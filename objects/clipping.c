@@ -73,7 +73,7 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    TRACE("%04x %04x %d\n", hdc, hrgn, fnMode );
+    TRACE("%p %p %d\n", hdc, hrgn, fnMode );
 
     if (dc->funcs->pExtSelectClipRgn)
     {
@@ -129,7 +129,7 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc16, HRGN16 hrgn )
     if (!hrgn) return ERROR;
     if (!(dc = DC_GetDCPtr( hdc ))) return ERROR;
 
-    TRACE("%04x %04x\n", hdc, hrgn );
+    TRACE("%p %04x\n", hdc, hrgn );
 
     dc->flags &= ~DC_DIRTY;
 
@@ -149,7 +149,7 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    TRACE("%04x %d,%d\n", hdc, x, y );
+    TRACE("%p %d,%d\n", hdc, x, y );
 
     if(dc->funcs->pOffsetClipRgn)
         ret = dc->funcs->pOffsetClipRgn( dc->physDev, x, y );
@@ -171,7 +171,7 @@ INT16 WINAPI OffsetVisRgn16( HDC16 hdc16, INT16 x, INT16 y )
     HDC hdc = HDC_32( hdc16 );
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
-    TRACE("%04x %d,%d\n", hdc, x, y );
+    TRACE("%p %d,%d\n", hdc, x, y );
     retval = OffsetRgn( dc->hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
     GDI_ReleaseObj( hdc );
@@ -190,7 +190,7 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
+    TRACE("%p %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
     if(dc->funcs->pExcludeClipRect)
         ret = dc->funcs->pExcludeClipRect( dc->physDev, left, top, right, bottom );
@@ -230,7 +230,7 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    TRACE("%04x %d,%d - %d,%d\n", hdc, left, top, right, bottom );
+    TRACE("%p %d,%d - %d,%d\n", hdc, left, top, right, bottom );
 
     if(dc->funcs->pIntersectClipRect)
         ret = dc->funcs->pIntersectClipRect( dc->physDev, left, top, right, bottom );
@@ -287,7 +287,7 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, 
 
     LPtoDP( hdc, pt, 2 );
 
-    TRACE("%04x %ld,%ld - %ld,%ld\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+    TRACE("%p %ld,%ld - %ld,%ld\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
 
     if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
     else
@@ -320,7 +320,7 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right
 
     LPtoDP( hdc, pt, 2 );
 
-    TRACE("%04x %ld,%ld - %ld,%ld\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+    TRACE("%p %ld,%ld - %ld,%ld\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
 
 
     if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
@@ -343,7 +343,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     BOOL ret = FALSE;
     DC *dc = DC_GetDCUpdate( hdc );
 
-    TRACE("%04x %d,%d\n", hdc, x, y );
+    TRACE("%p %d,%d\n", hdc, x, y );
     if (!dc) return FALSE;
     if (dc->hGCClipRgn)
     {
@@ -367,8 +367,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     BOOL ret = FALSE;
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return FALSE;
-    TRACE("%04x %d,%dx%d,%d\n",
-          hdc, rect->left, rect->top, rect->right, rect->bottom );
+    TRACE("%p %d,%dx%d,%d\n", hdc, rect->left, rect->top, rect->right, rect->bottom );
     if (dc->hGCClipRgn)
     {
         POINT pt[2];
@@ -435,7 +434,7 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
     DC *dc = DC_GetDCUpdate( hdc );
 
     if (!dc) return 0;
-    TRACE("%04x\n", hdc );
+    TRACE("%p\n", hdc );
 
     if (!(obj = GDI_GetObjPtr( dc->hVisRgn, REGION_MAGIC )))
     {
@@ -478,7 +477,7 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 
     if (!dc) return ERROR;
 
-    TRACE("%04x\n", hdc );
+    TRACE("%p\n", hdc );
 
     if (!(obj = GDI_GetObjPtr( dc->hVisRgn, REGION_MAGIC ))) goto done;
     saved = HRGN_32(obj->hNext);

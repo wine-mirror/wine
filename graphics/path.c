@@ -1555,7 +1555,7 @@ BOOL WINAPI StrokePath(HDC hdc)
     GdiPath *pPath;
     BOOL bRet = FALSE;
 
-    TRACE("(%08x)\n", hdc);
+    TRACE("(%p)\n", hdc);
     if(!dc) return FALSE;
 
     if(dc->funcs->pStrokePath)

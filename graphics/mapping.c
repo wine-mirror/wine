@@ -160,7 +160,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 	}
     }
 
-    TRACE("%04x %d\n", hdc, mode );
+    TRACE("%p %d\n", hdc, mode );
 
     ret = dc->MapMode;
     horzSize = GetDeviceCaps( hdc, HORZSIZE );

@@ -365,7 +365,7 @@ BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size )
 INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd,
                                  LPSTR lpModelName, LPSTR OldPort, LPSTR NewPort )
 {
-    FIXME("(%p, %04x, %s, %s, %s)\n", lpfnDevInstallProc, hWnd, lpModelName, OldPort, NewPort );
+    FIXME("(%p, %p, %s, %s, %s)\n", lpfnDevInstallProc, hWnd, lpModelName, OldPort, NewPort );
     return -1;
 }
 
@@ -389,7 +389,7 @@ INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd,
 INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice,
                                              LPCSTR lpszPort, LPVOID lpPropSheet )
 {
-    FIXME("(%04x, %s, %s, %p)\n", hWnd, lpszDevice, lpszPort, lpPropSheet );
+    FIXME("(%p, %s, %s, %p)\n", hWnd, lpszDevice, lpszPort, lpPropSheet );
     return -1;
 }
 
@@ -410,7 +410,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
     INT ret = -1;
     INT (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
 
-    TRACE("(%04x, %p, %s, %s, %p, %s, %ld)\n",
+    TRACE("(%p, %p, %s, %s, %p, %s, %ld)\n",
           hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile, fwMode );
 
     if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
@@ -438,7 +438,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
 INT WINAPI GDI_CallAdvancedSetupDialog16( HWND hwnd, LPSTR lpszDevice,
                                           LPDEVMODEA devin, LPDEVMODEA devout )
 {
-    TRACE("(%04x, %s, %p, %p)\n", hwnd, lpszDevice, devin, devout );
+    TRACE("(%p, %s, %p, %p)\n", hwnd, lpszDevice, devin, devout );
     return -1;
 }
 

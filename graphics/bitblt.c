@@ -37,7 +37,7 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
 
     if (dc->funcs->pPatBlt)
     {
-        TRACE("%04x %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
+        TRACE("%p %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
         bRet = dc->funcs->pPatBlt( dc->physDev, left, top, width, height, rop );
     }
     GDI_ReleaseObj( hdc );
@@ -59,7 +59,7 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
     if ((dcDst = DC_GetDCUpdate( hdcDst )))
     {
         dcSrc = DC_GetDCPtr( hdcSrc );
-        TRACE("hdcSrc=%04x %d,%d %d bpp->hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
+        TRACE("hdcSrc=%p %d,%d %d bpp->hdcDest=%p %d,%d %dx%dx%d rop=%06lx\n",
               hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->bitsPerPixel : 0,
               hdcDst, xDst, yDst, width, height, dcDst->bitsPerPixel, rop);
         if (dcDst->funcs->pBitBlt)
@@ -90,7 +90,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
     {
         dcSrc = DC_GetDCPtr( hdcSrc );
 
-        TRACE("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
+        TRACE("%p %d,%d %dx%dx%d -> %p %d,%d %dx%dx%d rop=%06lx\n",
               hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
               dcSrc ? dcSrc->bitsPerPixel : 0, hdcDst, xDst, yDst,
               widthDst, heightDst, dcDst->bitsPerPixel, rop );
@@ -116,7 +116,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 			INT nXSrc, INT nYSrc, HBITMAP hbmMask,
 			INT xMask, INT yMask, DWORD dwRop)
 {
-    FIXME("(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld): stub\n",
+    FIXME("(%p,%d,%d,%d,%d,%p,%d,%d,%p,%d,%d,%ld): stub\n",
              hdcDest,nXDest,nYDest,nWidth,nHeight,hdcSource,nXSrc,nYSrc,
              hbmMask,xMask,yMask,dwRop);
     return 1;

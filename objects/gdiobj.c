@@ -519,7 +519,7 @@ static HFONT create_stock_font( char const *fontName, const LOGFONTW *font, HKEY
 
 
 #define TRACE_SEC(handle,text) \
-   TRACE("(%04x): " text " %ld\n", (handle), GDI_level.crst.RecursionCount)
+   TRACE("(%p): " text " %ld\n", (handle), GDI_level.crst.RecursionCount)
 
 
 /***********************************************************************
@@ -557,7 +557,7 @@ inline static void dec_ref_count( HGDIOBJ handle )
             /* handle delayed DeleteObject*/
             header->dwCount = 0;
             GDI_ReleaseObj( handle );
-            TRACE( "executing delayed DeleteObject for %04x\n", handle );
+            TRACE( "executing delayed DeleteObject for %p\n", handle );
             DeleteObject( handle );
         }
     }
@@ -745,7 +745,7 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
                 return new_ptr;
             }
         }
-        else ERR( "Invalid handle %x\n", handle );
+        else ERR( "Invalid handle %p\n", handle );
     }
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
@@ -776,7 +776,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
             HeapFree( GetProcessHeap(), 0, large_handles[i] );
             large_handles[i] = NULL;
         }
-        else ERR( "Invalid handle %x\n", handle );
+        else ERR( "Invalid handle %p\n", handle );
     }
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
@@ -826,7 +826,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     {
         _LeaveSysLevel( &GDI_level );
         SetLastError( ERROR_INVALID_HANDLE );
-        WARN( "Invalid handle %x\n", handle );
+        WARN( "Invalid handle %p\n", handle );
     }
     else TRACE_SEC( handle, "enter" );
 
@@ -870,20 +870,20 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     if (!(header->wMagic & OBJECT_NOSYSTEM)
     &&   (header->wMagic >= FIRST_MAGIC) && (header->wMagic <= LAST_MAGIC))
     {
-	TRACE("Preserving system object %04x\n", obj);
+	TRACE("Preserving system object %p\n", obj);
         GDI_ReleaseObj( obj );
 	return TRUE;
     }
 
     if (header->dwCount)
     {
-        TRACE("delayed for %04x because object in use, count %ld\n", obj, header->dwCount );
+        TRACE("delayed for %p because object in use, count %ld\n", obj, header->dwCount );
         header->dwCount |= 0x80000000; /* mark for delete */
         GDI_ReleaseObj( obj );
         return TRUE;
     }
 
-    TRACE("%04x\n", obj );
+    TRACE("%p\n", obj );
 
       /* Delete object */
 
@@ -903,7 +903,7 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
     HGDIOBJ ret;
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     ret = stock_objects[obj];
-    TRACE("returning %4x\n", ret );
+    TRACE("returning %p\n", ret );
     return ret;
 }
 
@@ -917,7 +917,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle16, INT16 count, LPVOID buffer )
     HGDIOBJ handle = HGDIOBJ_32( handle16 );
     INT16 result = 0;
 
-    TRACE("%04x %d %p\n", handle, count, buffer );
+    TRACE("%p %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
@@ -939,7 +939,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr;
     INT result = 0;
-    TRACE("%08x %d %p\n", handle, count, buffer );
+    TRACE("%p %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
@@ -960,7 +960,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 {
     GDIOBJHDR * ptr;
     INT result = 0;
-    TRACE("%08x %d %p\n", handle, count, buffer );
+    TRACE("%p %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
@@ -981,7 +981,7 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 {
     GDIOBJHDR * ptr;
     INT result = 0;
-    TRACE("%08x\n", handle );
+    TRACE("%p\n", handle );
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
@@ -1049,7 +1049,7 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
 	case OBJ_BITMAP: ret = dc->hBitmap; break;
     default:
     	/* the SDK only mentions those above */
-    	FIXME("(%08x,%d): unknown type.\n",hdc,type);
+    	FIXME("(%p,%d): unknown type.\n",hdc,type);
 	    break;
         }
         GDI_ReleaseObj( hdc );
@@ -1067,7 +1067,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
     GDIOBJHDR *header = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
     if (!header) return 0;
 
-    TRACE("hdc=%04x %04x\n", hdc, handle );
+    TRACE("hdc=%p %p\n", hdc, handle );
 
     if (header->funcs && header->funcs->pSelectObject)
     {
@@ -1094,7 +1094,7 @@ BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
     GDIOBJHDR * header = GDI_GetObjPtr( obj, MAGIC_DONTCARE );
     if (!header) return FALSE;
 
-    TRACE("%04x\n", obj );
+    TRACE("%p\n", obj );
 
       /* Unrealize object */
 
@@ -1129,8 +1129,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
     LOGPEN pen;
     LOGBRUSH brush;
 
-    TRACE("%04x %d %08lx %08lx\n",
-                 hdc, nObjType, (DWORD)lpEnumFunc, lParam );
+    TRACE("%p %d %p %08lx\n", hdc, nObjType, lpEnumFunc, lParam );
     switch(nObjType)
     {
     case OBJ_PEN:
@@ -1228,7 +1227,7 @@ void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle16, BOOL16 private )
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
     if (!ptr)
     {
-	ERR("invalid GDI object %04x !\n", handle);
+	ERR("invalid GDI object %p !\n", handle);
 	return;
     }
     ptr->wMagic |= OBJECT_PRIVATE;

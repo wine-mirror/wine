@@ -246,7 +246,7 @@ HDC WINAPI CreateMetaFileA( LPCSTR filename ) /* [in] Filename of disk metafile 
     else  /* memory based metafile */
 	physDev->mh->mtType = METAFILE_MEMORY;
 
-    TRACE("returning %04x\n", dc->hSelf);
+    TRACE("returning %p\n", dc->hSelf);
     ret = dc->hSelf;
     GDI_ReleaseObj( dc->hSelf );
     return ret;
@@ -281,7 +281,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
 
-    TRACE("(%04x)\n", hdc );
+    TRACE("(%p)\n", hdc );
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;

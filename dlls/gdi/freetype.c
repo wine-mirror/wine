@@ -950,7 +950,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     /* check the cache first */
     for(ret = GdiFontList; ret; ret = ret->next) {
 	if(ret->hfont == hfont && !memcmp(&ret->xform, &dc->xformWorld2Vport, offsetof(XFORM, eDx))) {
-	    TRACE("returning cached gdiFont(%p) for hFont %x\n", ret, hfont);
+	    TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
 	    return ret;
 	}
     }
@@ -1104,7 +1104,7 @@ not_found:
     ret->orientation = lf.lfOrientation;
     ret->name = strdupW(family->FamilyName);
 
-    TRACE("caching: gdiFont=%p  hfont=%x\n", ret, hfont);
+    TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
     ret->hfont = hfont;
     ret->next = GdiFontList;
     GdiFontList = ret;
@@ -1120,7 +1120,7 @@ static void DumpGdiFontList(void)
     for(gdiFont = GdiFontList; gdiFont; gdiFont = gdiFont->next) {
 	LOGFONTW lf;
         GetObjectW( gdiFont->hfont, sizeof(lf), &lf );
-	TRACE("gdiFont=%p  hfont=%x (%s)\n",
+	TRACE("gdiFont=%p  hfont=%p (%s)\n",
 	       gdiFont, gdiFont->hfont, debugstr_w(lf.lfFaceName));
     }
 }
@@ -1137,7 +1137,7 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     GdiFont gdiPrev = NULL;
     BOOL ret = FALSE;
 
-    TRACE("destroying hfont=%x\n", handle);
+    TRACE("destroying hfont=%p\n", handle);
     if(TRACE_ON(font))
 	DumpGdiFontList();
 

@@ -51,7 +51,7 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     if (count == 0)
         return FALSE;
 
-    TRACE("%04x %d %d %x %p %s %p\n",
+    TRACE("%p %d %d %x %p %s %p\n",
 	  dc->hSelf, x, y, flags, lprect, debugstr_wn(wstr, count), lpDx);
 
     len = WideCharToMultiByte( CP_ACP, 0, wstr, count, NULL, 0, NULL, NULL );

@@ -372,7 +372,7 @@ HDC WINAPI CreateEnhMetaFileW(
 	physDev->hFile = hFile;
     }
 
-    TRACE("returning %04x\n", dc->hSelf);
+    TRACE("returning %p\n", dc->hSelf);
     ret = dc->hSelf;
     GDI_ReleaseObj( dc->hSelf );
 
@@ -393,7 +393,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     EMREOF emr;
     HANDLE hMapping = 0;
 
-    TRACE("(%04x)\n", hdc );
+    TRACE("(%p)\n", hdc );
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, ENHMETAFILE_DC_MAGIC ))) return 0;
     physDev = (EMFDRV_PDEVICE *)dc->physDev;
@@ -436,7 +436,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 	HeapFree( GetProcessHeap(), 0, physDev->emh );
         hMapping = CreateFileMappingA(physDev->hFile, NULL, PAGE_READONLY, 0,
 				      0, NULL);
-	TRACE("hMapping = %08x\n", hMapping );
+	TRACE("hMapping = %p\n", hMapping );
 	physDev->emh = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
 	TRACE("view = %p\n", physDev->emh );
         CloseHandle( hMapping );

@@ -281,7 +281,7 @@ HDC WINAPI GetDCState( HDC hdc )
       GDI_ReleaseObj( hdc );
       return 0;
     }
-    TRACE("(%04x): returning %04x\n", hdc, handle );
+    TRACE("(%p): returning %p\n", hdc, handle );
 
     newdc->flags            = dc->flags | DC_SAVED;
     newdc->hPen             = dc->hPen;
@@ -375,7 +375,7 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
       GDI_ReleaseObj( hdcs );
       return;
     }
-    TRACE("%04x %04x\n", hdc, hdcs );
+    TRACE("%p %p\n", hdc, hdcs );
 
     dc->flags            = dcs->flags & ~(DC_SAVED | DC_DIRTY);
     dc->hDevice          = dcs->hDevice;
@@ -500,7 +500,7 @@ INT WINAPI SaveDC( HDC hdc )
 
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = HDC_16(hdcs);
-    TRACE("(%04x): returning %d\n", hdc, dc->saveLevel+1 );
+    TRACE("(%p): returning %d\n", hdc, dc->saveLevel+1 );
     ret = ++dc->saveLevel;
     GDI_ReleaseObj( hdcs );
     GDI_ReleaseObj( hdc );
@@ -516,7 +516,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     DC * dc, * dcs;
     BOOL success;
 
-    TRACE("%04x %d\n", hdc, level );
+    TRACE("%p %d\n", hdc, level );
     dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
     if(dc->funcs->pRestoreDC)
@@ -599,8 +599,8 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
 
     dc->flags = 0;
 
-    TRACE("(driver=%s, device=%s, output=%s): returning %04x\n",
-               debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
+    TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
+          debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, &dc->physDev, buf, device, output, initData ))
@@ -690,8 +690,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         return 0;
     }
 
-    TRACE("(%04x): returning %04x\n",
-               hdc, dc->hSelf );
+    TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
     dc->flags        = DC_MEMORY;
     dc->bitsPerPixel = 1;
@@ -733,7 +732,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     const DC_FUNCTIONS *funcs = NULL;
     DC * dc;
 
-    TRACE("%04x\n", hdc );
+    TRACE("%p\n", hdc );
 
     GDI_CheckNotLock();
 
@@ -1205,7 +1204,7 @@ WORD WINAPI SetHookFlags16(HDC16 hdc16, WORD flags)
         /* "Undocumented Windows" info is slightly confusing.
          */
 
-        TRACE("hDC %04x, flags %04x\n",hdc,flags);
+        TRACE("hDC %p, flags %04x\n",hdc,flags);
 
         if( flags & DCHF_INVALIDATEVISRGN )
             dc->flags |= DC_DIRTY;
@@ -1369,7 +1368,7 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
  */
 DWORD WINAPI GetLayout(HDC hdc)
 {
-    FIXME("(%08x): stub\n", hdc);
+    FIXME("(%p): stub\n", hdc);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -1383,7 +1382,7 @@ DWORD WINAPI GetLayout(HDC hdc)
  */
 DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
 {
-    FIXME("(%08x,%08lx): stub\n", hdc, layout);
+    FIXME("(%p,%08lx): stub\n", hdc, layout);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -1398,7 +1397,7 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
  */
 COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
 {
-    FIXME("(%08x, %08lx): stub\n", hdc, crColor);
+    FIXME("(%p, %08lx): stub\n", hdc, crColor);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return CLR_INVALID;
 }

@@ -318,7 +318,7 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const LPPIXELFORMATDESCRIPTOR ppfd )
     INT ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("(%08x,%p)\n",hdc,ppfd);
+    TRACE("(%p,%p)\n",hdc,ppfd);
 
     if (!dc) return 0;
 
@@ -347,7 +347,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
     INT bRet = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("(%d,%d,%p)\n",hdc,iPixelFormat,ppfd);
+    TRACE("(%p,%d,%p)\n",hdc,iPixelFormat,ppfd);
 
     if (!dc) return 0;
 
@@ -375,7 +375,7 @@ INT WINAPI GetPixelFormat( HDC hdc )
     INT ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("(%08x)\n",hdc);
+    TRACE("(%p)\n",hdc);
 
     if (!dc) return 0;
 
@@ -407,7 +407,7 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
     INT ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("(%08x,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
+    TRACE("(%p,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
 
     if (!dc) return 0;
 
@@ -439,7 +439,7 @@ BOOL WINAPI SwapBuffers( HDC hdc )
     INT bRet = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("(%08x)\n",hdc);
+    TRACE("(%p)\n",hdc);
 
     if (!dc) return TRUE;
 

@@ -126,8 +126,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
 				 (HGDIOBJ *)&hbitmap, &bitmap_funcs )))
         return 0;
 
-    TRACE("%dx%d, %d colors returning %08x\n", width, height,
-	  1 << (planes*bpp), hbitmap);
+    TRACE("%dx%d, %d colors returning %p\n", width, height, 1 << (planes*bpp), hbitmap);
 
     bmp->size.cx = 0;
     bmp->size.cy = 0;
@@ -169,7 +168,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
     HBITMAP hbmpRet = 0;
     DC *dc;
 
-    TRACE("(%04x,%d,%d) = \n", hdc, width, height );
+    TRACE("(%p,%d,%d) = \n", hdc, width, height );
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if ((width >= 0x10000) || (height >= 0x10000)) {
 	FIXME("got bad width %d or height %d, please look for reason\n",
@@ -187,7 +186,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
             hbmpRet = 0;
         }
     }
-    TRACE("\t\t%04x\n", hbmpRet);
+    TRACE("\t\t%p\n", hbmpRet);
     GDI_ReleaseObj(hdc);
     return hbmpRet;
 }
@@ -249,7 +248,7 @@ LONG WINAPI GetBitmapBits(
       }
 
 
-    TRACE("(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+    TRACE("(%p, %ld, %p) %dx%d %d colors fetched height: %ld\n",
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 
@@ -308,7 +307,7 @@ LONG WINAPI SetBitmapBits(
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
     count = height * bmp->bitmap.bmWidthBytes;
 
-    TRACE("(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+    TRACE("(%p, %ld, %p) %dx%d %d colors fetched height: %ld\n",
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 
@@ -390,7 +389,7 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc )
     }
     else if (bitmap->funcs != dc->funcs)
     {
-        FIXME( "Trying to select bitmap %x in different DC type\n", hbitmap );
+        FIXME( "Trying to select bitmap %p in different DC type\n", hbitmap );
         ret = FALSE;
     }
     GDI_ReleaseObj( hbitmap );

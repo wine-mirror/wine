@@ -202,7 +202,7 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
     ABORTPROC abproc;
 
     if(!dc) {
-        ERR("Invalid hdc %04x\n", hdc);
+        ERR("Invalid hdc %p\n", hdc);
 	return FALSE;
     }
 

@@ -444,7 +444,7 @@ HMETAFILE WINAPI CopyMetaFileA(
     METAHEADER *mh2 = NULL;
     HANDLE hFile;
 
-    TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
+    TRACE("(%p,%s)\n", hSrcMetaFile, lpFilename);
 
     if(!mh) return 0;
 
@@ -636,9 +636,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
     HFONT hFont;
     BOOL16 result = TRUE, loaded = FALSE;
 
-    TRACE("(%04x, %04x, %08lx, %08lx)\n",
-		     hdc, hmf, (DWORD)lpEnumFunc, lpData);
-
+    TRACE("(%p, %04x, %p, %08lx)\n", hdc, hmf, lpEnumFunc, lpData);
 
     if(!mh) return FALSE;
     if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
@@ -728,7 +726,7 @@ BOOL WINAPI EnumMetaFile(
     HBRUSH hBrush;
     HFONT hFont;
 
-    TRACE("(%08x,%08x,%p,%p)\n", hdc, hmf, lpEnumFunc, (void*)lpData);
+    TRACE("(%p,%p,%p,%p)\n", hdc, hmf, lpEnumFunc, (void*)lpData);
     if (!mh) return 0;
     if(mh->mtType == METAFILE_DISK)
     {
@@ -805,7 +803,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
     POINT *pt;
     BITMAPINFOHEADER *infohdr;
 
-    TRACE("(%04x %p %p %u) function %04x\n", hdc, ht, mr, handles, mr->rdFunction);
+    TRACE("(%p %p %p %u) function %04x\n", hdc, ht, mr, handles, mr->rdFunction);
 
     switch (mr->rdFunction)
     {
@@ -1363,7 +1361,7 @@ UINT WINAPI GetMetaFileBitsEx(
     METAHEADER *mh = MF_GetMetaHeader(hmf);
     UINT mfSize;
 
-    TRACE("(%08x,%d,%p)\n", hmf, nSize, buf);
+    TRACE("(%p,%d,%p)\n", hmf, nSize, buf);
     if (!mh) return 0;  /* FIXME: error code */
     if(mh->mtType == METAFILE_DISK)
         FIXME("Disk-based metafile?\n");
@@ -1388,8 +1386,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
     HMETAFILE hmf;
     UINT ret;
 
-    FIXME("(%d,%d,%p,%d,%d): stub\n",
-	  hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
+    FIXME("(%p,%d,%p,%d,%p): stub\n", hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
     hdcmf = CreateMetaFileA(NULL);
 /*  PlayEnhMetaFile(hdcmf, hemf, lpRect); where does the bounding rect come from? */
     hmf = CloseMetaFile(hdcmf);

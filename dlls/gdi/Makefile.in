@@ -1,4 +1,4 @@
-EXTRADEFS = -D_GDI32_ -DWINE_NO_STRICT
+EXTRADEFS = -D_GDI32_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

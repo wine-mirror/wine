@@ -137,7 +137,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     }
 
     GDI_ReleaseObj( hbrush );
-    TRACE("%08x\n", hbrush);
+    TRACE("%p\n", hbrush);
     return hbrush;
 
  error:
@@ -169,7 +169,7 @@ HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 {
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
-    TRACE("%04x\n", hbitmap );
+    TRACE("%p\n", hbitmap );
 
     logbrush.lbHatch = (ULONG_PTR)hbitmap;
     return CreateBrushIndirect( &logbrush );
@@ -197,7 +197,7 @@ HBRUSH WINAPI CreateDIBPatternBrush(
 {
     LOGBRUSH logbrush;
 
-    TRACE("%04x\n", hbitmap );
+    TRACE("%p\n", hbitmap );
 
     logbrush.lbStyle = BS_DIBPATTERN;
     logbrush.lbColor = coloruse;

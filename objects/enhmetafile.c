@@ -96,7 +96,7 @@ static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
 {
     ENHMETAHEADER *ret = NULL;
     ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf, ENHMETAFILE_MAGIC );
-    TRACE("hmf %04x -> enhmetaObj %p\n", hmf, metaObj);
+    TRACE("hmf %p -> enhmetaObj %p\n", hmf, metaObj);
     if (metaObj)
     {
         ret = metaObj->emh;
@@ -305,9 +305,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
   int type;
   POINT pt[2];
 
-  TRACE(
-	"hdc = %08x, handletable = %p, record = %p, numHandles = %d\n",
-	  hdc, handletable, mr, handles);
+  TRACE("hdc = %p, handletable = %p, record = %p, numHandles = %d\n",
+        hdc, handletable, mr, handles);
   if (!mr) return FALSE;
 
   type = mr->iType;
@@ -1841,7 +1840,7 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
   ENHMETAHEADER* enhHeader = EMF_GetEnhMetaHeader( hEmf );
   EMF_PaletteCopy infoForCallBack;
 
-  TRACE( "(%04x,%d,%p)\n", hEmf, cEntries, lpPe );
+  TRACE( "(%p,%d,%p)\n", hEmf, cEntries, lpPe );
 
   /* First check if there are any palettes associated with
      this metafile. */
@@ -1888,7 +1887,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     METAFILEPICT mfp;
     RECT rc, *prcFrame = NULL;
 
-    TRACE("(%d, %p, %08x, %p)\n", cbBuffer, lpbBuffer, hdcRef, lpmfp);
+    TRACE("(%d, %p, %p, %p)\n", cbBuffer, lpbBuffer, hdcRef, lpmfp);
 
     if(!(hmf = SetMetaFileBitsEx(cbBuffer, lpbBuffer))) {
         WARN("SetMetaFileBitsEx fails\n");

@@ -539,7 +539,7 @@ static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj )
 {
     RGNOBJ *rgn = obj;
 
-    TRACE(" %04x\n", handle );
+    TRACE(" %p\n", handle );
 
     REGION_DestroyWineRegion( rgn->rgn );
     return GDI_FreeObject( handle, obj );
@@ -562,7 +562,7 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     INT ret;
 
-    TRACE("%04x %d,%d\n", hrgn, x, y);
+    TRACE("%p %d,%d\n", hrgn, x, y);
 
     if (!obj)
         return ERROR;
@@ -600,7 +600,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
     if (obj)
     {
 	INT ret;
-	TRACE(" %04x\n", hrgn );
+	TRACE(" %p\n", hrgn );
 	rect->left = obj->rgn->extents.left;
 	rect->top = obj->rgn->extents.top;
 	rect->right = obj->rgn->extents.right;
@@ -649,8 +649,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 {
     RGNOBJ * obj;
 
-    TRACE(" %04x %d,%d-%d,%d\n",
-	  hrgn, left, top, right, bottom );
+    TRACE("%p %d,%d-%d,%d\n", hrgn, left, top, right, bottom );
 
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
 
@@ -708,7 +707,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     d = (ellipse_height < 128) ? ((3 * ellipse_height) >> 2) : 64;
     if (!(hrgn = REGION_CreateRegion(d))) return 0;
     if (!(obj = GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return 0;
-    TRACE("(%d,%d-%d,%d %dx%d): ret=%04x\n",
+    TRACE("(%d,%d-%d,%d %dx%d): ret=%p\n",
 	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
 
       /* Ellipse algorithm, based on an article by K. Porter */
@@ -819,8 +818,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     DWORD size;
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
-    TRACE(" %04x count = %ld, rgndata = %p\n",
-		   hrgn, count, rgndata);
+    TRACE(" %p count = %ld, rgndata = %p\n", hrgn, count, rgndata);
 
     if(!obj) return 0;
 
@@ -883,7 +881,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
                 REGION_UnionRectWithRegion( pCurRect, obj->rgn );
 	    GDI_ReleaseObj( hrgn );
 
-            TRACE("%04x\n", hrgn );
+            TRACE("%p\n", hrgn );
             return hrgn;
         }
 	else ERR("Could not get pointer to newborn Region!\n");
@@ -1069,8 +1067,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
     RGNOBJ *destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC);
     INT result = ERROR;
 
-    TRACE(" %04x,%04x -> %04x mode=%x\n",
-	  hSrc1, hSrc2, hDest, mode );
+    TRACE(" %p,%p -> %p mode=%x\n", hSrc1, hSrc2, hDest, mode );
     if (destObj)
     {
 	RGNOBJ *src1Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc1, REGION_MAGIC);
@@ -1121,7 +1118,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 
 	GDI_ReleaseObj( hDest );
     } else {
-       ERR("Invalid rgn=%04x\n", hDest);
+       ERR("Invalid rgn=%p\n", hDest);
     }
     return result;
 }

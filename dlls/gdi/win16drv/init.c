@@ -343,7 +343,7 @@ static INT WIN16DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
     if (cap >= PHYSICALWIDTH || (cap % 2))
     {
-        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
+        FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
     return *((WORD *)&physDev->DevCaps + (cap / 2));

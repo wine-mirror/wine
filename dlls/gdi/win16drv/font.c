@@ -95,7 +95,7 @@ BOOL WIN16DRV_GetTextExtentPoint( PHYSDEV dev, LPCWSTR wstr, INT count,
     DWORD dwRet, len;
     char *str;
 
-    TRACE("%04x %s %d %p\n", physDev->hdc, debugstr_wn(wstr, count), count, size);
+    TRACE("%p %s %d %p\n", physDev->hdc, debugstr_wn(wstr, count), count, size);
 
 
     len = WideCharToMultiByte( CP_ACP, 0, wstr, count, NULL, 0, NULL, NULL );
@@ -121,7 +121,7 @@ BOOL WIN16DRV_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
 
-    TRACE("%04x \n", physDev->hdc);
+    TRACE("%p \n", physDev->hdc);
 
     *metrics = physDev->tm;
 

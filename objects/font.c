@@ -319,7 +319,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 	{
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
-	    TRACE("(%ld %ld %ld %ld %x %d %x %d %d) %s %s %s => %04x\n",
+	    TRACE("(%ld %ld %ld %ld %x %d %x %d %d) %s %s %s => %p\n",
                   plf->lfHeight, plf->lfWidth,
                   plf->lfEscapement, plf->lfOrientation,
                   plf->lfPitchAndFamily,
@@ -333,7 +333,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 	      /* this should really depend on whether GM_ADVANCED is set */
 	      fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
 	      WARN("orientation angle %f set to "
-                   "escapement angle %f for new font %04x\n",
+                   "escapement angle %f for new font %p\n",
                    plf->lfOrientation/10., plf->lfEscapement/10., hFont);
 	    }
 	    GDI_ReleaseObj( hFont );
@@ -890,7 +890,7 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
 	HeapFree( GetProcessHeap(), 0, p );
     }
 
-    TRACE("(%08x %s %d %p): returning %ld x %ld\n",
+    TRACE("(%p %s %d %p): returning %ld x %ld\n",
           hdc, debugstr_an (str, count), count, size, size->cx, size->cy );
     return ret;
 }
@@ -925,7 +925,7 @@ BOOL WINAPI GetTextExtentPoint32W(
 
     GDI_ReleaseObj( hdc );
 
-    TRACE("(%08x %s %d %p): returning %ld x %ld\n",
+    TRACE("(%p %s %d %p): returning %ld x %ld\n",
           hdc, debugstr_wn (str, count), count, size, size->cx, size->cy );
     return ret;
 }
@@ -961,7 +961,7 @@ BOOL WINAPI GetTextExtentPointI(
 
     GDI_ReleaseObj( hdc );
 
-    TRACE("(%08x %p %d %p): returning %ld x %ld\n",
+    TRACE("(%p %p %d %p): returning %ld x %ld\n",
           hdc, indices, count, size, size->cx, size->cy );
     return ret;
 }
@@ -1043,7 +1043,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     SIZE tSize;
     BOOL ret = FALSE;
 
-    TRACE("(%08x, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
+    TRACE("(%p, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
 
     size->cx = size->cy = nFit = extent = 0;
     for(index = 0; index < count; index++)
@@ -1318,7 +1318,7 @@ UINT WINAPI GetOutlineTextMetricsW(
     DC *dc = DC_GetDCPtr( hdc );
     UINT ret;
 
-    TRACE("(%d,%d,%p)\n", hdc, cbData, lpOTM);
+    TRACE("(%p,%d,%p)\n", hdc, cbData, lpOTM);
     if(!dc) return 0;
 
     if(dc->gdiFont) {
@@ -1473,7 +1473,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
     if(dc->funcs->pSetMapperFlags)
         ret = dc->funcs->pSetMapperFlags( dc->physDev, dwFlag );
     else
-        FIXME("(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
+        FIXME("(%p, 0x%08lx): stub - harmless\n", hDC, dwFlag);
     GDI_ReleaseObj( hDC );
     return ret;
 }
@@ -1492,7 +1492,7 @@ BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
  */
 BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 {
-  FIXME("(%04x, %p): -- Empty Stub !\n", hdc, pAspectRatio);
+  FIXME("(%p, %p): -- Empty Stub !\n", hdc, pAspectRatio);
   return FALSE;
 }
 
@@ -1617,7 +1617,7 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
     DC *dc = DC_GetDCPtr(hdc);
     DWORD ret;
 
-    TRACE("(%04x, %04x, %04x, %p, %ld, %p, %p)\n",
+    TRACE("(%p, %04x, %04x, %p, %ld, %p, %p)\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
 
     if(!dc) return GDI_ERROR;
@@ -1692,7 +1692,7 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs, LPKERNINGPAIR lpKerningPairs )
 {
     int i;
-    FIXME("(%x,%ld,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
+    FIXME("(%p,%ld,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
     for (i = 0; i < cPairs; i++)
         lpKerningPairs[i].iKernAmount = 0;
     return 0;
@@ -1837,8 +1837,8 @@ DWORD WINAPI GetGlyphIndicesA(HDC hdc, LPCSTR lpstr, INT count,
     WCHAR *lpstrW;
     INT countW;
 
-    TRACE("(%04x, %s, %d, %p, 0x%lx)\n",
-	hdc, debugstr_an(lpstr, count), count, pgi, flags);
+    TRACE("(%p, %s, %d, %p, 0x%lx)\n",
+          hdc, debugstr_an(lpstr, count), count, pgi, flags);
 
     lpstrW = FONT_mbtowc(hdc, lpstr, count, &countW, NULL);
     ret = GetGlyphIndicesW(hdc, lpstrW, countW, pgi, flags);
@@ -1856,8 +1856,8 @@ DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
     DC *dc = DC_GetDCPtr(hdc);
     DWORD ret = GDI_ERROR;
 
-    TRACE("(%04x, %s, %d, %p, 0x%lx)\n",
-	hdc, debugstr_wn(lpstr, count), count, pgi, flags);
+    TRACE("(%p, %s, %d, %p, 0x%lx)\n",
+          hdc, debugstr_wn(lpstr, count), count, pgi, flags);
 
     if(!dc) return GDI_ERROR;
 

@@ -285,7 +285,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 					     ySrc, startscan, lines, bits,
 					     info, coloruse );
     else {
-        FIXME("unimplemented on hdc %08x\n", hdc);
+        FIXME("unimplemented on hdc %p\n", hdc);
 	ret = 0;
     }
 
