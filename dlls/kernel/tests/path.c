@@ -510,19 +510,20 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      "GetShortPathNameA should not have a trailing \\");
 
   if (pGetLongPathNameA) {
-    DWORD rc;
+    DWORD rc1,rc2;
     sprintf(tmpstr,"%s\\%s\\%s",curdir,LONGDIR,LONGFILE);
-    rc=(*pGetLongPathNameA)(tmpstr,NULL,0);
-    ok(rc==strlen(tmpstr)+1,
+    rc1=(*pGetLongPathNameA)(tmpstr,NULL,0);
+    rc2=(*pGetLongPathNameA)(curdir,NULL,0);
+    ok((rc1-strlen(tmpstr))==(rc2-strlen(curdir)),
        "GetLongPathNameA: wrong return code, %ld instead of %d",
-       rc, strlen(curdir)+1);
+       rc1, strlen(tmpstr)+1);
 
     todo_wine {
         sprintf(dir,"%c:",curDrive);
-        rc=(*pGetLongPathNameA)(dir,tmpstr,sizeof(tmpstr));
+        rc1=(*pGetLongPathNameA)(dir,tmpstr,sizeof(tmpstr));
         ok(strcmp(dir,tmpstr)==0,
            "GetLongPathNameA: returned '%s' instead of '%s' (rc=%ld)",
-           tmpstr,dir,rc);
+           tmpstr,dir,rc1);
     }
   }
 
