@@ -1216,7 +1216,7 @@ void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
 BOOL    WINAPI SetProcessWorkingSetSize(HANDLE,DWORD,DWORD);
 BOOL    WINAPI TerminateProcess(HANDLE,DWORD);
 BOOL    WINAPI TerminateThread(HANDLE,DWORD);
-
+BOOL    WINAPI GetExitCodeThread(HANDLE,LPDWORD); 
 
 /* GetBinaryType return values.
  */
