@@ -27,7 +27,8 @@ C_SRCS = \
 	regsvr.c \
 	systemclock.c \
 	transform.c \
-	videorenderer.c
+	videorenderer.c \
+	waveparser.c
 
 RC_SRCS = version.rc
 
