@@ -88,6 +88,7 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file )
     (*file)->unix_name = NULL;
     (*file)->type = FILE_TYPE_DISK;
     (*file)->pos = 0;
+    (*file)->mode = 0;
 
     handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header,
                            FILE_ALL_ACCESS | GENERIC_READ |
@@ -228,6 +229,259 @@ int FILE_GetUnixHandle( HFILE32 hFile )
     return ret;
 }
 
+/***********************************************************************
+ *              FILE_UnixToDosMode
+ *
+ * PARAMS
+ *       unixmode[I] 
+ * RETURNS
+ *       dosmode 
+ */
+static int FILE_UnixToDosMode(int unixMode)
+{
+  int dosMode;
+  switch(unixMode & 3)
+      {
+      case O_WRONLY:
+        dosMode = OF_WRITE;
+        break;
+      case  O_RDWR:
+        dosMode =OF_READWRITE;
+        break;
+      case O_RDONLY:
+      default:
+        dosMode = OF_READ;
+        break;
+      }
+  return dosMode;
+}
+
+/***********************************************************************
+ *              FILE_DOSToUnixMode
+ *
+ * PARAMS
+ *       dosMode[I] 
+ * RETURNS
+ *       unixmode 
+ */
+static int FILE_DOSToUnixMode(int dosMode)
+{
+  int unixMode;
+  switch(dosMode & 3)
+      {
+      case OF_WRITE:
+        unixMode = O_WRONLY; break;
+      case OF_READWRITE:
+        unixMode = O_RDWR; break;
+      case OF_READ:
+      default:
+        unixMode = O_RDONLY; break;
+      }
+  return unixMode;
+}
+
+/***********************************************************************
+ *              FILE_ShareDeny
+ *
+ * PARAMS
+ *       oldmode[I] mode how file was first opened
+ *       mode[I] mode how the file should get opened
+ * RETURNS
+ *      TRUE: deny open
+ *      FALSE: allow open
+ *
+ * Look what we have to do with the given SHARE modes
+ *
+ * Ralph Brown's interrupt list gives following explication, I guess
+ * the same holds for Windows, DENY ALL should be OF_SHARE_COMPAT
+ *
+ * FIXME: Validate this function
+========from Ralph Brown's list =========
+(Table 0750)
+Values of DOS file sharing behavior:
+          |     Second and subsequent Opens
+ First    |Compat  Deny   Deny   Deny   Deny
+ Open     |        All    Write  Read   None
+          |R W RW R W RW R W RW R W RW R W RW
+ - - - - -| - - - - - - - - - - - - - - - - -
+ Compat R |Y Y Y  N N N  1 N N  N N N  1 N N
+        W |Y Y Y  N N N  N N N  N N N  N N N
+        RW|Y Y Y  N N N  N N N  N N N  N N N
+ - - - - -|
+ Deny   R |C C C  N N N  N N N  N N N  N N N
+ All    W |C C C  N N N  N N N  N N N  N N N
+        RW|C C C  N N N  N N N  N N N  N N N
+ - - - - -|
+ Deny   R |2 C C  N N N  Y N N  N N N  Y N N
+ Write  W |C C C  N N N  N N N  Y N N  Y N N
+        RW|C C C  N N N  N N N  N N N  Y N N
+ - - - - -|
+ Deny   R |C C C  N N N  N Y N  N N N  N Y N
+ Read   W |C C C  N N N  N N N  N Y N  N Y N
+        RW|C C C  N N N  N N N  N N N  N Y N
+ - - - - -|
+ Deny   R |2 C C  N N N  Y Y Y  N N N  Y Y Y
+ None   W |C C C  N N N  N N N  Y Y Y  Y Y Y
+        RW|C C C  N N N  N N N  N N N  Y Y Y
+Legend: Y = open succeeds, N = open fails with error code 05h
+        C = open fails, INT 24 generated
+        1 = open succeeds if file read-only, else fails with error code
+        2 = open succeeds if file read-only, else fails with INT 24      
+========end of description from Ralph Brown's List =====
+	For every "Y" in the table we return FALSE
+	For every "N" we set the DOS_ERROR and return TRUE 
+	For all	other cases we barf,set the DOS_ERROR and return TRUE
+
+ */
+static BOOL32 FILE_ShareDeny( int mode, int oldmode)
+{
+  int oldsharemode = oldmode & 0x70;
+  int sharemode    =    mode & 0x70;
+  int oldopenmode  = oldmode & 3;
+  int openmode     =    mode & 3;
+  
+  switch (oldsharemode)
+    {
+    case OF_SHARE_COMPAT:
+      if (sharemode == OF_SHARE_COMPAT) return FALSE;
+      if (openmode  == OF_READ) goto test_ro_err05 ;
+      goto fail_error05;
+    case OF_SHARE_EXCLUSIVE:
+      if (sharemode == OF_SHARE_COMPAT) goto fail_int24;
+      goto fail_error05;
+    case OF_SHARE_DENY_WRITE:
+      if (openmode  != OF_READ)
+	{
+	  if (sharemode == OF_SHARE_COMPAT) goto fail_int24;
+	  goto fail_error05;
+	}
+      switch (sharemode)
+	{
+	case OF_SHARE_COMPAT:
+	  if (oldopenmode == OF_READ) goto test_ro_int24 ;
+	  goto fail_int24;
+	case OF_SHARE_DENY_NONE : 
+	  return FALSE;
+	case OF_SHARE_DENY_WRITE :
+	  if (oldopenmode == OF_READ) return FALSE;
+	case OF_SHARE_DENY_READ :
+	  if (oldopenmode == OF_WRITE) return FALSE;
+	case OF_SHARE_EXCLUSIVE:
+	default:
+	  goto fail_error05;
+	}
+      break;
+    case OF_SHARE_DENY_READ:
+      if (openmode  != OF_WRITE)
+	{
+	  if (sharemode == OF_SHARE_COMPAT) goto fail_int24;
+	  goto fail_error05;
+	}
+      switch (sharemode)
+	{
+	case OF_SHARE_COMPAT:
+	  goto fail_int24;
+	case OF_SHARE_DENY_NONE : 
+	  return FALSE;
+	case OF_SHARE_DENY_WRITE :
+	  if (oldopenmode == OF_READ) return FALSE;
+	case OF_SHARE_DENY_READ :
+	  if (oldopenmode == OF_WRITE) return FALSE;
+	case OF_SHARE_EXCLUSIVE:
+	default:
+	  goto fail_error05;
+	}
+      break;
+    case OF_SHARE_DENY_NONE:
+      switch (sharemode)
+	{
+	case OF_SHARE_COMPAT:
+	  goto fail_int24;
+	case OF_SHARE_DENY_NONE : 
+	  return FALSE;
+	case OF_SHARE_DENY_WRITE :
+	  if (oldopenmode == OF_READ) return FALSE;
+	case OF_SHARE_DENY_READ :
+	  if (oldopenmode == OF_WRITE) return FALSE;
+	case OF_SHARE_EXCLUSIVE:
+	default:
+	  goto fail_error05;
+	}
+    default:
+      ERR(file,"unknown mode\n");
+    }
+  ERR(file,"shouldn't happen\n");
+  ERR(file,"Please report to bon@elektron.ikp.physik.tu-darmstadt.de\n");
+  return TRUE;
+  
+test_ro_int24:
+  FIXME(file,"test if file is RO missing\n");
+  /* Fall through */
+fail_int24:
+  FIXME(file,"generate INT24 missing\n");
+  /* Is this the right error? */
+  DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+  return TRUE;
+  
+test_ro_err05:
+  FIXME(file,"test if file is RO missing\n");
+  /* fall through */
+fail_error05:
+  DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+  return TRUE;
+}
+	
+    
+
+/***********************************************************************
+ *
+ *
+ * Look if the File is in Use For the OF_SHARE_XXX options
+ *
+ * PARAMS
+ *       name [I]: full unix name of the file that should be opened
+ *       mode [O]: mode how the file was first opened
+ * RETURNS
+ *       TRUE if the file was opened before
+ *       FALSE if we open the file exclusive for this process
+ *
+ * Scope of the files we look for is only the current pdb
+ * Could we use /proc/self/? on Linux for this?
+ * Should we use flock? Should we create another structure? 
+ * Searching through all files seem quite expensive for me, but
+ *        I don't see any other way.
+ *
+ * FIXME: Extend scope to the whole Wine process
+ * 
+ */
+static BOOL32 FILE_InUse(char * name, int * mode)
+{
+  FILE_OBJECT *file;
+  int  i;
+  HGLOBAL16 hPDB = GetCurrentPDB();
+  PDB *pdb = (PDB *)GlobalLock16( hPDB );
+
+  if (!pdb) return 0;
+  for (i=0;i<pdb->nbFiles;i++)
+    {
+      file =FILE_GetFile( (HFILE32) i);
+      if(file)
+       {
+         if(file->unix_name)
+           {
+             TRACE(file,"got %s at %d\n",file->unix_name,i);
+             if(!lstrcmp32A(file->unix_name,name))
+               {
+                  *mode = file->mode;
+                 FILE_ReleaseFile(file);
+                 return TRUE;
+               }
+             FILE_ReleaseFile(file);
+           }
+       }
+    }
+  return FALSE;
+}
 
 /***********************************************************************
  *           FILE_SetDosError
@@ -354,6 +608,11 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
 {
     DOS_FULL_NAME full_name;
     const char *unixName;
+    int oldMode, dosMode; /* FIXME: Do we really need unixmode as argument for 
+			     FILE_Open */
+    FILE_OBJECT *file; 
+    HFILE32 hFileRet;
+    BOOL32 fileInUse = FALSE;
 
     TRACE(file, "'%s' %04x\n", path, mode );
 
@@ -380,7 +639,23 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
             return HFILE_ERROR32;
         unixName = full_name.long_name;
     }
-    return FILE_OpenUnixFile( unixName, mode );
+    
+    dosMode = FILE_UnixToDosMode(mode);
+    fileInUse = FILE_InUse(full_name.long_name,&oldMode);
+    if(fileInUse)
+      {
+	TRACE(file, "found another instance with mode 0x%02x\n",oldMode&0x70);
+	if (FILE_ShareDeny(dosMode,oldMode)) return HFILE_ERROR32;
+      }
+    hFileRet = FILE_OpenUnixFile( unixName, mode );
+    /* we need to save the mode, but only if it is not in use yet*/
+    if ((hFileRet) && (!fileInUse) && ((file =FILE_GetFile(hFileRet))))
+      {
+       file->mode=dosMode;
+       FILE_ReleaseFile(file);
+      }
+    return hFileRet;
+    
 }
 
 
@@ -392,6 +667,9 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
     HFILE32 handle;
     FILE_OBJECT *file;
     DOS_FULL_NAME full_name;
+    BOOL32 fileInUse = FALSE;
+    int oldMode,dosMode; /* FIXME: Do we really need unixmode as argument for 
+			     FILE_Create */;
 
     TRACE(file, "'%s' %04x %d\n", path, mode, unique );
 
@@ -412,6 +690,15 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
         CloseHandle( handle );
         return INVALID_HANDLE_VALUE32;
     }
+    
+    dosMode = FILE_UnixToDosMode(mode);
+    fileInUse = FILE_InUse(full_name.long_name,&oldMode);
+    if(fileInUse)
+      {
+	TRACE(file, "found another instance with mode 0x%02x\n",oldMode&0x70);
+	if (FILE_ShareDeny(dosMode,oldMode)) return INVALID_HANDLE_VALUE32;
+      }
+    
     if ((file->unix_handle = open( full_name.long_name,
                            O_CREAT | O_TRUNC | O_RDWR | (unique ? O_EXCL : 0),
                            mode )) == -1)
@@ -424,6 +711,7 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
     /* File created OK, now fill the FILE_OBJECT */
 
     file->unix_name = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
+    file->mode = dosMode;
     return handle;
 }
 
@@ -739,7 +1027,9 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     WORD filedatetime[2];
     DOS_FULL_NAME full_name;
     char *p;
-    int unixMode;
+    int unixMode, oldMode;
+    FILE_OBJECT *file;
+    BOOL32 fileInUse = FALSE;
 
     if (!ofs) return HFILE_ERROR32;
 
@@ -805,20 +1095,33 @@ found:
     lstrcpyn32A( ofs->szPathName, full_name.short_name,
                  sizeof(ofs->szPathName) );
 
+    fileInUse = FILE_InUse(full_name.long_name,&oldMode);
+    if(fileInUse)
+      {
+	TRACE(file, "found another instance with mode 0x%02x\n",oldMode&0x70);
+	if (FILE_ShareDeny(mode,oldMode)) return HFILE_ERROR32;
+      }
+    
     if (mode & OF_SHARE_EXCLUSIVE)
+      /* Some InstallShield version uses OF_SHARE_EXCLUSIVE 
+	 on the file <tempdir>/_ins0432._mp to determine how
+	 far installation has proceeded.
+	 _ins0432._mp is an executable and while running the
+	 application expects the open with OF_SHARE_ to fail*/
+      /* Probable FIXME:
+	 As our loader closes the files after loading the executable,
+	 we can't find the running executable with FILE_InUse.
+	 Perhaps the loader should keep the file open.
+	 Recheck against how Win handles that case */
       {
 	char *last = strrchr(full_name.long_name,'/');
 	if (!last)
 	  last = full_name.long_name - 1;
-	/* Some InstallShield version uses OF_SHARE_EXCLUSIVE 
-	 on the file <tempdir>/_ins0432._mp to determine how
-	 far installation has proceeded*/
 	if (GetModuleHandle16(last+1))
 	  {
 	    TRACE(file,"Denying shared open for %s\n",full_name.long_name);
 	    return HFILE_ERROR32;
 	  }
-	FIXME(file,"OF_SHARE_EXCLUSIVE only partial implemented\n");
       }
 
     if (mode & OF_DELETE)
@@ -828,19 +1131,17 @@ found:
         return 1;
     }
 
-    switch(mode & 3)
-    {
-    case OF_WRITE:
-        unixMode = O_WRONLY; break;
-    case OF_READWRITE:
-        unixMode = O_RDWR; break;
-    case OF_READ:
-    default:
-        unixMode = O_RDONLY; break;
-    }
+    unixMode=FILE_DOSToUnixMode(mode);
 
     hFileRet = FILE_OpenUnixFile( full_name.long_name, unixMode );
     if (hFileRet == HFILE_ERROR32) goto not_found;
+    /* we need to save the mode, but only if it is not in use yet*/
+    if( (!fileInUse) &&(file =FILE_GetFile(hFileRet)))
+      {
+       file->mode=mode;
+       FILE_ReleaseFile(file);
+      }
+
     GetFileTime( hFileRet, NULL, NULL, &filetime );
     FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );
     if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
@@ -1107,19 +1408,9 @@ HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
 
     TRACE(file, "('%s',%04x)\n", path, mode );
 
-    switch(mode & 3)
-    {
-    case OF_WRITE:
-        unixMode = O_WRONLY;
-        break;
-    case OF_READWRITE:
-        unixMode = O_RDWR;
-        break;
-    case OF_READ:
-    default:
-        unixMode = O_RDONLY;
-        break;
-    }
+    unixMode= FILE_DOSToUnixMode(mode);
+    unixMode |= (mode &0x70); /* transfer the OF_SHARE options to handle 
+				 them in FILE_Open*/
     return FILE_Open( path, unixMode );
 }
 
