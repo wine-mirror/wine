@@ -356,7 +356,9 @@ HRESULT WINAPI SafeArrayGetElement(
         *((BSTR*)pv) = pbstrReturnedStr; 
     }
     else if( psa->fFeatures == FADF_VARIANT) {
-      HRESULT hr = VariantCopy(pv, elementStorageAddress);
+      HRESULT hr;
+      VariantInit(pv);
+      hr = VariantCopy(pv, elementStorageAddress);
       if (FAILED(hr)) {
         SafeArrayUnlock(psa);
         return hr;
