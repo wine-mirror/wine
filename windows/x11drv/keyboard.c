@@ -85,7 +85,7 @@ static const char main_key_UK[MAIN_LEN][4] =
 static const char main_key_FR[MAIN_LEN][4] =
 {
  "²","&1","é2~","\"3#","'4{","(5[","-6|","è7","_8\\","ç9^±","à0@",")°]","=+}",
- "aA","zZ","eE","rR","tT","yY","uU","iI","oO","pP","","$£¤",
+ "aA","zZ","eE","rR","tT","yY","uU","iI","oO","pP","^¨","$£¤",
  "qQ","sSß","dD","fF","gG","hH","jJ","kK","lL","mM","ù%","*µ",
  "wW","xX","cC","vV","bB","nN",",?",";.",":/","!§",
  "<>"
