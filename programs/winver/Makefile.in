@@ -1,27 +1,12 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = winver
-IMPORTS   = advapi32 comctl32 shlwapi shell32 ole32 rpcrt4 user32 gdi32 kernel32 ntdll
+MODULE    = winver
 
 C_SRCS = winver.c
 
-SPEC_SRCS = winver.spec
-
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-winver: $(OBJS)
-	$(CC) -o winver $(OBJS) $(DLL_LINK) $(LIBS)
-
-install::
-	$(INSTALL_PROGRAM) winver $(bindir)/winver
-
-uninstall::
-	$(RM) $(bindir)/winver
+@MAKE_PROG_RULES@
 
 ### Dependencies:

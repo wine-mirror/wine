@@ -1,27 +1,12 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = control
-IMPORTS   = advapi32 comctl32 shlwapi shell32 ole32 rpcrt4 user32 gdi32 kernel32 ntdll
+MODULE    = control
 
 C_SRCS = control.c
 
-SPEC_SRCS = control.spec
-
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-control: $(OBJS)
-	$(CC) -o control $(OBJS) $(DLL_LINK) $(LIBS)
-
-install::
-	$(INSTALL_PROGRAM) control $(bindir)/control
-
-uninstall::
-	$(RM) $(bindir)/control
+@MAKE_PROG_RULES@
 
 ### Dependencies:

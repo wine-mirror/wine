@@ -1,4 +1,7 @@
 name	aviplay
 mode	guiexe
 type	win32
-init	WinMain
+
+import	ddraw.dll
+import	kernel32.dll
+import	ntdll.dll

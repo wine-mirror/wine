@@ -1,29 +1,13 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = regapi
-IMPORTS   = kernel32 ntdll
+MODULE    = regapi
 
 C_SRCS = \
 	regapi.c
 
-SPEC_SRCS = \
-	regapi.spec
-
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-regapi: $(OBJS)
-	$(CC) -o regapi $(OBJS) $(DLL_LINK) $(LIBS)
-
-install::
-	$(INSTALL_PROGRAM) regapi $(bindir)/regapi
-
-uninstall::
-	$(RM) $(bindir)/regapi
+@MAKE_PROG_RULES@
 
 ### Dependencies:

@@ -1,27 +1,12 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = osversioncheck
-IMPORTS   = kernel32 ntdll
+MODULE    = osversioncheck
 
 C_SRCS = osversioncheck.c
 
-SPEC_SRCS = osversioncheck.spec
-
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-osversioncheck: $(OBJS)
-	$(CC) -o osversioncheck $(OBJS) $(DLL_LINK) $(LIBS)
-
-install::
-	$(INSTALL_PROGRAM) osversioncheck $(bindir)/osversioncheck
-
-uninstall::
-	$(RM) $(bindir)/osversioncheck
+@MAKE_PROG_RULES@
 
 ### Dependencies:

@@ -1,35 +1,16 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = winemine
-IMPORTS   = user32 gdi32 kernel32 ntdll
-
-LICENSELANG = En
+MODULE    = winemine
 
 C_SRCS = \
-	main.c \
-        dialog.c
-
-SPEC_SRCS = winemine.spec
+        dialog.c \
+	main.c
 
 RC_SRCS = rsrc.rc
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-winemine: $(OBJS)
-	$(CC) -o winemine $(OBJS) $(DLL_LINK) $(LIBS)
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-install::
-	$(INSTALL_PROGRAM) winemine $(bindir)/winemine
-
-uninstall::
-	$(RM) $(bindir)/winemine
+@MAKE_PROG_RULES@
 
 ### Dependencies:

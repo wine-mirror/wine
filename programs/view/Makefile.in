@@ -1,36 +1,18 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = view
-IMPORTS   = advapi32 comctl32 comdlg32 shell32 shlwapi ole32 rpcrt4 winspool.drv user32 gdi32 kernel32 ntdll
+MODULE    = view
 
 C_SRCS = \
 	init.c \
 	view.c \
 	winmain.c
 
-SPEC_SRCS = \
-	view.spec
-
 RC_SRCS = \
 	viewrc.rc
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-view: $(OBJS)
-	$(CC) -o view $(OBJS) $(DLL_LINK) $(LIBS)
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-install::
-	$(INSTALL_PROGRAM) view $(bindir)/view
-
-uninstall::
-	$(RM) $(bindir)/view
+@MAKE_PROG_RULES@
 
 ### Dependencies:

@@ -1,27 +1,12 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = regtest
-IMPORTS   = kernel32 ntdll
+MODULE    = regtest
 
 C_SRCS = regtest.c
 
-SPEC_SRCS = regtest.spec
-
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-regtest: $(OBJS)
-	$(CC) -o regtest $(OBJS) $(DLL_LINK) $(LIBS)
-
-install::
-	$(INSTALL_PROGRAM) regtest $(bindir)/regtest
-
-uninstall::
-	$(RM) $(bindir)/regtest
+@MAKE_PROG_RULES@
 
 ### Dependencies:

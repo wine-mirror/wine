@@ -1,11 +1,12 @@
-DEFS      = -DWINELIB
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = icinfo aviinfo aviplay
-IMPORTS   = msvfw32 winmm ddraw x11drv user32 gdi32 kernel32 ntdll
+DEFS       = @DLLFLAGS@
+LDDLLFLAGS = @LDDLLFLAGS@
+TOPSRCDIR  = @top_srcdir@
+TOPOBJDIR  = ../..
+SRCDIR     = @srcdir@
+VPATH      = @srcdir@
+MODULE     = none
+PROGRAMS   = icinfo aviinfo aviplay
+ALL_LIBS   = -L$(TOPOBJDIR) -lwine $(LIBS)
 
 SPEC_SRCS = \
 	icinfo.spec \
@@ -16,21 +17,47 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-icinfo: icinfo.o icinfo.spec.o
-	$(CC) -o icinfo icinfo.o icinfo.spec.o $(DLL_LINK) $(LIBS)
+aviinfo.spec.c: aviinfo.spec aviinfo.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviinfo.o -o aviinfo.spec.c -spec aviinfo.spec
 
-aviinfo: aviinfo.o aviinfo.spec.o
-	$(CC) -o aviinfo aviinfo.o aviinfo.spec.o $(DLL_LINK) $(LIBS)
+aviplay.spec.c: aviplay.spec aviplay.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviplay.o -o aviplay.spec.c -spec aviplay.spec
 
-aviplay: aviplay.o aviplay.spec.o
-	$(CC) -o aviplay aviplay.o aviplay.spec.o $(DLL_LINK) $(LIBS)
+icinfo.spec.c: icinfo.spec icinfo.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym icinfo.o -o icinfo.spec.c -spec icinfo.spec
 
-install::
-	$(INSTALL_PROGRAM) icinfo $(bindir)/icinfo
-	$(INSTALL_PROGRAM) aviinfo $(bindir)/aviinfo
-	$(INSTALL_PROGRAM) aviplay $(bindir)/aviplay
+aviinfo.so: aviinfo.o aviinfo.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o aviinfo.so aviinfo.o aviinfo.spec.o $(ALL_LIBS)
+
+aviplay.so: aviplay.o aviplay.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o aviplay.so aviplay.o aviplay.spec.o $(ALL_LIBS)
+
+icinfo.so: icinfo.o icinfo.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o icinfo.so icinfo.o icinfo.spec.o $(ALL_LIBS)
+
+aviinfo: aviinfo.so
+	$(RM) aviinfo && $(LN_S) $(TOPOBJDIR)/wine aviinfo
+
+aviplay: aviplay.so
+	$(RM) aviplay && $(LN_S) $(TOPOBJDIR)/wine aviplay
+
+icinfo: icinfo.so
+	$(RM) icinfo && $(LN_S) $(TOPOBJDIR)/wine icinfo
+
+install:: $(PROGRAMS:%=%.so)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) aviinfo.so $(bindir)/aviinfo.so
+	$(INSTALL_PROGRAM) aviplay.so $(bindir)/aviplay.so
+	$(INSTALL_PROGRAM) icinfo.so $(bindir)/icinfo.so
+	cd $(bindir) && $(LN_S) wine aviinfo && $(LN_S) wine aviplay && $(LN_S) wine icinfo
 
 uninstall::
-	$(RM) $(bindir)/aviinfo $(bindir)/icinfo $(bindir)/aviplay
+	$(RM) $(bindir)/aviinfo.so $(bindir)/aviplay.so $(bindir)/icinfo.so
+	$(RM) $(bindir)/aviinfo $(bindir)/aviplay $(bindir)/icinfo
+
+checklink:: $(PROGRAMS:%=%.so)
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviinfo.so $(ALL_LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviplay.so $(ALL_LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c icinfo.so $(ALL_LIBS) && $(RM) checklink
 
 ### Dependencies:

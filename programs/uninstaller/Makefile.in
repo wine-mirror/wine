@@ -1,34 +1,15 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = uninstaller
-IMPORTS   = user32 gdi32 kernel32 ntdll
-
-LICENSELANG = En
+MODULE    = uninstaller
 
 C_SRCS = \
 	main.c
 
-SPEC_SRCS = uninstaller.spec
-
 RC_SRCS = rsrc.rc
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-uninstaller: $(OBJS)
-	$(CC) -o uninstaller $(OBJS) $(DLL_LINK) $(LIBS)
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-install::
-	$(INSTALL_PROGRAM) uninstaller $(bindir)/uninstaller
-
-uninstall::
-	$(RM) $(bindir)/uninstaller
+@MAKE_PROG_RULES@
 
 ### Dependencies:

@@ -1,34 +1,16 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = cmdlgtst
-IMPORTS   = advapi32 comctl32 comdlg32 shell32 shlwapi ole32 rpcrt4 winspool.drv user32 gdi32 kernel32 ntdll
+MODULE    = cmdlgtst
 
 C_SRCS = \
 	cmdlgtst.c
 
-SPEC_SRCS = \
-	cmdlgtst.spec
-
 RC_SRCS = \
 	cmdlgr.rc
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-cmdlgtst: $(OBJS)
-	$(CC) -o cmdlgtst $(OBJS) $(DLL_LINK) $(LIBS)
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-install::
-	$(INSTALL_PROGRAM) cmdlgtst $(bindir)/cmdlgtst
-
-uninstall::
-	$(RM) $(bindir)/cmdlgtst
+@MAKE_PROG_RULES@
 
 ### Dependencies:

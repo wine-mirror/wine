@@ -1,11 +1,9 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = wcmd
-IMPORTS   = shell32 user32 gdi32 kernel32 ntdll
+MODULE    = wcmd
 
 C_SRCS = \
 	batch.c \
@@ -13,25 +11,9 @@ C_SRCS = \
 	directory.c \
 	wcmdmain.c
 
-SPEC_SRCS = \
-	wcmd.spec
-
 RC_SRCS = \
 	wcmdrc.rc
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-wcmd: $(OBJS)
-	$(CC) -o wcmd $(OBJS) $(DLL_LINK) $(LIBS)
-
-install::
-	$(INSTALL_PROGRAM) wcmd $(bindir)/wcmd
-
-uninstall::
-	$(RM) $(bindir)/wcmd
+@MAKE_PROG_RULES@
 
 ### Dependencies:

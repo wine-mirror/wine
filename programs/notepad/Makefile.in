@@ -1,39 +1,22 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = notepad
-IMPORTS   = advapi32 comctl32 shlwapi shell32 ole32 rpcrt4 comdlg32 winspool.drv user32 gdi32 kernel32 ntdll
+MODULE    = notepad
 
 LICENSELANG = En
 
 C_SRCS = \
-	license.c \
-	main.c \
 	dialog.c \
 	language.c \
+	license.c \
+	main.c \
 	search.c \
 	$(LICENSELANG:%=License_%.c)
 
-SPEC_SRCS = notepad.spec
-
 RC_SRCS = rsrc.rc
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-notepad: $(OBJS)
-	$(CC) -o notepad $(OBJS) $(DLL_LINK) $(LIBS)
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-install::
-	$(INSTALL_PROGRAM) notepad $(bindir)/notepad
-
-uninstall::
-	$(RM) $(bindir)/notepad
+@MAKE_PROG_RULES@
 
 ### Dependencies:

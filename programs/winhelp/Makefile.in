@@ -1,10 +1,10 @@
-DEFS      = -DWINELIB -DSTRICT
+EXTRADEFS = -DWINELIB -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = winhelp hlp2sgml
+MODULE    = winhelp
+PROGRAMS  = hlp2sgml
 IMPORTS   = advapi32 comctl32 shlwapi shell32 ole32 rpcrt4 comdlg32 winspool.drv user32 gdi32 kernel32 ntdll
 
 C_SRCS = \
@@ -13,31 +13,23 @@ C_SRCS = \
 	macro.c \
 	string.c
 
-SPEC_SRCS = winhelp.spec
-
 EXTRA_SRCS = macro.yacc.y macro.lex.l
 EXTRA_OBJS = y.tab.o lex.yy.o
 
 RC_SRCS = rsrc.rc
 
+@MAKE_PROG_RULES@
+
 all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-winhelp: $(OBJS)
-	$(CC) -o winhelp $(OBJS) $(DLL_LINK) $(LIBS)
 
 hlp2sgml: hlp2sgml.o hlpfile.o
 	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o
 
 install::
-	$(INSTALL_PROGRAM) winhelp $(bindir)/winhelp
 	$(INSTALL_PROGRAM) hlp2sgml $(bindir)/hlp2sgml
 
 uninstall::
-	$(RM) $(bindir)/winhelp $(bindir)/hlp2sgml
+	$(RM) $(bindir)/hlp2sgml
 
 y.tab.c y.tab.h: macro.yacc.y
 	$(YACC) -d -t $(SRCDIR)/macro.yacc.y
