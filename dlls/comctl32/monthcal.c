@@ -72,6 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 
 typedef struct
 {
+    HWND hwndSelf;
     COLORREF	bk;
     COLORREF	txt;
     COLORREF	titlebk;
@@ -84,8 +85,6 @@ typedef struct
     int		textWidth;
     int		height_increment;
     int		width_increment;
-    int		left_offset;
-    int		top_offset;
     int		firstDayplace; /* place of the first day of the current month */
     int		delta;	/* scroll rate; # of months that the */
                         /* control moves when user clicks a scroll button */
@@ -106,8 +105,6 @@ typedef struct
     SYSTEMTIME	minDate;
     SYSTEMTIME	maxDate;
 
-    RECT rcClient;	/* rect for whole client area */
-    RECT rcDraw;	/* rect for drawable portion of client area */
     RECT title;		/* rect for the header above the calendar */
     RECT titlebtnnext;	/* the `next month' button in the header */
     RECT titlebtnprev;  /* the `prev month' button in the header */
@@ -208,12 +205,15 @@ static int MONTHCAL_CalcDayFromPos(MONTHCAL_INFO *infoPtr, int x, int y,
 				   int *daypos,int *weekpos)
 {
   int retval, firstDay;
+  RECT rcClient;
+
+  GetClientRect(infoPtr->hwndSelf, &rcClient);
 
   /* if the point is outside the x bounds of the window put
   it at the boundry */
-  if(x > infoPtr->rcClient.right) {
-    x = infoPtr->rcClient.right ;
-  }
+  if (x > rcClient.right)
+    x = rcClient.right;
+
 
   *daypos = (x - infoPtr->days.left ) / infoPtr->width_increment;
   *weekpos = (y - infoPtr->days.top ) / infoPtr->height_increment;
@@ -407,8 +407,6 @@ static void MONTHCAL_DrawDay(HDC hdc, MONTHCAL_INFO *infoPtr, int day, int month
 static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 {
   MONTHCAL_INFO *infoPtr=MONTHCAL_GetInfoPtr(hwnd);
-  RECT *rcClient=&infoPtr->rcClient;
-  RECT *rcDraw=&infoPtr->rcDraw;
   RECT *title=&infoPtr->title;
   RECT *prev=&infoPtr->titlebtnprev;
   RECT *next=&infoPtr->titlebtnnext;
@@ -435,10 +433,9 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 
   oldTextColor = SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 
-
   /* fill background */
   hbr = CreateSolidBrush (infoPtr->bk);
-  FillRect(hdc, rcClient, hbr);
+  FillRect(hdc, &ps->rcPaint, hbr);
   DeleteObject(hbr);
 
   /* draw header */
@@ -519,8 +516,7 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 /* draw line under day abbreviatons */
 
   MoveToEx(hdc, infoPtr->days.left + 3, title->bottom + textHeight + 1, NULL);
-
-  LineTo(hdc, rcDraw->right - 3, title->bottom + textHeight + 1);
+  LineTo(hdc, infoPtr->days.right - 3, title->bottom + textHeight + 1);
 
   prevMonth = infoPtr->currentMonth - 1;
   if(prevMonth == 0) /* if currentMonth is january(1) prevMonth is */
@@ -787,10 +783,14 @@ MONTHCAL_GetMinReqRect(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   if((infoPtr==NULL) ||(lpRect == NULL) ) return FALSE;
 
-  lpRect->left = infoPtr->rcClient.left;
-  lpRect->right = infoPtr->rcClient.right;
-  lpRect->top = infoPtr->rcClient.top;
-  lpRect->bottom = infoPtr->rcClient.bottom;
+  lpRect->left = infoPtr->title.left;
+  lpRect->top = infoPtr->title.top;
+  lpRect->right = infoPtr->title.right;
+  lpRect->bottom = infoPtr->todayrect.bottom;
+  AdjustWindowRect(lpRect, GetWindowLongW(hwnd, GWL_STYLE), FALSE);
+
+  TRACE("%s\n", wine_dbgstr_rect(lpRect));
+
   return TRUE;
 }
 
@@ -1697,14 +1697,17 @@ done:
 static LRESULT
 MONTHCAL_Paint(HWND hwnd, WPARAM wParam)
 {
-  MONTHCAL_INFO *infoPtr = MONTHCAL_GetInfoPtr(hwnd);
   HDC hdc;
   PAINTSTRUCT ps;
 
-  /* fill ps.rcPaint with a default rect */
-  memcpy(&(ps.rcPaint), &(infoPtr->rcClient), sizeof(infoPtr->rcClient));
+  if (wParam)
+  {
+    GetClientRect(hwnd, &ps.rcPaint);
+    hdc = (HDC)wParam;
+  }
+  else
+    hdc = BeginPaint(hwnd, &ps);
 
-  hdc = (wParam==0 ? BeginPaint(hwnd, &ps) : (HDC)wParam);
   MONTHCAL_Refresh(hwnd, hdc, &ps);
   if(!wParam) EndPaint(hwnd, &ps);
   return 0;
@@ -1737,8 +1740,6 @@ static void MONTHCAL_UpdateSize(HWND hwnd)
 {
   HDC hdc = GetDC(hwnd);
   MONTHCAL_INFO *infoPtr = MONTHCAL_GetInfoPtr(hwnd);
-  RECT *rcClient=&infoPtr->rcClient;
-  RECT *rcDraw=&infoPtr->rcDraw;
   RECT *title=&infoPtr->title;
   RECT *prev=&infoPtr->titlebtnprev;
   RECT *next=&infoPtr->titlebtnnext;
@@ -1752,72 +1753,41 @@ static void MONTHCAL_UpdateSize(HWND hwnd)
   TEXTMETRICA tm;
   DWORD dwStyle = GetWindowLongA(hwnd, GWL_STYLE);
   HFONT currentFont;
-  double xdiv;
+  int xdiv, left_offset;
+  RECT rcClient;
+
+  GetClientRect(hwnd, &rcClient);
 
   currentFont = SelectObject(hdc, infoPtr->hFont);
 
-  /* FIXME: need a way to determine current font, without setting it */
-  /*
-  if(infoPtr->hFont!=currentFont) {
-    SelectObject(hdc, currentFont);
-    infoPtr->hFont=currentFont;
-    GetObjectA(currentFont, sizeof(LOGFONTA), &logFont);
-    logFont.lfWeight=FW_BOLD;
-    infoPtr->hBoldFont = CreateFontIndirectA(&logFont);
-  }
-  */
-
   /* get the height and width of each day's text */
   GetTextMetricsA(hdc, &tm);
-  infoPtr->textHeight = tm.tmHeight + tm.tmExternalLeading;
+  infoPtr->textHeight = tm.tmHeight + tm.tmExternalLeading + tm.tmInternalLeading;
   GetTextExtentPoint32A(hdc, "Sun", 3, &size);
   infoPtr->textWidth = size.cx + 2;
 
-  /* retrieve the controls client rectangle info infoPtr->rcClient */
-  GetClientRect(hwnd, rcClient);
-
-  /* rcDraw is the rectangle the control is drawn in */
-  rcDraw->left = rcClient->left;
-  rcDraw->right = rcClient->right;
-  rcDraw->top = rcClient->top;
-  rcDraw->bottom = rcClient->bottom;
-
   /* recalculate the height and width increments and offsets */
-  /* FIXME: We use up all available width. This will inhibit having multiple
-     calendars in a row, like win doesn
-  */
-  if(dwStyle & MCS_WEEKNUMBERS)
-    xdiv=8.0;
-  else
-    xdiv=7.0;
-  infoPtr->width_increment = (infoPtr->rcDraw.right - infoPtr->rcDraw.left) / xdiv;
-  infoPtr->height_increment = (infoPtr->rcDraw.bottom - infoPtr->rcDraw.top) / 10.0;
-  infoPtr->left_offset = (infoPtr->rcDraw.right - infoPtr->rcDraw.left) - (infoPtr->width_increment * xdiv);
-  infoPtr->top_offset = (infoPtr->rcDraw.bottom - infoPtr->rcDraw.top) - (infoPtr->height_increment * 10.0);
+  GetTextExtentPoint32A(hdc, "00", 2, &size);
 
-  rcDraw->bottom = rcDraw->top + 10 * infoPtr->height_increment;
-  /* this is correct, the control does NOT expand vertically */
-  /* like it does horizontally */
-  /* make sure we don't move the controls bottom out of the client */
-  /* area */
-  /* title line has about 3 text heights, abrev days line, 6 weeksline and today circle line*/
-  /*if((rcDraw->top + 9 * infoPtr->textHeight + 5) < rcDraw->bottom) {
-    rcDraw->bottom = rcDraw->top + 9 * infoPtr->textHeight + 5;
-    }*/
+  xdiv = (dwStyle & MCS_WEEKNUMBERS) ? 8 : 7;
+
+  infoPtr->width_increment = size.cx * 2;
+  infoPtr->height_increment = infoPtr->textHeight;
+  left_offset = (rcClient.right - rcClient.left) - (infoPtr->width_increment * xdiv);
 
   /* calculate title area */
-  title->top    = rcClient->top;
-  title->bottom = title->top + 2 * infoPtr->height_increment;
-  title->left   = rcClient->left;
-  title->right  = rcClient->right;
+  title->top    = rcClient.top;
+  title->bottom = title->top + 3 * infoPtr->height_increment / 2;
+  title->left   = left_offset;
+  title->right  = rcClient.right;
 
   /* set the dimensions of the next and previous buttons and center */
   /* the month text vertically */
-  prev->top    = next->top    = title->top + 6;
-  prev->bottom = next->bottom = title->bottom - 6;
-  prev->left   = title->left  + 6;
+  prev->top    = next->top    = title->top + 4;
+  prev->bottom = next->bottom = title->bottom - 4;
+  prev->left   = title->left + 4;
   prev->right  = prev->left + (title->bottom - title->top) ;
-  next->right  = title->right - 6;
+  next->right  = title->right - 4;
   next->left   = next->right - (title->bottom - title->top);
 
   /* titlemonth->left and right change based upon the current month */
@@ -1828,7 +1798,7 @@ static void MONTHCAL_UpdateSize(HWND hwnd)
 
   /* setup the dimensions of the rectangle we draw the names of the */
   /* days of the week in */
-  weeknumrect->left =infoPtr->left_offset;
+  weeknumrect->left = left_offset;
   if(dwStyle & MCS_WEEKNUMBERS)
     weeknumrect->right=prev->right;
   else
@@ -1839,22 +1809,20 @@ static void MONTHCAL_UpdateSize(HWND hwnd)
   wdays->bottom = wdays->top + infoPtr->height_increment;
 
   days->top    = weeknumrect->top = wdays->bottom ;
-  days->bottom = weeknumrect->bottom = days->top     + 6 * infoPtr->height_increment;
+  days->bottom = weeknumrect->bottom = days->top + 6 * infoPtr->height_increment;
 
-  todayrect->left   = rcClient->left;
-  todayrect->right  = rcClient->right;
+  todayrect->left   = rcClient.left;
+  todayrect->right  = rcClient.right;
   todayrect->top    = days->bottom;
   todayrect->bottom = days->bottom + infoPtr->height_increment;
 
-  /* uncomment for excessive debugging
-  TRACE("dx=%d dy=%d rcC[%d %d %d %d] t[%d %d %d %d] wd[%d %d %d %d] w[%d %d %d %d] t[%d %d %d %d]\n",
+  TRACE("dx=%d dy=%d client[%s] title[%s] wdays[%s] days[%s] today[%s]\n",
 	infoPtr->width_increment,infoPtr->height_increment,
-	 rcClient->left, rcClient->right, rcClient->top, rcClient->bottom,
-	    title->left,    title->right,    title->top,    title->bottom,
-	    wdays->left,    wdays->right,    wdays->top,    wdays->bottom,
-	     days->left,     days->right,     days->top,     days->bottom,
-	todayrect->left,todayrect->right,todayrect->top,todayrect->bottom);
-  */
+        wine_dbgstr_rect(&rcClient),
+        wine_dbgstr_rect(title),
+        wine_dbgstr_rect(wdays),
+        wine_dbgstr_rect(days),
+        wine_dbgstr_rect(todayrect));
 
   /* restore the originally selected font */
   SelectObject(hdc, currentFont);
@@ -1889,11 +1857,8 @@ MONTHCAL_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
     ERR( "could not allocate info memory!\n");
     return 0;
   }
-  if((MONTHCAL_INFO*)GetWindowLongPtrW(hwnd, 0) != infoPtr) {
-    ERR( "pointer assignment error!\n");
-    return 0;
-  }
 
+  infoPtr->hwndSelf = hwnd;
   infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
 
   infoPtr->hFont = GetStockObject(DEFAULT_GUI_FONT);
