@@ -79,6 +79,7 @@ typedef struct tagWND
     DWORD          helpContext;   /* Help context ID */
     WORD           flags;         /* Misc. flags (see below) */
     HMENU16        hSysMenu;      /* window's copy of System Menu */
+    int            irefCount;     /* window's reference count*/
     DWORD          userdata;      /* User private data */
     struct _WND_DRIVER *pDriver;  /* Window driver */
     void          *pDriverData;   /* Window driver data */
@@ -133,7 +134,12 @@ typedef struct
 #define BWA_SKIPICONIC		0x0008
 
   /* Window functions */
+extern void   WIN_LockWnds();
+extern void   WIN_UnlockWnds();
+extern int    WIN_SuspendWndsLock();
+extern void   WIN_RestoreWndsLock(int ipreviousLock);
 extern WND*   WIN_FindWndPtr( HWND32 hwnd );
+extern void   WIN_ReleaseWndPtr(WND *wndPtr);
 extern WND*   WIN_GetDesktop(void);
 extern void   WIN_DumpWindow( HWND32 hwnd );
 extern void   WIN_WalkWindows( HWND32 hwnd, int indent );

@@ -52,6 +52,68 @@ static HWND32 hwndSysModal = 0;
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
+/* thread safeness */
+static CRITICAL_SECTION WIN_CritSection;
+static int ilockCounter = 0;
+
+/***********************************************************************
+ *           WIN_LockWnds
+ *
+ *   Locks access to all WND structures for thread safeness
+ */
+void WIN_LockWnds()
+{
+    EnterCriticalSection(&WIN_CritSection);
+    ilockCounter++;
+    TRACE(win,"All windows hinstances have been locked (lock #%i)\n",ilockCounter);
+}
+
+/***********************************************************************
+ *           WIN_UnlockWnds
+ *
+ *  Unlocks access to all WND structures
+ */
+void WIN_UnlockWnds()
+{
+
+    TRACE(win,"Lock #%i been unlocked\n",ilockCounter+1);
+    ilockCounter--;
+    if(ilockCounter == 0)
+    {
+        LeaveCriticalSection(&WIN_CritSection);
+        TRACE(win,"All windows hinstances have been unlocked\n");
+    }
+    else if(ilockCounter < 0)
+    {
+        ERR(win,"Negative lock reference ==> missing call to  WIN_Lock!\n");
+    }
+}
+/***********************************************************************
+ *           WIN_SuspendWndsLock
+ *
+ *   Suspend the lock on WND structures.
+ *   Returns the number of locks suspended
+ */
+int WIN_SuspendWndsLock()
+{
+    int isuspendedLocks = ilockCounter;
+    ilockCounter = 0;
+    LeaveCriticalSection(&WIN_CritSection);
+    TRACE(win,"All windows hinstances locks have been suspended\n");
+    return isuspendedLocks;
+
+}
+
+/***********************************************************************
+ *           WIN_RestoreWndsLock
+ *
+ *  Restore the suspended locks on WND structures
+ */
+void WIN_Unlock(int ipreviousLocks)
+{
+    EnterCriticalSection(&WIN_CritSection);
+    ilockCounter = ipreviousLocks;
+}
 /***********************************************************************
  *           WIN_FindWndPtr
  *
@@ -61,8 +123,13 @@ WND * WIN_FindWndPtr( HWND32 hwnd )
 {
     WND * ptr;
     
-    if (!hwnd || HIWORD(hwnd)) goto error;
+    if (!hwnd || HIWORD(hwnd)) goto error2;
     ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
+    /* Lock all WND structures for thread safeness
+     WIN_LockWnds();
+     and increment destruction monitoring value
+     ptr->irefCount++;
+     */
     if (ptr->dwMagic != WND_MAGIC) goto error;
     if (ptr->hwndSelf != hwnd)
     {
@@ -72,8 +139,35 @@ WND * WIN_FindWndPtr( HWND32 hwnd )
     }
     return ptr;
  error:
+    /* Unlock all WND structures for thread safeness
+     WIN_UnlockWnds();
+     and decrement destruction monitoring value
+     ptr->irefCount--;
+     */
+error2:
     SetLastError( ERROR_INVALID_WINDOW_HANDLE );
     return NULL;
+}
+
+/***********************************************************************
+ *           WIN_ReleaseWndPtr
+ *
+ * Release the pointer to the WND structure.
+ */
+void WIN_ReleaseWndPtr(WND *wndPtr)
+{
+
+    /*Decrement destruction monitoring value
+     wndPtr->irefCount--;
+     Check if it's time to release the memory
+     if(wndPtr->irefCount == 0)
+     {
+         Add memory releasing code here
+     }
+     unlock all WND structures for thread safeness
+     WIN_UnlockWnds();
+
+     */    
 }
 
 
