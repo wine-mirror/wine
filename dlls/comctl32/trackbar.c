@@ -100,7 +100,7 @@ TRACKBAR_ConvertPlaceToPosition (TRACKBAR_INFO *infoPtr, int place,
     	width=infoPtr->rcChannel.right - infoPtr->rcChannel.left;
         pos=(range*(place - infoPtr->rcChannel.left)) / width;
     }
-	
+    pos+=infoPtr->nRangeMin;
     if (pos > infoPtr->nRangeMax)
         pos = infoPtr->nRangeMax;
     else if (pos < infoPtr->nRangeMin)
@@ -794,7 +794,7 @@ TRACKBAR_SetPos (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TRACKBAR_INFO *infoPtr = TRACKBAR_GetInfoPtr (hwnd);
 
-    infoPtr->nPos = (INT)LOWORD(lParam);
+    infoPtr->nPos = (INT)lParam;
 
     if (infoPtr->nPos < infoPtr->nRangeMin)
 	infoPtr->nPos = infoPtr->nRangeMin;
@@ -1149,7 +1149,7 @@ TRACKBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     SetFocus (hwnd);
 
-    vertical = dwStyle & TBS_VERT;
+    vertical = (dwStyle & TBS_VERT) ? 1 : 0;
     if (vertical)
         clickPlace=(INT)HIWORD(lParam);
     else
@@ -1185,7 +1185,7 @@ TRACKBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     clickPos = TRACKBAR_ConvertPlaceToPosition (infoPtr, clickPlace, vertical);
     prevPos = infoPtr->nPos;
 
-    if (clickPos > prevPos) {  /* similar to VK_NEXT */
+    if (vertical ^ (clickPos < (int)prevPos)) {  /* similar to VK_NEXT */
         infoPtr->nPos += infoPtr->nPageSize;
         if (infoPtr->nPos > infoPtr->nRangeMax)
             infoPtr->nPos = infoPtr->nRangeMax;
