@@ -271,13 +271,30 @@ Main_IDirect3DViewportImpl_3_2_1_AddLight(LPDIRECT3DVIEWPORT3 iface,
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
     IDirect3DLightImpl *lpDirect3DLightImpl = ICOM_OBJECT(IDirect3DLightImpl, IDirect3DLight, lpDirect3DLight);
+    DWORD i = 0;
+    DWORD map = This->map_lights;
     
     TRACE("(%p/%p)->(%p)\n", This, iface, lpDirect3DLight);
     
+    if (This->num_lights >= 8)
+        return DDERR_INVALIDPARAMS;
+
+    /* Find a light number and update both light and viewports objects accordingly */
+    while(map&1) {
+        map>>=1;
+	i++;
+    }
+    lpDirect3DLightImpl->dwLightIndex = i;
+    This->num_lights++;
+    This->map_lights |= 1<<i;
+
     /* Add the light in the 'linked' chain */
     lpDirect3DLightImpl->next = This->lights;
     This->lights = lpDirect3DLightImpl;
 
+    /* Attach the light to the viewport */
+    lpDirect3DLightImpl->active_viewport = This;
+    
     /* If active, activate the light */
     if (This->active_device != NULL) {
         lpDirect3DLightImpl->activate(lpDirect3DLightImpl);
@@ -301,6 +318,10 @@ Main_IDirect3DViewportImpl_3_2_1_DeleteLight(LPDIRECT3DVIEWPORT3 iface,
 	    lpDirect3DLightImpl->desactivate(lpDirect3DLightImpl);
 	    if (prev_light == NULL) This->lights = cur_light->next;
 	    else prev_light->next = cur_light->next;
+	    /* Detach the light to the viewport */
+	    cur_light->active_viewport = NULL;
+	    This->num_lights--;
+	    This->map_lights &= ~(1<<lpDirect3DLightImpl->dwLightIndex);
 	    return DD_OK;
 	}
 	prev_light = cur_light;
@@ -450,6 +471,8 @@ HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirect3DImpl *d3d)
     object->use_vp2 = 0xFF;
     object->next = NULL;
     object->lights = NULL;
+    object->num_lights = 0;
+    object->map_lights = 0;
     
     ICOM_INIT_INTERFACE(object, IDirect3DViewport3, VTABLE_IDirect3DViewport3);
 

@@ -90,8 +90,13 @@ struct IDirect3DLightImpl
     DWORD ref;
     /* IDirect3DLight fields */
     IDirect3DImpl *d3d;
+    /* If this light is active for one viewport, put the viewport here */
+    IDirect3DViewportImpl *active_viewport;
 
     D3DLIGHT2 light;
+    D3DLIGHT7 light7;
+
+    DWORD dwLightIndex;
 
     /* Chained list used for adding / removing from viewports */
     IDirect3DLightImpl *next;
@@ -131,6 +136,9 @@ struct IDirect3DViewportImpl
     IDirect3DImpl *d3d;
     /* If this viewport is active for one device, put the device here */
     IDirect3DDeviceImpl *active_device;
+
+    DWORD num_lights;
+    DWORD map_lights;
 
     int use_vp2;
     union {

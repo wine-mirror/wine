@@ -79,16 +79,46 @@ static void dump_light(LPD3DLIGHT2 light)
     DPRINTF("    - dwSize : %ld\n", light->dwSize);
 }
 
+static const float zero_value[] = {
+    0.0, 0.0, 0.0, 0.0
+};
+
 HRESULT WINAPI
 Main_IDirect3DLightImpl_1_SetLight(LPDIRECT3DLIGHT iface,
                                    LPD3DLIGHT lpLight)
 {
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    LPD3DLIGHT7 light7 = &(This->light7);
     TRACE("(%p/%p)->(%p)\n", This, iface, lpLight);
     if (TRACE_ON(ddraw)) {
         TRACE("  Light definition : \n");
 	dump_light((LPD3DLIGHT2) lpLight);
     }
+
+    if ( (lpLight->dltType == 0) || (lpLight->dltType > D3DLIGHT_PARALLELPOINT) )
+         return DDERR_INVALIDPARAMS;
+    
+    if ( lpLight->dltType == D3DLIGHT_PARALLELPOINT )
+	 FIXME("D3DLIGHT_PARALLELPOINT no supported\n");
+    
+    /* Translate D3DLIGH2 structure to D3DLIGHT7 */
+    light7->dltType        = lpLight->dltType;
+    light7->dcvDiffuse     = lpLight->dcvColor;
+    if ((((LPD3DLIGHT2)lpLight)->dwFlags & D3DLIGHT_NO_SPECULAR) != 0)	    
+      light7->dcvSpecular    = lpLight->dcvColor;
+    else
+      light7->dcvSpecular    = *(D3DCOLORVALUE*)zero_value;	    
+    light7->dcvAmbient     = lpLight->dcvColor;
+    light7->dvPosition     = lpLight->dvPosition;
+    light7->dvDirection    = lpLight->dvDirection;
+    light7->dvRange        = lpLight->dvRange;
+    light7->dvFalloff      = lpLight->dvFalloff;
+    light7->dvAttenuation0 = lpLight->dvAttenuation0;
+    light7->dvAttenuation1 = lpLight->dvAttenuation1;
+    light7->dvAttenuation2 = lpLight->dvAttenuation2;
+    light7->dvTheta        = lpLight->dvTheta;
+    light7->dvPhi          = lpLight->dvPhi;
+
     memcpy(&This->light, lpLight, lpLight->dwSize);
     if ((This->light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
         This->update(This);        
@@ -113,50 +143,10 @@ Main_IDirect3DLightImpl_1_GetLight(LPDIRECT3DLIGHT iface,
 /*******************************************************************************
  *				Light static functions
  */
-static const float zero_value[] = {
-    0.0, 0.0, 0.0, 0.0
-};
 
 static void update(IDirect3DLightImpl* This) {
-    IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
-    ENTER_GL();
-    switch (glThis->parent.light.dltType) {
-        case D3DLIGHT_POINT:         /* 1 */
-            FIXME("Activating POINT - not supported yet\n");
-	    break;
-
-	case D3DLIGHT_SPOT:          /* 2 */
-	    FIXME("Activating SPOT - not supported yet\n");
-	    break;
-
-	case D3DLIGHT_DIRECTIONAL: {  /* 3 */
-	    float direction[4];
-
-	    if (TRACE_ON(ddraw)) {
-	        TRACE("Activating DIRECTIONAL\n");
-		DPRINTF(" - direction     : "); dump_D3DVECTOR(&(glThis->parent.light.dvDirection)); DPRINTF("\n");
-		DPRINTF(" - color         : "); dump_D3DCOLORVALUE(&(glThis->parent.light.dcvColor)); DPRINTF("\n");
-	    }
-	    glLightfv(glThis->light_num, GL_AMBIENT, (float *) zero_value);
-	    glLightfv(glThis->light_num, GL_DIFFUSE, (float *) &(glThis->parent.light.dcvColor));
-
-	    direction[0] = -glThis->parent.light.dvDirection.u1.x;
-	    direction[1] = -glThis->parent.light.dvDirection.u2.y;
-	    direction[2] = -glThis->parent.light.dvDirection.u3.z;
-	    direction[3] = 0.0; /* This is a directional light */
-
-	    glLightfv(glThis->light_num, GL_POSITION, (float *) direction);
-	} break;
-
-	case D3DLIGHT_PARALLELPOINT:  /* 4 */
-	    FIXME("Activating PARRALLEL-POINT - not supported yet\n");
-	    break;
-
-	default:
-	    WARN("Not a known Light Type: %d\n", glThis->parent.light.dltType);
-	    break;
-    }
-    LEAVE_GL();
+    IDirect3DDeviceImpl* device = This->active_viewport->active_device;
+    IDirect3DDevice7_SetLight(ICOM_INTERFACE(device,IDirect3DDevice7),This->dwLightIndex,&(This->light7));
 }
 
 static void activate(IDirect3DLightImpl* This) {
@@ -236,6 +226,7 @@ HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLenum lig
     object->activate = activate;
     object->desactivate = desactivate;
     object->update = update;
+    object->active_viewport = NULL;
     gl_object->light_num = light_num;
     
     ICOM_INIT_INTERFACE(object, IDirect3DLight, VTABLE_IDirect3DLight);
