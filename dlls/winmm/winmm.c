@@ -28,6 +28,7 @@
  *      99/9	added support for loadable low level drivers
  */
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -133,6 +134,36 @@ BOOL WINMM_CheckForMMSystem(void)
         }
     }
     return loaded > 0;
+}
+
+/******************************************************************
+ *             WINMM_ErrorToString
+ */
+const char* WINMM_ErrorToString(MMRESULT error)
+{
+#define ERR_TO_STR(dev) case dev: return #dev
+    static char unknown[32];
+    switch (error) {
+    ERR_TO_STR(MMSYSERR_NOERROR);
+    ERR_TO_STR(MMSYSERR_ERROR);
+    ERR_TO_STR(MMSYSERR_BADDEVICEID);
+    ERR_TO_STR(MMSYSERR_NOTENABLED);
+    ERR_TO_STR(MMSYSERR_ALLOCATED);
+    ERR_TO_STR(MMSYSERR_INVALHANDLE);
+    ERR_TO_STR(MMSYSERR_NODRIVER);
+    ERR_TO_STR(MMSYSERR_NOMEM);
+    ERR_TO_STR(MMSYSERR_NOTSUPPORTED);
+    ERR_TO_STR(MMSYSERR_BADERRNUM);
+    ERR_TO_STR(MMSYSERR_INVALFLAG);
+    ERR_TO_STR(MMSYSERR_INVALPARAM);
+    ERR_TO_STR(WAVERR_BADFORMAT);
+    ERR_TO_STR(WAVERR_STILLPLAYING);
+    ERR_TO_STR(WAVERR_UNPREPARED);
+    ERR_TO_STR(WAVERR_SYNC);
+    }
+    sprintf(unknown, "Unknown(0x%08x)", error);
+    return unknown;
+#undef ERR_TO_STR
 }
 
 /**************************************************************************
@@ -2469,6 +2500,7 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
         dwRet = MMDRV_Open(wmld, (uType == MMDRV_WAVEOUT) ? WODM_OPEN : WIDM_OPEN, 
                            (DWORD)&wod, dwFlags);
 
+        TRACE("dwRet = %s\n", WINMM_ErrorToString(dwRet));
         if (dwRet != WAVERR_BADFORMAT ||
             (dwFlags & (WAVE_MAPPED|WAVE_FORMAT_DIRECT)) != 0) break;
         /* if we ask for a format which isn't supported by the physical driver, 
@@ -2485,7 +2517,7 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     }
 
     if (lphndl != NULL) *lphndl = handle;
-    TRACE("=> %ld hWave=%p\n", dwRet, handle);
+    TRACE("=> %s hWave=%p\n", WINMM_ErrorToString(dwRet), handle);
 
     return dwRet;
 }
@@ -2867,12 +2899,15 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
 	if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) != NULL) {
 	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
 	}
+        WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
     }
 
     /* from M$ KB */
-    if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER))
+    if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER)) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
+    }
 
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
 }

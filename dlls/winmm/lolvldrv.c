@@ -221,7 +221,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-	    TRACE("=> %lu\n", ret);
+	    TRACE("=> %s\n", WINMM_ErrorToString(ret));
 	} else {
 	    map = llType->Map16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
 	    switch (map) {
@@ -238,7 +238,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance,
 					  dwParam1, dwParam2);
-		TRACE("=> %lu\n", ret);
+	        TRACE("=> %s\n", WINMM_ErrorToString(ret));
 		if (map == WINMM_MAP_OKMEM)
 		    llType->UnMap16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
 		break;
@@ -268,7 +268,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
                                          mld->uDeviceID, wMsg, mld->dwDriverInstance, 
                                          dwParam1, dwParam2);
-		TRACE("=> %lu\n", ret);
+	        TRACE("=> %s\n", WINMM_ErrorToString(ret));
 		if (map == WINMM_MAP_OKMEM)
 		    llType->UnMap32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
 		break;
@@ -283,7 +283,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
             ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
                                      mld->uDeviceID, wMsg, mld->dwDriverInstance, 
                                      dwParam1, dwParam2);
-	    TRACE("=> %lu\n", ret);
+	    TRACE("=> %s\n", WINMM_ErrorToString(ret));
 	}
     }
     return ret;
@@ -540,7 +540,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 
     if (lpDrv->bIs32 && part->u.fnMessage32) {
 	ret = part->u.fnMessage32(0, DRVM_INIT, 0L, 0L, 0L);
-	TRACE("DRVM_INIT => %08lx\n", ret);
+	TRACE("DRVM_INIT => %s\n", WINMM_ErrorToString(ret));
 #if 0
 	ret = part->u.fnMessage32(0, DRVM_ENABLE, 0L, 0L, 0L);
 	TRACE("DRVM_ENABLE => %08lx\n", ret);
@@ -549,7 +549,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
     } else if (!lpDrv->bIs32 && part->u.fnMessage16 && pFnCallMMDrvFunc16) {
         ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16,
                                  0, DRVM_INIT, 0L, 0L, 0L);
-	TRACE("DRVM_INIT => %08lx\n", ret);
+	TRACE("DRVM_INIT => %s\n", WINMM_ErrorToString(ret));
 #if 0
 	ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16,
                                  0, DRVM_ENABLE, 0L, 0L, 0L);
@@ -795,7 +795,7 @@ static  BOOL	MMDRV_ExitPerType(LPWINE_MM_DRIVER lpDrv, UINT type)
 	TRACE("DRVM_DISABLE => %08lx\n", ret);
 #endif
 	ret = part->u.fnMessage32(0, DRVM_EXIT, 0L, 0L, 0L);
-	TRACE("DRVM_EXIT => %08lx\n", ret);
+	TRACE("DRVM_EXIT => %s\n", WINMM_ErrorToString(ret));
     } else if (!lpDrv->bIs32 && part->u.fnMessage16 && pFnCallMMDrvFunc16) {
 #if 0
 	ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16,
@@ -804,7 +804,7 @@ static  BOOL	MMDRV_ExitPerType(LPWINE_MM_DRIVER lpDrv, UINT type)
 #endif
         ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16,
                                  0, DRVM_EXIT, 0L, 0L, 0L);
-	TRACE("DRVM_EXIT => %08lx\n", ret);
+	TRACE("DRVM_EXIT => %s\n", WINMM_ErrorToString(ret));
     } else {
 	return FALSE;
     }
