@@ -1501,48 +1501,67 @@ void X11DRV_MappingNotify( XMappingEvent *event )
  */
 WORD X11DRV_VkKeyScan(CHAR cChar)
 {
-        Display *display = thread_display();
-	KeyCode keycode;
-	KeySym keysym;
-	int i,index;
-	int highbyte=0;
+    Display *display = thread_display();
+    KeyCode keycode;
+    KeySym keysym;
+    int i, index;
+    SHORT ret;
 
-	/* char->keysym (same for ANSI chars) */
-	keysym=(unsigned char) cChar;/* (!) cChar is signed */
-	if (keysym<=27) keysym+=0xFF00;/*special chars : return, backspace...*/
+    /* char->keysym (same for ANSI chars) */
+    keysym = (unsigned char)cChar; /* (!) cChar is signed */
+    if (keysym <= 27) keysym += 0xFF00; /* special chars : return, backspace... */
 
-	keycode = TSXKeysymToKeycode(display, keysym);  /* keysym -> keycode */
-	if (!keycode)
-	{ /* It didn't work ... let's try with deadchar code. */
-	  keycode = TSXKeysymToKeycode(display, keysym | 0xFE00);
-	}
+    keycode = TSXKeysymToKeycode(display, keysym);  /* keysym -> keycode */
+    if (!keycode)
+    { /* It didn't work ... let's try with deadchar code. */
+        TRACE("retrying with | 0xFE00\n");
+        keycode = TSXKeysymToKeycode(display, keysym | 0xFE00);
+    }
 
-	TRACE("'%c'(%#lx, %lu): got keycode %#.2x\n",
-              cChar,keysym,keysym,keycode);
+    TRACE("'%c'(%#lx, %lu): got keycode %#.2x (%d)\n",
+            cChar, keysym, keysym, keycode, keycode);
 
-	if (keycode)
-	  {
-	    for (index=-1, i=0; (i<8) && (index<0); i++) /* find shift state */
-	      if (TSXKeycodeToKeysym(display,keycode,i)==keysym) index=i;
-	    switch (index) {
-	    case -1 :
-	      WARN("Keysym %lx not found while parsing the keycode table\n",keysym); break;
-	    case 0 : break;
-	    case 1 : highbyte = 0x0100; break;
-	    case 2 : highbyte = 0x0600; break;
-	    case 3 : highbyte = 0x0700; break;
-	    default : ERR("index %d found by XKeycodeToKeysym. please report! \n",index);
-	    }
-	    /*
-	      index : 0     adds 0x0000
-	      index : 1     adds 0x0100 (shift)
-	      index : ?     adds 0x0200 (ctrl)
-	      index : 2     adds 0x0600 (ctrl+alt)
-	      index : 3     adds 0x0700 (ctrl+alt+shift)
-	     */
-	  }
-	TRACE(" ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);
-	return keyc2vkey[keycode]+highbyte;   /* keycode -> (keyc2vkey) vkey */
+    /* keycode -> (keyc2vkey) vkey */
+    ret = keyc2vkey[keycode];
+
+    if (!keycode || !ret)
+    {
+        TRACE("keycode for '%c' not found, returning -1\n", cChar);
+        return -1;
+    }
+
+    index = -1;
+    for (i = 0; i < 4; i++) /* find shift state */
+    {
+        if (TSXKeycodeToKeysym(display, keycode, i) == keysym)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    switch (index)
+    {
+        default:
+        case -1:
+            WARN("Keysym %lx not found while parsing the keycode table\n", keysym);
+            return -1;
+
+        case 0: break;
+        case 1: ret += 0x0100; break;
+        case 2: ret += 0x0600; break;
+        case 3: ret += 0x0700; break;
+    }
+    /*
+      index : 0     adds 0x0000
+      index : 1     adds 0x0100 (shift)
+      index : ?     adds 0x0200 (ctrl)
+      index : 2     adds 0x0600 (ctrl+alt)
+      index : 3     adds 0x0700 (ctrl+alt+shift)
+     */
+
+    TRACE(" ... returning %#.2x\n", ret);
+    return ret;
 }
 
 /***********************************************************************
