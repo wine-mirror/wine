@@ -448,12 +448,12 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		goto error;
 	}
 	pProv = CRYPT_LoadProvider(imagepath);
-	CRYPT_Free(temp);
 	CRYPT_Free(signature);
 	if (!pProv) {
 		/* CRYPT_LoadProvider calls SetLastError */
 		goto error;
 	}
+	CRYPT_Free(temp);
 	pProv->pVTable->dwProvType = dwProvType;
 	pProv->pVTable->pszProvName = provname;
 	if (pProv->pFuncs->pCPAcquireContext(&pProv->hPrivate, (CHAR*)pszContainer, dwFlags, pProv->pVTable))
