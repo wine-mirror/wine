@@ -136,7 +136,7 @@ file	krnl386.exe
 130 pascal FileCDR(ptr) FileCDR16
 131 pascal GetDOSEnvironment() GetDOSEnvironment16
 132 pascal GetWinFlags() GetWinFlags16
-133 pascal16 GetExePtr(word) GetExePtr
+133 pascal16 GetExePtr(word) WIN16_GetExePtr
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory16
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
 136 pascal16 GetDriveType(word) GetDriveType16
@@ -480,7 +480,7 @@ file	krnl386.exe
 608 pascal AllocSLThunkletSysthunk(long segptr long) AllocSLThunkletSysthunk16
 609 pascal FindLSThunkletCallback(segptr long) FindLSThunkletCallback
 610 pascal FindSLThunkletCallback(long long) FindSLThunkletCallback
-611 pascal16 FreeThunklet() FreeThunklet16
+611 pascal16 FreeThunklet(long long) FreeThunklet16
 612 pascal16 IsSLThunklet(ptr) IsSLThunklet16
 613 stub HugeMapLS
 614 stub HugeUnMapLS

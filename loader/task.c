@@ -1506,18 +1506,22 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
     return 0;
 }
 
-HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
+HMODULE16 WINAPI WIN16_GetExePtr( HANDLE16 handle )
 {
-    STACK16FRAME *frame;
     HTASK16 hTask = 0;
     HMODULE16 hModule = GetExePtrHelper( handle, &hTask );
-    if ((frame  = CURRENT_STACK16) != NULL)
-    {
-        frame->ecx = hModule;
-        if (hTask) frame->es = hTask;
-    }
+    STACK16FRAME *frame = CURRENT_STACK16;
+    frame->ecx = hModule;
+    if (hTask) frame->es = hTask;
     return hModule;
 }
+
+HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
+{
+    HTASK16 hTask = 0;
+    return GetExePtrHelper( handle, &hTask );
+}
+
 
 /***********************************************************************
  *           TaskFirst   (TOOLHELP.63)
