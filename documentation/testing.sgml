@@ -1,14 +1,6 @@
   <chapter id="testing">
     <title>Writing Conformance tests</title>
 
-    <para>
-      Written by &name-francois-gouget; <email>&email-francois-gouget;</email>
-    </para>
-    <para>
-      Note: This part of the documentation is still very much a work in
-      progress and is in no way complete.
-    </para>
-
     <sect1 id="testing-intro">
       <title>Introduction</title>
       <para>
@@ -506,9 +498,9 @@ ok ( GetLastError() == WIN9X_ERROR || GetLastError() == NT_ERROR, ...);
         applications (which do not do such checks), and not be a clone of a
         specific Windows version.
       </para>
-      <para>
+      <!--para>
         FIXME: What about checks that cause the process to crash due to a bug?
-      </para>
+      </para-->
     </sect1>
 
 
