@@ -28,6 +28,7 @@
 
 #include "wine/unicode.h"
 #include "rpc.h"
+#include "rpcdce.h"
 
 static UUID Uuid_Table[10] = {
   { 0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} }, /* 0 (null) */
@@ -122,8 +123,52 @@ void UuidConversionAndComparison(void) {
     }
 }
 
+void TestDceErrorInqText (void)
+{
+    char bufferInvalid [1024];
+    char buffer [1024]; /* The required size is not documented but would
+                         * appear to be 256.
+                         */
+    DWORD dwCount;
+
+    dwCount = FormatMessageA (FORMAT_MESSAGE_FROM_SYSTEM | 
+              FORMAT_MESSAGE_IGNORE_INSERTS,
+              NULL, RPC_S_NOT_RPC_ERROR, 0, bufferInvalid,
+              sizeof(bufferInvalid)/sizeof(bufferInvalid[0]), NULL);
+
+    /* A random sample of DceErrorInqText */
+    /* 0 is success */
+    ok ((DceErrorInqTextA (0, buffer) == RPC_S_OK),
+            "DceErrorInqTextA(0...)\n");
+    /* A real RPC_S error */
+    ok ((DceErrorInqTextA (RPC_S_INVALID_STRING_UUID, buffer) == RPC_S_OK),
+            "DceErrorInqTextA(valid...)\n");
+
+    if (dwCount)
+    {
+        /* A message for which FormatMessage should fail
+         * which should return RPC_S_OK and the 
+         * fixed "not valid" message
+         */
+        ok ((DceErrorInqTextA (35, buffer) == RPC_S_OK &&
+                    strcmp (buffer, bufferInvalid) == 0),
+                "DceErrorInqTextA(unformattable...)\n");
+        /* One for which FormatMessage should succeed but 
+         * DceErrorInqText should "fail"
+         * 3814 is generally quite a long message
+         */
+        ok ((DceErrorInqTextA (3814, buffer) == RPC_S_OK &&
+                    strcmp (buffer, bufferInvalid) == 0),
+                "DceErrorInqTextA(deviation...)\n");
+    }
+    else
+        ok (0, "Cannot set up for DceErrorInqText\n");
+}
+
 START_TEST( rpc )
 {
     trace ( " ** Uuid Conversion and Comparison Tests **\n" );
     UuidConversionAndComparison();
+    trace ( " ** DceErrorInqText **\n");
+    TestDceErrorInqText();
 }

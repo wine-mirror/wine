@@ -109,6 +109,10 @@ typedef struct _RPC_POLICY
 #define RPC_IF_ALLOW_UNKNOWN_AUTHORITY  0x4
 #define RPC_IF_ALLOW_SECURE_ONLY        0x8
 
+RPC_STATUS RPC_ENTRY DceErrorInqTextA(unsigned long e, unsigned char *buffer);
+RPC_STATUS RPC_ENTRY DceErrorInqTextW(unsigned long e, unsigned short *buffer);
+#define              DceErrorInqText WINELIB_NAME_AW(DceErrorInqText)
+
 RPCRTAPI void RPC_ENTRY
   RpcRaiseException( RPC_STATUS exception );
         
