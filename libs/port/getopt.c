@@ -33,6 +33,10 @@
 # include <config.h>
 #endif
 
+#ifdef HAVE_GETOPT_LONG
+#define ELIDE_CODE
+#endif
+
 #if !defined __STDC__ || !__STDC__
 /* This is a separate conditional since some stdc systems
    reject `defined (const)'.  */

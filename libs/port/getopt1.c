@@ -24,6 +24,10 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_GETOPT_LONG
+#define ELIDE_CODE
+#endif
+
 #ifdef _LIBC
 # include <getopt.h>
 #else
