@@ -686,8 +686,8 @@ init SHLWAPI_LibMain
 # exported in later versions
 @ stdcall StrRetToBufA (ptr ptr ptr long) StrRetToBufA
 @ stdcall StrRetToBufW (ptr ptr ptr long) StrRetToBufW
-#@ stdcall StrRetToStrA (ptr ptr ptr) StrRetToStrA
-#@ stdcall StrRetToStrW (ptr ptr ptr) StrRetToStrW
+@ stdcall StrRetToStrA (ptr ptr ptr) StrRetToStrA
+@ stdcall StrRetToStrW (ptr ptr ptr) StrRetToStrW
 @ stdcall SHRegGetPathA(long str str ptr long)SHRegGetPathA
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)SHRegGetPathW
 @ stub    MLLoadLibraryA

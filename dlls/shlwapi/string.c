@@ -37,6 +37,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest);
+HRESULT WINAPI _SHStrDupAW(LPCWSTR src, LPSTR * dest);
+
 /*************************************************************************
  * ChrCmpIA					[SHLWAPI.385]
  *
@@ -559,6 +562,64 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
 }
 
 /*************************************************************************
+ * StrRetToStrA					[SHLWAPI.@]
+ *
+ * converts a STRRET to a normal string
+ */
+HRESULT WINAPI StrRetToStrA(LPSTRRET pstr, const ITEMIDLIST * pidl, LPSTR* ppszName)
+{
+	HRESULT ret = E_FAIL;
+
+	switch (pstr->uType) {
+	    case STRRET_WSTR:
+	        ret = _SHStrDupAW(pstr->u.pOleStr, ppszName);
+	        CoTaskMemFree(pstr->u.pOleStr);
+	        break;
+
+	    case STRRET_CSTR:
+	        ret = _SHStrDupAA(pstr->u.cStr, ppszName);
+	        break;
+
+	    case STRRET_OFFSET:
+	        ret = _SHStrDupAA(((LPCSTR)&pidl->mkid)+pstr->u.uOffset, ppszName);
+	        break;
+
+	    default:
+	        *ppszName = NULL;
+	}
+	return ret;
+}
+
+/*************************************************************************
+ * StrRetToStrW					[SHLWAPI.@]
+ *
+ * converts a STRRET to a normal string
+ */
+HRESULT WINAPI StrRetToStrW(LPSTRRET pstr, const ITEMIDLIST * pidl, LPWSTR* ppszName)
+{
+	HRESULT ret = E_FAIL;
+
+	switch (pstr->uType) {
+	    case STRRET_WSTR:
+	        ret = SHStrDupW(pstr->u.pOleStr, ppszName);
+	        CoTaskMemFree(pstr->u.pOleStr);
+	        break;
+
+	    case STRRET_CSTR:
+	        ret = SHStrDupA(pstr->u.cStr, ppszName);
+		break;
+
+	    case STRRET_OFFSET:
+	        ret = SHStrDupA(((LPCSTR)&pidl->mkid)+pstr->u.uOffset, ppszName);
+	        break;
+
+	    default:
+	        *ppszName = NULL;
+	}
+	return ret;
+}
+
+/*************************************************************************
  * StrFormatByteSizeA				[SHLWAPI.@]
  */
 LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
@@ -636,6 +697,34 @@ BOOL WINAPI StrTrimA(LPSTR pszSource, LPCSTR pszTrimChars)
 }
 
 /*************************************************************************
+ *      _SHStrDupA	[INTERNAL]
+ *
+ * Duplicates a ASCII string to ASCII. The destination buffer is allocated.
+ */
+HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest)
+{
+	HRESULT hr;
+	int len = 0;
+
+	if (src) {
+	    len = lstrlenA(src);
+	    *dest = CoTaskMemAlloc(len);
+	} else {
+	    *dest = NULL;
+	}
+
+	if (*dest) {
+	    lstrcpynA(*dest,src, len);
+	    hr = S_OK;
+	} else {
+	    hr = E_OUTOFMEMORY;
+	}
+
+	TRACE("%s->(%p)\n", debugstr_a(src), *dest);
+	return hr;
+}
+
+/*************************************************************************
  *      SHStrDupA	[SHLWAPI.@]
  *
  * Duplicates a ASCII string to UNICODE. The destination buffer is allocated.
@@ -660,6 +749,34 @@ HRESULT WINAPI SHStrDupA(LPCSTR src, LPWSTR * dest)
 	}
 
 	TRACE("%s->(%p)\n", debugstr_a(src), *dest);
+	return hr;
+}
+
+/*************************************************************************
+ *      _SHStrDupAW	[INTERNAL]
+ *
+ * Duplicates a UNICODE to a ASCII string. The destination buffer is allocated.
+ */
+HRESULT WINAPI _SHStrDupAW(LPCWSTR src, LPSTR * dest)
+{
+	HRESULT hr;
+	int len = 0;
+
+	if (src) {
+	    len = WideCharToMultiByte(CP_ACP, 0, src, -1, NULL, 0, NULL, NULL);
+	    *dest = CoTaskMemAlloc(len);
+	} else {
+	    *dest = NULL;
+	}
+
+	if (*dest) {
+	    WideCharToMultiByte(CP_ACP, 0, src, -1, *dest, len, NULL, NULL);
+	    hr = S_OK;
+	} else {
+	    hr = E_OUTOFMEMORY;
+	}
+
+	TRACE("%s->(%p)\n", debugstr_w(src), *dest);
 	return hr;
 }
 
