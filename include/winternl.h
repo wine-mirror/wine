@@ -1318,7 +1318,7 @@ inline static ULONG RtlUlongByteSwap(ULONG i)
     __asm__("bswap %0" : "=r" (ret) : "0" (i) );
     return ret;
 #else
-    return ((ULONG)RtlUshortByteSwap(i) << 16) | RtlUshortByteSwap(i >> 16);
+    return ((ULONG)RtlUshortByteSwap((USHORT)i) << 16) | RtlUshortByteSwap((USHORT)(i >> 16));
 #endif
 }
 
