@@ -286,8 +286,9 @@
            <term><ulink url="http://www.winehq.org">Wine</ulink></term>
            <listitem>
            <para>
-              This is the "standard" source distribution of Wine. Its license is 
-              the LGPL, it can be downloaded for free.
+              This is the "standard" distribution of Wine. Its license is
+              the LGPL, it can be downloaded for free. Both source code and binaries
+              are available in the download section of the site.
             </para>
            </listitem>
           </varlistentry>
@@ -319,7 +320,7 @@
               improved copy protection support (needed for many
               games), support, and other enhancements. These packages are
               only available in binary form to subscribed customers
-              ($5/month).
+              ($5/month, minimum three months).
             </para>
          </listitem>
           </varlistentry>
@@ -374,16 +375,6 @@
           </listitem>
           </varlistentry>          
 
-	  <varlistentry>
-          <term><ulink url="http://www.winehq.org/download/">Other packaged versions of Wine</ulink></term>
-          <listitem>
-            <para>
-              Various Wine packages can be downloaded for free from
-              Wine HQ. They are not officially packaged by Wine HQ, and as
-              such may have some configuration inconsistencies.
-            </para>
-          </listitem>
-          </varlistentry>
         </variablelist>
       </answer>
       </qandaentry>
@@ -902,8 +893,6 @@
     [Drive C]      
           Path=/var/lib/wine
           Type=hd
-          Label=MS-DOS
-          Filesystem=win95
     [wine]
           Windows=c:\windows
           System=c:\windows\system
@@ -1055,12 +1044,19 @@
       </question>
       <answer>
         <para>
-          Because of lags created by using mirror, word of this newest release
+          Because of lags created by using mirror, word of the latest release
           may reach you before the release is actually available at the ftp
           sites listed here. The sources are available from the following
           locations:
         </para>
         <itemizedlist>
+          <listitem>
+            <para>
+              <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241&amp;package_id=77449">
+               http://sourceforge.net/project/showfiles.php?group_id=6241&amp;package_id=77449
+              </ulink>
+            </para>
+          </listitem>
           <listitem>
             <para>
               <ulink url="http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/">
@@ -1328,8 +1324,8 @@ wine
       </question>
       <answer>
         <para>
-          Make sure you have all the VB run time libraries installed. You may
-          need to use the native DLL vbrun60.dll. You can get some from dll-files.com.
+          Make sure you have all the VB run time libraries installed. You can
+          get the latest version from the microsoft web site.
         </para>
       </answer>
       </qandaentry>
