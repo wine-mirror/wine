@@ -681,7 +681,10 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
     { 
         HDC hMemDC = CreateCompatibleDC( hDC );
         int x = 0, y = 0;
-        delta = (rbox.bottom - rbox.top - checkBoxHeight) >> 1;
+        delta = (rbox.bottom - rbox.top - checkBoxHeight) / 2;
+
+	/* Check in case the client area is smaller than the checkbox bitmap */
+	if (delta < 0) delta = 0;
 
         if (action == ODA_SELECT) FillRect( hDC, &rbox, hBrush );
         else FillRect( hDC, &client, hBrush );
