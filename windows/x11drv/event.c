@@ -835,64 +835,196 @@ static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
 
 /***********************************************************************
  *           EVENT_SelectionRequest
+ *  Note: We only receive this event when WINE owns the X selection
  */
 static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event )
 {
   XSelectionEvent result;
-  Atom 	    rprop = None;
-  Window    request = event->requestor;
+  Atom 	          rprop = None;
+  Window          request = event->requestor;
+  UINT            wFormat;
+  char *          itemFmtName;
+  BOOL            couldOpen = FALSE;
+  Atom            xaClipboard = XInternAtom(display, "CLIPBOARD", False);
+  Atom            xaTargets = XInternAtom(display, "TARGETS", False);
+  int             xRc;
 
-  if(event->target == XA_STRING)
+  /*
+   * Map the requested X selection property type atom name to a
+   * windows clipboard format ID.
+   */
+  itemFmtName = TSXGetAtomName(display, event->target);
+  wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
+  TRACE_(event)("Request for %s\n", itemFmtName);
+  TSXFree(itemFmtName);
+
+  /*
+   * We can only handle the selection request if :
+   * The selection is PRIMARY or CLIPBOARD,
+   * AND we can successfully open the clipboard.
+   * AND we have a request for a TARGETS selection target,
+   *     OR the requested format is available in the clipboard
+   */
+  if ( ( (event->selection != XA_PRIMARY) && (event->selection != xaClipboard) )
+      || !(couldOpen = OpenClipboard(hWnd)) )
+     goto END;
+  if ( (event->target != xaTargets)
+       && ( (0 == wFormat) || !CLIPBOARD_IsPresent(wFormat) ) )
+     goto END;
+
+  /* We can handle the request */
+       
+  rprop = event->property;
+  
+  if( rprop == None ) 
+      rprop = event->target;
+  
+  if(event->target == xaTargets)  /*  Return a list of all supported targets */
+  {
+      Atom* targets;
+      Atom prop;
+      UINT wFormat;
+      unsigned long cTargets;
+      BOOL bHavePixmap;
+
+      /*
+       * Count the number of items we wish to expose as selection targets.
+       * We include the TARGETS item, and a PIXMAP if we have CF_DIB or CF_BITMAP
+       */
+      cTargets = CountClipboardFormats() + 1;
+      if ( CLIPBOARD_IsPresent(CF_DIB) ||  CLIPBOARD_IsPresent(CF_BITMAP) )
+         cTargets++;
+      
+      /* Allocate temp buffer */
+      targets = (Atom*)HEAP_xalloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
+
+      /* Create TARGETS property list (First item in list is TARGETS itself) */
+
+      for ( targets[0] = xaTargets, cTargets = 1, wFormat = 0, bHavePixmap = FALSE;
+            (wFormat = EnumClipboardFormats( wFormat )); )
+      {
+          if ( (prop = X11DRV_CLIPBOARD_MapFormatToProperty(wFormat)) != None )
+          {
+              /* Scan through what we have so far to avoid duplicates */
+              int i;
+              BOOL bExists;
+              for (i = 0, bExists = FALSE; i < cTargets; i++)
+              {
+                  if (targets[i] == prop)
+                  {
+                      bExists = TRUE;
+                      break;
+                  }
+              }
+              if (!bExists)
+              {
+                  targets[cTargets++] = prop;
+              
+                  /* Add PIXMAP prop for bitmaps additionally */
+                  if ( (wFormat == CF_DIB || wFormat == CF_BITMAP )
+                       && !bHavePixmap )
+                  {
+                      targets[cTargets++] = XA_PIXMAP;
+                      bHavePixmap = TRUE;
+                  }
+              }
+          }
+      }
+
+#ifdef DEBUG_RUNTIME
+{
+      int i;
+      for ( i = 0; i < cTargets; i++)
+      {
+          if (targets[i])
+          {
+            char *itemFmtName = TSXGetAtomName(display, targets[i]);
+            TRACE_(event)("\tAtom# %d:  Type %s\n", i, itemFmtName);
+            TSXFree(itemFmtName);
+          }
+      }
+}
+#endif
+      
+      /* Update the X property */
+      TRACE_(event)("\tUpdating property %s...", TSXGetAtomName(display, rprop));
+      xRc = TSXChangeProperty(display, request, rprop,
+                              XA_ATOM, 32, PropModeReplace,
+                              (unsigned char *)targets, cTargets);
+      TRACE_(event)("(Rc=%d)\n", xRc);
+      
+      HeapFree( GetProcessHeap(), 0, targets );
+  }
+  else if(event->target == XA_STRING)  /* treat CF_TEXT as Unix text */
   {
       HANDLE16 hText;
       LPSTR  text;
       int    size,i,j;
       
-      rprop = event->property;
+      char* lpstr = 0;
       
-      if( rprop == None ) 
-	  rprop = event->target;
+      hText = GetClipboardData16(CF_TEXT);
+      text = GlobalLock16(hText);
+      size = GlobalSize16(hText);
       
-      if( event->selection != XA_PRIMARY ) 
-	  rprop = None;
-      else 
-      if( !CLIPBOARD_IsPresent(CF_OEMTEXT) ) 
-	  rprop = None;
-      else
+      /* remove carriage returns */
+      
+      lpstr = (char*)HEAP_xalloc( GetProcessHeap(), 0, size-- );
+      for(i=0,j=0; i < size && text[i]; i++ )
       {
-	  /* open to make sure that clipboard is available */
-
-	  BOOL couldOpen = OpenClipboard( hWnd );
-	  char* lpstr = 0;
-	  
-	  hText = GetClipboardData16(CF_TEXT);
-	  text = GlobalLock16(hText);
-	  size = GlobalSize16(hText);
-	  
-	  /* remove carriage returns */
-	  
-	  lpstr = (char*)HEAP_xalloc( GetProcessHeap(), 0, size-- );
-	  for(i=0,j=0; i < size && text[i]; i++ )
-	  {
-	      if( text[i] == '\r' && 
-		  (text[i+1] == '\n' || text[i+1] == '\0') ) continue;
-	      lpstr[j++] = text[i];
-	  }
-	  lpstr[j]='\0';
-	  
-	  TSXChangeProperty(display, request, rprop, 
-			    XA_STRING, 8, PropModeReplace, 
-			    lpstr, j);
-	  HeapFree( GetProcessHeap(), 0, lpstr );
-	  
-	  /* close only if we opened before */
-	  
-	  if(couldOpen) CloseClipboard();
+          if( text[i] == '\r' && 
+              (text[i+1] == '\n' || text[i+1] == '\0') ) continue;
+          lpstr[j++] = text[i];
       }
+      lpstr[j]='\0';
+      
+      /* Update the X property */
+      TRACE_(event)("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
+      xRc = TSXChangeProperty(display, request, rprop, 
+                              XA_STRING, 8, PropModeReplace,
+                              lpstr, j);
+      TRACE_(event)("(Rc=%d)\n", xRc);
+
+      GlobalUnlock16(hText);
+      HeapFree( GetProcessHeap(), 0, lpstr );
   }
+  else if(event->target == XA_PIXMAP)  /*  Convert DIB's to Pixmaps */
+  {
+      FIXME_(event)("DIB to PIXMAP conversion not yet implemented!\n");
+      rprop = None;
+  }
+  else  /* For other data types (WCF_*) simply copy the data to X without conversion */
+  {
+      HANDLE hClipData = 0;
+      void*  lpClipData;
+      int cBytes;
+      
+      hClipData = GetClipboardData16(wFormat);
+      
+      if( hClipData && (lpClipData = GlobalLock16(hClipData)) )
+      {
+          cBytes = GlobalSize16(hClipData);
+          
+          TRACE_(event)("\tUpdating property %s, %d bytes...\n",
+                        TSXGetAtomName(display, rprop), cBytes);
+          
+          xRc = TSXChangeProperty(display, request, rprop, 
+                                  event->target, 8, PropModeReplace,
+                                  (unsigned char *)lpClipData, cBytes);
+          TRACE_(event)("(Rc=%d)\n", xRc);
+          
+          GlobalUnlock16(hClipData);
+      }
+      else
+          rprop = None; /* Fail the request */
+  }
+
+END:
+  /* close clipboard only if we opened before */
+  if(couldOpen) CloseClipboard();
   
   if( rprop == None) 
-      TRACE_(event)("Request for %s ignored\n", TSXGetAtomName(display,event->target));
+      TRACE_(event)("\tRequest ignored\n");
 
   /* reply to sender */
   
@@ -911,8 +1043,10 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event )
  */
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 {
-  if (event->selection != XA_PRIMARY) return;
-  X11DRV_CLIPBOARD_ReleaseSelection( event->window, hWnd );
+  Atom xaClipboard = XInternAtom(display, "CLIPBOARD", False);
+    
+  if (event->selection == XA_PRIMARY || event->selection == xaClipboard)
+      X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd );
 }
 
 
@@ -1210,7 +1344,7 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
       bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
 
       if ( !Options.managed || !bIsDisabled )
-          PostMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+      PostMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     }
     else if ( event->message_type == dndProtocol &&
 	      (event->data.l[0] == DndFile || event->data.l[0] == DndFiles) )

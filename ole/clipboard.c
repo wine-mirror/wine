@@ -827,7 +827,7 @@ LRESULT CALLBACK OLEClipbrd_WndProc
         WARN("(): WM_RENDERALLFORMATS failed to retrieve EnumFormatEtc!\n");
         return 0;
       }
-      
+
       while ( S_OK == IEnumFORMATETC_Next(penumFormatetc, 1, &rgelt, NULL) )
       {
         if ( rgelt.tymed == TYMED_HGLOBAL )
@@ -1093,6 +1093,9 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
 	    STGMEDIUM*       pmedium)
 {
   HANDLE      hData = 0;
+  BOOL bClipboardOpen = FALSE;
+  HRESULT hr = S_OK;
+
   /*
    * Declare "This" pointer 
    */
@@ -1124,8 +1127,11 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
 */
 
   /* 
-   * Otherwise, delegate to the Windows clipboard function GetClipboardData
+   * Otherwise, get the data from the windows clipboard using GetClipboardData
    */
+  if ( !(bClipboardOpen = OpenClipboard(theOleClipboard->hWndClipboard)) )
+    HANDLE_ERROR( CLIPBRD_E_CANT_OPEN );
+
   hData = GetClipboardData(pformatetcIn->cfFormat);
 
   /* 
@@ -1135,6 +1141,17 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
   pmedium->u.hGlobal = (HGLOBAL)hData;
   pmedium->pUnkForRelease = NULL;
   
+  hr = S_OK;
+  
+CLEANUP:
+  /*
+   * Close Windows clipboard
+   */
+  if ( bClipboardOpen && !CloseClipboard() )
+     hr = CLIPBRD_E_CANT_CLOSE;
+
+  if ( FAILED(hr) )
+      return hr;
   return (hData == 0) ? DV_E_FORMATETC : S_OK;
 }
 

@@ -73,9 +73,13 @@ extern void TTYDRV_USER_EndDebugging(void);
 
 extern struct tagCLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
 
-extern void TTYDRV_CLIPBOARD_Empty(void);
+extern void TTYDRV_CLIPBOARD_Acquire(void);
+extern void TTYDRV_CLIPBOARD_Release(void);
 extern void TTYDRV_CLIPBOARD_SetData(UINT wFormat);
 extern BOOL TTYDRV_CLIPBOARD_GetData(UINT wFormat);
+extern BOOL TTYDRV_CLIPBOARD_IsFormatAvailable(UINT wFormat);
+extern BOOL TTYDRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName );
+extern BOOL TTYDRV_CLIPBOARD_IsSelectionowner();
 extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 
 /* TTY desktop driver */

@@ -153,7 +153,6 @@ static void USER_QueueCleanup( HQUEUE16 hQueue )
 
         QUEUE_SetExitingQueue( hQueue );
         WIN_ResetQueueWindows( desktop, hQueue, (HQUEUE16)0);
-        CLIPBOARD_ResetLock( hQueue, 0 );
         QUEUE_SetExitingQueue( 0 );
 
         /* Free the message queue */
@@ -168,8 +167,13 @@ static void USER_QueueCleanup( HQUEUE16 hQueue )
  */
 static void USER_AppExit( HINSTANCE16 hInstance )
 {
-    /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
-     *	      only complains about them but does nothing);
+    /* FIXME: maybe destroy menus (Windows only complains about them
+     * but does nothing);
+     */
+
+    /*  TODO: Start up persistant WINE X clipboard server process which will
+     *  take ownership of the X selection and continue to service selection
+     *  requests from other apps.
      */
 
     /* ModuleUnload() in "Internals" */

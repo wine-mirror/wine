@@ -313,11 +313,17 @@ extern void X11DRV_USER_EndDebugging(void);
 
 extern struct tagCLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
-extern void X11DRV_CLIPBOARD_Empty(void);
+extern void X11DRV_CLIPBOARD_Acquire(void);
+extern void X11DRV_CLIPBOARD_Release(void);
 extern void X11DRV_CLIPBOARD_SetData(UINT wFormat);
 extern BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat);
+extern BOOL X11DRV_CLIPBOARD_IsFormatAvailable(UINT wFormat);
+extern BOOL X11DRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName );
+extern BOOL X11DRV_CLIPBOARD_IsSelectionowner();
+extern UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName);
+extern Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT id);
 extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
-extern void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd);
+extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd);
 
 /* X11 desktop driver */
 
