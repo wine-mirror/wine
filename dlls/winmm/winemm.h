@@ -28,6 +28,13 @@
 typedef DWORD (WINAPI *MessageProc16)(UINT16 wDevID, UINT16 wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 typedef DWORD (WINAPI *MessageProc32)(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 
+typedef enum {
+    WINMM_MAP_NOMEM, 	/* ko, memory problem */
+    WINMM_MAP_MSGERROR, /* ko, unknown message */
+    WINMM_MAP_OK, 	/* ok, no memory allocated. to be sent to the proc. */
+    WINMM_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
+} WINMM_MapType;
+
 /* Who said goofy boy ? */
 #define	WINE_DI_MAGIC	0x900F1B01
 

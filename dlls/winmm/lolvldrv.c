@@ -55,15 +55,7 @@ typedef struct tagWINE_MM_DRIVER {
     WINE_MM_DRIVER_PART		parts[MMDRV_MAX];/* Information for all known types */
 } WINE_MM_DRIVER, *LPWINE_MM_DRIVER;
 
-typedef enum {
-    MMDRV_MAP_NOMEM, 	/* ko, memory problem */
-    MMDRV_MAP_MSGERROR, /* ko, unknown message */
-    MMDRV_MAP_OK, 	/* ok, no memory allocated. to be sent to the proc. */
-    MMDRV_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
-    MMDRV_MAP_PASS	/* not handled (no memory allocated) to be sent to the driver */
-} MMDRV_MapType;
-
-typedef	MMDRV_MapType	(*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+typedef	WINMM_MapType	(*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
 
 /* each known type of driver has an instance of this structure */
 typedef struct tagWINE_LLTYPE {
@@ -213,31 +205,31 @@ static void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1
 /**************************************************************************
  * 				MMDRV_Aux_Map16To32A		[internal]
  */
-static	MMDRV_MapType	MMDRV_Aux_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Aux_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_Aux_UnMap16To32A		[internal]
  */
-static	MMDRV_MapType	MMDRV_Aux_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Aux_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_Aux_Map32ATo16		[internal]
  */
-static	MMDRV_MapType	MMDRV_Aux_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Aux_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_Aux_UnMap32ATo16		[internal]
  */
-static	MMDRV_MapType	MMDRV_Aux_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Aux_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
 #if 0
  case AUXDM_GETDEVCAPS:
@@ -248,7 +240,7 @@ static	MMDRV_MapType	MMDRV_Aux_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD
     lpCaps->wTechnology = ac16.wTechnology;
     lpCaps->dwSupport = ac16.dwSupport;
 #endif
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
@@ -269,15 +261,15 @@ static void	CALLBACK MMDRV_Aux_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance,
 /**************************************************************************
  * 				xMMDRV_Mixer_Map16To32A		[internal]
  */
-static	MMDRV_MapType	MMDRV_Mixer_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Mixer_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_Mixer_UnMap16To32A	[internal]
  */
-static	MMDRV_MapType	MMDRV_Mixer_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Mixer_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
 #if 0
     MIXERCAPSA	micA;
@@ -293,23 +285,23 @@ static	MMDRV_MapType	MMDRV_Mixer_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWO
     }
     return ret;
 #endif
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_Mixer_Map32ATo16		[internal]
  */
-static	MMDRV_MapType	MMDRV_Mixer_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Mixer_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_Mixer_UnMap32ATo16	[internal]
  */
-static	MMDRV_MapType	MMDRV_Mixer_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_Mixer_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
@@ -330,33 +322,33 @@ static void	CALLBACK MMDRV_Mixer_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstanc
 /**************************************************************************
  * 				MMDRV_MidiIn_Map16To32A		[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_MidiIn_UnMap16To32A	[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_MidiIn_Map32ATo16		[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
  * 				MMDRV_MidiIn_UnMap32ATo16	[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    return MMDRV_MAP_MSGERROR;
+    return WINMM_MAP_MSGERROR;
 }
 
 /**************************************************************************
@@ -418,16 +410,16 @@ static void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 /**************************************************************************
  * 				MMDRV_MidiOut_Map16To32A	[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case MODM_GETNUMDEVS:
     case MODM_DATA:
     case MODM_RESET:
     case MODM_SETVOLUME:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case MODM_OPEN:
@@ -447,9 +439,9 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = (DWORD)moc32;
 		*lpParam2 = sizeof(MIDIOUTCAPSA);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -475,9 +467,9 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = (DWORD)mh32;
 		*lpParam2 = sizeof(MIDIHDR);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -495,7 +487,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		    mh32->dwBufferLength, mh16->dwBufferLength);
 	    } else
                 mh32->dwBufferLength = mh16->dwBufferLength;
-	    ret = MMDRV_MAP_OKMEM;
+	    ret = WINMM_MAP_OKMEM;
 	}
 	break;
 
@@ -511,16 +503,16 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiOut_UnMap16To32A	[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case MODM_GETNUMDEVS:
     case MODM_DATA:
     case MODM_RESET:
     case MODM_SETVOLUME:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case MODM_OPEN:
@@ -544,7 +536,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 	    moc16->wChannelMask		= moc32->wChannelMask;
 	    moc16->dwSupport		= moc32->dwSupport;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)moc32 - sizeof(LPMIDIOUTCAPS16));
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case MODM_PREPARE:
@@ -566,7 +558,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 		HeapFree(GetProcessHeap(), 0, (LPSTR)mh32 - sizeof(LPMIDIHDR));
 		mh16->lpNext = 0;
 	    }
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
 
@@ -582,9 +574,9 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiOut_Map32ATo16	[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case MODM_CLOSE:
@@ -592,7 +584,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_DATA:
     case MODM_RESET:
     case MODM_SETVOLUME:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
     case MODM_GETDEVCAPS:
 	{
@@ -601,9 +593,9 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 
 	    if (ptr) {
 		*(LPMIDIOUTCAPSA*)ptr = moc32;
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	    *lpParam1 = (DWORD)MapLS(ptr) + sizeof(LPMIDIOUTCAPSA);
 	    *lpParam2 = sizeof(MIDIOUTCAPS16);
@@ -638,9 +630,9 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		      mh32->dwBufferLength, (DWORD)mh32->lpData);
 		*lpParam2 = sizeof(MIDIHDR);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -667,7 +659,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		    mh16->dwBufferLength, mh32->dwBufferLength);
 	    } else
                 mh16->dwBufferLength = mh32->dwBufferLength;
-	    ret = MMDRV_MAP_OKMEM;
+	    ret = WINMM_MAP_OKMEM;
 	}
 	break;
     case MODM_OPEN:
@@ -703,9 +695,9 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = (DWORD)segptr + sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD);
 		*lpdwUser = (DWORD)segptr + sizeof(LPMIDIOPENDESC) + sizeof(DWORD);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -722,9 +714,9 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiOut_UnMap32ATo16	[internal]
  */
-static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case MODM_CLOSE:
@@ -732,7 +724,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_DATA:
     case MODM_RESET:
     case MODM_SETVOLUME:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
     case MODM_GETDEVCAPS:
 	{
@@ -751,7 +743,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    moc32->dwSupport		= moc16->dwSupport;
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case MODM_PREPARE:
@@ -772,7 +764,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
                 HeapFree( GetProcessHeap(), 0, ptr );
 		mh32->lpNext = 0;
 	    }
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case MODM_OPEN:
@@ -783,7 +775,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    **(DWORD**)(ptr + sizeof(LPMIDIOPENDESC)) = *(LPDWORD)(ptr + sizeof(LPMIDIOPENDESC) + sizeof(DWORD));
 
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case MODM_GETVOLUME:
@@ -847,16 +839,16 @@ static void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 /**************************************************************************
  * 				MMDRV_WaveIn_Map16To32A		[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case WIDM_GETNUMDEVS:
     case WIDM_RESET:
     case WIDM_START:
     case WIDM_STOP:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
     case WIDM_OPEN:
     case WIDM_CLOSE:
@@ -873,9 +865,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		*lpParam1 = (DWORD)wic32;
 		*lpParam2 = sizeof(WAVEINCAPSA);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -892,9 +884,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		*lpParam1 = (DWORD)mmt32;
 		*lpParam2 = sizeof(MMTIME);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -918,9 +910,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		*lpParam1 = (DWORD)wh32;
 		*lpParam2 = sizeof(WAVEHDR);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -938,13 +930,13 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
-	    ret = MMDRV_MAP_OKMEM;
+	    ret = WINMM_MAP_OKMEM;
 	}
 	break;
     case WIDM_MAPPER_STATUS:
 	/* just a single DWORD */
 	*lpParam2 = (DWORD)MapSL(*lpParam2);
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
     default:
 	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
@@ -956,9 +948,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_WaveIn_UnMap16To32A	[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case WIDM_GETNUMDEVS:
@@ -966,7 +958,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_START:
     case WIDM_STOP:
     case WIDM_MAPPER_STATUS:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
     case WIDM_OPEN:
     case WIDM_CLOSE:
@@ -984,7 +976,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    wic16->dwFormats = wic32->dwFormats;
 	    wic16->wChannels = wic32->wChannels;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)wic32 - sizeof(LPWAVEINCAPS16));
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WIDM_GETPOS:
@@ -994,7 +986,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
 
 	    MMSYSTEM_MMTIME32to16(mmt16, mmt32);
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)mmt32 - sizeof(LPMMTIME16));
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WIDM_ADDBUFFER:
@@ -1015,7 +1007,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));
 		wh16->lpNext = 0;
 	    }
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     default:
@@ -1028,9 +1020,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_WaveIn_Map32ATo16		[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case WIDM_CLOSE:
@@ -1038,7 +1030,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_RESET:
     case WIDM_START:
     case WIDM_STOP:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case WIDM_OPEN:
@@ -1082,9 +1074,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		*lpParam1 = seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
 		*lpdwUser = seg_ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1115,9 +1107,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 		*lpParam2 = sizeof(WAVEHDR);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1146,7 +1138,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		    wh16->dwBufferLength, wh32->dwBufferLength);
 	    } else
                 wh16->dwBufferLength = wh32->dwBufferLength;
-	    ret = MMDRV_MAP_OKMEM;
+	    ret = WINMM_MAP_OKMEM;
 	}
 	break;
    case WIDM_GETDEVCAPS:
@@ -1156,9 +1148,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 
 	    if (ptr) {
 		*(LPWAVEINCAPSA*)ptr = wic32;
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	    *lpParam1 = MapLS(ptr) + sizeof(LPWAVEINCAPSA);
 	    *lpParam2 = sizeof(WAVEINCAPS16);
@@ -1173,9 +1165,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    if (ptr) {
 		*(LPMMTIME*)ptr = mmt32;
 		mmt16->wType = mmt32->wType;
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	    *lpParam1 = MapLS(ptr) + sizeof(LPMMTIME);
 	    *lpParam2 = sizeof(MMTIME16);
@@ -1185,7 +1177,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
  	{
             LPDWORD p32 = (LPDWORD)*lpParam2;
             *lpParam2 = MapLS(p32);
-            ret = MMDRV_MAP_OKMEM;
+            ret = WINMM_MAP_OKMEM;
 	}
 	break;
     default:
@@ -1198,9 +1190,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_WaveIn_UnMap32ATo16	[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case WIDM_CLOSE:
@@ -1208,7 +1200,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_RESET:
     case WIDM_START:
     case WIDM_STOP:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case WIDM_OPEN:
@@ -1221,7 +1213,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    wod32->uMappedDeviceID = wod16->uMappedDeviceID;
 	    **(DWORD**)(ptr + sizeof(LPWAVEOPENDESC)) = *(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD));
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
 
@@ -1244,7 +1236,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
                 HeapFree( GetProcessHeap(), 0, ptr );
 		wh32->lpNext = 0;
 	    }
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
      case WIDM_GETDEVCAPS:
@@ -1261,7 +1253,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    wic32->wChannels = wic16->wChannels;
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WIDM_GETPOS:
@@ -1273,13 +1265,13 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    MMSYSTEM_MMTIME16to32(mmt32, mmt16);
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case DRVM_MAPPER_STATUS:
 	{
             UnMapLS( *lpParam2 );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     default:
@@ -1336,9 +1328,9 @@ static void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 /**************************************************************************
  * 				MMDRV_WaveOut_Map16To32A	[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     /* nothing to do */
@@ -1351,7 +1343,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_SETPITCH:
     case WODM_SETPLAYBACKRATE:
     case WODM_SETVOLUME:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case WODM_GETPITCH:
@@ -1372,9 +1364,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = (DWORD)woc32;
 		*lpParam2 = sizeof(WAVEOUTCAPSA);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1391,9 +1383,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = (DWORD)mmt32;
 		*lpParam2 = sizeof(MMTIME);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1417,9 +1409,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = (DWORD)wh32;
 		*lpParam2 = sizeof(WAVEHDR);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1437,12 +1429,12 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
-	    ret = MMDRV_MAP_OKMEM;
+	    ret = WINMM_MAP_OKMEM;
 	}
 	break;
     case WODM_MAPPER_STATUS:
 	*lpParam2 = (DWORD)MapSL(*lpParam2);
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
     default:
 	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
@@ -1454,9 +1446,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveOut_UnMap16To32A	[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret = MMDRV_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     /* nothing to do */
@@ -1470,7 +1462,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_SETPLAYBACKRATE:
     case WODM_SETVOLUME:
     case WODM_MAPPER_STATUS:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case WODM_GETPITCH:
@@ -1493,7 +1485,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 	    woc16->wChannels = woc32->wChannels;
 	    woc16->dwSupport = woc32->dwSupport;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)woc32 - sizeof(LPWAVEOUTCAPS16));
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WODM_GETPOS:
@@ -1503,7 +1495,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 
 	    MMSYSTEM_MMTIME32to16(mmt16, mmt32);
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)mmt32 - sizeof(LPMMTIME16));
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WODM_PREPARE:
@@ -1524,7 +1516,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));
 		wh16->lpNext = 0;
 	    }
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     default:
@@ -1537,9 +1529,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveOut_Map32ATo16	[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret;
+    WINMM_MapType	ret;
 
     switch (wMsg) {
 	/* nothing to do */
@@ -1552,7 +1544,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_SETPITCH:
     case WODM_SETPLAYBACKRATE:
     case WODM_SETVOLUME:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case WODM_GETDEVCAPS:
@@ -1563,9 +1555,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 
 	    if (ptr) {
 		*(LPWAVEOUTCAPSA*)ptr = woc32;
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	    *lpParam1 = MapLS(ptr) + sizeof(LPWAVEOUTCAPSA);
 	    *lpParam2 = sizeof(WAVEOUTCAPS16);
@@ -1573,11 +1565,11 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case WODM_GETPITCH:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     case WODM_GETPLAYBACKRATE:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     case WODM_GETPOS:
 	{
@@ -1588,9 +1580,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    if (ptr) {
 		*(LPMMTIME*)ptr = mmt32;
 		mmt16->wType = mmt32->wType;
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	    *lpParam1 = MapLS(ptr) + sizeof(LPMMTIME);
 	    *lpParam2 = sizeof(MMTIME16);
@@ -1598,7 +1590,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case WODM_GETVOLUME:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     case WODM_OPEN:
 	{
@@ -1641,9 +1633,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
 		*lpdwUser = seg_ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1674,9 +1666,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 		*lpParam2 = sizeof(WAVEHDR);
 
-		ret = MMDRV_MAP_OKMEM;
+		ret = WINMM_MAP_OKMEM;
 	    } else {
-		ret = MMDRV_MAP_NOMEM;
+		ret = WINMM_MAP_NOMEM;
 	    }
 	}
 	break;
@@ -1705,19 +1697,19 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		    wh16->dwBufferLength, wh32->dwBufferLength);
 	    } else
                 wh16->dwBufferLength = wh32->dwBufferLength;
-	    ret = MMDRV_MAP_OKMEM;
+	    ret = WINMM_MAP_OKMEM;
 	}
 	break;
     case DRVM_MAPPER_STATUS:
  	{
             LPDWORD p32 = (LPDWORD)*lpParam2;
             *lpParam2 = MapLS(p32);
-            ret = MMDRV_MAP_OKMEM;
+            ret = WINMM_MAP_OKMEM;
 	}
 	break;
     default:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     }
     return ret;
@@ -1726,9 +1718,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveOut_UnMap32ATo16	[internal]
  */
-static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static	WINMM_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
 {
-    MMDRV_MapType	ret;
+    WINMM_MapType	ret;
 
     switch (wMsg) {
 	/* nothing to do */
@@ -1741,7 +1733,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_SETPITCH:
     case WODM_SETPLAYBACKRATE:
     case WODM_SETVOLUME:
-	ret = MMDRV_MAP_OK;
+	ret = WINMM_MAP_OK;
 	break;
 
     case WODM_GETDEVCAPS:
@@ -1759,16 +1751,16 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    woc32->dwSupport = woc16->dwSupport;
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WODM_GETPITCH:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     case WODM_GETPLAYBACKRATE:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     case WODM_GETPOS:
 	{
@@ -1779,7 +1771,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    MMSYSTEM_MMTIME16to32(mmt32, mmt16);
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WODM_OPEN:
@@ -1792,7 +1784,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    **(DWORD**)(ptr + sizeof(LPWAVEOPENDESC)) = *(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD));
             UnMapLS( *lpParam1 );
             HeapFree( GetProcessHeap(), 0, ptr );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WODM_PREPARE:
@@ -1814,22 +1806,22 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
                 HeapFree( GetProcessHeap(), 0, ptr );
 		wh32->lpNext = 0;
 	    }
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     case WODM_GETVOLUME:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     case DRVM_MAPPER_STATUS:
 	{
             UnMapLS( *lpParam2 );
-	    ret = MMDRV_MAP_OK;
+	    ret = WINMM_MAP_OK;
 	}
 	break;
     default:
 	FIXME("NIY: no conversion yet\n");
-	ret = MMDRV_MAP_MSGERROR;
+	ret = WINMM_MAP_MSGERROR;
 	break;
     }
     return ret;
@@ -1910,7 +1902,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
     DWORD			ret;
     WINE_MM_DRIVER_PART*	part;
     WINE_LLTYPE*		llType = &llTypes[mld->type];
-    MMDRV_MapType		map;
+    WINMM_MapType		map;
     int				devID;
 
     TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)!\n",
@@ -1954,26 +1946,25 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 	} else {
 	    map = llType->Map16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
 	    switch (map) {
-	    case MMDRV_MAP_NOMEM:
+	    case WINMM_MAP_NOMEM:
 		ret = MMSYSERR_NOMEM;
 		break;
-	    case MMDRV_MAP_MSGERROR:
+	    case WINMM_MAP_MSGERROR:
 		FIXME("NIY: no conversion yet 16->32 (%u)\n", wMsg);
 		ret = MMSYSERR_ERROR;
 		break;
-	    case MMDRV_MAP_OK:
-	    case MMDRV_MAP_OKMEM:
+	    case WINMM_MAP_OK:
+	    case WINMM_MAP_OKMEM:
 		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance,
 					  dwParam1, dwParam2);
 		TRACE("=> %lu\n", ret);
-		if (map == MMDRV_MAP_OKMEM)
+		if (map == WINMM_MAP_OKMEM)
 		    llType->UnMap16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
 		break;
 	    default:
-	    case MMDRV_MAP_PASS:
-		FIXME("NIY: pass used ?\n");
+		FIXME("NIY ?\n");
 		ret = MMSYSERR_NOTSUPPORTED;
 		break;
 	    }
@@ -1984,26 +1975,25 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 	if (bFrom32) {
 	    map = llType->Map32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
 	    switch (map) {
-	    case MMDRV_MAP_NOMEM:
+	    case WINMM_MAP_NOMEM:
 		ret = MMSYSERR_NOMEM;
 		break;
-	    case MMDRV_MAP_MSGERROR:
+	    case WINMM_MAP_MSGERROR:
 		FIXME("NIY: no conversion yet 32->16 (%u)\n", wMsg);
 		ret = MMSYSERR_ERROR;
 		break;
-	    case MMDRV_MAP_OK:
-	    case MMDRV_MAP_OKMEM:
+	    case WINMM_MAP_OK:
+	    case WINMM_MAP_OKMEM:
 		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, mld->uDeviceID,
 						wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		TRACE("=> %lu\n", ret);
-		if (map == MMDRV_MAP_OKMEM)
+		if (map == WINMM_MAP_OKMEM)
 		    llType->UnMap32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
 		break;
 	    default:
-	    case MMDRV_MAP_PASS:
-		FIXME("NIY: pass used ?\n");
+		FIXME("NIY\n");
 		ret = MMSYSERR_NOTSUPPORTED;
 		break;
 	    }
