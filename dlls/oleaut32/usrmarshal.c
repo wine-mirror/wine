@@ -20,6 +20,8 @@
 
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
