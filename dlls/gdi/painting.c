@@ -1074,6 +1074,8 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
 
 /******************************************************************************
  *           GradientFill   (GDI32.@)
+ *
+ *  FIXME: we don't support the Alpha channel properly
  */
 BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                           void * grad_array, ULONG ngrad, ULONG mode )
@@ -1111,9 +1113,9 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                   (v1->Green * (dx - x) + v2->Green * x) / dx >> 8,
                   (v1->Blue  * (dx - x) + v2->Blue  * x) / dx >> 8));
               hOldPen = SelectObject( hdc, hPen );
-              pts[0].x = x;
+              pts[0].x = v1->x + x;
               pts[0].y = y1;
-              pts[1].x = x;
+              pts[1].x = v1->x + x;
               pts[1].y = y2;
               Polyline( hdc, &pts[0], 2 );
               DeleteObject( SelectObject(hdc, hOldPen ) );
@@ -1147,9 +1149,9 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                   (v1->Blue  * (dy - y) + v2->Blue  * y) / dy >> 8));
               hOldPen = SelectObject( hdc, hPen );
               pts[0].x = x1;
-              pts[0].y = y;
+              pts[0].y = v1->y + y;
               pts[1].x = x2;
-              pts[1].y = y;
+              pts[1].y = v1->y + y;
               Polyline( hdc, &pts[0], 2 );
               DeleteObject( SelectObject(hdc, hOldPen ) );
             }
