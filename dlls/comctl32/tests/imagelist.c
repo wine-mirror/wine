@@ -156,9 +156,9 @@ static HDC show_image(HWND hwnd, HIMAGELIST himl, int idx, int size,
 }
 
 /* Useful for checking differences */
+#if 0
 static void dump_bits(const BYTE *p, const BYTE *q, int size)
 {
-#if 0
   int i, j;
 
   size /= 8;
@@ -176,8 +176,8 @@ static void dump_bits(const BYTE *p, const BYTE *q, int size)
       q += size * 4;
   }
   printf("\n");
-#endif
 }
+#endif
 
 static void check_bits(HWND hwnd, HIMAGELIST himl, int idx, int size,
                        const BYTE *checkbits, LPCSTR loc)
