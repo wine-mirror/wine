@@ -998,6 +998,31 @@ DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 
 
 /***********************************************************************
+ *           GetFileSizeEx   (KERNEL32.@)
+ */
+BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
+{
+    BY_HANDLE_FILE_INFORMATION info;
+
+    if (!lpFileSize)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!GetFileInformationByHandle( hFile, &info ))
+    {
+        return FALSE;
+    }
+
+    lpFileSize->s.LowPart = info.nFileSizeLow;
+    lpFileSize->s.HighPart = info.nFileSizeHigh;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           GetFileTime   (KERNEL32.@)
  */
 BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,

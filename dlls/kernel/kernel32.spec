@@ -366,6 +366,7 @@
 @ stdcall GetFileAttributesW(wstr) GetFileAttributesW
 @ stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
 @ stdcall GetFileSize(long ptr) GetFileSize
+@ stdcall GetFileSizeEx(long ptr) GetFileSizeEx
 @ stdcall GetFileTime(long ptr ptr ptr) GetFileTime
 @ stdcall GetFileType(long) GetFileType
 @ stdcall GetFullPathNameA(str long ptr ptr) GetFullPathNameA
