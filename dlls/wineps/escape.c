@@ -125,11 +125,77 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case GETPHYSPAGESIZE:
         {
-	    POINT16 *p  = MapSL(lpOutData);
+	    PSDRV_PDEVICE   *pdev = (PSDRV_PDEVICE *)(dc->physDev);
+	    POINT16 	    *p = MapSL(lpOutData);
 	    
-	    p->x = dc->devCaps->horzRes;
-	    p->y = dc->devCaps->vertRes;
-	    TRACE("GETPHYSPAGESIZE: returning %dx%d\n", p->x, p->y);
+	    p->x = p->y = 0;
+	    
+	    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) != 0 &&
+	    	    pdev->Devmode->dmPublic.u1.s1.dmPaperSize != 0)
+	    {
+	    	PAGESIZE    *page = pdev->pi->ppd->PageSizes;
+		
+		while (page != NULL)
+		{
+		    if (page->WinPage ==
+		    	    pdev->Devmode->dmPublic.u1.s1.dmPaperSize)
+		    	break;
+		    page = page->next;
+		}
+		
+		if (page == NULL)
+		{
+		    ERR("No entry for papersize %u in PPD file for '%s'\n",
+		    	    pdev->Devmode->dmPublic.u1.s1.dmPaperSize,
+			    pdev->pi->FriendlyName);
+		    return 0;
+		}
+		
+		TRACE("Found '%s' for paper size %u\n", page->FullName,
+		    	pdev->Devmode->dmPublic.u1.s1.dmPaperSize);
+		
+		p->x = page->PaperDimension->x * dc->devCaps->logPixelsX / 72;
+		p->y = page->PaperDimension->y * dc->devCaps->logPixelsY / 72;
+		
+		TRACE("%fx%f PostScript points = %ix%i device units\n", 
+		    	page->PaperDimension->x, page->PaperDimension->y,
+			p->x, p->y);
+	    }
+	    
+	    /* These are in tenths of a millimeter */
+	    
+	    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERWIDTH) != 0 &&
+	    	    pdev->Devmode->dmPublic.u1.s1.dmPaperWidth != 0)
+	    {
+		p->x = (pdev->Devmode->dmPublic.u1.s1.dmPaperWidth *
+		    	dc->devCaps->logPixelsX) / 254;
+		TRACE("dmPaperWidth = %i device units\n", p->x);
+	    }
+	    
+	    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) != 0 &&
+	    	    pdev->Devmode->dmPublic.u1.s1.dmPaperLength != 0)
+	    {
+	    	p->y = (pdev->Devmode->dmPublic.u1.s1.dmPaperLength *
+		    	dc->devCaps->logPixelsY) / 254;
+		TRACE("dmPaperLength = %i device units\n", p->y);
+	    }
+			
+	    if (p->x == 0 || p->y == 0)
+	    {
+	    	ERR("Paper size not properly set for '%s'\n",
+		    	pdev->pi->FriendlyName);
+		return 0;
+	    }
+	    
+	    if ((pdev->Devmode->dmPublic.dmFields & DM_ORIENTATION) != 0 &&
+	    	    pdev->Devmode->dmPublic.u1.s1.dmOrientation ==
+		    DMORIENT_LANDSCAPE)
+	    {
+	    	register INT16	temp = p->y;
+		p->y = p->x;
+		p->x = temp;
+	    }
+	    
 	    return 1;
 	}
 
