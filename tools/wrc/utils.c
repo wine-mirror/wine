@@ -327,15 +327,15 @@ struct lang2cp
 /* differs from the default (SUBLANG_NEUTRAL) */
 static const struct lang2cp lang2cps[] =
 {
-    /* default code page (LANG_NEUTRAL) must be first entry */
-    { LANG_NEUTRAL,        SUBLANG_NEUTRAL,              1252 },
     { LANG_AFRIKAANS,      SUBLANG_NEUTRAL,              1252 },
     { LANG_ALBANIAN,       SUBLANG_NEUTRAL,              1250 },
+    { LANG_ARABIC,         SUBLANG_NEUTRAL,              1256 },
     { LANG_BASQUE,         SUBLANG_NEUTRAL,              1252 },
     { LANG_BRETON,         SUBLANG_NEUTRAL,              1252 },
     { LANG_BULGARIAN,      SUBLANG_NEUTRAL,              1251 },
     { LANG_BYELORUSSIAN,   SUBLANG_NEUTRAL,              1251 },
     { LANG_CATALAN,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_CHINESE,        SUBLANG_NEUTRAL,              936  },
     { LANG_CORNISH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_CZECH,          SUBLANG_NEUTRAL,              1250 },
     { LANG_DANISH,         SUBLANG_NEUTRAL,              1252 },
@@ -343,6 +343,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_ENGLISH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_ESPERANTO,      SUBLANG_NEUTRAL,              1252 },
     { LANG_ESTONIAN,       SUBLANG_NEUTRAL,              1257 },
+    { LANG_FAEROESE,       SUBLANG_NEUTRAL,              1252 },
     { LANG_FINNISH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_FRENCH,         SUBLANG_NEUTRAL,              1252 },
     { LANG_GAELIC,         SUBLANG_NEUTRAL,              1252 },
@@ -357,6 +358,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_LATVIAN,        SUBLANG_NEUTRAL,              1257 },
     { LANG_LITHUANIAN,     SUBLANG_NEUTRAL,              1257 },
     { LANG_MACEDONIAN,     SUBLANG_NEUTRAL,              1251 },
+    { LANG_NEUTRAL,        SUBLANG_NEUTRAL,              1252 },
     { LANG_NORWEGIAN,      SUBLANG_NEUTRAL,              1252 },
     { LANG_POLISH,         SUBLANG_NEUTRAL,              1250 },
     { LANG_PORTUGUESE,     SUBLANG_NEUTRAL,              1252 },
@@ -371,6 +373,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_THAI,           SUBLANG_NEUTRAL,              874  },
     { LANG_TURKISH,        SUBLANG_NEUTRAL,              1254 },
     { LANG_UKRAINIAN,      SUBLANG_NEUTRAL,              1251 },
+    { LANG_VIETNAMESE,     SUBLANG_NEUTRAL,              1258 },
     { LANG_WALON,          SUBLANG_NEUTRAL,              1252 },
     { LANG_WELSH,          SUBLANG_NEUTRAL,              1252 }
 };
@@ -392,13 +395,8 @@ void set_language( unsigned short lang, unsigned short sublang )
     }
 
     if (!cp) cp = defcp;
-    if (!cp) error( "No codepage value for language %04x", MAKELANGID(lang,sublang) );
-    else
-    {
-        if ((current_codepage = cp_get_table( cp ))) return;
+    if (!cp)
+        error( "No codepage value for language %04x", MAKELANGID(lang,sublang) );
+    if (!(current_codepage = cp_get_table( cp )))
         error( "Bad codepage %d for language %04x", cp, MAKELANGID(lang,sublang) );
-    }
-    /* now find a default code page */
-    current_codepage = cp_get_table( lang2cps[0].cp );
-    assert( current_codepage );
 }
