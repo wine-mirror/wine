@@ -2968,7 +2968,7 @@ typedef struct _LUID {
 typedef struct _LUID_AND_ATTRIBUTES {
   LUID   Luid;
   DWORD  Attributes;
-} LUID_AND_ATTRIBUTES;
+} LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
 #include "poppack.h"
 
 /*

@@ -472,13 +472,21 @@ NTSTATUS WINAPI RtlOemStringToUnicodeString( UNICODE_STRING *uni,
 /**************************************************************************
  *	RtlUnicodeStringToAnsiString   (NTDLL.@)
  *
+ * Converts an Unicode string to an Ansi string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. ansi contains the converted string
+ *  Failure: STATUS_BUFFER_OVERFLOW if doalloc is FALSE and ansi is too small.
+ *           STATUS_NO_MEMORY if doalloc is TRUE and the allocation fails.
+ *
  * NOTES
- *  This function always writes a terminating NUL.
- *  Performs a partial copy if ansi is too small.
+ *  This function always writes a terminating '\0'.
+ *  It performs a partial copy if ansi is too small.
  */
-NTSTATUS WINAPI RtlUnicodeStringToAnsiString( STRING *ansi,
-                                              const UNICODE_STRING *uni,
-                                              BOOLEAN doalloc )
+NTSTATUS WINAPI RtlUnicodeStringToAnsiString(
+    STRING *ansi,              /* [I/O] Destination for the Ansi string */
+    const UNICODE_STRING *uni, /* [I]   Unicode string to be converted */
+    BOOLEAN doalloc)           /* [I]   TRUE=Allocate new buffer for ansi, FALSE=Use existing buffer */
 {
     NTSTATUS ret = STATUS_SUCCESS;
     DWORD len = RtlUnicodeStringToAnsiSize( uni );
@@ -515,8 +523,8 @@ NTSTATUS WINAPI RtlUnicodeStringToAnsiString( STRING *ansi,
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. oem contains the converted string
- *  Failure: STATUS_BUFFER_OVERFLOW if doalloc is FALSE and oem is too small.
- *           STATUS_NO_MEMORY if doalloc is TRUE and allocation fails.
+ *  Failure: STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and oem is too small.
+ *           STATUS_NO_MEMORY, if doalloc is TRUE and allocation fails.
  *
  * NOTES
  *   If doalloc is TRUE, the length allocated is uni->Length + 1.
@@ -993,66 +1001,139 @@ DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
 
 
 /**************************************************************************
- *      RtlAppendStringToString   (NTDLL.@)
+ *      RtlAppendAsciizToString   (NTDLL.@)
+ *
+ * Concatenates a buffered character string and a '\0' terminated character
+ * string
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. src is appended to dest.
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *                  to hold the concatenated string.
+ *
+ * NOTES
+ *  if src is NULL dest is unchanged.
+ *  dest is never '\0' terminated.
  */
-NTSTATUS WINAPI RtlAppendStringToString( STRING *dst, const STRING *src )
+NTSTATUS WINAPI RtlAppendAsciizToString(
+    STRING *dest, /* [I/O] Buffered character string to which src is concatenated */
+    LPCSTR src)   /* [I]   '\0' terminated character string to be concatenated */
 {
-    unsigned int len = src->Length + dst->Length;
-    if (len > dst->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
-    memcpy( dst->Buffer + dst->Length, src->Buffer, src->Length );
-    dst->Length = len;
+    if (src != NULL) {
+        unsigned int src_len = strlen(src);
+        unsigned int dest_len  = src_len + dest->Length;
+
+        if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
+        memcpy(dest->Buffer + dest->Length, src, src_len);
+        dest->Length = dest_len;
+    } /* if */
     return STATUS_SUCCESS;
 }
 
 
 /**************************************************************************
- *      RtlAppendAsciizToString   (NTDLL.@)
+ *      RtlAppendStringToString   (NTDLL.@)
+ *
+ * Concatenates two buffered character strings
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. src is appended to dest.
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *                  to hold the concatenated string.
+ *
+ * NOTES
+ *  if src->length is zero dest is unchanged.
+ *  dest is never '\0' terminated.
  */
-NTSTATUS WINAPI RtlAppendAsciizToString( STRING *dst, LPCSTR src )
+NTSTATUS WINAPI RtlAppendStringToString(
+    STRING *dest,       /* [I/O] Buffered character string to which src is concatenated */
+    const STRING *src)  /* [I]   Buffered character string to be concatenated */
 {
-    if (src)
-    {
-        unsigned int srclen = strlen(src);
-        unsigned int total  = srclen + dst->Length;
-        if (total > dst->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
-        memcpy( dst->Buffer + dst->Length, src, srclen );
-        dst->Length = total;
-    }
+    if (src->Length != 0) {
+	unsigned int dest_len = src->Length + dest->Length;
+
+	if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
+	memcpy(dest->Buffer + dest->Length, src->Buffer, src->Length);
+	dest->Length = dest_len;
+    } /* if */
     return STATUS_SUCCESS;
 }
 
 
 /**************************************************************************
  *      RtlAppendUnicodeToString   (NTDLL.@)
+ *
+ * Concatenates an buffered unicode string and a '\0' terminated unicode 
+ * string
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. src is appended to dest.
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *                  to hold the concatenated string.
+ *
+ * NOTES
+ *  if src is NULL dest is unchanged.
+ *  dest is '\0' terminated when the MaximumLength allowes it.
+ *  When dest fits exactly in MaximumLength characters the '\0' is ommitted.
+ *
+ * DIFFERENCES
+ *  Does not write in the src->Buffer beyond MaximumLength when
+ *  MaximumLength is odd as the native function does.
  */
-NTSTATUS WINAPI RtlAppendUnicodeToString( UNICODE_STRING *dst, LPCWSTR src )
+NTSTATUS WINAPI RtlAppendUnicodeToString(
+    UNICODE_STRING *dest, /* [I/O] Buffered unicode string to which src is concatenated */
+    LPCWSTR src)          /* [I]   '\0' terminated unicode string to be concatenated */
 {
-    if (src)
-    {
-        unsigned int srclen = strlenW(src) * sizeof(WCHAR);
-        unsigned int total  = srclen + dst->Length;
-        if (total > dst->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
-        memcpy( dst->Buffer + dst->Length/sizeof(WCHAR), src, srclen );
-        dst->Length = total;
+    if (src != NULL) {
+        unsigned int src_len = strlenW(src) * sizeof(WCHAR);
+        unsigned int dest_len  = src_len + dest->Length;
+
+        if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
+        memcpy(dest->Buffer + dest->Length/sizeof(WCHAR), src, src_len);
+        dest->Length = dest_len;
         /* append terminating NULL if enough space */
-        if (total < dst->MaximumLength) dst->Buffer[total / sizeof(WCHAR)] = 0;
-    }
+        if (dest_len + sizeof(WCHAR) <= dest->MaximumLength) {
+	    dest->Buffer[dest_len / sizeof(WCHAR)] = 0;
+	} /* if */
+    } /* if */
     return STATUS_SUCCESS;
 }
 
 
 /**************************************************************************
  *      RtlAppendUnicodeStringToString   (NTDLL.@)
+ *
+ * Concatenates two buffered unicode strings
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. src is appended to dest.
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *                  to hold the concatenated string.
+ *
+ * NOTES
+ *  if src->length is zero dest is unchanged.
+ *  dest is '\0' terminated when the MaximumLength allowes it.
+ *  When dest fits exactly in MaximumLength characters the '\0' is ommitted.
+ *
+ * DIFFERENCES
+ *  Does not write in the src->Buffer beyond MaximumLength when
+ *  MaximumLength is odd as the native function does.
  */
-NTSTATUS WINAPI RtlAppendUnicodeStringToString( UNICODE_STRING *dst, const UNICODE_STRING *src )
+NTSTATUS WINAPI RtlAppendUnicodeStringToString(
+    UNICODE_STRING *dest,      /* [I/O] Buffered unicode string to which src is concatenated */
+    const UNICODE_STRING *src) /* [I]   Buffered unicode string to be concatenated */
 {
-    unsigned int len = src->Length + dst->Length;
-    if (src->Length == 0) return STATUS_SUCCESS;
-    if (len > dst->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
-    memcpy( dst->Buffer + dst->Length/sizeof(WCHAR), src->Buffer, src->Length );
-    dst->Length = len;
-    /* append terminating NULL if enough space */
-    if (len < dst->MaximumLength) dst->Buffer[len / sizeof(WCHAR)] = 0;
+    if (src->Length != 0) {
+	unsigned int dest_len = src->Length + dest->Length;
+
+	if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
+	memcpy(dest->Buffer + dest->Length/sizeof(WCHAR), src->Buffer, src->Length);
+	dest->Length = dest_len;
+	/* append terminating NULL if enough space */
+	if (dest_len + sizeof(WCHAR) <= dest->MaximumLength) {
+	    dest->Buffer[dest_len / sizeof(WCHAR)] = 0;
+	} /* if */
+    } /* if */
     return STATUS_SUCCESS;
 }
 

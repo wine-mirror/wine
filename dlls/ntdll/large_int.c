@@ -183,56 +183,57 @@ LONGLONG WINAPI RtlExtendedIntegerMultiply( LONGLONG a, INT b )
 /******************************************************************************
  *        RtlExtendedMagicDivide   (NTDLL.@)
  *
- * This function computes (a * b) >> (64 + shift)
+ * Allows replacing a division by a longlong constant with a multiplication by
+ * the inverse constant.
  *
  * RETURNS
- *  (a * b) >> (64 + shift)
+ *  (dividend * inverse_divisor) >> (64 + shift)
  *
  * NOTES
- *  This allows replacing a division by a longlong constant
- *  by a multiplication by the inverse constant.
+ *  If the divisor of a division is constant, the constants inverse_divisor and
+ *  shift must be chosen such that inverse_divisor = 2^(64 + shift) / divisor.
+ *  Then we have RtlExtendedMagicDivide(dividend,inverse_divisor,shift) ==
+ *  dividend * inverse_divisor / 2^(64 + shift) == dividend / divisor.
  *
- *  If 'c' is the constant divisor, the constants 'b' and 'shift'
- *  must be chosen such that b = 2^(64+shift) / c.
- *  Then we have RtlExtendedMagicDivide(a,b,shift) == a * b / 2^(64+shift) == a / c.
- *
- *  The Parameter b although defined as LONGLONG is used as ULONGLONG.
+ *  The Parameter inverse_divisor although defined as LONGLONG is used as
+ *  ULONGLONG.
  */
 #define LOWER_32(A) ((A) & 0xffffffff)
 #define UPPER_32(A) ((A) >> 32)
 LONGLONG WINAPI RtlExtendedMagicDivide(
-    LONGLONG a, /* [I] Dividend to be divided by the constant divisor */
-    LONGLONG b, /* [I] Constant computed manually as 2^(64+shift) / divisor */
-    INT shift)  /* [I] Constant shift chosen to make b as big as possible for 64 bits */
+    LONGLONG dividend,        /* [I] Dividend to be divided by the constant divisor */
+    LONGLONG inverse_divisor, /* [I] Constant computed manually as 2^(64+shift) / divisor */
+    INT shift)                /* [I] Constant shift chosen to make inverse_divisor as big as possible for 64 bits */
 {
-    ULONGLONG a_high;
-    ULONGLONG a_low;
-    ULONGLONG b_high;
-    ULONGLONG b_low;
+    ULONGLONG dividend_high;
+    ULONGLONG dividend_low;
+    ULONGLONG inverse_divisor_high;
+    ULONGLONG inverse_divisor_low;
     ULONGLONG ah_bl;
     ULONGLONG al_bh;
     LONGLONG result;
     int positive;
 
-    if (a < 0) {
-	a_high = UPPER_32((ULONGLONG) -a);
-	a_low =  LOWER_32((ULONGLONG) -a);
+    if (dividend < 0) {
+	dividend_high = UPPER_32((ULONGLONG) -dividend);
+	dividend_low =  LOWER_32((ULONGLONG) -dividend);
 	positive = 0;
     } else {
-	a_high = UPPER_32((ULONGLONG) a);
-	a_low =  LOWER_32((ULONGLONG) a);
+	dividend_high = UPPER_32((ULONGLONG) dividend);
+	dividend_low =  LOWER_32((ULONGLONG) dividend);
 	positive = 1;
     } /* if */
-    b_high = UPPER_32((ULONGLONG) b);
-    b_low =  LOWER_32((ULONGLONG) b);
+    inverse_divisor_high = UPPER_32((ULONGLONG) inverse_divisor);
+    inverse_divisor_low =  LOWER_32((ULONGLONG) inverse_divisor);
 
-    ah_bl = a_high * b_low;
-    al_bh = a_low * b_high;
+    ah_bl = dividend_high * inverse_divisor_low;
+    al_bh = dividend_low * inverse_divisor_high;
 
-    result = (LONGLONG) ((a_high * b_high +
+    result = (LONGLONG) ((dividend_high * inverse_divisor_high +
 	    UPPER_32(ah_bl) +
 	    UPPER_32(al_bh) +
-	    UPPER_32(LOWER_32(ah_bl) + LOWER_32(al_bh) + UPPER_32(a_low * b_low))) >> shift);
+	    UPPER_32(LOWER_32(ah_bl) + LOWER_32(al_bh) +
+		     UPPER_32(dividend_low * inverse_divisor_low))) >> shift);
 
     if (positive) {
 	return result;

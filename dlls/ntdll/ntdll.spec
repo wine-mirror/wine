@@ -286,8 +286,8 @@
 @ stdcall RtlAppendUnicodeToString(ptr wstr)
 @ stub RtlApplyRXact
 @ stub RtlApplyRXactNoFlush
-@ stub RtlAreAllAccessesGranted
-@ stub RtlAreAnyAccessesGranted
+@ stdcall RtlAreAllAccessesGranted(long long)
+@ stdcall RtlAreAnyAccessesGranted(long long)
 @ stdcall RtlAreBitsClear(ptr long long)
 @ stdcall RtlAreBitsSet(ptr long long)
 @ stdcall RtlAssert(ptr ptr long long)
@@ -298,7 +298,7 @@
 @ stdcall RtlClearBits(ptr long long)
 @ stdcall RtlCompactHeap(long long)
 @ stdcall RtlCompareMemory(ptr ptr long)
-@ stdcall RtlCompareMemoryUlong(ptr ptr long)
+@ stdcall RtlCompareMemoryUlong(ptr long long)
 @ stdcall RtlCompareString(ptr ptr long)
 @ stdcall RtlCompareUnicodeString (ptr ptr long)
 @ stub RtlCompressBuffer
@@ -310,8 +310,8 @@
 @ stdcall RtlConvertSidToUnicodeString(ptr ptr long)
 @ stub RtlConvertUiListToApiList
 @ stdcall -ret64 RtlConvertUlongToLargeInteger(long)
-@ stub RtlCopyLuid
-@ stub RtlCopyLuidAndAttributesArray
+@ stdcall RtlCopyLuid(ptr ptr)
+@ stdcall RtlCopyLuidAndAttributesArray(long ptr ptr)
 @ stub RtlCopySecurityDescriptor
 @ stdcall RtlCopySid(long ptr ptr)
 @ stub RtlCopySidAndAttributesArray
@@ -363,7 +363,7 @@
 @ stub RtlEnumerateGenericTableWithoutSplaying
 @ stdcall RtlEqualComputerName(ptr ptr)
 @ stdcall RtlEqualDomainName(ptr ptr)
-@ stub RtlEqualLuid
+@ stdcall RtlEqualLuid(ptr ptr)
 @ stdcall RtlEqualPrefixSid(ptr ptr)
 @ stdcall RtlEqualSid (long long)
 @ stdcall RtlEqualString(ptr ptr long)
@@ -461,7 +461,7 @@
 @ stdcall RtlLockHeap(long)
 @ stub RtlLookupElementGenericTable
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr)
-@ stub RtlMapGenericMask
+@ stdcall RtlMapGenericMask(long ptr)
 @ stdcall RtlMoveMemory(ptr ptr long)
 @ stdcall RtlMultiByteToUnicodeN(ptr long ptr ptr long)
 @ stdcall RtlMultiByteToUnicodeSize(ptr str long)
@@ -493,7 +493,7 @@
 @ stdcall RtlQueryTimeZoneInformation(ptr)
 @ stdcall RtlRaiseException(ptr)
 @ stdcall RtlRaiseStatus(long)
-@ stub RtlRandom
+@ stdcall RtlRandom(ptr)
 @ stdcall RtlReAllocateHeap(long long ptr long)
 @ stub RtlRealPredecessor
 @ stub RtlRealSuccessor
