@@ -1251,7 +1251,9 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, LPCSTR name, WNDCLASSEX16
     wc->lpszClassName  = (SEGPTR)CLASS_GetClassNameA( classPtr );
     if (HIWORD(wc->lpszClassName))  /* Make it a SEGPTR */
         wc->lpszClassName = SEGPTR_GET( (LPSTR)wc->lpszClassName );
-    return TRUE;
+
+    /* We must return the atom of the class here instead of just TRUE. */
+    return atom;
 }
 
 
@@ -1281,7 +1283,9 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name,
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
     wc->lpszClassName  = CLASS_GetClassNameA( classPtr );
-    return TRUE;
+    
+    /* We must return the atom of the class here instead of just TRUE. */
+    return atom;
 }
 
 
@@ -1311,7 +1315,9 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name,
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );
     wc->lpszClassName = CLASS_GetClassNameW( classPtr );;
-    return TRUE;
+    
+    /* We must return the atom of the class here instead of just TRUE. */
+    return atom;
 }
 
 
