@@ -944,9 +944,6 @@ static VOID LISTVIEW_UnsupportedStyles(LONG lStyle)
   if ((LVS_TYPESTYLEMASK & lStyle) == LVS_NOSCROLL)
     FIXME("  LVS_NOSCROLL\n");
 
-  if ((LVS_TYPESTYLEMASK & lStyle) == LVS_NOSORTHEADER)
-    FIXME("  LVS_NOSORTHEADER\n");
-
   if (lStyle & LVS_EDITLABELS)
     FIXME("  LVS_EDITLABELS\n");
 
@@ -7217,10 +7214,8 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
           nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, item_index);
           cx = (nLabelWidth>cx)?nLabelWidth:cx;
         }
-        /* I had to add the '3' to prevent clipping of the end of the
-           line. Probably one of these padding numbers is incorrect. */
         if (infoPtr->himlSmall)
-          cx += WIDTH_PADDING + IMAGE_PADDING + 3;
+          cx += infoPtr->iconSize.cx + IMAGE_PADDING;
       }
       else
       {
@@ -7306,9 +7301,7 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
              up the positioning, so I suspect no applications actually use
              them. */
           if (item_index == 0 && infoPtr->himlSmall)
-            /* I had to add the '3' to prevent clipping of the end of the
-               line. Probably one of these padding numbers is incorrect. */
-            nLabelWidth += WIDTH_PADDING + IMAGE_PADDING + 3;
+            nLabelWidth += infoPtr->iconSize.cx + IMAGE_PADDING;
           cx = (nLabelWidth>cx)?nLabelWidth:cx;
         }
       }
@@ -8005,9 +7998,9 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   
   /* create header */
   infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, (LPCWSTR)NULL, 
-                                      WS_CHILD | HDS_HORZ | HDS_BUTTONS, 
-                                      0, 0, 0, 0, hwnd, (HMENU)0, 
-                                      lpcs->hInstance, NULL);
+    WS_CHILD | HDS_HORZ | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS), 
+    0, 0, 0, 0, hwnd, (HMENU)0, 
+    lpcs->hInstance, NULL);
 
   /* set header font */
   SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, 
@@ -8696,7 +8689,7 @@ static LRESULT LISTVIEW_LButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
 
     if(infoPtr->nEditLabelItem != -1)
     {
-      if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem)
+      if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem && lvHitTestInfo.flags & LVHT_ONITEMLABEL)
         LISTVIEW_EditLabelT(hwnd, lvHitTestInfo.iItem, TRUE);
       infoPtr->nEditLabelItem = -1;
     }
@@ -8804,7 +8797,7 @@ static LRESULT LISTVIEW_Notify(HWND hwnd, INT nCtrlId, LPNMHDR lpnmh)
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
       InvalidateRect(hwnd, NULL, TRUE);
     }
-    else if(lpnmh->code ==  HDN_ITEMCLICKW)
+    else if(lpnmh->code ==  HDN_ITEMCLICKW || lpnmh->code ==  HDN_ITEMCLICKA)
     {
         /* Handle sorting by Header Column */
         NMLISTVIEW nmlv;
