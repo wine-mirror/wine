@@ -39,7 +39,8 @@ WND_DRIVER X11DRV_WND_Driver =
   X11DRV_WND_SurfaceCopy,
   X11DRV_WND_SetDrawable,
   X11DRV_WND_SetHostAttr,
-  X11DRV_WND_IsSelfClipping
+  X11DRV_WND_IsSelfClipping,
+  X11DRV_WND_SetWindowRgn
 };
 
 

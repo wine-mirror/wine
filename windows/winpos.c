@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include "winerror.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winerror.h"
@@ -271,38 +272,74 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 
 
 /***********************************************************************
- *           GetWindowRgn 
+ *           GetWindowRgn   (USER32)
  */
-BOOL WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
-
+int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
 {
-  RECT    rect;
-  WND * wndPtr = WIN_FindWndPtr( hwnd ); 
-  if (!wndPtr) return (ERROR);
-
-  FIXME("GetWindowRgn: doesn't really do regions\n"); 
-  
-  memset (&rect, 0, sizeof(rect));
-
-  GetWindowRect ( hwnd, &rect );
-
-  FIXME("Check whether a valid region here\n");
-
-  SetRectRgn ( hrgn, rect.left, rect.top, rect.right, rect.bottom );
-
-  WIN_ReleaseWndPtr(wndPtr);
-  return (SIMPLEREGION);
+    int nRet = ERROR;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    if (wndPtr)
+    {
+        if (wndPtr->hrgnWnd) nRet = CombineRgn( hrgn, wndPtr->hrgnWnd, 0, RGN_COPY );
+        WIN_ReleaseWndPtr(wndPtr);
+    }
+    return nRet;
 }
 
 /***********************************************************************
- *           SetWindowRgn 
+ *           SetWindowRgn   (USER32)
  */
-INT WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn,BOOL bRedraw)
-
+int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 {
+    int ret = FALSE;
+    RECT tempRect;
 
-  FIXME("SetWindowRgn: stub\n"); 
-  return TRUE;
+    WND *wndPtr  = WIN_FindWndPtr(hwnd);
+
+    if (!wndPtr) return FALSE;
+
+    /* a region exists for this window */
+    if (hrgn != 0 && hrgn == wndPtr->hrgnWnd)
+    {
+        /* can't replace actual region with same region 
+           since we're now owner of that region 
+        */
+        SetLastError(ERROR_INVALID_HANDLE);
+        goto done;
+    }
+
+    if (wndPtr->hrgnWnd)
+    {
+        /* delete previous region */
+        DeleteObject(wndPtr->hrgnWnd);
+        wndPtr->hrgnWnd = 0;
+    }
+
+    /* we'd like to set it back to 0 */
+    if (hrgn == 0)
+    {
+        GetWindowRect(hwnd, &tempRect);
+    }
+    else
+    {
+        /* verify that region really exists */
+        if (GetRgnBox(hrgn, &tempRect) == ERROR) goto done;
+    }
+
+    /* valid region handle */
+    wndPtr->hrgnWnd = hrgn;
+    SetWindowPos( hwnd, NULL, tempRect.left, tempRect.top,
+                  tempRect.right  - tempRect.left, tempRect.bottom - tempRect.top,
+                  SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE |
+                  SWP_NOZORDER | (bRedraw ? 0 : SWP_NOREDRAW) );
+
+    wndPtr->pDriver->pSetWindowRgn(wndPtr, hrgn);
+
+    ret = TRUE;
+
+ done:
+    WIN_ReleaseWndPtr(wndPtr);
+    return ret;
 }
 
 /***********************************************************************

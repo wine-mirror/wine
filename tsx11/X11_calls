@@ -143,6 +143,8 @@ XSetWMHints
 XSetWMProperties
 XSetWMProtocols
 XSetWMSizeHints
+XShapeCombineMask
+XShapeCombineRectangles
 XShmAttach
 XShmCreateImage
 XShmCreatePixmap

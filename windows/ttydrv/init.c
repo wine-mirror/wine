@@ -39,7 +39,8 @@ WND_DRIVER TTYDRV_WND_Driver =
   TTYDRV_WND_ScrollWindow,
   TTYDRV_WND_SetDrawable,
   TTYDRV_WND_SetHostAttr,
-  TTYDRV_WND_IsSelfClipping
+  TTYDRV_WND_IsSelfClipping,
+  TTYDRV_WND_SetWindowRgn
 };
 
 

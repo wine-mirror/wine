@@ -17,7 +17,7 @@
 $X11_include_dir = "/usr/X11/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode");
+@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape");
 
 # First read list of wanted function names.
 
@@ -80,6 +80,14 @@ foreach $name (@dolist) {
 	$pre_file = "#include \"windef.h\"\n#ifdef HAVE_LIBXXF86VM\n#define XMD_H\n#include \"basetsd.h\"\n";
 	$post_file = "#endif /* defined(HAVE_LIBXXF86VM) */\n";
     }
+    if($name eq "shape") {
+        $extensions_dir = "extensions/";
+        $pre_file = "#ifdef HAVE_LIBXSHAPE\n#include <X11/IntrinsicP.h>\n";
+        $post_file = "#endif /* defined(HAVE_LIBXSHAPE) */\n";
+        $inc_name = "shape";
+    }
+
+
 
     print OUTH <<END;
 /*

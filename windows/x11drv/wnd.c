@@ -12,6 +12,7 @@
 
 #include "ts_xlib.h"
 #include "ts_xutil.h"
+#include "ts_shape.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -1010,3 +1011,62 @@ void X11DRV_WND_DockWindow(WND *wndPtr)
   );
 }
 
+
+/***********************************************************************
+ *		X11DRV_WND_SetWindowRgn
+ *
+ * Assign specified region to window (for non-rectangular windows)
+ */
+void X11DRV_WND_SetWindowRgn(WND *wndPtr, HRGN hrgnWnd)
+{
+#ifdef HAVE_LIBXSHAPE
+    Window win = X11DRV_WND_GetXWindow(wndPtr);
+
+    if (!win) return;
+
+    if (!hrgnWnd)
+    {
+        TSXShapeCombineMask( display, win, ShapeBounding, 0, 0, None, ShapeSet );
+    }
+    else
+    {
+        XRectangle *aXRect;
+        DWORD size;
+        DWORD dwBufferSize = GetRegionData(hrgnWnd, 0, NULL);
+        PRGNDATA pRegionData = HeapAlloc(GetProcessHeap(), 0, dwBufferSize);
+        if (!pRegionData) return;
+
+        GetRegionData(hrgnWnd, dwBufferSize, pRegionData);
+        size = pRegionData->rdh.nCount;
+        /* convert region's "Windows rectangles" to XRectangles */
+        aXRect = HeapAlloc(GetProcessHeap(), 0, size * sizeof(*aXRect) );
+        if (aXRect)
+        {
+            XRectangle* pCurrRect = aXRect;
+            RECT *pRect = (RECT*) pRegionData->Buffer;
+            for (; pRect < ((RECT*) pRegionData->Buffer) + size ; ++pRect, ++pCurrRect)
+            {
+                pCurrRect->x      = pRect->left;
+                pCurrRect->y      = pRect->top;
+                pCurrRect->height = pRect->bottom - pRect->top;
+                pCurrRect->width  = pRect->right  - pRect->left;
+
+                TRACE("Rectangle %04d of %04ld data: X=%04d, Y=%04d, Height=%04d, Width=%04d.\n",
+                      pRect - (RECT*) pRegionData->Buffer,
+                      size,
+                      pCurrRect->x,
+                      pCurrRect->y,
+                      pCurrRect->height,
+                      pCurrRect->width);
+            }
+
+            /* shape = non-rectangular windows (X11/extensions) */
+            TSXShapeCombineRectangles( display, win, ShapeBounding, 
+                                       0, 0, aXRect,
+                                       pCurrRect - aXRect, ShapeSet, YXBanded );
+            HeapFree(GetProcessHeap(), 0, aXRect );
+        }
+        HeapFree(GetProcessHeap(), 0, pRegionData);
+    }
+#endif  /* HAVE_LIBXSHAPE */
+}

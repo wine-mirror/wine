@@ -201,5 +201,6 @@ extern void TTYDRV_WND_ScrollWindow(struct tagWND *wndPtr, struct tagDC *dcPtr, 
 extern void TTYDRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL bSetClipOrigin);
 extern BOOL TTYDRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 extern BOOL TTYDRV_WND_IsSelfClipping(struct tagWND *wndPtr);
+extern void TTYDRV_WND_SetWindowRgn(struct tagWND *wndPtr, HRGN hrgnWnd);
 
 #endif /* !defined(__WINE_TTYDRV_H) */

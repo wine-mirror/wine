@@ -78,6 +78,7 @@ typedef struct tagWND
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN16         hrgnUpdate;    /* Update region */
+    HRGN           hrgnWnd;       /* window's region */
     HWND         hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
@@ -131,6 +132,7 @@ typedef struct tagWND_DRIVER
     void   (*pSetDrawable)(WND *, struct tagDC *, WORD, BOOL);
     BOOL   (*pSetHostAttr)(WND *, INT haKey, INT value);
     BOOL (*pIsSelfClipping)(WND *);
+    void   (*pSetWindowRgn)(WND *, const HRGN);
 } WND_DRIVER;
 
 extern WND_DRIVER *WND_Driver;

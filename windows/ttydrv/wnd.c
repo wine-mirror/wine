@@ -241,3 +241,11 @@ BOOL TTYDRV_WND_IsSelfClipping(WND *wndPtr)
 
   return FALSE;
 }
+
+/***********************************************************************
+ *		TTYDRV_WND_SetWindowRgn
+ */
+void TTYDRV_WND_SetWindowRgn(struct tagWND *wndPtr, HRGN hrgnWnd)
+{
+}
+

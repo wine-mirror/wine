@@ -13,6 +13,7 @@
 #include <X11/cursorfont.h>
 #include "ts_xlib.h"
 #include "ts_xutil.h"
+#include "ts_shape.h"
 
 #include "winbase.h"
 #include "wine/winbase16.h"

@@ -177,6 +177,16 @@ then
             AC_MSG_WARN([Xshm extension not found!!])
         )
 
+        dnl *** Check for X shape extension
+        AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/shape.h,
+            [ dnl *** If X11/extensions/shape.h exists...
+              AC_CHECK_LIB(Xext,XShapeQueryExtension,
+	      AC_DEFINE(HAVE_LIBXSHAPE),,
+	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+	    ],
+	    AC_MSG_WARN([XShape extension found!!])
+	)
+        
         dnl *** Check for XFree86 DGA / DGA 2.0 extension
         AC_CHECK_HEADERS(X11/extensions/xf86dga.h,
             [ dnl *** If X11/extensions/xf86dga.h exists, check 

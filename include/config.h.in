@@ -68,6 +68,9 @@
 /* Define if you have the X Shm extension */
 #undef HAVE_LIBXXSHM
 
+/* Define if you have the X Shape extension */
+#undef HAVE_LIBXSHAPE                         
+
 /* Define if you have the Xxf86vm library */
 #undef HAVE_LIBXXF86VM
 
@@ -256,6 +259,9 @@
 
 /* Define if you have the <X11/extensions/XShm.h> header file.  */
 #undef HAVE_X11_EXTENSIONS_XSHM_H
+
+/* Define if you have the <X11/extensions/shape.h> header file.  */
+#undef HAVE_X11_EXTENSIONS_SHAPE_H
 
 /* Define if you have the <X11/extensions/xf86dga.h> header file.  */
 #undef HAVE_X11_EXTENSIONS_XF86DGA_H

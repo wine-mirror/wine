@@ -431,6 +431,7 @@ extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD
 extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 extern BOOL X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 extern void X11DRV_WND_DockWindow(struct tagWND *wndPtr);
+extern void X11DRV_WND_SetWindowRgn(struct tagWND *wndPtr, HRGN hrgnWnd); 
 
 extern int X11DRV_EVENT_PrepareShmCompletion( Drawable dw );
 extern void X11DRV_EVENT_WaitShmCompletion( int compl );
