@@ -195,6 +195,25 @@ static void add_extra_undef_symbols(void)
     }
 }
 
+/* warn if a given dll is not used, but check forwards first */
+static void warn_unused( const char *dllname )
+{
+    int i;
+    size_t len = strlen(dllname);
+    const char *p = strchr( dllname, '.' );
+    if (p && !strcasecmp( p, ".dll" )) len = p - dllname;
+
+    for (i = Base; i <= Limit; i++)
+    {
+        ORDDEF *odp = Ordinals[i];
+        if (!odp || odp->type != TYPE_FORWARD) continue;
+        if (!strncasecmp( odp->u.fwd.link_name, dllname, len ) &&
+            odp->u.fwd.link_name[len] == '.')
+            return;  /* found an import, do not warn */
+    }
+    warning( "%s imported but no symbols used\n", dllname );
+}
+
 /* read in the list of undefined symbols */
 void read_undef_symbols( const char *name )
 {
@@ -249,7 +268,7 @@ int resolve_imports( FILE *outfile )
             else undef_symbols[j - off] = undef_symbols[j];
         }
         nb_undef_symbols -= off;
-        if (!off) warning( "%s imported but no symbols used\n", imp->dll );
+        if (!off) warn_unused( imp->dll );
     }
     return 1;
 }

@@ -358,12 +358,12 @@ static void output_stub_funcs( FILE *outfile )
  *
  * Build a Win32 C file from a spec file.
  */
-void BuildSpec32File( FILE *outfile, int output_main )
+void BuildSpec32File( FILE *outfile )
 {
     ORDDEF *odp;
     int i, fwd_size = 0, have_regs = FALSE;
     int nr_exports, nr_imports, nr_resources, nr_debug;
-    int characteristics, subsystem;
+    int characteristics, subsystem, has_imports;
     const char *init_func;
     DWORD page_size;
 
@@ -379,6 +379,8 @@ void BuildSpec32File( FILE *outfile, int output_main )
 
     AssignOrdinals();
     nr_exports = Base <= Limit ? Limit - Base + 1 : 0;
+
+    has_imports = resolve_imports( outfile );
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
@@ -498,7 +500,7 @@ void BuildSpec32File( FILE *outfile, int output_main )
                  "    _ARGC = __wine_get_main_args( &_ARGV );\n"
                  "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
                  "}\n\n", init_func, init_func );
-        if (output_main)
+        if (!has_imports)
             fprintf( outfile,
                      "int main( int argc, char *argv[] )\n"
                      "{\n"
@@ -510,7 +512,7 @@ void BuildSpec32File( FILE *outfile, int output_main )
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
         break;
     case SPEC_MODE_CUIEXE:
-        if (!init_func) init_func = output_main ? "wine_main" : "main";
+        if (!init_func) init_func = has_imports ? "main" : "wine_main";
         fprintf( outfile,
                  "\n#include <winbase.h>\n"
                  "int _ARGC;\n"
@@ -522,7 +524,7 @@ void BuildSpec32File( FILE *outfile, int output_main )
                  "    _ARGC = __wine_get_main_args( &_ARGV );\n"
                  "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
                  "}\n\n", init_func, init_func );
-        if (output_main)
+        if (!has_imports)
             fprintf( outfile,
                      "int main( int argc, char *argv[] )\n"
                      "{\n"

@@ -203,7 +203,7 @@ int main(int argc, char **argv)
                 BuildSpec16File( output_file );
                 break;
             case SPEC_WIN32:
-                BuildSpec32File( output_file, !resolve_imports( output_file ) );
+                BuildSpec32File( output_file );
                 break;
             default: assert(0);
         }

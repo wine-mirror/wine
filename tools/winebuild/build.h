@@ -153,7 +153,7 @@ extern int output_res16_directory( unsigned char *buffer );
 extern void BuildGlue( FILE *outfile, FILE *infile );
 extern void BuildRelays( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile );
-extern void BuildSpec32File( FILE *outfile, int output_main );
+extern void BuildSpec32File( FILE *outfile );
 extern SPEC_TYPE ParseTopLevel( FILE *file );
 
 /* global variables */
