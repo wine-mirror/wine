@@ -766,12 +766,16 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
     {
       HPEN  hnewPen     = CreatePen(PS_DOT, 0, GetSysColor(COLOR_WINDOWTEXT) );
       HPEN  hOldPen     = SelectObject( hdc, hnewPen );
-      POINT points[4]   = {
-        { wineItem->text.left-1,  wineItem->text.top+1 }, 
-        { wineItem->text.right,   wineItem->text.top+1 }, 
-        { wineItem->text.right,   wineItem->text.bottom }, 
-        { wineItem->text.left-1,  wineItem->text.bottom }
-      };
+      POINT points[4];
+      
+      points[0].x = wineItem->text.left-1;
+      points[0].y = wineItem->text.top+1; 
+      points[1].x = wineItem->text.right;
+      points[1].y = wineItem->text.top+1; 
+      points[2].x = wineItem->text.right;
+      points[2].y = wineItem->text.bottom; 
+      points[3].x = wineItem->text.left-1;
+      points[3].y = wineItem->text.bottom;
 
       Polyline (hdc,points,4); 
 
@@ -1598,7 +1602,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
      prevsib=NULL;
 
      switch ((INT)ptdi->hInsertAfter) {
-		case TVI_FIRST: 
+		case (DWORD) TVI_FIRST: 
 			if (wineItem->parent) {
 				wineItem->sibling=parentItem->firstChild;
 				parentItem->firstChild=(HTREEITEM)iItem;
@@ -1609,7 +1613,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			sibItem->upsibling=(HTREEITEM)iItem;
 			break;
 
-		case TVI_SORT:  
+		case (DWORD) TVI_SORT:  
   	  if (sibItem==wineItem) 
         /* 
          * This item is the first child of the level and it 
@@ -1667,7 +1671,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
       }
 
 
-		case TVI_LAST:  
+		case (DWORD) TVI_LAST:  
 			if (sibItem==wineItem) break;
 			while (sibItem->sibling) {
 				prevsib=sibItem;

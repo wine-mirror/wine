@@ -129,10 +129,15 @@ typedef struct tagTHUNK
 
 #include "poppack.h"
 
-#define DECL_THUNK(name,proc,relay) \
-    THUNK name = { 0x58, 0x68, (FARPROC)(proc), 0x50, 0xe9, \
-                   (RELAY)((char *)(relay) - (char *)(&(name).next)), NULL }
-
+#define DECL_THUNK(aname,aproc,arelay) \
+    THUNK aname; \
+    aname.popl_eax = 0x58; \
+    aname.pushl_func = 0x68; \
+    aname.proc = (FARPROC) (aproc); \
+    aname.pushl_eax = 0x50; \
+    aname.jmp = 0xe9; \
+    aname.relay = (RELAY)((char *)(arelay) - (char *)(&(aname).next)); \
+    aname.next = NULL;
 
 static THUNK *firstThunk = NULL;
 
@@ -729,7 +734,7 @@ VOID WINAPI THUNK_MOUSE_Enable( FARPROC16 proc )
         lastProc = proc;
     }
 
-    return MOUSE_Enable( (LPMOUSE_EVENT_PROC)lastThunk );
+    MOUSE_Enable( (LPMOUSE_EVENT_PROC)lastThunk );
 }
 
 /***********************************************************************
@@ -791,7 +796,7 @@ VOID WINAPI THUNK_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
         lastProc = proc;
     }
 
-    return KEYBOARD_Enable( (LPKEYBD_EVENT_PROC)lastThunk, lpKeyState );
+    KEYBOARD_Enable( (LPKEYBD_EVENT_PROC)lastThunk, lpKeyState );
 }
 
 /***********************************************************************

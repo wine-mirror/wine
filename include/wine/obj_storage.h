@@ -247,7 +247,7 @@ ICOM_DEFINE(ILayoutStorage,IUnknown)
 #define ILockBytes_METHODS \
     ICOM_METHOD4(HRESULT,ReadAt,       ULARGE_INTEGER,ulOffset, void*,pv, ULONG,cb, ULONG*,pcbRead) \
     ICOM_METHOD4(HRESULT,WriteAt,      ULARGE_INTEGER,ulOffset, const void*,pv, ULONG,cb, ULONG*,pcbWritten) \
-    ICOM_METHOD (HRESULT,Flush); \
+    ICOM_METHOD (HRESULT,Flush) \
     ICOM_METHOD1(HRESULT,SetSize,      ULARGE_INTEGER,cb) \
     ICOM_METHOD3(HRESULT,LockRegion,   ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
     ICOM_METHOD3(HRESULT,UnlockRegion, ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \

@@ -34,11 +34,11 @@ typedef struct IOleCacheControl IOleCacheControl, *LPOLECACHECONTROL;
  */
 #define ICOM_INTERFACE IOleCache
 #define IOleCache_METHODS \
-	ICOM_METHOD3(HRESULT,Cache, FORMATETC*,pformatetc, DWORD,advf, DWORD*, pdwConnection); \
-	ICOM_METHOD1(HRESULT,Uncache, DWORD,dwConnection); \
-	ICOM_METHOD1(HRESULT,EnumCache, IEnumSTATDATA**,ppenumSTATDATA); \
-	ICOM_METHOD1(HRESULT,InitCache, IDataObject*,pDataObject); \
-	ICOM_METHOD3(HRESULT,SetData, FORMATETC*,pformatetc, STGMEDIUM*,pmedium, BOOL,fRelease);
+	ICOM_METHOD3(HRESULT,Cache, FORMATETC*,pformatetc, DWORD,advf, DWORD*, pdwConnection) \
+	ICOM_METHOD1(HRESULT,Uncache, DWORD,dwConnection) \
+	ICOM_METHOD1(HRESULT,EnumCache, IEnumSTATDATA**,ppenumSTATDATA) \
+	ICOM_METHOD1(HRESULT,InitCache, IDataObject*,pDataObject) \
+	ICOM_METHOD3(HRESULT,SetData, FORMATETC*,pformatetc, STGMEDIUM*,pmedium, BOOL,fRelease)
 #define IOleCache_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleCache_METHODS
@@ -64,8 +64,8 @@ ICOM_DEFINE(IOleCache,IUnknown)
  */
 #define ICOM_INTERFACE IOleCache2
 #define IOleCache2_METHODS \
-	ICOM_METHOD3(HRESULT,UpdateCache, LPDATAOBJECT,pDataObject, DWORD,grfUpdf, LPVOID,pReserved); \
-	ICOM_METHOD1(HRESULT,DiscardCache, DWORD,dwDiscardOptions);
+	ICOM_METHOD3(HRESULT,UpdateCache, LPDATAOBJECT,pDataObject, DWORD,grfUpdf, LPVOID,pReserved) \
+	ICOM_METHOD1(HRESULT,DiscardCache, DWORD,dwDiscardOptions)
 #define IOleCache2_IMETHODS \
 	IOleCache_IMETHODS \
 	IOleCache2_METHODS
@@ -94,8 +94,8 @@ ICOM_DEFINE(IOleCache2,IOleCache)
  */
 #define ICOM_INTERFACE IOleCacheControl
 #define IOleCacheControl_METHODS \
-	ICOM_METHOD1(HRESULT,OnRun, LPDATAOBJECT,pDataObject); \
-	ICOM_METHOD (HRESULT,OnStop);
+	ICOM_METHOD1(HRESULT,OnRun, LPDATAOBJECT,pDataObject) \
+	ICOM_METHOD (HRESULT,OnStop)
 #define IOleCacheControl_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleCacheControl_METHODS

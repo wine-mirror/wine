@@ -565,11 +565,12 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
 	 }
 	 else if( !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED) )
 	 {
-	   XColor color = { color.pixel = (X11DRV_PALETTE_PaletteToXPixel)? X11DRV_PALETTE_PaletteToXPixel[idx] : idx ,
-	                    COLOR_sysPal[idx].peRed << 8,
-			    COLOR_sysPal[idx].peGreen << 8,
-			    COLOR_sysPal[idx].peBlue << 8,
-			    (DoRed | DoGreen | DoBlue) };
+	   XColor color;
+	   color.pixel = (X11DRV_PALETTE_PaletteToXPixel)? X11DRV_PALETTE_PaletteToXPixel[idx] : idx;
+	   color.red = COLOR_sysPal[idx].peRed << 8;
+	   color.green = COLOR_sysPal[idx].peGreen << 8;
+	   color.blue =  COLOR_sysPal[idx].peBlue << 8;
+	   color.flags = DoRed | DoGreen | DoBlue;
 	   TSXStoreColor(display, X11DRV_PALETTE_PaletteXColormap, &color);
 	 }
 	 idx = X11DRV_PALETTE_freeList[idx];

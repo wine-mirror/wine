@@ -24,12 +24,12 @@ typedef struct IStdMarshalInfo IStdMarshalInfo,*LPSTDMARSHALINFO;
  */
 #define ICOM_INTERFACE IMarshal
 #define IMarshal_METHODS \
-    ICOM_METHOD6(HRESULT,GetUnmarshalClass,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, CLSID*,pCid); \
-    ICOM_METHOD6(HRESULT,GetMarshalSizeMax,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, DWORD*,pSize); \
-    ICOM_METHOD6(HRESULT,MarshalInterface,   IStream*,pStm, REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags); \
-    ICOM_METHOD3(HRESULT,UnmarshalInterface, IStream*,pStm, REFIID,riid, void**,ppv); \
-    ICOM_METHOD1(HRESULT,ReleaseMarshalData, IStream*,pStm); \
-    ICOM_METHOD1(HRESULT,DisconnectObject,   DWORD,dwReserved);
+    ICOM_METHOD6(HRESULT,GetUnmarshalClass,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, CLSID*,pCid) \
+    ICOM_METHOD6(HRESULT,GetMarshalSizeMax,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, DWORD*,pSize) \
+    ICOM_METHOD6(HRESULT,MarshalInterface,   IStream*,pStm, REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags) \
+    ICOM_METHOD3(HRESULT,UnmarshalInterface, IStream*,pStm, REFIID,riid, void**,ppv) \
+    ICOM_METHOD1(HRESULT,ReleaseMarshalData, IStream*,pStm) \
+    ICOM_METHOD1(HRESULT,DisconnectObject,   DWORD,dwReserved)
 #define IMarshal_IMETHODS \
     IUnknown_IMETHODS \
     IMarshal_METHODS
@@ -56,7 +56,7 @@ ICOM_DEFINE(IMarshal,IUnknown)
  */
 #define ICOM_INTERFACE IStdMarshalInfo
 #define IStdMarshalInfo_METHODS \
-    ICOM_METHOD3(HRESULT,GetClassForHandler,  DWORD,dwDestContext, void*,pvDestContext, CLSID*,pClsid);
+    ICOM_METHOD3(HRESULT,GetClassForHandler,  DWORD,dwDestContext, void*,pvDestContext, CLSID*,pClsid)
 #define IStdMarshalInfo_IMETHODS \
     IUnknown_IMETHODS \
     IStdMarshalInfo_METHODS

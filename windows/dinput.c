@@ -380,7 +380,7 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
             ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
 	if (!HIWORD(rguid)) {
 		switch ((DWORD)rguid) {
-		case DIPROP_BUFFERSIZE: {
+		case (DWORD) DIPROP_BUFFERSIZE: {
 			LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
 
 			TRACE(dinput,"(buffersize=%ld)\n",pd->dwData);
@@ -1076,7 +1076,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
   
   if (!HIWORD(rguid)) {
     switch ((DWORD)rguid) {
-    case DIPROP_BUFFERSIZE: {
+    case (DWORD) DIPROP_BUFFERSIZE: {
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
       
       TRACE(dinput,"buffersize = %ld\n",pd->dwData);

@@ -503,10 +503,10 @@ enum VARENUM {
  */
 #define ICOM_INTERFACE IDispatch
 #define IDispatch_METHODS \
-  ICOM_METHOD1(HRESULT, GetTypeInfoCount, UINT*, pctinfo); \
-  ICOM_METHOD3(HRESULT, GetTypeInfo, UINT, iTInfo, LCID, lcid, ITypeInfo**, ppTInfo); \
-  ICOM_METHOD5(HRESULT, GetIDsOfNames, REFIID, riid, LPOLESTR*, rgszNames, UINT, cNames, LCID, lcid, DISPID*, rgDispId); \
-  ICOM_METHOD8(HRESULT, Invoke, DISPID, dispIdMember, REFIID, riid, LCID, lcid, WORD, wFlags, DISPPARAMS*, pDispParams, VARIANT*, pVarResult, EXCEPINFO*, pExepInfo, UINT*, puArgErr); 
+  ICOM_METHOD1(HRESULT, GetTypeInfoCount, UINT*, pctinfo) \
+  ICOM_METHOD3(HRESULT, GetTypeInfo, UINT, iTInfo, LCID, lcid, ITypeInfo**, ppTInfo) \
+  ICOM_METHOD5(HRESULT, GetIDsOfNames, REFIID, riid, LPOLESTR*, rgszNames, UINT, cNames, LCID, lcid, DISPID*, rgDispId) \
+  ICOM_METHOD8(HRESULT, Invoke, DISPID, dispIdMember, REFIID, riid, LCID, lcid, WORD, wFlags, DISPPARAMS*, pDispParams, VARIANT*, pVarResult, EXCEPINFO*, pExepInfo, UINT*, puArgErr)
 #define IDispatch_IMETHODS \
 	IUnknown_IMETHODS \
 	IDispatch_METHODS

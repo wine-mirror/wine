@@ -31,12 +31,12 @@ typedef struct IRpcStubBuffer IRpcStubBuffer,*LPRPCSTUBBUFFER;
  */
 #define ICOM_INTERFACE IChannelHook
 #define IChannelHook_METHODS \
-    ICOM_VMETHOD3(ClientGetSize,    REFGUID,uExtent, REFIID,riid, ULONG*,pDataSize); \
-    ICOM_VMETHOD4(ClientFillBuffer, REFGUID,uExtent, REFIID,riid, ULONG*,pDataSize, void*,pDataBuffer); \
-    ICOM_VMETHOD6(ClientNotify,     REFGUID,uExtent, REFIID,riid, ULONG,cbDataSize, void*,pDataBuffer, DWORD,lDataRep, HRESULT,hrFault); \
-    ICOM_VMETHOD5(ServerNotify,     REFGUID,uExtent, REFIID,riid, ULONG,cbDataSize, void*,pDataBuffer, DWORD,lDataRep); \
-    ICOM_VMETHOD4(ServerGetSize,    REFGUID,uExtent, REFIID,riid, HRESULT,hrFault, ULONG*,pDataSize); \
-    ICOM_VMETHOD5(ServerFillBuffer, REFGUID,uExtent, REFIID,riid, ULONG*,pDataSize, void*,pDataBuffer, HRESULT,hrFault);
+    ICOM_VMETHOD3(ClientGetSize,    REFGUID,uExtent, REFIID,riid, ULONG*,pDataSize) \
+    ICOM_VMETHOD4(ClientFillBuffer, REFGUID,uExtent, REFIID,riid, ULONG*,pDataSize, void*,pDataBuffer) \
+    ICOM_VMETHOD6(ClientNotify,     REFGUID,uExtent, REFIID,riid, ULONG,cbDataSize, void*,pDataBuffer, DWORD,lDataRep, HRESULT,hrFault) \
+    ICOM_VMETHOD5(ServerNotify,     REFGUID,uExtent, REFIID,riid, ULONG,cbDataSize, void*,pDataBuffer, DWORD,lDataRep) \
+    ICOM_VMETHOD4(ServerGetSize,    REFGUID,uExtent, REFIID,riid, HRESULT,hrFault, ULONG*,pDataSize) \
+    ICOM_VMETHOD5(ServerFillBuffer, REFGUID,uExtent, REFIID,riid, ULONG*,pDataSize, void*,pDataBuffer, HRESULT,hrFault)
 #define IChannelHook_IMETHODS \
     IUnknown_IMETHODS \
     IChannelHook_METHODS
@@ -63,8 +63,8 @@ ICOM_DEFINE(IChannelHook,IUnknown)
  */
 #define ICOM_INTERFACE IPSFactoryBuffer
 #define IPSFactoryBuffer_METHODS \
-    ICOM_METHOD4(HRESULT,CreateProxy, IUnknown*,pUnkOuter, REFIID,riid, IRpcProxyBuffer**,ppProxy, void**,ppv); \
-    ICOM_METHOD3(HRESULT,CreateStub,  REFIID,riid, IUnknown*,pUnkServer, IRpcStubBuffer**,ppStub);
+    ICOM_METHOD4(HRESULT,CreateProxy, IUnknown*,pUnkOuter, REFIID,riid, IRpcProxyBuffer**,ppProxy, void**,ppv) \
+    ICOM_METHOD3(HRESULT,CreateStub,  REFIID,riid, IUnknown*,pUnkServer, IRpcStubBuffer**,ppStub)
 #define IPSFactoryBuffer_IMETHODS \
     IUnknown_IMETHODS \
     IPSFactoryBuffer_METHODS
@@ -100,11 +100,11 @@ typedef struct tagRPCOLEMESSAGE
 
 #define ICOM_INTERFACE IRpcChannelBuffer
 #define IRpcChannelBuffer_METHODS \
-    ICOM_METHOD2(HRESULT,GetBuffer,   RPCOLEMESSAGE*,pMessage, REFIID,riid); \
-    ICOM_METHOD2(HRESULT,SendReceive, RPCOLEMESSAGE*,pMessage, ULONG*,pStatus); \
-    ICOM_METHOD1(HRESULT,FreeBuffer,  RPCOLEMESSAGE*,pMessage); \
-    ICOM_METHOD2(HRESULT,GetDestCtx,  DWORD*,pdwDestContext, void**,ppvDestContext); \
-    ICOM_METHOD (HRESULT,IsConnected);
+    ICOM_METHOD2(HRESULT,GetBuffer,   RPCOLEMESSAGE*,pMessage, REFIID,riid) \
+    ICOM_METHOD2(HRESULT,SendReceive, RPCOLEMESSAGE*,pMessage, ULONG*,pStatus) \
+    ICOM_METHOD1(HRESULT,FreeBuffer,  RPCOLEMESSAGE*,pMessage) \
+    ICOM_METHOD2(HRESULT,GetDestCtx,  DWORD*,pdwDestContext, void**,ppvDestContext) \
+    ICOM_METHOD (HRESULT,IsConnected)
 #define IRpcChannelBuffer_IMETHODS \
     IUnknown_IMETHODS \
     IRpcChannelBuffer_METHODS
@@ -130,8 +130,8 @@ ICOM_DEFINE(IRpcChannelBuffer,IUnknown)
  */
 #define ICOM_INTERFACE IRpcProxyBuffer
 #define IRpcProxyBuffer_METHODS \
-    ICOM_METHOD1(HRESULT,Connect,   IRpcChannelBuffer*,pRpcChannelBuffer); \
-    ICOM_VMETHOD(        Disconnect);
+    ICOM_METHOD1(HRESULT,Connect,   IRpcChannelBuffer*,pRpcChannelBuffer) \
+    ICOM_VMETHOD(        Disconnect)
 #define IRpcProxyBuffer_IMETHODS \
     IUnknown_IMETHODS \
     IRpcProxyBuffer_METHODS
@@ -154,13 +154,13 @@ ICOM_DEFINE(IRpcProxyBuffer,IUnknown)
  */
 #define ICOM_INTERFACE IRpcStubBuffer
 #define IRpcStubBuffer_METHODS \
-    ICOM_METHOD1 (HRESULT,        Connect,                   IUnknown*,pUnkServer); \
-    ICOM_VMETHOD (                Disconnect); \
-    ICOM_METHOD2 (HRESULT,        Invoke,                    RPCOLEMESSAGE*,_prpcmsg, IRpcChannelBuffer*,_pRpcChannelBuffer); \
-    ICOM_METHOD1 (IRpcStubBuffer*,IsIIDSupported,            REFIID,riid); \
-    ICOM_METHOD  (ULONG,          CountRefs); \
-    ICOM_METHOD1 (HRESULT,        DebugServerQueryInterface, void**,ppv); \
-    ICOM_VMETHOD1(                DebugServerRelease,        void*,pv);
+    ICOM_METHOD1 (HRESULT,        Connect,                   IUnknown*,pUnkServer) \
+    ICOM_VMETHOD (                Disconnect) \
+    ICOM_METHOD2 (HRESULT,        Invoke,                    RPCOLEMESSAGE*,_prpcmsg, IRpcChannelBuffer*,_pRpcChannelBuffer) \
+    ICOM_METHOD1 (IRpcStubBuffer*,IsIIDSupported,            REFIID,riid) \
+    ICOM_METHOD  (ULONG,          CountRefs) \
+    ICOM_METHOD1 (HRESULT,        DebugServerQueryInterface, void**,ppv) \
+    ICOM_VMETHOD1(                DebugServerRelease,        void*,pv)
 #define IRpcStubBuffer_IMETHODS \
     IUnknown_IMETHODS \
     IRpcStubBuffer_METHODS

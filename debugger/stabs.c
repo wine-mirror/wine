@@ -21,7 +21,7 @@
 
 #include "debugger.h"
 
-#ifdef __svr4__
+#if defined(__svr4__) || defined(__sun)
 #define __ELF__
 #endif
 

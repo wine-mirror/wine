@@ -97,7 +97,7 @@ typedef enum tagOLEDCFLAGS
 typedef enum tagDVASPECT2
 {
 	DVASPECT_OPAQUE = 16,
-	DVASPECT_TRANSPARENT = 32,
+	DVASPECT_TRANSPARENT = 32
 } DVASPECT2;
 
 typedef enum tagHITRESULT 
@@ -162,10 +162,10 @@ typedef struct IProvideClassInfo2 IProvideClassInfo2, *LPPROVIDECLASSINFO2;
  */
 #define ICOM_INTERFACE IOleControl
 #define IOleControl_METHODS \
-	ICOM_METHOD1(HRESULT,GetControlInfo, CONTROLINFO*,pCI); \
-	ICOM_METHOD1(HRESULT,OnMnemonic, MSG*,pMsg); \
-	ICOM_METHOD1(HRESULT,OnAmbientPropertyChange, DISPID,dispID); \
-	ICOM_METHOD1(HRESULT,FreezeEvents, BOOL,bFreeze);
+	ICOM_METHOD1(HRESULT,GetControlInfo, CONTROLINFO*,pCI) \
+	ICOM_METHOD1(HRESULT,OnMnemonic, MSG*,pMsg) \
+	ICOM_METHOD1(HRESULT,OnAmbientPropertyChange, DISPID,dispID) \
+	ICOM_METHOD1(HRESULT,FreezeEvents, BOOL,bFreeze)
 #define IOleControl_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleControl_METHODS
@@ -190,13 +190,13 @@ ICOM_DEFINE(IOleControl,IUnknown)
  */
 #define ICOM_INTERFACE IOleControlSite 
 #define IOleControlSite_METHODS \
-	ICOM_METHOD (HRESULT,OnControlInfoChanged); \
-	ICOM_METHOD1(HRESULT,LockInPlaceActive, BOOL,fLock); \
+	ICOM_METHOD (HRESULT,OnControlInfoChanged) \
+	ICOM_METHOD1(HRESULT,LockInPlaceActive, BOOL,fLock) \
 	ICOM_METHOD1(HRESULT,GetExtendedControl, IDispatch**,ppDisp) \
-	ICOM_METHOD3(HRESULT,TransformCoords, POINTL*,pPtlHimetric, POINTF*,pPtfContainer, DWORD,dwFlags); \
-	ICOM_METHOD2(HRESULT,TranslateAccelerator, MSG*,pMsg, DWORD,grfModifiers) ;\
-	ICOM_METHOD1(HRESULT,OnFocus, BOOL,fGotFocus); \
-	ICOM_METHOD (HRESULT,ShowPropertyFrame);
+	ICOM_METHOD3(HRESULT,TransformCoords, POINTL*,pPtlHimetric, POINTF*,pPtfContainer, DWORD,dwFlags) \
+	ICOM_METHOD2(HRESULT,TranslateAccelerator, MSG*,pMsg, DWORD,grfModifiers) \
+	ICOM_METHOD1(HRESULT,OnFocus, BOOL,fGotFocus) \
+	ICOM_METHOD (HRESULT,ShowPropertyFrame)
 #define IOleControlSite_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleControlSite_METHODS
@@ -224,9 +224,9 @@ ICOM_DEFINE(IOleControlSite,IUnknown)
  */
 #define ICOM_INTERFACE IOleInPlaceSiteEx
 #define IOleInPlaceSiteEx_METHODS \
-	ICOM_METHOD2(HRESULT,OnInPlaceActivateEx, BOOL*,pfNoRedraw, DWORD,dwFlags); \
-	ICOM_METHOD1(HRESULT,OnInPlaceDeactivateEx, BOOL,fNoRedraw); \
-	ICOM_METHOD (HRESULT,RequestUIActivate);
+	ICOM_METHOD2(HRESULT,OnInPlaceActivateEx, BOOL*,pfNoRedraw, DWORD,dwFlags) \
+	ICOM_METHOD1(HRESULT,OnInPlaceDeactivateEx, BOOL,fNoRedraw) \
+	ICOM_METHOD (HRESULT,RequestUIActivate)
 #define IOleInPlaceSiteEx_IMETHODS \
 	IOleInPlaceSite_IMETHODS \
 	IOleInPlaceSiteEx_METHODS
@@ -264,18 +264,18 @@ ICOM_DEFINE(IOleInPlaceSiteEx,IOleInPlaceSite)
  */
 #define ICOM_INTERFACE IOleInPlaceSiteWindowless
 #define IOleInPlaceSiteWindowless_METHODS \
-	ICOM_METHOD (HRESULT,CanWindowlessActivate); \
-	ICOM_METHOD (HRESULT,GetCapture); \
-	ICOM_METHOD1(HRESULT,SetCapture, BOOL,fCapture); \
-	ICOM_METHOD (HRESULT,GetFocus); \
-	ICOM_METHOD1(HRESULT,SetFocus, BOOL,fFocus); \
-	ICOM_METHOD3(HRESULT,GetDC, LPCRECT,pRect, DWORD,grfFlags, HDC*,phDC); \
-	ICOM_METHOD1(HRESULT,ReleaseDC, HDC,hDC); \
-	ICOM_METHOD2(HRESULT,InvalidateRect, LPCRECT,pRect, BOOL,fErase); \
-	ICOM_METHOD2(HRESULT,InvalidateRgn, HRGN,hRgn, BOOL,fErase); \
-	ICOM_METHOD4(HRESULT,ScrollRect, INT,dx, INT,dy, LPCRECT,pRectScroll, LPCRECT,pRectClip); \
-	ICOM_METHOD1(HRESULT,AdjustRect, LPRECT,prc); \
-	ICOM_METHOD4(HRESULT,OnDefWindowMessage, UINT,msg, WPARAM,wParam, LPARAM,lParam, LRESULT*,plResult);
+	ICOM_METHOD (HRESULT,CanWindowlessActivate) \
+	ICOM_METHOD (HRESULT,GetCapture) \
+	ICOM_METHOD1(HRESULT,SetCapture, BOOL,fCapture) \
+	ICOM_METHOD (HRESULT,GetFocus) \
+	ICOM_METHOD1(HRESULT,SetFocus, BOOL,fFocus) \
+	ICOM_METHOD3(HRESULT,GetDC, LPCRECT,pRect, DWORD,grfFlags, HDC*,phDC) \
+	ICOM_METHOD1(HRESULT,ReleaseDC, HDC,hDC) \
+	ICOM_METHOD2(HRESULT,InvalidateRect, LPCRECT,pRect, BOOL,fErase) \
+	ICOM_METHOD2(HRESULT,InvalidateRgn, HRGN,hRgn, BOOL,fErase) \
+	ICOM_METHOD4(HRESULT,ScrollRect, INT,dx, INT,dy, LPCRECT,pRectScroll, LPCRECT,pRectClip) \
+	ICOM_METHOD1(HRESULT,AdjustRect, LPRECT,prc) \
+	ICOM_METHOD4(HRESULT,OnDefWindowMessage, UINT,msg, WPARAM,wParam, LPARAM,lParam, LRESULT*,plResult)
 #define IOleInPlaceSiteWindowless_IMETHODS \
 	IOleInPlaceSite_IMETHODS \
 	IOleInPlaceSiteWindowless_METHODS
@@ -322,8 +322,8 @@ ICOM_DEFINE(IOleInPlaceSiteWindowless,IOleInPlaceSite)
  */
 #define ICOM_INTERFACE IOleInPlaceObjectWindowless
 #define IOleInPlaceObjectWindowless_METHODS \
-	ICOM_METHOD4(HRESULT,OnWindowMessage, UINT,msg, WPARAM,wParam, LPARAM,lParam, LRESULT*,plResult); \
-	ICOM_METHOD1(HRESULT,GetDropTarget, IDropTarget**,ppDropTarget);
+	ICOM_METHOD4(HRESULT,OnWindowMessage, UINT,msg, WPARAM,wParam, LPARAM,lParam, LRESULT*,plResult) \
+	ICOM_METHOD1(HRESULT,GetDropTarget, IDropTarget**,ppDropTarget)
 #define IOleInPlaceObjectWindowless_IMETHODS \
 	IOleInPlaceObject_IMETHODS \
 	IOleInPlaceObjectWindowless_METHODS
@@ -354,9 +354,9 @@ ICOM_DEFINE(IOleInPlaceObjectWindowless,IOleInPlaceObject)
  */
 #define ICOM_INTERFACE IClassFactory2
 #define IClassFactory2_METHODS \
-	ICOM_METHOD1(HRESULT,GetLicInfo, LICINFO*,pLicInfo); \
-	ICOM_METHOD2(HRESULT,RequestLicKey, DWORD,dwReserved, BSTR*,pBstrKey); \
-	ICOM_METHOD5(HRESULT,CreateInstanceLic, IUnknown*,pUnkOuter, IUnknown*,pUnkReserved, REFIID,riid, BSTR,bstrKey, PVOID*,ppvObj);
+	ICOM_METHOD1(HRESULT,GetLicInfo, LICINFO*,pLicInfo) \
+	ICOM_METHOD2(HRESULT,RequestLicKey, DWORD,dwReserved, BSTR*,pBstrKey) \
+	ICOM_METHOD5(HRESULT,CreateInstanceLic, IUnknown*,pUnkOuter, IUnknown*,pUnkReserved, REFIID,riid, BSTR,bstrKey, PVOID*,ppvObj)
 #define IClassFactory2_IMETHODS \
 	IClassFactory_IMETHODS \
 	IClassFactory2_METHODS
@@ -466,4 +466,3 @@ ICOM_DEFINE(IProvideClassInfo2,IProvideClassInfo)
 
 
 #endif /* __WINE_WINE_OBJ_CONTROL_H */
-

@@ -465,7 +465,7 @@ HRESULT WINAPI VarDecFromDisp32(IDispatch*pdispIn, LCID lcid, DECIMAL*pdecOut);
 #define VarUintFromInt	VarUI4FromI4
 
 #ifdef __cplusplus
-} // extern "C"
+} /* extern "C" */
 #endif 
 
 typedef struct tagPARAMDATA {

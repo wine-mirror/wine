@@ -301,8 +301,9 @@ HRESULT WINAPI CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         return E_FAIL;
 
     while(1){
-
-        //res=OleLoadFromStream(pStm,&IID_IMoniker,(void**)&This->tabMoniker[This->tabLastIndex]);
+#if 0
+        res=OleLoadFromStream(pStm,&IID_IMoniker,(void**)&This->tabMoniker[This->tabLastIndex]);
+#endif
         res=ReadClassStm(pStm,&clsid);
         printf("res=%ld",res);
         if (FAILED(res))
@@ -345,7 +346,7 @@ HRESULT WINAPI CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         if (++This->tabLastIndex==This->tabSize){
                 
             This->tabSize+=BLOCK_TAB_SIZE;
-            This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,sizeof(IMoniker[This->tabSize]));
+            This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,This->tabSize*sizeof(IMoniker));
 
             if (This->tabMoniker==NULL)
             return E_OUTOFMEMORY;
@@ -450,7 +451,7 @@ HRESULT WINAPI CompositeMonikerImpl_Construct(CompositeMonikerImpl* This,LPMONIK
     This->tabSize=BLOCK_TAB_SIZE;
     This->tabLastIndex=0;
 
-    This->tabMoniker=HeapAlloc(GetProcessHeap(),0,sizeof(IMoniker[This->tabSize]));
+    This->tabMoniker=HeapAlloc(GetProcessHeap(),0,This->tabSize*sizeof(IMoniker));
     if (This->tabMoniker==NULL)
         return E_OUTOFMEMORY;
 
@@ -472,7 +473,7 @@ HRESULT WINAPI CompositeMonikerImpl_Construct(CompositeMonikerImpl* This,LPMONIK
             if (++This->tabLastIndex==This->tabSize){
                 
                 This->tabSize+=BLOCK_TAB_SIZE;
-                This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,sizeof(IMoniker[This->tabSize]));
+                This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,This->tabSize*sizeof(IMoniker));
 
                 if (This->tabMoniker==NULL)
                     return E_OUTOFMEMORY;
@@ -522,7 +523,7 @@ HRESULT WINAPI CompositeMonikerImpl_Construct(CompositeMonikerImpl* This,LPMONIK
                 
             This->tabSize+=BLOCK_TAB_SIZE;
 
-            This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,sizeof(IMoniker[This->tabSize]));
+            This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,This->tabSize*sizeof(IMoniker));
 
             if (This->tabMoniker==NULL)
             return E_OUTOFMEMORY;
@@ -559,7 +560,7 @@ HRESULT WINAPI CompositeMonikerImpl_Construct(CompositeMonikerImpl* This,LPMONIK
                 
                 This->tabSize+=BLOCK_TAB_SIZE;
 
-                This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,sizeof(IMoniker[This->tabSize]));
+                This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,This->tabSize*sizeof(IMoniker));
 
                 if (This->tabMoniker==NULL)
                     return E_OUTOFMEMORY;
@@ -1613,7 +1614,7 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,
     newEnumMoniker->tabSize=tabSize;
     newEnumMoniker->currentPos=currentPos;
 
-    newEnumMoniker->tabMoniker=HeapAlloc(GetProcessHeap(),0,sizeof(IMoniker[tabSize]));
+    newEnumMoniker->tabMoniker=HeapAlloc(GetProcessHeap(),0,tabSize*sizeof(IMoniker));
 
     if (newEnumMoniker->tabMoniker==NULL)
         return E_OUTOFMEMORY;

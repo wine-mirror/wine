@@ -325,15 +325,30 @@ HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
                             BYTE clippres, BYTE quality, BYTE pitch,
                             LPCSTR name )
 {
-    LOGFONT16 logfont = { height, width, esc, orient, weight, italic, underline,
-                          strikeout, charset, outpres, clippres, quality, pitch, };
+    LOGFONT16 logfont;
 
     TRACE(font,"('%s',%d,%d)\n",
 		 (name ? name : "(null)") , height, width);
+
+    logfont.lfHeight = height;
+    logfont.lfWidth = width;
+    logfont.lfEscapement = esc;
+    logfont.lfOrientation = orient;
+    logfont.lfWeight = weight;
+    logfont.lfItalic = italic;
+    logfont.lfUnderline = underline;
+    logfont.lfStrikeOut = strikeout;
+    logfont.lfCharSet = charset;
+    logfont.lfOutPrecision = outpres;
+    logfont.lfClipPrecision = clippres;
+    logfont.lfQuality = quality;
+    logfont.lfPitchAndFamily = pitch;
+   
     if (name) 
 	lstrcpynA(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
     else 
 	logfont.lfFaceName[0] = '\0';
+
     return CreateFontIndirect16( &logfont );
 }
 
@@ -480,8 +495,16 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 	    LPENUMLOGFONTEX16	lplf16 = SEGPTR_ALLOC( sizeof(ENUMLOGFONTEX16) );
 	    if( lplf16 )
 	    {
-		fontEnum16	fe16 = { plf, efproc, lParam, lptm16, lplf16, 
-					 SEGPTR_GET(lptm16), SEGPTR_GET(lplf16) };
+		fontEnum16	fe16;
+
+		fe16.lpLogFontParam = plf;
+		fe16.lpEnumFunc = efproc;
+		fe16.lpData = lParam;
+		
+		fe16.lpTextMetric = lptm16;
+		fe16.lpLogFont = lplf16;
+		fe16.segTextMetric = SEGPTR_GET(lptm16);
+		fe16.segLogFont = SEGPTR_GET(lplf16);
 
 		retVal = dc->funcs->pEnumDeviceFonts( dc, plf, FONT_EnumInstance16, (LPARAM)&fe16 );
 
@@ -506,7 +529,15 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efpro
 	LOGFONT16		lf16;
 	NEWTEXTMETRICEXW 	tm32w;
 	ENUMLOGFONTEXW	lf32w;
-	fontEnum32		fe32 = { plf, efproc, lParam, &tm32w, &lf32w, dwUnicode }; 
+	fontEnum32		fe32;
+
+	fe32.lpLogFontParam = plf;
+	fe32.lpEnumFunc = efproc;
+	fe32.lpData = lParam;
+	
+	fe32.lpTextMetric = &tm32w;
+	fe32.lpLogFont = &lf32w;
+	fe32.dwFlags = dwUnicode;
 
 	/* the only difference between LOGFONT32A and LOGFONT32W is in the lfFaceName */
 
@@ -948,17 +979,17 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
     metrics->tmMaxCharWidth     = WDPTOLP(metrics->tmMaxCharWidth);
     metrics->tmOverhang         = WDPTOLP(metrics->tmOverhang);
 
-    TRACE(font,"text metrics:
-    Weight = %03i\t FirstChar = %03i\t AveCharWidth = %i
-    Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %i
-    UnderLined = %01i\t DefaultChar = %03i\t Overhang = %i
-    StruckOut = %01i\t BreakChar = %03i\t CharSet = %i
-    PitchAndFamily = %02x
-    --------------------
-    InternalLeading = %i
-    Ascent = %i
-    Descent = %i
-    Height = %i\n",
+    TRACE(font, "text metrics:\n"
+    "    Weight = %03i\t FirstChar = %03i\t AveCharWidth = %i\n"
+    "    Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %i\n"
+    "    UnderLined = %01i\t DefaultChar = %03i\t Overhang = %i\n"
+    "    StruckOut = %01i\t BreakChar = %03i\t CharSet = %i\n"
+    "    PitchAndFamily = %02x\n"
+    "    --------------------\n"
+    "    InternalLeading = %i\n"
+    "    Ascent = %i\n"
+    "    Descent = %i\n"
+    "    Height = %i\n",
     metrics->tmWeight, metrics->tmFirstChar, metrics->tmAveCharWidth,
     metrics->tmItalic, metrics->tmLastChar, metrics->tmMaxCharWidth,
     metrics->tmUnderlined, metrics->tmDefaultChar, metrics->tmOverhang,

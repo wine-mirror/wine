@@ -2670,12 +2670,16 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
    int     buflen=0;
    WCHAR   arg0[] = {0}, arg1[] = {'%','d',0};
    WCHAR   arg2[] = {'%','0','2','d',0};
-   WCHAR  *argarr[] = {arg0, arg1, arg2};
+   WCHAR  *argarr[3];
    int     datevars=0, timevars=0;
 
+   argarr[0] = arg0;
+   argarr[1] = arg1;
+   argarr[2] = arg2;
+
    /* make a debug report */
-   TRACE(ole, "args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:%s (at %p),
-   	 %p with max len %d\n",
+   TRACE(ole, "args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:%s (at %p), "
+   	      "%p with max len %d\n",
 	 locale, flags, tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 debugstr_w(format), format, output, outlen);

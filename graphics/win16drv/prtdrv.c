@@ -99,7 +99,7 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromPDEVICE(SEGPTR segptrPDEVICE)
     if (segptrPDEVICE != (SEGPTR)NULL)
     {
 	PDEVICE_HEADER *pPDH = (PDEVICE_HEADER *)
-	  (PTR_SEG_TO_LIN(segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
+	  ((char *) PTR_SEG_TO_LIN(segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
         pLPD = pPDH->pLPD;
     }
     return pLPD;

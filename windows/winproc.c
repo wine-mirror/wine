@@ -540,7 +540,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
 	  LPARAM *ptr = (LPARAM *) HEAP_xalloc( SystemHeap, 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
-	  (WORD)*ptr = len;   /* Store the lenght */
+	  *((WORD *) ptr) = len;   /* Store the length */
           *plparam = (LPARAM)ptr;
 	}
         return 1;
@@ -761,7 +761,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
 	  LPARAM *ptr = (LPARAM *) HEAP_xalloc( SystemHeap, 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
-	  (WORD)*ptr = len;   /* Store the lenght */
+	  *((WORD *) ptr) = len;   /* Store the length */
           *plparam = (LPARAM)ptr;
 	}
         return 1;

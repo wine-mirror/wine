@@ -39,8 +39,8 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
  */
 #define ICOM_INTERFACE IDropSource
 #define IDropSource_METHODS \
-    ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL, fEscapePressed, DWORD, grfKeyState); \
-    ICOM_METHOD1(HRESULT, GiveFeedback, DWORD, dwEffect);
+    ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL, fEscapePressed, DWORD, grfKeyState) \
+    ICOM_METHOD1(HRESULT, GiveFeedback, DWORD, dwEffect)
 #define IDropSource_IMETHODS \
   ICOM_INHERITS(IDropSource,IUnknown)
 ICOM_DEFINE(IDropSource,IUnknown)
@@ -61,10 +61,10 @@ ICOM_DEFINE(IDropSource,IUnknown)
  */
 #define ICOM_INTERFACE IDropTarget
 #define IDropTarget_METHODS \
-    ICOM_METHOD4(HRESULT, DragEnter, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect); \
-    ICOM_METHOD3(HRESULT, DragOver, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect); \
-    ICOM_METHOD(HRESULT, DragLeave); \
-    ICOM_METHOD4(HRESULT, Drop, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect);
+    ICOM_METHOD4(HRESULT, DragEnter, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect) \
+    ICOM_METHOD3(HRESULT, DragOver, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect) \
+    ICOM_METHOD(HRESULT, DragLeave) \
+    ICOM_METHOD4(HRESULT, Drop, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect)
 #define IDropTarget_IMETHODS \
   ICOM_INHERITS(IDropTarget,IUnknown)
 ICOM_DEFINE(IDropTarget,IUnknown)

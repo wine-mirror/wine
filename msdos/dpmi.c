@@ -81,7 +81,7 @@ DPMI_xalloc(int len) {
 		while (!ret) {
 			ret=VirtualAlloc(lastvalloced,len,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
 			if (!ret)
-				lastvalloced+=0x10000;
+				lastvalloced = (char *) lastvalloced + 0x10000;
 			/* we failed to allocate one in the first round. 
 			 * try non-linear
 			 */
@@ -157,7 +157,7 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
     FS_reg(context)  = call->fs;
     GS_reg(context)  = call->gs;
     SS_reg(context)  = call->ss;
-    (char*)V86BASE(context) = DOSMEM_MemoryBase(0);
+    V86BASE(context) = (DWORD) DOSMEM_MemoryBase(0);
 }
 
 
@@ -215,17 +215,16 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
         if (flag & 1) {
 	    int _clobber;
             /* 32-bit DPMI client */
-            __asm__ __volatile__("
-                 pushl %%es
-                 pushl %%ds
-                 pushfl
-                 movl %5,%%es
-                 movl %4,%%ds
-                 lcall %3
-                 popl %%ds
-                 movl %%es,%0
-                 popl %%es
-             "
+            __asm__ __volatile__(
+                 "pushl %%es\n"
+                 "pushl %%ds\n"
+                 "pushfl\n"
+                 "movl %5,%%es\n"
+                 "movl %4,%%ds\n"
+                 "lcall %3\n"
+                 "popl %%ds\n"
+                 "movl %%es,%0\n"
+                 "popl %%es\n"
              : "=g" (es), "=D" (edi), "=S" (_clobber)
              : "m" (rmcb->proc_ofs),
                "g" (ss), "g" (rmcb->regs_sel),

@@ -75,8 +75,8 @@ struct OLEFontImpl
  * by this object.
  */
 #define _ICOM_THIS(class,name) class* this = (class*)name;
-#define _ICOM_THIS_From_IDispatch(class, name) class* this = (class*)(((void*)name)-sizeof(void*)); 
-#define _ICOM_THIS_From_IPersistStream(class, name) class* this = (class*)(((void*)name)-2*sizeof(void*)); 
+#define _ICOM_THIS_From_IDispatch(class, name) class* this = (class*)(((char*)name)-sizeof(void*)); 
+#define _ICOM_THIS_From_IPersistStream(class, name) class* this = (class*)(((char*)name)-2*sizeof(void*)); 
 
 /***********************************************************************
  * Prototypes for the implementation functions for the IFont

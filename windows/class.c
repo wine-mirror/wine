@@ -423,8 +423,8 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
         return 0;
     }
 
-    TRACE(class, "atom=%04x wndproc=%08lx hinst=%04x
-bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
+    TRACE(class, "atom=%04x wndproc=%08lx hinst=%04x "
+                 "bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
                    atom, (DWORD)wc->lpfnWndProc, hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr,

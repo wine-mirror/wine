@@ -271,7 +271,7 @@ HRESULT WINAPI SafeArrayPutElement(
     stepCountInSAData = calcDisplacement(rgIndices, psa->rgsabound, psa->cDims);
   
     /* Figure out the number of byte to skip ... */
-    elementStorageAddress = psa->pvData+(stepCountInSAData*psa->cbElements);
+    elementStorageAddress = (char *) psa->pvData+(stepCountInSAData*psa->cbElements);
   
     if(isPointer(psa->fFeatures)) { /* increment ref count for this pointer */
 
@@ -327,7 +327,7 @@ HRESULT WINAPI SafeArrayGetElement(
     stepCountInSAData = calcDisplacement(rgIndices, psa->rgsabound, psa->cDims);
   
     /* Figure out the number of byte to skip ... */
-    elementStorageAddress = psa->pvData+(stepCountInSAData*psa->cbElements);
+    elementStorageAddress = (char *) psa->pvData+(stepCountInSAData*psa->cbElements);
   
     if( psa->fFeatures == FADF_BSTR) {           /* reallocate the obj */
       if( (pbstrReturnedStr = 
@@ -479,7 +479,7 @@ HRESULT WINAPI SafeArrayPtrOfIndex(
   /* Figure out the number of items to skip */
   stepCountInSAData = calcDisplacement(rgIndices, psa->rgsabound, psa->cDims);
   
-  *ppvData = psa->pvData+(stepCountInSAData*psa->cbElements);
+  *ppvData = (char *) psa->pvData+(stepCountInSAData*psa->cbElements);
 
   return S_OK;
 }
@@ -507,7 +507,7 @@ HRESULT WINAPI SafeArrayDestroyData(
   if(isPointer(psa->fFeatures)) {           /* release the pointers */
 
     for(ulDataIter=0; ulDataIter < ulWholeArraySize; ulDataIter++) {
-      punk = *(IUnknown**)(psa->pvData+(ulDataIter*(psa->cbElements)));	
+      punk = *(IUnknown**)((char *) psa->pvData+(ulDataIter*(psa->cbElements)));	
 
       if( punk != NULL) 
         IUnknown_Release(punk);
@@ -516,7 +516,7 @@ HRESULT WINAPI SafeArrayDestroyData(
   } else if(psa->fFeatures & FADF_BSTR) {  /* deallocate the obj */
 
     for(ulDataIter=0; ulDataIter < ulWholeArraySize; ulDataIter++) {
-      bstr = *(BSTR*)(psa->pvData+(ulDataIter*(psa->cbElements)));
+      bstr = *(BSTR*)((char *) psa->pvData+(ulDataIter*(psa->cbElements)));
 
       if( bstr != NULL) 
         SysFreeString( bstr );
@@ -570,7 +570,7 @@ HRESULT WINAPI SafeArrayCopyData(
                                                         that must be released */
     for(lDelta=0;lDelta < ulWholeArraySize; lDelta++) {
       punk = *(IUnknown**)
-        ((*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
+        ((char *) (*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
 
       if( punk != NULL) 
         IUnknown_Release(punk);
@@ -580,7 +580,7 @@ HRESULT WINAPI SafeArrayCopyData(
                                                         that must be freed */ 
     for(lDelta=0;lDelta < ulWholeArraySize; lDelta++) {
       bstr = 
-        *(BSTR*)((*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
+        *(BSTR*)((char *) (*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
 
       if( bstr != NULL) 
         SysFreeString( bstr );
@@ -788,7 +788,7 @@ static BOOL resizeSafeArray(
     if( isPointer(psa->fFeatures))    /* ptr that need to be released */
 	    for(;lDelta < 0; lDelta++) {
 	      punk = *(IUnknown**)
-          (psa->pvData+((ulWholeArraySize+lDelta)*psa->cbElements));
+          ((char *) psa->pvData+((ulWholeArraySize+lDelta)*psa->cbElements));
 	
         if( punk != NULL )
           IUnknown_Release(punk);
@@ -797,7 +797,7 @@ static BOOL resizeSafeArray(
     else if(psa->fFeatures & FADF_BSTR)  /* BSTR that need to be freed */
 	    for(;lDelta < 0; lDelta++) {
         bstr = *(BSTR*)
-          (psa->pvData+((ulWholeArraySize+lDelta)*psa->cbElements));
+          ((char *) psa->pvData+((ulWholeArraySize+lDelta)*psa->cbElements));
 
         if( bstr != NULL )
           SysFreeString( bstr );
@@ -960,7 +960,7 @@ static HRESULT duplicateData(
                                         object's reference count */
 
     for(lDelta=0; lDelta < ulWholeArraySize; lDelta++) {
-      punk = *(IUnknown**)(psa->pvData+(lDelta * psa->cbElements));
+      punk = *(IUnknown**)((char *) psa->pvData+(lDelta * psa->cbElements));
 
       if( punk != NULL)
         IUnknown_AddRef(punk);
@@ -975,13 +975,13 @@ static HRESULT duplicateData(
 
     for(lDelta=0; lDelta < ulWholeArraySize; lDelta++) {
       if(( pbstrReAllocStr = SysAllocString(
-            *(BSTR*)(psa->pvData+(lDelta * psa->cbElements)))) == NULL) {
+            *(BSTR*)((char *) psa->pvData+(lDelta * psa->cbElements)))) == NULL) {
 
         SafeArrayUnlock(*ppsaOut);
         return E_OUTOFMEMORY;
       }
 
-      *((BSTR*)((*ppsaOut)->pvData+(lDelta * psa->cbElements))) = 
+      *((BSTR*)((char *) (*ppsaOut)->pvData+(lDelta * psa->cbElements))) = 
         pbstrReAllocStr;
     }
 

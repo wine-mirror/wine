@@ -275,7 +275,7 @@ ICOM_DEFINE(IROTData,IUnknown)
 #define IROTData_GetComparisonData(p,a,b,c) ICOM_CALL3(GetComparisonData,p,a,b,c)
 #endif
 
-#define ICOM_THIS_From_IROTData(class, name) class* This = (class*)(((void*)name)-sizeof(void*))
+#define ICOM_THIS_From_IROTData(class, name) class* This = (class*)(((char*)name)-sizeof(void*))
 
 /*****************************************************************************
  * IRunnableObject interface

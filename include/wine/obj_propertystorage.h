@@ -36,7 +36,7 @@ typedef struct tagSTATPROPSTG STATPROPSTG;
  * PROPSPEC structure
  */
 
-// Reserved global Property IDs
+/* Reserved global Property IDs */
 #define PID_DICTIONARY  ( 0 )
 
 #define PID_CODEPAGE    ( 0x1 )
@@ -53,26 +53,26 @@ typedef struct tagSTATPROPSTG STATPROPSTG;
 
 #define PID_ILLEGAL     ( 0xffffffff )
 
-// Property IDs for the SummaryInformation Property Set
+/* Property IDs for the SummaryInformation Property Set */
 
-#define PIDSI_TITLE               0x00000002L  // VT_LPSTR
-#define PIDSI_SUBJECT             0x00000003L  // VT_LPSTR
-#define PIDSI_AUTHOR              0x00000004L  // VT_LPSTR
-#define PIDSI_KEYWORDS            0x00000005L  // VT_LPSTR
-#define PIDSI_COMMENTS            0x00000006L  // VT_LPSTR
-#define PIDSI_TEMPLATE            0x00000007L  // VT_LPSTR
-#define PIDSI_LASTAUTHOR          0x00000008L  // VT_LPSTR
-#define PIDSI_REVNUMBER           0x00000009L  // VT_LPSTR
-#define PIDSI_EDITTIME            0x0000000aL  // VT_FILETIME (UTC)
-#define PIDSI_LASTPRINTED         0x0000000bL  // VT_FILETIME (UTC)
-#define PIDSI_CREATE_DTM          0x0000000cL  // VT_FILETIME (UTC)
-#define PIDSI_LASTSAVE_DTM        0x0000000dL  // VT_FILETIME (UTC)
-#define PIDSI_PAGECOUNT           0x0000000eL  // VT_I4
-#define PIDSI_WORDCOUNT           0x0000000fL  // VT_I4
-#define PIDSI_CHARCOUNT           0x00000010L  // VT_I4
-#define PIDSI_THUMBNAIL           0x00000011L  // VT_CF
-#define PIDSI_APPNAME             0x00000012L  // VT_LPSTR
-#define PIDSI_DOC_SECURITY        0x00000013L  // VT_I4
+#define PIDSI_TITLE               0x00000002L  /* VT_LPSTR */
+#define PIDSI_SUBJECT             0x00000003L  /* VT_LPSTR */
+#define PIDSI_AUTHOR              0x00000004L  /* VT_LPSTR */
+#define PIDSI_KEYWORDS            0x00000005L  /* VT_LPSTR */
+#define PIDSI_COMMENTS            0x00000006L  /* VT_LPSTR */
+#define PIDSI_TEMPLATE            0x00000007L  /* VT_LPSTR */
+#define PIDSI_LASTAUTHOR          0x00000008L  /* VT_LPSTR */
+#define PIDSI_REVNUMBER           0x00000009L  /* VT_LPSTR */
+#define PIDSI_EDITTIME            0x0000000aL  /* VT_FILETIME (UTC) */
+#define PIDSI_LASTPRINTED         0x0000000bL  /* VT_FILETIME (UTC) */
+#define PIDSI_CREATE_DTM          0x0000000cL  /* VT_FILETIME (UTC) */
+#define PIDSI_LASTSAVE_DTM        0x0000000dL  /* VT_FILETIME (UTC) */
+#define PIDSI_PAGECOUNT           0x0000000eL  /* VT_I4 */
+#define PIDSI_WORDCOUNT           0x0000000fL  /* VT_I4 */
+#define PIDSI_CHARCOUNT           0x00000010L  /* VT_I4 */
+#define PIDSI_THUMBNAIL           0x00000011L  /* VT_CF */
+#define PIDSI_APPNAME             0x00000012L  /* VT_LPSTR */
+#define PIDSI_DOC_SECURITY        0x00000013L  /* VT_I4 */
 #define PRSPEC_INVALID  ( 0xffffffff )
 
 
@@ -127,10 +127,10 @@ struct tagSTATPROPSTG
  */
 #define ICOM_INTERFACE IEnumSTATPROPSETSTG
 #define IEnumSTATPROPSETSTG_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATPROPSETSTG*,rgelt, ULONG*,pceltFethed); \
-    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt); \
-    ICOM_METHOD (HRESULT,Reset); \
-    ICOM_METHOD1(HRESULT,Clone, IEnumSTATPROPSETSTG**,ppenum);
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATPROPSETSTG*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
+    ICOM_METHOD (HRESULT,Reset) \
+    ICOM_METHOD1(HRESULT,Clone, IEnumSTATPROPSETSTG**,ppenum)
 #define IEnumSTATPROPSETSTG_IMETHODS \
     ICOM_INHERITS(IEnumSTATPROPSETSTG,IUnknown)
 ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
@@ -154,10 +154,10 @@ ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
  */
 #define ICOM_INTERFACE IEnumSTATPROPSTG
 #define IEnumSTATPROPSTG_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATPROPSTG*,rgelt, ULONG*,pceltFethed); \
-    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt); \
-    ICOM_METHOD (HRESULT,Reset); \
-    ICOM_METHOD1(HRESULT,Clone, IEnumSTATPROPSTG**,ppenum);
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATPROPSTG*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
+    ICOM_METHOD (HRESULT,Reset) \
+    ICOM_METHOD1(HRESULT,Clone, IEnumSTATPROPSTG**,ppenum)
 #define IEnumSTATPROPSTG_IMETHODS \
     ICOM_INHERITS(IEnumSTATPROPSTG,IUnknown)
 ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
@@ -181,10 +181,10 @@ ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
  */
 #define ICOM_INTERFACE IPropertySetStorage
 #define IPropertySetStorage_METHODS \
-    ICOM_METHOD5(HRESULT,Create, REFFMTID,rfmtid, const CLSID*,pclsid, DWORD,grfFlags, DWORD,grfMode, IPropertyStorage**,ppprstg); \
-    ICOM_METHOD3(HRESULT,Open,   REFFMTID,rfmtid, DWORD,grfMode, IPropertyStorage**,ppprstg); \
-    ICOM_METHOD1(HRESULT,Delete, REFFMTID,rfmtid); \
-    ICOM_METHOD1(HRESULT,Enum,   IEnumSTATPROPSETSTG**,ppenum);
+    ICOM_METHOD5(HRESULT,Create, REFFMTID,rfmtid, const CLSID*,pclsid, DWORD,grfFlags, DWORD,grfMode, IPropertyStorage**,ppprstg) \
+    ICOM_METHOD3(HRESULT,Open,   REFFMTID,rfmtid, DWORD,grfMode, IPropertyStorage**,ppprstg) \
+    ICOM_METHOD1(HRESULT,Delete, REFFMTID,rfmtid) \
+    ICOM_METHOD1(HRESULT,Enum,   IEnumSTATPROPSETSTG**,ppenum)
 #define IPropertySetStorage_IMETHODS \
     ICOM_INHERITS(IPropertySetStorage,IUnknown)
 ICOM_DEFINE(IPropertySetStorage,IUnknown)
@@ -208,7 +208,7 @@ ICOM_DEFINE(IPropertySetStorage,IUnknown)
  */
 typedef struct tagPROPVARIANT PROPVARIANT,*LPPROPVARIANT;
 
-// Flags for IPropertySetStorage::Create
+/* Flags for IPropertySetStorage::Create */
 #define PROPSETFLAG_DEFAULT     ( 0 )
 #define PROPSETFLAG_NONSIMPLE   ( 1 )
 #define PROPSETFLAG_ANSI        ( 2 )
@@ -394,18 +394,18 @@ struct tagPROPVARIANT
 
 #define ICOM_INTERFACE IPropertyStorage
 #define IPropertyStorage_METHODS \
-    ICOM_METHOD3(HRESULT,ReadMultiple,        ULONG,cpspec, const PROPSPEC*,rgpspec, PROPVARIANT*,rgpropvar); \
-    ICOM_METHOD4(HRESULT,WriteMultiple,       ULONG,cpspec, const PROPSPEC*,rgpspec, const PROPVARIANT*,rgpropvar, PROPID,propidNameFirst); \
-    ICOM_METHOD2(HRESULT,DeleteMultiple,      ULONG,cpspec, const PROPSPEC*,rgpspec); \
-    ICOM_METHOD2(HRESULT,ReadPropertyNames,   const PROPID*,rgpropid, LPOLESTR*,rglpwstrName); \
-    ICOM_METHOD3(HRESULT,WritePropertyNames,  ULONG,cpropid, const PROPID*,rgpropid, LPOLESTR*,rglpwstrName); \
-    ICOM_METHOD2(HRESULT,DeletePropertyNames, ULONG,cpropid, const PROPID*,rgpropid); \
-    ICOM_METHOD1(HRESULT,Commit,              DWORD,grfCommitFlags); \
-    ICOM_METHOD (HRESULT,Revert); \
-    ICOM_METHOD1(HRESULT,Enum,                IEnumSTATPROPSTG**,ppenum); \
-    ICOM_METHOD3(HRESULT,SetTimes,            const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime); \
-    ICOM_METHOD1(HRESULT,SetClass,            REFCLSID,clsid); \
-    ICOM_METHOD1(HRESULT,Stat,                STATPROPSETSTG*,pstatpsstg);
+    ICOM_METHOD3(HRESULT,ReadMultiple,        ULONG,cpspec, const PROPSPEC*,rgpspec, PROPVARIANT*,rgpropvar) \
+    ICOM_METHOD4(HRESULT,WriteMultiple,       ULONG,cpspec, const PROPSPEC*,rgpspec, const PROPVARIANT*,rgpropvar, PROPID,propidNameFirst) \
+    ICOM_METHOD2(HRESULT,DeleteMultiple,      ULONG,cpspec, const PROPSPEC*,rgpspec) \
+    ICOM_METHOD2(HRESULT,ReadPropertyNames,   const PROPID*,rgpropid, LPOLESTR*,rglpwstrName) \
+    ICOM_METHOD3(HRESULT,WritePropertyNames,  ULONG,cpropid, const PROPID*,rgpropid, LPOLESTR*,rglpwstrName) \
+    ICOM_METHOD2(HRESULT,DeletePropertyNames, ULONG,cpropid, const PROPID*,rgpropid) \
+    ICOM_METHOD1(HRESULT,Commit,              DWORD,grfCommitFlags) \
+    ICOM_METHOD (HRESULT,Revert) \
+    ICOM_METHOD1(HRESULT,Enum,                IEnumSTATPROPSTG**,ppenum) \
+    ICOM_METHOD3(HRESULT,SetTimes,            const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
+    ICOM_METHOD1(HRESULT,SetClass,            REFCLSID,clsid) \
+    ICOM_METHOD1(HRESULT,Stat,                STATPROPSETSTG*,pstatpsstg)
 #define IPropertyStorage_IMETHODS \
     ICOM_INHERITS(IPropertyStorage,IUnknown)
 ICOM_DEFINE(IPropertyStorage,IUnknown)

@@ -266,7 +266,7 @@ DECL_WINELIB_TYPE_AW (PTSTR)
 DECL_WINELIB_TYPE_AW (LPTSTR)
 	 
 #ifdef __cplusplus
-} // extern "C"
+} /* extern "C" */
 #endif
 				 
 #endif /* __WINE_TCHAR_H */

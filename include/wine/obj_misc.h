@@ -31,10 +31,10 @@ typedef struct IMultiQI IMultiQI,*LPMULTIQI;
  */
 #define ICOM_INTERFACE IEnumString
 #define IEnumString_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, LPOLESTR*,rgelt, ULONG*,pceltFethed); \
-    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt); \
-    ICOM_METHOD (HRESULT,Reset); \
-    ICOM_METHOD1 (HRESULT, Clone, IEnumString**, ppenum);
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, LPOLESTR*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
+    ICOM_METHOD (HRESULT,Reset) \
+    ICOM_METHOD1(HRESULT, Clone, IEnumString**, ppenum)
 #define IEnumString_IMETHODS \
     IUnknown_IMETHODS \
     IEnumString_METHODS
@@ -60,10 +60,10 @@ ICOM_DEFINE(IEnumString,IUnknown)
  */
 #define ICOM_INTERFACE IEnumUnknown
 #define IEnumUnknown_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, IUnknown**,rgelt, ULONG*,pceltFethed); \
-    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt); \
-    ICOM_METHOD (HRESULT,Reset); \
-    ICOM_METHOD1(HRESULT,Clone, IEnumUnknown**,ppenum);
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, IUnknown**,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
+    ICOM_METHOD (HRESULT,Reset) \
+    ICOM_METHOD1(HRESULT,Clone, IEnumUnknown**,ppenum)
 #define IEnumUnknown_IMETHODS \
     IUnknown_IMETHODS \
     IEnumUnknown_METHODS
@@ -88,18 +88,18 @@ ICOM_DEFINE(IEnumUnknown,IUnknown)
  */
 #define ICOM_INTERFACE IMallocSpy
 #define IMallocSpy_METHODS \
-    ICOM_METHOD1 (ULONG,PreAlloc,        ULONG,cbRequest); \
-    ICOM_VMETHOD1(      PostAlloc,       void*,pActual); \
-    ICOM_METHOD2 (void*,PreFree,         void*,pRequest, BOOL,fSpyed); \
-    ICOM_VMETHOD1(      PostFree,        BOOL,fSpyed); \
-    ICOM_METHOD4 (ULONG,PreRealloc,      void*,pRequest, ULONG,cbRequest, void**,ppNewRequest, BOOL,fSpyed); \
-    ICOM_METHOD2 (void*,PostRealloc,     void*,pActual, BOOL,fSpyed); \
-    ICOM_METHOD2 (void*,PreGetSize,      void*,pRequest, BOOL,fSpyed); \
-    ICOM_METHOD2 (ULONG,PostGetSize,     ULONG,cbActual, BOOL,fSpyed); \
-    ICOM_METHOD2 (void*,PreDidAlloc,     void*,pRequest, BOOL,fSpyed); \
-    ICOM_METHOD3 (int,  PostDidAlloc,    void*,pRequest, BOOL,fSpyed, int,fActual); \
-    ICOM_METHOD  (int,  PreHeapMinimize); \
-    ICOM_METHOD  (int,  PostHeapMinimize);
+    ICOM_METHOD1 (ULONG,PreAlloc,        ULONG,cbRequest) \
+    ICOM_VMETHOD1(      PostAlloc,       void*,pActual) \
+    ICOM_METHOD2 (void*,PreFree,         void*,pRequest, BOOL,fSpyed) \
+    ICOM_VMETHOD1(      PostFree,        BOOL,fSpyed) \
+    ICOM_METHOD4 (ULONG,PreRealloc,      void*,pRequest, ULONG,cbRequest, void**,ppNewRequest, BOOL,fSpyed) \
+    ICOM_METHOD2 (void*,PostRealloc,     void*,pActual, BOOL,fSpyed) \
+    ICOM_METHOD2 (void*,PreGetSize,      void*,pRequest, BOOL,fSpyed) \
+    ICOM_METHOD2 (ULONG,PostGetSize,     ULONG,cbActual, BOOL,fSpyed) \
+    ICOM_METHOD2 (void*,PreDidAlloc,     void*,pRequest, BOOL,fSpyed) \
+    ICOM_METHOD3 (int,  PostDidAlloc,    void*,pRequest, BOOL,fSpyed, int,fActual) \
+    ICOM_METHOD  (int,  PreHeapMinimize) \
+    ICOM_METHOD  (int,  PostHeapMinimize)
 #define IMallocSpy_IMETHODS \
     IUnknown_IMETHODS \
     IMallocSpy_METHODS
@@ -147,7 +147,7 @@ typedef struct tagMULTI_QI
 
 #define ICOM_INTERFACE IMultiQI
 #define IMultiQI_METHODS \
-    ICOM_METHOD2(HRESULT,QueryMultipleInterfaces, ULONG,cMQIs, MULTI_QI*,pMQIs);
+    ICOM_METHOD2(HRESULT,QueryMultipleInterfaces, ULONG,cMQIs, MULTI_QI*,pMQIs)
 #define IMultiQI_IMETHODS \
     IUnknown_IMETHODS \
     IMultiQI_METHODS

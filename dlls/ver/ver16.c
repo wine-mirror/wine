@@ -126,15 +126,15 @@ DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
     retv = VerQueryValueA( lpvBlock, lpszSubBlock, &buffer, &buflen );
     if ( !retv ) return FALSE;
 
-    if ( OFFSETOF( spvBlock ) + (buffer - lpvBlock) >= 0x10000 )
+    if ( OFFSETOF( spvBlock ) + ((char *) buffer - (char *) lpvBlock) >= 0x10000 )
     {
         FIXME( ver, "offset %08X too large relative to %04X:%04X\n",
-               buffer - lpvBlock, SELECTOROF( spvBlock ), OFFSETOF( spvBlock ) );
+               (char *) buffer - (char *) lpvBlock, SELECTOROF( spvBlock ), OFFSETOF( spvBlock ) );
         return FALSE;
     }
 
     *lpcb = buflen;
-    *lpspBuffer = spvBlock + (buffer - lpvBlock);
+    *lpspBuffer = (SEGPTR) ((char *) spvBlock + ((char *) buffer - (char *) lpvBlock));
 
     return retv;
 }

@@ -44,9 +44,9 @@ typedef enum tagEOLE_AUTHENTICATION_CAPABILITIES
 
 #define ICOM_INTERFACE IClientSecurity
 #define IClientSecurity_METHODS \
-     ICOM_METHOD8(HRESULT,QueryBlanket, IUnknown*,pProxy, DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pAuthInfo, DWORD*,pCapabilites); \
-    ICOM_METHOD8(HRESULT,SetBlanket,   IUnknown*,pProxy, DWORD,pAuthnSvc, DWORD,pAuthzSvc, OLECHAR*,pServerPrincName, DWORD,pAuthnLevel, DWORD,pImpLevel, void*,pAuthInfo, DWORD,pCapabilites); \
-    ICOM_METHOD2(HRESULT,CopyProxy,    IUnknown*,pProxy, IUnknown**,ppCopy);
+     ICOM_METHOD8(HRESULT,QueryBlanket, IUnknown*,pProxy, DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pAuthInfo, DWORD*,pCapabilites) \
+    ICOM_METHOD8(HRESULT,SetBlanket,   IUnknown*,pProxy, DWORD,pAuthnSvc, DWORD,pAuthzSvc, OLECHAR*,pServerPrincName, DWORD,pAuthnLevel, DWORD,pImpLevel, void*,pAuthInfo, DWORD,pCapabilites) \
+    ICOM_METHOD2(HRESULT,CopyProxy,    IUnknown*,pProxy, IUnknown**,ppCopy)
 #define IClientSecurity_IMETHODS \
     IUnknown_IMETHODS \
     IClientSecurity_METHODS
@@ -77,8 +77,8 @@ typedef enum tagEXTCONN
 
 #define ICOM_INTERFACE IExternalConnection
 #define IExternalConnection_METHODS \
-    ICOM_METHOD2(DWORD,AddConnection,     DWORD,extconn, DWORD,reserved); \
-    ICOM_METHOD3(DWORD,ReleaseConnection, DWORD,extconn, DWORD,reserved, BOOL,fLastReleaseCloses);
+    ICOM_METHOD2(DWORD,AddConnection,     DWORD,extconn, DWORD,reserved) \
+    ICOM_METHOD3(DWORD,ReleaseConnection, DWORD,extconn, DWORD,reserved, BOOL,fLastReleaseCloses)
 #define IExternalConnection_IMETHODS \
     IUnknown_IMETHODS \
     IExternalConnection_METHODS
@@ -140,9 +140,9 @@ typedef struct tagINTERFACEINFO
 
 #define ICOM_INTERFACE IMessageFilter
 #define IMessageFilter_METHODS \
-    ICOM_METHOD4(DWORD,HandleInComingCall, DWORD,dwCallType, HTASK,htaskCaller, DWORD,dwTickCount, LPINTERFACEINFO,lpInterfaceInfo); \
-    ICOM_METHOD3(DWORD,RetryRejectedCall,  HTASK,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType); \
-    ICOM_METHOD3(DWORD,MessagePending,     HTASK,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType);
+    ICOM_METHOD4(DWORD,HandleInComingCall, DWORD,dwCallType, HTASK,htaskCaller, DWORD,dwTickCount, LPINTERFACEINFO,lpInterfaceInfo) \
+    ICOM_METHOD3(DWORD,RetryRejectedCall,  HTASK,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType) \
+    ICOM_METHOD3(DWORD,MessagePending,     HTASK,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType)
 #define IMessageFilter_IMETHODS \
     IUnknown_IMETHODS \
     IMessageFilter_METHODS
@@ -170,10 +170,10 @@ HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGE
  */
 #define ICOM_INTERFACE IServerSecurity
 #define IServerSecurity_METHODS \
-    ICOM_METHOD7(HRESULT,QueryBlanket,     DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pPrivs, DWORD*,pCapabilities); \
-    ICOM_METHOD (HRESULT,ImpersonateClient); \
-    ICOM_METHOD (HRESULT,RevertToSelf); \
-    ICOM_METHOD (BOOL,   IsImpersonating);
+    ICOM_METHOD7(HRESULT,QueryBlanket,     DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pPrivs, DWORD*,pCapabilities) \
+    ICOM_METHOD (HRESULT,ImpersonateClient) \
+    ICOM_METHOD (HRESULT,RevertToSelf) \
+    ICOM_METHOD (BOOL,   IsImpersonating)
 #define IServerSecurity_IMETHODS \
     IUnknown_IMETHODS \
     IServerSecurity_METHODS

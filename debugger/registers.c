@@ -160,7 +160,7 @@ void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext )
     GS_reg(&DEBUG_context) &= 0xffff;
 #endif
     if (ISV86(&DEBUG_context))
-        (char*)V86BASE(&DEBUG_context) = DOSMEM_MemoryBase(0);
+        V86BASE(&DEBUG_context) = (DWORD) DOSMEM_MemoryBase(0);
 }
 
 

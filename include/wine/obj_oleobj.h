@@ -76,27 +76,27 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
  */
 #define ICOM_INTERFACE IOleObject
 #define IOleObject_METHODS \
-	ICOM_METHOD1(HRESULT,SetClientSite, IOleClientSite*,pClientSite); \
-	ICOM_METHOD1(HRESULT,GetClientSite, IOleClientSite**,ppClientSite); \
-	ICOM_METHOD2(HRESULT,SetHostNames, LPCOLESTR,szContainerApp, LPCOLESTR,szContainerObj); \
-	ICOM_METHOD1(HRESULT,Close, DWORD,dwSaveOption); \
-	ICOM_METHOD2(HRESULT,SetMoniker, DWORD,dwWhichMoniker, IMoniker*,pmk); \
-	ICOM_METHOD3(HRESULT,GetMoniker, DWORD,dwAssign, DWORD,dwWhichMoniker, IMoniker**,ppmk); \
-	ICOM_METHOD3(HRESULT,InitFromData, IDataObject*,pDataObject, BOOL,fCreation, DWORD,dwReserved); \
-	ICOM_METHOD2(HRESULT,GetClipboardData, DWORD,dwReserved, IDataObject**,ppDataObject); \
-	ICOM_METHOD6(HRESULT,DoVerb, LONG,iVerb, LPMSG,lpmsg, IOleClientSite*,pActiveSite, LONG,lindex, HWND,hwndParent, LPCRECT,lprcPosRect); \
-	ICOM_METHOD1(HRESULT,EnumVerbs, IEnumOLEVERB**,ppEnumOleVerb); \
-	ICOM_METHOD (HRESULT,Update); \
-	ICOM_METHOD (HRESULT,IsUpToDate); \
-	ICOM_METHOD1(HRESULT,GetUserClassID, CLSID*,pClsid); \
-	ICOM_METHOD2(HRESULT,GetUserType, DWORD,dwFormOfType, LPOLESTR*,pszUserType); \
-	ICOM_METHOD2(HRESULT,SetExtent, DWORD,dwDrawAspect, SIZEL*,psizel); \
-	ICOM_METHOD2(HRESULT,GetExtent, DWORD,dwDrawAspect, SIZEL*,psizel); \
-	ICOM_METHOD2(HRESULT,Advise, IAdviseSink*,pAdvSink, DWORD*,pdwConnection); \
-	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwConnection); \
-	ICOM_METHOD1(HRESULT,EnumAdvise, IEnumSTATDATA**,ppenumAdvise); \
-	ICOM_METHOD2(HRESULT,GetMiscStatus, DWORD,dwAspect, DWORD*,pdwStatus); \
-	ICOM_METHOD1(HRESULT,SetColorScheme, LOGPALETTE*,pLogpal);
+	ICOM_METHOD1(HRESULT,SetClientSite, IOleClientSite*,pClientSite) \
+	ICOM_METHOD1(HRESULT,GetClientSite, IOleClientSite**,ppClientSite) \
+	ICOM_METHOD2(HRESULT,SetHostNames, LPCOLESTR,szContainerApp, LPCOLESTR,szContainerObj) \
+	ICOM_METHOD1(HRESULT,Close, DWORD,dwSaveOption) \
+	ICOM_METHOD2(HRESULT,SetMoniker, DWORD,dwWhichMoniker, IMoniker*,pmk) \
+	ICOM_METHOD3(HRESULT,GetMoniker, DWORD,dwAssign, DWORD,dwWhichMoniker, IMoniker**,ppmk) \
+	ICOM_METHOD3(HRESULT,InitFromData, IDataObject*,pDataObject, BOOL,fCreation, DWORD,dwReserved) \
+	ICOM_METHOD2(HRESULT,GetClipboardData, DWORD,dwReserved, IDataObject**,ppDataObject) \
+	ICOM_METHOD6(HRESULT,DoVerb, LONG,iVerb, LPMSG,lpmsg, IOleClientSite*,pActiveSite, LONG,lindex, HWND,hwndParent, LPCRECT,lprcPosRect) \
+	ICOM_METHOD1(HRESULT,EnumVerbs, IEnumOLEVERB**,ppEnumOleVerb) \
+	ICOM_METHOD (HRESULT,Update) \
+	ICOM_METHOD (HRESULT,IsUpToDate) \
+	ICOM_METHOD1(HRESULT,GetUserClassID, CLSID*,pClsid) \
+	ICOM_METHOD2(HRESULT,GetUserType, DWORD,dwFormOfType, LPOLESTR*,pszUserType) \
+	ICOM_METHOD2(HRESULT,SetExtent, DWORD,dwDrawAspect, SIZEL*,psizel) \
+	ICOM_METHOD2(HRESULT,GetExtent, DWORD,dwDrawAspect, SIZEL*,psizel) \
+	ICOM_METHOD2(HRESULT,Advise, IAdviseSink*,pAdvSink, DWORD*,pdwConnection) \
+	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwConnection) \
+	ICOM_METHOD1(HRESULT,EnumAdvise, IEnumSTATDATA**,ppenumAdvise) \
+	ICOM_METHOD2(HRESULT,GetMiscStatus, DWORD,dwAspect, DWORD*,pdwStatus) \
+	ICOM_METHOD1(HRESULT,SetColorScheme, LOGPALETTE*,pLogpal)
 #define IOleObject_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleObject_METHODS
@@ -138,12 +138,12 @@ ICOM_DEFINE(IOleObject,IUnknown)
  */
 #define ICOM_INTERFACE IOleAdviseHolder
 #define IOleAdviseHolder_METHODS \
-	ICOM_METHOD2(HRESULT,Advise, IAdviseSink*,pAdvise, DWORD*,pdwConnection); \
-	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwConnection); \
-	ICOM_METHOD1(HRESULT,EnumAdvise, IEnumSTATDATA**,ppenumAdvise); \
-	ICOM_METHOD1(HRESULT,SendOnRename, IMoniker*,pmk); \
-	ICOM_METHOD (HRESULT,SendOnSave); \
-	ICOM_METHOD (HRESULT,SendOnClose);
+	ICOM_METHOD2(HRESULT,Advise, IAdviseSink*,pAdvise, DWORD*,pdwConnection) \
+	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwConnection) \
+	ICOM_METHOD1(HRESULT,EnumAdvise, IEnumSTATDATA**,ppenumAdvise) \
+	ICOM_METHOD1(HRESULT,SendOnRename, IMoniker*,pmk) \
+	ICOM_METHOD (HRESULT,SendOnSave) \
+	ICOM_METHOD (HRESULT,SendOnClose)
 #define IOleAdviseHolder_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleAdviseHolder_METHODS
@@ -170,10 +170,10 @@ ICOM_DEFINE(IOleAdviseHolder,IUnknown)
  */
 #define ICOM_INTERFACE IEnumOLEVERB
 #define IEnumOLEVERB_METHODS \
-	ICOM_METHOD3(HRESULT,Next, ULONG,celt, LPOLEVERB,rgelt, ULONG*,pceltFetched); \
-	ICOM_METHOD1(HRESULT,Skip, ULONG,celt); \
-	ICOM_METHOD (HRESULT,Reset); \
-	ICOM_METHOD1(HRESULT,Clone, IEnumOLEVERB**,ppenum);
+	ICOM_METHOD3(HRESULT,Next, ULONG,celt, LPOLEVERB,rgelt, ULONG*,pceltFetched) \
+	ICOM_METHOD1(HRESULT,Skip, ULONG,celt) \
+	ICOM_METHOD (HRESULT,Reset) \
+	ICOM_METHOD1(HRESULT,Clone, IEnumOLEVERB**,ppenum)
 #define IEnumOLEVERB_IMETHODS \
 	IUnknown_IMETHODS \
 	IEnumOLEVERB_METHODS

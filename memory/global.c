@@ -1100,7 +1100,7 @@ HGLOBAL WINAPI GlobalAlloc(
       {
 	 palloc=HeapAlloc(GetProcessHeap(), hpflags, size+sizeof(HGLOBAL));
 	 *(HGLOBAL *)palloc=INTERN_TO_HANDLE(pintern);
-	 pintern->Pointer=palloc+sizeof(HGLOBAL);
+	 pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
       }
       else
 	 pintern->Pointer=NULL;
@@ -1288,22 +1288,22 @@ HGLOBAL WINAPI GlobalReAlloc(
 	    if(pintern->Pointer)
 	    {
 	       palloc=HeapReAlloc(GetProcessHeap(), 0,
-				  pintern->Pointer-sizeof(HGLOBAL),
+				  (char *) pintern->Pointer-sizeof(HGLOBAL),
 				  size+sizeof(HGLOBAL) );
-	       pintern->Pointer=palloc+sizeof(HGLOBAL);
+	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
 	    }
 	    else
 	    {
 	       palloc=HeapAlloc(GetProcessHeap(), 0, size+sizeof(HGLOBAL));
 	       *(HGLOBAL *)palloc=hmem;
-	       pintern->Pointer=palloc+sizeof(HGLOBAL);
+	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
 	    }
 	 }
 	 else
 	 {
 	    if(pintern->Pointer)
 	    {
-	       HeapFree(GetProcessHeap(), 0, pintern->Pointer-sizeof(HGLOBAL));
+	       HeapFree(GetProcessHeap(), 0, (char *) pintern->Pointer-sizeof(HGLOBAL));
 	       pintern->Pointer=NULL;
 	    }
 	 }

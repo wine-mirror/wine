@@ -1146,11 +1146,15 @@ UINT WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 {
     UINT swpFlags = 0;
     POINT pt;
-    POINT size = { wndPtr->rectWindow.left, wndPtr->rectWindow.top };
-    LPINTERNALPOS lpPos = WINPOS_InitInternalPos( wndPtr, size,
-                                                  &wndPtr->rectWindow );
+    POINT size;
+    LPINTERNALPOS lpPos;
 
     TRACE(win,"0x%04x %u\n", wndPtr->hwndSelf, cmd );
+
+    size.x = wndPtr->rectWindow.left;
+    size.y = wndPtr->rectWindow.top;
+
+    lpPos = WINPOS_InitInternalPos( wndPtr, size, &wndPtr->rectWindow );
 
     if (lpPos && !HOOK_CallHooks16(WH_CBT, HCBT_MINMAX, wndPtr->hwndSelf, cmd))
     {
@@ -1540,12 +1544,19 @@ BOOL WINAPI SetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *pwpl32 )
 {
     if( pwpl32 )
     {
-	WINDOWPLACEMENT16 wpl = { sizeof(WINDOWPLACEMENT16), 
-		pwpl32->flags, pwpl32->showCmd, { pwpl32->ptMinPosition.x,
-		pwpl32->ptMinPosition.y }, { pwpl32->ptMaxPosition.x,
-		pwpl32->ptMaxPosition.y }, { pwpl32->rcNormalPosition.left,
-		pwpl32->rcNormalPosition.top, pwpl32->rcNormalPosition.right,
-		pwpl32->rcNormalPosition.bottom } };
+	WINDOWPLACEMENT16 wpl;
+
+	wpl.length = sizeof(WINDOWPLACEMENT16);
+	wpl.flags = pwpl32->flags;
+	wpl.showCmd = pwpl32->showCmd;
+	wpl.ptMinPosition.x = pwpl32->ptMinPosition.x;
+	wpl.ptMinPosition.y = pwpl32->ptMinPosition.y;
+	wpl.ptMaxPosition.x = pwpl32->ptMaxPosition.x;
+	wpl.ptMaxPosition.y = pwpl32->ptMaxPosition.y;
+	wpl.rcNormalPosition.left = pwpl32->rcNormalPosition.left;
+	wpl.rcNormalPosition.top = pwpl32->rcNormalPosition.top;
+	wpl.rcNormalPosition.right = pwpl32->rcNormalPosition.right;
+	wpl.rcNormalPosition.bottom = pwpl32->rcNormalPosition.bottom;
 
         return WINPOS_SetPlacement( hwnd, &wpl, PLACE_MIN | PLACE_MAX | PLACE_RECT );
     }

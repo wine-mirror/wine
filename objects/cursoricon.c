@@ -384,8 +384,9 @@ BOOL CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL fCursor,
       }
     }
     if (!(entries = bits->idCount)) goto fail;
-    (int)_free = size = sizeof(CURSORICONDIR) + sizeof(CURSORICONDIRENTRY) * 
-                                                (entries - 1);
+    size = sizeof(CURSORICONDIR) + sizeof(CURSORICONDIRENTRY) * (entries - 1);
+    _free = (LPBYTE) size;
+
     for (i=0; i < entries; i++)
       size += bits->idEntries[i].dwDIBSize + (fCursor ? sizeof(POINT16): 0);
     
@@ -919,10 +920,19 @@ HCURSOR16 WINAPI CreateCursor16( HINSTANCE16 hInstance,
                                  INT16 nWidth, INT16 nHeight,
                                  LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
-    CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
+    CURSORICONINFO info;
 
     TRACE(cursor, "%dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
+
+    info.ptHotSpot.x = xHotSpot;
+    info.ptHotSpot.y = yHotSpot;
+    info.nWidth = nWidth;
+    info.nHeight = nHeight;
+    info.nWidthBytes = 0;
+    info.bPlanes = 1;
+    info.bBitsPerPixel = 1;
+
     return CreateCursorIconIndirect16( hInstance, &info, lpANDbits, lpXORbits );
 }
 
@@ -935,10 +945,19 @@ HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
                                  INT nWidth, INT nHeight,
                                  LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
-    CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
+    CURSORICONINFO info;
 
     TRACE(cursor, "%dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
+
+    info.ptHotSpot.x = xHotSpot;
+    info.ptHotSpot.y = yHotSpot;
+    info.nWidth = nWidth;
+    info.nHeight = nHeight;
+    info.nWidthBytes = 0;
+    info.bPlanes = 1;
+    info.bBitsPerPixel = 1;
+
     return CreateCursorIconIndirect16( 0, &info, lpANDbits, lpXORbits );
 }
 
@@ -950,10 +969,19 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
                              INT16 nHeight, BYTE bPlanes, BYTE bBitsPixel,
                              LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
-    CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel};
+    CURSORICONINFO info;
 
     TRACE(icon, "%dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
+
+    info.ptHotSpot.x = 0;
+    info.ptHotSpot.y = 0;
+    info.nWidth = nWidth;
+    info.nHeight = nHeight;
+    info.nWidthBytes = 0;
+    info.bPlanes = bPlanes;
+    info.bBitsPerPixel = bBitsPixel;
+
     return CreateCursorIconIndirect16( hInstance, &info, lpANDbits, lpXORbits );
 }
 
@@ -965,10 +993,19 @@ HICON WINAPI CreateIcon( HINSTANCE hInstance, INT nWidth,
                              INT nHeight, BYTE bPlanes, BYTE bBitsPixel,
                              LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
-    CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel};
+    CURSORICONINFO info;
 
     TRACE(icon, "%dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
+
+    info.ptHotSpot.x = 0;
+    info.ptHotSpot.y = 0;
+    info.nWidth = nWidth;
+    info.nHeight = nHeight;
+    info.nWidthBytes = 0;
+    info.bPlanes = bPlanes;
+    info.bBitsPerPixel = bBitsPixel;
+
     return CreateCursorIconIndirect16( 0, &info, lpANDbits, lpXORbits );
 }
 
@@ -1736,7 +1773,12 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 	}
     }
     if (DoOffscreen) {
-      RECT r = {0, 0, cxWidth, cxWidth};
+      RECT r;
+
+      r.left = 0;
+      r.top = 0;
+      r.right = cxWidth;
+      r.bottom = cxWidth;
 
       hDC_off = CreateCompatibleDC(hdc);
       hB_off = CreateCompatibleBitmap(hdc, cxWidth, cyWidth);

@@ -262,7 +262,8 @@ NTSTATUS WINAPI NtQueryInformationToken(
 
 	switch (tokeninfoclass)
 	{ case TokenGroups:	/* 2 */
-		*retlen = sizeof (TOKEN_GROUPS);	
+		*retlen = sizeof (TOKEN_GROUPS);
+#if 0	
 	  case TokenUser:	/* 1 */
 	  case TokenPrivileges:
 	  case TokenOwner:
@@ -272,7 +273,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 	  case TokenType:
 	  case TokenImpersonationLevel:
 	  case TokenStatistics:
-
+#endif /* 0 */
 	}
 
 	return 0;

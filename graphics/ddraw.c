@@ -210,7 +210,7 @@ HRESULT WINAPI DirectDrawEnumerateExW(
   LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags)
 {
   DirectDrawEnumerateProcData epd;
-  epd.lpCallback = lpCallback;
+  epd.lpCallback = (LPVOID) lpCallback;
   epd.lpContext = lpContext;
 
   return DirectDrawEnumerateExA(DirectDrawEnumerateExProcW, 
@@ -238,7 +238,7 @@ HRESULT WINAPI DirectDrawEnumerateA(
   LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) 
 {
   DirectDrawEnumerateProcData epd;  
-  epd.lpCallback = lpCallback;
+  epd.lpCallback = (LPVOID) lpCallback;
   epd.lpContext = lpContext;
 
   return DirectDrawEnumerateExA(DirectDrawEnumerateProcA, 
@@ -267,7 +267,7 @@ HRESULT WINAPI DirectDrawEnumerateW(
   LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) 
 {
   DirectDrawEnumerateProcData epd;  
-  epd.lpCallback = lpCallback;
+  epd.lpCallback = (LPVOID) lpCallback;
   epd.lpContext = lpContext;
 
   return DirectDrawEnumerateExW(DirectDrawEnumerateProcW, 
@@ -554,7 +554,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Lock(
 		FIXME(ddraw,"	lprect: %dx%d-%dx%d\n",
 			lprect->top,lprect->left,lprect->bottom,lprect->right
 		);
-		lpddsd->y.lpSurface = This->s.surface_desc.y.lpSurface +
+		lpddsd->y.lpSurface = (char *) This->s.surface_desc.y.lpSurface +
 			(lprect->top*This->s.surface_desc.lPitch) +
 			(lprect->left*(This->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8));
 	} else {
@@ -911,7 +911,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	  glDepthMask(ztest);
 	  
 	  dwFlags &= ~(DDBLT_DEPTHFILL);
-#endif HAVE_MESAGL
+#endif /* defined(HAVE_MESAGL) */
 	}
 	
 	if (dwFlags & DDBLT_ROP) {
@@ -4067,10 +4067,10 @@ static HRESULT WINAPI IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface,
 }
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
-#ifdef __GNUC__
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)	(typeof(dga_ddvt.fn##fun))
 #else
-# define XCAST(fun)	(void*)
+# define XCAST(fun)	(void *)
 #endif
 
 static ICOM_VTABLE(IDirectDraw) dga_ddvt = {
@@ -4260,7 +4260,7 @@ static HRESULT WINAPI IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 iface,
   return DD_OK;
 }
 
-#ifdef __GNUC__
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)	(typeof(dga_dd4vt.fn##fun))
 #else
 # define XCAST(fun)	(void*)

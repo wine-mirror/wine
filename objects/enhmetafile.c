@@ -113,15 +113,15 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
     )
 {
   LPENHMETAHEADER p = GlobalLock(hmf);
-  INT first  = lstrlenW( (void *)p+p->offDescription);
+  INT first  = lstrlenW( (LPWSTR) ((char *)p+p->offDescription));
 
   if (!buf || !size) return p->nDescription;
 
-  lstrcpynWtoA(buf, (void *)p+p->offDescription, size);
+  lstrcpynWtoA(buf, (LPWSTR) ((char *)p+p->offDescription), size);
   buf += first +1;
-  lstrcpynWtoA(buf, (void *)p+p->offDescription+2*(first+1), size-first-1);
+  lstrcpynWtoA(buf, (LPWSTR) ((char *)p+p->offDescription+2*(first+1)), size-first-1);
 
-  /*  memmove(buf, (void *)p+p->offDescription, MIN(size,p->nDescription)); */
+  /*  memmove(buf, (LPWSTR) ((char *)p+p->offDescription), MIN(size,p->nDescription)); */
   GlobalUnlock(hmf);
   return MIN(size,p->nDescription);
 }
@@ -145,7 +145,7 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
 
   if (!buf || !size) return p->nDescription;
 
-  memmove(buf, (void *)p+p->offDescription, MIN(size,p->nDescription));
+  memmove(buf, (char *)p+p->offDescription, MIN(size,p->nDescription));
   GlobalUnlock(hmf);
   return MIN(size,p->nDescription);
 }
@@ -480,7 +480,7 @@ BOOL WINAPI EnumEnhMetaFile(
   while (ret) {
     ret = (*callback)(hdc, ht, p, count, data); 
     if (p->iType == EMR_EOF) break;
-    p = (void *) p + p->nSize;
+    p = (LPENHMETARECORD) ((char *) p + p->nSize);
   }
   GlobalFree((HGLOBAL)ht);
   GlobalUnlock(hmf);
@@ -514,9 +514,13 @@ BOOL WINAPI PlayEnhMetaFile(
     LPENHMETAHEADER h = (LPENHMETAHEADER) p;
     FLOAT xscale = (h->rclBounds.right-h->rclBounds.left)/(lpRect->right-lpRect->left);
     FLOAT yscale = (h->rclBounds.bottom-h->rclBounds.top)/(lpRect->bottom-lpRect->top);
-    XFORM xform = {xscale, 0, 0, yscale, 0, 0};
-        xform.eDx = lpRect->left;
-	  xform.eDy = lpRect->top; 
+    XFORM xform;
+    xform.eM11 = xscale;
+    xform.eM12 = 0;
+    xform.eM21 = 0;
+    xform.eM22 = yscale;
+    xform.eDx = lpRect->left;
+    xform.eDy = lpRect->top; 
     FIXME(metafile, "play into rect doesn't work\n");
     savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
     if (!SetWorldTransform(hdc, &xform)) {
@@ -528,7 +532,7 @@ BOOL WINAPI PlayEnhMetaFile(
   while (1) {
     PlayEnhMetaFileRecord(hdc, ht, p, count);
     if (p->iType == EMR_EOF) break;
-    p = (void *) p + p->nSize; /* casted so that arithmetic is in bytes */
+    p = (LPENHMETARECORD) ((char *) p + p->nSize); /* casted so that arithmetic is in bytes */
   }
   GlobalUnlock(hmf);
   if (savedMode) SetGraphicsMode(hdc, savedMode);

@@ -274,7 +274,7 @@ BOOL  WINAPI EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 BOOL WINAPI PrinterProperties(HWND hWnd, HANDLE hPrinter);
 
 #ifdef __cplusplus
-} // extern "C"
+} /* extern "C" */
 #endif
 
 #endif  /* __WINE_WINSPOOL_H */

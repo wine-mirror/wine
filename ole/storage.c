@@ -1048,7 +1048,7 @@ HRESULT WINAPI IStream16_fnWrite(
 			if (cc>cb)
 				cc=cb;
 			memcpy(	((LPBYTE)block)+(This->offset.LowPart&(SMALLSIZE-1)),
-				(LPBYTE)(pv+curoffset),
+				(LPBYTE)((char *) pv+curoffset),
 				cc
 			);
 			if (!STORAGE_put_small_block(hf,blocknr,block))
@@ -1076,7 +1076,7 @@ HRESULT WINAPI IStream16_fnWrite(
 			if (cc>cb)
 				cc=cb;
 			memcpy(	((LPBYTE)block)+(This->offset.LowPart&(BIGSIZE-1)),
-				(LPBYTE)(pv+curoffset),
+				(LPBYTE)((char *) pv+curoffset),
 				cc
 			);
 			if (!STORAGE_put_big_block(hf,blocknr,block))

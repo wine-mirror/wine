@@ -588,7 +588,7 @@ DSA_GetItem (const HDSA hdsa, INT nIndex, LPVOID pDest)
     if ((nIndex < 0) || (nIndex >= hdsa->nItemCount))
 	return FALSE;
 
-    pSrc = hdsa->pData + (hdsa->nItemSize * nIndex);
+    pSrc = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
     memmove (pDest, pSrc, hdsa->nItemSize);
 
     return TRUE;
@@ -621,7 +621,7 @@ DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
     if ((nIndex < 0) || (nIndex >= hdsa->nItemCount))
 	return NULL;
 
-    pSrc = hdsa->pData + (hdsa->nItemSize * nIndex);
+    pSrc = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
     
     TRACE (commctrl, "-- ret=%p\n", pSrc);
 
@@ -677,7 +677,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
     }
 
     /* put the new entry in */
-    pDest = hdsa->pData + (hdsa->nItemSize * nIndex);
+    pDest = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
     TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
 	   pDest, pSrc, hdsa->nItemSize);
     memmove (pDest, pSrc, hdsa->nItemSize);
@@ -712,7 +712,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	return -1;
 
     for (i = 0; i < hdsa->nItemSize; i += 4) {
-	p = *(DWORD**)(pSrc + i);
+	p = *(DWORD**)((char *) pSrc + i);
 	if (IsBadStringPtrA ((char*)p, 256))
 	    TRACE (commctrl, "-- %d=%p\n", i, (DWORD*)p);
 	else
@@ -738,8 +738,8 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 
     /* do we need to move elements ? */
     if (nIndex < hdsa->nItemCount) {
-	lpTemp = hdsa->pData + (hdsa->nItemSize * nIndex);
-	lpDest = lpTemp + hdsa->nItemSize;
+	lpTemp = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
+	lpDest = (char *) lpTemp + hdsa->nItemSize;
 	nSize = (hdsa->nItemCount - nIndex) * hdsa->nItemSize;
 	TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
 	       lpDest, lpTemp, nSize);
@@ -748,7 +748,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 
     /* ok, we can put the new Item in */
     hdsa->nItemCount++;
-    lpDest = hdsa->pData + (hdsa->nItemSize * nIndex);
+    lpDest = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
     TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
 	   lpDest, pSrc, hdsa->nItemSize);
     memmove (lpDest, pSrc, hdsa->nItemSize);
@@ -784,8 +784,8 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
 
     /* do we need to move ? */
     if (nIndex < hdsa->nItemCount - 1) {
-	lpDest = hdsa->pData + (hdsa->nItemSize * nIndex);
-	lpSrc = lpDest + hdsa->nItemSize;
+	lpDest = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
+	lpSrc = (char *) lpDest + hdsa->nItemSize;
 	nSize = hdsa->nItemSize * (hdsa->nItemCount - nIndex - 1);
 	TRACE (commctrl, "-- move dest=%p src=%p size=%d\n",
 	       lpDest, lpSrc, nSize);

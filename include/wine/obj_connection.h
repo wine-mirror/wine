@@ -41,11 +41,11 @@ typedef struct IEnumConnectionPoints IEnumConnectionPoints, *LPENUMCONNECTIONPOI
  */
 #define ICOM_INTERFACE IConnectionPoint
 #define IConnectionPoint_METHODS \
-	ICOM_METHOD1(HRESULT,GetConnectionInterface, IID*,pIID); \
-	ICOM_METHOD1(HRESULT,GetConnectionPointContainer, IConnectionPointContainer**,ppCPC); \
-	ICOM_METHOD2(HRESULT,Advise, IUnknown*,pUnkSink, DWORD*,pdwCookie); \
-	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwCookie); \
-	ICOM_METHOD1(HRESULT,EnumConnections, IEnumConnections**,ppEnum);
+	ICOM_METHOD1(HRESULT,GetConnectionInterface, IID*,pIID) \
+	ICOM_METHOD1(HRESULT,GetConnectionPointContainer, IConnectionPointContainer**,ppCPC) \
+	ICOM_METHOD2(HRESULT,Advise, IUnknown*,pUnkSink, DWORD*,pdwCookie) \
+	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwCookie) \
+	ICOM_METHOD1(HRESULT,EnumConnections, IEnumConnections**,ppEnum)
 #define IConnectionPoint_IMETHODS \
 	IUnknown_IMETHODS \
 	IConnectionPoint_METHODS
@@ -71,8 +71,8 @@ ICOM_DEFINE(IConnectionPoint,IUnknown)
  */
 #define ICOM_INTERFACE IConnectionPointContainer
 #define IConnectionPointContainer_METHODS \
-	ICOM_METHOD1(HRESULT,EnumConnectionPoints, IEnumConnectionPoints**,ppEnum); \
-	ICOM_METHOD2(HRESULT,FindConnectionPoint, REFIID,riid, IConnectionPoint**,ppCP); 
+	ICOM_METHOD1(HRESULT,EnumConnectionPoints, IEnumConnectionPoints**,ppEnum) \
+	ICOM_METHOD2(HRESULT,FindConnectionPoint, REFIID,riid, IConnectionPoint**,ppCP)
 #define IConnectionPointContainer_IMETHODS \
 	IUnknown_IMETHODS \
 	IConnectionPointContainer_METHODS
@@ -95,10 +95,10 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
  */
 #define ICOM_INTERFACE IEnumConnections
 #define IEnumConnections_METHODS \
-	ICOM_METHOD3(HRESULT,Next, ULONG,cConnections, LPCONNECTDATA,rgcd, ULONG*,pcFectched); \
-	ICOM_METHOD1(HRESULT,Skip, ULONG,cConnections); \
-	ICOM_METHOD (HRESULT,Reset); \
-	ICOM_METHOD1(HRESULT,Clone, IEnumConnections**,ppEnum);
+	ICOM_METHOD3(HRESULT,Next, ULONG,cConnections, LPCONNECTDATA,rgcd, ULONG*,pcFectched) \
+	ICOM_METHOD1(HRESULT,Skip, ULONG,cConnections) \
+	ICOM_METHOD (HRESULT,Reset) \
+	ICOM_METHOD1(HRESULT,Clone, IEnumConnections**,ppEnum)
 #define IEnumConnections_IMETHODS \
 	IUnknown_IMETHODS \
 	IEnumConnections_METHODS
@@ -122,10 +122,10 @@ ICOM_DEFINE(IEnumConnections,IUnknown)
  */
 #define ICOM_INTERFACE IEnumConnectionPoints
 #define IEnumConnectionPoints_METHODS \
-	ICOM_METHOD3(HRESULT,Next, ULONG,cConnections, LPCONNECTIONPOINT*,ppCP, ULONG*,pcFectched); \
-	ICOM_METHOD1(HRESULT,Skip, ULONG,cConnections); \
-	ICOM_METHOD (HRESULT,Reset); \
-	ICOM_METHOD1(HRESULT,Clone, IEnumConnections**,ppEnum);
+	ICOM_METHOD3(HRESULT,Next, ULONG,cConnections, LPCONNECTIONPOINT*,ppCP, ULONG*,pcFectched) \
+	ICOM_METHOD1(HRESULT,Skip, ULONG,cConnections) \
+	ICOM_METHOD (HRESULT,Reset) \
+	ICOM_METHOD1(HRESULT,Clone, IEnumConnections**,ppEnum)
 #define IEnumConnectionPoints_IMETHODS \
 	IUnknown_IMETHODS \
 	IEnumConnectionPoints_METHODS

@@ -98,12 +98,12 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
  *
  *    #define ICOM_INTERFACE IDirect3D
  *    #define IDirect3D_METHODS \
- *        ICOM_METHOD1(HRESULT,Initialize,    REFIID,); \
- *        ICOM_METHOD2(HRESULT,EnumDevices,   LPD3DENUMDEVICESCALLBACK,, LPVOID,); \
- *        ICOM_METHOD2(HRESULT,CreateLight,   LPDIRECT3DLIGHT*,, IUnknown*,); \
- *        ICOM_METHOD2(HRESULT,CreateMaterial,LPDIRECT3DMATERIAL*,, IUnknown*,); \
- *        ICOM_METHOD2(HRESULT,CreateViewport,LPDIRECT3DVIEWPORT*,, IUnknown*,); \
- *        ICOM_METHOD2(HRESULT,FindDevice,    LPD3DFINDDEVICESEARCH,, LPD3DFINDDEVICERESULT,);
+ *        ICOM_METHOD1(HRESULT,Initialize,    REFIID,) \
+ *        ICOM_METHOD2(HRESULT,EnumDevices,   LPD3DENUMDEVICESCALLBACK,, LPVOID,) \
+ *        ICOM_METHOD2(HRESULT,CreateLight,   LPDIRECT3DLIGHT*,, IUnknown*,) \
+ *        ICOM_METHOD2(HRESULT,CreateMaterial,LPDIRECT3DMATERIAL*,, IUnknown*,) \
+ *        ICOM_METHOD2(HRESULT,CreateViewport,LPDIRECT3DVIEWPORT*,, IUnknown*,) \
+ *        ICOM_METHOD2(HRESULT,FindDevice,    LPD3DFINDDEVICESEARCH,, LPD3DFINDDEVICERESULT,)
  *    #define IDirect3D_IMETHODS \
  *        IUnknown_IMETHODS \
  *        IDirect3D_METHODS
@@ -798,7 +798,7 @@ struct IUnknown {
     ICOM_VTABLE(IUnknown)* lpvtbl;
 };
 struct ICOM_VTABLE(IUnknown) {
-    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj);
+    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj)
 #else /* ICOM_CINTERFACE */
 struct IUnknown {
 #ifndef ICOM_VIRTUAL_METHODS
