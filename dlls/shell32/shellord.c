@@ -1082,22 +1082,92 @@ BOOL WINAPI DAD_ShowDragImage(BOOL bShow)
 	FIXME("0x%08x stub\n",bShow);
 	return 0;
 }
+
+static const WCHAR szwCabLocation[] = {
+  'S','o','f','t','w','a','r','e','\\',
+  'M','i','c','r','o','s','o','f','t','\\',
+  'W','i','n','d','o','w','s','\\',
+  'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+  'E','x','p','l','o','r','e','r','\\',
+  'C','a','b','i','n','e','t','S','t','a','t','e',0
+};
+
+static const WCHAR szwSettings[] = { 'S','e','t','t','i','n','g','s',0 };
+
 /*************************************************************************
  * ReadCabinetState				[SHELL32.651] NT 4.0
  *
  */
-HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
-{	FIXME("0x%04lx 0x%04lx stub\n",u,v);
-	return 0;
+BOOL WINAPI ReadCabinetState(CABINETSTATE *cs, int length)
+{
+	HKEY hkey = 0;
+	DWORD type, r;
+
+	TRACE("%p %d \n",cs,length);
+
+	if( (cs == NULL) || (length < sizeof *cs)  )
+		return FALSE;
+
+	r = RegOpenKeyW( HKEY_CURRENT_USER, szwCabLocation, &hkey );
+	if( r == ERROR_SUCCESS )
+	{
+		type = REG_BINARY;
+		r = RegQueryValueExW( hkey, szwSettings, 
+			NULL, &type, (LPBYTE)cs, (LPDWORD)&length );
+		RegCloseKey( hkey );
+			
+	}
+
+	/* if we can't read from the registry, create default values */
+	if ( (r != ERROR_SUCCESS) || (cs->cLength < sizeof *cs) || 
+		(cs->cLength != length) )
+	{
+		ERR("Initializing shell cabinet settings\n");
+		memset(cs, 0, sizeof *cs);
+		cs->cLength          = sizeof *cs;
+		cs->nVersion         = 2;
+		cs->fFullPathTitle   = FALSE;
+		cs->fSaveLocalView   = TRUE;
+		cs->fNotShell        = FALSE;
+		cs->fSimpleDefault   = TRUE;
+		cs->fDontShowDescBar = FALSE;
+		cs->fNewWindowMode   = FALSE;
+		cs->fShowCompColor   = FALSE;
+		cs->fDontPrettyNames = FALSE;
+		cs->fAdminsCreateCommonGroups = TRUE;
+		cs->fMenuEnumFilter  = 96;
+	}
+	
+	return TRUE;
 }
+
 /*************************************************************************
  * WriteCabinetState				[SHELL32.652] NT 4.0
  *
  */
-HRESULT WINAPI WriteCabinetState(DWORD u)
-{	FIXME("0x%04lx stub\n",u);
-	return 0;
+BOOL WINAPI WriteCabinetState(CABINETSTATE *cs)
+{
+	DWORD r;
+	HKEY hkey = 0;
+
+	TRACE("%p\n",cs);
+
+	if( cs == NULL )
+		return FALSE;
+
+	r = RegCreateKeyExW( HKEY_CURRENT_USER, szwCabLocation, 0,
+		 NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+	if( r == ERROR_SUCCESS )
+	{
+		r = RegSetValueExW( hkey, szwSettings, 0, 
+			REG_BINARY, (LPBYTE) cs, cs->cLength);
+
+		RegCloseKey( hkey );
+	}
+
+	return (r==ERROR_SUCCESS);
 }
+
 /*************************************************************************
  * FileIconInit 				[SHELL32.660]
  *
@@ -1257,9 +1327,10 @@ BOOL WINAPI SHWaitForFileToOpen(
  * HCU\Software\Microsoft\Windows\CurrentVersion\Explorer\CabinetState
  * I'm (js) guessing: this one is just ReadCabinetState ;-)
  */
-HRESULT WINAPI shell32_654 (DWORD x, DWORD y)
-{	FIXME("0x%08lx 0x%08lx stub\n",x,y);
-	return 0;
+HRESULT WINAPI shell32_654 (CABINETSTATE *cs, int length)
+{
+	TRACE("%p %d\n",cs,length);
+	return ReadCabinetState(cs,length);
 }
 
 /************************************************************************
