@@ -429,8 +429,24 @@ REBAR_MoveChildWindows (HWND hwnd)
 	    }
 #if 0
 	    else if (!lstrcmpA (szClassName, WC_COMBOBOXEXA)) {
+		INT nEditHeight, yPos;
+		RECT rc;
+		HWND hwndEdit;
+
 		/* special placement code for extended combo box */
 
+		/* get size of edit line */
+		hwndEdit = SendMessageA (lpBand->hwndChild, CBEM_GETEDITCONTROL, 0, 0);
+		GetWindowRect (hwndEdit, &rc);
+		nEditHeight = rc.bottom - rc.top;
+		yPos = (lpBand->rcChild.bottom + lpBand->rcChild.top - nEditHeight)/2;
+
+		/* center combo box inside child area */
+		SetWindowPos (lpBand->hwndChild, HWND_TOP,
+			    lpBand->rcChild.left, /*lpBand->rcChild.top*/ yPos,
+			    lpBand->rcChild.right - lpBand->rcChild.left,
+			    nEditHeight,
+			    SWP_SHOWWINDOW);
 
 	    }
 #endif
