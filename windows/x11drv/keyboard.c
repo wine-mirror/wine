@@ -35,6 +35,8 @@ WORD keyc2vkey[256], keyc2scan[256];
 static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
 static int kcControl, kcAlt, kcShift, kcNumLock, kcCapsLock; /* keycodes */
 
+static char KEYBOARD_MapDeadKeysym(KeySym keysym);
+
 /* Keyboard translation tables */
 #define MAIN_LEN 48
 static const int main_key_scan[MAIN_LEN] =
@@ -545,8 +547,9 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	/* Allow both one-byte and two-byte national keysyms */
 	if ((keysym < 0x800) && (keysym != ' '))
 	  ckey[i] = keysym & 0xFF;
-	else
-	  ckey[i] = 0;
+	else {
+	  ckey[i] = KEYBOARD_MapDeadKeysym(keysym);
+	}
       }
       if (ckey[0]) {
 	/* search for a match in layout table */
@@ -933,6 +936,84 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 }
 
 /***********************************************************************
+ *		X11DRV_KEYBOARD_MapDeadKeysym
+ */
+static char KEYBOARD_MapDeadKeysym(KeySym keysym)
+{
+	switch (keysym)
+	    {
+	/* symbolic ASCII is the same as defined in rfc1345 */
+#ifdef XK_dead_tilde
+	    case XK_dead_tilde :
+#endif
+	    case 0x1000FE7E : /* Xfree's XK_Dtilde */
+		return '~';	/* '? */
+#ifdef XK_dead_acute
+	    case XK_dead_acute :
+#endif
+	    case 0x1000FE27 : /* Xfree's XK_Dacute_accent */
+		return 0xb4;	/* '' */
+#ifdef XK_dead_circumflex
+	    case XK_dead_circumflex:
+#endif
+	    case 0x1000FE5E : /* Xfree's XK_Dcircumflex_accent */
+		return '^';	/* '> */
+#ifdef XK_dead_grave
+	    case XK_dead_grave :
+#endif
+	    case 0x1000FE60 : /* Xfree's XK_Dgrave_accent */
+		return '`';	/* '! */
+#ifdef XK_dead_diaeresis
+	    case XK_dead_diaeresis :
+#endif
+	    case 0x1000FE22 : /* Xfree's XK_Ddiaeresis */
+		return 0xa8;	/* ': */
+#ifdef XK_dead_cedilla
+	    case XK_dead_cedilla :
+	        return 0xb8;	/* ', */
+#endif
+#ifdef XK_dead_macron
+	    case XK_dead_macron :
+	        return '-';	/* 'm isn't defined on iso-8859-x */
+#endif
+#ifdef XK_dead_breve
+	    case XK_dead_breve :
+	        return 0xa2;	/* '( */
+#endif
+#ifdef XK_dead_abovedot
+	    case XK_dead_abovedot :
+	        return 0xff;	/* '. */
+#endif
+#ifdef XK_dead_abovering
+	    case XK_dead_abovering :
+	        return '0';	/* '0 isn't defined on iso-8859-x */
+#endif
+#ifdef XK_dead_doubleacute
+	    case XK_dead_doubleacute :
+	        return 0xbd;	/* '" */
+#endif
+#ifdef XK_dead_caron
+	    case XK_dead_caron :
+	        return 0xb7;	/* '< */
+#endif
+#ifdef XK_dead_ogonek
+	    case XK_dead_ogonek :
+	        return 0xb2;	/* '; */
+#endif
+/* FIXME: I don't know this three.
+	    case XK_dead_iota :
+	        return 'i';	 
+	    case XK_dead_voiced_sound :
+	        return 'v';
+	    case XK_dead_semivoiced_sound :
+	        return 's';
+*/
+	    }
+	TRACE(keyboard,"no character for dead keysym 0x%08lx\n",keysym);
+	return 0;
+}
+
+/***********************************************************************
  *		X11DRV_KEYBOARD_ToAscii
  *
  * The ToAscii function translates the specified virtual-key code and keyboard
@@ -1021,91 +1102,7 @@ INT16 X11DRV_KEYBOARD_ToAscii(
 	BYTE dead_char = 0;
 
 	((char*)lpChar)[1] = '\0';
-	switch (keysym)
-	    {
-	/* symbolic ASCII is the same as defined in rfc1345 */
-#ifdef XK_dead_tilde
-	    case XK_dead_tilde :
-#endif
-	    case 0x1000FE7E : /* Xfree's XK_Dtilde */
-		dead_char = '~';	/* '? */
-		break;
-#ifdef XK_dead_acute
-	    case XK_dead_acute :
-#endif
-	    case 0x1000FE27 : /* Xfree's XK_Dacute_accent */
-		dead_char = 0xb4;	/* '' */
-		break;
-#ifdef XK_dead_circumflex
-	    case XK_dead_circumflex :
-#endif
-	    case 0x1000FE5E : /* Xfree's XK_Dcircumflex_accent */
-		dead_char = '^';	/* '> */
-		break;
-#ifdef XK_dead_grave
-	    case XK_dead_grave :
-#endif
-	    case 0x1000FE60 : /* Xfree's XK_Dgrave_accent */
-		dead_char = '`';	/* '! */
-		break;
-#ifdef XK_dead_diaeresis
-	    case XK_dead_diaeresis :
-#endif
-	    case 0x1000FE22 : /* Xfree's XK_Ddiaeresis */
-		dead_char = 0xa8;	/* ': */
-		break;
-#ifdef XK_dead_cedilla
-	    case XK_dead_cedilla :
-	        dead_char = 0xb8;	/* ', */
-	        break;
-#endif
-#ifdef XK_dead_macron
-	    case XK_dead_macron :
-	        dead_char = '-';	/* 'm isn't defined on iso-8859-x */
-	        break;
-#endif
-#ifdef XK_dead_breve
-	    case XK_dead_breve :
-	        dead_char = 0xa2;	/* '( */
-	        break;
-#endif
-#ifdef XK_dead_abovedot
-	    case XK_dead_abovedot :
-	        dead_char = 0xff;	/* '. */
-	        break;
-#endif
-#ifdef XK_dead_abovering
-	    case XK_dead_abovering :
-	        dead_char = '0';	/* '0 isn't defined on iso-8859-x */
-	        break;
-#endif
-#ifdef XK_dead_doubleacute
-	    case XK_dead_doubleacute :
-	        dead_char = 0xbd;	/* '" */
-	        break;
-#endif
-#ifdef XK_dead_caron
-	    case XK_dead_caron :
-	        dead_char = 0xb7;	/* '< */
-	        break;
-#endif
-#ifdef XK_dead_ogonek
-	    case XK_dead_ogonek :
-	        dead_char = 0xb2;	/* '; */
-	        break;
-#endif
-/* FIXME: I don't know this three.
-	    case XK_dead_iota :
-	        dead_char = 'i';	 
-	        break;
-	    case XK_dead_voiced_sound :
-	        dead_char = 'v';
-	        break;
-	    case XK_dead_semivoiced_sound :
-	        dead_char = 's';
-	        break;
-*/
-	    }
+	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
 	    {
 	    *(char*)lpChar = dead_char;
