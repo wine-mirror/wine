@@ -36,6 +36,7 @@ UB 000416:
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
 
+double CRTDLL_HUGE_dll;       /* CRTDLL.20 */
 UINT CRTDLL_argc_dll;         /* CRTDLL.23 */
 LPSTR *CRTDLL_argv_dll;       /* CRTDLL.24 */
 LPSTR  CRTDLL_acmdln_dll;     /* CRTDLL.38 */
@@ -57,6 +58,34 @@ INT  CRTDLL_doserrno = 0;
 INT  CRTDLL_errno = 0;
 const INT  CRTDLL__sys_nerr = 43;
 
+/* ASCII char classification flags - binary compatible */
+#define _C_ CRTDLL_CONTROL
+#define _S_ CRTDLL_SPACE
+#define _P_ CRTDLL_PUNCT
+#define _D_ CRTDLL_DIGIT
+#define _H_ CRTDLL_HEX
+#define _U_ CRTDLL_UPPER
+#define _L_ CRTDLL_LOWER
+
+WORD CRTDLL_ctype [257] = {
+  0, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|_C_, _S_|_C_,
+  _S_|_C_, _S_|_C_, _S_|_C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_,
+  _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|CRTDLL_BLANK,
+  _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_,
+  _P_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_,
+  _D_|_H_, _D_|_H_, _D_|_H_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _U_|_H_,
+  _U_|_H_, _U_|_H_, _U_|_H_, _U_|_H_, _U_|_H_, _U_, _U_, _U_, _U_, _U_,
+  _U_, _U_, _U_, _U_, _U_, _U_, _U_, _U_, _U_, _U_, _U_, _U_, _U_, _U_,
+  _U_, _P_, _P_, _P_, _P_, _P_, _P_, _L_|_H_, _L_|_H_, _L_|_H_, _L_|_H_,
+  _L_|_H_, _L_|_H_, _L_, _L_, _L_, _L_, _L_, _L_, _L_, _L_, _L_, _L_,
+  _L_, _L_, _L_, _L_, _L_, _L_, _L_, _L_, _L_, _L_, _P_, _P_, _P_, _P_,
+  _C_, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
 /*********************************************************************
  *                  CRTDLL_MainInit  (CRTDLL.init)
@@ -67,6 +96,7 @@ BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 	  __CRTDLL__init_io();
+	  CRTDLL_HUGE_dll = HUGE_VAL;
 	}
 	return TRUE;
 }
@@ -137,10 +167,10 @@ void __CRTDLL__set_errno(ULONG err)
   __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var2) : ); \
   __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var1) : )
 #else
-#define FPU_DOUBLE(var) double var = quiet_nan(); \
+#define FPU_DOUBLE(var) double var = quiet_nan(0); \
   FIXME(":not implemented\n");
 #define FPU_DOUBLES(var1,var2) double var1,var2; \
-  var1=var2=quiet_nan(); FIXME(":not implemented\n")
+  var1=var2=quiet_nan(0); FIXME(":not implemented\n")
 #endif
 
 /*********************************************************************
@@ -149,6 +179,7 @@ void __CRTDLL__set_errno(ULONG err)
 double __cdecl CRTDLL__CIacos(void)
 {
   FPU_DOUBLE(x);
+  if (x < -1.0 || x > 1.0) CRTDLL_errno = EDOM;
   return acos(x);
 }
 
@@ -159,6 +190,7 @@ double __cdecl CRTDLL__CIacos(void)
 double __cdecl CRTDLL__CIasin(void)
 {
   FPU_DOUBLE(x);
+  if (x < -1.0 || x > 1.0) CRTDLL_errno = EDOM;
   return asin(x);
 }
 
@@ -169,6 +201,7 @@ double __cdecl CRTDLL__CIasin(void)
 double __cdecl CRTDLL__CIatan(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return atan(x);
 }
 
@@ -178,6 +211,7 @@ double __cdecl CRTDLL__CIatan(void)
 double __cdecl CRTDLL__CIatan2(void)
 {
   FPU_DOUBLES(x,y);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return atan2(x,y);
 }
 
@@ -188,6 +222,7 @@ double __cdecl CRTDLL__CIatan2(void)
 double __cdecl CRTDLL__CIcos(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return cos(x);
 }
 
@@ -197,6 +232,7 @@ double __cdecl CRTDLL__CIcos(void)
 double __cdecl CRTDLL__CIcosh(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return cosh(x);
 }
 
@@ -206,6 +242,7 @@ double __cdecl CRTDLL__CIcosh(void)
 double __cdecl CRTDLL__CIexp(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return exp(x);
 }
 
@@ -215,6 +252,7 @@ double __cdecl CRTDLL__CIexp(void)
 double __cdecl CRTDLL__CIfmod(void)
 {
   FPU_DOUBLES(x,y);
+  if (!isfinite(x) | !isfinite(y)) CRTDLL_errno = EDOM;
   return fmod(x,y);
 }
 
@@ -224,6 +262,8 @@ double __cdecl CRTDLL__CIfmod(void)
 double __cdecl CRTDLL__CIlog(void)
 {
   FPU_DOUBLE(x);
+  if (x < 0.0 || !isfinite(x)) CRTDLL_errno = EDOM;
+  if (x == 0.0) CRTDLL_errno = ERANGE;
   return log(x);
 }
 
@@ -233,7 +273,22 @@ double __cdecl CRTDLL__CIlog(void)
 double __cdecl CRTDLL__CIlog10(void)
 {
   FPU_DOUBLE(x);
+  if (x < 0.0 || !isfinite(x)) CRTDLL_errno = EDOM;
+  if (x == 0.0) CRTDLL_errno = ERANGE;
   return log10(x);
+}
+
+/*********************************************************************
+ *                  _CIpow             (CRTDLL.014)
+ */
+double __cdecl CRTDLL__CIpow(void)
+{
+  double z;
+  FPU_DOUBLES(x,y);
+  /* FIXME: If x < 0 and y is not integral, set EDOM */
+  z = pow(x,y);
+  if (!isfinite(z)) CRTDLL_errno = EDOM;
+  return z;
 }
 
 /*********************************************************************
@@ -242,6 +297,7 @@ double __cdecl CRTDLL__CIlog10(void)
 double __cdecl CRTDLL__CIsin(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return sin(x);
 }
 
@@ -251,6 +307,7 @@ double __cdecl CRTDLL__CIsin(void)
 double __cdecl CRTDLL__CIsinh(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return sinh(x);
 }
 
@@ -260,6 +317,7 @@ double __cdecl CRTDLL__CIsinh(void)
 double __cdecl CRTDLL__CIsqrt(void)
 {
   FPU_DOUBLE(x);
+  if (x < 0.0) CRTDLL_errno = EDOM;
   return sqrt(x);
 }
 
@@ -269,6 +327,7 @@ double __cdecl CRTDLL__CIsqrt(void)
 double __cdecl CRTDLL__CItan(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return tan(x);
 }
 
@@ -278,6 +337,7 @@ double __cdecl CRTDLL__CItan(void)
 double __cdecl CRTDLL__CItanh(void)
 {
   FPU_DOUBLE(x);
+  if (!isfinite(x)) CRTDLL_errno = EDOM;
   return tanh(x);
 }
 
@@ -360,6 +420,23 @@ LPSTR * __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 	return environ;
 }
 
+
+
+/*********************************************************************
+ *                  _clearfp         (CRTDLL.056)
+ *
+ * Clear and return the previous FP status.
+ */
+UINT __cdecl CRTDLL__clearfp( VOID )
+{
+  UINT retVal = CRTDLL__statusfp();
+#if defined(__GNUC__) && defined(__i386__)
+  __asm__ __volatile__( "fnclex" );
+#else
+  FIXME(":Not Implemented!\n");
+#endif
+  return retVal;
+}
 
 /*********************************************************************
  *                  _fpclass         (CRTDLL.105)
@@ -562,24 +639,9 @@ LPSTR __cdecl CRTDLL_setlocale(INT category,LPCSTR locale)
 /*********************************************************************
  *                  _isctype           (CRTDLL.138)
  */
-BOOL __cdecl CRTDLL__isctype(CHAR x,CHAR type)
+INT __cdecl CRTDLL__isctype(INT c,UINT type)
 {
-    if ((type & CRTDLL_SPACE) && isspace(x))
-        return TRUE;
-    if ((type & CRTDLL_PUNCT) && ispunct(x))
-        return TRUE;
-    if ((type & CRTDLL_LOWER) && islower(x))
-        return TRUE;
-    if ((type & CRTDLL_UPPER) && isupper(x))
-        return TRUE;
-    if ((type & CRTDLL_ALPHA) && isalpha(x))
-        return TRUE;
-    if ((type & CRTDLL_DIGIT) && isdigit(x))
-        return TRUE;
-    if ((type & CRTDLL_CONTROL) && iscntrl(x))
-        return TRUE;
-    /* check CRTDLL_LEADBYTE */
-    return FALSE;
+  return CRTDLL_ctype[(UINT)c+1] & type;
 }
 
 
@@ -659,6 +721,21 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
 
 
 /*********************************************************************
+ *                  _matherr            (CRTDLL.181)
+ *
+ * Default handler for math errors.
+*/
+INT __cdecl CRTDLL__matherr(struct _exception *e)
+{
+  /* FIXME: Supposedly this can be user overridden, but
+   * currently it will never be called anyway.
+   */
+  FIXME(":Unhandled math error!\n");
+  return e == NULL ? 0 : 0;
+}
+
+
+/*********************************************************************
  *                  _makepath           (CRTDLL.182)
  */
 
@@ -727,6 +804,30 @@ LPINT __cdecl CRTDLL__errno( VOID )
 LPINT __cdecl CRTDLL___doserrno( VOID )
 {
   return &CRTDLL_doserrno;
+}
+
+/**********************************************************************
+ *                  _statusfp       (CRTDLL.279)
+ *
+ * Return the status of the FP control word.
+ */
+UINT __cdecl CRTDLL__statusfp( VOID )
+{
+  UINT retVal = 0;
+#if defined(__GNUC__) && defined(__i386__)
+  UINT fpword;
+
+  __asm__ __volatile__( "fstsw %0" : "=m" (fpword) : );
+  if (fpword & 0x1)  retVal |= _SW_INVALID;
+  if (fpword & 0x2)  retVal |= _SW_DENORMAL;
+  if (fpword & 0x4)  retVal |= _SW_ZERODIVIDE;
+  if (fpword & 0x8)  retVal |= _SW_OVERFLOW;
+  if (fpword & 0x10) retVal |= _SW_UNDERFLOW;
+  if (fpword & 0x20) retVal |= _SW_INEXACT;
+#else
+  FIXME(":Not implemented!\n");
+#endif
+  return retVal;
 }
 
 
@@ -826,6 +927,118 @@ LPSTR __cdecl CRTDLL_getenv(LPCSTR name)
 
 
 /*********************************************************************
+ *                  isalnum          (CRTDLL.442)
+ */
+INT __cdecl CRTDLL_isalnum(INT c)
+{
+  return CRTDLL__isctype( c,CRTDLL_ALPHA | CRTDLL_DIGIT );
+}
+
+
+/*********************************************************************
+ *                  isalpha          (CRTDLL.443)
+ */
+INT __cdecl CRTDLL_isalpha(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_ALPHA );
+}
+
+
+/*********************************************************************
+ *                  iscntrl          (CRTDLL.444)
+ */
+INT __cdecl CRTDLL_iscntrl(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_CONTROL );
+}
+
+
+/*********************************************************************
+ *                  isdigit          (CRTDLL.445)
+ */
+INT __cdecl CRTDLL_isdigit(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_DIGIT );
+}
+
+
+/*********************************************************************
+ *                  isgraph          (CRTDLL.446)
+ */
+INT __cdecl CRTDLL_isgraph(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_ALPHA | CRTDLL_DIGIT  | CRTDLL_PUNCT );
+}
+
+
+/*********************************************************************
+ *                  islower          (CRTDLL.447)
+ */
+INT __cdecl CRTDLL_islower(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_LOWER );
+}
+
+
+/*********************************************************************
+ *                  isprint          (CRTDLL.448)
+ */
+INT __cdecl CRTDLL_isprint(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_ALPHA | CRTDLL_DIGIT |
+			  CRTDLL_BLANK | CRTDLL_PUNCT );
+}
+
+
+/*********************************************************************
+ *                  ispunct           (CRTDLL.449)
+ */
+INT __cdecl CRTDLL_ispunct(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_PUNCT );
+}
+
+
+/*********************************************************************
+ *                  isspace           (CRTDLL.450)
+ */
+INT __cdecl CRTDLL_isspace(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_SPACE );
+}
+
+
+/*********************************************************************
+ *                  isupper           (CRTDLL.451)
+ */
+INT __cdecl CRTDLL_isupper(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_UPPER );
+}
+
+
+/*********************************************************************
+ *                  isxdigit           (CRTDLL.452)
+ */
+INT __cdecl CRTDLL_isxdigit(INT c)
+{
+  return CRTDLL__isctype( c, CRTDLL_HEX );
+}
+
+
+/*********************************************************************
+ *                  ldexp            (CRTDLL.454)
+ */
+double __cdecl CRTDLL_ldexp(double x, LONG y)
+{
+  double z;
+  z = ldexp(x,y);
+  /* FIXME: MS doesn't return -0 or very large/small (e=298+) numbers */
+  if (!isfinite(z)) CRTDLL_errno = ERANGE;
+  return z;
+}
+
+/*********************************************************************
  *                  _except_handler2  (CRTDLL.78)
  */
 INT __cdecl CRTDLL__except_handler2 (
@@ -847,7 +1060,7 @@ INT __cdecl CRTDLL__except_handler2 (
  */
 INT __cdecl CRTDLL___isascii(INT c)
 {
-  return isascii(c);
+  return isascii((unsigned)c);
 }
 
 
@@ -857,7 +1070,7 @@ INT __cdecl CRTDLL___isascii(INT c)
  */
 INT __cdecl CRTDLL___toascii(INT c)
 {
-  return c & 0x7f;
+  return (unsigned)c & 0x7f;
 }
 
 
@@ -882,9 +1095,9 @@ INT __cdecl CRTDLL_iswascii(LONG c)
  * RETURNS
  * Non zero if c is valid as t a C identifier.
  */
-INT __cdecl CRTDLL___iscsym(LONG c)
+INT __cdecl CRTDLL___iscsym(UCHAR c)
 {
-  return (isalnum(c) || c == '_');
+  return (c < 127 && (isalnum(c) || c == '_'));
 }
 
 
@@ -899,9 +1112,29 @@ INT __cdecl CRTDLL___iscsym(LONG c)
  * RETURNS
  *   Non zero if c is valid as the first letter in a C identifier.
  */
-INT __cdecl CRTDLL___iscsymf(LONG c)
+INT __cdecl CRTDLL___iscsymf(UCHAR c)
 {
-  return (isalpha(c) || c == '_');
+  return (c < 127 && (isalpha(c) || c == '_'));
+}
+
+
+/*********************************************************************
+ *                  _lfind          (CRTDLL.170)
+ *
+ * Perform a linear search of an array for an element.
+ */
+LPVOID __cdecl CRTDLL__lfind(LPCVOID match, LPCVOID start, LPUINT array_size,
+			     UINT elem_size, comp_func cf)
+{
+  UINT size = *array_size;
+  if (size)
+    do
+    {
+      if (cf(match, start) == 0)
+	return (LPVOID)start; /* found */
+      start += elem_size;
+    } while (--size);
+  return NULL;
 }
 
 
@@ -959,7 +1192,7 @@ INT __cdecl CRTDLL__unloaddll(HANDLE dll)
  *   start [in]      Pointer to start of search memory
  *   array_size [in] Length of search array (element count)
  *   elem_size [in]  Size of each element in memory
- *   comp_func [in]  Pointer to comparason function (like qsort()).
+ *   cf [in]         Pointer to comparison function (like qsort()).
  *
  * RETURNS
  *   Pointer to the location where element was found or added.
@@ -1092,14 +1325,65 @@ double __cdecl CRTDLL__chgsign(double d)
 /*********************************************************************
  *                  _control87    (CRTDLL.060)
  *
- * Unimplemented. Obsolete. Give it up. Use controlfp(), if you must.
+ * X86 implementation of _controlfp.
  *
  */
-UINT __cdecl CRTDLL__control87(UINT x, UINT y)
+UINT __cdecl CRTDLL__control87(UINT newVal, UINT mask)
 {
-  /* Will never be supported, no possible targets have an 87/287 FP unit */
-  WARN(":Ignoring control87 call, dont trust any FP results!\n");
-  return 0;
+#if defined(__GNUC__) && defined(__i386__)
+   UINT fpword, flags = 0;
+
+  /* Get fp control word */
+  __asm__ __volatile__( "fstsw %0" : "=m" (fpword) : );
+
+  /* Convert into mask constants */
+  if (fpword & 0x1)  flags |= _EM_INVALID;
+  if (fpword & 0x2)  flags |= _EM_DENORMAL;
+  if (fpword & 0x4)  flags |= _EM_ZERODIVIDE;
+  if (fpword & 0x8)  flags |= _EM_OVERFLOW;
+  if (fpword & 0x10) flags |= _EM_UNDERFLOW;
+  if (fpword & 0x20) flags |= _EM_INEXACT;
+  switch(fpword & 0xC00) {
+  case 0xC00: flags |= _RC_UP|_RC_DOWN; break;
+  case 0x800: flags |= _RC_UP; break;
+  case 0x400: flags |= _RC_DOWN; break;
+  }
+  switch(fpword & 0x300) {
+  case 0x0:   flags |= _PC_24; break;
+  case 0x200: flags |= _PC_53; break;
+  case 0x300: flags |= _PC_64; break;
+  }
+  if (fpword & 0x1000) flags |= _IC_AFFINE;
+
+  /* Mask with parameters */
+  flags = (flags & ~mask) | (newVal & mask);
+
+  /* Convert (masked) value back to fp word */
+  fpword = 0;
+  if (flags & _EM_INVALID)    fpword |= 0x1;
+  if (flags & _EM_DENORMAL)   fpword |= 0x2;
+  if (flags & _EM_ZERODIVIDE) fpword |= 0x4;
+  if (flags & _EM_OVERFLOW)   fpword |= 0x8;
+  if (flags & _EM_UNDERFLOW)  fpword |= 0x10;
+  if (flags & _EM_INEXACT)    fpword |= 0x20;
+  switch(flags & (_RC_UP | _RC_DOWN)) {
+  case _RC_UP|_RC_DOWN: fpword |= 0xC00; break;
+  case _RC_UP:          fpword |= 0x800; break;
+  case _RC_DOWN:        fpword |= 0x400; break;
+  }
+  switch (flags & (_PC_24 | _PC_53)) {
+  case _PC_64: fpword |= 0x300; break;
+  case _PC_53: fpword |= 0x200; break;
+  case _PC_24: fpword |= 0x0; break;
+  }
+  if (!(flags & _IC_AFFINE)) fpword |= 0x1000;
+
+  /* Put fp control word */
+  __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
+  return fpword;
+#else
+  return  CRTDLL__controlfp( newVal, mask );
+#endif
 }
 
 
@@ -1107,20 +1391,15 @@ UINT __cdecl CRTDLL__control87(UINT x, UINT y)
  *                  _controlfp    (CRTDLL.061)
  *
  * Set the state of the floating point unit.
- *
- * PARAMS
- * FIXME:
- *
- * RETURNS
- * None
- *
- * BUGS
- * Unimplemented.
  */
-UINT __cdecl CRTDLL__controlfp( UINT x, UINT y)
+UINT __cdecl CRTDLL__controlfp( UINT newVal, UINT mask)
 {
-  FIXME(":stub!\n");
+#if defined(__GNUC__) && defined(__i386__)
+  return CRTDLL__control87( newVal, mask );
+#else
+  FIXME(":Not Implemented!\n");
   return 0;
+#endif
 }
 
 
@@ -1160,19 +1439,14 @@ INT __cdecl  CRTDLL__finite(double d)
  *                  _fpreset           (CRTDLL.107)
  *
  * Reset the state of the floating point processor.
- * 
- * PARAMS
- *   None.
- *
- * RETURNS
- *   None.
- *
- * BUGS
- * Unimplemented.
  */
 VOID __cdecl CRTDLL__fpreset(void)
 {
-  FIXME(":stub!\n");
+#if defined(__GNUC__) && defined(__i386__)
+  __asm__ __volatile__( "fninit" );
+#else
+  FIXME(":Not Implemented!\n");
+#endif
 }
 
 
@@ -1205,4 +1479,50 @@ VOID __cdecl CRTDLL__purecall(VOID)
 {
   CRTDLL__amsg_exit( 6025 );
 }
+
+
+/*********************************************************************
+ *                  _div               (CRTDLL.@)
+ *
+ * Return the quotient and remainder of long integer division.
+ */
+#ifdef __i386__
+/* Windows binary compatible - returns the struct in eax/edx. */
+LONGLONG __cdecl CRTDLL_div(int x, int y)
+{
+  LONGLONG retVal;
+  div_t dt = div(x,y);
+  retVal = ((LONGLONG)dt.rem << 32) | dt.quot;
+  return retVal;
+}
+#else
+/* Non-x86 cant run win32 apps so dont need binary compatibility */
+div_t __cdecl CRTDLL_div(int x, int y)
+{
+  return div(x,y);
+}
+#endif /* __i386__ */
+
+
+/*********************************************************************
+ *                  _ldiv               (CRTDLL.249)
+ *
+ * Return the quotient and remainder of long integer division.
+ */
+#ifdef __i386__
+/* Windows binary compatible - returns the struct in eax/edx. */
+LONGLONG __cdecl CRTDLL_ldiv(long x, long y)
+{
+  LONGLONG retVal;
+  ldiv_t ldt = ldiv(x,y);
+  retVal = ((LONGLONG)ldt.rem << 32) | ldt.quot;
+  return retVal;
+}
+#else
+/* Non-x86 cant run win32 apps so dont need binary compatibility */
+ldiv_t __cdecl CRTDLL_ldiv(long x, long y)
+{
+  return ldiv(x,y);
+}
+#endif /* __i386__ */
 

@@ -215,6 +215,28 @@ INT __cdecl CRTDLL__access(LPCSTR filename, INT mode)
 
 
 /*********************************************************************
+ *                  _chmod           (CRTDLL.054)
+ *
+ * Change a files permissions.
+ */
+INT __cdecl CRTDLL__chmod(LPCSTR path, INT flags)
+{
+  DWORD oldFlags = GetFileAttributesA(path);
+ 
+  if (oldFlags != 0x0FFFFFFFF)
+  {
+    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
+      oldFlags | FILE_ATTRIBUTE_READONLY;
+
+    if (newFlags == oldFlags || SetFileAttributesA( path, newFlags ))
+      return 0;
+  }
+  __CRTDLL__set_errno(GetLastError());
+  return -1;
+}
+
+
+/*********************************************************************
  *                  _close           (CRTDLL.57)
  *
  * Close an open file descriptor.
@@ -381,6 +403,27 @@ INT __cdecl CRTDLL__fgetchar( VOID )
 INT __cdecl CRTDLL__filbuf(CRTDLL_FILE* file)
 {
   return CRTDLL_fgetc(file);
+}
+
+/*********************************************************************
+ *                   _filelength    (CRTDLL.097)
+ *
+ * Get the length of an open file.
+ */
+LONG __cdecl CRTDLL__filelength(INT fd)
+{
+  LONG curPos = CRTDLL__lseek(fd, 0, SEEK_CUR);
+  if (curPos != -1)
+  {
+    LONG endPos = CRTDLL__lseek(fd, 0, SEEK_END);
+    if (endPos != -1)
+    {
+      if (endPos != curPos)
+        CRTDLL__lseek(fd, curPos, SEEK_SET);
+      return endPos;
+    }
+  }
+  return -1;
 }
 
 
@@ -576,6 +619,20 @@ HANDLE CRTDLL__get_osfhandle(INT fd)
 
 
 /*********************************************************************
+ *                  _getw       (CRTDLL.128)
+ *
+ * Read an integter from a FILE*.
+ */
+INT __cdecl CRTDLL__getw( CRTDLL_FILE* file )
+{
+  INT i;
+  if (CRTDLL__read(file->_file, &i, sizeof(INT)) != 1)
+    return EOF;
+  return i;
+}
+
+
+/*********************************************************************
  *                  _isatty       (CRTDLL.137)
  *
  * Return non zero if fd is a character device (e.g console).
@@ -639,6 +696,41 @@ LONG __cdecl CRTDLL__lseek( INT fd, LONG offset, INT whence)
   return -1;
 }
 
+/*********************************************************************
+ *                  _mktemp           (CRTDLL.239)
+ *
+ * Create a temporary file name.
+ */
+LPSTR __cdecl CRTDLL__mktemp(LPSTR pattern)
+{
+  int numX = 0;
+  LPSTR retVal = pattern;
+  INT id;
+  char letter = 'a';
+
+  while(*pattern)
+    numX = (*pattern++ == 'X')? numX + 1 : 0;
+  if (numX < 5)
+    return NULL;
+  pattern--;
+  id = GetCurrentProcessId();
+  numX = 6;
+  while(numX--)
+  {
+    INT tempNum = id / 10;
+    *pattern-- = id - (tempNum * 10) + '0';
+    id = tempNum;
+  }
+  pattern++;
+  do
+  {
+    if (GetFileAttributesA( retVal ) == 0xFFFFFFFF &&
+	GetLastError() == ERROR_FILE_NOT_FOUND)
+      return retVal;
+    *pattern = letter++;
+  } while(letter != '|');
+  return NULL;
+}
 
 /*********************************************************************
  *                  _open           (CRTDLL.239)
@@ -735,6 +827,17 @@ INT __cdecl CRTDLL__open_osfhandle(HANDLE hand, INT flags)
   INT fd = __CRTDLL__alloc_fd(hand,flags);
   TRACE(":handle (%d) fd (%d)\n",hand,fd);
   return fd;
+}
+
+
+/*********************************************************************
+ *                  _putw         (CRTDLL.254)
+ *
+ * Write an int to a FILE*.
+ */
+INT __cdecl CRTDLL__putw(INT val, CRTDLL_FILE* file)
+{
+  return CRTDLL__write(file->_file, &val, sizeof(val)) == 1? val : EOF;
 }
 
 
@@ -1542,7 +1645,8 @@ LPSTR __cdecl CRTDLL_tmpnam(LPSTR s)
     return NULL;
   }
   TRACE(":got tmpnam %s\n",CRTDLL_tmpname);
-  return CRTDLL_tmpname;
+  s = CRTDLL_tmpname;
+  return s;
 }
 
 

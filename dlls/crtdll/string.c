@@ -58,6 +58,7 @@ LPSTR __cdecl CRTDLL__strdec(LPSTR str1, LPSTR str2)
   /* Hmm. While the docs suggest that the following should work... */
   /*  return (str2<=str1?0:str2-1); */
   /* ...Version 2.50.4170 (NT) from win98 constantly decrements! */
+  str1 = str1; /* remove warning */
   return str2-1;
 }
 
