@@ -682,6 +682,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     HWND16 hwnd, hwndLinkAfter;
     POINT maxSize, maxPos, minTrack, maxTrack;
     LRESULT (CALLBACK *localSend32)(HWND, UINT, WPARAM, LPARAM);
+    char buffer[256];
 
     TRACE(win, "%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
           unicode ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
@@ -707,10 +708,22 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     /* Find the window class */
     if (!(classPtr = CLASS_FindClassByAtom( classAtom, win32?cs->hInstance:GetExePtr(cs->hInstance) )))
     {
-        char buffer[256];
         GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) );
         WARN( win, "Bad class '%s'\n", buffer );
         return 0;
+    }
+
+    /* Fix the lpszClass field: from existing programs, it seems ok to call a CreateWindowXXX 
+     * with an atom as the class name, put some programs expect to have a *REAL* string in 
+     * lpszClass when the CREATESTRUCT is sent with WM_CREATE 
+     */
+    if ( !HIWORD(cs->lpszClass) ) {	
+        if (unicode) {
+	   GlobalGetAtomNameW( classAtom, (LPWSTR)buffer, sizeof(buffer) );
+	} else {
+	   GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) );
+	}
+	cs->lpszClass = buffer;
     }
 
     /* Fix the coordinates */
