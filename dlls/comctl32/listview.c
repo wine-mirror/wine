@@ -38,6 +38,7 @@
  *   -- tilemode
  *   -- groups
  *   -- FIXMEs (search for them)
+ *   -- LVA_SNAPTOGRID not implemented
  *   
  * States
  *   -- LVIS_ACTIVATING (not currently supported by comctl32.dll version 6.0)
@@ -233,6 +234,7 @@ typedef struct tagLISTVIEW_INFO
   HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
   HDPA hdpaPosY;		/* items in LVS_ICON, and LVS_SMALLICON modes */
   HDPA hdpaColumns;		/* array of COLUMN_INFO pointers */
+  POINT currIconPos;		/* this is the position next icon will be placed */
   PFNLVCOMPARE pfnCompare;
   LPARAM lParamSort;
   HWND hwndEdit;
@@ -343,7 +345,6 @@ static void LISTVIEW_GetOrigin(LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
-static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *, INT, POINT);
 static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *);
 static void LISTVIEW_SetSelection(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *);
@@ -1902,9 +1903,10 @@ static void LISTVIEW_GetItemBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprcBo
     OffsetRect(lprcBox, Position.x + Origin.x, Position.y + Origin.y);
 }
 
+
 /***
  * DESCRIPTION:
- * Aligns the items with the top edge of the window.
+ * Resets the current position to the origin.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
@@ -1912,109 +1914,160 @@ static void LISTVIEW_GetItemBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprcBo
  * RETURN:
  * None
  */
-static void LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
+static inline void LISTVIEW_ResetCurrentPosition(LISTVIEW_INFO *infoPtr)
 {
-  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-  INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
-  POINT ptItem;
-  INT i, off_x=0, off_y=0;
-
-  if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
-  {
-    /* Since SetItemPosition uses upper-left of icon, and for
-       style=LVS_ICON the icon is not left adjusted, get the offset */
-    if (uView == LVS_ICON)
-    {
-      off_y = ICON_TOP_PADDING;
-      off_x = (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
-    }
-    ptItem.x = off_x;
-    ptItem.y = off_y;
-    TRACE("Icon  off.x=%d, off.y=%d, left=%d, right=%d\n",
-	  off_x, off_y,
-	  infoPtr->rcList.left, infoPtr->rcList.right);
-
-    if (nListWidth > infoPtr->nItemWidth)
-    {
-      for (i = 0; i < infoPtr->nItemCount; i++)
-      {
-        if ((ptItem.x-off_x) + infoPtr->nItemWidth > nListWidth)
-        {
-          ptItem.x = off_x;
-          ptItem.y += infoPtr->nItemHeight;
-        }
-
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
-        ptItem.x += infoPtr->nItemWidth;
-      }
-    }
-    else
-    {
-      for (i = 0; i < infoPtr->nItemCount; i++)
-      {
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
-        ptItem.y += infoPtr->nItemHeight;
-      }
-    }
-  }
+    infoPtr->currIconPos.x = infoPtr->currIconPos.y = 0;
 }
 
 /***
  * DESCRIPTION:
- * Aligns the items with the left edge of the window.
+ * Returns the current icon position, and advances it along the top.
+ * The returned position is not offset by Origin.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
+ * [O] lpPos : will get the current icon position
  *
  * RETURN:
  * None
  */
-static void LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
+static void LISTVIEW_NextIconPosTop(LISTVIEW_INFO *infoPtr, LPPOINT lpPos)
 {
-  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-  INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
-  POINT ptItem;
-  INT i, off_x=0, off_y=0;
+    INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
+    
+    *lpPos = infoPtr->currIconPos;
+    
+    infoPtr->currIconPos.x += infoPtr->nItemWidth;
+    if (infoPtr->currIconPos.x + infoPtr->nItemWidth <= nListWidth) return;
 
-  if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
-  {
-    /* Since SetItemPosition uses upper-left of icon, and for
-       style=LVS_ICON the icon is not left adjusted, get the offset */
-    if (uView == LVS_ICON)
-    {
-      off_y = ICON_TOP_PADDING;
-      off_x = (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
-    }
-    ptItem.x = off_x;
-    ptItem.y = off_y;
-    TRACE("Icon  off.x=%d, off.y=%d\n", off_x, off_y);
-
-    if (nListHeight > infoPtr->nItemHeight)
-    {
-      for (i = 0; i < infoPtr->nItemCount; i++)
-      {
-        if (ptItem.y + infoPtr->nItemHeight > nListHeight)
-        {
-          ptItem.y = off_y;
-          ptItem.x += infoPtr->nItemWidth;
-        }
-
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
-        ptItem.y += infoPtr->nItemHeight;
-      }
-    }
-    else
-    {
-      for (i = 0; i < infoPtr->nItemCount; i++)
-      {
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
-        ptItem.x += infoPtr->nItemWidth;
-      }
-    }
-  }
+    infoPtr->currIconPos.x  = 0;
+    infoPtr->currIconPos.y += infoPtr->nItemHeight;
 }
 
+    
+/***
+ * DESCRIPTION:
+ * Returns the current icon position, and advances it down the left edge.
+ * The returned position is not offset by Origin.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [O] lpPos : will get the current icon position
+ *
+ * RETURN:
+ * None
+ */
+static void LISTVIEW_NextIconPosLeft(LISTVIEW_INFO *infoPtr, LPPOINT lpPos)
+{
+    INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
+    
+    *lpPos = infoPtr->currIconPos;
+    
+    infoPtr->currIconPos.y += infoPtr->nItemHeight;
+    if (infoPtr->currIconPos.y + infoPtr->nItemHeight <= nListHeight) return;
 
+    infoPtr->currIconPos.x += infoPtr->nItemWidth;
+    infoPtr->currIconPos.y  = 0;
+}
+
+    
+/***
+ * DESCRIPTION:
+ * Moves an icon to the specified position.
+ * It takes care of invalidating the item, etc.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nItem : the item to move
+ * [I] lpPos : the new icon position
+ * [I] isNew : flags the item as being new
+ *
+ * RETURN:
+ *   Success: TRUE
+ *   Failure: FALSE
+ */
+static BOOL LISTVIEW_MoveIconTo(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lppt, BOOL isNew)
+{
+    POINT Origin, old;
+    RECT rcItem;
+    
+    if (!isNew)
+    { 
+        old.x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+        old.y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
+    
+        if (lppt->x == old.x && lppt->y == old.y) return TRUE;
+    }
+
+    /* Allocating a POINTER for every item is too resource intensive,
+     * so we'll keep the (x,y) in different arrays */
+    if (!DPA_SetPtr(infoPtr->hdpaPosX, nItem, (void *)lppt->x)) return FALSE;
+    if (!DPA_SetPtr(infoPtr->hdpaPosY, nItem, (void *)lppt->y)) return FALSE;
+
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    if (!isNew)
+    {
+	rcItem.left = old.x + Origin.x;
+	rcItem.top = old.y + Origin.y;
+	rcItem.right = rcItem.left + infoPtr->nItemWidth;
+	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+	LISTVIEW_InvalidateRect(infoPtr, &rcItem);
+    }
+	
+    rcItem.left = lppt->x + Origin.x;
+    rcItem.top = lppt->y + Origin.y;
+    rcItem.right = rcItem.left + infoPtr->nItemWidth;
+    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+    LISTVIEW_InvalidateRect(infoPtr, &rcItem);
+
+    return TRUE;
+}
+
+/***
+ * DESCRIPTION:
+ * Arranges listview items in icon display mode.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nAlignCode : alignment code
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
+{
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    void (*next_pos)(LISTVIEW_INFO *, LPPOINT);
+    POINT pos;
+    INT i;
+
+    if (uView != LVS_ICON && uView != LVS_SMALLICON) return FALSE;
+  
+    if (nAlignCode == LVA_DEFAULT)
+    {
+	if (infoPtr->dwStyle & LVS_ALIGNLEFT) nAlignCode = LVA_ALIGNLEFT;
+        else nAlignCode = LVA_ALIGNTOP;
+    }
+   
+    switch (nAlignCode)
+    {
+    case LVA_ALIGNLEFT:  next_pos = LISTVIEW_NextIconPosLeft; break;
+    case LVA_ALIGNTOP:   next_pos = LISTVIEW_NextIconPosTop;  break;
+    case LVA_SNAPTOGRID: next_pos = LISTVIEW_NextIconPosTop;  break; /* FIXME */
+    default: return FALSE;
+    }
+
+    LISTVIEW_ResetCurrentPosition(infoPtr);
+    for (i = 0; i < infoPtr->nItemCount; i++)
+    {
+	next_pos(infoPtr, &pos);
+	LISTVIEW_MoveIconTo(infoPtr, i, &pos, FALSE);
+    }
+
+    return TRUE;
+}
+  
 /***
  * DESCRIPTION:
  * Retrieves the bounding rectangle of all the items, not offset by Origin.
@@ -3772,40 +3825,6 @@ static DWORD LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCount
     FIXME("uView == LVS_ICON: not implemented\n");
 
   return dwViewRect;
-}
-
-/***
- * DESCRIPTION:
- * Arranges listview items in icon display mode.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] nAlignCode : alignment code
- *
- * RETURN:
- *   SUCCESS : TRUE
- *   FAILURE : FALSE
- */
-static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
-{
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-
-    if (uView != LVS_ICON && uView != LVS_SMALLICON) return FALSE;
-  
-    if (nAlignCode == LVA_DEFAULT)
-    {
-	if (infoPtr->dwStyle & LVS_ALIGNLEFT) nAlignCode = LVA_ALIGNLEFT;
-        else nAlignCode = LVA_ALIGNTOP;
-    }
-    
-    switch (nAlignCode)
-    {
-    case LVA_ALIGNLEFT: LISTVIEW_AlignLeft(infoPtr); return TRUE;
-    case LVA_ALIGNTOP: LISTVIEW_AlignTop(infoPtr); return TRUE;
-    case LVA_SNAPTOGRID: FIXME("LVA_SNAPTOGRID: not implemented\n"); break;
-    }
-
-    return FALSE;
 }
 
 /* << LISTVIEW_CreateDragImage >> */
@@ -5727,12 +5746,14 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL
     /* align items (set position of each item) */
     if ((uView == LVS_SMALLICON || uView == LVS_ICON))
     {
-	RECT rcBox;
-	/* FIXME: compute X, Y here, inline */
-    	/*if (is_icon && (infoPtr->dwStyle & LVS_AUTOARRANGE))*/
-	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
-	LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
-	LISTVIEW_InvalidateRect(infoPtr, &rcBox);
+	POINT pt;
+
+	if (infoPtr->dwStyle & LVS_ALIGNLEFT)
+	    LISTVIEW_NextIconPosLeft(infoPtr, &pt);
+        else
+	    LISTVIEW_NextIconPosTop(infoPtr, &pt);
+
+	LISTVIEW_MoveIconTo(infoPtr, nItem, &pt, TRUE);
     }
 
     /* now is the invalidation fun */
@@ -6516,42 +6537,30 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    POINT old;
+    POINT Origin;
 
     TRACE("(nItem=%d, &pt=%s\n", nItem, debugpoint(&pt));
 
     if (nItem < 0 || nItem >= infoPtr->nItemCount ||
 	!(uView == LVS_ICON || uView == LVS_SMALLICON)) return FALSE;
 
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+
     /* This point value seems to be an undocumented feature.
      * The best guess is that it means either at the origin, 
      * or at true beginning of the list. I will assume the origin. */
     if ((pt.x == -1) && (pt.y == -1))
-	LISTVIEW_GetOrigin(infoPtr, &pt);
-    else if (uView == LVS_ICON)
+	pt = Origin;
+    
+    if (uView == LVS_ICON)
     {
 	pt.x -= (infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2;
 	pt.y -= ICON_TOP_PADDING;
     }
+    pt.x -= Origin.x;
+    pt.y -= Origin.y;
 
-    /* save the old position */
-    old.x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
-    old.y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
-    
-    /* Is the position changing? */
-    if (pt.x == old.x && pt.y == old.y) return TRUE;
-   
-    /* FIXME: shouldn't we invalidate, as the item moved? */
-    
-    /* Allocating a POINTER for every item is too resource intensive,
-     * so we'll keep the (x,y) in different arrays */
-    if (DPA_SetPtr(infoPtr->hdpaPosX, nItem, (void *)pt.x) &&
-        DPA_SetPtr(infoPtr->hdpaPosY, nItem, (void *)pt.y) )
-	return TRUE;
-    
-    ERR("We should never fail here (nItem=%d, pt=%s), please report.\n", 
-	nItem, debugpoint(&pt));
-    return FALSE;
+    return LISTVIEW_MoveIconTo(infoPtr, nItem, &pt, FALSE);
 }
 
 /***
@@ -6793,9 +6802,6 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
     if (selectionMarkItem != NULL)
 	infoPtr->nSelectionMark = DPA_GetPtrIndex(infoPtr->hdpaItems, selectionMarkItem);
     /* I believe nHotItem should be left alone, see LISTVIEW_ShiftIndices */
-
-    /* align the items */
-    LISTVIEW_AlignTop(infoPtr);
 
     /* refresh the display */
     if (uView != LVS_ICON && uView != LVS_SMALLICON)
