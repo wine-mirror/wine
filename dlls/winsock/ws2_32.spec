@@ -56,7 +56,7 @@ init WSOCK32_LibMain
 47  stub     WSAHtons
 48  stub     WSAInstallServiceClassA
 49  stub     WSAInstallServiceClassW
-50  stub     WSAIoctl
+50  stdcall  WSAIoctl(long long ptr long ptr long ptr ptr ptr) WSAIoctl
 51  stdcall  gethostbyaddr(ptr long long) WSOCK32_gethostbyaddr
 52  stdcall  gethostbyname(str) WSOCK32_gethostbyname
 53  stdcall  getprotobyname(str) WSOCK32_getprotobyname
