@@ -20,12 +20,12 @@
         <title>Further questions and comments</title>
         <para>
           If, after examining this guide, the FAQ, and other relevant
-          documentation there's still something you can't figure out,
-          we'd love to hear from you.  The <ulink
+          documentation there is still something you cannot figure out,
+          we would love to hear from you.  The <ulink
           url="http://www.winehq.org/site/forums">mailing lists</ulink>
           section contains several mailing lists and an IRC channel, all
           of which are great places to seek help and offer suggestions.
-          If you're particularly savvy, and believe that something can be
+          If you are particularly savvy, and believe that something can be
           explained better, you can file a <ulink
           url="http://bugs.winehq.org/">bug report</ulink> or <ulink
           url="http://www.winehq.org/site/sending_patches">post a
@@ -82,7 +82,7 @@
           difficulty: not only must the user endure the frustration of
           frequent rebooting, but programs for both platforms can't be
           run simultaneously.  Having Windows on a system also creates
-          an added burden: the software is expensive, requires a seperate
+          an added burden: the software is expensive, requires a separate
           disk partition, and is unable to read most filesystem formats,
           making the sharing of data between operating systems difficult.
         </para>
@@ -93,10 +93,10 @@
         <para>
           Wine makes it possible to run Windows programs alongside any
           Unix-like operating system, particularly Linux.  At its heart,
-          wine is an implementation of the Windows Application
+          Wine is an implementation of the Windows Application
           Programing Interface (API) library, acting as a bridge between
           the Windows program and Linux.  Think of Wine as a compatibility
-          layer, when a Windows program tries to preform a function that
+          layer, when a Windows program tries to perform a function that
           Linux doesn't normally understand, Wine will translate that
           program's instruction into one supported by the system.  For
           example, if a program asks the system to create a Windows
@@ -105,11 +105,11 @@
           to the window manager using the standard X11 protocol.
         </para>
         <para>
-          If you have access to the Windows program's source code, wine
+          If you have access to the Windows program's source code, Wine
           can also be used to recompile a program into a format that Linux
           can understand more easily.  Wine is still needed to launch the
           program in its recompiled form, however there are many advantages
-          to compiling a Windows program natively within linux.  For more
+          to compiling a Windows program natively within Linux.  For more
           information, see the Winelib User Guide.
         </para>
       </sect2>
@@ -209,12 +209,12 @@
              Wine is an open source project, and there are accordingly
              many different versions of Wine for you to choose from.  The
              standard version of Wine comes in intermittant releases
-             (roughly every 90 days), and can be downloaded over the
+             (roughly once a month), and can be downloaded over the
              internet in both prepackaged binary form and ready to compile
-             source code form.  Alternatively, you can install a prerelease
+             source code form.  Alternatively, you can install a development
              version of Wine by using the latest available source code on
-             the CVS server.  See the next chapter, Getting Wine (link:
-             getting wine), for further details.
+             the CVS server.  See the next chapter, <link
+             linkend="getting-wine">Getting Wine</link>, for further details.
           </para>
         </sect2>
         <sect2>
@@ -268,7 +268,7 @@
                 favorite Windows productivity applications in a
                 distributed thin-client environment under Linux, without
                 needing Microsoft Operating System licenses for each
-                client machine. CrossOver OfficeServer Edition allows you
+                client machine. CrossOver Office Server Edition allows you
                 to satisfy the needs of literally hundreds of concurrent
                 users, all from a single server.
               </entry>
@@ -358,7 +358,7 @@
         </para>
       </sect2>
       <sect2>
-        <title>Virtual Operating System</title>
+        <title>Virtual Machines</title>
         <para>
           Rather than installing an entirely new operating system on your
           machine, you can instead run a virtual machine at the software
