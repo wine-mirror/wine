@@ -11,18 +11,15 @@
 # include <sys/errno.h>
 #endif
 
-#include "debugtools.h"
-#include "user.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "winerror.h"
-#include "windef.h"
-#include "mouse.h"
 #include "winuser.h"
+#include "winerror.h"
 #include "dinput.h"
 
 #include "dinput_private.h"
 #include "device_private.h"
+#include "debugtools.h"
 
 #define MOUSE_HACK
 
@@ -105,7 +102,7 @@ struct SysMouseAImpl
         BYTE                            absolute;
         /* Previous position for relative moves */
         LONG				prevX, prevY;
-        LPMOUSE_EVENT_PROC		prev_handler;
+        HHOOK                           hook;
         HWND				win;
         DWORD				dwCoopLevel;
         POINT      			mapped_center;
@@ -226,10 +223,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE2A iface)
 	if (This->data_queue != NULL)
 	  HeapFree(GetProcessHeap(),0,This->data_queue);
 
-	/* Install the previous event handler (in case of releasing an acquired
-	   mouse device) */
-	if (This->prev_handler != NULL)
-	  MOUSE_Enable(This->prev_handler);
+        if (This->hook) UnhookWindowsHookEx( This->hook );
 	DeleteCriticalSection(&(This->crit));
 
 	/* Free the DataFormat */
@@ -318,40 +312,30 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
   return 0;
 }
   
-/* Our private mouse event handler */
-static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
-				      DWORD cButtons, DWORD dwExtraInfo )
+/* low-level mouse hook */
+static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lparam )
 {
-  long posX = -1, posY = -1;
-  DWORD keyState, xtime, extra;
-  SysMouseAImpl* This = (SysMouseAImpl*) current_lock;
-  
-  EnterCriticalSection(&(This->crit));
-  /* Mouse moved -> send event if asked */
-  if (This->hEvent)
-    SetEvent(This->hEvent);
-  
-  if (   !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
-      && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC ) {
-    WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
-    keyState = wme->keyState;
-    xtime = wme->time;
-    extra = (DWORD)wme->hWnd;
-    
-    if (dwFlags & MOUSEEVENTF_MOVE) {
-      if (dwFlags & MOUSEEVENTF_ABSOLUTE) {
-	posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
-	posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+    LRESULT ret;
+    MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
+    SysMouseAImpl* This = (SysMouseAImpl*) current_lock;
 
+    if (code != HC_ACTION) return CallNextHookEx( This->hook, code, wparam, lparam );
+
+    EnterCriticalSection(&(This->crit));
+    /* Mouse moved -> send event if asked */
+    if (This->hEvent)
+        SetEvent(This->hEvent);
+
+    if (wparam == WM_MOUSEMOVE) {
 	if (This->absolute) {
-	  if (posX != This->prevX)
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX, xtime, 0);
-	  if (posY != This->prevY)
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY, xtime, 0);
+	  if (hook->pt.x != This->prevX)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x, hook->time, 0);
+	  if (hook->pt.y != This->prevY)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y, hook->time, 0);
 	} else {
 	  /* Now, warp handling */
 	  if ((This->need_warp == WARP_STARTED) &&
-	      (posX == This->mapped_center.x) && (posY == This->mapped_center.y)) {
+	      (hook->pt.x == This->mapped_center.x) && (hook->pt.y == This->mapped_center.y)) {
 	    /* Warp has been done... */
 	    This->need_warp = WARP_DONE;
 	    goto end;
@@ -360,122 +344,73 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 	  /* Relative mouse input with absolute mouse event : the real fun starts here... */
 	  if ((This->need_warp == WARP_NEEDED) ||
 	      (This->need_warp == WARP_STARTED)) {
-	    if (posX != This->prevX)
-	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->prevX, xtime, (This->dinput->evsequence)++);
-	    if (posY != This->prevY)
-	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->prevY, xtime, (This->dinput->evsequence)++);
+	    if (hook->pt.x != This->prevX)
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x - This->prevX, hook->time, (This->dinput->evsequence)++);
+	    if (hook->pt.y != This->prevY)
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y - This->prevY, hook->time, (This->dinput->evsequence)++);
 	  } else {
 	    /* This is the first time the event handler has been called after a
 	       GetData of GetState. */
-	    if (posX != This->mapped_center.x) {
-	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->mapped_center.x, xtime, (This->dinput->evsequence)++);
+	    if (hook->pt.x != This->mapped_center.x) {
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x - This->mapped_center.x, hook->time, (This->dinput->evsequence)++);
 	      This->need_warp = WARP_NEEDED;
 	    }
 	    
-	    if (posY != This->mapped_center.y) {
-	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->mapped_center.y, xtime, (This->dinput->evsequence)++);
+	    if (hook->pt.y != This->mapped_center.y) {
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y - This->mapped_center.y, hook->time, (This->dinput->evsequence)++);
 	      This->need_warp = WARP_NEEDED;
 	    }
 	  }
 	}
 
-	This->prevX = posX;
-	This->prevY = posY;
+	This->prevX = hook->pt.x;
+	This->prevY = hook->pt.y;
 	
 	if (This->absolute) {
-	  This->m_state.lX = posX;
-	  This->m_state.lY = posY;
+	  This->m_state.lX = hook->pt.x;
+	  This->m_state.lY = hook->pt.y;
 	} else {
-	  This->m_state.lX = posX - This->mapped_center.x;
-	  This->m_state.lY = posY - This->mapped_center.y;
+	  This->m_state.lX = hook->pt.x - This->mapped_center.x;
+	  This->m_state.lY = hook->pt.y - This->mapped_center.y;
 	}
-      } else {
-	/* Mouse reporting is in relative mode */
-	posX = (long) dx;
-	posY = (long) dy;
-
-	if (This->absolute) {
-	  long aposX, aposY;
-	  
-	  aposX = This->m_state.lX + posX;
-	  if (aposX < 0)
-	    aposX = 0;
-	  if (aposX >= GetSystemMetrics(SM_CXSCREEN))
-	    aposX = GetSystemMetrics(SM_CXSCREEN);
-	  
-	  aposY = This->m_state.lY + posY;
-	  if (aposY < 0)
-	    aposY = 0;
-	  if (aposY >= GetSystemMetrics(SM_CYSCREEN))
-	    aposY = GetSystemMetrics(SM_CYSCREEN);
-	  
-	  if (posX != 0)
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], aposX, xtime, (This->dinput->evsequence)++);
-	  if (posY != 0)
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], aposY, xtime, (This->dinput->evsequence)++);
-
-	  This->m_state.lX = aposX;
-	  This->m_state.lY = aposY;
-	} else {
-	  if (posX != 0)
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX, xtime, (This->dinput->evsequence)++);
-	  if (posY != 0)
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY, xtime, (This->dinput->evsequence)++);
-
-	  This->m_state.lX = posX;
-	  This->m_state.lY = posY;
-	}
-      }
     }
-  } else {
-    ERR("Mouse event not supported...\n");
-    goto end;
-  }
 
-  if (TRACE_ON(dinput)) {
-    if (dwFlags & MOUSEEVENTF_MOVE)
-      TRACE(" %ld %ld (%s)", posX, posY,
-	    (dwFlags & MOUSEEVENTF_ABSOLUTE ? "abs" : "rel"));
-    
-    if ( dwFlags & MOUSEEVENTF_LEFTDOWN ) DPRINTF(" LD ");
-    if ( dwFlags & MOUSEEVENTF_LEFTUP )   DPRINTF(" LU ");
+    TRACE(" msg %x pt %ld %ld (W=%d)",
+          wparam, hook->pt.x, hook->pt.y, This->absolute && This->need_warp );
 
-    if ( dwFlags & MOUSEEVENTF_RIGHTDOWN ) DPRINTF(" RD ");
-    if ( dwFlags & MOUSEEVENTF_RIGHTUP )   DPRINTF(" RU ");
-
-    if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN ) DPRINTF(" MD ");
-    if ( dwFlags & MOUSEEVENTF_MIDDLEUP )   DPRINTF(" MU ");
-
-    if (!(This->absolute)) DPRINTF(" W=%d ", This->need_warp);
-    
-    DPRINTF("\n");
-  }
-
-  
-  if ( dwFlags & MOUSEEVENTF_LEFTDOWN ) {
-    GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0xFF, xtime, (This->dinput->evsequence)++);
-    This->m_state.rgbButtons[0] = 0xFF;
-  }
-  if ( dwFlags & MOUSEEVENTF_LEFTUP ) {
-    GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0x00, xtime, (This->dinput->evsequence)++);
-    This->m_state.rgbButtons[0] = 0x00;
-  }
-  if ( dwFlags & MOUSEEVENTF_RIGHTDOWN ) {
-    GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0xFF, xtime, (This->dinput->evsequence)++);
-    This->m_state.rgbButtons[1] = 0xFF;
-  }
-  if ( dwFlags & MOUSEEVENTF_RIGHTUP ) {
-    GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0x00, xtime, (This->dinput->evsequence)++);
-    This->m_state.rgbButtons[1] = 0x00;
-  }
-  if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN ) {
-    GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0xFF, xtime, (This->dinput->evsequence)++);
-    This->m_state.rgbButtons[2] = 0xFF;
-  }
-  if ( dwFlags & MOUSEEVENTF_MIDDLEUP ) {
-    GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0x00, xtime, (This->dinput->evsequence)++);
-    This->m_state.rgbButtons[2] = 0x00;
-  }
+    switch(wparam)
+    {
+    case WM_LBUTTONDOWN:
+        GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0xFF,
+                  hook->time, This->dinput->evsequence++);
+        This->m_state.rgbButtons[0] = 0xFF;
+        break;
+    case WM_LBUTTONUP:
+        GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0x00,
+                  hook->time, This->dinput->evsequence++);
+        This->m_state.rgbButtons[0] = 0x00;
+        break;
+    case WM_RBUTTONDOWN:
+        GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0xFF,
+                  hook->time, This->dinput->evsequence++);
+        This->m_state.rgbButtons[1] = 0xFF;
+        break;
+    case WM_RBUTTONUP:
+        GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0x00,
+                  hook->time, This->dinput->evsequence++);
+        This->m_state.rgbButtons[1] = 0x00;
+        break;
+    case WM_MBUTTONDOWN:
+        GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0xFF,
+                  hook->time, This->dinput->evsequence++);
+        This->m_state.rgbButtons[2] = 0xFF;
+        break;
+    case WM_MBUTTONUP:
+        GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0x00,
+                  hook->time, This->dinput->evsequence++);
+        This->m_state.rgbButtons[2] = 0x00;
+        break;
+    }
 
   TRACE("(X: %ld - Y: %ld   L: %02x M: %02x R: %02x)\n",
 	This->m_state.lX, This->m_state.lY,
@@ -484,10 +419,11 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 end:
   if (This->dwCoopLevel & DISCL_NONEXCLUSIVE)
   { /* pass the events down to previous handlers (e.g. win32 input) */
-    if (This->prev_handler)
-	This->prev_handler(dwFlags, dx, dy, cButtons, dwExtraInfo);
+      ret = CallNextHookEx( This->hook, code, wparam, lparam );
   }
+  else ret = 1;  /* ignore message */
   LeaveCriticalSection(&(This->crit));
+  return ret;
 }
 
 
@@ -503,10 +439,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 
   if (This->acquired == 0) {
     POINT point;
-    
-    /* This stores the current mouse handler. */
-    This->prev_handler = mouse_event;
-    
+
     /* Store (in a global variable) the current lock */
     current_lock = (IDirectInputDevice2A*)This;
 
@@ -525,9 +458,9 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
     This->m_state.rgbButtons[1] = (GetKeyState(VK_MBUTTON) ? 0xFF : 0x00);
     This->m_state.rgbButtons[2] = (GetKeyState(VK_RBUTTON) ? 0xFF : 0x00);
 
-    /* Install our own mouse event handler */
-    MOUSE_Enable(dinput_mouse_event);
-    
+    /* Install our mouse hook */
+    This->hook = SetWindowsHookExW( WH_MOUSE_LL, dinput_mouse_hook, 0, 0 );
+
     /* Get the window dimension and find the center */
     GetWindowRect(This->win, &rect);
     This->win_centerX = (rect.right  - rect.left) / 2;
@@ -564,9 +497,9 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
     if (This->acquired)
     {
         /* Reinstall previous mouse event handler */
-        MOUSE_Enable(This->prev_handler);
-        This->prev_handler = NULL;
-  
+        if (This->hook) UnhookWindowsHookEx( This->hook );
+        This->hook = 0;
+
         /* No more locks */
         current_lock = NULL;
 
