@@ -336,6 +336,10 @@ int WINAPI PathCommonPrefixA(LPCSTR,LPCSTR,LPSTR);
 int WINAPI PathCommonPrefixW(LPCWSTR,LPCWSTR,LPWSTR);
 #define PathCommonPrefix WINELIB_NAME_AW(PathCommonPrefix)
 
+HRESULT WINAPI PathCreateFromUrlA(LPCSTR pszUrl, LPSTR pszPath, LPDWORD pcchPath, DWORD dwReserved);
+HRESULT WINAPI PathCreateFromUrlW(LPCWSTR pszUrl, LPWSTR pszPath, LPDWORD pcchPath, DWORD dwReserved);
+#define PathCreateFromUrl WINELIB_NANE_AW(PathCreateFromUrl)
+
 BOOL WINAPI PathFileExistsA(LPCSTR);
 BOOL WINAPI PathFileExistsW(LPCWSTR);
 #define PathFileExists WINELIB_NAME_AW(PathFileExists)
