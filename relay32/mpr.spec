@@ -85,8 +85,8 @@ type win32
 0082 stub WNetGetResourceInformationW
 0083 stub WNetGetResourceParentA
 0084 stub WNetGetResourceParentW
-0085 stub WNetGetUniversalNameA
-0086 stub WNetGetUniversalNameW
+0085 stdcall WNetGetUniversalNameA (str long ptr ptr) WNetGetUniversalNameA
+0086 stdcall WNetGetUniversalNameW (wstr long ptr ptr) WNetGetUniversalNameW
 0087 stdcall WNetGetUserA(str ptr ptr) WNetGetUserA
 0088 stdcall WNetGetUserW(wstr wstr ptr) WNetGetUserW
 0089 stub WNetLogoffA
