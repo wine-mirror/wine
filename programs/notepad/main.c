@@ -444,11 +444,11 @@ DWORD CreateLine(
 void LoadBufferFromFile(LPCSTR szFileName)
 {
     HANDLE hFile;
-    OFSTRUCT ofs;
     CHAR *pTemp;
     DWORD size,i,len,bytes_left,bytes_read;
 
-    hFile = (HANDLE)OpenFile(szFileName, &ofs, OF_READ);
+    hFile = CreateFile(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hFile == INVALID_HANDLE_VALUE)
         return;
     size = BUFFERCHUNKSIZE;

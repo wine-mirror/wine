@@ -132,10 +132,9 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 BOOL FileIsPlaceable( LPCSTR szFileName )
 {
   HFILE		hInFile;
-  OFSTRUCT		inof;
   APMFILEHEADER	apmh;
 
-  if( (hInFile = OpenFile( szFileName, &inof, OF_READ ) ) == HFILE_ERROR )
+  if( (hInFile = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR )
     return FALSE;
 
   if( _lread( hInFile, &apmh, sizeof(APMFILEHEADER) ) 
@@ -157,11 +156,10 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   APMFILEHEADER	APMHeader;
   HFILE	fh;
   HMETAFILE hmf;
-  OFSTRUCT inof;
   WORD checksum, *p;
   int i;
 
-  if( (fh = OpenFile( szFileName, &inof, OF_READ ) ) == HFILE_ERROR ) return 0;
+  if( (fh = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR ) return 0;
   _llseek(fh, 0, 0);
   if (!_lread(fh, (LPSTR)&APMHeader, sizeof(APMFILEHEADER))) return 0;
   _llseek(fh, sizeof(APMFILEHEADER), 0);
