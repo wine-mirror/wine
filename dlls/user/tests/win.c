@@ -556,10 +556,17 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     {
 	case HCBT_CREATEWND:
 	{
+	    DWORD style;
 	    CBT_CREATEWNDA *createwnd = (CBT_CREATEWNDA *)lParam;
 	    trace("HCBT_CREATEWND: hwnd %p, parent %p, style %08lx\n",
 		  (HWND)wParam, createwnd->lpcs->hwndParent, createwnd->lpcs->style);
 	    ok(createwnd->hwndInsertAfter == HWND_TOP, "hwndInsertAfter should be always HWND_TOP\n");
+
+	    /* WS_VISIBLE should be turned off yet */
+	    style = createwnd->lpcs->style & ~WS_VISIBLE;
+	    ok(style == GetWindowLongA((HWND)wParam, GWL_STYLE),
+		"style of hwnd and style in the CREATESTRUCT do not match: %08lx != %08lx\n",
+		GetWindowLongA((HWND)wParam, GWL_STYLE), style);
 	    break;
 	}
     }
