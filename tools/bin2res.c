@@ -3,8 +3,7 @@
  * Converting binary resources from/to *.rc files
  *
  * Copyright 1999 Juergen Schmied
- *
- * 11/99 first release
+ * Copyright 2003 Dimitrie O. Paun
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,342 +21,206 @@
  */
 
 #include "config.h"
-
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include <ctype.h>
-#include <string.h>
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-
-#include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
+#include <ctype.h>
+#include <string.h>
+#include <sys/stat.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
 #endif
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-
-extern char*   g_lpstrFileName;
-
-/* global options */
-
-char*	g_lpstrFileName = NULL;
-char*   g_lpstrInputFile = NULL;
-int	b_to_binary = 0;
-int	b_force_overwrite = 0;
-
-static char*    errorOpenFile = "Unable to open file.\n";
-static char*    errorRCFormat = "Unexpexted syntax in rc file line %i\n";
+static const char* help =
+        "Usage: bin2res [-x] | [-a] [-f] [-h] <rsrc.rc>\n"
+	"  -a archive binaries into the <rsrc.rc> file\n"
+	"  -x extract binaries from the <rsrc.rc> file\n"
+	"  -f force processing of older resources\n"
+	"  -h print this help screen and exit\n"
+	"\n"
+	"This tool allows the insertion/extractions of embedded binary\n"
+	"resources to/from .rc files, for storage within the cvs tree.\n"
+	"This is accomplished by placing a magic marker in a comment\n"
+	"just above the resource. The marker consists of the BINRES\n"
+	"string followed by the file name. For example, to insert a\n"
+	"brand new binary resource in a .rc file, place the marker\n"
+	"above empty brackets:\n"
+	"    /* BINRES idb_std_small.bmp */\n"
+	"   {}\n"
+	"To merge the binary resources into the .rc file, run:\n"
+	"   bin2res -a myrsrc.rc\n"
+	"Only resources that are newer than the .rc are processed.\n"
+	"To extract the binary resources from the .rc file, run:\n"
+	"  bin2res -x myrsrc.rc\n"
+	"Binary files newer than the .rc file are not overwritten.\n"
+	"\n"
+	"To force processing of all resources, use the -f flag.\n";
 
 void usage(void)
 {
-    printf("Usage: bin2res [-d bin] [input file]\n");
-    printf("  -d bin convert a *.res back to a binary\n");
-    printf("  -f force overwriting newer files\n");
-    exit(-1);
+    printf(help);
+    exit(1);
 }
 
-void parse_options(int argc, char **argv)
+int insert_hexdump (FILE* outfile, FILE* infile)
 {
-  int i;
+    int i, c;
 
-  switch( argc )
-  {
-    case 2:
-	 g_lpstrInputFile = argv[1];
-	 break;
+    fprintf (outfile, "{\n '");
+    for (i = 0; (c = fgetc(infile)) != EOF; i++)
+    {
+	if (i && (i % 16) == 0) fprintf (outfile, "'\n '");
+	if (i % 16)  fprintf (outfile, " ");
+        fprintf(outfile, "%02X", c);
+    }
+    fprintf (outfile, "'\n}");
 
-    case 3:
-    case 4:
-    case 5:
-	 for( i = 1; i < argc - 1; i++ )
-	 {
-	   if( argv[i][0] != '-' ||
-	       strlen(argv[i]) != 2 ) break;
-
-	   if( argv[i][1] == 'd')
-	   {
-	     if (strcmp ("bin", argv[i+1])==0)
-	     {
-	       b_to_binary =1;
-	       i++;
-	     }
-	     else
-	     {
-	       usage();
-	     }
-
-	   }
-	   else if ( argv[i][1] == 'f')
-	   {
-	     b_force_overwrite = 1;
-	   }
-	   else
-	   {
-	     usage();
-	   }
-	 }
-	 if( i == argc - 1 )
-	 {
-	   g_lpstrInputFile = argv[i];
-	   break;
-	 }
-    default: usage();
-  }
+    return 1;
 }
 
-int insert_hex (char * infile, FILE * outfile)
+int hex2bin(char c)
 {
-#ifdef	HAVE_MMAP
-	unsigned int i;
-	int 		fd;
-	struct stat	st;
-	LPBYTE p_in_file = NULL;
+    if (!isxdigit(c)) return -1024;
+    if (isdigit(c)) return c - '0';
+    return toupper(c) - 'A' + 10;
+}
 
-	if( (fd = open( infile, O_RDONLY))==-1 )
+int extract_hexdump (FILE* outfile, FILE* infile)
+{
+    int byte, c;
+
+    while ( (c = fgetc(infile)) != EOF && c != '}')
+    {
+        if (isspace(c) || c == '\'') continue;
+	byte = 16 * hex2bin(c);
+	c = fgetc(infile);
+	if (c == EOF) return 0;
+	byte += hex2bin(c);
+	if (byte < 0) return 0;
+	fputc(byte, outfile);
+    }
+    return 1;
+}
+
+const char* parse_marker(const char *line, time_t* last_updated)
+{
+    static char res_file_name[PATH_MAX], *rpos, *wpos;
+    struct stat st;
+
+    if (!(rpos = strstr(line, "BINRES"))) return 0;
+    for (rpos += 6; *rpos && isspace(*rpos); rpos++) /**/;
+    for (wpos = res_file_name; *rpos && !isspace(*rpos); ) *wpos++ = *rpos++;
+    *wpos = 0;
+
+    *last_updated = (stat(res_file_name, &st) < 0) ? 0 : st.st_mtime;
+
+    return res_file_name;
+}
+
+int process_resources(const char* input_file_name, int inserting, int force_processing)
+{
+    char buffer[2048], tmp_file_name[PATH_MAX];
+    const char *res_file_name;
+    time_t rc_last_update, res_last_update;
+    FILE *fin, *fres, *ftmp = 0;
+    struct stat st;
+    int fd, c;
+
+    if (!(fin = fopen(input_file_name, "r"))) return 0;
+    if (stat(input_file_name, &st) < 0) return 0;
+    rc_last_update = st.st_mtime;
+
+    if (inserting)
+    {
+	strcpy(tmp_file_name, input_file_name);
+	strcat(tmp_file_name, "-XXXXXX.temp");
+	if ((fd = mkstemps(tmp_file_name, 5)) == -1)
 	{
-	  fprintf(stderr, errorOpenFile );
-	  exit(1);
+	    strcpy(tmp_file_name, "/tmp/bin2res-XXXXXX.temp");
+	    if ((fd = mkstemps(tmp_file_name, 5)) == -1) return 0;
 	}
-        if ((fstat(fd, &st) == -1) || (p_in_file = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)-1)
+	if (!(ftmp = fdopen(fd, "w"))) return 0;
+    }
+
+    for (c = EOF; fgets(buffer, sizeof(buffer), fin); c = EOF)
+    {
+	if (inserting) fprintf(ftmp, "%s", buffer);
+	if (!(res_file_name = parse_marker(buffer, &res_last_update))) continue;
+        if (!force_processing && ((rc_last_update < res_last_update) == !inserting))
         {
-	  fprintf(stderr, errorOpenFile );
-          close(fd);
-	  exit(1);
+	    printf("skipping '%s'\n", res_file_name);
+            continue;
         }
 
-	fprintf (outfile, "{\n '");
-	i = 0;
-	while (1)
+        printf("processing '%s'\n", res_file_name);
+	while ( (c = fgetc(fin)) != EOF && c != '{')
+	    if (inserting) fputc(c, ftmp);
+	if (c == EOF) break;
+
+	if (!(fres = fopen(res_file_name, inserting ? "r" : "w"))) break;
+	if (inserting)
 	{
-	  fprintf(outfile, "%02X", p_in_file[i]);
-	  if (++i >= st.st_size) break;
-	  fprintf(outfile, "%s", (i == (i & 0xfffffff0)) ? "'\n '" :" ");
+	    if (!insert_hexdump(ftmp, fres)) break;
+	    while ( (c = fgetc(fin)) != EOF && c != '}') /**/;
 	}
-	fprintf (outfile, "'\n}");
-        munmap(p_in_file, st.st_size);
-        close(fd);
-	return 1;
-#else	/* HAVE_MMAP */
-	FILE*	fp;
-	struct stat	st;
-	unsigned int	i;
-	int		c;
-
-	fp = fopen( infile, "r" );
-	if ( fp == NULL )
+	else
 	{
-	  fprintf(stderr, errorOpenFile );
-	  exit(1);
+	    if (!extract_hexdump(fres, fin)) break;
 	}
-	if (fstat(fileno(fp), &st) == -1)
-	{
-	  fprintf(stderr, errorOpenFile );
-	  fclose(fp);
-	  exit(1);
-	}
+	fclose(fres);
+    }
 
-	fprintf (outfile, "{\n '");
-	i = 0;
-	while (1)
-	{
-	  c = fgetc(fp);
-	  if ( c == EOF )
-	  {
-	    fprintf(stderr, errorOpenFile );
-	    fclose(fp);
-	    exit(1);
-	  }
-	  fprintf(outfile, "%02X", c);
-	  if (++i >= st.st_size) break;
-	  fprintf(outfile, "%s", (i == (i & 0xfffffff0)) ? "'\n '" :" ");
-	}
-	fprintf (outfile, "'\n}");
+    fclose(fin);
 
-	fclose(fp);
-	return 1;
-#endif	/* HAVE_MMAP */
-}
+    if (inserting)
+    {
+	fclose(ftmp);
+	if (c == EOF && rename(tmp_file_name, input_file_name) < 0)
+	    c = '.'; /* force an error */
+	else unlink(tmp_file_name);
+    }
 
-int convert_to_res ()
-{
-	FILE 	*fin, *ftemp;
-	char	buffer[255];
-	char	infile[255];
-	char	tmpfile[255];
-	char	*pos;
-	int	c, len;
-	struct stat	st;
-	int line = 0;
-	time_t	tinput;
-	long startpos, endpos;
-
-        strcpy( tmpfile, g_lpstrInputFile );
-        strcat( tmpfile, "-tmp" );
-        /* FIXME: should use better tmp name and create with O_EXCL */
-	if( (ftemp = fopen( tmpfile, "w")) == NULL ) goto error_open_file;
-
-	if( (fin = fopen( g_lpstrInputFile, "r")) == NULL || stat(g_lpstrInputFile, &st)) goto error_open_file;
-	tinput = st.st_ctime;
-
-	while ( NULL != fgets(buffer, 255, fin))
-	{
-	  fputs(buffer, ftemp);
-	  line++;
-	  if ( (pos = strstr(buffer, "BINRES")) != NULL)
-	  {
-	    /* get the out-file name */
-	    len = 0; pos += 6; startpos=0; endpos=0;
-	    while ( *pos == ' ') pos++;
-	    while ( pos[len] != ' ') len++;
-	    strncpy(infile, pos, len);
-	    infile[len]=0;
-
-	    if ( (!stat(infile, &st) && st.st_ctime > tinput) || b_force_overwrite)
-	    {
-	      /* write a output file */
-	      printf("[%s:c]", infile);
-	      while((c = fgetc(fin))!='{' && c != EOF) fputc(c, ftemp);
-	      if (c == EOF ) goto error_rc_format;
-	      while((c = fgetc(fin))!='}' && c != EOF);
-	      if (c == EOF ) goto error_rc_format;
-
-	      insert_hex(infile, ftemp);
-	    }
-	    else
-	    {
-	      printf("[%s:s]", infile);
-	    }
-	  }
-	}
-
-        fclose(fin);
-	fclose(ftemp);
-
-	if (unlink(g_lpstrInputFile) == -1)
-	{
-            perror("unlink");
-            unlink(tmpfile);
-            return 0;
-	}
-	if (rename(tmpfile, g_lpstrInputFile) == -1)
-        {
-            perror("rename");
-            unlink(tmpfile);
-            return 0;
-        }
-	return 1;
-
-error_open_file:
-	fprintf(stderr, errorOpenFile );
-	return 0;
-
-error_rc_format:
-	fprintf(stderr, errorRCFormat, line);
-	return 0;
-}
-
-int convert_to_bin()
-{
-	FILE 	*fin, *fout;
-	char	buffer[255];
-	char	outfile[255];
-	char	*pos;
-	int	len, index, in_resource;
-	unsigned int	byte;
-	struct stat	st;
-	int line = 0;
-	time_t	tinput;
-
-	if( (fin = fopen( g_lpstrInputFile, "r")) == NULL || stat(g_lpstrInputFile, &st)) goto error_open_file;
-	tinput = st.st_ctime;
-
-	while ( NULL != fgets(buffer, 255, fin))
-	{
-	  line++;
-	  if ( (pos = strstr(buffer, "BINRES")) != NULL)
-	  {
-	    /* get the out-file name */
-	    len = 0; pos += 6;
-	    while ( *pos == ' ') pos++;
-	    while ( pos[len] != ' ') len++;
-	    strncpy(outfile, pos, len);
-	    outfile[len]=0;
-
-	    if ( stat(outfile, &st) || st.st_ctime < tinput || b_force_overwrite)
-	    {
-	      /* write a output file */
-	      printf("[%s:c]", outfile);
-	      if ( (fout = fopen( outfile, "w")) == NULL) goto error_open_file;
-
-	      in_resource = 0;
-	      while (1)
-	      {
-	        if ( NULL == fgets(buffer, 255, fin)) goto error_rc_format;
-	        line++;
-
-	        /* parse a line */
-	        for ( index = 0; buffer[index] != 0; index++ )
-	        {
-	          if ( ! in_resource )
-		  {
-		    if ( buffer[index] == '{' ) in_resource = 1;
-		    continue;
-		  }
-
-	          if ( buffer[index] == ' ' || buffer[index] == '\''|| buffer[index] == '\n' ) continue;
-	          if ( buffer[index] == '}' ) goto end_of_resource;
-	          if ( ! isxdigit(buffer[index])) goto error_rc_format;
-		  index += sscanf(&buffer[index], "%02x", &byte);
-		  fputc(byte, fout);
-	        }
-	      }
-	      fclose(fout);
-	    }
-	    else
-	    {
-	      printf("[%s:s]", outfile);
-	    }
-end_of_resource: ;
-	  }
-	}
-
-        fclose(fin);
-	return 1;
-
-error_open_file:
-	fprintf(stderr, errorOpenFile );
-	return 0;
-
-error_rc_format:
-	fprintf(stderr, errorRCFormat, line);
-	return 0;
+    return c == EOF;
 }
 
 int main(int argc, char **argv)
 {
-	parse_options( argc, argv);
+    int convert_dir = 0, optc;
+    int force_overwrite = 0;
+    const char* input_file_name;
 
-	if (b_to_binary == 0)
+    while((optc = getopt(argc, argv, "axfh")) != EOF)
+    {
+	switch(optc)
 	{
-	  convert_to_res();
+	case 'a':
+	case 'x':
+	    if (convert_dir) usage();
+	    convert_dir = optc;
+	break;
+	case 'f':
+	    force_overwrite = 1;
+	break;
+	case 'h':
+	    printf(help);
+	    exit(0);
+	break;
+	default:
+	    usage();
 	}
-	else
-	{
-	  convert_to_bin();
-	}
-	printf("\n");
-	return 0;
+    }
+
+    if (optind + 1 != argc) usage();
+    input_file_name = argv[optind];
+
+    if (!convert_dir) usage();
+
+    if (!process_resources(input_file_name, convert_dir == 'a', force_overwrite))
+    {
+	perror("Processing failed");
+	exit(1);
+    }
+
+    return 0;
 }
