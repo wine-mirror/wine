@@ -672,6 +672,19 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define HP_TLS1PRF_LABEL        0x0006
 #define HP_TLS1PRF_SEED         0x0007
 
+/* Crypt{Get,Set}KeyParam */
+#define CRYPT_MODE_CBC          1
+#define CRYPT_MODE_ECB          2
+#define CRYPT_MODE_OFB          3
+#define CRYPT_MODE_CFB          4
+
+#define CRYPT_ENCRYPT           0x0001 
+#define CRYPT_DECRYPT           0x0002
+#define CRYPT_EXPORT            0x0004
+#define CRYPT_READ              0x0008
+#define CRYPT_WRITE             0x0010
+#define CRYPT_MAC               0x0020
+
 /* Crypt*Key */
 #define CRYPT_EXPORTABLE        0x00000001
 #define CRYPT_USER_PROTECTED    0x00000002
