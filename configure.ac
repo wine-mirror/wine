@@ -976,6 +976,7 @@ esac
 
 case $host_os in
   linux*)
+    WINE_TRY_CFLAGS([-static],,AC_MSG_ERROR([You need to install the static version of glibc to build Wine.]))
     AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread wine-preloader")
     AC_SUBST(MAIN_BINARY,"wine-glibc")
     ;;
