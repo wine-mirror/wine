@@ -1379,6 +1379,7 @@ DWORD WINAPI GlobalSize(
             return 0;
 	 retval=HeapSize(GetProcessHeap(), 0, 
 	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL))-4;
+	 if (retval == 0xffffffff-4) retval = 0;
       }
       else
       {
