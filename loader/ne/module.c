@@ -43,7 +43,7 @@ static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
 static HMODULE16 NE_LoadBuiltin(LPCSTR name,BOOL force) { return 0; }
 HMODULE16 (*fnBUILTIN_LoadModule)(LPCSTR name,BOOL force) = NE_LoadBuiltin;
-
+static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
 
 /***********************************************************************
  *           NE_GetPtr
@@ -814,7 +814,10 @@ static HINSTANCE16 NE_LoadFileModule( HFILE16 hFile, OFSTRUCT *ofs,
     /* Load the referenced DLLs */
 
     if (!NE_LoadDLLs( pModule ))
-        return 2;  /* File not found (FIXME: free everything) */
+      {
+       NE_FreeModule(hModule,0);
+        return 2;
+      }
 
     /* Load the segments */
 
