@@ -183,6 +183,26 @@ inline static void unlink_message( struct message_list *list, struct message *ms
     else list->first = msg->next;
 }
 
+/* try to merge a message with the last in the list; return 1 if successful */
+static int merge_message( struct message_list *list, const struct message *msg )
+{
+    struct message *prev = list->last;
+
+    if (!prev) return 0;
+    if (prev->result) return 0;
+    if (prev->win != msg->win) return 0;
+    if (prev->msg != msg->msg) return 0;
+    if (prev->type != msg->type) return 0;
+    /* now we can merge it */
+    prev->wparam  = msg->wparam;
+    prev->lparam  = msg->lparam;
+    prev->x       = msg->x;
+    prev->y       = msg->y;
+    prev->time    = msg->time;
+    prev->info    = msg->info;
+    return 1;
+}
+
 /* free a message when deleting a queue or window */
 static void free_message( struct message *msg )
 {
@@ -686,8 +706,15 @@ DECL_HANDLER(send_message)
             break;
         case COOKED_HW_MESSAGE:
         case RAW_HW_MESSAGE:
-            append_message( &recv_queue->msg_list[req->kind], msg );
-            change_queue_bits( recv_queue, get_hardware_msg_bit(msg), 0 );
+            if (msg->msg == WM_MOUSEMOVE && merge_message( &recv_queue->msg_list[req->kind], msg ))
+            {
+                free( msg );
+            }
+            else
+            {
+                append_message( &recv_queue->msg_list[req->kind], msg );
+                change_queue_bits( recv_queue, get_hardware_msg_bit(msg), 0 );
+            }
             break;
         default:
             free( msg );
