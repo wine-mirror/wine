@@ -250,6 +250,16 @@ extern void *memcpy_unaligned( void *dst, const void *src, size_t size );
 
 extern int mkstemps(char *template, int suffix_len);
 
+/* Process creation flags */
+#ifndef _P_WAIT
+# define _P_WAIT    0
+# define _P_NOWAIT  1
+# define _P_OVERLAY 2
+# define _P_NOWAITO 3
+# define _P_DETACH  4
+#endif
+extern int spawnvp(int mode, const char *cmdname, char *const argv[]);
+
 /* Interlocked functions */
 
 #if defined(__i386__) && defined(__GNUC__)
@@ -321,6 +331,7 @@ extern long interlocked_xchg_add( long *dest, long incr );
 #define memmove                 __WINE_NOT_PORTABLE(memmove)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
+#define spawnvp                 __WINE_NOT_PORTABLE(spawnvp)
 #define statfs                  __WINE_NOT_PORTABLE(statfs)
 #define strcasecmp              __WINE_NOT_PORTABLE(strcasecmp)
 #define strerror                __WINE_NOT_PORTABLE(strerror)

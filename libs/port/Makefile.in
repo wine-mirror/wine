@@ -16,6 +16,7 @@ C_SRCS = \
 	mkstemps.c \
 	pread.c \
 	pwrite.c \
+	spawn.c \
 	statfs.c \
 	strcasecmp.c \
 	strerror.c \
