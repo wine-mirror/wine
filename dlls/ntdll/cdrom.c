@@ -169,7 +169,7 @@ static DWORD CDROM_ControlEjection(int dev, const PREVENT_MEDIA_REMOVAL* rmv)
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(dev, CDROM_LOCKDOOR, val));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(dev, (val) ? CDIOPREVENT : CDIOCALLOW, NULL));
+    return CDROM_GetStatusCode(ioctl(dev, (val) ? CDIOCPREVENT : CDIOCALLOW, NULL));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -411,7 +411,7 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
         break;
     case IOCTL_CDROM_TRACK_ISRC:
         read_sc.data_format    = CD_TRACK_INFO;
-        sc.track_info.track_number = data->TrackIsrc.Track;
+        sc.what.track_info.track_number = data->TrackIsrc.Track;
         break;
     }
     io = ioctl(dev, CDIOCREADSUBCHANNEL, &read_sc);
@@ -435,9 +435,9 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
         hdr->AudioStatus = AUDIO_STATUS_IN_PROGRESS;
         break;
     case CD_AS_PLAY_PAUSED:
-        hdr->AudioStatus = AUDIO_STATUS_IN_PAUSED;
+        hdr->AudioStatus = AUDIO_STATUS_PAUSED;
         break;
-    case CD_AS_PLAY_AUDIO_COMPLETED:
+    case CD_AS_PLAY_COMPLETED:
         hdr->AudioStatus = AUDIO_STATUS_PLAY_COMPLETE;
         break;
     case CD_AS_PLAY_ERROR:
@@ -450,32 +450,32 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     {
     case IOCTL_CDROM_CURRENT_POSITION:
         size = sizeof(SUB_Q_CURRENT_POSITION);
-        data->CurrentPosition.FormatCode = sc.position.data_format;
-        data->CurrentPosition.Control = sc.position.control;
-        data->CurrentPosition.ADR = sc.position.addr_type;
-        data->CurrentPosition.TrackNumber = sc.position.track_number;
-        data->CurrentPosition.IndexNumber = sc.position.index_number;
+        data->CurrentPosition.FormatCode = sc.what.position.data_format;
+        data->CurrentPosition.Control = sc.what.position.control;
+        data->CurrentPosition.ADR = sc.what.position.addr_type;
+        data->CurrentPosition.TrackNumber = sc.what.position.track_number;
+        data->CurrentPosition.IndexNumber = sc.what.position.index_number;
 
         data->CurrentPosition.AbsoluteAddress[0] = 0;
-        data->CurrentPosition.AbsoluteAddress[1] = sc.position.absaddr.msf.minute;
-        data->CurrentPosition.AbsoluteAddress[2] = sc.position.absaddr.msf.second;
-        data->CurrentPosition.AbsoluteAddress[3] = sc.position.absaddr.msf.frame;
+        data->CurrentPosition.AbsoluteAddress[1] = sc.what.position.absaddr.msf.minute;
+        data->CurrentPosition.AbsoluteAddress[2] = sc.what.position.absaddr.msf.second;
+        data->CurrentPosition.AbsoluteAddress[3] = sc.what.position.absaddr.msf.frame;
         data->CurrentPosition.TrackRelativeAddress[0] = 0;
-        data->CurrentPosition.TrackRelativeAddress[1] = sc.position.reladdr.msf.minute;
-        data->CurrentPosition.TrackRelativeAddress[2] = sc.position.reladdr.msf.second;
-        data->CurrentPosition.TrackRelativeAddress[3] = sc.position.reladdr.msf.frame;
+        data->CurrentPosition.TrackRelativeAddress[1] = sc.what.position.reladdr.msf.minute;
+        data->CurrentPosition.TrackRelativeAddress[2] = sc.what.position.reladdr.msf.second;
+        data->CurrentPosition.TrackRelativeAddress[3] = sc.what.position.reladdr.msf.frame;
         break;
     case IOCTL_CDROM_MEDIA_CATALOG:
         size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
         data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
-        data->MediaCatalog.FormatCode = sc.media_catalog.data_format;
-        data->MediaCatalog.Mcval = sc.media_catalog.mc_valid;
-        memcpy(data->MediaCatalog.MediaCatalog, sc.media_catalog.mc_number, 15);
+        data->MediaCatalog.FormatCode = sc.what.media_catalog.data_format;
+        data->MediaCatalog.Mcval = sc.what.media_catalog.mc_valid;
+        memcpy(data->MediaCatalog.MediaCatalog, sc.what.media_catalog.mc_number, 15);
         break;
     case IOCTL_CDROM_TRACK_ISRC:
         size = sizeof(SUB_Q_CURRENT_POSITION);
-        data->TrackIsrc.Tcval = sc.track_info.ti_valid;
-        memcpy(data->TrackIsrc.TrackIsrc, sc.track_info.ti_number, 15);
+        data->TrackIsrc.Tcval = sc.what.track_info.ti_valid;
+        memcpy(data->TrackIsrc.TrackIsrc, sc.what.track_info.ti_number, 15);
         break;
     }
 
