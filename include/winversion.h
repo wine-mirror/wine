@@ -12,5 +12,6 @@ typedef enum
 
 extern WINDOWS_VERSION VERSION_GetVersion(); 
 extern char *VERSION_GetVersionName(); 
+extern BOOL32 VERSION_OsIsUnicode(void);
 
 #endif  /* __WINE_WINVERSION_H */

@@ -359,3 +359,21 @@ UINT32 WINAPI OaBuildVersion()
 		return 0x0;
     }
 }
+/***********************************************************************
+ *        VERSION_OsIsUnicode	[internal]
+ *
+ * NOTES
+ *   some functions getting sometimes LPSTR sometimes LPWSTR...
+ *
+ */
+BOOL32 VERSION_OsIsUnicode(void)
+{
+    switch(VERSION_GetVersion())
+    {
+    case NT351:
+    case NT40:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
