@@ -3,7 +3,7 @@
  *
  *  Copyright 2000 Jon Griffiths
  */
-#include "specmaker.h"
+#include "winedump.h"
 
 /* Type for parsing mangled types */
 typedef struct _compound_type

@@ -3,7 +3,7 @@
  *
  *  Copyright 2000 Jon Griffiths
  */
-#include "specmaker.h"
+#include "winedump.h"
 
 static char *grep_buff = NULL;
 static char *fgrep_buff = NULL;

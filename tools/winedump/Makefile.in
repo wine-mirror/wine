@@ -4,15 +4,16 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = specmaker
+PROGRAMS = winedump
 MODULE   = none
 
 C_SRCS = \
-	dll.c  \
+	debug.c \
 	main.c  \
 	misc.c  \
 	msmangle.c  \
 	output.c  \
+	pe.c \
 	search.c  \
 	symbol.c
 
@@ -20,16 +21,16 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-specmaker: $(OBJS)
-	$(CC) $(CFLAGS) -o specmaker $(OBJS) $(LDFLAGS)
+winedump: $(OBJS)
+	$(CC) $(CFLAGS) -o winedump $(OBJS) $(LDFLAGS)
 
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
-	$(INSTALL_PROGRAM) specmaker $(bindir)/specmaker
+	$(INSTALL_PROGRAM) winedump $(bindir)/winedump
 	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(bindir)/function_grep.pl
 
 uninstall::
-	$(RM) $(bindir)/specmaker
+	$(RM) $(bindir)/winedump
 	$(RM) $(bindir)/function_grep.pl
 
 ### Dependencies:

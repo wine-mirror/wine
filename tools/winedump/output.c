@@ -3,7 +3,7 @@
  *
  *  Copyright 2000 Jon Griffiths
  */
-#include "specmaker.h"
+#include "winedump.h"
 
 /* Output files */
 static FILE *specfile = NULL;
@@ -33,7 +33,7 @@ void  output_spec_preamble (void)
     puts ("Creating .spec preamble");
 
   fprintf (specfile,
-           "# Generated from %s.dll by specmaker\nname    %s\n"
+           "# Generated from %s.dll by winedump\nname    %s\n"
            "type    win32\ninit    %s_Init\n\nimport kernel32.dll\n"
            "import ntdll.dll\n", globals.input_name, OUTPUT_DLL_NAME,
            OUTPUT_UC_DLL_NAME);
@@ -133,7 +133,7 @@ void  output_header_preamble (void)
   atexit (output_header_postamble);
 
   fprintf (hfile,
-           "/*\n * %s.dll\n *\n * Generated from %s.dll by specmaker.\n *\n"
+           "/*\n * %s.dll\n *\n * Generated from %s.dll by winedump.\n *\n"
            " * DO NOT SEND GENERATED DLLS FOR INCLUSION INTO WINE !\n * \n */"
            "\n#ifndef __WINE_%s_DLL_H\n#define __WINE_%s_DLL_H\n\n#include "
            "\"config.h\"\n#include \"windef.h\"\n#include \"debugtools.h\"\n"
@@ -199,7 +199,7 @@ void  output_c_preamble (void)
   atexit (output_c_postamble);
 
   fprintf (cfile,
-           "/*\n * %s.dll\n *\n * Generated from %s.dll by specmaker.\n *\n"
+           "/*\n * %s.dll\n *\n * Generated from %s.dll by winedump.\n *\n"
            " * DO NOT SUBMIT GENERATED DLLS FOR INCLUSION INTO WINE!\n * \n */"
            "\n\n#include \"%s_dll.h\"\n\nDEFAULT_DEBUG_CHANNEL(%s);\n\n",
            OUTPUT_DLL_NAME, globals.input_name, OUTPUT_DLL_NAME,
@@ -419,7 +419,7 @@ void  output_makefile (void)
     puts ("Creating makefile");
 
   fprintf (makefile,
-           "# Generated from %s.dll by specmaker.\nTOPSRCDIR = @top_srcdir@\n"
+           "# Generated from %s.dll by winedump.\nTOPSRCDIR = @top_srcdir@\n"
            "TOPOBJDIR = ../..\nSRCDIR    = @srcdir@\nVPATH     = @srcdir@\n"
            "MODULE    = %s\nEXTRALIBS = $(LIBUNICODE)\n\n"
            "LDDLLFLAGS = @LDDLLFLAGS@\nSYMBOLFILE = $(MODULE).tmp.o\n\n"
@@ -447,7 +447,7 @@ void  output_install_script (void)
     puts ("Creating install script");
 
   fprintf (install_file,
-           "#!/bin/bash\n# Generated from %s.dll by specmaker.\n\n"
+           "#!/bin/bash\n# Generated from %s.dll by winedump.\n\n"
            "if [ $# -ne 1 ] || [ ! -d $1 ] || [ ! -f"
            " $1/AUTHORS ]; then\n\t[ $# -eq 1 ] && echo \"Invalid path\"\n"
            "\techo \"Usage: $0 wine-base-dir\"\n\texit 1\nfi\n\n"

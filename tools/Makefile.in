@@ -10,15 +10,14 @@ MODULE   = none
 C_SRCS = makedep.c fnt2bdf.c bin2res.c
 
 SUBDIRS = \
-	cvdump \
-	specmaker \
 	winebuild \
+	winedump \
 	wmc \
 	wrc
 
 INSTALLSUBDIRS = \
-	specmaker \
 	winebuild \
+	winedump \
 	wmc \
 	wrc
 
@@ -28,7 +27,7 @@ EXTRASUBDIRS = \
 	winapi_check/win32 \
 	wineconf.libs
 
-all: $(PROGRAMS) specmaker winebuild wmc wrc
+all: $(PROGRAMS) winebuild winedump wmc wrc
 
 @MAKE_RULES@
 

@@ -1,5 +1,5 @@
 /*
- *  Specmaker - A Wine DLL tool
+ *  Winedump - A Wine DLL tool
  *
  *  Copyright 2000 Jon Griffiths
  *
@@ -22,8 +22,8 @@
  *  mistakes and some incorrect assumptions, but the lists of types
  *  are pure gold.
  */
-#ifndef __WINE_SPECMAKER_H
-#define __WINE_SPECMAKER_H
+#ifndef __WINE_WINEDUMP_H
+#define __WINE_WINEDUMP_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,6 +58,8 @@
 #define SYM_THISCALL        0x4
 #define SYM_DATA            0x8 /* Data, not a function */
 
+typedef enum {NONE, DMGL, SPEC, DUMP} Mode;
+
 /* Structure holding a parsed symbol */
 typedef struct __parsed_symbol
 {
@@ -78,23 +80,37 @@ typedef struct __parsed_symbol
 /* All globals */
 typedef struct __globals
 {
-  /* Options */
+  Mode  mode;		   /* SPEC, DEMANGLE or DUMP */
+
+  /* Options: generic */
+  int   do_quiet;          /* -q */
+  int   do_verbose;        /* -v */
+
+  /* Option arguments: generic */
+  const char *input_name;  /* */
+
+  /* Options: spec mode */
   int   do_code;           /* -c, -t, -f */
   int   do_trace;          /* -t, -f */
   int   do_cdecl;          /* -C */
-  int   do_quiet;          /* -q */
-  int   do_verbose;        /* -v */
   int   do_documentation;  /* -D */
-  int   do_demangle;       /* -S */
 
-  /* Option arguments */
+  /* Options: dump mode */
+  int   do_demangle;        /* -d */
+  int   do_dumpheader;      /* -f */
+
+  /* Option arguments: spec mode */
   int   start_ordinal;     /* -s */
   int   end_ordinal;       /* -e */
   const char *directory;   /* -I */
-  const char *input_name;  /* -d */
   const char *forward_dll; /* -f */
   const char *dll_name;    /* -o */
   char *uc_dll_name;       /* -o */
+
+  /* Option arguments: dump mode */
+  const char *dumpsect;    /* -j */
+    
+  /* internal options */
   int   do_ordinals;
 } _globals;
 
@@ -113,6 +129,8 @@ extern _globals globals;
 /* Default calling convention */
 #define CALLING_CONVENTION (globals.do_cdecl ? SYM_CDECL : SYM_STDCALL)
 
+/* Image functions */
+void	dump_file(const char* name);
 
 /* DLL functions */
 void  dll_open (const char *dll_name);
@@ -174,11 +192,12 @@ FILE *open_file (const char *name, const char *ext, const char *mode);
 
 #ifdef __GNUC__
 void  do_usage (void) __attribute__ ((noreturn));
+void  fatal (const char *message)  __attribute__ ((noreturn));
 #else
 void  do_usage (void);
+void  fatal (const char *message);
 #endif
 
-void  fatal (const char *message);
 
 
-#endif /* __WINE_SPECMAKER_H */
+#endif /* __WINE_WINEDUMP_H */

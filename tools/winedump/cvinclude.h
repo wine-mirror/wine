@@ -24,16 +24,6 @@
 
 #include "pshpack1.h"
 
-/* FIXME: no idea if this is correct */
-typedef struct
-{
-    DWORD unknown1;
-    DWORD SizeOfData;
-    WORD  unknown2;
-    WORD  unknown3;
-    char  Name[MAX_PATH];
-} IMAGE_DEBUG_DIRECTORY_MISC;
-
 /*
  * CodeView headers
  */

@@ -7155,10 +7155,9 @@ relay32/Makefile
 scheduler/Makefile
 server/Makefile
 tools/Makefile
-tools/cvdump/Makefile
-tools/specmaker/Makefile
 tools/winapi/Makefile
 tools/winebuild/Makefile
+tools/winedump/Makefile
 tools/winelauncher
 tools/wmc/Makefile
 tools/wrc/Makefile
@@ -7410,10 +7409,9 @@ relay32/Makefile
 scheduler/Makefile
 server/Makefile
 tools/Makefile
-tools/cvdump/Makefile
-tools/specmaker/Makefile
 tools/winapi/Makefile
 tools/winebuild/Makefile
+tools/winedump/Makefile
 tools/winelauncher
 tools/wmc/Makefile
 tools/wrc/Makefile
