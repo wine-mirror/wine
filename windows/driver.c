@@ -226,7 +226,7 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam2)
 	if (*ptr == '\0') ptr = NULL;
     }
     
-    if ((hModule = LoadModule16(lpFileName, (LPVOID)-1)) < 32) goto exit;
+    if ((hModule = LoadLibrary16(lpFileName)) < 32) goto exit;
     if ((lpProc = (DRIVERPROC16)GetProcAddress16(hModule, "DRIVERPROC")) == NULL)
 	goto exit;
 
@@ -275,7 +275,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 	lpDrv = DRIVER_TryOpenDriver16(drvName, lParam2);
     }
     if (!lpDrv) {
-	ERR("Failed to open driver %s from system.ini file, section %s\n", lpDriverName, lpSectionName);
+	TRACE("Failed to open driver %s from system.ini file, section %s\n", lpDriverName, lpSectionName);
 	return 0;
     }
  the_end:

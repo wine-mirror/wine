@@ -17,11 +17,12 @@ C_SRCS = \
 	sound16.c \
 	time.c
 
-GLUE =  lolvldrv.c \
+GLUE = \
+	lolvldrv.c \
 	mmsystem.c \
 	time.c
 
-RC_SRCS= \
+RC_SRCS = \
 	winmm_res.rc
 
 @MAKE_DLL_RULES@

@@ -11,10 +11,9 @@
 #include <string.h>
 #include "heap.h"
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "mmddk.h"
 #include "winemm.h"
+#include "wine/winbase16.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(driver);
@@ -25,32 +24,6 @@ static LPWINE_DRIVER	lpDrvItemList = NULL;
  *	- LoadModule count and clean up is not handled correctly (it's not a 
  *	  problem as long as FreeLibrary is not working correctly)
  */
-
-/* ### start build ### */
-extern LONG CALLBACK DRIVER_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
-/* ### stop build ### */
-
-/**************************************************************************
- *			LoadStartupDrivers			[internal]
- */
-static void WINE_UNUSED DRIVER_LoadStartupDrivers(void)
-{
-    char  	str[256];
-    
-    if (GetPrivateProfileStringA("drivers", NULL, "", str, sizeof(str), "SYSTEM.INI") < 2) {
-    	ERR("Can't find drivers section in system.ini\n");
-    } else {
-	HDRVR16	hDrv;
-	LPSTR	ptr;
-
-	for (ptr = str; *ptr; ptr += strlen(ptr) + 1) {
-	    TRACE("str='%s'\n", ptr);
-	    hDrv = OpenDriver16(ptr, "drivers", 0L);
-	    TRACE("hDrv=%04x\n", hDrv);
-	}
-	TRACE("end of list !\n");
-    }
-}
 
 /**************************************************************************
  *			DRIVER_GetNumberOfModuleRefs		[internal]
@@ -446,7 +419,7 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
 	goto the_end;
 
     if (!(lpDrv = DRIVER_TryOpenDriver16(lpDriverName, lpSectionName, lParam2)))
-	ERR("Failed to open driver %s from section %s\n", lpDriverName, lpSectionName);
+	TRACE("Failed to open driver %s from section %s\n", lpDriverName, lpSectionName);
  the_end:
     if (lpDrv)	TRACE("=> %08lx\n", (DWORD)lpDrv);
     return (DWORD)lpDrv;
