@@ -179,7 +179,7 @@ int convert_to_res ()
 	FILE 	*fin, *ftemp;
 	char	buffer[255];
 	char	infile[255];
-	char	tmpfile[L_tmpnam];
+	char	tmpfile[255];
 	char	*pos;
 	int	c, len;
 	struct stat	st;
