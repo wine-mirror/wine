@@ -94,35 +94,75 @@ QueryPathOfRegTypeLib(
 	WORD wMaj,	/* [in] major version */
 	WORD wMin,	/* [in] minor version */
 	LCID lcid,	/* [in] locale id */
-	LPBSTR path	/* [out] path of typelib */
-) {
-	char	xguid[80];
-	char	typelibkey[100],pathname[260];
-	DWORD	plen;
+	LPBSTR path )	/* [out] path of typelib */
+{
+    /* don't need to ZeroMemory those arrays since sprintf and RegQueryValue add
+       string termination character on output strings */
 
-       	TRACE("\n");
+    HRESULT hr        = E_FAIL;
 
-	if (HIWORD(guid)) {
-            sprintf( typelibkey, "SOFTWARE\\Classes\\Typelib\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\%d.%d\\%lx\\win32",
-                     guid->Data1, guid->Data2, guid->Data3,
-                     guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-                     guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7],
-                     wMaj,wMin,lcid);
-	} else {
-		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
-		FIXME("(%s,%d,%d,0x%04lx,%p),stub!\n",xguid,wMaj,wMin,(DWORD)lcid,path);
-		return E_FAIL;
-	}
-	plen = sizeof(pathname);
-	if (RegQueryValueA(HKEY_LOCAL_MACHINE,typelibkey,pathname,&plen)) {
-		/* try again without lang specific id */
-		if (SUBLANGID(lcid))
-			return QueryPathOfRegTypeLib(guid,wMaj,wMin,PRIMARYLANGID(lcid),path);
-		FIXME("key %s not found\n",typelibkey);
-		return E_FAIL;
-	}
-	*path = HEAP_strdupAtoW(GetProcessHeap(),0,pathname);
-	return S_OK;
+    DWORD   dwPathLen = _MAX_PATH;
+    LCID    myLCID    = lcid;
+
+    char    szXGUID[80];
+    char    szTypeLibKey[100];
+    char    szPath[dwPathLen];
+
+    if ( !HIWORD(guid) )
+    {
+        sprintf(szXGUID,
+            "<guid 0x%08lx>",
+            (DWORD) guid);
+
+        FIXME("(%s,%d,%d,0x%04lx,%p),stub!\n", szXGUID, wMaj, wMin, (DWORD)lcid, path);
+        return E_FAIL;
+    }
+
+    while (hr != S_OK)
+    {
+        sprintf(szTypeLibKey,
+            "SOFTWARE\\Classes\\Typelib\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\%d.%d\\%lx\\win32",
+            guid->Data1,    guid->Data2,    guid->Data3,
+            guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3], 
+            guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7],
+            wMaj,
+            wMin,
+            myLCID);
+
+        if (RegQueryValueA(HKEY_LOCAL_MACHINE, szTypeLibKey, szPath, &dwPathLen))
+        {
+            if (myLCID == lcid)
+            {
+                /* try with sub-langid */
+                myLCID = SUBLANGID(lcid);
+            }
+            else if (myLCID == SUBLANGID(lcid))
+            {
+                /* try with system langid */
+                myLCID = 0;
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            DWORD len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, szPath, dwPathLen, NULL, 0 );
+            BSTR bstrPath = SysAllocStringLen(NULL,len);
+
+            MultiByteToWideChar(CP_ACP,
+                                MB_PRECOMPOSED,
+                                szPath,
+                                dwPathLen,
+                                bstrPath,
+                                len);
+           *path = bstrPath;
+           hr = S_OK;
+        }
+    }
+
+    return hr;
 }
 
 /******************************************************************************
