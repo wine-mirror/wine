@@ -187,18 +187,98 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     return HRESULT_FROM_WIN32(status);
 }
 
+struct rpc_sendreceive_params
+{
+    RPC_MESSAGE *msg;
+    RPC_STATUS   status;
+};
+
+/* this thread runs an outgoing RPC */
+static DWORD WINAPI rpc_sendreceive_thread(LPVOID param)
+{
+    struct rpc_sendreceive_params *data = (struct rpc_sendreceive_params *) param;
+    
+    TRACE("starting up\n");
+
+    /* FIXME: trap and rethrow RPC exceptions in app thread */
+    data->status = I_RpcSendReceive(data->msg);
+
+    TRACE("completed with status 0x%lx\n", data->status);
+    
+    return 0;
+}
+
 static HRESULT WINAPI RpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE *olemsg, ULONG *pstatus)
 {
     RPC_MESSAGE *msg = (RPC_MESSAGE *)olemsg;
+    HRESULT hr = S_OK;
+    HANDLE thread;
+    struct rpc_sendreceive_params *params;
+    DWORD tid, res;
     RPC_STATUS status;
-    HRESULT hr;
-
+    
     TRACE("(%p)\n", msg);
 
-    status = I_RpcSendReceive(msg);
+    params = HeapAlloc(GetProcessHeap(), 0, sizeof(*params));
+    if (!params) return E_OUTOFMEMORY;
+    
+    params->msg = msg;
 
+    /* we use a separate thread here because we need to be able to
+     * pump the message loop in the application thread: if we do not,
+     * any windows created by this thread will hang and RPCs that try
+     * and re-enter this STA from an incoming server thread will
+     * deadlock. InstallShield is an example of that.
+     */
+    
+    thread = CreateThread(NULL, 0, rpc_sendreceive_thread, params, 0, &tid);
+    if (!thread)
+    {
+        ERR("Could not create RpcSendReceive thread, error %lx\n", GetLastError());
+        return E_UNEXPECTED;
+    }
+
+    while (TRUE)
+    {
+        TRACE("waiting for rpc completion or window message\n");
+        res = MsgWaitForMultipleObjectsEx(1, &thread, INFINITE, QS_ALLINPUT, 0);
+        
+        if (res == WAIT_OBJECT_0 + 1)  /* messages available */
+        {
+            MSG message;
+            while (PeekMessageW(&message, NULL, 0, 0, PM_REMOVE))
+            {
+                /* FIXME: filter the messages here */
+                if (message.message == DM_EXECUTERPC)
+                    TRACE("received DM_EXECUTRPC dispatch request, re-entering ...\n");
+                else
+                    TRACE("received message whilst waiting for RPC: 0x%x\n", message.message);
+                TranslateMessage(&message);
+                DispatchMessageW(&message);
+            }
+        }
+        else if (res == WAIT_OBJECT_0) 
+        {
+            break; /* RPC is completed */
+        }
+        else
+        {
+            ERR("Unexpected wait termination: %ld, %ld\n", res, GetLastError());
+            hr = E_UNEXPECTED;
+            break;
+        }
+    }
+
+    CloseHandle(thread);
+
+    status = params->status;
+    HeapFree(GetProcessHeap(), 0, params);
+    params = NULL;
+    if (hr) return hr;
+    
     if (pstatus) *pstatus = status;
 
+    TRACE("RPC call status: 0x%lx\n", status);
     if (status == RPC_S_OK)
         hr = S_OK;
     else if (status == RPC_S_CALL_FAILED)
