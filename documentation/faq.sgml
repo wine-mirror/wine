@@ -11,7 +11,7 @@
         <para>Dave Gardner maintained it from 1995-1998.</para>
         <para>Douglas Ridgway (ridgway@winehq.com) took it over in 1999.</para>
         <para>Andreas Mohr (amohr@codeweavers.com) converted it to FAQ-O-Matic in 2000.</para>
-        <para>Dimitrie O. Paun, Keith Matthews and Thomas Wickline reorganised it in 2002.</para>
+        <para>Dimitrie O. Paun, Keith Matthews and Tom Wickline (in alphabetical order) reorganized it in 2002.</para>
         <para>For suggestions/additions/complaints regarding this FAQ, please send an email to
         <ulink url="mailto:wine-faq@winehq.org">wine-faq@winehq.org</ulink></para>
       </answer>
@@ -143,7 +143,7 @@
         <para>
           Integrating a CPU emulator in Wine would be extremely hard,
           due to the large number of Windows APIs and the complex
-          datatypes they exchange. It is not uncommon for a Windows API to
+          data types they exchange. It is not uncommon for a Windows API to
           take three or more pointers to structures composed of many fields,
           including pointers to other complex structures. For each of these
           we would need a conversion routine to deal with the byte order and
@@ -232,7 +232,7 @@
           copy/paste from one to the other, and run it all at full speed.
         </para>
         <para>
-          It is also a pretty vital part of migrating a large organisation,
+          It is also a pretty vital part of migrating a large organization,
           you can't change a 5000 desktop setup overnight without a lot of risk.
        </para>
       </answer>
@@ -341,7 +341,7 @@
             <para>
               Special Wine installation to be used for running Windows
               Netscape browser plugins such as e.g. QuickTime in Linux
-              browsers. Costs $24.95.
+              browsers. Costs $34.95.
               Well worth it (very stable and useful packaging). 
             </para>
           </listitem>
@@ -359,7 +359,21 @@
             </para>
           </listitem>
           </varlistentry>
- 
+          
+          <varlistentry>
+          <term><ulink url="http://www.codeweavers.com/products/cxofficeserver/">Codeweavers' CrossOver Office Server Edition</ulink></term>
+          <listitem>
+            <para>
+             Allows you to run your favorite Windows productivity applications in 
+             a distributed thin-client environment under Linux. Server Edition is 
+             also a great addition to Solaris environments, since there built-in 
+             support for Solaris desktops makes running Windows applications a 
+             possibility on Sun workstations as well. For pricing just follow this link: 
+          <ulink url="http://www.codeweavers.com/products/pricing.php">CrossOver Office Server Edition Pricing</ulink>
+            </para>
+          </listitem>
+          </varlistentry>          
+
 	  <varlistentry>
           <term><ulink url="http://www.winehq.org/download/">Other packaged versions of Wine</ulink></term>
           <listitem>
@@ -389,8 +403,8 @@
           applications became popular.
         </para>
         <para>
-          For more information, see <ulink url="http://www.winehq.com/about.shtml">
-          http://www.winehq.com/about.shtml</ulink>
+          For more information, see <ulink url="http://www.winehq.com/site/about">
+          http://www.winehq.com/site/about</ulink>
         </para>
       </answer>
       </qandaentry>
@@ -410,12 +424,12 @@
           <ulink url="http://www.winehq.com/download.shtml">the Download page</ulink>
           for some of these choices), you can make sure that you are getting 
           the latest version by watching the version numbers in the distribution
-          filename. For instance, the distribution released on October 31, 2002
-          was called Wine-20021031.tar.gz. Patch files are also available. If
+          file name. For instance, the distribution released on August 13, 2003
+          was called Wine-20030813.tar.gz. Patch files are also available. If
           you are current to the previous version, you can download and apply 
           just the current patch file rather than the entire new distribution.
-          The patch filenames follow the same conventions as the monthly 
-          distribution. <ulink url="http://www.winehq.com/dev.shtml">
+          The patch file names follow the same conventions as the monthly 
+          distribution. <ulink url="http://www.winehq.org/site/cvs">
           Read-only CVS</ulink> access is also available.
         </para>
       </answer>
@@ -435,7 +449,7 @@
         </para>
         <para>
           You may also want to look at the
-          <ulink url="http://www.winehq.com/about/index.php?status">
+          <ulink url="http://www.winehq.org/site/status">
           Status page</ulink> for a global view on Wine's implementation progress.
         </para>
       </answer>
@@ -468,7 +482,7 @@
       <answer>
         <para>
           Wine is available thanks to the work of many people. Please see the
-          <ulink url="http://www.winehq.com/source/AUTHORS">AUTHORS</ulink>
+          <ulink url="http://source.winehq.org/source/AUTHORS">AUTHORS</ulink>
           file in the distribution for the complete list. Some companies that
           are or have been involved with Wine development are CodeWeavers,
           TransGaming, Corel, and Macadamian.
@@ -519,7 +533,7 @@
           <listitem>
             <para>
              CodeWeavers
-             (<ulink url="http://www.codeweavers.com/">http://www.codeweavers.com</>)
+             (<ulink url="http://www.codeweavers.com/">http://www.codeweavers.com</ulink>)
             </para>
           </listitem>
         </itemizedlist>
@@ -584,19 +598,19 @@
           <listitem> 
             <para>
               Cygwin
-              (<ulink url="http:/www.cygwin.com/">http://www.cygwin.com</>)
+              (<ulink url="http:/www.cygwin.com/">http://www.cygwin.com</ulink>)
             </para>
           </listitem>
           <listitem>
             <para>
               MinGW
-              (<ulink url="http:/www.mingw.org/">http://www.mingw.org</>)
+              (<ulink url="http:/www.mingw.org/">http://www.mingw.org</ulink>)
             </para>
           </listitem>
           <listitem>
             <para>
               ReactOS
-              (<ulink url="http://www.reactos.com/">http://www.reactos.com</>)
+              (<ulink url="http://www.reactos.com/">http://www.reactos.com</ulink>)
             </para>
           </listitem>
         </itemizedlist>
@@ -607,7 +621,7 @@
         <para>
           Part of the rationale for these projects is to find out areas where
           Wine portability is lacking. This is especially true of the
-          ReactOS project which is a reimplementation of the Windows kernel
+          ReactOS project which is a re implementation of the Windows kernel
           and should thus be able to reuse most of Wine dlls.
         </para>
         <para>
@@ -734,8 +748,8 @@
         <para>
           Many development tools are needed in order to compile Wine.
           A list of required packages for several distributions is included in
-          the README (<ulink url="http://www.winehq.com/source/README">
-          http://www.winehq.com/source/README</ulink>).
+          the README (<ulink url="http://source.winehq.org/source/README">
+          http://source.winehq.org/source/README</ulink>).
         </para>
         <para>
           To run Wine, you will need the following:
@@ -845,7 +859,7 @@
       <answer>
         <para>
           Many folks have successfully installed and run programs
-          in their UNIX filesystem without having a DOS partition or MS 
+          in their UNIX file system without having a DOS partition or MS 
           Windows. However, in many cases you need a directory and file 
           infrastructure that is similar to an existing Windows installation.
           Some applications' installation programs want to distribute some of
@@ -891,7 +905,7 @@
          machine. If you have DOS/MS Windows installed on your system, you can
          mount that partition at bootup by modifying the file 
          <filename>/etc/fstab</filename> in your UNIX partition (assuming that
-         the UNIX kernel supports the DOS/MS Windows filesystem type).
+         the UNIX kernel supports the DOS/MS Windows file system type).
         </para>
         <para>
           If you edit this file by hand, it should contain something similar
@@ -921,7 +935,7 @@
           DLLs and APIs that are needed by these Windows applications.
           This means that Wine will not provide replacements for DLLs that
           are not shipped with Windows or are always shipped with Windows
-          application (e.g. the Visual Basic runtime). This also
+          application (e.g. the Visual Basic run time). This also
           means that implementing an API that no application ever uses is not
           a priority. Similarly, until there are applications out there that
           use the Win64 API, it will not be a priority. That being said,
@@ -931,9 +945,9 @@
         <para>
           Also Wine is not an operating system, so that writing device
           drivers is not part of Wine's goals. However if you are interested
-          in device drivers, the <ulink url="http://www.kernel.org/">Linux</>,
-          <ulink url="http://www.freebsd.org/">FreeBSD</> and
-          <ulink url="http://www.reactos.com/">ReactOS</> kernel developpers
+          in device drivers, the <ulink url="http://www.kernel.org/">Linux</ulink>,
+          <ulink url="http://www.freebsd.org/">FreeBSD</ulink> and
+          <ulink url="http://www.reactos.com/">ReactOS</ulink> kernel developers
           would certainly appreciate your contribution.
         </para>
         <para>
@@ -944,8 +958,8 @@
           to a large extant be redundant with other open-source projects.
           Again, there are projects that would certainly appreciate your
           contributions in this areas, such as the
-          <ulink url="http://www.gnome.org/">Gnome</> or
-          <ulink url="http://www.kde.org/">KDE</> desktop environments. You
+          <ulink url="http://www.gnome.org/">Gnome</ulink> or
+          <ulink url="http://www.kde.org/">KDE</ulink> desktop environments. You
           will get the added benefit that your contribution will then be
           usable by everyone, not just by Wine users.
         </para>
@@ -1066,7 +1080,7 @@
         <para>
           It should also be available from any other site that mirrors 
           ibiblio.org. For more download locations, see 
-          <ulink url="http://ftp search.lycos.com.">lycos</ulink> Some of
+          <ulink url="http://www.compucan.com/Lycos.htm">lycos</ulink> Some of
           these ftp sites may archive previous versions of Wine as well as the
           current one. To determine which is the latest one, look at the 
           distribution file name, which will take the form 
@@ -1077,7 +1091,7 @@
         <para>
           Wine binary packages are available for several OS'es and 
           distributions. See 
-          <ulink url="http://www.winehq.com/download.shtml">
+          <ulink url="http://www.winehq.org/site/download">
           the download page</ulink> for the most recent list.
         </para>
       </answer>
@@ -1121,8 +1135,8 @@ cvs -z 3 checkout wine/ANNOUNCE
           Be aware, though, that getting the entire Wine source tree via CVS
           is pretty slow, especially compared to getting Wine from an FTP 
           mirror near you. For a CVS mirror list, see 
-          <ulink url="http://www.winehq.com/dev.shtml">
-          http://www.winehq.com/dev.shtml</ulink>
+          <ulink url="http://www.winehq.com/site/cvs#cvsservers">
+          http://www.winehq.com/site/cvs#cvsservers</ulink>
         </para>
         <para>
           Patch files are also available, so that you don't have to download,
@@ -1191,7 +1205,7 @@ wine
       </question>
       <answer>
         <para>
-          See the README (<ulink url="http://www.winehq.com/source/README">http://www.winehq.com/source/README</ulink>) for instructions.
+          See the README (<ulink url="http://source.winehq.org/source/README">http://source.winehq.org/source/README</ulink>) for instructions.
           Additionally, you may want to set the <parameter>TMPDIR</parameter>
           environment variable <command>TMPDIR=~/tmp</command> or
           <command>TMPDIR=/tmp</command> (if you are root).
@@ -1229,12 +1243,12 @@ wine
           <filename>~/.wine/config</filename>. The format of this file is
           explained in the <filename>wine.conf</filename> man page. The file
           <filename>documentation/samples/config</filename>
-          (<ulink url="http://www.winehq.com/source/documentation/samples/config">
-          http://www.winehq.com/source/documentation/samples/config</ulink>) 
+          (<ulink url="http://source.winehq.org/source/documentation/samples/config">
+          http://source.winehq.org/source/documentation/samples/config</ulink>) 
           contains a config file example. More explicit directions can be 
           found in the <filename>README</filename> file
-          (<ulink url="http://www.winehq.com/source/README">
-          http://www.winehq.com/source/README</ulink>) that will be located in
+          (<ulink url="http://source.winehq.org/source/README">
+          http://source.winehq.org/source/README</ulink>) that will be located in
           the base Wine directory after you gunzip and untar the distribution
           file.
         </para>
@@ -1299,7 +1313,7 @@ wine
       </question>
       <answer>
         <para>
-          Make sure you have all the VB runtime libraries installed. You may
+          Make sure you have all the VB run time libraries installed. You may
           need to use the native DLL vbrun60.dll. You can get some from dll-files.com.
         </para>
       </answer>
@@ -1333,7 +1347,7 @@ wine myprogram.exe
       </question>
       <answer>
         <para>
-          Try to relogin into bash. That might fix it.
+          Try to re login into bash. That might fix it.
         </para>
         <para>
           If it doesn't, then make sure the wine binary is in your 
@@ -1369,8 +1383,8 @@ export PATH=$PATH:/path/to/wine/binary
            package...
         </para>
         <para>
-           For complete packages, use <ulink url="http://www.rpmfind.net/">
-           www.rpmfind.net</ulink> or the <ulink url="http://www.winehq.org/download/">
+           For complete packages, use <ulink url="http://rpmseek.com/rpm-pl/wine.html?hl=com&amp;cx=0::">
+           http://rpmseek.com/</ulink> or the <ulink url="http://www.winehq.org/site/download">
            Download</ulink> section.
         </para>
       </answer>
@@ -1391,14 +1405,14 @@ rm -fR \[/path/\]Wine*
           Make sure that you specify the exact path when using the powerful
           <command>rm -fR</command> command. If you are afraid that you might
           delete something important, or might otherwise delete other files 
-          within your filesystem, <command>cd</command> into each Wine 
-          subdirectory singly and delete the files found there manually, 
+          within your file system, <command>cd</command> into each Wine 
+          sub directory singly and delete the files found there manually, 
           one file or directory at a time.
         </para>
         <para>
         Neither the Wine developers and programmers, nor the Wine FAQ 
         author/maintainer, can be held responsible for your deleting any
-        files in your own filesystem.
+        files in your own file system.
         </para>
       </answer>
       </qandaentry>
@@ -1413,7 +1427,7 @@ rm -fR \[/path/\]Wine*
       <answer>
         <para>
           When invoking Wine, you must specify the entire path to the
-          executable, or by filename only. For example to run Windows'
+          executable, or by file name only. For example to run Windows'
           solitaire, type any of the following:
         </para>
         <itemizedlist>
@@ -1426,19 +1440,19 @@ rm -fR \[/path/\]Wine*
           <listitem>
           <para>
             <command>wine c:\\windows\\sol.exe</command> 
-           (using a DOS filename).
+           (using a DOS file name).
           </para>
           </listitem>
           <listitem>
           <para>
             <command>wine /usr/windows/sol.exe</command>
-           (using a UNIX filename).
+           (using a UNIX file name).
           </para>
           </listitem>
           <listitem>
           <para>
             <command>wine "c:\windows\sol.exe"</command>
-            (using quoted DOS filename).
+            (using quoted DOS file name).
           </para>
           </listitem>
         </itemizedlist>
@@ -1466,7 +1480,7 @@ rm -fR \[/path/\]Wine*
         <para>
           Remember too that unless your version of UNIX can see through it, or
           you are running a utility that can see through it, your DOS
-          partition must not be located on a Drivespaced, Doublespaced or
+          partition must not be located on a Drive spaced, Double spaced or
           Stackered partition, as neither Linux, FreeBSD, NetBSD or Wine can
           natively 'see' files located in these compressed DOS partitions.
         </para>
@@ -1521,7 +1535,7 @@ rm -fR \[/path/\]Wine*
 	    If you are a programmer and know C, then start debugging
 	    Wine and help us make it better! If you can't, then you will
 	    have to either convince a Wine developer to try and make your
-	    program work (there must be a downloadable version or demo for
+	    program work (there must be a download able version or demo for
 	    that), or hire somebody to do it for you. If this application
 	    is an internal corporate application, you may be able to hire a
 	    Wine developer to do consulting work for you on the matter.
@@ -1577,7 +1591,7 @@ rm -fR \[/path/\]Wine*
       <question id="Error-with-installshield-6">
         <para>
           I get <quote>Error installing iKernel.exe: (0x1400)</quote>
-          when running an Installshield 6 installer.
+          when running an Install shield 6 installer.
         </para>
       </question>
       <answer>
@@ -1616,8 +1630,8 @@ rm -fR \[/path/\]Wine*
       </question>
       <answer>
         <para>
-          Yes, see <ulink url="http://www.winehq.org/support.shtml">
-          http://www.winehq.com/support.shtml.</ulink>
+          Yes, see <ulink url="http://www.winehq.org/site/documentation">
+          http://www.winehq.org/site/documentation.</ulink>
         </para>
       </answer>
       </qandaentry>
@@ -1633,10 +1647,9 @@ rm -fR \[/path/\]Wine*
         <para>
           Updates and additions to the Wine documentation directory should be
           sent to the wine-patches mailing list at 
-          <ulink url="http://www.winehq.com/dev.shtml#ml">
-          http://www.winehq.com/dev.shtml#ml</ulink>. Website and FAQ 
-          additions should be added to the appropriate Wine Knowledgebase
-          directory.
+          <ulink url="http://www.winehq.com/site/forums">
+          http://www.winehq.com/site/forums</ulink>. Website and FAQ 
+          additions should be added to the appropriate Wine Knowledge base directory.
         </para>
       </answer>
       </qandaentry>
@@ -1652,7 +1665,7 @@ rm -fR \[/path/\]Wine*
           comp.emulators.ms-windows.wine</ulink>. The newsgroup serves as a
           place for users and developers to discuss Wine, and for minor 
           announcements for the general public. Major announcements will be
-          crossposted to other appropriate newsgroups, such as the following:
+          cross posted to other appropriate newsgroups, such as the following:
         </para>
         <itemizedlist>
           <listitem>
@@ -1716,7 +1729,7 @@ rm -fR \[/path/\]Wine*
       <answer>
         <para>
           Bug reports should be submitted to our online Bugzilla system 
-          (<ulink url="http://bugs.winehq.com">http://bugs.winehq.com/</ulink>).
+          (<ulink url="http://bugs.winehq.com/">http://bugs.winehq.com/</ulink>).
           You should include at least the following:
         </para>
         <itemizedlist>
@@ -1743,7 +1756,7 @@ rm -fR \[/path/\]Wine*
           </listitem>
           <listitem>
           <para>
-            A screenshot of the visual problem, if applicable
+            A screen shot of the visual problem, if applicable
           </para>
           </listitem>
         </itemizedlist>
@@ -1765,11 +1778,14 @@ rm -fR \[/path/\]Wine*
       <answer>
         <para>
           If you can program C, that's a good start. Download the sources via
-          CVS, subscribe to the mailing lists, look around the source, and pay
-          attention to the comp.emulators.ms-windows.wine newsgroup and the 
-          mailing lists (<ulink url="http://www.winehq.com/dev.shtml#ml">http://www.winehq.com/dev.shtml#ml</ulink>). See if there's anything
-          that you think you can fix or work on. You won't have much trouble
-          finding areas that need work in Wine (grep for FIXMEs in the source).
+          (<ulink url="http://www.winehq.com/site/cvs">CVS,</ulink>)
+          subscribe to the mailing lists, look around the source, and
+          pay attention to the comp.emulators.ms-windows.wine newsgroup
+          and the mailing lists (<ulink
+          url="http://www.winehq.com/site/forums">http://www.winehq.com/site/forums</ulink>).
+          See if there's anything that you think you can fix or work
+          on. You won't have much trouble finding areas that need work
+          in Wine (grep for FIXMEs in the source).
         </para>
       </answer>
       </qandaentry>
@@ -1786,7 +1802,7 @@ rm -fR \[/path/\]Wine*
         </para>
         <para>
           For a list of ideas of how you can help, please consult the 
-          <ulink url="http://www.winehq.com/about/index.php?contrib">
+          <ulink url="http://www.winehq.com/site/contributing">
           Wine contrib page</ulink>.
         </para>
       </answer>
@@ -1817,7 +1833,7 @@ rm -fR \[/path/\]Wine*
           Submitting a patch for inclusion in Wine is pretty simple.
           Basically all you have to do is send the patch to the
           wine-patches mailing list 
-          (<ulink url="http://www.winehq.com/dev.shtml#ml">http://www.winehq.com/dev.shtml#ml</>).
+          (<ulink url="http://www.winehq.org/mailman/listinfo/wine-patches">http://www.winehq.org/mailman/listinfo/wine-patches</>).
           Still there are a couple of recommendations about the patch format
           and all so it's best to read our page describing <ulink
           url="http://www.winehq.com/site/sending_patches">how to submit
@@ -1890,7 +1906,7 @@ rm -fR \[/path/\]Wine*
           </listitem>
           <listitem>
           <para>
-            MusicMatch JukeBox 5 has also been
+            MusicMatch Jukebox 5 has also been
             <ulink url="http://www.itworld.com/nl/lnx_desktop/01042001/">ported</>
             to Linux using Winelib. However more recent versions have not, and
             version 5 is no longer available.
@@ -1923,9 +1939,7 @@ rm -fR \[/path/\]Wine*
       <answer>
         <para>
           You really shouldn't want to do this. If there's a quirk in Wine 
-          you need to work around, it's much better to fix it in Wine (after
-          all you're a developer, so you should be able to gather enough help
-          and knowledge to fix it for real).
+          you need to work around, it's much better to fix it in Wine.
         </para>
       </answer>
       </qandaentry>
@@ -1938,7 +1952,7 @@ rm -fR \[/path/\]Wine*
       <qandaentry>
       <question id="Why-are-the-maillists-set-to-reply-to-author">
         <para>
-          Why are the maillists set to reply to author, not to mailing list?
+          Why are the mail lists set to reply to author, not to mailing list?
         </para>
       </question>
       <answer>
@@ -1954,7 +1968,8 @@ rm -fR \[/path/\]Wine*
       </question>
       <answer>
         <para>
-          Please see: <ulink url="http://www.winehq.org/development/#ml">http://www.winehq.org/development/#ml</ulink>
+          Please see: <ulink url="http://www.winehq.org/site/forums">http://www.winehq.org/site/forums</ulink>
+          And select [(Un-)Subscribe]
         </para>
       </answer>
       </qandaentry>
