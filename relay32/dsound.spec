@@ -5,7 +5,7 @@ type win32
 1 stdcall DirectSoundEnumerateA(ptr ptr) DirectSoundEnumerate32A
 2 stub DirectSoundEnumerateW
 3 stdcall DllCanUnloadNow() DllCanUnloadNow
-4 stdcall DllGetClassObject(ptr ptr ptr) DllGetClassObject
+4 stdcall DllGetClassObject(ptr ptr ptr) DSOUND_DllGetClassObject
 5 stub DirectSoundCaptureCreate
 6 stub DirectSoundCaptureEnumerateA
 7 stub DirectSoundCaptureEnumerateW

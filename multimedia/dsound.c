@@ -916,7 +916,7 @@ static HRESULT WINAPI IDirectSoundBuffer_GetPan(
 static HRESULT WINAPI IDirectSoundBuffer_Unlock(
 	LPDIRECTSOUNDBUFFER this,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
-	FIXME(dsound,"(%p,%p,%ld,%p,%ld):stub\n", this,p1,x1,p2,x2);
+	TRACE(dsound,"(%p,%p,%ld,%p,%ld):stub\n", this,p1,x1,p2,x2);
 	this->writepos = this->playpos + (this->wfx.nAvgBytesPerSec >> 4);
 	this->writepos %= this->buflen;
 
@@ -1273,6 +1273,11 @@ static HRESULT WINAPI IDirectSound_QueryInterface(
 	return E_FAIL;
 }
 
+static HRESULT WINAPI IDirectSound_Initialize(LPDIRECTSOUND this,GUID*lpguid) {
+	FIXME(dsound,"(%p)->(%p),stub!\n",this,lpguid);
+	return 0;
+}
+
 static struct tagLPDIRECTSOUND_VTABLE dsvt = {
 	IDirectSound_QueryInterface,
 	IDirectSound_AddRef,
@@ -1284,7 +1289,7 @@ static struct tagLPDIRECTSOUND_VTABLE dsvt = {
 	(void *)8,
         (void *)9,
         IDirectSound_SetSpeakerConfig,
-        (void *)11
+        IDirectSound_Initialize
 };
 
 static int
@@ -1878,6 +1883,58 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
 #endif
 }
 
+/*******************************************************************************
+ * DirectSound ClassFactory
+ */
+static HRESULT WINAPI 
+DSCF_QueryInterface(LPCLASSFACTORY this,REFIID riid,LPVOID *ppobj) {
+	char buf[80];
+
+	if (HIWORD(riid))
+	    WINE_StringFromCLSID(riid,buf);
+	else
+	    sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
+	FIXME(dsound,"(%p)->(%s,%p),stub!\n",this,buf,ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI
+DSCF_AddRef(LPCLASSFACTORY this) {
+	return ++(this->ref);
+}
+
+static ULONG WINAPI DSCF_Release(LPCLASSFACTORY this) {
+	/* static class, won't be  freed */
+	return --(this->ref);
+}
+
+static HRESULT WINAPI DSCF_CreateInstance(
+	LPCLASSFACTORY this,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
+) {
+	char buf[80];
+
+	WINE_StringFromCLSID(riid,buf);
+	TRACE(dsound,"(%p)->(%p,%s,%p)\n",this,pOuter,buf,ppobj);
+	if (!memcmp(riid,&IID_IDirectSound,sizeof(IID_IDirectSound))) {
+		/* FIXME: reuse already created dsound if present? */
+		return DirectSoundCreate(riid,(LPDIRECTSOUND*)ppobj,pOuter);
+	}
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY this,BOOL32 dolock) {
+	FIXME(dsound,"(%p)->(%d),stub!\n",this,dolock);
+	return S_OK;
+}
+
+static IClassFactory_VTable DSCF_VTable = {
+	DSCF_QueryInterface,
+	DSCF_AddRef,
+	DSCF_Release,
+	DSCF_CreateInstance,
+	DSCF_LockServer
+};
+static IClassFactory DSOUND_CF = {&DSCF_VTable, 1 };
 
 /*******************************************************************************
  * DllGetClassObject [DSOUND.4]
@@ -1896,10 +1953,27 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
  *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
  *             E_UNEXPECTED
  */
-DWORD WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, LPVOID *ppv )
+DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 {
-    FIXME(dsound, "(%p,%p,%p): stub\n", rclsid, riid, ppv);
+    char buf[80],xbuf[80];
+
+    if (HIWORD(rclsid))
+    	WINE_StringFromCLSID(rclsid,xbuf);
+    else
+    	sprintf(xbuf,"<guid-0x%04x>",LOWORD(rclsid));
+    if (HIWORD(riid))
+    	WINE_StringFromCLSID(riid,buf);
+    else
+    	sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
+    WINE_StringFromCLSID(riid,xbuf);
+    TRACE(dsound, "(%p,%p,%p)\n", xbuf, buf, ppv);
+    if (!memcmp(riid,&IID_IClassFactory,sizeof(IID_IClassFactory))) {
+    	*ppv = (LPVOID)&DSOUND_CF;
+	DSOUND_CF.lpvtbl->fnAddRef(&DSOUND_CF);
     return S_OK;
+    }
+    FIXME(dsound, "(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);
+    return E_NOINTERFACE;
 }
 
 
