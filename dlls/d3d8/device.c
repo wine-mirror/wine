@@ -1221,38 +1221,39 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     return hr;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pRenderTarget, IDirect3DSurface8* pNewZStencil) {
-    HRESULT hr;
+    HRESULT      hr = D3D_OK;
+    D3DVIEWPORT8 viewport;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
+    /* If pRenderTarget == NULL, it seems to default to back buffer */
+    if (pRenderTarget == NULL) pRenderTarget = (IDirect3DSurface8*)This->backBuffer;
+ 
+    /* For ease of code later on, handle a null depth as leave alone
+        - Have not tested real d3d for this case but doing this avoids 
+        numerous null pointer checks                                   */
+    if (pNewZStencil == NULL) pNewZStencil = (IDirect3DSurface8*)This->stencilBufferTarget;
+
+    /* If we are trying to set what we already have, dont bother */
     if ((IDirect3DSurface8Impl*) pRenderTarget == This->renderTarget && (IDirect3DSurface8Impl*) pNewZStencil == This->stencilBufferTarget) {
       TRACE("Trying to do a NOP SetRenderTarget operation\n");
-      return D3D_OK;
+    } else {
+      /* Otherwise, set the render target up */
+      TRACE("(%p) : newRender@%p newZStencil@%p (default is backbuffer=(%p))\n", This, pRenderTarget, pNewZStencil, This->backBuffer);
+      IDirect3DDevice8Impl_CleanRender(iface);
+      hr = IDirect3DDevice8Impl_ActiveRender(iface, pRenderTarget, pNewZStencil);
     }
 
-    IDirect3DDevice8Impl_CleanRender(iface);
-
-    if ((IDirect3DSurface8Impl*) pRenderTarget == This->frontBuffer && (IDirect3DSurface8Impl*) pNewZStencil == This->depthStencilBuffer) {
-      IDirect3DSurface8Impl* tmp;
-
-      TRACE("retoring SetRenderTarget defaults\n");
-
-      tmp = This->renderTarget;
-      This->renderTarget = (IDirect3DSurface8Impl*) This->frontBuffer;
-      IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->renderTarget);
-      IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
-      
-      tmp = This->stencilBufferTarget;
-      This->stencilBufferTarget = (IDirect3DSurface8Impl*) This->depthStencilBuffer;
-      if (NULL != This->stencilBufferTarget) IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->stencilBufferTarget);
-      if (NULL != tmp) IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
-
-      return D3D_OK;
+    if (SUCCEEDED(hr)) {
+	/* Finally, reset the viewport as the MSDN states. */
+	viewport.Height = ((IDirect3DSurface8Impl*)pRenderTarget)->myDesc.Height;
+	viewport.Width  = ((IDirect3DSurface8Impl*)pRenderTarget)->myDesc.Width;
+	viewport.X      = 0;
+	viewport.Y      = 0;
+	viewport.MaxZ   = 1.0f;
+	viewport.MinZ   = 0.0f;
+	IDirect3DDevice8Impl_SetViewport(iface, &viewport);
     }
-
-    FIXME("(%p) : expect crash newRender@%p newZStencil@%p\n", This, pRenderTarget, pNewZStencil);
-
-    hr = IDirect3DDevice8Impl_ActiveRender(iface, pRenderTarget, pNewZStencil);
     
     return hr;
 }
@@ -1285,6 +1286,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_BeginScene(LPDIRECT3DDEVICE8 iface) {
     TRACE("(%p) : stub\n", This);
     return D3D_OK;
 }
+
 HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     IDirect3DBaseTexture8* cont = NULL;
     HRESULT hr;
@@ -1296,12 +1298,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     glFlush();
     checkGLcall("glFlush");
 
-    /* Useful for debugging sometimes!
+#if 0 /* Useful for debugging sometimes! */
     printf("Hit Enter ...\n");
-    getchar(); */
+    getchar();
+#endif
 
     if (This->frontBuffer != This->renderTarget) {
-      {
+#if 0
 	GLenum prev_read;
 	glGetIntegerv(GL_READ_BUFFER, &prev_read);
 	vcheckGLcall("glIntegerv");
@@ -1327,13 +1330,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
 	}      
 	glReadBuffer(prev_read);
 	vcheckGLcall("glReadBuffer");
-      }
+#endif
 
       hr = IDirect3DSurface8_GetContainer((LPDIRECT3DSURFACE8) This->renderTarget, &IID_IDirect3DBaseTexture8, (void**) &cont);
       if (SUCCEEDED(hr) && NULL != cont) {
 	/** always dirtify for now. we must find a better way to see that surface have been modified */
-	IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
+	This->renderTarget->inPBuffer = TRUE;
+	This->renderTarget->inTexture = FALSE;
+      	IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
 	IDirect3DBaseTexture8_PreLoad(cont);
+	This->renderTarget->inPBuffer = FALSE;
 	IDirect3DBaseTexture8Impl_Release(cont);
 	cont = NULL;
       }
@@ -1640,7 +1646,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST
     glDepthRange(pViewport->MinZ, pViewport->MaxZ);
     checkGLcall("glDepthRange");
     /* Note: GL requires lower left, DirectX supplies upper left */
-    glViewport(pViewport->X, (This->PresentParms.BackBufferHeight - (pViewport->Y + pViewport->Height)), 
+    glViewport(pViewport->X, (This->renderTarget->myDesc.Height - (pViewport->Y + pViewport->Height)), 
                pViewport->Width, pViewport->Height);
     checkGLcall("glViewport");
 
@@ -2256,15 +2262,25 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         case D3DCULL_CW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            glFrontFace(GL_CCW);
-            checkGLcall("glFrontFace GL_CCW");
+            if (This->renderUpsideDown) {
+                glFrontFace(GL_CW);
+                checkGLcall("glFrontFace GL_CW");
+            } else {
+                glFrontFace(GL_CCW);
+                checkGLcall("glFrontFace GL_CCW");
+            }
             glCullFace(GL_BACK);
             break;
         case D3DCULL_CCW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            glFrontFace(GL_CW); 
-            checkGLcall("glFrontFace GL_CW");
+            if (This->renderUpsideDown) {
+                glFrontFace(GL_CCW); 
+                checkGLcall("glFrontFace GL_CCW");
+            } else {
+                glFrontFace(GL_CW);
+                checkGLcall("glFrontFace GL_CW");
+            }
             glCullFace(GL_BACK);
             break;
         default:
@@ -4403,7 +4419,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 #define PUSH1(att)        attribs[nAttribs++] = (att); 
 #define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
 
-  PUSH2(GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT | GLX_WINDOW | GLX_PBUFFER_BIT);
+  PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
   PUSH2(GLX_X_RENDERABLE,  TRUE);
   PUSH2(GLX_DOUBLEBUFFER, TRUE);
   
@@ -4503,7 +4519,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 #endif
 
     if (NULL != This->renderTarget) {
-      GLenum prev_read;      
+      /*GLenum prev_read; */
       glFlush();
       vcheckGLcall("glFlush");
 
@@ -4514,6 +4530,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
       getchar();
 #endif
 
+#if 0
       glGetIntegerv(GL_READ_BUFFER, &prev_read);
       vcheckGLcall("glIntegerv");
       glReadBuffer(GL_BACK);
@@ -4538,6 +4555,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
       }      
       glReadBuffer(prev_read);
       vcheckGLcall("glReadBuffer");
+#endif
     }
 
     if (BackBufferFormat != This->renderTarget->myDesc.Format && 
@@ -4570,6 +4588,18 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
     This->stencilBufferTarget = (IDirect3DSurface8Impl*) StencilSurface;
     if (NULL != This->stencilBufferTarget) IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->stencilBufferTarget);
     if (NULL != tmp) IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
+
+    {
+      DWORD value;
+      /* The surface must be rendered upside down to cancel the flip produce by glCopyTexImage */
+      This->renderUpsideDown = This->renderTarget != This->frontBuffer;
+      /* Force updating the cull mode */
+      IDirect3DDevice8_GetRenderState(iface, D3DRS_CULLMODE, &value);
+      IDirect3DDevice8_SetRenderState(iface, D3DRS_CULLMODE, value);
+      /* Force updating projection matrix */
+      This->last_was_rhw = FALSE;
+      This->proj_valid = FALSE;
+    }
 
     ret = D3D_OK;
 

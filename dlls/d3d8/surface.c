@@ -129,7 +129,12 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
     ICOM_THIS(IDirect3DSurface8Impl,iface);
   
     /* fixme: should we really lock as such? */
-
+    if (This->inTexture && This->inPBuffer) {
+	FIXME("Warning: Surface is in texture memory or pbuffer\n");
+	This->inTexture = 0;
+	This->inPBuffer = 0;
+    }
+    
     if (FALSE == This->lockable) {
       /* Note: UpdateTextures calls CopyRects which calls this routine to populate the 
             texture regions, and since the destination is an unlockable region we need
@@ -474,6 +479,33 @@ ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
 HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
   ICOM_THIS(IDirect3DSurface8Impl,iface);
 
+  if (This->inTexture)
+    return D3D_OK;
+  if (This->inPBuffer) {
+    ENTER_GL();
+    if (gl_level != 0)
+      FIXME("Surface in texture is only supported for level 0\n");
+    else if (This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8 ||
+        This->myDesc.Format == D3DFMT_DXT1 || This->myDesc.Format == D3DFMT_DXT3 ||
+        This->myDesc.Format == D3DFMT_DXT5)
+      FIXME("Format %d not supported\n", This->myDesc.Format);
+    else {
+	glCopyTexImage2D(gl_target,
+			 0,
+			 D3DFmt2GLIntFmt(This->Device,
+		         This->myDesc.Format),
+			 0,
+			 0,/*This->surfaces[j][i]->myDesc.Height-1,*/
+			 This->myDesc.Width,
+			 This->myDesc.Height,
+			 0);
+	TRACE("Updating target %d\n", gl_target);
+	This->inTexture = TRUE;
+    }
+    LEAVE_GL();
+    return D3D_OK;
+  }
+  
   if ((This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8) && 
       !GL_SUPPORT_DEV(EXT_PALETTED_TEXTURE, This->Device)) {
     /**

@@ -218,6 +218,12 @@ void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
 
 }
 
+static GLfloat invymat[16]={
+	1.0f, 0.0f, 0.0f, 0.0f,
+	0.0f, -1.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 1.0f};
+
 /* Setup views - Transformed & lit if RHW, else untransformed.
        Only unlit if Normals are supplied                       
     Returns: Whether to restore lighting afterwards           */
@@ -271,6 +277,10 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
                a pixel (See comment above glTranslate below)                         */
             glTranslatef(0.5, 0.5, 0);
             checkGLcall("glTranslatef(0.5, 0.5, 0)");
+            if (This->renderUpsideDown) {
+                glMultMatrixf(invymat);
+                checkGLcall("glMultMatrixf(invymat)");
+            }
         }
 
     } else {
@@ -311,6 +321,11 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
             glLoadIdentity();
             glTranslatef(1.0/This->StateBlock->viewport.Width, -1.0/This->StateBlock->viewport.Height, 0);
             checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
+
+            if (This->renderUpsideDown) {
+                glMultMatrixf(invymat);
+                checkGLcall("glMultMatrixf(invymat)");
+            }
             glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
         }
@@ -330,6 +345,10 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
                a pixel (See comment above glTranslate above)                         */
             glTranslatef(1.0/This->StateBlock->viewport.Width, -1.0/This->StateBlock->viewport.Height, 0);
             checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
+            if (This->renderUpsideDown) {
+                glMultMatrixf(invymat);
+                checkGLcall("glMultMatrixf(invymat)");
+            }
             This->modelview_valid = FALSE;
             This->proj_valid = FALSE;
         } 

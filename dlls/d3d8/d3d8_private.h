@@ -393,6 +393,8 @@ struct IDirect3DDevice8Impl
 
     UINT                          dummyTextureName[8];
 
+    /* For rendering to a texture using glCopyTexImage */
+    BOOL                          renderUpsideDown;
 };
 
 /* IUnknown: */
@@ -627,6 +629,8 @@ struct IDirect3DSurface8Impl
     RECT                    lockedRect;
     RECT                    dirtyRect;
     BOOL                    Dirty;
+    BOOL                    inTexture;
+    BOOL                    inPBuffer;
 };
 
 /* IUnknown: */

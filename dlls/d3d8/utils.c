@@ -653,14 +653,17 @@ void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum*
   case D3DTA_TFACTOR:   *source  = GL_CONSTANT_EXT;
     break;
   case D3DTA_SPECULAR:
-    /**
+    /*
      * According to the GL_ARB_texture_env_combine specs, SPECULAR is
      * 'Secondary color' and isn't supported until base GL supports it
      * There is no concept of temp registers as far as I can tell
      */
+    FIXME("Unhandled texture arg D3DTA_SPECULAR\n");
+    *source = GL_TEXTURE;
+    break;
 
   default:
-    FIXME("Unrecognized or unhandled texture arg %ld\n", iValue);
+    FIXME("Unrecognized texture arg %ld\n", iValue);
     *source = GL_TEXTURE;
   }
 }
