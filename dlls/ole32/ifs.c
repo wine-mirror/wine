@@ -108,7 +108,14 @@ static int AddMemoryLocation(LPVOID * pMem)
 
 static int RemoveMemoryLocation(LPVOID * pMem)
 {
-        LPVOID * Current = Malloc32.SpyedBlocks;
+        LPVOID * Current;
+
+	/* allocate the table if not already allocated */
+	if (!Malloc32.SpyedBlockTableLength) {
+            if (!SetSpyedBlockTableLength(0x1000)) return 0;
+	}
+
+	Current = Malloc32.SpyedBlocks;
 
 	/* find the location */
 	while (*Current != pMem) {

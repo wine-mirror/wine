@@ -19,12 +19,14 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "ole32_main.h"
 #include "wine/debug.h"
 
@@ -38,20 +40,23 @@ HINSTANCE OLE32_hInstance = 0;
 HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
                                                LPOLESTR lpszSourceFile, UINT iIconIndex)
 {
-	HMETAFILE hmf;
+	METAFILEPICT mfp;
 	HDC hdc;
-	UINT dy, mfsize;
-	HGLOBAL hmem = 0;
+	UINT dy;
+	HGLOBAL hmem = NULL;
 	LPVOID mfdata;
+	static const char szIconOnly[] = "IconOnly";
 
-	TRACE("%p %p %p %d\n", hIcon, lpszLabel, lpszSourceFile, iIconIndex);
+	TRACE("%p %p %s %d\n", hIcon, lpszLabel, debugstr_w(lpszSourceFile), iIconIndex);
 
 	if( !hIcon )
-		return 0;
+		return NULL;
 
 	hdc = CreateMetaFileW(NULL);
 	if( !hdc )
-		return 0;
+		return NULL;
+
+	ExtEscape(hdc, MFCOMMENT, sizeof(szIconOnly), szIconOnly, 0, NULL);
 
 	/* FIXME: things are drawn in the wrong place */
 	DrawIcon(hdc, 0, 0, hIcon);
@@ -59,30 +64,47 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 	if(lpszLabel)
 		TextOutW(hdc, 0, dy, lpszLabel, lstrlenW(lpszLabel));
 
-	hmf = CloseMetaFile(hdc);
-	if( !hmf )
-		return 0;
+	if (lpszSourceFile)
+	{
+		char szIconIndex[10];
+		int path_length = WideCharToMultiByte(CP_ACP,0,lpszSourceFile,-1,NULL,0,NULL,NULL);
+		if (path_length > 1)
+		{
+			char * szPath = CoTaskMemAlloc(path_length * sizeof(CHAR));
+			if (szPath)
+			{
+				WideCharToMultiByte(CP_ACP,0,lpszSourceFile,-1,szPath,path_length,NULL,NULL);
+				ExtEscape(hdc, MFCOMMENT, path_length, szPath, 0, NULL);
+				CoTaskMemFree(szPath);
+			}
+		}
+		snprintf(szIconIndex, 10, "%u", iIconIndex);
+		ExtEscape(hdc, MFCOMMENT, strlen(szIconIndex)+1, szIconIndex, 0, NULL);
+	}
 
-	mfsize = GetMetaFileBitsEx( hmf, 0, NULL);
-	if( !mfsize )
-		goto end;
+	mfp.mm = MM_ISOTROPIC;
+	mfp.xExt = mfp.yExt = 0; /* FIXME ? */
+	mfp.hMF = CloseMetaFile(hdc);
+	if( !mfp.hMF )
+		return NULL;
 
-	hmem = GlobalAlloc( GMEM_MOVEABLE, mfsize );
+	hmem = GlobalAlloc( GMEM_MOVEABLE, sizeof(mfp) );
 	if( !hmem )
-		goto end;
+	{
+		DeleteMetaFile(mfp.hMF);
+		return NULL;
+	}
 
 	mfdata = GlobalLock( hmem );
 	if( !mfdata )
 	{
 		GlobalFree( hmem );
-		hmem = 0;
-		goto end;
+		DeleteMetaFile(mfp.hMF);
+		return NULL;
 	}
 
-	GetMetaFileBitsEx( hmf, mfsize, mfdata );
+	memcpy(mfdata,&mfp,sizeof(mfp));
 	GlobalUnlock( hmem );
-end:
-	DeleteMetaFile(hmf);
 
 	TRACE("returning %p\n",hmem);
 

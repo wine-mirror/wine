@@ -2235,6 +2235,296 @@ HRESULT WINAPI OleDraw(
   }
 }
 
+/***********************************************************************
+ *             OleTranslateAccelerator [OLE32.@]
+ */
+HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
+                   LPOLEINPLACEFRAMEINFO lpFrameInfo, LPMSG lpmsg)
+{
+    WORD wID;
+
+    TRACE("(%p,%p,%p)\n", lpFrame, lpFrameInfo, lpmsg);
+
+    if (IsAccelerator(lpFrameInfo->haccel,lpFrameInfo->cAccelEntries,lpmsg,&wID))
+        return IOleInPlaceFrame_TranslateAccelerator(lpFrame,lpmsg,wID);
+
+    return S_FALSE;
+}
+
+/******************************************************************************
+ *              OleCreate        [OLE32.@]
+ *
+ */
+HRESULT WINAPI OleCreate(
+	REFCLSID rclsid,
+	REFIID riid,
+	DWORD renderopt,
+	LPFORMATETC pFormatEtc,
+	LPOLECLIENTSITE pClientSite,
+	LPSTORAGE pStg,
+	LPVOID* ppvObj)
+{
+    HRESULT hres, hres1;
+    IUnknown * pUnk = NULL;
+
+    FIXME("\n\t%s\n\t%s semi-stub!\n", debugstr_guid(rclsid), debugstr_guid(riid));
+
+    if (SUCCEEDED((hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER|CLSCTX_LOCAL_SERVER , riid, (LPVOID*)&pUnk))))
+    {
+        if (pClientSite)
+        {
+            IOleObject * pOE;
+            IPersistStorage * pPS;
+            if (SUCCEEDED((hres = IUnknown_QueryInterface( pUnk, &IID_IOleObject, (LPVOID*)&pOE))))
+            {
+                TRACE("trying to set clientsite %p\n", pClientSite);
+                hres1 = IOleObject_SetClientSite(pOE, pClientSite);
+                TRACE("-- result 0x%08lx\n", hres1);
+                IOleObject_Release(pOE);
+            }
+            if (SUCCEEDED((hres = IUnknown_QueryInterface( pUnk, &IID_IPersistStorage, (LPVOID*)&pPS))))
+            {
+                TRACE("trying to set stg %p\n", pStg);
+                hres1 = IPersistStorage_InitNew(pPS, pStg);
+                TRACE("-- result 0x%08lx\n", hres1);
+                IPersistStorage_Release(pPS);
+            }
+        }
+    }
+
+    *ppvObj = pUnk;
+
+    TRACE("-- %p \n", pUnk);
+    return hres;
+}
+
+/***********************************************************************
+ *           OLE_FreeClipDataArray   [internal]
+ *
+ * NOTES:
+ *  frees the data associated with an array of CLIPDATAs
+ */
+static void OLE_FreeClipDataArray(ULONG count, CLIPDATA * pClipDataArray)
+{
+    ULONG i;
+    for (i = 0; i < count; i++)
+        if (pClipDataArray[i].pClipData)
+            CoTaskMemFree(pClipDataArray[i].pClipData);
+}
+
+HRESULT WINAPI FreePropVariantArray(ULONG,PROPVARIANT*);
+
+/***********************************************************************
+ *           PropVariantClear			    [OLE32.@]
+ */
+HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
+{
+    TRACE("(%p)\n", pvar);
+
+    if (!pvar)
+        return S_OK;
+
+    switch(pvar->vt)
+    {
+    case VT_STREAM:
+    case VT_STREAMED_OBJECT:
+    case VT_STORAGE:
+    case VT_STORED_OBJECT:
+        IUnknown_Release((LPUNKNOWN)pvar->u.pStream);
+        break;
+    case VT_CLSID:
+    case VT_LPSTR:
+    case VT_LPWSTR:
+        /* pick an arbitary typed pointer - we don't care about the type
+         * as we are just freeing it */
+        CoTaskMemFree(pvar->u.puuid);
+        break;
+    case VT_BLOB:
+    case VT_BLOB_OBJECT:
+        CoTaskMemFree(pvar->u.blob.pBlobData);
+        break;
+    case VT_BSTR:
+        FIXME("Need to load OLEAUT32 for SysFreeString\n");
+        /* SysFreeString(pvar->u.bstrVal); */
+        break;
+   case VT_CF:
+        if (pvar->u.pclipdata)
+        {
+            OLE_FreeClipDataArray(1, pvar->u.pclipdata);
+            CoTaskMemFree(pvar->u.pclipdata);
+        }
+        break;
+    default:
+        if (pvar->vt & VT_ARRAY)
+        {
+            FIXME("Need to call SafeArrayDestroy\n");
+            /* SafeArrayDestroy(pvar->u.caub); */
+        }
+        switch (pvar->vt & VT_VECTOR)
+        {
+        case VT_VARIANT:
+            FreePropVariantArray(pvar->u.capropvar.cElems, pvar->u.capropvar.pElems);
+            break;
+        case VT_CF:
+            OLE_FreeClipDataArray(pvar->u.caclipdata.cElems, pvar->u.caclipdata.pElems);
+            break;
+        case VT_BSTR:
+        case VT_LPSTR:
+        case VT_LPWSTR:
+            FIXME("Freeing of vector sub-type not supported yet\n");
+        }
+        if (pvar->vt & VT_VECTOR)
+        {
+            /* pick an arbitary VT_VECTOR structure - they all have the same
+             * memory layout */
+            CoTaskMemFree(pvar->u.capropvar.pElems);
+        }
+    }
+
+    ZeroMemory(pvar, sizeof(*pvar));
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           PropVariantCopy			    [OLE32.@]
+ */
+HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
+                               const PROPVARIANT *pvarSrc) /* [in] */
+{
+    ULONG len;
+    TRACE("(%p, %p): stub:\n", pvarDest, pvarSrc);
+
+    /* this will deal with most cases */
+    CopyMemory(pvarDest, pvarSrc, sizeof(*pvarDest));
+
+    switch(pvarSrc->vt)
+    {
+    case VT_STREAM:
+    case VT_STREAMED_OBJECT:
+    case VT_STORAGE:
+    case VT_STORED_OBJECT:
+        IUnknown_AddRef((LPUNKNOWN)pvarDest->u.pStream);
+        break;
+    case VT_CLSID:
+        pvarDest->u.puuid = CoTaskMemAlloc(sizeof(CLSID));
+        CopyMemory(pvarDest->u.puuid, pvarSrc->u.puuid, sizeof(CLSID));
+        break;
+    case VT_LPSTR:
+        len = strlen(pvarSrc->u.pszVal);
+        pvarDest->u.pszVal = CoTaskMemAlloc(len);
+        CopyMemory(pvarDest->u.pszVal, pvarSrc->u.pszVal, len);
+        break;
+    case VT_LPWSTR:
+        len = lstrlenW(pvarSrc->u.pwszVal);
+        pvarDest->u.pwszVal = CoTaskMemAlloc(len);
+        CopyMemory(pvarDest->u.pwszVal, pvarSrc->u.pwszVal, len);
+        break;
+    case VT_BLOB:
+    case VT_BLOB_OBJECT:
+        if (pvarSrc->u.blob.pBlobData)
+        {
+            len = pvarSrc->u.blob.cbSize;
+            pvarDest->u.blob.pBlobData = CoTaskMemAlloc(len);
+            CopyMemory(pvarDest->u.blob.pBlobData, pvarSrc->u.blob.pBlobData, len);
+        }
+        break;
+    case VT_BSTR:
+        FIXME("Need to copy BSTR\n");
+        break;
+    case VT_CF:
+        if (pvarSrc->u.pclipdata)
+        {
+            len = pvarSrc->u.pclipdata->cbSize - sizeof(pvarSrc->u.pclipdata->ulClipFmt);
+            CoTaskMemAlloc(len);
+            CopyMemory(pvarDest->u.pclipdata->pClipData, pvarSrc->u.pclipdata->pClipData, len);
+        }
+        break;
+    default:
+        if (pvarSrc->vt & VT_ARRAY)
+        {
+            FIXME("Need to call SafeArrayCopy\n");
+            /* SafeArrayCopy(...); */
+        }
+        if (pvarSrc->vt & VT_VECTOR)
+        {
+            int elemSize;
+            switch(pvarSrc->vt & VT_VECTOR)
+            {
+            case VT_I1:       elemSize = sizeof(pvarSrc->u.cVal); break;
+            case VT_UI1:      elemSize = sizeof(pvarSrc->u.bVal); break;
+            case VT_I2:       elemSize = sizeof(pvarSrc->u.iVal); break;
+            case VT_UI2:      elemSize = sizeof(pvarSrc->u.uiVal); break;
+            case VT_BOOL:     elemSize = sizeof(pvarSrc->u.boolVal); break;
+            case VT_I4:       elemSize = sizeof(pvarSrc->u.lVal); break;
+            case VT_UI4:      elemSize = sizeof(pvarSrc->u.ulVal); break;
+            case VT_R4:       elemSize = sizeof(pvarSrc->u.fltVal); break;
+            case VT_R8:       elemSize = sizeof(pvarSrc->u.dblVal); break;
+            case VT_ERROR:    elemSize = sizeof(pvarSrc->u.scode); break;
+            case VT_I8:       elemSize = sizeof(pvarSrc->u.hVal); break;
+            case VT_UI8:      elemSize = sizeof(pvarSrc->u.uhVal); break;
+            case VT_CY:       elemSize = sizeof(pvarSrc->u.cyVal); break;
+            case VT_DATE:     elemSize = sizeof(pvarSrc->u.date); break;
+            case VT_FILETIME: elemSize = sizeof(pvarSrc->u.filetime); break;
+            case VT_CLSID:    elemSize = sizeof(*pvarSrc->u.puuid); break;
+            case VT_CF:       elemSize = sizeof(*pvarSrc->u.pclipdata); break;
+
+            case VT_BSTR:
+            case VT_LPSTR:
+            case VT_LPWSTR:
+            case VT_VARIANT:
+            default:
+                FIXME("Invalid element type: %ul\n", pvarSrc->vt & VT_VECTOR);
+                return E_INVALIDARG;
+            }
+            len = pvarSrc->u.capropvar.cElems;
+            pvarDest->u.capropvar.pElems = CoTaskMemAlloc(len * elemSize);
+            if (pvarSrc->vt == (VT_VECTOR | VT_VARIANT))
+            {
+                ULONG i;
+                for (i = 0; i < len; i++)
+                    PropVariantCopy(&pvarDest->u.capropvar.pElems[i], &pvarSrc->u.capropvar.pElems[i]);
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_CF))
+            {
+                FIXME("Copy clipformats\n");
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_BSTR))
+            {
+                FIXME("Copy BSTRs\n");
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_LPSTR))
+            {
+                FIXME("Copy LPSTRs\n");
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_LPSTR))
+            {
+                FIXME("Copy LPWSTRs\n");
+            }
+            else
+                CopyMemory(pvarDest->u.capropvar.pElems, pvarSrc->u.capropvar.pElems, len * elemSize);
+        }
+    }
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           FreePropVariantArray			    [OLE32.@]
+ */
+HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
+                                    PROPVARIANT *rgvars)    /* [in/out] */
+{
+    ULONG i;
+
+    TRACE("(%lu, %p)\n", cVariants, rgvars);
+
+    for(i = 0; i < cVariants; i++)
+        PropVariantClear(&rgvars[i]);
+
+    return S_OK;
+}
+
 /******************************************************************************
  * DllDebugObjectRPCHook (OLE32.@)
  * turns on and off internal debugging,  pointer is only used on macintosh
