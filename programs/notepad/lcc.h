@@ -9,7 +9,7 @@
 
 #ifdef LCC
 
-   #include "assert.h"
+   #include <assert.h>
    #include "shellapi.h"
 
    #define HANDLE HANDLE
