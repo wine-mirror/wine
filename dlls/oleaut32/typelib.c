@@ -2196,7 +2196,7 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
                 if(!memcmp(szNameBuf,pFInfo->pParamDesc[i].Name,nNameBufLen))
                     goto ITypeLib2_fnFindName_exit;
         }
-        for(pVInfo=pTInfo->varlist;pVInfo;pVInfo=pVInfo->next) ;
+        for(pVInfo=pTInfo->varlist;pVInfo;pVInfo=pVInfo->next)
             if(!memcmp(szNameBuf,pVInfo->Name, nNameBufLen)) goto ITypeLib2_fnFindName_exit;
         continue;
 ITypeLib2_fnFindName_exit:
