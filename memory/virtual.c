@@ -1094,7 +1094,6 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
     K32OBJ *obj = K32OBJ_FindName( name );
 
-    SetLastError(0); /* Win95 does that for some functions, like CFM */
     if (obj)
     {
         if (obj->type == K32OBJ_MEM_MAPPED_FILE)
@@ -1133,7 +1132,6 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
     if (hFile == INVALID_HANDLE_VALUE32)
     {
-	FIXME(virtual,"shared anon mapping (%s, size %d) not correctly supported!\n",debugstr_a(name),size_low);
 	if (!size_high && !size_low)
 	{
 	    SetLastError( ERROR_INVALID_PARAMETER );
@@ -1206,6 +1204,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
     else handle = HANDLE_Alloc( PROCESS_Current(), &mapping->header,
                                 FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, -1 );
     K32OBJ_DecCount( &mapping->header );
+    SetLastError(0); /* Last error value is relevant. (see the start of fun) */
     return handle;
 
 error:
