@@ -350,7 +350,7 @@ static void test_marshal_proxy_apartment_shutdown()
 
     CoUninitialize();
 
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 
     IUnknown_Release(pProxy);
 

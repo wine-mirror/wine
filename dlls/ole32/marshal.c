@@ -355,6 +355,8 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
 {
     struct list * cursor;
 
+    TRACE("oid = %s\n", wine_dbgstr_longlong(This->oid));
+
     EnterCriticalSection(&This->cs);
 
     LIST_FOR_EACH(cursor, &This->interfaces)
@@ -365,6 +367,11 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
 
     /* apartment is being destroyed so don't keep a pointer around to it */
     This->parent = NULL;
+
+    /* FIXME: will this still be necessary if/when we use a real RPC
+     * channel? */
+    IRpcChannelBuffer_Release(This->chan);
+    This->chan = NULL;
 
     LeaveCriticalSection(&This->cs);
 }
@@ -397,7 +404,7 @@ static void proxy_manager_destroy(struct proxy_manager * This)
         ifproxy_destroy(ifproxy);
     }
 
-    IRpcChannelBuffer_Release(This->chan);
+    if (This->chan) IRpcChannelBuffer_Release(This->chan);
 
     DeleteCriticalSection(&This->cs);
 
