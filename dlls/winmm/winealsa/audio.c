@@ -1635,8 +1635,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->p_handle = 0;
     flags = SND_PCM_NONBLOCK;
+#if 0
     if ( dwFlags & WAVE_DIRECTSOUND )
-    	flags |= SND_PCM_ASYNC;
+	flags |= SND_PCM_ASYNC;
+#endif
 
     if ( (err = snd_pcm_open(&pcm, wwo->device, SND_PCM_STREAM_PLAYBACK, flags)) < 0)
     {
@@ -3123,10 +3125,12 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->p_handle = 0;
     flags = SND_PCM_NONBLOCK;
+#if 0
     if ( dwFlags & WAVE_DIRECTSOUND )
-    	flags |= SND_PCM_ASYNC;
+	flags |= SND_PCM_ASYNC;
+#endif
 
-    if ( (err=snd_pcm_open(&pcm, wwi->device, SND_PCM_STREAM_CAPTURE, dwFlags)) < 0 )
+    if ( (err=snd_pcm_open(&pcm, wwi->device, SND_PCM_STREAM_CAPTURE, flags)) < 0 )
     {
         ERR("Error open: %s\n", snd_strerror(err));
 	return MMSYSERR_NOTENABLED;
