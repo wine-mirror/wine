@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "windows.h"
 /* not present in Wine yet */
 /*#include "propidl.h"*/
@@ -27,6 +25,12 @@ WINOLEAPI PropVariantClear(PROPVARIANT*);
 WINOLEAPI PropVariantCopy(PROPVARIANT*, const PROPVARIANT*);
 
 #include "wine/test.h"
+
+#ifdef NONAMELESSUNION
+# define U(x) (x).u
+#else
+# define U(x) (x)
+#endif
 
 struct valid_mapping
 {
@@ -172,30 +176,30 @@ static void test_copy()
     HRESULT hr;
 
     propvarSrc.vt = VT_BSTR;
-    propvarSrc.u.bstrVal = SysAllocString(wszTestString);
+    U(propvarSrc).bstrVal = SysAllocString(wszTestString);
 
     hr = PropVariantCopy(&propvarDst, &propvarSrc);
     ok(hr == S_OK, "PropVariantCopy(...VT_BSTR...) failed\n");
-    ok(!lstrcmpW(propvarSrc.u.bstrVal, propvarDst.u.bstrVal), "BSTR not copied properly\n");
+    ok(!lstrcmpW(U(propvarSrc).bstrVal, U(propvarDst).bstrVal), "BSTR not copied properly\n");
     hr = PropVariantClear(&propvarSrc);
     ok(hr == S_OK, "PropVariantClear(...VT_BSTR...) failed\n");
     hr = PropVariantClear(&propvarDst);
     ok(hr == S_OK, "PropVariantClear(...VT_BSTR...) failed\n");
 
     propvarSrc.vt = VT_LPWSTR;
-    propvarSrc.u.pwszVal = (LPWSTR)wszTestString;
+    U(propvarSrc).pwszVal = (LPWSTR)wszTestString;
     hr = PropVariantCopy(&propvarDst, &propvarSrc);
     ok(hr == S_OK, "PropVariantCopy(...VT_LPWSTR...) failed\n");
-    ok(!lstrcmpW(propvarSrc.u.pwszVal, propvarDst.u.pwszVal), "Wide string not copied properly\n");
+    ok(!lstrcmpW(U(propvarSrc).pwszVal, U(propvarDst).pwszVal), "Wide string not copied properly\n");
     hr = PropVariantClear(&propvarDst);
     ok(hr == S_OK, "PropVariantClear(...VT_LPWSTR...) failed\n");
     memset(&propvarSrc, 0, sizeof(propvarSrc));
 
     propvarSrc.vt = VT_LPSTR;
-    propvarSrc.u.pszVal = (LPSTR)szTestString;
+    U(propvarSrc).pszVal = (LPSTR)szTestString;
     hr = PropVariantCopy(&propvarDst, &propvarSrc);
     ok(hr == S_OK, "PropVariantCopy(...VT_LPSTR...) failed\n");
-    ok(!strcmp(propvarSrc.u.pszVal, propvarDst.u.pszVal), "String not copied properly\n");
+    ok(!strcmp(U(propvarSrc).pszVal, U(propvarDst).pszVal), "String not copied properly\n");
     hr = PropVariantClear(&propvarDst);
     ok(hr == S_OK, "PropVariantClear(...VT_LPSTR...) failed\n");
     memset(&propvarSrc, 0, sizeof(propvarSrc));
