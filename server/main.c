@@ -60,19 +60,6 @@ static void sigterm_handler()
 /* initialize signal handling */
 static void signal_init(void)
 {
-    if (!debug_level)
-    {
-        switch(fork())
-        {
-        case -1:
-            break;
-        case 0:
-            setsid();
-            break;
-        default:
-            exit(0);
-        }
-    }
     signal( SIGPIPE, SIG_IGN );
     signal( SIGHUP, sigterm_handler );
     signal( SIGINT, sigterm_handler );

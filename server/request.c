@@ -103,6 +103,7 @@ void fatal_protocol_error( struct thread *thread, const char *err, ... )
 }
 
 /* die on a fatal error */
+static void fatal_error( const char *err, ... ) WINE_NORETURN;
 static void fatal_error( const char *err, ... )
 {
     va_list args;
@@ -115,6 +116,7 @@ static void fatal_error( const char *err, ... )
 }
 
 /* die on a fatal error */
+static void fatal_perror( const char *err, ... ) WINE_NORETURN;
 static void fatal_perror( const char *err, ... )
 {
     va_list args;
@@ -392,6 +394,18 @@ void open_master_socket(void)
     if (!(master_socket = alloc_object( &master_socket_ops, fd )))
         fatal_error( "out of memory\n" );
     set_select_events( &master_socket->obj, POLLIN );
+
+    /* go in the background */
+    switch(fork())
+    {
+    case -1:
+        fatal_perror( "fork" );
+    case 0:
+        setsid();
+        break;
+    default:
+        _exit(0);  /* do not call atexit functions */
+    }
 }
 
 /* close the master socket and stop waiting for new clients */

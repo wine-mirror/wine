@@ -17,6 +17,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 #include <sys/un.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -54,6 +57,7 @@ static void *boot_thread_id;
 
 
 /* die on a fatal error; use only during initialization */
+static void fatal_error( const char *err, ... ) WINE_NORETURN;
 static void fatal_error( const char *err, ... )
 {
     va_list args;
@@ -66,6 +70,7 @@ static void fatal_error( const char *err, ... )
 }
 
 /* die on a fatal error; use only during initialization */
+static void fatal_perror( const char *err, ... ) WINE_NORETURN;
 static void fatal_perror( const char *err, ... )
 {
     va_list args;
@@ -334,6 +339,7 @@ static void start_server( const char *oldcwd )
     static int started;  /* we only try once */
     if (!started)
     {
+        int status;
         int pid = fork();
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
@@ -359,6 +365,9 @@ static void start_server( const char *oldcwd )
             fatal_error( "could not exec wineserver\n" );
         }
         started = 1;
+        waitpid( pid, &status, 0 );
+        status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+        if (status) exit(status);  /* server failed */
     }
 }
 
@@ -374,27 +383,34 @@ static int server_connect( const char *oldcwd, const char *serverdir )
     struct stat st;
     int s, slen;
 
+    /* chdir to the server directory */
     if (chdir( serverdir ) == -1)
     {
         if (errno != ENOENT) fatal_perror( "chdir to %s", serverdir );
         start_server( NULL );
-        return -1;
+        if (chdir( serverdir ) == -1) fatal_perror( "chdir to %s", serverdir );
     }
+
+    /* make sure we are at the right place */
     if (stat( ".", &st ) == -1) fatal_perror( "stat %s", serverdir );
     if (st.st_uid != getuid()) fatal_error( "'%s' is not owned by you\n", serverdir );
     if (st.st_mode & 077) fatal_error( "'%s' must not be accessible by other users\n", serverdir );
 
+    /* check for an existing socket */
     if (lstat( SOCKETNAME, &st ) == -1)
     {
         if (errno != ENOENT) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
         start_server( oldcwd );
-        return -1;
+        if (lstat( SOCKETNAME, &st ) == -1) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
     }
+
+    /* make sure the socket is sane */
     if (!S_ISSOCK(st.st_mode))
         fatal_error( "'%s/%s' is not a socket\n", serverdir, SOCKETNAME );
     if (st.st_uid != getuid())
         fatal_error( "'%s/%s' is not owned by you\n", serverdir, SOCKETNAME );
 
+    /* try to connect to it */
     if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
     addr.sun_family = AF_UNIX;
     strcpy( addr.sun_path, SOCKETNAME );
@@ -404,8 +420,12 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 #endif
     if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
     {
-        close( s );
-        return -2;
+        usleep( 50000 );  /* in case the server was starting right now */
+        if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
+            fatal_error( "'%s/%s' exists,\n"
+                         "   but I cannot connect to it; maybe the server has crashed?\n"
+                         "   If this is the case, you should remove the socket file and try again.\n",
+                         serverdir, SOCKETNAME );
     }
     fcntl( s, F_SETFD, 1 ); /* set close on exec flag */
     return s;
@@ -419,7 +439,7 @@ static int server_connect( const char *oldcwd, const char *serverdir )
  */
 int CLIENT_InitServer(void)
 {
-    int delay, fd, size;
+    int fd, size;
     const char *env_fd;
     char hostname[64];
     char *oldcwd, *serverdir;
@@ -452,23 +472,9 @@ int CLIENT_InitServer(void)
     strcat( serverdir, SERVERDIR );
     strcat( serverdir, hostname );
 
-    /* try to connect, leaving some time for the server to start up */
-    for (delay = 10000; delay < 500000; delay += delay / 2)
-    {
-        if ((fd = server_connect( oldcwd, serverdir )) >= 0) goto done;
-        usleep( delay );
-    }
+    /* connect to the server */
+    fd = server_connect( oldcwd, serverdir );
 
-    if (fd == -2)
-    {
-        fatal_error( "'%s/%s' exists,\n"
-                     "   but I cannot connect to it; maybe the server has crashed?\n"
-                     "   If this is the case, you should remove the socket file and try again.\n",
-                     serverdir, SOCKETNAME );
-    }
-    fatal_error( "could not start wineserver, giving up\n" );
-
- done:
     /* switch back to the starting directory */
     if (oldcwd)
     {
