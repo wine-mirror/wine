@@ -7,13 +7,16 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw($options &parse_comma_list);
+@EXPORT_OK = qw($options &parse_comma_list &parse_value);
 
 use vars qw($options);
+
+use output qw($output);
 
 sub parse_comma_list {
     my $prefix = shift;
     my $value = shift;
+
     if(defined($prefix) && $prefix eq "no") {
 	return { active => 0, filter => 0, hash => {} };
     } elsif(defined($value)) {
@@ -25,6 +28,13 @@ sub parse_comma_list {
     } else {
 	return { active => 1, filter => 0, hash => {} };
     }
+}
+
+sub parse_value {
+    my $prefix = shift;
+    my $value = shift;
+
+    return $value;
 }
 
 package _options;

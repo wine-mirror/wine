@@ -93,9 +93,16 @@ sub file_normalize {
     local $_ = shift;
 
     foreach my $dir (split(m%/%, $current_dir)) {
-	s%^(\.\./)*\.\./$dir/%%;
-	if(defined($1)) {
-	    $_ = "$1$_";
+	if(s%^(\.\./)*\.\./$dir/%%) {
+	    if(defined($1)) {
+		$_ = "$1$_";
+	    }
+	}
+    }
+
+    while(m%^(.*?)([^/\.]+)/\.\./(.*?)$%) {
+	if($2 ne "." && $2 ne "..") {
+	    $_ = "$1$3";
 	}
     }
 

@@ -7,11 +7,14 @@ BEGIN {
     require "$1/winapi/setup.pm";
 }
 
-use config qw($current_dir $wine_dir);
+use config qw(
+    &file_absolutize &file_normalize
+    $current_dir $wine_dir
+);
 use output qw($output);
 use make_filter_options qw($options);
 
-use make_parser;
+use make_parser qw($directory $tool $file $line $message);
 
 if($options->progress) {
     $output->enable_progress;
@@ -23,7 +26,7 @@ if($options->progress) {
 # main
 ########################################################################
 
-my $command = join(" ", $options->arguments);
+my $command = $options->make . " " . join(" ", $options->arguments);
 open(IN, "($command) 2>&1 |");
 
 while(<IN>) {    
@@ -33,34 +36,31 @@ while(<IN>) {
 	next;
     }
 
-    my $directory = &make_parser::directory();
-    my $file = &make_parser::file_name();
-    my $line = &make_parser::file_line();
-    my $message = &make_parser::message();
-
-    if(&make_parser::tool() eq "make") {
-	if($directory && $directory ne ".") {
-	    $output->progress("$directory: make");
-	}
-    } elsif($message) {
+    if($message) {
 	if($file && $line) {
-	    if($directory) {
-		$output->write("$directory/$file:$line: $message\n");
+	    if($directory && $directory ne ".") {
+		$output->write(&file_normalize("$directory/$file") . ":$line: $message\n");
 	    } else {
 		$output->write("$file:$line: $message\n");
 	    }
 	} elsif($file) {
-	    if($directory) {
-		$output->write("$directory/$file: $message\n");
+	    if($directory && $directory ne ".") {
+		$output->write(&file_normalize("$directory/$file") . ": $message\n");
 	    } else {
 		$output->write("$file: $message\n");
 	    }
 	} else {
-	    if($directory) {
-		$output->write("$directory: " . &make_parser::tool() . ": $message\n");
+	    if($directory && $directory ne ".") {
+		$output->write("$directory: $tool: $message\n");
+	    } elsif($tool) {
+		$output->write("$tool: $message\n");
 	    } else {
-		$output->write(".: " . &make_parser::tool() . ": $message\n");
+		$output->write("$message\n");
 	    }
+	}
+    } elsif($tool eq "make") {
+	if($directory && $directory ne ".") {
+	    $output->progress("$directory: make");
 	}
     }
 }

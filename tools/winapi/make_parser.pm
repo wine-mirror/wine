@@ -2,32 +2,39 @@ package make_parser;
 
 use strict;
 
+use strict;
+
+use setup qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
+
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+require Exporter;
+
+@ISA = qw(Exporter);
+@EXPORT = qw();
+@EXPORT_OK = qw($directory $tool $file $line $message);
+
+use vars qw($directory $tool $file $line $message);
+
 use output qw($output);
+use options qw($options);
 
 ########################################################################
 # global
 ########################################################################
 
 my $current; 
-my $tool;
-my $directory;
-my $file;
-my $line;
 my $function;
-my $message;
-
-sub directory { return $directory; }
-sub tool { return $tool; }
-sub file_name { return $file; }
-sub file_line { return $line; }
-sub message { return $message; }
 
 ########################################################################
 # error
 ########################################################################
 
 sub error {
-    $output->write("make_filter: $tool: can't parse output: '$current'\n");
+    if(defined($tool)) {
+	$output->write("make_filter: $tool: can't parse output: '$current'\n");
+    } else {
+	$output->write("make_filter: <>: can't parse output: '$current'\n");
+    }
     exit 1;
 }
 
@@ -50,40 +57,52 @@ sub line {
 
 	$function = "";
 
-	my $progress = "$directory: $tool: ";
-	if($#$read_files >= 0) {
-	    $progress .= "read[" . join(" ", @{$read_files}) . "]";
-	}
-	if($#$write_files >= 0) {
-	    if($#$read_files >= 0) {
-		$progress .= ", ";
-	    }	       
-	    $progress .= "write[" . join(" ", @{$write_files}) . "]";
-	}
-	if($#$remove_files >= 0) {
-	    if($#$read_files >= 0 || $#$write_files >= 0) {
-		$progress .= ", ";
-	    }	       
-	    $progress .= "remove[" . join(" ", @{$remove_files}) . "]";
-	}
-
 	if($tool =~ /^cd|make$/) {
 	    # Nothing
 	} elsif($tool =~ /^ld$/) {
-	    $progress =~ s/read\[.*?\]/read[*.o]/; # FIXME: Kludge
-	    $output->progress($progress)
+	    foreach my $file (@{$read_files}) {
+		$output->lazy_progress("$directory: ld: reading '$file'");
+	    }
+	    my $file = $$write_files[0];
+	    $output->progress("$directory: ld: writing '$file'");
+	} elsif($tool =~ /^rm$/) {
+	    foreach my $file (@{$remove_files}) {
+		$output->lazy_progress("$directory: rm: removing '$file'");
+	    }
 	} else {
-	    $output->progress($progress)
+	    my $progress = "$directory: $tool: ";
+	    if($#$read_files >= 0) {
+		$progress .= "read[" . join(" ", @{$read_files}) . "]";
+	    }
+	    if($#$write_files >= 0) {
+		if($#$read_files >= 0) {
+		    $progress .= ", ";
+		}	       
+		$progress .= "write[" . join(" ", @{$write_files}) . "]";
+	    }
+	    if($#$remove_files >= 0) {
+		if($#$read_files >= 0 || $#$write_files >= 0) {
+		    $progress .= ", ";
+		}	       
+		$progress .= "remove[" . join(" ", @{$remove_files}) . "]";
+	    }
+	    
+	    $output->progress($progress);
 	}
-
 	return 0;
     }
 
     if(/^Wine build complete\.$/) {
 	# Nothing
-    } elsif(s/^make\[(\d+)\]:\s*//) {
+    } elsif(/^(.*?) is newer than (.*?), please rerun (.*?)\!$/) {
+	$message = "$_";
+    } elsif(/^(.*?) is older than (.*?), please rerun (.*?)$/) {
+	$message = "$_";
+    } elsif(s/^make(?:\[(\d+)\])?:\s*//) {
 	$tool = "make";
 	make_output($1, $_);
+    } elsif(!defined($tool)) {
+	error();
     } elsif($tool eq "bison" && /^conflicts:\s+\d+\s+shift\/reduce$/) {
 	# Nothing
     } elsif($tool eq "gcc" && /^In file included from (.+?):(\d+):$/) {
@@ -101,7 +120,7 @@ sub line {
     } elsif($tool eq "cd" && s/^\/bin\/sh:\s*cd:\s*//) {
 	parse_cd_output($_);
     } else {
-	error($_)
+	error();
     }
     
     $file =~ s/^\.\///;
@@ -123,7 +142,7 @@ sub make_output {
     if(0) {
 	# Nothing
     } elsif(/^\*\*\* \[(.*?)\] Error (\d+)$/) {
-	# Nothing
+	$message = "$_";
     } elsif(/^\*\*\* Warning:\s+/) { # 
 	if(/^File \`(.+?)\' has modification time in the future \((.+?) > \(.+?\)\)$/) {
 	    # Nothing
@@ -150,7 +169,9 @@ sub make_output {
 	    }
 	}
 	$directory = join("/", @components);
-    } elsif(/^Nothing to be done for \`(.*?)\'.$/) {
+    } elsif(/^(.*?) is older than (.*?), please rerun (.*?)\$/) {
+	# Nothing
+    } elsif(/^Nothing to be done for \`(.*?)\'\.$/) {
 	# Nothing
     } elsif(s/^warning:\s+//) {
 	if(/^Clock skew detected.  Your build may be incomplete.$/) {
@@ -378,6 +399,8 @@ sub gcc_output {
 
 	    if(0) {
 		# Nothing
+	    } elsif(/^((?:signed |unsigned )?(?:int|long)) format, (different type|\S+) arg \(arg (\d+)\)$/) {
+		$supress = 0;
 	    } elsif(/^\(near initialization for \`(.*?)\'\)$/) {
 		$supress = 0;
 	    } elsif(/^\`(.*?)\' defined but not used$/) {
@@ -386,9 +409,15 @@ sub gcc_output {
 		$supress = 0;
 	    } elsif(/^\`%x\' yields only last 2 digits of year in some locales$/) {
 		$supress = 1;
-	    } elsif(/^(.*?) format, different type arg \(arg (\d+)\)$/) {
+	    } elsif(/^assignment makes integer from pointer without a cast$/) {
+		$supress = 0;
+	    } elsif(/^assignment makes pointer from integer without a cast$/) {
 		$supress = 0;
 	    } elsif(/^assignment from incompatible pointer type$/) {
+		$supress = 0;
+	    } elsif(/^cast from pointer to integer of different size$/) {
+		$supress = 0;
+	    } elsif(/^comparison between pointer and integer$/) {
 		$supress = 0;
 	    } elsif(/^comparison between signed and unsigned$/) {
 		$supress = 0;
@@ -406,17 +435,27 @@ sub gcc_output {
 		$supress = 0;
 	    } elsif(/^initialization from incompatible pointer type$/) {
 		$supress = 0;
+	    } elsif(/^initialization makes pointer from integer without a cast$/) {
+		$supress = 0;
 	    } elsif(/^missing initializer$/) {
 		$supress = 0;
 	    } elsif(/^ordered comparison of pointer with integer zero$/) {
 		$supress = 0;
-	    } elsif(/^passing arg (\d+) of pointer to function from incompatible pointer type$/) {
+	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') from incompatible pointer type$/) {
 		$supress = 0;
-	    } elsif(/^passing arg (\d+) of \`(\S+)\' from incompatible pointer type$/) {
+	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes integer from pointer without a cast$/) {
 		$supress = 0;
-	    } elsif(/^passing arg (\d+) of \`(\S+)\' makes integer from pointer without a cast$/) {
+	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes pointer from integer without a cast$/) {
+		$supress = 0;
+	    } elsif(/^return makes integer from pointer without a cast$/) {
+		$supress = 0;
+	    } elsif(/^return makes pointer from integer without a cast$/) {
 		$supress = 0;
 	    } elsif(/^type of \`(.*?)\' defaults to \`(.*?)\'$/) {
+		$supress = 0;
+	    } elsif(/^unused variable \`(.*?)\'$/) {
+		$supress = 0;
+	    } elsif(!$options->pedantic) {
 		$supress = 0;
 	    } else {
 		error();
@@ -435,11 +474,17 @@ sub gcc_output {
 	    $message = "$_";
 	} elsif(/^\(Each undeclared identifier is reported only once$/) {
 	    $message = "$_";
+	} elsif(/^conflicting types for \`(.*?)\'$/) {
+	    $message = "$_";
 	} elsif(/^for each function it appears in.\)$/) {
+	    $message = "$_";
+	} elsif(/^too many arguments to function$/) {
+	    $message = "$_";
+        } elsif(/^previous declaration of \`(.*?)\'$/) {
 	    $message = "$_";
 	} elsif(/^parse error before `(.*?)'$/) {
 	    $message = "$_";
-	} elsif(/^$/) {
+	} elsif(!$options->pedantic) {
 	    $message = "$_";
 	} else {
 	    error();

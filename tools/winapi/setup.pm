@@ -12,24 +12,27 @@ BEGIN {
 
     use vars qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
 
-    my $dir;
-    my $tool;
+    my $tool = $0; 
+    $tool =~ s%^(?:.*?/)?([^/]+)$%$1%;
 
-    if($0 =~ m%^((.*?)/?tools/([^/]+))/([^/]+)$%)
+    if(defined($current_dir) && defined($wine_dir) &&
+       defined($winapi_dir) && defined($winapi_check_dir))
     {
-	$winapi_dir = $1;
-	$winapi_check_dir = $1;
-	$dir = $3;
-	$tool = $4;
-	
-	if(defined($2) && $2 ne "")
+	# Nothing
+    } elsif($0 =~ m%^(.*?)/?tools/([^/]+)/[^/]+$%) {
+	my $dir = $2;
+
+	if(defined($1) && $1 ne "")
 	{
-	    $wine_dir = $2;
+	    $wine_dir = $1;
 	} else {
 	    $wine_dir = ".";
 	    
 	} 
-	
+
+	require Cwd;
+	my $cwd = Cwd::cwd();
+
 	if($wine_dir =~ /^\./) {
 	    $current_dir = ".";
 	    my $pwd; chomp($pwd = `pwd`);
@@ -38,19 +41,32 @@ BEGIN {
 		$current_dir = "$1/$current_dir";
 	    }
 	    $current_dir =~ s%/\.$%%;
+	} elsif($wine_dir eq $cwd) {
+	    $wine_dir = ".";
+	    $current_dir = ".";
+	} elsif($cwd =~ m%^$wine_dir/(.*?)?$%) {
+	    $current_dir = $1;
+	    $wine_dir = ".";
+	    foreach my $dir (split(m%/%, $current_dir)) {
+		$wine_dir = "../$wine_dir";
+	    }
+	    $wine_dir =~ s%/\.$%%;
+	} else {
+	    print STDERR "$tool: You must run this tool in the main Wine directory or a sub directory\n";
+	    exit 1;
 	}
-	
+
+	$winapi_dir = "$wine_dir/tools/winapi";
 	$winapi_dir =~ s%^\./%%;
-	$winapi_dir =~ s/$dir/winapi/g;
-	
+
+	$winapi_check_dir = "$wine_dir/tools/winapi_check";
 	$winapi_check_dir =~ s%^\./%%;
-	$winapi_check_dir =~ s/$dir/winapi_check/g; 
+
+	push @INC, ($winapi_dir, $winapi_check_dir);
     } else {
 	print STDERR "$tool: You must run this tool in the main Wine directory or a sub directory\n";
 	exit 1;
     }
-
-    push @INC, ($winapi_dir, $winapi_check_dir);
 }
 
 1;

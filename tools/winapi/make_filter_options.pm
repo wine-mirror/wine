@@ -10,7 +10,7 @@ require Exporter;
 @EXPORT = qw();
 @EXPORT_OK = qw($options);
 
-use options qw($options &parse_comma_list);
+use options qw($options &parse_comma_list &parse_value);
 
 my %options_long = (
     "debug" => { default => 0, description => "debug mode" },
@@ -19,6 +19,9 @@ my %options_long = (
 
     "progress" => { default => 1, description => "show progress" },
 
+    "make" => { default => "make",
+		parser => \&parse_value,
+		description => "use which make" },
     "pedantic" => { default => 0, description => "be pedantic" },
 );
 
