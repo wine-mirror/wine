@@ -128,6 +128,7 @@ DLLS = \
 	stress \
 	tapi32 \
 	ttydrv \
+	urlmon \
 	user32 \
 	version \
 	w32skrnl \
@@ -135,6 +136,7 @@ DLLS = \
 	windebug \
 	wineoss.drv \
 	wing \
+	wininet \
 	winmm \
 	winspool \
 	wnaspi32 \

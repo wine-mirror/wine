@@ -37,6 +37,7 @@ DLLFILES = \
 	stress/libstress.@LIBEXT@ \
 	tapi32/libtapi32.@LIBEXT@ \
 	ttydrv/libttydrv.@LIBEXT@ \
+	urlmon/liburlmon.@LIBEXT@ \
 	user/libuser32.@LIBEXT@ \
 	version/libversion.@LIBEXT@ \
 	win32s/libw32skrnl.@LIBEXT@ \
@@ -44,6 +45,7 @@ DLLFILES = \
 	winaspi/libwnaspi32.@LIBEXT@ \
 	windebug/libwindebug.@LIBEXT@ \
 	wing/libwing.@LIBEXT@ \
+	wininet/libwininet.@LIBEXT@ \
 	winmm/joystick/libjoystick.drv.@LIBEXT@ \
 	winmm/libwinmm.@LIBEXT@ \
 	winmm/mcianim/libmcianim.drv.@LIBEXT@ \
@@ -118,6 +120,7 @@ SUBDIRS = \
 	stress \
 	tapi32 \
 	ttydrv \
+	urlmon \
 	user \
 	version \
 	win32s \
@@ -125,6 +128,7 @@ SUBDIRS = \
 	winaspi \
 	windebug \
 	wing \
+	wininet \
 	winmm \
 	winsock \
 	winspool \
@@ -259,6 +263,9 @@ libtapi32.@LIBEXT@: tapi32/libtapi32.@LIBEXT@
 libttydrv.@LIBEXT@: ttydrv/libttydrv.@LIBEXT@
 	$(RM) $@ && $(LN_S) ttydrv/libttydrv.@LIBEXT@ $@
 
+liburlmon.@LIBEXT@: urlmon/liburlmon.@LIBEXT@
+	$(RM) $@ && $(LN_S) urlmon/liburlmon.@LIBEXT@ $@
+
 libuser32.@LIBEXT@ libuser.@LIBEXT@: user/libuser32.@LIBEXT@
 	$(RM) $@ && $(LN_S) user/libuser32.@LIBEXT@ $@
 
@@ -279,6 +286,9 @@ libwineoss.drv.@LIBEXT@: winmm/wineoss/libwineoss.drv.@LIBEXT@
 
 libwing.@LIBEXT@: wing/libwing.@LIBEXT@
 	$(RM) $@ && $(LN_S) wing/libwing.@LIBEXT@ $@
+
+libwininet.@LIBEXT@: wininet/libwininet.@LIBEXT@
+	$(RM) $@ && $(LN_S) wininet/libwininet.@LIBEXT@ $@
 
 libwinmm.@LIBEXT@ libmmsystem.@LIBEXT@: winmm/libwinmm.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/libwinmm.@LIBEXT@ $@

@@ -1027,6 +1027,7 @@ dlls/sound/Makefile
 dlls/stress/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
+dlls/urlmon/Makefile
 dlls/user/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
@@ -1034,6 +1035,7 @@ dlls/win87em/Makefile
 dlls/winaspi/Makefile
 dlls/windebug/Makefile
 dlls/wing/Makefile
+dlls/wininet/Makefile
 dlls/winmm/Makefile
 dlls/winmm/joystick/Makefile
 dlls/winmm/mcianim/Makefile

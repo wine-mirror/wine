@@ -1,0 +1,17 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wininet
+SOVERSION = 1.0
+
+SPEC_SRCS = wininet.spec
+
+C_SRCS = \
+	internet.c \
+	ftp.c \
+	utility.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
