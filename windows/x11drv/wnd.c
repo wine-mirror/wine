@@ -32,6 +32,10 @@
 
 DEFAULT_DEBUG_CHANNEL(win)
 
+  /* Some useful macros */
+#define HAS_DLGFRAME(style,exStyle) \
+((!((style) & WS_THICKFRAME)) && (((style) & WS_DLGFRAME) || ((exStyle) & WS_EX_DLGMODALFRAME)))
+
 /**********************************************************************/
 
 extern Cursor X11DRV_MOUSE_XCursor;  /* Current X cursor */
@@ -247,7 +251,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
               size_hints->win_gravity = StaticGravity;
               size_hints->flags = PWinGravity;
 
-	      if (cs->dwExStyle & WS_EX_DLGMODALFRAME) 
+              if (HAS_DLGFRAME(cs->style,cs->dwExStyle))
 	      {
 	          size_hints->min_width = size_hints->max_width = cs->cx;
 	          size_hints->min_height = size_hints->max_height = cs->cy;
@@ -510,7 +514,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 	  /* Tweak dialog window size hints */
 	  
 	  if ((winposPtr->flags & WIN_MANAGED) &&
-	      (winposPtr->dwExStyle & WS_EX_DLGMODALFRAME))
+               HAS_DLGFRAME(winposPtr->dwStyle,winposPtr->dwExStyle))
 	    {
 	      XSizeHints *size_hints = TSXAllocSizeHints();
 	      

@@ -63,7 +63,7 @@ BYTE lpGrayMask[] = { 0xAA, 0xA0,
 
 #define HAS_THICKFRAME(style,exStyle) \
     (((style) & WS_THICKFRAME) && \
-     !((exStyle) & WS_EX_DLGMODALFRAME))
+     !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
 
 #define HAS_THINFRAME(style) \
     (((style) & WS_BORDER) || !((style) & (WS_CHILD | WS_POPUP)))

@@ -862,7 +862,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             wndPtr->flags |= WIN_NEED_SIZE;
 	}
     }
-    if (cs->dwExStyle & WS_EX_DLGMODALFRAME) wndPtr->dwStyle &= ~WS_THICKFRAME;
 
     /* Get class or window DC if needed */
 
