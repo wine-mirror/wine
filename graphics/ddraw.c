@@ -439,7 +439,6 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
 ) {
 	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
-#ifdef HAVE_LIBXXF86DGA
         /* According to spec, we are only supposed to 
          * AddRef if this is not the same palette.
          */
@@ -466,11 +465,6 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
         }
 
 	return 0;
-#else /* defined(HAVE_LIBXXF86DGA) */
-	return E_UNEXPECTED;
-#endif /* defined(HAVE_LIBXXF86DGA) */
-
-
 }
 
 static HRESULT WINAPI DGA_IDirectDrawSurface3_SetPalette(
@@ -559,7 +553,22 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	) {
 		memcpy(this->s.surface,src->s.surface,this->s.height*this->s.lpitch);
 		return 0;
+	} else {
+	  /* Non full screen Blit. In this case, we need to copy line per line.
+	     WARNING : if the program behaves badly (ie sizes of structures are different
+	               or buffer not big enough) this may crash Wine... */
+	  int bpp = this->s.ddraw->d.depth / 8;
+	  int height = xsrc.bottom - xsrc.top;
+	  int width = (xsrc.right - xsrc.left) * bpp;
+	  int h;
+
+	  for (h = 0; h < height; h++) {
+	    memcpy(this->s.surface + ((h + xdst.top) * this->s.lpitch) + xdst.left * bpp,
+		   src->s.surface + ((h + xsrc.top) * src->s.lpitch) + xsrc.left * bpp,
+		   width);
+	  }
 	}
+	
 	if (dwFlags) {
 		FIXME(ddraw,"(%p)->(%p,%p,%p,%08lx,%p),stub!\n",
 			this,rdst,src,rsrc,dwFlags,lpbltfx
@@ -571,6 +580,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	if (dwFlags & DDBLT_DDFX) {
 		TRACE(ddraw,"	blitfx: \n");_dump_DDBLTFX(lpbltfx->dwDDFX);
 	}
+	
 	return 0;
 }
 
