@@ -9,6 +9,7 @@
  * Copyright 1999 Ove Kåven
  */
 
+#include <ctype.h>
 #include "config.h"
 
 #ifndef X_DISPLAY_MISSING
@@ -301,7 +302,8 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
 
     TSXLookupString(e, NULL, 0, &keysym, NULL);
 
-    if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (e->state & NumLockMask)) 
+    if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (keysym != 0xFFAF) 
+	&& (e->state & NumLockMask)) 
         /* Only the Keypad keys 0-9 and . send different keysyms
          * depending on the NumLock state */
         return keypad_key_vkey[(keysym & 0xFF) - 0x7E];
@@ -323,6 +325,7 @@ void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT ev
                            DWORD event_time )
 {
   BOOL * State = (vkey==VK_NUMLOCK? &NumState : &CapsState);
+  DWORD up, down;
 
   if (*State) {
     /* The INTERMEDIARY state means : just after a 'press' event, if a 'release' event comes,
@@ -332,14 +335,16 @@ void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT ev
     TRACE(keyboard,"INTERM : don\'t treat release of toggle key. InputKeyStateTable[%#x] = %#x\n",vkey,pKeyStateTable[vkey]);
   } else
     {
+        down = (vkey==VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0);
+        up = (vkey==VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0) | KEYEVENTF_KEYUP;
 	if ( pKeyStateTable[vkey] & 0x1 ) /* it was ON */
 	  {
 	    if (Evtype!=KeyPress)
 	      {
 		TRACE(keyboard,"ON + KeyRelease => generating DOWN and UP messages.\n");
-	        KEYBOARD_SendEvent( vkey, scan, 0,
+	        KEYBOARD_SendEvent( vkey, scan, down,
                                     event_x, event_y, event_time );
-	        KEYBOARD_SendEvent( vkey, scan, KEYEVENTF_KEYUP, 
+	        KEYBOARD_SendEvent( vkey, scan, up, 
                                     event_x, event_y, event_time );
 		*State=FALSE;
 		pKeyStateTable[vkey] &= ~0x01; /* Toggle state to off. */ 
@@ -349,9 +354,9 @@ void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT ev
 	  if (Evtype==KeyPress)
 	    {
 	      TRACE(keyboard,"OFF + Keypress => generating DOWN and UP messages.\n");
-	      KEYBOARD_SendEvent( vkey, scan, 0,
+	      KEYBOARD_SendEvent( vkey, scan, down,
                                   event_x, event_y, event_time );
-	      KEYBOARD_SendEvent( vkey, scan, KEYEVENTF_KEYUP, 
+	      KEYBOARD_SendEvent( vkey, scan, up, 
                                   event_x, event_y, event_time );
 	      *State=TRUE; /* Goes to intermediary state before going to ON */
 	      pKeyStateTable[vkey] |= 0x01; /* Toggle state to on. */
@@ -898,14 +903,16 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
 				if ((keyc2vkey[keyc] & 0xFF) == wCode)
 					returnMVK (keyc2scan[keyc] & 0xFF);
+			TRACE(keyboard,"returning no scan-code.\n");
 		        return 0; }
 
 		case 1: { /* scan-code to vkey-code */
 			/* let's do scan -> keycode -> vkey */
 			int keyc;
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
-				if ((keyc2scan[keyc] & 0xFF) == wCode)
+				if ((keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
 					returnMVK (keyc2vkey[keyc] & 0xFF);
+			TRACE(keyboard,"returning no vkey-code.\n");
 		        return 0; }
 
 		case 2: { /* vkey-code to unshifted ANSI code */
@@ -914,15 +921,50 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 			/* let's do vkey -> keycode -> (XLookupString) ansi char */
 			XKeyEvent e;
 			KeySym keysym;
+			int keyc;
 			char s[2];
 			e.display = display;
 			e.state = 0; /* unshifted */
-			e.keycode = MapVirtualKey16( wCode, 0);
-			if (!TSXLookupString(&e, s , 2 , &keysym, NULL))
+
+			e.keycode = 0;
+			/* We exit on the first keycode found, to speed up the thing. */
+			for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
+			{ /* Find a keycode that could have generated this virtual key */
+			    if  ((keyc2vkey[keyc] & 0xFF) == wCode)
+			    { /* We filter the extended bit, we don't know it */
+			        e.keycode = keyc; /* Store it temporarily */
+				if ((EVENT_event_to_vkey(&e) & 0xFF) != wCode) {
+				    e.keycode = 0; /* Wrong one (ex: because of the NumLock
+					 state), so set it to 0, we'll find another one */
+				}
+			    }
+			}
+
+			if ((wCode>=VK_NUMPAD0) && (wCode<=VK_NUMPAD9))
+			  e.keycode = TSXKeysymToKeycode(e.display, wCode-VK_NUMPAD0+XK_KP_0);
+          
+			if (wCode==VK_DECIMAL)
+			  e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
+
+			if (!e.keycode)
+			{
+			  WARN(keyboard,"Unknown virtual key %X !!! \n", wCode);
+			  return 0; /* whatever */
+			}
+			TRACE(keyboard,"Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
+
+			if (TSXLookupString(&e, s, 2, &keysym, NULL))
 			  returnMVK (*s);
 			
+			TRACE(keyboard,"returning no ANSI.\n");
 			return 0;
 			}
+
+		case 3:   /* **NT only** scan-code to vkey-code but distinguish between  */
+              		  /*             left and right  */
+		          FIXME(keyboard, " stub for NT\n");
+                          return 0;
+
 		default: /* reserved */
 			WARN(keyboard, "Unknown wMapType %d !\n",
 				wMapType);
@@ -936,31 +978,52 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
  */
 INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
-  int key, i, scanCode;
-  const char (*lkey)[MAIN_LEN][4];
+  int vkey, ansi, scanCode;
 	
   scanCode = lParam >> 16;
-  scanCode &= 0xff;
-  lkey = main_key_tab[kbd_layout].key;
+  scanCode &= 0x1ff;  /* keep "extended-key" flag with code */
 
-  if (!(lParam & 0x01000000))  /* handle non-extended keys */
-  { 
-    /*  FIXME:  need to handle "don't care" bit (0x02000000) */
+  /* FIXME: should use MVK type 3 (NT version that distinguishes right and left */
+  vkey = X11DRV_KEYBOARD_MapVirtualKey(scanCode, 1);
 
-    /*  FIXME:  assume return caps */
-    i = 1;
-    for (key = 0 ; key < MAIN_LEN ; key++) 
-      if (main_key_scan[key] == scanCode)
+  /*  handle "don't care" bit (0x02000000) */
+  if (!(lParam & 0x02000000)) {
+    switch (vkey) {
+         case VK_LSHIFT:
+         case VK_RSHIFT:
+                          vkey = VK_SHIFT;
+                          break;
+       case VK_LCONTROL:
+       case VK_RCONTROL:
+                          vkey = VK_CONTROL;
+                          break;
+          case VK_LMENU:
+          case VK_RMENU:
+                          vkey = VK_MENU;
+                          break;
+               default:
+                          break;
+    }
+  }
+
+  ansi = X11DRV_KEYBOARD_MapVirtualKey(vkey, 2);
+  TRACE(keyboard, "scan 0x%04x, vkey 0x%04x, ANSI 0x%04x\n",
+          scanCode, vkey, ansi);
+
+  if ((vkey >= 0x30) && (vkey <= 0x39) &&
+      (vkey >= 0x41) && (vkey <= 0x5a)) /* Windows VK_* are ANSI codes */
       {
         if ((nSize >= 2) && lpBuffer)
 	{
-          *lpBuffer = (*lkey)[key][i];
+        *lpBuffer = toupper((char)ansi);
           *(lpBuffer+1) = 0;
           return 1;
         } 
-        else return 0;
-      }
+     else
+        return 0;
   }
+
+  /* use vkey values to construct names */
 
   FIXME(keyboard,"(%08lx,%p,%d): unsupported key\n",lParam,lpBuffer,nSize);
 
