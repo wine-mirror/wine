@@ -208,7 +208,7 @@ IMalloc16_Constructor() {
 
 	This = (IMalloc16Impl*)SEGPTR_NEW(IMalloc16Impl);
         if (!msegvt16) {
-            This->lpvtbl = msegvt16 = SEGPTR_NEW(ICOM_VTABLE(IMalloc16));
+            msegvt16 = SEGPTR_NEW(ICOM_VTABLE(IMalloc16));
 
 #define VTENT(x) msegvt16->fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->fn##x)
             VTENT(QueryInterface);
@@ -220,8 +220,8 @@ IMalloc16_Constructor() {
             VTENT(GetSize);
             VTENT(DidAlloc);
             VTENT(HeapMinimize);
-            msegvt16 = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
 #undef VTENT
+            This->lpvtbl = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
 	}
 	This->ref = 1;
 	/* FIXME: implement multiple heaps */
