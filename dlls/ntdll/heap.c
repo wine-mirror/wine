@@ -290,15 +290,29 @@ static HEAP *HEAP_GetPtr(
  *
  * Insert a free block into the free list.
  */
-static void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena )
+static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL last )
 {
     FREE_LIST_ENTRY *pEntry = heap->freeList;
     while (pEntry->size < pArena->size) pEntry++;
-    pArena->size      |= ARENA_FLAG_FREE;
-    pArena->next       = pEntry->arena.next;
-    pArena->next->prev = pArena;
-    pArena->prev       = &pEntry->arena;
-    pEntry->arena.next = pArena;
+    if (last)
+    {
+        /* insert at end of free list, i.e. before the next free list entry */
+        pEntry++;
+        if (pEntry == &heap->freeList[HEAP_NB_FREE_LISTS]) pEntry = heap->freeList;
+        pArena->prev       = pEntry->arena.prev;
+        pArena->prev->next = pArena;
+        pArena->next       = &pEntry->arena;
+        pEntry->arena.prev = pArena;
+    }
+    else
+    {
+        /* insert at head of free list */
+        pArena->next       = pEntry->arena.next;
+        pArena->next->prev = pArena;
+        pArena->prev       = &pEntry->arena;
+        pEntry->arena.next = pArena;
+    }
+    pArena->size |= ARENA_FLAG_FREE;
 }
 
 
@@ -388,6 +402,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, DWORD size )
 {
     ARENA_FREE *pFree;
     char *pEnd;
+    BOOL last;
 
     /* Create a free arena */
     mark_block_uninitialized( ptr, sizeof( ARENA_FREE ) );
@@ -415,7 +430,8 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, DWORD size )
 
     /* Set the next block PREV_FREE flag and pointer */
 
-    if ((char *)ptr + size < (char *)subheap + subheap->size)
+    last = ((char *)ptr + size >= (char *)subheap + subheap->size);
+    if (!last)
     {
         DWORD *pNext = (DWORD *)((char *)ptr + size);
         *pNext |= ARENA_FLAG_PREV_FREE;
@@ -426,7 +442,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, DWORD size )
     /* Last, insert the new block into the free list */
 
     pFree->size = size - sizeof(*pFree);
-    HEAP_InsertFreeBlock( subheap->heap, pFree );
+    HEAP_InsertFreeBlock( subheap->heap, pFree, last );
 }
 
 
