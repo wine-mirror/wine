@@ -5,6 +5,7 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 IDL_SRCS = \
+	objidl.idl \
 	unknwn.idl \
 	wtypes.idl
 
@@ -89,7 +90,6 @@ WINDOWS_INCLUDES = \
 	ntstatus.h \
 	oaidl.h \
 	objbase.h \
-	objidl.h \
 	ocidl.h \
 	ole2.h \
 	ole2ver.h \
@@ -205,14 +205,11 @@ WINE_INCLUDES = \
 	library.h \
 	obj_base.h \
 	obj_cache.h \
-	obj_channel.h \
-	obj_clientserver.h \
 	obj_comcat.h \
 	obj_commdlgbrowser.h \
 	obj_connection.h \
 	obj_contextmenu.h \
 	obj_control.h \
-	obj_dataobject.h \
 	obj_dockingwindowframe.h \
 	obj_dragdrop.h \
 	obj_dragdrophelper.h \
@@ -221,9 +218,6 @@ WINE_INCLUDES = \
 	obj_errorinfo.h \
 	obj_extracticon.h \
 	obj_inplace.h \
-	obj_marshal.h \
-	obj_misc.h \
-	obj_moniker.h \
 	obj_oleaut.h \
 	obj_olefont.h \
 	obj_oleobj.h \
@@ -231,14 +225,12 @@ WINE_INCLUDES = \
 	obj_oleview.h \
 	obj_picture.h \
 	obj_property.h \
-	obj_propertystorage.h \
 	obj_serviceprovider.h \
 	obj_shellbrowser.h \
 	obj_shellextinit.h \
 	obj_shellfolder.h \
 	obj_shelllink.h \
 	obj_shellview.h \
-	obj_storage.h \
 	obj_webbrowser.h \
 	unicode.h
 
