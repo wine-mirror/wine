@@ -575,7 +575,8 @@ HIC VFWAPI ICGetDisplayFormat(
 {
 	HIC	tmphic = hic;
 
-	FIXME("(%p,%p,%p,%d,%d,%d),stub!\n",hic,lpbiIn,lpbiOut,depth,dx,dy);
+	TRACE("(%p,%p,%p,%d,%d,%d)!\n",hic,lpbiIn,lpbiOut,depth,dx,dy);
+
 	if (!tmphic) {
 		tmphic=ICLocate(ICTYPE_VIDEO,0,lpbiIn,NULL,ICMODE_DECOMPRESS);
 		if (!tmphic)

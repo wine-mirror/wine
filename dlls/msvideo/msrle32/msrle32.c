@@ -1551,7 +1551,7 @@ static LRESULT CompressEnd(CodecInfo *pi)
 static LRESULT DecompressGetFormat(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 				   LPBITMAPINFOHEADER lpbiOut)
 {
-  int size;
+  DWORD size;
 
   TRACE("(%p,%p,%p)\n",pi,lpbiIn,lpbiOut);
 
@@ -1566,19 +1566,15 @@ static LRESULT DecompressGetFormat(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 
   size = lpbiIn->biSize;
 
+  if (lpbiIn->biBitCount <= 8)
+    size += lpbiIn->biClrUsed * sizeof(RGBQUAD);
+
   if (lpbiOut != NULL) {
     memcpy(lpbiOut, lpbiIn, size);
-    lpbiOut->biBitCount     = 32;
     lpbiOut->biCompression  = BI_RGB;
     lpbiOut->biSizeImage    = DIBWIDTHBYTES(*lpbiOut) * lpbiOut->biHeight;
-    lpbiOut->biClrImportant = 0;
 
-    if (lpbiOut->biBitCount <= 8 && lpbiOut->biClrUsed == 0)
-      lpbiOut->biClrUsed = 1 << lpbiOut->biBitCount;
-    else
-      lpbiOut->biClrUsed = 0;
-
-    return size;
+    return ICERR_OK;
   } else
     return size;
 }

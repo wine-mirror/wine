@@ -346,21 +346,27 @@ CRAM_DecompressQuery( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPINFO out )
 static LRESULT 
 CRAM_DecompressGetFormat( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPINFO out )
 {
+    DWORD size;
+
     TRACE("ICM_DECOMPRESS_GETFORMAT %p %p %p\n", info, in, out);
 
     if( (info==NULL) || (info->dwMagic!=CRAM_MAGIC) )
         return ICERR_BADPARAM;
 
+    size = in->bmiHeader.biSize;
+    if (in->bmiHeader.biBitCount <= 8)
+        size += in->bmiHeader.biClrUsed * sizeof(RGBQUAD);
+
     if( out )
     {
-        memcpy( out, in, sizeof (BITMAPINFO) );
+        memcpy( out, in, size );
         out->bmiHeader.biCompression = BI_RGB;
         out->bmiHeader.biSizeImage = in->bmiHeader.biHeight
                                    * in->bmiHeader.biWidth *4;
-        out->bmiHeader.biBitCount = in->bmiHeader.biBitCount;
+        return ICERR_OK;
     }
 
-    return sizeof (BITMAPINFO);
+    return size;
 }
 
 LRESULT CRAM_DecompressBegin( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPINFO out )

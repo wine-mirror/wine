@@ -783,20 +783,26 @@ LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO
 
 LRESULT ICCVID_DecompressGetFormat( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
 {
+    DWORD size;
+
     TRACE("ICM_DECOMPRESS_GETFORMAT %p %p %p\n", info, in, out);
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
 
+    size = in->bmiHeader.biSize;
+    if (in->bmiHeader.biBitCount <= 8)
+        size += in->bmiHeader.biClrUsed * sizeof(RGBQUAD);
+
     if( out )
     {
-        memcpy( out, in, sizeof (BITMAPINFO) );
+        memcpy( out, in, size );
         out->bmiHeader.biCompression = BI_RGB;
         out->bmiHeader.biSizeImage = in->bmiHeader.biHeight
                                    * in->bmiHeader.biWidth *4;
+        return ICERR_OK;
     }
-
-    return sizeof (BITMAPINFO);
+    return size;
 }
 
 LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
