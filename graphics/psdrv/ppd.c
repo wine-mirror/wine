@@ -30,16 +30,39 @@ static struct {
   char *PSName;
   WORD WinPage;
 } PageTrans[] = {
-  {"A4",	DMPAPER_A4},
-  {"Letter",	DMPAPER_LETTER},
-  {"Legal",	DMPAPER_LEGAL},
-  {"Executive",	DMPAPER_EXECUTIVE},
-  {"Comm10",	DMPAPER_ENV_10},
-  {"Monarch",	DMPAPER_ENV_MONARCH},
-  {"DL",	DMPAPER_ENV_DL},
-  {"C5",	DMPAPER_ENV_C5},
-  {"B5",	DMPAPER_ENV_B5},
-  {NULL,	0}
+  {"A2",                      DMPAPER_A2},
+  {"A3",                      DMPAPER_A3},
+  {"A4",                      DMPAPER_A4},
+  {"A5",                      DMPAPER_A5},
+  {"B4",                      DMPAPER_B4},
+  {"B5",                      DMPAPER_B5},
+  {"C4",                      DMPAPER_ENV_C4},
+  {"C5",                      DMPAPER_ENV_C5},
+  {"C6",                      DMPAPER_ENV_C6},
+  {"Comm10",                  DMPAPER_ENV_10},
+  {"DL",                      DMPAPER_ENV_DL},
+  {"DoublePostcard",          DMPAPER_DBL_JAPANESE_POSTCARD},
+  {"Env9",                    DMPAPER_ENV_9},
+  {"Env10",                   DMPAPER_ENV_10},
+  {"Env11",                   DMPAPER_ENV_11},
+  {"Env12",                   DMPAPER_ENV_12},
+  {"Env14",                   DMPAPER_ENV_14},
+  {"EnvC4",                   DMPAPER_ENV_C4},
+  {"EnvC5",                   DMPAPER_ENV_C5},
+  {"EnvC6",                   DMPAPER_ENV_C6},
+  {"EnvDL",                   DMPAPER_ENV_DL},
+  {"EnvISOB4",                DMPAPER_ENV_B4},
+  {"EnvISOB5",                DMPAPER_ENV_B5},
+  {"EnvISOB6",                DMPAPER_ENV_B6},
+  {"EnvMonarch",              DMPAPER_ENV_MONARCH},
+  {"Executive",               DMPAPER_EXECUTIVE},
+  {"FanFoldGerman",           DMPAPER_FANFOLD_STD_GERMAN},
+  {"FanFoldGermanLegal",      DMPAPER_FANFOLD_LGL_GERMAN},
+  {"Legal",                   DMPAPER_LEGAL},
+  {"Letter",                  DMPAPER_LETTER},
+  {"Monarch",                 DMPAPER_ENV_MONARCH},
+  {"Postcard",                DMPAPER_JAPANESE_POSTCARD},
+  {NULL,                      0}
 };
 
 /* the same for bin names */
@@ -48,10 +71,12 @@ static struct {
   char *PSName;
   WORD WinBin;
 } BinTrans[] = {
-  {"Lower",		DMBIN_LOWER},
-  {"Upper",		DMBIN_UPPER},
   {"Envelope",		DMBIN_ENVELOPE},
   {"LargeCapacity",	DMBIN_LARGECAPACITY},
+  {"Lower",		DMBIN_LOWER},
+  {"ManualFeed",        DMBIN_MANUAL},
+  {"Middle",            DMBIN_MIDDLE},
+  {"Upper",		DMBIN_UPPER},
   {NULL,		0}
 };
 
