@@ -1377,29 +1377,66 @@ static INT WINAPI TREEVIEW_CallBackCompare(
 }
 
 /***************************************************************************
+ * Treeview native sort routine: sort on item text.
+ */
+static INT WINAPI TREEVIEW_SortOnName ( 
+  LPVOID first, 
+  LPVOID second, 
+  LPARAM tvInfoPtr)
+{
+  HWND hwnd=(HWND) tvInfoPtr;
+  char *txt1, *txt2;
+  TREEVIEW_ITEM *item;
+
+	
+  item=(TREEVIEW_ITEM *) first;
+  if (item->pszText==LPSTR_TEXTCALLBACKA)  {
+	 TREEVIEW_SendDispInfoNotify (hwnd, item, TVN_GETDISPINFO, TVIF_TEXT);
+	}
+  txt1=item->pszText;
+
+  item=(TREEVIEW_ITEM *) second;
+  if (item->pszText==LPSTR_TEXTCALLBACKA)  {
+	 TREEVIEW_SendDispInfoNotify (hwnd, item, TVN_GETDISPINFO, TVIF_TEXT);
+	}
+  txt2=item->pszText;
+
+  return -strcmp (txt1,txt2);
+}
+
+/***************************************************************************
  * Setup the treeview structure with regards of the sort method
  * and sort the children of the TV item specified in lParam
+ * fRecurse: currently unused. Should be zero.
+ * parent: if pSort!=NULL, should equal pSort->hParent.
+ *         otherwise, item which child items are to be sorted.
+ * pSort:  sort method info. if NULL, sort on item text.
+ *         if non-NULL, sort on item's lParam content, and let the
+ *         application decide what that means. See also TVM_SORTCHILDRENCB.
  */
-LRESULT WINAPI TREEVIEW_SortChildrenCB(
+
+LRESULT WINAPI TREEVIEW_Sort (
   HWND   hwnd, 
-  WPARAM wParam, 
-  LPARAM lParam)
+  BOOL   fRecurse, 
+  HTREEITEM parent,
+  LPTVSORTCB pSort 
+  )
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
   TREEVIEW_ITEM *sortMe  = NULL; /* Node for which we sort the children */
 
   /* Obtain the TVSORTBC struct */
-  infoPtr->pCallBackSort = (LPTVSORTCB)lParam;
+  infoPtr->pCallBackSort = pSort;
 
   /* Check for a valid handle to the parent item */
-  if (!TREEVIEW_ValidItem(infoPtr, infoPtr->pCallBackSort->hParent))
+  if (!TREEVIEW_ValidItem(infoPtr, parent))
   {
-    ERR ("invalid item hParent=%d\n", (INT)infoPtr->pCallBackSort->hParent);
+    ERR ("invalid item hParent=%d\n", (INT)parent);
     return FALSE;
   }
 
   /* Obtain the parent node to sort */  
-  sortMe = &infoPtr->items[ (INT)infoPtr->pCallBackSort->hParent ];
+  sortMe = &infoPtr->items[ (INT)parent ];
 
   /* Make sure there is something to sort */
   if ( sortMe->cChildren > 1 ) 
@@ -1429,10 +1466,16 @@ LRESULT WINAPI TREEVIEW_SortChildrenCB(
     } while ( itemHandle != NULL );
 
     /* let DPA perform the sort activity */
-    DPA_Sort(
-      sortList,                  /* what  */ 
-      TREEVIEW_CallBackCompare,  /* how   */
-      hwnd);                     /* owner */
+	if (pSort) 
+    	DPA_Sort(
+      		sortList,                  /* what  */ 
+      		TREEVIEW_CallBackCompare,  /* how   */
+      		hwnd);                     /* owner */
+	else 
+		DPA_Sort (
+			sortList,                  /* what  */
+      		TREEVIEW_SortOnName,       /* how   */
+			hwnd);                     /* owner */
 
     /* 
      * Reorganized TREEVIEW_ITEM structures. 
@@ -1471,6 +1514,35 @@ LRESULT WINAPI TREEVIEW_SortChildrenCB(
   }
   return FALSE;
 }
+
+
+/***************************************************************************
+ * Setup the treeview structure with regards of the sort method
+ * and sort the children of the TV item specified in lParam
+ */
+LRESULT WINAPI TREEVIEW_SortChildrenCB(
+  HWND   hwnd, 
+  WPARAM wParam, 
+  LPARAM lParam
+  )
+{
+ LPTVSORTCB pSort=(LPTVSORTCB) lParam;
+
+ return TREEVIEW_Sort (hwnd, wParam, pSort->hParent, pSort);
+}
+
+
+/***************************************************************************
+ * Sort the children of the TV item specified in lParam.
+ */
+LRESULT WINAPI TREEVIEW_SortChildren (
+  HWND   hwnd, 
+  WPARAM wParam, 
+  LPARAM lParam)
+{
+ return TREEVIEW_Sort (hwnd, (BOOL) wParam, (HTREEITEM) lParam, NULL);
+}
+
 
 
 /* the method used below isn't the most memory-friendly, but it avoids 
@@ -1702,7 +1774,8 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
                 sibItem=&infoPtr->items [(INT)sibItem->sibling];
               }
 			if (sibItem->hItem!=ptdi->hInsertAfter) {
-			 ERR("tried to insert item after nonexisting handle.\n");
+			 ERR("tried to insert item after nonexisting handle %d.\n",
+                      (INT) ptdi->hInsertAfter);
 			 break;
 			}
 			prevsib=sibItem;
@@ -3420,8 +3493,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return TREEVIEW_CreateDragImage (hwnd, wParam, lParam);
   
     	case TVM_SORTCHILDREN:
-      		FIXME("Unimplemented msg TVM_SORTCHILDREN\n");
-      		return 0;
+      		return TREEVIEW_SortChildren (hwnd, wParam, lParam);
   
     	case TVM_ENSUREVISIBLE:
       		FIXME("Unimplemented msg TVM_ENSUREVISIBLE\n");
