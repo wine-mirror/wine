@@ -3645,6 +3645,10 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     }
     iterator_rangeitems(&j, colRange);
 
+    /* in full row select, we _have_ to draw the main item */
+    if (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)
+	j.nSpecial = 0;
+
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
     
@@ -3658,7 +3662,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    Position.x += Origin.x;
 	    Position.y += Origin.y;
 
-	    if (rgntype == COMPLEXREGION)
+	    if (rgntype == COMPLEXREGION && !((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) && j.nItem == 0))
 	    {
 		LISTVIEW_GetHeaderRect(infoPtr, j.nItem, &rcItem);
 		rcItem.top = 0;
