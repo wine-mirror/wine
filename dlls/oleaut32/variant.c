@@ -1017,6 +1017,10 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	case( VT_I4 ):
 		switch( vtFrom )
 		{
+		case( VT_EMPTY ):
+		        V_UNION(pd,lVal) = 0;
+		        res = S_OK;
+		    	break;
 		case( VT_I1 ):
 			res = VarI4FromI1( V_UNION(ps,cVal), &V_UNION(pd,lVal) );
 			break;
