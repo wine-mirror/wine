@@ -1225,6 +1225,11 @@ end:
 /***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
  *           CoGetClassObject [OLE32.16]
+ *
+ * FIXME.  If request allows of several options and there is a failure 
+ *         with one (other than not being registered) do we try the
+ *         others or return failure?  (E.g. inprocess is registered but
+ *         the DLL is not found but the server version works)
  */
 HRESULT WINAPI CoGetClassObject(
     REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
@@ -1233,12 +1238,14 @@ HRESULT WINAPI CoGetClassObject(
     LPUNKNOWN	regClassObject;
     HRESULT	hres = E_UNEXPECTED;
     char	xclsid[80];
-    WCHAR dllName[MAX_PATH+1];
-    DWORD dllNameLen = sizeof(dllName);
+    WCHAR ProviderName[MAX_PATH+1];
+    DWORD ProviderNameLen = sizeof(ProviderName);
     HINSTANCE hLibrary;
     typedef HRESULT CALLBACK (*DllGetClassObjectFunc)(REFCLSID clsid,
 			     REFIID iid, LPVOID *ppv);
     DllGetClassObjectFunc DllGetClassObject;
+    HKEY key;
+    char buf[200];
 
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
 
@@ -1273,57 +1280,69 @@ HRESULT WINAPI CoGetClassObject(
       return hres;
     }
 
-    /* out of process and remote servers not supported yet */
-    if (     ((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext)
-        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)
-    ){
-        FIXME("%s %s not supported!\n",
-		(dwClsContext&CLSCTX_LOCAL_SERVER)?"CLSCTX_LOCAL_SERVER":"",
-		(dwClsContext&CLSCTX_REMOTE_SERVER)?"CLSCTX_REMOTE_SERVER":""
-	);
-	return E_ACCESSDENIED;
-    }
-
-    if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext) {
-        HKEY key;
-	char buf[200];
-
+    /* Then try for in-process */
+    if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)
+    {
+	memset(ProviderName,0,sizeof(ProviderName));
 	sprintf(buf,"CLSID\\%s\\InprocServer32",xclsid);
-        hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key);
-
-	if (hres != ERROR_SUCCESS) {
-	    return REGDB_E_CLASSNOTREG;
+        if (((hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key)) != ERROR_SUCCESS) ||
+            ((hres = RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)ProviderName,&ProviderNameLen)),
+             RegCloseKey (key),
+             hres != ERROR_SUCCESS))
+        {
+            hres = REGDB_E_CLASSNOTREG;
+        }
+        /* Don't ask me.  MSDN says that CoGetClassObject does NOT call CoLoadLibrary */
+        else if ((hLibrary = CoLoadLibrary(ProviderName, TRUE)) == 0)
+        {
+	    FIXME("couldn't load InprocServer32 dll %s\n", debugstr_w(ProviderName));
+	    hres = E_ACCESSDENIED; /* or should this be CO_E_DLLNOTFOUND? */
 	}
-
-	memset(dllName,0,sizeof(dllName));
-	hres= RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)dllName,&dllNameLen);
-	if (hres)
-		return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
-	RegCloseKey(key);
-	TRACE("found InprocServer32 dll %s\n", debugstr_w(dllName));
-
-	/* open dll, call DllGetClassObject */
-	hLibrary = CoLoadLibrary(dllName, TRUE);
-	if (hLibrary == 0) {
-	    FIXME("couldn't load InprocServer32 dll %s\n", debugstr_w(dllName));
-	    return E_ACCESSDENIED; /* or should this be CO_E_DLLNOTFOUND? */
-	}
-	DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(hLibrary, "DllGetClassObject");
-	if (!DllGetClassObject) {
+	else if (!(DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(hLibrary, "DllGetClassObject")))
+        {
 	    /* not sure if this should be called here CoFreeLibrary(hLibrary);*/
-	    FIXME("couldn't find function DllGetClassObject in %s\n", debugstr_w(dllName));
-	    return E_ACCESSDENIED;
+	    FIXME("couldn't find function DllGetClassObject in %s\n", debugstr_w(ProviderName));
+	    hres = E_ACCESSDENIED;
 	}
-
-	/*
-	 * Ask the DLL for its class object. (there was a note here about class
-	 * factories but this is good.
-	 */
-	return DllGetClassObject(rclsid, iid, ppv);
+        else
+        {
+	    /* Ask the DLL for its class object. (there was a note here about
+	     * class factories but this is good.
+	     */
+	    return DllGetClassObject(rclsid, iid, ppv);
+        }
     }
+    
+
+    /* Finally try out of process */
+    /* out of process and remote servers not supported yet */
+    if (CLSCTX_LOCAL_SERVER & dwClsContext)
+    {
+	memset(ProviderName,0,sizeof(ProviderName));
+	sprintf(buf,"CLSID\\%s\\LocalServer32",xclsid);
+        if (((hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key)) != ERROR_SUCCESS) ||
+            ((hres = RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)ProviderName,&ProviderNameLen)),
+             RegCloseKey (key),
+             hres != ERROR_SUCCESS))
+        {
+            hres = REGDB_E_CLASSNOTREG;
+        }
+        else
+        {
+            /* CO_E_APPNOTFOUND if no exe */
+            FIXME("CLSCTX_LOCAL_SERVER %s registered but not yet supported!\n",debugstr_w(ProviderName));
+            hres = E_ACCESSDENIED;
+	}
+    }
+
+    if (CLSCTX_REMOTE_SERVER & dwClsContext)
+    {
+        FIXME ("CLSCTX_REMOTE_SERVER not supported\n");
+        hres = E_ACCESSDENIED;
+    }
+
     return hres;
 }
-
 /***********************************************************************
  *        CoResumeClassObjects (OLE32.173)
  *
