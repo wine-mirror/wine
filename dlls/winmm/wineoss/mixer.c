@@ -395,19 +395,22 @@ static BOOL	MIX_SetRecSrc(struct mixer* mix, unsigned mask)
 static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSA lpCaps, DWORD dwSize)
 {
     struct mixer*	mix;
+    MIXERCAPSA		capsA;
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
     if (!(mix = MIX_Get(wDevID))) return MMSYSERR_BADDEVICEID;
 
-    lpCaps->wMid = WINE_MIXER_MANUF_ID;
-    lpCaps->wPid = WINE_MIXER_PRODUCT_ID;
-    lpCaps->vDriverVersion = WINE_MIXER_VERSION;
-    strcpy(lpCaps->szPname, WINE_MIXER_NAME);
+    capsA.wMid = WINE_MIXER_MANUF_ID;
+    capsA.wPid = WINE_MIXER_PRODUCT_ID;
+    capsA.vDriverVersion = WINE_MIXER_VERSION;
+    strcpy(capsA.szPname, WINE_MIXER_NAME);
 
-    lpCaps->cDestinations = 2; /* speakers & record */
-    lpCaps->fdwSupport = 0; /* No bits defined yet */
+    capsA.cDestinations = 2; /* speakers & record */
+    capsA.fdwSupport = 0; /* No bits defined yet */
+
+    memcpy(lpCaps, &capsA, min(dwSize, sizeof(capsA)));
 
     return MMSYSERR_NOERROR;
 }
