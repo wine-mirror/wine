@@ -5885,7 +5885,7 @@ static BOOL LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
 	if (infoPtr->clrBk != CLR_NONE) DeleteObject(infoPtr->hBkBrush);
 	infoPtr->clrBk = clrBk;
 	if (clrBk == CLR_NONE)
-	    infoPtr->hBkBrush = GetClassLongW(infoPtr->hwndSelf, GCL_HBRBACKGROUND);
+	    infoPtr->hBkBrush = (HBRUSH)GetClassLongW(infoPtr->hwndSelf, GCL_HBRBACKGROUND);
 	else
 	    infoPtr->hBkBrush = CreateSolidBrush(clrBk);
 	LISTVIEW_InvalidateList(infoPtr);
@@ -6244,7 +6244,7 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 	    if (Header_GetItemW(infoPtr->hwndHeader, nColumn, (LPARAM)&hdi))
 	    {
 		HDC hdc = GetDC(infoPtr->hwndSelf);
-		HFONT old_font = SelectObject(hdc, SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0, 0));
+		HFONT old_font = SelectObject(hdc, (HFONT)SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0, 0));
 		SIZE size;
 
 		if (GetTextExtentPoint32W(hdc, hdi.pszText, lstrlenW(hdi.pszText), &size))
@@ -8530,7 +8530,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DLGC_WANTCHARS | DLGC_WANTARROWS;
 
   case WM_GETFONT:
-    return infoPtr->hFont;
+    return (LRESULT)infoPtr->hFont;
 
   case WM_HSCROLL:
     return LISTVIEW_HScroll(infoPtr, (INT)LOWORD(wParam), 0, (HWND)lParam);
@@ -8709,7 +8709,7 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 	    GetWindowRect(infoPtr->hwndEdit, &rect);
 
             /* Select font to get the right dimension of the string */
-            hFont = SendMessageW(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
+            hFont = (HFONT)SendMessageW(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
             if(hFont != 0)
             {
                 hOldFont = SelectObject(hdc, hFont);
@@ -8883,7 +8883,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style,
     HDC hdc;
     HDC hOldFont=0;
     TEXTMETRICW textMetric;
-    HINSTANCE hinst = GetWindowLongW(infoPtr->hwndSelf, GWL_HINSTANCE);
+    HINSTANCE hinst = (HINSTANCE)GetWindowLongW(infoPtr->hwndSelf, GWL_HINSTANCE);
 
     TRACE("(text=%s, ..., isW=%d)\n", debugtext_t(text, isW), isW);
 
@@ -8916,7 +8916,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style,
 	(isW ? SetWindowLongW(hedit, GWL_WNDPROC, (LONG)EditLblWndProcW) :
                SetWindowLongA(hedit, GWL_WNDPROC, (LONG)EditLblWndProcA) );
 
-    SendMessageW(hedit, WM_SETFONT, infoPtr->hFont, FALSE);
+    SendMessageW(hedit, WM_SETFONT, (WPARAM)infoPtr->hFont, FALSE);
 
     return hedit;
 }
