@@ -251,14 +251,22 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
       <sect2>
         <title>With Visual C++</title>
 	<screen>
-	Visual Studio 6 users:
-	- MSVC headers may not work well, try with Wine headers
-	- Ensure that you have the "processor pack" from
-	  <ulink url="http://msdn.microsoft.com/vstudio/downloads/tools/ppack/default.aspx">http://msdn.microsoft.com/vstudio/downloads/tools/ppack/default.aspx</>
-	  as well as the latest service packs.  The processor pack fixes <emphasis>"error C2520: conversion from unsigned
-	   __int64 to double not implemented, use signed __int64"</>
+	
 	</screen>
         <itemizedlist>
+          <listitem><para>
+            If you are using Visual Studio 6, make sure you have the
+            "processor pack" from
+            <ulink url="http://msdn.microsoft.com/vstudio/downloads/tools/ppack/default.aspx">http://msdn.microsoft.com/vstudio/downloads/tools/ppack/default.aspx</>.
+            The processor pack fixes <emphasis>"error C2520: conversion from
+            unsigned __int64 to double not implemented, use signed __int64"</>.
+	    However note that the "processor pack" is incompatible with
+            Visual Studio 6.0 Standard Edition, and with the Visual Studio 6
+            Service Pack 6. If you are using Visual Studio 7 or greater you
+            do not need the processor pack. In either case it is recommended
+            to the most recent compatible Visual Studio
+            <ulink url="http://msdn.microsoft.com/vstudio/downloads/updates/sp/">service pack</>.
+          </para></listitem>
           <listitem><para>
             get the Wine sources
           </para></listitem>
@@ -280,9 +288,20 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
             On the Windows machine, open the <filename>winetest.dsw</>
             workspace. This will load each test's project. For each test there
             are two configurations: one compiles the test with the Wine
-            headers, and the other uses the Visual C++ headers. Some tests
-            will compile fine with the former, but most will require the
-            latter.
+            headers, and the other uses the Microsoft headers.
+          </para></listitem>
+          <listitem><para>
+            If you choose the "Win32 MSVC Headers" configuration, most of the
+            tests will not compile with the regular Visual Studio headers. So
+            to use this configuration, download and install a recent
+            <ulink url="http://www.microsoft.com/msdownload/platformsdk/sdkupdate/">Platform SDK</>
+            (the download requires Internet Explorer!), as well as the latest
+            <ulink url="http://msdn.microsoft.com/library/default.asp?url=/downloads/list/directx.asp">DirectX SDK</>.
+            Then, <ulink url="http://msdn.microsoft.com/library/default.asp?url=/library/EN-US/sdkintro/sdkintro/installing_the_platform_sdk_with_visual_studio.asp">configure Visual Studio</>
+            to use these SDK's headers and libraries. Alternately you could go
+            to the <menuchoice><guimenu>Project</> <guimenu>Settings...</></>
+            menu and modify the settings appropriately, but you would then
+            have to redo this whenever you rerun msvcmaker.
           </para></listitem>
           <listitem><para>
             Open the <menuchoice><guimenu>Build</> <guimenu>Batch
