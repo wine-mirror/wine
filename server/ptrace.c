@@ -135,7 +135,7 @@ void sigchld_callback(void)
 }
 
 /* wait for a ptraced child to get a certain signal */
-static void wait4_thread( struct thread *thread, int signal )
+static int wait4_thread( struct thread *thread, int signal )
 {
     int res, status;
 
@@ -150,10 +150,11 @@ static void wait4_thread( struct thread *thread, int signal )
                 thread->attached = 0;
             }
             else perror( "wait4" );
-            return;
+            return 0;
         }
         res = handle_child_status( thread, res, status, signal );
     } while (res && res != signal);
+    return (thread->unix_pid != -1);
 }
 
 /* return the Unix pid to use in ptrace calls for a given thread */
@@ -199,8 +200,7 @@ static int attach_thread( struct thread *thread )
     }
     if (debug_level) fprintf( stderr, "%04x: *attached*\n", thread->id );
     thread->attached = 1;
-    wait4_thread( thread, SIGSTOP );
-    return 1;
+    return wait4_thread( thread, SIGSTOP );
 }
 
 /* detach from a Unix thread and kill it */
@@ -260,8 +260,8 @@ int suspend_for_ptrace( struct thread *thread )
 
     if (thread->attached)
     {
-        send_thread_signal( thread, SIGSTOP );
-        wait4_thread( thread, SIGSTOP );
+        if (!send_thread_signal( thread, SIGSTOP )) goto error;
+        if (!wait4_thread( thread, SIGSTOP )) goto error;
         return 1;
     }
     if (attach_thread( thread )) return 1;
