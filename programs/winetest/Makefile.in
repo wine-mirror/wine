@@ -23,6 +23,7 @@ TESTS = \
 	comctl32 \
 	gdi32 \
 	kernel32 \
+	msacm32 \
 	msvcrt \
 	netapi32 \
 	ntdll \
@@ -63,6 +64,8 @@ gdi32_test.exe$(DLLEXT): $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 kernel32_test.exe$(DLLEXT): $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+msacm32_test.exe$(DLLEXT): $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msvcrt_test.exe$(DLLEXT): $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT) $@ && $(STRIP) $@
 netapi32_test.exe$(DLLEXT): $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT)
