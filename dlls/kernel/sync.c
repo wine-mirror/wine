@@ -1477,7 +1477,7 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
                         LPSECURITY_ATTRIBUTES sa, DWORD size )
 {
     static unsigned  index = 0;
-    char        name[64];
+    WCHAR       name[64];
     HANDLE      hr, hw;
     unsigned    in_index = index;
 
@@ -1485,15 +1485,19 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
     /* generate a unique pipe name (system wide) */
     do
     {
-        sprintf(name, "\\\\.\\pipe\\Win32.Pipes.%08lu.%08u", GetCurrentProcessId(), ++index);
-        hr = CreateNamedPipeA(name, PIPE_ACCESS_INBOUND, 
+        static const WCHAR nameFmt[] = { '\\','\\','.','\\','p','i','p','e',
+         '\\','W','i','n','3','2','.','P','i','p','e','s','.','%','0','8','l',
+         'u','.','%','0','8','u','\0' };
+        snprintfW(name, sizeof(name) / sizeof(name[0]), nameFmt,
+                  GetCurrentProcessId(), ++index);
+        hr = CreateNamedPipeW(name, PIPE_ACCESS_INBOUND, 
                               PIPE_TYPE_BYTE | PIPE_WAIT, 1, size, size, 
                               NMPWAIT_USE_DEFAULT_WAIT, sa);
     } while (hr == INVALID_HANDLE_VALUE && index != in_index);
     /* from completion sakeness, I think system resources might be exhausted before this happens !! */
     if (hr == INVALID_HANDLE_VALUE) return FALSE;
 
-    hw = CreateFileA(name, GENERIC_WRITE, 0, sa, OPEN_EXISTING, 0, 0);
+    hw = CreateFileW(name, GENERIC_WRITE, 0, sa, OPEN_EXISTING, 0, 0);
     if (hw == INVALID_HANDLE_VALUE) 
     {
         CloseHandle(hr);
