@@ -41,7 +41,7 @@ typedef struct
 typedef struct
 {
     
-    OPENFILENAMEA ofnInfos;
+    LPOPENFILENAMEA ofnInfos;
     struct {
         IShellBrowser *FOIShellBrowser; 
         IShellFolder *FOIShellFolder;
@@ -87,6 +87,13 @@ typedef struct
 #define IDS_CREATEFILE                  116
 #define IDS_CREATEFOLDER_DENIED         117
 #define IDS_FILEOPEN_CAPTION            118
+
+/* File Dialog Tooltips string IDs */
+
+#define IDS_UPFOLDER                    150
+#define IDS_NEWFOLDER                   151
+#define IDS_LISTVIEW                    152
+#define IDS_REPORTVIEW                  153
 
 #define IDC_OPENREADONLY                chx1
 
@@ -207,5 +214,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
 
 
 LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
+BOOL EnumSelectedPidls(IShellView *ppshv, UINT nPidlIndex, LPITEMIDLIST *pidlSelected);
+UINT GetNumSelected(IShellView *ppshv);
 
 #endif /*SHBROWSER_H*/

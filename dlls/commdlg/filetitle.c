@@ -28,7 +28,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 
 	TRACE("(%p %p %d); \n", lpFile, lpTitle, cbBuf);
 
-	if(lpFile == NULL || (lpTitle == NULL && cbBuf != 0))
+	if(lpFile == NULL || lpTitle == NULL)
 		return -1;
 
 	len = strlen(lpFile);
@@ -62,8 +62,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 	if(cbBuf < len)
 		return len;
 
-       /* The lpTitle buffer is big enough, perform a simple copy */
-	strcpy(lpTitle, &lpFile[i]);
+	strncpy(lpTitle, &lpFile[i], len);
 	return 0;
 }
 

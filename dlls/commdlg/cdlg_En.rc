@@ -316,6 +316,13 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "File does not exist\nDo you want to create file"
 }
 
+STRINGTABLE DISCARDABLE
+{
+    IDS_UPFOLDER         "Up One Level"
+    IDS_NEWFOLDER        "Create New Folder"
+    IDS_LISTVIEW         "List"
+    IDS_REPORTVIEW       "Details"
+} 
 
 STRINGTABLE DISCARDABLE
 {
