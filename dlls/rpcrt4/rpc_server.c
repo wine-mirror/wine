@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -42,6 +43,7 @@ static RpcServerProtseq* protseqs;
 static RpcServerInterface* ifs;
 
 static CRITICAL_SECTION server_cs = CRITICAL_SECTION_INIT("RpcServer");
+static CRITICAL_SECTION listen_cs = CRITICAL_SECTION_INIT("RpcListen");
 static BOOL std_listen;
 static LONG listen_count = -1;
 static HANDLE mgr_event, server_thread;
@@ -95,7 +97,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     }
 #endif
     if (dwRead != sizeof(hdr)) {
-      TRACE("protocol error\n");
+      if (dwRead) TRACE("protocol error: <hdrsz == %d, dwRead == %lu>\n", sizeof(hdr), dwRead);
       break;
     }
 
@@ -118,7 +120,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     }
 #endif
     if (dwRead != hdr.len) {
-      TRACE("protocol error\n");
+      TRACE("protocol error: <bodylen == %d, dwRead == %lu>\n", hdr.len, dwRead);
       break;
     }
 
@@ -231,7 +233,8 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
     /* start waiting */
     res = WaitForMultipleObjects(count, objs, FALSE, INFINITE);
     if (res == WAIT_OBJECT_0) {
-      if (listen_count == -1) break;
+      ResetEvent(m_event);
+      if (!std_listen) break;
     }
     else if (res == WAIT_FAILED) {
       ERR("wait failed\n");
@@ -279,23 +282,32 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
 static void RPCRT4_start_listen(void)
 {
   TRACE("\n");
-  if (!InterlockedIncrement(&listen_count)) {
-    mgr_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);
-  }
-  else SetEvent(mgr_event);
-}
 
-/* not used (WTF?) ---------------------------
+  EnterCriticalSection(&listen_cs);
+  if (! ++listen_count) {
+    if (!mgr_event) mgr_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    std_listen = TRUE;
+    server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);
+    LeaveCriticalSection(&listen_cs);
+  } else {
+    LeaveCriticalSection(&listen_cs);
+    SetEvent(mgr_event);
+  }
+}
 
 static void RPCRT4_stop_listen(void)
 {
-  HANDLE m_event = mgr_event;
-  if (InterlockedDecrement(&listen_count) < 0)
-    SetEvent(m_event);
+  EnterCriticalSection(&listen_cs);
+  if (listen_count == -1)
+    LeaveCriticalSection(&listen_cs);
+  else if (--listen_count == -1) {
+    std_listen = FALSE;
+    LeaveCriticalSection(&listen_cs);
+    SetEvent(mgr_event);
+  } else
+    LeaveCriticalSection(&listen_cs);
+  assert(listen_count > -2);
 }
-
---------------------- */
 
 static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps)
 {
@@ -307,7 +319,7 @@ static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps)
   protseqs = ps;
   LeaveCriticalSection(&server_cs);
 
-  if (listen_count >= 0) SetEvent(mgr_event);
+  if (std_listen) SetEvent(mgr_event);
 
   return RPC_S_OK;
 }
@@ -535,6 +547,28 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
 }
 
 /***********************************************************************
+ *             RpcServerUnregisterIf (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, UINT WaitForCallsToComplete )
+{
+  FIXME("(IfSpec == (RPC_IF_HANDLE)^%p, MgrTypeUuid == %s, WaitForCallsToComplete == %u): stub\n",
+    IfSpec, debugstr_guid(MgrTypeUuid), WaitForCallsToComplete);
+
+  return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcServerUnregisterIfEx (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcServerUnregisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, int RundownContextHandles )
+{
+  FIXME("(IfSpec == (RPC_IF_HANDLE)^%p, MgrTypeUuid == %s, RundownContextHandles == %d): stub\n",
+    IfSpec, debugstr_guid(MgrTypeUuid), RundownContextHandles);
+
+  return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcServerRegisterAuthInfoA (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( LPSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
@@ -563,14 +597,19 @@ RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT 
 {
   TRACE("(%u,%u,%u)\n", MinimumCallThreads, MaxCalls, DontWait);
 
-  if (std_listen)
-    return RPC_S_ALREADY_LISTENING;
-
   if (!protseqs)
     return RPC_S_NO_PROTSEQS_REGISTERED;
 
-  std_listen = TRUE;
+  EnterCriticalSection(&listen_cs);
+
+  if (std_listen) {
+    LeaveCriticalSection(&listen_cs);
+    return RPC_S_ALREADY_LISTENING;
+  }
+
   RPCRT4_start_listen();
+
+  LeaveCriticalSection(&listen_cs);
 
   if (DontWait) return RPC_S_OK;
 
@@ -585,15 +624,47 @@ RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
   RPC_STATUS rslt = RPC_S_OK;
 
   TRACE("\n");
+
+  EnterCriticalSection(&listen_cs);
+
   if (!std_listen)
-    if ( (rslt = RpcServerListen(1, 0, TRUE)) != RPC_S_OK )
+    if ( (rslt = RpcServerListen(1, 0, TRUE)) != RPC_S_OK ) {
+      LeaveCriticalSection(&listen_cs);
       return rslt;
+    }
   
+  LeaveCriticalSection(&listen_cs);
+
   while (std_listen) {
-    WaitForSingleObject(mgr_event, 1000);
+    WaitForSingleObject(mgr_event, INFINITE);
+    if (!std_listen) {
+      Sleep(100); /* don't spin violently */
+      TRACE("spinning.\n");
+    }
   }
 
   return rslt;
+}
+
+/***********************************************************************
+ *             RpcMgmtStopServerListening (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtStopServerListening ( RPC_BINDING_HANDLE Binding )
+{
+  TRACE("(Binding == (RPC_BINDING_HANDLE)^%p)\n", Binding);
+
+  if (Binding) {
+    FIXME("client-side invocation not implemented.\n");
+    return RPC_S_WRONG_KIND_OF_BINDING;
+  }
+  
+  /* hmm... */
+  EnterCriticalSection(&listen_cs);
+  while (std_listen)
+    RPCRT4_stop_listen();
+  LeaveCriticalSection(&listen_cs);
+
+  return RPC_S_OK;
 }
 
 /***********************************************************************

@@ -98,7 +98,7 @@ init	RPCRT4_LibMain
 @ stub RpcMgmtSetParameter # win9x
 @ stub RpcMgmtSetServerStackSize
 @ stub RpcMgmtStatsVectorFree
-@ stub RpcMgmtStopServerListening
+@ stdcall RpcMgmtStopServerListening(ptr) RpcMgmtStopServerListening
 @ stdcall RpcMgmtWaitServerListen() RpcMgmtWaitServerListen
 @ stub RpcNetworkInqProtseqsA
 @ stub RpcNetworkInqProtseqsW
@@ -128,8 +128,8 @@ init	RPCRT4_LibMain
 @ stdcall RpcServerRegisterIfEx(ptr ptr ptr long long ptr)     RpcServerRegisterIfEx
 @ stdcall RpcServerRegisterIf2(ptr ptr ptr long long long ptr) RpcServerRegisterIf2
 @ stub RpcServerTestCancel
-@ stub RpcServerUnregisterIf
-@ stub RpcServerUnregisterIfEx # wxp
+@ stdcall RpcServerUnregisterIf(ptr ptr long)   RpcServerUnregisterIf
+@ stdcall RpcServerUnregisterIfEx(ptr ptr long) RpcServerUnregisterIfEx
 @ stub RpcServerUseAllProtseqs
 @ stub RpcServerUseAllProtseqsEx
 @ stub RpcServerUseAllProtseqsIf

@@ -865,14 +865,21 @@ RPC_STATUS WINAPI RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, LPWSTR
  *  Exists in win9x and winNT, but with different number of arguments
  *  (9x version has 3 arguments, NT has 2).
  */
+#ifdef WINNT
+RPC_STATUS WINAPI I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING_FN BlockingFn)
+#else
 RPC_STATUS WINAPI I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING_FN BlockingFn, unsigned long ServerTid )
+#endif
 {
   RpcBinding* bind = (RpcBinding*)Binding;
 
   TRACE( "(%p,%p,%ld): stub\n", Binding, BlockingFn, ServerTid );
 
   bind->BlockingFn = BlockingFn;
+
+  #ifndef WINNT
   bind->ServerTid = ServerTid;
+  #endif
 
   return RPC_S_OK;
 }

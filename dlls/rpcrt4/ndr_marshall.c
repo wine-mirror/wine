@@ -67,10 +67,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  * NdrConformantString:
  * 
  * What MS calls a ConformantString is, in DCE terminology,
- * a Varying Conformant String.
+ * a Varying-Conformant String.
  * [
  *   maxlen: DWORD (max # of CHARTYPE characters, inclusive of '\0')
- *   offset: DWORD (actual elements begin at (offset) CHARTYPE's into (data))
+ *   offset: DWORD (actual string data begins at (offset) CHARTYPE's
+ *           into unmarshalled string) 
  *   length: DWORD (# of CHARTYPE characters, inclusive of '\0')
  *   [ 
  *     data: CHARTYPE[maxlen]
@@ -199,7 +200,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
     len = LITTLE_ENDIAN_UINT32_READ(pStubMsg->Buffer);
     pStubMsg->Buffer += 4;
 
-    pStubMsg->Buffer += ofs;
+    c += ofs; /* presumably this will always be zero, otherwise the string is no good */
 
     while ((*c++ = *(pStubMsg->Buffer++)) != '\0') 
       ;
