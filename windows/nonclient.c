@@ -75,6 +75,21 @@ static HBITMAP16 hbitmapRestoreD = 0;
  (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
 
 /***********************************************************************
+ *           WIN_WindowNeedsWMBorder
+ *
+ * This method defines the rules for a window to have a WM border,
+ * caption...  It is used for consitency purposes.
+ */
+BOOL WIN_WindowNeedsWMBorder( DWORD style, DWORD exStyle )
+{
+    if (!(style & WS_CHILD) && Options.managed  &&
+        (((style & WS_CAPTION) == WS_CAPTION) ||
+         (style & WS_THICKFRAME) ||
+         (exStyle & WS_EX_DLGMODALFRAME))) return TRUE;
+    return FALSE;
+}
+
+/***********************************************************************
  *           NC_AdjustRect
  *
  * Compute the size of the window rectangle from the size of the
@@ -88,9 +103,7 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL menu,
 
     if(style & WS_ICONIC) return;
     /* Decide if the window will be managed (see CreateWindowEx) */
-    if (!(Options.managed && !(style & WS_CHILD) &&
-          ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
-           (exStyle & WS_EX_DLGMODALFRAME))))
+    if (!WIN_WindowNeedsWMBorder(style, exStyle))
     {
         if (HAS_THICKFRAME( style, exStyle ))
             InflateRect16( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );
@@ -156,9 +169,7 @@ NC_AdjustRectOuter95 (LPRECT16 rect, DWORD style, BOOL menu, DWORD exStyle)
     if(style & WS_ICONIC) return;
 
     /* Decide if the window will be managed (see CreateWindowEx) */
-    if (!(Options.managed && !(style & WS_CHILD) &&
-          ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
-           (exStyle & WS_EX_DLGMODALFRAME))))
+    if (!WIN_WindowNeedsWMBorder(style, exStyle))
     {
         if (HAS_THICKFRAME( style, exStyle ))
             InflateRect16( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );

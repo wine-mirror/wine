@@ -226,4 +226,8 @@ extern LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 extern LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 extern LRESULT WINAPI ComboLBWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
+/* generic method that returns TRUE if the window properties ask for a 
+   window manager type of border */
+extern BOOL WIN_WindowNeedsWMBorder( DWORD style, DWORD exStyle );
+
 #endif  /* __WINE_WIN_H */

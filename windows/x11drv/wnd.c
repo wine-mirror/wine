@@ -188,9 +188,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       
       /* Create "managed" windows only if a title bar or resizable */
       /* frame is required. */
-      if (Options.managed && ( ((cs->style & WS_CAPTION) == WS_CAPTION) ||
-                              (cs->style & WS_THICKFRAME) ||
-			      (cs->dwExStyle & WS_EX_DLGMODALFRAME)))
+        if (WIN_WindowNeedsWMBorder(cs->style, cs->dwExStyle))
         {
 	  win_attr.event_mask = ExposureMask | KeyPressMask |
 	    KeyReleaseMask | PointerMotionMask |
