@@ -196,8 +196,8 @@ BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len)
  */
 int	WINECON_GrabChanges(struct inner_data* data)
 {
-    struct console_renderer_event	evts[16];
-    int	i, num;
+    struct console_renderer_event	evts[256];
+    int	i, num, curs = -1;
     HANDLE h;
 
     SERVER_START_REQ( get_console_renderer_events )
@@ -211,6 +211,43 @@ int	WINECON_GrabChanges(struct inner_data* data)
     if (!num) {Trace(0, "hmm renderer signaled but no events available\n"); return 1;}
     
     /* FIXME: should do some event compression here (cursor pos, update) */
+    /* step 1: keep only last cursor pos event */
+    for (i = num - 1; i >= 0; i--)
+    {
+        if (evts[i].event == CONSOLE_RENDERER_CURSOR_POS_EVENT)
+        {
+            if (curs == -1)
+                curs = i;
+            else
+            {
+                memmove(&evts[i], &evts[i+1], (num - i - 1) * sizeof(evts[0]));
+                num--;
+            }
+        }
+    }
+    /* step 2: manage update events */
+    for (i = 0; i < num - 1; i++)
+    {
+        if (evts[i].event == CONSOLE_RENDERER_UPDATE_EVENT &&
+            evts[i+1].event == CONSOLE_RENDERER_UPDATE_EVENT)
+        {
+            /* contiguous */
+            if (evts[i].u.update.bottom + 1 == evts[i+1].u.update.top)
+            {
+                evts[i].u.update.bottom = evts[i+1].u.update.bottom;
+                memmove(&evts[i+1], &evts[i+2], (num - i - 2) * sizeof(evts[0]));
+                num--; i--;
+            }
+            /* already handled cases */
+            else if (evts[i].u.update.top <= evts[i+1].u.update.top &&
+                     evts[i].u.update.bottom >= evts[i+1].u.update.bottom)
+            {
+                memmove(&evts[i+1], &evts[i+2], (num - i - 2) * sizeof(evts[0]));
+                num--; i--;
+            }
+        }
+    }
+   
     Trace(1, "Change notification:");
     for (i = 0; i < num; i++)
     {
