@@ -2200,6 +2200,7 @@ enum message_type
 #define SET_CB_CLOSE     0x020
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
+#define CB_PROCESS       0x100
 
 
 /* Open a security token */

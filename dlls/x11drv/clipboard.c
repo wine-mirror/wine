@@ -321,6 +321,26 @@ static UINT wSeqNo = 0;
  *                Internal Clipboard implementation methods
  **************************************************************************/
 
+static Window thread_selection_wnd(void)
+{
+    Window w = x11drv_thread_data()->selection_wnd;
+
+    if (!w)
+    {
+        wine_tsx11_lock();
+        w = XCreateWindow(thread_display(), root_window, 0, 0, 1, 1, 0, screen_depth,
+            InputOutput, visual, 0, NULL);
+        wine_tsx11_unlock();
+
+        if (w)
+            x11drv_thread_data()->selection_wnd = w;
+        else
+            FIXME("Failed to create window. Fetching selection data will fail.\n");
+    }
+
+    return w;
+}
+
 /**************************************************************************
  *		X11DRV_InitClipboard
  */
@@ -1603,7 +1623,6 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
     unsigned long  remain;
     Atom*	   targetList=NULL;
     Window         w;
-    HWND           hWndClipWindow; 
     unsigned long  cSelectionTargets = 0;
 
     if (selectionAcquired & (S_PRIMARY | S_CLIPBOARD))
@@ -1613,20 +1632,12 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         return -1; /* Prevent self request */
     }
 
-    if (lpcbinfo->flags & CB_OWNER)
-        hWndClipWindow = lpcbinfo->hWndOwner;
-    else if (lpcbinfo->flags & CB_OPEN)
-        hWndClipWindow = lpcbinfo->hWndOpen;
-    else
-        hWndClipWindow = GetActiveWindow();
-
-    if (!hWndClipWindow)
+    w = thread_selection_wnd();
+    if (!w)
     {
-        WARN("No window available to retrieve selection!\n");
+        ERR("No window available to retrieve selection!\n");
         return -1;
     }
-
-    w = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
 
     /*
      * Query the selection owner for the TARGETS property
@@ -1714,20 +1725,16 @@ static BOOL X11DRV_CLIPBOARD_ReadClipboardData(UINT wFormat)
     Display *display = thread_display();
     BOOL bRet = FALSE;
     Bool res;
-
-    HWND hWndClipWindow = GetOpenClipboardWindow();
-    HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
-
     LPWINE_CLIPFORMAT lpFormat;
 
     TRACE("%d\n", wFormat);
 
     if (!selectionAcquired)
     {
-        Window w = X11DRV_get_whole_window(GetAncestor(hWnd, GA_ROOT));
+        Window w = thread_selection_wnd();
         if(!w)
         {
-            FIXME("No parent win found %p %p\n", hWnd, hWndClipWindow);
+            ERR("No window available to read selection data!\n");
             return FALSE;
         }
 
@@ -1988,9 +1995,9 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd, Time t
 
         X11DRV_CLIPBOARD_GetClipboardInfo(&cbinfo);
 
-        if (cbinfo.flags & CB_OWNER)
+        if (cbinfo.flags & CB_PROCESS)
         {
-            /* Since we're still the owner, this wasn't initiated by 
+            /* Since we're still the owner, this wasn't initiated by
                another Wine process */
             if (OpenClipboard(hwnd))
             {
@@ -2130,7 +2137,20 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
         if (!hWndClipWindow)
             hWndClipWindow = GetActiveWindow();
 
-        owner = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
+        hWndClipWindow = GetAncestor(hWndClipWindow, GA_ROOT);
+
+        if (GetCurrentThreadId() != GetWindowThreadProcessId(hWndClipWindow, NULL))
+        {
+            TRACE("Thread %lx is acquiring selection with thread %lx's window %p\n",
+                GetCurrentThreadId(),
+                GetWindowThreadProcessId(hWndClipWindow, NULL),
+                hWndClipWindow);
+            if (!SendMessageW(hWndClipWindow, WM_X11DRV_ACQUIRE_SELECTION, 0, 0))
+                ERR("Failed to acquire selection\n");
+            return;
+        }
+
+        owner = X11DRV_get_whole_window(hWndClipWindow);
 
         wine_tsx11_lock();
         /* Grab PRIMARY selection if not owned */

@@ -3130,6 +3130,7 @@ struct set_clipboard_info_reply
 #define SET_CB_CLOSE     0x020
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
+#define CB_PROCESS       0x100
 
 
 
@@ -3780,6 +3781,6 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 157
+#define SERVER_PROTOCOL_VERSION 158
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -376,6 +376,7 @@ struct x11drv_thread_data
     Window   cursor_window;        /* current window that contains the cursor */
     HWND     last_focus;           /* last window that had focus */
     XIM      xim;                  /* input method */
+    Window   selection_wnd;        /* window used for selection interactions */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
@@ -481,6 +482,12 @@ extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XEvent *event );
 extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XEvent *event );
 
 extern DWORD EVENT_x11_time_to_win32_time(Time time);
+
+/* X11 driver private messages, must be in the range 0x80001000..0x80001fff */
+enum x11drv_window_messages
+{
+    WM_X11DRV_ACQUIRE_SELECTION = 0x80001000
+};
 
 /* x11drv private window data */
 struct x11drv_win_data

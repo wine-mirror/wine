@@ -80,7 +80,7 @@ static int set_clipboard_window(user_handle_t win, int clear)
 
 static int set_clipboard_owner(user_handle_t win, int clear)
 {
-    if (cbthread && cbthread != current)
+    if (cbthread && cbthread->process != current->process)
     {
         set_error(STATUS_WAS_LOCKED);
         return 0;
@@ -166,4 +166,8 @@ DECL_HANDLER(set_clipboard_info)
 
     if (cbowner == current)
         reply->flags |= CB_OWNER;
+
+    if (cbowner &&
+        cbowner->process == current->process)
+        reply->flags |= CB_PROCESS;
 }

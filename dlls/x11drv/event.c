@@ -902,3 +902,20 @@ static void EVENT_ClientMessage( HWND hwnd, XEvent *xev )
     }
     TRACE( "no handler found for %ld\n", event->message_type );
 }
+
+
+/**********************************************************************
+ *           X11DRV_WindowMessage   (X11DRV.@)
+ */
+LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch(msg)
+    {
+    case WM_X11DRV_ACQUIRE_SELECTION:
+        X11DRV_AcquireClipboard( hwnd );
+        return 0;
+    default:
+        FIXME( "got window msg %x hwnd %p wp %x lp %lx\n", msg, hwnd, wp, lp );
+        return 0;
+    }
+}
