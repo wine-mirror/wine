@@ -1796,7 +1796,11 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         if(HIWORD(wParam32) & MF_POPUP)
         {
             UINT16 hmenu;
-            if((hmenu = GetSubMenu((HMENU16)*plparam, *pwparam16))) *pwparam16=hmenu;
+            if (((UINT)HIWORD(wParam32) != 0xFFFF) || (*plparam))
+            {
+                if((hmenu = GetSubMenu((HMENU16)*plparam, *pwparam16)))
+                    *pwparam16=hmenu;
+            }
         }
         /* fall through */
     case WM_MENUCHAR:
