@@ -64,8 +64,10 @@ typedef struct tagMSIFEATURE
     WCHAR Directory[96];
     INT Attributes;
     
-    INSTALLSTATE State;
-    BOOL Enabled;
+    INSTALLSTATE Installed;
+    INSTALLSTATE ActionRequest;
+    INSTALLSTATE Action;
+
     INT ComponentCount;
     INT Components[1024]; /* yes hardcoded limit.... I am bad */
     INT Cost;
@@ -80,8 +82,10 @@ typedef struct tagMSICOMPONENT
     WCHAR Condition[0x100];
     WCHAR KeyPath[96];
 
-    INSTALLSTATE State;
-    BOOL FeatureState;
+    INSTALLSTATE Installed;
+    INSTALLSTATE ActionRequest;
+    INSTALLSTATE Action;
+
     BOOL Enabled;
     INT  Cost;
 } MSICOMPONENT;
@@ -411,7 +415,10 @@ void ACTION_remove_tracked_tempfiles(MSIPACKAGE* package)
     for (i = 0; i < package->loaded_files; i++)
     {
         if (package->files[i].Temporary)
+        {
+            TRACE("Cleaning up %s\n",debugstr_w(package->files[i].TargetPath));
             DeleteFileW(package->files[i].TargetPath);
+        }
 
     }
 }
@@ -1832,9 +1839,11 @@ static int load_component(MSIPACKAGE* package, MSIRECORD * row)
     sz = 96;       
     MSI_RecordGetStringW(row,6,package->components[index].KeyPath,&sz);
 
-    package->components[index].State = INSTALLSTATE_ABSENT;
+    package->components[index].Installed = INSTALLSTATE_ABSENT;
+    package->components[index].Action = INSTALLSTATE_UNKNOWN;
+    package->components[index].ActionRequest = INSTALLSTATE_UNKNOWN;
+
     package->components[index].Enabled = TRUE;
-    package->components[index].FeatureState= FALSE;
 
     return index;
 }
@@ -1894,7 +1903,10 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
         MSI_RecordGetStringW(row,7,package->features[index].Directory,&sz);
 
     package->features[index].Attributes= MSI_RecordGetInteger(row,8);
-    package->features[index].State = INSTALLSTATE_ABSENT;
+
+    package->features[index].Installed = INSTALLSTATE_ABSENT;
+    package->features[index].Action = INSTALLSTATE_UNKNOWN;
+    package->features[index].ActionRequest = INSTALLSTATE_UNKNOWN;
 
     /* load feature components */
 
@@ -2372,39 +2384,84 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
     else
         install_level = 1;
 
-    override = load_dynamic_property(package,szAddLocal,NULL);
-   
-    /*
-     * Components FeatureState defaults to FALSE. The idea is we want to 
-     * enable the component is ANY feature that uses it is enabled to install
+    /* ok hereis the rub
+     * ADDLOCAL and its friend OVERRIDE INSTALLLEVLE
+     * I have confirmed this if ADDLOCALis stated then the INSTALLLEVEL is
+     * itnored for all the features. seems strange, epsecially since it is not
+     * documented anywhere, but it is how it works. 
      */
-    for(i = 0; i < package->loaded_features; i++)
+    
+    override = load_dynamic_property(package,szAddLocal,NULL);
+  
+    if (override)
     {
-        BOOL feature_state= ((package->features[i].Level > 0) &&
+        for(i = 0; i < package->loaded_features; i++)
+        {
+            if (strcmpiW(override,all)==0 || 
+                strstrW(override,package->features[i].Feature))
+            {
+                package->features[i].ActionRequest= INSTALLSTATE_LOCAL;
+                package->features[i].Action = INSTALLSTATE_LOCAL;
+            }
+        }
+        HeapFree(GetProcessHeap(),0,override);
+    } 
+    else
+    {
+        for(i = 0; i < package->loaded_features; i++)
+        {
+            BOOL feature_state= ((package->features[i].Level > 0) &&
                              (package->features[i].Level <= install_level));
 
-        if (override && (strcmpiW(override,all)==0 || 
-                         strstrW(override,package->features[i].Feature)))
-        {
-            TRACE("Override of install level found\n");
-            feature_state = TRUE;
+            if (feature_state)
+            {
+                package->features[i].ActionRequest= INSTALLSTATE_LOCAL;
+                package->features[i].Action = INSTALLSTATE_LOCAL;
+            }
         }
-        package->features[i].Enabled = feature_state;
+    }
 
-        TRACE("Feature %s has a state of %i\n",
-               debugstr_w(package->features[i].Feature), feature_state);
-        for( j = 0; j < package->features[i].ComponentCount; j++)
+    /*
+     * now we want to enable or disable components base on feature 
+    */
+
+    for(i = 0; i < package->loaded_features; i++)
+    {
+        MSIFEATURE* feature = &package->features[i];
+        TRACE("Examining Feature %s (Installed %i, Action %i, Request %i)\n",
+            debugstr_w(feature->Feature), feature->Installed, feature->Action,
+            feature->ActionRequest);
+
+        for( j = 0; j < feature->ComponentCount; j++)
         {
-            package->components[package->features[i].Components[j]].FeatureState
-            |= feature_state;
+            MSICOMPONENT* component = &package->components[
+                                                    feature->Components[j]];
+
+            if (!component->Enabled)
+            {
+                component->Action = INSTALLSTATE_ABSENT;
+                component->ActionRequest = INSTALLSTATE_ABSENT;
+            }
+            else
+            {
+                if (feature->Action == INSTALLSTATE_LOCAL)
+                    component->Action = INSTALLSTATE_LOCAL;
+                if (feature->ActionRequest == INSTALLSTATE_LOCAL)
+                    component->ActionRequest = INSTALLSTATE_LOCAL;
+            }
         }
     } 
-    if (override)
-        HeapFree(GetProcessHeap(),0,override);
-    /* 
-     * So basically we ONLY want to install a component if its Enabled AND
-     * FeatureState are both TRUE 
-     */
+
+    for(i = 0; i < package->loaded_components; i++)
+    {
+        MSICOMPONENT* component= &package->components[i];
+
+        TRACE("Result: Component %s (Installed %i, Action %i, Request %i)\n",
+            debugstr_w(component->Component), component->Installed, 
+            component->Action, component->ActionRequest);
+    }
+
+
     return ERROR_SUCCESS;
 }
 
@@ -2686,6 +2743,11 @@ end:
 
 
 /* Support functions for FDI functions */
+typedef struct
+{
+    MSIPACKAGE* package;
+    LPCSTR cab_path;
+} CabData;
 
 static void * cabinet_alloc(ULONG cb)
 {
@@ -2758,13 +2820,34 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
     {
     case fdintCOPY_FILE:
     {
-        ULONG len = strlen((char*)pfdin->pv) + strlen(pfdin->psz1);
+        CabData *data = (CabData*) pfdin->pv;
+        ULONG len = strlen(data->cab_path) + strlen(pfdin->psz1);
         char *file = cabinet_alloc((len+1)*sizeof(char));
 
-        strcpy(file, (char*)pfdin->pv);
+        LPWSTR trackname;
+        LPWSTR trackpath;
+        LPWSTR tracknametmp;
+        static const WCHAR tmpprefix[] = {'C','A','B','T','M','P','_',0};
+        
+        strcpy(file, data->cab_path);
         strcat(file, pfdin->psz1);
 
         TRACE("file: %s\n", debugstr_a(file));
+
+        /* track this file so it can be deleted if not installed */
+        trackpath=strdupAtoW(file);
+        tracknametmp=strdupAtoW(strrchr(file,'\\')+1);
+        trackname = HeapAlloc(GetProcessHeap(),0,(strlenW(tracknametmp) + 
+                                  strlenW(tmpprefix)+1) * sizeof(WCHAR));
+
+        strcpyW(trackname,tmpprefix);
+        strcatW(trackname,tracknametmp);
+
+        track_tempfile(data->package, trackname, trackpath);
+
+        HeapFree(GetProcessHeap(),0,trackpath);
+        HeapFree(GetProcessHeap(),0,trackname);
+        HeapFree(GetProcessHeap(),0,tracknametmp);
 
         return cabinet_open(file, _O_WRONLY | _O_CREAT, 0);
     }
@@ -2792,13 +2875,15 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
  *
  * Extract files from a cab file.
  */
-static BOOL extract_cabinet_file(const WCHAR* source, const WCHAR* path)
+static BOOL extract_cabinet_file(MSIPACKAGE* package, const WCHAR* source, 
+                                 const WCHAR* path)
 {
     HFDI hfdi;
     ERF erf;
     BOOL ret;
     char *cabinet;
     char *cab_path;
+    CabData data;
 
     TRACE("Extracting %s to %s\n",debugstr_w(source), debugstr_w(path));
 
@@ -2829,7 +2914,10 @@ static BOOL extract_cabinet_file(const WCHAR* source, const WCHAR* path)
         return FALSE;
     }
 
-    ret = FDICopy(hfdi, cabinet, "", 0, cabinet_notify, NULL, cab_path);
+    data.package = package;
+    data.cab_path = cab_path;
+
+    ret = FDICopy(hfdi, cabinet, "", 0, cabinet_notify, NULL, &data);
 
     if (!ret)
         ERR("FDICopy failed\n");
@@ -2921,7 +3009,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
                     GetTempPathW(MAX_PATH,path);
             }
         }
-        rc = !extract_cabinet_file(source,path);
+        rc = !extract_cabinet_file(package, source,path);
     }
     msiobj_release(&row->hdr);
     MSI_ViewClose(view);
@@ -2974,11 +3062,12 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (file->Temporary)
             continue;
 
-        if (!package->components[file->ComponentIndex].Enabled ||
-            !package->components[file->ComponentIndex].FeatureState)
+        if (package->components[file->ComponentIndex].ActionRequest != 
+             INSTALLSTATE_LOCAL)
         {
             TRACE("File %s is not scheduled for install\n",
                    debugstr_w(file->File));
+
             continue;
         }
 
@@ -3127,8 +3216,8 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         }
 
         component_index = get_loaded_component(package,component);
-        if (!package->components[component_index].Enabled ||
-            !package->components[component_index].FeatureState)
+        if (package->components[component_index].ActionRequest != 
+             INSTALLSTATE_LOCAL)
         {
             TRACE("Skipping copy due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -3358,8 +3447,8 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         component = load_dynamic_stringW(row, 6);
         component_index = get_loaded_component(package,component);
 
-        if (!package->components[component_index].Enabled ||
-            !package->components[component_index].FeatureState)
+        if (package->components[component_index].ActionRequest != 
+             INSTALLSTATE_LOCAL)
         {
             TRACE("Skipping write due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -3865,8 +3954,7 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
             continue;
         }
 
-        if (!package->components[index].Enabled ||
-            !package->components[index].FeatureState)
+        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
         {
             TRACE("Skipping typelib reg due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -4110,8 +4198,7 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             continue;
         }
 
-        if (!package->components[index].Enabled ||
-            !package->components[index].FeatureState)
+        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
         {
             TRACE("Skipping class reg due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -4471,8 +4558,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
             continue;
         }
 
-        if (!package->components[index].Enabled ||
-            !package->components[index].FeatureState)
+        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
         {
             TRACE("Skipping shortcut creation due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -5027,7 +5113,7 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
     if (index < 0)
         return ERROR_UNKNOWN_FEATURE;
 
-    package->features[index].State = iState;
+    package->features[index].ActionRequest= iState;
 
     return ERROR_SUCCESS;
 }
@@ -5057,15 +5143,11 @@ UINT MSI_GetFeatureStateW(MSIPACKAGE *package, LPWSTR szFeature,
         return ERROR_UNKNOWN_FEATURE;
 
     if (piInstalled)
-        *piInstalled = package->features[index].State;
+        *piInstalled = package->features[index].Installed;
 
     if (piAction)
-    {
-        if (package->features[index].Enabled)
-            *piAction = INSTALLSTATE_LOCAL;
-        else
-            *piAction = package->features[index].State;
-    }
+        *piAction = package->features[index].Action;
+
     TRACE("returning %i %i\n",*piInstalled,*piAction);
 
     return ERROR_SUCCESS;
@@ -5116,16 +5198,10 @@ piAction);
         return ERROR_UNKNOWN_COMPONENT;
 
     if (piInstalled)
-        *piInstalled = package->components[index].State;
+        *piInstalled = package->components[index].Installed;
 
     if (piAction)
-    {
-        if (package->components[index].Enabled &&
-            package->components[index].FeatureState)
-            *piAction = INSTALLSTATE_LOCAL;
-        else
-            *piAction = INSTALLSTATE_UNKNOWN;
-    }
+        *piInstalled = package->components[index].Action;
 
     return ERROR_SUCCESS;
 }
