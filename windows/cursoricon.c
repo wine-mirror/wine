@@ -43,6 +43,9 @@
  * FIXME: what are we going to do with animation and color (bpp > 1) cursors ?!
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>

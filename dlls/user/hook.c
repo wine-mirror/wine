@@ -61,6 +61,9 @@
  *     WH_MOUSE_LL                  Implemented but should use SendMessage instead
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
