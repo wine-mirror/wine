@@ -1135,7 +1135,15 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
  */
 HRESULT WINAPI IsAsyncMoniker(IMoniker *pmk)
 {
-    FIXME("stub\n");
+    IUnknown *am;
+    
+    TRACE("(%p)\n", pmk);
+    if(!pmk)
+        return E_INVALIDARG;
+    if(SUCCEEDED(IMoniker_QueryInterface(pmk, &IID_IAsyncMoniker, (void**)&am))) {
+        IUnknown_Release(am);
+        return S_OK;
+    }
     return S_FALSE;
 }
 
