@@ -503,9 +503,9 @@ static int charset_cmp( const void *name, const void *entry )
 }
 
 /***********************************************************************
- *		init_default_lcid
+ *		get_env_lcid
  */
-static LCID init_default_lcid( UINT *unix_cp, const char *env_str )
+static LCID get_env_lcid( UINT *unix_cp, const char *env_str )
 {
     char *buf, *lang,*country,*charset,*dialect,*next;
     LCID ret = 0;
@@ -527,7 +527,7 @@ static LCID init_default_lcid( UINT *unix_cp, const char *env_str )
             country=strchr(lang,'_'); if (country) *country++='\0';
 
             ret = get_language_id(lang, country, charset, dialect);
-            if (ret && charset)
+            if (ret && charset && unix_cp)
             {
                 const struct charset_entry *entry;
                 char charset_name[16];
@@ -593,7 +593,7 @@ LANGID WINAPI GetUserDefaultLangID(void)
  */
 LANGID WINAPI GetSystemDefaultLangID(void)
 {
-    return GetUserDefaultLangID();
+    return LANGIDFROMLCID(GetSystemDefaultLCID());
 }
 
 
@@ -648,7 +648,9 @@ LCID WINAPI GetSystemDefaultLCID(void)
  */
 LANGID WINAPI GetUserDefaultUILanguage(void)
 {
-    return GetUserDefaultLangID();
+    LANGID lang;
+    NtQueryDefaultUILanguage( &lang );
+    return lang;
 }
 
 
@@ -666,7 +668,9 @@ LANGID WINAPI GetUserDefaultUILanguage(void)
  */
 LANGID WINAPI GetSystemDefaultUILanguage(void)
 {
-    return GetSystemDefaultLangID();
+    LANGID lang;
+    NtQueryInstallUILanguage( &lang );
+    return lang;
 }
 
 
@@ -2483,11 +2487,15 @@ void LOCALE_Init(void)
                                        const union cptable *unix_cp );
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp = ~0U;
-    LCID lcid = init_default_lcid( &unix_cp, NULL );
+    LCID lcid;
 
+    lcid = get_env_lcid( NULL, NULL );
     NtSetDefaultLocale( TRUE, lcid );
 
-    lcid = init_default_lcid( &unix_cp, "LC_CTYPE" );
+    lcid = get_env_lcid( NULL, "LC_MESSAGES" );
+    NtSetDefaultUILanguage( LANGIDFROMLCID(lcid) );
+
+    lcid = get_env_lcid( &unix_cp, "LC_CTYPE" );
     NtSetDefaultLocale( FALSE, lcid );
 
     ansi_cp = get_lcid_codepage(lcid);

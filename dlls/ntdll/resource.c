@@ -51,6 +51,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 static LCID user_lcid, system_lcid;
+static LANGID user_ui_language, system_ui_language;
 
 static WINE_EXCEPTION_FILTER(page_fault)
 {
@@ -444,6 +445,40 @@ NTSTATUS WINAPI NtQueryDefaultLocale( BOOLEAN user, LCID *lcid )
 NTSTATUS WINAPI NtSetDefaultLocale( BOOLEAN user, LCID lcid )
 {
     if (user) user_lcid = lcid;
-    else system_lcid = lcid;
+    else
+    {
+        system_lcid = lcid;
+        system_ui_language = LANGIDFROMLCID(lcid); /* there is no separate call to set it */
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *	NtQueryDefaultUILanguage  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryDefaultUILanguage( LANGID *lang )
+{
+    *lang = user_ui_language;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *	NtSetDefaultUILanguage  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetDefaultUILanguage( LANGID lang )
+{
+    user_ui_language = lang;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *	NtQueryInstallUILanguage  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
+{
+    *lang = system_ui_language;
     return STATUS_SUCCESS;
 }

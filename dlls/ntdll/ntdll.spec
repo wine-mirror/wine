@@ -161,6 +161,7 @@
 @ stdcall NtPulseEvent(long ptr)
 @ stdcall NtQueryAttributesFile(ptr ptr)
 @ stdcall NtQueryDefaultLocale(long ptr)
+@ stdcall NtQueryDefaultUILanguage(ptr)
 @ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)
 @ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stub NtQueryEaFile
@@ -171,6 +172,7 @@
 @ stdcall NtQueryInformationProcess(long long ptr long ptr)
 @ stdcall NtQueryInformationThread(long long ptr long ptr)
 @ stdcall NtQueryInformationToken(long long ptr long ptr)
+@ stdcall NtQueryInstallUILanguage(ptr)
 @ stub NtQueryIntervalProfile
 @ stub NtQueryIoCompletion
 @ stdcall NtQueryKey (long long ptr long ptr)
@@ -217,6 +219,7 @@
 @ stdcall NtSetContextThread(long ptr)
 @ stub NtSetDefaultHardErrorPort
 @ stdcall NtSetDefaultLocale(long long)
+@ stdcall NtSetDefaultUILanguage(long)
 @ stub NtSetEaFile
 @ stdcall NtSetEvent(long long)
 @ stub NtSetHighEventPair
@@ -740,6 +743,7 @@
 @ stdcall ZwPulseEvent(long ptr) NtPulseEvent
 @ stdcall ZwQueryAttributesFile(ptr ptr) NtQueryAttributesFile
 @ stdcall ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
+@ stdcall ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
 @ stdcall ZwQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
@@ -749,6 +753,7 @@
 @ stdcall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
 @ stdcall ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
 @ stdcall ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
+@ stdcall ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage
 @ stub ZwQueryIntervalProfile
 @ stub ZwQueryIoCompletion
 @ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey
@@ -792,6 +797,7 @@
 @ stdcall ZwSetContextThread(long ptr) NtSetContextThread
 @ stub ZwSetDefaultHardErrorPort
 @ stdcall ZwSetDefaultLocale(long long) NtSetDefaultLocale
+@ stdcall ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stub ZwSetEaFile
 @ stdcall ZwSetEvent(long long) NtSetEvent
 @ stub ZwSetHighEventPair
