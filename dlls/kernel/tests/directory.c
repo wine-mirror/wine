@@ -330,6 +330,15 @@ static void test_RemoveDirectoryW(void)
        ret ? " True" : "False", GetLastError());
 }
 
+static void test_SetCurrentDirectoryA(void)
+{
+    SetLastError(0);
+    ok( !SetCurrentDirectoryA( "\\some_dummy_dir" ), "SetCurrentDirectoryA succeeded\n" );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %ld\n", GetLastError() );
+    ok( !SetCurrentDirectoryA( "\\some_dummy\\subdir" ), "SetCurrentDirectoryA succeeded\n" );
+    ok( GetLastError() == ERROR_PATH_NOT_FOUND, "wrong error %ld\n", GetLastError() );
+}
+
 START_TEST(directory)
 {
     test_GetWindowsDirectoryA();
@@ -343,4 +352,6 @@ START_TEST(directory)
 
     test_RemoveDirectoryA();
     test_RemoveDirectoryW();
+
+    test_SetCurrentDirectoryA();
 }
