@@ -257,7 +257,7 @@ typedef enum tagDVASPECT
         DVASPECT_DOCPRINT	= 8
 } DVASPECT;
 
-enum tagTYMED
+typedef enum tagTYMED
 {	TYMED_HGLOBAL   = 1,
 	TYMED_FILE      = 2,
 	TYMED_ISTREAM   = 4,
@@ -349,7 +349,7 @@ typedef struct tagLPIDLLIST	*LPIDLLIST,	IDLList;
 
 #define THIS LPIDLLIST this
 
-enum
+typedef enum
 {	State_UnInit=1,
 	State_Init=2,
 	State_OutOfMem=3
