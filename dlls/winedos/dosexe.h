@@ -72,6 +72,11 @@ extern int DOSDEV_Write(DWORD dev, DWORD buf, int buflen, int verify);
 extern int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen);
 extern int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen);
 
+/* dma.c */
+extern int DMA_Transfer(int channel,int reqlength,void* buffer);
+extern void DMA_ioport_out( WORD port, BYTE val );
+extern BYTE DMA_ioport_in( WORD port );
+
 /* int09.c */
 extern void WINAPI DOSVM_Int09Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int09SendScan(BYTE scan,BYTE ascii);
@@ -112,6 +117,10 @@ extern void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD*);
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);
 extern void WINAPI EMS_Ioctl_Handler(CONTEXT86*);
+
+/* soundblaster.c */
+extern void SB_ioport_out( WORD port, BYTE val );
+extern BYTE SB_ioport_in( WORD port );
 
 /* xms.c */
 extern void WINAPI XMS_Handler(CONTEXT86*);
