@@ -577,7 +577,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
                                       NULL);
         }
         if(buflen == GDI_ERROR) {
-            LeaveCriticalSection(&xrender_cs);
+            ERR("GetGlyphOutlineW failed\n");
             return FALSE;
         }
         TRACE("Turning off antialiasing for this monochrome font\n");
