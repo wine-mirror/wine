@@ -943,6 +943,75 @@ typedef struct _LDR_RESOURCE_INFO
     ULONG Language;
 } LDR_RESOURCE_INFO, *PLDR_RESOURCE_INFO;
 
+
+/* debug buffer definitions */
+
+typedef struct _DEBUG_BUFFER {
+  HANDLE SectionHandle;
+  PVOID  SectionBase;
+  PVOID  RemoteSectionBase;
+  ULONG  SectionBaseDelta;
+  HANDLE EventPairHandle;
+  ULONG  Unknown[2];
+  HANDLE RemoteThreadHandle;
+  ULONG  InfoClassMask;
+  ULONG  SizeOfInfo;
+  ULONG  AllocatedSize;
+  ULONG  SectionSize;
+  PVOID  ModuleInformation;
+  PVOID  BackTraceInformation;
+  PVOID  HeapInformation;
+  PVOID  LockInformation;
+  PVOID  Reserved[8];
+} DEBUG_BUFFER, *PDEBUG_BUFFER;
+
+#define PDI_MODULES                       0x01
+#define PDI_BACKTRACE                     0x02
+#define PDI_HEAPS                         0x04
+#define PDI_HEAP_TAGS                     0x08
+#define PDI_HEAP_BLOCKS                   0x10
+#define PDI_LOCKS                         0x20
+
+typedef struct _DEBUG_MODULE_INFORMATION {
+  ULONG  Reserved[2];
+  ULONG  Base;
+  ULONG  Size;
+  ULONG  Flags;
+  USHORT Index;
+  USHORT Unknown;
+  USHORT LoadCount;
+  USHORT ModuleNameOffset;
+  CHAR   ImageName[256];
+} DEBUG_MODULE_INFORMATION, *PDEBUG_MODULE_INFORMATION;
+
+typedef struct _DEBUG_HEAP_INFORMATION {
+  ULONG  Base;
+  ULONG  Flags;
+  USHORT Granularity;
+  USHORT Unknown;
+  ULONG  Allocated;
+  ULONG  Committed;
+  ULONG  TagCount;
+  ULONG  BlockCount;
+  ULONG  Reserved[7];
+  PVOID  Tags;
+  PVOID  Blocks;
+} DEBUG_HEAP_INFORMATION, *PDEBUG_HEAP_INFORMATION;
+
+typedef struct _DEBUG_LOCK_INFORMATION {
+  PVOID  Address;
+  USHORT Type;
+  USHORT CreatorBackTraceIndex;
+  ULONG  OwnerThreadId;
+  ULONG  ActiveCount;
+  ULONG  ContentionCount;
+  ULONG  EntryCount;
+  ULONG  RecursionCount;
+  ULONG  NumberOfSharedWaiters;
+  ULONG  NumberOfExclusiveWaiters;
+} DEBUG_LOCK_INFORMATION, *PDEBUG_LOCK_INFORMATION;
+
+
 /***********************************************************************
  * Defines
  */

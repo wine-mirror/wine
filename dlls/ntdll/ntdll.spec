@@ -325,7 +325,7 @@
 @ stdcall RtlCreateEnvironment(long ptr)
 @ stdcall RtlCreateHeap(long ptr long long ptr ptr)
 @ stdcall RtlCreateProcessParameters(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
-@ stub RtlCreateQueryDebugBuffer
+@ stdcall RtlCreateQueryDebugBuffer(long long)
 @ stub RtlCreateRegistryKey
 @ stdcall RtlCreateSecurityDescriptor(ptr long)
 @ stub RtlCreateTagHeap
@@ -349,7 +349,7 @@
 @ stdcall RtlDestroyEnvironment(ptr)
 @ stdcall RtlDestroyHeap(long)
 @ stdcall RtlDestroyProcessParameters(ptr)
-@ stub RtlDestroyQueryDebugBuffer
+@ stdcall RtlDestroyQueryDebugBuffer(ptr)
 @ stdcall RtlDetermineDosPathNameType_U(wstr)
 @ stdcall RtlDoesFileExists_U(wstr)
 @ stdcall RtlDosPathNameToNtPathName_U(wstr ptr ptr ptr)
@@ -493,7 +493,7 @@
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
 @ stub RtlQueryProcessBackTraceInformation
-@ stub RtlQueryProcessDebugInformation
+@ stdcall RtlQueryProcessDebugInformation(long long ptr)
 @ stub RtlQueryProcessHeapInformation
 @ stub RtlQueryProcessLockInformation
 @ stub RtlQueryRegistryValues

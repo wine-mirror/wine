@@ -9,6 +9,7 @@ EXTRALIBS = $(LIBUNICODE)
 C_SRCS = \
 	cdrom.c \
 	critsection.c \
+	debugbuffer.c \
 	debugtools.c \
 	directory.c \
 	env.c \
