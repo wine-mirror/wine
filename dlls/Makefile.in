@@ -469,7 +469,7 @@ version/libversion.@LIBEXT@: liblz32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIB
 win32s/libw32skrnl.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winaspi/libwnaspi32.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winedos/libwinedos.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-wineps/libwineps.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libwinspool.drv.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+wineps/libwineps.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libwinspool.drv.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 wininet/libwininet.@LIBEXT@: libshlwapi.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/joystick/libjoystick.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/libwinmm.@LIBEXT@: libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
@@ -487,7 +487,7 @@ winspool/libwinspool.drv.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ lib
 wintrust/libwintrust.@LIBEXT@: libntdll.@LIBEXT@
 wow32/libwow32.@LIBEXT@: libkernel32.@LIBEXT@
 wsock32/libwsock32.@LIBEXT@: libws2_32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-x11drv/libx11drv.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@
+x11drv/libx11drv.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 
 $(DLLFILES): dummy
 	@cd `dirname $@` && $(MAKE)

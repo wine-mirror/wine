@@ -4,7 +4,9 @@ init	X11DRV_Init
 
 import	user32.dll
 import	gdi32.dll
+import	advapi32.dll
 import	kernel32.dll
+import	ntdll.dll
 
 debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
                 key keyboard opengl palette text win x11drv)
