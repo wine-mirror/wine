@@ -309,7 +309,7 @@ static void CURSOR_SetCursor( HCURSOR hCursor )
 {
     CURSORALLOC	*lpcur;
 
-    if (!(lpcur = (CURSORALLOC *)GlobalLock(hCursor))) return FALSE;
+    if (!(lpcur = (CURSORALLOC *)GlobalLock(hCursor))) return;
     if (rootWindow != DefaultRootWindow(display))
     {
         XDefineCursor( display, rootWindow, lpcur->xcursor );

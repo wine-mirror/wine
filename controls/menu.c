@@ -67,7 +67,6 @@ extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
 
 extern HINSTANCE hSysRes;
 
-static HMENU hSysMenu = 0;
 static HBITMAP hStdCheck = 0;
 static HBITMAP hStdMnArrow = 0;
 
@@ -96,14 +95,6 @@ BOOL MENU_Init()
     GetObject( hStdMnArrow, sizeof(BITMAP), (LPSTR)&bm );
     arrow_bitmap_width = bm.bmWidth;
     arrow_bitmap_height = bm.bmHeight;
-
-      /* Load system menu */
-
-    if (!(hSysMenu = LoadMenu( hSysRes, "SYSMENU" )))
-    {
-	fprintf(stderr,"SysMenu not found in system resources !\n");
-	return FALSE;
-    }
 
     return TRUE;
 }
@@ -1075,13 +1066,12 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
 static BOOL MENU_MouseMove( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
 			    POINT pt )
 {
-    POPUPMENU *menu;
     MENUITEM *item;
+    POPUPMENU *menu = (POPUPMENU *) USER_HEAP_ADDR( hmenu );
     WORD id = NO_SELECTED_ITEM;
 
     if (hmenu)
     {
-	menu = (POPUPMENU *) USER_HEAP_ADDR( hmenu );
 	item = MENU_FindItemByCoords( menu, pt.x, pt.y, &id );
 	if (!item)  /* Maybe in system menu */
 	{
@@ -2049,20 +2039,16 @@ HMENU LoadMenuIndirect(LPSTR menu_template)
 HMENU CopySysMenu()
 {
     HMENU hMenu;
-    LPPOPUPMENU sysmenu, menu;
-    MENUITEM *item;
-    int i;
+    LPPOPUPMENU menu;
+    extern unsigned char sysres_MENU_SYSMENU[];
 
-    sysmenu = (LPPOPUPMENU) USER_HEAP_ADDR(hSysMenu);
-    if (!(hMenu = CreatePopupMenu())) return 0;
-    menu = (POPUPMENU *) USER_HEAP_ADDR( hMenu );
-    menu->wFlags |= MF_SYSMENU;
-    item = (MENUITEM *) USER_HEAP_ADDR( sysmenu->hItems );
-    for (i = 0; i < sysmenu->nItems; i++, item++)
-    {
-	AppendMenu( hMenu, item->item_flags, item->item_id, item->item_text );
+    hMenu=LoadMenuIndirect(sysres_MENU_SYSMENU);
+    if(!hMenu){
+	dprintf_menu(stddeb,"No SYSMENU\n");
+	return 0;
     }
-
+    menu = (POPUPMENU*) USER_HEAP_ADDR(hMenu);
+    menu->wFlags |= MF_SYSMENU|MF_POPUP;
     dprintf_menu(stddeb,"CopySysMenu hMenu=%04X !\n", hMenu);
     return hMenu;
 }

@@ -770,7 +770,7 @@ CreateEnvironment(void)
     /*
      * Display environment
      */
-    dprintf_selectors(stddeb, "Environment at %08.8x\n", s->base_addr);
+    dprintf_selectors(stddeb, "Environment at %p\n", s->base_addr);
     for (p = s->base_addr; *p; p += strlen(p) + 1)
 	dprintf_selectors(stddeb, "    %s\n", p);
 

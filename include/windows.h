@@ -122,6 +122,8 @@ typedef PAINTSTRUCT *LPPAINTSTRUCT;
 #define WINE_PACKED __attribute__ ((packed))
 #endif
 
+#pragma pack(1)
+
   /* Window classes */
 
 typedef LONG (*WNDPROC)(HWND, UINT, WPARAM, LPARAM);
@@ -2340,6 +2342,8 @@ typedef METAFILEPICT *LPMETAFILEPICT;
 #define META_CREATEBITMAPINDIRECT    0x02FD
 #define META_CREATEBITMAP            0x06FE
 #define META_CREATEREGION            0x06FF
+
+#pragma pack(4)
 
 
 #define F(ret,name) ret name(void);

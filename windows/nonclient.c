@@ -11,7 +11,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "message.h"
 #include "sysmetrics.h"
 #include "user.h"
-#include "scroll.h"
 #include "syscolor.h"
 #include "stddebug.h"
 /* #define DEBUG_NONCLIENT /* */
@@ -20,7 +19,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
 
 static HBITMAP hbitmapClose = 0;
-static HBITMAP hbitmapMDIClose = 0;
 static HBITMAP hbitmapMinimize = 0;
 static HBITMAP hbitmapMinimizeD = 0;
 static HBITMAP hbitmapMaximize = 0;
@@ -73,6 +71,7 @@ extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
  */
 static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
+    if (style & WS_ICONIC) return;  /* Nothing to change for an icon */
     if (HAS_DLGFRAME( style, exStyle ))
 	InflateRect( rect, SYSMETRICS_CXDLGFRAME, SYSMETRICS_CYDLGFRAME );
     else
@@ -130,13 +129,6 @@ LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params )
     WND *wndPtr = WIN_FindWndPtr( hwnd );    
 
     if (!wndPtr) return 0;
-
-    /*
-     * we don't want to change the size if hwnd is an icon since
-     * there are no window manager handles on an icon
-     */
-    if(IsIconic(hwnd)) return 0;
-
     NC_AdjustRect( &tmpRect, wndPtr->dwStyle, FALSE, wndPtr->dwExStyle );
     params->rgrc[0].left   -= tmpRect.left;
     params->rgrc[0].top    -= tmpRect.top;
@@ -167,6 +159,8 @@ void NC_GetInsideRect( HWND hwnd, RECT *rect )
     rect->top    = rect->left = 0;
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+
+    if (wndPtr->dwStyle & WS_ICONIC) return;  /* No border to remove */
 
       /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -331,10 +325,10 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
     RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     NC_GetInsideRect( hwnd, &rect );
-    GRAPH_DrawBitmap( hdc, (wndPtr->dwStyle & WS_CHILD) ?
-		      hbitmapMDIClose : hbitmapClose,
+    GRAPH_DrawBitmap( hdc, hbitmapClose,
 		      rect.left, rect.top,
-		      1, 1, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
+                      (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
+                      SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
 		      down ? NOTSRCCOPY : SRCCOPY );
 }
 
@@ -349,8 +343,8 @@ static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
     GRAPH_DrawBitmap( hdc, (IsZoomed(hwnd) ?
 			    (down ? hbitmapRestoreD : hbitmapRestore) :
 			    (down ? hbitmapMaximizeD : hbitmapMaximize)),
-		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top - 1,
-		     0, 0, SYSMETRICS_CXSIZE+2, SYSMETRICS_CYSIZE+2, SRCCOPY );
+		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, SRCCOPY );
 }
 
 
@@ -364,8 +358,8 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
     NC_GetInsideRect( hwnd, &rect );
     if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE + 1;
     GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
-		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top - 1,
-		     0, 0, SYSMETRICS_CXSIZE+2, SYSMETRICS_CYSIZE+2, SRCCOPY );
+		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, SRCCOPY );
 }
 
 
@@ -488,8 +482,6 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
     if (!hbitmapClose)
     {
 	if (!(hbitmapClose = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
-	    return;
-	if (!(hbitmapMDIClose = LoadBitmap( 0, MAKEINTRESOURCE(OBM_OLD_CLOSE) )))
 	    return;
 	hbitmapMinimize  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCE) );
 	hbitmapMinimizeD = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCED) );
@@ -646,24 +638,24 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
  	    if ((wndPtr->dwStyle & WS_HSCROLL) && (wndPtr->scroll_flags & 0x0001))
 			bottom -= SYSMETRICS_CYHSCROLL;
 	    SetRect(&rect2, rect.right - SYSMETRICS_CXVSCROLL, 
-	    	rect.top, rect.right, bottom); 
- 	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, (LPHEADSCROLL)wndPtr->VScroll);
+	    	rect.top, rect.right+1, bottom+1); 
+ 	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, wndPtr->VScroll);
  	    }
  	if ((wndPtr->dwStyle & WS_HSCROLL) && wndPtr->HScroll != NULL &&
 	    (wndPtr->scroll_flags & 0x0002)) {
 	    int right = rect.right;
 	    if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->scroll_flags & 0x0001))
 			right -= SYSMETRICS_CYVSCROLL;
-	    SetRect(&rect2, rect.left, rect.bottom - SYSMETRICS_CYHSCROLL,
-		    right, rect.bottom);
-	    StdDrawScrollBar(hwnd, hdc, SB_HORZ, &rect2, (LPHEADSCROLL)wndPtr->HScroll);
+	    SetRect(&rect2, rect.left-1, rect.bottom - SYSMETRICS_CYHSCROLL,
+		    right+1, rect.bottom+1);
+	    StdDrawScrollBar(hwnd, hdc, SB_HORZ, &rect2, wndPtr->HScroll);
 	    }
 
 	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL) &&
 	    (wndPtr->scroll_flags & 0x0003) == 0x0003) {
 		RECT r = rect;
-		r.left = r.right - SYSMETRICS_CXVSCROLL;
-		r.top  = r.bottom - SYSMETRICS_CYHSCROLL;
+		r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
+		r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
 		FillRect( hdc, &r, sysColorObjects.hbrushScrollbar );
 		}
     }    
@@ -909,7 +901,11 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 
     if (GetCapture() != hwnd) SetCapture( hwnd );    
 
-    if (wndPtr->dwStyle & WS_CHILD) hdc = GetDC( wndPtr->hwndParent );
+    if (wndPtr->dwStyle & WS_CHILD)
+    {
+          /* Retrieve a default cache DC (without using the window style) */
+        hdc = GetDCEx( wndPtr->hwndParent, 0, DCX_CACHE );
+    }
     else
     {  /* Grab the server only when moving top-level windows without desktop */
 	hdc = GetDC( 0 );
@@ -1262,8 +1258,10 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
-	    DialogBox( hSysRes, MAKEINTRESOURCE(2), 
+	{   extern char sysres_DIALOG_2[];
+	    DialogBoxIndirectPtr( hSysRes, sysres_DIALOG_2,
 		       hwnd, (WNDPROC)AboutWine_Proc );
+        }
 	break;
     }
     return 0;

@@ -1,15 +1,21 @@
 #include "../Wine.tmpl"
 
+MODULE = rc
+
 .SUFFIXES: .rc
 
 .rc.c:
 	echo "#include \"windows.h\"" >$*.rct
 	echo WINDOWS_H_ENDS_HERE >>$*.rct
 	cat $< >>$*.rct
-	gcc -E -x c $(CFLAGS) $*.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | winerc -v -p $* >$@
+	gcc -E -x c $(CFLAGS) $*.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o $* -v -p $*
 	$(RM) $*.rct
 
-AllTarget(sysres.c)
+RCSRCS = sysres.rc sysresbm.rc
+
+RCOBJS = $(RCSRCS:.rc=.o)
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(RCOBJS))
 
 sysres.c: winerc $(TOP)/include/windows.h
 
@@ -27,6 +33,8 @@ SRCS = \
 	winerc.c
 
 OBJS = $(SRCS:.c=.o)
+
+LOCAL_LIBRARIES = -lfl
 
 depend:: rc.tab.c rc.tab.h lex.yy.c
 

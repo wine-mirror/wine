@@ -2,7 +2,6 @@
 #define __WINE_REGISTERS_H
 
 #include <windows.h>
-#include "autoconf.h"
 
 #ifndef PROCEMU
 
@@ -33,7 +32,11 @@
 #define DI context->sc_edi
 #define SI context->sc_esi
 #define SP context->sc_esp
+#ifndef __FreeBSD__
+#define EFL context->sc_eflags
+#else
 #define EFL context->sc_efl
+#endif
 #define EIP context->sc_eip
 
 #define SetCflag	(EFL |= 0x00000001)

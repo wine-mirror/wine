@@ -260,7 +260,9 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     if (template.header->style & DS_SETFONT)
     {
-	hFont = CreateFont( template.pointSize, 0, 0, 0, FW_DONTCARE,
+          /* The font height must be negative as it is a point size */
+          /* (see CreateFont() documentation in the Windows SDK).   */
+	hFont = CreateFont( -template.pointSize, 0, 0, 0, FW_DONTCARE,
 			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			    DEFAULT_QUALITY, FF_DONTCARE, template.faceName );
 	if (hFont)
@@ -464,6 +466,16 @@ int DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
     return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
+/***********************************************************************
+ *           DialogBoxIndirectPtr
+ *  like DialogBoxIndirect, but expects pointer to template
+ */
+int DialogBoxIndirectPtr( HINSTANCE hInst, LPCSTR dlgTemplate,
+                          HWND owner, WNDPROC dlgProc)
+{
+    return DialogBoxIndirectParamPtr(hInst, dlgTemplate, owner, dlgProc, 0);
+}
+
 
 /***********************************************************************
  *           DialogBoxIndirectParam   (USER.240)
@@ -477,6 +489,19 @@ int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
     if (!(ptr = GlobalLock( dlgTemplate ))) return -1;
     hwnd = CreateDialogIndirectParam( hInst, ptr, owner, dlgProc, param );
     GlobalUnlock( dlgTemplate );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
+    return -1;
+}
+
+/***********************************************************************
+ *           DialogBoxIndirectParamPtr
+ *  like DialogBoxIndirectParam, but expects pointer to template
+ */
+int DialogBoxIndirectParamPtr(HINSTANCE hInst,LPCSTR dlgTemplate,
+                              HWND owner, WNDPROC dlgProc, LPARAM param)
+{
+    HWND hwnd;
+    hwnd = CreateDialogIndirectParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
@@ -672,7 +697,7 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 {
     int len;
     HANDLE hText;
-    long result;
+    long result = 0;
     char * str;
     
     if (translated) *translated = FALSE;

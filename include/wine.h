@@ -25,7 +25,7 @@ struct sigcontext_struct {
 	unsigned long sc_err;
 	unsigned long sc_eip;
 	unsigned short sc_cs, __csh;
-	unsigned long sc_efl;
+	unsigned long sc_eflags;
 	unsigned long esp_at_signal;
 	unsigned short sc_ss, __ssh;
 	unsigned long i387;

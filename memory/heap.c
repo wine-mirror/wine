@@ -479,6 +479,21 @@ WIN16_LocalInit(unsigned int segment, unsigned int start, unsigned int end)
 	segment = Stack16Frame[6];
     }
 
+    dprintf_heap(stddeb, "WIN16_LocalInit   segment=%04x  start=%04x  end=%04x\n", segment, start, end);
+
+    /* start=0 doesn't mean the first byte of the segment if the segment 
+       is an auto data segment. Instead it should start after the actual
+       data (and the stack if there is one). As we don't know the length
+       of the data and stack right now, we simply put the local heap at the
+       end of the segment */
+    if ((start==0)&&(Segments[segment>>3].owner==segment))
+    {
+        return;
+        start = Segments[segment>>3].length-end-2;
+        end   = Segments[segment>>3].length-1;  
+        dprintf_heap(stddeb, "Changed to  start=%04x  end=%04x\n",start,end);
+    }
+
     if (lh == NULL)
     {
 	HEAP_LocalInit(owner, 

@@ -65,9 +65,9 @@ void Font_Init( void )
   int i;
 
   if( GetPrivateProfileString("fonts", NULL, "*", temp, sizeof(temp), WINE_INI) > 2 ) {
-    for( ptr = temp, i = 1; strlen(ptr) != 0; ptr += strlen(ptr) + 1, i++ )
+    for( ptr = temp, i = 1; strlen(ptr) != 0; ptr += strlen(ptr) + 1 )
       if( strcmp( ptr, "default" ) )
-	FontNames[i].window = strdup( ptr );
+	FontNames[i++].window = strdup( ptr );
     FontSize = i;
 
     for( i = 1; i < FontSize; i++ ) {
@@ -75,8 +75,7 @@ void Font_Init( void )
       FontNames[i].x11 = strdup( temp );
     }
     GetPrivateProfileString("fonts", "default", "*", temp, sizeof(temp), WINE_INI);
-    if( *temp == '*' )
-      FontNames[0].x11 = strdup( temp );
+    FontNames[0].x11 = strdup( temp );
 
   } else {
     FontNames[0].window = NULL; FontNames[0].x11 = "bitstream-courier";
@@ -114,7 +113,7 @@ static const char *FONT_TranslateName( char *winFaceName )
  *
  * Find a X font matching the logical font.
  */
-static XFontStruct * FONT_MatchFont( LOGFONT * font )
+static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
 {
     char pattern[100];
     const char *family, *weight, *charset;
@@ -125,8 +124,17 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font )
     
     weight = (font->lfWeight > 550) ? "bold" : "medium";
     slant = font->lfItalic ? 'i' : 'r';
-    height = abs(font->lfHeight * 10);
-    width = font->lfWidth * 10;
+    height = font->lfHeight * dc->w.VportExtX / dc->w.WndExtX;
+    if (height == 0) height = 120;  /* Default height = 12 */
+    else if (height < 0)
+    {
+          /* If height is negative, it means the height of the characters */
+          /* *without* the internal leading. So we adjust it a bit to     */
+          /* compensate. 5/4 seems to give good results for small fonts.  */
+        height = 10 * (-height * 5 / 4);
+    }
+    else height *= 10;
+    width  = 10 * (font->lfWidth * dc->w.VportExtY / dc->w.WndExtY);
     spacing = (font->lfPitchAndFamily & FIXED_PITCH) ? 'm' :
 	      (font->lfPitchAndFamily & VARIABLE_PITCH) ? 'p' : '*';
     charset = (font->lfCharSet == ANSI_CHARSET) ? "iso8859-1" : "*-*";
@@ -304,7 +312,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
     
     if (!stockPtr || !stockPtr->fstruct)
     {
-	fontStruct = FONT_MatchFont( &font->logfont );
+	fontStruct = FONT_MatchFont( &font->logfont, dc );
     }
     else
     {
@@ -520,6 +528,27 @@ BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
     }
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           AddFontResource    (GDI.119)
+ */
+int AddFontResource( LPSTR str )
+{
+    fprintf( stdnimp, "STUB: AddFontResource('%s')\n", str );
+    return 1;
+}
+
+
+/***********************************************************************
+ *           RemoveFontResource    (GDI.136)
+ */
+BOOL RemoveFontResource( LPSTR str )
+{
+    fprintf( stdnimp, "STUB: RemoveFontResource('%s')\n", str );
+    return TRUE;
+}
+
 
 /*************************************************************************
  *				ParseFontParms		[internal]

@@ -34,7 +34,7 @@ extern int do_int2a(struct sigcontext_struct *);
 extern int do_int2f(struct sigcontext_struct *);
 extern int do_int31(struct sigcontext_struct *);
  
-#if !defined(BSD4_4) || defined(linux)
+#if !defined(BSD4_4) || defined(linux) || defined(__FreeBSD__)
 char * cstack[4096];
 #endif
 struct sigaction segv_act;
@@ -200,7 +200,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 	XUngrabServer(display);
 	XFlush(display);
     fprintf(stderr,"In win_fault %x:%lx\n", scp->sc_cs, scp->sc_eip);
-#if defined(linux) || defined(__NetBSD__)
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__)
     wine_debug(signal, scp);  /* Enter our debugger */
 #else
     fprintf(stderr,"Stack: %x:%x\n", scp->sc_ss, scp->sc_esp);
@@ -233,7 +233,7 @@ int init_wine_signals(void)
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
         sigset_t sig_mask;
-#ifdef BSD4_4
+#if defined(BSD4_4) && !defined (__FreeBSD__)
         struct sigaltstack ss;
         
         if ((ss.ss_base = malloc(MINSIGSTKSZ)) == NULL) {
@@ -308,7 +308,11 @@ test_memory( char *p, int write )
 	    *p = c;
 	ret = TRUE;
     }
+#ifdef linux
     wine_sigaction(SIGSEGV, &old_act, NULL);
+#else
+    sigaction(SIGSEGV, &old_act, NULL);
+#endif
     return ret;
 }
 

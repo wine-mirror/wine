@@ -66,7 +66,7 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
 	   rc->left, rc->top, rc->right, rc->bottom);
 
     if (rc == NULL)
-	return;
+	return FALSE;
 
     if (cliprc)
     {
@@ -100,7 +100,7 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
 
     if (!BitBlt(hdc, dest.x, dest.y, width, height, hdc, src.x, src.y, 
 		SRCCOPY))
-	return;
+	return FALSE;
 
     if (hrgnUpdate)
     {
@@ -124,6 +124,7 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
     }
 
     if (rcUpdate) GetRgnBox( hrgnUpdate, rcUpdate );
+    return TRUE;
 }
 
 

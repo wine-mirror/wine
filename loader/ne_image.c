@@ -33,6 +33,7 @@ extern HANDLE CreateNewTask(HINSTANCE hInst);
 extern void InitializeLoadedDLLs(struct w_files *wpnt);
 extern int CallToInit16(unsigned long csip, unsigned long sssp, 
 			unsigned short ds);
+extern int CallTo16cx(unsigned long csip, unsigned long dscx);
 extern void CallTo32();
 extern char WindowsPath[256];
 extern unsigned short WIN_StackSize;
@@ -472,7 +473,7 @@ int StartNEprogram(struct w_files *wpnt)
 
 void InitNEDLL(struct w_files *wpnt)
 {
-	int cs_reg, ds_reg, ip_reg, rv;
+	int cs_reg, ds_reg, ip_reg, cx_reg, rv;
 	/* 
 	 * Is this a library? 
 	 */
@@ -490,11 +491,13 @@ void InitNEDLL(struct w_files *wpnt)
 	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
 	    ip_reg = wpnt->ne->ne_header->ip;
 
+	    cx_reg = wpnt->ne->ne_header->local_heap_length;
+
 	    if (cs_reg) {
-		dprintf_dll(stddeb,"Initializing %s, cs:ip %04x:%04x, ds %04x\n", 
-		    wpnt->name, cs_reg, ip_reg, ds_reg);
+		dprintf_dll(stddeb,"Initializing %s, cs:ip %04x:%04x, ds %04x, cx %04x\n", 
+		    wpnt->name, cs_reg, ip_reg, ds_reg, cx_reg);
 	    	    
-		rv = CallTo16(cs_reg << 16 | ip_reg, ds_reg);
+		rv = CallTo16cx(cs_reg << 16 | ip_reg, ds_reg | (cx_reg<<16));
 		dprintf_exec(stddeb,"rv = %x\n", rv);
 	    } else
 		dprintf_exec(stddeb,"%s skipped\n", wpnt->name);

@@ -35,7 +35,7 @@ static char Copyright[] = "Copyright Martin von Loewis, 1994";
 %type <style> style optional_style
 %%
 
-resource_file: resources {create_output($1)}
+resource_file: resources {create_output($1);}
 
 /*resources are put into a linked list*/
 resources:	{$$=0;}
@@ -201,8 +201,8 @@ versioninfo:	VERSIONINFO NOT_SUPPORTED {$$=0;}
    NOT is used to disable default styles */
 style:		NUMBER {$$=new_style();$$->or=$1;}
 		| NOT NUMBER {$$=new_style();$$->and=~($2);}
-		| NUMBER '|' style {$$=$3;$$->or|=$1;}
-		| NOT NUMBER '|' style {$$=$4;$$->and&=~($2);}
+		| '(' style ')' {$$=$2;}
+		| style '|' style {$$=$1;$$->or|=$3->or;$$->and&=$3->and;}
 %%
 yyerror(char *s)
 {

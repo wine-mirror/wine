@@ -137,7 +137,7 @@ HANDLE CreateNewTask(HINSTANCE hInst, HTASK hTaskParent)
 		}
 	hTask = GlobalAlloc(GMEM_MOVEABLE, sizeof(WINETASKENTRY));
 	lpNewTask = (LPWINETASKENTRY) GlobalLock(hTask);
-    	dprintf_task(stddeb,"CreateNewTask entry allocated %08X\n", lpNewTask);
+    	dprintf_task(stddeb,"CreateNewTask entry allocated %p\n", lpNewTask);
 	if (lpNewTask == NULL) return 0;
 	if (lpTaskList == NULL) {
 		lpTaskList = lpNewTask;

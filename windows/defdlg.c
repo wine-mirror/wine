@@ -26,7 +26,6 @@ extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );  /* windows/dialog.c */
  */
 static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 {
-    int dlgCode;
     HWND hwndPrev = GetFocus();
 
     if (IsChild( hwndDlg, hwndPrev ))
@@ -126,7 +125,7 @@ LONG DefDlgProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
 
-    dprintf_dialog(stddeb, "DefDlgProc: %d %04x %d %08x\n", 
+    dprintf_dialog(stddeb, "DefDlgProc: %d %04x %d %08lx\n", 
 		   hwnd, msg, wParam, lParam );
 
     dlgInfo->msgResult = 0;

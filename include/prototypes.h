@@ -142,34 +142,9 @@ extern void sync_profiles(void);
 
 extern void SpyInit(void);
 
-/* controls/button.c */
-
-extern LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam);
-
-/* controls/combo.c */
-
-extern LONG ComboBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam);
-
 /* controls/desktop.c */
 
-extern LONG DesktopWndProc (HWND hwnd, WORD message, WORD wParam, LONG lParam);
 extern BOOL DESKTOP_SetPattern(char *pattern);
-
-/* controls/listbox.c */
-
-extern LONG ListBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam);
-
-/* controls/menu.c */
-
-extern LONG PopupMenuWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam);
-
-/* controls/scrollbar.c */
-
-extern LONG ScrollBarWndProc(HWND hWnd, WORD message, WORD wParam, LONG lParam);
-
-/* controls/static.c */
-
-extern LONG StaticWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam);
 
 /* controls/widget.c */
 

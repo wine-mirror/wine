@@ -19,7 +19,6 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "msdos.h"
 #include "wine.h"
 #include "listbox.h"
-#include "scroll.h"
 #include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_LISTBOX */
@@ -57,11 +56,6 @@ int ListBoxFindNextMatch(HWND hwnd, WORD wChar);
   ( ((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) != LBS_OWNERDRAWFIXED) && \
     ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) != LBS_OWNERDRAWVARIABLE) ) || \
   ((wndPtr->dwStyle & LBS_HASSTRINGS) == LBS_HASSTRINGS) )
-
-#define HasStrings(wndPtr) ( \
-	( ((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) != LBS_OWNERDRAWFIXED) && \
-	  ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) != LBS_OWNERDRAWVARIABLE) ) || \
-	  ((wndPtr->dwStyle & LBS_HASSTRINGS) == LBS_HASSTRINGS) )
 
 
 /***********************************************************************
@@ -399,6 +393,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		wRet = ListBoxAddString(hwnd, (LPSTR)lParam);
 		return wRet;
 	case LB_GETTEXT:
+		dprintf_listbox(stddeb, "LB_GETTEXT  wParam=%d\n",wParam);
 		wRet = ListBoxGetText(hwnd, wParam, (LPSTR)lParam, FALSE);
                 return wRet;
 	case LB_INSERTSTRING:
@@ -423,7 +418,8 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	case LB_GETHORIZONTALEXTENT:
 		return wRet;
 	case LB_GETITEMDATA:
-		lRet = ListBoxGetText(hwnd, wParam, (LPSTR)lParam, HasStrings(wndPtr));
+		dprintf_listbox(stddeb, "LB_GETITEMDATA wParam=%x\n", wParam);
+		lRet = ListBoxGetText(hwnd, wParam, (LPSTR)lParam, TRUE);
 		return lRet;
 	case LB_GETITEMHEIGHT:
                 ListBoxGetItemRect(hwnd, wParam, &rect);
@@ -460,6 +456,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	case LB_SETHORIZONTALEXTENT:
 		return wRet;
 	case LB_SETITEMDATA:
+		dprintf_listbox(stddeb, "LB_SETITEMDATA  wParam=%x  lParam=%lx\n", wParam, lParam);
 		wRet = ListBoxSetItemData(hwnd, wParam, lParam);
 		return wRet;
 	case LB_SETTABSTOPS:
@@ -960,6 +957,8 @@ int ListBoxGetText(HWND hwnd, UINT uIndex, LPSTR OutStr, BOOL bItemData)
     LPHEADLIST 	lphl;
     LPLISTSTRUCT lpls;
     UINT	Count;
+    if ((!OutStr)&&(!bItemData))
+	fprintf(stderr, "ListBoxGetText // OutStr==NULL\n"); 
     if (!bItemData)   	*OutStr=0;
     lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
     if (lphl == NULL) return LB_ERR;
@@ -1083,6 +1082,8 @@ int ListBoxResetContent(HWND hwnd)
     if (lphl == NULL) return LB_ERR;
     lpls = lphl->lpFirst;
     if (lpls == NULL) return LB_ERR;
+    dprintf_listbox(stddeb, "ListBoxResetContent // ItemCount = %d\n",
+	lphl->ItemsCount);
     for(i = 0; i <= lphl->ItemsCount; i++) {
 	lpls2 = lpls;
 	lpls = (LPLISTSTRUCT)lpls->lpNext;
@@ -1097,8 +1098,8 @@ int ListBoxResetContent(HWND hwnd)
     lphl->lpFirst = NULL;
     lphl->FirstVisible = 1;
     lphl->ItemsCount = 0;
-	lphl->ItemFocused = -1;
-	lphl->PrevFocused = -1;
+    lphl->ItemFocused = -1;
+    lphl->PrevFocused = -1;
     if ((wndPtr->dwStyle && LBS_NOTIFY) != 0)
 	SendMessage(lphl->hWndLogicParent, WM_COMMAND, 
     	    wndPtr->wIDmenu, MAKELONG(hwnd, LBN_SELCHANGE));

@@ -321,7 +321,8 @@ ATOM DeleteAtom( ATOM atom )
  */
 ATOM FindAtom( LPCSTR str )
 {
-    if (!*LOCALATOMTABLE()) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
+    if (!*LOCALATOMTABLE()) return 0;
+    /* if (!*LOCALATOMTABLE()) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );*/
     return ATOM_FindAtom( *LOCALATOMTABLE(), str );
 }
 

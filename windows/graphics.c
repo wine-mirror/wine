@@ -150,8 +150,6 @@ BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
     yend   = YLPTODP( dc, yend );
     if ((left == right) || (top == bottom)) return FALSE;
 
-    if (!DC_SetupGCForPen( dc )) return TRUE;
-
     xcenter = (right + left) / 2;
     ycenter = (bottom + top) / 2;
     start_angle = atan2( (double)(ycenter-ystart)*(right-left),
@@ -164,6 +162,19 @@ BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
     if (left > right) swap_int( &left, &right );
     if (top > bottom) swap_int( &top, &bottom );
 
+      /* Fill arc with brush if Chord() or Pie() */
+
+    if ((lines > 0) && DC_SetupGCForBrush( dc ))
+    {
+        XSetArcMode( display, dc->u.x.gc, (lines==1) ? ArcChord : ArcPieSlice);
+        XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                 dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+                 right-left-1, bottom-top-1, istart_angle, idiff_angle );
+    }
+
+      /* Draw arc and lines */
+
+    if (!DC_SetupGCForPen( dc )) return TRUE;
     XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 	      right-left-1, bottom-top-1, istart_angle, idiff_angle );

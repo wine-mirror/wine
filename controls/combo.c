@@ -57,7 +57,7 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		case WM_CREATE:
 			wndPtr = WIN_FindWndPtr(hwnd);
 			if (wndPtr == NULL) return 0;
-			dprintf_combo(stddeb,"Combo WM_CREATE %p !\n", lphc);
+			dprintf_combo(stddeb,"Combo WM_CREATE %d !\n", hwnd);
 			if (hComboBit == (HBITMAP)NULL) 
 			hComboBit = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_COMBO));
 			GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
@@ -388,6 +388,7 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		dprintf_combo(stddeb,"ComboBox CB_SHOWDROPDOWN !\n");
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
+		wndPtr = WIN_FindWndPtr(hwnd);
 		lphc->dwState = lphc->dwState | CB_SHOWDROPDOWN;
 		if (wParam != 0) {
 			GetWindowRect(hwnd, &rect);
@@ -481,6 +482,7 @@ void ComboBoxStaticOwnerDraw(HWND hWnd, LPHEADCOMBO lphc)
 		SendMessage(lphc->hWndLBox, LB_GETTEXT, y, (LPARAM)str);
 		ptr = (LPSTR)SendMessage(lphc->hWndLBox, LB_GETITEMDATA, y, 0L);
 		}
+	hDC = GetDC(hWnd);
 	hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
 						MAKELONG(hWnd, CTLCOLOR_STATIC)); 
 	if (hBrush == (HBRUSH)NULL)  hBrush = GetStockObject(WHITE_BRUSH);
@@ -490,9 +492,9 @@ void ComboBoxStaticOwnerDraw(HWND hWnd, LPHEADCOMBO lphc)
 	lpdis = (LPDRAWITEMSTRUCT) USER_HEAP_ADDR(hTemp);
 	if (lpdis == NULL) {
 		printf("ComboBox Ownerdraw // Error allocating DRAWITEMSTRUCT !\n");
+                ReleaseDC( hWnd, hDC );
 		return;
 		}
-	hDC = GetDC(hWnd);
 	FillRect(hDC, &lphc->RectEdit, hBrush);
 	lpdis->hDC = hDC;
 	if (y != LB_ERR) lpdis->itemID = y - 1;

@@ -303,10 +303,10 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 			DrawIcon(hDC, lpmb->rectIcon.left,
 				lpmb->rectIcon.top, lpmb->hIcon);
 		DrawText(hDC, lpmb->Str, -1, &rect, 
-			DT_CALCRECT | DT_CENTER | DT_WORDBREAK);
+			DT_CALCRECT | DT_LEFT | DT_VCENTER | DT_WORDBREAK);
 		rect.top = lpmb->rectStr.bottom / 2 - rect.bottom / 2;
 		rect.bottom = lpmb->rectStr.bottom / 2 + rect.bottom / 2;
-		DrawText(hDC, lpmb->Str, -1, &rect, DT_CENTER | DT_WORDBREAK);
+		DrawText(hDC, lpmb->Str, -1, &rect, DT_LEFT | DT_VCENTER | DT_WORDBREAK);
 		SetTextColor(hDC, OldTextColor);
 		EndPaint(hWnd, &ps);
 		dprintf_msgbox(stddeb, "MessageBox End of WM_PAINT !\n");

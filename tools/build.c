@@ -629,7 +629,11 @@ InitContext()
     i = n_context_strings - 1 + ((int) &context - (int) &context.sc_eip) / 4;
     context_strings[i] = PUSH_EIP;
 
-    i = n_context_strings - 1 + ((int) &context - (int) &context.sc_efl) / 4;
+#ifndef __FreeBSD__
+    i = n_context_strings - 1 + ((int) &context - (int)&context.sc_eflags) / 4;
+#else
+    i = n_context_strings - 1 + ((int) &context - (int)&context.sc_efl) / 4;
+#endif
     context_strings[i] = PUSH_EFL;
     pop_strings[n_context_strings - 1 - i] = POP_EFL;
 

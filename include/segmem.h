@@ -33,12 +33,12 @@
 extern unsigned short SelectorMap[MAX_SELECTORS];
 
 #ifdef HAVE_IPC
-#define SAFEMAKEPTR(s, o) (((int) (s) << 16) | ((o) & 0xffff))
+#define SAFEMAKEPTR(s, o) ((void *)(((int) (s) << 16) | ((o) & 0xffff)))
 #define FIXPTR(p)	  (p)
 #else
 #define SAFEMAKEPTR(s, o) \
-    (((int) SelectorMap[SelectorMap[(s) >> 3] & SELECTOR_INDEXMASK] << 19) \
-     | 0x70000 | ((o) & 0xffff))
+    ((void *)(((int)SelectorMap[SelectorMap[(s) >> 3] & SELECTOR_INDEXMASK] \
+                    << 19) | 0x70000 | ((o) & 0xffff)))
 #define FIXPTR(p)	  SAFEMAKEPTR((unsigned long) (p) >> 16, (p))
 #endif
 
@@ -76,6 +76,9 @@ extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);
 #define GLOBAL_FLAGS_READONLY		0x00020000
 
 #define FIRST_SELECTOR	8
+
+#define IS_16_BIT_ADDRESS(addr)  \
+     ((unsigned int)(addr) >= (((FIRST_SELECTOR << 3) | 0x0007) << 16))
 
 extern SEGDESC Segments[];
 

@@ -16,7 +16,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "user.h"
 #include "dce.h"
 #include "sysmetrics.h"
-#include "scroll.h"
 #include "icon.h"
 #include "cursor.h"
 #include "stddebug.h"
@@ -39,7 +38,6 @@ extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 extern HMENU CopySysMenu(); /* menu.c */
 extern LONG MDIClientWndProc(HWND hwnd, WORD message, 
 			     WORD wParam, LONG lParam); /* mdi.c */
-
 
 static HWND hwndDesktop = 0;
 static HWND hWndSysModal = 0;
@@ -230,7 +228,7 @@ BOOL WIN_CreateDesktopWindow()
     HCLASS hclass;
     CLASS *classPtr;
 
-    if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_NAME, &classPtr )))
+    if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_NAME, 0, &classPtr )))
 	return FALSE;
 
     hwndDesktop = USER_HEAP_ALLOC( GMEM_MOVEABLE,
@@ -338,7 +336,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     }
     else if (style & WS_CHILD) return 0;  /* WS_CHILD needs a parent */
 
-    if (!(class = CLASS_FindClassByName( className, &classPtr ))) {
+    if (!(class = CLASS_FindClassByName( className, instance, &classPtr ))) {
 	fprintf(stderr,"CreateWindow BAD CLASSNAME '%s' !\n", className);
 	return 0;
 	}    
@@ -603,7 +601,7 @@ HWND FindWindow(LPSTR ClassMatch, LPSTR TitleMatch)
 
     if (ClassMatch)
     {
-	hclass = CLASS_FindClassByName( ClassMatch, &classPtr );
+	hclass = CLASS_FindClassByName( ClassMatch, 0xffff, &classPtr );
 	if (!hclass) return 0;
     }
     else hclass = 0;
@@ -731,7 +729,19 @@ LONG GetWindowLong( HWND hwnd, short offset )
     {
 	case GWL_STYLE:   return wndPtr->dwStyle;
         case GWL_EXSTYLE: return wndPtr->dwExStyle;
-	case GWL_WNDPROC: return (LONG)wndPtr->lpfnWndProc;
+	case GWL_WNDPROC: 
+		if (!IS_16_BIT_ADDRESS(wndPtr->lpfnWndProc))
+		{
+		   /* The window procedure is part of Wine.
+		      Unfortunately, MS-Windows programs can't access these
+		      adresses.
+                      FIXME: There should be a jump table somewhere in if1632
+		   */
+		   long x=Stack16Frame[11]<<16 | 0x0010;
+		   /* Just to make Borland's OWL happy */
+		   return x;
+		}
+	        else return (LONG)wndPtr->lpfnWndProc;
     }
     return 0;
 }

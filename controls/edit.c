@@ -16,7 +16,6 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include "win.h"
 #include "class.h"
 #include "user.h"
-#include "scroll.h"
 #include "stddebug.h"
 /* #define DEBUG_EDIT */
 /* #undef  DEBUG_EDIT */
@@ -583,7 +582,7 @@ long EDIT_CreateMsg(HWND hwnd, LONG lParam)
     memset(text, ' ', (ClientWidth(wndPtr) / charWidths[32]) + 2);
 
     /* set up text cursor for edit class */
-    CLASS_FindClassByName("EDIT", &classPtr);
+    CLASS_FindClassByName("EDIT", 0, &classPtr);
     classPtr->wc.hCursor = LoadCursor(0, IDC_IBEAM);
 
     /* paint background on first WM_PAINT */
@@ -1093,18 +1092,18 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
 {
     HANDLE hStr;
     char *str;
-    int ch = 0, i = 0, j, s_i;
+    int ch = 0, i = 0, j, s_i=0;
     int ch1;
 
-    dprintf_edit(stddeb,"EDIT_GetStr %s %d %d\n", lp, off, len);
+    dprintf_edit(stddeb,"EDIT_GetStr lp='%s'  off=%d  len=%d\n", lp, off, len);
 
+    if (off<0) off=0;
     while (i < off)
     {
 	s_i = i;
 	i += EDIT_CharWidth(hwnd, (BYTE)(*(lp + ch)), i);
 	ch++;
     }
-
     /* if stepped past _off_, go back a character */
     if (i - off)
     {
@@ -1113,7 +1112,6 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
     }
     *diff = off - i;
     ch1 = ch;
-
     while (i < len + off)
     {
 	i += EDIT_CharWidth(hwnd, (BYTE)(*(lp + ch)), i);
@@ -2176,7 +2174,7 @@ void EDIT_MouseMoveMsg(HWND hwnd, WORD wParam, LONG lParam)
 
 int EDIT_PixelToChar(HWND hwnd, int row, int *pixel)
 {
-    int ch = 0, i = 0, s_i;
+    int ch = 0, i = 0, s_i = 0;
     char *text;
 
     dprintf_edit(stddeb,"EDIT_PixelToChar: row=%d, pixel=%d\n", row, *pixel);
@@ -2214,12 +2212,14 @@ LONG EDIT_SetTextMsg(HWND hwnd, LONG lParam)
 
     if (strlen((char *)lParam) <= es->MaxTextLen)
     {
-	len = strlen((char *)lParam);
+	len = ( lParam? strlen((char *)lParam) : 0 );
 	EDIT_ClearText(hwnd);
 	es->textlen = len;
 	es->hText = EDIT_HeapReAlloc(hwnd, es->hText, len + 3);
 	text = EDIT_HeapAddr(hwnd, es->hText);
-	strcpy(text, (char *)lParam);
+	if (lParam)
+	    strcpy(text, (char *)lParam);
+	text[len]     = '\0';
 	text[len + 1] = '\0';
 	text[len + 2] = '\0';
 	EDIT_BuildTextPointers(hwnd);

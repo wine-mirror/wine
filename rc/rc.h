@@ -89,6 +89,7 @@ gen_res *make_menu(gen_res*);
 gen_res *add_resource(gen_res*,gen_res*);
 
 void create_output(gen_res*);
+void set_out_file(char*);
 
 #define CT_BUTTON 	0x80
 #define CT_EDIT 	0x81

@@ -1,3 +1,106 @@
+Sun Nov  6 18:52:04 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [objects/oembitmap.c]  (New file)
+	Added possibility to use .xpm files for OEM bitmaps.
+
+	* [include/bitmaps/obm*]  (New files)
+	Redrawn all OEM bitmaps in xpm format.
+
+	* [objects/font.c]
+	Add space for internal leading when using a negative font height.
+	Stubs for AddFontResource() and RemoveFontResource().
+	Fix in FONT_Init() for uninitialised default font.
+
+	* [windows/dialog.c]
+	Make font height negative as it is really a point size and not a
+	pixel size; dialogs using 8-point fonts look better now.
+
+	* [windows/graphics.c]
+	Fixed the fix :-) for Pie() to make it work for Arc() and Chord() also.
+
+	* [windows/nonclient.c]
+	A few changes for new OEM bitmaps.
+
+Sun Nov  6 18:22:18 1994  Michael Patra  <micky@marie.physik.tu-berlin.de>
+
+	* [windows/class.c]
+	The names of local classes have to be stored using GlobalAtom*.
+	Otherwise they couldn't be accessed from other modules (e.g. BWCC) 
+
+	* [if1632/call.S]
+	CallTo16(cx): It's possible to set the contents of the cx-register.
+
+	* [loader/ne_image.c]
+	InitNEDLL(): The size of the local heap is now passed in the cx-
+	register when initializing a DLL.
+
+	* [memory/heap.c]
+	LocalInit(): The case start==0 is now handled in the way it should.
+
+	* [windows/win.c]
+	GetWindowLong(): If the adress of the windows function is requested
+	it's no longer returned if it's within the Wine code (and therefore
+	unreachable by a windows program). This makes Borland's OWL happy.
+
+	* [controls/edit.c]
+	EDIT_GetStr(): Added handling for off<0.
+
+Sun Nov  6 17:37:14 1994  Chris Jones  <chrisj@ichips.intel.com>
+
+	* [loader/library.c]
+	Fixed infinite loop bug when two DLLs refer to each other (fixes
+	hangup of Quicken during loading).
+
+Thu Nov 04 12:00:00 1994  Jan Willamowius  (jan@janhh.sh.sub.de)
+
+	* [misc/dos_fs.c]
+	Bug fix: The size of a disk an the available space
+	is now returned in bytes instead of (incorrectly)
+	KBytes.
+
+Thu Nov 03 12:00:00 1994  Jan Willamowius  (jan@janhh.sh.sub.de)
+
+	* [windows/graphics.c]
+	Bug fix: Pie segments are now filled with correct brush.
+
+Thu Nov  3 10:40:09 1994  Martin von Loewis  (martin@cs.csufresno.edu)
+
+        * [Imakefile]
+        generate rc.o before loader.o
+
+        * [controls/menu.c]
+        CopySysMenu: generate SYSMENU on the fly, eliminate hSysMenu
+
+        * [include/resource.h]
+        Add struct ResourceTable
+
+        * [loader/bitmap.h]
+        Load system bitmaps from sysresbmTable
+
+        * [misc/clipboard.c]
+          [windows/event.c]
+        IsClipboardFormatAvailable,EVENT_SelectionRequest: bug fixes
+        
+        * [rc/Imakefile]
+        generate rc.o from sysres.o and sysresbm.o. Added -lfl
+
+        * [rc/rc.y]
+        change style handling to allow ( S1 | S2 ) | S3
+
+        * [rc/sysres.rc]
+          [rc/sysresbm.rc]
+        Put bitmaps and icons to sysresbm, everything else to sysres
+
+        * [rc/winerc.c]
+          [rc/winerc.h]
+        Added -o, -c flags. New function set_out_file. Output to files.
+
+        * [windows/dialog.c]
+        DialogBoxIndirectPtr, DialogBoxIndirectParamPtr: New functions 
+
+        * [windows/nonclient.c]
+        Create AboutWine dialog from template pointer
+
 ----------------------------------------------------------------------
 Sun Oct 30 13:01:18 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 
@@ -345,6 +448,11 @@ Sat Oct 15 17:35:00 PDT 1994		<martin@cs.csufresno.edu>
 
 	* [debugger/info.c]
 	symbolic backtrace for 32-bit stack. Breaks 16-bit bt.
+
+Sun Sep  25 12:00:00 PDT 1994   <martin@osiris.cs.csufresno.edu>
+
+	* [rc/rc.y] [rc/rc.h] [rc/rc.l] [rc/winerc.c]
+	Files created
 
 Sun Sep 18 11:04:45 MET DST 1994          Dag Asheim (dash@ifi.uio.no)
 

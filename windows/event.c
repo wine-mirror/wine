@@ -478,12 +478,15 @@ static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
         if(event->selection!=XA_PRIMARY)rprop=None;
         else if(!IsClipboardFormatAvailable(CF_TEXT))rprop=None;
 	else{
-            /* don't open the clipboard, just get the data */
+            /* Don't worry if we can't open */
+	    BOOL couldOpen=OpenClipboard(hwnd);
 	    hText=GetClipboardData(CF_TEXT);
 	    text=GlobalLock(hText);
 	    XChangeProperty(display,request,rprop,XA_STRING,
 		8,PropModeReplace,text,strlen(text));
 	    GlobalUnlock(hText);
+	    /* close only if we opened before */
+	    if(couldOpen)CloseClipboard();
 	}
     }
     if(rprop==None) dprintf_event(stddeb,"Request for %s ignored\n",

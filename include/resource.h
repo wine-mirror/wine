@@ -20,4 +20,10 @@ typedef struct resource_s {
 	struct w_files *wpnt;
 } RESOURCE;
 
+struct ResourceTable{
+        int id,type;
+        char *name;
+        unsigned char* value;
+        unsigned size;
+};
 #endif /* __WINE_RESOURCE_H */

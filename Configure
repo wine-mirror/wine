@@ -41,6 +41,7 @@ else
 #	if [ "$input" = 'y' -o "$input" = 'Y' ]
 #	then
 #		PROCEMU='#define PROCEMU'
+#		ALLDEFINES="$ALLDEFINES -DPROCEMU"
 #		echo
 #		echo -n 'bochs directory [/usr/src/bochs]? '
 #		read input
@@ -63,6 +64,17 @@ then
 	ALLDEFINES="$ALLDEFINES -DSHORTNAMES"
 else
 	SHORTNAMES=''
+fi
+
+echo
+echo -n 'Use the XPM library (Y/N) [N]? '
+read input
+if [ "$input" = 'y' -o "$input" = 'Y' ]
+then
+	XPM='#define USE_XPM'
+	ALLDEFINES="$ALLDEFINES -DUSE_XPM"
+else
+	XPM=''
 fi
 
 prompt "Global configfile name" WINE_CONFIGFILE /usr/local/etc/wine.conf
@@ -179,16 +191,16 @@ fi
 NEWLINUXLDT=''
 if grep -s seg_not_present /usr/include/linux/ldt.h 2> /dev/null
 then
-	NEWLINUXLDT='#define NEW_LDT_STRUCT'
+	ALLDEFINES="$ALLDEFINES -DNEW_LDT_STRUCT"
 fi
 
 cat > autoconf.h << EOF
 /* autoconf.h generated automatically.  Run Configure. */
 $WINELIB
 $SHORTNAMES
+$XPM
 $NEWBUILD
 $WINE_INI_GLOBAL
-$NEWLINUXLDT
 $ENDIAN
 $PROCEMUDIR
 #define AutoDefines $ALLDEFINES

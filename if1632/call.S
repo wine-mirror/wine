@@ -8,9 +8,9 @@
 #define UDATASEL 0x27
 #endif
 #ifdef __ELF__
-#define A( addr) addr
+#define A(addr) addr
 #else
-#define A( addr) _##addr
+#define A(addr) _##addr
 #endif
 	.data
 jump_target:
@@ -21,22 +21,22 @@ return_value:
  *	Places to keep info about the current 32-bit stack frame.
  */
 	.globl	A( IF1632_Saved32_esp), A(IF1632_Saved32_ebp), A(IF1632_Saved32_ss)
-A(IF1632_Saved32_esp):
+A(IF1632_Saved32_esp:)
 	.long	0
-A(IF1632_Saved32_ebp):
+A(IF1632_Saved32_ebp:)
 	.long	0
-A(IF1632_Saved32_ss):
+A(IF1632_Saved32_ss:)
 	.word	0
 
 /**********************************************************************
  *	Places to keep info about the current 16-bit stack frame.
  */
 	.globl A(IF1632_Saved16_esp),A(IF1632_Saved16_ebp),A(IF1632_Saved16_ss)
-A(IF1632_Saved16_esp):
+A(IF1632_Saved16_esp:)
 	.long	0
-A(IF1632_Saved16_ebp):
+A(IF1632_Saved16_ebp:)
 	.long	0
-A(IF1632_Saved16_ss):
+A(IF1632_Saved16_ss:)
 	.word	0
 
 nbytes:
@@ -62,7 +62,7 @@ offset:
  */
 	.align	4
 	.globl A(CallToInit16)
-A(CallToInit16):
+A(CallToInit16:)
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -154,17 +154,20 @@ A(CallToInit16):
 	ret
 
 /**********************************************************************
- *	int CallTo16(unsigned long csip, unsigned short ds)
+ *	int CallTo16  (unsigned long csip, unsigned short ds)
+ *      int CallTo16cx(unsigned long csip, unsigned long dscx);
  *
  *	Stack:	 	0	ebp
  *		 	4	eip
  *		 	8	target ip
  *			10	target cs
  *			12	target ds
+ *			14      target cx  (only CallTo16cx)
  */
 	.align	4
-	.globl A(CallTo16)
-A(CallTo16):
+	.globl A(CallTo16), A(CallTo16cx)
+A(CallTo16:)
+A(CallTo16cx:)
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -175,6 +178,7 @@ A(CallTo16):
 	movl	%eax,jump_target
 	lea	jump_target,%edx
 	movw	12(%ebp),%ax
+	movw	14(%ebp),%cx
 
 	/*
 	 * Switch to 16-bit stack
@@ -252,7 +256,7 @@ A(CallTo16):
  */
 	.align	4
 	.globl A(CallTo32)
-A(CallTo32):
+A(CallTo32:)
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -354,7 +358,7 @@ noargs:
  */
 	.align	4
 	.globl A(CallTo32_16)
-A(CallTo32_16):
+A(CallTo32_16:)
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -443,7 +447,7 @@ noargs2:
  *	ReturnFromRegisterFunc()
  */
 	.globl A(ReturnFromRegisterFunc)
-A(ReturnFromRegisterFunc):
+A(ReturnFromRegisterFunc:)
 	/*
  	 * Restore 16-bit stack
 	 */

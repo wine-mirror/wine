@@ -27,6 +27,7 @@
 #define METAFILE_MAGIC        0x4f50
 #define METAFILE_DC_MAGIC     0x4f51
 
+#pragma pack(1)
 
 typedef struct tagREGION
 {
@@ -81,6 +82,8 @@ typedef struct tagRGNOBJ
     GDIOBJHDR   header;
     REGION      region;
 } RGNOBJ;
+
+#pragma pack(4)
 
 typedef struct
 {

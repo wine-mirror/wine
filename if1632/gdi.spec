@@ -125,6 +125,7 @@ length	490
 105 pascal16 SelectVisRgn(word word) SelectVisRgn(1 2)
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits(1 2 3)
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg(1 2 3)
+119 pascal16 AddFontResource(ptr) AddFontResource(1)
 #121 pascal Death
 #122 pascal ReSurRection
 123 pascal16 PlayMetaFile(word word) PlayMetaFile(1 2)
@@ -140,7 +141,7 @@ length	490
 133 pascal16 GetEnvironment(ptr ptr word) GetEnvironment(1 2 3)
 134 pascal16 GetRgnBox(word ptr) GetRgnBox(1 2)
 #135 pascal ScanLr
-#136 pascal RemoveFontResource
+136 pascal16 RemoveFontResource(ptr) RemoveFontResource(1)
 148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg(1 2 3)
 149 pascal GetBrushOrg(word) GetBrushOrg(1)
 150 pascal16 UnrealizeObject(word) UnrealizeObject(1)

@@ -5,7 +5,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "autoconf.h"
 #include "stddebug.h"
 /* #define DEBUG_LDT */
 /* #undef DEBUG_LDT  */

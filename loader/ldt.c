@@ -81,7 +81,7 @@ print_ldt()
 	{
 	    printf("Entry %2d: Base %08lx, Limit %05lx, DPL %d, Type %d\n",
 		   i, base_addr, limit, dpl, type);
-	    printf("          SYSTEM: %08x %08x\n", *lp, *(lp-1));
+	    printf("          SYSTEM: %08lx %08lx\n", *lp, *(lp-1));
 	}
     }
 }

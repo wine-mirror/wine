@@ -21,7 +21,7 @@
 #include <sys/vfs.h>
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mount.h>
 #endif
 
@@ -93,7 +93,7 @@ void ChopOffSlash(char *path)
 void DOS_InitFS(void)
 {
 	int x;
-	char drive[2], temp[256], *ptr;
+	char drive[2], temp[256];
 
 	GetPrivateProfileString("wine", "windows", "c:\\windows", 
 		WindowsDirectory, sizeof(WindowsDirectory), WINE_INI);
@@ -250,12 +250,14 @@ int DOS_ValidDirectory(char *name)
 {
 	char *dirname;
 	struct stat s;
+	dprintf_dosfs(stddeb, "DOS_ValidDirectory: '%s'\n", name);
 	if ((dirname = GetUnixFileName(name)) == NULL)
 		return 0;
 	if (stat(dirname,&s))
 		return 0;
 	if (!S_ISDIR(s.st_mode))
 		return 0;
+	dprintf_dosfs(stddeb, "==> OK\n");
 	return 1;
 }
 
@@ -543,8 +545,8 @@ int DOS_GetFreeSpace(int drive, long *size, long *available)
 		return 0;
 	}
 
-	*size = info.f_bsize * info.f_blocks / 1024;
-	*available = info.f_bavail * info.f_bsize / 1024;
+	*size = info.f_bsize * info.f_blocks;
+	*available = info.f_bavail * info.f_bsize;
 	
 	return 1;
 }

@@ -286,7 +286,7 @@ LONG MDIMaximizeChild(HWND parent, HWND child, MDICLIENTINFO *ci)
 LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
 {
     HWND    child;
-    WND    *w      = WIN_FindWndPtr(child);
+    WND    *w      = WIN_FindWndPtr(parent);
     LPRECT  lprect = &ci->rectRestore;
 
     dprintf_mdi(stddeb,"restoring mdi child\n");

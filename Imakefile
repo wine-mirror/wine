@@ -27,10 +27,10 @@ COMMONSUBDIRS = \
 	controls \
 	etc \
 	include \
+	rc \
 	loader \
 	misc \
 	objects \
-	rc \
 	test \
 	windows
 
@@ -51,6 +51,7 @@ COMMONOBJS = \
 	loader.o \
 	misc.o \
 	objects.o \
+	rc.o \
 	windows.o
 
 /*
@@ -86,12 +87,18 @@ SYSLIBS = -ll -lm -lgnumalloc
 SYSLIBS = -lm -lg
 #endif
 
+#ifdef USE_XPM
+XPM_LIB = -lXpm
+#else
+XPM_LIB =
+#endif
+
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 AllTarget(wine.sym)
 
 #ifndef WINELIB
-NormalProgramTarget(wine,$(EMUOBJS) $(COMMONOBJS),$(DEPXLIB),$(XLIB),$(SYSLIBS))
+NormalProgramTarget(wine,$(EMUOBJS) $(COMMONOBJS),$(DEPXLIB),$(XPM_LIB) $(XLIB),$(SYSLIBS))
 #else
 NormalLibraryTarget(wine,$(LIBOBJS) $(COMMONOBJS))
 #endif

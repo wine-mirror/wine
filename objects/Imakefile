@@ -16,6 +16,7 @@ SRCS = \
 	gdiobj.c \
 	linedda.c \
 	metafile.c \
+	oembitmap.c \
 	palette.c \
 	pen.c \
 	region.c \

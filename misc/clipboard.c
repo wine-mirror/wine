@@ -312,7 +312,7 @@ BOOL IsClipboardFormatAvailable(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     dprintf_clipboard(stddeb,"IsClipboardFormatAvailable(%04X) !\n", wFormat);
-    if(wFormat == CF_TEXT) /* obtain selection as text if possible */
+    if(wFormat == CF_TEXT && !wineOwnsSelection) /* obtain selection as text if possible */
 	return GetClipboardData(CF_TEXT)!=0;
     while(TRUE) {
 	if (lpFormat == NULL) return FALSE;

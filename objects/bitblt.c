@@ -380,9 +380,9 @@ static __inline__ int muldiv64( int m1, int m2, int d )
 	__asm__(
 		"imull %%edx\n\t"
 		"idivl %3\n\t"
-		: "=a" (result)			/* out */
-		: "a" (m1), "d" (m2), "g" (d)	/* in */
-		: "ax", "dx"			/* mod */
+		: "=&a" (result)		/* out */
+		: "0" (m1), "d" (m2), "g" (d)	/* in */
+		: "%edx"			/* mod */
 	);
 	return result;
 #else

@@ -135,7 +135,7 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
     Caret.timeout = 750;
     LockCaret = FALSE;
 
-    Caret.timerid = SetSystemTimer(NULL, 0, Caret.timeout, CARET_Callback);
+    Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout, (FARPROC)CARET_Callback);
 
     dprintf_caret(stddeb,"CreateCaret: hwnd=%d, timerid=%d\n", 
 		  hwnd, Caret.timerid);
@@ -152,7 +152,7 @@ void DestroyCaret()
 */
     dprintf_caret(stddeb,"DestroyCaret: timerid=%d\n", Caret.timerid);
 
-    KillSystemTimer(NULL, Caret.timerid);
+    KillSystemTimer( (HWND)0, Caret.timerid);
 
     if (Caret.on)
 	CARET_HideCaret();
@@ -221,9 +221,9 @@ void SetCaretBlinkTime(WORD msecs)
 {
     if (!Caret.hwnd) return;
 
-    KillSystemTimer(NULL, Caret.timerid);
+    KillSystemTimer( (HWND)0, Caret.timerid);
     Caret.timeout = msecs;
-    Caret.timerid = SetSystemTimer(NULL, 0, Caret.timeout, CARET_Callback);
+    Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout, (FARPROC)CARET_Callback);
 }
 
 

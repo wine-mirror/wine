@@ -24,6 +24,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 /* #define DEBUG_ACCEL    */
 /* #undef  DEBUG_ACCEL    */
 #include "debug.h"
+#include "../rc/sysresbm.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 
@@ -32,7 +33,7 @@ extern HINSTANCE hSysRes;
 
 extern int NE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
 extern int PE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
-extern HBITMAP BITMAP_LoadOEMBitmap( WORD id );  /* objects/bitmap.c */
+extern HBITMAP OBM_LoadOEMBitmap( WORD id );  /* objects/oembitmap.c */
 
 #define PrintId(name) \
 	if (HIWORD((DWORD)name)) \
@@ -731,10 +732,23 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 #endif
 
     if (!instance) {
-	hbitmap = BITMAP_LoadOEMBitmap(((int) bmp_name) & 0xffff);
+	struct ResourceTable *it;
+	hbitmap = OBM_LoadOEMBitmap(((int) bmp_name) & 0xffff);
 	if (hbitmap)
 		return hbitmap;
-    }
+	/* Load from sysresbm */
+	dprintf_resource(stddeb,"Searching for %d\n",bmp_name);
+	for(it=sysresbmTable;it;it++){
+	    if(it->type==NE_RSCTYPE_BITMAP)
+	    if((((int)bmp_name & 0xFFFF0000) == 0))
+		{if(it->id==(int)bmp_name)break;}
+	    else if(!strcmp(it->name,bmp_name))break;
+	}
+	if(!it)return 0;
+	dprintf_resource(stddeb,"Found %s\n",it->name);
+	lp=it->value;
+	rsc_mem=(HANDLE)NULL;
+    } else { /* Load from file - indent this code properly later */
 
     rsc_mem = RSC_LoadResource(instance, bmp_name, (LPSTR) NE_RSCTYPE_BITMAP, 
 			       &image_size);
@@ -745,12 +759,13 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	return 0;
 	}
     lp = (long *) GlobalLinearLock(rsc_mem);
-    if (!(hdc = GetDC(0))) lp = NULL;
     if (lp == NULL)
     {
 	GlobalFree(rsc_mem);
 	return 0;
     }
+    } /* Load from file */
+    if (!(hdc = GetDC(0))) lp = NULL;
     size = CONV_LONG (*lp);
     if (size == sizeof(BITMAPCOREHEADER)){
 	CONV_BITMAPCOREHEADER (lp);

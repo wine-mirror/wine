@@ -32,11 +32,6 @@ struct thunk_s
     unsigned char thunk[10];
 };
 
-static __inline__ int Is16bitAddress(void *address)
-{
-    return ((unsigned int) address 
-	    >= (((FIRST_SELECTOR << 3) | 0x0007) << 16));
-}
 
 /**********************************************************************
  *					PushOn16
@@ -197,7 +192,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
 	    exit(1);
 	}
     }
-    else if (Is16bitAddress(func))
+    else if (IS_16_BIT_ADDRESS(func))
     {	
 	dprintf_callback(stddeb, "CallWindowProc // 16bit func=%p !\n", func);
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
@@ -219,7 +214,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
  */
 void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
 {
-    if (Is16bitAddress(func))
+    if (IS_16_BIT_ADDRESS(func))
     {
 	PushOn16( CALLBACK_SIZE_WORD, xPos );
 	PushOn16( CALLBACK_SIZE_WORD, yPos );
@@ -238,7 +233,7 @@ void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
  */
 DWORD CallHookProc( HOOKPROC func, short code, WPARAM wParam, LPARAM lParam )
 {
-    if (Is16bitAddress(func))
+    if (IS_16_BIT_ADDRESS(func))
     {
 	PushOn16( CALLBACK_SIZE_WORD, code );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
@@ -257,7 +252,7 @@ DWORD CallHookProc( HOOKPROC func, short code, WPARAM wParam, LPARAM lParam )
  */
 BOOL CallGrayStringProc(FARPROC func, HDC hdc, LPARAM lParam, INT cch )
 {
-    if (Is16bitAddress(func))
+    if (IS_16_BIT_ADDRESS(func))
     {
 	PushOn16( CALLBACK_SIZE_WORD, hdc );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );

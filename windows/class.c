@@ -28,7 +28,7 @@ static HCLASS firstClass = 0;
  * Return a handle and a pointer to the class.
  * 'ptr' can be NULL if the pointer is not needed.
  */
-HCLASS CLASS_FindClassByName( char * name, CLASS **ptr )
+HCLASS CLASS_FindClassByName( char * name, WORD hinstance, CLASS **ptr )
 {
     ATOM atom;
     HCLASS class;
@@ -36,13 +36,14 @@ HCLASS CLASS_FindClassByName( char * name, CLASS **ptr )
 
       /* First search task-specific classes */
 
-    if ((atom = FindAtom( name )) != 0)
+    if ((atom = /*FindAtom*/GlobalFindAtom( name )) != 0)
     {
 	for (class = firstClass; (class); class = classPtr->hNext)
 	{
 	    classPtr = (CLASS *) USER_HEAP_ADDR(class);
 	    if (classPtr->wc.style & CS_GLOBALCLASS) continue;
-	    if (classPtr->atomName == atom)
+	    if ((classPtr->atomName == atom) && 
+		(( hinstance==0xffff )|| (hinstance == classPtr->wc.hInstance)))
 	    {
 		if (ptr) *ptr = classPtr;
 		return class;
@@ -101,7 +102,8 @@ ATOM RegisterClass( LPWNDCLASS class )
 
       /* Check if a class with this name already exists */
 
-    prevClass = CLASS_FindClassByName( class->lpszClassName, &prevClassPtr );
+    prevClass = CLASS_FindClassByName( class->lpszClassName, class->hInstance,
+	&prevClassPtr );
     if (prevClass)
     {
 	  /* Class can be created only if it is local and */
@@ -124,9 +126,9 @@ ATOM RegisterClass( LPWNDCLASS class )
     newClass->wc.cbWndExtra = (class->cbWndExtra < 0) ? 0 : class->cbWndExtra;
     newClass->wc.cbClsExtra = classExtra;
 
-    if (newClass->wc.style & CS_GLOBALCLASS)
+    /*if (newClass->wc.style & CS_GLOBALCLASS)*/
 	newClass->atomName = GlobalAddAtom( class->lpszClassName );
-    else newClass->atomName = AddAtom( class->lpszClassName );
+    /*else newClass->atomName = AddAtom( class->lpszClassName );*/
     newClass->wc.lpszClassName = NULL; 
 
     if (newClass->wc.style & CS_CLASSDC)
@@ -161,7 +163,7 @@ BOOL UnregisterClass( LPSTR className, HANDLE instance )
     CLASS * classPtr, * prevClassPtr;
     
       /* Check if we can remove this class */
-    class = CLASS_FindClassByName( className, &classPtr );
+    class = CLASS_FindClassByName( className, instance, &classPtr );
     if (!class) return FALSE;
     if ((classPtr->wc.hInstance != instance) || (classPtr->cWindows > 0))
 	return FALSE;
@@ -186,8 +188,8 @@ BOOL UnregisterClass( LPSTR className, HANDLE instance )
       /* Delete the class */
     if (classPtr->hdce) DCE_FreeDCE( classPtr->hdce );
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
-    if (classPtr->wc.style & CS_GLOBALCLASS) GlobalDeleteAtom( classPtr->atomName );
-    else DeleteAtom( classPtr->atomName );
+    /*if (classPtr->wc.style & CS_GLOBALCLASS)*/ GlobalDeleteAtom( classPtr->atomName );
+    /*else DeleteAtom( classPtr->atomName );*/
     if ((int)classPtr->wc.lpszMenuName & 0xffff0000)
 	USER_HEAP_FREE( (int)classPtr->wc.lpszMenuName & 0xffff );
     USER_HEAP_FREE( class );
@@ -262,6 +264,7 @@ int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
     WND *wndPtr;
     CLASS *classPtr;
 
+    /* FIXME: We have the find the correct hInstance */
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
 
@@ -277,7 +280,29 @@ BOOL GetClassInfo(HANDLE hInstance, LPSTR lpClassName,
 {
     CLASS *classPtr;
 
-    if (!(CLASS_FindClassByName(lpClassName, &classPtr))) return FALSE;
+    if (HIWORD(lpClassName))
+    {
+        dprintf_class(stddeb, "GetClassInfo   hInstance=%04x  lpClassName=%s\n",
+            hInstance, lpClassName);
+    }
+    else
+       dprintf_class(stddeb, "GetClassInfo   hInstance=%04x  lpClassName=#%d\n",
+            hInstance, (int)lpClassName);    
+
+
+    /* if (!(CLASS_FindClassByName(lpClassName, &classPtr))) return FALSE; */
+    if (!(CLASS_FindClassByName(lpClassName, hInstance, &classPtr)))
+    {
+        if (!HIWORD(lpClassName))
+        {
+            char temp[10];
+            sprintf(temp, "#%d", (int)lpClassName);
+            if (!(CLASS_FindClassByName(temp, hInstance, &classPtr))) return FALSE;        
+    
+        }
+        else return FALSE;
+    }
+
     if (hInstance && (hInstance != classPtr->wc.hInstance)) return FALSE;
 
     memcpy(lpWndClass, &(classPtr->wc), sizeof(WNDCLASS));

@@ -1,0 +1,20 @@
+/* XPM */
+static char * obm_old_dnarrow[] = {
+"15 15 2 1",
+" 	s button_highlight	c white",
+".	s button_text	c black",
+"               ",
+"               ",
+"               ",
+"      ...      ",
+"      ...      ",
+"      ...      ",
+"      ...      ",
+"   .........   ",
+"    .......    ",
+"     .....     ",
+"      ...      ",
+"       .       ",
+"               ",
+"               ",
+"               "};

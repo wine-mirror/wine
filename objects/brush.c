@@ -50,7 +50,7 @@ HBRUSH CreateBrushIndirect( LOGBRUSH * brush )
 HBRUSH CreateHatchBrush( short style, COLORREF color )
 {
     LOGBRUSH logbrush = { BS_HATCHED, color, style };
-    dprintf_gdi(stddeb, "CreateHatchBrush: %d %06x\n", style, color );
+    dprintf_gdi(stddeb, "CreateHatchBrush: %d %06lx\n", style, color );
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
     return CreateBrushIndirect( &logbrush );
 }
@@ -119,7 +119,7 @@ HBRUSH CreateDIBPatternBrush( HANDLE hbitmap, WORD coloruse )
 HBRUSH CreateSolidBrush( COLORREF color )
 {
     LOGBRUSH logbrush = { BS_SOLID, color, 0 };
-    dprintf_gdi(stddeb, "CreateSolidBrush: %06x\n", color );
+    dprintf_gdi(stddeb, "CreateSolidBrush: %06lx\n", color );
     return CreateBrushIndirect( &logbrush );
 }
 

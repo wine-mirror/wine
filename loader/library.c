@@ -96,7 +96,7 @@ void InitializeLoadedDLLs(struct w_files *wpnt)
     static flagReadyToRun = 0;
     struct w_files *final_wpnt;
 
-    dprintf_module(stddeb,"InitializeLoadedDLLs(%08lX)\n", wpnt);
+    dprintf_module(stddeb,"InitializeLoadedDLLs(%p)\n", wpnt);
 
     if (wpnt == NULL)
     {
@@ -221,28 +221,39 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     read(wpnt->fd, &header, sizeof(header));
 
     handle = 0;
+
+    /* 
+     * Stick this file into the list of loaded files so we don't try to reload
+     * it again if another module references this module.  Do this before
+     * calling loadNEImage because we might get back here before loadNEImage
+     * returns.
+     */
+    if(wine_files == NULL)
+       wine_files = wpnt;
+    else {
+	 wpnt1 = wine_files;
+	 while(wpnt1->next)
+	    wpnt1 = wpnt1->next;
+	 wpnt1->next = wpnt;
+    }
+    wpnt->next = NULL;
+
     if (header[0] == 'N' && header[1] == 'E')
     	handle = LoadNEImage(wpnt);
     if (header[0] == 'P' && header[1] == 'E')
-	handle = LoadPEImage(wpnt);
+        handle = LoadPEImage(wpnt);
     wpnt->hinstance = handle;
 
     if (handle > 32) {
-	/* ok, loaded, add to the end of the list */
-	if(wine_files == NULL)
-		wine_files = wpnt;
-	else {
-		wpnt1 = wine_files;
-		while(wpnt1->next)
-			wpnt1 =  wpnt1->next;
-		wpnt1->next  = wpnt;
-	}
-	wpnt->next = NULL;
-
 	return handle;
     } else {
 	fprintf(stderr, "wine: (%s) unknown fileformat !\n", wpnt->filename);
 
+	/* Remove this module from the list of loaded modules */
+	if (wine_files == wpnt)
+	    wine_files = NULL;
+	else
+	    wpnt1->next = NULL;
 	close(wpnt->fd);
 	free(wpnt->filename);
 	free(wpnt->name);

@@ -9,6 +9,7 @@
 
 #include "windows.h"
 
+#pragma pack(1)
 
   /* Dialog info structure.
    * This structure is stored into the window extra bytes (cbWndExtra).
@@ -64,5 +65,6 @@ typedef struct
     LPSTR               faceName;
 } DLGTEMPLATE;
 
+#pragma pack(4)
 
 #endif  /* DIALOG_H */
