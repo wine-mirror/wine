@@ -90,7 +90,10 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
    if (!mwi) return 0;
 
    mwi->dwStyle = dwStyle;
-   mwi->lpName = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(szFile) + 1), szFile);
+   if (szFile)
+     mwi->lpName = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(szFile) + 1), szFile);
+   else
+     mwi->lpName = NULL;
    mwi->uTimer = 0;
 
    wndStyle = ((hwndParent) ? (WS_CHILD|WS_BORDER) : WS_OVERLAPPEDWINDOW) |
@@ -102,7 +105,7 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
 		       hwndParent, (HMENU)0, hInstance, mwi))
       return mwi->hWnd;
    
-   HeapFree(GetProcessHeap(), 0, mwi->lpName);
+   if(mwi->lpName) HeapFree(GetProcessHeap(), 0, mwi->lpName);
    HeapFree(GetProcessHeap(), 0, mwi);
    return 0;
 }
