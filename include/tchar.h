@@ -72,8 +72,8 @@ char *CRTDLL__strrev(char *string);
 /*****************************************************************************
  * tchar routines
  */
-#define _strdec(start,current)  (start<current?(current)-1:NULL)
-#define _strinc(current) ((current)+1)
+#define _strdec(start,current)  (start<current?((char*)current)-1:NULL)
+#define _strinc(current) (((char*)current)+1)
 /* FIXME: _strncnt and strncnt are missing */
 /* FIXME: _strspnp is not implemented */
 
@@ -193,6 +193,8 @@ char *CRTDLL__strrev(char *string);
 #define _texecvp      WINE_tchar_routine(_execvp,         _execvp,     _wexecvp)
 #define _texecvpe     WINE_tchar_routine(_execvpe,        _execvpe,    _wexecvpe)
 #define _tfdopen      WINE_tchar_routine(_fdopen,         _fdopen,     _wfdopen)
+#define _tfinddata_t  WINE_tchar_routine(_finddata_t,     _finddata_t, _wfinddata_t)
+#define _tfinddatai64_t WINE_tchar_routine(_finddatai64_t,_finddatai64_t,_wfinddatai64_t)
 #define _tfindfirst   WINE_tchar_routine(_findfirst,      _findfirst,  _wfindfirst)
 #define _tfindnext    WINE_tchar_routine(_findnext,       _findnext,   _wfindnext)
 #define _tfopen       WINE_tchar_routine(fopen,           fopen,       _wfopen)
