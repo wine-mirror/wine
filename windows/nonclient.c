@@ -1874,9 +1874,6 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 	pt.y = wndPtr->rectWindow.top + rect.top + SYSMETRICS_CYSIZE/2;
 	hittest = HTCAPTION;
 	*capturePoint = pt;
-
-	if (wndPtr->dwStyle & WS_CHILD)
-	    ClientToScreen16( wndPtr->parent->hwndSelf, &pt );
     }
     else  /* SC_SIZE */
     {
@@ -1950,9 +1947,9 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
     BOOL32    thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
     BOOL32    iconic = wndPtr->dwStyle & WS_MINIMIZE;
     BOOL32    moved = FALSE;
+    DWORD     dwPoint = GetMessagePos ();
 
-    GetCursorPos16 (&pt);
-    capturePoint = pt;
+    capturePoint = pt = *(POINT16*)&dwPoint;
 
     if (IsZoomed32(hwnd) || !IsWindowVisible32(hwnd) ||
         (wndPtr->flags & WIN_MANAGED)) return;
@@ -2008,6 +2005,11 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
 	mouseRect.top    = MAX( mouseRect.top, sizingRect.top+minTrack.y );
 	mouseRect.bottom = MIN( mouseRect.bottom, sizingRect.top+maxTrack.y );
     }
+    if (wndPtr->dwStyle & WS_CHILD)
+    {
+	MapWindowPoints32( wndPtr->parent->hwndSelf, 0, 
+		(LPPOINT32)&mouseRect, 2 );
+    }
     SendMessage16( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
     if (GetCapture32() != hwnd) SetCapture32( hwnd );    
@@ -2047,9 +2049,8 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam )
 	if ((msg.message != WM_KEYDOWN) && (msg.message != WM_MOUSEMOVE))
 	    continue;  /* We are not interested in other messages */
 
-	pt = msg.pt;
-	if (wndPtr->dwStyle & WS_CHILD)
-	    ScreenToClient16( wndPtr->parent->hwndSelf, &pt );
+	dwPoint = GetMessagePos ();
+	pt = *(POINT16*)&dwPoint;
 	
 	if (msg.message == WM_KEYDOWN) switch(msg.wParam)
 	{
