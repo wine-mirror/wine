@@ -1,6 +1,7 @@
 /*              DirectShow FilterGraph object (QUARTZ.DLL)
  *
  * Copyright 2002 Lionel Ulmer
+ * Copyright 2004 Christian Costa
  *
  * This file contains the (internal) driver registration functions,
  * driver enumeration APIs and DirectDraw creation functions.
@@ -29,11 +30,109 @@
 #include "wine/debug.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
+#include "evcode.h"
 #include "wine/unicode.h"
 
 #include "quartz_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+
+typedef struct {
+    HWND hWnd;      /* Target window */
+    long msg;       /* User window message */
+    long instance;  /* User data */
+    int  disabled;  /* Disabled messages posting */
+} WndNotify;
+
+typedef struct {
+    long lEventCode;   /* Event code */
+    LONG_PTR lParam1;  /* Param1 */
+    LONG_PTR lParam2;  /* Param2 */
+} Event;
+
+/* messages ring implementation for queuing events (taken from winmm) */
+#define EVENTS_RING_BUFFER_INCREMENT      64
+typedef struct {
+    Event* messages;
+    int ring_buffer_size;
+    int msg_tosave;
+    int msg_toget;
+    CRITICAL_SECTION msg_crst;
+    HANDLE msg_event; /* Signaled for no empty queue */
+} EventsQueue;
+
+static int EventsQueue_Init(EventsQueue* omr)
+{
+    omr->msg_toget = 0;
+    omr->msg_tosave = 0;
+    omr->msg_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    omr->ring_buffer_size = EVENTS_RING_BUFFER_INCREMENT;
+    omr->messages = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(Event));
+
+    InitializeCriticalSection(&omr->msg_crst);
+    return TRUE;
+}
+
+static int EventsQueue_Destroy(EventsQueue* omr)
+{
+    CloseHandle(omr->msg_event);
+    HeapFree(GetProcessHeap(),0,omr->messages);
+    DeleteCriticalSection(&omr->msg_crst);
+    return TRUE;
+}
+
+static int EventsQueue_PutEvent(EventsQueue* omr, Event* evt)
+{
+    EnterCriticalSection(&omr->msg_crst);
+    if ((omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size)))
+    {
+	int old_ring_buffer_size = omr->ring_buffer_size;
+	omr->ring_buffer_size += EVENTS_RING_BUFFER_INCREMENT;
+	TRACE("omr->ring_buffer_size=%d\n",omr->ring_buffer_size);
+	omr->messages = HeapReAlloc(GetProcessHeap(),0,omr->messages, omr->ring_buffer_size * sizeof(Event));
+	/* Now we need to rearrange the ring buffer so that the new
+	   buffers just allocated are in between omr->msg_tosave and
+	   omr->msg_toget.
+	*/
+	if (omr->msg_tosave < omr->msg_toget)
+	{
+	    memmove(&(omr->messages[omr->msg_toget + EVENTS_RING_BUFFER_INCREMENT]),
+		    &(omr->messages[omr->msg_toget]),
+		    sizeof(Event)*(old_ring_buffer_size - omr->msg_toget)
+		    );
+	    omr->msg_toget += EVENTS_RING_BUFFER_INCREMENT;
+	}
+    }
+    omr->messages[omr->msg_tosave] = *evt;
+    SetEvent(omr->msg_event);
+    omr->msg_tosave = (omr->msg_tosave + 1) % omr->ring_buffer_size;
+    LeaveCriticalSection(&omr->msg_crst);
+    return TRUE;
+}
+
+static int EventsQueue_GetEvent(EventsQueue* omr, Event* evt, long msTimeOut)
+{
+    if (WaitForSingleObject(omr->msg_event, msTimeOut) != WAIT_OBJECT_0)
+	return FALSE;
+	
+    EnterCriticalSection(&omr->msg_crst);
+
+    if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
+    {
+        LeaveCriticalSection(&omr->msg_crst);
+	return FALSE;
+    }
+
+    *evt = omr->messages[omr->msg_toget];
+    omr->msg_toget = (omr->msg_toget + 1) % omr->ring_buffer_size;
+
+    /* Mark the buffer as empty if needed */
+    if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
+	ResetEvent(omr->msg_event);
+
+    LeaveCriticalSection(&omr->msg_crst);
+    return TRUE;
+}
 
 typedef struct _IFilterGraphImpl {
     ICOM_VTABLE(IGraphBuilder) *IGraphBuilder_vtbl;
@@ -44,6 +143,7 @@ typedef struct _IFilterGraphImpl {
     ICOM_VTABLE(IVideoWindow) *IVideoWindow_vtbl;
     ICOM_VTABLE(IMediaEventEx) *IMediaEventEx_vtbl;
     ICOM_VTABLE(IMediaFilter) *IMediaFilter_vtbl;
+    ICOM_VTABLE(IMediaEventSink) *IMediaEventSink_vtbl;
     /* IAMGraphStreams */
     /* IAMStats */
     /* IBasicVideo2 */
@@ -52,7 +152,6 @@ typedef struct _IFilterGraphImpl {
     /* IFilterMapper2 */
     /* IGraphConfig */
     /* IGraphVersion */
-    /* IMediaEventSink */
     /* IMediaPosition */
     /* IQueueCommand */
     /* IRegisterServiceProvider */
@@ -66,6 +165,14 @@ typedef struct _IFilterGraphImpl {
     int nFilters;
     int filterCapacity;
     long nameIndex;
+    EventsQueue evqueue;
+    HANDLE hEventCompletion;
+    int CompletionStatus;
+    WndNotify notif;
+    int nRenderers;
+    int EcCompleteCount;
+    int HandleEcComplete;
+    int HandleEcRepaint;
 } IFilterGraphImpl;
 
 
@@ -101,6 +208,9 @@ static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
           IsEqualGUID(&IID_IPersist, riid)) {
         *ppvObj = &(This->IMediaFilter_vtbl);
         TRACE("   returning IMediaFilter interface (%p)\n", *ppvObj);
+    } else if (IsEqualGUID(&IID_IMediaEventSink, riid)) {
+        *ppvObj = &(This->IMediaEventSink_vtbl);
+        TRACE("   returning IMediaEventSink interface (%p)\n", *ppvObj);
     } else {
         *ppvObj = NULL;
 	FIXME("unknown interface %s\n", debugstr_guid(riid));
@@ -124,8 +234,10 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
     
     ref = --This->ref;
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->ppFiltersInGraph);
-        HeapFree(GetProcessHeap(), 0, This->pFilterNames);
+	CloseHandle(This->hEventCompletion);
+	EventsQueue_Destroy(&This->evqueue);
+	HeapFree(GetProcessHeap(), 0, This->ppFiltersInGraph);
+	HeapFree(GetProcessHeap(), 0, This->pFilterNames);
 	HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -289,7 +401,7 @@ static HRESULT WINAPI Graphbuilder_EnumFilters(IGraphBuilder *iface,
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-    
+
     return IEnumFiltersImpl_Construct(This->ppFiltersInGraph, This->nFilters, ppEnum);
 }
 
@@ -542,6 +654,8 @@ static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
+
+    ResetEvent(This->hEventCompletion);
 
     return S_OK;
 }
@@ -1988,7 +2102,9 @@ static HRESULT WINAPI Mediaevent_GetEventHandle(IMediaEventEx *iface,
 						OAEVENT *hEvent) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, hEvent);
+    TRACE("(%p/%p)->(%p)\n", This, iface, hEvent);
+
+    *hEvent = (OAEVENT)This->evqueue.msg_event;
 
     return S_OK;
 }
@@ -1999,10 +2115,20 @@ static HRESULT WINAPI Mediaevent_GetEvent(IMediaEventEx *iface,
 					  LONG_PTR *lParam2,
 					  long msTimeout) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+    Event evt;
 
-    TRACE("(%p/%p)->(%p, %p, %p, %ld): stub !!!\n", This, iface, lEventCode, lParam1, lParam2, msTimeout);
+    TRACE("(%p/%p)->(%p, %p, %p, %ld)\n", This, iface, lEventCode, lParam1, lParam2, msTimeout);
 
-    return S_OK;
+    if (EventsQueue_GetEvent(&This->evqueue, &evt, msTimeout))
+    {
+	*lEventCode = evt.lEventCode;
+	*lParam1 = evt.lParam1;
+	*lParam2 = evt.lParam2;
+	return S_OK;
+    }
+
+    *lEventCode = 0;
+    return E_ABORT;
 }
 
 static HRESULT WINAPI Mediaevent_WaitForCompletion(IMediaEventEx *iface,
@@ -2010,16 +2136,30 @@ static HRESULT WINAPI Mediaevent_WaitForCompletion(IMediaEventEx *iface,
 						   long *pEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld, %p): stub !!!\n", This, iface, msTimeout, pEvCode);
+    TRACE("(%p/%p)->(%ld, %p)\n", This, iface, msTimeout, pEvCode);
 
-    return S_OK;
+    if (WaitForSingleObject(This->hEventCompletion, msTimeout) == WAIT_OBJECT_0)
+    {
+	*pEvCode = This->CompletionStatus;
+	return S_OK;
+    }
+
+    *pEvCode = 0;
+    return E_ABORT;
 }
 
 static HRESULT WINAPI Mediaevent_CancelDefaultHandling(IMediaEventEx *iface,
 						       long lEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld): stub !!!\n", This, iface, lEvCode);
+    TRACE("(%p/%p)->(%ld)\n", This, iface, lEvCode);
+
+    if (lEvCode == EC_COMPLETE)
+	This->HandleEcComplete = FALSE;
+    else if (lEvCode == EC_REPAINT)
+	This->HandleEcRepaint = FALSE;
+    else
+	return S_FALSE;
 
     return S_OK;
 }
@@ -2028,7 +2168,14 @@ static HRESULT WINAPI Mediaevent_RestoreDefaultHandling(IMediaEventEx *iface,
 							long lEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld): stub !!!\n", This, iface, lEvCode);
+    TRACE("(%p/%p)->(%ld)\n", This, iface, lEvCode);
+
+    if (lEvCode == EC_COMPLETE)
+	This->HandleEcComplete = TRUE;
+    else if (lEvCode == EC_REPAINT)
+	This->HandleEcRepaint = TRUE;
+    else
+	return S_FALSE;
 
     return S_OK;
 }
@@ -2051,7 +2198,11 @@ static HRESULT WINAPI Mediaevent_SetNotifyWindow(IMediaEventEx *iface,
 						 LONG_PTR lInstanceData) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%08lx, %ld, %08lx): stub !!!\n", This, iface, (DWORD) hwnd, lMsg, lInstanceData);
+    TRACE("(%p/%p)->(%08lx, %ld, %08lx)\n", This, iface, (DWORD) hwnd, lMsg, lInstanceData);
+
+    This->notif.hWnd = (HWND)hwnd;
+    This->notif.msg = lMsg;
+    This->notif.instance = (long) lInstanceData;
 
     return S_OK;
 }
@@ -2060,7 +2211,12 @@ static HRESULT WINAPI Mediaevent_SetNotifyFlags(IMediaEventEx *iface,
 						long lNoNotifyFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld): stub !!!\n", This, iface, lNoNotifyFlags);
+    TRACE("(%p/%p)->(%ld)\n", This, iface, lNoNotifyFlags);
+
+    if ((lNoNotifyFlags != 0) || (lNoNotifyFlags != 1))
+	return E_INVALIDARG;
+
+    This->notif.disabled = lNoNotifyFlags;
 
     return S_OK;
 }
@@ -2069,7 +2225,12 @@ static HRESULT WINAPI Mediaevent_GetNotifyFlags(IMediaEventEx *iface,
 						long *lplNoNotifyFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, lplNoNotifyFlags);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lplNoNotifyFlags);
+
+    if (!lplNoNotifyFlags)
+	return E_POINTER;
+
+    *lplNoNotifyFlags = This->notif.disabled;
 
     return S_OK;
 }
@@ -2182,6 +2343,78 @@ static ICOM_VTABLE(IMediaFilter) IMediaFilter_VTable =
     MediaFilter_GetSyncSource
 };
 
+static HRESULT WINAPI MediaEventSink_QueryInterface(IMediaEventSink *iface, REFIID riid, LPVOID *ppv)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventSink_vtbl, iface);
+
+    return Filtergraph_QueryInterface(This, riid, ppv);
+}
+
+static ULONG WINAPI MediaEventSink_AddRef(IMediaEventSink *iface)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventSink_vtbl, iface);
+
+    return Filtergraph_AddRef(This);
+}
+
+static ULONG WINAPI MediaEventSink_Release(IMediaEventSink *iface)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventSink_vtbl, iface);
+
+    return Filtergraph_Release(This);
+}
+
+static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, long EventCode, LONG_PTR EventParam1, LONG_PTR EventParam2)
+{
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventSink_vtbl, iface);
+    Event evt;
+
+    TRACE("(%p/%p)->(%ld, %ld, %ld)\n", This, iface, EventCode, EventParam1, EventParam2);
+
+    /* We need thread safety here, let's use the events queue's one */
+    EnterCriticalSection(&This->evqueue.msg_crst);
+    
+    if ((EventCode == EC_COMPLETE) && This->HandleEcComplete)
+    {
+	if (++This->EcCompleteCount == This->nRenderers)
+	{
+	    evt.lEventCode = EC_COMPLETE;
+	    evt.lParam1 = S_OK;
+	    evt.lParam2 = 0;
+	    EventsQueue_PutEvent(&This->evqueue, &evt);
+	    if (!This->notif.disabled && This->notif.hWnd)
+		PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
+	    This->CompletionStatus = EC_COMPLETE;
+	    SetEvent(This->hEventCompletion);
+	}
+    }
+    else if ((EventCode == EC_REPAINT) && This->HandleEcRepaint)
+    {
+	/* FIXME: Not handled yet */
+    }
+    else
+    {
+	evt.lEventCode = EventCode;
+	evt.lParam1 = EventParam1;
+	evt.lParam2 = EventParam2;
+	EventsQueue_PutEvent(&This->evqueue, &evt);
+	if (!This->notif.disabled && This->notif.hWnd)
+	    PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
+    }
+
+    EnterCriticalSection(&This->evqueue.msg_crst);
+    return S_OK;
+}
+
+static ICOM_VTABLE(IMediaEventSink) IMediaEventSink_VTable =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    MediaEventSink_QueryInterface,
+    MediaEventSink_AddRef,
+    MediaEventSink_Release,
+    MediaEventSink_Notify
+};
+
 /* This is the only function that actually creates a FilterGraph class... */
 HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     IFilterGraphImpl *fimpl;
@@ -2197,12 +2430,21 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     fimpl->IVideoWindow_vtbl = &IVideoWindow_VTable;
     fimpl->IMediaEventEx_vtbl = &IMediaEventEx_VTable;
     fimpl->IMediaFilter_vtbl = &IMediaFilter_VTable;
+    fimpl->IMediaEventSink_vtbl = &IMediaEventSink_VTable;
     fimpl->ref = 1;
     fimpl->ppFiltersInGraph = NULL;
     fimpl->pFilterNames = NULL;
     fimpl->nFilters = 0;
     fimpl->filterCapacity = 0;
     fimpl->nameIndex = 1;
+    fimpl->hEventCompletion = CreateEventW(0, TRUE, FALSE,0);
+    fimpl->HandleEcComplete = TRUE;
+    fimpl->HandleEcRepaint = TRUE;
+    fimpl->notif.hWnd = 0;
+    fimpl->notif.disabled = TRUE;
+    fimpl->nRenderers = 0;
+    fimpl->EcCompleteCount = 0;
+    EventsQueue_Init(&fimpl->evqueue);
 
     *ppObj = fimpl;
     return S_OK;
