@@ -118,7 +118,7 @@ void X11DRV_XF86VM_Init(void)
 
   /* see if XVidMode is available */
   wine_tsx11_lock();
-  ok = !XF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error);
+  ok = XF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error);
   if (ok)
   {
       X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
