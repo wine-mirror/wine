@@ -13,7 +13,7 @@
 18 stub AtlModuleRegisterServer
 19 stub AtlModuleRegisterTypeLib
 20 stub AtlModuleRevokeClassObjects
-21 stub AtlModuleTerm
+21 stdcall AtlModuleTerm(ptr)
 22 stub AtlModuleUnregisterServer
 23 stub AtlModuleUpdateRegistryFromResourceD
 24 stub AtlWaitWithMessageLoop

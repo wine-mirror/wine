@@ -67,6 +67,12 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
     return S_OK;
 }
 
+HRESULT WINAPI AtlModuleTerm(_ATL_MODULEA* pM)
+{
+    HeapFree(GetProcessHeap(), 0, pM);
+    return S_OK;
+}
+
 HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA *pM, DWORD dwClsContext,
                                              DWORD dwFlags)
 {
