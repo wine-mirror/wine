@@ -62,7 +62,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/winproc.c \
 	cache.c \
 	caret.c \
-	comm16.c \
 	dde/client.c \
 	dde/ddeml16.c \
 	dde/misc.c \
@@ -86,6 +85,7 @@ C_SRCS = \
 
 C_SRCS16 = \
 	bidi16.c \
+	comm16.c \
 	hook16.c \
 	network.c \
 	user16.c \
