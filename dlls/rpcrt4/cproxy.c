@@ -332,3 +332,11 @@ ULONG WINAPI IUnknown_Release_Proxy(LPUNKNOWN iface)
   return IUnknown_Release(This->pUnkOuter);
 #endif
 }
+
+HRESULT WINAPI
+CreateProxyFromTypeInfo( LPTYPEINFO pTypeInfo, LPUNKNOWN pUnkOuter, REFIID riid,
+                         LPRPCPROXYBUFFER *ppProxy, LPVOID *ppv )
+{
+    FIXME("%p %p %s %p %p\n", pTypeInfo, pUnkOuter, debugstr_guid(riid), ppProxy, ppv);
+    return E_NOTIMPL;
+}
