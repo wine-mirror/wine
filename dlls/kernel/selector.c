@@ -26,9 +26,9 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "miscemu.h"
-#include "selectors.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "kernel_private.h"
 #include "toolhelp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(selector);

@@ -28,7 +28,6 @@
 #include "excpt.h"
 #include "module.h"
 #include "miscemu.h"
-#include "selectors.h"
 #include "wine/debug.h"
 #include "kernel_private.h"
 #include "thread.h"

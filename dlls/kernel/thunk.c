@@ -42,9 +42,9 @@
 #include "wine/library.h"
 #include "flatthunk.h"
 #include "module.h"
-#include "selectors.h"
 #include "stackframe.h"
 #include "task.h"
+#include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
 

@@ -41,9 +41,9 @@
 #include "ntstatus.h"
 #include "global.h"
 #include "toolhelp.h"
-#include "selectors.h"
 #include "miscemu.h"
 #include "stackframe.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 #include "winerror.h"
 

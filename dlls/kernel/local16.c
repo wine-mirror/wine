@@ -39,7 +39,6 @@
 #include "global.h"
 #include "module.h"
 #include "stackframe.h"
-#include "selectors.h"
 #include "toolhelp.h"
 #include "kernel_private.h"
 #include "wine/debug.h"

@@ -35,7 +35,6 @@
 #include "file.h"
 #include "task.h"
 #include "miscemu.h"
-#include "selectors.h"
 #include "stackframe.h"
 #include "kernel_private.h"
 #include "wine/exception.h"

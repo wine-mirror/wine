@@ -56,6 +56,12 @@ extern VOID SYSLEVEL_CheckNotLevel( INT level );
 extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
 extern void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );
 
+extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags );
+extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
+extern void SELECTOR_FreeBlock( WORD sel );
+#define IS_SELECTOR_32BIT(sel) \
+   (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
+
 /* this structure is always located at offset 0 of the DGROUP segment */
 #include "pshpack1.h"
 typedef struct
