@@ -705,6 +705,14 @@ LPSTR WINAPI lstrrchr( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
 }
 
 /***********************************************************************
+ *           ChrCmpW   
+ * This fuction returns FALSE if both words match, TRUE otherwise...
+ */
+static BOOL ChrCmpW( WORD word1, WORD word2) {
+  return (word1 != word2);
+}
+
+/***********************************************************************
  *           lstrrchrw    (Not a Windows API)
  *
  * This is the implementation meant to be invoked form within
@@ -739,12 +747,4 @@ static BOOL ChrCmpA( WORD word1, WORD word2) {
     return FALSE;
   }
   return TRUE;
-}
-
-/***********************************************************************
- *           ChrCmpW   
- * This fuction returns FALSE if both words match, TRUE otherwise...
- */
-static BOOL ChrCmpW( WORD word1, WORD word2) {
-  return (word1 != word2);
 }
