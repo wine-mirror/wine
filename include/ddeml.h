@@ -32,11 +32,48 @@ extern "C" {
 
 #define EXPENTRY CALLBACK
 
+#define SZDDESYS_TOPIC		TEXT("System")
+#define SZDDESYS_ITEM_TOPICS	TEXT("Topics")
+#define SZDDESYS_ITEM_SYSITEMS	TEXT("SysItems")
+#define SZDDESYS_ITEM_RTNMSG	TEXT("ReturnMessage")
+#define SZDDESYS_ITEM_STATUS	TEXT("Status")
+#define SZDDESYS_ITEM_FORMATS	TEXT("Formats")
+#define SZDDESYS_ITEM_HELP	TEXT("Help")
+#define SZDDE_ITEM_ITEMLIST	TEXT("TopicItemList")
+
 /***************************************************
 
       FLAGS Section - copied from Microsoft SDK as must be standard, probably Copyright Microsoft Corporation
 
 ***************************************************/
+
+#define     XST_NULL              0
+#define     XST_INCOMPLETE        1
+#define     XST_CONNECTED         2
+#define     XST_INIT1             3
+#define     XST_INIT2             4
+#define     XST_REQSENT           5
+#define     XST_DATARCVD          6
+#define     XST_POKESENT          7
+#define     XST_POKEACKRCVD       8
+#define     XST_EXECSENT          9
+#define     XST_EXECACKRCVD      10
+#define     XST_ADVSENT          11
+#define     XST_UNADVSENT        12
+#define     XST_ADVACKRCVD       13
+#define     XST_UNADVACKRCVD     14
+#define     XST_ADVDATASENT      15
+#define     XST_ADVDATAACKRCVD   16
+
+#define     ST_CONNECTED            0x0001
+#define     ST_ADVISE               0x0002
+#define     ST_ISLOCAL              0x0004
+#define     ST_BLOCKED              0x0008
+#define     ST_CLIENT               0x0010
+#define     ST_TERMINATED           0x0020
+#define     ST_INLIST               0x0040
+#define     ST_BLOCKNEXT            0x0080
+#define     ST_ISSELF               0x0100
 
 /*
  * Callback filter flags for use with standard apps.
@@ -138,6 +175,8 @@ extern "C" {
 #define XTYP_MASK		0x00F0
 #define XTYP_SHIFT		4
 
+#define TIMEOUT_ASYNC           0xFFFFFFFF
+
 /**************************************************
 
 	End of Message Types Section
@@ -159,6 +198,10 @@ extern "C" {
 #define DDE_FAPPSTATUS		0x00FF
 #define DDE_FNOTPROCESSED	0x0000
 
+#define DDE_FACKRESERVED        (~(DDE_FACK | DDE_FBUSY | DDE_FAPPSTATUS))
+#define DDE_FADVRESERVED        (~(DDE_FACKREQ | DDE_FDEFERUPD))
+#define DDE_FDATRESERVED        (~(DDE_FACKREQ | DDE_FRELEASE | DDE_FREQUESTED))
+#define DDE_FPOKRESERVED        (~(DDE_FRELEASE))
 
 /*****************************************************
 
@@ -197,6 +240,8 @@ extern "C" {
 
 #define     DMLERR_LAST                        0x4011
 
+#define     HDATA_APPOWNED          	       0x0001
+
 /*****************************************************
 
       End of Return Codes and Microsoft section
@@ -205,10 +250,10 @@ extern "C" {
 
 
 
-DECLARE_OLD_HANDLE(HCONVLIST);
-DECLARE_OLD_HANDLE(HCONV);
-DECLARE_OLD_HANDLE(HSZ);
-DECLARE_OLD_HANDLE(HDDEDATA);
+DECLARE_HANDLE(HCONVLIST);
+DECLARE_HANDLE(HCONV);
+DECLARE_HANDLE(HSZ);
+DECLARE_HANDLE(HDDEDATA);
 
 
 
@@ -218,8 +263,8 @@ DECLARE_OLD_HANDLE(HDDEDATA);
 
 *******************************************************/
 
-typedef HDDEDATA CALLBACK (*PFNCALLBACK)(UINT,UINT,HCONV,HSZ,HSZ,
-                                           HDDEDATA,DWORD,DWORD);
+typedef HDDEDATA CALLBACK (*PFNCALLBACK)(UINT, UINT, HCONV, HSZ, HSZ,
+					 HDDEDATA, DWORD, DWORD);
 
 /***************************************************
 
@@ -227,7 +272,13 @@ typedef HDDEDATA CALLBACK (*PFNCALLBACK)(UINT,UINT,HCONV,HSZ,HSZ,
 
 ***************************************************/
 
-typedef struct
+typedef struct tagHSZPAIR
+{
+    HSZ hszSvc;
+    HSZ hszTopic;
+} HSZPAIR, *PHSZPAIR, *LPHSZPAIR;
+
+typedef struct tagCONVCONTEXT
 {
     UINT  cb;
     UINT  wFlags;
@@ -237,7 +288,7 @@ typedef struct
     DWORD   dwSecurity;
 } CONVCONTEXT, *LPCONVCONTEXT;
 
-typedef struct
+typedef struct tagCONVINFO
 {
     DWORD		cb;
     DWORD 		hUser;

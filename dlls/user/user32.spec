@@ -8,7 +8,7 @@ import	advapi32.dll
 import	kernel32.dll
 import	ntdll.dll
 
-debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
+debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog driver
                 edit event graphics hook icon key keyboard listbox local mdi
                 menu message msg nonclient prop relay resource scroll sendmsg
                 shell static string syscolor system text timer win win32 wnet)
@@ -331,7 +331,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall GrayStringW(long long ptr long long long long long long) GrayStringW
 @ stdcall HideCaret(long) HideCaret
 @ stdcall HiliteMenuItem(long long long long) HiliteMenuItem
-@ stub ImpersonateDdeClientWindow
+@ stdcall ImpersonateDdeClientWindow(long long) ImpersonateDdeClientWindow
 @ stdcall InSendMessage() InSendMessage
 @ stdcall InSendMessageEx(ptr) InSendMessageEx
 @ stdcall InflateRect(ptr long long) InflateRect

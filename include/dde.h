@@ -32,7 +32,7 @@ extern "C" {
 /* DDEACK: wStatus in WM_DDE_ACK message */
 struct tagDDEACK
 {
-    unsigned bAppReturnCode:8, reserved:6, fBusy:1, fAck:1;
+    unsigned short bAppReturnCode:8, reserved:6, fBusy:1, fAck:1;
 };
 typedef struct tagDDEACK DDEACK;
 
@@ -61,6 +61,11 @@ struct tagDDEPOKE
 };
 typedef struct tagDDEPOKE DDEPOKE;
 
+BOOL WINAPI DdeSetQualityOfService(HWND hwndClient,
+				   CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
+				   PSECURITY_QUALITY_OF_SERVICE pqosPrev);
+ 
+BOOL WINAPI ImpersonateDdeClientWindow(HWND hWndClient, HWND hWndServer);
 
 /* lParam packing/unpacking API */
 
