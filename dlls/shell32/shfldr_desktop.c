@@ -172,6 +172,7 @@ static ULONG WINAPI ISF_Desktop_fnRelease (IShellFolder2 * iface)
 	if (This->sPathTarget)
 	    SHFree (This->sPathTarget);
 	LocalFree ((HLOCAL) This);
+        return 0;
     }
     return This->ref;
 }
