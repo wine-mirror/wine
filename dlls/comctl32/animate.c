@@ -349,15 +349,12 @@ static BOOL ANIMATE_DrawFrame(ANIMATE_INFO *infoPtr)
 
     TRACE("Drawing frame %d (loop %d)\n", infoPtr->currFrame, infoPtr->nLoop);
 
-    EnterCriticalSection(&infoPtr->cs);
-
     mmioSeek(infoPtr->hMMio, infoPtr->lpIndex[infoPtr->currFrame], SEEK_SET);
     mmioRead(infoPtr->hMMio, infoPtr->indata, infoPtr->ash.dwSuggestedBufferSize);
 
     if (infoPtr->hic &&
 	fnIC.fnICDecompress(infoPtr->hic, 0, infoPtr->inbih, infoPtr->indata,
 		     infoPtr->outbih, infoPtr->outdata) != ICERR_OK) {
-	LeaveCriticalSection(&infoPtr->cs);
 	WARN("Decompression error\n");
 	return FALSE;
     }
@@ -375,9 +372,22 @@ static BOOL ANIMATE_DrawFrame(ANIMATE_INFO *infoPtr)
 	    }
 	}
     }
-    LeaveCriticalSection(&infoPtr->cs);
 
     return TRUE;
+}
+
+static LRESULT ANIMATE_Timer(ANIMATE_INFO *infoPtr)
+{
+   /* FIXME: we should pass the hDC instead of 0 to WM_CTLCOLORSTATIC */
+   if (infoPtr->dwStyle & ACS_TRANSPARENT)
+        infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
+                                                 WM_CTLCOLORSTATIC,
+                                                 0, (LPARAM)infoPtr->hwndSelf);
+    EnterCriticalSection(&infoPtr->cs);
+    ANIMATE_DrawFrame(infoPtr);
+    LeaveCriticalSection(&infoPtr->cs);
+
+    return 0;
 }
 
 static DWORD CALLBACK ANIMATE_AnimationThread(LPVOID ptr_)
@@ -892,11 +902,7 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         return ANIMATE_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
     case WM_TIMER:
-        if (infoPtr->dwStyle & ACS_TRANSPARENT)
-            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
-                                                     WM_CTLCOLORSTATIC,
-                                                     wParam, (LPARAM)infoPtr->hwndSelf);
-        return ANIMATE_DrawFrame(infoPtr);
+        return ANIMATE_Timer(infoPtr);
 
     case WM_PAINT:
         {
