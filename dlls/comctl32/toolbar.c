@@ -3165,6 +3165,28 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+static LRESULT
+TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    TBUTTON_INFO *hotBtnPtr;
+
+    hotBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
+
+    /* Redraw the button if the last button we were over is the hot button and it
+       is enabled */
+    if((infoPtr->nOldHit == infoPtr->nHotItem) && (hotBtnPtr->fsState & TBSTATE_ENABLED))
+    {
+	hotBtnPtr->bHot = FALSE;
+		    
+        InvalidateRect (hwnd, &hotBtnPtr->rect, TRUE);
+    }
+
+    infoPtr->nOldHit = -1; /* reset the old hit index as we've left the toolbar */
+    infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
+
+    return TRUE;
+}
 
 static LRESULT
 TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -3174,6 +3196,25 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     POINT pt;
     INT   nHit;
     HDC   hdc;
+    TRACKMOUSEEVENT trackinfo;
+
+    /* fill in the TRACKMOUSEEVENT struct */
+    trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
+    trackinfo.dwFlags = TME_QUERY;
+    trackinfo.hwndTrack = hwnd;
+    trackinfo.dwHoverTime = HOVER_DEFAULT;
+
+    /* call _TrackMouseEvent to see if we are currently tracking for this hwnd */
+    _TrackMouseEvent(&trackinfo);
+
+    /* Make sure tracking is enabled so we recieve a WM_MOUSELEAVE message */
+    if(!(trackinfo.dwFlags & TME_LEAVE)) {
+        trackinfo.dwFlags = TME_LEAVE; /* notify upon leaving */
+
+        /* call TRACKMOUSEEVENT so we recieve a WM_MOUSELEAVE message */
+        /* and can properly deactivate the hot toolbar button */
+        _TrackMouseEvent(&trackinfo);
+   }
 
     if (infoPtr->hwndToolTip)
 	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, hwnd,
@@ -3186,8 +3227,10 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr->nOldHit != nHit)
     {
-        /* Remove the effect of an old hot button */
-	if(infoPtr->nOldHit == infoPtr->nHotItem)
+	/* Remove the effect of an old hot button if the button was enabled and was
+	   drawn with the hot button effect */
+	if(infoPtr->nOldHit == infoPtr->nHotItem && 
+		(infoPtr->buttons[infoPtr->nOldHit].fsState & TBSTATE_ENABLED))
 	{
 	    oldBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
 	    oldBtnPtr->bHot = FALSE;
@@ -3740,6 +3783,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_MOUSEMOVE:
 	    return TOOLBAR_MouseMove (hwnd, wParam, lParam);
+
+	case WM_MOUSELEAVE:
+	    return TOOLBAR_MouseLeave (hwnd, wParam, lParam);	
 
 	case WM_NCACTIVATE:
 	    return TOOLBAR_NCActivate (hwnd, wParam, lParam);
