@@ -22,6 +22,7 @@ C_SRCS       = $(CTESTS)
 EXTRA_SRCS   = $(TESTLIST)
 EXTRA_OBJS   = $(TESTLIST:.c=.o)
 ALL_LIBS     = $(LIBWINE) $(EXTRALIBS) $(LIBS)
+IMPORTLIBS   = $(DELAYIMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT)) $(IMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT))
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
 CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(TESTLIST:.c=.cross.o)
@@ -32,7 +33,7 @@ all: $(TESTPROGRAM)
 
 # Rule for main module spec file
 
-$(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(WINEBUILD)
+$(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(IMPORTLIBS) $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -exe $(MODULE) -mcui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) -L.. $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
@@ -42,7 +43,7 @@ $(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
 
 # Rules for .exe main module
 
-$(MODULE): $(OBJS) $(RCOBJS) Makefile.in
+$(MODULE): $(OBJS) $(RCOBJS) $(IMPORTLIBS) Makefile.in
 	$(CC) $(OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for building test list
@@ -56,7 +57,7 @@ depend: $(TESTLIST)
 
 check test:: $(TESTRESULTS) $(SUBDIRS:%=%/__test__)
 
-$(TESTRESULTS): $(MODULE)$(DLLEXT) $(TOPOBJDIR)/dlls/$(TESTDLL)$(DLLEXT)
+$(TESTRESULTS): $(MODULE)$(DLLEXT) $(DLLDIR)/$(TESTDLL)$(DLLEXT)
 
 # Rules for cross-compiling tests
 
