@@ -1777,6 +1777,17 @@ enum message_type
 @END
 
 
+/* Get a list of the window children that contain a given point */
+@REQ(get_window_children_from_point)
+    user_handle_t  parent;        /* parent window */
+    int            x;             /* point in parent coordinates */
+    int            y;
+@REPLY
+    int            count;         /* total count of children */
+    VARARG(children,user_handles); /* children handles */
+@END
+
+
 /* Get window tree information from a window handle */
 @REQ(get_window_tree)
     user_handle_t  handle;        /* handle to the window */

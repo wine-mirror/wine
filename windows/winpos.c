@@ -338,92 +338,42 @@ BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
 
 
 /***********************************************************************
- *           find_child_from_point
+ *           list_children_from_point
  *
- * Find the child that contains pt. Helper for WindowFromPoint.
- * pt is in parent client coordinates.
- * lparam is the param to pass in the WM_NCHITTEST message.
+ * Get the list of children that can contain point from the server.
+ * Point is in screen coordinates.
+ * Returned list must be freed by caller.
  */
-static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM lparam )
+static HWND *list_children_from_point( HWND hwnd, POINT pt )
 {
-    int i, res;
-    LONG style, exstyle;
-    RECT rectWindow, rectClient;
-    WND *wndPtr;
-    HWND *list = WIN_ListChildren( parent );
-    HWND retvalue = 0;
+    HWND *list;
+    int size = 32;
 
-    if (!list) return 0;
-    for (i = 0; list[i]; i++)
+    for (;;)
     {
-        /* If point is in window, and window is visible, and it  */
-        /* is enabled (or it's a top-level window), then explore */
-        /* its children. Otherwise, go to the next window.       */
+        int count = 0;
 
-        style = GetWindowLongW( list[i], GWL_STYLE );
-        if (!(style & WS_VISIBLE)) continue;  /* not visible -> skip */
-        if ((style & (WS_POPUP | WS_CHILD | WS_DISABLED)) == (WS_CHILD | WS_DISABLED))
-            continue;  /* disabled child -> skip */
-        exstyle = GetWindowLongW( list[i], GWL_EXSTYLE );
-        if ((exstyle & (WS_EX_LAYERED | WS_EX_TRANSPARENT)) == (WS_EX_LAYERED | WS_EX_TRANSPARENT))
-            continue;  /* transparent -> skip */
+        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) break;
 
-        if (!WIN_GetRectangles( list[i], &rectWindow, &rectClient )) continue;
-        if (!PtInRect( &rectWindow, pt )) continue;  /* not in window -> skip */
-
-        /* FIXME: check window region for other processes too */
-        if ((wndPtr = WIN_GetPtr( list[i] )) && wndPtr != WND_OTHER_PROCESS)
+        SERVER_START_REQ( get_window_children_from_point )
         {
-            if (wndPtr->hrgnWnd && !PtInRegion( wndPtr->hrgnWnd,
-                                                pt.x - rectWindow.left, pt.y - rectWindow.top ))
-            {
-                WIN_ReleasePtr( wndPtr );
-                continue;  /* point outside window region -> skip */
-            }
-            WIN_ReleasePtr( wndPtr );
+            req->parent = hwnd;
+            req->x = pt.x;
+            req->y = pt.y;
+            wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
+            if (!wine_server_call( req )) count = reply->count;
         }
-
-        /* If window is minimized or disabled, return at once */
-        if (style & WS_MINIMIZE)
+        SERVER_END_REQ;
+        if (count && count < size)
         {
-            *hittest = HTCAPTION;
-            retvalue = list[i];
-            break;
+            list[count] = 0;
+            return list;
         }
-        if (style & WS_DISABLED)
-        {
-            *hittest = HTERROR;
-            retvalue = list[i];
-            break;
-        }
-
-        /* If point is in client area, explore children */
-        if (PtInRect( &rectClient, pt ))
-        {
-            POINT new_pt;
-
-            new_pt.x = pt.x - rectClient.left;
-            new_pt.y = pt.y - rectClient.top;
-            if ((retvalue = find_child_from_point( list[i], new_pt, hittest, lparam ))) break;
-        }
-
-        /* Now it's inside window, send WM_NCCHITTEST (if same thread) */
-        if (!WIN_IsCurrentThread( list[i] ))
-        {
-            *hittest = HTCLIENT;
-            retvalue = list[i];
-            break;
-        }
-        if ((res = SendMessageA( list[i], WM_NCHITTEST, 0, lparam )) != HTTRANSPARENT)
-        {
-            *hittest = res;  /* Found the window */
-            retvalue = list[i];
-            break;
-        }
-        /* continue search with next sibling */
+        HeapFree( GetProcessHeap(), 0, list );
+        if (!count) break;
+        size = count + 1;  /* restart with a large enough buffer */
     }
-    HeapFree( GetProcessHeap(), 0, list );
-    return retvalue;
+    return NULL;
 }
 
 
@@ -434,54 +384,50 @@ static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM l
  */
 HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
 {
-    POINT xy = pt;
-    int res;
-    LONG style;
-
-    TRACE("scope %p %ld,%ld\n", hwndScope, pt.x, pt.y);
+    int i, res;
+    HWND ret, *list;
 
     if (!hwndScope) hwndScope = GetDesktopWindow();
-    style = GetWindowLongW( hwndScope, GWL_STYLE );
 
-    *hittest = HTERROR;
-    if (style & WS_DISABLED) return 0;
-
-    MapWindowPoints( GetDesktopWindow(), GetAncestor( hwndScope, GA_PARENT ), &xy, 1 );
-
-    if (!(style & WS_MINIMIZE))
-    {
-        RECT rectClient;
-        if (WIN_GetRectangles( hwndScope, NULL, &rectClient ) && PtInRect( &rectClient, xy ))
-        {
-            HWND ret;
-
-            xy.x -= rectClient.left;
-            xy.y -= rectClient.top;
-            if ((ret = find_child_from_point( hwndScope, xy, hittest, MAKELONG( pt.x, pt.y ) )))
-            {
-                TRACE( "found child %p\n", ret );
-                return ret;
-            }
-        }
-    }
-
-    /* If nothing found, try the scope window */
-    if (!WIN_IsCurrentThread( hwndScope ))
-    {
-        *hittest = HTCLIENT;
-        TRACE( "returning %p\n", hwndScope );
-        return hwndScope;
-    }
-    res = SendMessageA( hwndScope, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
-    if (res != HTTRANSPARENT)
-    {
-        *hittest = res;  /* Found the window */
-        TRACE( "returning %p\n", hwndScope );
-        return hwndScope;
-    }
     *hittest = HTNOWHERE;
-    TRACE( "nothing found\n" );
-    return 0;
+
+    if (!(list = list_children_from_point( hwndScope, pt ))) return 0;
+
+    /* now determine the hittest */
+
+    for (i = 0; list[i]; i++)
+    {
+        LONG style = GetWindowLongW( list[i], GWL_STYLE );
+
+        /* If window is minimized or disabled, return at once */
+        if (style & WS_MINIMIZE)
+        {
+            *hittest = HTCAPTION;
+            break;
+        }
+        if (style & WS_DISABLED)
+        {
+            *hittest = HTERROR;
+            break;
+        }
+        /* Send WM_NCCHITTEST (if same thread) */
+        if (!WIN_IsCurrentThread( list[i] ))
+        {
+            *hittest = HTCLIENT;
+            break;
+        }
+        res = SendMessageA( list[i], WM_NCHITTEST, 0, MAKELONG(pt.x,pt.y) );
+        if (res != HTTRANSPARENT)
+        {
+            *hittest = res;  /* Found the window */
+            break;
+        }
+        /* continue search with next window in z-order */
+    }
+    ret = list[i];
+    HeapFree( GetProcessHeap(), 0, list );
+    TRACE( "scope %p (%ld,%ld) returning %p\n", hwndScope, pt.x, pt.y, ret );
+    return ret;
 }
 
 

@@ -2105,6 +2105,20 @@ static void dump_get_window_children_reply( const struct get_window_children_rep
     dump_varargs_user_handles( cur_size );
 }
 
+static void dump_get_window_children_from_point_request( const struct get_window_children_from_point_request *req )
+{
+    fprintf( stderr, " parent=%p,", req->parent );
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d", req->y );
+}
+
+static void dump_get_window_children_from_point_reply( const struct get_window_children_from_point_reply *req )
+{
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " children=" );
+    dump_varargs_user_handles( cur_size );
+}
+
 static void dump_get_window_tree_request( const struct get_window_tree_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -2677,6 +2691,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_window_info_request,
     (dump_func)dump_get_window_parents_request,
     (dump_func)dump_get_window_children_request,
+    (dump_func)dump_get_window_children_from_point_request,
     (dump_func)dump_get_window_tree_request,
     (dump_func)dump_set_window_rectangles_request,
     (dump_func)dump_get_window_rectangles_request,
@@ -2856,6 +2871,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_window_info_reply,
     (dump_func)dump_get_window_parents_reply,
     (dump_func)dump_get_window_children_reply,
+    (dump_func)dump_get_window_children_from_point_reply,
     (dump_func)dump_get_window_tree_reply,
     (dump_func)0,
     (dump_func)dump_get_window_rectangles_reply,
@@ -3035,6 +3051,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_window_info",
     "get_window_parents",
     "get_window_children",
+    "get_window_children_from_point",
     "get_window_tree",
     "set_window_rectangles",
     "get_window_rectangles",

@@ -2515,6 +2515,22 @@ struct get_window_children_reply
 
 
 
+struct get_window_children_from_point_request
+{
+    struct request_header __header;
+    user_handle_t  parent;
+    int            x;
+    int            y;
+};
+struct get_window_children_from_point_reply
+{
+    struct reply_header __header;
+    int            count;
+    /* VARARG(children,user_handles); */
+};
+
+
+
 struct get_window_tree_request
 {
     struct request_header __header;
@@ -3227,6 +3243,7 @@ enum request
     REQ_set_window_info,
     REQ_get_window_parents,
     REQ_get_window_children,
+    REQ_get_window_children_from_point,
     REQ_get_window_tree,
     REQ_set_window_rectangles,
     REQ_get_window_rectangles,
@@ -3410,6 +3427,7 @@ union generic_request
     struct set_window_info_request set_window_info_request;
     struct get_window_parents_request get_window_parents_request;
     struct get_window_children_request get_window_children_request;
+    struct get_window_children_from_point_request get_window_children_from_point_request;
     struct get_window_tree_request get_window_tree_request;
     struct set_window_rectangles_request set_window_rectangles_request;
     struct get_window_rectangles_request get_window_rectangles_request;
@@ -3591,6 +3609,7 @@ union generic_reply
     struct set_window_info_reply set_window_info_reply;
     struct get_window_parents_reply get_window_parents_reply;
     struct get_window_children_reply get_window_children_reply;
+    struct get_window_children_from_point_reply get_window_children_from_point_reply;
     struct get_window_tree_reply get_window_tree_reply;
     struct set_window_rectangles_reply set_window_rectangles_reply;
     struct get_window_rectangles_reply get_window_rectangles_reply;
@@ -3628,6 +3647,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 146
+#define SERVER_PROTOCOL_VERSION 147
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

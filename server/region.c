@@ -758,3 +758,20 @@ struct region *union_region( struct region *dst, const struct region *src1,
     dst->extents.bottom = max(src1->extents.bottom, src2->extents.bottom);
     return dst;
 }
+
+/* check if the given point is inside the region */
+int point_in_region( struct region *region, int x, int y )
+{
+    const rectangle_t *ptr, *end;
+
+    for (ptr = region->rects, end = region->rects + region->num_rects; ptr < end; ptr++)
+    {
+        if (ptr->top > y) return 0;
+        if (ptr->bottom <= y) continue;
+        /* now we are in the correct band */
+        if (ptr->left > x) return 0;
+        if (ptr->right <= x) continue;
+        return 1;
+    }
+    return 0;
+}

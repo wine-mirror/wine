@@ -244,6 +244,7 @@ DECL_HANDLER(get_window_info);
 DECL_HANDLER(set_window_info);
 DECL_HANDLER(get_window_parents);
 DECL_HANDLER(get_window_children);
+DECL_HANDLER(get_window_children_from_point);
 DECL_HANDLER(get_window_tree);
 DECL_HANDLER(set_window_rectangles);
 DECL_HANDLER(get_window_rectangles);
@@ -426,6 +427,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_window_info,
     (req_handler)req_get_window_parents,
     (req_handler)req_get_window_children,
+    (req_handler)req_get_window_children_from_point,
     (req_handler)req_get_window_tree,
     (req_handler)req_set_window_rectangles,
     (req_handler)req_get_window_rectangles,

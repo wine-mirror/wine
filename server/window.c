@@ -66,9 +66,9 @@ struct window
     struct window_class *class;       /* window class */
     atom_t           atom;            /* class atom */
     user_handle_t    last_active;     /* last active popup */
-    rectangle_t      window_rect;     /* window rectangle */
-    rectangle_t      client_rect;     /* client rectangle */
-    struct region   *win_region;      /* window region (for shaped windows) */
+    rectangle_t      window_rect;     /* window rectangle (relative to parent client area) */
+    rectangle_t      client_rect;     /* client rectangle (relative to parent client area) */
+    struct region   *win_region;      /* region for shaped windows (relative to window rect) */
     unsigned int     style;           /* window style */
     unsigned int     ex_style;        /* window extended style */
     unsigned int     id;              /* window id */
@@ -81,6 +81,14 @@ struct window
     struct property *properties;      /* window properties array */
     int              nb_extra_bytes;  /* number of extra bytes */
     char             extra_bytes[1];  /* extra bytes storage */
+};
+
+/* growable array of user handles */
+struct user_handle_array
+{
+    user_handle_t *handles;
+    int            count;
+    int            total;
 };
 
 static struct window *top_window;  /* top-level (desktop) window */
@@ -143,6 +151,26 @@ static void link_window( struct window *win, struct window *parent, struct windo
         win->prev = NULL;
         parent->first_unlinked = win;
     }
+}
+
+/* append a user handle to a handle array */
+static int add_handle_to_array( struct user_handle_array *array, user_handle_t handle )
+{
+    if (array->count >= array->total)
+    {
+        int new_total = max( array->total * 2, 32 );
+        user_handle_t *new_array = realloc( array->handles, new_total * sizeof(*new_array) );
+        if (!new_array)
+        {
+            free( array->handles );
+            set_error( STATUS_NO_MEMORY );
+            return 0;
+        }
+        array->handles = new_array;
+        array->total = new_total;
+    }
+    array->handles[array->count++] = handle;
+    return 1;
 }
 
 /* set a window property */
@@ -377,6 +405,23 @@ int make_window_active( user_handle_t window )
     return 1;
 }
 
+/* check if point is inside the window */
+static inline int is_point_in_window( struct window *win, int x, int y )
+{
+    if (!(win->style & WS_VISIBLE)) return 0; /* not visible */
+    if ((win->style & (WS_POPUP|WS_CHILD|WS_DISABLED)) == (WS_CHILD|WS_DISABLED))
+        return 0;  /* disabled child */
+    if ((win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
+        return 0;  /* transparent */
+    if (x < win->window_rect.left || x >= win->window_rect.right ||
+        y < win->window_rect.top || y >= win->window_rect.bottom)
+        return 0;  /* not in window */
+    if (win->win_region &&
+        !point_in_region( win->win_region, x - win->window_rect.left, y - win->window_rect.top ))
+        return 0;  /* not in window region */
+    return 1;
+}
+
 /* find child of 'parent' that contains the given point (in parent-relative coords) */
 static struct window *child_window_from_point( struct window *parent, int x, int y )
 {
@@ -384,16 +429,7 @@ static struct window *child_window_from_point( struct window *parent, int x, int
 
     for (ptr = parent->first_child; ptr; ptr = ptr->next)
     {
-        if (!(ptr->style & WS_VISIBLE)) continue; /* not visible -> skip */
-        if ((ptr->style & (WS_POPUP|WS_CHILD|WS_DISABLED)) == (WS_CHILD|WS_DISABLED))
-            continue;  /* disabled child -> skip */
-        if ((ptr->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
-            continue;  /* transparent -> skip */
-        if (x < ptr->window_rect.left || x >= ptr->window_rect.right ||
-            y < ptr->window_rect.top || y >= ptr->window_rect.bottom)
-            continue;  /* not in window -> skip */
-
-        /* FIXME: check window region here */
+        if (!is_point_in_window( ptr, x, y )) continue;  /* skip it */
 
         /* if window is minimized or disabled, return at once */
         if (ptr->style & (WS_MINIMIZE|WS_DISABLED)) return ptr;
@@ -408,6 +444,32 @@ static struct window *child_window_from_point( struct window *parent, int x, int
     return parent;  /* not found any child */
 }
 
+/* find all children of 'parent' that contain the given point */
+static int get_window_children_from_point( struct window *parent, int x, int y,
+                                           struct user_handle_array *array )
+{
+    struct window *ptr;
+
+    for (ptr = parent->first_child; ptr; ptr = ptr->next)
+    {
+        if (!is_point_in_window( ptr, x, y )) continue;  /* skip it */
+
+        /* if point is in client area, and window is not minimized or disabled, check children */
+        if (!(ptr->style & (WS_MINIMIZE|WS_DISABLED)) &&
+            x >= ptr->client_rect.left && x < ptr->client_rect.right &&
+            y >= ptr->client_rect.top && y < ptr->client_rect.bottom)
+        {
+            if (!get_window_children_from_point( ptr, x - ptr->client_rect.left,
+                                                 y - ptr->client_rect.top, array ))
+                return 0;
+        }
+
+        /* now add window to the array */
+        if (!add_handle_to_array( array, ptr->handle )) return 0;
+    }
+    return 1;
+}
+
 /* find window containing point (in absolute coords) */
 user_handle_t window_from_point( int x, int y )
 {
@@ -417,6 +479,35 @@ user_handle_t window_from_point( int x, int y )
     ret = child_window_from_point( top_window, x, y );
     return ret->handle;
 }
+
+/* return list of all windows containing point (in absolute coords) */
+static int all_windows_from_point( struct window *top, int x, int y, struct user_handle_array *array )
+{
+    struct window *ptr;
+
+    /* make point relative to top window */
+    for (ptr = top->parent; ptr && ptr != top_window; ptr = ptr->parent)
+    {
+        x -= ptr->client_rect.left;
+        y -= ptr->client_rect.top;
+    }
+
+    if (!is_point_in_window( top, x, y )) return 1;
+
+    /* if point is in client area, and window is not minimized or disabled, check children */
+    if (!(top->style & (WS_MINIMIZE|WS_DISABLED)) &&
+        x >= top->client_rect.left && x < top->client_rect.right &&
+        y >= top->client_rect.top && y < top->client_rect.bottom)
+    {
+        if (!get_window_children_from_point( top, x - top->client_rect.left,
+                                             y - top->client_rect.top, array ))
+            return 0;
+    }
+    /* now add window to the array */
+    if (!add_handle_to_array( array, top->handle )) return 0;
+    return 1;
+}
+
 
 /* return the thread owning a window */
 struct thread *get_window_thread( user_handle_t handle )
@@ -822,6 +913,27 @@ DECL_HANDLER(get_window_children)
             len -= sizeof(*data);
         }
     }
+}
+
+
+/* get a list of the window children that contain a given point */
+DECL_HANDLER(get_window_children_from_point)
+{
+    struct user_handle_array array;
+    struct window *parent = get_window( req->parent );
+    size_t len;
+
+    if (!parent) return;
+
+    array.handles = NULL;
+    array.count = 0;
+    array.total = 0;
+    if (!all_windows_from_point( parent, req->x, req->y, &array )) return;
+
+    reply->count = array.count;
+    len = min( get_reply_max_size(), array.count * sizeof(user_handle_t) );
+    if (len) set_reply_data_ptr( array.handles, len );
+    else free( array.handles );
 }
 
 
