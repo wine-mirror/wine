@@ -27,10 +27,10 @@ debug_channels (wininet)
 @ stub FindCloseUrlCache
 @ stub FindFirstUrlCacheContainerA
 @ stub FindFirstUrlCacheContainerW
-@ stub FindFirstUrlCacheEntryA
+@ stdcall FindFirstUrlCacheEntryA(str ptr ptr) FindFirstUrlCacheEntryA
 @ stub FindFirstUrlCacheEntryExA
 @ stub FindFirstUrlCacheEntryExW
-@ stub FindFirstUrlCacheEntryW
+@ stdcall FindFirstUrlCacheEntryW(wstr ptr ptr) FindFirstUrlCacheEntryW
 @ stub FindNextUrlCacheContainerA
 @ stub FindNextUrlCacheContainerW
 @ stub FindNextUrlCacheEntryA

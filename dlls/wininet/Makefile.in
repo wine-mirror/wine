@@ -11,6 +11,7 @@ C_SRCS = \
 	ftp.c \
 	http.c \
 	internet.c \
+	urlcache.c \
 	utility.c \
 	wininet_main.c
 
