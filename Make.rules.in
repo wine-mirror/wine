@@ -101,6 +101,7 @@ prefix          = @prefix@
 exec_prefix     = @exec_prefix@
 bindir          = @bindir@
 libdir          = @libdir@
+datadir         = @datadir@
 infodir         = @infodir@
 mandir          = @mandir@
 sysconfdir      = @sysconfdir@

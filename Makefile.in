@@ -82,11 +82,15 @@ wine: $(WINEWRAPPER)
 
 # Installation rules
 
+install-aclocal: dummy
+	$(MKINSTALLDIRS) $(datadir)/aclocal
+	$(INSTALL_DATA) $(SRCDIR)/aclocal.m4 $(datadir)/aclocal/wine.m4
+
 install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__)
 
-install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__)
+install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) install-aclocal
 
-install::
+install:: install-aclocal
 	-$(LDCONFIG)
 	@if test -n "`LANG=C $(LDD) $(bindir)/wine|grep not.found`";	\
 	then								\
@@ -100,7 +104,11 @@ install::
 		echo "*************************************************" ; \
 	fi
 
-.PHONY: install-lib install-dev
+uninstall::
+	$(RM) $(datadir)/aclocal/wine.m4
+	-rmdir $(datadir)/aclocal
+
+.PHONY: install-aclocal install-lib install-dev
 
 # Dependencies between directories
 
