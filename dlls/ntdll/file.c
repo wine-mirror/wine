@@ -206,7 +206,7 @@ static void fileio_async_cleanup( struct async_private *ovp )
  * Retrieve the Nt Status code from errno.
  * Try to be consistent with FILE_SetDosError().
  */
-static DWORD FILE_GetNtStatus(void)
+NTSTATUS FILE_GetNtStatus(void)
 {
     int err = errno;
     DWORD nt;
@@ -921,30 +921,6 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
     io_status->u.Status = status;
     io_status->Information = 0;
     return status;
-}
-
-/******************************************************************************
- *  NtQueryDirectoryFile	[NTDLL.@]
- *  ZwQueryDirectoryFile	[NTDLL.@]
- */
-NTSTATUS WINAPI NtQueryDirectoryFile(
-	IN HANDLE FileHandle,
-	IN HANDLE Event OPTIONAL,
-	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-	IN PVOID ApcContext OPTIONAL,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	OUT PVOID FileInformation,
-	IN ULONG Length,
-	IN FILE_INFORMATION_CLASS FileInformationClass,
-	IN BOOLEAN ReturnSingleEntry,
-	IN PUNICODE_STRING FileName OPTIONAL,
-	IN BOOLEAN RestartScan)
-{
-	FIXME("(%p %p %p %p %p %p 0x%08lx 0x%08x 0x%08x %p 0x%08x\n",
-	FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation,
-	Length, FileInformationClass, ReturnSingleEntry,
-	debugstr_us(FileName),RestartScan);
-	return 0;
 }
 
 /******************************************************************************

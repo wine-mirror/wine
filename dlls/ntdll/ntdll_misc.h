@@ -79,7 +79,6 @@ extern HANDLE (WINAPI *pCreateFileW)( LPCWSTR filename, DWORD access, DWORD shar
                                       DWORD attributes, HANDLE template );
 
 /* Device IO */
-/* ntdll/cdrom.c.c */
 extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice, 
                                       HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
                                       PVOID UserApcContext, 
@@ -88,7 +87,10 @@ extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
                                       LPVOID lpInBuffer, DWORD nInBufferSize,
                                       LPVOID lpOutBuffer, DWORD nOutBufferSize);
 
-/* memory/virtual.c */
+/* file I/O */
+extern NTSTATUS FILE_GetNtStatus(void);
+
+/* virtual memory */
 typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
 extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
 extern DWORD VIRTUAL_HandleFault(LPCVOID addr);

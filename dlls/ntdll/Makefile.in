@@ -10,6 +10,7 @@ C_SRCS = \
 	cdrom.c \
 	critsection.c \
 	debugtools.c \
+	directory.c \
 	env.c \
 	error.c \
 	exception.c \
