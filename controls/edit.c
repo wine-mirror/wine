@@ -4408,8 +4408,8 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 	EDITSTATE *es;
 	UINT alloc_size;
 
-	TRACE("Creating %s edit control, style = %08lx\n",
-		unicode ? "Unicode" : "ANSI", style);
+	TRACE("Creating %s edit control, style = %08lx %08lx\n",
+		unicode ? "Unicode" : "ANSI", style, wnd->dwExStyle);
 
 	if (!(es = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*es))))
 		return FALSE;
@@ -4429,16 +4429,15 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 	/*
 	 * In Win95 look and feel, the WS_BORDER style is replaced by the 
 	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit 
-	 * control a non client area.
+	 * control a non client area.  Not always.  This coordinates in some
+         * way with the window creation code in dialog.c  When making 
+         * modifications please ensure that the code still works for edit
+         * controls created directly with style 0x50800000, exStyle 0 (
+         * which should have a single pixel border)
 	 */
 	if (TWEAK_WineLook != WIN31_LOOK)
 	{
-	  if (es->style & WS_BORDER)
-	  {
-	    es->style      &= ~WS_BORDER;
-	    wnd->dwStyle   &= ~WS_BORDER;
-	    wnd->dwExStyle |= WS_EX_CLIENTEDGE;
-	  }
+	  es->style      &= ~WS_BORDER;
 	}
 	else
 	{

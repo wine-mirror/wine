@@ -479,6 +479,12 @@ static BOOL DIALOG_CreateControls( WND *pWnd, LPCSTR template,
         {
             template = (LPCSTR)DIALOG_GetControl32( (WORD *)template, &info,
                                                     dlgTemplate->dialogEx );
+            /* Is this it? */
+            if (info.style & WS_BORDER)
+            {
+                info.style &= ~WS_BORDER;
+                info.exStyle |= WS_EX_CLIENTEDGE;
+            }
             hwndCtrl = CreateWindowExW( info.exStyle | WS_EX_NOPARENTNOTIFY,
                                           (LPCWSTR)info.className,
                                           (LPCWSTR)info.windowName,
