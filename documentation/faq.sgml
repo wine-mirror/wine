@@ -93,8 +93,8 @@
       <answer>
         <para>
           There are two free x86 hardware emulators:
-          <ulink url="http://bochs.sourceforge.net">bochs</ulink>, and 
-          <ulink url="http://savannah.nongnu.org/projects/plex86">plex86</ulink>.
+          <ulink url="http://bochs.sourceforge.net">Bochs</ulink>, and
+          <ulink url="http://savannah.nongnu.org/projects/plex86">Plex86</ulink>.
        </para>
 
        <para>
@@ -107,14 +107,14 @@
           Bochs is a highly portable open source IA-32 (x86) PC emulator 
           written in C++, that runs on most popular platforms. It includes emulation
           of the Intel x86 CPU, common I/O devices, and a custom BIOS. Currently, 
-          bochs can be compiled to emulate a 386, 486 or Pentium CPU. Bochs is capable 
+          Bochs can be compiled to emulate a 386, 486 or Pentium CPU. Bochs is capable
           of running most Operating Systems inside the emulation including Linux, 
           Windows® 95, DOS, and recently Windows® NT 4.
        </para>
 
        <para>
-          Both are licensed under the GPL. Bochs is older than plex86, seems to be 
-          easier to install, but plex86 will run faster because plex86 uses a just in
+          Both are licensed under the GPL. Bochs is older than Plex86, seems to be
+          easier to install, but Plex86 will run faster because Plex86 uses a just in
           time binary compiler.
        </para>
        <para>
@@ -514,6 +514,12 @@
             <para>
              Corel (<ulink url="http://www.corel.com">
              http://www.corel.com</ulink>)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+             CodeWeavers
+             (<ulink url="http://www.codeweavers.com/">http://www.codeweavers.com</>)
             </para>
           </listitem>
         </itemizedlist>
@@ -1808,10 +1814,16 @@ rm -fR \[/path/\]Wine*
       </question>
       <answer>
         <para>
-          Patches are greatly appreciated and should be submitted to the 
+          Submitting a patch for inclusion in Wine is pretty simple.
+          Basically all you have to do is send the patch to the
           wine-patches mailing list 
-          (<ulink url="http://www.winehq.com/dev.shtml#ml">http://www.winehq.com/dev.shtml#ml</ulink>). Also see this page for
-          a description of what happens to submitted patches.
+          (<ulink url="http://www.winehq.com/dev.shtml#ml">http://www.winehq.com/dev.shtml#ml</>).
+          Still there are a couple of recommendations about the patch format
+          and all so it's best to read our page describing <ulink
+          url="http://www.winehq.com/site/sending_patches">how to submit
+          patches</>. This will also give you more details about the whole
+          process and in particular to what will happen to your patch once
+          submitted.
         </para>
       </answer>
       </qandaentry>
@@ -1858,12 +1870,30 @@ rm -fR \[/path/\]Wine*
       </question>
       <answer>
         <para>
-          A few examples of applications using Winelib:
+          Here are few examples of applications ported using Wine or Winelib:
         </para>
         <itemizedlist>
           <listitem>
           <para>
-            Corel's WordPerfect Office Suite 
+            Corel's WordPerfect Office Suite 2000 was ported to Linux using
+            Wine.
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            Kylix, the Linux version of Delphi, was ported to Linux using
+            Winelib. The IDE actually uses a combination of QT and Winelib
+            which would not have been possible to achieve using only Wine.
+            The generated applications however do not depend on Wine in
+            any way.
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            MusicMatch JukeBox 5 has also been
+            <ulink url="http://www.itworld.com/nl/lnx_desktop/01042001/">ported</>
+            to Linux using Winelib. However more recent versions have not, and
+            version 5 is no longer available.
           </para>
           </listitem>
           <listitem>
