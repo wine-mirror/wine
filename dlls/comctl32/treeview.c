@@ -3203,7 +3203,8 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     TRACE("TVE_EXPAND %p %s\n", wineItem, TREEVIEW_ItemName(wineItem));
 
-    if (bUser || !(wineItem->state & TVIS_EXPANDEDONCE))
+    if (bUser || ((wineItem->cChildren != 0) &&
+                  !(wineItem->state & TVIS_EXPANDEDONCE)))
     {
 	if (!TREEVIEW_SendExpanding(infoPtr, wineItem, TVE_EXPAND))
 	{
