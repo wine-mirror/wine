@@ -421,7 +421,7 @@ static int sock_get_info( struct object *obj, struct get_file_info_reply *reply,
     if (sock->flags & WSA_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
     if ( !(sock->state & FD_READ ) )  *flags |= FD_FLAG_RECV_SHUTDOWN;
     if ( !(sock->state & FD_WRITE ) ) *flags |= FD_FLAG_SEND_SHUTDOWN;
-    return FD_TYPE_DEFAULT;
+    return FD_TYPE_SOCKET;
 }
 
 static void sock_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count)

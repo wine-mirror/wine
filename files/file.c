@@ -115,6 +115,7 @@ typedef struct async_fileio
     LPOVERLAPPED_COMPLETION_ROUTINE  completion_func;
     char                             *buffer;
     int                              count;
+    enum fd_type                     fd_type;
 } async_fileio;
 
 static DWORD fileio_get_async_status (const struct async_private *ovp)
@@ -207,6 +208,42 @@ int FILE_strncasecmp( const char *str1, const char *str2, int len )
     return ret;
 }
 
+
+/***********************************************************************
+ *           FILE_GetNtStatus(void)
+ *
+ * Retrieve the Nt Status code from errno.
+ * Try to be consistent with FILE_SetDosError().
+ */
+DWORD FILE_GetNtStatus(void)
+{
+    int err = errno;
+    DWORD nt;
+    TRACE ( "errno = %d\n", errno );
+    switch ( err )
+    {
+    case EAGAIN:       nt = STATUS_SHARING_VIOLATION;       break;
+    case EBADF:        nt = STATUS_INVALID_HANDLE;          break;
+    case ENOSPC:       nt = STATUS_DISK_FULL;               break;
+    case EPERM:
+    case EROFS:
+    case EACCES:       nt = STATUS_ACCESS_DENIED;           break;
+    case ENOENT:       nt = STATUS_SHARING_VIOLATION;       break;
+    case EISDIR:       nt = STATUS_FILE_IS_A_DIRECTORY;     break;
+    case EMFILE:
+    case ENFILE:       nt = STATUS_NO_MORE_FILES;           break;
+    case EINVAL:
+    case ENOTEMPTY:    nt = STATUS_DIRECTORY_NOT_EMPTY;     break;
+    case EPIPE:        nt = STATUS_PIPE_BROKEN;             break;
+    case ENOEXEC:      /* ?? */
+    case ESPIPE:       /* ?? */
+    case EEXIST:       /* ?? */
+    default:
+        FIXME ( "Converting errno %d to STATUS_UNSUCCESSFUL\n", err );
+        nt = STATUS_UNSUCCESSFUL;
+    }
+    return nt;
+}
 
 /***********************************************************************
  *           FILE_SetDosError
@@ -1460,10 +1497,15 @@ static void FILE_AsyncReadService(async_private *ovp)
 
     /* check to see if the data is ready (non-blocking) */
 
-    result = pread (ovp->fd, &fileio->buffer[already], fileio->count - already,
-                    OVERLAPPED_OFFSET (lpOverlapped) + already);
-    if ((result < 0) && (errno == ESPIPE))
+    if ( fileio->fd_type == FD_TYPE_SOCKET )
         result = read (ovp->fd, &fileio->buffer[already], fileio->count - already);
+    else
+    {
+        result = pread (ovp->fd, &fileio->buffer[already], fileio->count - already,
+                        OVERLAPPED_OFFSET (lpOverlapped) + already);
+        if ((result < 0) && (errno == ESPIPE))
+            result = read (ovp->fd, &fileio->buffer[already], fileio->count - already);
+    }
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1475,18 +1517,17 @@ static void FILE_AsyncReadService(async_private *ovp)
     /* check to see if the transfer is complete */
     if(result<0)
     {
-        TRACE("read returned errno %d\n",errno);
-        r = STATUS_UNSUCCESSFUL;
+        r = FILE_GetNtStatus ();
         goto async_end;
     }
 
     lpOverlapped->InternalHigh += result;
     TRACE("read %d more bytes %ld/%d so far\n",result,lpOverlapped->InternalHigh,fileio->count);
 
-    if(lpOverlapped->InternalHigh < fileio->count)
-        r = STATUS_PENDING;
-    else
+    if(lpOverlapped->InternalHigh >= fileio->count || fileio->fd_type == FD_TYPE_SOCKET )
         r = STATUS_SUCCESS;
+    else
+        r = STATUS_PENDING;
 
 async_end:
     lpOverlapped->Internal = r;
@@ -1545,6 +1586,7 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     ovp->count = bytesToRead;
     ovp->completion_func = lpCompletionRoutine;
     ovp->buffer = buffer;
+    ovp->fd_type = type;
 
     return !register_new_async (&ovp->async);
 
@@ -1684,10 +1726,15 @@ static void FILE_AsyncWriteService(struct async_private *ovp)
 
     /* write some data (non-blocking) */
 
-    result = pwrite(ovp->fd, &fileio->buffer[already], fileio->count - already,
-                    OVERLAPPED_OFFSET (lpOverlapped) + already);
-    if ((result < 0) && (errno == ESPIPE))
+    if ( fileio->fd_type == FD_TYPE_SOCKET )
         result = write(ovp->fd, &fileio->buffer[already], fileio->count - already);
+    else
+    {
+        result = pwrite(ovp->fd, &fileio->buffer[already], fileio->count - already,
+                    OVERLAPPED_OFFSET (lpOverlapped) + already);
+        if ((result < 0) && (errno == ESPIPE))
+            result = write(ovp->fd, &fileio->buffer[already], fileio->count - already);
+    }
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1698,7 +1745,7 @@ static void FILE_AsyncWriteService(struct async_private *ovp)
     /* check to see if the transfer is complete */
     if(result<0)
     {
-        r = STATUS_UNSUCCESSFUL;
+        r = FILE_GetNtStatus ();
         goto async_end;
     }
 
@@ -1728,8 +1775,8 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     int flags;
     enum fd_type type;
 
-    TRACE("file %d to buf %p num %ld %p func %p stub\n",
-	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
+    TRACE("file %d to buf %p num %ld %p func %p handle %d\n",
+	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine, hEvent);
 
     if (overlapped == NULL)
     {
@@ -1767,6 +1814,7 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     ovp->buffer = (LPVOID) buffer;
     ovp->count = bytesToWrite;
     ovp->completion_func = lpCompletionRoutine;
+    ovp->fd_type = type;
 
     return !register_new_async (&ovp->async);
 

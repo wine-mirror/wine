@@ -791,6 +791,7 @@ enum fd_type
     FD_TYPE_INVALID,
     FD_TYPE_DEFAULT,
     FD_TYPE_CONSOLE,
+    FD_TYPE_SOCKET,
     FD_TYPE_SMB
 };
 #define FD_FLAG_OVERLAPPED         0x01
