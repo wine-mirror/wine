@@ -879,7 +879,7 @@ type	win32
 871 stub _splitpath
 872 cdecl _strcmpi(str str) CRTDLL__strcmpi
 873 cdecl _stricmp(str str) CRTDLL__strcmpi
-874 stub _strlwr
+874 cdecl _strlwr(str) CRTDLL__strlwr
 875 cdecl _strnicmp(str str long) CRTDLL__strnicmp
 876 cdecl _strupr(str) CRTDLL__strupr
 877 cdecl _ultoa(long ptr long) CRTDLL__ultoa
