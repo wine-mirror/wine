@@ -1004,6 +1004,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     TDB *pTask;
     LPSTR cmdline;
     WORD cmdShow;
+    HANDLE hThread;
     int socket;
 
     /* Load module */
@@ -1049,7 +1050,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     req->suspend = 0;
     req->inherit = 0;
     if (server_call_fd( REQ_NEW_THREAD, -1, &socket )) return 0;
-    CloseHandle( req->handle );
+    hThread = req->handle;
 
     if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
     teb->startup = NE_InitProcess;
@@ -1072,7 +1073,14 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     do
     {
         DirectedYield16( hTask );
-        if (!IsTask16( hTask )) break;
+        if (!IsTask16( hTask ))  /* thread has died */
+        {
+            DWORD exit_code;
+            WaitForSingleObject( hThread, INFINITE );
+            GetExitCodeThread( hThread, &exit_code );
+            CloseHandle( hThread );
+            return exit_code;
+        }
         if (!(pTask = (TDB *)GlobalLock16( hTask ))) break;
         instance = pTask->hInstance;
         GlobalUnlock16( hTask );
@@ -1083,6 +1091,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
  error:
     /* FIXME: free TEB and task */
     close( socket );
+    CloseHandle( hThread );
     return 0;  /* FIXME */
 }
 
