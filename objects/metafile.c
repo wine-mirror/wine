@@ -93,15 +93,16 @@ HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh)
 {
     HMETAFILE16 hmf;
-    DWORD size;
+    DWORD size = mh->mtSize * sizeof(WORD);
 
-    if(mh->mtType == METAFILE_MEMORY)
-        size = mh->mtSize * sizeof(WORD);
-    else
-        size = sizeof(METAHEADER) + sizeof(METAHEADERDISK);
-
-    hmf = GLOBAL_CreateBlock( GMEM_MOVEABLE, mh, mh->mtSize * sizeof(WORD),
-                              GetCurrentPDB16(), WINE_LDT_FLAGS_DATA );
+    hmf = GlobalAlloc16(GMEM_MOVEABLE, size);
+    if(hmf)
+    {
+	METAHEADER *mh_dest = GlobalLock16(hmf);
+	memcpy(mh_dest, mh, size);
+	GlobalUnlock16(hmf);
+    }
+    HeapFree(GetProcessHeap(), 0, mh);
     return hmf;
 }
 

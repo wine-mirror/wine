@@ -12,6 +12,7 @@
 
 #include "windef.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
 
@@ -20,7 +21,6 @@
 #include "font.h"
 #include "heap.h"
 #include "local.h"
-#include "options.h"
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
@@ -173,6 +173,28 @@ HBITMAP hPseudoStockBitmap; /* 1x1 bitmap for memory DCs */
 static SYSLEVEL GDI_level = { CRITICAL_SECTION_INIT, 3 };
 static WORD GDI_HeapSel;
 
+static BOOL get_bool(char *buffer, BOOL def_value)
+{
+    switch(buffer[0])
+    {
+	case 'n':
+	case 'N':
+	case 'f':
+	case 'F':
+	case '0':
+	    return FALSE;
+
+	case 'y':
+	case 'Y':
+	case 't':
+	case 'T':
+	case '1':
+	    return TRUE;
+
+	default:
+	    return def_value;
+    }
+}
 
 /******************************************************************************
  *
@@ -203,32 +225,50 @@ static void  ReadFontInformation(
     int  defStrikeOut )
 {
     char  key[256];
+    char buffer[MAX_PATH];
+    HKEY hkey;
+    DWORD type, count;
 
     /* In order for the stock fonts to be independent of 
      * mapping mode, the height (& width) must be 0
      */
+
+    /* assign defaults */
+    font->logfont.lfHeight = defHeight;
+    font->logfont.lfWeight = defBold;
+    font->logfont.lfItalic = defItalic;
+    font->logfont.lfUnderline = defUnderline;
+    font->logfont.lfStrikeOut = defStrikeOut;
+
+    if(RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Fonts", &hkey))
+	return;
+
     sprintf(key, "%s.Height", fontName);
-    font->logfont.lfHeight =
-	PROFILE_GetWineIniInt("Tweak.Fonts", key, defHeight);
+    count = sizeof(buffer);
+    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
+	font->logfont.lfHeight = atoi(buffer);
 
     sprintf(key, "%s.Bold", fontName);
-    font->logfont.lfWeight =
-	(PROFILE_GetWineIniBool("Tweak.Fonts", key, defBold)) ?
-	FW_BOLD : FW_NORMAL;
+    count = sizeof(buffer);
+    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
+	font->logfont.lfWeight = get_bool(buffer, defBold) ? FW_BOLD : FW_NORMAL;
 
     sprintf(key, "%s.Italic", fontName);
-    font->logfont.lfItalic =
-	PROFILE_GetWineIniBool("Tweak.Fonts", key, defItalic);
+    count = sizeof(buffer);
+    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
+	font->logfont.lfItalic = get_bool(buffer, defItalic);
 
     sprintf(key, "%s.Underline", fontName);
-    font->logfont.lfUnderline =
-	PROFILE_GetWineIniBool("Tweak.Fonts", key, defUnderline);
+    count = sizeof(buffer);
+    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
+	font->logfont.lfUnderline = get_bool(buffer, defUnderline);
 
     sprintf(key, "%s.StrikeOut", fontName);
-    font->logfont.lfStrikeOut =
-	PROFILE_GetWineIniBool("Tweak.Fonts", key, defStrikeOut);
+    count = sizeof(buffer);
+    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
+	font->logfont.lfStrikeOut = get_bool(buffer, defStrikeOut);
 
-    return;
+    RegCloseKey(hkey);
 }
 
 /***********************************************************************

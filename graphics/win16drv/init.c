@@ -9,12 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "winreg.h"
 #include "win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"
 #include "heap.h"
 #include "font.h"
-#include "options.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv);
@@ -205,8 +205,17 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
     char printerEnabled[20];
-    PROFILE_GetWineIniString( "wine", "printer", "off",
-                             printerEnabled, sizeof(printerEnabled) );
+    HKEY hkey;
+
+    /* default value */
+    strcpy(printerEnabled, "off");
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\wine", &hkey))
+    {
+	DWORD type, count = sizeof(printerEnabled);
+	RegQueryValueExA(hkey, "printer", 0, &type, printerEnabled, &count);
+	RegCloseKey(hkey);
+    }
+
     if (strcasecmp(printerEnabled,"on"))
     {
         MESSAGE("Printing disabled in wine.conf or .winerc file\n");
