@@ -19,9 +19,6 @@
 #ifndef __SETUPAPI_PRIVATE_H
 #define __SETUPAPI_PRIVATE_H
 
-#include "wine/windef16.h"
-#include "setupx16.h"
-
 #define COPYFILEDLGORD	1000
 #define SOURCESTRORD	500
 #define DESTSTRORD	501
@@ -31,18 +28,6 @@
 #define REG_INSTALLEDFILES "System\\CurrentControlSet\\Control\\InstalledFiles"
 #define REGPART_RENAME "\\Rename"
 #define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
-
-typedef struct tagLDD_LIST {
-        LPLOGDISKDESC pldd;
-        struct tagLDD_LIST *next;
-} LDD_LIST;
-
-#define INIT_LDD(ldd, LDID) \
-  do { \
-    memset(&(ldd), 0, sizeof(LOGDISKDESC_S)); \
-   (ldd).cbSize = sizeof(LOGDISKDESC_S); \
-   ldd.ldid = LDID; \
-  } while(0)
 
 /* string substitutions */
 

@@ -254,9 +254,9 @@ static long sc_cb_lseek(INT_PTR hf, long dist, int seektype)
 
 static INT_PTR sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
-  FILE_IN_CABINET_INFOA fici;
+  FILE_IN_CABINET_INFO_A fici;
   PSC_HSC_A phsc;
-  CABINET_INFOA ci;
+  CABINET_INFO_A ci;
   FILEPATHS_A fp;
   UINT err;
 
@@ -375,9 +375,9 @@ static INT_PTR sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 
 static INT_PTR sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
-  FILE_IN_CABINET_INFOW fici;
+  FILE_IN_CABINET_INFO_W fici;
   PSC_HSC_W phsc;
-  CABINET_INFOW ci;
+  CABINET_INFO_W ci;
   FILEPATHS_W fp;
   UINT err;
   int len;

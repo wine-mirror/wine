@@ -547,4 +547,16 @@ extern RETERR16 WINAPI CtlDelLdd16(LOGDISKID16);
 extern RETERR16 WINAPI CtlGetLddPath16(LOGDISKID16 ldid, LPSTR szPath);
 extern RETERR16 WINAPI GenInstall16(HINF16,LPCSTR,WORD);
 
+typedef struct tagLDD_LIST {
+        LPLOGDISKDESC pldd;
+        struct tagLDD_LIST *next;
+} LDD_LIST;
+
+#define INIT_LDD(ldd, LDID) \
+  do { \
+   memset(&(ldd), 0, sizeof(LOGDISKDESC_S)); \
+   (ldd).cbSize = sizeof(LOGDISKDESC_S); \
+   ldd.ldid = LDID; \
+  } while(0)
+
 #endif /* __SETUPX16_H */
