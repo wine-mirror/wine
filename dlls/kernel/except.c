@@ -219,11 +219,11 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
+    char *cmdline, *env, *p;
     HKEY		hDbgConf;
     DWORD		bAuto = FALSE;
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
-    char*		cmdline;
     char*		format = NULL;
     BOOL		ret = FALSE;
 
@@ -329,12 +329,27 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 	}
     }
 
+    /* remove WINEDEBUG from the environment */
+    env = GetEnvironmentStringsA();
+    for (p = env; *p; p += strlen(p) + 1)
+    {
+        if (!memcmp( p, "WINEDEBUG=", sizeof("WINEDEBUG=")-1 ))
+        {
+            char *next = p + strlen(p) + 1;
+            char *end = next;
+            while (*end) end += strlen(end) + 1;
+            memmove( p, next, end + 1 - next );
+            break;
+        }
+    }
+
     TRACE("Starting debugger %s\n", debugstr_a(cmdline));
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
-    ret = CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, 0, env, NULL, &startup, &info);
+    FreeEnvironmentStringsA( env );
 
     if (ret) WaitForSingleObject(hEvent, INFINITE);  /* wait for debugger to come up... */
     else ERR("Couldn't start debugger (%s) (%ld)\n"
