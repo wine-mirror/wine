@@ -1141,11 +1141,15 @@ VOID WINAPI GlobalMemoryStatus(
     /* Some applications (e.g. QuickTime 6) crash if we tell them there
      * is more than 2GB of physical memory.
      */
-    if (lpmem->dwTotalPhys>2U*1024*1024*1024)
+    if (lpmem->dwTotalPhys >= 2U*1024*1024*1024)
     {
-        lpmem->dwTotalPhys=2U*1024*1024*1024;
-        lpmem->dwAvailPhys=2U*1024*1024*1024;
+        lpmem->dwTotalPhys=2U*1024*1024*1024 - 1;
+        lpmem->dwAvailPhys=2U*1024*1024*1024 - 1;
     }
+
+    /* work around for broken photoshop 4 installer */
+    if (lpmem->dwAvailPhys + lpmem->dwAvailPageFile >= 2U*1024*1024*1024)
+        lpmem->dwAvailPageFile = 2U*1024*1024*1024 - lpmem->dwAvailPhys - 1;
 
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
