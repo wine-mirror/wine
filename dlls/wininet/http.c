@@ -1160,6 +1160,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     INT i;
     BOOL bSuccess = FALSE;
     LPSTR requestString = NULL;
+    LPSTR lpszHeaders_r_n = NULL; /* lpszHeaders with atleast one pair of \r\n at the end */
     INT requestStringLen;
     INT responseLen;
     INT headerLength = 0;
@@ -1236,10 +1237,34 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
             strlen(HTTPHEADER) +
             5; /* " \r\n\r\n" */
 
+	/* add "\r\n" to end of lpszHeaders if needed */
+	if (lpszHeaders)
+	{
+	    int len = strlen(lpszHeaders);
+
+	    /* Check if the string is terminated with \r\n, but not if
+	     * the string is less that 2 characters long, because then
+	     * we would be looking at memory before the beginning of
+	     * the string. Besides, if it is less than 2 characters
+	     * long, then clearly, its not terminated with \r\n.
+	     */
+	    if ((len > 2) && (memcmp(lpszHeaders + (len - 2), "\r\n", 2) == 0))
+	    {
+		lpszHeaders_r_n = HTTP_strdup(lpszHeaders);
+	    }
+	    else
+	    {
+		TRACE("Adding \r\n to lpszHeaders.\n");
+		lpszHeaders_r_n =  HeapAlloc( GetProcessHeap(), 0, strlen(lpszHeaders) + 3 );
+		strcpy( lpszHeaders_r_n, lpszHeaders );
+		strcpy( lpszHeaders_r_n + strlen(lpszHeaders), "\r\n" );
+	    }
+	}
+
         /* Add length of passed headers */
         if (lpszHeaders)
         {
-            headerLength = -1 == dwHeaderLength ?  strlen(lpszHeaders) : dwHeaderLength;
+            headerLength = -1 == dwHeaderLength ?  strlen(lpszHeaders_r_n) : dwHeaderLength;
             requestStringLen += headerLength +  2; /* \r\n */
         }
 
@@ -1319,12 +1344,18 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
             cnt += sprintf(requestString + cnt, "%s%s", HTTPHOSTHEADER, lpwhr->lpszHostName);
 
         /* Append passed request headers */
-        if (lpszHeaders)
+        if (lpszHeaders_r_n)
         {
             strcpy(requestString + cnt, "\r\n");
             cnt += 2;
-            strcpy(requestString + cnt, lpszHeaders);
+            strcpy(requestString + cnt, lpszHeaders_r_n);
             cnt += headerLength;
+	    /* only add \r\n if not already present */
+	    if (memcmp((requestString + cnt) - 2, "\r\n", 2) != 0)
+	    {
+                strcpy(requestString + cnt, "\r\n");
+                cnt += 2;
+	    }
         }
 
         /* Set (header) termination string for request */
@@ -1345,7 +1376,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
             cnt += dwOptionalLength;
             /* we also have to decrease the expected string length by two,
              * since we won't be adding on those following \r\n's */
-            requestStringLen -= 2;
+	    requestStringLen -= 2;
         }
         else
         { /* if there is no optional data, add on another \r\n just to be safe */
@@ -1463,6 +1494,9 @@ lend:
 
     if (requestString)
         HeapFree(GetProcessHeap(), 0, requestString);
+
+    if (lpszHeaders)
+	HeapFree(GetProcessHeap(), 0, lpszHeaders_r_n);
 
     /* TODO: send notification for P3P header */
     
