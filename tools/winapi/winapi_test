@@ -386,9 +386,11 @@ sub output_header {
 	}
     }
     print OUT " */\n";
-
     print OUT "\n";
+
     print OUT "#define WINVER 0x0501\n";
+    print OUT "#define _WIN32_WINNT 0x0501\n";
+    print OUT "\n";
     print OUT "#define WINE_NOWINSOCK\n";
     print OUT "\n";
     foreach my $test (@tests) {
@@ -399,6 +401,15 @@ sub output_header {
     }
     print OUT "\n";
     print OUT "#include \"wine/test.h\"\n";
+    print OUT "\n";
+
+    print OUT "/***********************************************************************\n";
+    print OUT " * Compability macros\n";
+    print OUT " */\n";
+    print OUT "\n";
+    print OUT "#define DWORD_PTR UINT_PTR\n";
+    print OUT "#define LONG_PTR INT_PTR\n";
+    print OUT "#define ULONG_PTR UINT_PTR\n";
     print OUT "\n";
 
     print OUT "/***********************************************************************\n";
@@ -470,6 +481,65 @@ sub output_footer {
 }
 
 ########################################################################
+# output_test_pack_type
+
+sub output_test_pack_type {
+    local *OUT = shift;
+
+    my $types = shift;
+    my $type_name = shift;
+    my $type = shift;
+
+    my $type_align = $type->align;
+    my $type_pack = $type->pack;
+    my $type_size = $type->size;
+    
+    print OUT "    /* $type_name (pack $type_pack) */\n";
+    if (defined($type_align) && defined($type_size)) {
+	print OUT "    TEST_TYPE($type_name, $type_size, $type_align);\n";
+    }
+}
+    
+sub output_test_pack_fields {
+    local *OUT = shift;
+
+    my $types = shift;
+    my $type_name = shift;
+    my $type = shift;
+    my $offset = shift;
+    my $optional_field = shift;
+
+    foreach my $field ($type->fields()) {
+	my $field_type_name = $field->type_name;
+	my $field_name = $field->name;
+	my $field_size = $field->size;
+	my $field_offset = $field->offset;
+	my $field_align = $field->align;
+
+	next if $field_name eq "" || (defined($field_size) && $field_size < 0);
+
+	if ($$optional_field{$field_name}) {
+	    # Nothing
+	} elsif (defined($field_size) && defined($field_offset)) {
+	    $field_offset += $offset;
+	    if ($field_name eq "DUMMYSTRUCTNAME") {
+		print OUT "#ifdef NONAMELESSSTRUCT\n";
+		print OUT "    TEST_FIELD($type_name, $field_type_name, $field_name, ";
+		print OUT "$field_offset, $field_size, $field_align);\n";
+		print OUT "#else\n";
+		output_test_pack_fields(\*OUT, $types, $type_name, $$types{$field_type_name}, $field_offset, $optional_field);	
+		print OUT "#endif\n";
+	    } else {
+		print OUT "    TEST_FIELD($type_name, $field_type_name, $field_name, ";
+		print OUT "$field_offset, $field_size, $field_align);\n";
+	    }
+	} else {
+	    $output->write("$type_name: $field_type_name: $field_name: test not generated (offset not defined)\n");
+	}
+    }
+}
+
+########################################################################
 # output_test_pack
 
 sub output_test_pack {
@@ -483,51 +553,50 @@ sub output_test_pack {
 
     my %type_name_not_used;
 
-    foreach my $type_name (@type_names) {
+    foreach my $_type_name (@type_names) {
+	my $type_name = $_type_name;
+
+	$type_name =~ s/:.*?$//;
 	$type_name_not_used{$type_name} = 1;
     }
 
     foreach my $header (@headers) {
 	my $types = $file2types{"include/$header"};
 	
-	foreach my $type_name (@type_names) {
+	foreach my $_type_name (@type_names) {
+	    my $type_name = $_type_name;
+
+	    my %optional_field = ();
+	    if ($type_name =~ s/:\s*(.*?)$//) {
+		my @fields = split /\s+/, $1;
+		foreach my $field (@fields) {
+		    if ($field =~ s/^!//) {
+			$optional_field{$field}++;
+		    }
+		}
+	    } 
+
 	    my $type = $$types{$type_name};
 	    if (!defined($type)) {
 		next;
 	    }
 	    $type_name_not_used{$type_name} = 0;
 
-	    my $type_align = $type->align;
-	    my $type_pack = $type->pack;
-	    my $type_size = $type->size;
-
-	    print OUT "    /* $type_name (pack $type_pack) */\n";
-	    if (defined($type_align) && defined($type_size)) {
-		print OUT "    TEST_TYPE($type_name, $type_size, $type_align);\n";
+	    if (!scalar(keys(%optional_field))) {
+		output_test_pack_type(\*OUT, $types, $type_name, $type);
+	    } else {
+		print OUT "    /* $type_name */\n";
 	    }
-
-	    foreach my $field ($type->fields()) {
-		my $field_type_name = $field->type_name;
-		my $field_name = $field->name;
-		my $field_size = $field->size;
-		my $field_offset = $field->offset;
-		my $field_align = $field->align;
-
-		next if $field_name eq "" || (defined($field_size) && $field_size < 0);
-
-		if (defined($field_size) && defined($field_offset)) {
-		    print OUT "    TEST_FIELD($type_name, $field_type_name, $field_name, $field_offset, $field_size, $field_align);\n";
-		} else {
-		    $output->write("$type_name: $field_type_name: $field_name: test not generated (offset not defined)\n");
-		}
-	    }
+	    output_test_pack_fields(\*OUT, $types, $type_name, $type, 0, \%optional_field);
 	    print OUT "\n";
 	}
     }
 
-    foreach my $type_name (@type_names) {
+    foreach my $_type_name (@type_names) {
+	my $type_name = $_type_name;
+	$type_name =~ s/:.*?$//;
 	if ($type_name_not_used{$type_name}) {
-	    $output->write("$test_dir: $test: $type_name: type not found (ignored)\n");
+	    # $output->write("$test_dir: $test: $type_name: type not found (ignored)\n");
 	}
     }
 }
@@ -559,6 +628,8 @@ sub output_file {
     }
 
     output_footer(\*OUT, $test_dir, \@tests);
+
+    return 1;
 }
 
 ########################################################################
