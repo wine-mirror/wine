@@ -381,6 +381,12 @@ extern int spawnvp(int mode, const char *cmdname, const char * const argv[]);
 
 #if defined(__i386__) && defined(__GNUC__)
 
+extern inline long interlocked_cmpxchg( long *dest, long xchg, long compare );
+extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
+extern inline long interlocked_xchg( long *dest, long val );
+extern inline void *interlocked_xchg_ptr( void **dest, void *val );
+extern inline long interlocked_xchg_add( long *dest, long incr );
+
 extern inline long interlocked_cmpxchg( long *dest, long xchg, long compare )
 {
     long ret;

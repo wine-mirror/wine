@@ -32,6 +32,7 @@
 # include <io.h>
 #endif
 
+#include "wine/wpp.h"
 #include "wpp_private.h"
 
 struct pp_status pp_status;

@@ -177,15 +177,19 @@ inline static int wine_ldt_is_empty( const LDT_ENTRY *ent )
 #ifdef __i386__
 # ifdef __GNUC__
 #  define __DEFINE_GET_SEG(seg) \
+    extern inline unsigned short wine_get_##seg(void); \
     extern inline unsigned short wine_get_##seg(void) \
     { unsigned short res; __asm__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
 #  define __DEFINE_SET_SEG(seg) \
+    extern inline void wine_set_##seg(int val); \
     extern inline void wine_set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
 # elif defined(_MSC_VER)
 #  define __DEFINE_GET_SEG(seg) \
+    extern inline unsigned short wine_get_##seg(void); \
     extern inline unsigned short wine_get_##seg(void) \
     { unsigned short res; __asm { mov res, seg } return res; }
 #  define __DEFINE_SET_SEG(seg) \
+    extern inline void wine_set_##seg(unsigned short val); \
     extern inline void wine_set_##seg(unsigned short val) { __asm { mov seg, val } }
 # else  /* __GNUC__ || _MSC_VER */
 #  define __DEFINE_GET_SEG(seg) extern unsigned short wine_get_##seg(void);
