@@ -34,9 +34,7 @@
  * neutral language. This will prevent them from
  * being duplicated for each language.
  */
-#include "resources/user32_bitmaps.rc"
-#include "resources/user32_cursors.rc"
-#include "resources/user32_icons.rc"
+#include "resources/user32_bin.rc"
 
 /*
  * Everything specific to any language goes

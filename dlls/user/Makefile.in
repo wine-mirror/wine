@@ -93,7 +93,8 @@ C_SRCS16 = \
 
 RC_SRCS = resources/user32.rc
 
-RC_BMPS = \
+RC_BINSRC = resources/user32_bin.rc
+RC_BINARIES = \
 	resources/obm_btncorners.bmp \
 	resources/obm_btsize.bmp \
 	resources/obm_check.bmp \
@@ -128,9 +129,7 @@ RC_BMPS = \
 	resources/obm_uparrowd.bmp \
 	resources/obm_uparrowi.bmp \
 	resources/obm_zoom.bmp \
-	resources/obm_zoomd.bmp
-
-RC_CURS = \
+	resources/obm_zoomd.bmp \
 	resources/ocr_appstarting.cur \
 	resources/ocr_cross.cur \
 	resources/ocr_dragobject.cur \
@@ -140,16 +139,14 @@ RC_CURS = \
 	resources/ocr_icon.cur \
 	resources/ocr_no.cur \
 	resources/ocr_normal.cur \
-	resources/ocr_sizeall.cur \
 	resources/ocr_size.cur \
+	resources/ocr_sizeall.cur \
 	resources/ocr_sizenesw.cur \
 	resources/ocr_sizens.cur \
 	resources/ocr_sizenwse.cur \
 	resources/ocr_sizewe.cur \
 	resources/ocr_up.cur \
-	resources/ocr_wait.cur
-
-RC_ICOS = \
+	resources/ocr_wait.cur \
 	resources/oic_bang.ico \
 	resources/oic_hand.ico \
 	resources/oic_note.ico \
@@ -191,21 +188,5 @@ resources/mouse.res: resources/mouse.rc
 
 resources/version16.res: resources/version16.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/resources/version16.rc
-
-$(RC_BMPS): resources/user32_bitmaps.rc
-	$(BIN2RES) -f -o $@ $(SRCDIR)/resources/user32_bitmaps.rc
-
-$(RC_CURS): resources/user32_cursors.rc
-	$(BIN2RES) -f -o $@ $(SRCDIR)/resources/user32_cursors.rc
-
-$(RC_ICOS): resources/user32_icons.rc
-	$(BIN2RES) -f -o $@ $(SRCDIR)/resources/user32_icons.rc
-
-$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(RC_BMPS) $(RC_CURS) $(RC_ICOS)
-
-$(RC_BMPS) $(RC_CURS) $(RC_ICOS): $(BIN2RES)
-
-clean::
-	$(RM) $(RC_BMPS) $(RC_CURS) $(RC_ICOS)
 
 ### Dependencies:
