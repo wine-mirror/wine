@@ -2943,24 +2943,22 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
             goto track_menu;
         }
     }
-    else
-    {
-        /* prevent sysmenu activation for managed windows on Alt down/up */
-        if ((wParam & HTSYSMENU) && (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MANAGED))
-        {
-            MENU_SelectItem( hwnd, hTrackMenu, 0, TRUE, 0 );
-            /* schedule end of menu tracking */
-            wFlags |= TF_ENDMENU;
-            goto track_menu;
-        }
-    }
 
     MENU_SelectItem( hwnd, hTrackMenu, uItem, TRUE, 0 );
 
-    if( uItem == NO_SELECTED_ITEM )
-        MENU_MoveSelection( hwnd, hTrackMenu, ITEM_NEXT );
+    if (wParam & HTSYSMENU)
+    {
+        /* prevent sysmenu activation for managed windows on Alt down/up */
+        if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MANAGED)
+            wFlags |= TF_ENDMENU; /* schedule end of menu tracking */
+    }
     else
-        PostMessageW( hwnd, WM_KEYDOWN, VK_DOWN, 0L );
+    {
+        if( uItem == NO_SELECTED_ITEM )
+            MENU_MoveSelection( hwnd, hTrackMenu, ITEM_NEXT );
+        else
+            PostMessageW( hwnd, WM_KEYDOWN, VK_DOWN, 0L );
+    }
 
 track_menu:
     MENU_TrackMenu( hTrackMenu, wFlags, 0, 0, hwnd, NULL );
