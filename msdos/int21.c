@@ -345,6 +345,12 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT *context )
 			dataptr[3] = 0xFF; /* no physical drive */
 			break;
 
+		case 0x72:
+			/* Trail on error implementation */
+			AX_reg(context) = GetDriveType16(BL_reg(context)) == DRIVE_CANNOTDETERMINE ? 0x0f : 0x01;
+			SET_CFLAG(context);	/* Seems to be set all the time */
+			break;
+
 		default:
                         INT_BARF( context, 0x21 );
 	}
