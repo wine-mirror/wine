@@ -76,7 +76,6 @@ struct ICreateDevEnumVtbl {
 #endif
 
 #define ICreateDevEnum_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -381,7 +380,6 @@ struct IPinVtbl {
 #endif
 
 #define IPin_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -610,7 +608,6 @@ struct IEnumPinsVtbl {
 #endif
 
 #define IEnumPins_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -740,7 +737,6 @@ struct IEnumMediaTypesVtbl {
 #endif
 
 #define IEnumMediaTypes_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -906,7 +902,6 @@ struct IFilterGraphVtbl {
 #endif
 
 #define IFilterGraph_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1074,7 +1069,6 @@ struct IEnumFiltersVtbl {
 #endif
 
 #define IEnumFilters_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1230,7 +1224,6 @@ struct IMediaFilterVtbl {
 #endif
 
 #define IMediaFilter_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1430,7 +1423,6 @@ struct IBaseFilterVtbl {
 #endif
 
 #define IBaseFilter_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1588,7 +1580,6 @@ struct IReferenceClockVtbl {
 #endif
 
 #define IReferenceClock_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1819,7 +1810,6 @@ struct IMediaSampleVtbl {
 #endif
 
 #define IMediaSample_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2153,7 +2143,6 @@ struct IMediaSample2Vtbl {
 #endif
 
 #define IMediaSample2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2305,7 +2294,6 @@ struct IMemAllocatorVtbl {
 #endif
 
 #define IMemAllocator_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2469,7 +2457,6 @@ struct IMemAllocatorCallbackTempVtbl {
 #endif
 
 #define IMemAllocatorCallbackTemp_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2557,7 +2544,6 @@ struct IMemAllocatorNotifyCallbackTempVtbl {
 #endif
 
 #define IMemAllocatorNotifyCallbackTemp_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2674,7 +2660,6 @@ struct IMemInputPinVtbl {
 #endif
 
 #define IMemInputPin_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2802,7 +2787,6 @@ struct IAMovieSetupVtbl {
 #endif
 
 #define IAMovieSetup_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3057,7 +3041,6 @@ struct IMediaSeekingVtbl {
 #endif
 
 #define IMediaSeeking_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3580,7 +3563,6 @@ struct IEnumRegFiltersVtbl {
 #endif
 
 #define IEnumRegFilters_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3794,7 +3776,6 @@ struct IFilterMapperVtbl {
 #endif
 
 #define IFilterMapper_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -4078,7 +4059,6 @@ struct IFilterMapper2Vtbl {
 #endif
 
 #define IFilterMapper2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -4251,7 +4231,6 @@ struct IFilterMapper3Vtbl {
 #endif
 
 #define IFilterMapper3_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -4353,7 +4332,6 @@ struct IQualityControlVtbl {
 #endif
 
 #define IQualityControl_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -4509,7 +4487,6 @@ struct IOverlayNotifyVtbl {
 #endif
 
 #define IOverlayNotify_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -4645,7 +4622,6 @@ struct IOverlayNotify2Vtbl {
 #endif
 
 #define IOverlayNotify2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -4808,7 +4784,6 @@ struct IOverlayVtbl {
 #endif
 
 #define IOverlay_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -4973,7 +4948,6 @@ struct IMediaEventSinkVtbl {
 #endif
 
 #define IMediaEventSink_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -5062,7 +5036,6 @@ struct IFileSourceFilterVtbl {
 #endif
 
 #define IFileSourceFilter_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -5160,7 +5133,6 @@ struct IFileSinkFilterVtbl {
 #endif
 
 #define IFileSinkFilter_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -5268,7 +5240,6 @@ struct IFileSinkFilter2Vtbl {
 #endif
 
 #define IFileSinkFilter2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -5458,7 +5429,6 @@ struct IGraphBuilderVtbl {
 #endif
 
 #define IGraphBuilder_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -5688,7 +5658,6 @@ struct ICaptureGraphBuilderVtbl {
 #endif
 
 #define ICaptureGraphBuilder_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -5854,7 +5823,6 @@ struct IAMCopyCaptureFileProgressVtbl {
 #endif
 
 #define IAMCopyCaptureFileProgress_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -6045,7 +6013,6 @@ struct ICaptureGraphBuilder2Vtbl {
 #endif
 
 #define ICaptureGraphBuilder2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -6352,7 +6319,6 @@ struct IFilterGraph2Vtbl {
 #endif
 
 #define IFilterGraph2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -6483,7 +6449,6 @@ struct IStreamBuilderVtbl {
 #endif
 
 #define IStreamBuilder_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -6642,7 +6607,6 @@ struct IAsyncReaderVtbl {
 #endif
 
 #define IAsyncReader_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -6789,7 +6753,6 @@ struct IGraphVersionVtbl {
 #endif
 
 #define IGraphVersion_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -6875,7 +6838,6 @@ struct IResourceConsumerVtbl {
 #endif
 
 #define IResourceConsumer_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -7042,7 +7004,6 @@ struct IResourceManagerVtbl {
 #endif
 
 #define IResourceManager_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -7236,7 +7197,6 @@ struct IKsPropertySetVtbl {
 #endif
 
 #define IKsPropertySet_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -7383,7 +7343,6 @@ struct IPinConnectionVtbl {
 #endif
 
 #define IPinConnection_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -7483,7 +7442,6 @@ struct IPinFlowControlVtbl {
 #endif
 
 #define IPinFlowControl_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -7673,7 +7631,6 @@ struct IGraphConfigVtbl {
 #endif
 
 #define IGraphConfig_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -7842,7 +7799,6 @@ struct IGraphConfigCallbackVtbl {
 #endif
 
 #define IGraphConfigCallback_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -7953,7 +7909,6 @@ struct IFilterChainVtbl {
 #endif
 
 #define IFilterChain_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \

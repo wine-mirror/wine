@@ -108,7 +108,6 @@ struct IEnumGUIDVtbl {
 #endif
 
 #define IEnumGUID_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -249,7 +248,6 @@ struct IEnumCATEGORYINFOVtbl {
 #endif
 
 #define IEnumCATEGORYINFO_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -423,7 +421,6 @@ struct ICatInformationVtbl {
 #endif
 
 #define ICatInformation_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -649,7 +646,6 @@ struct ICatRegisterVtbl {
 #endif
 
 #define ICatRegister_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \

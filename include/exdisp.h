@@ -314,7 +314,6 @@ struct IWebBrowserVtbl {
 #endif
 
 #define IWebBrowser_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -928,7 +927,6 @@ struct IWebBrowserAppVtbl {
 #endif
 
 #define IWebBrowserApp_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1357,7 +1355,6 @@ struct IShellWindowsVtbl {
 #endif
 
 #define IShellWindows_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \

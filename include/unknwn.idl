@@ -18,17 +18,6 @@
 
 import "wtypes.idl";
 
-/* COM vtable compatibility macros for g++ */
-/* Included here because the generated header needs them */
-
-cpp_quote("#if defined(ICOM_MSVTABLE_COMPAT) && (!defined(__cplusplus) || defined(CINTERFACE))")
-cpp_quote("# define ICOM_MSVTABLE_COMPAT_FIELDS long dummyRTTI1,dummyRTTI2;")
-cpp_quote("# define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,")
-cpp_quote("#else")
-cpp_quote("# define ICOM_MSVTABLE_COMPAT_FIELDS")
-cpp_quote("# define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE")
-cpp_quote("#endif")
-
 /* Interfaces */
 
 [

@@ -95,7 +95,6 @@ struct IOleWindowVtbl {
 #endif
 
 #define IOleWindow_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -219,7 +218,6 @@ struct IOleInPlaceObjectVtbl {
 #endif
 
 #define IOleInPlaceObject_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -383,7 +381,6 @@ struct IOleInPlaceActiveObjectVtbl {
 #endif
 
 #define IOleInPlaceActiveObject_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -559,7 +556,6 @@ struct IOleInPlaceUIWindowVtbl {
 #endif
 
 #define IOleInPlaceUIWindow_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -767,7 +763,6 @@ struct IOleInPlaceFrameVtbl {
 #endif
 
 #define IOleInPlaceFrame_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -990,7 +985,6 @@ struct IOleInPlaceSiteVtbl {
 #endif
 
 #define IOleInPlaceSite_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1158,7 +1152,6 @@ struct IParseDisplayNameVtbl {
 #endif
 
 #define IParseDisplayName_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1261,7 +1254,6 @@ struct IOleContainerVtbl {
 #endif
 
 #define IOleContainer_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1423,7 +1415,6 @@ struct IOleItemContainerVtbl {
 #endif
 
 #define IOleItemContainer_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1624,7 +1615,6 @@ struct IOleLinkVtbl {
 #endif
 
 #define IOleLink_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1835,7 +1825,6 @@ struct IOleClientSiteVtbl {
 #endif
 
 #define IOleClientSite_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1999,7 +1988,6 @@ struct IOleCacheVtbl {
 #endif
 
 #define IOleCache_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2185,7 +2173,6 @@ struct IOleCache2Vtbl {
 #endif
 
 #define IOleCache2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2299,7 +2286,6 @@ struct IOleCacheControlVtbl {
 #endif
 
 #define IOleCacheControl_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2426,7 +2412,6 @@ struct IEnumOLEVERBVtbl {
 #endif
 
 #define IEnumOLEVERB_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -2786,7 +2771,6 @@ struct IOleObjectVtbl {
 #endif
 
 #define IOleObject_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3101,7 +3085,6 @@ struct IOleAdviseHolderVtbl {
 #endif
 
 #define IOleAdviseHolder_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3222,7 +3205,6 @@ struct IContinueVtbl {
 #endif
 
 #define IContinue_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3383,7 +3365,6 @@ struct IViewObjectVtbl {
 #endif
 
 #define IViewObject_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3648,7 +3629,6 @@ struct IViewObject2Vtbl {
 #endif
 
 #define IViewObject2_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3748,7 +3728,6 @@ struct IDropSourceVtbl {
 #endif
 
 #define IDropSource_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -3899,7 +3878,6 @@ struct IDropTargetVtbl {
 #endif
 
 #define IDropTarget_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \

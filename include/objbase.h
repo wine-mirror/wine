@@ -23,29 +23,6 @@
 #define _OBJBASE_H_
 
 /*****************************************************************************
- * define ICOM_MSVTABLE_COMPAT
- * to implement the microsoft com vtable compatibility workaround for g++.
- *
- * NOTE: Turning this option on will produce a winelib that is incompatible
- * with the binary emulator.
- *
- * If the compiler supports the com_interface attribute, leave this off, and
- * define the ICOM_USE_COM_INTERFACE_ATTRIBUTE macro below. This may also
- * require the addition of the -vtable-thunks option for g++.
- *
- * If you aren't interested in Winelib C++ compatibility at all, leave both
- * options off.
- *
- * The preferable method for using ICOM_USE_COM_INTERFACE_ATTRIBUTE macro
- * would be to define it only for your Winelib application. This allows you
- * to have both binary and Winelib compatibility for C and C++ at the same
- * time :)
- */
-/* #define ICOM_MSVTABLE_COMPAT 1 */
-/* #define ICOM_USE_COM_INTERFACE_ATTRIBUTE 1 */
-
-
-/*****************************************************************************
  * Macros to define a COM interface
  */
 /*
@@ -213,7 +190,6 @@
  *    // ...
  *
  *    static IDirect3DVtbl d3dvt = {
- *        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
  *        IDirect3D_QueryInterface,
  *        IDirect3D_Add,
  *        IDirect3D_Add2,
@@ -246,11 +222,7 @@
 #define THIS   void
 
 #define interface struct
-#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
-#define DECLARE_INTERFACE(iface)        interface __attribute__((com_interface)) iface
-#else
 #define DECLARE_INTERFACE(iface)        interface iface
-#endif
 #define DECLARE_INTERFACE_(iface,ibase) interface iface : public ibase
 
 #define BEGIN_INTERFACE
@@ -290,11 +262,7 @@
 #endif
 #define DECLARE_INTERFACE_(iface,ibase) DECLARE_INTERFACE(iface)
 
-#ifdef ICOM_MSVTABLE_COMPAT
-# define BEGIN_INTERFACE long dummyRTTI1, dummyRTTI2;
-#else
-# define BEGIN_INTERFACE
-#endif
+#define BEGIN_INTERFACE
 #define END_INTERFACE
 
 #endif  /* __cplusplus && !CINTERFACE */
@@ -302,6 +270,7 @@
 /* Wine-specific macros */
 
 #define ICOM_THIS(impl,iface)    impl* const This=(impl*)(iface)
+#define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE  /* no longer used */
 
 #include <objidl.h>
 

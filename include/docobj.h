@@ -114,7 +114,6 @@ struct IOleDocumentVtbl {
 #endif
 
 #define IOleDocument_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -216,7 +215,6 @@ struct IOleDocumentSiteVtbl {
 #endif
 
 #define IOleDocumentSite_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -394,7 +392,6 @@ struct IOleDocumentViewVtbl {
 #endif
 
 #define IOleDocumentView_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -607,7 +604,6 @@ struct IEnumOleDocumentViewsVtbl {
 #endif
 
 #define IEnumOleDocumentViews_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -836,7 +832,6 @@ struct IOleCommandTargetVtbl {
 #endif
 
 #define IOleCommandTarget_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -943,7 +938,6 @@ struct IContinueCallbackVtbl {
 #endif
 
 #define IContinueCallback_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -1088,7 +1082,6 @@ struct IPrintVtbl {
 #endif
 
 #define IPrint_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \

@@ -755,11 +755,7 @@ void write_com_interface(type_t *iface)
   }
   else
   {
-      fprintf(header, "#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE\n");
-      fprintf(header, "struct __attribute__((com_interface)) %s\n", iface->name);
-      fprintf(header, "#else\n");
       fprintf(header, "struct %s\n", iface->name);
-      fprintf(header, "#endif\n");
       fprintf(header, "{\n");
       fprintf(header, "    BEGIN_INTERFACE\n");
       fprintf(header, "\n");
@@ -791,8 +787,7 @@ void write_com_interface(type_t *iface)
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
   if (compat_icom) {
-      fprintf(header, "#define %s_METHODS \\\n", iface->name);
-      fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS");
+      fprintf(header, "#define %s_METHODS", iface->name);
       write_icom_method_def(iface);
       fprintf(header, "\n\n");
   }

@@ -8,13 +8,6 @@
 extern "C" {
 #endif
 #include <wtypes.h>
-#if defined(ICOM_MSVTABLE_COMPAT) && (!defined(__cplusplus) || defined(CINTERFACE))
-# define ICOM_MSVTABLE_COMPAT_FIELDS long dummyRTTI1,dummyRTTI2;
-# define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,
-#else
-# define ICOM_MSVTABLE_COMPAT_FIELDS
-# define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-#endif
 #ifndef __IUnknown_FWD_DEFINED__
 #define __IUnknown_FWD_DEFINED__
 typedef struct IUnknown IUnknown;
@@ -30,11 +23,7 @@ typedef IUnknown *LPUNKNOWN;
 
 DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
-#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
-struct __attribute__((com_interface)) IUnknown
-#else
 struct IUnknown
-#endif
 {
     BEGIN_INTERFACE
 
@@ -83,7 +72,6 @@ struct IUnknownVtbl {
 #endif
 
 #define IUnknown_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
@@ -188,7 +176,6 @@ struct IClassFactoryVtbl {
 #endif
 
 #define IClassFactory_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \

@@ -139,7 +139,6 @@ void WINAPI
   CStdStubBuffer_DebugServerRelease( IRpcStubBuffer *This, void *pv );
 
 #define CStdStubBuffer_METHODS \
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE \
   CStdStubBuffer_QueryInterface, \
   CStdStubBuffer_AddRef, \
   CStdStubBuffer_Release, \

@@ -1090,7 +1090,6 @@ struct IFileSystemBindData {
     const IFileSystemBindDataVtbl* lpVtbl;
 };
 struct IFileSystemBindDataVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1126,7 +1125,6 @@ struct IFileSystemBindDataVtbl {
 #endif
 
 #define IFileSystemBindData_METHODS \
-    ICOM_MSVTABLE_COMPAT_FIELDS \
     /*** IUnknown methods ***/ \
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
     STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
