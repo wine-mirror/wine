@@ -74,6 +74,8 @@ typedef struct
     BYTE  DiskDataRate;              /* 8B: Last disk data rate selected */
 } BIOSDATA;
 
+#pragma pack(4)
+
 extern HANDLE16 DOSMEM_BiosDataSeg;
 extern HANDLE16 DOSMEM_BiosSysSeg;
 extern BIOSDATA * DOSMEM_BiosData();
