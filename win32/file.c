@@ -104,7 +104,7 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     {
         FILE_SetDosError();
         MESSAGE("Wine ERROR: Couldn't set file attributes for existing file \"%s\". Check permissions or set VFAT \"quiet\" flag !\n", full_name.long_name);
-        return FALSE;
+        return TRUE;
     }
     return TRUE;
 }
