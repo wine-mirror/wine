@@ -190,7 +190,7 @@ int mkstemp(char *tmpfn);
 #endif /* HAVE_MKSTEMP */
 
 #ifndef HAVE_MEMMOVE
-void *memmove(void *dest, const void *src, unsigned int len);
+void *memmove(void *dest, const void *src, size_t len);
 #endif /* !defined(HAVE_MEMMOVE) */
 
 #ifndef HAVE_PREAD
@@ -228,6 +228,12 @@ int strcasecmp(const char *str1, const char *str2);
 #ifndef HAVE_USLEEP
 int usleep (unsigned int useconds);
 #endif /* !defined(HAVE_USLEEP) */
+
+#ifdef __i386__
+#define wine_memcpy_unaligned memcpy
+#else
+extern void *wine_memcpy_unaligned( void *dst, const void *src, size_t size );
+#endif /* __i386__ */
 
 /* Interlocked functions */
 

@@ -94,7 +94,7 @@ int usleep (unsigned int useconds)
  *		memmove
  */
 #ifndef HAVE_MEMMOVE
-void *memmove( void *dest, const void *src, unsigned int len )
+void *memmove( void *dest, const void *src, size_t len )
 {
     register char *dst = dest;
 
@@ -664,6 +664,19 @@ char *gcvt (double number, size_t  ndigit,  char *buff)
     return buff;
 }
 #endif /* HAVE_ECVT */
+
+
+#ifndef wine_memcpy_unaligned
+/***********************************************************************
+ *		wine_memcpy_unaligned
+ *
+ * This is necessary to defeat optimizations of memcpy by gcc.
+ */
+void *wine_memcpy_unaligned( void *dst, const void *src, size_t size )
+{
+    return memcpy( dst, src, size );
+}
+#endif
 
 
 /***********************************************************************

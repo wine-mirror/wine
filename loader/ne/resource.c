@@ -277,7 +277,7 @@ BOOL NE_InitResourceHandler( HMODULE16 hModule )
 
     while(pTypeInfo->type_id)
     {
-        memcpy( &pTypeInfo->resloader, &DefResourceHandlerProc, sizeof(FARPROC16) );
+        wine_memcpy_unaligned( &pTypeInfo->resloader, &DefResourceHandlerProc, sizeof(FARPROC16) );
 	pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return TRUE;
@@ -303,8 +303,8 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId,
     {
         if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, typeId )))
             break;
-        memcpy( &prevHandler, &pTypeInfo->resloader, sizeof(FARPROC16) );
-        memcpy( &pTypeInfo->resloader, &resourceHandler, sizeof(FARPROC16) );
+        wine_memcpy_unaligned( &prevHandler, &pTypeInfo->resloader, sizeof(FARPROC16) );
+        wine_memcpy_unaligned( &pTypeInfo->resloader, &resourceHandler, sizeof(FARPROC16) );
         pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return prevHandler;
@@ -507,7 +507,7 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 	else
 	{
             FARPROC16 resloader;
-            memcpy( &resloader, &pTypeInfo->resloader, sizeof(FARPROC16) );
+            wine_memcpy_unaligned( &resloader, &pTypeInfo->resloader, sizeof(FARPROC16) );
 	    if ( resloader && resloader != DefResourceHandlerProc )
                 pNameInfo->handle = NE_CallTo16_word_www(
                     resloader, pNameInfo->handle, pModule->self, hRsrc );
