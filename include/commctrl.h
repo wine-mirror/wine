@@ -3433,7 +3433,12 @@ typedef struct NMLVSCROLL
     (INT)SNDMSGA((hwnd),LVM_GETITEMCOUNT,0,0L)
 #define ListView_RedrawItems(hwnd,first,last) \
     (BOOL)SNDMSGA((hwnd),LVM_REDRAWITEMS,(WPARAM)(INT)(first),(LPARAM)(INT)(last))
-
+#define ListView_GetEditControl(hwnd) \
+    (HWND)SNDMSGA((hwnd), LVM_GETEDITCONTROL, 0, 0)
+#define ListView_GetTextColor(hwnd)  \
+    (COLORREF)SNDMSGA((hwnd), LVM_GETTEXTCOLOR, 0, 0)
+#define ListView_GetBkColor(hwnd)  \
+    (COLORREF)SNDMSGA((hwnd), LVM_GETBKCOLOR, 0, 0)
 #define ListView_GetItemA(hwnd,pitem) \
     (BOOL)SNDMSGA((hwnd),LVM_GETITEMA,0,(LPARAM)(LVITEMA *)(pitem))
 #define ListView_GetItemW(hwnd,pitem) \
@@ -3488,7 +3493,8 @@ typedef struct NMLVSCROLL
     SNDMSGW(hwndLV, LVM_GETITEMTEXTW, (WPARAM)(i), (LPARAM)&_LVi);\
 }
 #define ListView_GetItemText WINELIB_NAME_AW(ListView_GetItemText)
-
+#define ListView_SetItemPosition32(hwnd,n,x1,y1) \
+{ POINT ptNewPos; ptNewPos.x = (x1); ptNewPos.y = (y1); SNDMSGA((hwnd), LVM_SETITEMPOSITION32, (WPARAM)(int)(n), (LPARAM)&ptNewPos); }
 #define ListView_SetItemTextA(hwndLV, i, _iSubItem, _pszText) \
 { LVITEMA _LVi; _LVi.iSubItem = _iSubItem; _LVi.pszText = _pszText;\
   SNDMSGA(hwndLV, LVM_SETITEMTEXTA, (WPARAM)i, (LPARAM) (LVITEMA*)&_LVi);}
