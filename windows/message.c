@@ -1558,8 +1558,7 @@ static BOOL MSG_PostToQueue( HQUEUE16 hQueue, int type, HWND hwnd,
     msg.wParam  = wParam;
     msg.lParam  = lParam;
     msg.time    = GetTickCount();
-    msg.pt.x    = 0;
-    msg.pt.y    = 0;
+    GetCursorPos(&msg.pt);
 
     return QUEUE_AddMsg( hQueue, type, &msg, 0 );
 }
