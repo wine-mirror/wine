@@ -130,6 +130,7 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
     thread->teb         = NULL;
     thread->mutex       = NULL;
     thread->debug_ctx   = NULL;
+    thread->debug_event = NULL;
     thread->wait        = NULL;
     thread->apc         = NULL;
     thread->apc_count   = 0;
@@ -584,7 +585,7 @@ void kill_thread( struct thread *thread, int violent_death )
 /* signal that we are finished booting on the client side */
 DECL_HANDLER(boot_done)
 {
-    debug_level = req->debug_level;
+    debug_level = max( debug_level, req->debug_level );
     /* Make sure last_req is initialized */
     current->last_req = REQ_BOOT_DONE;
     if (current == booting_thread)

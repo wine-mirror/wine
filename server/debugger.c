@@ -36,7 +36,6 @@ struct debug_ctx
     struct object        obj;         /* object header */
     struct debug_event  *event_head;  /* head of pending events queue */
     struct debug_event  *event_tail;  /* tail of pending events queue */
-    struct debug_event  *to_send;     /* next event on the queue to send to debugger */
 };
 
 
@@ -216,8 +215,8 @@ static void unlink_event( struct debug_ctx *debug_ctx, struct debug_event *event
     else debug_ctx->event_head = event->next;
     if (event->next) event->next->prev = event->prev;
     else debug_ctx->event_tail = event->prev;
-    if (debug_ctx->to_send == event) debug_ctx->to_send = event->next;
     event->next = event->prev = NULL;
+    if (event->sender->debug_event == event) event->sender->debug_event = NULL;
     release_object( event );
 }
 
@@ -230,11 +229,20 @@ static void link_event( struct debug_ctx *debug_ctx, struct debug_event *event )
     debug_ctx->event_tail = event;
     if (event->prev) event->prev->next = event;
     else debug_ctx->event_head = event;
-    if (!debug_ctx->to_send)
+    if (!event->sender->debug_event) wake_up( &debug_ctx->obj, 0 );
+}
+
+/* find the next event that we can send to the debugger */
+static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
+{
+    struct debug_event *event;
+    for (event = debug_ctx->event_head; event; event = event->next)
     {
-        debug_ctx->to_send = event;
-        wake_up( &debug_ctx->obj, 0 );
+        if (event->state == EVENT_SENT) continue;  /* already sent */
+        if (event->sender->debug_event) continue;  /* thread busy with another one */
+        break;
     }
+    return event;
 }
 
 /* build a reply for the wait_debug_event request */
@@ -245,14 +253,14 @@ static void build_wait_debug_reply( struct thread *thread, struct object *obj, i
     if (obj)
     {
         struct debug_ctx *debug_ctx = (struct debug_ctx *)obj; 
-        struct debug_event *event = debug_ctx->to_send;
+        struct debug_event *event = find_event_to_send( debug_ctx );
 
         /* the object that woke us has to be our debug context */
         assert( obj->ops == &debug_ctx_ops );
         assert( event );
 
         event->state = EVENT_SENT;
-        debug_ctx->to_send = event->next;
+        event->sender->debug_event = event;
         req->event.code = event->data.code;
         req->pid  = event->sender->process;
         req->tid  = event->sender;
@@ -330,15 +338,15 @@ static void debug_ctx_dump( struct object *obj, int verbose )
 {
     struct debug_ctx *debug_ctx = (struct debug_ctx *)obj;
     assert( obj->ops == &debug_ctx_ops );
-    fprintf( stderr, "Debug context head=%p tail=%p to_send=%p\n",
-             debug_ctx->event_head, debug_ctx->event_tail, debug_ctx->to_send );
+    fprintf( stderr, "Debug context head=%p tail=%p\n",
+             debug_ctx->event_head, debug_ctx->event_tail );
 }
 
 static int debug_ctx_signaled( struct object *obj, struct thread *thread )
 {
     struct debug_ctx *debug_ctx = (struct debug_ctx *)obj;
     assert( obj->ops == &debug_ctx_ops );
-    return debug_ctx->to_send != NULL;
+    return find_event_to_send( debug_ctx ) != NULL;
 }
 
 static void debug_ctx_destroy( struct object *obj )
@@ -378,10 +386,12 @@ static int continue_debug_event( struct process *process, struct thread *thread,
     /* find the event in the queue */
     for (event = debug_ctx->event_head; event; event = event->next)
     {
-        if (event == debug_ctx->to_send) goto error;
+        if (event->state != EVENT_SENT) continue;
         if (event->sender == thread) break;
     }
     if (!event) goto error;
+
+    assert( event->sender->debug_event == event );
 
     event->status = status;
     event->state  = EVENT_CONTINUED;
@@ -503,7 +513,6 @@ int set_process_debugger( struct process *process, struct thread *debugger )
         if (!(debug_ctx = alloc_object( &debug_ctx_ops, -1 ))) return 0;
         debug_ctx->event_head = NULL;
         debug_ctx->event_tail = NULL;
-        debug_ctx->to_send    = NULL;
         debugger->debug_ctx = debug_ctx;
     }
     process->debugger = debugger;

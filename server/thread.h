@@ -20,6 +20,7 @@ struct thread_wait;
 struct thread_apc;
 struct mutex;
 struct debug_ctx;
+struct debug_event;
 
 enum run_state
 {
@@ -38,6 +39,7 @@ struct thread
     struct process     *process;
     struct mutex       *mutex;       /* list of currently owned mutexes */
     struct debug_ctx   *debug_ctx;   /* debugger context if this thread is a debugger */
+    struct debug_event *debug_event; /* debug event being sent to debugger */
     struct thread_wait *wait;      /* current wait condition if sleeping */
     struct thread_apc  *apc;       /* list of async procedure calls */
     int                 apc_count; /* number of outstanding APCs */
