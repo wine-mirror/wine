@@ -449,7 +449,7 @@ type	win32
 446 stub RtlOemStringToUnicodeSize
 447 stdcall RtlOemStringToUnicodeString(ptr ptr long) RtlOemStringToUnicodeString
 448 stdcall RtlOemToUnicodeN(ptr long ptr ptr long) RtlOemToUnicodeN
-449 stub RtlOpenCurrentUser
+449 stdcall RtlOpenCurrentUser(long ptr) RtlOpenCurrentUser
 450 stub RtlPcToFileHeader
 451 stub RtlPrefixString
 452 stub RtlPrefixUnicodeString

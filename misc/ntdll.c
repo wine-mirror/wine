@@ -18,6 +18,7 @@
 #include "module.h"
 #include "heap.h"
 #include "debugstr.h"
+#include "winreg.h"
 
 /**************************************************************************
  *                 RtlLengthRequiredSid			[NTDLL.427]
@@ -822,6 +823,18 @@ DWORD WINAPI RtlFormatCurrentUserKeyPath()
 {
     FIXME(ntdll,"(): stub\n");
     return 1;
+}
+DWORD WINAPI RtlOpenCurrentUser(DWORD x1, DWORD *x2)
+{
+/* Note: this is not the correct solution, 
+ * But this works pretty good on wine and NT4.0 binaries
+ */
+	if  ( x1 == 0x2000000 )  {
+		*x2 = HKEY_CURRENT_USER; 
+		return TRUE;
+	}
+		
+	return FALSE;
 }
 /******************************************************************************
 *  RtlAllocateAndInitializeSid		[NTDLL.265] 
