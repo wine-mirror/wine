@@ -1,4 +1,12 @@
 ----------------------------------------------------------------
+Fri Feb 26 12:33:21 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* DEVELOPERS-HINTS: Updated for new naming conventions.
+
+	* */*: Large-scale renaming of all Win32 functions and types to
+ 	use the standard Windows names.
+
+----------------------------------------------------------------
 Thu Feb 25 18:11:40 1999  Alexandre Julliard  <julliard@winehq.com>
 
 	* misc/main.c: Albert den Haan <albertd@corel.ca>
