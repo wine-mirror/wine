@@ -35,7 +35,7 @@ static DWORD NE_FindNameTableId( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId 
     NE_MODULE *pModule;
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;
-    HGLOBAL handle;
+    HGLOBAL16 handle;
     WORD *p;
     DWORD ret = 0;
     int count;
@@ -101,8 +101,8 @@ static DWORD NE_FindNameTableId( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId 
  *
  * Find a resource once the type info structure has been found.
  */
-static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
-                                      NE_TYPEINFO *pTypeInfo, SEGPTR resId )
+static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
+                                        NE_TYPEINFO *pTypeInfo, SEGPTR resId )
 {
     BYTE *p;
     int count;
@@ -117,7 +117,7 @@ static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
             if (pNameInfo->id & 0x8000) continue;
             p = (BYTE *)pModule + pModule->res_table + pNameInfo->id;
             if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
-                return (HRSRC)((int)pNameInfo - (int)pModule);
+                return (HRSRC16)((int)pNameInfo - (int)pModule);
         }
     }
     else  /* Numeric resource id */
@@ -125,7 +125,7 @@ static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
         WORD id = LOWORD(resId) | 0x8000;
         for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
             if (pNameInfo->id == id) 
-	      return (HRSRC)((int)pNameInfo - (int)pModule);
+	      return (HRSRC16)((int)pNameInfo - (int)pModule);
     }
     return 0;
 }
@@ -134,10 +134,10 @@ static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
 /***********************************************************************
  *           NE_FindResource
  */
-HRSRC NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
+HRSRC16 NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
 {
     NE_TYPEINFO *pTypeInfo;
-    HRSRC hRsrc;
+    HRSRC16 hRsrc;
 
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
@@ -211,7 +211,7 @@ HRSRC NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
 /***********************************************************************
  *           NE_AllocResource
  */
-HGLOBAL NE_AllocResource( HMODULE16 hModule, HRSRC hRsrc, DWORD size )
+HGLOBAL16 NE_AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -231,7 +231,7 @@ HGLOBAL NE_AllocResource( HMODULE16 hModule, HRSRC hRsrc, DWORD size )
 /***********************************************************************
  *           NE_AccessResource
  */
-int NE_AccessResource( HMODULE16 hModule, HRSRC hRsrc )
+int NE_AccessResource( HMODULE16 hModule, HRSRC16 hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     int fd;
@@ -254,7 +254,7 @@ int NE_AccessResource( HMODULE16 hModule, HRSRC hRsrc )
 /***********************************************************************
  *           NE_SizeofResource
  */
-DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC hRsrc )
+DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC16 hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -272,7 +272,7 @@ DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC hRsrc )
 /***********************************************************************
  *           NE_LoadResource
  */
-HGLOBAL NE_LoadResource( HMODULE16 hModule,  HRSRC hRsrc )
+HGLOBAL16 NE_LoadResource( HMODULE16 hModule,  HRSRC16 hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -307,7 +307,7 @@ HGLOBAL NE_LoadResource( HMODULE16 hModule,  HRSRC hRsrc )
 /***********************************************************************
  *           NE_LockResource
  */
-SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL handle )
+SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL16 handle )
 {
     /* May need to reload the resource if discarded */
 
@@ -318,7 +318,7 @@ SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL handle )
 /***********************************************************************
  *           NE_FreeResource
  */
-BOOL NE_FreeResource( HMODULE16 hModule, HGLOBAL handle )
+BOOL NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
 {
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;

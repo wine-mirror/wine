@@ -12,9 +12,9 @@
   /* Extra info for STATIC windows */
 typedef struct
 {
-    HFONT  hFont;   /* Control font (or 0 for system font) */
-    WORD   dummy;   /* Don't know what MS-Windows puts in there */
-    HICON  hIcon;   /* Icon handle for SS_ICON controls */ 
+    HFONT16  hFont;   /* Control font (or 0 for system font) */
+    WORD     dummy;   /* Don't know what MS-Windows puts in there */
+    HICON16  hIcon;   /* Icon handle for SS_ICON controls */ 
 } STATICINFO;
 
 extern LRESULT StaticWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam );

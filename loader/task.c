@@ -38,7 +38,7 @@
   /* Must not be greater than 64k, or MAKE_SEGPTR won't work */
 #define STACK32_SIZE 0x10000
 
-extern void USER_AppExit(HTASK, HINSTANCE, HQUEUE );
+extern void USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );
 
   /* Saved 16-bit stack for current process (Win16 only) */
 WORD IF1632_Saved16_ss = 0;
@@ -254,7 +254,7 @@ static void TASK_UnlinkTask( HTASK16 hTask )
  * Create a thunk free-list in segment 'handle', starting from offset 'offset'
  * and containing 'count' entries.
  */
-static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
+static void TASK_CreateThunks( HGLOBAL16 handle, WORD offset, WORD count )
 {
     int i;
     WORD free;
@@ -1030,9 +1030,9 @@ HANDLE GetCodeHandle( FARPROC16 proc )
 /***********************************************************************
  *           SetTaskQueue  (KERNEL.34)
  */
-HQUEUE SetTaskQueue( HANDLE hTask, HQUEUE hQueue )
+HQUEUE16 SetTaskQueue( HTASK16 hTask, HQUEUE16 hQueue )
 {
-    HQUEUE hPrev;
+    HQUEUE16 hPrev;
     TDB *pTask;
 
     if (!hTask) hTask = hCurrentTask;

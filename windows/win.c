@@ -43,8 +43,7 @@ static HWND hwndSysModal = 0;
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
-extern HCURSOR CURSORICON_IconToCursor(HICON);
-extern HQUEUE  QUEUE_GetDoomedQueue();
+extern HCURSOR16 CURSORICON_IconToCursor(HICON16);
 
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -343,7 +342,7 @@ static void WIN_DestroyWindow( HWND hwnd )
 /***********************************************************************
  *	     WIN_DestroyQueueWindows
  */
-void WIN_DestroyQueueWindows( WND* wnd, HQUEUE hQueue )
+void WIN_DestroyQueueWindows( WND* wnd, HQUEUE16 hQueue )
 {
     WND* next;
 
@@ -905,8 +904,7 @@ BOOL DestroyWindow( HWND hwnd )
 		      SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE );
     if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
 	ReleaseCapture();
-    if (!QUEUE_GetDoomedQueue())
-        WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LONG)hwnd );
+    WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LONG)hwnd );
 
     CLIPBOARD_DisOwn( hwnd );
 
@@ -1981,17 +1979,17 @@ BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
  *
  */
 DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
-                WORD szList , HCURSOR hCursor)
+                WORD szList , HCURSOR16 hCursor)
 {
  MSG16	 	msg;
  LPDRAGINFO	lpDragInfo;
  SEGPTR		spDragInfo;
- HCURSOR 	hDragCursor=0, hOldCursor=0, hBummer=0;
+ HCURSOR16 	hDragCursor=0, hOldCursor=0, hBummer=0;
  HANDLE		hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO));
  WND           *wndPtr = WIN_FindWndPtr(hWnd);
  DWORD		dwRet = 0;
  short	 	dragDone = 0;
- HCURSOR	hCurrentCursor = 0;
+ HCURSOR16	hCurrentCursor = 0;
  HWND		hCurrentWnd = 0;
  WORD	        btemp;
 

@@ -841,7 +841,7 @@ LONG MDITile(WND* wndClient, MDICLIENTINFO *ci,WORD wParam)
 BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
 {
  WND*		child = WIN_FindWndPtr(hChild);
- HGLOBAL        handle;
+ HGLOBAL16      handle;
  HMENU  	hSysPopup = 0;
 
  dprintf_mdi(stddeb,"MDI_AugmentFrameMenu: frame %p,child %04x\n",frame,hChild);

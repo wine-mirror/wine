@@ -19,6 +19,7 @@
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
+#include "file.h"
 #include "string32.h"	
 #include "stddebug.h"
 #include "debug.h"

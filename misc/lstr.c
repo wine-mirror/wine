@@ -559,6 +559,8 @@ BOOL32 IsCharUpper32W(WCHAR x)
  */
 BOOL32 CharToOem32A(LPSTR s,LPSTR d)
 {
+    if (!s || !d)
+    	return TRUE;
     AnsiToOem(s,d);
     return TRUE;
 }
@@ -633,8 +635,8 @@ BOOL32 OemToChar32W(LPCSTR s,LPWSTR d)
 }
 
 /***********************************************************************
- *           FormatMessageA   (KERNEL32.138)
- * FIXME: missing wrap, function has no clue about varargs handling
+ *           FormatMessageA   (KERNEL32.138) Library Version
+ * FIXME: missing wrap,FROM_SYSTEM message-loading,
  */
 DWORD
 FormatMessage32A(
@@ -644,29 +646,36 @@ FormatMessage32A(
 	DWORD	dwLanguageId,
 	LPSTR	lpBuffer,
 	DWORD	nSize,
-	LPDWORD	*Arguments /* va_list *Arguments */
+	LPDWORD	args /* va_list *args */
 ) {
 	LPSTR	target,t;
 	DWORD	talloced;
 	LPSTR	from,f;
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
+	DWORD	nolinefeed = 0;
 
-	fprintf(stddeb,"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
-		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,
-		nSize,Arguments
+	dprintf_resource(stddeb,
+		"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args
 	);
 	if (width) 
 		fprintf(stdnimp,"	- line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
-		from = (LPSTR)lpSource;
+		from = xstrdup((LPSTR)lpSource);
 	if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
 		/* gather information from system message tables ... */
 		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_SYSTEM not implemented.\n");
 	}
 	if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
-		/* gather information from module's message tables ... */
-		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_HMODULE not implemented.\n");
+		INT32	bufsize;
+
+		dwMessageId &= 0xFFFF;
+		bufsize=LoadMessage32A(0,dwMessageId,dwLanguageId,NULL,100);
+		if (bufsize) {
+			from = (char*)xmalloc(bufsize+1);
+			LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
+		}
 	}
 	target	= (char*)xmalloc(100);
 	t	= target;
@@ -683,12 +692,11 @@ FormatMessage32A(
 
 	if (from) {
 		f=from;
-		fprintf(stddeb,"	from is %s\n",from);
 		while (*f) {
 			if (*f=='%') {
 				int	insertnr;
 				char	*fmtstr,*sprintfbuf,*x;
-				DWORD	arg1,arg2,arg3;
+				DWORD	*argliststart;
 
 				f++;
 				if (!*f) {
@@ -705,53 +713,45 @@ FormatMessage32A(
 					case '8':case '9':
 						f++;
 						insertnr=insertnr*10+*f-'0';
+						f++;
 						break;
-					default:break;
+					default:
+						f++;
+						break;
 					}
-					if (f[1]=='!') {
-						f+=2;
+					if (*f=='!') {
+						f++;
 						if (NULL!=(x=strchr(f,'!'))) {
 							*x='\0';
-							fmtstr=strdup(f);
+							fmtstr=xmalloc(strlen(f)+2);
+							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
 						}
-					} else {
+					} else
 						fmtstr=strdup("%s");
-					}
+					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
+						argliststart=args+insertnr-1;
+					else
+						/* FIXME: not sure that this is
+						 * correct for unix-c-varargs.
+						 */
+						argliststart=((DWORD*)&args)+insertnr-1;
 
-					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) {
-						DWORD	*args = (DWORD*)Arguments;
-						arg1 = args[insertnr-1];
-						arg2 = args[insertnr+0];
-						arg3 = args[insertnr+1];
-					} else {
-						/* 
-						int	i;
-						va_list	vl;
-
-						vl=va_start(Arguments,7);
-						for (i=insertnr;i--;)
-							va_arg(vl,DWORD);
-						arg1 = va_arg(vl,DWORD);
-						arg2 = va_arg(vl,DWORD);
-						arg3 = va_arg(vl,DWORD);
-						va_end(vl);
-						*/
-						fprintf(stdnimp,"	- varargs not supported yet.\n");
-					}
-
-					if (fmtstr[strlen(fmtstr)]=='s') {
-						sprintfbuf=(char*)xmalloc(strlen((LPSTR)arg1)+1);
-					} else {
+					if (fmtstr[strlen(fmtstr)]=='s')
+						sprintfbuf=(char*)xmalloc(strlen((LPSTR)argliststart[0])+1);
+					else
 						sprintfbuf=(char*)xmalloc(100);
-					}
-					sprintf(sprintfbuf,fmtstr,arg1,arg2,arg3);
+					vsprintf(sprintfbuf,fmtstr,argliststart);
 					x=sprintfbuf;
 					while (*x) {
 						ADD_TO_T(*x++);
 					}
 					free(sprintfbuf);
 					free(fmtstr);
+					break;
+				case '0':
+					nolinefeed=1;
+					f++;
 					break;
 				default:ADD_TO_T(*f++)
 					break;
@@ -763,6 +763,8 @@ FormatMessage32A(
 		}
 		*t='\0';
 	}
+	if (!nolinefeed && t[-1]!='\n')
+		ADD_TO_T('\n');
 	talloced = strlen(target)+1;
 	if (nSize && talloced<nSize) {
 		target = (char*)xrealloc(target,nSize);
@@ -774,5 +776,46 @@ FormatMessage32A(
 	} else
 		strncpy(lpBuffer,target,nSize);
 	free(target);
-	return strlen(lpBuffer);
+	if (from) free(from);
+	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
+			strlen(*(LPSTR*)lpBuffer):
+			strlen(lpBuffer);
+}
+
+/***********************************************************************
+ *           FormatMessageA   (KERNEL32.138) Emulator Version
+ */
+DWORD
+WIN32_FormatMessage32A(DWORD *args) {
+	DWORD	dwFlags		= args[0];
+	LPCVOID	lpSource	= (LPCVOID)args[1];
+	DWORD	dwMessageId	= args[2];
+	DWORD	dwLanguageId	= args[3];
+	LPSTR	lpBuffer	= (LPSTR)args[4];
+	DWORD	nSize		= args[5];
+	DWORD	*xargs;
+
+	/* convert possible varargs to an argument array look-a-like */
+
+	if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) {
+		xargs=(DWORD*)args[6];
+	} else {
+		/* args[6] is a pointer to a pointer to the start of 
+		 * a list of arguments.
+		 */
+		if (args[6])
+			xargs=(DWORD*)(((DWORD*)args[6])[0]);
+		else
+			xargs=NULL;
+		dwFlags|=FORMAT_MESSAGE_ARGUMENT_ARRAY;
+	}
+	return FormatMessage32A(
+		dwFlags,
+		lpSource,
+		dwMessageId,
+		dwLanguageId,
+		lpBuffer,
+		nSize,
+		xargs
+	);
 }

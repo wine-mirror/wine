@@ -10,7 +10,6 @@
 #include <string.h>
 #include "windows.h"
 #include "debugger.h"
-#include "kernel32.h"  /* for CRITICAL_SECTION */
 #include "selectors.h"
 #include "winbase.h"
 #include "winerror.h"

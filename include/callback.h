@@ -64,6 +64,8 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
                                  style, MAKELONG(y,x), MAKELONG(cy,cx), \
                                  MAKELONG(hmenu,hparent), instance, params, \
                                  hwnd, msg, wParam, lParam )
+#define _InitTermProc( func ) CallTo32_0( (FARPROC32)func )
+
 
 /* List of the 32-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto32.S */
@@ -99,6 +101,8 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     (*func)( hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     (*func)( lpch, ichCurrent, cch, code )
+#define _InitTermProc( func ) (*func)()
+
 
 #endif  /* WINELIB */
 

@@ -15,7 +15,6 @@
 #include <sys/types.h>
 #include "wintypes.h"
 #include "windows.h"
-#include "kernel32.h"
 #include "pe_image.h"
 #include "module.h"
 #include "handle32.h"
@@ -28,8 +27,6 @@
 #include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
-
-int language = 0x0409;
 
 #define PrintIdA(name) \
     if (HIWORD((DWORD)name)) \
@@ -116,9 +113,11 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 }
 
 /**********************************************************************
- *	    PE_FindResource32W
+ *	    PE_FindResourceEx32W
  */
-HANDLE32 PE_FindResource32W( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
+HANDLE32 PE_FindResourceEx32W( 
+	HINSTANCE hModule, LPCWSTR name, LPCWSTR type, WORD lang
+)
 {
     PE_MODULE *pe;
     NE_MODULE *pModule;
@@ -142,7 +141,7 @@ HANDLE32 PE_FindResource32W( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 	return 0;
     if ((resdirptr = GetResDirEntryW(resdirptr, name, root)) == NULL)
 	return 0;
-    result = (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)language, root);
+    result = (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT32)lang, root);
 	/* Try LANG_NEUTRAL, too */
     if(!result)
         return (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)0, root);

@@ -23,12 +23,12 @@ typedef struct {
     REL_PTR rel;
 }DDE_HWND;
 
-WORD DDE_SyncHandle(HGLOBAL handle, WORD sel);
+WORD DDE_SyncHandle(HGLOBAL16 handle, WORD sel);
 void *DDE_malloc(unsigned int flags,unsigned long size, SHMDATA *shmdata);
 HANDLE DDE_GlobalReAlloc(WORD,long,WORD);
-HGLOBAL DDE_GlobalFree(HGLOBAL block);
-void *DDE_AttachHandle(HGLOBAL handle, SEGPTR *segptr);
-WORD DDE_GlobalHandleToSel( HGLOBAL handle );
+HGLOBAL16 DDE_GlobalFree(HGLOBAL16 block);
+void *DDE_AttachHandle(HGLOBAL16 handle, SEGPTR *segptr);
+WORD DDE_GlobalHandleToSel( HGLOBAL16 handle );
 int DDE_GlobalUnlock(int);
 HANDLE DDE_GlobalSize(WORD);
 HANDLE DDE_GlobalHandle(WORD);

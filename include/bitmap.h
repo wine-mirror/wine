@@ -48,7 +48,7 @@ extern int DIB_GetImageWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
 
   /* objects/oembitmap.c */
-extern HBITMAP OBM_LoadBitmap( WORD id );
-extern HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor );
+extern HBITMAP16 OBM_LoadBitmap( WORD id );
+extern HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor );
 
 #endif  /* __WINE_BITMAP_H */

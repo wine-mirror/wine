@@ -623,7 +623,7 @@ HWND16 CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
                             HWND16 owner, DLGPROC16 dlgProc, LPARAM param )
 {
     HWND16 hwnd = 0;
-    HRSRC hRsrc;
+    HRSRC16 hRsrc;
     HGLOBAL16 hmem;
     LPCVOID data;
 

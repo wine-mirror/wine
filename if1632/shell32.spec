@@ -33,7 +33,7 @@ base	1
 0028 stub FindExeDlgProc
 0029 stub FindExecutableA
 0030 stub FindExecutableW
-0031 stub FreeIconList
+0031 return FreeIconList 4 0
 0032 stub InternalExtractIconListA
 0033 stub InternalExtractIconListW
 0034 stub OpenAs_RunDLL

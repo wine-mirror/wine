@@ -1,3 +1,4 @@
+# C RunTime DLL. All functions use cdecl!
 name	crtdll
 type	win32
 base	1
@@ -23,9 +24,9 @@ base	1
 019 stub _CItanh
 020 stub _HUGE_dll
 021 stub _XcptFilter
-022 stub __GetMainArgs
-023 stub __argc_dll
-024 stub __argv_dll
+022 cdecl __GetMainArgs(ptr ptr ptr long) CRTDLL__GetMainArgs
+023 extern __argc_dll CRTDLL_argc_dll
+024 extern __argv_dll CRTDLL_argv_dll
 025 stub __dllonexit
 026 stub __doserrno
 027 stub __fpecode
@@ -39,13 +40,13 @@ base	1
 035 stub __toascii
 036 stub _abnormal_termination
 037 stub _access
-038 stub _acmdln_dll
+038 extern _acmdln_dll CRTDLL_acmdln_dll
 039 stub _aexit_rtn_dll
 040 stub _amsg_exit
 041 stub _assert
-042 stub _basemajor_dll
-043 stub _baseminor_dll
-044 stub _baseversion_dll
+042 extern _basemajor_dll CRTDLL_basemajor_dll
+043 extern _baseminor_dll CRTDLL_baseminor_dll
+044 extern _baseversion_dll CRTDLL_baseversion_dll
 045 stub _beep
 046 stub _beginthread
 047 stub _c_exit
@@ -76,7 +77,7 @@ base	1
 072 stub _dup2
 073 stub _ecvt
 074 stub _endthread
-075 stub _environ_dll
+075 extern _environ_dll CRTDLL_environ_dll
 076 stub _eof
 077 stub _errno
 078 stub _except_handler2
@@ -136,9 +137,9 @@ base	1
 132 stub _heapset
 133 stub _heapwalk
 134 stub _hypot
-135 stub _initterm
+135 cdecl _initterm(ptr ptr) CRTDLL__initterm
 136 stub _iob
-137 stub _isatty
+137 cdecl _isatty(long) CRTDLL__isatty
 138 stub _isctype
 139 stub _ismbbalnum
 140 stub _ismbbalpha
@@ -242,11 +243,11 @@ base	1
 238 stub _onexit
 239 stub _open
 240 stub _open_osfhandle
-241 stub _osmajor_dll
-242 stub _osminor_dll
-243 stub _osmode_dll
-244 stub _osver_dll
-245 stub _osversion_dll
+241 extern _osmajor_dll CRTDLL_osmajor_dll
+242 extern _osminor_dll CRTDLL_osminor_dll
+243 long _osmode_dll(0)
+244 extern _osver_dll CRTDLL_osver_dll
+245 extern _osversion_dll CRTDLL_osversion_dll
 246 stub _pclose
 247 stub _pctype_dll
 248 stub _pgmptr_dll
@@ -330,10 +331,10 @@ base	1
 326 stub _wcsrev
 327 stub _wcsset
 328 stub _wcsupr
-329 stub _winmajor_dll
-330 stub _winminor_dll
-331 stub _winver_dll
-332 stub _write
+329 extern _winmajor_dll CRTDLL_winmajor_dll
+330 extern _winminor_dll CRTDLL_winminor_dll
+331 extern _winver_dll CRTDLL_winver_dll
+332 cdecl _write(long ptr long) CRTDLL__write
 333 stub _wtoi
 334 stub _wtol
 335 stub _y0
@@ -360,13 +361,13 @@ base	1
 356 stub ctime
 357 stub difftime
 358 stub div
-359 stub exit
+359 cdecl exit(long) CRTDLL_exit
 360 stub exp
 361 stub fabs
 362 stub fclose
 363 stub feof
 364 stub ferror
-365 stub fflush
+365 cdecl fflush(ptr) CRTDLL_fflush
 366 stub fgetc
 367 stub fgetpos
 368 stub fgets
@@ -374,7 +375,7 @@ base	1
 370 stub floor
 371 stub fmod
 372 stub fopen
-373 stub fprintf
+373 cdecl fprintf() CRTDLL_fprintf
 374 stub fputc
 375 stub fputs
 376 stub fputwc
@@ -392,7 +393,7 @@ base	1
 388 stub getc
 389 stub getchar
 390 stub getenv
-391 stub gets
+391 cdecl gets(ptr) CRTDLL_gets
 392 stub gmtime
 393 stub is_wctype
 394 stub isalnum
@@ -441,9 +442,9 @@ base	1
 437 stub modf
 438 stub perror
 439 stub pow
-440 stub printf
+440 cdecl printf() CRTDLL_printf
 441 stub putc
-442 stub putchar
+442 cdecl putchar(long) CRTDLL_putchar
 443 stub puts
 444 stub qsort
 445 stub raise
@@ -461,7 +462,7 @@ base	1
 457 stub sinh
 458 stub sprintf
 459 stub sqrt
-460 stub srand
+460 cdecl srand(long) CRTDLL_srand
 461 stub sscanf
 462 stub strcat
 463 stub strchr
@@ -489,11 +490,11 @@ base	1
 485 stub system
 486 stub tan
 487 stub tanh
-488 stub time
+488 cdecl time(ptr) CRTDLL_time
 489 stub tmpfile
 490 stub tmpnam
 491 stub tolower
-492 stub toupper
+492 cdecl toupper(long) CRTDLL_toupper
 493 stub towlower
 494 stub towupper
 495 stub ungetc

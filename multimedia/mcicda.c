@@ -834,7 +834,7 @@ static DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 /**************************************************************************
 * 				CDAUDIO_DriverProc		[sample driver]
 */
-LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 							DWORD dwParam1, DWORD dwParam2)
 {
 #ifdef linux

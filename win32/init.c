@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "winerror.h"
-#include "kernel32.h"
 #include "handle32.h"
 #include "except.h"
 #include "task.h"

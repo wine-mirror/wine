@@ -5,6 +5,7 @@
  */
 
 #define NO_TRANSITION_TYPES  /* This file is Win32-clean */
+#include <stdlib.h>
 #include <string.h>
 #include "win.h"
 #include "heap.h"

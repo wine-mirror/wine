@@ -54,7 +54,7 @@ typedef struct tagDRIVERITEM
     DRIVERPROC            lpDrvProc;
 } DRIVERITEM, *LPDRIVERITEM;
 
-LRESULT DefDriverProc(DWORD dwDevID, HDRVR hDriv, UINT16 wMsg, 
+LRESULT DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
                       LPARAM dwParam1, LPARAM dwParam2);
 HDRVR16 OpenDriver(LPSTR szDriverName, LPSTR szSectionName, LPARAM lParam2);
 LRESULT CloseDriver(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);

@@ -4,28 +4,26 @@
  * Copyright (c) 1996 Onno Hovers, (onno@stack.urc.tue.nl)
  *
  */
-#if defined(__svr4__) || defined(_SCO_DS)
-#define __ELF__ 1
-#endif
+#include "../include/config.h"
 
-#ifndef __ELF__
+#ifdef NEED_UNDERSCORE_PREFIX
 
      .globl _EXC_CallUnhandledExceptionFilter
  _EXC_CallUnhandledExceptionFilter:
 
-#else  /* __ELF__ */
+#else
 
      .globl EXC_CallUnhandledExceptionFilter
  EXC_CallUnhandledExceptionFilter:
 
-#endif  /* __ELF__ */
+#endif  /* NEED_UNDERSCORE_PREFIX */
      leal   4(%esp),%eax
      pushl  %eax
-#ifndef __ELF__
+#ifdef NEED_UNDERSCORE_PREFIX
      call   *_pTopExcHandler
-#else  /* __ELF__ */
+#else
      call   *pTopExcHandler
-#endif  /* __ELF__ */
+#endif  /* NEED_UNDERSCORE_PREFIX */
      movl   %ebp,%esp
      ret
 
@@ -95,7 +93,7 @@
 #define PARM_EBP              4
 #define PARM_EFLAGS           0
 
-#ifndef __ELF__
+#ifdef NEED_UNDERSCORE_PREFIX
 	.globl _RaiseException
 
  _RaiseException:
@@ -107,7 +105,7 @@
  _RtlUnwind:
        push   $_EXC_RtlUnwind
 
-#else  /* __ELF__ */
+#else  /* NEED_UNDERSCORE_PREFIX */
        .globl RaiseException
 
  RaiseException:
@@ -118,7 +116,7 @@
 
  RtlUnwind:
        push   $EXC_RtlUnwind
-#endif  /* __ELF__ */
+#endif  /* NEED_UNDERSCORE_PREFIX */
 
  ContextCall:
        pushl  %ebp

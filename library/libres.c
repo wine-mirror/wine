@@ -99,7 +99,7 @@ LPVOID LIBRES_LockResource( HGLOBAL32 handle )
 /**********************************************************************
  *	    LIBRES_FreeResource    
  */
-BOOL LIBRES_FreeResource( HGLOBAL handle )
+BOOL LIBRES_FreeResource( HGLOBAL32 handle )
 {
   return 0; /* Obsolete in Win32 */
 }
@@ -108,7 +108,7 @@ BOOL LIBRES_FreeResource( HGLOBAL handle )
 /**********************************************************************
  *	    LIBRES_AccessResource    
  */
-INT LIBRES_AccessResource( HINSTANCE hModule, HRSRC hRsrc )
+INT LIBRES_AccessResource( HINSTANCE hModule, HRSRC32 hRsrc )
 {
   WINELIB_UNIMP("LIBRES_AccessResource()");
   return -1; /* Obsolete in Win32 */
@@ -127,7 +127,7 @@ DWORD LIBRES_SizeofResource( HINSTANCE hModule, HRSRC32 hRsrc )
 /**********************************************************************
  *	    LIBRES_AllocResource    
  */
-HGLOBAL LIBRES_AllocResource( HINSTANCE hModule, HRSRC hRsrc, DWORD size )
+HGLOBAL32 LIBRES_AllocResource( HINSTANCE hModule, HRSRC32 hRsrc, DWORD size )
 {
   WINELIB_UNIMP("LIBRES_AllocResource()");
   return 0; /* Obsolete in Win32 */

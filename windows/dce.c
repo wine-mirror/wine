@@ -302,8 +302,9 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     int xoffset, yoffset;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-      /* Get visible rectangle and create a region with it 
-       * FIXME: do we really need to calculate vis rgns for X windows? 
+      /* Get visible rectangle and create a region with it. 
+       * do we really need to calculate vis rgns for X windows? 
+       * - yes, to clip child windows.
        */
 
     if (!wndPtr || !DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &rect ))

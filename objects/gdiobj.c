@@ -515,11 +515,10 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
  */
 BOOL IsGDIObject(HANDLE handle)
 {
-    GDIOBJHDR *object;
-
-    object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
-    /* FIXME: should check magic here */
-    return (object != NULL);
+    GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+    if (object)
+      return (object->wMagic>=PEN_MAGIC && object->wMagic<= METAFILE_DC_MAGIC);
+    return FALSE;
 }
 
 

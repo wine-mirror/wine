@@ -10,7 +10,6 @@
 #include "windows.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "kernel32.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"

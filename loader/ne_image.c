@@ -20,6 +20,7 @@
 #include "arch.h"
 #include "selectors.h"
 #include "callback.h"
+#include "file.h"
 #include "module.h"
 #include "stackframe.h"
 #include "stddebug.h"

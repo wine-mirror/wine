@@ -16,7 +16,6 @@
 #include "windows.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "kernel32.h"
 #include "handle32.h"
 #include "dos_fs.h"
 #include "stddebug.h"

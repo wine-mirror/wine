@@ -137,4 +137,10 @@ distclean: clean
 	$(RM) config.* Make.rules include/config.h
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
+configure: configure.in
+	autoconf
+
+include/config.h.in: configure.in include/acconfig.h
+	autoheader -l include
+
 dummy:

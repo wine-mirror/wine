@@ -1,4 +1,104 @@
 ----------------------------------------------------------------------
+Sun Aug 11 13:00:20 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [configure.in] [include/acconfig.h] [tools/build.c]
+	Added check for underscore on external symbols.
+
+	* [memory/selector.c] [memory/global.c]
+	Fixed FreeSelector() to free only one selector.
+	Added SELECTOR_FreeBlock() to free an array of selectors.
+
+	* [objects/color.c]
+	Fixed a bug in COLOR_ToLogical() that caused GetPixel() to fail on
+	hi-color displays.
+
+	* [tools/build.c] [if1632/crtdll.spec]
+	Added 'extern' type, used for external variables or functions.
+
+	* [windows/winpos.c]
+	Allow de-activating a window in WINPOS_ChangeActiveWindow().
+
+	* [windows/winproc.c]
+	Added 32-to-16 translation for button messages.
+	Fixed WINPROC_GetPtr() to avoid crashes on 32-bit procedures that
+	happen to be valid SEGPTRs.
+
+Sat Aug 10 18:22:25 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [windows/message.c]
+	Removed a FIXME in MSG_PeekHardwareMsg(): produces correct 
+	data for the JOURNALRECORD-hook (using EVENTMSG16 structure).
+
+	* [if1632/gdi.spec] [include/windows.h] [objects/metafile.c]
+	Introduced undocumented API function IsValidMetaFile(), plus a
+ 	minor fix in last patch of CopyMetaFile().
+
+	* [objects/gdiobj.c]
+	Removed a FIXME in IsGDIObject(): added magic word check.
+
+Sun Aug 10 18:10:10 1996  Bruce Milner <Bruce.Milner@genetics.utah.edu>
+
+	* [controls/statuswin.c]
+	First pass at implementing the StatusWindow class.
+
+	* [include/commctrl.h]
+	Header file for common controls.
+
+	* [controls/widgets.c]
+	Added InitCommonControls().
+
+	* [if1632/comctl32.spec]
+	Add DrawStatusTextA, CreateStatusWindowA, InitCommonControls.
+
+	* [win32/findfile.c] [if1632/kernel32.spec]
+	Add FindNextFile32A, FindClose.
+	Modified FindFirstFile32A so it works with FindNextFile32A.
+
+	* [include/winbase.h]
+	Fixed WIN32_FIND_DATA structure member names.
+
+Sat Aug 10 09:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/scroll.c]
+	Changed scrolling routines to benefit from DCE code update.
+
+Thu Aug  8 18:05:09 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/file.c]
+	SearchPath* could get NULL for lastpart argument.
+
+	* [if1632/build-spec.txt] [documentation/debugging]
+	Varargs documentation added, debugging hints updated.
+
+	* [if1632/crtdll.spec][misc/crtdll.c][misc/Makefile.in]
+	Started to implement CRTDLL.
+
+	* [if1632/wsock32.spec]
+	Some thunks to standard libc functions (structures have the same
+ 	elements, but perhaps wrong offset due to packing).
+
+	* [include/kernel32.h][include/windows.h][win32/*.c][loader/main.c]
+	Merged kernel32.h into windows.h.
+
+	* [misc/lstr.c]
+	Enhanced FormatMessage().
+
+	* [misc/main.c] [if1632/kernel.spec] [include/windows.h]
+	GetVersion() updated to new naming standard.
+	Changed language handling to support language ids.
+
+	* [misc/shell.c]
+	Enhanced FindExecutable, so it finds files in the search path too.
+
+	* [win32/environment.c]
+	GetCommandLine* updated.
+
+	* [loader/resource.c] [loader/pe_resource.c]
+	FindResourceEx32* added.
+	Loading of messagetables added.
+	Language handling now uses Wine default language id.
+
+----------------------------------------------------------------------
 Sun Aug  4 18:18:48 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/scroll.c]

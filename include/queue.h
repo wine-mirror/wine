@@ -68,6 +68,8 @@ typedef struct tagMESSAGEQUEUE
 
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );
 extern void QUEUE_WalkQueues(void);
+extern HQUEUE16 QUEUE_GetDoomedQueue();
+extern void QUEUE_SetDoomedQueue( HQUEUE16 hQueue );
 extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
 extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit );

@@ -10,31 +10,53 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "wintypes.h"
 #include "registers.h"
 #include "winerror.h"  /* for ERROR_CALL_NOT_IMPLEMENTED */
 #include "module.h"
 #include "neexe.h"
 #include "windows.h"
 
-/* ELF symbols do not have an underscore in front */
-#if defined (__ELF__) || defined (__svr4__) || defined(_SCO_DS)
-#define PREFIX
+#ifdef NEED_UNDERSCORE_PREFIX
+# define PREFIX "_"
 #else
-#define PREFIX "_"
+# define PREFIX
 #endif
 
-#define TYPE_INVALID     0
-#define TYPE_BYTE        1  /* byte variable */
-#define TYPE_WORD        2  /* word variable */
-#define TYPE_LONG        3  /* long variable */
-#define TYPE_PASCAL_16   4  /* pascal function with 16-bit return (Win16) */
-#define TYPE_PASCAL      5  /* pascal function with 32-bit return (Win16) */
-#define TYPE_REGISTER    6  /* register function (Win16) */
-#define TYPE_ABS         7  /* absolute value */
-#define TYPE_RETURN      8  /* simple return value function */
-#define TYPE_STUB        9  /* unimplemented stub */
-#define TYPE_STDCALL    10  /* stdcall function (Win32) */
-#define TYPE_CDECL      11  /* cdecl function (Win32) */
+typedef enum
+{
+    TYPE_INVALID,
+    TYPE_BYTE,         /* byte variable */
+    TYPE_WORD,         /* word variable */
+    TYPE_LONG,         /* long variable */
+    TYPE_PASCAL_16,    /* pascal function with 16-bit return (Win16) */
+    TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
+    TYPE_REGISTER,     /* register function (Win16) */
+    TYPE_ABS,          /* absolute value */
+    TYPE_RETURN,       /* simple return value function */
+    TYPE_STUB,         /* unimplemented stub */
+    TYPE_STDCALL,      /* stdcall function (Win32) */
+    TYPE_CDECL,        /* cdecl function (Win32) */
+    TYPE_EXTERN,       /* external symbol (Win32) */
+    TYPE_NBTYPES
+} ORD_TYPE;
+
+static const char * const TypeNames[TYPE_NBTYPES] =
+{
+    NULL,
+    "byte",         /* TYPE_BYTE */
+    "word",         /* TYPE_WORD */
+    "long",         /* TYPE_LONG */
+    "pascal16",     /* TYPE_PASCAL_16 */
+    "pascal",       /* TYPE_PASCAL */
+    "register",     /* TYPE_REGISTER */
+    "equate",       /* TYPE_ABS */
+    "return",       /* TYPE_RETURN */
+    "stub",         /* TYPE_STUB */
+    "stdcall",      /* TYPE_STDCALL */
+    "cdecl",        /* TYPE_CDECL */
+    "extern"        /* TYPE_EXTERN */
+};
 
 #define MAX_ORDINALS	1299
 
@@ -42,43 +64,60 @@
 #define STUB_CALLBACK \
   ((SpecType == SPEC_WIN16) ? "RELAY_Unimplemented16": "RELAY_Unimplemented32")
 
-enum SPEC_TYPE
+typedef enum
 {
     SPEC_INVALID,
     SPEC_WIN16,
     SPEC_WIN32
-};
+} SPEC_TYPE;
 
-typedef struct ordinal_definition_s
-{
-    int type;
-    int offset;
-    char export_name[80];
-    void *additional_data;
-} ORDDEF;
-
-typedef struct ordinal_variable_definition_s
+typedef struct
 {
     int n_values;
     int *values;
-} ORDVARDEF;
+} ORD_VARIABLE;
 
-typedef struct ordinal_function_definition_s
+typedef struct
 {
     int  n_args;
     char arg_types[32];
-    char internal_name[80];
-} ORDFUNCDEF;
+    char link_name[80];
+} ORD_FUNCTION;
 
-typedef struct ordinal_return_definition_s
+typedef struct
 {
     int arg_size;
     int ret_value;
-} ORDRETDEF;
+} ORD_RETURN;
+
+typedef struct
+{
+    int value;
+} ORD_ABS;
+
+typedef struct
+{
+    char link_name[80];
+} ORD_EXTERN;
+
+typedef struct
+{
+    ORD_TYPE    type;
+    int         offset;
+    char        name[80];
+    union
+    {
+        ORD_VARIABLE   var;
+        ORD_FUNCTION   func;
+        ORD_RETURN     ret;
+        ORD_ABS        abs;
+        ORD_EXTERN     ext;
+    } u;
+} ORDDEF;
 
 static ORDDEF OrdinalDefinitions[MAX_ORDINALS];
 
-static enum SPEC_TYPE SpecType = SPEC_INVALID;
+static SPEC_TYPE SpecType = SPEC_INVALID;
 char DLLName[80];
 int Limit = 0;
 int Base = 0;
@@ -211,20 +250,14 @@ static char * GetToken(void)
     return token;
 }
 
-static int ParseVariable(int ordinal, int type)
+static int ParseVariable( ORDDEF *odp )
 {
-    ORDDEF *odp;
-    ORDVARDEF *vdp;
-    char export_name[80];
-    char *token;
     char *endptr;
     int *value_array;
     int n_values;
     int value_array_size;
     
-    strcpy(export_name, GetToken());
-
-    token = GetToken();
+    char *token = GetToken();
     if (*token != '(')
     {
 	fprintf(stderr, "%d: Expected '(' got '%s'\n", Line, token);
@@ -262,48 +295,33 @@ static int ParseVariable(int ordinal, int type)
 	exit(1);
     }
 
-    if (ordinal >= MAX_ORDINALS)
-    {
-	fprintf(stderr, "%d: Ordinal number too large\n", Line);
-	exit(1);
-    }
-    
-    odp = &OrdinalDefinitions[ordinal];
-    odp->type = type;
-    strcpy(odp->export_name, export_name);
-
-    vdp = xmalloc(sizeof(*vdp));
-    odp->additional_data = vdp;
-    
-    vdp->n_values = n_values;
-    vdp->values = xrealloc(value_array, sizeof(*value_array) * n_values);
+    odp->u.var.n_values = n_values;
+    odp->u.var.values = xrealloc(value_array, sizeof(*value_array) * n_values);
 
     return 0;
 }
 
-static int ParseExportFunction(int ordinal, int type)
+static int ParseExportFunction( ORDDEF *odp )
 {
     char *token;
-    ORDDEF *odp;
-    ORDFUNCDEF *fdp;
     int i;
 
     switch(SpecType)
     {
     case SPEC_WIN16:
-        if (type == TYPE_STDCALL)
+        if (odp->type == TYPE_STDCALL)
         {
             fprintf( stderr, "%d: 'stdcall' not supported for Win16\n", Line );
             exit(1);
         }
-        if (type == TYPE_CDECL)
+        if (odp->type == TYPE_CDECL)
         {
             fprintf( stderr, "%d: 'cdecl' not supported for Win16\n", Line );
             exit(1);
         }
         break;
     case SPEC_WIN32:
-        if ((type == TYPE_PASCAL) || (type == TYPE_PASCAL_16))
+        if ((odp->type == TYPE_PASCAL) || (odp->type == TYPE_PASCAL_16))
         {
             fprintf( stderr, "%d: 'pascal' not supported for Win32\n", Line );
             exit(1);
@@ -312,11 +330,6 @@ static int ParseExportFunction(int ordinal, int type)
     default:
         break;
     }
-    odp = &OrdinalDefinitions[ordinal];
-    strcpy(odp->export_name, GetToken());
-    odp->type = type;
-    fdp = xmalloc(sizeof(*fdp));
-    odp->additional_data = fdp;
 
     token = GetToken();
     if (*token != '(')
@@ -325,20 +338,20 @@ static int ParseExportFunction(int ordinal, int type)
 	exit(1);
     }
 
-    for (i = 0; i < sizeof(fdp->arg_types)-1; i++)
+    for (i = 0; i < sizeof(odp->u.func.arg_types)-1; i++)
     {
 	token = GetToken();
 	if (*token == ')')
 	    break;
 
         if (!strcmp(token, "byte") || !strcmp(token, "word"))
-            fdp->arg_types[i] = 'w';
+            odp->u.func.arg_types[i] = 'w';
         else if (!strcmp(token, "s_byte") || !strcmp(token, "s_word"))
-            fdp->arg_types[i] = 's';
+            odp->u.func.arg_types[i] = 's';
         else if (!strcmp(token, "long") || !strcmp(token, "segptr"))
-            fdp->arg_types[i] = 'l';
+            odp->u.func.arg_types[i] = 'l';
         else if (!strcmp(token, "ptr"))
-            fdp->arg_types[i] = 'p';
+            odp->u.func.arg_types[i] = 'p';
         else
         {
             fprintf(stderr, "%d: Unknown variable type '%s'\n", Line, token);
@@ -359,54 +372,25 @@ static int ParseExportFunction(int ordinal, int type)
         fprintf( stderr, "%d: Too many arguments\n", Line );
         exit(1);
     }
-    fdp->arg_types[i] = '\0';
-    if ((type == TYPE_STDCALL) && !i)
+    odp->u.func.arg_types[i] = '\0';
+    if ((odp->type == TYPE_STDCALL) && !i)
         odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
-    strcpy(fdp->internal_name, GetToken());
+    strcpy(odp->u.func.link_name, GetToken());
     return 0;
 }
 
-static int ParseEquate(int ordinal)
+
+/*******************************************************************
+ *         ParseEquate
+ *
+ * Parse an 'equate' definition.
+ */
+static int ParseEquate( ORDDEF *odp )
 {
-    ORDDEF *odp;
-    char *token;
-    char *endptr;
-    int value;
-    
-    odp = &OrdinalDefinitions[ordinal];
-    strcpy(odp->export_name, GetToken());
-
-    token = GetToken();
-    value = strtol(token, &endptr, 0);
-    if (endptr == NULL || *endptr != '\0')
-    {
-	fprintf(stderr, "%d: Expected number value, got '%s'\n", Line,
-		token);
-	exit(1);
-    }
-
-    odp->type = TYPE_ABS;
-    odp->additional_data = (void *) value;
-
-    return 0;
-}
-
-static int ParseReturn(int ordinal)
-{
-    ORDDEF *odp;
-    ORDRETDEF *rdp;
-    char *token;
     char *endptr;
     
-    rdp = xmalloc(sizeof(*rdp));
-    
-    odp = &OrdinalDefinitions[ordinal];
-    strcpy(odp->export_name, GetToken());
-    odp->type = TYPE_RETURN;
-    odp->additional_data = rdp;
-
-    token = GetToken();
-    rdp->arg_size = strtol(token, &endptr, 0);
+    char *token = GetToken();
+    int value = strtol(token, &endptr, 0);
     if (endptr == NULL || *endptr != '\0')
     {
 	fprintf(stderr, "%d: Expected number value, got '%s'\n", Line,
@@ -414,39 +398,83 @@ static int ParseReturn(int ordinal)
 	exit(1);
     }
 
-    token = GetToken();
-    rdp->ret_value = strtol(token, &endptr, 0);
-    if (endptr == NULL || *endptr != '\0')
-    {
-	fprintf(stderr, "%d: Expected number value, got '%s'\n", Line,
-		token);
-	exit(1);
-    }
-
+    odp->u.abs.value = value;
     return 0;
 }
 
 
-static int ParseStub( int ordinal )
+/*******************************************************************
+ *         ParseReturn
+ *
+ * Parse a 'return' definition.
+ */
+static int ParseReturn( ORDDEF *odp )
 {
-    ORDDEF *odp;
-    ORDFUNCDEF *fdp;
+    char *token;
+    char *endptr;
     
-    odp = &OrdinalDefinitions[ordinal];
-    strcpy( odp->export_name, GetToken() );
-    odp->type = TYPE_STUB;
-    fdp = xmalloc(sizeof(*fdp));
-    odp->additional_data = fdp;
-    fdp->arg_types[0] = '\0';
-    strcpy( fdp->internal_name, STUB_CALLBACK );
+    token = GetToken();
+    odp->u.ret.arg_size = strtol(token, &endptr, 0);
+    if (endptr == NULL || *endptr != '\0')
+    {
+	fprintf(stderr, "%d: Expected number value, got '%s'\n", Line,
+		token);
+	exit(1);
+    }
+
+    token = GetToken();
+    odp->u.ret.ret_value = strtol(token, &endptr, 0);
+    if (endptr == NULL || *endptr != '\0')
+    {
+	fprintf(stderr, "%d: Expected number value, got '%s'\n", Line,
+		token);
+	exit(1);
+    }
+
     return 0;
 }
 
 
+/*******************************************************************
+ *         ParseStub
+ *
+ * Parse a 'stub' definition.
+ */
+static int ParseStub( ORDDEF *odp )
+{
+    odp->u.func.arg_types[0] = '\0';
+    strcpy( odp->u.func.link_name, STUB_CALLBACK );
+    return 0;
+}
+
+
+/*******************************************************************
+ *         ParseExtern
+ *
+ * Parse an 'extern' definition.
+ */
+static int ParseExtern( ORDDEF *odp )
+{
+    if (SpecType == SPEC_WIN16)
+    {
+        fprintf( stderr, "%d: 'extern' not supported for Win16\n", Line );
+        exit(1);
+    }
+    strcpy( odp->u.ext.link_name, GetToken() );
+    return 0;
+}
+
+
+/*******************************************************************
+ *         ParseOrdinal
+ *
+ * Parse an ordinal definition.
+ */
 static int ParseOrdinal(int ordinal)
 {
+    ORDDEF *odp;
     char *token;
-    
+
     if (ordinal >= MAX_ORDINALS)
     {
 	fprintf(stderr, "%d: Ordinal number too large\n", Line);
@@ -454,39 +482,56 @@ static int ParseOrdinal(int ordinal)
     }
     if (ordinal > Limit) Limit = ordinal;
 
-    token = GetToken();
-    if (token == NULL)
+    odp = &OrdinalDefinitions[ordinal];
+    if (!(token = GetToken()))
     {
 	fprintf(stderr, "%d: Expected type after ordinal\n", Line);
 	exit(1);
     }
 
-    if (strcmp(token, "byte") == 0)
-	return ParseVariable(ordinal, TYPE_BYTE);
-    if (strcmp(token, "word") == 0)
-	return ParseVariable(ordinal, TYPE_WORD);
-    if (strcmp(token, "long") == 0)
-	return ParseVariable(ordinal, TYPE_LONG);
-    if (strcmp(token, "pascal") == 0)
-	return ParseExportFunction(ordinal, TYPE_PASCAL);
-    if (strcmp(token, "pascal16") == 0)
-	return ParseExportFunction(ordinal, TYPE_PASCAL_16);
-    if (strcmp(token, "register") == 0)
-        return ParseExportFunction(ordinal, TYPE_REGISTER);
-    if (strcmp(token, "stdcall") == 0)
-        return ParseExportFunction(ordinal, TYPE_STDCALL);
-    if (strcmp(token, "cdecl") == 0)
-        return ParseExportFunction(ordinal, TYPE_CDECL);
-    if (strcmp(token, "equate") == 0)
-	return ParseEquate(ordinal);
-    if (strcmp(token, "return") == 0)
-	return ParseReturn(ordinal);
-    if (strcmp(token, "stub") == 0)
-	return ParseStub(ordinal);
-    fprintf(stderr, 
-            "%d: Expected type after ordinal, found '%s' instead\n",
-            Line, token);
-    exit(1);
+    for (odp->type = 0; odp->type < TYPE_NBTYPES; odp->type++)
+        if (TypeNames[odp->type] && !strcmp( token, TypeNames[odp->type] ))
+            break;
+
+    if (odp->type >= TYPE_NBTYPES)
+    {
+        fprintf( stderr,
+                 "%d: Expected type after ordinal, found '%s' instead\n",
+                 Line, token );
+        exit(1);
+    }
+
+    if (!(token = GetToken()))
+    {
+        fprintf( stderr, "%d: Expected name after type\n", Line );
+        exit(1);
+    }
+    strcpy( odp->name, token );
+
+    switch(odp->type)
+    {
+    case TYPE_BYTE:
+    case TYPE_WORD:
+    case TYPE_LONG:
+	return ParseVariable( odp );
+    case TYPE_PASCAL_16:
+    case TYPE_PASCAL:
+    case TYPE_REGISTER:
+    case TYPE_STDCALL:
+    case TYPE_CDECL:
+	return ParseExportFunction( odp );
+    case TYPE_ABS:
+	return ParseEquate( odp );
+    case TYPE_RETURN:
+	return ParseReturn( odp );
+    case TYPE_STUB:
+	return ParseStub( odp );
+    case TYPE_EXTERN:
+	return ParseExtern( odp );
+    default:
+        fprintf( stderr, "Should not happen\n" );
+        exit(1);
+    }
 }
 
 static int ParseTopLevel(void)
@@ -559,26 +604,24 @@ static int ParseTopLevel(void)
  */
 static int StoreVariableCode( unsigned char *buffer, int size, ORDDEF *odp )
 {
-    ORDVARDEF *vdp;
     int i;
 
-    vdp = odp->additional_data;
     switch(size)
     {
     case 1:
-        for (i = 0; i < vdp->n_values; i++)
-            buffer[i] = vdp->values[i];
+        for (i = 0; i < odp->u.var.n_values; i++)
+            buffer[i] = odp->u.var.values[i];
         break;
     case 2:
-        for (i = 0; i < vdp->n_values; i++)
-            ((unsigned short *)buffer)[i] = vdp->values[i];
+        for (i = 0; i < odp->u.var.n_values; i++)
+            ((unsigned short *)buffer)[i] = odp->u.var.values[i];
         break;
     case 4:
-        for (i = 0; i < vdp->n_values; i++)
-            ((unsigned int *)buffer)[i] = vdp->values[i];
+        for (i = 0; i < odp->u.var.n_values; i++)
+            ((unsigned int *)buffer)[i] = odp->u.var.values[i];
         break;
     }
-    return vdp->n_values * size;
+    return odp->u.var.n_values * size;
 }
 
 
@@ -719,9 +762,9 @@ static int BuildModule16( int max_code_offset, int max_data_offset )
     odp = OrdinalDefinitions + 1;
     for (i = 1; i <= Limit; i++, odp++)
     {
-        if (!odp->export_name[0]) continue;
-        *pstr = strlen( odp->export_name );
-        strcpy( pstr + 1, odp->export_name );
+        if (!odp->name[0]) continue;
+        *pstr = strlen( odp->name );
+        strcpy( pstr + 1, odp->name );
         strupper( pstr + 1 );
         pstr += *pstr + 1;
         *(WORD *)pstr = i;
@@ -740,10 +783,6 @@ static int BuildModule16( int max_code_offset, int max_data_offset )
 
 	switch (odp->type)
 	{
-        case TYPE_INVALID:
-            selector = 0;  /* Invalid selector */
-            break;
-
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
         case TYPE_REGISTER:
@@ -760,6 +799,10 @@ static int BuildModule16( int max_code_offset, int max_data_offset )
 
         case TYPE_ABS:
             selector = 0xfe;  /* Constant selector */
+            break;
+
+        default:
+            selector = 0;  /* Invalid selector */
             break;
         }
 
@@ -908,8 +951,6 @@ static int BuildModule32(void)
 static void BuildSpec32Files(void)
 {
     ORDDEF *odp;
-    ORDFUNCDEF *fdp;
-    ORDRETDEF *rdp;
     int i, module_size, len;
     char buffer[1024];
 
@@ -921,9 +962,6 @@ static void BuildSpec32Files(void)
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-        fdp = odp->additional_data;
-        rdp = odp->additional_data;
-
         switch (odp->type)
         {
         case TYPE_INVALID:
@@ -933,26 +971,26 @@ static void BuildSpec32Files(void)
         case TYPE_CDECL:
         case TYPE_STUB:
             printf( "/* %s.%d (%s) */\n",
-                     DLLName, i, odp->export_name);
+                     DLLName, i, odp->name);
             printf( "%s_%d:\n", DLLName, i );
             printf( "\tpushl %%ebp\n" );
-            printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
+            printf( "\tpushl $" PREFIX "%s\n", odp->u.func.link_name );
             printf( "\tcall " PREFIX "CallFrom32_%s_%d\n",
                     (odp->type == TYPE_STDCALL) ? "stdcall" : "cdecl",
-                    strlen(fdp->arg_types));
+                    strlen(odp->u.func.arg_types));
             printf( "\tnop\n" );
             break;
 
         case TYPE_RETURN:
             printf( "/* %s.%d (%s) */\n",
-                     DLLName, i, odp->export_name);
+                     DLLName, i, odp->name);
             printf( "%s_%d:\n", DLLName, i );
             printf( "\tmovl $%d,%%eax\n", ERROR_CALL_NOT_IMPLEMENTED );
             printf( "\tmovl %%eax," PREFIX "WIN32_LastError\n" );
-            printf( "\tmovl $%d,%%eax\n", rdp->ret_value );
-            if (rdp->arg_size)
+            printf( "\tmovl $%d,%%eax\n", odp->u.ret.ret_value );
+            if (odp->u.ret.arg_size)
             {
-                printf( "\tret $%d\n", rdp->arg_size );
+                printf( "\tret $%d\n", odp->u.ret.arg_size );
                 printf( "\tnop\n" );
                 printf( "\tnop\n" );
             }
@@ -961,7 +999,7 @@ static void BuildSpec32Files(void)
 
         case TYPE_BYTE:
             printf( "/* %s.%d (%s) */\n",
-                     DLLName, i, odp->export_name);
+                     DLLName, i, odp->name);
             printf( "\t.data\n" );
             printf( "%s_%d:\n", DLLName, i );
             len = StoreVariableCode( buffer, 1, odp );
@@ -971,7 +1009,7 @@ static void BuildSpec32Files(void)
 
         case TYPE_WORD:
             printf( "/* %s.%d (%s) */\n",
-                     DLLName, i, odp->export_name);
+                     DLLName, i, odp->name);
             printf( "\t.data\n" );
             printf( "%s_%d:\n", DLLName, i );
             len = StoreVariableCode( buffer, 2, odp );
@@ -981,12 +1019,15 @@ static void BuildSpec32Files(void)
 
         case TYPE_LONG:
             printf( "/* %s.%d (%s) */\n",
-                     DLLName, i, odp->export_name);
+                     DLLName, i, odp->name);
             printf( "\t.data\n" );
             printf( "%s_%d:\n", DLLName, i );
             len = StoreVariableCode( buffer, 4, odp );
             DumpBytes( buffer, len, NULL, NULL );
             printf( "\t.text\n" );
+            break;
+
+        case TYPE_EXTERN:
             break;
 
         default:
@@ -1006,8 +1047,18 @@ static void BuildSpec32Files(void)
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-        if (odp->type == TYPE_INVALID) printf( "\t.long 0\n" );
-        else printf("\t.long %s_%d\n", DLLName, i);
+        switch(odp->type)
+        {
+        case TYPE_INVALID:
+            printf( "\t.long 0\n" );
+            break;
+        case TYPE_EXTERN:
+            printf( "\t.long " PREFIX "%s\n", odp->u.ext.link_name );
+            break;
+        default:
+            printf( "\t.long %s_%d\n", DLLName, i );
+            break;
+        }
     }
 
     /* Output the DLL names table */
@@ -1025,7 +1076,7 @@ static void BuildSpec32Files(void)
     for (i = 0, odp = OrdinalDefinitions; i <= Limit; i++, odp++)
     {
         if (odp->type != TYPE_INVALID)
-            printf( "Name_%d:\t.ascii \"%s\\0\"\n", i, odp->export_name );
+            printf( "Name_%d:\t.ascii \"%s\\0\"\n", i, odp->name );
     }
 
     /* Output the DLL descriptor */
@@ -1052,8 +1103,6 @@ static void BuildSpec32Files(void)
 static void BuildSpec16Files(void)
 {
     ORDDEF *odp;
-    ORDFUNCDEF *fdp;
-    ORDRETDEF *rdp;
     int i;
     int code_offset, data_offset, module_size;
     unsigned char *data;
@@ -1070,9 +1119,6 @@ static void BuildSpec16Files(void)
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-        fdp = odp->additional_data;
-        rdp = odp->additional_data;
-	    
         switch (odp->type)
         {
           case TYPE_INVALID:
@@ -1080,7 +1126,7 @@ static void BuildSpec16Files(void)
             break;
 
           case TYPE_ABS:
-            odp->offset = (int)odp->additional_data & 0xffff;
+            odp->offset = LOWORD(odp->u.abs.value);
             break;
 
           case TYPE_BYTE:
@@ -1100,11 +1146,11 @@ static void BuildSpec16Files(void)
 
           case TYPE_RETURN:
             printf( "/* %s.%d */\n", DLLName, i);
-            printf( "\tmovw $%d,%%ax\n", rdp->ret_value & 0xffff );
-            printf( "\tmovw $%d,%%dx\n", (rdp->ret_value >> 16) & 0xffff);
+            printf( "\tmovw $%d,%%ax\n", LOWORD(odp->u.ret.ret_value) );
+            printf( "\tmovw $%d,%%dx\n", HIWORD(odp->u.ret.ret_value) );
             printf( "\t.byte 0x66\n");
-            if (rdp->arg_size != 0)
-                printf( "\tlret $%d\n\n", rdp->arg_size);
+            if (odp->u.ret.arg_size != 0)
+                printf( "\tlret $%d\n\n", odp->u.ret.arg_size);
             else
             {
                 printf( "\tlret\n");
@@ -1121,13 +1167,13 @@ static void BuildSpec16Files(void)
           case TYPE_STUB:
             printf( "/* %s.%d */\n", DLLName, i);
             printf( "\tpushw %%bp\n" );
-            printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
+            printf( "\tpushl $" PREFIX "%s\n", odp->u.func.link_name );
             /* FreeBSD does not understand lcall, so do it the hard way */
             printf( "\t.byte 0x9a /*lcall*/\n" );
             printf( "\t.long " PREFIX "CallFrom16_%s_%s\n",
                     (odp->type == TYPE_REGISTER) ? "regs" :
                     (odp->type == TYPE_PASCAL) ? "long" : "word",
-                    fdp->arg_types );
+                    odp->u.func.arg_types );
             printf( "\t.byte 0x%02x,0x%02x\n", /* Some asms don't have .word */
                     LOBYTE(WINE_CODE_SELECTOR), HIBYTE(WINE_CODE_SELECTOR) );
             printf( "\tnop\n" );

@@ -163,7 +163,7 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
      lphc->RectButton.bottom = lphc->RectButton.top + lphl->StdItemHeight;
      SetWindowPos(hwnd, 0, 0, 0, rect.right -rect.left + 2*SYSMETRICS_CXBORDER,
 		 lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER,
-		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOSENDCHANGING);
+		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOSENDCHANGING | SWP_NOACTIVATE);
      dprintf_combo(stddeb,(cstyle & 3)==CBS_DROPDOWN ? "CBS_DROPDOWN\n": "CBS_DROPDOWNLIST\n");
      break;
      
@@ -615,7 +615,8 @@ static LRESULT CBShowDropDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
     lphc->DropDownVisible = wParam;
     GetWindowRect32(hwnd,&rect);
     SetWindowPos(lphc->hWndLBox, 0, rect.left, rect.top+lphc->LBoxTop, 0, 0,
-		 SWP_NOSIZE | (wParam ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
+		 SWP_NOSIZE | SWP_NOACTIVATE |
+                 (wParam ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
     if (!wParam) SetFocus(hwnd);
   }
   return 0;
@@ -1005,7 +1006,7 @@ static LRESULT CBLLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   int        y;
   RECT16     rectsel;
 
-  SetFocus(hwnd);
+/*  SetFocus(hwnd); */
   SetCapture(hwnd);
 
   lphl->PrevFocused = lphl->ItemFocused;
@@ -1213,6 +1214,8 @@ LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case WM_MOUSEMOVE: return CBLMouseMove(hwnd, wParam, lParam);
      case WM_VSCROLL: return CBLVScroll(hwnd, wParam, lParam);
      case WM_SIZE: return CBLCheckSize(hwnd);
+     case WM_MOUSEACTIVATE:  /* We don't want to be activated */
+	return MA_NOACTIVATE;
     }
     return DefWindowProc16(hwnd, message, wParam, lParam);
 }

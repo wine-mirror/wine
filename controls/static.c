@@ -46,9 +46,9 @@ static pfPaint staticPaintFunc[LAST_STATIC_TYPE+1] =
  *
  * Set the icon for an SS_ICON control.
  */
-static HICON STATIC_SetIcon( WND *wndPtr, HICON hicon )
+static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
 {
-    HICON prevIcon;
+    HICON16 prevIcon;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return 0;
@@ -167,7 +167,7 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return infoPtr->hIcon;
 
 	case STM_SETICON:
-            lResult = STATIC_SetIcon( wndPtr, (HICON)wParam );
+            lResult = STATIC_SetIcon( wndPtr, (HICON16)wParam );
             InvalidateRect32( hWnd, NULL, FALSE );
             UpdateWindow( hWnd );
 	    break;

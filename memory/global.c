@@ -111,7 +111,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 
     if (!(pArena = GLOBAL_GetArena( sel, selcount )))
     {
-        FreeSelector( sel );
+        SELECTOR_FreeBlock( sel, selcount );
         return 0;
     }
 
@@ -159,11 +159,13 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
 {
     WORD sel;
+    GLOBALARENA *pArena;
 
     if (!handle) return TRUE;
-    sel = GlobalHandleToSel( handle );
-    if (FreeSelector( sel )) return FALSE;  /* failed */
-    memset( GET_ARENA_PTR(sel), 0, sizeof(GLOBALARENA) );
+    sel = GlobalHandleToSel( handle ); 
+    pArena = GET_ARENA_PTR(sel);
+    SELECTOR_FreeBlock( sel, (pArena->size + 0xffff) / 0x10000 );
+    memset( pArena, 0, sizeof(GLOBALARENA) );
     return TRUE;
 }
 
@@ -226,7 +228,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
  * Find the arena  for a given handle
  * (when handle is not serial - e.g. DDE)
  */
-static GLOBALARENA *GLOBAL_FindArena( HGLOBAL handle)
+static GLOBALARENA *GLOBAL_FindArena( HGLOBAL16 handle)
 {
     int i;
     for (i = globalArenaSize-1 ; i>=0 ; i--) {
@@ -241,7 +243,7 @@ static GLOBALARENA *GLOBAL_FindArena( HGLOBAL handle)
  *           DDE_GlobalHandleToSel
  */
 
-WORD DDE_GlobalHandleToSel( HGLOBAL handle )
+WORD DDE_GlobalHandleToSel( HGLOBAL16 handle )
 {
     GLOBALARENA *pArena;
     SEGPTR segptr;
@@ -341,7 +343,7 @@ HGLOBAL16 GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
     ptr = HeapReAlloc( SystemHeap, 0, ptr, size );
     if (!ptr)
     {
-        FreeSelector( sel );
+        SELECTOR_FreeBlock( sel, (oldsize + 0xffff) / 0x10000 );
         memset( pArena, 0, sizeof(GLOBALARENA) );
         return 0;
     }
@@ -360,7 +362,7 @@ HGLOBAL16 GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
     if (!(pNewArena = GLOBAL_GetArena( sel, selcount )))
     {
         HeapFree( SystemHeap, 0, ptr );
-        FreeSelector( sel );
+        SELECTOR_FreeBlock( sel, selcount );
         return 0;
     }
 

@@ -11,8 +11,8 @@ base	0
 007 stub getsockopt
 008 stub htonl
 009 stub htons
-010 stub inet_addr
-011 stub inet_ntoa
+010 stdcall inet_addr(ptr) inet_addr
+011 stdcall inet_ntoa(ptr) inet_ntoa
 012 stub ioctlsocket
 013 stub listen
 014 stub ntohl
@@ -25,11 +25,11 @@ base	0
 021 stub setsockopt
 022 stub shutdown
 023 stub socket
-051 stub gethostbyaddr
+051 stdcall gethostbyaddr(ptr long long) gethostbyaddr
 052 stub gethostbyname
 053 stub getprotobyname
 054 stub getprotobynumber
-055 stub getservbyname
+055 stdcall getservbyname(ptr ptr) getservbyname
 056 stub getservbyport
 057 stub gethostname
 101 stub WSAAsyncSelect
@@ -46,21 +46,21 @@ base	0
 112 stub WSASetLastError
 113 stub WSACancelBlockingCall
 114 stub WSAIsBlocking
-115 stub WSAStartup
-116 stub WSACleanup
+115 stdcall WSAStartup(long ptr) WSAStartup
+116 stdcall WSACleanup() WSACleanup
 151 stub __WSAFDIsSet
 #500 stub WEP
 # applications *should* 'degrade gracefully if these are not present
 # ... as it is, they don't
 #1000 stub WSApSetPostRoutine
-#1100 stub inet_network
-#1101 stub getnetbyname
+1100 stub inet_network
+1101 stub getnetbyname
 #1102 stub rcmd
 #1103 stub rexec
 #1104 stub rresvport
 #1105 stub sethostname
 #1106 stub dn_expand
-#1107 stub WSARecvEx
+1107 stub WSARecvEx
 1108 stub s_perror
 1109 stub GetAddressByNameA
 1110 stub GetAddressByNameW

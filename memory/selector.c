@@ -64,31 +64,8 @@ WORD AllocSelector( WORD sel )
  */
 WORD FreeSelector( WORD sel )
 {
-    WORD i, count, nextsel;
-    ldt_entry entry;
-    STACK16FRAME *frame;
-
-    dprintf_selector( stddeb, "FreeSelector(%04x)\n", sel );
     if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
-    count = (GET_SEL_LIMIT(sel) >> 16) + 1;
-    sel &= ~(__AHINCR - 1);  /* clear bottom bits of selector */
-    nextsel = sel + (count << __AHSHIFT);
-    memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
-    /* FIXME: is it correct to free the whole array? */
-    for (i = SELECTOR_TO_ENTRY(sel); count; i++, count--)
-    {
-        LDT_SetEntry( i, &entry );
-        ldt_flags_copy[i] &= ~LDT_FLAGS_ALLOCATED;
-    }
-
-    /* Clear the saved 16-bit selector */
-    frame = CURRENT_STACK16;
-    while (frame)
-    {
-        if ((frame->ds >= sel) && (frame->ds < nextsel)) frame->ds = 0;
-        if ((frame->es >= sel) && (frame->es < nextsel)) frame->es = 0;
-	frame = PTR_SEG_OFF_TO_LIN(frame->saved_ss, frame->saved_sp);
-    }
+    SELECTOR_FreeBlock( sel, 1 );
     return 0;
 }
 
@@ -147,6 +124,38 @@ WORD SELECTOR_AllocBlock( const void *base, DWORD size, enum seg_type type,
 
 
 /***********************************************************************
+ *           SELECTOR_FreeBlock
+ *
+ * Free a block of selectors.
+ */
+void SELECTOR_FreeBlock( WORD sel, WORD count )
+{
+    WORD i, nextsel;
+    ldt_entry entry;
+    STACK16FRAME *frame;
+
+    dprintf_selector( stddeb, "SELECTOR_FreeBlock(%04x,%d)\n", sel, count );
+    sel &= ~(__AHINCR - 1);  /* clear bottom bits of selector */
+    nextsel = sel + (count << __AHSHIFT);
+    memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
+    for (i = SELECTOR_TO_ENTRY(sel); count; i++, count--)
+    {
+        LDT_SetEntry( i, &entry );
+        ldt_flags_copy[i] &= ~LDT_FLAGS_ALLOCATED;
+    }
+
+    /* Clear the saved 16-bit selector */
+    frame = CURRENT_STACK16;
+    while (frame)
+    {
+        if ((frame->ds >= sel) && (frame->ds < nextsel)) frame->ds = 0;
+        if ((frame->es >= sel) && (frame->es < nextsel)) frame->es = 0;
+	frame = PTR_SEG_OFF_TO_LIN(frame->saved_ss, frame->saved_sp);
+    }
+}
+
+
+/***********************************************************************
  *           SELECTOR_ReallocBlock
  *
  * Change the size of a block of selectors.
@@ -155,7 +164,6 @@ WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
                            enum seg_type type, BOOL32 is32bit, BOOL32 readonly)
 {
     WORD i, oldcount, newcount;
-    ldt_entry entry;
 
     if (!size) size = 1;
     oldcount = (GET_SEL_LIMIT(sel) >> 16) + 1;
@@ -171,7 +179,7 @@ WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
 
         if (i < newcount)  /* they are not free */
         {
-            FreeSelector( sel );
+            SELECTOR_FreeBlock( sel, oldcount );
             sel = AllocSelectorArray( newcount );
         }
         else  /* mark the selectors as allocated */
@@ -182,12 +190,8 @@ WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
     }
     else if (oldcount > newcount) /* We need to remove selectors */
     {
-        memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
-        for (i = oldcount; i < newcount; i++)
-        {
-            LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
-            ldt_flags_copy[SELECTOR_TO_ENTRY(sel) + i] &= ~LDT_FLAGS_ALLOCATED;
-        }
+        SELECTOR_FreeBlock( ENTRY_TO_SELECTOR(SELECTOR_TO_ENTRY(sel)+newcount),
+                            oldcount - newcount );
     }
     if (sel) SELECTOR_SetEntries( sel, base, size, type, is32bit, readonly );
     return sel;

@@ -108,7 +108,7 @@ typedef struct {
 #define CALLBACK_TASK       0x00020000l    /* dwCallback is a HTASK */
 #define CALLBACK_FUNCTION   0x00030000l    /* dwCallback is a FARPROC */
 
-typedef void (*LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (*LPDRVCALLBACK) (HDRVR16 h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define MM_MICROSOFT            1       /* Microsoft Corp. */
 
@@ -148,8 +148,8 @@ BOOL sndPlaySound(LPCSTR lpszSoundName, UINT uFlags);
 #define WAVERR_SYNC           (WAVERR_BASE + 3)    /* device is synchronous */
 #define WAVERR_LASTERROR      (WAVERR_BASE + 3)    /* last error in range */
 
-typedef HWAVEIN *LPHWAVEIN;
-typedef HWAVEOUT *LPHWAVEOUT;
+typedef HWAVEIN16 *LPHWAVEIN16;
+typedef HWAVEOUT16 *LPHWAVEOUT16;
 typedef LPDRVCALLBACK LPWAVECALLBACK;
 
 #define WOM_OPEN        MM_WOM_OPEN
@@ -243,50 +243,50 @@ UINT waveOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
 UINT waveOutSetVolume(UINT uDeviceID, DWORD dwVolume);
 UINT waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveOutOpen(HWAVEOUT * lphWaveOut, UINT uDeviceID,
+UINT waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT waveOutClose(HWAVEOUT hWaveOut);
-UINT waveOutPrepareHeader(HWAVEOUT hWaveOut,
+UINT waveOutClose(HWAVEOUT16 hWaveOut);
+UINT waveOutPrepareHeader(HWAVEOUT16 hWaveOut,
      WAVEHDR * lpWaveOutHdr, UINT uSize);
-UINT waveOutUnprepareHeader(HWAVEOUT hWaveOut,
+UINT waveOutUnprepareHeader(HWAVEOUT16 hWaveOut,
     WAVEHDR * lpWaveOutHdr, UINT uSize);
-UINT waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR * lpWaveOutHdr,
+UINT waveOutWrite(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,
     UINT uSize);
-UINT waveOutPause(HWAVEOUT hWaveOut);
-UINT waveOutRestart(HWAVEOUT hWaveOut);
-UINT waveOutReset(HWAVEOUT hWaveOut);
-UINT waveOutBreakLoop(HWAVEOUT hWaveOut);
-UINT waveOutGetPosition(HWAVEOUT hWaveOut, MMTIME * lpInfo,
+UINT waveOutPause(HWAVEOUT16 hWaveOut);
+UINT waveOutRestart(HWAVEOUT16 hWaveOut);
+UINT waveOutReset(HWAVEOUT16 hWaveOut);
+UINT waveOutBreakLoop(HWAVEOUT16 hWaveOut);
+UINT waveOutGetPosition(HWAVEOUT16 hWaveOut, MMTIME * lpInfo,
     UINT uSize);
-UINT waveOutGetPitch(HWAVEOUT hWaveOut, DWORD * lpdwPitch);
-UINT waveOutSetPitch(HWAVEOUT hWaveOut, DWORD dwPitch);
-UINT waveOutGetPlaybackRate(HWAVEOUT hWaveOut, DWORD * lpdwRate);
-UINT waveOutSetPlaybackRate(HWAVEOUT hWaveOut, DWORD dwRate);
-UINT waveOutGetID(HWAVEOUT hWaveOut, UINT * lpuDeviceID);
+UINT waveOutGetPitch(HWAVEOUT16 hWaveOut, DWORD * lpdwPitch);
+UINT waveOutSetPitch(HWAVEOUT16 hWaveOut, DWORD dwPitch);
+UINT waveOutGetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD * lpdwRate);
+UINT waveOutSetPlaybackRate(HWAVEOUT16 hWaveOut, DWORD dwRate);
+UINT waveOutGetID(HWAVEOUT16 hWaveOut, UINT * lpuDeviceID);
 
-DWORD waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD waveOutMessage(HWAVEOUT16 hWaveOut, UINT uMessage, DWORD dw1, DWORD dw2);
 
 UINT waveInGetNumDevs(void);
 UINT waveInGetDevCaps(UINT uDeviceID, WAVEINCAPS * lpCaps,
     UINT uSize);
 UINT waveInGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveInOpen(HWAVEIN * lphWaveIn, UINT uDeviceID,
+UINT waveInOpen(HWAVEIN16 * lphWaveIn, UINT uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT waveInClose(HWAVEIN hWaveIn);
-UINT waveInPrepareHeader(HWAVEIN hWaveIn,
+UINT waveInClose(HWAVEIN16 hWaveIn);
+UINT waveInPrepareHeader(HWAVEIN16 hWaveIn,
     WAVEHDR * lpWaveInHdr, UINT uSize);
-UINT waveInUnprepareHeader(HWAVEIN hWaveIn,
+UINT waveInUnprepareHeader(HWAVEIN16 hWaveIn,
     WAVEHDR * lpWaveInHdr, UINT uSize);
-UINT waveInAddBuffer(HWAVEIN hWaveIn,
+UINT waveInAddBuffer(HWAVEIN16 hWaveIn,
     WAVEHDR * lpWaveInHdr, UINT uSize);
-UINT waveInStart(HWAVEIN hWaveIn);
-UINT waveInStop(HWAVEIN hWaveIn);
-UINT waveInReset(HWAVEIN hWaveIn);
-UINT waveInGetPosition(HWAVEIN hWaveIn, MMTIME * lpInfo,
+UINT waveInStart(HWAVEIN16 hWaveIn);
+UINT waveInStop(HWAVEIN16 hWaveIn);
+UINT waveInReset(HWAVEIN16 hWaveIn);
+UINT waveInGetPosition(HWAVEIN16 hWaveIn, MMTIME * lpInfo,
     UINT uSize);
-UINT waveInGetID(HWAVEIN hWaveIn, UINT * lpuDeviceID);
+UINT waveInGetID(HWAVEIN16 hWaveIn, UINT * lpuDeviceID);
 
-DWORD waveInMessage(HWAVEIN hWaveIn, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD waveInMessage(HWAVEIN16 hWaveIn, UINT uMessage, DWORD dw1, DWORD dw2);
 
 #define MIDIERR_UNPREPARED    (MIDIERR_BASE + 0)   /* header not prepared */
 #define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
@@ -296,8 +296,8 @@ DWORD waveInMessage(HWAVEIN hWaveIn, UINT uMessage, DWORD dw1, DWORD dw2);
 #define MIDIERR_INVALIDSETUP  (MIDIERR_BASE + 5)   /* invalid setup */
 #define MIDIERR_LASTERROR     (MIDIERR_BASE + 5)   /* last error in range */
 
-typedef HMIDIIN  *LPHMIDIIN;
-typedef HMIDIOUT  *LPHMIDIOUT;
+typedef HMIDIIN16  *LPHMIDIIN16;
+typedef HMIDIOUT16  *LPHMIDIOUT16;
 typedef LPDRVCALLBACK LPMIDICALLBACK;
 #define MIDIPATCHSIZE   128
 typedef WORD PATCHARRAY[MIDIPATCHSIZE];
@@ -376,44 +376,44 @@ UINT midiOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
 UINT midiOutSetVolume(UINT uDeviceID, DWORD dwVolume);
 UINT midiOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT midiOutOpen(HMIDIOUT * lphMidiOut, UINT uDeviceID,
+UINT midiOutOpen(HMIDIOUT16 * lphMidiOut, UINT uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT midiOutClose(HMIDIOUT hMidiOut);
-UINT midiOutPrepareHeader(HMIDIOUT hMidiOut,
+UINT midiOutClose(HMIDIOUT16 hMidiOut);
+UINT midiOutPrepareHeader(HMIDIOUT16 hMidiOut,
     MIDIHDR * lpMidiOutHdr, UINT uSize);
-UINT midiOutUnprepareHeader(HMIDIOUT hMidiOut,
+UINT midiOutUnprepareHeader(HMIDIOUT16 hMidiOut,
     MIDIHDR * lpMidiOutHdr, UINT uSize);
-UINT midiOutShortMsg(HMIDIOUT hMidiOut, DWORD dwMsg);
-UINT midiOutLongMsg(HMIDIOUT hMidiOut,
+UINT midiOutShortMsg(HMIDIOUT16 hMidiOut, DWORD dwMsg);
+UINT midiOutLongMsg(HMIDIOUT16 hMidiOut,
     MIDIHDR * lpMidiOutHdr, UINT uSize);
-UINT midiOutReset(HMIDIOUT hMidiOut);
-UINT midiOutCachePatches(HMIDIOUT hMidiOut,
+UINT midiOutReset(HMIDIOUT16 hMidiOut);
+UINT midiOutCachePatches(HMIDIOUT16 hMidiOut,
     UINT uBank, WORD * lpwPatchArray, UINT uFlags);
-UINT midiOutCacheDrumPatches(HMIDIOUT hMidiOut,
+UINT midiOutCacheDrumPatches(HMIDIOUT16 hMidiOut,
     UINT uPatch, WORD * lpwKeyArray, UINT uFlags);
-UINT midiOutGetID(HMIDIOUT hMidiOut, UINT * lpuDeviceID);
+UINT midiOutGetID(HMIDIOUT16 hMidiOut, UINT * lpuDeviceID);
 
-DWORD midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD midiOutMessage(HMIDIOUT16 hMidiOut, UINT uMessage, DWORD dw1, DWORD dw2);
 
 UINT midiInGetNumDevs(void);
 UINT midiInGetDevCaps(UINT uDeviceID,
     LPMIDIINCAPS lpCaps, UINT uSize);
 UINT midiInGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT midiInOpen(HMIDIIN * lphMidiIn, UINT uDeviceID,
+UINT midiInOpen(HMIDIIN16 * lphMidiIn, UINT uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
-UINT midiInClose(HMIDIIN hMidiIn);
-UINT midiInPrepareHeader(HMIDIIN hMidiIn,
+UINT midiInClose(HMIDIIN16 hMidiIn);
+UINT midiInPrepareHeader(HMIDIIN16 hMidiIn,
     MIDIHDR * lpMidiInHdr, UINT uSize);
-UINT midiInUnprepareHeader(HMIDIIN hMidiIn,
+UINT midiInUnprepareHeader(HMIDIIN16 hMidiIn,
     MIDIHDR * lpMidiInHdr, UINT uSize);
-UINT midiInAddBuffer(HMIDIIN hMidiIn,
+UINT midiInAddBuffer(HMIDIIN16 hMidiIn,
     MIDIHDR * lpMidiInHdr, UINT uSize);
-UINT midiInStart(HMIDIIN hMidiIn);
-UINT midiInStop(HMIDIIN hMidiIn);
-UINT midiInReset(HMIDIIN hMidiIn);
-UINT midiInGetID(HMIDIIN hMidiIn, UINT * lpuDeviceID);
+UINT midiInStart(HMIDIIN16 hMidiIn);
+UINT midiInStop(HMIDIIN16 hMidiIn);
+UINT midiInReset(HMIDIIN16 hMidiIn);
+UINT midiInGetID(HMIDIIN16 hMidiIn, UINT * lpuDeviceID);
 
-DWORD midiInMessage(HMIDIIN hMidiIn, UINT uMessage, DWORD dw1, DWORD dw2);
+DWORD midiInMessage(HMIDIIN16 hMidiIn, UINT uMessage, DWORD dw1, DWORD dw2);
 
 #define AUX_MAPPER     (-1)
 
@@ -547,7 +547,7 @@ typedef struct {
         /* other fields maintained by MMIO */
         DWORD           dwReserved1;    /* reserved for MMIO use */
         DWORD           dwReserved2;    /* reserved for MMIO use */
-        HMMIO           hmmio;          /* handle to open file */
+        HMMIO16         hmmio;          /* handle to open file */
 } MMIOINFO, *LPMMIOINFO;
 
 typedef struct _MMCKINFO
@@ -624,28 +624,28 @@ typedef struct _MMCKINFO
 FOURCC mmioStringToFOURCC(LPCSTR sz, UINT uFlags);
 LPMMIOPROC mmioInstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
     DWORD dwFlags);
-HMMIO mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo,
+HMMIO16 mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo,
     DWORD dwOpenFlags);
 
 UINT mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
      MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
 
-UINT mmioClose(HMMIO hmmio, UINT uFlags);
-LONG mmioRead(HMMIO hmmio, HPSTR pch, LONG cch);
-LONG mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch);
-LONG mmioSeek(HMMIO hmmio, LONG lOffset, int iOrigin);
-UINT mmioGetInfo(HMMIO hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
-UINT mmioSetInfo(HMMIO hmmio, const MMIOINFO * lpmmioinfo, UINT uFlags);
-UINT mmioSetBuffer(HMMIO hmmio, LPSTR pchBuffer, LONG cchBuffer,
+UINT mmioClose(HMMIO16 hmmio, UINT uFlags);
+LONG mmioRead(HMMIO16 hmmio, HPSTR pch, LONG cch);
+LONG mmioWrite(HMMIO16 hmmio, HPCSTR pch, LONG cch);
+LONG mmioSeek(HMMIO16 hmmio, LONG lOffset, int iOrigin);
+UINT mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
+UINT mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT uFlags);
+UINT mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, LONG cchBuffer,
     UINT uFlags);
-UINT mmioFlush(HMMIO hmmio, UINT uFlags);
-UINT mmioAdvance(HMMIO hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
-LONG mmioSendMessage(HMMIO hmmio, UINT uMessage,
+UINT mmioFlush(HMMIO16 hmmio, UINT uFlags);
+UINT mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
+LONG mmioSendMessage(HMMIO16 hmmio, UINT uMessage,
     LPARAM lParam1, LPARAM lParam2);
-UINT mmioDescend(HMMIO hmmio, MMCKINFO * lpck,
+UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
     const MMCKINFO * lpckParent, UINT uFlags);
-UINT mmioAscend(HMMIO hmmio, MMCKINFO * lpck, UINT uFlags);
-UINT mmioCreateChunk(HMMIO hmmio, MMCKINFO * lpck, UINT uFlags);
+UINT mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags);
+UINT mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT uFlags);
 
 typedef UINT (*YIELDPROC) (UINT uDeviceID, DWORD dwYieldData);
 
@@ -1476,19 +1476,19 @@ typedef struct {
 typedef struct {
 	DWORD   	dwCallback;
 	DWORD   	dwInstance;
-	HMIDIOUT	hMidi;
+	HMIDIOUT16	hMidi;
 	DWORD   	dwFlags;
 } PORTALLOC, *LPPORTALLOC;
 
 typedef struct {
-	HWAVE			hWave;
+	HWAVE16			hWave;
 	LPWAVEFORMAT	lpFormat;
 	DWORD			dwCallBack;
 	DWORD			dwInstance;
 } WAVEOPENDESC, *LPWAVEOPENDESC;
 
 typedef struct {
-	HMIDI			hMidi;
+	HMIDI16			hMidi;
 	DWORD			dwCallback;
 	DWORD			dwInstance;
 } MIDIOPENDESC, *LPMIDIOPENDESC;

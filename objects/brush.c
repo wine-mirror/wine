@@ -190,7 +190,7 @@ HBRUSH CreatePatternBrush( HBITMAP hbitmap )
 /***********************************************************************
  *           CreateDIBPatternBrush    (GDI.445)
  */
-HBRUSH CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
+HBRUSH CreateDIBPatternBrush( HGLOBAL16 hbitmap, UINT coloruse )
 {
     LOGBRUSH16 logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;

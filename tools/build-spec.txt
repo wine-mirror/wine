@@ -13,10 +13,13 @@ ORDINAL equate EXPORTNAME DATA
 
 ORDINAL return EXPORTNAME ARGLENGTH RETVALUE
 
+ORDINAL extern EXPORTNAME SYMBOLNAME
+
 # COMMENT_TEXT
 
 --------------------
 General:
+========
 
     "name" and "type" fields are mandatory.  Specific ordinal
 declarations are optional, but the default handler will print an error
@@ -26,6 +29,7 @@ modules); default is no local heap.  Lines whose first character is a
 '#' will be ignored as comments.
 
 Variable ordinals:
+==================
 
     This type defines data storage at the ordinal specified.  You may
 store items as bytes, 16-bit words, or 32-bit words.
@@ -39,6 +43,7 @@ ordinal 2 and containing 4 bytes:
 	2 byte VariableA(-1 0xff 0 0)
 
 Function ordinals:
+==================
 
     This type defines a function entry point.  The prototype defined by
 "EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])" specifies the name available for
@@ -79,13 +84,21 @@ call (the ordinal 100 is just an example):
 
 	100 pascal GetFocus() WIN_GetFocus()
 
+To declare a function using a variable number of arguments, specify
+the function as taking no arguments. In this special case, in Win32
+the called function will be passed a pointer to the first arg; in
+Win16, the args are available with CURRENT_STACK16->args. See the
+wsprintf* functions in user.spec and user32.spec for an example.
+
 Stub ordinals:
+==============
 
     This type defines a stub function. It makes the name and ordinal
 available for dynamic linking, but will terminate execution with an
 error message if the function is ever called.
 
 Equate ordinals:
+================
 
     This type defines an ordinal as an absolute value.
 "ORDINAL" is replaced by the ordinal number corresponding to the
@@ -93,6 +106,7 @@ variable.  "EXPORTNAME" will be the name available for dynamic linking.
 "DATA" can be a decimal number or a hex number preceeded by "0x".
 
 Return ordinals:
+================
 
     This type defines a function entry point whose handler should do
 nothing but return a value.
@@ -100,3 +114,11 @@ nothing but return a value.
 variable.  ARGLENGTH is the number of bytes that need to be removed
 from the stack before returning to the caller.  RETVALUE is the
 return value which will be passed back to the caller.
+
+Extern ordinals:
+================
+
+    This type defines an entry that simply maps to a Wine symbol
+(variable or function); "EXPORTNAME" will point to the symbol
+"SYMBOLNAME" that must be defined in C code. This type only works with
+Win32.

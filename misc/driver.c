@@ -211,7 +211,7 @@ HMODULE16 GetDriverModuleHandle(HDRVR16 hDrvr)
 /**************************************************************************
  *				DefDriverProc			[USER.255]
  */
-LRESULT DefDriverProc(DWORD dwDevID, HDRVR hDriv, UINT16 wMsg, 
+LRESULT DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
 		      LPARAM lParam1, LPARAM lParam2)
 {
     switch(wMsg)

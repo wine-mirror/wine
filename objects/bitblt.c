@@ -660,8 +660,9 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
         memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
                 widthDst*sizeof(int) );
 
-    hstretch = ((widthSrc < widthDst) || (mode == STRETCH_DELETESCANS));
-    vstretch = ((heightSrc < heightDst) || (mode == STRETCH_DELETESCANS));
+    hstretch = (widthSrc < widthDst);
+    vstretch = (heightSrc < heightDst);
+
     xinc = hstretch ? ((int)widthSrc << 16) / widthDst :
                       ((int)widthDst << 16) / widthSrc;
 

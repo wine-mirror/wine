@@ -116,13 +116,13 @@ typedef UINT32         *LPUINT32;
 typedef HKEY           *LPHKEY;
 typedef HMIXEROBJ      *LPHMIXEROBJ;
 
-/* Special case: a segmented pointer is just a pointer in the library. */
+/* Special case: a segmented pointer is just a pointer in the user's code. */
 
-#ifdef WINELIB
-typedef void* SEGPTR;
-#else  /* WINELIB */
+#ifdef __WINE__
 typedef DWORD SEGPTR;
-#endif /* WINELIB */
+#else
+typedef void* SEGPTR;
+#endif /* __WINE__ */
 
 /* Handle types that exist both in Win16 and Win32. */
 

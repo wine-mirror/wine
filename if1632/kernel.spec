@@ -3,7 +3,7 @@ type	win16
 
 1   stub FatalExit
 2   stub ExitKernel
-3   pascal GetVersion() GetVersion
+3   pascal GetVersion() GetVersion16
 4   pascal16 LocalInit(word word word) LocalInit
 5   pascal16 LocalAlloc(word word) LocalAlloc16
 6   pascal16 LocalReAlloc(word word word) LocalReAlloc16

@@ -25,9 +25,9 @@ static int HTLen;       /* allocated length of handle table */
  *         GetMetafile         GDI.124 By Kenny MacDonald 30 Nov 94
  */
 
-HMETAFILE GetMetaFile(LPSTR lpFilename)
+HMETAFILE16 GetMetaFile(LPSTR lpFilename)
 {
-  HMETAFILE hmf;
+  HMETAFILE16 hmf;
   METAHEADER *mh;
   HFILE hFile;
   DWORD size;
@@ -146,9 +146,9 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
  *         CopyMetafile         GDI.151 Niels de Carpentier, April 1996
  */
 
-HMETAFILE CopyMetaFile(HMETAFILE hSrcMetaFile, LPCSTR lpFilename)
+HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 {
-    HMETAFILE handle = 0;
+    HMETAFILE16 handle = 0;
     METAHEADER *mh;
     METAHEADER *mh2;
     int hFile;
@@ -168,12 +168,9 @@ HMETAFILE CopyMetaFile(HMETAFILE hSrcMetaFile, LPCSTR lpFilename)
 	mh->mtType=1;        /* disk file version stores 1 here */
 	i=_lwrite(hFile, (char *)mh, mh->mtSize * 2) ;
 	mh->mtType=j;        /* restore old value  [0 or 1] */	
+        _lclose(hFile);
 	if (i == -1)
-	    {
-	    _lclose(hFile);
 	    return 0;
-	    }
-	_lclose(hFile);
         }
     else                     /* memory based metafile */
         {
@@ -186,16 +183,35 @@ HMETAFILE CopyMetaFile(HMETAFILE hSrcMetaFile, LPCSTR lpFilename)
     return handle;
 }
 
+/******************************************************************
+ *         IsValidMetaFile   (GDI.410)
+ *         (This is not exactly what windows does, see "Undoc Win")
+ */
+
+BOOL IsValidMetaFile(HMETAFILE16 hmf)
+{
+    BOOL resu=FALSE;
+    METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
+    if (mh)
+      if (mh->mtType == 1 || mh->mtType == 0) 
+        if (mh->mtHeaderSize == MFHEADERSIZE/sizeof(INT16))
+          if (mh->mtVersion == MFVERSION)
+            resu=TRUE;
+    GlobalUnlock16(hmf);            
+    dprintf_metafile(stddeb,"IsValidMetaFile %x => %d\n",hmf,resu);
+    return resu;         
+}
+
 
 /******************************************************************
  *         CloseMetafile         GDI.126
  */
 
-HMETAFILE CloseMetaFile(HDC hdc)
+HMETAFILE16 CloseMetaFile(HDC hdc)
 {
     DC *dc;
     METAHEADER *mh;
-    HMETAFILE hmf;
+    HMETAFILE16 hmf;
     HFILE hFile;
     
     dprintf_metafile(stddeb,"CloseMetaFile\n");
@@ -248,7 +264,7 @@ HMETAFILE CloseMetaFile(HDC hdc)
  *         DeleteMetafile         GDI.127
  */
 
-BOOL DeleteMetaFile(HMETAFILE hmf)
+BOOL DeleteMetaFile(HMETAFILE16 hmf)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
 
@@ -264,7 +280,7 @@ BOOL DeleteMetaFile(HMETAFILE hmf)
  *         PlayMetafile         GDI.123
  */
 
-BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
+BOOL PlayMetaFile(HDC hdc, HMETAFILE16 hmf)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -307,7 +323,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
  *                                    Niels de carpentier, april 1996
  */
 
-BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpData)
+BOOL EnumMetaFile(HDC hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpData)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -740,7 +756,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE16 *ht, METARECORD *mr,
  * Trade in a meta file object handle for a handle to the meta file memory
  */
 
-HANDLE GetMetaFileBits(HMETAFILE hmf)
+HANDLE GetMetaFileBits(HMETAFILE16 hmf)
 {
     dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: %04x\n", hmf);
 
@@ -753,7 +769,7 @@ HANDLE GetMetaFileBits(HMETAFILE hmf)
  * Trade in a meta file memory handle for a handle to a meta file object
  */
 
-HMETAFILE SetMetaFileBits(HANDLE hMem)
+HMETAFILE16 SetMetaFileBits(HANDLE hMem)
 {
     dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %04x\n", hMem);
 
@@ -764,7 +780,7 @@ HMETAFILE SetMetaFileBits(HANDLE hMem)
  *         MF_WriteRecord
  */
 
-HMETAFILE MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen)
+HMETAFILE16 MF_WriteRecord(HMETAFILE16 hmf, METARECORD *mr, WORD rlen)
 {
     DWORD len;
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
@@ -860,7 +876,7 @@ BOOL MF_MetaParam0(DC *dc, short func)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     
     mr->rdSize = 3;
     mr->rdFunction = func;
@@ -878,7 +894,7 @@ BOOL MF_MetaParam1(DC *dc, short func, short param1)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     
     mr->rdSize = 4;
     mr->rdFunction = func;
@@ -897,7 +913,7 @@ BOOL MF_MetaParam2(DC *dc, short func, short param1, short param2)
 {
     char buffer[10];
     METARECORD *mr = (METARECORD *)&buffer;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     
     mr->rdSize = 5;
     mr->rdFunction = func;
@@ -919,7 +935,7 @@ BOOL MF_MetaParam4(DC *dc, short func, short param1, short param2,
 {
     char buffer[14];
     METARECORD *mr = (METARECORD *)&buffer;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     
     mr->rdSize = 7;
     mr->rdFunction = func;
@@ -943,7 +959,7 @@ BOOL MF_MetaParam6(DC *dc, short func, short param1, short param2,
 {
     char buffer[18];
     METARECORD *mr = (METARECORD *)&buffer;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     
     mr->rdSize = 9;
     mr->rdFunction = func;
@@ -969,7 +985,7 @@ BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2,
 {
     char buffer[22];
     METARECORD *mr = (METARECORD *)&buffer;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     
     mr->rdSize = 11;
     mr->rdFunction = func;
@@ -995,7 +1011,7 @@ BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2,
 BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush)
 {
     int index;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGBRUSH16)];
     METARECORD *mr = (METARECORD *)&buffer;
     METAHEADER *mh;
@@ -1039,7 +1055,7 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush)
     BITMAPINFO *info;
     BITMAPINFOHEADER *infohdr;
     int index;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     char buffer[sizeof(METARECORD)];
     METAHEADER *mh;
 
@@ -1124,7 +1140,7 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush)
 BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
 {
     int index;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGPEN16)];
     METARECORD *mr = (METARECORD *)&buffer;
     METAHEADER *mh;
@@ -1161,7 +1177,7 @@ BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
 BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT16 *logfont)
 {
     int index;
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT16)];
     METARECORD *mr = (METARECORD *)&buffer;
     METAHEADER *mh;
@@ -1196,7 +1212,7 @@ BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT16 *logfont)
  */
 BOOL MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
 {
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     DWORD len;
     HANDLE hmr;
     METARECORD *mr;
@@ -1225,7 +1241,7 @@ BOOL MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
 BOOL MF_ExtTextOut(DC *dc, short x, short y, UINT16 flags, const RECT16 *rect,
                    LPCSTR str, short count, const INT16 *lpDx)
 {
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     DWORD len;
     HANDLE hmr;
     METARECORD *mr;
@@ -1259,7 +1275,7 @@ BOOL MF_ExtTextOut(DC *dc, short x, short y, UINT16 flags, const RECT16 *rect,
  */
 BOOL MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
 {
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     DWORD len;
     HANDLE hmr;
     METARECORD *mr;
@@ -1287,7 +1303,7 @@ BOOL MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
 BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
 	       short height, HDC hdcSrc, short xSrc, short ySrc, DWORD rop)
 {
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     DWORD len;
     HANDLE hmr;
     METARECORD *mr;
@@ -1339,7 +1355,7 @@ BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 		   short heightDest, HDC hdcSrc, short xSrc, short ySrc, 
 		   short widthSrc, short heightSrc, DWORD rop)
 {
-    HMETAFILE handle;
+    HMETAFILE16 handle;
     DWORD len;
     HANDLE hmr;
     METARECORD *mr;

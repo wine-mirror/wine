@@ -736,9 +736,9 @@ COLORREF COLOR_ToLogical(int pixel)
 
     if ( cSpace.flags & COLOR_FIXED && !COLOR_Graymax )
        {
-         color.red = pixel >> COLOR_Redshift;
-         color.green = pixel >> COLOR_Greenshift;
-         color.blue = pixel >> COLOR_Blueshift;
+         color.red = (pixel >> COLOR_Redshift) & COLOR_Redmax;
+         color.green = (pixel >> COLOR_Greenshift) & COLOR_Greenmax;
+         color.blue = (pixel >> COLOR_Blueshift) & COLOR_Bluemax;
        }
     else if ((screenDepth <= 8) && (pixel < 256) && 
 	    !(cSpace.flags & (COLOR_VIRTUAL | COLOR_FIXED)) )

@@ -121,18 +121,18 @@ base	1
 0116 stub FillConsoleOutputCharacterW
 0117 stub FindAtomA
 0118 stub FindAtomW
-0119 stub FindClose
+0119 stdcall FindClose(long) FindClose
 0120 stub FindCloseChangeNotification
 0121 stub FindFirstChangeNotificationA
 0122 stub FindFirstChangeNotificationW
 0123 stdcall FindFirstFileA(ptr ptr) FindFirstFile32A
 0124 stub FindFirstFileW
 0125 stub FindNextChangeNotification
-0126 stub FindNextFileA
+0126 stdcall FindNextFileA(long ptr) FindNextFile32A
 0127 stub FindNextFileW
 0128 stdcall FindResourceA(long ptr ptr) FindResource32A
-0129 stub FindResourceExA
-0130 stub FindResourceExW
+0129 stdcall FindResourceExA(long ptr ptr long) FindResourceEx32A
+0130 stdcall FindResourceExW(long ptr ptr long) FindResourceEx32W
 0131 stdcall FindResourceW(long ptr ptr) FindResource32W
 0132 stub FlushConsoleInputBuffer
 0133 stdcall FlushFileBuffers(long) FlushFileBuffers
@@ -140,7 +140,7 @@ base	1
 0135 stub FlushViewOfFile
 0136 stub FoldStringA
 0137 stub FoldStringW
-0138 stdcall FormatMessageA(long ptr long long ptr long ptr) FormatMessage32A
+0138 stdcall FormatMessageA() WIN32_FormatMessage32A
 0139 stub FormatMessageW
 0140 stub FreeConsole
 0141 stdcall FreeEnvironmentStringsA(ptr)	FreeEnvironmentStringsA
@@ -163,8 +163,8 @@ base	1
 0158 stub GetCommProperties
 0159 stdcall GetCommState(long ptr) GetCommState32
 0160 stdcall GetCommTimeouts(long ptr) GetCommTimeouts
-0161 stdcall GetCommandLineA()	GetCommandLineA
-0162 stub GetCommandLineW
+0161 stdcall GetCommandLineA() GetCommandLine32A
+0162 stdcall GetCommandLineW() GetCommandLine32W
 0163 stub GetCompressedFileSizeA
 0164 stub GetCompressedFileSizeW
 0165 stub GetComputerNameA

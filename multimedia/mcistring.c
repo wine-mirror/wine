@@ -19,6 +19,7 @@
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
+#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -31,16 +32,16 @@ extern MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
  */
 extern MCI_OPEN_PARMS		mciOpenDrv[MAXMCIDRIVERS];
 
-LONG DrvDefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		      DWORD dwParam1, DWORD dwParam2);
 
-LONG WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		     DWORD dwParam1, DWORD dwParam2);
-LONG MIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG MIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		     DWORD dwParam1, DWORD dwParam2);
-LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 			DWORD dwParam1, DWORD dwParam2);
-LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		     DWORD dwParam1, DWORD dwParam2);
 
 /* The reason why I just don't lowercase the keywords array in 

@@ -13,7 +13,7 @@
 #define MFVERSION 0x300
 #define META_EOF 0x0000
 
-HMETAFILE MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen);
+HMETAFILE16 MF_WriteRecord(HMETAFILE16 hmf, METARECORD *mr, WORD rlen);
 int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HANDLE hobj);
 int MF_AddHandleInternal(HANDLE hobj);
 BOOL MF_MetaParam0(DC *dc, short func);

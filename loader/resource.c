@@ -32,6 +32,7 @@
     else \
         dprintf_resource( stddeb, "#%04x", LOWORD(name)); 
 
+extern WORD WINE_LanguageId;
 
 /**********************************************************************
  *	    FindResource16    (KERNEL.60)
@@ -72,6 +73,15 @@ HRSRC16 FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
  */
 HANDLE32 FindResource32A( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
 {
+    return FindResourceEx32A(hModule,name,type,WINE_LanguageId);
+}
+
+/**********************************************************************
+ *	    FindResourceEx32A    (KERNEL32.129)
+ */
+HANDLE32 FindResourceEx32A(
+	HINSTANCE32 hModule,LPCSTR name,LPCSTR type,WORD lang
+) {
     LPWSTR xname,xtype;
     HANDLE32 ret;
 
@@ -79,7 +89,7 @@ HANDLE32 FindResource32A( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
     else xname = (LPWSTR)name;
     if (HIWORD((DWORD)type)) xtype = STRING32_DupAnsiToUni(type);
     else xtype = (LPWSTR)type;
-    ret = FindResource32W(hModule,xname,xtype);
+    ret = FindResourceEx32W(hModule,xname,xtype,lang);
     if (HIWORD((DWORD)name)) free(xname);
     if (HIWORD((DWORD)type)) free(xtype);
     return ret;
@@ -87,16 +97,14 @@ HANDLE32 FindResource32A( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
 
 
 /**********************************************************************
- *	    FindResource32W    (KERNEL32.131)
+ *	    FindResourceEx32W    (KERNEL32.130)
  */
-HRSRC32 FindResource32W( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
-{
+HRSRC32 FindResourceEx32W(
+	HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type, WORD lang
+) {
 #ifndef WINELIB
     NE_MODULE *pModule;
 
-    /* Sometimes we get passed hModule = 0x00000000. FIXME: is GetTaskDS()
-     * ok?
-     */
     if (!hModule) hModule = GetTaskDS();
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "FindResource32W: module=%08x type=", hModule );
@@ -106,10 +114,18 @@ HRSRC32 FindResource32W( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
     dprintf_resource( stddeb, "\n" );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
-    return PE_FindResource32W(hModule,name,type);
+    return PE_FindResourceEx32W(hModule,name,type,lang);
 #else
     return LIBRES_FindResource( hModule, name, type );
 #endif
+}
+
+/**********************************************************************
+ *	    FindResource32W    (KERNEL32.131)
+ */
+HRSRC32 FindResource32W( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
+{
+    return FindResourceEx32W(hModule,name,type,WINE_LanguageId);
 }
 
 
@@ -642,11 +658,121 @@ LoadString32W(HINSTANCE32 instance,UINT32 resource_id,LPWSTR buffer,int buflen)
 INT32
 LoadString32A(HINSTANCE32 instance,UINT32 resource_id,LPSTR buffer,int buflen)
 {
-    LPWSTR buffer2 = (LPWSTR)xmalloc(buflen*2);
+    LPWSTR buffer2 = buffer?(LPWSTR)xmalloc(buflen*2):NULL;
     INT32 retval = LoadString32W(instance,resource_id,buffer2,buflen);
 
-    STRING32_UniToAnsi(buffer,buffer2);
-    free(buffer2);
+    if (buffer) {
+	STRING32_UniToAnsi(buffer,buffer2);
+	free(buffer2);
+    }
+    return retval;
+}
+
+/* Messages...used by FormatMessage32* (KERNEL32.something)
+ * 
+ * They can be specified either directly or using a message ID and
+ * loading them from the resource.
+ * 
+ * The resourcedata has following format:
+ * start:
+ * 0: DWORD nrofentries
+ * nrofentries * subentry:
+ *	0: DWORD firstentry
+ *	4: DWORD lastentry
+ *      8: DWORD offset from start to the stringentries
+ *
+ * (lastentry-firstentry) * stringentry:
+ * 0: WORD len (0 marks end)
+ * 2: WORD unknown (flags?)
+ * 4: CHAR[len-4]
+ * 	(stringentry i of a subentry refers to the ID 'firstentry+i')
+ *
+ * Yes, ANSI strings in win32 resources. Go figure.
+ */
+
+/**********************************************************************
+ *	LoadMessage32A		(internal)
+ */
+INT32
+LoadMessage32A(
+	HINSTANCE32 instance,UINT32 id,WORD lang,LPSTR buffer,int buflen
+) {
+    HGLOBAL32	hmem;
+    HRSRC32	hrsrc;
+    BYTE	*p;
+    int		nrofentries,i,slen;
+    struct	_subentry {
+    	DWORD	firstentry;
+	DWORD	lastentry;
+	DWORD	offset;
+    } *se;
+    struct	_stringentry {
+    	WORD	len;
+	WORD	unknown;
+	CHAR	str[1];
+    } *stre;
+
+    dprintf_resource(stddeb, "LoadMessage: instance = %04x, id = %04x, buffer = %08x, "
+	   "length = %d\n", instance, (int)id, (int) buffer, buflen);
+
+    /*FIXME: I am not sure about the '1' ... But I've only seen those entries*/
+    hrsrc = FindResourceEx32W(instance,(LPWSTR)1,(LPCWSTR)RT_MESSAGELIST,lang);
+    if (!hrsrc) return 0;
+    hmem = LoadResource32( instance, hrsrc );
+    if (!hmem) return 0;
+    
+    p = LockResource32(hmem);
+    nrofentries = *(DWORD*)p;
+    stre = NULL;
+    se = (struct _subentry*)(p+4);
+    for (i=nrofentries;i--;) {
+    	if ((id>=se->firstentry) && (id<se->lastentry)) {
+	    stre = (struct _stringentry*)(p+se->offset);
+	    id	-= se->firstentry;
+	    break;
+	}
+	se++;
+    }
+    if (!stre)
+    	return 0;
+    for (i=id;i--;) {
+    	if (!(slen=stre->len))
+		return 0;
+    	stre = (struct _stringentry*)(((char*)stre)+slen);
+    }
+    slen=stre->len;
+    dprintf_resource(stddeb,"	- strlen=%d\n",slen);
+    i = MIN(buflen - 1, slen);
+    if (buffer == NULL)
+	return slen; /* different to LoadString */
+    if (i>0) {
+	lstrcpyn32A(buffer,stre->str,i);
+	buffer[i]=0;
+    } else {
+	if (buflen>1) {
+	    buffer[0]=0;
+	    return 0;
+	}
+    }
+    if (buffer)
+	    dprintf_resource(stddeb,"LoadMessage // '%s' copied !\n", buffer);
+    return i;
+}
+
+/**********************************************************************
+ *	LoadMessage32W	(internal)
+ */
+INT32
+LoadMessage32W(
+	HINSTANCE32 instance,UINT32 id,WORD lang,LPWSTR buffer,int buflen
+) {
+    LPSTR buffer2 = buffer?(LPSTR)xmalloc(buflen):NULL;
+    INT32 retval = LoadMessage32A(instance,id,lang,buffer2,buflen);
+
+    if (buffer) {
+	STRING32_AnsiToUni(buffer,buffer2);
+	free(buffer2);
+    }
     return retval;
 }
 

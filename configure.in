@@ -66,6 +66,25 @@ int main(void) {
   fi
 fi
 
+dnl **** Check for underscore on external symbols ****
+
+AC_CACHE_CHECK("whether external symbols need an underscore prefix",
+               ac_cv_c_extern_prefix,
+[saved_libs=$LIBS
+LIBS="conftest_asm.s $LIBS"
+cat > conftest_asm.s <<EOF
+	.globl _ac_test
+_ac_test:
+	.long 0
+EOF
+AC_TRY_LINK([extern int ac_test;],[if (ac_test) return 1],
+            ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no")
+LIBS=$saved_libs])
+if test "$ac_cv_c_extern_prefix" = "yes"
+then
+  AC_DEFINE(NEED_UNDERSCORE_PREFIX)
+fi
+
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(memmove tcgetattr usleep)

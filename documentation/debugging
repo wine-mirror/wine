@@ -63,6 +63,7 @@ relevant developer as feasonable.
                                   ^^^^^^
 				  |Returnvalue is 16 bit and has the value 7.
 
+
  3. If you have found a misbehaving function, try to find out why it
     misbehaves. Find the function in the source code. Try to make sense of
     the arguments passed. Usually there is a
@@ -70,15 +71,30 @@ relevant developer as feasonable.
     function. Rerun wine with "-debugmsg +xyz,+relay" added to the
     commandline.
 
+ 4. If the crash happened in a function in WINE, find out the exact line using
+    gdb (the sample crash has another reason):
+|... somewhere in the backtrace ...
+|5 0x080e5ad8 (CreateWindowEx32A+0xd8)
+|...
+|$ gdb wine
+|...
+|(gdb) l *0x080e5ad8
+|0x80e5ad8 is in CreateWindowEx32A (win.c:837).
+|...
+|837         return WIN_CreateWindowEx( &cs, classAtom, FALSE );
+|...
 
- 4. If those information isn't clear enough or if you want to know more about
+
+ 5. If those information isn't clear enough or if you want to know more about
     what's happening in the function itself, try running wine with "-debugmsg
     +all", which dumps ALL included debug information in wine.
 
- 5. If that isn't enough add more debug output for yourself into the
+ 6. If that isn't enough add more debug output for yourself into the
     functions you find relevant.
+    You might also try to run the program in gdb instead of using the
+    WINE-debugger.
   
- 6. You can also set a breakpoint for that function. Start wine with the
+ 7. You can also set a breakpoint for that function. Start wine with the
     "-debug" option added to the commandline. After loading the executable
     wine will enter the internal debugger. Use "break KERNEL.LSTRLEN"
     (replace by function you want to debug, CASE IS RELEVANT.) to set a
@@ -95,7 +111,7 @@ Program hangs, nothing happens
 
   Switch to UNIX shell, get the process-ID using "ps -a|grep wine", and do a
   "kill -HUP <pid>" (without " and <>). Wine will then enter its internal
-  debugger and you can procede as explained above.
+  debugger and you can proceed as explained above.
 
 Program reports an error with a Messagebox
 ==========================================
@@ -111,6 +127,44 @@ Program reports an error with a Messagebox
   and proceed with "continue". With "-debugmsg +all" Wine will now stop
   directly directly before setting up the Messagebox.  Proceed as explained
   above.
+
+
+Disassembling programs:
+=======================
+  You may also try to disassemble the offending program to check for 
+  undocumented features and/or use of them.
+  The best, freely available, disassembler for win16 programs is
+  Windows Codeback, archivename wcbxxx.zip, which usually can be found
+  in the Cica-Mirror subdirectory on the WINE ftpsites. (See ANNOUNCE).
+  Disassembling win32 programs is currenty only possible using 
+  Windows Disassembler 32, archivename something like wdasm32x.zip on
+  ftp.winsite.com and mirrors.
+  Understanding disassembled code is just a question of exercise.
+  Most code out there uses standard C function entries (for it is usually 
+  written in C). Win16 function entries usually look like that:
+|  	push bp
+|	mov bp, sp
+|	... function code ..
+|	retf XXXX 	<--------- XXXX is number of bytes of arguments
+
+  This is a FAR function with no local storage. The arguments usually start
+  at [bp+6] with increasing offsets. Note, that [bp+6] belongs to the RIGHTMOST 
+  argument, for exported win16 functions use the PASCAL calling convention.
+  So, if we use strcmp(a,b) with a and b both 32 bit variables b would be at
+  [bp+6] and a at [bp+10].
+  Most functions make also use of local storage in the stackframe:
+|	enter 0086, 00
+|	... function code ...
+|	leave
+|	retf XXXX
+  This does mostly the same as above, but also adds 0x86 bytes of
+  stackstorage, which is accessed using [bp-xx].
+  Before calling a function, arguments are pushed on the stack using something
+  like this:
+|	push word ptr [bp-02]	<- will be at [bp+8]
+|	push di			<- will be at [bp+6]
+|	call KERNEL.LSTRLEN
+  Here first the selector and then the offset to the passed string are pushed.
 
 
 Sample debugging session:

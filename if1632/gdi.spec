@@ -269,7 +269,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 405 stub FINALGDIINIT
 407 stub CREATEUSERBITMAP
 409 stub CREATEUSERDISCARDABLEBITMAP
-410 stub ISVALIDMETAFILE
+410 pascal16 IsValidMetaFile (word) IsValidMetaFile
 411 pascal16 GetCurLogFont(word) GetCurLogFont
 412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette
 439 pascal16 StretchDIBits (word s_word s_word word word word word

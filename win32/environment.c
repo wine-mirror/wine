@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "winerror.h"
-#include "kernel32.h"
 #include "module.h"
 #include "task.h"
 #include "stddebug.h"
@@ -19,7 +18,7 @@
 /***********************************************************************
  *           GetCommandLineA      (KERNEL32.161)
  */
-LPSTR GetCommandLineA(void)
+LPCSTR GetCommandLine32A(void)
 {
     static char buffer[256];
     char *cp;
@@ -34,6 +33,17 @@ LPSTR GetCommandLineA(void)
         memcpy( cp, &pdb->cmdLine[1], pdb->cmdLine[0] );
     }
     dprintf_win32(stddeb,"CommandLine = %s\n", buffer );
+    return buffer;
+}
+
+/***********************************************************************
+ *           GetCommandLineW      (KERNEL32.162)
+ */
+LPCWSTR GetCommandLine32W(void)
+{
+    static WCHAR buffer[256];
+
+    lstrcpynAtoW(buffer,GetCommandLine32A(),256);
     return buffer;
 }
 

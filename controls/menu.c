@@ -107,7 +107,7 @@ static UINT uSubPWndLevel = 0;
 static HMENU MENU_CopySysMenu(void)
 {
     HMENU hMenu;
-    HGLOBAL handle;
+    HGLOBAL16 handle;
     POPUPMENU *menu;
 
     if (!(handle = SYSRES_LoadResource( SYSRES_MENU_SYSMENU ))) return 0;

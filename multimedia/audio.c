@@ -71,7 +71,7 @@ typedef struct {
     BOOL    fShareable;         /* TRUE if first open was shareable */
     WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
     HANDLE  hCallback;          /* Callback handle for pending notification */
-	HMMIO	hFile;				/* mmio file handle open as Element		*/
+	HMMIO16	hFile;				/* mmio file handle open as Element		*/
 	MCI_WAVE_OPEN_PARMS openParms;
 	PCMWAVEFORMAT	WaveFormat;
 	WAVEHDR		WaveHdr;
@@ -1580,7 +1580,7 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 /**************************************************************************
 * 				AUDIO_DriverProc		[sample driver]
 */
-LONG WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2)
 {
 #ifdef linux

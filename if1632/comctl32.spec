@@ -5,8 +5,8 @@ base	2
 00 stub MenuHelp
 01 stub ShowHideMenuCtl
 02 stub GetEffectiveClientRect
-03 stub DrawStatusTextA
-04 stub CreateStatusWindowA
+03 stdcall DrawStatusTextA(long ptr ptr long) DrawStatusText32A
+04 stdcall CreateStatusWindowA(long ptr long long) CreateStatusWindow32A
 05 stub CreateToolbar
 06 stub CreateMappedBitmap
 07 stub CreatePropertySheetPage
@@ -17,7 +17,7 @@ base	2
 12 stub LBItemFromPt
 13 stub DrawInsert
 14 stub CreateUpDownControl
-15 return InitCommonControls 4 0
+15 stdcall InitCommonControls() InitCommonControls
 16 stub CreateStatusWindowW
 17 stub CreateToolbarEx
 18 stub DestroyPropertySheetPage

@@ -9,7 +9,8 @@
 #include "windows.h"
 #include "winreg.h"
 
-extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon);
+extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
+                      HICON16 hIcon);
 extern void SHELL_LoadRegistry();
 extern void SHELL_SaveRegistry();
 extern void SHELL_Init();

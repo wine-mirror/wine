@@ -13,6 +13,7 @@
 #include "win.h"
 #include "gdi.h"
 #include "sysmetrics.h"
+#include "heap.h"
 #include "hook.h"
 #include "spy.h"
 #include "stackframe.h"
@@ -259,13 +260,37 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
         if ((msg->hwnd != GetDesktopWindow()) && 
             (GetWindowTask16(msg->hwnd) != GetCurrentTask()))
             continue;  /* Not for this task */
-        if (remove)
+        if (remove && HOOK_GetHook( WH_JOURNALRECORD, GetTaskQueue(0) ))
         {
-            MSG16 tmpMsg = *msg; /* FIXME */
-            HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
-                            0, (LPARAM)MAKE_SEGPTR(&tmpMsg) );
-            QUEUE_RemoveMsg( sysMsgQueue, pos );
+            EVENTMSG16 *event = SEGPTR_NEW(EVENTMSG16);
+            if (event)
+            {
+                event->message = msg->message;
+                event->time = msg->time;
+                if ((msg->message >= WM_KEYFIRST) &&
+                    (msg->message <= WM_KEYLAST))
+                {
+                    event->paramL = (msg->wParam & 0xFF) |
+                                    (HIWORD(msg->lParam) << 8);
+                    event->paramH = msg->lParam & 0x7FFF;  
+                    if (HIWORD(msg->lParam) & 0x0100)
+                        event->paramH |= 0x8000;  /* special_key - bit */
+                    HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
+                                    0, (LPARAM)SEGPTR_GET(event) );
+                }
+                else if ((msg->message >= WM_MOUSEFIRST) &&
+                         (msg->message <= WM_MOUSELAST))
+                {
+                    event->paramL = LOWORD(msg->lParam);       /* X pos */
+                    event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
+                    ClientToScreen16( msg->hwnd, (LPPOINT16)&event->paramL );
+                    HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
+                                    0, (LPARAM)SEGPTR_GET(event) );
+                }
+                SEGPTR_FREE(event);
+            }
         }
+        if (remove) QUEUE_RemoveMsg( sysMsgQueue, pos );
         return TRUE;
     }
     return FALSE;
@@ -295,8 +320,8 @@ WORD GetDoubleClickTime()
  *
  * Implementation of an inter-task SendMessage.
  */
-static LRESULT MSG_SendMessage( HQUEUE hDestQueue, HWND hwnd, UINT msg,
-                         WPARAM wParam, LPARAM lParam )
+static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND hwnd, UINT msg,
+                                WPARAM wParam, LPARAM lParam )
 {
     MESSAGEQUEUE *queue, *destQ;
 
@@ -372,7 +397,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
 {
     int pos, mask;
     MESSAGEQUEUE *msgQueue;
-    HQUEUE	  hQueue;
+    HQUEUE16 hQueue;
 
 #ifdef CONFIG_IPC
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
@@ -681,6 +706,8 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         fprintf( stderr, "SendMessage16: invalid hwnd %04x\n", hwnd );
         return 0;
     }
+    if (wndPtr->hmemTaskQ == QUEUE_GetDoomedQueue())
+        return 0;  /* Don't send anything if the task is dying */
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
         return MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam );
 
@@ -731,6 +758,8 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         return ret;
     }
 
+    if (wndPtr->hmemTaskQ == QUEUE_GetDoomedQueue())
+        return 0;  /* Don't send anything if the task is dying */
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
     {
         fprintf( stderr, "SendMessage32A: intertask message not supported\n" );
@@ -771,6 +800,8 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         fprintf( stderr, "SendMessage32W: invalid hwnd %08x\n", hwnd );
         return 0;
     }
+    if (wndPtr->hmemTaskQ == QUEUE_GetDoomedQueue())
+        return 0;  /* Don't send anything if the task is dying */
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
     {
         fprintf( stderr, "SendMessage32W: intertask message not supported\n" );

@@ -75,8 +75,8 @@ WORD FreeSelector(WORD a)
 }
 
 /* stub that partially emulates the true GLOBAL_CreateBlock function */
-HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
-                            HGLOBAL hOwner, BOOL isCode,
+HGLOBAL16 GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
+                            HGLOBAL16 hOwner, BOOL isCode,
                             BOOL is32Bit, BOOL isReadOnly,
 			    SHMDATA *shmdata  )
 {

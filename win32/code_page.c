@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include "windows.h"
 #include "winerror.h"
-#include "kernel32.h"
 #include "winnls.h"
 #include "stddebug.h"
 #include "debug.h"

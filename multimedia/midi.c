@@ -66,7 +66,7 @@ typedef struct {
 	BOOL    fShareable;         /* TRUE if first open was shareable */
 	WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
 	HANDLE  hCallback;          /* Callback handle for pending notification */
-	HMMIO	hFile;				/* mmio file handle open as Element		*/
+	HMMIO16	hFile;				/* mmio file handle open as Element		*/
 	DWORD	dwBeginData;
 	DWORD	dwTotalLen;
 	WORD	wFormat;
@@ -1267,7 +1267,7 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 /**************************************************************************
 * 				MIDI_DriverProc		[sample driver]
 */
-LONG MIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG MIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2)
 {
 #ifdef linux

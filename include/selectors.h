@@ -16,5 +16,6 @@ extern WORD SELECTOR_AllocBlock( const void *base, DWORD size,
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
                                    enum seg_type type, BOOL32 is32bit,
                                    BOOL32 readonly );
+extern void SELECTOR_FreeBlock( WORD sel, WORD count );
 
 #endif /* __WINE_SELECTORS_H */

@@ -206,8 +206,8 @@ typedef CHOOSEFONT *LPCHOOSEFONT;
 typedef struct {
 	DWORD 		lStructSize;
 	HWND 		hwndOwner;
-	HGLOBAL		hDevMode;
-	HGLOBAL		hDevNames;
+	HGLOBAL16       hDevMode;
+	HGLOBAL16       hDevNames;
 	HDC	       	hDC;
 	DWORD 		Flags;
 	UINT		nFromPage;
@@ -221,8 +221,8 @@ typedef struct {
         WNDPROC16       lpfnSetupHook;
 	SEGPTR 		lpPrintTemplateName;
 	SEGPTR 		lpSetupTemplateName;
-	HGLOBAL 	hPrintTemplate;
-	HGLOBAL 	hSetupTemplate;
+	HGLOBAL16       hPrintTemplate;
+	HGLOBAL16       hSetupTemplate;
 	} PRINTDLG;
 typedef PRINTDLG * LPPRINTDLG;
 

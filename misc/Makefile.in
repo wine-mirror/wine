@@ -7,6 +7,7 @@ C_SRCS = \
 	comm.c \
 	commdlg.c \
 	compobj.c \
+	crtdll.c \
 	driver.c \
 	exec.c \
 	escape.c \

@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "winerror.h"
-#include "kernel32.h"
 #include "winbase.h"
 #include "handle32.h"
 #include "stddebug.h"

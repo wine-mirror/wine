@@ -866,6 +866,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
     CBTACTIVATESTRUCT16   *cbtStruct;
     WORD                   wIconized=0;
+    HANDLE hNewActiveQueue;
 
     /* FIXME: When proper support for cooperative multitasking is in place 
      *        hActiveQ will be global 
@@ -874,10 +875,10 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     HANDLE                 hActiveQ = 0;   
 
     /* paranoid checks */
-    if( !hWnd || hWnd == GetDesktopWindow() || hWnd == hwndActive )
+    if( hWnd == GetDesktopWindow() || hWnd == hwndActive )
 	return 0;
 
-    if( GetTaskQueue(0) != wndPtr->hmemTaskQ )
+    if (wndPtr && (GetTaskQueue(0) != wndPtr->hmemTaskQ))
 	return 0;
 
     if( wndTemp )
@@ -918,7 +919,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     hwndActive = hWnd;
 
     /* send palette messages */
-    if( SendMessage16( hWnd, WM_QUERYNEWPALETTE, 0, 0L) )
+    if (hWnd && SendMessage16( hWnd, WM_QUERYNEWPALETTE, 0, 0L))
 	SendMessage16((HWND16)-1, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0L );
 
     /* if prev wnd is minimized redraw icon title 
@@ -932,7 +933,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
   */
 
     /* managed windows will get ConfigureNotify event */  
-    if (!(wndPtr->dwStyle & WS_CHILD) && !(wndPtr->flags & WIN_MANAGED))
+    if (wndPtr && !(wndPtr->dwStyle & WS_CHILD) && !(wndPtr->flags & WIN_MANAGED))
     {
 	/* check Z-order and bring hWnd to the top */
 	for (wndTemp = WIN_GetDesktop()->child; wndTemp; wndTemp = wndTemp->next)
@@ -941,18 +942,18 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 	if( wndTemp != wndPtr )
 	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0, 
 			 SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+        if( !IsWindow(hWnd) ) return 0;
     }
-
-    if( !IsWindow(hWnd) ) return 0;
 
     if (hwndPrevActive)
     {
         wndTemp = WIN_FindWndPtr( hwndPrevActive );
         if (wndTemp) hActiveQ = wndTemp->hmemTaskQ;
     }
+    hNewActiveQueue = wndPtr ? wndPtr->hmemTaskQ : 0;
 
     /* send WM_ACTIVATEAPP if necessary */
-    if (hActiveQ != wndPtr->hmemTaskQ)
+    if (hActiveQ != hNewActiveQueue)
     {
         WND **list, **ppWnd;
 
@@ -964,7 +965,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
                 if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
                 if ((*ppWnd)->hmemTaskQ != hActiveQ) continue;
                 SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
-                               0, QUEUE_GetQueueTask(wndPtr->hmemTaskQ) );
+                               0, QUEUE_GetQueueTask(hNewActiveQueue) );
             }
             HeapFree( SystemHeap, 0, list );
         }
@@ -975,7 +976,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
             {
                 /* Make sure that the window still exists */
                 if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-                if ((*ppWnd)->hmemTaskQ != wndPtr->hmemTaskQ) continue;
+                if ((*ppWnd)->hmemTaskQ != hNewActiveQueue) continue;
                 SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
                                1, QUEUE_GetQueueTask( hActiveQ ) );
             }
@@ -984,19 +985,22 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 	if (!IsWindow(hWnd)) return 0;
     }
 
-    /* walk up to the first unowned window */
-    wndTemp = wndPtr;
-    while (wndTemp->owner) wndTemp = wndTemp->owner;
-    /* and set last active owned popup */
-    wndTemp->hwndLastActive = hWnd;
+    if (hWnd)
+    {
+        /* walk up to the first unowned window */
+        wndTemp = wndPtr;
+        while (wndTemp->owner) wndTemp = wndTemp->owner;
+        /* and set last active owned popup */
+        wndTemp->hwndLastActive = hWnd;
 
-    wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
-    SendMessage16( hWnd, WM_NCACTIVATE, TRUE, 0 );
-    SendMessage32A( hWnd, WM_ACTIVATE,
+        wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
+        SendMessage16( hWnd, WM_NCACTIVATE, TRUE, 0 );
+        SendMessage32A( hWnd, WM_ACTIVATE,
 		 MAKEWPARAM( (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE, wIconized),
 		 (LPARAM)hwndPrevActive );
 
-    if( !IsWindow(hWnd) ) return 0;
+        if( !IsWindow(hWnd) ) return 0;
+    }
 
     /* change focus if possible */
     if( fChangeFocus && GetFocus() )
@@ -1023,6 +1027,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
+
+    if (!hWnd) return WINPOS_SetActiveWindow( 0, mouseMsg, TRUE );
 
     if( !wndPtr ) return FALSE;
 

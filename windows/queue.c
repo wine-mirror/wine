@@ -22,18 +22,6 @@ static HQUEUE16 hDoomedQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
 
 /***********************************************************************
- *	     QUEUE_GetDoomedQueue/QUEUE_SetDoomedQueue
- */
-HQUEUE QUEUE_GetDoomedQueue()
-{
-  return hDoomedQueue;
-}
-void QUEUE_SetDoomedQueue(HQUEUE hQueue)
-{
-  hDoomedQueue = hQueue;
-}
-
-/***********************************************************************
  *	     QUEUE_DumpQueue
  */
 void QUEUE_DumpQueue( HQUEUE16 hQueue )
@@ -75,7 +63,7 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
  */
 void QUEUE_WalkQueues(void)
 {
-    HQUEUE hQueue = hFirstQueue;
+    HQUEUE16 hQueue = hFirstQueue;
 
     fprintf( stderr, "Queue Size Msgs Task\n" );
     while (hQueue)
@@ -96,13 +84,31 @@ void QUEUE_WalkQueues(void)
 
 
 /***********************************************************************
+ *	     QUEUE_GetDoomedQueue/QUEUE_SetDoomedQueue
+ */
+HQUEUE16 QUEUE_GetDoomedQueue()
+{
+    return hDoomedQueue;
+}
+
+
+/***********************************************************************
+ *	     QUEUE_SetDoomedQueue
+ */
+void QUEUE_SetDoomedQueue( HQUEUE16 hQueue )
+{
+    hDoomedQueue = hQueue;
+}
+
+
+/***********************************************************************
  *           QUEUE_CreateMsgQueue
  *
  * Creates a message queue. Doesn't link it into queue list!
  */
-static HQUEUE QUEUE_CreateMsgQueue( int size )
+static HQUEUE16 QUEUE_CreateMsgQueue( int size )
 {
-    HQUEUE hQueue;
+    HQUEUE16 hQueue;
     MESSAGEQUEUE * msgQueue;
     int queueSize;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
@@ -249,7 +255,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     WPARAM wParam;
     LPARAM lParam;
     LRESULT result = 0;
-    HQUEUE oldSender;
+    HQUEUE16 oldSender;
 
     printf( "ReceiveMessage\n" );
     if (!(queue->wakeBits & QS_SENDMESSAGE)) return;
@@ -395,7 +401,7 @@ static void QUEUE_WakeSomeone( UINT message )
 {
     HWND hwnd;
     WORD wakeBit;
-    HQUEUE hQueue;
+    HQUEUE16 hQueue;
     MESSAGEQUEUE *queue = NULL;
 
     if ((message >= WM_KEYFIRST) && (message <= WM_KEYLAST)) wakeBit = QS_KEY;
@@ -577,7 +583,7 @@ HTASK16 GetWindowTask16( HWND16 hwnd )
  */
 BOOL SetMessageQueue( int size )
 {
-    HQUEUE hQueue, hNewQueue;
+    HQUEUE16 hQueue, hNewQueue;
     MESSAGEQUEUE *queuePtr;
 
     dprintf_msg(stddeb,"SetMessageQueue: task %04x size %i\n", GetCurrentTask(), size); 

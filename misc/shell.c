@@ -124,6 +124,7 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     HINSTANCE retval=31;    /* default - 'No association was found' */
     char *tok;              /* token pointer */
     int i;                  /* random counter */
+    char xlpFile[256];          /* result of SearchPath */
 
     dprintf_exec(stddeb, "SHELL_FindExecutable: File %s, Dir %s\n", 
 		 (lpFile != NULL?lpFile:"-"), 
@@ -132,18 +133,19 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     lpResult[0]='\0'; /* Start off with an empty return string */
 
     /* trap NULL parameters on entry */
-    if (( lpFile == NULL ) || ( lpDirectory == NULL ) || 
-	( lpResult == NULL ) || ( lpOperation == NULL ))
+    if (( lpFile == NULL ) || ( lpResult == NULL ) || ( lpOperation == NULL ))
     {
 	/* FIXME - should throw a warning, perhaps! */
 	return 2; /* File not found. Close enough, I guess. */
     }
+    if (SearchPath32A(lpDirectory,lpFile,NULL,sizeof(xlpFile),xlpFile,NULL))
+    	lpFile = xlpFile;
 
     /* First thing we need is the file's extension */
-    extension = strrchr( lpFile, '.' ); /* Assume last "." is the one; */
+    extension = strrchr( xlpFile, '.' ); /* Assume last "." is the one; */
 					/* File->Run in progman uses */
 					/* .\FILE.EXE :( */
-    if ((extension == NULL) || (extension == &lpFile[strlen(lpFile)]))
+    if ((extension == NULL) || (extension == &xlpFile[strlen(xlpFile)]))
     {
 	return 31; /* no association */
     }
@@ -176,7 +178,7 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     {
 	if (strcmp(tok, &tmpext[1])==0) /* have to skip the leading "." */
 	{
-	    strcpy(lpResult, lpFile); /* Need to perhaps check that */
+	    strcpy(lpResult, xlpFile); /* Need to perhaps check that */
 				      /* the file has a path attached */
 	    dprintf_exec(stddeb, "SHELL_FindExecutable: found %s\n",
 			 lpResult);
@@ -212,7 +214,7 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
 	    if (tok != NULL)
 	    {
 		tok[0]='\0'; /* truncate string at the percent */
-		strcat( lpResult, lpFile ); /* what if no dir in lpFile? */
+		strcat( lpResult, xlpFile ); /* what if no dir in xlpFile? */
 		tok=strstr( command, "%1" );
 		if ((tok!=NULL) && (strlen(tok)>2))
 		{
@@ -235,7 +237,7 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
 	    if (tok != NULL)
 	    {
 		tok[0]='\0';
-		strcat( lpResult, lpFile ); /* what if no dir in lpFile? */
+		strcat( lpResult, xlpFile ); /* what if no dir in xlpFile? */
 		tok=strstr( command, "^" ); /* see above */
 		if ((tok != NULL) && (strlen(tok)>5))
 		{
@@ -300,8 +302,7 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
     lpResult[0]='\0'; /* Start off with an empty return string */
 
     /* trap NULL parameters on entry */
-    if (( lpFile == NULL ) || ( lpDirectory == NULL ) || 
-	( lpResult == NULL ))
+    if (( lpFile == NULL ) || ( lpResult == NULL ))
     {
 	/* FIXME - should throw a warning, perhaps! */
 	return 2; /* File not found. Close enough, I guess. */
@@ -346,7 +347,7 @@ LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 /*************************************************************************
  *				ShellAbout		[SHELL.22]
  */
-INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
+INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON16 hIcon)
 {
     HANDLE handle;
     BOOL bRet;
@@ -435,10 +436,10 @@ HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WOR
  *
  * This abortion is called directly by Progman
  */
-HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIconIndex, WORD n )
+HICON16 InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIconIndex, WORD n )
 {
   HANDLE 	hRet = 0;
-  HICON*	RetPtr = NULL;
+  HICON16*	RetPtr = NULL;
   BYTE*  	pData;
   OFSTRUCT 	ofs;
   HFILE 	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
@@ -448,8 +449,8 @@ HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIco
 
   if( hFile == HFILE_ERROR || !n ) return 0;
 
-  hRet = GlobalAlloc16( GMEM_FIXED, sizeof(HICON)*n);
-  RetPtr = (HICON*)GlobalLock16(hRet);
+  hRet = GlobalAlloc16( GMEM_FIXED, sizeof(HICON16)*n);
+  RetPtr = (HICON16*)GlobalLock16(hRet);
 
  *RetPtr = (n == 0xFFFF)? 0: 1;				/* error return values */
 
@@ -495,7 +496,7 @@ HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIco
             if( nIconIndex == (UINT)-1 ) RetPtr[0] = iconDirCount;
 	    else if( nIconIndex < iconDirCount )
 	      {
-		  HANDLE hIcon;
+		  HICON16 hIcon;
 		  UINT   i, icon;
 
 		  if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
@@ -531,14 +532,14 @@ HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIco
 /*************************************************************************
  *				ExtractIcon 		[SHELL.34]
  */
-HICON ExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
+HICON16 ExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
 {
   HANDLE handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
 
   if( handle )
     {
-      HICON* ptr = (HICON*)GlobalLock16(handle);
-      HICON  hIcon = *ptr;
+      HICON16* ptr = (HICON16*)GlobalLock16(handle);
+      HICON16  hIcon = *ptr;
 
       GlobalFree16(handle);
       return hIcon;

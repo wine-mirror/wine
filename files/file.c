@@ -906,10 +906,12 @@ found:
     	p=p+1;
     else
         p=testpath;
-    if (p-testpath<buflen)
-	*lastpart=(p-testpath)+buf;
-    else
-    	*lastpart=NULL;
+    if (lastpart) {
+	if (p-testpath<buflen)
+	    *lastpart=(p-testpath)+buf;
+	else
+	    *lastpart=NULL;
+    }
     dprintf_file(stddeb,"	-> found %s,last part is %s\n",testpath,p);
     return strlen(testpath);
 }
@@ -930,10 +932,12 @@ DWORD SearchPath32W(
 
 	ret=SearchPath32A(pathA,fnA,extA,buflen,bufA,&lastpartA);
 	lstrcpynAtoW(buf,bufA,buflen);
-	if (lastpartA)
-		*lastpart = buf+(lastpartA-bufA);
-	else
-		*lastpart = NULL;
+	if (lastpart) {
+		if (lastpartA)
+			*lastpart = buf+(lastpartA-bufA);
+		else
+			*lastpart = NULL;
+	}
 	free(bufA);
 	free(fnA);
 	if (pathA) free(pathA);

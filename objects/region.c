@@ -424,6 +424,35 @@ static int REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
 }
 
 /***********************************************************************
+ *           REGION_UnionRectWithRgn
+ *
+ * Add rectangle to region
+ */
+BOOL16 REGION_UnionRectWithRgn( HRGN32 hRgn, LPRECT16 rc )
+{
+  RGNOBJ 	*rgnObj = (RGNOBJ*) GDI_GetObjPtr( hRgn, REGION_MAGIC );
+  XRectangle     rect = { rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top };
+  BOOL16	 ret = 0; 
+
+  if( rgnObj )
+  {
+    if( !rgnObj->xrgn )
+    {
+      if (!(rgnObj->xrgn = XCreateRegion()))
+      {
+         GDI_FreeObject( hRgn );
+         return 0;
+      }
+      ret = SIMPLEREGION; 
+    }
+    else
+      ret = COMPLEXREGION;
+    XUnionRectWithRegion( &rect, rgnObj->xrgn, rgnObj->xrgn );
+  }
+  return ret;
+}
+
+/***********************************************************************
  *           REGION_CreateFrameRgn
  *
  * Create a region that is a frame around another region

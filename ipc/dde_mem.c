@@ -55,7 +55,7 @@ int debug_last_handle_size= 0;	/* for debugging purpose only */
  *   h    - the handle.
  * RETURN: pointer to handle info.
  */
-static struct handle_info *locate_handle(HGLOBAL h, struct local_shm_map *map)
+static struct handle_info *locate_handle(HGLOBAL16 h, struct local_shm_map *map)
 {
   struct shm_block *block;
   
@@ -79,7 +79,7 @@ static struct handle_info *locate_handle(HGLOBAL h, struct local_shm_map *map)
 }
 
 /* dde_alloc_handle: allocate shared DDE handle */
-static HGLOBAL dde_alloc_handle()
+static HGLOBAL16 dde_alloc_handle()
 {
   int bit_nr;
 
@@ -101,7 +101,7 @@ DDE_malloc(unsigned int flags, unsigned long size, SHMDATA *shmdata)
     struct shm_block *block;
     struct handle_info *h_info;
     struct local_shm_map *curr;
-    HGLOBAL handle;
+    HGLOBAL16 handle;
     
     dprintf_global(stddeb,"DDE_malloc flags %4X, size %ld\n", flags, size);
     DDE_IPC_init();		/* make sure main shm block allocated */ 
@@ -167,7 +167,7 @@ DDE_malloc(unsigned int flags, unsigned long size, SHMDATA *shmdata)
     return (char *)HINFO2DATAPTR(h_info);
 }
 
-HGLOBAL DDE_GlobalFree(HGLOBAL h)
+HGLOBAL16 DDE_GlobalFree(HGLOBAL16 h)
 {
   struct handle_info *h_info;
   int handle_index= h & 0x7fff;
@@ -193,7 +193,7 @@ HGLOBAL DDE_GlobalFree(HGLOBAL h)
   return 0;
 }
 
-WORD DDE_SyncHandle(HGLOBAL handle, WORD sel)
+WORD DDE_SyncHandle(HGLOBAL16 handle, WORD sel)
     
 {
     struct handle_info *h_info;
@@ -228,12 +228,12 @@ WORD DDE_SyncHandle(HGLOBAL handle, WORD sel)
  *   32 bit pointer to the memory.
  */
 
-void *DDE_AttachHandle(HGLOBAL handle, SEGPTR *segptr)
+void *DDE_AttachHandle(HGLOBAL16 handle, SEGPTR *segptr)
 {
   struct handle_info *h_info;
   SHMDATA shmdata;
   void *ptr;
-  HGLOBAL hOwner = GetCurrentPDB();
+  HGLOBAL16 hOwner = GetCurrentPDB();
 
   assert(is_dde_handle(handle));
   if (segptr != NULL)

@@ -2,7 +2,7 @@
  * Scroll windows and DCs
  *
  * Copyright  David W. Metcalfe, 1993
- *	      Alex Korobka       1995
+ *	      Alex Korobka       1995,1996
  *
  *
  */
@@ -12,100 +12,16 @@
 #include "class.h"
 #include "win.h"
 #include "gdi.h"
+#include "region.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
 /* #define DEBUG_SCROLL */
 #include "debug.h"
 
-extern HRGN DCE_GetVisRgn(HWND, WORD);		/* windows/dce.c */
 extern HWND CARET_GetHwnd();			/* windows/caret.c */
 extern void CLIPPING_UpdateGCRegion(DC* );	/* objects/clipping.c */
 
 static int RgnType;
-
-
-/* -----------------------------------------------------------------------
- *	       SCROLL_TraceChildren
- * 
- * Returns a region invalidated by children, siblings, and/or ansectors
- * in the window rectangle or client rectangle
- *
- * dcx can have DCX_WINDOW, DCX_CLIPCHILDREN, DCX_CLIPSIBLINGS set
- */
-
-HRGN	SCROLL_TraceChildren( WND* wndScroll, short dx, short dy, WORD dcx)
-{
- HRGN		hRgnWnd;
- HRGN		hUpdateRgn,hCombineRgn;
-
- if( !wndScroll || ( !dx && !dy) ) return 0;
-
- if( dcx & DCX_WINDOW )
-	 hRgnWnd   = CreateRectRgnIndirect16(&wndScroll->rectWindow);
- else
-	{
-	 RECT32 rect = { 0, 0, wndScroll->rectClient.right - wndScroll->rectClient.left,
-			       wndScroll->rectClient.bottom - wndScroll->rectClient.top };
-
- 	 hRgnWnd   = CreateRectRgnIndirect32(&rect);
-	}
-
- hUpdateRgn  = DCE_GetVisRgn( wndScroll->hwndSelf, dcx );
- hCombineRgn = CreateRectRgn(0,0,0,0);
-
- if( !hUpdateRgn || !hCombineRgn )
-      {
-	DeleteObject( hUpdateRgn? hUpdateRgn : hCombineRgn);
-	DeleteObject(hRgnWnd);
-	return 0;
-      }
-
- OffsetRgn( hUpdateRgn, dx, dy);
- CombineRgn(hCombineRgn, hRgnWnd, hUpdateRgn, RGN_DIFF);
- 
- DeleteObject(hRgnWnd);
- DeleteObject(hUpdateRgn);
-
- return hCombineRgn;
-}
-
-
-/* ----------------------------------------------------------------------
- *	       SCROLL_ScrollChildren
- */
-BOOL	SCROLL_ScrollChildren( WND* wndScroll, short dx, short dy)
-{
- WND           *wndPtr = NULL;
- HRGN		hUpdateRgn;
- BOOL		b = 0;
-
- if( !wndScroll || ( !dx && !dy )) return 0;
-
- dprintf_scroll(stddeb,"SCROLL_ScrollChildren: hwnd %04x dx=%i dy=%i\n",wndScroll->hwndSelf,dx,dy);
-
- /* get a region in client rect invalidated by siblings and ansectors */
- hUpdateRgn = SCROLL_TraceChildren(wndScroll, dx , dy, DCX_CLIPSIBLINGS);
-
-   /* update children coordinates */
-   for (wndPtr = wndScroll->child; wndPtr; wndPtr = wndPtr->next)
-   {
-	/* we can check if window intersects with clipRect parameter
-	 * and do not move it if not - just a thought.     - AK
-	 */
-	SetWindowPos(wndPtr->hwndSelf, 0, wndPtr->rectWindow.left + dx,
-                     wndPtr->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
-                     SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
-                     SWP_DEFERERASE );
-  } 
-
- /* invalidate uncovered region and paint frames */
- b = RedrawWindow32( wndScroll->hwndSelf, NULL, hUpdateRgn, 
-		     RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW | RDW_ALLCHILDREN ); 
-
- DeleteObject( hUpdateRgn);
- return b;
-}
-
 
 /*************************************************************************
  *             ScrollWindow         (USER.61)
@@ -119,14 +35,13 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
     HWND 	hCaretWnd = CARET_GetHwnd();
     WND*	wndScroll = WIN_FindWndPtr( hwnd );
 
-    dprintf_scroll(stddeb,"ScrollWindow: dx=%d, dy=%d, lpRect =%08lx clipRect=%i,%i,%i,%i\n", 
-	    dx, dy, (LONG)rect, (int)((clipRect)?clipRect->left:0),
+    dprintf_scroll(stddeb,"ScrollWindow: hwnd=%04x, dx=%d, dy=%d, lpRect =%08lx clipRect=%i,%i,%i,%i\n", 
+	    hwnd, dx, dy, (LONG)rect, (int)((clipRect)?clipRect->left:0),
                                 (int)((clipRect)?clipRect->top:0),
                                 (int)((clipRect)?clipRect->right:0), 
                                 (int)((clipRect)?clipRect->bottom:0));
 
-    /* if rect is NULL children have to be moved */
-    if ( !rect )
+    if ( !rect ) /* do not clip children */
        {
 	  GetClientRect16(hwnd, &rc);
 	  hrgnClip = CreateRectRgnIndirect16( &rc );
@@ -135,21 +50,17 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
               HideCaret(hCaretWnd);
           else hCaretWnd = 0;
  
-	  /* children will be Blt'ed too */
 	  hdc      = GetDCEx(hwnd, hrgnClip, DCX_CACHE | DCX_CLIPSIBLINGS);
           DeleteObject(hrgnClip);
        }
-    else
+    else	/* clip children */
        {
 	  GetClientRect16(hwnd,&rc);
-	  dprintf_scroll(stddeb,"\trect=%i %i %i %i client=%i %i %i %i\n",
-			 (int)rect->left,(int)rect->top,(int)rect->right,
-			 (int)rect->bottom,(int)rc.left,(int)rc.top,
-			 (int)rc.right,(int)rc.bottom);
+	  CopyRect16(&rc, rect);
 
           if (hCaretWnd == hwnd) HideCaret(hCaretWnd);
           else hCaretWnd = 0;
-          CopyRect16(&rc, rect);
+
 	  hdc = GetDC(hwnd);
        }
 
@@ -158,34 +69,28 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
     else
 	CopyRect16(&cliprc, clipRect);
 
-    /* move window update region (if any) */
-
-    if( wndScroll->hrgnUpdate > 1 )
-	OffsetRgn( wndScroll->hrgnUpdate, dx, dy );
-
     hrgnUpdate = CreateRectRgn(0, 0, 0, 0);
     ScrollDC(hdc, dx, dy, &rc, &cliprc, hrgnUpdate, NULL);
     ReleaseDC(hwnd, hdc);
 
-    if( !rect )
-      {
-         /* FIXME: this doesn't take into account hrgnUpdate */
+    if( !rect )		/* move child windows and update region */
+    { 
+      WND*	wndPtr;
 
-         if( !SCROLL_ScrollChildren( wndScroll, dx,dy) )
-	     InvalidateRgn(hwnd, hrgnUpdate, TRUE);
-      }
-    else
-      {
-        HRGN hrgnInv = SCROLL_TraceChildren( wndScroll ,dx,dy,DCX_CLIPCHILDREN |
-						              DCX_CLIPSIBLINGS );
-        if( hrgnInv )
-        {
-	    CombineRgn(hrgnUpdate,hrgnInv,hrgnUpdate,RGN_OR);
-            DeleteObject(hrgnInv);
-        }
+      if( wndScroll->hrgnUpdate > 1 )
+	OffsetRgn( wndScroll->hrgnUpdate, dx, dy );
 
-        RedrawWindow32( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW);
-      }
+      for (wndPtr = wndScroll->child; wndPtr; wndPtr = wndPtr->next)
+        SetWindowPos(wndPtr->hwndSelf, 0, wndPtr->rectWindow.left + dx,
+                     wndPtr->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
+                     SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+                     SWP_DEFERERASE );
+    }
+
+    /* RDW_ALLCHILDREN is to account for dialog controls */
+
+    RedrawWindow32( hwnd, NULL, hrgnUpdate, RDW_ALLCHILDREN |
+					    RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW);
 
     DeleteObject(hrgnUpdate);
     if( hCaretWnd ) ShowCaret(hCaretWnd);
@@ -210,15 +115,15 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
                    dx, dy, hrgnUpdate, rcUpdate, cliprc, rc ? rc->left : 0,
                    rc ? rc->top : 0, rc ? rc->right : 0, rc ? rc->bottom : 0 );
 
-    if (rc == NULL || !hdc || !dc)
-	return FALSE;
+    if ( !dc || !hdc ) return FALSE;
 
     /* set clipping region */
 
+    if ( !rc ) GetClipBox16( hdc, &rectClip );
+    else rectClip = *rc;
+
     if (cliprc)
-	IntersectRect16(&rectClip,rc,cliprc);
-    else
-	rectClip = *rc;
+	IntersectRect16(&rectClip,&rectClip,cliprc);
 
     if( rectClip.left >= rectClip.right || rectClip.top >= rectClip.bottom )
 	return FALSE;
@@ -228,9 +133,7 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 
     if( hrgnClip )
       {
-        /* call UpdateGCRegion directly to avoid
-         * one more temporary region
-	 */ 
+        /* save a copy and change cliprgn directly */
 
         CombineRgn( hrgnScrollClip, hrgnClip, 0, RGN_COPY );
         SetRectRgn( hrgnClip, rectClip.left, rectClip.top, rectClip.right, rectClip.bottom );
@@ -238,33 +141,33 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 	CLIPPING_UpdateGCRegion( dc );
       }
     else
-        SelectClipRgn( hdc, hrgnScrollClip ); 
+        SelectClipRgn( hdc, hrgnScrollClip );
 
     /* translate coordinates */
 
     if (dx > 0)
     {
-	src.x = XDPTOLP(dc, rc->left);
-	dest.x = XDPTOLP(dc, rc->left + abs(dx));
+	src.x = XDPTOLP(dc, rectClip.left);
+	dest.x = XDPTOLP(dc, rectClip.left + abs(dx));
     }
     else
     {
-	src.x = XDPTOLP(dc, rc->left + abs(dx));
-	dest.x = XDPTOLP(dc, rc->left);
+	src.x = XDPTOLP(dc, rectClip.left + abs(dx));
+	dest.x = XDPTOLP(dc, rectClip.left);
     }
     if (dy > 0)
     {
-	src.y = YDPTOLP(dc, rc->top);
-	dest.y = YDPTOLP(dc, rc->top + abs(dy));
+	src.y = YDPTOLP(dc, rectClip.top);
+	dest.y = YDPTOLP(dc, rectClip.top + abs(dy));
     }
     else
     {
-	src.y = YDPTOLP(dc, rc->top + abs(dy));
-	dest.y = YDPTOLP(dc, rc->top);
+	src.y = YDPTOLP(dc, rectClip.top + abs(dy));
+	dest.y = YDPTOLP(dc, rectClip.top);
     }
 
-    width = rc->right - rc->left - abs(dx);
-    height = rc->bottom - rc->top - abs(dy);
+    width = rectClip.right - rectClip.left - abs(dx);
+    height = rectClip.bottom - rectClip.top - abs(dy);
 
     /* copy bits */
 
@@ -274,45 +177,38 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 
     /* compute update areas */
 
-    if (hrgnUpdate)
+    if (hrgnUpdate || rcUpdate)
     {
-	HRGN hrgn1,hrgn2;
+	HRGN   hrgn1 = (hrgnUpdate)?hrgnUpdate:CreateRectRgn( 0,0,0,0 );
 
-	if (dx > 0)
-	    hrgn1 = CreateRectRgn(rc->left, rc->top, rc->left+dx, rc->bottom);
-	else if (dx < 0)
-	    hrgn1 = CreateRectRgn(rc->right+dx, rc->top, rc->right, 
-				  rc->bottom);
+	if( dc->w.hVisRgn )
+	{
+	  CombineRgn( hrgn1, dc->w.hVisRgn, 0, RGN_COPY);
+	  CombineRgn( hrgn1, hrgn1, (hrgnClip)?hrgnClip:hrgnScrollClip, RGN_AND);
+	  OffsetRgn( hrgn1, dx, dy );
+	  CombineRgn( hrgn1, dc->w.hVisRgn, hrgn1, RGN_DIFF);
+	  RgnType = CombineRgn( hrgn1, hrgn1, (hrgnClip)?hrgnClip:hrgnScrollClip, RGN_AND);
+	}
 	else
-	    hrgn1 = CreateRectRgn(0, 0, 0, 0);
+	{
+	  RECT16	rect;
 
-	if (dy > 0)
-	    hrgn2 = CreateRectRgn(rc->left, rc->top, rc->right, rc->top+dy);
-	else if (dy < 0)
-	    hrgn2 = CreateRectRgn(rc->left, rc->bottom+dy, rc->right, 
-				  rc->bottom);
-	else
-	    hrgn2 = CreateRectRgn(0, 0, 0, 0);
+          rect = rectClip;				/* vertical band */
+          if (dx > 0) rect.right = rect.left + dx;
+          else if (dx < 0) rect.left = rect.right + dx;
+          else SetRectEmpty16( &rect );
+          SetRectRgn( hrgn1, rect.left, rect.top, rect.right, rect.bottom );
 
-	RgnType = CombineRgn(hrgnUpdate, hrgn1, hrgn2, RGN_OR);
-	DeleteObject(hrgn1);
-	DeleteObject(hrgn2);
-        if (rcUpdate) GetRgnBox16( hrgnUpdate, rcUpdate );
-    }
-    else if (rcUpdate)
-    {
-	RECT16 rx,ry;
+          rect = rectClip;				/* horizontal band */
+          if (dy > 0) rect.bottom = rect.top + dy;
+          else if (dy < 0) rect.top = rect.bottom + dy;
+          else SetRectEmpty16( &rect );
 
-	rx = ry = *rc;
-	if( dx > 0 )  	  rx.right = rc->left+dx; 
-	else if (dx < 0)  rx.left = rc->right+dx; 
-	else SetRectEmpty16( &rx );
+          RgnType = REGION_UnionRectWithRgn( hrgn1, &rect );
+	}
 
-        if( dy > 0 )      ry.bottom = rc->top+dy;
-        else if (dy < 0)  ry.top = rc->bottom+dy;
-        else SetRectEmpty16( &ry );
-
-	UnionRect16( rcUpdate, &rx, &ry );
+	if (rcUpdate) GetRgnBox16( hrgn1, rcUpdate );
+	if (!hrgnUpdate) DeleteObject( hrgn1 );
     }
 
     /* restore clipping region */
@@ -327,9 +223,8 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 /*************************************************************************
  *             ScrollWindowEx       (USER.319)
  *
- * FIXME: broken
+ * FIXME: broken, is there a program that actually uses it?
  *
- * SCROLL_TraceChildren can help
  */
 
 int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRect,

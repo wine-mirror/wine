@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "winerror.h"
-#include "kernel32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -119,7 +118,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 /***********************************************************************
  *              SetTimeZoneInformation  (KERNEL32.515)
  */
-BOOL32 SetTimeZoneInformation(const TIME_ZONE_INFORMATION *tzinfo)
+BOOL32 SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
 {
     struct timezone tz;
 

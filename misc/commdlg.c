@@ -1571,7 +1571,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
  HBRUSH hbrush;
  HDC hdc ;
  RECT16 rect,client;
- HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
+ HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
 
  GetClientRect16(hwnd,&client);
  hdc=GetDC(hwnd);
@@ -2383,7 +2383,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
   int i,j,res,init=0;
   long l;
   LPLOGFONT16 lpxx;
-  HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
+  HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
   LPCHOOSEFONT lpcf;
 
   SetWindowLong32A(hDlg, DWL_USER, lParam); 
@@ -2635,7 +2635,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		      i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL,0,0);
 		      if (i!=CB_ERR)
 		      {
-		        HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
+		        HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
                         SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT,i,(LPARAM)MAKE_SEGPTR(buffer));
 	                dprintf_commdlg(stddeb,"WM_COMMAND/cmb1 =>%s\n",buffer);
        		        EnumFontFamilies(hdc,buffer,FontStyleEnumProc,

@@ -38,7 +38,7 @@
 extern UINT16 COLOR_GetSystemPaletteSize();
 
 Cursor CURSORICON_XCursor = None;  /* Current X cursor */
-static HCURSOR hActiveCursor = 0;  /* Active cursor */
+static HCURSOR16 hActiveCursor = 0;  /* Active cursor */
 static int CURSOR_ShowCount = 0;   /* Cursor display count */
 static RECT32 CURSOR_ClipRect;       /* Cursor clipping rect */
 
@@ -371,7 +371,7 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
                                int height, int colors, BOOL fCursor )
 {
     HANDLE handle,hRet;
-    HRSRC  hRsrc;
+    HRSRC16 hRsrc;
     CURSORICONDIRENTRY dirEntry;
 
     if (!hInstance)  /* OEM cursor/icon */
@@ -433,7 +433,7 @@ static HANDLE CURSORICON_Copy( HANDLE hInstance, HANDLE handle )
  * FIXME: if icon is passed returns a copy of OCR_DRAGOBJECT cursor
  *	  but should actually convert icon to cursor.
  */
-HCURSOR CURSORICON_IconToCursor(HICON hIcon)
+HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon)
 {
  CURSORICONINFO *ptr = NULL;
 
@@ -499,9 +499,9 @@ HICON16 LoadIcon16(HINSTANCE16 hInstance,SEGPTR name)
 /***********************************************************************
  *           CreateCursor    (USER.406)
  */
-HCURSOR CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
-                      INT nWidth, INT nHeight,
-                      const BYTE *lpANDbits, const BYTE *lpXORbits )
+HCURSOR16 CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
+                        INT nWidth, INT nHeight,
+                        const BYTE *lpANDbits, const BYTE *lpXORbits )
 {
     CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
 
@@ -514,7 +514,7 @@ HCURSOR CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
 /***********************************************************************
  *           CreateIcon    (USER.407)
  */
-HICON CreateIcon( HINSTANCE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
+HICON16 CreateIcon( HINSTANCE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
                   BYTE bBitsPixel, const BYTE* lpANDbits, const BYTE* lpXORbits)
 {
     CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel };
@@ -585,7 +585,7 @@ HCURSOR16 CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 /***********************************************************************
  *           DestroyIcon    (USER.457)
  */
-BOOL DestroyIcon( HICON hIcon )
+BOOL DestroyIcon( HICON16 hIcon )
 {
     dprintf_icon( stddeb, "DestroyIcon: %04x\n", hIcon );
     /* FIXME: should check for OEM icon here */
@@ -596,7 +596,7 @@ BOOL DestroyIcon( HICON hIcon )
 /***********************************************************************
  *           DestroyCursor    (USER.458)
  */
-BOOL DestroyCursor( HCURSOR hCursor )
+BOOL DestroyCursor( HCURSOR16 hCursor )
 {
     dprintf_cursor( stddeb, "DestroyCursor: %04x\n", hCursor );
     /* FIXME: should check for OEM cursor here */
@@ -607,7 +607,7 @@ BOOL DestroyCursor( HCURSOR hCursor )
 /***********************************************************************
  *           DrawIcon    (USER.84)
  */
-BOOL DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
+BOOL DrawIcon( HDC hdc, INT x, INT y, HICON16 hIcon )
 {
     CURSORICONINFO *ptr;
     HDC hMemDC;
@@ -665,7 +665,7 @@ DWORD DumpIcon( SEGPTR pInfo, WORD *lpLen,
  *
  * Change the X cursor. Helper function for SetCursor() and ShowCursor().
  */
-static BOOL CURSORICON_SetCursor( HCURSOR hCursor )
+static BOOL CURSORICON_SetCursor( HCURSOR16 hCursor )
 {
     Pixmap pixmapBits, pixmapMask, pixmapAll;
     XColor fg, bg;
@@ -803,9 +803,9 @@ static BOOL CURSORICON_SetCursor( HCURSOR hCursor )
 /***********************************************************************
  *           SetCursor    (USER.69)
  */
-HCURSOR SetCursor( HCURSOR hCursor )
+HCURSOR16 SetCursor( HCURSOR16 hCursor )
 {
-    HCURSOR hOldCursor;
+    HCURSOR16 hOldCursor;
 
     if (hCursor == hActiveCursor) return hActiveCursor;  /* No change */
     dprintf_cursor( stddeb, "SetCursor: %04x\n", hCursor );
@@ -852,7 +852,7 @@ int ShowCursor( BOOL bShow )
 /***********************************************************************
  *           GetCursor    (USER.247)
  */
-HCURSOR GetCursor(void)
+HCURSOR16 GetCursor(void)
 {
     return hActiveCursor;
 }
@@ -973,7 +973,7 @@ WORD GetIconID( HANDLE hResource, DWORD resType )
 /**********************************************************************
  *	    LoadIconHandler    (USER.456)
  */
-HICON LoadIconHandler( HANDLE hResource, BOOL bNew )
+HICON16 LoadIconHandler( HANDLE hResource, BOOL bNew )
 {
     dprintf_cursor(stddeb,"LoadIconHandler: hRes=%04x\n",hResource);
 

@@ -55,21 +55,26 @@ const char people[] = "Wine is available thanks to the work of "
 "Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale, "
 "and James Youngman. ";
 
-const char * langNames[] =
+const struct _langentry {
+	char *name;
+	WORD langid;
+} languages[] =
 {
-    "En",  /* LANG_En */
-    "Es",  /* LANG_Es */
-    "De",  /* LANG_De */
-    "No",  /* LANG_No */
-    "Fr",  /* LANG_Fr */
-    "Fi",  /* LANG_Fi */
-    "Da",  /* LANG_Da */
-    "Cz",  /* LANG_Cz */
-    "Eo",  /* LANG_Eo */
-    "It",  /* LANG_It */
-    "Ko",  /* LANG_Ko */
-    NULL
+    {"En",0x0409},	/* LANG_En */
+    {"Es",0x040A},	/* LANG_Es */
+    {"De",0x0407},	/* LANG_De */
+    {"No",0x0414},	/* LANG_No */
+    {"Fr",0x0400},	/* LANG_Fr */
+    {"Fi",0x040B},	/* LANG_Fi */
+    {"Da",0x0406},	/* LANG_Da */
+    {"Cz",0x0405},	/* LANG_Cz */
+    {"Eo",     0},	/* LANG_Eo */ /* FIXME languageid */
+    {"It",0x0410},	/* LANG_It */
+    {"Ko",0x0412},	/* LANG_Ko */
+    {NULL,0}
 };
+
+WORD WINE_LanguageId = 0;
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
@@ -284,16 +289,19 @@ BOOL ParseDebugOptions(char *options)
  */
 static void MAIN_ParseLanguageOption( char *arg )
 {
-    const char **p = langNames;
+    const struct _langentry *p = languages;
 
     Options.language = LANG_En;  /* First language */
-    for (p = langNames; *p; p++)
+    for (;p->name;p++)
     {
-        if (!lstrcmpi32A( *p, arg )) return;
+        if (!lstrcmpi32A( p->name, arg )) {
+	    WINE_LanguageId = p->langid;
+	    return;
+	}
         Options.language++;
     }
     fprintf( stderr, "Invalid language specified '%s'. Supported languages are: ", arg );
-    for (p = langNames; *p; p++) fprintf( stderr, "%s ", *p );
+    for (p = languages; p->name; p++) fprintf( stderr, "%s ", p->name );
     fprintf( stderr, "\n" );
     exit(1);
 }
@@ -678,9 +686,9 @@ BOOL32 Beep( DWORD dwFreq, DWORD dwDur )
 
 
 /***********************************************************************
- *      GetVersion (KERNEL.3)
+ *      GetVersion16   (KERNEL.3)
  */
-LONG GetVersion(void)
+LONG GetVersion16(void)
 {
     if (getVersion16) return getVersion16;
     return MAKELONG( WINVERSION, WINDOSVER );

@@ -88,6 +88,7 @@
 #undef DEBUG_COMBO
 #undef DEBUG_COMM
 #undef DEBUG_COMMDLG
+#undef DEBUG_CRTDLL
 #undef DEBUG_CURSOR
 #undef DEBUG_DC
 #undef DEBUG_DDE
@@ -165,6 +166,7 @@
 #define DEBUG_COMBO
 #define DEBUG_COMM
 #define DEBUG_COMMDLG
+#define DEBUG_CRTDLL
 #define DEBUG_CURSOR
 #define DEBUG_DC
 #define DEBUG_DDE

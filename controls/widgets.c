@@ -5,8 +5,10 @@
  */
 
 #include "win.h"
+#include "commctrl.h"
 #include "button.h"
 #include "static.h"
+#include "status.h"
 #include "scroll.h"
 #include "desktop.h"
 #include "mdi.h"
@@ -49,6 +51,7 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 #define NB_BUILTIN_CLASSES16 \
          (sizeof(WIDGETS_BuiltinClasses16)/sizeof(WIDGETS_BuiltinClasses16[0]))
 
+
 static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
 {
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
@@ -59,6 +62,16 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
 
 #define NB_BUILTIN_CLASSES32 \
          (sizeof(WIDGETS_BuiltinClasses32)/sizeof(WIDGETS_BuiltinClasses32[0]))
+
+
+static WNDCLASS32A WIDGETS_CommonControls32[] =
+{
+    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, StatusWindowProc, 0,
+      sizeof(STATUSWINDOWINFO), 0, 0, 0, 0, 0, STATUSCLASSNAME32A },
+};
+
+#define NB_COMMON_CONTROLS32 \
+         (sizeof(WIDGETS_CommonControls32)/sizeof(WIDGETS_CommonControls32[0]))
 
 
 /***********************************************************************
@@ -107,4 +120,24 @@ BOOL WIDGETS_Init(void)
 
     SEGPTR_FREE(name);
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           InitCommonControls   (COMCTL32.15)
+ */
+void InitCommonControls(void)
+{
+    int i;
+    char name[30];
+    WNDCLASS32A *class32 = WIDGETS_CommonControls32;
+
+    for (i = 0; i < NB_COMMON_CONTROLS32; i++, class32++)
+    {
+        /* Just to make sure the string is > 0x10000 */
+        strcpy( name, (char *)class32->lpszClassName );
+        class32->lpszClassName = name;
+        class32->hCursor = LoadCursor16( 0, IDC_ARROW );
+        RegisterClass32A( class32 );
+    }
 }

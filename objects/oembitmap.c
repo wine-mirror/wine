@@ -216,7 +216,7 @@ static char **OBM_Cursors_Data[NB_CURSORS] =
 #endif
 };
 
-static HCURSOR OBM_Cursors[NB_CURSORS];
+static HGLOBAL16 OBM_Cursors[NB_CURSORS];
 
 
   /* All the colors used in the xpm files must be included in this   */
@@ -299,10 +299,10 @@ static BOOL OBM_InitColorSymbols()
  *
  * Allocate a GDI bitmap.
  */
-static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
-                               WORD bpp, Pixmap pixmap )
+static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
+                                 WORD bpp, Pixmap pixmap )
 {
-    HBITMAP hbitmap;
+    HBITMAP16 hbitmap;
     BITMAPOBJ * bmpObjPtr;
 
     if (!pixmap) return 0;
@@ -330,8 +330,8 @@ static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
  *
  * Create the 2 bitmaps from XPM data.
  */
-static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP *hBitmap,
-                               HBITMAP *hBitmapMask, POINT16 *hotspot )
+static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP16 *hBitmap,
+                               HBITMAP16 *hBitmapMask, POINT16 *hotspot )
 {
     Pixmap pixmap, pixmask;
     XpmAttributes *attrs;
@@ -377,9 +377,9 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP *hBitmap,
 /***********************************************************************
  *           OBM_LoadBitmap
  */
-HBITMAP OBM_LoadBitmap( WORD id )
+HBITMAP16 OBM_LoadBitmap( WORD id )
 {
-    HBITMAP hbitmap;
+    HBITMAP16 hbitmap;
 
     if ((id < OBM_FIRST) || (id > OBM_LAST)) return 0;
     id -= OBM_FIRST;
@@ -401,12 +401,12 @@ HBITMAP OBM_LoadBitmap( WORD id )
 /***********************************************************************
  *           OBM_LoadCursorIcon
  */
-HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor )
+HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
 {
-    HANDLE handle;
+    HGLOBAL16 handle;
     CURSORICONINFO *pInfo;
     BITMAPOBJ *bmpXor, *bmpAnd;
-    HBITMAP hXorBits, hAndBits;
+    HBITMAP16 hXorBits, hAndBits;
     POINT16 hotspot;
     int sizeXor, sizeAnd;
 

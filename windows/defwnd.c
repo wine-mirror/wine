@@ -319,7 +319,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 
     case WM_QUERYDRAGICON:
         {
-            HICON hI = 0;
+            HICON16 hI = 0;
             UINT16 len = 1;
             while(len < 64)
 		if( (hI = LoadIcon16(wndPtr->hInstance,MAKEINTRESOURCE(len))) )

@@ -15,6 +15,9 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+/* Define if symbols declared in assembly code need an underscore prefix */
+#undef NEED_UNDERSCORE_PREFIX
+
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 

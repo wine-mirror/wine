@@ -21,7 +21,6 @@ WORD USER_HeapSel = 0;
 
 
 extern HTASK	TASK_GetNextTask(HTASK);
-extern void	QUEUE_SetDoomedQueue(HQUEUE);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -109,7 +108,7 @@ int USER_InitApp(HINSTANCE hInstance)
 /**********************************************************************
  *					USER_AppExit
  */
-void USER_AppExit(HTASK hTask, HINSTANCE hInstance, HQUEUE hQueue)
+void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
 {
     /* FIXME: flush send messages (which are not implemented yet),
      *        empty clipboard if needed, maybe destroy menus (Windows

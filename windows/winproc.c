@@ -147,6 +147,7 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
     if (!IsBadReadPtr( (SEGPTR)handle, sizeof(WINDOWPROC)-sizeof(proc->thunk)))
     {
         ptr = (BYTE *)PTR_SEG_TO_LIN(handle);
+        if (!HEAP_IsInsideHeap( WinProcHeap, 0, ptr )) return NULL;
         /* It must be the thunk address */
         if (*ptr == 0x58 /* popl eax */) ptr -= (int)&((WINDOWPROC *)0)->thunk;
         /* Now we have a pointer to the WINDOWPROC struct */
@@ -906,6 +907,13 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
     *pwparam16 = (WPARAM16)LOWORD(wParam32);
     switch(msg32)
     {
+    case BM_GETCHECK32:
+    case BM_SETCHECK32:
+    case BM_GETSTATE32:
+    case BM_SETSTATE32:
+    case BM_SETSTYLE32:
+        *pmsg16 = (UINT16)msg32 + (BM_GETCHECK16 - BM_GETCHECK32);
+        return 0;
     case WM_ACTIVATE:
     case WM_CHARTOITEM:
     case WM_COMMAND:

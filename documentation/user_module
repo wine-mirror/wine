@@ -205,13 +205,13 @@ located in windows/, controls/, and misc/ directories.
 	
 
     b) Intertask/interthread SendMessage. The system has to inform the
-       target queue about the forthcoming message, then it has to
-       carry out the context switch and wait until the result is
-       available.  In Win16 it is done by putting necessary parameters
-       into the queue structure and do a DirectedYield() call.
-       However, in Win32 there could be several messages pending sent
-       by preemptively executing threads, and in this case SendMessage
-       has to build some sort of message queue for sent
-       messages. Another issue is what to do with messages sent to the
-       sender when it is blocked inside its own SendMessage. At this
-       point Wine does not address any of these problems.
+       target queue about the forthcoming message, then it has to carry 
+       out the context switch and wait until the result is available.  
+       Win16 stores necessary parameters in the queue structure and then 
+       calls DirectedYield() function.  However, in Win32 there could be 
+       several messages pending sent by preemptively executing threads, 
+       and in this case SendMessage has to build some sort of message 
+       queue for sent messages. Another issue is what to do with messages 
+       sent to the sender when it is blocked inside its own SendMessage. 
+       At this point Wine addresses very few of these problems.
+

@@ -42,7 +42,7 @@ static const struct resource * const * SYSRES_Resources[] =
  *
  * Create a global memory block for a system resource.
  */
-HANDLE SYSRES_LoadResource( SYSTEM_RESOURCE id )
+HGLOBAL16 SYSRES_LoadResource( SYSTEM_RESOURCE id )
 {
     const struct resource *resPtr;
 
@@ -57,7 +57,7 @@ HANDLE SYSRES_LoadResource( SYSTEM_RESOURCE id )
  *
  * Free a global memory block for a system resource.
  */
-void SYSRES_FreeResource( HANDLE handle )
+void SYSRES_FreeResource( HGLOBAL16 handle )
 {
     GLOBAL_FreeBlock( handle );
 }

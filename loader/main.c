@@ -16,7 +16,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "comm.h"
 #include "win.h"
 #include "menu.h"
-#include "kernel32.h"
 #include "atom.h"
 #include "dialog.h"
 #include "directory.h"
@@ -59,6 +58,7 @@ int MAIN_Init(void)
     extern BOOL32 RELAY_Init(void);
     extern BOOL32 SIGNAL_Init(void);
     extern BOOL32 WIDGETS_Init(void);
+    extern int KERN32_Init(void);
 
     int queueSize;
 

@@ -2177,7 +2177,7 @@ static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
 	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	HGLOBAL hdst;
+	HGLOBAL16 hdst;
 	char *text;
 	char *dst;
 	char *src;
@@ -2717,7 +2717,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_Paste(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	HGLOBAL hsrc;
+	HGLOBAL16 hsrc;
 	char *src;
 
 	OpenClipboard(wndPtr->hwndSelf);
