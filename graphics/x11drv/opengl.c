@@ -94,19 +94,12 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   int att_list[64];
   int att_pos = 0;
   XVisualInfo *vis;
+  int i;
   
   if (TRACE_ON(opengl)) {
     TRACE("(%p,%p)\n", physDev, ppfd);
     
     dump_PIXELFORMATDESCRIPTOR((PIXELFORMATDESCRIPTOR *) ppfd);
-  }
-
-  /* For the moment, we are dumb : we always allocate a new XVisualInfo structure,
-     we do not try to find an already found that could match */
-  if (physDev->used_visuals == MAX_PIXELFORMATS) {
-    ERR("Maximum number of visuals reached !\n");
-    /* Should SetError here... */
-    return 0;
   }
 
   if (ppfd->dwFlags & PFD_DRAW_TO_BITMAP) {
@@ -125,16 +118,16 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   /* These flags are not supported yet...
      
      NULL_TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, 8);
-     ADD2(GLX_ACCUM_SIZE, ppfd->cAccumBits); 
-     ADD2(GLX_STENCIL_SIZE, ppfd->cStencilBits);
-     ADD2(GLX_AUX_BUFFERS, ppfd->cAuxBuffers); */
+     ADD2(GLX_ACCUM_SIZE, ppfd->cAccumBits); */
+  ADD2(GLX_STENCIL_SIZE, ppfd->cStencilBits); /* now suported */
+  /*   ADD2(GLX_AUX_BUFFERS, ppfd->cAuxBuffers); */
   att_list[att_pos] = None;
   
   ENTER_GL(); {
     /*
        This command cannot be used as we need to use the default visual...
        Let's hope it at least contains some OpenGL functionnalities
-       
+
        vis = glXChooseVisual(gdi_display, DefaultScreen(gdi_display), att_list);
     */
     int num;
@@ -149,6 +142,19 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   
   if (vis == NULL) {
     ERR("No visual found !\n");
+    /* Should SetError here... */
+    return 0;
+  }
+  /* try to find the visualid in the already created visuals */
+  for( i=0; i<physDev->used_visuals; i++ ) {
+    if ( vis->visualid == physDev->visuals[i]->visualid ) {
+      XFree(vis);
+      return i+1;
+    }
+  }
+  /* now give up, if the maximum is reached */
+  if (physDev->used_visuals == MAX_PIXELFORMATS) {
+    ERR("Maximum number of visuals reached !\n");
     /* Should SetError here... */
     return 0;
   }
@@ -256,9 +262,14 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   /* Depth bits */
   glXGetConfig(gdi_display, vis, GLX_DEPTH_SIZE, &value);
   ppfd->cDepthBits = value;
+
+  /* stencil bits */
+  glXGetConfig( gdi_display, vis, GLX_STENCIL_SIZE, &value );
+  ppfd->cStencilBits = value;
+  
   LEAVE_GL();
 
-  /* Aux, stencil : to do ... */
+  /* Aux : to do ... */
 
   ppfd->iLayerType = PFD_MAIN_PLANE;
   
