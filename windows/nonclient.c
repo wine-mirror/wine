@@ -936,9 +936,9 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
     {
         RECT rect;
         NC_GetInsideRect( hwnd, &rect );
-        DrawIconEx (hdc, rect.left + 2, rect.top + 2, hIcon,
-                    GetSystemMetrics(SM_CXSMICON),
-                    GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
+        DrawIconEx (hdc, rect.left + 1, rect.top + 1, hIcon,
+                    GetSystemMetrics(SM_CXSIZE) - 1,
+                    GetSystemMetrics(SM_CYSIZE) - 1, 0, 0, DI_NORMAL);
     }
     return (hIcon != 0);
 }
