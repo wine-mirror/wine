@@ -380,7 +380,7 @@
 @ stdcall GetConsoleScreenBufferInfo(long ptr)
 @ stdcall GetConsoleTitleA(ptr long)
 @ stdcall GetConsoleTitleW(ptr long)
-@ stub GetConsoleWindow
+@ stdcall GetConsoleWindow()
 @ stdcall GetCurrencyFormatA(long long str ptr str long)
 @ stdcall GetCurrencyFormatW(long long str ptr str long)
 @ stdcall GetCurrentDirectoryA(long ptr)

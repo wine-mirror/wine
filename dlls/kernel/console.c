@@ -118,6 +118,16 @@ static void char_info_AtoW( CHAR_INFO *buffer, int count )
 
 
 /******************************************************************************
+ * GetConsoleWindow [KERNEL32.@]
+ */
+HWND WINAPI GetConsoleWindow(VOID)
+{
+    FIXME("stub\n");
+    return NULL;
+}
+
+
+/******************************************************************************
  * GetConsoleCP [KERNEL32.@]  Returns the OEM code page for the console
  *
  * RETURNS
