@@ -1519,7 +1519,8 @@ enum message_type
     MSG_CALLBACK_RESULT,/* result of a callback message */
     MSG_OTHER_PROCESS,  /* sent from other process, may include vararg data, always Unicode */
     MSG_POSTED,         /* posted message (from PostMessageW), always Unicode */
-    MSG_HARDWARE        /* hardware message */
+    MSG_HARDWARE,       /* hardware message */
+    MSG_WINEVENT        /* winevent message */
 };
 #define SEND_MSG_ABORT_IF_HUNG  0x01
 
@@ -1538,6 +1539,8 @@ enum message_type
     unsigned int    lparam;    /* parameters (result for MSG_CALLBACK_RESULT) */
     int             x;         /* x position */
     int             y;         /* y position */
+    user_handle_t   hook;      /* winevent hook handle */
+    void*           hook_proc; /* winevent hook proc address */
     unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
     size_t          total;     /* total size of extra data */
@@ -2064,7 +2067,11 @@ enum message_type
 /* Set a window hook */
 @REQ(set_hook)
     int            id;             /* id of the hook */
+    process_id_t   pid;            /* id of process to set the hook into */
     thread_id_t    tid;            /* id of thread to set the hook into */
+    int            event_min;
+    int            event_max;
+    int            flags;
     void*          proc;           /* hook procedure */
     int            unicode;        /* is it a unicode hook? */
     VARARG(module,unicode_str);    /* module name */
@@ -2084,6 +2091,10 @@ enum message_type
 /* Start calling a hook chain */
 @REQ(start_hook_chain)
     int            id;             /* id of the hook */
+    int            event;          /* signalled event */
+    user_handle_t  window;         /* handle to the event window */
+    int            object_id;      /* object id for out of context winevent */
+    int            child_id;       /* child id for out of context winevent */
 @REPLY
     user_handle_t  handle;         /* handle to the next hook */
     process_id_t   pid;            /* process id for low-level keyboard/mouse hooks */
@@ -2103,6 +2114,10 @@ enum message_type
 /* Get the next hook to call */
 @REQ(get_next_hook)
     user_handle_t  handle;         /* handle to the current hook */
+    int            event;          /* signalled event */
+    user_handle_t  window;         /* handle to the event window */
+    int            object_id;      /* object id for out of context winevent */
+    int            child_id;       /* child id for out of context winevent */
 @REPLY
     user_handle_t  next;           /* handle to the next hook */
     int            id;             /* id of the next hook */

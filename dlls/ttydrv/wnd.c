@@ -186,6 +186,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
         if (ret) ret = (SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
     }
+    if (ret) NotifyWinEvent(EVENT_OBJECT_CREATE, hwnd, OBJID_WINDOW, 0);
     return ret;
 }
 

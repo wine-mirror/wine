@@ -64,6 +64,8 @@ struct received_message_info
     enum message_type type;
     MSG               msg;
     UINT              flags;  /* InSendMessageEx return flags */
+    HWINEVENTHOOK     hook;   /* winevent hook handle */
+    WINEVENTPROC      hook_proc; /* winevent hook proc address */
 };
 
 /* structure to group all parameters for sent messages of the various kinds */
@@ -1542,6 +1544,25 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
 
 
 /***********************************************************************
+ *		get_hook_proc
+ *
+ * Retrieve the hook procedure real value for a module-relative proc
+ */
+static void *get_hook_proc( void *proc, const WCHAR *module )
+{
+    HMODULE mod;
+
+    if (!(mod = GetModuleHandleW(module)))
+    {
+        TRACE( "loading %s\n", debugstr_w(module) );
+        /* FIXME: the library will never be freed */
+        if (!(mod = LoadLibraryW(module))) return NULL;
+    }
+    return (char *)mod + (ULONG_PTR)proc;
+}
+
+
+/***********************************************************************
  *           MSG_peek_message
  *
  * Peek for a message matching the given parameters. Return FALSE if none available.
@@ -1584,6 +1605,8 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                     info.msg.time    = reply->time;
                     info.msg.pt.x    = reply->x;
                     info.msg.pt.y    = reply->y;
+                    info.hook        = reply->hook;
+                    info.hook_proc   = reply->hook_proc;
                     extra_info       = reply->info;
                 }
                 else
@@ -1598,7 +1621,8 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
         if (res) return FALSE;
 
         TRACE( "got type %d msg %x (%s) hwnd %p wp %x lp %lx\n",
-               info.type, info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd),
+               info.type, info.msg.message,
+               (info.type == MSG_WINEVENT) ? "MSG_WINEVENT" : SPY_GetMsgName(info.msg.message, info.msg.hwnd),
                info.msg.hwnd, info.msg.wParam, info.msg.lParam );
 
         switch(info.type)
@@ -1616,6 +1640,34 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
         case MSG_CALLBACK_RESULT:
             call_sendmsg_callback( (SENDASYNCPROC)info.msg.wParam, info.msg.hwnd,
                                    info.msg.message, extra_info, info.msg.lParam );
+            goto next;
+        case MSG_WINEVENT:
+            if (size)
+            {
+                WCHAR module[MAX_PATH];
+                size = min( size, (MAX_PATH - 1) * sizeof(WCHAR) );
+                memcpy( module, buffer, size );
+                module[size / sizeof(WCHAR)] = 0;
+                if (!(info.hook_proc = get_hook_proc( info.hook_proc, module )))
+                {
+                    ERR( "invalid winevent hook module name %s\n", debugstr_w(module) );
+                    goto next;
+                }
+            }
+            if (TRACE_ON(relay))
+                DPRINTF( "%04lx:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%lx)\n",
+                         GetCurrentThreadId(), info.hook_proc,
+                         info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                         info.msg.lParam, extra_info, info.msg.time);
+
+            info.hook_proc( info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                            info.msg.lParam, extra_info, info.msg.time );
+
+            if (TRACE_ON(relay))
+                DPRINTF( "%04lx:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%lx)\n",
+                         GetCurrentThreadId(), info.hook_proc,
+                         info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                         info.msg.lParam, extra_info, info.msg.time);
             goto next;
         case MSG_OTHER_PROCESS:
             info.flags = ISMEX_SEND;

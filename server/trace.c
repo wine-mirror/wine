@@ -1866,6 +1866,8 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " lparam=%08x,", req->lparam );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d,", req->y );
+    fprintf( stderr, " hook=%p,", req->hook );
+    fprintf( stderr, " hook_proc=%p,", req->hook_proc );
     fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " info=%08x,", req->info );
     fprintf( stderr, " total=%d,", req->total );
@@ -2460,7 +2462,11 @@ static void dump_set_caret_info_reply( const struct set_caret_info_reply *req )
 static void dump_set_hook_request( const struct set_hook_request *req )
 {
     fprintf( stderr, " id=%d,", req->id );
+    fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
+    fprintf( stderr, " event_min=%d,", req->event_min );
+    fprintf( stderr, " event_max=%d,", req->event_max );
+    fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " unicode=%d,", req->unicode );
     fprintf( stderr, " module=" );
@@ -2481,7 +2487,11 @@ static void dump_remove_hook_request( const struct remove_hook_request *req )
 
 static void dump_start_hook_chain_request( const struct start_hook_chain_request *req )
 {
-    fprintf( stderr, " id=%d", req->id );
+    fprintf( stderr, " id=%d,", req->id );
+    fprintf( stderr, " event=%d,", req->event );
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " object_id=%d,", req->object_id );
+    fprintf( stderr, " child_id=%d", req->child_id );
 }
 
 static void dump_start_hook_chain_reply( const struct start_hook_chain_reply *req )
@@ -2502,7 +2512,11 @@ static void dump_finish_hook_chain_request( const struct finish_hook_chain_reque
 
 static void dump_get_next_hook_request( const struct get_next_hook_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " event=%d,", req->event );
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " object_id=%d,", req->object_id );
+    fprintf( stderr, " child_id=%d", req->child_id );
 }
 
 static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
@@ -3212,8 +3226,8 @@ static const char *get_status_name( unsigned int status )
         NAME(TIMEOUT),
         NAME(USER_APC),
         NAME(WAS_LOCKED),
-        NAME_WIN32(ERROR_INVALID_HOOK_HANDLE),
         NAME_WIN32(ERROR_INVALID_INDEX),
+        NAME_WIN32(ERROR_INVALID_THREAD_ID),
         NAME_WIN32(ERROR_NEGATIVE_SEEK),
         NAME_WIN32(ERROR_SEEK),
         { NULL, 0 }  /* terminator */

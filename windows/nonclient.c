@@ -1561,7 +1561,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case SC_ARRANGE:
     case SC_NEXTWINDOW:
     case SC_PREVWINDOW:
- 	FIXME("unimplemented!\n");
+ 	FIXME("unimplemented WM_SYSCOMMAND %04x!\n", wParam);
         break;
     }
     return 0;

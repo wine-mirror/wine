@@ -4978,8 +4978,8 @@ static void test_winevents(void)
     HWINEVENTHOOK hhook;
     const struct message *events = WmWinEventsSeq;
     HMODULE user32 = GetModuleHandleA("user32.dll");
-    FARPROC pSetWinEventHook = 0;/*GetProcAddress(user32, "SetWinEventHook");*/
-    FARPROC pUnhookWinEvent = 0;/*GetProcAddress(user32, "UnhookWinEvent");*/
+    FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
+    FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
     FARPROC pNotifyWinEvent = GetProcAddress(user32, "NotifyWinEvent");
 
     hwnd = CreateWindowExA(0, "TestWindowClass", NULL,
@@ -5134,7 +5134,7 @@ static void test_set_hook(void)
     HHOOK hhook;
     HWINEVENTHOOK hwinevent_hook;
     HMODULE user32 = GetModuleHandleA("user32.dll");
-    FARPROC pSetWinEventHook = 0;/*GetProcAddress(user32, "SetWinEventHook");*/
+    FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
     FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
 
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, GetModuleHandleA(0), GetCurrentThreadId());
@@ -5208,12 +5208,16 @@ static void test_set_hook(void)
     ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
     ok(pUnhookWinEvent(hwinevent_hook), "UnhookWinEvent error %ld\n", GetLastError());
 
+todo_wine {
+    /* This call succeeds under win2k SP4, but fails under Wine.
+       Does win2k test/use passed process id? */
     SetLastError(0xdeadbeef);
     hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
 	0, win_event_proc, 0xdeadbeef, 0, WINEVENT_OUTOFCONTEXT);
     ok(hwinevent_hook != 0, "SetWinEventHook error %ld\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
     ok(pUnhookWinEvent(hwinevent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+}
 
     SetLastError(0xdeadbeef);
     ok(!pUnhookWinEvent((HWINEVENTHOOK)0xdeadbeef), "UnhookWinEvent succeeded\n");
@@ -5225,9 +5229,9 @@ static void test_set_hook(void)
 START_TEST(msg)
 {
     HMODULE user32 = GetModuleHandleA("user32.dll");
-    FARPROC pSetWinEventHook = 0;/*GetProcAddress(user32, "SetWinEventHook");*/
-    FARPROC pUnhookWinEvent = 0;/*GetProcAddress(user32, "UnhookWinEvent");*/
-    FARPROC pIsWinEventHookInstalled = GetProcAddress(user32, "IsWinEventHookInstalled");
+    FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
+    FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
+    FARPROC pIsWinEventHookInstalled = 0;/*GetProcAddress(user32, "IsWinEventHookInstalled");*/
 
     if (!RegisterWindowClasses()) assert(0);
 
@@ -5247,16 +5251,18 @@ START_TEST(msg)
 	    for (event = EVENT_MIN; event <= EVENT_MAX; event++)
 		ok(pIsWinEventHookInstalled(event), "IsWinEventHookInstalled(%u) failed\n", event);
 	}
-
-        /* Fix message sequences before removing 3 lines below */
-        ok(pUnhookWinEvent(hEvent_hook), "UnhookWinEvent error %ld\n", GetLastError());
-        pUnhookWinEvent = 0;
-        hEvent_hook = 0;
     }
 
     cbt_hook_thread_id = GetCurrentThreadId();
     hCBT_hook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
     assert(hCBT_hook);
+
+    test_winevents();
+
+    /* Fix message sequences before removing 3 lines below */
+    ok(pUnhookWinEvent(hEvent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+    pUnhookWinEvent = 0;
+    hEvent_hook = 0;
 
     test_messages();
     test_mdi_messages();
@@ -5267,7 +5273,6 @@ START_TEST(msg)
     test_accelerators();
     test_timers();
     test_set_hook();
-    test_winevents();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)

@@ -70,6 +70,8 @@ struct message
     int                    y;         /* y position */
     unsigned int           time;      /* message time */
     unsigned int           info;      /* extra info */
+    user_handle_t          hook;      /* winevent hook handle */
+    void                  *hook_proc; /* winevent hook proc address */
     void                  *data;      /* message data for sent messages */
     unsigned int           data_size; /* size of message data */
     struct message_result *result;    /* result in sender queue */
@@ -550,6 +552,8 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
     reply->y      = msg->y;
     reply->time   = msg->time;
     reply->info   = msg->info;
+    reply->hook   = msg->hook;
+    reply->hook_proc = msg->hook_proc;
 
     if (msg->data) set_reply_data_ptr( msg->data, msg->data_size );
 
@@ -1296,6 +1300,45 @@ void post_message( user_handle_t win, unsigned int message,
     release_object( thread );
 }
 
+/* post a win event */
+void post_win_event( struct thread *thread, unsigned int event,
+                     user_handle_t win, unsigned int object_id,
+                     unsigned int child_id, void *hook_proc,
+                     const WCHAR *module, size_t module_size,
+                     user_handle_t hook)
+{
+    struct message *msg;
+
+    if (thread->queue && (msg = mem_alloc( sizeof(*msg) )))
+    {
+        msg->type      = MSG_WINEVENT;
+        msg->win       = get_user_full_handle( win );
+        msg->msg       = event;
+        msg->wparam    = object_id;
+        msg->lparam    = child_id;
+        msg->time      = get_tick_count();
+        msg->x         = 0;
+        msg->y         = 0;
+        msg->info      = get_thread_id( current );
+        msg->result    = NULL;
+        msg->hook      = hook;
+        msg->hook_proc = hook_proc;
+
+        if ((msg->data = malloc( module_size )))
+        {
+            msg->data_size = module_size;
+            memcpy( msg->data, module, module_size );
+
+            if (debug_level > 1)
+                fprintf( stderr, "post_win_event: tid %04x event %04x win %p object_id %d child_id %d\n",
+                         get_thread_id(thread), event, win, object_id, child_id );
+            append_message( &thread->queue->msg_list[SEND_MESSAGE], msg );
+            set_queue_bits( thread->queue, QS_SENDMESSAGE );
+        }
+        else
+            free( msg );
+    }
+}
 
 /* get the message queue of the current thread */
 DECL_HANDLER(get_msg_queue)

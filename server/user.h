@@ -64,6 +64,11 @@ extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
 extern void post_message( user_handle_t win, unsigned int message,
                           unsigned int wparam, unsigned int lparam );
+extern void post_win_event( struct thread *thread, unsigned int event,
+                            user_handle_t win, unsigned int object_id,
+                            unsigned int child_id, void *proc,
+                            const WCHAR *module, size_t module_size,
+                            user_handle_t handle );
 
 /* region functions */
 

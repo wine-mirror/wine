@@ -2142,7 +2142,8 @@ enum message_type
     MSG_CALLBACK_RESULT,
     MSG_OTHER_PROCESS,
     MSG_POSTED,
-    MSG_HARDWARE
+    MSG_HARDWARE,
+    MSG_WINEVENT
 };
 #define SEND_MSG_ABORT_IF_HUNG  0x01
 
@@ -2166,6 +2167,8 @@ struct get_message_reply
     unsigned int    lparam;
     int             x;
     int             y;
+    user_handle_t   hook;
+    void*           hook_proc;
     unsigned int    time;
     unsigned int    info;
     size_t          total;
@@ -2948,7 +2951,11 @@ struct set_hook_request
 {
     struct request_header __header;
     int            id;
+    process_id_t   pid;
     thread_id_t    tid;
+    int            event_min;
+    int            event_max;
+    int            flags;
     void*          proc;
     int            unicode;
     /* VARARG(module,unicode_str); */
@@ -2979,6 +2986,10 @@ struct start_hook_chain_request
 {
     struct request_header __header;
     int            id;
+    int            event;
+    user_handle_t  window;
+    int            object_id;
+    int            child_id;
 };
 struct start_hook_chain_reply
 {
@@ -3009,6 +3020,10 @@ struct get_next_hook_request
 {
     struct request_header __header;
     user_handle_t  handle;
+    int            event;
+    user_handle_t  window;
+    int            object_id;
+    int            child_id;
 };
 struct get_next_hook_reply
 {
@@ -3712,6 +3727,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 155
+#define SERVER_PROTOCOL_VERSION 156
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2,6 +2,7 @@
  * Windows hook functions
  *
  * Copyright 2002 Alexandre Julliard
+ * Copyright 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -65,6 +66,7 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -81,7 +83,17 @@
 WINE_DEFAULT_DEBUG_CHANNEL(hook);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-static const char * const hook_names[WH_MAXHOOK - WH_MINHOOK + 1] =
+struct hook_info
+{
+    FARPROC proc;
+    void *handle;
+    DWORD tid;
+    WCHAR module[MAX_PATH];
+};
+
+#define WH_WINEVENT (WH_MAXHOOK+1)
+
+static const char * const hook_names[WH_WINEVENT - WH_MINHOOK + 1] =
 {
     "WH_MSGFILTER",
     "WH_JOURNALRECORD",
@@ -98,7 +110,8 @@ static const char * const hook_names[WH_MAXHOOK - WH_MINHOOK + 1] =
     "WH_FOREGROUNDIDLE",
     "WH_CALLWNDPROCRET",
     "WH_KEYBOARD_LL",
-    "WH_MOUSE_LL"
+    "WH_MOUSE_LL",
+    "WH_WINEVENT"
 };
 
 
@@ -130,6 +143,13 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
         return 0;
     }
 
+    if (!proc)
+    {
+        SetLastError( ERROR_INVALID_FILTER_PROC );
+        return 0;
+    }
+
+    /* FIXME: what if the tid belongs to another process? */
     if (tid)  /* thread-local hook */
     {
         if (id == WH_JOURNALRECORD ||
@@ -156,9 +176,13 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
 
     SERVER_START_REQ( set_hook )
     {
-        req->id      = id;
-        req->tid     = tid;
-        req->unicode = unicode;
+        req->id        = id;
+        req->pid       = 0;
+        req->tid       = tid;
+        req->event_min = EVENT_MIN;
+        req->event_max = EVENT_MAX;
+        req->flags     = WINEVENT_INCONTEXT;
+        req->unicode   = unicode;
         if (inst) /* make proc relative to the module base */
         {
             req->proc = (void *)((char *)proc - (char *)inst);
@@ -281,7 +305,7 @@ static LRESULT call_hook( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM
  *
  * Retrieve the hook procedure real value for a module-relative proc
  */
-static HOOKPROC get_hook_proc( HOOKPROC proc, const WCHAR *module )
+static void *get_hook_proc( void *proc, const WCHAR *module )
 {
     HMODULE mod;
 
@@ -291,7 +315,7 @@ static HOOKPROC get_hook_proc( HOOKPROC proc, const WCHAR *module )
         /* FIXME: the library will never be freed */
         if (!(mod = LoadLibraryW(module))) return NULL;
     }
-    return (HOOKPROC)((char *)mod + (ULONG_PTR)proc);
+    return (char *)mod + (ULONG_PTR)proc;
 }
 
 
@@ -312,6 +336,7 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
     SERVER_START_REQ( start_hook_chain )
     {
         req->id = id;
+        req->event = EVENT_MIN;
         wine_server_set_reply( req, module, sizeof(module)-sizeof(WCHAR) );
         if (!wine_server_call( req ))
         {
@@ -339,6 +364,10 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
         case WH_MOUSE_LL:
             MSG_SendInternalMessageTimeout( pid, tid, WM_WINE_MOUSE_LL_HOOK, wparam, lparam,
                                             SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
+            break;
+        default:
+            ERR("Unknown hook id %d\n", id);
+            assert(0);
             break;
         }
     }
@@ -431,6 +460,7 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+    if (!ret && GetLastError() == ERROR_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
     return ret;
 }
 
@@ -448,9 +478,11 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
     SERVER_START_REQ( remove_hook )
     {
         req->handle = hhook;
+        req->id     = 0;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+    if (!ret && GetLastError() == ERROR_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
     return ret;
 }
 
@@ -474,6 +506,7 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
     SERVER_START_REQ( get_next_hook )
     {
         req->handle = queue->hook;
+        req->event = EVENT_MIN;
         wine_server_set_reply( req, module, sizeof(module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
@@ -503,6 +536,10 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
         case WH_MOUSE_LL:
             MSG_SendInternalMessageTimeout( pid, tid, WM_WINE_MOUSE_LL_HOOK, wparam, lparam,
                                             SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
+            break;
+        default:
+            ERR("Unknown hook id %d\n", id);
+            assert(0);
             break;
         }
     }
@@ -549,28 +586,73 @@ BOOL WINAPI CallMsgFilterW( LPMSG msg, INT code )
  * Set up an event hook for a set of events.
  *
  * PARAMS
- *  dwMin     [I] Lowest event handled by pfnProc
- *  dwMax     [I] Highest event handled by pfnProc
- *  hModule   [I] DLL containing pfnProc
- *  pfnProc   [I] Callback event hook function
- *  dwProcess [I] Process to get events from, or 0 for all processes
- *  dwThread  [I] Thread to get events from, or 0 for all threads
- *  dwFlags   [I] Flags indicating the status of pfnProc
+ *  event_min [I] Lowest event handled by pfnProc
+ *  event_max [I] Highest event handled by pfnProc
+ *  inst      [I] DLL containing pfnProc
+ *  proc      [I] Callback event hook function
+ *  pid       [I] Process to get events from, or 0 for all processes
+ *  tid       [I] Thread to get events from, or 0 for all threads
+ *  flags     [I] Flags indicating the status of pfnProc
  *
  * RETURNS
  *  Success: A handle representing the hook.
  *  Failure: A NULL handle.
- *
- * BUGS
- *  Not implemented.
  */
-HWINEVENTHOOK WINAPI SetWinEventHook(DWORD dwMin, DWORD dwMax, HMODULE hModule,
-                                     WINEVENTPROC pfnProc, DWORD dwProcess,
-                                     DWORD dwThread, DWORD dwFlags)
+HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
+                                     HMODULE inst, WINEVENTPROC proc,
+                                     DWORD pid, DWORD tid, DWORD flags)
 {
-    FIXME("(%ld,%ld,%p,%p,%ld,%ld,0x%08lx)-stub!\n", dwMin, dwMax, hModule,
-          pfnProc, dwProcess, dwThread, dwFlags);
-    return 0;
+    HWINEVENTHOOK handle = 0;
+    WCHAR module[MAX_PATH];
+    DWORD len;
+
+    TRACE("%ld,%ld,%p,%p,%08lx,%04lx,%08lx\n", event_min, event_max, inst,
+          proc, pid, tid, flags);
+
+    if (inst)
+    {
+        if (!(len = GetModuleFileNameW(inst, module, MAX_PATH)) || len >= MAX_PATH)
+            inst = 0;
+    }
+
+    if ((flags & WINEVENT_INCONTEXT) && !inst)
+    {
+        SetLastError(ERROR_HOOK_NEEDS_HMOD);
+        return 0;
+    }
+
+    if (event_min > event_max)
+    {
+        SetLastError(ERROR_INVALID_HOOK_FILTER);
+        return 0;
+    }
+
+    /* FIXME: what if the tid or pid belongs to another process? */
+    if (tid)  /* thread-local hook */
+        inst = 0;
+
+    SERVER_START_REQ( set_hook )
+    {
+        req->id        = WH_WINEVENT;
+        req->pid       = pid;
+        req->tid       = tid;
+        req->event_min = event_min;
+        req->event_max = event_max;
+        req->flags     = flags;
+        req->unicode   = 1;
+        if (inst) /* make proc relative to the module base */
+        {
+            req->proc = (void *)((char *)proc - (char *)inst);
+            wine_server_add_data( req, module, strlenW(module) * sizeof(WCHAR) );
+        }
+        else req->proc = proc;
+
+        if (!wine_server_call_err( req )) handle = reply->handle;
+    }
+    SERVER_END_REQ;
+
+    TRACE("-> %p\n", handle);
+    return handle;
 }
 
 
@@ -585,17 +667,84 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD dwMin, DWORD dwMax, HMODULE hModule,
  * RETURNS
  *  Success: TRUE. The event hook has been removed.
  *  Failure: FALSE, if hEventHook is invalid.
- *
- * BUGS
- *  Not implemented.
  */
 BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
 {
-    FIXME("(%p)-stub!\n", hEventHook);
+    BOOL ret;
 
-    return (hEventHook != 0);
+    TRACE( "%p\n", hEventHook );
+
+    SERVER_START_REQ( remove_hook )
+    {
+        req->handle = hEventHook;
+        req->id     = WH_WINEVENT;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
+inline static BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object_id,
+                                   LONG child_id, struct hook_info *info)
+{
+    BOOL ret;
+
+    SERVER_START_REQ( start_hook_chain )
+    {
+        req->id = id;
+        req->event = event;
+        req->window = hwnd;
+        req->object_id = object_id;
+        req->child_id = child_id;
+        wine_server_set_reply( req, info->module, sizeof(info->module)-sizeof(WCHAR) );
+        ret = !wine_server_call( req );
+        if (ret)
+        {
+            info->module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info->handle    = reply->handle;
+            info->proc      = reply->proc;
+            info->tid       = reply->tid;
+        }
+    }
+    SERVER_END_REQ;
+    return ret && (info->tid || info->proc);
+}
+
+inline static BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
+                                  LONG child_id, struct hook_info *info)
+{
+    BOOL ret;
+
+    SERVER_START_REQ( get_next_hook )
+    {
+        req->handle = info->handle;
+        req->event = event;
+        req->window = hwnd;
+        req->object_id = object_id;
+        req->child_id = child_id;
+        wine_server_set_reply( req, info->module, sizeof(info->module)-sizeof(WCHAR) );
+        ret = !wine_server_call( req );
+        if (ret)
+        {
+            info->module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info->handle    = reply->next;
+            info->proc      = reply->proc;
+            info->tid       = reply->tid;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+inline static void find_hook_close(DWORD id)
+{
+    SERVER_START_REQ( finish_hook_chain )
+    {
+        req->id = id;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+}
 
 /***********************************************************************
  *           NotifyWinEvent                             [USER32.@]
@@ -603,20 +752,81 @@ BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
  * Inform the OS that an event has occurred.
  *
  * PARAMS
- *  dwEvent  [I] Id of the event
- *  hWnd     [I] Window holding the object that created the event
- *  nId      [I] Type of object that created the event
- *  nChildId [I] Child object of nId, or CHILDID_SELF.
+ *  event     [I] Id of the event
+ *  hwnd      [I] Window holding the object that created the event
+ *  object_id [I] Type of object that created the event
+ *  child_id  [I] Child object of nId, or CHILDID_SELF.
  *
  * RETURNS
  *  Nothing.
- *
- * BUGS
- *  Not implemented.
  */
-void WINAPI NotifyWinEvent(DWORD dwEvent, HWND hWnd, LONG nId, LONG nChildId)
+void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id)
 {
-    FIXME("(%ld,%p,%ld,%ld)-stub!\n", dwEvent, hWnd, nId, nChildId);
+    struct hook_info info;
+
+    TRACE("%04lx,%p,%ld,%ld\n", event, hwnd, object_id, child_id);
+
+    if (!hwnd)
+    {
+        SetLastError(ERROR_INVALID_WINDOW_HANDLE);
+        return;
+    }
+
+#if 0
+    if (event & 0x80000000)
+    {
+        /* FIXME: on 64-bit platforms we need to invent some other way for
+         * passing parameters, nId and nChildId can't hold full [W|L]PARAM.
+         * struct call_hook *hook = (LRESULT *)hWnd;
+         * wparam = hook->wparam;
+         * lparam = hook->lparam;
+         */
+        LRESULT *ret = (LRESULT *)hwnd;
+        INT id, code, unicode;
+
+        id = (dwEvent & 0x7fff0000) >> 16;
+        code = event & 0x7fff;
+        unicode = event & 0x8000;
+        *ret = HOOK_CallHooks(id, code, object_id, child_id, unicode);
+        return;
+    }
+#endif
+
+    if (!find_first_hook(WH_WINEVENT, event, hwnd, object_id, child_id, &info)) return;
+
+    do
+    {
+        if (info.proc)
+        {
+            TRACE( "calling WH_WINEVENT hook %p event %lx hwnd %p %lx %lx module %s\n",
+                   info.proc, event, hwnd, object_id, child_id, debugstr_w(info.module) );
+
+            if (!info.module[0] || (info.proc = get_hook_proc( info.proc, info.module )) != NULL)
+            {
+                int locks = WIN_SuspendWndsLock();
+
+                if (TRACE_ON(relay))
+                    DPRINTF( "%04lx:Call winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
+                             GetCurrentThreadId(), info.proc, info.handle, event, hwnd, object_id,
+                             child_id, GetCurrentThreadId(), GetCurrentTime());
+
+                info.proc(info.handle, event, hwnd, object_id, child_id,
+                          GetCurrentThreadId(), GetCurrentTime());
+
+                if (TRACE_ON(relay))
+                    DPRINTF( "%04lx:Ret  winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
+                             GetCurrentThreadId(), info.proc, info.handle, event, hwnd, object_id,
+                             child_id, GetCurrentThreadId(), GetCurrentTime());
+
+                WIN_RestoreWndsLock( locks );
+            }
+        }
+        else
+            break;
+    }
+    while (find_next_hook(event, hwnd, object_id, child_id, &info));
+
+    find_hook_close(WH_WINEVENT);
 }
 
 
