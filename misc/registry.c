@@ -40,7 +40,7 @@
 #include "winreg.h"
 #include "winversion.h"
 
-static void REGISTRY_Init();
+static void REGISTRY_Init(void);
 /* FIXME: following defines should be configured global ... */
 
 /* NOTE: do not append a /. linux' mkdir() WILL FAIL if you do that */
@@ -404,7 +404,7 @@ static void split_keypath( LPCWSTR wp, LPWSTR **wpv, int *wpc)
  * REGISTRY_Init [Internal]
  * Registry initialisation, allocates some default keys. 
  */
-static void REGISTRY_Init() {
+static void REGISTRY_Init(void) {
 	HKEY	hkey;
 	char	buf[200];
 
@@ -1560,7 +1560,7 @@ __w31_dumptree(	unsigned short idx,
 /******************************************************************************
  * _w31_loadreg [Internal]
  */
-void _w31_loadreg() {
+void _w31_loadreg(void) {
 	HFILE32			hf;
 	struct _w31_header	head;
 	struct _w31_tabent	*tab;

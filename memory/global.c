@@ -75,7 +75,7 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
 }
 
 
-void debug_handles()
+void debug_handles(void)
 {
     int printed=0;
     int i;

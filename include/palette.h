@@ -19,7 +19,7 @@ typedef struct
     LOGPALETTE  logpalette; /* _MUST_ be the last field */
 } PALETTEOBJ;
 
-extern HPALETTE16 PALETTE_Init();
+extern HPALETTE16 PALETTE_Init(void);
 extern int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer );
 extern BOOL32 PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette );
 extern BOOL32 PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette);

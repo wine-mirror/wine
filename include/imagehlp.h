@@ -669,6 +669,7 @@ BOOL32 WINAPI ImageUnload32(
   PLOADED_IMAGE32 LoadedImage
 );
 PAPI_VERSION32 WINAPI ImagehlpApiVersion32(
+  void 
 );
 PAPI_VERSION32 WINAPI ImagehlpApiVersionEx32(
   PAPI_VERSION32 AppVersion
@@ -743,6 +744,7 @@ BOOL32 WINAPI SymGetModuleInfo32(
   PIMAGEHLP_MODULE32 ModuleInfo
 );
 DWORD WINAPI SymGetOptions32(
+  void
 );
 BOOL32 WINAPI SymGetSearchPath32(
   HANDLE32 hProcess, LPSTR szSearchPath, DWORD SearchPathLength
