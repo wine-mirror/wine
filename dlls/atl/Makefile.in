@@ -3,12 +3,16 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = atl.dll
-IMPORTS   = ole32 user32 kernel32 advapi32
-EXTRALIBS = -luuid
+IMPORTS   = ole32 shlwapi user32 advapi32 kernel32
+EXTRALIBS = $(LIBUNICODE) -luuid
 
 C_SRCS = \
 	atl_main.c \
+	registrar.c \
 	regsvr.c
+
+IDL_SRCS = \
+	atliface.idl
 
 @MAKE_DLL_RULES@
 

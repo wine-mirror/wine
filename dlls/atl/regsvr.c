@@ -31,13 +31,11 @@
 #include "winerror.h"
 
 #include "objbase.h"
-#include "initguid.h"
+#include "atliface.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
-
-DEFINE_GUID( CLSID_ATLRegistrar, 0x44ec053a,0x400f,0x11d0,0x9d,0xcd,0x00,0xa0,0xc9,0x03,0x91,0xd3 );
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
@@ -553,17 +551,4 @@ HRESULT WINAPI ATL_DllUnregisterServer(void)
     if (SUCCEEDED(hr))
 	hr = unregister_interfaces(interface_list);
     return hr;
-}
-
-/***********************************************************************
- *		DllGetClassObject (ATL.@)
- */
-HRESULT WINAPI ATL_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
-{
-    if (IsEqualCLSID (rclsid, &CLSID_ATLRegistrar)) {
-        FIXME("No COM Class for ATLRegistrar\n");
-        return CLASS_E_CLASSNOTAVAILABLE;
-    }
-    FIXME("(%s, %s, %p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    return CLASS_E_CLASSNOTAVAILABLE;
 }
