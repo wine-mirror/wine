@@ -766,7 +766,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     else
     {
         TRACE( "cannot open device %s: err %ld\n", debugstr_w(device), GetLastError() );
-        if (GetLastError() != ERROR_ACCESS_DENIED) return FALSE;
+        if (GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
     }
 
     /* we couldn't open the device, fallback to default strategy */
