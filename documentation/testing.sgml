@@ -178,10 +178,8 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
       <sect2>
         <title>Setup of the MinGW cross-compiling environment</title>
         <para>
-          The most daunting problem while trying to cross-compile the Wine
-          tests is the setup of the MinGW cross-compiling environment. Here
-          are some instructions for different Linux distributions and *BSD
-          systems to help with this problem.
+          Here are some instructions to setup MinGW on different Linux 
+          distributions and *BSD.
         </para>
         <sect3>
           <title>Debian GNU/Linux</title>
@@ -197,26 +195,12 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
             most probably SuSE Linux too, etc. But this list isn't exhaustive;
             the following steps should probably work on any rpm based system.
           </para>
-          <itemizedlist>
-            <listitem><para>
-              Download the mingw-binutils  and mingw-gcc  srpm's from
-              <ulink url="http://ftp.redhat.com/pub/contrib/libc6/SRPMS/">
-              http://ftp.redhat.com/pub/contrib/libc6/SRPMS/</ulink>.
-            </para></listitem>
-            <listitem><para>
-              Download the mingw srpm from
-              <ulink url="http://ftp.redhat.com/pub/contrib/libc6/noarch/SRPMS/">
-              http://ftp.redhat.com/pub/contrib/libc6/noarch/SRPMS/</ulink>.
-            </para></listitem>
-            <listitem><para>
-              Build the mingw and mingw-binutils rpm's (<command>rpmbuild
-              --rebuild $SRPM</>) and install them.
-            </para></listitem>
-            <listitem><para>
-              After the above step you can build the mingw-gcc rpm too.
-              Install it.
-            </para></listitem>
-          </itemizedlist>
+          <para>
+            Download and install the latest rpm's from 
+            <ulink url="http://mirzam.it.vu.nl/mingw/">MinGW RPM packages</>.
+            Alternatively you can follow the instructions on that page and
+            build your own packages from the source rpm's listed there as well.
+          </para>
         </sect3>
         <sect3>
           <title>*BSD</title>
@@ -325,9 +309,12 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
       <sect2>
         <title>With MinGW</title>
         <para>
-          This needs to be documented. The best may be to ask on the Wine
-          development mailing list and update this documentation with the
-          result of your inquiry.
+         Wine's build system already has support for building tests with a MinGW
+         cross-compiler. See the section above called 'Setup of the MinGW 
+         cross-compiling environment' for instructions on how to set things up.
+         When you have a MinGW environment installed all you need to do is rerun
+         configure and it should detect the MinGW compiler and tools. Then run 
+         'make crosstest' to start building the tests.
         </para>
       </sect2>
     </sect1>
