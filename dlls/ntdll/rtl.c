@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -358,7 +359,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
 
     length = strlenW(szwDosPath) * sizeof (WCHAR) + sizeof szPrefix;
  
-    ntpath->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, length);
+    ntpath->Buffer = RtlAllocateHeap(ntdll_get_process_heap(), 0, length);
     ntpath->Length = 0;
     ntpath->MaximumLength = length;
 

@@ -591,7 +591,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
     ANSI_STRING AnsiPath;
     NTSTATUS ret;
 
-    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, strlen(user)+16 )))
+    if (!(buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, strlen(user)+16 )))
         return STATUS_NO_MEMORY;
 
     strcpy( buffer, "\\Registry\\User\\" );

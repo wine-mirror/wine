@@ -78,7 +78,8 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
 		nSubAuthority4, nSubAuthority5,	nSubAuthority6, nSubAuthority7, pSid);
 
-	if (!(*pSid = RtlAllocateHeap( GetProcessHeap(), 0, RtlLengthRequiredSid(nSubAuthorityCount))))
+	if (!(*pSid = RtlAllocateHeap( ntdll_get_process_heap(), 0,
+                                       RtlLengthRequiredSid(nSubAuthorityCount))))
 	  return FALSE;
 
 	(*pSid)->Revision = SID_REVISION;
@@ -148,7 +149,7 @@ BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2)
 DWORD WINAPI RtlFreeSid(PSID pSid)
 {
 	TRACE("(%p)\n", pSid);
-	RtlFreeHeap( GetProcessHeap(), 0, pSid );
+	RtlFreeHeap( ntdll_get_process_heap(), 0, pSid );
 	return STATUS_SUCCESS;
 }
 
