@@ -431,6 +431,23 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
         WIN_ReleaseWndPtr(pWnd);
     }
 
+    /*
+     * Clear the update region to make sure no WM_PAINT messages will be
+     * generated for this window while processing the WM_NCDESTROY.
+     */
+    if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
+    {
+        if (wndPtr->hrgnUpdate > 1)
+	  DeleteObject( wndPtr->hrgnUpdate );
+
+        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+
+	wndPtr->hrgnUpdate = 0;
+    }
+
+    /*
+     * Send the WM_NCDESTROY to the window being destroyed.
+     */
     SendMessageA( wndPtr->hwndSelf, WM_NCDESTROY, 0, 0);
 
     /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
@@ -444,12 +461,6 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     PROPERTY_RemoveWindowProps( wndPtr );
 
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
-
-    if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
-    {
-        if (wndPtr->hrgnUpdate > 1) DeleteObject( wndPtr->hrgnUpdate );
-        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
-    }
 
     /* toss stale messages from the queue */
 
