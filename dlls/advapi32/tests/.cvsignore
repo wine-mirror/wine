@@ -1,4 +1,5 @@
 Makefile
 crypt.ok
 registry.ok
+security.ok
 testlist.c
