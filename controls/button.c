@@ -275,7 +275,10 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
     case BM_SETIMAGE:
 	oldHbitmap = infoPtr->hImage;
 	if ((wndPtr->dwStyle & BS_BITMAP) || (wndPtr->dwStyle & BS_ICON))
+	{
 	    infoPtr->hImage = (HANDLE) lParam;
+	    InvalidateRect( hWnd, NULL, FALSE );
+	}
 	return oldHbitmap;
 
     case BM_GETIMAGE:
