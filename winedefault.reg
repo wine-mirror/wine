@@ -44,6 +44,49 @@
 "DragFullWindows"="0"
 
 #
+# WinMM config
+#
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\MCI Extensions]
+"cda"="cdaudio"
+"mid"="sequencer"
+"midi"="sequencer"
+"rmi"="sequencer"
+# aif"="MPEGVideo"
+"aifc"="MPEGVideo"
+# aiff"="MPEGVideo"
+"asf"="MPEGVideo2"
+"asx"="MPEGVideo2"
+"au"="MPEGVideo"
+# avi"="MPEGVideo"
+"lsf"="MPEGVideo2"
+"lsx"="MPEGVideo2"
+"m1v"="MPEGVideo"
+"m3u"="MPEGVideo"
+# mov"="MPEGVideo"
+"m3u"="MPEGVideo"
+"mp2"="MPEGVideo"
+"mp2v"="MPEGVideo"
+"mp3"="MPEGVideo"
+"mpa"="MPEGVideo"
+"mpe"="MPEGVideo"
+"mpeg"="MPEGVideo"
+"mpg"="MPEGVideo"
+"mpv"="MPEGVideo"
+"mpv2"="MPEGVideo"
+# qt"="MPEGVideo"
+"snd"="MPEGVideo"
+"rmi"="MPEGVideo"
+# wav"="MPEGVideo"
+"wav"="waveaudio"
+"wax"="MPEGVideo2"
+"wm"="MPEGVideo2"
+"wma"="MPEGVideo2"
+"wmp"="MPEGVideo2"
+"wmv"="MPEGVideo2"
+"wmx"="MPEGVideo2"
+"wvx"="MPEGVideo2"
+
+#
 # Override default load address of BDE (Borland database engine),
 # since it's not available on Linux
 #
@@ -1426,6 +1469,13 @@
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021401-0000-0000-C000-000000000046}\shellex\MayChangeDefaultMenu]
 @=""
+
+[MACHINE\Software\Classes\CLSID\{000214e6-0000-0000-c000-000000000046}]
+@="Shellfolder"
+
+[MACHINE\Software\Classes\CLSID\{000214e6-0000-0000-c000-000000000046}\InProcServer32]
+@="shell32.dll"
+"ThreadingModel"="Apartment"
 
 #
 # Entries for COMCAT (Component Category Manager)
