@@ -85,27 +85,13 @@ HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
 HBRUSH32 WINAPI CreatePatternBrush32( HBITMAP32 hbitmap )
 {
     LOGBRUSH32 logbrush = { BS_PATTERN, 0, 0 };
-    BITMAPOBJ *bmp, *newbmp;
-
     TRACE(gdi, "%04x\n", hbitmap );
 
-      /* Make a copy of the bitmap */
-
-    if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
-	return 0;
-    logbrush.lbHatch = (INT32)CreateBitmapIndirect16( &bmp->bitmap );
-    newbmp = (BITMAPOBJ *) GDI_GetObjPtr( (HGDIOBJ32)logbrush.lbHatch,
-                                          BITMAP_MAGIC );
-    if (!newbmp) 
-    {
-      GDI_HEAP_UNLOCK( hbitmap );
-      return 0;
-    }
-    TSXCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
-	       0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
-    GDI_HEAP_UNLOCK( hbitmap );
-    GDI_HEAP_UNLOCK( logbrush.lbHatch );
-    return CreateBrushIndirect32( &logbrush );
+    logbrush.lbHatch = (INT32)BITMAP_CopyBitmap( hbitmap );
+    if(!logbrush.lbHatch)
+        return 0;
+    else
+        return CreateBrushIndirect32( &logbrush );
 }
 
 

@@ -21,10 +21,12 @@ static const DC_FUNCTIONS X11DRV_Funcs =
 {
     X11DRV_Arc,                      /* pArc */
     X11DRV_BitBlt,                   /* pBitBlt */
+    X11DRV_BitmapBits,               /* pBitmapBits */
     X11DRV_Chord,                    /* pChord */
+    X11DRV_CreateBitmap,             /* pCreateBitmap */
     X11DRV_CreateDC,                 /* pCreateDC */
     X11DRV_DeleteDC,                 /* pDeleteDC */
-    NULL,                            /* pDeleteObject */
+    X11DRV_DeleteObject,             /* pDeleteObject */
     X11DRV_Ellipse,                  /* pEllipse */
     X11DRV_EnumDeviceFonts,          /* pEnumDeviceFonts */
     X11DRV_Escape,                   /* pEscape */
@@ -173,10 +175,13 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     dc->w.devCaps      = &X11DRV_DevCaps;
     if (dc->w.flags & DC_MEMORY)
     {
+        X11DRV_PHYSBITMAP *pbitmap;
         BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap,
                                                       BITMAP_MAGIC );
-        physDev->drawable  = bmp->pixmap;
-        physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
+	X11DRV_CreateBitmap( dc->w.hBitmap );
+	pbitmap            = bmp->DDBitmap->physBitmap;
+        physDev->drawable  = pbitmap->pixmap;
+        physDev->gc        = TSXCreateGC(display, physDev->drawable, 0, NULL);
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
 
         dc->w.totalExtent.left   = 0;

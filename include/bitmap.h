@@ -8,19 +8,6 @@
 #define __WINE_BITMAP_H
 
 #include "gdi.h"
-#include "xmalloc.h"
-
-#ifdef PRELIMINARY_WING16_SUPPORT
-/* FIXME: this doesn't belong here */
-#include "ts_xshm.h"
-
-typedef struct
-{
-  XShmSegmentInfo	si;
-  SEGPTR		bits;
-} __ShmBitmapCtl;
-
-#endif
 
   /* Additional info for DIB section objects */
 typedef struct
@@ -40,52 +27,51 @@ typedef struct
 
 } DIBSECTIONOBJ;
 
+/* Flags used for BitmapBits. We only use the first two at the moment */
+
+#define DDB_SET			1
+#define DDB_GET			2
+#define DDB_COPY		4
+#define DDB_SETWITHFILLER	8
+
+typedef struct {
+    const struct tagDC_FUNCS *funcs; /* DC function table */
+    void	 *physBitmap; /* ptr to device specific data */
+} DDBITMAP;
+
   /* GDI logical bitmap object */
-typedef struct
+typedef struct tagBITMAPOBJ
 {
     GDIOBJHDR   header;
-    BITMAP16    bitmap;
-    Pixmap      pixmap;
-    SIZE16      size;   /* For SetBitmapDimension() */
+    BITMAP32    bitmap;
+    SIZE32      size;   /* For SetBitmapDimension() */
+
+    DDBITMAP	*DDBitmap;
 
     /* For device-independent bitmaps: */
     DIBSECTIONOBJ *dib;
 
 } BITMAPOBJ;
 
-  /* GCs used for B&W and color bitmap operations */
-extern GC BITMAP_monoGC, BITMAP_colorGC;
-
-#define BITMAP_GC(bmp) \
-  (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
-
 #define BITMAP_WIDTH_BYTES(width,bpp) \
     (((bpp) == 24) ? (width) * 4 : ( ((bpp) == 15) ? (width) * 2 : \
 				    ((width) * (bpp) + 15) / 16 * 2 ))
 
-#define XCREATEIMAGE(image,width,height,bpp) \
-{ \
-    int width_bytes = DIB_GetXImageWidthBytes( (width), (bpp) ); \
-    (image) = TSXCreateImage(display, DefaultVisualOfScreen(screen), \
-                           (bpp), ZPixmap, 0, xcalloc( (height)*width_bytes ),\
-                           (width), (height), 32, width_bytes ); \
-}
-
   /* objects/bitmap.c */
-extern BOOL32  BITMAP_Init(void);
 extern INT16   BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
 extern INT32   BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
 extern BOOL32  BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
-extern XImage *BITMAP_GetXImage( const BITMAPOBJ *bmp );
 extern INT32   BITMAP_GetBitsPadding( int width, int depth );
 extern INT32   BITMAP_GetBitsWidth( int width, int depth );
 extern HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
   UINT32 loadflags);
+extern HBITMAP32 BITMAP_CopyBitmap( HBITMAP32 hbitmap );
 
   /* objects/dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth );
-extern int DIB_GetXImageWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
+extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
+                              int *height, WORD *bpp, WORD *compr );
 extern void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB );
 extern void DIB_DeleteDIBSection( BITMAPOBJ *bmp );
 extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );

@@ -21,6 +21,7 @@ extern HFONT32 X11DRV_FONT_SelectObject( DC * dc, HFONT32 hfont,
                                          FONTOBJ * font );
 extern HPEN32 X11DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
 
+extern BOOL32 X11DRV_BITMAP_DeleteObject( HBITMAP32 hbitmap, BITMAPOBJ *bmp );
 
 /***********************************************************************
  *           X11DRV_SelectObject
@@ -50,6 +51,31 @@ HGDIOBJ32 X11DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
       case REGION_MAGIC:
 	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
 	  break;
+    }
+    GDI_HEAP_UNLOCK( handle );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           X11DRV_DeleteObject
+ */
+BOOL32 X11DRV_DeleteObject( HGDIOBJ32 handle )
+{
+    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    BOOL32 ret = 0;
+
+    if (!ptr) return FALSE;
+     
+    switch(ptr->wMagic) {
+    case BITMAP_MAGIC:
+        ret = X11DRV_BITMAP_DeleteObject( handle, (BITMAPOBJ *)ptr );
+	break;
+
+    default:
+        ERR(gdi, "Shouldn't be here!\n");
+	ret = FALSE;
+	break;
     }
     GDI_HEAP_UNLOCK( handle );
     return ret;

@@ -173,10 +173,12 @@ typedef struct tagDC_FUNCS
 {
     BOOL32     (*pArc)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
     BOOL32     (*pBitBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,DWORD);
+    LONG       (*pBitmapBits)(HBITMAP32,void*,LONG,WORD);
     BOOL32     (*pChord)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
+    BOOL32     (*pCreateBitmap)(HBITMAP32); 
     BOOL32     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
     BOOL32     (*pDeleteDC)(DC*);
-    BOOL32     (*pDeleteObject)(HGDIOBJ16);
+    BOOL32     (*pDeleteObject)(HGDIOBJ32);
     BOOL32     (*pEllipse)(DC*,INT32,INT32,INT32,INT32);
     BOOL32     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
     INT32      (*pEscape)(DC*,INT32,INT32,SEGPTR,SEGPTR);

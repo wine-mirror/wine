@@ -67,7 +67,7 @@ BOOL32 DIB_Init(void)
  *
  * Return the width of an X image in bytes
  */
-int DIB_GetXImageWidthBytes( int width, int depth )
+int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
 {
     int		i;
 
@@ -144,7 +144,7 @@ int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse )
  * Get the info from a bitmap header.
  * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
  */
-static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
+int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
                               int *height, WORD *bpp, WORD *compr )
 {
     if (header->biSize == sizeof(BITMAPINFOHEADER))
@@ -1282,11 +1282,18 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
         } 
     }
 
+    /* HACK for now */
+    if(!bmp->DDBitmap)
+        X11DRV_CreateBitmap(hbitmap);
+{
+    X11DRV_PHYSBITMAP *pbitmap = bmp->DDBitmap->physBitmap;
+
+
     descr.bits      = bits;
     descr.image     = NULL;
     descr.lines     = tmpheight >= 0 ? lines : -lines;
     descr.depth     = bmp->bitmap.bmBitsPixel;
-    descr.drawable  = bmp->pixmap;
+    descr.drawable  = pbitmap->pixmap;
     descr.gc        = BITMAP_GC(bmp);
     descr.xSrc      = 0;
     descr.ySrc      = 0;
@@ -1294,7 +1301,7 @@ INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
     descr.yDest     = height - startscan - lines;
     descr.width     = bmp->bitmap.bmWidth;
     descr.height    = lines;
-
+}
     EnterCriticalSection( &X11DRV_CritSection );
     result = CALL_LARGE_STACK( DIB_SetImageBits, &descr );
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -1598,8 +1605,12 @@ INT32 WINAPI GetDIBits32(
             xend = info->bmiHeader.biWidth;
 	}
 
+	/* HACK for now */
+	if(!bmp->DDBitmap)
+	    X11DRV_CreateBitmap(hbitmap);
+
         EnterCriticalSection( &X11DRV_CritSection );
-	bmpImage = (XImage *)CALL_LARGE_STACK( BITMAP_GetXImage, bmp );
+	bmpImage = (XImage *)CALL_LARGE_STACK( X11DRV_BITMAP_GetXImage, bmp );
 
 	switch( info->bmiHeader.biBitCount )
 	{
@@ -1822,7 +1833,9 @@ static void DIB_DoUpdateDIBSection( BITMAPOBJ *bmp, BOOL32 toDIB )
     descr.nColorMap = dib->nColorMap;
     descr.bits      = dib->dibSection.dsBm.bmBits;
     descr.depth     = bmp->bitmap.bmBitsPixel;
-    descr.drawable  = bmp->pixmap;
+    
+    /* Hack for now */
+    descr.drawable  = ((X11DRV_PHYSBITMAP *)bmp->DDBitmap->physBitmap)->pixmap;
     descr.gc        = BITMAP_GC(bmp);
     descr.xSrc      = 0;
     descr.ySrc      = 0;
@@ -2062,6 +2075,10 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
        res = CreateDIBitmap32(hdc, bi, 0, NULL, bmi, usage);
        bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
        if (bmp) bmp->dib = dib;
+
+       /* HACK for now */
+       if(!bmp->DDBitmap)
+	  X11DRV_CreateBitmap(res); 
     }
 
     /* Create XImage */

@@ -71,6 +71,7 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
     BITMAPOBJ *bmp;
     DC *dc;
     BOOL32 ret = TRUE;
+    X11DRV_PHYSBITMAP *pbitmap;
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
@@ -79,6 +80,8 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
         return FALSE;
     }
 
+    pbitmap = bmp->DDBitmap->physBitmap;
+
     xdest += dc->w.DCOrgX; ydest += dc->w.DCOrgY;
 
     TSXSetFunction( display, dc->u.x.gc, GXcopy );
@@ -86,7 +89,7 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
     {
         TSXSetForeground( display, dc->u.x.gc, dc->u.x.backgroundPixel );
         TSXSetBackground( display, dc->u.x.gc, dc->u.x.textPixel );
-        TSXCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
+        TSXCopyPlane( display, pbitmap->pixmap, dc->u.x.drawable, dc->u.x.gc,
                     xsrc, ysrc, width, height, xdest, ydest, 1 );
     }
     else if (bmp->bitmap.bmBitsPixel == dc->w.bitsPerPixel)
@@ -105,12 +108,12 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 		TSXSetForeground(display, dc->u.x.gc, dc->u.x.textPixel);
 		TSXSetBackground(display, dc->u.x.gc, dc->u.x.backgroundPixel);
 	    }
-	    TSXCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
+	    TSXCopyPlane( display, pbitmap->pixmap, dc->u.x.drawable, dc->u.x.gc,
 			xsrc, ysrc, width, height, xdest, ydest, plane );
 	}
 	else 
 	{
-	    TSXCopyArea( display, bmp->pixmap, dc->u.x.drawable, 
+	    TSXCopyArea( display, pbitmap->pixmap, dc->u.x.drawable, 
 		       dc->u.x.gc, xsrc, ysrc, width, height, xdest, ydest );
 	}
     }
@@ -235,6 +238,7 @@ BOOL32 GRAPH_SelectClipMask( HDC32 hdc, HBITMAP32 hMonoBitmap, INT32 x, INT32 y)
 {
     BITMAPOBJ *bmp = NULL;
     DC *dc;
+    X11DRV_PHYSBITMAP *pbitmap = NULL;
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
     if ( hMonoBitmap ) 
@@ -245,10 +249,11 @@ BOOL32 GRAPH_SelectClipMask( HDC32 hdc, HBITMAP32 hMonoBitmap, INT32 x, INT32 y)
 	   GDI_HEAP_UNLOCK( hdc );
 	   return FALSE;
        }
+       pbitmap = bmp->DDBitmap->physBitmap;
        TSXSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX + x, dc->w.DCOrgY + y);
     }
 
-    TSXSetClipMask( display, dc->u.x.gc, (bmp) ? bmp->pixmap : None );
+    TSXSetClipMask( display, dc->u.x.gc, (bmp) ? pbitmap->pixmap : None );
 
     GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hMonoBitmap );

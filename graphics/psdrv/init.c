@@ -22,7 +22,9 @@ static const DC_FUNCTIONS PSDRV_Funcs =
 {
     PSDRV_Arc,                       /* pArc */
     NULL,                            /* pBitBlt */
+    NULL,                            /* pBitmapBits */
     PSDRV_Chord,                     /* pChord */
+    NULL,                            /* pCreateBitmap */
     PSDRV_CreateDC,                  /* pCreateDC */
     PSDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pDeleteObject */

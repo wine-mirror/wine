@@ -17,7 +17,9 @@ static const DC_FUNCTIONS MFDRV_Funcs =
 {
     MFDRV_Arc,                       /* pArc */
     MFDRV_BitBlt,                    /* pBitBlt */
+    NULL,                            /* pBitmapBits */	
     MFDRV_Chord,                     /* pChord */
+    NULL,                            /* pCreateBitmap */
     NULL, /* no implementation */    /* pCreateDC */
     NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pDeleteObject */

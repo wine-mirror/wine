@@ -319,6 +319,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
 {
     HBITMAP16 hbitmap;
     BITMAPOBJ * bmpObjPtr;
+    X11DRV_PHYSBITMAP *pbitmap;
 
     if (!pixmap) return 0;
 
@@ -328,15 +329,18 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
     bmpObjPtr->size.cx = width;
     bmpObjPtr->size.cy = height;
-    bmpObjPtr->pixmap  = pixmap;
     bmpObjPtr->bitmap.bmType       = 0;
     bmpObjPtr->bitmap.bmWidth      = width;
     bmpObjPtr->bitmap.bmHeight     = height;
     bmpObjPtr->bitmap.bmWidthBytes = BITMAP_WIDTH_BYTES( width, bpp );
     bmpObjPtr->bitmap.bmPlanes     = 1;
     bmpObjPtr->bitmap.bmBitsPixel  = bpp;
-    bmpObjPtr->bitmap.bmBits       = (SEGPTR)NULL;
+    bmpObjPtr->bitmap.bmBits       = NULL;
     bmpObjPtr->dib                 = NULL;
+
+    pbitmap = X11DRV_AllocBitmap(bmpObjPtr);
+
+    pbitmap->pixmap  = pixmap;
 
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;
@@ -493,10 +497,11 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
 
     if (descr.mask)
     {
+        X11DRV_PHYSBITMAP *pbitmapAnd = bmpAnd->DDBitmap->physBitmap;
           /* Invert the mask */
 
         TSXSetFunction( display, BITMAP_monoGC, GXinvert );
-        TSXFillRectangle( display, bmpAnd->pixmap, BITMAP_monoGC, 0, 0,
+        TSXFillRectangle( display, pbitmapAnd->pixmap, BITMAP_monoGC, 0, 0,
                         bmpAnd->bitmap.bmWidth, bmpAnd->bitmap.bmHeight );
         TSXSetFunction( display, BITMAP_monoGC, GXcopy );
 
@@ -504,11 +509,12 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
 
         if (bmpXor->bitmap.bmBitsPixel != 1)
         {
+	    X11DRV_PHYSBITMAP *pbitmapXor = bmpXor->DDBitmap->physBitmap;
             TSXSetForeground( display, BITMAP_colorGC,
                             COLOR_ToPhysical( NULL, RGB(0,0,0) ));
             TSXSetBackground( display, BITMAP_colorGC, 0 );
             TSXSetFunction( display, BITMAP_colorGC, GXor );
-            TSXCopyPlane(display, bmpAnd->pixmap, bmpXor->pixmap, BITMAP_colorGC,
+            TSXCopyPlane(display, pbitmapAnd->pixmap, pbitmapXor->pixmap, BITMAP_colorGC,
                        0, 0, bmpXor->bitmap.bmWidth, bmpXor->bitmap.bmHeight,
                        0, 0, 1 );
             TSXSetFunction( display, BITMAP_colorGC, GXcopy );

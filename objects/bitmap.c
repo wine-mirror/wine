@@ -2,51 +2,21 @@
  * GDI bitmap objects
  *
  * Copyright 1993 Alexandre Julliard
+ *           1998 Huw D M Davies
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include "ts_xlib.h"
-#include "ts_xutil.h"
 #include "gdi.h"
-#include "callback.h"
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
 #include "global.h"
-#include "debug.h"
 #include "sysmetrics.h"
 #include "cursoricon.h"
 #include "color.h"
+#include "debug.h"
 
-#ifdef PRELIMINARY_WING16_SUPPORT
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#endif
-
-  /* GCs used for B&W and color bitmap operations */
-GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
-
-/***********************************************************************
- *           XPutImage_wrapper
- *
- * Wrapper to call XPutImage with CALL_LARGE_STACK.
- */
-
-struct XPutImage_descr
-{
-    BITMAPOBJ *bmp;
-    XImage    *image;
-    INT32      width;
-    INT32      height;
-};
-
-static int XPutImage_wrapper( const struct XPutImage_descr *descr )
-{
-    return XPutImage( display, descr->bmp->pixmap, BITMAP_GC(descr->bmp),
-                      descr->image, 0, 0, 0, 0, descr->width, descr->height );
-}
 
 /***********************************************************************
  *           BITMAP_GetBitsPadding
@@ -142,7 +112,6 @@ HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy,
 }
 
 
-
 /***********************************************************************
  *           CreateBitmap16    (GDI.48)
  */
@@ -165,51 +134,51 @@ HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
  *
  * RETURNS
  *    Success: Handle to bitmap
- *    Failure: NULL
+ *    Failure: 0
  */
 HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
                                  UINT32 bpp, LPCVOID bits )
 {
-    BITMAPOBJ * bmpObjPtr;
+    BITMAPOBJ *bmp;
     HBITMAP32 hbitmap;
 
     planes = (BYTE)planes;
     bpp    = (BYTE)bpp;
 
-    TRACE(gdi, "%dx%d, %d colors\n", width, height, 1 << (planes*bpp) );
 
       /* Check parameters */
-    if (!height || !width || planes != 1) return 0;
-    if ((bpp != 1) && (bpp != screenDepth)) return 0;
+    if (!height || !width) return 0;
+    if (planes != 1) {
+        FIXME(bitmap, "planes = %d\n", planes);
+	return 0;
+    }
     if (height < 0) height = -height;
     if (width < 0) width = -width;
 
       /* Create the BITMAPOBJ */
     hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
     if (!hbitmap) return 0;
-    bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
 
-    bmpObjPtr->size.cx = 0;
-    bmpObjPtr->size.cy = 0;
-    bmpObjPtr->bitmap.bmType = 0;
-    bmpObjPtr->bitmap.bmWidth = (INT16)width;
-    bmpObjPtr->bitmap.bmHeight = (INT16)height;
-    bmpObjPtr->bitmap.bmPlanes = (BYTE)planes;
-    bmpObjPtr->bitmap.bmBitsPixel = (BYTE)bpp;
-    bmpObjPtr->bitmap.bmWidthBytes = (INT16)BITMAP_WIDTH_BYTES( width, bpp );
-    bmpObjPtr->bitmap.bmBits = 0;
+    TRACE(bitmap, "%dx%d, %d colors returning %08x\n", width, height,
+	  1 << (planes*bpp), hbitmap);
 
-    bmpObjPtr->dib = NULL;
+    bmp = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
 
-      /* Create the pixmap */
-    bmpObjPtr->pixmap = TSXCreatePixmap(display, rootWindow, width, height, bpp);
-    if (!bmpObjPtr->pixmap)
-    {
-	GDI_HEAP_FREE( hbitmap );
-	hbitmap = 0;
-    }
-    else if (bits) /* Set bitmap bits */
-	SetBitmapBits32( hbitmap, height * bmpObjPtr->bitmap.bmWidthBytes,
+    bmp->size.cx = 0;
+    bmp->size.cy = 0;
+    bmp->bitmap.bmType = 0;
+    bmp->bitmap.bmWidth = (INT16)width;
+    bmp->bitmap.bmHeight = (INT16)height;
+    bmp->bitmap.bmPlanes = (BYTE)planes;
+    bmp->bitmap.bmBitsPixel = (BYTE)bpp;
+    bmp->bitmap.bmWidthBytes = (INT16)BITMAP_WIDTH_BYTES( width, bpp );
+    bmp->bitmap.bmBits = NULL;
+
+    bmp->DDBitmap = NULL;
+    bmp->dib = NULL;
+
+    if (bits) /* Set bitmap bits */
+	SetBitmapBits32( hbitmap, height * bmp->bitmap.bmWidthBytes,
                          bits );
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;
@@ -235,23 +204,26 @@ HBITMAP16 WINAPI CreateCompatibleBitmap16(HDC16 hdc, INT16 width, INT16 height)
  *
  * RETURNS
  *    Success: Handle to bitmap
- *    Failure: NULL
+ *    Failure: 0
  */
 HBITMAP32 WINAPI CreateCompatibleBitmap32( HDC32 hdc, INT32 width, INT32 height)
 {
     HBITMAP32 hbmpRet = 0;
     DC *dc;
 
-    TRACE(gdi, "(%04x,%d,%d) = \n", hdc, width, height );
+    TRACE(bitmap, "(%04x,%d,%d) = \n", hdc, width, height );
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    if ((width >0x1000) || (height > 0x1000))
-      {
-	FIXME(gdi,"got bad width %d or height %d, please look for reason\n",
-	       width, height );
+    if ((width >0x1000) || (height > 0x1000)) {
+	FIXME(bitmap,"got bad width %d or height %d, please look for reason\n",
+	      width, height );
 	return 0;
-      }
+    }
     hbmpRet = CreateBitmap32( width, height, 1, dc->w.bitsPerPixel, NULL );
-    TRACE(gdi,"\t\t%04x\n", hbmpRet);
+
+    if(dc->funcs->pCreateBitmap)
+        dc->funcs->pCreateBitmap( hbmpRet );
+
+    TRACE(bitmap,"\t\t%04x\n", hbmpRet);
     return hbmpRet;
 }
 
@@ -282,18 +254,6 @@ HBITMAP32 WINAPI CreateBitmapIndirect32(
 
 
 /***********************************************************************
- *           BITMAP_GetXImage
- *
- * Get an X image for a bitmap. For use with CALL_LARGE_STACK.
- */
-XImage *BITMAP_GetXImage( const BITMAPOBJ *bmp )
-{
-    return XGetImage( display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
-                      bmp->bitmap.bmHeight, AllPlanes, ZPixmap );
-}
-
-
-/***********************************************************************
  *           GetBitmapBits16    (GDI.74)
  */
 LONG WINAPI GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
@@ -312,136 +272,52 @@ LONG WINAPI GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
 LONG WINAPI GetBitmapBits32(
     HBITMAP32 hbitmap, /* [in]  Handle to bitmap */
     LONG count,        /* [in]  Number of bytes to copy */
-    LPVOID buffer)     /* [out] Pointer to buffer to receive bits */
+    LPVOID bits)       /* [out] Pointer to buffer to receive bits */
 {
-    BITMAPOBJ * bmp;
-    LONG height, old_height;
-    XImage * image;
-    LPBYTE tbuf;
-    int	h,w,pad;
+    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    LONG height, ret;
     
-    /* KLUDGE! */
+    if (!bmp) return 0;
+
     if (count < 0) {
 	WARN(bitmap, "(%ld): Negative number of bytes passed???\n", count );
 	count = -count;
     }
-    bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (!bmp) return 0;
 
-      /* Only get entire lines */
+    /* Only get entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
+    count = height * bmp->bitmap.bmWidthBytes;
 
-    TRACE(bitmap, "%dx%d %d colors %p fetched height: %ld\n",
-	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-	    1 << bmp->bitmap.bmBitsPixel, buffer, height );
+    TRACE(bitmap, "(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+	    hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+	    1 << bmp->bitmap.bmBitsPixel, height );
 
-    pad = BITMAP_GetBitsPadding( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+    if(bmp->DDBitmap) { 
 
-    if (!height || (pad == -1))
-    {
-      GDI_HEAP_UNLOCK( hbitmap );
-      return 0;
-    }
+        TRACE(bitmap, "Calling device specific BitmapBits\n");
+	if(bmp->DDBitmap->funcs->pBitmapBits)
+	    ret = bmp->DDBitmap->funcs->pBitmapBits(hbitmap, bits, count,
+						    DDB_GET);
+	else {
+	    ERR(bitmap, "BitmapBits == NULL??\n");
+	    ret = 0;
+	}	
 
-    EnterCriticalSection( &X11DRV_CritSection );
+    } else {
 
-    /* Hack: change the bitmap height temporarily to avoid */
-    /*       getting unnecessary bitmap rows. */
-    old_height = bmp->bitmap.bmHeight;
-    bmp->bitmap.bmHeight = height;
-    image = (XImage *)CALL_LARGE_STACK( BITMAP_GetXImage, bmp );
-    bmp->bitmap.bmHeight = old_height;
-
-    /* copy XImage to 16 bit padded image buffer with real bitsperpixel */
-
-    tbuf = buffer;
-    switch (bmp->bitmap.bmBitsPixel)
-    {
-    case 1:
-        for (h=0;h<height;h++)
-        {
-            *tbuf = 0;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-                if ((w%8) == 0)
-                    *tbuf = 0;
-                *tbuf |= XGetPixel(image,w,h)<<(7-(w&7));
-                if ((w&7) == 7) ++tbuf;
-            }
-            tbuf += pad;
-        }
-        break;
-    case 4:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-                if (!(w & 1)) *tbuf = XGetPixel( image, w, h) << 4;
-	    	else *tbuf++ |= XGetPixel( image, w, h) & 0x0f;
-            }
-            tbuf += pad;
-        }
-        break;
-    case 8:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-                *tbuf++ = XGetPixel(image,w,h);
-            tbuf += pad;
-        }
-        break;
-    case 15:
-    case 16:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-	    	long pixel = XGetPixel(image,w,h);
-
-		*tbuf++ = pixel & 0xff;
-		*tbuf++ = (pixel>>8) & 0xff;
-            }
-        }
-        break;
-    case 24:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-	    	long pixel = XGetPixel(image,w,h);
-
-		*tbuf++ = pixel & 0xff;
-		*tbuf++ = (pixel>> 8) & 0xff;
-		*tbuf++ = (pixel>>16) & 0xff;
-	    }
-            tbuf += pad;
+        if(!bmp->bitmap.bmBits) {
+	    WARN(bitmap, "Bitmap is empty\n");
+	    ret = 0;
+	} else {
+	    memcpy(bits, bmp->bitmap.bmBits, count);
+	    ret = count;
 	}
-        break;
 
-    case 32:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-	    	long pixel = XGetPixel(image,w,h);
-
-		*tbuf++ = pixel & 0xff;
-		*tbuf++ = (pixel>> 8) & 0xff;
-		*tbuf++ = (pixel>>16) & 0xff;
-		*tbuf++ = (pixel>>24) & 0xff;
-	    }
-            tbuf += pad;
-	}
-        break;
-    default:
-        FIXME(bitmap, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
     }
-    XDestroyImage( image );
-    LeaveCriticalSection( &X11DRV_CritSection );
 
     GDI_HEAP_UNLOCK( hbitmap );
-    return height * bmp->bitmap.bmWidthBytes;
+    return ret;
 }
 
 
@@ -464,132 +340,53 @@ LONG WINAPI SetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPCVOID buffer )
 LONG WINAPI SetBitmapBits32(
     HBITMAP32 hbitmap, /* [in] Handle to bitmap */
     LONG count,        /* [in] Number of bytes in bitmap array */
-    LPCVOID buffer)    /* [in] Address of array with bitmap bits */
+    LPCVOID bits)      /* [in] Address of array with bitmap bits */
 {
-    struct XPutImage_descr descr;
-    BITMAPOBJ * bmp;
-    LONG height;
-    XImage * image;
-    LPBYTE sbuf,tmpbuffer;
-    int	w,h,pad,widthbytes;
+    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    LONG height, ret;
     
-    /* KLUDGE! */
+    if (!bmp) return 0;
+
     if (count < 0) {
 	WARN(bitmap, "(%ld): Negative number of bytes passed???\n", count );
 	count = -count;
     }
-    bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (!bmp) return 0;
 
-    TRACE(bitmap, "%dx%d %d colors %p\n",
-	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-	    1 << bmp->bitmap.bmBitsPixel, buffer );
-
-      /* Only set entire lines */
+    /* Only get entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
+    count = height * bmp->bitmap.bmWidthBytes;
 
-    pad = BITMAP_GetBitsPadding( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+    TRACE(bitmap, "(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+	    hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+	    1 << bmp->bitmap.bmBitsPixel, height );
 
-    if (!height || (pad == -1)) 
-    {
-      GDI_HEAP_UNLOCK( hbitmap );
-      return 0;
-    }
+    if(bmp->DDBitmap) {
+
+        TRACE(bitmap, "Calling device specific BitmapBits\n");
+	if(bmp->DDBitmap->funcs->pBitmapBits)
+	    ret = bmp->DDBitmap->funcs->pBitmapBits(hbitmap, (void *) bits,
+						    count, DDB_SET);
+	else {
+	    ERR(bitmap, "BitmapBits == NULL??\n");
+	    ret = 0;
+	}
 	
-    sbuf = (LPBYTE)buffer;
+    } else {
 
-    widthbytes	= DIB_GetXImageWidthBytes(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
-    tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
-
-    EnterCriticalSection( &X11DRV_CritSection );
-    image = XCreateImage( display, DefaultVisualOfScreen(screen),
-                          bmp->bitmap.bmBitsPixel, ZPixmap, 0, tmpbuffer,
-                          bmp->bitmap.bmWidth,height,32,widthbytes );
-    
-    /* copy 16 bit padded image buffer with real bitsperpixel to XImage */
-    sbuf = (LPBYTE)buffer;
-    switch (bmp->bitmap.bmBitsPixel)
-    {
-    case 1:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-                XPutPixel(image,w,h,(sbuf[0]>>(7-(w&7))) & 1);
-                if ((w&7) == 7)
-                    sbuf++;
-            }
-            sbuf += pad;
-        }
-        break;
-    case 4:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-                if (!(w & 1)) XPutPixel( image, w, h, *sbuf >> 4 );
-                else XPutPixel( image, w, h, *sbuf++ & 0xf );
-            }
-            sbuf += pad;
-        }
-        break;
-    case 8:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-                XPutPixel(image,w,h,*sbuf++);
-            sbuf += pad;
-        }
-        break;
-    case 15:
-    case 16:
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-                XPutPixel(image,w,h,sbuf[1]*256+sbuf[0]);
-                sbuf+=2;
-            }
-        }
-        break;
-    case 24: 
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-                XPutPixel(image,w,h,(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
-                sbuf += 3;
-            }
-            sbuf += pad;
-        }
-        break;
-    case 32: 
-        for (h=0;h<height;h++)
-        {
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
-            {
-                XPutPixel(image,w,h,(sbuf[3]<<24)+(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
-                sbuf += 4;
-            }
-            sbuf += pad;
-        }
-        break;
-    default:
-      FIXME(bitmap, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
-
+        if(!bmp->bitmap.bmBits) /* Alloc enough for entire bitmap */
+	    bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), 0, count );
+	if(!bmp->bitmap.bmBits) {
+	    WARN(bitmap, "Unable to allocate bit buffer\n");
+	    ret = 0;
+	} else {
+	    memcpy(bmp->bitmap.bmBits, bits, count);
+	    ret = count;
+	}
     }
 
-    descr.bmp    = bmp;
-    descr.image  = image;
-    descr.width  = bmp->bitmap.bmWidth;
-    descr.height = height;
-    CALL_LARGE_STACK( XPutImage_wrapper, &descr );
-    XDestroyImage( image ); /* frees tmpbuffer too */
-    LeaveCriticalSection( &X11DRV_CritSection );
-    
     GDI_HEAP_UNLOCK( hbitmap );
-    return height * bmp->bitmap.bmWidthBytes;
+    return ret;
 }
 
 /***********************************************************************
@@ -691,22 +488,30 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
 
 
 /**********************************************************************
- *          CopyBitmap32 (not an API)
- *
- * NOTES
- *    If it is not an API, why is it declared with WINAPI?
+ *		BITMAP_CopyBitmap
  *
  */
-HBITMAP32 WINAPI CopyBitmap32 (HBITMAP32 hnd)
+HBITMAP32 BITMAP_CopyBitmap(HBITMAP32 hbitmap)
 {
+    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     HBITMAP32 res = 0;
-    BITMAP32 bmp;
+    BITMAP32 bm;
 
-    if (GetObject32A (hnd, sizeof (bmp), &bmp))
-    {
-	res = CreateBitmapIndirect32 (&bmp);
-	SetBitmapBits32 (res, bmp.bmWidthBytes * bmp.bmHeight, bmp.bmBits);
+    if(!bmp) return 0;
+
+    bm = bmp->bitmap;
+    bm.bmBits = NULL;
+    res = CreateBitmapIndirect32(&bm);
+
+    if(res) {
+        char *buf = HeapAlloc( GetProcessHeap(), 0, bm.bmWidthBytes *
+			       bm.bmHeight );
+        GetBitmapBits32 (hbitmap, bm.bmWidthBytes * bm.bmHeight, buf);
+	SetBitmapBits32 (res, bm.bmWidthBytes * bm.bmHeight, buf);
+	HeapFree( GetProcessHeap(), 0, buf );
     }
+
+    GDI_HEAP_UNLOCK( hbitmap );
     return res;
 }
 
@@ -734,7 +539,7 @@ HICON32 WINAPI CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
     switch (type)
     {
 	case IMAGE_BITMAP:
-		return CopyBitmap32(hnd);
+		return BITMAP_CopyBitmap(hnd);
 	case IMAGE_ICON:
 		return CopyIcon32(hnd);
 	case IMAGE_CURSOR:
@@ -879,25 +684,13 @@ HBITMAP32 WINAPI LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
  */
 BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
 {
-#ifdef PRELIMINARY_WING16_SUPPORT
-    if( bmp->bitmap.bmBits )
- 	TSXShmDetach( display, (XShmSegmentInfo*)bmp->bitmap.bmBits );
-#endif
-
-    TSXFreePixmap( display, bmp->pixmap );
-#ifdef PRELIMINARY_WING16_SUPPORT
-    if( bmp->bitmap.bmBits )
-    {
-    __ShmBitmapCtl* p = (__ShmBitmapCtl*)bmp->bitmap.bmBits;
-      WORD          sel = HIWORD(p->bits);
-      unsigned long l, limit = GetSelectorLimit(sel);
-
-      for( l = 0; l < limit; l += 0x10000, sel += __AHINCR )
-	   FreeSelector(sel);
-      shmctl(p->si.shmid, IPC_RMID, NULL); 
-      shmdt(p->si.shmaddr);  /* already marked for destruction */
+    if( bmp->DDBitmap ) {
+        if( bmp->DDBitmap->funcs->pDeleteObject )
+	    bmp->DDBitmap->funcs->pDeleteObject( hbitmap );
     }
-#endif
+
+    if( bmp->bitmap.bmBits )
+        HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
 
     DIB_DeleteDIBSection( bmp );
 
@@ -922,7 +715,7 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
 	    bmp16.bmWidthBytes = bmp32->bmWidthBytes;
 	    bmp16.bmPlanes     = bmp32->bmPlanes;
 	    bmp16.bmBitsPixel  = bmp32->bmBitsPixel;
-	    bmp16.bmBits       = NULL;
+	    bmp16.bmBits       = (SEGPTR)0;
 	    memcpy( buffer, &bmp16, count );
 	    return count;
         }
@@ -934,8 +727,16 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
     }
     else
     {
-	if (count > sizeof(bmp->bitmap)) count = sizeof(bmp->bitmap);
-	memcpy( buffer, &bmp->bitmap, count );
+	BITMAP16 bmp16;
+	bmp16.bmType       = bmp->bitmap.bmType;
+	bmp16.bmWidth      = bmp->bitmap.bmWidth;
+	bmp16.bmHeight     = bmp->bitmap.bmHeight;
+	bmp16.bmWidthBytes = bmp->bitmap.bmWidthBytes;
+	bmp16.bmPlanes     = bmp->bitmap.bmPlanes;
+	bmp16.bmBitsPixel  = bmp->bitmap.bmBitsPixel;
+	bmp16.bmBits       = (SEGPTR)0;
+	if (count > sizeof(bmp16)) count = sizeof(bmp16);
+	memcpy( buffer, &bmp16, count );
 	return count;
     }
 }
@@ -962,16 +763,8 @@ INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
     }
     else
     {
-	BITMAP32 bmp32;
-	bmp32.bmType       = bmp->bitmap.bmType;
-	bmp32.bmWidth      = bmp->bitmap.bmWidth;
-	bmp32.bmHeight     = bmp->bitmap.bmHeight;
-	bmp32.bmWidthBytes = bmp->bitmap.bmWidthBytes;
-	bmp32.bmPlanes     = bmp->bitmap.bmPlanes;
-	bmp32.bmBitsPixel  = bmp->bitmap.bmBitsPixel;
-	bmp32.bmBits       = NULL;
-	if (count > sizeof(bmp32)) count = sizeof(bmp32);
-	memcpy( buffer, &bmp32, count );
+	if (count > sizeof(BITMAP32)) count = sizeof(BITMAP32);
+	memcpy( buffer, &bmp->bitmap, count );
 	return count;
     }
 }
@@ -1013,7 +806,7 @@ BOOL16 WINAPI GetBitmapDimensionEx16( HBITMAP16 hbitmap, LPSIZE16 size )
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
-    *size = bmp->size;
+    CONV_SIZE32TO16( &bmp->size, size );
     GDI_HEAP_UNLOCK( hbitmap );
     return TRUE;
 }
@@ -1032,8 +825,7 @@ BOOL32 WINAPI GetBitmapDimensionEx32(
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
-    size->cx = (INT32)bmp->size.cx;
-    size->cy = (INT32)bmp->size.cy;
+    *size = bmp->size;
     GDI_HEAP_UNLOCK( hbitmap );
     return TRUE;
 }
@@ -1058,7 +850,7 @@ BOOL16 WINAPI SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
-    if (prevSize) *prevSize = bmp->size;
+    if (prevSize) CONV_SIZE32TO16( &bmp->size, prevSize );
     bmp->size.cx = x;
     bmp->size.cy = y;
     GDI_HEAP_UNLOCK( hbitmap );
@@ -1081,9 +873,9 @@ BOOL32 WINAPI SetBitmapDimensionEx32(
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
-    if (prevSize) CONV_SIZE16TO32( &bmp->size, prevSize );
-    bmp->size.cx = (INT16)x;
-    bmp->size.cy = (INT16)y;
+    if (prevSize) *prevSize = bmp->size;
+    bmp->size.cx = x;
+    bmp->size.cy = y;
     GDI_HEAP_UNLOCK( hbitmap );
     return TRUE;
 }

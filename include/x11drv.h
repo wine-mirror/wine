@@ -9,6 +9,7 @@
 #include "ts_xutil.h"
 #include "winbase.h"
 #include "windows.h"
+#include "xmalloc.h" /* for XCREATEIMAGE macro */
 
   /* X physical pen */
 typedef struct
@@ -46,6 +47,17 @@ typedef struct
     int           backgroundPixel;
     int           textPixel;
 } X11DRV_PDEVICE;
+
+
+typedef struct {
+    Pixmap	pixmap;
+} X11DRV_PHYSBITMAP;
+
+  /* GCs used for B&W and color bitmap operations */
+extern GC BITMAP_monoGC, BITMAP_colorGC;
+
+#define BITMAP_GC(bmp) \
+  (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
 typedef INT32 (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
 
@@ -111,13 +123,31 @@ extern BOOL32 X11DRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
 extern BOOL32 X11DRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
 				 UINT32 flags, const RECT32 *lprect,
 				 LPCSTR str, UINT32 count, const INT32 *lpDx );
-
-
+extern BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap );
+extern BOOL32 X11DRV_DeleteObject( HGDIOBJ32 handle );
+extern LONG X11DRV_BitmapBits( HBITMAP32 hbitmap, void *bits, LONG count,
+			       WORD flags );
+extern INT32 X11DRV_SetDIBitsToDevice( struct tagDC *dc, INT32 xDest,
+				       INT32 yDest, DWORD cx, DWORD cy,
+				       INT32 xSrc, INT32 ySrc,
+				       UINT32 startscan, UINT32 lines,
+				       LPCVOID bits, const BITMAPINFO *info,
+				       UINT32 coloruse );
+extern INT32 X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP32 hbitmap,
+				      WORD fGet, UINT32 startscan,
+				      UINT32 lines, LPSTR bits,
+				      LPBITMAPINFO info, UINT32 coloruse );
 /* X11 driver internal functions */
 
 extern BOOL32 X11DRV_BITMAP_Init(void);
 extern BOOL32 X11DRV_BRUSH_Init(void);
 extern BOOL32 X11DRV_FONT_Init( struct tagDeviceCaps* );
+
+struct tagBITMAPOBJ;
+extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
+extern int X11DRV_DIB_GetXImageWidthBytes( int width, int depth );
+extern BOOL32 X11DRV_DIB_Init(void);
+extern X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( struct tagBITMAPOBJ *bmp );
 
 /* Xlib critical section */
 
@@ -125,4 +155,13 @@ extern CRITICAL_SECTION X11DRV_CritSection;
 
 extern void _XInitImageFuncPtrs(XImage *);
 
+#define XCREATEIMAGE(image,width,height,bpp) \
+{ \
+    int width_bytes = X11DRV_DIB_GetXImageWidthBytes( (width), (bpp) ); \
+    (image) = TSXCreateImage(display, DefaultVisualOfScreen(screen), \
+                           (bpp), ZPixmap, 0, xcalloc( (height)*width_bytes ),\
+                           (width), (height), 32, width_bytes ); \
+}
+
 #endif  /* __WINE_X11DRV_H */
+

@@ -51,7 +51,9 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
 {
     NULL,                            /* pArc */
     NULL,                            /* pBitBlt */
+    NULL,                            /* pBitmapBits */
     NULL,                            /* pChord */
+    NULL,                            /* pCreateBitmap */
     WIN16DRV_CreateDC,               /* pCreateDC */
     NULL,                            /* pDeleteDC */
     NULL,                            /* pDeleteObject */
