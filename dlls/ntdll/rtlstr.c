@@ -37,6 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
+#define GUID_STRING_LENGTH    38
+
 UINT NlsAnsiCodePage = 0;
 BYTE NlsMbCodePageTag = 0;
 BYTE NlsMbOemCodePageTag = 0;
@@ -2010,13 +2012,14 @@ NTSTATUS WINAPI RtlStringFromGUID(const GUID* guid, UNICODE_STRING *str)
 
   TRACE("(%p,%p)\n", guid, str);
 
-  str->Buffer = (WCHAR*)RtlAllocateHeap( GetProcessHeap(), 0, 40 * sizeof(WCHAR));
+  str->Length = GUID_STRING_LENGTH * sizeof(WCHAR);
+  str->MaximumLength = str->Length + sizeof(WCHAR);
+  str->Buffer = (WCHAR*)RtlAllocateHeap(GetProcessHeap(), 0, str->MaximumLength);
   if (!str->Buffer)
   {
     str->Length = str->MaximumLength = 0;
     return STATUS_NO_MEMORY;
   }
-  str->Length = str->MaximumLength = 40;
   sprintfW(str->Buffer, szFormat, guid->Data1, guid->Data2, guid->Data3,
           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
