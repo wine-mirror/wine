@@ -26,6 +26,7 @@
 #include "dce.h"
 #include "options.h"
 #include "hook.h"
+#include "mwm.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -44,6 +45,7 @@ Atom wmTakeFocus = None;
 Atom dndProtocol = None;
 Atom dndSelection = None;
 Atom wmChangeState = None;
+Atom mwmHints = None;
 Atom kwmDockWindow = None;
 Atom _kde_net_wm_system_tray_window_for = None; /* KDE 2 Final */
 
@@ -366,11 +368,36 @@ static void set_wm_hints( Display *display, WND *win )
     {
         int val = 1;
         if (kwmDockWindow != None)
-            TSXChangeProperty( display, data->whole_window, kwmDockWindow, kwmDockWindow,
-                               32, PropModeReplace, (char*)&val, 1 );
+            XChangeProperty( display, data->whole_window, kwmDockWindow, kwmDockWindow,
+                             32, PropModeReplace, (char*)&val, 1 );
         if (_kde_net_wm_system_tray_window_for != None)
-            TSXChangeProperty( display, data->whole_window, _kde_net_wm_system_tray_window_for,
-                               XA_WINDOW, 32, PropModeReplace, (char*)&data->whole_window, 1 );
+            XChangeProperty( display, data->whole_window, _kde_net_wm_system_tray_window_for,
+                             XA_WINDOW, 32, PropModeReplace, (char*)&data->whole_window, 1 );
+    }
+
+    if (mwmHints != None)
+    {
+        MwmHints mwm_hints;
+        mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
+        mwm_hints.functions = 0;
+        if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.functions |= MWM_FUNC_MOVE;
+        if (win->dwStyle & WS_THICKFRAME) mwm_hints.functions |= MWM_FUNC_MOVE | MWM_FUNC_RESIZE;
+        if (win->dwStyle & WS_MINIMIZE)   mwm_hints.functions |= MWM_FUNC_MINIMIZE;
+        if (win->dwStyle & WS_MAXIMIZE)   mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
+        if (win->dwStyle & WS_SYSMENU)    mwm_hints.functions |= MWM_FUNC_CLOSE;
+        mwm_hints.decorations = 0;
+        if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.decorations |= MWM_DECOR_TITLE;
+        if (win->dwExStyle & WS_EX_DLGMODALFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
+        else if (win->dwStyle & WS_THICKFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER | MWM_DECOR_RESIZEH;
+        else if ((win->dwStyle & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
+        else if (win->dwStyle & WS_BORDER) mwm_hints.decorations |= MWM_DECOR_BORDER;
+        else if (!(win->dwStyle & (WS_CHILD|WS_POPUP))) mwm_hints.decorations |= MWM_DECOR_BORDER;
+        if (win->dwStyle & WS_SYSMENU)  mwm_hints.decorations |= MWM_DECOR_MENU;
+        if (win->dwStyle & WS_MINIMIZE) mwm_hints.decorations |= MWM_DECOR_MINIMIZE;
+        if (win->dwStyle & WS_MAXIMIZE) mwm_hints.decorations |= MWM_DECOR_MAXIMIZE;
+
+        XChangeProperty( display, data->whole_window, mwmHints, mwmHints, 32,
+                         PropModeReplace, (char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
     }
 
     wine_tsx11_unlock();
@@ -600,7 +627,8 @@ static void create_desktop( Display *display, WND *wndPtr, CREATESTRUCTA *cs )
     wmTakeFocus = 0;  /* not yet */
     dndProtocol = XInternAtom( display, "DndProtocol" , False );
     dndSelection = XInternAtom( display, "DndSelection" , False );
-    wmChangeState = XInternAtom (display, "WM_CHANGE_STATE", False);
+    wmChangeState = XInternAtom( display, "WM_CHANGE_STATE", False );
+    mwmHints = XInternAtom( display, _XA_MWM_HINTS, False );
     kwmDockWindow = XInternAtom( display, "KWM_DOCKWINDOW", False );
     _kde_net_wm_system_tray_window_for = XInternAtom( display, "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR", False );
     wine_tsx11_unlock();
