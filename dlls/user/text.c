@@ -71,7 +71,6 @@ DEFAULT_DEBUG_CHANNEL(text);
 #define SPACE  32
 #define PREFIX 38
 
-#define ELLIPSIS "..."
 #define FORWARD_SLASH '/'
 #define BACK_SLASH '\\'
 
@@ -144,7 +143,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
 }
 
 /*********************************************************************
- *                      TEXT_PathElllipsify (static)
+ *                      TEXT_PathEllipsify (static)
  *
  * Add an ellipsis to the provided string in order to make it fit within
  * the width.  The ellipsis is added as specified for the DT_PATH_ELLIPSIS
@@ -394,12 +393,11 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 		    wb_i = i+1;
 		    wb_j = j;
 		    wb_count = *count;
+                    plen = ((plen/tabwidth)+1)*tabwidth;
                 }
 
                 normal_char = 0;
                 dest[j++] = str[i++];
-	        if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
-                    plen = ((plen/tabwidth)+1)*tabwidth;
 	    }
 	    break;
 
@@ -418,7 +416,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         if (normal_char)
         {
 	    dest[j++] = str[i++];
-	    if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
+	    if ((format & DT_WORDBREAK))
 	    {
 		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
 		    return NULL;
@@ -427,25 +425,11 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         }
 
 	(*count)--;
-	if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
+	if ((format & DT_WORDBREAK) && plen > width && wb_j)
 	{
-	    if (plen > width)
-	    {
-		if (format & DT_WORDBREAK)
-		{
-		    if (wb_j)
-		    {
 			*len = wb_j;
 			*count = wb_count - 1;
 			return (&str[wb_i]);
-		    }
-		}
-		else
-		{
-		    *len = j;
-		    return (&str[i]);
-		}
-	    }
 	}
     }
     
