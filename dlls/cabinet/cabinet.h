@@ -236,7 +236,7 @@ struct LZXstate {
 struct cab_file {
   struct cab_file *next;               /* next file in sequence          */
   struct cab_folder *folder;           /* folder that contains this file */
-  LPCSTR filename;                    /* output name of file            */
+  LPCSTR filename;                     /* output name of file            */
   HANDLE fh;                           /* open file handle or NULL       */
   cab_ULONG length;                    /* uncompressed length of file    */
   cab_ULONG offset;                    /* uncompressed offset in folder  */
@@ -258,15 +258,15 @@ struct cab_folder {
 
 struct cabinet {
   struct cabinet *next;                /* for making a list of cabinets  */
-  LPCSTR filename;                    /* input name of cabinet          */
+  LPCSTR filename;                     /* input name of cabinet          */
   HANDLE *fh;                          /* open file handle or NULL       */
   cab_off_t filelen;                   /* length of cabinet file         */
   cab_off_t blocks_off;                /* offset to data blocks in file  */
   struct cabinet *prevcab, *nextcab;   /* multipart cabinet chains       */
   char *prevname, *nextname;           /* and their filenames            */
   char *previnfo, *nextinfo;           /* and their visible names        */
-  struct cab_folder *folders;           /* first folder in this cabinet   */
-  struct cab_file *files;               /* first file in this cabinet     */
+  struct cab_folder *folders;          /* first folder in this cabinet   */
+  struct cab_file *files;              /* first file in this cabinet     */
   cab_UBYTE block_resv;                /* reserved space in datablocks   */
   cab_UBYTE flags;                     /* header flags                   */
 };
@@ -277,8 +277,8 @@ typedef struct cds_forward {
   cab_UBYTE *outpos;               /* (high level) start of data to use up  */
   cab_UWORD outlen;                /* (high level) amount of data to use up */
   cab_UWORD split;                 /* at which split in current folder?     */
-  int (*decompress)(int, int, struct cds_forward *);     /* the chosen compression func      */
-  cab_UBYTE inbuf[CAB_INPUTMAX+2]; /* +2 for lzx bitbuffer overflows!  */
+  int (*decompress)(int, int, struct cds_forward *); /* chosen compress fn  */
+  cab_UBYTE inbuf[CAB_INPUTMAX+2]; /* +2 for lzx bitbuffer overflows!       */
   cab_UBYTE outbuf[CAB_BLOCKMAX];
   union {
     struct ZIPstate zip;
