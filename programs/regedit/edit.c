@@ -109,12 +109,11 @@ INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	break;
         case IDOK:
             if ((hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA))) {
-                if ((len = GetWindowTextLength(hwndValue))) {
-                    if ((valueData = HeapReAlloc(GetProcessHeap(), 0, stringValueData, (len + 1) * sizeof(TCHAR)))) {
-                        stringValueData = valueData;
-                        if (!GetWindowText(hwndValue, stringValueData, len + 1))
-                            *stringValueData = 0;
-                    }
+                len = GetWindowTextLength(hwndValue);
+                if ((valueData = HeapReAlloc(GetProcessHeap(), 0, stringValueData, (len + 1) * sizeof(TCHAR)))) {
+                    stringValueData = valueData;
+                    if (!GetWindowText(hwndValue, stringValueData, len + 1))
+                        *stringValueData = 0;
                 }
             }
             /* Fall through */
@@ -126,14 +125,28 @@ INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
     return FALSE;
 }
 
+static BOOL check_value(HWND hwnd, HKEY hKey, LPCTSTR valueName)
+{
+    LONG lRet = RegQueryValueEx(hKey, valueName ? valueName : _T(""), 0, NULL, 0, NULL);
+    if(lRet != ERROR_SUCCESS) return FALSE;
+    return TRUE;
+}
+
 static LPTSTR read_value(HWND hwnd, HKEY hKey, LPCTSTR valueName, DWORD *lpType, LONG *len)
 {
     DWORD valueDataLen;
     LPTSTR buffer = NULL;
     LONG lRet;
 
-    lRet = RegQueryValueEx(hKey, valueName, 0, lpType, 0, &valueDataLen);
+    lRet = RegQueryValueEx(hKey, valueName ? valueName : _T(""), 0, lpType, 0, &valueDataLen);
     if (lRet != ERROR_SUCCESS) {
+        if (lRet == ERROR_FILE_NOT_FOUND && !valueName) { /* no default value here, make it up */
+            if (len) *len = 1;
+            if (lpType) *lpType = REG_SZ;
+            buffer = HeapAlloc(GetProcessHeap(), 0, 1);
+            *buffer = '\0';
+            return buffer;
+        }
         error(hwnd, IDS_BAD_VALUE, valueName);
         goto done;
     }
@@ -198,9 +211,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) return FALSE;
 
-    editValueName = valueName;
-    if (!lstrcmp(valueName, _T("(Default)")))
-        valueName = NULL;
+    editValueName = valueName ? valueName : g_pszDefaultValueName;
     if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, 0))) goto done;
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
@@ -234,7 +245,7 @@ BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath)
     LONG lRet;
     HKEY hKey;
     
-    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_SET_VALUE, &hKey);
+    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ|KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) return FALSE;
     
     if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, keyPath) != IDYES)
@@ -257,15 +268,16 @@ BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     BOOL result = FALSE;
     LONG lRet;
     HKEY hKey;
+    LPCSTR visibleValueName = valueName ? valueName : g_pszDefaultValueName;
 
-    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_SET_VALUE, &hKey);
+    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) return FALSE;
 
-    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, valueName) != IDYES)
+    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, visibleValueName) != IDYES)
 	goto done;
 
-    lRet = RegDeleteValue(hKey, valueName);
-    if (lRet != ERROR_SUCCESS) {
+    lRet = RegDeleteValue(hKey, valueName ? valueName : "");
+    if (lRet != ERROR_SUCCESS && valueName) {
         error(hwnd, IDS_BAD_VALUE, valueName);
     }
     if (lRet != ERROR_SUCCESS) goto done;
@@ -276,11 +288,10 @@ done:
     return result;
 }
 
-BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType)
+BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType, LPTSTR valueName)
 {
     LONG lRet = ERROR_SUCCESS;
-    TCHAR valueName[32];
-    TCHAR newValue[COUNT_OF(valueName) - 4];
+    TCHAR newValue[256];
     DWORD valueDword = 0;
     BOOL result = FALSE;
     int valueNum;
@@ -316,13 +327,13 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR oldName, LPC
     BOOL result = FALSE;
     HKEY hKey;
 
+    if (!oldName) return FALSE;
     if (!newName) return FALSE;
 
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) return FALSE;
     /* check if value already exists */
-    value = read_value(hwnd, hKey, newName, &type, &len);
-    if (value) goto done;
+    if (check_value(hwnd, hKey, newName)) goto done;
     value = read_value(hwnd, hKey, oldName, &type, &len);
     if(!value) goto done;
     lRet = RegSetValueEx(hKey, newName, 0, type, (BYTE*)value, len);

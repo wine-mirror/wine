@@ -28,6 +28,11 @@
 
 #include "main.h"
 
+#include "wine/debug.h"
+#include "wine/unicode.h"
+                                                                                                                             
+WINE_DEFAULT_DEBUG_CHANNEL(regedit);
+                                                                                                                             
 typedef struct tagLINE_INFO
 {
     DWORD dwValType;
@@ -58,6 +63,7 @@ LPTSTR get_item_text(HWND hwndLV, int item)
 
     curStr = HeapAlloc(GetProcessHeap(), 0, maxLen);
     if (!curStr) return NULL;
+    if (item == 0) return NULL; /* first item is ALWAYS a default */
     do {
         ListView_GetItemText(hwndLV, item, 0, curStr, maxLen);
 	if (_tcslen(curStr) < maxLen - 1) return curStr;
@@ -74,7 +80,8 @@ LPCTSTR GetValueName(HWND hwndLV)
 {
     INT item;
 
-    if (g_valueName) HeapFree(GetProcessHeap(), 0,  g_valueName);
+    if (g_valueName && g_valueName != LPSTR_TEXTCALLBACK)
+        HeapFree(GetProcessHeap(), 0,  g_valueName);
     g_valueName = NULL;
 
     item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
@@ -88,7 +95,8 @@ LPCTSTR GetValueName(HWND hwndLV)
 /*******************************************************************************
  * Local module support methods
  */
-static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, void* ValBuf, DWORD dwCount)
+static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, 
+    void* ValBuf, DWORD dwCount, BOOL bHighlight)
 {
     LINE_INFO* linfo;
     LVITEM item;
@@ -98,17 +106,22 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, void* ValB
     linfo->dwValType = dwValType;
     linfo->val_len = dwCount;
     memcpy(&linfo[1], ValBuf, dwCount);
-    linfo->name = _tcsdup(Name);
+    
+    if (Name)
+        linfo->name = _tcsdup(Name);
+    else
+        linfo->name = NULL;
 
-    item.mask = LVIF_TEXT | LVIF_PARAM;
-    item.iItem = 0;/*idx;  */
+    item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
+    item.iItem = ListView_GetItemCount(hwndLV);/*idx;  */
     item.iSubItem = 0;
     item.state = 0;
-    item.stateMask = 0;
-    item.pszText = Name;
-    item.cchTextMax = _tcslen(item.pszText);
-    if (item.cchTextMax == 0)
-        item.pszText = LPSTR_TEXTCALLBACK;
+    item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+    item.pszText = Name ? Name : LPSTR_TEXTCALLBACK;
+    item.cchTextMax = Name ? _tcslen(item.pszText) : 0;
+    if (bHighlight) {
+        item.stateMask = item.state = LVIS_FOCUSED | LVIS_SELECTED;
+    }
     item.iImage = 0;
     item.lParam = (LPARAM)linfo;
 
@@ -124,7 +137,11 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, void* ValB
         switch (dwValType) {
         case REG_SZ:
         case REG_EXPAND_SZ:
-            ListView_SetItemText(hwndLV, index, 2, ValBuf);
+            if (ValBuf) {
+                ListView_SetItemText(hwndLV, index, 2, ValBuf);
+            } else {
+                ListView_SetItemText(hwndLV, index, 2, "(not set)");
+            }
             break;
         case REG_DWORD: {
                 TCHAR buf[64];
@@ -184,7 +201,7 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
 
     switch (plvdi->item.iSubItem) {
     case 0:
-        plvdi->item.pszText = _T("(Default)");
+        plvdi->item.pszText = (LPSTR)g_pszDefaultValueName;
         break;
     case 1:
         switch (((LINE_INFO*)plvdi->item.lParam)->dwValType) {
@@ -235,6 +252,8 @@ static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSor
     LINE_INFO*l, *r;
     l = (LINE_INFO*)lParam1;
     r = (LINE_INFO*)lParam2;
+    if (!l->name) return -1;
+    if (!r->name) return +1;
         
     if (g_columnToSort == ~0UL) 
         g_columnToSort = 0;
@@ -247,16 +266,15 @@ static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSor
     return g_invertSort ? _tcscmp(r->name, l->name) : _tcscmp(l->name, r->name);
 }
 
-static void ListViewPopUpMenu(HWND hWnd, POINT pt)
-{
-}
-
 HWND StartValueRename(HWND hwndLV)
 {
     int item;
 
     item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED | LVNI_SELECTED);
-    if (item < 0) return 0;
+    if (item < 1) { /* cannot rename default key */
+        MessageBeep(MB_ICONHAND);
+        return 0;
+    }
     return ListView_EditLabel(hwndLV, item);
 }
 
@@ -279,8 +297,13 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
             return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
         }
         break;
-    case WM_NOTIFY:
+    case WM_NOTIFY_REFLECT:
         switch (((LPNMHDR)lParam)->code) {
+	
+        case LVN_BEGINLABELEDIT:
+            if (!((NMLVDISPINFO *)lParam)->item.iItem)
+                return 1;
+            return 0;
         case LVN_GETDISPINFO:
             OnGetDispInfo((NMLVDISPINFO*)lParam);
             break;
@@ -297,16 +320,25 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 	case LVN_ENDLABELEDIT: {
 	        LPNMLVDISPINFO dispInfo = (LPNMLVDISPINFO)lParam;
 		LPTSTR valueName = get_item_text(hWnd, dispInfo->item.iItem);
-	        BOOL res = RenameValue(hWnd, g_currentRootKey, g_currentPath, valueName, dispInfo->item.pszText);
-		if (res) RefreshListView(hWnd, g_currentRootKey, g_currentPath);
+                LONG ret;
+                if (!valueName) return -1; /* cannot rename a default value */
+	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, valueName, dispInfo->item.pszText);
+		if (ret)
+                    RefreshListView(hWnd, g_currentRootKey, g_currentPath, dispInfo->item.pszText);
 		HeapFree(GetProcessHeap(), 0, valueName);
-		return res;
+		return 0;
 	    }
+        case NM_RETURN: {
+                int cnt = ListView_GetNextItem(hWnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+	        if (cnt != -1)
+		    SendMessage(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
+	    }
+	    break;
         case NM_DBLCLK: {
                 NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
                 LVHITTESTINFO info;
 
-                if (nmitem->hdr.hwndFrom != hWnd) break;
+                /* if (nmitem->hdr.hwndFrom != hWnd) break; unnecessary because of WM_NOTIFY_REFLECT */
                 /*            if (nmitem->hdr.idFrom != IDW_LISTVIEW) break;  */
                 /*            if (nmitem->hdr.code != ???) break;  */
 #ifdef _MSC_VER
@@ -324,47 +356,25 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                 info.pt.x = nmitem->ptAction.x;
                 info.pt.y = nmitem->ptAction.y;
                 if (ListView_HitTest(hWnd, &info) != -1) {
-                    LVITEM item;
-                    item.mask = LVIF_PARAM;
-                    item.iItem = info.iItem;
-                    if (ListView_GetItem(hWnd, &item)) {}
-                }
-            }
-            break;
-
-        case NM_RCLICK: {
-                int idx;
-                LV_HITTESTINFO lvH;
-                NM_LISTVIEW* pNm = (NM_LISTVIEW*)lParam;
-                lvH.pt.x = pNm->ptAction.x;
-                lvH.pt.y = pNm->ptAction.y;
-                idx = ListView_HitTest(hWnd, &lvH);
-                if (idx != -1) {
-                    POINT pt;
-                    GetCursorPos(&pt);
-                    ListViewPopUpMenu(hWnd, pt);
-                    return idx;
+                    ListView_SetItemState(hWnd, -1, 0, LVIS_FOCUSED|LVIS_SELECTED);
+                    ListView_SetItemState(hWnd, info.iItem, LVIS_FOCUSED|LVIS_SELECTED,
+                        LVIS_FOCUSED|LVIS_SELECTED);
+		    SendMessage(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
                 }
             }
             break;
 
         default:
-            return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
+            return 0; /* shouldn't call default ! */
         }
         break;
     case WM_CONTEXTMENU: {
         POINTS pt = MAKEPOINTS(lParam);
-        int cnt = ListView_GetNextItem(hWnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
+        int cnt = ListView_GetNextItem(hWnd, -1, LVNI_SELECTED);
         TrackPopupMenu(GetSubMenu(hPopupMenus, cnt == -1 ? PM_NEW : PM_MODIFYVALUE), 
 		       TPM_RIGHTBUTTON, pt.x, pt.y, 0, hFrameWnd, NULL);
         break;
     }
-    case WM_KEYDOWN:
-        if (wParam == VK_TAB) {
-            /*TODO: SetFocus(Globals.hDriveBar) */
-            /*SetFocus(child->nFocusPanel? child->left.hWnd: child->right.hWnd); */
-        }
-        /* fall thru... */
     default:
         return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
         break;
@@ -400,7 +410,7 @@ fail:
     return NULL;
 }
 
-BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath)
+BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highlightValue)
 {
     BOOL result = FALSE;
     DWORD max_sub_key_len;
@@ -443,20 +453,23 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath)
 
     valName = HeapAlloc(GetProcessHeap(), 0, max_val_name_len * sizeof(TCHAR));
     valBuf = HeapAlloc(GetProcessHeap(), 0, max_val_size);
-    /*if (RegQueryValueEx(hKey, NULL, NULL, &dwValType, ValBuf, &dwValSize) == ERROR_SUCCESS) { */
-    /*    AddEntryToList(hwndLV, _T("(Default)"), dwValType, ValBuf, dwValSize); */
-    /*} */
+    if (RegQueryValueEx(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) { 
+        AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0, !highlightValue);
+    }
     /*dwValSize = max_val_size; */
     for(index = 0; index < val_count; index++) {
+        BOOL bSelected = (valName == highlightValue); /* NOT a bug, we check for double NULL here */
         valNameLen = max_val_name_len;
         valSize = max_val_size;
 	valType = 0;
         errCode = RegEnumValue(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
 	if (errCode != ERROR_SUCCESS) goto done;
         valBuf[valSize] = 0;
-        AddEntryToList(hwndLV, valName, valType, valBuf, valSize);
+        if (valName && highlightValue && !_tcscmp(valName, highlightValue))
+            bSelected = TRUE;
+        AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, bSelected);
     }
-    ListView_SortItems(hwndLV, CompareFunc, hwndLV);
+    ListView_SortItems(hwndLV, CompareFunc, hwndLV); 
 
     g_currentRootKey = hKeyRoot;
     if (keyPath != g_currentPath) {

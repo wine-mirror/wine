@@ -37,6 +37,8 @@
 
 #define MAX_NEW_KEY_LEN 128
 
+#define WM_NOTIFY_REFLECT (WM_USER+1024)
+
 extern HINSTANCE hInst;
 
 /******************************************************************************/
@@ -76,6 +78,7 @@ extern enum OPTION_FLAGS Options;
 extern TCHAR szTitle[];
 extern TCHAR szFrameClass[];
 extern TCHAR szChildClass[];
+extern LPCTSTR g_pszDefaultValueName;
 
 /* about.c */
 extern void ShowAboutBox(HWND hWnd);
@@ -90,7 +93,7 @@ extern void UpdateStatusBar(void);
 
 /* listview.c */
 extern HWND CreateListView(HWND hwndParent, int id);
-extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath);
+extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highlightValue);
 extern HWND StartValueRename(HWND hwndLV);
 extern LPCTSTR GetValueName(HWND hwndLV);
 extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
@@ -106,7 +109,7 @@ extern HWND StartKeyRename(HWND hwndTV);
 
 /* edit.c */
 extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR newKeyName);
-extern BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType);
+extern BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType, LPTSTR valueName);
 extern BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
 extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);

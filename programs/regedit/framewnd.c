@@ -459,19 +459,20 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PrintRegistryHive(hWnd, _T(""));
         break;
     case ID_EDIT_DELETE:
-	if (keyPath == 0 || *keyPath == 0) {
-	    MessageBeep(MB_ICONHAND); 
-	} else if (GetFocus() == g_pChildWnd->hTreeWnd) {
-	    if (DeleteKey(hWnd, hKeyRoot, keyPath))
+	if (GetFocus() == g_pChildWnd->hTreeWnd) {
+	    if (keyPath == 0 || *keyPath == 0) {
+	        MessageBeep(MB_ICONHAND); 
+            } else if (DeleteKey(hWnd, hKeyRoot, keyPath)) {
 		DeleteNode(g_pChildWnd->hTreeWnd, 0);
+            }
 	} else if (GetFocus() == g_pChildWnd->hListWnd) {
 	    if (DeleteValue(hWnd, hKeyRoot, keyPath, valueName))
-		RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+		RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
 	}
         break;
     case ID_EDIT_MODIFY:
         if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
-            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, valueName);
         break;
     case ID_EDIT_COPYKEYNAME:
         CopyKeyName(hWnd, _T(""));
@@ -492,8 +493,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	valueType = REG_DWORD;
 	/* fall through */
     create_value:
-	if (CreateValue(hWnd, hKeyRoot, keyPath, valueType)) {
-	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+	if (CreateValue(hWnd, hKeyRoot, keyPath, valueType, newKey)) {
+	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, newKey);
+            StartValueRename(g_pChildWnd->hListWnd);
 	    /* FIXME: start rename */
 	}
 	break;
@@ -576,6 +578,10 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam))
             return DefWindowProc(hWnd, message, wParam, lParam);
+        break;
+    case WM_ACTIVATE:
+        if (LOWORD(hWnd)) 
+            SetFocus(g_pChildWnd->hWnd);
         break;
     case WM_SIZE:
         resize_frame_client(hWnd);

@@ -28,7 +28,7 @@ IDC_REGEDIT MENU DISCARDABLE
 BEGIN
     POPUP "&Plik"
     BEGIN
-        MENUITEM "Za&koÅÒcz",                       ID_REGISTRY_EXIT
+        MENUITEM "Za&koÒcz",                       ID_REGISTRY_EXIT
     END
     POPUP "&Help"
     BEGIN
@@ -43,12 +43,12 @@ BEGIN
         MENUITEM "&Importuj rejestr...",        ID_REGISTRY_IMPORTREGISTRYFILE
         MENUITEM "&Eksportuj rejestr...",       ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
-        MENUITEM "&PodÅ≥Åπcz rejestr sieciowy...",ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
-        MENUITEM "&OdÅ≥Åπcz rejestr sieciowy...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Pod≥πcz rejestr sieciowy...",ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Od≥πcz rejestr sieciowy...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Drukuj\tCtrl+P",             ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Za&koÅÒcz",                    ID_REGISTRY_EXIT
+        MENUITEM "Za&koÒcz",                    ID_REGISTRY_EXIT
     END
     POPUP "&Edycja"
     BEGIN
@@ -63,13 +63,13 @@ BEGIN
             MENUITEM "&Dana liczbowa (DWORD)",ID_EDIT_NEW_DWORDVALUE
         END
         MENUITEM SEPARATOR
-        MENUITEM "U&suÅÒ\tDel",                  ID_EDIT_DELETE
-        MENUITEM "Z&mieÅÒ nazwÅÍ",                ID_EDIT_RENAME
+        MENUITEM "U&suÒ\tDel",                  ID_EDIT_DELETE
+        MENUITEM "Z&mieÒ nazwÍ\tF2",          ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Kopiuj nazwÅÍ klucza",         ID_EDIT_COPYKEYNAME
+        MENUITEM "&Kopiuj nazwÍ klucza",         ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Znajdü...\tCtrl+F",          ID_EDIT_FIND, GRAYED
-        MENUITEM "Zn&ajdü nastÅÍpny\tF3",        ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "Zn&ajdü nastÍpny\tF3",        ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Widok"
     BEGIN
@@ -77,13 +77,13 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Po&dziel",                    ID_VIEW_SPLIT
         MENUITEM SEPARATOR
-        MENUITEM "&OdúwieÅø\tF5",                ID_VIEW_REFRESH
+        MENUITEM "&Odúwieø\tF5",                ID_VIEW_REFRESH
     END
     POPUP "&Ulubione"
     BEGIN
         MENUITEM "&Dodaj do ulubionych",        ID_FAVOURITES_ADDTOFAVOURITES
         , GRAYED
-        MENUITEM "&UsuÅÒ ulubiony",              ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&UsuÒ ulubiony",              ID_FAVOURITES_REMOVEFAVOURITE
         , GRAYED
     END
     POPUP "Pomo&c"
@@ -101,8 +101,8 @@ BEGIN
 	MENUITEM "&Modyfikuj",                     ID_EDIT_MODIFY
 	MENUITEM "Modyfikuj dane binarne",         ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
-	MENUITEM "&UsuÅÒ\tDel",                     ID_EDIT_DELETE
-	MENUITEM "&ZmieÅÒ nazwÅÍ",                   ID_EDIT_RENAME
+	MENUITEM "&UsuÒ\tDel",                     ID_EDIT_DELETE
+	MENUITEM "&ZmieÒ nazwÍ",                   ID_EDIT_RENAME
   END
   POPUP ""
   BEGIN
@@ -141,7 +141,7 @@ FONT 8, "System"
 BEGIN
     LTEXT           "Nazwa:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
-    LTEXT           "WartoúÅÊ:",IDC_STATIC,5,30,119,8
+    LTEXT           "WartoúÊ:",IDC_STATIC,5,30,119,8
     EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
     PUSHBUTTON   "Anuluj",IDCANCEL,175,60,30,11,WS_GROUP
@@ -154,11 +154,11 @@ FONT 8, "System"
 BEGIN
     LTEXT           "Nazwa:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
-    LTEXT           "WartoúÅÊ:",IDC_STATIC,5,30,90,8
+    LTEXT           "WartoúÊ:",IDC_STATIC,5,30,90,8
     EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
     GROUPBOX        "System", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
     AUTORADIOBUTTON "Szesnastkowy", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
-    AUTORADIOBUTTON "DziesiÅÍtny", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "DziesiÍtny", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
     PUSHBUTTON   "Anuluj",IDCANCEL,175,80,30,11,WS_GROUP
 END
@@ -171,7 +171,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_LIST_COLUMN_NAME    "Nazwa"
     IDS_LIST_COLUMN_TYPE    "Typ"
-    IDS_LIST_COLUMN_DATA    "WartoúÅÊ"
+    IDS_LIST_COLUMN_DATA    "WartoúÊ"
 END
 
 STRINGTABLE DISCARDABLE
@@ -183,57 +183,57 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_REGISTRY_MENU        "Zawiera polecenia operujÅπce na caÅ≥ym rejestrze"
-    ID_EDIT_MENU            "Zawiera polecenia dotyczÅπce edycji kluczy i danych"
-    ID_VIEW_MENU            "Zawiera polecenia dotyczÅπce wyglÅπdu programu"
-    ID_FAVOURITES_MENU      "Zawiera polecenia dotyczÅπce skrÅÛtÅÛw do kluczy rejestru"
-    ID_HELP_MENU            "Zawiera polecenia wyúwietlajÅπce informacje o programie"
-    ID_EDIT_NEW_MENU        "Zawiera polecenia tworzÅπce nowe klucze i dane"
+    ID_REGISTRY_MENU        "Zawiera polecenia operujπce na ca≥ym rejestrze"
+    ID_EDIT_MENU            "Zawiera polecenia dotyczπce edycji kluczy i danych"
+    ID_VIEW_MENU            "Zawiera polecenia dotyczπce wyglπdu programu"
+    ID_FAVOURITES_MENU      "Zawiera polecenia dotyczπce skrÛtÛw do kluczy rejestru"
+    ID_HELP_MENU            "Zawiera polecenia wyúwietlajπce informacje o programie"
+    ID_EDIT_NEW_MENU        "Zawiera polecenia tworzπce nowe klucze i dane"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_EDIT_MODIFY          "Pozwala zmodyfikowaÅÊ wartoúÅÊ danej"
+    ID_EDIT_MODIFY          "Pozwala zmodyfikowaÊ wartoúÊ danej"
     ID_EDIT_NEW_KEY         "Dodaje nowy klucz"
-    ID_EDIT_NEW_STRINGVALUE "Dodaje nowÅπ danÅπ tekstowÅπ"
-    ID_EDIT_NEW_BINARYVALUE "Dodaje nowÅπ danÅπ binarnÅπ"
-    ID_EDIT_NEW_DWORDVALUE  "Dodaje nowÅπ danÅπ liczbowÅπ"
+    ID_EDIT_NEW_STRINGVALUE "Dodaje nowπ danπ tekstowπ"
+    ID_EDIT_NEW_BINARYVALUE "Dodaje nowπ danπ binarnπ"
+    ID_EDIT_NEW_DWORDVALUE  "Dodaje nowπ danπ liczbowπ"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importuje plik tekstowy do rejestru"
     ID_REGISTRY_EXPORTREGISTRYFILE
-                            "Eksportuje czÅÍúÅÊ lub caÅ≥oúÅÊ rejestru do pliku tekstowego"
+                            "Eksportuje czÍúÊ lub ca≥oúÊ rejestru do pliku tekstowego"
     ID_REGISTRY_CONNECTNETWORKREGISTRY
-                            "Å£Åπczy siÅÍ do rejestru innego komputera"
+                            "£πczy siÍ do rejestru innego komputera"
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
-                            "OdÅ≥Åπcza siÅÍ od rejestru innego komputera"
-    ID_REGISTRY_PRINT       "Drukuje caÅ≥oúÅÊ lub czÅÍúÅÊ rejestru"
+                            "Od≥πcza siÍ od rejestru innego komputera"
+    ID_REGISTRY_PRINT       "Drukuje ca≥oúÊ lub czÍúÊ rejestru"
 /*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
-    ID_HELP_ABOUT           "Wyúwietla informacjÅÍ o programie, numerze wersji i prawach autorskich"
+    ID_HELP_ABOUT           "Wyúwietla informacjÍ o programie, numerze wersji i prawach autorskich"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_REGISTRY_EXIT        "KoÅÒczy dziaÅ≥anie edytora rejestru"
+    ID_REGISTRY_EXIT        "KoÒczy dzia≥anie edytora rejestru"
     ID_FAVOURITES_ADDTOFAVOURITES "Dodaje klucze do listy ulubionych"
     ID_FAVOURITES_REMOVEFAVOURITE "Usuwa klucze z listy ulubionych"
     ID_VIEW_STATUSBAR       "Wyúwietla lub ukrywa pasek stanu"
     ID_VIEW_SPLIT           "Zmienia proporcje szerokoúci paneli"
-    ID_VIEW_REFRESH         "OdúwieÅøa zawartoúÅÊ okien"
+    ID_VIEW_REFRESH         "Odúwieøa zawartoúÊ okien"
     ID_EDIT_DELETE          "Kasuje zaznaczony obiekt"
-    ID_EDIT_RENAME          "Zmienia nazwÅÍ zaznaczonego obiektu"
-    ID_EDIT_COPYKEYNAME     "Kopiuje nazwÅÍ zaznaczonego klucza do schowka"
-    ID_EDIT_FIND            "Znajduje ciÅπg znakÅÛw w kluczu lub danej"
-    ID_EDIT_FINDNEXT        "Znajduje nastÅÍpne wystÅπpienie ostatnio szukanego ciÅπgu"
+    ID_EDIT_RENAME          "Zmienia nazwÍ zaznaczonego obiektu"
+    ID_EDIT_COPYKEYNAME     "Kopiuje nazwÍ zaznaczonego klucza do schowka"
+    ID_EDIT_FIND            "Znajduje ciπg znakÛw w kluczu lub danej"
+    ID_EDIT_FINDNEXT        "Znajduje nastÍpne wystπpienie ostatnio szukanego ciπgu"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ERROR		    "BÅ≥Åπd"
-    IDS_BAD_KEY		    "Nie udaÅ≥o sie przeczytaÅÊ klucza '%s'"
-    IDS_BAD_VALUE           "Nie udaÅ≥o sie przeczytaÅÊ danej '%s'"
-    IDS_UNSUPPORTED_TYPE    "Nie da siÅÍ modyfikowaÅÊ kluczy tego typu (%ld)"
-    IDS_TOO_BIG_VALUE       "WartoúÅÊ jest zbyt duÅøa (%ld)"
+    IDS_ERROR		    "B≥πd"
+    IDS_BAD_KEY		    "Nie uda≥o sie przeczytaÊ klucza '%s'"
+    IDS_BAD_VALUE           "Nie uda≥o sie przeczytaÊ danej '%s'"
+    IDS_UNSUPPORTED_TYPE    "Nie da siÍ modyfikowaÊ kluczy tego typu (%ld)"
+    IDS_TOO_BIG_VALUE       "WartoúÊ jest zbyt duøa (%ld)"
     IDS_DELETE_BOX_TITLE    "Potwierdzenie kasowania"
-    IDS_DELETE_BOX_TEXT     "Jesteú pewien, Åøe chcesz usunÅπÅÊ danÅπ '%s'?"
+    IDS_DELETE_BOX_TEXT     "Jesteú pewien, øe chcesz usunπÊ danπ '%s'?"
     IDS_NEWKEY              "Nowy klucz #%d"
     IDS_NEWVALUE            "Nowa dana #%d"
 END

@@ -64,7 +64,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "&Excluir\tDel",                    ID_EDIT_DELETE
-        MENUITEM "&Renomear",                        ID_EDIT_RENAME
+        MENUITEM "&Renomear\tF2",                    ID_EDIT_RENAME
         MENUITEM SEPARATOR
         MENUITEM "&Copiar nome da chave",            ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR

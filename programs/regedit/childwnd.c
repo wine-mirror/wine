@@ -26,6 +26,11 @@
 
 #include "main.h"
 
+#include "wine/debug.h"
+#include "wine/unicode.h"
+                                                                                                                             
+WINE_DEFAULT_DEBUG_CHANNEL(regedit);
+                                                                                                                             
 ChildWnd* g_pChildWnd;
 
 /*******************************************************************************
@@ -87,6 +92,7 @@ static void OnPaint(HWND hWnd)
 
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    ChildWnd* pChildWnd = g_pChildWnd;
     switch (LOWORD(wParam)) {
         /* Parse the menu selections: */
     case ID_REGISTRY_EXIT:
@@ -94,6 +100,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case ID_VIEW_REFRESH:
         /* TODO */
+        break;
+    case ID_SWITCH_PANELS:
+        pChildWnd->nFocusPanel = !pChildWnd->nFocusPanel;
+        SetFocus(pChildWnd->nFocusPanel? pChildWnd->hListWnd: pChildWnd->hTreeWnd);
         break;
     default:
         return FALSE;
@@ -233,7 +243,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		    keyPath = GetItemPath(pChildWnd->hTreeWnd, ((NMTREEVIEW*)lParam)->itemNew.hItem, &hRootKey);
 		    if (keyPath) {
-                        RefreshListView(pChildWnd->hListWnd, hRootKey, keyPath);
+                        RefreshListView(pChildWnd->hListWnd, hRootKey, keyPath, NULL);
 			rootName = get_root_key_name(hRootKey);
 			fullPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(rootName) + 1 + lstrlen(keyPath) + 1) * sizeof(TCHAR));
 			if (fullPath) {
@@ -245,8 +255,15 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 }
                 break;
 	    case NM_SETFOCUS:
-		pChildWnd->nFocusPanel = 1;
+		pChildWnd->nFocusPanel = 0;
 		break;
+            case NM_RCLICK: {
+		POINT pt;
+                GetCursorPos(&pt);
+		TrackPopupMenu(GetSubMenu(hPopupMenus, PM_NEW),
+			       TPM_RIGHTBUTTON, pt.x, pt.y, 0, hFrameWnd, NULL);
+		break;
+            }
 	    case TVN_ENDLABELEDIT: {
 		HKEY hRootKey;
 	        LPNMTVDISPINFO dispInfo = (LPNMTVDISPINFO)lParam;
@@ -262,13 +279,13 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		return res;
 	    }
             default:
-                goto def;
+                return 0; /* goto def; */
             }
         } else
             if ((int)wParam == LIST_WINDOW) {
 		if (((LPNMHDR)lParam)->code == NM_SETFOCUS) {
-		    pChildWnd->nFocusPanel = 0;
-		} else if (!SendMessage(pChildWnd->hListWnd, message, wParam, lParam)) {
+		    pChildWnd->nFocusPanel = 1;
+		} else if (!SendMessage(pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam)) {
                     goto def;
                 }
             }

@@ -119,6 +119,7 @@
 #define IDS_NEWVALUE			32861
 #define IDS_BAD_KEY			32862
 #define ID_EDIT_MODIFY_BIN		32870
+#define ID_SWITCH_PANELS                32871
 
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001

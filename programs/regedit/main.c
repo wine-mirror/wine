@@ -30,6 +30,7 @@
 #define REGEDIT_DECLARE_FUNCTIONS
 #include "main.h"
 
+LPCSTR g_pszDefaultValueName = _T("(Default)");
 
 BOOL ProcessCmdLine(LPSTR lpCmdLine);
 
@@ -144,6 +145,15 @@ void ExitInstance(void)
     DestroyMenu(hMenuFrame);
 }
 
+BOOL TranslateChildTabMessage(MSG *msg)
+{
+    if (msg->message != WM_KEYDOWN) return FALSE;
+    if (msg->wParam != VK_TAB) return FALSE;
+    if (GetParent(msg->hwnd) != g_pChildWnd->hWnd) return FALSE;
+    PostMessage(g_pChildWnd->hWnd, WM_COMMAND, ID_SWITCH_PANELS, 0);
+    return TRUE;
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
@@ -172,8 +182,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
     /* Main message loop */
     while (GetMessage(&msg, (HWND)NULL, 0, 0)) {
-        if (!TranslateAccelerator(hFrameWnd, hAccel, &msg) &&
-	    !IsDialogMessage(hFrameWnd, &msg)) {
+        if (!TranslateAccelerator(hFrameWnd, hAccel, &msg)
+           && !TranslateChildTabMessage(&msg)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
