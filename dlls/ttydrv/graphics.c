@@ -84,17 +84,22 @@ BOOL TTYDRV_DC_LineTo(TTYDRV_PDEVICE *physDev, INT x, INT y)
 {
 #ifdef WINE_CURSES
   INT row1, col1, row2, col2;
-  DC *dc = physDev->dc;
+  POINT pt[2];
 
   TRACE("(%x, %d, %d)\n", physDev->hdc, x, y);
 
   if(!physDev->window)
     return FALSE;
 
-  row1 = (dc->DCOrgY + XLPTODP(dc, dc->CursPosY)) / physDev->cellHeight;
-  col1 = (dc->DCOrgX + XLPTODP(dc, dc->CursPosX)) / physDev->cellWidth;
-  row2 = (dc->DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
-  col2 = (dc->DCOrgX + XLPTODP(dc, x)) / physDev->cellWidth;
+  GetCurrentPositionEx( physDev->hdc, &pt[0] );
+  pt[1].x = x;
+  pt[1].y = y;
+  LPtoDP( physDev->hdc, pt, 2 );
+
+  row1 = (physDev->org.y + pt[0].y) / physDev->cellHeight;
+  col1 = (physDev->org.x + pt[0].x) / physDev->cellWidth;
+  row2 = (physDev->org.y + pt[1].y) / physDev->cellHeight;
+  col2 = (physDev->org.x + pt[1].x) / physDev->cellWidth;
 
   if(row1 > row2) {
     INT tmp = row1;
@@ -190,17 +195,22 @@ BOOL TTYDRV_DC_Rectangle(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, 
 {
 #ifdef WINE_CURSES
   INT row1, col1, row2, col2;
-  DC *dc = physDev->dc;
+  RECT rect;
 
   TRACE("(%x, %d, %d, %d, %d)\n", physDev->hdc, left, top, right, bottom);
 
   if(!physDev->window)
     return FALSE;
 
-  row1 = (dc->DCOrgY + XLPTODP(dc, top)) / physDev->cellHeight;
-  col1 = (dc->DCOrgX + XLPTODP(dc, left)) / physDev->cellWidth;
-  row2 = (dc->DCOrgY + XLPTODP(dc, bottom)) / physDev->cellHeight;
-  col2 = (dc->DCOrgX + XLPTODP(dc, right)) / physDev->cellWidth;
+  rect.left   = left;
+  rect.top    = top;
+  rect.right  = right;
+  rect.bottom = bottom;
+  LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
+  row1 = (physDev->org.y + rect.top) / physDev->cellHeight;
+  col1 = (physDev->org.x + rect.left) / physDev->cellWidth;
+  row2 = (physDev->org.y + rect.bottom) / physDev->cellHeight;
+  col2 = (physDev->org.x + rect.right) / physDev->cellWidth;
 
   if(row1 > row2) {
     INT tmp = row1;
@@ -259,15 +269,18 @@ COLORREF TTYDRV_DC_SetPixel(TTYDRV_PDEVICE *physDev, INT x, INT y, COLORREF colo
 {
 #ifdef WINE_CURSES
   INT row, col;
-  DC *dc = physDev->dc;
+  POINT pt;
 
   TRACE("(%x, %d, %d, 0x%08lx)\n", physDev->hdc, x, y, color);
 
   if(!physDev->window)
     return FALSE;
 
-  row = (dc->DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
-  col = (dc->DCOrgX + XLPTODP(dc, x)) / physDev->cellWidth;
+  pt.x = x;
+  pt.y = y;
+  LPtoDP( physDev->hdc, &pt, 1 );
+  row = (physDev->org.y + pt.y) / physDev->cellHeight;
+  col = (physDev->org.x + pt.x) / physDev->cellWidth;
 
   mvwaddch(physDev->window, row, col, ACS_BULLET);
   wrefresh(physDev->window);
@@ -328,7 +341,8 @@ BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
   INT row, col;
   LPSTR ascii;
   DWORD len;
-  DC *dc = physDev->dc;
+  POINT pt;
+  UINT text_align = GetTextAlign( physDev->hdc );
 
   TRACE("(%x, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
         physDev->hdc, x, y, flags, lpRect, debugstr_wn(str, count), count, lpDx);
@@ -336,17 +350,14 @@ BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
   if(!physDev->window)
     return FALSE;
 
+  pt.x = x;
+  pt.y = y;
   /* FIXME: Is this really correct? */
-  if(dc->textAlign & TA_UPDATECP) {
-    x = dc->CursPosX;
-    y = dc->CursPosY;
-  }
+  if(text_align & TA_UPDATECP) GetCurrentPositionEx( physDev->hdc, &pt );
 
-  x = XLPTODP(dc, x);
-  y = YLPTODP(dc, y);
-
-  row = (dc->DCOrgY + y) / physDev->cellHeight;
-  col = (dc->DCOrgX + x) / physDev->cellWidth;
+  LPtoDP( physDev->hdc, &pt, 1 );
+  row = (physDev->org.y + pt.y) / physDev->cellHeight;
+  col = (physDev->org.x + pt.x) / physDev->cellWidth;
   len = WideCharToMultiByte( CP_ACP, 0, str, count, NULL, 0, NULL, NULL );
   ascii = HeapAlloc( GetProcessHeap(), 0, len );
   WideCharToMultiByte( CP_ACP, 0, str, count, ascii, len, NULL, NULL );
@@ -354,9 +365,12 @@ BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
   HeapFree( GetProcessHeap(), 0, ascii );
   wrefresh(physDev->window);
 
-  if(dc->textAlign & TA_UPDATECP) {
-    dc->CursPosX += count * physDev->cellWidth;
-    dc->CursPosY += physDev->cellHeight;
+  if(text_align & TA_UPDATECP)
+  {
+      pt.x += count * physDev->cellWidth;
+      pt.y += physDev->cellHeight;
+      DPtoLP( physDev->hdc, &pt, 1 );
+      MoveToEx( physDev->hdc, pt.x, pt.y, NULL );
   }
 
   return TRUE;

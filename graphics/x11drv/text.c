@@ -135,8 +135,8 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         dibUpdateFlag = TRUE;
         TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
         TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                        dc->DCOrgX + rect.left, dc->DCOrgY + rect.top,
-                        rect.right-rect.left, rect.bottom-rect.top );
+                          physDev->org.x + rect.left, physDev->org.y + rect.top,
+                          rect.right-rect.left, rect.bottom-rect.top );
     }
     if (!count) goto END;  /* Nothing more to do */
 
@@ -235,10 +235,8 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
             {
                 TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
                 TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                                dc->DCOrgX + x,
-                                dc->DCOrgY + y - ascent,
-                                width,
-                                ascent + descent );
+                                  physDev->org.x + x, physDev->org.y + y - ascent,
+                                  width, ascent + descent );
             }
         }
     }
@@ -254,7 +252,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
       {
         X11DRV_cptable[pfo->fi->cptable].pDrawString(
 		pfo, gdi_display, physDev->drawable, physDev->gc,
-		dc->DCOrgX + x, dc->DCOrgY + y, str2b, count );
+		physDev->org.x + x, physDev->org.y + y, str2b, count );
       }
       else  /* Now the fun begins... */
       {
@@ -326,7 +324,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
 	X11DRV_cptable[pfo->fi->cptable].pDrawText( pfo, gdi_display,
 		physDev->drawable, physDev->gc,
-		dc->DCOrgX + x, dc->DCOrgY + y, items, pitem - items );
+		physDev->org.x + x, physDev->org.y + y, items, pitem - items );
         HeapFree( GetProcessHeap(), 0, items );
       }
     }
@@ -340,9 +338,9 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
       {
 	int char_metric_offset = str2b[i].byte2 + (str2b[i].byte1 << 8)
 	  - font->min_char_or_byte2;
-	int x_i = IROUND((double) (dc->DCOrgX + x) + offset *
+	int x_i = IROUND((double) (physDev->org.x + x) + offset *
 			 pfo->lpX11Trans->a / pfo->lpX11Trans->pixelsize );
-	int y_i = IROUND((double) (dc->DCOrgY + y) - offset *
+	int y_i = IROUND((double) (physDev->org.y + y) - offset *
 			 pfo->lpX11Trans->b / pfo->lpX11Trans->pixelsize );
 
 	X11DRV_cptable[pfo->fi->cptable].pDrawString(
@@ -380,8 +378,8 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	TSXSetLineAttributes( gdi_display, physDev->gc, lineWidth,
 			      LineSolid, CapRound, JoinBevel );
         TSXDrawLine( gdi_display, physDev->drawable, physDev->gc,
-		     dc->DCOrgX + x, dc->DCOrgY + y + linePos,
-		     dc->DCOrgX + x + width, dc->DCOrgY + y + linePos );
+		     physDev->org.x + x, physDev->org.y + y + linePos,
+		     physDev->org.x + x + width, physDev->org.y + y + linePos );
     }
     if (lfStrikeOut)
     {
@@ -393,8 +391,8 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	TSXSetLineAttributes( gdi_display, physDev->gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel );
 	TSXDrawLine( gdi_display, physDev->drawable, physDev->gc,
-		   dc->DCOrgX + x, dc->DCOrgY + y - lineAscent,
-		   dc->DCOrgX + x + width, dc->DCOrgY + y - lineAscent );
+                     physDev->org.x + x, physDev->org.y + y - lineAscent,
+                     physDev->org.x + x + width, physDev->org.y + y - lineAscent );
     }
 
     if (flags & ETO_CLIPPED) RestoreVisRgn16( dc->hSelf );

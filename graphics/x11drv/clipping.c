@@ -117,7 +117,7 @@ void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN hrgn )
     RGNDATA *data;
 
     if (!(data = X11DRV_GetRegionData( hrgn, 0 ))) return;
-    TSXSetClipRectangles( gdi_display, physDev->gc, 0, 0,
+    TSXSetClipRectangles( gdi_display, physDev->gc, physDev->org.x, physDev->org.y,
                           (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -128,27 +128,17 @@ void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN hrgn )
  *
  * Set the drawable, clipping mode and origin for a DC.
  */
-void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int org_y )
+void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, const POINT *org,
+                         const POINT *drawable_org )
 {
     DC *dc = DC_GetDCPtr( hdc );
     if (dc)
     {
         X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-        /*
-         * This function change the coordinate system (DCOrgX,DCOrgY)
-         * values. When it moves the origin, other data like the current clipping
-         * region will not be moved to that new origin. In the case of DCs that are class
-         * or window DCs that clipping region might be a valid value from a previous use
-         * of the DC and changing the origin of the DC without moving the clip region
-         * results in a clip region that is not placed properly in the DC.
-         * This code will save the dc origin, let the SetDrawable
-         * modify the origin and reset the clipping. When the clipping is set,
-         * it is moved according to the new DC origin.
-         */
-        if (dc->hClipRgn) OffsetRgn( dc->hClipRgn, org_x - dc->DCOrgX, org_y - dc->DCOrgY );
-        dc->DCOrgX = org_x;
-        dc->DCOrgY = org_y;
+
+        physDev->org = *org;
         physDev->drawable = drawable;
+        physDev->drawable_org = *drawable_org;
         TSXSetSubwindowMode( gdi_display, physDev->gc, mode );
 	if(physDev->xrender)
 	  X11DRV_XRender_UpdateDrawable( physDev );
@@ -202,8 +192,8 @@ void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
                 if (event.type == NoExpose) break;
                 if (event.type == GraphicsExpose)
                 {
-                    int x = event.xgraphicsexpose.x - dc->DCOrgX;
-                    int y = event.xgraphicsexpose.y - dc->DCOrgY;
+                    int x = event.xgraphicsexpose.x - physDev->org.x;
+                    int y = event.xgraphicsexpose.y - physDev->org.y;
 
                     TRACE( "got %d,%d %dx%d count %d\n",
                            x, y, event.xgraphicsexpose.width, event.xgraphicsexpose.height,
@@ -228,4 +218,3 @@ void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
         GDI_ReleaseObj( hdc );
     }
 }
-

@@ -4796,8 +4796,8 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     descr.xSrc      = xSrc;
     descr.ySrc      = tmpheight >= 0 ? lines-(ySrc-startscan)-cy+(oldcy-cy)
                                      : ySrc - startscan;
-    descr.xDest     = dc->DCOrgX + XLPTODP( dc, xDest );
-    descr.yDest     = dc->DCOrgY + YLPTODP( dc, yDest ) +
+    descr.xDest     = physDev->org.x + XLPTODP( dc, xDest );
+    descr.yDest     = physDev->org.y + YLPTODP( dc, yDest ) +
                                      (tmpheight >= 0 ? oldcy-cy : 0);
     descr.width     = cx;
     descr.height    = cy;
@@ -5178,7 +5178,8 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     }
     /* perform the copy */
     X11DRV_DIB_DoCopyDIBSection(bmp, FALSE, colorMap, nColorMap,
-				physDevDst->drawable, xSrc, ySrc, xDest, yDest,
+				physDevDst->drawable, xSrc, ySrc,
+                                physDevDst->org.x + xDest, physDevDst->org.y + yDest,
 				width, height);
     /* free color mapping */
     if (aColorMap)

@@ -131,8 +131,6 @@ typedef struct tagDC
 
     INT           MapMode;
     INT           GraphicsMode;      /* Graphics mode */
-    INT           DCOrgX;            /* DC origin */
-    INT           DCOrgY;
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */
     ABORTPROC16   pAbortProc16;
     INT           CursPosX;          /* Current position */
@@ -162,7 +160,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCloseFigure)(PHYSDEV);
     BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
-    BOOL     (*pCreateDC)(DC *,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
+    BOOL     (*pCreateDC)(DC *,PHYSDEV *,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
     HBITMAP  (*pCreateDIBSection)(PHYSDEV,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD,DWORD);
     BOOL     (*pDeleteBitmap)(HBITMAP);
     BOOL     (*pDeleteDC)(PHYSDEV);
@@ -232,6 +230,7 @@ typedef struct tagDC_FUNCS
     LONG     (*pSetBitmapBits)(HBITMAP,const void*,LONG);
     COLORREF (*pSetBkColor)(PHYSDEV,COLORREF);
     INT      (*pSetBkMode)(PHYSDEV,INT);
+    DWORD    (*pSetDCOrg)(PHYSDEV,INT,INT);
     UINT     (*pSetDIBColorTable)(PHYSDEV,UINT,UINT,const RGBQUAD*);
     INT      (*pSetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
     INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,

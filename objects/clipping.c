@@ -121,12 +121,10 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
             dc->hClipRgn = CreateRectRgnIndirect( &rect );
         }
 
-        OffsetRgn( dc->hClipRgn, -dc->DCOrgX, -dc->DCOrgY );
         if(fnMode == RGN_COPY)
             retval = CombineRgn( dc->hClipRgn, hrgn, 0, fnMode );
         else
             retval = CombineRgn( dc->hClipRgn, dc->hClipRgn, hrgn, fnMode);
-        OffsetRgn( dc->hClipRgn, dc->DCOrgX, dc->DCOrgY );
     }
 
     CLIPPING_UpdateGCRegion( dc );
@@ -230,10 +228,10 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
         ret = dc->funcs->pExcludeClipRect( dc->physDev, left, top, right, bottom );
     else
     {
-        left   = dc->DCOrgX + XLPTODP( dc, left );
-        right  = dc->DCOrgX + XLPTODP( dc, right );
-        top    = dc->DCOrgY + YLPTODP( dc, top );
-        bottom = dc->DCOrgY + YLPTODP( dc, bottom );
+        left   = XLPTODP( dc, left );
+        right  = XLPTODP( dc, right );
+        top    = YLPTODP( dc, top );
+        bottom = YLPTODP( dc, bottom );
 
         if (!(newRgn = CreateRectRgn( left, top, right, bottom ))) ret = ERROR;
         else
@@ -279,10 +277,10 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
         ret = dc->funcs->pIntersectClipRect( dc->physDev, left, top, right, bottom );
     else
     {
-        left   = dc->DCOrgX + XLPTODP( dc, left );
-        right  = dc->DCOrgX + XLPTODP( dc, right );
-        top    = dc->DCOrgY + YLPTODP( dc, top );
-        bottom = dc->DCOrgY + YLPTODP( dc, bottom );
+        left   = XLPTODP( dc, left );
+        right  = XLPTODP( dc, right );
+        top    = YLPTODP( dc, top );
+        bottom = YLPTODP( dc, bottom );
 
         if (!dc->hClipRgn)
         {
@@ -318,10 +316,10 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    left   = dc->DCOrgX + XLPTODP( dc, left );
-    right  = dc->DCOrgX + XLPTODP( dc, right );
-    top    = dc->DCOrgY + YLPTODP( dc, top );
-    bottom = dc->DCOrgY + YLPTODP( dc, bottom );
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
 
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
@@ -348,10 +346,10 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
-    left   = dc->DCOrgX + XLPTODP( dc, left );
-    right  = dc->DCOrgX + XLPTODP( dc, right );
-    top    = dc->DCOrgY + YLPTODP( dc, top );
-    bottom = dc->DCOrgY + YLPTODP( dc, bottom );
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
 
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
@@ -388,8 +386,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     if (!dc) return FALSE;
     if (dc->hGCClipRgn)
     {
-        ret = PtInRegion( dc->hGCClipRgn, XLPTODP(dc,x) + dc->DCOrgX,
-                                           YLPTODP(dc,y) + dc->DCOrgY );
+        ret = PtInRegion( dc->hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
     }
     GDI_ReleaseObj( hdc );
     return ret;
@@ -424,10 +421,6 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
         /* copy rectangle to avoid overwriting by LPtoDP */
         tmpRect = *rect;
         LPtoDP( hdc, (LPPOINT)&tmpRect, 2 );
-        tmpRect.left   += dc->DCOrgX;
-        tmpRect.right  += dc->DCOrgX;
-        tmpRect.top    += dc->DCOrgY;
-        tmpRect.bottom += dc->DCOrgY;
         ret = RectInRegion( dc->hGCClipRgn, &tmpRect );
     }
     GDI_ReleaseObj( hdc );
@@ -444,10 +437,6 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
     ret = GetRgnBox16( dc->hGCClipRgn, rect );
-    rect->left   -= dc->DCOrgX;
-    rect->right  -= dc->DCOrgX;
-    rect->top    -= dc->DCOrgY;
-    rect->bottom -= dc->DCOrgY;
     DPtoLP16( hdc, (LPPOINT16)rect, 2 );
     TRACE("%d,%d-%d,%d\n", rect->left,rect->top,rect->right,rect->bottom );
     GDI_ReleaseObj( hdc );
@@ -464,10 +453,6 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
     ret = GetRgnBox( dc->hGCClipRgn, rect );
-    rect->left   -= dc->DCOrgX;
-    rect->right  -= dc->DCOrgX;
-    rect->top    -= dc->DCOrgY;
-    rect->bottom -= dc->DCOrgY;
     DPtoLP( hdc, (LPPOINT)rect, 2 );
     GDI_ReleaseObj( hdc );
     return ret;
@@ -485,14 +470,7 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
     {
       if( dc->hClipRgn )
       {
-	/* this assumes that dc->hClipRgn is in coordinates
-	   relative to the device (not DC origin) */
-
-	if( CombineRgn(hRgn, dc->hClipRgn, 0, RGN_COPY) != ERROR )
-        {
-            OffsetRgn( hRgn, -dc->DCOrgX, -dc->DCOrgY );
-            ret = 1;
-        }
+          if( CombineRgn(hRgn, dc->hClipRgn, 0, RGN_COPY) != ERROR ) ret = 1;
       }
       else ret = 0;
       GDI_ReleaseObj( hdc );

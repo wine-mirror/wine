@@ -39,7 +39,7 @@ BOOL TTYDRV_GDI_Initialize(void)
 /***********************************************************************
  *	     TTYDRV_DC_CreateDC
  */
-BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
+BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
 			LPCSTR output, const DEVMODEA *initData)
 {
   TTYDRV_PDEVICE *physDev;
@@ -48,15 +48,14 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     dc, debugstr_a(driver), debugstr_a(device),
     debugstr_a(output), initData);
 
-  dc->physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			  sizeof(TTYDRV_PDEVICE));
-  if(!dc->physDev) {
+  physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TTYDRV_PDEVICE));
+  if(!physDev) {
     ERR("Can't allocate physDev\n");
     return FALSE;
   }
-  physDev = (TTYDRV_PDEVICE *) dc->physDev;
+  *pdev = physDev;
   physDev->hdc = dc->hSelf;
-  physDev->dc = dc;
+  physDev->org.x = physDev->org.y = 0;
 
   if(dc->flags & DC_MEMORY){
     physDev->window = NULL;
@@ -80,7 +79,6 @@ BOOL TTYDRV_DC_DeleteDC(TTYDRV_PDEVICE *physDev)
 {
     TRACE("(%x)\n", physDev->hdc);
 
-    physDev->dc->physDev = NULL;
     HeapFree( GetProcessHeap(), 0, physDev );
     return TRUE;
 }
@@ -166,4 +164,26 @@ INT TTYDRV_GetDeviceCaps( TTYDRV_PDEVICE *physDev, INT cap )
         FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
+}
+
+
+/***********************************************************************
+ *           GetDCOrgEx    (TTYDRV.@)
+ */
+BOOL TTYDRV_GetDCOrgEx( TTYDRV_PDEVICE *physDev, LPPOINT pt )
+{
+    *pt = physDev->org;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           SetDCOrg    (TTYDRV.@)
+ */
+DWORD TTYDRV_SetDCOrg( TTYDRV_PDEVICE *physDev, INT x, INT y )
+{
+    DWORD ret = MAKELONG( physDev->org.x, physDev->org.y );
+    physDev->org.x = x;
+    physDev->org.y = y;
+    return ret;
 }

@@ -61,7 +61,7 @@ typedef struct { int dummy; } WINDOW;
 
 typedef struct {
   HDC hdc;
-  DC *dc;
+  POINT org;
   WINDOW *window;
   int cellWidth;
   int cellHeight;
@@ -76,7 +76,6 @@ extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
 
 extern BOOL TTYDRV_DC_Arc(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
 extern LONG TTYDRV_DC_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags);
-extern BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODEA *initData);
 extern BOOL TTYDRV_DC_DeleteDC(TTYDRV_PDEVICE *physDev);
 extern BOOL TTYDRV_DC_BitBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT width, INT height, TTYDRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, DWORD rop);
 extern BOOL TTYDRV_DC_Chord(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);

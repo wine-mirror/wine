@@ -2920,8 +2920,6 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 		GetDCOrgEx(hDC, &org);
 	    else
 		org.x = org.y = 0;
-	    org.x -= dc->DCOrgX;
-	    org.y -= dc->DCOrgY;
 	    OffsetRgn (hRgn, org.x, org.y);
             GDI_ReleaseObj( hDC );
 	    return 1;

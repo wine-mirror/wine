@@ -637,7 +637,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if(flags & ETO_OPAQUE) {
         TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
 	TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-			  dc->DCOrgX + rc.left, dc->DCOrgY + rc.top,
+			  physDev->org.x + rc.left, physDev->org.y + rc.top,
 			  rc.right - rc.left, rc.bottom - rc.top );
     }
 
@@ -735,7 +735,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     {
         wine_tsx11_lock();
         pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
-                                          0, 0, (XRectangle *)data->Buffer, data->rdh.nCount );
+                                          physDev->org.x, physDev->org.y,
+                                          (XRectangle *)data->Buffer, data->rdh.nCount );
         wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, data );
     }
@@ -746,7 +747,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	       y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom) {
 	        TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
 		TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-				  dc->DCOrgX + x, dc->DCOrgY + y - tm.tmAscent,
+				  physDev->org.x + x, physDev->org.y + y - tm.tmAscent,
 				  width, tm.tmAscent + tm.tmDescent );
 	    }
 	}
@@ -809,8 +810,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
 
 
-    TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count), dc->DCOrgX + x,
-	  dc->DCOrgY + y);
+    TRACE("Writing %s at %ld,%ld\n", debugstr_wn(wstr,count),
+          physDev->org.x + x, physDev->org.y + y);
 
     wine_tsx11_lock();
     if(!lpDx)
@@ -819,7 +820,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				   physDev->xrender->pict,
 				   physDev->xrender->cacheEntry->font_format,
 				   physDev->xrender->cacheEntry->glyphset,
-				   0, 0, dc->DCOrgX + x, dc->DCOrgY + y,
+				   0, 0, physDev->org.x + x, physDev->org.y + y,
 				   glyphs, count);
 
     else {
@@ -830,8 +831,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				       physDev->xrender->pict,
 				       physDev->xrender->cacheEntry->font_format,
 				       physDev->xrender->cacheEntry->glyphset,
-				       0, 0, dc->DCOrgX + x + xoff,
-				       dc->DCOrgY + y + yoff,
+				       0, 0, physDev->org.x + x + xoff,
+				       physDev->org.y + y + yoff,
 				       glyphs + idx, 1);
 	    offset += INTERNAL_XWSTODS(dc, lpDx[idx]);
 	    xoff = offset * cosEsc;

@@ -229,7 +229,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
                      LPCSTR output, const DEVMODEA* initData )
 {
     PSDRV_PDEVICE *physDev;
@@ -238,9 +238,9 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     /* If no device name was specified, retrieve the device name
      * from the DEVMODE structure from the DC's physDev.
      * (See CreateCompatibleDC) */
-    if ( !device && dc->physDev )
+    if ( !device && *pdev )
     {
-        physDev = (PSDRV_PDEVICE *)dc->physDev;
+        physDev = *pdev;
         device = physDev->Devmode->dmPublic.dmDeviceName;
     }
     pi = PSDRV_FindPrinterInfo(device);
@@ -257,7 +257,7 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     physDev = (PSDRV_PDEVICE *)HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
 					             sizeof(*physDev) );
     if (!physDev) return FALSE;
-    dc->physDev = (PHYSDEV)physDev;
+    *pdev = physDev;
     physDev->hdc = dc->hSelf;
     physDev->dc = dc;
 
@@ -300,7 +300,6 @@ BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
     HeapFree( PSDRV_Heap, 0, physDev->job.output );
-    physDev->dc->physDev = NULL;
     HeapFree( PSDRV_Heap, 0, physDev );
 
     return TRUE;

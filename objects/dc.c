@@ -107,8 +107,6 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     dc->bitsPerPixel        = 1;
     dc->MapMode             = MM_TEXT;
     dc->GraphicsMode        = GM_COMPATIBLE;
-    dc->DCOrgX              = 0;
-    dc->DCOrgY              = 0;
     dc->pAbortProc          = NULL;
     dc->CursPosX            = 0;
     dc->CursPosY            = 0;
@@ -310,11 +308,6 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     newdc->breakRem         = dc->breakRem;
     newdc->MapMode          = dc->MapMode;
     newdc->GraphicsMode     = dc->GraphicsMode;
-#if 0
-    /* Apparently, the DC origin is not changed by [GS]etDCState */
-    newdc->DCOrgX           = dc->DCOrgX;
-    newdc->DCOrgY           = dc->DCOrgY;
-#endif
     newdc->CursPosX         = dc->CursPosX;
     newdc->CursPosY         = dc->CursPosY;
     newdc->ArcDirection     = dc->ArcDirection;
@@ -403,11 +396,6 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
     dc->breakRem         = dcs->breakRem;
     dc->MapMode          = dcs->MapMode;
     dc->GraphicsMode     = dcs->GraphicsMode;
-#if 0
-    /* Apparently, the DC origin is not changed by [GS]etDCState */
-    dc->DCOrgX           = dcs->DCOrgX;
-    dc->DCOrgY           = dcs->DCOrgY;
-#endif
     dc->CursPosX         = dcs->CursPosX;
     dc->CursPosY         = dcs->CursPosY;
     dc->ArcDirection     = dcs->ArcDirection;
@@ -620,7 +608,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
                debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( dc, buf, device, output, initData ))
+        !dc->funcs->pCreateDC( dc, &dc->physDev, buf, device, output, initData ))
     {
         WARN("creation aborted by device\n" );
         GDI_FreeObject( dc->hSelf, dc );
@@ -740,7 +728,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     if ((origDC = GDI_GetObjPtr( hdc, DC_MAGIC ))) dc->physDev = origDC->physDev;
 
     if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
+        !dc->funcs->pCreateDC( dc, &dc->physDev, NULL, NULL, NULL, NULL ))
     {
         WARN("creation aborted by device\n");
         GDI_FreeObject( dc->hSelf, dc );
@@ -820,6 +808,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
         SelectObject( hdc, GetStockObject(DEFAULT_BITMAP) );
         funcs = dc->funcs;
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc->physDev);
+        dc->physDev = NULL;
     }
 
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
@@ -1003,8 +992,6 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 
     lpp->x = lpp->y = 0;
     if (dc->funcs->pGetDCOrgEx) dc->funcs->pGetDCOrgEx( dc->physDev, lpp );
-    lpp->x += dc->DCOrgX;
-    lpp->y += dc->DCOrgY;
     GDI_ReleaseObj( hDC );
     return TRUE;
 }
@@ -1027,12 +1014,10 @@ DWORD WINAPI GetDCOrg16( HDC16 hdc )
  */
 DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
 {
-    DWORD prevOrg;
+    DWORD prevOrg = 0;
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
-    prevOrg = dc->DCOrgX | (dc->DCOrgY << 16);
-    dc->DCOrgX = x;
-    dc->DCOrgY = y;
+    if (dc->funcs->pSetDCOrg) prevOrg = dc->funcs->pSetDCOrg( dc->physDev, x, y );
     GDI_ReleaseObj( hdc );
     return prevOrg;
 }

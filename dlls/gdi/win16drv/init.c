@@ -50,7 +50,7 @@ SEGPTR		win16drv_SegPtr_DrawMode;
 LPDRAWMODE 	win16drv_DrawModeP;
 
 
-static BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+static BOOL WIN16DRV_CreateDC( DC *dc, PHYSDEV *pdev, LPCSTR driver, LPCSTR device,
                                  LPCSTR output, const DEVMODEA* initData );
 static INT WIN16DRV_GetDeviceCaps( PHYSDEV dev, INT cap );
 static INT WIN16DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
@@ -139,6 +139,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetBitmapBits */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
+    NULL,                            /* pSetDCOrg */
     NULL,                            /* pSetDIBColorTable */
     NULL,                            /* pSetDIBits */
     NULL,                            /* pSetDIBitsToDevice */
@@ -240,8 +241,8 @@ void InitDrawMode(LPDRAWMODE lpDrawMode)
     lpDrawMode->eMiterLimit     = 1;
 }
 
-BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODEA* initData )
+BOOL WIN16DRV_CreateDC( DC *dc, PHYSDEV *pdev, LPCSTR driver, LPCSTR device, LPCSTR output,
+                        const DEVMODEA* initData )
 {
     LOADED_PRINTER_DRIVER *pLPD;
     WORD wRet;
@@ -254,9 +255,10 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     physDev = (WIN16DRV_PDEVICE *)HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev) );
     if (!physDev) return FALSE;
-    dc->physDev = (PHYSDEV)physDev;
+    *pdev = (PHYSDEV)physDev;
     physDev->hdc = dc->hSelf;
     physDev->dc = dc;
+    physDev->org.x = physDev->org.y = 0;
 
     pLPD = LoadPrinterDriver(driver);
     if (pLPD == NULL)

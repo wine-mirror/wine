@@ -45,7 +45,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     HWND hwndLinkAfter;
 
 #ifdef WINE_CURSES
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_GetPtr( hwnd );
     WINDOW *window;
     INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */
 
@@ -70,7 +70,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         }
         wndPtr->pDriverData = window;
     }
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 #else /* defined(WINE_CURSES) */
     FIXME("(%x): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
@@ -117,14 +117,14 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 BOOL TTYDRV_DestroyWindow( HWND hwnd )
 {
 #ifdef WINE_CURSES
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_GetPtr( hwnd );
     WINDOW *window = wndPtr->pDriverData;
 
     TRACE("(%x)\n", hwnd);
 
     if (window && window != root_window) delwin(window);
     wndPtr->pDriverData = NULL;
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 #else /* defined(WINE_CURSES) */
     FIXME("(%x): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
@@ -367,8 +367,6 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
 BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-    DC *dc;
-    BOOL updateVisRgn;
     HRGN hrgnVisible = 0;
     POINT org;
 
@@ -385,17 +383,9 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         org.y = wndPtr->rectClient.top;
     }
 
-    if (!(dc = DC_GetDCPtr( hdc )))
-    {
-        WIN_ReleaseWndPtr( wndPtr );
-        return FALSE;
-    }
-    dc->DCOrgX = org.x;
-    dc->DCOrgY = org.y;
-    updateVisRgn = (dc->flags & DC_DIRTY) != 0;
-    GDI_ReleaseObj( hdc );
+    SetDCOrg16( hdc, org.x, org.y );
 
-    if (updateVisRgn)
+    if (SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         if (flags & DCX_PARENTCLIP)
         {
@@ -418,7 +408,6 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
                 else
                     OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
                                -wndPtr->rectClient.top );
-                OffsetRgn( hrgnVisible, org.x, org.y );
             }
             else
                 hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
@@ -678,7 +667,6 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
  */
 static UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 {
-    WND *wndPtr;
     UINT swpFlags = 0;
     WINDOWPLACEMENT wpl;
 
@@ -691,11 +679,8 @@ static UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     /* If I glark this right, yields an immutable window*/
     swpFlags = SWP_NOSIZE | SWP_NOMOVE;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-
     /*cmd handling goes here.  see dlls/x1drv/winpos.c*/
 
-    WIN_ReleaseWndPtr( wndPtr );
     return swpFlags;
 }
 

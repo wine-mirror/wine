@@ -8,7 +8,7 @@ init	X11DRV_Init
 @ cdecl ChoosePixelFormat(ptr ptr) X11DRV_ChoosePixelFormat
 @ cdecl Chord(ptr long long long long long long long long) X11DRV_Chord
 @ cdecl CreateBitmap(ptr long) X11DRV_CreateBitmap
-@ cdecl CreateDC(ptr str str str ptr) X11DRV_CreateDC
+@ cdecl CreateDC(ptr ptr str str str ptr) X11DRV_CreateDC
 @ cdecl CreateDIBSection(ptr ptr long ptr long long long) X11DRV_DIB_CreateDIBSection
 @ cdecl DeleteBitmap(long) X11DRV_DeleteBitmap
 @ cdecl DeleteDC(ptr) X11DRV_DeleteDC
@@ -49,6 +49,7 @@ init	X11DRV_Init
 @ cdecl SelectPen(ptr long) X11DRV_SelectPen
 @ cdecl SetBitmapBits(long ptr long) X11DRV_SetBitmapBits
 @ cdecl SetBkColor(ptr long) X11DRV_SetBkColor
+@ cdecl SetDCOrg(ptr long long) X11DRV_SetDCOrg
 @ cdecl SetDIBColorTable(ptr long long ptr) X11DRV_SetDIBColorTable
 @ cdecl SetDIBits(ptr long long long ptr ptr long) X11DRV_SetDIBits
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) X11DRV_SetDIBitsToDevice

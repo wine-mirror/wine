@@ -82,6 +82,8 @@ typedef struct
     DC           *dc;          /* direct pointer to DC, should go away */
     GC            gc;          /* X Window GC */
     Drawable      drawable;
+    POINT         org;          /* DC origin relative to drawable */
+    POINT         drawable_org; /* Origin of drawable relative to screen */
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
@@ -193,7 +195,8 @@ extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
 extern Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc );
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
-extern void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int org_y );
+extern void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, const POINT *org,
+                                const POINT *drawable_org );
 extern void X11DRV_StartGraphicsExposures( HDC hdc );
 extern void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn );
 

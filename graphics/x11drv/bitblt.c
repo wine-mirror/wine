@@ -888,7 +888,8 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
 
     /* FIXME: avoid BadMatch errors */
     imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
-                          visRectSrc->left, visRectSrc->top,
+                          physDevSrc->org.x + visRectSrc->left,
+                          physDevSrc->org.y + visRectSrc->top,
                           visRectSrc->right - visRectSrc->left,
                           visRectSrc->bottom - visRectSrc->top,
                           AllPlanes, ZPixmap );
@@ -939,25 +940,30 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                 XSetBackground( gdi_display, gc, physDevDst->textPixel );
                 XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
                 XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
-                            visRectSrc->left, visRectSrc->top,
+                            physDevSrc->org.x + visRectSrc->left,
+                            physDevSrc->org.y + visRectSrc->top,
                             width, height, 0, 0, 1);
             }
             else
                 XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
-                           visRectSrc->left, visRectSrc->top, width, height, 0, 0);
+                           physDevSrc->org.x + visRectSrc->left,
+                           physDevSrc->org.y + visRectSrc->top,
+                           width, height, 0, 0);
             exposures++;
         }
         else  /* color -> color */
         {
             if (dcSrc->flags & DC_MEMORY)
                 imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
-                                      visRectSrc->left, visRectSrc->top,
+                                      physDevSrc->org.x + visRectSrc->left,
+                                      physDevSrc->org.y + visRectSrc->top,
                                       width, height, AllPlanes, ZPixmap );
             else
             {
                 /* Make sure we don't get a BadMatch error */
                 XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
-                           visRectSrc->left, visRectSrc->top,
+                           physDevSrc->org.x + visRectSrc->left,
+                           physDevSrc->org.y + visRectSrc->top,
                            width, height, 0, 0);
                 exposures++;
                 imageSrc = XGetImage( gdi_display, pixmap, 0, 0, width, height,
@@ -989,7 +995,8 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                 XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
             }
             XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
-                        visRectSrc->left, visRectSrc->top,
+                        physDevSrc->org.x + visRectSrc->left,
+                        physDevSrc->org.y + visRectSrc->top,
                         width, height, 0, 0, 1 );
             exposures++;
         }
@@ -997,7 +1004,8 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
         {
             /* FIXME: avoid BadMatch error */
             imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
-                                  visRectSrc->left, visRectSrc->top,
+                                  physDevSrc->org.x + visRectSrc->left,
+                                  physDevSrc->org.y + visRectSrc->top,
                                   width, height, AllPlanes, ZPixmap );
             imageDst = X11DRV_DIB_CreateXImage( width, height, dcDst->bitsPerPixel );
             for (y = 0; y < height; y++)
@@ -1030,7 +1038,8 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
 	(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
         XCopyArea( gdi_display, physDev->drawable, pixmap, gc,
-                   visRectDst->left, visRectDst->top, width, height, 0, 0 );
+                   physDev->org.x + visRectDst->left, physDev->org.y + visRectDst->top,
+                   width, height, 0, 0 );
         exposures++;
     }
     else
@@ -1040,13 +1049,16 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
 
         if (physDev->dc->flags & DC_MEMORY)
             image = XGetImage( gdi_display, physDev->drawable,
-                               visRectDst->left, visRectDst->top,
+                               physDev->org.x + visRectDst->left,
+                               physDev->org.y + visRectDst->top,
                                width, height, AllPlanes, ZPixmap );
         else
         {
             /* Make sure we don't get a BadMatch error */
             XCopyArea( gdi_display, physDev->drawable, pixmap, gc,
-                       visRectDst->left, visRectDst->top, width, height, 0, 0);
+                       physDev->org.x + visRectDst->left,
+                       physDev->org.y + visRectDst->top,
+                       width, height, 0, 0);
             exposures++;
             image = XGetImage( gdi_display, pixmap, 0, 0, width, height,
                                AllPlanes, ZPixmap );
@@ -1079,8 +1091,9 @@ static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, RECT *visRe
     if (!X11DRV_PALETTE_PaletteToXPixel || (physDev->dc->bitsPerPixel == 1) ||
         (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
-        XCopyArea( gdi_display, pixmap, physDev->drawable, physDev->gc, 0, 0,
-                   width, height, visRectDst->left, visRectDst->top );
+        XCopyArea( gdi_display, pixmap, physDev->drawable, physDev->gc, 0, 0, width, height,
+                   physDev->org.x + visRectDst->left,
+                   physDev->org.y + visRectDst->top );
         exposures++;
     }
     else
@@ -1095,7 +1108,8 @@ static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, RECT *visRe
                            X11DRV_PALETTE_PaletteToXPixel[XGetPixel( image, x, y )]);
             }
         XPutImage( gdi_display, physDev->drawable, physDev->gc, image, 0, 0,
-                   visRectDst->left, visRectDst->top, width, height );
+                   physDev->org.x + visRectDst->left,
+                   physDev->org.y + visRectDst->top, width, height );
         XDestroyImage( image );
     }
     return exposures;
@@ -1230,8 +1244,8 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 
       /* Map the coordinates to device coords */
 
-    xDst      = dcDst->DCOrgX + XLPTODP( dcDst, xDst );
-    yDst      = dcDst->DCOrgY + YLPTODP( dcDst, yDst );
+    xDst      = XLPTODP( dcDst, xDst );
+    yDst      = YLPTODP( dcDst, yDst );
 
     /* Here we have to round to integers, not truncate */
     widthDst  = MulDiv(widthDst, dcDst->vportExtX, dcDst->wndExtX);
@@ -1242,14 +1256,14 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
                     dcDst->vportExtX, dcDst->vportExtY,
                     dcDst->wndOrgX, dcDst->wndOrgY,
                     dcDst->wndExtX, dcDst->wndExtY );
-    TRACE("    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
+    TRACE("    rectdst=%d,%d-%d,%d orgdst=%ld,%ld\n",
                     xDst, yDst, widthDst, heightDst,
-                    dcDst->DCOrgX, dcDst->DCOrgY );
+                    physDevDst->org.x, physDevDst->org.y );
 
     if (useSrc)
     {
-        xSrc      = dcSrc->DCOrgX + XLPTODP( dcSrc, xSrc );
-        ySrc      = dcSrc->DCOrgY + YLPTODP( dcSrc, ySrc );
+        xSrc      = XLPTODP( dcSrc, xSrc );
+        ySrc      = YLPTODP( dcSrc, ySrc );
         widthSrc  = widthSrc * dcSrc->vportExtX / dcSrc->wndExtX;
         heightSrc = heightSrc * dcSrc->vportExtY / dcSrc->wndExtY;
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
@@ -1258,9 +1272,9 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
                         dcSrc->vportExtX, dcSrc->vportExtY,
                         dcSrc->wndOrgX, dcSrc->wndOrgY,
                         dcSrc->wndExtX, dcSrc->wndExtY );
-        TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
+        TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%ld,%ld\n",
                         xSrc, ySrc, widthSrc, heightSrc,
-                        dcSrc->DCOrgX, dcSrc->DCOrgY );
+                        physDevSrc->org.x, physDevSrc->org.y );
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
@@ -1298,7 +1312,9 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
         }
         XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                        visRectDst.left, visRectDst.top, width, height );
+                        physDevDst->org.x + visRectDst.left,
+                        physDevDst->org.y + visRectDst.top,
+                        width, height );
         wine_tsx11_unlock();
         return TRUE;
 
@@ -1323,7 +1339,9 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
                 XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
             }
             XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                            visRectDst.left, visRectDst.top, width, height );
+                            physDevDst->org.x + visRectDst.left,
+                            physDevDst->org.y + visRectDst.top,
+                            width, height );
             wine_tsx11_unlock();
             return TRUE;
         }
@@ -1336,7 +1354,9 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             wine_tsx11_lock();
             XSetFunction( gdi_display, physDevDst->gc, GXxor );
             XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-			    visRectDst.left, visRectDst.top, width, height );
+                            physDevDst->org.x + visRectDst.left,
+                            physDevDst->org.y + visRectDst.top,
+                            width, height );
             wine_tsx11_unlock();
         }
         return TRUE;
@@ -1348,7 +1368,9 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             wine_tsx11_lock();
 	    XSetFunction( gdi_display, physDevDst->gc, GXequiv );
 	    XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-			    visRectDst.left, visRectDst.top, width, height );
+                            physDevDst->org.x + visRectDst.left,
+                            physDevDst->org.y + visRectDst.top,
+                            width, height );
             wine_tsx11_unlock();
 	}
 	return TRUE;
@@ -1360,8 +1382,11 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             XSetFunction( gdi_display, physDevDst->gc, GXcopy );
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
-                       visRectSrc.left, visRectSrc.top,
-                       width, height, visRectDst.left, visRectDst.top );
+                       physDevSrc->org.x + visRectSrc.left,
+                       physDevSrc->org.y + visRectSrc.top,
+                       width, height,
+                       physDevDst->org.x + visRectDst.left,
+                       physDevDst->org.y + visRectDst.top );
             physDevDst->exposures++;
             wine_tsx11_unlock();
             return TRUE;
@@ -1374,8 +1399,11 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             XSetFunction( gdi_display, physDevDst->gc, GXcopy );
             XCopyPlane( gdi_display, physDevSrc->drawable,
                         physDevDst->drawable, physDevDst->gc,
-                        visRectSrc.left, visRectSrc.top,
-                        width, height, visRectDst.left, visRectDst.top, 1 );
+                        physDevSrc->org.x + visRectSrc.left,
+                        physDevSrc->org.y + visRectSrc.top,
+                        width, height,
+                        physDevDst->org.x + visRectDst.left,
+                        physDevDst->org.y + visRectDst.top, 1 );
             physDevDst->exposures++;
             wine_tsx11_unlock();
             return TRUE;
@@ -1387,7 +1415,9 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         wine_tsx11_lock();
         XSetFunction( gdi_display, physDevDst->gc, GXcopy );
         XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                        visRectDst.left, visRectDst.top, width, height );
+                        physDevDst->org.x + visRectDst.left,
+                        physDevDst->org.y + visRectDst.top,
+                        width, height );
         wine_tsx11_unlock();
         return TRUE;
 
@@ -1403,7 +1433,9 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
             XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
         }
         XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                        visRectDst.left, visRectDst.top, width, height );
+                        physDevDst->org.x + visRectDst.left,
+                        physDevDst->org.y + visRectDst.top,
+                        width, height );
         wine_tsx11_unlock();
         return TRUE;
     }
@@ -1522,17 +1554,17 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
         (dcSrc->bitsPerPixel == dcDst->bitsPerPixel))
     {
       /* do everything ourselves; map coordinates */
-      xSrc = dcSrc->DCOrgX + XLPTODP( dcSrc, xSrc );
-      ySrc = dcSrc->DCOrgY + YLPTODP( dcSrc, ySrc );
-      xDst = dcDst->DCOrgX + XLPTODP( dcDst, xDst );
-      yDst = dcDst->DCOrgY + YLPTODP( dcDst, yDst );
+      xSrc = XLPTODP( dcSrc, xSrc );
+      ySrc = YLPTODP( dcSrc, ySrc );
+      xDst = XLPTODP( dcDst, xDst );
+      yDst = YLPTODP( dcDst, yDst );
       width  = MulDiv(width, dcDst->vportExtX, dcDst->wndExtX);
       height = MulDiv(height, dcDst->vportExtY, dcDst->wndExtY);
 
       /* Perform basic clipping */
       if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, width, height,
-                                      dcSrc, xSrc, ySrc, width, height,
-                                      &visRectSrc, &visRectDst ))
+                                    dcSrc, xSrc, ySrc, width, height,
+                                    &visRectSrc, &visRectDst ))
         goto END;
 
       xSrc = visRectSrc.left;
@@ -1586,4 +1618,3 @@ BOOL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
     X11DRV_UnlockDIBSection( physDevDst, TRUE );
     return result;
 }
-

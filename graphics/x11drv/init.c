@@ -87,7 +87,7 @@ void X11DRV_GDI_Finalize(void)
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
                       LPCSTR output, const DEVMODEA* initData )
 {
     X11DRV_PDEVICE *physDev;
@@ -99,7 +99,7 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         ERR("Can't allocate physDev\n");
 	return FALSE;
     }
-    dc->physDev = (PHYSDEV)physDev;
+    *pdev = physDev;
     physDev->hdc = dc->hSelf;
     physDev->dc  = dc;  /* FIXME */
 
@@ -112,6 +112,8 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         physDev->drawable  = root_window;
         dc->bitsPerPixel   = screen_depth;
     }
+    physDev->org.x = physDev->org.y = 0;
+    physDev->drawable_org.x = physDev->drawable_org.y = 0;
 
     physDev->current_pf   = 0;
     physDev->used_visuals = 0;
@@ -131,8 +133,6 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
  */
 BOOL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
 {
-    DC *dc = physDev->dc;
-
     if(physDev->xrender)
       X11DRV_XRender_DeleteDC( physDev );
     wine_tsx11_lock();
@@ -141,7 +141,6 @@ BOOL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
         XFree(physDev->visuals[physDev->used_visuals]);
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, physDev );
-    dc->physDev = NULL;
     return TRUE;
 }
 

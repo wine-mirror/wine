@@ -207,6 +207,7 @@ typedef struct
     LPLOGPEN16		PenInfo;        /* Current pen realized by printer driver */
     HDC                 hdc;
     DC                 *dc;
+    POINT               org;            /* Device origin */
     DeviceCaps          DevCaps;        /* Device caps */
 } WIN16DRV_PDEVICE;
 
@@ -300,4 +301,3 @@ extern SEGPTR		win16drv_SegPtr_DrawMode;
 extern LPDRAWMODE 	win16drv_DrawModeP;
 
 #endif  /* __WINE_WIN16DRV_H */
-

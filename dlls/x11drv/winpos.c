@@ -426,7 +426,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     X11DRV_WND_DATA *data = win->pDriverData;
     Drawable drawable;
     BOOL visible;
-    POINT org;
+    POINT org, drawable_org;
     int mode = IncludeInferiors;
 
     /* don't clip siblings if using parent clip region */
@@ -466,7 +466,9 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             org.x = win->rectWindow.left - win->rectClient.left;
             org.y = win->rectWindow.top - win->rectClient.top;
         }
+        drawable_org = org;
         MapWindowPoints( hwnd, parent, &org, 1 );
+        MapWindowPoints( hwnd, 0, &drawable_org, 1 );
         /* have to use the parent so that we include siblings */
         if (parent) drawable = X11DRV_get_client_window( parent );
         else drawable = root_window;
@@ -478,23 +480,28 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             drawable = data->icon_window ? data->icon_window : data->whole_window;
             org.x = 0;
             org.y = 0;
+            drawable_org = org;
         }
         else if (flags & DCX_WINDOW)
         {
             drawable = data->whole_window;
             org.x = win->rectWindow.left - data->whole_rect.left;
             org.y = win->rectWindow.top - data->whole_rect.top;
+            drawable_org.x = data->whole_rect.left - win->rectClient.left;
+            drawable_org.y = data->whole_rect.top - win->rectClient.top;
         }
         else
         {
             drawable = data->client_window;
             org.x = 0;
             org.y = 0;
+            drawable_org = org;
             if (flags & DCX_CLIPCHILDREN) mode = ClipByChildren;  /* can use X11 clipping */
         }
+        MapWindowPoints( hwnd, 0, &drawable_org, 1 );
     }
 
-    X11DRV_SetDrawable( hdc, drawable, mode, org.x, org.y );
+    X11DRV_SetDrawable( hdc, drawable, mode, &org, &drawable_org );
 
     if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
         SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
@@ -509,9 +516,6 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
                 CombineRgn( visRgn, visRgn, hrgn,
                             (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-
-            /* make it relative to the drawable origin */
-            OffsetRgn( visRgn, org.x, org.y );
         }
         else visRgn = CreateRectRgn( 0, 0, 0, 0 );
 
