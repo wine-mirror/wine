@@ -43,7 +43,7 @@ AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CXX
 dnl We can't use AC_PROG_CPP, it uses by default $(CC) -E
-AC_CHECK_PROG(CPP, "cpp", "cpp")
+AC_CHECK_TOOL(CPP,cpp,cpp)
 
 AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
   [if test -z "$with_wine_tools"; then
