@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <signal.h>
+#include <sys/types.h>
 #include <sys/ptrace.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
@@ -142,7 +143,7 @@ void continue_thread( struct thread *thread )
 /* read an int from a thread address space */
 int read_thread_int( struct thread *thread, const int *addr, int *data )
 {
-    if (((*data = ptrace( PTRACE_PEEKDATA, thread->unix_pid, addr )) == -1) && errno)
+    if (((*data = ptrace( PTRACE_PEEKDATA, thread->unix_pid, addr, 0 )) == -1) && errno)
     {
         file_set_error();
         return -1;
