@@ -86,43 +86,31 @@ VOID WINAPI RtlTimeToTimeFields(
 	PTIME_FIELDS TimeFields)
 {
 	const int *Months;
-	int LeapSecondCorrections, SecondsInDay, CurYear;
-	int LeapYear, CurMonth, GMTOffset;
+	int SecondsInDay, CurYear;
+	int LeapYear, CurMonth;
 	long int Days;
-	LONGLONG Time = *(LONGLONG *)&liTime;
+	LONGLONG Time;
+
+	Time = liTime->s.HighPart;
+	Time <<= 32;
+	Time += liTime->s.LowPart;
 
 	/* Extract millisecond from time and convert time into seconds */
 	TimeFields->Milliseconds = (CSHORT) ((Time % TICKSPERSEC) / TICKSPERMSEC);
 	Time = Time / TICKSPERSEC;
 
-	/* FIXME: Compute the number of leap second corrections here */
-	LeapSecondCorrections = 0;
-
-	/* FIXME: get the GMT offset here */
-	GMTOffset = 0;
+	/* The native version of RtlTimeToTimeFields does not take leap seconds
+	 * into account */
 
 	/* Split the time into days and seconds within the day */
 	Days = Time / SECSPERDAY;
 	SecondsInDay = Time % SECSPERDAY;
-
-	/* Adjust the values for GMT and leap seconds */
-	SecondsInDay += (GMTOffset - LeapSecondCorrections);
-	while (SecondsInDay < 0)
-	{ SecondsInDay += SECSPERDAY;
-	  Days--;
-	}
-	while (SecondsInDay >= SECSPERDAY)
-	{ SecondsInDay -= SECSPERDAY;
-	  Days++;
-	}
 
 	/* compute time of day */
 	TimeFields->Hour = (CSHORT) (SecondsInDay / SECSPERHOUR);
 	SecondsInDay = SecondsInDay % SECSPERHOUR;
 	TimeFields->Minute = (CSHORT) (SecondsInDay / SECSPERMIN);
 	TimeFields->Second = (CSHORT) (SecondsInDay % SECSPERMIN);
-
-	/* FIXME: handle the possibility that we are on a leap second (i.e. Second = 60) */
 
 	/* compute day of week */
 	TimeFields->Weekday = (CSHORT) ((EPOCHWEEKDAY + Days) % DAYSPERWEEK);
@@ -147,6 +135,7 @@ VOID WINAPI RtlTimeToTimeFields(
 	TimeFields->Month = (CSHORT) (CurMonth + 1);
 	TimeFields->Day = (CSHORT) (Days + 1);
 }
+
 /******************************************************************************
  *  RtlTimeFieldsToTime		[NTDLL.@]
  *
