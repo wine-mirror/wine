@@ -1479,6 +1479,12 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
             }
             else
             {
+                int on = 1;
+                /* The game GrandPrixLegends binds more than one time, but does
+                 * not do a SO_REUSEADDR - Stevens says this is ok */
+                FIXME( "Setting WS_SO_REUSEADDR on socket before we binding it\n");
+                WS_setsockopt( s, WS_SOL_SOCKET, WS_SO_REUSEADDR, (char*)&on, sizeof(on) );
+
                 if (bind(fd, uaddr, uaddrlen) < 0)
                 {
                     int loc_errno = errno;
@@ -2677,6 +2683,17 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         TRACE("setting global SO_OPENTYPE to 0x%x\n", *(int *)optval );
         return 0;
     }
+
+    /* For some reason the game GrandPrixLegends does set SO_DONTROUTE on its
+     * socket. This will either not happen under windows or it is ignored in
+     * windows (but it works in linux and therefor prevents the game to find
+     * games outsite the current network) */
+    if ( level==WS_SOL_SOCKET && optname==WS_SO_DONTROUTE ) 
+    {
+        FIXME("Does windows ignore SO_DONTROUTE?\n");
+        return 0;
+    }
+
 
     fd = _get_sock_fd(s);
     if (fd != -1)
