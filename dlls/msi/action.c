@@ -1943,6 +1943,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
                   c_indx);
             package->features[index].Components[cnt] = c_indx;
             package->features[index].ComponentCount ++;
+            continue;
         }
 
         rc = ACTION_OpenQuery(package->db, &view2, Query2, buffer);
@@ -1971,6 +1972,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 
             package->features[index].Components[cnt] = c_indx;
             package->features[index].ComponentCount ++;
+            TRACE("Loaded new component to index %i\n",c_indx);
         }
         MSI_ViewClose(view2);
         msiobj_release( &view2->hdr );
