@@ -1126,7 +1126,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     TRACE("real x,y %d,%d\n", x, y);
 
-    if((char_extra = GetTextCharacterExtra(hdc)) != 0) {
+    char_extra = GetTextCharacterExtra(hdc);
+    if(char_extra || breakExtra) {
         UINT i;
 	SIZE tmpsz;
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
@@ -1137,6 +1138,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	        GetTextExtentPointI(hdc, glyphs + i, 1, &tmpsz);
 		deltas[i] = tmpsz.cx;
 	    }
+            
+            if (breakExtra && wstr[i] == tm.tmBreakChar) {
+                deltas[i] = deltas[i] + breakExtra;
+            }
 	}
     } else if(lpDx)
         deltas = (INT*)lpDx;
