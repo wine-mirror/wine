@@ -37,12 +37,11 @@ static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
     BOOL ret;
     DWORD len;
     METARECORD *mr;
+    BOOL isrect = flags & (ETO_CLIPPED | ETO_OPAQUE);
 
-    if (flags && !rect)
-	    WARN("Inconsistent flags and rect\n");
     len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)
 	    + sizeof(UINT16);
-    if (rect&&flags)
+    if (isrect)
         len += sizeof(RECT16);
     if (lpDx)
      len+=count*sizeof(INT16);
@@ -55,10 +54,10 @@ static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
     *(mr->rdParm + 1) = x;
     *(mr->rdParm + 2) = count;
     *(mr->rdParm + 3) = flags;
-    if (rect&&flags) memcpy(mr->rdParm + 4, rect, sizeof(RECT16));
-    memcpy(mr->rdParm + ((rect&&flags) ? 8 : 4), str, count);
+    if (isrect) memcpy(mr->rdParm + 4, rect, sizeof(RECT16));
+    memcpy(mr->rdParm + (isrect ? 8 : 4), str, count);
     if (lpDx)
-     memcpy(mr->rdParm + ((rect&&flags) ? 8 : 4) + ((count + 1) >> 1),lpDx,
+     memcpy(mr->rdParm + (isrect ? 8 : 4) + ((count + 1) >> 1),lpDx,
       count*sizeof(INT16));
     ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
     HeapFree( GetProcessHeap(), 0, mr);
