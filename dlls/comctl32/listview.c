@@ -843,22 +843,20 @@ static VOID LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
   if (uView == LVS_LIST)
   {
     /* update horizontal scrollbar */
-
     INT nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
     INT nCountPerRow = LISTVIEW_GetCountPerRow(infoPtr);
     INT nNumOfItems = GETITEMCOUNT(infoPtr);
 
-    scrollInfo.nMax = nNumOfItems / nCountPerColumn;
     TRACE("items=%d, perColumn=%d, perRow=%d\n",
 	  nNumOfItems, nCountPerColumn, nCountPerRow);
+    
+    scrollInfo.nMax = nNumOfItems / nCountPerColumn;
     if((nNumOfItems % nCountPerColumn) == 0)
-    {
         scrollInfo.nMax--;
-    }
+    if (scrollInfo.nMax < 0) scrollInfo.nMax = 0;
     scrollInfo.nPos = ListView_GetTopIndex(infoPtr->hwndSelf) / nCountPerColumn;
     scrollInfo.nPage = nCountPerRow;
     scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
-    TRACE("LVS_LIST\n");
     SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
     ShowScrollBar(infoPtr->hwndSelf, SB_VERT, FALSE);
   }
@@ -8070,13 +8068,13 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 	    nNewScrollPos = scrollInfo.nMin;
     }
 
-    /* carry on only if it really changed */
-    if (nNewScrollPos == nOldScrollPos) return 0;
-    
-    /* set the new position */
+    /* set the new position, and reread in case it changed */
     scrollInfo.fMask = SIF_POS;
     scrollInfo.nPos = nNewScrollPos;
-    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+    nNewScrollPos = SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+    
+    /* carry on only if it really changed */
+    if (nNewScrollPos == nOldScrollPos) return 0;
     
     /* now adjust to client coordinates */
     nScrollDiff = nOldScrollPos - nNewScrollPos;
@@ -8153,6 +8151,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
     case SB_THUMBPOSITION:
     case SB_THUMBTRACK:
 	nScrollDiff = scrollInfo.nTrackPos - scrollInfo.nPos;
+	break;
 
     default:
 	nScrollDiff = 0;
@@ -8173,20 +8172,20 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 	    nNewScrollPos = scrollInfo.nMin;
     }
 
+    /* set the new position, and reread in case it changed */
+    scrollInfo.fMask = SIF_POS;
+    scrollInfo.nPos = nNewScrollPos;
+    nNewScrollPos = SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
+    
     /* carry on only if it really changed */
     if (nNewScrollPos == nOldScrollPos) return 0;
     
-    /* set the new position */
-    scrollInfo.fMask = SIF_POS;
-    scrollInfo.nPos = nNewScrollPos;
-    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
-    
-      if(uView == LVS_REPORT)
-          LISTVIEW_UpdateHeaderSize(infoPtr, nNewScrollPos);
+    if(uView == LVS_REPORT)
+        LISTVIEW_UpdateHeaderSize(infoPtr, nNewScrollPos);
       
     /* now adjust to client coordinates */
     nScrollDiff = nOldScrollPos - nNewScrollPos;
-    if (uView == LVS_REPORT) nScrollDiff *= infoPtr->nItemHeight;
+    if (uView == LVS_LIST) nScrollDiff *= infoPtr->nItemWidth;
    
     /* and scroll the window */ 
     ScrollWindowEx( infoPtr->hwndSelf, nScrollDiff, 0, &infoPtr->rcList,
