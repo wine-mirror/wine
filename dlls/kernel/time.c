@@ -166,6 +166,181 @@ BOOL WINAPI SetTimeZoneInformation(
 
 
 /***********************************************************************
+ *  _DayLightCompareDate
+ *
+ *  Compares two dates without looking at the year
+ *
+ * RETURNS
+ *
+ *  -1 if date < compareDate
+ *   0 if date == compareDate
+ *   1 if date > compareDate
+ *  -2 if an error occures
+ */
+
+static int _DayLightCompareDate(
+    const LPSYSTEMTIME date,                       /* [in] The date to compare. */
+    const LPSYSTEMTIME compareDate)                /* [in] The daylight saving begin or end date */
+{
+    int limit_day;
+
+    if (compareDate->wYear != 0)
+    {
+        if (date->wMonth < compareDate->wMonth)
+            return -1; /* We are in a year before the date limit. */
+
+        if (date->wMonth > compareDate->wMonth)
+            return 1; /* We are in a year after the date limit. */
+    }
+
+    if (date->wMonth < compareDate->wMonth)
+        return -1; /* We are in a month before the date limit. */
+
+    if (date->wMonth > compareDate->wMonth)
+        return 1; /* We are in a month after the date limit. */
+
+    if (compareDate->wDayOfWeek <= 6)
+    {
+       SYSTEMTIME tmp;
+       FILETIME tmp_ft;
+
+       /* compareDate->wDay is interpreted as number of the week in the month. */
+       /* 5 means: the last week in the month */
+       int weekofmonth = compareDate->wDay;
+
+         /* calculate day of week for the first day in the month */
+        memcpy(&tmp, date, sizeof(SYSTEMTIME));
+        tmp.wDay = 1;
+        tmp.wDayOfWeek = -1;
+
+        if (weekofmonth == 5)
+        {
+             /* Go to the beginning of the next month. */
+            if (++tmp.wMonth > 12)
+            {
+                tmp.wMonth = 1;
+                ++tmp.wYear;
+            }
+        }
+
+        if (!SystemTimeToFileTime(&tmp, &tmp_ft))
+            return -2;
+
+        if (weekofmonth == 5)
+        {
+          LONGLONG t, one_day;
+
+          t = tmp_ft.dwHighDateTime;
+          t <<= 32;
+          t += (UINT)tmp_ft.dwLowDateTime;
+
+          /* substract one day */
+          one_day = 24*60*60;
+          one_day *= 10000000;
+          t -= one_day;
+
+          tmp_ft.dwLowDateTime  = (UINT)t;
+          tmp_ft.dwHighDateTime = (UINT)(t >> 32);
+        }
+
+        if (!FileTimeToSystemTime(&tmp_ft, &tmp))
+            return -2;
+
+       if (weekofmonth == 5)
+       {
+          /* calculate the last matching day of the week in this month */
+          int dif = tmp.wDayOfWeek - compareDate->wDayOfWeek;
+          if (dif < 0)
+             dif += 7;
+
+          limit_day = tmp.wDay - dif;
+       }
+       else
+       {
+          /* calulcate the matching day of the week in the given week */
+          int dif = compareDate->wDayOfWeek - tmp.wDayOfWeek;
+          if (dif < 0)
+             dif += 7;
+
+          limit_day = tmp.wDay + 7*(weekofmonth-1) + dif;
+       }
+    }
+    else
+    {
+       limit_day = compareDate->wDay;
+    }
+
+    if (date->wDay < limit_day)
+        return -1;
+
+    if (date->wDay > limit_day)
+        return 1;
+
+    return 0;   /* date is equal to the date limit. */
+}
+
+
+/***********************************************************************
+ *  _GetTimezoneBias
+ *
+ *  Calculates the local time bias for a given time zone
+ *
+ * RETURNS
+ *
+ *  Returns TRUE when the time zone bias was calculated.
+ */
+
+static BOOL _GetTimezoneBias(
+    const LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The time zone data.            */
+    LPSYSTEMTIME                  lpSystemTime,          /* [in] The system time.               */
+    LONG*                         pBias)                 /* [out] The calulated bias in minutes */
+{
+    int ret;
+    BOOL beforedaylightsaving, afterdaylightsaving;
+    BOOL daylightsaving = FALSE;
+    LONG bias = lpTimeZoneInformation->Bias;
+
+    if (lpTimeZoneInformation->DaylightDate.wMonth != 0)
+    {
+        if (lpTimeZoneInformation->StandardDate.wMonth == 0 ||
+            lpTimeZoneInformation->StandardDate.wDay<1 ||
+            lpTimeZoneInformation->StandardDate.wDay>5 ||
+            lpTimeZoneInformation->DaylightDate.wDay<1 ||
+            lpTimeZoneInformation->DaylightDate.wDay>5)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+         /* check for daylight saving */
+       ret = _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->StandardDate);
+       if (ret == -2)
+          return FALSE;
+
+        beforedaylightsaving = ret < 0;
+
+       _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->DaylightDate);
+       if (ret == -2)
+          return FALSE;
+
+        afterdaylightsaving = ret >= 0;
+
+        if (!beforedaylightsaving && !afterdaylightsaving)
+            daylightsaving = TRUE;
+    }
+
+    if (daylightsaving)
+        bias += lpTimeZoneInformation->DaylightBias;
+    else if (lpTimeZoneInformation->StandardDate.wMonth != 0)
+        bias += lpTimeZoneInformation->StandardBias;
+
+    *pBias = bias;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *              SystemTimeToTzSpecificLocalTime  (KERNEL32.@)
  *
  *  Converts the system time (utc) to the local time in the specified time zone.
@@ -173,20 +348,100 @@ BOOL WINAPI SetTimeZoneInformation(
  * RETURNS
  *
  *  Returns true when the local time was calculated.
+ *  Returns TRUE when the local time was calculated.
  *
- * BUGS
- *
- *  Does not handle daylight savings time adjustments correctly.
  */
+
 BOOL WINAPI SystemTimeToTzSpecificLocalTime(
     LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The desired time zone. */
     LPSYSTEMTIME            lpUniversalTime,       /* [in] The utc time to base local time on. */
     LPSYSTEMTIME            lpLocalTime)           /* [out] The local time in the time zone. */
 {
-  FIXME(":stub\n");
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-       return FALSE;
+    FILETIME ft;
+    LONG lBias;
+    LONGLONG t, bias;
+    TIME_ZONE_INFORMATION tzinfo;
+
+    if (lpTimeZoneInformation != NULL)
+    {
+        memcpy(&tzinfo, lpTimeZoneInformation, sizeof(TIME_ZONE_INFORMATION));
+    }
+    else
+    {
+        if (GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_INVALID)
+            return FALSE;
+    }
+
+    if (!SystemTimeToFileTime(lpUniversalTime, &ft))
+        return FALSE;
+
+    t = ft.dwHighDateTime;
+    t <<= 32;
+    t += (UINT)ft.dwLowDateTime;
+
+    if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, &lBias))
+        return FALSE;
+
+    bias = lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
+    t += bias;
+
+    ft.dwLowDateTime  = (UINT)t;
+    ft.dwHighDateTime = (UINT)(t >> 32);
+
+    return FileTimeToSystemTime(&ft, lpLocalTime);
 }
+
+
+/***********************************************************************
+ *              TzSpecificLocalTimeToSystemTime  (KERNEL32.@)
+ *
+ *  Converts a local time to a time in Coordinated Universal Time (UTC).
+ *
+ * RETURNS
+ *
+ *  Returns TRUE when the utc time was calculated.
+ */
+
+BOOL WINAPI TzSpecificLocalTimeToSystemTime(
+    LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The desired time zone. */
+    LPSYSTEMTIME            lpLocalTime,           /* [in] The local time. */
+    LPSYSTEMTIME            lpUniversalTime)       /* [out] The calculated utc time. */
+{
+    FILETIME ft;
+    LONG lBias;
+    LONGLONG t, bias;
+    TIME_ZONE_INFORMATION tzinfo;
+
+    if (lpTimeZoneInformation != NULL)
+    {
+        memcpy(&tzinfo, lpTimeZoneInformation, sizeof(TIME_ZONE_INFORMATION));
+    }
+    else
+    {
+        if (GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_INVALID)
+            return FALSE;
+    }
+
+    if (!SystemTimeToFileTime(lpLocalTime, &ft))
+        return FALSE;
+
+    t = ft.dwHighDateTime;
+    t <<= 32;
+    t += (UINT)ft.dwLowDateTime;
+
+    if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, &lBias))
+        return FALSE;
+
+    bias = lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
+    t -= bias;
+
+    ft.dwLowDateTime  = (UINT)t;
+    ft.dwHighDateTime = (UINT)(t >> 32);
+
+    return FileTimeToSystemTime(&ft, lpUniversalTime);
+}
+
+
 
 
 /***********************************************************************

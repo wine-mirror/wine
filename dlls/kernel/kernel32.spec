@@ -819,6 +819,7 @@
 @ stub Toolhelp32ReadProcessMemory
 @ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr) TransactNamedPipe
 @ stdcall TransmitCommChar(long long) TransmitCommChar
+@ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) TzSpecificLocalTimeToSystemTime
 @ stdcall UTRegister(long str str str ptr ptr ptr) UTRegister
 @ stdcall UTUnRegister(long) UTUnRegister
 @ stdcall UnMapLS(long) UnMapLS
