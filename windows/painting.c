@@ -150,7 +150,7 @@ static BOOL WIN_HaveToDelayNCPAINT( HWND hwnd, UINT uncFlags)
   while ((hwnd = GetAncestor( hwnd, GA_PARENT )))
   {
       WND* parentWnd = WIN_FindWndPtr( hwnd );
-      if (!(parentWnd->dwStyle & WS_CLIPCHILDREN) && parentWnd->hrgnUpdate)
+      if (parentWnd && !(parentWnd->dwStyle & WS_CLIPCHILDREN) && parentWnd->hrgnUpdate)
       {
           WIN_ReleaseWndPtr( parentWnd );
           return TRUE;
@@ -335,7 +335,7 @@ static void RDW_ValidateParent(WND *wndChild)
     while (parent && parent != GetDesktopWindow())
     {
         WND *wndParent = WIN_FindWndPtr( parent );
-        if (!(wndParent->dwStyle & WS_CLIPCHILDREN))
+        if (wndParent && !(wndParent->dwStyle & WS_CLIPCHILDREN))
         {
             if (wndParent->hrgnUpdate != 0)
             {
