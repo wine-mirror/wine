@@ -20,8 +20,7 @@ C_SRCS = \
 	ts_xresource.c \
 	ts_xvideo.c \
 	ts_xutil.c \
-	ts_shape.c \
-	ts_xpm.c
+	ts_shape.c
 
 all: libwine_tsx11.$(LIBEXT)
 

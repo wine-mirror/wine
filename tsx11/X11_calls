@@ -177,8 +177,6 @@ XUniqueContext
 XUnmapWindow
 XWarpPointer
 XXorRegion
-XpmAttributesSize
-XpmCreatePixmapFromData
 XrmGetFileDatabase
 XrmGetResource
 XrmGetStringDatabase

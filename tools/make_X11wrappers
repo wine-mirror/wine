@@ -17,7 +17,7 @@
 $X11_include_dir = "/usr/X11/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape", "xvideo", "Xrender");
+@dolist = ("Xlib", "Xresource", "Xutil", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape", "xvideo", "Xrender");
 
 # First read list of wanted function names.
 
@@ -69,10 +69,6 @@ foreach $name (@dolist) {
 	$extensions_dir = "extensions/";
 	$pre_file = "#ifdef HAVE_LIBXXSHM\n";
 	$post_file = "#endif /* defined(HAVE_LIBXXSHM) */\n";
-    }
-    if($name eq "xpm") {
-	$pre_file = "#ifdef HAVE_LIBXXPM\n";
-	$post_file = "#endif /* defined(HAVE_LIBXXPM) */\n";
     }
     if($name eq "xf86vmode") {
      	$x11_incl = "#include <X11/Xlib.h>\n";
@@ -140,13 +136,7 @@ $x11_incl#include <X11/$extensions_dir$inc_name.h>
 
 END
 
-    if($name eq "xpm") {	# Handle as special case.
-	output_fn("XpmCreatePixmapFromData", "int",
-		  "Display *, Drawable, char **, Pixmap *, Pixmap *, XpmAttributes *",
-		  "Display *a0, Drawable a1, char **a2, Pixmap *a3, Pixmap *a4, XpmAttributes *a5",
-		  "a0, a1, a2, a3, a4, a5");
-	output_fn("XpmAttributesSize", "int", "void", "void", "");
-    } elsif($name eq "XShm") {
+    if ($name eq "XShm") {
 	output_fn("XShmQueryExtension", "Bool",
 		  "Display *", "Display *a0", "a0");
 	output_fn("XShmQueryVersion", "Bool",
