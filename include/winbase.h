@@ -1919,6 +1919,21 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
 /* If this is not declared, we cannot compile many sources written with C++. */
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
+#define HW_PROFILE_GUIDLEN	39
+#define MAX_PROFILE_LEN		80
+
+#define DOCKINFO_UNDOCKED	0x1
+#define DOCKINFO_DOCKED		0x2
+#define DOCKINFO_USER_SUPPLIED	0x4
+#define DOCKINFO_USER_UNDOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_UNDOCKED)
+#define DOCKINFO_USER_DOCKED	(DOCKINFO_USER_SUPPLIED | DOCKINFO_DOCKED)
+
+typedef struct HW_PROFILE_INFOAtag {
+    DWORD dwDockInfo;
+    CHAR  szHwProfileGuid[HW_PROFILE_GUIDLEN];
+    CHAR  szHwProfileName[MAX_PROFILE_LEN];
+} HW_PROFILE_INFOA, *LPHW_PROFILE_INFOA;
+
 /* Stream data structures and defines */
 /*the types of backup data -- WIN32_STREAM_ID.dwStreamID below*/
 #define BACKUP_INVALID        0

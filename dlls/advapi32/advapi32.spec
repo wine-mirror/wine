@@ -85,6 +85,8 @@ name	advapi32
 @ stdcall FreeSid(ptr) FreeSid
 @ stdcall GetAce(ptr long ptr) GetAce
 @ stub GetAclInformation
+@ stdcall GetCurrentHwProfileA(ptr) GetCurrentHwProfileA
+@ stub GetEffectiveRightsFromAclA
 @ stdcall GetFileSecurityA(str long ptr long ptr) GetFileSecurityA
 @ stdcall GetFileSecurityW(wstr long ptr long ptr) GetFileSecurityW
 @ stub GetKernelObjectSecurity

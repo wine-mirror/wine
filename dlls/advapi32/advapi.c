@@ -93,6 +93,18 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 }
 
 /******************************************************************************
+ * GetCurrentHwProfileA [ADVAPI32.@]
+ */
+BOOL WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA info)
+{
+	FIXME("Mostly Stub\n");
+	info->dwDockInfo = DOCKINFO_DOCKED;
+	strcpy(info->szHwProfileGuid,"{12340001-1234-1234-1234-1233456789012}");
+	strcpy(info->szHwProfileName,"Wine Profile");
+	return 1;
+}
+
+/******************************************************************************
  * AbortSystemShutdownA [ADVAPI32.@]
  *
  * PARAMS
