@@ -124,13 +124,13 @@ int __pthread_atfork(void (*prepare)(void),
 		     void (*parent)(void),
 		     void (*child)(void))
 {
-    EnterCriticalSection( &atfork_section );
+    if (SystemHeap) EnterCriticalSection( &atfork_section );
     assert( atfork_count < MAX_ATFORK );
     atfork_prepare[atfork_count] = prepare;
     atfork_parent[atfork_count] = parent;
     atfork_child[atfork_count] = child;
     atfork_count++;
-    LeaveCriticalSection( &atfork_section );
+    if (SystemHeap) LeaveCriticalSection( &atfork_section );
     return 0;
 }
 strong_alias(__pthread_atfork, pthread_atfork);
