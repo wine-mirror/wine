@@ -1474,6 +1474,8 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_DISABLED;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_VISIBLE;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_THICKFRAME;
+
+    ((MyDLGTEMPLATEEX*)pTemplate)->exStyle |= WS_EX_CONTROLPARENT;
   }
   else
   {
@@ -1485,6 +1487,8 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     pTemplate->style &= ~WS_DISABLED;
     pTemplate->style &= ~WS_VISIBLE;
     pTemplate->style &= ~WS_THICKFRAME;
+
+    pTemplate->dwExtendedStyle |= WS_EX_CONTROLPARENT;
   }
 
   if (psInfo->proppage[index].useCallback)
