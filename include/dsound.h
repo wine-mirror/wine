@@ -1,7 +1,10 @@
 #ifndef __WINE_DSOUND_H
 #define __WINE_DSOUND_H
 
+#include "windows.h"
+#include "compobj.h"
 #include "mmsystem.h"
+#include "d3d.h"			//FIXME: Need to break out d3dtypes.h
 
 DEFINE_GUID(CLSID_DirectSound,		0x47d4d946, 0x62e8, 0x11cf, 0x93, 0xbc, 0x44, 0x45, 0x53, 0x54, 0x0, 0x0);
 
@@ -19,6 +22,8 @@ DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x
 typedef struct IDirectSound IDirectSound,*LPDIRECTSOUND;
 typedef struct IDirectSoundNotify IDirectSoundNotify,*LPDIRECTSOUNDNOTIFY;
 typedef struct IDirectSoundBuffer IDirectSoundBuffer,*LPDIRECTSOUNDBUFFER,**LPLPDIRECTSOUNDBUFFER;
+typedef struct IDirectSound3DListener IDirectSound3DListener,*LPDIRECTSOUND3DLISTENER,**LPLPDIRECTSOUND3DLISTENER;
+typedef struct IDirectSound3DBuffer IDirectSound3DBuffer,*LPDIRECTSOUND3DBUFFER,**LPLPDIRECTSOUND3DBUFFER;
 
 #define	_FACDS		0x878
 #define	MAKE_DSHRESULT(code)		MAKE_HRESULT(1,_FACDS,code)
@@ -92,19 +97,32 @@ typedef struct _DSCAPS
 #define DSBSTATUS_LOOPING           0x00000004
 
 
-#define DSBLOCK_FROMWRITECURSOR         0x00000001
+#define DSBLOCK_FROMWRITECURSOR     0x00000001
+#define DSBLOCK_ENTIREBUFFER        0x00000002
 
 #define DSBCAPS_PRIMARYBUFFER       0x00000001
 #define DSBCAPS_STATIC              0x00000002
 #define DSBCAPS_LOCHARDWARE         0x00000004
 #define DSBCAPS_LOCSOFTWARE         0x00000008
+#define DSBCAPS_CTRL3D              0x00000010
 #define DSBCAPS_CTRLFREQUENCY       0x00000020
 #define DSBCAPS_CTRLPAN             0x00000040
 #define DSBCAPS_CTRLVOLUME          0x00000080
+#define DSBCAPS_CTRLPOSITIONNOTIFY  0x00000100
 #define DSBCAPS_CTRLDEFAULT         0x000000E0  /* Pan + volume + frequency. */
-#define DSBCAPS_CTRLALL             0x000000E0  /* All control capabilities */
+#define DSBCAPS_CTRLALL             0x000001F0  /* All control capabilities */
 #define DSBCAPS_STICKYFOCUS         0x00004000
+#define DSBCAPS_GLOBALFOCUS         0x00008000
 #define DSBCAPS_GETCURRENTPOSITION2 0x00010000  /* More accurate play cursor under emulation*/
+#define DSBCAPS_MUTE3DATMAXDISTANCE 0x00020000
+
+#define DSBPAN_LEFT                 -10000
+#define DSBPAN_RIGHT                 10000
+#define DSBVOLUME_MAX                    0
+#define DSBVOLUME_MIN               -10000
+#define DSBFREQUENCY_MIN            100
+#define DSBFREQUENCY_MAX            100000
+#define DSBFREQUENCY_ORIGINAL       0
 
 typedef struct _DSBCAPS
 {
@@ -179,8 +197,11 @@ typedef struct tagLPDIRECTSOUND_VTABLE
 struct IDirectSound {
 	LPDIRECTSOUND_VTABLE	lpvtbl;
 	DWORD			ref;
+	DWORD			priolevel;
 	int			nrofbuffers;
 	LPDIRECTSOUNDBUFFER	*buffers;
+	LPDIRECTSOUNDBUFFER	primary;
+	LPDIRECTSOUND3DLISTENER	listener;
 	WAVEFORMATEX		wfx; /* current main waveformat */
 };
 #undef THIS
@@ -219,15 +240,22 @@ struct IDirectSoundBuffer {
 	WAVEFORMATEX			wfx;
 	DWORD				ref;
 	LPBYTE				buffer;
-	DWORD				playflags,playing,playpos,writepos,buflen;
+	LPDIRECTSOUND3DBUFFER		ds3db;
+	DWORD				playflags,playing;
+	DWORD				playpos,writepos,buflen;
+	DWORD				nAvgBytesPerSec;
+	DWORD				freq;
+	ULONG				freqAdjust;
 	LONG				volume,pan;
+	ULONG				lVolAdjust,rVolAdjust;
 	LPDIRECTSOUND			dsound;
 	DSBUFFERDESC			dsbd;
 	LPDSBPOSITIONNOTIFY		notifies;
 	int				nrofnotifies;
-	double				volfac;
 };
 #undef THIS
+
+#define WINE_NOBUFFER                   0x80000000
 
 #define THIS LPDIRECTSOUNDNOTIFY this
 typedef struct IDirectSoundNotify_VTable {
@@ -244,6 +272,136 @@ struct IDirectSoundNotify {
 	LPDIRECTSOUNDNOTIFY_VTABLE	lpvtbl;
 	DWORD				ref;
 	LPDIRECTSOUNDBUFFER		dsb;
+};
+#undef THIS
+
+#define DS3DMODE_NORMAL             0x00000000
+#define DS3DMODE_HEADRELATIVE       0x00000001
+#define DS3DMODE_DISABLE            0x00000002
+
+#define DS3D_IMMEDIATE              0x00000000
+#define DS3D_DEFERRED               0x00000001
+
+#define DS3D_MINDISTANCEFACTOR      0.0f
+#define DS3D_MAXDISTANCEFACTOR      10.0f
+#define DS3D_DEFAULTDISTANCEFACTOR  1.0f
+
+#define DS3D_MINROLLOFFFACTOR       0.0f
+#define DS3D_MAXROLLOFFFACTOR       10.0f
+#define DS3D_DEFAULTROLLOFFFACTOR   1.0f
+
+#define DS3D_MINDOPPLERFACTOR       0.0f
+#define DS3D_MAXDOPPLERFACTOR       10.0f
+#define DS3D_DEFAULTDOPPLERFACTOR   1.0f
+
+#define DS3D_DEFAULTMINDISTANCE     1.0f
+#define DS3D_DEFAULTMAXDISTANCE     1000000000.0f
+
+#define DS3D_MINCONEANGLE           0
+#define DS3D_MAXCONEANGLE           360
+#define DS3D_DEFAULTCONEANGLE       360
+
+#define DS3D_DEFAULTCONEOUTSIDEVOLUME   0
+
+typedef struct _DS3DLISTENER {
+	DWORD				dwSize;
+	D3DVECTOR			vPosition;
+	D3DVECTOR			vVelocity;
+	D3DVECTOR			vOrientFront;
+	D3DVECTOR			vOrientTop;
+	D3DVALUE			flDistanceFactor;
+	D3DVALUE			flRolloffFactor;
+	D3DVALUE			flDopplerFactor;
+} DS3DLISTENER, *LPDS3DLISTENER;
+
+typedef const DS3DLISTENER *LPCDS3DLISTENER;
+	
+#define THIS LPDIRECTSOUND3DLISTENER this
+typedef struct IDirectSound3DListener_VTable
+{
+	// IUnknown methods
+	STDMETHOD(QueryInterface)           (THIS_ REFIID, LPVOID FAR *) PURE;
+	STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
+	STDMETHOD_(ULONG,Release)           (THIS) PURE;
+
+	// IDirectSound3DListener methods
+	STDMETHOD(GetAllParameters)         (THIS_ LPDS3DLISTENER) PURE;
+	STDMETHOD(GetDistanceFactor)        (THIS_ LPD3DVALUE) PURE;
+	STDMETHOD(GetDopplerFactor)         (THIS_ LPD3DVALUE) PURE;
+	STDMETHOD(GetOrientation)           (THIS_ LPD3DVECTOR, LPD3DVECTOR) PURE;
+	STDMETHOD(GetPosition)              (THIS_ LPD3DVECTOR) PURE;
+	STDMETHOD(GetRolloffFactor)         (THIS_ LPD3DVALUE) PURE;
+	STDMETHOD(GetVelocity)              (THIS_ LPD3DVECTOR) PURE;
+	STDMETHOD(SetAllParameters)         (THIS_ LPCDS3DLISTENER, DWORD) PURE;
+	STDMETHOD(SetDistanceFactor)        (THIS_ D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetDopplerFactor)         (THIS_ D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetOrientation)           (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetPosition)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetRolloffFactor)         (THIS_ D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetVelocity)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
+	STDMETHOD(CommitDeferredSettings)   (THIS) PURE;
+} *LPDIRECTSOUND3DLISTENER_VTABLE, IDirectSound3DListener_VTable;
+
+struct IDirectSound3DListener {
+	LPDIRECTSOUND3DLISTENER_VTABLE	lpvtbl;
+	DWORD				ref;
+	LPDIRECTSOUNDBUFFER		dsb;
+	DS3DLISTENER			ds3dl;
+	
+};
+#undef THIS
+
+typedef struct  _DS3DBUFFER {
+	DWORD				dwSize;
+	D3DVECTOR			vPosition;
+	D3DVECTOR			vVelocity;
+	DWORD				dwInsideConeAngle;
+	DWORD				dwOutsideConeAngle;
+	D3DVECTOR			vConeOrientation;
+	LONG				lConeOutsideVolume;
+	D3DVALUE			flMinDistance;
+	D3DVALUE			flMaxDistance;
+	DWORD				dwMode;
+} DS3DBUFFER, *LPDS3DBUFFER;
+
+typedef const DS3DBUFFER *LPCDS3DBUFFER;
+
+#define THIS LPDIRECTSOUND3DBUFFER this
+typedef struct IDirectSound3DBuffer_VTable
+{
+	// IUnknown methods
+	STDMETHOD(QueryInterface)           (THIS_ REFIID, LPVOID FAR *) PURE;
+	STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
+	STDMETHOD_(ULONG,Release)           (THIS) PURE;
+
+	// IDirectSound3DBuffer methods
+	STDMETHOD(GetAllParameters)         (THIS_ LPDS3DBUFFER) PURE;
+	STDMETHOD(GetConeAngles)            (THIS_ LPDWORD, LPDWORD) PURE;
+	STDMETHOD(GetConeOrientation)       (THIS_ LPD3DVECTOR) PURE;
+	STDMETHOD(GetConeOutsideVolume)     (THIS_ LPLONG) PURE;
+	STDMETHOD(GetMaxDistance)           (THIS_ LPD3DVALUE) PURE;
+	STDMETHOD(GetMinDistance)           (THIS_ LPD3DVALUE) PURE;
+	STDMETHOD(GetMode)                  (THIS_ LPDWORD) PURE;
+	STDMETHOD(GetPosition)              (THIS_ LPD3DVECTOR) PURE;
+	STDMETHOD(GetVelocity)              (THIS_ LPD3DVECTOR) PURE;
+	STDMETHOD(SetAllParameters)         (THIS_ LPCDS3DBUFFER, DWORD) PURE;
+	STDMETHOD(SetConeAngles)            (THIS_ DWORD, DWORD, DWORD) PURE;
+	STDMETHOD(SetConeOrientation)       (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetConeOutsideVolume)     (THIS_ LONG, DWORD) PURE;
+	STDMETHOD(SetMaxDistance)           (THIS_ D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetMinDistance)           (THIS_ D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetMode)                  (THIS_ DWORD, DWORD) PURE;
+	STDMETHOD(SetPosition)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
+	STDMETHOD(SetVelocity)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
+} *LPDIRECTSOUND3DBUFFER_VTABLE, IDirectSound3DBuffer_VTable;
+
+struct IDirectSound3DBuffer {
+	LPDIRECTSOUND3DBUFFER_VTABLE	lpvtbl;
+	DWORD				ref;
+	LPDIRECTSOUNDBUFFER		dsb;
+	DS3DBUFFER			ds3db;
+	LPBYTE				buffer;
+	DWORD				buflen;
 };
 #undef THIS
 #undef STDMETHOD
