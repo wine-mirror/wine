@@ -21,6 +21,7 @@
 
 #include "winnt.h"
 #include "winternl.h"
+#include "module.h"
 #include "thread.h"
 
 /* debug helper */
@@ -29,11 +30,12 @@ extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 
 /* module handling */
 extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, int hint, BOOL snoop );
+extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
+extern NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** );
 
 static inline HANDLE ntdll_get_process_heap(void)
 {
     HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;
     return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
 }
-
 #endif

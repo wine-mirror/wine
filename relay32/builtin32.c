@@ -147,9 +147,8 @@ static void load_library( void *base, const char *filename )
  * Partly copied from the original PE_ version.
  *
  */
-WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
+NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, WINE_MODREF** pwm)
 {
-    WINE_MODREF   *wm;
     char dllname[20], *p;
     LPCSTR name;
     void *handle;
@@ -159,29 +158,24 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     if ((p = strrchr( name, '/' ))) name = p + 1;
 
-    if (strlen(name) >= sizeof(dllname)-4) goto error;
+    if (strlen(name) >= sizeof(dllname)-4) return STATUS_NO_SUCH_FILE;
 
     strcpy( dllname, name );
     p = strrchr( dllname, '.' );
     if (!p) strcat( dllname, ".dll" );
     for (p = dllname; *p; p++) *p = FILE_tolower(*p);
 
-    if (!(handle = BUILTIN32_dlopen( dllname ))) goto error;
+    if (!(handle = BUILTIN32_dlopen( dllname ))) return STATUS_NO_SUCH_FILE;
 
-    if (!(wm = MODULE_FindModule( path ))) wm = MODULE_FindModule( dllname );
-    if (!wm)
+    if (!((*pwm) = MODULE_FindModule( path ))) *pwm = MODULE_FindModule( dllname );
+    if (!*pwm)
     {
         ERR( "loaded .so but dll %s still not found - 16-bit dll or version conflict.\n", dllname );
         /* wine_dll_unload( handle );*/
-        SetLastError( ERROR_BAD_EXE_FORMAT );
-        return NULL;
+        return STATUS_INVALID_IMAGE_FORMAT;
     }
-    wm->dlhandle = handle;
-    return wm;
-
- error:
-    SetLastError( ERROR_FILE_NOT_FOUND );
-    return NULL;
+    (*pwm)->dlhandle = handle;
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************

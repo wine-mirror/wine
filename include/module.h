@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "wine/windef16.h"
 #include "wine/winbase16.h"
+#include "winternl.h"
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
@@ -193,11 +194,9 @@ enum binary_type
 };
 
 /* module.c */
-extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
 extern BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved );
 extern void MODULE_DllThreadAttach( LPVOID lpReserved );
-extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 extern HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
@@ -254,7 +253,7 @@ extern DWORD PE_SizeofResource(HRSRC);
 extern HGLOBAL PE_LoadResource(HMODULE,HRSRC);
 
 /* loader/pe_image.c */
-extern WINE_MODREF *PE_LoadLibraryExA(LPCSTR, DWORD);
+extern NTSTATUS PE_LoadLibraryExA(LPCSTR, DWORD, WINE_MODREF**);
 extern HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags );
 extern WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename,
                                      DWORD flags, HANDLE hFile, BOOL builtin );
@@ -268,7 +267,7 @@ extern void MODULE_GetLoadOrder( enum loadorder_type plo[], const char *path, BO
 extern void MODULE_AddLoadOrderOption( const char *option );
 
 /* relay32/builtin.c */
-extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags);
+extern NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags, WINE_MODREF**);
 extern HMODULE BUILTIN32_LoadExeModule( HMODULE main );
 extern void *BUILTIN32_dlopen( const char *name );
 extern int BUILTIN32_dlclose( void *handle );

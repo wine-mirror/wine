@@ -257,7 +257,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
     /* Allocate module dependency list */
     wm->nDeps = i;
-    wm->deps  = HeapAlloc( GetProcessHeap(), 0, i*sizeof(WINE_MODREF *) );
+    wm->deps  = RtlAllocateHeap( ntdll_get_process_heap(), 0, i*sizeof(WINE_MODREF *) );
 
     /* load the imported modules. They are automatically
      * added to the modref list of the process.
@@ -268,19 +268,24 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
  	char			*name = get_rva(wm->module, pe_imp->Name);
+        NTSTATUS                nts;
 
 	if (characteristics_detection && !pe_imp->u.Characteristics)
 		break;
 
-	wmImp = MODULE_LoadLibraryExA( name, 0, 0 );
-	if (!wmImp) {
-            if(GetLastError() == ERROR_FILE_NOT_FOUND)
-                ERR_(module)("Module (file) %s (which is needed by %s) not found\n", name, wm->filename);
-            else
-                ERR_(module)("Loading module (file) %s (which is needed by %s) failed (error %ld).\n",
-                        name, wm->filename, GetLastError());
+	nts = MODULE_LoadLibraryExA( name, 0, &wmImp );
+        switch (nts)
+        {
+        case STATUS_SUCCESS:
+            break;
+        case STATUS_NO_SUCH_FILE:
+            ERR_(module)("Module (file) %s (which is needed by %s) not found\n", name, wm->filename);
+            return 1;
+        default:
+            ERR_(module)("Loading module (file) %s (which is needed by %s) failed (error %ld).\n",
+                         name, wm->filename, GetLastError());
 	    return 1;
-	}
+        }
         wm->deps[i++] = wmImp;
 
 	/* FIXME: forwarder entries ... */
@@ -575,35 +580,38 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
  * The PE Library Loader frontend.
  * FIXME: handle the flags.
  */
-WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
+NTSTATUS PE_LoadLibraryExA (LPCSTR name, DWORD flags, WINE_MODREF** pwm)
 {
 	HMODULE		hModule32;
-	WINE_MODREF	*wm;
 	HANDLE		hFile;
 
 	hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
                              NULL, OPEN_EXISTING, 0, 0 );
-	if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
+	if ( hFile == INVALID_HANDLE_VALUE ) 
+        {
+            /* keep it that way until we transform CreateFile into NtCreateFile */
+            return (GetLastError() == ERROR_FILE_NOT_FOUND) ? 
+                STATUS_NO_SUCH_FILE : STATUS_INTERNAL_ERROR;
+        }
 
 	/* Load PE module */
 	hModule32 = PE_LoadImage( hFile, name, flags );
 	if (!hModule32)
 	{
                 CloseHandle( hFile );
-		return NULL;
+		return STATUS_INTERNAL_ERROR;
 	}
 
 	/* Create 32-bit MODREF */
-	if ( !(wm = PE_CreateModule( hModule32, name, flags, hFile, FALSE )) )
+	if ( !(*pwm = PE_CreateModule( hModule32, name, flags, hFile, FALSE )) )
 	{
 		ERR( "can't load %s\n", name );
                 CloseHandle( hFile );
-		SetLastError( ERROR_OUTOFMEMORY );
-		return NULL;
+		return STATUS_NO_MEMORY; /* FIXME */
 	}
 
         CloseHandle( hFile );
-	return wm;
+	return STATUS_SUCCESS;
 }
 
 

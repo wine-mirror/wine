@@ -1141,7 +1141,7 @@ typedef struct _LDR_MODULE
     LIST_ENTRY          InMemoryOrderModuleList;
     LIST_ENTRY          InInitializationOrderModuleList;
     void*               BaseAddress;
-    ULONG               EntryPoint;
+    void*               EntryPoint;
     ULONG               SizeOfImage;
     UNICODE_STRING      FullDllName;
     UNICODE_STRING      BaseDllName;
@@ -1187,7 +1187,7 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE);
 NTSTATUS WINAPI LdrFindEntryForAddress(void*, PLDR_MODULE*);
 NTSTATUS WINAPI LdrGetDllHandle(ULONG, ULONG, PUNICODE_STRING, HMODULE*);
 NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE, PANSI_STRING, ULONG, void**);
-NTSTATUS WINAPI LdrLoadDll(LPCSTR, DWORD, PUNICODE_STRING, HMODULE*);
+NTSTATUS WINAPI LdrLoadDll(LPCWSTR, DWORD, PUNICODE_STRING, HMODULE*);
 NTSTATUS WINAPI LdrShutdownThread(void);
 NTSTATUS WINAPI LdrShutdownProcess(void);
 NTSTATUS WINAPI LdrUnloadDll(HMODULE);

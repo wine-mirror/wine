@@ -96,48 +96,6 @@ WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 }
 
 /*************************************************************************
- *		MODULE_AllocModRef
- *
- * Allocate a WINE_MODREF structure and add it to the process list
- * NOTE: Assumes that the process critical section is held!
- */
-WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
-{
-    WINE_MODREF *wm;
-
-    DWORD long_len = strlen( filename );
-    DWORD short_len = GetShortPathNameA( filename, NULL, 0 );
-
-    if ((wm = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                         sizeof(*wm) + long_len + short_len + 1 )))
-    {
-        wm->module = hModule;
-        wm->tlsindex = -1;
-
-        wm->filename = wm->data;
-        memcpy( wm->filename, filename, long_len + 1 );
-        if ((wm->modname = strrchr( wm->filename, '\\' ))) wm->modname++;
-        else wm->modname = wm->filename;
-
-        wm->short_filename = wm->filename + long_len + 1;
-        GetShortPathNameA( wm->filename, wm->short_filename, short_len + 1 );
-        if ((wm->short_modname = strrchr( wm->short_filename, '\\' ))) wm->short_modname++;
-        else wm->short_modname = wm->short_filename;
-
-        wm->next = MODULE_modref_list;
-        if (wm->next) wm->next->prev = wm;
-        MODULE_modref_list = wm;
-
-        if (!(RtlImageNtHeader(hModule)->FileHeader.Characteristics & IMAGE_FILE_DLL))
-        {
-            if (!exe_modref) exe_modref = wm;
-            else FIXME( "Trying to load second .EXE file: %s\n", filename );
-        }
-    }
-    return wm;
-}
-
-/*************************************************************************
  *		MODULE_InitDLL
  */
 BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
@@ -1024,277 +982,146 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
     return strlenW(lpFileName);
 }
 
-
-/***********************************************************************
- *           LoadLibraryExA   (KERNEL32.@)
- */
-HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
-{
-	WINE_MODREF *wm;
-
-	if(!libname)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
-	}
-
-        if (flags & LOAD_LIBRARY_AS_DATAFILE)
-        {
-            char filename[256];
-            HMODULE hmod = 0;
-
-            /* This method allows searching for the 'native' libraries only */
-            if (SearchPathA( NULL, libname, ".dll", sizeof(filename), filename, NULL ))
-            {
-                /* FIXME: maybe we should use the hfile parameter instead */
-                HANDLE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
-                                            NULL, OPEN_EXISTING, 0, 0 );
-                if (hFile != INVALID_HANDLE_VALUE)
-                {
-                    HANDLE mapping;
-                    switch (MODULE_GetBinaryType( hFile ))
-                    {
-                    case BINARY_PE_EXE:
-                    case BINARY_PE_DLL:
-                        mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
-                        if (mapping)
-                        {
-                            hmod = (HMODULE)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
-                            CloseHandle( mapping );
-                        }
-                        break;
-                    default:
-                        break;
-                    }
-                    CloseHandle( hFile );
-                }
-                if (hmod) return (HMODULE)((ULONG_PTR)hmod + 1);
-            }
-            flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
-            /* Fallback to normal behaviour */
-        }
-
-        RtlEnterCriticalSection( &loader_section );
-
-	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
-	if ( wm )
-	{
-		if ( !MODULE_DllProcessAttach( wm, NULL ) )
-		{
-			WARN_(module)("Attach failed for module '%s'.\n", libname);
-			LdrUnloadDll(wm->module);
-			SetLastError(ERROR_DLL_INIT_FAILED);
-			wm = NULL;
-		}
-	}
-
-        RtlLeaveCriticalSection( &loader_section );
-	return wm ? wm->module : 0;
-}
-
-/***********************************************************************
- *      allocate_lib_dir
+/******************************************************************
+ *		load_library_as_datafile
  *
- * helper for MODULE_LoadLibraryExA.  Allocate space to hold the directory
- * portion of the provided name and put the name in it.
  *
  */
-static LPCSTR allocate_lib_dir(LPCSTR libname)
+static BOOL load_library_as_datafile(const void* name, BOOL unicode, HMODULE* hmod)
 {
-    LPCSTR p, pmax;
-    LPSTR result;
-    int length;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HANDLE mapping;
+    
+    *hmod = 0;
 
-    pmax = libname;
-    if ((p = strrchr( pmax, '\\' ))) pmax = p + 1;
-    if ((p = strrchr( pmax, '/' ))) pmax = p + 1; /* Naughty.  MSDN says don't */
-    if (pmax == libname && pmax[0] && pmax[1] == ':') pmax += 2;
-
-    length = pmax - libname;
-
-    result = HeapAlloc (GetProcessHeap(), 0, length+1);
-
-    if (result)
+    if (unicode)
     {
-        strncpy (result, libname, length);
-        result [length] = '\0';
+        WCHAR filenameW[MAX_PATH];
+static  WCHAR dotDLL[] = {'.','d','l','l',0};
+
+        if (SearchPathW( NULL, (LPCWSTR)name, dotDLL, sizeof(filenameW) / sizeof(filenameW[0]), filenameW, NULL ))
+        {
+            hFile = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ,
+                                 NULL, OPEN_EXISTING, 0, 0 );
+        }
+    }
+    else
+    {
+        char filenameA[MAX_PATH];
+
+        if (SearchPathA( NULL, (const char*)name, ".dll", sizeof(filenameA), filenameA, NULL ))
+        {
+            hFile = CreateFileA( filenameA, GENERIC_READ, FILE_SHARE_READ,
+                                 NULL, OPEN_EXISTING, 0, 0 );
+        }
     }
 
-    return result;
+    if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+    switch (MODULE_GetBinaryType( hFile ))
+    {
+    case BINARY_PE_EXE:
+    case BINARY_PE_DLL:
+        mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        if (mapping)
+        {
+            *hmod = (HMODULE)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+            CloseHandle( mapping );
+        }
+        break;
+    default:
+        break;
+    }
+    CloseHandle( hFile );
+
+    return *hmod != 0;
 }
 
-/***********************************************************************
- *	MODULE_LoadLibraryExA	(internal)
- *
- * Load a PE style module according to the load order.
+/******************************************************************
+ *		LoadLibraryExA          (KERNEL32.@)
  *
  * The HFILE parameter is not used and marked reserved in the SDK. I can
  * only guess that it should force a file to be mapped, but I rather
  * ignore the parameter because it would be extremely difficult to
  * integrate this with different types of module representations.
  *
- * libdir is used to support LOAD_WITH_ALTERED_SEARCH_PATH during the recursion
- *        on this function.  When first called from LoadLibraryExA it will be
- *        NULL but thereafter it may point to a buffer containing the path
- *        portion of the library name.  Note that the recursion all occurs
- *        within a Critical section (see LoadLibraryExA) so the use of a
- *        static is acceptable.
- *        (We have to use a static variable at some point anyway, to pass the
- *        information from BUILTIN32_dlopen through dlopen and the builtin's
- *        init function into load_library).
- * allocated_libdir is TRUE in the stack frame that allocated libdir
  */
-WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
+HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 {
-	DWORD err = GetLastError();
-	WINE_MODREF *pwm;
-	int i;
-	enum loadorder_type loadorder[LOADORDER_NTYPES];
-	LPSTR filename;
-        const char *filetype = "";
-        DWORD found;
-        BOOL allocated_libdir = FALSE;
-        static LPCSTR libdir = NULL; /* See above */
+    UNICODE_STRING      wstr;
+    NTSTATUS            nts;
+    HMODULE             hModule;
 
-	if ( !libname ) return NULL;
+    if (!libname)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
-	filename = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
-	if ( !filename ) return NULL;
-        *filename = 0; /* Just in case we don't set it before goto error */
+    if (flags & LOAD_LIBRARY_AS_DATAFILE)
+    {
+        /* The method in load_library_as_datafile allows searching for the 
+         * 'native' libraries only 
+         */
+        if (load_library_as_datafile(libname, FALSE, &hModule))
+            return (HMODULE)((ULONG_PTR)hModule + 1);
+        flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
+        /* Fallback to normal behaviour */
+    }
 
-        RtlEnterCriticalSection( &loader_section );
+    RtlCreateUnicodeStringFromAsciiz( &wstr, libname );
+    nts = LdrLoadDll(NULL, flags, &wstr, &hModule);
+    if (nts != STATUS_SUCCESS)
+    {
+        hModule = 0;
+        SetLastError( RtlNtStatusToDosError( nts ) );
+    }
+    RtlFreeUnicodeString( &wstr );
 
-        if ((flags & LOAD_WITH_ALTERED_SEARCH_PATH) && FILE_contains_path(libname))
-        {
-            if (!(libdir = allocate_lib_dir(libname))) goto error;
-            allocated_libdir = TRUE;
-        }
+    return hModule;
+}
 
-        if (!libdir || allocated_libdir)
-            found = SearchPathA(NULL, libname, ".dll", MAX_PATH, filename, NULL);
-        else
-            found = DIR_SearchAlternatePath(libdir, libname, ".dll", MAX_PATH, filename, NULL);
+/***********************************************************************
+ *           LoadLibraryExW       (KERNEL32.@)
+ */
+HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
+{
+    UNICODE_STRING      wstr;
+    NTSTATUS            nts;
+    HMODULE             hModule;
 
-	/* build the modules filename */
-        if (!found)
-	{
-            if (!MODULE_GetBuiltinPath( libname, ".dll", filename, MAX_PATH )) goto error;
-	}
+    if (!libnameW)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
-	/* Check for already loaded module */
-	if (!(pwm = MODULE_FindModule(filename)) && !FILE_contains_path(libname))
-        {
-	    LPSTR	fn = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
-	    if (fn)
-	    {
-	    	/* since the default loading mechanism uses a more detailed algorithm
-		 * than SearchPath (like using PATH, which can even be modified between
-		 * two attempts of loading the same DLL), the look-up above (with
-		 * SearchPath) can have put the file in system directory, whereas it
-		 * has already been loaded but with a different path. So do a specific
-		 * look-up with filename (without any path)
-	     	 */
-	    	strcpy ( fn, libname );
-	    	/* if the filename doesn't have an extension append .DLL */
-	    	if (!strrchr( fn, '.')) strcat( fn, ".dll" );
-	    	if ((pwm = MODULE_FindModule( fn )) != NULL)
-		   strcpy( filename, fn );
-		HeapFree( GetProcessHeap(), 0, fn );
-	    }
-	}
-	if (pwm)
-	{
-		pwm->refCount++;
+    if (flags & LOAD_LIBRARY_AS_DATAFILE)
+    {
+        /* The method in load_library_as_datafile allows searching for the 
+         * 'native' libraries only 
+         */
+        if (load_library_as_datafile(libnameW, TRUE, &hModule))
+            return (HMODULE)((ULONG_PTR)hModule + 1);
+        flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
+        /* Fallback to normal behaviour */
+    }
 
-                if ((pwm->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
-		    !(flags & DONT_RESOLVE_DLL_REFERENCES))
-                {
-                    pwm->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
-                    PE_fixup_imports( pwm );
-		}
-		TRACE("Already loaded module '%s' at %p, count=%d\n", filename, pwm->module, pwm->refCount);
-                if (allocated_libdir)
-                {
-                    HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
-                    libdir = NULL;
-                }
-                RtlLeaveCriticalSection( &loader_section );
-		HeapFree ( GetProcessHeap(), 0, filename );
-		return pwm;
-	}
-
-        MODULE_GetLoadOrder( loadorder, filename, TRUE);
-
-	for(i = 0; i < LOADORDER_NTYPES; i++)
-	{
-                if (loadorder[i] == LOADORDER_INVALID) break;
-                SetLastError( ERROR_FILE_NOT_FOUND );
-
-		switch(loadorder[i])
-		{
-		case LOADORDER_DLL:
-			TRACE("Trying native dll '%s'\n", filename);
-			pwm = PE_LoadLibraryExA(filename, flags);
-                        filetype = "native";
-			break;
-
-		case LOADORDER_BI:
-			TRACE("Trying built-in '%s'\n", filename);
-			pwm = BUILTIN32_LoadLibraryExA(filename, flags);
-                        filetype = "builtin";
-			break;
-
-                default:
-			pwm = NULL;
-			break;
-		}
-
-		if(pwm)
-		{
-			/* Initialize DLL just loaded */
-			TRACE("Loaded module '%s' at %p\n", filename, pwm->module);
-                        if (!TRACE_ON(module))
-                            TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
-			/* Set the refCount here so that an attach failure will */
-			/* decrement the dependencies through the MODULE_FreeLibrary call. */
-			pwm->refCount = 1;
-
-                        if (allocated_libdir)
-                        {
-                            HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
-                            libdir = NULL;
-                        }
-                        RtlLeaveCriticalSection( &loader_section );
-                        SetLastError( err );  /* restore last error */
-			HeapFree ( GetProcessHeap(), 0, filename );
-			return pwm;
-		}
-
-		if(GetLastError() != ERROR_FILE_NOT_FOUND)
-                {
-                    WARN("Loading of %s DLL %s failed (error %ld).\n",
-                         filetype, filename, GetLastError());
-                    break;
-                }
-	}
-
- error:
-        if (allocated_libdir)
-        {
-            HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
-            libdir = NULL;
-        }
-        RtlLeaveCriticalSection( &loader_section );
-	WARN("Failed to load module '%s'; error=%ld\n", filename, GetLastError());
-	HeapFree ( GetProcessHeap(), 0, filename );
-	return NULL;
+    RtlInitUnicodeString( &wstr, libnameW );
+    nts = LdrLoadDll(NULL, flags, &wstr, &hModule);
+    if (nts != STATUS_SUCCESS)
+    {
+        hModule = 0;
+        SetLastError( RtlNtStatusToDosError( nts ) );
+    }
+    return hModule;
 }
 
 /***********************************************************************
  *           LoadLibraryA         (KERNEL32.@)
  */
-HMODULE WINAPI LoadLibraryA(LPCSTR libname) {
-	return LoadLibraryExA(libname,0,0);
+HMODULE WINAPI LoadLibraryA(LPCSTR libname)
+{
+    return LoadLibraryExA(libname, 0, 0);
 }
 
 /***********************************************************************
@@ -1302,7 +1129,7 @@ HMODULE WINAPI LoadLibraryA(LPCSTR libname) {
  */
 HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 {
-    return LoadLibraryExW(libnameW,0,0);
+    return LoadLibraryExW(libnameW, 0, 0);
 }
 
 /***********************************************************************
@@ -1321,18 +1148,6 @@ HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
 }
 
 /***********************************************************************
- *           LoadLibraryExW       (KERNEL32.@)
- */
-HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HANDLE hfile,DWORD flags)
-{
-    LPSTR libnameA = HEAP_strdupWtoA( GetProcessHeap(), 0, libnameW );
-    HMODULE ret = LoadLibraryExA( libnameA , hfile, flags );
-
-    HeapFree( GetProcessHeap(), 0, libnameA );
-    return ret;
-}
-
-/***********************************************************************
  *           FreeLibrary   (KERNEL32.@)
  *           FreeLibrary32 (KERNEL.486)
  */
@@ -1341,19 +1156,18 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     BOOL                retv = FALSE;
     NTSTATUS            nts;
 
+    if (!hLibModule)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
     if ((ULONG_PTR)hLibModule & 1)
     {
         /* this is a LOAD_LIBRARY_AS_DATAFILE module */
         char *ptr = (char *)hLibModule - 1;
         UnmapViewOfFile( ptr );
         return TRUE;
-    }
-    
-    if (!hLibModule)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        RtlLeaveCriticalSection( &loader_section );
-        return FALSE;
     }
 
     if ((nts = LdrUnloadDll( hLibModule )) == STATUS_SUCCESS) retv = TRUE;
@@ -1380,8 +1194,6 @@ HINSTANCE16 WINAPI PrivateLoadLibrary(LPCSTR libname)
 {
     return LoadLibrary16(libname);
 }
-
-
 
 /***********************************************************************
  *           PrivateFreeLibrary       (KERNEL32.@)

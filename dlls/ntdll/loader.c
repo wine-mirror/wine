@@ -44,6 +44,48 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 
+/*************************************************************************
+ *		MODULE_AllocModRef
+ *
+ * Allocate a WINE_MODREF structure and add it to the process list
+ * NOTE: Assumes that the process critical section is held!
+ */
+WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
+{
+    WINE_MODREF *wm;
+
+    DWORD long_len = strlen( filename );
+    DWORD short_len = GetShortPathNameA( filename, NULL, 0 );
+
+    if ((wm = RtlAllocateHeap( ntdll_get_process_heap(), HEAP_ZERO_MEMORY,
+                               sizeof(*wm) + long_len + short_len + 1 )))
+    {
+        wm->module = hModule;
+        wm->tlsindex = -1;
+
+        wm->filename = wm->data;
+        memcpy( wm->filename, filename, long_len + 1 );
+        if ((wm->modname = strrchr( wm->filename, '\\' ))) wm->modname++;
+        else wm->modname = wm->filename;
+
+        wm->short_filename = wm->filename + long_len + 1;
+        GetShortPathNameA( wm->filename, wm->short_filename, short_len + 1 );
+        if ((wm->short_modname = strrchr( wm->short_filename, '\\' ))) wm->short_modname++;
+        else wm->short_modname = wm->short_filename;
+
+        wm->next = MODULE_modref_list;
+        if (wm->next) wm->next->prev = wm;
+        MODULE_modref_list = wm;
+
+        if (!(RtlImageNtHeader(hModule)->FileHeader.Characteristics & IMAGE_FILE_DLL))
+        {
+            if (!exe_modref) exe_modref = wm;
+            else FIXME( "Trying to load second .EXE file: %s\n", filename );
+        }
+    }
+    return wm;
+}
+
 /******************************************************************
  *		LdrDisableThreadCalloutsForDll (NTDLL.@)
  *
@@ -181,6 +223,245 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE base, PANSI_STRING name, ULONG or
     return (*address) ? STATUS_SUCCESS : STATUS_PROCEDURE_NOT_FOUND;
 }
 
+
+/***********************************************************************
+ *      allocate_lib_dir
+ *
+ * helper for MODULE_LoadLibraryExA.  Allocate space to hold the directory
+ * portion of the provided name and put the name in it.
+ *
+ */
+static LPCSTR allocate_lib_dir(LPCSTR libname)
+{
+    LPCSTR p, pmax;
+    LPSTR result;
+    int length;
+
+    pmax = libname;
+    if ((p = strrchr( pmax, '\\' ))) pmax = p + 1;
+    if ((p = strrchr( pmax, '/' ))) pmax = p + 1; /* Naughty.  MSDN says don't */
+    if (pmax == libname && pmax[0] && pmax[1] == ':') pmax += 2;
+
+    length = pmax - libname;
+
+    result = RtlAllocateHeap (ntdll_get_process_heap(), 0, length+1);
+
+    if (result)
+    {
+        strncpy (result, libname, length);
+        result [length] = '\0';
+    }
+
+    return result;
+}
+
+/***********************************************************************
+ *	MODULE_LoadLibraryExA	(internal)
+ *
+ * Load a PE style module according to the load order.
+ *
+ * libdir is used to support LOAD_WITH_ALTERED_SEARCH_PATH during the recursion
+ *        on this function.  When first called from LoadLibraryExA it will be
+ *        NULL but thereafter it may point to a buffer containing the path
+ *        portion of the library name.  Note that the recursion all occurs
+ *        within a Critical section (see LoadLibraryExA) so the use of a
+ *        static is acceptable.
+ *        (We have to use a static variable at some point anyway, to pass the
+ *        information from BUILTIN32_dlopen through dlopen and the builtin's
+ *        init function into load_library).
+ * allocated_libdir is TRUE in the stack frame that allocated libdir
+ */
+NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** pwm)
+{
+    int i;
+    enum loadorder_type loadorder[LOADORDER_NTYPES];
+    LPSTR filename;
+    const char *filetype = "";
+    DWORD found;
+    BOOL allocated_libdir = FALSE;
+    static LPCSTR libdir = NULL; /* See above */
+    NTSTATUS nts = STATUS_SUCCESS;
+
+    *pwm = NULL;
+    if ( !libname ) return STATUS_DLL_NOT_FOUND; /* FIXME ? */
+
+    filename = RtlAllocateHeap ( ntdll_get_process_heap(), 0, MAX_PATH + 1 );
+    if ( !filename ) return STATUS_NO_MEMORY;
+    *filename = 0; /* Just in case we don't set it before goto error */
+
+    RtlEnterCriticalSection( &loader_section );
+
+    if ((flags & LOAD_WITH_ALTERED_SEARCH_PATH) && FILE_contains_path(libname))
+    {
+        if (!(libdir = allocate_lib_dir(libname)))
+        {
+            nts = STATUS_NO_MEMORY;
+            goto error;
+        }
+        allocated_libdir = TRUE;
+    }
+
+    if (!libdir || allocated_libdir)
+        found = SearchPathA(NULL, libname, ".dll", MAX_PATH, filename, NULL);
+    else
+        found = DIR_SearchAlternatePath(libdir, libname, ".dll", MAX_PATH, filename, NULL);
+
+    /* build the modules filename */
+    if (!found)
+    {
+        if (!MODULE_GetBuiltinPath( libname, ".dll", filename, MAX_PATH ))
+        {
+            nts = STATUS_INTERNAL_ERROR;
+            goto error;
+        }
+    }
+
+    /* Check for already loaded module */
+    if (!(*pwm = MODULE_FindModule(filename)) && !FILE_contains_path(libname))
+    {
+        LPSTR	fn = RtlAllocateHeap ( ntdll_get_process_heap(), 0, MAX_PATH + 1 );
+        if (fn)
+        {
+            /* since the default loading mechanism uses a more detailed algorithm
+             * than SearchPath (like using PATH, which can even be modified between
+             * two attempts of loading the same DLL), the look-up above (with
+             * SearchPath) can have put the file in system directory, whereas it
+             * has already been loaded but with a different path. So do a specific
+             * look-up with filename (without any path)
+             */
+            strcpy ( fn, libname );
+            /* if the filename doesn't have an extension append .DLL */
+            if (!strrchr( fn, '.')) strcat( fn, ".dll" );
+            if ((*pwm = MODULE_FindModule( fn )) != NULL)
+                strcpy( filename, fn );
+            RtlFreeHeap( ntdll_get_process_heap(), 0, fn );
+        }
+    }
+    if (*pwm)
+    {
+        (*pwm)->refCount++;
+        
+        if (((*pwm)->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
+            !(flags & DONT_RESOLVE_DLL_REFERENCES))
+        {
+            (*pwm)->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
+            PE_fixup_imports( *pwm );
+        }
+        TRACE("Already loaded module '%s' at %p, count=%d\n", filename, (*pwm)->module, (*pwm)->refCount);
+        if (allocated_libdir)
+        {
+            RtlFreeHeap( ntdll_get_process_heap(), 0, (LPSTR)libdir );
+            libdir = NULL;
+        }
+        RtlLeaveCriticalSection( &loader_section );
+        RtlFreeHeap( ntdll_get_process_heap(), 0, filename );
+        return STATUS_SUCCESS;
+    }
+
+    MODULE_GetLoadOrder( loadorder, filename, TRUE);
+
+    for (i = 0; i < LOADORDER_NTYPES; i++)
+    {
+        if (loadorder[i] == LOADORDER_INVALID) break;
+
+        switch (loadorder[i])
+        {
+        case LOADORDER_DLL:
+            TRACE("Trying native dll '%s'\n", filename);
+            nts = PE_LoadLibraryExA(filename, flags, pwm);
+            filetype = "native";
+            break;
+            
+        case LOADORDER_BI:
+            TRACE("Trying built-in '%s'\n", filename);
+            nts = BUILTIN32_LoadLibraryExA(filename, flags, pwm);
+            filetype = "builtin";
+            break;
+            
+        default:
+            nts = STATUS_INTERNAL_ERROR;
+            break;
+        }
+
+        if (nts == STATUS_SUCCESS)
+        {
+            /* Initialize DLL just loaded */
+            TRACE("Loaded module '%s' at %p\n", filename, (*pwm)->module);
+            if (!TRACE_ON(module))
+                TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
+            /* Set the refCount here so that an attach failure will */
+            /* decrement the dependencies through the MODULE_FreeLibrary call. */
+            (*pwm)->refCount = 1;
+            
+            if (allocated_libdir)
+            {
+                RtlFreeHeap( ntdll_get_process_heap(), 0, (LPSTR)libdir );
+                libdir = NULL;
+            }
+            RtlLeaveCriticalSection( &loader_section );
+            RtlFreeHeap( ntdll_get_process_heap(), 0, filename );
+            return nts;
+        }
+
+        if (nts != STATUS_NO_SUCH_FILE)
+        {
+            WARN("Loading of %s DLL %s failed (status %ld).\n",
+                 filetype, filename, nts);
+            break;
+        }
+    }
+
+ error:
+    if (allocated_libdir)
+    {
+        RtlFreeHeap( ntdll_get_process_heap(), 0, (LPSTR)libdir );
+        libdir = NULL;
+    }
+    RtlLeaveCriticalSection( &loader_section );
+    WARN("Failed to load module '%s'; status=%ld\n", filename, nts);
+    RtlFreeHeap( ntdll_get_process_heap(), 0, filename );
+    return nts;
+}
+
+/******************************************************************
+ *		LdrLoadDll (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags, PUNICODE_STRING libname, HMODULE* hModule)
+{
+    WINE_MODREF *wm;
+    NTSTATUS    nts = STATUS_SUCCESS;
+    STRING      str;
+
+    RtlUnicodeStringToAnsiString(&str, libname, TRUE);
+
+    RtlEnterCriticalSection( &loader_section );
+
+    switch (nts = MODULE_LoadLibraryExA( str.Buffer, flags, &wm ))
+    {
+    case STATUS_SUCCESS:
+        if ( !MODULE_DllProcessAttach( wm, NULL ) )
+        {
+            WARN_(module)("Attach failed for module '%s'.\n", str.Buffer);
+            LdrUnloadDll(wm->module);
+            nts = STATUS_DLL_INIT_FAILED;
+            wm = NULL;
+        }
+        break;
+    case STATUS_NO_SUCH_FILE:
+        nts = STATUS_DLL_NOT_FOUND;
+        break;
+    default: /* keep error code as it is (memory...) */
+        break;
+    }
+
+    *hModule = (wm) ? wm->module : NULL;
+    
+    RtlLeaveCriticalSection( &loader_section );
+
+    RtlFreeAnsiString(&str);
+
+    return nts;
+}
 
 /******************************************************************
  *		LdrShutdownProcess (NTDLL.@)

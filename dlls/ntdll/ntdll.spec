@@ -42,7 +42,7 @@
 @ stdcall LdrGetDllHandle(long long ptr ptr) LdrGetDllHandle
 @ stdcall LdrGetProcedureAddress(ptr ptr long ptr) LdrGetProcedureAddress
 @ stub LdrInitializeThunk
-@ stub LdrLoadDll
+@ stdcall LdrLoadDll(wstr long ptr ptr) LdrLoadDll
 @ stub LdrProcessRelocationBlock
 @ stub LdrQueryImageFileExecutionOptions
 @ stub LdrQueryProcessModuleInformation
