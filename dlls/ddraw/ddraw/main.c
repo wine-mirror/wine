@@ -17,9 +17,30 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-/*
+ *
+ * NOTES
+ *
+ * WINE currently implements a very basic set of the DirectDraw functionality
+ * in graphics/ddraw.c. This implementation uses either the XFree86-DGA extension 
+ * to get very fast access to the graphics card framebuffer and doublebuffering
+ * features or Xlib, which is slower.
+ * The implementation using XFree86-DGA is as fast as the MS equivalent for the
+ * stuff that is implemented.
+ *
+ * Several applications already work, see below.
+ * Problems of the implementation using XFree86-DGA:
+ *
+ *	- XFree86 cannot switch depth on the fly.
+ *	  This is a problem with X and unavoidable.
+ *	  Current solution is to pop up a MessageBox with an error for 
+ *	  mismatched parameters and advice the user to restart the X server
+ *	  with the specified depth.
+ *	- The rest of the functionality that has to be implemented will have
+ *	  to be done in software and will be very slow.
+ *	- This requires WINE to be run as root user so XF86DGA can mmap the
+ *	  framebuffer into the addressspace of the process.
+ *	- Blocks all other X windowed applications.
+ *
  * This file contains all the interface functions that are shared between
  * all interfaces. Or better, it is a "common stub" library for the
  * IDirectDraw* objects
