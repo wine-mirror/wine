@@ -29,13 +29,13 @@ static HKEY hkey_main;
 /* delete key and all its subkeys */
 static DWORD delete_key( HKEY hkey )
 {
-    WCHAR name[MAX_PATH];
+    char name[MAX_PATH];
     DWORD ret;
 
-    while (!(ret = RegEnumKeyW(hkey, 0, name, sizeof(name))))
+    while (!(ret = RegEnumKeyA(hkey, 0, name, sizeof(name))))
     {
         HKEY tmp;
-        if (!(ret = RegOpenKeyExW( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
+        if (!(ret = RegOpenKeyExA( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
         {
             ret = delete_key( tmp );
             RegCloseKey( tmp );
@@ -90,7 +90,8 @@ static void test_enum_value(void)
     strcpy( data, "xxxxxxxxxx" );
     res = RegEnumValueA( hkey_main, 0, value, &val_count, NULL, &type, data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld", res );
-    ok( val_count == 3, "val_count set to %ld", val_count );
+    /* Win9x returns 2 as specified by MSDN but NT returns 3... */
+    ok( val_count == 2 || val_count == 3, "val_count set to %ld", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ", type );
     ok( !strcmp( value, "Te" ), "value set to '%s' instead of 'Te'", value );
@@ -140,7 +141,10 @@ static void test_enum_value(void)
 
     /* Unicode tests */
 
+    SetLastError(0);
     res = RegSetValueExW( hkey_main, testW, 0, REG_SZ, (BYTE *)foobarW, 7*sizeof(WCHAR) );
+    if (res==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        goto CLEANUP;
     ok( res == 0, "RegSetValueExW failed error %ld", res );
 
     /* overflow both name and data */
@@ -199,6 +203,7 @@ static void test_enum_value(void)
     ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'" );
     ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'" );
 
+CLEANUP:
     /* cleanup */
     RegDeleteValueA( hkey_main, "Test" );
 }
