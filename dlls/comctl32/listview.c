@@ -5852,7 +5852,8 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
       }
       break;
 
-    case SB_THUMBPOSITION:
+    case SB_THUMBTRACK:
+        scrollInfo.nPos = nCurrentPos;
       break;
     }
 
@@ -5961,7 +5962,8 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
       }
       break;
 
-    case SB_THUMBPOSITION:
+    case SB_THUMBTRACK:
+        scrollInfo.nPos = nCurrentPos;
       break;
     }
 
