@@ -121,32 +121,42 @@ void RemoveSpecificProgram(char *name)
     }
 }
 
-
-int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
+int main( int argc, char *argv[])
 {
     MSG msg;
     WNDCLASS wc;
     HWND hWnd;
+    LPSTR token = NULL;
+    int i = 1;
+    HINSTANCE hInst = NULL;
 
-    /*------------------------------------------------------------------------
-    ** Handle requests just to list the programs
-    **----------------------------------------------------------------------*/
-    if (cmdline && strlen(cmdline) >= 6 && memcmp(cmdline, "--list", 6) == 0)
+    while( i<argc )
     {
-        ListUninstallPrograms();
-        return(0);
+        token = argv[i++];
+
+        /* Handle requests just to list the programs */
+        if( !lstrcmpA( token, "--list" ) )
+        {
+            ListUninstallPrograms();
+            return 0;
+        }
+        else if( !lstrcmpA( token, "--remove" ) )
+        {
+            if( i >= argc )
+            {
+                WINE_ERR( "The remove option requires a parameter.\n");
+                return 1;
+            }
+
+            RemoveSpecificProgram( argv[i++] );
+            return 0;
+        }
+        else 
+        {
+            WINE_ERR( "unknown option %s\n",token);
+            return 1;
+        }
     }
-
-    /*------------------------------------------------------------------------
-    ** Handle requests to remove one program
-    **----------------------------------------------------------------------*/
-    if (cmdline && strlen(cmdline) > 9 && memcmp(cmdline, "--remove ", 9) == 0)
-    {
-        RemoveSpecificProgram(cmdline + 9);
-        return(0);
-    }
-
-
 
     LoadString( hInst, IDS_APPNAME, appname, sizeof(appname));
 
@@ -169,7 +179,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
 
     if (!hWnd) exit(1);
 
-    ShowWindow( hWnd, cmdshow );
+    ShowWindow( hWnd, SW_SHOW );
     UpdateWindow( hWnd );
 
     while( GetMessage(&msg, NULL_HANDLE, 0, 0) ) {

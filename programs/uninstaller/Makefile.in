@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = uninstaller.exe
-APPMODE   = gui
+APPMODE   = cui
 IMPORTS   = user32 gdi32 advapi32 kernel32
 
 C_SRCS = \
