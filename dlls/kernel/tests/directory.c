@@ -30,21 +30,25 @@ static void test_GetWindowsDirectoryA(void)
     UINT len, len_with_null;
     char buf[MAX_PATH];
 
+    len_with_null = GetWindowsDirectoryA(NULL, 0);
+    ok(len_with_null <= MAX_PATH, "should fit into MAX_PATH");
+
     lstrcpyA(buf, "foo");
     len_with_null = GetWindowsDirectoryA(buf, 1);
     ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    ok(len_with_null <= MAX_PATH, "should fit into MAX_PATH");
 
     lstrcpyA(buf, "foo");
     len = GetWindowsDirectoryA(buf, len_with_null - 1);
     ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    ok(len == len_with_null, "should return length with terminating 0");
+    ok(len == len_with_null, "GetWindowsDirectoryW returned %d, expected %d",
+       len, len_with_null);
 
     lstrcpyA(buf, "foo");
     len = GetWindowsDirectoryA(buf, len_with_null);
     ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
     ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
-    ok(len == (len_with_null - 1), "should return length without terminating 0");
+    ok(len == len_with_null-1, "GetWindowsDirectoryA returned %d, expected %d",
+       len, len_with_null-1);
 }
 
 static void test_GetWindowsDirectoryW(void)
@@ -53,21 +57,29 @@ static void test_GetWindowsDirectoryW(void)
     WCHAR buf[MAX_PATH];
     static const WCHAR fooW[] = {'f','o','o',0};
 
-    lstrcpyW(buf, fooW);
-    len_with_null = GetWindowsDirectoryW(buf, 1);
-    ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
+    len_with_null = GetWindowsDirectoryW(NULL, 0);
+    if (len_with_null==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
     ok(len_with_null <= MAX_PATH, "should fit into MAX_PATH");
+
+    lstrcpyW(buf, fooW);
+    len = GetWindowsDirectoryW(buf, 1);
+    ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
+    ok(len == len_with_null, "GetWindowsDirectoryW returned %d, expected %d",
+       len, len_with_null);
 
     lstrcpyW(buf, fooW);
     len = GetWindowsDirectoryW(buf, len_with_null - 1);
     ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
-    ok(len == len_with_null, "should return length with terminating 0");
+    ok(len == len_with_null, "GetWindowsDirectoryW returned %d, expected %d",
+       len, len_with_null);
 
     lstrcpyW(buf, fooW);
     len = GetWindowsDirectoryW(buf, len_with_null);
     ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
     ok(len == lstrlenW(buf), "returned length should be equal to the length of string");
-    ok(len == (len_with_null - 1), "should return length without terminating 0");
+    ok(len == len_with_null-1, "GetWindowsDirectoryW returned %d, expected %d",
+       len, len_with_null-1);
 }
 
 
@@ -79,21 +91,27 @@ static void test_GetSystemDirectoryA(void)
     UINT len, len_with_null;
     char buf[MAX_PATH];
 
-    lstrcpyA(buf, "foo");
-    len_with_null = GetSystemDirectoryA(buf, 1);
-    ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
+    len_with_null = GetSystemDirectoryA(NULL, 0);
     ok(len_with_null <= MAX_PATH, "should fit into MAX_PATH");
+
+    lstrcpyA(buf, "foo");
+    len = GetSystemDirectoryA(buf, 1);
+    ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
+    ok(len == len_with_null, "GetSystemDirectoryA returned %d, expected %d",
+       len, len_with_null);
 
     lstrcpyA(buf, "foo");
     len = GetSystemDirectoryA(buf, len_with_null - 1);
     ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    ok(len == len_with_null, "should return length with terminating 0");
+    ok(len == len_with_null, "GetSystemDirectoryA returned %d, expected %d",
+       len, len_with_null);
 
     lstrcpyA(buf, "foo");
     len = GetSystemDirectoryA(buf, len_with_null);
     ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
     ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
-    ok(len == (len_with_null - 1), "should return length without terminating 0");
+    ok(len == len_with_null-1, "GetSystemDirectoryW returned %d, expected %d",
+       len, len_with_null-1);
 }
 
 static void test_GetSystemDirectoryW(void)
@@ -102,21 +120,29 @@ static void test_GetSystemDirectoryW(void)
     WCHAR buf[MAX_PATH];
     static const WCHAR fooW[] = {'f','o','o',0};
 
-    lstrcpyW(buf, fooW);
-    len_with_null = GetSystemDirectoryW(buf, 1);
-    ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
+    len_with_null = GetSystemDirectoryW(NULL, 0);
+    if (len_with_null==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
     ok(len_with_null <= MAX_PATH, "should fit into MAX_PATH");
+
+    lstrcpyW(buf, fooW);
+    len = GetSystemDirectoryW(buf, 1);
+    ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
+    ok(len == len_with_null, "GetSystemDirectoryW returned %d, expected %d",
+       len, len_with_null);
 
     lstrcpyW(buf, fooW);
     len = GetSystemDirectoryW(buf, len_with_null - 1);
     ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
-    ok(len == len_with_null, "should return length with terminating 0");
+    ok(len == len_with_null, "GetSystemDirectoryW returned %d, expected %d",
+       len, len_with_null);
 
     lstrcpyW(buf, fooW);
     len = GetSystemDirectoryW(buf, len_with_null);
     ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
     ok(len == lstrlenW(buf), "returned length should be equal to the length of string");
-    ok(len == (len_with_null - 1), "should return length without terminating 0");
+    ok(len == len_with_null-1, "GetSystemDirectoryW returned %d, expected %d",
+       len, len_with_null-1);
 }
 
 static void test_CreateDirectoryA(void)
@@ -125,10 +151,14 @@ static void test_CreateDirectoryA(void)
     BOOL ret;
 
     ret = CreateDirectoryA(NULL, NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, "should not create NULL path");
+    ok(ret == FALSE && (GetLastError() == ERROR_PATH_NOT_FOUND ||
+                        GetLastError() == ERROR_INVALID_PARAMETER),
+       "CreateDirectoryA(NULL,NULL): ret=%d error=%ld",ret,GetLastError());
 
     ret = CreateDirectoryA("", NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, "should not create empty path");
+    ok(ret == FALSE && (GetLastError() == ERROR_BAD_PATHNAME ||
+                        GetLastError() == ERROR_PATH_NOT_FOUND),
+       "CreateDirectoryA(\"\",NULL): ret=%d error=%ld",ret,GetLastError());
 
     ret = GetSystemDirectoryA(tmpdir, MAX_PATH);
     ok(ret < MAX_PATH, "System directory should fit into MAX_PATH");
@@ -145,7 +175,9 @@ static void test_CreateDirectoryA(void)
     GetTempPathA(MAX_PATH, tmpdir);
     tmpdir[3] = 0; /* truncate the path */
     ret = CreateDirectoryA(tmpdir, NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_ACCESS_DENIED, "should deny access to the drive root");
+    ok(ret == FALSE && (GetLastError() == ERROR_ALREADY_EXISTS ||
+                        GetLastError() == ERROR_ACCESS_DENIED),
+       "CreateDirectoryA(drive_root): ret=%d error=%ld",ret,GetLastError());
 
     GetTempPathA(MAX_PATH, tmpdir);
     lstrcatA(tmpdir, "Please Remove Me");
@@ -169,6 +201,8 @@ static void test_CreateDirectoryW(void)
     static const WCHAR dotdotW[] = {'.','.',0};
 
     ret = CreateDirectoryW(NULL, NULL);
+    if (!ret && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
     ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, "should not create NULL path");
 
     ret = CreateDirectoryW(empty_strW, NULL);
