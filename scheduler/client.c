@@ -238,7 +238,7 @@ static void wait_reply(void)
  */
 unsigned int wine_server_call( enum request req )
 {
-    void *req_ptr = get_req_buffer();
+    void *req_ptr = NtCurrentTeb()->buffer;
     send_request( req, req_ptr );
     wait_reply();
     return ((struct request_header *)req_ptr)->error;
@@ -253,7 +253,7 @@ unsigned int wine_server_call( enum request req )
 unsigned int server_call_fd( enum request req, int fd_out )
 {
     unsigned int res;
-    void *req_ptr = get_req_buffer();
+    void *req_ptr = NtCurrentTeb()->buffer;
 
     send_request_fd( req, req_ptr, fd_out );
     wait_reply();
