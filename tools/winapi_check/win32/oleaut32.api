@@ -28,7 +28,9 @@ CY *
 COLORREF *
 DATE *
 FLOAT *
+ICreateErrorInfo **
 IErrorInfo *
+IErrorInfo **
 ITypeLib *
 ITypeLib **
 LPBSTR
