@@ -286,32 +286,38 @@ BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 /***********************************************************************
  *               PRINTDLG_UpdatePrinterInfoTexts               [internal]
  */
-static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
+void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
 {
     char   StatusMsg[256];
     char   ResourceString[256];
     int    i;
     LPPRINTER_INFO_2A lpPi = &(PrintStructures->lpPrinterInfo
                                              [PrintStructures->CurrentPrinter]);
-                                             
+    
     /* Status Message */
     StatusMsg[0]='\0';
+    /* FIXME: if default printer, add this first */
+    ;
+    /* add all status messages */
     for (i=0; i< 25; i++)
     {
         if (lpPi->Status & (1<<i))
         {
-         LoadStringA(COMDLG32_hInstance, (1<<i), 
+         LoadStringA(COMDLG32_hInstance, PD32_PRINTER_STATUS_PAUSED+i, 
                         ResourceString, 255);
-         if (StatusMsg[0]!='\0')        /* append ; before next item */
-            strcat(StatusMsg, "; ");         
          strcat(StatusMsg,ResourceString);
         }
     }
-    if (StatusMsg[0]=='\0')     /* no Status ??? */
-         LoadStringA(COMDLG32_hInstance, PRINTER_STATUS_NOT_AVAILABLE, 
-                        StatusMsg, 255);         
+    /* append "ready" */
+    /* FIXME: status==ready must only be appended if really so. 
+              but how to detect??? */
+    LoadStringA(COMDLG32_hInstance, PD32_PRINTER_STATUS_READY, 
+                        ResourceString, 255);
+    strcat(StatusMsg,ResourceString);
+  
     SendDlgItemMessageA(hDlg, stc12, WM_SETTEXT, 0, (LPARAM)StatusMsg);
-    
+
+    /* set all other printer info texts */
     SendDlgItemMessageA(hDlg, stc11, WM_SETTEXT, 0, (LPARAM)lpPi->pDriverName);
     if (lpPi->pLocation != NULL && lpPi->pLocation[0]!='\0')
         SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)lpPi->pLocation);

@@ -195,7 +195,6 @@ FONT 8, "Helv"
 }
 
 
-/* NOTE: Please, do not translate the PRINT32 dialog box yet! */
 PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
@@ -356,46 +355,58 @@ aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa
 aa aa a2 00 43 02'}
 
 
-
-#if 0
-
-/*
- * DO NOT ENABLE!
- * These IDs are out of range.
- */
-
-/* NOTE: Please, do not translate these texts yet! */
 STRINGTABLE DISCARDABLE
 {
-    PD32_PRINT_ALL_X_PAGES "&All %d pages"
     PD32_PRINT_TITLE       "Print"
+
+    PD32_VALUE_UREADABLE                  "Unreadable Entry"
     PD32_INVALID_PAGE_RANGE "This value lies not within Page range\n\
 Please enter a value between %d and %d"
-    PRINTER_STATUS_PAUSED            "Paused"
-    PRINTER_STATUS_ERROR             "Error"
-    PRINTER_STATUS_PENDING_DELETION  "Pending deletion"
-    PRINTER_STATUS_PAPER_JAM         "Paper jam"
-    PRINTER_STATUS_PAPER_OUT         "Out of paper"
-    PRINTER_STATUS_MANUAL_FEED       "Feed paper manual"
-    PRINTER_STATUS_PAPER_PROBLEM     "Paper problem"
-    PRINTER_STATUS_OFFLINE           "Printer offline"
-    PRINTER_STATUS_IO_ACTIVE         "I/O Active"
-    PRINTER_STATUS_BUSY              "Busy"
-    PRINTER_STATUS_PRINTING          "Printing"
-    PRINTER_STATUS_OUTPUT_BIN_FULL   "Output tray is full"
-    PRINTER_STATUS_NOT_AVAILABLE     "Not available"
-    PRINTER_STATUS_WAITING           "Waiting"
-    PRINTER_STATUS_PROCESSING        "Processing"
-    PRINTER_STATUS_INITIALIZING      "Initialising"
-    PRINTER_STATUS_WARMING_UP        "Warming up"
-    PRINTER_STATUS_TONER_LOW         "Toner low"
-    PRINTER_STATUS_NO_TONER          "No toner"
-    PRINTER_STATUS_PAGE_PUNT         "Page punt"
-    PRINTER_STATUS_USER_INTERVENTION "User intervention required"
-    PRINTER_STATUS_OUT_OF_MEMORY     "Out of memory"
-    PRINTER_STATUS_DOOR_OPEN         "The printer door is open"
-    PRINTER_STATUS_SERVER_UNKNOWN    "Print server unknown"
-    PRINTER_STATUS_POWER_SAVE        "Power safe mode"
-}
+    PD32_FROM_NOT_ABOVE_TO                "The FROM entry cannot exceed TO:"
+    PD32_MARGINS_OVERLAP                  "Margins overlap or fall outside \
+Paper boundaries.\nPlease reenter margins"
+    PD32_NR_OF_COPIES_EMPTY               "The NumberOfCopies entry cannot \
+be empty"
+    PD32_TOO_LARGE_COPIES                 "This large amount of prints is not \
+supported by your printer.\nPlease enter a value between 1 and %d"
+    PD32_PRINT_ERROR                      "A printer error occurred"
+    PD32_NO_DEFAULT_PRINTER               "There is not default printer"
+    PD32_CANT_FIND_PRINTER                "Cannot find the printer"
+    PD32_OUT_OF_MEMORY                    "Out of memory"
+    PD32_GENERIC_ERROR                    "Some error occurred"
+    PD32_DRIVER_UNKNOWN                   "Unknown printer driver"
 
-#endif
+    PD32_DEFAULT_PRINTER                  "Default Printer; "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "There are %d documents in queue"
+    PD32_PRINT_ALL_X_PAGES                "&All %d pages"
+    PD32_MARGINS_IN_INCHES                "Margins [inches]"
+    PD32_MARGINS_IN_MILIMETERS            "Margins [mm]"
+    PD32_MILIMETERS                       "mm"
+
+    PD32_PRINTER_STATUS_READY             "Ready"
+    PD32_PRINTER_STATUS_PAUSED            "Paused; "
+    PD32_PRINTER_STATUS_ERROR             "Error; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Pending deletion; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Paper jam; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "Out of paper; "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "Feed paper manual; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Paper problem; "
+    PD32_PRINTER_STATUS_OFFLINE           "Printer offline; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Active; "
+    PD32_PRINTER_STATUS_BUSY              "Busy; "
+    PD32_PRINTER_STATUS_PRINTING          "Printing; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Output tray is full; "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "Not available; "
+    PD32_PRINTER_STATUS_WAITING           "Waiting; "
+    PD32_PRINTER_STATUS_PROCESSING        "Processing; "
+    PD32_PRINTER_STATUS_INITIALIZING      "Initialising; "
+    PD32_PRINTER_STATUS_WARMING_UP        "Warming up; "
+    PD32_PRINTER_STATUS_TONER_LOW         "Toner low; "
+    PD32_PRINTER_STATUS_NO_TONER          "No toner; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "Interrupted by user; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Out of memory; "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "The printer door is open; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Print server unknown; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Power safe mode; "
+}
