@@ -410,7 +410,7 @@ inline static void vshader_program_dump_param(const DWORD param, int input) {
     TRACE("V[%lu]", reg);
     break;
   case D3DSPR_CONST:
-    TRACE("C[%s%lu]", (reg & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+    TRACE("C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
     break;
   case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
     TRACE("a[%lu]", reg);
@@ -656,7 +656,7 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
 	    p[i] = &input->V[reg];
 	    break;
 	  case D3DSPR_CONST:
-	    if (reg & D3DVS_ADDRMODE_RELATIVE) {
+	    if (pToken[i] & D3DVS_ADDRMODE_RELATIVE) {
 	      p[i] = &vshader->data->C[(DWORD) A[0].x + reg];
 	    } else {
 	      p[i] = &vshader->data->C[reg];
@@ -1050,7 +1050,7 @@ inline static void pshader_program_dump_param(const DWORD param, int input) {
     TRACE("V[%lu]", reg);
     break;
   case D3DSPR_CONST:
-    TRACE("C[%s%lu]", (reg & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+    TRACE("C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
     break;
   case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
     TRACE("t[%lu]", reg);
