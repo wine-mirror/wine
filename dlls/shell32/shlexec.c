@@ -108,7 +108,7 @@ static BOOL argify(char* res, int len, const char* fmt, const char* lpFile)
  *	SHELL_ExecuteA [Internal]
  *
  */
-static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL is32, BOOL shWait)
+static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
 {
     STARTUPINFOA  startup;
     PROCESS_INFORMATION info;
@@ -119,31 +119,26 @@ static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL is32,
     startup.cb = sizeof(STARTUPINFOA);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = sei->nShow;
-    if (is32)
+    if (CreateProcessA(NULL, lpCmd, NULL, NULL, FALSE, 0,
+                       NULL, sei->lpDirectory, &startup, &info))
     {
-        if (CreateProcessA(NULL, lpCmd, NULL, NULL, FALSE, 0,
-                        NULL, sei->lpDirectory, &startup, &info))
-        {
-            /* Give 30 seconds to the app to come up, if desired. Probably only needed
-               when starting app immediately before making a DDE connection. */
-            if (shWait)
-                if (WaitForInputIdle( info.hProcess, 30000 ) == -1)
-                    WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-            retval = (HINSTANCE)33;
-            if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
-	        sei->hProcess = info.hProcess;
-            else
-                CloseHandle( info.hProcess );
-            CloseHandle( info.hThread );
-        }
-        else if ((retval = GetLastError()) >= (HINSTANCE)32)
-        {
-            FIXME("Strange error set by CreateProcess: %d\n", retval);
-            retval = (HINSTANCE)ERROR_BAD_FORMAT;
-        }
+        /* Give 30 seconds to the app to come up, if desired. Probably only needed
+           when starting app immediately before making a DDE connection. */
+        if (shWait)
+            if (WaitForInputIdle( info.hProcess, 30000 ) == -1)
+                WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+        retval = (HINSTANCE)33;
+        if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
+            sei->hProcess = info.hProcess;
+        else
+            CloseHandle( info.hProcess );
+        CloseHandle( info.hThread );
     }
-    else
-        retval = WinExec16(lpCmd, sei->nShow);
+    else if ((retval = GetLastError()) >= (HINSTANCE)32)
+    {
+        FIXME("Strange error set by CreateProcess: %d\n", retval);
+        retval = (HINSTANCE)ERROR_BAD_FORMAT;
+    }
 
     sei->hInstApp = retval;
     return retval;
@@ -348,7 +343,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
  */
 static unsigned dde_connect(char* key, char* start, char* ddeexec,
                             const char* lpFile,
-                            LPSHELLEXECUTEINFOA sei, BOOL is32)
+                            LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
 {
     char*       endkey = key + strlen(key);
     char        app[256], topic[256], ifexec[256], res[256];
@@ -388,7 +383,7 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
     if (!hConv)
     {
         TRACE("Launching '%s'\n", start);
-        ret = SHELL_ExecuteA(start, sei, is32, TRUE);
+        ret = execfunc(start, sei, TRUE);
         if (ret < 32)
         {
             TRACE("Couldn't launch\n");
@@ -423,7 +418,7 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
 /*************************************************************************
  *	execute_from_key [Internal]
  */
-static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA sei, BOOL is32)
+static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
 {
     char cmd[1024] = "";
     LONG cmdlen = sizeof(cmd);
@@ -445,14 +440,14 @@ static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA 
         if (RegQueryValueA(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
         {
             TRACE("Got ddeexec %s => %s\n", key, param);
-            retval = dde_connect(key, cmd, param, lpFile, sei, is32);
+            retval = dde_connect(key, cmd, param, lpFile, sei, execfunc);
         }
         else
         {
             /* Is there a replace() function anywhere? */
             cmd[cmdlen] = '\0';
             argify(param, sizeof(param), cmd, lpFile);
-            retval = SHELL_ExecuteA(param, sei, is32, FALSE);
+            retval = execfunc(param, sei, FALSE);
         }
     }
     else TRACE("ooch\n");
@@ -506,7 +501,7 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
 /*************************************************************************
  *	ShellExecuteExA32 [Internal]
  */
-BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
+BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
 {
     CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20],fileName[MAX_PATH];
     LPSTR pos;
@@ -584,7 +579,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
             strcat(cmd, " ");
             strcat(cmd, szApplicationName);
         }
-        retval = SHELL_ExecuteA(cmd, sei, is32, FALSE);
+        retval = execfunc(cmd, sei, FALSE);
         if (retval > 32)
             return TRUE;
         else
@@ -608,7 +603,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
         strcat(szApplicationName, szCommandline);
     }
 
-    retval = SHELL_ExecuteA(szApplicationName, sei, is32, FALSE);
+    retval = execfunc(szApplicationName, sei, FALSE);
     if (retval > 32)
         return TRUE;
 
@@ -623,9 +618,9 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
         }
         TRACE("%s/%s => %s/%s\n", szApplicationName, lpOperation, cmd, lpstrProtocol);
         if (*lpstrProtocol)
-            retval = execute_from_key(lpstrProtocol, szApplicationName, sei, is32);
+            retval = execute_from_key(lpstrProtocol, szApplicationName, sei, execfunc);
         else
-            retval = SHELL_ExecuteA(cmd, sei, is32, FALSE);
+            retval = execfunc(cmd, sei, FALSE);
     }
     else if (PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
     {
@@ -653,7 +648,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
             lpFile += iSize;
             while (*lpFile == ':') lpFile++;
         }
-        retval = execute_from_key(lpstrProtocol, lpFile, sei, is32);
+        retval = execute_from_key(lpstrProtocol, lpFile, sei, execfunc);
     }
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncasecmp(lpFile, "www", 3))
@@ -672,35 +667,6 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
 
     sei->hInstApp = 33;
     return TRUE;
-}
-
-
-/*************************************************************************
- *				ShellExecute		[SHELL.20]
- */
-HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
-                                   LPCSTR lpFile, LPCSTR lpParameters,
-                                   LPCSTR lpDirectory, INT16 iShowCmd )
-{
-    SHELLEXECUTEINFOA sei;
-    HANDLE hProcess = 0;
-
-    sei.cbSize = sizeof(sei);
-    sei.fMask = 0;
-    sei.hwnd = HWND_32(hWnd);
-    sei.lpVerb = lpOperation;
-    sei.lpFile = lpFile;
-    sei.lpParameters = lpParameters;
-    sei.lpDirectory = lpDirectory;
-    sei.nShow = iShowCmd;
-    sei.lpIDList = 0;
-    sei.lpClass = 0;
-    sei.hkeyClass = 0;
-    sei.dwHotKey = 0;
-    sei.hProcess = hProcess;
-
-    ShellExecuteExA32 (&sei, FALSE);
-    return (HINSTANCE16)sei.hInstApp;
 }
 
 /*************************************************************************
@@ -727,7 +693,7 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
     sei.dwHotKey = 0;
     sei.hProcess = hProcess;
 
-    ShellExecuteExA32 (&sei, TRUE);
+    ShellExecuteExA32 (&sei, SHELL_ExecuteA);
     return sei.hInstApp;
 }
 
@@ -739,7 +705,7 @@ BOOL WINAPI ShellExecuteExAW (LPVOID sei)
 {
     if (SHELL_OsIsUnicode())
 	return ShellExecuteExW (sei);
-    return ShellExecuteExA32 (sei, TRUE);
+    return ShellExecuteExA32 (sei, SHELL_ExecuteA);
 }
 
 /*************************************************************************
@@ -748,7 +714,7 @@ BOOL WINAPI ShellExecuteExAW (LPVOID sei)
  */
 BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 {
-    return  ShellExecuteExA32 (sei, TRUE);
+    return  ShellExecuteExA32 (sei, SHELL_ExecuteA);
 }
 
 /*************************************************************************

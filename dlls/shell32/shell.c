@@ -624,3 +624,40 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
     fix_win16_hkey( &hkey );
     return RegEnumKeyA( hkey, index, name, name_len );
 }
+
+/*************************************************************************
+ *           SHELL_Execute16 [Internal]
+ */
+static HINSTANCE SHELL_Execute16(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
+{
+    sei->hInstApp = WinExec16(lpCmd, sei->nShow);
+    return sei->hInstApp;
+}
+
+/*************************************************************************
+ *                              ShellExecute            [SHELL.20]
+ */
+HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
+                                   LPCSTR lpFile, LPCSTR lpParameters,
+                                   LPCSTR lpDirectory, INT16 iShowCmd )
+{
+    SHELLEXECUTEINFOA sei;
+    HANDLE hProcess = 0;
+
+    sei.cbSize = sizeof(sei);
+    sei.fMask = 0;
+    sei.hwnd = HWND_32(hWnd);
+    sei.lpVerb = lpOperation;
+    sei.lpFile = lpFile;
+    sei.lpParameters = lpParameters;
+    sei.lpDirectory = lpDirectory;
+    sei.nShow = iShowCmd;
+    sei.lpIDList = 0;
+    sei.lpClass = 0;
+    sei.hkeyClass = 0;
+    sei.dwHotKey = 0;
+    sei.hProcess = hProcess;
+
+    ShellExecuteExA32 (&sei, SHELL_Execute16);
+    return (HINSTANCE16)sei.hInstApp;
+}

@@ -201,4 +201,7 @@ inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
 #define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
 #define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
+typedef HINSTANCE (*SHELL_ExecuteA1632)(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait);
+BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc);
+
 #endif
