@@ -2766,6 +2766,8 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
     if (!wndPtr) return hwnd;
     retval = wndPtr->hwndLastActive;
     WIN_ReleaseWndPtr(wndPtr);
+    if ((retval != hwnd) && (!IsWindow(retval)))
+       retval = hwnd;
     return retval;
 }
 
