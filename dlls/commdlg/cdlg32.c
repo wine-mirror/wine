@@ -242,8 +242,5 @@ DWORD WINAPI CommDlgExtendedError(void)
         if (COMDLG32_TlsIndex != 0xffffffff) 
 	  return (DWORD)TlsGetValue(COMDLG32_TlsIndex);
 	else
-	  {
-	    FIXME("No Tls Space\n");
-	    return 0;
-	  }
+	  return 0; /* we never set an error, so there isn't one */
 }
