@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
   DWORD maxLength;
   CHAR szBrowsers[256];
   DWORD type;
-  CHAR *defaultBrowsers = "mozilla,netscape,konqueror,galeon,opera";
+  CHAR *defaultBrowsers = "mozilla,netscape,konqueror,galeon,opera,dillo";
   char *browser;
   HKEY hkey;
   LONG r;
