@@ -2020,32 +2020,274 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 }
 
 /*======================================================================*
- *                  Low level DSOUND implementation			*
+ *                  Low level DSOUND definitions                        *
  *======================================================================*/
 
+typedef struct IDsDriverPropertySetImpl IDsDriverPropertySetImpl;
+typedef struct IDsDriverNotifyImpl IDsDriverNotifyImpl;
 typedef struct IDsDriverImpl IDsDriverImpl;
 typedef struct IDsDriverBufferImpl IDsDriverBufferImpl;
+
+struct IDsDriverPropertySetImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsDriverPropertySet);
+    DWORD                       ref;
+
+    IDsDriverBufferImpl*        buffer;
+};
+
+struct IDsDriverNotifyImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsDriverNotify);
+    DWORD                       ref;
+
+    /* IDsDriverNotifyImpl fields */
+    LPDSBPOSITIONNOTIFY         notifies;
+    int                         nrofnotifies;
+
+    IDsDriverBufferImpl*        buffer;
+};
 
 struct IDsDriverImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDsDriver);
-    DWORD		ref;
+    DWORD                       ref;
+
     /* IDsDriverImpl fields */
-    UINT		wDevID;
-    IDsDriverBufferImpl*primary;
+    UINT                        wDevID;
+    IDsDriverBufferImpl*        primary;
 };
 
 struct IDsDriverBufferImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDsDriverBuffer);
-    DWORD		ref;
+    DWORD                       ref;
+
     /* IDsDriverBufferImpl fields */
-    IDsDriverImpl*	drv;
-    DWORD		buflen;
-    WAVEFORMATEX        wfx;
+    IDsDriverImpl*              drv;
+    DWORD                       buflen;
+    WAVEFORMATEX                wfx;
+
+    /* IDsDriverNotifyImpl fields */
+    IDsDriverNotifyImpl*        notify;
+    int                         notify_index;
+
+    /* IDsDriverPropertySetImpl fields */
+    IDsDriverPropertySetImpl*   property_set;
 };
+
+static HRESULT WINAPI IDsDriverPropertySetImpl_Create(
+    IDsDriverBufferImpl * dsdb,
+    IDsDriverPropertySetImpl **pdsdps);
+
+static HRESULT WINAPI IDsDriverNotifyImpl_Create(
+    IDsDriverBufferImpl * dsdb,
+    IDsDriverNotifyImpl **pdsdn);
+
+/*======================================================================*
+ *                  Low level DSOUND property set implementation        *
+ *======================================================================*/
+
+static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
+    PIDSDRIVERPROPERTYSET iface,
+    REFIID riid,
+    LPVOID *ppobj) 
+{
+    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+    if ( IsEqualGUID(riid, &IID_IUnknown) ||
+         IsEqualGUID(riid, &IID_IDsDriverPropertySet) ) {
+        IDsDriverPropertySet_AddRef(iface);
+        *ppobj = (LPVOID)This;
+        return DS_OK;
+    }
+
+    FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
+
+    *ppobj = 0;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface) 
+{
+    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedIncrement(&(This->ref));
+    return ref;
+}
+
+static ULONG WINAPI IDsDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface) 
+{
+    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedDecrement(&(This->ref));
+    if (ref == 0) {
+        IDsDriverBuffer_Release((PIDSDRIVERBUFFER)This->buffer);
+        HeapFree(GetProcessHeap(),0,This);
+        TRACE("(%p) released\n",This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI IDsDriverPropertySetImpl_Get(
+    PIDSDRIVERPROPERTYSET iface,
+    PDSPROPERTY pDsProperty,
+    LPVOID pPropertyParams,
+    ULONG cbPropertyParams,
+    LPVOID pPropertyData,
+    ULONG cbPropertyData,
+    PULONG pcbReturnedData )
+{
+    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    FIXME("(%p,%p,%p,%lx,%p,%lx,%p)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData,pcbReturnedData);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverPropertySetImpl_Set(
+    PIDSDRIVERPROPERTYSET iface,
+    PDSPROPERTY pDsProperty,
+    LPVOID pPropertyParams,
+    ULONG cbPropertyParams,
+    LPVOID pPropertyData,
+    ULONG cbPropertyData )
+{
+    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    FIXME("(%p,%p,%p,%lx,%p,%lx)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverPropertySetImpl_QuerySupport(
+    PIDSDRIVERPROPERTYSET iface,
+    REFGUID PropertySetId,
+    ULONG PropertyId,
+    PULONG pSupport )
+{
+    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    FIXME("(%p,%s,%lx,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,pSupport);
+    return DSERR_UNSUPPORTED;
+}
+
+ICOM_VTABLE(IDsDriverPropertySet) dsdpsvt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDsDriverPropertySetImpl_QueryInterface,
+    IDsDriverPropertySetImpl_AddRef,
+    IDsDriverPropertySetImpl_Release,
+    IDsDriverPropertySetImpl_Get,
+    IDsDriverPropertySetImpl_Set,
+    IDsDriverPropertySetImpl_QuerySupport,
+};
+
+/*======================================================================*
+ *                  Low level DSOUND notify implementation              *
+ *======================================================================*/
+
+static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
+    PIDSDRIVERNOTIFY iface,
+    REFIID riid,
+    LPVOID *ppobj) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+    if ( IsEqualGUID(riid, &IID_IUnknown) ||
+         IsEqualGUID(riid, &IID_IDsDriverNotify) ) {
+        IDsDriverNotify_AddRef(iface);
+        *ppobj = This;
+        return DS_OK;
+    }
+
+    FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
+
+    *ppobj = 0;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedIncrement(&(This->ref));
+    return ref;
+}
+
+static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedDecrement(&(This->ref));
+    if (ref == 0) {
+        IDsDriverBuffer_Release((PIDSDRIVERBUFFER)This->buffer);
+        if (This->notifies != NULL)
+            HeapFree(GetProcessHeap(), 0, This->notifies);
+
+        HeapFree(GetProcessHeap(),0,This);
+        TRACE("(%p) released\n",This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
+    PIDSDRIVERNOTIFY iface,
+    DWORD howmuch,
+    LPCDSBPOSITIONNOTIFY notify) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
+
+    if (!notify) {
+        WARN("invalid parameter\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (TRACE_ON(wave)) {
+        int i;
+        for (i=0;i<howmuch;i++)
+            TRACE("notify at %ld to 0x%08lx\n",
+                notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
+    }
+
+    /* Make an internal copy of the caller-supplied array.
+     * Replace the existing copy if one is already present. */
+    if (This->notifies) 
+        This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+        This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+    else 
+        This->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+        howmuch * sizeof(DSBPOSITIONNOTIFY));
+
+    memcpy(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
+    This->nrofnotifies = howmuch;
+
+    return S_OK;
+}
+
+ICOM_VTABLE(IDsDriverNotify) dsdnvt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDsDriverNotifyImpl_QueryInterface,
+    IDsDriverNotifyImpl_AddRef,
+    IDsDriverNotifyImpl_Release,
+    IDsDriverNotifyImpl_SetNotificationPositions,
+};
+
+/*======================================================================*
+ *                  Low level DSOUND implementation                     *
+ *======================================================================*/
 
 static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 {
@@ -2120,15 +2362,27 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
     }
 
     if ( IsEqualGUID( &IID_IDsDriverNotify, riid ) ) {
-	FIXME("IDsDriverNotify not implemented\n");
-	*ppobj = (LPVOID)0;
-	return E_NOINTERFACE;
+        if (!This->notify)
+            IDsDriverNotifyImpl_Create(This, &(This->notify));
+        if (This->notify) {
+            IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
+            *ppobj = (LPVOID)This->notify;
+            return DS_OK;
+        }
+        *ppobj = 0;
+        return E_FAIL;
     }
 
     if ( IsEqualGUID( &IID_IDsDriverPropertySet, riid ) ) {
-	FIXME("IDsDriverPropertySet not implemented\n");
-	*ppobj = (LPVOID)0;
-	return E_NOINTERFACE;
+        if (!This->property_set)
+            IDsDriverPropertySetImpl_Create(This, &(This->property_set));
+        if (This->property_set) {
+            IDsDriverPropertySet_AddRef((PIDSDRIVERPROPERTYSET)This->property_set);
+            *ppobj = (LPVOID)This->property_set;
+            return DS_OK;
+        }
+	*ppobj = 0;
+	return E_FAIL;
     }
 
     FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
@@ -2523,6 +2777,53 @@ static ICOM_VTABLE(IDsDriver) dsdvt =
     IDsDriverImpl_GetCaps,
     IDsDriverImpl_CreateSoundBuffer,
     IDsDriverImpl_DuplicateSoundBuffer
+};
+
+static HRESULT WINAPI IDsDriverPropertySetImpl_Create(
+    IDsDriverBufferImpl * dsdb,
+    IDsDriverPropertySetImpl **pdsdps)
+{
+    IDsDriverPropertySetImpl * dsdps;
+    TRACE("(%p,%p)\n",dsdb,pdsdps);
+
+    dsdps = (IDsDriverPropertySetImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dsdps));
+    if (dsdps == NULL) {
+        WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
+    }
+                                                                                
+    dsdps->ref = 0;
+    dsdps->lpVtbl = &dsdpsvt;
+    dsdps->buffer = dsdb;
+    dsdb->property_set = dsdps;
+    IDsDriverBuffer_AddRef((PIDSDRIVER)dsdb);
+                                                                                
+    *pdsdps = dsdps;
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverNotifyImpl_Create(
+    IDsDriverBufferImpl * dsdb,
+    IDsDriverNotifyImpl **pdsdn)
+{
+    IDsDriverNotifyImpl * dsdn;
+    TRACE("(%p,%p)\n",dsdb,pdsdn);
+
+    dsdn = (IDsDriverNotifyImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dsdn));
+                                                                                
+    if (dsdn == NULL) {
+        WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
+    }
+                                                                                
+    dsdn->ref = 0;
+    dsdn->lpVtbl = &dsdnvt;
+    dsdn->buffer = dsdb;
+    dsdb->notify = dsdn;
+    IDsDriverBuffer_AddRef((PIDSDRIVER)dsdb);
+                                                                                
+    *pdsdn = dsdn;
+    return DS_OK;
 };
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
@@ -3303,43 +3604,103 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 /*======================================================================*
- *                  Low level DSOUND property set implementation	*
+ *           Low level DSOUND capture definitions                       *
  *======================================================================*/
 
-typedef struct IDsDriverPropertySetImpl IDsDriverPropertySetImpl;
+typedef struct IDsCaptureDriverPropertySetImpl IDsCaptureDriverPropertySetImpl;
+typedef struct IDsCaptureDriverNotifyImpl IDsCaptureDriverNotifyImpl;
+typedef struct IDsCaptureDriverImpl IDsCaptureDriverImpl;
+typedef struct IDsCaptureDriverBufferImpl IDsCaptureDriverBufferImpl;
 
-struct IDsDriverPropertySetImpl
+struct IDsCaptureDriverPropertySetImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDsDriverPropertySet);
-    DWORD                            ref;
+    DWORD                               ref;
+
+    IDsCaptureDriverBufferImpl*         capture_buffer;
 };
 
-static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
+struct IDsCaptureDriverNotifyImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsDriverNotify);
+    DWORD                               ref;
+
+    /* IDsDriverNotifyImpl fields */
+    LPDSBPOSITIONNOTIFY                 notifies;
+    int                                 nrofnotifies;
+
+    IDsCaptureDriverBufferImpl*        capture_buffer;
+};
+
+struct IDsCaptureDriverImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsCaptureDriver);
+    DWORD                               ref;
+
+    /* IDsCaptureDriverImpl fields */
+    UINT                                wDevID;
+    IDsCaptureDriverBufferImpl*         capture_buffer;
+};
+
+struct IDsCaptureDriverBufferImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsCaptureDriverBuffer);
+    DWORD                               ref;
+
+    /* IDsCaptureDriverBufferImpl fields */
+    IDsCaptureDriverImpl*               drv;
+    DWORD                               buflen;
+    LPBYTE                              buffer;
+    DWORD                               writeptr;
+
+    /* IDsDriverNotifyImpl fields */
+    IDsCaptureDriverNotifyImpl*         notify;
+    int                                 notify_index;
+
+    /* IDsDriverPropertySetImpl fields */
+    IDsCaptureDriverPropertySetImpl*    property_set;
+};
+
+static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Create(
+    IDsCaptureDriverBufferImpl * dscdb,
+    IDsCaptureDriverPropertySetImpl **pdscdps);
+
+static HRESULT WINAPI IDsCaptureDriverNotifyImpl_Create(
+    IDsCaptureDriverBufferImpl * dsdcb,
+    IDsCaptureDriverNotifyImpl **pdscdn);
+
+/*======================================================================*
+ *           Low level DSOUND capture property set implementation       *
+ *======================================================================*/
+
+static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QueryInterface(
     PIDSDRIVERPROPERTYSET iface,
     REFIID riid,
     LPVOID *ppobj) 
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsDriverPropertySet) ) {
-	IDsDriverPropertySet_AddRef(iface);
-	*ppobj = (LPVOID)This;
-	return DS_OK;
+        IDsDriverPropertySet_AddRef(iface);
+        *ppobj = (LPVOID)This;
+        return DS_OK;
     }
 
     FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
 
     *ppobj = 0;
-
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface) 
+static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface) 
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -3347,17 +3708,22 @@ static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface)
     return ref;
 }
 
-static ULONG WINAPI IDsDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface) 
+static ULONG WINAPI IDsCaptureDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface) 
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     ref = InterlockedDecrement(&(This->ref));
+    if (ref == 0) {
+        IDsCaptureDriverBuffer_Release((PIDSCDRIVERBUFFER)This->capture_buffer);
+        HeapFree(GetProcessHeap(),0,This);
+        TRACE("(%p) released\n",This);
+    }
     return ref;
 }
 
-static HRESULT WINAPI IDsDriverPropertySetImpl_Get(
+static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Get(
     PIDSDRIVERPROPERTYSET iface,
     PDSPROPERTY pDsProperty,
     LPVOID pPropertyParams,
@@ -3366,12 +3732,12 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_Get(
     ULONG cbPropertyData,
     PULONG pcbReturnedData )
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     FIXME("(%p,%p,%p,%lx,%p,%lx,%p)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData,pcbReturnedData);
     return DSERR_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDsDriverPropertySetImpl_Set(
+static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Set(
     PIDSDRIVERPROPERTYSET iface,
     PDSPROPERTY pDsProperty,
     LPVOID pPropertyParams,
@@ -3379,74 +3745,61 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_Set(
     LPVOID pPropertyData,
     ULONG cbPropertyData )
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     FIXME("(%p,%p,%p,%lx,%p,%lx)\n",This,pDsProperty,pPropertyParams,cbPropertyParams,pPropertyData,cbPropertyData);
     return DSERR_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDsDriverPropertySetImpl_QuerySupport(
+static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QuerySupport(
     PIDSDRIVERPROPERTYSET iface,
     REFGUID PropertySetId,
     ULONG PropertyId,
     PULONG pSupport )
 {
-    ICOM_THIS(IDsDriverPropertySetImpl,iface);
+    ICOM_THIS(IDsCaptureDriverPropertySetImpl,iface);
     FIXME("(%p,%s,%lx,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,pSupport);
     return DSERR_UNSUPPORTED;
 }
 
-ICOM_VTABLE(IDsDriverPropertySet) dsdpsvt =
+ICOM_VTABLE(IDsDriverPropertySet) dscdpsvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    IDsDriverPropertySetImpl_QueryInterface,
-    IDsDriverPropertySetImpl_AddRef,
-    IDsDriverPropertySetImpl_Release,
-    IDsDriverPropertySetImpl_Get,
-    IDsDriverPropertySetImpl_Set,
-    IDsDriverPropertySetImpl_QuerySupport,
+    IDsCaptureDriverPropertySetImpl_QueryInterface,
+    IDsCaptureDriverPropertySetImpl_AddRef,
+    IDsCaptureDriverPropertySetImpl_Release,
+    IDsCaptureDriverPropertySetImpl_Get,
+    IDsCaptureDriverPropertySetImpl_Set,
+    IDsCaptureDriverPropertySetImpl_QuerySupport,
 };
 
 /*======================================================================*
- *                  Low level DSOUND notify implementation		*
+ *                  Low level DSOUND capture notify implementation      *
  *======================================================================*/
 
-typedef struct IDsDriverNotifyImpl IDsDriverNotifyImpl;
-
-struct IDsDriverNotifyImpl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverNotify);
-    DWORD                            ref;
-    /* IDsDriverNotifyImpl fields */
-    LPDSBPOSITIONNOTIFY              notifies;
-    int                              nrofnotifies;
-};
-
-static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
+static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(
     PIDSDRIVERNOTIFY iface,
     REFIID riid,
     LPVOID *ppobj) 
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsDriverNotify) ) {
-	IDsDriverNotify_AddRef(iface);
-	*ppobj = This;
-	return DS_OK;
+        IDsDriverNotify_AddRef(iface);
+        *ppobj = This;
+        return DS_OK;
     }
 
     FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
 
     *ppobj = 0;
-
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface) 
+static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface) 
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
@@ -3454,54 +3807,53 @@ static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
     return ref;
 }
 
-static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface) 
+static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface) 
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     DWORD ref;
     TRACE("(%p) ref was %ld\n", This, This->ref);
 
     ref = InterlockedDecrement(&(This->ref));
-    /* FIXME: A notification should be a part of a buffer rather than pointed
-     * to from a buffer. Hence the -1 ref count */
-    if (ref == -1) {
-	if (This->notifies != NULL)
-	    HeapFree(GetProcessHeap(), 0, This->notifies);
+    if (ref == 0) {
+        IDsCaptureDriverBuffer_Release((PIDSCDRIVERBUFFER)This->capture_buffer);
+        if (This->notifies != NULL)
+            HeapFree(GetProcessHeap(), 0, This->notifies);
 
-	HeapFree(GetProcessHeap(),0,This);
-	return 0;
+        HeapFree(GetProcessHeap(),0,This);
+        TRACE("(%p) released\n",This);
     }
 
     return ref;
 }
 
-static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
+static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     PIDSDRIVERNOTIFY iface,
     DWORD howmuch,
     LPCDSBPOSITIONNOTIFY notify) 
 {
-    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    ICOM_THIS(IDsCaptureDriverNotifyImpl,iface);
     TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
     if (!notify) {
-	WARN("invalid parameter\n");
-	return DSERR_INVALIDPARAM;
+        WARN("invalid parameter\n");
+        return DSERR_INVALIDPARAM;
     }
 
     if (TRACE_ON(wave)) {
-	int i;
-	for (i=0;i<howmuch;i++)
-	    TRACE("notify at %ld to 0x%08lx\n",
-		notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
+        int i;
+        for (i=0;i<howmuch;i++)
+            TRACE("notify at %ld to 0x%08lx\n",
+                notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
     }
 
     /* Make an internal copy of the caller-supplied array.
      * Replace the existing copy if one is already present. */
     if (This->notifies) 
         This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-	This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+            This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
     else 
         This->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-	howmuch * sizeof(DSBPOSITIONNOTIFY));
+            howmuch * sizeof(DSBPOSITIONNOTIFY));
 
     memcpy(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
     This->nrofnotifies = howmuch;
@@ -3509,48 +3861,18 @@ static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
     return S_OK;
 }
 
-ICOM_VTABLE(IDsDriverNotify) dsdnvt =
+ICOM_VTABLE(IDsDriverNotify) dscdnvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    IDsDriverNotifyImpl_QueryInterface,
-    IDsDriverNotifyImpl_AddRef,
-    IDsDriverNotifyImpl_Release,
-    IDsDriverNotifyImpl_SetNotificationPositions,
+    IDsCaptureDriverNotifyImpl_QueryInterface,
+    IDsCaptureDriverNotifyImpl_AddRef,
+    IDsCaptureDriverNotifyImpl_Release,
+    IDsCaptureDriverNotifyImpl_SetNotificationPositions,
 };
 
 /*======================================================================*
- *                  Low level DSOUND capture implementation		*
+ *                  Low level DSOUND capture implementation             *
  *======================================================================*/
-
-typedef struct IDsCaptureDriverImpl IDsCaptureDriverImpl;
-typedef struct IDsCaptureDriverBufferImpl IDsCaptureDriverBufferImpl;
-
-struct IDsCaptureDriverImpl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDsCaptureDriver);
-    DWORD			ref;
-    /* IDsCaptureDriverImpl fields */
-    UINT			wDevID;
-    IDsCaptureDriverBufferImpl*	capture_buffer;
-};
-
-struct IDsCaptureDriverBufferImpl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDsCaptureDriverBuffer);
-    DWORD			ref;
-    /* IDsCaptureDriverBufferImpl fields */
-    IDsCaptureDriverImpl*	drv;
-    DWORD			buflen;
-
-    /* IDsDriverNotifyImpl fields */
-    IDsDriverNotifyImpl*        notify;
-    int                         notify_index;
-
-    /* IDsDriverPropertySetImpl fields */
-    IDsDriverPropertySetImpl*   property_set;
-};
 
 static HRESULT DSDB_MapCapture(IDsCaptureDriverBufferImpl *dscdb)
 {
@@ -3621,37 +3943,27 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(PIDSCDRIVERBUFFE
     }
 
     if ( IsEqualGUID( &IID_IDsDriverNotify, riid ) ) {
-	if (!This->notify) {
-	    This->notify = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->notify));
-	    if (This->notify) {
-		This->notify->ref = 0;	/* release when ref = -1 */
-		This->notify->lpVtbl = &dsdnvt;
-	    }
-	}
-	if (This->notify) {
-	    IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
-	    *ppobj = (LPVOID)This->notify;
-	    return DS_OK;
-	}
-	*ppobj = 0;
-	return E_FAIL;
+        if (!This->notify)
+            IDsCaptureDriverNotifyImpl_Create(This, &(This->notify));
+        if (This->notify) {
+            IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
+            *ppobj = (LPVOID)This->notify;
+            return DS_OK;
+        }
+        *ppobj = 0;
+        return E_FAIL;
     }
 
     if ( IsEqualGUID( &IID_IDsDriverPropertySet, riid ) ) {
-	if (!This->property_set) {
-	    This->property_set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->property_set));
-	    if (This->property_set) {
-		This->property_set->ref = 0;  /* release when ref = -1 */
-		This->property_set->lpVtbl = &dsdpsvt;
-	    }
-	}
-	if (This->property_set) {
-	    IDsDriverPropertySet_AddRef((PIDSDRIVERPROPERTYSET)This->property_set);
-	    *ppobj = (LPVOID)This->property_set;
-	    return DS_OK;
-	}
-	*ppobj = 0;
-	return E_FAIL;
+        if (!This->property_set)
+            IDsCaptureDriverPropertySetImpl_Create(This, &(This->property_set));
+        if (This->property_set) {
+            IDsDriverPropertySet_AddRef((PIDSDRIVERPROPERTYSET)This->property_set);
+            *ppobj = (LPVOID)This->property_set;
+            return DS_OK;
+        }
+        *ppobj = 0;
+        return E_FAIL;
     }
 
     FIXME("(%p,%s,%p) unsupported GUID\n", This, debugstr_guid(riid), ppobj);
@@ -4003,6 +4315,52 @@ static ICOM_VTABLE(IDsCaptureDriver) dscdvt =
     IDsCaptureDriverImpl_Close,
     IDsCaptureDriverImpl_GetCaps,
     IDsCaptureDriverImpl_CreateCaptureBuffer
+};
+
+static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Create(
+    IDsCaptureDriverBufferImpl * dscdb,
+    IDsCaptureDriverPropertySetImpl **pdscdps)
+{
+    IDsCaptureDriverPropertySetImpl * dscdps;
+    TRACE("(%p,%p)\n",dscdb,pdscdps);
+
+    dscdps = (IDsCaptureDriverPropertySetImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdps));
+    if (dscdps == NULL) {
+        WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
+    }
+                                                                                
+    dscdps->ref = 0;
+    dscdps->lpVtbl = &dscdpsvt;
+    dscdps->capture_buffer = dscdb;
+    dscdb->property_set = dscdps;
+    IDsCaptureDriverBuffer_AddRef((PIDSCDRIVER)dscdb);
+                                                                                
+    *pdscdps = dscdps;
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsCaptureDriverNotifyImpl_Create(
+    IDsCaptureDriverBufferImpl * dscdb,
+    IDsCaptureDriverNotifyImpl **pdscdn)
+{
+    IDsCaptureDriverNotifyImpl * dscdn;
+    TRACE("(%p,%p)\n",dscdb,pdscdn);
+
+    dscdn = (IDsCaptureDriverNotifyImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdn));
+    if (dscdn == NULL) {
+        WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
+    }
+                                                                                
+    dscdn->ref = 0;
+    dscdn->lpVtbl = &dscdnvt;
+    dscdn->capture_buffer = dscdb;
+    dscdb->notify = dscdn;
+    IDsCaptureDriverBuffer_AddRef((PIDSCDRIVER)dscdb);
+                                                                                
+    *pdscdn = dscdn;
+    return DS_OK;
 };
 
 static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
