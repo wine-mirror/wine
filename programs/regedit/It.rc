@@ -219,7 +219,9 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Valore troppo grande (%ld)"
     IDS_DELETE_BOX_TITLE    "Confermare Cancellazione del Valore"
     IDS_DELETE_BOX_TEXT     "Sei sicuro di voler cancellare il valore '%s'?"
-    IDS_NEWKEY              "Nuova Chiave"
+    IDS_NEWKEY              "Nuova Chiave #%d"
+    IDS_NEWVALUE            "Nuovo Valore #%d"
+
 END
 
 /*****************************************************************/
