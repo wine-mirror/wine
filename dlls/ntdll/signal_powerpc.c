@@ -65,11 +65,102 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 /***********************************************************************
  * signal context platform-specific definitions
  */
+#ifdef linux
+# warning Please define registers for your platform linux ppc some are missing
 
 typedef struct ucontext SIGCONTEXT;
 
-#define HANDLER_DEF(name) void name( int __signal, struct siginfo *__siginfo, SIGCONTEXT *__context )
-#define HANDLER_CONTEXT (__context)
+# define HANDLER_DEF(name) void name( int __signal, struct siginfo *__siginfo, SIGCONTEXT *__context )
+# define HANDLER_CONTEXT (__context)
+
+/* All Registers access - only for local access */
+# define REG_sig(reg_name, context)		((context)->uc_mcontext.regs->reg_name)
+
+
+/* Gpr Registers access  */
+# define GPR_sig(reg_num, context)		REG_sig(r##reg_num, context)
+
+# define IAR_sig(context)			REG_sig(nip, context)	/* Program counter */
+# define MSR_sig(context)			REG_sig(msr, context)   /* Machine State Register (Supervisor) */
+# define CTR_sig(context)			REG_sig(ctr, context)   /* Count register */
+
+# define XER_sig(context)			XER_sig not defined on your platform /* Link register */
+# define LR_sig(context)			LR_sig not defined on your platform  /* User's integer exception register */
+# define CR_sig(context)			CR_sig not defined on your platform  /* Condition register */
+
+/* Float Registers access  */
+# define FLOAT_sig(reg_num, context)		FLOAT_sig not defined on your platform /* Float registers */
+
+# define FPSCR_sig(reg_num, context)		FPSCR_sig not defined on your platform /* Float registers */
+
+/* Exception Registers access */
+# define DAR_sig(context)			DAR_sig not defined on your platform
+# define DSISR_sig(context)			DSISR_sig not defined on your platform
+# define TRAP_sig(context)			TRAP_sig not defined on your platform
+
+#endif /* linux */
+
+#ifdef __darwin__
+
+# include <sys/ucontext.h>
+
+# include <sys/types.h>
+# include <signal.h>
+typedef siginfo_t siginfo;
+
+typedef struct ucontext SIGCONTEXT;
+
+
+# define HANDLER_DEF(name) void name( int __signal, siginfo *__siginfo, SIGCONTEXT *__context )
+# define HANDLER_CONTEXT (__context)
+
+/* All Registers access - only for local access */
+# define REG_sig(reg_name, context)		((context)->uc_mcontext->ss.reg_name)
+# define FLOATREG_sig(reg_name, context)	((context)->uc_mcontext->fs.reg_name)
+# define EXCEPREG_sig(reg_name, context)	((context)->uc_mcontext->es.reg_name)
+# define VECREG_sig(reg_name, context)		((context)->uc_mcontext->vs.reg_name)
+
+/* Gpr Registers access */
+# define GPR_sig(reg_num, context)		REG_sig(r##reg_num, context)
+
+# define IAR_sig(context)			REG_sig(srr0, context)	/* Program counter */
+# define MSR_sig(context)			REG_sig(srr1, context)  /* Machine State Register (Supervisor) */
+# define CTR_sig(context)			REG_sig(ctr, context)
+
+# define XER_sig(context)			REG_sig(xer, context) /* Link register */
+# define LR_sig(context)			REG_sig(lr, context)  /* User's integer exception register */
+# define CR_sig(context)			REG_sig(cr, context)  /* Condition register */
+
+/* Float Registers access */
+# define FLOAT_sig(reg_num, context)		FLOATREG_sig(fpregs[reg_num], context)
+
+# define FPSCR_sig(context)			((double)FLOATREG_sig(fpscr, context))
+
+/* Exception Registers access */
+# define DAR_sig(context)			EXCEPREG_sig(dar, context)     /* Fault registers for coredump */
+# define DSISR_sig(context)			EXCEPREG_sig(dsisr, context)
+# define TRAP_sig(context)			EXCEPREG_sig(exception, context) /* number of powerpc exception taken */
+
+/* Signal defs : Those are undefined on darwin
+SIGBUS
+#undef BUS_ADRERR
+#undef BUS_OBJERR
+SIGILL
+#undef ILL_ILLOPN
+#undef ILL_ILLTRP
+#undef ILL_ILLADR
+#undef ILL_COPROC
+#undef ILL_PRVREG
+#undef ILL_BADSTK
+SIGTRAP
+#undef TRAP_BRKPT
+#undef TRAP_TRACE
+SIGFPE
+*/
+
+#endif /* __darwin__ */
+
+
 
 typedef int (*wine_signal_handler)(unsigned int sig);
 
@@ -93,30 +184,27 @@ inline static int dispatch_signal(unsigned int sig)
  */
 static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
-#define CX(x,y) context->x = sigcontext->uc_mcontext.regs->y
-#define C(x) CX(Gpr##x,gpr[x])
+
+#define C(x) context->Gpr##x = GPR_sig(x,sigcontext)
+        /* Save Gpr registers */
 	C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
 	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
 	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
 	C(31);
+#undef C
 
-	CX(Iar,nip);
-	CX(Msr,msr);
-	CX(Ctr,ctr);
-#undef CX
-	/* FIXME: fp regs? */
-
-	/* FIXME: missing pt_regs ...
-	unsigned long link;
-	unsigned long xer;
-	unsigned long ccr;
-	unsigned long mq;
-
-	unsigned long trap;
-	unsigned long dar;
-	unsigned long dsisr;
-
-	*/
+	context->Iar = IAR_sig(sigcontext);  /* Program Counter */
+	context->Msr = MSR_sig(sigcontext);  /* Machine State Register (Supervisor) */
+	context->Ctr = CTR_sig(sigcontext);
+        
+        context->Xer = XER_sig(sigcontext);
+	context->Lr  = LR_sig(sigcontext);
+	context->Cr  = CR_sig(sigcontext);
+        
+        /* Saving Exception regs */
+        context->Dar   = DAR_sig(sigcontext);
+        context->Dsisr = DSISR_sig(sigcontext);
+        context->Trap  = TRAP_sig(sigcontext);
 }
 
 
@@ -127,16 +215,26 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
  */
 static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
-#define CX(x,y) sigcontext->uc_mcontext.regs->y = context->x
+
+#define C(x)  GPR_sig(x,sigcontext) = context->Gpr##x
 	C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
 	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
 	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
 	C(31);
+#undef C
 
-	CX(Iar,nip);
-	CX(Msr,msr);
-	CX(Ctr,ctr);
-#undef CX
+        IAR_sig(sigcontext) = context->Iar;  /* Program Counter */
+        MSR_sig(sigcontext) = context->Msr;  /* Machine State Register (Supervisor) */
+        CTR_sig(sigcontext) = context->Ctr;
+        
+        XER_sig(sigcontext) = context->Xer;
+        LR_sig(sigcontext) = context->Lr;
+	CR_sig(sigcontext) = context->Cr;
+        
+        /* Setting Exception regs */
+        DAR_sig(sigcontext) = context->Dar;
+        DSISR_sig(sigcontext) = context->Dsisr;
+        TRAP_sig(sigcontext) = context->Trap;
 }
 
 
@@ -147,7 +245,13 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
  */
 inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
-	/* FIXME? */
+#define C(x)   context->Fpr##x = FLOAT_sig(x,sigcontext)
+        C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
+	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
+	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+	C(31);
+#undef C
+        context->Fpscr = FPSCR_sig(sigcontext);
 }
 
 
@@ -158,7 +262,13 @@ inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  */
 inline static void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
-	/* FIXME? */
+#define C(x)  FLOAT_sig(x,sigcontext) = context->Fpr##x
+        C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
+	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
+	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+	C(31);
+#undef C
+        FPSCR_sig(sigcontext) = context->Fpscr;
 }
 
 
@@ -169,7 +279,7 @@ inline static void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  */
 static inline DWORD get_fpu_code( const CONTEXT *context )
 {
-    DWORD status  = 0 /* FIXME */;
+    DWORD status  = context->Fpscr;
 
     if (status & 0x01)  /* IE */
     {
@@ -186,6 +296,186 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
     return EXCEPTION_FLT_INVALID_OPERATION;  /* generic error */
 }
 
+/**********************************************************************
+ *		do_segv
+ *
+ * Implementation of SIGSEGV handler.
+ */
+static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr )
+{
+    EXCEPTION_RECORD rec;
+    DWORD page_fault_code = EXCEPTION_ACCESS_VIOLATION;
+
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionAddress = addr;
+    rec.NumberParameters = 0;
+    
+    switch (trap) {
+    case SIGSEGV:
+    	switch ( code & 0xffff ) {
+	case SEGV_MAPERR:
+	case SEGV_ACCERR:
+		rec.NumberParameters = 2;
+		rec.ExceptionInformation[0] = 0; /* FIXME ? */
+		rec.ExceptionInformation[1] = (DWORD)addr;
+		if (!(page_fault_code=VIRTUAL_HandleFault(addr)))
+			return;
+		rec.ExceptionCode = page_fault_code;
+		break;
+	default:FIXME("Unhandled SIGSEGV/%x\n",code);
+		break;
+	}
+    	break;
+    case SIGBUS:
+    	switch ( code & 0xffff ) {
+	case BUS_ADRALN:
+		rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+		break;
+#ifdef BUS_ADRERR
+	case BUS_ADRERR:
+#endif
+#ifdef BUS_OBJERR
+	case BUS_OBJERR:
+		/* FIXME: correct for all cases ? */
+		rec.NumberParameters = 2;
+		rec.ExceptionInformation[0] = 0; /* FIXME ? */
+		rec.ExceptionInformation[1] = (DWORD)addr;
+		if (!(page_fault_code=VIRTUAL_HandleFault(addr)))
+			return;
+		rec.ExceptionCode = page_fault_code;
+		break;
+#endif
+	default:FIXME("Unhandled SIGBUS/%x\n",code);
+		break;
+	}
+    	break;
+    case SIGILL:
+    	switch ( code & 0xffff ) {
+	case ILL_ILLOPC: /* illegal opcode */
+#ifdef ILL_ILLOPN
+	case ILL_ILLOPN: /* illegal operand */
+#endif
+#ifdef ILL_ILLADR
+	case ILL_ILLADR: /* illegal addressing mode */
+#endif
+#ifdef ILL_ILLTRP
+	case ILL_ILLTRP: /* illegal trap */
+#endif
+#ifdef ILL_COPROC
+	case ILL_COPROC: /* coprocessor error */
+#endif
+		rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+		break;
+	case ILL_PRVOPC: /* privileged opcode */
+#ifdef ILL_PRVREG
+	case ILL_PRVREG: /* privileged register */
+#endif
+		rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
+		break;
+#ifdef ILL_BADSTK
+	case ILL_BADSTK: /* internal stack error */
+        	rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+		break;
+#endif
+	default:FIXME("Unhandled SIGILL/%x\n", code);
+		break;
+	}
+    	break;
+    }
+    EXC_RtlRaiseException( &rec, context );
+}
+
+/**********************************************************************
+ *		do_trap
+ *
+ * Implementation of SIGTRAP handler.
+ */
+static void do_trap( CONTEXT *context, int code, void * addr )
+{
+    EXCEPTION_RECORD rec;
+
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = addr;
+    rec.NumberParameters = 0;
+
+    /* FIXME: check if we might need to modify PC */
+    switch (code & 0xffff) {
+#ifdef TRAP_BRKPT
+    case TRAP_BRKPT:
+        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+    	break;
+#endif
+#ifdef TRAP_TRACE
+    case TRAP_TRACE:
+        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+    	break;
+#endif
+    default:FIXME("Unhandled SIGTRAP/%x\n", code);
+		break;
+    }
+    EXC_RtlRaiseException( &rec, context );
+}
+
+/**********************************************************************
+ *		do_trap
+ *
+ * Implementation of SIGFPE handler.
+ */
+static void do_fpe( CONTEXT *context, int code, void * addr )
+{
+    EXCEPTION_RECORD rec;
+
+    switch ( code  & 0xffff ) {
+#ifdef FPE_FLTSUB
+    case FPE_FLTSUB:
+        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        break;
+#endif
+#ifdef FPE_INTDIV
+    case FPE_INTDIV:
+        rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+        break;
+#endif
+#ifdef FPE_INTOVF
+    case FPE_INTOVF:
+        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTDIV
+    case FPE_FLTDIV:
+        rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+        break;
+#endif
+#ifdef FPE_FLTOVF
+    case FPE_FLTOVF:
+        rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTUND
+    case FPE_FLTUND:
+        rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTRES
+    case FPE_FLTRES:
+        rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
+        break;
+#endif
+#ifdef FPE_FLTINV
+    case FPE_FLTINV:
+#endif
+    default:
+        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        break;
+    }
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = addr;
+    rec.NumberParameters = 0;
+    EXC_RtlRaiseException( &rec, context );
+}
 
 /**********************************************************************
  *		segv_handler
@@ -195,72 +485,8 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 static HANDLER_DEF(segv_handler)
 {
     CONTEXT context;
-    EXCEPTION_RECORD rec;
-    DWORD page_fault_code = EXCEPTION_ACCESS_VIOLATION;
-
     save_context( &context, HANDLER_CONTEXT );
-
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionAddress = (LPVOID)HANDLER_CONTEXT->uc_mcontext.regs->nip;
-    rec.NumberParameters = 0;
-    switch (__siginfo->si_signo) {
-    case SIGSEGV:
-    	switch ( __siginfo->si_code & 0xffff ) {
-	case SEGV_MAPERR:
-	case SEGV_ACCERR:
-		rec.NumberParameters = 2;
-		rec.ExceptionInformation[0] = 0; /* FIXME ? */
-		rec.ExceptionInformation[1] = (DWORD)__siginfo->si_addr;
-		if (!(page_fault_code=VIRTUAL_HandleFault(__siginfo->si_addr)))
-			return;
-		rec.ExceptionCode = page_fault_code;
-		break;
-	default:FIXME("Unhandled SIGSEGV/%x\n",__siginfo->si_code);
-		break;
-	}
-    	break;
-    case SIGBUS:
-    	switch ( __siginfo->si_code & 0xffff ) {
-	case BUS_ADRALN:
-		rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
-		break;
-	case BUS_ADRERR:
-	case BUS_OBJERR:
-		/* FIXME: correct for all cases ? */
-		rec.NumberParameters = 2;
-		rec.ExceptionInformation[0] = 0; /* FIXME ? */
-		rec.ExceptionInformation[1] = (DWORD)__siginfo->si_addr;
-		if (!(page_fault_code=VIRTUAL_HandleFault(__siginfo->si_addr)))
-			return;
-		rec.ExceptionCode = page_fault_code;
-		break;
-	default:FIXME("Unhandled SIGBUS/%x\n",__siginfo->si_code);
-		break;
-	}
-    	break;
-    case SIGILL:
-    	switch ( __siginfo->si_code & 0xffff ) {
-	case ILL_ILLOPC: /* illegal opcode */
-	case ILL_ILLOPN: /* illegal operand */
-	case ILL_ILLADR: /* illegal addressing mode */
-	case ILL_ILLTRP: /* illegal trap */
-	case ILL_COPROC: /* coprocessor error */
-		rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
-		break;
-	case ILL_PRVOPC: /* privileged opcode */
-	case ILL_PRVREG: /* privileged register */
-		rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
-		break;
-	case ILL_BADSTK: /* internal stack error */
-        	rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-		break;
-	default:FIXME("Unhandled SIGILL/%x\n",__siginfo->si_code);
-		break;
-	}
-    	break;
-    }
-    EXC_RtlRaiseException( &rec, &context );
+    do_segv( &context, __siginfo->si_signo, __siginfo->si_errno, __siginfo->si_code, __siginfo->si_addr );
     restore_context( &context, HANDLER_CONTEXT );
 }
 
@@ -272,28 +498,10 @@ static HANDLER_DEF(segv_handler)
 static HANDLER_DEF(trap_handler)
 {
     CONTEXT context;
-    EXCEPTION_RECORD rec;
-
     save_context( &context, HANDLER_CONTEXT );
-
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)__context->uc_mcontext.regs->nip;
-    rec.NumberParameters = 0;
-
-    /* FIXME: check if we might need to modify PC */
-    switch (__siginfo->si_code & 0xffff) {
-    case TRAP_BRKPT:
-        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-    	break;
-    case TRAP_TRACE:
-        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-    	break;
-    }
-    EXC_RtlRaiseException( &rec, &context );
+    do_trap( &context, __siginfo->si_code, __siginfo->si_addr );
     restore_context( &context, HANDLER_CONTEXT );
 }
-
 
 /**********************************************************************
  *		fpe_handler
@@ -303,47 +511,12 @@ static HANDLER_DEF(trap_handler)
 static HANDLER_DEF(fpe_handler)
 {
     CONTEXT context;
-    EXCEPTION_RECORD rec;
-
-    /*save_fpu( &context, HANDLER_CONTEXT );*/
+    save_fpu( &context, HANDLER_CONTEXT );
     save_context( &context, HANDLER_CONTEXT );
-
-    switch ( __siginfo->si_code  & 0xffff ) {
-    case FPE_FLTSUB:
-        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
-        break;
-    case FPE_INTDIV:
-        rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
-        break;
-    case FPE_INTOVF:
-        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
-        break;
-    case FPE_FLTDIV:
-        rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
-        break;
-    case FPE_FLTOVF:
-        rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
-        break;
-    case FPE_FLTUND:
-        rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
-        break;
-    case FPE_FLTRES:
-        rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
-        break;
-    case FPE_FLTINV:
-    default:
-        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
-        break;
-    }
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)__context->uc_mcontext.regs->nip;
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context );
+    do_fpe( &context,  __siginfo->si_code, __siginfo->si_addr );
     restore_context( &context, HANDLER_CONTEXT );
-    /*restore_fpu( &context, HANDLER_CONTEXT );*/
+    restore_fpu( &context, HANDLER_CONTEXT );
 }
-
 
 /**********************************************************************
  *		int_handler
