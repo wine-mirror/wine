@@ -375,8 +375,50 @@ BOOL WINAPI SHRegGetBoolUSValueA(
 	BOOL fIgnoreHKCU,
 	BOOL fDefault)
 {
-	FIXME("%s %s\n", pszSubKey,pszValue);
-	return fDefault;
+	LONG retvalue;
+	DWORD type, datalen, work;
+	BOOL ret = fDefault;
+	CHAR data[10];
+
+	TRACE("key '%s', value '%s', %s\n",
+	      debugstr_a(pszSubKey), debugstr_a(pszValue),
+	      (fIgnoreHKCU) ? "Ignoring HKCU" : "Trys HKCU then HKLM");
+
+	datalen = sizeof(data)-1;
+	if (!(retvalue = SHRegGetUSValueA( pszSubKey, pszValue, &type, 
+					   data, &datalen,
+					   fIgnoreHKCU, 0, 0))) {
+	    /* process returned data via type into bool */
+	    switch (type) {
+	    case REG_SZ:
+		data[9] = '\0';     /* set end of string */
+		if (lstrcmpiA(data, "YES") == 0) ret = TRUE;
+		if (lstrcmpiA(data, "TRUE") == 0) ret = TRUE;
+		if (lstrcmpiA(data, "NO") == 0) ret = FALSE;
+		if (lstrcmpiA(data, "FALSE") == 0) ret = FALSE;
+		break;
+	    case REG_DWORD:
+		work = *(LPDWORD)data;
+		ret = (work != 0);
+		break;
+	    case REG_BINARY:
+		if (datalen == 1) {
+		    ret = (data[0] != '\0');
+		    break;
+		}
+	    default:
+		FIXME("Unsupported registry data type %ld\n", type);
+		ret = FALSE;
+	    }
+	    TRACE("got value (type=%ld), returing <%s>\n", type,
+		  (ret) ? "TRUE" : "FALSE");
+	}
+	else {
+	    ret = fDefault;
+	    TRACE("returning default data <%s>\n",
+		  (ret) ? "TRUE" : "FALSE");
+	}
+	return ret;
 }
 
 /*************************************************************************
@@ -388,8 +430,50 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 	BOOL fIgnoreHKCU,
 	BOOL fDefault)
 {
-	FIXME("%s %s\n", debugstr_w(pszSubKey),debugstr_w(pszValue));
-	return fDefault;
+	LONG retvalue;
+	DWORD type, datalen, work;
+	BOOL ret = fDefault;
+	WCHAR data[10];
+
+	TRACE("key '%s', value '%s', %s\n",
+	      debugstr_w(pszSubKey), debugstr_w(pszValue),
+	      (fIgnoreHKCU) ? "Ignoring HKCU" : "Trys HKCU then HKLM");
+
+	datalen = (sizeof(data)-1) * sizeof(WCHAR);
+	if (!(retvalue = SHRegGetUSValueW( pszSubKey, pszValue, &type, 
+					   data, &datalen,
+					   fIgnoreHKCU, 0, 0))) {
+	    /* process returned data via type into bool */
+	    switch (type) {
+	    case REG_SZ:
+		data[9] = L'\0';     /* set end of string */
+		if (lstrcmpiW(data, L"YES") == 0) ret = TRUE;
+		if (lstrcmpiW(data, L"TRUE") == 0) ret = TRUE;
+		if (lstrcmpiW(data, L"NO") == 0) ret = FALSE;
+		if (lstrcmpiW(data, L"FALSE") == 0) ret = FALSE;
+		break;
+	    case REG_DWORD:
+		work = *(LPDWORD)data;
+		ret = (work != 0);
+		break;
+	    case REG_BINARY:
+		if (datalen == 1) {
+		    ret = (data[0] != L'\0');
+		    break;
+		}
+	    default:
+		FIXME("Unsupported registry data type %ld\n", type);
+		ret = FALSE;
+	    }
+	    TRACE("got value (type=%ld), returing <%s>\n", type,
+		  (ret) ? "TRUE" : "FALSE");
+	}
+	else {
+	    ret = fDefault;
+	    TRACE("returning default data <%s>\n",
+		  (ret) ? "TRUE" : "FALSE");
+	}
+	return ret;
 }
 
 /*************************************************************************
