@@ -224,60 +224,68 @@ void pdump (LPCITEMIDLIST pidl)
 	  pcheck(pidl);
 	}
 }
-#define BYTES_PRINTED 32
-BOOL pcheck (LPCITEMIDLIST pidl)
+
+static void dump_pidl_hex( LPCITEMIDLIST pidl )
 {
-        DWORD type, ret=TRUE;
-        LPCITEMIDLIST pidltemp = pidl;
+    const unsigned char *p = (const unsigned char *)pidl;
+    const int max_bytes = 0x80, max_line = 0x10;
+    char szHex[max_line*3+1], szAscii[max_line+1];
+    int i, n;
 
-        if (pidltemp && pidltemp->mkid.cb)
-        { do
-          { type   = _dbg_ILGetDataPointer(pidltemp)->type;
-            switch (type)
-	    { case PT_CPLAPPLET:
-	      case PT_GUID:
-	      case PT_SHELLEXT:
-	      case PT_DRIVE:
-	      case PT_DRIVE1:
-	      case PT_DRIVE2:
-	      case PT_DRIVE3:
-	      case PT_FOLDER:
-	      case PT_VALUE:
-	      case PT_FOLDER1:
-	      case PT_WORKGRP:
-	      case PT_COMP:
-	      case PT_NETPROVIDER:
-	      case PT_NETWORK:
-	      case PT_IESPECIAL1:
-	      case PT_YAGUID:
-	      case PT_IESPECIAL2:
-	      case PT_SHARE:
-		break;
-	      default:
-	      {
-		char szTemp[BYTES_PRINTED*4 + 1];
-		int i;
-		unsigned char c;
+    n = pidl->mkid.cb;
+    if( n>max_bytes )
+        n = max_bytes;
+    for( i=0; i<n; i++ )
+    {
+        sprintf( &szHex[ (i%max_line)*3 ], "%02X ", p[i] );
+        szAscii[ (i%max_line) ] = isprint( p[i] ) ? p[i] : '.';
 
-		memset(szTemp, ' ', BYTES_PRINTED*4 + 1);
-		for ( i = 0; (i<pidltemp->mkid.cb) && (i<BYTES_PRINTED); i++)
-		{
-		  c = ((const unsigned char *)pidltemp)[i];
+        /* print out at the end of each line and when we're finished */
+        if( i!=(n-1) && (i%max_line) != (max_line-1) )
+            continue;
+        szAscii[ (i%max_line)+1 ] = 0;
+        DPRINTF("%-*s   %s\n", max_line*3, szHex, szAscii );
+    }
+}
 
-		  szTemp[i*3+0] = ((c>>4)>9)? (c>>4)+55 : (c>>4)+48;
-		  szTemp[i*3+1] = ((0x0F&c)>9)? (0x0F&c)+55 : (0x0F&c)+48;
-		  szTemp[i*3+2] = ' ';
-		  szTemp[i+BYTES_PRINTED*3]  =  (c>=0x20 && c <=0x80) ? c : '.';
-		}
-		szTemp[BYTES_PRINTED*4] = 0x00;
-		ERR("unknown IDLIST %p [%p] size=%u type=%lx\n%s\n",pidl, pidltemp, pidltemp->mkid.cb,type, szTemp);
-		ret = FALSE;
-	      }
-	    }
-	    pidltemp = _dbg_ILGetNext(pidltemp);
-	  } while (pidltemp && pidltemp->mkid.cb);
-	}
-	return ret;
+BOOL pcheck( LPCITEMIDLIST pidl )
+{
+    DWORD type;
+    LPCITEMIDLIST pidltemp = pidl;
+
+    while( pidltemp && pidltemp->mkid.cb )
+    {
+        type = _dbg_ILGetDataPointer(pidltemp)->type;
+        switch( type )
+        {
+        case PT_CPLAPPLET:
+        case PT_GUID:
+        case PT_SHELLEXT:
+        case PT_DRIVE:
+        case PT_DRIVE1:
+        case PT_DRIVE2:
+        case PT_DRIVE3:
+        case PT_FOLDER:
+        case PT_VALUE:
+        case PT_FOLDER1:
+        case PT_WORKGRP:
+        case PT_COMP:
+        case PT_NETPROVIDER:
+        case PT_NETWORK:
+        case PT_IESPECIAL1:
+        case PT_YAGUID:
+        case PT_IESPECIAL2:
+        case PT_SHARE:
+            break;
+        default:
+            ERR("unknown IDLIST %p [%p] size=%u type=%lx\n",
+                pidl, pidltemp, pidltemp->mkid.cb,type );
+            dump_pidl_hex( pidltemp );
+            return FALSE;
+        }
+        pidltemp = _dbg_ILGetNext(pidltemp);
+    }
+    return TRUE;
 }
 
 static char shdebugstr_buf1[100];
