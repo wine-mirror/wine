@@ -162,6 +162,7 @@ typedef struct {
 typedef struct {
     /* Mirrored Repeat */
     BOOLEAN mirrored_repeat;
+    BOOLEAN mipmap_lodbias;
 } GL_EXTENSIONS_LIST; 
 extern GL_EXTENSIONS_LIST GL_extensions;
 

@@ -1953,11 +1953,12 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	    D3DVALUE value = *((D3DVALUE *) &dwState);
 	    BOOLEAN handled = TRUE;
 	    
-	    if (value != 0.0)
+	    if ((value != 0.0) && (GL_extensions.mipmap_lodbias == FALSE))
 	        handled = FALSE;
 
 	    if (handled) {
 	        TRACE(" Stage type : D3DTSS_MIPMAPLODBIAS => %f\n", value);
+		glTexEnvf(GL_TEXTURE_FILTER_CONTROL_WINE, GL_TEXTURE_LOD_BIAS_WINE, value);
 	    } else {
 	        FIXME(" Unhandled stage type : D3DTSS_MIPMAPLODBIAS => %f\n", value);
 	    }
@@ -3770,7 +3771,11 @@ static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
     pc->dwMiscCaps = D3DPMISCCAPS_CONFORMANT | D3DPMISCCAPS_CULLCCW | D3DPMISCCAPS_CULLCW |
       D3DPMISCCAPS_LINEPATTERNREP | D3DPMISCCAPS_MASKPLANES | D3DPMISCCAPS_MASKZ;
     pc->dwRasterCaps = D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_FOGRANGE | D3DPRASTERCAPS_FOGTABLE |
-      D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_STIPPLE | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZTEST | D3DPRASTERCAPS_SUBPIXEL;
+      D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_STIPPLE | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZTEST | D3DPRASTERCAPS_SUBPIXEL |
+	  D3DPRASTERCAPS_ZFOG;
+    if (GL_extensions.mipmap_lodbias == TRUE) {
+	pc->dwRasterCaps |= D3DPRASTERCAPS_MIPMAPLODBIAS;
+    }
     pc->dwZCmpCaps = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
       D3DPCMPCAPS_LESS | D3DPCMPCAPS_LESSEQUAL | D3DPCMPCAPS_NEVER | D3DPCMPCAPS_NOTEQUAL;
     pc->dwSrcBlendCaps  = D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_DESTCOLOR | D3DPBLENDCAPS_INVDESTCOLOR |
@@ -3937,6 +3942,14 @@ d3ddevice_init_at_startup(void *gl_handle)
 	((major >= 1) && (minor >= 4))) {
 	TRACE(" - mirrored repeat\n");
 	GL_extensions.mirrored_repeat = TRUE;
+    }
+
+    /* Texture LOD Bias :
+         - GL_EXT_texture_lod_bias
+    */
+    if (strstr(glExtensions, "GL_EXT_texture_lod_bias")) {
+	TRACE(" - texture lod bias\n");
+	GL_extensions.mipmap_lodbias = TRUE;
     }
     
     /* Fill the D3D capabilities according to what GL tells us... */

@@ -400,6 +400,12 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        glThis->blending = dwRenderState;
 	        break;
 
+	    case D3DRENDERSTATE_MIPMAPLODBIAS: /* 46 */
+	        IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7),
+						      0, D3DTSS_MIPMAPLODBIAS,
+						      dwRenderState);
+	        break;
+	      
 	    case D3DRENDERSTATE_ZBIAS: /* 47 */
 	        /* This is a tad bit hacky.. But well, no idea how to do it better in OpenGL :-/ */
 	        if (dwRenderState == 0) {

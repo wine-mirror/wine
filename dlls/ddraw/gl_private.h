@@ -54,7 +54,9 @@
 
    Note: this is perfectly 'legal' as the three variants of the enum have exactly the same value
 */
-#define GL_MIRRORED_REPEAT_WINE 0x8370
+#define GL_MIRRORED_REPEAT_WINE                 0x8370
+#define GL_TEXTURE_FILTER_CONTROL_WINE          0x8500
+#define GL_TEXTURE_LOD_BIAS_WINE                0x8501
 
 #ifndef GLPRIVATE_NO_REDEFINE
 
@@ -123,6 +125,7 @@
 #define glStencilOp pglStencilOp
 #define glTexCoord2f pglTexCoord2f
 #define glTexCoord2fv pglTexCoord2fv
+#define glTexEnvf pglTexEnvf
 #define glTexEnvfv pglTexEnvfv
 #define glTexEnvi pglTexEnvi
 #define glTexImage2D pglTexImage2D
