@@ -401,15 +401,12 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 static HRESULT WINAPI IDirectSoundImpl_GetCaps(LPDIRECTSOUND8 iface,LPDSCAPS caps) {
 	ICOM_THIS(IDirectSoundImpl,iface);
 	TRACE("(%p,%p)\n",This,caps);
-	TRACE("(flags=0x%08lx)\n",caps->dwFlags);
 
-	if (caps == NULL)
+	if (caps == NULL || caps->dwSize!=sizeof(*caps))
 		return DSERR_INVALIDPARAM;
 
-	/* We should check this value, not set it. See Inside DirectX, p215. */
-	caps->dwSize = sizeof(*caps);
-
 	caps->dwFlags = This->drvcaps.dwFlags;
+	TRACE("(flags=0x%08lx)\n",caps->dwFlags);
 
 	/* FIXME: copy caps from This->drvcaps */
 	caps->dwMinSecondarySampleRate		= DSBFREQUENCY_MIN;
