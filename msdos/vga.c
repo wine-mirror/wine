@@ -11,6 +11,7 @@
 #include "winuser.h"
 #include "wincon.h"
 #include "miscemu.h"
+#include "callback.h"
 #include "vga.h"
 #include "ddraw.h"
 #include "services.h"
@@ -30,6 +31,27 @@ static DirectDrawCreateProc pDirectDrawCreate;
 
 typedef HWND WINAPI (*CreateWindowExAProc)(DWORD,LPCSTR,LPCSTR,DWORD,INT,INT, INT,INT,HWND,HMENU,HINSTANCE,LPVOID);
 static CreateWindowExAProc pCreateWindowExA;
+
+static PALETTEENTRY vga_def_palette[256]={
+/* red  green  blue */
+  {0x00, 0x00, 0x00}, /* 0 - Black */
+  {0x00, 0x00, 0x80}, /* 1 - Blue */
+  {0x00, 0x80, 0x00}, /* 2 - Green */
+  {0x00, 0x80, 0x80}, /* 3 - Cyan */
+  {0x80, 0x00, 0x00}, /* 4 - Red */
+  {0x80, 0x00, 0x80}, /* 5 - Magenta */
+  {0x80, 0x80, 0x00}, /* 6 - Brown */
+  {0xC0, 0xC0, 0xC0}, /* 7 - Light gray */
+  {0x80, 0x80, 0x80}, /* 8 - Dark gray */
+  {0x00, 0x00, 0xFF}, /* 9 - Light blue */
+  {0x00, 0xFF, 0x00}, /* A - Light green */
+  {0x00, 0xFF, 0xFF}, /* B - Light cyan */
+  {0xFF, 0x00, 0x00}, /* C - Light red */
+  {0xFF, 0x00, 0xFF}, /* D - Light magenta */
+  {0xFF, 0xFF, 0x00}, /* E - Yellow */
+  {0xFF, 0xFF, 0xFF}, /* F - White */
+  {0,0,0} /* FIXME: a series of continuous rainbow hues should follow */
+};
 
 static void VGA_DeinstallTimer(void)
 {
@@ -60,10 +82,17 @@ char*VGA_AlphaBuffer(void)
 
 /*** GRAPHICS MODE ***/
 
-int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
+typedef struct {
+  unsigned Xres, Yres, Depth;
+  int ret;
+} ModeSet;
+
+static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 {
     LRESULT	res;
     HWND	hwnd;
+    ModeSet *par = (ModeSet *)arg;
+    par->ret=1;
 
     if (lpddraw) VGA_Exit();
     if (!lpddraw) {
@@ -73,7 +102,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             if (hmod) pDirectDrawCreate = (DirectDrawCreateProc)GetProcAddress( hmod, "DirectDrawCreate" );
 	    if (!pDirectDrawCreate) {
 		ERR("Can't lookup DirectDrawCreate from ddraw.dll.\n");
-		return 1;
+		return;
 	    }
         }
         if (!pCreateWindowExA)
@@ -81,20 +110,20 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             HMODULE hmod = LoadLibraryA( "user32.dll" );
 	    if (!hmod) {
 		ERR("Can't load user32.dll.\n");
-		return 1;
+		return;
 	    }
             if (hmod) pCreateWindowExA = (CreateWindowExAProc)GetProcAddress( hmod, "CreateWindowExA" );
 	    if (!pCreateWindowExA) {
 		ERR("Can't lookup CreateWindowExA from user32.dll.\n");
-		return 1;
+		return;
 	    }
 	}
         res = pDirectDrawCreate(NULL,&lpddraw,NULL);
         if (!lpddraw) {
             ERR("DirectDraw is not available (res = %lx)\n",res);
-            return 1;
+            return;
         }
-	hwnd = pCreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,Xres,Yres,0,0,0,NULL);
+	hwnd = pCreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,par->Xres,par->Yres,0,0,0,NULL);
 	if (!hwnd) {
 	    ERR("Failed to create user window.\n");
 	}
@@ -102,16 +131,24 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 	    ERR("Could not set cooperative level to exclusive (%lx)\n",res);
 	}
 
-        if ((res=IDirectDraw_SetDisplayMode(lpddraw,Xres,Yres,Depth))) {
-            ERR("DirectDraw does not support requested display mode (%dx%dx%d), res = %lx!\n",Xres,Yres,Depth,res);
+        if ((res=IDirectDraw_SetDisplayMode(lpddraw,par->Xres,par->Yres,par->Depth))) {
+            ERR("DirectDraw does not support requested display mode (%dx%dx%d), res = %lx!\n",par->Xres,par->Yres,par->Depth,res);
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
-            return 1;
+            return;
         }
+
         res=IDirectDraw_CreatePalette(lpddraw,DDPCAPS_8BIT,NULL,&lpddpal,NULL);
-	if (res) {
+        if (res) {
 	    ERR("Could not create palette (res = %lx)\n",res);
-	}
+            IDirectDraw_Release(lpddraw);
+            lpddraw=NULL;
+            return;
+        }
+        if ((res=IDirectDrawPalette_SetEntries(lpddpal,0,0,256,vga_def_palette))) {
+            ERR("Could not set default palette entries (res = %lx)\n", res);
+        }
+
         memset(&sdesc,0,sizeof(sdesc));
         sdesc.dwSize=sizeof(sdesc);
 	sdesc.dwFlags = DDSD_CAPS;
@@ -120,15 +157,26 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             ERR("DirectDraw surface is not available\n");
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
-            return 1;
+            return;
         }
-        FIXME("no default palette entries\n");
         IDirectDrawSurface_SetPalette(lpddsurf,lpddpal);
         vga_refresh=0;
         /* poll every 20ms (50fps should provide adequate responsiveness) */
         VGA_InstallTimer(20);
     }
-    return 0;
+    par->ret=0;
+    return;
+}
+
+int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
+{
+    ModeSet par;
+    par.Xres = Xres;
+    par.Yres = Yres;
+    par.Depth = Depth;
+    if (Dosvm.RunInThread) Dosvm.RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
+    else VGA_DoSetMode((ULONG_PTR)&par);
+    return par.ret;
 }
 
 int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
@@ -141,17 +189,23 @@ int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
     return 0;
 }
 
+static void WINAPI VGA_DoExit(ULONG_PTR arg)
+{
+    VGA_DeinstallTimer();
+    IDirectDrawSurface_SetPalette(lpddsurf,NULL);
+    IDirectDrawSurface_Release(lpddsurf);
+    lpddsurf=NULL;
+    IDirectDrawPalette_Release(lpddpal);
+    lpddpal=NULL;
+    IDirectDraw_Release(lpddraw);
+    lpddraw=NULL;
+}
+
 void VGA_Exit(void)
 {
     if (lpddraw) {
-        VGA_DeinstallTimer();
-        IDirectDrawSurface_SetPalette(lpddsurf,NULL);
-        IDirectDrawSurface_Release(lpddsurf);
-        lpddsurf=NULL;
-        IDirectDrawPalette_Release(lpddpal);
-        lpddpal=NULL;
-        IDirectDraw_Release(lpddraw);
-        lpddraw=NULL;
+        if (Dosvm.RunInThread) Dosvm.RunInThread(VGA_DoExit, 0);
+        else VGA_DoExit(0);
     }
 }
 
@@ -224,7 +278,8 @@ void VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
 void VGA_SetCursorPos(unsigned X,unsigned Y)
 {
     COORD pos;
-    
+
+    if (!poll_timer) VGA_SetAlphaMode(80, 25);
     pos.X = X;
     pos.Y = Y;
     SetConsoleCursorPosition(VGA_AlphaConsole(),pos);
