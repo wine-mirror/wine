@@ -51,12 +51,15 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winuser.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
 #include "mmddk.h"
 #include "wine/windef16.h"
+#include "wine/winbase16.h"
 #include "wine/debug.h"
 #include "dsound.h"
 #include "dsdriver.h"
@@ -92,6 +95,7 @@ typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
 typedef struct IDirectSoundCaptureImpl IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IKsPropertySetImpl IKsPropertySetImpl;
+
 
 /*****************************************************************************
  * IDirectSound implementation structure
@@ -277,6 +281,98 @@ static HRESULT mmErr(UINT err)
 		return DSERR_GENERIC;
 	}
 }
+
+static int	ds_emuldriver = DS_EMULDRIVER;
+static int	ds_hel_margin = DS_HEL_MARGIN;
+static int	ds_hel_queue = DS_HEL_QUEUE;
+static int	ds_snd_queue_max = DS_SND_QUEUE_MAX;
+static int	ds_snd_queue_min = DS_SND_QUEUE_MIN;
+
+/*
+ * Get a config key from either the app-specific or the default config
+ */
+
+inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
+                                    char *buffer, DWORD size )
+{
+    if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, buffer, &size )) return 0;
+    return RegQueryValueExA( defkey, name, 0, NULL, buffer, &size );
+}
+
+
+/*
+ * Setup the dsound options.
+ */
+
+inline static void setup_dsound_options(void)
+{
+    char buffer[MAX_PATH+1];
+    HKEY hkey, appkey = 0;
+    
+    buffer[MAX_PATH]='\0';
+    
+    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\dsound", 0, NULL,
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    {
+        ERR("Cannot create config registry key\n" );
+        ExitProcess(1);
+    }
+
+    if (GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) ||
+        GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    {
+        HKEY tmpkey;
+
+        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &tmpkey ))
+        {
+	    char appname[MAX_PATH+16];
+	    char *p = strrchr( buffer, '\\' );
+	    if (p!=NULL) {
+	    	    appname[MAX_PATH]='\0';
+	    	    strncpy(appname,p+1,MAX_PATH);
+		    strcat(appname,"\\dsound");
+		    TRACE("appname = [%s] \n",appname);
+		    if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
+            		RegCloseKey( tmpkey );
+	    }
+        }
+    }
+
+    /* get options */
+
+    if (!get_config_key( hkey, appkey, "EmulDriver", buffer, MAX_PATH )) 
+        ds_emuldriver = atoi(buffer);
+ 
+    if (!get_config_key( hkey, appkey, "HELmargin", buffer, MAX_PATH )) 
+        ds_hel_margin = atoi(buffer);
+
+    if (!get_config_key( hkey, appkey, "HELqueue", buffer, MAX_PATH ))
+        ds_hel_queue = atoi(buffer);
+
+    if (!get_config_key( hkey, appkey, "SndQueueMax", buffer, MAX_PATH ))
+        ds_snd_queue_max = atoi(buffer);
+
+    if (!get_config_key( hkey, appkey, "SndQueueMin", buffer, MAX_PATH ))
+        ds_snd_queue_min = atoi(buffer);
+
+    if (appkey) RegCloseKey( appkey );
+    RegCloseKey( hkey );
+
+    if (ds_emuldriver != DS_EMULDRIVER )
+	WARN("ds_emuldriver = %d (default=%d)\n",ds_emuldriver, DS_EMULDRIVER);
+    if (ds_hel_margin != DS_HEL_MARGIN ) 
+	WARN("ds_hel_margin = %d (default=%d)\n",ds_hel_margin, DS_HEL_MARGIN );
+    if (ds_hel_queue != DS_HEL_QUEUE )
+    	WARN("ds_hel_queue = %d (default=%d)\n",ds_hel_queue, DS_HEL_QUEUE );          
+    if (ds_snd_queue_max != DS_SND_QUEUE_MAX)
+	WARN("ds_snd_queue_max = %d (default=%d)\n",ds_snd_queue_max ,DS_SND_QUEUE_MAX);
+    if (ds_snd_queue_min != DS_SND_QUEUE_MIN)
+	WARN("ds_snd_queue_min = %d (default=%d)\n",ds_snd_queue_min ,DS_SND_QUEUE_MIN);
+
+}
+
+
+
 
 /***************************************************************************
  * DirectSoundEnumerateA [DSOUND.2]  
@@ -1508,7 +1604,7 @@ static DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
 	/* detect buffer underrun */
 	if (pwrite < pplay) pwrite += primarybuf->buflen; /* wraparound */
 	pwrite -= pplay;
-	if (pmix > (DS_SND_QUEUE_MAX * primarybuf->dsound->fraglen + pwrite + primarybuf->writelead)) {
+	if (pmix > (ds_snd_queue_max * primarybuf->dsound->fraglen + pwrite + primarybuf->writelead)) {
 		WARN("detected an underrun: primary queue was %ld\n",pmix);
 		pmix = 0;
 	}
@@ -1555,7 +1651,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 		if (writepos) {
 			/* the writepos should only be used by apps with WRITEPRIMARY priority,
 			 * in which case our software mixer is disabled anyway */
-			*writepos = (This->dsound->pwplay + DS_HEL_MARGIN) * This->dsound->fraglen;
+			*writepos = (This->dsound->pwplay + ds_hel_margin) * This->dsound->fraglen;
 			while (*writepos >= This->buflen)
 				*writepos -= This->buflen;
 		}
@@ -1593,7 +1689,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 				 * behind write cursor, hmm... */
 				/* let's just do what might work for Half-Life */
 				DWORD wp;
-				wp = (This->dsound->pwplay + DS_HEL_MARGIN) * This->dsound->fraglen;
+				wp = (This->dsound->pwplay + ds_hel_margin) * This->dsound->fraglen;
 				while (wp >= primarybuf->buflen)
 					wp -= primarybuf->buflen;
 				*playpos = DSOUND_CalcPlayPosition(This, pstate, wp, pwrite, lplay, splay);
@@ -2602,75 +2698,66 @@ static inline BYTE cvtS16toU8(INT16 word)
 }
 
 
-/* We should be able to optimize these two inline functions */
-/* so that we aren't doing 8->16->8 conversions when it is */
-/* not necessary. But this is still a WIP. Optimize later. */
-static inline void get_fields(const IDirectSoundBufferImpl *dsb, BYTE *buf, INT *fl, INT *fr)
+static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE *obuf )
 {
-	INT16	*bufs = (INT16 *) buf;
-
-	/* TRACE("(%p)\n", buf); */
-	if ((dsb->wfx.wBitsPerSample == 8) && dsb->wfx.nChannels == 2) {
-		*fl = cvtU8toS16(*buf);
-		*fr = cvtU8toS16(*(buf + 1));
-		return;
+	INT 	fl = 0, fr = 0;
+	if (dsb->wfx.nChannels == 2) {
+		if (dsb->wfx.wBitsPerSample == 8)  {
+			/* avoid needless 8->16->8 conversion */
+			if ( (primarybuf->wfx.wBitsPerSample == 8) && (primarybuf->wfx.nChannels == 2) ) {
+				*obuf=*ibuf;
+				*(obuf+1)=*(ibuf+1);
+				return;
+			}
+			fl = cvtU8toS16(*ibuf);
+			fr = cvtU8toS16(*(ibuf + 1));
+		} else if (dsb->wfx.wBitsPerSample == 16) {
+			fl = *((INT16 *)ibuf);
+			fr = *(((INT16 *)ibuf) + 1);
+		}
+	} else if (dsb->wfx.nChannels == 1) {
+		if (dsb->wfx.wBitsPerSample == 8) {
+			/* avoid needless 8->16->8 conversion */
+			if ( (primarybuf->wfx.wBitsPerSample == 8) && (primarybuf->wfx.nChannels == 1) ) {
+				*obuf=*ibuf;
+				return;
+			}
+			fl = cvtU8toS16(*ibuf);
+			fr = fl;
+		} else if (dsb->wfx.wBitsPerSample == 16) {
+			fl = *((INT16 *)ibuf);
+			fr = fl;
+		}
 	}
-
-	if ((dsb->wfx.wBitsPerSample == 16) && dsb->wfx.nChannels == 2) {
-		*fl = *bufs;
-		*fr = *(bufs + 1);
-		return;
+	if (primarybuf->wfx.nChannels == 2) {
+		if (primarybuf->wfx.wBitsPerSample == 8) {
+			*obuf = cvtS16toU8(fl);
+			*(obuf + 1) = cvtS16toU8(fr);
+			return;
+		}
+		if (primarybuf->wfx.wBitsPerSample == 16) {
+			*((INT16 *)obuf) = fl;
+			*(((INT16 *)obuf) + 1) = fr;
+			return;
+		}
+	}	
+	if (primarybuf->wfx.nChannels == 1) {
+		fl = (fl + fr) >> 1;
+		if (primarybuf->wfx.wBitsPerSample == 8) {
+			*obuf = cvtS16toU8(fl);
+			return;
+		}
+		if (primarybuf->wfx.wBitsPerSample == 16) {
+			*((INT16 *)obuf) = fl;
+			return;
+		}
 	}
-
-	if ((dsb->wfx.wBitsPerSample == 8) && dsb->wfx.nChannels == 1) {
-		*fl = cvtU8toS16(*buf);
-		*fr = *fl;
-		return;
-	}
-
-	if ((dsb->wfx.wBitsPerSample == 16) && dsb->wfx.nChannels == 1) {
-		*fl = *bufs;
-		*fr = *bufs;
-		return;
-	}
-
-	FIXME("get_fields found an unsupported configuration\n");
-	return;
-}
-
-static inline void set_fields(BYTE *buf, INT fl, INT fr)
-{
-	INT16 *bufs = (INT16 *) buf;
-
-	if ((primarybuf->wfx.wBitsPerSample == 8) && (primarybuf->wfx.nChannels == 2)) {
-		*buf = cvtS16toU8(fl);
-		*(buf + 1) = cvtS16toU8(fr);
-		return;
-	}
-
-	if ((primarybuf->wfx.wBitsPerSample == 16) && (primarybuf->wfx.nChannels == 2)) {
-		*bufs = fl;
-		*(bufs + 1) = fr;
-		return;
-	}
-
-	if ((primarybuf->wfx.wBitsPerSample == 8) && (primarybuf->wfx.nChannels == 1)) {
-		*buf = cvtS16toU8((fl + fr) >> 1);
-		return;
-	}
-
-	if ((primarybuf->wfx.wBitsPerSample == 16) && (primarybuf->wfx.nChannels == 1)) {
-		*bufs = (fl + fr) >> 1;
-		return;
-	}
-	FIXME("set_fields found an unsupported configuration\n");
-	return;
 }
 
 /* Now with PerfectPitch (tm) technology */
 static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 {
-	INT	i, size, ipos, ilen, fieldL, fieldR;
+	INT	i, size, ipos, ilen;
 	BYTE	*ibp, *obp;
 	INT	iAdvance = dsb->wfx.nBlockAlign;
 	INT	oAdvance = primarybuf->wfx.nBlockAlign;
@@ -2700,10 +2787,9 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 			dsb->freq, primarybuf->wfx.nSamplesPerSec);
 		ilen = 0;
 		for (i = 0; i < len; i += oAdvance) {
-			get_fields(dsb, ibp, &fieldL, &fieldR);
+			cp_fields(dsb, ibp, obp );
 			ibp += iAdvance;
 			ilen += iAdvance;
-			set_fields(obp, fieldL, fieldR);
 			obp += oAdvance;
 			if (ibp >= (BYTE *)(dsb->buffer + dsb->buflen))
 				ibp = dsb->buffer;	/* wrap */
@@ -2719,17 +2805,15 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	/* Patent enhancements (c) 2000 Ove Kåven,
 	 * TransGaming Technologies Inc. */
 
-	FIXME("(%p) Adjusting frequency: %ld -> %ld (need optimization)\n",
+/*	FIXME("(%p) Adjusting frequency: %ld -> %ld (need optimization)\n",
 		dsb, dsb->freq, primarybuf->wfx.nSamplesPerSec);
-
+*/
 	size = len / oAdvance;
 	ilen = 0;
 	ipos = dsb->buf_mixpos;
 	for (i = 0; i < size; i++) {
-		get_fields(dsb, (dsb->buffer + ipos), &fieldL, &fieldR);
-		set_fields(obp, fieldL, fieldR);
+		cp_fields(dsb, (dsb->buffer + ipos), obp);
 		obp += oAdvance;
-
 		dsb->freqAcc += dsb->freqAdjust;
 		if (dsb->freqAcc >= (1<<DSOUND_FREQSHIFT)) {
 			ULONG adv = (dsb->freqAcc>>DSOUND_FREQSHIFT) * iAdvance;
@@ -3260,16 +3344,16 @@ static void DSOUND_CheckReset(IDirectSoundImpl *dsound, DWORD writepos)
 		DSOUND_MixReset(writepos);
 		primarybuf->need_remix = FALSE;
 		/* maximize Half-Life performance */
-		dsound->prebuf = DS_SND_QUEUE_MIN;
+		dsound->prebuf = ds_snd_queue_min;
 	} else {
-		/* if (dsound->prebuf < DS_SND_QUEUE_MAX) dsound->prebuf++; */
+		/* if (dsound->prebuf < ds_snd_queue_max) dsound->prebuf++; */
 	}
 	TRACE("premix adjust: %d\n", dsound->prebuf);
 }
 
 static void DSOUND_WaveQueue(IDirectSoundImpl *dsound, DWORD mixq)
 {
-	if (mixq + dsound->pwqueue > DS_HEL_QUEUE) mixq = DS_HEL_QUEUE - dsound->pwqueue;
+	if (mixq + dsound->pwqueue > ds_hel_queue) mixq = ds_hel_queue - dsound->pwqueue;
 	TRACE("queueing %ld buffers, starting at %d\n", mixq, dsound->pwwrite);
 	for (; mixq; mixq--) {
 		waveOutWrite(dsound->hwo, dsound->pwave[dsound->pwwrite], sizeof(WAVEHDR));
@@ -3325,7 +3409,7 @@ static void DSOUND_PerformMix(void)
  			playpos = dsound->pwplay * dsound->fraglen;
  			writepos = playpos;
  			if (!paused) {
-	 			writepos += DS_HEL_MARGIN * dsound->fraglen;
+	 			writepos += ds_hel_margin * dsound->fraglen;
 	 			while (writepos >= primarybuf->buflen)
  					writepos -= primarybuf->buflen;
 	 		}
@@ -3515,7 +3599,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	PIDSDRIVER drv = NULL;
 	WAVEOUTCAPSA wcaps;
 	unsigned wod, wodn;
-	HRESULT err = DS_OK;
+	HRESULT err = DS_OK;	
 
 	if (lpGUID)
 		TRACE("(%p,%p,%p)\n",lpGUID,ippDS,pUnkOuter);
@@ -3530,6 +3614,9 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		*ippDS = dsound;
 		return DS_OK;
 	}
+
+	/* get dsound configuration */
+	setup_dsound_options();
 
 	/* Enumerate WINMM audio devices and find the one we want */
 	wodn = waveOutGetNumDevs();
@@ -3559,7 +3646,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	(*ippDS)->primary	= NULL; 
 	(*ippDS)->listener	= NULL; 
 
-	(*ippDS)->prebuf	= DS_SND_QUEUE_MAX;
+	(*ippDS)->prebuf	= ds_snd_queue_max;
 
 	/* Get driver description */
 	if (drv) {
@@ -3619,10 +3706,11 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	} else {
 		unsigned c;
 
+
 		/* FIXME: look at wcaps */
 		(*ippDS)->drvcaps.dwFlags =
 			DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
-		if (DS_EMULDRIVER)
+		if (ds_emuldriver)
 		    (*ippDS)->drvcaps.dwFlags |= DSCAPS_EMULDRIVER;
 
 		/* Allocate memory for HEL buffer headers */
