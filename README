@@ -28,19 +28,20 @@ found at http://www.winehq.com.
 
 To compile and run Wine, you must have one of the following:
 
-	Linux version 2.0.36 or above
-	FreeBSD 4.x or FreeBSD 5-CURRENT
-	Solaris x86 2.5 or later
-	NetBSD-current
+  Linux version 2.0.36 or above
+  FreeBSD 4.x or FreeBSD 5-CURRENT or later
+  Solaris x86 2.5 or later
+  NetBSD-current
+
+As Wine requires kernel-level thread support to run, only the operating
+systems mentioned above are supported.
+Other operating systems which support kernel threads may be supported
+in the future.
 
 Linux info:
-  Although Linux version 2.0.x will mostly work, certain features
-  (specifically LDT sharing) required for properly supporting Win32
-  threads were not implemented until kernel version 2.2.  If you get
-  consistent thread-related crashes, you may want to upgrade to at least 2.2.
-  Also, some bugs were fixed and additional features were added
-  late in the Linux 2.0.x series, so if you have a very old Linux kernel,
-  you may want to upgrade to at least the latest 2.0.x release.
+  While Linux 2.2.x should still work and Linux 2.0.x may still work
+  (older 2.0.x versions had thread-related crashes),
+  it's best to have a current kernel such as 2.4.x.
 
 FreeBSD info:
   Make sure you have the USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG
@@ -57,7 +58,9 @@ NetBSD info:
   Make sure you have the USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG options
   turned on in your kernel.
 
-File systems info:
+
+
+Supported file systems:
   Wine should run on most file systems. However, Wine will fail to start
   if umsdos is used for the /tmp directory. A few compatibility problems have
   also been reported using files accessed through Samba. Also, as NTFS
@@ -65,33 +68,29 @@ File systems info:
   using NTFS, as Windows programs need write access almost everywhere.
   In case of NTFS files, copy over to a writable location.
 
-Wine requires kernel-level threads to run. Currently, only Linux
-version 2.0 or later, FreeBSD 4.x or later, Solaris x86 version 2.5
-or later, and NetBSD-current are supported.
-Other operating systems which support kernel threads may be supported
-in the future.
+Basic requirements:
+  You need to have the X11 development include files installed
+  (called xlib6g-dev in Debian and XFree86-devel in RedHat).
 
-You need to have the X11 development include files installed
-(called xlib6g-dev in Debian and XFree86-devel in RedHat).
-To use Wine's support for multi-threaded applications, your X libraries
-must be reentrant, which is probably the default by now.
-If you have libc6 (glibc2), or you compiled the X libraries yourself,
-they were probably compiled with the reentrant option enabled.
+Build tool requirements:
+  On x86 Systems gcc >= 2.7.2 is required.
+  Versions earlier than 2.7.2.3 may have problems when certain files
+  are compiled with optimization, often due to problems with header file
+  management. pgcc currently doesn't work with Wine. The cause of this problem
+  is unknown.
 
-On x86 Systems gcc >= 2.7.2 is required.
-Versions earlier than 2.7.2.3 may have problems when certain files
-are compiled with optimization, often due to problems with header file
-management. pgcc currently doesn't work with Wine. The cause of this problem
-is unknown.
+  Of course you also need "make" (most likely GNU make).
 
-Of course you also need "make" (most likely GNU make).
+  You also need flex version 2.5 or later and yacc.
+  Bison will work as a replacement for yacc. If you are
+  using RedHat or Debian, install the flex and bison packages.
 
-You also need flex version 2.5 or later and yacc.
-Bison will work as a replacement for yacc. If you are
-using RedHat or Debian, install the flex and bison packages.
+Optional support libraries:
+  If you want CUPS printing support, please install both cups and cups-devel
+  packages.
 
-For the automatic processing of the test suite scripts, you also need
-libperl development header support (libperl-dev package on Debian).
+  For the automatic processing of the test suite scripts, you also need
+  libperl development header support (libperl-dev package on Debian).
 
 For requirements in case you intend to build the documentation yourself,
 see "DOCUMENTATION" section.
@@ -144,7 +143,8 @@ which has to be adapted and copied to the location mentioned above.
 Don't forget to add vital registry entries by applying winedefault.reg
 with programs/regedit/. See documentation/ directory for details.
 
-See http://www.winehq.com/support/ for further configuration hints.
+See the Support area at http://www.winehq.com/ for further
+configuration hints.
 
 In case of library loading errors
 (e.g. "Error while loading shared libraries: libntdll.so"), make sure
@@ -165,12 +165,15 @@ or a filename only.
 
 For example: to run Solitaire:
 
-	wine sol		   (using the searchpath to locate the file)
-	wine sol.exe
+	wine sol		   (using the search Path as specified in
+	wine sol.exe		    the config file to locate the file)
 
-	wine c:\\windows\\sol.exe  (using a DOS filename)
+	wine c:\\windows\\sol.exe  (using DOS filename syntax)
 
-	wine /usr/windows/sol.exe  (using a Unix filename)
+	wine /usr/windows/sol.exe  (using Unix filename syntax)
+
+        wine -- sol.exe /parameter1 -parameter2 parameter3
+				   (calling program with parameters)
 
 Note: the path of the file will also be added to the path when
       a full name is supplied on the commandline.
@@ -213,7 +216,7 @@ FAQ:	The Wine FAQ is located at http://www.winehq.com/FAQ
 Usenet:	You can discuss Wine-related issues and get help
 	on comp.emulators.ms-windows.wine.
 
-Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.com/.
+Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.com
 	Please search the bugzilla database to check whether your
 	problem is already found before posting a bug report.  You can
 	also post bug reports to comp.emulators.ms-windows.wine.

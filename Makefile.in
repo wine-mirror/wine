@@ -89,7 +89,7 @@ install:: install-lib install-dev install-aclocal
 		echo "*************************************************" ; \
 		echo "The installed Wine libraries will not be found!" ; \
 		echo "You can either:" ; 				\
-		echo "   Add the line '$(libdir)' to /etc/ld.so.conf" ;	\
+		echo "   Add the line '$(libdir)' to /etc/ld.so.conf and run /sbin/ldconfig" ;	\
 		echo '   export LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(libdir)' ; \
 		echo "*************************************************" ; \
 		echo "*************************************************" ; \

@@ -633,7 +633,7 @@ sub Check_Registry {
   }
   else
   {
-    Do_PrintResult($is_notice, "entry \"Default Taskbar\" not found", "A Windows registry does not seem to have been added to Wine as this typical Windows registry entry does not exist in Wine's registry.  A complete original Windows registry entry set will *not* be available with a no-windows install. Usually this will present no problem in running applications although this can affect newer programs");
+    Do_PrintResult($is_notice, "entry \"Default Taskbar\" not found", "A Windows registry does not seem to have been added to Wine as this typical Windows registry entry does not exist in Wine's registry.  A complete original Windows registry entry set will *not* be available with a no-windows install. Usually this will present no problem in running applications although this can affect newer programs. Feel free to ignore this message in case you do use a Windows registry, but have the SaveOnlyUpdatedKeys config setting set to N.");
   }
   @entries = ();
 }
