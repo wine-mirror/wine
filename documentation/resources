@@ -1,0 +1,45 @@
+This document desribes tools for handling resources within wine
+
+### bin2res ###
+
+ This tool allows the editing of embeded binary resources within 
+ *.rc files. These resources are stored as hex dump so they can be
+ stored within the cvs. This makes the editing of the embeded
+ bitmaps and icons harder.
+ 
+ ### Create binary files from.rc ###
+
+  the resources in the.rc file has to be marked by a header:
+
+	/* BINRES idb_std_small.bmp */
+ 	IDB_STD_SMALL BITMAP LOADONCALL DISCARDABLE
+	{
+	 '42 4D 20 07 00 00 00 00 00 00 76 00 00 00 28 00'
+
+  BINRES is the keyword followed by a filename.
+  "bin2res -d bin rsrc.rc" generates binary files from all marked
+  resources. If the binary file is newer it gets not overwritten.
+  To force overwriting use the -f switch.
+  
+ ### Create a .rc file from binaries ###
+
+  Put a header followed by empty brackets in the.rc file.
+
+	/* BINRES idb_std_small.bmp */
+	{}
+
+  Then run "bin2res rsrc.rc". It will merge the resources into the
+  .rc file if the binary resources are newer than the.rc file.
+  To force the resources into the.rc file use the -f switch.
+  If there is already a resource with the same filename in the.rc 
+  file it gets overwritten.
+
+  ### output of bin2res ###
+
+	bash-2.03# ../../tools/bin2res -d bin shres.rc
+	[000.ico:c][003.ico:c][008.ico:s][015.ico:s][034.ico:s]
+	
+   s means skiped, c means changed
+---
+
+juergen.schmied@debitel.net (11/99)

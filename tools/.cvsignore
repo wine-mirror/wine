@@ -1,4 +1,5 @@
 Makefile
+bin2res
 build
 fnt2bdf
 makedep
