@@ -334,9 +334,9 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
  *
  * Create a dummy NE module for Win32 or Winelib.
  */
-HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
+HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
 {
-    HMODULE hModule;
+    HMODULE16 hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
     char *pStr,*s;
@@ -366,7 +366,7 @@ HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
                  8;
 
     hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
-    if (!hModule) return (HMODULE)11;  /* invalid exe */
+    if (!hModule) return (HMODULE16)11;  /* invalid exe */
 
     FarSetOwner16( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
@@ -819,7 +819,7 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
     {
         DWORD count;
         ReleaseThunkLock( &count );
-        ret = WinExec( lpCmdLine, nCmdShow );
+        ret = LOWORD( WinExec( lpCmdLine, nCmdShow ) );
         RestoreThunkLock( count );
     }
     return ret;
@@ -850,15 +850,15 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
         if (Callout.WaitForInputIdle &&
             Callout.WaitForInputIdle( info.hProcess, 30000 ) == 0xFFFFFFFF)
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-        hInstance = 33;
+        hInstance = (HINSTANCE)33;
         /* Close off the handles */
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
-    else if ((hInstance = GetLastError()) >= 32)
+    else if ((hInstance = (HINSTANCE)GetLastError()) >= (HINSTANCE)32)
     {
         FIXME("Strange error set by CreateProcess: %d\n", hInstance );
-        hInstance = 11;
+        hInstance = (HINSTANCE)11;
     }
     HeapFree( GetProcessHeap(), 0, cmdline );
     return hInstance;
@@ -877,15 +877,15 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     char filename[MAX_PATH];
     BYTE len;
 
-    if (!name) return ERROR_FILE_NOT_FOUND;
+    if (!name) return (HINSTANCE)ERROR_FILE_NOT_FOUND;
 
     if (!SearchPathA( NULL, name, ".exe", sizeof(filename), filename, NULL ) &&
         !SearchPathA( NULL, name, NULL, sizeof(filename), filename, NULL ))
-        return GetLastError();
+        return (HINSTANCE)GetLastError();
 
     len = (BYTE)params->lpCmdLine[0];
     if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + len + 2 )))
-        return ERROR_NOT_ENOUGH_MEMORY;
+        return (HINSTANCE)ERROR_NOT_ENOUGH_MEMORY;
 
     strcpy( cmdline, filename );
     p = cmdline + strlen(cmdline);
@@ -908,15 +908,15 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
         if (Callout.WaitForInputIdle &&
             Callout.WaitForInputIdle( info.hProcess, 30000 ) ==  0xFFFFFFFF )
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-        hInstance = 33;
+        hInstance = (HINSTANCE)33;
         /* Close off the handles */
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
-    else if ((hInstance = GetLastError()) >= 32)
+    else if ((hInstance = (HINSTANCE)GetLastError()) >= (HINSTANCE)32)
     {
         FIXME("Strange error set by CreateProcess: %d\n", hInstance );
-        hInstance = 11;
+        hInstance = (HINSTANCE)11;
     }
 
     HeapFree( GetProcessHeap(), 0, cmdline );
@@ -1268,7 +1268,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
                     hmod = PE_LoadImage( hFile, filename, flags );
                     CloseHandle( hFile );
                 }
-                if (hmod) return hmod;
+                if (hmod) return (HMODULE)((ULONG_PTR)hmod + 1);
             }
             flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
             /* Fallback to normal behaviour */
@@ -1537,14 +1537,24 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     BOOL retv = FALSE;
     WINE_MODREF *wm;
 
+    if (!hLibModule)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    if ((ULONG_PTR)hLibModule & 1)
+    {
+        /* this is a LOAD_LIBRARY_AS_DATAFILE module */
+        char *ptr = (char *)hLibModule - 1;
+        UnmapViewOfFile( ptr );
+        return TRUE;
+    }
+
     RtlAcquirePebLock();
     free_lib_count++;
 
-    wm = MODULE32_LookupHMODULE( hLibModule );
-    if ( !wm || !hLibModule )
-        SetLastError( ERROR_INVALID_HANDLE );
-    else
-        retv = MODULE_FreeLibrary( wm );
+    if ((wm = MODULE32_LookupHMODULE( hLibModule ))) retv = MODULE_FreeLibrary( wm );
 
     free_lib_count--;
     RtlReleasePebLock();
@@ -1627,9 +1637,9 @@ VOID WINAPI FreeLibraryAndExitThread(HINSTANCE hLibModule, DWORD dwExitCode)
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */
-HINSTANCE WINAPI PrivateLoadLibrary(LPCSTR libname)
+HINSTANCE16 WINAPI PrivateLoadLibrary(LPCSTR libname)
 {
-        return (HINSTANCE)LoadLibrary16(libname);
+    return LoadLibrary16(libname);
 }
 
 
@@ -1639,9 +1649,9 @@ HINSTANCE WINAPI PrivateLoadLibrary(LPCSTR libname)
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */
-void WINAPI PrivateFreeLibrary(HINSTANCE handle)
+void WINAPI PrivateFreeLibrary(HINSTANCE16 handle)
 {
-	FreeLibrary16((HINSTANCE16)handle);
+    FreeLibrary16(handle);
 }
 
 
@@ -1660,7 +1670,7 @@ FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hModule, LPCSTR name )
     	WARN("hModule is Win32 handle (%08x)\n", hModule );
 	return (FARPROC16)0;
     }
-    return GetProcAddress16( hModule, name );
+    return GetProcAddress16( LOWORD(hModule), name );
 }
 
 /***********************************************************************

@@ -26,6 +26,27 @@
 
 DEFAULT_DEBUG_CHANNEL(resource);
 
+
+/**********************************************************************
+ *  get_module_base
+ *
+ * Get the base address of a module
+ */
+static const void *get_module_base( HMODULE hmod )
+{
+    if (!hmod) hmod = GetModuleHandleA( NULL );
+    else if (!HIWORD(hmod))
+    {
+        FIXME("Enumeration of 16-bit resources is not supported\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
+
+    /* clear low order bit in case of LOAD_LIBRARY_AS_DATAFILE module */
+    return (void *)((ULONG_PTR)hmod & ~1);
+}
+
+
 /**********************************************************************
  *  get_resdir
  *
@@ -35,17 +56,14 @@ static const IMAGE_RESOURCE_DIRECTORY* get_resdir( HMODULE hmod )
 {
     const IMAGE_DATA_DIRECTORY *dir;
     const IMAGE_RESOURCE_DIRECTORY *ret = NULL;
+    const void *base = get_module_base( hmod );
 
-    if (!hmod) hmod = GetModuleHandleA( NULL );
-    else if (!HIWORD(hmod))
+    if (base)
     {
-        FIXME("Enumeration of 16-bit resources is not supported\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        return NULL;
+        dir = &PE_HEADER(base)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
+        if (dir->Size && dir->VirtualAddress)
+            ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)base + dir->VirtualAddress);
     }
-    dir = &PE_HEADER(hmod)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
-    if (dir->Size && dir->VirtualAddress)
-        ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)hmod + dir->VirtualAddress);
     return ret;
 }
 
@@ -254,8 +272,9 @@ HRSRC PE_FindResourceW( HMODULE hmod, LPCWSTR name, LPCWSTR type )
  */
 HGLOBAL PE_LoadResource( HMODULE hmod, HRSRC hRsrc )
 {
+    const void *base = get_module_base( hmod );
     if (!hRsrc) return 0;
-    return (HANDLE)(hmod + ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+    return (HANDLE)((char *)base + ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
 }
 
 

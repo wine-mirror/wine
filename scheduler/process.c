@@ -180,11 +180,13 @@ extern BOOL MAIN_MainInit(void);
  * USIG_FLAGS_FAULT
  *     The signal is being sent due to a fault.
  */
-void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
+void PROCESS_CallUserSignalProc( UINT uCode, HMODULE16 hModule )
 {
     DWORD flags = current_process.flags;
     DWORD startup_flags = current_startupinfo.dwFlags;
     DWORD dwFlags = 0;
+
+    if (!Callout.UserSignalProc) return;
 
     /* Determine dwFlags */
 
@@ -205,20 +207,12 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
             dwFlags |= USIG_FLAGS_FEEDBACK;
     }
 
-    /* Convert module handle to 16-bit */
-
-    if ( HIWORD( hModule ) )
-        hModule = MapHModuleLS( hModule );
-
     /* Call USER signal proc */
 
-    if ( Callout.UserSignalProc )
-    {
-        if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-            Callout.UserSignalProc( uCode, GetCurrentThreadId(), dwFlags, hModule );
-        else
-            Callout.UserSignalProc( uCode, GetCurrentProcessId(), dwFlags, hModule );
-    }
+    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
+        Callout.UserSignalProc( uCode, GetCurrentThreadId(), dwFlags, hModule );
+    else
+        Callout.UserSignalProc( uCode, GetCurrentProcessId(), dwFlags, hModule );
 }
 
 

@@ -171,7 +171,7 @@ extern void MODULE_DllThreadDetach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags );
 extern BOOL MODULE_FreeLibrary( WINE_MODREF *wm );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
-extern HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
+extern HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 extern void MODULE_WalkModref( DWORD id );
@@ -255,7 +255,7 @@ extern int BUILTIN32_dlclose( void *handle );
 #define USIG_PROCESS_LOADED       0x0600
 
 /* scheduler/process.c */
-extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
+extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE16 hModule );
 extern BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,
