@@ -2320,17 +2320,20 @@ static RANGES ranges_create(int count)
     return NULL;
 }
 
+static void ranges_clear(RANGES ranges)
+{
+    INT i;
+	
+    for(i = 0; i < ranges->hdpa->nItemCount; i++)
+	COMCTL32_Free(DPA_GetPtr(ranges->hdpa, i));
+    DPA_DeleteAllPtrs(ranges->hdpa);
+}
+
+
 static void ranges_destroy(RANGES ranges)
 {
-    if (ranges && ranges->hdpa)
-    {
-	INT i;
-	
-	for(i = 0; i < ranges->hdpa->nItemCount; i++)
-	    COMCTL32_Free(DPA_GetPtr(ranges->hdpa, i));
-	DPA_Destroy(ranges->hdpa);
-    	ranges->hdpa = NULL;
-    }
+    ranges_clear(ranges);
+    DPA_Destroy(ranges->hdpa);
     COMCTL32_Free(ranges);
 }
 
@@ -3825,84 +3828,57 @@ static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
  */
 static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 {
-  LISTVIEW_ITEM *lpItem;
-  LISTVIEW_SUBITEM *lpSubItem;
-  NMLISTVIEW nmlv;
-  BOOL bSuppress;
-  BOOL bResult = FALSE;
-  HDPA hdpaSubItems;
-
-  TRACE("()\n");
-
-  LISTVIEW_DeselectAll(infoPtr);
-  infoPtr->nSelectionMark=-1;
-  infoPtr->nFocusedItem=-1;
-  SetRectEmpty(&infoPtr->rcFocus);
-  /* But we are supposed to leave nHotItem as is! */
-
-  if (infoPtr->dwStyle & LVS_OWNERDATA)
-  {
-    infoPtr->nItemCount = 0;
-    LISTVIEW_InvalidateList(infoPtr);
-    return TRUE;
-  }
-
-  if (infoPtr->nItemCount > 0)
-  {
+    NMLISTVIEW nmlv;
+    HDPA hdpaSubItems = NULL;
+    BOOL bSuppress;
+    ITEMHDR *hdrItem;
     INT i, j;
 
+    TRACE("()\n");
+
+    /* we do it directly, to avoid notifications */
+    ranges_clear(infoPtr->selectionRanges);
+    infoPtr->nSelectionMark = -1;
+    infoPtr->nFocusedItem = -1;
+    SetRectEmpty(&infoPtr->rcFocus);
+    /* But we are supposed to leave nHotItem as is! */
+
+
     /* send LVN_DELETEALLITEMS notification */
-    /* verify if subsequent LVN_DELETEITEM notifications should be
-       suppressed */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     nmlv.iItem = -1;
     bSuppress = notify_listview(infoPtr, LVN_DELETEALLITEMS, &nmlv);
 
-    for (i = 0; i < infoPtr->nItemCount; i++)
+    for (i = infoPtr->nItemCount - 1; i >= 0; i--)
     {
-        hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
-        for (j = 1; j < hdpaSubItems->nItemCount; j++)
-        {
-            lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, j);
-            /* free subitem string */
-            if (is_textW(lpSubItem->hdr.pszText))
-              COMCTL32_Free(lpSubItem->hdr.pszText);
-
-            /* free subitem */
-            COMCTL32_Free(lpSubItem);
-        }
-
-        lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-        if (!bSuppress)
-        {
-            /* send LVN_DELETEITEM notification */
-            nmlv.iItem = i;
-            nmlv.lParam = lpItem->lParam;
-            notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
-        }
-
-        /* free item string */
-        if (is_textW(lpItem->hdr.pszText))
-            COMCTL32_Free(lpItem->hdr.pszText);
-
-        /* free item */
-        COMCTL32_Free(lpItem);
-
-        DPA_Destroy(hdpaSubItems);
+        /* send LVN_DELETEITEM notification, if not supressed */
+	if (!bSuppress)
+	{
+	    nmlv.iItem = i;
+	    notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
+	}
+	if (infoPtr->dwStyle & LVS_OWNERDATA)
+	{
+	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
+	    for (j = 0; j < hdpaSubItems->nItemCount; j++)
+	    {
+		hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, j);
+		if (is_textW(hdrItem->pszText)) COMCTL32_Free(hdrItem->pszText);
+		COMCTL32_Free(hdrItem);
+	    }
+	    DPA_Destroy(hdpaSubItems);
+	    DPA_DeletePtr(infoPtr->hdpaItems, i);
+	}
+	DPA_DeletePtr(infoPtr->hdpaPosX, i);
+	DPA_DeletePtr(infoPtr->hdpaPosY, i);
+	infoPtr->nItemCount --;
     }
-
-    /* reinitialize listview memory */
-    bResult = DPA_DeleteAllPtrs(infoPtr->hdpaItems);
-    infoPtr->nItemCount = 0;
-    DPA_DeleteAllPtrs(infoPtr->hdpaPosX);
-    DPA_DeleteAllPtrs(infoPtr->hdpaPosY);
-
+    
     LISTVIEW_UpdateScroll(infoPtr);
 
     LISTVIEW_InvalidateList(infoPtr);
-  }
-
-  return bResult;
+    
+    return TRUE;
 }
 
 /***
@@ -7591,7 +7567,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
 
   /* destroy data structure */
   DPA_Destroy(infoPtr->hdpaItems);
-  ranges_destroy(infoPtr->selectionRanges);
+  if (infoPtr->selectionRanges) ranges_destroy(infoPtr->selectionRanges);
 
   /* destroy image lists */
   if (!(infoPtr->dwStyle & LVS_SHAREIMAGELISTS))
