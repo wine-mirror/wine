@@ -292,12 +292,15 @@ HRESULT WINAPI DirectSoundEnumerateA(
 	LPVOID lpContext)
 {
 	TRACE("lpDSEnumCallback = %p, lpContext = %p\n", 
-		lpDSEnumCallback, lpContext);
+	      lpDSEnumCallback, lpContext);
 
 #ifdef HAVE_OSS
 	if (lpDSEnumCallback != NULL)
-		lpDSEnumCallback(NULL,"WINE DirectSound",
-		    "sound",lpContext);
+		if (lpDSEnumCallback(NULL, "Primary DirectSound Driver",
+				     "sound", lpContext))
+			lpDSEnumCallback((LPGUID)&DSDEVID_WinePlayback,
+					 "WINE DirectSound", "sound",
+					 lpContext);
 #endif
 
 	return DS_OK;

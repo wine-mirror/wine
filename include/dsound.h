@@ -53,7 +53,8 @@ typedef struct IDirectSoundCapture IDirectSoundCapture,*LPDIRECTSOUNDCAPTURE;
 
 DEFINE_GUID(IID_IDirectSoundCaptureBuffer,0xB0210782,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
 typedef struct IDirectSoundCaptureBuffer IDirectSoundCaptureBuffer,*LPDIRECTSOUNDCAPTUREBUFFER;
-
+  
+DEFINE_GUID(DSDEVID_WinePlayback, 0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00,0x80,0xAD,0x00,0x02,0xFE);
 
 #define	_FACDS		0x878
 #define	MAKE_DSHRESULT(code)		MAKE_HRESULT(1,_FACDS,code)
