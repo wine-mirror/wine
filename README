@@ -13,8 +13,9 @@ that you wrote it.
 
 2. QUICK START
 
-For the impatient, use the Wine Installer to build and install wine.
-From the top-level Wine directory (which contains this file), run:
+Whenever you compile from source, it is recommended to use the Wine
+Installer to build and install wine.  From the top-level Wine
+directory (which contains this file), run:
 
 ./tools/wineinstall
 
@@ -122,7 +123,8 @@ For example: to run Solitaire:
 Note: the path of the file will also be added to the path when
       a full name is supplied on the commandline.
 
-Wine is not yet complete, so some programs may crash. You will be dropped
+Wine is not yet complete, so some programs may crash. Provided you set up
+winedbg correctly according to documentation/debugger.sgml, you will be dropped
 into a debugger so that you can investigate and fix the problem. For more
 information on how to do this, please read the file documentation/debugging.
 If you post a bug report, please read the file documentation/bugreports to
