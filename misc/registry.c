@@ -19,6 +19,8 @@
  *    Time for RegEnumKey*, RegQueryInfoKey*
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -1983,7 +1985,7 @@ void SHELL_LoadRegistry( void )
    */
   if (!(home = getenv( "HOME" )))
       WARN_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
-  else if (PROFILE_GetWineIniBool("registry", "LoadHomeRegistryFiles", 0))
+  else if (PROFILE_GetWineIniBool("registry", "LoadHomeRegistryFiles", 1))
   {
       /* 
        * Load user's personal versions of global HKU/.Default keys
