@@ -58,6 +58,8 @@ typedef struct
   UINT       uNumRows;	      /* number of tab rows */
   INT        tabHeight;       /* height of the tab row */
   INT        tabWidth;        /* width of tabs */
+  USHORT     uHItemPadding;   /* amount of horizontal padding, in pixels */
+  USHORT     uVItemPadding;   /* amount of vertical padding, in pixels */
   HFONT      hFont;           /* handle to the current font */
   HCURSOR    hcurArrow;       /* handle to the current cursor */
   HIMAGELIST himl;            /* handle to a image list (may be 0) */
@@ -80,8 +82,6 @@ typedef struct
  * Positioning constants
  */
 #define SELECTED_TAB_OFFSET     2
-#define HORIZONTAL_ITEM_PADDING 6
-#define VERTICAL_ITEM_PADDING   3
 #define ROUND_CORNER_SIZE       2
 #define DISPLAY_AREA_PADDINGX   2
 #define DISPLAY_AREA_PADDINGY   2
@@ -255,6 +255,17 @@ TAB_SetToolTips (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr == NULL) return 0;
     infoPtr->hwndToolTip = (HWND)wParam;
+    return 0;
+}
+
+static LRESULT
+TAB_SetPadding (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+    
+    if (infoPtr == NULL) return 0;
+    infoPtr->uHItemPadding=LOWORD(lParam);
+    infoPtr->uVItemPadding=HIWORD(lParam);
     return 0;
 }
 
@@ -1109,7 +1120,7 @@ static void TAB_SetItemBounds (HWND hwnd)
      */
     infoPtr->tabHeight = item_height + SELECTED_TAB_OFFSET +
 	                 ((lStyle & TCS_BUTTONS) ? 2 : 1) *
-                          VERTICAL_ITEM_PADDING;
+                          infoPtr->uVItemPadding;
 
     TRACE("tabH=%d, tmH=%ld, iconh=%d\n",
 	  infoPtr->tabHeight, fontMetrics.tmHeight, icon_height);
@@ -1126,7 +1137,7 @@ static void TAB_SetItemBounds (HWND hwnd)
     {
       infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
                                            infoPtr->tabWidth +
-                                           2 * HORIZONTAL_ITEM_PADDING;
+                                           2 * infoPtr->uHItemPadding;
     }
     else
     {
@@ -1151,7 +1162,7 @@ static void TAB_SetItemBounds (HWND hwnd)
 
       infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
                                            size.cx + icon_width +
-                                           num * HORIZONTAL_ITEM_PADDING;
+                                           num * infoPtr->uHItemPadding;
       TRACE("for <%s>, l,r=%ld,%ld, num=%d\n",
 	  debugstr_w(infoPtr->items[curItem].pszText),
 	  infoPtr->items[curItem].rect.left,
@@ -1481,9 +1492,9 @@ TAB_DrawItemInterior
    * Deflate the rectangle to acount for the padding
    */
   if(lStyle & TCS_VERTICAL)
-    InflateRect(drawRect, -VERTICAL_ITEM_PADDING, -HORIZONTAL_ITEM_PADDING);
+    InflateRect(drawRect, -infoPtr->uVItemPadding, -infoPtr->uHItemPadding);
   else
-    InflateRect(drawRect, -HORIZONTAL_ITEM_PADDING, -VERTICAL_ITEM_PADDING);
+    InflateRect(drawRect, -infoPtr->uHItemPadding, -infoPtr->uVItemPadding);
 
 
   /*
@@ -1567,9 +1578,9 @@ TAB_DrawItemInterior
       ImageList_GetIconSize(infoPtr->himl, &cx, &cy);
 
       if(lStyle & TCS_VERTICAL)
-        center_offset = ((drawRect->bottom - drawRect->top) - (cy + HORIZONTAL_ITEM_PADDING + (rcText.right - rcText.left))) / 2;
+        center_offset = ((drawRect->bottom - drawRect->top) - (cy + infoPtr->uHItemPadding + (rcText.right - rcText.left))) / 2;
       else
-        center_offset = ((drawRect->right - drawRect->left) - (cx + HORIZONTAL_ITEM_PADDING + (rcText.right - rcText.left))) / 2;
+        center_offset = ((drawRect->right - drawRect->left) - (cx + infoPtr->uHItemPadding + (rcText.right - rcText.left))) / 2;
 
       TRACE("for <%s>, c_o=%d, draw=(%ld,%ld)-(%ld,%ld), textlen=%ld\n",
 	  debugstr_w(infoPtr->items[iItem].pszText), center_offset,
@@ -1582,18 +1593,18 @@ TAB_DrawItemInterior
         rcImage.left = drawRect->right - cx; /* if tab is TCS_VERTICAL and TCS_BOTTOM, the text is drawn from the */
                                              /* right side of the tab, but the image still uses the left as its x position */
                                              /* this keeps the image always drawn off of the same side of the tab */
-        drawRect->top = rcImage.top + (cx + HORIZONTAL_ITEM_PADDING);
+        drawRect->top = rcImage.top + (cx + infoPtr->uHItemPadding);
       }
       else if(lStyle & TCS_VERTICAL)
       {
         rcImage.top = drawRect->bottom - cy - center_offset;
 	rcImage.left--;
-        drawRect->bottom = rcImage.top - HORIZONTAL_ITEM_PADDING;
+        drawRect->bottom = rcImage.top - infoPtr->uHItemPadding;
       }
       else /* normal style, whether TCS_BOTTOM or not */
       {
         rcImage.left = drawRect->left + center_offset + 3;
-        drawRect->left = rcImage.left + cx + HORIZONTAL_ITEM_PADDING;
+        drawRect->left = rcImage.left + cx + infoPtr->uHItemPadding;
 	rcImage.top -= (lStyle & TCS_BOTTOM) ? 2 : 1;
       }
 
@@ -2901,6 +2912,8 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   infoPtr->uNumItem        = 0;
   infoPtr->uNumRows        = 0;
+  infoPtr->uHItemPadding   = 6;
+  infoPtr->uVItemPadding   = 3;
   infoPtr->hFont           = 0;
   infoPtr->items           = 0;
   infoPtr->hcurArrow       = LoadCursorA (0, IDC_ARROWA);
@@ -2961,7 +2974,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
    */
   infoPtr->tabHeight = fontMetrics.tmHeight + SELECTED_TAB_OFFSET +
 	               ((dwStyle & TCS_BUTTONS) ? 2 : 1) *
-                        VERTICAL_ITEM_PADDING;
+                        infoPtr->uVItemPadding;
 
   /* Initialize the width of a tab. */
   infoPtr->tabWidth = DEFAULT_TAB_WIDTH;
@@ -3075,8 +3088,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return 0;
 
     case TCM_SETPADDING:
-      FIXME("Unimplemented msg TCM_SETPADDING\n");
-      return 0;
+      return TAB_SetPadding (hwnd, wParam, lParam);
 
     case TCM_GETROWCOUNT:
       return TAB_GetRowCount(hwnd);
