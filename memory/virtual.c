@@ -20,6 +20,7 @@
 #include "process.h"
 #include "xmalloc.h"
 #include "global.h"
+#include "server.h"
 #include "debug.h"
 
 #ifndef MS_SYNC
@@ -30,11 +31,7 @@
 typedef struct
 {
     K32OBJ        header;
-    DWORD         size_high;
-    DWORD         size_low;
     FILE_OBJECT  *file;
-    int           unix_handle;
-    BYTE          protect;
 } FILE_MAPPING;
 
 /* File view */
@@ -46,21 +43,12 @@ typedef struct _FV
     UINT32        size;        /* Size in bytes */
     UINT32        flags;       /* Allocation flags */
     UINT32        offset;      /* Offset from start of mapped file */
-    FILE_MAPPING *mapping;     /* File mapping */
+    HANDLE32      mapping;     /* Handle to the file mapping */
     HANDLERPROC   handlerProc; /* Fault handler */
     LPVOID        handlerArg;  /* Fault handler argument */
     BYTE          protect;     /* Protection for all pages at allocation time */
     BYTE          prot[1];     /* Protection byte for each page */
 } FILE_VIEW;
-
-/* Per-page protection byte values */
-#define VPROT_READ       0x01
-#define VPROT_WRITE      0x02
-#define VPROT_EXEC       0x04
-#define VPROT_WRITECOPY  0x08
-#define VPROT_GUARD      0x10
-#define VPROT_NOCACHE    0x20
-#define VPROT_COMMITTED  0x40
 
 /* Per-view flags */
 #define VFLAG_SYSTEM     0x01
@@ -145,8 +133,8 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     DUMP( "View: %08x - %08x%s",
 	  view->base, view->base + view->size - 1,
 	  (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
-    if (view->mapping && view->mapping->file)
-        DUMP( " %s @ %08x\n", view->mapping->file->unix_name, view->offset );
+    if (view->mapping)
+        DUMP( " %d @ %08x\n", view->mapping, view->offset );
     else
         DUMP( " (anonymous)\n");
 
@@ -212,7 +200,7 @@ static FILE_VIEW *VIRTUAL_FindView(
  */
 static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
                                       UINT32 flags, BYTE vprot,
-                                      FILE_MAPPING *mapping )
+                                      HANDLE32 mapping )
 {
     FILE_VIEW *view, *prev;
 
@@ -229,6 +217,17 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
     view->mapping = mapping;
     view->protect = vprot;
     memset( view->prot, vprot, size );
+
+    /* Duplicate the mapping handle */
+
+    if ((view->mapping != -1) &&
+        !DuplicateHandle( GetCurrentProcess(), view->mapping,
+                          GetCurrentProcess(), &view->mapping,
+                          0, FALSE, DUPLICATE_SAME_ACCESS ))
+    {
+        free( view );
+        return NULL;
+    }
 
     /* Insert it in the linked list */
 
@@ -267,7 +266,7 @@ static void VIRTUAL_DeleteView(
     if (view->next) view->next->prev = view->prev;
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
-    if (view->mapping) K32OBJ_DecCount( &view->mapping->header );
+    if (view->mapping) CloseHandle( view->mapping );
     free( view );
 }
 
@@ -473,7 +472,7 @@ BOOL32 VIRTUAL_Init(void)
                 if (x == 'x') vprot |= VPROT_EXEC;
                 if (p == 'p') vprot |= VPROT_WRITECOPY;
                 VIRTUAL_CreateView( start, end - start, 0,
-                                    VFLAG_SYSTEM, vprot, NULL );
+                                    VFLAG_SYSTEM, vprot, -1 );
             }
             close (fd);
         }
@@ -598,7 +597,7 @@ LPVOID WINAPI VirtualAlloc(
     if ((type & MEM_RESERVE) || !base)
     {
         view_size = size + (base ? 0 : granularity_mask + 1);
-        ptr = (UINT32)FILE_dommap( NULL, -1, (LPVOID)base, 0, view_size, 0, 0,
+        ptr = (UINT32)FILE_dommap( -1, (LPVOID)base, 0, view_size, 0, 0,
                                    VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
         if (ptr == (UINT32)-1)
         {
@@ -627,7 +626,7 @@ LPVOID WINAPI VirtualAlloc(
 	    SetLastError( ERROR_INVALID_ADDRESS );
 	    return NULL;
         }
-        if (!(view = VIRTUAL_CreateView( ptr, size, 0, 0, vprot, NULL )))
+        if (!(view = VIRTUAL_CreateView( ptr, size, 0, 0, vprot, -1 )))
         {
             FILE_munmap( (void *)ptr, 0, size );
             SetLastError( ERROR_OUTOFMEMORY );
@@ -1080,7 +1079,9 @@ HANDLE32 WINAPI CreateFileMapping32A(
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
     FILE_MAPPING *mapping = NULL;
-    int unix_handle = -1;
+    FILE_OBJECT *file;
+    struct create_mapping_request req;
+    struct create_mapping_reply reply = { -1 };
     HANDLE32 handle;
     BYTE vprot;
     BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
@@ -1132,7 +1133,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
 	    SetLastError( ERROR_INVALID_PARAMETER );
 	    return 0;
 	}
-	obj = NULL;
+	file = NULL;
         if (name)
 	{
 	    CHAR	buf[260];
@@ -1164,10 +1165,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
             ((protect & 0xff) == PAGE_EXECUTE_READWRITE) ||
             ((protect & 0xff) == PAGE_EXECUTE_WRITECOPY))
                 access |= GENERIC_WRITE;
-        if (!(obj = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
-                                      K32OBJ_FILE, access, NULL )))
-            goto error;
-        if ((unix_handle = FILE_GetUnixHandle( hFile, access )) == -1) goto error;
+        if (!(file = FILE_GetFile( hFile, access, &req.handle ))) goto error;
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
         if (!size_high && !size_low)
         {
@@ -1184,28 +1182,36 @@ HANDLE32 WINAPI CreateFileMapping32A(
             if (!SetEndOfFile( hFile )) goto error;
         }
     }
+    else req.handle = -1;
+
+    /* Create the server object */
+
+    req.size_high = size_high;
+    req.size_low  = ROUND_SIZE( 0, size_low );
+    req.protect   = vprot;
+    CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
+                        &req, sizeof(req),
+                        name, name ? strlen(name) : 0 );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
+        goto error;
 
     /* Allocate the mapping object */
 
     if (!(mapping = HeapAlloc( SystemHeap, 0, sizeof(*mapping) ))) goto error;
     mapping->header.type     = K32OBJ_MEM_MAPPED_FILE;
     mapping->header.refcount = 1;
-    mapping->protect         = vprot;
-    mapping->size_high       = size_high;
-    mapping->size_low        = ROUND_SIZE( 0, size_low );
-    mapping->file            = (FILE_OBJECT *)obj;
-    mapping->unix_handle     = unix_handle;
+    mapping->file            = file;
 
     if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
     else handle = HANDLE_Alloc( PROCESS_Current(), &mapping->header,
-                                FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, -1 );
+                                FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, reply.handle );
     K32OBJ_DecCount( &mapping->header );
     SetLastError(0); /* Last error value is relevant. (see the start of fun) */
     return handle;
 
 error:
-    if (obj) K32OBJ_DecCount( obj );
-    if (unix_handle != -1) close( unix_handle );
+    if (reply.handle != -1) CLIENT_CloseHandle( reply.handle );
+    if (file) K32OBJ_DecCount( &file->header );
     if (mapping) HeapFree( SystemHeap, 0, mapping );
     return 0;
 }
@@ -1238,17 +1244,33 @@ HANDLE32 WINAPI CreateFileMapping32W( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
 HANDLE32 WINAPI OpenFileMapping32A(
                 DWORD access,   /* [in] Access mode */
                 BOOL32 inherit, /* [in] Inherit flag */
-                LPCSTR name     /* [in] Name of file-mapping object */
-) {
+                LPCSTR name )   /* [in] Name of file-mapping object */
+{
     HANDLE32 handle = 0;
     K32OBJ *obj;
-    SYSTEM_LOCK();
-    if ((obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE )))
+    struct open_named_obj_request req;
+    struct open_named_obj_reply reply;
+    int len = name ? strlen(name) + 1 : 0;
+
+    req.type    = OPEN_MAPPING;
+    req.access  = access;
+    req.inherit = inherit;
+    CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+
+    if (reply.handle != -1)
     {
-        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
-        K32OBJ_DecCount( obj );
+        SYSTEM_LOCK();
+        if ((obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE )))
+        {
+            handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
+            K32OBJ_DecCount( obj );
+            if (handle == INVALID_HANDLE_VALUE32)
+                handle = 0; /* must return 0 on failure, not -1 */
+        }
+        else CLIENT_CloseHandle( reply.handle );
+        SYSTEM_UNLOCK();
     }
-    SYSTEM_UNLOCK();
     return handle;
 }
 
@@ -1277,7 +1299,6 @@ static void VIRTUAL_DestroyMapping( K32OBJ *ptr )
     assert( ptr->type == K32OBJ_MEM_MAPPED_FILE );
 
     if (mapping->file) K32OBJ_DecCount( &mapping->file->header );
-    if (mapping->unix_handle != -1) close( mapping->unix_handle );
     ptr->type = K32OBJ_UNKNOWN;
     HeapFree( SystemHeap, 0, mapping );
 }
@@ -1323,6 +1344,9 @@ LPVOID WINAPI MapViewOfFileEx(
     FILE_VIEW *view;
     UINT32 ptr = (UINT32)-1, size = 0;
     int flags = MAP_PRIVATE;
+    int unix_handle = -1;
+    struct get_mapping_info_request req;
+    struct get_mapping_info_reply info;
 
     /* Check parameters */
 
@@ -1336,27 +1360,31 @@ LPVOID WINAPI MapViewOfFileEx(
     if (!(mapping = (FILE_MAPPING *)HANDLE_GetObjPtr( PROCESS_Current(),
                                                       handle,
                                                       K32OBJ_MEM_MAPPED_FILE,
-                                                      0  /* FIXME */, NULL )))
+                                                      0  /* FIXME */, &req.handle )))
         return NULL;
 
-    if (mapping->size_high || offset_high)
+    CLIENT_SendRequest( REQ_GET_MAPPING_INFO, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &info, sizeof(info), &unix_handle ))
+        goto error;
+
+    if (info.size_high || offset_high)
         ERR(virtual, "Offsets larger than 4Gb not supported\n");
 
-    if ((offset_low >= mapping->size_low) ||
-        (count > mapping->size_low - offset_low))
+    if ((offset_low >= info.size_low) ||
+        (count > info.size_low - offset_low))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         goto error;
     }
     if (count) size = ROUND_SIZE( offset_low, count );
-    else size = mapping->size_low - offset_low;
+    else size = info.size_low - offset_low;
 
     switch(access)
     {
     case FILE_MAP_ALL_ACCESS:
     case FILE_MAP_WRITE:
     case FILE_MAP_WRITE | FILE_MAP_READ:
-        if (!(mapping->protect & VPROT_WRITE))
+        if (!(info.protect & VPROT_WRITE))
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             goto error;
@@ -1366,7 +1394,7 @@ LPVOID WINAPI MapViewOfFileEx(
     case FILE_MAP_READ:
     case FILE_MAP_COPY:
     case FILE_MAP_COPY | FILE_MAP_READ:
-        if (mapping->protect & VPROT_READ) break;
+        if (info.protect & VPROT_READ) break;
         /* fall through */
     default:
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1378,9 +1406,9 @@ LPVOID WINAPI MapViewOfFileEx(
     TRACE(virtual, "handle=%x size=%x offset=%lx\n",
                      handle, size, offset_low );
 
-    ptr = (UINT32)FILE_dommap( mapping->file, mapping->unix_handle,
+    ptr = (UINT32)FILE_dommap( unix_handle,
                                addr, 0, size, 0, offset_low,
-                               VIRTUAL_GetUnixProt( mapping->protect ),
+                               VIRTUAL_GetUnixProt( info.protect ),
                                flags );
     if (ptr == (UINT32)-1) {
         /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
@@ -1397,14 +1425,17 @@ LPVOID WINAPI MapViewOfFileEx(
     }
 
     if (!(view = VIRTUAL_CreateView( ptr, size, offset_low, 0,
-                                     mapping->protect, mapping )))
+                                     info.protect, handle )))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         goto error;
     }
+    if (unix_handle != -1) close( unix_handle );
+    K32OBJ_DecCount( &mapping->header );
     return (LPVOID)ptr;
 
 error:
+    if (unix_handle != -1) close( unix_handle );
     if (ptr != (UINT32)-1) FILE_munmap( (void *)ptr, 0, size );
     K32OBJ_DecCount( &mapping->header );
     return NULL;
