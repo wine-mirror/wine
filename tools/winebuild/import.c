@@ -1006,24 +1006,24 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
 #elif defined(__powerpc__)
     /* Save all callee saved registers into a stackframe. */
-    fprintf( outfile, "    \"\\tstwu %s, -48, %s\\n\"\n", ppc_reg[1], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,   4, %s\\n\"\n", ppc_reg[3], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,   8, %s\\n\"\n", ppc_reg[4], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  12, %s\\n\"\n", ppc_reg[5], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  16, %s\\n\"\n", ppc_reg[6], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  20, %s\\n\"\n", ppc_reg[7], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  24, %s\\n\"\n", ppc_reg[8], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  28, %s\\n\"\n", ppc_reg[9], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  32, %s\\n\"\n", ppc_reg[10], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  36, %s\\n\"\n", ppc_reg[11], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s,  40, %s\\n\"\n", ppc_reg[12], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstwu %s, -48(%s)\\n\"\n", ppc_reg[1], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,   4(%s)\\n\"\n", ppc_reg[3], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,   8(%s)\\n\"\n", ppc_reg[4], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  12(%s)\\n\"\n", ppc_reg[5], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  16(%s)\\n\"\n", ppc_reg[6], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  20(%s)\\n\"\n", ppc_reg[7], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  24(%s)\\n\"\n", ppc_reg[8], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  28(%s)\\n\"\n", ppc_reg[9], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  32(%s)\\n\"\n", ppc_reg[10], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  36(%s)\\n\"\n", ppc_reg[11], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s,  40(%s)\\n\"\n", ppc_reg[12], ppc_reg[1]);
 
     /* r0 -> r3 (arg1) */
     fprintf( outfile, "    \"\\tmr %s, %s\\n\"\n", ppc_reg[3], ppc_reg[0]);
 
     /* save return address */
     fprintf( outfile, "    \"\\tmflr %s\\n\"\n", ppc_reg[0]);
-    fprintf( outfile, "    \"\\tstw  %s, 44, %s\\n\"\n", ppc_reg[0], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tstw  %s, 44(%s)\\n\"\n", ppc_reg[0], ppc_reg[1]);
 
     /* Call the __wine_delay_load function, arg1 is arg1. */
     fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_delay_load") "\\n\"\n");
@@ -1032,19 +1032,19 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg[3]);
 
     /* restore all saved registers and drop stackframe. */
-    fprintf( outfile, "    \"\\tlwz  %s,   4, %s\\n\"\n", ppc_reg[3], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,   8, %s\\n\"\n", ppc_reg[4], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  12, %s\\n\"\n", ppc_reg[5], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  16, %s\\n\"\n", ppc_reg[6], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  20, %s\\n\"\n", ppc_reg[7], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  24, %s\\n\"\n", ppc_reg[8], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  28, %s\\n\"\n", ppc_reg[9], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  32, %s\\n\"\n", ppc_reg[10], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  36, %s\\n\"\n", ppc_reg[11], ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s,  40, %s\\n\"\n", ppc_reg[12], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,   4(%s)\\n\"\n", ppc_reg[3], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,   8(%s)\\n\"\n", ppc_reg[4], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  12(%s)\\n\"\n", ppc_reg[5], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  16(%s)\\n\"\n", ppc_reg[6], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  20(%s)\\n\"\n", ppc_reg[7], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  24(%s)\\n\"\n", ppc_reg[8], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  28(%s)\\n\"\n", ppc_reg[9], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  32(%s)\\n\"\n", ppc_reg[10], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  36(%s)\\n\"\n", ppc_reg[11], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  40(%s)\\n\"\n", ppc_reg[12], ppc_reg[1]);
 
     /* Load return value from call into return register */
-    fprintf( outfile, "    \"\\tlwz  %s,  44, %s\\n\"\n", ppc_reg[0], ppc_reg[1]);
+    fprintf( outfile, "    \"\\tlwz  %s,  44(%s)\\n\"\n", ppc_reg[0], ppc_reg[1]);
     fprintf( outfile, "    \"\\tmtlr %s\\n\"\n", ppc_reg[0]);
     fprintf( outfile, "    \"\\taddi %s, %s, 48\\n\"\n", ppc_reg[1], ppc_reg[1]);
 
@@ -1072,8 +1072,8 @@ static int output_delayed_imports( FILE *outfile )
 #elif defined(__powerpc__)
             /* g0 is a function scratch register or so I understand. */
             /* First load the upper half-word, and then the lower part */
-            fprintf( outfile, "    \"\\lis %s, %d\\n\"\n", ppc_reg[0], idx);
-            fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg[0], ppc_reg[0], j);
+            fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg[0], idx);
+            fprintf( outfile, "    \"\\tli %s, %d\\n\"\n", ppc_reg[0], j);
             fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
 #else
 #error You need to defined delayed import thunks for your architecture!
@@ -1118,14 +1118,14 @@ static int output_delayed_imports( FILE *outfile )
             }
 
 #elif defined(__powerpc__)
-            fprintf( outfile, "\t addi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+            fprintf( outfile, "\t\"addi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
             fprintf( outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[9], ppc_reg[1]);
             fprintf( outfile, "\t\"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
             fprintf( outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[8], ppc_reg[1]);
             fprintf( outfile, "\t\"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
             fprintf( outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[7], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tlis %s " ppc_high(__ASM_NAME("imports") "+ %d") "\\n\"\n", ppc_reg[9], pos);
-            fprintf( outfile, "\t\"\\tla  %s " ppc_low (__ASM_NAME("imports") "+ %d") "(%s)\\n\"\n", ppc_reg[8], pos, ppc_reg[9]);
+            fprintf( outfile, "\t\"\\tlis %s, " ppc_high(__ASM_NAME("imports") "+ %d") "\\n\"\n", ppc_reg[9], pos);
+            fprintf( outfile, "\t\"\\tla  %s, " ppc_low (__ASM_NAME("imports") "+ %d") "(%s)\\n\"\n", ppc_reg[8], pos, ppc_reg[9]);
             fprintf( outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg[7], ppc_reg[8]);
             fprintf( outfile, "\t\"\\tmtctr %s\\n\"\n", ppc_reg[7]);
 
@@ -1135,7 +1135,7 @@ static int output_delayed_imports( FILE *outfile )
             fprintf( outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
             fprintf( outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[9], ppc_reg[1]);
             fprintf( outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tbctr\\n");
+            fprintf( outfile, "\t\"\\tbctr\\n\"");
 #else
 #error You need to define delayed import thunks for your architecture!
 #endif
