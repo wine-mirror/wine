@@ -67,6 +67,7 @@ DLLs (under dlls/):
 	imagehlp/		- PE (Portable Executable) Image Helper lib
 	imm32/			- Input Method Manager
 	iphlpapi/       	- IP Helper API
+	itss/			- Infotech Structured Storage (HTML Help)
 	kernel/			- The Windows kernel
 	lzexpand/		- Lempel-Ziv compression/decompression
 	mapi32/			- Mail interface
