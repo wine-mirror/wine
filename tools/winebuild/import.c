@@ -282,8 +282,7 @@ int output_imports( FILE *outfile )
 
     /* main import header */
 
-    fprintf( outfile, "\n\n/* imports */\n\n" );
-    fprintf( outfile, "static struct {\n" );
+    fprintf( outfile, "\nstatic struct {\n" );
     fprintf( outfile, "  struct {\n" );
     fprintf( outfile, "    void        *OriginalFirstThunk;\n" );
     fprintf( outfile, "    unsigned int TimeDateStamp;\n" );
@@ -320,7 +319,7 @@ int output_imports( FILE *outfile )
 
     fprintf( outfile, "#ifndef __GNUC__\nstatic void __asm__dummy_import(void) {\n#endif\n\n" );
     pos = 20 * (nb_imports + 1);  /* offset of imports.data from start of imports */
-    fprintf( outfile, "asm(\".align 4\\n\"\n" );
+    fprintf( outfile, "asm(\".align 8\\n\"\n" );
     for (i = 0; i < nb_imports; i++, pos += 4)
     {
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
@@ -329,9 +328,11 @@ int output_imports( FILE *outfile )
                      dll_imports[i]->imports[j] );
             fprintf( outfile, "    \"\\t.globl " PREFIX "%s\\n\"\n",
                      dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"" PREFIX "%s:\\tjmp *(imports+%d)\\n\"\n",
-                     dll_imports[i]->imports[j], pos );
-            fprintf( outfile, "    \"\\tmovl %%esi,%%esi\\n\"\n" );
+            fprintf( outfile, "    \"" PREFIX "%s:\\t", dll_imports[i]->imports[j] );
+            if (strstr( dll_imports[i]->imports[j], "__wine_call_from_16" ))
+                fprintf( outfile, ".byte 0x2e\\n\\tjmp *(imports+%d)\\n\\tnop\\n\"\n", pos );
+            else
+                fprintf( outfile, "jmp *(imports+%d)\\n\\tmovl %%esi,%%esi\\n\"\n", pos );
         }
     }
     fprintf( outfile, ");\n#ifndef __GNUC__\n}\n#endif\n\n" );
