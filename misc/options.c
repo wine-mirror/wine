@@ -23,11 +23,9 @@ struct option
 };
 
 static void do_config( const char *arg );
-static void do_debug( const char *arg );
 static void do_desktop( const char *arg );
 static void do_display( const char *arg );
 static void do_dll( const char *arg );
-static void do_failreadonly( const char *arg );
 static void do_help( const char *arg );
 static void do_managed( const char *arg );
 static void do_synchronous( const char *arg );
@@ -37,8 +35,6 @@ static const struct option option_table[] =
 {
     { "config",       0, 1, do_config,
       "--config name    Specify config file to use" },
-    { "debug",        0, 0, do_debug,
-      "--debug          Enter debugger before starting application" },
     { "debugmsg",     0, 1, MAIN_ParseDebugOptions,
       "--debugmsg name  Turn debugging-messages on or off" },
     { "desktop",      0, 1, do_desktop,
@@ -80,11 +76,6 @@ static void do_version( const char *arg )
 static void do_synchronous( const char *arg )
 {
     Options.synchronous = TRUE;
-}
-
-static void do_debug( const char *arg )
-{
-    Options.debug = TRUE;
 }
 
 static void do_desktop( const char *arg )

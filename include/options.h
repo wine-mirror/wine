@@ -61,7 +61,6 @@ struct options
     char * display;         /* display name */
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    synchronous;     /* X synchronous mode */
-    int    debug;
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
     char * configFileName;  /* Command line config file */

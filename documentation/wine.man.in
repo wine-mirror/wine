@@ -101,9 +101,6 @@ file contained in the source distribution.
 Use the named configuration file rather than the default
 (@sysconfdir@/wine.conf or ~/.winerc).
 .TP
-.I --debug
-Enter the debugger before starting application.
-.TP
 .I --debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
 Turn debugging messages on or off.  
 .RS +7

@@ -18,18 +18,9 @@
 #include "wine/exception.h"
 #include "debugtools.h"
 
-extern DWORD DEBUG_WinExec(LPCSTR lpCmdLine, int sw);
-
-
 static BOOL exec_program( LPCSTR cmdline )
 {
-    HINSTANCE handle;
-
-    if (Options.debug) 
-        handle = DEBUG_WinExec( cmdline, SW_SHOWNORMAL );
-    else
-        handle = WinExec( cmdline, SW_SHOWNORMAL );
-       
+    HINSTANCE handle = WinExec( cmdline, SW_SHOWNORMAL );
     if (handle < 32) 
     {
         MESSAGE( "%s: can't exec '%s': ", argv0, cmdline );

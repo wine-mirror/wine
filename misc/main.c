@@ -89,7 +89,6 @@ struct options Options =
     NULL,           /* display */
     NULL,           /* dllFlags */
     FALSE,          /* synchronous */
-    FALSE,          /* debug */
     0,              /* language */
     FALSE,          /* Managed windows */
     NULL            /* Alternate config file name */
