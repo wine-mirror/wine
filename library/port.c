@@ -653,7 +653,7 @@ unsigned short* wine_rewrite_s4tos2(const wchar_t* str4 )
  */
 char *ecvt (double number, int  ndigits,  int  *decpt,  int *sign)
 {
-    static buf[40]; /* ought to be enough */
+    static char buf[40]; /* ought to be enough */
     char *dec;
     sprintf(buf, "%.*e", ndigits /* FIXME wrong */, number); 
     *sign = (number < 0);
@@ -667,7 +667,7 @@ char *ecvt (double number, int  ndigits,  int  *decpt,  int *sign)
  */
 char *fcvt (double number, int  ndigits,  int  *decpt,  int *sign)
 {
-    static buf[40]; /* ought to be enough */
+    static char buf[40]; /* ought to be enough */
     char *dec;
     sprintf(buf, "%.*e", ndigits, number);
     *sign = (number < 0);
@@ -683,7 +683,7 @@ char *fcvt (double number, int  ndigits,  int  *decpt,  int *sign)
  */
 char *gcvt (double number, size_t  ndigit,  char *buff)
 {
-    sprintf(buff, "%.*E", ndigit, number);
+    sprintf(buff, "%.*E", (int)ndigit, number);
     return buff;
 }
 #endif /* HAVE_ECVT */
