@@ -574,7 +574,7 @@ static DWORD WINAPI MZ_DOSVM( LPVOID lpExtra )
   context.Esp    = init_sp;
   context.SegDs  = DOSVM_psp;
   context.SegEs  = DOSVM_psp;
-  context.EFlags = 0x00080000;  /* virtual interrupt flag */
+  context.EFlags = V86_FLAG | VIF_MASK;
   DOSVM_SetTimer(0x10000);
   ret = DOSVM_Enter( &context );
 

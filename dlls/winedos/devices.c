@@ -547,6 +547,7 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
 
   /* prepare to call device driver */
   memset(&ctx, 0, sizeof(ctx));
+  ctx.EFlags |= V86_FLAG;
 
   /* ES:BX points to request for strategy routine */
   ctx.SegEs = HIWORD(DOS_LOLSeg);

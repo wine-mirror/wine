@@ -26,19 +26,6 @@
 
 #include "thread.h"
 
-#ifdef HAVE_SYS_VM86_H
-# include <sys/vm86.h>
-#endif
-
-#ifndef IF_MASK
-#define IF_MASK 0x00000200
-#endif
-
-#ifndef VIF_MASK
-#define VIF_MASK 0x00080000
-#endif
-
-
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 

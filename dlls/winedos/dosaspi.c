@@ -82,6 +82,8 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 
 		/* Zero everything */
 		memset(&ctx, 0, sizeof(ctx));
+                ctx.EFlags |= V86_FLAG;
+
 		/* CS:IP is routine to call */
 		ctx.SegCs = SELECTOROF(lpSRB16->cmd.SRB_PostProc);
 		ctx.Eip   = OFFSETOF(lpSRB16->cmd.SRB_PostProc);

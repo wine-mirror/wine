@@ -61,9 +61,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 WORD DOSVM_psp = 0;
 WORD DOSVM_retval = 0;
 
-#ifdef HAVE_SYS_VM86_H
-# include <sys/vm86.h>
-#endif
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
@@ -416,7 +413,7 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
          */
         if (!ISV86(&context))
         {
-            context.EFlags |= 0x00020000;
+            context.EFlags |= V86_FLAG;
             context.SegSs = 0xffff;
             context.Esp = 0;
         }
@@ -580,8 +577,8 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 
 int WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
-  /* Some callers forget to turn V86_FLAG on. */
-  context->EFlags |= V86_FLAG;
+  if (!ISV86(context))
+      ERR( "Called with protected mode context!\n" );
 
   __TRY
   {

@@ -139,6 +139,12 @@ static void MouseRelay(CONTEXT86 *context,void *mdata)
   MCALLDATA *data = (MCALLDATA *)mdata;
   CONTEXT86 ctx = *context;
 
+  if (!ISV86(&ctx))
+  {
+      ctx.EFlags |= V86_FLAG;
+      ctx.SegSs = 0; /* Allocate new stack. */
+  }
+
   ctx.Eax   = data->mask;
   ctx.Ebx   = data->but;
   ctx.Ecx   = data->x;

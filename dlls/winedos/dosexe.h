@@ -88,7 +88,14 @@ extern struct DPMI_segments *DOSVM_dpmi_segments;
 # define MZ_SUPPORTED
 #endif /* linux-i386 */
 
+/*
+ * Declare some CONTEXT86.EFlags bits.
+ * IF_MASK is only pushed into real mode stack.
+ */
 #define V86_FLAG 0x00020000
+#define IF_MASK  0x00000200
+#define VIF_MASK 0x00080000
+#define VIP_MASK 0x00100000
 
 #define BIOS_DATA ((void *)0x400)
 

@@ -696,7 +696,12 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
   rm_ctx.Ebp    = context->Ebp;
   rm_ctx.SegFs  = 0;
   rm_ctx.SegGs  = 0;
-  rm_ctx.EFlags = context->EFlags; /* at least we need the IF flag */
+
+  /* Copy interrupt state. */
+  if (NtCurrentTeb()->dpmi_vif)
+      rm_ctx.EFlags = V86_FLAG | VIF_MASK;
+  else
+      rm_ctx.EFlags = V86_FLAG;
 
   /* enter real mode again */
   TRACE("re-entering real mode at %04lx:%04lx\n",rm_ctx.SegCs,rm_ctx.Eip);
@@ -720,6 +725,12 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
   context->Ebp     = rm_ctx.Ebp;
   context->SegFs   = 0;
   context->SegGs   = 0;
+
+  /* Copy interrupt state. */
+  if (rm_ctx.EFlags & VIF_MASK)
+      NtCurrentTeb()->dpmi_vif = 1;
+  else
+      NtCurrentTeb()->dpmi_vif = 0;
 
   /* Return to new address and hope that we didn't mess up */
   TRACE("re-entering protected mode at %04lx:%08lx\n",
