@@ -26,7 +26,6 @@ typedef struct _DOSTASK {
  WORD init_cs,init_ip,init_ss,init_sp;
  WORD xms_seg;
  WORD dpmi_seg,dpmi_sel,dpmi_flag;
- HMODULE16 hModule;
  char mm_name[128];
  int mm_fd;
  HANDLE hReadPipe,hXPipe,hConInput,hConOutput;
@@ -62,10 +61,7 @@ extern LPDOSTASK MZ_AllocDPMITask( void );
 
 #define V86_FLAG 0x00020000
 
-extern BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env, 
-                              LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                              BOOL inherit, DWORD flags, LPSTARTUPINFOA startup, 
-                              LPPROCESS_INFORMATION info );
+extern BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename );
 extern LPDOSTASK MZ_Current( void );
 extern int DOSVM_Enter( CONTEXT86 *context );
 extern void DOSVM_Wait( int read_pipe, HANDLE hObject );
