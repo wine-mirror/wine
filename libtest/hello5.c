@@ -1,8 +1,8 @@
 /*
  * This example demonstrates dynamical loading of (internal) Win32 DLLS.
  */
-#include <windows.h>
 #include <stdio.h>
+#include <windows.h>
 
 int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 {
@@ -15,7 +15,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 		fprintf(stderr,"FATAL: could not load KERNEL32!\n");
 		return 0;
 	}
-	fnGetSystemInfo = (void (CALLBACK*)(LPSYSTEM_INFO))GetProcAddress(kernel32,"GetSystemInfo");
+	fnGetSystemInfo = (void*)GetProcAddress(kernel32,"GetSystemInfo");
 	if (!fnGetSystemInfo) {
 		fprintf(stderr,"FATAL: could not find GetSystemInfo!\n");
 		return 0;
