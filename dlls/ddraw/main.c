@@ -411,7 +411,7 @@ DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 
     for (i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++)
     {
-	if (IsEqualGUID(&object_creation[i].clsid, rclsid))
+	if (IsEqualGUID(object_creation[i].clsid, rclsid))
 	    break;
     }
 
