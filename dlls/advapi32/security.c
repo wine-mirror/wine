@@ -1248,25 +1248,6 @@ LsaQueryInformationPolicy(
 /******************************************************************************
  * LsaLookupSids [ADVAPI32.@]
  */
-typedef struct
-{
-	SID_NAME_USE Use;
-	LSA_UNICODE_STRING Name;
-	LONG DomainIndex;
-} LSA_TRANSLATED_NAME, *PLSA_TRANSLATED_NAME;
-
-typedef struct
-{
-	LSA_UNICODE_STRING Name;
-	PSID Sid;
-} LSA_TRUST_INFORMATION, *PLSA_TRUST_INFORMATION;
-
-typedef struct
-{
-	ULONG Entries;
-	PLSA_TRUST_INFORMATION Domains;
-} LSA_REFERENCED_DOMAIN_LIST, *PLSA_REFERENCED_DOMAIN_LIST;
-
 NTSTATUS WINAPI
 LsaLookupSids(
 	IN LSA_HANDLE PolicyHandle,
