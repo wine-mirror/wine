@@ -2509,15 +2509,16 @@ ICOM_VTABLE(IDsDriverNotify) dsdnvt =
 
 static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
 {
-    TRACE("(%p)\n",dsdb);
+    TRACE("(%p), format=%ldx%dx%d\n", dsdb, dsdb->wfx.nSamplesPerSec,
+          dsdb->wfx.wBitsPerSample, dsdb->wfx.nChannels);
     if (!dsdb->mapping) {
         dsdb->mapping = mmap(NULL, dsdb->maplen, PROT_WRITE, MAP_SHARED,
                              dsdb->fd, 0);
         if (dsdb->mapping == (LPBYTE)-1) {
-            TRACE("(%p): Could not map sound device for direct access (%s)\n", dsdb, strerror(errno));
+            TRACE("Could not map sound device for direct access (%s)\n", strerror(errno));
             return DSERR_GENERIC;
         }
-        TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, dsdb->mapping, dsdb->maplen);
+        TRACE("The sound device has been mapped for direct access at %p, size=%ld\n", dsdb->mapping, dsdb->maplen);
 
 	/* for some reason, es1371 and sblive! sometimes have junk in here.
 	 * clear it, or we get junk noise */
