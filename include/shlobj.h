@@ -791,7 +791,57 @@ typedef struct _DROPFILES
   BOOL  fWide;
 } DROPFILES, *LPDROPFILES;
 
-#include <poppack.h> 
+/*
+ * Properties of a file in the clipboard
+ */
+typedef struct _FILEDESCRIPTORA {
+    DWORD dwFlags;
+    CLSID clsid;
+    SIZEL sizel;
+    POINTL pointl;
+    DWORD dwFileAttributes;
+    FILETIME ftCreationTime;
+    FILETIME ftLastAccessTime;
+    FILETIME ftLastWriteTime;
+    DWORD nFileSizeHigh;
+    DWORD nFileSizeLow;
+    CHAR cFileName[MAX_PATH];
+} FILEDESCRIPTORA, *LPFILEDESCRIPTORA;
+
+typedef struct _FILEDESCRIPTORW {
+    DWORD dwFlags;
+    CLSID clsid;
+    SIZEL sizel;
+    POINTL pointl;
+    DWORD dwFileAttributes;
+    FILETIME ftCreationTime;
+    FILETIME ftLastAccessTime;
+    FILETIME ftLastWriteTime;
+    DWORD nFileSizeHigh;
+    DWORD nFileSizeLow;
+    WCHAR cFileName[MAX_PATH];
+} FILEDESCRIPTORW, *LPFILEDESCRIPTORW;
+
+DECL_WINELIB_TYPE_AW(FILEDESCRIPTOR)
+DECL_WINELIB_TYPE_AW(LPFILEDESCRIPTOR)
+
+/*
+ * CF_FILEGROUPDESCRIPTOR clipboard format
+ */
+typedef struct _FILEGROUPDESCRIPTORA {
+    UINT cItems;
+    FILEDESCRIPTORA fgd[1];
+} FILEGROUPDESCRIPTORA, *LPFILEGROUPDESCRIPTORA;
+
+typedef struct _FILEGROUPDESCRIPTORW {
+    UINT cItems;
+    FILEDESCRIPTORW fgd[1];
+} FILEGROUPDESCRIPTORW, *LPFILEGROUPDESCRIPTORW;
+
+DECL_WINELIB_TYPE_AW(FILEGROUPDESCRIPTOR)
+DECL_WINELIB_TYPE_AW(LPFILEGROUPDESCRIPTOR)
+
+#include <poppack.h>
 
 /*****************************************************************************
  * IFileSystemBindData interface
