@@ -138,6 +138,15 @@ LOAD_FUNCPTR(XRenderQueryExtension)
         X11DRV_XRender_Installed = TRUE;
 	TRACE("Xrender is up and running error_base = %d\n", error_base);
 	screen_format = pXRenderFindVisualFormat(gdi_display, visual);
+	if(!screen_format) { /* This fails in buggy versions of libXrender.so */
+            wine_tsx11_unlock();
+	    WINE_MESSAGE(
+	     "Wine has detected that you probably have a buggy version\n"
+	     "of libXrender.so .  Because of this client side font rendering\n"
+	     "will be disabled.  Please upgrade this library.\n");
+	    X11DRV_XRender_Installed = FALSE;
+	    return;
+	}
 	pf.type = PictTypeDirect;
 	pf.depth = 1;
 	pf.direct.alpha = 0;
@@ -145,7 +154,12 @@ LOAD_FUNCPTR(XRenderQueryExtension)
 	mono_format = pXRenderFindFormat(gdi_display, PictFormatType |
 					  PictFormatDepth | PictFormatAlpha |
 					  PictFormatAlphaMask, &pf, 0);
-
+	if(!mono_format) {
+            wine_tsx11_unlock();
+	    ERR("mono_format == NULL?\n");
+	    X11DRV_XRender_Installed = FALSE;
+	    return;
+	}
 	glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				  sizeof(*glyphsetCache) * INIT_CACHE_SIZE);
 
