@@ -57,7 +57,9 @@ WINDOWS_INCLUDES = \
 	dmusici.h \
 	dmusics.h \
 	docobj.h \
+	dpaddr.h \
 	dplay.h \
+	dplay8.h \
 	dplobby.h \
 	dsconf.h \
 	dsdriver.h \
