@@ -19,10 +19,12 @@
  *     working on this.
  */
  
+#include "wintypes.h"
 #include "oleauto.h"
 #include "heap.h"
 #include "debug.h"
 #include "winerror.h"
+#include "mapidefs.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -41,7 +43,7 @@ static const short I2_MIN =  -32768;
 static const unsigned long UI4_MAX = 4294967295;
 static const unsigned long UI4_MIN = 0;
 static const long I4_MAX = 2147483647;
-static const long I4_MIN = -2147483648.0;
+static const long I4_MIN = -2147483648;
 static const DATE DATE_MIN = -657434;
 static const DATE DATE_MAX = 2958465;
 
@@ -138,20 +140,18 @@ static BSTR32 StringDupAtoBstr( char* strIn )
  */
 static double round( double d )
 {
-	double decimals = 0.0;
-	unsigned long integerValue = 0.0;
-    double roundedValue = 0.0;
+   double decimals = 0.0, integerValue = 0.0, roundedValue = 0.0;
     BOOL32 bEvenNumber = FALSE;
     int nSign = 0;
 
     /* Save the sign of the number
      */
-    nSign = d >= 0.0 ? 1 : -1;
+   nSign = (d >= 0.0) ? 1 : -1;
     d = fabs( d );
     
 	/* Remove the decimals.
 	 */
-	integerValue = (unsigned long) d;
+   integerValue = floor( d );
 
     /* Set the Even flag.  This is used to round the number when
      * the decimals are exactly 1/2.  If the integer part is
@@ -159,7 +159,7 @@ static double round( double d )
      * is even the number is rounded down.  Using this method
      * numbers are rounded up|down half the time.
      */
-    bEvenNumber = ((integerValue % 2) == 0) ? TRUE : FALSE;
+   bEvenNumber = (((short)fmod(integerValue, 2)) == 0) ? TRUE : FALSE;
 
     /* Remove the integral part of the number.
      */
@@ -197,7 +197,6 @@ static double round( double d )
 
 	return roundedValue * nSign;
 }
-
 
 /******************************************************************************
  *		RemoveCharacterFromString		[INTERNAL]
@@ -535,7 +534,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI1FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarI1FromCY32( ps->u.cyVal, &(pd->u.cVal) );*/
+	     res = VarI1FromCy32( ps->u.cyVal, &(pd->u.cVal) );
 		case( VT_DISPATCH ):
 			/*res = VarI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.cVal) );*/
 		case( VT_UNKNOWN ):
@@ -588,7 +587,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI2FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.iVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarI2FromCY32( ps->u.cyVal, &(pd->u.iVal) );*/
+	     res = VarI2FromCy32( ps->u.cyVal, &(pd->u.iVal) );
 		case( VT_DISPATCH ):
 			/*res = VarI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.iVal) );*/
 		case( VT_UNKNOWN ):
@@ -642,7 +641,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarI4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.lVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarI4FromCY32( ps->u.cyVal, &(pd->u.lVal) );*/
+	     res = VarI4FromCy32( ps->u.cyVal, &(pd->u.lVal) );
 		case( VT_DISPATCH ):
 			/*res = VarI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.lVal) );*/
 		case( VT_UNKNOWN ):
@@ -695,7 +694,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI1FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.bVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarUI1FromCY32( ps->u.cyVal, &(pd->u.bVal) );*/
+	     res = VarUI1FromCy32( ps->u.cyVal, &(pd->u.bVal) );
 		case( VT_DISPATCH ):
 			/*res = VarUI1FromDisp32( ps->u.pdispVal, lcid, &(pd->u.bVal) );*/
 		case( VT_UNKNOWN ):
@@ -748,7 +747,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI2FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.uiVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarUI2FromCY32( ps->u.cyVal, &(pd->u.uiVal) );*/
+	     res = VarUI2FromCy32( ps->u.cyVal, &(pd->u.uiVal) );
 		case( VT_DISPATCH ):
 			/*res = VarUI2FromDisp32( ps->u.pdispVal, lcid, &(pd->u.uiVal) );*/
 		case( VT_UNKNOWN ):
@@ -801,7 +800,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarUI4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.ulVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarUI4FromCY32( ps->u.cyVal, &(pd->u.ulVal) );*/
+	     res = VarUI4FromCy32( ps->u.cyVal, &(pd->u.ulVal) );
 		case( VT_DISPATCH ):
 			/*res = VarUI4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.ulVal) );*/
 		case( VT_UNKNOWN ):
@@ -854,7 +853,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarR4FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.fltVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarR4FromCY32( ps->u.cyVal, &(pd->u.fltVal) );*/
+	     res = VarR4FromCy32( ps->u.cyVal, &(pd->u.fltVal) );
 		case( VT_DISPATCH ):
 			/*res = VarR4FromDisp32( ps->u.pdispVal, lcid, &(pd->u.fltVal) );*/
 		case( VT_UNKNOWN ):
@@ -907,7 +906,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarR8FromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.dblVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarR8FromCY32( ps->u.cyVal, &(pd->u.dblVal) );*/
+	     res = VarR8FromCy32( ps->u.cyVal, &(pd->u.dblVal) );
 		case( VT_DISPATCH ):
 			/*res = VarR8FromDisp32( ps->u.pdispVal, lcid, &(pd->u.dblVal) );*/
 		case( VT_UNKNOWN ):
@@ -964,7 +963,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarDateFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.date) );
 			break;
 		case( VT_CY ):
-			/*res = VarDateFromCY32( ps->u.cyVal, &(pd->u.date) );*/
+	     res = VarDateFromCy32( ps->u.cyVal, &(pd->u.date) );
 		case( VT_DISPATCH ):
 			/*res = VarDateFromDisp32( ps->u.pdispVal, lcid, &(pd->u.date) );*/
 		case( VT_UNKNOWN ):
@@ -1021,7 +1020,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarBoolFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.boolVal) );
 			break;
 		case( VT_CY ):
-			/*res = VarBoolFromCY32( ps->u.cyVal, &(pd->u.boolVal) );*/
+	     res = VarBoolFromCy32( ps->u.cyVal, &(pd->u.boolVal) );
 		case( VT_DISPATCH ):
 			/*res = VarBoolFromDisp32( ps->u.pdispVal, lcid, &(pd->u.boolVal) );*/
 		case( VT_UNKNOWN ):
@@ -1078,7 +1077,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
             res = VariantCopy32( pd, ps );
             break;
 		case( VT_CY ):
-			/*res = VarBstrFromCY32( ps->u.cyVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
+	     /*res = VarBstrFromCy32( ps->u.cyVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
 		case( VT_DISPATCH ):
 			/*res = VarBstrFromDisp32( ps->u.pdispVal, lcid, lcid, dwFlags, &(pd->u.bstrVal) );*/
 		case( VT_UNKNOWN ):
@@ -1091,6 +1090,63 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			break;
 		}
 		break;
+
+     case( VT_CY ):
+	switch( vtFrom )
+	  {
+	  case( VT_I1 ):
+	     res = VarCyFromI132( ps->u.cVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_I2 ):
+	     res = VarCyFromI232( ps->u.iVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_INT ):
+	     res = VarCyFromInt32( ps->u.intVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_I4 ):
+	     res = VarCyFromI432( ps->u.lVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_UI1 ):
+	     res = VarCyFromUI132( ps->u.bVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_UI2 ):
+	     res = VarCyFromUI232( ps->u.uiVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_UINT ):
+	     res = VarCyFromUint32( ps->u.uintVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_UI4 ):
+	     res = VarCyFromUI432( ps->u.ulVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_R4 ):
+	     res = VarCyFromR432( ps->u.fltVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_R8 ):
+	     res = VarCyFromR832( ps->u.dblVal, &(pd->u.cyVal) );
+	     break;
+	  case( VT_DATE ):
+	     res = VarCyFromDate32( ps->u.date, &(pd->u.cyVal) );
+	     break;
+	  case( VT_BOOL ):
+	     res = VarCyFromBool32( ps->u.date, &(pd->u.cyVal) );
+	     break;
+	  case( VT_CY ):
+	     res = VariantCopy32( pd, ps );
+	     break;
+	  case( VT_BSTR ):
+	     /*res = VarCyFromStr32( ps->u.bstrVal, lcid, dwFlags, &(pd->u.cyVal) );*/
+	  case( VT_DISPATCH ):
+	     /*res = VarCyFromDisp32( ps->u.pdispVal, lcid, &(pd->u.boolVal) );*/
+	  case( VT_UNKNOWN ):
+	     /*res = VarCyFrom32( ps->u.lVal, &(pd->u.boolVal) );*/
+	  case( VT_DECIMAL ):
+	     /*res = VarCyFromDec32( ps->u.deiVal, &(pd->u.boolVal) );*/
+	  default:
+	     res = DISP_E_TYPEMISMATCH;
+	     FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+	     break;
+	  }
+	break;
 
 	default:
 		res = DISP_E_TYPEMISMATCH;
@@ -1367,7 +1423,7 @@ HRESULT WINAPI VariantCopyInd32(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 					{
 						/* Prevent from cycling.  According to tests on
 						 * VariantCopyInd in Windows and the documentation
-						 * this API dereferences the inner Variants to only on depth.
+						 * this API dereferences the inner Variants to only one depth.
 						 * If the inner Variant itself contains an
 						 * other inner variant the E_INVALIDARG error is
 						 * returned. 
@@ -1707,6 +1763,19 @@ HRESULT WINAPI VarUI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, BYTE*
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarUI1FromCy32 [OLEAUT32.134]
+ * Convert currency to unsigned char
+ */
+HRESULT WINAPI VarUI1FromCy32(CY cyIn, BYTE* pbOut) {
+   double t = round((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   if (t > UI1_MAX || t < UI1_MIN) return DISP_E_OVERFLOW;
+   
+   *pbOut = (BYTE)t;
+   return S_OK;
+}
+
 /******************************************************************************
  *		VarI2FromUI132		[OLEAUT32.48]
  */
@@ -1900,6 +1969,19 @@ HRESULT WINAPI VarI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, short*
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarI2FromCy32 [OLEAUT32.52]
+ * Convert currency to signed short
+ */
+HRESULT WINAPI VarI2FromCy32(CY cyIn, short* psOut) {
+   double t = round((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   if (t > I2_MAX || t < I2_MIN) return DISP_E_OVERFLOW;
+   
+   *psOut = (SHORT)t;
+   return S_OK;
+}
+
 /******************************************************************************
  *		VarI4FromUI132		[OLEAUT32.58]
  */
@@ -2080,6 +2162,19 @@ HRESULT WINAPI VarI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, LONG* 
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarI4FromCy32 [OLEAUT32.62]
+ * Convert currency to signed long
+ */
+HRESULT WINAPI VarI4FromCy32(CY cyIn, LONG* plOut) {
+   double t = round((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   if (t > I4_MAX || t < I4_MIN) return DISP_E_OVERFLOW;
+   
+   *plOut = (LONG)t;
+   return S_OK;
+}
+
 /******************************************************************************
  *		VarR4FromUI132		[OLEAUT32.68]
  */
@@ -2241,6 +2336,16 @@ HRESULT WINAPI VarR4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, FLOAT*
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarR4FromCy32 [OLEAUT32.72]
+ * Convert currency to float
+ */
+HRESULT WINAPI VarR4FromCy32(CY cyIn, FLOAT* pfltOut) {
+   *pfltOut = (FLOAT)((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   return S_OK;
+}
+
 /******************************************************************************
  *		VarR8FromUI132		[OLEAUT32.68]
  */
@@ -2379,6 +2484,16 @@ HRESULT WINAPI VarR8FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, double
 	*pdblOut = dValue;
 
 	return S_OK;
+}
+
+/**********************************************************************
+ *              VarR8FromCy32 [OLEAUT32.82]
+ * Convert currency to double
+ */
+HRESULT WINAPI VarR8FromCy32(CY cyIn, double* pdblOut) {
+   *pdblOut = (double)((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   return S_OK;
 }
 
 /******************************************************************************
@@ -2554,6 +2669,16 @@ HRESULT WINAPI VarDateFromBool32(VARIANT_BOOL boolIn, DATE* pdateOut)
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarDateFromCy32 [OLEAUT32.93]
+ * Convert currency to date
+ */
+HRESULT WINAPI VarDateFromCy32(CY cyIn, DATE* pdateOut) {
+   *pdateOut = (DATE)((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+
+   if (*pdateOut > DATE_MAX || *pdateOut < DATE_MIN) return DISP_E_TYPEMISMATCH;
+   return S_OK;
+}
 
 /******************************************************************************
  *		VarBstrFromUI132		[OLEAUT32.108]
@@ -3050,6 +3175,17 @@ HRESULT WINAPI VarBoolFromUI432(ULONG ulIn, VARIANT_BOOL* pboolOut)
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarBoolFromCy32 [OLEAUT32.124]
+ * Convert currency to boolean
+ */
+HRESULT WINAPI VarBoolFromCy32(CY cyIn, VARIANT_BOOL* pboolOut) {
+      if (cyIn.u.Hi || cyIn.u.Lo) *pboolOut = -1;
+      else *pboolOut = 0;
+      
+      return S_OK;
+}
+
 /******************************************************************************
  *		VarI1FromUI132		[OLEAUT32.244]
  */
@@ -3241,6 +3377,19 @@ HRESULT WINAPI VarI1FromUI432(ULONG ulIn, CHAR* pcOut)
 	*pcOut = (CHAR) ulIn;
 
 	return S_OK;
+}
+
+/**********************************************************************
+ *              VarI1FromCy32 [OLEAUT32.250]
+ * Convert currency to signed char
+ */
+HRESULT WINAPI VarI1FromCy32(CY cyIn, CHAR* pcOut) {
+   double t = round((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   if (t > CHAR_MAX || t < CHAR_MIN) return DISP_E_OVERFLOW;
+   
+   *pcOut = (CHAR)t;
+   return S_OK;
 }
 
 /******************************************************************************
@@ -3464,6 +3613,20 @@ HRESULT WINAPI VarUI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, ULONG
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarUI2FromCy32 [OLEAUT32.263]
+ * Convert currency to unsigned short
+ */
+HRESULT WINAPI VarUI2FromCy32(CY cyIn, USHORT* pusOut) {
+   double t = round((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   if (t > UI2_MAX || t < UI2_MIN) return DISP_E_OVERFLOW;
+      
+   *pusOut = (USHORT)t;
+   
+   return S_OK;
+}
+
 /******************************************************************************
  *		VarUI4FromUI132		[OLEAUT32.270]
  */
@@ -3598,3 +3761,138 @@ HRESULT WINAPI VarUI4FromUI232(USHORT uiIn, ULONG* pulOut)
 	return S_OK;
 }
 
+/**********************************************************************
+ *              VarUI4FromCy32 [OLEAUT32.276]
+ * Convert currency to unsigned long
+ */
+HRESULT WINAPI VarUI4FromCy32(CY cyIn, ULONG* pulOut) {
+   double t = round((((double)cyIn.u.Hi * 4294967296) + (double)cyIn.u.Lo) / 10000);
+   
+   if (t > UI4_MAX || t < UI4_MIN) return DISP_E_OVERFLOW;
+
+   *pulOut = (ULONG)t;
+
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromUI132 [OLEAUT32.98]
+ * Convert unsigned char to currency
+ */
+HRESULT WINAPI VarCyFromUI132(BYTE bIn, CY* pcyOut) {
+   pcyOut->u.Hi = 0;
+   pcyOut->u.Lo = ((ULONG)bIn) * 10000;
+   
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromI232 [OLEAUT32.99]
+ * Convert signed short to currency
+ */
+HRESULT WINAPI VarCyFromI232(short sIn, CY* pcyOut) {
+   if (sIn < 0) pcyOut->u.Hi = -1;
+   else pcyOut->u.Hi = 0;
+   pcyOut->u.Lo = ((ULONG)sIn) * 10000;
+   
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromI432 [OLEAUT32.100]
+ * Convert signed long to currency
+ */
+HRESULT WINAPI VarCyFromI432(LONG lIn, CY* pcyOut) {
+      double t = (double)lIn * (double)10000;
+      pcyOut->u.Hi = (LONG)(t / (double)4294967296);
+      pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296);
+      if (lIn < 0) pcyOut->u.Hi--;
+   
+      return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromR432 [OLEAUT32.101]
+ * Convert float to currency
+ */
+HRESULT WINAPI VarCyFromR432(FLOAT fltIn, CY* pcyOut) {
+   double t = round((double)fltIn * (double)10000);
+   pcyOut->u.Hi = (LONG)(t / (double)4294967296);
+   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296);
+   if (fltIn < 0) pcyOut->u.Hi--;
+   
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromR832 [OLEAUT32.102]
+ * Convert double to currency
+ */
+HRESULT WINAPI VarCyFromR832(double dblIn, CY* pcyOut) {
+   double t = round(dblIn * (double)10000);
+   pcyOut->u.Hi = (LONG)(t / (double)4294967296);
+   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296);
+   if (dblIn < 0) pcyOut->u.Hi--;
+
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromDate32 [OLEAUT32.103]
+ * Convert date to currency
+ */
+HRESULT WINAPI VarCyFromDate32(DATE dateIn, CY* pcyOut) {
+   double t = round((double)dateIn * (double)10000);
+   pcyOut->u.Hi = (LONG)(t / (double)4294967296);
+   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296);
+   if (dateIn < 0) pcyOut->u.Hi--;
+
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromBool32 [OLEAUT32.106]
+ * Convert boolean to currency
+ */
+HRESULT WINAPI VarCyFromBool32(VARIANT_BOOL boolIn, CY* pcyOut) {
+   if (boolIn < 0) pcyOut->u.Hi = -1;
+   else pcyOut->u.Hi = 0;
+   pcyOut->u.Lo = (ULONG)boolIn * (ULONG)10000;
+   
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromI132 [OLEAUT32.225]
+ * Convert signed char to currency
+ */
+HRESULT WINAPI VarCyFromI132(CHAR cIn, CY* pcyOut) {
+   if (cIn < 0) pcyOut->u.Hi = -1;
+   else pcyOut->u.Hi = 0;
+   pcyOut->u.Lo = (ULONG)cIn * (ULONG)10000;
+   
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromUI232 [OLEAUT32.226]
+ * Convert unsigned short to currency
+ */
+HRESULT WINAPI VarCyFromUI232(USHORT usIn, CY* pcyOut) {
+   pcyOut->u.Hi = 0;
+   pcyOut->u.Lo = (ULONG)usIn * (ULONG)10000;
+   
+   return S_OK;
+}
+
+/**********************************************************************
+ *              VarCyFromUI432 [OLEAUT32.227]
+ * Convert unsigned long to currency
+ */
+HRESULT WINAPI VarCyFromUI432(ULONG ulIn, CY* pcyOut) {
+   double t = (double)ulIn * (double)10000;
+   pcyOut->u.Hi = (LONG)(t / (double)4294967296);
+   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296);
+      
+   return S_OK;
+}

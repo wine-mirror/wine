@@ -2,6 +2,7 @@
 #define __WINE_OLEAUTO_H
 
 #include <ole.h>
+#include "mapidefs.h"
 
 BSTR16 WINAPI SysAllocString16(LPOLESTR16);
 BSTR32 WINAPI SysAllocString32(LPOLESTR32);
@@ -38,7 +39,6 @@ typedef short VARIANT_BOOL;
 #define VARIANT_TRUE	 0xFFFF
 #define VARIANT_FALSE	 0x0000
 
-typedef double DATE;
 typedef LONG SCODE;
 
 enum VARENUM {
@@ -135,9 +135,9 @@ struct tagVARIANT {
 		SCODE scode;
 		DATE date;
 		BSTR32 bstrVal;
+		CY cyVal;
         /*
         DECIMAL decVal;
-		CY cyVal;
 		IUnknown* punkVal;
 		IDispatch* pdispVal;
         SAFEARRAY* parray;
@@ -161,9 +161,9 @@ struct tagVARIANT {
 		BSTR32* pbstrVal;
 		VARIANT* pvarVal;
 		PVOID byref;
+		CY* pcyVal;
         /*
         DECIMAL* pdecVal;
-		CY* pcyVal;
 		IUnknown** ppunkVal;
 		IDispatch** ppdispVal;
         SAFEARRAY** pparray;
@@ -296,14 +296,14 @@ HRESULT WINAPI VarUI1FromUI432(ULONG ulIn, BYTE*pbOut);
 #define VarUI1FromUI4 WINELIB_NAME(VarUI1FromUI4)
 HRESULT WINAPI VarUI1FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut);
 #define VarUI1FromStr WINELIB_NAME(VarUI1FromStr)
+HRESULT WINAPI VarUI1FromCy32(CY cyIn, BYTE* pbOut);
+#define VarUI1FromCy WINELIB_NAME(VarUI1FromCy)
 
 /*
 HRESULT WINAPI VarUI1FromDec32(DECIMAL*pdecIn, BYTE*pbOut);
 #define VarUI1FromDec WINELIB_NAME(VarUI1FromDec)
 HRESULT WINAPI VarUI1FromDisp32(IDispatch* pdispIn, LCID lcid, BYTE* pbOut);
 #define VarUI1FromDisp WINELIB_NAME(VarUI1FromDisp)
-HRESULT WINAPI VarUI1FromCy32(CY cyIn, BYTE* pbOut);
-#define VarUI1FromCy WINELIB_NAME(VarUI1FromCy)
 */
 
 HRESULT WINAPI VarI2FromUI132(BYTE bIn, short* psOut);
@@ -326,13 +326,13 @@ HRESULT WINAPI VarI2FromUI432(ULONG ulIn, short*psOut);
 #define VarI2FromUI4 WINELIB_NAME(VarI2FromUI4)
 HRESULT WINAPI VarI2FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, short* psOut);
 #define VarI2FromStr WINELIB_NAME(VarI2FromStr)
+HRESULT WINAPI VarI2FromCy32(CY cyIn, short* psOut);
+#define VarI2FromCy WINELIB_NAME(VarI2FromCy)
 /*
 HRESULT WINAPI VarI2FromDec32(DECIMAL*pdecIn, short*psOut);
 #define VarI2FromDec WINELIB_NAME(VarI2FromDec)
 HRESULT WINAPI VarI2FromDisp32(IDispatch* pdispIn, LCID lcid, short* psOut);
 #define VarI2FromDisp WINELIB_NAME(VarI2FromDisp)
-HRESULT WINAPI VarI2FromCy32(CY cyIn, short* psOut);
-#define VarI2FromCy WINELIB_NAME(VarI2FromCy)
 */
 
 HRESULT WINAPI VarI4FromUI132(BYTE bIn, LONG* plOut);
@@ -355,9 +355,9 @@ HRESULT WINAPI VarI4FromUI432(ULONG ulIn, LONG*plOut);
 #define VarI4FromUI4 WINELIB_NAME(VarI4FromUI4)
 HRESULT WINAPI VarI4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, LONG* plOut);
 #define VarI4FromStr WINELIB_NAME(VarI4FromStr)
-/*
 HRESULT WINAPI VarI4FromCy32(CY cyIn, LONG* plOut);
 #define VarI4FromCy WINELIB_NAME(VarI4FromCy)
+/*
 HRESULT WINAPI VarI4FromDec32(DECIMAL*pdecIn, LONG*plOut);
 #define VarI4FromDec WINELIB_NAME(VarI4FromDec)
 HRESULT WINAPI VarI4FromDisp32(IDispatch* pdispIn, LCID lcid, LONG* plOut);
@@ -384,13 +384,13 @@ HRESULT WINAPI VarR4FromUI432(ULONG ulIn, FLOAT*pfltOut);
 #define VarR4FromUI4 WINELIB_NAME(VarR4FromUI4)
 HRESULT WINAPI VarR4FromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, FLOAT*pfltOut);
 #define VarR4FromStr WINELIB_NAME(VarR4FromStr)
+HRESULT WINAPI VarR4FromCy32(CY cyIn, FLOAT* pfltOut);
+#define VarR4FromCy WINELIB_NAME(VarR4FromCy)
 /*
 HRESULT WINAPI VarR4FromDec32(DECIMAL*pdecIn, FLOAT*pfltOut);
 #define VarR4FromDec WINELIB_NAME(VarR4FromDec)
 HRESULT WINAPI VarR4FromDisp32(IDispatch* pdispIn, LCID lcid, FLOAT* pfltOut);
 #define VarR4FromDisp WINELIB_NAME(VarR4FromDisp)
-HRESULT WINAPI VarR4FromCy32(CY cyIn, FLOAT* pfltOut);
-#define VarR4FromCy WINELIB_NAME(VarR4FromCy)
 */
 
 HRESULT WINAPI VarR8FromUI132(BYTE bIn, double* pdblOut);
@@ -413,11 +413,11 @@ HRESULT WINAPI VarR8FromUI432(ULONG ulIn, double*pdblOut);
 #define VarR8FromUI4 WINELIB_NAME(VarR8FromUI4)
 HRESULT WINAPI VarR8FromStr32(OLECHAR32*strIn, LCID lcid, ULONG dwFlags, double*pdblOut);
 #define VarR8FromStr WINELIB_NAME(VarR8FromStr)
+HRESULT WINAPI VarR8FromCy32(CY cyIn, double* pdblOut);
+#define VarR8FromCy WINELIB_NAME(VarR8FromCy)
 /*
 HRESULT WINAPI VarR8FromDec32(DECIMAL*pdecIn, double*pdblOut);
 #define VarR8FromDec WINELIB_NAME(VarR8FromDec)
-HRESULT WINAPI VarR8FromCy32(CY cyIn, double* pdblOut);
-#define VarR8FromCy WINELIB_NAME(VarR8FromCy)
 HRESULT WINAPI VarR8FromDisp32(IDispatch* pdispIn, LCID lcid, double* pdblOut);
 #define VarR8FromDisp WINELIB_NAME(VarR8FromDisp)
 */
@@ -442,14 +442,14 @@ HRESULT WINAPI VarDateFromUI432(ULONG ulIn, DATE*pdateOut);
 #define VarDateFromUI4 WINELIB_NAME(VarDateFromUI4)
 HRESULT WINAPI VarDateFromBool32(VARIANT_BOOL boolIn, DATE* pdateOut);
 #define VarDateFromBool WINELIB_NAME(VarDateFromBool)
+HRESULT WINAPI VarDateFromCy32(CY cyIn, DATE* pdateOut);
+#define VarDateFromCy WINELIB_NAME(VarDateFromCy)
 /*
 HRESULT WINAPI VarDateFromDec32(DECIMAL*pdecIn, DATE*pdateOut);
 #define VarDateFromDec WINELIB_NAME(VarDateFromDec)
 HRESULT WINAPI VarDateFromDisp32(IDispatch* pdispIn, LCID lcid, DATE* pdateOut);
 #define VarDateFromDisp WINELIB_NAME(VarDateFromDisp)
-HRESULT WINAPI VarDateFromCy32(CY cyIn, DATE* pdateOut);
-#define VarDateFromCy WINELIB_NAME(VarDateFromCy)
-
+*/
 HRESULT WINAPI VarCyFromUI132(BYTE bIn, CY* pcyOut);
 #define VarCyFromUI1 WINELIB_NAME(VarCyFromUI1)
 HRESULT WINAPI VarCyFromI232(short sIn, CY* pcyOut);
@@ -462,10 +462,6 @@ HRESULT WINAPI VarCyFromR832(double dblIn, CY* pcyOut);
 #define VarCyFromR8 WINELIB_NAME(VarCyFromR8)
 HRESULT WINAPI VarCyFromDate32(DATE dateIn, CY* pcyOut);
 #define VarCyFromDate WINELIB_NAME(VarCyFromDate)
-HRESULT WINAPI VarCyFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, CY* pcyOut);
-#define VarCyFromStr WINELIB_NAME(VarCyFromStr)
-HRESULT WINAPI VarCyFromDisp32(IDispatch* pdispIn, LCID lcid, CY* pcyOut);
-#define VarCyFromDisp WINELIB_NAME(VarCyFromDisp)
 HRESULT WINAPI VarCyFromBool32(VARIANT_BOOL boolIn, CY* pcyOut);
 #define VarCyFromBool WINELIB_NAME(VarCyFromBool)
 HRESULT WINAPI VarCyFromI132(CHAR cIn, CY*pcyOut);
@@ -474,8 +470,13 @@ HRESULT WINAPI VarCyFromUI232(USHORT uiIn, CY*pcyOut);
 #define VarCyFromUI2 WINELIB_NAME(VarCyFromUI2)
 HRESULT WINAPI VarCyFromUI432(ULONG ulIn, CY*pcyOut);
 #define VarCyFromUI4 WINELIB_NAME(VarCyFromUI4)
+/*
 HRESULT WINAPI VarCyFromDec32(DECIMAL*pdecIn, CY*pcyOut);
 #define VarCyFromDec WINELIB_NAME(VarCyFromDec)
+HRESULT WINAPI VarCyFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, CY* pcyOut);
+#define VarCyFromStr WINELIB_NAME(VarCyFromStr)
+HRESULT WINAPI VarCyFromDisp32(IDispatch* pdispIn, LCID lcid, CY* pcyOut);
+#define VarCyFromDisp WINELIB_NAME(VarCyFromDisp)
 */
 
 HRESULT WINAPI VarBstrFromUI132(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut);
@@ -498,11 +499,11 @@ HRESULT WINAPI VarBstrFromUI232(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR32*pb
 #define VarBstrFromUI2 WINELIB_NAME(VarBstrFromUI2)
 HRESULT WINAPI VarBstrFromUI432(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR32*pbstrOut);
 #define VarBstrFromUI4 WINELIB_NAME(VarBstrFromUI4)
+HRESULT WINAPI VarBstrFromCy32(CY cyIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut);
+#define VarBstrFromCy WINELIB_NAME(VarBstrFromCy)
 /*
 HRESULT WINAPI VarBstrFromDec32(DECIMAL*pdecIn, LCID lcid, ULONG dwFlags, BSTR32*pbstrOut);
 #define VarBstrFromDec WINELIB_NAME(VarBstrFromDec)
-HRESULT WINAPI VarBstrFromCy32(CY cyIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut);
-#define VarBstrFromCy WINELIB_NAME(VarBstrFromCy)
 HRESULT WINAPI VarBstrFromDisp32(IDispatch* pdispIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut);
 #define VarBstrFromDisp WINELIB_NAME(VarBstrFromDisp)
 */
@@ -527,11 +528,11 @@ HRESULT WINAPI VarBoolFromUI232(USHORT uiIn, VARIANT_BOOL*pboolOut);
 #define VarBoolFromUI2 WINELIB_NAME(VarBoolFromUI2)
 HRESULT WINAPI VarBoolFromUI432(ULONG ulIn, VARIANT_BOOL*pboolOut);
 #define VarBoolFromUI4 WINELIB_NAME(VarBoolFromUI4)
+HRESULT WINAPI VarBoolFromCy32(CY cyIn, VARIANT_BOOL* pboolOut);
+#define VarBoolFromCy WINELIB_NAME(VarBoolFromCy)
 /*
 HRESULT WINAPI VarBoolFromDec32(DECIMAL*pdecIn, VARIANT_BOOL*pboolOut);
 #define VarBoolFromDec WINELIB_NAME(VarBoolFromDec)
-HRESULT WINAPI VarBoolFromCy32(CY cyIn, VARIANT_BOOL* pboolOut);
-#define VarBoolFromCy WINELIB_NAME(VarBoolFromCy)
 HRESULT WINAPI VarBoolFromDisp32(IDispatch* pdispIn, LCID lcid, VARIANT_BOOL* pboolOut);
 #define VarBoolFromDisp WINELIB_NAME(VarBoolFromDisp)
 */
@@ -556,13 +557,13 @@ HRESULT WINAPI VarI1FromUI232(USHORT uiIn, CHAR*pcOut);
 #define VarI1FromUI2 WINELIB_NAME(VarI1FromUI2)
 HRESULT WINAPI VarI1FromUI432(ULONG ulIn, CHAR*pcOut);
 #define VarI1FromUI4 WINELIB_NAME(VarI1FromUI4)
+HRESULT WINAPI VarI1FromCy32(CY cyIn, CHAR*pcOut);
+#define VarI1FromCy WINELIB_NAME(VarI1FromCy)
 /*
 HRESULT WINAPI VarI1FromDec32(DECIMAL*pdecIn, CHAR*pcOut);
 #define VarI1FromDec WINELIB_NAME(VarI1FromDec)
 HRESULT WINAPI VarI1FromDisp32(IDispatch*pdispIn, LCID lcid, CHAR*pcOut);
 #define VarI1FromDisp WINELIB_NAME(VarI1FromDisp)
-HRESULT WINAPI VarI1FromCy32(CY cyIn, CHAR*pcOut);
-#define VarI1FromCy WINELIB_NAME(VarI1FromCy)
 */
 
 HRESULT WINAPI VarUI2FromUI132(BYTE bIn, USHORT*puiOut);
@@ -585,11 +586,11 @@ HRESULT WINAPI VarUI2FromI132(CHAR cIn, USHORT*puiOut);
 #define VarUI2FromI1 WINELIB_NAME(VarUI2FromI1)
 HRESULT WINAPI VarUI2FromUI432(ULONG ulIn, USHORT*puiOut);
 #define VarUI2FromUI4 WINELIB_NAME(VarUI2FromUI4)
+HRESULT WINAPI VarUI2FromCy32(CY cyIn, USHORT*puiOut);
+#define VarUI2FromCy WINELIB_NAME(VarUI2FromCy)
 /*
 HRESULT WINAPI VarUI2FromDec32(DECIMAL*pdecIn, USHORT*puiOut);
 #define VarUI2FromDec WINELIB_NAME(VarUI2FromDec)
-HRESULT WINAPI VarUI2FromCy32(CY cyIn, USHORT*puiOut);
-#define VarUI2FromCy WINELIB_NAME(VarUI2FromCy)
 HRESULT WINAPI VarUI2FromDisp32(IDispatch*pdispIn, LCID lcid, USHORT*puiOut);
 #define VarUI2FromDisp WINELIB_NAME(VarUI2FromDisp)
 */
@@ -614,13 +615,13 @@ HRESULT WINAPI VarUI4FromI132(CHAR cIn, ULONG*pulOut);
 #define VarUI4FromI1 WINELIB_NAME(VarUI4FromI1)
 HRESULT WINAPI VarUI4FromUI232(USHORT uiIn, ULONG*pulOut);
 #define VarUI4FromUI2 WINELIB_NAME(VarUI4FromUI2)
+HRESULT WINAPI VarUI4FromCy32(CY cyIn, ULONG*pulOut);
+#define VarUI4FromCy WINELIB_NAME(VarUI4FromCy)
 /*
 HRESULT WINAPI VarUI4FromDec32(DECIMAL*pdecIn, ULONG*pulOut);
 #define VarUI4FromDec WINELIB_NAME(VarUI4FromDec)
 HRESULT WINAPI VarUI4FromDisp32(IDispatch*pdispIn, LCID lcid, ULONG*pulOut);
 #define VarUI4FromDisp WINELIB_NAME(VarUI4FromDisp)
-HRESULT WINAPI VarUI4FromCy32(CY cyIn, ULONG*pulOut);
-#define VarUI4FromCy WINELIB_NAME(VarUI4FromCy)
 
 HRESULT WINAPI VarDecFromUI132(BYTE bIn, DECIMAL*pdecOut);
 #define VarDecFromUI1 WINELIB_NAME(VarDecFromUI1)

@@ -80,6 +80,7 @@ typedef unsigned long   DWORD;
 typedef unsigned long   ULONG;
 typedef unsigned char   BYTE;
 typedef long            LONG;
+typedef short           SHORT;
 typedef unsigned short  USHORT;
 typedef char            CHAR;
 typedef unsigned char   UCHAR;
@@ -87,6 +88,11 @@ typedef unsigned char   UCHAR;
 typedef unsigned short  WCHAR;
 typedef unsigned short  BOOL16;
 typedef int             BOOL32;
+typedef double          DATE;
+#ifdef __i386__
+typedef double          LONGLONG;
+typedef double          ULONGLONG;
+#endif /*__i386__*/
 
 /* Integer types. These are the same for emulator and library. */
 

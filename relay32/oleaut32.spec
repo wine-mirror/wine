@@ -48,7 +48,7 @@ type win32
 49 stdcall VarI2FromI4(long ptr) VarI2FromI432
 50 stdcall VarI2FromR4(long ptr) VarI2FromR432
 51 stdcall VarI2FromR8(double ptr) VarI2FromR832
-52 stub VarI2FromCy
+52 stdcall VarI2FromCy(double ptr) VarI2FromCy32
 53 stdcall VarI2FromDate(long ptr) VarI2FromDate32
 54 stdcall VarI2FromStr(wstr long long ptr) VarI2FromStr32
 55 stub VarI2FromDisp
@@ -57,7 +57,7 @@ type win32
 59 stdcall VarI4FromI2(long ptr) VarI4FromI232
 60 stdcall VarI4FromR4(long ptr) VarI4FromR432
 61 stdcall VarI4FromR8(double ptr) VarI4FromR832
-62 stub VarI4FromCy
+62 stdcall VarI4FromCy(double ptr) VarI4FromCy32
 63 stdcall VarI4FromDate(long ptr) VarI4FromDate32
 64 stdcall VarI4FromStr(wstr long long ptr) VarI4FromStr32
 65 stub VarI4FromDisp
@@ -66,7 +66,7 @@ type win32
 69 stdcall VarR4FromI2(long ptr) VarR4FromI232
 70 stdcall VarR4FromI4(long ptr) VarR4FromI432
 71 stdcall VarR4FromR8(double ptr) VarR4FromR832
-72 stub VarR4FromCy
+72 stdcall VarR4FromCy(double ptr) VarR4FromCy32
 73 stdcall VarR4FromDate(long ptr) VarR4FromDate32
 74 stdcall VarR4FromStr(wstr long long ptr) VarR4FromStr32
 75 stub VarR4FromDisp
@@ -75,7 +75,7 @@ type win32
 79 stdcall VarR8FromI2(long ptr) VarR8FromI232
 80 stdcall VarR8FromI4(long ptr) VarR8FromI432
 81 stdcall VarR8FromR4(long ptr) VarR8FromR432
-82 stub VarR8FromCy
+82 stdcall VarR8FromCy(double ptr) VarR8FromCy32
 83 stdcall VarR8FromDate(long ptr) VarR8FromDate32
 84 stdcall VarR8FromStr(wstr long long ptr) VarR8FromStr32
 85 stub VarR8FromDisp
@@ -85,19 +85,19 @@ type win32
 90 stdcall VarDateFromI4(long ptr) VarDateFromI432
 91 stdcall VarDateFromR4(long ptr) VarDateFromR432
 92 stdcall VarDateFromR8(double ptr) VarDateFromR832
-93 stub VarDateFromCy
+93 stdcall VarDateFromCy(double ptr) VarDateFromCy32
 94 stdcall VarDateFromStr(wstr long long ptr) VarDateFromStr32
 95 stub VarDateFromDisp
 96 stdcall VarDateFromBool(long ptr) VarDateFromBool32
-98 stub VarCyFromUI1
-99 stub VarCyFromI2
-100 stub VarCyFromI4
-101 stub VarCyFromR4
-102 stub VarCyFromR8
-103 stub VarCyFromDate
+98 stdcall VarCyFromUI1(long ptr) VarCyFromUI132
+99 stdcall VarCyFromI2(long ptr) VarCyFromI232
+100 stdcall VarCyFromI4(long ptr) VarCyFromI432
+101 stdcall VarCyFromR4(long ptr) VarCyFromR432
+102 stdcall VarCyFromR8(double ptr) VarCyFromR832
+103 stdcall VarCyFromDate(double ptr) VarCyFromDate32
 104 stub VarCyFromStr
 105 stub VarCyFromDisp
-106 stub VarCyFromBool
+106 stdcall VarCyFromBool(long ptr) VarCyFromBool32
 108 stdcall VarBstrFromUI1(long long long ptr) VarBstrFromUI132
 109 stdcall VarBstrFromI2(long long long ptr) VarBstrFromI232
 110 stdcall VarBstrFromI4(long long long ptr) VarBstrFromI432
@@ -113,14 +113,14 @@ type win32
 121 stdcall VarBoolFromR4(long ptr) VarBoolFromR432
 122 stdcall VarBoolFromR8(double ptr) VarBoolFromR832
 123 stdcall VarBoolFromDate(long ptr) VarBoolFromDate32
-124 stub VarBoolFromCy
+124 stdcall VarBoolFromCy(double ptr) VarBoolFromCy32
 125 stdcall VarBoolFromStr(wstr long long ptr) VarBoolFromStr32
 126 stub VarBoolFromDisp
 130 stdcall VarUI1FromI2(long ptr) VarUI1FromI232
 131 stdcall VarUI1FromI4(long ptr) VarUI1FromI432
 132 stdcall VarUI1FromR4(long ptr) VarUI1FromR432
 133 stdcall VarUI1FromR8(double ptr) VarUI1FromR832
-134 stub VarUI1FromCy
+134 stdcall VarUI1FromCy(double ptr) VarUI1FromCy32
 135 stdcall VarUI1FromDate(long ptr) VarUI1FromDate32
 136 stdcall VarUI1FromStr(wstr long long ptr) VarUI1FromStr32
 137 stub VarUI1FromDisp
@@ -177,9 +177,9 @@ type win32
 222 stdcall VarDateFromUI2(long ptr) VarDateFromUI232
 223 stdcall VarDateFromUI4(long ptr) VarDateFromUI432
 224 stub VarDateFromDec
-225 stub VarCyFromI1
-226 stub VarCyFromUI2
-227 stub VarCyFromUI4
+225 stdcall VarCyFromI1(long ptr) VarCyFromI132
+226 stdcall VarCyFromUI2(long ptr) VarCyFromUI232
+227 stdcall VarCyFromUI4(long ptr) VarCyFromUI432
 228 stub VarCyFromDec
 229 stdcall VarBstrFromI1(long long long ptr) VarBstrFromI132
 230 stdcall VarBstrFromUI2(long long long ptr) VarBstrFromUI232
@@ -202,7 +202,7 @@ type win32
 247 stdcall VarI1FromR4(long ptr) VarI1FromR432
 248 stdcall VarI1FromR8(double ptr) VarI1FromR832
 249 stdcall VarI1FromDate(long ptr) VarI1FromDate32
-250 stub VarI1FromCy
+250 stdcall VarI1FromCy(double ptr) VarI1FromCy32
 251 stdcall VarI1FromStr(wstr long long ptr) VarI1FromStr32
 252 stub VarI1FromDisp
 253 stdcall VarI1FromBool(long ptr) VarI1FromBool32
@@ -215,7 +215,7 @@ type win32
 260 stdcall VarUI2FromR4(long ptr) VarUI2FromR432
 261 stdcall VarUI2FromR8(double ptr) VarUI2FromR832
 262 stdcall VarUI2FromDate(long ptr) VarUI2FromDate32
-263 stub VarUI2FromCy
+263 stdcall VarUI2FromCy(double ptr) VarUI2FromCy32
 264 stdcall VarUI2FromStr(wstr long long ptr) VarUI2FromStr32
 265 stub VarUI2FromDisp
 266 stdcall VarUI2FromBool(long ptr) VarUI2FromBool32
@@ -228,7 +228,7 @@ type win32
 273 stdcall VarUI4FromR4(long ptr) VarUI4FromR432
 274 stdcall VarUI4FromR8(double ptr) VarUI4FromR832
 275 stdcall VarUI4FromDate(long ptr) VarUI4FromDate32
-276 stub VarUI4FromCy
+276 stdcall VarUI4FromCy(double ptr) VarUI4FromCy32
 277 stdcall VarUI4FromStr(wstr long long ptr) VarUI4FromStr32
 278 stub VarUI4FromDisp
 279 stdcall VarUI4FromBool(long ptr) VarUI4FromBool32

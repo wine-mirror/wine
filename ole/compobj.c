@@ -448,7 +448,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
    
    TRACE(ole, "%p", pguid);
    
-   return 1;
+   return S_OK;
 }
 
 /******************************************************************************

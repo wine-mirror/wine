@@ -110,8 +110,6 @@ typedef struct PDEVICE_HEADER
     LOADED_PRINTER_DRIVER *pLPD;	/* Associated printer driver */
 } PDEVICE_HEADER;
 
-typedef short SHORT; 
-
 #pragma pack(1)
 #define PCOLOR DWORD
 typedef struct DRAWMODE 
