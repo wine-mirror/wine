@@ -5,6 +5,8 @@
  */
 
 #include <string.h>
+
+#include "wine/winuser16.h"
 #include "win.h"
 #include "heap.h"
 #include "debug.h"

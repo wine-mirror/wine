@@ -7,6 +7,8 @@
 
 #include <ctype.h>
 #include <string.h>
+
+#include "wine/winbase16.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/keyboard16.h"

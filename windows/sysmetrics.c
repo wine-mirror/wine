@@ -6,6 +6,8 @@
  */
 
 #include <stdio.h>
+
+#include "wine/winuser16.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "monitor.h"

@@ -27,6 +27,7 @@
 #include "stackframe.h"
 #include "debugtools.h"
 #include "xmalloc.h"
+#include "toolhelp.h"
 
 DECLARE_DEBUG_CHANNEL(dll)
 DECLARE_DEBUG_CHANNEL(fixup)

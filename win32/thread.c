@@ -5,8 +5,10 @@
  * Copyright 1997 Onno Hovers
  */
 
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "winbase.h"
 #include "windef.h"
 #include "winerror.h"
 

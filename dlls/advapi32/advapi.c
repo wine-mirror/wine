@@ -4,6 +4,7 @@
  * Copyright 1995 Sven Verdoolaege
  */
 
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 

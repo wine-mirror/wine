@@ -7,6 +7,7 @@
 
 #include <string.h>
 
+#include "wine/winestring.h"
 #include "winbase.h"
 #include "commdlg.h"
 #include "debug.h"

@@ -30,6 +30,7 @@
 #include "file.h"
 #include "loadorder.h"
 #include "elfdll.h"
+#include "toolhelp.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
 

@@ -22,6 +22,7 @@
 #include "snoop.h"
 #include "task.h"
 #include "debug.h"
+#include "toolhelp.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
 

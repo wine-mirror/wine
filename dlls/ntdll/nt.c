@@ -7,6 +7,7 @@
  * Copyright 1996-1998 Marcus Meissner
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
