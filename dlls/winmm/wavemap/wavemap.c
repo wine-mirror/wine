@@ -145,7 +145,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     UINT		i;
     WAVEMAPDATA*	wom = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
 
-    TRACE("(%p %p %08lx\n", lpdwUser, lpDesc, dwFlags);
+    TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
 
     if (!wom)
 	return MMSYSERR_NOMEM;
@@ -679,7 +679,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     HeapFree(GetProcessHeap(), 0, wim);
-    return MMSYSERR_ALLOCATED;
+    return WAVERR_BADFORMAT;
 found:
     if (dwFlags & WAVE_FORMAT_QUERY) {
 	*lpdwUser = 0L;
