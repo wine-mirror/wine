@@ -844,8 +844,9 @@ INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	break;
 
     case WM_COMMAND:
-        if (wParam == IDOK)
-    {  EndDialog(hWnd, TRUE);
+        if (wParam == IDOK || wParam == IDCANCEL)
+        {
+            EndDialog(hWnd, TRUE);
             return TRUE;
         }
         break;
