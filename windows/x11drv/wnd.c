@@ -411,7 +411,7 @@ void X11DRV_WND_SetGravity( WND* wnd, int value )
 {
     X11DRV_WND_DATA *data = wnd->pDriverData;
 
-    if (data->window && data->bit_gravity != value )
+    if (data && data->window && data->bit_gravity != value )
     {
         XSetWindowAttributes win_attr;
         win_attr.bit_gravity = value;
