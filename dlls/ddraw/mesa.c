@@ -654,6 +654,31 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     current_surface = surf_ptr;
     current_level = level;
 
+    if (src_pf->dwFlags & DDPF_FOURCC) {
+	GLenum retVal;
+	int size = surf_ptr->surface_desc.u1.dwLinearSize;
+	int width = surf_ptr->surface_desc.dwWidth;
+	int height = surf_ptr->surface_desc.dwHeight;
+	LPVOID buffer = surf_ptr->surface_desc.lpSurface;
+
+	switch (src_pf->dwFourCC) {
+	    case MAKE_FOURCC('D','X','T','1'): retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+	    case MAKE_FOURCC('D','X','T','3'): retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+	    case MAKE_FOURCC('D','X','T','5'): retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+	    default:
+		FIXME("FourCC Not supported\n");
+		return DD_OK;
+		break;
+	}
+
+	if (GL_extensions.s3tc_compressed_texture) {
+	    GL_extensions.glCompressedTexImage2D(GL_TEXTURE_2D, current_level, retVal, width, height, 0, size, buffer);
+	} else
+	    ERR("Trying to upload S3TC texture whereas the device does not have support for it\n");
+
+	return DD_OK;
+    }
+
     /* First, do some sanity checks ... */
     if ((surf_ptr->surface_desc.u1.lPitch % bpp) != 0) {
 	FIXME("Warning : pitch is not a multiple of BPP - not supported yet !\n");
@@ -932,6 +957,32 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
     width = rect->right - rect->left;
     height = rect->bottom - rect->top;
 
+    if (current_surface->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) {
+	GLint retVal;
+	int size = current_surface->surface_desc.u1.dwLinearSize;
+	int width_ = current_surface->surface_desc.dwWidth;
+	int height_ = current_surface->surface_desc.dwHeight;
+	LPVOID buffer = current_surface->surface_desc.lpSurface;
+
+	switch (current_surface->surface_desc.u4.ddpfPixelFormat.dwFourCC) {
+	    case MAKE_FOURCC('D','X','T','1'): retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+	    case MAKE_FOURCC('D','X','T','3'): retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+	    case MAKE_FOURCC('D','X','T','5'): retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+	    default:
+		FIXME("Not supported\n");
+		return DD_OK;
+		break;
+	}
+
+	if (GL_extensions.s3tc_compressed_texture) {
+	    /* GL_extensions.glCompressedTexSubImage2D(GL_TEXTURE_2D, current_level, xoffset, yoffset, width, height, retVal, (unsigned char*)temp_buffer); */
+	    GL_extensions.glCompressedTexImage2D(GL_TEXTURE_2D, current_level, retVal, width_, height_, 0, size, buffer);
+	} else
+	    ERR("Trying to upload S3TC texture whereas the device does not have support for it\n");
+
+	return DD_OK;
+    }
+    
     /* Used when converting stuff */
     line_increase = src_d->u1.lPitch - (width * bpp);
 

@@ -380,16 +380,38 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	ddsd.u4.ddpfPixelFormat = This->pixelformat;
     }
 
-    /* We do not support for now compressed texture formats... */
-    if (ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+    /* We support for now only DXT1, DXT3 & DXT5 compressed texture formats... */
+    if ((ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
+        (ddsd.u4.ddpfPixelFormat.dwFourCC != MAKE_FOURCC('D','X','T','1')) &&
+        (ddsd.u4.ddpfPixelFormat.dwFourCC != MAKE_FOURCC('D','X','T','3')) &&
+        (ddsd.u4.ddpfPixelFormat.dwFourCC != MAKE_FOURCC('D','X','T','5')) )
     {
         return DDERR_INVALIDPIXELFORMAT;
     }
-    
+
+    /* Check if we can really support DXT1, DXT3 & DXT5 */
+    if ((ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
+	!GL_extensions.s3tc_compressed_texture && !s3tc_initialized) {
+	ERR("Trying to create DXT1, DXT3 or DXT5 texture which is not supported by the video card!!!\n");
+	ERR("However there is a library libtxc_dxtn.so that can be used to do the software decompression...\n");
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
     if (!(ddsd.dwFlags & DDSD_PITCH))
     {
-	ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth,
-						  GET_BPP(ddsd)*8);
+	if (ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) {
+	    int size = 0;
+	    int width = ddsd.dwWidth;
+	    int height = ddsd.dwHeight;
+	    switch(ddsd.u4.ddpfPixelFormat.dwFourCC) {
+		case MAKE_FOURCC('D','X','T','1'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 8; break;
+		case MAKE_FOURCC('D','X','T','3'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
+		case MAKE_FOURCC('D','X','T','5'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
+		default: FIXME("FOURCC not supported\n"); break;
+	    }
+	    ddsd.u1.dwLinearSize = size;
+	} else
+	    ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth, GET_BPP(ddsd)*8);
     }
 
     /* Check also for the MIPMAP / MIPMAPCOUNT flags.
@@ -433,9 +455,23 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	    if (mipmap_surface_desc.dwHeight > 1)
 		mipmap_surface_desc.dwHeight /= 2;
 
-	    mipmap_surface_desc.u1.lPitch
-		= DDRAW_width_bpp_to_pitch(mipmap_surface_desc.dwWidth,
-					   GET_BPP(ddsd)*8);
+	    if (mipmap_surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) {
+		int size = 0;
+		int width = mipmap_surface_desc.dwWidth;
+		int height = mipmap_surface_desc.dwHeight;
+		switch(mipmap_surface_desc.u4.ddpfPixelFormat.dwFourCC) {
+		    case MAKE_FOURCC('D','X','T','1'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 8; break;
+		    case MAKE_FOURCC('D','X','T','3'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
+		    case MAKE_FOURCC('D','X','T','5'): size = ((width+3)&~3) * ((height+3)&~3) / 16 * 16; break;
+		    default: FIXME("FOURCC not supported\n"); break;
+		}
+		mipmap_surface_desc.u1.dwLinearSize = size;
+	    } else {
+		ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth, GET_BPP(ddsd)*8);
+		mipmap_surface_desc.u1.lPitch
+		    = DDRAW_width_bpp_to_pitch(mipmap_surface_desc.dwWidth,
+					       GET_BPP(ddsd)*8);
+	    }
 
 	    hr = This->create_texture(This, &mipmap_surface_desc, &mipmap,
 				      pUnkOuter, mipmap_level);

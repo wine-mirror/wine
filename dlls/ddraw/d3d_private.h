@@ -276,4 +276,12 @@ extern void multiply_matrix(LPD3DMATRIX,LPD3DMATRIX,LPD3DMATRIX);
 
 extern const float id_mat[16];
 
+typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT1)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT3)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT5)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+
+extern FUNC_FETCH_2D_TEXEL_RGBA_DXT1 fetch_2d_texel_rgba_dxt1;
+extern FUNC_FETCH_2D_TEXEL_RGBA_DXT3 fetch_2d_texel_rgba_dxt3;
+extern FUNC_FETCH_2D_TEXEL_RGBA_DXT5 fetch_2d_texel_rgba_dxt5;
+
 #endif /* __GRAPHICS_WINE_D3D_PRIVATE_H */

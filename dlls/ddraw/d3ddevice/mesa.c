@@ -614,6 +614,26 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
+    if (GL_extensions.s3tc_compressed_texture) {
+	TRACE("Enumerating DXT1\n");
+	pformat->dwFlags = DDPF_FOURCC;
+        pformat->dwFourCC = MAKE_FOURCC('D','X','T','1');
+	if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+	if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+
+	TRACE("Enumerating DXT3\n");
+	pformat->dwFlags = DDPF_FOURCC;
+        pformat->dwFourCC = MAKE_FOURCC('D','X','T','3');
+	if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+	if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+
+	TRACE("Enumerating DXT5\n");
+	pformat->dwFlags = DDPF_FOURCC;
+        pformat->dwFourCC = MAKE_FOURCC('D','X','T','5');
+	if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+	if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+    }
+
     TRACE("End of enumeration\n");
     return DD_OK;
 }
@@ -4235,6 +4255,13 @@ d3ddevice_init_at_startup(void *gl_handle)
 	    GL_extensions.glActiveTexture = pglXGetProcAddressARB("glActiveTextureARB");
 	    GL_extensions.glMultiTexCoord2fv = pglXGetProcAddressARB("glMultiTexCoord2fv");
 	    GL_extensions.glClientActiveTexture = pglXGetProcAddressARB("glClientActiveTextureARB");
+	}
+
+	if (strstr(glExtensions, "GL_EXT_texture_compression_s3tc")) {
+	    TRACE(" - S3TC compression supported\n");
+	    GL_extensions.s3tc_compressed_texture = TRUE;
+	    GL_extensions.glCompressedTexImage2D = pglXGetProcAddressARB("glCompressedTexImage2D");
+	    GL_extensions.glCompressedTexSubImage2D = pglXGetProcAddressARB("glCompressedTexSubImage2D");
 	}
     }
     

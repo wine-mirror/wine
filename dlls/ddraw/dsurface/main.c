@@ -1119,9 +1119,21 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 
 	This->lock_update(This, prect, flags);
 
-	pDDSD->lpSurface = (char *)This->surface_desc.lpSurface
-	    + prect->top * This->surface_desc.u1.lPitch
-	    + prect->left * GET_BPP(This->surface_desc);
+	if (pDDSD->u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) {
+	    int blksize;
+	    switch(pDDSD->u4.ddpfPixelFormat.dwFourCC) {
+		case MAKE_FOURCC('D','X','T','1') : blksize = 8; break;
+		case MAKE_FOURCC('D','X','T','3') : blksize = 16; break;
+		case MAKE_FOURCC('D','X','T','5') : blksize = 16; break;
+		default: return DDERR_INVALIDPIXELFORMAT;
+	    }
+	    pDDSD->lpSurface = (char *)This->surface_desc.lpSurface
+		+ prect->top/4 * (pDDSD->dwWidth+3)/4 * blksize
+	    	+ prect->left/4 * blksize;
+	} else
+	    pDDSD->lpSurface = (char *)This->surface_desc.lpSurface
+		+ prect->top * This->surface_desc.u1.lPitch
+		+ prect->left * GET_BPP(This->surface_desc);
     } else {
 	This->lock_update(This, NULL, flags);
     }

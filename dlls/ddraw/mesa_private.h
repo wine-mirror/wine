@@ -175,6 +175,12 @@ typedef struct {
     void (*glActiveTexture)(GLenum texture);
     void (*glMultiTexCoord2fv)(GLenum target, const GLfloat *v);
     void (*glClientActiveTexture)(GLenum texture);
+    /* S3TC/DXTN compressed texture */
+    BOOLEAN s3tc_compressed_texture;
+    void (*glCompressedTexImage2D)(GLenum target, GLint level, GLenum internalformat, GLsizei width,
+                                 GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+    void (*glCompressedTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset,
+                                    GLsizei width, GLsizei height, GLsizei imageSize, const GLvoid *data);
 } GL_EXTENSIONS_LIST; 
 extern GL_EXTENSIONS_LIST GL_extensions;
 

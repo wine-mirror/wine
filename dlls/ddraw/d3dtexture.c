@@ -642,7 +642,11 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	if (gl_dst_ptr != NULL) {
 	    if (gl_dst_ptr->loaded == FALSE) {
 	        /* Only check memory for not already loaded texture... */
-	        DWORD mem_used = dst_ptr->surface_desc.dwHeight * dst_ptr->surface_desc.u1.lPitch;
+	        DWORD mem_used;
+		if (dst_ptr->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+                    mem_used = dst_ptr->surface_desc.u1.dwLinearSize;
+		else
+                    mem_used = dst_ptr->surface_desc.dwHeight * dst_ptr->surface_desc.u1.lPitch;
 		if (This->ddraw_owner->allocate_memory(This->ddraw_owner, mem_used) < 0) {
 		    TRACE(" out of virtual memory... Warning application.\n");
 		    return D3DERR_TEXTURE_LOAD_FAILED;
@@ -697,7 +701,10 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 
 	    /* Copy the main memory texture into the surface that corresponds to the OpenGL
 	       texture object. */
-	    memcpy(dst_d->lpSurface, src_d->lpSurface, src_d->u1.lPitch * src_d->dwHeight);
+	    if (dst_ptr->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+	        memcpy(dst_d->lpSurface, src_d->lpSurface, src_ptr->surface_desc.u1.dwLinearSize);
+	    else
+	        memcpy(dst_d->lpSurface, src_d->lpSurface, src_d->u1.lPitch * src_d->dwHeight);
 
 	    if (gl_dst_ptr != NULL) {
 	        /* If the GetHandle was not done, it is an error... */

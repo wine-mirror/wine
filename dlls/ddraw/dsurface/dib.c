@@ -30,6 +30,7 @@
 #include "winerror.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"
+#include "d3d_private.h"
 #include "dsurface/main.h"
 #include "dsurface/dib.h"
 
@@ -254,8 +255,12 @@ HRESULT DIB_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 
 	This->surface_desc.dwFlags |= DDSD_PITCH|DDSD_LPSURFACE;
 
-	This->surface_desc.lpSurface
-	    = VirtualAlloc(NULL, This->surface_desc.u1.lPitch
+	if (This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+	    This->surface_desc.lpSurface
+		= VirtualAlloc(NULL, This->surface_desc.u1.dwLinearSize, MEM_COMMIT, PAGE_READWRITE);
+	else
+	    This->surface_desc.lpSurface
+		= VirtualAlloc(NULL, This->surface_desc.u1.lPitch
 			   * This->surface_desc.dwHeight + 4, /* The + 4 here is for dumb games reading after the end of the surface
 								 when reading the last byte / half using word access */
 			   MEM_COMMIT, PAGE_READWRITE);
@@ -354,6 +359,26 @@ static HRESULT _Blt_ColorFill(
     return DD_OK;
 }
 
+void ComputeShifts(DWORD mask, DWORD* lshift, DWORD* rshift)
+{
+  int pos = 0;
+  int bits = 0;
+  *lshift = 0;
+  *rshift = 0;
+
+  if (!mask)
+    return;
+
+  while(!(mask & (1 << pos)))
+    pos++; 
+
+  while(mask & (1 << (pos+bits)))
+    bits++;
+
+  *lshift = pos;
+  *rshift = 8 - bits;
+}
+  
 HRESULT WINAPI
 DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 			  LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
@@ -393,6 +418,122 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     ddesc.dwSize = sizeof(ddesc);
     IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 
+    if ((sdesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
+	(ddesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)) {
+	if (sdesc.u4.ddpfPixelFormat.dwFourCC != sdesc.u4.ddpfPixelFormat.dwFourCC) {
+	    FIXME("FOURCC->FOURCC copy only supported for the same type of surface\n");
+	    return DDERR_INVALIDPIXELFORMAT;
+	}
+	memcpy(ddesc.lpSurface, sdesc.lpSurface, ddesc.u1.dwLinearSize);
+	goto release;
+    }
+
+    if ((sdesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
+	(!(ddesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC))) {
+	DWORD rs,rb,rm;
+	DWORD gs,gb,gm;
+	DWORD bs,bb,bm;
+	DWORD as,ab,am;
+
+	if (!s3tc_initialized) {
+	    /* FIXME: We may fake this by rendering the texture into the framebuffer using OpenGL functions and reading back
+	     *        the framebuffer. This will be slow and somewhat ugly. */ 
+	    FIXME("Manual S3TC decompression is not supported in native mode\n");
+	    goto release;
+	}
+	
+	rm = ddesc.u4.ddpfPixelFormat.u2.dwRBitMask;
+	ComputeShifts(rm, &rs, &rb);
+	gm = ddesc.u4.ddpfPixelFormat.u3.dwGBitMask;
+	ComputeShifts(gm, &gs, &gb);
+	bm = ddesc.u4.ddpfPixelFormat.u4.dwBBitMask;
+	ComputeShifts(bm, &bs, &bb);
+	am = ddesc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask;
+	ComputeShifts(am, &as, &ab);
+	if (sdesc.u4.ddpfPixelFormat.dwFourCC == MAKE_FOURCC('D','X','T','1')) {
+	    int is16 = ddesc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16;
+	    int pitch = ddesc.u1.lPitch;
+	    int width = ddesc.dwWidth;
+	    int height = ddesc.dwHeight;
+	    int x,y;
+	    char* dst = (char*) ddesc.lpSurface;
+	    char* src = (char*) sdesc.lpSurface;
+	    for (x = 0; x < width; x++)
+		for (y =0; y < height; y++) {
+		    DWORD pixel = 0;
+		    BYTE data[4];
+		    (*fetch_2d_texel_rgba_dxt1)(width, src, x, y, data);
+		    pixel = 0;
+		    pixel |= ((data[0] >> rb) << rs) & rm;
+		    pixel |= ((data[1] >> gb) << gs) & gm;
+		    pixel |= ((data[2] >> bb) << bs) & bm;
+		    pixel |= ((data[3] >> ab) << as) & am;
+		    if (is16)
+			*((WORD*)(dst+y*pitch+x*(is16?2:4))) = pixel;
+	            else
+			*((DWORD*)(dst+y*pitch+x*(is16?2:4))) = pixel;
+		}
+	} else if (sdesc.u4.ddpfPixelFormat.dwFourCC == MAKE_FOURCC('D','X','T','3')) {
+	    int is16 = ddesc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16;
+	    int pitch = ddesc.u1.lPitch;
+	    int width = ddesc.dwWidth;
+	    int height = ddesc.dwHeight;
+	    int x,y;
+	    char* dst = (char*) ddesc.lpSurface;
+	    char* src = (char*) sdesc.lpSurface;
+	    for (x = 0; x < width; x++)
+		for (y =0; y < height; y++) {
+		    DWORD pixel = 0;
+		    BYTE data[4];
+		    (*fetch_2d_texel_rgba_dxt3)(width, src, x, y, data);
+		    pixel = 0;
+		    pixel |= ((data[0] >> rb) << rs) & rm;
+		    pixel |= ((data[1] >> gb) << gs) & gm;
+		    pixel |= ((data[2] >> bb) << bs) & bm;
+		    pixel |= ((data[3] >> ab) << as) & am;
+                    if (is16)
+			*((WORD*)(dst+y*pitch+x*(is16?2:4))) = pixel;
+		    else
+			*((DWORD*)(dst+y*pitch+x*(is16?2:4))) = pixel;
+		}
+	} else if (sdesc.u4.ddpfPixelFormat.dwFourCC == MAKE_FOURCC('D','X','T','5')) {
+	    int is16 = ddesc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16;
+	    int pitch = ddesc.u1.lPitch;
+	    int width = ddesc.dwWidth;
+	    int height = ddesc.dwHeight;
+	    int x,y;
+	    char* dst = (char*) ddesc.lpSurface;
+	    char* src = (char*) sdesc.lpSurface;
+	    for (x = 0; x < width; x++)
+		for (y =0; y < height; y++) {
+		    DWORD pixel = 0;
+		    BYTE data[4];
+		    (*fetch_2d_texel_rgba_dxt5)(width, src, x, y, data);
+		    pixel = 0;
+		    pixel |= ((data[0] >> rb) << rs) & rm;
+		    pixel |= ((data[1] >> gb) << gs) & gm;
+		    pixel |= ((data[2] >> bb) << bs) & bm;
+		    pixel |= ((data[3] >> ab) << as) & am;
+		    if (is16)
+			*((WORD*)(dst+y*pitch+x*(is16?2:4))) = pixel;
+		    else
+			*((DWORD*)(dst+y*pitch+x*(is16?2:4))) = pixel;
+		}
+	}
+#if 0 /* Usefull for debugging */
+	{
+	  static int idx;
+	  char texname[255];
+	  FILE* f;
+	  sprintf(texname, "dxt_%d.pnm", idx++);
+	  f = fopen(texname,"w");
+	  DDRAW_dump_surface_to_disk(This, f, 1);
+	  fclose(f);
+	}
+#endif
+	goto release;
+    }
+    
     if (rdst) {
 	memcpy(&xdst,rdst,sizeof(xdst));
     } else {
@@ -842,6 +983,14 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
     /* Get the surface description without locking to first compute the width / height */
     ddesc = This->surface_desc;
     sdesc = (ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src))->surface_desc;
+
+    if ((sdesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) && (ddesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)) {
+	if (trans)
+	    FIXME("trans arg not supported when a FOURCC surface is involved\n");
+	if (dstx || dsty)
+	    FIXME("offset for destination surface is not supported\n");
+	DIB_DirectDrawSurface_Blt(iface, NULL, src, rsrc, 0, NULL);
+    }
     
     if (!rsrc) {
 	WARN("rsrc is NULL!\n");

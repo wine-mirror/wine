@@ -86,7 +86,6 @@ static void *gl_handle = NULL;
 static BOOL DDRAW_bind_to_opengl( void )
 {
     const char *glname = SONAME_LIBGL;
-    BOOL ret_value;
 
     gl_handle = wine_dlopen(glname, RTLD_NOW, NULL, 0);
     if (!gl_handle) {
@@ -104,11 +103,7 @@ static BOOL DDRAW_bind_to_opengl( void )
 #undef GL_API_FUNCTION
 
     /* And now calls the function to initialize the various fields for the rendering devices */
-    ret_value = d3ddevice_init_at_startup(gl_handle);
-
-    wine_dlclose(gl_handle, NULL, 0);
-    gl_handle = NULL;
-    return ret_value;
+    return d3ddevice_init_at_startup(gl_handle);
     
 sym_not_found:
     WARN("Wine cannot find certain functions that it needs inside the OpenGL\n"
@@ -120,6 +115,49 @@ sym_not_found:
 }
 
 #endif /* HAVE_OPENGL */
+
+BOOL s3tc_initialized = 0;
+
+static void *s3tc_handle = NULL;
+
+FUNC_FETCH_2D_TEXEL_RGBA_DXT1 fetch_2d_texel_rgba_dxt1;
+FUNC_FETCH_2D_TEXEL_RGBA_DXT3 fetch_2d_texel_rgba_dxt3;
+FUNC_FETCH_2D_TEXEL_RGBA_DXT5 fetch_2d_texel_rgba_dxt5;
+
+#ifndef SONAME_LIBTXC_DXTN
+#define SONAME_LIBTXC_DXTN "libtxc_dxtn.so"
+#endif
+
+static BOOL DDRAW_bind_to_s3tc( void )
+{
+    const char * const s3tcname = SONAME_LIBTXC_DXTN;
+
+    s3tc_handle = wine_dlopen(s3tcname, RTLD_NOW, NULL, 0);
+    if (!s3tc_handle) {
+        TRACE("No S3TC software decompression library seems to be present (%s).\n",s3tcname);
+	return FALSE;
+    }
+    TRACE("Found S3TC software decompression library (%s).\n",s3tcname);
+
+#define API_FUNCTION(f)  \
+    if((f = wine_dlsym(s3tc_handle, #f, NULL, 0)) == NULL) \
+    { \
+        WARN("Can't find symbol %s\n", #f); \
+        goto sym_not_found; \
+    }
+    API_FUNCTION(fetch_2d_texel_rgba_dxt1);
+    API_FUNCTION(fetch_2d_texel_rgba_dxt3);
+    API_FUNCTION(fetch_2d_texel_rgba_dxt5);
+#undef API_FUNCTION
+
+    return TRUE;
+    
+sym_not_found:
+    WARN("Wine cannot find functions that are necessary for S3TC software decompression\n");
+    wine_dlclose(s3tc_handle, NULL, 0);
+    s3tc_handle = NULL;
+    return FALSE;
+}
 
 /***********************************************************************
  *		DirectDrawEnumerateExA (DDRAW.@)
@@ -607,6 +645,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 #ifdef HAVE_OPENGL
         opengl_initialized = DDRAW_bind_to_opengl();
 #endif /* HAVE_OPENGL */
+        s3tc_initialized = DDRAW_bind_to_s3tc();
     }
 
     if (DDRAW_num_drivers > 0)

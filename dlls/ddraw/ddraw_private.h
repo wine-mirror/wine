@@ -55,6 +55,8 @@
 		(to)->dwSize = __size;/*restore size*/	\
 	} while (0)
 
+#define MAKE_FOURCC(a,b,c,d) ((a << 0) | (b << 8) | (c << 16) | (d << 24))
+
 /*****************************************************************************
  * IDirectDraw implementation structure
  */
@@ -377,6 +379,7 @@ typedef struct {
 extern Convert ModeEmulations[8];
 extern int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw);
 extern BOOL opengl_initialized;
+extern BOOL s3tc_initialized;
 
 /******************************************************************************
  * Structure conversion (for thunks)
