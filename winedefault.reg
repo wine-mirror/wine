@@ -279,6 +279,12 @@
 "CSDVersion"=dword:00000600
 
 #
+# Entries for programs that read the registry to get Serial/Com Port info
+#
+[HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\SerialComm]
+"Serial0"="COM1"
+
+#
 # Entries for Multimedia
 #
 
