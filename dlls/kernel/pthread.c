@@ -188,18 +188,18 @@ static int wine_pthread_mutex_trylock(pthread_mutex_t *mutex)
   if (!((wine_mutex)mutex)->critsect)
     mutex_real_init( mutex );
 
-  if (!RtlTryEnterCriticalSection(((wine_mutex)mutex)->critsect)) {
-    errno = EBUSY;
-    return -1;
-  }
+  if (!RtlTryEnterCriticalSection(((wine_mutex)mutex)->critsect)) return EBUSY;
   return 0;
 }
 
 static int wine_pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-  if (!((wine_mutex)mutex)->critsect) return 0;
-  RtlLeaveCriticalSection(((wine_mutex)mutex)->critsect);
-  return 0;
+    CRITICAL_SECTION *crit = ((wine_mutex)mutex)->critsect;
+
+    if (!crit) return 0;
+    if (crit->OwningThread != (HANDLE)GetCurrentThreadId()) return EPERM;
+    RtlLeaveCriticalSection( crit );
+    return 0;
 }
 
 static int wine_pthread_mutex_destroy(pthread_mutex_t *mutex)
@@ -262,10 +262,7 @@ static int wine_pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
   if (!((wine_rwlock)rwlock)->lock)
     rwlock_real_init( rwlock );
 
-  if (!RtlAcquireResourceShared(((wine_rwlock)rwlock)->lock, FALSE)) {
-    errno = EBUSY;
-    return -1;
-  }
+  if (!RtlAcquireResourceShared(((wine_rwlock)rwlock)->lock, FALSE)) return EBUSY;
   return 0;
 }
 
@@ -284,10 +281,7 @@ static int wine_pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock)
   if (!((wine_rwlock)rwlock)->lock)
     rwlock_real_init( rwlock );
 
-  if (!RtlAcquireResourceExclusive(((wine_rwlock)rwlock)->lock, FALSE)) {
-    errno = EBUSY;
-    return -1;
-  }
+  if (!RtlAcquireResourceExclusive(((wine_rwlock)rwlock)->lock, FALSE)) return EBUSY;
   return 0;
 }
 
