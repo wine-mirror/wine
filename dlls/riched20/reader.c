@@ -53,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 extern HANDLE me_heap;
 
-static int      _RTFGetChar(RTF_Info *);
+static int	_RTFGetChar(RTF_Info *);
 static void	_RTFGetToken (RTF_Info *);
 static void	_RTFGetToken2 (RTF_Info *);
 static int	GetChar (RTF_Info *);
@@ -74,6 +74,51 @@ static void	DocAttr(RTF_Info *info);
 static void	RTFFlushCPOutputBuffer(RTF_Info *info);
 static void	RTFPutCodePageChar(RTF_Info *info, int c);
 
+/* ---------------------------------------------------------------------- */
+
+/*
+ * Memory allocation routines
+ */
+
+
+/*
+ * Return pointer to block of size bytes, or NULL if there's
+ * not enough memory available.
+ */
+static inline void *RTFAlloc(int size)
+{
+	return HeapAlloc(me_heap, 0, size);
+}
+
+
+static inline void * RTFReAlloc(void *ptr, int size)
+{
+        return HeapReAlloc(me_heap, 0, ptr, size);
+}
+
+
+/*
+ * Saves a string on the heap and returns a pointer to it.
+ */
+static inline char *RTFStrSave(char *s)
+{
+	char	*p;
+
+	p = RTFAlloc (lstrlenA(s) + 1);
+	if (p == NULL)
+		return NULL;
+	return lstrcpyA (p, s);
+}
+
+
+static inline void RTFFree(void *p)
+{
+        HeapFree(me_heap, 0, p);
+}
+
+
+/* ---------------------------------------------------------------------- */
+
 
 int _RTFGetChar(RTF_Info *info)
 {
@@ -82,19 +127,20 @@ int _RTFGetChar(RTF_Info *info)
 	TRACE("\n");
 
 	/* if the last buffer wasn't full, it's EOF */
-  if (info->dwInputSize > 0 &&
-    info->dwInputSize == info->dwInputUsed && info->dwInputSize < sizeof(info->InputBuffer))
-    return EOF;
-  if (info->dwInputSize <= info->dwInputUsed)
+	if (info->dwInputSize > 0 &&
+		info->dwInputSize == info->dwInputUsed &&
+		info->dwInputSize < sizeof(info->InputBuffer))
+		return EOF;
+	if (info->dwInputSize <= info->dwInputUsed)
 	{
 		long count = 0;
 		info->editstream.dwError = info->editstream.pfnCallback(info->editstream.dwCookie, 
-			info->InputBuffer, sizeof(info->InputBuffer), &count);
-  	/* if error, it's EOF */
+		info->InputBuffer, sizeof(info->InputBuffer), &count);
+		/* if error, it's EOF */
 		if (info->editstream.dwError)
-		  return EOF;
-  	/* if no bytes read, it's EOF */
-		if(count == 0)
+			return EOF;
+		/* if no bytes read, it's EOF */
+		if (count == 0)
 			return EOF;
 		info->dwInputSize = count;
 		info->dwInputUsed = 0;
@@ -122,32 +168,32 @@ RTFDestroyAttrs(RTF_Info *info)
 	RTFStyle	*sp;
 	RTFStyleElt	*eltList, *ep;
 
-	while (info->fontList != (RTFFont *) NULL)
+	while (info->fontList)
 	{
 		fp = info->fontList->rtfNextFont;
 		RTFFree (info->fontList->rtfFName);
-		RTFFree ((char *) info->fontList);
+		RTFFree (info->fontList);
 		info->fontList = fp;
 	}
-	while (info->colorList != (RTFColor *) NULL)
+	while (info->colorList)
 	{
 		cp = info->colorList->rtfNextColor;
-		RTFFree ((char *) info->colorList);
+		RTFFree (info->colorList);
 		info->colorList = cp;
 	}
-	while (info->styleList != (RTFStyle *) NULL)
+	while (info->styleList)
 	{
 		sp = info->styleList->rtfNextStyle;
 		eltList = info->styleList->rtfSSEList;
-		while (eltList != (RTFStyleElt *) NULL)
+		while (eltList)
 		{
 			ep = eltList->rtfNextSE;
 			RTFFree (eltList->rtfSEText);
-			RTFFree ((char *) eltList);
+			RTFFree (eltList);
 			eltList = ep;
 		}
 		RTFFree (info->styleList->rtfSName);
-		RTFFree ((char *) info->styleList);
+		RTFFree (info->styleList);
 		info->styleList = sp;
 	}
 }
@@ -156,13 +202,13 @@ RTFDestroyAttrs(RTF_Info *info)
 void
 RTFDestroy(RTF_Info *info)
 {
-        if (info->rtfTextBuf)
-        {
-                RTFFree(info->rtfTextBuf);
-                RTFFree(info->pushedTextBuf);
-        }
-        RTFDestroyAttrs(info);
-        RTFFree(info->cpOutputBuffer);
+	if (info->rtfTextBuf)
+	{
+		RTFFree(info->rtfTextBuf);
+		RTFFree(info->pushedTextBuf);
+	}
+	RTFDestroyAttrs(info);
+	RTFFree(info->cpOutputBuffer);
 }
 
 
@@ -178,27 +224,26 @@ void RTFInit(RTF_Info *info)
 
 	TRACE("\n");
 
-	if (info->rtfTextBuf == (char *) NULL)	/* initialize the text buffers */
+	if (info->rtfTextBuf == NULL)	/* initialize the text buffers */
 	{
 		info->rtfTextBuf = RTFAlloc (rtfBufSiz);
 		info->pushedTextBuf = RTFAlloc (rtfBufSiz);
-		if (info->rtfTextBuf == (char *) NULL
-			|| info->pushedTextBuf == (char *) NULL)
+		if (info->rtfTextBuf == NULL || info->pushedTextBuf == NULL)
 			RTFPanic (info,"Cannot allocate text buffers.");
 		info->rtfTextBuf[0] = info->pushedTextBuf[0] = '\0';
 	}
 
 	RTFFree (info->inputName);
 	RTFFree (info->outputName);
-	info->inputName = info->outputName = (char *) NULL;
+	info->inputName = info->outputName = NULL;
 
 	/* initialize lookup table */
 	LookupInit ();
 
 	for (i = 0; i < rtfMaxClass; i++)
-		RTFSetClassCallback (info, i, (RTFFuncPtr) NULL);
+		RTFSetClassCallback (info, i, NULL);
 	for (i = 0; i < rtfMaxDestination; i++)
-		RTFSetDestinationCallback (info, i, (RTFFuncPtr) NULL);
+		RTFSetDestinationCallback (info, i, NULL);
 
 	/* install built-in destination readers */
 	RTFSetDestinationCallback (info, rtfFontTbl, ReadFontTbl);
@@ -209,16 +254,16 @@ void RTFInit(RTF_Info *info)
 	RTFSetDestinationCallback (info, rtfObject, ReadObjGroup);
 
 
-	RTFSetReadHook (info, (RTFFuncPtr) NULL);
+	RTFSetReadHook (info, NULL);
 
 	/* dump old lists if necessary */
 
-        RTFDestroyAttrs(info);
+	RTFDestroyAttrs(info);
 
-        info->ansiCodePage = 1252; /* Latin-1 */
-        
-        info->unicodeLength = 1; /* \uc1 is the default */
-        info->codePage = info->ansiCodePage;
+	info->ansiCodePage = 1252; /* Latin-1 */
+
+	info->unicodeLength = 1; /* \uc1 is the default */
+	info->codePage = info->ansiCodePage;
 
 	info->rtfClass = -1;
 	info->pushedClass = -1;
@@ -229,12 +274,12 @@ void RTFInit(RTF_Info *info)
 	info->prevChar = EOF;
 	info->bumpLine = 0;
 
-        info->dwCPOutputCount = 0;
+	info->dwCPOutputCount = 0;
         if (!info->cpOutputBuffer)
-        {
-                info->dwMaxCPOutputCount = 0x1000;
-                info->cpOutputBuffer = RTFAlloc(info->dwMaxCPOutputCount);
-        }
+	{
+		info->dwMaxCPOutputCount = 0x1000;
+		info->cpOutputBuffer = RTFAlloc(info->dwMaxCPOutputCount);
+	}
 }
 
 /*
@@ -246,7 +291,8 @@ void RTFSetInputName(RTF_Info *info, char *name)
 {
 	TRACE("\n");
 
-	if ((info->inputName = RTFStrSave (name)) == (char *) NULL)
+	info->inputName = RTFStrSave (name);
+	if (info->inputName == NULL)
 		RTFPanic (info,"RTFSetInputName: out of memory");
 }
 
@@ -261,7 +307,8 @@ void RTFSetOutputName(RTF_Info *info, char *name)
 {
 	TRACE("\n");
 
-	if ((info->outputName = RTFStrSave (name)) == (char *) NULL)
+	info->outputName = RTFStrSave (name);
+	if (info->outputName == NULL)
 		RTFPanic (info, "RTFSetOutputName: out of memory");
 }
 
@@ -294,8 +341,8 @@ void RTFSetClassCallback(RTF_Info *info, int class, RTFFuncPtr callback)
 RTFFuncPtr RTFGetClassCallback(RTF_Info *info, int class)
 {
 	if (class >= 0 && class < rtfMaxClass)
-		return (info->ccb[class]);
-	return ((RTFFuncPtr) NULL);
+		return info->ccb[class];
+	return NULL;
 }
 
 
@@ -313,8 +360,8 @@ void RTFSetDestinationCallback(RTF_Info *info, int dest, RTFFuncPtr callback)
 RTFFuncPtr RTFGetDestinationCallback(RTF_Info *info, int dest)
 {
 	if (dest >= 0 && dest < rtfMaxDestination)
-		return (info->dcb[dest]);
-	return ((RTFFuncPtr) NULL);
+		return info->dcb[dest];
+	return NULL;
 }
 
 
@@ -357,15 +404,16 @@ void RTFRouteToken(RTF_Info *info)
 	if (RTFCheckCM (info, rtfControl, rtfDestination))
 	{
 		/* invoke destination-specific callback if there is one */
-		if ((p = RTFGetDestinationCallback (info, info->rtfMinor))
-							!= (RTFFuncPtr) NULL)
+		p = RTFGetDestinationCallback (info, info->rtfMinor);
+		if (p != NULL)
 		{
 			(*p) (info);
 			return;
 		}
 	}
 	/* invoke class callback if there is one */
-	if ((p = RTFGetClassCallback (info, info->rtfClass)) != (RTFFuncPtr) NULL)
+	p = RTFGetClassCallback (info, info->rtfClass);
+	if (p != NULL)
 		(*p) (info);
 }
 
@@ -414,7 +462,8 @@ int RTFGetToken(RTF_Info *info)
 	for (;;)
 	{
 		_RTFGetToken (info);
-		if ((p = RTFGetReadHook (info)) != (RTFFuncPtr) NULL)
+		p = RTFGetReadHook (info);
+		if (p != NULL)
 			(*p) (info);	/* give read hook a look at token */
 
 		/* Silently discard newlines, carriage returns, nulls.  */
@@ -454,7 +503,7 @@ void RTFUngetToken(RTF_Info *info)
 	info->pushedMajor = info->rtfMajor;
 	info->pushedMinor = info->rtfMinor;
 	info->pushedParam = info->rtfParam;
-	(void) strcpy (info->pushedTextBuf, info->rtfTextBuf);
+	lstrcpyA (info->pushedTextBuf, info->rtfTextBuf);
 }
 
 
@@ -470,16 +519,17 @@ static void _RTFGetToken(RTF_Info *info)
 {
 	TRACE("\n");
 
-        if (info->rtfFormat == SF_TEXT) {
-            info->rtfMajor = GetChar (info);
-            info->rtfMinor = 0;
-            info->rtfParam = rtfNoParam;
-            info->rtfTextBuf[info->rtfTextLen = 0] = '\0';
-            if (info->rtfMajor == EOF)
-                info->rtfClass = rtfEOF;
-            else
-	        info->rtfClass = rtfText;
-	    return;
+	if (info->rtfFormat == SF_TEXT)
+	{
+		info->rtfMajor = GetChar (info);
+		info->rtfMinor = 0;
+		info->rtfParam = rtfNoParam;
+		info->rtfTextBuf[info->rtfTextLen = 0] = '\0';
+		if (info->rtfMajor == EOF)
+			info->rtfClass = rtfEOF;
+		else
+			info->rtfClass = rtfText;
+		return;
 	}
 
 	/* first check for pushed token from RTFUngetToken() */
@@ -490,8 +540,8 @@ static void _RTFGetToken(RTF_Info *info)
 		info->rtfMajor = info->pushedMajor;
 		info->rtfMinor = info->pushedMinor;
 		info->rtfParam = info->pushedParam;
-		(void) strcpy (info->rtfTextBuf, info->pushedTextBuf);
-		info->rtfTextLen = strlen (info->rtfTextBuf);
+		lstrcpyA (info->rtfTextBuf, info->pushedTextBuf);
+		info->rtfTextLen = lstrlenA(info->rtfTextBuf);
 		info->pushedClass = -1;
 		return;
 	}
@@ -508,7 +558,7 @@ static void _RTFGetToken(RTF_Info *info)
 static int
 RTFCharSetToCodePage(RTF_Info *info, int charset)
 {
-        switch (charset)
+	switch (charset)
         {
                 case ANSI_CHARSET:
                 case DEFAULT_CHARSET:
@@ -550,7 +600,7 @@ RTFCharSetToCodePage(RTF_Info *info, int charset)
                 default:
 		{
                         CHARSETINFO csi;
-                        DWORD n = (DWORD)charset;
+                        DWORD n = charset;
                         
                         /* FIXME: TranslateCharsetInfo does not work as good as it
                          * should, so let's use it only when all else fails */
@@ -790,10 +840,10 @@ void RTFSetToken(RTF_Info *info, int class, int major, int minor, int param, con
 	info->rtfMinor = minor;
 	info->rtfParam = param;
 	if (param == rtfNoParam)
-		(void) strcpy (info->rtfTextBuf, text);
+		lstrcpyA(info->rtfTextBuf, text);
 	else
 		sprintf (info->rtfTextBuf, "%s%d", text, param);
-	info->rtfTextLen = strlen (info->rtfTextBuf);
+	info->rtfTextLen = lstrlenA (info->rtfTextBuf);
 }
 
 
@@ -836,7 +886,7 @@ static void ReadFontTbl(RTF_Info *info)
 
 	for (;;)
 	{
-		(void) RTFGetToken (info);
+		RTFGetToken (info);
 		if (RTFCheckCM (info, rtfGroup, rtfEndGroup))
 			break;
 		if (old < 0)		/* first entry - determine tbl type */
@@ -852,16 +902,17 @@ static void ReadFontTbl(RTF_Info *info)
 		{
 			if (!RTFCheckCM (info, rtfGroup, rtfBeginGroup))
 				RTFPanic (info, "%s: missing \"{\"", fn);
-			(void) RTFGetToken (info);	/* yes, skip to next token */
+			RTFGetToken (info);	/* yes, skip to next token */
 		}
-		if ((fp = New (RTFFont)) == (RTFFont *) NULL)
+		fp = New (RTFFont);
+		if (fp == NULL)
 			RTFPanic (info, "%s: cannot allocate font entry", fn);
 
 		fp->rtfNextFont = info->fontList;
 		info->fontList = fp;
 
-		fp->rtfFName = (char *) NULL;
-		fp->rtfFAltName = (char *) NULL;
+		fp->rtfFName = NULL;
+		fp->rtfFAltName = NULL;
 		fp->rtfFNum = -1;
 		fp->rtfFFamily = 0;
 		fp->rtfFCharSet = 0;
@@ -930,17 +981,17 @@ static void ReadFontTbl(RTF_Info *info)
                                         && !RTFCheckCM (info, rtfText, ';'))
 				{
 					*bp++ = info->rtfMajor;
-					(void) RTFGetToken (info);
+					RTFGetToken (info);
 				}
 
 				/* FIX: in some cases the <fontinfo> isn't finished with a semi-column */
 				if(RTFCheckCM (info, rtfGroup, rtfEndGroup))
 				{
-				  RTFUngetToken (info);
+					RTFUngetToken (info);
 				}
 				*bp = '\0';
 				fp->rtfFName = RTFStrSave (buf);
-				if (fp->rtfFName == (char *) NULL)
+				if (fp->rtfFName == NULL)
 					RTFPanic (info, "%s: cannot allocate font name", fn);
 				/* already have next token; don't read one */
 				/* at bottom of loop */
@@ -952,11 +1003,11 @@ static void ReadFontTbl(RTF_Info *info)
 				RTFMsg (info, "%s: unknown token \"%s\"\n",
 							fn,info->rtfTextBuf);
 			}
-			(void) RTFGetToken (info);
+			RTFGetToken (info);
 		}
 		if (old == 0)	/* need to see "}" here */
 		{
-			(void) RTFGetToken (info);
+			RTFGetToken (info);
 			if (!RTFCheckCM (info, rtfGroup, rtfEndGroup))
 				RTFPanic (info, "%s: missing \"}\"", fn);
 		}
@@ -989,10 +1040,11 @@ static void ReadColorTbl(RTF_Info *info)
 
 	for (;;)
 	{
-		(void) RTFGetToken (info);
+		RTFGetToken (info);
 		if (RTFCheckCM (info, rtfGroup, rtfEndGroup))
 			break;
-		if ((cp = New (RTFColor)) == (RTFColor *) NULL)
+		cp = New (RTFColor);
+		if (cp == NULL)
 			RTFPanic (info,"%s: cannot allocate color entry", fn);
 		cp->rtfCNum = cnum++;
 		cp->rtfCRed = cp->rtfCGreen = cp->rtfCBlue = -1;
@@ -1008,7 +1060,7 @@ static void ReadColorTbl(RTF_Info *info)
 			}
 			RTFGetToken (info);
 		}
-		if (!RTFCheckCM (info, rtfText, (int) ';'))
+		if (!RTFCheckCM (info, rtfText, ';'))
 			RTFPanic (info,"%s: malformed entry", fn);
 	}
 	RTFRouteToken (info);	/* feed "}" back to router */
@@ -1031,18 +1083,19 @@ static void ReadStyleSheet(RTF_Info *info)
 
 	for (;;)
 	{
-		(void) RTFGetToken (info);
+		RTFGetToken (info);
 		if (RTFCheckCM (info, rtfGroup, rtfEndGroup))
 			break;
-		if ((sp = New (RTFStyle)) == (RTFStyle *) NULL)
+		sp = New (RTFStyle);
+		if (sp == NULL)
 			RTFPanic (info,"%s: cannot allocate stylesheet entry", fn);
-		sp->rtfSName = (char *) NULL;
+		sp->rtfSName = NULL;
 		sp->rtfSNum = -1;
 		sp->rtfSType = rtfParStyle;
 		sp->rtfSAdditive = 0;
 		sp->rtfSBasedOn = rtfNoStyleNum;
 		sp->rtfSNextPar = -1;
-		sp->rtfSSEList = sepLast = (RTFStyleElt *) NULL;
+		sp->rtfSSEList = sepLast = NULL;
 		sp->rtfNextStyle = info->styleList;
 		sp->rtfExpanding = 0;
 		info->styleList = sp;
@@ -1050,7 +1103,7 @@ static void ReadStyleSheet(RTF_Info *info)
 			RTFPanic (info,"%s: missing \"{\"", fn);
 		for (;;)
 		{
-			(void) RTFGetToken (info);
+			RTFGetToken (info);
 			if (info->rtfClass == rtfEOF
 				|| RTFCheckCM (info, rtfText, ';'))
 				break;
@@ -1091,20 +1144,21 @@ static void ReadStyleSheet(RTF_Info *info)
 					sp->rtfSNextPar = info->rtfParam;
 					continue;
 				}
-				if ((sep = New (RTFStyleElt)) == (RTFStyleElt *) NULL)
+				sep = New (RTFStyleElt);
+				if (sep == NULL)
 					RTFPanic (info,"%s: cannot allocate style element", fn);
 				sep->rtfSEClass = info->rtfClass;
 				sep->rtfSEMajor = info->rtfMajor;
 				sep->rtfSEMinor = info->rtfMinor;
 				sep->rtfSEParam = info->rtfParam;
-				if ((sep->rtfSEText = RTFStrSave (info->rtfTextBuf))
-								== (char *) NULL)
+				sep->rtfSEText = RTFStrSave (info->rtfTextBuf);
+				if (sep->rtfSEText == NULL)
 					RTFPanic (info,"%s: cannot allocate style element text", fn);
-				if (sepLast == (RTFStyleElt *) NULL)
+				if (sepLast == NULL)
 					sp->rtfSSEList = sep;	/* first element */
 				else				/* add to end */
 					sepLast->rtfNextSE = sep;
-				sep->rtfNextSE = (RTFStyleElt *) NULL;
+				sep->rtfNextSE = NULL;
 				sepLast = sep;
 			}
 			else if (RTFCheckCM (info, rtfGroup, rtfBeginGroup))
@@ -1124,14 +1178,15 @@ static void ReadStyleSheet(RTF_Info *info)
 					if (info->rtfMajor == ';')
 					{
 						/* put back for "for" loop */
-						(void) RTFUngetToken (info);
+						RTFUngetToken (info);
 						break;
 					}
 					*bp++ = info->rtfMajor;
-					(void) RTFGetToken (info);
+					RTFGetToken (info);
 				}
 				*bp = '\0';
-				if ((sp->rtfSName = RTFStrSave (buf)) == (char *) NULL)
+				sp->rtfSName = RTFStrSave (buf);
+				if (sp->rtfSName == NULL)
 					RTFPanic (info, "%s: cannot allocate style name", fn);
 			}
 			else		/* unrecognized */
@@ -1141,7 +1196,7 @@ static void ReadStyleSheet(RTF_Info *info)
 							fn, info->rtfTextBuf);
 			}
 		}
-		(void) RTFGetToken (info);
+		RTFGetToken (info);
 		if (!RTFCheckCM (info, rtfGroup, rtfEndGroup))
 			RTFPanic (info, "%s: missing \"}\"", fn);
 
@@ -1155,7 +1210,7 @@ static void ReadStyleSheet(RTF_Info *info)
 		 *
 		 * Some German RTF writers use "Standard" instead of "Normal".
 		 */
-		if (sp->rtfSName == (char *) NULL)
+		if (sp->rtfSName == NULL)
 			RTFPanic (info,"%s: missing style name", fn);
 		if (sp->rtfSNum < 0)
 		{
@@ -1206,7 +1261,7 @@ RTFStyle *RTFGetStyle(RTF_Info *info, int num)
 
 	if (num == -1)
 		return (info->styleList);
-	for (s = info->styleList; s != (RTFStyle *) NULL; s = s->rtfNextStyle)
+	for (s = info->styleList; s != NULL; s = s->rtfNextStyle)
 	{
 		if (s->rtfSNum == num)
 			break;
@@ -1221,7 +1276,7 @@ RTFFont *RTFGetFont(RTF_Info *info, int num)
 
 	if (num == -1)
 		return (info->fontList);
-	for (f = info->fontList; f != (RTFFont *) NULL; f = f->rtfNextFont)
+	for (f = info->fontList; f != NULL; f = f->rtfNextFont)
 	{
 		if (f->rtfFNum == num)
 			break;
@@ -1236,7 +1291,7 @@ RTFColor *RTFGetColor(RTF_Info *info, int num)
 
 	if (num == -1)
 		return (info->colorList);
-	for (c = info->colorList; c != (RTFColor *) NULL; c = c->rtfNextColor)
+	for (c = info->colorList; c != NULL; c = c->rtfNextColor)
 	{
 		if (c->rtfCNum == num)
 			break;
@@ -1259,7 +1314,10 @@ void RTFExpandStyle(RTF_Info *info, int n)
 
 	TRACE("\n");
 
-	if (n == -1 || (s = RTFGetStyle (info, n)) == (RTFStyle *) NULL)
+	if (n == -1)
+		return;
+	s = RTFGetStyle (info, n);
+	if (s == NULL)
 		return;
 	if (s->rtfExpanding != 0)
 		RTFPanic (info,"Style expansion loop, style %d", n);
@@ -1283,14 +1341,14 @@ void RTFExpandStyle(RTF_Info *info, int n)
 	 * isn't used because it would add the param value to the end
 	 * of the token text, which already has it in.
 	 */
-	for (se = s->rtfSSEList; se != (RTFStyleElt *) NULL; se = se->rtfNextSE)
+	for (se = s->rtfSSEList; se != NULL; se = se->rtfNextSE)
 	{
 		info->rtfClass = se->rtfSEClass;
 		info->rtfMajor = se->rtfSEMajor;
 		info->rtfMinor = se->rtfSEMinor;
 		info->rtfParam = se->rtfSEParam;
-		(void) strcpy (info->rtfTextBuf, se->rtfSEText);
-		info->rtfTextLen = strlen (info->rtfTextBuf);
+		lstrcpyA (info->rtfTextBuf, se->rtfSEText);
+		info->rtfTextLen = lstrlenA (info->rtfTextBuf);
 		RTFRouteToken (info);
 	}
 	s->rtfExpanding = 0;	/* done - clear expansion flag */
@@ -2218,8 +2276,8 @@ static RTFKey	rtfKey[] =
 #define RTF_KEY_COUNT (sizeof(rtfKey) / sizeof(RTFKey))
 
 typedef struct tagRTFHashTableEntry {
-  int count;
-  RTFKey **value;
+	int count;
+	RTFKey **value;
 } RTFHashTableEntry;
 
 static RTFHashTableEntry rtfHashTable[RTF_KEY_COUNT * 2];
@@ -2237,15 +2295,15 @@ static void LookupInit(void)
 	if (inited == 0)
 	{
                 memset(rtfHashTable, 0, RTF_KEY_COUNT * 2 * sizeof(*rtfHashTable));
-		for (rp = rtfKey; rp->rtfKStr != (char *) NULL; rp++) {
+		for (rp = rtfKey; rp->rtfKStr != NULL; rp++) {
                         int index;
                         
 			rp->rtfKHash = Hash ((char*)rp->rtfKStr);
                         index = rp->rtfKHash % (RTF_KEY_COUNT * 2);
                         if (!rtfHashTable[index].count)
-                                rtfHashTable[index].value = (void *)RTFAlloc(sizeof(RTFKey *));
+                                rtfHashTable[index].value = RTFAlloc(sizeof(RTFKey *));
                         else
-                                rtfHashTable[index].value = (void *)RTFReAlloc((void *)rtfHashTable[index].value, sizeof(RTFKey *) * (rtfHashTable[index].count + 1));
+                                rtfHashTable[index].value = RTFReAlloc(rtfHashTable[index].value, sizeof(RTFKey *) * (rtfHashTable[index].count + 1));
                         rtfHashTable[index].value[rtfHashTable[index].count++] = rp;
                 }
 		++inited;
@@ -2294,59 +2352,10 @@ static int Hash(char *s)
 	int	val = 0;
 
 	while ((c = *s++) != '\0')
-		val += (int) c;
+		val += c;
 	return (val);
 }
 
-
-/* ---------------------------------------------------------------------- */
-
-/*
- * Memory allocation routines
- */
-
-
-/*
- * Return pointer to block of size bytes, or NULL if there's
- * not enough memory available.
- *
- * This is called through RTFAlloc(), a define which coerces the
- * argument to int.  This avoids the persistent problem of allocation
- * failing under THINK C when a long is passed.
- */
-
-char *_RTFAlloc(int size)
-{
-	return HeapAlloc(me_heap, 0, size);
-}
-
-
-char *
-RTFReAlloc(char *ptr, int size)
-{
-        return HeapReAlloc(me_heap, 0, ptr, size);
-}
-
-
-/*
- * Saves a string on the heap and returns a pointer to it.
- */
-
-
-char *RTFStrSave(char *s)
-{
-	char	*p;
-
-	if ((p = RTFAlloc ((int) (strlen (s) + 1))) == (char *) NULL)
-		return ((char *) NULL);
-	return (strcpy (p, s));
-}
-
-
-void RTFFree(char *p)
-{
-        HeapFree(me_heap, 0, p);
-}
 
 
 /* ---------------------------------------------------------------------- */
@@ -2392,27 +2401,6 @@ int RTFHexToChar(int i)
 	if (i < 10)
 		return (i + '0');
 	return (i - 10 + 'a');
-}
-
-
-/* ---------------------------------------------------------------------- */
-
-/*
- * Open a library file.
- */
-
-
-void RTFSetOpenLibFileProc(RTF_Info *info, FILE	*(*proc)())
-{
-	info->libFileOpen = proc;
-}
-
-
-FILE *RTFOpenLibFile (RTF_Info *info, char *file, char *mode)
-{
-	if (info->libFileOpen == NULL)
-		return ((FILE *) NULL);
-	return ((*info->libFileOpen) (file, mode));
 }
 
 
@@ -2467,10 +2455,10 @@ void RTFPanic(RTF_Info *info, const char *fmt, ...)
 	va_start (args,fmt);
 	vsprintf (buf, fmt, args);
 	va_end (args);
-	(void) strcat (buf, "\n");
-	if (info->prevChar != EOF && info->rtfTextBuf != (char *) NULL)
+	lstrcatA (buf, "\n");
+	if (info->prevChar != EOF && info->rtfTextBuf != NULL)
 	{
-		sprintf (buf + strlen (buf),
+		sprintf (buf + lstrlenA (buf),
 			"Last token read was \"%s\" near line %ld, position %d.\n",
 			info->rtfTextBuf, info->rtfLineNum, info->rtfLinePos);
 	}

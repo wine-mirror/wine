@@ -59,13 +59,7 @@
  */
 
 
-# ifdef THINK_C
-# define	rtfNoParam	(-32768)	/* 16-bit max. neg. value */
-# endif
-# ifndef rtfNoParam
 # define	rtfNoParam	(-1000000)
-# endif
-
 
 
 
@@ -1103,8 +1097,6 @@ struct _RTF_Info {
 
     RTFFuncPtr       panicProc;
 
-    FILE     *(*libFileOpen) ();
-
     DWORD    dwOutputCount;
     WCHAR    OutputBuffer[0x1000];
 
@@ -1147,11 +1139,6 @@ int		RTFCheckMM (RTF_Info *, int, int);
 RTFFont		*RTFGetFont (RTF_Info *, int);
 RTFColor	*RTFGetColor (RTF_Info *, int);
 RTFStyle	*RTFGetStyle (RTF_Info *, int);
-# define	RTFAlloc(size)	_RTFAlloc ((int) size)
-char		*_RTFAlloc (int);
-char		*RTFReAlloc(char *ptr, int size);
-char		*RTFStrSave (char *);
-void		RTFFree (char *);
 int		RTFCharToHex ( char);
 int		RTFHexToChar ( int );
 void		RTFSetMsgProc ( RTFFuncPtr );
@@ -1166,9 +1153,6 @@ void		RTFSetPanicProc ( RTF_Info *, RTFFuncPtr);
 
 void	RTFMsg (RTF_Info *, const char *fmt, ...);
 void	RTFPanic (RTF_Info *, const char *fmt, ...);
-
-void	RTFSetOpenLibFileProc ( RTF_Info *, FILE *(*)());
-FILE	*RTFOpenLibFile ( RTF_Info *, char *, char *);
 
 void	RTFFlushOutputBuffer( RTF_Info *info );
 void	RTFSetEditStream(RTF_Info *, EDITSTREAM *es);
