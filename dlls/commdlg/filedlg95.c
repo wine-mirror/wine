@@ -238,7 +238,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   BOOL ret;
   FileOpenDlgInfos *fodInfos;
   HINSTANCE hInstance;
-  LPCSTR lpstrInitialDir = NULL;
+  LPCSTR lpstrInitialDir = (LPCSTR)-1;
   DWORD dwFlags = 0;
   
   /* Initialise FileOpenDlgInfos structure*/  
@@ -280,7 +280,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
       ret = 0;
   }
 
-  if (lpstrInitialDir)
+  if (lpstrInitialDir != (LPCSTR)-1)
   {
     MemFree((LPVOID)(ofn->lpstrInitialDir));
     ofn->lpstrInitialDir = lpstrInitialDir;
