@@ -273,7 +273,13 @@ void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
     while(1); /* avoid warning */
 }
 #  endif /* !defined(__GNUC__) */
-#endif /* !defined(__i386__) */
+#else /* !sparc, !i386 */
+void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
+{
+    func( arg );
+    while(1); /* avoid warning */
+}
+#endif /* !defined(__i386__) && !defined(__sparc__) */
 
 
 /***********************************************************************
