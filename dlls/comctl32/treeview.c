@@ -2319,20 +2319,8 @@ TREEVIEW_DrawItemLines(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	    HBRUSH hbr    = CreateSolidBrush(infoPtr->clrBk);
 	    HBRUSH hbrOld = SelectObject(hdc, hbr);
 
-           /* FIXME: Native actually draws:
-            *
-            *    xxx
-            *    X x
-            *  xxx xxx      xxxxxxx
-            *  x     x  or  x     x
-            *  xxx xxx      xxxxxxx
-            *    x x
-            *    xxx
-            *
-            * This looks a lot better when the icon size is increased.
-            */
-           Rectangle(hdc, centerx - rectsize - 1, centery - rectsize - 1,
-                     centerx + rectsize + 2, centery + rectsize + 2);
+	    Rectangle(hdc, centerx - rectsize - 1, centery - rectsize - 1,
+		      centerx + rectsize + 2, centery + rectsize + 2);
 
 	    SelectObject(hdc, hbrOld);
 	    DeleteObject(hbr);
@@ -2340,13 +2328,29 @@ TREEVIEW_DrawItemLines(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	    SelectObject(hdc, hOldPen);
 	    DeleteObject(hNewPen);
 
-	    MoveToEx(hdc, centerx - plussize + 1, centery, NULL);
-	    LineTo(hdc, centerx + plussize, centery);
-
-	    if (!(item->state & TVIS_EXPANDED))
+	    if (height < 16 || width < 16)
 	    {
-		MoveToEx(hdc, centerx, centery - plussize + 1, NULL);
-		LineTo(hdc, centerx, centery + plussize);
+	        MoveToEx(hdc, centerx - plussize + 1, centery, NULL);
+	        LineTo(hdc, centerx + plussize, centery);
+
+	        if (!(item->state & TVIS_EXPANDED))
+	        {
+		    MoveToEx(hdc, centerx, centery - plussize + 1, NULL);
+		    LineTo(hdc, centerx, centery + plussize);
+	        }
+	    }
+	    else
+	    {
+		Rectangle(hdc, centerx - plussize + 1, centery - 1,
+		centerx + plussize, centery + 2);
+
+		if (!(item->state & TVIS_EXPANDED))
+		{
+		    Rectangle(hdc, centerx - 1, centery - plussize + 1,
+		    centerx + 2, centery + plussize);
+		    SetPixel(hdc, centerx - 1, centery, infoPtr->clrBk);
+		    SetPixel(hdc, centerx + 1, centery, infoPtr->clrBk);
+		}
 	    }
 	}
     }
