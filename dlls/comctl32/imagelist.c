@@ -3,11 +3,11 @@
  *
  *  Copyright 1998 Eric Kohl
  *            2000 Jason Mawdsley.
+ *            2001 Michael Stefaniuc
  *
  *  TODO:
  *    - Fix ImageList_DrawIndirect (xBitmap, yBitmap, rgbFg, rgbBk, dwRop).
  *    - Fix ImageList_GetIcon.
- *    - Fix drag functions.
  *    - Fix ImageList_Write.
  *    - Fix ImageList_SetFilter (undocumented).
  *      BTW does anybody know anything about this function???
@@ -23,6 +23,7 @@
  *      limited in functionality too.
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include "winerror.h"
 #include "winbase.h"
@@ -37,21 +38,25 @@ DEFAULT_DEBUG_CHANNEL(imagelist);
 
 #define MAX_OVERLAYIMAGE 15
 
-
 /* internal image list data used for Drag & Drop operations */
+typedef struct
+{
+    HWND	hwnd;
+    HIMAGELIST	himl;
+    /* position of the drag image relative to the window */
+    INT		x;
+    INT		y;
+    /* offset of the hotspot relative to the origin of the image */
+    INT		dxHotspot;
+    INT		dyHotspot;
+    /* is the drag image visible */
+    BOOL	bShow;
+    /* saved background */
+    HBITMAP	hbmBg;
+} INTERNALDRAG;
 
-static HIMAGELIST himlInternalDrag = NULL;
-/* offset of the Hotspot to the origin of the himlInternalDrag image */
-static INT      nInternalDragHotspotX = 0;
-static INT      nInternalDragHotspotY = 0;
+static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0 };
 
-static HWND     hwndInternalDrag = 0;
-/* coordinates of the Hotspot relative to the window origin */
-static INT      nInternalDragPosX = 0;
-static INT      nInternalDragPosY = 0;
-
-static HDC      hdcBackBuffer = 0;
-static HBITMAP  hbmBackBuffer = 0;
 
 
 /*************************************************************************
@@ -76,7 +81,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
     HBITMAP hbmNewBitmap;
     INT     nNewWidth, nNewCount;
 
-    if ((himl->cCurImage + nImageCount < himl->cMaxImage)
+    if ((himl->cCurImage + nImageCount <= himl->cMaxImage)
         && (himl->cy >= cy))
 	return;
 
@@ -459,9 +464,6 @@ IMAGELIST_InternalDrawOverlay(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 }
 
 
-
-
-
 /*************************************************************************
  * ImageList_Add [COMCTL32.40]
  *
@@ -707,45 +709,44 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
     HDC hdcSrc, hdcDst;
     INT cx, cy;
 
-    FIXME("partially implemented!\n");
     TRACE("(himlTrack=%p iTrack=%d dx=%d dy=%d)\n", himlTrack, iTrack,
 	  dxHotspot, dyHotspot);
 
     if (himlTrack == NULL)
 	return FALSE;
 
+    if (InternalDrag.himl)
+        ImageList_EndDrag ();
+
     cx = himlTrack->cx;
     cy = himlTrack->cy;
 
-    if (himlInternalDrag)
-        ImageList_EndDrag ();
-
-    himlInternalDrag = ImageList_Create (cx, cy, himlTrack->flags, 1, 1);
-    if (himlInternalDrag == NULL) {
+    InternalDrag.himl = ImageList_Create (cx, cy, himlTrack->flags, 1, 1);
+    if (InternalDrag.himl == NULL) {
         ERR("Error creating drag image list!\n");
         return FALSE;
     }
 
-    nInternalDragHotspotX = dxHotspot;
-    nInternalDragHotspotY = dyHotspot;
+    InternalDrag.dxHotspot = dxHotspot;
+    InternalDrag.dyHotspot = dyHotspot;
 
     hdcSrc = CreateCompatibleDC (0);
     hdcDst = CreateCompatibleDC (0);
 
     /* copy image */
     SelectObject (hdcSrc, himlTrack->hbmImage);
-    SelectObject (hdcDst, himlInternalDrag->hbmImage);
+    SelectObject (hdcDst, InternalDrag.himl->hbmImage);
     BitBlt (hdcDst, 0, 0, cx, cy, hdcSrc, iTrack * cx, 0, SRCCOPY);
 
     /* copy mask */
     SelectObject (hdcSrc, himlTrack->hbmMask);
-    SelectObject (hdcDst, himlInternalDrag->hbmMask);
+    SelectObject (hdcDst, InternalDrag.himl->hbmMask);
     BitBlt (hdcDst, 0, 0, cx, cy, hdcSrc, iTrack * cx, 0, SRCCOPY);
 
     DeleteDC (hdcSrc);
     DeleteDC (hdcDst);
 
-    himlInternalDrag->cCurImage = 1;
+    InternalDrag.himl->cCurImage = 1;
 
     return TRUE;
 }
@@ -1034,24 +1035,23 @@ ImageList_DragEnter (HWND hwndLock, INT x, INT y)
 {
     TRACE("(hwnd=%#x x=%d y=%d)\n", hwndLock, x, y);
 
-    if (himlInternalDrag == NULL)
+    if (InternalDrag.himl == NULL)
 	return FALSE;
 
     if (hwndLock)
-	hwndInternalDrag = hwndLock;
+	InternalDrag.hwnd = hwndLock;
     else
-	hwndInternalDrag = GetDesktopWindow ();
+	InternalDrag.hwnd = GetDesktopWindow ();
 
-    nInternalDragPosX = x;
-    nInternalDragPosY = y;
+    InternalDrag.x = x;
+    InternalDrag.y = y;
 
-    hdcBackBuffer = CreateCompatibleDC (0);
-    hbmBackBuffer = CreateCompatibleBitmap (hdcBackBuffer,
-		himlInternalDrag->cx, himlInternalDrag->cy);
+    /* draw the drag image and save the background */
+    if (!ImageList_DragShowNolock(TRUE)) {
+	return FALSE;
+    }
 
-    ImageList_DragShowNolock (TRUE);
-
-    return FALSE;
+    return TRUE;
 }
 
 
@@ -1072,14 +1072,11 @@ BOOL WINAPI
 ImageList_DragLeave (HWND hwndLock)
 {
     if (hwndLock)
-	hwndInternalDrag = hwndLock;
+	InternalDrag.hwnd = hwndLock;
     else
-	hwndInternalDrag = GetDesktopWindow ();
+	InternalDrag.hwnd = GetDesktopWindow ();
 
     ImageList_DragShowNolock (FALSE);
-
-    DeleteDC (hdcBackBuffer);
-    DeleteObject (hbmBackBuffer);
 
     return TRUE;
 }
@@ -1101,6 +1098,9 @@ ImageList_DragLeave (HWND hwndLock)
  * NOTES
  *     The position of the drag image is relative to the window, not
  *     the client area.
+ *
+ * BUGS
+ *     The drag image should be drawn semitransparent.
  */
 
 BOOL WINAPI
@@ -1108,14 +1108,69 @@ ImageList_DragMove (INT x, INT y)
 {
     TRACE("(x=%d y=%d)\n", x, y);
 
-    ImageList_DragShowNolock (FALSE);
+    if (!InternalDrag.himl) {
+	return FALSE;
+    }
 
-    nInternalDragPosX = x;
-    nInternalDragPosY = y;
+    /* draw/update the drag image */
+    if (InternalDrag.bShow) {
+	HDC hdcDrag;
+	HDC hdcOffScreen;
+	HDC hdcBg;
+	HBITMAP hbmOffScreen;
+	INT origNewX, origNewY;
+	INT origOldX, origOldY;
+	INT origRegX, origRegY;
+	INT sizeRegX, sizeRegY;
+	
 
-    ImageList_DragShowNolock (TRUE);
+	/* calculate the update region */
+	origNewX = x - InternalDrag.dxHotspot;
+	origNewY = y - InternalDrag.dyHotspot;
+	origOldX = InternalDrag.x - InternalDrag.dxHotspot;
+	origOldY = InternalDrag.y - InternalDrag.dyHotspot;
+	origRegX = min(origNewX, origOldX);
+	origRegY = min(origNewY, origOldY);
+	sizeRegX = InternalDrag.himl->cx + abs(x - InternalDrag.x);
+	sizeRegY = InternalDrag.himl->cy + abs(y - InternalDrag.y);
 
-    return FALSE;
+	hdcDrag = GetDCEx(InternalDrag.hwnd, 0,
+   			  DCX_WINDOW | DCX_CACHE | DCX_LOCKWINDOWUPDATE);
+    	hdcOffScreen = CreateCompatibleDC(hdcDrag);
+    	hdcBg = CreateCompatibleDC(hdcDrag);
+
+	hbmOffScreen = CreateCompatibleBitmap(hdcDrag, sizeRegX, sizeRegY);
+	SelectObject(hdcOffScreen, hbmOffScreen);
+	SelectObject(hdcBg, InternalDrag.hbmBg);
+
+	/* get the actual background of the update region */
+	BitBlt(hdcOffScreen, 0, 0, sizeRegX, sizeRegY, hdcDrag,
+	       origRegX, origRegY, SRCCOPY);
+	/* erase the old image */
+	BitBlt(hdcOffScreen, origOldX - origRegX, origOldY - origRegY,
+	       InternalDrag.himl->cx, InternalDrag.himl->cy, hdcBg, 0, 0,
+	       SRCCOPY);
+	/* save the background */
+	BitBlt(hdcBg, 0, 0, InternalDrag.himl->cx, InternalDrag.himl->cy,
+	       hdcOffScreen, origNewX - origRegX, origNewY - origRegY, SRCCOPY);
+	/* draw the image */
+	/* FIXME: image should be drawn semitransparent */
+	ImageList_Draw(InternalDrag.himl, 0, hdcOffScreen, origNewX - origRegX,
+		       origNewY - origRegY, ILD_NORMAL);
+	/* draw the update region to the screen */
+	BitBlt(hdcDrag, origRegX, origRegY, sizeRegX, sizeRegY,
+	       hdcOffScreen, 0, 0, SRCCOPY);
+
+	DeleteDC(hdcBg);
+	DeleteDC(hdcOffScreen);
+	ReleaseDC(InternalDrag.hwnd, hdcDrag);
+    }
+
+    /* update the image position */
+    InternalDrag.x = x;
+    InternalDrag.y = y;
+
+    return TRUE;
 }
 
 
@@ -1131,39 +1186,59 @@ ImageList_DragMove (INT x, INT y)
  *     Success: TRUE
  *     Failure: FALSE
  *
- * FIXME
- *     semi-stub.
+ * BUGS
+ *     The drag image should be drawn semitransparent.
  */
 
 BOOL WINAPI
 ImageList_DragShowNolock (BOOL bShow)
 {
     HDC hdcDrag;
+    HDC hdcBg;
+    INT x, y;
 
-    FIXME("semi-stub!\n");
     TRACE("bShow=0x%X!\n", bShow);
 
-    hdcDrag = GetDCEx (hwndInternalDrag, 0,
+    /* DragImage is already visible/hidden */
+    if ((InternalDrag.bShow && bShow) || (!InternalDrag.bShow && !bShow)) {
+	return FALSE;
+    }
+
+    /* position of the origin of the DragImage */
+    x = InternalDrag.x - InternalDrag.dxHotspot;
+    y = InternalDrag.y - InternalDrag.dyHotspot;
+
+    hdcDrag = GetDCEx (InternalDrag.hwnd, 0,
 			 DCX_WINDOW | DCX_CACHE | DCX_LOCKWINDOWUPDATE);
+    if (!hdcDrag) {
+	return FALSE;
+    }
 
+    hdcBg = CreateCompatibleDC(hdcDrag);
+    if (!InternalDrag.hbmBg) {
+	InternalDrag.hbmBg = CreateCompatibleBitmap(hdcDrag,
+		    InternalDrag.himl->cx, InternalDrag.himl->cy);
+    }
+    SelectObject(hdcBg, InternalDrag.hbmBg);
+    
     if (bShow) {
-	/* show drag image */
-
-	/* save background */
-
-	/* draw drag image */
-
-    }
-    else {
-	/* hide drag image */
-
-	/* restore background */
-
+	/* save the background */
+	BitBlt(hdcBg, 0, 0, InternalDrag.himl->cx, InternalDrag.himl->cy,
+	       hdcDrag, x, y, SRCCOPY);
+	/* show the image */
+	/* FIXME: this should be drawn semitransparent */
+	ImageList_Draw(InternalDrag.himl, 0, hdcDrag, x, y, ILD_NORMAL);
+    } else { 
+	/* hide the image */
+	BitBlt(hdcDrag, x, y, InternalDrag.himl->cx, InternalDrag.himl->cy,
+	       hdcBg, 0, 0, SRCCOPY);
     }
 
-    ReleaseDC (hwndInternalDrag, hdcDrag);
+    InternalDrag.bShow = !InternalDrag.bShow;
 
-    return FALSE;
+    DeleteDC(hdcBg);
+    ReleaseDC (InternalDrag.hwnd, hdcDrag);
+    return TRUE;
 }
 
 
@@ -1397,26 +1472,25 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
  * RETURNS
  *     Success: TRUE
  *     Failure: FALSE
- *
- * BUGS
- *     semi-stub.
  */
 
 BOOL WINAPI
 ImageList_EndDrag (void)
 {
-    FIXME("semi-stub!\n");
+    /* hide the drag image */
+    ImageList_DragShowNolock(FALSE);
 
-    if (himlInternalDrag)
-    {
-
-        ImageList_Destroy (himlInternalDrag);
-        himlInternalDrag = NULL;
-
-        nInternalDragHotspotX = 0;
-        nInternalDragHotspotY = 0;
-
-    }
+    /* cleanup the InternalDrag struct */
+    InternalDrag.hwnd = 0;
+    ImageList_Destroy (InternalDrag.himl);
+    InternalDrag.himl = 0;
+    InternalDrag.x= 0;
+    InternalDrag.y= 0;
+    InternalDrag.dxHotspot = 0;
+    InternalDrag.dyHotspot = 0;
+    InternalDrag.bShow = FALSE;
+    DeleteObject(InternalDrag.hbmBg);
+    InternalDrag.hbmBg = 0;
 
     return TRUE;
 }
@@ -1457,24 +1531,21 @@ ImageList_GetBkColor (HIMAGELIST himl)
  * RETURNS
  *     Success: Handle of the drag image list.
  *     Failure: NULL.
- *
- * BUGS
- *     semi-stub.
  */
 
 HIMAGELIST WINAPI
 ImageList_GetDragImage (POINT *ppt, POINT *pptHotspot)
 {
-    if (himlInternalDrag) {
+    if (InternalDrag.himl) {
 	if (ppt) {
-	    ppt->x = nInternalDragPosX;
-	    ppt->y = nInternalDragPosY;
+	    ppt->x = InternalDrag.x;
+	    ppt->y = InternalDrag.y;
 	}
 	if (pptHotspot) {
-	    pptHotspot->x = nInternalDragHotspotX;
-	    pptHotspot->y = nInternalDragHotspotY;
+	    pptHotspot->x = InternalDrag.dxHotspot;
+	    pptHotspot->y = InternalDrag.dyHotspot;
 	}
-        return (himlInternalDrag);
+        return (InternalDrag.himl);
     }
 
     return NULL;
@@ -2395,7 +2466,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
     GetObjectA (ii.hbmMask, sizeof(BITMAP), (LPVOID)&bmp);
 
     if (i == -1) {
-        if (himl->cCurImage + 1 >= himl->cMaxImage)
+        if (himl->cCurImage + 1 > himl->cMaxImage)
             IMAGELIST_InternalExpandBitmaps (himl, 1, 0, 0);
 
         nIndex = himl->cCurImage;
@@ -2489,8 +2560,10 @@ ImageList_SetBkColor (HIMAGELIST himl, COLORREF clrBk)
  *     Success: TRUE
  *     Failure: FALSE
  *
- * BUGS
- *     semi-stub.
+ * NOTES
+ *     When this function is called and the drag image is visible, a
+ *     short flickering occurs but this matches the Win9x behavior. It is
+ *     possible to fix the flickering using code like in ImageList_DragMove.
  */
 
 BOOL WINAPI
@@ -2499,32 +2572,51 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 {
     HIMAGELIST himlTemp;
     INT dx, dy;
+    BOOL visible;
 
-    if (himlInternalDrag == NULL)
+    if (InternalDrag.himl == NULL)
 	return FALSE;
 
     TRACE(" dxH=%d dyH=%d nX=%d nY=%d\n",
-	   dxHotspot, dyHotspot, nInternalDragHotspotX, nInternalDragHotspotY);
+	   dxHotspot, dyHotspot, InternalDrag.dxHotspot, InternalDrag.dyHotspot);
+
+    visible = InternalDrag.bShow;
 
     /* Calculate the offset between the origin of the old image and the
      * origin of the second image.
      * dxHotspot, dyHotspot is the offset of THE Hotspot (there is only one
-     * hotspot) to the origin of the second image (himlDrag).
+     * hotspot) to the origin of the second image.
      * See M$DN for details */
-    dx = nInternalDragHotspotX - dxHotspot;
-    dy = nInternalDragHotspotY - dyHotspot;
+    dx = InternalDrag.dxHotspot - dxHotspot;
+    dy = InternalDrag.dyHotspot - dyHotspot;
+    himlTemp = ImageList_Merge (InternalDrag.himl, 0, himlDrag, iDrag, dx, dy);
 
-    himlTemp = ImageList_Merge (himlInternalDrag, 0, himlDrag, iDrag, dx, dy);
-    ImageList_Destroy (himlInternalDrag);
-    himlInternalDrag = himlTemp;
-
-    /* update the InternalDragOffset, if the origin of the origin of the
-     * DragImage was changed by ImageList_Merge. */
-    if (dx > nInternalDragHotspotX) {
-	nInternalDragHotspotX = dx;
+    if (visible) {
+	/* hide the drag image */
+	ImageList_DragShowNolock(FALSE);
     }
-    if (dy > nInternalDragHotspotY) {
-	nInternalDragHotspotY = dy;
+    if ((InternalDrag.himl->cx != himlTemp->cx) ||
+	   (InternalDrag.himl->cy != himlTemp->cy)) {
+	/* the size of the drag image changed, invalidate the buffer */
+	DeleteObject(InternalDrag.hbmBg);
+	InternalDrag.hbmBg = 0;
+    }
+
+    ImageList_Destroy (InternalDrag.himl);
+    InternalDrag.himl = himlTemp;
+
+    /* update the InternalDragOffset, if the origin of the
+     * DragImage was changed by ImageList_Merge. */
+    if (dx > InternalDrag.dxHotspot) {
+	InternalDrag.dxHotspot = dx;
+    }
+    if (dy > InternalDrag.dyHotspot) {
+	InternalDrag.dyHotspot = dy;
+    }
+
+    if (visible) {
+	/* show the drag image */
+	ImageList_DragShowNolock(TRUE);
     }
 
     return TRUE;
