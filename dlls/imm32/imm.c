@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
  */
 HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 {
-  FIXME("(0x%08x, 0x%08x): stub\n",hWnd,hIMC);
+  FIXME("(%p, %p): stub\n",hWnd,hIMC);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return (HIMC)NULL;
 }
@@ -44,7 +44,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 BOOL WINAPI ImmConfigureIMEA(
   HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
 {
-  FIXME("(0x%08x, 0x%08x, %ld, %p): stub\n",
+  FIXME("(%p, %p, %ld, %p): stub\n",
     hKL, hWnd, dwMode, lpData
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -57,7 +57,7 @@ BOOL WINAPI ImmConfigureIMEA(
 BOOL WINAPI ImmConfigureIMEW(
   HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
 {
-  FIXME("(0x%08x, 0x%08x, %ld, %p): stub\n",
+  FIXME("(%p, %p, %ld, %p): stub\n",
     hKL, hWnd, dwMode, lpData
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -79,7 +79,7 @@ HIMC WINAPI ImmCreateContext()
  */
 BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 {
-  FIXME("(0x%08x): stub\n",hIMC);
+  FIXME("(%p): stub\n",hIMC);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -92,7 +92,7 @@ UINT WINAPI ImmEnumRegisterWordA(
   LPCSTR lpszReading, DWORD dwStyle,
   LPCSTR lpszRegister, LPVOID lpData)
 {
-  FIXME("(0x%08x, %p, %s, %ld, %s, %p): stub\n",
+  FIXME("(%p, %p, %s, %ld, %s, %p): stub\n",
     hKL, lpfnEnumProc,
     debugstr_a(lpszReading), dwStyle,
     debugstr_a(lpszRegister), lpData
@@ -109,7 +109,7 @@ UINT WINAPI ImmEnumRegisterWordW(
   LPCWSTR lpszReading, DWORD dwStyle,
   LPCWSTR lpszRegister, LPVOID lpData)
 {
-  FIXME("(0x%08x, %p, %s, %ld, %s, %p): stub\n",
+  FIXME("(%p, %p, %s, %ld, %s, %p): stub\n",
     hKL, lpfnEnumProc,
     debugstr_w(lpszReading), dwStyle,
     debugstr_w(lpszRegister), lpData
@@ -125,7 +125,7 @@ LRESULT WINAPI ImmEscapeA(
   HKL hKL, HIMC hIMC,
   UINT uEscape, LPVOID lpData)
 {
-  FIXME("(0x%08x, 0x%08x, %d, %p): stub\n",
+  FIXME("(%p, %p, %d, %p): stub\n",
     hKL, hIMC, uEscape, lpData
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -139,7 +139,7 @@ LRESULT WINAPI ImmEscapeW(
   HKL hKL, HIMC hIMC,
   UINT uEscape, LPVOID lpData)
 {
-  FIXME("(0x%08x, 0x%08x, %d, %p): stub\n",
+  FIXME("(%p, %p, %d, %p): stub\n",
     hKL, hIMC, uEscape, lpData
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -153,7 +153,7 @@ DWORD WINAPI ImmGetCandidateListA(
   HIMC hIMC, DWORD deIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
-  FIXME("(0x%08x, %ld, %p, %ld): stub\n",
+  FIXME("(%p, %ld, %p, %ld): stub\n",
     hIMC, deIndex,
     lpCandList, dwBufLen
   );
@@ -167,7 +167,7 @@ DWORD WINAPI ImmGetCandidateListA(
 DWORD WINAPI ImmGetCandidateListCountA(
   HIMC hIMC, LPDWORD lpdwListCount)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lpdwListCount);
+  FIXME("(%p, %p): stub\n", hIMC, lpdwListCount);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -178,7 +178,7 @@ DWORD WINAPI ImmGetCandidateListCountA(
 DWORD WINAPI ImmGetCandidateListCountW(
   HIMC hIMC, LPDWORD lpdwListCount)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lpdwListCount);
+  FIXME("(%p, %p): stub\n", hIMC, lpdwListCount);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -190,7 +190,7 @@ DWORD WINAPI ImmGetCandidateListW(
   HIMC hIMC, DWORD deIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
-  FIXME("(0x%08x, %ld, %p, %ld): stub\n",
+  FIXME("(%p, %ld, %p, %ld): stub\n",
     hIMC, deIndex,
     lpCandList, dwBufLen
   );
@@ -204,7 +204,7 @@ DWORD WINAPI ImmGetCandidateListW(
 BOOL WINAPI ImmGetCandidateWindow(
   HIMC hIMC, DWORD dwBufLen, LPCANDIDATEFORM lpCandidate)
 {
-  FIXME("(0x%08x, %ld, %p): stub\n", hIMC, dwBufLen, lpCandidate);
+  FIXME("(%p, %ld, %p): stub\n", hIMC, dwBufLen, lpCandidate);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -214,7 +214,7 @@ BOOL WINAPI ImmGetCandidateWindow(
  */
 BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lplf);
+  FIXME("(%p, %p): stub\n", hIMC, lplf);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -224,7 +224,7 @@ BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
  */
 BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lplf);
+  FIXME("(%p, %p): stub\n", hIMC, lplf);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -236,7 +236,7 @@ LONG WINAPI ImmGetCompositionStringA(
   HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen)
 {
   OSVERSIONINFOA version;
-  FIXME("(0x%08x, %ld, %p, %ld): stub\n",
+  FIXME("(%p, %ld, %p, %ld): stub\n",
     hIMC, dwIndex, lpBuf, dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -259,7 +259,7 @@ LONG WINAPI ImmGetCompositionStringW(
   LPVOID lpBuf, DWORD dwBufLen)
 {
   OSVERSIONINFOA version;
-  FIXME("(0x%08x, %ld, %p, %ld): stub\n",
+  FIXME("(%p, %ld, %p, %ld): stub\n",
     hIMC, dwIndex, lpBuf, dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -279,7 +279,7 @@ LONG WINAPI ImmGetCompositionStringW(
  */
 BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lpCompForm);
+  FIXME("(%p, %p): stub\n", hIMC, lpCompForm);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -289,7 +289,7 @@ BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
  */
 HIMC WINAPI ImmGetContext(HWND hWnd)
 {
-  FIXME("(0x%08x): stub\n", hWnd);
+  FIXME("(%p): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return (HIMC)NULL;
 }
@@ -302,7 +302,7 @@ DWORD WINAPI ImmGetConversionListA(
   LPCSTR pSrc, LPCANDIDATELIST lpDst,
   DWORD dwBufLen, UINT uFlag)
 {
-  FIXME("(0x%08x, 0x%08x, %s, %p, %ld, %d): stub\n",
+  FIXME("(%p, %p, %s, %p, %ld, %d): stub\n",
     hKL, hIMC, debugstr_a(pSrc), lpDst, dwBufLen, uFlag
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -317,7 +317,7 @@ DWORD WINAPI ImmGetConversionListW(
   LPCWSTR pSrc, LPCANDIDATELIST lpDst,
   DWORD dwBufLen, UINT uFlag)
 {
-  FIXME("(0x%08x, 0x%08x, %s, %p, %ld, %d): stub\n",
+  FIXME("(%p, %p, %s, %p, %ld, %d): stub\n",
     hKL, hIMC, debugstr_w(pSrc), lpDst, dwBufLen, uFlag
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -330,7 +330,7 @@ DWORD WINAPI ImmGetConversionListW(
 BOOL WINAPI ImmGetConversionStatus(
   HIMC hIMC, LPDWORD lpfdwConversion, LPDWORD lpfdwSentence)
 {
-  FIXME("(0x%08x, %p, %p): stub\n",
+  FIXME("(%p, %p, %p): stub\n",
     hIMC, lpfdwConversion, lpfdwSentence
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -342,7 +342,7 @@ BOOL WINAPI ImmGetConversionStatus(
  */
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
-  FIXME("(0x%08x): stub\n", hWnd);
+  FIXME("(%p): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return (HWND)NULL;
 }
@@ -353,7 +353,7 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 UINT WINAPI ImmGetDescriptionA(
   HKL hKL, LPSTR lpszDescription, UINT uBufLen)
 {
-  FIXME("(0x%08x, %s, %d): stub\n",
+  FIXME("(%p, %s, %d): stub\n",
     hKL, debugstr_a(lpszDescription), uBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -365,7 +365,7 @@ UINT WINAPI ImmGetDescriptionA(
  */
 UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
 {
-  FIXME("(0x%08x, %s, %d): stub\n",
+  FIXME("(%p, %s, %d): stub\n",
     hKL, debugstr_w(lpszDescription), uBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -378,7 +378,7 @@ UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
 DWORD WINAPI ImmGetGuideLineA(
   HIMC hIMC, DWORD dwIndex, LPSTR lpBuf, DWORD dwBufLen)
 {
-  FIXME("(0x%08x, %ld, %s, %ld): stub\n",
+  FIXME("(%p, %ld, %s, %ld): stub\n",
     hIMC, dwIndex, debugstr_a(lpBuf), dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -390,7 +390,7 @@ DWORD WINAPI ImmGetGuideLineA(
  */
 DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBufLen)
 {
-  FIXME("(0x%08x, %ld, %s, %ld): stub\n",
+  FIXME("(%p, %ld, %s, %ld): stub\n",
     hIMC, dwIndex, debugstr_w(lpBuf), dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -403,7 +403,7 @@ DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBu
 UINT WINAPI ImmGetIMEFileNameA(
   HKL hKL, LPSTR lpszFileName, UINT uBufLen)
 {
-  FIXME("(0x%08x, %s, %d): stub\n",
+  FIXME("(%p, %s, %d): stub\n",
     hKL, debugstr_a(lpszFileName), uBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -416,7 +416,7 @@ UINT WINAPI ImmGetIMEFileNameA(
 UINT WINAPI ImmGetIMEFileNameW(
   HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
 {
-  FIXME("(0x%08x, %s, %d): stub\n",
+  FIXME("(%p, %s, %d): stub\n",
     hKL, debugstr_w(lpszFileName), uBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -428,7 +428,7 @@ UINT WINAPI ImmGetIMEFileNameW(
  */
 BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
 {
-  FIXME("(0x%08x): stub\n", hIMC);
+  FIXME("(%p): stub\n", hIMC);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -438,7 +438,7 @@ BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
  */
 DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
 {
-  FIXME("(0x%08x, %ld): stub\n", hKL, fdwIndex);
+  FIXME("(%p, %ld): stub\n", hKL, fdwIndex);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -449,7 +449,7 @@ DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
 UINT WINAPI ImmGetRegisterWordStyleA(
   HKL hKL, UINT nItem, LPSTYLEBUFA lpStyleBuf)
 {
-  FIXME("(0x%08x, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
+  FIXME("(%p, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -460,7 +460,7 @@ UINT WINAPI ImmGetRegisterWordStyleA(
 UINT WINAPI ImmGetRegisterWordStyleW(
   HKL hKL, UINT nItem, LPSTYLEBUFW lpStyleBuf)
 {
-  FIXME("(0x%08x, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
+  FIXME("(%p, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -470,7 +470,7 @@ UINT WINAPI ImmGetRegisterWordStyleW(
  */
 BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lpptPos);
+  FIXME("(%p, %p): stub\n", hIMC, lpptPos);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -481,7 +481,7 @@ BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 {
   OSVERSIONINFOA version;
-  FIXME("(0x%08x): stub\n", hWnd);
+  FIXME("(%p): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   GetVersionExA( &version );
   switch(version.dwPlatformId)
@@ -527,7 +527,7 @@ HKL WINAPI ImmInstallIMEW(
  */
 BOOL WINAPI ImmIsIME(HKL hKL)
 {
-  FIXME("(0x%08x): stub\n", hKL);
+  FIXME("(%p): stub\n", hKL);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -538,7 +538,7 @@ BOOL WINAPI ImmIsIME(HKL hKL)
 BOOL WINAPI ImmIsUIMessageA(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  FIXME("(0x%08x, %d, %d, %ld): stub\n",
+  FIXME("(%p, %d, %d, %ld): stub\n",
     hWndIME, msg, wParam, lParam
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -551,7 +551,7 @@ BOOL WINAPI ImmIsUIMessageA(
 BOOL WINAPI ImmIsUIMessageW(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  FIXME("(0x%08x, %d, %d, %ld): stub\n",
+  FIXME("(%p, %d, %d, %ld): stub\n",
     hWndIME, msg, wParam, lParam
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -564,7 +564,7 @@ BOOL WINAPI ImmIsUIMessageW(
 BOOL WINAPI ImmNotifyIME(
   HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 {
-  FIXME("(0x%08x, %ld, %ld, %ld): stub\n",
+  FIXME("(%p, %ld, %ld, %ld): stub\n",
     hIMC, dwAction, dwIndex, dwValue
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -577,7 +577,7 @@ BOOL WINAPI ImmNotifyIME(
 BOOL WINAPI ImmRegisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszRegister)
 {
-  FIXME("(0x%08x, %s, %ld, %s): stub\n",
+  FIXME("(%p, %s, %ld, %s): stub\n",
     hKL, debugstr_a(lpszReading), dwStyle, debugstr_a(lpszRegister)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -590,7 +590,7 @@ BOOL WINAPI ImmRegisterWordA(
 BOOL WINAPI ImmRegisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszRegister)
 {
-  FIXME("(0x%08x, %s, %ld, %s): stub\n",
+  FIXME("(%p, %s, %ld, %s): stub\n",
     hKL, debugstr_w(lpszReading), dwStyle, debugstr_w(lpszRegister)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -602,7 +602,7 @@ BOOL WINAPI ImmRegisterWordW(
  */
 BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 {
-  FIXME("(0x%08x, 0x%08x): stub\n", hWnd, hIMC);
+  FIXME("(%p, %p): stub\n", hWnd, hIMC);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -613,7 +613,7 @@ BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 BOOL WINAPI ImmSetCandidateWindow(
   HIMC hIMC, LPCANDIDATEFORM lpCandidate)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lpCandidate);
+  FIXME("(%p, %p): stub\n", hIMC, lpCandidate);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -623,7 +623,7 @@ BOOL WINAPI ImmSetCandidateWindow(
  */
 BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lplf);
+  FIXME("(%p, %p): stub\n", hIMC, lplf);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -633,7 +633,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
  */
 BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lplf);
+  FIXME("(%p, %p): stub\n", hIMC, lplf);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -646,7 +646,7 @@ BOOL WINAPI ImmSetCompositionStringA(
   LPCVOID lpComp, DWORD dwCompLen,
   LPCVOID lpRead, DWORD dwReadLen)
 {
-  FIXME("(0x%08x, %ld, %p, %ld, %p, %ld): stub\n",
+  FIXME("(%p, %ld, %p, %ld, %p, %ld): stub\n",
     hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -661,7 +661,7 @@ BOOL WINAPI ImmSetCompositionStringW(
 	LPCVOID lpComp, DWORD dwCompLen,
 	LPCVOID lpRead, DWORD dwReadLen)
 {
-  FIXME("(0x%08x, %ld, %p, %ld, %p, %ld): stub\n",
+  FIXME("(%p, %ld, %p, %ld, %p, %ld): stub\n",
     hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -674,7 +674,7 @@ BOOL WINAPI ImmSetCompositionStringW(
 BOOL WINAPI ImmSetCompositionWindow(
   HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lpCompForm);
+  FIXME("(%p, %p): stub\n", hIMC, lpCompForm);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -685,7 +685,7 @@ BOOL WINAPI ImmSetCompositionWindow(
 BOOL WINAPI ImmSetConversionStatus(
   HIMC hIMC, DWORD fdwConversion, DWORD fdwSentence)
 {
-  FIXME("(0x%08x, %ld, %ld): stub\n",
+  FIXME("(%p, %ld, %ld): stub\n",
     hIMC, fdwConversion, fdwSentence
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -697,7 +697,7 @@ BOOL WINAPI ImmSetConversionStatus(
  */
 BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
 {
-  FIXME("(0x%08x, %d): stub\n", hIMC, fOpen);
+  FIXME("(%p, %d): stub\n", hIMC, fOpen);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -707,7 +707,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
  */
 BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
-  FIXME("(0x%08x, %p): stub\n", hIMC, lpptPos);
+  FIXME("(%p, %p): stub\n", hIMC, lpptPos);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -717,7 +717,7 @@ BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
  */
 BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
 {
-  FIXME("(0x%08x, %ld): stub\n", hWnd, dwHotKeyID);
+  FIXME("(%p, %ld): stub\n", hWnd, dwHotKeyID);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -728,7 +728,7 @@ BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
 BOOL WINAPI ImmUnregisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszUnregister)
 {
-  FIXME("(0x%08x, %s, %ld, %s): stub\n",
+  FIXME("(%p, %s, %ld, %s): stub\n",
     hKL, debugstr_a(lpszReading), dwStyle, debugstr_a(lpszUnregister)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -741,7 +741,7 @@ BOOL WINAPI ImmUnregisterWordA(
 BOOL WINAPI ImmUnregisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszUnregister)
 {
-  FIXME("(0x%08x, %s, %ld, %s): stub\n",
+  FIXME("(%p, %s, %ld, %s): stub\n",
     hKL, debugstr_w(lpszReading), dwStyle, debugstr_w(lpszUnregister)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
