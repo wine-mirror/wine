@@ -352,9 +352,9 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
 {
     HINTERNET rc = (HINTERNET)NULL;
-    INT lenAgent = lstrlenW(lpszAgent)+1;
-    INT lenProxy = lstrlenW(lpszProxy)+1;
-    INT lenBypass = lstrlenW(lpszProxyBypass)+1;
+    INT lenAgent = WideCharToMultiByte(CP_ACP, 0, lpszAgent, -1, NULL, 0, NULL, NULL);
+    INT lenProxy = WideCharToMultiByte(CP_ACP, 0, lpszProxy, -1, NULL, 0, NULL, NULL);
+    INT lenBypass = WideCharToMultiByte(CP_ACP, 0, lpszProxyBypass, -1, NULL, 0, NULL, NULL);
     CHAR *szAgent = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenAgent*sizeof(CHAR));
     CHAR *szProxy = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenProxy*sizeof(CHAR));
     CHAR *szBypass = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenBypass*sizeof(CHAR));
@@ -362,19 +362,19 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     if (!szAgent || !szProxy || !szBypass)
     {
         if (szAgent)
-            free(szAgent);
+            HeapFree(GetProcessHeap(), 0, szAgent);
         if (szProxy)
-            free(szProxy);
+            HeapFree(GetProcessHeap(), 0, szProxy);
         if (szBypass)
-            free(szBypass);
+            HeapFree(GetProcessHeap(), 0, szBypass);
         return (HINTERNET)NULL;
     }
 
-    WideCharToMultiByte(CP_ACP, -1, lpszAgent, -1, szAgent, lenAgent,
+    WideCharToMultiByte(CP_ACP, 0, lpszAgent, -1, szAgent, lenAgent,
         NULL, NULL);
-    WideCharToMultiByte(CP_ACP, -1, lpszProxy, -1, szProxy, lenProxy,
+    WideCharToMultiByte(CP_ACP, 0, lpszProxy, -1, szProxy, lenProxy,
         NULL, NULL);
-    WideCharToMultiByte(CP_ACP, -1, lpszProxyBypass, -1, szBypass, lenBypass,
+    WideCharToMultiByte(CP_ACP, 0, lpszProxyBypass, -1, szBypass, lenBypass,
         NULL, NULL);
 
     rc = InternetOpenA(szAgent, dwAccessType, szProxy, szBypass, dwFlags);
@@ -532,23 +532,26 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
 
     if (lpszServerName)
     {
-	lenServer = lstrlenW(lpszServerName)+1;
+	lenServer = WideCharToMultiByte(CP_ACP, 0, lpszServerName, -1, NULL, 0,
+                            NULL, NULL);
         szServerName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenServer*sizeof(CHAR));
-        WideCharToMultiByte(CP_ACP, -1, lpszServerName, -1, szServerName, lenServer,
+        WideCharToMultiByte(CP_ACP, 0, lpszServerName, -1, szServerName, lenServer,
                             NULL, NULL);
     }
     if (lpszUserName)
     {
-	lenUser = lstrlenW(lpszUserName)+1;
+	lenUser = WideCharToMultiByte(CP_ACP, 0, lpszUserName, -1, NULL, 0,
+                            NULL, NULL);
         szUserName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenUser*sizeof(CHAR));
-        WideCharToMultiByte(CP_ACP, -1, lpszUserName, -1, szUserName, lenUser,
+        WideCharToMultiByte(CP_ACP, 0, lpszUserName, -1, szUserName, lenUser,
                             NULL, NULL);
     }
     if (lpszPassword)
     {
-	lenPass = lstrlenW(lpszPassword)+1;
+	lenPass = WideCharToMultiByte(CP_ACP, 0, lpszPassword, -1, NULL, 0,
+                            NULL, NULL);
         szPassword = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenPass*sizeof(CHAR));
-        WideCharToMultiByte(CP_ACP, -1, lpszPassword, -1, szPassword, lenPass,
+        WideCharToMultiByte(CP_ACP, 0, lpszPassword, -1, szPassword, lenPass,
                             NULL, NULL);
     }
 
@@ -906,7 +909,7 @@ INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, INT nMaxCmp)
     if(lpszScheme==NULL)
         return INTERNET_SCHEME_UNKNOWN;
 
-    tempBuffer=malloc(nMaxCmp+1);
+    tempBuffer=HeapAlloc(GetProcessHeap(),0,(nMaxCmp+1)*sizeof(WCHAR));
     strncpyW(tempBuffer,lpszScheme,nMaxCmp);
     tempBuffer[nMaxCmp]=0;
     strlwrW(tempBuffer);
@@ -926,7 +929,7 @@ INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, INT nMaxCmp)
         iScheme=INTERNET_SCHEME_MAILTO;
     else if (nMaxCmp==strlenW(lpszRes) && !strncmpW(lpszRes, tempBuffer, nMaxCmp))
         iScheme=INTERNET_SCHEME_RES;
-    free(tempBuffer);
+    HeapFree(GetProcessHeap(),0,tempBuffer);
     return iScheme;
 }
 
@@ -1812,10 +1815,10 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
     INT len;
     BOOL rc;
 
-    len = lstrlenW(lpszUrl)+1;
+    len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
     if (!(szUrl = (CHAR *)HeapAlloc(GetProcessHeap(), 0, len*sizeof(CHAR))))
         return FALSE;
-    WideCharToMultiByte(CP_ACP, -1, lpszUrl, -1, szUrl, len, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, szUrl, len, NULL, NULL);
     rc = InternetCheckConnectionA((LPCSTR)szUrl, dwFlags, dwReserved);
     HeapFree(GetProcessHeap(), 0, szUrl);
     
@@ -1868,8 +1871,6 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
   case INTERNET_SCHEME_HTTPS:
   {
     LPCSTR accept[2] = { "*/*", NULL };
-    char *hostreq=(char*)malloc(strlen(hostName)+9);
-    sprintf(hostreq, "Host: %s\r\n", hostName);
     if(urlComponents.nPort == 0) {
       if(urlComponents.nScheme == INTERNET_SCHEME_HTTP)
         urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
@@ -1915,8 +1916,8 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 {
     HINTERNET rc = (HINTERNET)NULL;
 
-    INT lenUrl = lstrlenW(lpszUrl)+1;
-    INT lenHeaders = lstrlenW(lpszHeaders)+1;
+    INT lenUrl = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
+    INT lenHeaders = WideCharToMultiByte(CP_ACP, 0, lpszHeaders, -1, NULL, 0, NULL, NULL);
     CHAR *szUrl = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(CHAR));
     CHAR *szHeaders = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(CHAR));
 
@@ -1929,9 +1930,9 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
         return (HINTERNET)NULL;
     }
 
-    WideCharToMultiByte(CP_ACP, -1, lpszUrl, -1, szUrl, lenUrl,
+    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, szUrl, lenUrl,
         NULL, NULL);
-    WideCharToMultiByte(CP_ACP, -1, lpszHeaders, -1, szHeaders, lenHeaders,
+    WideCharToMultiByte(CP_ACP, 0, lpszHeaders, -1, szHeaders, lenHeaders,
         NULL, NULL);
 
     rc = InternetOpenUrlA(hInternet, szUrl, szHeaders,
