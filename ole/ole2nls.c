@@ -1362,7 +1362,22 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
   ''   used to quote literal characters
   ''   (within a quoted string) indicates a literal '
 
+ If TIME_NOMINUTESORSECONDS or TIME_NOSECONDS is specified, the function 
+  removes the separator(s) preceding the minutes and/or seconds element(s).
+
+ If TIME_NOTIMEMARKER is specified, the function removes the separator(s) 
+  preceding and following the time marker.
+
+ If TIME_FORCE24HOURFORMAT is specified, the function displays any existing 
+  time marker, unless the TIME_NOTIMEMARKER flag is also set.
+
  These functions REQUIRE valid locale, date,  and format.
+
+ If the time or date is invalid, return 0 and set ERROR_INVALID_PARAMETER
+
+ Return value is the number of characters written, or if outlen is zero
+	it is the number of characters required for the output including
+	the terminating null.
  */
 static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			    const SYSTEMTIME* xtime,
@@ -1370,6 +1385,12 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			    LPWSTR output, INT outlen, int dateformat)
 {
    INT     outpos;
+   INT	   lastFormatPos; /* the position in the output buffer of */
+			  /* the end of the output from the last formatting */
+			  /* character */
+   BOOL	   dropUntilNextFormattingChar = FALSE; /* TIME_NOTIMEMARKER drops 
+				all of the text around the dropped marker,
+				eg. "h@!t@!m" becomes "hm" */
 
    /* make a debug report */
    TRACE("args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:%s (at %p), "
@@ -1380,25 +1401,49 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 
    /* initialize state variables */
    outpos = 0;
+   lastFormatPos = 0;
 
    while (*format) {
       /* Literal string: Maybe terminated early by a \0 */
-      if (*format == (WCHAR) '\'') {
+      if (*format == (WCHAR) '\'')
+      {
          format++;
-         while (*format) {
-            if (*format == (WCHAR) '\'') {
+
+	 /* We loop while we haven't reached the end of the format string */
+	 /* and until we haven't found another "'" character */
+	 while (*format)
+         {
+	    /* we found what might be the close single quote mark */
+	    /* we need to make sure there isn't another single quote */
+	    /* after it, if there is we need to skip over this quote mark */
+	    /* as the user is trying to put a single quote mark in their output */
+            if (*format == (WCHAR) '\'')
+            {
                format++;
-               if (*format != '\'') {
+               if (*format != '\'')
+               {
                   break; /* It was a terminating quote */
                }
             }
+
+	    /* if outlen is zero then we are couting the number of */
+	    /* characters of space we need to output this text, don't */
+	    /* modify the output buffer */
             if (!outlen)
-               /* We are counting */;
-            else if (outpos >= outlen)
+            {
+               outpos++;   /* We are counting */;
+            }  else if (outpos >= outlen)
+            {
                goto too_short;
-            else
-               output[outpos] = *format;
-            outpos++;
+            } else 
+            {
+               /* even drop literal strings */
+	       if(!dropUntilNextFormattingChar)
+               {
+                 output[outpos] = *format;
+                 outpos++;
+               }
+            }
             format++;
          }
       } else if ( (dateformat &&  (*format=='d' ||
@@ -1409,15 +1454,28 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 				   *format=='h' ||
 				   *format=='m' ||
 				   *format=='s' ||
-				   *format=='t') )    ) {
+				   *format=='t') )    ) 
+     /* if processing a date and we have a date formatting character, OR */
+     /* if we are processing a time and we have a time formatting character */
+     {
          int type, count;
          char    tmp[16];
          WCHAR   buf[40];
          int     buflen=0;
          type = *format;
          format++;
+
+	 /* clear out the drop text flag if we are in here */
+	 dropUntilNextFormattingChar = FALSE;
+
+         /* count up the number of the same letter values in a row that */
+	 /* we get, this lets us distinguish between "s" and "ss" and it */
+	 /* eliminates the duplicate to simplify the below case statement */
          for (count = 1; *format == type; format++)
             count++;
+
+	 buf[0] = 0; /* always null terminate the buffer */
+
          switch(type)
          {
           case 'd':
@@ -1471,38 +1529,72 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
             break;
 
           case 'h':
-              /* hours 1:00-12:00 --- is this right? */
-              sprintf( tmp, "%.*d", count > 2 ? 2 : count, (xtime->wHour-1)%12 +1);
-              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
-              break;
-
+	      /* fallthrough if we are forced to output in 24 hour format */
+	      if(!(tflags & TIME_FORCE24HOURFORMAT))
+              {
+                /* hours 1:00-12:00 --- is this right? */
+		/* NOTE: 0000 hours is also 12 midnight */
+                sprintf( tmp, "%.*d", count > 2 ? 2 : count, 
+			xtime->wHour == 0 ? 12 : (xtime->wHour-1)%12 +1);
+                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+                break;
+              }
           case 'H':
               sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wHour );
               MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
               break;
 
           case 'm':
-              sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wMinute );
-              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+	      /* if TIME_NOMINUTESORSECONDS don't display minutes */
+	      if(!(tflags & TIME_NOMINUTESORSECONDS))
+              {
+                sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wMinute );
+                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+	      } else
+	      {
+		outpos = lastFormatPos;
+	      }
               break;
 
           case 's':
-              sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wSecond );
-              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+	      /* if we have a TIME_NOSECONDS or TIME_NOMINUTESORSECONDS 
+			flag then don't display seconds */
+	      if(!(tflags & TIME_NOSECONDS) && !(tflags & 
+			TIME_NOMINUTESORSECONDS))
+              {
+                sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wSecond );
+                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+	      } else
+	      {
+		outpos = lastFormatPos;
+	      }
               break;
 
           case 't':
-	    GetLocaleInfoW(locale, (xtime->wHour < 12) ?
+	    if(!(tflags & TIME_NOTIMEMARKER))
+	    {
+  	      GetLocaleInfoW(locale, (xtime->wHour < 12) ?
 			     LOCALE_S1159 : LOCALE_S2359,
 			     buf, sizeof(buf) );
-	    if        (count == 1) {
-	       buf[1] = 0;
+  	      if (count == 1)
+	      {
+	         buf[1] = 0;
+	      }
+            } else
+	    {
+		outpos = lastFormatPos; /* remove any prior text up until 
+			the output due to formatting characters */
+ 		dropUntilNextFormattingChar = TRUE; /* drop everything 
+			until we hit the next formatting character */
 	    }
             break;
          }
 
 	 /* cat buf onto the output */
 	 buflen = strlenW(buf);
+
+	 /* we are counting how many characters we need for output */
+	 /* don't modify the output buffer... */
          if (!outlen)
             /* We are counting */;
          else if (outpos + buflen < outlen) {
@@ -1513,15 +1605,27 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
             goto too_short;
 	 }
 	 outpos += buflen;
-      } else {
+	 lastFormatPos = outpos; /* record the end of the formatting text we just output */
+      } else /* we are processing a NON formatting character */
+      {
          /* a literal character */
          if (!outlen)
-            /* We are counting */;
+         {
+            outpos++;   /* We are counting */;
+         }
          else if (outpos >= outlen)
+         {
             goto too_short;
-         else
-            output[outpos] = *format;
-         outpos++;
+         }
+         else /* just copy the character into the output buffer */
+         {
+	    /* unless we are dropping characters */
+	    if(!dropUntilNextFormattingChar)
+	    {
+	       output[outpos] = *format;
+               outpos++;
+            }
+         }
          format++;
       }
    }
@@ -1533,7 +1637,8 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
       goto too_short;
    else
       output[outpos] = '\0';
-   outpos++;
+
+   outpos++; /* add one for the terminating null character */
 
    TRACE(" returning %d %s\n", outpos, debugstr_w(output));
    return outpos;
@@ -1629,9 +1734,9 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
     TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
 	  locale,flags,xtime,debugstr_w(format),date,datelen);
     
-    /* Tests (could be left until OLE_GetFormatW) */
-    if (flags && format)
-    {
+    /* Tests */
+    if (flags && format) /* if lpFormat is non-null then flags must be zero */
+    {			 
         SetLastError (ERROR_INVALID_FLAGS);
 	return 0;
     }
@@ -1640,26 +1745,62 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
         SetLastError (ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    if (!locale) {
+    if (!locale)
+    {
 	locale = LOCALE_SYSTEM_DEFAULT;
     };
     
-    if (locale == LOCALE_SYSTEM_DEFAULT) {
+    if (locale == LOCALE_SYSTEM_DEFAULT)
+    {
 	thislocale = GetSystemDefaultLCID();
-    } else if (locale == LOCALE_USER_DEFAULT) {
+    } else if (locale == LOCALE_USER_DEFAULT)
+    {
 	thislocale = GetUserDefaultLCID();
-    } else {
+    } else
+    {
 	thislocale = locale;
     };
-    
-    if (xtime == NULL) {
+
+    /* check for invalid flag combinations */
+    if((flags & DATE_LTRREADING) && (flags & DATE_RTLREADING))
+    {
+        SetLastError (ERROR_INVALID_FLAGS);
+	return 0;
+    }
+
+    /* DATE_SHORTDATE, DATE_LONGDATE and DATE_YEARMONTH are mutually */
+    /* exclusive */    
+    if((flags & (DATE_SHORTDATE|DATE_LONGDATE|DATE_YEARMONTH))
+	 && !((flags & DATE_SHORTDATE) ^ (flags & 
+        DATE_LONGDATE) ^ (flags & DATE_YEARMONTH)))
+    {
+        SetLastError (ERROR_INVALID_FLAGS);
+	return 0;
+    }
+
+    /* if the user didn't pass in a pointer to the current time we read it */    
+    /* here */
+    if (xtime == NULL)
+    {
 	GetSystemTime(&t);
-    } else {
+    } else
+    {
+        /* NOTE: check here before we perform the SystemTimeToFileTime conversion */
+        /*  because this conversion will fix invalid time values */
+        /* check to see if the time/date is valid */
+        /* set ERROR_INVALID_PARAMETER and return 0 if invalid */
+        if((xtime->wDay > 31) || (xtime->wDayOfWeek > 6) || (xtime->wMonth > 12))
+        {
+          SetLastError(ERROR_INVALID_PARAMETER);
+          return 0;
+        }
+
 	/* Silently correct wDayOfWeek by transforming to FileTime and back again */
 	res=SystemTimeToFileTime(xtime,&ft);
+
 	/* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error */
-	/*FIXME: SystemTimeToFileTime doesn't yet do that check */
-	if(!res) {
+	if(!res)
+	{
 	    SetLastError(ERROR_INVALID_PARAMETER);
 	    return 0;
 	}
@@ -1668,13 +1809,15 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
     };
     thistime = &t;
     
-    if (format == NULL) {
+    if (format == NULL)
+    {
 	GetLocaleInfoW(thislocale, ((flags&DATE_LONGDATE)
 				    ? LOCALE_SLONGDATE
 				    : LOCALE_SSHORTDATE),
 		       format_buf, sizeof(format_buf)/sizeof(*format_buf));
 	thisformat = format_buf;
-    } else {
+    } else
+    {
 	thisformat = format;
     };
     
@@ -2763,6 +2906,8 @@ GetTimeFormatA(LCID locale,        /* [in]  */
 /******************************************************************************
  *		GetTimeFormatW	[KERNEL32.@]
  * Makes a Unicode string of the time
+ *
+ * NOTE: See OLE_GetFormatW() for further documentation
  */
 INT WINAPI
 GetTimeFormatW(LCID locale,        /* [in]  */
@@ -2784,15 +2929,29 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 
 	thislocale = OLE2NLS_CheckLocale ( locale );
 
+	/* if the user didn't specify a format we use the default */
+        /* format for this locale */
 	if (format == NULL)
-	{ if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
-	  { thislocale = GetSystemDefaultLCID();
+	{
+	  if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
+	  { 
+            thislocale = GetSystemDefaultLCID();
 	  }
 	  GetLocaleInfoW(thislocale, thisflags, format_buf, 40);
 	  thisformat = format_buf;
 	}
 	else
-	{ thisformat = format;
+	{
+	  /* if non-null format and LOCALE_NOUSEROVERRIDE then fail */ 
+	  /* NOTE: this could be either invalid flags or invalid parameter */
+	  /*  windows sets it to invalid flags */
+	  if (flags & LOCALE_NOUSEROVERRIDE)
+          {
+	    SetLastError(ERROR_INVALID_FLAGS);
+	    return 0;
+          }
+
+          thisformat = format;
 	}
 
 	if (xtime == NULL) /* NULL means use the current local time */
@@ -2800,7 +2959,15 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 	  thistime = &t;
 	}
 	else
-	{ thistime = xtime;
+	{
+          /* check time values */
+          if((xtime->wHour > 24) || (xtime->wMinute >= 60) || (xtime->wSecond >= 60))
+          {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+          }
+
+          thistime = xtime;
 	}
 
 	ret = OLE_GetFormatW(thislocale, thisflags, flags, thistime, thisformat,

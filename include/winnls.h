@@ -196,6 +196,10 @@ extern "C" {
 #define DATE_USE_ALT_CALENDAR  0x00000004  /* use alternate calendar */
                           /* alt. calendar support is broken anyway */
 
+#define DATE_YEARMONTH         0x00000008  /* use year/month */
+#define DATE_LTRREADING        0x00000010  /* left to right reading order */
+#define DATE_RTLREADING        0x00000020  /* right to left reading order */
+
 #define TIME_FORCE24HOURFORMAT 0x00000008  /* force 24 hour format*/
 #define TIME_NOTIMEMARKER      0x00000004  /* show no AM/PM */
 #define TIME_NOSECONDS         0x00000002  /* show no seconds */
