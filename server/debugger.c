@@ -586,6 +586,7 @@ DECL_HANDLER(debug_process)
 /* send an exception event */
 DECL_HANDLER(exception_event)
 {
+    req->status = 0;
     if (current->process->debugger)
     {
         struct debug_event_exception data;
