@@ -9,6 +9,8 @@ extern "C" {
 
 #include "pshpack1.h"
 
+DECLARE_HANDLE(HDROP);
+
 /******************************************
  * DragObject
  */

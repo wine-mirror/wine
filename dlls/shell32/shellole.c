@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "shlobj.h"
+#include "shellapi.h"
 #include "shlguid.h"
 #include "winreg.h"
 #include "wine/unicode.h"

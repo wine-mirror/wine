@@ -41,6 +41,7 @@
 #include "file.h"
 #include "windef.h"
 #include "x11drv.h"
+#include "shellapi.h"
 
 DEFAULT_DEBUG_CHANNEL(event);
 DECLARE_DEBUG_CHANNEL(win);
@@ -1628,7 +1629,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 		      p += strlen(p) + 1;
 		    }
 		  *p_drop = '\0';
-		  PostMessageA( hWnd, WM_DROPFILES, hDrop, 0L );
+		  PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
 		}
 	    }
 	}
@@ -1708,7 +1709,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       pDropWnd = WIN_FindWndPtr( hWnd );
       
       drop_len += sizeof(DROPFILES) + 1;
-      hDrop = (HDROP)GlobalAlloc( GMEM_SHARE, drop_len );
+      hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
       lpDrop = (DROPFILES *) GlobalLock( hDrop );
 
       if( lpDrop ) {
@@ -1752,7 +1753,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	}
 
         GlobalUnlock(hDrop);
-        PostMessageA( hWnd, WM_DROPFILES, hDrop, 0L );
+        PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
       }
       WIN_ReleaseWndPtr(pDropWnd);
     }
