@@ -279,6 +279,7 @@ int WINAPI SysStringLen(BSTR str)
 {
     DWORD* bufferPointer;
 
+     if (!str) return 0;
     /*
      * The length of the string (in bytes) is contained in a DWORD placed 
      * just before the BSTR pointer
