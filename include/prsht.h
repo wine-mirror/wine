@@ -260,6 +260,7 @@ typedef struct _PSHNOTIFY
 #define PSN_WIZNEXT             (PSN_FIRST-7)
 #define PSN_WIZFINISH           (PSN_FIRST-8)
 #define PSN_QUERYCANCEL         (PSN_FIRST-9)
+#define PSN_GETOBJECT           (PSN_FIRST-10)
 
 #define PSNRET_NOERROR              0
 #define PSNRET_INVALID              1
