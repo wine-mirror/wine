@@ -96,7 +96,7 @@ static __inline__ int wine_sigaction( int sig, struct kernel_sigaction *new,
                           "popl %%ebx"
                           : "=a" (sig)
                           : "0" (SYS_sigaction),
-                            "g" (sig),
+                            "r" (sig),
                             "c" (new),
                             "d" (old) );
 #else

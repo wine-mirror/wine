@@ -39,7 +39,7 @@ static __inline__ int modify_ldt( int func, struct modify_ldt_s *ptr,
                           "popl %%ebx"
                           : "=a" (res)
                           : "0" (SYS_modify_ldt),
-                            "g" (func),
+                            "r" (func),
                             "c" (ptr),
                             "d" (count) );
 #else

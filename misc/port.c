@@ -88,7 +88,7 @@ int clone( int (*fn)(void *), void *stack, int flags, void *arg )
                           "xorl %%eax,%%eax\n\t"  /* Just in case it does*/
                           "0:"
                           : "=a" (ret)
-                          : "0" (SYS_clone), "g" (flags), "c" (stack_ptr) );
+                          : "0" (SYS_clone), "r" (flags), "c" (stack_ptr) );
     assert( ret );  /* If ret is 0, we returned from the child function */
     if (ret > 0) return ret;
     errno = -ret;
