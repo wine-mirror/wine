@@ -105,6 +105,7 @@ BOOL WINAPI WaitForDebugEvent(
                 break;
             }
         done:
+            /* nothing */ ;
         }
         SERVER_END_VAR_REQ;
         if (ret) return TRUE;

@@ -301,12 +301,12 @@ static int output_exports( FILE *outfile, int nr_exports )
         if (Names[i]->flags & FLAG_NOIMPORT) continue;
         /* check for invalid characters in the name */
         for (p = Names[i]->name; *p; p++)
-            if (!isalnum(*p) && *p != '_' && *p != '.') goto next;
+            if (!isalnum(*p) && *p != '_' && *p != '.') break;
+        if (*p) continue;
         fprintf( outfile, "    \"\\t.globl " PREFIX "__wine_dllexport_%s_%s\\n\"\n",
                  DLLName, Names[i]->name );
         fprintf( outfile, "    \"" PREFIX "__wine_dllexport_%s_%s:\\n\"\n",
                  DLLName, Names[i]->name );
-    next:
     }
     fprintf( outfile, "    \"\\t.long 0xffffffff\\n\"\n" );
 

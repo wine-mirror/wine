@@ -232,7 +232,7 @@ static void init_process( int ppid, struct init_process_request *req )
         process->handles = copy_handle_table( process, parent );
     else
         process->handles = alloc_handle_table( process, 0 );
-    if (!process->handles) goto error;
+    if (!process->handles) return;
 
     /* retrieve the main exe file */
     req->exe_file = 0;
@@ -240,11 +240,11 @@ static void init_process( int ppid, struct init_process_request *req )
     {
         process->exe.file = (struct file *)grab_object( info->exe_file );
         if (!(req->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
-            goto error;
+            return;
     }
 
     /* set the process console */
-    if (!set_process_console( process, parent, info, req )) goto error;
+    if (!set_process_console( process, parent, info, req )) return;
 
     if (parent)
     {
@@ -278,7 +278,6 @@ static void init_process( int ppid, struct init_process_request *req )
     }
     req->create_flags = process->create_flags;
     req->server_start = server_start_ticks;
- error:
 }
 
 /* destroy a process when its refcount is 0 */
