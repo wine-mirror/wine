@@ -197,6 +197,12 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
   void *instr = ilpBuff->desc.lpData + is;
   D3DDPRIVATE((IDirect3DDeviceImpl*)dev);
 
+  /* Should check if the viewport was added or not to the device */
+
+  /* Activate the viewport */
+  ivp->device.active_device1 = (IDirect3DDeviceImpl*)dev;
+  ivp->activate(ivp);
+
   TRACE("ExecuteData : \n");
   if (TRACE_ON(ddraw))
   _dump_executedata(&(ilpBuff->data));
