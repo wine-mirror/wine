@@ -366,7 +366,7 @@ ULARGE_INTEGER byte_count, file_size;
 char * WCMD_filesize64 (ULONGLONG n) {
 
 ULONGLONG q;
-uint r, i;
+unsigned int r, i;
 char *p;
 static char buff[32];
 
