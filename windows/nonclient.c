@@ -2458,17 +2458,24 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
 
     (*paintButton)( hwnd, hdc, TRUE, FALSE);
 
-    do
+    while(1)
     {
 	BOOL oldstate = pressed;
         MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
 
+	if(msg.message == WM_LBUTTONUP)
+	    break;
+
+	if(msg.message != WM_MOUSEMOVE)
+	    continue;
+
 	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
 	   (*paintButton)( hwnd, hdc, pressed, FALSE);
-    } while (msg.message != WM_LBUTTONUP);
+    }
 
-    (*paintButton)( hwnd, hdc, FALSE, FALSE);
+    if(pressed)
+	(*paintButton)(hwnd, hdc, FALSE, FALSE);
 
     ReleaseCapture();
     ReleaseDC( hwnd, hdc );
@@ -2506,17 +2513,24 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 
     (*paintButton)( hwnd, hdc, TRUE);
 
-    do
+    while(1)
     {
 	BOOL oldstate = pressed;
         MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
 
+	if(msg.message == WM_LBUTTONUP)
+	    break;
+
+	if(msg.message != WM_MOUSEMOVE)
+	    continue;
+
 	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
 	   (*paintButton)( hwnd, hdc, pressed);
-    } while (msg.message != WM_LBUTTONUP);
+    }
 
-    (*paintButton)( hwnd, hdc, FALSE);
+    if(pressed)
+	(*paintButton)( hwnd, hdc, FALSE);
 
     ReleaseCapture();
     ReleaseDC( hwnd, hdc );
@@ -2560,17 +2574,24 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
 
     NC_DrawCloseButton95 (hwnd, hdc, TRUE, FALSE);
 
-    do
+    while(1)
     {
 	BOOL oldstate = pressed;
         MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
 
+	if(msg.message == WM_LBUTTONUP)
+	    break;
+
+	if(msg.message != WM_MOUSEMOVE)
+	    continue;
+
 	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
 	   NC_DrawCloseButton95 (hwnd, hdc, pressed, FALSE);
-    } while (msg.message != WM_LBUTTONUP);
+    }
 
-    NC_DrawCloseButton95 (hwnd, hdc, FALSE, FALSE);
+    if(pressed)
+	NC_DrawCloseButton95 (hwnd, hdc, FALSE, FALSE);
 
     ReleaseCapture();
     ReleaseDC( hwnd, hdc );
