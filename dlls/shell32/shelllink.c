@@ -496,8 +496,6 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
 
     TRACE("(%p)->(%s)\n",This,debugstr_w(pszFileName));
 
-    ERR("(%p)->(%s),%s,%s,%s\n",This,debugstr_w(pszFileName),This->sPath,This->sArgs,This->sDescription);
-
     if (!pszFileName || !This->sPath)
         return ERROR_UNKNOWN;
 
@@ -559,7 +557,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     if (!(icon_name = extract_icon( This->sIcoPath ? This->sIcoPath : This->sPath,
                                     This->iIcoNdx ))) goto done;
 
-    ERR("linker app='%s' link='%s' mode=%s path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",
+    TRACE("linker app='%s' link='%s' mode=%s path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",
         shell_link_app, link_name, bDesktop ? "desktop" : "menu", path_name,
         This->sArgs ? This->sArgs : "", icon_name, work_dir ? work_dir : "",
         This->sDescription ? This->sDescription : "" );
