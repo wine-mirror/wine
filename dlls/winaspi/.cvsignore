@@ -1,5 +1,5 @@
 Makefile
 winaspi.spec.c
-winaspi16.glue.c
 wnaspi32.dll.dbg.c
+wnaspi32.dll.glue.c
 wnaspi32.spec.c

@@ -118,11 +118,7 @@ GEN_ASM_SRCS = \
 	relay16.s \
 	relay32.s
 
-GLUE = \
-	$(TOPOBJDIR)/loader/task.c \
-	$(TOPOBJDIR)/loader/ne/module.c \
-	$(TOPOBJDIR)/loader/ne/segment.c \
-	$(TOPOBJDIR)/memory/local.c
+EXTRA_OBJS = $(MODULE).glue.o
 
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/files \

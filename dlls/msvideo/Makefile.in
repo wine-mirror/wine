@@ -14,9 +14,8 @@ C_SRCS = \
 	msvideo_main.c \
 	drawdib.c
 
-GLUE = msvideo_main.c
+EXTRA_OBJS = $(MODULE).glue.o
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

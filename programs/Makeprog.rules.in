@@ -13,7 +13,6 @@ DEFS        = @DLLFLAGS@ -DSTRICT -DNONAMELESSUNION -DNONAMELESSSTRUCT $(EXTRADE
 LDDLLFLAGS  = @LDDLLFLAGS@
 ALL_OBJS    = $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
-SYMBOLFILE  = $(MODULE).tmp.o
 BASEMODULE  = $(MODULE:.exe=)
 TESTIMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 
@@ -23,8 +22,8 @@ all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 
 # Rule for main module spec file
 
-$(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) $(SYMBOLFILE:%=-sym %) -o $@ -exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
+$(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:%.rc=-res %.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 

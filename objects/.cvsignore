@@ -1,6 +1,0 @@
-Makefile
-dc.glue.c
-font.glue.c
-gdiobj.glue.c
-linedda.glue.c
-metafile.glue.c

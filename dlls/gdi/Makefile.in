@@ -62,14 +62,7 @@ C_SRCS = \
 RC_SRCS = version.rc
 RC_SRCS16 = version16.rc
 
-GLUE = \
-	$(TOPOBJDIR)/objects/dc.c \
-	$(TOPOBJDIR)/objects/font.c \
-	$(TOPOBJDIR)/objects/gdiobj.c \
-	$(TOPOBJDIR)/objects/linedda.c \
-	$(TOPOBJDIR)/objects/metafile.c \
-	printdrv.c \
-	win16drv/prtdrv.c
+EXTRA_OBJS = $(MODULE).glue.o
 
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/graphics \

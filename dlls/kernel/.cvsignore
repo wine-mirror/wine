@@ -2,12 +2,12 @@ Makefile
 comm.spec.c
 kernel.res
 kernel32.dll.dbg.c
+kernel32.dll.glue.c
 kernel32.spec.c
 krnl386.exe.spec.c
 stress.spec.c
 system.spec.c
 toolhelp.spec.c
-utthunk.glue.c
 version16.res
 win87em.spec.c
 windebug.spec.c

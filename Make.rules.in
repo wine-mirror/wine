@@ -13,7 +13,6 @@
 # GEN_ASM_SRCS : generated assembly sources
 # RC_SRCS      : resource source files
 # SPEC_SRCS    : interface definition files
-# GLUE         : C sources for which glue code needs to be generated
 # EXTRA_SRCS   : extra source files for make depend
 # EXTRA_OBJS   : extra object files
 # IMPORTS      : dlls to import
@@ -112,15 +111,14 @@ conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.spec.def *.glue.c *.dbg.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
 
-OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
-       $(ASM_SRCS:.S=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
+OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
 
 RCOBJS = $(RC_SRCS:.rc=.res.o)
 LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .glue.c .pl .ok
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .pl .ok
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -146,9 +144,6 @@ LINTS  = $(C_SRCS:.c=.ln)
 .spec.spec.def:
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -def $<
 
-.c.glue.c:
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -glue $<
-
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
 
@@ -167,36 +162,20 @@ filter:
 
 .PHONY: all filter
 
-# Rule for main module intermediate object
-
-$(MODULE).tmp.o: $(SPEC_SRCS:.spec=.spec.o) $(OBJS) Makefile.in
-	$(LDCOMBINE) $(SPEC_SRCS:.spec=.spec.o) $(OBJS) -o $@
-	-$(STRIP) --strip-unneeded $@
-
 # Rule for main module debug channels
 
 $(MODULE).dbg.c: $(C_SRCS) $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -debug -C$(SRCDIR) $(C_SRCS)
 
-# Rule to rebuild the resource compiler
+# Rule for 16-bit glue
 
-$(WRC):
-	cd $(TOOLSDIR)/tools/wrc && $(MAKE) wrc
+$(MODULE).glue.c: $(C_SRCS) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -glue -C$(SRCDIR) $(C_SRCS)
 
-# Rule to rebuild the message compiler
+# Rule to rebuild the tools
 
-$(WMC):
-	cd $(TOOLSDIR)/tools/wmc && $(MAKE) wmc
-
-# Rule to rebuild the 'makedep' program
-
-$(MAKEDEP):
-	cd $(TOOLSDIR)/tools && $(MAKE) makedep
-
-# Rule to rebuild the 'winebuild' program
-
-$(WINEBUILD):
-	cd $(TOOLSDIR)/tools/winebuild && $(MAKE) winebuild
+$(MAKEDEP) $(WINEBUILD) $(WMC) $(WRC):
+	cd $(TOOLSDIR)/tools && $(MAKE) `basename $@`
 
 # Rules for makefile
 
@@ -304,12 +283,8 @@ $(TESTLIST): Makefile.in
 $(TESTPROGRAM).so: $(TESTPROGRAM).spec.o $(TESTOBJS)
 	$(LDSHARED) @LDDLLFLAGS@ $(TESTPROGRAM).spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
 
-$(TESTPROGRAM).tmp.o: $(TESTOBJS)
-	$(LDCOMBINE) $(TESTOBJS) -o $@
-	-$(STRIP) --strip-unneeded $@
-
-$(TESTPROGRAM).spec.c: $(TESTPROGRAM).tmp.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym $(TESTPROGRAM).tmp.o -o $@ -exe $(TESTPROGRAM) -mcui -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
+$(TESTPROGRAM).spec.c: $(TESTOBJS) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -exe $(TESTPROGRAM) -mcui $(TESTOBJS) -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
 
 $(TESTPROGRAM): $(TESTOBJS)
 	$(CC) $(TESTOBJS) -o $@ $(TESTIMPORTS:%=-l%) $(LIBWINE) $(LIBS)
@@ -317,8 +292,6 @@ $(TESTPROGRAM): $(TESTOBJS)
 # Misc. rules
 
 $(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD)
-
-$(GLUE:.c=.glue.c): $(WINEBUILD)
 
 $(RC_SRCS:.rc=.res): $(WRC)
 

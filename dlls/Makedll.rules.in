@@ -14,7 +14,7 @@ ALTSPECS    = $(ALTNAMES:%.dll=%)
 SPEC_SRCS   = $(ALTSPECS:%=%.spec)
 MAINSPEC    = $(MODULE:%.dll=%).spec
 SPEC_DEF    = $(MAINSPEC).def
-ALL_OBJS    = $(MAINSPEC).o $(SPEC_SRCS:.spec=.spec.o) $(OBJS) $(MODULE).dbg.o
+ALL_OBJS    = $(SPEC_SRCS:.spec=.spec.o) $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 TESTIMPORTS = $(MODULE:%.dll=%) $(DELAYIMPORTS) $(IMPORTS)
 
@@ -22,15 +22,17 @@ all: $(MODULE)$(DLLEXT)
 
 @MAKE_RULES@
 
-# Rule for main module spec file
-
-$(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
-
 # Rules for .so files
 
-$(MODULE).so: $(ALL_OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS)
+$(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-res %.res) $(SYMBOLFILE) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
+
+$(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
+	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS)
+
+$(MODULE).tmp.o: $(ALL_OBJS) Makefile.in
+	$(LDCOMBINE) $(ALL_OBJS) -o $@
+	-$(STRIP) --strip-unneeded $@
 
 # Rules for .dll files
 

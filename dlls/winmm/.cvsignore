@@ -1,9 +1,7 @@
 Makefile
-lolvldrv.glue.c
-mmsystem.glue.c
 mmsystem.spec.c
 sound.spec.c
-time.glue.c
 winmm.dll.dbg.c
+winmm.dll.glue.c
 winmm.spec.c
 winmm_res.res

@@ -1,5 +1,6 @@
 Makefile
 ntdll.dll.dbg.c
+ntdll.dll.glue.c
 ntdll.spec.c
 relay16.s
 relay32.s

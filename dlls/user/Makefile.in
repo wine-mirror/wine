@@ -82,15 +82,7 @@ RC_SRCS16 = \
 	resources/mouse.rc \
 	resources/version16.rc
 
-GLUE = \
-	$(TOPOBJDIR)/controls/edit.c \
-	$(TOPOBJDIR)/windows/driver.c \
-	$(TOPOBJDIR)/windows/hook.c \
-	$(TOPOBJDIR)/windows/painting.c \
-	dde/ddeml16.c \
-	property.c \
-	text.c \
-	wnd16.c
+EXTRA_OBJS = $(MODULE).glue.o
 
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/controls \

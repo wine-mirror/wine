@@ -1,6 +1,6 @@
 Makefile
 setupapi.dll.dbg.c
+setupapi.dll.glue.c
 setupapi.res
 setupapi.spec.c
 setupx.spec.c
-virtcopy.glue.c

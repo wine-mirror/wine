@@ -33,7 +33,7 @@ RC_SRCS16 = \
 MC_SRCS = \
 	messages/winerr_enu.mc
 
-GLUE = utthunk.c
+EXTRA_OBJS = $(MODULE).glue.o
 
 EXTRASUBDIRS = \
 	messages \

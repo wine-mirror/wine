@@ -22,10 +22,9 @@ C_SRCS = \
 	stubs.c \
 	virtcopy.c
 
-GLUE = \
-	virtcopy.c
-
 RC_SRCS= setupapi.rc
+
+EXTRA_OBJS = $(MODULE).glue.o
 
 @MAKE_DLL_RULES@
 
