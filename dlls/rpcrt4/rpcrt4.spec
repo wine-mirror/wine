@@ -171,7 +171,7 @@ init	RPCRT4_LibMain
 @ stub TowerConstruct
 @ stub TowerExplode
 
-@ stub UuidCompare
+@ stdcall UuidCompare(ptr ptr ptr) UuidCompare
 @ stdcall UuidCreate(ptr) UuidCreate
 @ stdcall UuidCreateSequential(ptr) UuidCreateSequential # win 2000
 @ stdcall UuidCreateNil(ptr) UuidCreateNil
