@@ -40,7 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-#define BUFFER_PARANOIA 40
+#define BUFFER_PARANOIA 20
 
 #if defined(__i386__)
   #define LITTLE_ENDIAN_32_WRITE(pchar, word32) \
@@ -105,7 +105,8 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
   TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
 
   if (*pFormat == RPC_FC_C_CSTRING) {
-    pStubMsg->BufferLength = strlen(pMemory) + BUFFER_PARANOIA;
+    /* we need 12 chars for the [maxlen, offset, len] DWORDS, + 1 byte for '\0' */
+    pStubMsg->BufferLength = strlen(pMemory) + 13 + BUFFER_PARANOIA;
   } else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
     /* FIXME what to do here? */
@@ -147,6 +148,3 @@ void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, lo
 {
   FIXME("(pStubMsg == ^%p, pFormat == ^%p, NumberParams == %ld): stub.\n", pStubMsg, pFormat, NumberParams);
 }
-
-
-#undef BUFFER_PARANOIA
