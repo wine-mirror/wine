@@ -86,6 +86,7 @@ void updateGUIForDesktopMode(HWND dialog) {
 /* pokes the win32 api to setup the dialog from the config struct */
 void initX11DrvDlg (HWND hDlg)
 {
+    static const char default_desktop[] = "640x480";
     char *buf;
     char *bufindex;
 
@@ -94,8 +95,14 @@ void initX11DrvDlg (HWND hDlg)
     updatingUI = TRUE;
     
     /* desktop size */
-    buf = getConfigValue(section, "Desktop", "640x480");
+    buf = getConfigValue(section, "Desktop", default_desktop);
     bufindex = strchr(buf, 'x');
+    if(!bufindex) /* handle invalid "Desktop" values */
+    {
+      free(buf);
+      buf = strdup(default_desktop);
+      bufindex = strchr(buf, 'x');
+    }
     *bufindex = '\0';
     bufindex++;
     SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), buf);
