@@ -9,6 +9,7 @@ IMPORTS   = user32 gdi32 winspool.drv kernel32 ntdll
 
 C_SRCS = \
 	afm.c \
+	agl.c \
 	bitblt.c \
 	bitmap.c \
 	brush.c \
@@ -17,6 +18,7 @@ C_SRCS = \
 	driver.c \
 	escape.c \
 	font.c \
+	glyphlist.c \
 	graphics.c \
 	init.c \
 	objects.c \

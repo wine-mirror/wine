@@ -15,6 +15,25 @@
 #include "winspool.h"
 
 typedef struct {
+    INT			index;
+    const LPCSTR	sz;
+} GLYPHNAME;
+
+typedef struct {
+    LONG		UV;
+    const GLYPHNAME	*const name;
+} UNICODEGLYPH;
+
+typedef struct {
+    INT			size;
+    const UNICODEGLYPH	*const glyphs;
+} UNICODEVECTOR;
+
+extern const INT	    PSDRV_AGLGlyphNamesSize;
+extern GLYPHNAME	    PSDRV_AGLGlyphNames[];
+extern const UNICODEVECTOR  PSDRV_AdobeGlyphList;
+
+typedef struct {
     float	llx, lly, urx, ury;
 } AFMBBOX;
 
@@ -27,7 +46,7 @@ typedef struct _tagAFMLIGS {
 typedef struct _tagAFMMETRICS {
     int				C;			/* character */  
     float			WX;
-    char			N[32];			/* name */
+    const GLYPHNAME		*N;		/* name */
     AFMBBOX			B;
     AFMLIGS			*L;			/* Ligatures */
 } AFMMETRICS;
@@ -382,6 +401,9 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      WORD fwCapability, LPSTR lpszOutput,
 				      LPDEVMODEA lpdm);
 VOID PSDRV_DrawLine( DC *dc );
+INT PSDRV_GlyphListInit();
+const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
+VOID PSDRV_DumpGlyphList();
 
 #endif
 

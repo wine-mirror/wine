@@ -88,7 +88,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    }
 
 	    else if(!strncmp("N ", item, 2)) {
-                strncpy( metric->N, value, sizeof(metric->N) );
+		metric->N = PSDRV_GlyphName(value);
 	    }
 
 	    else if(!strncmp("B ", item, 2)) {
@@ -96,7 +96,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 				          &metric->B.urx, &metric->B.ury);
 
 		/* Store height of Aring to use as lfHeight */
-		if(metric->N && !strncmp(metric->N, "Aring", 5))
+		if(metric->N && !strncmp(metric->N->sz, "Aring", 5))
 		    afm->FullAscender = metric->B.ury;
 	    }
 
@@ -106,7 +106,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	}
 
 	TRACE("Metrics for '%s' WX = %f B = %f,%f - %f,%f\n",
-	      metric->N, metric->WX, metric->B.llx, metric->B.lly,
+	      metric->N->sz, metric->WX, metric->B.llx, metric->B.lly,
 	      metric->B.urx, metric->B.ury);
     }
 
@@ -407,7 +407,7 @@ static void PSDRV_ReencodeCharWidths(AFM *afm)
 	    continue;
 	}
         for (j = 0, metric = afm->Metrics; j < afm->NumofMetrics; j++, metric++) {
-	    if(!strcmp(metric->N, PSDRV_ANSIVector[i])) {
+	    if(metric->N && !strcmp(metric->N->sz, PSDRV_ANSIVector[i])) {
 	        afm->CharWidths[i] = metric->WX;
 		break;
 	    }
@@ -447,7 +447,7 @@ static void PSDRV_DumpFontList(void)
  *	PSDRV_GetFontMetrics
  *
  * Only exported function in this file. Parses all afm files listed in
- * [afmfiles] of wine.conf .
+ * [afmfiles] and [afmdirs] of wine.conf .
  */
 
 static void PSDRV_ReadAFMDir(const char* afmdir) {
@@ -487,6 +487,9 @@ BOOL PSDRV_GetFontMetrics(void)
     char key[256];
     char value[256];
 
+    if (PSDRV_GlyphListInit() != 0)
+	return FALSE;
+
     while (PROFILE_EnumWineIniString( "afmfiles", idx++, key, sizeof(key), value, sizeof(value)))
     {
         AFM* afm = PSDRV_AFMParse(value);
@@ -504,6 +507,7 @@ BOOL PSDRV_GetFontMetrics(void)
 	    value, sizeof (value)); ++idx)
 	PSDRV_ReadAFMDir (value);
 
+    PSDRV_DumpGlyphList();
     PSDRV_DumpFontList();
     return TRUE;
 }
