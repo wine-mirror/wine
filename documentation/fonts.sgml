@@ -10,8 +10,8 @@
             The <command>fnt2bdf</command> utility is included with
             Wine. It can be found in the <filename>tools</filename>
             directory. Links to the other tools mentioned in this
-            document can be found on wine headquarters:
-            <ulink url="http://www.winehq.org/development/">http://www.winehq.org/development/</ulink>
+            document can be found in the Wine Developer's Guide:
+            <ulink url="http://www.winehq.org/site/docs/wine-devel/index">http://www.winehq.org/site/docs/wine-devel/index</ulink>
           </para>
         </note>
       </para>
