@@ -778,7 +778,13 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPARAM lParam, BOOL 
     if (HAS_STRINGS(descr))
     {
         if (!lParam)
-            return strlenW(descr->items[index].str);
+        {
+            DWORD len = strlenW(descr->items[index].str);
+            if( unicode )
+                return len;
+            return WideCharToMultiByte( CP_ACP, 0, descr->items[index].str, len,
+                                        NULL, 0, NULL, NULL );
+        }
 
 	TRACE("index %d (0x%04x) %s\n", index, index, debugstr_w(descr->items[index].str));
 
