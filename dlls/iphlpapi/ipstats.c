@@ -42,6 +42,40 @@
 #include "ifenum.h"
 #include "ipstats.h"
 
+#ifndef TCPS_ESTABLISHED
+# define TCPS_ESTABLISHED TCP_ESTABLISHED
+#endif
+#ifndef TCPS_SYN_SENT
+# define TCPS_SYN_SENT TCP_SYN_SENT
+#endif
+#ifndef TCPS_SYN_RECEIVED
+# define TCPS_SYN_RECEIVED TCP_SYN_RECV
+#endif
+#ifndef TCPS_FIN_WAIT_1
+# define TCPS_FIN_WAIT_1 TCP_FIN_WAIT1
+#endif
+#ifndef TCPS_FIN_WAIT_2
+# define TCPS_FIN_WAIT_2 TCP_FIN_WAIT2
+#endif
+#ifndef TCPS_TIME_WAIT
+# define TCPS_TIME_WAIT TCP_TIME_WAIT
+#endif
+#ifndef TCPS_CLOSED
+# define TCPS_CLOSED TCP_CLOSE
+#endif
+#ifndef TCPS_CLOSE_WAIT
+# define TCPS_CLOSE_WAIT TCP_CLOSE_WAIT
+#endif
+#ifndef TCPS_LAST_ACK
+# define TCPS_LAST_ACK TCP_LAST_ACK
+#endif
+#ifndef TCPS_LISTEN
+# define TCPS_LISTEN TCP_LISTEN
+#endif
+#ifndef TCPS_CLOSING
+# define TCPS_CLOSING TCP_CLOSING
+#endif
+
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 {
   FILE *fp;
@@ -778,67 +812,43 @@ PMIB_TCPTABLE getTcpTable(void)
           if (ptr && *ptr) {
             DWORD state = strtoul(ptr, &endPtr, 16);
 
-#if HAVE_NETINET_TCP_H
             switch (state)
             {
-#ifdef TCP_ESTABLISHED
-              case TCP_ESTABLISHED:
+              case TCPS_ESTABLISHED:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_ESTAB;
                 break;
-#endif
-#ifdef TCP_SYN_SEND
-              case TCP_SYN_SENT:
+              case TCPS_SYN_SENT:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_SYN_SENT;
                 break;
-#endif
-#ifdef TCP_SYN_RECV
-              case TCP_SYN_RECV:
+              case TCPS_SYN_RECEIVED:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_SYN_RCVD;
                 break;
-#endif
-#ifdef TCP_FIN_WAIT1
-              case TCP_FIN_WAIT1:
+              case TCPS_FIN_WAIT_1:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_FIN_WAIT1;
                 break;
-#endif
-#ifdef TCP_FIN_WAIT2
-              case TCP_FIN_WAIT2:
+              case TCPS_FIN_WAIT_2:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_FIN_WAIT2;
                 break;
-#endif
-#ifdef TCP_TIME_WAIT
-              case TCP_TIME_WAIT:
+              case TCPS_TIME_WAIT:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_TIME_WAIT;
                 break;
-#endif
-#ifdef TCP_CLOSE
-              case TCP_CLOSE:
+              case TCPS_CLOSED:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_CLOSED;
                 break;
-#endif
-#ifdef TCP_CLOSE_WAIT
-              case TCP_CLOSE_WAIT:
+              case TCPS_CLOSE_WAIT:
                 ret->table[ret->dwNumEntries].dwState =
                  MIB_TCP_STATE_CLOSE_WAIT;
                 break;
-#endif
-#ifdef TCP_LAST_ACK
-              case TCP_LAST_ACK:
+              case TCPS_LAST_ACK:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_LAST_ACK;
                 break;
-#endif
-#ifdef TCP_LISTEN
-              case TCP_LISTEN:
+              case TCPS_LISTEN:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_LISTEN;
                 break;
-#endif
-#ifdef TCP_CLOSING
-              case TCP_CLOSING:
+              case TCPS_CLOSING:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_CLOSING;
                 break;
-#endif
             }
-#endif
             ptr = endPtr;
           }
           ret->dwNumEntries++;
