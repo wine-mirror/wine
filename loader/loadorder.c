@@ -62,6 +62,23 @@ static struct tagDllOverride {
 	{NULL,NULL},
 };
 
+static const struct tagDllPair {
+    const char *dll1, *dll2;
+} DllPairs[] = {
+    { "krnl386",  "kernel32" },
+    { "gdi",      "gdi32" },
+    { "user",     "user32" },
+    { "commdlg",  "comdlg32" },
+    { "commctrl", "comctl32" },
+    { "ver",      "version" },
+    { "shell",    "shell32" },
+    { "lzexpand", "lz32" },
+    { "mmsystem", "winmm" },
+    { "msvideo",  "msvfw32" },
+    { "winsock",  "wsock32" },
+    { NULL,       NULL }
+};
+
 /***************************************************************************
  *	cmp_sort_func	(internal, static)
  *
@@ -343,23 +360,6 @@ endit:
  * commdlg = native, builtin
  * version, ver = elfdll, native, builtin
  *
- * Section:
- *	[DllPairs]
- *
- * Keys:
- * This is a simple pairing in the form 'name1 = name2'. It is supposed to
- * identify the dlls that cannot live without eachother unless they are
- * loaded in the same format. Examples are common dialogs and controls,
- * shell, kernel, gdi, user, etc...
- * The code will issue a warning if the loadorder of these pairs are different
- * and might cause hard-to-find bugs due to incompatible pairs loaded at
- * run-time. Note that this pairing gives *no* guarantee that the pairs
- * actually get loaded as the same type, nor that the correct versions are
- * loaded (might be implemented later). It merely notes obvious trouble.
- * Examples:
- * kernel = kernel32
- * commdlg = comdlg32
- *
  */
 
 #define BUFFERSIZE	1024
@@ -367,7 +367,10 @@ endit:
 BOOL MODULE_InitLoadOrder(void)
 {
 	char buffer[BUFFERSIZE];
+	char key[256];
 	int nbuffer;
+        int idx;
+        const struct tagDllPair *dllpair;
 
 #if defined(HAVE_DL_API)
 	/* Get/set the new LD_LIBRARY_PATH */
@@ -405,41 +408,14 @@ BOOL MODULE_InitLoadOrder(void)
 	}
 
 	/* Read the explicitely defined orders for specific modules as an entire section */
-	nbuffer = PROFILE_GetWineIniString("DllOverrides", NULL, "", buffer, sizeof(buffer));
-	if(nbuffer == BUFFERSIZE-2)
-	{
-		ERR("BUFFERSIZE %d is too small to read [DllOverrides]. Needs to grow in the source\n", BUFFERSIZE);
-		return FALSE;
-	}
-	if(nbuffer)
-	{
-		/* We only have the keys in the buffer, not the values */
-		char *key;
-		char value[BUFFERSIZE];
-		char *next;
-
-		for(key = buffer; *key; key = next)
-		{
-			next = key + strlen(key) + 1;
-
-			nbuffer = PROFILE_GetWineIniString("DllOverrides", key, "", value, sizeof(value));
-			if(!nbuffer)
-			{
-				ERR("Module(s) '%s' will always fail to load. Are you sure you want this?\n", key);
-				value[0] = '\0';	/* Just in case */
-			}
-			if(nbuffer == BUFFERSIZE-2)
-			{
-				ERR("BUFFERSIZE %d is too small to read [DllOverrides] key '%s'. Needs to grow in the source\n", BUFFERSIZE, key);
-				return FALSE;
-			}
-
-			TRACE("Key '%s' uses override '%s'\n", key, value);
-
-                        if(!AddLoadOrderSet(key, value, TRUE))
-				return FALSE;
-		}
-	}
+        idx = 0;
+        while (PROFILE_EnumWineIniString( "DllOverrides", idx++, key, sizeof(key),
+                                          buffer, sizeof(buffer)))
+        {
+            TRACE("Key '%s' uses override '%s'\n", key, buffer);
+            if(!AddLoadOrderSet(key, buffer, TRUE))
+                return FALSE;
+        }
 
 	/* Add the commandline overrides to the pool */
 	if(!ParseCommandlineOverrides())
@@ -460,45 +436,17 @@ BOOL MODULE_InitLoadOrder(void)
 	qsort(module_loadorder, nmodule_loadorder, sizeof(module_loadorder[0]), cmp_sort_func);
 
 	/* Check the pairs of dlls */
-	nbuffer = PROFILE_GetWineIniString("DllPairs", NULL, "", buffer, sizeof(buffer));
-	if(nbuffer == BUFFERSIZE-2)
-	{
-		ERR("BUFFERSIZE %d is too small to read [DllPairs]. Needs to grow in the source\n", BUFFERSIZE);
-		return FALSE;
-	}
-	if(nbuffer)
-	{
-		/* We only have the keys in the buffer, not the values */
-		char *key;
-		char value[BUFFERSIZE];
-		char *next;
-
-		for(key = buffer; *key; key = next)
-		{
-			module_loadorder_t *plo1, *plo2;
-
-			next = key + strlen(key) + 1;
-
-			nbuffer = PROFILE_GetWineIniString("DllPairs", key, "", value, sizeof(value));
-			if(!nbuffer)
-			{
-				ERR("Module pair '%s' is not associated with another module?\n", key);
-				continue;
-			}
-			if(nbuffer == BUFFERSIZE-2)
-			{
-				ERR("BUFFERSIZE %d is too small to read [DllPairs] key '%s'. Needs to grow in the source\n", BUFFERSIZE, key);
-				return FALSE;
-			}
-
-			plo1 = MODULE_GetLoadOrder(key);
-			plo2 = MODULE_GetLoadOrder(value);
-			assert(plo1 && plo2);
-
-			if(memcmp(plo1->loadorder, plo2->loadorder, sizeof(plo1->loadorder)))
-				MESSAGE("Warning: Modules '%s' and '%s' have different loadorder which may cause trouble\n", key, value);
-		}
-	}
+        dllpair = DllPairs;
+        while (dllpair->dll1)
+        {
+            module_loadorder_t *plo1, *plo2;
+            plo1 = MODULE_GetLoadOrder(dllpair->dll1);
+            plo2 = MODULE_GetLoadOrder(dllpair->dll2);
+            assert(plo1 && plo2);
+            if(memcmp(plo1->loadorder, plo2->loadorder, sizeof(plo1->loadorder)))
+                MESSAGE("Warning: Modules '%s' and '%s' have different loadorder which may cause trouble\n", dllpair->dll1, dllpair->dll2);
+            dllpair++;
+        }
 
 	if(TRACE_ON(module))
 	{
