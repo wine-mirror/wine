@@ -1254,8 +1254,6 @@ BOOL WINAPI EnumEnhMetaFile(
     HBRUSH hBrush = (HBRUSH)NULL;
     HFONT hFont = (HFONT)NULL;
 
-    XFORM outXform;
-
     if(!lpRect)
     {
 	SetLastError(ERROR_INVALID_PARAMETER);
@@ -1319,8 +1317,6 @@ BOOL WINAPI EnumEnhMetaFile(
 	if (!ModifyWorldTransform(hdc, &xform, MWT_RIGHTMULTIPLY)) {
 	    ERR("World transform failed!\n");
 	}
-
-	GetWorldTransform(hdc, &outXform);
 
 	/* save the current pen, brush and font */
 	hPen = GetCurrentObject(hdc, OBJ_PEN);
