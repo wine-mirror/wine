@@ -49,8 +49,8 @@
 45  stub     WSAGetServiceClassNameByClassIdW
 46  stub     WSAHtonl
 47  stub     WSAHtons
-48  stub     WSAInstallServiceClassA
-49  stub     WSAInstallServiceClassW
+48  stdcall  WSAInstallServiceClassA(ptr) WSAInstallServiceClassA
+49  stdcall  WSAInstallServiceClassW(ptr) WSAInstallServiceClassW
 50  stdcall  WSAIoctl(long long ptr long ptr long ptr ptr ptr) WSAIoctl
 51  stdcall  gethostbyaddr(ptr long long) WS_gethostbyaddr
 52  stdcall  gethostbyname(str) WS_gethostbyname

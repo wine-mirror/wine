@@ -4207,3 +4207,21 @@ int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA
    lpProtocolInfo->dwServiceFlags4 = 0xff00ff00; /* magic */
    return 0;
 }
+
+/***********************************************************************
+ *              WSAInstallServiceClassA                  (WS2_32.48)
+ */
+int WINAPI WSAInstallServiceClassA(LPWSASERVICECLASSINFOA info)
+{
+    FIXME("Request to install service %s\n",debugstr_a(info->lpszServiceClassName));
+    return WSAEACCES;
+}
+
+/***********************************************************************
+ *              WSAInstallServiceClassW                  (WS2_32.49)
+ */
+int WINAPI WSAInstallServiceClassW(LPWSASERVICECLASSINFOW info)
+{
+    FIXME("Request to install service %s\n",debugstr_w(info->lpszServiceClassName));
+    return WSAEACCES;
+}
