@@ -235,6 +235,14 @@ int main(int argc, char *argv[])
 						break;
 				}
 			}
+			if(len == 2)
+			{
+				RepairMode = REINSTALLMODE_FILEMISSING |
+					REINSTALLMODE_FILEEQUALVERSION |
+					REINSTALLMODE_FILEVERIFY |
+					REINSTALLMODE_MACHINEDATA |
+					REINSTALLMODE_SHORTCUT;
+			}
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
