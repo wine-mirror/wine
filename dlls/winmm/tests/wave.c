@@ -93,7 +93,7 @@ static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
         } else if ((wfx->wBitsPerSample==32) && (wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
             IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
             union { float f; char c[4]; } sample;
-            sample.f=y;
+            sample.f=(float)y;
             for (j = 0; j < wfx->nChannels; j++) {
                 b[0]=sample.c[0];
                 b[1]=sample.c[1];
@@ -426,7 +426,7 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
        "waveOutGetPosition(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_SMPTE)
     {
-        BYTE frames=ceil(fmod(duration*mmtime.u.smpte.fps, mmtime.u.smpte.fps));
+        BYTE frames=(BYTE)ceil(fmod(duration*mmtime.u.smpte.fps, mmtime.u.smpte.fps));
         ok(mmtime.u.smpte.hour==(BYTE)(floor(duration/(60*60))) &&
            mmtime.u.smpte.min==(BYTE)(fmod(floor(duration/60), 60)) &&
            mmtime.u.smpte.sec==(BYTE)(fmod(duration,60)) &&
@@ -529,7 +529,7 @@ static void wave_out_test_deviceOut(int device, double duration,
               flags & WAVE_MAPPED ? "WAVE_MAPPED" : "");
 
         /* Check that the position is 0 at start */
-        check_position(device, wout, 0.0, pwfx);
+        check_position(device, wout, 0, pwfx);
 
         rc=waveOutSetVolume(wout,0x20002000);
         ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",
