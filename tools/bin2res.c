@@ -164,7 +164,7 @@ int process_resources(const char* input_file_name, const char* specific_file_nam
 	    if (inserting) fputc(c, ftmp);
 	if (c == EOF) break;
 
-	if (!(fres = fopen(res_file_name, inserting ? "r" : "w"))) break;
+	if (!(fres = fopen(res_file_name, inserting ? "rb" : "wb"))) break;
 	if (inserting)
 	{
 	    if (!insert_hexdump(ftmp, fres)) break;
