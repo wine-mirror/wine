@@ -118,6 +118,7 @@ HKCU,%Desktop%,"FontSmoothing",,"0"
 HKCU,%Desktop%,"DragFullWindows",,"0"
 HKCU,%Desktop%,"SmoothScroll",1,00,00,00,00
 HKCU,%Desktop%,"UserPreferencemask",1,00,00,00,00
+HKCU,%Desktop%,"LowPowerActive",,"0"
 
 [DirectX]
 HKLM,Software\Microsoft\DirectX,"Version",,"4.09.00.0902"
