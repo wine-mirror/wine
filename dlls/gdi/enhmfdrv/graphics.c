@@ -490,7 +490,7 @@ BOOL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
     if(!index) return FALSE;
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
-    size = rgnsize + sizeof(EMRFILLRGN) - 1;
+    size = rgnsize + offsetof(EMRFILLRGN,RgnData);
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
@@ -523,7 +523,7 @@ BOOL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, INT heig
     if(!index) return FALSE;
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
-    size = rgnsize + sizeof(EMRFRAMERGN) - 1;
+    size = rgnsize + offsetof(EMRFRAMERGN,RgnData);
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
@@ -559,7 +559,7 @@ static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
 
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
-    size = rgnsize + sizeof(EMRINVERTRGN) - 1;
+    size = rgnsize + offsetof(EMRINVERTRGN,RgnData);
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );

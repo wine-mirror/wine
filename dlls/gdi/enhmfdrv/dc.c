@@ -134,11 +134,16 @@ INT EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
     DWORD size, rgnsize;
     BOOL ret;
 
-    rgnsize = GetRegionData( hrgn, 0, NULL );
-    size = rgnsize + sizeof(*emr) - 1;
-    emr = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!hrgn)
+    {
+        if (mode != RGN_COPY) return ERROR;
+        rgnsize = 0;
+    }
+    else rgnsize = GetRegionData( hrgn, 0, NULL );
 
-    GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
+    size = rgnsize + offsetof(EMREXTSELECTCLIPRGN,RgnData);
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
+    if (rgnsize) GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
     emr->emr.iType = EMR_EXTSELECTCLIPRGN;
     emr->emr.nSize = size;

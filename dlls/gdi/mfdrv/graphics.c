@@ -237,7 +237,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
     WORD *Param, *StartBand;
     BOOL ret;
 
-    len = GetRegionData( hrgn, 0, NULL );
+    if (!(len = GetRegionData( hrgn, 0, NULL ))) return -1;
     if( !(rgndata = HeapAlloc( GetProcessHeap(), 0, len )) ) {
         WARN("Can't alloc rgndata buffer\n");
 	return -1;
@@ -376,16 +376,15 @@ MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
 INT MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
 {
     INT16 iRgn;
+    INT ret;
 
-    if (mode != RGN_COPY)
-    {
-        FIXME( "mode %d not supported\n", mode );
-        return ERROR;
-    }
+    if (mode != RGN_COPY) return ERROR;
+    if (!hrgn) return NULLREGION;
     iRgn = MFDRV_CreateRegion( dev, hrgn );
-    if(iRgn == -1)
-        return ERROR;
-    return MFDRV_MetaParam1( dev, META_SELECTCLIPREGION, iRgn ) ? SIMPLEREGION : ERROR;
+    if(iRgn == -1) return ERROR;
+    ret = MFDRV_MetaParam1( dev, META_SELECTCLIPREGION, iRgn ) ? NULLREGION : ERROR;
+    MFDRV_MetaParam1( dev, META_DELETEOBJECT, iRgn );
+    return ret;
 }
 
 
