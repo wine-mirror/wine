@@ -116,8 +116,14 @@ static	void			DEBUG_InitCurrProcess(void)
     DEBUG_ProcessDeferredDebug();
 }
 
-static	BOOL			DEBUG_ProcessGetString(char* buffer, int size, 
-						       HANDLE hp, LPVOID addr)
+static BOOL DEBUG_ProcessGetString(char* buffer, int size, HANDLE hp, LPSTR addr)
+{
+    DWORD sz;
+    *(WCHAR*)buffer = 0;
+    return (addr && ReadProcessMemory(hp, addr, buffer, size, &sz));
+}
+
+static BOOL DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LPVOID addr)
 {
     LPVOID	ad;
     DWORD	sz;
@@ -344,9 +350,9 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    break;
 	    
 	case CREATE_PROCESS_DEBUG_EVENT:
-	    DEBUG_ProcessGetString(buffer, sizeof(buffer), 
-				   de.u.CreateProcessInfo.hProcess, 
-				   de.u.LoadDll.lpImageName);
+	    DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer), 
+                                           de.u.CreateProcessInfo.hProcess, 
+                                           de.u.LoadDll.lpImageName);
 	    
 	    /* FIXME unicode ? de.u.CreateProcessInfo.fUnicode */
 	    TRACE("%08lx:%08lx: create process %s @%p\n", 
@@ -413,9 +419,9 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 		ERR("Unknown thread\n");
 		break;
 	    }
-	    DEBUG_ProcessGetString(buffer, sizeof(buffer), 
-				   DEBUG_CurrThread->process->handle, 
-				   de.u.LoadDll.lpImageName);
+	    DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer), 
+                                           DEBUG_CurrThread->process->handle, 
+                                           de.u.LoadDll.lpImageName);
 	    
 	    /* FIXME unicode: de.u.LoadDll.fUnicode */
 	    TRACE("%08lx:%08lx: loads DLL %s @%p\n", de.dwProcessId, de.dwThreadId, 
@@ -436,7 +442,6 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    DEBUG_ProcessGetString(buffer, sizeof(buffer), 
 				   DEBUG_CurrThread->process->handle, 
 				   de.u.DebugString.lpDebugStringData);
-	    
 	    
 	    /* fixme unicode de.u.DebugString.fUnicode ? */
 	    TRACE("%08lx:%08lx: output debug string (%s)\n", 
