@@ -1558,7 +1558,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
         lpwfs->hdr.htype = WH_HFTPSESSION;
         lpwfs->hdr.dwFlags = dwFlags;
         lpwfs->hdr.dwContext = dwContext;
-        lpwfs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
+        lpwfs->hdr.lpwhparent = &hIC->hdr;
         lpwfs->sndSocket = nsocket;
 	lpwfs->download_in_progress = NULL;
 	sock_namelen = sizeof(lpwfs->socketAddress);
@@ -2543,7 +2543,7 @@ HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONA lpwfs, INT nSocket,
             if( handle )
             {
                 lpwfn->hdr.htype = WH_HFINDNEXT;
-                lpwfn->hdr.lpwhparent = (LPWININETHANDLEHEADER)lpwfs;
+                lpwfn->hdr.lpwhparent = &lpwfs->hdr;
 	        lpwfn->hdr.dwContext = dwContext;
                 lpwfn->index = 1; /* Next index is 1 since we return index 0 */
                 lpwfn->size = dwSize;
