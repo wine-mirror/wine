@@ -27,7 +27,8 @@
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_ATOM MAKEINTATOMA(32768)  /* PopupMenu */
 #define DESKTOP_CLASS_ATOM   MAKEINTATOMA(32769)  /* Desktop */
-#define DIALOG_CLASS_ATOM    MAKEINTATOMA(32770)  /* Dialog */
+#define DIALOG_CLASS_ATOMA   MAKEINTATOMA(32770)  /* Dialog */
+#define DIALOG_CLASS_ATOMW   MAKEINTATOMW(32770)  /* Dialog */
 #define WINSWITCH_CLASS_ATOM MAKEINTATOMA(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOMA(32772)  /* IconTitle */
 
@@ -138,5 +139,9 @@ inline static DIALOGINFO *DIALOG_get_info( HWND hwnd )
 }
 
 extern BOOL DIALOG_Init(void);
+extern BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize );
+extern void DIALOG_EnableOwner( HWND hOwner );
+extern BOOL DIALOG_DisableOwner( HWND hOwner );
+extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner );
 
 #endif  /* __WINE_CONTROLS_H */

@@ -524,155 +524,6 @@ INT16 WINAPI ReleaseDC16( HWND16 hwnd, HDC16 hdc )
 
 
 /**************************************************************************
- *              EndDialog   (USER.88)
- */
-BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
-{
-    return EndDialog( WIN_Handle32(hwnd), retval );
-}
-
-
-/**************************************************************************
- *              GetDlgItem   (USER.91)
- */
-HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
-{
-    return HWND_16( GetDlgItem( WIN_Handle32(hwndDlg), (UINT16) id ));
-}
-
-
-/**************************************************************************
- *              SetDlgItemText   (USER.92)
- */
-void WINAPI SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
-{
-    SendDlgItemMessage16( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
-}
-
-
-/**************************************************************************
- *              GetDlgItemText   (USER.93)
- */
-INT16 WINAPI GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
-{
-    return (INT16)SendDlgItemMessage16( hwnd, id, WM_GETTEXT, len, (LPARAM)str );
-}
-
-
-/**************************************************************************
- *              SetDlgItemInt   (USER.94)
- */
-void WINAPI SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
-{
-    SetDlgItemInt( WIN_Handle32(hwnd), (UINT)(UINT16)id,
-             (UINT)(fSigned ? (INT16) value : (UINT16) value), fSigned );
-}
-
-
-/**************************************************************************
- *              GetDlgItemInt   (USER.95)
- */
-UINT16 WINAPI GetDlgItemInt16( HWND16 hwnd, INT16 id, BOOL16 *translated, BOOL16 fSigned )
-{
-    UINT result;
-    BOOL ok;
-
-    if (translated) *translated = FALSE;
-    result = GetDlgItemInt( WIN_Handle32(hwnd), (UINT)(UINT16)id, &ok, fSigned );
-    if (!ok) return 0;
-    if (fSigned)
-    {
-        if (((INT)result < -32767) || ((INT)result > 32767)) return 0;
-    }
-    else
-    {
-        if (result > 65535) return 0;
-    }
-    if (translated) *translated = TRUE;
-    return (UINT16)result;
-}
-
-
-/**************************************************************************
- *              CheckRadioButton   (USER.96)
- */
-BOOL16 WINAPI CheckRadioButton16( HWND16 hwndDlg, UINT16 firstID,
-                                  UINT16 lastID, UINT16 checkID )
-{
-    return CheckRadioButton( WIN_Handle32(hwndDlg), firstID, lastID, checkID );
-}
-
-
-/**************************************************************************
- *              CheckDlgButton   (USER.97)
- */
-BOOL16 WINAPI CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
-{
-    SendDlgItemMessage16( hwnd, id, BM_SETCHECK16, check, 0 );
-    return TRUE;
-}
-
-
-/**************************************************************************
- *              IsDlgButtonChecked   (USER.98)
- */
-UINT16 WINAPI IsDlgButtonChecked16( HWND16 hwnd, UINT16 id )
-{
-    return (UINT16)SendDlgItemMessage16( hwnd, id, BM_GETCHECK16, 0, 0 );
-}
-
-
-/**************************************************************************
- *              DlgDirSelect   (USER.99)
- */
-BOOL16 WINAPI DlgDirSelect16( HWND16 hwnd, LPSTR str, INT16 id )
-{
-    return DlgDirSelectEx16( hwnd, str, 128, id );
-}
-
-
-/**************************************************************************
- *              DlgDirList   (USER.100)
- */
-INT16 WINAPI DlgDirList16( HWND16 hDlg, LPSTR spec, INT16 idLBox,
-                           INT16 idStatic, UINT16 attrib )
-{
-    /* according to Win16 docs, DDL_DRIVES should make DDL_EXCLUSIVE
-     * be set automatically (this is different in Win32, and
-     * DIALOG_DlgDirList sends Win32 messages to the control,
-     * so do it here) */
-    if (attrib & DDL_DRIVES) attrib |= DDL_EXCLUSIVE;
-    return DlgDirListA( WIN_Handle32(hDlg), spec, idLBox, idStatic, attrib );
-}
-
-
-/**************************************************************************
- *              SendDlgItemMessage   (USER.101)
- */
-LRESULT WINAPI SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
-                                     WPARAM16 wParam, LPARAM lParam )
-{
-    HWND16 hwndCtrl = GetDlgItem16( hwnd, id );
-    if (hwndCtrl) return SendMessage16( hwndCtrl, msg, wParam, lParam );
-    else return 0;
-}
-
-
-/**************************************************************************
- *              MapDialogRect   (USER.103)
- */
-void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
-{
-    RECT rect32;
-    MapDialogRect( WIN_Handle32(hwnd), &rect32 );
-    rect->left   = rect32.left;
-    rect->right  = rect32.right;
-    rect->top    = rect32.top;
-    rect->bottom = rect32.bottom;
-}
-
-
-/**************************************************************************
  *              FlashWindow   (USER.105)
  */
 BOOL16 WINAPI FlashWindow16( HWND16 hwnd, BOOL16 bInvert )
@@ -1011,25 +862,6 @@ HWND16 WINAPI ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
 }
 
 
-/**************************************************************************
- *              DlgDirSelectComboBox   (USER.194)
- */
-BOOL16 WINAPI DlgDirSelectComboBox16( HWND16 hwnd, LPSTR str, INT16 id )
-{
-    return DlgDirSelectComboBoxEx16( hwnd, str, 128, id );
-}
-
-
-/**************************************************************************
- *              DlgDirListComboBox   (USER.195)
- */
-INT16 WINAPI DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
-                                   INT16 idStatic, UINT16 attrib )
-{
-    return DlgDirListComboBoxA( WIN_Handle32(hDlg), spec, idCBox, idStatic, attrib );
-}
-
-
 /***********************************************************************
  *		GetWindowTask   (USER.224)
  */
@@ -1052,28 +884,6 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lPara
     info.proc  = func;
     info.param = lParam;
     return EnumThreadWindows( tid, wnd_enum_callback, (LPARAM)&info );
-}
-
-
-/**************************************************************************
- *              GetNextDlgGroupItem   (USER.227)
- */
-HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
-                                     BOOL16 fPrevious )
-{
-    return HWND_16( GetNextDlgGroupItem( WIN_Handle32(hwndDlg),
-                                              WIN_Handle32(hwndCtrl), fPrevious ));
-}
-
-
-/**************************************************************************
- *              GetNextDlgTabItem   (USER.228)
- */
-HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
-                                   BOOL16 fPrevious )
-{
-    return HWND_16( GetNextDlgTabItem( WIN_Handle32(hwndDlg),
-                                            WIN_Handle32(hwndCtrl), fPrevious ));
 }
 
 
@@ -1447,25 +1257,6 @@ BOOL16 WINAPI TrackPopupMenu16( HMENU16 hMenu, UINT16 wFlags, INT16 x, INT16 y,
     if (lpRect) CONV_RECT16TO32( lpRect, &r );
     return TrackPopupMenu( HMENU_32(hMenu), wFlags, x, y, nReserved,
                            WIN_Handle32(hwnd), lpRect ? &r : NULL );
-}
-
-
-/**************************************************************************
- *              DlgDirSelectEx   (USER.422)
- */
-BOOL16 WINAPI DlgDirSelectEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
-{
-    return DlgDirSelectExA( WIN_Handle32(hwnd), str, len, id );
-}
-
-
-/**************************************************************************
- *              DlgDirSelectComboBoxEx   (USER.423)
- */
-BOOL16 WINAPI DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len,
-                                        INT16 id )
-{
-    return DlgDirSelectComboBoxExA( WIN_Handle32(hwnd), str, len, id );
 }
 
 

@@ -70,7 +70,7 @@
 @ stdcall CreateDesktopA(str str ptr long long ptr)
 @ stdcall CreateDesktopW(wstr wstr ptr long long ptr)
 @ stdcall CreateDialogIndirectParamA(long ptr long ptr long)
-@ stdcall CreateDialogIndirectParamAorW (long ptr long ptr long)
+@ stdcall CreateDialogIndirectParamAorW(long ptr long ptr long long)
 @ stdcall CreateDialogIndirectParamW(long ptr long ptr long)
 @ stdcall CreateDialogParamA(long ptr long ptr long)
 @ stdcall CreateDialogParamW(long ptr long ptr long)

@@ -67,6 +67,7 @@ C_SRCS = \
 	dde/ddeml16.c \
 	dde/misc.c \
 	dde/server.c \
+	dialog16.c \
 	display.c \
 	exticon.c \
 	focus.c \
