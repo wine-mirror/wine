@@ -73,7 +73,9 @@ int rand_prime(mp_int *N, long len)
       type = LTM_PRIME_BBS;
       len = -len;
    } else {
-      type = 0;
+      /* This seems to be what MS CSP's do: */
+      type = LTM_PRIME_2MSB_ON;
+      /* Original LibTomCrypt: type = 0; */
    }
 
    /* New prime generation makes the code even more cryptoish-insane.  Do you know what this means!!!
