@@ -21,12 +21,14 @@ C_SRCS = \
 	defaulthandler.c \
 	errorinfo.c \
 	filemoniker.c \
+	ftmarshal.c \
 	hglobalstream.c \
 	ifs.c \
 	itemmoniker.c \
 	marshal.c \
 	memlockbytes.c \
 	moniker.c \
+	ole16.c \
 	ole2.c \
 	ole2stubs.c \
 	ole2impl.c \
@@ -45,4 +47,3 @@ RC_SRCS = ole32res.rc
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
