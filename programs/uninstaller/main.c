@@ -228,7 +228,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     PAINTSTRUCT ps;
     TEXTMETRIC tm;
     int cxChar, cyChar, i, y, bx, by, maxx, maxy, wx, wy;
-    static HWND hwndList = 0;
+    static HWND hwndList = 0, hwndEdit = 0;
     DWORD style;
     RECT rect;
 
@@ -284,7 +284,20 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		hWnd, (HMENU)1,
 		((LPCREATESTRUCT)lParam)->hInstance, NULL);
 	maxx += wx + cxChar * 5; /* button + right border */
-	maxy += cyChar * 5 + cyChar * 3; /* static text + bottom border */
+	maxy += cyChar * 5 + cyChar * 2; /* static text + distance */
+	CreateWindow("static", "command line to be executed:",
+		WS_CHILD|WS_VISIBLE|SS_LEFT,
+		bx, maxy,
+		cxChar * 50, cyChar,
+		hWnd, (HMENU)1,
+		((LPCREATESTRUCT)lParam)->hInstance, NULL);
+	maxy += cyChar;
+	hwndEdit = CreateWindow("edit", NULL,
+		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_LEFT|ES_MULTILINE|ES_READONLY,
+		bx, maxy, maxx-(2*bx), (cyChar*6)+4,
+		hWnd, (HMENU)1,
+		((LPCREATESTRUCT)lParam)->hInstance, NULL);
+	maxy += (cyChar*6)+4 + cyChar * 3; /* edit ctrl + bottom border */
 	SetWindowPos(	hWnd, 0,
 			0, 0, maxx, maxy,
 			SWP_NOMOVE);
@@ -294,8 +307,10 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
       {
 	SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
+	SendMessage(hwndList, WM_SETREDRAW, FALSE, 0);
 	for (i=0; i < numentries; i++)
 	    SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)entries[i].descr);
+	SendMessage(hwndList, WM_SETREDRAW, TRUE, 0);
         hdc = BeginPaint( hWnd, &ps );
         EndPaint( hWnd, &ps );
         return 0;
@@ -317,6 +332,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #else
 		cursel = sel;
 #endif
+		SendMessage(hwndEdit, WM_SETTEXT, 0, (LPARAM)entries[sel].command);
 	    }
 	}
 	else
