@@ -76,8 +76,6 @@ static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 /* Check for comments in profile */
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
-#define WINE_INI_GLOBAL ETCDIR "/wine.conf"
-
 static const WCHAR wininiW[] = { 'w','i','n','.','i','n','i',0 };
 
 static CRITICAL_SECTION PROFILE_CritSect = CRITICAL_SECTION_INIT;
@@ -1065,7 +1063,7 @@ int  PROFILE_GetWineIniBool(
 /***********************************************************************
  *           PROFILE_LoadWineIni
  *
- * Load the wine.ini file.
+ * Load the old .winerc file.
  */
 int PROFILE_LoadWineIni(void)
 {
@@ -1091,18 +1089,6 @@ int PROFILE_LoadWineIni(void)
 
     if (!CLIENT_IsBootThread()) return 1;  /* already loaded */
 
-    if ( (Options.configFileName!=NULL) && (f = fopen(Options.configFileName, "r")) )
-    {
-      /* Open -config specified file */
-      lstrcpynA(PROFILE_WineIniUsed,Options.configFileName,MAX_PATHNAME_LEN);
-      goto found;
-    }
-
-    if ( (p = getenv( "WINE_INI" )) && (f = fopen( p, "r" )) )
-    {
-	lstrcpynA(PROFILE_WineIniUsed,p,MAX_PATHNAME_LEN);
-	goto found;
-    }
     if ((p = getenv( "HOME" )) != NULL)
     {
         lstrcpynA(buffer, p, MAX_PATHNAME_LEN - sizeof(PROFILE_WineIniName));
@@ -1115,26 +1101,17 @@ int PROFILE_LoadWineIni(void)
     }
     else WARN("could not get $HOME value for config file.\n" );
 
-    /* Try global file */
-
-    if ((f = fopen( WINE_INI_GLOBAL, "r" )) != NULL)
-    {
-	lstrcpynA(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN);
-        goto found;
-    }
-
     if (disp == REG_OPENED_EXISTING_KEY) return 1;  /* loaded by the server */
 
-    MESSAGE( "Can't open configuration file %s or %s/config\n",
-	     WINE_INI_GLOBAL, get_config_dir() );
+    MESSAGE( "Can't open configuration file %s/config\n",get_config_dir() );
     return 0;
 
  found:
 
     if (disp == REG_OPENED_EXISTING_KEY)
     {
-        MESSAGE( "Warning: configuration loaded by the server from %s/config,\n"
-                 "         file %s was ignored.\n", get_config_dir(), PROFILE_WineIniUsed );
+        MESSAGE( "Warning: configuration loaded by the server from '%s/config',\n"
+                 "         file '%s' was ignored.\n", get_config_dir(), PROFILE_WineIniUsed );
         fclose( f );
         return 1;
     }
@@ -1167,11 +1144,7 @@ void PROFILE_UsageWineIni(void)
 {
     MESSAGE("Perhaps you have not properly edited or created "
 	"your Wine configuration file.\n");
-    MESSAGE("This is either %s or $HOME%s\n",WINE_INI_GLOBAL,PROFILE_WineIniName);
-    MESSAGE("  or it is determined by the -config option or from\n"
-        "  the WINE_INI environment variable.\n");
-    if (*PROFILE_WineIniUsed)
-	MESSAGE("Wine has used %s as configuration file.\n", PROFILE_WineIniUsed);
+    MESSAGE("This is '$HOME%s'\n",PROFILE_WineIniName);
     /* RTFM, so to say */
 }
 
