@@ -1,0 +1,73 @@
+Copyright  Robert J. Amstadt, 1993.  All code is provided without
+warranty.  It is my intent to cover this code with the Gnu Public
+License.
+
+So here goes release 0.0.2 of the Windows loader.  It will do some 
+relocations and then run the program.  The program test.exe is a 
+Windows executable.  Try the command "wine test.exe".
+
+WHAT'S NEW with version 0.0.2:
+
+    - Again thanks to Eric Youngdale for some very useful comments.
+    - The Windows startup code created by Micrsoft C 7.0 now runs 
+      to completion.
+    - Added a new patch to the kernel to increase the usable size of
+      the ldt to the full 32 entries currently allowed.
+    - Imported name relocations are now supported.
+    - Source code for my infamous test program is now included.
+    - A handful of basic Windows functions are now emulated.  See
+      "kernel.spec" for examples of how to use the build program.
+
+WHAT'S NEW with version 0.0.1:
+
+    - Eric Youngdale contributed countless improvements in memory
+      efficiency, bug fixes, and relocation.
+    - The build program has been completed.  It now lets you specify
+      how the main DLL entry point should interface to your emulation
+      library routines.  A brief description of how to build these
+      specifications is included in the file "build-spec.txt".
+    - The code to dispatch builtin DLL calls is complete, but untested.
+
+TODO:
+
+    - Segment fixup code completion.
+    - Make changes to the kernel to allow more than 32 LDT entries.
+    - Trap and handle DOS and DPMI calls.
+    - Windows emulation library (connect to Peter MacDonald's library).
+    - Set registers correctly when starting Windows program.
+    - Allowing loading of 16-bit DLLs for use with program.
+    - global memory allocation
+    - complete and improve local heap allocation
+
+INSTALLATION:
+
+    Uncompress and untar this archive into the directory of your
+choice.  The file "ldt.tar" contains a necessary kernel patch against
+Linux 0.99.10.  If you installed the "ldt.tar" from the first release
+of this package, then you MUST to replace it.  In the directory 
+/usr/src/linux (or whereever you keep your kernel sources), untar 
+this file it contains three files:
+
+	kernel/ldt.c
+		- This is source for a new system call.
+	
+	include/linux/ldt.h
+		- This contains structures defining the system call
+		  interface.
+
+	ldt.patch
+		- This is a patch that must be applied to the kernel.
+		  It updates two header files, and the kernel Makefile.
+
+BUILD:
+
+    The documentation for the build program is in the file build-spec.txt
+
+FINALE:
+
+Good luck,
+
+	If you successfully add anything, please send me a copy.
+
+Bob Amstadt
+bob@amscons.com

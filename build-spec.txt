@@ -1,0 +1,81 @@
+name	NAME
+id	ID_NUMBER
+length	NUMBER_OF_ORDINALS
+
+ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
+
+ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]])
+		 HANDLERNAME([ARGNUM [ARGNUM [...]]])
+
+ORDINAL equate EXPORTNAME DATA
+--------------------
+General:
+
+    "name", "id" and "length" fields are mandatory.  Specific ordinal 
+declarations are optional, but the default handler will print an
+error message.
+
+Variable ordinals:
+
+    This type defines data storage at the ordinal specified.  You may
+store items as bytes, 16-bit words, or 32-bit words.
+    "ORDINAL" is replaced by the ordinal number corresponding to the
+variable.  "VARTYPE" should be "byte", "word" or "long" for 8, 16, or
+32 bits respectively.  "EXPORTNAME" will be the name available for
+dynamic linking.  "DATA" can be a decimal number or a hex number preceeded
+by "0x".  The following example defines the variable "VariableA" at
+ordinal 2 and containing 4 bytes:
+
+	2 byte VariableA -1 0xff 0 0
+
+Function ordinals:
+
+    This type defines a function entry point.  The prototype defined
+by "EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])" specifies the name available
+for dynamic linking and the format of the 16-bit stack.  By specifying
+"FUNCTYPE", the loader can automatically determine which order the
+parameters were pushed by the calling routine.  The prototype
+specified by "HANDLERNAME([ARGNUM [ARGNUM [...]]])"  specifies to
+the loader how to call the 32-bit library routine which will handle this
+call.  Note that specifying "ARGNUM" as 1 means the leftmost argument
+given to the function call, and not the first argument on the stack.
+For "pascal" functions, "ARGNUM" equal to 1 specifies the last
+argument on the stack.  If you do not specify any arguments to the
+handler function, then address of the 16-bit argument stack is
+passed to the handler function.
+    "ORDINAL" is replaced by the ordinal number corresponding to the
+function.  "FUNCTYPE" should be "c" or "pascal" ("pascal" may be
+shortened to "p").  "EXPORTNAME" will be the name available for
+dynamic linking.  "ARGTYPE" should be "byte", "word", "long", "ptr",
+"s_byte" (signed byte), "s_word" (signed word) or "s_long"
+(signed long).  "HANDLERNAME" is the name of the actual function
+that will process the request in 32-bit mode.  "ARGNUM" is the
+original argument number.  The first argument is numbered "1".
+
+    This first example defines an entry point for the CreateWindow()
+call (the ordinal 100 is just an example):
+
+	100 pascal CreateWindow(ptr ptr long s_word s_word s_word s_word
+				word word word ptr)
+		   WIN_CreateWindow(1 2 3 4 5 6 7 8 9 10 11)
+
+   This second example defines an entry point for the GetFocus()
+call (the ordinal 100 is just an example):
+
+	100 pascal GetFocus() WIN_GetFocus()
+
+Equate ordinals:
+
+    This type defines an ordinal as an absolute value.
+"ORDINAL" is replaced by the ordinal number corresponding to the
+variable.  "EXPORTNAME" will be the name available for dynamic linking.  
+"DATA" can be a decimal number or a hex number preceeded by "0x".
+
+Return ordinals:
+
+    This type defines a function entry point whose handler should do
+nothing but return a value.
+    "ORDINAL" is replaced by the ordinal number corresponding to the
+variable.  ARGLENGTH is the number of bytes that need to be removed
+from the stack before returning to the caller.  RETVALUE is the
+return value which will be passed back to the caller.

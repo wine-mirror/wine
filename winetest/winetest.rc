@@ -1,0 +1,11 @@
+#include <windows.h>
+
+MainMenu MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "E&xit",               	100
+        MENUITEM SEPARATOR
+        MENUITEM "&About...",           	101
+    END
+END
