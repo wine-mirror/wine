@@ -40,6 +40,8 @@ struct window
     user_handle_t    handle;          /* full handle for this window */
     struct thread   *thread;          /* thread owning the window */
     atom_t           atom;            /* class atom */
+    rectangle_t      window_rect;     /* window rectangle */
+    rectangle_t      client_rect;     /* client rectangle */
     int              prop_inuse;      /* number of in-use window properties */
     int              prop_alloc;      /* number of allocated window properties */
     struct property *properties;      /* window properties array */
@@ -473,6 +475,61 @@ DECL_HANDLER(get_window_tree)
     }
     req->first_child = win->first_child ? win->first_child->handle : 0;
     req->last_child  = win->last_child ? win->last_child->handle : 0;
+}
+
+
+/* set the window and client rectangles of a window */
+DECL_HANDLER(set_window_rectangles)
+{
+    struct window *win = get_window( req->handle );
+
+    if (win)
+    {
+        win->window_rect = req->window;
+        win->client_rect = req->client;
+    }
+}
+
+
+/* get the window and client rectangles of a window */
+DECL_HANDLER(get_window_rectangles)
+{
+    struct window *win = get_window( req->handle );
+
+    if (win)
+    {
+        req->window = win->window_rect;
+        req->client = win->client_rect;
+    }
+}
+
+
+/* get the coordinates offset between two windows */
+DECL_HANDLER(get_windows_offset)
+{
+    struct window *win;
+
+    req->x = req->y = 0;
+    if (req->from)
+    {
+        if (!(win = get_window( req->from ))) return;
+        while (win)
+        {
+            req->x += win->client_rect.left;
+            req->y += win->client_rect.top;
+            win = win->parent;
+        }
+    }
+    if (req->to)
+    {
+        if (!(win = get_window( req->to ))) return;
+        while (win)
+        {
+            req->x -= win->client_rect.left;
+            req->y -= win->client_rect.top;
+            win = win->parent;
+        }
+    }
 }
 
 

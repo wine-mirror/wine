@@ -140,6 +140,15 @@ typedef struct
 } property_data_t;
 
 
+typedef struct
+{
+    int  left;
+    int  top;
+    int  right;
+    int  bottom;
+} rectangle_t;
+
+
 
 
 
@@ -1652,6 +1661,36 @@ struct get_window_tree_request
 };
 
 
+struct set_window_rectangles_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    rectangle_t    window;
+    rectangle_t    client;
+};
+
+
+
+struct get_window_rectangles_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    rectangle_t    window;
+    rectangle_t    client;
+};
+
+
+
+struct get_windows_offset_request
+{
+    struct request_header __header;
+    user_handle_t  from;
+    user_handle_t  to;
+    int            x;
+    int            y;
+};
+
+
 
 struct set_window_property_request
 {
@@ -1823,6 +1862,9 @@ enum request
     REQ_get_window_parents,
     REQ_get_window_children,
     REQ_get_window_tree,
+    REQ_set_window_rectangles,
+    REQ_get_window_rectangles,
+    REQ_get_windows_offset,
     REQ_set_window_property,
     REQ_remove_window_property,
     REQ_get_window_property,
@@ -1963,12 +2005,15 @@ union generic_request
     struct get_window_parents_request get_window_parents;
     struct get_window_children_request get_window_children;
     struct get_window_tree_request get_window_tree;
+    struct set_window_rectangles_request set_window_rectangles;
+    struct get_window_rectangles_request get_window_rectangles;
+    struct get_windows_offset_request get_windows_offset;
     struct set_window_property_request set_window_property;
     struct remove_window_property_request remove_window_property;
     struct get_window_property_request get_window_property;
     struct get_window_properties_request get_window_properties;
 };
 
-#define SERVER_PROTOCOL_VERSION 59
+#define SERVER_PROTOCOL_VERSION 60
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -141,6 +141,15 @@ typedef struct
     handle_t       handle;   /* handle stored in property */
 } property_data_t;
 
+/* structure to specify window rectangles */
+typedef struct
+{
+    int  left;
+    int  top;
+    int  right;
+    int  bottom;
+} rectangle_t;
+
 /****************************************************************/
 /* Request declarations */
 
@@ -1476,6 +1485,32 @@ enum message_type
     user_handle_t  last_sibling;  /* last sibling in Z-order */
     user_handle_t  first_child;   /* first child */
     user_handle_t  last_child;    /* last child */
+@END
+
+/* Set the window and client rectangles of a window */
+@REQ(set_window_rectangles)
+    user_handle_t  handle;        /* handle to the window */
+    rectangle_t    window;        /* window rectangle */
+    rectangle_t    client;        /* client rectangle */
+@END
+
+
+/* Get the window and client rectangles of a window */
+@REQ(get_window_rectangles)
+    user_handle_t  handle;        /* handle to the window */
+@REPLY
+    rectangle_t    window;        /* window rectangle */
+    rectangle_t    client;        /* client rectangle */
+@END
+
+
+/* Get the coordinates offset between two windows */
+@REQ(get_windows_offset)
+    user_handle_t  from;          /* handle to the first window */
+    user_handle_t  to;            /* handle to the second window */
+@REPLY
+    int            x;             /* x coordinate offset */
+    int            y;             /* y coordinate offset */
 @END
 
 

@@ -43,6 +43,12 @@ static void dump_uints( const int *ptr, int len )
     fputc( '}', stderr );
 }
 
+static void dump_rectangle( const void *req, const rectangle_t *rect )
+{
+    fprintf( stderr, "{%d,%d;%d,%d}",
+             rect->left, rect->top, rect->right, rect->bottom );
+}
+
 static void dump_context( const CONTEXT *context )
 {
 #ifdef __i386__
@@ -1761,6 +1767,42 @@ static void dump_get_window_tree_reply( const struct get_window_tree_request *re
     fprintf( stderr, " last_child=%08x", req->last_child );
 }
 
+static void dump_set_window_rectangles_request( const struct set_window_rectangles_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " window=" );
+    dump_rectangle( req, &req->window );
+    fprintf( stderr, "," );
+    fprintf( stderr, " client=" );
+    dump_rectangle( req, &req->client );
+}
+
+static void dump_get_window_rectangles_request( const struct get_window_rectangles_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_get_window_rectangles_reply( const struct get_window_rectangles_request *req )
+{
+    fprintf( stderr, " window=" );
+    dump_rectangle( req, &req->window );
+    fprintf( stderr, "," );
+    fprintf( stderr, " client=" );
+    dump_rectangle( req, &req->client );
+}
+
+static void dump_get_windows_offset_request( const struct get_windows_offset_request *req )
+{
+    fprintf( stderr, " from=%08x,", req->from );
+    fprintf( stderr, " to=%08x", req->to );
+}
+
+static void dump_get_windows_offset_reply( const struct get_windows_offset_request *req )
+{
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d", req->y );
+}
+
 static void dump_set_window_property_request( const struct set_window_property_request *req )
 {
     fprintf( stderr, " window=%08x,", req->window );
@@ -1932,6 +1974,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_parents_request,
     (dump_func)dump_get_window_children_request,
     (dump_func)dump_get_window_tree_request,
+    (dump_func)dump_set_window_rectangles_request,
+    (dump_func)dump_get_window_rectangles_request,
+    (dump_func)dump_get_windows_offset_request,
     (dump_func)dump_set_window_property_request,
     (dump_func)dump_remove_window_property_request,
     (dump_func)dump_get_window_property_request,
@@ -2069,6 +2114,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_children_reply,
     (dump_func)dump_get_window_tree_reply,
     (dump_func)0,
+    (dump_func)dump_get_window_rectangles_reply,
+    (dump_func)dump_get_windows_offset_reply,
+    (dump_func)0,
     (dump_func)dump_remove_window_property_reply,
     (dump_func)dump_get_window_property_reply,
     (dump_func)dump_get_window_properties_reply,
@@ -2204,6 +2252,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_parents",
     "get_window_children",
     "get_window_tree",
+    "set_window_rectangles",
+    "get_window_rectangles",
+    "get_windows_offset",
     "set_window_property",
     "remove_window_property",
     "get_window_property",

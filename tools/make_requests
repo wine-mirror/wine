@@ -18,6 +18,7 @@
     "handle_t"      => "%d",
     "atom_t"        => "%04x",
     "user_handle_t" => "%08x",
+    "rectangle_t"   => "&dump_rectangle",
 );
 
 my @requests = ();
