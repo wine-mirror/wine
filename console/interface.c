@@ -342,7 +342,7 @@ int pop_driver(char **drivers, char **single, int *length)
    *single = *drivers;
    *length = 0;
 
-   while ((*drivers[0] != NULL) && (*drivers[0] != '+'))
+   while ((*drivers[0] != '\0') && (*drivers[0] != '+'))
    {
       (*drivers)++;
       (*length)++;
