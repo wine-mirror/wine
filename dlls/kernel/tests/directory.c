@@ -311,6 +311,9 @@ static void test_RemoveDirectoryW(void)
     GetTempPathW(MAX_PATH, tmpdir);
     lstrcatW(tmpdir, tmp_dir_name);
     ret = CreateDirectoryW(tmpdir, NULL);
+    if (!ret && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+      return;
+
     ok(ret == TRUE, "CreateDirectoryW should always succeed");
 
     ret = RemoveDirectoryW(tmpdir);
