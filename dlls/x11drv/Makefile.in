@@ -1,3 +1,4 @@
+EXTRADEFS = -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -8,7 +9,10 @@ IMPORTS   = user32.dll gdi32.dll kernel32.dll
 
 C_SRCS = \
 	desktop.c \
+	clipboard.c \
 	dga2.c \
+	event.c \
+	keyboard.c \
 	mouse.c \
 	scroll.c \
 	window.c \
@@ -18,29 +22,29 @@ C_SRCS = \
 	xrender.c \
 	xvidmode.c
 
-PROGRAMS = \
-	$(TOPOBJDIR)/windows/x11drv/wineclipsrv
+PROGRAMS = wineclipsrv
 
 EXTRA_OBJS = \
-	$(TOPOBJDIR)/graphics/x11drv/x11drv.o \
-	$(TOPOBJDIR)/windows/x11drv/x11drv.o
+	$(TOPOBJDIR)/graphics/x11drv/x11drv.o
 
 SUBDIRS = \
-	$(TOPOBJDIR)/graphics/x11drv \
-	$(TOPOBJDIR)/windows/x11drv
+	$(TOPOBJDIR)/graphics/x11drv
 
 @MAKE_DLL_RULES@
 
 all: $(PROGRAMS)
 
-$(EXTRA_OBJS) $(PROGRAMS): dummy
+wineclipsrv: wineclipsrv.c
+	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(X_LIBS) $(XLIB) $(LIBS)
+
+$(EXTRA_OBJS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 install:: $(PROGRAMS) install_libdir
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
-	$(INSTALL_PROGRAM) $(TOPOBJDIR)/windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
+	$(INSTALL_PROGRAM) wineclipsrv $(bindir)/wineclipsrv
 
 uninstall:: uninstall_libdir
-	cd $(bindir) && $(RM) wineclipsrv
+	$(RM) $(bindir)/wineclipsrv
 
 ### Dependencies:

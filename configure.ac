@@ -1385,8 +1385,7 @@ tools/wrc/Makefile
 tsx11/Makefile
 unicode/Makefile
 win32/Makefile
-windows/Makefile
-windows/x11drv/Makefile ])
+windows/Makefile])
 
 AC_OUTPUT
 

@@ -1,2 +1,3 @@
 Makefile
+wineclipsrv
 x11drv.spec.c

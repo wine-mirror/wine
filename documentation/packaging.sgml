@@ -1307,7 +1307,7 @@ install -d $BR/usr/X11R6/lib/wine
 mv $BR/usr/X11R6/lib/lib* $BR/usr/X11R6/lib/wine/
 
 # the clipboard server is started on demand.
-install -m 755 windows/x11drv/wineclipsrv $BR/usr/X11R6/bin/
+install -m 755 dlls/x11drv/wineclipsrv $BR/usr/X11R6/bin/
 
 # The WINE server is needed.
 install -m 755 server/wineserver $BR/usr/X11R6/bin/

@@ -1879,7 +1879,7 @@ OPTIONAL:
       </para>
       <para>
         To do this, open the file
-        <filename>windows/x11drv/keyboard.c</filename> and take a look
+        <filename>dlls/x11drv/keyboard.c</filename> and take a look
         at the existing tables. Make a backup copy of it, especially
         if you don't use CVS.
       </para>
@@ -2005,7 +2005,7 @@ wine --debugmsg +key,+keyboard >& key.log
         you will just have to do
       </para>
       <screen>
-cvs -z3 diff -u windows/x11drv/keyboard.c > layout.diff
+cvs -z3 diff -u dlls/x11drv/keyboard.c > layout.diff
       </screen>
       <para>
         from your main Wine directory, then submit
@@ -2017,7 +2017,7 @@ cvs -z3 diff -u windows/x11drv/keyboard.c > layout.diff
         If you don't use CVS, you need to do
       </para>
       <screen>
-diff -u the_backup_file_you_made windows/x11drv/keyboard.c > layout.diff
+diff -u the_backup_file_you_made dlls/x11drv/keyboard.c > layout.diff
       </screen>
       <para>
         and submit it as explained above.
