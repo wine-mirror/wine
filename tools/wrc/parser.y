@@ -433,6 +433,8 @@ resource
  * Get a valid name/id
  */
 nameid	: expr	{
+		if($1 > 65535 || $1 < -32768)
+			yyerror("Resource's ID out of range (%d)", $1);
 		$$ = new_name_id();
 		$$->type = name_ord;
 		$$->name.i_name = $1;
@@ -1305,6 +1307,8 @@ strings	: /* Empty */	{ $$ = NULL; }
 	| strings expr opt_comma tSTRING {
 		int i;
 		assert(tagstt != NULL);
+		if($2 > 65535 || $2 < -32768)
+			yyerror("Stringtable entry's ID out of range (%d)", $2);
 		/* Search for the ID */
 		for(i = 0; i < tagstt->nentries; i++)
 		{

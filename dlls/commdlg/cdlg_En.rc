@@ -357,7 +357,12 @@ aa aa a2 00 43 02'}
 
 
 
+#if 0
 
+/*
+ * DO NOT ENABLE!
+ * These IDs are out of range.
+ */
 
 /* NOTE: Please, do not translate these texts yet! */
 STRINGTABLE DISCARDABLE
@@ -392,3 +397,5 @@ Please enter a value between %d and %d"
     PRINTER_STATUS_SERVER_UNKNOWN    "Print server unknown"
     PRINTER_STATUS_POWER_SAVE        "Power safe mode"
 }
+
+#endif

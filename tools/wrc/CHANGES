@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------
+Version 1.0.15 (13-Aug-1999)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Bugfix: IDs were not checked which resulted in numbers > 2^16-1 being
+  accepted as IDs. This resulted in duplicate IDs and all other sort of
+  trouble.
+
+---------------------------------------------------------------------------
 Version 1.0.14 (08-Aug-1999)
 
 Bertho Stultiens <bertho@akhphd.au.dk>
