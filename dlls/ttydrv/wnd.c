@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "ttydrv.h"
+#include "ntstatus.h"
 #include "win.h"
 #include "winpos.h"
 #include "wownt32.h"
@@ -36,6 +37,45 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
     (SWP_AGG_NOGEOMETRYCHANGE | SWP_NOZORDER)
 #define SWP_AGG_STATUSFLAGS \
     (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
+
+/***********************************************************************
+ *		get_server_visible_region
+ */
+static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
+{
+    RGNDATA *data;
+    NTSTATUS status;
+    HRGN ret = 0;
+    size_t size = 256;
+
+    do
+    {
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) + size - 1 ))) return 0;
+        SERVER_START_REQ( get_visible_region )
+        {
+            req->window  = hwnd;
+            req->top_win = top;
+            req->flags   = flags;
+            wine_server_set_reply( req, data->Buffer, size );
+            if (!(status = wine_server_call( req )))
+            {
+                size_t reply_size = wine_server_reply_size( reply );
+                data->rdh.dwSize   = sizeof(data->rdh);
+                data->rdh.iType    = RDH_RECTANGLES;
+                data->rdh.nCount   = reply_size / sizeof(RECT);
+                data->rdh.nRgnSize = reply_size;
+                ret = ExtCreateRegion( NULL, size, data );
+            }
+            else size = reply->total_size;
+        }
+        SERVER_END_REQ;
+        HeapFree( GetProcessHeap(), 0, data );
+    } while (status == STATUS_BUFFER_OVERFLOW);
+
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
 
 /***********************************************************************
  *           set_window_pos
@@ -92,9 +132,8 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     BOOL ret;
     RECT rect;
-    HWND hwndLinkAfter;
+    HWND parent, hwndLinkAfter;
     CBT_CREATEWNDA cbtc;
-    WND *wndPtr = WIN_GetPtr( hwnd );
 
     TRACE("(%p)\n", hwnd);
 
@@ -102,35 +141,29 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
     set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 );
 
-    if (!wndPtr->parent)  /* desktop window */
+    parent = GetAncestor( hwnd, GA_PARENT );
+    if (!parent)  /* desktop window */
     {
-        wndPtr->pDriverData = root_window;
-        WIN_ReleasePtr( wndPtr );
+        SetPropA( hwnd, "__wine_ttydrv_window", root_window );
         return TRUE;
     }
 
 #ifdef WINE_CURSES
     /* Only create top-level windows */
-    if (!(wndPtr->dwStyle & WS_CHILD))
+    if (parent == GetDesktopWindow())
     {
         WINDOW *window;
         const INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */
 
-        int x = wndPtr->rectWindow.left;
-        int y = wndPtr->rectWindow.top;
-        int cx = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-        int cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
-
-        window = subwin( root_window, cy/cellHeight, cx/cellWidth,
-                         y/cellHeight, x/cellWidth);
+        window = subwin( root_window, cs->cy/cellHeight, cs->cx/cellWidth,
+                         cs->y/cellHeight, cs->x/cellWidth);
         werase(window);
         wrefresh(window);
-        wndPtr->pDriverData = window;
+        SetPropA( hwnd, "__wine_ttydrv_window", window );
     }
 #else /* defined(WINE_CURSES) */
     FIXME("(%p): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
-    WIN_ReleasePtr( wndPtr );
 
     /* Call the WH_CBT hook */
 
@@ -163,244 +196,15 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 BOOL TTYDRV_DestroyWindow( HWND hwnd )
 {
 #ifdef WINE_CURSES
-    WND *wndPtr = WIN_GetPtr( hwnd );
-    WINDOW *window = wndPtr->pDriverData;
+    WINDOW *window = GetPropA( hwnd, "__wine_ttydrv_window" );
 
     TRACE("(%p)\n", hwnd);
 
     if (window && window != root_window) delwin(window);
-    wndPtr->pDriverData = NULL;
-    WIN_ReleasePtr( wndPtr );
 #else /* defined(WINE_CURSES) */
     FIXME("(%p): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
     return TRUE;
-}
-
-
-/***********************************************************************
- *           DCE_GetVisRect
- *
- * Calculate the visible rectangle of a window (i.e. the client or
- * window area clipped by the client area of all ancestors) in the
- * corresponding coordinates. Return FALSE if the visible region is empty.
- */
-static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
-{
-    *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
-
-    if (wndPtr->dwStyle & WS_VISIBLE)
-    {
-        INT xoffset = lprect->left;
-        INT yoffset = lprect->top;
-
-        while ((wndPtr = WIN_FindWndPtr( GetAncestor(wndPtr->hwndSelf,GA_PARENT) )))
-        {
-            if ( (wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-                goto fail;
-            }
-
-            xoffset += wndPtr->rectClient.left;
-            yoffset += wndPtr->rectClient.top;
-            OffsetRect( lprect, wndPtr->rectClient.left,
-                        wndPtr->rectClient.top );
-
-            if( (wndPtr->rectClient.left >= wndPtr->rectClient.right) ||
-                (wndPtr->rectClient.top >= wndPtr->rectClient.bottom) ||
-                (lprect->left >= wndPtr->rectClient.right) ||
-                (lprect->right <= wndPtr->rectClient.left) ||
-                (lprect->top >= wndPtr->rectClient.bottom) ||
-                (lprect->bottom <= wndPtr->rectClient.top) )
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-                goto fail;
-            }
-
-            lprect->left = max( lprect->left, wndPtr->rectClient.left );
-            lprect->right = min( lprect->right, wndPtr->rectClient.right );
-            lprect->top = max( lprect->top, wndPtr->rectClient.top );
-            lprect->bottom = min( lprect->bottom, wndPtr->rectClient.bottom );
-
-            WIN_ReleaseWndPtr(wndPtr);
-        }
-        OffsetRect( lprect, -xoffset, -yoffset );
-        return TRUE;
-    }
-
-fail:
-    SetRectEmpty( lprect );
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           DCE_AddClipRects
- *
- * Go through the linked list of windows from pWndStart to pWndEnd,
- * adding to the clip region the intersection of the target rectangle
- * with an offset window rectangle.
- */
-static void DCE_AddClipRects( HWND parent, HWND end, HRGN hrgnClip, LPRECT lpRect, int x, int y )
-{
-    RECT rect;
-    WND *pWnd;
-    int i;
-    HWND *list = WIN_ListChildren( parent );
-    HRGN hrgn = 0;
-
-    if (!list) return;
-    for (i = 0; list[i]; i++)
-    {
-        if (list[i] == end) break;
-        if (!(pWnd = WIN_FindWndPtr( list[i] ))) continue;
-        if (pWnd->dwStyle & WS_VISIBLE)
-        {
-            rect.left = pWnd->rectWindow.left + x;
-            rect.top = pWnd->rectWindow.top + y;
-            rect.right = pWnd->rectWindow.right + x;
-            rect.bottom = pWnd->rectWindow.bottom + y;
-            if( IntersectRect( &rect, &rect, lpRect ))
-            {
-                if (!hrgn) hrgn = CreateRectRgnIndirect( &rect );
-                else SetRectRgn( hrgn, rect.left, rect.top, rect.right, rect.bottom );
-                CombineRgn( hrgnClip, hrgnClip, hrgn, RGN_OR );
-            }
-        }
-        WIN_ReleaseWndPtr( pWnd );
-    }
-    if (hrgn) DeleteObject( hrgn );
-    HeapFree( GetProcessHeap(), 0, list );
-}
-
-
-/***********************************************************************
- *           DCE_GetVisRgn
- *
- * Return the visible region of a window, i.e. the client or window area
- * clipped by the client area of all ancestors, and then optionally
- * by siblings and children.
- */
-static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
-{
-    HRGN hrgnVis = 0;
-    RECT rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    WND *childWnd = WIN_FindWndPtr( hwndChild );
-
-    /* Get visible rectangle and create a region with it. */
-
-    if (wndPtr && DCE_GetVisRect(wndPtr, !(flags & DCX_WINDOW), &rect))
-    {
-        if((hrgnVis = CreateRectRgnIndirect( &rect )))
-        {
-            HRGN hrgnClip = CreateRectRgn( 0, 0, 0, 0 );
-            INT xoffset, yoffset;
-
-            if( hrgnClip )
-            {
-                /* Compute obscured region for the visible rectangle by
-		 * clipping children, siblings, and ancestors. Note that
-		 * DCE_GetVisRect() returns a rectangle either in client
-		 * or in window coordinates (for DCX_WINDOW request). */
-
-                if (flags & DCX_CLIPCHILDREN)
-                {
-                    if( flags & DCX_WINDOW )
-                    {
-                        /* adjust offsets since child window rectangles are
-			 * in client coordinates */
-
-                        xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-                        yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-                    }
-                    else
-                        xoffset = yoffset = 0;
-
-                    DCE_AddClipRects( wndPtr->hwndSelf, 0, hrgnClip, &rect, xoffset, yoffset );
-                }
-
-                /* We may need to clip children of child window, if a window with PARENTDC
-		 * class style and CLIPCHILDREN window style (like in Free Agent 16
-		 * preference dialogs) gets here, we take the region for the parent window
-		 * but apparently still need to clip the children of the child window... */
-
-                if( (cflags & DCX_CLIPCHILDREN) && childWnd)
-                {
-                    if( flags & DCX_WINDOW )
-                    {
-                        /* adjust offsets since child window rectangles are
-			 * in client coordinates */
-
-                        xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-                        yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-                    }
-                    else
-                        xoffset = yoffset = 0;
-
-                    /* client coordinates of child window */
-                    xoffset += childWnd->rectClient.left;
-                    yoffset += childWnd->rectClient.top;
-
-                    DCE_AddClipRects( childWnd->hwndSelf, 0, hrgnClip,
-                                      &rect, xoffset, yoffset );
-                }
-
-                /* sibling window rectangles are in client
-		 * coordinates of the parent window */
-
-                if (flags & DCX_WINDOW)
-                {
-                    xoffset = -wndPtr->rectWindow.left;
-                    yoffset = -wndPtr->rectWindow.top;
-                }
-                else
-                {
-                    xoffset = -wndPtr->rectClient.left;
-                    yoffset = -wndPtr->rectClient.top;
-                }
-
-                if (flags & DCX_CLIPSIBLINGS && wndPtr->parent )
-                    DCE_AddClipRects( wndPtr->parent, wndPtr->hwndSelf,
-                                      hrgnClip, &rect, xoffset, yoffset );
-
-                /* Clip siblings of all ancestors that have the
-                 * WS_CLIPSIBLINGS style
-		 */
-
-                while (wndPtr->parent)
-                {
-                    WND *ptr = WIN_FindWndPtr( wndPtr->parent );
-                    WIN_ReleaseWndPtr( wndPtr );
-                    wndPtr = ptr;
-                    xoffset -= wndPtr->rectClient.left;
-                    yoffset -= wndPtr->rectClient.top;
-                    if(wndPtr->dwStyle & WS_CLIPSIBLINGS && wndPtr->parent)
-                    {
-                        DCE_AddClipRects( wndPtr->parent, wndPtr->hwndSelf,
-                                          hrgnClip, &rect, xoffset, yoffset );
-                    }
-                }
-
-                /* Now once we've got a jumbo clip region we have
-		 * to substract it from the visible rectangle.
-	         */
-                CombineRgn( hrgnVis, hrgnVis, hrgnClip, RGN_DIFF );
-                DeleteObject( hrgnClip );
-            }
-            else
-            {
-                DeleteObject( hrgnVis );
-                hrgnVis = 0;
-            }
-        }
-    }
-    else
-        hrgnVis = CreateRectRgn(0, 0, 0, 0); /* empty */
-    WIN_ReleaseWndPtr(wndPtr);
-    WIN_ReleaseWndPtr(childWnd);
-    return hrgnVis;
 }
 
 
@@ -412,72 +216,36 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
  */
 BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    HRGN hrgnVisible = 0;
     struct ttydrv_escape_set_drawable escape;
-
-    if (!wndPtr) return FALSE;
 
     if(flags & DCX_WINDOW)
     {
-        escape.org.x = wndPtr->rectWindow.left;
-        escape.org.y = wndPtr->rectWindow.top;
+        RECT rect;
+        GetWindowRect( hwnd, &rect );
+        escape.org.x = rect.left;
+        escape.org.y = rect.top;
     }
     else
     {
-        escape.org.x = wndPtr->rectClient.left;
-        escape.org.y = wndPtr->rectClient.top;
+        escape.org.x = escape.org.y = 0;
+        MapWindowPoints( hwnd, 0, &escape.org, 1 );
     }
 
     escape.code = TTYDRV_SET_DRAWABLE;
     ExtEscape( hdc, TTYDRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
-    if (SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ) ||  /* DC was dirty */
-        ( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ))
+    if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
+        SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
-        if (flags & DCX_PARENTCLIP)
-        {
-            WND *parentPtr = WIN_FindWndPtr( wndPtr->parent );
+        /* need to recompute the visible region */
+        HRGN visRgn = get_server_visible_region( hwnd, GetDesktopWindow(), flags );
 
-            if( wndPtr->dwStyle & WS_VISIBLE && !(parentPtr->dwStyle & WS_MINIMIZE) )
-            {
-                DWORD dcxFlags;
+        if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
+            CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
-                if( parentPtr->dwStyle & WS_CLIPSIBLINGS )
-                    dcxFlags = DCX_CLIPSIBLINGS | (flags & ~(DCX_CLIPCHILDREN | DCX_WINDOW));
-                else
-                    dcxFlags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW);
-
-                hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, dcxFlags,
-                                             wndPtr->hwndSelf, flags );
-                if( flags & DCX_WINDOW )
-                    OffsetRgn( hrgnVisible, -wndPtr->rectWindow.left,
-                               -wndPtr->rectWindow.top );
-                else
-                    OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
-                               -wndPtr->rectClient.top );
-            }
-            else
-                hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
-            WIN_ReleaseWndPtr(parentPtr);
-        }
-        else
-        {
-            hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
-            OffsetRgn( hrgnVisible, escape.org.x, escape.org.y );
-        }
-
-        /* apply additional region operation (if any) */
-        if( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) )
-            CombineRgn( hrgnVisible, hrgnVisible, hrgn,
-                        (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-
-        SelectVisRgn16( HDC_16(hdc), HRGN_16(hrgnVisible) );
+        SelectVisRgn16( HDC_16(hdc), HRGN_16(visRgn) );
+        DeleteObject( visRgn );
     }
-
-    if (hrgnVisible) DeleteObject( hrgnVisible );
-
-    WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
 }
 
@@ -549,23 +317,17 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
     /* hwndInsertAfter must be a sibling of the window */
     if ((winpos->hwndInsertAfter != HWND_TOP) && (winpos->hwndInsertAfter != HWND_BOTTOM))
     {
-        WND* wnd = WIN_FindWndPtr(winpos->hwndInsertAfter);
-
-        if( wnd ) {
-            if( wnd->parent != wndPtr->parent )
-            {
-                retvalue = FALSE;
-                WIN_ReleaseWndPtr(wnd);
-                goto END;
-            }
-            /* don't need to change the Zorder of hwnd if it's already inserted
-             * after hwndInsertAfter or when inserting hwnd after itself.
-             */
-            if ((winpos->hwnd == winpos->hwndInsertAfter) ||
-                (winpos->hwnd == GetWindow( winpos->hwndInsertAfter, GW_HWNDNEXT )))
-                winpos->flags |= SWP_NOZORDER;
+        if (GetAncestor( winpos->hwndInsertAfter, GA_PARENT ) != wndPtr->parent)
+        {
+            retvalue = FALSE;
+            goto END;
         }
-        WIN_ReleaseWndPtr(wnd);
+        /* don't need to change the Zorder of hwnd if it's already inserted
+         * after hwndInsertAfter or when inserting hwnd after itself.
+         */
+        if ((winpos->hwnd == winpos->hwndInsertAfter) ||
+            (winpos->hwnd == GetWindow( winpos->hwndInsertAfter, GW_HWNDNEXT )))
+            winpos->flags |= SWP_NOZORDER;
     }
 
  Pos:  /* ------------------------------------------------------------------------ MAIN part */
