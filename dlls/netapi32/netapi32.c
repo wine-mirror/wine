@@ -32,6 +32,7 @@
 #include "wine/debug.h"
 #include "winerror.h"
 #include "nb30.h"
+#include "lmcons.h"
 
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
@@ -294,4 +295,22 @@ BOOL WINAPI Netbios(PNCB pncb)
     }
     pncb->ncb_retcode = ret;
     return ret;
+}
+
+NET_API_STATUS  WINAPI NetServerEnum(
+  LPCWSTR servername,
+  DWORD level,
+  LPBYTE* bufptr,
+  DWORD prefmaxlen,
+  LPDWORD entriesread,
+  LPDWORD totalentries,
+  DWORD servertype,
+  LPCWSTR domain,
+  LPDWORD resume_handle
+)
+{
+    FIXME("Stub (%p, %ld %p %ld %p %p %ld %s %p)\n",servername, level, bufptr,
+          prefmaxlen, entriesread, totalentries, servertype, debugstr_w(domain), resume_handle);
+
+    return ERROR_NO_BROWSER_SERVERS_FOUND;
 }
