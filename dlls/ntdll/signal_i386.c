@@ -772,7 +772,7 @@ static void do_trap( CONTEXT *context, int trap_code )
         }
         else
         {
-            /* likely we get this because of a kill(SIGTRAP) on ourself, 
+            /* likely we get this because of a kill(SIGTRAP) on ourself,
              * so send a bp exception instead of a single step exception
              */
             TRACE("Spurious single step trap => breakpoint simulation\n");
@@ -1058,9 +1058,6 @@ BOOL SIGNAL_Init(void)
 #endif  /* HAVE_SIGALTSTACK */
 
     sigfillset( &all_sigs );
-
-    /* automatic child reaping to avoid zombies */
-    signal( SIGCHLD, SIG_IGN );
 
     if (set_handler( SIGINT,  have_sigaltstack, (void (*)())int_handler ) == -1) goto error;
     if (set_handler( SIGFPE,  have_sigaltstack, (void (*)())fpe_handler ) == -1) goto error;

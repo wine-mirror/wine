@@ -677,6 +677,8 @@ void CLIENT_InitThread(void)
 
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
     signal( SIGPIPE, SIG_IGN );
+    /* automatic child reaping to avoid zombies */
+    signal( SIGCHLD, SIG_IGN );
 
     /* create the server->client communication pipes */
     if (pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );

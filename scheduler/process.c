@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -860,6 +861,10 @@ static int fork_and_exec( const char *filename, char *cmdline,
         char **argv = build_argv( cmdline, filename ? 0 : 1 );
         char **envp = build_envp( env, extra_env );
         close( fd[0] );
+
+        /* Reset signals that we previously set to SIG_IGN */
+        signal( SIGPIPE, SIG_DFL );
+        signal( SIGCHLD, SIG_DFL );
 
         if (newdir) chdir(newdir);
 

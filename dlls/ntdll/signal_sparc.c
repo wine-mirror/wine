@@ -362,11 +362,6 @@ void SIGNAL_Unblock( void )
  */
 BOOL SIGNAL_Init(void)
 {
-    /* ignore SIGPIPE so that WINSOCK can get a EPIPE error instead  */
-    signal( SIGPIPE, SIG_IGN );
-    /* automatic child reaping to avoid zombies */
-    signal( SIGCHLD, SIG_IGN );
-
     sigfillset( &all_sigs );
 
     if (set_handler( SIGINT,  (void (*)())int_handler  ) == -1) goto error;
