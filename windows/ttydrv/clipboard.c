@@ -1,13 +1,12 @@
 /*
  * TTY clipboard driver
  *
- * Copyright 1998 Patrik Stridvall
+ * Copyright 1998-1999 Patrik Stridvall
  */
-
-#include "config.h"
 
 #include "heap.h"
 #include "ttydrv.h"
+#include "win.h"
 
 /**********************************************************************/
 

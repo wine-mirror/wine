@@ -4,8 +4,6 @@
  * Copyright 1998 Patrik Stridvall
  */
 
-#include "config.h"
-
 #include "keyboard.h"
 #include "ttydrv.h"
 
