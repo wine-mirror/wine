@@ -23,7 +23,7 @@
       </qandaentry>
       <qandaentry>
       <question id="What-is-the-copyright-on-the-FAQ-And">
-        <para>What is the copyright on the FAQ ? And how may I use it ?</para>
+        <para>What is the copyright on the FAQ? And how may I use it?</para>
       </question>
       <answer>
         <para>The original Wine FAQ, which this FAQ was based on, was copyright &copy; 1995-1998 David Gardner.</para>
@@ -36,7 +36,7 @@
       <qandaentry>
 
       <question id="What-is-Wine-and-what-is-it-supposed-to">
-        <para>What is Wine and what is it supposed to do ?</para>
+        <para>What is Wine and what is it supposed to do?</para>
       </question>
       <answer>
         <para>
@@ -71,10 +71,11 @@
       </question>
       <answer>
         <para>
-          Yes, there are. You can use VMWare to run a Windows installation
-          inside a virtual machine, or use Win4Lin to run a specially 
-          adapted Windows version on Linux. Both solutions cost money for 
-          both the software itself and a Windows license.
+          Yes, there are. You can use <ulink url="http://www.vmware.com">VMWare</ulink> to run a Windows installation inside a virtual machine,
+	  or use <ulink url="http://www.win4lin.com">Win4Lin</ulink>
+	  to run a specially adapted Windows version on Linux.
+	  Both solutions cost money for both the software itself
+	  and a Windows license.
        </para>
        <para>
          Note that, like Wine, they can only use the hardware platform that
@@ -90,8 +91,8 @@
       <answer>
         <para>
           There are two free x86 hardware emulators:
-          <ulink url="http://bochs.sourceforge.net"> bochs</ulink>, and 
-          <ulink url="http://savannah.nongnu.org/projects/plex86"> plex86</ulink>.
+          <ulink url="http://bochs.sourceforge.net">bochs</ulink>, and 
+          <ulink url="http://savannah.nongnu.org/projects/plex86">plex86</ulink>.
        </para>
 
        <para>
@@ -197,7 +198,7 @@
           </varlistentry>
  
 	  <varlistentry>
-          <term><ulink url="http://rewind.sourceforge.net">ReWine</ulink></term>
+          <term><ulink url="http://rewind.sourceforge.net">ReWind</ulink></term>
           <listitem>
             <para>
               This is a forked Wine tree that got created when Wine changed its
@@ -403,14 +404,14 @@
           </listitem>
           <listitem>
             <para>
-             VMWare Inc. <ulink url="http://www.vmware.com">
-             (http://www.vmware.com)</ulink>
+             VMWare Inc. (<ulink url="http://www.vmware.com">
+             http://www.vmware.com</ulink>)
             </para>
           </listitem>
           <listitem>
             <para>
-             Corel <ulink url="http://linux.corel.com">
-             (http://linux.corel.com)</ulink>
+             Corel (<ulink url="http://www.corel.com">
+             http://www.corel.com</ulink>)
             </para>
           </listitem>
         </itemizedlist>
@@ -463,14 +464,14 @@
         <itemizedlist spacing="compact">
           <listitem> 
             <para>
-              Cygwin <ulink url="http:/www.cygwin.com">
-              (http://www.cygwin.com/)</ulink>
+              Cygwin (<ulink url="http:/www.cygwin.com">
+              http://www.cygwin.com/</ulink>)
             </para>
           </listitem>
           <listitem>
             <para>
-              Reactos <ulink url="http://www.reactos.com/">
-             (http://www.reactos.com/)</ulink>
+              Reactos (<ulink url="http://www.reactos.com/">
+             http://www.reactos.com/</ulink>)
             </para>
           </listitem>
         </itemizedlist>
@@ -493,9 +494,18 @@
       </question>
       <answer>
         <para>
-          Wine is being developed specifically to run on the Intel x86 class
-          of CPUs under certain UNIXes that run on the x86 platform.
+          Wine is being developed specifically to run on the <emphasis>Intel x86</emphasis> class of CPUs under certain UNIXes that run on the x86 platform.
+	  Winelib however is capable of porting Windows program <emphasis>source code</emphasis> to other platforms also, not only x86.
         </para>
+        <para>
+          Thus running Windows programs via Wine on other platforms (e.g. MacOS X) is <emphasis>not</emphasis> possible; the only way to run Windows code
+	  on MacOS X would be to take Windows program source code and recompile it for e.g. MacOS X using Winelib.
+	</para>
+	<para>
+	  The following will list the x86 operating systems supported by
+	  Wine; Winelib support for other platforms keeps evolving,
+	  so it's not specifically listed here.
+	</para>
         <para>
           NetBSD, OpenBSD, Unixware, and SCO OpenServer 5 worked at one time,
           but Wine now requires kernel-level threads which are not currently 
@@ -535,7 +545,7 @@
         </para>
         <para>
           Wine won't run on any x86 CPU less than an 80386 due to address
-          management limitations
+          management limitations.
         </para>
         <para>
           It is known to also work in the 80486 and upwards compatible CPUs.
@@ -545,7 +555,7 @@
         <para>
           As always, the faster your CPU, the better. Having a math coprocessor
           is unimportant. However, having a graphics accelerated video card
-          supported by X will help greatly
+          supported by X will help greatly.
         </para>
         <para>
           Depending on your application you may find that faster speeds are
@@ -582,8 +592,8 @@
         <para>
           Many development tools need to be installed in order to compile Wine.
           A list of required packages for several distributions is included in
-          the README <ulink url="http://www.winehq.com/source/README">
-          (http://www.winehq.com/source/README)</ulink>.
+          the README (<ulink url="http://www.winehq.com/source/README">
+          http://www.winehq.com/source/README</ulink>).
         </para>
         <para>
           To run Wine, you will need the following:
@@ -1010,8 +1020,7 @@ wine
       </question>
       <answer>
         <para>
-          See the README (<ulink url="http://www.winehq.com/source/README">
-          http://www.winehq.com/source/README</ulink>) for instructions.
+          See the README (<ulink url="http://www.winehq.com/source/README">http://www.winehq.com/source/README</ulink>) for instructions.
           Additionally, you may want to set the <parameter>TMPDIR</parameter>
           environment variable <command>TMPDIR=~/tmp</command> or
           <command>TMPDIR=/tmp</command> (if you are root).
@@ -1048,12 +1057,12 @@ wine
           Wine requires that you have a config file as 
           <filename>~/.wine/config</filename>. The format of this file is
           explained in the <filename>wine.conf</filename> man page. The file
-          <filename>documentation/samples/config</filename> ( 
-          <ulink url="http://www.winehq.com/source/documentation/samples/config">
+          <filename>documentation/samples/config</filename>
+          (<ulink url="http://www.winehq.com/source/documentation/samples/config">
           http://www.winehq.com/source/documentation/samples/config</ulink>) 
           contains a config file example. More explicit directions can be 
-          found in the <filename>README</filename> file (
-          <ulink url="http://www.winehq.com/source/README">
+          found in the <filename>README</filename> file
+          (<ulink url="http://www.winehq.com/source/README">
           http://www.winehq.com/source/README</ulink>) that will be located in
           the base Wine directory after you gunzip and untar the distribution
           file.
@@ -1480,8 +1489,7 @@ rm -fR \[/path/\]Wine*
       </question>
       <answer>
         <para>
-          Wine HQ (<ulink url="http://www.winehq.com">
-          http://www.winehq.com</ulink>) is the official site.
+          Wine HQ (<ulink url="http://www.winehq.com">http://www.winehq.com</ulink>) is the official site.
         </para>
       </answer>
       </qandaentry>
@@ -1494,9 +1502,8 @@ rm -fR \[/path/\]Wine*
         <para>
           Sure. It's channel <filename>#WineHQ</filename> on 
           <filename>irc.freenode.net</filename> see 
-          (<ulink url="http://freenode.net">
-          http://freenode.net</ulink>). Usually several
-          Wine developers hang out there just to help YOU ;-)
+          (<ulink url="http://freenode.net">http://freenode.net</ulink>).
+          Usually several Wine developers hang out there just to help YOU ;-)
         </para>
       </answer>
       </qandaentry>
@@ -1511,9 +1518,8 @@ rm -fR \[/path/\]Wine*
       <answer>
         <para>
           Bug reports should be submitted to our online Bugzilla system 
-          (<ulink url="http://bugs.winehq.com">
-          http://bugs.winehq.com/</ulink>). You should include at least the
-          following:
+          (<ulink url="http://bugs.winehq.com">http://bugs.winehq.com/</ulink>).
+          You should include at least the following:
         </para>
         <itemizedlist>
           <listitem>
@@ -1563,8 +1569,7 @@ rm -fR \[/path/\]Wine*
           If you can program C, that's a good start. Download the sources via
           CVS, subscribe to the mailing lists, look around the source, and pay
           attention to the comp.emulators.ms-windows.wine newsgroup and the 
-          mailing lists (<ulink url="http://www.winehq.com/dev.shtml#ml">
-          http://www.winehq.com/dev.shtml#ml</ulink>). See if there's anything
+          mailing lists (<ulink url="http://www.winehq.com/dev.shtml#ml">http://www.winehq.com/dev.shtml#ml</ulink>). See if there's anything
           that you think you can fix or work on. You won't have much trouble
           finding areas that need work in Wine (grep for FIXMEs in the source).
         </para>
@@ -1613,8 +1618,7 @@ rm -fR \[/path/\]Wine*
         <para>
           Patches are greatly appreciated and should be submitted to the 
           wine-patches mailing list 
-          (<ulink url="http://www.winehq.com/dev.shtml#ml">
-          http://www.winehq.com/dev.shtml#ml</ulink>). Also see this page for
+          (<ulink url="http://www.winehq.com/dev.shtml#ml">http://www.winehq.com/dev.shtml#ml</ulink>). Also see this page for
           a description of what happens to submitted patches.
         </para>
       </answer>
@@ -1631,8 +1635,7 @@ rm -fR \[/path/\]Wine*
         <para>
           That is the idea of Winelib. Right now you may still have some 
           difficulties, but this is changing all the time. Read the 
-          <ulink url="http://www.winehq.org/Docs/winelib-user/">
-          Winelib User's Guide</ulink> for info.
+          <ulink url="http://www.winehq.org/Docs/winelib-user/">Winelib User's Guide</ulink> for info.
 
         </para>
       </answer>
@@ -1649,8 +1652,7 @@ rm -fR \[/path/\]Wine*
         </para>
         <para>
           Please refer to the 
-          <ulink url="http://www.winehq.org/Docs/winelib-user/">
-          Winelib User's Guide</ulink> for how to do this.
+          <ulink url="http://www.winehq.org/Docs/winelib-user/">Winelib User's Guide</ulink> for how to do this.
         </para>
       </answer>
       </qandaentry>
@@ -1670,22 +1672,18 @@ rm -fR \[/path/\]Wine*
           <listitem>
           <para>
             Corel's WordPerfect Office Suite 
-            (<ulink url="http://linux.corel.com/products/wpo2000_linux/index.htm">
-            http://linux.corel.com/products/wpo2000_linux/index.htm</ulink>)
           </para>
           </listitem>
           <listitem>
           <para>
             Ability Office
-            (<ulink url="http://www.ability.com/linux/abilitylinux.php">
-             http://www.ability.com/linux/abilitylinux.php</ulink>)
+            (<ulink url="http://www.ability.com/linux/abilitylinux.php">http://www.ability.com/linux/abilitylinux.php</ulink>)
           </para>
           </listitem>
           <listitem>
           <para>
             IBM's Websphere
-            (<ulink url="http://www7b.boulder.ibm.com/dl/swws/swwsgddb-p">
-            http://www7b.boulder.ibm.com/dl/swws/swwsgddb-p</ulink>)
+            (<ulink url="http://www7b.boulder.ibm.com/dl/swws/swwsgddb-p">http://www7b.boulder.ibm.com/dl/swws/swwsgddb-p</ulink>)
           </para>
           </listitem>
         </itemizedlist>
@@ -1734,8 +1732,7 @@ rm -fR \[/path/\]Wine*
       </question>
       <answer>
         <para>
-          Please see: <ulink url="http://www.winehq.org/development/#ml">
-          http://www.winehq.org/development/#ml</ulink>
+          Please see: <ulink url="http://www.winehq.org/development/#ml">http://www.winehq.org/development/#ml</ulink>
         </para>
       </answer>
       </qandaentry>
