@@ -333,6 +333,11 @@ static int ctl2_encode_string(
     converted_string[0] = length & 0xff;
     converted_string[1] = (length >> 8) & 0xff;
 
+    if(length < 3) { /* strings of this length are padded with upto 8 bytes incl the 2 byte length */
+        for(offset = 0; offset < 4; offset++)
+            converted_string[length + offset + 2] = 0x57;
+        length += 4;
+    }
     for (offset = (4 - (length + 2)) & 3; offset; offset--) converted_string[length + offset + 1] = 0x57;
 
     *result = converted_string;
@@ -1176,7 +1181,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (index << 16) | (callconv << 8) | 9;
-    if(num_defaults) typedata[4] |= 0x10;
+    if(num_defaults) typedata[4] |= 0x1000;
     typedata[5] = num_params;
 
     /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
