@@ -458,9 +458,6 @@ INT32     WINAPI WSAAsyncSelect32(SOCKET32 s, HWND32 hWnd, UINT32 uMsg, UINT32 l
 
 #define WS_AF_MAX          27
 
-
-#ifdef HAVE_LINUX_IPX_H
-
 struct ws_sockaddr_ipx
 {
 	INT16		sipx_family	__attribute__((packed));
@@ -468,7 +465,6 @@ struct ws_sockaddr_ipx
 	CHAR		sipx_node[6]	__attribute__((packed));
 	UINT16		sipx_port	__attribute__((packed));
 };
-#endif
 
 #ifdef __cplusplus
 }
