@@ -211,7 +211,7 @@ static const char *wrapper_code =
 ;
 
 static char *output_name;
-static strarray *arh_files, *dll_files, *lib_files, *lib_paths, *obj_files;
+static strarray *arh_files, *dll_files, *lib_files, *llib_paths, *lib_paths, *obj_files;
 static int keep_generated = 0;
 
 static void rm_temp_file(const char *file)
@@ -316,8 +316,7 @@ static char *find_lib(const char *name)
 static void add_lib_path(const char* path)
 {
     strarray_add(lib_paths, strdup(path));
-    strarray_add(dll_files, strmake("-L%s", path));
-    strarray_add(lib_files, strmake("-L%s", path));
+    strarray_add(llib_paths, strmake("-L%s", path));
 }
 
 static void add_lib_file(const char* library)
@@ -378,6 +377,8 @@ static void create_the_wrapper(char* base_file, char* base_name, int gui_mode, i
     strarray_add(wspec_args, strmake("%s.exe", base_name));
     strarray_add(wspec_args, gui_mode ? "-mgui" : "-mcui");
     strarray_add(wspec_args, wrap_o_name);
+    for (i = 0; i < llib_paths->size; i++)
+	strarray_add(wspec_args, llib_paths->base[i]);
     for (i = 0; i < lib_files->size; i++)
 	strarray_add(wspec_args, lib_files->base[i]);
     for (i = 0; i < dll_files->size; i++)
@@ -433,7 +434,8 @@ int main(int argc, char **argv)
     lib_files = strarray_alloc();
     lib_paths = strarray_alloc();
     obj_files = strarray_alloc();
-    
+    llib_paths = strarray_alloc();
+
     /* include the standard DLL path first */
     add_lib_path(DLLDIR);
 
@@ -539,6 +541,8 @@ int main(int argc, char **argv)
 	strarray_add(spec_args, strmake("%s.exe", base_name));
         strarray_add(spec_args, gui_mode ? "-mgui" : "-mcui");
     }
+    for (i = 0; i < llib_paths->size; i++)
+	strarray_add(spec_args, llib_paths->base[i]);
     for (i = 0; i < dll_files->size; i++)
 	strarray_add(spec_args, dll_files->base[i]);
     for (i = 0; i < obj_files->size; i++)
@@ -575,8 +579,8 @@ int main(int argc, char **argv)
     strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs");
     strarray_add(link_args, "-lwine");
     strarray_add(link_args, "-lm");
-    for (i = 0; i < lib_files->size; i++)
-	strarray_add(link_args, lib_files->base[i]);
+    for (i = 0; i < llib_paths->size; i++)
+	strarray_add(link_args, llib_paths->base[i]);
     strarray_add(link_args, "-o");
     if (create_wrapper)
 	strarray_add(link_args, strmake("%s-wrap.dll.so", base_file));
