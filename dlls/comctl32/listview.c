@@ -8182,18 +8182,22 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
             hl.pwpos = &wp;
             Header_Layout(infoPtr->hwndHeader, &hl);
             SetWindowPos(infoPtr->hwndHeader, infoPtr->hwndSelf, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
-            if (!(LVS_NOCOLUMNHEADER & lpss->styleNew))
-		ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
         }
 
         infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
         infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
-    
-        if (uNewView == LVS_ICON || uNewView == LVS_SMALLICON)
-        {
-	    if (lpss->styleNew & LVS_ALIGNLEFT) LISTVIEW_AlignLeft(infoPtr);
-	    else LISTVIEW_AlignTop(infoPtr);
-        }
+    }
+
+    if (uNewView == LVS_REPORT)
+	ShowWindow(infoPtr->hwndHeader, (LVS_NOCOLUMNHEADER & lpss->styleNew) ? SW_HIDE : SW_SHOWNORMAL);
+     
+    if ( (uNewView == LVS_ICON || uNewView == LVS_SMALLICON) &&
+	 (uNewView != uOldView || ((lpss->styleNew ^ lpss->styleOld) & LVS_ALIGNMASK)) )
+    {
+	 if (infoPtr->dwStyle & LVS_ALIGNLEFT)
+	     LISTVIEW_AlignLeft(infoPtr);
+	 else 
+	     LISTVIEW_AlignTop(infoPtr);
     }
 
     /* update the size of the client area */
