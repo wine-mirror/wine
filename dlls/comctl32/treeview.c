@@ -2934,6 +2934,8 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
   BOOL          bRevert     = (BOOL)wParam;
   BOOL          bReturn     = ! bRevert;
   NMTVDISPINFOA tvdi;
+  RECT          itemRect;
+  
 
   if ( ! (BOOL)wParam ) /* wParam is set to true to cancel the edition */
   {
@@ -3024,12 +3026,16 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
                   (LPARAM)&tvdi);
        }
     }
-
-    ShowWindow(infoPtr->hwndEdit, SW_HIDE);
-    EnableWindow(infoPtr->hwndEdit, FALSE);
-
-    infoPtr->editItem = 0;
   }
+
+  ShowWindow(infoPtr->hwndEdit, SW_HIDE);
+  EnableWindow(infoPtr->hwndEdit, FALSE);
+
+  /* update the window to eliminate fragments and the like */
+  TreeView_GetItemRect(hwnd,infoPtr->editItem,&itemRect,FALSE);
+  RedrawWindow(hwnd,&itemRect,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+
+  infoPtr->editItem = 0;
 
   return bReturn;
 }
