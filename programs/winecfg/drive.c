@@ -120,7 +120,7 @@ void removeDrive(char letter) {
   addTransaction(driveSection, NULL, ACTION_REMOVE, NULL);
 }
 
-int refreshDriveDlg (HWND hDlg)
+int refreshDriveDlg (HWND dialog)
 {
   int i;
   char *subKeyName = malloc(MAX_NAME_LENGTH);
@@ -133,7 +133,7 @@ int refreshDriveDlg (HWND hDlg)
   updatingUI = TRUE;
 
   /* Clear the listbox */
-  SendMessageA(GetDlgItem(hDlg, IDC_LIST_DRIVES), LB_RESETCONTENT, 0, 0);
+  SendMessageA(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_RESETCONTENT, 0, 0);
   for (i = 0;
        RegEnumKeyExA(configKey, i, subKeyName, &sizeOfSubKeyName, NULL, NULL, NULL, NULL ) != ERROR_NO_MORE_ITEMS;
        ++i, sizeOfSubKeyName = MAX_NAME_LENGTH) {
@@ -195,8 +195,8 @@ int refreshDriveDlg (HWND hDlg)
       snprintf(title, titleLen, "Drive %c: %s", driveLetter, label);
       
       /* the first SendMessage call adds the string and returns the index, the second associates that index with it */
-      itemIndex = SendMessageA(GetDlgItem(hDlg, IDC_LIST_DRIVES), LB_ADDSTRING ,(WPARAM) -1, (LPARAM) title);
-      SendMessageA(GetDlgItem(hDlg, IDC_LIST_DRIVES), LB_SETITEMDATA, itemIndex, (LPARAM) driveLetter);
+      itemIndex = SendMessageA(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_ADDSTRING ,(WPARAM) -1, (LPARAM) title);
+      SendMessageA(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_SETITEMDATA, itemIndex, (LPARAM) driveLetter);
       
       free(title);
       free(label);
@@ -207,15 +207,35 @@ int refreshDriveDlg (HWND hDlg)
   }
   
   WINE_TRACE("loaded %d drives\n", driveCount);
-  SendDlgItemMessage(hDlg, IDC_LIST_DRIVES, LB_SETSEL, TRUE, lastSel);
+  SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_SETSEL, TRUE, lastSel);
 
   /* show the warning if there is no Drive C */
   if (!doesDriveCExist)
-    ShowWindow(GetDlgItem(hDlg, IDS_DRIVE_NO_C), SW_NORMAL);
+    ShowWindow(GetDlgItem(dialog, IDS_DRIVE_NO_C), SW_NORMAL);
   else
-    ShowWindow(GetDlgItem(hDlg, IDS_DRIVE_NO_C), SW_HIDE);
+    ShowWindow(GetDlgItem(dialog, IDS_DRIVE_NO_C), SW_HIDE);
   
-  free(subKeyName);  
+  free(subKeyName);
+
+  /* disable or enable controls depending on whether we are editing global vs app specific config */
+  if (appSettings == EDITING_GLOBAL) {
+    WINE_TRACE("enabling controls\n");
+    enable(IDC_LIST_DRIVES);
+    enable(IDC_BUTTON_ADD);
+    enable(IDC_BUTTON_REMOVE);
+    enable(IDC_BUTTON_EDIT);
+    enable(IDC_BUTTON_AUTODETECT);
+    
+  } else {
+    WINE_TRACE("disabling controls\n");
+    disable(IDC_LIST_DRIVES);
+    disable(IDC_BUTTON_ADD);
+    disable(IDC_BUTTON_REMOVE);
+    disable(IDC_BUTTON_EDIT);
+    disable(IDC_BUTTON_AUTODETECT);    
+  }
+
+  
   updatingUI = FALSE;
   return driveCount;
 }
@@ -368,7 +388,7 @@ long drive_available_mask(char letter)
 }
 
 
-void refreshDriveEditDialog(HWND hDlg) {
+void refreshDriveEditDialog(HWND dialog) {
   char *path;
   char *type;
   char *fs;
@@ -380,19 +400,19 @@ void refreshDriveEditDialog(HWND hDlg) {
   updatingUI = TRUE;
   
   /* Drive letters */
-  fill_drive_droplist( drive_available_mask( editWindowLetter ), editWindowLetter, hDlg );
+  fill_drive_droplist( drive_available_mask( editWindowLetter ), editWindowLetter, dialog );
 
   /* path */
   path = getDriveValue(editWindowLetter, "Path");
   if (path) {
-    SetWindowText(GetDlgItem(hDlg, IDC_EDIT_PATH), path);
+    SetWindowText(GetDlgItem(dialog, IDC_EDIT_PATH), path);
   } else WINE_WARN("no Path field?\n");
   
   /* drive type */
   type = getDriveValue(editWindowLetter, "Type");
   if (type) {
     for(i = 0, selection = -1; i < sizeof(type_pairs)/sizeof(code_desc_pair); i++) {
-      SendDlgItemMessage(hDlg, IDC_COMBO_TYPE, CB_ADDSTRING, 0,
+      SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_ADDSTRING, 0,
 			 (LPARAM) type_pairs[i].sDesc);
       if(strcasecmp(type_pairs[i].sCode, type) == 0){
 	selection = i;
@@ -400,7 +420,7 @@ void refreshDriveEditDialog(HWND hDlg) {
     }
   
     if( selection == -1 ) selection = DRIVE_TYPE_DEFAULT;
-    SendDlgItemMessage(hDlg, IDC_COMBO_TYPE, CB_SETCURSEL, selection, 0);
+    SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_SETCURSEL, selection, 0);
   } else WINE_WARN("no Type field?\n");
 
   
@@ -408,7 +428,7 @@ void refreshDriveEditDialog(HWND hDlg) {
   fs = getDriveValue(editWindowLetter, "FileSystem");
   if (fs) {
     for( i=0, selection=-1; i < sizeof(fs_pairs)/sizeof(code_desc_pair); i++) {
-      SendDlgItemMessage(hDlg, IDC_COMBO_NAMES, CB_ADDSTRING, 0,
+      SendDlgItemMessage(dialog, IDC_COMBO_NAMES, CB_ADDSTRING, 0,
 			 (LPARAM) fs_pairs[i].sDesc);
       if(strcasecmp(fs_pairs[i].sCode, fs) == 0){
 	selection = i;
@@ -416,42 +436,42 @@ void refreshDriveEditDialog(HWND hDlg) {
     }
   
     if( selection == -1 ) selection = DRIVE_FS_DEFAULT;
-    SendDlgItemMessage(hDlg, IDC_COMBO_NAMES, CB_SETCURSEL, selection, 0);
+    SendDlgItemMessage(dialog, IDC_COMBO_NAMES, CB_SETCURSEL, selection, 0);
   } else WINE_WARN("no FileSystem field?\n");
 
 
   /* removeable media properties */
   serial = getDriveValue(editWindowLetter, "Serial");
   if (serial) {
-    SendDlgItemMessage(hDlg, IDC_EDIT_SERIAL, WM_SETTEXT, 0,(LPARAM)serial);
+    SendDlgItemMessage(dialog, IDC_EDIT_SERIAL, WM_SETTEXT, 0,(LPARAM)serial);
   } else WINE_WARN("no Serial field?\n");
 
   label = getDriveValue(editWindowLetter, "Label");
   if (label) {
-    SendDlgItemMessage(hDlg, IDC_EDIT_LABEL, WM_SETTEXT, 0,(LPARAM)label);
+    SendDlgItemMessage(dialog, IDC_EDIT_LABEL, WM_SETTEXT, 0,(LPARAM)label);
   } else WINE_WARN("no Label field?\n");
 
   device = getDriveValue(editWindowLetter, "Device");
   if (device) {
-    SendDlgItemMessage(hDlg, IDC_EDIT_DEVICE, WM_SETTEXT, 0,(LPARAM)device);
+    SendDlgItemMessage(dialog, IDC_EDIT_DEVICE, WM_SETTEXT, 0,(LPARAM)device);
   } else WINE_WARN("no Device field?\n");
 
   selection = IDC_RADIO_ASSIGN;
   if ((type && strcmp("cdrom", type) == 0) || (type && strcmp("floppy", type) == 0)) {
     if (device) {
       selection = IDC_RADIO_AUTODETECT;
-      enable_labelserial_box(hDlg, BOX_MODE_CD_AUTODETECT);
+      enable_labelserial_box(dialog, BOX_MODE_CD_AUTODETECT);
     } else {
       selection = IDC_RADIO_ASSIGN;
-      enable_labelserial_box(hDlg, BOX_MODE_CD_ASSIGN);
+      enable_labelserial_box(dialog, BOX_MODE_CD_ASSIGN);
     }
   } else {
-    enable_labelserial_box(hDlg, BOX_MODE_NORMAL);
+    enable_labelserial_box(dialog, BOX_MODE_NORMAL);
     selection = IDC_RADIO_ASSIGN;
   }
 
-  CheckRadioButton( hDlg, IDC_RADIO_AUTODETECT, IDC_RADIO_ASSIGN, selection );
-  if (path) SendDlgItemMessage(hDlg, IDC_EDIT_PATH, WM_SETTEXT, 0,(LPARAM)path);
+  CheckRadioButton( dialog, IDC_RADIO_AUTODETECT, IDC_RADIO_ASSIGN, selection );
+  if (path) SendDlgItemMessage(dialog, IDC_EDIT_PATH, WM_SETTEXT, 0,(LPARAM)path);
   
   if (path) free(path);
   if (type) free(type);
@@ -460,6 +480,7 @@ void refreshDriveEditDialog(HWND hDlg) {
   if (label) free(label);
   if (device) free(device);
 
+  
   updatingUI = FALSE;
   
   return;

@@ -34,6 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 int appSettings = EDITING_GLOBAL; /* start by editing global */
 char *currentApp; /* the app we are currently editing, or NULL if editing global */
 
+static int needToRefresh = 1;
+
 char *getSectionForApp(char *section) {
     static char *lastResult = NULL;
     if (lastResult) HeapFree(GetProcessHeap(), 0, lastResult);
@@ -48,7 +50,6 @@ static void configureFor(HWND dialog, int mode) {
 	disable(IDC_LIST_APPS);
 	disable(IDC_ADD_APPDEFAULT);
 	disable(IDC_REMOVE_APPDEFAULT);
-	if (currentApp) HeapFree(GetProcessHeap(), 0, currentApp);
     } else {
 	enable(IDC_LIST_APPS);
 	enable(IDC_ADD_APPDEFAULT);
@@ -87,6 +88,7 @@ static void refreshDialog(HWND dialog) {
     WINE_TRACE("done\n");
     RegCloseKey(key);
     HeapFree(GetProcessHeap(), 0, subKeyName);
+
 }
 
 static void onAppsListSelChange(HWND dialog) {
@@ -107,6 +109,11 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 	case WM_COMMAND: switch (LOWORD(wParam)) {
 	    case IDC_EDITING_APP:
+		if (SendDlgItemMessage(hDlg, IDC_LIST_APPS, LB_GETCURSEL, 0, 0) == LB_ERR) {
+		    /* no selection, so select the first one */
+		    SendDlgItemMessage(hDlg, IDC_LIST_APPS, LB_SETCURSEL, 0, 0);
+		    onAppsListSelChange(hDlg);
+		}
 		configureFor(hDlg, EDITING_APP);
 		break;
 	    case IDC_EDITING_GLOBAL:
@@ -114,9 +121,11 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 	    case IDC_ADD_APPDEFAULT:
 		WRITEME(hDlg);
+		refreshDialog(hDlg);
 		break;
 	    case IDC_REMOVE_APPDEFAULT:
 		WRITEME(hDlg);
+		refreshDialog(hDlg);
 		break;
 	    case IDC_LIST_APPS:
 		if (HIWORD(wParam) == LBN_SELCHANGE) onAppsListSelChange(hDlg);
@@ -132,10 +141,12 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 		break;
 	    case PSN_SETACTIVE:
-		refreshDialog(hDlg);
+		if (needToRefresh) {
+		    refreshDialog(hDlg);
+		    needToRefresh = 0;
+		}
 		break;
-		    
-	};
+	}
 	break;
 
 	case WM_INITDIALOG:

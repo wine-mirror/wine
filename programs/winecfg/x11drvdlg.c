@@ -45,7 +45,7 @@ void updateGUIForDesktopMode(HWND dialog) {
     updatingUI = TRUE;
     
     /* do we have desktop mode enabled? */
-    if (doesConfigValueExist("x11drv", "Desktop") == S_OK) {
+    if (doesConfigValueExist(section, "Desktop") == S_OK) {
 	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_CHECKED);
 	/* enable the controls */
 	enable(IDC_DESKTOP_WIDTH);
@@ -77,25 +77,26 @@ void initX11DrvDlg (HWND hDlg)
     char *buf;
     char *bufindex;
 
+    updateGUIForDesktopMode(hDlg);
+
     updatingUI = TRUE;
     
-    updateGUIForDesktopMode(hDlg);
-    
     /* desktop size */
-    buf = getConfigValue("x11drv", "Desktop", "640x480");
+    buf = getConfigValue(section, "Desktop", "640x480");
     bufindex = strchr(buf, 'x');
     *bufindex = '\0';
     bufindex++;
     SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), buf);
     SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), bufindex);
     free(buf);
-    
+
+    SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_RESETCONTENT, 0, 0);
     SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "8 bit");
     SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "16 bit");
     SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "24 bit");
     SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "32 bit"); /* is this valid? */
 
-    buf = getConfigValue("x11drv", "ScreenDepth", "24");
+    buf = getConfigValue(section, "ScreenDepth", "24");
     if (strcmp(buf, "8") == 0)
 	SendDlgItemMessage(hDlg, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
     else if (strcmp(buf, "16") == 0)
@@ -111,21 +112,21 @@ void initX11DrvDlg (HWND hDlg)
     SendDlgItemMessage(hDlg, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
-    buf = getConfigValue("x11drv", "DXGrab", "Y");
+    buf = getConfigValue(section, "DXGrab", "Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_CHECKED);
     else
 	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
     free(buf);
 
-    buf = getConfigValue("x11drv", "DesktopDoubleBuffered", "Y");
+    buf = getConfigValue(section, "DesktopDoubleBuffered", "Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_CHECKED);
     else
 	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
     free(buf);
     
-    buf = getConfigValue("x11drv", "UseTakeFocus", "N");
+    buf = getConfigValue(section, "UseTakeFocus", "N");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(hDlg, IDC_USE_TAKE_FOCUS, BST_CHECKED);
     else
@@ -153,7 +154,7 @@ void setFromDesktopSizeEdits(HWND hDlg) {
     if (strcmp(height, "") == 0) strcpy(height, "480");
     
     sprintf(newStr, "%sx%s", width, height);
-    addTransaction("x11drv", "Desktop", ACTION_SET, newStr);
+    addTransaction(section, "Desktop", ACTION_SET, newStr);
 
     free(width);
     free(height);
@@ -167,7 +168,7 @@ void onEnableDesktopClicked(HWND hDlg) {
 	setFromDesktopSizeEdits(hDlg);
     } else {
 	/* it was just checked, so remove the config values */
-	addTransaction("x11drv", "Desktop", ACTION_REMOVE, NULL);
+	addTransaction(section, "Desktop", ACTION_REMOVE, NULL);
     }
     updateGUIForDesktopMode(hDlg);
 }
@@ -180,30 +181,30 @@ void onScreenDepthChanged(HWND hDlg) {
     if (updatingUI) return;
 
     *spaceIndex = '\0';
-    addTransaction("x11drv", "ScreenDepth", ACTION_SET, newvalue);
+    addTransaction(section, "ScreenDepth", ACTION_SET, newvalue);
     free(newvalue);
 }
 
 void onDXMouseGrabClicked(HWND hDlg) {
     if (IsDlgButtonChecked(hDlg, IDC_DX_MOUSE_GRAB) == BST_CHECKED)
-	addTransaction("x11drv", "DXGrab", ACTION_SET, "Y");
+	addTransaction(section, "DXGrab", ACTION_SET, "Y");
     else
-	addTransaction("x11drv", "DXGrab", ACTION_SET, "N");
+	addTransaction(section, "DXGrab", ACTION_SET, "N");
 }
 
 
 void onDoubleBufferClicked(HWND hDlg) {
     if (IsDlgButtonChecked(hDlg, IDC_DOUBLE_BUFFER) == BST_CHECKED)
-	addTransaction("x11drv", "DesktopDoubleBuffered", ACTION_SET, "Y");
+	addTransaction(section, "DesktopDoubleBuffered", ACTION_SET, "Y");
     else
-	addTransaction("x11drv", "DesktopDoubleBuffered", ACTION_SET, "N");
+	addTransaction(section, "DesktopDoubleBuffered", ACTION_SET, "N");
 }
 
 void onUseTakeFocusClicked(HWND hDlg) {
     if (IsDlgButtonChecked(hDlg, IDC_USE_TAKE_FOCUS) == BST_CHECKED)
-	addTransaction("x11drv", "UseTakeFocus", ACTION_SET, "Y");
+	addTransaction(section, "UseTakeFocus", ACTION_SET, "Y");
     else
-	addTransaction("x11drv", "UseTakeFocus", ACTION_SET, "N");
+	addTransaction(section, "UseTakeFocus", ACTION_SET, "N");
 }
 
 
@@ -218,11 +219,12 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    switch(HIWORD(wParam)) {
 		case EN_CHANGE: {
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-		    if ( (LOWORD(wParam) == IDC_DESKTOP_WIDTH) || (LOWORD(wParam) == IDC_DESKTOP_HEIGHT) ) setFromDesktopSizeEdits(hDlg);
+		    if ( ((LOWORD(wParam) == IDC_DESKTOP_WIDTH) || (LOWORD(wParam) == IDC_DESKTOP_HEIGHT)) && !updatingUI )
+			setFromDesktopSizeEdits(hDlg);
 		    break;
 		}
 		case BN_CLICKED: {
-		    WINE_TRACE("%d\n", LOWORD(wParam));
+		    if (updatingUI) break;
 		    switch(LOWORD(wParam)) {
 			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
 			case IDC_DX_MOUSE_GRAB:  onDXMouseGrabClicked(hDlg); break;
