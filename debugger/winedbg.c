@@ -277,8 +277,9 @@ BOOL				DEBUG_Attach(DWORD pid, BOOL cofe)
     if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0))) return FALSE;
 
     if (!DebugActiveProcess(pid)) {
-	DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
-		     pid, GetLastError());
+        DEBUG_Printf(DBG_CHN_MESG, "Can't attach process %lx: error %ld\n", pid, GetLastError());
+        DEBUG_DelProcess(DEBUG_CurrProcess);
+        DEBUG_CurrProcess = NULL;
 	return FALSE;
     }
     DEBUG_CurrProcess->continue_on_first_exception = cofe;

@@ -142,7 +142,7 @@ command:
     | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
     | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2); }
     | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
-    | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE); return TRUE; }
+    | tATTACH tNUM tEOL		{ if (DEBUG_Attach($2, FALSE)) return TRUE; }
     | list_command
     | disassemble_command
     | set_command
