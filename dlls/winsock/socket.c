@@ -1587,6 +1587,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                                   INT optname, char *optval, INT *optlen)
 {
     int fd;
+    INT ret = 0;
 
     TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %8x, len %d\n", s, level,
           (int) optname, (int) optval, (int) *optlen);
@@ -1665,22 +1666,49 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     }
 #endif
 
-    fd = get_sock_fd( s, 0, NULL );
-    if (fd != -1)
-    {
-	if (!convert_sockopt(&level, &optname)) {
-	    SetLastError(WSAENOPROTOOPT);	/* Unknown option */
-        } else {
-	    if (getsockopt(fd, (int) level, optname, optval, optlen) == 0 )
-	    {
-		release_sock_fd( s, fd );
-		return 0;
-	    }
-	    SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
-	}
-        release_sock_fd( s, fd );
+    if( (fd = get_sock_fd( s, 0, NULL )) == -1)
+        return SOCKET_ERROR;
+
+    if (!convert_sockopt(&level, &optname)) {
+        SetLastError(WSAENOPROTOOPT);	/* Unknown option */
+        ret = SOCKET_ERROR;
+    } else {
+        struct timeval tv;
+        struct linger lingval;
+        INT len, *plen = optlen;
+        char *pval = optval;
+        if(level == SOL_SOCKET && is_timeout_option(optname)) {
+            len = sizeof(tv);
+            plen = &len;
+            pval = (char *) &tv;
+        } else if( level == SOL_SOCKET && optname == SO_LINGER) {
+            len = sizeof(lingval);
+            plen = &len;
+            pval = (char *) &lingval;
+        }
+        if (getsockopt(fd, (int) level, optname, pval, plen) != 0 ) {
+            SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+            ret = SOCKET_ERROR;
+        } else if(level == SOL_SOCKET && is_timeout_option(optname)) {
+            if( *optlen >= sizeof(INT) ) {
+                *optlen = sizeof(INT);
+                *(INT*)optval = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+            } else {
+                SetLastError(WSAEFAULT);
+                ret = SOCKET_ERROR;
+            }
+        } else if( level == SOL_SOCKET && optname == SO_LINGER) {
+            if( *optlen >=  sizeof( LINGER) ) {
+                (( LINGER *) optval)->l_onoff = lingval.l_onoff;
+                (( LINGER *) optval)->l_linger = lingval.l_linger;
+            } else {
+                SetLastError(WSAEFAULT);
+                ret = SOCKET_ERROR;
+            }
+        }
     }
-    return SOCKET_ERROR;
+    release_sock_fd( s, fd );
+    return ret;
 }
 
 
@@ -2442,9 +2470,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             return SOCKET_ERROR;
         }
         if (optname == SO_LINGER && optval) {
-            /* yes, uses unsigned short in both win16/win32 */
-            linger.l_onoff  = ((UINT16*)optval)[0];
-            linger.l_linger = ((UINT16*)optval)[1];
+            linger.l_onoff  = ((LINGER*)optval)->l_onoff;
+            linger.l_linger  = ((LINGER*)optval)->l_linger;
             /* FIXME: what is documented behavior if SO_LINGER optval
                is null?? */
             optval = (char*)&linger;

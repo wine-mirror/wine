@@ -625,6 +625,65 @@ static void do_test( test_setup *test )
         CloseHandle ( client_ready[i] );
 }
 
+/********* some tests for getsockopt(setsockopt(X)) == X ***********/
+/* optname = SO_LINGER */
+LINGER linger_testvals[] = {
+    {0,0},
+    {0,73}, 
+    {1,0},
+    {5,189}
+};
+
+/* optname = SO_RCVTIMEO, SOSNDTIMEO */
+#define SOCKTIMEOUT1 63000 /* 63 seconds. Do not test fractional part because of a
+                        bug in the linux kernel (fixed in 2.6.8) */ 
+#define SOCKTIMEOUT2 997000 /* 997 seconds */
+
+static void test_set_getsockopt()
+{
+    SOCKET s;
+    int i, err;
+    int timeout;
+    LINGER lingval;
+    int size;
+
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s!=INVALID_SOCKET, "socket() failed error: %d\n", WSAGetLastError());
+    if( s == INVALID_SOCKET) return;
+    /* SO_RCVTIMEO */
+    timeout = SOCKTIMEOUT1;
+    size = sizeof(timeout);
+    err = setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, size); 
+    if( !err)
+        err = getsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, &size); 
+    ok( !err, "get/setsockopt(SO_RCVTIMEO) failed error: %d\n", WSAGetLastError());
+    ok( timeout == SOCKTIMEOUT1, "getsockopt(SO_RCVTIMEO) returned wrong value %d\n", timeout);
+    /* SO_SNDTIMEO */
+    timeout = SOCKTIMEOUT2; /* 54 seconds. See remark above */ 
+    size = sizeof(timeout);
+    err = setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, size); 
+    if( !err)
+        err = getsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, &size); 
+    ok( !err, "get/setsockopt(SO_SNDTIMEO) failed error: %d\n", WSAGetLastError());
+    ok( timeout == SOCKTIMEOUT2, "getsockopt(SO_SNDTIMEO) returned wrong value %d\n", timeout);
+    /* SO_LINGER */
+    for( i = 0; i < sizeof(linger_testvals)/sizeof(LINGER);i++) {
+        size =  sizeof(lingval);
+        lingval = linger_testvals[i];
+        err = setsockopt(s, SOL_SOCKET, SO_LINGER, (char *) &lingval, size); 
+        if( !err)
+            err = getsockopt(s, SOL_SOCKET, SO_LINGER, (char *) &lingval, &size); 
+        ok( !err, "get/setsockopt(SO_LINGER) failed error: %d\n", WSAGetLastError());
+        ok( !lingval.l_onoff == !linger_testvals[i].l_onoff &&
+                (lingval.l_linger == linger_testvals[i].l_linger ||
+                 (!lingval.l_linger && !linger_testvals[i].l_onoff))
+                , "getsockopt(SO_LINGER #%d) returned wrong value %d,%d not %d,%d \n", i, 
+                 lingval.l_onoff, lingval.l_linger,
+                 linger_testvals[i].l_onoff, linger_testvals[i].l_linger);
+    }
+    closesocket(s);
+}
+
 static void test_so_reuseaddr()
 {
     struct sockaddr_in saddr;
@@ -725,6 +784,7 @@ START_TEST( sock )
     int i;
     Init();
 
+    test_set_getsockopt();
     test_so_reuseaddr();
 
     for (i = 0; i < NUM_TESTS; i++)
