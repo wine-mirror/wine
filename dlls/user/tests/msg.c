@@ -3,6 +3,7 @@
  *
  * Copyright 1999 Ove Kaaven
  * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2004 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -44,18 +45,18 @@ Window Edge Styles (Win31/Win95/98 look), in order of precedence:
 
 typedef enum { 
     sent=0x1, posted=0x2, parent=0x4, wparam=0x8, lparam=0x10,
-    defwinproc=0x20
+    defwinproc=0x20, optional=0x40
 } msg_flags_t;
 
 struct message {
     UINT message;          /* the WM_* code */
     msg_flags_t flags;     /* message props */
-    WPARAM wParam;         /* expacted value of wParam */
-    LPARAM lParam;         /* expacted value of lParam */
+    WPARAM wParam;         /* expected value of wParam */
+    LPARAM lParam;         /* expected value of lParam */
 };
 
 /* CreateWindow (for overlapped window, not initially visible) (16/32) */
-static struct message WmCreateOverlappedSeq[] = {
+static const struct message WmCreateOverlappedSeq[] = {
     { WM_GETMINMAXINFO, sent },
     { WM_NCCREATE, sent },
     { WM_NCCALCSIZE, sent|wparam, 0 },
@@ -63,39 +64,45 @@ static struct message WmCreateOverlappedSeq[] = {
     { 0 }
 };
 /* ShowWindow (for overlapped window) (16/32) */
-static struct message WmShowOverlappedSeq[] = {
+static const struct message WmShowOverlappedSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, /*FIXME: SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW*/ 0 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     /* FIXME: WM_QUERYNEWPALETTE, if in 256-color mode */
-    { WM_WINDOWPOSCHANGING, sent|wparam, /*FIXME: SWP_NOMOVE|SWP_NOSIZE*/ 0 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_GETTEXT, sent|defwinproc },
     { WM_ACTIVATE, sent|wparam, 1 },
+    { WM_IME_SETCONTEXT, sent|optional },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
-    { WM_NCPAINT, sent|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
-    { WM_ERASEBKGND, sent },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_SHOWWINDOW },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
     { 0 }
 };
 
 /* DestroyWindow (for overlapped window) (32) */
-static struct message WmDestroyOverlappedSeq[] = {
+static const struct message WmDestroyOverlappedSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_NCACTIVATE, sent|wparam, 0 },
     { WM_ACTIVATE, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 0 },
     { WM_KILLFOCUS, sent|wparam, 0 },
+    { WM_IME_SETCONTEXT, sent|optional },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
     { 0 }
 };
 /* CreateWindow (for child window, not initially visible) */
-static struct message WmCreateChildSeq[] = {
+static const struct message WmCreateChildSeq[] = {
     { WM_NCCREATE, sent }, 
     /* child is inserted into parent's child list after WM_NCCREATE returns */
     { WM_NCCALCSIZE, sent|wparam, 0 },
@@ -106,40 +113,42 @@ static struct message WmCreateChildSeq[] = {
     { 0 }
 };
 /* ShowWindow (for child window) */
-static struct message WmShowChildSeq[] = {
+static const struct message WmShowChildSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_ERASEBKGND, sent|parent },
+    { WM_ERASEBKGND, sent|parent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { 0 }
 };
 /* DestroyWindow (for child window) */
-static struct message WmDestroyChildSeq[] = {
+static const struct message WmDestroyChildSeq[] = {
     { WM_PARENTNOTIFY, sent|parent|wparam, 2 },
     { WM_SHOWWINDOW, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_ERASEBKGND, sent|parent },
+    { WM_ERASEBKGND, sent|parent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_DESTROY, sent },
+    { WM_DESTROY, sent|optional }, /* a bug in win2k sp4 ? */
     { WM_NCDESTROY, sent },
+    { WM_NCDESTROY, sent|optional }, /* a bug in win2k sp4 ? */
     { 0 }
 };
 /* Moving the mouse in nonclient area */
-static struct message WmMouseMoveInNonClientAreaSeq[] = { /* FIXME: add */
+static const struct message WmMouseMoveInNonClientAreaSeq[] = { /* FIXME: add */
     { WM_NCHITTEST, sent },
     { WM_SETCURSOR, sent },
     { WM_NCMOUSEMOVE, posted },
     { 0 }
 };
 /* Moving the mouse in client area */
-static struct message WmMouseMoveInClientAreaSeq[] = { /* FIXME: add */
+static const struct message WmMouseMoveInClientAreaSeq[] = { /* FIXME: add */
     { WM_NCHITTEST, sent },
     { WM_SETCURSOR, sent },
     { WM_MOUSEMOVE, posted },
     { 0 }
 };
 /* Moving by dragging the title bar (after WM_NCHITTEST and WM_SETCURSOR) (outline move) */
-static struct message WmDragTitleBarSeq[] = { /* FIXME: add */
+static const struct message WmDragTitleBarSeq[] = { /* FIXME: add */
     { WM_NCLBUTTONDOWN, sent|wparam, HTCAPTION },
     { WM_SYSCOMMAND, sent|defwinproc|wparam, SC_MOVE+2 },
     { WM_GETMINMAXINFO, sent|defwinproc },
@@ -151,7 +160,7 @@ static struct message WmDragTitleBarSeq[] = { /* FIXME: add */
     { 0 }
 };
 /* Sizing by dragging the thick borders (after WM_NCHITTEST and WM_SETCURSOR) (outline move) */
-static struct message WmDragThinkBordersBarSeq[] = { /* FIXME: add */
+static const struct message WmDragThinkBordersBarSeq[] = { /* FIXME: add */
     { WM_NCLBUTTONDOWN, sent|wparam, 0xd },
     { WM_SYSCOMMAND, sent|defwinproc|wparam, 0xf004 },
     { WM_GETMINMAXINFO, sent|defwinproc },
@@ -170,17 +179,17 @@ static struct message WmDragThinkBordersBarSeq[] = { /* FIXME: add */
     { 0 }
 };
 /* Resizing child window with MoveWindow (32) */
-static struct message WmResizingChildWithMoveWindowSeq[] = {
+static const struct message WmResizingChildWithMoveWindowSeq[] = {
     { WM_WINDOWPOSCHANGING, sent },
     { WM_NCCALCSIZE, sent|wparam, 1 },
-    { WM_ERASEBKGND, sent },
+    { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
     { 0 }
 };
 /* Clicking on inactive button */
-static struct message WmClickInactiveButtonSeq[] = { /* FIXME: add */
+static const struct message WmClickInactiveButtonSeq[] = { /* FIXME: add */
     { WM_NCHITTEST, sent },
     { WM_PARENTNOTIFY, sent|parent|wparam, WM_LBUTTONDOWN },
     { WM_MOUSEACTIVATE, sent },
@@ -201,7 +210,7 @@ static struct message WmClickInactiveButtonSeq[] = { /* FIXME: add */
 };
 /* Reparenting a button (16/32) */
 /* The last child (button) reparented gets topmost for its new parent. */
-static struct message WmReparentButtonSeq[] = { /* FIXME: add */
+static const struct message WmReparentButtonSeq[] = { /* FIXME: add */
     { WM_SHOWWINDOW, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER },
     { WM_ERASEBKGND, sent|parent },
@@ -214,7 +223,7 @@ static struct message WmReparentButtonSeq[] = { /* FIXME: add */
     { 0 }
 };
 /* Creation of a modal dialog (32) */
-static struct message WmCreateModalDialogSeq[] = { /* FIXME: add */
+static const struct message WmCreateModalDialogSeq[] = { /* FIXME: add */
     { WM_CANCELMODE, sent|parent },
     { WM_KILLFOCUS, sent|parent },
     { WM_ENABLE, sent|parent|wparam, 0 },
@@ -245,7 +254,7 @@ static struct message WmCreateModalDialogSeq[] = { /* FIXME: add */
     { 0 }
 };
 /* Destruction of a modal dialog (32) */
-static struct message WmDestroyModalDialogSeq[] = { /* FIXME: add */
+static const struct message WmDestroyModalDialogSeq[] = { /* FIXME: add */
     /* (inside dialog proc: EndDialog is called) */
     { WM_ENABLE, sent|parent|wparam, 1 },
     { WM_SETFOCUS, sent },
@@ -268,7 +277,7 @@ static struct message WmDestroyModalDialogSeq[] = { /* FIXME: add */
     { 0 }
 };
 /* Creation of a modal dialog that is resized inside WM_INITDIALOG (32) */
-static struct message WmCreateModalDialogResizeSeq[] = { /* FIXME: add */
+static const struct message WmCreateModalDialogResizeSeq[] = { /* FIXME: add */
     /* (inside dialog proc, handling WM_INITDIALOG) */
     { WM_WINDOWPOSCHANGING, sent },
     { WM_NCCALCSIZE, sent },
@@ -297,7 +306,7 @@ static struct message WmCreateModalDialogResizeSeq[] = { /* FIXME: add */
     { 0 }
 };
 /* SetMenu for NonVisible windows with size change*/
-static struct message WmSetMenuNonVisibleSizeChangeSeq[] = {
+static const struct message WmSetMenuNonVisibleSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
@@ -306,31 +315,33 @@ static struct message WmSetMenuNonVisibleSizeChangeSeq[] = {
     { 0 }
 };
 /* SetMenu for NonVisible windows with no size change */
-static struct message WmSetMenuNonVisibleNoSizeChangeSeq[] = {
+static const struct message WmSetMenuNonVisibleNoSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { 0 }
 };
 /* SetMenu for Visible windows with size change */
-static struct message WmSetMenuVisibleSizeChangeSeq[] = {
+static const struct message WmSetMenuVisibleSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|wparam, 1 },
     { WM_GETTEXT, sent },
-    { WM_ACTIVATE, sent },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_ACTIVATE, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_MOVE, sent },
     { WM_SIZE, sent },
     { 0 }
 };
 /* SetMenu for Visible windows with no size change */
-static struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
+static const struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|wparam, 1 },
     { WM_GETTEXT, sent },
-    { WM_ACTIVATE, sent },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_ACTIVATE, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { 0 }
 };
@@ -338,14 +349,26 @@ static struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
 
-static void add_message(struct message msg)
+static void add_message(const struct message *msg)
 {
     if (!sequence) 
-	sequence = malloc ( (sequence_size = 10) * sizeof (struct message) );
+    {
+	sequence_size = 10;
+	sequence = malloc ( sequence_size * sizeof (struct message) );
+    }
     if (sequence_cnt == sequence_size) 
-	sequence = realloc ( sequence, (sequence_size *= 2) * sizeof (struct message) );
+    {
+	sequence_size *= 2;
+	sequence = realloc ( sequence, sequence_size * sizeof (struct message) );
+    }
     assert(sequence);
-    sequence[sequence_cnt++] = msg;
+
+    sequence[sequence_cnt].message = msg->message;
+    sequence[sequence_cnt].flags = msg->flags;
+    sequence[sequence_cnt].wParam = msg->wParam;
+    sequence[sequence_cnt].lParam = msg->lParam;
+
+    sequence_cnt++;
 }
 
 static void flush_sequence()
@@ -355,16 +378,17 @@ static void flush_sequence()
     sequence_cnt = sequence_size = 0;
 }
 
-static void ok_sequence(struct message *expected, const char *context)
+static void ok_sequence(const struct message *expected, const char *context)
 {
-    static struct message end_of_sequence = { 0, 0, 0, 0 };
-    struct message *actual = sequence;
+    static const struct message end_of_sequence = { 0, 0, 0, 0 };
+    const struct message *actual = sequence;
     
-    add_message(end_of_sequence);
+    add_message(&end_of_sequence);
 
-    /* naive sequence comparison. Would be nice to use a regexp engine here */
-    while (expected->message || actual->message)
+    while (expected->message && actual->message)
     {
+	trace("expected %04x - actual %04x\n", expected->message, actual->message);
+
 	if (expected->message == actual->message)
 	{
 	    if (expected->flags & wparam)
@@ -385,20 +409,8 @@ static void ok_sequence(struct message *expected, const char *context)
 	    expected++;
 	    actual++;
 	}
-	else if (expected->message && ((expected + 1)->message == actual->message) )
-	{
-	  todo_wine {
-	    ok (FALSE, "%s: the msg 0x%04x was not received\n", context, expected->message);
+	else if (expected->flags & optional)
 	    expected++;
-	  }
-	}
-	else if (actual->message && (expected->message == (actual + 1)->message) )
-	{
-	  todo_wine {
-	    ok (FALSE, "%s: the msg 0x%04x was not expected\n", context, actual->message);
-	    actual++;
-	  }
-	}
 	else
 	{
 	  todo_wine {
@@ -409,6 +421,11 @@ static void ok_sequence(struct message *expected, const char *context)
 	  }
 	}
     }
+
+  todo_wine {
+    if (expected->message || actual->message)
+	ok (FALSE, "%s: the msg sequence is not complete\n", context);
+  }
 
     flush_sequence();
 }
@@ -431,7 +448,7 @@ static void test_messages(void)
     DestroyWindow(hwnd);
     ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped");
 
-    hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW,
+    hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hparent != 0, "Failed to create parent window\n");
     flush_sequence();
@@ -487,9 +504,16 @@ static void test_messages(void)
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct message msg = { message, sent|wparam|lparam, wParam, lParam };
+    struct message msg;
 
-    add_message(msg);
+    trace("%p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
