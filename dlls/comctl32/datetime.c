@@ -1,7 +1,7 @@
 /*
  * Date and time picker control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998, 1999 Eric Kohl
  *
  * NOTES
  *   This is just a dummy control. An author is needed! Any volunteers?
@@ -20,7 +20,7 @@
 #include "debug.h"
 
 
-#define DATETIME_GetInfoPtr(wndPtr) ((DATETIME_INFO *)wndPtr->wExtra[0])
+#define DATETIME_GetInfoPtr(hwnd) ((DATETIME_INFO *)GetWindowLongA (hwnd, 0))
 
 
 
@@ -28,23 +28,19 @@
 
 
 static LRESULT
-DATETIME_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+DATETIME_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr;
 
     /* allocate memory for info structure */
     infoPtr = (DATETIME_INFO *)COMCTL32_Alloc (sizeof(DATETIME_INFO));
-    wndPtr->wExtra[0] = (DWORD)infoPtr;
-
     if (infoPtr == NULL) {
 	ERR (datetime, "could not allocate info memory!\n");
 	return 0;
     }
 
-    if ((DATETIME_INFO*)wndPtr->wExtra[0] != infoPtr) {
-	ERR (datetime, "pointer assignment error!\n");
-	return 0;
-    }
+    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
+
 
     /* initialize info structure */
 
@@ -55,9 +51,9 @@ DATETIME_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-DATETIME_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+DATETIME_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr(wndPtr);
+    DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
 
     /* free datetime info data */
     COMCTL32_Free (infoPtr);
@@ -71,8 +67,6 @@ DATETIME_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI
 DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
     switch (uMsg)
     {
 
@@ -121,10 +115,10 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
 
 	case WM_CREATE:
-	    return DATETIME_Create (wndPtr, wParam, lParam);
+	    return DATETIME_Create (hwnd, wParam, lParam);
 
 	case WM_DESTROY:
-	    return DATETIME_Destroy (wndPtr, wParam, lParam);
+	    return DATETIME_Destroy (hwnd, wParam, lParam);
 
 	default:
 	    if (uMsg >= WM_USER)

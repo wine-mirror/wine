@@ -1,7 +1,7 @@
 /*
  * Native Font control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998, 1999 Eric Kohl
  *
  * NOTES
  *   This is just a dummy control. An author is needed! Any volunteers?
@@ -19,29 +19,20 @@
 #include "debug.h"
 
 
-#define NATIVEFONT_GetInfoPtr(wndPtr) ((NATIVEFONT_INFO *)wndPtr->wExtra[0])
+#define NATIVEFONT_GetInfoPtr(hwnd) ((NATIVEFONT_INFO *)GetWindowLongA (hwnd, 0))
 
 
 
 
 static LRESULT
-NATIVEFONT_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+NATIVEFONT_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     NATIVEFONT_INFO *infoPtr;
 
     /* allocate memory for info structure */
     infoPtr = (NATIVEFONT_INFO *)COMCTL32_Alloc (sizeof(NATIVEFONT_INFO));
-    wndPtr->wExtra[0] = (DWORD)infoPtr;
+    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
-    if (infoPtr == NULL) {
-	ERR (listview, "could not allocate info memory!\n");
-	return 0;
-    }
-
-    if ((NATIVEFONT_INFO*)wndPtr->wExtra[0] != infoPtr) {
-	ERR (listview, "pointer assignment error!\n");
-	return 0;
-    }
 
     /* initialize info structure */
 
@@ -51,9 +42,9 @@ NATIVEFONT_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-NATIVEFONT_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+NATIVEFONT_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    NATIVEFONT_INFO *infoPtr = NATIVEFONT_GetInfoPtr(wndPtr);
+    NATIVEFONT_INFO *infoPtr = NATIVEFONT_GetInfoPtr (hwnd);
 
 
 
@@ -69,16 +60,14 @@ NATIVEFONT_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI
 NATIVEFONT_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
     switch (uMsg)
     {
 
 	case WM_CREATE:
-	    return NATIVEFONT_Create (wndPtr, wParam, lParam);
+	    return NATIVEFONT_Create (hwnd, wParam, lParam);
 
 	case WM_DESTROY:
-	    return NATIVEFONT_Destroy (wndPtr, wParam, lParam);
+	    return NATIVEFONT_Destroy (hwnd, wParam, lParam);
 
 	default:
 	    ERR (nativefont, "unknown msg %04x wp=%08x lp=%08lx\n",

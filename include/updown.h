@@ -19,6 +19,7 @@ typedef struct
   INT       MinVal;       /* Minimum up-down value */
   INT       MaxVal;       /* Maximum up-down value */
   HWND      Buddy;        /* Handle to the buddy window */
+  CHAR      szBuddyClass[40]; /* Buddy window class name */
   INT       Flags;        /* Internal Flags FLAG_* */
 } UPDOWN_INFO;
 

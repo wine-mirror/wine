@@ -1,7 +1,7 @@
 /*
  * Animation control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998, 1999 Eric Kohl
  *
  * NOTES
  *   This is just a dummy control. An author is needed! Any volunteers?
@@ -19,7 +19,7 @@
 #include "animate.h"
 #include "debug.h"
 
-#define ANIMATE_GetInfoPtr(wndPtr) ((ANIMATE_INFO *)wndPtr->wExtra[0])
+#define ANIMATE_GetInfoPtr(hwnd) ((ANIMATE_INFO *)GetWindowLongA (hwnd, 0))
 
 
 static BOOL
@@ -99,9 +99,9 @@ ANIMATE_GetAviInfo (infoPtr)
 
 
 static LRESULT
-ANIMATE_OpenA (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+ANIMATE_OpenA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
+    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(hwnd);
     HINSTANCE hInstance = (HINSTANCE)wParam;
 
     ANIMATE_Free (infoPtr);
@@ -153,9 +153,9 @@ ANIMATE_OpenA (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Play (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+ANIMATE_Play (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr); */
+    /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(hwnd); */
     INT nFrom   = (INT)LOWORD(lParam);
     INT nTo     = (INT)HIWORD(lParam);
     INT nRepeat = (INT)wParam;
@@ -185,9 +185,9 @@ ANIMATE_Play (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Stop (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+ANIMATE_Stop (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr); */
+    /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(hwnd); */
 
 #if 0
     /* nothing opened */
@@ -201,23 +201,20 @@ ANIMATE_Stop (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+ANIMATE_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     ANIMATE_INFO *infoPtr;
 
     /* allocate memory for info structure */
     infoPtr = (ANIMATE_INFO *)COMCTL32_Alloc (sizeof(ANIMATE_INFO));
-    wndPtr->wExtra[0] = (DWORD)infoPtr;
-
-    if (infoPtr == NULL) {
+    if (!infoPtr) {
 	ERR (animate, "could not allocate info memory!\n");
 	return 0;
     }
 
-    if ((ANIMATE_INFO*)wndPtr->wExtra[0] != infoPtr) {
-	ERR (animate, "pointer assignment error!\n");
-	return 0;
-    }
+    /* store pointer to info structure */
+    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
+
 
     /* set default settings */
 
@@ -227,9 +224,9 @@ ANIMATE_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-ANIMATE_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+ANIMATE_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
+    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(hwnd);
 
 
     /* free avi data */
@@ -244,9 +241,9 @@ ANIMATE_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 #if 0
 static LRESULT
-ANIMATE_EraseBackground (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+ANIMATE_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
+    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(hwnd);
 /*
     HBRUSH32 hBrush = CreateSolidBrush32 (infoPtr->clrBk);
     RECT32 rect;
@@ -264,31 +261,29 @@ ANIMATE_EraseBackground (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI
 ANIMATE_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
     switch (uMsg)
     {
 	case ACM_OPENA:
-	    return ANIMATE_OpenA (wndPtr, wParam, lParam);
+	    return ANIMATE_OpenA (hwnd, wParam, lParam);
 
 /*	case ACM_OPEN32W: */
-/*	    return ANIMATE_Open32W (wndPtr, wParam, lParam); */
+/*	    return ANIMATE_Open32W (hwnd, wParam, lParam); */
 
         case ACM_PLAY:
-            return ANIMATE_Play (wndPtr, wParam, lParam);
+            return ANIMATE_Play (hwnd, wParam, lParam);
 
 	case ACM_STOP:
-	    return ANIMATE_Stop (wndPtr, wParam, lParam);
+	    return ANIMATE_Stop (hwnd, wParam, lParam);
 
 
 	case WM_CREATE:
-	    return ANIMATE_Create (wndPtr, wParam, lParam);
+	    return ANIMATE_Create (hwnd, wParam, lParam);
 
 	case WM_DESTROY:
-	    return ANIMATE_Destroy (wndPtr, wParam, lParam);
+	    return ANIMATE_Destroy (hwnd, wParam, lParam);
 
 /*	case WM_ERASEBKGND: */
-/*	    return ANIMATE_EraseBackground (wndPtr, wParam, lParam); */
+/*	    return ANIMATE_EraseBackground (hwnd, wParam, lParam); */
 
 /*	case WM_NCCREATE: */
 /*	case WM_NCHITTEST: */

@@ -1,7 +1,7 @@
 /*
  * Month calendar control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998, 1999 Eric Kohl
  *
  * NOTES
  *   This is just a dummy control. An author is needed! Any volunteers?
@@ -20,7 +20,7 @@
 #include "debug.h"
 
 
-#define MONTHCAL_GetInfoPtr(wndPtr) ((MONTHCAL_INFO *)wndPtr->wExtra[0])
+#define MONTHCAL_GetInfoPtr(hwnd) ((MONTHCAL_INFO *)GetWindowLongA (hwnd, 0))
 
 
 
@@ -28,23 +28,14 @@
 
 
 static LRESULT
-MONTHCAL_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+MONTHCAL_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     MONTHCAL_INFO *infoPtr;
 
     /* allocate memory for info structure */
     infoPtr = (MONTHCAL_INFO *)COMCTL32_Alloc (sizeof(MONTHCAL_INFO));
-    wndPtr->wExtra[0] = (DWORD)infoPtr;
+    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
-    if (infoPtr == NULL) {
-	ERR (monthcal, "could not allocate info memory!\n");
-	return 0;
-    }
-
-    if ((MONTHCAL_INFO*)wndPtr->wExtra[0] != infoPtr) {
-	ERR (monthcal, "pointer assignment error!\n");
-	return 0;
-    }
 
     /* initialize info structure */
 
@@ -55,9 +46,9 @@ MONTHCAL_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-MONTHCAL_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+MONTHCAL_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    MONTHCAL_INFO *infoPtr = MONTHCAL_GetInfoPtr(wndPtr);
+    MONTHCAL_INFO *infoPtr = MONTHCAL_GetInfoPtr (hwnd);
 
 
 
@@ -76,17 +67,15 @@ MONTHCAL_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI
 MONTHCAL_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
     switch (uMsg)
     {
 
 
 	case WM_CREATE:
-	    return MONTHCAL_Create (wndPtr, wParam, lParam);
+	    return MONTHCAL_Create (hwnd, wParam, lParam);
 
 	case WM_DESTROY:
-	    return MONTHCAL_Destroy (wndPtr, wParam, lParam);
+	    return MONTHCAL_Destroy (hwnd, wParam, lParam);
 
 	default:
 	    if (uMsg >= WM_USER)

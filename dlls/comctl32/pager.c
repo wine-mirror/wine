@@ -1,7 +1,7 @@
 /*
  * Pager control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998, 1999 Eric Kohl
  *
  * NOTES
  *   This is just a dummy control. An author is needed! Any volunteers?
@@ -19,13 +19,13 @@
 #include "debug.h"
 
 
-#define PAGER_GetInfoPtr(wndPtr) ((PAGER_INFO *)wndPtr->wExtra[0])
+#define PAGER_GetInfoPtr(hwnd) ((PAGER_INFO *)GetWindowLongA(hwnd, 0))
 
 
 static __inline__ LRESULT
-PAGER_ForwardMouse (WND *wndPtr, WPARAM wParam)
+PAGER_ForwardMouse (HWND hwnd, WPARAM wParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     infoPtr->bForward = (BOOL)wParam;
 
@@ -34,36 +34,36 @@ PAGER_ForwardMouse (WND *wndPtr, WPARAM wParam)
 
 
 static __inline__ LRESULT
-PAGER_GetBkColor (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_GetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     return (LRESULT)infoPtr->clrBk;
 }
 
 
 static __inline__ LRESULT
-PAGER_GetBorder (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_GetBorder (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     return (LRESULT)infoPtr->nBorder;
 }
 
 
 static __inline__ LRESULT
-PAGER_GetButtonSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_GetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     return (LRESULT)infoPtr->nButtonSize;
 }
 
 
 static LRESULT
-PAGER_GetButtonState (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_GetButtonState (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr); */
+    /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd); */
 
     FIXME (pager, "empty stub!\n");
 
@@ -75,32 +75,31 @@ PAGER_GetButtonState (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_GetPos (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_GetPos (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     return infoPtr->nPos;
 }
 
 
 static LRESULT
-PAGER_RecalcSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_RecalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
+    DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     NMPGCALCSIZE nmpgcs;
 
     if (infoPtr->hwndChild) {
 	ZeroMemory (&nmpgcs, sizeof (NMPGCALCSIZE));
-	nmpgcs.hdr.hwndFrom = wndPtr->hwndSelf;
-	nmpgcs.hdr.idFrom = wndPtr->wIDmenu;
+	nmpgcs.hdr.hwndFrom = hwnd;
+	nmpgcs.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
 	nmpgcs.hdr.code = PGN_CALCSIZE;
-	nmpgcs.dwFlag =
-	     (wndPtr->dwStyle & PGS_HORZ) ? PGF_CALCWIDTH : PGF_CALCHEIGHT;
-	SendMessageA (GetParent (wndPtr->hwndSelf), WM_NOTIFY,
-			(WPARAM)wndPtr->wIDmenu, (LPARAM)&nmpgcs);
+	nmpgcs.dwFlag = (dwStyle & PGS_HORZ) ? PGF_CALCWIDTH : PGF_CALCHEIGHT;
+	SendMessageA (GetParent (hwnd), WM_NOTIFY,
+			(WPARAM)nmpgcs.hdr.idFrom, (LPARAM)&nmpgcs);
 
-	infoPtr->nChildSize =
-	     (wndPtr->dwStyle & PGS_HORZ) ? nmpgcs.iWidth : nmpgcs.iHeight;
+	infoPtr->nChildSize = (dwStyle & PGS_HORZ) ? nmpgcs.iWidth : nmpgcs.iHeight;
 
 
         FIXME (pager, "Child size %d\n", infoPtr->nChildSize);
@@ -113,9 +112,9 @@ PAGER_RecalcSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetBkColor (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_SetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     COLORREF clrTemp = infoPtr->clrBk;
 
     infoPtr->clrBk = (COLORREF)lParam;
@@ -127,9 +126,9 @@ PAGER_SetBkColor (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetBorder (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_SetBorder (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     INT nTemp = infoPtr->nBorder;
 
     infoPtr->nBorder = (INT)lParam;
@@ -141,9 +140,9 @@ PAGER_SetBorder (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetButtonSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     INT nTemp = infoPtr->nButtonSize;
 
     infoPtr->nButtonSize = (INT)lParam;
@@ -157,9 +156,9 @@ PAGER_SetButtonSize (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetChild (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_SetChild (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     infoPtr->hwndChild = IsWindow ((HWND)lParam) ? (HWND)lParam : 0;
 
@@ -167,7 +166,7 @@ PAGER_SetChild (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
     /* FIXME: redraw */
     if (infoPtr->hwndChild) {
-	SetParent (infoPtr->hwndChild, wndPtr->hwndSelf);
+	SetParent (infoPtr->hwndChild, hwnd);
 	SetWindowPos (infoPtr->hwndChild, HWND_TOP,
 			0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
     }
@@ -177,9 +176,9 @@ PAGER_SetChild (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static __inline__ LRESULT
-PAGER_SetPos (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_SetPos (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
     infoPtr->nPos = (INT)lParam;
 
@@ -194,23 +193,13 @@ PAGER_SetPos (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr;
 
     /* allocate memory for info structure */
     infoPtr = (PAGER_INFO *)COMCTL32_Alloc (sizeof(PAGER_INFO));
-    wndPtr->wExtra[0] = (DWORD)infoPtr;
-
-    if (infoPtr == NULL) {
-	ERR (pager, "could not allocate info memory!\n");
-	return 0;
-    }
-
-    if ((PAGER_INFO*)wndPtr->wExtra[0] != infoPtr) {
-	ERR (pager, "pointer assignment error!\n");
-	return 0;
-    }
+    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
     /* set default settings */
     infoPtr->hwndChild = (HWND)NULL;
@@ -225,9 +214,9 @@ PAGER_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
 
 
 
@@ -240,13 +229,13 @@ PAGER_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_EraseBackground (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     HBRUSH hBrush = CreateSolidBrush (infoPtr->clrBk);
     RECT rect;
 
-    GetClientRect (wndPtr->hwndSelf, &rect);
+    GetClientRect (hwnd, &rect);
     FillRect ((HDC)wParam, &rect, hBrush);
     DeleteObject (hBrush);
 
@@ -256,9 +245,9 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_MouseMove (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr); */
+    /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd); */
 
     TRACE (pager, "stub!\n");
 
@@ -270,12 +259,12 @@ PAGER_MouseMove (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_Size (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+PAGER_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     RECT rect;
 
-    GetClientRect (wndPtr->hwndSelf, &rect);
+    GetClientRect (hwnd, &rect);
     if (infoPtr->hwndChild) {
 	SetWindowPos (infoPtr->hwndChild, HWND_TOP, rect.left, rect.top,
 			rect.right - rect.left, rect.bottom - rect.top,
@@ -294,69 +283,67 @@ PAGER_Size (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI
 PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
     switch (uMsg)
     {
 	case PGM_FORWARDMOUSE:
-	    return PAGER_ForwardMouse (wndPtr, wParam);
+	    return PAGER_ForwardMouse (hwnd, wParam);
 
 	case PGM_GETBKCOLOR:
-	    return PAGER_GetBkColor (wndPtr, wParam, lParam);
+	    return PAGER_GetBkColor (hwnd, wParam, lParam);
 
 	case PGM_GETBORDER:
-	    return PAGER_GetBorder (wndPtr, wParam, lParam);
+	    return PAGER_GetBorder (hwnd, wParam, lParam);
 
 	case PGM_GETBUTTONSIZE:
-	    return PAGER_GetButtonSize (wndPtr, wParam, lParam);
+	    return PAGER_GetButtonSize (hwnd, wParam, lParam);
 
 	case PGM_GETBUTTONSTATE:
-	    return PAGER_GetButtonState (wndPtr, wParam, lParam);
+	    return PAGER_GetButtonState (hwnd, wParam, lParam);
 
 /*	case PGM_GETDROPTARGET: */
 
 	case PGM_GETPOS:
-	    return PAGER_SetPos (wndPtr, wParam, lParam);
+	    return PAGER_SetPos (hwnd, wParam, lParam);
 
 	case PGM_RECALCSIZE:
-	    return PAGER_RecalcSize (wndPtr, wParam, lParam);
+	    return PAGER_RecalcSize (hwnd, wParam, lParam);
 
 	case PGM_SETBKCOLOR:
-	    return PAGER_SetBkColor (wndPtr, wParam, lParam);
+	    return PAGER_SetBkColor (hwnd, wParam, lParam);
 
 	case PGM_SETBORDER:
-	    return PAGER_SetBorder (wndPtr, wParam, lParam);
+	    return PAGER_SetBorder (hwnd, wParam, lParam);
 
 	case PGM_SETBUTTONSIZE:
-	    return PAGER_SetButtonSize (wndPtr, wParam, lParam);
+	    return PAGER_SetButtonSize (hwnd, wParam, lParam);
 
 	case PGM_SETCHILD:
-	    return PAGER_SetChild (wndPtr, wParam, lParam);
+	    return PAGER_SetChild (hwnd, wParam, lParam);
 
 	case PGM_SETPOS:
-	    return PAGER_SetPos (wndPtr, wParam, lParam);
+	    return PAGER_SetPos (hwnd, wParam, lParam);
 
 	case WM_CREATE:
-	    return PAGER_Create (wndPtr, wParam, lParam);
+	    return PAGER_Create (hwnd, wParam, lParam);
 
 	case WM_DESTROY:
-	    return PAGER_Destroy (wndPtr, wParam, lParam);
+	    return PAGER_Destroy (hwnd, wParam, lParam);
 
 	case WM_ERASEBKGND:
-	    return PAGER_EraseBackground (wndPtr, wParam, lParam);
+	    return PAGER_EraseBackground (hwnd, wParam, lParam);
 
 	case WM_MOUSEMOVE:
-	    return PAGER_MouseMove (wndPtr, wParam, lParam);
+	    return PAGER_MouseMove (hwnd, wParam, lParam);
 
 	case WM_NOTIFY:
 	case WM_COMMAND:
-	    return SendMessageA (wndPtr->parent->hwndSelf, uMsg, wParam, lParam);
+	    return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
 
 /*	case WM_PAINT: */
-/*	    return PAGER_Paint (wndPtr, wParam); */
+/*	    return PAGER_Paint (hwnd, wParam); */
 
 	case WM_SIZE:
-	    return PAGER_Size (wndPtr, wParam, lParam);
+	    return PAGER_Size (hwnd, wParam, lParam);
 
 	default:
 	    if (uMsg >= WM_USER)

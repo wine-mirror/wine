@@ -1,7 +1,7 @@
 /*
  * Flat Scrollbar control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998, 1999 Eric Kohl
  * Copyright 1998 Alex Priem
  *
  * NOTES
@@ -21,7 +21,7 @@
 #include "debug.h"
 
 
-#define FlatSB_GetInfoPtr(wndPtr) ((FLATSB_INFO*)wndPtr->wExtra[0])
+#define FlatSB_GetInfoPtr(hwnd) ((FLATSB_INFO*)GetWindowLongA (hwnd, 0))
 
 
 BOOL WINAPI 
@@ -111,14 +111,14 @@ HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 
 
 static LRESULT
-FlatSB_Create (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+FlatSB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     return 0;
 }
 
 
 static LRESULT
-FlatSB_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
+FlatSB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     return 0;
 }
@@ -129,16 +129,14 @@ FlatSB_Destroy (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI
 FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
     switch (uMsg)
     {
 
 	case WM_CREATE:
-	    return FlatSB_Create (wndPtr, wParam, lParam);
+	    return FlatSB_Create (hwnd, wParam, lParam);
 
 	case WM_DESTROY:
-	    return FlatSB_Destroy (wndPtr, wParam, lParam);
+	    return FlatSB_Destroy (hwnd, wParam, lParam);
 
 	default:
 	    if (uMsg >= WM_USER)

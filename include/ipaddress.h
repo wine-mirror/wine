@@ -22,7 +22,7 @@ typedef struct tagIP_SUBCLASS_INFO
     WNDPROC wpOrigProc[4];
     HWND    hwndIP[4];
 	IPADDRESS_INFO *infoPtr;
-	WND 	  *wndPtr;
+    HWND    hwnd;
     UINT    uRefCount;
 } IP_SUBCLASS_INFO, *LPIP_SUBCLASS_INFO;
 
