@@ -48,10 +48,14 @@ static PALETTEENTRY COLOR_sysPaletteEntries[NB_RESERVED_COLORS] =
 };
 
 static HANDLE hSysColorTranslation = 0;
+static HANDLE hRevSysColorTranslation = 0;
 
    /* Map an EGA index (0..15) to a pixel value. Used for dithering. */
 int COLOR_mapEGAPixel[16];
 
+int* COLOR_PaletteToPixel = NULL;
+int* COLOR_PixelToPalette = NULL;
+int COLOR_ColormapSize = 0;
 
 /***********************************************************************
  *           COLOR_BuildMap
@@ -93,16 +97,29 @@ static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
  */
 static HPALETTE COLOR_InitPalette(void)
 {
-    int i, size;
+    int i, size, pixel;
     XColor color;
     HPALETTE hpalette;
     LOGPALETTE * palPtr;
-    WORD *colorTranslation;
+    WORD *colorTranslation, *revTranslation;
 
-    if (!(hSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
-				   sizeof(WORD)*NB_RESERVED_COLORS ))) return FALSE;
-    colorTranslation = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
     size = DefaultVisual( display, DefaultScreen(display) )->map_entries;
+    COLOR_ColormapSize = size;
+    if (!(hSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
+				            sizeof(WORD)*NB_RESERVED_COLORS )))
+        return FALSE;
+    if (!(hRevSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
+                                                    sizeof(WORD)*size )))
+        return FALSE;
+    colorTranslation = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
+    revTranslation   = (WORD *) GDI_HEAP_ADDR( hRevSysColorTranslation );
+
+    if (COLOR_WinColormap == DefaultColormapOfScreen(screen))
+    {
+        COLOR_PaletteToPixel = (int *)malloc( sizeof(int) * size );
+        COLOR_PixelToPalette = (int *)malloc( sizeof(int) * size );
+    }
+
     for (i = 0; i < NB_RESERVED_COLORS; i++)
     {
 	color.red   = COLOR_sysPaletteEntries[i].peRed * 65535 / 255;
@@ -110,34 +127,38 @@ static HPALETTE COLOR_InitPalette(void)
 	color.blue  = COLOR_sysPaletteEntries[i].peBlue * 65535 / 255;
 	color.flags = DoRed | DoGreen | DoBlue;
 
+        if (i < NB_RESERVED_COLORS/2)
+        {
+            /* Bottom half of the colormap */
+            pixel = i;
+            if (pixel >= size/2) continue;
+        }
+        else
+        {
+            /* Top half of the colormap */
+            pixel = size - NB_RESERVED_COLORS + i;
+            if (pixel < size/2) continue;
+        }
 	if (COLOR_WinColormap != DefaultColormapOfScreen(screen))
 	{
-	    if (i < NB_RESERVED_COLORS/2)
-	    {
-		  /* Bottom half of the colormap */
-		color.pixel = i;
-		if (color.pixel >= size/2) continue;
-	    }
-	    else
-	    {
-		  /* Top half of the colormap */
-		color.pixel = size - NB_RESERVED_COLORS + i;
-		if (color.pixel < size/2) continue;
-	    }
+            color.pixel = pixel;
 	    XStoreColor( display, COLOR_WinColormap, &color );
 	}
-	else if (!XAllocColor( display, COLOR_WinColormap, &color ))
-	{
-	    fprintf(stderr, "Warning: Not enough free colors. Try using the -privatemap option.\n" );
-	    color.pixel = color.red = color.green = color.blue = 0;
-	}
+	else
+        {
+            if (!XAllocColor( display, COLOR_WinColormap, &color ))
+            {
+                fprintf(stderr, "Warning: Not enough free colors. Try using the -privatemap option.\n" );
+                color.pixel = color.red = color.green = color.blue = 0;
+            }
+            else
+            {
+                COLOR_PaletteToPixel[pixel] = color.pixel;
+                COLOR_PixelToPalette[color.pixel] = pixel;
+            }
+        }
 	colorTranslation[i] = color.pixel;
-#if 0
-	  /* Put the allocated colors back in the list */
-	COLOR_sysPaletteEntries[i].peRed   = color.red >> 8;
-	COLOR_sysPaletteEntries[i].peGreen = color.green >> 8;
-	COLOR_sysPaletteEntries[i].peBlue  = color.blue >> 8;
-#endif
+        revTranslation[color.pixel] = i;
 	  /* Set EGA mapping if color in the first or last eight */
 	if (i < 8)
 	    COLOR_mapEGAPixel[i] = color.pixel;
@@ -232,7 +253,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
     WORD index = 0;
     WORD *mapping;
 
-    if (dc && !dc->u.x.pal.hMapping) return 0;
+    if (screenDepth > 8) return color;
     switch(color >> 24)
     {
     case 0:  /* RGB */
@@ -256,7 +277,8 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
         if (index >= NB_RESERVED_COLORS) return 0;
         mapping = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
     }
-    return mapping[index];
+    if (mapping) return mapping[index];
+    else return index;  /* Identity mapping */
 }
 
 
@@ -265,12 +287,16 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
  *
  * Set the color-mapping table in a DC.
  */
-void COLOR_SetMapping( DC *dc, HANDLE map, WORD size )
+void COLOR_SetMapping( DC *dc, HANDLE map, HANDLE revMap, WORD size )
 {
     WORD *pmap, *pnewmap;
+    WORD i;
 
     if (dc->u.x.pal.hMapping && (dc->u.x.pal.hMapping != hSysColorTranslation))
 	GDI_HEAP_FREE( dc->u.x.pal.hMapping );
+    if (dc->u.x.pal.hRevMapping &&
+        (dc->u.x.pal.hRevMapping != hRevSysColorTranslation))
+	GDI_HEAP_FREE( dc->u.x.pal.hRevMapping );
     if (map && (map != hSysColorTranslation))
     {
 	  /* Copy mapping table */
@@ -278,8 +304,17 @@ void COLOR_SetMapping( DC *dc, HANDLE map, WORD size )
 	pmap = (WORD *) GDI_HEAP_ADDR( map );
 	pnewmap = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );
 	memcpy( pnewmap, pmap, sizeof(WORD)*size );
+          /* Build reverse table */
+        dc->u.x.pal.hRevMapping = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
+                                             sizeof(WORD)*COLOR_ColormapSize );
+        pmap = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hRevMapping );
+        for (i = 0; i < size; i++) pmap[pnewmap[i]] = i;
     }
-    else dc->u.x.pal.hMapping = map;
+    else
+    {
+        dc->u.x.pal.hMapping = map;
+        dc->u.x.pal.hRevMapping = map ? hRevSysColorTranslation : 0;
+    }
     dc->u.x.pal.mappingSize = size;
 }
 
@@ -306,6 +341,7 @@ WORD RealizeDefaultPalette( HDC hdc )
     DC *dc;
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     dc->w.hPalette = STOCK_DEFAULT_PALETTE;
-    COLOR_SetMapping( dc, hSysColorTranslation, NB_RESERVED_COLORS );
+    COLOR_SetMapping( dc, hSysColorTranslation,
+                      hRevSysColorTranslation, NB_RESERVED_COLORS );
     return NB_RESERVED_COLORS;
 }

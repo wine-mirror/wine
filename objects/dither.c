@@ -85,12 +85,7 @@ static char *imageData = NULL;
  */
 BOOL DITHER_Init(void)
 {
-    int bytes_per_line = (screenDepth * MATRIX_SIZE + 7) / 8;
-    if (!(imageData = (char *) malloc( bytes_per_line * MATRIX_SIZE )))
-	return FALSE;
-    ditherImage = XCreateImage( display, DefaultVisualOfScreen(screen),
-			        screenDepth, ZPixmap, 0, imageData,
-			        MATRIX_SIZE, MATRIX_SIZE, 8, bytes_per_line );
+    XCREATEIMAGE( ditherImage, MATRIX_SIZE, MATRIX_SIZE, screenDepth );
     return (ditherImage != NULL);
 }
 
@@ -104,16 +99,12 @@ Pixmap DITHER_DitherColor( DC *dc, COLORREF color )
     unsigned int x, y;
     Pixmap pixmap;
 
-/*    printf( "Dither: %x\n", color ); */
-
     if (color != prevColor)
     {
 	int r = GetRValue( color ) * DITHER_LEVELS;
 	int g = GetGValue( color ) * DITHER_LEVELS;
 	int b = GetBValue( color ) * DITHER_LEVELS;
 	const int *pmatrix = dither_matrix;
-
-/*	WORD *mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );*/
 
 	for (y = 0; y < MATRIX_SIZE; y++)
 	{

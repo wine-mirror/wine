@@ -139,7 +139,7 @@ HBITMAP CreateBitmapIndirect( BITMAP * bmp )
 	hbitmap = 0;
     }
     else if (bmp->bmBits)  /* Set bitmap bits */
-	SetBitmapBits( hbitmap, bmp->bmHeight*bmp->bmWidthBytes, bmp->bmBits );
+	SetBitmapBits( hbitmap, bmpObjPtr->bitmap.bmHeight*bmpObjPtr->bitmap.bmWidthBytes, bmp->bmBits );
     return hbitmap;
 }
 

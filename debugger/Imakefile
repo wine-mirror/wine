@@ -1,7 +1,8 @@
 #include "../Wine.tmpl"
 
-#define IHavSubDirs
-#define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)' 'MAKE=$(MAKE)'
+#define IHaveSubdirs
+#define	PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)' 'MAKE=$(MAKE)'\
+			'LD=$(LD)'
 
 MODULE = debugger
 
@@ -16,21 +17,22 @@ SRCS = \
 	lex.yy.c \
 	info.c
 
-OBJS = $(SRCS:.c=.o)
+SUBDIRS_OBJS = \
+	opcodes/opcodes.o \
+	readline/readline.o
+
+OBJS = $(SRCS:.c=.o) $(SUBDIRS_OBJS)
 
 /*
  * All the SUBDIR stuff
  */
 MakeSubdirs($(SUBDIRS))
-MakefileSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
-CleanSubdirs($(SUBDIRS))
-IncludesSubdirs($(SUBDIRS))
 
 /*
  * The main act
  */
-WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+WineRelocatableTarget($(MODULE),,$(OBJS))
 
 depend:: dbg.tab.c dbg.tab.h lex.yy.c
 

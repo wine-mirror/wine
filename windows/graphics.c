@@ -484,7 +484,9 @@ COLORREF GetPixel( HDC hdc, short x, short y )
 {
     PALETTEENTRY entry;
     XImage * image;
-    
+    WORD * mapping;
+    int pixel;
+
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
 
@@ -492,8 +494,11 @@ COLORREF GetPixel( HDC hdc, short x, short y )
     return 0;
 #endif
 
+    if (!PtVisible( hdc, x, y )) return 0;
+
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
+#if 0
     if ((x < 0) || (y < 0)) return 0;
     
     if (!(dc->w.flags & DC_MEMORY))
@@ -505,11 +510,16 @@ COLORREF GetPixel( HDC hdc, short x, short y )
 	if (win_attr.map_state != IsViewable) return 0;
 	if ((x >= win_attr.width) || (y >= win_attr.height)) return 0;
     }
-    
+#endif
     image = XGetImage( display, dc->u.x.drawable, x, y,
 		       1, 1, AllPlanes, ZPixmap );
-    GetPaletteEntries( dc->w.hPalette, XGetPixel( image, 0, 0 ), 1, &entry );
+    pixel = XGetPixel( image, 0, 0 );
     XDestroyImage( image );
+    
+    if (screenDepth > 8) return pixel;
+    mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hRevMapping );
+    if (mapping) pixel = mapping[pixel];
+    GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
     return RGB( entry.peRed, entry.peGreen, entry.peBlue );
 }
 

@@ -2,15 +2,13 @@
  * DC clipping functions
  *
  * Copyright 1993 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
+
 #include <stdio.h>
 #include "gdi.h"
 #include "metafile.h"
 #include "stddebug.h"
 /* #define DEBUG_CLIPPING */
-/* #undef  DEBUG_CLIPPING */
 #include "debug.h"
 
 /***********************************************************************
@@ -129,7 +127,7 @@ int OffsetClipRgn( HDC hdc, short x, short y )
 
     if (dc->w.hClipRgn)
     {
-	int retval = OffsetRgn( dc->w.hClipRgn, x, y );
+	int retval = OffsetRgn( dc->w.hClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
 	CLIPPING_UpdateGCRegion( dc );
 	return retval;
     }
@@ -162,6 +160,11 @@ static int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
 {
     HRGN tempRgn, newRgn;
     int ret;
+
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
 
     if (!(newRgn = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
     if (!(tempRgn = CreateRectRgn( left, top, right, bottom )))
@@ -236,6 +239,11 @@ static int CLIPPING_IntersectVisRect( DC * dc, short left, short top,
 {
     HRGN tempRgn, newRgn;
     int ret;
+
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
 
     if (!(newRgn = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
     if (!(tempRgn = CreateRectRgn( left, top, right, bottom )))
@@ -312,10 +320,7 @@ BOOL RectVisible( HDC hdc, LPRECT rect )
     if (!dc) return FALSE;
     dprintf_clipping(stddeb,"RectVisible: %d %p\n", hdc, rect );
     if (!dc->w.hGCClipRgn) return FALSE;
-    tmpRect.left   = XLPTODP(dc, rect->left);
-    tmpRect.top    = YLPTODP(dc, rect->top);
-    tmpRect.right  = XLPTODP(dc, rect->right);
-    tmpRect.bottom = YLPTODP(dc, rect->bottom);
+    LPtoDP( hdc, (LPPOINT)rect, 2 );
     return RectInRegion( dc->w.hGCClipRgn, &tmpRect );
 }
 
@@ -325,10 +330,13 @@ BOOL RectVisible( HDC hdc, LPRECT rect )
  */
 int GetClipBox( HDC hdc, LPRECT rect )
 {
+    int ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
     dprintf_clipping(stddeb, "GetClipBox: %d %p\n", hdc, rect );
-    return GetRgnBox( dc->w.hGCClipRgn, rect );
+    ret = GetRgnBox( dc->w.hGCClipRgn, rect );
+    DPtoLP( hdc, (LPPOINT)rect, 2 );
+    return ret;
 }
 
 

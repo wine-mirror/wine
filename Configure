@@ -56,10 +56,10 @@ then
 fi
 
 LANGS=`echo En rc/sysres_*.rc | sed -e 's/rc\/sysres_//g' -e 's/\.rc//g' -e 's/ /\//g;'`
-while	expr "$LANGS" : ".*$LANG" == 0 > /dev/null
+while	expr "$LANGS" : ".*$LANG" = 0 > /dev/null
 do
 	prompt "Language ($LANGS)" LANG En
-	if	expr "$LANGS" : ".*$LANG" == 0 > /dev/null
+	if	expr "$LANGS" : ".*$LANG" = 0 > /dev/null
 	then
 		echo "\"$LANG\" is not a supported language."
 	fi
@@ -209,22 +209,37 @@ EOF
 
 echo
 echo "Creating Makefiles.  This may take a while."
-xmkmf -a
+if xmkmf -a
+then :
+else	cat << EOF
+
+WARNING:  The exit status of the command 'xmkmf -a' indicates an error.
+Maybe the Wine directory is incomplete, or Imake (see 'man xmkmf imake')
+is incorrectly configured?  In the latter case, it might be easiest to
+reinstall X11 to get a new copy of Imake.
+EOF
+fi
 
 if [ 0 -lt `find . -name "*.rej" -print | wc -l` ]
 then
 	cat << EOF
 
-WARNING:  You have some files named "*.rej".  Rejected patch files?
-Maybe you tried to upgrade Wine by diff-files, and that patch failed.
-If something doesn't work, this might be the reason.  See "man patch".
+WARNING:  You have some files named '*.rej', which usually indicates
+rejected patch files.  Maybe you tried to upgrade Wine with 'patch',
+and that some of the patches failed?  If something doesn't work, this
+might be the reason.  See 'man patch' (especially the '-p' option).
 
 List of "*.rej" files:
 
 EOF
 	find . -name "*.rej" -print
-	exit 1
 fi
 
-echo
-echo "Configure finished.  Do 'make' to compile Wine."
+if [ -f ./Makefile ]
+then
+	echo
+	echo "Configure finished.  Do 'make' to compile Wine."
+else
+	echo
+	echo "*** There was a problem with 'imake': the main Makefile has not be created."
+fi

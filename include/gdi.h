@@ -203,7 +203,8 @@ typedef struct
   /* X physical palette information */
 typedef struct
 {
-    HANDLE    hMapping;
+    HANDLE    hMapping;     /* Color mapping table (or 0 for identity) */
+    HANDLE    hRevMapping;  /* Reverse color mapping table */
     WORD      mappingSize;
 } X_PHYSPALETTE;
 

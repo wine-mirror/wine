@@ -8,7 +8,7 @@ MODULE = rc
 	echo "#include \"windows.h\"" >$*.rct
 	echo WINDOWS_H_ENDS_HERE >>$*.rct
 	cat $< >>$*.rct
-	gcc -E -x c -P $(CFLAGS) $*.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o $* -v -p $*
+	$(CC) -E -x c -P $(CFLAGS) $*.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o $* -v -p $*
 	$(RM) $*.rct
 
 XCOMM This would be nicer, but it breaks gcc (2.5.8 on Linux)  --AJ
@@ -18,7 +18,7 @@ RCSRCS = sysres.rc sysresbm.rc
 
 RCOBJS = $(RCSRCS:.rc=.o)
 
-WineRelocatableTarget($(TOP)/$(MODULE),,$(RCOBJS))
+WineRelocatableTarget($(MODULE),,$(RCOBJS))
 
 $(RCOBJS): winerc $(TOP)/include/windows.h
 

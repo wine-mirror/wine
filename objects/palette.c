@@ -178,7 +178,7 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     prev = dc->w.hPalette;
     dc->w.hPalette = hpal;
-    if (hpal != STOCK_DEFAULT_PALETTE) COLOR_SetMapping( dc, 0, 0 );
+    if (hpal != STOCK_DEFAULT_PALETTE) COLOR_SetMapping( dc, 0, 0, 0 );
     else RealizeDefaultPalette( hdc );  /* Always realize default palette */
     return prev;
 }

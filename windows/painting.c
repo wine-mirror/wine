@@ -44,6 +44,7 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
         return 0;
     }
     GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
+    DPtoLP( lps->hdc, (LPPOINT)&lps->rcPaint, 2 );
 
     SendMessage( hwnd, WM_NCPAINT, hrgnUpdate, 0 );
     DeleteObject( hrgnUpdate );
@@ -71,6 +72,7 @@ void FillWindow( HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush )
 {
     RECT rect;
     GetClientRect( hwnd, &rect );
+    DPtoLP( hdc, (LPPOINT)&rect, 2 );
     PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
 }
 

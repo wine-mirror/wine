@@ -57,10 +57,6 @@ extern void SpyInit(void);
 
 extern BOOL WIDGETS_Init(void);
 
-/* objects/dib.c */
-
-extern int DIB_BitmapInfoSize(BITMAPINFO *info, WORD coloruse);
-
 /* objects/palette.c */
 
 extern BOOL PALETTE_Init(void);

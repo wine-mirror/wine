@@ -31,12 +31,14 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
 extern ButtonTexts ButtonText;
 
-static char people[] = "People who have generously donated time to the Wine " \
-"project include Bob Amstadt, Martin Ayotte, Erik Bos, John Brezak, "\
-"Andrew Bulhak, John Burton, Peter Galbavy, Jeffery Hsu, Miguel de Icaza, " \
-"Alexandre Julliard, Scott A. Laird, Peter MacDonald, David Metcalfe, " \
-"John Richardson, Johannes Ruscheinski, Yngvi Sigurjonsson, Linus Torvalds, " \
-"Carl Williams, Karl Guenter Wuensch, and Eric Youngdale. ";
+static const char people[] = "Wine is available thanks to the work of "\
+"Bob Amstadt, Dag Asheim, Martin Ayotte, Erik Bos, John Brezak, "\
+"Andrew Bulhak, John Burton, Paul Falstad, Peter Galbavy, Jeffrey Hsu, "\
+"Miguel de Icaza, Alexandre Julliard, Jon Konrath, Scott A. Laird, "\
+"Martin von Loewis, Kenneth MacDonald, Peter MacDonald, David Metcalfe, "\
+"Michael Patra, John Richardson, Johannes Ruscheinski, Yngvi Sigurjonsson, "\
+"Rick Sladkey, William Smith, Jon Tombs, Linus Torvalds, Carl Williams, "\
+"Karl Guenter Wuensch, and Eric Youngdale.";
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 

@@ -243,10 +243,6 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
     HANDLE handle = GDI_HEAP_ALLOC( GMEM_MOVEABLE, size );
     if (!handle) return 0;
     obj = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
-    if (obj == NULL) {
-    	fprintf(stderr,"GDI_AllocObject // Error trying to get GDI_HEAD_ADDR !\n");
-    	return 0;
-    	}
     obj->hNext   = 0;
     obj->wMagic  = magic;
     obj->dwCount = ++count;

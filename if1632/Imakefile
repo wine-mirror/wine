@@ -39,23 +39,23 @@ OBJS = $(CALLOBJS) $(DLLOBJS) $(SRCS:.c=.o) $(DLLOBJS:.o=_tab.o) $(DLLOBJS:dll_.
 /*
  * If you add a new spec file, copy one of these lines
  */
-MakeDllFromSpec(commdlg,$(TOP)/$(MODULE))
-MakeDllFromSpec(gdi,$(TOP)/$(MODULE))
-MakeDllFromSpec(kernel,$(TOP)/$(MODULE))
-MakeDllFromSpec(keyboard,$(TOP)/$(MODULE))
-MakeDllFromSpec(shell,$(TOP)/$(MODULE))
-MakeDllFromSpec(mmsystem,$(TOP)/$(MODULE))
-MakeDllFromSpec(mouse,$(TOP)/$(MODULE))
-MakeDllFromSpec(sound,$(TOP)/$(MODULE))
-MakeDllFromSpec(stress,$(TOP)/$(MODULE))
-MakeDllFromSpec(system,$(TOP)/$(MODULE))
-MakeDllFromSpec(toolhelp,$(TOP)/$(MODULE))
-MakeDllFromSpec(unixlib,$(TOP)/$(MODULE))
-MakeDllFromSpec(user,$(TOP)/$(MODULE))
-MakeDllFromSpec(win87em,$(TOP)/$(MODULE))
-MakeDllFromSpec(winsock,$(TOP)/$(MODULE))
+MakeDllFromSpec(commdlg)
+MakeDllFromSpec(gdi)
+MakeDllFromSpec(kernel)
+MakeDllFromSpec(keyboard)
+MakeDllFromSpec(shell)
+MakeDllFromSpec(mmsystem)
+MakeDllFromSpec(mouse)
+MakeDllFromSpec(sound)
+MakeDllFromSpec(stress)
+MakeDllFromSpec(system)
+MakeDllFromSpec(toolhelp)
+MakeDllFromSpec(unixlib)
+MakeDllFromSpec(user)
+MakeDllFromSpec(win87em)
+MakeDllFromSpec(winsock)
 
-WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+WineRelocatableTarget($(MODULE),,$(OBJS))
 DependTarget()
 
 #ifndef WINELIB
@@ -63,7 +63,7 @@ pop.h: $(TOP)/tools/build
 	$(TOP)/tools/build -p
 
 call.o: call.S pop.h
-	gcc -I. -c -o call.o call.S
+	$(CC) -I. -c -o call.o call.S
 #endif
 
 includes::

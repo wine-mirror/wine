@@ -1,3 +1,33 @@
+Tue Dec 27 13:35:16 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [*/Imakefile]
+	All objects files are now kept in their respective directory.
+
+	* [README]
+	Rewrote most of it.
+
+	* [objects/bitblt.c]
+	Rewrote BitBlt() to look right in every case, while minimizing
+	the impact on performance. Not really finished yet.
+
+	* [objects/bitmap.c] [objects/dc.c]
+	Fixed bug with pattern brushes.
+
+	* [objects/clipping.c] [windows/painting.c]
+	Fixes for logical coordinates.
+
+	* [objects/color.c] [windows/graphics.c]
+	Fixed GetPixel() to return the correct color, and made it faster.
+
+	* [objects/region.c]
+	Fixed bug in CombineRgn() when one of the region is empty.
+
+Fri Dec 22 01:42:57 MET 1994		  Dag Asheim (dash@ifi.uio.no)
+
+	* [Configure]
+	Don't assume that expr handles '==', use '=' instead.
+	Give a (hopefully informative) message if imake fails.
+
 ----------------------------------------------------------------------
 Wed Dec  7 14:52:25 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 

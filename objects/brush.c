@@ -8,7 +8,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 #include "bitmap.h"
-#include "prototypes.h"
 #include "metafile.h"
 #include "stddebug.h"
 #include "color.h"

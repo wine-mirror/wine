@@ -18,7 +18,7 @@ OBJS = $(SRCS:.c=.o)
 #undef xi386
 #endif
 
-WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+WineRelocatableTarget($(MODULE),,$(OBJS))
 DependTarget()
 
 includes::

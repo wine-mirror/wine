@@ -138,6 +138,7 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		break;
 
 	case WM_LBUTTONUP:
+                if (GetCapture() != hWnd) break;
                 ReleaseCapture();
                 SendMessage( hWnd, BM_SETSTATE, FALSE, 0 );
                 GetClientRect( hWnd, &rect );

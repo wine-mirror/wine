@@ -12,7 +12,7 @@ SRCS = \
 
 OBJS = $(SRCS:.c=.o)
 
-WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+WineRelocatableTarget($(MODULE),,$(OBJS))
 DependTarget()
 
 includes::

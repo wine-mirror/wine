@@ -21,18 +21,15 @@ DEFINES = AutoDefines -DUSE_READLINE -DWINESTAT
 
 #define IHaveSubdirs
 #define	PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)' 'MAKE=$(MAKE)'\
-			'DEFINES=$(DEFINES)'
+			'DEFINES=$(DEFINES)' 'LD=$(LD)'
 
 COMMONSUBDIRS = \
 	controls \
-	etc \
-	include \
 	rc \
 	loader \
 	misc \
 	multimedia \
 	objects \
-	test \
 	windows
 
 EMUSUBDIRS = \
@@ -48,35 +45,33 @@ LIBSUBDIRS = \
 WINEDIR = $(LIBDIR)/wine
 
 COMMONOBJS = \
-	controls.o \
-	loader.o \
-	misc.o \
-	multimedia.o \
-	objects.o \
-	rc.o \
-	windows.o
+	controls/controls.o \
+	loader/loader.o \
+	misc/misc.o \
+	multimedia/multimedia.o \
+	objects/objects.o \
+	rc/rc.o \
+	windows/windows.o
 
 /*
  * WARNING: if1632.o must be the first object file because its code must be
  *          linked at the lowest possible addresses.
  */
 EMUOBJS = \
-	if1632.o \
-	debugger.o \
-	memory.o \
-	miscemu.o \
-	opcodes.o \
-	readline.o
+	if1632/if1632.o \
+	debugger/debugger.o \
+	memory/memory.o \
+	miscemu/miscemu.o
 
 LIBOBJS = \
-	toolkit.o
+	toolkit/toolkit.o
 
 #ifndef WINELIB
 SUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS)
-OBJS = $(COMMONOBJS) $(EMUOBJS)
+OBJS = $(EMUOBJS) $(COMMONOBJS)
 #else
 SUBDIRS = $(COMMONSUBDIRS) $(LIBSUBDIRS)
-OBJS = $(COMMONOBJS) $(LIBOBJS)
+OBJS = $(LIBOBJS) $(COMMONOBJS)
 #endif
 
 #ifdef i386BsdArchitecture
@@ -100,9 +95,9 @@ DependSubdirs($(SUBDIRS))
 AllTarget(wine.sym)
 
 #ifndef WINELIB
-NormalProgramTarget(wine,$(EMUOBJS) $(COMMONOBJS),$(DEPXLIB),$(XPM_LIB) $(XLIB),$(SYSLIBS))
+NormalProgramTarget(wine,$(OBJS),$(DEPXLIB),$(XPM_LIB) $(XLIB),$(SYSLIBS))
 #else
-NormalLibraryTarget(wine,$(LIBOBJS) $(COMMONOBJS))
+NormalLibraryTarget(wine,$(OBJS))
 #endif
 
 wine.sym: wine
@@ -119,6 +114,6 @@ etags::
 	etags `find . -name '*.[chS]' -print`
 
 distclean: clean
-	$(RM) `find . -name Makefile -print`
 	echo "/* autoconf.h generated automatically.  Run Configure */" >autoconf.h
 	echo "#error You must run Configure before you can build the makefiles." >>autoconf.h
+	$(RM) `find . -name Makefile -print`

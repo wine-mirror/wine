@@ -15,7 +15,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
-#include <linux/segment.h>
 #endif
 
 #include "neexe.h"

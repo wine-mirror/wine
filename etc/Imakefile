@@ -1,9 +1,0 @@
-#include "../Wine.tmpl"
-
-MODULE = etc
-
-AllTarget()
-
-depend::
-
-includes::

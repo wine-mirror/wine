@@ -588,6 +588,45 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
         return ERROR;
     region = &destObj->region;
 
+      /* Some optimizations for null regions */
+
+    if (src1Obj->region.type == NULLREGION)
+    {
+        switch(mode)
+        {
+        case RGN_AND:
+        case RGN_DIFF:
+            if (region->xrgn) XDestroyRegion( region->xrgn );
+            if (region->pixmap) XFreePixmap( display, region->pixmap );
+	    region->type = NULLREGION;
+	    region->xrgn = 0;
+	    return NULLREGION;
+        case RGN_OR:
+        case RGN_XOR:
+            return REGION_CopyRegion( src2Obj, destObj );
+	default:
+	    return ERROR;
+        }
+    }
+    else if (src2Obj->region.type == NULLREGION)
+    {
+        switch(mode)
+        {
+        case RGN_AND:
+            if (region->xrgn) XDestroyRegion( region->xrgn );
+            if (region->pixmap) XFreePixmap( display, region->pixmap );
+	    region->type = NULLREGION;
+	    region->xrgn = 0;
+	    return NULLREGION;
+        case RGN_OR:
+        case RGN_XOR:
+        case RGN_DIFF:
+            return REGION_CopyRegion( src1Obj, destObj );
+	default:
+	    return ERROR;
+        }
+    }
+
     if (src1Obj->region.xrgn && src2Obj->region.xrgn)
     {
 	/* Perform the operation with X regions */

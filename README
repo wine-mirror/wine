@@ -1,36 +1,20 @@
-0. LICENSE
+1. INTRODUCTION
 
-You may without charge, royalty or other payment, copy and
-distribute copies of this work and derivative works of this work
-in source or binary form provided that: (1) 
-you appropriately publish on each copy an appropriate copyright
-notice; (2) faithfully reproduce all prior copyright notices
-included in the original work (you may also add your own
-copyright notice); and (3) agree to indemnify and hold all prior
-authors, copyright holders and licensors of the work harmless
-from and against all damages arising from use of the work.
+Wine is a program that allows running MS-Windows programs under X11.
+It consists of a program loader, that loads and executes an
+MS-Windows binary, and of an emulation library that translates Windows
+API calls to their Unix/X11 equivalent.
 
-You may distribute sources of derivative works of the work
-provided that (1) (a) all source files of the original work that
-have been modified, (b) all source files of the derivative work
-that contain any party of the original work, and (c) all source
-files of the derivative work that are necessary to compile, link
-and run the derivative work without unresolved external calls and
-with the same functionality of the original work ("Necessary
-Sources") carry a prominent notice explaining the nature and date
-of the modification and/or creation.  You are encouraged to make
-the Necessary Sources available under this license in order to
-further the development and acceptance of the work.
+Wine is free software. See the file LICENSE for the details.
+Basically, you can do anything with it, except claim that you wrote it.
 
-EXCEPT AS OTHERWISE RESTRICTED BY LAW, THIS WORK IS PROVIDED
-WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES OF ANY KIND, INCLUDING
-BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OF FITNESS FOR A
-PARTICULAR PURPOSE, MERCHANTABILITY OR TITLE.  EXCEPT AS
-OTHERWISE PROVIDED BY LAW, NO AUTHOR, COPYRIGHT HOLDER OR
-LICENSOR SHALL BE LIABLE TO YOU FOR DAMAGES OF ANY KIND, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+Important note: current versions of Wine include a built-in debugger
+for 16-bit code, that is based on code from gdb. This means that if
+you redistribute a version of Wine that includes this debugger, you
+must follow the terms of the GNU General Public License.
 
-1. COMPILATION:
+
+2. COMPILATION
 
 You must have one of:
 
@@ -42,15 +26,25 @@ To build Wine, first do a "./Configure" and then a "make" (or "gmake"
 if you're running *BSD).  The executable "wine" will be built.  "wine"
 will load and run 16-bit Windows' executables. 
 
+To upgrade to a new release by using a patch file, first cd to the
+top-level directory of the release (the one containing this README
+file). Then do a "make clean", and patch the release with:
+
+    gunzip -c patch-file | patch -p1
+
+where "patch-file" is the name of the patch file (something like
+Wine-yymmdd.diff.gz). You can then re-run "./Configure", and then
+run "make". 
 
 
-2. SETUP:
+3. SETUP
 
 Wine requires you to have a file /usr/local/etc/wine.conf (you can
 supply a different name when configuring wine) or a file called .winerc
-in your homedirectory.
+in your home directory.
 
-The formatstyle of this config file is just like a windows .ini file.
+The format of this config file is just like a Windows .ini file.
+The file wine.ini contains a config file example.
 
 Here's an explanation of each section:
 
@@ -60,10 +54,10 @@ format: <driveletter> = <rootdirectory>
 default: none
 
 This section is used to specify the root directory of each `dos'drive 
-as windows' applications require a dos/mswindows based diskdrive & 
+as Windows' applications require a dos/mswindows based diskdrive & 
 directory scheme. 
 
-If you mounted you dos-partition as /dos and installed microsoft windows 
+If you mounted your dos-partition as /dos and installed Microsoft Windows 
 in c:\windows than you should specify c=/dos in the drives section.
 
 * [wine]
@@ -81,7 +75,7 @@ Used to specify an different system directory.
 format: temp = <directory>
 default: c:\temp
 
-Used to specify a directory where windows applications can store temporary
+Used to specify a directory where Windows applications can store temporary
 files.
 
 format: path = <directories separated by semi-colons>
@@ -92,7 +86,7 @@ Used to specify the path which will be used to find executables and DLL's.
 format: systemresources = <filename>
 default: c:\temp
 
-Used to specify the name of sysres.dll, a dll which is used by wine itself.
+Used to specify the name of sysres.dll, a dll which is used by Wine itself.
 
 * [serialports]
 
@@ -126,10 +120,9 @@ default: none
 Used to specify which messages will be included in the logfile.
 
 
+4. RUNNING PROGRAMS
 
-3. RUNNING PROGRAMS
-
-When invoking wine, you must specify the entire path to the executable,
+When invoking Wine, you must specify the entire path to the executable,
 or a filename only.
 
 For example: to run Windows' solitaire:
@@ -141,410 +134,22 @@ For example: to run Windows' solitaire:
 
 	wine /usr/windows/sol.exe  (using a unixfilename)
 
-note: the path of the file will also be added to the path when
+Note: the path of the file will also be added to the path when
       a full name is supplied on the commandline.
 
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
-So, occassionally it will crash.
+So, occasionally it may crash.
 
 
+5. GETTING MORE INFORMATION
 
-4. EXAMPLE CONFIGFILE
+The best place to get help or to report bugs is the Usenet newsgroup
+comp.emulators.ms-windows.wine. The Wine FAQ is posted there every
+month.
 
-----------------------------------------------------------------------------
-[drives]
-a=/mnt/fd0
-c=/dos
-d=~/Wine
+If you add something, or fix a bug, please send a patch to
+wine-new@amscons.com for inclusion in the next release.
 
-[wine]
-windows=c:\windows
-system=c:\windows\system
-temp=c:\temp
-path=c:\windows;c:\windows\system;c:\winapps\word\;c:\winapps\pctools
-systemresources=./sysres.dll
-
-[serialports]
-com1=/dev/cua1
-com2=/dev/cua1
-
-[parallelports]
-lpt1=/dev/lp0
-
-[spy]
-;File=CON
-;File=spy.log
-Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;WM_NCACTIVATE;WM_GETDLGCODE;
-Include=WM_COMMAND;
-
-----------------------------------------------------------------------------
-
-
-5. BUILD:
-
-    The documentation for the build program is in the file build-spec.txt
-
-
-6. FINALE:
-
-Good luck,
-
-	If you successfully add anything, please send me a copy.
-
-Bob Amstadt
-bob@amscons.com
-
-
-7. WHAT'S NEW
-
-WHAT'S NEW with Wine-940602: (see ChangeLog for details)
-	- CLOCK.EXE runs.
-	- ABORT command added to debugger.
-	- Windows environment is now imported from the UNIX environment.
-	- Use of save unders and backing store are now the default.  Resource
-	  and command line options have been added to disable these things.
-	- Assorted new driver functions
-	- GetAsyncKeyState()
-	- More metafile support
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940524: (see ChangeLog for details)
-	- New menu functions
-	- EnumObjects()
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940518: (see ChangeLog for details)
-	- debugger improvements
-	- bug fixes to get some dialog boxes working.
-	- skeleton for passing MCI functions.
-	- beginnings of metafile support.
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940510: (see ChangeLog for details)
-	- debugger improvements
-	- mmsystem
-	- ShellAbout() and AboutDlgProc()
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940505: (see ChangeLog for details)
-	- faster color_stretch()
-	- SetSysMenu(), GetCursor(), GetDesktopWindow()
-	- WSAGetXbyY() now non-blocking	
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940420: (see ChangeLog for details)
-	- new property functions
-	- new listbox and combo box functions
-	- GrayString() and CallGrayStringProc()
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940412: (see ChangeLog for details)
-	- menuing improvements
-	- drawing performance improvements
-	- beginnings of hooks
-	- MDI maximizing and tiling
-	- improvements in winsock implementation
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940405: (see ChangeLog for details)
-	- Mouse activation of menus working again
-	- GetprocAddress()
-	- SetDIBitsToDevice()
-	- FindWindow()
-	- int 10hm 25h and 26h
-	- in, inb, out, outb emulation
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940329: (see ChangeLog for details)
-	- MDI: child windows can be created, activated and cascaded.
-	- -depth option
-	- support for dithered brushes
-	- GetNearestColor(), RealizeDefaultPalette(), 
-	  GetSystemPaletteEntries(), and SelectPalette()
-	- System colors read from WIN.INI
-	- Keyboard menu manipulation (mouse is temporarily broken)
-	- GetFreeSystemResources()
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940322: (see ChangeLog for details)
-	- Speed improvements in bitmaps and mouse messages
-	- More MDI support.  More to come next week...
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940315: (see ChangeLog for details)
-	- Beginnings of MDI support.  More to come next week...
-	- Stress DLL
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940309: (see ChangeLog for details)
-	- New "exclude" and "include" filters for spy feature.  See sample
-	  wine.ini for details.
-	- -desktop and -name options (see ChangeLog)
-	- GetFreeSpace() and CreateIcon()
-	- and many many bug fixes!
-
-WHAT'S NEW with Wine-940301: (see ChangeLog for details)
-	- NEW Configure script to set compile time options!
-	- Support for filesystems with short (less than 14 chars) filenames.
-	- Clipboard functions!
-	- and more...
-
-WHAT'S NEW with Wine-940223: (see ChangeLog for details)
-	- FreeBSD support
-	- FloodFill()
-	- Desktop window support
-	- Menu fixes
-	- and more...
-
-WHAT'S NEW with Wine-940216: (see ChangeLog for details)
-	- Many many bug fixes
-	- Switched to using Imakefile's instead of Makefile's.
-	- Lot's of changes for libwine.a
-
-WHAT'S NEW with Wine-940209: (see ChangeLog for details)
-	- Many many bug fixes
-	- Minor directory structure reorganization
-	- New GetModule*() functions.
-	- WINSOCK DLL
-	- First stab at Wine as a library
-
-WHAT'S NEW with Wine-940201: (see ChangeLog for details)
-	- Support for huge data structures.
-	- FreeBSD support.
-	- Many many bug fixes
-
-WHAT'S NEW with version 0.8: (see ChangeLog for details)
-	- Eliminated Xt-dependent code.  Thanks to Alexandre and Martin.
-	- EnumWindows() and EnumChildWindows()
-	- Activating and deactivating of windows.
-	- More work on system menus.
-
-WHAT'S NEW with version 0.7: (see ChangeLog for details)
-	- Eliminated Xt-dependent code.  Thanks to Alexandre and Martin.
-	- Other bug fixes.
-	- IsWIndowEnabled() and EnableWindow() now implemented.
-	- New command line options.
-
-WHAT'S NEW with version 0.6: (see ChangeLog for details)
-	- Working towards elimination of Xt-dependent code.  Thanks to
-	  Alexandre and Martin.
-	- Other bug fixes.
-	- I added a rudimentary spy facility which can be turned
- 	  on from the wine.ini file.  See the sample wine.ini
-	  for details
-
-WHAT'S NEW with version 0.5: (see ChangeLog for details)
-	- Working towards elimination of Xt-dependent code.
-	- StretchBlt()
-	- GetClassName() & GetClassInfo()
-	- Implemented loader relocation types 5 and 6.
-
-WHAT'S NEW with version 0.4.14: (see ChangeLog for details)
-	- Bug fixes and enhancements
-	- Comm functions
-	- Text caret functions
-
-WHAT'S NEW with version 0.4.13: (see ChangeLog for details)
-	- Bug fixes
-	- GetCapture()
-	- More keyboard handling
-	- Polyline() and Polygon()
-
-WHAT'S NEW with version 0.4.12: (see ChangeLog for details)
-	- Bug fixes
-	- New DOS file functions
-	- Experimental Imakefiles
-
-WHAT'S NEW with version 0.4.11: (see ChangeLog for details)
-	- Bug fixes
-	- New cursor functions
-	- New file system handling
-	- Atoms
-
-WHAT'S NEW with version 0.4.10: (see ChangeLog for details)
-	- Bug fixes
-	- More scroll bar functions
-	- More icon and cursor handling
-
-WHAT'S NEW with version 0.4.9: (see ChangeLog for details)
-	- Bug fixes
-	- real MessageBox()
-	- New resource functions
-	- Icon functions
-	- Selector manipulation functions
-	- Catch()/Throw()
-
-WHAT'S NEW with version 0.4.7: (see ChangeLog for details)
-	- More dialog box functions
-	- More DOS interrupts
-	- NetBSD compatibility patches
-
-WHAT'S NEW with version 0.4.5: (see ChangeLog for details)
-	- Bug fixes
-	- focus routines
-	- dialog box functions
-	- improvements to control windows
-
-WHAT'S NEW with version 0.4.4: (see ChangeLog for details)
-	- Bug fixes
-	- New static control class
-	- Preliminary listbox, combobox and scrollbar controls
-	- System initialization file is now called "wine.ini", and
-	  may be located in the user's current directory, the
-	  user's home directory or any directory specified by
-	  the WINEPATH environment variable.
-	- The loader now searches the directories specified by the
-	  WINEPATH environment variable for programs and DLLs.
-	- Internal debugger now works on 386BSD.
-
-WHAT'S NEW with version 0.4.3: (see ChangeLog for details)
-	- Bug fixes
-	- Resource loading now able to load DLL resources
-	- Button control now based on GDI calls
-	- Preliminary system color support
-	- Miscellaneous window functions
-	- Limited debugging facility (sometimes hangs)
-
-WHAT'S NEW with version 0.4.2: (see ChangeLog for details)
-	- Bug fixes
-	- 32-bit callback functions allowed
-	- .INI file handling
-	- lstr* functions and ANSI<->OEM conversion functions.
-
-WHAT'S NEW with version 0.4.1: (see ChangeLog for details)
-	- Bug fixes
-	- Memory usage changes.
-
-WHAT'S NEW with version 0.4.0: (see ChangeLog for details)
-	- Wine now compiles and runs under NetBSD.  Patches are
-	  required for NetBSD.
-	- Wine stat patches included.  Add "-DWINESTAT" to the definition
-	  of COPTS in the main Makefile to activate.
-	- Preliminary keyboard handling.
-	- Button control window implemented.
-	- many other new functions added.
-
-WHAT'S NEW with version 0.3.1: (see ChangeLog for details)
-	- LineDDA() completed
-	- numerous bug fixes
-	- INT 1Ah implemented
-	- SOUND DLL implemented
-	- More of WIN87EM DLL implemented
-	- OpenFile() and friends implemented
-
-WHAT'S NEW with version 0.3.0: (see ChangeLog for details)
-	- Mouse capture
-	- Text justification and underlining
-	- Clipping
-	- LoadBitmap() completed
-	- Code generated by the Borland compiler should now work
-
-WHAT'S NEW with version 0.2.8: (see ChangeLog for details)
-	- Text functions from Alexandre
-	- INT 21h from Eric
-	- Menu improvements from David
-	- Bug fixes and GetProcAddress() stub from me
-
-WHAT'S NEW with version 0.2.7: (see ChangeLog for details)
-    - sol.exe gets further.  I did some debugging and now solitaire
-      stops when it tries to call GetTextExtent().  Any volunteers?
-    - Many DC updates from Alexandre.
-    - Menu updates to support underlining characters from David Metcalfe.
-
-WHAT'S NEW with version 0.2.6: (see ChangeLog for details)
-    - More region updates from Alexandre
-
-WHAT'S NEW with version 0.2.5: (see ChangeLog for details)
-    - Regions implemented by Alexandre
-    - More menuing code from me
-
-WHAT'S NEW with version 0.2.4: (see ChangeLog for details)
-    - Many improvements to GDI from Alexandre
-    - Many improvements to menu handling by me.
-
-WHAT'S NEW with version 0.2.3: (see ChangeLog for details)
-    - Bug fixes with SendMessage() and PostMessage()
-    - Preliminary menu support
-
-WHAT'S NEW with version 0.2.2: (see ChangeLog for details)
-    - Misc bug fixes
-    - More bitmap code
-    - Timers
-    - Memory DC's
-
-WHAT'S NEW with version 0.2.1:
-    - I have placed things into sub-directories.  The organization is
-      not finalized.  I imagine that the directory structure will
-      change as is necessary.  Files in the ./misc directory need
-      to be split apart and placed in apropriate directories.
-    - Tons of code from Alexandre.  He has constructed the framework
-      for handling GDI objects.  He has also provided code for DCEs.
-    - Local heap functions have been completed.
-    - Bug fixes in global.c and win.c
-    - New function GlobalQuickAlloc() combines GlobalAlloc() and
-      GlobalLock() into a single function call.
-    - New patch kit for Linux 0.99 pl11 kernel.  Thanks to Linus
-      who has graciously included our patches into the ALPHA patch
-      release cycle.
-
-WHAT'S NEW with version 0.2.0:
-    - Alexandre Julliard has provided a replacement for the Tcl code.
-      The new code uses Xlib and Xt directly with no intervening
-      interpretted language.  This should reduce the learning
-      curve for casual hackers.
-    - I changed all GLOBAL_ names to Global.
-
-WHAT'S NEW with version 0.1.1:
-    - I have completed global memory allocation, but I don't like it.
-      It is not 100% compatible with Windows.  I need some more kernel
-      modifications for 100% compatibility.
-    - Alexandre Julliard has provided written better emulation for
-      the Windows message queue.
-
-WHAT'S NEW with version 0.1.0:
-    - Latest patches from Alexandre Julliard.
-    - minor bug fix in if1632.S
-
-WHAT'S NEW with version 0.0.5:
-    - Patches from Alexandre Julliard.  Some integration with Tcl.
-    - Generic interface for callback procedures.  This will allow
-      callbacks into DLLs.
-    - MakeProcInstance() has been implemented but untested.
-
-WHAT'S NEW with version 0.0.4:
-    - Eric Youngdale modified wine.c and selector.c to allow loading
-      of Windows DLLs.
-    - Added global memory allocation routines (GlobalAlloc, GlobalFree,
-      and GlobalLock)
-    - Bitmap resource loading into global memory.
-
-WHAT'S NEW with version 0.0.3:
-    - Fixed bug with sector sizes.
-    - Registers at program startup are now set correctly.
-    - Segment fixups for relocatable-segment internal entry points.
-    - Fixed bug in DOS PSP structure.
-    - Some resource loading is done.
-    - Added "return" ordinal type to build program.
-    - Added comment capability to build program.
-
-WHAT'S NEW with version 0.0.2:
-
-    - Again thanks to Eric Youngdale for some very useful comments.
-    - The Windows startup code created by Micrsoft C 7.0 now runs 
-      to completion.
-    - Added a new patch to the kernel to increase the usable size of
-      the ldt to the full 32 entries currently allowed.
-    - Imported name relocations are now supported.
-    - Source code for my infamous test program is now included.
-    - A handful of basic Windows functions are now emulated.  See
-      "kernel.spec" for examples of how to use the build program.
-
-WHAT'S NEW with version 0.0.1:
-
-    - Eric Youngdale contributed countless improvements in memory
-      efficiency, bug fixes, and relocation.
-    - The build program has been completed.  It now lets you specify
-      how the main DLL entry point should interface to your emulation
-      library routines.  A brief description of how to build these
-      specifications is included in the file "build-spec.txt".
-    - The code to dispatch builtin DLL calls is complete, but untested.
+--
+Alexandre Julliard
+julliard@lamisun.epfl.ch

@@ -1,10 +1,9 @@
 /*
- * GDI device independent bitmaps
+ * GDI device-independent bitmaps
  *
- * Copyright 1993 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ * Copyright 1993,1994  Alexandre Julliard
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -17,22 +16,31 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "color.h"
 #include "debug.h"
 
-static int get_bpp(int depth)
+
+/***********************************************************************
+ *           DIB_GetImageWidthBytes
+ *
+ * Return the width of an X image in bytes
+ */
+int DIB_GetImageWidthBytes( int width, int depth )
 {
-	switch(depth) {
-		case 4:
-		case 8:	
-			return 1;
-		case 15:
-		case 16:
-			return 2;
-		case 24:
-			return 4;
-		default:
-			fprintf(stderr, "DIB: unsupported depth %d!\n", depth);
-			exit(1);
-	}		
+    int words;
+
+    switch(depth)
+    {
+    case 1:  words = (width + 31) / 32; break;
+    case 4:  words = (width + 7) / 8; break;
+    case 8:  words = (width + 3) / 4; break;
+    case 15:
+    case 16: words = (width + 1) / 2; break;
+    case 24: words = width; break;
+    default:
+        fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
+        exit(1);
+    }
+    return 4 * words;
 }
+
 
 /***********************************************************************
  *           DIB_BitmapInfoSize
@@ -61,11 +69,11 @@ static XImage *DIB_DIBmpToImage( BITMAPINFOHEADER * bmp, void * bmpData )
 {
     extern void _XInitImageFuncPtrs( XImage* );
     XImage * image;
-    int bytesPerLine = bmp->biWidth * get_bpp(bmp->biBitCount);
 
-    image = XCreateImage( display, DefaultVisualOfScreen( screen ),
-			  bmp->biBitCount, ZPixmap, 0, bmpData,
-			  bmp->biWidth, bmp->biHeight, 32, bytesPerLine );
+    image = XCreateImage(display, DefaultVisualOfScreen( screen ),
+                         bmp->biBitCount, ZPixmap, 0, bmpData,
+                         bmp->biWidth, bmp->biHeight, 32,
+                         DIB_GetImageWidthBytes(bmp->biWidth,bmp->biBitCount));
     if (!image) return 0;
     image->byte_order = MSBFirst;
     image->bitmap_bit_order = MSBFirst;
@@ -359,7 +367,7 @@ static void DIB_SetImageBits_RLE8(WORD lines,
 			      dprintf_bitmap(stddeb, 
 					     "DIB_SetImageBits_RLE8(): "
 					     "Delta to last line of bitmap "
-					     "(wrongly??) causes loop exit\n");
+					     "(wrongly?) causes loop exit\n");
 			    }
 			  break;
 		      }
@@ -448,8 +456,7 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
 {
     int *colorMapping;
     XImage *bmpImage;
-    void *bmpData;
-    int i, colors, widthBytes;
+    int i, colors;
 
       /* Build the color mapping table */
 
@@ -477,12 +484,7 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
     }
 
       /* Transfer the pixels */
-    widthBytes = info->bmiHeader.biWidth * get_bpp(depth);
-
-    bmpData  = malloc( lines * widthBytes );
-    bmpImage = XCreateImage( display, DefaultVisualOfScreen(screen),
-			     depth, ZPixmap, 0, bmpData,
-			     info->bmiHeader.biWidth, lines, 32, widthBytes );
+    XCREATEIMAGE(bmpImage, info->bmiHeader.biWidth, lines, depth );
 
     switch(info->bmiHeader.biBitCount)
     {
