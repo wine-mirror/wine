@@ -34,7 +34,6 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-#include "dplay.h"
 #include "wine/debug.h"
 
 #include "dpinit.h"

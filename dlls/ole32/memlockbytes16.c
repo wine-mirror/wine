@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
+#include "winuser.h"
 #include "objbase.h"
 #include "ole2.h"
 #include "winerror.h"

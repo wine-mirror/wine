@@ -190,10 +190,4 @@ typedef struct
 
 extern IConnectionPointImpl SHDOCVW_ConnectionPoint;
 
-
-/* Other stuff.. */
-
-DEFINE_GUID(IID_INotifyDBEvents,
-0xdb526cc0, 0xd188, 0x11cd, 0xad, 0x48, 0x0, 0xaa, 0x0, 0x3c, 0x9c, 0xb6);
-
 #endif /* __WINE_SHDOCVW_H */

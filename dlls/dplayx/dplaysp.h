@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "dplay.h"
 #include "dplobby.h"
 

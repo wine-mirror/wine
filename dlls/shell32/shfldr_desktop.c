@@ -35,6 +35,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wingdi.h"
+#include "winuser.h"
 
 #include "ole2.h"
 #include "shlguid.h"

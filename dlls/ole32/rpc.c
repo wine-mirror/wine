@@ -30,6 +30,7 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "objbase.h"
 #include "ole2.h"
 #include "ole2ver.h"

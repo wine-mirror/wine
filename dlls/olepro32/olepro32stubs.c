@@ -26,6 +26,7 @@
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "ole2.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);

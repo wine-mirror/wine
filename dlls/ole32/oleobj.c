@@ -24,6 +24,7 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "wine/debug.h"
 #include "ole2.h"
@@ -758,4 +759,3 @@ HRESULT WINAPI CreateDataAdviseHolder(
 
   return E_OUTOFMEMORY;
 }
-

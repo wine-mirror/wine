@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "mmsystem.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "vfw.h"
 
 #define IDS_NAME        100

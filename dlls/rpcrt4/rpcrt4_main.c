@@ -110,6 +110,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "wine/unicode.h"
 #include "rpc.h"
 

@@ -30,11 +30,11 @@
 #include "winnls.h"
 #include "wine/debug.h"
 
-#include "dplobby.h"
-#include "dpinit.h"
 #include "dplayx_global.h"
 #include "dplayx_messages.h"
 #include "dplayx_queue.h"
+#include "dplobby.h"
+#include "dpinit.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 

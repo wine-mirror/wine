@@ -108,11 +108,9 @@ interface IOleInPlaceActiveObject : IOleWindow
 {
     typedef [unique] IOleInPlaceActiveObject *LPOLEINPLACEACTIVEOBJECT;
 
-cpp_quote("struct tagMSG;")  /* FIXME */
-
     [local]
     HRESULT TranslateAccelerator(
-        [in] struct tagMSG *lpmsg);
+        [in] LPMSG lpmsg);
 
     [call_as(TranslateAccelerator)]
     HRESULT RemoteTranslateAccelerator();
@@ -220,7 +218,7 @@ interface IOleInPlaceFrame : IOleInPlaceUIWindow
         [in] BOOL fEnable);
 
     HRESULT TranslateAccelerator(
-        [in] struct tagMSG *lpmsg,
+        [in] LPMSG lpmsg,
         [in] WORD wID);
 }
 
@@ -686,7 +684,7 @@ interface IOleObject : IUnknown
 
     HRESULT DoVerb(
         [in] LONG iVerb,
-        [in, unique] struct tagMSG *lpmsg,
+        [in, unique] LPMSG lpmsg,
         [in, unique] IOleClientSite *pActiveSite,
         [in] LONG lindex,
         [in] HWND hwndParent,

@@ -28,6 +28,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 
+static const GUID IID_INotifyDBEvents =
+    { 0xdb526cc0, 0xd188, 0x11cd, { 0xad, 0x48, 0x00, 0xaa, 0x00, 0x3c, 0x9c, 0xb6 } };
+
 /**********************************************************************
  * Implement the IConnectionPointContainer interface
  */

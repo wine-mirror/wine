@@ -272,7 +272,6 @@ typedef struct IOleInPlaceActiveObject IOleInPlaceActiveObject;
 
 typedef IOleInPlaceActiveObject *LPOLEINPLACEACTIVEOBJECT;
 
-struct tagMSG;
 /*****************************************************************************
  * IOleInPlaceActiveObject interface
  */
@@ -284,14 +283,7 @@ DEFINE_GUID(IID_IOleInPlaceActiveObject, 0x00000117, 0x0000, 0x0000, 0xc0,0x00, 
 struct IOleInPlaceActiveObject : public IOleWindow
 {
     virtual HRESULT STDMETHODCALLTYPE TranslateAccelerator(
-        struct tagMSG {
-            HWND hwnd;
-            UINT message;
-            WPARAM wParam;
-            LPARAM lParam;
-            DWORD time;
-            POINT pt;
-        }* lpmsg) = 0;
+        LPMSG lpmsg) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE OnFrameWindowActivate(
         BOOL fActivate) = 0;
@@ -340,7 +332,7 @@ struct IOleInPlaceActiveObjectVtbl {
     /*** IOleInPlaceActiveObject methods ***/
     HRESULT (STDMETHODCALLTYPE *TranslateAccelerator)(
         IOleInPlaceActiveObject* This,
-        struct tagMSG* lpmsg);
+        LPMSG lpmsg);
 
     HRESULT (STDMETHODCALLTYPE *OnFrameWindowActivate)(
         IOleInPlaceActiveObject* This,
@@ -388,7 +380,7 @@ struct IOleInPlaceActiveObjectVtbl {
     STDMETHOD_(HRESULT,GetWindow)(THIS_ HWND* phwnd) PURE; \
     STDMETHOD_(HRESULT,ContextSensitiveHelp)(THIS_ BOOL fEnterMode) PURE; \
     /*** IOleInPlaceActiveObject methods ***/ \
-    STDMETHOD_(HRESULT,TranslateAccelerator)(THIS_ struct tagMSG* lpmsg) PURE; \
+    STDMETHOD_(HRESULT,TranslateAccelerator)(THIS_ LPMSG lpmsg) PURE; \
     STDMETHOD_(HRESULT,OnFrameWindowActivate)(THIS_ BOOL fActivate) PURE; \
     STDMETHOD_(HRESULT,OnDocWindowActivate)(THIS_ BOOL fActivate) PURE; \
     STDMETHOD_(HRESULT,ResizeBorder)(THIS_ LPCRECT prcBorder, IOleInPlaceUIWindow* pUIWindow, BOOL fFrameWindow) PURE; \
@@ -403,7 +395,7 @@ void __RPC_STUB IOleInPlaceActiveObject_RemoteTranslateAccelerator_Stub(
     DWORD* pdwStubPhase);
 HRESULT CALLBACK IOleInPlaceActiveObject_TranslateAccelerator_Proxy(
     IOleInPlaceActiveObject* This,
-    struct tagMSG* lpmsg);
+    LPMSG lpmsg);
 HRESULT __RPC_STUB IOleInPlaceActiveObject_TranslateAccelerator_Stub(
     IOleInPlaceActiveObject* This);
 HRESULT CALLBACK IOleInPlaceActiveObject_OnFrameWindowActivate_Proxy(
@@ -652,7 +644,7 @@ struct IOleInPlaceFrame : public IOleInPlaceUIWindow
         BOOL fEnable) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE TranslateAccelerator(
-        struct tagMSG* lpmsg,
+        LPMSG lpmsg,
         WORD wID) = 0;
 
 };
@@ -729,7 +721,7 @@ struct IOleInPlaceFrameVtbl {
 
     HRESULT (STDMETHODCALLTYPE *TranslateAccelerator)(
         IOleInPlaceFrame* This,
-        struct tagMSG* lpmsg,
+        LPMSG lpmsg,
         WORD wID);
 
 };
@@ -776,7 +768,7 @@ struct IOleInPlaceFrameVtbl {
     STDMETHOD_(HRESULT,RemoveMenus)(THIS_ HMENU hmenuShared) PURE; \
     STDMETHOD_(HRESULT,SetStatusText)(THIS_ LPCOLESTR pszStatusText) PURE; \
     STDMETHOD_(HRESULT,EnableModeless)(THIS_ BOOL fEnable) PURE; \
-    STDMETHOD_(HRESULT,TranslateAccelerator)(THIS_ struct tagMSG* lpmsg, WORD wID) PURE;
+    STDMETHOD_(HRESULT,TranslateAccelerator)(THIS_ LPMSG lpmsg, WORD wID) PURE;
 
 HRESULT CALLBACK IOleInPlaceFrame_InsertMenus_Proxy(
     IOleInPlaceFrame* This,
@@ -823,7 +815,7 @@ void __RPC_STUB IOleInPlaceFrame_EnableModeless_Stub(
     DWORD* pdwStubPhase);
 HRESULT CALLBACK IOleInPlaceFrame_TranslateAccelerator_Proxy(
     IOleInPlaceFrame* This,
-    struct tagMSG* lpmsg,
+    LPMSG lpmsg,
     WORD wID);
 void __RPC_STUB IOleInPlaceFrame_TranslateAccelerator_Stub(
     struct IRpcStubBuffer* This,
@@ -2543,7 +2535,7 @@ struct IOleObject : public IUnknown
 
     virtual HRESULT STDMETHODCALLTYPE DoVerb(
         LONG iVerb,
-        struct tagMSG* lpmsg,
+        LPMSG lpmsg,
         IOleClientSite* pActiveSite,
         LONG lindex,
         HWND hwndParent,
@@ -2654,7 +2646,7 @@ struct IOleObjectVtbl {
     HRESULT (STDMETHODCALLTYPE *DoVerb)(
         IOleObject* This,
         LONG iVerb,
-        struct tagMSG* lpmsg,
+        LPMSG lpmsg,
         IOleClientSite* pActiveSite,
         LONG lindex,
         HWND hwndParent,
@@ -2757,7 +2749,7 @@ struct IOleObjectVtbl {
     STDMETHOD_(HRESULT,GetMoniker)(THIS_ DWORD dwAssign, DWORD dwWhichMoniker, IMoniker** ppmk) PURE; \
     STDMETHOD_(HRESULT,InitFromData)(THIS_ IDataObject* pDataObject, BOOL fCreation, DWORD dwReserved) PURE; \
     STDMETHOD_(HRESULT,GetClipboardData)(THIS_ DWORD dwReserved, IDataObject** ppDataObject) PURE; \
-    STDMETHOD_(HRESULT,DoVerb)(THIS_ LONG iVerb, struct tagMSG* lpmsg, IOleClientSite* pActiveSite, LONG lindex, HWND hwndParent, LPCRECT lprcPosRect) PURE; \
+    STDMETHOD_(HRESULT,DoVerb)(THIS_ LONG iVerb, LPMSG lpmsg, IOleClientSite* pActiveSite, LONG lindex, HWND hwndParent, LPCRECT lprcPosRect) PURE; \
     STDMETHOD_(HRESULT,EnumVerbs)(THIS_ IEnumOLEVERB** ppEnumOleVerb) PURE; \
     STDMETHOD_(HRESULT,Update)(THIS) PURE; \
     STDMETHOD_(HRESULT,IsUpToDate)(THIS) PURE; \
@@ -2845,7 +2837,7 @@ void __RPC_STUB IOleObject_GetClipboardData_Stub(
 HRESULT CALLBACK IOleObject_DoVerb_Proxy(
     IOleObject* This,
     LONG iVerb,
-    struct tagMSG* lpmsg,
+    LPMSG lpmsg,
     IOleClientSite* pActiveSite,
     LONG lindex,
     HWND hwndParent,

@@ -28,6 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "ole2.h"
 #include "winerror.h"
 

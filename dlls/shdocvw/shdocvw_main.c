@@ -24,7 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "initguid.h"
+#include "winuser.h"
 #include "ole2.h"
 #include "shlwapi.h"
 

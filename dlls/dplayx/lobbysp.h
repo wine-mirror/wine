@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "dplobby.h"
 
 /* GUID for IDPLobbySP {5A4E5A20-2CED-11d0-A889-00A0C905433C} */
