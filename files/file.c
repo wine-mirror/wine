@@ -198,19 +198,10 @@ HFILE FILE_DupUnixHandle( int fd, DWORD access )
 int FILE_GetUnixHandle( HANDLE handle, DWORD access )
 {
     int unix_handle = -1;
-    if (access == GENERIC_READ)
-    {
-        struct get_read_fd_request *req = get_req_buffer();
-        req->handle = handle;
-        server_call_fd( REQ_GET_READ_FD, -1, &unix_handle );
-    }
-    else if (access == GENERIC_WRITE)
-    {
-        struct get_write_fd_request *req = get_req_buffer();
-        req->handle = handle;
-        server_call_fd( REQ_GET_WRITE_FD, -1, &unix_handle );
-    }
-    else ERR( "bad access %08lx\n", access );
+    struct get_handle_fd_request *req = get_req_buffer();
+    req->handle = handle;
+    req->access = access;
+    server_call_fd( REQ_GET_HANDLE_FD, -1, &unix_handle );
     return unix_handle;
 }
 

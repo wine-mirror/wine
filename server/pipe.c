@@ -37,8 +37,7 @@ struct pipe
 
 static void pipe_dump( struct object *obj, int verbose );
 static int pipe_get_poll_events( struct object *obj );
-static int pipe_get_read_fd( struct object *obj );
-static int pipe_get_write_fd( struct object *obj );
+static int pipe_get_fd( struct object *obj );
 static int pipe_get_info( struct object *obj, struct get_file_info_request *req );
 static void pipe_destroy( struct object *obj );
 
@@ -52,8 +51,7 @@ static const struct object_ops pipe_ops =
     no_satisfied,                 /* satisfied */
     pipe_get_poll_events,         /* get_poll_events */
     default_poll_event,           /* poll_event */
-    pipe_get_read_fd,             /* get_read_fd */
-    pipe_get_write_fd,            /* get_write_fd */
+    pipe_get_fd,                  /* get_fd */
     no_flush,                     /* flush */
     pipe_get_info,                /* get_file_info */
     pipe_destroy                  /* destroy */
@@ -114,7 +112,7 @@ static int pipe_get_poll_events( struct object *obj )
     return (pipe->side == READ_SIDE) ? POLLIN : POLLOUT;
 }
 
-static int pipe_get_read_fd( struct object *obj )
+static int pipe_get_fd( struct object *obj )
 {
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
@@ -122,29 +120,6 @@ static int pipe_get_read_fd( struct object *obj )
     if (!pipe->other)
     {
         set_error( STATUS_PIPE_BROKEN );
-        return -1;
-    }
-    if (pipe->side != READ_SIDE)  /* FIXME: should not be necessary */
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return -1;
-    }
-    return dup( pipe->obj.fd );
-}
-
-static int pipe_get_write_fd( struct object *obj )
-{
-    struct pipe *pipe = (struct pipe *)obj;
-    assert( obj->ops == &pipe_ops );
-
-    if (!pipe->other)
-    {
-        set_error( STATUS_PIPE_BROKEN );
-        return -1;
-    }
-    if (pipe->side != WRITE_SIDE)  /* FIXME: should not be necessary */
-    {
-        set_error( STATUS_ACCESS_DENIED );
         return -1;
     }
     return dup( pipe->obj.fd );

@@ -130,7 +130,6 @@ struct new_process_request
     IN  int          hstdout;      /* handle for stdout */
     IN  int          hstderr;      /* handle for stderr */
     IN  int          cmd_show;     /* main window show mode */
-    IN  int          alloc_fd;     /* create the fd pair right now? */
     IN  VARARG(filename,string);   /* file name of main exe */
 };
 
@@ -542,19 +541,13 @@ struct alloc_file_handle_request
 };
 
 
-/* Get a Unix fd to read from a file */
-struct get_read_fd_request
+/* Get a Unix fd to access a file */
+struct get_handle_fd_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
-};
-
-
-/* Get a Unix fd to write to a file */
-struct get_write_fd_request
-{
-    REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  unsigned int access;        /* wanted access rights */
+    OUT int          fd;            /* file descriptor */
 };
 
 
@@ -1396,8 +1389,7 @@ enum request
     REQ_OPEN_SEMAPHORE,
     REQ_CREATE_FILE,
     REQ_ALLOC_FILE_HANDLE,
-    REQ_GET_READ_FD,
-    REQ_GET_WRITE_FD,
+    REQ_GET_HANDLE_FD,
     REQ_SET_FILE_POINTER,
     REQ_TRUNCATE_FILE,
     REQ_SET_FILE_TIME,
@@ -1513,8 +1505,7 @@ union generic_request
     struct open_semaphore_request open_semaphore;
     struct create_file_request create_file;
     struct alloc_file_handle_request alloc_file_handle;
-    struct get_read_fd_request get_read_fd;
-    struct get_write_fd_request get_write_fd;
+    struct get_handle_fd_request get_handle_fd;
     struct set_file_pointer_request set_file_pointer;
     struct truncate_file_request truncate_file;
     struct set_file_time_request set_file_time;
@@ -1588,7 +1579,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 29
+#define SERVER_PROTOCOL_VERSION 30
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

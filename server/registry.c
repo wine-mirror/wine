@@ -137,8 +137,7 @@ static const struct object_ops key_ops =
     NULL,                    /* satisfied */
     NULL,                    /* get_poll_events */
     NULL,                    /* poll_event */
-    no_read_fd,              /* get_read_fd */
-    no_write_fd,             /* get_write_fd */
+    no_get_fd,               /* get_fd */
     no_flush,                /* flush */
     no_get_file_info,        /* get_file_info */
     key_destroy              /* destroy */
@@ -1341,7 +1340,7 @@ static void load_registry( struct key *key, int handle )
     int fd;
 
     if (!(obj = get_handle_obj( current->process, handle, GENERIC_READ, NULL ))) return;
-    fd = obj->ops->get_read_fd( obj );
+    fd = obj->ops->get_fd( obj );
     release_object( obj );
     if (fd != -1)
     {
@@ -1436,7 +1435,7 @@ static void save_registry( struct key *key, int handle )
         return;
     }
     if (!(obj = get_handle_obj( current->process, handle, GENERIC_WRITE, NULL ))) return;
-    fd = obj->ops->get_write_fd( obj );
+    fd = obj->ops->get_fd( obj );
     release_object( obj );
     if (fd != -1)
     {

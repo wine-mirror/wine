@@ -58,12 +58,12 @@ struct screen_buffer
 
 static void console_input_dump( struct object *obj, int verbose );
 static int console_input_get_poll_events( struct object *obj );
-static int console_input_get_read_fd( struct object *obj );
+static int console_input_get_fd( struct object *obj );
 static void console_input_destroy( struct object *obj );
 
 static void screen_buffer_dump( struct object *obj, int verbose );
 static int screen_buffer_get_poll_events( struct object *obj );
-static int screen_buffer_get_write_fd( struct object *obj );
+static int screen_buffer_get_fd( struct object *obj );
 static void screen_buffer_destroy( struct object *obj );
 
 /* common routine */
@@ -79,8 +79,7 @@ static const struct object_ops console_input_ops =
     no_satisfied,                     /* satisfied */
     console_input_get_poll_events,    /* get_poll_events */
     default_poll_event,               /* poll_event */
-    console_input_get_read_fd,        /* get_read_fd */
-    no_write_fd,                      /* get_write_fd */
+    console_input_get_fd,             /* get_fd */
     no_flush,                         /* flush */
     console_get_info,                 /* get_file_info */
     console_input_destroy             /* destroy */
@@ -96,8 +95,7 @@ static const struct object_ops screen_buffer_ops =
     no_satisfied,                     /* satisfied */
     screen_buffer_get_poll_events,    /* get_poll_events */
     default_poll_event,               /* poll_event */
-    no_read_fd,                       /* get_read_fd */
-    screen_buffer_get_write_fd,       /* get_write_fd */
+    screen_buffer_get_fd,             /* get_fd */
     no_flush,                         /* flush */
     console_get_info,                 /* get_file_info */
     screen_buffer_destroy             /* destroy */
@@ -352,7 +350,7 @@ static int console_input_get_poll_events( struct object *obj )
     return POLLIN;
 }
 
-static int console_input_get_read_fd( struct object *obj )
+static int console_input_get_fd( struct object *obj )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
@@ -393,7 +391,7 @@ static int screen_buffer_get_poll_events( struct object *obj )
     return POLLOUT;
 }
 
-static int screen_buffer_get_write_fd( struct object *obj )
+static int screen_buffer_get_fd( struct object *obj )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
@@ -483,12 +481,12 @@ DECL_HANDLER(set_console_fd)
 
     if (!(obj = get_handle_obj( current->process, req->file_handle,
                                 GENERIC_READ | GENERIC_WRITE, NULL ))) return;
-    if ((fd_in = obj->ops->get_read_fd( obj )) == -1)
+    if ((fd_in = obj->ops->get_fd( obj )) == -1)
     {
         release_object( obj );
         return;
     }
-    fd_out = obj->ops->get_write_fd( obj );
+    fd_out = dup( fd_in );
     release_object( obj );
     if (fd_out != -1)
     {

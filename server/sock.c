@@ -69,8 +69,7 @@ static const struct object_ops sock_ops =
     no_satisfied,                 /* satisfied */
     sock_get_poll_events,         /* get_poll_events */
     sock_poll_event,              /* poll_event */
-    sock_get_fd,                  /* get_read_fd */
-    sock_get_fd,                  /* get_write_fd */
+    sock_get_fd,                  /* get_fd */
     no_flush,                     /* flush */
     no_get_file_info,             /* get_file_info */
     sock_destroy                  /* destroy */

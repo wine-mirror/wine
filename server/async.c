@@ -58,8 +58,7 @@ struct async
 static void async_dump( struct object *obj, int verbose );
 static void async_destroy( struct object *obj );
 static int async_get_poll_events( struct object *obj );
-static int async_get_read_fd( struct object *obj );
-static int async_get_write_fd( struct object *obj );
+static int async_get_fd( struct object *obj );
 static int async_get_info( struct object *obj, struct get_file_info_request *req );
 static void async_poll_event( struct object *obj, int event );
 
@@ -73,8 +72,7 @@ static const struct object_ops async_ops =
     no_satisfied,                 /* satisfied */
     async_get_poll_events,        /* get_poll_events */
     async_poll_event,             /* poll_event */
-    async_get_read_fd,            /* get_read_fd */
-    async_get_write_fd,           /* get_write_fd */
+    async_get_fd,                 /* get_fd */
     no_flush,                     /* flush */
     async_get_info,               /* get_file_info */
     async_destroy                 /* destroy */
@@ -115,14 +113,7 @@ static int async_get_poll_events( struct object *obj )
     return serial_async_get_poll_events(ov);
 }
 
-static int async_get_read_fd( struct object *obj )
-{
-    struct async *async = (struct async *)obj;
-    assert( obj->ops == &async_ops );
-    return dup( async->obj.fd );
-}
-
-static int async_get_write_fd( struct object *obj )
+static int async_get_fd( struct object *obj )
 {
     struct async *async = (struct async *)obj;
     assert( obj->ops == &async_ops );

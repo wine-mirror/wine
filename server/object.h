@@ -46,10 +46,8 @@ struct object_ops
     int  (*get_poll_events)(struct object *);
     /* a poll() event occured */
     void (*poll_event)(struct object *,int event);
-    /* return a Unix fd that can be used to read from the object */
-    int  (*get_read_fd)(struct object *);
-    /* return a Unix fd that can be used to write to the object */
-    int  (*get_write_fd)(struct object *);
+    /* return a Unix fd that can be used to read/write from the object */
+    int  (*get_fd)(struct object *);
     /* flush the object buffers */
     int  (*flush)(struct object *);
     /* get file information */
@@ -93,8 +91,7 @@ extern void release_object( void *obj );
 extern struct object *find_object( const WCHAR *name, size_t len );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
-extern int no_read_fd( struct object *obj );
-extern int no_write_fd( struct object *obj );
+extern int no_get_fd( struct object *obj );
 extern int no_flush( struct object *obj );
 extern int no_get_file_info( struct object *obj, struct get_file_info_request *info );
 extern void no_destroy( struct object *obj );

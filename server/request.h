@@ -106,8 +106,7 @@ DECL_HANDLER(release_semaphore);
 DECL_HANDLER(open_semaphore);
 DECL_HANDLER(create_file);
 DECL_HANDLER(alloc_file_handle);
-DECL_HANDLER(get_read_fd);
-DECL_HANDLER(get_write_fd);
+DECL_HANDLER(get_handle_fd);
 DECL_HANDLER(set_file_pointer);
 DECL_HANDLER(truncate_file);
 DECL_HANDLER(set_file_time);
@@ -222,8 +221,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_open_semaphore,
     (req_handler)req_create_file,
     (req_handler)req_alloc_file_handle,
-    (req_handler)req_get_read_fd,
-    (req_handler)req_get_write_fd,
+    (req_handler)req_get_handle_fd,
     (req_handler)req_set_file_pointer,
     (req_handler)req_truncate_file,
     (req_handler)req_set_file_time,

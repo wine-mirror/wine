@@ -34,8 +34,7 @@ static const struct object_ops change_ops =
     no_satisfied,             /* satisfied */
     NULL,                     /* get_poll_events */
     NULL,                     /* poll_event */
-    no_read_fd,               /* get_read_fd */
-    no_write_fd,              /* get_write_fd */
+    no_get_fd,                /* get_fd */
     no_flush,                 /* flush */
     no_get_file_info,         /* get_file_info */
     no_destroy                /* destroy */

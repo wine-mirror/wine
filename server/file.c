@@ -45,8 +45,7 @@ static struct file *file_hash[NAME_HASH_SIZE];
 
 static void file_dump( struct object *obj, int verbose );
 static int file_get_poll_events( struct object *obj );
-static int file_get_read_fd( struct object *obj );
-static int file_get_write_fd( struct object *obj );
+static int file_get_fd( struct object *obj );
 static int file_flush( struct object *obj );
 static int file_get_info( struct object *obj, struct get_file_info_request *req );
 static void file_destroy( struct object *obj );
@@ -61,8 +60,7 @@ static const struct object_ops file_ops =
     no_satisfied,                 /* satisfied */
     file_get_poll_events,         /* get_poll_events */
     default_poll_event,           /* poll_event */
-    file_get_read_fd,             /* get_read_fd */
-    file_get_write_fd,            /* get_write_fd */
+    file_get_fd,                  /* get_fd */
     file_flush,                   /* flush */
     file_get_info,                /* get_file_info */
     file_destroy                  /* destroy */
@@ -233,14 +231,7 @@ static int file_get_poll_events( struct object *obj )
     return events;
 }
 
-static int file_get_read_fd( struct object *obj )
-{
-    struct file *file = (struct file *)obj;
-    assert( obj->ops == &file_ops );
-    return dup( file->obj.fd );
-}
-
-static int file_get_write_fd( struct object *obj )
+static int file_get_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
@@ -480,26 +471,15 @@ DECL_HANDLER(alloc_file_handle)
     else set_error( STATUS_INVALID_PARAMETER );
 }
 
-/* get a Unix fd to read from a file */
-DECL_HANDLER(get_read_fd)
+/* get a Unix fd to access a file */
+DECL_HANDLER(get_handle_fd)
 {
     struct object *obj;
 
-    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_READ, NULL )))
+    req->fd = -1;
+    if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
     {
-        set_reply_fd( current, obj->ops->get_read_fd( obj ) );
-        release_object( obj );
-    }
-}
-
-/* get a Unix fd to write to a file */
-DECL_HANDLER(get_write_fd)
-{
-    struct object *obj;
-
-    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_WRITE, NULL )))
-    {
-        set_reply_fd( current, obj->ops->get_write_fd( obj ) );
+        set_reply_fd( current, obj->ops->get_fd( obj ) );
         release_object( obj );
     }
 }

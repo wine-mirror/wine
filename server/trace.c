@@ -256,7 +256,6 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
-    fprintf( stderr, " alloc_fd=%d,", req->alloc_fd );
     fprintf( stderr, " filename=" );
     cur_pos += dump_varargs_string( req );
 }
@@ -657,14 +656,15 @@ static void dump_alloc_file_handle_reply( const struct alloc_file_handle_request
     fprintf( stderr, " handle=%d", req->handle );
 }
 
-static void dump_get_read_fd_request( const struct get_read_fd_request *req )
+static void dump_get_handle_fd_request( const struct get_handle_fd_request *req )
 {
-    fprintf( stderr, " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " access=%08x", req->access );
 }
 
-static void dump_get_write_fd_request( const struct get_write_fd_request *req )
+static void dump_get_handle_fd_reply( const struct get_handle_fd_request *req )
 {
-    fprintf( stderr, " handle=%d", req->handle );
+    fprintf( stderr, " fd=%d", req->fd );
 }
 
 static void dump_set_file_pointer_request( const struct set_file_pointer_request *req )
@@ -1487,8 +1487,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_semaphore_request,
     (dump_func)dump_create_file_request,
     (dump_func)dump_alloc_file_handle_request,
-    (dump_func)dump_get_read_fd_request,
-    (dump_func)dump_get_write_fd_request,
+    (dump_func)dump_get_handle_fd_request,
     (dump_func)dump_set_file_pointer_request,
     (dump_func)dump_truncate_file_request,
     (dump_func)dump_set_file_time_request,
@@ -1600,8 +1599,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_semaphore_reply,
     (dump_func)dump_create_file_reply,
     (dump_func)dump_alloc_file_handle_reply,
-    (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_get_handle_fd_reply,
     (dump_func)dump_set_file_pointer_reply,
     (dump_func)0,
     (dump_func)0,
@@ -1713,8 +1711,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_semaphore",
     "create_file",
     "alloc_file_handle",
-    "get_read_fd",
-    "get_write_fd",
+    "get_handle_fd",
     "set_file_pointer",
     "truncate_file",
     "set_file_time",

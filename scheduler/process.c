@@ -778,7 +778,6 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
             req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
         }
         req->cmd_show = startup->wShowWindow;
-        req->alloc_fd = 0;
 
         if (hFile == -1)  /* unix process */
         {

@@ -48,8 +48,7 @@ static const struct object_ops process_ops =
     no_satisfied,                /* satisfied */
     NULL,                        /* get_poll_events */
     NULL,                        /* poll_event */
-    no_read_fd,                  /* get_read_fd */
-    no_write_fd,                 /* get_write_fd */
+    no_get_fd,                   /* get_fd */
     no_flush,                    /* flush */
     no_get_file_info,            /* get_file_info */
     process_destroy              /* destroy */
@@ -87,8 +86,7 @@ static const struct object_ops startup_info_ops =
     no_satisfied,                  /* satisfied */
     NULL,                          /* get_poll_events */
     NULL,                          /* poll_event */
-    no_read_fd,                    /* get_read_fd */
-    no_write_fd,                   /* get_write_fd */
+    no_get_fd,                     /* get_fd */
     no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
     startup_info_destroy           /* destroy */
@@ -716,7 +714,6 @@ DECL_HANDLER(new_process)
 {
     size_t len = get_req_data_size( req );
     struct startup_info *info;
-    int sock[2];
 
     if (current->info)
     {
@@ -752,24 +749,6 @@ DECL_HANDLER(new_process)
     }
     memcpy( info->filename, get_req_data(req), len );
     info->filename[len] = 0;
-
-    if (req->alloc_fd)
-    {
-        if (socketpair( AF_UNIX, SOCK_STREAM, 0, sock ) == -1)
-        {
-            file_set_error();
-            release_object( info );
-            return;
-        }
-        if (!create_process( sock[0] ))
-        {
-            release_object( info );
-            close( sock[1] );
-            return;
-        }
-        /* thread object will be released when the thread gets killed */
-        set_reply_fd( current, sock[1] );
-    }
     current->info = info;
 }
 

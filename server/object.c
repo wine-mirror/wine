@@ -251,13 +251,7 @@ int no_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* not abandoned */
 }
 
-int no_read_fd( struct object *obj )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return -1;
-}
-
-int no_write_fd( struct object *obj )
+int no_get_fd( struct object *obj )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return -1;

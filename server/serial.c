@@ -37,8 +37,7 @@
 #include "request.h"
 
 static void serial_dump( struct object *obj, int verbose );
-static int serial_get_read_fd( struct object *obj );
-static int serial_get_write_fd( struct object *obj );
+static int serial_get_fd( struct object *obj );
 static int serial_get_info( struct object *obj, struct get_file_info_request *req );
 static int serial_get_poll_events( struct object *obj );
 
@@ -72,8 +71,7 @@ static const struct object_ops serial_ops =
     no_satisfied,                 /* satisfied */
     serial_get_poll_events,       /* get_poll_events */
     default_poll_event,           /* poll_event */
-    serial_get_read_fd,           /* get_read_fd */
-    serial_get_write_fd,          /* get_write_fd */
+    serial_get_fd,                /* get_fd */
     no_flush,                     /* flush */
     serial_get_info,              /* get_file_info */
     no_destroy                    /* destroy */
@@ -152,14 +150,7 @@ static int serial_get_poll_events( struct object *obj )
     return events;
 }
 
-static int serial_get_read_fd( struct object *obj )
-{
-    struct serial *serial = (struct serial *)obj;
-    assert( obj->ops == &serial_ops );
-    return dup( serial->obj.fd );
-}
-
-static int serial_get_write_fd( struct object *obj )
+static int serial_get_fd( struct object *obj )
 {
     struct serial *serial = (struct serial *)obj;
     assert( obj->ops == &serial_ops );
