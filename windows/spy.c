@@ -1401,6 +1401,13 @@ static const USER_MSG toolbar_array[] = {
           USM(TB_SETINSERTMARKCOLOR    ,0),
           USM(TB_GETINSERTMARKCOLOR    ,0),
           USM(TB_MAPACCELERATORW       ,0),
+          USM(TB_GETSTRINGW            ,0),
+          USM(TB_GETSTRINGA            ,0),
+          USM(TB_UNKWN45D              ,8),
+          USM(TB_UNKWN45E              ,0),
+          USM(TB_UNKWN460              ,0),
+          USM(TB_UNKWN463              ,8),
+          USM(TB_UNKWN464              ,0),
           {0,0,0} };
 
 static const USER_MSG comboex_array[] = {
