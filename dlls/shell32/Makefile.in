@@ -14,6 +14,7 @@ C_SRCS = \
 	enumidlist.c \
 	folders.c \
 	iconcache.c \
+	memorystream.c \
 	pidl.c \
 	regstream.c \
 	shell32_main.c \
