@@ -47,7 +47,6 @@
 #include "shlwapi.h"
 
 #include "pidl.h"
-#include "debughlp.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pidl);

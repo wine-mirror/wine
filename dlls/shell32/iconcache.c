@@ -43,7 +43,6 @@
 #include "pidl.h"
 #include "shell32_main.h"
 #include "undocshell.h"
-#include "shlwapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 

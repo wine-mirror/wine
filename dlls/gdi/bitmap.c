@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
+#include "wine/wingdi16.h"
 #include "gdi.h"
 #include "gdi_private.h"
 #include "wine/debug.h"

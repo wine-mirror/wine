@@ -23,7 +23,7 @@
 #include "windef.h"
 #include "wownt32.h"
 #include "gdi.h"
-#include "wine/winuser16.h"
+#include "wine/wingdi16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wing);

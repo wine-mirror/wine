@@ -38,17 +38,12 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
-#include "wownt32.h"
-#include "shellapi.h"
-#include "wingdi.h"
 #include "winuser.h"
-#include "shlobj.h"
 #include "shlwapi.h"
 #include "ddeml.h"
 
 #include "wine/winbase16.h"
 #include "shell32_main.h"
-#include "undocshell.h"
 #include "pidl.h"
 
 #include "wine/debug.h"
