@@ -978,6 +978,7 @@ AC_CHECK_HEADERS(\
 	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
+	machine/cpu.h \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \

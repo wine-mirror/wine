@@ -22,6 +22,16 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_MACHINE_CPU_H
+# include <machine/cpu.h>
+#endif
+
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
@@ -268,9 +278,99 @@ VOID WINAPI GetSystemInfo(
 	fclose (f);
 	}
 	memcpy(si,&cachedsi,sizeof(*si));
-#else  /* linux */
+#elif defined (__NetBSD__)
+        {
+             int mib[2];
+             int value[2];
+             char model[256];
+             char *cpuclass;
+             FILE *f = fopen ("/var/run/dmesg.boot", "r");
+
+             /* first deduce as much as possible from the sysctls */
+             mib[0] = CTL_MACHDEP;
+#ifdef CPU_FPU_PRESENT
+             mib[1] = CPU_FPU_PRESENT;
+             value[1] = sizeof(int);
+             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
+                 if (value) PF[PF_FLOATING_POINT_EMULATED] = FALSE;
+                 else       PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+#endif
+#ifdef CPU_SSE
+             mib[1] = CPU_SSE;   /* this should imply MMX */
+             value[1] = sizeof(int);
+             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
+                 if (value) PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+#endif
+#ifdef CPU_SSE2
+             mib[1] = CPU_SSE2;  /* this should imply MMX */
+             value[1] = sizeof(int);
+             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
+                 if (value) PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+#endif
+             mib[0] = CTL_HW;
+             mib[1] = HW_NCPU;
+             value[1] = sizeof(int);
+             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
+                 if (value[0] > cachedsi.dwNumberOfProcessors)
+                    cachedsi.dwNumberOfProcessors = value[0];
+             mib[1] = HW_MODEL;
+             value[1] = 255;
+             if (sysctl(mib, 2, model, value+1, NULL, 0) >= 0) {
+                  model[value[1]] = '\0'; /* just in case */
+                  cpuclass = strstr(model, "-class");
+                  if (cpuclass != NULL) {
+                       while(cpuclass > model && cpuclass[0] != '(') cpuclass--;
+                       if (!strncmp(cpuclass+1, "386", 3)) {
+                            cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
+                            cachedsi.wProcessorLevel= 3;
+                       }
+                       if (!strncmp(cpuclass+1, "486", 3)) {
+                            cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
+                            cachedsi.wProcessorLevel= 4;
+                       }
+                       if (!strncmp(cpuclass+1, "586", 3)) {
+                            cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+                            cachedsi.wProcessorLevel= 5;
+                       }
+                       if (!strncmp(cpuclass+1, "686", 3)) {
+                            cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+                            cachedsi.wProcessorLevel= 5;
+                            /* this should imply MMX */
+                            PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                       }
+                  }
+             }
+
+             /* it may be worth reading from /var/run/dmesg.boot for
+                additional information such as CX8, MMX and TSC
+                (however this information should be considered less
+                 reliable than that from the sysctl calls) */
+             if (f != NULL)
+             {
+	         while (fgets(model, 255, f) != NULL) {
+                        if (sscanf(model,"cpu%d: features %x<", value, value+1) == 2) {
+                            /* we could scan the string but it is easier
+                               to test the bits directly */
+                            if (value[1] & 0x1)
+                                PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+                            if (value[1] & 0x10)
+                                PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+                            if (value[1] & 0x100)
+                                PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                            if (value[1] & 0x800000)
+                                PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+
+                            break;
+                        }
+                 }
+                 fclose(f);
+             }
+
+        }
+        memcpy(si,&cachedsi,sizeof(*si));
+#else /* !linux && !__NetBSD__ */
 	FIXME("not yet supported on this system\n");
-#endif  /* !linux */
+#endif  /* !linux  && !__NetBSD__ */
         TRACE("<- CPU arch %d, res'd %d, pagesize %ld, minappaddr %p, maxappaddr %p,"
               " act.cpumask %08lx, numcpus %ld, CPU type %ld, allocgran. %ld, CPU level %d, CPU rev %d\n",
               si->u.s.wProcessorArchitecture, si->u.s.wReserved, si->dwPageSize,

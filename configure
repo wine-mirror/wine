@@ -13239,6 +13239,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -13261,6 +13262,7 @@ for ac_header in \
 	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
+	machine/cpu.h \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
