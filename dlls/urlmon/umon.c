@@ -882,8 +882,36 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeft
 HRESULT WINAPI CreateAsyncBindCtx(DWORD reserved, IBindStatusCallback *callback,
     IEnumFORMATETC *format, IBindCtx **pbind)
 {
-    FIXME("stub.\n");
-    return E_INVALIDARG;
+    HRESULT hres;
+    BIND_OPTS bindopts;
+    IBindCtx *bctx;
+
+    TRACE("(%08lx %p %p %p)\n", reserved, callback, format, pbind);
+
+    if(!callback)
+        return E_INVALIDARG;
+    if(format)
+        FIXME("format is not supported yet\n");
+
+    hres = CreateBindCtx(0, &bctx);
+    if(FAILED(hres))
+        return hres;
+
+    bindopts.cbStruct = sizeof(BIND_OPTS);
+    bindopts.grfFlags = BIND_MAYBOTHERUSER;
+    bindopts.grfMode = STGM_READWRITE | STGM_SHARE_EXCLUSIVE;
+    bindopts.dwTickCountDeadline = 0;
+    IBindCtx_SetBindOptions(bctx, &bindopts);
+
+    hres = IBindCtx_RegisterObjectParam(bctx, (LPOLESTR)BSCBHolder, (IUnknown*)callback);
+    if(FAILED(hres)) {
+        IBindCtx_Release(bctx);
+        return hres;
+    }
+
+    *pbind = bctx;
+
+    return S_OK;
 }
 /***********************************************************************
  *           CreateAsyncBindCtxEx (URLMON.@)
@@ -892,7 +920,7 @@ HRESULT WINAPI CreateAsyncBindCtx(DWORD reserved, IBindStatusCallback *callback,
  *
  * FIXME
  *   Not implemented.
- */
+ */ 
 HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
     IBindStatusCallback *callback, IEnumFORMATETC *format, IBindCtx** pbind,
     DWORD reserved)
