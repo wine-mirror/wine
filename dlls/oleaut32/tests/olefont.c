@@ -48,12 +48,12 @@ START_TEST(olefont)
 	hres = OleCreateFontIndirect(NULL, &IID_IFont, &pvObj);
 	font = pvObj;
 
-	ok(hres == S_OK,"OCFI (NULL,..) does not return 0, but 0x%08lx",hres);
-	ok(font != NULL,"OCFI (NULL,..) does return NULL, insytead of !NULL");
+	ok(hres == S_OK,"OCFI (NULL,..) does not return 0, but 0x%08lx\n",hres);
+	ok(font != NULL,"OCFI (NULL,..) returns NULL, instead of !NULL\n");
 
 	pvObj = NULL;
 	hres = IFont_QueryInterface( font, &IID_IFont, &pvObj);
 
-	ok(hres == S_OK,"IFont_QI does not return S_OK, but 0x%08lx", hres);
-	ok(pvObj != NULL,"IFont_QI does return NULL, instead of a ptr");
+	ok(hres == S_OK,"IFont_QI does not return S_OK, but 0x%08lx\n", hres);
+	ok(pvObj != NULL,"IFont_QI does return NULL, instead of a ptr\n");
 }

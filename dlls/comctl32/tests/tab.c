@@ -83,7 +83,7 @@ void CheckSize(HWND hwnd, INT width, INT height)
     r1.left=r1.top=r1.right=r1.bottom=0;
     SendMessage (hwnd, TCM_GETITEMRECT, 0, (LPARAM) &rTab);
     SendMessage (hwnd, TCM_ADJUSTRECT, FALSE, (LPARAM) &r1);
-    /* trace ("Got (%ld,%ld)-(%ld,%ld)", rTab.left, rTab.top, rTab.right, rTab.bottom); */
+    /* trace ("Got (%ld,%ld)-(%ld,%ld)\n", rTab.left, rTab.top, rTab.right, rTab.bottom); */
     trace (" (%ld,%ld)-(%ld,%ld)\n", r1.left, r1.top, r1.right, r1.bottom);
     if ((width  >= 0) && (height < 0))
 	ok (width  == rTab.right  - rTab.left, "Expected [%d] got [%ld]\n",  width,  rTab.right  - rTab.left);

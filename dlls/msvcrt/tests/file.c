@@ -42,8 +42,8 @@ static void test_fdopen( void )
     fd = open ("fdopen.tst", O_RDONLY | O_BINARY);
     lseek (fd, 5, SEEK_SET);
     file = fdopen (fd, "rb");
-    ok (fread (buffer, 1, sizeof (buffer), file) == 5, "read wrong byte count");
-    ok (memcmp (buffer, buffer + 5, 5) == 0, "read wrong bytes");
+    ok (fread (buffer, 1, sizeof (buffer), file) == 5, "read wrong byte count\n");
+    ok (memcmp (buffer, buffer + 5, 5) == 0, "read wrong bytes\n");
     fclose (file);
     unlink ("fdopen.tst");
 }
@@ -62,27 +62,27 @@ static void test_fileops( void )
 
     fd = open ("fdopen.tst", O_RDONLY | O_BINARY);
     file = fdopen (fd, "rb");
-    ok(strlen(outbuffer) == (sizeof(outbuffer)-1),"strlen/sizeof error");
-    ok(fgets(buffer,sizeof(buffer),file) !=0,"fgets failed unexpected");
-    ok(fgets(buffer,sizeof(buffer),file) ==0,"fgets didn't signal EOF");
-    ok(feof(file) !=0,"feof doesn't signal EOF");
+    ok(strlen(outbuffer) == (sizeof(outbuffer)-1),"strlen/sizeof error\n");
+    ok(fgets(buffer,sizeof(buffer),file) !=0,"fgets failed unexpected\n");
+    ok(fgets(buffer,sizeof(buffer),file) ==0,"fgets didn't signal EOF\n");
+    ok(feof(file) !=0,"feof doesn't signal EOF\n");
     rewind(file);
-    ok(fgets(buffer,strlen(outbuffer),file) !=0,"fgets failed unexpected");
-    ok(lstrlenA(buffer) == strlen(outbuffer) -1,"fgets didn't read right size");
-    ok(fgets(buffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected");
-    ok(strlen(buffer) == 1,"fgets dropped chars");
-    ok(buffer[0] == outbuffer[strlen(outbuffer)-1],"fgets exchanged chars");
+    ok(fgets(buffer,strlen(outbuffer),file) !=0,"fgets failed unexpected\n");
+    ok(lstrlenA(buffer) == strlen(outbuffer) -1,"fgets didn't read right size\n");
+    ok(fgets(buffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
+    ok(strlen(buffer) == 1,"fgets dropped chars\n");
+    ok(buffer[0] == outbuffer[strlen(outbuffer)-1],"fgets exchanged chars\n");
     fclose (file);
     fd = open ("fdopen.tst", O_RDONLY | O_TEXT);
     file = fdopen (fd, "rt"); /* open in TEXT mode */
-    ok(fgetws(wbuffer,sizeof(wbuffer),file) !=0,"fgetws failed unexpected");
-    ok(fgetws(wbuffer,sizeof(wbuffer),file) ==0,"fgetws didn't signal EOF");
-    ok(feof(file) !=0,"feof doesn't signal EOF");
+    ok(fgetws(wbuffer,sizeof(wbuffer),file) !=0,"fgetws failed unexpected\n");
+    ok(fgetws(wbuffer,sizeof(wbuffer),file) ==0,"fgetws didn't signal EOF\n");
+    ok(feof(file) !=0,"feof doesn't signal EOF\n");
     rewind(file);
-    ok(fgetws(wbuffer,strlen(outbuffer),file) !=0,"fgetws failed unexpected");
-    ok(lstrlenW(wbuffer) == (strlen(outbuffer) -1),"fgetws didn't read right size");
-    ok(fgetws(wbuffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected");
-    ok(lstrlenW(wbuffer) == 1,"fgets dropped chars");
+    ok(fgetws(wbuffer,strlen(outbuffer),file) !=0,"fgetws failed unexpected\n");
+    ok(lstrlenW(wbuffer) == (strlen(outbuffer) -1),"fgetws didn't read right size\n");
+    ok(fgetws(wbuffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
+    ok(lstrlenW(wbuffer) == 1,"fgets dropped chars\n");
     fclose (file);
     unlink ("fdopen.tst");
 } 
@@ -122,7 +122,7 @@ static void test_fgetwc( void )
     {
       diff_found |= (*aptr != *wptr);
     }
-  ok(!(diff_found), "fgetwc difference found in TEXT mode");
+  ok(!(diff_found), "fgetwc difference found in TEXT mode\n");
   if(mytextW) free (mytextW);
   fclose(tempfh);
   unlink(tempf);
@@ -146,19 +146,19 @@ static void test_file_put_get( void )
   fclose(tempfh);
   tempfh = fopen(tempf,"rb"); /* open in TEXT mode */
   fgets(btext,LLEN,tempfh);
-  ok( strlen(mytext) + 1 == strlen(btext),"TEXT/BINARY mode not handled for write");
-  ok( btext[strlen(mytext)-1] == '\r', "CR not written");
+  ok( strlen(mytext) + 1 == strlen(btext),"TEXT/BINARY mode not handled for write\n");
+  ok( btext[strlen(mytext)-1] == '\r', "CR not written\n");
   fclose(tempfh);
   tempfh = fopen(tempf,"wb"); /* open in BINARY mode */
   fputs(dostext,tempfh);
   fclose(tempfh);
   tempfh = fopen(tempf,"rt"); /* open in TEXT mode */
   fgets(btext,LLEN,tempfh);
-  ok(strcmp(btext, mytext) == 0,"_O_TEXT read doesn't strip CR");
+  ok(strcmp(btext, mytext) == 0,"_O_TEXT read doesn't strip CR\n");
   fclose(tempfh);
   tempfh = fopen(tempf,"rb"); /* open in TEXT mode */
   fgets(btext,LLEN,tempfh);
-  ok(strcmp(btext, dostext) == 0,"_O_BINARY read doesn't preserve CR");
+  ok(strcmp(btext, dostext) == 0,"_O_BINARY read doesn't preserve CR\n");
 
   fclose(tempfh);
   tempfh = fopen(tempf,"rt"); /* open in TEXT mode */
@@ -171,7 +171,7 @@ static void test_file_put_get( void )
     {
       diff_found |= (*aptr != *wptr);
     }
-  ok(!(diff_found), "fgetwc doesn't strip CR in TEXT mode");
+  ok(!(diff_found), "fgetwc doesn't strip CR in TEXT mode\n");
   if(mytextW) free (mytextW);
   fclose(tempfh);
   unlink(tempf);
@@ -187,48 +187,48 @@ static void test_file_write_read( void )
   tempf=_tempnam(".","wne");
   ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_TEXT|_O_RDWR,
                      _S_IREAD | _S_IWRITE)) != -1,
-     "Can't open '%s': %d", tempf, errno); /* open in TEXT mode */
+     "Can't open '%s': %d\n", tempf, errno); /* open in TEXT mode */
   ok(_write(tempfd,mytext,strlen(mytext)) == lstrlenA(mytext),
-     "_write _O_TEXT bad return value");
+     "_write _O_TEXT bad return value\n");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_BINARY,0); /* open in BINARY mode */
   ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext),
-     "_read _O_BINARY got bad length");
+     "_read _O_BINARY got bad length\n");
   ok( memcmp(dostext,btext,strlen(dostext)) == 0,
-      "problems with _O_TEXT _write / _O_BINARY _read");
-  ok( btext[strlen(dostext)-2] == '\r', "CR not written or read");
+      "problems with _O_TEXT _write / _O_BINARY _read\n");
+  ok( btext[strlen(dostext)-2] == '\r', "CR not written or read\n");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
   ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext),
-     "_read _O_TEXT got bad length");
+     "_read _O_TEXT got bad length\n");
   ok( memcmp(mytext,btext,strlen(mytext)) == 0,
-      "problems with _O_TEXT _write / _read");
+      "problems with _O_TEXT _write / _read\n");
   _close(tempfd);
-  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d", tempf, errno);
+  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
 
   tempf=_tempnam(".","wne");
   ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0)) != -1,
-     "Can't open '%s': %d", tempf, errno); /* open in BINARY mode */
+     "Can't open '%s': %d\n", tempf, errno); /* open in BINARY mode */
   ok(_write(tempfd,dostext,strlen(dostext)) == lstrlenA(dostext),
-     "_write _O_BINARY bad return value");
+     "_write _O_BINARY bad return value\n");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_BINARY,0); /* open in BINARY mode */
   ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext),
-     "_read _O_BINARY got bad length");
+     "_read _O_BINARY got bad length\n");
   ok( memcmp(dostext,btext,strlen(dostext)) == 0,
-      "problems with _O_BINARY _write / _read");
-  ok( btext[strlen(dostext)-2] == '\r', "CR not written or read");
+      "problems with _O_BINARY _write / _read\n");
+  ok( btext[strlen(dostext)-2] == '\r', "CR not written or read\n");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
   ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext),
-     "_read _O_TEXT got bad length");
+     "_read _O_TEXT got bad length\n");
   ok( memcmp(mytext,btext,strlen(mytext)) == 0,
-      "problems with _O_BINARY _write / _O_TEXT _read");
+      "problems with _O_BINARY _write / _O_TEXT _read\n");
   _close(tempfd);
 
   ok(_chmod (tempf, _S_IREAD | _S_IWRITE) == 0,
-     "Can't chmod '%s' to read-write: %d", tempf, errno);
-  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d", tempf, errno);
+     "Can't chmod '%s' to read-write: %d\n", tempf, errno);
+  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
 }
 
 static void test_tmpnam( void )
@@ -237,17 +237,17 @@ static void test_tmpnam( void )
   char *res;
 
   res = tmpnam(NULL);
-  ok(res != NULL, "tmpnam returned NULL");
-  ok(res[0] == '\\', "first character is not a backslash");
-  ok(strchr(res+1, '\\') == 0, "file not in the root directory");
-  ok(res[strlen(res)-1] == '.', "first call - last character is not a dot");
+  ok(res != NULL, "tmpnam returned NULL\n");
+  ok(res[0] == '\\', "first character is not a backslash\n");
+  ok(strchr(res+1, '\\') == 0, "file not in the root directory\n");
+  ok(res[strlen(res)-1] == '.', "first call - last character is not a dot\n");
 
   res = tmpnam(name);
-  ok(res != NULL, "tmpnam returned NULL");
-  ok(res == name, "supplied buffer was not used");
-  ok(res[0] == '\\', "first character is not a backslash");
-  ok(strchr(res+1, '\\') == 0, "file not in the root directory");
-  ok(res[strlen(res)-1] != '.', "second call - last character is not a dot");
+  ok(res != NULL, "tmpnam returned NULL\n");
+  ok(res == name, "supplied buffer was not used\n");
+  ok(res[0] == '\\', "first character is not a backslash\n");
+  ok(strchr(res+1, '\\') == 0, "file not in the root directory\n");
+  ok(res[strlen(res)-1] != '.', "second call - last character is not a dot\n");
 }
 
 

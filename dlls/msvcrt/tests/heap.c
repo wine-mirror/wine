@@ -26,13 +26,13 @@ static void test_realloc( void )
     void *mem = NULL;
 
     mem = realloc(mem, 10);
-    ok(mem != NULL, "memory not allocated");
+    ok(mem != NULL, "memory not allocated\n");
     
     mem = realloc(mem, 20);
-    ok(mem != NULL, "memory not reallocated");
+    ok(mem != NULL, "memory not reallocated\n");
  
     mem = realloc(mem, 0);
-    ok(mem == NULL, "memory nto freed");
+    ok(mem == NULL, "memory not freed\n");
 }
 
 START_TEST(heap)
