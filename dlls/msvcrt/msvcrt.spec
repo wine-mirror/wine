@@ -325,7 +325,7 @@ debug_channels (msvcrt)
 @ cdecl _lfind(ptr ptr ptr long ptr) _lfind
 @ cdecl _loaddll(str) _loaddll
 @ cdecl _local_unwind2(ptr long) _local_unwind2
-@ stub _lock
+@ cdecl _lock(long) _lock
 @ stub _locking #(long long long)
 @ cdecl _logb( double ) _logb
 @ stub _longjmpex
@@ -441,7 +441,7 @@ debug_channels (msvcrt)
 @ cdecl _sleep(long) _sleep
 @ varargs _snprintf(str long str) snprintf
 @ forward -noimport _snwprintf ntdll._snwprintf
-@ cdecl _sopen(str long long) MSVCRT__sopen
+@ varargs _sopen(str long long) MSVCRT__sopen
 @ varargs _spawnl(long str str) _spawnl
 @ stub _spawnle #(str str) varargs
 @ varargs _spawnlp(long str str) _spawnlp
@@ -488,7 +488,7 @@ debug_channels (msvcrt)
 @ cdecl _ungetch(long) _ungetch
 @ cdecl _unlink(str) _unlink
 @ cdecl _unloaddll(long) _unloaddll
-@ stub _unlock
+@ cdecl _unlock(long) _unlock
 @ cdecl _utime(str ptr) _utime
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
 @ cdecl _vsnwprintf(ptr long wstr long) _vsnwprintf
@@ -548,7 +548,7 @@ debug_channels (msvcrt)
 @ cdecl _wrmdir(wstr) _wrmdir
 @ stub _wsearchenv #(wstr wstr wstr)
 @ stub _wsetlocale #(long wstr)
-@ stub _wsopen #(wstr long long) varargs
+@ varargs _wsopen (wstr long long) MSVCRT__wsopen
 @ stub _wspawnl #(long wstr wstr) varargs
 @ stub _wspawnle #(long wstr wstr) varargs
 @ stub _wspawnlp #(long wstr wstr) varargs

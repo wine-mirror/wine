@@ -24,6 +24,7 @@
 #include "msvcrt/sys/stat.h"
 #include "msvcrt/sys/utime.h"
 #include "msvcrt/time.h"
+#include "msvcrt/share.h"
 
 #include "wine/debug.h"
 
@@ -719,18 +720,23 @@ WCHAR *_wmktemp(WCHAR *pattern)
 }
 
 /*********************************************************************
- *		_open (MSVCRT.@)
+ *              _sopen (MSVCRT.@)
  */
-int _open(const char *path,int flags,...)
+int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
 {
+  va_list ap;
+  int pmode;
   DWORD access = 0, creation = 0;
+  DWORD sharing;
   int ioflag = 0, fd;
   HANDLE hand;
   SECURITY_ATTRIBUTES sa;
-  
-  TRACE(":file (%s) mode 0x%04x\n",path,flags);
 
-  switch(flags & (_O_RDONLY | _O_WRONLY | _O_RDWR))
+
+  TRACE(":file (%s) oflags: 0x%04x shflags: 0x%04x\n",
+        path, oflags, shflags);
+
+  switch(oflags & (_O_RDONLY | _O_WRONLY | _O_RDWR))
   {
   case _O_RDONLY:
     access |= GENERIC_READ;
@@ -746,49 +752,73 @@ int _open(const char *path,int flags,...)
     break;
   }
 
-  if (flags & _O_CREAT)
+  if (oflags & _O_CREAT)
   {
-    if (flags & _O_EXCL)
+    va_start(ap, shflags);
+      pmode = va_arg(ap, int);
+    va_end(ap);
+
+    FIXME(": pmode 0x%04x ignored\n", pmode);
+
+    if (oflags & _O_EXCL)
       creation = CREATE_NEW;
-    else if (flags & _O_TRUNC)
+    else if (oflags & _O_TRUNC)
       creation = CREATE_ALWAYS;
     else
       creation = OPEN_ALWAYS;
   }
   else  /* no _O_CREAT */
   {
-    if (flags & _O_TRUNC)
+    if (oflags & _O_TRUNC)
       creation = TRUNCATE_EXISTING;
     else
       creation = OPEN_EXISTING;
   }
-  if (flags & _O_APPEND)
+  if (oflags & _O_APPEND)
     ioflag |= MSVCRT__IOAPPEND;
 
 
-  flags |= _O_BINARY; /* FIXME: Default to text */
+  oflags |= _O_BINARY; /* FIXME: Default to text */
 
-  if (flags & _O_TEXT)
+  if (oflags & _O_TEXT)
   {
     /* Dont warn when writing */
     if (ioflag & GENERIC_READ)
       FIXME(":TEXT node not implemented\n");
-    flags &= ~_O_TEXT;
+    oflags &= ~_O_TEXT;
   }
 
-  if (flags & ~(_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL
-                |_O_CREAT|_O_RDWR|_O_TEMPORARY))
-    TRACE(":unsupported flags 0x%04x\n",flags);
-      
+  switch( shflags )
+  {
+    case _SH_DENYRW:
+      sharing = 0L;
+      break;
+    case _SH_DENYWR:
+      sharing = FILE_SHARE_READ;
+      break;
+    case _SH_DENYRD:
+      sharing = FILE_SHARE_WRITE;
+      break;
+    case _SH_DENYNO:
+      sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
+      break;
+    default:
+      ERR( "Unhandled shflags 0x%x\n", shflags );
+      return -1;
+  }
+
+  if (oflags & ~(_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL
+                |_O_CREAT|_O_RDWR|_O_TEMPORARY|_O_NOINHERIT))
+    TRACE(":unsupported oflags 0x%04x\n",oflags);
+
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
-  sa.bInheritHandle       = TRUE;
+  sa.bInheritHandle       = (oflags & _O_NOINHERIT) ? FALSE : TRUE;
 
-  hand = CreateFileA(path, access, FILE_SHARE_READ | FILE_SHARE_WRITE,
+  hand = CreateFileA(path, access, sharing,
                       &sa, creation, FILE_ATTRIBUTE_NORMAL, 0);
 
-  if (hand == INVALID_HANDLE_VALUE)
-  {
+  if (hand == INVALID_HANDLE_VALUE)  {
     WARN(":failed-last error (%ld)\n",GetLastError());
     MSVCRT__set_errno(GetLastError());
     return -1;
@@ -800,7 +830,7 @@ int _open(const char *path,int flags,...)
 
   if (fd > 0)
   {
-    if (flags & _O_TEMPORARY)
+    if (oflags & _O_TEMPORARY)
       MSVCRT_tempfiles[fd] = _strdup(path);
     if (ioflag & MSVCRT__IOAPPEND)
       _lseek(fd, 0, FILE_END);
@@ -810,15 +840,22 @@ int _open(const char *path,int flags,...)
 }
 
 /*********************************************************************
- *		_wopen (MSVCRT.@)
+ *              _wsopen (MSVCRT.@)
  */
-int _wopen(const WCHAR *path,int flags,...)
+int MSVCRT__wsopen( const WCHAR* path, int oflags, int shflags, ... )
 {
   const unsigned int len = strlenW(path);
   char *patha = MSVCRT_calloc(len + 1,1);
+  va_list ap;
+  int pmode;
+
+  va_start(ap, shflags);
+  pmode = va_arg(ap, int);
+  va_end(ap);
+
   if (patha && WideCharToMultiByte(CP_ACP,0,path,len,patha,len,NULL,NULL))
   {
-    int retval = _open(patha,flags);
+    int retval = MSVCRT__sopen(patha,oflags,shflags,pmode);
     MSVCRT_free(patha);
     return retval;
   }
@@ -828,11 +865,43 @@ int _wopen(const WCHAR *path,int flags,...)
 }
 
 /*********************************************************************
- *		_sopen (MSVCRT.@)
+ *              _open (MSVCRT.@)
  */
-int MSVCRT__sopen(const char *path,int oflags,int shflags)
+int _open( const char *path, int flags, ... )
 {
-  return _open(path, oflags | shflags);
+  va_list ap;
+  int pmode;
+
+  va_start(ap, flags);
+  pmode = va_arg(ap, int);
+  va_end(ap);
+
+  return MSVCRT__sopen( path, flags, _SH_DENYNO, pmode );
+}
+
+/*********************************************************************
+ *              _wopen (MSVCRT.@)
+ */
+int _wopen(const WCHAR *path,int flags,...)
+{
+  const unsigned int len = strlenW(path);
+  char *patha = MSVCRT_calloc(len + 1,1);
+  va_list ap;
+  int pmode;
+
+  va_start(ap, flags);
+  pmode = va_arg(ap, int);
+  va_end(ap);
+
+  if (patha && WideCharToMultiByte(CP_ACP,0,path,len,patha,len,NULL,NULL))
+  {
+    int retval = _open(patha,flags,pmode);
+    MSVCRT_free(patha);
+    return retval;
+  }
+
+  MSVCRT__set_errno(GetLastError());
+  return -1;
 }
 
 /*********************************************************************

@@ -8,7 +8,6 @@
 #include "msvcrt/locale.h"
 #include "msvcrt/stdio.h"
 
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -16,17 +15,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /* Index to TLS */
 DWORD MSVCRT_tls_index;
 
-/* MT locks */
-CRITICAL_SECTION MSVCRT_heap_cs;
-CRITICAL_SECTION MSVCRT_file_cs;
-CRITICAL_SECTION MSVCRT_exit_cs;
-CRITICAL_SECTION MSVCRT_console_cs;
-CRITICAL_SECTION MSVCRT_locale_cs;
-
 static inline BOOL msvcrt_init_tls(void);
 static inline BOOL msvcrt_free_tls(void);
-static inline void msvcrt_init_critical_sections(void);
-static inline void msvcrt_free_critical_sections(void);
 const char* msvcrt_get_reason(DWORD reason) WINE_UNUSED;
 
 void msvcrt_init_io(void);
@@ -56,8 +46,8 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   case DLL_PROCESS_ATTACH:
     if (!msvcrt_init_tls())
       return FALSE;
+    msvcrt_init_mt_locks();
     msvcrt_init_vtables();
-    msvcrt_init_critical_sections();
     msvcrt_init_io();
     msvcrt_init_console();
     msvcrt_init_args();
@@ -77,7 +67,7 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     TRACE("finished thread init\n");
     break;
   case DLL_PROCESS_DETACH:
-    msvcrt_free_critical_sections();
+    msvcrt_free_mt_locks();
     _fcloseall();
     msvcrt_free_console();
     msvcrt_free_args();
@@ -121,24 +111,6 @@ static inline BOOL msvcrt_free_tls(void)
     return FALSE;
   }
   return TRUE;
-}
-
-static inline void msvcrt_init_critical_sections(void)
-{
-  InitializeCriticalSectionAndSpinCount(&MSVCRT_heap_cs, 4000);
-  InitializeCriticalSection(&MSVCRT_file_cs);
-  InitializeCriticalSection(&MSVCRT_exit_cs);
-  InitializeCriticalSection(&MSVCRT_console_cs);
-  InitializeCriticalSection(&MSVCRT_locale_cs);
-}
-
-static inline void msvcrt_free_critical_sections(void)
-{
-  DeleteCriticalSection(&MSVCRT_locale_cs);
-  DeleteCriticalSection(&MSVCRT_console_cs);
-  DeleteCriticalSection(&MSVCRT_exit_cs);
-  DeleteCriticalSection(&MSVCRT_file_cs);
-  DeleteCriticalSection(&MSVCRT_heap_cs);
 }
 
 const char* msvcrt_get_reason(DWORD reason)

@@ -9,6 +9,7 @@
 
 #include "msvcrt.h"
 #include "msvcrt/locale.h"
+#include "mtdll.h"
 
 #include "wine/debug.h"
 
@@ -24,9 +25,8 @@ LCID MSVCRT_current_lc_all_lcid;
 int MSVCRT_current_lc_all_cp;
 
 /* MT */
-extern CRITICAL_SECTION MSVCRT_locale_cs;
-#define LOCK_LOCALE    EnterCriticalSection(&MSVCRT_locale_cs)
-#define UNLOCK_LOCALE  LeaveCriticalSection(&MSVCRT_locale_cs)
+#define LOCK_LOCALE   _mlock(_SETLOCALE_LOCK);
+#define UNLOCK_LOCALE _munlock(_SETLOCALE_LOCK);
 
 /* ctype data modified when the locale changes */
 extern WORD MSVCRT__ctype [257];

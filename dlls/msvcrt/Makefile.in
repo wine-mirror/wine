@@ -1,4 +1,4 @@
-EXTRADEFS = -DUSE_MSVCRT_PREFIX
+EXTRADEFS = -DUSE_MSVCRT_PREFIX -D_MT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -22,6 +22,7 @@ C_SRCS = \
 	file.c \
 	heap.c \
 	locale.c \
+	lock.c \
 	main.c \
 	math.c \
 	mbcs.c \

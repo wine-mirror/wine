@@ -11,16 +11,16 @@
 #include "ms_errno.h"
 
 #include "msvcrt/malloc.h"
-
+#include "mtdll.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* MT */
-extern CRITICAL_SECTION MSVCRT_heap_cs;
-#define LOCK_HEAP      EnterCriticalSection(&MSVCRT_heap_cs)
-#define UNLOCK_HEAP    LeaveCriticalSection(&MSVCRT_heap_cs)
+#define LOCK_HEAP   _mlock( _HEAP_LOCK )
+#define UNLOCK_HEAP _munlock( _HEAP_LOCK )
+
 
 typedef void (*MSVCRT_new_handler_func)(unsigned long size);
 

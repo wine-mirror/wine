@@ -7,16 +7,15 @@
 
 #include "msvcrt/conio.h"
 #include "msvcrt/stdlib.h"
-
+#include "mtdll.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* MT */
-extern CRITICAL_SECTION MSVCRT_exit_cs;
-#define LOCK_EXIT      EnterCriticalSection(&MSVCRT_exit_cs)
-#define UNLOCK_EXIT    LeaveCriticalSection(&MSVCRT_exit_cs)
+#define LOCK_EXIT   _mlock(_EXIT_LOCK1)
+#define UNLOCK_EXIT _munlock(_EXIT_LOCK1)
 
 static _onexit_t *MSVCRT_atexit_table = NULL;
 static int MSVCRT_atexit_table_size = 0;

@@ -12,6 +12,7 @@
 #include "msvcrt/conio.h"
 #include "msvcrt/malloc.h"
 #include "msvcrt/stdio.h"
+#include "mtdll.h"
 
 #include "wine/debug.h"
 
@@ -20,9 +21,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* MT */
-extern CRITICAL_SECTION MSVCRT_console_cs;
-#define LOCK_CONSOLE   EnterCriticalSection(&MSVCRT_console_cs)
-#define UNLOCK_CONSOLE LeaveCriticalSection(&MSVCRT_console_cs)
+#define LOCK_CONSOLE   _mlock(_CONIO_LOCK)
+#define UNLOCK_CONSOLE _munlock(_CONIO_LOCK)
 
 static HANDLE MSVCRT_console_in = INVALID_HANDLE_VALUE;
 static HANDLE MSVCRT_console_out= INVALID_HANDLE_VALUE;
