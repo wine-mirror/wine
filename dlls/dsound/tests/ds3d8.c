@@ -1130,4 +1130,6 @@ START_TEST(ds3d8)
     }
 
     ds3d8_tests();
+
+    CoUninitialize();
 }

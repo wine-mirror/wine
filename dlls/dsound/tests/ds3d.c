@@ -1198,5 +1198,9 @@ static void ds3d_tests()
 
 START_TEST(ds3d)
 {
+    CoInitialize(NULL);
+
     ds3d_tests();
+
+    CoUninitialize();
 }

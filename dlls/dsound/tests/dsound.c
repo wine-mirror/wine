@@ -756,4 +756,6 @@ START_TEST(dsound)
 
     IDirectSound_tests();
     dsound_tests();
+
+    CoUninitialize();
 }

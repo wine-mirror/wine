@@ -791,4 +791,6 @@ START_TEST(dsound8)
 
     IDirectSound8_tests();
     dsound8_tests();
+
+    CoUninitialize();
 }

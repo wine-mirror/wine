@@ -513,6 +513,8 @@ START_TEST(capture)
 {
     HMODULE hDsound;
 
+    CoInitialize(NULL);
+
     hDsound = LoadLibraryA("dsound.dll");
     if (!hDsound) {
         trace("dsound.dll not found\n");
@@ -527,4 +529,6 @@ START_TEST(capture)
     }
 
     capture_tests();
+
+    CoUninitialize();
 }

@@ -408,6 +408,10 @@ static void propset_buffer_tests()
 
 START_TEST(propset)
 {
+    CoInitialize(NULL);
+
     propset_private_tests();
     propset_buffer_tests();
+
+    CoUninitialize();
 }
