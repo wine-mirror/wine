@@ -327,8 +327,8 @@ winedbg "hl.exe -windowed"
             <para>
               Determine the cause of the crash. Since this is usually
               a primary/secondary reaction to a failed or misbehaving
-              Wine function, rerun Wine with <parameter>-debugmsg
-                +relay</parameter> added to the commandline. This will
+              Wine function, rerun Wine with the<parameter>WINEDEBUG=+relay</parameter>
+              environment variable set. This will
               generate quite a lot of output, but usually the reason is
               located in the last call(s).  Those lines usually look like
               this:
@@ -355,9 +355,8 @@ winedbg "hl.exe -windowed"
               why it misbehaves. Find the function in the source code.
               Try to make sense of the arguments passed. Usually there is
               a <function>WINE_DEFAULT_DEBUG_CHANNEL(&lt;channel>);</function>
-              at the beginning of the file. Rerun wine with
-              <parameter>-debugmsg +xyz,+relay</parameter> added to the
-              commandline.
+              at the beginning of the file. Rerun wine with the
+              <parameter>WINEDEBUG=+xyz,+relay</parameter> environment variable set.
             </para>
             <para>
               Occasionally there are additional debug channels defined at the 
@@ -380,8 +379,8 @@ winedbg "hl.exe -windowed"
             <para>
               If this information isn't clear enough or if you want to
               know more about what's happening in the function itself,
-              try running wine with <parameter>-debugmsg
-                +all</parameter>, which dumps ALL included debug
+              try running wine with <parameter>WINEDEBUG=+all</parameter>,
+              which dumps ALL included debug
               information in wine.
             </para>
           </listitem>
@@ -446,12 +445,12 @@ winedbg "hl.exe -windowed"
           the Messagebox you can start winedbg and set a
           breakpoint at <function>MessageBoxA</function> (called by win16
           and win32 programs) and proceed with
-          <command>continue</command>. With <parameter>--debugmsg
-            +all</parameter> Wine will now stop directly before setting
+          <command>continue</command>. With <parameter>WINEDEBUG=+all</parameter>
+          Wine will now stop directly before setting
           up the Messagebox. Proceed as explained above.
         </para>
         <para>
-          You can also run wine using <command>wine -debugmsg +relay
+          You can also run wine using <command>WINEDEBUG=+relay wine
             program.exe 2>&1 | less -i</command> and in
           <command>less</command> search for <quote>MessageBox</quote>.
         </para>
@@ -548,7 +547,7 @@ call KERNEL.LSTRLEN
 |            +---------------------------------------------+
         </screen>
         <screen>
-|marcus@jet $ wine winword.exe -debugmsg +relay -debug
+|marcus@jet $ WINEDEBUG=+relay,-debug wine winword.exe
 |CallTo32(wndproc=0x40065bc0,hwnd=000001ac,msg=00000081,wp=00000000,lp=00000000)
 |Win16 task 'winword': Breakpoint 1 at 0x01d7:0x001a
 |CallTo16(func=0127:0070,ds=0927)
@@ -647,7 +646,7 @@ Wine-dbg>
               use the Wine debugger normally, but Wine already executes the program's
               start code, then you may use a special trick. You should do a
               <programlisting>
-wine --debugmsg +relay program
+WINEDEBUG=+relay wine program
               </programlisting>
               to get a listing of the functions the program calls in its start function.
               Now you do a
@@ -672,7 +671,7 @@ winedbg winfile.exe
               functions executed before <function>MessageBox()</function>.
               That's why you should re-run the program with e.g.
               <programlisting>
-wine --debugmsg +relay &lt;program name> &>relmsg
+WINEDEBUG=+relay wine  &lt;program name> &>relmsg
               </programlisting>
               Then do a <command>more relmsg</command> and search for the
               last occurrence of a call to the string "MESSAGEBOX". This is a line like
@@ -999,7 +998,7 @@ wine -debug myprog.exe
         <programlisting>
 [MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug] 957636538
 "Auto"=dword:00000001
-"Debugger"="winedbg --debugmsg -all %ld %ld"
+"Debugger"="winedbg %ld %ld"
         </programlisting>
 
         <note>
