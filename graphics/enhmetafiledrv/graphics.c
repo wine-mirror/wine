@@ -77,8 +77,10 @@ EMFDRV_ArcChordPie( DC *dc, INT left, INT top, INT right, INT bottom,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    right--;
-    bottom--;
+    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+        right--;
+	bottom--;
+    }
 
     emr.emr.iType     = iType;
     emr.emr.nSize     = sizeof(emr);
@@ -210,8 +212,10 @@ EMFDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    right--;
-    bottom--;
+    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+        right--;
+	bottom--;
+    }
 
     emr.emr.iType     = EMR_ELLIPSE;
     emr.emr.nSize     = sizeof(emr);
@@ -240,8 +244,10 @@ EMFDRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    right--;
-    bottom--;
+    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+        right--;
+	bottom--;
+    }
 
     emr.emr.iType     = EMR_RECTANGLE;
     emr.emr.nSize     = sizeof(emr);
@@ -269,8 +275,10 @@ EMFDRV_RoundRect( DC *dc, INT left, INT top, INT right,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    right--;
-    bottom--;
+    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+        right--;
+	bottom--;
+    }
 
     emr.emr.iType     = EMR_ROUNDRECT;
     emr.emr.nSize     = sizeof(emr);

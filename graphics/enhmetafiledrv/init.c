@@ -283,6 +283,16 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->emh->rclBounds.left = physDev->emh->rclBounds.top = 0;
     physDev->emh->rclBounds.right = physDev->emh->rclBounds.bottom = -1;
 
+    if(rect) {
+        physDev->emh->rclFrame.left   = rect->left;
+	physDev->emh->rclFrame.top    = rect->top;
+	physDev->emh->rclFrame.right  = rect->right;
+	physDev->emh->rclFrame.bottom = rect->bottom;
+    } else {  /* Set this to {0,0 - -1,-1} and update it at the end */
+        physDev->emh->rclFrame.left = physDev->emh->rclFrame.top = 0;
+	physDev->emh->rclFrame.right = physDev->emh->rclFrame.bottom = -1;
+    }
+
     physDev->emh->dSignature = ENHMETA_SIGNATURE;
     physDev->emh->nVersion = 0x10000;
     physDev->emh->nBytes = physDev->emh->nSize;
@@ -350,6 +360,18 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc /* metafile DC */ )
     emr.offPalEntries = 0;
     emr.nSizeLast = emr.emr.nSize;
     EMFDRV_WriteRecord( dc, &emr.emr );
+
+    /* Update rclFrame if not initialized in CreateEnhMetaFile */
+    if(physDev->emh->rclFrame.left > physDev->emh->rclFrame.right) {
+        physDev->emh->rclFrame.left = physDev->emh->rclBounds.left *
+	  physDev->emh->szlMillimeters.cx * 100 / physDev->emh->szlDevice.cx;
+        physDev->emh->rclFrame.top = physDev->emh->rclBounds.top *
+	  physDev->emh->szlMillimeters.cy * 100 / physDev->emh->szlDevice.cy;
+        physDev->emh->rclFrame.right = physDev->emh->rclBounds.right *
+	  physDev->emh->szlMillimeters.cx * 100 / physDev->emh->szlDevice.cx;
+        physDev->emh->rclFrame.bottom = physDev->emh->rclBounds.bottom *
+	  physDev->emh->szlMillimeters.cy * 100 / physDev->emh->szlDevice.cy;
+    }
 
     if (physDev->hFile)  /* disk based metafile */
     {
