@@ -4505,6 +4505,67 @@ INT    WINAPI DPA_Search(HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 
 BOOL WINAPI Str_SetPtrW (LPWSTR *, LPCWSTR);
 
+/**************************************************************************
+ * SysLink control
+ */
+
+#if defined(__GNUC__)
+# define WC_LINK (const WCHAR []){ 'S','y','s','L','i','n','k',0 }
+#elif defined(_MSC_VER)
+# define WC_LINK             L"SysLink"
+#else
+static const WCHAR WC_LINK[] = { 'S','y','s','L','i','n','k',0 };
+#endif
+
+/* SysLink messages */
+#define LM_HITTEST           (WM_USER + 768)
+#define LM_GETIDEALHEIGHT    (WM_USER + 769)
+#define LM_SETITEM           (WM_USER + 770)
+#define LM_GETITEM           (WM_USER + 771)
+
+/* SysLink links flags */
+
+#define LIF_ITEMINDEX   1
+#define LIF_STATE       2
+#define LIF_ITEMID      4
+#define LIF_URL         8
+
+/* SysLink links states */
+
+#define LIS_FOCUSED     1
+#define LIS_ENABLED     2
+#define LIS_VISITED     4
+
+/* SysLink misc. */
+
+#define INVALID_LINK_INDEX  (-1)
+#define MAX_LINKID_TEXT     48
+#define L_MAX_URL_LENGTH    2084
+
+/* SysLink structures */
+
+typedef struct tagLITEM
+{
+  UINT mask;
+  int iLink;
+  UINT state;
+  UINT stateMask;
+  WCHAR szID[MAX_LINKID_TEXT];
+  WCHAR szUrl[L_MAX_URL_LENGTH];
+} LITEM, *PLITEM;
+
+typedef struct tagLHITTESTINFO
+{
+  POINT pt;
+  LITEM item;
+} LHITTESTINFO, *PLHITTESTINFO;
+
+typedef struct tagNMLINK
+{
+  NMHDR hdr;
+  LITEM item ;
+} NMLINK, *PNMLINK;
+
 #ifdef __cplusplus
 }
 #endif
