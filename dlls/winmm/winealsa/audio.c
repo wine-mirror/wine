@@ -2089,8 +2089,9 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     (*idrv)->primary	= NULL;
     return MMSYSERR_NOERROR;
 }
+#endif
 
-#else /* !HAVE_ALSA */
+#ifndef HAVE_ALSA
 
 /**************************************************************************
  * 				wodMessage (WINEALSA.7)
