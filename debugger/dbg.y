@@ -123,7 +123,7 @@ line: command
     | error tEOL               { yyerrok; }
 
 command:
-      tQUIT tEOL               { exit(0); }
+      tQUIT tEOL               { DEBUG_Exit(0); }
     | tHELP tEOL               { DEBUG_Help(); }
     | tHELP tINFO tEOL         { DEBUG_HelpInfo(); }
     | tCONT tEOL               { dbg_exec_count = 1; 
@@ -431,6 +431,41 @@ void mode_command(int newmode)
     else fprintf(stderr,"Invalid mode (use 16 or 32)\n");
 }
 
+/***********************************************************************
+ *           DEBUG_Freeze
+ */
+static void DEBUG_Freeze( BOOL freeze )
+{
+    static BOOL frozen = FALSE;
+
+    if ( freeze && !frozen )
+    {
+        /* Don't freeze thread currently holding the X crst! */
+        EnterCriticalSection( &X11DRV_CritSection );
+        CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
+        LeaveCriticalSection( &X11DRV_CritSection );
+        frozen = TRUE;
+    }
+
+    if ( !freeze && frozen )
+    {
+        CLIENT_DebuggerRequest( DEBUGGER_UNFREEZE_ALL );
+        frozen = FALSE;
+    }
+}
+
+/***********************************************************************
+ *           DEBUG_Exit
+ *
+ * Kill current process.
+ */
+void DEBUG_Exit( DWORD exit_code )
+{
+    DEBUG_Freeze( FALSE );
+
+    TASK_KillTask( 0 );  /* FIXME: should not be necessary */
+    TerminateProcess( GetCurrentProcess(), exit_code );
+}
 
 /***********************************************************************
  *           DEBUG_Main
@@ -440,7 +475,6 @@ void mode_command(int newmode)
 static void DEBUG_Main( BOOL is_debug )
 {
     static int loaded_symbols = 0;
-    static BOOL frozen = FALSE;
     static BOOL in_debugger = FALSE;
     char SymbolTableFile[256];
     int newmode;
@@ -452,7 +486,7 @@ static void DEBUG_Main( BOOL is_debug )
     if (in_debugger)
     {
         fprintf( stderr, " inside debugger, exiting.\n" );
-        exit(1);
+        DEBUG_Exit(1);
     }
     in_debugger = TRUE;
     yyin = stdin;
@@ -472,14 +506,7 @@ static void DEBUG_Main( BOOL is_debug )
     {
         loaded_symbols++;
 
-        if ( !frozen )
-        {
-            /* Don't freeze thread currently holding the X crst! */
-            EnterCriticalSection( &X11DRV_CritSection );
-            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
-            LeaveCriticalSection( &X11DRV_CritSection );
-            frozen = TRUE;
-        }
+        DEBUG_Freeze( TRUE );
 
 #ifdef DBG_need_heap
 	/*
@@ -540,14 +567,7 @@ static void DEBUG_Main( BOOL is_debug )
 
         GlobalUnlock16( GetCurrentTask() );
 
-        if ( !frozen )
-        {
-            /* Don't freeze thread currently holding the X crst! */
-            EnterCriticalSection( &X11DRV_CritSection );
-            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
-            LeaveCriticalSection( &X11DRV_CritSection );
-            frozen = TRUE;
-        }
+        DEBUG_Freeze( TRUE );
 
         /* Put the display in a correct state */
 	USER_Driver->pBeginDebugging();
@@ -619,11 +639,7 @@ static void DEBUG_Main( BOOL is_debug )
       {
 	dbg_exec_count = 0;
 
-        if ( frozen )
-        {
-            CLIENT_DebuggerRequest( DEBUGGER_UNFREEZE_ALL );
-            frozen = FALSE;
-        }
+        DEBUG_Freeze( FALSE );
       }
 
     in_debugger = FALSE;
@@ -645,7 +661,7 @@ DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance 
         is_debug = TRUE;
         break;
     case CONTROL_C_EXIT:
-        if (!Options.debug) exit(0);
+        if (!Options.debug) DEBUG_Exit(0);
         break;
     }
 

@@ -634,7 +634,7 @@ DEBUG_EvalExpr(struct expr * exp)
       break;
     default:
       fprintf(stderr,"Unexpected expression.\n");
-      exit(123);
+      DEBUG_Exit(123);
       break;
     }
 
@@ -794,7 +794,7 @@ DEBUG_DisplayExpr(struct expr * exp)
       break;
     default:
       fprintf(stderr,"Unexpected expression.\n");
-      exit(123);
+      DEBUG_Exit(123);
       break;
     }
 
@@ -855,7 +855,7 @@ DEBUG_CloneExpr(struct expr * exp)
       break;
     default:
       fprintf(stderr,"Unexpected expression.\n");
-      exit(123);
+      DEBUG_Exit(123);
       break;
     }
 
@@ -912,7 +912,7 @@ DEBUG_FreeExpr(struct expr * exp)
       break;
     default:
       fprintf(stderr,"Unexpected expression.\n");
-      exit(123);
+      DEBUG_Exit(123);
       break;
     }
 

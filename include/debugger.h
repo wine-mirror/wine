@@ -317,6 +317,7 @@ extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 
   /* debugger/dbg.y */
 extern DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
+extern void DEBUG_Exit( DWORD exit_code );
 
   /* Choose your allocator! */
 #if 1

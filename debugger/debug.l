@@ -239,7 +239,7 @@ static int dbg_read(char * buf, int size)
         if (!line)
         {
             fprintf( stderr, "\n" );
-            exit(0);
+            DEBUG_Exit(0);
         }
 
         /* Remove leading and trailing whitespace from the line */
@@ -264,7 +264,7 @@ static int dbg_read(char * buf, int size)
             if (size < len + 1)
             {
                 fprintf(stderr,"Fatal readline goof.\n");
-                exit(0);
+                DEBUG_Exit(0);
             }
             strcpy(buf, line);
             buf[len] = '\n';
