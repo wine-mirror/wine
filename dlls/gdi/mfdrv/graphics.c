@@ -156,7 +156,11 @@ MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 
     pt16 = (LPPOINT16)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
     if(!pt16) return FALSE;
-    for (i=count;i--;) CONV_POINT32TO16(&(pt[i]),&(pt16[i]));
+    for (i=count;i--;)
+    {
+        pt16[i].x = pt[i].x;
+        pt16[i].y = pt[i].y;
+    }
     ret = MFDRV_MetaPoly(dev, META_POLYLINE, pt16, count);
 
     HeapFree( GetProcessHeap(), 0, pt16 );
@@ -176,7 +180,11 @@ MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 
     pt16 = (LPPOINT16) HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
     if(!pt16) return FALSE;
-    for (i=count;i--;) CONV_POINT32TO16(&(pt[i]),&(pt16[i]));
+    for (i=count;i--;)
+    {
+        pt16[i].x = pt[i].x;
+        pt16[i].y = pt[i].y;
+    }
     ret = MFDRV_MetaPoly(dev, META_POLYGON, pt16, count);
 
     HeapFree( GetProcessHeap(), 0, pt16 );
@@ -215,7 +223,8 @@ MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygon
 
     /* convert all points */
     for (j = totalpoint16; j--;){
-         CONV_POINT32TO16(&(pt[j]),&(pt16[j]));
+        pt16[j].x = pt[j].x;
+        pt16[j].y = pt[j].y;
     }
 
     len = sizeof(METARECORD) + sizeof(WORD) + polygons*sizeof(INT16) + totalpoint16*sizeof(POINT16);

@@ -283,7 +283,10 @@ static LRESULT CALLBACK call_WH_CBT( INT code, WPARAM wp, LPARAM lp )
             RECT *rect32 = (RECT *)lp;
             RECT16 rect16;
 
-            CONV_RECT32TO16( rect32, &rect16 );
+            rect16.left   = rect32->left;
+            rect16.top    = rect32->top;
+            rect16.right  = rect32->right;
+            rect16.bottom = rect32->bottom;
             lp = MapLS( &rect16 );
             ret = call_hook_16( WH_CBT, code, wp, lp );
             UnMapLS( lp );
@@ -571,7 +574,10 @@ LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wparam, LPARA
                 RECT16 *rect16 = MapSL(lparam);
                 RECT rect32;
 
-                CONV_RECT16TO32( rect16, &rect32 );
+                rect32.left   = rect16->left;
+                rect32.top    = rect16->top;
+                rect32.right  = rect16->right;
+                rect32.bottom = rect16->bottom;
                 ret = CallNextHookEx( hhook, code, wparam, (LPARAM)&rect32 );
                 break;
             }

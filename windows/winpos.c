@@ -642,17 +642,31 @@ static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd, POINT pt, const RECT *res
 
 	SetPropA( wnd->hwndSelf, atomInternalPos, (HANDLE)lpPos );
 	lpPos->hwndIconTitle = 0; /* defer until needs to be shown */
-        CONV_RECT32TO16( &wnd->rectWindow, &lpPos->rectNormal );
-	*(UINT*)&lpPos->ptIconPos = *(UINT*)&lpPos->ptMaxPos = 0xFFFFFFFF;
+        lpPos->rectNormal.left   = wnd->rectWindow.left;
+        lpPos->rectNormal.top    = wnd->rectWindow.top;
+        lpPos->rectNormal.right  = wnd->rectWindow.right;
+        lpPos->rectNormal.bottom = wnd->rectWindow.bottom;
+        lpPos->ptIconPos.x = lpPos->ptIconPos.y = -1;
+        lpPos->ptMaxPos.x = lpPos->ptMaxPos.y = -1;
     }
 
     if( wnd->dwStyle & WS_MINIMIZE )
-	CONV_POINT32TO16( &pt, &lpPos->ptIconPos );
+    {
+        lpPos->ptIconPos.x = pt.x;
+        lpPos->ptIconPos.y = pt.y;
+    }
     else if( wnd->dwStyle & WS_MAXIMIZE )
-	CONV_POINT32TO16( &pt, &lpPos->ptMaxPos );
+    {
+        lpPos->ptMaxPos.x = pt.x;
+        lpPos->ptMaxPos.y = pt.y;
+    }
     else if( restoreRect )
-	CONV_RECT32TO16( restoreRect, &lpPos->rectNormal );
-
+    {
+        lpPos->rectNormal.left   = restoreRect->left;
+        lpPos->rectNormal.top    = restoreRect->top;
+        lpPos->rectNormal.right  = restoreRect->right;
+        lpPos->rectNormal.bottom = restoreRect->bottom;
+    }
     return lpPos;
 }
 
@@ -772,7 +786,10 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 
     lpPos = (LPINTERNALPOS)GetPropA( hwnd, atomInternalPos );
     if( lpPos && !EMPTYPOINT(lpPos->ptMaxPos) )
-	CONV_POINT16TO32( &lpPos->ptMaxPos, &MinMax.ptMaxPosition );
+    {
+        MinMax.ptMaxPosition.x = lpPos->ptMaxPos.x;
+        MinMax.ptMaxPosition.y = lpPos->ptMaxPos.y;
+    }
     else
     {
         MinMax.ptMaxPosition.x = -xinc;
@@ -883,9 +900,14 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
         wndpl->flags = WPF_RESTORETOMAXIMIZED;
     else
         wndpl->flags = 0;
-    CONV_POINT16TO32( &lpPos->ptIconPos, &wndpl->ptMinPosition );
-    CONV_POINT16TO32( &lpPos->ptMaxPos, &wndpl->ptMaxPosition );
-    CONV_RECT16TO32( &lpPos->rectNormal, &wndpl->rcNormalPosition );
+    wndpl->ptMinPosition.x = lpPos->ptIconPos.x;
+    wndpl->ptMinPosition.y = lpPos->ptIconPos.y;
+    wndpl->ptMaxPosition.x = lpPos->ptMaxPos.x;
+    wndpl->ptMaxPosition.y = lpPos->ptMaxPos.y;
+    wndpl->rcNormalPosition.left   = lpPos->rectNormal.left;
+    wndpl->rcNormalPosition.top    = lpPos->rectNormal.top;
+    wndpl->rcNormalPosition.right  = lpPos->rectNormal.right;
+    wndpl->rcNormalPosition.bottom = lpPos->rectNormal.bottom;
     WIN_ReleaseWndPtr(pWnd);
     return TRUE;
 }
@@ -902,10 +924,23 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
 	LPINTERNALPOS lpPos = (LPINTERNALPOS)WINPOS_InitInternalPos( pWnd,
 			     *(LPPOINT)&pWnd->rectWindow.left, &pWnd->rectWindow );
 
-	if( flags & PLACE_MIN ) CONV_POINT32TO16( &wndpl->ptMinPosition, &lpPos->ptIconPos );
-	if( flags & PLACE_MAX ) CONV_POINT32TO16( &wndpl->ptMaxPosition, &lpPos->ptMaxPos );
-	if( flags & PLACE_RECT) CONV_RECT32TO16( &wndpl->rcNormalPosition, &lpPos->rectNormal );
-
+        if( flags & PLACE_MIN )
+        {
+            lpPos->ptIconPos.x = wndpl->ptMinPosition.x;
+            lpPos->ptIconPos.y = wndpl->ptMinPosition.y;
+        }
+        if( flags & PLACE_MAX )
+        {
+            lpPos->ptMaxPos.x = wndpl->ptMaxPosition.x;
+            lpPos->ptMaxPos.y = wndpl->ptMaxPosition.y;
+        }
+        if( flags & PLACE_RECT)
+        {
+            lpPos->rectNormal.left   = wndpl->rcNormalPosition.left;
+            lpPos->rectNormal.top    = wndpl->rcNormalPosition.top;
+            lpPos->rectNormal.right  = wndpl->rcNormalPosition.right;
+            lpPos->rectNormal.bottom = wndpl->rcNormalPosition.bottom;
+        }
 	if( pWnd->dwStyle & WS_MINIMIZE )
 	{
 	    WINPOS_ShowIconTitle( pWnd->hwndSelf, FALSE );

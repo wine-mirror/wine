@@ -97,6 +97,23 @@ static BOOL CALLBACK draw_state_callback( HDC hdc, LPARAM lparam, WPARAM wparam,
     return LOWORD(ret);
 }
 
+
+/***********************************************************************
+ *		ClipCursor (USER.16)
+ */
+BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
+{
+    RECT rect32;
+
+    if (!rect) return ClipCursor( NULL );
+    rect32.left   = rect->left;
+    rect32.top    = rect->top;
+    rect32.right  = rect->right;
+    rect32.bottom = rect->bottom;
+    return ClipCursor( &rect32 );
+}
+
+
 /***********************************************************************
  *		SetCursor (USER.69)
  */
@@ -153,7 +170,11 @@ void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect16, HBRUSH16 hbrush )
 {
     RECT rect;
-    CONV_RECT16TO32( rect16, &rect );
+
+    rect.left   = rect16->left;
+    rect.top    = rect16->top;
+    rect.right  = rect16->right;
+    rect.bottom = rect16->bottom;
     return FrameRect( HDC_32(hdc), &rect, HBRUSH_32(hbrush) );
 }
 
@@ -177,9 +198,16 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT
     if (rect)
     {
         RECT rect32;
-        CONV_RECT16TO32( rect, &rect32 );
+
+        rect32.left   = rect->left;
+        rect32.top    = rect->top;
+        rect32.right  = rect->right;
+        rect32.bottom = rect->bottom;
         ret = DrawTextA( HDC_32(hdc), str, count, &rect32, flags );
-        CONV_RECT32TO16( &rect32, rect );
+        rect->left   = rect32.left;
+        rect->top    = rect32.top;
+        rect->right  = rect32.right;
+        rect->bottom = rect32.bottom;
     }
     else ret = DrawTextA( HDC_32(hdc), str, count, NULL, flags);
     return ret;
@@ -194,6 +222,15 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT
 DWORD WINAPI IconSize16(void)
 {
   return MAKELONG(GetSystemMetrics(SM_CYICON), GetSystemMetrics(SM_CXICON));
+}
+
+
+/***********************************************************************
+ *		AdjustWindowRect (USER.102)
+ */
+BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
+{
+    return AdjustWindowRectEx16( rect, style, menu, 0 );
 }
 
 
@@ -400,12 +437,30 @@ BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
     RECT rect32, clipRect32, rcUpdate32;
     BOOL16 ret;
 
-    if (rect) CONV_RECT16TO32( rect, &rect32 );
-    if (cliprc) CONV_RECT16TO32( cliprc, &clipRect32 );
+    if (rect)
+    {
+        rect32.left   = rect->left;
+        rect32.top    = rect->top;
+        rect32.right  = rect->right;
+        rect32.bottom = rect->bottom;
+    }
+    if (cliprc)
+    {
+        clipRect32.left   = cliprc->left;
+        clipRect32.top    = cliprc->top;
+        clipRect32.right  = cliprc->right;
+        clipRect32.bottom = cliprc->bottom;
+    }
     ret = ScrollDC( HDC_32(hdc), dx, dy, rect ? &rect32 : NULL,
                     cliprc ? &clipRect32 : NULL, HRGN_32(hrgnUpdate),
                     &rcUpdate32 );
-    if (rcUpdate) CONV_RECT32TO16( &rcUpdate32, rcUpdate );
+    if (rcUpdate)
+    {
+        rcUpdate->left   = rcUpdate32.left;
+        rcUpdate->top    = rcUpdate32.top;
+        rcUpdate->right  = rcUpdate32.right;
+        rcUpdate->bottom = rcUpdate32.bottom;
+    }
     return ret;
 }
 
@@ -501,6 +556,23 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hdc, HPALETTE16 hpal, BOOL16 bForceBack
 UINT16 WINAPI RealizePalette16( HDC16 hdc )
 {
     return UserRealizePalette( HDC_32(hdc) );
+}
+
+
+/***********************************************************************
+ *		GetClipCursor (USER.309)
+ */
+void WINAPI GetClipCursor16( RECT16 *rect )
+{
+    if (rect)
+    {
+        RECT rect32;
+        GetClipCursor( &rect32 );
+        rect->left   = rect32.left;
+        rect->top    = rect32.top;
+        rect->right  = rect32.right;
+        rect->bottom = rect32.bottom;
+    }
 }
 
 
@@ -759,6 +831,28 @@ HICON16 WINAPI CreateIconFromResourceEx16(LPBYTE bits, UINT16 cbSize,
 					   width, height, cFlag));
 }
 
+
+/***********************************************************************
+ *		AdjustWindowRectEx (USER.454)
+ */
+BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style, BOOL16 menu, DWORD exStyle )
+{
+    RECT rect32;
+    BOOL ret;
+
+    rect32.left   = rect->left;
+    rect32.top    = rect->top;
+    rect32.right  = rect->right;
+    rect32.bottom = rect->bottom;
+    ret = AdjustWindowRectEx( &rect32, style, menu, exStyle );
+    rect->left   = rect32.left;
+    rect->top    = rect32.top;
+    rect->right  = rect32.right;
+    rect->bottom = rect32.bottom;
+    return ret;
+}
+
+
 /***********************************************************************
  *		DestroyIcon (USER.457)
  */
@@ -924,7 +1018,11 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 {
     RECT rect32;
-    CONV_RECT16TO32( rc, &rect32 );
+
+    rect32.left   = rc->left;
+    rect32.top    = rc->top;
+    rect32.right  = rc->right;
+    rect32.bottom = rc->bottom;
     DrawFocusRect( HDC_32(hdc), &rect32 );
 }
 
@@ -937,9 +1035,15 @@ BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType, UINT16 u
     RECT rect32;
     BOOL ret;
 
-    CONV_RECT16TO32( rc, &rect32 );
+    rect32.left   = rc->left;
+    rect32.top    = rc->top;
+    rect32.right  = rc->right;
+    rect32.bottom = rc->bottom;
     ret = DrawFrameControl( HDC_32(hdc), &rect32, uType, uState );
-    CONV_RECT32TO16( &rect32, rc );
+    rc->left   = rect32.left;
+    rc->top    = rect32.top;
+    rc->right  = rect32.right;
+    rc->bottom = rect32.bottom;
     return ret;
 }
 
@@ -951,9 +1055,15 @@ BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
     RECT rect32;
     BOOL ret;
 
-    CONV_RECT16TO32( rc, &rect32 );
+    rect32.left   = rc->left;
+    rect32.top    = rc->top;
+    rect32.right  = rc->right;
+    rect32.bottom = rc->bottom;
     ret = DrawEdge( HDC_32(hdc), &rect32, edge, flags );
-    CONV_RECT32TO16( &rect32, rc );
+    rc->left   = rect32.left;
+    rc->top    = rect32.top;
+    rc->right  = rect32.right;
+    rc->bottom = rect32.bottom;
     return ret;
 }
 

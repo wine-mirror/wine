@@ -742,9 +742,17 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam,
     case WM_NCCALCSIZE:
         {
             RECT rect32;
-            CONV_RECT16TO32( MapSL(lParam), &rect32 );
+            RECT16 *rect16 = MapSL(lParam);
+
+            rect32.left   = rect16->left;
+            rect32.top    = rect16->top;
+            rect32.right  = rect16->right;
+            rect32.bottom = rect16->bottom;
             result = NC_HandleNCCalcSize( hwnd, &rect32 );
-            CONV_RECT32TO16( &rect32, MapSL(lParam) );
+            rect16->left   = rect32.left;
+            rect16->top    = rect32.top;
+            rect16->right  = rect32.right;
+            rect16->bottom = rect32.bottom;
         }
         break;
 

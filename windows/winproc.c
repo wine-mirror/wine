@@ -1392,16 +1392,19 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT*)HeapAlloc(GetProcessHeap(), 0,
                                                                  sizeof(*dis));
             if (!dis) return -1;
-            dis->CtlType    = dis16->CtlType;
-            dis->CtlID      = dis16->CtlID;
-            dis->itemID     = dis16->itemID;
-            dis->itemAction = dis16->itemAction;
-            dis->itemState  = dis16->itemState;
-            dis->hwndItem   = (dis->CtlType == ODT_MENU) ? (HWND)HMENU_32(dis16->hwndItem)
-                                                         : WIN_Handle32( dis16->hwndItem );
-            dis->hDC        = HDC_32(dis16->hDC);
-            dis->itemData   = dis16->itemData;
-            CONV_RECT16TO32( &dis16->rcItem, &dis->rcItem );
+            dis->CtlType       = dis16->CtlType;
+            dis->CtlID         = dis16->CtlID;
+            dis->itemID        = dis16->itemID;
+            dis->itemAction    = dis16->itemAction;
+            dis->itemState     = dis16->itemState;
+            dis->hwndItem      = (dis->CtlType == ODT_MENU) ? (HWND)HMENU_32(dis16->hwndItem)
+                                                            : WIN_Handle32( dis16->hwndItem );
+            dis->hDC           = HDC_32(dis16->hDC);
+            dis->itemData      = dis16->itemData;
+            dis->rcItem.left   = dis16->rcItem.left;
+            dis->rcItem.top    = dis16->rcItem.top;
+            dis->rcItem.right  = dis16->rcItem.right;
+            dis->rcItem.bottom = dis16->rcItem.bottom;
             *plparam = (LPARAM)dis;
         }
         return 1;
@@ -1477,13 +1480,22 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
                                                 sizeof(*nc) + sizeof(LPARAM) );
             if (!nc) return -1;
             nc16 = MapSL(*plparam);
-            CONV_RECT16TO32( &nc16->rgrc[0], &nc->rgrc[0] );
+            nc->rgrc[0].left   = nc16->rgrc[0].left;
+            nc->rgrc[0].top    = nc16->rgrc[0].top;
+            nc->rgrc[0].right  = nc16->rgrc[0].right;
+            nc->rgrc[0].bottom = nc16->rgrc[0].bottom;
             if (wParam16)
             {
                 nc->lppos = (WINDOWPOS *)HeapAlloc( GetProcessHeap(), 0,
                                                       sizeof(*nc->lppos) );
-                CONV_RECT16TO32( &nc16->rgrc[1], &nc->rgrc[1] );
-                CONV_RECT16TO32( &nc16->rgrc[2], &nc->rgrc[2] );
+                nc->rgrc[1].left   = nc16->rgrc[1].left;
+                nc->rgrc[1].top    = nc16->rgrc[1].top;
+                nc->rgrc[1].right  = nc16->rgrc[1].right;
+                nc->rgrc[1].bottom = nc16->rgrc[1].bottom;
+                nc->rgrc[2].left   = nc16->rgrc[2].left;
+                nc->rgrc[2].top    = nc16->rgrc[2].top;
+                nc->rgrc[2].right  = nc16->rgrc[2].right;
+                nc->rgrc[2].bottom = nc16->rgrc[2].bottom;
                 if (nc->lppos) WINDOWPOS16to32( MapSL(nc16->lppos), nc->lppos );
             }
             *(LPARAM *)(nc + 1) = *plparam;  /* Store the previous lParam */
@@ -1703,11 +1715,20 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
             NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lParam;
             lParam = *(LPARAM *)(nc + 1);
             nc16 = MapSL(lParam);
-            CONV_RECT32TO16( &nc->rgrc[0], &nc16->rgrc[0] );
+            nc16->rgrc[0].left   = nc->rgrc[0].left;
+            nc16->rgrc[0].top    = nc->rgrc[0].top;
+            nc16->rgrc[0].right  = nc->rgrc[0].right;
+            nc16->rgrc[0].bottom = nc->rgrc[0].bottom;
             if (wParam)
             {
-                CONV_RECT32TO16( &nc->rgrc[1], &nc16->rgrc[1] );
-                CONV_RECT32TO16( &nc->rgrc[2], &nc16->rgrc[2] );
+                nc16->rgrc[1].left   = nc->rgrc[1].left;
+                nc16->rgrc[1].top    = nc->rgrc[1].top;
+                nc16->rgrc[1].right  = nc->rgrc[1].right;
+                nc16->rgrc[1].bottom = nc->rgrc[1].bottom;
+                nc16->rgrc[2].left   = nc->rgrc[2].left;
+                nc16->rgrc[2].top    = nc->rgrc[2].top;
+                nc16->rgrc[2].right  = nc->rgrc[2].right;
+                nc16->rgrc[2].bottom = nc->rgrc[2].bottom;
                 if (nc->lppos)
                 {
                     WINDOWPOS32to16( nc->lppos, MapSL(nc16->lppos));
@@ -2220,15 +2241,18 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             DRAWITEMSTRUCT *dis32 = (DRAWITEMSTRUCT *)*plparam;
             DRAWITEMSTRUCT16 *dis = HeapAlloc( GetProcessHeap(), 0, sizeof(DRAWITEMSTRUCT16) );
             if (!dis) return -1;
-            dis->CtlType    = (UINT16)dis32->CtlType;
-            dis->CtlID      = (UINT16)dis32->CtlID;
-            dis->itemID     = (UINT16)dis32->itemID;
-            dis->itemAction = (UINT16)dis32->itemAction;
-            dis->itemState  = (UINT16)dis32->itemState;
-            dis->hwndItem   = HWND_16( dis32->hwndItem );
-            dis->hDC        = HDC_16(dis32->hDC);
-            dis->itemData   = dis32->itemData;
-            CONV_RECT32TO16( &dis32->rcItem, &dis->rcItem );
+            dis->CtlType       = (UINT16)dis32->CtlType;
+            dis->CtlID         = (UINT16)dis32->CtlID;
+            dis->itemID        = (UINT16)dis32->itemID;
+            dis->itemAction    = (UINT16)dis32->itemAction;
+            dis->itemState     = (UINT16)dis32->itemState;
+            dis->hwndItem      = HWND_16( dis32->hwndItem );
+            dis->hDC           = HDC_16(dis32->hDC);
+            dis->itemData      = dis32->itemData;
+            dis->rcItem.left   = dis32->rcItem.left;
+            dis->rcItem.top    = dis32->rcItem.top;
+            dis->rcItem.right  = dis32->rcItem.right;
+            dis->rcItem.bottom = dis32->rcItem.bottom;
             *plparam = MapLS( dis );
         }
         return 1;
@@ -2318,12 +2342,21 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             NCCALCSIZE_PARAMS16 *nc = HeapAlloc( GetProcessHeap(), 0, sizeof(*nc) + sizeof(LPARAM));
             if (!nc) return -1;
 
-            CONV_RECT32TO16( &nc32->rgrc[0], &nc->rgrc[0] );
+            nc->rgrc[0].left   = nc32->rgrc[0].left;
+            nc->rgrc[0].top    = nc32->rgrc[0].top;
+            nc->rgrc[0].right  = nc32->rgrc[0].right;
+            nc->rgrc[0].bottom = nc32->rgrc[0].bottom;
             if (wParam32)
             {
                 WINDOWPOS16 *wp;
-                CONV_RECT32TO16( &nc32->rgrc[1], &nc->rgrc[1] );
-                CONV_RECT32TO16( &nc32->rgrc[2], &nc->rgrc[2] );
+                nc->rgrc[1].left   = nc32->rgrc[1].left;
+                nc->rgrc[1].top    = nc32->rgrc[1].top;
+                nc->rgrc[1].right  = nc32->rgrc[1].right;
+                nc->rgrc[1].bottom = nc32->rgrc[1].bottom;
+                nc->rgrc[2].left   = nc32->rgrc[2].left;
+                nc->rgrc[2].top    = nc32->rgrc[2].top;
+                nc->rgrc[2].right  = nc32->rgrc[2].right;
+                nc->rgrc[2].bottom = nc32->rgrc[2].bottom;
                 if (!(wp = HeapAlloc( GetProcessHeap(), 0, sizeof(WINDOWPOS16) )))
                 {
                     HeapFree( GetProcessHeap(), 0, nc );
@@ -2541,10 +2574,15 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     case CB_GETDROPPEDCONTROLRECT:
     case LB_GETITEMRECT:
         {
+            RECT *r32;
             RECT16 *rect = MapSL(p16->lParam);
             UnMapLS( p16->lParam );
             p16->lParam = *(LPARAM *)(rect + 1);
-            CONV_RECT16TO32( rect, (RECT *)(p16->lParam));
+            r32 = (RECT *)p16->lParam;
+            r32->left   = rect->left;
+            r32->top    = rect->top;
+            r32->right  = rect->right;
+            r32->bottom = rect->bottom;
             HeapFree( GetProcessHeap(), 0, rect );
         }
         break;
@@ -2615,13 +2653,22 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
             UnMapLS( p16->lParam );
             p16->lParam = *(LPARAM *)(nc + 1);
             nc32 = (NCCALCSIZE_PARAMS *)(p16->lParam);
-            CONV_RECT16TO32( &nc->rgrc[0], &nc32->rgrc[0] );
+            nc32->rgrc[0].left   = nc->rgrc[0].left;
+            nc32->rgrc[0].top    = nc->rgrc[0].top;
+            nc32->rgrc[0].right  = nc->rgrc[0].right;
+            nc32->rgrc[0].bottom = nc->rgrc[0].bottom;
             if (p16->wParam)
             {
                 WINDOWPOS16 *pos = MapSL(nc->lppos);
                 UnMapLS( nc->lppos );
-                CONV_RECT16TO32( &nc->rgrc[1], &nc32->rgrc[1] );
-                CONV_RECT16TO32( &nc->rgrc[2], &nc32->rgrc[2] );
+                nc32->rgrc[1].left   = nc->rgrc[1].left;
+                nc32->rgrc[1].top    = nc->rgrc[1].top;
+                nc32->rgrc[1].right  = nc->rgrc[1].right;
+                nc32->rgrc[1].bottom = nc->rgrc[1].bottom;
+                nc32->rgrc[2].left   = nc->rgrc[2].left;
+                nc32->rgrc[2].top    = nc->rgrc[2].top;
+                nc32->rgrc[2].right  = nc->rgrc[2].right;
+                nc32->rgrc[2].bottom = nc->rgrc[2].bottom;
                 WINDOWPOS16to32( pos, nc32->lppos );
                 HeapFree( GetProcessHeap(), 0, pos );
             }

@@ -164,7 +164,8 @@ HWND16 WINAPI WindowFromPoint16( POINT16 pt )
 {
     POINT pt32;
 
-    CONV_POINT16TO32( &pt, &pt32 );
+    pt32.x = pt.x;
+    pt32.y = pt.y;
     return HWND_16( WindowFromPoint( pt32 ) );
 }
 
@@ -447,8 +448,20 @@ void WINAPI ScrollWindow16( HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
 {
     RECT rect32, clipRect32;
 
-    if (rect) CONV_RECT16TO32( rect, &rect32 );
-    if (clipRect) CONV_RECT16TO32( clipRect, &clipRect32 );
+    if (rect)
+    {
+        rect32.left   = rect->left;
+        rect32.top    = rect->top;
+        rect32.right  = rect->right;
+        rect32.bottom = rect->bottom;
+    }
+    if (clipRect)
+    {
+        clipRect32.left   = clipRect->left;
+        clipRect32.top    = clipRect->top;
+        clipRect32.right  = clipRect->right;
+        clipRect32.bottom = clipRect->bottom;
+    }
     ScrollWindow( WIN_Handle32(hwnd), dx, dy, rect ? &rect32 : NULL,
                   clipRect ? &clipRect32 : NULL );
 }
@@ -846,7 +859,10 @@ BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
 
     if (!rect) return GetUpdateRect( WIN_Handle32(hwnd), NULL, erase );
     ret = GetUpdateRect( WIN_Handle32(hwnd), &r, erase );
-    CONV_RECT32TO16( &r, rect );
+    rect->left   = r.left;
+    rect->top    = r.top;
+    rect->right  = r.right;
+    rect->bottom = r.bottom;
     return ret;
 }
 
@@ -857,7 +873,9 @@ BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
 HWND16 WINAPI ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
 {
     POINT pt32;
-    CONV_POINT16TO32( &pt, &pt32 );
+
+    pt32.x = pt.x;
+    pt32.y = pt.y;
     return HWND_16( ChildWindowFromPoint( WIN_Handle32(hwndParent), pt32 ));
 }
 
@@ -1085,7 +1103,10 @@ BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
     if (rectUpdate)
     {
         RECT r;
-        CONV_RECT16TO32( rectUpdate, &r );
+        r.left   = rectUpdate->left;
+        r.top    = rectUpdate->top;
+        r.right  = rectUpdate->right;
+        r.bottom = rectUpdate->bottom;
         return RedrawWindow(WIN_Handle32(hwnd), &r, HRGN_32(hrgnUpdate), flags);
     }
     return RedrawWindow(WIN_Handle32(hwnd), NULL, HRGN_32(hrgnUpdate), flags);
@@ -1112,12 +1133,30 @@ INT16 WINAPI ScrollWindowEx16( HWND16 hwnd, INT16 dx, INT16 dy,
     RECT rect32, clipRect32, rcUpdate32;
     BOOL16 ret;
 
-    if (rect) CONV_RECT16TO32( rect, &rect32 );
-    if (clipRect) CONV_RECT16TO32( clipRect, &clipRect32 );
+    if (rect)
+    {
+        rect32.left   = rect->left;
+        rect32.top    = rect->top;
+        rect32.right  = rect->right;
+        rect32.bottom = rect->bottom;
+    }
+    if (clipRect)
+    {
+        clipRect32.left   = clipRect->left;
+        clipRect32.top    = clipRect->top;
+        clipRect32.right  = clipRect->right;
+        clipRect32.bottom = clipRect->bottom;
+    }
     ret = ScrollWindowEx( WIN_Handle32(hwnd), dx, dy, rect ? &rect32 : NULL,
                           clipRect ? &clipRect32 : NULL, HRGN_32(hrgnUpdate),
                           (rcUpdate) ? &rcUpdate32 : NULL, flags );
-    if (rcUpdate) CONV_RECT32TO16( &rcUpdate32, rcUpdate );
+    if (rcUpdate)
+    {
+        rcUpdate->left   = rcUpdate32.left;
+        rcUpdate->top    = rcUpdate32.top;
+        rcUpdate->right  = rcUpdate32.right;
+        rcUpdate->bottom = rcUpdate32.bottom;
+    }
     return ret;
 }
 
@@ -1131,7 +1170,10 @@ void WINAPI FillWindow16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hb
     RECT16 rc16;
     GetClientRect( WIN_Handle32(hwnd), &rect );
     DPtoLP( HDC_32(hdc), (LPPOINT)&rect, 2 );
-    CONV_RECT32TO16( &rect, &rc16 );
+    rc16.left   = rect.left;
+    rc16.top    = rect.top;
+    rc16.right  = rect.right;
+    rc16.bottom = rect.bottom;
     PaintRect16( hwndParent, hwnd, hdc, hbrush, &rc16 );
 }
 
@@ -1193,9 +1235,14 @@ BOOL16 WINAPI GetWindowPlacement16( HWND16 hwnd, WINDOWPLACEMENT16 *wp16 )
     wp16->length  = sizeof(*wp16);
     wp16->flags   = wpl.flags;
     wp16->showCmd = wpl.showCmd;
-    CONV_POINT32TO16( &wpl.ptMinPosition, &wp16->ptMinPosition );
-    CONV_POINT32TO16( &wpl.ptMaxPosition, &wp16->ptMaxPosition );
-    CONV_RECT32TO16( &wpl.rcNormalPosition, &wp16->rcNormalPosition );
+    wp16->ptMinPosition.x = wpl.ptMinPosition.x;
+    wp16->ptMinPosition.y = wpl.ptMinPosition.y;
+    wp16->ptMaxPosition.x = wpl.ptMaxPosition.x;
+    wp16->ptMaxPosition.y = wpl.ptMaxPosition.y;
+    wp16->rcNormalPosition.left   = wpl.rcNormalPosition.left;
+    wp16->rcNormalPosition.top    = wpl.rcNormalPosition.top;
+    wp16->rcNormalPosition.right  = wpl.rcNormalPosition.right;
+    wp16->rcNormalPosition.bottom = wpl.rcNormalPosition.bottom;
     return TRUE;
 }
 
@@ -1229,7 +1276,9 @@ BOOL16 WINAPI SetWindowPlacement16( HWND16 hwnd, const WINDOWPLACEMENT16 *wp16 )
 HWND16 WINAPI ChildWindowFromPointEx16( HWND16 hwndParent, POINT16 pt, UINT16 uFlags)
 {
     POINT pt32;
-    CONV_POINT16TO32( &pt, &pt32 );
+
+    pt32.x = pt.x;
+    pt32.y = pt.y;
     return HWND_16( ChildWindowFromPointEx( WIN_Handle32(hwndParent), pt32, uFlags ));
 }
 
@@ -1254,7 +1303,13 @@ BOOL16 WINAPI TrackPopupMenu16( HMENU16 hMenu, UINT16 wFlags, INT16 x, INT16 y,
                                 INT16 nReserved, HWND16 hwnd, const RECT16 *lpRect )
 {
     RECT r;
-    if (lpRect) CONV_RECT16TO32( lpRect, &r );
+    if (lpRect)
+    {
+        r.left   = lpRect->left;
+        r.top    = lpRect->top;
+        r.right  = lpRect->right;
+        r.bottom = lpRect->bottom;
+    }
     return TrackPopupMenu( HMENU_32(hMenu), wFlags, x, y, nReserved,
                            WIN_Handle32(hwnd), lpRect ? &r : NULL );
 }
@@ -1446,7 +1501,9 @@ void WINAPI ScrollChildren16(HWND16 hwnd, UINT16 uMsg, WPARAM16 wParam, LPARAM l
 BOOL16 WINAPI DragDetect16( HWND16 hwnd, POINT16 pt )
 {
     POINT pt32;
-    CONV_POINT16TO32( &pt, &pt32 );
+
+    pt32.x = pt.x;
+    pt32.y = pt.y;
     return DragDetect( WIN_Handle32(hwnd), pt32 );
 }
 
@@ -1513,8 +1570,13 @@ BOOL16 WINAPI DrawCaptionTemp16( HWND16 hwnd, HDC16 hdc, const RECT16 *rect,
 {
     RECT rect32;
 
-    if (rect) CONV_RECT16TO32(rect,&rect32);
-
+    if (rect)
+    {
+        rect32.left   = rect->left;
+        rect32.top    = rect->top;
+        rect32.right  = rect->right;
+        rect32.bottom = rect->bottom;
+    }
     return DrawCaptionTempA( WIN_Handle32(hwnd), HDC_32(hdc),
 			     rect ? &rect32 : NULL, HFONT_32(hFont),
 			     HICON_32(hIcon), str, uFlags & 0x1f );
@@ -1528,8 +1590,13 @@ BOOL16 WINAPI DrawCaption16( HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 
 {
     RECT rect32;
 
-    if (rect) CONV_RECT16TO32( rect, &rect32 );
-
+    if (rect)
+    {
+        rect32.left   = rect->left;
+        rect32.top    = rect->top;
+        rect32.right  = rect->right;
+        rect32.bottom = rect->bottom;
+    }
     return DrawCaption(WIN_Handle32(hwnd), HDC_32(hdc), rect ? &rect32 : NULL, flags);
 }
 
@@ -1544,7 +1611,10 @@ BOOL16 WINAPI GetMenuItemRect16( HWND16 hwnd, HMENU16 hMenu, UINT16 uItem,
      BOOL res;
      if (!rect) return FALSE;
      res = GetMenuItemRect( WIN_Handle32(hwnd), HMENU_32(hMenu), uItem, &r32 );
-     CONV_RECT32TO16( &r32, rect );
+     rect->left   = r32.left;
+     rect->top    = r32.top;
+     rect->right  = r32.right;
+     rect->bottom = r32.bottom;
      return res;
 }
 

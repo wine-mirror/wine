@@ -460,7 +460,13 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 
 	case EM_GETRECT16:
 		if (lParam)
-			CONV_RECT32TO16(&es->format_rect, MapSL(lParam));
+                {
+                    RECT16 *r16 = MapSL(lParam);
+                    r16->left   = es->format_rect.left;
+                    r16->top    = es->format_rect.top;
+                    r16->right  = es->format_rect.right;
+                    r16->bottom = es->format_rect.bottom;
+                }
 		break;
 	case EM_GETRECT:
 		if (lParam)
@@ -470,7 +476,11 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	case EM_SETRECT16:
 		if ((es->style & ES_MULTILINE) && lParam) {
 			RECT rc;
-			CONV_RECT16TO32(MapSL(lParam), &rc);
+			RECT16 *r16 = MapSL(lParam);
+			rc.left   = r16->left;
+			rc.top    = r16->top;
+			rc.right  = r16->right;
+			rc.bottom = r16->bottom;
 			EDIT_SetRectNP(es, &rc);
 			EDIT_UpdateText(es, NULL, TRUE);
 		}
@@ -485,7 +495,11 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	case EM_SETRECTNP16:
 		if ((es->style & ES_MULTILINE) && lParam) {
 			RECT rc;
-			CONV_RECT16TO32(MapSL(lParam), &rc);
+			RECT16 *r16 = MapSL(lParam);
+			rc.left   = r16->left;
+			rc.top    = r16->top;
+			rc.right  = r16->right;
+			rc.bottom = r16->bottom;
 			EDIT_SetRectNP(es, &rc);
 		}
 		break;

@@ -337,36 +337,11 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 
 
 /***********************************************************************
- *		AdjustWindowRect (USER.102)
- */
-BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
-{
-    return AdjustWindowRectEx16( rect, style, menu, 0 );
-}
-
-
-/***********************************************************************
  *		AdjustWindowRect (USER32.@)
  */
 BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 {
     return AdjustWindowRectEx( rect, style, menu, 0 );
-}
-
-
-/***********************************************************************
- *		AdjustWindowRectEx (USER.454)
- */
-BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
-                                    BOOL16 menu, DWORD exStyle )
-{
-    RECT rect32;
-    BOOL ret;
-
-    CONV_RECT16TO32( rect, &rect32 );
-    ret = AdjustWindowRectEx( &rect32, style, menu, exStyle );
-    CONV_RECT32TO16( &rect32, rect );
-    return ret;
 }
 
 

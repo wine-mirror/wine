@@ -617,33 +617,4 @@ BOOL16      WINAPI WidenPath16(HDC16);
 INT16       WINAPI WriteDialog16(HPJOB16,LPSTR,INT16);
 INT16       WINAPI WriteSpool16(HPJOB16,LPSTR,INT16);
 
-
-inline static void CONV_POINT16TO32( const POINT16 *p16, POINT *p32 )
-{
-    p32->x = p16->x;
-    p32->y = p16->y;
-}
-
-inline static void CONV_POINT32TO16( const POINT *p32, POINT16 *p16 )
-{
-    p16->x = (INT16)p32->x;
-    p16->y = (INT16)p32->y;
-}
-
-inline static void CONV_RECT16TO32( const RECT16 *r16, RECT *r32 )
-{
-    r32->left   = r16->left;
-    r32->top    = r16->top;
-    r32->right  = r16->right;
-    r32->bottom = r16->bottom;
-}
-
-inline static void CONV_RECT32TO16( const RECT *r32, RECT16 *r16 )
-{
-    r16->left   = (INT16)r32->left;
-    r16->top    = (INT16)r32->top;
-    r16->right  = (INT16)r32->right;
-    r16->bottom = (INT16)r32->bottom;
-}
-
 #endif /* __WINE_WINE_WINGDI16_H */

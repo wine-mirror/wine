@@ -2133,9 +2133,13 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		lParam = (LPARAM)MapSL(lParam);
 		if( lParam )
 		{
-		    RECT	r;
-		    CBGetDroppedControlRect( lphc, &r );
-		    CONV_RECT32TO16( &r, (LPRECT16)lParam );
+                    RECT r;
+                    RECT16 *r16 = (RECT16 *)lParam;
+                    CBGetDroppedControlRect( lphc, &r );
+                    r16->left   = r.left;
+                    r16->top    = r.top;
+                    r16->right  = r.right;
+                    r16->bottom = r.bottom;
 		}
 		return  CB_OKAY;
 	case CB_GETDROPPEDCONTROLRECT:

@@ -2721,8 +2721,12 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
     case LB_GETITEMRECT16:
         {
             RECT rect;
+            RECT16 *r16 = MapSL(lParam);
             ret = LISTBOX_GetItemRect( descr, (INT16)wParam, &rect );
-            CONV_RECT32TO16( &rect, MapSL(lParam) );
+            r16->left   = rect.left;
+            r16->top    = rect.top;
+            r16->right  = rect.right;
+            r16->bottom = rect.bottom;
         }
 	return ret;
 

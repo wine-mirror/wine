@@ -2223,7 +2223,13 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	RECT tmp;
 	ret = SystemParametersInfoA( uAction, uParam, lpvParam ? &tmp : NULL, fuWinIni );
 	if (ret && lpvParam)
-	    CONV_RECT32TO16( &tmp, (RECT16 *)lpvParam );
+        {
+            RECT16 *r16 = (RECT16 *)lpvParam;
+            r16->left   = tmp.left;
+            r16->top    = tmp.top;
+            r16->right  = tmp.right;
+            r16->bottom = tmp.bottom;
+        }
 	break;
     }
 

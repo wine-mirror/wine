@@ -947,13 +947,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	/* NB POINTS array doesn't start at pPolyPoly->apts it's actually
 	   pPolyPoly->aPolyCounts + pPolyPoly->nPolys */
 
-	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
-				pPolyPoly->cpts * sizeof(POINT) );
+        POINT16 *pts16 = (POINT16 *)(pPolyPoly->aPolyCounts + pPolyPoly->nPolys);
+        POINT *pts = HeapAlloc( GetProcessHeap(), 0, pPolyPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPolyPoly->cpts; i++)
-	  CONV_POINT16TO32((POINT16*) (pPolyPoly->aPolyCounts +
-				      pPolyPoly->nPolys) + i, pts + i);
-
+        {
+            pts[i].x = pts16[i].x;
+            pts[i].y = pts16[i].y;
+        }
 	PolyPolygon(hdc, pts, (INT*)pPolyPoly->aPolyCounts, pPolyPoly->nPolys);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;
@@ -964,13 +965,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	/* NB POINTS array doesn't start at pPolyPoly->apts it's actually
 	   pPolyPoly->aPolyCounts + pPolyPoly->nPolys */
 
-	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
-				pPolyPoly->cpts * sizeof(POINT) );
+        POINT16 *pts16 = (POINT16 *)(pPolyPoly->aPolyCounts + pPolyPoly->nPolys);
+        POINT *pts = HeapAlloc( GetProcessHeap(), 0, pPolyPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPolyPoly->cpts; i++)
-	  CONV_POINT16TO32((POINT16*) (pPolyPoly->aPolyCounts +
-				      pPolyPoly->nPolys) + i, pts + i);
-
+        {
+            pts[i].x = pts16[i].x;
+            pts[i].y = pts16[i].y;
+        }
 	PolyPolyline(hdc, pts, pPolyPoly->aPolyCounts, pPolyPoly->nPolys);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;

@@ -1411,17 +1411,6 @@ HCURSOR WINAPI GetCursor(void)
 
 
 /***********************************************************************
- *		ClipCursor (USER.16)
- */
-BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
-{
-    if (!rect) SetRectEmpty( &CURSOR_ClipRect );
-    else CONV_RECT16TO32( rect, &CURSOR_ClipRect );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		ClipCursor (USER32.@)
  */
 BOOL WINAPI ClipCursor( const RECT *rect )
@@ -1429,15 +1418,6 @@ BOOL WINAPI ClipCursor( const RECT *rect )
     if (!rect) SetRectEmpty( &CURSOR_ClipRect );
     else CopyRect( &CURSOR_ClipRect, rect );
     return TRUE;
-}
-
-
-/***********************************************************************
- *		GetClipCursor (USER.309)
- */
-void WINAPI GetClipCursor16( RECT16 *rect )
-{
-    if (rect) CONV_RECT32TO16( &CURSOR_ClipRect, rect );
 }
 
 

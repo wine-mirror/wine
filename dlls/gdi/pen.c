@@ -156,7 +156,8 @@ static INT PEN_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer 
 
     logpen.lopnStyle = pen->logpen.lopnStyle;
     logpen.lopnColor = pen->logpen.lopnColor;
-    CONV_POINT32TO16( &pen->logpen.lopnWidth, &logpen.lopnWidth );
+    logpen.lopnWidth.x = pen->logpen.lopnWidth.x;
+    logpen.lopnWidth.y = pen->logpen.lopnWidth.y;
     if (count > sizeof(logpen)) count = sizeof(logpen);
     memcpy( buffer, &logpen, count );
     return count;

@@ -130,7 +130,13 @@ MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     TRACE("mapped %s -> %s\n", debugstr_wn(str, count), debugstr_an(ascii, len));
 
 
-    if (lprect)	CONV_RECT32TO16(lprect,&rect16);
+    if (lprect)
+    {
+        rect16.left   = lprect->left;
+        rect16.top    = lprect->top;
+        rect16.right  = lprect->right;
+        rect16.bottom = lprect->bottom;
+    }
 
     if(lpDx) {
         lpdx16 = HeapAlloc( GetProcessHeap(), 0, sizeof(INT16)*len );

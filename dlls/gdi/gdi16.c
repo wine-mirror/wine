@@ -486,7 +486,11 @@ BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
                                            count*sizeof(POINT) );
 
     if (!pt32) return FALSE;
-    for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
+    for (i=count;i--;)
+    {
+        pt32[i].x = pt[i].x;
+        pt32[i].y = pt[i].y;
+    }
     ret = Polygon(HDC_32(hdc),pt32,count);
     HeapFree( GetProcessHeap(), 0, pt32 );
     return ret;
@@ -504,7 +508,11 @@ BOOL16 WINAPI Polyline16( HDC16 hdc, const POINT16* pt, INT16 count )
                                            count*sizeof(POINT) );
 
     if (!pt32) return FALSE;
-    for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
+    for (i=count;i--;)
+    {
+        pt32[i].x = pt[i].x;
+        pt32[i].y = pt[i].y;
+    }
     ret = Polyline(HDC_32(hdc),pt32,count);
     HeapFree( GetProcessHeap(), 0, pt32 );
     return ret;
@@ -1414,7 +1422,10 @@ INT16 WINAPI GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
 {
     RECT r;
     INT16 ret = GetRgnBox( HRGN_32(hrgn), &r );
-    CONV_RECT32TO16( &r, rect );
+    rect->left   = r.left;
+    rect->top    = r.top;
+    rect->right  = r.right;
+    rect->bottom = r.bottom;
     return ret;
 }
 
@@ -1554,7 +1565,10 @@ UINT16 WINAPI SetBoundsRect16( HDC16 hdc, const RECT16* rect, UINT16 flags )
     if (rect)
     {
         RECT rect32;
-        CONV_RECT16TO32( rect, &rect32 );
+        rect32.left   = rect->left;
+        rect32.top    = rect->top;
+        rect32.right  = rect->right;
+        rect32.bottom = rect->bottom;
         return SetBoundsRect( HDC_32( hdc ), &rect32, flags );
     }
     else return SetBoundsRect( HDC_32( hdc ), NULL, flags );
@@ -1568,7 +1582,13 @@ UINT16 WINAPI GetBoundsRect16( HDC16 hdc, LPRECT16 rect, UINT16 flags)
 {
     RECT rect32;
     UINT ret = GetBoundsRect( HDC_32( hdc ), &rect32, flags );
-    if (rect) CONV_RECT32TO16( &rect32, rect );
+    if (rect)
+    {
+        rect->left   = rect32.left;
+        rect->top    = rect32.top;
+        rect->right  = rect32.right;
+        rect->bottom = rect32.bottom;
+    }
     return ret;
 }
 
@@ -1842,7 +1862,13 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
         if(lpdx32 == NULL) return FALSE;
         for (i=count;i--;) lpdx32[i]=lpDx[i];
     }
-    if (lprect) CONV_RECT16TO32(lprect,&rect32);
+    if (lprect)
+    {
+        rect32.left   = lprect->left;
+        rect32.top    = lprect->top;
+        rect32.right  = lprect->right;
+        rect32.bottom = lprect->bottom;
+    }
     ret = ExtTextOutA(HDC_32(hdc),x,y,flags,lprect?&rect32:NULL,str,count,lpdx32);
     if (lpdx32) HeapFree( GetProcessHeap(), 0, lpdx32 );
     return ret;
@@ -2202,7 +2228,10 @@ BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
     pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT)*nrpts);
     if(pt32 == NULL) return FALSE;
     for (i=nrpts;i--;)
-        CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
+    {
+        pt32[i].x = pt[i].x;
+        pt32[i].y = pt[i].y;
+    }
     counts32 = (LPINT)HeapAlloc( GetProcessHeap(), 0, polygons*sizeof(INT) );
     if(counts32 == NULL) {
         HeapFree( GetProcessHeap(), 0, pt32 );
@@ -2230,7 +2259,11 @@ HRGN16 WINAPI CreatePolyPolygonRgn16( const POINT16 *points,
 
     for (i = 0; i < nbpolygons; i++) npts += count[i];
     points32 = HeapAlloc( GetProcessHeap(), 0, npts * sizeof(POINT) );
-    for (i = 0; i < npts; i++) CONV_POINT16TO32( &(points[i]), &(points32[i]) );
+    for (i = 0; i < npts; i++)
+    {
+        points32[i].x = points[i].x;
+        points32[i].y = points[i].y;
+    }
 
     count32 = HeapAlloc( GetProcessHeap(), 0, nbpolygons * sizeof(INT) );
     for (i = 0; i < nbpolygons; i++) count32[i] = count[i];
@@ -2257,7 +2290,11 @@ void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
 BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect16 )
 {
     RECT rect;
-    CONV_RECT16TO32( rect16, &rect );
+
+    rect.left   = rect16->left;
+    rect.top    = rect16->top;
+    rect.right  = rect16->right;
+    rect.bottom = rect16->bottom;
     return RectVisible( HDC_32(hdc), &rect );
 }
 
@@ -2270,7 +2307,10 @@ BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 {
     RECT r32;
 
-    CONV_RECT16TO32(rect, &r32);
+    r32.left   = rect->left;
+    r32.top    = rect->top;
+    r32.right  = rect->right;
+    r32.bottom = rect->bottom;
     return RectInRegion( HRGN_32(hrgn), &r32 );
 }
 
@@ -2398,7 +2438,11 @@ BOOL16 WINAPI OffsetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt)
 {
     POINT pt32;
     BOOL16 ret = OffsetViewportOrgEx( HDC_32(hdc), x, y, &pt32 );
-    if (pt) CONV_POINT32TO16( &pt32, pt );
+    if (pt)
+    {
+        pt->x = pt32.x;
+        pt->y = pt32.y;
+    }
     return ret;
 }
 
@@ -2410,7 +2454,11 @@ BOOL16 WINAPI OffsetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
     POINT pt32;
     BOOL16 ret = OffsetWindowOrgEx( HDC_32(hdc), x, y, &pt32 );
-    if (pt) CONV_POINT32TO16( &pt32, pt );
+    if (pt)
+    {
+        pt->x = pt32.x;
+        pt->y = pt32.y;
+    }
     return ret;
 }
 
@@ -2451,7 +2499,11 @@ BOOL16 WINAPI SetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
     POINT pt32;
     BOOL16 ret = SetViewportOrgEx( HDC_32(hdc), x, y, &pt32 );
-    if (pt) CONV_POINT32TO16( &pt32, pt );
+    if (pt)
+    {
+        pt->x = pt32.x;
+        pt->y = pt32.y;
+    }
     return ret;
 }
 
@@ -2475,7 +2527,11 @@ BOOL16 WINAPI SetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
     POINT pt32;
     BOOL16 ret = SetWindowOrgEx( HDC_32(hdc), x, y, &pt32 );
-    if (pt) CONV_POINT32TO16( &pt32, pt );
+    if (pt)
+    {
+        pt->x = pt32.x;
+        pt->y = pt32.y;
+    }
     return ret;
 }
 
@@ -2488,7 +2544,11 @@ BOOL16 WINAPI MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
     POINT pt32;
 
     if (!MoveToEx( HDC_32(hdc), x, y, &pt32 )) return FALSE;
-    if (pt) CONV_POINT32TO16( &pt32, pt );
+    if (pt)
+    {
+        pt->x = pt32.x;
+        pt->y = pt32.y;
+    }
     return TRUE;
 }
 
@@ -2531,7 +2591,11 @@ BOOL16 WINAPI PolyBezier16( HDC16 hdc, const POINT16* lppt, INT16 cPoints )
     LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
                                            cPoints*sizeof(POINT) );
     if(!pt32) return FALSE;
-    for (i=cPoints;i--;) CONV_POINT16TO32(&(lppt[i]),&(pt32[i]));
+    for (i=cPoints;i--;)
+    {
+        pt32[i].x = lppt[i].x;
+        pt32[i].y = lppt[i].y;
+    }
     ret= PolyBezier(HDC_32(hdc), pt32, cPoints);
     HeapFree( GetProcessHeap(), 0, pt32 );
     return ret;
@@ -2548,7 +2612,11 @@ BOOL16 WINAPI PolyBezierTo16( HDC16 hdc, const POINT16* lppt, INT16 cPoints )
     LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
                                            cPoints*sizeof(POINT) );
     if(!pt32) return FALSE;
-    for (i=cPoints;i--;) CONV_POINT16TO32(&(lppt[i]),&(pt32[i]));
+    for (i=cPoints;i--;)
+    {
+        pt32[i].x = lppt[i].x;
+        pt32[i].y = lppt[i].y;
+    }
     ret= PolyBezierTo(HDC_32(hdc), pt32, cPoints);
     HeapFree( GetProcessHeap(), 0, pt32 );
     return ret;
