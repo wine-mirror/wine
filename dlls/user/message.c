@@ -419,8 +419,10 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         return wparam * sizeof(WCHAR);
-    case WM_SETTEXT:
     case WM_WININICHANGE:
+        if (lparam) push_string(data, (LPWSTR)lparam );
+        return 0;
+    case WM_SETTEXT:
     case WM_DEVMODECHANGE:
     case CB_DIR:
     case LB_DIR:
@@ -630,8 +632,10 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_ASKCBFORMATNAME:
         if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)) )) return FALSE;
         break;
-    case WM_SETTEXT:
     case WM_WININICHANGE:
+        if (!*lparam) return TRUE;
+        /* fall through */
+    case WM_SETTEXT:
     case WM_DEVMODECHANGE:
     case CB_DIR:
     case LB_DIR:
