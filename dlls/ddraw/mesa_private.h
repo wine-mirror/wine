@@ -133,6 +133,9 @@ typedef struct mesa_d3dd_private {
     D3DMATRIX *world_mat;
     D3DMATRIX *view_mat;
     D3DMATRIX *proj_mat;
+    
+    Display  *gdi_display;
+    Drawable drawable;
 } mesa_d3dd_private;
 
 #define _dump_colorvalue(s,v)               \

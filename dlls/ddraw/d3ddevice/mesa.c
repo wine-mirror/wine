@@ -32,6 +32,8 @@
 
 #include "mesa_private.h"
 
+#include "x11drv.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable;
@@ -59,6 +61,31 @@ static const float id_mat[16] = {
   0.0, 0.0, 0.0, 1.0
 };
 
+/* retrieve the X display to use on a given DC */
+inline static Display *get_display( HDC hdc )
+{
+    Display *display;
+    enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(display), (LPSTR)&display )) display = NULL;
+
+    return display;
+}
+
+
+/* retrieve the X drawable to use on a given DC */
+inline static Drawable get_drawable( HDC hdc )
+{
+    Drawable drawable;
+    enum x11drv_escape_codes escape = X11DRV_GET_DRAWABLE;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(drawable), (LPSTR)&drawable )) drawable = 0;
+
+    return drawable;
+}
+
 /*******************************************************************************
  *				OpenGL static functions
  */
@@ -71,6 +98,15 @@ static void set_context(IDirect3DDevice2Impl* This) {
 	    odev->ctx, ddpriv->drawable);
     }
 #endif
+    D3DDPRIVATE(This);
+
+    ENTER_GL();
+    TRACE("glxMakeCurrent %p, %ld, %p\n",odev->gdi_display,odev->drawable, odev->ctx);
+    if (glXMakeCurrent(odev->gdi_display,odev->drawable, odev->ctx) == False) {
+	ERR("Error in setting current context (context %p drawable %ld)!\n",
+	    odev->ctx, odev->drawable);
+    }
+    LEAVE_GL();
 }
 
 static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
@@ -167,7 +203,12 @@ is_OpenGL(
     IDirect3DDevice2Impl** device, IDirect3D2Impl* d3d
 ) {
   mesa_d3dd_private *odev = NULL;
+  HDC device_context;
+  XVisualInfo *vis;
+  int num;
+  XVisualInfo template;
 
+  TRACE("rguid = %s, surface = %p, &device = %p, d3d = %p\n",debugstr_guid(rguid),surface,device,d3d);
   if (/* Default device */
       (rguid == NULL) ||
       /* HAL Device */
@@ -188,27 +229,31 @@ is_OpenGL(
 
     TRACE("Creating OpenGL device for surface %p\n", surface);
     /* Create the OpenGL context */
-#if COMPILABLE
     /* First get the correct visual */
-    ENTER_GL();
     /* Create the context */
-    {
-      XVisualInfo *vis;
-      int num;
-      XVisualInfo template;
+      
+    device_context = GetDC((*device)->surface->ddraw_owner->window);
+    odev->gdi_display = get_display(device_context);
+    odev->drawable = get_drawable(device_context);
+    ReleaseDC((*device)->surface->ddraw_owner->window,device_context);
+    ENTER_GL();
 
-      template.visualid = XVisualIDFromVisual(visual);
-      vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
+    template.visualid = GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+    vis = XGetVisualInfo(odev->gdi_display, VisualIDMask, &template, &num);
+    if (vis == NULL)
+      ERR("No visual found !\n");
+    else
+      TRACE("Visual found\n");
 
-      odev->ctx = glXCreateContext(gdi_display, vis,
+    odev->ctx = glXCreateContext(odev->gdi_display, vis,
 				   NULL, GL_TRUE);
-    }
 
     if (odev->ctx == NULL)
       ERR("Error in context creation !\n");
     else
       TRACE("Context created (%p)\n", odev->ctx);
 
+#if COMPILABLE
     /* Now override the surface's Flip method (if in double buffering) */
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
     {
@@ -237,7 +282,9 @@ is_OpenGL(
 
     /* Initialisation */
     TRACE("Setting current context\n");
+    LEAVE_GL();
     (*device)->set_context(*device);
+    ENTER_GL();
     TRACE("Current context set\n");
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
@@ -259,16 +306,15 @@ is_OpenGL(
 static ULONG WINAPI MESA_IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
 {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
-  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
   if (!--(This->ref)) {
-#if 0  /* broken for now */
     D3DDPRIVATE(This);
+
     ENTER_GL();
-    glXDestroyContext(gdi_display, odev->ctx);
+    glXDestroyContext(odev->gdi_display, odev->ctx);
     LEAVE_GL();
-#endif
-    This->private = NULL;
+    HeapFree(GetProcessHeap(),0,This->private);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
@@ -828,12 +874,12 @@ int d3d_OpenGL_dx3(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
 
 int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDeviceImpl** device)
 {
+  TRACE("rguid = %s, surface = %p, &device = %p\n",debugstr_guid(rguid),surface,device);
   if (!memcmp(&IID_D3DDEVICE_OpenGL,rguid,sizeof(IID_D3DDEVICE_OpenGL))) {
     mesa_d3dd_private *odev;
-#if 0 /* See below */
+    HDC device_context;
     int attributeList[]={ GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
     XVisualInfo *xvis;
-#endif
 
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DDeviceImpl));
     (*device)->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dd_private));
@@ -854,22 +900,26 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     /* First get the correct visual */
     /* if (surface->s.backbuffer == NULL)
        attributeList[3] = None; */
-#if 0 /* non working currently */
+    device_context = GetDC((*device)->surface->ddraw_owner->window);
+    odev->gdi_display = get_display(device_context);
+    odev->drawable = get_drawable(device_context);
+    ReleaseDC((*device)->surface->ddraw_owner->window,device_context);
     ENTER_GL();
-    xvis = glXChooseVisual(gdi_display,
-			   DefaultScreen(gdi_display),
+    xvis = glXChooseVisual(odev->gdi_display,
+			   DefaultScreen(odev->gdi_display),
 			   attributeList);
     if (xvis == NULL)
       ERR("No visual found !\n");
     else
       TRACE("Visual found\n");
+    
     /* Create the context */
-    odev->ctx = glXCreateContext(gdi_display,
+    odev->ctx = glXCreateContext(odev->gdi_display,
 				 xvis,
 				 NULL,
 				 GL_TRUE);
     TRACE("Context created\n");
-
+#if 0
     /* Now override the surface's Flip method (if in double buffering) */
     surface->s.d3d_device = (void *) odev;
     {
@@ -890,10 +940,12 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     odev->proj_mat  = (LPD3DMATRIX) &id_mat;
 
     /* Initialisation */
+    LEAVE_GL();
     (*device)->set_context(*device);
+    ENTER_GL();
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
-
+    LEAVE_GL();
     fill_device_capabilities((IDirectDrawImpl *) surface->ddraw_owner);
 
     return 1;
@@ -906,16 +958,14 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 static ULONG WINAPI MESA_IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
-  FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
+  TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
   if (!--(This->ref)) {
-#if 0  /* broken for now */
     D3DDPRIVATE(This);
     ENTER_GL();
-    glXDestroyContext(gdi_display, odev->ctx);
+    glXDestroyContext(odev->gdi_display, odev->ctx);
     LEAVE_GL();
-#endif
-    This->private = NULL;
+    HeapFree(GetProcessHeap(),0,This->private);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
