@@ -1,7 +1,8 @@
 /*
  * Direct3D 8 private include file
  *
- * Copyright 2002 Jason Edmeades
+ * Copyright 2002-2004 Jason Edmeades
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,6 +29,7 @@
 /* THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES */
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
 #include <GL/gl.h>
+#define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #ifdef HAVE_GL_GLEXT_H
 # include <GL/glext.h>
@@ -63,6 +65,11 @@ extern int num_lock;
 #include "windef.h"
 #include "winbase.h"
 #include "d3d8.h"
+
+extern int vs_mode;
+#define VS_NONE 0
+#define VS_HW   1
+#define VS_SW   2
 
 /* Device caps */
 #define MAX_PALETTES      256
@@ -1198,6 +1205,10 @@ struct IDirect3DVertexShaderImpl {
   UINT functionLength;
   DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
   DWORD version;
+  
+  /** fields for hw vertex shader use */
+  GLuint  prgId;
+
   /* run time datas */
   VSHADERDATA8* data;
   VSHADERINPUTDATA8 input;
@@ -1217,7 +1228,8 @@ extern DWORD WINAPI IDirect3DVertexShaderImpl_GetVersion(IDirect3DVertexShaderIm
 extern HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* This, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output);
 /* temporary internal Interfaces */
 extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, DWORD Usage, IDirect3DVertexShaderImpl** ppVertexShader);
-extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader,  DWORD SkipnStrides);
+extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader,  DWORD SkipnStrides);
+extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader,  DWORD SkipnStrides);
 
 /* ------------------------ */
 /* IDirect3DPixelShaderImpl */

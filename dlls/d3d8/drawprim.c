@@ -1,8 +1,9 @@
 /*
  * D3D8 utils
  *
- * Copyright 2002-2003 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2004 Jason Edmeades
+ * Copyright 2002-2004 Raphael Junqueira
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -831,18 +832,30 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
                 FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#if defined(GL_VERSION_1_3)
+                glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
+#else
                 glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
+#endif
                 continue;
             }
 
             if (coordIdx > 7) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#if defined(GL_VERSION_1_3)
+                glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
+#else
                 glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
+#endif
             } else if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
                 VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#if defined(GL_VERSION_1_3)
+                glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
+#else
                 glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
+#endif
             } else {
 
                 /* The coords to supply depend completely on the fvf / vertex shader */
@@ -866,7 +879,11 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
     	    }
     	} else {
     	    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#if defined(GL_VERSION_1_3)
+    	    glMultiTexCoord4f(GL_TEXTURE0 + textureNo, 0, 0, 0, 1);
+#else
     	    glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
+#endif
     	}
     } 
 
@@ -1280,7 +1297,7 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
         }
 
         /* Fill the vertex shader input */
-        IDirect3DDeviceImpl_FillVertexShaderInput(This, vertex_shader, SkipnStrides);
+        IDirect3DDeviceImpl_FillVertexShaderInputSW(This, vertex_shader, SkipnStrides);
 
         /* Initialize the output fields to the same defaults as it would normally have */
         memset(&vertex_shader->output, 0, sizeof(VSHADEROUTPUTDATA8));
@@ -1360,6 +1377,86 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
     checkGLcall("glEnd and previous calls");
 }
 
+void drawStridedHardwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
+                     int PrimitiveType, ULONG NumPrimitives,
+                     const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
+
+    IDirect3DVertexShaderImpl* vertex_shader = NULL;
+    int                        i;
+    int                        NumVertexes;
+    int                        glPrimType;
+    int                        maxAttribs;
+
+    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    TRACE("Drawing with hardware vertex shaders\n");
+
+    /* Retrieve the VS information */
+    vertex_shader = VERTEX_SHADER(This->StateBlock->VertexShader);
+
+    /* Enable the Vertex Shader */
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertex_shader->prgId));
+    checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertex_shader->prgId);");
+    glEnable(GL_VERTEX_PROGRAM_ARB);
+    checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
+
+    /* Update the constants */
+    for (i=0; i<D3D8_VSHADER_MAX_CONSTANTS; i++) {
+        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, (GLfloat *)&This->StateBlock->vertexShaderConstant[i]));
+        checkGLcall("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB");
+    }
+
+    /* Set up the vertex.attr[n] inputs */
+    IDirect3DDeviceImpl_FillVertexShaderInputArbHW(This, vertex_shader, 0);
+
+    /* Ok, Work out which primitive is requested and how many vertexes that 
+       will be                                                              */
+    NumVertexes = primitiveToGl(PrimitiveType, NumPrimitives, &glPrimType);
+
+    /* Finally do the drawing */
+    if (idxData != NULL) {
+
+        TRACE("glElements(%x, %d, %ld, ...)\n", glPrimType, NumVertexes, minIndex);
+#if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
+        glDrawElements(glPrimType, NumVertexes, idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
+                      (char *)idxData+(idxSize * startIdx));
+#else
+        glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
+                      idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT, 
+                      (char *)idxData+(idxSize * startIdx));
+#endif
+        checkGLcall("glDrawRangeElements");
+
+    } else {
+
+        /* Note first is now zero as we shuffled along earlier */
+        TRACE("glDrawArrays(%x, 0, %d)\n", glPrimType, NumVertexes);
+        glDrawArrays(glPrimType, 0, NumVertexes);
+        checkGLcall("glDrawArrays");
+
+    }
+    
+    {
+    GLint errPos;
+    glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
+    if (errPos != -1)
+        FIXME("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString( GL_PROGRAM_ERROR_STRING_ARB) );
+    }
+
+
+    /* Leave all the attribs disabled */
+    glGetIntegerv( GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
+    /* MESA does not support it right not */
+    if (glGetError() != GL_NO_ERROR)
+	maxAttribs = 16;
+    for (i=0; i<maxAttribs; i++) {
+        GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+        checkGLcall("glDisableVertexAttribArrayARB(reg);");
+    }
+
+    /* Done */
+    glDisable(GL_VERTEX_PROGRAM_ARB);
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(LPDIRECT3DDEVICE8 iface,
                     int PrimitiveType, long NumPrimitives,
@@ -1378,7 +1475,8 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-
+    int                           i;
+    int                           useHW = FALSE;
 
     /* Work out what the FVF should look like */
     rc = initializeFVF(iface, &fvf, &useVertexShaderFunction);
@@ -1388,6 +1486,11 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     if (useVertexShaderFunction == TRUE) {
         vertex_shader = VERTEX_SHADER(This->UpdateStateBlock->VertexShader);
         memset(&vertex_shader->input, 0, sizeof(VSHADERINPUTDATA8));
+
+    	useHW = (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) &&
+                 This->devType != D3DDEVTYPE_REF &&
+	         !This->StateBlock->renderstate[D3DRS_SOFTWAREVERTEXPROCESSING] &&
+		 vertex_shader->usage != D3DUSAGE_SOFTWAREPROCESSING);
 
         /** init Constants */
         if (TRUE == This->UpdateStateBlock->Changed.vertexShaderConstant) {
@@ -1400,10 +1503,18 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     ENTER_GL();
 
     /* Setup transform matrices and sort out */
-    isLightingOn = primitiveInitState(iface, 
-                                      fvf & D3DFVF_XYZRHW, 
-                                      !(fvf & D3DFVF_NORMAL),
-                                      useVertexShaderFunction);
+    if (useHW) {
+	/* Lighting is not completely bypassed with ATI drivers although it should be. Mesa is ok from this respect...
+	   So make sure lighting is disabled. */
+	isLightingOn = glIsEnabled(GL_LIGHTING);
+        glDisable(GL_LIGHTING);
+        checkGLcall("glDisable(GL_LIGHTING);");
+        TRACE("Disabled lighting as no normals supplied, old state = %d\n", isLightingOn); 
+    } else
+        isLightingOn = primitiveInitState(iface, 
+                                          fvf & D3DFVF_XYZRHW, 
+                                          !(fvf & D3DFVF_NORMAL),
+                                          useVertexShaderFunction);
 
     /* Initialize all values to null */
     if (useVertexShaderFunction == FALSE) {
@@ -1434,15 +1545,33 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     /* Now initialize the materials state */
     init_materials(iface, (dataLocations.u.s.diffuse.lpData != NULL));
 
+    /* And re-upload any dirty textures */
+    for (i=0; i<GL_LIMITS(textures); i++) {
+        
+        if ((This->StateBlock->textures[i] != NULL) && 
+            (IDirect3DBaseTexture8Impl_IsDirty(This->StateBlock->textures[i])))
+        {
+            /* Load up the texture now */
+            IDirect3DTexture8Impl_PreLoad((LPDIRECT3DTEXTURE8) This->StateBlock->textures[i]);
+        }
+    }
+
     /* Now draw the graphics to the screen */
     if  (useVertexShaderFunction == TRUE) {
 
         /* Ideally, we should have software FV and hardware VS, possibly
            depending on the device type?                                 */
 
-        /* We will have to use the very, very slow emulation layer */
-        drawStridedSoftwareVS(iface, &dataLocations, PrimitiveType, NumPrimitives, 
+        if (useHW) {
+            TRACE("Swap HW vertex shader\n");
+            drawStridedHardwareVS(iface, &dataLocations, PrimitiveType, NumPrimitives, 
                         idxData, idxSize, minIndex, StartIdx);            
+	} else {
+            /* We will have to use the very, very slow emulation layer */
+            TRACE("Swap SW vertex shader\n");
+	    drawStridedSoftwareVS(iface, &dataLocations, PrimitiveType, NumPrimitives, 
+                        idxData, idxSize, minIndex, StartIdx);            
+        }
 
     } else if ((dataLocations.u.s.pSize.lpData        != NULL) || 
                (dataLocations.u.s.diffuse.lpData      != NULL) || 

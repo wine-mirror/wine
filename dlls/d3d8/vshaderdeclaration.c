@@ -2,6 +2,8 @@
  * vertex shaders declaration implementation
  *
  * Copyright 2002 Raphael Junqueira
+ * Copyright 2004 Jason Edmeades
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -201,6 +203,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
   TRACE("(%p) :  pDeclaration8(%p)\n", This, pDeclaration8);
 
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexShaderDeclarationImpl));
+
   /*object->lpVtbl = &Direct3DVextexShaderDeclaration8_Vtbl;*/
   object->device = This; /* FIXME: AddRef(This) */
   object->ref = 1;
@@ -376,10 +379,9 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
   return D3D_OK;
 }
 
-
-HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* This,
-							 IDirect3DVertexShaderImpl* vshader,	 
-							 DWORD SkipnStrides) {
+HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl* This,
+							   IDirect3DVertexShaderImpl* vshader,	 
+							   DWORD SkipnStrides) {
   /** parser data */
   const DWORD* pToken = This->UpdateStateBlock->vertexShaderDecl->pDeclaration8;
   DWORD stream = 0;
@@ -553,6 +555,149 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* T
 	vshader->input.V[reg].w = (float) ((dw & 0xF000) >> 24);
 	
 	break;
+
+      default: /** errooooorr what to do ? */
+	ERR("Error in VertexShader declaration of %s register: unsupported type %s\n", VertexShaderDeclRegister[reg], VertexShaderDeclDataTypes[type]);
+      }
+    }
+
+  }
+  /* here D3DVSD_END() */
+  return D3D_OK;
+}
+
+HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Impl* This,
+							      IDirect3DVertexShaderImpl* vshader,	 
+							      DWORD SkipnStrides) {
+  /** parser data */
+  const DWORD* pToken = This->UpdateStateBlock->vertexShaderDecl->pDeclaration8;
+  DWORD stream = 0;
+  DWORD token;
+  /*DWORD tokenlen;*/
+  DWORD tokentype;
+  /** for input readers */
+  const char* curPos = NULL;
+  int skip = 0;
+
+  TRACE("(%p) - This:%p, skipstrides=%lu\n", vshader, This, SkipnStrides);
+
+  while (D3DVSD_END() != *pToken) {
+    token = *pToken;
+    tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
+    
+    /** FVF generation block */
+    if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
+      IDirect3DVertexBuffer8* pVB;
+
+      ++pToken;
+      /** 
+       * how really works streams, 
+       *  in DolphinVS dx8 dsk sample use it !!!
+       */
+      stream = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
+      skip = This->StateBlock->stream_stride[stream];
+      pVB  = This->StateBlock->stream_source[stream];
+      
+      if (NULL == pVB) {
+	  ERR("using unitialised stream[%lu]\n", stream);
+	  return D3DERR_INVALIDCALL;
+      } else {
+          if (This->StateBlock->streamIsUP == TRUE) {
+              curPos = ((char *) pVB) + (SkipnStrides * skip);   /* Not really a VB */
+          } else {
+              curPos = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (SkipnStrides * skip);
+          }
+	  
+	  TRACE(" using stream[%lu] with %p (%p + (Stride %d * skip %ld))\n", stream, curPos, 
+                 ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory, skip, SkipnStrides);
+      }
+    } else if (D3DVSD_TOKEN_CONSTMEM == tokentype) {
+      /** Const decl */
+      DWORD i;
+      DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
+      DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
+
+      ++pToken;
+      for (i = 0; i < count; ++i) {
+        FIXME("Confirm this is correct handling of consts inside the hw vertex shader\n");
+        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, constaddress+i, (GLfloat *)pToken));
+	vshader->data->C[constaddress + i].x = *(float*)pToken;
+	vshader->data->C[constaddress + i].y = *(float*)(pToken + 1);
+	vshader->data->C[constaddress + i].z = *(float*)(pToken + 2);
+	vshader->data->C[constaddress + i].w = *(float*)(pToken + 3);
+	pToken += 4;
+      }
+
+    } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 != (0x10000000 & tokentype)) {
+      /** skip datas */
+      DWORD skipCount = ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
+      TRACE(" skipping %ld dwords\n", skipCount);
+      curPos = curPos + skipCount * sizeof(DWORD);
+      ++pToken;
+
+    } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 == (0x10000000 & tokentype)) {
+      DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
+      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
+      ++pToken;
+
+      TRACE(" type : %ld, reg = %ld\n", type, reg);
+      switch (type) {
+      case D3DVSDT_FLOAT1:
+          TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 1, skip, curPos);
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 1, GL_FLOAT, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + sizeof(float);
+	  break;
+
+      case D3DVSDT_FLOAT2:
+          TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 2, skip, curPos);
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 2, GL_FLOAT, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + 2*sizeof(float);
+	  break;
+
+      case D3DVSDT_FLOAT3: 
+          TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 3, skip, curPos);
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 3, GL_FLOAT, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + 3*sizeof(float);
+	  break;
+
+      case D3DVSDT_FLOAT4: 
+          TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 4, skip, curPos);
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_FLOAT, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + 4*sizeof(float);
+	  break;
+
+      case D3DVSDT_D3DCOLOR: 
+          TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 4, skip, curPos);
+          FIXME("D3DVSDT_D3DCOLOR in hw shader - To confirm\n");
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_UNSIGNED_BYTE, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + 4*sizeof(BYTE);
+	  break;
+
+      case D3DVSDT_SHORT2: 
+          TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 2, skip, curPos);
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 2, GL_UNSIGNED_SHORT, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + 2*sizeof(short int);
+	  break;
+
+      case D3DVSDT_SHORT4: 
+          TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 1, skip, curPos);
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_UNSIGNED_SHORT, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + 4*sizeof(short int);
+	  break;
+
+      case D3DVSDT_UBYTE4: 
+          FIXME("D3DVSDT_UBYTE4 in hw shader - To confirm\n");
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_UNSIGNED_BYTE, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+          curPos = curPos + 4*sizeof(BYTE);
+	  break;
 
       default: /** errooooorr what to do ? */
 	ERR("Error in VertexShader declaration of %s register: unsupported type %s\n", VertexShaderDeclRegister[reg], VertexShaderDeclDataTypes[type]);

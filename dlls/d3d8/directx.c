@@ -1,7 +1,8 @@
 /*
  * IDirect3D8 implementation
  *
- * Copyright 2002 Jason Edmeades
+ * Copyright 2002-2004 Jason Edmeades
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -313,6 +314,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
     case D3DFMT_X8L8V8U8:
     case D3DFMT_L6V5U5:
     case D3DFMT_V8U8:
+    case D3DFMT_L8:
       /* Since we do not support these formats right now, don't pretend to. */
       return D3DERR_NOTAVAILABLE;
     default:
@@ -646,6 +648,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 
 #if defined(GL_EXT_texture_filter_anisotropic)
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+        checkGLcall("glGetInterv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT)");
         pCaps->MaxAnisotropy = gl_max;
 #else
         pCaps->MaxAnisotropy = 0;
@@ -668,13 +671,11 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     pCaps->MaxStreams = MAX_STREAMS;
     pCaps->MaxStreamStride = 1024;
 
-#if 1
-    pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+    if (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (vs_mode == VS_SW) || (DeviceType == D3DDEVTYPE_REF))
+        pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+    else
+        pCaps->VertexShaderVersion = 0;
     pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
-#else
-    pCaps->VertexShaderVersion = 0;
-    pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
-#endif
 
 #if 0
     pCaps->PixelShaderVersion = D3DPS_VERSION(1,1);

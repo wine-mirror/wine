@@ -2,6 +2,8 @@
  * shaders implementation
  *
  * Copyright 2002 Raphael Junqueira
+ * Copyright 2004 Jason Edmeades
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +24,7 @@
 
 #include <math.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -42,7 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 # define VSTRACE(A) 
 # define TRACE_VSVECTOR(name)
 #endif
-
 
 /**
  * DirectX9 SDK download
@@ -346,36 +348,37 @@ void vshader_lrp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1, D
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
+ *   Note opcode must be in uppercase if direct mapping to GL hw shaders
  */
 static CONST SHADER_OPCODE vshader_ins [] = {
-  {D3DSIO_NOP,  "nop",  0, vshader_nop, 0, 0},
-  {D3DSIO_MOV,  "mov",  2, vshader_mov, 0, 0},
-  {D3DSIO_ADD,  "add",  3, vshader_add, 0, 0},
-  {D3DSIO_SUB,  "sub",  3, vshader_sub, 0, 0},
-  {D3DSIO_MAD,  "mad",  4, vshader_mad, 0, 0},
-  {D3DSIO_MUL,  "mul",  3, vshader_mul, 0, 0},
-  {D3DSIO_RCP,  "rcp",  2, vshader_rcp, 0, 0},
-  {D3DSIO_RSQ,  "rsq",  2, vshader_rsq, 0, 0},
-  {D3DSIO_DP3,  "dp3",  3, vshader_dp3, 0, 0},
-  {D3DSIO_DP4,  "dp4",  3, vshader_dp4, 0, 0},
-  {D3DSIO_MIN,  "min",  3, vshader_min, 0, 0},
-  {D3DSIO_MAX,  "max",  3, vshader_max, 0, 0},
-  {D3DSIO_SLT,  "slt",  3, vshader_slt, 0, 0},
-  {D3DSIO_SGE,  "sge",  3, vshader_sge, 0, 0},
-  {D3DSIO_EXP,  "exp",  2, vshader_exp, 0, 0},
-  {D3DSIO_LOG,  "log",  2, vshader_log, 0, 0},
-  {D3DSIO_LIT,  "lit",  2, vshader_lit, 0, 0},
-  {D3DSIO_DST,  "dst",  3, vshader_dst, 0, 0},
-  {D3DSIO_LRP,  "lrp",  5, vshader_lrp, 0, 0},
-  {D3DSIO_FRC,  "frc",  2, vshader_frc, 0, 0},
-  {D3DSIO_M4x4, "m4x4", 3, vshader_m4x4, 0, 0},
-  {D3DSIO_M4x3, "m4x3", 3, vshader_m4x3, 0, 0},
-  {D3DSIO_M3x4, "m3x4", 3, vshader_m3x4, 0, 0},
-  {D3DSIO_M3x3, "m3x3", 3, vshader_m3x3, 0, 0},
-  {D3DSIO_M3x2, "m3x2", 3, vshader_m3x2, 0, 0},
+  {D3DSIO_NOP,  "NOP",  0, vshader_nop, 0, 0},
+  {D3DSIO_MOV,  "MOV",  2, vshader_mov, 0, 0},
+  {D3DSIO_ADD,  "ADD",  3, vshader_add, 0, 0},
+  {D3DSIO_SUB,  "SUB",  3, vshader_sub, 0, 0},
+  {D3DSIO_MAD,  "MAD",  4, vshader_mad, 0, 0},
+  {D3DSIO_MUL,  "MUL",  3, vshader_mul, 0, 0},
+  {D3DSIO_RCP,  "RCP",  2, vshader_rcp, 0, 0},
+  {D3DSIO_RSQ,  "RSQ",  2, vshader_rsq, 0, 0},
+  {D3DSIO_DP3,  "DP3",  3, vshader_dp3, 0, 0},
+  {D3DSIO_DP4,  "DP4",  3, vshader_dp4, 0, 0},
+  {D3DSIO_MIN,  "MIN",  3, vshader_min, 0, 0},
+  {D3DSIO_MAX,  "MAX",  3, vshader_max, 0, 0},
+  {D3DSIO_SLT,  "SLT",  3, vshader_slt, 0, 0},
+  {D3DSIO_SGE,  "SGE",  3, vshader_sge, 0, 0},
+  {D3DSIO_EXP,  "EXP",  2, vshader_exp, 0, 0},
+  {D3DSIO_LOG,  "LOG",  2, vshader_log, 0, 0},
+  {D3DSIO_LIT,  "LIT",  2, vshader_lit, 0, 0},
+  {D3DSIO_DST,  "DST",  3, vshader_dst, 0, 0},
+  {D3DSIO_LRP,  "LRP",  5, vshader_lrp, 0, 0},
+  {D3DSIO_FRC,  "FRC",  2, vshader_frc, 0, 0},
+  {D3DSIO_M4x4, "M4X4", 3, vshader_m4x4, 0, 0},
+  {D3DSIO_M4x3, "M4X3", 3, vshader_m4x3, 0, 0},
+  {D3DSIO_M3x4, "M3X4", 3, vshader_m3x4, 0, 0},
+  {D3DSIO_M3x3, "M3X3", 3, vshader_m3x3, 0, 0},
+  {D3DSIO_M3x2, "M3X2", 3, vshader_m3x2, 0, 0},
   /** FIXME: use direct access so add the others opcodes as stubs */
-  {D3DSIO_EXPP, "expp", 2, vshader_expp, 0, 0},
-  {D3DSIO_LOGP, "logp", 2, vshader_logp, 0, 0},
+  {D3DSIO_EXPP, "EXPP", 2, vshader_expp, 0, 0},
+  {D3DSIO_LOGP, "LOGP", 2, vshader_logp, 0, 0},
 
   {0, NULL, 0, NULL, 0, 0}
 };
@@ -391,6 +394,14 @@ inline static const SHADER_OPCODE* vshader_program_get_opcode(const DWORD code) 
     ++i;
   }
   return NULL;
+}
+
+inline static BOOL vshader_is_version_token(DWORD token) {
+  return 0xFFFE0000 == (token & 0xFFFE0000);
+}
+
+inline static BOOL vshader_is_comment_token(DWORD token) {
+  return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
 }
 
 inline static void vshader_program_dump_param(const DWORD param, int input) {
@@ -463,18 +474,327 @@ inline static void vshader_program_dump_param(const DWORD param, int input) {
   }
 }
 
-inline static BOOL vshader_is_version_token(DWORD token) {
-  return 0xFFFE0000 == (token & 0xFFFE0000);
+inline static void vshader_program_add_param(const DWORD param, int input, char *hwLine) {
+  /*static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" }; */
+  static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
+  static const char swizzle_reg_chars[] = "xyzw";
+
+  DWORD reg = param & 0x00001FFF;
+  DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
+  char  tmpReg[255];
+
+  if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) {
+      strcat(hwLine, " -");
+  } else {
+      strcat(hwLine, " ");
+  }
+  
+  switch (regtype << D3DSP_REGTYPE_SHIFT) {
+  case D3DSPR_TEMP:
+    sprintf(tmpReg, "T%lu", reg);
+    strcat(hwLine, tmpReg);
+    break;
+  case D3DSPR_INPUT:
+    sprintf(tmpReg, "vertex.attrib[%lu]", reg);
+    strcat(hwLine, tmpReg);
+    break;
+  case D3DSPR_CONST:
+    sprintf(tmpReg, "program.env[%lu]", reg);
+    strcat(hwLine, tmpReg);
+    break;
+  case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
+    sprintf(tmpReg, "A%lu", reg);
+    strcat(hwLine, tmpReg);
+    break;
+  case D3DSPR_RASTOUT:
+    sprintf(tmpReg, "%s", hwrastout_reg_names[reg]);
+    strcat(hwLine, tmpReg);
+    break;
+  case D3DSPR_ATTROUT:
+    if (reg==0) {
+       strcat(hwLine, "result.color.primary");
+    } else {
+       strcat(hwLine, "result.color.secondary");
+    }
+    break;
+  case D3DSPR_TEXCRDOUT:
+    sprintf(tmpReg, "result.texcoord[%lu]", reg);
+    strcat(hwLine, tmpReg);
+    break;
+  default:
+    break;
+  }
+
+  if (!input) {
+    /** operand output */
+    if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+      strcat(hwLine, ".");
+      if (param & D3DSP_WRITEMASK_0) {
+          strcat(hwLine, "x");
+      }
+      if (param & D3DSP_WRITEMASK_1) {
+          strcat(hwLine, "y");
+      }
+      if (param & D3DSP_WRITEMASK_2) {
+          strcat(hwLine, "z");
+      }
+      if (param & D3DSP_WRITEMASK_3) {
+          strcat(hwLine, "w");
+      }
+    }
+  } else {
+    /** operand input */
+    DWORD swizzle = (param & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
+    DWORD swizzle_x = swizzle & 0x03;
+    DWORD swizzle_y = (swizzle >> 2) & 0x03;
+    DWORD swizzle_z = (swizzle >> 4) & 0x03;
+    DWORD swizzle_w = (swizzle >> 6) & 0x03;
+    /**
+     * swizzle bits fields:
+     *  WWZZYYXX
+     */
+    if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+      if (swizzle_x == swizzle_y && 
+	  swizzle_x == swizzle_z && 
+	  swizzle_x == swizzle_w) {
+        sprintf(tmpReg, ".%c", swizzle_reg_chars[swizzle_x]);
+        strcat(hwLine, tmpReg);
+      } else {
+        sprintf(tmpReg, ".%c%c%c%c", 
+		swizzle_reg_chars[swizzle_x], 
+		swizzle_reg_chars[swizzle_y], 
+		swizzle_reg_chars[swizzle_z], 
+		swizzle_reg_chars[swizzle_w]);
+        strcat(hwLine, tmpReg);
+      }
+    }
+  }
 }
 
-inline static BOOL vshader_is_comment_token(DWORD token) {
-  return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
-}
+DWORD MacroExpansion[4*4];
+
+int ExpandMxMacro(DWORD macro_opcode, const DWORD* args) {
+  int i;
+  int nComponents = 0;
+  DWORD opcode =0;
+  switch(macro_opcode) {
+    case D3DSIO_M4x4:
+      nComponents = 4;
+      opcode = D3DSIO_DP4;
+      break;
+    case D3DSIO_M4x3:
+      nComponents = 3;
+      opcode = D3DSIO_DP4;
+      break;
+    case D3DSIO_M3x4:
+      nComponents = 4;
+      opcode = D3DSIO_DP3;
+      break;
+    case D3DSIO_M3x3:
+      nComponents = 3;
+      opcode = D3DSIO_DP3;
+      break;
+    case D3DSIO_M3x2:
+      nComponents = 2;
+      opcode = D3DSIO_DP3;
+      break;
+    default:
+      break;
+  }
+  for (i = 0; i < nComponents; i++) {
+    MacroExpansion[i*4+0] = opcode;
+    MacroExpansion[i*4+1] = ((*args) & ~D3DSP_WRITEMASK_ALL)|(D3DSP_WRITEMASK_0<<i);
+    MacroExpansion[i*4+2] = *(args+1);
+    MacroExpansion[i*4+3] = (*(args+2))+i;
+  }
+  return nComponents;
+}	
 
 /**
  * Function parser ...
  */
-inline static VOID IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderImpl* vshader, CONST DWORD* pFunction) {
+inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVertexShaderImpl* vshader, CONST DWORD* pFunction) {
+  const DWORD* pToken = pFunction;
+  const DWORD* pSavedToken = NULL;
+  const SHADER_OPCODE* curOpcode = NULL;
+  int nRemInstr = -1;
+  DWORD len = 0;  
+  DWORD i;
+  char *pgmStr = NULL;
+  char  tmpLine[255];
+  IDirect3DDevice8Impl* This = vshader->device;
+
+  pgmStr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 65535); /* 64kb should be enough */
+
+  if (NULL != pToken) {
+    while (D3DVS_END() != *pToken) {
+      tmpLine[0] = 0;
+
+      if ((nRemInstr >= 0) && (--nRemInstr == -1))
+        /* Macro is finished, continue normal path */ 
+        pToken = pSavedToken;
+
+      if (vshader_is_version_token(*pToken)) { /** version */
+
+        /* Extract version *10 into integer value (ie. 1.0 == 10, 1.1==11 etc */
+        int version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
+        int numTemps;
+
+	TRACE("vs.%lu.%lu;\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
+
+        /* Each release of vertex shaders has had different numbers of temp registers */
+        switch (version) {
+        case 10:
+        case 11: numTemps=12; 
+                 strcpy(tmpLine, "!!ARBvp1.0\n");
+                 TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 break;
+        case 20: numTemps=12;
+                 strcpy(tmpLine, "!!ARBvp2.0\n");
+                 FIXME("No work done yet to support vs2.0 in hw\n");
+                 TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 break;
+        case 30:  numTemps=32; 
+                 strcpy(tmpLine, "!!ARBvp3.0\n");
+                 FIXME("No work done yet to support vs3.0 in hw\n");
+                 TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 break;
+        default:
+                 numTemps=12;
+                 strcpy(tmpLine, "!!ARBvp1.0\n");
+                 FIXME("Unrecognized vertex shader version!\n");
+        }
+        strcat(pgmStr,tmpLine);
+
+        for (i=0;i<numTemps;i++) {
+            sprintf(tmpLine, "TEMP T%ld;\n", i);
+            TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+            strcat(pgmStr,tmpLine);
+        }
+
+	++pToken;
+	++len;
+	continue;
+      } 
+      if (vshader_is_comment_token(*pToken)) { /** comment */
+	DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+	++pToken;
+	/*TRACE("comment[%ld] ;%s\n", comment_len, (char*)pToken);*/
+	pToken += comment_len;
+	len += comment_len + 1;
+	continue;
+      }
+      curOpcode = vshader_program_get_opcode(*pToken);
+      ++pToken;
+      ++len;
+      if (NULL == curOpcode) {
+	/* unkown current opcode ... */
+	while (*pToken & 0x80000000) {
+	  TRACE("unrecognized opcode: %08lx\n", *pToken);
+	  ++pToken;
+	  ++len;
+	}
+      } else {
+	TRACE("%s ", curOpcode->name);
+
+        /* Build opcode for GL vertex_program */
+        switch (curOpcode->opcode) {
+        case D3DSIO_MOV:
+        case D3DSIO_ADD: 
+        case D3DSIO_SUB: 
+        case D3DSIO_MAD: 
+        case D3DSIO_MUL: 
+        case D3DSIO_RCP: 
+        case D3DSIO_RSQ: 
+        case D3DSIO_DP3: 
+        case D3DSIO_DP4: 
+        case D3DSIO_MIN: 
+        case D3DSIO_MAX: 
+        case D3DSIO_SLT: 
+        case D3DSIO_SGE:
+        case D3DSIO_LIT: 
+        case D3DSIO_DST:
+        case D3DSIO_FRC:
+            strcpy(tmpLine, curOpcode->name); 
+            break;
+
+        case D3DSIO_EXPP:
+            strcpy(tmpLine, "EXP"); 
+            break;
+        case D3DSIO_LOGP:
+            strcpy(tmpLine, "LOG"); 
+            break;
+        case D3DSIO_EXP: 
+            strcpy(tmpLine, "EX2"); 
+            break;
+        case D3DSIO_LOG: 
+            strcpy(tmpLine, "LG2"); 
+            break;
+
+        case D3DSIO_M4x4:
+        case D3DSIO_M4x3:
+        case D3DSIO_M3x4:
+        case D3DSIO_M3x3:
+        case D3DSIO_M3x2:
+            /* Expand the macro and get number of generated instruction */
+            nRemInstr = ExpandMxMacro(curOpcode->opcode, pToken);
+            /* Save point to next instruction */
+            pSavedToken = pToken + 3;
+            /* Execute expanded macro */
+            pToken = MacroExpansion;
+            continue;
+
+        default:
+            FIXME("Cant handle opcode %s in hwShader\n", curOpcode->name);
+        }
+
+	if (curOpcode->num_params > 0) {
+	  vshader_program_add_param(*pToken, 0, tmpLine);
+          
+	  ++pToken;
+	  ++len;
+	  for (i = 1; i < curOpcode->num_params; ++i) {
+	    TRACE(", ");
+            strcat(tmpLine, ",");
+	    vshader_program_add_param(*pToken, 1, tmpLine);
+	    ++pToken;
+	    ++len;
+	  }
+	}
+	TRACE("\n");
+        strcat(tmpLine,";\n");
+        TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+        strcat(pgmStr, tmpLine);
+      }
+    }
+    vshader->functionLength = (len + 1) * sizeof(DWORD);
+    strcpy(tmpLine, "END\n"); 
+    TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+    strcat(pgmStr, tmpLine);
+  } else {
+    vshader->functionLength = 1; /* no Function defined use fixed function vertex processing */
+  }
+  
+
+  /*  Create the hw shader */
+  GL_EXTCALL(glGenProgramsARB(1, &vshader->prgId));
+  TRACE("Creating a hw vertex shader, prg=%d\n", vshader->prgId);
+
+  GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vshader->prgId));
+
+  /* Create the program and check for errors */
+  GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr), pgmStr));
+  if ( glGetError() == GL_INVALID_OPERATION) {
+      GLint errPos;
+      glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
+      FIXME("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString( GL_PROGRAM_ERROR_STRING_ARB) );
+      vshader->prgId = -1;
+  }
+  
+  HeapFree(GetProcessHeap(), 0, pgmStr);
+}
+
+inline static VOID IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderImpl* vshader, CONST DWORD* pFunction, int useHW) {
   const DWORD* pToken = pFunction;
   const SHADER_OPCODE* curOpcode = NULL;
   DWORD len = 0;  
@@ -526,8 +846,12 @@ inline static VOID IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderI
   } else {
     vshader->functionLength = 1; /* no Function defined use fixed function vertex processing */
   }
-  /* copy the function ... because it will certainly be released by application */
 
+  /* Generate HW shader in needed */
+  if (useHW)
+    IDirect3DVertexShaderImpl_GenerateProgramArbHW(vshader, pFunction);
+  
+  /* copy the function ... because it will certainly be released by application */
   if (NULL != pFunction) {
     vshader->function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, vshader->functionLength);
     memcpy(vshader->function, pFunction, vshader->functionLength);
@@ -538,7 +862,8 @@ inline static VOID IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderI
 
 HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, DWORD Usage, IDirect3DVertexShaderImpl** ppVertexShader) {
   IDirect3DVertexShaderImpl* object;
-
+  int useHW;
+  
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexShaderImpl));
   if (NULL == object) {
     *ppVertexShader = NULL;
@@ -550,8 +875,12 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShader(IDirect3DDevice8Impl* This
   
   object->usage = Usage;
   object->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VSHADERDATA8));
-    
-  IDirect3DVertexShaderImpl_ParseProgram(object, pFunction);
+
+  useHW = (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) &&
+            This->devType != D3DDEVTYPE_REF &&
+            object->usage != D3DUSAGE_SOFTWAREPROCESSING);
+  
+  IDirect3DVertexShaderImpl_ParseProgram(object, pFunction, useHW);
 
   *ppVertexShader = object;
   return D3D_OK;
@@ -633,7 +962,7 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
 	  TRACE("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - vshader->function, *(pToken - 1));
 	}
 	TRACE("unrecognized opcode param: pos=%d token=%08lX what=", pToken - vshader->function, *pToken);
-	vshader_program_dump_param(*pToken, i);
+	vshader_program_add_param(*pToken, i, NULL); /* Add function just used for trace error scenario */
 	TRACE("\n");
 	++i;
 	++pToken;

@@ -1248,7 +1248,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, I
       return D3D_OK;
     }
 
-    TRACE("(%p) : expect crash newRender@%p newZStencil@%p\n", This, pRenderTarget, pNewZStencil);
+    FIXME("(%p) : expect crash newRender@%p newZStencil@%p\n", This, pRenderTarget, pNewZStencil);
 
     hr = IDirect3DDevice8Impl_ActiveRender(iface, pRenderTarget, pNewZStencil);
     
@@ -3920,6 +3920,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
     TRACE_(d3d_shader)("(%p) : freing VertexShader %p\n", This, object);
     /* TODO: check validity of object */
     if (NULL != object->function) HeapFree(GetProcessHeap(), 0, (void *)object->function);
+    if (object->prgId != 0) {
+        GL_EXTCALL(glDeleteProgramsARB( 1, &object->prgId ));
+    }
     HeapFree(GetProcessHeap(), 0, (void *)object->data);
     HeapFree(GetProcessHeap(), 0, (void *)object);
     VertexShaders[Handle - VS_HIGHESTFIXEDFXF] = NULL;

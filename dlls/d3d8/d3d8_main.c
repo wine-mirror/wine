@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
@@ -34,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 int num_lock = 0;
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
+int vs_mode;
 
 HRESULT WINAPI D3D8GetSWInfo(void)
 {
@@ -64,18 +66,39 @@ IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion)
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     TRACE("D3D8 DLLMain Reason=%ld\n", fdwReason);
-       if (fdwReason == DLL_PROCESS_ATTACH)
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+       HMODULE mod;
+       char buffer[32];
+       DWORD size = sizeof(buffer);
+       HKEY hkey = 0;
+
+       DisableThreadLibraryCalls(hInstDLL);
+
+       mod = GetModuleHandleA( "x11drv.dll" );
+       if (mod)
        {
-           HMODULE mod;
-
-           DisableThreadLibraryCalls(hInstDLL);
-
-           mod = GetModuleHandleA( "x11drv.dll" );
-           if (mod)
-           {
-               wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
-               wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
-           }
+           wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
+           wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
        }
+       if ( !RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\d3d", &hkey) &&
+            !RegQueryValueExA( hkey, "vs_mode", 0, NULL, buffer, &size) )
+       {
+           if (!strcmp(buffer,"none"))
+           {
+               TRACE("Disable vertex shader\n");
+               vs_mode = VS_NONE;
+	   }
+	   else if (!strcmp(buffer,"emulation"))
+           {
+               TRACE("Force SW vertex shader\n");
+               vs_mode = VS_SW;
+           }
+	   else {
+               TRACE("Allow HW vertex shader\n");
+               vs_mode = VS_HW;
+	   }
+       }
+    }
     return TRUE;
 }
