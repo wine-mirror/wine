@@ -215,6 +215,12 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
                 bbits = 8;
                 threshold = 0x40;
                 break;
+            case 16:
+                rbits = 5;
+                gbits = 6;
+                bbits = 5;
+                threshold = 0x40;
+                break;
             default:
                 FIXME("Currently no support for cursors with %d bits per pixel\n",
                   ptr->bBitsPerPixel);
@@ -248,13 +254,27 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
             {
                 for (x=0; x<xmax; x++)
                 {
-                    theChar = theImage[byteIndex++];
-                    red = green = blue = 0;
-                    blue = theChar;
-                    theChar = theImage[byteIndex++];
-                    green = theChar;
-                    theChar = theImage[byteIndex++];
-                    red = theChar;
+                   	red = green = blue = 0;
+                   	switch (ptr->bBitsPerPixel)
+                   	{
+                   	case 24:
+                   	    theChar = theImage[byteIndex++];
+                   	    blue = theChar;
+                   	    theChar = theImage[byteIndex++];
+                   	    green = theChar;
+                   	    theChar = theImage[byteIndex++];
+                   	    red = theChar;
+                   	    break;
+                   	case 16:
+                   	    theChar = theImage[byteIndex++];
+                   	    blue = theChar & 0x1F;
+                   	    green = (theChar & 0xE0) >> 5;
+                   	    theChar = theImage[byteIndex++];
+                   	    green |= (theChar & 0x07) << 3;
+                   	    red = (theChar & 0xF8) >> 3;
+                   	    break;
+                   	}
+
                     if (red+green+blue > threshold)
                     {
                         rfg += red;
