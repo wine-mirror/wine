@@ -1252,8 +1252,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
 	}
 	if (pwm)
 	{
-		if(!(pwm->flags & WINE_MODREF_MARKER))
-			pwm->refCount++;
+		pwm->refCount++;
 
                 if ((pwm->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
 		    !(flags & DONT_RESOLVE_DLL_REFERENCES))
@@ -1312,7 +1311,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
                             TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
 			/* Set the refCount here so that an attach failure will */
 			/* decrement the dependencies through the MODULE_FreeLibrary call. */
-			pwm->refCount++;
+			pwm->refCount = 1;
 
                         if (allocated_libdir)
                         {
