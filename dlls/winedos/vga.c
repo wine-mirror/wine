@@ -269,7 +269,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             return;
         }
         if (!vga_hwnd) {
-            vga_hwnd = CreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,par->Xres,par->Yres,0,0,0,NULL);
+            vga_hwnd = CreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_VISIBLE,0,0,par->Xres,par->Yres,0,0,0,NULL);
             if (!vga_hwnd) {
                 ERR("Failed to create user window.\n");
                 IDirectDraw_Release(lpddraw);
@@ -768,6 +768,8 @@ void VGA_ioport_out( WORD port, BYTE val )
                 palcnt=0;
             }
             break;
+        default:
+            FIXME("Unsupported VGA register: 0x%04x (value 0x%02x)\n", port, val);
     }
 }
 
@@ -789,6 +791,7 @@ BYTE VGA_ioport_in( WORD port )
             break;
         default:
             ret=0xff;
+            FIXME("Unsupported VGA register: 0x%04x\n", port);
     }
     return ret;
 }

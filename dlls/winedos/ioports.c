@@ -24,7 +24,9 @@
 #include "windef.h"
 #include "dosexe.h"
 #include "vga.h"
+#include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
  *	    DOSVM_inport
@@ -42,7 +44,40 @@ BOOL WINAPI DOSVM_inport( int port, int size, DWORD *res )
         *res = (DWORD)SB_ioport_in( port );
 	break;
     case 0x3ba:
+    case 0x3c0:
+    case 0x3c1:
+    case 0x3c2:
+    case 0x3c3:
+    case 0x3c4:
+    case 0x3c5:
+    case 0x3c6:
+    case 0x3c7:
+    case 0x3c8:
+    case 0x3c9:
+    case 0x3ca:
+    case 0x3cb:
+    case 0x3cc:
+    case 0x3cd:
+    case 0x3ce:
+    case 0x3cf:
+    case 0x3d0:
+    case 0x3d1:
+    case 0x3d2:
+    case 0x3d3:
+    case 0x3d4:
+    case 0x3d5:
+    case 0x3d6:
+    case 0x3d7:
+    case 0x3d8:
+    case 0x3d9:
     case 0x3da:
+    case 0x3db:
+    case 0x3dc:
+    case 0x3dd:
+    case 0x3de:
+    case 0x3df:
+        if(size > 1)
+           FIXME("Trying to read more than one byte from VGA!\n");
         *res = (DWORD)VGA_ioport_in( port );
         break;
     case 0x00:
@@ -102,8 +137,40 @@ BOOL WINAPI DOSVM_outport( int port, int size, DWORD value )
     case 0x22c:
         SB_ioport_out( port, (BYTE)value );
         break;
+    case 0x3c0:
+    case 0x3c1:
+    case 0x3c2:
+    case 0x3c3:
+    case 0x3c4:
+    case 0x3c5:
+    case 0x3c6:
+    case 0x3c7:
     case 0x3c8:
     case 0x3c9:
+    case 0x3ca:
+    case 0x3cb:
+    case 0x3cc:
+    case 0x3cd:
+    case 0x3ce:
+    case 0x3cf:
+    case 0x3d0:
+    case 0x3d1:
+    case 0x3d2:
+    case 0x3d3:
+    case 0x3d4:
+    case 0x3d5:
+    case 0x3d6:
+    case 0x3d7:
+    case 0x3d8:
+    case 0x3d9:
+    case 0x3da:
+    case 0x3db:
+    case 0x3dc:
+    case 0x3dd:
+    case 0x3de:
+    case 0x3df:
+        if(size > 1)
+           FIXME("Trying to write more than one byte to VGA!\n");
         VGA_ioport_out( port, (BYTE)value );
         break;
     case 0x00:
