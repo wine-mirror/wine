@@ -1028,14 +1028,15 @@ static BOOL make_lpCommandLine_name( LPCSTR line, LPSTR name, int namelen,
     } while (1);
 
     /* if we have a non-null full path name in buffer then move to output */
-    if ( retlen )
-       if ( strlen(buffer) <= namelen )  
+    if ( retlen ) {
+       if ( strlen(buffer) <= namelen ) {
           strcpy( name, buffer );
-       else {
+       } else {
           /* not enough space to return full path string */
           FIXME_(module)("internal string not long enough, need %d\n",
              strlen(buffer) );
         }
+    }
 
     /* all done, indicate end of module name and then trace and exit */
     if (after) *after = from;
@@ -1139,6 +1140,23 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         return FALSE;
     }
 
+    /* Process the AppName or CmdLine to get module name and path */
+
+    name[0] = '\0';
+
+    if (lpApplicationName) {
+       found_file = make_lpApplicationName_name( lpApplicationName, name, sizeof(name) );
+       cmdline = (lpCommandLine) ? lpCommandLine : lpApplicationName ;
+    }
+    else 
+       found_file = make_lpCommandLine_name( lpCommandLine, name, sizeof ( name ), &cmdline );
+
+    if ( !found_file ) {
+        /* make an early exit if file not found - save second pass */
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return FALSE;
+    }
+
     /* Warn if unsupported features are used */
 
     if (dwCreationFlags & CREATE_SUSPENDED)
@@ -1196,24 +1214,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         FIXME_(module)("(%s,...): STARTF_FORCEOFFFEEDBACK ignored\n", name);
     if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
         FIXME_(module)("(%s,...): STARTF_USEHOTKEY ignored\n", name);
-
-    /* Process the AppName or CmdLine to get module name and path */
-
-    name[0] = '\0';
-
-    if (lpApplicationName) {
-       found_file = make_lpApplicationName_name( lpApplicationName, name, sizeof(name) );
-       cmdline = (lpCommandLine) ? lpCommandLine : lpApplicationName ;
-    }
-    else 
-       found_file = make_lpCommandLine_name( lpCommandLine, name, sizeof ( name ), &cmdline );
-
-    if ( !found_file ) {
-        /* make an early exit if file not found - save second pass */
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return FALSE;
-    }
-
 
     /* When in WineLib, always fork new Unix process */
 
