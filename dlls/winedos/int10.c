@@ -31,12 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
-       int *wattribute);
 static void scroll_window(int direction, char lines, char row1, 
    char col1, char row2, char col2, char attribute);
-
-static int color_palette[16];
 
 #define SCROLL_UP 1
 #define SCROLL_DOWN 2
@@ -90,45 +86,7 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
 
 void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {
-    static int registered_colors = FALSE;
     BIOSDATA *data = DOSMEM_BiosData();
-
-    if (!registered_colors)
-    {
-        /* Colors:
-             0000b   black          1000b   dark gray
-             0001b   blue           1001b   light blue
-             0010b   green          1010b   light green
-             0011b   cyan           1011b   light cyan
-             0100b   red            1100b   light red
-             0101b   magenta        1101b   light magenta
-             0110b   brown          1110b   yellow
-             0111b   light gray     1111b   white
-        */
-        
-        /* These AllocColor calls have the side-effect of triggering 
-           terminal initialization as xx_Init() is no longer called on
-           startup. Which is what we want anyway. */
-
-        color_palette[0]  = CONSOLE_AllocColor(WINE_BLACK);
-        color_palette[1]  = CONSOLE_AllocColor(WINE_BLUE);
-        color_palette[2]  = CONSOLE_AllocColor(WINE_GREEN);
-        color_palette[3]  = CONSOLE_AllocColor(WINE_CYAN);
-        color_palette[4]  = CONSOLE_AllocColor(WINE_RED);
-        color_palette[5]  = CONSOLE_AllocColor(WINE_MAGENTA);
-        color_palette[6]  = CONSOLE_AllocColor(WINE_BROWN);
-        color_palette[7]  = CONSOLE_AllocColor(WINE_LIGHT_GRAY);
-        color_palette[8]  = CONSOLE_AllocColor(WINE_DARK_GRAY);
-        color_palette[9]  = CONSOLE_AllocColor(WINE_LIGHT_BLUE);
-        color_palette[10] = CONSOLE_AllocColor(WINE_LIGHT_GREEN);
-        color_palette[11] = CONSOLE_AllocColor(WINE_LIGHT_CYAN);
-        color_palette[12] = CONSOLE_AllocColor(WINE_LIGHT_RED);
-        color_palette[13] = CONSOLE_AllocColor(WINE_LIGHT_MAGENTA);
-        color_palette[14] = CONSOLE_AllocColor(WINE_YELLOW);
-        color_palette[15] = CONSOLE_AllocColor(WINE_WHITE);
-
-        registered_colors = TRUE;
-    }
 
     if(AL_reg(context) == 0x4F) { /* VESA functions */
 	switch(AH_reg(context)) {
@@ -463,9 +421,6 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 
     case 0x08: /* READ CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
         {
-            /* Note here that color data returned is bogus, will fix later. */
-            char ch;
-            int bg, fg, attr;
             if (BH_reg(context)) /* Write to different page */
             {
                 FIXME("Read character and attribute at cursor position -"
@@ -474,12 +429,9 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 AH_reg(context) = 7;
             }
             else
-            {
-                TRACE(
-                      "Read Character and Attribute at Cursor Position\n");
-                CONSOLE_GetCharacterAtCursor(&ch, &fg, &bg, &attr);
-                AL_reg(context) = ch;
-                AH_reg(context) = 7;	/* FIXME: We're assuming wh on bl */ 
+           {
+                TRACE("Read Character and Attribute at Cursor Position\n");
+                VGA_GetCharacterAtCursor(&AL_reg(context), &AH_reg(context));
             }
         }
         break;
@@ -522,10 +474,8 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                apparantly, the foreground or attribute of the background
                with this call, so we should check first to see what the
                foreground already is... FIXME */
-            TRACE("Set Background/Border Color: %d\n", 
+            FIXME("Set Background/Border Color: %d\n", 
                BL_reg(context));
-            CONSOLE_SetBackgroundColor(color_palette[0],
-               color_palette[BL_reg(context)]);   
             break;
         case 0x01: /* SET PALETTE */
             FIXME("Set Palette - Not Supported\n");
@@ -787,43 +737,20 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     }
 }
 
-static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
-   int *wattribute)
-{
-    /* This is a local function to convert the text-mode attributes
-       to Wine's color and attribute scheme */
-
-    /* Foreground Color is stored in bits 3 through 0 */
-    /* Background Color is stored in bits 6 through 4 */
-    /* If this has bit 7 set, then we need to blink */
-
-    *fg = color_palette[attribute & 15];
-    *bg = color_palette[(attribute & 112) / 16];
-    *wattribute = attribute & 128;
-
-}
-
 static void scroll_window(int direction, char lines, char row1, 
    char col1, char row2, char col2, char attribute)
 {
-   int wattribute, bg_color, fg_color;
-
-   conv_text_mode_attributes(attribute, &fg_color, &bg_color,
-      &wattribute);
-
    if (!lines) /* Actually, clear the window */
    {
-      CONSOLE_ClearWindow(row1, col1, row2, col2, bg_color, wattribute);
+       VGA_ClearText(row1, col1, row2, col2, attribute);
    }
    else if (direction == SCROLL_UP)
    {
-      CONSOLE_ScrollUpWindow(row1, col1, row2, col2, lines, bg_color,
-         wattribute);
+       VGA_ScrollUpText(row1, col1, row2, col2, lines, attribute);
    }
    else
    {
-      CONSOLE_ScrollDownWindow(row1, col1, row2, col2, lines, bg_color,
-         wattribute);
+       VGA_ScrollDownText(row1, col1, row2, col2, lines, attribute);
    }
 }
    

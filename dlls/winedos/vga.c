@@ -552,6 +552,62 @@ void VGA_SetTextAttribute(BYTE attr)
     SetConsoleTextAttribute(VGA_AlphaConsole(), attr);
 }
 
+void VGA_ClearText(unsigned row1, unsigned col1, 
+                  unsigned row2, unsigned col2,
+                  BYTE attr)
+{
+    unsigned width, height, x, y;
+    COORD off;
+    char *dat = VGA_AlphaBuffer();
+    HANDLE con = VGA_AlphaConsole();
+    VGA_GetAlphaMode(&width, &height);
+
+    EnterCriticalSection(&vga_lock); 
+
+    for(y=row1; y<=row2; y++) {
+        off.X = col1;
+       off.Y = y;
+       FillConsoleOutputCharacterA(con, ' ', col2-col1+1, off, NULL);
+       FillConsoleOutputAttribute(con, attr, col2-col1+1, off, NULL);
+
+       for(x=col1; x<=col2; x++) {
+           char *ptr = dat + ((width*y + x) * 2);
+           ptr[0] = ' ';
+           ptr[1] = attr;
+       }
+    }
+
+    LeaveCriticalSection(&vga_lock);
+}
+
+void VGA_ScrollUpText(unsigned row1, unsigned col1, 
+                     unsigned row2, unsigned col2,
+                     unsigned lines, BYTE attr)
+{
+    FIXME("not implemented\n");
+}
+
+void VGA_ScrollDownText(unsigned row1, unsigned col1, 
+                       unsigned row2, unsigned col2,
+                       unsigned lines, BYTE attr)
+{
+    FIXME("not implemented\n");
+}
+
+void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
+{
+    unsigned width, height, x, y;
+    char *dat;
+
+    VGA_GetAlphaMode(&width, &height);
+    VGA_GetCursorPos(&x, &y);
+    dat = VGA_AlphaBuffer() + ((width*y + x) * 2);
+
+    *ascii = dat[0];
+    *attr = dat[1];
+}
+
+
 /*** CONTROL ***/
 
 static void VGA_Poll_Graphics(void)
