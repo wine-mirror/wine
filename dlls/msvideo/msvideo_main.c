@@ -22,7 +22,6 @@
  *      
  * TODO
  *      - no thread safety
- *      - the four CC comparisons are wrong on big endian machines
  */
 
 #include <stdio.h>
@@ -36,6 +35,13 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
+
+static inline const char *wine_dbgstr_fcc( DWORD fcc )
+{
+    return wine_dbg_sprintf("%c%c%c%c", 
+                            LOBYTE(LOWORD(fcc)), HIBYTE(LOWORD(fcc)),
+                            LOBYTE(HIWORD(fcc)), HIBYTE(HIWORD(fcc)));
+}
 
 LRESULT (CALLBACK *pFnCallTo16)(HDRVR, HIC, UINT, LPARAM, LPARAM) = NULL;
 
@@ -74,51 +80,48 @@ DWORD WINAPI VideoForWindowsVersion(void)
  */
 BOOL VFWAPI ICInfo(
 	DWORD fccType,		/* [in] type of compressor ('vidc') */
-	DWORD fccHandler,	/* [in] <n>th compressor */
+	DWORD fccHandler,	/* [in] real fcc for handler or <n>th compressor */
 	ICINFO *lpicinfo)	/* [out] information about compressor */
 {
     char	buf[2000];
 
-    TRACE("(%.4s,%.4s,%p)\n", (char*)&fccType, (char*)&fccHandler, lpicinfo);
+    TRACE("(%s,%s/%08lx,%p)\n", 
+          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), fccHandler, lpicinfo);
 
-    if (GetPrivateProfileStringA("drivers32", NULL, NULL, buf, sizeof(buf), "system.ini")) 
+    if (GetPrivateProfileSectionA("drivers32", buf, sizeof(buf), "system.ini")) 
     {
-        char *s = buf;
-        while (*s) 
-        {
-	    /* (WS) I'm commenting out this test because GetPrivateProfileString
-	     * will return only a list of keys without their values. I'm curious
-	     * to understand how the codecs ever got listed since it seems
-	     * obvious they can't be found this way.
-	     */
-            if (!strncasecmp((char*)&fccType, s, 4) && s[4] == '.' /* && s[9] == '=' */ )
-            {
-                if (!fccHandler--) 
-                {
-                    HIC hic;
+        char    fccTypeStr[4];
+        char    fccHandlerStr[4];
+        char*   s;
 
-                    lpicinfo->fccHandler = mmioStringToFOURCCA(s + 5, 0);
-                    hic = ICOpen(fccType, lpicinfo->fccHandler, ICMODE_QUERY);
-                    if (hic)
-                    {
-			/* (WS) Some incompatible codecs can make wine crash 
-			 * right here. It would be nice if we could protect
-			 * wine and simply ignore such codecs.
-			 */
-                        ICGetInfo(hic, lpicinfo, lpicinfo->dwSize);
-                        ICClose(hic);
-                        return TRUE;
-                    }
-		    /* (WS) I'm removing this return because I think it's
-		     * better to keep going down the list of codecs rather
-		     * than stopping short at the first one that will not
-		     * open.
-		     
-                     * return FALSE; */
-		    fccHandler++;
-                }
+        fccTypeStr[0] = LOBYTE(LOWORD(fccType));
+        fccTypeStr[1] = HIBYTE(LOWORD(fccType));
+        fccTypeStr[2] = LOBYTE(HIWORD(fccType));
+        fccTypeStr[3] = HIBYTE(HIWORD(fccType));
+
+        fccHandlerStr[0] = LOBYTE(LOWORD(fccHandler));
+        fccHandlerStr[1] = HIBYTE(LOWORD(fccHandler));
+        fccHandlerStr[2] = LOBYTE(HIWORD(fccHandler));
+        fccHandlerStr[3] = HIBYTE(HIWORD(fccHandler));
+
+        for (s = buf; *s; s += strlen(s) + 1) 
+        {
+            if (!strncasecmp(fccTypeStr, s, 4) && s[4] == '.' && s[9] == '=' &&
+                (!fccHandler-- || !strncasecmp(fccHandlerStr, s + 5, 4)))
+            {
+                /* exact match of fccHandler or nth driver found ?? */
+                lpicinfo->fccType = fccType;
+                lpicinfo->fccHandler = mmioStringToFOURCCA(s + 5, 0);
+                lpicinfo->dwFlags = 0;
+                lpicinfo->dwVersion = 0;
+                lpicinfo->dwVersionICM = 0x104;
+                lpicinfo->szName[0] = 0;
+                lpicinfo->szDescription[0] = 0;
+                MultiByteToWideChar(CP_ACP, 0, s + 10, -1, 
+                                    lpicinfo->szDriver, 
+                                    sizeof(lpicinfo->szDriver)/sizeof(WCHAR));
+                return TRUE;
             }
-            s += strlen(s) + 1; /* either next char or \0 */
         }
     }
     return FALSE;
@@ -132,15 +135,24 @@ static DWORD IC_HandleRef = 1;
  */
 HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode) 
 {
-    char		codecname[20];
+    char		codecname[10];
     ICOPEN		icopen;
     HDRVR		hdrv;
     WINE_HIC*           whic;
     BOOL                bIs16;
 
-    TRACE("(%.4s,%.4s,0x%08lx)\n", (char*)&fccType, (char*)&fccHandler, (DWORD)wMode);
+    TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);
 
-    sprintf(codecname, "%.4s.%.4s", (char*)&fccType, (char*)&fccHandler);
+    codecname[0] = LOBYTE(LOWORD(fccType));
+    codecname[1] = HIBYTE(LOWORD(fccType));
+    codecname[2] = LOBYTE(HIWORD(fccType));
+    codecname[3] = HIBYTE(HIWORD(fccType));
+    codecname[4] = '.';
+    codecname[5] = LOBYTE(LOWORD(fccHandler));
+    codecname[6] = HIBYTE(LOWORD(fccHandler));
+    codecname[7] = LOBYTE(HIWORD(fccHandler));
+    codecname[8] = HIBYTE(HIWORD(fccHandler));
+    codecname[9] = '\0';
 
     /* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
      * same layout as ICOPEN
@@ -160,7 +172,11 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     {
         if (fccType == streamtypeVIDEO) 
         {
-            sprintf(codecname, "vidc.%.4s", (char*)&fccHandler);
+            codecname[0] = 'v';
+            codecname[1] = 'i';
+            codecname[2] = 'd';
+            codecname[3] = 'c';
+
             fccType = ICTYPE_VIDEO;
             hdrv = OpenDriverA(codecname, "drivers32", (LPARAM)&icopen);
         }
@@ -204,8 +220,8 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
     ICOPEN      icopen;
     WINE_HIC*   whic;
 
-    TRACE("(%.4s,%.4s,%d,%p,%08lx)\n", 
-          (char*)&fccType, (char*)&fccHandler, wMode, lpfnHandler, lpfnHandler16);
+    TRACE("(%s,%s,%d,%p,%08lx)\n", 
+          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode, lpfnHandler, lpfnHandler16);
 
     icopen.dwSize		= sizeof(ICOPEN);
     icopen.fccType		= fccType;
@@ -230,7 +246,7 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
     /* Now try opening/loading the driver. Taken from DRIVER_AddToList */
     /* What if the function is used more than once? */
 
-    if (MSVIDEO_SendMessage(whic->hic, DRV_LOAD, 0L, 0L) != DRV_SUCCESS) 
+    if (MSVIDEO_SendMessage(whic, DRV_LOAD, 0L, 0L) != DRV_SUCCESS) 
     {
         WARN("DRV_LOAD failed for hic %p\n", whic->hic);
         MSVIDEO_FirstHic = whic->next;
@@ -238,9 +254,9 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
         return 0;
     }
     /* return value is not checked */
-    MSVIDEO_SendMessage(whic->hic, DRV_ENABLE, 0L, 0L);
+    MSVIDEO_SendMessage(whic, DRV_ENABLE, 0L, 0L);
 
-    whic->hdrv = (HDRVR)MSVIDEO_SendMessage(whic->hic, DRV_OPEN, 0, (DWORD)&icopen);
+    whic->hdrv = (HDRVR)MSVIDEO_SendMessage(whic, DRV_OPEN, 0, (DWORD)&icopen);
 
     if (whic->hdrv == 0) 
     {
@@ -265,36 +281,42 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC l
 /***********************************************************************
  *		ICGetInfo			[MSVFW32.@]
  */
-LRESULT VFWAPI ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
-	LRESULT		ret;
-	char    codecname[10];
-	char	szDriver[128];
+LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb) 
+{
+    LRESULT	ret;
+    WINE_HIC*   whic = MSVIDEO_GetHicPtr(hic);
 
-	TRACE("(%p,%p,%ld)\n",hic,picinfo,cb);
+    TRACE("(%p,%p,%ld)\n", hic, picinfo, cb);
 
-	/* (WS) The field szDriver should be initialized because the driver 
-	 * is not obliged and often will not do it. Some applications, like
-	 * VirtualDub, rely on this field and will occasionally crash if it
-	 * goes unitialized.
-	 */
-	if (picinfo && cb >= sizeof(ICINFO)) 
-	   picinfo->szDriver[0] = 0; /* At first, set it to an empty string */
+    whic = MSVIDEO_GetHicPtr(hic);
+    if (!whic) return ICERR_BADHANDLE;
+    if (!picinfo) return MMSYSERR_INVALPARAM;
 
-	ret = ICSendMessage(hic,ICM_GETINFO,(DWORD)picinfo,cb);
+    /* (WS) The field szDriver should be initialized because the driver 
+     * is not obliged and often will not do it. Some applications, like
+     * VirtualDub, rely on this field and will occasionally crash if it
+     * goes unitialized.
+     */
+    if (cb >= sizeof(ICINFO)) picinfo->szDriver[0] = '\0';
 
-	/* (WS) When szDriver was not supplied by the driver itself, apparently 
-	 * Windows will set its value equal to the driver file name. This can
-	 * be obtained from the registry as we do here.
-	 */
-	if (picinfo && cb >= sizeof(ICINFO))
-	   if (picinfo->szDriver[0] == 0) { /* was szDriver not supplied? */
-              sprintf(codecname, "vidc.%.4s", (char*)&(picinfo->fccHandler));
-              GetPrivateProfileStringA("drivers32", codecname, "", szDriver, sizeof(szDriver), "system.ini");
-	      MultiByteToWideChar(CP_ACP, 0, szDriver, -1, picinfo->szDriver, sizeof(picinfo->szDriver)/sizeof(WCHAR));
-	   }
+    ret = ICSendMessage(hic, ICM_GETINFO, (DWORD)picinfo, cb);
 
-	TRACE("	-> 0x%08lx\n",ret);
-	return ret;
+    /* (WS) When szDriver was not supplied by the driver itself, apparently 
+     * Windows will set its value equal to the driver file name. This can
+     * be obtained from the registry as we do here.
+     */
+    if (cb >= sizeof(ICINFO) && picinfo->szDriver[0] == 0)
+    {
+        ICINFO  ii;
+
+        memset(&ii, 0, sizeof(ii));
+        ii.dwSize = sizeof(ii);
+        ICInfo(picinfo->fccType, picinfo->fccHandler, &ii);
+        lstrcpyW(picinfo->szDriver, ii.szDriver);
+    }
+
+    TRACE("	-> 0x%08lx\n", ret);
+    return ret;
 }
 
 /***********************************************************************
@@ -307,8 +329,8 @@ HIC VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
     DWORD	querymsg;
     LPSTR       pszBuffer;
 
-    TRACE("(%.4s,%.4s,%p,%p,0x%04x)\n", 
-          (char*)&fccType, (char*)&fccHandler, lpbiIn, lpbiOut, wMode);
+    TRACE("(%s,%s,%p,%p,0x%04x)\n", 
+          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), lpbiIn, lpbiOut, wMode);
 
     switch (wMode) 
     {
@@ -347,15 +369,21 @@ HIC VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
     if (GetPrivateProfileSectionA("drivers32", pszBuffer, 1024, "system.ini")) 
     {
         char* s = pszBuffer;
+        char  fcc[4];
+
         while (*s) 
         {
-            if (!strncasecmp((char*)&fccType, s, 4) && s[4] == '.' && s[9] == '=')
+            fcc[0] = LOBYTE(LOWORD(fccType));
+            fcc[1] = HIBYTE(LOWORD(fccType));
+            fcc[2] = LOBYTE(HIWORD(fccType));
+            fcc[3] = HIBYTE(HIWORD(fccType));
+            if (!strncasecmp(fcc, s, 4) && s[4] == '.' && s[9] == '=')
             {
                 char *s2 = s;
                 while (*s2 != '\0' && *s2 != '.') s2++;
                 if (*s2++) 
                 {
-                    hic = ICOpen(fccType, *(DWORD*)s2, wMode);
+                    hic = ICOpen(fccType, mmioStringToFOURCCA(s2, 0), wMode);
                     if (hic) 
                     {
                         if (!ICSendMessage(hic, querymsg, (DWORD)lpbiIn, (DWORD)lpbiOut))
@@ -376,8 +404,8 @@ HIC VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
     if (fccType == streamtypeVIDEO) 
         return ICLocate(ICTYPE_VIDEO, fccHandler, lpbiIn, lpbiOut, wMode);
     
-    WARN("(%.4s,%.4s,%p,%p,0x%04x) not found!\n",
-         (char*)&fccType, (char*)&fccHandler, lpbiIn, lpbiOut, wMode);
+    WARN("(%s,%s,%p,%p,0x%04x) not found!\n",
+         wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), lpbiIn, lpbiOut, wMode);
     return 0;
 }
 
@@ -478,7 +506,7 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 
 	TRACE("(%p,%ld,%p,%p,%p,%p)\n",hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
 
-	TRACE("lpBits[0] == %ld\n",((LPDWORD)lpBits)[0]);
+	TRACE("lpBits[0] == %lx\n",((LPDWORD)lpBits)[0]);
 
 	icd.dwFlags	= dwFlags;
 	icd.lpbiInput	= lpbiFormat;
@@ -489,7 +517,7 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	icd.ckid	= 0;
 	ret = ICSendMessage(hic,ICM_DECOMPRESS,(DWORD)&icd,sizeof(ICDECOMPRESS));
 
-	TRACE("lpBits[0] == %ld\n",((LPDWORD)lpBits)[0]);
+	TRACE("lpBits[0] == %lx\n",((LPDWORD)lpBits)[0]);
 
 	TRACE("-> %ld\n",ret);
 
@@ -522,12 +550,11 @@ void VFWAPI ICCompressorFree(PCOMPVARS pc)
  *
  *
  */
-LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2)
+LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD lParam1, DWORD lParam2)
 {
     LRESULT     ret;
-    WINE_HIC*   whic = MSVIDEO_GetHicPtr(hic);
     
-#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx)\n",hic,lParam1,lParam2);break;
+#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx)\n",whic,lParam1,lParam2); break;
     
     switch (msg) {
         /* DRV_* */
@@ -588,15 +615,13 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2)
         XX(ICM_DECOMPRESSEX_END);
         XX(ICM_SET_STATUS_PROC);
     default:
-        FIXME("(%p,0x%08lx,0x%08lx,0x%08lx) unknown message\n",hic,(DWORD)msg,lParam1,lParam2);
+        FIXME("(%p,0x%08lx,0x%08lx,0x%08lx) unknown message\n",whic,(DWORD)msg,lParam1,lParam2);
     }
     
 #undef XX
     
-    if (!whic) return ICERR_BADHANDLE;
-    
     if (whic->driverproc) {
-        ret = whic->driverproc((DWORD)hic, whic->hdrv, msg, lParam1, lParam2);
+        ret = whic->driverproc((DWORD)whic->hic, whic->hdrv, msg, lParam1, lParam2);
     } else {
         ret = SendDriverMessage(whic->hdrv, msg, lParam1, lParam2);
     }
@@ -608,8 +633,12 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2)
 /***********************************************************************
  *		ICSendMessage			[MSVFW32.@]
  */
-LRESULT VFWAPI ICSendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2) {
-	return MSVIDEO_SendMessage(hic,msg,lParam1,lParam2);
+LRESULT VFWAPI ICSendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2) 
+{
+    WINE_HIC*   whic = MSVIDEO_GetHicPtr(hic);
+
+    if (!whic) return ICERR_BADHANDLE;
+    return MSVIDEO_SendMessage(whic, msg, lParam1, lParam2);
 }
 
 /***********************************************************************
@@ -689,9 +718,9 @@ LRESULT WINAPI ICClose(HIC hic)
 
     if (whic->driverproc) 
     {
-        MSVIDEO_SendMessage(hic, DRV_CLOSE, 0, 0);
-        MSVIDEO_SendMessage(hic, DRV_DISABLE, 0, 0);
-        MSVIDEO_SendMessage(hic, DRV_FREE, 0, 0);
+        MSVIDEO_SendMessage(whic, DRV_CLOSE, 0, 0);
+        MSVIDEO_SendMessage(whic, DRV_DISABLE, 0, 0);
+        MSVIDEO_SendMessage(whic, DRV_FREE, 0, 0);
     }
     else
     {
@@ -751,7 +780,7 @@ HANDLE VFWAPI ICImageDecompress(
 
 	if ( hic == NULL )
 	{
-		hic = ICDecompressOpen( mmioFOURCC('V','I','D','C'), 0, &lpbiIn->bmiHeader, (lpbiOut != NULL) ? &lpbiOut->bmiHeader : NULL );
+		hic = ICDecompressOpen( ICTYPE_VIDEO, 0, &lpbiIn->bmiHeader, (lpbiOut != NULL) ? &lpbiOut->bmiHeader : NULL );
 		if ( hic == NULL )
 		{
 			WARN("no handler\n" );

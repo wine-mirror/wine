@@ -43,7 +43,7 @@ typedef struct tagWINE_HIC {
 } WINE_HIC;
 
 HIC             MSVIDEO_OpenFunction(DWORD, DWORD, UINT, DRIVERPROC, DWORD);
-LRESULT         MSVIDEO_SendMessage(HIC, UINT, DWORD, DWORD);
+LRESULT         MSVIDEO_SendMessage(WINE_HIC*, UINT, DWORD, DWORD);
 WINE_HIC*       MSVIDEO_GetHicPtr(HIC);
 
 extern LRESULT  (CALLBACK *pFnCallTo16)(HDRVR, HIC, UINT, LPARAM, LPARAM);

@@ -740,7 +740,7 @@ LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lPara
             /* map the message for a 32 bit infrastructure, and pass it along */
             void*       data16 = MSVIDEO_MapMsg16To32(msg, &lParam1, &lParam2);
     
-            ret = MSVIDEO_SendMessage(HIC_32(hic), msg, lParam1, lParam2);
+            ret = MSVIDEO_SendMessage(whic, msg, lParam1, lParam2);
             if (data16)
                 MSVIDEO_UnmapMsg16To32(msg, data16, &lParam1, &lParam2);
         }
