@@ -1517,12 +1517,56 @@ LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
 
 
 /***********************************************************************
+ *           dump_winpos_flags
+ */
+static void dump_winpos_flags(UINT flags)
+{
+    TRACE("flags:");
+    if(flags & SWP_NOSIZE) DPRINTF(" SWP_NOSIZE");
+    if(flags & SWP_NOMOVE) DPRINTF(" SWP_NOMOVE");
+    if(flags & SWP_NOZORDER) DPRINTF(" SWP_NOZORDER");
+    if(flags & SWP_NOREDRAW) DPRINTF(" SWP_NOREDRAW");
+    if(flags & SWP_NOACTIVATE) DPRINTF(" SWP_NOACTIVATE");
+    if(flags & SWP_FRAMECHANGED) DPRINTF(" SWP_FRAMECHANGED");
+    if(flags & SWP_SHOWWINDOW) DPRINTF(" SWP_SHOWWINDOW");
+    if(flags & SWP_HIDEWINDOW) DPRINTF(" SWP_HIDEWINDOW");
+    if(flags & SWP_NOCOPYBITS) DPRINTF(" SWP_NOCOPYBITS");
+    if(flags & SWP_NOOWNERZORDER) DPRINTF(" SWP_NOOWNERZORDER");
+    if(flags & SWP_NOSENDCHANGING) DPRINTF(" SWP_NOSENDCHANGING");
+    if(flags & SWP_DEFERERASE) DPRINTF(" SWP_DEFERERASE");
+    if(flags & SWP_ASYNCWINDOWPOS) DPRINTF(" SWP_ASYNCWINDOWPOS");
+
+#define DUMPED_FLAGS \
+    (SWP_NOSIZE | \
+    SWP_NOMOVE | \
+    SWP_NOZORDER | \
+    SWP_NOREDRAW | \
+    SWP_NOACTIVATE | \
+    SWP_FRAMECHANGED | \
+    SWP_SHOWWINDOW | \
+    SWP_HIDEWINDOW | \
+    SWP_NOCOPYBITS | \
+    SWP_NOOWNERZORDER | \
+    SWP_NOSENDCHANGING | \
+    SWP_DEFERERASE | \
+    SWP_ASYNCWINDOWPOS)
+
+    if(flags & ~DUMPED_FLAGS) DPRINTF(" %08x", flags & ~DUMPED_FLAGS);
+    DPRINTF("\n");
+#undef DUMPED_FLAGS
+}
+
+/***********************************************************************
  *		SetWindowPos (USER32.@)
  */
 BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
                           INT x, INT y, INT cx, INT cy, UINT flags )
 {
     WINDOWPOS winpos;
+
+    TRACE("hwnd %x, after %x, %d,%d (%dx%d), flags %08x\n",
+	   hwnd, hwndInsertAfter, x, y, cx, cy, flags);
+    if(TRACE_ON(win)) dump_winpos_flags(flags);
 
     winpos.hwnd = hwnd;
     winpos.hwndInsertAfter = hwndInsertAfter;
