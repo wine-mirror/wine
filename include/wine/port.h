@@ -283,6 +283,7 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 #endif  /* HAVE_GETOPT_LONG */
 
 #ifndef HAVE_FUTIMES
+struct timeval;
 int futimes(int fd, const struct timeval tv[2]);
 #endif
 
