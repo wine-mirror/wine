@@ -18,10 +18,9 @@
 #include <string.h>
 #include "windows.h"
 #include "bitmap.h"
-#include "gdi.h"
+#include "win.h"
 #include "sysmetrics.h"
 #include "task.h"
-#include "win.h"
 #include "heap.h"
 #include "module.h"
 #include "neexe.h"
@@ -30,6 +29,7 @@
 #include "message.h"
 #include "resource.h"
 #include "tweak.h"
+
 #include "debug.h"
 
 

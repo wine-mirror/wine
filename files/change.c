@@ -4,7 +4,6 @@
  * Copyright 1998 Ulrich Weigand
  */
 
-#include <errno.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>

@@ -9,9 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-/* #include <locale.h> */
 #ifdef MALLOC_DEBUGGING
-#include <malloc.h>
+# include <malloc.h>
 #endif
 #include "ts_xlib.h"
 #include "ts_xresource.h"

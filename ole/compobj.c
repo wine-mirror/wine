@@ -768,13 +768,13 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 	if (hres != ERROR_SUCCESS) {
 	    RegCloseKey(CLSIDkey);
 	    return REGDB_E_CLASSNOTREG;
-	    }
-	    hres = RegQueryValue32A(key, "InprocServer32", dllName, &dllNameLen);
+	}
+	hres = RegQueryValue32A(key, "InprocServer32", dllName, &dllNameLen);
 	RegCloseKey(key);
 	RegCloseKey(CLSIDkey);
 	if (hres != ERROR_SUCCESS)
 	        return REGDB_E_READREGDB;
-	    TRACE(ole,"found InprocServer32 dll %s\n", dllName);
+	TRACE(ole,"found InprocServer32 dll %s\n", dllName);
 
 	/* open dll, call DllGetClassFactory */
 	hLibrary = CoLoadLibrary(dllName, TRUE);

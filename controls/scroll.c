@@ -5,9 +5,6 @@
  * Copyright 1994, 1996 Alexandre Julliard
  */
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "windows.h"
 #include "sysmetrics.h"
 #include "scroll.h"

@@ -7,16 +7,11 @@
  * FIXME: return values might be wrong
  */
 
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "windows.h"
 #include "file.h"
 #include "heap.h"
-#include "ldt.h"
 #include "lzexpand.h"
 #include "debug.h"
 

@@ -92,7 +92,6 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 		break;
 	}
 	TRACE(mmtime, "after CallBack16 !\n");
-	fflush(stdout);
     }
     if (lpTimer->wFlags & TIME_ONESHOT)
 	timeKillEvent32(lpTimer->wTimerID);

@@ -95,6 +95,9 @@ static void MODULE_DoInitializeDLLs( PDB32 *process, WINE_MODREF *wm,
         PE_InitDLL( wm, type, lpReserved );
         break;
 
+    case MODULE32_ELF:
+    	/* no need to do that, dlopen() already does */
+    	break;
     default:
     	ERR(module, "wine_modref type %d not handled.\n", wm->type);
         break;
@@ -579,7 +582,6 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 	    lstrcpyn32A(name, lpCommandLine, len);
 	    if (!strchr(name, '\\') && !strchr(name, '.'))
 		strcat(name, ".exe");
-	    fprintf(stderr,"looking for: %s\n",name);
 	    if (GetFileAttributes32A(name)!=-1)
 	    	break;
 	    /* if there is a space and no file found yet, include the word
