@@ -603,7 +603,7 @@ void write_forward(type_t *iface)
 
 void write_guid(type_t *iface)
 {
-  uuid_t *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
   if (!uuid) return;
   fprintf(header, "DEFINE_GUID(IID_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
           iface->name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],

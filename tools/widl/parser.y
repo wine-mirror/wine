@@ -106,7 +106,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 	var_t *var;
 	func_t *func;
 	char *str;
-	uuid_t *uuid;
+	UUID *uuid;
 	int num;
 }
 

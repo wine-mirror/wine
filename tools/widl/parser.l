@@ -75,9 +75,9 @@ int import_stack_ptr = 0;
 
 static void pop_import(void);
 
-static uuid_t* parse_uuid(const char*u)
+static UUID* parse_uuid(const char*u)
 {
-  uuid_t* uuid = xmalloc(sizeof(uuid_t));
+  UUID* uuid = xmalloc(sizeof(UUID));
   char b[3];
   /* it would be nice to use UuidFromStringA */
   uuid->Data1 = strtoul(u, NULL, 16);
