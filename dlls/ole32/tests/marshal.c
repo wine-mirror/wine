@@ -1128,13 +1128,6 @@ static void test_proxy_interfaces()
     IUnknown *pOtherUnknown = NULL;
     DWORD tid;
     HANDLE thread;
-    static const IID IID_IMarshal2 =
-    {
-        0x000001cf,
-        0x0000,
-        0x0000,
-        { 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 }
-    };
 
     cLocks = 0;
 
@@ -1167,9 +1160,8 @@ static void test_proxy_interfaces()
     todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IMarshal); }
     if (hr == S_OK) IUnknown_Release(pOtherUnknown);
 
-    hr = IUnknown_QueryInterface(pProxy, &IID_IMarshal2, (LPVOID*)&pOtherUnknown);
-    todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IMarshal2); }
-    if (hr == S_OK) IUnknown_Release(pOtherUnknown);
+    /* IMarshal2 is also supported on NT-based systems, but is pretty much
+     * useless as it has no more methods over IMarshal that it inherits from. */
 
     IUnknown_Release(pProxy);
 
