@@ -7,6 +7,7 @@
  * Noureddine Jemmali
  *
  * Copyright 2000 Andreas Mohr
+ * Copyright 2002 Jaco Greeff
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -43,6 +44,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wininet.h"
+#include "winnls.h"
 #include "winerror.h"
 
 #include "wine/debug.h"
@@ -302,6 +304,33 @@ BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 
 
 /***********************************************************************
+ *           FtpSetCurrentDirectoryW (WININET.@)
+ *
+ * Change the working directory on the FTP server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
+{
+    CHAR *szDir;
+    INT len;
+    BOOL rc;
+
+    len = lstrlenW(lpszDirectory)+1;
+    if (!(szDir = (CHAR *)malloc(len*sizeof(CHAR))))
+        return FALSE;
+    WideCharToMultiByte(CP_ACP, -1, lpszDirectory, -1, szDir, len, NULL, NULL);
+    rc = FtpSetCurrentDirectoryA(hConnect, szDir);
+    free(szDir);
+
+    return rc;
+}
+
+
+/***********************************************************************
  *           FTP_FtpSetCurrentDirectoryA (Internal)
  *
  * Change the working directory on the FTP server
@@ -395,6 +424,33 @@ BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
     {
 	return FTP_FtpCreateDirectoryA(hConnect, lpszDirectory);
     }
+}
+
+
+/***********************************************************************
+ *           FtpCreateDirectoryW (WININET.@)
+ *
+ * Create new directory on the FTP server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
+{
+    CHAR *szDir;
+    INT len;
+    BOOL rc;
+
+    len = lstrlenW(lpszDirectory)+1;
+    if (!(szDir = (CHAR *)malloc(len*sizeof(CHAR))))
+        return FALSE;
+    WideCharToMultiByte(CP_ACP, -1, lpszDirectory, -1, szDir, len, NULL, NULL);
+    rc = FtpCreateDirectoryA(hConnect, szDir);
+    free(szDir);
+
+    return rc;
 }
 
 
@@ -496,6 +552,24 @@ HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
 	return FTP_FtpFindFirstFileA(hConnect, lpszSearchFile, lpFindFileData,
 		dwFlags, dwContext);
     }
+}
+
+
+/***********************************************************************
+ *           FtpFindFirstFileA (WININET.@)
+ *
+ * Search the specified directory
+ *
+ * RETURNS
+ *    HINTERNET on success
+ *    NULL on failure
+ *
+ */
+HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
+    LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD dwContext)
+{
+    FIXME("STUB\n");
+    return NULL;
 }
 
 
@@ -604,7 +678,7 @@ lend:
  *
  */
 BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory,
-	LPDWORD lpdwCurrentDirectory)
+    LPDWORD lpdwCurrentDirectory)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hFtpSession;
     LPWININETAPPINFOA hIC = NULL;
@@ -634,6 +708,24 @@ BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDire
 	return FTP_FtpGetCurrentDirectoryA(hFtpSession, lpszCurrentDirectory,
 		lpdwCurrentDirectory);
     }
+}
+
+
+/***********************************************************************
+ *           FtpGetCurrentDirectoryW (WININET.@)
+ *
+ * Retrieves the current directory
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDirectory,
+    LPDWORD lpdwCurrentDirectory)
+{
+    FIXME("STUB\n");
+    return FALSE;
 }
 
 
@@ -728,8 +820,8 @@ lend:
  *
  */
 HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
-	LPCSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
-	DWORD dwContext)
+    LPCSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
+    DWORD dwContext)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hFtpSession;
     LPWININETAPPINFOA hIC = NULL;
@@ -759,6 +851,25 @@ HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
     {
 	return FTP_FtpOpenFileA(hFtpSession, lpszFileName, fdwAccess, dwFlags, dwContext);
     }
+}
+
+
+/***********************************************************************
+ *           FtpOpenFileW (WININET.@)
+ *
+ * Open a remote file for writing or reading
+ *
+ * RETURNS
+ *    HINTERNET handle on success
+ *    NULL on failure
+ *
+ */
+HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
+    LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
+    DWORD dwContext)
+{
+    FIXME("STUB\n");
+    return NULL;
 }
 
 
@@ -852,8 +963,8 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
  *
  */
 BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
-	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
-	DWORD dwContext)
+    BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
+    DWORD dwContext)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hInternet;
     LPWININETAPPINFOA hIC = NULL;
@@ -885,6 +996,25 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
 	return FTP_FtpGetFileA(hInternet, lpszRemoteFile, lpszNewFile,
            fFailIfExists, dwLocalFlagsAttribute, dwInternetFlags, dwContext);
     }
+}
+
+
+/***********************************************************************
+ *           FtpGetFileW (WININET.@)
+ *
+ * Retrieve file from the FTP server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
+    BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
+    DWORD dwContext)
+{
+    FIXME("STUB\n");
+    return FALSE;
 }
 
 

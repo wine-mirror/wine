@@ -1,6 +1,6 @@
 init    WININET_LibMain
 
-@ stub InternetInitializeAutoProxyDll
+@ stdcall InternetInitializeAutoProxyDll(long) InternetInitializeAutoProxyDll
 @ stub ShowCertificate
 @ stdcall CommitUrlCacheEntryA(str str long long long str long str str) CommitUrlCacheEntryA
 @ stub CommitUrlCacheEntryW
@@ -30,18 +30,18 @@ init    WININET_LibMain
 @ stub FindNextUrlCacheEntryW
 @ stub FreeUrlCacheSpaceA
 @ stub FreeUrlCacheSpaceW
-@ stdcall FtpCreateDirectoryA(ptr str)  FtpCreateDirectoryA
-@ stub FtpCreateDirectoryW
+@ stdcall FtpCreateDirectoryA(ptr str) FtpCreateDirectoryA
+@ stdcall FtpCreateDirectoryW(ptr wstr) FtpCreateDirectoryW
 @ stdcall FtpDeleteFileA(ptr str) FtpDeleteFileA
 @ stub FtpDeleteFileW
 @ stdcall FtpFindFirstFileA(ptr str str long long) FtpFindFirstFileA
-@ stub FtpFindFirstFileW
+@ stdcall FtpFindFirstFileW(ptr wstr wstr long long) FtpFindFirstFileW
 @ stdcall FtpGetCurrentDirectoryA(ptr str ptr) FtpGetCurrentDirectoryA
-@ stub FtpGetCurrentDirectoryW
+@ stdcall FtpGetCurrentDirectoryW(ptr wstr ptr) FtpGetCurrentDirectoryW
 @ stdcall FtpGetFileA(ptr str str long long long long) FtpGetFileA
-@ stub FtpGetFileW
+@ stdcall FtpGetFileW(ptr wstr wstr long long long long) FtpGetFileW
 @ stdcall FtpOpenFileA(ptr str long long long) FtpOpenFileA
-@ stub FtpOpenFileW
+@ stdcall FtpOpenFileW(ptr wstr long long long) FtpOpenFileW
 @ stdcall FtpPutFileA(ptr str str long long) FtpPutFileA
 @ stub FtpPutFileW
 @ stdcall FtpRemoveDirectoryA(ptr str) FtpRemoveDirectoryA
@@ -49,7 +49,7 @@ init    WININET_LibMain
 @ stdcall FtpRenameFileA(ptr str str) FtpRenameFileA
 @ stub FtpRenameFileW
 @ stdcall FtpSetCurrentDirectoryA(ptr str) FtpSetCurrentDirectoryA
-@ stub FtpSetCurrentDirectoryW
+@ stdcall FtpSetCurrentDirectoryW(ptr wstr) FtpSetCurrentDirectoryW
 @ stub GetUrlCacheConfigInfoA
 @ stub GetUrlCacheConfigInfoW
 @ stdcall GetUrlCacheEntryInfoA(str ptr long) GetUrlCacheEntryInfoA
@@ -83,17 +83,17 @@ init    WININET_LibMain
 @ stdcall InternetAttemptConnect(long) InternetAttemptConnect
 @ stdcall InternetAutodial(long ptr) InternetAutoDial
 @ stub InternetAutodialCallback
-@ stub InternetAutodialHangup
+@ stdcall InternetAutodialHangup(long) InternetAutodialHangup
 @ stdcall InternetCanonicalizeUrlA(str str ptr long) InternetCanonicalizeUrlA
-@ stub InternetCanonicalizeUrlW
+@ stdcall InternetCanonicalizeUrlW(wstr wstr ptr long) InternetCanonicalizeUrlW
 @ stdcall InternetCheckConnectionA(ptr long long) InternetCheckConnectionA
-@ stub InternetCheckConnectionW
+@ stdcall InternetCheckConnectionW(ptr long long) InternetCheckConnectionW
 @ stdcall InternetCloseHandle(long) InternetCloseHandle
 @ stub InternetCombineUrlA
 @ stub InternetCombineUrlW
 @ stub InternetConfirmZoneCrossing
 @ stdcall InternetConnectA(ptr str long str str long long long) InternetConnectA
-@ stub InternetConnectW
+@ stdcall InternetConnectW(ptr wstr long wstr wstr long long long) InternetConnectW
 @ stdcall InternetCrackUrlA(str long long ptr) InternetCrackUrlA
 @ stub InternetCrackUrlW
 @ stub InternetCreateUrlA
@@ -106,17 +106,17 @@ init    WININET_LibMain
 @ stub InternetGetCertByURL
 @ stdcall InternetGetConnectedState(ptr long) InternetGetConnectedState
 @ stdcall InternetGetCookieA(str str ptr long) InternetGetCookieA
-@ stub InternetGetCookieW
+@ stdcall InternetGetCookieW(wstr wstr ptr long) InternetGetCookieW
 @ stdcall InternetGetLastResponseInfoA(ptr str ptr) InternetGetLastResponseInfoA
 @ stub InternetGetLastResponseInfoW
 @ stub InternetGoOnline
 @ stub InternetHangUp
 @ stdcall InternetLockRequestFile(ptr ptr) InternetLockRequestFile
 @ stdcall InternetOpenA(str long str str long) InternetOpenA
+@ stdcall InternetOpenW(wstr long wstr wstr long) InternetOpenW
 @ stub InternetOpenServerPushParse
 @ stdcall InternetOpenUrlA(ptr str str long long long) InternetOpenUrlA
-@ stub InternetOpenUrlW
-@ stub InternetOpenW
+@ stdcall InternetOpenUrlW(ptr wstr wstr long long long) InternetOpenUrlW
 @ stdcall InternetQueryDataAvailable(ptr ptr long long) InternetQueryDataAvailable
 @ stdcall InternetQueryOptionA(ptr long ptr ptr) InternetQueryOptionA
 @ stub InternetQueryOptionW
@@ -125,7 +125,7 @@ init    WININET_LibMain
 @ stdcall InternetReadFileExW(ptr ptr long long) InternetReadFileExW
 @ stub InternetServerPushParse
 @ stdcall InternetSetCookieA(str str str) InternetSetCookieA
-@ stub InternetSetCookieW
+@ stdcall InternetSetCookieW(wstr wstr wstr) InternetSetCookieW
 @ stub InternetSetDialState
 @ stub InternetSetFilePointer
 @ stdcall InternetSetOptionA(ptr long ptr long) InternetSetOptionA

@@ -7,6 +7,8 @@
  * Ulrich Czekalla
  * Aric Stewart
  *
+ * Copyright 2002 Jaco Greeff
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -45,6 +47,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wininet.h"
+#include "winnls.h"
 #include "wine/debug.h"
 #include "winerror.h"
 #define NO_SHLWAPI_STREAM
@@ -166,6 +169,26 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 
 /***********************************************************************
+ *           InternetInitializeAutoProxyDll   (WININET.@)
+ *
+ * Setup the internal proxy
+ *
+ * PARAMETERS
+ *     dwReserved
+ *
+ * RETURNS
+ *     FALSE on failure
+ *
+ */
+BOOL InternetInitializeAutoProxyDll(DWORD dwReserved)
+{
+    FIXME("STUB\n");
+    INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           InternetOpenA   (WININET.@)
  *
  * Per-application initialization of wininet
@@ -175,9 +198,8 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *    NULL on failure
  *
  */
-HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent,
-	DWORD dwAccessType, LPCSTR lpszProxy,
-    	LPCSTR lpszProxyBypass, DWORD dwFlags)
+HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
+    LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
     LPWININETAPPINFOA lpwai = NULL;
 
@@ -216,6 +238,54 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent,
     return (HINTERNET)lpwai;
 }
 
+
+/***********************************************************************
+ *           InternetOpenW   (WININET.@)
+ *
+ * Per-application initialization of wininet
+ *
+ * RETURNS
+ *    HINTERNET on success
+ *    NULL on failure
+ *
+ */
+HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
+    LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
+{
+    HINTERNET rc = (HINTERNET)NULL;
+    INT lenAgent = lstrlenW(lpszAgent)+1;
+    INT lenProxy = lstrlenW(lpszProxy)+1;
+    INT lenBypass = lstrlenW(lpszProxyBypass)+1;
+    CHAR *szAgent = (CHAR *)malloc(lenAgent*sizeof(CHAR));
+    CHAR *szProxy = (CHAR *)malloc(lenProxy*sizeof(CHAR));
+    CHAR *szBypass = (CHAR *)malloc(lenBypass*sizeof(CHAR));
+
+    if (!szAgent || !szProxy || !szBypass)
+    {
+        if (szAgent)
+            free(szAgent);
+        if (szProxy)
+            free(szProxy);
+        if (szBypass)
+            free(szBypass);
+        return (HINTERNET)NULL;
+    }
+
+    WideCharToMultiByte(CP_ACP, -1, lpszAgent, -1, szAgent, lenAgent,
+        NULL, NULL);
+    WideCharToMultiByte(CP_ACP, -1, lpszProxy, -1, szProxy, lenProxy,
+        NULL, NULL);
+    WideCharToMultiByte(CP_ACP, -1, lpszProxyBypass, -1, szBypass, lenBypass,
+        NULL, NULL);
+
+    rc = InternetOpenA(szAgent, dwAccessType, szProxy, szBypass, dwFlags);
+
+    free(szAgent);
+    free(szProxy);
+    free(szBypass);
+
+    return rc;
+}
 
 /***********************************************************************
  *           InternetGetLastResponseInfoA (WININET.@)
@@ -309,6 +379,58 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
 
     return rc;
 }
+
+
+/***********************************************************************
+ *           InternetConnectW (WININET.@)
+ *
+ * Open a ftp, gopher or http session
+ *
+ * RETURNS
+ *    HINTERNET a session handle on success
+ *    NULL on failure
+ *
+ */
+HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
+    LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
+    LPCWSTR lpszUserName, LPCWSTR lpszPassword,
+    DWORD dwService, DWORD dwFlags, DWORD dwContext)
+{
+    HINTERNET rc = (HINTERNET)NULL;
+    INT lenServer = lstrlenW(lpszServerName)+1;
+    INT lenUser = lstrlenW(lpszUserName)+1;
+    INT lenPass = lstrlenW(lpszPassword)+1;
+    CHAR *szServerName = (CHAR *)malloc(lenServer*sizeof(CHAR));
+    CHAR *szUserName = (CHAR *)malloc(lenUser*sizeof(CHAR));
+    CHAR *szPassword = (CHAR *)malloc(lenPass*sizeof(CHAR));
+
+    if (!szServerName || !szUserName || !szPassword)
+    {
+        if (szServerName)
+            free(szServerName);
+        if (szUserName)
+            free(szUserName);
+        if (szPassword)
+            free(szPassword);
+        return (HINTERNET)NULL;
+    }
+
+    WideCharToMultiByte(CP_ACP, -1, lpszServerName, -1, szServerName, lenServer,
+        NULL, NULL);
+    WideCharToMultiByte(CP_ACP, -1, lpszUserName, -1, szUserName, lenUser,
+        NULL, NULL);
+    WideCharToMultiByte(CP_ACP, -1, lpszPassword, -1, szPassword, lenPass,
+        NULL, NULL);
+
+    rc = InternetConnectA(hInternet, szServerName, nServerPort,
+        szUserName, szPassword, dwService, dwFlags, dwContext);
+
+    free(szServerName);
+    free(szUserName);
+    free(szPassword);
+    return rc;
+}
+
 
 /***********************************************************************
  *           InternetFindNextFileA (WININET.@)
@@ -524,7 +646,8 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
  *    FALSE on failure
  *
  */
-BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, LPCSTR lpszStart, INT len)
+BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, 
+    LPCSTR lpszStart, INT len)
 {
     TRACE("%s (%d)\n", lpszStart, len);
 
@@ -561,7 +684,7 @@ BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, LPCSTR 
  *
  */
 BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
-		LPURL_COMPONENTSA lpUrlComponents)
+    LPURL_COMPONENTSA lpUrlComponents)
 {
   /*
    * RFC 1808
@@ -820,6 +943,34 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 
     return (hr == S_OK) ? TRUE : FALSE;
 }
+
+/***********************************************************************
+ *           InternetCanonicalizeUrlW (WININET.@)
+ *
+ * Escape unsafe characters and spaces
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
+    LPDWORD lpdwBufferLength, DWORD dwFlags)
+{
+    HRESULT hr;
+    TRACE("%s %p %p %08lx\n", debugstr_w(lpszUrl), lpszBuffer,
+        lpdwBufferLength, dwFlags);
+
+    /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
+    dwFlags ^= ICU_NO_ENCODE;
+
+    dwFlags |= 0x80000000; /* Don't know what this means */
+
+    hr = UrlCanonicalizeW(lpszUrl, lpszBuffer, lpdwBufferLength, dwFlags);
+
+    return (hr == S_OK) ? TRUE : FALSE;
+}
+
 
 /***********************************************************************
  *           InternetSetStatusCallback (WININET.@)
@@ -1107,7 +1258,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     {
     default:
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-        FIXME("Stub!\n");
+        FIXME("STUB\n");
         break;
     }
 
@@ -1146,13 +1297,35 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
  *
  */
 BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
-		LPSTR lpCookieData, LPDWORD lpdwSize)
+    LPSTR lpCookieData, LPDWORD lpdwSize)
 {
-    FIXME("(%s,%s,%p), stub!\n",debugstr_a(lpszUrl),debugstr_a(lpszCookieName),
-	    lpCookieData
-    );
+    FIXME("STUB\n");
+    TRACE("(%s,%s,%p)\n", debugstr_a(lpszUrl),debugstr_a(lpszCookieName),
+        lpCookieData);
     return FALSE;
 }
+
+
+/***********************************************************************
+ *           InternetGetCookieW (WININET.@)
+ *
+ * Retrieve cookie from the specified url
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetGetCookieW(LPCSTR lpszUrl, LPCWSTR lpszCookieName,
+    LPWSTR lpCookieData, LPDWORD lpdwSize)
+{
+    FIXME("STUB\n");
+    TRACE("(%s,%s,%p)\n", debugstr_a(lpszUrl), debugstr_w(lpszCookieName),
+        lpCookieData);
+    return FALSE;
+}
+
+
 /***********************************************************************
  *           InternetSetCookieA (WININET.@)
  *
@@ -1163,12 +1336,35 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetSetCookieA(
-	LPCSTR lpszUrl, LPCSTR lpszCookieName, LPCSTR lpCookieData
-) {
-    FIXME("(%s,%s,%s), stub!\n",debugstr_a(lpszUrl),debugstr_a(lpszCookieName),debugstr_a(lpCookieData));
+BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
+    LPCSTR lpCookieData)
+{
+    FIXME("STUB\n");
+    TRACE("(%s,%s,%s)\n", debugstr_a(lpszUrl),
+        debugstr_a(lpszCookieName), debugstr_a(lpCookieData));
     return FALSE;
 }
+
+
+/***********************************************************************
+ *           InternetSetCookieW (WININET.@)
+ *
+ * Sets cookie for the specified url
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetSetCookieW(LPCSTR lpszUrl, LPCWSTR lpszCookieName,
+    LPCWSTR lpCookieData)
+{
+    FIXME("STUB\n");
+    TRACE("(%s,%s,%s)\n", debugstr_a(lpszUrl),
+        debugstr_w(lpszCookieName), debugstr_w(lpCookieData));
+    return FALSE;
+}
+
 
 /***********************************************************************
  *           GetInternetScheme (internal)
@@ -1210,9 +1406,8 @@ INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp)
  * Pings a requested host to check internet connection
  *
  * RETURNS
- *
- *  TRUE on success and FALSE on failure. if a failures then
- *   ERROR_NOT_CONNECTED is places into GetLastError
+ *   TRUE on success and FALSE on failure. If a failure then
+ *   ERROR_NOT_CONNECTED is placesd into GetLastError
  *
  */
 BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwReserved )
@@ -1284,6 +1479,34 @@ End:
   return rc;
 }
 
+
+/***********************************************************************
+ *	InternetCheckConnectionW (WININET.@)
+ *
+ * Pings a requested host to check internet connection
+ *
+ * RETURNS
+ *   TRUE on success and FALSE on failure. If a failure then
+ *   ERROR_NOT_CONNECTED is placed into GetLastError
+ *
+ */
+BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwReserved)
+{
+    CHAR *szUrl;
+    INT len;
+    BOOL rc;
+
+    len = lstrlenW(lpszUrl)+1;
+    if (!(szUrl = (CHAR *)malloc(len*sizeof(CHAR))))
+        return FALSE;
+    WideCharToMultiByte(CP_ACP, -1, lpszUrl, -1, szUrl, len, NULL, NULL);
+    rc = InternetCheckConnectionA((LPCSTR)szUrl, dwFlags, dwReserved);
+    free(szUrl);
+    
+    return rc;
+}
+
+
 /**********************************************************
  *	InternetOpenUrlA (WININET.@)
  *
@@ -1292,10 +1515,12 @@ End:
  * RETURNS
  *   handle of connection or NULL on failure
  */
-HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl, LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
+    LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
   URL_COMPONENTSA urlComponents;
-  char protocol[32], hostName[MAXHOSTNAME], userName[1024], password[1024], path[2048], extra[1024];
+  char protocol[32], hostName[MAXHOSTNAME], userName[1024];
+  char password[1024], path[2048], extra[1024];
   HINTERNET client = NULL, client1 = NULL;
   urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
   urlComponents.lpszScheme = protocol;
@@ -1316,7 +1541,8 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl, LPCSTR lp
   case INTERNET_SCHEME_FTP:
     if(urlComponents.nPort == 0)
       urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
-    client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
+    client = InternetConnectA(hInternet, hostName, urlComponents.nPort,
+        userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
     return FtpOpenFileA(client, path, GENERIC_READ, dwFlags, dwContext);
     break;
   case INTERNET_SCHEME_HTTP:
@@ -1331,7 +1557,8 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl, LPCSTR lp
       else
 	urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
     }
-    client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName, password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
+    client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName,
+        password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
     if(client == NULL)
       return NULL;
     client1 = HttpOpenRequestA(hInternet, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
@@ -1357,6 +1584,48 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl, LPCSTR lp
   }
   if(client != NULL)
     InternetCloseHandle(client);
+}
+
+
+/**********************************************************
+ *	InternetOpenUrlW (WININET.@)
+ *
+ * Opens an URL
+ *
+ * RETURNS
+ *   handle of connection or NULL on failure
+ */
+HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
+    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+{
+    HINTERNET rc = (HINTERNET)NULL;
+
+    INT lenUrl = lstrlenW(lpszUrl)+1;
+    INT lenHeaders = lstrlenW(lpszHeaders)+1;
+    CHAR *szUrl = (CHAR *)malloc(lenUrl*sizeof(CHAR));
+    CHAR *szHeaders = (CHAR *)malloc(lenHeaders*sizeof(CHAR));
+
+    if (!szUrl || !szHeaders)
+    {
+        if (szUrl)
+            free(szUrl);
+        if (szHeaders)
+            free(szHeaders);
+        return (HINTERNET)NULL;
+    }
+
+    WideCharToMultiByte(CP_ACP, -1, lpszUrl, -1, szUrl, lenUrl,
+        NULL, NULL);
+    WideCharToMultiByte(CP_ACP, -1, lpszHeaders, -1, szHeaders, lenHeaders,
+        NULL, NULL);
+
+    rc = InternetOpenUrlA(hInternet, szUrl, szHeaders,
+        dwHeadersLength, dwFlags, dwContext);
+
+    free(szUrl);
+    free(szHeaders);
+
+    return rc;
 }
 
 
@@ -1829,11 +2098,30 @@ BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
  *   FALSE on failure
  *
  */
-
 BOOL WINAPI InternetAutoDial(DWORD dwFlags, HWND hwndParent)
 {
     FIXME("STUB\n");
 
     /* Tell that we are connected to the internet. */
+    return TRUE;
+}
+
+/***********************************************************************
+ *           InternetAutoDialHangup
+ *
+ * Hangs up an connection made with InternetAutoDial
+ *
+ * PARAM
+ *    dwReserved
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+BOOL WINAPI InternetAutodialHangup(DWORD dwReserved)
+{
+    FIXME("STUB\n");
+
+    /* we didn't dial, we don't disconnect */
     return TRUE;
 }
