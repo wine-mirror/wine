@@ -99,6 +99,7 @@ LINTS = $(C_SRCS:.c=.ln)
 X_DLLS = \
 	ddraw \
 	@OPENGL32_DLL@ \
+	@GLU32_DLL@ \
 	x11drv
 
 DLLS = \

@@ -3,7 +3,11 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
+GLU32FILES= \
+	glu32/libglu32.@LIBEXT@
+
 OPENGLFILES= \
+	@GLU32FILES@ \
 	opengl32/libopengl32.@LIBEXT@
 
 XFILES = \
@@ -140,6 +144,7 @@ SUBDIRS = \
 	dplayx \
 	dsound \
 	gdi \
+	glu32 \
 	icmp \
 	imagehlp \
 	imm32 \
@@ -238,6 +243,9 @@ libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
 
 libgdi32.@LIBEXT@ libdispdib.@LIBEXT@ libgdi.@LIBEXT@ libwing.@LIBEXT@: gdi/libgdi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) gdi/libgdi32.@LIBEXT@ $@
+
+libglu32.@LIBEXT@: glu32/libglu32.@LIBEXT@
+	$(RM) $@ && $(LN_S) glu32/libglu32.@LIBEXT@ $@
 
 libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@
 	$(RM) $@ && $(LN_S) icmp/libicmp.@LIBEXT@ $@
@@ -414,7 +422,7 @@ libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 # Inter-dll dependencies (only necessary for dynamic libs)
 
 advapi32/libadvapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-avifil32/libavifil32.@LIBEXT@: libmsvfw32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+avifil32/libavifil32.@LIBEXT@: libmsvfw32.@LIBEXT@ libole32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 comctl32/libcomctl32.@LIBEXT@: libmsvfw32.@LIBEXT@ libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 commdlg/libcomdlg32.@LIBEXT@: libshell32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libwinspool.drv.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 crtdll/libcrtdll.@LIBEXT@: libmsvcrt.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
@@ -470,7 +478,7 @@ winmm/mciavi/libmciavi.drv.@LIBEXT@: libmsvfw32.@LIBEXT@ libwinmm.@LIBEXT@ libus
 winmm/mcicda/libmcicda.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/mciseq/libmciseq.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/mciwave/libmciwave.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-winmm/midimap/libmidimap.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/midimap/libmidimap.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/wavemap/libmsacm.drv.@LIBEXT@: libmsacm32.@LIBEXT@ libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/wineoss/libwineoss.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winnls/libwinnls32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@

@@ -91,7 +91,7 @@ AC_SUBST(LDCOMBINE)
 
 dnl **** Check for some libraries ****
 
-dnl Check for -lm for BeOS
+dnl Check for -lm
 AC_CHECK_LIB(m,sqrt)
 dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt)
@@ -134,6 +134,10 @@ AC_SUBST(OPENGLFILES)
 OPENGLFILES=""
 AC_SUBST(OPENGL32_DLL)
 OPENGL32_DLL=""
+GLU32FILES=""
+AC_SUBST(GLU32FILES)
+GLU32_DLL=""
+AC_SUBST(GLU32_DLL)
 if test "$have_x" = "yes"
 then
     XLIB="-lXext -lX11"
@@ -328,6 +332,14 @@ then
                             ]
                         )
 		fi
+	        dnl Check for GLU32 library.
+		AC_CHECK_LIB(GLU,glBegin,
+			     X_PRE_LIBS="$X_PRE_LIBS -lGLU"
+			     GLU32FILES='$(GLU32FILES)'
+			     GLU32_DLL=glu32
+			     ,,
+			     $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
+		)
 	     fi
 	 fi
     fi
@@ -1178,6 +1190,7 @@ dlls/dplay/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
 dlls/gdi/Makefile
+dlls/glu32/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile

@@ -73,7 +73,7 @@ typedef struct
 typedef struct
 {
     int  n_args;
-    char arg_types[17];
+    char arg_types[21];
 } ORD_FUNCTION;
 
 typedef struct
