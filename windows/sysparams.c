@@ -158,7 +158,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 
 #define lpnm ((LPNONCLIENTMETRICSA)lpvParam)
 		
-		if( lpnm->cbSize == sizeof(NONCLIENTMETRICSA) )
+		if (lpnm->cbSize == sizeof(NONCLIENTMETRICSA))
 		{
 		    LPLOGFONTA lpLogFont = &(lpnm->lfMenuFont);
 		
@@ -210,6 +210,11 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 							(LPVOID)&(lpnm->lfStatusFont),0);
 		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfMessageFont),0);
+		}
+		else
+		{
+		    WARN("size mismatch !! (is %d; should be %d)\n", lpnm->cbSize, sizeof(NONCLIENTMETRICSA));
+		    return FALSE;
 		}
 #undef lpnm
 		break;
