@@ -24,3 +24,4 @@
 #include "resource.h"
 
 #include "shlwapi_En.rc"
+#include "shlwapi_Es.rc"

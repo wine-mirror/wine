@@ -1,5 +1,6 @@
 /*
  * Copyright 1995 Jon Tombs
+ * Copyright 2004 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,14 +33,14 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
  MENUITEM SEPARATOR
  MENUITEM "&Acerca de WINE...", 61761
  MENUITEM SEPARATOR
- MENUITEM "&Añadir marca en el historial de depuración", 61762
+ MENUITEM "Añadir marca en el &historial de depuración", 61762
 }
 
 EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
 	POPUP ""
 	BEGIN
-		MENUITEM "&Undo", EM_UNDO
+		MENUITEM "&Deshacer", EM_UNDO
 		MENUITEM SEPARATOR
 		MENUITEM "Co&rtar", WM_CUT
 		MENUITEM "&Copiar", WM_COPY
@@ -57,10 +58,26 @@ BEGIN
         LTEXT "", 100, 32, 4, 176, 48, WS_CHILD | WS_VISIBLE | WS_GROUP
         PUSHBUTTON "&Aceptar", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Cancelar", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Abortar", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "A&bortar", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Reintentar", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Ignorar", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Sí", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&No", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
 
+MDI_MOREWINDOWS DIALOG FIXED IMPURE 20, 20, 232, 122
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Seleccionar ventana"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LISTBOX         MDI_IDC_LISTBOX, 5, 7, 222, 90, WS_VSCROLL | WS_HSCROLL /* defined in mdi.h */
+    DEFPUSHBUTTON   "Aceptar", IDOK, 75, 100, 35, 14
+    PUSHBUTTON      "Cancelar", IDCANCEL, 120, 100, 35, 14
+END
+
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_ERROR "Error"
+    IDS_MDI_MOREWINDOWS "&Más ventanas..."
+}

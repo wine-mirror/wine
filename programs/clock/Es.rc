@@ -1,10 +1,10 @@
 /*
- * Clock (English resources)
+ * Clock (Spanish resources)
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
  * Spanish translation by Pablo Saratxaga <srtxg@chanae.alphanet.ch>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
- * Copyright 2003 José Manuel Ferrer Ortiz
+ * Copyright 2003,2004 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-MAIN_MENU MENU LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
+LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
+
+MAIN_MENU MENU
 {
  POPUP "&Propiedades" {
   MENUITEM "Ana&lógico", IDM_ANALOG
@@ -43,7 +45,7 @@ MAIN_MENU MENU LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
  }
 }
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "Reloj"
 }

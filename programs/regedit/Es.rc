@@ -1,7 +1,7 @@
 /*
  * Regedit resources
  *
- * Copyright 2003 José Manuel Ferrer Ortiz
+ * Copyright 2003,2004 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -86,14 +86,36 @@ BEGIN
         MENUITEM "&Eliminar Favorito",          ID_FAVOURITES_REMOVEFAVOURITE
         , GRAYED
     END
-    POPUP "&Ayuda"
+    POPUP "A&yuda"
     BEGIN
-        MENUITEM "&Help Topics",                ID_HELP_HELPTOPICS
+        MENUITEM "&Temas de ayuda\tF1",         ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&Acerca de Editor de registro", ID_HELP_ABOUT
+        MENUITEM "&Acerca del Editor de registro", ID_HELP_ABOUT
     END
 END
 
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Modificar"                   ID_EDIT_MODIFY
+	MENUITEM "Modificar datos binarios",    ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Eliminar\tDel",              ID_EDIT_DELETE
+	MENUITEM "&Renombrar",                  ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+	POPUP "&Nuevo"
+	BEGIN
+		MENUITEM "&Clave",              ID_EDIT_NEW_KEY
+		MENUITEM SEPARATOR
+		MENUITEM "Valor de &cadena",    ID_EDIT_NEW_STRINGVALUE
+		MENUITEM "Valor &binario",      ID_EDIT_NEW_BINARYVALUE
+		MENUITEM "Valor &DWORD",        ID_EDIT_NEW_DWORDVALUE
+	END
+  END
+END
 
 /*
  * Dialog
@@ -111,6 +133,35 @@ BEGIN
     DEFPUSHBUTTON   "Aceptar",IDOK,195,6,30,11,WS_GROUP
 END
 
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Editar cadena"
+FONT 8, "System"
+BEGIN
+    LTEXT           "Nombre del valor:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Datos del valor:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP
+    DEFPUSHBUTTON   "Aceptar",IDOK,140,60,30,11,WS_GROUP
+    DEFPUSHBUTTON   "Cancelar",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Editar cadena"
+FONT 8, "System"
+BEGIN
+    LTEXT           "Nombre del valor:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Datos del valor:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Base", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Hexadecimal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Decimal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "Aceptar",IDOK,140,80,30,11,WS_GROUP
+    DEFPUSHBUTTON   "Cancelar",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
 /*
  * String Table
  */
@@ -124,7 +175,7 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APP_TITLE           "Editor de registro"
+    IDS_APP_TITLE           "Editor del registro"
     IDC_REGEDIT             "REGEDIT"
     IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
@@ -171,6 +222,19 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Copia el nombre de la clave seleccionada al portapapeles"
     ID_EDIT_FIND            "Busca una cadena de texto en una clave, valor o datos"
     ID_EDIT_FINDNEXT        "Busca la siguiente ocurrencia del texto especificado en la búsqueda anterior"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR               "Error"
+    IDS_BAD_KEY             "No se puede consultar la clave '%s'"
+    IDS_BAD_VALUE           "No se puede consultar el valor '%s'"
+    IDS_UNSUPPORTED_TYPE    "No se pueden editar claves de este tipo (%ld)"
+    IDS_TOO_BIG_VALUE       "El valor es demasiado grande (%ld)"
+    IDS_DELETE_BOX_TITLE    "Confirmar eliminación de valor"
+    IDS_DELETE_BOX_TEXT     "¿Seguro que desea eliminar el valor '%s'?"
+    IDS_NEWKEY              "Nueva clave #%d"
+    IDS_NEWVALUE            "Nuevo valor #%d"
 END
 
 /*****************************************************************/
