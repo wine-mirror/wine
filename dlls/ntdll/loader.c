@@ -499,11 +499,8 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     WCHAR *p;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader(hModule);
     PLIST_ENTRY entry, mark;
-    DWORD len;
 
-    RtlUnicodeToMultiByteSize( &len, filename, (strlenW(filename) + 1) * sizeof(WCHAR) );
-    if (!(wm = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wm) + len )))
-        return NULL;
+    if (!(wm = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wm) ))) return NULL;
 
     wm->nDeps    = 0;
     wm->deps     = NULL;
