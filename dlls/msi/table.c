@@ -1284,9 +1284,10 @@ static UINT TABLE_get_column_info( struct tagMSIVIEW *view,
     return ERROR_SUCCESS;
 }
 
-static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIHANDLE hrec)
+static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
+                MSIRECORD *rec)
 {
-    FIXME("%p %d %ld\n", view, eModifyMode, hrec );
+    FIXME("%p %d %p\n", view, eModifyMode, rec );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 

@@ -430,10 +430,10 @@ out:
 
 UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hRec)
 {
-    MSIVIEW *view;
-    MSIQUERY *query;
-    MSIHANDLE handle;
-    UINT ret, i, count = 0, type;
+    MSIVIEW *view = NULL;
+    MSIQUERY *query = NULL;
+    MSIRECORD *rec = NULL;
+    UINT r = ERROR_FUNCTION_FAILED, i, count = 0, type;
     LPWSTR name;
 
     TRACE("%ld %d %p\n", hView, info, hRec);
@@ -444,34 +444,82 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
 
     view = query->view;
     if( !view )
-        return ERROR_FUNCTION_FAILED;
+        goto out;
 
     if( !view->ops->get_dimensions )
-        return ERROR_FUNCTION_FAILED;
+        goto out;
 
-    ret = view->ops->get_dimensions( view, NULL, &count );
-    if( ret )
-        return ret;
+    r = view->ops->get_dimensions( view, NULL, &count );
+    if( r )
+        goto out;
     if( !count )
-        return ERROR_INVALID_PARAMETER;
+    {
+        r = ERROR_INVALID_PARAMETER;
+        goto out;
+    }
 
-    handle = MsiCreateRecord( count );
-    if( !handle )
+    rec = MSI_CreateRecord( count );
+    if( !rec )
         return ERROR_FUNCTION_FAILED;
 
     for( i=0; i<count; i++ )
     {
         name = NULL;
-        ret = view->ops->get_column_info( view, i+1, &name, &type );
-        if( ret != ERROR_SUCCESS )
+        r = view->ops->get_column_info( view, i+1, &name, &type );
+        if( r != ERROR_SUCCESS )
             continue;
-        MsiRecordSetStringW( handle, i+1, name );
+        MSI_RecordSetStringW( rec, i+1, name );
         HeapFree( GetProcessHeap(), 0, name );
     }
 
-    *hRec = handle;
+    *hRec = alloc_msihandle( &rec->hdr );
 
-    return ERROR_SUCCESS;
+out:
+    if( query )
+        msiobj_release( &query->hdr );
+    if( rec )
+        msiobj_release( &rec->hdr );
+
+    return r;
+}
+
+UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,
+                MSIHANDLE hRecord)
+{
+    MSIVIEW *view = NULL;
+    MSIQUERY *query = NULL;
+    MSIRECORD *rec = NULL;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    TRACE("%ld %x %ld\n", hView, eModifyMode, hRecord);
+
+    query = msihandle2msiinfo( hView, MSIHANDLETYPE_VIEW );
+    if( !query )
+        return ERROR_INVALID_HANDLE;
+
+    view = query->view;
+    if( !view )
+        goto out;
+
+    if( !view->ops->modify )
+        goto out;
+
+    rec = msihandle2msiinfo( hRecord, MSIHANDLETYPE_RECORD );
+    if( !rec )
+    {
+        r = ERROR_INVALID_HANDLE;
+        goto out;
+    }
+
+    r = view->ops->modify( view, eModifyMode, rec );
+
+out:
+    if( query )
+        msiobj_release( &query->hdr );
+    if( rec )
+        msiobj_release( &rec->hdr );
+
+    return r;
 }
 
 UINT WINAPI MsiDatabaseApplyTransformA( MSIHANDLE hdb, 
@@ -537,13 +585,6 @@ UINT WINAPI MsiDatabaseGetPrimaryKeysW(MSIHANDLE hdb,
                     LPCWSTR table, MSIHANDLE* rec)
 {
     FIXME("%ld %s %p\n", hdb, debugstr_w(table), rec);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiViewModify(MSIHANDLE hView, MSIMODIFY eModifyMode, MSIHANDLE
-hRecord)
-{
-    FIXME("%ld %x %ld\n",hView, eModifyMode, hRecord);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 

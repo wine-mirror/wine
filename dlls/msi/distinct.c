@@ -217,16 +217,17 @@ static UINT DISTINCT_get_column_info( struct tagMSIVIEW *view,
     return dv->table->ops->get_column_info( dv->table, n, name, type );
 }
 
-static UINT DISTINCT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIHANDLE hrec)
+static UINT DISTINCT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
+                MSIRECORD *rec )
 {
     MSIDISTINCTVIEW *dv = (MSIDISTINCTVIEW*)view;
 
-    TRACE("%p %d %ld\n", dv, eModifyMode, hrec );
+    TRACE("%p %d %p\n", dv, eModifyMode, rec );
 
     if( !dv->table )
          return ERROR_FUNCTION_FAILED;
 
-    return dv->table->ops->modify( dv->table, eModifyMode, hrec );
+    return dv->table->ops->modify( dv->table, eModifyMode, rec );
 }
 
 static UINT DISTINCT_delete( struct tagMSIVIEW *view )

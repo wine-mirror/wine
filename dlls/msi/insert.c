@@ -214,11 +214,11 @@ static UINT INSERT_get_column_info( struct tagMSIVIEW *view,
     return sv->ops->get_column_info( sv, n, name, type );
 }
 
-static UINT INSERT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIHANDLE hrec)
+static UINT INSERT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec)
 {
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
 
-    TRACE("%p %d %ld\n", iv, eModifyMode, hrec );
+    TRACE("%p %d %p\n", iv, eModifyMode, rec );
 
     return ERROR_FUNCTION_FAILED;
 }

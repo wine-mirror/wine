@@ -161,7 +161,7 @@ typedef struct tagMSIVIEWOPS
     /*
      * modify - not yet implemented properly
      */
-    UINT (*modify)( struct tagMSIVIEW *, MSIMODIFY, MSIHANDLE );
+    UINT (*modify)( struct tagMSIVIEW *, MSIMODIFY, MSIRECORD * );
 
     /*
      * delete - destroys the structure completely
