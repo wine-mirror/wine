@@ -865,21 +865,21 @@ BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey)
 	TRACE("(%p, %p)\n", unused, inpRegKey);
 
 	/* first check - if input is non-NULL and points to the secret
-	   key string, then pass.  Otherwise return 0.
+	   key string, then pass. Otherwise return 0.
 	 */
 	if (inpRegKey != NULL)
 	{
 	  if (SHELL_OsIsUnicode())
 	  {
-	    if (lstrcmpiA((LPSTR)inpRegKey, strRegistryPolicyA) ||
-	        lstrcmpiA((LPSTR)inpRegKey, strPolicyA))
+	    if (lstrcmpiW((LPWSTR)inpRegKey, strRegistryPolicyW) &&
+	        lstrcmpiW((LPWSTR)inpRegKey, strPolicyW))
 	      /* doesn't match, fail */
 	      return 0;
 	  }
 	  else
 	  {
-	    if (lstrcmpiW((LPWSTR)inpRegKey, strRegistryPolicyW) ||
-	        lstrcmpiW((LPWSTR)inpRegKey, strPolicyW))
+	    if (lstrcmpiA((LPSTR)inpRegKey, strRegistryPolicyA) &&
+	        lstrcmpiA((LPSTR)inpRegKey, strPolicyA))
 	      /* doesn't match, fail */
 	      return 0;
 	  }
