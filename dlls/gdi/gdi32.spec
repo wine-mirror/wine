@@ -425,11 +425,9 @@
 @ stdcall DeleteMetaFile16(long)
 @ stdcall DrvGetPrinterData16(str str ptr ptr long ptr)
 @ stdcall DrvSetPrinterData16(str str long ptr long)
-@ stdcall GetDCState16(long)
 @ stdcall OpenJob16(str str long)
 @ stdcall SelectVisRgn16(long long)
 @ stdcall SetDCHook(long ptr long)
-@ stdcall SetDCState16(long long)
 @ stdcall SetHookFlags16(long long)
 @ stdcall WriteSpool16(long ptr long)
 

@@ -44,7 +44,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
 static DCE *firstDCE;
-static HDC16 defaultDCstate;
 
 static void DCE_DeleteClipRgn( DCE* );
 static INT DCE_ReleaseDC( DCE* );
@@ -91,13 +90,13 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
         HeapFree( GetProcessHeap(), 0, dce );
 	return 0;
     }
-    if (!defaultDCstate) defaultDCstate = GetDCState16( HDC_16(dce->hDC) );
+    SaveDC( dce->hDC );
 
     /* store DCE handle in DC hook data field */
 
     SetDCHook( dce->hDC, DCHook16, (DWORD)dce );
 
-    dce->hwndCurrent = WIN_GetFullHandle( hWnd );
+    dce->hwndCurrent = hWnd;
     dce->hClipRgn    = 0;
 
     if( type != DCE_CACHE_DC ) /* owned or class DC */
@@ -238,14 +237,15 @@ static INT DCE_ReleaseDC( DCE* dce )
 
     if (dce->DCXflags & DCX_CACHE)
     {
-        /* make the DC clean so that SetDCState doesn't try to update the vis rgn */
+        /* make the DC clean so that RestoreDC doesn't try to update the vis rgn */
         SetHookFlags16( HDC_16(dce->hDC), DCHF_VALIDATEVISRGN );
-        SetDCState16( HDC_16(dce->hDC), defaultDCstate );
+        RestoreDC( dce->hDC, 1 );  /* initial save level is always 1 */
+        SaveDC( dce->hDC );  /* save the state again for next time */
         dce->DCXflags &= ~DCX_DCEBUSY;
 	if (dce->DCXflags & DCX_DCEDIRTY)
 	{
 	    /* don't keep around invalidated entries
-	     * because SetDCState() disables hVisRgn updates
+	     * because RestoreDC() disables hVisRgn updates
 	     * by removing dirty bit. */
             if (dce->hwndCurrent && USER_Driver.pReleaseDC)
                 USER_Driver.pReleaseDC( dce->hwndCurrent, dce->hDC );
