@@ -721,7 +721,7 @@ import  ntdll.dll
 702 stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
 703 stdcall UninitializeCriticalSection(ptr) UninitializeCriticalSection
 704 stdcall UnlockFile(long long long long long) UnlockFile
-705 stub UnlockFileEx
+705 stdcall UnlockFileEx(long long long long ptr) UnlockFileEx
 706 stdcall UnmapViewOfFile(ptr) UnmapViewOfFile
 707 stdcall UpdateResourceA(long str str long ptr long) UpdateResourceA
 708 stdcall UpdateResourceW(long wstr wstr long ptr long) UpdateResourceW

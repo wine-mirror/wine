@@ -1960,6 +1960,32 @@ BOOL WINAPI UnlockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHi
 }
 
 
+/**************************************************************************
+ *           UnlockFileEx   (KERNEL32.705)
+ */
+BOOL WINAPI UnlockFileEx(
+		HFILE hFile,
+		DWORD dwReserved,
+		DWORD nNumberOfBytesToUnlockLow,
+		DWORD nNumberOfBytesToUnlockHigh,
+		LPOVERLAPPED lpOverlapped
+)
+{
+	FIXME(file, "hFile=%d,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
+	  hFile, dwReserved, nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh,
+	  lpOverlapped);
+	if (dwReserved == 0)
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	else
+	{
+		ERR(file, "reserved == %ld: Supposed to be 0??\n", dwReserved);
+		SetLastError(ERROR_INVALID_PARAMETER);
+	}
+
+	return FALSE;
+}
+
+
 #if 0
 
 struct DOS_FILE_LOCK {
