@@ -28,7 +28,6 @@ typedef struct
   HMENU   hPopupMenu1;
   LPCSTR  lpszIniFile;
   LPCSTR  lpszIcoFile;
-  LPSTR   lpszLanguage;
   UINT    wStringTableOffset;
 
   BOOL    bAnalog;

@@ -10,10 +10,6 @@
 #include "main.h"
 #include "language.h"
 
-#ifdef WINELIB
-#include "options.h"
-#endif
-
 CHAR STRING_MENU_Xx[]      = "MENU_Xx";
 CHAR STRING_PAGESETUP_Xx[] = "DIALOG_PAGESETUP_Xx";
 
@@ -97,7 +93,6 @@ VOID LANGUAGE_SelectByNumber(UINT num)
 
   /* Get Language id */
   LoadString(Globals.hInstance, IDS_LANGUAGE_ID, lang, sizeof(lang));
-  Globals.lpszLanguage = lang;
 
   /* Set frame caption */
   LANGUAGE_UpdateWindowCaption();
@@ -135,17 +130,3 @@ VOID LANGUAGE_DefaultHandle(WPARAM wParam)
           LANGUAGE_SelectByNumber(wParam - NP_FIRST_LANGUAGE);
      else printf("Unimplemented menu command %i\n", wParam);
 }
-
-VOID LANGUAGE_Init(VOID)
-{
-  CHAR buffer[MAX_PATHNAME_LEN], *p;
-
-#ifndef LCC
-    PROFILE_GetWineIniString("programs", "language", "language", 
-                             buffer, sizeof(buffer));
-#endif
-  Globals.lpszLanguage = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
-  strcpy(p, buffer);
-  /* hmemcpy(p, buffer, 1 + lstrlen(buffer)); */
-}
-

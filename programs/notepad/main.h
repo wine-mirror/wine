@@ -33,7 +33,6 @@ typedef struct
   HMENU   hHelpMenu;
   LPCSTR  lpszIniFile;
   LPCSTR  lpszIcoFile;
-  LPCSTR  lpszLanguage;
   UINT    wStringTableOffset;
   BOOL    bWrapLongLines;
   CHAR    szFindText[MAX_PATHNAME_LEN];

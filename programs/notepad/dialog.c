@@ -11,10 +11,6 @@
 #include <commdlg.h>
 #include <winerror.h>
 
-#ifdef WINELIB
-#include "options.h"
-#endif
-
 #include "main.h"
 #include "license.h"
 #include "language.h"
@@ -28,7 +24,7 @@
   #include "winnls.h"
 #endif
 
-static LRESULT DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+static LRESULT WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
 
@@ -593,12 +589,12 @@ VOID DIALOG_HelpHelp(VOID)
 
 VOID DIALOG_HelpLicense(VOID)
 {
-        WineLicense(Globals.hMainWnd, Globals.lpszLanguage);
+        WineLicense(Globals.hMainWnd);
 }
 
 VOID DIALOG_HelpNoWarranty(VOID)
 {
-        WineWarranty(Globals.hMainWnd, Globals.lpszLanguage);
+        WineWarranty(Globals.hMainWnd);
 }
 
 VOID DIALOG_HelpAboutWine(VOID)
@@ -629,7 +625,7 @@ VOID DIALOG_PageSetup(VOID)
  *           DIALOG_PAGESETUP_DlgProc
  */
 
-static LRESULT DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 
    switch (msg)

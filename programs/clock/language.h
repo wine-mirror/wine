@@ -10,7 +10,6 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID);
 VOID LANGUAGE_SelectByNumber(UINT num);
 VOID LANGUAGE_SelectByName(LPCSTR lang);
 VOID LANGUAGE_DefaultHandle(WPARAM wParam);
-VOID LANGUAGE_Init(VOID);
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */

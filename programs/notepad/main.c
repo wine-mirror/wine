@@ -443,12 +443,12 @@ DWORD CreateLine(
  */
 void LoadBufferFromFile(LPCSTR szFileName)
 {
-    HFILE hFile;
+    HANDLE hFile;
     OFSTRUCT ofs;
     CHAR *pTemp;
     DWORD size,i,len,bytes_left,bytes_read;
 
-    hFile = OpenFile(szFileName, &ofs, OF_READ);
+    hFile = (HANDLE)OpenFile(szFileName, &ofs, OF_READ);
     if(hFile == INVALID_HANDLE_VALUE)
         return;
     size = BUFFERCHUNKSIZE;
@@ -749,7 +749,7 @@ int NOTEPAD_MenuCommand (WPARAM wParam)
  *           NOTEPAD_WndProc
  */
 
-LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hContext;
@@ -861,9 +861,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     char className[] = "NPClass";  /* To make sure className >= 0x10000 */
     char winName[]   = "Notepad";
 
-    /* Select Language */
-    LANGUAGE_Init();
-
     /* setup buffer */
     InitBuffer();
 
@@ -918,7 +915,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     Globals.hFindReplaceDlg = 0;
 
-    LANGUAGE_SelectByName(Globals.lpszLanguage);
+    LANGUAGE_SelectByNumber(0);
 
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);               
                         

@@ -10,10 +10,6 @@
 #include "windowsx.h"
 #include "winhelp.h"
 
-#ifdef WINELIB
-#include "options.h"
-#endif
-
 static BOOL    WINHELP_RegisterWinClasses();
 static LRESULT CALLBACK WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_TextWndProc(HWND, UINT, WPARAM, LPARAM);

@@ -10,9 +10,6 @@
 #include "main.h"
 #include "language.h"
 #include "winnls.h"
-#ifdef WINELIB
-#include "options.h"
-#endif
 
 CHAR STRING_MENU_Xx[]      = "MENU_Xx";
 
@@ -124,7 +121,6 @@ VOID LANGUAGE_SelectByNumber(UINT num)
 
   /* Get Language id */
   LoadString(Globals.hInstance, IDS_LANGUAGE_ID, szLanguage, sizeof(szLanguage));
-  Globals.lpszLanguage = szLanguage;
 
   /* Change Resource names */
   lstrcpyn(STRING_MENU_Xx + sizeof(STRING_MENU_Xx) - 3, szLanguage, 3);
@@ -168,20 +164,6 @@ VOID LANGUAGE_DefaultHandle(WPARAM wParam)
   if ((wParam >=CL_FIRST_LANGUAGE) && (wParam<=CL_LAST_LANGUAGE))
           LANGUAGE_SelectByNumber(wParam - CL_FIRST_LANGUAGE);
      else printf("Unimplemented menu command %i\n", wParam);
-}
-
-VOID LANGUAGE_Init(VOID)
-{
-  CHAR szBuffer[MAX_PATHNAME_LEN];
-
-  if (Globals.lpszLanguage == "En") {
-        PROFILE_GetWineIniString("programs", "language", "En", szBuffer, 
-                                  sizeof(szBuffer));       
-        Globals.lpszLanguage = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(szBuffer)+1));
-
-/*        hmemcpy(Globals.lpszLanguage, szBuffer, 1+lstrlen(szBuffer));  */
-        lstrcpyn(Globals.lpszLanguage, szBuffer, strlen(szBuffer)+1); 
-  }
 }
 
 /* Local Variables:    */

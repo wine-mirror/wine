@@ -70,11 +70,11 @@ int CLOCK_MenuCommand (WPARAM wParam)
          break;
        }
      case CL_INFO_LICENSE: {
-         WineLicense(Globals.hMainWnd, Globals.lpszLanguage);
+         WineLicense(Globals.hMainWnd);
          break;
        }
      case CL_INFO_NO_WARRANTY: {
-         WineWarranty(Globals.hMainWnd, Globals.lpszLanguage);
+         WineWarranty(Globals.hMainWnd);
          break;
        }
      case CL_INFO_ABOUT_WINE: {
@@ -119,7 +119,7 @@ VOID MAIN_FileChooseFont(VOID) {
  *           CLOCK_WndProc
  */
 
-LRESULT CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC context;
@@ -203,9 +203,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     Globals.lpszIniFile     = "clock.ini";
     Globals.lpszIcoFile     = "clock.ico";
 
-    /* Select Language */
-    LANGUAGE_Init();
-
     Globals.hInstance       = hInstance;
     Globals.hMainIcon       = ExtractIcon(Globals.hInstance, 
                                           Globals.lpszIcoFile, 0);
@@ -232,7 +229,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         CW_USEDEFAULT, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 0,
         LoadMenu(Globals.hInstance, STRING_MENU_Xx), Globals.hInstance, 0);
 			
-    LANGUAGE_SelectByName(Globals.lpszLanguage);
+    LANGUAGE_SelectByName("En");
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
 
     LANGUAGE_UpdateMenuCheckmarks();

@@ -5,8 +5,8 @@
  *  To be distributed under the Wine License
  */
 
-VOID WineLicense(HWND hWnd, LPCSTR lpszLanguage);
-VOID WineWarranty(HWND hWnd, LPCSTR language);
+VOID WineLicense(HWND hWnd);
+VOID WineWarranty(HWND hWnd);
 
 typedef struct
 {

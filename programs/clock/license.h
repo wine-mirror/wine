@@ -8,8 +8,8 @@
 
 /* function prototypes */
  
-VOID WineLicense(HWND hWnd, LPCSTR lpszLanguage);
-VOID WineWarranty(HWND hWnd, LPCSTR language);
+VOID WineLicense(HWND hWnd);
+VOID WineWarranty(HWND hWnd);
 
 
 /* typedefs */

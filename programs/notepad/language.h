@@ -9,5 +9,4 @@ VOID LANGUAGE_UpdateWindowCaption(VOID);
 VOID LANGUAGE_SelectByNumber(UINT num);
 VOID LANGUAGE_SelectByName(LPCSTR lang);
 VOID LANGUAGE_DefaultHandle(WPARAM wParam);
-VOID LANGUAGE_Init(VOID);
 
