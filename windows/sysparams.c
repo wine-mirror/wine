@@ -1213,7 +1213,21 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
     WINE_SPI_FIXME(SPI_SETNONCLIENTMETRICS);	/*     42  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_GETMINIMIZEDMETRICS);	/*     43  WINVER >= 0x400 */
+    case SPI_GETMINIMIZEDMETRICS: 		/*     43  WINVER >= 0x400 */
+    {
+        MINIMIZEDMETRICS * lpMm = pvParam;
+	if (lpMm->cbSize == sizeof(*lpMm))
+	{
+	    /* these taken from Win2k SP3 */
+	    lpMm->iWidth = 154;
+	    lpMm->iHorzGap = 0;
+	    lpMm->iVertGap = 0;
+	    lpMm->iArrange = 8;
+	}
+	else
+	    ret = FALSE;
+	break;
+    }
     WINE_SPI_FIXME(SPI_SETMINIMIZEDMETRICS);	/*     44  WINVER >= 0x400 */
 
     case SPI_GETICONMETRICS:			/*     45  WINVER >= 0x400 */
