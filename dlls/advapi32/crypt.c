@@ -142,7 +142,7 @@ static inline BOOL CRYPT_ANSIToUnicode(LPCSTR str, LPWSTR* wstr, int wstrsize)
 }
 
 /* These next 2 functions are used by the VTableProvStruc structure */
-BOOL CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
+static BOOL CALLBACK CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 {
 	if (!lpszImage || !pData)
 	{
@@ -153,7 +153,7 @@ BOOL CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 	return TRUE;
 }
 
-BOOL CRYPT_ReturnhWnd(HWND *phWnd)
+static BOOL CALLBACK CRYPT_ReturnhWnd(HWND *phWnd)
 {
 	if (!phWnd)
 		return FALSE;
@@ -210,8 +210,8 @@ PCRYPTPROV CRYPT_LoadProvider(PSTR pImage)
 	 *        Does it need memory allocation?
          */
 	provider->pVTable->Version = 3;
-	provider->pVTable->pFuncVerifyImage = CRYPT_VerifyImage;
-	provider->pVTable->pFuncReturnhWnd = CRYPT_ReturnhWnd;
+	provider->pVTable->pFuncVerifyImage = (FARPROC)CRYPT_VerifyImage;
+	provider->pVTable->pFuncReturnhWnd = (FARPROC)CRYPT_ReturnhWnd;
 	provider->pVTable->dwProvType = 0;
 	provider->pVTable->pbContextInfo = NULL;
 	provider->pVTable->cbContextInfo = 0;
