@@ -69,6 +69,7 @@ struct DosHeap {
         BYTE mediaID;
 	BYTE biosdate[8];
         struct DPB dpb;
+        BYTE DummyDBCSLeadTable[6];
 };
 static struct DosHeap *heap;
 static WORD DosHeapHandle;
@@ -89,6 +90,7 @@ static BOOL32 INT21_CreateHeap(void)
     dpbsegptr = PTR_SEG_OFF_TO_SEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
     heap->InDosFlag = 0;
     strcpy(heap->biosdate, "01/01/80");
+    memset(heap->DummyDBCSLeadTable, 0, 6);
     return TRUE;
 }
 
@@ -319,6 +321,44 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
                         INT_BARF( context, 0x21 );
 	}
 	return FALSE;
+}
+
+static void INT21_ParseFileNameIntoFCB( CONTEXT *context )
+{
+    char *filename =
+        CTX_SEG_OFF_TO_LIN(context, DS_reg(context), SI_reg(context) );
+    char *fcb =
+        CTX_SEG_OFF_TO_LIN(context, ES_reg(context), DI_reg(context) );
+    char *buffer, *s, *d;
+
+    AL_reg(context) = 0xff; /* failed */
+
+    TRACE(int21, "filename: '%s'\n", filename);
+
+    buffer = HeapAlloc( GetProcessHeap(), 0, strlen(filename) );
+
+    s = filename;
+    d = buffer;
+    while (*s)
+    {
+        if ((*s != ' ') && (*s != '\r') && (*s != '\n'))
+            *d++ = *s++;
+        else
+            break;
+    }
+
+    *d = '\0';
+    DOSFS_ToDosFCBFormat(buffer, fcb + 1);
+    *fcb = 0;
+    TRACE(int21, "FCB: '%s'\n", ((CHAR *)fcb + 1));
+
+    HeapFree( GetProcessHeap(), 0, buffer);
+
+    AL_reg(context) =
+        ((strchr(filename, '*')) || (strchr(filename, '$'))) != 0;
+
+    /* point DS:SI to first unparsed character */
+    SI_reg(context) += (int)s - (int)filename;
 }
 
 static void INT21_GetSystemDate( CONTEXT *context )
@@ -684,6 +724,21 @@ static BOOL32 INT21_GetCurrentDirectory( CONTEXT *context )
 }
 
 
+static void INT21_GetDBCSLeadTable( CONTEXT *context )
+{
+    if (heap || INT21_CreateHeap())
+    { /* return an empty table just as DOS 4.0+ does */
+	DS_reg(context) = DosHeapHandle;
+	SI_reg(context) = (int)&heap->DummyDBCSLeadTable - (int)heap;
+    }
+    else
+    {
+        AX_reg(context) = 0x1; /* error */
+        SET_CFLAG(context);
+    }
+}
+
+
 static int INT21_GetDiskSerialNumber( CONTEXT *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, DS_reg(context), DX_reg(context));
@@ -1042,7 +1097,6 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x26: /* CREATE NEW PROGRAM SEGMENT PREFIX */
     case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
     case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
-    case 0x29: /* PARSE FILENAME INTO FCB */
     case 0x54: /* GET VERIFY FLAG */
         INT_BARF( context, 0x21 );
         break;
@@ -1168,6 +1222,10 @@ void WINAPI DOS3Call( CONTEXT *context )
         INT_CtxSetHandler( context, AL_reg(context),
                         (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( DS_reg(context),
                                                           DX_reg(context)));
+        break;
+
+    case 0x29: /* PARSE FILENAME INTO FCB */
+        INT21_ParseFileNameIntoFCB(context);
         break;
 
     case 0x2a: /* GET SYSTEM DATE */
@@ -1836,7 +1894,13 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x61: /* UNUSED */
-    case 0x63: /* UNUSED */
+    case 0x63: /* misc. language support */
+        switch (AL_reg(context)) {
+        case 0x00: /* GET DOUBLE BYTE CHARACTER SET LEAD-BYTE TABLE */
+	    INT21_GetDBCSLeadTable(context);
+            break;
+        }
+        break;
     case 0x64: /* OS/2 DOS BOX */
         INT_BARF( context, 0x21 );
         SET_CFLAG(context);
