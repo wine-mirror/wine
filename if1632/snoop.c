@@ -315,8 +315,8 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 }
 #else	/* !__i386__ */
 void SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
+	if (!TRACE_ON(snoop)) return;
 	FIXME("snooping works only on i386 for now.\n");
-	return;
 }
 
 FARPROC16 SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {

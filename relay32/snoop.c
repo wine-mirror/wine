@@ -380,8 +380,8 @@ __ASM_GLOBAL_FUNC( SNOOP_Return,
 
 #else	/* !__i386__ */
 void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
+	if (!TRACE_ON(snoop)) return;
 	FIXME("snooping works only on i386 for now.\n");
-	return;
 }
 
 FARPROC SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
