@@ -1058,8 +1058,8 @@ DWORD WINAPI GetFreeMemInfo16(void)
 #define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
 #define INTERN_TO_HANDLE(i)  ((HGLOBAL) &((i)->Pointer))
 #define POINTER_TO_HANDLE(p) (*(((HGLOBAL *)(p))-2))
-#define ISHANDLE(h)          (((DWORD)(h)&2)!=0)
-#define ISPOINTER(h)         (((DWORD)(h)&2)==0)
+#define ISHANDLE(h)          (((ULONG_PTR)(h)&2)!=0)
+#define ISPOINTER(h)         (((ULONG_PTR)(h)&2)==0)
 /* allign the storage needed for the HGLOBAL on an 8byte boundary thus
  * GlobalAlloc/GlobalReAlloc'ing with GMEM_MOVEABLE of memory with
  * size = 8*k, where k=1,2,3,... alloc's exactly the given size.
@@ -1138,30 +1138,40 @@ HGLOBAL WINAPI GlobalAlloc(
  */
 LPVOID WINAPI GlobalLock(
               HGLOBAL hmem /* [in] Handle of global memory object */
-) {
-   PGLOBAL32_INTERN pintern;
-   LPVOID           palloc;
+)
+{
+    PGLOBAL32_INTERN pintern;
+    LPVOID           palloc;
 
-   if(ISPOINTER(hmem))
-      return (LPVOID) hmem;
+    if (ISPOINTER(hmem))
+        return IsBadReadPtr(hmem, 1) ? NULL : hmem;
 
-   /* HeapLock(GetProcessHeap()); */
-
-   pintern=HANDLE_TO_INTERN(hmem);
-   if(pintern->Magic==MAGIC_GLOBAL_USED)
-   {
-      if(pintern->LockCount<GLOBAL_LOCK_MAX)
-	 pintern->LockCount++;
-      palloc=pintern->Pointer;
-   }
-   else
-   {
-      WARN("invalid handle\n");
-      palloc=NULL;
-      SetLastError(ERROR_INVALID_HANDLE);
-   }
-   /* HeapUnlock(GetProcessHeap()); */;
-   return palloc;
+    /* HeapLock(GetProcessHeap()); */
+    __TRY
+    {
+        pintern = HANDLE_TO_INTERN(hmem);
+        if (pintern->Magic == MAGIC_GLOBAL_USED)
+        {
+            if (pintern->LockCount < GLOBAL_LOCK_MAX)
+                pintern->LockCount++;
+            palloc = pintern->Pointer;
+        }
+        else
+        {
+            WARN("invalid handle %p\n", hmem);
+            palloc = NULL;
+            SetLastError(ERROR_INVALID_HANDLE);
+        }
+    }
+    __EXCEPT(page_fault)
+    {
+        WARN("page fault on %p\n", hmem);
+        palloc = NULL;
+        SetLastError(ERROR_INVALID_HANDLE);
+    }
+    __ENDTRY
+    /* HeapUnlock(GetProcessHeap()); */;
+    return palloc;
 }
 
 
@@ -1179,9 +1189,9 @@ BOOL WINAPI GlobalUnlock(
 
     if (ISPOINTER(hmem)) return FALSE;
 
+    /* HeapLock(GetProcessHeap()); */
     __TRY
     {
-        /* HeapLock(GetProcessHeap()); */
         pintern=HANDLE_TO_INTERN(hmem);
         if(pintern->Magic==MAGIC_GLOBAL_USED)
         {
@@ -1197,15 +1207,15 @@ BOOL WINAPI GlobalUnlock(
             SetLastError(ERROR_INVALID_HANDLE);
             locked=FALSE;
         }
-        /* HeapUnlock(GetProcessHeap()); */
     }
     __EXCEPT(page_fault)
     {
         ERR("page fault occurred ! Caused by bug ?\n");
         SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
+        locked=FALSE;
     }
     __ENDTRY
+    /* HeapUnlock(GetProcessHeap()); */
     return locked;
 }
 
@@ -1438,6 +1448,8 @@ SIZE_T WINAPI GlobalSize(
 ) {
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
+
+   if (!hmem) return 0;
 
    if(ISPOINTER(hmem))
    {
