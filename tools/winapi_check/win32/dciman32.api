@@ -1,3 +1,7 @@
 %long
 
 HDC
+
+%void
+
+void

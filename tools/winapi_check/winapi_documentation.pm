@@ -106,7 +106,7 @@ sub check_documentation {
 		foreach my $uc_module16 (@uc_modules16) {
 		    if($documentation !~ /\b$uc_module16\.\Q$ordinal16\E/) {
 			$output->write("documentation: wrong or missing ordinal " .
-				       "expected (\U$module16\E.$ordinal16)\\\n$documentation\n");
+				       "expected ($uc_module16.$ordinal16) \\\n$documentation\n");
 		    }
 		}
 	    }
@@ -121,7 +121,7 @@ sub check_documentation {
 		foreach my $uc_module32 (@uc_modules32) {
 		    if($documentation !~ /\b$uc_module32\.\Q$ordinal32\E/) {
 			$output->write("documentation: wrong or missing ordinal " .
-						   "expected (\U$module32\E.$ordinal32) \\\n$documentation\n");
+						   "expected ($uc_module32.$ordinal32) \\\n$documentation\n");
 		    }
 		}
 	    }

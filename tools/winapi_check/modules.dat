@@ -444,6 +444,8 @@ dlls/winmm
 
 % dlls/winnls/winnls.spec
 
+dlls/winnls
+
 % dlls/winnls/winnls32.spec
 
 % dlls/winsock/winsock.spec
