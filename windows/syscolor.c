@@ -120,25 +120,40 @@ void SYSCOLOR_Init(void)
     /* first, try to read the values from the registry */
     if (VERSION_GetVersion() != WIN31)
     { HKEY  hKey;
-      DWORD dwDataSize = 100;
+      DWORD dwDataSize = 32;
+      BOOL bOk = FALSE, bNoReg = FALSE;
 
       if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
-        return;
+        bNoReg = TRUE;
 	
       for (i = 0; i < NUM_SYS_COLORS; i++)
-      { if (!(RegQueryValueExA(hKey, (LPSTR)(p[i*2]), 0, 0, (LPBYTE) &buffer[0], &dwDataSize)))
-        { if (sscanf( buffer, "%d %d %d", &r, &g, &b ) != 3) r = g = b = 0;
-          SYSCOLOR_SetColor( i, RGB(r,g,b) );
-        }
+      { bOk = FALSE;
+
+	/* first try, registry */
+	if (!bNoReg)
+	  if (!(RegQueryValueExA(hKey, (LPSTR)(p[i*2]), 0, 0, (LPBYTE) &buffer[0], &dwDataSize)))
+	    if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) 
+	      bOk = TRUE;
+
+	/* second try, win.ini */
+	if (!bOk)
+	{ GetProfileStringA( "colors", p[i*2], p[i*2+1], buffer, 100 );
+	  if (sscanf( buffer, " %d %d %d", &r, &g, &b ) == 3)
+	    bOk = TRUE;
+	}
+	
+	/* last chance, take the default */
+	if (!bOk)
+	{ int iNumColors = sscanf( p[i*2+1], " %d %d %d", &r, &g, &b );
+	  assert (iNumColors==3);
+	}
+	
+	SYSCOLOR_SetColor( i, RGB(r,g,b) );
       }
-      RegCloseKey(hKey);
+      if (!bNoReg)
+        RegCloseKey(hKey);
     }
 
-    for (i = 0; i < NUM_SYS_COLORS; i++)
-    {	GetProfileStringA( "colors", p[i*2], p[i*2+1], buffer, 100 );
-	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) != 3) r = g = b = 0;
-	SYSCOLOR_SetColor( i, RGB(r,g,b) );
-    }
 }
 
 
