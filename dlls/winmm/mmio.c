@@ -617,18 +617,15 @@ static	LRESULT	MMIO_Flush(WINE_MMIO* wm, UINT uFlags)
 
     /* not quite sure what to do here, but I'll guess */
     if (wm->info.dwFlags & MMIO_DIRTY) {
-	MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lBufOffset,
+	MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lDiskOffset,
 			 SEEK_SET, MMIO_PROC_32A);
 	MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)wm->info.pchBuffer,
 			 wm->info.pchNext - wm->info.pchBuffer, MMIO_PROC_32A);
 	wm->info.dwFlags &= ~MMIO_DIRTY;
     }
-    if (uFlags & MMIO_EMPTYBUF) {
-	wm->info.pchNext = wm->info.pchBuffer;
-	wm->info.pchEndRead = wm->info.pchBuffer;
-	wm->info.pchEndWrite = wm->info.pchBuffer;
-    }
-    
+    if (uFlags & MMIO_EMPTYBUF)
+        wm->info.pchNext = wm->info.pchBuffer;
+
     return 0;
 }
 
@@ -995,7 +992,7 @@ LONG WINAPI mmioRead16(HMMIO16 hmmio, HPSTR pch, LONG cch)
 LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 {
     LPWINE_MMIO	wm;
-    LONG count;
+    LONG count,bytesW=0;
 
     TRACE("(%04X, %p, %ld);\n", hmmio, pch, cch);
 
@@ -1011,26 +1008,28 @@ LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 		memcpy(wm->info.pchNext, pch, count);
 		wm->info.pchNext += count;
 		pch += count;
-		cch -= count;
+                cch -= count;
+                bytesW+=count;                
 		wm->info.dwFlags |= MMIO_DIRTY;
 	    } else
 		if (wm->info.fccIOProc == FOURCC_MEM) {
 		    if (wm->info.adwInfo[0]) {
 			/* from where would we get the memory handle? */
-			FIXME("memory file expansion not implemented!\n");
+                        FIXME("memory file expansion not implemented!\n");
+                        break;
 		    } else break;
 		}
-	    
-	    if (wm->info.pchNext == wm->info.pchEndWrite && 
-		MMIO_Flush(wm, MMIO_EMPTYBUF)) break;
+
+            if (wm->info.pchNext == wm->info.pchEndWrite) MMIO_Flush(wm, MMIO_EMPTYBUF);
+            else break;
 	}
     } else {
-	count = MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)pch, cch, MMIO_PROC_32A);
+	bytesW = MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)pch, cch, MMIO_PROC_32A);
 	wm->info.lBufOffset = wm->info.lDiskOffset;
     }
     
-    TRACE("count=%ld\n", count);
-    return count;
+    TRACE("bytes written=%ld\n", bytesW);
+    return bytesW;
 }
 
 /**************************************************************************
