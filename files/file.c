@@ -1434,6 +1434,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
     int unix_handle, result;
+    DWORD type;
 
     TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToRead, 
           bytesRead, overlapped );
@@ -1441,13 +1442,21 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
-    /* this will only have impact if the overlapped structure is specified */
-    if ( overlapped )
+    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type );
+    if (unix_handle == -1)
+        return FALSE;
+
+    switch(type)
     {
-        /* see if we can read some data already (this shouldn't block) */
-        unix_handle = FILE_GetUnixHandle( hFile, GENERIC_READ );
-        if (unix_handle == -1)
+    case FD_TYPE_OVERLAPPED:
+        if(!overlapped)
+        {
+            close(unix_handle);
+            SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
+        }
+
+        /* see if we can read some data already (this shouldn't block) */
         result = read( unix_handle, buffer, bytesToRead );
         close(unix_handle);
 
@@ -1474,10 +1483,16 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         /* fail on return, with ERROR_IO_PENDING */
         SetLastError(ERROR_IO_PENDING);
         return FALSE;
-    }
 
-    unix_handle = FILE_GetUnixHandle( hFile, GENERIC_READ );
-    if (unix_handle == -1) return FALSE;
+    default:
+        if(overlapped)
+        {
+            close(unix_handle);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        break;
+    }
 
     /* code for synchronous reads */
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
