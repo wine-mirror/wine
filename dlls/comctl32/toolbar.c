@@ -517,6 +517,11 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	infoPtr->nButtonWidth = infoPtr->nBitmapWidth + 6;
     }
 
+    if ( infoPtr->cxMin >= 0 && infoPtr->nButtonWidth < infoPtr->cxMin )
+        infoPtr->nButtonWidth = infoPtr->cxMin;
+    if ( infoPtr->cxMax >= 0 && infoPtr->nButtonWidth > infoPtr->cxMax )
+        infoPtr->nButtonWidth = infoPtr->cxMax;
+
     TOOLBAR_WrapToolbar( hwnd, dwStyle );
 
     x  = infoPtr->nIndent;
