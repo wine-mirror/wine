@@ -407,9 +407,9 @@ static const char main_key_UA[MAIN_LEN][4] =
 /*** Spanish keyboard layout (contributed by José Marcos López) */
 static const char main_key_ES[MAIN_LEN][4] =
 {
- "ºª\\","1!|","2\"@","3·#","4$","5%","6&¬","7/","8(","9)","0=","'?","¡¿",
+ "ºª\\","1!|","2\"@","3·#","4$~","5%","6&¬","7/","8(","9)","0=","'?","¡¿",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","`^[","+*]",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ñÑ","'¨{","çÇ}",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ñÑ","´¨{","çÇ}",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
