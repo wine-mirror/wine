@@ -920,13 +920,14 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
  *
  * Find a suitable place for an iconic window.
  */
-static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
+static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
 {
     RECT rectParent;
-    HWND *list;
+    HWND *list, parent;
     short x, y, xspacing, yspacing;
 
-    GetClientRect( wndPtr->parent, &rectParent );
+    parent = GetAncestor( hwnd, GA_PARENT );
+    GetClientRect( parent, &rectParent );
     if ((pt.x >= rectParent.left) && (pt.x + GetSystemMetrics(SM_CXICON) < rectParent.right) &&
         (pt.y >= rectParent.top) && (pt.y + GetSystemMetrics(SM_CYICON) < rectParent.bottom))
         return pt;  /* The icon already has a suitable position */
@@ -934,7 +935,7 @@ static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
     xspacing = GetSystemMetrics(SM_CXICONSPACING);
     yspacing = GetSystemMetrics(SM_CYICONSPACING);
 
-    list = WIN_ListChildren( wndPtr->parent );
+    list = WIN_ListChildren( parent );
     y = rectParent.bottom;
     for (;;)
     {
@@ -950,7 +951,7 @@ static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
 
                 for (i = 0; list[i]; i++)
                 {
-                    if (list[i] == wndPtr->hwndSelf) continue;
+                    if (list[i] == hwnd) continue;
                     if (!IsIconic( list[i] )) continue;
                     if (!(childPtr = WIN_GetPtr( list[i] )) || childPtr == WND_OTHER_PROCESS)
                         continue;
@@ -1006,26 +1007,23 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     if (IsIconic( hwnd ))
     {
         if (cmd == SW_MINIMIZE) return SWP_NOSIZE | SWP_NOMOVE;
-        if (!SendMessageA( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
+        if (!SendMessageW( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
         swpFlags |= SWP_NOCOPYBITS;
     }
-
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-
-    size.x = wndPtr->rectWindow.left;
-    size.y = wndPtr->rectWindow.top;
 
     switch( cmd )
     {
     case SW_MINIMIZE:
+        if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
         if( wndPtr->dwStyle & WS_MAXIMIZE) wndPtr->flags |= WIN_RESTORE_MAX;
         else wndPtr->flags &= ~WIN_RESTORE_MAX;
+        WIN_ReleasePtr( wndPtr );
 
         WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
         X11DRV_set_iconic_state( hwnd );
 
-        wpl.ptMinPosition = WINPOS_FindIconPos( wndPtr, wpl.ptMinPosition );
+        wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
 
         SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
                  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON) );
@@ -1048,10 +1046,15 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         old_style = WIN_SetStyle( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
         if (old_style & WS_MINIMIZE)
         {
+            BOOL restore_max;
+
             WINPOS_ShowIconTitle( hwnd, FALSE );
             X11DRV_set_iconic_state( hwnd );
 
-            if( wndPtr->flags & WIN_RESTORE_MAX)
+            if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
+            restore_max = (wndPtr->flags & WIN_RESTORE_MAX) != 0;
+            WIN_ReleasePtr( wndPtr );
+            if (restore_max)
             {
                 /* Restore to maximized position */
                 WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
@@ -1071,7 +1074,6 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         break;
     }
 
-    WIN_ReleaseWndPtr( wndPtr );
     return swpFlags;
 }
 
@@ -1081,22 +1083,21 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
  */
 BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 {
-    WND* 	wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL 	wasVisible, showFlag;
-    RECT 	newPos = {0, 0, 0, 0};
-    UINT 	swp = 0;
+    WND *wndPtr;
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    BOOL wasVisible = (style & WS_VISIBLE) != 0;
+    BOOL showFlag = TRUE;
+    RECT newPos = {0, 0, 0, 0};
+    UINT swp = 0;
 
-    if (!wndPtr) return FALSE;
-    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
-
-    wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 
     TRACE("hwnd=%p, cmd=%d, wasVisible %d\n", hwnd, cmd, wasVisible);
 
     switch(cmd)
     {
         case SW_HIDE:
-            if (!wasVisible) goto END;
+            if (!wasVisible) return FALSE;
+            showFlag = FALSE;
             swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER;
 	    break;
 
@@ -1109,25 +1110,24 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             /* fall through */
 	case SW_MINIMIZE:
             swp |= SWP_FRAMECHANGED;
-            if( !(wndPtr->dwStyle & WS_MINIMIZE) )
+            if( !(style & WS_MINIMIZE) )
 		 swp |= WINPOS_MinMaximize( hwnd, SW_MINIMIZE, &newPos );
             else swp |= SWP_NOSIZE | SWP_NOMOVE;
 	    break;
 
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
-            if( !(wndPtr->dwStyle & WS_MAXIMIZE) )
+            if( !(style & WS_MAXIMIZE) )
 		 swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
             else swp |= SWP_NOSIZE | SWP_NOMOVE;
             break;
 
 	case SW_SHOWNA:
             swp |= SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
-            if( wndPtr->dwStyle & WS_CHILD) swp |= SWP_NOZORDER;
+            if (style & WS_CHILD) swp |= SWP_NOZORDER;
             break;
 	case SW_SHOW:
-            if (wasVisible) goto END;
-
+            if (wasVisible) return TRUE;
 	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
 	    break;
 
@@ -1141,21 +1141,20 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
 	    swp |= SWP_SHOWWINDOW;
 
-            if( wndPtr->dwStyle & (WS_MINIMIZE | WS_MAXIMIZE) )
+            if (style & (WS_MINIMIZE | WS_MAXIMIZE))
 		 swp |= WINPOS_MinMaximize( hwnd, SW_RESTORE, &newPos );
             else swp |= SWP_NOSIZE | SWP_NOMOVE;
 	    break;
     }
 
-    showFlag = (cmd != SW_HIDE);
     if (showFlag != wasVisible || cmd == SW_SHOWNA)
     {
         SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
-        if (!IsWindow( hwnd )) goto END;
+        if (!IsWindow( hwnd )) return wasVisible;
     }
 
     /* ShowWindow won't activate a not being maximized child window */
-    if ((wndPtr->dwStyle & WS_CHILD) && cmd != SW_MAXIMIZE)
+    if ((style & WS_CHILD) && cmd != SW_MAXIMIZE)
         swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 
     SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
@@ -1181,26 +1180,28 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             SetFocus(parent);
         }
     }
-    if (!IsWindow( hwnd )) goto END;
-    else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( hwnd, TRUE );
+
+    if (IsIconic(hwnd)) WINPOS_ShowIconTitle( hwnd, TRUE );
+
+    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return wasVisible;
 
     if (wndPtr->flags & WIN_NEED_SIZE)
     {
         /* should happen only in CreateWindowEx() */
 	int wParam = SIZE_RESTORED;
+        RECT client = wndPtr->rectClient;
 
 	wndPtr->flags &= ~WIN_NEED_SIZE;
 	if (wndPtr->dwStyle & WS_MAXIMIZE) wParam = SIZE_MAXIMIZED;
 	else if (wndPtr->dwStyle & WS_MINIMIZE) wParam = SIZE_MINIMIZED;
-	SendMessageA( hwnd, WM_SIZE, wParam,
-		     MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-			    wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-	SendMessageA( hwnd, WM_MOVE, 0,
-		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
-    }
+        WIN_ReleasePtr( wndPtr );
 
-END:
-    WIN_ReleaseWndPtr(wndPtr);
+        SendMessageW( hwnd, WM_SIZE, wParam,
+                      MAKELONG( client.right - client.left, client.bottom - client.top ));
+        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( client.left, client.top ));
+    }
+    else WIN_ReleasePtr( wndPtr );
+
     return wasVisible;
 }
 
