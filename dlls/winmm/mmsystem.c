@@ -20,13 +20,17 @@
 
 #include <string.h>
 
+#include "mmsystem.h"
 #include "winbase.h"
 #include "wingdi.h"
+
+#include "wine/mmsystem16.h"
 #include "wine/winuser16.h"
 #include "heap.h"
-#include "winemm.h"
-#include "debugtools.h"
 #include "ntddk.h"
+#include "winemm.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mmsys);
 

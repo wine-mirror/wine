@@ -51,14 +51,17 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <sys/poll.h>
-
-#include "windef.h"
 #ifdef HAVE_SYS_MODEM_H
 # include <sys/modem.h>
 #endif
 #ifdef HAVE_SYS_STRTIO_H
 # include <sys/strtio.h>
 #endif
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "heap.h"
 #include "options.h"
 #include "wine/port.h"

@@ -29,18 +29,21 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "winerror.h"
-#include "file.h"
-#include "heap.h"
-#include "debugtools.h"
-#include "options.h"
-#include "winreg.h"
-#include "server.h"
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
-#include "winnt.h"
 
+#include "winerror.h"
+#include "winnt.h"
+#include "winreg.h"
+
+#include "wine/winbase16.h"
+#include "file.h"
+#include "heap.h"
+#include "options.h"
+#include "server.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(reg);
 

@@ -7,11 +7,15 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
-#include "wine/winbase16.h"
-#include "windef.h"
+
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "stackframe.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(string);

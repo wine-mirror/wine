@@ -4,8 +4,16 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <string.h>
+
+#include "windef.h"
+#include "wingdi.h"
+
+#include "wine/wingdi16.h"
 #include "pen.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);

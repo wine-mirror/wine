@@ -4,10 +4,17 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <string.h>
+
 #include "winbase.h"
-#include "brush.h"
+#include "wingdi.h"
+
+#include "wine/wingdi16.h"
 #include "bitmap.h"
+#include "brush.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);

@@ -3,9 +3,11 @@
  */
 
 #include "config.h"
-#include "windef.h"
+
 #include "winnt.h"
+
 #include "console.h"
+#include "miscemu.h"
 
 /**********************************************************************
  *	    INT_Int29Handler

@@ -4,14 +4,21 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
 
-#include "wine/port.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winnt.h"
+#include "winuser.h"
+#include "winsock.h"
+
 #include "wine/winbase16.h"
-#include "ntddk.h"
 #include "callback.h"
 #include "drive.h"
 #include "file.h"
@@ -19,18 +26,17 @@
 #include "instance.h"
 #include "miscemu.h"
 #include "module.h"
+#include "ntddk.h"
 #include "selectors.h"
+#include "services.h"
+#include "server.h"
+#include "syslevel.h"
 #include "stackframe.h"
 #include "task.h"
 #include "thread.h"
 #include "toolhelp.h"
-#include "winnt.h"
-#include "syslevel.h"
-#include "winsock.h"
-#include "debugtools.h"
-#include "services.h"
-#include "server.h"
 
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(task);
 DECLARE_DEBUG_CHANNEL(relay);

@@ -15,14 +15,20 @@
  *	  embedded driver handling scheme in msacm32.dll which isn't done yet
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <string.h>
-#include "winnls.h"
+
+#include "msacm.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winnls.h"
 #include "winuser.h"
-#include "msacm.h"
+
 #include "msacmdrv.h"
+#include "wineacm.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(msacm);

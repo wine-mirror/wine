@@ -3735,11 +3735,12 @@ UINT      WINAPI MapVirtualKeyW(UINT,UINT);
 UINT        WINAPI MapVirtualKeyExA(UINT,UINT,HKL);
 UINT        WINAPI MapVirtualKeyExW(UINT,UINT,HKL);
 #define     MapVirtualKeyEx WINELIB_NAME_AW(MapVirtualKeyEx)
-BOOL      WINAPI MapDialogRect(HWND,LPRECT);
-INT       WINAPI MapWindowPoints(HWND,HWND,LPPOINT,UINT);
-BOOL      WINAPI MessageBeep(UINT);
-INT       WINAPI MessageBoxA(HWND,LPCSTR,LPCSTR,UINT);
-INT       WINAPI MessageBoxW(HWND,LPCWSTR,LPCWSTR,UINT);
+BOOL        WINAPI MapDialogRect(HWND,LPRECT);
+INT         WINAPI MapWindowPoints(HWND,HWND,LPPOINT,UINT);
+UINT        WINAPI MenuItemFromPoint(HWND,HMENU,POINT);
+BOOL        WINAPI MessageBeep(UINT);
+INT         WINAPI MessageBoxA(HWND,LPCSTR,LPCSTR,UINT);
+INT         WINAPI MessageBoxW(HWND,LPCWSTR,LPCWSTR,UINT);
 #define     MessageBox WINELIB_NAME_AW(MessageBox)
 INT       WINAPI MessageBoxIndirectA(LPMSGBOXPARAMSA);
 INT       WINAPI MessageBoxIndirectW(LPMSGBOXPARAMSW);

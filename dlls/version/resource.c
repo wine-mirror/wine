@@ -6,20 +6,21 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "config.h"
-
 #include "winbase.h"
-#include "wine/winbase16.h"
-#include "winnls.h"
-#include "wine/unicode.h"
-
-#include "winver.h"
 #include "lzexpand.h"
+
+#include "wine/unicode.h"
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
+#include "winver.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver);

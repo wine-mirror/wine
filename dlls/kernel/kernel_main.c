@@ -2,17 +2,20 @@
  * Kernel initialization code
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
 
 #include "winbase.h"
-#include "wine/winbase16.h"
 
+#include "wine/winbase16.h"
+#include "callback.h"
+#include "global.h"
+#include "miscemu.h"
 #include "module.h"
 #include "task.h"
-#include "miscemu.h"
-#include "global.h"
 
 extern void CODEPAGE_Init(void);
 extern BOOL RELAY_Init(void);

@@ -6,22 +6,24 @@
  * Copyright 1996 Marcus Meissner
  */
 
+#include "config.h"
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "winerror.h"
+
+#include "wine/exception.h"
+#include "wine/keyboard16.h"
+#include "wine/unicode.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/unicode.h"
-#include "wine/exception.h"
-
 #include "heap.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);

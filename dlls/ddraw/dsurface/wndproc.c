@@ -4,14 +4,17 @@
  */
 
 #include "config.h"
-#include "winerror.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "debugtools.h"
+#include "winerror.h"
+
 #include "ddraw_private.h"
+#include "wndproc.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 

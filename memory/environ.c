@@ -4,14 +4,18 @@
  * Copyright 1996, 1998 Alexandre Julliard
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include "wine/port.h"
+
 #include "windef.h"
-#include "winnls.h"
 #include "winerror.h"
-#include "ntddk.h"
+
+#include "wine/winbase16.h"
 #include "heap.h"
+#include "ntddk.h"
 #include "selectors.h"
 
 /* Win32 process environment database */

@@ -17,7 +17,7 @@ extern DWORD MSVCRT_tls_index;
 typedef struct __MSVCRT_thread_data
 {
   int errno;
-  int doserrno;
+  unsigned long doserrno;
 } MSVCRT_thread_data;
 
 #define GET_THREAD_DATA(x) \

@@ -6,13 +6,15 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "winerror.h"
-#include "ddraw.h"
 #include "d3d.h"
-#include "options.h"
-#include "debugtools.h"
+#include "ddraw.h"
+#include "winerror.h"
 
+#include "ddraw_private.h"
 #include "mesa_private.h"
+#include "options.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 

@@ -9,7 +9,10 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "msvcrt/conio.h"
+#include "msvcrt/stdlib.h"
+#include "msvcrt/string.h"
 
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -19,7 +22,7 @@ DEFAULT_DEBUG_CHANNEL(msvcrt);
 void MSVCRT__set_errno(int err)
 {
   int *errno = GET_THREAD_VAR_PTR(errno);
-  int *doserrno = GET_THREAD_VAR_PTR(doserrno);
+  unsigned long *doserrno = GET_THREAD_VAR_PTR(doserrno);
 
   *doserrno = err;
 
@@ -86,7 +89,7 @@ int* MSVCRT__errno(void)
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-int* __doserrno(void)
+unsigned long* __doserrno(void)
 {
   return GET_THREAD_VAR_PTR(doserrno);
 }
@@ -102,7 +105,7 @@ char* MSVCRT_strerror(int err)
 /**********************************************************************
  *		_strerror	(MSVCRT.@)
  */
-const char* _strerror(const char* err)
+char* _strerror(const char* err)
 {
   static char strerrbuff[256]; /* FIXME: Per thread, nprintf */
   sprintf(strerrbuff,"%s: %s\n",err,MSVCRT_strerror(GET_THREAD_VAR(errno)));

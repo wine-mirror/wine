@@ -10,13 +10,16 @@
 
 #include <stddef.h>
 
-#include "winerror.h"
-#include "heap.h"
-#include "wine/exception.h"
-#include "ddraw.h"
 #include "d3d.h"
-#include "debugtools.h"
+#include "ddraw.h"
+#include "winerror.h"
+
+#include "wine/exception.h"
+#include "ddraw_private.h"
+#include "heap.h"
 #include "options.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
@@ -217,9 +220,7 @@ void DDRAW_dump_paletteformat(DWORD dwFlags)
     DDRAW_dump_flags(dwFlags, flags, sizeof(flags)/sizeof(flags[0]));
 }
 
-void DDRAW_dump_pixelformat(void *in) {
-    LPDDPIXELFORMAT pf = (LPDDPIXELFORMAT) in;
-
+void DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf) {
     DPRINTF("( ");
     DDRAW_dump_pixelformat_flag(pf->dwFlags);
     if (pf->dwFlags & DDPF_FOURCC) {
@@ -282,9 +283,7 @@ static void DDRAW_dump_DWORD(const void *in) {
 static void DDRAW_dump_PTR(const void *in) {
     DPRINTF("%p", *((const void **) in));
 }
-void DDRAW_dump_DDCOLORKEY(const void *in) {
-    const DDCOLORKEY *ddck = (const DDCOLORKEY *) in;
-
+void DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck) {
     DPRINTF(" Low : %ld  - High : %ld", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
 }
 

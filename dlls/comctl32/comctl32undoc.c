@@ -20,11 +20,14 @@
 #include <stdlib.h> /* atoi */
 #include <ctype.h>
 
+#include "commctrl.h"
+#include "objbase.h"
 #include "winbase.h"
 #include "winerror.h"
+
 #include "wine/unicode.h"
-#include "objbase.h"
-#include "commctrl.h"
+#include "comctl32.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl);

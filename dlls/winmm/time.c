@@ -6,17 +6,23 @@
  * Copyright 1993 Martin Ayotte
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "mmsystem.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#include "wine/mmsystem16.h"
 #include "winemm.h"
+
 #include "debugtools.h"
-#include "wine/port.h"
 
 DEFAULT_DEBUG_CHANNEL(mmtime);
 

@@ -8,11 +8,15 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "ddraw.h"
 #include "winerror.h"
-#include "debugtools.h"
+
 #include "ddraw_private.h"
 #include "dclipper/main.h"
 #include "ddraw/main.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 

@@ -22,12 +22,16 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+
+#include "mmsystem.h"
 #include "windef.h"
+
+#include "wine/mmsystem16.h"
 #include "wine/winbase16.h"
 #include "heap.h"
-#include "mmsystem.h"
-#include "debugtools.h"
 #include "winemm.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mmio);
 

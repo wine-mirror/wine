@@ -30,16 +30,20 @@
  * HDMD - 14/4/1999
  */  
 
+#include "config.h"
 
 #include <string.h>
 #include <fcntl.h>
+
 #include "wine/winbase16.h"
-#include "metafile.h"
+#include "wine/wingdi16.h"
 #include "bitmap.h"
-#include "heap.h"
-#include "toolhelp.h"
-#include "debugtools.h"
 #include "global.h"
+#include "heap.h"
+#include "metafile.h"
+#include "toolhelp.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile);
 

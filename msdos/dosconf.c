@@ -5,16 +5,22 @@
  *
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
 #include "winbase.h"
-#include "msdos.h"
-#include "debugtools.h"
-#include "options.h"
+
 #include "file.h"
+#include "miscemu.h"
+#include "msdos.h"
+#include "options.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(profile);
 

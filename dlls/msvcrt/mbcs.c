@@ -8,8 +8,10 @@
  * Not currently binary compatible with win32. MSVCRT_mbctype must be
  * populated correctly and the ismb* functions should reference it.
  */
+
 #include "msvcrt.h"
 
+#include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 
 
@@ -184,7 +186,7 @@ char *_mbsrchr(const char *s,unsigned int x)
 /*********************************************************************
  *		mbtowc(MSVCRT.@)
  */
-int MSVCRT_mbtowc(WCHAR *dst, const unsigned char *str, unsigned int n)
+int MSVCRT_mbtowc(WCHAR *dst, const char *str, unsigned int n)
 {
   if(n <= 0 || !str)
     return 0;
@@ -385,7 +387,7 @@ char *_mbsnset(char *str, unsigned int c, unsigned int len)
 /*********************************************************************
  *		_mbstrlen(MSVCRT.@)
  */
-int _mbstrlen(const unsigned char *str)
+MSVCRT_size_t _mbstrlen(const char *str)
 {
   if(MSVCRT___mb_cur_max > 1)
   {

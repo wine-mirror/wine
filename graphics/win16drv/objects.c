@@ -4,12 +4,17 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "bitmap.h"
 #include "brush.h"
 #include "font.h"
 #include "pen.h"
+#include "win16drv.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);

@@ -6,6 +6,7 @@
  */
 
 #include "config.h"
+
 #include <sys/types.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -22,17 +23,19 @@
 #include <unistd.h>
 
 #include "windef.h"
-#include "ntddk.h"
-#include "winnls.h"
-#include "wine/winbase16.h"
-#include "wine/unicode.h"
 #include "winerror.h"
+#include "wingdi.h"
+
+#include "wine/unicode.h"
+#include "wine/winbase16.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "server.h"
+#include "ntddk.h"
 #include "options.h"
+#include "server.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dosfs);

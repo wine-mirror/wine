@@ -4,11 +4,7 @@
 
 #include "config.h"
 
-#include "debugtools.h"
-
-DEFAULT_DEBUG_CHANNEL(int);
-
-#ifdef  HAVE_PPDEV
+#ifdef HAVE_PPDEV
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -21,6 +17,11 @@ DEFAULT_DEBUG_CHANNEL(int);
 #include "winerror.h"
 #include "winreg.h"
 
+#include "miscemu.h"
+
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(int);
 
 typedef struct _PPDEVICESTRUCT{
   int fd; /* NULL if device not available */
@@ -271,6 +272,8 @@ BOOL IO_pp_outp(int port, DWORD* res)
 
 
 #else /* HAVE_PPDEV */
+
+#include "windef.h"
 
 char IO_pp_init(void)
 {

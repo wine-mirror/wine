@@ -15,11 +15,16 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+
+#include "mmsystem.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#include "wine/mmsystem16.h"
 #include "winemm.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mmsys);

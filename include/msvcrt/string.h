@@ -34,7 +34,7 @@ void*       _memccpy(void*,const void*,int,MSVCRT(size_t));
 int         _memicmp(const void*,const void*,MSVCRT(size_t));
 int         _strcmpi(const char*,const char*);
 char*       _strdup(const char*);
-char*       _strerror(int);
+char*       _strerror(const char*);
 int         _stricmp(const char*,const char*);
 int         _stricoll(const char*,const char*);
 char*       _strlwr(char*);

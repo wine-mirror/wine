@@ -21,10 +21,14 @@
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
+
 #include "winbase.h"
 #include "winerror.h"
+
+#include "wine/winbase16.h"
 #include "file.h"
 #include "heap.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(file);

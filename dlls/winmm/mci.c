@@ -10,15 +10,19 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mmsystem.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winuser.h"
+
+#include "wine/mmsystem16.h"
+#include "wine/winbase16.h"
+#include "digitalv.h"
 #include "heap.h"
 #include "winemm.h"
-#include "digitalv.h"
-#include "wine/winbase16.h"
+
 #include "debugtools.h" 
-#include "winreg.h"
 
 DEFAULT_DEBUG_CHANNEL(mci);
 
