@@ -62,14 +62,14 @@ BOOL MAIN_MainInit( int *argc, char *argv[] )
     /* Create the initial process */
     if (!PROCESS_Init()) return 0;
 
-    /* Set server debug level */
-    CLIENT_SetDebug( TRACE_ON(server) );
-
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
 
     /* Parse command line arguments */
     MAIN_WineInit( argc, argv );
+
+    /* Set server debug level */
+    CLIENT_SetDebug( TRACE_ON(server) );
 
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
