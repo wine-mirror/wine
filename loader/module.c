@@ -443,6 +443,58 @@ WINE_MODREF *MODULE_FindModule(
     return wm;
 }
 
+
+/* Check whether a file is an OS/2 or a very old Windows executable
+ * by testing on import of KERNEL.
+ *
+ * FIXME: is reading the module imports the only way of discerning
+ *        old Windows binaries from OS/2 ones ? At least it seems so...
+ */
+static DWORD MODULE_Decide_OS2_OldWin(HANDLE hfile, IMAGE_DOS_HEADER *mz, IMAGE_OS2_HEADER *ne)
+{
+    DWORD currpos = SetFilePointer( hfile, 0, NULL, SEEK_CUR);
+    DWORD type = SCS_OS216_BINARY;
+    LPWORD modtab = NULL;
+    LPSTR nametab = NULL;
+    DWORD len;
+    int i;
+
+    /* read modref table */
+    if ( (SetFilePointer( hfile, mz->e_lfanew + ne->ne_modtab, NULL, SEEK_SET ) == -1)
+      || (!(modtab = HeapAlloc( GetProcessHeap(), 0, ne->ne_cmod*sizeof(WORD))))
+      || (!(ReadFile(hfile, modtab, ne->ne_cmod*sizeof(WORD), &len, NULL)))
+      || (len != ne->ne_cmod*sizeof(WORD)) )
+	goto broken;
+
+    /* read imported names table */
+    if ( (SetFilePointer( hfile, mz->e_lfanew + ne->ne_imptab, NULL, SEEK_SET ) == -1)
+      || (!(nametab = HeapAlloc( GetProcessHeap(), 0, ne->ne_enttab - ne->ne_imptab)))
+      || (!(ReadFile(hfile, nametab, ne->ne_enttab - ne->ne_imptab, &len, NULL)))
+      || (len != ne->ne_enttab - ne->ne_imptab) )
+	goto broken;
+
+    for (i=0; i < ne->ne_cmod; i++)
+    {
+	LPSTR module = &nametab[modtab[i]];
+	TRACE("modref: %.*s\n", module[0], &module[1]);
+	if (!(strncmp(&module[1], "KERNEL", module[0])))
+	{ /* very old Windows file */
+	    MESSAGE("This seems to be a very old (pre-3.0) Windows executable. Expect crashes, especially if this is a real-mode binary !\n");
+	    type = SCS_WOW_BINARY;
+	    goto good;
+	}
+    }
+
+broken:
+    ERR("Hmm, an error occurred. Is this binary file broken ?\n");
+
+good:
+    HeapFree( GetProcessHeap(), 0, modtab);
+    HeapFree( GetProcessHeap(), 0, nametab);
+    SetFilePointer( hfile, currpos, NULL, SEEK_SET); /* restore filepos */
+    return type;
+}
+
 /***********************************************************************
  *           MODULE_GetBinaryType
  *
@@ -550,7 +602,9 @@ BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinaryType )
                          {
                          case 2:  *lpBinaryType = SCS_WOW_BINARY;   return TRUE;
                          case 5:  *lpBinaryType = SCS_DOS_BINARY;   return TRUE;
-                         default: *lpBinaryType = SCS_OS216_BINARY; return TRUE;
+                         default: *lpBinaryType =
+				  MODULE_Decide_OS2_OldWin(hfile, &mz_header, &ne);
+				  return TRUE;
                          }
                      }
                      /* Couldn't read header, so abort. */
