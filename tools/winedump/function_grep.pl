@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -w
 #
 # Copyright 2000 Patrik Stridvall
 #
@@ -19,22 +19,38 @@
 
 use strict;
 
+my $name0=$0;
+$name0 =~ s%^.*/%%;
+
 my $invert = 0;
 my $pattern;
 my @files = ();
+my $usage;
 
 while(defined($_ = shift)) {
-    if(/^-/) {
-	if(/^-v$/) {
-	    $invert = 1;
-	}
+    if (/^-v$/) {
+        $invert = 1;
+    } elsif (/^--?(\?|h|help)$/) {
+        $usage=0;
+    } elsif (/^-/) {
+        print STDERR "$name0:error: unknown option '$_'\n";
+        $usage=2;
+        last;
+    } elsif(!defined($pattern)) {
+        $pattern = $_;
     } else {
-	if(!defined($pattern)) {
-	    $pattern = $_;
-	} else {
-	    push @files, $_;
-	}
+        push @files, $_;
     }
+}
+if (defined $usage)
+{
+    print "Usage: $name0 [--help] [-v] pattern files...\n";
+    print "where:\n";
+    print "--help    Prints this help message\n";
+    print "-v        Return functions that do not match pattern\n";
+    print "pattern   A regular expression for the function name\n";
+    print "files...  A list of files to search the function in\n";
+    exit $usage;
 }
 
 foreach my $file (@files) {
@@ -266,9 +282,9 @@ foreach my $file (@files) {
 		    }
 		}
 	    }
-        } elsif(/\'[^\']*\'/s) {
+        } elsif(/\'(?:[^\\\']*|\\.)*\'/s) {
             $_ = $'; $again = 1;
-        } elsif(/\"[^\"]*\"/s) {
+        } elsif(/\"(?:[^\\\"]*|\\.)*\"/s) {
             $_ = $'; $again = 1;
         } elsif(/;/s) {
             $_ = $'; $again = 1;
