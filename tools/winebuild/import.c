@@ -661,7 +661,9 @@ void read_undef_symbols( char **argv )
         char *p = buffer + strlen(buffer) - 1;
         if (p < buffer) continue;
         if (*p == '\n') *p-- = 0;
-        p = buffer; while (*p == ' ') p++;
+        p = buffer;
+        while (*p == ' ') p++;
+        if (p[0] == 'U' && p[1] == ' ' && p[2]) p += 2;
         add_undef_symbol( p );
     }
     if ((err = pclose( f ))) fatal_error( "nm -u %s error %d\n", name, err );
