@@ -241,7 +241,7 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3DDEVICE7 iface,
 	TRACE("  Return IDirectDrawSurface3 interface %p\n", *obp);
 	return S_OK;
     }
-    if ( IsEqualGUID( &IID_IDirectDrawSurface3, riid ) ||
+    if ( IsEqualGUID( &IID_IDirectDrawSurface4, riid ) ||
          IsEqualGUID( &IID_IDirectDrawSurface7, riid ) ) {
         IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This->surface, IDirectDrawSurface7));
         *obp = ICOM_INTERFACE(This->surface, IDirectDrawSurface7);

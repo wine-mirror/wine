@@ -2862,7 +2862,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     GLenum buffer_type, buffer_color;
     RECT loc_rect;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
-    GLint depth_test, alpha_test, cull_face, lighting, min_tex, max_tex, tex_env, blend, stencil_test;
+    GLint depth_test, alpha_test, cull_face, lighting, min_tex, max_tex, tex_env, blend, stencil_test, fog;
     GLuint initial_texture;
     GLint tex_state;
     int x, y;
@@ -2885,6 +2885,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glGetIntegerv(GL_BLEND, &blend);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &initial_texture);
     glGetIntegerv(GL_TEXTURE_2D, &tex_state);
+    glGetIntegerv(GL_FOG, &fog);
     glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &max_tex);
     glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &min_tex);
     glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_env);
@@ -2939,6 +2940,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_BLEND);
+    glDisable(GL_FOG);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -2976,6 +2978,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     if (stencil_test != 0) glEnable(GL_STENCIL_TEST);
     if (cull_face != 0) glEnable(GL_CULL_FACE);
     if (blend != 0) glEnable(GL_BLEND);
+    if (fog != 0) glEnable(GL_FOG);
     glBindTexture(GL_TEXTURE_2D, initial_texture);
     if (tex_state == 0) glDisable(GL_TEXTURE_2D);
     glDisable(GL_SCISSOR_TEST);
