@@ -46,6 +46,23 @@ static IDirectInputA_VTable ddiavt;
 static IDirectInputDeviceA_VTable SysKeyboardAvt;
 static IDirectInputDeviceA_VTable SysMouseAvt;
 
+/* UIDs for Wine "drivers".
+   When enumerating each device supporting DInput, they have two UIDs :
+    - the 'windows' UID
+    - a vendor UID */
+static GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
+  0x9e573ed8,
+  0x7734,
+  0x11d2,
+  {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
+};
+static GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a96441 */
+  0x0ab8648a,
+  0x7735,
+  0x11d2,
+  {0x8c, 0x73, 0x71, 0xdf, 0x54, 0xa9, 0x64, 0x41}
+};
+
 /******************************************************************************
  *	DirectInputCreate32A
  */
@@ -74,8 +91,8 @@ static HRESULT WINAPI IDirectInputA_EnumDevices(
   
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
   /* Return keyboard */
-  devInstance.guidInstance = GUID_SysKeyboard;
-  devInstance.guidProduct = GUID_SysKeyboard;
+    devInstance.guidInstance = GUID_SysKeyboard;         /* DInput's GUID */
+    devInstance.guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
     devInstance.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
   strcpy(devInstance.tszInstanceName, "Keyboard");
   strcpy(devInstance.tszProductName, "Wine Keyboard");
@@ -89,8 +106,8 @@ static HRESULT WINAPI IDirectInputA_EnumDevices(
   
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
   /* Return mouse */
-  devInstance.guidInstance = GUID_SysMouse;
-  devInstance.guidProduct = GUID_SysMouse;
+    devInstance.guidInstance = GUID_SysMouse;         /* DInput's GUID */
+    devInstance.guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
     devInstance.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_UNKNOWN << 8);
   strcpy(devInstance.tszInstanceName, "Mouse");
   strcpy(devInstance.tszProductName, "Wine Mouse");
@@ -124,7 +141,8 @@ static HRESULT WINAPI IDirectInputA_CreateDevice(
 	
 	WINE_StringFromCLSID(rguid,xbuf);
 	FIXME(dinput,"(this=%p,%s,%p,%p): stub\n",this,xbuf,pdev,punk);
-	if (!memcmp(&GUID_SysKeyboard,rguid,sizeof(GUID_SysKeyboard))) {
+	if ((!memcmp(&GUID_SysKeyboard,rguid,sizeof(GUID_SysKeyboard))) ||          /* Generic Keyboard */
+	    (!memcmp(&DInput_Wine_Keyboard_GUID,rguid,sizeof(GUID_SysKeyboard)))) { /* Wine Keyboard */
 		*pdev = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboard32A));
 		(*pdev)->ref = 1;
 		(*pdev)->lpvtbl = &SysKeyboardAvt;
@@ -132,7 +150,8 @@ static HRESULT WINAPI IDirectInputA_CreateDevice(
 		memset(((LPSYSKEYBOARD32A)(*pdev))->keystate,0,256);
 		return 0;
 	}
-	if (!memcmp(&GUID_SysMouse,rguid,sizeof(GUID_SysMouse))) {
+	if ((!memcmp(&GUID_SysMouse,rguid,sizeof(GUID_SysMouse))) ||             /* Generic Mouse */
+	    (!memcmp(&DInput_Wine_Mouse_GUID,rguid,sizeof(GUID_SysKeyboard)))) { /* Wine Mouse */
 		*pdev = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouse32A));
 		(*pdev)->ref = 1;
 		(*pdev)->lpvtbl = &SysMouseAvt;
