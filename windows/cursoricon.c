@@ -1607,8 +1607,10 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 /**********************************************************************
  *		GetIconInfo (USER32.@)
  */
-BOOL WINAPI GetIconInfo(HICON hIcon,PICONINFO iconinfo) {
+BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
+{
     CURSORICONINFO	*ciconinfo;
+    INT height;
 
     ciconinfo = GlobalLock16(HICON_16(hIcon));
     if (!ciconinfo)
@@ -1628,12 +1630,22 @@ BOOL WINAPI GetIconInfo(HICON hIcon,PICONINFO iconinfo) {
       iconinfo->yHotspot = ciconinfo->ptHotSpot.y;
     }
 
-    iconinfo->hbmColor = CreateBitmap ( ciconinfo->nWidth, ciconinfo->nHeight,
+    if (ciconinfo->bBitsPerPixel > 1)
+    {
+        iconinfo->hbmColor = CreateBitmap( ciconinfo->nWidth, ciconinfo->nHeight,
                                 ciconinfo->bPlanes, ciconinfo->bBitsPerPixel,
                                 (char *)(ciconinfo + 1)
                                 + ciconinfo->nHeight *
                                 get_bitmap_width_bytes (ciconinfo->nWidth,1) );
-    iconinfo->hbmMask = CreateBitmap ( ciconinfo->nWidth, ciconinfo->nHeight,
+        height = ciconinfo->nHeight;
+    }
+    else
+    {
+        iconinfo->hbmColor = 0;
+        height = ciconinfo->nHeight * 2;
+    }
+
+    iconinfo->hbmMask = CreateBitmap ( ciconinfo->nWidth, height,
                                 1, 1, (char *)(ciconinfo + 1));
 
     GlobalUnlock16(HICON_16(hIcon));
