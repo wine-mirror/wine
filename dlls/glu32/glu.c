@@ -21,6 +21,48 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(glu);
+
+/* The only non-trivial bit of this is the *Tess* functions.  Here we
+   need to wrap the callbacks up in a thunk to switch calling
+   conventions, so we use our own tesselator type to store the
+   application's callbacks.  wine_gluTessCallback always sets the
+   *_DATA type of callback so that we have access to the polygon_data
+   (which is in fact just wine_tess_t), in the thunk itself we can
+   check whether we should call the _DATA or non _DATA type. */
+
+typedef struct {
+    void *tess;
+    void *polygon_data;
+    void (CALLBACK *cb_tess_begin)(int);
+    void (CALLBACK *cb_tess_begin_data)(int, void *);
+    void (CALLBACK *cb_tess_vertex)(void *);
+    void (CALLBACK *cb_tess_vertex_data)(void *, void *);
+    void (CALLBACK *cb_tess_end)(void);
+    void (CALLBACK *cb_tess_end_data)(void *);
+    void (CALLBACK *cb_tess_error)(int);
+    void (CALLBACK *cb_tess_error_data)(int, void *);
+    void (CALLBACK *cb_tess_edge_flag)(int);
+    void (CALLBACK *cb_tess_edge_flag_data)(int, void *);
+    void (CALLBACK *cb_tess_combine)(double *, void *, float *, void **);
+    void (CALLBACK *cb_tess_combine_data)(double *, void *, float *, void **, void *);
+} wine_tess_t;
+
+#define GLU_TESS_BEGIN          100100
+#define GLU_TESS_VERTEX         100101
+#define GLU_TESS_END            100102
+#define GLU_TESS_ERROR          100103
+#define GLU_TESS_EDGE_FLAG      100104
+#define GLU_TESS_COMBINE        100105
+#define GLU_TESS_BEGIN_DATA     100106
+#define GLU_TESS_VERTEX_DATA    100107
+#define GLU_TESS_END_DATA       100108
+#define GLU_TESS_ERROR_DATA     100109
+#define GLU_TESS_EDGE_FLAG_DATA 100110
+#define GLU_TESS_COMBINE_DATA   100111
+
 /***********************************************************************
  *		gluLookAt (GLU32.@)
  */
@@ -310,38 +352,6 @@ int WINAPI wine_gluNurbsCallback(void *arg0,int arg1,void *arg2) {
 }
 
 /***********************************************************************
- *		gluNewTess (GLU32.@)
- */
-extern int gluNewTess();
-int WINAPI wine_gluNewTess() {
-	return gluNewTess();
-}
-
-/***********************************************************************
- *		gluDeleteTess (GLU32.@)
- */
-extern int gluDeleteTess(void *arg0);
-int WINAPI wine_gluDeleteTess(void *arg0) {
-	return gluDeleteTess(arg0);
-}
-
-/***********************************************************************
- *		gluTessVertex (GLU32.@)
- */
-extern int gluTessVertex(void *arg0,void *arg1,void *arg2);
-int WINAPI wine_gluTessVertex(void *arg0,void *arg1,void *arg2) {
-	return gluTessVertex(arg0,arg1,arg2);
-}
-
-/***********************************************************************
- *		gluTessCallback (GLU32.@)
- */
-extern int gluTessCallback(void *arg0,int arg1,void *arg2);
-int WINAPI wine_gluTessCallback(void *arg0,int arg1,void *arg2) {
-	return gluTessCallback(arg0,arg1,arg2);
-}
-
-/***********************************************************************
  *		gluBeginPolygon (GLU32.@)
  */
 extern int gluBeginPolygon(void *arg0);
@@ -379,4 +389,231 @@ int WINAPI wine_gluGetString(int arg0) {
 int WINAPI
 wine_gluCheckExtension( const char *extName, void *extString ) {
     return 0;
+}
+
+extern void *gluNewTess(void);
+extern void gluDeleteTess(void *);
+
+/***********************************************************************
+ *		gluNewTess (GLU32.@)
+ */
+void * WINAPI wine_gluNewTess(void)
+{
+    void *tess;
+    wine_tess_t *ret;
+
+    if((tess = gluNewTess()) == NULL)
+       return NULL;
+
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
+    if(!ret) {
+        gluDeleteTess(tess);
+        return NULL;
+    }
+    ret->tess = tess;
+    return ret;
+}
+
+/***********************************************************************
+ *		gluDeleteTess (GLU32.@)
+ */
+void WINAPI wine_gluDeleteTess(void *tess)
+{
+    wine_tess_t *wine_tess = tess;
+    gluDeleteTess(wine_tess->tess);
+    HeapFree(GetProcessHeap(), 0, wine_tess);
+    return;
+}
+
+/***********************************************************************
+ *		gluTessBeginPolygon (GLU32.@)
+ */
+extern void gluTessBeginPolygon(void *, void *);
+void WINAPI wine_gluTessBeginPolygon(void *tess, void *polygon_data)
+{
+    wine_tess_t *wine_tess = tess;
+    wine_tess->polygon_data = polygon_data;
+
+    gluTessBeginPolygon(wine_tess->tess, wine_tess);
+}
+
+/***********************************************************************
+ *		gluTessEndPolygon (GLU32.@)
+ */
+extern void gluTessEndPolygon(void *);
+void WINAPI wine_gluTessEndPolygon(void *tess)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessEndPolygon(wine_tess->tess);
+}
+
+
+void wine_glu_tess_begin_data(int type, wine_tess_t *wine_tess)
+{
+    if(wine_tess->cb_tess_begin_data)
+        wine_tess->cb_tess_begin_data(type, wine_tess->polygon_data);
+    else
+        wine_tess->cb_tess_begin(type);
+}
+
+void wine_glu_tess_vertex_data(void *vertex_data, wine_tess_t *wine_tess)
+{
+    if(wine_tess->cb_tess_vertex_data)
+        wine_tess->cb_tess_vertex_data(vertex_data, wine_tess->polygon_data);
+    else
+        wine_tess->cb_tess_vertex(vertex_data);
+}
+
+void wine_glu_tess_end_data(wine_tess_t *wine_tess)
+{
+    if(wine_tess->cb_tess_end_data)
+        wine_tess->cb_tess_end_data(wine_tess->polygon_data);
+    else
+        wine_tess->cb_tess_end();
+}
+
+void wine_glu_tess_error_data(int error, wine_tess_t *wine_tess)
+{
+    if(wine_tess->cb_tess_error_data)
+        wine_tess->cb_tess_error_data(error, wine_tess->polygon_data);
+    else
+        wine_tess->cb_tess_error(error);
+}
+
+void wine_glu_tess_edge_flag_data(int flag, wine_tess_t *wine_tess)
+{
+    if(wine_tess->cb_tess_edge_flag_data)
+        wine_tess->cb_tess_edge_flag_data(flag, wine_tess->polygon_data);
+    else
+        wine_tess->cb_tess_edge_flag(flag);
+}
+
+void wine_glu_tess_combine_data(double *coords, void *vertex_data, float *weight, void **outData,
+                                wine_tess_t *wine_tess)
+{
+    if(wine_tess->cb_tess_combine_data)
+        wine_tess->cb_tess_combine_data(coords, vertex_data, weight, outData, wine_tess->polygon_data);
+    else
+        wine_tess->cb_tess_combine(coords, vertex_data, weight, outData);
+}
+
+
+/***********************************************************************
+ *		gluTessCallback (GLU32.@)
+ */
+extern void gluTessCallback(void *,int,void *);
+void WINAPI wine_gluTessCallback(void *tess,int which,void *fn)
+{
+    wine_tess_t *wine_tess = tess;
+    switch(which) {
+    case GLU_TESS_BEGIN:
+        wine_tess->cb_tess_begin = fn;
+        fn = wine_glu_tess_begin_data;
+        which += 6;
+        break;
+    case GLU_TESS_VERTEX:
+        wine_tess->cb_tess_vertex = fn;
+        fn = wine_glu_tess_vertex_data;
+        which += 6;
+        break;
+    case GLU_TESS_END:
+        wine_tess->cb_tess_end = fn;
+        fn = wine_glu_tess_end_data;
+        which += 6;
+        break;
+    case GLU_TESS_ERROR:
+        wine_tess->cb_tess_error = fn;
+        fn = wine_glu_tess_error_data;
+        which += 6;
+        break;
+    case GLU_TESS_EDGE_FLAG:
+        wine_tess->cb_tess_edge_flag = fn;
+        fn = wine_glu_tess_edge_flag_data;
+        which += 6;
+        break;
+    case GLU_TESS_COMBINE:
+        wine_tess->cb_tess_combine = fn;
+        fn = wine_glu_tess_combine_data;
+        which += 6;
+        break;
+    case GLU_TESS_BEGIN_DATA:
+        wine_tess->cb_tess_begin_data = fn;
+        fn = wine_glu_tess_begin_data;
+        break;
+    case GLU_TESS_VERTEX_DATA:
+        wine_tess->cb_tess_vertex_data = fn;
+        fn = wine_glu_tess_vertex_data;
+        break;
+    case GLU_TESS_END_DATA:
+        wine_tess->cb_tess_end_data = fn;
+        fn = wine_glu_tess_end_data;
+        break;
+    case GLU_TESS_ERROR_DATA:
+        wine_tess->cb_tess_error_data = fn;
+        fn = wine_glu_tess_error_data;
+        break;
+    case GLU_TESS_EDGE_FLAG_DATA:
+        wine_tess->cb_tess_edge_flag_data = fn;
+        fn = wine_glu_tess_edge_flag_data;
+        break;
+    case GLU_TESS_COMBINE_DATA:
+        wine_tess->cb_tess_combine_data = fn;
+        fn = wine_glu_tess_combine_data;
+        break;
+    default:
+        ERR("Unknown callback %d\n", which);
+        break;
+    }
+    gluTessCallback(wine_tess->tess, which, fn);
+}
+
+/***********************************************************************
+ *		gluTessBeginContour (GLU32.@)
+ */
+extern void gluTessBeginContour(void *);
+void WINAPI wine_gluTessBeginContour(void *tess)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessBeginContour(wine_tess->tess);
+}
+
+/***********************************************************************
+ *		gluTessEndContour (GLU32.@)
+ */
+extern void gluTessEndContour(void *);
+void WINAPI wine_gluTessEndContour(void *tess)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessEndContour(wine_tess->tess);
+}
+
+/***********************************************************************
+ *		gluTessVertex (GLU32.@)
+ */
+extern void gluTessVertex(void *, void *, void *);
+void WINAPI wine_gluTessVertex(void *tess,void *arg1,void *arg2)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessVertex(wine_tess->tess, arg1, arg2);
+}
+
+
+/***********************************************************************
+ *		gluTessProperty (GLU32.@)
+ */
+extern void gluTessProperty(void *, int, double);
+void WINAPI wine_gluTessProperty(void *tess, int arg1, double arg2)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessProperty(wine_tess->tess, arg1, arg2);
+}
+
+/***********************************************************************
+ *		gluTessNormal (GLU32.@)
+ */
+extern void gluTessNormal(void *, double, double, double);
+void WINAPI wine_gluTessNormal(void *tess, double arg1, double arg2, double arg3)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessNormal(wine_tess->tess, arg1, arg2, arg3);
 }

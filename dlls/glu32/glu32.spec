@@ -41,13 +41,13 @@
 @ stdcall gluQuadricTexture(ptr long) wine_gluQuadricTexture
 @ stdcall gluScaleImage(long long long long ptr long long long ptr) wine_gluScaleImage
 @ stdcall gluSphere(ptr double long long) wine_gluSphere
-@ stub gluTessBeginContour
-@ stub gluTessBeginPolygon
+@ stdcall gluTessBeginContour(ptr) wine_gluTessBeginContour
+@ stdcall gluTessBeginPolygon(ptr ptr) wine_gluTessBeginPolygon
 @ stdcall gluTessCallback(ptr long ptr) wine_gluTessCallback
-@ stub gluTessEndContour
-@ stub gluTessEndPolygon
-@ stub gluTessNormal
-@ stub gluTessProperty
+@ stdcall gluTessEndContour(ptr) wine_gluTessEndContour
+@ stdcall gluTessEndPolygon(ptr) wine_gluTessEndPolygon
+@ stdcall gluTessNormal(ptr double double double) wine_gluTessNormal
+@ stdcall gluTessProperty(ptr long double) wine_gluTessProperty
 @ stdcall gluTessVertex(ptr ptr ptr) wine_gluTessVertex
 @ stdcall gluUnProject(double double double ptr ptr ptr ptr ptr ptr) wine_gluUnProject
 @ stdcall gluCheckExtension(str ptr) wine_gluCheckExtension

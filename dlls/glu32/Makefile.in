@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = glu32.dll
+IMPORTS   = kernel32 ntdll
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
 
