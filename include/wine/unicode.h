@@ -236,6 +236,12 @@ static inline WCHAR *strrchrW( const WCHAR *str, WCHAR ch )
     return ret;
 }
 
+static inline WCHAR *strpbrkW( const WCHAR *str, const WCHAR *accept )
+{
+    for ( ; *str; str++) if (strchrW( accept, *str )) return (WCHAR *)str;
+    return NULL;
+}
+
 static inline WCHAR *strlwrW( WCHAR *str )
 {
     WCHAR *ret = str;

@@ -219,20 +219,6 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
 BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
 
-LPWSTR strpbrkW(LPWSTR str, LPCWSTR clist)
-{
-    LPCWSTR p;
-
-    while(str && *str)
-    {
-        for(p = clist; *p; p++ )
-            if(*p == *str)
-                return str;
-        str++;
-    }
-    return NULL;
-}
-
 /***********************************************************************
  *      GetFileName95
  *
