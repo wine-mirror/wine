@@ -137,11 +137,87 @@
 #define WINE_NORETURN  /* nothing */
 #endif
 
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64)) && !defined(MIDL_PASS)
+# define DECLSPEC_IMPORT __declspec(dllimport)
+#else
+# define DECLSPEC_IMPORT
+#endif
+
 #ifndef DECLSPEC_NORETURN
-# if _MSVC_VER > 1200
+# if (_MSVC_VER >= 1200) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)
 # else
 #  define DECLSPEC_NORETURN
+# endif
+#endif
+
+#ifndef DECLSPEC_ALIGN
+# if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+#  define DECLSPEC_ALIGN(x)   __declspec(align(x))
+# else
+#  define DECLSPEC_ALIGN(x)
+# endif
+#endif
+
+#ifndef DECLSPEC_CACHEALIGN
+# define DECLSPEC_CACHEALIGN DECLSPEC_ALIGN(128)
+#endif
+
+#ifndef DECLSPEC_UUID
+# if (_MSC_VER >= 1100) && defined (__cplusplus)
+#  define DECLSPEC_UUID(x)    __declspec(uuid(x))
+# else
+#  define DECLSPEC_UUID(x)
+# endif
+#endif
+
+#ifndef DECLSPEC_NOVTABLE
+# if (_MSC_VER >= 1100) && defined(__cplusplus)
+#  define DECLSPEC_NOVTABLE   __declspec(novtable)
+# else
+#  define DECLSPEC_NOVTABLE
+# endif
+#endif
+
+#ifndef DECLSPEC_SELECTANY
+#if (_MSC_VER >= 1100)
+#define DECLSPEC_SELECTANY  __declspec(selectany)
+#else
+#define DECLSPEC_SELECTANY
+#endif
+#endif
+
+#ifndef NOP_FUNCTION
+# if (_MSC_VER >= 1210)
+#  define NOP_FUNCTION __noop
+# else
+#  define NOP_FUNCTION (void)0
+# endif
+#endif
+
+#ifndef DECLSPEC_ADDRSAFE
+# if (_MSC_VER >= 1200) && (defined(_M_ALPHA) || defined(_M_AXP64))
+#  define DECLSPEC_ADDRSAFE  __declspec(address_safe)
+# else
+#  define DECLSPEC_ADDRSAFE
+# endif
+#endif
+
+#ifndef FORCEINLINE
+# if (_MSC_VER >= 1200)
+#  define FORCEINLINE __forceinline
+# else
+#  define FORCEINLINE __inline
+# endif
+#endif
+
+#ifndef DECLSPEC_DEPRECATED
+# if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+#  define DECLSPEC_DEPRECATED   __declspec(deprecated)
+#  define DEPRECATE_SUPPORTED
+# else
+#  define DECLSPEC_DEPRECATED
+#  undef  DEPRECATE_SUPPORTED
 # endif
 #endif
 
