@@ -423,7 +423,7 @@
 @ stub RtlFirstEntrySList
 @ stdcall RtlFirstFreeAce(ptr ptr)
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)
-@ stub RtlFormatMessage
+@ stdcall RtlFormatMessage(ptr long long long long ptr ptr long)
 @ stdcall RtlFreeAnsiString(long)
 @ stub RtlFreeHandle
 @ stdcall RtlFreeHeap(long long long)
