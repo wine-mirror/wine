@@ -274,12 +274,6 @@ inline static BOOL listbox_has_strings( HWND hwnd )
     return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
 }
 
-/* check if hwnd is a broadcast magic handle */
-inline static BOOL is_broadcast( HWND hwnd )
-{
-    return (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST);
-}
-
 
 /***********************************************************************
  *		broadcast_message_callback

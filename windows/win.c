@@ -1691,6 +1691,12 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     LONG style;
     HWND full_handle;
 
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
         return SendMessageW( hwnd, WM_WINE_ENABLEWINDOW, enable, 0 );
 
@@ -1983,6 +1989,11 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 
     TRACE( "%p %d %lx %x\n", hwnd, offset, newval, type );
 
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     if (!WIN_IsCurrentProcess( hwnd ))
     {
         if (offset == GWL_WNDPROC)
@@ -2322,6 +2333,11 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
  */
 BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
 {
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     if (!WIN_IsCurrentProcess( hwnd ))
     {
         FIXME( "cannot set text %s of other process window %p\n", debugstr_a(lpString), hwnd );
@@ -2337,6 +2353,11 @@ BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
  */
 BOOL WINAPI SetWindowTextW( HWND hwnd, LPCWSTR lpString )
 {
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     if (!WIN_IsCurrentProcess( hwnd ))
     {
         FIXME( "cannot set text %s of other process window %p\n", debugstr_w(lpString), hwnd );
@@ -2536,6 +2557,12 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     WND *wndPtr;
     HWND retvalue, full_handle;
     BOOL was_visible;
+
+    if (is_broadcast(hwnd) || is_broadcast(parent))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
     if (!parent) parent = GetDesktopWindow();
     else parent = WIN_GetFullHandle( parent );

@@ -834,6 +834,12 @@ BOOL WINAPI ShowWindowAsync( HWND hwnd, INT cmd )
 {
     HWND full_handle;
 
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     if ((full_handle = WIN_IsCurrentThread( hwnd )))
         return USER_Driver.pShowWindow( full_handle, cmd );
     return SendNotifyMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
@@ -847,8 +853,17 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
 {
     HWND full_handle;
 
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     if ((full_handle = WIN_IsCurrentThread( hwnd )))
-        return USER_Driver.pShowWindow( full_handle, cmd );
+    {
+        if (USER_Driver.pShowWindow)
+            return USER_Driver.pShowWindow( full_handle, cmd );
+        return FALSE;
+    }
     return SendMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
@@ -1172,6 +1187,12 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     TRACE("hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
           hwnd, hwndInsertAfter, x, y, cx, cy, flags);
     if(TRACE_ON(win)) dump_winpos_flags(flags);
+
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
 
     winpos.hwnd = WIN_GetFullHandle(hwnd);
     winpos.hwndInsertAfter = WIN_GetFullHandle(hwndInsertAfter);
