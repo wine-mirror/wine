@@ -1004,9 +1004,6 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
     /* First, copy the Surface description */
     DD_STRUCT_COPY_BYSIZE(pDDSD,&(This->surface_desc));
 
-    TRACE("locked surface returning description : \n");
-    if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(pDDSD);
-
     /* Used to optimize the D3D Device locking */
     This->lastlocktype = flags & (DDLOCK_READONLY|DDLOCK_WRITEONLY);
     
@@ -1014,15 +1011,14 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
      * (Not documented.) */
     if (prect != NULL) {
 	TRACE("	lprect: %ldx%ld-%ldx%ld\n",
-		prect->top,prect->left,prect->bottom,prect->right
-	);
+		prect->top,prect->left,prect->bottom,prect->right);
 	if ((prect->top < 0) ||
 	    (prect->left < 0) ||
 	    (prect->bottom < 0) ||
 	    (prect->right < 0)) {
-	  ERR(" Negative values in LPRECT !!!\n");
-	  return DDERR_INVALIDPARAMS;
-       }
+	    ERR(" Negative values in LPRECT !!!\n");
+	    return DDERR_INVALIDPARAMS;
+	}
 
 	This->lock_update(This, prect, flags);
 
@@ -1033,6 +1029,9 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 	This->lock_update(This, NULL, flags);
     }
 
+    TRACE("locked surface returning description : \n");
+    if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(pDDSD);
+    
     return DD_OK;
 }
 

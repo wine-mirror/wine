@@ -30,6 +30,7 @@
 #include "mesa_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw_geom);
 
 HRESULT WINAPI
 Main_IDirect3DVertexBufferImpl_7_1T_QueryInterface(LPDIRECT3DVERTEXBUFFER7 iface,
@@ -352,46 +353,46 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
 	    copy_and_next(dest_ptr, tex_coord, 2 * sizeof(D3DVALUE));
 	}
 
-	if (TRACE_ON(ddraw)) {
+	if (TRACE_ON(ddraw_geom)) {
 	    if ((dwVertexTypeDesc & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
 	        D3DVALUE *position =
 		  (D3DVALUE *) (((char *) lpStrideData->position.lpvData) + i * lpStrideData->position.dwStride);
-		TRACE(" %f %f %f", position[0], position[1], position[2]);
+		TRACE_(ddraw_geom)(" %f %f %f", position[0], position[1], position[2]);
 	    } else if ((dwVertexTypeDesc & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
 	        D3DVALUE *position =
 		  (D3DVALUE *) (((char *) lpStrideData->position.lpvData) + i * lpStrideData->position.dwStride);
-		TRACE(" %f %f %f %f", position[0], position[1], position[2], position[3]);
+		TRACE_(ddraw_geom)(" %f %f %f %f", position[0], position[1], position[2], position[3]);
 	    }
 	    if (dwVertexTypeDesc & D3DFVF_NORMAL) { 
 	        D3DVALUE *normal = 
 		  (D3DVALUE *) (((char *) lpStrideData->normal.lpvData) + i * lpStrideData->normal.dwStride);	    
-		TRACE(" / %f %f %f", normal[0], normal[1], normal[2]);
+		TRACE_(ddraw_geom)(" / %f %f %f", normal[0], normal[1], normal[2]);
 	    }
 	    if (dwVertexTypeDesc & D3DFVF_DIFFUSE) {
 	        DWORD *color_d = 
 		  (DWORD *) (((char *) lpStrideData->diffuse.lpvData) + i * lpStrideData->diffuse.dwStride);
-		TRACE(" / %02lx %02lx %02lx %02lx",
-			(*color_d >> 16) & 0xFF,
-			(*color_d >>  8) & 0xFF,
-			(*color_d >>  0) & 0xFF,
-			(*color_d >> 24) & 0xFF);
+		TRACE_(ddraw_geom)(" / %02lx %02lx %02lx %02lx",
+				   (*color_d >> 16) & 0xFF,
+				   (*color_d >>  8) & 0xFF,
+				   (*color_d >>  0) & 0xFF,
+				   (*color_d >> 24) & 0xFF);
 	    }
 	    if (dwVertexTypeDesc & D3DFVF_SPECULAR) { 
 	        DWORD *color_s = 
 		  (DWORD *) (((char *) lpStrideData->specular.lpvData) + i * lpStrideData->specular.dwStride);
-		TRACE(" / %02lx %02lx %02lx %02lx",
-			(*color_s >> 16) & 0xFF,
-			(*color_s >>  8) & 0xFF,
-			(*color_s >>  0) & 0xFF,
-			(*color_s >> 24) & 0xFF);
+		TRACE_(ddraw_geom)(" / %02lx %02lx %02lx %02lx",
+				   (*color_s >> 16) & 0xFF,
+				   (*color_s >>  8) & 0xFF,
+				   (*color_s >>  0) & 0xFF,
+				   (*color_s >> 24) & 0xFF);
 	    }
 	    for (tex_index = 0; tex_index < ((dwVertexTypeDesc & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
 	        D3DVALUE *tex_coord =
 		  (D3DVALUE *) (((char *) lpStrideData->textureCoords[tex_index].lpvData) + 
 				i * lpStrideData->textureCoords[tex_index].dwStride);
-		TRACE(" / %f %f", tex_coord[0], tex_coord[1]);
+		TRACE_(ddraw_geom)(" / %f %f", tex_coord[0], tex_coord[1]);
 	    }
-	    TRACE("\n");
+	    TRACE_(ddraw_geom)("\n");
 	}
     }
 

@@ -123,6 +123,7 @@ typedef struct IDirect3DDeviceGLImpl
 
     GLuint unlock_tex;
     SURFACE_STATE state, front_state;
+    IDirectDrawSurfaceImpl *lock_surf, *front_lock_surf;
 } IDirect3DDeviceGLImpl;
 
 /* This is for the OpenGL additions... */

@@ -113,7 +113,7 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
     TRACE("(%p, %ld)\n", gl_d3d_dev->display,(Drawable)drawable);
     ENTER_GL();
     if (gl_d3d_dev->state == SURFACE_MEMORY_DIRTY) {
-        d3d_dev->flush_to_framebuffer(d3d_dev, NULL);
+        d3d_dev->flush_to_framebuffer(d3d_dev, NULL, gl_d3d_dev->lock_surf);
     }
     gl_d3d_dev->state = SURFACE_GL;
     gl_d3d_dev->front_state = SURFACE_GL;
@@ -1128,7 +1128,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 
     ENTER_GL();
     if (glThis->state == SURFACE_MEMORY_DIRTY) {
-        This->flush_to_framebuffer(This, NULL);
+        This->flush_to_framebuffer(This, NULL, glThis->lock_surf);
     }
     LEAVE_GL();
 
@@ -2466,7 +2466,7 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
 
     if (glThis->state == SURFACE_MEMORY_DIRTY) {
         /* TODO: optimize here the case where Clear changes all the screen... */
-        This->flush_to_framebuffer(This, NULL);
+        This->flush_to_framebuffer(This, NULL, glThis->lock_surf);
     }
     glThis->state = SURFACE_GL;
 
@@ -2738,8 +2738,18 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
     
     if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
         is_front = TRUE;
+	if ((gl_d3d_dev->front_state != SURFACE_GL) &&
+	    (gl_d3d_dev->front_lock_surf != This)) {
+	    ERR("Change of front buffer.. Expect graphic corruptions !\n");
+	}
+	gl_d3d_dev->front_lock_surf = This;
     } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
         is_front = FALSE;
+	if ((gl_d3d_dev->state != SURFACE_GL) &&
+	    (gl_d3d_dev->lock_surf != This)) {
+	    ERR("Change of back buffer.. Expect graphic corruptions !\n");
+	}
+	gl_d3d_dev->lock_surf = This;
     } else {
         ERR("Wrong surface type for locking !\n");
 	return;
@@ -2848,10 +2858,9 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 
 #define UNLOCK_TEX_SIZE 256
 
-static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect) {
+static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, IDirectDrawSurfaceImpl *surf) {
     GLenum buffer_type, buffer_color;
     RECT loc_rect;
-    IDirectDrawSurfaceImpl *surf = d3d_dev->surface;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
     GLint depth_test, alpha_test, cull_face, lighting, min_tex, max_tex, tex_env, blend, stencil_test;
     GLuint initial_texture;
@@ -3016,7 +3025,7 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 	    ENTER_GL();
 	    glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
 	    glDrawBuffer(GL_FRONT);
-	    d3d_dev->flush_to_framebuffer(d3d_dev, pRect);
+	    d3d_dev->flush_to_framebuffer(d3d_dev, pRect, gl_d3d_dev->front_lock_surf);
 	    glDrawBuffer(prev_draw);
 	    LEAVE_GL();
 	} else {
