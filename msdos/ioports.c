@@ -16,6 +16,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "windows.h"
+#include "vga.h"
 #include "options.h"
 #include "debug.h"
 
@@ -234,6 +235,10 @@ DWORD IO_inport( int port, int count )
         case 0x71:
             b = cmosimage[cmosaddress & 0x3f];
             break;
+        case 0x200:
+        case 0x201:
+            b = 0xff; /* no joystick */
+            break;
         default:
             WARN( int, "Direct I/O read attempted from port %x\n", port);
             b = 0xff;
@@ -292,6 +297,10 @@ void IO_outport( int port, int count, DWORD value )
             break;
         case 0x71:
             cmosimage[cmosaddress & 0x3f] = b;
+            break;
+        case 0x3c8:
+        case 0x3c9:
+            VGA_ioport_out( port, b );
             break;
         default:
             WARN(int, "Direct I/O write attempted to port %x\n", port );

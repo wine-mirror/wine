@@ -7,17 +7,12 @@
 
 #include <string.h>
 #include "windows.h"
+#include "miscemu.h"
 #include "dispdib.h"
-#include "compobj.h"
-#include "interfaces.h"
-#include "ddraw.h"
+#include "vga.h"
 #include "debug.h"
 
 static int dispdib_multi = 0;
-static IDirectDraw *lpddraw = NULL;
-static IDirectDrawSurface *lpddsurf;
-static IDirectDrawPalette *lpddpal;
-static DDSURFACEDESC sdesc;
 
 static WORD DISPDIB_Begin(WORD wFlags)
 {
@@ -33,60 +28,28 @@ static WORD DISPDIB_Begin(WORD wFlags)
         default:
             return DISPLAYDIB_NOTSUPPORTED;
     }
-    if (!lpddraw) {
-        DirectDrawCreate(NULL,&lpddraw,NULL);
-        if (!lpddraw) {
-            ERR(ddraw,"DirectDraw is not available\n");
-            return DISPLAYDIB_NOTSUPPORTED;
-        }
-        if (lpddraw->lpvtbl->fnSetDisplayMode(lpddraw,Xres,Yres,Depth)) {
-            ERR(ddraw,"DirectDraw does not support requested display mode\n");
-            lpddraw->lpvtbl->fnRelease(lpddraw);
-            return DISPLAYDIB_NOTSUPPORTED;
-        }
-        lpddraw->lpvtbl->fnCreatePalette(lpddraw,0,NULL,&lpddpal,NULL);
-        memset(&sdesc,0,sizeof(sdesc));
-        sdesc.dwSize=sizeof(sdesc);
-        lpddraw->lpvtbl->fnCreateSurface(lpddraw,&sdesc,&lpddsurf,NULL);
-    }
+    if (VGA_SetMode(Xres,Yres,Depth)) return DISPLAYDIB_NOTSUPPORTED;
     return DISPLAYDIB_NOERROR;
 }
 
 static void DISPDIB_End(void)
 {
-    if (lpddraw) {
-        lpddsurf->lpvtbl->fnRelease(lpddsurf);
-        lpddraw->lpvtbl->fnRelease(lpddraw);
-        lpddraw=NULL;
-    }
+    VGA_Exit();
 }
 
 static void DISPDIB_Palette(LPBITMAPINFO lpbi)
 {
-    PALETTEENTRY pal[256];
-    int c;
-
-    for (c=0; c<256; c++) {
-        pal[c].peRed  =lpbi->bmiColors[c].rgbRed;
-        pal[c].peGreen=lpbi->bmiColors[c].rgbGreen;
-        pal[c].peBlue =lpbi->bmiColors[c].rgbBlue;
-        pal[c].peFlags=0;
-    }
-    lpddpal->lpvtbl->fnSetEntries(lpddpal,0,0,256,pal);
-    lpddsurf->lpvtbl->fnSetPalette(lpddsurf,lpddpal);
+    VGA_SetQuadPalette(lpbi->bmiColors,0,256);
 }
 
 static void DISPDIB_Show(LPBITMAPINFOHEADER lpbi,LPSTR lpBits,WORD uFlags)
 {
     int Xofs,Yofs,Width=lpbi->biWidth,Height=lpbi->biHeight,Delta;
-    unsigned Pitch=(Width+3)&~3;
-    LPSTR surf;
+    unsigned Pitch=(Width+3)&~3,sPitch,sWidth,sHeight;
+    LPSTR surf = DOSMEM_MapDosToLinear(0xa0000);
 
-    if (lpddsurf->lpvtbl->fnLock(lpddsurf,NULL,&sdesc,0,0)) {
-        ERR(ddraw,"could not lock surface!\n");
-        return;
-    }
-    /* size in sdesc.dwHeight, sdesc.dwWidth, pitch in sdesc.lPitch, ptr in sdesc.y.lpSurface */
+    if (VGA_GetMode(&sHeight,&sWidth,NULL)) return;
+    sPitch=320;
 
     Delta=(Height<0)*2-1;
     Height*=-Delta; Pitch*=Delta;
@@ -94,16 +57,16 @@ static void DISPDIB_Show(LPBITMAPINFOHEADER lpbi,LPSTR lpBits,WORD uFlags)
     if (uFlags&DISPLAYDIB_NOCENTER) {
         Xofs=0; Yofs=0;
     } else {
-        Xofs=(sdesc.dwWidth-Width)/2;
-        Yofs=(sdesc.dwHeight-Height)/2;
+        Xofs=(sWidth-Width)/2;
+        Yofs=(sHeight-Height)/2;
     }
-    surf=(LPSTR)sdesc.y.lpSurface + (Yofs*sdesc.lPitch)+Xofs;
+    surf += (Yofs*sPitch)+Xofs;
     if (Pitch<0) lpBits-=Pitch*(Height-1);
-    for (; Height; Height--,lpBits+=Pitch,surf+=sdesc.lPitch) {
+    for (; Height; Height--,lpBits+=Pitch,surf+=sPitch) {
         memcpy(surf,lpBits,Width);
     }
 
-    lpddsurf->lpvtbl->fnUnlock(lpddsurf,sdesc.y.lpSurface);
+    VGA_Poll();
 }
 
 /*********************************************************************
