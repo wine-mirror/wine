@@ -31,6 +31,7 @@
 #include "message.h"
 #include "queue.h"
 #include "tweak.h"
+#include "wine/unicode.h"
 
 #include "debugtools.h"
 
@@ -51,7 +52,7 @@ typedef struct {
     HMENU hSubMenu;		/* Pop-up menu.  */
     HBITMAP hCheckBit;		/* Bitmap when checked.  */
     HBITMAP hUnCheckBit;	/* Bitmap when unchecked.  */
-    LPSTR text;			/* Item text or bitmap handle.  */
+    LPWSTR text;			/* Item text or bitmap handle.  */
     DWORD dwItemData;		/* Application defined.  */
     DWORD dwTypeData;		/* depends on fMask */
     HBITMAP hbmpItem;		/* bitmap in win98 style menus */
@@ -250,7 +251,7 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 
 	if (typ == MFT_STRING) {
 	    if (mp->text)
-		DPRINTF( ", Text=\"%s\"", mp->text);
+		DPRINTF( ", Text=\"%s\"", debugstr_w(mp->text));
 	    else
 		DPRINTF( ", Text=Null");
 	} else if (mp->text == NULL)
@@ -705,10 +706,10 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
 	     {
 		if (item->text && (IS_STRING_ITEM(item->fType)))
 		{
-		    char *p = item->text - 2;
+		    WCHAR *p = item->text - 2;
 		    do
 		    {
-		    	p = strchr (p + 2, '&');
+		    	p = strchrW (p + 2, '&');
 		    }
 		    while (p != NULL && p [1] == '&');
 		    if (p && (toupper(p[1]) == key)) return i;
@@ -771,7 +772,7 @@ static HBITMAP MENU_LoadMagicItem(UINT id, BOOL hilite, DWORD dwItemData)
 static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 			       INT orgX, INT orgY, BOOL menuBar )
 {
-    char *p;
+    WCHAR *p;
 
     TRACE("dc=0x%04x owner=0x%04x (%d,%d)\n", hdc, hwndOwner, orgX, orgY);
     debug_print_menuitem("MENU_CalcItemSize: menuitem:", lpitem, 
@@ -862,7 +863,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     if (IS_STRING_ITEM( lpitem->fType ))
     {   SIZE size;
 
-	GetTextExtentPoint32A(hdc, lpitem->text,  strlen(lpitem->text), &size);
+	GetTextExtentPoint32W(hdc, lpitem->text,  strlenW(lpitem->text), &size);
 	
 	lpitem->rect.right  += size.cx;
 	if (TWEAK_WineLook == WIN31_LOOK)
@@ -875,16 +876,16 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	{
 	     lpitem->rect.right += MENU_BAR_ITEMS_SPACE;
 	}
-	else if ((p = strchr( lpitem->text, '\t' )) != NULL)
+	else if ((p = strchrW( lpitem->text, '\t' )) != NULL)
 	{
 	    /* Item contains a tab (only meaningful in popup menus) */
-	    GetTextExtentPoint32A(hdc, lpitem->text, (int)(p - lpitem->text) , &size);
+	    GetTextExtentPoint32W(hdc, lpitem->text, (int)(p - lpitem->text) , &size);
 	    lpitem->xTab = check_bitmap_width + MENU_TAB_SPACE + size.cx;
 	    lpitem->rect.right += MENU_TAB_SPACE;
 	}
 	else
 	{
-	    if (strchr( lpitem->text, '\b' ))
+	    if (strchrW( lpitem->text, '\b' ))
 	        lpitem->rect.right += MENU_TAB_SPACE;
 	    lpitem->xTab = lpitem->rect.right - check_bitmap_width 
 	                   - arrow_bitmap_width;
@@ -1310,7 +1311,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	{
 	    rect.left += MENU_BAR_ITEMS_SPACE / 2;
 	    rect.right -= MENU_BAR_ITEMS_SPACE / 2;
-	    i = strlen( lpitem->text );
+	    i = strlenW( lpitem->text );
 	}
 	else
 	{
@@ -1325,13 +1326,13 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    {
 		++rect.left; ++rect.top; ++rect.right; ++rect.bottom;
 		SetTextColor(hdc, RGB(0xff, 0xff, 0xff));
-		DrawTextA( hdc, lpitem->text, i, &rect, uFormat );
+		DrawTextW( hdc, lpitem->text, i, &rect, uFormat );
 		--rect.left; --rect.top; --rect.right; --rect.bottom;
 	    }
 	    SetTextColor(hdc, RGB(0x80, 0x80, 0x80));
 	}
 	
-	DrawTextA( hdc, lpitem->text, i, &rect, uFormat);
+	DrawTextW( hdc, lpitem->text, i, &rect, uFormat);
 
 	/* paint the shortcut text */
 	if (lpitem->text[i])  /* There's a tab or flush-right char */
@@ -1352,12 +1353,12 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 		{
 		    ++rect.left; ++rect.top; ++rect.right; ++rect.bottom;
 		    SetTextColor(hdc, RGB(0xff, 0xff, 0xff));
-		    DrawTextA( hdc, lpitem->text + i + 1, -1, &rect, uFormat );
+		    DrawTextW( hdc, lpitem->text + i + 1, -1, &rect, uFormat );
 		    --rect.left; --rect.top; --rect.right; --rect.bottom;
 		}
 		SetTextColor(hdc, RGB(0x80, 0x80, 0x80));
 	    }
-	    DrawTextA( hdc, lpitem->text + i + 1, -1, &rect, uFormat );
+	    DrawTextW( hdc, lpitem->text + i + 1, -1, &rect, uFormat );
 	}
 
 	if (hfontOld) 
@@ -1802,9 +1803,9 @@ static void MENU_MoveSelection( HWND hwndOwner, HMENU hmenu, INT offset )
  * ModifyMenu().
  */
 static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
-                                LPCSTR str )
+                                LPCWSTR str )
 {
-    LPSTR prevText = IS_STRING_ITEM(item->fType) ? item->text : NULL;
+    LPWSTR prevText = IS_STRING_ITEM(item->fType) ? item->text : NULL;
 
     debug_print_menuitem("MENU_SetItemData from: ", item, "");
 
@@ -1817,19 +1818,19 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
         }
         else
         {
-            LPSTR text;
+            LPWSTR text;
             /* Item beginning with a backspace is a help item */
             if (*str == '\b')
             {
                 flags |= MF_HELP;
                 str++;
             }
-            if (!(text = HEAP_strdupA( SystemHeap, 0, str ))) return FALSE;
+            if (!(text = HEAP_strdupW( SystemHeap, 0, str ))) return FALSE;
             item->text = text;
         }
     }
     else if (IS_BITMAP_ITEM(flags))
-        item->text = (LPSTR)(HBITMAP)LOWORD(str);
+        item->text = (LPWSTR)(HBITMAP)LOWORD(str);
     else item->text = NULL;
 
     if (flags & MF_OWNERDRAW) 
@@ -1951,7 +1952,7 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
             ERR("not a string item %04x\n", flags );
         str = res;
         if (!unicode) res += strlen(str) + 1;
-        else res += (lstrlenW((LPCWSTR)str) + 1) * sizeof(WCHAR);
+        else res += (strlenW((LPCWSTR)str) + 1) * sizeof(WCHAR);
         if (flags & MF_POPUP)
         {
             HMENU hSubMenu = CreatePopupMenu();
@@ -1997,7 +1998,7 @@ static LPCSTR MENUEX_ParseResource( LPCSTR res, HMENU hMenu)
 	/* Align the text on a word boundary.  */
 	res += (~((int)res - 1)) & 1;
 	mii.dwTypeData = (LPWSTR) res;
-	res += (1 + lstrlenW(mii.dwTypeData)) * sizeof(WCHAR);
+	res += (1 + strlenW(mii.dwTypeData)) * sizeof(WCHAR);
 	/* Align the following fields on a dword boundary.  */
 	res += (~((int)res - 1)) & 3;
 
@@ -2637,9 +2638,9 @@ static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
 
     TRACE("MENU_KeyRight called, cur %x (%s), top %x (%s).\n",
 		  pmt->hCurrentMenu,
-		  (MENU_GetMenu(pmt->hCurrentMenu))->
-		     items[0].text,
-		  pmt->hTopMenu, menu->items[0].text );
+		  debugstr_w((MENU_GetMenu(pmt->hCurrentMenu))->
+		     items[0].text),
+		  pmt->hTopMenu, debugstr_w(menu->items[0].text) );
 
     if ( (menu->wFlags & MF_POPUP) || (pmt->hCurrentMenu != pmt->hTopMenu))
     {
@@ -3421,9 +3422,9 @@ INT WINAPI GetMenuStringA(
                  hMenu, wItemID, str, nMaxSiz, wFlags );
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return 0;
     if (!IS_STRING_ITEM(item->fType)) return 0;
-    if (!str || !nMaxSiz) return strlen(item->text);
+    if (!str || !nMaxSiz) return strlenW(item->text);
     str[0] = '\0';
-    lstrcpynA( str, item->text, nMaxSiz );
+    lstrcpynWtoA( str, item->text, nMaxSiz );
     TRACE("returning '%s'\n", str );
     return strlen(str);
 }
@@ -3441,10 +3442,10 @@ INT WINAPI GetMenuStringW( HMENU hMenu, UINT wItemID,
                  hMenu, wItemID, str, nMaxSiz, wFlags );
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return 0;
     if (!IS_STRING_ITEM(item->fType)) return 0;
-    if (!str || !nMaxSiz) return strlen(item->text);
+    if (!str || !nMaxSiz) return strlenW(item->text);
     str[0] = '\0';
-    lstrcpynAtoW( str, item->text, nMaxSiz );
-    return lstrlenW(str);
+    lstrcpynW( str, item->text, nMaxSiz );
+    return strlenW(str);
 }
 
 
@@ -3573,17 +3574,17 @@ BOOL16 WINAPI InsertMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
 
 
 /*******************************************************************
- *         InsertMenuA    (USER32.322)
+ *         InsertMenuW    (USER32.325)
  */
-BOOL WINAPI InsertMenuA( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCSTR str )
+BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
+                             UINT id, LPCWSTR str )
 {
     MENUITEM *item;
 
     if (IS_STRING_ITEM(flags) && str)
         TRACE("hMenu %04x, pos %d, flags %08x, "
 		      "id %04x, str '%s'\n",
-                      hMenu, pos, flags, id, str );
+                      hMenu, pos, flags, id, debugstr_w(str) );
     else TRACE("hMenu %04x, pos %d, flags %08x, "
 		       "id %04x, str %08lx (not a string)\n",
                        hMenu, pos, flags, id, (DWORD)str );
@@ -3605,21 +3606,21 @@ BOOL WINAPI InsertMenuA( HMENU hMenu, UINT pos, UINT flags,
 
 
 /*******************************************************************
- *         InsertMenuW    (USER32.325)
+ *         InsertMenuA    (USER32.322)
  */
-BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCWSTR str )
+BOOL WINAPI InsertMenuA( HMENU hMenu, UINT pos, UINT flags,
+                             UINT id, LPCSTR str )
 {
     BOOL ret;
 
     if (IS_STRING_ITEM(flags) && str)
     {
-        LPSTR newstr = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-        ret = InsertMenuA( hMenu, pos, flags, id, newstr );
+        LPWSTR newstr = HEAP_strdupAtoW( GetProcessHeap(), 0, str );
+        ret = InsertMenuW( hMenu, pos, flags, id, newstr );
         HeapFree( GetProcessHeap(), 0, newstr );
         return ret;
     }
-    else return InsertMenuA( hMenu, pos, flags, id, (LPCSTR)str );
+    else return InsertMenuW( hMenu, pos, flags, id, (LPCWSTR)str );
 }
 
 
@@ -3734,17 +3735,17 @@ BOOL16 WINAPI ModifyMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
 
 
 /*******************************************************************
- *         ModifyMenuA    (USER32.397)
+ *         ModifyMenuW    (USER32.398)
  */
-BOOL WINAPI ModifyMenuA( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCSTR str )
+BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
+                             UINT id, LPCWSTR str )
 {
     MENUITEM *item;
 
     if (IS_STRING_ITEM(flags))
     {
 	TRACE("%04x %d %04x %04x '%s'\n",
-                      hMenu, pos, flags, id, str ? str : "#NULL#" );
+                      hMenu, pos, flags, id, str ? debugstr_w(str) : "#NULL#" );
         if (!str) return FALSE;
     }
     else
@@ -3759,21 +3760,21 @@ BOOL WINAPI ModifyMenuA( HMENU hMenu, UINT pos, UINT flags,
 
 
 /*******************************************************************
- *         ModifyMenuW    (USER32.398)
+ *         ModifyMenuA    (USER32.397)
  */
-BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCWSTR str )
+BOOL WINAPI ModifyMenuA( HMENU hMenu, UINT pos, UINT flags,
+                             UINT id, LPCSTR str )
 {
     BOOL ret;
 
     if (IS_STRING_ITEM(flags) && str)
     {
-        LPSTR newstr = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-        ret = ModifyMenuA( hMenu, pos, flags, id, newstr );
+        LPWSTR newstr = HEAP_strdupAtoW( GetProcessHeap(), 0, str );
+        ret = ModifyMenuW( hMenu, pos, flags, id, newstr );
         HeapFree( GetProcessHeap(), 0, newstr );
         return ret;
     }
-    else return ModifyMenuA( hMenu, pos, flags, id, (LPCSTR)str );
+    else return ModifyMenuW( hMenu, pos, flags, id, (LPCWSTR)str );
 }
 
 
@@ -4355,7 +4356,7 @@ BOOL WINAPI IsMenu(HMENU hmenu)
  */
 
 static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
-					LPMENUITEMINFOA lpmii, BOOL unicode)
+					LPMENUITEMINFOW lpmii, BOOL unicode)
 {
     MENUITEM *menu = MENU_FindItem (&hmenu, &item, bypos? MF_BYPOSITION : 0);
 
@@ -4369,13 +4370,13 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 	switch (MENU_ITEM_TYPE(menu->fType)) {
 	case MF_STRING:
  	    if (menu->text) {
-	        int len = strlen(menu->text);
+	        int len = strlenW(menu->text);
 	        if(lpmii->dwTypeData && lpmii->cch) {
 		    if (unicode)
-		        lstrcpynAtoW((LPWSTR) lpmii->dwTypeData, menu->text,
+		        lstrcpynW(lpmii->dwTypeData, menu->text,
 				     lpmii->cch);
 		    else
-		        lstrcpynA(lpmii->dwTypeData, menu->text, lpmii->cch);
+		        lstrcpynWtoA((LPSTR)lpmii->dwTypeData, menu->text, lpmii->cch);
 		    /* if we've copied a substring we return its length */
 		    if(lpmii->cch <= len)
 		        lpmii->cch--;
@@ -4395,12 +4396,12 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
     if (lpmii->fMask & MIIM_STRING) {
         if(lpmii->dwTypeData && lpmii->cch) {
 	    if (unicode)
-	        lstrcpynAtoW((LPWSTR) lpmii->dwTypeData, menu->text,
+	        lstrcpynW((LPWSTR) lpmii->dwTypeData, menu->text,
 			     lpmii->cch);
 	    else
-	        lstrcpynA(lpmii->dwTypeData, menu->text, lpmii->cch);
+	        lstrcpynWtoA((LPSTR)lpmii->dwTypeData, menu->text, lpmii->cch);
 	}
-	lpmii->cch = strlen(menu->text);
+	lpmii->cch = strlenW(menu->text);
     }
 
     if (lpmii->fMask & MIIM_FTYPE)
@@ -4434,7 +4435,8 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 BOOL WINAPI GetMenuItemInfoA( HMENU hmenu, UINT item, BOOL bypos,
                                   LPMENUITEMINFOA lpmii)
 {
-    return GetMenuItemInfo_common (hmenu, item, bypos, lpmii, FALSE);
+    return GetMenuItemInfo_common (hmenu, item, bypos, 
+                                    (LPMENUITEMINFOW)lpmii, FALSE);
 }
 
 /**********************************************************************
@@ -4444,7 +4446,7 @@ BOOL WINAPI GetMenuItemInfoW( HMENU hmenu, UINT item, BOOL bypos,
                                   LPMENUITEMINFOW lpmii)
 {
     return GetMenuItemInfo_common (hmenu, item, bypos,
-                                     (LPMENUITEMINFOA)lpmii, TRUE);
+                                     lpmii, TRUE);
 }
 
 /**********************************************************************
@@ -4452,7 +4454,7 @@ BOOL WINAPI GetMenuItemInfoW( HMENU hmenu, UINT item, BOOL bypos,
  */
 
 static BOOL SetMenuItemInfo_common(MENUITEM * menu,
-				       const MENUITEMINFOA *lpmii,
+				       const MENUITEMINFOW *lpmii,
 				       BOOL unicode)
 {
     if (!menu) return FALSE;
@@ -4472,9 +4474,9 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
 	if (IS_STRING_ITEM(menu->fType) && menu->text) {
 	    if (unicode)
-		menu->text = HEAP_strdupWtoA(SystemHeap, 0,  (LPWSTR) lpmii->dwTypeData);
+		menu->text = HEAP_strdupW(SystemHeap, 0,  lpmii->dwTypeData);
 	    else
-		menu->text = HEAP_strdupA(SystemHeap, 0, lpmii->dwTypeData);
+		menu->text = HEAP_strdupAtoW(SystemHeap, 0, (LPSTR)lpmii->dwTypeData);
 	}
     }
 
@@ -4493,9 +4495,9 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
 	    HeapFree(SystemHeap, 0, menu->text);
 	    if (unicode)
-		menu->text = HEAP_strdupWtoA(SystemHeap, 0,  (LPWSTR) lpmii->dwTypeData);
+		menu->text = HEAP_strdupW(SystemHeap, 0,  lpmii->dwTypeData);
 	    else
-		menu->text = HEAP_strdupA(SystemHeap, 0, lpmii->dwTypeData);
+		menu->text = HEAP_strdupAtoW(SystemHeap, 0, (LPSTR) lpmii->dwTypeData);
 	}
     }
 
@@ -4546,7 +4548,7 @@ BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
                                  const MENUITEMINFOA *lpmii) 
 {
     return SetMenuItemInfo_common(MENU_FindItem(&hmenu, &item, bypos? MF_BYPOSITION : 0),
-				    lpmii, FALSE);
+				    (const MENUITEMINFOW *)lpmii, FALSE);
 }
 
 /**********************************************************************
@@ -4556,7 +4558,7 @@ BOOL WINAPI SetMenuItemInfoW(HMENU hmenu, UINT item, BOOL bypos,
                                  const MENUITEMINFOW *lpmii)
 {
     return SetMenuItemInfo_common(MENU_FindItem(&hmenu, &item, bypos? MF_BYPOSITION : 0),
-				    (const MENUITEMINFOA*)lpmii, TRUE);
+				    lpmii, TRUE);
 }
 
 /**********************************************************************
@@ -4683,7 +4685,7 @@ BOOL WINAPI InsertMenuItemA(HMENU hMenu, UINT uItem, BOOL bypos,
                                 const MENUITEMINFOA *lpmii)
 {
     MENUITEM *item = MENU_InsertItem(hMenu, uItem, bypos ? MF_BYPOSITION : 0 );
-    return SetMenuItemInfo_common(item, lpmii, FALSE);
+    return SetMenuItemInfo_common(item, (const MENUITEMINFOW *)lpmii, FALSE);
 }
 
 
@@ -4694,7 +4696,7 @@ BOOL WINAPI InsertMenuItemW(HMENU hMenu, UINT uItem, BOOL bypos,
                                 const MENUITEMINFOW *lpmii)
 {
     MENUITEM *item = MENU_InsertItem(hMenu, uItem, bypos ? MF_BYPOSITION : 0 );
-    return SetMenuItemInfo_common(item, (const MENUITEMINFOA*)lpmii, TRUE);
+    return SetMenuItemInfo_common(item, lpmii, TRUE);
 }
 
 /**********************************************************************
