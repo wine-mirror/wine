@@ -327,6 +327,7 @@ static HICON
 STATUSBAR_GetIcon (STATUSWINDOWINFO *infoPtr, INT nPart)
 {
     TRACE("%d\n", nPart);
+    /* MSDN says: "simple parts are indexed with -1" */
     if ((nPart < -1) || (nPart >= infoPtr->numParts))
 	return 0;
 
@@ -371,6 +372,8 @@ STATUSBAR_GetTextA (STATUSWINDOWINFO *infoPtr, INT nPart, LPSTR buf)
     LRESULT result;
 
     TRACE("part %d\n", nPart);
+
+    /* MSDN says: "simple parts use index of 0", so this check is ok. */
     if (nPart < 0 || nPart >= infoPtr->numParts) return 0;
 
     if (infoPtr->simple)
@@ -505,6 +508,7 @@ STATUSBAR_SetIcon (STATUSWINDOWINFO *infoPtr, INT nPart, HICON hIcon)
 
     TRACE("setting part %d\n", nPart);
 
+    /* FIXME: MSDN says "if nPart is -1, the status bar is assumed simple" */
     if (nPart == -1) {
 	if (infoPtr->part0.hIcon == hIcon) /* same as - no redraw */
 	    return TRUE;
@@ -625,12 +629,17 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
     BOOL changed = FALSE;
 
     TRACE("part %d, text %s\n", nPart, debugstr_t(text, isW));
-    if (nPart < 0 || nPart >= infoPtr->numParts) return FALSE;
 
-    if (nPart == 0x00ff)
+    /* MSDN says: "If the parameter is set to SB_SIMPLEID (255), the status
+     * window is assumed to be a simple window */
+
+    if (nPart == 0x00ff) {
 	part = &infoPtr->part0;
-    else if (!infoPtr->simple && infoPtr->parts)
-	part = &infoPtr->parts[nPart];
+    } else {
+	if (infoPtr->parts && (nPart < 0 || nPart >= infoPtr->numParts)) {
+	    part = &infoPtr->parts[nPart];
+	}
+    }
     if (!part) return FALSE;
 
     if (part->style != style)
