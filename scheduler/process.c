@@ -636,7 +636,9 @@ void WINAPI ExitProcess( DWORD status )
     req->handle    = GetCurrentProcess();
     req->exit_code = status;
     server_call( REQ_TERMINATE_PROCESS );
-    exit( status );
+    /* FIXME: need separate address spaces for that */
+    /* exit( status ); */
+    SYSDEPS_ExitThread( status );
 }
 
 /***********************************************************************
