@@ -7,7 +7,7 @@ init WINMM_LibMain
   3 stub WINMM_3
   4 stdcall CloseDriver(long long long) CloseDriver
   5 stdcall DefDriverProc(long long long long long) DefDriverProc
-  6 stub DriverCallback
+  6 stdcall DriverCallback(long long long long long long long) DriverCallback
   7 stdcall DrvClose(long long long) CloseDriver
   8 stdcall DrvDefDriverProc(long long long long long) DefDriverProc
   9 stdcall DrvGetModuleHandle(long) GetDriverModuleHandle
