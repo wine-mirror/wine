@@ -204,7 +204,7 @@ static void pixel_convert_32_to_24(
 }
 
 Convert ModeEmulations[6] = {
-  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  24, 24, 0xFF0000, 0x0FF0000, 0x00FF }, { pixel_convert_32_to_24, NULL } },
+  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  24, 24, 0xFF0000, 0x0000FF00, 0x00FF }, { pixel_convert_32_to_24, NULL } },
   { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_32_to_8,  palette_convert_24_to_8 } },
   { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  16, 16, 0xF800, 0x07E0, 0x001F }, { pixel_convert_32_to_16, NULL } },
   { { 24, 24,   0xFF0000,   0x00FF00,   0x0000FF }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_24_to_8,  palette_convert_24_to_8 } },
