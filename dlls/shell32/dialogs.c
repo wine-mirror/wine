@@ -30,7 +30,7 @@
 #include "shell32_main.h"
 #include "undocshell.h"
 
-typedef struct 
+typedef struct
     {
 	HWND hwndOwner ;
 	HICON hIcon ;
@@ -39,7 +39,7 @@ typedef struct
 	LPCSTR lpstrDescription ;
 	UINT uFlags ;
     } RUNFILEDLGPARAMS ;
-    
+
 typedef BOOL (*LPFNOFN) (OPENFILENAMEA *) ;
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
@@ -77,10 +77,17 @@ void WINAPI RunFileDlg(
 	UINT uFlags)
 {
 
-    RUNFILEDLGPARAMS rfdp = {hwndOwner, hIcon, lpstrDirectory, lpstrTitle, lpstrDescription, uFlags} ;
+    RUNFILEDLGPARAMS rfdp;
     HRSRC hRes;
     LPVOID template;
     TRACE("\n");
+
+    rfdp.hwndOwner        = hwndOwner;
+    rfdp.hIcon            = hIcon;
+    rfdp.lpstrDirectory   = lpstrDirectory;
+    rfdp.lpstrTitle       = lpstrTitle;
+    rfdp.lpstrDescription = lpstrDescription;
+    rfdp.uFlags           = uFlags;
 
     if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_RUN_DLG", RT_DIALOGA)))
         {
@@ -104,7 +111,7 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     int ic ;
     char *psz, szMsg[256] ;
     static RUNFILEDLGPARAMS *prfdp = NULL ;
-    
+
     switch (message)
         {
         case WM_INITDIALOG :
@@ -115,12 +122,12 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             FillList (GetDlgItem (hwnd, 12298), NULL) ;
             SetFocus (GetDlgItem (hwnd, 12298)) ;
             return TRUE ;
-            
+
         case WM_COMMAND :
             {
             STARTUPINFOA si ;
             PROCESS_INFORMATION pi ;
-            
+
             si.cb = sizeof (STARTUPINFOA) ;
             si.lpReserved = NULL ;
             si.lpDesktop = NULL ;
@@ -135,7 +142,7 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             si.dwFlags = 0 ;
             si.cbReserved2 = 0 ;
             si.lpReserved2 = NULL ;
-            
+
             switch (LOWORD (wParam))
                 {
                 case IDOK :
@@ -145,7 +152,7 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
                         {
                         psz = malloc (ic + 2) ;
                         GetWindowTextA (htxt, psz, ic + 1) ;
-                        
+
                         if (!CreateProcessA (NULL, psz, NULL, NULL, TRUE,
                             NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
                             {
@@ -161,7 +168,7 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
                             sprintf (szMsg, "Error: %s", pszSysMsg) ;
                             LocalFree ((HLOCAL)pszSysMsg) ;
                             MessageBoxA (hwnd, szMsg, "Nix", MB_OK | MB_ICONEXCLAMATION) ;
-                            
+
                             free (psz) ;
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                             return TRUE ;
@@ -171,11 +178,11 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
                         EndDialog (hwnd, 0) ;
                         }
                     }
-                    
+
                 case IDCANCEL :
                     EndDialog (hwnd, 0) ;
                     return TRUE ;
-                
+
                 case 12288 :
                     {
                     HMODULE hComdlg = (HMODULE)NULL ;
@@ -198,36 +205,36 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
                         "Browse",
                         OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST,
                         0,
-                        0, 
+                        0,
                         (LPCSTR)NULL,
                         0,
-                        (LPOFNHOOKPROC)NULL, 
+                        (LPOFNHOOKPROC)NULL,
                         (LPCSTR)NULL
                         } ;
-                    
+
                     ofn.hwndOwner = hwnd ;
-                    
+
                     if ((HMODULE)NULL == (hComdlg = LoadLibraryExA ("comdlg32", (HANDLE)NULL, 0)))
                         {
                         MessageBoxA (hwnd, "Unable to display dialog box (LoadLibraryEx) !", "Nix", MB_OK | MB_ICONEXCLAMATION) ;
                         return TRUE ;
                         }
-                    
+
                     if ((LPFNOFN)NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameA")))
                         {
                         MessageBoxA (hwnd, "Unable to display dialog box (GetProcAddress) !", "Nix", MB_OK | MB_ICONEXCLAMATION) ;
                         return TRUE ;
                         }
-                    
+
                     ofnProc (&ofn) ;
-                    
+
                     SetFocus (GetDlgItem (hwnd, IDOK)) ;
                     SetWindowTextA (GetDlgItem (hwnd, 12298), szFName) ;
                     SendMessageA (GetDlgItem (hwnd, 12298), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                     SetFocus (GetDlgItem (hwnd, IDOK)) ;
-                    
+
                     FreeLibrary (hComdlg) ;
-                    
+
                     return TRUE ;
                     }
                 }
@@ -245,14 +252,14 @@ void FillList (HWND hCb, char *pszLatest)
     char *pszList = NULL, *pszCmd = NULL, cMatch = 0, cMax = 0x60, szIndex[2] = "-" ;
     DWORD icList = 0, icCmd = 0 ;
     int Nix ;
-    
+
     SendMessageA (hCb, CB_RESETCONTENT, 0, 0) ;
-    
+
     if (ERROR_SUCCESS != RegCreateKeyExA (
         HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RunMRU",
         0, "", REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL))
         MessageBoxA (hCb, "Unable to open registry key !", "Nix", MB_OK) ;
-        
+
     RegQueryValueExA (hkey, "MRUList", NULL, NULL, NULL, &icList) ;
 
     if (icList > 0)
@@ -266,20 +273,20 @@ void FillList (HWND hCb, char *pszLatest)
         pszList = malloc (icList = 1) ;
         pszList[0] = 0 ;
         }
-    
+
     for (Nix = 0 ; Nix < icList - 1 ; Nix++)
         {
         if (pszList[Nix] > cMax)
             cMax = pszList[Nix] ;
-            
+
         szIndex[0] = pszList[Nix] ;
-        
+
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, NULL, &icCmd))
             MessageBoxA (hCb, "Unable to grab size of index", "Nix", MB_OK) ;
         pszCmd = realloc (pszCmd, icCmd) ;
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, pszCmd, &icCmd))
             MessageBoxA (hCb, "Unable to grab index", "Nix", MB_OK) ;
-        
+
         if (NULL != pszLatest)
             {
             if (!strcasecmp (pszCmd, pszLatest))
@@ -291,14 +298,14 @@ void FillList (HWND hCb, char *pszLatest)
                 SendMessageA (hCb, CB_INSERTSTRING, 0, (LPARAM)pszCmd) ;
                 SetWindowTextA (hCb, pszCmd) ;
                 SendMessageA (hCb, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
-                    
+
                 cMatch = pszList[Nix] ;
                 memmove (&pszList[1], pszList, Nix) ;
                 pszList[0] = cMatch ;
                 continue ;
                 }
             }
-            
+
         if (26 != icList - 1 || icList - 2 != Nix || cMatch || NULL == pszLatest)
             {
             /*
@@ -311,7 +318,7 @@ void FillList (HWND hCb, char *pszLatest)
                 SetWindowTextA (hCb, pszCmd) ;
                 SendMessageA (hCb, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                 }
-                
+
             }
         else
             {
@@ -322,7 +329,7 @@ void FillList (HWND hCb, char *pszLatest)
             SendMessageA (hCb, CB_INSERTSTRING, 0, (LPARAM)pszLatest) ;
             SetWindowTextA (hCb, pszLatest) ;
             SendMessageA (hCb, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
-        
+
             cMatch = pszList[Nix] ;
             memmove (&pszList[1], pszList, Nix) ;
             pszList[0] = cMatch ;
@@ -340,7 +347,7 @@ void FillList (HWND hCb, char *pszLatest)
         SendMessageA (hCb, CB_INSERTSTRING, 0, (LPARAM)pszLatest) ;
         SetWindowTextA (hCb, pszLatest) ;
         SendMessageA (hCb, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
-        
+
         cMatch = ++cMax ;
         pszList = realloc (pszList, ++icList) ;
         memmove (&pszList[1], pszList, icList - 1) ;
@@ -350,8 +357,8 @@ void FillList (HWND hCb, char *pszLatest)
         }
 
     RegSetValueExA (hkey, "MRUList", 0, REG_SZ, pszList, strlen (pszList) + 1) ;
-    
-    free (pszCmd) ;    
+
+    free (pszCmd) ;
     free (pszList) ;
     }
 
