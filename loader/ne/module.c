@@ -13,7 +13,6 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "module.h"
-#include "neexe.h"
 #include "toolhelp.h"
 #include "file.h"
 #include "ldt.h"
@@ -29,6 +28,17 @@
 #include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
+
+/*
+ * Segment table entry
+ */
+struct ne_segment_table_entry_s
+{
+    WORD seg_data_offset;   /* Sector offset of segment data	*/
+    WORD seg_data_length;   /* Length of segment data		*/
+    WORD seg_flags;         /* Flags associated with this segment	*/
+    WORD min_alloc;         /* Minimum allocation size for this	*/
+};
 
 #define hFirstModule (pThhook->hExeHead)
 
@@ -111,8 +121,8 @@ void NE_DumpModule( HMODULE16 hModule )
         DPRINTF( "Alignment: %d\n", *pword++ );
         while (*pword)
         {
-            struct resource_typeinfo_s *ptr = (struct resource_typeinfo_s *)pword;
-            struct resource_nameinfo_s *pname = (struct resource_nameinfo_s *)(ptr + 1);
+            NE_TYPEINFO *ptr = (NE_TYPEINFO *)pword;
+            NE_NAMEINFO *pname = (NE_NAMEINFO *)(ptr + 1);
             DPRINTF( "id=%04x count=%d\n", ptr->type_id, ptr->count );
             for (i = 0; i < ptr->count; i++, pname++)
                 DPRINTF( "offset=%d len=%d id=%04x\n",
@@ -284,11 +294,11 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
 
 
 /***********************************************************************
- *           NE_GetEntryPoint   (WPROCS.27)
+ *           NE_GetEntryPoint / EntryAddrProc16   (KERNEL Wine-specific export)
  *
  * Return the entry point for a given ordinal.
  */
-FARPROC16 WINAPI WIN16_NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
+FARPROC16 WINAPI EntryAddrProc16( HMODULE16 hModule, WORD ordinal )
 {
     FARPROC16 ret = NE_GetEntryPointEx( hModule, ordinal, TRUE );
     CURRENT_STACK16->ecx = hModule; /* FIXME: might be incorrect value */
@@ -1215,15 +1225,8 @@ HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
  */
 static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
 {
-    FARPROC16 WEP = (FARPROC16)0;
-    WORD ordinal = NE_GetOrdinal( hModule, "WEP" );
-
-    if (ordinal) WEP = NE_GetEntryPoint( hModule, ordinal );
-    if (!WEP)
-    {
-	WARN("module %04x doesn't have a WEP\n", hModule );
-	return FALSE;
-    }
+    FARPROC16 WEP = GetProcAddress16( hModule, "WEP" );
+    if (!WEP) return FALSE;
     return NE_CallTo16_word_w( WEP, WEP_FREE_DLL );
 }
 

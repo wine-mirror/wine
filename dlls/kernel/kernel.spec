@@ -515,6 +515,12 @@ owner	kernel32
 652 stub IsThreadId
 653 stub OkWithKernelToChangeUsers
 
+# Extra Wine internal functions for thunking and self-loader
+
+666 pascal UTGlue16(ptr long ptr long) UTGlue16
+667 pascal EntryAddrProc(word word) EntryAddrProc16
+668 pascal MyAlloc(word word word) MyAlloc16
+ 
 
 # 700-704 are Win95 only
 

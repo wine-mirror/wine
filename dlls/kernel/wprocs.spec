@@ -2,10 +2,6 @@ name	wprocs
 type	win16
 owner	kernel32
 
-23 pascal UTGlue16(ptr long ptr long) UTGlue16
-27 pascal EntryAddrProc(word word) WIN16_NE_GetEntryPoint
-28 pascal MyAlloc(word word word) NE_AllocateSegment
- 
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'interrupt' keyword takes care of the flags pushed on the stack by the interrupt
 116 interrupt INT_Int10Handler() INT_Int10Handler
@@ -26,6 +22,8 @@ owner	kernel32
 165 interrupt INT_Int41Handler() INT_Int41Handler
 175 interrupt INT_Int4bHandler() INT_Int4bHandler
 192 interrupt INT_Int5cHandler() NetBIOSCall16
+# default handler for unimplemented interrupts
+356 interrupt INT_DefaultHandler() INT_DefaultHandler
 
 # VxDs. The first Vxd is at 400
 #

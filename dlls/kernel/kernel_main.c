@@ -8,7 +8,6 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 
-#include "neexe.h"
 #include "module.h"
 #include "task.h"
 #include "selectors.h"
@@ -50,7 +49,7 @@ static BOOL process_attach(void)
     NE_SetEntryPoint( hModule, 455, __get_ds() );
 
     /* Initialize KERNEL.THHOOK */
-    TASK_InstallTHHook((THHOOK *)PTR_SEG_TO_LIN((SEGPTR)NE_GetEntryPoint( hModule, 332 )));
+    TASK_InstallTHHook((THHOOK *)PTR_SEG_TO_LIN((SEGPTR)GetProcAddress16( hModule, (LPCSTR)332 )));
 
     /* Initialize the real-mode selector entry points */
 #define SET_ENTRY_POINT( num, addr ) \
@@ -72,7 +71,6 @@ static BOOL process_attach(void)
 
     /* Force loading of some dlls */
     if (LoadLibrary16( "system" ) < 32) return FALSE;
-    if (LoadLibrary16( "wprocs" ) < 32) return FALSE;
 
     /* Initialize communications */
     COMM_Init();

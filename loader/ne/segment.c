@@ -16,7 +16,6 @@
 #include <string.h>
 
 #include "wine/winbase16.h"
-#include "neexe.h"
 #include "global.h"
 #include "task.h"
 #include "file.h"
@@ -29,6 +28,37 @@ DECLARE_DEBUG_CHANNEL(dll);
 DECLARE_DEBUG_CHANNEL(fixup);
 DECLARE_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(segment);
+
+/*
+ * Relocation table entry
+ */
+struct relocation_entry_s
+{
+    BYTE address_type;    /* Relocation address type */
+    BYTE relocation_type; /* Relocation type */
+    WORD offset;          /* Offset in segment to fixup */
+    WORD target1;         /* Target specification */
+    WORD target2;         /* Target specification */
+};
+
+/*
+ * Relocation address types
+ */
+#define NE_RADDR_LOWBYTE      0
+#define NE_RADDR_SELECTOR     2
+#define NE_RADDR_POINTER32    3
+#define NE_RADDR_OFFSET16     5
+#define NE_RADDR_POINTER48    11
+#define NE_RADDR_OFFSET32     13
+
+/*
+ * Relocation types
+ */
+#define NE_RELTYPE_INTERNAL  0
+#define NE_RELTYPE_ORDINAL   1
+#define NE_RELTYPE_NAME      2
+#define NE_RELTYPE_OSFIXUP   3
+#define NE_RELFLAG_ADDITIVE  4
 
 #define SEL(x) ((x)|1)
 
@@ -398,7 +428,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         HFILE16 hFile16;
         /* Handle self-loading modules */
         SELFLOADHEADER *selfloadheader;
-        HMODULE16 hselfload = GetModuleHandle16("WPROCS");
+        HMODULE16 mod = GetModuleHandle16("KERNEL");
         DWORD oldstack;
 
         TRACE_(module)("%.*s is a self-loading module!\n",
@@ -407,9 +437,9 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         if (!NE_LoadSegment( pModule, 1 )) return FALSE;
         selfloadheader = (SELFLOADHEADER *)
                           PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg), 0);
-        selfloadheader->EntryAddrProc = NE_GetEntryPoint(hselfload,27);
-        selfloadheader->MyAlloc  = NE_GetEntryPoint(hselfload,28);
-        selfloadheader->SetOwner = NE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
+        selfloadheader->EntryAddrProc = GetProcAddress16(mod,"EntryAddrProc");
+        selfloadheader->MyAlloc       = GetProcAddress16(mod,"MyAlloc");
+        selfloadheader->SetOwner      = GetProcAddress16(mod,"FarSetOwner");
         pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, WINE_LDT_FLAGS_DATA));
         oldstack = NtCurrentTeb()->cur_stack;
         NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
@@ -671,12 +701,10 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 {
     WORD hInst, ds, heap;
     FARPROC16 entryPoint;
-    WORD ordinal;
 
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE)) return;
     if (!(pModule->flags & NE_FFLAGS_BUILTIN) && pModule->expected_version < 0x0400) return;
-    if (!(ordinal = NE_GetOrdinal( pModule->self, "DllEntryPoint" ))) return;
-    if (!(entryPoint = NE_GetEntryPoint( pModule->self, ordinal ))) return;
+    if (!(entryPoint = GetProcAddress16( pModule->self, "DllEntryPoint" ))) return;
 
     NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
 
@@ -796,11 +824,11 @@ static WORD NE_Ne2MemFlags(WORD flags)
 }
 
 /***********************************************************************
- *           NE_AllocateSegment (WPROCS.26)
+ *           MyAlloc16   (KERNEL Wine-specific export)
  *
  * MyAlloc() function for self-loading apps.
  */
-DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
+DWORD WINAPI MyAlloc16( WORD wFlags, WORD wSize, WORD wElem )
 {
     WORD size = wSize << wElem;
     HANDLE16 hMem = 0;

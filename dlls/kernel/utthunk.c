@@ -65,7 +65,7 @@ extern LONG CALLBACK UTTHUNK_CallTo16_long_ll(FARPROC16,LONG,LONG);
 /* ### stop build ### */
 
 /****************************************************************************
- *		UTGlue16     (WPROCS.*)
+ *		UTGlue16     (KERNEL Wine-specific export)
  */
 DWORD WINAPI UTGlue16( LPVOID lpBuff, DWORD dwUserDefined, SEGPTR *translationList,
 		       UTGLUEPROC target )
@@ -148,11 +148,8 @@ static UTINFO *UTAlloc( HMODULE hModule, HMODULE16 hModule16,
 
     if ( !UTGlue16_Segptr )
     {
-        HMODULE16 hModule = GetModuleHandle16( "WPROCS" );
-        int       ordinal = NE_GetOrdinal( hModule, "UTGlue16" );
-        if ( hModule && ordinal )
-            UTGlue16_Segptr = NE_GetEntryPoint( hModule, ordinal );
-
+        HMODULE16 hModule = GetModuleHandle16( "KERNEL" );
+        UTGlue16_Segptr = GetProcAddress16( hModule, "UTGlue16" );
         if ( !UTGlue16_Segptr ) return NULL;
     }
 

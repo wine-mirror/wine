@@ -32,13 +32,18 @@ FARPROC16 INT_GetPMHandler( BYTE intnum )
         static HMODULE16 wprocs;
         if (!wprocs)
         {
-            if ((wprocs = GetModuleHandle16( "wprocs" )) < 32)
+            if (((wprocs = GetModuleHandle16( "wprocs" )) < 32) &&
+                ((wprocs = LoadLibrary16( "wprocs" )) < 32))
             {
                 ERR("could not load wprocs.dll\n");
                 return 0;
             }
         }
-        INT_Vectors[intnum] = NE_GetEntryPoint( wprocs, FIRST_INTERRUPT + intnum );
+        if (!(INT_Vectors[intnum] = GetProcAddress16( wprocs, (LPCSTR)(FIRST_INTERRUPT + intnum))))
+        {
+            WARN("int%x not implemented, returning dummy handler\n", intnum );
+            INT_Vectors[intnum] = GetProcAddress16( wprocs, (LPCSTR)(FIRST_INTERRUPT + 256) );
+        }
     }
     return INT_Vectors[intnum];
 }
@@ -175,4 +180,14 @@ int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
             return 1;
     }
     return 0;
+}
+
+
+/**********************************************************************
+ *         INT_DefaultHandler
+ *
+ * Default interrupt handler.
+ */
+void WINAPI INT_DefaultHandler( CONTEXT86 *context )
+{
 }

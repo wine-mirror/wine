@@ -326,15 +326,15 @@ static void do_int2f_16( CONTEXT86 *context )
 	break;
 
     case 0x84:  /* Get device API entry point */
-        addr = (DWORD)NE_GetEntryPoint( GetModuleHandle16("WPROCS"),
-                                        VXD_BASE + BX_reg(context) );
-        if (!addr)  /* not supported */
         {
-	    ERR("Accessing unknown VxD %04x - Expect a failure now.\n",
-                     BX_reg(context) );
+            HMODULE16 mod = GetModuleHandle16("wprocs");
+            if (mod < 32) mod = LoadLibrary16( "wprocs" );
+            addr = (DWORD)GetProcAddress16( mod, (LPCSTR)(VXD_BASE + BX_reg(context)) );
+            if (!addr)  /* not supported */
+                ERR("Accessing unknown VxD %04x - Expect a failure now.\n", BX_reg(context) );
+            context->SegEs = SELECTOROF(addr);
+            DI_reg(context) = OFFSETOF(addr);
         }
-	context->SegEs = SELECTOROF(addr);
-	DI_reg(context) = OFFSETOF(addr);
 	break;
 
     case 0x86:  /* DPMI detect mode */
