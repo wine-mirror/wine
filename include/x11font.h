@@ -72,12 +72,24 @@ typedef struct
 #define FI_ENC_TCVN		7
 #define FI_ENC_TIS620		8
 
+enum X11DRV_CPTABLE
+{
+    X11DRV_CPTABLE_SBCS,
+    X11DRV_CPTABLE_UNICODE,
+    X11DRV_CPTABLE_CP932,
+    X11DRV_CPTABLE_CP936,
+    X11DRV_CPTABLE_CP949,
+    X11DRV_CPTABLE_CP950,
+    X11DRV_CPTABLE_COUNT
+};
+
 typedef struct tagFontInfo
 {
     struct tagFontInfo*		next;
     UINT16			fi_flags;
     UINT16			fi_encoding;
     UINT16			codepage;
+    UINT16			cptable;
 
  /* LFD parameters can be quite different from the actual metrics */
 
@@ -96,20 +108,20 @@ typedef struct tagFontInfo
 #define LFD_FIELDS 14
 typedef struct
 {
-    char* foundry;
-    char* family;
-    char* weight;
-    char* slant;
-    char* set_width;
-    char* add_style;
-    char* pixel_size;
-    char* point_size;
-    char* resolution_x;
-    char* resolution_y;
-    char* spacing;
-    char* average_width;
-    char* charset_registry;
-    char* charset_encoding;
+    const char* foundry;
+    const char* family;
+    const char* weight;
+    const char* slant;
+    const char* set_width;
+    const char* add_style;
+    const char* pixel_size;
+    const char* point_size;
+    const char* resolution_x;
+    const char* resolution_y;
+    const char* spacing;
+    const char* average_width;
+    const char* charset_registry;
+    const char* charset_encoding;
 } LFD;
 
 typedef struct tagFontResource
@@ -213,5 +225,21 @@ typedef struct
 extern fontObject* XFONT_GetFontObject( X_PHYSFONT pFont );
 extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont );
 extern LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont );
+
+typedef struct tagX11DRV_CP
+{
+    XChar2b* (*punicode_to_char2b)( fontObject* pfo,
+                                    LPCWSTR lpwstr, UINT count );
+    void (*pDrawString)( fontObject* pfo, Display* pdisp, Drawable d, GC gc,
+                         int x, int y, XChar2b* pstr, int count );
+    int (*pTextWidth)( fontObject* pfo, XChar2b* pstr, int count );
+    void (*pDrawText)( fontObject* pfo, Display* pdisp, Drawable d, GC gc,
+                       int x, int y, XTextItem16* pitems, int count );
+    void (*pTextExtents)( fontObject* pfo, XChar2b* pstr, int count,
+                          int* pdir, int* pascent, int* pdescent,
+                          int* pwidth );
+} X11DRV_CP;
+
+extern const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT];
 
 #endif /* __WINE_X11FONT_H */

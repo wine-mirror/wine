@@ -28,74 +28,6 @@ DEFAULT_DEBUG_CHANNEL(text);
 
 
 /***********************************************************************
- *        unicode_to_char2b
- *
- * dup a Unicode string into a XChar2b array; must be HeapFree'd by the caller
- */
-static XChar2b *unicode_to_char2b( LPCWSTR wstr, UINT count, UINT codepage, UINT def_char )
-{
-    XChar2b *str2b;
-    UINT i;
-
-    if (!(str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) )))
-	return NULL;
-
-    if (codepage != 0)  /* multibyte font */
-    {
-	BYTE *str;
-        char ch = def_char;
-	CPINFO cpinfo;
-	
-	/* allocate the worst case count * 2 bytes */
-	if (!(str = HeapAlloc( GetProcessHeap(), 0, count * 2 )))
-	{
-	    HeapFree( GetProcessHeap(), 0, str2b );
-	    return NULL;
-	}
-
-	/* we have to convert from unicode to codepage first */
-        WideCharToMultiByte( codepage, 0, wstr, count, str, count, &ch, NULL );
-
-	GetCPInfo( codepage, &cpinfo );
-
-	if (cpinfo.MaxCharSize == 1)
-	{
-    	    for (i = 0; i < count; i++)
-    	    {
-        	str2b[i].byte1 = 0;
-        	str2b[i].byte2 = str[i];
-    	    }
-	}
-	else
-	{
-	    XChar2b *str2b_dst = str2b;
-    	    for (i = 0; i < count; i++, str2b_dst++)
-    	    {
-        	str2b_dst->byte2 = str[i];
-		if (IsDBCSLeadByteEx( codepage, str[i] ))
-		{
-        	    str2b_dst->byte1 = str[i + 1];
-		    i++;
-		}
-		else
-		    str2b_dst->byte1 = 0;
-    	    }
-	}
-	HeapFree( GetProcessHeap(), 0, str );
-    }
-    else  /* codepage 0 -> unicode font */
-    {
-	for (i = 0; i < count; i++)
-        {
-	    str2b[i].byte1 = wstr[i] >> 8;
-	    str2b[i].byte2 = wstr[i] & 0xff;
-	}
-    }
-    return str2b;
-}
-
-
-/***********************************************************************
  *           X11DRV_ExtTextOut
  */
 BOOL
@@ -294,7 +226,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     }
     
     /* Draw the text (count > 0 verified) */
-    if (!(str2b = unicode_to_char2b( wstr, count, pfo->fi->codepage, pfo->fs->default_char )))
+    if (!(str2b = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, wstr, count )))
         goto FAIL;
 
     TSXSetForeground( display, physDev->gc, physDev->textPixel );
@@ -302,8 +234,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     {
       if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
       {
-        TSXDrawString16( display, physDev->drawable, physDev->gc, 
-			 dc->w.DCOrgX + x, dc->w.DCOrgY + y, str2b, count );
+        X11DRV_cptable[pfo->fi->cptable].pDrawString(
+		pfo, display, physDev->drawable, physDev->gc,
+		dc->w.DCOrgX + x, dc->w.DCOrgY + y, str2b, count );
       }
       else  /* Now the fun begins... */
       {
@@ -336,7 +269,8 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 		do
 		{
 		    delta += (lpDx[i] * dc->vportExtX + extra) / dc->wndExtX
-		      - TSXTextWidth16( font, str2b + i, 1);
+		      - X11DRV_cptable[pfo->fi->cptable].pTextWidth(
+							pfo, str2b + i, 1);
 		    pitem->nchars++;
 		} while ((++i < count) && !delta);
 		pitem++;
@@ -363,8 +297,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
             } 
         }
 
-        TSXDrawText16( display, physDev->drawable, physDev->gc,
-                   dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
+	X11DRV_cptable[pfo->fi->cptable].pDrawText( pfo, display,
+		physDev->drawable, physDev->gc,
+		dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
         HeapFree( GetProcessHeap(), 0, items );
       }
     }
@@ -383,8 +318,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset *
 			 pfo->lpX11Trans->b / pfo->lpX11Trans->pixelsize );
 
-	TSXDrawString16( display, physDev->drawable, physDev->gc,
-		       x_i, y_i, &str2b[i], 1);
+	X11DRV_cptable[pfo->fi->cptable].pDrawString(
+		pfo, display, physDev->drawable, physDev->gc,
+		x_i, y_i, &str2b[i], 1);
 	if (lpDx)
 	  offset += XLSTODS(dc, lpDx[i]);
 	else
@@ -460,11 +396,12 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
     if( pfo ) {
         if( !pfo->lpX11Trans ) {
 	    int dir, ascent, descent;
-	    XCharStruct info;
-	    XChar2b *p = unicode_to_char2b( str, count, pfo->fi->codepage, pfo->fs->default_char );
+	    int info_width;
+	    XChar2b *p = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, str, count );
             if (!p) return FALSE;
-	    TSXTextExtents16( pfo->fs, p, count, &dir, &ascent, &descent, &info );
-	    size->cx = abs((info.width + dc->w.breakRem + count * 
+	    X11DRV_cptable[pfo->fi->cptable].pTextExtents( pfo, p,
+				count, &dir, &ascent, &descent, &info_width );
+	    size->cx = abs((info_width + dc->w.breakRem + count * 
 			    dc->w.charExtra) * dc->wndExtX / dc->vportExtX);
 	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
 			   dc->wndExtY / dc->vportExtY);

@@ -102,117 +102,118 @@ static const char*	INIDefaultSansSerif = "DefaultSansSerif";
 
 typedef struct __sufch
 {
-  LPSTR		psuffix;
-  BYTE		charset;
-  UINT16	codepage;
+  LPCSTR        psuffix;
+  BYTE          charset;
+  WORD          codepage;
+  WORD          cptable;
 } SuffixCharset;
 
-static SuffixCharset sufch_ansi[] = {
-    {  "0", ANSI_CHARSET, 1252 },
-    { NULL, ANSI_CHARSET, 1252 }};
+static const SuffixCharset sufch_ansi[] = {
+    {  "0", ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS },
+    { NULL, ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_iso646[] = {
-    { "irv", ANSI_CHARSET, 1252 },
-    { NULL, ANSI_CHARSET, 1252 }};
+static const SuffixCharset sufch_iso646[] = {
+    { "irv", ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS },
+    { NULL, ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_iso8859[] = {
-    {  "1", ANSI_CHARSET, 28591 },
-    {  "2", EE_CHARSET, 28592 },
-    {  "3", ISO3_CHARSET, 28593 }, 
-    {  "4", ISO4_CHARSET, 28594 }, 
-    {  "5", RUSSIAN_CHARSET, 28595 },
-    {  "6", ARABIC_CHARSET, 28596 },
-    {  "7", GREEK_CHARSET, 28597 },
-    {  "8", HEBREW_CHARSET, 28598 }, 
-    {  "9", TURKISH_CHARSET, 28599 },
-    { "10", BALTIC_CHARSET, 1257 }, /* FIXME */
-    { "11", THAI_CHARSET, 874 }, /* FIXME */
-    { "12", SYMBOL_CHARSET, CP_SYMBOL },
-    { "13", SYMBOL_CHARSET, CP_SYMBOL },
-    { "14", SYMBOL_CHARSET, CP_SYMBOL },
-    { "15", ANSI_CHARSET, 1252 },
-    { NULL, ANSI_CHARSET, 1252 }};
+static const SuffixCharset sufch_iso8859[] = {
+    {  "1", ANSI_CHARSET, 28591, X11DRV_CPTABLE_SBCS },
+    {  "2", EE_CHARSET, 28592, X11DRV_CPTABLE_SBCS },
+    {  "3", ISO3_CHARSET, 28593, X11DRV_CPTABLE_SBCS }, 
+    {  "4", ISO4_CHARSET, 28594, X11DRV_CPTABLE_SBCS }, 
+    {  "5", RUSSIAN_CHARSET, 28595, X11DRV_CPTABLE_SBCS },
+    {  "6", ARABIC_CHARSET, 28596, X11DRV_CPTABLE_SBCS },
+    {  "7", GREEK_CHARSET, 28597, X11DRV_CPTABLE_SBCS },
+    {  "8", HEBREW_CHARSET, 28598, X11DRV_CPTABLE_SBCS }, 
+    {  "9", TURKISH_CHARSET, 28599, X11DRV_CPTABLE_SBCS },
+    { "10", BALTIC_CHARSET, 1257, X11DRV_CPTABLE_SBCS }, /* FIXME */
+    { "11", THAI_CHARSET, 874, X11DRV_CPTABLE_SBCS }, /* FIXME */
+    { "12", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    { "13", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    { "14", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    { "15", ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS },
+    { NULL, ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_microsoft[] = {
-    { "cp1250", EE_CHARSET, 1250 },
-    { "cp1251", RUSSIAN_CHARSET, 1251 },
-    { "cp1252", ANSI_CHARSET, 1252 },
-    { "cp1253", GREEK_CHARSET, 1253 },
-    { "cp1254", TURKISH_CHARSET, 1254 },
-    { "cp1255", HEBREW_CHARSET, 1255 },
-    { "cp1256", ARABIC_CHARSET, 1256 },
-    { "cp1257", BALTIC_CHARSET, 1257 },
-    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL },
-    { "symbol", SYMBOL_CHARSET, CP_SYMBOL },
-    {   NULL,   ANSI_CHARSET, 1252 }};
+static const SuffixCharset sufch_microsoft[] = {
+    { "cp1250", EE_CHARSET, 1250, X11DRV_CPTABLE_SBCS },
+    { "cp1251", RUSSIAN_CHARSET, 1251, X11DRV_CPTABLE_SBCS },
+    { "cp1252", ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS },
+    { "cp1253", GREEK_CHARSET, 1253, X11DRV_CPTABLE_SBCS },
+    { "cp1254", TURKISH_CHARSET, 1254, X11DRV_CPTABLE_SBCS },
+    { "cp1255", HEBREW_CHARSET, 1255, X11DRV_CPTABLE_SBCS },
+    { "cp1256", ARABIC_CHARSET, 1256, X11DRV_CPTABLE_SBCS },
+    { "cp1257", BALTIC_CHARSET, 1257, X11DRV_CPTABLE_SBCS },
+    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    { "symbol", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    {   NULL,   ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_tcvn[] = {
-    {  "0", TCVN_CHARSET, 1252 }, /* FIXME */
-    { NULL, TCVN_CHARSET, 1252 }};
+static const SuffixCharset sufch_tcvn[] = {
+    {  "0", TCVN_CHARSET, 1252, X11DRV_CPTABLE_SBCS }, /* FIXME */
+    { NULL, TCVN_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_tis620[] = {
-    {  "0", THAI_CHARSET, 874 }, /* FIXME */
-    { NULL, THAI_CHARSET, 874 }};
+static const SuffixCharset sufch_tis620[] = {
+    {  "0", THAI_CHARSET, 874, X11DRV_CPTABLE_SBCS }, /* FIXME */
+    { NULL, THAI_CHARSET, 874, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_viscii[] = {
-    {  "1", VISCII_CHARSET, 1252 }, /* FIXME */
-    { NULL, VISCII_CHARSET, 1252 }};
+static const SuffixCharset sufch_viscii[] = {
+    {  "1", VISCII_CHARSET, 1252, X11DRV_CPTABLE_SBCS }, /* FIXME */
+    { NULL, VISCII_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_windows[] = {
-    { "1250", EE_CHARSET, 1250 },
-    { "1251", RUSSIAN_CHARSET, 1251 },
-    { "1252", ANSI_CHARSET, 1252 },
-    { "1253", GREEK_CHARSET, 1253 },
-    { "1254", TURKISH_CHARSET, 1254 }, 
-    { "1255", HEBREW_CHARSET, 1255 }, 
-    { "1256", ARABIC_CHARSET, 1256 },
-    { "1257", BALTIC_CHARSET, 1257 },
-    {  NULL,  ANSI_CHARSET, 1252 }};
+static const SuffixCharset sufch_windows[] = {
+    { "1250", EE_CHARSET, 1250, X11DRV_CPTABLE_SBCS },
+    { "1251", RUSSIAN_CHARSET, 1251, X11DRV_CPTABLE_SBCS },
+    { "1252", ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS },
+    { "1253", GREEK_CHARSET, 1253, X11DRV_CPTABLE_SBCS },
+    { "1254", TURKISH_CHARSET, 1254, X11DRV_CPTABLE_SBCS }, 
+    { "1255", HEBREW_CHARSET, 1255, X11DRV_CPTABLE_SBCS }, 
+    { "1256", ARABIC_CHARSET, 1256, X11DRV_CPTABLE_SBCS },
+    { "1257", BALTIC_CHARSET, 1257, X11DRV_CPTABLE_SBCS },
+    {  NULL,  ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_koi8[] = {
-    { "r", RUSSIAN_CHARSET, 20866 },
-    { "u", RUSSIAN_CHARSET, 20866 },
-    { NULL, RUSSIAN_CHARSET, 20866 }};
+static const SuffixCharset sufch_koi8[] = {
+    { "r", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
+    { "u", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
+    { NULL, RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS }};
 
 /* FIXME: DBCS charsets need 2 or more fonts */
-static SuffixCharset sufch_jisx0201[] = {
-    { "0", ANSI_CHARSET, 932 },
-    { NULL, ANSI_CHARSET, 932 }};
+static const SuffixCharset sufch_jisx0201[] = {
+    { "0", ANSI_CHARSET, 932, X11DRV_CPTABLE_SBCS },
+    { NULL, ANSI_CHARSET, 932, X11DRV_CPTABLE_SBCS }};
 
-static SuffixCharset sufch_jisx0208[] = {
-    { "0", SHIFTJIS_CHARSET, 932 },
-    { NULL, SHIFTJIS_CHARSET, 932 }};
+static const SuffixCharset sufch_jisx0208[] = {
+    { "0", SHIFTJIS_CHARSET, 932, X11DRV_CPTABLE_CP932 },
+    { NULL, SHIFTJIS_CHARSET, 932, X11DRV_CPTABLE_CP932 }};
 
-static SuffixCharset sufch_ksc5601[] = {
-    { "0", HANGEUL_CHARSET, 949 },
-    { NULL, HANGEUL_CHARSET, 949 }};
+static const SuffixCharset sufch_ksc5601[] = {
+    { "0", HANGEUL_CHARSET, 949, X11DRV_CPTABLE_CP949 },
+    { NULL, HANGEUL_CHARSET, 949, X11DRV_CPTABLE_CP949 }};
 
-static SuffixCharset sufch_gb2312[] = {
-    { "0", GB2312_CHARSET, 936 },
-    { NULL, GB2312_CHARSET, 936 }};
+static const SuffixCharset sufch_gb2312[] = {
+    { "0", GB2312_CHARSET, 936, X11DRV_CPTABLE_CP936 },
+    { NULL, GB2312_CHARSET, 936, X11DRV_CPTABLE_CP936 }};
 
-static SuffixCharset sufch_big5[] = {
-    { "0", CHINESEBIG5_CHARSET, 950 },
-    { NULL, CHINESEBIG5_CHARSET, 950 }};
+static const SuffixCharset sufch_big5[] = {
+    { "0", CHINESEBIG5_CHARSET, 950, X11DRV_CPTABLE_CP950 },
+    { NULL, CHINESEBIG5_CHARSET, 950, X11DRV_CPTABLE_CP950 }};
 
-static SuffixCharset sufch_unicode[] = {
-    { "0", DEFAULT_CHARSET, 0 },
-    { NULL, DEFAULT_CHARSET, 0 }};
+static const SuffixCharset sufch_unicode[] = {
+    { "0", DEFAULT_CHARSET, 0, X11DRV_CPTABLE_UNICODE },
+    { NULL, DEFAULT_CHARSET, 0, X11DRV_CPTABLE_UNICODE }};
 
-static SuffixCharset sufch_iso10646[] = {
-    { "1", DEFAULT_CHARSET, 0 },
-    { NULL, DEFAULT_CHARSET, 0 }};
+static const SuffixCharset sufch_iso10646[] = {
+    { "1", DEFAULT_CHARSET, 0, X11DRV_CPTABLE_UNICODE },
+    { NULL, DEFAULT_CHARSET, 0, X11DRV_CPTABLE_UNICODE }};
 
 /* Each of these must be matched explicitly */
-static SuffixCharset sufch_any[] = {
-    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL },
-    { NULL, 0, 0 }};
+static const SuffixCharset sufch_any[] = {
+    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    { NULL, 0, 0, X11DRV_CPTABLE_SBCS }};
 
 
 typedef struct __fet
 {
   LPSTR		 prefix;
-  SuffixCharset* sufch;
+  const SuffixCharset* sufch;
   struct __fet*  next;
 } fontEncodingTemplate;
 
@@ -390,7 +391,7 @@ static LFD* LFD_Parse(LPSTR lpFont)
 
 static void LFD_UnParse(LPSTR dp, UINT buf_size, LFD* lfd)
 {
-    char* lfd_fld[LFD_FIELDS];
+    const char* lfd_fld[LFD_FIELDS];
     int i;
 
     if (!buf_size)
@@ -415,7 +416,7 @@ static void LFD_UnParse(LPSTR dp, UINT buf_size, LFD* lfd)
 
     for (i = 0; i < LFD_FIELDS; i++)
     {
-	char* sp = lfd_fld[i];
+	const char* sp = lfd_fld[i];
 	if (!sp || !buf_size)
 	    break;
 	
@@ -523,7 +524,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
    int    	i, j, dec_style_check, scalability;
    fontEncodingTemplate* boba;
    const char* ridiculous = "font '%s' has ridiculous %s\n";
-   char* lpstr;
+   const char* lpstr;
 
    if (!lfd->charset_registry)
    {
@@ -649,7 +650,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
        strstr(lpstr, "gb2312") ||
        strstr(lpstr, "big5") )
    {
-       FIXME("DBCS fonts like '%s' are not worked correctly now.\n", fullname);
+       FIXME("DBCS fonts like '%s' are not working correctly now.\n", fullname);
    }
 
    fi->df.dfCharSet = ANSI_CHARSET;
@@ -666,6 +667,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 		   {
 		       fi->df.dfCharSet = boba->sufch[j].charset;
 		       fi->codepage = boba->sufch[j].codepage;
+		       fi->cptable = boba->sufch[j].cptable;
 		       goto done;
 		   }
 	       }
@@ -675,6 +677,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 			fullname, lfd->charset_encoding);
 		   fi->df.dfCharSet = boba->sufch[j].charset;
 		   fi->codepage = boba->sufch[j].codepage;
+		   fi->cptable = boba->sufch[j].cptable;
 		   j = 254;
 		   goto done;
 	       }
@@ -685,6 +688,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 		   ;
 	       fi->df.dfCharSet = boba->sufch[j].charset;
 	       fi->codepage = boba->sufch[j].codepage;
+	       fi->cptable = boba->sufch[j].cptable;
 	       j = 255;
 	       goto done;
 	   }
@@ -2062,6 +2066,7 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 			while( TRUE )
 			{
 			   if( offset > length ||
+			       pfi->cptable >= (UINT16)X11DRV_CPTABLE_COUNT ||
 			      (int)(pfi->next) != j++ ) goto fail;
 
 			   if( pfi->df.dfPixHeight == 0 ) goto fail;
