@@ -495,10 +495,10 @@ TAB_DrawLoneItemInterior(HWND hwnd, TAB_INFO* infoPtr, int iItem)
 static VOID CALLBACK
 TAB_HotTrackTimerProc
   (
-  HWND hwnd,    // handle of window for timer messages
-  UINT uMsg,    // WM_TIMER message
-  UINT idEvent, // timer identifier
-  DWORD dwTime  // current system time
+  HWND hwnd,    /* handle of window for timer messages */
+  UINT uMsg,    /* WM_TIMER message */
+  UINT idEvent, /* timer identifier */
+  DWORD dwTime  /* current system time */
   )
 {
   TAB_INFO* infoPtr = TAB_GetInfoPtr(hwnd);
@@ -517,12 +517,12 @@ TAB_HotTrackTimerProc
     */
     if (!GetCursorPos(&pt) || WindowFromPoint(pt) != hwnd)
     {
-      // Redraw iHotTracked to look normal
+      /* Redraw iHotTracked to look normal */
       INT iRedraw = infoPtr->iHotTracked;
       infoPtr->iHotTracked = -1;
       TAB_DrawLoneItemInterior(hwnd, infoPtr, iRedraw);
 
-      // Kill this timer
+      /* Kill this timer */
       KillTimer(hwnd, TAB_HOTTRACK_TIMER);
     }
   }
@@ -586,19 +586,19 @@ TAB_RecalcHotTrack
   {
     if (infoPtr->iHotTracked >= 0)
     {
-      // Mark currently hot-tracked to be redrawn to look normal
+      /* Mark currently hot-tracked to be redrawn to look normal */
       if (out_redrawLeave != NULL)
         *out_redrawLeave = infoPtr->iHotTracked;
 
       if (item < 0)
       {
-        // Kill timer which forces recheck of mouse pos
+        /* Kill timer which forces recheck of mouse pos */
         KillTimer(hwnd, TAB_HOTTRACK_TIMER);
       }
     }
     else
     {
-      // Start timer so we recheck mouse pos
+      /* Start timer so we recheck mouse pos */
       UINT timerID = SetTimer
         (
         hwnd,
@@ -615,7 +615,7 @@ TAB_RecalcHotTrack
 
     if (item >= 0)
     {
-      // Mark new hot-tracked to be redrawn to look highlighted
+	/* Mark new hot-tracked to be redrawn to look highlighted */
       if (out_redrawEnter != NULL)
         *out_redrawEnter = item;
     }
