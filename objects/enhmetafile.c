@@ -60,7 +60,8 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
 {
     HENHMETAFILE hmf = 0;
     ENHMETAFILEOBJ *metaObj = GDI_AllocObject( sizeof(ENHMETAFILEOBJ),
-                                               ENHMETAFILE_MAGIC, &hmf, NULL );
+                                               ENHMETAFILE_MAGIC,
+					       (HGDIOBJ *)&hmf, NULL );
     if (metaObj)
     {
         metaObj->emh = emh;

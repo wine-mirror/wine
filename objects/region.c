@@ -513,7 +513,8 @@ static HRGN REGION_CreateRegion( INT n )
     HRGN hrgn;
     RGNOBJ *obj;
 
-    if(!(obj = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC, &hrgn, &region_funcs ))) return 0;
+    if(!(obj = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC, (HGDIOBJ *)&hrgn,
+				&region_funcs ))) return 0;
     if(!(obj->rgn = REGION_AllocWineRegion(n))) {
         GDI_FreeObject( hrgn, obj );
         return 0;

@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include "winnls.h"
+#include "wownt32.h"
 #include "wine/winbase16.h"
 #include "win16drv/win16drv.h"
 #include "gdi.h"
@@ -147,7 +148,7 @@ HFONT WIN16DRV_SelectFont( PHYSDEV dev, HFONT hfont)
     DC *dc = physDev->dc;
     int	nSize;
 
-    if (!GetObject16( hfont, sizeof(physDev->lf), &physDev->lf ))
+    if (!GetObject16( HFONT_16(hfont), sizeof(physDev->lf), &physDev->lf ))
         return HGDI_ERROR;
 
     TRACE("WIN16DRV_FONT_SelectObject %s h=%d\n",
@@ -213,7 +214,7 @@ HFONT WIN16DRV_SelectFont( PHYSDEV dev, HFONT hfont)
            physDev->tm.tmMaxCharWidth,
            physDev->tm.tmWeight);
 
-    return TRUE; /* We'll use a device font */
+    return (HFONT)1; /* We'll use a device font */
 }
 
 /***********************************************************************

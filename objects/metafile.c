@@ -52,6 +52,7 @@
 #include "wine/wingdi16.h"
 #include "bitmap.h"
 #include "global.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
@@ -109,7 +110,8 @@ static int MF_AddHandle(HANDLETABLE *ht, UINT htlen, HGDIOBJ hobj)
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
     HMETAFILE hmf = 0;
-    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC, &hmf, NULL );
+    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC,
+					    (HGDIOBJ *)&hmf, NULL );
     if (metaObj)
     {
     metaObj->mh = mh;
@@ -593,7 +595,7 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 {
     BOOL16 ret;
     METAHEADER *mh = MF_GetMetaHeader16( hmf );
-    ret = MF_PlayMetaFile( hdc, mh );
+    ret = MF_PlayMetaFile( HDC_32(hdc), mh );
     MF_ReleaseMetaHeader16( hmf );
     return ret;
 }
@@ -618,12 +620,13 @@ BOOL WINAPI PlayMetaFile(
  *            EnumMetaFile   (GDI.175)
  *
  */
-BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
+BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
 			      MFENUMPROC16 lpEnumFunc, LPARAM lpData )
 {
     METAHEADER *mh = MF_GetMetaHeader16(hmf);
     METARECORD *mr;
     HANDLETABLE16 *ht;
+    HDC hdc = HDC_32(hdc16);
     HGLOBAL16 hHT;
     SEGPTR spht;
     unsigned int offset = 0;
@@ -664,7 +667,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     {
 	mr = (METARECORD *)((char *)mh + offset);
 
-        if (!MF_CallTo16_word_wllwl( lpEnumFunc, hdc, spht,
+        if (!MF_CallTo16_word_wllwl( lpEnumFunc, hdc16, spht,
                                   MAKESEGPTR( seg + (HIWORD(offset) << __AHSHIFT), LOWORD(offset) ),
                                      mh->mtNoObjects, (LONG)lpData ))
 	{

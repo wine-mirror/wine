@@ -19,6 +19,7 @@
  */
 
 #include "gdi.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
@@ -53,7 +54,7 @@ void MAPPING_FixIsotropic( DC * dc )
  */
 BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = DC_GetDCPtr( HDC_32(hdc) );
     if (!dc) return FALSE;
 
     while (count--)
@@ -62,7 +63,7 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
         points->y = MulDiv( points->y - dc->vportOrgY, dc->wndExtY, dc->vportExtY ) + dc->wndOrgY;
         points++;
     }
-    GDI_ReleaseObj( hdc );
+    GDI_ReleaseObj( HDC_32(hdc) );
     return TRUE;
 }
 
@@ -100,7 +101,7 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
  */
 BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = DC_GetDCPtr( HDC_32(hdc) );
     if (!dc) return FALSE;
 
     while (count--)
@@ -109,7 +110,7 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
         points->y = MulDiv( points->y - dc->wndOrgY, dc->vportExtY, dc->wndExtY ) + dc->vportOrgY;
         points++;
     }
-    GDI_ReleaseObj( hdc );
+    GDI_ReleaseObj( HDC_32(hdc) );
     return TRUE;
 }
 

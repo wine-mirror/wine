@@ -122,7 +122,8 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     if (width < 0) width = -width;
 
       /* Create the BITMAPOBJ */
-    if (!(bmp = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC, &hbitmap, &bitmap_funcs )))
+    if (!(bmp = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC,
+				 (HGDIOBJ *)&hbitmap, &bitmap_funcs )))
         return 0;
 
     TRACE("%dx%d, %d colors returning %08x\n", width, height,

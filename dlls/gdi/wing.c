@@ -25,6 +25,7 @@
 #include "wine/debug.h"
 #include "palette.h"
 #include "windef.h"
+#include "wownt32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wing);
 
@@ -99,7 +100,8 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
  */
 SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
-    BITMAPOBJ* bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
+    BITMAPOBJ* bmp = (BITMAPOBJ *) GDI_GetObjPtr( HBITMAP_32(hWinGBitmap),
+						  BITMAP_MAGIC );
     SEGPTR res = 0;
 
     TRACE("(%d,%p)\n", hWinGBitmap, bmpi);
@@ -108,7 +110,7 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
     if (bmpi) FIXME(": Todo - implement setting BITMAPINFO\n");
 
     res = bmp->segptr_bits;
-    GDI_ReleaseObj( hWinGBitmap );
+    GDI_ReleaseObj( HBITMAP_32(hWinGBitmap) );
     return res;
 }
 
@@ -137,10 +139,10 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
-    HDC hdc = CreateCompatibleDC(0);
+    HDC16 hdc = CreateCompatibleDC16(0);
     HPALETTE16 ret = CreateHalftonePalette16(hdc);
     TRACE("(void)\n");
-    DeleteDC(hdc);
+    DeleteDC16(hdc);
     return ret;
 }
 

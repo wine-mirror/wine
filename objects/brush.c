@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "wine/wingdi16.h"
 #include "bitmap.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
@@ -93,7 +94,8 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     BRUSHOBJ * ptr;
     HBRUSH hbrush;
 
-    if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush, &brush_funcs ))) return 0;
+    if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC,
+				 (HGDIOBJ *)&hbrush, &brush_funcs ))) return 0;
     ptr->logbrush.lbStyle = brush->lbStyle;
     ptr->logbrush.lbColor = brush->lbColor;
     ptr->logbrush.lbHatch = brush->lbHatch;
@@ -372,7 +374,7 @@ BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
     BOOL16 res = FALSE;
 
     TRACE("(hBrush %04x, newColor %08lx)\n", hBrush, (DWORD)newColor);
-    if (!(brushPtr = (BRUSHOBJ *) GDI_GetObjPtr( hBrush, BRUSH_MAGIC )))
+    if (!(brushPtr = (BRUSHOBJ *) GDI_GetObjPtr( HBRUSH_32(hBrush), BRUSH_MAGIC )))
 	return FALSE;
 
     if (brushPtr->logbrush.lbStyle == BS_SOLID)
@@ -381,6 +383,6 @@ BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
 	res = TRUE;
     }
 
-     GDI_ReleaseObj( hBrush );
+     GDI_ReleaseObj( HBRUSH_32(hBrush) );
      return res;
 }

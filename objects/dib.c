@@ -25,6 +25,7 @@
 #include "bitmap.h"
 #include "selectors.h"
 #include "gdi.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 #include "palette.h"
 
@@ -835,7 +836,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
     LPVOID bits32;
     HBITMAP hbitmap;
 
-    hbitmap = CreateDIBSection( hdc, bmi, usage, &bits32, section, offset );
+    hbitmap = CreateDIBSection( HDC_32(hdc), bmi, usage, &bits32, section, offset );
     if (hbitmap)
     {
         BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(hbitmap, BITMAP_MAGIC);
@@ -863,7 +864,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
         }
         if (bmp) GDI_ReleaseObj( hbitmap );
     }
-    return hbitmap;
+    return HBITMAP_16(hbitmap);
 }
 
 /***********************************************************************

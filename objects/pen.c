@@ -79,7 +79,8 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
     PENOBJ * penPtr;
     HPEN hpen;
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen, &pen_funcs ))) return 0;
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
+				    &pen_funcs ))) return 0;
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnWidth = pen->lopnWidth;
     penPtr->logpen.lopnColor = pen->lopnColor;
@@ -106,7 +107,8 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 	if (brush->lbHatch)
 	    FIXME("Hatches not implemented\n");
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen, &pen_funcs ))) return 0;
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
+				    &pen_funcs ))) return 0;
     penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK;
 
     /* PS_USERSTYLE workaround */

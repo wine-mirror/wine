@@ -27,6 +27,7 @@
 #include <assert.h>
 #include "winerror.h"
 #include "winnls.h"
+#include "wownt32.h"
 #include "wine/unicode.h"
 #include "font.h"
 #include "wine/debug.h"
@@ -313,7 +314,8 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
     if (plf)
     {
         FONTOBJ* fontPtr;
-	if ((fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC, &hFont, &font_funcs )))
+	if ((fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC,
+					(HGDIOBJ *)&hFont, &font_funcs )))
 	{
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
@@ -589,10 +591,10 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 {
     fontEnum16 fe16;
     INT16	retVal = 0;
-    DC* 	dc = DC_GetDCPtr( hDC );
+    DC* 	dc = DC_GetDCPtr( HDC_32(hDC) );
 
     if (!dc) return 0;
-    fe16.hdc = hDC;
+    fe16.hdc = HDC_32(hDC);
     fe16.dc = dc;
     fe16.physDev = dc->physDev;
 

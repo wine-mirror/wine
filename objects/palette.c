@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "windef.h"
 #include "wingdi.h"
+#include "wownt32.h"
 #include "wine/winuser16.h"
 #include "gdi.h"
 #include "palette.h"
@@ -159,7 +160,8 @@ HPALETTE WINAPI CreatePalette(
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
     if (!(palettePtr = GDI_AllocObject( size + sizeof(int*) +sizeof(GDIOBJHDR),
-                                        PALETTE_MAGIC, &hpalette, &palette_funcs ))) return 0;
+                                        PALETTE_MAGIC, (HGDIOBJ *)&hpalette,
+					&palette_funcs ))) return 0;
     memcpy( &palettePtr->logpalette, palette, size );
     PALETTE_ValidateFlags(palettePtr->logpalette.palPalEntry,
 			  palettePtr->logpalette.palNumEntries);
@@ -723,10 +725,10 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 
     TRACE("%04x\n", hdc );
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    if (!(dc = DC_GetDCPtr( HDC_32(hdc) ))) return 0;
 
     if (dc->funcs->pRealizeDefaultPalette) ret = dc->funcs->pRealizeDefaultPalette( dc->physDev );
-    GDI_ReleaseObj( hdc );
+    GDI_ReleaseObj( HDC_32(hdc) );
     return ret;
 }
 
@@ -735,11 +737,11 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
  */
 BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 {
-    DC *dc = DC_GetDCPtr( hDC );
+    DC *dc = DC_GetDCPtr( HDC_32(hDC) );
     if (dc)
     {
       BOOL bRet = dc->hPalette == hPrimaryPalette;
-      GDI_ReleaseObj( hDC );
+      GDI_ReleaseObj( HDC_32(hDC) );
       return bRet;
     }
     return FALSE;

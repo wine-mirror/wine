@@ -22,6 +22,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "wownt32.h"
 
 #include "gdi.h"
 
@@ -403,11 +404,11 @@ BOOL WINAPI GetWindowOrgEx( HDC hdc, LPPOINT pt )
 HRGN16 WINAPI InquireVisRgn16( HDC16 hdc )
 {
     HRGN16 ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = DC_GetDCPtr( HDC_32(hdc) );
     if (dc)
     {
-        ret = dc->hVisRgn;
-        GDI_ReleaseObj( hdc );
+        ret = HRGN_16(dc->hVisRgn);
+        GDI_ReleaseObj( HDC_32(hdc) );
     }
     return ret;
 }
@@ -419,11 +420,11 @@ HRGN16 WINAPI InquireVisRgn16( HDC16 hdc )
 HRGN16 WINAPI GetClipRgn16( HDC16 hdc )
 {
     HRGN16 ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = DC_GetDCPtr( HDC_32(hdc) );
     if (dc)
     {
-        ret = dc->hClipRgn;
-        GDI_ReleaseObj( hdc );
+        ret = HRGN_16(dc->hClipRgn);
+        GDI_ReleaseObj( HDC_32(hdc) );
     }
     return ret;
 }

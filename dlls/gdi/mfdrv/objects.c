@@ -24,6 +24,7 @@
 
 #include "bitmap.h"
 #include "font.h"
+#include "wownt32.h"
 #include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
 
@@ -78,7 +79,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	    BITMAPINFO *info;
 	    DWORD bmSize;
 
-	    GetObjectA(logbrush.lbHatch, sizeof(bm), &bm);
+	    GetObjectA((HANDLE)logbrush.lbHatch, sizeof(bm), &bm);
 	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
 	        FIXME("Trying to store a colour pattern brush\n");
 		goto done;
@@ -104,7 +105,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	    info->bmiHeader.biBitCount = 1;
 	    bits = ((BYTE *)info) + sizeof(BITMAPINFO) + sizeof(RGBQUAD);
 
-	    GetDIBits(physDev->hdc, logbrush.lbHatch, 0, bm.bmHeight,
+	    GetDIBits(physDev->hdc, (HANDLE)logbrush.lbHatch, 0, bm.bmHeight,
 		      bits, info, DIB_RGB_COLORS);
 	    *(DWORD *)info->bmiColors = 0;
 	    *(DWORD *)(info->bmiColors + 1) = 0xffffff;
@@ -168,7 +169,7 @@ HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
  *         MFDRV_CreateFontIndirect
  */
 
-static BOOL MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT16 hFont, LOGFONT16 *logfont)
+static BOOL MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONT16 *logfont)
 {
     int index;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT16)];
@@ -195,7 +196,7 @@ HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont )
 {
     LOGFONT16 lf16;
 
-    if (!GetObject16( hfont, sizeof(lf16), &lf16 )) return GDI_ERROR;
+    if (!GetObject16( HFONT_16(hfont), sizeof(lf16), &lf16 )) return HGDI_ERROR;
     if (MFDRV_CreateFontIndirect(dev, hfont, &lf16)) return 0;
     return HGDI_ERROR;
 }
@@ -203,7 +204,7 @@ HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont )
 /******************************************************************
  *         MFDRV_CreatePenIndirect
  */
-static BOOL MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN16 hPen, LOGPEN16 *logpen)
+static BOOL MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen, LOGPEN16 *logpen)
 {
     int index;
     char buffer[sizeof(METARECORD) - 2 + sizeof(*logpen)];
@@ -230,7 +231,7 @@ HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
 {
     LOGPEN16 logpen;
 
-    if (!GetObject16( hpen, sizeof(logpen), &logpen )) return 0;
+    if (!GetObject16( HPEN_16(hpen), sizeof(logpen), &logpen )) return 0;
     if (MFDRV_CreatePenIndirect( dev, hpen, &logpen )) return hpen;
     return 0;
 }

@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include "win16drv/win16drv.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win16drv);
@@ -40,7 +41,7 @@ WIN16DRV_LineTo( PHYSDEV dev, INT x, INT y )
     points[0].y = dc->CursPosY;
     points[1].x = x;
     points[1].y = y;
-    LPtoDP16( physDev->hdc, points, 2 );
+    LPtoDP16( HDC_16(physDev->hdc), points, 2 );
 
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
                          OS_POLYLINE, 2, points,
@@ -72,7 +73,7 @@ WIN16DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     points[0].y = top;
     points[1].x = right;
     points[1].y = bottom;
-    LPtoDP16( physDev->hdc, points, 2 );
+    LPtoDP16( HDC_16(physDev->hdc), points, 2 );
 
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
                            OS_RECTANGLE, 2, points,
@@ -109,7 +110,7 @@ WIN16DRV_Polygon(PHYSDEV dev, const POINT* pt, INT count )
       points[i].x = pt[i].x;
       points[i].y = pt[i].y;
     }
-    LPtoDP16( physDev->hdc, points, count-1 );
+    LPtoDP16( HDC_16(physDev->hdc), points, count-1 );
     points[count-1].x = points[0].x;
     points[count-1].y = points[0].y;
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
@@ -144,7 +145,7 @@ WIN16DRV_Polyline(PHYSDEV dev, const POINT* pt, INT count )
       points[i].x = pt[i].x;
       points[i].y = pt[i].y;
     }
-    LPtoDP16( physDev->hdc, points, count );
+    LPtoDP16( HDC_16(physDev->hdc), points, count );
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
                          OS_POLYLINE, count, points,
                          physDev->PenInfo,
@@ -174,7 +175,7 @@ WIN16DRV_Ellipse(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     points[0].y = top;
     points[1].x = right;
     points[1].y = bottom;
-    LPtoDP16( physDev->hdc, points, 2 );
+    LPtoDP16( HDC_16(physDev->hdc), points, 2 );
 
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
                          OS_ELLIPSE, 2, points,

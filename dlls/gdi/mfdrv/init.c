@@ -21,6 +21,7 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "gdi.h"
+#include "wownt32.h"
 #include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
 
@@ -324,7 +325,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(
 {
     HMETAFILE16 hmf;
     METAFILEDRV_PDEVICE *physDev;
-    DC *dc = MFDRV_CloseMetaFile(hdc);
+    DC *dc = MFDRV_CloseMetaFile(HDC_32(hdc));
     if (!dc) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
 

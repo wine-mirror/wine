@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "win16drv/win16drv.h"
+#include "wownt32.h"
 
 #include "wine/debug.h"
 
@@ -49,7 +50,7 @@ HBRUSH WIN16DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
     int          nSize;
     LOGBRUSH16 lBrush16;
 
-    if (!GetObject16( hbrush, sizeof(lBrush16), &lBrush16 )) return 0;
+    if (!GetObject16( HBRUSH_16(hbrush), sizeof(lBrush16), &lBrush16 )) return 0;
 
     if ( physDev->BrushInfo )
     {
@@ -79,7 +80,7 @@ HPEN WIN16DRV_SelectPen( PHYSDEV dev, HPEN hpen )
     int          nSize;
     LOGPEN16     lPen16;
 
-    if (!GetObject16( hpen, sizeof(lPen16), &lPen16 )) return 0;
+    if (!GetObject16( HPEN_16(hpen), sizeof(lPen16), &lPen16 )) return 0;
 
     if ( physDev->PenInfo )
     {

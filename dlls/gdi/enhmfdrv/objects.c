@@ -231,7 +231,7 @@ static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
 
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         index = 0;
-    return index;
+    return (HPEN)index;
 }
 
 /******************************************************************
@@ -257,7 +257,7 @@ HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
             goto found;
         }
     }
-    if (!(index = EMFDRV_CreatePenIndirect(dev, hPen ))) return 0;
+    if (!(index = (DWORD)EMFDRV_CreatePenIndirect(dev, hPen ))) return 0;
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
