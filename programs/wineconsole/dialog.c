@@ -601,6 +601,19 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 	SetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, di->config.win_height, FALSE);
         SendDlgItemMessage(hDlg, IDC_CNF_CLOSE_EXIT, BM_SETCHECK,
                            (di->config.exit_on_die) ? BST_CHECKED : BST_UNCHECKED, 0L);
+        {
+            static WCHAR        s1[] = {'W','i','n','3','2',0};
+            static WCHAR        s2[] = {'E','m','a','c','s',0};
+
+            SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_ADDSTRING,
+                               0, (LPARAM)s1);
+            SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_ADDSTRING,
+                               0, (LPARAM)s2);
+            SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_SETCURSEL,
+                               di->config.edition_mode, 0);
+            WINE_FIXME("edmo=%d\n", di->config.edition_mode);
+    	}
+
 	break;
     case WM_COMMAND:
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
@@ -637,7 +650,8 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
                 di->config.win_height = y;
             }
             di->config.exit_on_die = IsDlgButtonChecked(hDlg, IDC_CNF_CLOSE_EXIT) ? 1 : 0;
-
+            di->config.edition_mode = SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_GETCURSEL,
+                                                         0, 0);
             SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
 	default:

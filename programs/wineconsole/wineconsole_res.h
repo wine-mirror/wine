@@ -70,6 +70,7 @@
 #define IDC_CNF_WIN_HEIGHT	0x0307
 #define IDC_CNF_WIN_HEIGHT_UD	0x0308
 #define IDC_CNF_CLOSE_EXIT      0x0309
+#define IDC_CNF_EDITION_MODE    0x030a
 
 #define IDC_SAV_SAVE            0x0401
 #define IDC_SAV_SESSION         0x0402
