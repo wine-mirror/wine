@@ -68,6 +68,8 @@ static const WCHAR *get_unknown_dirid(void)
     return unknown_dirid;
 }
 
+static const WCHAR *get_csidl_dir(DWORD csidl);
+
 /* create the string for a system dirid */
 static const WCHAR *create_system_dirid( int dirid )
 {
@@ -80,7 +82,6 @@ static const WCHAR *create_system_dirid( int dirid )
     static const WCHAR Viewers[] = {'\\','v','i','e','w','e','r','s',0};
     static const WCHAR System[]  = {'\\','s','y','s','t','e','m',0};
     static const WCHAR Spool[]   = {'\\','s','p','o','o','l',0};
-    static const WCHAR Profile[] = {'\\','p','r','o','f','i','l','e','s','\\','A','d','m','i','n','i','s','t','r','a','t','o','r',0};
     static const WCHAR UserProfile[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
 
     WCHAR buffer[MAX_PATH+32], *str;
@@ -134,9 +135,7 @@ static const WCHAR *create_system_dirid( int dirid )
         break;
     case DIRID_USERPROFILE:
         if (GetEnvironmentVariableW( UserProfile, buffer, MAX_PATH )) break;
-        GetWindowsDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, Profile );
-        break;
+        return get_csidl_dir(CSIDL_PROFILE);
     case DIRID_LOADER:
         return C_Root;  /* FIXME */
     case DIRID_COLOR:  /* FIXME */
