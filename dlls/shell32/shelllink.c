@@ -1281,7 +1281,7 @@ static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA * iface, LPCSTR 
 {
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
-    FIXME("(%p)->(path=%s %lx)\n",This, pszPathRel, dwReserved);
+    TRACE("(%p)->(path=%s %lx)\n",This, pszPathRel, dwReserved);
 
     HeapFree(GetProcessHeap(), 0, This->sPathRel);
     This->sPathRel = HEAP_strdupAtoW(GetProcessHeap(), 0, pszPathRel);
@@ -1296,7 +1296,7 @@ static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWOR
 
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
-    FIXME("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
+    TRACE("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
 
     /*FIXME: use IResolveShellLink interface */
 
@@ -1721,7 +1721,7 @@ static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWOR
 
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
-    FIXME("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
+    TRACE("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
 
     /*FIXME: use IResolveShellLink interface */
 
