@@ -757,6 +757,24 @@ BOOL WINAPI IsValidAcl(IN PACL pAcl)
 	##############################
 */
 
+static const char * const DefaultPrivNames[] =
+{
+    NULL, NULL,
+    "SeCreateTokenPrivilege", "SeAssignPrimaryTokenPrivilege",
+    "SeLockMemoryPrivilege", "SeIncreaseQuotaPrivilege",
+    "SeMachineAccountPrivilege", "SeTcbPrivilege",
+    "SeSecurityPrivilege", "SeTakeOwnershipPrivilege",
+    "SeLoadDriverPrivilege", "SeSystemProfilePrivilege",
+    "SeSystemtimePrivilege", "SeProfileSingleProcessPrivilege",
+    "SeIncreaseBasePriorityPrivilege", "SeCreatePagefilePrivilege",
+    "SeCreatePermanentPrivilege", "SeBackupPrivilege",
+    "SeRestorePrivilege", "SeShutdownPrivilege",
+    "SeDebugPrivilege", "SeAuditPrivilege",
+    "SeSystemEnvironmentPrivilege", "SeChangeNotifyPrivilege",
+    "SeRemoteShutdownPrivilege",
+};
+#define NUMPRIVS (sizeof DefaultPrivNames/sizeof DefaultPrivNames[0])
+
 /******************************************************************************
  * LookupPrivilegeValueW			[ADVAPI32.@]
  *
@@ -765,11 +783,26 @@ BOOL WINAPI IsValidAcl(IN PACL pAcl)
 BOOL WINAPI
 LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
 {
-    FIXME("(%s,%s,%p): stub\n",debugstr_w(lpSystemName),
-        debugstr_w(lpName), lpLuid);
-    lpLuid->LowPart = 0x12345678;
-    lpLuid->HighPart = 0x87654321;
-    return TRUE;
+    UINT i;
+    WCHAR priv[0x28];
+
+    TRACE("%s,%s,%p\n",debugstr_w(lpSystemName), debugstr_w(lpName), lpLuid);
+
+    for( i=0; i<NUMPRIVS; i++ )
+    {
+        if( !DefaultPrivNames[i] )
+            continue;
+        MultiByteToWideChar( CP_ACP, 0, DefaultPrivNames[i], -1,
+                             priv, sizeof priv );
+        if( strcmpW( priv, lpName) )
+            continue;
+        lpLuid->LowPart = i;
+        lpLuid->HighPart = 0;
+        TRACE( "%s -> %08lx-%08lx\n",debugstr_w( lpSystemName ),
+               lpLuid->HighPart, lpLuid->LowPart );
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /******************************************************************************
@@ -799,6 +832,27 @@ LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid )
     RtlFreeUnicodeString(&lpNameW);
     RtlFreeUnicodeString(&lpSystemNameW);
     return ret;
+}
+
+
+/******************************************************************************
+ * LookupPrivilegeNameA			[ADVAPI32.@]
+ */
+BOOL WINAPI
+LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName, LPDWORD cchName)
+{
+    FIXME("%s %p %p %p\n", debugstr_a(lpSystemName), lpLuid, lpName, cchName);
+    return FALSE;
+}
+
+/******************************************************************************
+ * LookupPrivilegeNameW			[ADVAPI32.@]
+ */
+BOOL WINAPI
+LookupPrivilegeNameW( LPCWSTR lpSystemName, PLUID lpLuid, LPSTR lpName, LPDWORD cchName)
+{
+    FIXME("%s %p %p %p\n", debugstr_w(lpSystemName), lpLuid, lpName, cchName);
+    return FALSE;
 }
 
 /******************************************************************************

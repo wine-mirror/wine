@@ -148,8 +148,8 @@
 @ stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr)
 @ stub LookupPrivilegeDisplayNameA
 @ stub LookupPrivilegeDisplayNameW
-@ stub LookupPrivilegeNameA
-@ stub LookupPrivilegeNameW
+@ stdcall LookupPrivilegeNameA(str ptr ptr long)
+@ stdcall LookupPrivilegeNameW(wstr ptr ptr long)
 @ stdcall LookupPrivilegeValueA(ptr ptr ptr)
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
 @ stub MakeAbsoluteSD
