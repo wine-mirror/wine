@@ -2257,7 +2257,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
 	    rect.bottom = descr->height;
 
             return MAKELONG( LISTBOX_GetItemFromPoint(wnd, descr, pt.x, pt.y),
-                             PtInRect( &rect, pt ) );
+                             !PtInRect( &rect, pt ) );
         }
 
     case LB_SETCARETINDEX16:
