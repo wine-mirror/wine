@@ -493,10 +493,6 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_CTLCOLOR:
 	return (LRESULT)DEFWND_ControlColor( (HDC)wParam, HIWORD(lParam) );
 	
-    case WM_GETTEXTLENGTH:
-        if (wndPtr->text) return (LRESULT)strlenW(wndPtr->text);
-        return 0;
-
     case WM_SETCURSOR:
 	if (wndPtr->dwStyle & WS_CHILD)
 	{
@@ -704,6 +700,12 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 	}
         break;
 
+    case WM_GETTEXTLENGTH:
+        if (wndPtr->text)
+            result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, strlenW(wndPtr->text),
+                                          NULL, 0, NULL, NULL );
+        break;
+
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
@@ -772,6 +774,12 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 	    WINDOWPOS * winPos = (WINDOWPOS *)lParam;
             DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
 	}
+        break;
+
+    case WM_GETTEXTLENGTH:
+        if (wndPtr->text)
+            result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, strlenW(wndPtr->text),
+                                          NULL, 0, NULL, NULL );
         break;
 
     case WM_GETTEXT:
@@ -890,6 +898,10 @@ LRESULT WINAPI DefWindowProcW(
 	    WINDOWPOS * winPos = (WINDOWPOS *)lParam;
             DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
 	}
+        break;
+
+    case WM_GETTEXTLENGTH:
+        if (wndPtr->text) result = (LRESULT)strlenW(wndPtr->text);
         break;
 
     case WM_GETTEXT:
