@@ -20,7 +20,10 @@ typedef LONG OLE_YPOS_HIMETRIC;
 typedef LONG OLE_XSIZE_HIMETRIC;
 typedef LONG OLE_YSIZE_HIMETRIC;
 
-
+typedef enum tagPicture { /* bitmasks */
+    PICTURE_SCALABLE	= 0x1,
+    PICTURE_TRANSPARENT	= 0x2
+} PICTUREATTRIBUTES;
 
 /*****************************************************************************
  * Predeclare the interfaces

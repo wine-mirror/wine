@@ -122,6 +122,16 @@ AC_CHECK_HEADERS(dlfcn.h,
  	LIBEXT="a"
     )
 
+JPEGLIB=""
+AC_SUBST(JPEGLIB)
+AC_CHECK_HEADERS(jpeglib.h,
+    AC_CHECK_LIB(jpeg,jpeg_start_decompress,
+    	AC_DEFINE(HAVE_LIBJPEG,1,[Define if you have libjpeg including devel headers])
+	JPEGLIB="-ljpeg"
+    )
+)
+
+
 AC_SUBST(XLIB)
 AC_SUBST(X_DLLS)
 X_DLLS=""

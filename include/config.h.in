@@ -241,6 +241,9 @@
 /* Define if you have the <ieeefp.h> header file.  */
 #undef HAVE_IEEEFP_H
 
+/* Define if you have the <jpeglib.h> header file.  */
+#undef HAVE_JPEGLIB_H
+
 /* Define if you have the <libio.h> header file.  */
 #undef HAVE_LIBIO_H
 
@@ -417,6 +420,9 @@
 
 /* Define if TRACE messages are to be compiled out */
 #undef NO_TRACE_MSGS
+
+/* Define if you have libjpeg including devel headers */
+#undef HAVE_LIBJPEG
 
 /* Define if you have the Xpm library */
 #undef HAVE_LIBXXPM
