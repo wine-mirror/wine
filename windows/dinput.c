@@ -242,7 +242,9 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_JOYSTICK)) {
 		/* check whether we have a joystick */
 #ifdef HAVE_LINUX_22_JOYSTICK_API
-		if ((access(JOYDEV,O_RDONLY)!=-1) || (errno!=ENODEV)) {
+		if (	(access(JOYDEV,O_RDONLY)!=-1)		||
+			(errno!=ENODEV && errno!=ENOENT)
+		) {
 		    /* Return joystick */
 		    devInstance.guidInstance	= GUID_Joystick;
 		    devInstance.guidProduct	= DInput_Wine_Joystick_GUID;
