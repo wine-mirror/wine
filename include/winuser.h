@@ -3120,7 +3120,6 @@ BOOL        WINAPI RegisterHotKey(HWND,INT,UINT,UINT);
 HDEVNOTIFY  WINAPI RegisterDeviceNotificationA(HANDLE,LPVOID,DWORD);
 HDEVNOTIFY  WINAPI RegisterDeviceNotificationW(HANDLE,LPVOID,DWORD);
 #define     RegisterDeviceNotification WINELIB_NAME_AW(RegisterDeviceNotification)
-UINT      WINAPI ReuseDDElParam(UINT,UINT,UINT,UINT,UINT);
 BOOL        WINAPI SendMessageCallbackA(HWND,UINT,WPARAM,LPARAM,FARPROC,DWORD);
 BOOL        WINAPI SendMessageCallbackW(HWND,UINT,WPARAM,LPARAM,FARPROC,DWORD);
 #define      SendMessageCallback WINELIB_NAME_AW(SendMessageCallback)
@@ -3140,7 +3139,6 @@ WORD        WINAPI TileWindows (HWND, UINT, const LPRECT,
 INT         WINAPI ToUnicode(UINT,UINT,PBYTE,LPWSTR,int,UINT);
 BOOL      WINAPI TrackPopupMenuEx(HMENU,UINT,INT,INT,HWND,
                                     LPTPMPARAMS);
-UINT      WINAPI UnpackDDElParam(UINT,UINT,UINT*,UINT*);
 BOOL        WINAPI UnregisterDeviceNotification(HDEVNOTIFY);
 BOOL        WINAPI UnregisterHotKey(HWND,INT);
 DWORD       WINAPI WaitForInputIdle(HANDLE,DWORD);

@@ -13,6 +13,10 @@
 
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WM_DDE_INITIATE   0x3E0
 #define WM_DDE_TERMINATE  0x3E1
 #define WM_DDE_ADVISE	  0x3E2
@@ -56,5 +60,18 @@ struct tagDDEPOKE
     BYTE Value[1];   	/* undetermined array */
 };
 typedef struct tagDDEPOKE DDEPOKE;
+
+
+/* lParam packing/unpacking API */
+
+LPARAM      WINAPI PackDDElParam(UINT,UINT,UINT);
+BOOL        WINAPI UnpackDDElParam(UINT,LPARAM,PUINT,PUINT);
+BOOL        WINAPI FreeDDElParam(UINT,LPARAM);
+LPARAM      WINAPI ReuseDDElParam(LPARAM,UINT,UINT,UINT,UINT);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_DDE_H */
