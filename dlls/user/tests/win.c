@@ -468,6 +468,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	}
 	case WM_WINDOWPOSCHANGED:
 	{
+            RECT rc1, rc2;
 	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
 	    trace("main: WM_WINDOWPOSCHANGED\n");
 	    trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
@@ -478,6 +479,21 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
 	    ok(winpos->cx >= 0 && winpos->cx <= 32767, "bad winpos->cx %d\n", winpos->cx);
 	    ok(winpos->cy >= 0 && winpos->cy <= 32767, "bad winpos->cy %d\n", winpos->cy);
+
+            GetWindowRect(hwnd, &rc1);
+            trace("window: (%ld,%ld)-(%ld,%ld)\n", rc1.left, rc1.top, rc1.right, rc1.bottom);
+            SetRect(&rc2, winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy);
+            /* note: winpos coordinates are relative to parent */
+            MapWindowPoints(GetParent(hwnd), 0, (LPPOINT)&rc2, 2);
+            trace("pos: (%ld,%ld)-(%ld,%ld)\n", rc2.left, rc2.top, rc2.right, rc2.bottom);
+#if 0 /* Uncomment this once the test succeeds in all cases */
+            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+#endif
+
+            GetClientRect(hwnd, &rc2);
+            DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
+            MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
+            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
 	    break;
 	}
 	case WM_NCCREATE:
@@ -609,6 +625,58 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
     ok(info->wCreatorVersion == 0x0400, "wrong wCreatorVersion %04x\n", info->wCreatorVersion);
 }
 
+static void test_nonclient_area(HWND hwnd)
+{
+    DWORD style, exstyle;
+    RECT rc_window, rc_client, rc;
+    BOOL menu;
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
+    menu = !(style & WS_CHILD) && GetMenu(hwnd) != 0;
+
+    GetWindowRect(hwnd, &rc_window);
+    trace("window: (%ld,%ld)-(%ld,%ld)\n", rc_window.left, rc_window.top, rc_window.right, rc_window.bottom);
+    GetClientRect(hwnd, &rc_client);
+    trace("client: (%ld,%ld)-(%ld,%ld)\n", rc_client.left, rc_client.top, rc_client.right, rc_client.bottom);
+
+    /* avoid some cases when things go wrong */
+    if (IsRectEmpty(&rc_window) || IsRectEmpty(&rc_client) ||
+	rc_window.right > 32768 || rc_window.bottom > 32768) return;
+
+    CopyRect(&rc, &rc_client);
+    MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
+    AdjustWindowRectEx(&rc, style, menu, exstyle);
+    trace("calc window: (%ld,%ld)-(%ld,%ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+#if 0 /* Uncomment this once the test succeeds in all cases */
+    ok(EqualRect(&rc, &rc_window), "window rect does not match\n");
+#endif
+
+    CopyRect(&rc, &rc_window);
+    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+    MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
+    trace("calc client: (%ld,%ld)-(%ld,%ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+#if 0 /* Uncomment this once the test succeeds in all cases */
+    ok(EqualRect(&rc, &rc_client), "client rect does not match\n");
+#endif
+
+    /* and now test AdjustWindowRectEx and WM_NCCALCSIZE on synthetic data */
+    SetRect(&rc_client, 0, 0, 250, 150);
+    CopyRect(&rc_window, &rc_client);
+    MapWindowPoints(hwnd, 0, (LPPOINT)&rc_window, 2);
+    AdjustWindowRectEx(&rc_window, style, menu, exstyle);
+    trace("calc window: (%ld,%ld)-(%ld,%ld)\n",
+	rc_window.left, rc_window.top, rc_window.right, rc_window.bottom);
+
+    CopyRect(&rc, &rc_window);
+    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+    MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
+    trace("calc client: (%ld,%ld)-(%ld,%ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+#if 0 /* Uncomment this once the test succeeds in all cases */
+    ok(EqualRect(&rc, &rc_client), "client rect does not match\n");
+#endif
+}
+
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
     static const char *CBT_code_name[10] = {
@@ -625,6 +693,32 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     const char *code_name = (nCode >= 0 && nCode <= HCBT_SETFOCUS) ? CBT_code_name[nCode] : "Unknown";
 
     trace("CBT: %d (%s), %08x, %08lx\n", nCode, code_name, wParam, lParam);
+
+    /* on HCBT_DESTROYWND window state is undefined */
+    if (nCode != HCBT_DESTROYWND && wParam)
+    {
+	BOOL is_win9x = GetWindowLongW((HWND)wParam, GWL_WNDPROC) == 0;
+	if (is_win9x && nCode == HCBT_CREATEWND)
+	    /* Win9x doesn't like WM_NCCALCSIZE with synthetic data and crashes */;
+	else
+	    test_nonclient_area((HWND)wParam);
+
+	if (pGetWindowInfo)
+	{
+	    WINDOWINFO info;
+
+	    info.cbSize = 0;
+	    ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
+	    /* win2k SP4 returns broken border info if GetWindowInfo
+	     * is being called from HCBT_DESTROYWND or HCBT_MINMAX hook proc.
+	     */
+	    verify_window_info((HWND)wParam, &info, nCode != HCBT_MINMAX);
+
+	    info.cbSize = sizeof(WINDOWINFO) + 1;
+	    ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
+	    verify_window_info((HWND)wParam, &info, nCode != HCBT_MINMAX);
+	}
+    }
 
     switch (nCode)
     {
@@ -689,25 +783,6 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 #endif
 	    break;
 	}
-
-	case HCBT_DESTROYWND:
-	case HCBT_SETFOCUS:
-	    if (wParam && pGetWindowInfo)
-	    {
-		WINDOWINFO info;
-
-		info.cbSize = 0;
-		ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
-		/* win2k SP4 returns broken border info if GetWindowInfo
-		 * is being called from HCBT_DESTROYWND hook proc.
-		 */
-		verify_window_info((HWND)wParam, &info, nCode != HCBT_DESTROYWND);
-
-		info.cbSize = sizeof(WINDOWINFO) + 1;
-		ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
-		verify_window_info((HWND)wParam, &info, nCode != HCBT_DESTROYWND);
-	    }
-	    break;
     }
 
     return CallNextHookEx(hhook, nCode, wParam, lParam);
@@ -1265,8 +1340,27 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
             break;
         }
 
-        case WM_WINDOWPOSCHANGING:
         case WM_WINDOWPOSCHANGED:
+        {
+            WINDOWPOS *winpos = (WINDOWPOS *)lparam;
+            RECT rc1, rc2;
+
+            GetWindowRect(hwnd, &rc1);
+            trace("window: (%ld,%ld)-(%ld,%ld)\n", rc1.left, rc1.top, rc1.right, rc1.bottom);
+            SetRect(&rc2, winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy);
+            /* note: winpos coordinates are relative to parent */
+            MapWindowPoints(GetParent(hwnd), 0, (LPPOINT)&rc2, 2);
+            trace("pos: (%ld,%ld)-(%ld,%ld)\n", rc2.left, rc2.top, rc2.right, rc2.bottom);
+            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+
+            GetWindowRect(hwnd, &rc1);
+            GetClientRect(hwnd, &rc2);
+            DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
+            MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
+            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+        }
+        /* fall through */
+        case WM_WINDOWPOSCHANGING:
         {
             WINDOWPOS *winpos = (WINDOWPOS *)lparam;
             WINDOWPOS my_winpos = *winpos;
@@ -1331,6 +1425,48 @@ static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPA
             test_MDI_create(hwnd, mdi_client);
             DestroyWindow(mdi_client);
             break;
+        }
+
+        case WM_WINDOWPOSCHANGED:
+        {
+            WINDOWPOS *winpos = (WINDOWPOS *)lparam;
+            RECT rc1, rc2;
+
+            GetWindowRect(hwnd, &rc1);
+            trace("window: (%ld,%ld)-(%ld,%ld)\n", rc1.left, rc1.top, rc1.right, rc1.bottom);
+            SetRect(&rc2, winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy);
+            /* note: winpos coordinates are relative to parent */
+            MapWindowPoints(GetParent(hwnd), 0, (LPPOINT)&rc2, 2);
+            trace("pos: (%ld,%ld)-(%ld,%ld)\n", rc2.left, rc2.top, rc2.right, rc2.bottom);
+            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+
+            GetWindowRect(hwnd, &rc1);
+            GetClientRect(hwnd, &rc2);
+            DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
+            MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
+            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+        }
+        /* fall through */
+        case WM_WINDOWPOSCHANGING:
+        {
+            WINDOWPOS *winpos = (WINDOWPOS *)lparam;
+            WINDOWPOS my_winpos = *winpos;
+
+            trace("%s\n", (msg == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
+            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                  winpos->hwnd, winpos->hwndInsertAfter,
+                  winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+
+            DefWindowProcA(hwnd, msg, wparam, lparam);
+
+            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                  winpos->hwnd, winpos->hwndInsertAfter,
+                  winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+
+            ok(!memcmp(&my_winpos, winpos, sizeof(WINDOWPOS)),
+               "DefWindowProc should not change WINDOWPOS values\n");
+
+            return 1;
         }
 
         case WM_CLOSE:
@@ -1457,6 +1593,11 @@ static void test_icons(void)
 
 static void test_SetWindowPos(HWND hwnd)
 {
+    BOOL is_win9x = GetWindowLongW(hwnd, GWL_WNDPROC) == 0;
+
+    /* Win9x truncates coordinates to 16-bit irrespectively */
+    if (is_win9x) return;
+
     SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOMOVE);
     SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOMOVE);
 
@@ -1468,19 +1609,24 @@ static void test_SetMenu(HWND parent)
 {
     HWND child;
     HMENU hMenu, ret;
+    BOOL is_win9x = GetWindowLongW(parent, GWL_WNDPROC) == 0;
 
     hMenu = CreateMenu();
     assert(hMenu);
 
     ok(SetMenu(parent, hMenu), "SetMenu on a top level window should not fail\n");
+    test_nonclient_area(parent);
     ret = GetMenu(parent);
-    ok(ret == (HMENU)hMenu, "unexpected menu id %p\n", ret);
+    ok(ret == hMenu, "unexpected menu id %p\n", ret);
     /* test whether we can destroy a menu assigned to a window */
     ok(DestroyMenu(hMenu), "DestroyMenu error %ld\n", GetLastError());
     ok(!IsMenu(hMenu), "menu handle should be not valid after DestroyMenu\n");
     ret = GetMenu(parent);
-    ok(ret == (HMENU)hMenu, "unexpected menu id %p\n", ret);
+    /* This test fails on Win9x */
+    if (!is_win9x)
+        ok(ret == hMenu, "unexpected menu id %p\n", ret);
     ok(SetMenu(parent, 0), "SetMenu(0) on a top level window should not fail\n");
+    test_nonclient_area(parent);
 
     hMenu = CreateMenu();
     assert(hMenu);
@@ -1490,14 +1636,17 @@ static void test_SetMenu(HWND parent)
     ok(ret == 0, "unexpected menu id %p\n", ret);
 
     ok(!SetMenu(parent, (HMENU)20), "SetMenu with invalid menu handle should fail\n");
+    test_nonclient_area(parent);
     ret = GetMenu(parent);
     ok(ret == 0, "unexpected menu id %p\n", ret);
 
     ok(SetMenu(parent, hMenu), "SetMenu on a top level window should not fail\n");
+    test_nonclient_area(parent);
     ret = GetMenu(parent);
-    ok(ret == (HMENU)hMenu, "unexpected menu id %p\n", ret);
+    ok(ret == hMenu, "unexpected menu id %p\n", ret);
 
     ok(SetMenu(parent, 0), "SetMenu(0) on a top level window should not fail\n");
+    test_nonclient_area(parent);
     ret = GetMenu(parent);
     ok(ret == 0, "unexpected menu id %p\n", ret);
  
@@ -1509,14 +1658,17 @@ static void test_SetMenu(HWND parent)
     ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
 
     ok(!SetMenu(child, (HMENU)20), "SetMenu with invalid menu handle should fail\n");
+    test_nonclient_area(child);
     ret = GetMenu(child);
     ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
 
     ok(!SetMenu(child, hMenu), "SetMenu on a child window should fail\n");
+    test_nonclient_area(child);
     ret = GetMenu(child);
     ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
 
     ok(!SetMenu(child, 0), "SetMenu(0) on a child window should fail\n");
+    test_nonclient_area(child);
     ret = GetMenu(child);
     ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
 
