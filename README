@@ -50,7 +50,14 @@ FreeBSD info:
 
 Solaris info:
   You will most likely need to build Wine with the GNU toolchain
-  (gcc, gas, etc.)
+  (gcc, gas, etc.). Warning : installing gas does *not* ensure that it
+  will be used by gcc. Recompiling gcc after installing gas or 
+  symlinking cc, as and ld to the gnu tools is said to be necessary.
+
+File systems info :
+  Wine should run on most file systems. However, Wine will fail to start
+  if umsdos is used for the /tmp directory. A few compatibility problems have
+  also been reported using files accessed through Samba.
 
 Wine requires kernel-level threads to run. Currently, only Linux
 version 2.0 or later, FreeBSD-current or FreeBSD 3.0 or later,
