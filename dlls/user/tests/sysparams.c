@@ -1051,7 +1051,6 @@ static void test_SPI_SETWALLPAPER( void )              /*   115 */
         return;
     }
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
-    test_reg_key(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, oldval);
 
     strcpy(newval, "");
     rc=SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, newval, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
@@ -1060,6 +1059,8 @@ static void test_SPI_SETWALLPAPER( void )              /*   115 */
 
     rc=SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, oldval, SPIF_UPDATEINIFILE);
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+
+    test_reg_key(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, oldval);
 }
 
 /*
