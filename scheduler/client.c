@@ -318,10 +318,16 @@ int CLIENT_InitServer(void)
  */
 int CLIENT_InitThread(void)
 {
-    struct init_thread_request init;
-    init.unix_pid = getpid();
-    CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &init, sizeof(init) );
-    return CLIENT_WaitReply( NULL, NULL, 0 );
+    THDB *thdb = THREAD_Current();
+    struct init_thread_request req;
+    struct init_thread_reply reply;
+
+    req.unix_pid = getpid();
+    CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return -1;
+    thdb->process->server_pid = reply.pid;
+    thdb->server_tid = reply.tid;
+    return 0;
 }
 
 

@@ -97,6 +97,11 @@ struct init_thread_request
 {
     int          unix_pid;     /* Unix pid of new thread */
 };
+struct init_thread_reply
+{
+    void*        pid;          /* process id of the new thread's process */
+    void*        tid;          /* thread id of the new thread */
+};
 
 
 /* Terminate a process */

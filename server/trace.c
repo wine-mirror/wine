@@ -66,6 +66,13 @@ static int dump_init_thread_request( struct init_thread_request *req, int len )
     return (int)sizeof(*req);
 }
 
+static int dump_init_thread_reply( struct init_thread_reply *req, int len )
+{
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " tid=%p", req->tid );
+    return (int)sizeof(*req);
+}
+
 static int dump_terminate_process_request( struct terminate_process_request *req, int len )
 {
     fprintf( stderr, " handle=%d,", req->handle );
@@ -638,7 +645,7 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
     { (int(*)(void *,int))dump_init_process_request,
       (void(*)())dump_init_process_reply },
     { (int(*)(void *,int))dump_init_thread_request,
-      (void(*)())0 },
+      (void(*)())dump_init_thread_reply },
     { (int(*)(void *,int))dump_terminate_process_request,
       (void(*)())0 },
     { (int(*)(void *,int))dump_terminate_thread_request,

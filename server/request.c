@@ -160,6 +160,8 @@ DECL_HANDLER(init_process)
 /* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
+    struct init_thread_reply reply;
+
     if (current->state != STARTING)
     {
         fatal_protocol_error( "init_thread: already running\n" );
@@ -169,7 +171,9 @@ DECL_HANDLER(init_thread)
     current->unix_pid = req->unix_pid;
     if (current->suspend > 0)
         kill( current->unix_pid, SIGSTOP );
-    send_reply( current, -1, 0 );
+    reply.pid = current->process;
+    reply.tid = current;
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
 /* set the debug level */

@@ -201,6 +201,7 @@ THDB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
 
     /* Now proceed with normal initialization */
 
+    if (CLIENT_InitThread()) return NULL;
     if (!THREAD_InitTHDB( &initial_thdb, 0, TRUE, NULL )) return NULL;
     return &initial_thdb;
 }
@@ -344,6 +345,7 @@ DWORD WINAPI GetCurrentThreadId(void)
 {
     THDB *thdb = THREAD_Current();
     assert( thdb );
+    assert( thdb->server_tid );
     return (DWORD)thdb->server_tid;
 }
 

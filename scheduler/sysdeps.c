@@ -80,12 +80,8 @@ int *__h_errno_location()
  */
 static void SYSDEPS_StartThread( THDB *thdb )
 {
-    struct init_thread_request init;
-
     SET_CUR_THREAD( thdb );
-    init.unix_pid = getpid();
-    CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &init, sizeof(init) );
-    CLIENT_WaitReply( NULL, NULL, 0 );
+    CLIENT_InitThread();
     thdb->startup();
     _exit(0);  /* should never get here */
 }

@@ -306,9 +306,6 @@ BOOL PROCESS_Init(void)
     /* Create the environment DB of the first process */
     if (!PROCESS_BuildEnvDB( &initial_pdb )) return FALSE;
 
-    /* Initialize the first thread */
-    if (CLIENT_InitThread()) return FALSE;
-
     /* Create the SEGPTR heap */
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
