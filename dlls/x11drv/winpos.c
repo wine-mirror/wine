@@ -400,6 +400,8 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
     top = GetAncestor( hwnd, GA_ROOT );
+    if (!top) top = GetDesktopWindow();
+
     if (top != hwnd)
     {
         escape.org.x = escape.org.y = 0;
@@ -422,21 +424,21 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             escape.org.y = 0;
             escape.drawable_org = escape.org;
         }
-        else
+        else if (flags & DCX_WINDOW)
         {
             escape.drawable = data->whole_window;
             escape.drawable_org.x = data->whole_rect.left;
             escape.drawable_org.y = data->whole_rect.top;
-            if (flags & DCX_WINDOW)
-            {
-                escape.org.x = win->rectWindow.left - data->whole_rect.left;
-                escape.org.y = win->rectWindow.top - data->whole_rect.top;
-            }
-            else
-            {
-                escape.org.x = win->rectClient.left - data->whole_rect.left;
-                escape.org.y = win->rectClient.top - data->whole_rect.top;
-            }
+            escape.org.x = win->rectWindow.left - data->whole_rect.left;
+            escape.org.y = win->rectWindow.top - data->whole_rect.top;
+        }
+        else
+        {
+            escape.drawable = data->client_window;
+            escape.drawable_org.x = win->rectClient.left;
+            escape.drawable_org.y = win->rectClient.top;
+            escape.org.x = 0;
+            escape.org.y = 0;
         }
     }
 
