@@ -635,9 +635,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	if (writebytes > This->buflen)
 		writebytes = This->buflen;
 
-	assert(audiobytes1!=audiobytes2);
-	assert(lplpaudioptr1!=lplpaudioptr2);
-
 	EnterCriticalSection(&(This->lock));
 
 	if ((writebytes == This->buflen) &&

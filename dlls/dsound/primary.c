@@ -718,9 +718,6 @@ static HRESULT WINAPI PrimaryBufferImpl_Lock(
 	if (writebytes > dsound->buflen)
 		writebytes = dsound->buflen;
 
-	assert(audiobytes1!=audiobytes2);
-	assert(lplpaudioptr1!=lplpaudioptr2);
-
 	if (!(dsound->drvdesc.dwFlags & DSDDESC_DONTNEEDPRIMARYLOCK) && dsound->hwbuf) {
 		HRESULT hres;
 		hres = IDsDriverBuffer_Lock(dsound->hwbuf,
