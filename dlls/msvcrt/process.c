@@ -16,6 +16,7 @@
 
 #include "msvcrt/process.h"
 #include "msvcrt/stdlib.h"
+#include "msvcrt/string.h"
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -26,7 +27,7 @@ static const unsigned int CMD = 'c' << 16 | 'm' << 8 | 'd';
 static const unsigned int COM = 'c' << 16 | 'o' << 8 | 'm';
 
 /* INTERNAL: Spawn a child process */
-static int msvcrt_spawn(int flags, const char* exe, char* args, char* env)
+static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
 {
   STARTUPINFOA si;
   PROCESS_INFORMATION pi;
@@ -45,7 +46,7 @@ static int msvcrt_spawn(int flags, const char* exe, char* args, char* env)
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
 
-  if (!CreateProcessA(exe, args, NULL, NULL, TRUE,
+  if (!CreateProcessA(exe, cmdline, NULL, NULL, TRUE,
                      flags == _P_DETACH ? DETACHED_PROCESS : 0,
                      env, NULL, &si, &pi))
   {
@@ -75,76 +76,90 @@ static int msvcrt_spawn(int flags, const char* exe, char* args, char* env)
   return -1; /* can't reach here */
 }
 
-/* INTERNAL: Convert argv list to a single 'delim'-separated string */
+/* INTERNAL: Convert argv list to a single 'delim'-separated string, with an
+ * extra '\0' to terminate it
+ */
 static char* msvcrt_argvtos(const char* const* arg, char delim)
 {
-  const char* const* search = arg;
-  long size = 0;
-  char *ret;
+  const char* const* a;
+  long size;
+  char* p;
+  char* ret;
 
   if (!arg && !delim)
-    return NULL;
-
-  /* get length */
-  while(*search)
   {
-    size += strlen(*search) + 1;
-    search++;
+      /* Return NULL for an empty environment list */
+      return NULL;
   }
 
-  if (!(ret = (char *)MSVCRT_calloc(size + 1, 1)))
+  /* get length */
+  a = arg;
+  size = 0;
+  while (*a)
+  {
+    size += strlen(*a) + 1;
+    a++;
+  }
+
+  ret = (char*)MSVCRT_malloc(size + 1);
+  if (!ret)
     return NULL;
 
   /* fill string */
-  search = arg;
-  size = 0;
-  while(*search)
+  a = arg;
+  p = ret;
+  while (*a)
   {
-    int strsize = strlen(*search);
-    memcpy(ret+size,*search,strsize);
-    ret[size+strsize] = delim;
-    size += strsize + 1;
-    search++;
+    int len = strlen(*a);
+    memcpy(ret+size,*a,len);
+    p += len;
+    *p++ = delim;
+    a++;
   }
+  *p='\0';
   return ret;
 }
 
-/* INTERNAL: Convert va_list to a single 'delim'-separated string */
-static char* msvcrt_valisttos(const char* arg0, va_list ap, char delim)
+/* INTERNAL: Convert va_list to a single 'delim'-separated string, with an
+ * extra '\0' to terminate it
+ */
+static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
 {
-  va_list search = ap;
+  va_list alist2 = alist;
   long size;
-  char *arg;
+  const char *arg;
+  char* p;
   char *ret;
-  int strsize;
 
   if (!arg0 && !delim)
-    return NULL;
-
-  /* get length */
-  size = strlen(arg0) + 1;
-  while((arg = va_arg(search, char *)) != NULL)
   {
-    size += strlen(arg) + 1;
+      /* Return NULL for an empty environment list */
+      return NULL;
   }
 
-  if (!(ret = (char *)MSVCRT_calloc(size + 1, 1)))
+  /* get length */
+  arg = arg0;
+  size = 0;
+  do {
+      size += strlen(arg) + 1;
+      arg = va_arg(alist, char*);
+  } while (arg != NULL);
+
+  ret = (char*)MSVCRT_malloc(size + 1);
+  if (!ret)
     return NULL;
 
   /* fill string */
-  search = ap;
-  size = 0;
-  strsize = strlen(arg0);
-  memcpy(ret+size,arg0,strsize);
-  ret[size+strsize] = delim;
-  size += strsize + 1;
-  while((arg = va_arg(search, char *)) != NULL)
-  {
-    strsize = strlen(search);
-    memcpy(ret+size,search,strsize);
-    ret[size+strsize] = delim;
-    size += strsize + 1;
-  }
+  arg = arg0;
+  p = ret;
+  do {
+      int len = strlen(arg);
+      memcpy(p,arg,len);
+      p += len;
+      *p++ = delim;
+      arg = va_arg(alist2, char*);
+  } while (arg != NULL);
+  *p = '\0';
   return ret;
 }
 
@@ -183,6 +198,9 @@ int _cwait(int *status, int pid, int action)
 
 /*********************************************************************
  *		_execl (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _execl(const char* name, const char* arg0, ...)
 {
@@ -202,6 +220,9 @@ int _execl(const char* name, const char* arg0, ...)
 
 /*********************************************************************
  *		_execlp (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _execlp(const char* name, const char* arg0, ...)
 {
@@ -224,6 +245,9 @@ int _execlp(const char* name, const char* arg0, ...)
 
 /*********************************************************************
  *		_execv (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _execv(const char* name, char* const* argv)
 {
@@ -232,6 +256,9 @@ int _execv(const char* name, char* const* argv)
 
 /*********************************************************************
  *		_execve (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _execve(const char* name, char* const* argv, const char* const* envv)
 {
@@ -240,6 +267,9 @@ int _execve(const char* name, char* const* argv, const char* const* envv)
 
 /*********************************************************************
  *		_execvpe (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _execvpe(const char* name, char* const* argv, const char* const* envv)
 {
@@ -252,6 +282,9 @@ int _execvpe(const char* name, char* const* argv, const char* const* envv)
 
 /*********************************************************************
  *		_execvp (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _execvp(const char* name, char* const* argv)
 {
@@ -260,6 +293,9 @@ int _execvp(const char* name, char* const* argv)
 
 /*********************************************************************
  *		_spawnl (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _spawnl(int flags, const char* name, const char* arg0, ...)
 {
@@ -279,6 +315,9 @@ int _spawnl(int flags, const char* name, const char* arg0, ...)
 
 /*********************************************************************
  *		_spawnlp (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _spawnlp(int flags, const char* name, const char* arg0, ...)
 {
@@ -301,6 +340,9 @@ int _spawnlp(int flags, const char* name, const char* arg0, ...)
 
 /*********************************************************************
  *		_spawnve (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _spawnve(int flags, const char* name, const char* const* argv,
                             const char* const* envv)
@@ -326,6 +368,9 @@ int _spawnve(int flags, const char* name, const char* const* argv,
 
 /*********************************************************************
  *		_spawnv (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _spawnv(int flags, const char* name, const char* const* argv)
 {
@@ -334,6 +379,9 @@ int _spawnv(int flags, const char* name, const char* const* argv)
 
 /*********************************************************************
  *		_spawnvpe (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _spawnvpe(int flags, const char* name, const char* const* argv,
                             const char* const* envv)
@@ -345,6 +393,9 @@ int _spawnvpe(int flags, const char* name, const char* const* argv,
 
 /*********************************************************************
  *		_spawnvp (MSVCRT.@)
+ *
+ * Like on Windows, this function does not handle arguments with spaces 
+ * or double-quotes.
  */
 int _spawnvp(int flags, const char* name, const char* const* argv)
 {
@@ -356,8 +407,15 @@ int _spawnvp(int flags, const char* name, const char* const* argv)
  */
 int MSVCRT_system(const char* cmd)
 {
-  /* FIXME: should probably launch cmd interpreter in COMSPEC */
-  return msvcrt_spawn(_P_WAIT, cmd, NULL, NULL);
+    char* cmdcopy;
+    int res;
+
+    /* Make a writable copy for CreateProcess */
+    cmdcopy=_strdup(cmd);
+    /* FIXME: should probably launch cmd interpreter in COMSPEC */
+    res=msvcrt_spawn(_P_WAIT, NULL, cmdcopy, NULL);
+    MSVCRT_free(cmdcopy);
+    return res;
 }
 
 /*********************************************************************
