@@ -1,4 +1,4 @@
-This is release 990110 of Wine, a free implementation of Windows on
+This is release 990131 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
@@ -6,9 +6,11 @@ correctly.
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-990110: (see ChangeLog for details)
-	- Many more COM interfaces definitions.
-	- Improvements to the resource compiler.
+WHAT'S NEW with Wine-990131: (see ChangeLog for details)
+	- Tons of new OLE stuff.
+	- Several improvements to DirectDraw support.
+	- Better message queues.
+	- Many new functions and stubs.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,10 +19,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/Wine-990110.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-990110.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-990110.tar.gz
-  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-990110.tar.gz
+  ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/Wine-990131.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-990131.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-990131.tar.gz
+  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-990131.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 
