@@ -277,11 +277,6 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
-    if (!name || !*name) {
-        *retkey = hkey;
-        return ERROR_SUCCESS;
-    }
-
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
@@ -321,11 +316,6 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
     STRING nameA;
     NTSTATUS status;
 
-    if (!name || !*name) {
-        *retkey = hkey;
-        return ERROR_SUCCESS;
-    }
-
     if (!is_version_nt()) access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
@@ -354,6 +344,11 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
  */
 DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
 {
+    if (!name || !*name)
+    {
+        *retkey = hkey;
+        return ERROR_SUCCESS;
+    }
     return RegOpenKeyExW( hkey, name, 0, KEY_ALL_ACCESS, retkey );
 }
 
@@ -374,6 +369,11 @@ DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
  */
 DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
+    if (!name || !*name)
+    {
+        *retkey = hkey;
+        return ERROR_SUCCESS;
+    }
     return RegOpenKeyExA( hkey, name, 0, KEY_ALL_ACCESS, retkey );
 }
 
@@ -855,7 +855,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
  */
 DWORD WINAPI RegCloseKey( HKEY hkey )
 {
-    if (!hkey) return ERROR_INVALID_PARAMETER;
+    if (!hkey) return ERROR_INVALID_HANDLE;
     if (hkey >= (HKEY)0x80000000) return ERROR_SUCCESS;
     return RtlNtStatusToDosError( NtClose( hkey ) );
 }

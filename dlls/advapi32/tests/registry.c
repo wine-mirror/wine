@@ -341,7 +341,7 @@ static void test_reg_close_key()
 
     /* try to close a NULL handle */
     ret = RegCloseKey(NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
 }
 
 START_TEST(registry)
