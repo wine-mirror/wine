@@ -82,6 +82,7 @@ const WCHAR *DIR_System = NULL;
 
 static const WCHAR comW[] = {'.','c','o','m',0};
 static const WCHAR batW[] = {'.','b','a','t',0};
+static const WCHAR pifW[] = {'.','p','i','f',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
 extern void SHELL_LoadRegistry(void);
@@ -1952,7 +1953,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
         /* check for .com or .bat extension */
         if ((p = strrchrW( name, '.' )))
         {
-            if (!strcmpiW( p, comW ))
+            if (!strcmpiW( p, comW ) || !strcmpiW( p, pifW ))
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
                 retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,

@@ -1827,7 +1827,7 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
     HeapFree( GetProcessHeap(), 0, cmdline );
     if (name != lpCmdLine) HeapFree( GetProcessHeap(), 0, name );
 
-    if (ret == 21)  /* 32-bit module */
+    if (ret == 21 || ret == 11)  /* 32-bit module or unknown executable*/
     {
         DWORD count;
         ReleaseThunkLock( &count );
