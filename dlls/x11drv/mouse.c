@@ -605,6 +605,8 @@ void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event )
 {
     POINT pt;
 
+    TRACE("hwnd %p, event->is_hint %d\n", hwnd, event->is_hint);
+
     if (!hwnd) return;
 
     update_cursor( hwnd, event->window );
@@ -622,8 +624,10 @@ void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event )
 {
     POINT pt;
 
-    if (event->detail == NotifyVirtual || event->detail == NotifyNonlinearVirtual) return;
+    TRACE("hwnd %p, event->detail %d\n", hwnd, event->detail);
+
     if (!hwnd) return;
+    if (event->detail == NotifyVirtual || event->detail == NotifyNonlinearVirtual) return;
 
     /* simulate a mouse motion event */
     update_cursor( hwnd, event->window );

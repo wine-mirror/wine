@@ -2099,6 +2099,66 @@ static void test_keyboard_input(HWND hwnd)
     ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
 }
 
+static void test_mouse_input(HWND hwnd)
+{
+    RECT rc;
+    POINT pt;
+    int x, y;
+    HWND popup;
+    MSG msg;
+
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+
+    GetWindowRect(hwnd, &rc);
+    trace("main window %p: (%ld,%ld)-(%ld,%ld)\n", hwnd, rc.left, rc.top, rc.right, rc.bottom);
+
+    popup = CreateWindowExA(0, "MainWindowClass", NULL, WS_POPUP,
+                            rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top,
+                            hwnd, 0, 0, NULL);
+    assert(popup != 0);
+    ShowWindow(popup, SW_SHOW);
+    UpdateWindow(popup);
+
+    GetWindowRect(popup, &rc);
+    trace("popup window %p: (%ld,%ld)-(%ld,%ld)\n", popup, rc.left, rc.top, rc.right, rc.bottom);
+
+    x = rc.left + (rc.right - rc.left) / 2;
+    y = rc.top + (rc.bottom - rc.top) / 2;
+    trace("setting cursor to (%d,%d)\n", x, y);
+
+    SetCursorPos(x, y);
+    GetCursorPos(&pt);
+    ok(x == pt.x && y == pt.y, "wrong cursor pos (%ld,%ld), expected (%d,%d)\n", pt.x, pt.y, x, y);
+
+    /* force the system to update its internal queue mouse position,
+     * otherwise it won't generate relative mouse movements below.
+     */
+    mouse_event(MOUSEEVENTF_MOVE, -1, -1, 0, 0);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+    msg.message = 0;
+    mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    /* FIXME: SetCursorPos in Wine generates additional WM_MOUSEMOVE message */
+    if (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+        ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+
+    mouse_event(MOUSEEVENTF_MOVE, -1, -1, 0, 0);
+    ShowWindow(popup, SW_HIDE);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == hwnd && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+    mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
+    ShowWindow(hwnd, SW_HIDE);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+
+    DestroyWindow(popup);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2153,6 +2213,7 @@ START_TEST(win)
 
     test_children_zorder(hwndMain);
     test_keyboard_input(hwndMain);
+    test_mouse_input(hwndMain);
 
     UnhookWindowsHookEx(hhook);
 }
