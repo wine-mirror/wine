@@ -575,7 +575,7 @@ static void start_process(void)
  */
 void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win16_exe_file )
 {
-    char error[100], *p;
+    char error[1024], *p;
     DWORD stack_size = 0;
 
     /* Initialize everything */
