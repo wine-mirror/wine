@@ -324,7 +324,7 @@ static	DWORD	MCIAVI_mciOpen(UINT wDevID, DWORD dwFlags,
                 strcpy(wma->lpFileName, lpOpenParms->lpstrElementName);
 
 		wma->hFile = mmioOpenA(lpOpenParms->lpstrElementName, NULL,
-				       MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READWRITE);
+				       MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READ);
 
 		if (wma->hFile == 0) {
 		    WARN("can't find file='%s' !\n", lpOpenParms->lpstrElementName);
