@@ -48,5 +48,5 @@
 54 stub AtlGetObjectSourceInterface
 55 stub AtlModuleUnRegisterTypeLib
 56 stub AtlModuleLoadTypeLib
-57 stub AtlModuleUnregisterServerEx
+57 stdcall AtlModuleUnregisterServerEx(ptr long ptr)
 58 stub AtlModuleAddTermFunc

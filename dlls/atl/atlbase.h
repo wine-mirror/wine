@@ -130,6 +130,7 @@ typedef struct _ATL_INTMAP_ENTRY_TAG
 
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE h);
 HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA* pM, DWORD dwClsContext, DWORD dwFlags);
+HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEA* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID);
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULEA* pM);
 HRESULT WINAPI AtlInternalQueryInterface(LPVOID pThis,
         const _ATL_INTMAP_ENTRY* pEntries, REFIID iid, LPVOID* ppvObject);

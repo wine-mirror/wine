@@ -109,6 +109,12 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA *pM, DWORD dwClsContex
    return hRes;
 }
 
+HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEA* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID)
+{
+    FIXME("(%p, %i, %p) stub\n", pM, bUnRegTypeLib, pCLSID);
+    return S_OK;
+}
+
 HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* pEntries,  REFIID iid, LPVOID* ppvObject)
 {
     int i = 0;
