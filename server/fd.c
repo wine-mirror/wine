@@ -36,9 +36,6 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
-#ifdef HAVE_SYS_EPOLL_H
-#include <sys/epoll.h>
-#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -55,8 +52,67 @@
 #include "winternl.h"
 
 #if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_EPOLL_CREATE)
+# include <sys/epoll.h>
 # define USE_EPOLL
-#endif
+#elif defined(linux) && defined(__i386__) && defined(HAVE_STDINT_H)
+# define USE_EPOLL
+# define EPOLLIN POLLIN
+# define EPOLLOUT POLLOUT
+# define EPOLLERR POLLERR
+# define EPOLLHUP POLLHUP
+# define EPOLL_CTL_ADD 1
+# define EPOLL_CTL_DEL 2
+# define EPOLL_CTL_MOD 3
+
+typedef union epoll_data
+{
+  void *ptr;
+  int fd;
+  uint32_t u32;
+  uint64_t u64;
+} epoll_data_t;
+
+struct epoll_event
+{
+  uint32_t events;
+  epoll_data_t data;
+};
+
+#define SYSCALL_RET(ret) do { \
+        if (ret < 0) { errno = -ret; ret = -1; } \
+        return ret; \
+    } while(0)
+
+static inline int epoll_create( int size )
+{
+    int ret;
+    __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
+             : "=a" (ret) : "0" (254 /*NR_epoll_create*/), "g" (size) );
+    SYSCALL_RET(ret);
+}
+
+static inline int epoll_ctl( int epfd, int op, int fd, const struct epoll_event *event )
+{
+    int ret;
+    __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
+             : "=a" (ret)
+             : "0" (255 /*NR_epoll_ctl*/), "g" (epfd), "c" (op), "d" (fd), "S" (event), "m" (*event) );
+    SYSCALL_RET(ret);
+}
+
+static inline int epoll_wait( int epfd, struct epoll_event *events, int maxevents, int timeout )
+{
+    int ret;
+    __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
+             : "=a" (ret)
+             : "0" (256 /*NR_epoll_wait*/), "g" (epfd), "c" (events), "d" (maxevents), "S" (timeout)
+             : "memory" );
+    SYSCALL_RET(ret);
+}
+#undef SYSCALL_RET
+
+#endif /* linux && __i386__ && HAVE_STDINT_H */
+
 
 /* Because of the stupid Posix locking semantics, we need to keep
  * track of all file descriptors referencing a given file, and not
