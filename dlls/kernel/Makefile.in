@@ -18,6 +18,7 @@ C_SRCS = \
 	editline.c \
 	format_msg.c \
 	kernel_main.c \
+	lcformat.c \
 	locale.c \
 	stress.c \
 	string.c \
