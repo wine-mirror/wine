@@ -2,7 +2,7 @@
  *
  * Copyright 1997-2000 Marcus Meissner
  * Copyright 1998-2000 Lionel Ulmer
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 
 #include "config.h"
@@ -136,6 +136,9 @@ static HRESULT create_dib(IDirectDrawSurfaceImpl* This)
     /* I don't think it's worth checking for this. */
     if (priv->dib.bitmap_data != This->surface_desc.lpSurface)
 	ERR("unexpected error creating DirectDrawSurface DIB section\n");
+
+    /* this seems like a good place to put the handle for HAL driver use */
+    This->global_more.hKernelSurface = priv->dib.DIBsection;
 
     return S_OK;
 }
@@ -804,9 +807,29 @@ void DIB_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
     This->get_dc(This, &dc);
     SetDIBColorTable(dc, dwStart, dwCount, col);
     This->release_dc(This, dc);
-    /* FIXME: propagate change to backbuffers */
-}
 
+    /* Propagate change to backbuffers if there are any */
+    /* Basically this is a modification of the Flip code to find the backbuffer */
+    /* and duplicate the palette update there as well */
+    if ((This->surface_desc.ddsCaps.dwCaps&(DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER))
+	== (DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER))
+    {
+	static DDSCAPS2 back_caps = { DDSCAPS_BACKBUFFER };
+	LPDIRECTDRAWSURFACE7 tgt;
+
+	HRESULT hr = IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(This,IDirectDrawSurface7),
+							    &back_caps, &tgt);
+	if (!FAILED(hr))
+	{
+	    IDirectDrawSurfaceImpl* target = ICOM_OBJECT(IDirectDrawSurfaceImpl,
+							 IDirectDrawSurface7,tgt);
+	    IDirectDrawSurface7_Release(tgt);
+	    target->get_dc(target, &dc);
+	    SetDIBColorTable(dc, dwStart, dwCount, col);
+	    target->release_dc(target, dc);
+	}
+    }
+}
 
 /* SetPalette: generic */
 /* SetPriority: generic */
@@ -816,10 +839,42 @@ HRESULT WINAPI
 DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 				     LPDDSURFACEDESC2 pDDSD, DWORD dwFlags)
 {
-    /* XXX */
-    FIXME("(%p)->(%p,%08lx)\n",iface,pDDSD,dwFlags);
-    abort();
-    return E_FAIL;
+    ICOM_THIS(IDirectDrawSurfaceImpl,iface);
+    DIB_PRIV_VAR(priv, This);
+    HRESULT hr = DD_OK;
+
+    TRACE("(%p)->(%p,%08lx)\n",iface,pDDSD,dwFlags);
+    if (pDDSD->dwFlags == DDSD_LPSURFACE) {
+	HBITMAP oldbmp = priv->dib.DIBsection;
+	LPVOID oldsurf = This->surface_desc.lpSurface;
+	BOOL oldc = priv->dib.client_memory;
+
+	TRACE("new lpSurface=%p\n",pDDSD->lpSurface);
+	This->surface_desc.lpSurface = pDDSD->lpSurface;
+	priv->dib.client_memory = TRUE;
+
+	hr = create_dib(This);
+	if (FAILED(hr))
+	{
+	    priv->dib.DIBsection = oldbmp;
+	    This->surface_desc.lpSurface = oldsurf;
+	    priv->dib.client_memory = oldc;
+	    return hr;
+	}
+
+	DeleteObject(oldbmp);
+
+	if (!oldc)
+	    VirtualFree(oldsurf, 0, MEM_RELEASE);
+
+	return hr;
+    }
+    else {
+	FIXME("flags=%08lx\n",pDDSD->dwFlags);
+	abort();
+	hr = E_FAIL;
+    }
+    return hr;
 }
 
 /* Unlock: ???, need callback */

@@ -1,4 +1,4 @@
-/* Copyright 2000 TransGaming Technologies Inc. */
+/* Copyright 2000-2001 TransGaming Technologies Inc. */
 
 #ifndef DDRAW_DSURFACE_DIB_H_INCLUDED
 #define DDRAW_DSURFACE_DIB_H_INCLUDED

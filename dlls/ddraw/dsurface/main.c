@@ -253,6 +253,14 @@ Main_DirectDrawSurface_AddAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
     /* TODO MSDN: "You can attach only z-buffer surfaces with this method."
      * But apparently backbuffers and mipmaps can be attached too. */
 
+    /* Set MIPMAPSUBLEVEL if this seems to be one */
+    if (This->surface_desc.ddsCaps.dwCaps &
+	surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) {
+	surf->surface_desc.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
+	/* FIXME: we should probably also add to dwMipMapCount of this
+	 * and all parent surfaces (update create_texture if you do) */
+    }
+
     /* Callback to allow the surface to do something special now that it is
      * attached. (e.g. maybe the Z-buffer tells the renderer to use it.) */
     if (!surf->attach(surf, This))
@@ -333,6 +341,14 @@ Main_DirectDrawSurface_DeleteAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 
     surf->detach(surf);
 
+    /* Remove MIPMAPSUBLEVEL if this seemed to be one */
+    if (This->surface_desc.ddsCaps.dwCaps &
+	surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) {
+	surf->surface_desc.ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
+	/* FIXME: we should probably also subtract from dwMipMapCount of this
+	 * and all parent surfaces */
+    }
+
     if (surf->next_attached)
 	surf->next_attached->prev_attached = surf->prev_attached;
     if (surf->prev_attached)
@@ -391,6 +407,18 @@ BOOL Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 	BOOL tmp = front->dc_in_use;
 	front->dc_in_use = back->dc_in_use;
 	back->dc_in_use = tmp;
+    }
+
+    {
+	FLATPTR tmp = front->global.fpVidMem;
+	front->global.fpVidMem = back->global.fpVidMem;
+	back->global.fpVidMem = tmp;
+    }
+
+    {
+	ULONG_PTR tmp = front->global_more.hKernelSurface;
+	front->global_more.hKernelSurface = back->global_more.hKernelSurface;
+	back->global_more.hKernelSurface = tmp;
     }
 
     return TRUE;
