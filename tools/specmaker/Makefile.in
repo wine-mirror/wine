@@ -26,7 +26,7 @@ specmaker: $(OBJS)
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) specmaker $(bindir)/specmaker
-	$(INSTALL_PROGRAM) $(SRCDIR)/function_grep.pl $(bindir)/function_grep.pl
+	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(bindir)/function_grep.pl
 
 uninstall::
 	$(RM) $(bindir)/specmaker

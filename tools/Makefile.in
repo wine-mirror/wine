@@ -44,9 +44,9 @@ bin2res: bin2res.o
 install:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) fnt2bdf $(bindir)/fnt2bdf
-	$(INSTALL_PROGRAM) winelauncher $(bindir)/winelauncher
-	$(INSTALL_PROGRAM) $(SRCDIR)/winemaker $(bindir)/winemaker
-	$(INSTALL_PROGRAM) $(SRCDIR)/wineshelllink $(bindir)/wineshelllink
+	$(INSTALL_SCRIPT) winelauncher $(bindir)/winelauncher
+	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
+	$(INSTALL_SCRIPT) $(SRCDIR)/wineshelllink $(bindir)/wineshelllink
 
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 	$(RM) $(bindir)/fnt2bdf $(bindir)/winelauncher $(bindir)/winemaker $(bindir)/wineshelllink
