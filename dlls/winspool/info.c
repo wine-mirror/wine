@@ -206,6 +206,12 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
     LPOPENEDPRINTERA lpOpenedPrinter;
     HKEY hkeyPrinters, hkeyPrinter;
 
+    if (!lpPrinterName) {
+       WARN("(printerName: NULL, pDefault %p Ret: False\n", pDefault);
+       SetLastError(ERROR_INVALID_PARAMETER);
+       return FALSE;
+    }
+
     TRACE("(printerName: %s, pDefault %p\n", lpPrinterName, pDefault);
 
     /* Check Printer exists */
@@ -1045,6 +1051,8 @@ BOOL  WINAPI EnumPrintersA(
     switch(dwLevel) {
     case 1:
         RegCloseKey(hkeyPrinters);
+	if (lpdwReturned)
+	    *lpdwReturned = number;
 	return TRUE;
 
     case 2:
@@ -1160,6 +1168,8 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
     
     TRACE("(%d,%s,%ld,%p,%ld,%p)\n",hPrinter,pEnvironment,
          Level,pDriverInfo,cbBuf, pcbNeeded);
+
+    ZeroMemory(pDriverInfo, cbBuf);
 
     lpOpenedPrinter = WINSPOOL_GetOpenedPrinterA(hPrinter);
     if(!lpOpenedPrinter) {
