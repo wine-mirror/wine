@@ -130,7 +130,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 
 static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 				LPCSTR name, WORD lang, 
-				BOOL bUnicode, BOOL bRet16, BOOL allowdefault )
+				BOOL bUnicode, BOOL bRet16 )
 {
     HRSRC hRsrc = 0;
     HMODULE16 hMod16   = MapHModuleLS( hModule );
@@ -138,15 +138,14 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
     WINE_MODREF *wm    = pModule && pModule->module32? 
 	MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
     
-    TRACE("(%08x %s, %08x%s, %08x%s, %04x, %s, %s, %s)\n",
+    TRACE("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
 	  hModule,
 	  pModule ? (char *)NE_MODULE_NAME(pModule) : "NULL dereference",
 	  (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
 	  (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
 	  lang,
 	  bUnicode? "W"  : "A",
-	  bRet16?   "NE" : "PE",
-	  allowdefault ? "allow default" : "NOT allowdefault" );
+	  bRet16?   "NE" : "PE" );
     
     if (pModule)
     {
@@ -164,7 +163,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 	    else
 		nameStr = (LPWSTR)name;
 	    
-	    hRsrc = PE_FindResourceExW( wm, nameStr, typeStr, lang, allowdefault );
+	    hRsrc = PE_FindResourceExW( wm, nameStr, typeStr, lang );
 	    
 	    if ( HIWORD( type ) && !bUnicode ) 
 		HeapFree( GetProcessHeap(), 0, typeStr );
@@ -212,12 +211,12 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 
 static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
                                LPCSTR name, WORD lang, 
-                               BOOL bUnicode, BOOL bRet16, BOOL allowdefault )
+                               BOOL bUnicode, BOOL bRet16 )
 {
     HRSRC hRsrc;
     __TRY
     {
-	hRsrc = RES_FindResource2(hModule, type, name, lang, bUnicode, bRet16, allowdefault);
+	hRsrc = RES_FindResource2(hModule, type, name, lang, bUnicode, bRet16);
     }
     __EXCEPT(page_fault)
     {
@@ -445,7 +444,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
     LPCSTR typeStr = HIWORD(type)? PTR_SEG_TO_LIN(type) : (LPCSTR)type;
 
     return RES_FindResource( hModule, typeStr, nameStr, 
-                             GetSystemDefaultLangID(), FALSE, TRUE, TRUE );
+                             GetSystemDefaultLangID(), FALSE, TRUE );
 }
 
 /**********************************************************************
@@ -454,7 +453,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 HANDLE WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 {
     return RES_FindResource( hModule, type, name, 
-                             GetSystemDefaultLangID(), FALSE, FALSE, TRUE );
+                             GetSystemDefaultLangID(), FALSE, FALSE );
 }
 
 /**********************************************************************
@@ -464,7 +463,7 @@ HANDLE WINAPI FindResourceExA( HMODULE hModule,
                                LPCSTR type, LPCSTR name, WORD lang )
 {
     return RES_FindResource( hModule, type, name, 
-                             lang, FALSE, FALSE, FALSE );
+                             lang, FALSE, FALSE );
 }
 
 /**********************************************************************
@@ -474,7 +473,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule,
                               LPCWSTR type, LPCWSTR name, WORD lang )
 {
     return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name, 
-                             lang, TRUE, FALSE, FALSE );
+                             lang, TRUE, FALSE );
 }
 
 /**********************************************************************
@@ -483,7 +482,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule,
 HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 {
     return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name, 
-                             GetSystemDefaultLangID(), TRUE, FALSE, TRUE );
+                             GetSystemDefaultLangID(), TRUE, FALSE );
 }
 
 /**********************************************************************
