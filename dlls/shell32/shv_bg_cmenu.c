@@ -168,15 +168,15 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	{
 	  TRACE("%s\n",lpcmi->lpVerb);
 
-	  if (! strcmp(lpcmi->lpVerb,CMDSTR_NEWFOLDER))
+	  if (! strcmp(lpcmi->lpVerb,CMDSTR_NEWFOLDERA))
 	  {
 	    FIXME("%s not implemented\n",lpcmi->lpVerb);
 	  }
-	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWLIST))
+	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWLISTA))
 	  {
 	    SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_LISTVIEW,0),0 );
 	  }
-	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWDETAILS))
+	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWDETAILSA))
 	  {
 	    SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
 	  } 
@@ -213,9 +213,6 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 /**************************************************************************
  *  ISVBgCm_fnGetCommandString()
  *
- * NOTES
- *  the values given by the common dialogs are not documented. so we put some magic
- *  words in it and will see, where we get these verbs back...
  */
 static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 	IContextMenu *iface,
@@ -233,12 +230,14 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 	   the buttons according to this */
 	if (uFlags == GCS_VALIDATEA)
 	{
-	  /* idCommmand's are 7febd910, 7febd920, 7febd930 */
-	  if ((idCommand==0x7febd910) ||
-	      (idCommand==0x7febd920) ||
-	      (idCommand==0x7febd930))
-	  {	
-	    return NOERROR;
+	  if(HIWORD(idCommand))
+	  {
+	    if (!strcmp((LPSTR)idCommand, CMDSTR_VIEWLISTA) ||
+	        !strcmp((LPSTR)idCommand, CMDSTR_VIEWDETAILSA) ||
+	        !strcmp((LPSTR)idCommand, CMDSTR_NEWFOLDERA))
+	    {	
+	      return NOERROR;
+	    }
 	  }
 	}
 

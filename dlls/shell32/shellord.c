@@ -389,19 +389,25 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
  *     free_ptr() - frees memory using IMalloc
  *     exported by ordinal
  */
+/*#define MEM_DEBUG 1*/
 DWORD WINAPI SHFree(LPVOID x) 
 {
-	TRACE("%p\n",x);
-#if 0
-	WORD len;
-	x -= 4;
+#ifdef MEM_DEBUG
+	WORD len = *(LPWORD)(x-2);
 
-	if ( (*(LPWORD)x) != 0x8271)
-	  ERR("MAGIC1!\n");
-
-	len = *(LPWORD)(x+2);
-	if ( *(LPWORD)( x + 4 + len) != 0x7384)
+	if ( *(LPWORD)(x+len) != 0x7384)
 	  ERR("MAGIC2!\n");
+
+	if ( (*(LPWORD)(x-4)) != 0x8271)
+	  ERR("MAGIC1!\n");
+	else
+	  memset(x-4, 0xde, len+6);
+
+	TRACE("%p len=%u\n",x, len);
+
+	x -= 4;
+#else
+	TRACE("%p\n",x);
 #endif
 	return HeapFree(GetProcessHeap(), 0, x);
 }
@@ -415,16 +421,21 @@ DWORD WINAPI SHFree(LPVOID x)
  */
 LPVOID WINAPI SHAlloc(DWORD len) 
 {
-	LPBYTE ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
-#if 0
-	LPBYTE ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len + 6);
-	*(LPWORD)(ret) = 0x8271;
-	*(LPWORD)(ret+2) = len;
-	*(LPWORD)(ret+len+4) = 0x7384;
-	
-	ret += 4;
+	LPBYTE ret;
+
+#ifdef MEM_DEBUG
+	ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len+6);
+#else
+	ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
 #endif
 
+#ifdef MEM_DEBUG
+	*(LPWORD)(ret) = 0x8271;
+	*(LPWORD)(ret+2) = (WORD)len;
+	*(LPWORD)(ret+4+len) = 0x7384;
+	ret += 4;
+	memset(ret, 0xdf, len);
+#endif
 	TRACE("%lu bytes at %p\n",len, ret);
 	return (LPVOID)ret;
 }
@@ -1298,11 +1309,3 @@ HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
 	return DoEnvironmentSubstA(x, y);
 }
 
-/*************************************************************************
- * PathCleanupSpec				[SHELL32.171]
- *
- */
-BOOL WINAPI PathCleanupSpec(LPSTR x, LPSTR y)
-{	FIXME("%p(%s) %p(%s) stub\n",x,debugstr_w(x),y,debugstr_w(y));
-	return TRUE;
-}

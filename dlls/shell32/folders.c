@@ -199,7 +199,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	else	/* object is file */
 	{
 	  if (_ILGetExtension (pSimplePidl, sTemp, MAX_PATH)
-	      && HCR_MapTypeToValue(sTemp, sTemp, MAX_PATH)
+	      && HCR_MapTypeToValue(sTemp, sTemp, MAX_PATH, TRUE)
 	      && HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
 	  {
 	    if (!strcmp("%1",sTemp))		/* icon is in the file */

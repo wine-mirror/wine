@@ -174,6 +174,10 @@ LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf );
 LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf );
 #define  StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
 
+DWORD WINAPI PathCleanupSpecA(LPSTR x, LPSTR y);
+DWORD WINAPI PathCleanupSpecW(LPWSTR x, LPWSTR y);
+#define  PathCleanupSpec WINELIB_NAME_AW(PathCleanupSpec)
+
 /****************************************************************************
 *  other functions
 */

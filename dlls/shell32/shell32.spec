@@ -176,7 +176,7 @@ init	Shell32LibMain
  168 stub SHCreatePropSheetExtArray
  169 stub SHDestroyPropSheetExtArray
  170 stub SHReplaceFromPropSheetExtArray
- 171 stdcall PathCleanupSpec(ptr ptr) PathCleanupSpec
+ 171 stdcall PathCleanupSpec(ptr ptr) PathCleanupSpecAW
  172 stub SHCreateLinks
  173 stdcall SHValidateUNC(long long long)SHValidateUNC
  174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx

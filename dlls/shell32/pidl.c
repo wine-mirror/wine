@@ -276,38 +276,38 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
  * NOTES
  *   wraper for IShellFolder::ParseDisplayName()
  */
-HRESULT WINAPI SHILCreateFromPathA (LPSTR path, LPITEMIDLIST * ppidl, DWORD attributes)
+HRESULT WINAPI SHILCreateFromPathA (LPCSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {	LPSHELLFOLDER sf;
 	WCHAR lpszDisplayName[MAX_PATH];
 	DWORD pchEaten;
 	HRESULT ret = E_FAIL;
 	
-	TRACE_(shell)("%s %p 0x%08lx\n",path,ppidl,attributes);
+	TRACE_(shell)("%s %p 0x%08lx\n",path,ppidl,attributes?*attributes:0);
 
 	LocalToWideChar(lpszDisplayName, path, MAX_PATH);
 
 	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
 	{
-	  ret = sf->lpvtbl->fnParseDisplayName(sf,0, NULL,lpszDisplayName,&pchEaten,ppidl,&attributes);
-	  sf->lpvtbl->fnRelease(sf);
+	  ret = IShellFolder_ParseDisplayName(sf,0, NULL,lpszDisplayName,&pchEaten,ppidl,attributes);
+	  IShellFolder_Release(sf);
 	}
-	return ret; 	
+	return ret;
 }
-HRESULT WINAPI SHILCreateFromPathW (LPWSTR path, LPITEMIDLIST * ppidl, DWORD attributes)
+HRESULT WINAPI SHILCreateFromPathW (LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {	LPSHELLFOLDER sf;
 	DWORD pchEaten;
 	HRESULT ret = E_FAIL;
 	
-	TRACE_(shell)("%s %p 0x%08lx\n",debugstr_w(path),ppidl,attributes);
+	TRACE_(shell)("%s %p 0x%08lx\n",debugstr_w(path),ppidl,attributes?*attributes:0);
 
 	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
 	{
-	  ret = sf->lpvtbl->fnParseDisplayName(sf,0, NULL, path, &pchEaten, ppidl, &attributes);
-	  sf->lpvtbl->fnRelease(sf);
+	  ret = IShellFolder_ParseDisplayName(sf,0, NULL, path, &pchEaten, ppidl, attributes);
+	  IShellFolder_Release(sf);
 	}
 	return ret;
 }
-HRESULT WINAPI SHILCreateFromPathAW (LPVOID path, LPITEMIDLIST * ppidl, DWORD attributes)
+HRESULT WINAPI SHILCreateFromPathAW (LPCVOID path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {
 	if ( VERSION_OsIsUnicode())
 	  return SHILCreateFromPathW (path, ppidl, attributes);
@@ -698,27 +698,29 @@ DWORD WINAPI ILGlobalFree( LPITEMIDLIST pidl)
  * ILCreateFromPath [SHELL32.157]
  *
  */
-LPITEMIDLIST WINAPI ILCreateFromPathA (LPSTR path) 
+LPITEMIDLIST WINAPI ILCreateFromPathA (LPCSTR path) 
 {
 	LPITEMIDLIST pidlnew;
+	DWORD attributes = 0;
 
 	TRACE_(shell)("%s\n",path);
 
-	if (SUCCEEDED (SHILCreateFromPathA (path, &pidlnew, 0)))
+	if (SUCCEEDED (SHILCreateFromPathA (path, &pidlnew, &attributes)))
 	  return pidlnew;
 	return FALSE;
 }
-LPITEMIDLIST WINAPI ILCreateFromPathW (LPWSTR path) 
+LPITEMIDLIST WINAPI ILCreateFromPathW (LPCWSTR path) 
 {
 	LPITEMIDLIST pidlnew;
+	DWORD attributes = 0;
 
 	TRACE_(shell)("%s\n",debugstr_w(path));
 
-	if (SUCCEEDED (SHILCreateFromPathW (path, &pidlnew, 0)))
+	if (SUCCEEDED (SHILCreateFromPathW (path, &pidlnew, &attributes)))
 	  return pidlnew;
 	return FALSE;
 }
-LPITEMIDLIST WINAPI ILCreateFromPathAW (LPVOID path) 
+LPITEMIDLIST WINAPI ILCreateFromPathAW (LPCVOID path) 
 {
 	if ( VERSION_OsIsUnicode())
 	  return ILCreateFromPathW (path);
@@ -813,7 +815,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 	      {
 		DWORD attributes=0;
 		TRACE_(shell)("Value=%s\n",szPath);
-		hr = SHILCreateFromPathA(szPath, ppidl, attributes);
+		hr = SHILCreateFromPathA(szPath, ppidl, &attributes);
 	      }
 	  }
 	}
@@ -891,7 +893,7 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
  *  fnGetDisplayNameOf can return different types of OLEString
  */
 BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
-{	STRRET lpName;
+{	STRRET str;
 	LPSHELLFOLDER shellfolder;
 
 	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
@@ -908,10 +910,10 @@ BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
 	{
 	  if (SHGetDesktopFolder(&shellfolder)==S_OK)
 	  {
-	    IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&lpName);
+	    IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&str);
+	    StrRetToStrNA (pszPath, MAX_PATH, &str, pidl);
 	    IShellFolder_Release(shellfolder);
 	  }
-	  strcpy(pszPath,lpName.u.cStr);
 	}
 	TRACE_(shell)("-- (%s)\n",pszPath);
 
@@ -945,27 +947,37 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
 	TRACE_(shell)("pidl=%p\n", pidl);
 	pdump(pidl);
 	
-	if (_ILIsPidlSimple(pidl)) return E_INVALIDARG;
-
 	*ppv = NULL;
-	pidlChild =  ILClone(ILFindLastID(pidl));
-	pidlParent = ILClone(pidl);
-	ILRemoveLastID(pidlParent);
+	if (ppidlLast) *ppidlLast = NULL;
 
-	if (SUCCEEDED(SHGetDesktopFolder(&psf)))
+	if (_ILIsPidlSimple(pidl))
 	{
-	  if (SUCCEEDED(IShellFolder_BindToObject(psf, pidlParent, NULL, riid, ppv)))
-	  {
-	    if(ppidlLast)
-	     *ppidlLast = pidlChild;
-	    else
-	     ILFree (pidlChild);
-	    hr = S_OK;
-	  }
+	  /* we are on desktop level */
+	  if (ppidlLast) 
+	    *ppidlLast = ILClone(pidl);
+	  hr = SHGetDesktopFolder((IShellFolder**)ppv);
 	}
-	SHFree (pidlParent);
+	else
+	{
+	  pidlChild =  ILClone(ILFindLastID(pidl));
+	  pidlParent = ILClone(pidl);
+	  ILRemoveLastID(pidlParent);
 
-	TRACE_(shell)("-- psf=%p pidl=%p\n", *ppv, (ppidlLast)?*ppidlLast:NULL);
+	  hr = SHGetDesktopFolder(&psf);
+
+	  if (SUCCEEDED(hr))
+	    hr = IShellFolder_BindToObject(psf, pidlParent, NULL, riid, ppv);
+
+	  if (SUCCEEDED(hr) && ppidlLast)
+	    *ppidlLast = pidlChild;
+	  else
+	    ILFree (pidlChild);
+
+	  SHFree (pidlParent);
+	}
+
+
+	TRACE_(shell)("-- psf=%p pidl=%p ret=0x%08lx\n", *ppv, (ppidlLast)?*ppidlLast:NULL, hr);
 	return hr;
 }
 

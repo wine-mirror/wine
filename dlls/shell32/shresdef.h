@@ -1,21 +1,24 @@
 #ifndef __WINE_SHELL_RES_H
 #define __WINE_SHELL_RES_H
 
-#define IDS_FILE_TITLE              	1
-#define IDS_MI_FILE                 	2
-#define IDS_MI_VIEW_FILES               3
-#define IDS_TB_VIEW_FILES               4
-#define IDS_MI_VIEW_IDW                 5
-#define IDS_TB_VIEW_IDW                 6
+/*
+	columntitles for the shellview
+*/
+#define IDS_SHV_COLUMN1		7
+#define IDS_SHV_COLUMN2		8
+#define IDS_SHV_COLUMN3		9
+#define IDS_SHV_COLUMN4		10
+#define IDS_SHV_COLUMN5		11
+#define IDS_SHV_COLUMN6		12
 
-#define IDS_COLUMN1                     7
-#define IDS_COLUMN2                     8
-#define IDS_COLUMN3                     9
-#define IDS_COLUMN4                     10
+#define IDS_DESKTOP		20
+#define IDS_MYCOMPUTER		21
 
-#define IDS_MI_FILEITEM                 12
-
-#define IDI_FOLDER                      101
-#define IDI_FOLDEROPEN                  102
+#define IDS_SELECT		22
+#define IDS_OPEN		23
+#define IDS_VIEW_LARGE		24
+#define IDS_VIEW_SMALL		25
+#define IDS_VIEW_LIST		26
+#define IDS_VIEW_DETAILS	27
 
 #endif

@@ -53,6 +53,13 @@ extern LPVOID	(WINAPI* pDPA_DeletePtr) (const HDPA hdpa, INT i);
 extern HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
 extern HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
 
+/* ole2 */
+extern HRESULT (WINAPI* pOleInitialize)(LPVOID reserved);
+extern void (WINAPI* pOleUninitialize)(void);
+extern HRESULT (WINAPI* pDoDragDrop)(IDataObject* pDataObject, IDropSource * pDropSource, DWORD dwOKEffect, DWORD * pdwEffect);
+extern HRESULT (WINAPI* pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
+extern HRESULT (WINAPI* pRevokeDragDrop)(HWND hwnd);
+
 BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
 HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
 
@@ -63,7 +70,7 @@ void SIC_Destroy(void);
 BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT * pIndex);
 
 /* Classes Root */
-BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len);
+BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL bPrependDot);
 BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len );
 BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
 BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len);
@@ -90,7 +97,7 @@ LPSHELLLINK	IShellLink_Constructor(BOOL);
 
 IShellFolder * ISF_Desktop_Constructor(void);
 
-/* 3th parameter */
+/* kind of enumidlist */
 #define EIDL_DESK	0
 #define EIDL_MYCOMP	1
 #define EIDL_FILE	2
@@ -112,5 +119,20 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR,REFCLSID,LPUNKNOWN,REFIID,LPVOID *);
 #define MM_ADDSEPARATOR         0x00000001L
 #define MM_SUBMENUSHAVEIDS      0x00000002L
 HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAdjust, UINT uIDAdjustMax, ULONG uFlags);
+
+/* initialisation for FORMATETC */
+#define InitFormatEtc(fe, cf, med) \
+	{\
+	(fe).cfFormat=cf;\
+	(fe).dwAspect=DVASPECT_CONTENT;\
+	(fe).ptd=NULL;\
+	(fe).tymed=med;\
+	(fe).lindex=-1;\
+	};
+
+#define KeyStateToDropEffect(kst)\
+	(((kst) & MK_CONTROL) ?\
+	(((kst) & MK_SHIFT) ? DROPEFFECT_LINK : DROPEFFECT_COPY):\
+	DROPEFFECT_MOVE)
 
 #endif

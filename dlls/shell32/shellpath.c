@@ -718,6 +718,29 @@ LPCVOID WINAPI PathGetExtensionAW(LPCVOID path,DWORD y,DWORD z)
 }
 
 /*************************************************************************
+ * PathCleanupSpec				[SHELL32.171]
+ *
+ */
+DWORD WINAPI PathCleanupSpecA(LPSTR x, LPSTR y)
+{
+	FIXME("%p(%s) %p(%s) stub\n",x,x,y,y);
+	return TRUE;
+}
+
+DWORD WINAPI PathCleanupSpecW(LPWSTR x, LPWSTR y)
+{
+	FIXME("%p(%s) %p(%s) stub\n",x,debugstr_w(x),y,debugstr_w(y));
+	return TRUE;
+}
+
+DWORD WINAPI PathCleanupSpecAW (LPVOID x, LPVOID y)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathCleanupSpecW(x,y);
+	return PathCleanupSpecA(x,y);
+}
+
+/*************************************************************************
  * SheGetDirW [SHELL32.281]
  *
  */

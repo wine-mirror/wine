@@ -38,11 +38,11 @@ DWORD WINAPI SHCLSIDFromStringA (LPSTR clsid, CLSID *id);
 LRESULT WINAPI SHCoCreateInstance(
 	LPSTR aclsid,
 	REFCLSID clsid,
-	LPUNKNOWN unknownouter,
+	IUnknown * unknownouter,
 	REFIID refiid,
 	LPVOID *ppv)
 {
-	char	xclsid[48], xiid[48];
+	char	xclsid[48], xiid[48], xuout[48];
 	DWORD	hres;
 	IID	iid;
 	CLSID * myclsid = (CLSID*)clsid;
@@ -58,7 +58,11 @@ LRESULT WINAPI SHCoCreateInstance(
 
 	WINE_StringFromCLSID(myclsid,xclsid);
 	WINE_StringFromCLSID(refiid,xiid);
-	TRACE("(%p,\n\tCLSID:\t%s,%p,\n\tIID:\t%s,%p)\n",aclsid,xclsid,unknownouter,xiid,ppv);
+	if (unknownouter)
+		WINE_StringFromCLSID(unknownouter,xuout);
+	  
+	TRACE("(%p,\n\tCLSID:\t%s\n\tUOUT:\t%s\n\tIID:\t%s,%p)\n",
+		aclsid,xclsid,unknownouter?xuout:"nil",xiid,ppv);
 
 	hres = CoCreateInstance(myclsid, NULL, CLSCTX_INPROC_SERVER, refiid, ppv);
 
@@ -156,15 +160,13 @@ LPSHELLFOLDER pdesktopfolder=NULL;
 
 DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 {
-	HRESULT	hres = E_OUTOFMEMORY;
+	HRESULT	hres = S_OK;
 	LPCLASSFACTORY lpclf;
 	TRACE_(shell)("%p->(%p)\n",psf,*psf);
 
-	if (pdesktopfolder) 
-	{
-	  hres = NOERROR;
-	}
-	else 
+	*psf=NULL;
+
+	if (!pdesktopfolder) 
 	{
 	  lpclf = IClassFactory_Constructor(&CLSID_ShellDesktop);
 	  if(lpclf) 
@@ -176,12 +178,9 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 	
 	if (pdesktopfolder) 
 	{
-	  *psf = pdesktopfolder;
+	  /* even if we create the folder, add a ref so the application can´t destroy the folder*/
 	  IShellFolder_AddRef(pdesktopfolder);
-	} 
-	else 
-	{
-	  *psf=NULL;
+	  *psf = pdesktopfolder;
 	}
 
 	TRACE_(shell)("-- %p->(%p)\n",psf, *psf);

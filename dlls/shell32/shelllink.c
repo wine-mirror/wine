@@ -26,12 +26,13 @@ DEFAULT_DEBUG_CHANNEL(shell)
 
 #include "pshpack1.h"
 
-/* lnk elements: simple link has 0x0B */
+/* flag1: lnk elements: simple link has 0x0B */
 #define	WORKDIR		0x10
 #define	ARGUMENT	0x20
 #define	ICON		0x40
+#define UNC		0x80
 
-/* startup type */
+/* fStartup */
 #define	NORMAL		0x01
 #define	MAXIMIZED	0x03
 #define	MINIMIZED	0x07
@@ -46,7 +47,7 @@ typedef struct _LINK_HEADER
 	FILETIME Time3;		/* 0x2c */
 	DWORD	Unknown1;	/* 0x34 */
 	DWORD	Unknown2;	/* 0x38 icon number */
-	DWORD	Flag3;		/* 0x3c startup type */
+	DWORD	fStartup;	/* 0x3c startup type */
 	DWORD	wHotKey;	/* 0x40 hotkey */
 	DWORD	Unknown5;	/* 0x44 */
 	DWORD	Unknown6;	/* 0x48 */
@@ -81,6 +82,9 @@ typedef struct
 	LPSTR		sPath;
 	LPITEMIDLIST	pPidl;
 	WORD		wHotKey;
+	SYSTEMTIME	time1;
+	SYSTEMTIME	time2;
+	SYSTEMTIME	time3;
 
 } IShellLinkImpl;
 
@@ -315,26 +319,30 @@ static HRESULT WINAPI IPersistStream_fnLoad(
 
 	            SHGetPathFromIDListA(&lpLinkHeader->Pidl, sTemp);
 	            This->sPath = HEAP_strdupA ( GetProcessHeap(), 0, sTemp);
-		    This->wHotKey = lpLinkHeader->wHotKey;
-		    ret = S_OK;
 	          }
+		  This->wHotKey = lpLinkHeader->wHotKey;
+		  FileTimeToSystemTime (&lpLinkHeader->Time1, &This->time1);
+		  FileTimeToSystemTime (&lpLinkHeader->Time2, &This->time2);
+		  FileTimeToSystemTime (&lpLinkHeader->Time3, &This->time3);
+#if 1
+		  GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time1, NULL, sTemp, 256);
+		  TRACE("-- time1: %s\n", sTemp);
+		  GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time2, NULL, sTemp, 256);
+		  TRACE("-- time1: %s\n", sTemp);
+		  GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time3, NULL, sTemp, 256);
+		  TRACE("-- time1: %s\n", sTemp);
+		  pdump (This->pPidl);
+#endif		  
+		  ret = S_OK;
 	        }
 	      }
 	    }
 	    else
-	    { WARN("stream contains no link!\n");
+	    {
+	      WARN("stream contains no link!\n");
 	    }
 	  }
 	}
-
-	/* old code for debugging */
-	/*  SYSTEMTIME time;
-	  FileTimeToSystemTime (&pImage->Time1, &time);
-	  GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  sTemp, 256);
-	  TRACE("-- time1: %s\n", sTemp);
-
-	  pdump (&pImage->Pidl);
-	*/
 
 	IStream_Release (pLoadStream);
 
