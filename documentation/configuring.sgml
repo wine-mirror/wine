@@ -210,11 +210,6 @@
           <itemizedlist>
             <listitem>
               <para>
-                Drives and information about them
-              </para>
-            </listitem>
-            <listitem>
-              <para>
                 Directory settings
               </para>
             </listitem>
@@ -302,11 +297,6 @@
             </thead>
             <tbody>
               <row>
-                <entry>[Drive x]</entry>
-                <entry>yes</entry>
-                <entry>Sets up drive mappings to be used by Wine</entry>
-              </row>
-              <row>
                 <entry>[wine]</entry>
                 <entry>yes</entry>
                 <entry>General settings for Wine</entry>
@@ -325,16 +315,6 @@
                 <entry>[fonts]</entry>
                 <entry>yes</entry>
                 <entry>Font appearance and recognition</entry>
-              </row>
-              <row>
-                <entry>[serialports]</entry>
-                <entry>no</entry>
-                <entry>COM ports seen by Wine</entry>
-              </row>
-              <row>
-                <entry>[parallelports]</entry>
-                <entry>no</entry>
-                <entry>LPT ports seen by Wine</entry>
               </row>
               <row>
                 <entry>[ppdev]</entry>
@@ -399,17 +379,6 @@
 	  Now let's explain the configuration file sections in a
 	  detailed way.
 	</para>
-	
-        <sect3>
-          <title>The [Drive x] Sections</title>
-          <para>
-	    For a detailed description of these configuration file
-	    sections which are used to set up DOS drive mappings to Unix
-	    directory space, please look at the <link
-	    linkend="config-drive-sections">Wine file system layer
-	    configuration section</link>.
-	  </para>
-	</sect3>
 
         <sect3 id="config-wine">
           <title>The [wine] Section </title>
@@ -427,8 +396,8 @@
             </programlisting>
 	    For a detailed description of drive layer configuration and
 	    the meaning of these parameters, please look at the <link
-	    linkend="config-drive-main">Wine file system layer
-	    configuration section</link>.
+	    linkend="config-drive-main">Disc Drives, Serial and Parallel
+            Ports section</link>.
           </para>
           <para>
             <programlisting>"GraphicsDriver" = "x11drv|ttydrv"</programlisting>
@@ -589,41 +558,8 @@
         </sect3>
 
         <sect3 id="config-io">
-          <title>The [serialports], [parallelports], [spooler], and [ports] Sections</title>
+          <title>The [spooler] and [ports] Sections</title>
           <para>
-            Even though it sounds like a lot of sections, these are
-            all closely related. They are all for communications and
-            parallel ports.
-          </para>
-          <para>
-            The [serialports] section tells wine what serial ports it
-            is allowed to use.
-            <programlisting>"ComX" = "/dev/ttySY"</programlisting>
-            Replace <literal>X</literal> with the number of the COM
-            port in Windows (1-8) and <literal>Y</literal> with the
-            number of it in <literal>X</literal> (Usually the number
-            of the port in Windows minus 1). <literal>ComX</literal>
-            can actually equal any device
-            (<medialabel>/dev/modem</medialabel> is acceptable). It is
-            not always necessary to define any COM ports (An optional
-            setting). Here is an example:
-            <programlisting>"Com1" = "/dev/ttyS0"</programlisting>
-            Use as many of these as you like in the section to define
-            all of the COM ports you need.
-          </para>
-          <para>
-            The [parallelports] section sets up any parallel ports
-            that will be allowed access under wine.
-            <programlisting>"LptX" = "/dev/lpY"</programlisting>
-            Sounds familiar? Syntax is just like the COM port setting.
-            Replace <literal>X</literal> with a value from 1-4 as it
-            is in Windows and <literal>Y</literal> with a value from
-            0-3 (<literal>Y</literal> is usually the value in windows
-            minus 1, just like for COM ports). You don't always need
-            to define a parallel port (AKA, it's optional). As with
-            the other section, LptX can equal any device (Maybe
-            <medialabel>/dev/printer</medialabel>). Here is an
-            example:  <programlisting>"Lpt1" = "/dev/lp0"</programlisting>
             The [spooler] section will inform wine where to spool
             print jobs. Use this if you want to try printing. Wine
             docs claim that spooling is "rather primitive" at this
@@ -873,7 +809,7 @@
     </sect1>
 
     <sect1 id="config-drive-main">
-      <title>The Wine File System And Drive Layer</title>
+      <title>Disc Drives, Serial and Parallel Ports</title>
       <sect2>
         <title>Extremely Important Prerequisites</title>
 	<para>
@@ -898,29 +834,54 @@
       <sect2>
         <title>Short Introduction</title>
         <para>
-	  Wine emulates drives by placing their virtual drive roots to
-	  user-configurable points in the Unix filesystem, so it's your
-	  choice where <medialabel>C:</medialabel>'s root should be
-	  (<filename>tools/wineinstall</filename> will even ask you). If
-	  you choose, say, <filename>~/wine</filename> (or, in other
-	  words, <filename>/home/user/wine</filename>, since "~"
-	  indicates the home directory of a user), as the root of your
-	  virtual drive <medialabel>C:</medialabel>, then you'd put this
-	  into your Wine configuration file:
+          Windows applications refer to disc drives by letters such as
+          <filename>A:</filename>, <filename>B:</filename> and
+          <filename>C:</filename>, and to serial and parallel ports by names
+          such as <filename>COM1</filename>: and <filename>LPT1:</filename>.
         </para>
-
-        <programlisting>
-[Drive C]
-"Path" = "%HOME%/wine"
-"Type" = "hd"
-        </programlisting>
-
         <para>
-          With this configuration, what windows apps think of as
-          "c:\windows\system" would map to
-          <filename>/home/user/wine/windows/system</filename> in the UNIX
-          filesystem.
+          You need to tell Wine how to interpret these. You do so by
+          specifying the Unix file system nodes and devices that Wine
+          should map them onto, as described later in this section.
         </para>
+        <para>
+          You can map a Windows fixed disc drive onto any node in your
+          Unix file system - this need not be the root node of a drive.
+          For example, you could map your Windows drive <filename>C:</filename>
+          onto your Unix directory <filename>/usr/share/wine-C</filename>.
+          Then the Windows folder <filename>C:\Windows\Fonts</filename> would
+          be at <filename>/usr/share/wine-C/Windows/Fonts</filename> in your
+          Unix file system.
+        </para>
+        <para>
+          Make sure that you have assigned drive letters for directories
+          that will cover all the items Wine needs to access. These include
+          the programs that you run, the data files they need and the Wine
+          debugger (in case anything goes wrong).
+        </para>
+        <para>
+          It is best to use a number of drive letters, and map them onto
+          directories that cover small sections of the file system containing
+          the files that Wine will need to access. This is safer than simply
+          assigning a single drive letter to the Unix root directory 
+          <filename></filename>/, which would allow Windows applications to
+          access the whole of your Unix file system (subject, of course,
+          to Unix permissions). If one of them misbehaved, or if you
+          accidentally installed a virus, this might leave you vulnerable.
+        </para>
+        <para>
+          For replaceable media, such as floppy discs and CD-ROMs, you should
+          map Windows drive letters onto the mount points for these drives in
+          your Unix file system - for example <filename>/mnt/floppy</filename>
+          or <filename>/mnt/cdrom</filename>.
+        </para>
+        <para>
+          If your applications access serial and parallel ports directly,
+          you should map these onto the corresponding Unix devices
+          - for example <filename>/dev/ttyS0</filename> and
+          <filename>/dev/lp0</filename>.
+        </para>
+
       </sect2>
 
       <sect2 id="config-drive-dir">
@@ -951,100 +912,51 @@ C:\                Root directory of primary disk drive
       </sect2>
 
       <sect2 id="config-drive-sections">
-        <title>The [Drive x] Sections</title>
+        <title>The dosdevices Directory</title>
         <para>
-            These sections are supposed to make certain Unix
-            directory locations accessible to Wine as a DOS/Windows drive
-            (drive 'x:') and thus accessible to Windows programs
-            under the drive name you specified.
-	    Every DOS/Windows program sort of expects at least a C:
-	    drive (and sometimes also an A: floppy drive), so your
-	    configuration file should at least contain the corresponding
-	    sections, [Drive C] and [Drive A].
-            You need to decide on whether you want to use an existing Windows
-            partition as the C drive or whether you want to create your own
-            Wine drive C directory tree somewhere (take care about
-            permissions!).
-            Each drive section may specify up to 6 different settings
-            as explained below.
+          The <filename>dosdevices</filename> directory contains the entries
+          that tell Wine how to map Windows disc drive letters onto Unix file
+          system nodes, and how to map Windows serial and parallel ports onto
+          Unix devices. It is located in the <filename>.wine</filename>
+          sub-directory of your home directory,
+          i.e. <filename>~/.wine/dosdevices</filename>.
         </para>
         <para>
-          <programlisting>[Drive x]</programlisting>
-          The above line begins the section for a drive whose letter is x
-            (DOS notation: drive 'x:').
-            You could e.g. create an equivalent to a drive 'C:'
-            under DOS/Windows by using a [Drive C] section name.
-	    Note that the drive letter is case insensitive.
+          The entries in the <filename>dosdevices</filename> directory are
+          symbolic links to Unix file system nodes and devices. You can
+          create them by using the <command>ln</command> command in a Unix
+          terminal. Alternatively, many File Managers have the capability of
+          creating symbolic links.
         </para>
         <para>
-          <programlisting>"Path" = "/dir/to/path"</programlisting>
-            This specifies the directory where the drive will begin.
-            When Wine is browsing in drive x, it will be able
-            to see the files that are in the directory
-            <filename>/dir/to/path</filename> and below.
-            (note that symlinks to directories won't get included!
-            see "<link linkend="dirsymlinks">ShowDirSymlinks</link>"
-            configuration setting)
-            You can also make use of environment variables like $HOME here,
-	    an example for using a <filename>mywinedrive</filename>
-	    directory in your home dir would be
-            <programlisting>"Path" = "%HOME%/mywinedrive"</programlisting>,
-	    but don't forget to put it as a DOS environment variable,
-	    ie surrounded by '%' signs rather than preceded by a '$'.
-            Don't forget to leave off the trailing slash!
-        </para>
-        <para>
-          <programlisting>"Type" = "hd|cdrom|network|floppy"</programlisting>
-          Sets up the type of drive Wine will see it as. Type must
-          equal one of the four <literal>floppy</literal>,
-          <literal>hd</literal>, <literal>cdrom</literal>, or
-          <literal>network</literal>. They are self-explanatory.
-          (The |'s mean "Type = '&lt;one of the options&gt;'".)
-          Usually, you choose "hd" for a drive ("hd" is default anyway).
-	  For a home directory entry, it makes sense to choose
-	  "network" sometimes, since some home directories are being
-	  exported over the network via NFS and thus can have slow response
-	  times.
-        </para>
-
-        <programlisting>"Device" = "/dev/xx"</programlisting>
-        <para>
-          Needed for raw device access and <link linkend="config-drive-cdrom-labels">label and serial number reading</link>.
-          Use this <emphasis>only</emphasis> for floppy and cdrom devices. Using it on
-          Extended2 or other Unix file systems can have dire results
-          (when a windows app tries to do a lowlevel write,
-          they do it in a FAT way -- FAT format is completely different from
-          any Unix file system).
-          Also, make sure that you have proper permissions to this device
-          file.
-        </para>
-        <note>
-          <para>
-            This setting is not really important; almost all apps
-            will have no problem if it remains unspecified. For
-            CD-ROMs it's quite useful in order to get automatic label
-            detection, though. If you are unsure about specifying
-            device names, just leave out this setting for your
-            drives.
-          </para>
-        </note>
-        <para>
-            Here are a few sample entries:
+          For example, if you have decided to map your Windows
+          <filename>C:</filename> drive onto
+          <filename>/usr/share/wine-c</filename>, you could type the
+          following (after changing to your <filename>dosdevices</filename>
+          directory):
           <programlisting>
-Here is a setup for Drive C, a generic hard drive:
-[Drive C]
-"Path" = "/dosc"
-"Type" = "hd"
-This is a setup for Drive E, a generic CD-ROM drive:
-[Drive E]
-"Path" = "/mnt/cdrom"
-"Type" = "cdrom"
-"Device" = "/dev/cdrom"
-And here is a setup for Drive A, a generic floppy drive:
-[Drive A]
-"Type" = "floppy"
-"Path" = "/mnt/floppy"
-"Device" = "/dev/fd0"
+ln -s /usr/share/wine-c c:
+          </programlisting>
+        </para>
+        <para>
+          Replaceable media are a little more complicated. In addition to
+          creating a link for the file system on the medium, for example:
+          <programlisting>
+ln -s /mnt/floppy a:
+          </programlisting>
+          you also need to create a link for the device itself. Notice that
+          this has a double colon after the drive letter:
+          <programlisting>
+ln -s /dev/fd0 a::
+          </programlisting>          
+        </para>
+        <para>
+          For serial and parallel ports, you simply create a link to
+          the device; notice that no colon is required after the Windows
+          device name:
+          <programlisting>
+ln -s /dev/ttyS0 com1
+ln -s /dev/lp0 lpt1
           </programlisting>
         </para>
       </sect2>
@@ -1228,13 +1140,13 @@ And here is a setup for Drive A, a generic floppy drive:
         <orderedlist>
           <listitem>
             <para>
-              Point <medialabel>[Drive C]</medialabel> in
-              <filename>~/.wine/config</filename> to the directory where you want
-              <filename>C:</filename> to be. Refer to the wine.conf man page
-              for more information.
-  	    The directory to be used for emulating a C: drive will be
-  	    the base directory for some Windows specific directories
-  	    created below.
+              Make a symbolic link in <filename>~/.wine/dosdevices</filename>
+              to the directory where you want
+              <filename>C:</filename> to be. Refer to the wine man page
+              for more information. The directory to be used for emulating
+  	      a <filename>C:</filename> drive will be
+  	      the base directory for some Windows specific directories
+  	      created below.
             </para>
           </listitem>
           <listitem>
@@ -1389,17 +1301,16 @@ And here is a setup for Drive A, a generic floppy drive:
             through Wine for dual boot (Linux + Windows) systems.
           </para>
           <para>
-            Wine maps mounted FAT filesystems, such as
-            <filename>/c</filename>, to driver letters, such as
-            <quote>c:</quote>, as indicated by the
-            <filename>~/.wine/config</filename> file.  The following excerpt
-            from a <filename>~/.wine/config</filename> file does this:
-          </para>
+            Wine maps mounted FAT file systems, such as
+            <filename>/c</filename>, to drive letters, such as
+            <quote>c:</quote>, by means of symbolic links in the
+            <link linkend="config-drive-sections"><filename>dosdevices</filename></link>
+            directory. Thus, in your dosdevices directory, you could type
+            the command:
           <programlisting>
-[Drive C]
-"Path" = "/c"
-"Type" = "hd"
+ln -s /c c:
           </programlisting>
+          </para>
           <para>
             Although VFAT filesystems are preferable to FAT filesystems
             for their long filename support, the term <quote>FAT</quote>
@@ -1588,10 +1499,8 @@ And here is a setup for Drive A, a generic floppy drive:
 
       <title>Drive labels and serial numbers</title>
       <para>
-        Until now, your only possibility of specifying drive volume
-        labels and serial numbers was to set them manually in the wine
-        configuration file. By now, wine can read them directly from the
-        device as well. This may be useful for many Win 9x games or
+        Wine can read drive volume labels and serial numbers directly
+        from the device. This may be useful for many Win 9x games or
         for setup programs distributed on CD-ROMs that check for
         volume label.
       </para>
@@ -1629,8 +1538,10 @@ And here is a setup for Drive A, a generic floppy drive:
         <title>How To Set Up?</title>
         <para>
           Reading labels and serial numbers just works automatically
-          if you specify a <literal>"Device" =</literal> line in the
-          [Drive x] section in your <filename>~/.wine/config</filename>.
+          if you specify the correct symbolic links for the devices
+          (with double colons after the drive letters) in your
+          <link linkend="config-drive-sections"><filename>dosdevices</filename></link>
+          directory.
           Note that the device has to exist and must be accessible by the user
           running Wine if you do this, though.
         </para>
@@ -1651,15 +1562,13 @@ And here is a setup for Drive A, a generic floppy drive:
           Here's a simple example of CD-ROM and floppy:
         </para>
         <programlisting>
-[Drive A]
-"Path" = "/mnt/floppy"
-"Type" = "floppy"
-"Device" = "/dev/fd0"
+cd ~/.wine/dosdevices
 
-[Drive R]
-"Path" = "/mnt/cdrom"
-"Type" = "cdrom"
-"Device" = "/dev/hda1"
+ln -s /mnt/floppy a:
+ln -s /dev/fd0 a::
+
+ln -s /mnt/cdrom r:
+ln -s /dev/hda1 r::
         </programlisting>
       </sect3>
 
