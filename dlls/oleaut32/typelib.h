@@ -580,7 +580,7 @@ WORD offset from start of block to SAFEARRAY
 WORD typeofarray
 */
 
-extern DWORD _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args);
+extern DWORD _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args);
 extern void dump_Variant(VARIANT * pvar);
 #include "poppack.h"
 

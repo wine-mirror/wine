@@ -1581,7 +1581,7 @@ TMStubImpl_Invoke(
 	return hres;
     }
     res = _invoke(
-	    (*((LPVOID**)args[0]))[fdesc->oVft/4],
+	    (*((FARPROC**)args[0]))[fdesc->oVft/4],
 	    fdesc->callconv,
 	    (xargs-args),
 	    args

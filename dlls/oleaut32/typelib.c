@@ -4122,70 +4122,50 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
  * interface described by the type description.
  */
 DWORD
-_invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
+_invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
     DWORD res;
 
     if (TRACE_ON(ole)) {
 	int i;
-	MESSAGE("Calling %p(",func);
-	for (i=0;i<nrargs;i++) MESSAGE("%08lx,",args[i]);
-	MESSAGE(")\n");
+	TRACE("Calling %p(",func);
+	for (i=0;i<nrargs;i++) TRACE("%08lx,",args[i]);
+	TRACE(")\n");
     }
 
     switch (callconv) {
     case CC_STDCALL:
 
 	switch (nrargs) {
-	case 0: {
-		DWORD (WINAPI *xfunc)() = func;
-		res = xfunc();
+	case 0:
+		res = func();
 		break;
-	}
-	case 1: {
-		DWORD (WINAPI *xfunc)(DWORD) = func;
-		res = xfunc(args[0]);
+	case 1:
+		res = func(args[0]);
 		break;
-	}
-	case 2: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1]);
+	case 2:
+		res = func(args[0],args[1]);
 		break;
-	}
-	case 3: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1],args[2]);
+	case 3:
+		res = func(args[0],args[1],args[2]);
 		break;
-	}
-	case 4: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1],args[2],args[3]);
+	case 4:
+		res = func(args[0],args[1],args[2],args[3]);
 		break;
-	}
-	case 5: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1],args[2],args[3],args[4]);
+	case 5:
+		res = func(args[0],args[1],args[2],args[3],args[4]);
 		break;
-	}
-	case 6: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5]);
+	case 6:
+		res = func(args[0],args[1],args[2],args[3],args[4],args[5]);
 		break;
-	}
-	case 7: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+	case 7:
+		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
 		break;
-	}
-	case 8: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+	case 8:
+		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
 		break;
-	}
-	case 9: {
-		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
-		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
+	case 9:
+		res = func(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
 		break;
-	}
 	default:
 		FIXME("unsupported number of arguments %d in stdcall\n",nrargs);
 		res = -1;
@@ -4349,13 +4329,13 @@ DispCallFunc(
 
     if(pvargResult!=NULL && V_VT(pvargResult)==VT_EMPTY)
     {
-        _invoke((*(DWORD***)pvInstance)[oVft/4],cc,argsize,args);
+        _invoke((*(FARPROC**)pvInstance)[oVft/4],cc,argsize,args);
         hres=S_OK;
     }
     else
     {
         FIXME("Do not know how to handle pvargResult %p. Expect crash ...\n",pvargResult);
-        hres = _invoke((*(DWORD***)pvInstance)[oVft/4],cc,argsize,args);
+        hres = _invoke((*(FARPROC**)pvInstance)[oVft/4],cc,argsize,args);
         FIXME("Method returned %lx\n",hres);
     }
     HeapFree(GetProcessHeap(),0,args);
@@ -4444,7 +4424,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 			pFDesc->funcdesc.cParamsOpt
 		);
 
-	    res = _invoke((*(DWORD***)pIUnk)[pFDesc->funcdesc.oVft/4],
+	    res = _invoke((*(FARPROC**)pIUnk)[pFDesc->funcdesc.oVft/4],
 		    pFDesc->funcdesc.callconv,
 		    numargs,
 		    args
