@@ -386,7 +386,15 @@ then
     FREETYPEINCL=""
     wine_cv_msg_freetype=no
 else
-    AC_CHECK_PROG(ft_devel,freetype-config,yes,no)
+    AC_CHECK_PROG(ft_devel,freetype-config,freetype-config,no)
+    if test "$ft_devel" = "no"
+    then
+        AC_CHECK_PROG(ft_devel2,freetype2-config,freetype2-config,no)
+        if test "$ft_devel2" = "freetype2-config"
+	then
+		ft_devel=$ft_devel2
+	fi
+    fi
     if test "$ft_devel" = "no"
     then
     	FREETYPELIBS=""
@@ -394,8 +402,8 @@ else
 	wine_cv_msg_freetype=yes
     else
     	AC_DEFINE(HAVE_FREETYPE)
-	FREETYPELIBS=`freetype-config --libs`
-	FREETYPEINCL=`freetype-config --cflags`
+	FREETYPELIBS=`$ft_devel --libs`
+	FREETYPEINCL=`$ft_devel --cflags`
 	wine_cv_msg_freetype=no
     fi
 fi
