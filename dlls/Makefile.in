@@ -125,7 +125,7 @@ all: \
 	dplay.dll$(DLLEXT) \
 	dplayx.dll$(DLLEXT) \
 	dsound.dll$(DLLEXT) \
-	gdi.dll$(DLLEXT) \
+	gdi.exe$(DLLEXT) \
 	gdi32.dll$(DLLEXT) \
 	icmp.dll$(DLLEXT) \
 	imaadp32.acm$(DLLEXT) \
@@ -133,9 +133,9 @@ all: \
 	imm.dll$(DLLEXT) \
 	imm32.dll$(DLLEXT) \
 	joystick.drv$(DLLEXT) \
-	kernel.dll$(DLLEXT) \
 	kernel32.dll$(DLLEXT) \
 	keyboard.dll$(DLLEXT) \
+	krnl386.exe$(DLLEXT) \
 	lz32.dll$(DLLEXT) \
 	lzexpand.dll$(DLLEXT) \
 	mapi32.dll$(DLLEXT) \
@@ -204,7 +204,7 @@ all: \
 	typelib.dll$(DLLEXT) \
 	url.dll$(DLLEXT) \
 	urlmon.dll$(DLLEXT) \
-	user.dll$(DLLEXT) \
+	user.exe$(DLLEXT) \
 	user32.dll$(DLLEXT) \
 	ver.dll$(DLLEXT) \
 	version.dll$(DLLEXT) \
@@ -277,7 +277,7 @@ dplayx.dll$(DLLEXT): dplayx/dplayx.dll$(DLLEXT)
 dsound.dll$(DLLEXT): dsound/dsound.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dsound/dsound.dll$(DLLEXT) $@
 
-gdi32.dll$(DLLEXT) dispdib.dll$(DLLEXT) gdi.dll$(DLLEXT) \
+gdi32.dll$(DLLEXT) dispdib.dll$(DLLEXT) gdi.exe$(DLLEXT) \
   wing.dll$(DLLEXT): gdi/gdi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll$(DLLEXT) $@
 
@@ -299,7 +299,7 @@ imm32.dll$(DLLEXT) imm.dll$(DLLEXT): imm32/imm32.dll$(DLLEXT)
 joystick.drv$(DLLEXT): winmm/joystick/joystick.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv$(DLLEXT) $@
 
-kernel32.dll$(DLLEXT) comm.dll$(DLLEXT) kernel.dll$(DLLEXT) \
+kernel32.dll$(DLLEXT) comm.dll$(DLLEXT) krnl386.exe$(DLLEXT) \
   stress.dll$(DLLEXT) system.dll$(DLLEXT) toolhelp.dll$(DLLEXT) \
   win87em.dll$(DLLEXT) windebug.dll$(DLLEXT) wprocs.dll$(DLLEXT): kernel/kernel32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
@@ -448,7 +448,7 @@ urlmon.dll$(DLLEXT): urlmon/urlmon.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) urlmon/urlmon.dll$(DLLEXT) $@
 
 user32.dll$(DLLEXT) ddeml.dll$(DLLEXT) display.dll$(DLLEXT) \
-  keyboard.dll$(DLLEXT) mouse.dll$(DLLEXT) user.dll$(DLLEXT): user/user32.dll$(DLLEXT)
+  keyboard.dll$(DLLEXT) mouse.dll$(DLLEXT) user.exe$(DLLEXT): user/user32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) user/user32.dll$(DLLEXT) $@
 
 version.dll$(DLLEXT) ver.dll$(DLLEXT): version/version.dll$(DLLEXT)

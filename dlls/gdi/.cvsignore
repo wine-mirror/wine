@@ -1,6 +1,6 @@
 Makefile
 dispdib.spec.c
-gdi.spec.c
+gdi.exe.spec.c
 gdi32.spec.c
 printdrv.glue.c
 version.res

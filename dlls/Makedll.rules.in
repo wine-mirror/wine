@@ -11,7 +11,8 @@
 
 DEFS       = @DLLFLAGS@ -D__WINE__ $(EXTRADEFS)
 DLLEXT     = @DLLEXT@
-SPEC_SRCS  = $(ALTNAMES:.dll=.spec)
+ALTSPECS   = $(ALTNAMES:%.dll=%)
+SPEC_SRCS  = $(ALTSPECS:%=%.spec)
 ALL_OBJS   = $(MODULE:%.dll=%).spec.o $(OBJS)
 ALL_LIBS   = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 

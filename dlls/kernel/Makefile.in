@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32.dll
-ALTNAMES  = comm.dll kernel.dll stress.dll system.dll toolhelp.dll windebug.dll win87em.dll wprocs.dll
+ALTNAMES  = krnl386.exe comm.dll stress.dll system.dll toolhelp.dll windebug.dll win87em.dll wprocs.dll
 IMPORTS   = ntdll.dll
 
 C_SRCS = \
@@ -54,7 +54,7 @@ kernel.res: $(MC_SRCS:.mc=.mc.rc)
 version16.res: version16.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/version16.rc
 
-kernel.spec.c: version16.res
+krnl386.exe.spec.c: version16.res
 
 install:: install_libdir
 uninstall:: uninstall_libdir

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdi32.dll
-ALTNAMES  = gdi.dll dispdib.dll wing.dll
+ALTNAMES  = gdi.exe dispdib.dll wing.dll
 IMPORTS   = kernel32.dll ntdll.dll
 EXTRALIBS = @FREETYPELIBS@
 EXTRAINCL = @FREETYPEINCL@
@@ -49,7 +49,7 @@ $(EXTRA_OBJS): dummy
 version16.res: version16.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/version16.rc
 
-gdi.spec.c: version16.res
+gdi.exe.spec.c: version16.res
 
 install:: install_libdir
 uninstall:: uninstall_libdir

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32.dll
-ALTNAMES  = user.dll keyboard.dll ddeml.dll display.dll mouse.dll
+ALTNAMES  = user.exe keyboard.dll ddeml.dll display.dll mouse.dll
 IMPORTS   = gdi32.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
@@ -81,7 +81,7 @@ display.spec.c: resources/display.res
 
 mouse.spec.c: resources/mouse.res
 
-user.spec.c: resources/version16.res
+user.exe.spec.c: resources/version16.res
 
 install:: install_libdir
 uninstall:: uninstall_libdir

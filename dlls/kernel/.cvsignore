@@ -1,8 +1,8 @@
 Makefile
 comm.spec.c
 kernel.res
-kernel.spec.c
 kernel32.spec.c
+krnl386.exe.spec.c
 stress.spec.c
 system.spec.c
 toolhelp.spec.c
