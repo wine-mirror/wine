@@ -284,6 +284,7 @@ DECL_WINELIB_TYPE_AW(CHARFORMAT2)
 #define CFM_KERNING           0x00100000
 #define CFM_SPACING           0x00200000
 #define CFM_WEIGHT            0x00400000
+#define CFM_UNDERLINETYPE     0x00800000
 #define CFM_LCID              0x02000000
 #define CFM_BACKCOLOR         0x04000000
 #define CFM_CHARSET           0x08000000
@@ -313,6 +314,7 @@ DECL_WINELIB_TYPE_AW(CHARFORMAT2)
 #define CFE_IMPRINT           CFM_IMPRINT
 #define CFE_DISABLED          CFM_DISABLED
 #define CFE_REVISED           CFM_REVISED
+#define CFE_AUTOBACKCOLOR     CFM_BACKCOLOR
 
 #define CFU_CF1UNDERLINE      0xFF
 #define CFU_INVERT            0xFE
@@ -487,6 +489,25 @@ typedef struct _paraformat {
     SHORT      cTabCount;
     LONG       rgxTabs[MAX_TAB_STOPS];
 } PARAFORMAT;
+
+typedef struct _paraformat2 {
+    UINT       cbSize;
+    DWORD      dwMask;
+    WORD       wNumbering;
+    WORD       wEffects;
+    LONG       dxStartIndent;
+    LONG       dxRightIndent;
+    LONG       dxOffset;
+    WORD       wAlignment;
+    SHORT      cTabCount;
+    LONG       rgxTabs[MAX_TAB_STOPS];
+    LONG       dySpaceBefore, dySpaceAfter, dyLineSpacing;
+    SHORT      sStyle;
+    BYTE       bLineSpacingRule, bOutlineLevel;
+    WORD       wShadingWeight, wShadingStyle;
+    WORD       wNumberingStart, wNumberingStyle, wNumberingTab;
+    WORD       wBorderSpace, wBorderWidth, wBorders;
+} PARAFORMAT2;
 
 typedef struct _selchange {
     NMHDR      nmhdr;
