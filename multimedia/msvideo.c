@@ -2,6 +2,7 @@
  * Copyright 1998 Marcus Meissner
  */
 #include <stdio.h>
+#include <strings.h>
 
 #include "windows.h"
 #include "driver.h"
@@ -36,7 +37,7 @@ ICInfo32(
 	char	type[5],buf[2000];
 
 	memcpy(type,&fccType,4);type[4]=0;
-	TRACE(mmsys,"(%s,%ld,%p).\n",type,fccHandler,lpicinfo);
+	TRACE(msvideo,"(%s,%ld,%p).\n",type,fccHandler,lpicinfo);
 	/* does OpenDriver/CloseDriver */
 	lpicinfo->dwSize = sizeof(ICINFO32);
 	lpicinfo->fccType = fccType;
@@ -69,8 +70,13 @@ ICOpen32(DWORD fccType,DWORD fccHandler,UINT32 wMode) {
 
 	memcpy(type,&fccType,4);type[4]=0;
 	memcpy(handler,&fccHandler,4);handler[4]=0;
-	TRACE(mmsys,"(%s,%s,0x%08lx)\n",type,handler,(DWORD)wMode);
-	sprintf(codecname,"%s.%s",type,handler);
+	TRACE(msvideo,"(%s,%s,0x%08lx)\n",type,handler,(DWORD)wMode);
+	/* FIXME: When do we use 'vids' , when 'vidc'? Unclear */
+	if (!strcasecmp(type,"vids")) {
+	    sprintf(codecname,"vidc.%s",handler);
+	    fccType = mmioFOURCC('v','i','d','c');
+	} else
+	    sprintf(codecname,"%s.%s",type,handler);
 	hdrv=OpenDriver32A(codecname,"drivers32",0);
 	if (!hdrv)
 		return 0;
@@ -83,7 +89,8 @@ ICOpen32(DWORD fccType,DWORD fccHandler,UINT32 wMode) {
 	icopen.fccType		= fccType;
 	icopen.fccHandler	= fccHandler;
 	icopen.dwSize		= sizeof(ICOPEN);
-	/* FIXME: fill out rest too... */
+	icopen.dwFlags		= wMode;
+	/* FIXME: do we need to fill out the rest too? */
 	whic->private	= whic->driverproc(0,hdrv,DRV_OPEN,0,&icopen);
 	return (HIC32)whic;
 }
@@ -91,20 +98,60 @@ ICOpen32(DWORD fccType,DWORD fccHandler,UINT32 wMode) {
 LRESULT WINAPI
 ICGetInfo32(HIC32 hic,ICINFO32 *picinfo,DWORD cb) {
 	LRESULT		ret;
-	WINE_HIC	*whic = (WINE_HIC*)hic;
 
-	TRACE(mmsys,"(0x%08lx,%p,%ld)\n",(DWORD)hic,picinfo,cb);
-	ret = ICSendMessage32(whic,ICM_GETINFO,(DWORD)picinfo,cb);
-	TRACE(mmsys,"	-> 0x%08lx\n",ret);
+	TRACE(msvideo,"(0x%08lx,%p,%ld)\n",(DWORD)hic,picinfo,cb);
+	ret = ICSendMessage32(hic,ICM_GETINFO,(DWORD)picinfo,cb);
+	TRACE(msvideo,"	-> 0x%08lx\n",ret);
 	return ret;
 }
 
+DWORD VFWAPIV
+ICCompress32(
+	HIC32 hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiOutput,LPVOID lpData,
+	LPBITMAPINFOHEADER lpbiInput,LPVOID lpBits,LPDWORD lpckid,
+	LPDWORD lpdwFlags,LONG lFrameNum,DWORD dwFrameSize,DWORD dwQuality,
+	LPBITMAPINFOHEADER lpbiPrev,LPVOID lpPrev
+) {
+	ICCOMPRESS	iccmp;
+
+	iccmp.dwFlags		= dwFlags;
+
+	iccmp.lpbiOutput	= lpbiOutput;
+	iccmp.lpOutput		= lpData;
+	iccmp.lpbiInput		= lpbiInput;
+	iccmp.lpInput		= lpBits;
+
+	iccmp.lpckid		= lpckid;
+	iccmp.lpdwFlags		= lpdwFlags;
+	iccmp.lFrameNum		= lFrameNum;
+	iccmp.dwFrameSize	= dwFrameSize;
+	iccmp.dwQuality		= dwQuality;
+	iccmp.lpbiPrev		= lpbiPrev;
+	iccmp.lpPrev		= lpPrev;
+	return ICSendMessage32(hic,ICM_COMPRESS,(LPARAM)&iccmp,sizeof(iccmp));
+}
+
+DWORD VFWAPIV 
+ICDecompress32(HIC32 hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,LPBITMAPINFOHEADER  lpbi,LPVOID lpBits) {
+	ICDECOMPRESS	icd;
+
+	icd.dwFlags	= dwFlags;
+	icd.lpbiInput	= lpbiFormat;
+	icd.lpInput	= lpData;
+
+	icd.lpbiOutput	= lpbi;
+	icd.lpOutput	= lpBits;
+	/* 
+	icd.ckid	= ??? ckid from AVI file? how do we get it? ;
+	 */
+	return ICSendMessage32(hic,ICM_DECOMPRESS,(LPARAM)&icd,sizeof(icd));
+}
 
 HIC32 WINAPI
 ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
 	 LPBITMAPINFOHEADER lpbiOut, WORD wFlags
 ) {
-	FIXME(mmsys,"stub!\n");
+	FIXME(msvideo,"stub!\n");
 	return 0;
 }
 
@@ -113,18 +160,56 @@ ICSendMessage32(HIC32 hic,UINT32 msg,DWORD lParam1,DWORD lParam2) {
 	LRESULT		ret;
 	WINE_HIC	*whic = (WINE_HIC*)hic;
 
+#define XX(x) case x: TRACE(msvideo,"(0x%08lx,"#x",0x%08lx,0x%08lx)\n",(DWORD)hic,lParam1,lParam2);break;
+
 	switch (msg) {
-	case ICM_GETINFO:
-		FIXME(mmsys,"(0x%08lx,ICM_GETINFO,0x%08lx,0x%08lx)\n",(DWORD)hic,lParam1,lParam2);
-		break;
+	XX(ICM_ABOUT)
+	XX(ICM_GETINFO)
+	XX(ICM_COMPRESS_FRAMES_INFO)
+	XX(ICM_COMPRESS_GET_FORMAT)
+	XX(ICM_COMPRESS_GET_SIZE)
+	XX(ICM_COMPRESS_QUERY)
+	XX(ICM_COMPRESS_BEGIN)
+	XX(ICM_COMPRESS)
+	XX(ICM_COMPRESS_END)
+	XX(ICM_DECOMPRESS_GET_FORMAT)
+	XX(ICM_DECOMPRESS_QUERY)
+	XX(ICM_DECOMPRESS_BEGIN)
+	XX(ICM_DECOMPRESS)
+	XX(ICM_DECOMPRESS_END)
+	XX(ICM_DECOMPRESS_SET_PALETTE)
+	XX(ICM_DECOMPRESS_GET_PALETTE)
+	XX(ICM_DRAW_QUERY)
+	XX(ICM_DRAW_BEGIN)
+	XX(ICM_DRAW_GET_PALETTE)
+	XX(ICM_DRAW_START)
+	XX(ICM_DRAW_STOP)
+	XX(ICM_DRAW_END)
+	XX(ICM_DRAW_GETTIME)
+	XX(ICM_DRAW)
+	XX(ICM_DRAW_WINDOW)
+	XX(ICM_DRAW_SETTIME)
+	XX(ICM_DRAW_REALIZE)
+	XX(ICM_DRAW_FLUSH)
+	XX(ICM_DRAW_RENDERBUFFER)
+	XX(ICM_DRAW_START_PLAY)
+	XX(ICM_DRAW_STOP_PLAY)
+	XX(ICM_DRAW_SUGGESTFORMAT)
+	XX(ICM_DRAW_CHANGEPALETTE)
+	XX(ICM_GETBUFFERSWANTED)
+	XX(ICM_GETDEFAULTKEYFRAMERATE)
+	XX(ICM_DECOMPRESSEX_BEGIN)
+	XX(ICM_DECOMPRESSEX_QUERY)
+	XX(ICM_DECOMPRESSEX)
+	XX(ICM_DECOMPRESSEX_END)
+	XX(ICM_SET_STATUS_PROC)
 	default:
-		FIXME(mmsys,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx)\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2);
+		FIXME(msvideo,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx)\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2);
 	}
 	ret = whic->driverproc(whic->private,whic->hdrv,msg,lParam1,lParam2);
-	FIXME(mmsys,"	-> 0x%08lx\n",ret);
+	TRACE(msvideo,"	-> 0x%08lx\n",ret);
 	return ret;
 }
-
 
 DWORD	VFWAPIV	ICDrawBegin32(
         HIC32			hic,
@@ -146,23 +231,28 @@ DWORD	VFWAPIV	ICDrawBegin32(
 		return 0;
 }
 
+LRESULT WINAPI ICClose32(HIC32 hic) {
+	FIXME(msvideo,"(%d),stub!\n",hic);
+	return 0;
+}
+
 HANDLE32 /* HDRAWDIB */ WINAPI
 DrawDibOpen32( void ) {
-	FIXME(mmsys,"stub!\n");
+	FIXME(msvideo,"stub!\n");
 	return 0;
 }
 HWND32 VFWAPIV MCIWndCreate32 (HWND32 hwndParent, HINSTANCE32 hInstance,
                       DWORD dwStyle,LPVOID szFile)
-{	FIXME(mmsys,"%x %x %lx %p\n",hwndParent, hInstance, dwStyle, szFile);
+{	FIXME(msvideo,"%x %x %lx %p\n",hwndParent, hInstance, dwStyle, szFile);
 	return 0;
 }
 HWND32 VFWAPIV MCIWndCreate32A(HWND32 hwndParent, HINSTANCE32 hInstance,
                       DWORD dwStyle,LPCSTR szFile)
-{	FIXME(mmsys,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, szFile);
+{	FIXME(msvideo,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, szFile);
 	return 0;
 }
 HWND32 VFWAPIV MCIWndCreate32W(HWND32 hwndParent, HINSTANCE32 hInstance,
                       DWORD dwStyle,LPCWSTR szFile)
-{	FIXME(mmsys,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, debugstr_w(szFile));
+{	FIXME(msvideo,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 	return 0;
 }

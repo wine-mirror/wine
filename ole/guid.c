@@ -15,5 +15,6 @@
 #include "dinput.h"
 #include "dsound.h"
 #include "dplay.h"
+#include "vfw.h"
 
 #endif

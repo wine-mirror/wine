@@ -1,6 +1,9 @@
 name	msvfw32
 type	win32
 
+# Yes, ICCompress,ICDecompress,MCIWnd* and ICDraw* are cdecl (VFWAPIV).
+# The rest is stdcall (VFWAPI) however. -Marcus Meissner, 990124
+
   2 stdcall VideoForWindowsVersion() VideoForWindowsVersion
   3 stub    DrawDibBegin
   4 stub    DrawDibChangePalette
@@ -21,13 +24,13 @@ type	win32
  19 stub    GetOpenFileNamePreviewW
  20 stub    GetSaveFileNamePreviewA
  21 stub    GetSaveFileNamePreviewW
- 22 stub    ICClose
- 23 stub    ICCompress
+ 22 stdcall ICClose(long) ICClose32
+ 23 cdecl   ICCompress(long long ptr ptr ptr ptr ptr ptr long long long ptr ptr) ICCompress32
  24 stub    ICCompressorChoose
  25 stub    ICCompressorFree
- 26 stub    ICDecompress
- 27 stub    ICDraw
- 28 stdcall ICDrawBegin(long long long long long long long long long ptr long long long long long long) ICDrawBegin32
+ 26 cdecl   ICDecompress(long long ptr ptr ptr ptr) ICDecompress32
+ 27 stub    ICDraw 	# CDECL too
+ 28 cdecl   ICDrawBegin(long long long long long long long long long ptr long long long long long long) ICDrawBegin32
  29 stub    ICGetDisplayFormat
  30 stdcall ICGetInfo(long ptr long) ICGetInfo32
  31 stub    ICImageCompress
@@ -43,9 +46,9 @@ type	win32
  41 stub    ICSeqCompressFrame
  42 stub    ICSeqCompressFrameEnd
  43 stub    ICSeqCompressFrameStart
- 44 stdcall MCIWndCreate (long long long ptr) MCIWndCreate32
- 45 stdcall MCIWndCreateA (long long long str) MCIWndCreate32A
- 46 stdcall MCIWndCreateW (long long long wstr) MCIWndCreate32W
+ 44 cdecl   MCIWndCreate (long long long ptr) MCIWndCreate32
+ 45 cdecl   MCIWndCreateA (long long long str) MCIWndCreate32A
+ 46 cdecl   MCIWndCreateW (long long long wstr) MCIWndCreate32W
  47 stub    MCIWndRegisterClass
  48 stub    StretchDIB
  49 stub    ls_ThunkData32

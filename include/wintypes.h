@@ -89,6 +89,7 @@ typedef unsigned short  WCHAR;
 typedef unsigned short  BOOL16;
 typedef int             BOOL32;
 typedef double          DATE;
+typedef long		SCODE;
 typedef long            LONG_PTR;
 typedef unsigned long   ULONG_PTR;
 #ifdef __i386__
@@ -301,6 +302,7 @@ DECL_WINELIB_TYPE(HFILE)
 DECL_WINELIB_TYPE(HFONT)
 DECL_WINELIB_TYPE(HGDIOBJ)
 DECL_WINELIB_TYPE(HGLOBAL)
+DECL_WINELIB_TYPE(HIC)
 DECL_WINELIB_TYPE(HICON)
 DECL_WINELIB_TYPE(HINSTANCE)
 DECL_WINELIB_TYPE(HLOCAL)

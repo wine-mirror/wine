@@ -4,6 +4,7 @@
 
 extern int WIN32_LastError;
 
+#define FACILITY_ITF		4
 #define FACILITY_WIN32		7
 
 #define SEVERITY_ERROR		1

@@ -600,6 +600,7 @@ ole/Makefile
 programs/Makefile
 programs/clock/Makefile
 programs/control/Makefile
+programs/avitools/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
 programs/regtest/Makefile

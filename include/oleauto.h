@@ -158,8 +158,6 @@ typedef short VARIANT_BOOL;
 #define VARIANT_TRUE	 ((VARIANT_BOOL)0xFFFF)
 #define VARIANT_FALSE	 ((VARIANT_BOOL)0x0000)
 
-typedef LONG SCODE;
-
 enum VARENUM {
 	VT_EMPTY = 0,
 	VT_NULL = 1,
