@@ -76,11 +76,93 @@ $DEF_CHAR = ord '?';
     [ 28599, "ISO8859/8859-9.TXT",                "ISO 8859-9 Latin 5" ]
 );
 
+
+%ctype =
+(
+    "upper"  => 0x0001,
+    "lower"  => 0x0002,
+    "digit"  => 0x0004,
+    "space"  => 0x0008,
+    "punct"  => 0x0010,
+    "cntrl"  => 0x0020,
+    "blank"  => 0x0040,
+    "xdigit" => 0x0080,
+    "alpha"  => 0x0100
+);
+
+%categories =
+(
+    "Lu" => $ctype{"alpha"}|$ctype{"upper"}, # Letter, Uppercase
+    "Ll" => $ctype{"alpha"}|$ctype{"lower"}, # Letter, Lowercase
+    "Lt" => $ctype{"alpha"},    # Letter, Titlecase
+    "Mn" => $ctype{"punct"},    # Mark, Non-Spacing
+    "Mc" => $ctype{"punct"},    # Mark, Spacing Combining
+    "Me" => $ctype{"punct"},    # Mark, Enclosing
+    "Nd" => $ctype{"digit"},    # Number, Decimal Digit
+    "Nl" => $ctype{"punct"},    # Number, Letter
+    "No" => $ctype{"punct"},    # Number, Other
+    "Zs" => $ctype{"space"},    # Separator, Space
+    "Zl" => 0,                  # Separator, Line
+    "Zp" => 0,                  # Separator, Paragraph
+    "Cc" => $ctype{"cntrl"},    # Other, Control
+    "Cf" => 0,                  # Other, Format
+    "Cs" => 0,                  # Other, Surrogate
+    "Co" => 0,                  # Other, Private Use
+    "Cn" => 0,                  # Other, Not Assigned
+    "Lm" => $ctype{"punct"},    # Letter, Modifier
+    "Lo" => $ctype{"alpha"},    # Letter, Other
+    "Pc" => $ctype{"punct"},    # Punctuation, Connector
+    "Pd" => $ctype{"punct"},    # Punctuation, Dash
+    "Ps" => $ctype{"punct"},    # Punctuation, Open
+    "Pe" => $ctype{"punct"},    # Punctuation, Close
+    "Pi" => $ctype{"punct"},    # Punctuation, Initial quote
+    "Pf" => $ctype{"punct"},    # Punctuation, Final quote
+    "Po" => $ctype{"punct"},    # Punctuation, Other
+    "Sm" => $ctype{"punct"},    # Symbol, Math
+    "Sc" => $ctype{"punct"},    # Symbol, Currency
+    "Sk" => $ctype{"punct"},    # Symbol, Modifier
+    "So" => $ctype{"punct"}     # Symbol, Other 
+);
+
+# a few characters need additional categories that cannot be determined automatically
+%special_categories =
+(
+    "xdigit" => [ ord('0')..ord('9'),ord('A')..ord('F'),ord('a')..ord('f'),
+                  0xff10..0xff19, 0xff21..0xff26, 0xff41..0xff46 ],
+    "space"  => [ 0x09..0x0d, 0xfeff ],
+    "blank"  => [ 0x09, 0x20, 0xa0, 0xfeff ]
+);
+
+%directions =
+(
+    "L"   => 1,    # Left-to-Right
+    "LRE" => 11,   # Left-to-Right Embedding
+    "LRO" => 11,   # Left-to-Right Override
+    "R"   => 2,    # Right-to-Left
+    "AL"  => 2,    # Right-to-Left Arabic
+    "RLE" => 11,   # Right-to-Left Embedding
+    "RLO" => 11,   # Right-to-Left Override
+    "PDF" => 11,   # Pop Directional Format
+    "EN"  => 3,    # European Number
+    "ES"  => 4,    # European Number Separator
+    "ET"  => 5,    # European Number Terminator
+    "AN"  => 6,    # Arabic Number
+    "CS"  => 7,    # Common Number Separator
+    "NSM" => 0,    # Non-Spacing Mark
+    "BN"  => 0,    # Boundary Neutral
+    "B"   => 8,    # Paragraph Separator
+    "S"   => 9,    # Segment Separator
+    "WS"  => 10,   # Whitespace
+    "ON"  => 11    # Other Neutrals
+);
+
+
 ################################################################
 # main routine
 
 READ_DEFAULTS();
 DUMP_CASE_MAPPINGS();
+DUMP_CTYPE_TABLES();
 
 foreach $file (@allfiles) { HANDLE_FILE( @$file ); }
 
@@ -97,6 +179,8 @@ sub READ_DEFAULTS
     @unicode_aliases = ();
     @tolower_table = ();
     @toupper_table = ();
+    @category_table = ();
+    @direction_table = ();
 
     # first setup a few default mappings
 
@@ -135,12 +219,43 @@ sub READ_DEFAULTS
 	 $decomp, $dec, $dig, $num, $mirror, 
 	 $oldname, $comment, $upper, $lower, $title) = split /;/;
 
-        if ($lower ne "") { $tolower_table[hex $code] = hex $lower; }
-        if ($upper ne "") { $toupper_table[hex $code] = hex $upper; }
+        my $src = hex $code;
 
+        die "unknown category $cat" unless defined $categories{$cat};
+        die "unknown directionality $bidi" unless defined $directions{$bidi};
+
+        $uniname[$src] = $name;
+        $category_table[$src] = $categories{$cat};
+        $direction_table[$src] = $directions{$bidi};
+
+        if ($lower ne "")
+        {
+            $tolower_table[$src] = hex $lower;
+            $category_table[$src] |= $ctype{"upper"}|$ctype{"alpha"};
+        }
+        if ($upper ne "")
+        {
+            $toupper_table[$src] = hex $upper;
+            $category_table[$src] |= $ctype{"lower"}|$ctype{"alpha"};
+        }
+        if ($dec ne "")
+        {
+            $category_table[$src] |= $ctype{"digit"};
+        }
+
+        # copy the category and direction for everything between First/Last pairs
+        if ($name =~ /, First>/) { $start = $src; }
+        if ($name =~ /, Last>/)
+        {
+            while ($start < $src)
+            {
+                $category_table[$start] = $category_table[$src];
+                $direction_table[$start] = $direction_table[$src];
+                $start++;
+            }
+        }
+        
         next if $decomp eq "";  # no decomposition, skip it
-
-        $src = hex $code;
 
         if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
         {
@@ -165,6 +280,7 @@ sub READ_DEFAULTS
         {
             # decomposition contains only char values without prefix -> use first char
             $dst = hex $1;
+            $category_table[$src] |= $category_table[$dst];
         }
         else
         {
@@ -180,6 +296,14 @@ sub READ_DEFAULTS
             last unless defined($unicode_defaults[$i]);
         }
         $unicode_defaults[$src] = $dst;
+    }
+
+    # patch the category of some special characters
+
+    foreach $cat (keys %special_categories)
+    {
+        my $flag = $ctype{$cat};
+        foreach $i (@{$special_categories{$cat}}) { $category_table[$i] |= $flag; }
     }
 }
 
@@ -565,6 +689,49 @@ sub DUMP_CASE_TABLE
     printf OUTPUT "\n};\n";
 }
 
+
+################################################################
+# dump the ctype tables
+sub DUMP_CTYPE_TABLES
+{
+    open OUTPUT,">wctype.c" or die "Cannot create casemap.c";
+    printf "Building wctype.c\n";
+    printf OUTPUT "/* Unicode ctype tables */\n";
+    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    my $i;
+    my @array = (0) x 256;
+
+    # add the direction in the high 4 bits of the category
+    for ($i = 0; $i < 65536; $i++)
+    {
+        $category_table[$i] |= $direction_table[$i] << 12;
+    }
+
+    # try to merge table rows
+    for ($row = 0; $row < 256; $row++)
+    {
+        my $rowtxt = sprintf "%04x" x 256, @category_table[($row<<8)..($row<<8)+255];
+        if (defined($sequences{$rowtxt}))
+        {
+            # reuse an existing row
+            $array[$row] = $sequences{$rowtxt};
+        }
+        else
+        {
+            # create a new row
+            $sequences{$rowtxt} = $array[$row] = $#array + 1;
+            push @array, @category_table[($row<<8)..($row<<8)+255];
+        }
+    }
+
+    printf OUTPUT "const unsigned short wctype_table[%d] =\n{\n", $#array+1;
+    printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
+    printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
+
+    close OUTPUT;
+}
 
 ################################################################
 # read an input file and generate the corresponding .c file

@@ -360,3 +360,38 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
     }
     return ret;
 }
+
+
+/******************************************************************************
+ *              GetStringTypeW   (KERNEL32)
+ *
+ */
+BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
+{
+    if (count == -1) count = strlenW(src) + 1;
+    switch(type)
+    {
+    case CT_CTYPE1:
+        while (count--) *chartype++ = get_char_typeW( *src++ ) & 0xfff;
+        break;
+    case CT_CTYPE2:
+        while (count--) *chartype++ = get_char_typeW( *src++ ) >> 12;
+        break;
+    case CT_CTYPE3:
+        FIXME("CT_CTYPE3 not supported.\n");
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/******************************************************************************
+ *              GetStringTypeExW   (KERNEL32)
+ */
+BOOL WINAPI GetStringTypeExW( LCID locale, DWORD type, LPCWSTR src, INT count, LPWORD chartype )
+{
+    /* locale is ignored for Unicode */
+    return GetStringTypeW( type, src, count, chartype );
+}

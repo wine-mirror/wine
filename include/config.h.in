@@ -428,9 +428,6 @@
 /* Define if you have the <ucontext.h> header file.  */
 #undef HAVE_UCONTEXT_H
 
-/* Define if you have the <wctype.h> header file.  */
-#undef HAVE_WCTYPE_H
-
 /* Define if you have the curses library (-lcurses).  */
 #undef HAVE_LIBCURSES
 

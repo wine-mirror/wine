@@ -9,9 +9,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_WCTYPE_H
-#include <wctype.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -296,40 +293,7 @@ INT __cdecl NTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base)
  */
 INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct )
 {
-    INT res = 0;
-
-#ifdef HAVE_WCTYPE_H
-#undef iswupper
-#undef iswlower
-#undef iswdigit
-#undef iswspace
-#undef iswpunct
-#undef iswcntrl
-#undef iswxdigit
-#undef iswalpha
-    if (wct & 0x0001) res |= iswupper(wc);
-    if (wct & 0x0002) res |= iswlower(wc);
-    if (wct & 0x0004) res |= iswdigit(wc);
-    if (wct & 0x0008) res |= iswspace(wc);
-    if (wct & 0x0010) res |= iswpunct(wc);
-    if (wct & 0x0020) res |= iswcntrl(wc);
-    if (wct & 0x0080) res |= iswxdigit(wc);
-    if (wct & 0x0100) res |= iswalpha(wc);
-#else
-    if (wct & 0x0001) res |= isupper(LOBYTE(wc));
-    if (wct & 0x0002) res |= islower(LOBYTE(wc));
-    if (wct & 0x0004) res |= isdigit(LOBYTE(wc));
-    if (wct & 0x0008) res |= isspace(LOBYTE(wc));
-    if (wct & 0x0010) res |= ispunct(LOBYTE(wc));
-    if (wct & 0x0020) res |= iscntrl(LOBYTE(wc));
-    if (wct & 0x0080) res |= isxdigit(LOBYTE(wc));
-    if (wct & 0x0100) res |= isalpha(LOBYTE(wc));
-#endif
-    if (wct & 0x0040)
-	FIXME(": iswctype(%04hx,_BLANK|...) requested\n",wc);
-    if (wct & 0x8000)
-	FIXME(": iswctype(%04hx,_LEADBYTE|...) requested\n",wc);
-    return res;
+    return (get_char_typeW(wc) & 0xfff) & wct;
 }
 
 
@@ -338,5 +302,5 @@ INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct )
  */
 INT __cdecl NTDLL_iswalpha( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0100 );
+    return get_char_typeW(wc) & C1_ALPHA;
 }

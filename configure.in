@@ -761,8 +761,7 @@ AC_CHECK_HEADERS(\
 	sys/vfs.h \
 	sys/vm86.h \
 	syscall.h \
-	ucontext.h \
-	wctype.h \
+	ucontext.h
 )
 AC_HEADER_STAT()
 

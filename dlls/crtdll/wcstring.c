@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winnls.h"
 #include "wine/unicode.h"
 #include "crtdll.h"
 #include "debugtools.h"
@@ -113,17 +114,15 @@ LPWSTR __cdecl CRTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
  */
 INT __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch )
 {
-    return wctomb( dst, (wchar_t)ch );
+    return WideCharToMultiByte( CP_ACP, 0, ch, 1, dst, 6, NULL, NULL );
 }
-
-extern INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct ); /* FIXME */
 
 /*********************************************************************
  *           CRTDLL_iswalnum    (CRTDLL.405)
  */
 INT __cdecl CRTDLL_iswalnum( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0107 );
+    return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 /*********************************************************************
@@ -131,7 +130,7 @@ INT __cdecl CRTDLL_iswalnum( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswalpha( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0103 );
+    return get_char_typeW(wc) & (C1_ALPHA|C1_LOWER|C1_UPPER);
 }
 
 /*********************************************************************
@@ -139,7 +138,7 @@ INT __cdecl CRTDLL_iswalpha( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswcntrl( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0020 );
+    return get_char_typeW(wc) & C1_CNTRL;
 }
 
 /*********************************************************************
@@ -147,7 +146,7 @@ INT __cdecl CRTDLL_iswcntrl( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswdigit( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0004 );
+    return get_char_typeW(wc) & C1_DIGIT;
 }
 
 /*********************************************************************
@@ -155,7 +154,7 @@ INT __cdecl CRTDLL_iswdigit( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswgraph( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0117 );
+    return get_char_typeW(wc) & (C1_ALPHA|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 /*********************************************************************
@@ -163,7 +162,7 @@ INT __cdecl CRTDLL_iswgraph( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswlower( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0002 );
+    return get_char_typeW(wc) & C1_LOWER;
 }
 
 /*********************************************************************
@@ -171,7 +170,7 @@ INT __cdecl CRTDLL_iswlower( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswprint( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0157 );
+    return get_char_typeW(wc) & (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 /*********************************************************************
@@ -179,7 +178,7 @@ INT __cdecl CRTDLL_iswprint( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswpunct( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0010 );
+    return get_char_typeW(wc) & C1_PUNCT;
 }
 
 /*********************************************************************
@@ -187,7 +186,7 @@ INT __cdecl CRTDLL_iswpunct( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswspace( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0008 );
+    return get_char_typeW(wc) & C1_SPACE;
 }
 
 /*********************************************************************
@@ -195,7 +194,7 @@ INT __cdecl CRTDLL_iswspace( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswupper( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0001 );
+    return get_char_typeW(wc) & C1_UPPER;
 }
 
 /*********************************************************************
@@ -203,5 +202,5 @@ INT __cdecl CRTDLL_iswupper( WCHAR wc )
  */
 INT __cdecl CRTDLL_iswxdigit( WCHAR wc )
 {
-    return NTDLL_iswctype( wc, 0x0080 );
+    return get_char_typeW(wc) & C1_XDIGIT;
 }

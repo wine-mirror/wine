@@ -1223,60 +1223,6 @@ BOOL WINAPI GetStringTypeExA(LCID locale,DWORD dwInfoType,LPCSTR src,
 	}
 }
 
-/******************************************************************************
- *		GetStringTypeW	[KERNEL32.399]
- *
- * NOTES
- * Yes, this is missing LCID locale. MS fault.
- */
-BOOL WINAPI GetStringTypeW(DWORD dwInfoType,LPCWSTR src,INT cchSrc,
-                               LPWORD chartype)
-{
-	return GetStringTypeExW(0/*defaultlocale*/,dwInfoType,src,cchSrc,chartype);
-}
-
-/******************************************************************************
- *		GetStringTypeExW	[KERNEL32.398]
- *
- * FIXME: unicode chars are assumed chars
- */
-BOOL WINAPI GetStringTypeExW(LCID locale,DWORD dwInfoType,LPCWSTR src,
-                                 INT cchSrc,LPWORD chartype)
-{
-	int	i;
-	UINT	ch;
-
-	if (cchSrc==-1)
-	  cchSrc=lstrlenW(src)+1;
-	
-	switch (dwInfoType) {
-	case CT_CTYPE2:
-		FIXME("CT_CTYPE2 not supported.\n");
-		return FALSE;
-	case CT_CTYPE3:
-		FIXME("CT_CTYPE3 not supported.\n");
-		return FALSE;
-	default:break;
-	}
-	for (i=0;i<cchSrc;i++) {
-		chartype[i] = 0;
-		ch = src[i];
-		if ( ch >= (UINT)0x100 ) continue;
-		if (isdigit(ch)) chartype[i]|=C1_DIGIT;
-		if (isalpha(ch)) chartype[i]|=C1_ALPHA;
-		if (islower(ch)) chartype[i]|=C1_LOWER;
-		if (isupper(ch)) chartype[i]|=C1_UPPER;
-		if (isspace(ch)) chartype[i]|=C1_SPACE;
-		if (ispunct(ch)) chartype[i]|=C1_PUNCT;
-		if (iscntrl(ch)) chartype[i]|=C1_CNTRL;
-/* FIXME: isblank() is a GNU extension */
-/*		if (isblank(ch)) chartype[i]|=C1_BLANK; */
-                if ((ch == ' ') || (ch == '\t')) chartype[i]|=C1_BLANK;
-		/* C1_XDIGIT */
-	}
-	return TRUE;
-}
-
 /***********************************************************************
  *           VerLanguageNameA              [KERNEL32.709][VERSION.9]
  */

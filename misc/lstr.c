@@ -13,15 +13,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_WCTYPE_H
-# include <wctype.h>
-#else
-# define iswalnum(c) isalnum(c)
-# define iswalpha(c) isalpha(c)
-# define iswupper(c) isupper(c)
-# define iswlower(c) islower(c)
-#endif  /* HAVE_WCTYPE_H */
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -191,58 +182,4 @@ BOOL WINAPI IsCharAlphaA(CHAR x)
 BOOL WINAPI IsCharAlphaNumericA(CHAR x)
 {
     return IsCharAlphaA(x) || isdigit(x) ;
-}
-
-/***********************************************************************
- *           IsCharAlphaNumericW   (USER32.333)
- * FIXME: handle current locale
- */
-BOOL WINAPI IsCharAlphaNumericW(WCHAR x)
-{
-    return iswalnum(x);
-}
-
-/***********************************************************************
- *           IsCharAlphaW   (USER32.334)
- * FIXME: handle current locale
- */
-BOOL WINAPI IsCharAlphaW(WCHAR x)
-{
-    return iswalpha(x);
-}
-
-/***********************************************************************
- *           IsCharLowerA   (USER.436) (USER32.335)
- * FIXME: handle current locale
- */
-BOOL WINAPI IsCharLowerA(CHAR x)
-{
-    return islower(x);
-}
-
-/***********************************************************************
- *           IsCharLowerW   (USER32.336)
- * FIXME: handle current locale
- */
-BOOL WINAPI IsCharLowerW(WCHAR x)
-{
-    return iswlower(x);
-}
-
-/***********************************************************************
- *           IsCharUpperA   (USER.435) (USER32.337)
- * FIXME: handle current locale
- */
-BOOL WINAPI IsCharUpperA(CHAR x)
-{
-    return isupper(x);
-}
-
-/***********************************************************************
- *           IsCharUpperW   (USER32.338)
- * FIXME: handle current locale
- */
-BOOL WINAPI IsCharUpperW(WCHAR x)
-{
-    return iswupper(x);
 }

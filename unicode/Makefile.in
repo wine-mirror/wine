@@ -72,6 +72,7 @@ C_SRCS = \
 	string.c \
 	utf8.c \
 	wctomb.c \
+	wctype.c \
 	$(CODEPAGES:%=c_%.c)
 
 all: libwine_unicode.$(LIBEXT)

@@ -1767,11 +1767,10 @@ INT       WINAPI GetProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,UINT);
 VOID        WINAPI GetStartupInfoA(LPSTARTUPINFOA);
 VOID        WINAPI GetStartupInfoW(LPSTARTUPINFOW);
 #define     GetStartupInfo WINELIB_NAME_AW(GetStartupInfo)
-BOOL      WINAPI GetStringTypeA(LCID,DWORD,LPCSTR,INT,LPWORD);
-BOOL      WINAPI GetStringTypeW(DWORD,LPCWSTR,INT,LPWORD);
-#define     GetStringType WINELIB_NAME_AW(GetStringType)
-UINT      WINAPI GetSystemDirectoryA(LPSTR,UINT);
-UINT      WINAPI GetSystemDirectoryW(LPWSTR,UINT);
+BOOL        WINAPI GetStringTypeA(LCID,DWORD,LPCSTR,INT,LPWORD);
+BOOL        WINAPI GetStringTypeW(DWORD,LPCWSTR,INT,LPWORD);
+UINT        WINAPI GetSystemDirectoryA(LPSTR,UINT);
+UINT        WINAPI GetSystemDirectoryW(LPWSTR,UINT);
 #define     GetSystemDirectory WINELIB_NAME_AW(GetSystemDirectory)
 DWORD       WINAPI GetTickCount(void);
 UINT        WINAPI GetTempFileNameA(LPCSTR,LPCSTR,UINT,LPSTR);

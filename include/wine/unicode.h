@@ -73,6 +73,14 @@ static inline WCHAR toupperW( WCHAR ch )
     return ch + casemap_upper[casemap_upper[ch >> 8] + (ch & 0xff)];
 }
 
+/* the character type contains the C1_* flags in the low 12 bits */
+/* and the C2_* type in the high 4 bits */
+static inline unsigned short get_char_typeW( WCHAR ch )
+{
+    extern unsigned short wctype_table[];
+    return wctype_table[wctype_table[ch >> 8] + (ch & 0xff)];
+}
+
 /* some useful string manipulation routines */
 
 static inline unsigned int strlenW( const WCHAR *str )

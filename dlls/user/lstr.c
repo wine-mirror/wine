@@ -320,6 +320,62 @@ BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 
 
 /***********************************************************************
+ *           IsCharLowerA   (USER.436) (USER32.@)
+ * FIXME: handle current locale
+ */
+BOOL WINAPI IsCharLowerA(CHAR x)
+{
+    return islower(x);
+}
+
+
+/***********************************************************************
+ *           IsCharLowerW   (USER32.@)
+ */
+BOOL WINAPI IsCharLowerW(WCHAR x)
+{
+    return get_char_typeW(x) & C1_LOWER;
+}
+
+
+/***********************************************************************
+ *           IsCharUpperA   (USER.435) (USER32.337)
+ * FIXME: handle current locale
+ */
+BOOL WINAPI IsCharUpperA(CHAR x)
+{
+    return isupper(x);
+}
+
+
+/***********************************************************************
+ *           IsCharUpperW   (USER32.@)
+ */
+BOOL WINAPI IsCharUpperW(WCHAR x)
+{
+    return get_char_typeW(x) & C1_UPPER;
+}
+
+
+/***********************************************************************
+ *           IsCharAlphaNumericW   (USER32.@)
+ */
+BOOL WINAPI IsCharAlphaNumericW(WCHAR x)
+{
+    return get_char_typeW(x) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
+}
+
+
+/***********************************************************************
+ *           IsCharAlphaW   (USER32.@)
+ */
+BOOL WINAPI IsCharAlphaW(WCHAR x)
+{
+    return get_char_typeW(x) & (C1_ALPHA|C1_LOWER|C1_UPPER);
+}
+
+
+/***********************************************************************
  *           FormatMessage16   (USER.606)
  */
 DWORD WINAPI FormatMessage16(
