@@ -33,9 +33,6 @@ static inline BOOL msvcrt_init_tls(void);
 static inline BOOL msvcrt_free_tls(void);
 const char* msvcrt_get_reason(DWORD reason) WINE_UNUSED;
 
-typedef void* (*MSVCRT_malloc_func)(unsigned int);
-typedef void (*MSVCRT_free_func)(void*);
-
 /*********************************************************************
  *                  Init
  */
@@ -54,7 +51,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     if (!msvcrt_init_tls())
       return FALSE;
     msvcrt_init_mt_locks();
-    msvcrt_init_vtables();
     msvcrt_init_io();
     msvcrt_init_console();
     msvcrt_init_args();
@@ -126,19 +122,35 @@ void MSVCRT_I10_OUTPUT(void)
   /* FIXME: This is probably data, not a function */
 }
 
-
 /*********************************************************************
  *		__unDName (MSVCRT.@)
- * Function not really understood but needed to make the DLL work
+ *
+ * Demangle a C++ identifier.
+ *
+ * PARAMS
+ *  unknown  [I] Not yet determined
+ *  mangled  [I] Mangled name of the function
+ *  unknown2 [I] Not yet determined
+ *  memget   [I] Function to allocate memory with
+ *  memfree  [I] Function to free memory with
+ *  flags    [I] Flags determining demangled format
+ *
+ * RETURNS
+ *  Success: A string pointing to the unmangled name, allocated with memget.
+ *  Failure: NULL.
  */
-char* MSVCRT___unDName(int unknown, const char* mangled,
+char* MSVCRT___unDName(int unknown, const char* mangled, int unknown2,
                        MSVCRT_malloc_func memget,
                        MSVCRT_free_func memfree,
                        unsigned int flags)
 {
   char* ret;
 
-  FIXME("(%d,%s,%p,%p,%x) stub!\n", unknown, mangled, memget, memfree, flags);
+  FIXME("(%d,%s,%d,%p,%p,%x) stub!\n", unknown, mangled, unknown2, memget, memfree, flags);
+
+  /* FIXME: The code in tools/winebuild/msmangle.c is pretty complete and
+   * could be used here.
+   */
 
   /* Experimentation reveals the following flag meanings when set:
    * 0x0001 - Dont show __ in calling convention
@@ -147,7 +159,9 @@ char* MSVCRT___unDName(int unknown, const char* mangled,
    * 0x0010 - Same as 0x1
    * 0x0080 - Dont show access specifier (public/protected/private)
    * 0x0200 - Dont show static specifier
+   * 0x0800 - Unknown, passed by type_info::name()
    * 0x1000 - Only report the variable/class name
+   * 0x2000 - Unknown, passed by type_info::name()
    */
   /* Duplicate the mangled name; for comparisons it doesn't matter anyway */
   ret = memget(strlen(mangled) + 1);

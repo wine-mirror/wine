@@ -67,6 +67,13 @@ extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **);
  */
 int    MSVCRT__set_new_mode(int mode);
 
+void MSVCRT_operator_delete(void*);
+
+typedef void* (*MSVCRT_malloc_func)(MSVCRT_size_t);
+typedef void (*MSVCRT_free_func)(void*);
+
+extern char* MSVCRT___unDName(int,const char*,int,MSVCRT_malloc_func,MSVCRT_free_func,unsigned int);
+
 /* Setup and teardown multi threaded locks */
 extern void msvcrt_init_mt_locks(void);
 extern void msvcrt_free_mt_locks(void);
