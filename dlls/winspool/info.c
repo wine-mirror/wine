@@ -23,8 +23,6 @@
 
 DEFAULT_DEBUG_CHANNEL(winspool);
 
-CRITICAL_SECTION PRINT32_RegistryBlocker;
-
 typedef struct _OPENEDPRINTER
 {
     LPWSTR lpsPrinterName;
