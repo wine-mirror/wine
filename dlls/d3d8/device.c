@@ -3703,7 +3703,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
 	    case D3DTSS_TCI_CAMERASPACENORMAL:
 	      {
-		if (GL_SUPPORT(GL_NV_texgen_reflection)) {
+		if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
 		  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
 		  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
 		  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
@@ -3737,7 +3737,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
 	    case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
 	      {
-		if (GL_SUPPORT(GL_NV_texgen_reflection)) {
+		if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
 		  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
 		  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
 		  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };

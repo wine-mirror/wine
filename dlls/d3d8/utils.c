@@ -1019,13 +1019,13 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	    glTexEnvi(GL_TEXTURE_ENV, src3_target, src1);
 	    checkGLcall("GL_TEXTURE_ENV, src3_target, src1");
 	    switch (opr1) {
-	    case GL_SRC_COLOR: opr1 = GL_ONE_MINUS_SRC_COLOR; break;
-	    case GL_ONE_MINUS_SRC_COLOR: opr1 = GL_SRC_COLOR; break;
-	    case GL_SRC_ALPHA: opr1 = GL_ONE_MINUS_SRC_ALPHA; break;
-	    case GL_ONE_MINUS_SRC_ALPHA: opr1 = GL_SRC_ALPHA; break;
+	    case GL_SRC_COLOR: opr = GL_ONE_MINUS_SRC_COLOR; break;
+	    case GL_ONE_MINUS_SRC_COLOR: opr = GL_SRC_COLOR; break;
+	    case GL_SRC_ALPHA: opr = GL_ONE_MINUS_SRC_ALPHA; break;
+	    case GL_ONE_MINUS_SRC_ALPHA: opr = GL_SRC_ALPHA; break;
 	    }
-	    glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr1);
-	    checkGLcall("GL_TEXTURE_ENV, opr3_target, opr1");
+	    glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr);
+	    checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");
 	    glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 	    checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
 	    break;
@@ -1135,12 +1135,12 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	    checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");     /*  a3 = src1 alpha   */
 	    glTexEnvi(GL_TEXTURE_ENV, src3_target, src1);
 	    checkGLcall("GL_TEXTURE_ENV, src3_target, src1");
-	    switch (opr1) {
-	    case GL_SRC_COLOR: opr1 = GL_SRC_ALPHA; break;
-	    case GL_ONE_MINUS_SRC_COLOR: opr1 = GL_ONE_MINUS_SRC_ALPHA; break;
+	    switch (opr) {
+	    case GL_SRC_COLOR: opr = GL_SRC_ALPHA; break;
+	    case GL_ONE_MINUS_SRC_COLOR: opr = GL_ONE_MINUS_SRC_ALPHA; break;
 	    }
-	    glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr1);
-	    checkGLcall("GL_TEXTURE_ENV, opr3_target, opr1");
+	    glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr);
+	    checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");
 	    glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 	    checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
 	    break;
@@ -1158,11 +1158,11 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	    glTexEnvi(GL_TEXTURE_ENV, src2_target, src1);
 	    checkGLcall("GL_TEXTURE_ENV, src2_target, src1");
 	    switch (opr1) {
-	    case GL_SRC_COLOR: opr1 = GL_SRC_ALPHA; break;
-	    case GL_ONE_MINUS_SRC_COLOR: opr1 = GL_ONE_MINUS_SRC_ALPHA; break;
+	    case GL_SRC_COLOR: opr = GL_SRC_ALPHA; break;
+	    case GL_ONE_MINUS_SRC_COLOR: opr = GL_ONE_MINUS_SRC_ALPHA; break;
 	    }
-	    glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr1);
-	    checkGLcall("GL_TEXTURE_ENV, opr2_target, opr1");
+	    glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
+	    checkGLcall("GL_TEXTURE_ENV, opr2_target, opr");
 	    glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_ZERO);
 	    checkGLcall("GL_TEXTURE_ENV, src3_target, GL_ZERO");
 	    glTexEnvi(GL_TEXTURE_ENV, opr3_target, invopr);
@@ -1218,11 +1218,11 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	    glTexEnvi(GL_TEXTURE_ENV, src2_target, src1);
 	    checkGLcall("GL_TEXTURE_ENV, src2_target, src1");
 	    switch (opr1) {
-	    case GL_SRC_COLOR: opr1 = GL_SRC_ALPHA; break;
-	    case GL_ONE_MINUS_SRC_COLOR: opr1 = GL_ONE_MINUS_SRC_ALPHA; break;
+	    case GL_SRC_COLOR: opr = GL_SRC_ALPHA; break;
+	    case GL_ONE_MINUS_SRC_COLOR: opr = GL_ONE_MINUS_SRC_ALPHA; break;
 	    }
-	    glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr1);
-	    checkGLcall("GL_TEXTURE_ENV, opr2_target, opr1");
+	    glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
+	    checkGLcall("GL_TEXTURE_ENV, opr2_target, opr");
 	    glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_ZERO);
 	    checkGLcall("GL_TEXTURE_ENV, src3_target, GL_ZERO");
 	    glTexEnvi(GL_TEXTURE_ENV, opr3_target, invopr);
@@ -1678,13 +1678,13 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
 		  checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
 		  glTexEnvi(GL_TEXTURE_ENV, src1_target, src1);
-		  checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
-		  glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr1);
-		  checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-		  glTexEnvi(GL_TEXTURE_ENV, src2_target, src1);
-		  checkGLcall("GL_TEXTURE_ENV, src2_target, src1");
-		  glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA);
-		  checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA");
+		  checkGLcall("GL_TEXTURE_ENV, src1_target, src1");
+		  glTexEnvi(GL_TEXTURE_ENV, opr1_target, GL_SRC_ALPHA);
+		  checkGLcall("GL_TEXTURE_ENV, opr1_target, GL_SRC_ALPHA");
+		  glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);
+		  checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
+		  glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
+		  checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
 		  glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 		  checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
 		} else
@@ -1717,16 +1717,16 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
-		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
-		  checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
+		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, GL_ONE_MINUS_SRC_COLOR);
+		  checkGLcall("GL_TEXTURE_ENV, opr0_target, GL_ONE_MINUS_SRC_COLOR");
 		  glTexEnvi(GL_TEXTURE_ENV, src1_target, src1);
-		  checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
-		  glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr1);
-		  checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-		  glTexEnvi(GL_TEXTURE_ENV, src2_target, src1);
-		  checkGLcall("GL_TEXTURE_ENV, src2_target, src1");
-		  glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_ONE_MINUS_SRC_ALPHA);
-		  checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_ONE_MINUS_SRC_ALPHA");
+		  checkGLcall("GL_TEXTURE_ENV, src1_target, src1");
+		  glTexEnvi(GL_TEXTURE_ENV, opr1_target, GL_SRC_ALPHA);
+		  checkGLcall("GL_TEXTURE_ENV, opr1_target, GL_SRC_ALPHA");
+		  glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);
+		  checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
+		  glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
+		  checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
 		  glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 		  checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
 		} else
