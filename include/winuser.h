@@ -593,6 +593,12 @@ typedef struct
 #define WM_KEYFIRST         WM_KEYDOWN
 #define WM_KEYLAST          0x0108
 
+/* Win32 4.0 messages for IME */
+#define WM_IME_STARTCOMPOSITION     0x010d
+#define WM_IME_ENDCOMPOSITION       0x010e
+#define WM_IME_COMPOSITION          0x010f
+#define WM_IME_KEYLAST              0x010f
+
 #define WM_INITDIALOG       0x0110 
 #define WM_COMMAND          0x0111
 #define WM_SYSCOMMAND       0x0112
@@ -671,6 +677,21 @@ typedef struct
 #define WM_ENTERSIZEMOVE    0x0231
 #define WM_EXITSIZEMOVE     0x0232
 #define WM_DROPFILES	    0x0233
+
+
+/* Win32 4.0 messages for IME */
+#define WM_IME_SETCONTEXT           0x0281
+#define WM_IME_NOTIFY               0x0282
+#define WM_IME_CONTROL              0x0283
+#define WM_IME_COMPOSITIONFULL      0x0284
+#define WM_IME_SELECT               0x0285
+#define WM_IME_CHAR                 0x0286
+/* Win32 5.0 messages for IME */
+#define WM_IME_REQUEST              0x0288
+
+/* Win32 4.0 messages for IME */
+#define WM_IME_KEYDOWN              0x0290
+#define WM_IME_KEYUP                0x0291
 
 /* Clipboard command messages */
 #define WM_CUT               0x0300
