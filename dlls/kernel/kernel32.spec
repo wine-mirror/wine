@@ -167,6 +167,8 @@
 @ stub Callback60
 @ stub Callback64
 @ stub Callback8
+@ stub CancelDeviceWakeupRequest
+@ stub ChangeTimerQueueTimer
 @ stdcall ClearCommBreak(long) ClearCommBreak
 @ stdcall ClearCommError(long ptr ptr) ClearCommError
 @ stdcall CloseHandle(long) CloseHandle
@@ -180,6 +182,7 @@
 @ stdcall ConnectNamedPipe(long ptr) ConnectNamedPipe
 @ stdcall ContinueDebugEvent(long long long) ContinueDebugEvent
 @ stdcall ConvertDefaultLocale (long) ConvertDefaultLocale
+@ stub ConvertThreadToFiber
 @ stdcall ConvertToGlobalHandle(long) ConvertToGlobalHandle
 @ stdcall CopyFileA(str str long) CopyFileA
 @ stdcall CopyFileW(wstr wstr long) CopyFileW
@@ -231,8 +234,14 @@
 @ forward EnterCriticalSection ntdll.RtlEnterCriticalSection
 @ stdcall EnumCalendarInfoA(ptr long long long) EnumCalendarInfoA
 @ stub EnumCalendarInfoW
+@ stub EnumCalendarInfoExA
+@ stub EnumCalendarInfoExW
 @ stdcall EnumDateFormatsA(ptr long long) EnumDateFormatsA
 @ stdcall EnumDateFormatsW(ptr long long) EnumDateFormatsW
+@ stub EnumDateFormatsExA
+@ stub EnumDateFormatsExW
+@ stub EnumLanguageGroupLocalesA
+@ stub EnumLanguageGroupLocalesW
 @ stdcall EnumResourceLanguagesA(long str str ptr long) EnumResourceLanguagesA
 @ stdcall EnumResourceLanguagesW(long wstr wstr ptr long) EnumResourceLanguagesW
 @ stdcall EnumResourceNamesA(long str ptr long) EnumResourceNamesA
@@ -241,10 +250,15 @@
 @ stdcall EnumResourceTypesW(long ptr long) EnumResourceTypesW
 @ stdcall EnumSystemCodePagesA(ptr long) EnumSystemCodePagesA
 @ stdcall EnumSystemCodePagesW(ptr long) EnumSystemCodePagesW
+@ stub EnumSystemGeoID
+@ stub EnumSystemLanguageGroupsA
+@ stub EnumSystemLanguageGroupsW
 @ stdcall EnumSystemLocalesA(ptr long) EnumSystemLocalesA
 @ stdcall EnumSystemLocalesW(ptr long) EnumSystemLocalesW
 @ stdcall EnumTimeFormatsA(ptr long long) EnumTimeFormatsA
 @ stdcall EnumTimeFormatsW(ptr long long) EnumTimeFormatsW
+@ stub EnumUILanguagesA
+@ stub EnumUILanguagesW
 @ stdcall EraseTape(ptr long long) EraseTape
 @ stdcall EscapeCommFunction(long long) EscapeCommFunction
 @ stdcall ExitProcess(long) ExitProcess
@@ -285,13 +299,23 @@
 @ stdcall FindFirstChangeNotificationW(wstr long long) FindFirstChangeNotificationW
 @ stdcall FindFirstFileA(str ptr) FindFirstFileA
 @ stdcall FindFirstFileW(wstr ptr) FindFirstFileW
+@ stub FindFirstVolumeA
+@ stub FindFirstVolumeW
+@ stub FindFirstVolumeMountPointA
+@ stub FindFirstVolumeMountPointW
 @ stdcall FindNextChangeNotification(long) FindNextChangeNotification
 @ stdcall FindNextFileA(long ptr) FindNextFileA
 @ stdcall FindNextFileW(long ptr) FindNextFileW
+@ stub FindNextVolumeA
+@ stub FindNextVolumeW
+@ stub FindNextVolumeMountPointA
+@ stub FindNextVolumeMountPointW
 @ stdcall FindResourceA(long str str) FindResourceA
 @ stdcall FindResourceExA(long str str long) FindResourceExA
 @ stdcall FindResourceExW(long wstr wstr long) FindResourceExW
 @ stdcall FindResourceW(long wstr wstr) FindResourceW
+@ stub FindVolumeClose
+@ stub FindVolumeMountPointClose
 @ stdcall FlushConsoleInputBuffer(long) FlushConsoleInputBuffer
 @ stdcall FlushFileBuffers(long) FlushFileBuffers
 @ stdcall FlushInstructionCache(long long long) FlushInstructionCache
@@ -308,6 +332,7 @@
 @ stdcall FreeLibrary(long) FreeLibrary
 @ stdcall FreeResource(long) FreeResource
 @ stdcall FreeSLCallback(long) FreeSLCallback
+@ stub FreeUserPhysicalPages
 @ stdcall GenerateConsoleCtrlEvent(long long) GenerateConsoleCtrlEvent
 @ stdcall GetACP() GetACP
 @ stdcall GetAtomNameA(long ptr long) GetAtomNameA
@@ -316,6 +341,8 @@
 @ stdcall GetBinaryTypeA(ptr ptr) GetBinaryTypeA
 @ stdcall GetBinaryTypeW(ptr ptr) GetBinaryTypeW
 @ stdcall GetCPInfo(long ptr) GetCPInfo
+@ stub GetCPInfoExA
+@ stub GetCPInfoExW
 @ stdcall GetCommConfig(long ptr long) GetCommConfig
 @ stdcall GetCommMask(long ptr) GetCommMask
 @ stdcall GetCommModemStatus(long ptr) GetCommModemStatus
@@ -330,13 +357,17 @@
 @ stdcall GetComputerNameExA(long ptr ptr) GetComputerNameExA
 @ stdcall GetComputerNameExW(long ptr ptr) GetComputerNameExW
 @ stdcall GetComputerNameW(ptr ptr) GetComputerNameW
+@ stub GetConsoleCharType
 @ stdcall GetConsoleCP() GetConsoleCP
 @ stdcall GetConsoleCursorInfo(long ptr) GetConsoleCursorInfo
+@ stub GetConsoleCursorMode
 @ stdcall GetConsoleMode(long ptr) GetConsoleMode
+@ stub GetConsoleNlsMode
 @ stdcall GetConsoleOutputCP() GetConsoleOutputCP
 @ stdcall GetConsoleScreenBufferInfo(long ptr) GetConsoleScreenBufferInfo
 @ stdcall GetConsoleTitleA(ptr long) GetConsoleTitleA
 @ stdcall GetConsoleTitleW(ptr long) GetConsoleTitleW
+@ stub GetConsoleWindow
 @ stdcall GetCurrencyFormatA(long long str ptr str long) GetCurrencyFormatA
 @ stdcall GetCurrencyFormatW(long long str ptr str long) GetCurrencyFormatW
 @ stdcall GetCurrentDirectoryA(long ptr) GetCurrentDirectoryA
@@ -350,6 +381,8 @@
 @ stub GetDaylightFlag
 @ stdcall GetDefaultCommConfigA(str ptr long) GetDefaultCommConfigA
 @ stdcall GetDefaultCommConfigW(wstr ptr long) GetDefaultCommConfigW
+@ stub GetDefaultSortkeySize
+@ stub GetDevicePowerState
 @ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) GetDiskFreeSpaceA
 @ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr) GetDiskFreeSpaceW
 @ stdcall GetDriveTypeA(str) GetDriveTypeA
@@ -371,12 +404,15 @@
 @ stdcall GetFileType(long) GetFileType
 @ stdcall GetFullPathNameA(str long ptr ptr) GetFullPathNameA
 @ stdcall GetFullPathNameW(wstr long ptr ptr) GetFullPathNameW
+@ stub GetGeoInfoA
+@ stub GetGeoInfoW
 @ stdcall GetHandleContext(long) GetHandleContext
 @ stdcall GetHandleInformation(long ptr) GetHandleInformation
 @ stub GetLSCallbackTarget
 @ stub GetLSCallbackTemplate
 @ stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
 @ stdcall GetLastError() GetLastError
+@ stub GetLinguistLangSize
 @ stdcall GetLocalTime(ptr) GetLocalTime
 @ stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA
 @ stdcall GetLocaleInfoW(long long ptr long) GetLocaleInfoW
@@ -391,6 +427,7 @@
 @ stdcall GetNamedPipeHandleStateA(long ptr ptr ptr ptr str long) GetNamedPipeHandleStateA
 @ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long) GetNamedPipeHandleStateW
 @ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr) GetNamedPipeInfo
+@ stub GetNlsSectionName
 @ stdcall GetNumberFormatA(long long str ptr ptr long) GetNumberFormatA
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) GetNumberFormatW
 @ stdcall GetNumberOfConsoleInputEvents(long ptr) GetNumberOfConsoleInputEvents
@@ -413,6 +450,7 @@
 @ stdcall GetProcessFlags(long) GetProcessFlags
 @ stdcall GetProcessHeap() GetProcessHeap
 @ stdcall GetProcessHeaps(long ptr) GetProcessHeaps
+@ stub GetProcessIoCounters
 @ stdcall GetProcessShutdownParameters(ptr ptr) GetProcessShutdownParameters
 @ stdcall GetProcessTimes(long ptr ptr ptr ptr) GetProcessTimes
 @ stdcall GetProcessVersion(long) GetProcessVersion
@@ -465,13 +503,19 @@
 @ stdcall GetUserDefaultLCID() GetUserDefaultLCID
 @ stdcall GetUserDefaultLangID() GetUserDefaultLangID
 @ stdcall GetUserDefaultUILanguage() GetUserDefaultUILanguage
+@ stub GetUserGeoID
 @ stdcall GetVersion() GetVersion
 @ stdcall GetVersionExA(ptr) GetVersionExA
 @ stdcall GetVersionExW(ptr) GetVersionExW
 @ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) GetVolumeInformationA
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) GetVolumeInformationW
+@ stub GetVolumeNameForVolumeMountPointA
+@ stub GetVolumeNameForVolumeMountPointW
+@ stub GetVolumePathNameA
+@ stub GetVolumePathNameW
 @ stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectoryA
 @ stdcall GetWindowsDirectoryW(ptr long) GetWindowsDirectoryW
+@ stub GetWriteWatch
 @ stdcall GlobalAddAtomA(str) GlobalAddAtomA
 @ stdcall GlobalAddAtomW(wstr) GlobalAddAtomW
 @ stdcall GlobalAlloc(long long) GlobalAlloc
@@ -487,6 +531,7 @@
 @ stdcall GlobalHandle(ptr) GlobalHandle
 @ stdcall GlobalLock(long) GlobalLock
 @ stdcall GlobalMemoryStatus(ptr) GlobalMemoryStatus
+@ stub GlobalMemoryStatusEx
 @ stdcall GlobalReAlloc(long long long) GlobalReAlloc
 @ stdcall GlobalSize(long) GlobalSize
 @ stdcall GlobalUnWire(long) GlobalUnWire
@@ -526,7 +571,9 @@
 @ stdcall IsDBCSLeadByteEx(long long) IsDBCSLeadByteEx
 @ stub IsLSCallback
 @ stub IsSLCallback
+@ stub IsSystemResumeAutomatic
 @ stdcall IsValidCodePage(long) IsValidCodePage
+@ stub IsValidLanguageGroup
 @ stdcall IsValidLocale(long long) IsValidLocale
 @ stdcall -register -i386 K32Thk1632Epilog() K32Thk1632Epilog
 @ stdcall -register -i386 K32Thk1632Prolog() K32Thk1632Prolog
@@ -574,6 +621,7 @@
 @ stdcall MulDiv(long long long) MulDiv
 @ stdcall MultiByteToWideChar(long long str long ptr long) MultiByteToWideChar
 @ stub NotifyNLSUserCache
+@ stub OpenDataFile
 @ stdcall OpenEventA(long long str) OpenEventA
 @ stdcall OpenEventW(long long wstr) OpenEventW
 @ stdcall OpenFile(str ptr long) OpenFile
@@ -596,18 +644,23 @@
 @ stdcall PeekNamedPipe(long ptr long ptr ptr ptr) PeekNamedPipe
 @ stub PostQueuedCompletionStatus
 @ stdcall PrepareTape(ptr long long) PrepareTape
+@ stub PrivMoveFileIdentityW
 @ stdcall Process32First (ptr ptr) Process32First
+@ stub Process32FirstW
 @ stdcall Process32Next (ptr ptr) Process32Next
+@ stub Process32NextW
 @ stdcall PulseEvent(long) PulseEvent
 @ stdcall PurgeComm(long long) PurgeComm
 @ stdcall -register -i386 QT_Thunk() QT_Thunk
 @ stdcall QueryDosDeviceA(str ptr long) QueryDosDeviceA
 @ stdcall QueryDosDeviceW(wstr ptr long) QueryDosDeviceW
+@ stub QueryInformationJobObject
 @ stub QueryNumberOfEventLogRecords
 @ stub QueryOldestEventLogRecord
 @ stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
 @ stdcall QueryPerformanceFrequency(ptr) QueryPerformanceFrequency
 @ stdcall QueueUserAPC(ptr long long) QueueUserAPC
+@ stub QueueUserWorkItem
 @ stdcall RaiseException(long long long ptr) RaiseException
 @ stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsoleA
 @ stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInputA
@@ -621,13 +674,24 @@
 @ stdcall ReadFile(long ptr long ptr ptr) ReadFile
 @ stdcall ReadFileEx(long ptr long ptr ptr) ReadFileEx
 @ stdcall ReadProcessMemory(long ptr ptr long ptr) ReadProcessMemory
+@ stub RegisterConsoleIME
+@ stub RegisterConsoleOS2
 @ stdcall RegisterServiceProcess(long long) RegisterServiceProcess
+@ stub RegisterSysMsgHandler
+@ stub RegisterWaitForSingleObject
+@ stub RegisterWaitForSingleObjectEx
 @ stdcall ReinitializeCriticalSection(ptr) ReinitializeCriticalSection
 @ stdcall ReleaseMutex(long) ReleaseMutex
 @ stdcall ReleaseSemaphore(long long ptr) ReleaseSemaphore
+@ stub ReplaceFile
+@ stub ReplaceFileA
+@ stub ReplaceFileW
 @ stdcall RemoveDirectoryA(str) RemoveDirectoryA
 @ stdcall RemoveDirectoryW(wstr) RemoveDirectoryW
+@ stub RequestDeviceWakeup
+@ stub RequestWakeupLatency
 @ stdcall ResetEvent(long) ResetEvent
+@ stub ResetWriteWatch
 @ stdcall ResumeThread(long) ResumeThread
 @ forward RtlFillMemory NTDLL.RtlFillMemory
 @ forward RtlMoveMemory NTDLL.RtlMoveMemory
@@ -670,8 +734,12 @@
 @ stdcall SetConsoleCP(long) SetConsoleCP
 @ stdcall SetConsoleCtrlHandler(ptr long) SetConsoleCtrlHandler
 @ stdcall SetConsoleCursorInfo(long ptr) SetConsoleCursorInfo
+@ stub SetConsoleCursorMode
 @ stdcall SetConsoleCursorPosition(long long) SetConsoleCursorPosition
+@ stub SetConsoleLocalEUDC
 @ stdcall SetConsoleMode(long long) SetConsoleMode
+@ stub SetConsoleNlsMode
+@ stub SetConsoleOS2OemFormat
 @ stdcall SetConsoleOutputCP(long) SetConsoleOutputCP
 @ stdcall SetConsoleScreenBufferSize(long long) SetConsoleScreenBufferSize
 @ stdcall SetConsoleTextAttribute(long long) SetConsoleTextAttribute
@@ -693,6 +761,7 @@
 @ stdcall SetFileAttributesA(str long) SetFileAttributesA
 @ stdcall SetFileAttributesW(wstr long) SetFileAttributesW
 @ stdcall SetFilePointer(long long ptr long) SetFilePointer
+@ stub SetFilePointerEx
 @ stdcall SetFileTime(long ptr ptr ptr) SetFileTime
 @ stdcall SetHandleContext(long long) SetHandleContext
 @ stdcall SetHandleCount(long) SetHandleCount
@@ -702,6 +771,7 @@
 @ stdcall SetLocaleInfoA(long long str) SetLocaleInfoA
 @ stdcall SetLocaleInfoW(long long wstr) SetLocaleInfoW
 @ stub SetMailslotInfo
+@ stub SetMessageWaitingIndicator
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr) SetNamedPipeHandleState
 @ stdcall SetPriorityClass(long long) SetPriorityClass
 @ stdcall SetProcessShutdownParameters(long long) SetProcessShutdownParameters
@@ -716,10 +786,14 @@
 @ stdcall SetThreadContext(long ptr) SetThreadContext
 @ stdcall SetThreadLocale(long) SetThreadLocale
 @ stdcall SetThreadPriority(long long) SetThreadPriority
+@ stub SetTimerQueueTimer
 @ stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
 @ stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
+@ stub SetUserGeoID
 @ stdcall SetVolumeLabelA(str str) SetVolumeLabelA
 @ stdcall SetVolumeLabelW(wstr wstr) SetVolumeLabelW
+@ stub SetVolumeMountPointA
+@ stub SetVolumeMountPointW
 @ stdcall SetupComm(long long long) SetupComm
 @ stdcall SizeofResource(long long) SizeofResource
 @ stdcall Sleep(long) Sleep
@@ -727,8 +801,10 @@
 @ stdcall SuspendThread(long) SuspendThread
 @ stdcall SystemTimeToFileTime(ptr ptr) SystemTimeToFileTime
 @ stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr) SystemTimeToTzSpecificLocalTime
+@ stub TerminateJobObject
 @ stdcall TerminateProcess(long long) TerminateProcess
 @ stdcall TerminateThread(long long) TerminateThread
+@ stub TermsrvAppInstallMode
 @ stdcall Thread32First(long ptr) Thread32First
 @ stdcall Thread32Next(long ptr) Thread32Next
 @ stdcall ThunkConnect32(ptr str str str ptr ptr) ThunkConnect32
@@ -752,8 +828,11 @@
 @ stdcall UnmapViewOfFile(ptr) UnmapViewOfFile
 @ stdcall UpdateResourceA(long str str long ptr long) UpdateResourceA
 @ stdcall UpdateResourceW(long wstr wstr long ptr long) UpdateResourceW
+@ stub ValidateLCType
+@ stub ValidateLocale
 @ stdcall VerLanguageNameA(long str long) VerLanguageNameA
 @ stdcall VerLanguageNameW(long wstr long) VerLanguageNameW
+@ stub VerSetConditionMask
 @ stdcall VirtualAlloc(ptr long long long) VirtualAlloc
 @ stdcall VirtualFree(ptr long long) VirtualFree
 @ stdcall VirtualLock(ptr long) VirtualLock

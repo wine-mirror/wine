@@ -5,6 +5,7 @@
 @ stdcall gluProject(double double double ptr ptr ptr ptr ptr ptr) wine_gluProject
 @ stdcall gluUnProject(double double double ptr ptr ptr ptr ptr ptr) wine_gluUnProject
 @ stdcall gluErrorString(long) wine_gluErrorString
+@ stub gluErrorUnicodeStringEXT
 @ stdcall gluScaleImage(long long long long ptr long long long ptr) wine_gluScaleImage
 @ stdcall gluBuild1DMipmaps(long long long long long ptr) wine_gluBuild1DMipmaps
 @ stdcall gluBuild2DMipmaps(long long long long long long ptr) wine_gluBuild2DMipmaps
@@ -36,6 +37,13 @@
 @ stdcall gluNurbsCallback(ptr long ptr) wine_gluNurbsCallback
 @ stdcall gluNewTess() wine_gluNewTess
 @ stdcall gluDeleteTess(ptr) wine_gluDeleteTess
+@ stub gluGetTessProperty
+@ stub gluTessBeginContour
+@ stub gluTessBeginPolygon
+@ stub gluTessEndContour
+@ stub gluTessEndPolygon
+@ stub gluTessNormal
+@ stub gluTessProperty
 @ stdcall gluTessVertex(ptr ptr ptr) wine_gluTessVertex
 @ stdcall gluTessCallback(ptr long ptr) wine_gluTessCallback
 @ stdcall gluBeginPolygon(ptr) wine_gluBeginPolygon
