@@ -36,7 +36,7 @@ typedef struct tagPROFILESECTION
 
 typedef struct
 {
-    BOOL           changed;
+    BOOL             changed;
     PROFILESECTION  *section;
     char            *dos_name;
     char            *unix_name;
@@ -53,7 +53,7 @@ static PROFILE *MRUProfile[N_CACHED_PROFILES]={NULL};
 #define CurProfile (MRUProfile[0])
 
 /* wine.ini profile content */
-static PROFILESECTION *WineProfile;
+static PROFILESECTION *PROFILE_WineProfile;
 
 #define PROFILE_MAX_LINE_LEN   1024
 
@@ -69,6 +69,8 @@ static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 #define WINE_INI_GLOBAL ETCDIR "/wine.conf"
 
 static LPCWSTR wininiW = NULL;
+
+static CRITICAL_SECTION PROFILE_CritSect;
 
 /***********************************************************************
  *           PROFILE_CopyEntry
@@ -282,7 +284,7 @@ static BOOL PROFILE_DeleteSection( PROFILESECTION **section, LPCSTR name )
  * Delete a key from a profile tree.
  */
 static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
-                                 LPCSTR section_name, LPCSTR key_name )
+			       LPCSTR section_name, LPCSTR key_name )
 {
     while (*section)
     {
@@ -548,8 +550,8 @@ static BOOL PROFILE_Open( LPCSTR filename )
  * If return_values is TRUE, also include the corresponding values.
  */
 static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
-                                 LPSTR buffer, UINT len, BOOL handle_env,
-				 BOOL return_values )
+			       LPSTR buffer, UINT len, BOOL handle_env,
+			       BOOL return_values )
 {
     PROFILEKEY *key;
     while (section)
@@ -599,7 +601,7 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
  * Get a profile string.
  */
 static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
-                                LPCSTR def_val, LPSTR buffer, UINT len )
+			      LPCSTR def_val, LPSTR buffer, UINT len )
 {
     PROFILEKEY *key = NULL;
 
@@ -624,7 +626,7 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
  * Set a profile string.
  */
 static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
-                                 LPCSTR value )
+			       LPCSTR value )
 {
     if (!key_name)  /* Delete a whole section */
     {
@@ -675,16 +677,26 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
 int PROFILE_GetWineIniString( const char *section, const char *key_name,
                               const char *def, char *buffer, int len )
 {
+    int	ret;
+
+    EnterCriticalSection( &PROFILE_CritSect );
+
     if (key_name)
     {
-        PROFILEKEY *key = PROFILE_Find(&WineProfile, section, key_name, FALSE);
+        PROFILEKEY *key = PROFILE_Find(&PROFILE_WineProfile, section, key_name, FALSE);
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def,
                            len, TRUE );
         TRACE(profile, "('%s','%s','%s'): returning '%s'\n",
                          section, key_name, def, buffer );
-        return strlen( buffer );
+        ret = strlen( buffer );
+    } 
+    else 
+    {
+       ret = PROFILE_GetSection( PROFILE_WineProfile, section, buffer, len, TRUE, FALSE );
     }
-    return PROFILE_GetSection( WineProfile, section, buffer, len, TRUE, FALSE );
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    return ret;
 }
 
 
@@ -698,13 +710,23 @@ int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def )
     char buffer[20];
     char *p;
     long result;
+    PROFILEKEY *key;
+    int	ret;
 
-    PROFILEKEY *key = PROFILE_Find( &WineProfile, section, key_name, FALSE );
-    if (!key || !key->value) return def;
-    PROFILE_CopyEntry( buffer, key->value, sizeof(buffer), TRUE );
-    result = strtol( buffer, &p, 0 );
-    if (p == buffer) return 0;  /* No digits at all */
-    return (int)result;
+    EnterCriticalSection( &PROFILE_CritSect );
+
+    key = PROFILE_Find( &PROFILE_WineProfile, section, key_name, FALSE );
+    if (!key || !key->value) {
+       ret = def;
+    } else {
+       PROFILE_CopyEntry( buffer, key->value, sizeof(buffer), TRUE );
+       result = strtol( buffer, &p, 0 );
+       ret = (p == buffer) ? 0  /* No digits at all */ : (int)result;
+    }
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    return ret;
 }
 
 
@@ -741,8 +763,10 @@ int  PROFILE_EnumerateWineIniSection(
     PROFILEKEY  *scankey;
     int  calls = 0;
 
+    EnterCriticalSection( &PROFILE_CritSect );
+
     /* Search for the correct section */
-    for(scansect = WineProfile; scansect; scansect = scansect->next) {
+    for(scansect = PROFILE_WineProfile; scansect; scansect = scansect->next) {
 	if(scansect->name && !strcasecmp(scansect->name, section)) {
 
 	    /* Enumerate each key with the callback */
@@ -759,6 +783,7 @@ int  PROFILE_EnumerateWineIniSection(
 	    break;
 	}
     }
+    LeaveCriticalSection( &PROFILE_CritSect );
 
     return calls;
 }
@@ -831,29 +856,32 @@ int PROFILE_LoadWineIni(void)
     const char *p;
     FILE *f;
 
+    InitializeCriticalSection( &PROFILE_CritSect );
+    MakeCriticalSectionGlobal( &PROFILE_CritSect );
+
     if ( (Options.configFileName!=NULL) && (f = fopen(Options.configFileName, "r")) )
     {
       /* Open -config specified file */
-      WineProfile = PROFILE_Load ( f);
+      PROFILE_WineProfile = PROFILE_Load ( f);
       fclose ( f );
       strncpy(PROFILE_WineIniUsed,Options.configFileName,MAX_PATHNAME_LEN-1);
       return 1;
     }
 
     if ( (p = getenv( "WINE_INI" )) && (f = fopen( p, "r" )) )
-      {
-	WineProfile = PROFILE_Load( f );
+    {
+	PROFILE_WineProfile = PROFILE_Load( f );
 	fclose( f );
 	strncpy(PROFILE_WineIniUsed,p,MAX_PATHNAME_LEN-1);
 	return 1;
-      }
+    }
     if ((p = getenv( "HOME" )) != NULL)
     {
         lstrcpynA(buffer, p, MAX_PATHNAME_LEN - sizeof(PROFILE_WineIniName));
         strcat( buffer, PROFILE_WineIniName );
         if ((f = fopen( buffer, "r" )) != NULL)
         {
-            WineProfile = PROFILE_Load( f );
+            PROFILE_WineProfile = PROFILE_Load( f );
             fclose( f );
 	    strncpy(PROFILE_WineIniUsed,buffer,MAX_PATHNAME_LEN-1);
             return 1;
@@ -865,7 +893,7 @@ int PROFILE_LoadWineIni(void)
 
     if ((f = fopen( WINE_INI_GLOBAL, "r" )) != NULL)
     {
-        WineProfile = PROFILE_Load( f );
+        PROFILE_WineProfile = PROFILE_Load( f );
         fclose( f );
 	strncpy(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN-1);
         return 1;
@@ -895,7 +923,6 @@ void PROFILE_UsageWineIni(void)
     /* RTFM, so to say */
 }
 
-
 /***********************************************************************
  *           PROFILE_GetStringItem
  *
@@ -920,7 +947,6 @@ char* PROFILE_GetStringItem( char* start )
     if( lpch ) *lpch = '\0';
     return NULL;
 }
-
 
 /********************* API functions **********************************/
 
@@ -964,21 +990,21 @@ INT16 WINAPI GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
  *           GetProfileString32A   (KERNEL32.268)
  */
 INT WINAPI GetProfileStringA( LPCSTR section, LPCSTR entry, LPCSTR def_val,
-                                  LPSTR buffer, UINT len )
+			      LPSTR buffer, UINT len )
 {
     return GetPrivateProfileStringA( section, entry, def_val,
-                                       buffer, len, "win.ini" );
+				     buffer, len, "win.ini" );
 }
 
 /***********************************************************************
  *           GetProfileString32W   (KERNEL32.269)
  */
 INT WINAPI GetProfileStringW( LPCWSTR section, LPCWSTR entry,
-                                  LPCWSTR def_val, LPWSTR buffer, UINT len )
+			      LPCWSTR def_val, LPWSTR buffer, UINT len )
 {
     if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
     return GetPrivateProfileStringW( section, entry, def_val,
-                                       buffer, len, wininiW );
+				     buffer, len, wininiW );
 }
 
 /***********************************************************************
@@ -999,10 +1025,6 @@ INT WINAPI GetProfileSectionW( LPCWSTR section, LPWSTR buffer, DWORD len )
     return GetPrivateProfileSectionW( section, buffer, len, wininiW );
 }
 
-
-
-
-
 /***********************************************************************
  *           WriteProfileString16   (KERNEL.59)
  */
@@ -1016,7 +1038,7 @@ BOOL16 WINAPI WriteProfileString16( LPCSTR section, LPCSTR entry,
  *           WriteProfileString32A   (KERNEL32.587)
  */
 BOOL WINAPI WriteProfileStringA( LPCSTR section, LPCSTR entry,
-                                     LPCSTR string )
+				 LPCSTR string )
 {
     return WritePrivateProfileStringA( section, entry, string, "win.ini" );
 }
@@ -1050,7 +1072,7 @@ UINT16 WINAPI GetPrivateProfileInt16( LPCSTR section, LPCSTR entry,
  *           GetPrivateProfileInt32A   (KERNEL32.251)
  */
 UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
-                                       INT def_val, LPCSTR filename )
+				   INT def_val, LPCSTR filename )
 {
     char buffer[20];
     char *p;
@@ -1068,7 +1090,7 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
  *           GetPrivateProfileInt32W   (KERNEL32.252)
  */
 UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
-                                       INT def_val, LPCWSTR filename )
+				   INT def_val, LPCWSTR filename )
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
     LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
@@ -1094,23 +1116,34 @@ INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
  *           GetPrivateProfileString32A   (KERNEL32.255)
  */
 INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
-                                         LPCSTR def_val, LPSTR buffer,
-                                         UINT len, LPCSTR filename )
+				     LPCSTR def_val, LPSTR buffer,
+				     UINT len, LPCSTR filename )
 {
+    int		ret;
+
     if (!filename) 
 	filename = "win.ini";
-    if (PROFILE_Open( filename ))
-        return PROFILE_GetString( section, entry, def_val, buffer, len );
-    lstrcpynA( buffer, def_val, len );
-    return strlen( buffer );
+
+    EnterCriticalSection( &PROFILE_CritSect );
+
+    if (PROFILE_Open( filename )) {
+        ret = PROFILE_GetString( section, entry, def_val, buffer, len );
+    } else {
+       lstrcpynA( buffer, def_val, len );
+       ret = strlen( buffer );
+    }
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+    
+    return ret;
 }
 
 /***********************************************************************
  *           GetPrivateProfileString32W   (KERNEL32.256)
  */
 INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
-                                         LPCWSTR def_val, LPWSTR buffer,
-                                         UINT len, LPCWSTR filename )
+				     LPCWSTR def_val, LPWSTR buffer,
+				     UINT len, LPCWSTR filename )
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
     LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
@@ -1132,11 +1165,17 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
  *           GetPrivateProfileSection32A   (KERNEL32.255)
  */
 INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
-                                          DWORD len, LPCSTR filename )
+				      DWORD len, LPCSTR filename )
 {
+    int		ret = 0;
+
+    EnterCriticalSection( &PROFILE_CritSect );
+
     if (PROFILE_Open( filename ))
-        return PROFILE_GetSection(CurProfile->section, section, buffer, len,
-                                FALSE, TRUE);
+        ret = PROFILE_GetSection(CurProfile->section, section, buffer, len,
+				 FALSE, TRUE);
+    
+    LeaveCriticalSection( &PROFILE_CritSect );
 
     return 0;
 }
@@ -1146,7 +1185,7 @@ INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
  */
 
 INT WINAPI GetPrivateProfileSectionW (LPCWSTR section, LPWSTR buffer,
-                                          DWORD len, LPCWSTR filename )
+				      DWORD len, LPCWSTR filename )
 
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
@@ -1173,25 +1212,37 @@ BOOL16 WINAPI WritePrivateProfileString16( LPCSTR section, LPCSTR entry,
  *           WritePrivateProfileString32A   (KERNEL32.582)
  */
 BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
-                                            LPCSTR string, LPCSTR filename )
+					LPCSTR string, LPCSTR filename )
 {
-    if (!PROFILE_Open( filename )) return FALSE;
-    if (!section) return PROFILE_FlushFile();
-    return PROFILE_SetString( section, entry, string );
+    BOOL	ret;
+
+    EnterCriticalSection( &PROFILE_CritSect );
+
+    if (!PROFILE_Open( filename )) {
+       ret = FALSE;
+    } else if (!section) {
+       ret = PROFILE_FlushFile();
+    } else {
+       ret = PROFILE_SetString( section, entry, string );
+    }
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    return ret;
 }
 
 /***********************************************************************
  *           WritePrivateProfileString32W   (KERNEL32.583)
  */
 BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
-                                            LPCWSTR string, LPCWSTR filename )
+					LPCWSTR string, LPCWSTR filename )
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
     LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
     LPSTR stringA   = HEAP_strdupWtoA( GetProcessHeap(), 0, string );
     LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
     BOOL res = WritePrivateProfileStringA( sectionA, entryA,
-                                               stringA, filenameA );
+					   stringA, filenameA );
     HeapFree( GetProcessHeap(), 0, sectionA );
     HeapFree( GetProcessHeap(), 0, entryA );
     HeapFree( GetProcessHeap(), 0, stringA );
@@ -1203,7 +1254,7 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
  *           WritePrivateProfileSection32A   (KERNEL32)
  */
 BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section, 
-                                            LPCSTR string, LPCSTR filename )
+					 LPCSTR string, LPCSTR filename )
 {
     char *p =(char*)string;
 
@@ -1224,7 +1275,7 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
  *           WritePrivateProfileSection32W   (KERNEL32)
  */
 BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
-                                            LPCWSTR string, LPCWSTR filename)
+					 LPCWSTR string, LPCWSTR filename)
 
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
@@ -1263,30 +1314,38 @@ BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
 WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
                                              LPCSTR filename )
 {
- char *buf;
- int l,cursize;
- PROFILESECTION *section;
+    char *buf;
+    int l,cursize;
+    PROFILESECTION *section;
+    BOOL	ret = FALSE;
+
+    EnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
-	buf=buffer;
-	cursize=0;
-	section=CurProfile->section;
+        buf = buffer;
+	cursize = 0;
+	section = CurProfile->section;
 	for ( ; section; section = section->next) 
-            if (section->name) {
-		l=strlen (section->name);
-		cursize+=l+1;
-        	if (cursize > size+1)
-			return size-2;
-		strcpy (buf,section->name);
-		buf+=l;
-		*buf=0;
-		buf++;
+	    if (section->name) {
+	        l = strlen (section->name);
+		cursize += l+1;
+        	if (cursize > size+1) {
+		    LeaveCriticalSection( &PROFILE_CritSect );
+		    return size-2;
 		}
- 	buf++;
- 	*buf=0;
- 	return (buf-buffer);
- }
- return FALSE;
+		strcpy (buf,section->name);
+		buf += l;
+		*buf = 0;
+		buf++;
+	    }
+	buf++;
+	*buf=0;
+	ret = buf-buffer;
+    }
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    return ret;
 }
 
 
@@ -1296,7 +1355,7 @@ WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
 WORD WINAPI GetProfileSectionNames16( LPSTR buffer, WORD size)
 
 {
- return (GetPrivateProfileSectionNames16 (buffer,size,"win.ini"));
+    return (GetPrivateProfileSectionNames16 (buffer,size,"win.ini"));
 }
 
 
@@ -1304,7 +1363,7 @@ WORD WINAPI GetProfileSectionNames16( LPSTR buffer, WORD size)
  *           GetPrivateProfileSectionNames32A  (KERNEL32.365)
  */
 DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
-					 LPCSTR filename)
+					     LPCSTR filename)
 
 {
  return (GetPrivateProfileSectionNames16 (buffer,size,filename));
@@ -1315,7 +1374,7 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
  *           GetPrivateProfileSectionNames32W  (KERNEL32.366)
  */
 DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
-                                         LPCWSTR filename)
+					     LPCWSTR filename)
 
 {
    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
@@ -1334,24 +1393,29 @@ DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
  *           GetPrivateProfileStruct32A (KERNEL32.370)
  */
 BOOL WINAPI GetPrivateProfileStructA (LPCSTR section, LPCSTR key, 
-	LPVOID buf, UINT len, LPCSTR filename)
+				      LPVOID buf, UINT len, LPCSTR filename)
 {
-    PROFILEKEY *k;
+    BOOL	ret = FALSE;
+
+    EnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
-        k=PROFILE_Find ( &CurProfile->section, section, key, FALSE);
-	if (!k) return FALSE;
-    	lstrcpynA( buf, k->value, strlen(k->value));
-        return TRUE;
+        PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE);
+	if (k) {
+	   lstrcpynA( buf, k->value, strlen(k->value));
+	   ret = TRUE;
+	}
     }
-  return FALSE;
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    return FALSE;
 }
 
 /***********************************************************************
  *           GetPrivateProfileStruct32W (KERNEL32.543)
  */
 BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
-        LPVOID buffer, UINT len, LPCWSTR filename)
+				      LPVOID buffer, UINT len, LPCWSTR filename)
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
     LPSTR keyA      = HEAP_strdupWtoA( GetProcessHeap(), 0, key);
@@ -1359,7 +1423,7 @@ BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
     LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, len );
 
     INT ret = GetPrivateProfileStructA( sectionA, keyA, bufferA,
-                                            len, filenameA );
+					len, filenameA );
     lstrcpynAtoW( buffer, bufferA, len );
     HeapFree( GetProcessHeap(), 0, bufferA);
     HeapFree( GetProcessHeap(), 0, sectionA );
@@ -1378,26 +1442,36 @@ BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key, 
 	LPVOID buf, UINT bufsize, LPCSTR filename)
 {
+    BOOL ret;
+
+    EnterCriticalSection( &PROFILE_CritSect );
+
     if ((!section) && (!key) && (!buf)) {	/* flush the cache */
         PROFILE_FlushFile();
-	return FALSE;
- 	}
+	ret = FALSE;
+    } else {
+       if (!PROFILE_Open( filename )) 
+	  ret = FALSE;
+       else 
+	  ret = PROFILE_SetString( section, key, buf);
+    }
 
-    if (!PROFILE_Open( filename )) return FALSE;
-    return PROFILE_SetString( section, key, buf);
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    return ret;
 }
 
 /***********************************************************************
  *           WritePrivateProfileStruct32W (KERNEL32.544)
  */
 BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
-        LPVOID buf, UINT bufsize, LPCWSTR filename)
+					LPVOID buf, UINT bufsize, LPCWSTR filename)
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
     LPSTR keyA      = HEAP_strdupWtoA( GetProcessHeap(), 0, key);
     LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
     INT ret = WritePrivateProfileStructA( sectionA, keyA, buf, bufsize,
-                                             filenameA );
+					  filenameA );
     HeapFree( GetProcessHeap(), 0, sectionA );
     HeapFree( GetProcessHeap(), 0, keyA );
     HeapFree( GetProcessHeap(), 0, filenameA );
@@ -1411,5 +1485,7 @@ BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
  */
 void WINAPI WriteOutProfiles16(void)
 {
+    EnterCriticalSection( &PROFILE_CritSect );
     PROFILE_FlushFile();
+    LeaveCriticalSection( &PROFILE_CritSect );
 }
