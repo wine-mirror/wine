@@ -366,7 +366,7 @@ static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
         WCHAR wch = LOWORD(wparam);
         char ch;
         WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
-        wparam = MAKEWPARAM( ch, HIWORD(wparam) );
+        wparam = MAKEWPARAM( (unsigned char)ch, HIWORD(wparam) );
     }
     return wparam;
 }
