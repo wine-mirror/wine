@@ -53,17 +53,6 @@ cvs -d $CVSROOT checkout wine
           painful for the WineHQ CVS server and probably a bit faster
           if you don't have a very good net connection.
         </para>
-        <note>
-          <para>
-            If you use CVS directly from the winehq.org server, do not
-            forget to add to your <filename>.cvsrc</filename> file:
-          </para>
-          <screen>
-cvs -z 3
-update -dPA
-diff -u
-          </screen>
-         </note>
       </listitem>
       <listitem>
         <para>
@@ -72,7 +61,7 @@ diff -u
           Now update this image to the date you want:
           <screen>
 cd /home/gerard/wine
-cvs -d $CVSROOT update -D "2002-06-01 CST"   
+cvs update -PAd -D "2004-08-23 CDT"   
           </screen>
         </para>
         <para>
@@ -125,7 +114,7 @@ make depend && make
           the search using the wine-cvs archive (sorted by date) and a
           more precise cvs update including hour, minute, second :
           <screen>
-cvs -d $CVSROOT update -D "2002-06-01 15:17:25 CST"
+cvs update -PAd -D "2004-08-23 15:17:25 CDT"
           </screen>
           This will allow you to find easily the exact patch that did it.
         </para>
