@@ -296,12 +296,6 @@
 /* Define if you have the <X11/xpm.h> header file.  */
 #undef HAVE_X11_XPM_H
 
-/* Define if you have the <a.out.h> header file.  */
-#undef HAVE_A_OUT_H
-
-/* Define if you have the <a_out.h> header file.  */
-#undef HAVE_A_OUT_H
-
 /* Define if you have the <arpa/inet.h> header file.  */
 #undef HAVE_ARPA_INET_H
 

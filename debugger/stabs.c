@@ -36,14 +36,6 @@
 #ifdef HAVE_LINK_H
 # include <link.h>
 #endif
-#elif defined(__EMX__)
-#ifdef HAVE_A_OUT_H
-# include <a_out.h>
-#endif
-#else
-#ifdef HAVE_A_OUT_H
-# include <a.out.h>
-#endif
 #endif
 
 #ifndef N_UNDF
@@ -1543,7 +1535,7 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 
 #else	/* !__ELF__ */
 
-int	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
+enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 {
   return FALSE;
 }

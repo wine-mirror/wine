@@ -762,8 +762,6 @@ AC_CHECK_FUNCS(\
 dnl **** Check for header files ****
 
 AC_CHECK_HEADERS(\
-	a.out.h \
-	a_out.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	elf.h \
