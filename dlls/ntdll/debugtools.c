@@ -2,6 +2,7 @@
  * Debugging functions
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -198,9 +199,17 @@ const char *wine_dbgstr_guid( const GUID *id )
 int wine_dbg_vprintf( const char *format, va_list args )
 {
     struct debug_info *info = get_info();
+    char *p;
 
-    int ret = vsprintf( info->out_pos, format, args );
-    char *p = strrchr( info->out_pos, '\n' );
+    int ret = vsnprintf( info->out_pos, sizeof(info->output) - (info->out_pos - info->output),
+                         format, args );
+
+    /* make sure we didn't exceed the buffer length
+     * the two asserts are due to glibc changes in vsnprintfs return value */
+    assert( ret != -1 );
+    assert( ret < sizeof(info->output) - (info->out_pos - info->output) );
+
+    p = strrchr( info->out_pos, '\n' );
     if (!p) info->out_pos += ret;
     else
     {
