@@ -5,7 +5,7 @@ dnl See ChangeLog file for detailed change history.
 m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[\1]))
 
 AC_PREREQ(2.53)
-AC_INIT([Wine],WINE_VERSION)
+AC_INIT([Wine],WINE_VERSION,[wine-devel@winehq.org])
 AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
