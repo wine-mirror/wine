@@ -4,8 +4,6 @@
  * Copyright 1998 Marcus Meissner
  */
 
-#ifdef __i386__
-
 #include <assert.h>
 #include "windows.h"
 #include "winbase.h"
@@ -17,6 +15,8 @@
 #include "snoop.h"
 #include "debugstr.h"
 #include "debug.h"
+
+#ifdef __i386__
 
 #pragma pack(1)
 
