@@ -19,7 +19,6 @@
 #include "color.h"
 #include "palette.h"
 #include "debugtools.h"
-#include "callback.h"
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(palette);
@@ -775,28 +774,40 @@ UINT WINAPI RealizePalette(
 }
 
 
+typedef HWND WINAPI (*WindowFromDC_funcptr)( HDC );
+typedef BOOL WINAPI (*RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
+
 /**********************************************************************
  *            UpdateColors16   (DISPLAY.366)
  *            UpdateColors16   (GDI.366)
  */
 INT16 WINAPI UpdateColors16( HDC16 hDC )
 {
+    HMODULE mod;
     DC *dc;
-    HWND hWnd;
     int size;
 
     if (!(dc = DC_GetDCPtr( hDC ))) return 0;
     size = dc->devCaps->sizePalette;
     GDI_ReleaseObj( hDC );
-    if (Callout.WindowFromDC)
-    {
-        hWnd = Callout.WindowFromDC( hDC );
 
-        /* Docs say that we have to remap current drawable pixel by pixel
-         * but it would take forever given the speed of XGet/PutPixel.
-         */
-        if (hWnd && size)
-            Callout.RedrawWindow( hWnd, NULL, 0, RDW_INVALIDATE );
+    mod = GetModuleHandleA("user32.dll");
+    if (mod)
+    {
+        WindowFromDC_funcptr pWindowFromDC = (WindowFromDC_funcptr)GetProcAddress(mod,"WindowFromDC");
+        if (pWindowFromDC)
+        {
+            HWND hWnd = pWindowFromDC( hDC );
+
+            /* Docs say that we have to remap current drawable pixel by pixel
+             * but it would take forever given the speed of XGet/PutPixel.
+             */
+            if (hWnd && size)
+            {
+                RedrawWindow_funcptr pRedrawWindow = GetProcAddress( mod, "RedrawWindow" );
+                if (pRedrawWindow) pRedrawWindow( hWnd, NULL, 0, RDW_INVALIDATE );
+            }
+        }
     }
     return 0x666;
 }

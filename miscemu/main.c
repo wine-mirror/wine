@@ -17,6 +17,10 @@
 static char main_exe_name[MAX_PATH];
 static HANDLE main_exe_file;
 
+static BOOL (WINAPI *pGetMessageA)(LPMSG,HWND,UINT,UINT);
+static BOOL (WINAPI *pTranslateMessage)(const MSG*);
+static LONG (WINAPI *pDispatchMessageA)(const MSG*);
+
 extern void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name,
                               HANDLE *win16_exe_file ) WINE_NORETURN;
 extern HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file );
@@ -28,12 +32,16 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
 {
     MSG msg;
     HINSTANCE16 instance;
+    HMODULE user32;
 
-    if (!LoadLibraryA( "user32.dll" ))
+    if (!(user32 = LoadLibraryA( "user32.dll" )))
     {
         MESSAGE( "Cannot load user32.dll\n" );
         ExitProcess( GetLastError() );
     }
+    pGetMessageA      = (void *)GetProcAddress( user32, "GetMessageA" );
+    pTranslateMessage = (void *)GetProcAddress( user32, "TranslateMessage" );
+    pDispatchMessageA = (void *)GetProcAddress( user32, "DispatchMessageA" );
     THUNK_InitCallout();
 
     if ((instance = NE_StartMain( main_exe_name, main_exe_file )) < 32)
@@ -59,10 +67,10 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
 
     /* Start message loop for desktop window */
 
-    while ( GetNumTasks16() > 1  && Callout.GetMessageA( &msg, 0, 0, 0 ) )
+    while ( GetNumTasks16() > 1  && pGetMessageA( &msg, 0, 0, 0 ) )
     {
-        Callout.TranslateMessage( &msg );
-        Callout.DispatchMessageA( &msg );
+        pTranslateMessage( &msg );
+        pDispatchMessageA( &msg );
     }
 
     ExitProcess( 0 );

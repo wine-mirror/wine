@@ -1573,6 +1573,8 @@ BOOL16 WINAPI TaskFindHandle16( TASKENTRY *lpte, HTASK16 hTask )
 }
 
 
+typedef INT (WINAPI *MessageBoxA_funcptr)(HWND hWnd, LPCSTR text, LPCSTR title, UINT type);
+
 /**************************************************************************
  *           FatalAppExit16   (KERNEL.137)
  */
@@ -1582,11 +1584,19 @@ void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 
     if (!pTask || !(pTask->error_mode & SEM_NOGPFAULTERRORBOX))
     {
-        if (Callout.MessageBoxA)
-            Callout.MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
-        else
-            ERR( "%s\n", debugstr_a(str) );
+        HMODULE mod = GetModuleHandleA( "user32.dll" );
+        if (mod)
+        {
+            MessageBoxA_funcptr pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
+            if (pMessageBoxA)
+            {
+                pMessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+                goto done;
+            }
+        }
+        ERR( "%s\n", debugstr_a(str) );
     }
+ done:
     ExitThread(0xff);
 }
 

@@ -23,23 +23,13 @@ extern void THUNK_InitCallout(void);
 
 typedef struct
 {
-    BOOL WINAPI     (*PeekMessageA)( LPMSG, HWND, UINT, UINT, UINT );
-    BOOL WINAPI     (*GetMessageA)( MSG*, HWND, UINT, UINT );
-    LRESULT WINAPI  (*SendMessageA)( HWND, UINT, WPARAM, LPARAM );
     BOOL WINAPI     (*PostMessageA)( HWND, UINT, WPARAM, LPARAM );
-    BOOL WINAPI     (*TranslateMessage)( const MSG *msg );
-    LONG WINAPI     (*DispatchMessageA)( const MSG* msg );
-    BOOL WINAPI     (*RedrawWindow)( HWND, const RECT *, HRGN, UINT );
     WORD WINAPI     (*UserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
     void WINAPI     (*FinalUserInit16)( void );
     HQUEUE16 WINAPI (*InitThreadInput16)( WORD, WORD );
     void WINAPI     (*UserYield16)( void );
     WORD WINAPI     (*DestroyIcon32)( HGLOBAL16, UINT16 );
     DWORD WINAPI    (*WaitForInputIdle)( HANDLE, DWORD );
-    DWORD WINAPI    (*MsgWaitForMultipleObjects)( DWORD, HANDLE *, BOOL, DWORD, DWORD );
-    HWND WINAPI     (*WindowFromDC)( HDC );
-    INT WINAPI      (*MessageBoxA)( HWND, LPCSTR, LPCSTR, UINT );
-    INT WINAPI      (*MessageBoxW)( HWND, LPCWSTR, LPCWSTR, UINT );
 }  CALLOUT_TABLE;
 
 extern CALLOUT_TABLE Callout;

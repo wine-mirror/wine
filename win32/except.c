@@ -26,8 +26,9 @@
 #include "windef.h"
 #include "winerror.h"
 #include "ntddk.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "wine/exception.h"
-#include "callback.h"
 #include "thread.h"
 #include "stackframe.h"
 #include "server.h"
@@ -37,6 +38,8 @@ DEFAULT_DEBUG_CHANNEL(seh);
 
 static PTOP_LEVEL_EXCEPTION_FILTER top_filter;
 
+typedef INT (WINAPI *MessageBoxA_funcptr)(HWND,LPCSTR,LPCSTR,UINT);
+typedef INT (WINAPI *MessageBoxW_funcptr)(HWND,LPCWSTR,LPCWSTR,UINT);
 
 /*******************************************************************
  *         RaiseException  (KERNEL32.@)
@@ -241,14 +244,22 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
        strcpy(format, "debugger/winedbg %ld %ld");
     }
 
-    if (!bAuto && Callout.MessageBoxA) {
-        format_exception_msg( epointers, buffer );
-       if (Callout.MessageBoxA( 0, buffer, "Error", MB_YESNO | MB_ICONHAND ) == IDNO) {
-	  TRACE("Killing process\n");
-	  return EXCEPTION_EXECUTE_HANDLER;
-       }
+    if (!bAuto)
+    {
+        HMODULE mod = GetModuleHandleA( "user32.dll" );
+        MessageBoxA_funcptr pMessageBoxA = NULL;
+        if (mod) pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
+        if (pMessageBoxA)
+        {
+            format_exception_msg( epointers, buffer );
+            if (pMessageBoxA( 0, buffer, "Error", MB_YESNO | MB_ICONHAND ) == IDNO)
+            {
+                TRACE("Killing process\n");
+                return EXCEPTION_EXECUTE_HANDLER;
+            }
+        }
     }
-    
+
     if (format[0]) {
        HANDLE			hEvent;
        PROCESS_INFORMATION	info;
@@ -304,11 +315,14 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
  */
 void WINAPI FatalAppExitA( UINT action, LPCSTR str )
 {
+    HMODULE mod = GetModuleHandleA( "user32.dll" );
+    MessageBoxA_funcptr pMessageBoxA = NULL;
+
     WARN("AppExit\n");
-    if (Callout.MessageBoxA)
-        Callout.MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
-    else
-        ERR( "%s\n", debugstr_a(str) );
+
+    if (mod) pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
+    if (pMessageBoxA) pMessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    else ERR( "%s\n", debugstr_a(str) );
     ExitProcess(0);
 }
 
@@ -318,10 +332,13 @@ void WINAPI FatalAppExitA( UINT action, LPCSTR str )
  */
 void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
 {
+    HMODULE mod = GetModuleHandleA( "user32.dll" );
+    MessageBoxW_funcptr pMessageBoxW = NULL;
+
     WARN("AppExit\n");
-    if (Callout.MessageBoxW)
-        Callout.MessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
-    else
-        ERR( "%s\n", debugstr_w(str) );
+
+    if (mod) pMessageBoxW = (MessageBoxW_funcptr)GetProcAddress( mod, "MessageBoxW" );
+    if (pMessageBoxW) pMessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    else ERR( "%s\n", debugstr_w(str) );
     ExitProcess(0);
 }

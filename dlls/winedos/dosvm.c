@@ -28,7 +28,6 @@
 #include "winnt.h"
 #include "wincon.h"
 
-#include "callback.h"
 #include "msdos.h"
 #include "file.h"
 #include "miscemu.h"
@@ -426,13 +425,13 @@ void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject )
   objc=hObject?2:1;
   do {
     /* check for messages (waste time before the response check below) */
-    if (Callout.PeekMessageA)
+    if (PeekMessageA)
     {
-        while (Callout.PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
+        while (PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
             /* got a message */
             DOSVM_ProcessMessage(&msg);
             /* we don't need a TranslateMessage here */
-            Callout.DispatchMessageA(&msg);
+            DispatchMessageA(&msg);
             got_msg = TRUE;
         }
     }
@@ -465,8 +464,8 @@ chk_console_input:
 	break;
     }
     /* nothing yet, block while waiting for something to do */
-    if (Callout.MsgWaitForMultipleObjects)
-        waitret = Callout.MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
+    if (MsgWaitForMultipleObjects)
+        waitret = MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
     else
         waitret = WaitForMultipleObjects(objc,objs,FALSE,INFINITE);
 
