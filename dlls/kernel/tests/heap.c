@@ -21,24 +21,59 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/test.h"
-#include "winnt.h"
-#include "winnls.h"
-#include "winreg.h"
-#include "winternl.h"
-
-static void test_realloc( void )
-{
-    void *mem = NULL;
-
-    mem = HeapReAlloc(GetProcessHeap(), 0, mem, 10);
-    ok(mem == NULL, "memory allocated");
-}
 
 START_TEST(heap)
 {
-    test_realloc();
+    void *mem;
+    HGLOBAL gbl;
+    SIZE_T size;
+
+    /* Heap*() functions */
+    mem = HeapAlloc(GetProcessHeap(), 0, 0);
+    ok(mem != NULL, "memory not allocated for size 0");
+
+    mem = HeapReAlloc(GetProcessHeap(), 0, NULL, 10);
+    ok(mem == NULL, "memory allocated by HeapReAlloc");
+
+    /* Global*() functions */
+    gbl = GlobalAlloc(GMEM_MOVEABLE, 0);
+    ok(gbl != NULL, "global memory not allocated for size 0");
+
+    gbl = GlobalReAlloc(gbl, 10, GMEM_MOVEABLE);
+    ok(gbl != NULL, "Can't realloc global memory");
+    size = GlobalSize(gbl);
+    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld", size);
+    gbl = GlobalReAlloc(gbl, 0, GMEM_MOVEABLE);
+    ok(gbl == NULL, "GlobalReAlloc should fail on size 0, instead size=%ld", size);
+    size = GlobalSize(gbl);
+    ok(size == 0, "Memory not resized to size 0, instead size=%ld", size);
+    ok(GlobalFree(gbl) == NULL, "Memory not freed");
+    size = GlobalSize(gbl);
+    ok(size == 0, "Memory should have been freed, size=%ld", size);
+
+    gbl = GlobalReAlloc(0, 10, GMEM_MOVEABLE);
+    ok(gbl == NULL, "global realloc allocated memory");
+
+    /* Local*() functions */
+    gbl = LocalAlloc(GMEM_MOVEABLE, 0);
+    ok(gbl != NULL, "global memory not allocated for size 0");
+
+    gbl = LocalReAlloc(gbl, 10, GMEM_MOVEABLE);
+    ok(gbl != NULL, "Can't realloc global memory");
+    size = LocalSize(gbl);
+    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld", size);
+    gbl = LocalReAlloc(gbl, 0, GMEM_MOVEABLE);
+    ok(gbl == NULL, "LocalReAlloc should fail on size 0, instead size=%ld", size);
+    size = LocalSize(gbl);
+    ok(size == 0, "Memory not resized to size 0, instead size=%ld", size);
+    ok(LocalFree(gbl) == NULL, "Memory not freed");
+    size = LocalSize(gbl);
+    ok(size == 0, "Memory should have been freed, size=%ld", size);
+
+    gbl = LocalReAlloc(0, 10, GMEM_MOVEABLE);
+    ok(gbl == NULL, "global realloc allocated memory");
+
 }
