@@ -527,6 +527,15 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDL
 	  case CSIDL_TEMPLATES:
 	    strcpy (buffer,"Templates");			
 	    break;
+	  case CSIDL_INTERNET_CACHE:
+	    strcpy (buffer,"Cache");
+	    break;
+	  case CSIDL_HISTORY:
+	    strcpy (buffer,"History");
+	    break;
+	  case CSIDL_COOKIES:
+	    strcpy(buffer,"Cookies");
+	    break;
 	  default:
 	    ERR (shell,"unknown CSIDL 0x%08x\n", nFolder);
 	    tFolder=FT_UNKNOWN;			
@@ -595,6 +604,15 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDL
       		case CSIDL_TEMPLATES:
          	  strcat (npath,"Templates");			
          	  break;
+		case CSIDL_INTERNET_CACHE:
+		  strcat(npath,"Temporary Internet Files");
+		  break;
+		case CSIDL_HISTORY:
+		  strcat (npath,"History");
+		  break;
+		case CSIDL_COOKIES:
+		  strcat (npath,"Cookies");
+		  break;
          	default:
          	  RegCloseKey(key);
         	  return E_OUTOFMEMORY;
