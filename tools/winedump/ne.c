@@ -60,6 +60,18 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
     printf( "Expected version:    %d.%d\n", HIBYTE(ne->ne_expver), LOBYTE(ne->ne_expver) );
 }
 
+static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
+{
+    char *pstr = (char *)ne + ne->ne_restab;
+
+    printf( "\nResident-name table:\n" );
+    while (*pstr)
+    {
+        printf( "%*.*s: %d\n", *pstr, *pstr, pstr + 1, *(WORD *)(pstr + *pstr + 1) );
+        pstr += *pstr + 1 + sizeof(WORD);
+    }
+}
+
 static const char *get_resource_type( WORD id )
 {
     static char buffer[5];
@@ -116,5 +128,6 @@ void ne_dump( const void *exe, size_t exe_size )
     const IMAGE_OS2_HEADER *ne = (IMAGE_OS2_HEADER *)((char *)dos + dos->e_lfanew);
 
     dump_ne_header( ne );
+    dump_ne_names( exe, ne );
     dump_ne_resources( exe, ne );
 }
