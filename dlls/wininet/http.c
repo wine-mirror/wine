@@ -47,6 +47,7 @@
 
 #include "internet.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
@@ -248,6 +249,35 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
     }
 }
 
+/***********************************************************************
+ *           HttpOpenRequestW (WININET.@)
+ *
+ * Open a HTTP request handle
+ *
+ * RETURNS
+ *    HINTERNET  a HTTP request handle on success
+ *    NULL 	 on failure
+ *
+ */
+HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
+	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
+	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
+	DWORD dwFlags, DWORD dwContext)
+{
+    char szVerb[20],
+         szObjectName[INTERNET_MAX_PATH_LENGTH];
+    if(lpszVerb!=NULL)
+        WideCharToMultiByte(CP_ACP,0,lpszVerb,-1,szVerb,20,NULL,NULL);
+    else
+        szVerb[0]=0;
+    if(lpszObjectName!=NULL)
+        WideCharToMultiByte(CP_ACP,0,lpszObjectName,-1,szObjectName,INTERNET_MAX_PATH_LENGTH,NULL,NULL);
+    else
+        szObjectName[0]=0;
+    TRACE("object name=%s\n",szObjectName);
+    FIXME("lpszVersion, lpszReferrer and lpszAcceptTypes ignored\n");
+    return HttpOpenRequestA(hHttpSession, szVerb, szObjectName, NULL, NULL, NULL, dwFlags, dwContext);
+}
 
 /***********************************************************************
  *           HTTP_HttpOpenRequestA (internal)
@@ -563,6 +593,36 @@ lend:
     return bSuccess;
 }
 
+/***********************************************************************
+ *           HttpQueryInfoW (WININET.@)
+ *
+ * Queries for information about an HTTP request
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
+	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
+{
+    BOOL result;
+    DWORD charLen=*lpdwBufferLength;
+    char* tempBuffer=HeapAlloc(GetProcessHeap(), 0, charLen);
+    result=HttpQueryInfoA(hHttpRequest, dwInfoLevel, tempBuffer, &charLen, lpdwIndex);
+    if((dwInfoLevel & HTTP_QUERY_FLAG_NUMBER) ||
+       (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME))
+    {
+        memcpy(lpBuffer,tempBuffer,charLen);
+    }
+    else
+    {
+        int nChars=MultiByteToWideChar(CP_ACP,0, tempBuffer,charLen,lpBuffer,*lpdwBufferLength);
+        *lpdwBufferLength=nChars;
+    }
+    HeapFree(GetProcessHeap(), 0, tempBuffer);
+    return result;
+}
 
 /***********************************************************************
  *           HttpSendRequestExA (WININET.@)
@@ -647,6 +707,34 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     }
 }
 
+/***********************************************************************
+ *           HttpSendRequestW (WININET.@)
+ *
+ * Sends the specified request to the HTTP server
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
+	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
+{
+    BOOL result;
+    char* szHeaders=NULL;
+    DWORD nLen=dwHeaderLength;
+    if(lpszHeaders!=NULL)
+    {
+        if(nLen==-1)
+            nLen=strlenW(lpszHeaders);
+        szHeaders=(char*)malloc(nLen+1);
+        WideCharToMultiByte(CP_ACP,0,lpszHeaders,nLen,szHeaders,nLen,NULL,NULL);
+    }
+    result=HttpSendRequestA(hHttpRequest, szHeaders, dwHeaderLength, lpOptional, dwOptionalLength);
+    if(szHeaders!=NULL)
+        free(szHeaders);
+    return result;
+}
 
 /***********************************************************************
  *           HTTP_HttpSendRequestA (internal)

@@ -70,13 +70,13 @@
 @ stdcall HttpEndRequestA(ptr ptr long long) HttpEndRequestA
 @ stdcall HttpEndRequestW(ptr ptr long long) HttpEndRequestW
 @ stdcall HttpOpenRequestA(ptr str str str str ptr long long) HttpOpenRequestA
-@ stub HttpOpenRequestW
+@ stdcall HttpOpenRequestW(ptr wstr wstr wstr wstr ptr long long) HttpOpenRequestW
 @ stdcall HttpQueryInfoA(ptr long ptr ptr ptr) HttpQueryInfoA
-@ stub HttpQueryInfoW
+@ stdcall HttpQueryInfoW(ptr long ptr ptr ptr) HttpQueryInfoW
 @ stdcall HttpSendRequestA(ptr str long ptr long) HttpSendRequestA
 @ stdcall HttpSendRequestExA(long ptr ptr long long) HttpSendRequestExA
 @ stub HttpSendRequestExW
-@ stub HttpSendRequestW
+@ stdcall HttpSendRequestW(ptr wstr long ptr long) HttpSendRequestW
 @ stub IncrementUrlCacheHeaderData
 @ stdcall InternetAttemptConnect(long) InternetAttemptConnect
 @ stdcall InternetAutodial(long ptr) InternetAutoDial
