@@ -1110,13 +1110,28 @@ WORD WINAPI GdiFreeResources16( DWORD reserve )
 /***********************************************************************
  *           MulDiv16   (GDI.128)
  */
-INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )
+INT16 WINAPI MulDiv16(
+	     INT16 nMultiplicand, 
+	     INT16 nMultiplier,
+	     INT16 nDivisor)
 {
     INT ret;
-    if (!baz) return -32768;
-    ret = (foo * bar) / baz;
+    if (!nDivisor) return -32768;
+    /* We want to deal with a positive divisor to simplify the logic. */
+    if (nDivisor < 0)
+    {
+      nMultiplicand = - nMultiplicand;
+      nDivisor = -nDivisor;
+    }
+    /* If the result is positive, we "add" to round. else, 
+     * we subtract to round. */
+    if ( ( (nMultiplicand <  0) && (nMultiplier <  0) ) ||
+	 ( (nMultiplicand >= 0) && (nMultiplier >= 0) ) )
+        ret = (((int)nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
+    else
+        ret = (((int)nMultiplicand * nMultiplier) - (nDivisor/2)) / nDivisor;
     if ((ret > 32767) || (ret < -32767)) return -32768;
-    return ret;
+    return (INT16) ret;
 }
 
 
@@ -1129,8 +1144,8 @@ INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )
 INT WINAPI MulDiv(
 	     INT nMultiplicand, 
 	     INT nMultiplier,
-	     INT nDivisor
-) {
+	     INT nDivisor)
+{
 #if SIZEOF_LONG_LONG >= 8
     long long ret;
 
