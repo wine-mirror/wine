@@ -694,6 +694,7 @@ static BOOL WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
             if (end == wci->ptr + 12) return FALSE;
             wci->mode = from_event;
             wci->ptr = end;
+            wci->backend = WCUSER_InitBackend;
         }
         else if (strncmp(wci->ptr, "--backend=", 10) == 0)
         {
@@ -709,6 +710,8 @@ static BOOL WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
             else
                 return FALSE;
         }
+        else
+            return FALSE;
     }
 
     return TRUE;
