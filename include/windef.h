@@ -302,6 +302,8 @@ typedef HINSTANCE HMODULE;
 typedef HANDLE HGDIOBJ;
 typedef HANDLE HGLOBAL;
 typedef HANDLE HLOCAL;
+typedef HANDLE GLOBALHANDLE;
+typedef HANDLE LOCALHANDLE;
 
 /* Callback function pointers types */
 
@@ -327,7 +329,7 @@ typedef BOOL    (CALLBACK* TIMEFMT_ENUMPROCA)(LPSTR);
 typedef BOOL    (CALLBACK* TIMEFMT_ENUMPROCW)(LPWSTR);
 DECL_WINELIB_TYPE_AW(TIMEFMT_ENUMPROC)
 typedef VOID    (CALLBACK *TIMERPROC)(HWND,UINT,UINT,DWORD);
-typedef LRESULT (CALLBACK *WNDENUMPROC)(HWND,LPARAM);
+typedef BOOL (CALLBACK *WNDENUMPROC)(HWND,LPARAM);
 typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 
 /*----------------------------------------------------------------------------
