@@ -71,10 +71,11 @@ int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int ds
 
 int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
                     const char* defchar, int *used )
-{ 
-    return (unix_table) ?
-        wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used ) :
-        wine_utf8_wcstombs( src, srclen, dst, dstlen );
+{
+    if (unix_table)
+        return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
+    if (used) *used = 0;  /* all chars are valid for UTF-8 */
+    return wine_utf8_wcstombs( src, srclen, dst, dstlen );
 }
 
 /**************************************************************************
