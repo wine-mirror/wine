@@ -8,8 +8,10 @@
 #define __WINE_STACKFRAME_H
 
 #include <string.h>
+
 #include "ldt.h"
 #include "thread.h"
+#include "winnt.h"
 
 #include "pshpack1.h"
 

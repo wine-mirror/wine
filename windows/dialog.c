@@ -24,6 +24,7 @@
 #include "user.h"
 #include "winproc.h"
 #include "message.h"
+#include "queue.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dialog);

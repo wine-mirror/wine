@@ -6,7 +6,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "queue.h"
 
 extern void STRUCT32_MINMAXINFO32to16( const MINMAXINFO*, MINMAXINFO16* );
 extern void STRUCT32_MINMAXINFO16to32( const MINMAXINFO16*, MINMAXINFO* );

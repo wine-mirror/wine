@@ -77,6 +77,8 @@
 #endif
 
 #include "wine/winbase16.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "winsock.h"
 #include "winnt.h"
 #include "heap.h"

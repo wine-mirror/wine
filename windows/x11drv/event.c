@@ -37,6 +37,7 @@
 #include "options.h"
 #include "queue.h"
 #include "shell.h"
+#include "win.h"
 #include "winpos.h"
 #include "services.h"
 #include "file.h"

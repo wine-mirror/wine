@@ -7,7 +7,9 @@
 #ifndef __WINE_DCE_H
 #define __WINE_DCE_H
 
-#include "win.h"
+#include "windef.h"
+
+struct tagWND;
 
 /* additional DCX flags 
  */
@@ -49,9 +51,9 @@ typedef struct tagDCE
 extern void  DCE_Init(void);
 extern DCE*  DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
 extern DCE*  DCE_FreeDCE( DCE *dce );
-extern void  DCE_FreeWindowDCE( WND* );
-extern INT16 DCE_ExcludeRgn( HDC, WND*, HRGN );
+extern void  DCE_FreeWindowDCE( struct tagWND* );
+extern INT16 DCE_ExcludeRgn( HDC, struct tagWND*, HRGN );
 extern HRGN DCE_GetVisRgn( HWND, WORD, HWND, WORD );
-extern BOOL DCE_InvalidateDCE( WND*, const RECT* );
+extern BOOL DCE_InvalidateDCE( struct tagWND*, const RECT* );
 
 #endif  /* __WINE_DCE_H */

@@ -14,6 +14,7 @@
 #include "winpos.h"
 #include "hook.h"
 #include "message.h"
+#include "queue.h"
 #include "task.h"
 #include "debugtools.h"
 

@@ -27,6 +27,7 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "message.h"
+#include "queue.h"
 #include "module.h"
 #include "debugtools.h"
 #include "struct32.h"

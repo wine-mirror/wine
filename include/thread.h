@@ -8,12 +8,13 @@
 #define __WINE_THREAD_H
 
 #include "config.h"
-#include "winbase.h"
-#include "syslevel.h"
+
 #include "ntdef.h" /* UNICODE_STRING */
 
 struct _PDB;
 struct __EXCEPTION_FRAME;
+struct _SECURITY_ATTRIBUTES;
+struct tagSYSLEVEL;
 
 /* Thread exception block
 
@@ -84,7 +85,7 @@ typedef struct _TEB
     void        *entry_arg;      /* --3 1b4 Entry point arg (was: unknown) */
     DWORD        unknown5[4];    /* --n 1b8 Unknown */
     DWORD        sys_count[4];   /* --3 1c8 Syslevel mutex entry counters */
-    SYSLEVEL    *sys_mutex[4];   /* --3 1d8 Syslevel mutex pointers */
+    struct tagSYSLEVEL *sys_mutex[4];   /* --3 1d8 Syslevel mutex pointers */
     DWORD        unknown6[5];    /* --n 1e8 Unknown */
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
@@ -123,7 +124,7 @@ typedef struct _TEB
 extern TEB *THREAD_CreateInitialThread( struct _PDB *pdb, int server_fd );
 extern TEB *THREAD_Create( struct _PDB *pdb, int fd, DWORD flags, 
                            DWORD stack_size, BOOL alloc_stack16,
-                           LPSECURITY_ATTRIBUTES sa, int *server_handle );
+                           struct _SECURITY_ATTRIBUTES *sa, int *server_handle );
 extern BOOL THREAD_IsWin16( TEB *thdb );
 extern TEB *THREAD_IdToTEB( DWORD id );
 

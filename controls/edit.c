@@ -14,6 +14,8 @@
 #include "config.h"
 
 #include <string.h>
+
+#include "winbase.h"
 #include "winnt.h"
 #include "win.h"
 #include "wine/winbase16.h"

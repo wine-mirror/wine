@@ -158,7 +158,7 @@ typedef struct
 #define DRIVE_RAMDISK              6
 
 /* The security attributes structure */
-typedef struct
+typedef struct _SECURITY_ATTRIBUTES
 {
     DWORD   nLength;
     LPVOID  lpSecurityDescriptor;
@@ -1764,7 +1764,8 @@ INT       WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
 
 #if defined(__i386__) && defined(__GNUC__)
 
-static inline PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare )
+extern inline PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare );
+extern inline PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare )
 {
     PVOID ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
@@ -1772,7 +1773,8 @@ static inline PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, 
     return ret;
 }
 
-static inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
+extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val );
+extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
 {
     LONG ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
@@ -1780,7 +1782,8 @@ static inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
     return ret;
 }
 
-static inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
+extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr );
+extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
 {
     LONG ret;
     __asm__ __volatile__( "lock; xaddl %0,(%1)"
@@ -1788,31 +1791,36 @@ static inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
     return ret;
 }
 
-static inline LONG WINAPI InterlockedIncrement( PLONG dest )
+extern inline LONG WINAPI InterlockedIncrement( PLONG dest );
+extern inline LONG WINAPI InterlockedIncrement( PLONG dest )
 {
     return InterlockedExchangeAdd( dest, 1 ) + 1;
 }
 
-static inline LONG WINAPI InterlockedDecrement( PLONG dest )
+extern inline LONG WINAPI InterlockedDecrement( PLONG dest );
+extern inline LONG WINAPI InterlockedDecrement( PLONG dest )
 {
     return InterlockedExchangeAdd( dest, -1 ) - 1;
 }
 
-static inline DWORD WINAPI GetLastError(void)
+extern inline DWORD WINAPI GetLastError(void);
+extern inline DWORD WINAPI GetLastError(void)
 {
     DWORD ret;
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x60,%0" : "=r" (ret) );
     return ret;
 }
 
-static inline DWORD WINAPI GetCurrentThreadId(void)
+extern inline DWORD WINAPI GetCurrentThreadId(void);
+extern inline DWORD WINAPI GetCurrentThreadId(void)
 {
     DWORD ret;
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x24,%0" : "=r" (ret) );
     return ret;
 }
 
-static inline void WINAPI SetLastError( DWORD err )
+extern inline void WINAPI SetLastError( DWORD err );
+extern inline void WINAPI SetLastError( DWORD err )
 {
     __asm__ __volatile__( ".byte 0x64\n\tmovl %0,0x60" : : "r" (err) : "memory" );
 }

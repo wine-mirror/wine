@@ -7,6 +7,7 @@
 
 #include <string.h>
 
+#include "class.h"
 #include "win.h"
 #include "user.h"
 #include "heap.h"

@@ -5,8 +5,10 @@
 #include <ctype.h>
 
 #include "debugtools.h"
-#include "wtypes.h"
 #include "thread.h"
+#include "winbase.h"
+#include "winnt.h"
+#include "wtypes.h"
 
 /* ---------------------------------------------------------------------- */
 

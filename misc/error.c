@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "winbase.h"
 #include "windef.h"
 #include "stackframe.h"
 #include "debugtools.h"

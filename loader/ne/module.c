@@ -24,6 +24,7 @@
 #include "global.h"
 #include "process.h"
 #include "snoop.h"
+#include "syslevel.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "debugtools.h"

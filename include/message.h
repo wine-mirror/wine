@@ -7,13 +7,14 @@
 #ifndef __WINE_MESSAGE_H
 #define __WINE_MESSAGE_H
 
-#include "win.h"
-#include "queue.h"
+#include "windef.h"
+
+struct tagMSG;
 
 extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
 /* message.c */
-extern BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd,
+extern BOOL MSG_InternalGetMessage( int type, struct tagMSG *msg, HWND hwnd,
                                     HWND hwndOwner, WPARAM code,
                                     WORD flags, BOOL sendIdle, BOOL* idleSent );
 
@@ -21,7 +22,7 @@ extern BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd,
 extern BOOL TIMER_Init( void );
 extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
-extern BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
+extern BOOL TIMER_GetTimerMsg( struct tagMSG *msg, HWND hwnd,
                                  HQUEUE16 hQueue, BOOL remove );
 
 /* event.c */

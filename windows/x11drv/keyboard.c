@@ -29,6 +29,7 @@
 #include "keyboard.h"
 #include "message.h"
 #include "winnls.h"
+#include "win.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(keyboard)

@@ -6,6 +6,8 @@
  *
  */
 
+#include <string.h>
+
 #include "winbase.h"
 #include "heap.h"
 #include "commctrl.h"

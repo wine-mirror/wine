@@ -9,9 +9,8 @@
 
 #include "windef.h"
 #include "wingdi.h"
+#include "winproc.h"
 #include "winuser.h"
-#include "queue.h"
-#include "class.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
@@ -56,6 +55,7 @@ typedef enum
 struct tagCLASS;
 struct tagDCE;
 struct tagDC;
+struct tagMESSAGEQUEUE;
 struct tagWND_DRIVER;
 
 typedef struct tagWND
@@ -220,7 +220,7 @@ extern HWND ICONTITLE_Create( WND* );
 extern BOOL ICONTITLE_Init( void );
 
 /* windows/focus.c */
-extern void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND , HWND );
+extern void FOCUS_SwitchFocus( struct tagMESSAGEQUEUE *pMsgQ, HWND , HWND );
 
 /* windows/edit.c */
 extern LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );

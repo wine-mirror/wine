@@ -1,11 +1,9 @@
 #ifndef __WINE_WINE_WINUSER16_H
 #define __WINE_WINE_WINUSER16_H
 
+#include "wine/wingdi16.h" /* wingdi.h needed for COLORREF */
 #include "winuser.h" /* winuser.h needed for MSGBOXCALLBACK */
-                     /* wingdi.h needed for COLORREF */
-#include "wine/wingdi16.h"
-
-
+                     
 #include "pshpack1.h"
 
 typedef struct tagCOMSTAT16

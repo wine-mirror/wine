@@ -6,6 +6,7 @@
  */
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "dialog.h"

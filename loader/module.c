@@ -25,6 +25,7 @@
 #include "pe_image.h"
 #include "dosexe.h"
 #include "process.h"
+#include "syslevel.h"
 #include "thread.h"
 #include "selectors.h"
 #include "stackframe.h"
