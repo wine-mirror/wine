@@ -628,9 +628,11 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 		SetUrlComponentValue(&lpUrlComponents->lpszUserName, 
 			&lpUrlComponents->dwUserNameLength, lpszUser, lpszPasswd - lpszUser);
 
+                if (lpszPasswd != lpszHost)
+                    lpszPasswd++;
 		SetUrlComponentValue(&lpUrlComponents->lpszPassword, 
 			&lpUrlComponents->dwPasswordLength, 
-			lpszPasswd == lpszHost ? NULL : ++lpszPasswd, 
+			lpszPasswd == lpszHost ? NULL : lpszPasswd, 
 			lpszHost - lpszPasswd);
 
 		lpszcp++; /* Advance to beginning of host */
