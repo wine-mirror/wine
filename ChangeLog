@@ -1,4 +1,513 @@
 ----------------------------------------------------------------
+Sun May 23 10:25:26 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* memory/global.c, memory/heap.c, memory/ldt.c, memory/selector.c, memory/string.c, memory/virtual.c, objects/brush.c, objects/color.c, objects/dc.c, objects/dib.c, objects/enhmetafile.c, objects/gdiobj.c, objects/metafile.c, objects/palette.c, objects/pen.c, objects/region.c, objects/text.c, scheduler/handle.c, scheduler/services.c, scheduler/synchro.c, scheduler/sysdeps.c, scheduler/syslevel.c, scheduler/thread.c, win32/code_page.c, win32/console.c, win32/error.c, win32/file.c, win32/init.c, win32/process.c, win32/struct32.c, win32/thread.c, win32/time.c, dlls/ntdll/file.c, dlls/ntdll/nt.c, dlls/ntdll/om.c, dlls/ntdll/reg.c, dlls/ntdll/rtl.c, dlls/ntdll/rtlstr.c, dlls/ntdll/sec.c, dlls/ntdll/sync.c, dlls/ntdll/time.c, memory/atom.c:
+	Converted to the new debug interface, using script written by Patrik
+	Stridvall.
+
+	* scheduler/process.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: dwFlags must describe target process in UserSignalProc.
+
+	* dlls/shell32/shellord.c: Ian Schmidt <irsman@iag.net>
+	Added missing WINAPI to SHELL32_654 stub.  Fixes crash in Win98
+	Explorer.
+
+	* dlls/comctl32/listview.c: Chris Morgan <cmorgan@wpi.edu>
+	James Abbatiello <abbeyj@wpi.edu>
+	LISTVIEW_KeyDown: Invalidate the listview window only when the
+	selected item changes.
+
+	* if1632/kernel.spec, misc/wsprintf.c, relay32/kernel32.spec, win32/kernel32.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added _DebugOutput (KERNEL.328), LogApiThk (KERNEL.423), LogApiThkLSF
+	(KERNEL32.42), LogApiThkSL (KERNEL32.44), LogCBThkSL (KERNEL32.47),
+	and SSConfirmSmallStack (KERNEL.704).
+
+	* if1632/display.spec, windows/display.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fix typo (wrong DISPLAY.CheckCursor ordinal).
+	Superfluous FIXME converted to TRACE in CheckCursor.
+
+	* relay32/relay386.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: syslevel relay check was too strict.
+
+	* server/mapping.c: Marcus Meissner <marcus@jet.franken.de>
+	Do not use pagesize aligned size_low to grow mapped file, but original
+	size_low. (fixes Heises Index Register)
+
+Sat May 22 19:22:26 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* graphics/ddraw.c: Lionel Ulmer <ulmer@directprovider.net>
+	- added some more debug output
+	- corrected a slight bug in DGA DirectDraw creation
+
+	* windows/win.c: Francis Beaudet <francis@macadamian.com>
+	Fixed a major memory leak in the window management code.
+
+	* windows/winpos.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	In SetWindowPos if changing Z order and child window not yet in its
+	parent list, do not link it in WINPOS_ShowIconTitle, check for retval
+	of WIN_FindWndPtr.
+
+	* graphics/x11drv/dib.c: Pavel Roskin <pavel_roskin@geocities.com>
+	Disable passing device context to X11DRV_DIB_BuildColorMap when RGB
+	colormap is used.
+
+	* debugger/dbg.y: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Don't freeze other thread while it may hold the X critical section.
+
+	* include/display.h, loader/main.c, windows/display.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added UserRepaintDisable16().
+
+	* windows/dinput.c, windows/message.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Removed EVENT_WaitNetEvent() calls.
+
+	* windows/input.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added IsUserIdle16().
+
+	* include/ttydrv.h, windows/ttydrv/event.c, windows/ttydrv/init.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Adapted to EVENT_ driver changes.
+
+	* loader/task.c, scheduler/synchro.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Adapted to event synchronization changes.
+
+	* include/message.h, include/x11drv.h, windows/event.c, windows/x11drv/event.c, windows/x11drv/init.c, windows/x11drv/wnd.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Moved X input event handling out of EVENT_WaitNetEvent and into
+	service thread callback; moved EVENT_WaitNetEvent out of the EVENT_
+	driver.  Changed winContext to hold HWND instead of WND *.
+
+	* windows/winpos.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Don't change Z-order of child windows when activating.
+
+	* dlls/winspool/info.c, include/wine/wingdi16.h, include/winerror.h, include/winspool.h, relay32/winspool.spec:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Implemented AddPrinterA, AddPrinterDriverA and GetPrinterDriverDirectory
+	Moved some 16bit GDI function declarations from winspool.h -> wingdi16.h
+
+	* configure, configure.in, include/acconfig.h, include/config.h.in:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Create a new configuration manifest constant HAVE_OSS_MIDI.
+
+	* loader/dos/module.c: Ove Kaaven <ovek@arcticnet.no>
+	Fixed silly EINTR bug with starting dosmod.
+
+	* graphics/ddraw.c: Kevin Holbrook <kwh@neosoft.com>
+	Should compare to X11 constant "None" since a colormap is an X
+	Resource ID and not a pointer.
+
+	* controls/listbox.c: Paul Quinn <paulq@corel.ca>
+	Stop a listbox bug that causes a div by zero when the item height
+	is zero. Doesn't solve the root of the problem though.
+
+	* dlls/shell32/shell32_Pt.rc:
+	Andre Malafaya Baptista <Malafaya@milenio3.pt>
+	About dialog translated to Portuguese.
+
+	* if1632/thunk.c: James Juran <jrj120@psu.edu>
+	task.h was included twice.  Removing one fixed a sig11 in gcc-2.7.2.3.
+
+	* objects/cursoricon.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Check if dc has been created before using it.
+
+	* graphics/escape.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Add a few more 32->16 Escape conversions.
+
+	* relay32/relay386.c, if1632/relay.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Check for syslevel violations while relay debugging.
+
+	* if1632/kernel.spec, include/syslevel.h, include/thread.h, scheduler/syslevel.c, windows/win.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Improved syslevel handling, store currently held syslevels in thread
+	database, WIN_CritSection converted to syslevel.
+
+	* include/windows.h: Joshua Thielen <thielen@netperson.net>
+	Added mmsystem.h include.
+
+	* loader/main.c, loader/task.c, scheduler/process.c, windows/user.c, if1632/kernel.spec, include/user.h, include/wine/winbase16.h:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added ExitKernel16 (replacing USER_ExitWindows), ExitProcess16, and
+	MapProcessHandle; stub for BUNNY_351.
+
+	* if1632/thunk.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Handle proc == NULL in THUNK_SetDCHook correctly.
+
+	* files/profile.c:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Added support for the undocumented combination
+	GetPrivateProfileStringA(section == NULL, entry == NULL, ...
+
+	* dlls/comctl32/header.c: Chris Morgan <cmorgan@wpi.edu>
+	James Abbatiello <abbeyj@wpi.edu>
+	Cleaner null pointer check in HEADER_InsertItemA and HEADER_InsertItemW.
+
+	* dlls/comctl32/listview.c: Chris Morgan <cmorgan@wpi.edu>
+	James Abbatiello <abbeyj@wpi.edu>
+	Implemented GetNextItem for the Listview control.
+
+	* scheduler/services.c: Ove Kaaven <ovek@arcticnet.no>
+	Expire timers on expiry time too, not just after.
+
+	* include/wine/obj_base.h, graphics/d3dexecutebuffer.c, graphics/d3dlight.c, graphics/d3dmaterial.c, graphics/d3dtexture.c, graphics/d3dviewport.c, graphics/ddraw.c, multimedia/dplay.c, multimedia/dsound.c, ole/antimoniker.c, ole/bindctx.c, ole/compositemoniker.c, ole/datacache.c, ole/defaulthandler.c, ole/filemoniker.c, ole/hglobalstream.c, ole/ifs.c, ole/itemmoniker.c, ole/memlockbytes.c, ole/moniker.c, ole/olefont.c, ole/oleobj.c, ole/stg_stream.c, ole/storage32.c, windows/dinput.c, dlls/avifil32/avifile.c, dlls/shell32/contmenu.c, dlls/shell32/dataobject.c, dlls/shell32/enumidlist.c, dlls/shell32/folders.c, dlls/shell32/regstream.c, dlls/shell32/shelllink.c, dlls/shell32/shellole.c, dlls/shell32/shlfolder.c, dlls/shell32/shlview.c, graphics/d3ddevices.c:
+	Paul Quinn <paulq@corel.ca>
+	Microsoft com vtable compatibility workaround for g++.  Basically adds
+	an optional 8 bytes padding to COM objects where the RTTI would be.
+
+	* include/sysmetrics.h, misc/shell.c, objects/bitmap.c, objects/cursoricon.c, windows/dce.c, windows/defwnd.c, windows/dialog.c, windows/dinput.c, windows/input.c, windows/mdi.c, windows/message.c, windows/nonclient.c, windows/scroll.c, windows/sysmetrics.c, windows/win.c, windows/winpos.c, controls/button.c, controls/combo.c, controls/icontitle.c, controls/menu.c, controls/scroll.c, dlls/commdlg/filedlg.c, dlls/commdlg/finddlg.c, dlls/commdlg/fontdlg.c, dlls/commdlg/printdlg.c, dlls/shell32/iconcache.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Replaced all occurences of SYSMETRICS_xx and sysMetrics[SM_xx] by
+	GetSystemMetrics(SM_xx), removed no longer needed includes of
+	sysmetrics.h.
+
+	* msdos/int16.c: Ove Kaaven <ovek@arcticnet.no>
+	Added INT_Int16AddChar.
+
+	* loader/resource.c: Bertho Stultiens <bertho@panter.soci.aau.dk>
+	Bugfix: Prevent null-pointer dereference in TRACE argument list in
+	RES_FindResource
+
+	* loader/elfdll.c: Bertho Stultiens <bertho@panter.soci.aau.dk>
+	Fixed wrong NE module registration so that resources work.
+
+	* if1632/thunk.c, tools/build.c, win32/kernel32.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Set %ebx to point to real 16-bit stack in CBClientThunkSL.
+	Pass %esi back-and-forth in CBClientThunkSL(Ex).
+	Copy modified buffers back after return from FT_Thunk.
+	Fix broken recognition of LS thunklets.
+
+	* dlls/comctl32/comctl32undoc.c, dlls/comctl32/rebar.c, dlls/comctl32/toolbar.c, dlls/comctl32/updown.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Removed use of win.h, sysmetrics.h and associated WINE USER internal
+	variables. Added missing infoPtr->Buddy = hwndBud; in updown.c
+
+	* dlls/comctl32/Attic/propsheet.h, dlls/comctl32/comctl32.h, dlls/comctl32/propsheet.c, dlls/comctl32/rsrc.rc, dlls/comctl32/toolbar.c, include/commctrl.h, include/toolbar.h:
+	Eric Kohl <ekohl@abo.rhein-zeitung.de>
+	Toolbar customization dialog (take one).
+
+	* windows/win.c: Francis Beaudet <francis@macadamian.com>
+	Fixed GetTopWindow so it will correctly handle the NULL parameter.
+
+	* include/process.h, loader/module.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fix swapped FreeLibary return values. Handle FreeLibrary( 0 ) better.
+	Fix DLL_PROCESS_DETACH call sequence bugs resulting from nested
+	FreeLibrary calls.
+
+	* if1632/mmsystem.spec, multimedia/mmsystem.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Fixed specs for mixerGetDevCaps16/mixerGetID16, fixed mixGetDevCaps16.
+
+	* include/miscemu.h, msdos/devices.c, msdos/dosmem.c, msdos/int21.c:
+	Ove Kaaven <ovek@arcticnet.no>
+	Changed global DOS_LOL into function DOSMEM_LOL() in order to operate
+	on the correct address space. Added DOSMEM_MovePointers() that
+	relocates selectors when the DOS address space changes (i.e. when
+	dosmod is spawned, particularly from Win16 apps that uses DPMI to
+	execute real-mode code). More complete DOS device implementation.
+
+	* include/dosexe.h, loader/dos/dosvm.c, loader/dos/module.c:
+	Ove Kaaven <ovek@arcticnet.no>
+	Added MZ_Current() (returns current LPDOSTASK) and DOSVM_Wait()
+	(DOSVM idle message loop), and fields hConInput and hConOutput.
+
+	* objects/bitmap.c: Pascal Lessard <pascal@macadamian.com>
+	Add some null checking in the Get/SetBitmapBits functions.
+
+	* misc/crtdll.c, relay32/crtdll.spec:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added init function for CRTDLL, allocate stdio/stderr/stdout on
+	DLL_PROCESS_ATTACH, increase buffer for vfprintf() (Win95 arp.exe
+	needs 1.3KB).
+
+	* debugger/memory.c: Marcus Meissner <marcus@jet.franken.de>
+	Added support for FreeBSD 3.0 to DEBUG_checkmap_bad().
+
+	* misc/winsock.c: James Juran <jrj120@psu.edu>
+	Print a more effective (and visible) error message when an application
+	can't create a socket with type == SOCK_RAW.
+
+	* include/mmreg.h: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Some more defines for multimedia.
+
+	* msdos/vxd.c, win32/device.c:
+	Juergen Schmied <juergen.schmied@pop3.pop.debitel.net>
+	Some stubs for pccard vxd to debug the native shell32.
+
+	* multimedia/time.c: Ove Kaaven <ovek@arcticnet.no>
+	Use service thread for "true" multimedia timers.
+	Removed implementation of fake multimedia timers.
+	Set minimum resolution to 10 ms (the timing resolution of the Linux
+	kernel). Fixed a couple of flaws.
+
+	* misc/spy.c: Juergen Schmied <juergen.schmied@pop3.pop.debitel.net>
+	Implemented printing out of some structures.
+
+Thu May 20 16:40:23 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/select.c, server/socket.c:
+	Set only the client socket in non-blocking mode instead of all fds;
+	should avoid problems with stdio handles.
+
+Mon May 17 16:20:53 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/debugdefs.h, include/gdi.h, include/psdrv.h, include/ttydrv.h, include/wine/wingdi16.h, include/wingdi.h, include/winspool.h, misc/Attic/spooler.c, misc/Makefile.in, misc/printdrv.c, objects/dc.c, dlls/winspool/.cvsignore, dlls/winspool/Makefile.in, dlls/winspool/info.c, graphics/driver.c, graphics/enhmetafiledrv/init.c, graphics/env.c, graphics/escape.c, graphics/metafiledrv/init.c, graphics/psdrv/driver.c, graphics/psdrv/init.c, graphics/psdrv/ppd.c, graphics/psdrv/ps.c, graphics/ttydrv/init.c, graphics/win16drv/init.c, graphics/x11drv/init.c, Makefile.in, configure, configure.in:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Implement DocumentProperties, DeviceCapabilities, beginnings of
+	Open/Get/ClosePrinter.  Additions to PSDRV_DeviceCapabilities.
+	Split off WINSPOOL into its own directory.
+	Several functions added to DC_Funcs.
+	Based largely on a patch by Pascal Lessard <pascal@macadamian.com>
+
+	* loader/loadorder.c: Marcus Meissner <marcus@jet.franken.de>
+	glide2x loadorder is "so,native".
+
+	* msdos/dpmi.c: Ove Kaaven <ovek@arcticnet.no>
+	Improved shortcuts - follows jumps in trying to avoid switching to
+	real mode unnecessarily.
+
+	* documentation/no-windows: Ove Kaaven <ovek@arcticnet.no>
+	Updated and improved instructions.
+
+	* debugger/expr.c: Ove Kaaven <ovek@arcticnet.no>
+	Made "Wine-dbg>set *seg:off = val" work (previously only
+	"Wine-dbg>set *off = val" worked).
+
+	* multimedia/mcimidi.c, multimedia/mciwave.c:
+	Jukka Kangas <jtkangas@nic.fi>
+	When opening the file we don't need MMIO_EXCLUSIVE
+	rights. MMIO_DENYWRITE should be sufficient.
+
+	* dlls/shell32/shellpath.c:
+	Juergen Schmied <juergen.schmied@pop3.pop.debitel.net>
+	Prevent crash in stub of SheGetDirW.
+
+	* dlls/shell32/shlmenu.c:
+	Juergen Schmied <juergen.schmied@pop3.pop.debitel.net>
+	Further implementation of the FileMenu.
+
+	* windows/mdi.c: Juergen Schmied <juergen.schmied@pop3.pop.debitel.net>
+	Set the default menu item of the window menu
+
+	* wine.ini: James Juran <jrj120@psu.edu>
+	Changed serial ports in wine.ini to /dev/ttySX from /dev/cuaX in
+	accordance with Linux 2.2 Changes file.
+
+	* if1632/kernel.spec, loader/module.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Release Win16Lock when calling LoadLibrary32 from 16-bit code.
+
+	* if1632/thunk.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fixed THUNK_SetDCHook when using native USER.
+
+	* win32/kernel32.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: FT_PrologPrime was broken due to relay changes.
+
+	* misc/network.c, relay32/mpr.spec:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Some stubs added.
+
+	* windows/hook.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Suspend window locks before calling hook procedure.
+
+	* windows/dialog.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fixed window refcount handling in GetNextDlgGroupItem.
+
+	* controls/button.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Removed superfluous WIN_ReleaseWndPtr.
+
+	* graphics/ddraw.c: Marcus Meissner <marcus@mud.de>
+	Xlib_IDirectDrawSurface4Impl_Flip should show 'flipto' surface, not
+	previous one. (reported by Ove)
+
+Sun May 16 17:11:58 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/winbase.h, include/winnt.h:
+	Added a few missing debug event definitions.
+
+	* server/console.c, server/file.c, server/pipe.c, server/thread.c, server/thread.h:
+	Adapted to new select interface.
+	Fixed bug in *_signaled routines that could cause busy-waiting in the
+	select loop.
+
+	* server/object.c, server/object.h, server/request.c, server/select.c, server/socket.c:
+	Changed select interface, separated timeouts from file descriptors.
+
+	* server/handle.c, server/handle.h, server/process.c, server/process.h:
+	Moved process structure definition to process.h.
+	Added suspend/resume_process.
+	Moved handle table back into the process structure.
+
+	* scheduler/client.c, server/trace.c, include/server.h:
+	Added TEB in init_thread request.
+
+Sat May 15 10:52:56 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* miscemu/instr.c:
+	Tried to add an error message when crashing on a selector load because
+	of missing LDT sharing between threads (untested).
+
+	* scheduler/event.c, scheduler/mutex.c, scheduler/semaphore.c, server/Makefile.in, server/change.c, server/console.c, server/device.c, server/event.c, server/file.c, server/handle.c, server/handle.h, server/main.c, server/mapping.c, server/mutex.c, server/object.c, server/object.h, server/pipe.c, server/process.c, server/process.h, server/request.c, server/select.c, server/semaphore.c, server/snapshot.c, server/socket.c, server/thread.c, server/thread.h, server/trace.c, tools/make_requests, include/server.h, include/server/Attic/object.h, include/server/Attic/process.h, include/server/Attic/thread.h, include/server/request.h, memory/virtual.c:
+	Server reorganization:
+	- moved request handlers to the specific C files
+	- moved handle management to handle.c
+	- moved server private includes to server/ instead of include/server/
+
+	* Make.rules.in: Get include files from the current directory first.
+
+Fri May 14 18:39:37 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/commdlg/colordlg.c, dlls/commdlg/filedlg.c, dlls/commdlg/finddlg.c, dlls/commdlg/fontdlg.c, dlls/commdlg/printdlg.c, dlls/shell32/shell32_main.c, graphics/psdrv/driver.c, include/win.h, windows/msgbox.c, windows/queue.c, windows/win.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Replaced WIN_GetWindowInstance by GetWindowLongA(GWL_HINSTANCE),
+	removed unnecessary win.h includes, added syslevel.h to queue.c.
+
+	* controls/combo.c: Francois Boisvert <francois@macadamian.com>
+	Changed CBGetDroppedControlRect to be compliant with Windows API.
+
+	* include/wine/exception.h, win32/except.c:
+	Fixed a few bugs, and improved the exception macros (based on
+	suggestions by Sergei Turchanov).
+
+	* dlls/ver/ver16.c, dlls/version/info.c, dlls/version/install.c, dlls/version/resource.c, ipc/dde_atom.c, ipc/dde_atom_test.c, ipc/shm_block.c, ipc/shm_fragment.c, ipc/shm_fragment_test.c, ipc/shm_main_blk.c, ipc/shm_semaph.c, ipc/shm_semaph_test.c, ipc/wine_test_stub.c, relay32/snoop.c, relay32/utthunk.c, dlls/advapi32/advapi.c, dlls/advapi32/crypt.c, dlls/advapi32/eventlog.c, dlls/advapi32/service.c, dlls/imagehlp/access.c, dlls/imagehlp/debug.c, dlls/imagehlp/imagehlp_main.c, dlls/imagehlp/integrity.c, dlls/imagehlp/internal.c, dlls/imagehlp/modify.c, dlls/imagehlp/symbol.c, dlls/msacm/msacm_main.c, dlls/msacm32/builtin.c, dlls/msacm32/driver.c, dlls/msacm32/filter.c, dlls/msacm32/format.c, dlls/msacm32/internal.c, dlls/msacm32/msacm32_main.c, dlls/msacm32/stream.c, dlls/psapi/psapi_main.c, dlls/rasapi32/rasapi.c, dlls/tapi32/assisted.c, dlls/tapi32/phone.c, console/generic.c, console/ncurses.c, console/xterm.c, controls/combo.c, controls/listbox.c, controls/menu.c, controls/scroll.c, controls/static.c, controls/uitools.c:
+	Converted to the new debug interface, using script written by Patrik
+	Stridvall.
+
+	* tools/make_X11wrappers, tsx11/ts_xf86dga.c, tsx11/ts_xf86vmode.c, tsx11/ts_xlib.c, tsx11/ts_xpm.c, tsx11/ts_xresource.c, tsx11/ts_xshm.c, tsx11/ts_xutil.c:
+	Converted to the new debug interface.
+
+	* windows/painting.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fixed invalid window refcount handling in RDW_Paint().
+
+	* windows/message.c: Noel Borthwick <noel@macadamian.com>
+	Fix a deadlock with the system message queue by ensuring the system message
+	queue is unlocked while the actual message is being processed.
+
+	* graphics/ddraw.c: Lionel Ulmer <ulmer@directprovider.net>
+	Check if in depth-conversion mode before returning an error message
+	in IDirectDrawPaletteImpl_GetEntries.
+
+Thu May 13 18:53:05 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* documentation/status/direct3D, graphics/d3d_private.h, graphics/d3dcommon.c, graphics/d3ddevices.c, graphics/d3dexecutebuffer.c, graphics/d3dlight.c, graphics/d3dmaterial.c, graphics/d3dtexture.c, graphics/d3dviewport.c, graphics/ddraw.c, graphics/ddraw_private.h, include/wine_gl.h:
+	Lionel Ulmer <ulmer@directprovider.net>
+	Replaced all the Mesa specific code by GLX code. Should work now on
+	any OpenGL implementation.
+
+	* windows/x11drv/keyboard.c: <TTarrant@Etnoteam.It>
+	Added Italian keyboard support.
+
+	* graphics/enhmetafiledrv/graphics.c:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Fixed a couple of memcpy errors.
+
+	* graphics/psdrv/driver.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Small fix to help native win95 PrintDlg on the way.
+
+	* dlls/winaspi/winaspi16.c, if1632/winaspi.spec, include/aspi.h:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Implemented InsertInASPIChain and fixed minor things.
+
+	* windows/x11drv/mouse.c:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Fixed quite ill window locking code.
+
+	* windows/winpos.c: Francis Beaudet <francis@macadamian.com>
+	Fixed an infinite loop in ChildWindowFromPointEx.
+
+	* controls/menu.c:
+	Juergen Schmied <juergen.schmied@pop3.pop.debitel.net>
+	- prevent crash when GetMenuDefaultItem is called on empty menu
+	- set default item on system menu
+
+	* loader/ne/module.c, memory/selector.c, relay32/ntdll.spec, win32/kernel32.c, win32/ordinals.c, dlls/ntdll/exception.c, dlls/ntdll/rtl.c, include/stackframe.h:
+	Adapted for new register functions support (ESP_reg in register
+	functions now points after the arguments).
+
+	* relay32/builtin32.c, relay32/kernel32.spec, relay32/relay386.c, relay32/snoop.c, tools/build.c:
+	Win32 register functions can now have arguments.
+	Simplified relay debugging for register functions.
+
+	* relay32/kernel32.spec, win32/device.c:
+	VxDCall functions do not need to be 'register'.
+
+Wed May 12 16:10:53 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* relay32/builtin32.c: Fixed bug I introduced in relay debugging.
+
+	* dlls/ntdll/exception.c, if1632/thunk.c, include/Attic/except.h, include/wine/exception.h, win32/except.c:
+	Added macros and definitions for using exception inside Wine or
+	Winelib code.
+
+	* include/Attic/except.h, include/ntddk.h, include/winnt.h, misc/crtdll.c, win32/init.c:
+	Moved some exception definitions to winnt.h and ntddk.h.
+
+	* msdos/devices.c: Marcus Meissner <marcus@jet.franken.de>
+	Added missing WINAPI for the callback procs.
+
+	* include/sig_context.h: Added ERROR_sig.
+
+	* ole/stg_bigblockfile.c: Francis Beaudet <francis@macadamian.com>
+	Bug fix.
+
+	* misc/winsock.c, include/winsock.h:
+	Marcus Meissner <marcus@jet.franken.de>
+	WSOCK32/WINSOCK uses SetLastError() to keep its own WSALastErrors,
+	replaced all pwsi->err references.
+
+	* loader/pe_image.c: Changed some error handling a bit.
+
+	* windows/win.c: Ove Kaaven <ovek@arcticnet.no>
+	Cleaner Suspend/RestoreWndsLock, which should fix some slowness.
+
+	* relay32/kernel32.spec, relay32/ntdll.spec:
+	Added RtlUnwind in ntdll, and made kernel32 spec entry a forward to
+	the ntdll one.
+
+	* relay32/builtin32.c, tools/build-spec.txt, tools/build.c, include/builtin32.h:
+	Added import declaration for Win32 built-ins.
+
+Mon May 10 14:44:48 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* tools/build-spec.txt, tools/build.c, include/builtin32.h, relay32/builtin32.c:
+	Added support for forwarded ordinals in built-in dlls.
+
+Sun May  9 16:15:28 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* win32/console.c:
+	Fixed request size for alloc_console and free_console.
+
+	* relay32/kernel32.spec, relay32/ntdll.spec, win32/except.c, dlls/ntdll/Makefile.in, dlls/ntdll/exception.c, dlls/ntdll/rtl.c, include/Attic/except.h, include/debugdefs.h, include/ntddk.h, include/thread.h, include/winbase.h, include/winnt.h:
+	Improved exception handling.
+	Based on the work of Sergey Turchanov <turchanov@usa.net>.
+
+	* loader/module.c:
+	Use OpenFile() to test for file existence, so that the path gets
+	searched.
+
+	* server/select.c: Ove Kaaven <ovek@arcticnet.no>
+	Restart interrupted select() (happens with -pg).
+
+	* debugger/memory.c: Ove Kaaven <ovek@arcticnet.no>
+	Fixed off-by-one bug in memory access check.
+
+	* misc/registry.c: Marcus Meissner <marcus@jet.franken.de>
+	More debug output for RegQueryInfoKey.
+
+	* debugger/stack.c: Ove Kaaven <ovek@arcticnet.no>
+	Fixed a couple of bugs (silent backtrace not totally silent, crashes
+	when the stack is corrupted or similar).
+
+----------------------------------------------------------------
 Sat May  8 18:39:05 1999  Alexandre Julliard  <julliard@winehq.com>
 
 	* tools/wineconf.libs/autoconf.eng, tools/wineconf.libs/autoconf.tcl, tools/wineconf.libs/browsers.eng, tools/wineconf.libs/dirbrowser.tcl, tools/wineconf.libs/general.eng, tools/wineconf.libs/getfilename.tcl, tools/wineconf.libs/message.tcl, tools/wineconf.libs/message2.tcl, tools/wineconf.libs/saveRC.tcl, tools/wineconf.libs/wine-half.gif, tools/wineconf.libs/wineconf.eng, tools/wineconf.libs/wineconf.tcl, tools/wineconf.libs/wineconf1.tcl, tools/wineconf.tcl:
