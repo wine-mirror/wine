@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(comboex);
 /* Item structure */
 typedef struct
 {
-    VOID         *next;
+    void         *next;
     UINT         mask;
     LPWSTR       pszText;
     LPWSTR       pszTemp;
@@ -126,10 +126,8 @@ typedef struct
 
 
 /* Things common to the entire DLL */
-static LRESULT WINAPI
-COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static LRESULT WINAPI
-COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT WINAPI COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT WINAPI COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr);
 typedef INT (WINAPI *cmp_func_t)(LPCWSTR, LPCWSTR);
 
