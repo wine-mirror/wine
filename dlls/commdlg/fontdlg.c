@@ -615,7 +615,7 @@ static INT CFn_FitFontStyle( HWND hDlg, LONG packedstyle )
 static INT CFn_FitCharSet( HWND hDlg, int charset )
 {
     int i,n,cs;
-    /* look for fitting har set in combobox5 */
+    /* look for fitting char set in combobox5 */
     n=SendDlgItemMessageA(hDlg, cmb5, CB_GETCOUNT, 0, 0);
     for (i=0;i<n;i++)
     {
@@ -737,9 +737,11 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
             j=SendDlgItemMessageA(hDlg,cmb1,CB_FINDSTRING,-1,(LONG)lpxx->lfFaceName);
             if (j!=CB_ERR)
             {
-                INT height = (lpcf->iPointSize + 5) / 10;
+                INT height = lpxx->lfHeight < 0 ? -lpxx->lfHeight :
+                    lpxx->lfHeight;
                 int charset = lpxx->lfCharSet;
-                pstyle=MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:FW_NORMAL,lpxx->lfItalic !=0);
+                pstyle = MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:
+                        FW_NORMAL,lpxx->lfItalic !=0);
                 SendDlgItemMessageA(hDlg, cmb1, CB_SETCURSEL, j, 0);
                 SendMessageA(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
                         (LPARAM)GetDlgItem(hDlg,cmb1));

@@ -227,6 +227,11 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     }
     lpChFont->lpTemplateName=lpTemplateName;
 
+    lpChFont->iPointSize = cf32a.iPointSize;
+    lpChFont->Flags = cf32a.Flags;
+    lpChFont->rgbColors = cf32a.rgbColors;
+    lpChFont->lCustData = cf32a.lCustData;
+    lpChFont->nFontType = cf32a.nFontType;
 
     font16 = MapSL(lpChFont->lpLogFont);
     font16->lfHeight = cf32a.lpLogFont->lfHeight;
