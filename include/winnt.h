@@ -41,25 +41,6 @@
 
 /**** Some Wine specific definitions *****/
 
-/* Architecture dependent settings. */
-/* These are hardcoded to avoid dependencies on config.h in Winelib apps. */
-#if defined(__i386__)
-# undef  WORDS_BIGENDIAN
-# undef  BITFIELDS_BIGENDIAN
-# define ALLOW_UNALIGNED_ACCESS
-#elif defined(__sparc__)
-# define WORDS_BIGENDIAN
-# define BITFIELDS_BIGENDIAN
-# undef  ALLOW_UNALIGNED_ACCESS
-#elif defined(__PPC__)
-# define WORDS_BIGENDIAN
-# define BITFIELDS_BIGENDIAN
-# undef  ALLOW_UNALIGNED_ACCESS
-#elif !defined(RC_INVOKED)
-# error Unknown CPU architecture!
-#endif
-
-
 /* Calling conventions definitions */
 
 #ifdef __i386__

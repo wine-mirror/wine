@@ -154,11 +154,28 @@ typedef __uint32 DWORD_PTR, *PDWORD_PTR;
 typedef INT_PTR SSIZE_T, *PSSIZE_T;
 typedef UINT_PTR SIZE_T, *PSIZE_T;
 
+/* Some Wine-specific definitions */
+
+/* Architecture dependent settings. */
+/* These are hardcoded to avoid dependencies on config.h in Winelib apps. */
+#if defined(__i386__)
+# undef  WORDS_BIGENDIAN
+# undef  BITFIELDS_BIGENDIAN
+# define ALLOW_UNALIGNED_ACCESS
+#elif defined(__sparc__)
+# define WORDS_BIGENDIAN
+# define BITFIELDS_BIGENDIAN
+# undef  ALLOW_UNALIGNED_ACCESS
+#elif defined(__PPC__)
+# define WORDS_BIGENDIAN
+# define BITFIELDS_BIGENDIAN
+# undef  ALLOW_UNALIGNED_ACCESS
+#elif !defined(RC_INVOKED)
+# error Unknown CPU architecture!
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
 #endif /* !defined(__WINE_BASETSD_H) */
-
-
-

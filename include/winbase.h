@@ -202,8 +202,13 @@ typedef struct _SECURITY_ATTRIBUTES
 /* 64 bit number of 100 nanoseconds intervals since January 1, 1601 */
 typedef struct
 {
+#ifdef WORDS_BIGENDIAN
+  DWORD  dwHighDateTime;
+  DWORD  dwLowDateTime;
+#else
   DWORD  dwLowDateTime;
   DWORD  dwHighDateTime;
+#endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 #endif /* _FILETIME_ */
 
