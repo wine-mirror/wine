@@ -448,7 +448,15 @@ BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
             if (((*ppPrev)->type == type) &&
                 (func == WINPROC_THUNKPROC(*ppPrev)))
             {
-                bRecycle = TRUE;
+                if((*ppPrev)->user == user)
+                {
+                    bRecycle = TRUE;
+                }
+                else
+                {
+                    WINPROC_FreeProc( *ppPrev, user );
+                    *ppPrev = NULL;
+                }
                 break;
             }
         }
