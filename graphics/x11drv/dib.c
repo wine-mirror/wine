@@ -2221,7 +2221,6 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 
     switch ( bmpImage->depth )
     {
-        case 24:
         case 32:
             /* ==== 32 BGR dib to 24/32 BGR bitmap ==== */
             if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff) {
@@ -2247,6 +2246,29 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 
             break;
 
+        case 24:
+	    /* ==== 32 BGR dib to 24 (888) BGR bitmap ==== */
+	    /* we need to check that source mask matches destination */
+            {
+                DWORD *srcpixel;
+		BYTE  *bptr;
+
+		srcpixel = (DWORD *) srcbits + left;
+                bptr = bmpImage->data;
+
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = 0; x < dstwidth; x++) {
+			/* *srcpixel is a 32bit value */
+			/* bptr points to first of 3 bytes */
+                        *bptr++ = (*srcpixel >> 16) & 0xff;
+                        *bptr++ = (*srcpixel >>  8) & 0xff;
+                        *bptr++ = (*srcpixel      ) & 0xff;
+			srcpixel++;
+                    }
+                }
+            }
+	    break;
+	
         case 15:
 	    /* ==== 32 BGR dib to 555 BGR bitmap ==== */
 	    if (bmpImage->red_mask == 0x7c00 && bmpImage->blue_mask == 0x001f)
@@ -2360,7 +2382,6 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 
     switch ( bmpImage->depth )
     {
-        case 24:
         case 32:
             /* ==== 24/32 BGR bitmap to 32 BGR dib ==== */
             if ( bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff )
@@ -2384,6 +2405,32 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
             }
             else goto notsupported;
             break;
+
+        case 24:
+	    /* ==== 24 BGR bitmap to 32 (0888) BGR dib ==== */
+	    /* we need to check that source mask matches destination */
+            {
+                DWORD *srcpixel;
+		BYTE  *bptr;
+		DWORD srcdata;
+
+		srcpixel = (DWORD *) dstbits;
+                bptr = bmpImage->data;
+
+                for (h = lines - 1; h >= 0; h--) {
+                    for (x = 0; x < dstwidth; x++) {
+			/* *srcpixel is a 32bit value */
+			/* bptr points to first of 3 bytes */
+			srcdata = 0;
+			srcdata	= srcdata << 8 | *bptr++;
+			srcdata = srcdata << 8 | *bptr++;	
+			srcdata = srcdata << 8 | *bptr++;	
+
+			*srcpixel++ = srcdata;
+                    }
+                }
+            }
+	    break;
 
         case 15:
             {
