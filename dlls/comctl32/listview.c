@@ -273,7 +273,7 @@ static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
-static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *, INT, LONG, LONG);
+static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *, INT, POINT);
 static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *);
 static void LISTVIEW_SetSelection(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *);
@@ -427,9 +427,20 @@ static char* debug_getbuf()
     return buffers[index++ % DEBUG_BUFFERS];
 }
 
+static inline char* debugpoint(const POINT* lppt)
+{
+    if (lppt) 
+    {
+	char* buf = debug_getbuf();
+	snprintf(buf, DEBUG_BUFFER_SIZE, "(%ld, %ld)", lppt->x, lppt->y);
+    	return buf;
+    } else return "(null)";
+}
+
 static inline char* debugrect(const RECT* rect)
 {
-    if (rect) {
+    if (rect) 
+    {
 	char* buf = debug_getbuf();
 	snprintf(buf, DEBUG_BUFFER_SIZE, "[(%d, %d);(%d, %d)]", 
 		 rect->left, rect->top, rect->right, rect->bottom);
@@ -1547,7 +1558,7 @@ static void LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
           ptItem.y += infoPtr->nItemHeight;
         }
 
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem.x, ptItem.y);
+        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.x += infoPtr->nItemWidth;
         rcView.right = max(rcView.right, ptItem.x);
       }
@@ -1559,7 +1570,7 @@ static void LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
     {
       for (i = 0; i < infoPtr->nItemCount; i++)
       {
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem.x, ptItem.y);
+        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.y += infoPtr->nItemHeight;
       }
 
@@ -1613,7 +1624,7 @@ static void LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
           ptItem.x += infoPtr->nItemWidth;
         }
 
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem.x, ptItem.y);
+        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.y += infoPtr->nItemHeight;
         rcView.bottom = max(rcView.bottom, ptItem.y);
       }
@@ -1624,7 +1635,7 @@ static void LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
     {
       for (i = 0; i < infoPtr->nItemCount; i++)
       {
-        LISTVIEW_SetItemPosition(infoPtr, i, ptItem.x, ptItem.y);
+        LISTVIEW_SetItemPosition(infoPtr, i, ptItem);
         ptItem.x += infoPtr->nItemWidth;
       }
 
@@ -6765,16 +6776,14 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] INT : item index
- * [I] LONG : x coordinate
- * [I] LONG : y coordinate
+ * [I] nItem : item index
+ * [I] pt : coordinate
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem,
-                                     LONG nPosX, LONG nPosY)
+static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt)
 {
   UINT lStyle = infoPtr->dwStyle;
   UINT uView = lStyle & LVS_TYPEMASK;
@@ -6782,7 +6791,7 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem,
   HDPA hdpaSubItems;
   BOOL bResult = FALSE;
 
-  TRACE("(nItem=%d, X=%ld, Y=%ld)\n", nItem, nPosX, nPosY);
+  TRACE("(nItem=%d, &pt=%s\n", nItem, debugpoint(&pt));
 
   if (lStyle & LVS_OWNERDATA)
     return FALSE;
@@ -6795,43 +6804,33 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem,
       {
         if ( (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)) )
         {
-	  POINT orig;
+	  POINT orig = lpItem->ptPosition;
           bResult = TRUE;
-	  orig = lpItem->ptPosition;
-          if ((nPosX == -1) && (nPosY == -1))
+          if ((pt.x == -1) && (pt.y == -1))
           {
             /* This point value seems to be an undocumented feature. The
              * best guess is that it means either at the origin, or at
              * the true beginning of the list. I will assume the origin.
              */
-            POINT pt1;
-            if (!LISTVIEW_GetOrigin(infoPtr, &pt1))
-            {
-              pt1.x = 0;
-              pt1.y = 0;
-            }
-            nPosX = pt1.x;
-            nPosY = pt1.y;
+            if (!LISTVIEW_GetOrigin(infoPtr, &pt))
+              pt.x = pt.y = 0;
             if (uView == LVS_ICON)
             {
-              nPosX += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
-              nPosY += ICON_TOP_PADDING;
+              pt.x += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
+              pt.y += ICON_TOP_PADDING;
             }
-            TRACE("requested special (-1,-1), set to origin (%ld,%ld)\n",
-                  nPosX, nPosY);
+            TRACE("requested special (-1,-1), set to origin %s\n", debugpoint(&pt));
           }
 
-          lpItem->ptPosition.x = nPosX;
-          lpItem->ptPosition.y = nPosY;
+          lpItem->ptPosition = *&pt;
 	  if (uView == LVS_ICON)
 	  {
 	    lpItem->ptPosition.y -= ICON_TOP_PADDING;
               lpItem->ptPosition.x -= (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
               if ((lpItem->ptPosition.y < 0) || (lpItem->ptPosition.x < 0))
               {
-                  FIXME("failed orig (%ld,%ld), intent (%ld,%ld), is (%ld, %ld), setting neg to 0\n",
-                        orig.x, orig.y, nPosX, nPosY, lpItem->ptPosition.x, lpItem->ptPosition.y);
-
+                  FIXME("failed orig=%s, intent=%s, is %s, setting neg to 0\n", 
+			debugpoint(&orig), debugpoint(&pt), debugpoint(&lpItem->ptPosition));
                   /*
                   if (lpItem->ptPosition.x < 0) lpItem->ptPosition.x = 0;
                   if (lpItem->ptPosition.y < 0) lpItem->ptPosition.y = 0;
@@ -6839,8 +6838,7 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem,
               }
               else
               {
-                  TRACE("orig (%ld,%ld), intent (%ld,%ld), is (%ld,%ld)\n",
-                        orig.x, orig.y, nPosX, nPosY, lpItem->ptPosition.x, lpItem->ptPosition.y);
+                  TRACE("orig=%s, intent=%s, is %s\n", debugpoint(&orig), debugpoint(&pt), debugpoint(&lpItem->ptPosition));
               }
 	  }
         }
@@ -8781,12 +8779,14 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetItemCount(infoPtr, (INT)wParam, (DWORD)lParam);
 
   case LVM_SETITEMPOSITION:
-    return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, (INT)LOWORD(lParam),
-                                    (INT)HIWORD(lParam));
+    {
+	POINT pt = { SLOWORD(lParam), SHIWORD(lParam) };
+        return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, pt);
+    }
 
   case LVM_SETITEMPOSITION32:
-    return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, ((POINT*)lParam)->x,
-				    ((POINT*)lParam)->y);
+    if (lParam == 0) return FALSE;
+    return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, *((POINT*)lParam));
 
   case LVM_SETITEMSTATE:
     return LISTVIEW_SetItemState(infoPtr, (INT)wParam, (LPLVITEMW)lParam);
