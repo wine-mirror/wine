@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid);
+HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 
 #ifdef __cplusplus
 }
