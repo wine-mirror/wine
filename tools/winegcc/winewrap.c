@@ -86,136 +86,6 @@ static const char *app_loader_script =
     "exec \"$WINELOADER\" $debugmsg $dll -- \"$apppath\" \"$@\"\n"
 ;
 
-static const char *app_gui_spec =
-    "@ stdcall WinMain(ptr long ptr long) WinMain\n"
-;
-
-static const char *app_cui_spec =
-    "@ stdcall main(long ptr ptr) main\n"
-;
-
-static const char *wrapper_code =
-    "/*\n"
-    " * Copyright 2000 Francois Gouget <fgouget@codeweavers.com> for CodeWeavers\n"
-    " * Copyright 2002 Dimitrie O. Paun <dpaun@rogers.com>\n"
-    " */\n"
-    "\n"
-    "#include <stdio.h>\n"
-    "#include <windows.h>\n"
-    "\n"
-    "\n"
-    "/*\n"
-    " * Describe the wrapped application\n"
-    " */\n"
-    "\n"
-    "/* The app name */\n"
-    "#define APPNAME \"%s\"\n"
-    "/**\n"
-    " * This is either 0 for a console based application or\n"
-    " * 1 for a regular windows application.\n"
-    " */\n"
-    "#define GUIEXE %d\n"
-    "\n"
-    "/**\n"
-    " * This is the name of the library containing the application,\n"
-    " * e.g. 'hello-wrap.dll' if the application is called 'hello.exe'.\n"
-    " */\n"
-    "static char* appName     = \"%s\";\n"
-    "\n"
-    "/**\n"
-    " * This is the name of the application's Windows module. If left NULL\n"
-    " * then appName is used.\n"
-    " */\n"
-    "static char* appModule   = NULL;\n"
-    "\n"
-    "/**\n"
-    " * This is the application's entry point. This is usually 'WinMain' for a\n"
-    " * gui app and 'main' for a console application.\n"
-    " */\n"
-    "#if GUIEXE\n"
-    "static char* appInit     = \"WinMain\";\n"
-    "#else\n"
-    "static char* appInit     = \"main\";\n"
-    "#endif\n"
-    "\n"
-    "/**\n"
-    " * This is either non-NULL for MFC-based applications and is the name of the\n"
-    " * MFC's module. This is the module in which we will take the 'WinMain'\n"
-    " * function.\n"
-    " */\n"
-    "static char* mfcModule   = NULL;\n"
-    "\n"
-    "\n"
-    "void error(const char *format, ...)\n"
-    "{\n"
-    "    va_list ap;\n"
-    "    char msg[4096];\n"
-    "\n"
-    "    va_start(ap, format);\n"
-    "    vsnprintf(msg, sizeof(msg), format, ap);\n"
-    "    fprintf(stderr, \"Error: %%s\\n\", msg);\n"
-    "    va_end(ap);\n"
-    "    exit(1);\n"
-    "}\n"
-    "\n"
-    "\n"
-    "#if GUIEXE\n"
-    "typedef int WINAPI (*WinMainFunc)(HINSTANCE hInstance, HINSTANCE hPrevInstance,\n"
-    "				  PSTR szCmdLine, int iCmdShow);\n"
-    "#else\n"
-    "typedef int WINAPI (*MainFunc)(int argc, char** argv, char** envp);\n"
-    "#endif\n"
-    "\n"
-    "#if GUIEXE\n"
-    "int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,\n"
-    "                   PSTR szCmdLine, int iCmdShow)\n"
-    "#else\n"
-    "int WINAPI main(int argc, char** argv, char** envp)\n"
-    "#endif\n"
-    "{\n"
-    "    HINSTANCE hApp = 0, hMFC = 0, hMain = 0;\n"
-    "    void* appMain;\n"
-    "    int retcode, i;\n"
-    "    const char* libs[] = { %s };\n"
-    "\n"
-    "    /* Then if this application is MFC based, load the MFC module */\n"
-    "    if (mfcModule) {\n"
-    "        hMFC = LoadLibrary(mfcModule);\n"
-    "        if (!hMFC) error(\"Could not load the MFC module %%s (%%d)\", mfcModule, GetLastError());\n"
-    "        /* For MFC apps, WinMain is in the MFC library */\n"
-    "        hMain = hMFC;\n"
-    "    }\n"
-    "\n"
-    "    for (i = 0; i < sizeof(libs)/sizeof(libs[0]); i++) {\n"
-    "        if (!LoadLibrary(libs[i])) \n"
-    "            fprintf(stderr, \"Warning: Could not load %%s (%%d)\\n\", libs[i], GetLastError());\n"
-    "    }\n"
-    "\n"
-    "    /* Load the application's module */\n"
-    "    if (!appModule) appModule = appName;\n"
-    "    hApp = LoadLibrary(appModule);\n"
-    "    if (!hApp) error(\"Could not load the application's module %%s (%%d)\", appModule, GetLastError());\n"
-    "    if (!hMain) hMain = hApp;\n"
-    "\n"
-    "    /* Get the address of the application's entry point */\n"
-    "    appMain = GetProcAddress(hMain, appInit);\n"
-    "    if (!appMain) error(\"Could not get the address of %%s (%%d)\", appInit, GetLastError());\n"
-    "\n"
-    "    /* And finally invoke the application's entry point */\n"
-    "#if GUIEXE\n"
-    "    retcode = (*((WinMainFunc)appMain))(hApp, hPrevInstance, szCmdLine, iCmdShow);\n"
-    "#else\n"
-    "    retcode = (*((MainFunc)appMain))(argc, argv, envp);\n"
-    "#endif\n"
-    "\n"
-    "    /* Cleanup and done */\n"
-    "    FreeLibrary(hApp);\n"
-    "    FreeLibrary(hMFC);\n"
-    "\n"
-    "    return retcode;\n"
-    "}\n"
-;
-
 static const char *output_name = "a.out";
 static strarray *so_files, *arh_files, *dll_files, *llib_paths, *lib_paths, *obj_files;
 static int keep_generated = 0;
@@ -352,95 +222,11 @@ static void identify_lib_files(strarray *lib_files)
     }
 }
 
-
-static void create_the_wrapper(char* base_file, char* base_name, char* app_name, int gui_mode)
-{
-    char *wrp_temp_name, *wspec_name, *wspec_c_name, *wspec_o_name;
-    char *wrap_c_name, *wrap_o_name;
-    const char *dlls = "";
-    strarray *wwrap_args, *wspec_args, *wcomp_args, *wlink_args;
-    int i;
-
-    wrp_temp_name = tempnam(0, "wwrp");
-    wspec_name = strmake("%s.spec", wrp_temp_name);
-    wspec_c_name = strmake("%s.c", wspec_name);
-    wspec_o_name = strmake("%s.o", wspec_name);
-
-    wrap_c_name = strmake("%s.c", wrp_temp_name);
-    wrap_o_name = strmake("%s.o", wrp_temp_name);
-
-    /* build wrapper compile argument list */
-    wwrap_args = strarray_alloc();
-    strarray_add(wwrap_args, "gcc");
-    strarray_add(wwrap_args, "-fPIC");
-    strarray_add(wwrap_args, "-I" INCLUDEDIR "/windows");
-    strarray_add(wwrap_args, "-o");
-    strarray_add(wwrap_args, wrap_o_name);
-    strarray_add(wwrap_args, "-c");
-    strarray_add(wwrap_args, wrap_c_name);
-    strarray_add(wwrap_args, NULL);
-
-    for (i = dll_files->size - 1; i >= 0; i--)
-        dlls = strmake("\"%s\", %s", dll_files->base[i] + 2, dlls);
-    create_file(wrap_c_name, wrapper_code, base_name, gui_mode, app_name, dlls);
-    spawn(wwrap_args);
-    strarray_free(wwrap_args);
-    rm_temp_file(wrap_c_name);
-
-    /* build wrapper winebuild's argument list */
-    wspec_args = strarray_alloc();
-    strarray_add(wspec_args, "winebuild");
-    strarray_add(wspec_args, "-o");
-    strarray_add(wspec_args, wspec_c_name);
-    strarray_add(wspec_args, "--exe");
-    strarray_add(wspec_args, strmake("%s.exe", base_name));
-    strarray_add(wspec_args, gui_mode ? "-mgui" : "-mcui");
-    strarray_add(wspec_args, wrap_o_name);
-    strarray_add(wspec_args, "-L" DLLDIR);
-    strarray_add(wspec_args, "-lkernel32");
-    strarray_add(wspec_args, NULL);
-
-    spawn(wspec_args);
-    strarray_free(wspec_args);
-
-    /* build wrapper gcc's argument list */
-    wcomp_args = strarray_alloc();
-    strarray_add(wcomp_args, "gcc");
-    strarray_add(wcomp_args, "-fPIC");
-    strarray_add(wcomp_args, "-o");
-    strarray_add(wcomp_args, wspec_o_name);
-    strarray_add(wcomp_args, "-c");
-    strarray_add(wcomp_args, wspec_c_name);
-    strarray_add(wcomp_args, NULL);
-
-    spawn(wcomp_args);
-    strarray_free(wcomp_args);
-    rm_temp_file(wspec_c_name);
-
-    /* build wrapper ld's argument list */
-    wlink_args = strarray_alloc();
-    strarray_add(wlink_args, "gcc");
-    strarray_add(wlink_args, "-shared");
-    strarray_add(wlink_args, "-Wl,-Bsymbolic,-z,defs");
-    strarray_add(wlink_args, "-o");
-    strarray_add(wlink_args, strmake("%s.exe.so", base_file));
-    strarray_add(wlink_args, "-L" LIBDIR);
-    strarray_add(wlink_args, "-lwine");
-    strarray_add(wlink_args, wspec_o_name);
-    strarray_add(wlink_args, wrap_o_name);
-    strarray_add(wlink_args, NULL);
-
-    spawn(wlink_args);
-    strarray_free(wlink_args);
-    rm_temp_file(wspec_o_name);
-    rm_temp_file(wrap_o_name);
-}
-
 int main(int argc, char **argv)
 {
     char *library = 0, *path = 0;
-    int i, len, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = -1;
-    char *base_name, *base_file, *base_path, *app_temp_name, *app_name = 0;
+    int i, len, cpp = 0, no_opt = 0, gui_mode = 0;
+    char *base_name, *base_file, *base_path, *app_temp_name;
     char *spec_name, *spec_c_name, *spec_o_name;
     strarray *spec_args, *comp_args, *link_args;
     strarray *lib_files;
@@ -459,11 +245,6 @@ int main(int argc, char **argv)
 	{
 	    switch (argv[i][1])
 	    {
-	    case 'a':
-		if (argv[i][2]) app_name = strdup(argv[i]+ 2);
-		else if (i + 1 < argc) app_name = strdup(argv[++i]);
-		else error("The -a switch takes an argument.");
-		break;
 	    case 'k':
 		keep_generated = 1;
 		break;
@@ -498,12 +279,6 @@ int main(int argc, char **argv)
 	    case 'C':
 		cpp = 1;
 		break;
-	    case 'w':
-		create_wrapper = 1;
-		break;
-	    case 'W':
-		create_wrapper = 0;
-		break;
 	    case '-':
 		if (argv[i][2]) error("No long option supported.");
 		no_opt = 1;
@@ -518,9 +293,6 @@ int main(int argc, char **argv)
 	strarray_add(obj_files, strdup(argv[i]));
     }
 
-    /* create wrapper only in C++ by default */
-    if (create_wrapper == -1) create_wrapper = cpp;
-    
     /* include the standard library (for eg libwine.so) and DLL paths last */
     add_lib_path(DLLDIR);
     add_lib_path(LIBDIR);
@@ -555,9 +327,6 @@ int main(int argc, char **argv)
 	base_name = base_file;
     }
     
-    /* create default name for the wrapper */
-    if (!app_name) app_name =  strmake("%s-wrap.dll", base_name);
-
     spec_name = strmake("%s.spec", app_temp_name);
     spec_c_name = strmake("%s.c", spec_name);
     spec_o_name = strmake("%s.o", spec_name);
@@ -567,20 +336,9 @@ int main(int argc, char **argv)
     strarray_add(spec_args, "winebuild");
     strarray_add(spec_args, "-o");
     strarray_add(spec_args, spec_c_name);
-    if (create_wrapper)
-    {
-	create_file(spec_name, gui_mode ? app_gui_spec : app_cui_spec);
-	strarray_add(spec_args, "-F");
-	strarray_add(spec_args, app_name);
-	strarray_add(spec_args, "--spec");
-	strarray_add(spec_args, spec_name);
-    }
-    else
-    {
-	strarray_add(spec_args, "--exe");
-	strarray_add(spec_args, strmake("%s.exe", base_name));
-        strarray_add(spec_args, gui_mode ? "-mgui" : "-mcui");
-    }
+    strarray_add(spec_args, "--exe");
+    strarray_add(spec_args, strmake("%s.exe", base_name));
+    strarray_add(spec_args, gui_mode ? "-mgui" : "-mcui");
     for (i = 0; i < llib_paths->size; i++)
 	strarray_add(spec_args, llib_paths->base[i]);
     for (i = 0; i < dll_files->size; i++)
@@ -594,9 +352,6 @@ int main(int argc, char **argv)
     /* run winebuild to get the .spec.c file */
     spawn(spec_args);
     strarray_free(spec_args);
-
-    if (create_wrapper)
-        rm_temp_file(spec_name);
 
     /* build gcc's argument list */
     comp_args = strarray_alloc();
@@ -630,10 +385,7 @@ int main(int argc, char **argv)
 	strarray_add(link_args, so_files->base[i]);
 
     strarray_add(link_args, "-o");
-    if (create_wrapper)
-	strarray_add(link_args, strmake("%s/%s.so", base_path, app_name));
-    else
-	strarray_add(link_args, strmake("%s.exe.so", base_file));
+    strarray_add(link_args, strmake("%s.exe.so", base_file));
     strarray_add(link_args, spec_o_name);
 
     for (i = 0; i < obj_files->size; i++)
@@ -646,9 +398,6 @@ int main(int argc, char **argv)
     spawn(link_args);
     strarray_free(link_args);
     rm_temp_file(spec_o_name);
-
-    if (create_wrapper)
-	create_the_wrapper(base_file, base_name, app_name, gui_mode );
 
     /* create the loader script */
     create_file(base_file, app_loader_script, base_name);
