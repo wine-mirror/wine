@@ -172,9 +172,23 @@ void WINAPI NdrStubGetBuffer(LPRPCSTUBBUFFER This,
  *             NdrClientInitializeNew [RPCRT4.@]
  */
 void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg, 
-                                    PMIDL_STUB_DESC pStubDesc, int unknown )
+                                    PMIDL_STUB_DESC pStubDesc, unsigned int ProcNum )
 {
-  FIXME("stub\n");
+  TRACE("(pRpcMessage == ^%p, pStubMsg == ^%p, pStubDesc == ^%p, ProcNum == %d)\n",
+    pRpcMessage, pStubMsg, pStubDesc, ProcNum);
+
+  memset(pRpcMessage, 0, sizeof(RPC_MESSAGE));
+  memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
+
+  pStubMsg->ReuseBuffer = TRUE;
+  pStubMsg->IsClient = TRUE;
+  pStubMsg->StubDesc = pStubDesc;
+  pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
+  pStubMsg->pfnFree = pStubDesc->pfnFree;
+  pStubMsg->RpcMsg = pRpcMessage;
+
+  pRpcMessage->ProcNum = ProcNum;
+  pRpcMessage->RpcInterfaceInformation = pStubDesc->RpcInterfaceInformation;
 }
 
 /***********************************************************************
