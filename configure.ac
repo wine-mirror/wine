@@ -1557,6 +1557,7 @@ dlls/kernel/Makefile
 dlls/kernel/tests/Makefile
 dlls/lzexpand/Makefile
 dlls/mapi32/Makefile
+dlls/mapi32/tests/Makefile
 dlls/mmdevldr.vxd/Makefile
 dlls/monodebg.vxd/Makefile
 dlls/mpr/Makefile

@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = mapi32.dll
+IMPORTS   = mapi32
+EXTRALIBS = -luuid
+
+CTESTS = \
+	prop.c \
+	util.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
