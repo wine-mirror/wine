@@ -1877,7 +1877,7 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     return;
 
 error:
-    ERR( "Main exe initialization failed, status %lx\n", status );
+    ERR( "Main exe initialization for %s failed, status %lx\n", debugstr_w(main_exe_name->Buffer), status );
     exit(1);
 }
 
