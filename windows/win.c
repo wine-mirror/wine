@@ -862,6 +862,14 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     else if (classPtr->style & CS_CLASSDC) wndPtr->dce = classPtr->dce;
     else wndPtr->dce = NULL;
 
+    /* Initialize the dimensions before sending WM_GETMINMAXINFO */
+
+    wndPtr->rectWindow.left   = cs->x;
+    wndPtr->rectWindow.top    = cs->y;
+    wndPtr->rectWindow.right  = cs->x + cs->cx;
+    wndPtr->rectWindow.bottom = cs->y + cs->cy;
+    wndPtr->rectClient        = wndPtr->rectWindow;
+
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
