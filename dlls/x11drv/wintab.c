@@ -249,6 +249,7 @@ static void *xinput_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(XListInputDevices)
+MAKE_FUNCPTR(XFreeDeviceList)
 MAKE_FUNCPTR(XOpenDevice)
 MAKE_FUNCPTR(XQueryDeviceState)
 MAKE_FUNCPTR(XGetDeviceButtonMapping)
@@ -264,6 +265,7 @@ static INT X11DRV_XInput_Init(void)
     {
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xinput_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
         LOAD_FUNCPTR(XListInputDevices)
+        LOAD_FUNCPTR(XFreeDeviceList)
         LOAD_FUNCPTR(XOpenDevice)
         LOAD_FUNCPTR(XGetDeviceButtonMapping)
         LOAD_FUNCPTR(XCloseDevice)
@@ -507,6 +509,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             }
         }
     }
+    pXFreeDeviceList(devices);
     wine_tsx11_unlock();
     gSysDevice.NCSRTYPES = cursor_target+1;
     gNumCursors = cursor_target+1;
@@ -693,6 +696,7 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
     wine_tsx11_lock();
     devices = pXListInputDevices(data->display, &num_devices);
 
+    X11DRV_expect_error(data->display,Tablet_ErrorHandler,NULL);
     for (cur_loop=0; cur_loop < gNumCursors; cur_loop++)
     {
         int    event_number=0;
@@ -736,15 +740,13 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
             if (proximity_in_type) X11DRV_register_event_handler( proximity_in_type, proximity_event );
             if (proximity_out_type) X11DRV_register_event_handler( proximity_out_type, proximity_event );
 
-            if (pXSelectExtensionEvent(data->display, win, event_list, event_number))
-            {
-                ERR( "error selecting extended events\n");
-                goto end;
-            }
+            pXSelectExtensionEvent(data->display, win, event_list, event_number);
         }
     }
+    XSync(data->display, False);
+    X11DRV_check_error();
 
-end:
+    if (NULL != devices) pXFreeDeviceList(devices);
     wine_tsx11_unlock();
     return 0;
 }
