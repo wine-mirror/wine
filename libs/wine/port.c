@@ -125,6 +125,7 @@ __ASM_GLOBAL_FUNC( wine_switch_to_stack,
                    "mtctr r3\n\t" /* func -> ctr */
                    "mr r3,r4\n\t" /* args -> function param 1 (r3) */
                    "mr r1,r5\n\t" /* stack */
+                   "subi r1,r1,0x100\n\t" /* adjust stack pointer */
                    "bctr\n" /* call ctr */
                    "1:\tb 1b"); /* loop */
 #elif defined(__powerpc__) && defined(__GNUC__)
