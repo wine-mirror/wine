@@ -164,10 +164,6 @@ extern HPEN SYSCOLOR_GetPen( INT index );
 extern void SYSMETRICS_Init(void);
 extern INT SYSMETRICS_Set( INT index, INT value );
 
-/* Wine extensions */
-#define SM_WINE_BPP (SM_CMETRICS+1)  /* screen bpp */
-#define SM_WINE_CMETRICS SM_WINE_BPP
-
 /* sysparams.c */
 extern void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height );
 extern INT SYSPARAMS_GetMouseButtonSwap( void );

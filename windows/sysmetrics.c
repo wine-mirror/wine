@@ -32,7 +32,8 @@
 #include "winerror.h"
 #include "user.h"
 
-static int sysMetrics[SM_WINE_CMETRICS+1];
+static int sysMetrics[SM_CMETRICS+1];
+static HDC display_dc;
 
 
 /***********************************************************************
@@ -116,11 +117,11 @@ static int SYSMETRICS_GetRegistryMetric (
  */
 void SYSMETRICS_Init(void)
 {
-    HDC hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
     HKEY hkey; /* key to the window metrics area of the registry */
     INT dummy;
 
-    assert(hdc);
+    display_dc = CreateICA( "DISPLAY", NULL, NULL, NULL );
+    assert( display_dc );
 
     if (RegOpenKeyExA (HKEY_CURRENT_USER, "Control Panel\\desktop\\WindowMetrics",
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
@@ -158,17 +159,12 @@ void SYSMETRICS_Init(void)
 
     sysMetrics[SM_CXCURSOR] = 32;
     sysMetrics[SM_CYCURSOR] = 32;
-    sysMetrics[SM_CXSCREEN] = GetDeviceCaps( hdc, HORZRES );
-    sysMetrics[SM_CYSCREEN] = GetDeviceCaps( hdc, VERTRES );
-    sysMetrics[SM_WINE_BPP] = GetDeviceCaps( hdc, BITSPIXEL );
     sysMetrics[SM_CXBORDER] = 1;
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL];
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
     sysMetrics[SM_CXICON] = 32;
     sysMetrics[SM_CYICON] = 32;
-    sysMetrics[SM_CXFULLSCREEN] = sysMetrics[SM_CXSCREEN];
-    sysMetrics[SM_CYFULLSCREEN] = sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];
     sysMetrics[SM_CYKANJIWINDOW] = 0;
     sysMetrics[SM_MOUSEPRESENT] = 1;
     sysMetrics[SM_CYVSCROLL] = SYSMETRICS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CXVSCROLL]);
@@ -230,10 +226,6 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYMINIMIZED] = 24;
 
     /* FIXME: How do I calculate these? */
-    sysMetrics[SM_CXMAXTRACK] = sysMetrics[SM_CXSCREEN] + 4 + 2 * sysMetrics[SM_CXFRAME];
-    sysMetrics[SM_CYMAXTRACK] = sysMetrics[SM_CYSCREEN] + 4 + 2 * sysMetrics[SM_CYFRAME];
-    sysMetrics[SM_CXMAXIMIZED] = sysMetrics[SM_CXSCREEN] + 2 * sysMetrics[SM_CXFRAME];
-    sysMetrics[SM_CYMAXIMIZED] = sysMetrics[SM_CYSCREEN] + 2 * sysMetrics[SM_CXFRAME];
     sysMetrics[SM_NETWORK] = 3;
 
     /* For the following: 0 = ok, 1 = failsafe, 2 = failsafe + network */
@@ -252,8 +244,6 @@ void SYSMETRICS_Init(void)
 
     sysMetrics[SM_MOUSEWHEELPRESENT] = 1;
 
-    sysMetrics[SM_CXVIRTUALSCREEN] = sysMetrics[SM_CXSCREEN];
-    sysMetrics[SM_CYVIRTUALSCREEN] = sysMetrics[SM_CYSCREEN];
     sysMetrics[SM_XVIRTUALSCREEN] = 0;
     sysMetrics[SM_YVIRTUALSCREEN] = 0;
     sysMetrics[SM_CMONITORS] = 1;
@@ -263,7 +253,6 @@ void SYSMETRICS_Init(void)
     SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], 0 );
 
     if (hkey) RegCloseKey (hkey);
-    DeleteDC( hdc );
 }
 
 
@@ -274,7 +263,7 @@ void SYSMETRICS_Init(void)
  */
 INT SYSMETRICS_Set( INT index, INT value )
 {
-    if ((index < 0) || (index > SM_WINE_CMETRICS)) return 0;
+    if ((index < 0) || (index > SM_CMETRICS)) return 0;
     else
     {
         INT prev = sysMetrics[index];
@@ -298,6 +287,31 @@ INT16 WINAPI GetSystemMetrics16( INT16 index )
  */
 INT WINAPI GetSystemMetrics( INT index )
 {
-    if ((index < 0) || (index > SM_WINE_CMETRICS)) return 0;
-    return sysMetrics[index];
+    /* some metrics are dynamic */
+    switch (index)
+    {
+    case SM_CXSCREEN:
+    case SM_CXFULLSCREEN:
+    case SM_CXVIRTUALSCREEN:
+        return GetDeviceCaps( display_dc, HORZRES );
+    case SM_CYSCREEN:
+    case SM_CYVIRTUALSCREEN:
+        return GetDeviceCaps( display_dc, VERTRES );
+    case SM_CYFULLSCREEN:
+        return GetDeviceCaps( display_dc, VERTRES ) - sysMetrics[SM_CYCAPTION];
+
+    /* FIXME: How do I calculate these? */
+    case SM_CXMAXTRACK:
+        return GetDeviceCaps( display_dc, HORZRES ) + 4 + 2 * sysMetrics[SM_CXFRAME];
+    case SM_CYMAXTRACK:
+        return GetDeviceCaps( display_dc, VERTRES ) + 4 + 2 * sysMetrics[SM_CYFRAME];
+    case SM_CXMAXIMIZED:
+        return GetDeviceCaps( display_dc, HORZRES ) + 2 * sysMetrics[SM_CXFRAME];
+    case SM_CYMAXIMIZED:
+        return GetDeviceCaps( display_dc, VERTRES ) + 2 * sysMetrics[SM_CYFRAME];
+
+    default:
+        if ((index < 0) || (index > SM_CMETRICS)) return 0;
+        return sysMetrics[index];
+    }
 }
