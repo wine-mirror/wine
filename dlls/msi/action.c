@@ -2022,7 +2022,8 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     }
     else if (!source && package->folders[i].Property)
     {
-        path = dupstrW(package->folders[i].Property);
+        path = build_directory_name(2, package->folders[i].Property, NULL);
+                    
         TRACE("   internally set to %s\n",debugstr_w(path));
         if (set_prop)
             MSI_SetPropertyW(package,name,path);
@@ -4769,7 +4770,6 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
         ' ','f','r','o','m',' ','I','n','i','F','i','l','e',0};
     static const WCHAR szWindowsFolder[] =
           {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
-    static const WCHAR szbs[] = {'\\',0};
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
@@ -4847,14 +4847,7 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
             goto cleanup;
         }
 
-
-        fullname = HeapAlloc(GetProcessHeap(),0,
-                    (strlenW(folder)+strlenW(filename)+2)*sizeof(WCHAR));
-       
-        strcpyW(fullname,folder);
-        if (fullname[strlenW(folder)] != '\\')
-            strcatW(fullname,szbs);
-        strcatW(fullname,filename);
+        fullname = build_directory_name(3, folder, filename, NULL);
 
         if (action == 0)
         {
@@ -5546,7 +5539,6 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     DWORD i;
     LPWSTR path = NULL;
     LPWSTR path2 = NULL;
-    INT len;
     MSIFOLDER *folder;
 
     TRACE("(%p %s %s)\n",package, debugstr_w(szFolder),debugstr_w(szFolderPath));
@@ -5566,20 +5558,9 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
         return ERROR_INVALID_PARAMETER;
 
     HeapFree(GetProcessHeap(),0,folder->Property);
+    folder->Property = build_directory_name(2, szFolderPath, NULL);
 
-    len = strlenW(szFolderPath);
-
-    if (szFolderPath[len-1]!='\\')
-    {
-        len +=2;
-        folder->Property = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-        strcpyW(folder->Property,szFolderPath);
-        strcatW(folder->Property,cszbs);
-    }
-    else
-        folder->Property = dupstrW(szFolderPath);
-
-    if (strcmpiW(path, szFolderPath) == 0)
+    if (strcmpiW(path, folder->Property) == 0)
     {
         /*
          *  Resolved Target has not really changed, so just 
