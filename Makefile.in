@@ -271,7 +271,8 @@ llib-lwine.ln : $(LIBLINTS) $(X11LINTS)
 
 libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
 	$(LDSHARED) -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS)
-	ln -sf $@ libwine.so
+	$(RM) libwine.so
+	$(LN_S) $@ libwine.so
 
 install_emu: install_lib
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
@@ -285,8 +286,12 @@ install_lib: dummy
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	if [ -f wine.sym ]; then $(INSTALL_DATA) wine.sym $(libdir)/wine.sym; fi
 	if [ $(LIB_TARGET) ]; then \
-	    $(INSTALL_DATA) $(LIB_TARGET) $(libdir); \
-	    if [ $(LIB_TARGET) = libwine.so.1.0 ]; then $(LDCONFIG); fi \
+	    if [ $(LIB_TARGET) = libwine.so.1.0 ]; then \
+	        $(INSTALL_PROGRAM) $(LIB_TARGET) $(libdir); \
+	        $(LDCONFIG) || (cd $(libdir) ; $(RM) libwine.so ; $(LN_S) $(LIB_TARGET) libwine.so) ; \
+	    else \
+	        $(INSTALL_DATA) $(LIB_TARGET) $(libdir); \
+	    fi \
 	fi
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver

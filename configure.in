@@ -356,7 +356,7 @@ then
   then
     BUILDFLAGS="-pic"
     DLLFLAGS="-fPIC"
-    LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so"
+    LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so,-rpath,\$(libdir)"
   else
     AC_CACHE_CHECK("whether we can build a UnixWare dll",
                  ac_cv_c_dll_unixware,
@@ -369,7 +369,7 @@ then
     then
       BUILDFLAGS="-pic"
       DLLFLAGS="-fPIC"
-      LDSHARED="\$(CC) -Wl,-G,-h,/usr/local/lib/libwine.so"
+      LDSHARED="\$(CC) -Wl,-G,-h,\$(libdir)/libwine.so"
     else
       AC_CACHE_CHECK("whether we can build a NetBSD dll",
                    ac_cv_c_dll_netbsd,

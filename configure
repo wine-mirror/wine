@@ -4119,7 +4119,7 @@ echo "$ac_t""$ac_cv_c_dll_linux" 1>&6
   then
     BUILDFLAGS="-pic"
     DLLFLAGS="-fPIC"
-    LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so"
+    LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so,-rpath,\$(libdir)"
   else
     echo $ac_n "checking "whether we can build a UnixWare dll"""... $ac_c" 1>&6
 echo "configure:4126: checking "whether we can build a UnixWare dll"" >&5
@@ -4155,7 +4155,7 @@ echo "$ac_t""$ac_cv_c_dll_unixware" 1>&6
     then
       BUILDFLAGS="-pic"
       DLLFLAGS="-fPIC"
-      LDSHARED="\$(CC) -Wl,-G,-h,/usr/local/lib/libwine.so"
+      LDSHARED="\$(CC) -Wl,-G,-h,\$(libdir)/libwine.so"
     else
       echo $ac_n "checking "whether we can build a NetBSD dll"""... $ac_c" 1>&6
 echo "configure:4162: checking "whether we can build a NetBSD dll"" >&5
