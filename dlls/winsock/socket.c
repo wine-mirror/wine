@@ -3443,3 +3443,16 @@ int WINAPI WSARemoveServiceClass(LPGUID info)
     WSASetLastError(WSATYPE_NOT_FOUND);
     return SOCKET_ERROR;
 }
+
+/***********************************************************************
+ *              WSAStringToAddressA                      (WS2_32.80)
+ */
+INT WINAPI WSAStringToAddressA(LPSTR AddressString,
+                               INT AddressFamily,
+                               LPWSAPROTOCOL_INFOA lpProtocolInfo, 
+                               LPSOCKADDR lpAddress,
+                               LPINT lpAddressLength)
+{
+    FIXME("(%s, %x, %p, %p, %p) Stub!\n", AddressString, AddressFamily, lpProtocolInfo, lpAddress, lpAddressLength);
+    return 0;
+}

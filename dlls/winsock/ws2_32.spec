@@ -81,7 +81,7 @@
 77  stub     WSASetServiceW
 78  stdcall  WSASocketA(long long long ptr long long)
 79  stub     WSASocketW
-80  stub     WSAStringToAddressA
+80  stdcall  WSAStringToAddressA(str long ptr ptr ptr)
 81  stub     WSAStringToAddressW
 82  stdcall  WSAWaitForMultipleEvents(long ptr long long long) kernel32.WaitForMultipleObjectsEx
 83  stdcall  WSCDeinstallProvider(ptr ptr)
