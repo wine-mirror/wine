@@ -1,4 +1,26 @@
 ----------------------------------------------------------------
+2002-03-09  Alexandre Julliard  <julliard@winehq.com>
+
+	* LICENSE.OLD: Keep old license around.
+
+	* include/debugtools.h, tools/apiw.index, tools/ipcl,
+	  tools/make_os2.cmd, tools/makehtml.pl, tools/unimap.pl,
+	  tools/wmc/language.c:
+	Removed some obsolete files.
+
+	* */*:
+	Added LGPL standard comment, and copyright notices where necessary.
+	Global replacement of debugtools.h by wine/debug.h.
+
+	* COPYING.LIB, LICENSE, WARRANTY:
+	Changed license to LGPL.
+
+2002-02-28  Alexandre Julliard  <julliard@winehq.com>
+
+	* VERSION, configure, ANNOUNCE, ChangeLog:
+	Release 20020228.
+
+----------------------------------------------------------------
 2002-02-28  Alexandre Julliard  <julliard@winehq.com>
 
 	* dlls/shell32/authors.h, AUTHORS:
