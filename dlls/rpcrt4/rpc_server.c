@@ -117,8 +117,10 @@ static void RPCRT4_push_packet(RpcPacket* packet)
 {
   packet->next = NULL;
   EnterCriticalSection(&spacket_cs);
-  if (spacket_tail) spacket_tail->next = packet;
-  else {
+  if (spacket_tail) {
+    spacket_tail->next = packet;
+    spacket_tail = packet;
+  } else {
     spacket_head = packet;
     spacket_tail = packet;
   }
