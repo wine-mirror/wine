@@ -2763,13 +2763,13 @@ static void test_showwindow(void)
     /* ShowWindow( SW_SHOWNA) for invisible top level window */
     trace("calling ShowWindow( SW_SHOWNA) for invisible top level window\n");
     ok( ShowWindow(hwnd, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
-    ok_sequence(WmSHOWNATopInvisible, "ShowWindow(SW_SHOWNA) on invisible top level window.\n", TRUE);
+    ok_sequence(WmSHOWNATopInvisible, "ShowWindow(SW_SHOWNA) on invisible top level window", TRUE);
     trace("done\n");
 
     /* ShowWindow( SW_SHOWNA) for now visible top level window */
     trace("calling ShowWindow( SW_SHOWNA) for now visible top level window\n");
     ok( ShowWindow(hwnd, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
-    ok_sequence(WmSHOWNATopVisible, "ShowWindow(SW_SHOWNA) on visible top level window.\n", FALSE);
+    ok_sequence(WmSHOWNATopVisible, "ShowWindow(SW_SHOWNA) on visible top level window", FALSE);
     trace("done\n");
     /* back to invisible */
     ShowWindow(hchild, SW_HIDE);
@@ -2778,21 +2778,21 @@ static void test_showwindow(void)
     /* ShowWindow(SW_SHOWNA) with child and parent invisible */ 
     trace("calling ShowWindow( SW_SHOWNA) for invisible child with invisible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
-    ok_sequence(WmSHOWNAChildInvisParInvis, "ShowWindow(SW_SHOWNA) invisible child and parent\n", TRUE);
+    ok_sequence(WmSHOWNAChildInvisParInvis, "ShowWindow(SW_SHOWNA) invisible child and parent", TRUE);
     trace("done\n");
     /* ShowWindow(SW_SHOWNA) with child visible and parent invisible */ 
     ok( ShowWindow(hchild, SW_SHOW) != FALSE, "ShowWindow: window was invisible\n" );
     flush_sequence();
     trace("calling ShowWindow( SW_SHOWNA) for the visible child and invisible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
-    ok_sequence(WmSHOWNAChildVisParInvis, "ShowWindow(SW_SHOWNA) visible child and invisible parent\n", TRUE);
+    ok_sequence(WmSHOWNAChildVisParInvis, "ShowWindow(SW_SHOWNA) visible child and invisible parent", TRUE);
     trace("done\n");
     /* ShowWindow(SW_SHOWNA) with child visible and parent visible */
     ShowWindow( hwnd, SW_SHOW);
     flush_sequence();
     trace("calling ShowWindow( SW_SHOWNA) for the visible child and parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
-    ok_sequence(WmSHOWNAChildVisParVis, "ShowWindow(SW_SHOWNA) for the visible child and parent\n", FALSE);
+    ok_sequence(WmSHOWNAChildVisParVis, "ShowWindow(SW_SHOWNA) for the visible child and parent", FALSE);
     trace("done\n");
 
     /* ShowWindow(SW_SHOWNA) with child invisible and parent visible */
@@ -2800,7 +2800,7 @@ static void test_showwindow(void)
     flush_sequence();
     trace("calling ShowWindow( SW_SHOWNA) for the invisible child and visible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
-    ok_sequence(WmSHOWNAChildInvisParVis, "ShowWindow(SW_SHOWNA) for the invisible child and visible parent\n", FALSE);
+    ok_sequence(WmSHOWNAChildInvisParVis, "ShowWindow(SW_SHOWNA) for the invisible child and visible parent", FALSE);
     trace("done\n");
 
     DestroyWindow(hchild);
@@ -5358,20 +5358,20 @@ static void test_scrollwindowex(void)
     trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_ERASE|SW_INVALIDATE);
-    ok_sequence(WmEmptySeq, "ScrollWindowEx\n", 0);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
     trace("end scroll\n");
     flush_sequence();
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
-    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx\n", 0);
+    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
 
     /* Now without the SW_ERASE flag */
     trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL, SW_INVALIDATE);
-    ok_sequence(WmEmptySeq, "ScrollWindowEx\n", 0);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
     trace("end scroll\n");
     flush_sequence();
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
-    ok_sequence(ScrollWindowPaint2, "ScrollWindowEx\n", 0);
+    ok_sequence(ScrollWindowPaint2, "ScrollWindowEx", 0);
 
     /* now scroll the child window as well */
     trace("start scroll\n");
@@ -5379,12 +5379,12 @@ static void test_scrollwindowex(void)
             SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
     todo_wine { /* wine sends WM_POSCHANGING, WM_POSCHANGED messages */
                 /* windows sometimes a WM_MOVE */
-        ok_sequence(WmEmptySeq, "ScrollWindowEx\n", 0);
+        ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
     }
     trace("end scroll\n");
     flush_sequence();
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
-    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx\n", 0);
+    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
 
     ok(DestroyWindow(hchild), "failed to destroy window\n");
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
@@ -5435,7 +5435,7 @@ static void test_DestroyWindow(void)
     ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     if(pGetAncestor) {
         test = pGetAncestor(child2, GA_PARENT);
-    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+        ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     }
     test = GetWindow(child2, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
@@ -5448,7 +5448,7 @@ static void test_DestroyWindow(void)
     ok(!test, "wrong parent %p\n", test);
     if(pGetAncestor) {
         test = pGetAncestor(parent, GA_PARENT);
-    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+        ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     }
     test = GetWindow(parent, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
@@ -5458,7 +5458,7 @@ static void test_DestroyWindow(void)
     ok(test == parent, "wrong parent %p\n", test);
     if(pGetAncestor) {
         test = pGetAncestor(child1, GA_PARENT);
-    ok(test == parent, "wrong parent %p\n", test);
+        ok(test == parent, "wrong parent %p\n", test);
     }
     test = GetWindow(child1, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
@@ -5468,7 +5468,7 @@ static void test_DestroyWindow(void)
     ok(test == parent, "wrong parent %p\n", test);
     if(pGetAncestor) {
         test = pGetAncestor(child2, GA_PARENT);
-    ok(test == parent, "wrong parent %p\n", test);
+        ok(test == parent, "wrong parent %p\n", test);
     }
     test = GetWindow(child2, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
@@ -5478,7 +5478,7 @@ static void test_DestroyWindow(void)
     ok(test == child1, "wrong parent %p\n", test);
     if(pGetAncestor) {
         test = pGetAncestor(child3, GA_PARENT);
-    ok(test == child1, "wrong parent %p\n", test);
+        ok(test == child1, "wrong parent %p\n", test);
     }
     test = GetWindow(child3, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
@@ -5488,7 +5488,7 @@ static void test_DestroyWindow(void)
     ok(test == parent, "wrong parent %p\n", test);
     if(pGetAncestor) {
         test = pGetAncestor(child4, GA_PARENT);
-    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+        ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     }
     test = GetWindow(child4, GW_OWNER);
     ok(test == parent, "wrong owner %p\n", test);
@@ -5501,7 +5501,7 @@ static void test_DestroyWindow(void)
     test_DestroyWindow_flag = TRUE;
     ok(DestroyWindow(parent), "DestroyWindow() error %ld\n", GetLastError());
     test_DestroyWindow_flag = FALSE;
-    ok_sequence(destroy_window_with_children, "destroy window with children\n", 0);
+    ok_sequence(destroy_window_with_children, "destroy window with children", 0);
 
     ok(!IsWindow(parent), "parent still exists");
     ok(!IsWindow(child1), "child1 still exists");
