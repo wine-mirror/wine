@@ -176,11 +176,10 @@ printer=on
 	    and to set it as the default printer also add
 	  </para>
 	  <screen>
-  "device" = "Wine PostScript Driver,WINEPS,LPT1:"
+  device = Wine PostScript Driver,WINEPS,LPT1:
 	  </screen>
 	  <para>
-	    to the [windows] section of <filename>~/.wine/config</filename> and ???
-	    <emphasis>[sic]</emphasis>
+	    to the [windows] section of <filename>win.ini</filename>.
 	  </para>
 	  <para>
 	    You also need to add certain entries to the registry.
