@@ -19,13 +19,14 @@ DEFAULT_DEBUG_CHANNEL(shell);
 
 static BOOL SHELL_WarnFolderDelete (int nKindOfDialog, LPCSTR szDir)
 {
-	char szCaption[255], szText[255], szBuffer[256];
+	char szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 
 	LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_TEXT, szText, sizeof(szText));
 	LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_CAPTION, szCaption, sizeof(szCaption));
-	FormatMessageA(FORMAT_MESSAGE_FROM_STRING, szText, 0,0, szBuffer, sizeof(szBuffer), (DWORD*)&szDir);
+	FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+	    szText, 0, 0, szBuffer, sizeof(szBuffer), (DWORD*)&szDir);
 
-	return (IDOK == MessageBoxA(GetActiveWindow(),szText, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
+	return (IDOK == MessageBoxA(GetActiveWindow(), szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
 }
 
 /**************************************************************************
