@@ -23,6 +23,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/debug.h"
+#include "math.h"
 
 #include "d3d8_private.h"
 
@@ -995,6 +996,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE d3dts,CONST D3DMATRIX* lpmatrix) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
+    int k;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
     TRACE("(%p) : State=%d\n", This, d3dts);
@@ -1064,6 +1066,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
     checkGLcall("glMatrixMode");
     glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
     checkGLcall("glLoadMatrixf");
+
+    /* If we are changing the View matrix, reset the light information to the new view */
+    if (d3dts == D3DTS_VIEW) {
+        for (k = 0; k < MAX_ACTIVE_LIGHTS; k++) {
+            glLightfv(GL_LIGHT0 + k, GL_POSITION,       &This->lightPosn[k][0]);
+            checkGLcall("glLightfv posn");
+            glLightfv(GL_LIGHT0 + k, GL_SPOT_DIRECTION, &This->lightDirn[k][0]);
+            checkGLcall("glLightfv dirn");
+        }
+    }
+
     glMultMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
     checkGLcall("glMultMatrixf");
 
@@ -1165,7 +1178,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetMaterial(LPDIRECT3DDEVICE8 iface, D3DMA
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,CONST D3DLIGHT8* pLight) {
     float colRGBA[] = {0.0, 0.0, 0.0, 0.0};
-    float coords[] = {0.0, 0.0, 0.0, 0.0};
+    float rho;
+    float quad_att;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
@@ -1212,52 +1226,80 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     glLightfv(GL_LIGHT0+Index, GL_AMBIENT, colRGBA);
     checkGLcall("glLightfv");
 
+    /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+    glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
+
     /* Attenuation - Are these right? guessing... */
     glLightf(GL_LIGHT0+Index, GL_CONSTANT_ATTENUATION,  pLight->Attenuation0);
     checkGLcall("glLightf");
     glLightf(GL_LIGHT0+Index, GL_LINEAR_ATTENUATION,    pLight->Attenuation1);
     checkGLcall("glLightf");
-    glLightf(GL_LIGHT0+Index, GL_QUADRATIC_ATTENUATION, pLight->Attenuation2);
+
+    quad_att = 1.4/(pLight->Range*pLight->Range);
+    if (quad_att < pLight->Attenuation2) quad_att = pLight->Attenuation2;
+    glLightf(GL_LIGHT0+Index, GL_QUADRATIC_ATTENUATION, quad_att);
     checkGLcall("glLightf");
 
     switch (pLight->Type) {
     case D3DLIGHT_POINT:
         /* Position */
-        coords[0] = pLight->Position.x;
-        coords[1] = pLight->Position.y;
-        coords[2] = pLight->Position.z;
-        coords[3] = 1.0;
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, coords);
+        This->lightPosn[Index][0] = pLight->Position.x;
+        This->lightPosn[Index][1] = pLight->Position.y;
+        This->lightPosn[Index][2] = pLight->Position.z;
+        This->lightPosn[Index][3] = 1.0;
+        glLightfv(GL_LIGHT0+Index, GL_POSITION, &This->lightPosn[Index][0]);
         checkGLcall("glLightfv");
+
+        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, 180);
+        checkGLcall("glLightf");
 
         /* FIXME: Range */
         break;
+
     case D3DLIGHT_SPOT:
         /* Position */
-        coords[0] = pLight->Position.x;
-        coords[1] = pLight->Position.y;
-        coords[2] = pLight->Position.z;
-        coords[3] = 0.0;
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, coords);
+        This->lightPosn[Index][0] = pLight->Position.x;
+        This->lightPosn[Index][1] = pLight->Position.y;
+        This->lightPosn[Index][2] = pLight->Position.z;
+        This->lightPosn[Index][3] = 1.0;
+        glLightfv(GL_LIGHT0+Index, GL_POSITION, &This->lightPosn[Index][0]);
         checkGLcall("glLightfv");
 
         /* Direction */
-        coords[0] = pLight->Direction.x;
-        coords[1] = pLight->Direction.y;
-        coords[2] = pLight->Direction.z;
-        coords[3] = 1.0;
-        glLightfv(GL_LIGHT0+Index, GL_SPOT_DIRECTION, coords);
+        This->lightDirn[Index][0] = pLight->Direction.x;
+        This->lightDirn[Index][1] = pLight->Direction.y;
+        This->lightDirn[Index][2] = pLight->Direction.z;
+        This->lightDirn[Index][3] = 1.0;
+        glLightfv(GL_LIGHT0+Index, GL_SPOT_DIRECTION, &This->lightDirn[Index][0]);
         checkGLcall("glLightfv");
+
+        /*
+         * opengl-ish and d3d-ish spot lights use too different models for the
+         * light "intensity" as a function of the angle towards the main light direction,
+         * so we only can approximate very roughly.
+         * however spot lights are rather rarely used in games (if ever used at all).
+         * furthermore if still used, probably nobody pays attention to such details.
+         */
+        if (pLight->Falloff == 0) {
+            rho = 6.28f;
+        } else {
+            rho = pLight->Theta + (pLight->Phi - pLight->Theta)/(2*pLight->Falloff);
+        }
+        if (rho < 0.0001) rho = 0.0001f;
+        glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, -0.3/log(cos(rho/2)));
+        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, pLight->Phi*90/M_PI);
 
         /* FIXME: Range */
         break;
     case D3DLIGHT_DIRECTIONAL:
         /* Direction */
-        coords[0] = -pLight->Direction.x;
-        coords[1] = pLight->Direction.y;
-        coords[2] = -pLight->Direction.z;
-        coords[3] = 0.0;
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, coords); /* Note gl uses w position of 0 for direction! */
+        This->lightPosn[Index][0] = -pLight->Direction.x;
+        This->lightPosn[Index][1] = -pLight->Direction.y;
+        This->lightPosn[Index][2] = -pLight->Direction.z;
+        This->lightPosn[Index][3] = 0.0;
+        glLightfv(GL_LIGHT0+Index, GL_POSITION, &This->lightPosn[Index][0]); /* Note gl uses w position of 0 for direction! */
         checkGLcall("glLightfv");
 
         glLightf(GL_LIGHT0+Index, GL_SPOT_CUTOFF, 180.0f);
@@ -1269,7 +1311,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
         FIXME("Unrecognized light type %d\n", pLight->Type);
     }
 
-    /* FIXME: Falloff, Theta, Phi; */
+    /* Restore the modelview matrix */
+    glPopMatrix();
+
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,D3DLIGHT8* pLight) {

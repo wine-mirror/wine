@@ -300,6 +300,10 @@ struct IDirect3DDevice8Impl
     STATEBLOCK                 StateBlock;
     STATEBLOCK                *UpdateStateBlock;
 
+    /* Other required values */
+    float lightPosn[MAX_ACTIVE_LIGHTS][4];
+    float lightDirn[MAX_ACTIVE_LIGHTS][4];
+
     /* OpenGL related */
     GLXContext   glCtx;
     XVisualInfo *visInfo;
