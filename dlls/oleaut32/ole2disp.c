@@ -360,7 +360,7 @@ HRESULT WINAPI CreateDispTypeInfo16(
 	ITypeInfo **pptinfo)
 {
 	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
-	return 0;
+	return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -374,7 +374,7 @@ HRESULT WINAPI CreateStdDispatch16(
 {
 	FIXME("(%p,%p,%p,%p),stub\n",punkOuter, pvThis, ptinfo,
                ppunkStdDisp);
-	return 0;
+	return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -384,7 +384,7 @@ HRESULT WINAPI RegisterActiveObject16(
 	IUnknown *punk, REFCLSID rclsid, DWORD dwFlags, unsigned long *pdwRegister
 ) {
 	FIXME("(%p,%s,0x%08lx,%p):stub\n",punk,debugstr_guid(rclsid),dwFlags,pdwRegister);
-	return 0;
+	return E_NOTIMPL;
 }
 
 /******************************************************************************

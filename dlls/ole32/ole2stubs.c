@@ -35,7 +35,7 @@ HRESULT WINAPI  OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid,
 			LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
 {
     FIXME("(%p,%p,%li,%p,%p,%p,%p), stub!\n",lpszFileName, riid, renderopt, lpFormatEtc, pClientSite, pStg, ppvObj);
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 
@@ -46,7 +46,7 @@ HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 	                          UINT uiFlags)
 {
     FIXME("(%x,%x,%x), stub!\n", hSrc, cfFormat, uiFlags);
-    return S_OK;
+    return E_NOTIMPL;
 }
 
  
@@ -57,7 +57,7 @@ HRESULT WINAPI WriteFmtUserTypeStg(
 	  LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType)
 {
     FIXME("(%p,%x,%s) stub!\n",pstg,cf,debugstr_w(lpszUserType));
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 /***********************************************************************
@@ -76,7 +76,7 @@ HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
 HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
 {
   FIXME("(%p,%x), stub!\n", pStg, fConvert);
-  return S_OK;
+  return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -133,7 +133,7 @@ HRESULT WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
 {
   FIXME("(not shown), stub!\n");
-  return S_OK;
+  return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -143,7 +143,7 @@ HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID
             DWORD renderopt, LPFORMATETC lpFormatEtc, LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
 {
   FIXME("(not shown), stub!\n");
-  return S_OK;
+  return E_NOTIMPL;
 }
 
 
@@ -153,7 +153,7 @@ HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID
 HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseTypeAsLabel)
 {
   FIXME("(%p,%p,%x), stub!\n", rclsid, lpszLabel, fUseTypeAsLabel);
-  return S_OK;
+  return (HGLOBAL)NULL;
 }
 
 /******************************************************************************
@@ -162,7 +162,7 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
 HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lplpszUserType)
 {
   FIXME("(%p,%p,%p), stub!\n", pstg, pcf, lplpszUserType);
-  return S_OK;
+  return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -173,7 +173,7 @@ HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
                 LPSTORAGE pStg, LPVOID* ppvObj)
 {
   FIXME("(not shown), stub!\n");
-  return S_OK;
+  return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -186,7 +186,7 @@ HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
                 LPVOID* ppvObj)
 {
   FIXME("(not shown), stub!\n");
-  return S_OK;
+  return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -217,7 +217,7 @@ HRESULT     WINAPI OleRegEnumFormatEtc (
 {
     FIXME("(%p, %ld, %p), stub!\n", clsid, dwDirection, ppenumFormatetc);
 
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 /***********************************************************************
@@ -229,7 +229,7 @@ HRESULT WINAPI PropVariantClear(void *pvar) /* [in/out] FIXME: PROPVARIANT * */
 
 	*(LPWORD)pvar = 0;
 	/* sets at least the vt field to VT_EMPTY */
-	return S_OK;
+	return E_NOTIMPL;
 }
 
 /***********************************************************************
@@ -240,7 +240,7 @@ HRESULT WINAPI PropVariantCopy(void *pvarDest,      /* [out] FIXME: PROPVARIANT 
 {
 	FIXME("(%p, %p): stub:\n", pvarDest, pvarSrc);
 
-	return S_OK;
+	return E_NOTIMPL;
 }
 
 /***********************************************************************
@@ -251,7 +251,7 @@ HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
 {
 	FIXME("(%lu, %p): stub:\n", cVariants, rgvars);
 
-	return S_OK;
+	return E_NOTIMPL;
 }
 
 /***********************************************************************
