@@ -76,7 +76,8 @@ typedef struct tagTrackerWindowInfo
   HRESULT      returnValue;
 
   BOOL       escPressed;
-  HWND       curDragTargetHWND;
+  HWND       curTargetHWND;	/* window the mouse is hovering over */
+  HWND       curDragTargetHWND; /* might be a ancestor of curTargetHWND */
   IDropTarget* curDragTarget;
 } TrackerWindowInfo;
 
@@ -551,6 +552,7 @@ HRESULT WINAPI DoDragDrop (
   trackerInfo.trackingDone      = FALSE;
   trackerInfo.escPressed        = FALSE;
   trackerInfo.curDragTargetHWND = 0;
+  trackerInfo.curTargetHWND     = 0;
   trackerInfo.curDragTarget     = 0;
 
   hwndTrackWindow = CreateWindowA(OLEDD_DRAGTRACKERCLASS,
@@ -1920,7 +1922,7 @@ static void OLEDD_TrackMouseMove(
    * DragOver notification
    */
   if ( (trackerInfo->curDragTarget != 0) &&
-       (trackerInfo->curDragTargetHWND==hwndNewTarget) )
+       (trackerInfo->curTargetHWND == hwndNewTarget) )
   {
     POINTL  mousePosParam;
 
@@ -1959,6 +1961,8 @@ static void OLEDD_TrackMouseMove(
        * Find-out if there is a drag target under the mouse
        */
       HWND nexttar = hwndNewTarget;
+      trackerInfo->curTargetHWND = hwndNewTarget;
+
       do {
 	newDropTargetNode = OLEDD_FindDropTarget(nexttar);
       } while (!newDropTargetNode && (nexttar = GetParent(nexttar)) != 0);
@@ -1995,6 +1999,7 @@ static void OLEDD_TrackMouseMove(
        * The mouse is not over a window so we don't track anything.
        */
       trackerInfo->curDragTargetHWND = 0;
+      trackerInfo->curTargetHWND     = 0;
       trackerInfo->curDragTarget     = 0;
     }
   }
