@@ -1,6 +1,7 @@
 SUBDIRS = \
 	avitools \
 	clock \
+	cmdlgtst \
 	control \
 	notepad \
 	progman \

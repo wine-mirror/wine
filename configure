@@ -4510,6 +4510,7 @@ objects/Makefile
 ole/Makefile
 programs/Makefile
 programs/clock/Makefile
+programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/avitools/Makefile
 programs/notepad/Makefile
@@ -4668,6 +4669,7 @@ objects/Makefile
 ole/Makefile
 programs/Makefile
 programs/clock/Makefile
+programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/avitools/Makefile
 programs/notepad/Makefile

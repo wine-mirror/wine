@@ -1,0 +1,802 @@
+// (c) 1999 Eric Williams.  Rights as specified under the WINE
+// License.  Don't hoard code; share it!
+
+//
+// One might call this a Commdlg test jig.  Its sole function in life
+// is to call the Commdlg Common Dialogs; at present it doesn't even
+// do anything horribly interesting with the results.
+
+// Ideally it would also do event logging and be a bit less stupid
+// about displaying the results of the various requesters.  But hey,
+// it's only a first step. :-)
+
+#include <windows.h>
+#include <commdlg.h>
+#include <stdio.h>
+#include "cmdlgr.h"
+
+// This structure is to set up flag / control associations for the custom
+// requesters.  The ft_id is the id for the control (usually generated
+// by the system) and the ft_bit is the flag bit which goes into the
+// settings longword for the various Commdlg structures.  It is assumed
+// that all flags fit in an unsigned long and that all bits are in fact
+// one bit.
+
+// The array of entries is terminated by {IDOK, 0}; the assumption is that
+// IDOK would never be associated with a dialogbox control (since it's
+// usually the ID of the OK button}.
+
+struct FlagTableEntry {
+	int ft_id;
+	unsigned long ft_bit;
+};
+
+// #ifdef __WINE_WINDOWS_H
+// #define EXPORT
+// #define HWND HWND32
+// int ctx_debug = 0;
+// #else
+// #define EXPORT _export
+// #endif
+
+//#define FAR
+#define EXPORT
+
+static char menuName[] = "TestCommdlgMenu";
+static char className[] = "TestCommdlg";
+static char windowName[] = "TestCommdlg Window";
+
+// global hInstance variable.  This makes the code non-threadable,
+// but wotthehell; this is Win32 anyway!  (Though it does work
+// under Win16, if one doesn't run more than one copy at a time.)
+
+static HINSTANCE g_hInstance;
+
+// global CommDlg data structures for modals.  These are placed here
+// so that the custom dialog boxes can get at them.
+
+static PRINTDLG pd;
+static COLORREF cc_cr[16];
+static CHOOSECOLOR cc;
+static LOGFONT cf_lf;
+static CHOOSEFONT cf;
+static char ofn_filepat[] = "All Files (*.*)\0*.*\0Only Text Files (*.txt)\0*.txt\0";
+static char ofn_result[1024];
+static OPENFILENAME ofn;
+
+// Stuff for find and replace.  These are modeless, so I have to put them here.
+
+static HWND findDialogBox = 0;
+static UINT findMessageId = 0;
+
+static int findDialogBoxInit = 0;
+static int findDialogStructInit = 0;
+static FINDREPLACE frS;
+static char fromstring[1024], tostring[1024];
+
+// Utility routines.  Currently there is only one, and it's a nasty
+// reminder that I'm not done yet.
+
+void nyi(HWND hWnd)
+{
+	MessageBox(hWnd, "Not yet implemented!", "NYI", MB_ICONEXCLAMATION | MB_OK);
+}
+
+
+// Initial initialization code.  This code simply shoves in predefined
+// data into the COMMDLG data structures; in the future, I might use
+// a series of loadable resources, or static initializers; of course,
+// if Microsoft decides to change the field ordering, I'd be screwed.
+
+void mwi_Print(HWND hWnd)
+{
+	pd.lStructSize = sizeof(PRINTDLG);
+	pd.hwndOwner = hWnd;
+	pd.hDevMode = 0;
+	pd.hDevNames = 0;
+	pd.hDC = 0;
+	pd.Flags = 0;
+	pd.nMinPage = 1;
+	pd.nMaxPage = 100;
+	pd.hInstance = 0;
+	pd.lCustData = 0;
+	pd.lpfnPrintHook = 0;
+	pd.lpfnSetupHook = 0;
+	pd.lpPrintTemplateName = 0;
+	pd.lpSetupTemplateName = 0;
+	pd.hPrintTemplate = 0;
+	pd.hSetupTemplate = 0;
+
+}
+
+void mwi_Color(HWND hWnd)
+{
+	int i;
+
+	// there's probably an init call for this, somewhere.
+
+	for(i=0;i<16;i++)
+		cc_cr[i] = RGB(0,0,0);
+
+	cc.lStructSize = sizeof(CHOOSECOLOR);
+	cc.hwndOwner = hWnd;
+	cc.hInstance = 0;
+	cc.rgbResult = RGB(0,0,0);
+	cc.lpCustColors = cc_cr;
+	cc.Flags = 0;
+	cc.lCustData = 0;
+	cc.lpfnHook = 0;
+	cc.lpTemplateName = 0;
+}
+
+void mwi_Font(HWND hWnd)
+{
+	cf.lStructSize = sizeof(CHOOSEFONT);
+	cf.hwndOwner = hWnd;
+	cf.hDC = 0;
+	cf.lpLogFont = &cf_lf;
+	cf.Flags = 0;
+	cf.rgbColors = RGB(0,0,0);  // what is *this* doing here??
+	cf.lCustData = 0;
+	cf.lpfnHook = 0;
+	cf.lpTemplateName = 0;
+	cf.hInstance = 0;
+	cf.lpszStyle = 0;
+	cf.nFontType = 0;
+	cf.nSizeMin = 8;
+	cf.nSizeMax = 72;
+}
+
+void mwi_File(HWND hWnd)
+{
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hWnd;
+	ofn.hInstance = 0;
+	ofn.lpstrFilter = (LPSTR) ofn_filepat;
+	ofn.lpstrCustomFilter = 0;
+	ofn.nMaxCustFilter = 0;
+	ofn.nFilterIndex = 0;
+	ofn.lpstrFile = ofn_result;
+	ofn.nMaxFile = sizeof(ofn_result);
+	ofn.lpstrFileTitle = 0;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = 0;
+	ofn.lpstrTitle = "Open File";
+	ofn.Flags = 0;
+	ofn.nFileOffset = 0;
+	ofn.nFileExtension = 0;
+	ofn.lpstrDefExt = "*";
+	ofn.lCustData = 0;
+	ofn.lpfnHook = 0;
+	ofn.lpTemplateName = 0;
+
+	ofn_result[0] = '\0';
+}
+
+void mwi_FindReplace(HWND hWnd)
+{
+	frS.lStructSize = sizeof(FINDREPLACE);
+	frS.hwndOwner = hWnd;
+	frS.hInstance = 0;
+	frS.Flags = FR_DOWN;
+	frS.lpstrFindWhat = fromstring;
+	frS.lpstrReplaceWith = tostring;
+	frS.wFindWhatLen = sizeof(fromstring);
+	frS.wReplaceWithLen = sizeof(tostring);
+	frS.lCustData = 0;
+	frS.lpfnHook = 0;
+	frS.lpTemplateName = 0;
+
+	fromstring[0] = '\0';
+	tostring[0] = '\0';
+	findMessageId = RegisterWindowMessage(FINDMSGSTRING);
+}
+
+void mwi_InitAll(HWND hWnd)
+{
+	mwi_Print(hWnd);
+	mwi_Font(hWnd);
+	mwi_Color(hWnd);
+	mwi_File(hWnd);
+	mwi_FindReplace(hWnd);
+}
+
+// Various configurations for the window.  Ideally, this
+// would be stored with the window itself, but then, this
+// isn't the brightest of apps.  Wouldn't be hard to set up,
+// though -- one of the neater functions of Windows, but if
+// someone decides to load the windows themselves from resources,
+// there might be a problem.
+
+void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
+{
+	PAINTSTRUCT ps;
+	RECT rect;
+
+	// This is the Windows equivalent of one of my widgets,
+	// which basically just draws a large 'X'.
+
+	BeginPaint(hWnd, &ps);
+	GetClientRect(hWnd, (LPRECT) &rect);
+	MoveToEx(ps.hdc, rect.left, rect.top, (POINT FAR *) 0);
+	LineTo(ps.hdc, rect.right, rect.bottom);
+	MoveToEx(ps.hdc, rect.left, rect.bottom, (POINT FAR *) 0);
+	LineTo(ps.hdc, rect.right, rect.top);
+
+	EndPaint(hWnd, &ps);
+}
+
+// This function simply returns an error indication.  Naturally,
+// I do not (yet) see an elegant method by which one can convert
+// the CDERR_xxx return values into something resembling usable text;
+// consult cderr.h to see what was returned.
+
+void mw_checkError(HWND hWnd)
+{
+	DWORD errval = CommDlgExtendedError();
+	if(errval) {
+		char errbuf[80];
+
+		sprintf(errbuf, "CommDlgExtendedError(): error code %ld (0x%lx)", errval, errval);
+		MessageBox(hWnd, errbuf, "Error", MB_ICONEXCLAMATION | MB_OK);
+	}
+	else {
+		MessageBox(hWnd, "Nope, user canceled it.", "No", MB_OK);
+	}
+}
+
+// The actual dialog function calls.  These merely wrap the Commdlg
+// calls, and do something (not so) intelligent with the result.
+// Ideally, the main window would refresh and take into account the
+// various values specified in the dialog.
+
+void mw_ColorSetup(HWND hWnd)
+{
+	if(ChooseColor(&cc)) {
+		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+	}
+	else mw_checkError(hWnd);
+}
+
+void mw_FontSetup(HWND hWnd)
+{
+	if(ChooseFont(&cf)) {
+		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+	}
+	else mw_checkError(hWnd);
+}
+
+void mw_FindSetup(HWND hWnd)
+{
+	if(findDialogBox == 0) {
+		findDialogBox = FindText(&frS);
+		if(findDialogBox==0) mw_checkError(hWnd);
+	}
+}
+
+void mw_ReplaceSetup(HWND hWnd)
+{
+	if(findDialogBox == 0) {
+		findDialogBox = ReplaceText(&frS);
+		if(findDialogBox==0) mw_checkError(hWnd);
+	}
+}
+
+void mw_OpenSetup(HWND hWnd)
+{
+	if(GetOpenFileName(&ofn)) {
+		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+	}
+	else mw_checkError(hWnd);
+}
+
+void mw_SaveSetup(HWND hWnd)
+{
+	if(GetSaveFileName(&ofn)) {
+		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+	}
+	else mw_checkError(hWnd);
+}
+
+// Can't find documentation in Borland for this one.  Does it
+// exist at all, or is it merely a subdialog of Print?
+
+void mw_PSetupSetup(HWND hWnd)
+{
+	nyi(hWnd);
+}
+
+void mw_PrintSetup(HWND hWnd)
+{
+	if(PrintDlg(&pd)) {
+		// the following are suggested in the Borland documentation,
+		// but aren't that useful until WinE starts to actually
+		// function with respect to printing.
+
+		// Escape(tmp.hDC, STARTDOC, 8, "Test-Doc", NULL);
+
+	 /* Print text and rectangle */
+
+		// TextOut(tmp.hDC, 50, 50, "Common Dialog Test Page", 23);
+
+		// Rectangle(tmp.hDC, 50, 90, 625, 105);
+		// Escape(tmp.hDC, NEWFRAME, 0, NULL, NULL);
+		// Escape(tmp.hDC, ENDDOC, 0, NULL, NULL);
+	 //	DeleteDC(tmp.hDC);
+		 if (pd.hDevMode != NULL)
+			 GlobalFree(pd.hDevMode);
+		 if (pd.hDevNames != NULL)
+			 GlobalFree(pd.hDevNames);
+
+		 pd.hDevMode = 0;
+		 pd.hDevNames = 0;
+
+		 MessageBox(hWnd, "Success.", "Yes", MB_OK);
+	}
+	else mw_checkError(hWnd);
+}
+
+// Some support functions for the custom dialog box handlers.
+// In particular, we have to set things properly, and get the flags back.
+
+void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, unsigned long flags)
+{
+	int i;
+
+	for(i=0; table[i].ft_id != IDOK; i++)
+	{
+		CheckDlgButton(hWnd, table[i].ft_id,(table[i].ft_bit & flags) ? 1 : 0);
+	}
+}
+
+unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
+{
+	int i;
+	unsigned long l = 0;
+
+	for(i=0; table[i].ft_id != IDOK; i++)
+	{
+		if(IsDlgButtonChecked(hWnd, table[i].ft_id) == 1)
+			l |= table[i].ft_bit;
+	}
+
+	return l;
+}
+
+// These functions are the custom dialog box handlers.
+// The division of labor may be a tad peculiar; in particular,
+// the flag tables should probably be in the main functions,
+// not the handlers.  I'll fix that later; this works as of right now.
+
+BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+					 struct FlagTableEntry * table, unsigned long * flags)
+{
+	switch(uMsg)
+	{
+		case WM_INITDIALOG:
+			// Set the controls properly.
+
+			mwcd_SetFlags(hWnd, table, *flags);
+
+			return TRUE; // I would return FALSE if I explicitly called SetFocus().
+							 // As usual, Windows is weird.
+
+		case WM_COMMAND:
+			switch(wParam) {
+				case IDOK:
+					*flags = mwcd_GetFlags(hWnd, table);
+					EndDialog(hWnd,1);
+					break;
+
+				case IDCANCEL:
+					EndDialog(hWnd,0);
+					break;
+
+				case CM_R_HELP:
+					break; // help?  We don't need no steenkin help!
+
+				default:
+					break; // eat the message
+			}
+			return TRUE;
+
+		default:
+			return FALSE; // since I don't process this particular message
+	}
+}
+
+BOOL CALLBACK mwcd_ColorSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	static struct FlagTableEntry flagTable[] = {
+		{I_CC_RGBINIT, CC_RGBINIT},
+		{I_CC_SHOWHELP, CC_SHOWHELP},
+		{I_CC_PREVENTFULLOPEN, CC_PREVENTFULLOPEN},
+		{I_CC_FULLOPEN, CC_FULLOPEN},
+		{I_CC_ENABLETEMPLATEHANDLE, CC_ENABLETEMPLATEHANDLE},
+		{I_CC_ENABLETEMPLATE, CC_ENABLETEMPLATE},
+		{I_CC_ENABLEHOOK, CC_ENABLEHOOK},
+		{IDOK, 0},
+	};
+
+	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &cc.Flags);
+}
+
+BOOL CALLBACK mwcd_FontSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	static struct FlagTableEntry flagTable[] = {
+		{I_CF_APPLY, CF_APPLY},
+		{I_CF_ANSIONLY, CF_ANSIONLY},
+		{I_CF_BOTH, CF_BOTH},
+		{I_CF_TTONLY, CF_TTONLY},
+		{I_CF_EFFECTS, CF_EFFECTS},
+		{I_CF_ENABLEHOOK, CF_ENABLEHOOK},
+		{I_CF_ENABLETEMPLATE, CF_ENABLETEMPLATE},
+		{I_CF_ENABLETEMPLATEHANDLE, CF_ENABLETEMPLATEHANDLE},
+		{I_CF_FIXEDPITCHONLY, CF_FIXEDPITCHONLY},
+		{I_CF_INITTOLOGFONTSTRUCT, CF_INITTOLOGFONTSTRUCT},
+		{I_CF_LIMITSIZE, CF_LIMITSIZE},
+		{I_CF_NOFACESEL, CF_NOFACESEL},
+		{I_CF_USESTYLE, CF_USESTYLE},
+		{I_CF_WYSIWYG, CF_WYSIWYG},
+		{I_CF_SHOWHELP, CF_SHOWHELP},
+		{I_CF_SCREENFONTS, CF_SCREENFONTS},
+		{I_CF_SCALABLEONLY, CF_SCALABLEONLY},
+		{I_CF_PRINTERFONTS, CF_PRINTERFONTS},
+		{I_CF_NOVECTORFONTS, CF_NOVECTORFONTS},
+		{I_CF_NOSTYLESEL, CF_NOSTYLESEL},
+		{I_CF_NOSIZESEL, CF_NOSIZESEL},
+		{I_CF_NOOEMFONTS, CF_NOOEMFONTS},
+		{IDOK, 0},
+	};
+
+	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &cf.Flags);
+}
+
+BOOL CALLBACK mwcd_FindSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+
+	static struct FlagTableEntry flagTable[] = {
+		{I_FR_DIALOGTERM, FR_DIALOGTERM},
+		{I_FR_DOWN, FR_DOWN},
+		{I_FR_ENABLEHOOK, FR_ENABLEHOOK},
+		{I_FR_ENABLETEMPLATE, FR_ENABLETEMPLATE},
+		{I_FR_ENABLETEMPLATEHANDLE, FR_ENABLETEMPLATEHANDLE},
+		{I_FR_FINDNEXT, FR_FINDNEXT},
+		{I_FR_HIDEMATCHCASE, FR_HIDEMATCHCASE},
+		{I_FR_HIDEWHOLEWORD, FR_HIDEWHOLEWORD},
+		{I_FR_HIDEUPDOWN, FR_HIDEUPDOWN},
+		{I_FR_MATCHCASE, FR_MATCHCASE},
+		{I_FR_NOMATCHCASE, FR_NOMATCHCASE},
+		{I_FR_NOUPDOWN, FR_NOUPDOWN},
+		{I_FR_NOWHOLEWORD, FR_NOWHOLEWORD},
+		{I_FR_REPLACE, FR_REPLACE},
+		{I_FR_REPLACEALL, FR_REPLACEALL},
+		{I_FR_SHOWHELP, FR_SHOWHELP},
+		{I_FR_WHOLEWORD, FR_WHOLEWORD},
+		{IDOK, 0},
+	};
+
+	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &frS.Flags);
+}
+
+BOOL CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	static struct FlagTableEntry flagTable[] = {
+		{I_PD_ALLPAGES, PD_ALLPAGES},
+		{I_PD_COLLATE, PD_COLLATE},
+		{I_PD_DISABLEPRINTTOFILE, PD_DISABLEPRINTTOFILE},
+		{I_PD_ENABLEPRINTHOOK, PD_ENABLEPRINTHOOK},
+		{I_PD_ENABLEPRINTTEMPLATE, PD_ENABLEPRINTTEMPLATE},
+		{I_PD_ENABLEPRINTTEMPLATEHANDLE, PD_ENABLEPRINTTEMPLATEHANDLE},
+		{I_PD_ENABLESETUPHOOK, PD_ENABLESETUPHOOK},
+		{I_PD_ENABLESETUPTEMPLATE, PD_ENABLESETUPTEMPLATE},
+		{I_PD_ENABLESETUPTEMPLATEHANDLE, PD_ENABLESETUPTEMPLATEHANDLE},
+		{I_PD_HIDEPRINTTOFILE, PD_HIDEPRINTTOFILE},
+		{I_PD_NOPAGENUMS, PD_NOPAGENUMS},
+		{I_PD_NOSELECTION, PD_NOSELECTION},
+		{I_PD_NOWARNING, PD_NOWARNING},
+		{I_PD_PAGENUMS, PD_PAGENUMS},
+		{I_PD_PRINTSETUP, PD_PRINTSETUP},
+		{I_PD_PRINTTOFILE, PD_PRINTTOFILE},
+		{I_PD_RETURNDC, PD_RETURNDC},
+		{I_PD_RETURNDEFAULT, PD_RETURNDEFAULT},
+		{I_PD_RETURNIC, PD_RETURNIC},
+		{I_PD_SELECTION, PD_SELECTION},
+		{I_PD_SHOWHELP, PD_SHOWHELP},
+		{I_PD_USEDEVMODECOPIES, PD_USEDEVMODECOPIES},
+		{IDOK, 0},
+	};
+
+	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &pd.Flags);
+}
+
+BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	static struct FlagTableEntry flagTable[] = {
+		{I_OFN_ALLOWMULTISELECT, OFN_ALLOWMULTISELECT},
+		{I_OFN_CREATEPROMPT, OFN_CREATEPROMPT},
+		{I_OFN_ENABLEHOOK, OFN_ENABLEHOOK},
+		{I_OFN_ENABLETEMPLATE, OFN_ENABLETEMPLATE},
+		{I_OFN_ENABLETEMPLATEHANDLE, OFN_ENABLETEMPLATEHANDLE},
+		{I_OFN_EXTENSIONDIFFERENT, OFN_EXTENSIONDIFFERENT},
+		{I_OFN_FILEMUSTEXIST, OFN_FILEMUSTEXIST},
+		{I_OFN_HIDEREADONLY, OFN_HIDEREADONLY},
+		{I_OFN_NOCHANGEDIR, OFN_NOCHANGEDIR},
+		{I_OFN_NOREADONLYRETURN, OFN_NOREADONLYRETURN},
+		{I_OFN_NOTESTFILECREATE, OFN_NOTESTFILECREATE},
+		{I_OFN_NOVALIDATE, OFN_NOVALIDATE},
+		{I_OFN_OVERWRITEPROMPT, OFN_OVERWRITEPROMPT},
+		{I_OFN_PATHMUSTEXIST, OFN_PATHMUSTEXIST},
+		{I_OFN_READONLY, OFN_READONLY},
+		{I_OFN_SHAREAWARE, OFN_SHAREAWARE},
+      {I_OFN_SHOWHELP, OFN_SHOWHELP},
+		{IDOK, 0},
+	};
+
+	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &pd.Flags);
+}
+
+BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch(uMsg) {
+		case WM_INITDIALOG: return TRUE; // let WINDOWS set the focus.
+		case WM_COMMAND: EndDialog(hWnd, 0); return TRUE; // it's our OK button.
+		default: return FALSE; // it's something else, let Windows worry about it
+	}
+}
+
+
+// These functions call custom dialog boxes (resource-loaded, if I do this right).
+// Right now they don't do a heck of a lot, but at some future time
+// they will muck about with the flags (and be loaded from the flags) of
+// the CommDlg structures initialized by the mwi_xxx() routines.
+
+void mwc_ColorSetup(HWND hWnd)
+{
+	int r = DialogBox(g_hInstance, "Color_Flags_Dialog", hWnd, (DLGPROC) mwcd_ColorSetup);
+	if(r < 0) { MessageBox(hWnd, "Failure opening Color_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
+}
+
+void mwc_FontSetup(HWND hWnd)
+{
+	int r = DialogBox(g_hInstance, "Font_Flags_Dialog", hWnd, (DLGPROC) mwcd_FontSetup);
+	if(r < 0) { MessageBox(hWnd, "Failure opening Font_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
+}
+
+void mwc_FindReplaceSetup(HWND hWnd)
+{
+	int r = DialogBox(g_hInstance, "Find_Flags_Dialog", hWnd, (DLGPROC) mwcd_FindSetup);
+	if(r < 0) { MessageBox(hWnd, "Failure opening Find_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
+}
+
+void mwc_PrintSetup(HWND hWnd)
+{
+	int r = DialogBox(g_hInstance, "Print_Flags_Dialog", hWnd, (DLGPROC) mwcd_PrintSetup);
+	if(r < 0) { MessageBox(hWnd, "Failure opening Print_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
+}
+
+void mwc_FileSetup(HWND hWnd)
+{
+	int r = DialogBox(g_hInstance, "File_Flags_Dialog", hWnd, (DLGPROC) mwcd_PrintSetup);
+	if(r < 0) { MessageBox(hWnd, "Failure opening File_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
+}
+
+// Main window message dispatcher.  Here the messages get chewed up
+// and spit out.  Note the ugly hack for the modeless Find/Replace box;
+// this looks like it was bolted on with hexhead screws and is now
+// dangling from Windows like a loose muffler.  Sigh.
+
+LRESULT CALLBACK EXPORT mainWindowDispatcher(
+	HWND hWnd,
+	UINT uMsg,
+	WPARAM wParam,
+	LPARAM lParam
+)
+{
+
+	if(uMsg == findMessageId) {
+		FINDREPLACE FAR* lpfr = (FINDREPLACE FAR*) lParam;
+		if(lpfr->Flags & FR_DIALOGTERM) {
+			MessageBox(hWnd, "User closing us down.", "Down", MB_OK);
+			findDialogBox = 0;
+		}
+		else if (lpfr->Flags & FR_FINDNEXT) {
+			MessageBox(hWnd, "Finding next occurrence.", "Findnext", MB_OK);
+		}
+		else if (lpfr->Flags & FR_REPLACE) {
+			MessageBox(hWnd, "Replacing next occurence.", "Replace", MB_OK);
+		}
+		else if (lpfr->Flags & FR_REPLACEALL) {
+			MessageBox(hWnd, "Replacing all occurrences.", "Replace All", MB_OK);
+		}
+		else {
+			MessageBox(hWnd, "Eh?", "Eh?", MB_OK);
+		}
+		return 1;
+	}
+	else switch(uMsg) {
+	case WM_CREATE:
+			// this is always the first message...at least as far as
+			// we are concerned.
+		mwi_InitAll(hWnd);
+		break;
+
+	case WM_PAINT:
+			// Well, draw something!
+		paintMainWindow(hWnd, uMsg, wParam, lParam);
+		break;
+
+	case WM_DESTROY:
+			// Uh oh.  Eject!  Eject!  Eject!
+		PostQuitMessage(0);
+		break;
+
+	case WM_COMMAND:
+			// menu or accelerator pressed; do something.
+
+		switch(wParam) {
+		case CM_U_EXIT:
+				// Uh oh.  Eject!  Eject!  Eject!
+			PostQuitMessage(0);
+			break;
+
+		// these actually call the Common Dialogs.
+
+		case CM_U_COLOR:
+			mw_ColorSetup(hWnd); return 1;
+
+		case CM_U_FONT:
+			mw_FontSetup(hWnd); return 1;
+
+		case CM_U_FIND:
+			mw_FindSetup(hWnd); return 1;
+
+		case CM_U_REPLACE:
+			mw_ReplaceSetup(hWnd); return 1;
+
+		case CM_U_OPEN:
+			mw_OpenSetup(hWnd); return 1;
+
+		case CM_U_SAVE:
+			mw_SaveSetup(hWnd); return 1;
+
+		case CM_U_PSETUP:
+			mw_PSetupSetup(hWnd); return 1;
+
+		case CM_U_PRINT:
+			mw_PrintSetup(hWnd); return 1;
+
+		// these set up various flags and values in the Common Dialog
+		// data structures, which are currently stored in static memory.
+		// The control dialogs themselves are resources as well.
+
+		case CM_F_FILE:
+			mwc_FileSetup(hWnd); return 1;
+
+		case CM_F_COLOR:
+			mwc_ColorSetup(hWnd); return 1;
+
+		case CM_F_FONT:
+			mwc_FontSetup(hWnd); return 1;
+
+		case CM_F_FINDREPLACE:
+			mwc_FindReplaceSetup(hWnd); return 1;
+
+		case CM_F_PRINT:
+			mwc_PrintSetup(hWnd); return 1;
+
+		case CM_H_ABOUT:
+			DialogBox(g_hInstance, "AboutDialog", hWnd, (DLGPROC) mwcd_About);
+         	// return value?  *What* return value?
+			return 1;
+
+		default:
+			nyi(hWnd); return 1;
+		}
+		break;
+
+	default:
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+	return 0;
+}
+
+// Class registration.  One might call this a Windowsism.
+
+int registerMainWindowClass(HINSTANCE hInstance)
+{
+	WNDCLASS wndClass;
+
+	wndClass.style         = CS_HREDRAW|CS_VREDRAW;
+	wndClass.lpfnWndProc   = mainWindowDispatcher;
+	wndClass.cbClsExtra    = 0;
+	wndClass.cbWndExtra    = 0;
+	wndClass.hInstance     = hInstance;
+	//wndClass.hIcon         = LoadIcon(hInstance, "whello");
+	//wndClass.hCursor       = LoadCursor(hInstance, IDC_ARROW);
+	wndClass.hIcon         = 0;
+	wndClass.hCursor       = 0;
+	wndClass.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
+	wndClass.lpszMenuName  = menuName;
+	wndClass.lpszClassName = className;
+
+	return RegisterClass(&wndClass);
+}
+
+// Another Windowsism; this one's not too bad, as it compares
+// favorably with CreateWindow() in X (mucking about with X Visuals
+// can get messy; at least here we don't have to worry about that).
+
+HWND createMainWindow(HINSTANCE hInstance, int show)
+{
+	HWND hWnd;
+
+	hWnd = CreateWindow(
+		className,  // classname
+		windowName,  // windowname/title
+		WS_OVERLAPPEDWINDOW, // dwStyle
+		0, //x
+		0, //y
+		CW_USEDEFAULT, //width
+		CW_USEDEFAULT, //height
+		0, // parent window
+		0, // menu
+		hInstance, // instance
+		0          // passthrough for MDI
+	);
+
+	if(hWnd==0) return 0;
+
+	ShowWindow(hWnd, show);
+	UpdateWindow(hWnd);
+
+	return hWnd;
+}
+
+int messageLoop(HINSTANCE hInstance, HWND hWnd)
+{
+
+	MSG msg;
+
+	while(GetMessage(&msg, 0, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	return msg.wParam;
+}
+
+// Oh, did we tell you that main() isn't the name of the
+// thing called in a Win16/Win32 app?  And then there are
+// the lack of argument lists, the necessity (at least in Win16)
+// of having to deal with class registration exactly once (as the
+// app may be run again), and some other bizarre holdovers from
+// Windows 3.x days.  But hey, Solitaire still works.
+
+int PASCAL WinMain(
+	HINSTANCE hInstance, HINSTANCE hPrevInstance,
+	LPSTR lpszCmdLine, int nCmdShow
+)
+{
+	HWND hWnd;
+
+	if(hPrevInstance==0) {
+		if(!registerMainWindowClass(hInstance))
+			return -1;
+	}
+
+	g_hInstance = hInstance;
+
+	hWnd = createMainWindow(hInstance,nCmdShow);
+	if(hWnd == 0)
+		return -1;
+
+
+	return messageLoop(hInstance, hWnd);
+}
+
+// And now the end of the program.  Enjoy.
+
+// (c) 1999 Eric Williams.  Rights as specified under the WINE
+// License.  Don't hoard code; share it!
+
