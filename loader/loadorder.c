@@ -42,6 +42,7 @@ static struct tagDllOverride {
 	{"lz32,lzexpand",		"builtin,native"},
 	{"commctrl,comctl32",		"builtin,native"},
 	{"wsock32,winsock",		"builtin"},
+	{"ws2_32",			"builtin"},
 	{"advapi32,crtdll,ntdll",	"builtin,native"},
 	{"mpr,winspool.drv",		"builtin,native"},
 	{"ddraw,dinput,dsound",		"builtin,native"},
