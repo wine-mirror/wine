@@ -611,13 +611,14 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 /*************************************************************************
  *           SHELL_Execute16 [Internal]
  */
-static UINT SHELL_Execute16(WCHAR *lpCmd, void* env, LPSHELLEXECUTEINFOW seiW, BOOL shWait)
+static UINT SHELL_Execute16(const WCHAR *lpCmd, void *env, BOOL shWait,
+			    LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
     UINT ret;
     char sCmd[MAX_PATH];
     WideCharToMultiByte(CP_ACP, 0, lpCmd, -1, sCmd, MAX_PATH, NULL, NULL);
-    ret = WinExec16(sCmd, seiW->nShow);
-    seiW->hInstApp = HINSTANCE_32(ret);
+    ret = WinExec16(sCmd, (UINT16)psei->nShow);
+    psei_out->hInstApp = HINSTANCE_32(ret);
     return ret;
 }
 
