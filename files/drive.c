@@ -1024,12 +1024,12 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     if (!DRIVE_IsValid( drive )) return FALSE;
     if (label)
     {
-       lstrcpyn32A( label, DOSDrives[drive].label, label_len );
+       lstrcpyn32A( label, DRIVE_GetLabel(drive), label_len );
        for (cp = label; *cp; cp++);
        while (cp != label && *(cp-1) == ' ') cp--;
        *cp = '\0';
     }
-    if (serial) *serial = DOSDrives[drive].serial;
+    if (serial) *serial = DRIVE_GetSerialNumber(drive);
 
     /* Set the filesystem information */
     /* Note: we only emulate a FAT fs at the present */
