@@ -4,12 +4,6 @@
  * Copyright 1998 Alexandre Julliard
  */
 
-/* Note: critical sections are not implemented exactly the same way
- * than under NT (LockSemaphore should be a real semaphore handle).
- * But since they are even more different under Win95, it probably
- * doesn't matter... 
- */
-
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -24,13 +18,6 @@
 #include "debug.h"
 #include "thread.h"
 
-typedef struct
-{
-    K32OBJ        header;
-    THREAD_QUEUE  wait_queue;
-    BOOL32        signaled;
-} CRIT_SECTION;
-
 /* On some systems this is supposed to be defined in the program */
 #ifndef HAVE_UNION_SEMUN
 union semun {
@@ -40,44 +27,20 @@ union semun {
 };
 #endif
 
-static BOOL32 CRIT_SECTION_Signaled( K32OBJ *obj, DWORD thread_id );
-static BOOL32 CRIT_SECTION_Satisfied( K32OBJ *obj, DWORD thread_id );
-static void CRIT_SECTION_AddWait( K32OBJ *obj, DWORD thread_id );
-static void CRIT_SECTION_RemoveWait( K32OBJ *obj, DWORD thread_id );
-static void CRIT_SECTION_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS CRITICAL_SECTION_Ops =
-{
-    CRIT_SECTION_Signaled,     /* signaled */
-    CRIT_SECTION_Satisfied,    /* satisfied */
-    CRIT_SECTION_AddWait,      /* add_wait */
-    CRIT_SECTION_RemoveWait,   /* remove_wait */
-    NULL,                      /* read */
-    NULL,                      /* write */
-    CRIT_SECTION_Destroy       /* destroy */
-};
 
 /***********************************************************************
  *           InitializeCriticalSection   (KERNEL32.472) (NTDLL.406)
  */
 void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
 {
-    CRIT_SECTION *obj;
-
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
     crit->LockSemaphore  = 0;
     if (SystemHeap)
     {
-        if (!(obj = (CRIT_SECTION *)HeapAlloc( SystemHeap, 0, sizeof(*obj) )))
-            return;  /* No way to return an error... */
-        obj->header.type     = K32OBJ_CRITICAL_SECTION;
-        obj->header.refcount = 1;
-        obj->wait_queue      = NULL;
-        obj->signaled        = FALSE;
-        crit->LockSemaphore  = (HANDLE32)obj;
-        crit->Reserved       = (DWORD)-1;
+        crit->LockSemaphore = CreateSemaphore32A( NULL, 0, 1, NULL );
+        crit->Reserved      = (DWORD)-1;
     }
     else
     {
@@ -99,17 +62,15 @@ void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
 {
-    CRIT_SECTION *obj = (CRIT_SECTION *)crit->LockSemaphore;
-
-    if (obj)
+    if (crit->LockSemaphore)
     {
         if (crit->RecursionCount)  /* Should not happen */
             MSG("Deleting owned critical section (%p)\n", crit );
         crit->LockCount      = -1;
         crit->RecursionCount = 0;
         crit->OwningThread   = 0;
+        CloseHandle( crit->LockSemaphore );
         crit->LockSemaphore  = 0;
-        K32OBJ_DecCount( &obj->header );
     }
     else if (crit->Reserved != (DWORD)-1)
     {
@@ -139,16 +100,8 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
         /* Now wait for it */
         if (crit->LockSemaphore)
         {
-            WAIT_STRUCT *wait = &THREAD_Current()->wait_struct;
-            SYSTEM_LOCK();
-            wait->count    = 1;
-            wait->signaled = WAIT_FAILED;
-            wait->wait_all = FALSE;
-            wait->objs[0] = (K32OBJ *)crit->LockSemaphore;
-            K32OBJ_IncCount( wait->objs[0] );
-            SYNC_WaitForCondition( wait, INFINITE32 );
-            K32OBJ_DecCount( wait->objs[0] );
-            SYSTEM_UNLOCK();
+            /* FIXME: should set a timeout and raise an exception */
+            WaitForSingleObject( crit->LockSemaphore, INFINITE32 );
         }
         else if (crit->Reserved != (DWORD)-1)
         {
@@ -213,11 +166,7 @@ void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
         /* Someone is waiting */
         if (crit->LockSemaphore)
         {
-            CRIT_SECTION *obj = (CRIT_SECTION *)crit->LockSemaphore;
-            SYSTEM_LOCK();
-            obj->signaled = TRUE;
-            SYNC_WakeUp( &obj->wait_queue, 1 );
-            SYSTEM_UNLOCK();
+            ReleaseSemaphore( crit->LockSemaphore, 1, NULL );
         }
         else if (crit->Reserved != (DWORD)-1)
         {
@@ -236,7 +185,7 @@ void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 {
-    /* Nothing to do: a critical section is always global */
+    crit->LockSemaphore = ConvertToGlobalHandle( crit->LockSemaphore );
 }
 
 
@@ -247,70 +196,4 @@ void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 {
     DeleteCriticalSection( crit );
     InitializeCriticalSection( crit );
-}
-
-
-/***********************************************************************
- *           CRIT_SECTION_Signaled
- */
-static BOOL32 CRIT_SECTION_Signaled( K32OBJ *obj, DWORD thread_id )
-{
-    CRIT_SECTION *crit = (CRIT_SECTION *)obj;
-    assert( obj->type == K32OBJ_CRITICAL_SECTION );
-    return crit->signaled;
-}
-
-
-/***********************************************************************
- *           CRIT_SECTION_Satisfied
- *
- * Wait on this object has been satisfied.
- */
-static BOOL32 CRIT_SECTION_Satisfied( K32OBJ *obj, DWORD thread_id )
-{
-    CRIT_SECTION *crit = (CRIT_SECTION *)obj;
-    assert( obj->type == K32OBJ_CRITICAL_SECTION );
-    /* Only one thread is allowed to wake up */
-    crit->signaled = FALSE;
-    return FALSE;  /* Not abandoned */
-}
-
-
-/***********************************************************************
- *           CRIT_SECTION_AddWait
- *
- * Add thread to object wait queue.
- */
-static void CRIT_SECTION_AddWait( K32OBJ *obj, DWORD thread_id )
-{
-    CRIT_SECTION *crit = (CRIT_SECTION *)obj;
-    assert( obj->type == K32OBJ_CRITICAL_SECTION );
-    THREAD_AddQueue( &crit->wait_queue, THREAD_ID_TO_THDB(thread_id) );
-}
-
-
-/***********************************************************************
- *           CRIT_SECTION_RemoveWait
- *
- * Remove current thread from object wait queue.
- */
-static void CRIT_SECTION_RemoveWait( K32OBJ *obj, DWORD thread_id )
-{
-    CRIT_SECTION *crit = (CRIT_SECTION *)obj;
-    assert( obj->type == K32OBJ_CRITICAL_SECTION );
-    THREAD_RemoveQueue( &crit->wait_queue, THREAD_ID_TO_THDB(thread_id) );
-}
-
-
-/***********************************************************************
- *           CRIT_SECTION_Destroy
- */
-static void CRIT_SECTION_Destroy( K32OBJ *obj )
-{
-    CRIT_SECTION *crit = (CRIT_SECTION *)obj;
-    assert( obj->type == K32OBJ_CRITICAL_SECTION );
-    /* There cannot be any thread on the list since the ref count is 0 */
-    assert( crit->wait_queue == NULL );
-    obj->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, crit );
 }
