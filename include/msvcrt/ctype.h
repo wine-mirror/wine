@@ -104,10 +104,10 @@ MSVCRT(wchar_t) MSVCRT(towupper)(MSVCRT(wchar_t));
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define isascii __isascii
-#define iscsym  __iscsym
-#define iscsymf __iscsymf
-#define toascii __toascii
+static inline int isascii(int c) { return __isascii(c); }
+static inline int iscsym(int c) { return __iscsym(c); }
+static inline int iscsymf(int c) { return __iscsymf(c); }
+static inline int toascii(int c) { return __toascii(c); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_CTYPE_H */

@@ -256,22 +256,22 @@ int             MSVCRT(wscanf)(const MSVCRT(wchar_t)*,...);
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define fdopen   _fdopen
-#define fgetchar _fgetchar
-#define fileno   _fileno
-#define fputchar _fputchar
-#define pclose   _pclose
-#define popen    _popen
-#define tempnam  _tempnam
+static inline MSVCRT(FILE)* fdopen(int fd, const char *mode) { return _fdopen(fd, mode); }
+static inline int fgetchar(void) { return _fgetchar(); }
+static inline int fileno(MSVCRT(FILE)* file) { return _fileno(file); }
+static inline int fputchar(int c) { return _fputchar(c); }
+static inline int pclose(MSVCRT(FILE)* file) { return _pclose(file); }
+static inline MSVCRT(FILE)* popen(const char* command, const char* mode) { return _popen(command, mode); }
+static inline char* tempnam(const char *dir, const char *prefix) { return _tempnam(dir, prefix); }
 #ifndef MSVCRT_UNLINK_DEFINED
 static inline int unlink(const char* path) { return _unlink(path); }
 #define MSVCRT_UNLINK_DEFINED
 #endif
 
-#define fgetwchar _fgetwchar
-#define fputwchar _fputwchar
-#define getw     _getw
-#define putw     _putw
+static inline MSVCRT(wint_t) fgetwchar(void) { return _fgetwchar(); }
+static inline MSVCRT(wint_t) fputwchar(MSVCRT(wint_t) wc) { return _fputwchar(wc); }
+static inline int getw(MSVCRT(FILE)* file) { return _getw(file); }
+static inline int putw(int val, MSVCRT(FILE)* file) { return _putw(val, file); }
 #define wpopen   _wpopen
 #endif /* USE_MSVCRT_PREFIX */
 

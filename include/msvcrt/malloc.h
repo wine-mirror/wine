@@ -81,7 +81,7 @@ void*       MSVCRT(realloc)(void*,MSVCRT(size_t));
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define alloca _alloca
+static inline void* alloca(MSVCRT(size_t) i) { return _alloca(i); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_MALLOC_H */

@@ -119,29 +119,29 @@ MSVCRT(size_t)  MSVCRT(wcsxfrm)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(s
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define memccpy _memccpy
-#define memicmp _memicmp
-#define strcasecmp _stricmp
-#define strcmpi _strcmpi
-#define strdup _strdup
-#define stricmp _stricmp
-#define stricoll _stricoll
-#define strlwr _strlwr
-#define strncasecmp _strncasecmp
-#define strnicmp _strnicmp
-#define strnset _strnset
-#define strrev _strrev
-#define strset _strset
-#define strupr _strupr
+static inline void* memccpy(void *s1, const void *s2, int c, MSVCRT(size_t) n) { return _memccpy(s1, s2, c, n); }
+static inline int memicmp(const void* s1, const void* s2, MSVCRT(size_t) len) { return _memicmp(s1, s2, len); }
+static inline int strcasecmp(const char* s1, const char* s2) { return _stricmp(s1, s2); }
+static inline int strcmpi(const char* s1, const char* s2) { return _strcmpi(s1, s2); }
+static inline char* strdup(const char* buf) { return _strdup(buf); }
+static inline int stricmp(const char* s1, const char* s2) { return _stricmp(s1, s2); }
+static inline int stricoll(const char* s1, const char* s2) { return _stricoll(s1, s2); }
+static inline char* strlwr(char* str) { return _strlwr(str); }
+static inline int strncasecmp(const char *str1, const char *str2, size_t n) { return _strnicmp(str1, str2, n); }
+static inline int strnicmp(const char* s1, const char* s2, MSVCRT(size_t) n) { return _strnicmp(s1, s2, n); }
+static inline char* strnset(char* str, int value, unsigned int len) { return _strnset(str, value, len); }
+static inline char* strrev(char* str) { return _strrev(str); }
+static inline char* strset(char* str, int value) { return _strset(str, value); }
+static inline char* strupr(char* str) { return _strupr(str); }
 
-#define wcsdup _wcsdup
-#define wcsicoll _wcsicoll
-#define wcslwr _wcslwr
-#define wcsnicmp _wcsnicmp
-#define wcsnset _wcsnset
-#define wcsrev _wcsrev
-#define wcsset _wcsset
-#define wcsupr _wcsupr
+static inline MSVCRT(wchar_t)* wcsdup(const MSVCRT(wchar_t)* str) { return _wcsdup(str); }
+static inline int wcsicoll(const MSVCRT(wchar_t)* str1, const MSVCRT(wchar_t)* str2) { return _wcsicoll(str1, str2); }
+static inline MSVCRT(wchar_t)* wcslwr(MSVCRT(wchar_t)* str) { return _wcslwr(str); }
+static inline int wcsnicmp(const MSVCRT(wchar_t)* str1, const MSVCRT(wchar_t)* str2, MSVCRT(size_t) n) { return _wcsnicmp(str1, str2, n); }
+static inline MSVCRT(wchar_t)* wcsnset(MSVCRT(wchar_t)* str, MSVCRT(wchar_t) c, MSVCRT(size_t) n) { return _wcsnset(str, c, n); }
+static inline MSVCRT(wchar_t)* wcsrev(MSVCRT(wchar_t)* str) { return _wcsrev(str); }
+static inline MSVCRT(wchar_t)* wcsset(MSVCRT(wchar_t)* str, MSVCRT(wchar_t) c) { return _wcsset(str, c); }
+static inline MSVCRT(wchar_t)* wcsupr(MSVCRT(wchar_t)* str) { return _wcsupr(str); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_STRING_H */

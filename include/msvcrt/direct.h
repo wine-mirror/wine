@@ -67,10 +67,10 @@ int              _wrmdir(const MSVCRT(wchar_t)*);
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define chdir _chdir
-#define getcwd _getcwd
-#define mkdir _mkdir
-#define rmdir _rmdir
+static inline int chdir(const char* newdir) { return _chdir(newdir); }
+static inline char* getcwd(char * buf, int size) { return _getcwd(buf, size); }
+static inline int mkdir(const char* newdir) { return _mkdir(newdir); }
+static inline int rmdir(const char* dir) { return _rmdir(dir); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_DIRECT_H */

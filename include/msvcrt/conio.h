@@ -39,20 +39,20 @@ unsigned short _outpw(unsigned short, unsigned short);
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define cgets _cgets
+static inline char* cgets(char* str) { return _cgets(str); }
 #define cprintf _cprintf
-#define cputs _cputs
+static inline int cputs(const char* str) { return _cputs(str); }
 #define cscanf _cscanf
-#define getch _getch
-#define getche _getche
-#define kbhit _kbhit
-#define putch _putch
-#define ungetch _ungetch
+static inline int getch(void) { return _getch(); }
+static inline int getche(void) { return _getche(); }
+static inline int kbhit(void) { return _kbhit(); }
+static inline int putch(int c) { return _putch(c); }
+static inline int ungetch(int c) { return _ungetch(c); }
 #ifdef _M_IX86
-#define inp _inp
-#define inpw _inpw
-#define outp _outp
-#define outpw _outpw
+static inline int inp(unsigned short i) { return _inp(i); }
+static inline unsigned short inpw(unsigned short i) { return _inpw(i); }
+static inline int outp(unsigned short i, int j) { return _outp(i, j); }
+static inline unsigned short outpw(unsigned short i, unsigned short j) { return _outpw(i, j); }
 #endif
 #endif /* USE_MSVCRT_PREFIX */
 

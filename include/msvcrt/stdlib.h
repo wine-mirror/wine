@@ -231,15 +231,15 @@ int            MSVCRT(wctomb)(char*,MSVCRT(wchar_t));
 #define environ _environ
 #define onexit_t _onexit_t
 
-#define ecvt _ecvt
-#define fcvt _fcvt
-#define gcvt _gcvt
-#define itoa _itoa
-#define ltoa _ltoa
-#define onexit _onexit
-#define putenv _putenv
-#define swab _swab
-#define ultoa _ultoa
+static inline char* ecvt(double value, int ndigit, int* decpt, int* sign) { return _ecvt(value, ndigit, decpt, sign); }
+static inline char* fcvt(double value, int ndigit, int* decpt, int* sign) { return _fcvt(value, ndigit, decpt, sign); }
+static inline char* gcvt(double value, int ndigit, char* buf) { return _gcvt(value, ndigit, buf); }
+static inline char* itoa(int value, char* str, int radix) { return _itoa(value, str, radix); }
+static inline char* ltoa(long value, char* str, int radix) { return _ltoa(value, str, radix); }
+static inline _onexit_t onexit(_onexit_t func) { return _onexit(func); }
+static inline int putenv(const char* str) { return _putenv(str); }
+static inline void swab(char* src, char* dst, int len) { return _swab(src, dst, len); }
+static inline char* ultoa(unsigned long value, char* str, int radix) { return _ultoa(value, str, radix); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_STDLIB_H */

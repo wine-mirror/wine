@@ -54,8 +54,8 @@ void        MSVCRT(qsort)(void*,MSVCRT(size_t),MSVCRT(size_t),
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define lfind _lfind
-#define lsearch _lsearch
+static inline void* lfind(const void* match, const void* start, unsigned int* array_size, unsigned int elem_size, int (*cf)(const void*,const void*)) { return _lfind(match, start, array_size, elem_size, cf); 
+static inline void* lsearch(const void* match, void* start, unsigned int* array_size, unsigned int elem_size, int (*cf)(const void*,const void*) ) { return _lsearch(match, start, array_size, elem_size, cf); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SEARCH_H */

@@ -121,24 +121,24 @@ int         _wsystem(const MSVCRT(wchar_t)*);
 #define WAIT_CHILD      _WAIT_CHILD
 #define WAIT_GRANDCHILD _WAIT_GRANDCHILD
 
-#define cwait    _cwait
-#define getpid   _getpid
+static inline int cwait(int *status, int pid, int action) { return _cwait(status, pid, action); }
+static inline int getpid(void) { return _getpid(); }
 #define execl    _execl
 #define execle   _execle
 #define execlp   _execlp
 #define execlpe  _execlpe
-#define execv    _execv
-#define execve   _execve
-#define execvp   _execvp
-#define execvpe  _execvpe
+static inline int execv(const char* name, char* const* argv) { return _execv(name, argv); }
+static inline int execve(const char* name, char* const* argv, const char* const* envv) { return _execve(name, argv, envv); }
+static inline int execvp(const char* name, char* const* argv) { return _execvp(name, argv); }
+static inline int execvpe(const char* name, char* const* argv, const char* const* envv) { return _execvpe(name, argv, envv); }
 #define spawnl   _spawnl
 #define spawnle  _spawnle
 #define spawnlp  _spawnlp
 #define spawnlpe _spawnlpe
-#define spawnv   _spawnv
-#define spawnve  _spawnve
-#define spawnvp  _spawnvp
-#define spawnvpe _spawnvpe
+static inline int spawnv(int flags, const char* name, const char* const* argv) { return _spawnv(flags, name, argv); }
+static inline int spawnve(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnve(flags, name, argv, envv); }
+static inline int spawnvp(int flags, const char* name, const char* const* argv) { return _spawnvp(flags, name, argv); }
+static inline int spawnvpe(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnvpe(flags, name, argv, envv); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_PROCESS_H */
