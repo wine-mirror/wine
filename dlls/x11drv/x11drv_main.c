@@ -335,6 +335,7 @@ static void process_attach(void)
     if (!(display = XOpenDisplay( NULL )))
     {
         MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
+        MESSAGE( "Please ensure that your X server is running and that $DISPLAY is set correctly.\n" );
         ExitProcess(1);
     }
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
@@ -465,6 +466,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     {
         wine_tsx11_unlock();
         MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
+        MESSAGE( "Please ensure that your X server is running and that $DISPLAY is set correctly.\n" );
         ExitProcess(1);
     }
 
