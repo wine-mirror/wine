@@ -132,6 +132,8 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
     if (SUCCEEDED(res))
     {
         res = DEVENUM_ICreateDevEnum_CreateClassEnumerator((ICreateDevEnum *)(char*)&DEVENUM_CreateDevEnum, &clsidDevice, &pEm, 0);
+        if (res == S_FALSE) /* S_FALSE means no category */
+            res = MK_E_NOOBJECT;
     }
 
     if (SUCCEEDED(res))
