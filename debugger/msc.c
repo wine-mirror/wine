@@ -775,6 +775,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 
   curr_type = 0x1000;
 
+  ptr.c = table;
   while( ptr.c - table < len )
     {
       type = (union codeview_type *) ptr.c;
