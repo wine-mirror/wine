@@ -617,7 +617,11 @@ int main(int argc, char **argv)
     link_args = strarray_alloc();
     strarray_add(link_args, cpp ? "g++" : "gcc");
     strarray_add(link_args, "-shared");
+#ifdef HAVE_LINKER_INIT_FINI
+    strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs,-init,__wine_spec_init,-fini,__wine_spec_fini");
+#else
     strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs");
+#endif
 
     for (i = 0; i < llib_paths->size; i++)
 	strarray_add(link_args, llib_paths->base[i]);
