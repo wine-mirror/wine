@@ -469,7 +469,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 
     METARECORD *mr;
     HANDLETABLE16 *ht;
-    int offset = 0;
+    unsigned int offset = 0;
     WORD i;
     HPEN hPen;
     HBRUSH hBrush;
@@ -570,7 +570,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     HANDLETABLE16 *ht;
     HGLOBAL16 hHT;
     SEGPTR spht;
-    int offset = 0;
+    unsigned int offset = 0;
     WORD i, seg;
     HPEN hPen;
     HBRUSH hBrush;
@@ -662,7 +662,8 @@ BOOL WINAPI EnumMetaFile(
     METARECORD *mr;
     HANDLETABLE *ht;
     BOOL result = TRUE;
-    int i, offset = 0;
+    int i;
+    unsigned int offset = 0;
     HPEN hPen;
     HBRUSH hBrush;
     HFONT hFont;
@@ -1216,7 +1217,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable,
 {
     HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR, 
 					     handles*sizeof(HANDLETABLE16));
-    int i = 0;
+    unsigned int i = 0;
     TRACE("(%08x,%p,%p,%d)\n", hdc, handletable, metarecord,
 	  handles); 
     for (i=0; i<handles; i++)  

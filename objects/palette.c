@@ -213,7 +213,7 @@ UINT WINAPI GetPaletteEntries(
     LPPALETTEENTRY entries) /* [out] Address of array receiving entries */
 {
     PALETTEOBJ * palPtr;
-    INT numEntries;
+    UINT numEntries;
 
     TRACE("hpal = %04x, count=%i\n", hpalette, count );
         
@@ -265,7 +265,7 @@ UINT WINAPI SetPaletteEntries(
     LPPALETTEENTRY entries) /* [in] Address of array of structures */
 {
     PALETTEOBJ * palPtr;
-    INT numEntries;
+    UINT numEntries;
 
     TRACE("hpal=%04x,start=%i,count=%i\n",hpalette,start,count );
 

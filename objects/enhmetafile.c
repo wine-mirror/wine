@@ -1214,7 +1214,7 @@ BOOL WINAPI EnumEnhMetaFile(
     ENHMETAHEADER *emh, *emhTemp;
     ENHMETARECORD *emr;
     DWORD offset;
-    INT i;
+    UINT i;
     HANDLETABLE *ht;
     INT savedMode = 0;
     FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;

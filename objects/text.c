@@ -64,7 +64,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
         UINT wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
         if (lpDx)
         {
-            int i = 0, j = 0;
+            unsigned int i = 0, j = 0;
 
             lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
             while(i < count)
