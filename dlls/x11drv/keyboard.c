@@ -1010,8 +1010,9 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     wine_tsx11_unlock();
 
     /* Ignore some unwanted events */
-    if ((keysym >= XK_ISO_Lock && keysym <= XK_ISO_Last_Group_Lock) ||
-         keysym == XK_Mode_switch)
+    if (ascii_chars &&
+        ((keysym >= XK_ISO_Lock && keysym <= XK_ISO_Last_Group_Lock) ||
+         keysym == XK_Mode_switch))
     {
         TRACE("Ignoring %s keyboard event\n", TSXKeysymToString(keysym));
         return;
