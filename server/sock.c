@@ -188,8 +188,6 @@ static void sock_wake_up( struct sock *sock, int pollev )
     /* We need this to delay FD_CLOSE events until all pending overlapped requests are processed */
     if ( !events || async_active ) return;
 
-    if (events & FD_CLOSE) sock->hmask |= FD_CLOSE;
-
     if (sock->event)
     {
         if (debug_level) fprintf(stderr, "signalling events %x ptr %p\n", events, sock->event );
@@ -284,7 +282,7 @@ static void sock_poll_event( struct object *obj, int event )
             {
                 /* incoming data */
                 sock->pmask |= FD_READ;
-                sock->hmask |= FD_READ;
+                sock->hmask |= (FD_READ|FD_CLOSE);
                 sock->errors[FD_READ_BIT] = 0;
                 if (debug_level)
                     fprintf(stderr, "socket %d is readable\n", sock->obj.fd );
@@ -330,6 +328,7 @@ static void sock_poll_event( struct object *obj, int event )
             if ( event & ( POLLERR|POLLHUP ) )
                  sock->state &= ~(FD_WINE_CONNECTED|FD_WRITE);
             sock->pmask |= FD_CLOSE;
+            sock->hmask |= FD_CLOSE;
             if (debug_level)
                 fprintf(stderr, "socket %d aborted by error %d, event: %x - removing from select loop\n",
                         sock->obj.fd, sock->errors[FD_CLOSE_BIT], event);
@@ -390,7 +389,7 @@ static int sock_get_poll_events( struct object *obj )
     if (mask & FD_WRITE || (sock->flags & WSA_FLAG_OVERLAPPED && IS_READY (sock->write_q)))
         ev |= POLLOUT;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication. */
-    if (sock->mask & ~sock->hmask & FD_CLOSE && !(sock->hmask & FD_READ) )
+    if (sock->mask & ~sock->hmask & FD_CLOSE)
         ev |= POLLIN;
 
     return ev;
@@ -447,6 +446,7 @@ static void sock_queue_async(struct object *obj, void *ptr, unsigned int status,
     {
     case ASYNC_TYPE_READ:
         q = &sock->read_q;
+        sock->hmask &= ~FD_CLOSE;
         break;
     case ASYNC_TYPE_WRITE:
         q = &sock->write_q;
@@ -788,6 +788,8 @@ DECL_HANDLER(enable_socket_event)
 
     sock->pmask &= ~req->mask; /* is this safe? */
     sock->hmask &= ~req->mask;
+    if ( req->mask & FD_READ )
+        sock->hmask &= ~FD_CLOSE;
     sock->state |= req->sstate;
     sock->state &= ~req->cstate;
 
