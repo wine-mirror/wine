@@ -40,17 +40,36 @@
 "Personal"="C:\My Documents"
 "Favorites"="C:\WINDOWS\Favorites"
 
+#
+# General OLE/DCOM config
+#
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\OLE]
+# allow cross-machine calls (RPC) (default Y)
+"EnableDCOM"="Y"
+# allow incoming connections ? (def. N)
+"EnableRemoteConnect"="N"
+
+#
+# General installation config
+#
+
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion]
 "ProgramFilesDir"="C:\Program Files"
+
+#
+# This identifies the files for available code pages
+#
 
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Nls\Codepage]
 "ACP"="1252"
 "OEMCP"="437"
 
 #
-# SHELL32 entrys base classes of the desktop/ shelllinks
-# Used by common dialogs, programs creating and may others
+# SHELL32 entries base classes of the desktop/ shelllinks
+# Used by common dialogs, programs creating and many others
 #
+
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021400-0000-0000-C000-000000000046}]
 @="Shortcut"
 
