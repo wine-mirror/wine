@@ -1291,7 +1291,16 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
 
 
     for( ; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_UUID) {
+        switch(attr->type) {
+        case ATTR_HIDDEN:
+            typeinfo->flags |= 0x10; /* TYPEFLAG_FHIDDEN */
+            break;
+
+        case ATTR_RESTRICTED:
+            typeinfo->flags |= 0x200; /* TYPEFLAG_FRESTRICTED */
+            break;
+
+        case ATTR_UUID:
             guidentry.guid = *(GUID*)attr->u.pval;
             guidentry.hreftype = typelib->typelib_typeinfo_offsets[typeinfo->typekind >> 16];
             guidentry.next_hash = -1;
@@ -1301,6 +1310,14 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
                 typelib->typelib_header.dispatchpos = typelib->typelib_typeinfo_offsets[typeinfo->typekind >> 16];
             }
 #endif
+
+        case ATTR_VERSION:
+            typeinfo->version = attr->u.ival;
+            break;
+
+        default:
+            warning("create_msft_typeinfo: ignoring attr %d\n", attr->type);
+            break;
         }
     }
 
