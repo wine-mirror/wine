@@ -32,6 +32,10 @@ DEFAULT_DEBUG_CHANNEL(commdlg);
 static HBITMAP16 hBitmapTT = 0; 
 
 
+LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
+				  LPARAM lParam);
+LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
+				  LPARAM lParam);
 
 
 static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)

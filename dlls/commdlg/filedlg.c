@@ -46,6 +46,12 @@ static const char defaultfilter[]=" \0\0";
  * Windows 3.1 OpenFileName/SaveFileName dialog
  *
  */
+
+LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+				 LPARAM lParam);
+LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+				 LPARAM lParam);
+
 /***********************************************************************
  * 				FileDlg_Init			[internal]
  */

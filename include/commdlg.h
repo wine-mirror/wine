@@ -48,31 +48,7 @@ extern "C" {
 #define SAVE_DIALOG  1
 #define OPEN_DIALOG  2
     
-typedef UINT16 (CALLBACK *LPOFNHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef UINT (CALLBACK *LPOFNHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
-
-typedef struct {
-	DWORD		lStructSize;
-	HWND16		hwndOwner;
-	HINSTANCE16	hInstance;
-	SEGPTR	        lpstrFilter;
-	SEGPTR          lpstrCustomFilter;
-	DWORD		nMaxCustFilter;
-	DWORD		nFilterIndex;
-	SEGPTR          lpstrFile;
-	DWORD		nMaxFile;
-	SEGPTR		lpstrFileTitle;
-	DWORD		nMaxFileTitle;
-	SEGPTR 		lpstrInitialDir;
-	SEGPTR 		lpstrTitle;
-	DWORD		Flags;
-	UINT16		nFileOffset;
-	UINT16		nFileExtension;
-	SEGPTR		lpstrDefExt;
-	LPARAM 		lCustData;
-	LPOFNHOOKPROC16 lpfnHook;
-	SEGPTR 		lpTemplateName;
-}   OPENFILENAME16,*LPOPENFILENAME16;
 
 typedef struct {
 	DWORD		lStructSize;
@@ -140,21 +116,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(OFNOTIFY)
 DECL_WINELIB_TYPE_AW(LPOFNOTIFY)
  
-typedef UINT16 (CALLBACK *LPCCHOOKPROC16) (HWND16, UINT16, WPARAM16, LPARAM);
 typedef UINT (CALLBACK *LPCCHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
-
-typedef struct {
-	DWORD		lStructSize;
-	HWND16		hwndOwner;
-	HWND16		hInstance;
-	COLORREF	rgbResult;
-	COLORREF       *lpCustColors;
-	DWORD 		Flags;
-	LPARAM		lCustData;
-        LPCCHOOKPROC16  lpfnHook;
-	SEGPTR 		lpTemplateName;
-} CHOOSECOLOR16;
-typedef CHOOSECOLOR16 *LPCHOOSECOLOR16;
 
 typedef struct {
 	DWORD		lStructSize;
@@ -194,29 +156,12 @@ DECL_WINELIB_TYPE_AW(LPCHOOSECOLOR)
 #define CC_ENABLETEMPLATE        0x00000020
 #define CC_ENABLETEMPLATEHANDLE  0x00000040
 
-typedef UINT16 (CALLBACK *LPFRHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef UINT (CALLBACK *LPFRHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
-
-typedef struct {
-	DWORD		lStructSize; 			/* size of this struct 0x20 */
-	HWND16		hwndOwner; 				/* handle to owner's window */
-	HINSTANCE16	hInstance; 				/* instance handle of.EXE that  */
-										/*	contains cust. dlg. template */
-	DWORD		Flags;                  /* one or more of the FR_?? */
-	SEGPTR		lpstrFindWhat;          /* ptr. to search string    */
-	SEGPTR		lpstrReplaceWith;       /* ptr. to replace string   */
-	UINT16		wFindWhatLen;           /* size of find buffer      */
-	UINT16 		wReplaceWithLen;        /* size of replace buffer   */
-	LPARAM 		lCustData;              /* data passed to hook fn.  */
-        LPFRHOOKPROC16  lpfnHook;
-	SEGPTR 		lpTemplateName;         /* custom template name     */
-	} FINDREPLACE16, *LPFINDREPLACE16;
 
 typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
 	HINSTANCE	hInstance;
-
 	DWORD		Flags;
 	LPSTR		lpstrFindWhat;
 	LPSTR		lpstrReplaceWith;
@@ -225,13 +170,12 @@ typedef struct {
 	LPARAM 		lCustData;
         LPFRHOOKPROC    lpfnHook;
 	LPCSTR 		lpTemplateName;
-	} FINDREPLACEA, *LPFINDREPLACEA;
+} FINDREPLACEA, *LPFINDREPLACEA;
 
 typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
 	HINSTANCE	hInstance;
-
 	DWORD		Flags;
 	LPWSTR		lpstrFindWhat;
 	LPWSTR		lpstrReplaceWith;
@@ -240,7 +184,7 @@ typedef struct {
 	LPARAM 		lCustData;
         LPFRHOOKPROC    lpfnHook;
 	LPCWSTR		lpTemplateName;
-	} FINDREPLACEW, *LPFINDREPLACEW;
+} FINDREPLACEW, *LPFINDREPLACEW;
 	
 DECL_WINELIB_TYPE_AW(FINDREPLACE)
 DECL_WINELIB_TYPE_AW(LPFINDREPLACE)
@@ -263,33 +207,7 @@ DECL_WINELIB_TYPE_AW(LPFINDREPLACE)
 #define FR_HIDEMATCHCASE                0x00008000
 #define FR_HIDEWHOLEWORD                0x00010000
 
-typedef UINT16 (CALLBACK *LPCFHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef UINT (CALLBACK *LPCFHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
-
-typedef struct 
-{
-	DWORD			lStructSize;
-	HWND16			hwndOwner;          /* caller's window handle   */
-	HDC16          	        hDC;                /* printer DC/IC or NULL    */
-	SEGPTR                  lpLogFont;          /* ptr. to a LOGFONT struct */
-	short			iPointSize;         /* 10 * size in points of selected font */
-	DWORD			Flags;  /* enum. type flags         */
-	COLORREF		rgbColors;          /* returned text color      */
-	LPARAM	                lCustData;          /* data passed to hook fn.  */
-	LPCFHOOKPROC16          lpfnHook;
-	SEGPTR			lpTemplateName;     /* custom template name     */
-	HINSTANCE16		hInstance;          /* instance handle of.EXE that   */
-							/* contains cust. dlg. template  */
-	SEGPTR			lpszStyle;  /* return the style field here   */
-							/* must be LF_FACESIZE or bigger */
-	UINT16			nFontType;          	/* same value reported to the    */
-						    	/* EnumFonts callback with the   */
-							/* extra FONTTYPE_ bits added    */
-	short			nSizeMin;   /* minimum pt size allowed & */
-	short			nSizeMax;   /* max pt size allowed if    */
-							/* CF_LIMITSIZE is used      */
-} CHOOSEFONT16, *LPCHOOSEFONT16;
-
 
 typedef struct
 {
@@ -443,34 +361,8 @@ DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
         (void)SNDMSG(_hdlg, CDM_SETDEFEXT, 0, (LPARAM)(LPSTR)_pszext)
 
 
-typedef UINT16 (CALLBACK *LPPRINTHOOKPROC16) (HWND16, UINT16, WPARAM16, LPARAM);
 typedef UINT (CALLBACK *LPPRINTHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
-
-typedef UINT16 (CALLBACK *LPSETUPHOOKPROC16) (HWND16, UINT16, WPARAM16, LPARAM);
 typedef UINT (CALLBACK *LPSETUPHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
-
-typedef struct
-{
-    DWORD            lStructSize;
-    HWND16           hwndOwner;
-    HGLOBAL16        hDevMode;
-    HGLOBAL16        hDevNames;
-    HDC16            hDC;
-    DWORD            Flags;
-    WORD             nFromPage;
-    WORD             nToPage;
-    WORD             nMinPage;
-    WORD             nMaxPage;
-    WORD             nCopies;
-    HINSTANCE16      hInstance;
-    LPARAM           lCustData;
-    LPPRINTHOOKPROC16 lpfnPrintHook;
-    LPSETUPHOOKPROC16 lpfnSetupHook;
-    SEGPTR           lpPrintTemplateName;
-    SEGPTR           lpSetupTemplateName;
-    HGLOBAL16        hPrintTemplate;
-    HGLOBAL16        hSetupTemplate;
-} PRINTDLG16, *LPPRINTDLG16;
 
 typedef struct tagPDA
 {
@@ -544,6 +436,7 @@ DECL_WINELIB_TYPE_AW(LPPRINTDLG)
 #define PD_USEDEVMODECOPIESANDCOLLATE 0x00040000
 #define PD_DISABLEPRINTTOFILE        0x00080000
 #define PD_HIDEPRINTTOFILE           0x00100000
+#define PD_NONETWORKBUTTON           0x00200000
 
 typedef struct {
 	UINT16 	wDriverOffset;
@@ -625,57 +518,35 @@ DECL_WINELIB_TYPE_AW(LPPAGESETUPDLG)
 #define PSD_ENABLEPAGEPAINTHOOK           0x00040000
 #define PSD_DISABLEPAGEPAINTING           0x00080000
 
-BOOL16  WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol);
+
 BOOL  WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol);
 BOOL  WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol);
 #define ChooseColor WINELIB_NAME_AW(ChooseColor)
 DWORD   WINAPI CommDlgExtendedError(void);
-HWND16  WINAPI FindText16( SEGPTR find);
 HWND  WINAPI FindTextA(LPFINDREPLACEA lpFind);
 HWND  WINAPI FindTextW(LPFINDREPLACEW lpFind);
 #define FindText WINELIB_NAME_AW(FindText)
-INT16   WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
-INT16   WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf);
-INT16   WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf);
+short   WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf);
+short   WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf);
 #define GetFileTitle WINELIB_NAME_AW(GetFileTitle)
-BOOL16  WINAPI GetOpenFileName16(SEGPTR ofn);
 BOOL  WINAPI GetOpenFileNameA(LPOPENFILENAMEA ofn);
 BOOL  WINAPI GetOpenFileNameW(LPOPENFILENAMEW ofn);
-BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType);
-BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType);
 #define GetOpenFileName WINELIB_NAME_AW(GetOpenFileName)
-BOOL16  WINAPI GetSaveFileName16(SEGPTR ofn);
 BOOL  WINAPI GetSaveFileNameA(LPOPENFILENAMEA ofn);
 BOOL  WINAPI GetSaveFileNameW(LPOPENFILENAMEW ofn);
 #define GetSaveFileName WINELIB_NAME_AW(GetSaveFileName)
 BOOL WINAPI PageSetupDlgA( LPPAGESETUPDLGA );
 BOOL WINAPI PageSetupDlgW( LPPAGESETUPDLGW );
 #define PageSetupDlg WINELIB_NAME_AW(PageSetupDlg)
-BOOL16  WINAPI PrintDlg16( LPPRINTDLG16 print);
 BOOL  WINAPI PrintDlgA( LPPRINTDLGA printdlg);
 BOOL  WINAPI PrintDlgW( LPPRINTDLGW printdlg);
 #define PrintDlg WINELIB_NAME_AW(PrintDlg)
-HWND16  WINAPI ReplaceText16( SEGPTR find);
 HWND  WINAPI ReplaceTextA( LPFINDREPLACEA lpFind);
 HWND  WINAPI ReplaceTextW( LPFINDREPLACEW lpFind);
 #define ReplaceText WINELIB_NAME_AW(ReplaceText)
-BOOL16  WINAPI ChooseFont16(LPCHOOSEFONT16);
 BOOL  WINAPI ChooseFontA(LPCHOOSEFONTA);
 BOOL  WINAPI ChooseFontW(LPCHOOSEFONTW);
 #define ChooseFont WINELIB_NAME_AW(ChooseFont)
-LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI ColorDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI PrintDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI PrintDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI PrintDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI FormatCharDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-LRESULT WINAPI FormatCharDlgProcA(HWND,UINT,WPARAM,LPARAM);
-LRESULT WINAPI FormatCharDlgProcW(HWND,UINT,WPARAM,LPARAM);
-#define FormatCharDlgProc WINELIB_NAME_AW(FormatCharDlgProc)
 
 void COMDLG32_SetCommDlgExtendedError(DWORD err); 
 

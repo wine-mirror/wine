@@ -2,6 +2,7 @@ name	comdlg32
 type	win32
 init	COMDLG32_DllEntryPoint
 rsrc	comdlg32
+import   winspool.drv
 
 import	shell32.dll
 import	comctl32.dll
@@ -23,7 +24,7 @@ import	winspool.drv
 13 stdcall GetSaveFileNameW(ptr) GetSaveFileNameW
 14 stub LoadAlterBitmap
 15 stdcall PageSetupDlgA(ptr) PageSetupDlgA
-16 stub PageSetupDlgW
+16 stdcall PageSetupDlgW(ptr) PageSetupDlgW
 17 stdcall PrintDlgA(ptr) PrintDlgA
 18 stdcall PrintDlgW(ptr) PrintDlgW
 19 stdcall ReplaceTextA(ptr) ReplaceTextA

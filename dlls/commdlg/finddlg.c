@@ -23,6 +23,11 @@ DEFAULT_DEBUG_CHANNEL(commdlg)
 
 #include "cdlg.h"
 
+LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                                 LPARAM lParam);
+LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+				    LPARAM lParam);
+
 /***********************************************************************
  *           FindTextDlgProc [internal]
  *
