@@ -44,6 +44,7 @@ TOOLTIPS_Refresh (WND *wndPtr, HDC32 hdc)
     RECT32 rc;
     INT32 oldBkMode;
     HFONT32 hOldFont;
+    HBRUSH32 hBrush;
     UINT32 uFlags = DT_EXTERNALLEADING;
 
     if (infoPtr->nMaxTipWidth > -1)
@@ -51,10 +52,19 @@ TOOLTIPS_Refresh (WND *wndPtr, HDC32 hdc)
     if (wndPtr->dwStyle & TTS_NOPREFIX)
 	uFlags |= DT_NOPREFIX;
     GetClientRect32 (wndPtr->hwndSelf, &rc);
+
+    /* fill the background */
+    hBrush = CreateSolidBrush32 (infoPtr->clrBk);
+    FillRect32 (hdc, &rc, hBrush);
+    DeleteObject32 (hBrush);
+
+    /* calculate text rectangle */
     rc.left   += (2 + infoPtr->rcMargin.left);
     rc.top    += (2 + infoPtr->rcMargin.top);
     rc.right  -= (2 + infoPtr->rcMargin.right);
     rc.bottom -= (2 + infoPtr->rcMargin.bottom);
+
+    /* draw text */
     oldBkMode = SetBkMode32 (hdc, TRANSPARENT);
     SetTextColor32 (hdc, infoPtr->clrText);
     hOldFont = SelectObject32 (hdc, infoPtr->hFont);
@@ -178,7 +188,8 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
     TTTOOL_INFO *toolPtr;
     RECT32 rect;
     SIZE32 size;
-    NMHDR hdr;
+    HDC32  hdc;
+    NMHDR  hdr;
 
     if (infoPtr->nTool == -1) {
 	TRACE (tooltips, "invalid tool (-1)!\n");
@@ -240,6 +251,11 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 		    rect.right - rect.left, rect.bottom - rect.top,
 		    SWP_SHOWWINDOW);
 
+    /* repaint the tooltip */
+    hdc = GetDC32 (wndPtr->hwndSelf);
+    TOOLTIPS_Refresh (wndPtr, hdc);
+    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+
     SetTimer32 (wndPtr->hwndSelf, ID_TIMERPOP, infoPtr->nAutoPopTime, 0);
 }
 
@@ -276,6 +292,7 @@ TOOLTIPS_TrackShow (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
     TTTOOL_INFO *toolPtr;
     RECT32 rect;
     SIZE32 size;
+    HDC32  hdc;
     NMHDR hdr;
 
     if (infoPtr->nTrackTool == -1) {
@@ -349,6 +366,10 @@ TOOLTIPS_TrackShow (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
     SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, rect.left, rect.top,
 		    rect.right - rect.left, rect.bottom - rect.top,
 		    SWP_SHOWWINDOW);
+
+    hdc = GetDC32 (wndPtr->hwndSelf);
+    TOOLTIPS_Refresh (wndPtr, hdc);
+    ReleaseDC32 (wndPtr->hwndSelf, hdc);
 }
 
 
@@ -1729,6 +1750,12 @@ TOOLTIPS_UpdateTipText32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	}
     }
 
+    /* force repaint */
+    if (infoPtr->bActive)
+	TOOLTIPS_Show (wndPtr, infoPtr);
+    else if (infoPtr->bTrackActive)
+	TOOLTIPS_TrackShow (wndPtr, infoPtr);
+
     return 0;
 }
 
@@ -1775,6 +1802,12 @@ TOOLTIPS_UpdateTipText32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    }
 	}
     }
+
+    /* force repaint */
+    if (infoPtr->bActive)
+	TOOLTIPS_Show (wndPtr, infoPtr);
+    else if (infoPtr->bTrackActive)
+	TOOLTIPS_TrackShow (wndPtr, infoPtr);
 
     return 0;
 }
