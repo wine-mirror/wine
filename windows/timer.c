@@ -31,6 +31,8 @@ typedef struct tagTIMER
 #define NB_TIMERS            34
 #define NB_RESERVED_TIMERS    2  /* for SetSystemTimer */
 
+#define SYS_TIMER_RATE  54925
+
 static TIMER TimersArray[NB_TIMERS];
 
 static CRITICAL_SECTION csTimer;
@@ -205,8 +207,11 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     int i;
     TIMER * pTimer;
 
-    if (!timeout) return 0;
-
+    if (!timeout)
+      {       /* timeout==0 is a legal argument  UB 990821*/
+       WARN("Timeout== 0 not implemented, using timeout=1\n");
+        timeout=1; 
+      }
     EnterCriticalSection( &csTimer );
     
       /* Check if there's already a timer with the same hwnd and id */
@@ -248,9 +253,9 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     if (proc) WINPROC_SetProc( &pTimer->proc, proc, type, WIN_PROC_TIMER );
 
     pTimer->expired  = FALSE;
-    pTimer->hService = SERVICE_AddTimer( timeout * 1000L, 
-                                         TIMER_CheckTimer, (ULONG_PTR)pTimer );
-
+    pTimer->hService = SERVICE_AddTimer( MAX( timeout * 1000L, SYS_TIMER_RATE ),
+                                       TIMER_CheckTimer, (ULONG_PTR)pTimer );
+    
     TRACE("Timer added: %p, %04x, %04x, %04x, %08lx\n", 
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );
