@@ -3907,16 +3907,20 @@ done:
  */
 static void X11DRV_DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
 {
+    DWORD old_prot;
+    INT totalSize;
     DIBSECTION *dib = bmp->dib;
     INT effHeight = dib->dsBm.bmHeight >= 0? dib->dsBm.bmHeight
                                              : -dib->dsBm.bmHeight;
+
     /* use the biSizeImage data as the memory size only if we're dealing with a
        compressed image where the value is set.  Otherwise, calculate based on
        width * height */
-    INT totalSize = dib->dsBmih.biSizeImage && dib->dsBmih.biCompression != BI_RGB
-                         ? dib->dsBmih.biSizeImage
-                         : dib->dsBm.bmWidthBytes * effHeight;
-    DWORD old_prot;
+    if (dib->dsBmih.biSizeImage &&
+        (dib->dsBmih.biCompression == BI_RLE4 || dib->dsBmih.biCompression == BI_RLE8))
+        totalSize = dib->dsBmih.biSizeImage;
+    else
+        totalSize = dib->dsBm.bmWidthBytes * effHeight;
 
     VirtualProtect(dib->dsBm.bmBits, totalSize, new_prot, &old_prot);
     TRACE("Changed protection from %ld to %ld\n", old_prot, new_prot);
@@ -4532,8 +4536,10 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 
   /* Get storage location for DIB bits.  Only use biSizeImage if it's valid and
      we're dealing with a compressed bitmap.  Otherwise, use width * height. */
-  totalSize = bi->biSizeImage && bi->biCompression != BI_RGB
-    ? bi->biSizeImage : bm.bmWidthBytes * effHeight;
+  if (bi->biSizeImage && (bi->biCompression == BI_RLE4 || bi->biCompression == BI_RLE8))
+      totalSize = bi->biSizeImage;
+  else
+      totalSize = bm.bmWidthBytes * effHeight;
 
   if (section)
   {
