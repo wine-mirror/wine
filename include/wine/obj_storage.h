@@ -140,19 +140,22 @@ struct STATSTG {
  * IEnumSTATSTG interface
  */
 #define ICOM_INTERFACE IEnumSTATSTG
-ICOM_BEGIN(IEnumSTATSTG,IUnknown)
-     ICOM_METHOD3(HRESULT, Next, ULONG, celt, STATSTG*, rgelt, ULONG*, pceltFetched);   
-     ICOM_METHOD1(HRESULT, Skip, ULONG, celt);
-     ICOM_CMETHOD(HRESULT, Reset);
-     ICOM_METHOD1(HRESULT, Clone, IEnumSTATSTG**, ppenum);
-ICOM_END(IEnumSTATSTG)
+#define IEnumSTATSTG_METHODS \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATSTG*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
+    ICOM_METHOD (HRESULT,Reset) \
+    ICOM_METHOD1(HRESULT,Clone, IEnumSTATSTG**,ppenum)
+#define IEnumSTATSTG_IMETHODS \
+    IUnknown_IMETHODS \
+    IEnumSTATSTG_METHODS
+ICOM_DEFINE(IEnumSTATSTG,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IEnumSTATSTG_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IEnumSTATSTG_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IEnumSTATSTG_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IEnumSTATSTG_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IEnumSTATSTG_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IEnumSTATSTG_Release(p)            ICOM_CALL (Release,p)
 /*** IEnumSTATSTG methods ***/
 #define IEnumSTATSTG_Next(p,a,b,c)         ICOM_CALL3(Next,p,a,b,c)
 #define IEnumSTATSTG_Skip(p,a)             ICOM_CALL1(Skip,p,a)
@@ -160,38 +163,124 @@ ICOM_END(IEnumSTATSTG)
 #define IEnumSTATSTG_Clone(p,a)            ICOM_CALL1(Clone,p,a)
 #endif
 
+
 /*****************************************************************************
  * IFillLockBytes interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IFillLockBytes
+#define IFillLockBytes_METHODS \
+    ICOM_METHOD3(HRESULT,FillAppend,  const void*,pv, ULONG,cb, ULONG*,pcbWritten) \
+    ICOM_METHOD4(HRESULT,FillAt,      ULARGE_INTEGER,ulOffset, const void*,pv, ULONG,cb, ULONG*,pcbWritten) \
+    ICOM_METHOD1(HRESULT,SetFillSize, ULARGE_INTEGER,ulSize) \
+    ICOM_METHOD1(HRESULT,Terminate,   BOOL32,bCanceled)
+#define IFillLockBytes_IMETHODS \
+    IUnknown_IMETHODS \
+    IFillLockBytes_METHODS
+ICOM_DEFINE(IFillLockBytes,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IFillLockBytes_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IFillLockBytes_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IFillLockBytes_Release(p)            ICOM_CALL (Release,p)
+/*** IFillLockBytes methods ***/
+#define IFillLockBytes_FillAppend(p,a,b,c) ICOM_CALL3(FillAppend,p,a,b,c)
+#define IFillLockBytes_FillAt(p,a,b,c,d)   ICOM_CALL4(FillAt,p,a,b,c,d)
+#define IFillLockBytes_SetFillSize(p,a)    ICOM_CALL1(SetFillSize,p,a)
+#define IFillLockBytes_Terminate(p,a)      ICOM_CALL1(Terminate,p,a)
+#endif
 
 
 /*****************************************************************************
  * ILayoutStorage interface
  */
-/* FIXME: not implemented */
+typedef struct tagStorageLayout
+{
+    DWORD LayoutType;
+    OLECHAR16* pwcsElementName;
+    LARGE_INTEGER cOffset;
+    LARGE_INTEGER cBytes;
+} StorageLayout;
+
+#define ICOM_INTERFACE ILayoutStorage
+#define ILayoutStorage_METHODS \
+    ICOM_METHOD2(HRESULT,LayoutScript,                DWORD,nEntries, DWORD,glfInterleavedFlag) \
+    ICOM_METHOD (HRESULT,BeginMonitor) \
+    ICOM_METHOD (HRESULT,EndMonitor) \
+    ICOM_METHOD1(HRESULT,ReLayoutDocfile,             OLECHAR16*,pwcsNewDfName) \
+    ICOM_METHOD1(HRESULT,ReLayoutDocfileOnILockBytes, ILockBytes*,pILockBytes)
+#define ILayoutStorage_IMETHODS \
+    IUnknown_IMETHODS \
+    ILayoutStorage_METHODS
+ICOM_DEFINE(ILayoutStorage,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define ILayoutStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define ILayoutStorage_AddRef(p)             ICOM_CALL (AddRef,p)
+#define ILayoutStorage_Release(p)            ICOM_CALL (Release,p)
+/*** ILayoutStorage methods ***/
+#define ILayoutStorage_LayoutScript(p,a,b)              ICOM_CALL2(LayoutScript,p,a,b)
+#define ILayoutStorage_BeginMonitor(p)                  ICOM_CALL (BeginMonitor,p)
+#define ILayoutStorage_EndMonitor(p)                    ICOM_CALL (EndMonitor,p)
+#define ILayoutStorage_ReLayoutDocfile(p,a)             ICOM_CALL1(ReLayoutDocfile,p,a)
+#define ILayoutStorage_ReLayoutDocfileOnILockBytes(p,a) ICOM_CALL1(ReLayoutDocfileOnILockBytes,p,a)
+#endif
 
 
 /*****************************************************************************
  * ILockBytes interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE ILockBytes
+#define ILockBytes_METHODS \
+    ICOM_METHOD4(HRESULT,ReadAt,       ULARGE_INTEGER,ulOffset, void*,pv, ULONG,cb, ULONG*,pcbRead) \
+    ICOM_METHOD4(HRESULT,WriteAt,      ULARGE_INTEGER,ulOffset, const void*,pv, ULONG,cb, ULONG*,pcbWritten) \
+    ICOM_METHOD (HRESULT,Flush); \
+    ICOM_METHOD1(HRESULT,SetSize,      ULARGE_INTEGER,cb) \
+    ICOM_METHOD3(HRESULT,LockRegion,   ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
+    ICOM_METHOD3(HRESULT,UnlockRegion, ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
+    ICOM_METHOD2(HRESULT,Stat,         STATSTG*,pstatstg, DWORD,grfStatFlag)
+#define ILockBytes_IMETHODS \
+    IUnknown_IMETHODS \
+    ILockBytes_METHODS
+ICOM_DEFINE(ILockBytes,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define ILockBytes_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define ILockBytes_AddRef(p)             ICOM_CALL (AddRef,p)
+#define ILockBytes_Release(p)            ICOM_CALL (Release,p)
+/*** ILockBytes methods ***/
+#define ILockBytes_ReadAt(p,a,b,c,d)     ICOM_CALL4(ReadAt,p,a,b,c,d)
+#define ILockBytes_WriteAt(p,a,b,c,d)    ICOM_CALL4(WriteAt,p,a,b,c,d)
+#define ILockBytes_Flush(p)              ICOM_CALL (Flush,p)
+#define ILockBytes_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
+#define ILockBytes_LockRegion(p,a,b,c)   ICOM_CALL3(LockRegion,p,a,b,c)
+#define ILockBytes_UnlockRegion(p,a,b,c) ICOM_CALL3(UnlockRegion,p,a,b,c)
+#define ILockBytes_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
+#endif
 
 
 /*****************************************************************************
  * IPersist interface
  */
 #define ICOM_INTERFACE IPersist
-ICOM_BEGIN(IPersist,IUnknown)
-    ICOM_CMETHOD1(HRESULT,GetClassID, CLSID*,pClassID);
-ICOM_END(IPersist)
+#define IPersist_METHODS \
+    ICOM_CMETHOD1(HRESULT,GetClassID, CLSID*,pClassID)
+#define IPersist_IMETHODS \
+    IUnknown_IMETHODS \
+    IPersist_METHODS
+ICOM_DEFINE(IPersist,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IPersist_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IPersist_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IPersist_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IPersist_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IPersist_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IPersist_Release(p)            ICOM_CALL (Release,p)
 /*** IPersist methods ***/
 #define IPersist_GetClassID(p,a) ICOM_CALL1(GetClassID,p,a)
 #endif
@@ -201,22 +290,25 @@ ICOM_END(IPersist)
  * IPersistFile interface
  */
 #define ICOM_INTERFACE IPersistFile
-ICOM_BEGIN(IPersistFile,IPersist)
-    ICOM_CMETHOD (HRESULT,IsDirty);
-    ICOM_METHOD2 (HRESULT,Load,          LPCOLESTR32,pszFileName, DWORD,dwMode);
-    ICOM_METHOD2 (HRESULT,Save,          LPCOLESTR32,pszFileName, BOOL32,fRemember);
-    ICOM_METHOD1 (HRESULT,SaveCompleted, LPCOLESTR32,pszFileName);
-    ICOM_CMETHOD1(HRESULT,GetCurFile,    LPOLESTR32*,ppszFileName);
-ICOM_END(IPersistFile)
+#define IPersistFile_METHODS \
+    ICOM_CMETHOD (HRESULT,IsDirty) \
+    ICOM_METHOD2 (HRESULT,Load,          LPCOLESTR32,pszFileName, DWORD,dwMode) \
+    ICOM_METHOD2 (HRESULT,Save,          LPCOLESTR32,pszFileName, BOOL32,fRemember) \
+    ICOM_METHOD1 (HRESULT,SaveCompleted, LPCOLESTR32,pszFileName) \
+    ICOM_CMETHOD1(HRESULT,GetCurFile,    LPOLESTR32*,ppszFileName)
+#define IPersistFile_IMETHODS \
+    IPersist_IMETHODS \
+    IPersistFile_METHODS
+ICOM_DEFINE(IPersistFile,IPersist)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IPersistFile_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IPersistFile_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IPersistFile_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IPersistFile_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IPersistFile_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IPersistFile_Release(p)            ICOM_CALL (Release,p)
 /*** IPersist methods ***/
-#define IPersistFile_GetClassID(p,a) ICOM_ICALL1(IPersist,GetClassID,p,a)
+#define IPersistFile_GetClassID(p,a) ICOM_CALL1(GetClassID,p,a)
 /*** IPersistFile methods ***/
 #define IPersistFile_IsDirty(p)         ICOM_CALL(IsDirty,p)
 #define IPersistFile_Load(p,a,b)        ICOM_CALL2(Load,p,a,b)
@@ -230,24 +322,27 @@ ICOM_END(IPersistFile)
  * IPersistStorage interface
  */
 #define ICOM_INTERFACE IPersistStorage
-ICOM_BEGIN(IPersistStorage, IPersist)
-		ICOM_METHOD (HRESULT,IsDirty)
-		ICOM_METHOD1(HRESULT,InitNew,         IStorage32*,pStg)
-		ICOM_METHOD1(HRESULT,Load,            IStorage32*,pStg)
-		ICOM_METHOD2(HRESULT,Save,            IStorage32*,pStgSave,  BOOL32,fSameAsLoad)
-		ICOM_METHOD1(HRESULT,SaveCompleted,   IStorage32*,pStgNew);
+#define IPersistStorage_METHODS \
+    ICOM_METHOD (HRESULT,IsDirty) \
+    ICOM_METHOD1(HRESULT,InitNew,        IStorage32*,pStg) \
+    ICOM_METHOD1(HRESULT,Load,           IStorage32*,pStg) \
+    ICOM_METHOD2(HRESULT,Save,           IStorage32*,pStg, BOOL32,fSameAsLoad) \
+    ICOM_METHOD1(HRESULT,SaveCompleted,  IStorage32*,pStgNew) \
 		ICOM_METHOD (HRESULT,HandsOffStorage)
-ICOM_END(IPersistStorage)
+#define IPersistStorage_IMETHODS \
+    IPersist_IMETHODS \
+    IPersistStorage_METHODS
+ICOM_DEFINE(IPersistStorage,IPersist)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IPersistStorage_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IPersistStorage_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IPersistStorage_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IPersistStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IPersistStorage_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IPersistStorage_Release(p)            ICOM_CALL (Release,p)
 /*** IPersist methods ***/
-#define IPersistStorage_GetClassID(p,a)    ICOM_ICALL1(IPersist,GetClassID,p,a)
-/*** IPersistFile methods ***/
+#define IPersistStorage_GetClassID(p,a) ICOM_CALL1(GetClassID,p,a)
+/*** IPersistStorage methods ***/
 #define IPersistStorage_IsDirty(p)         ICOM_CALL (IsDirty,p)
 #define IPersistStorage_InitNew(p,a)			 ICOM_CALL1(InitNew,p,a)
 #define IPersistStorage_Load(p,a)          ICOM_CALL1(Load,p,a)
@@ -261,56 +356,94 @@ ICOM_END(IPersistStorage)
  * IPersistStream interface
  */
 #define ICOM_INTERFACE IPersistStream
-ICOM_BEGIN(IPersistStream,IPersist);
-          ICOM_METHOD(HRESULT, IsDirty);
-          ICOM_METHOD1(HRESULT, Load, IStream32*, pStm);
-          ICOM_METHOD2(HRESULT, Save, IStream32*, pStm, BOOL32, fClearDirty);
-          ICOM_METHOD1(HRESULT, GetSizeMax, ULARGE_INTEGER*, pcbSize);
-ICOM_END(IPersistStream)
+#define IPersistStream_METHODS \
+    ICOM_METHOD (HRESULT,IsDirty) \
+    ICOM_METHOD1(HRESULT,Load,       IStream32*,pStm) \
+    ICOM_METHOD2(HRESULT,Save,       IStream32*,pStm, BOOL32,fClearDirty) \
+    ICOM_METHOD1(HRESULT,GetSizeMax, ULARGE_INTEGER*,pcbSize)
+#define IPersistStream_IMETHODS \
+    IPersist_IMETHODS \
+    IPersistStream_METHODS
+ICOM_DEFINE(IPersistStream,IPersist)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IPersistStream_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IPersistStream_AddRef(p)             ICOM_ICALL(IUnknown,AddRef,p)
-#define IPersistStream_Release(p)            ICOM_ICALL(IUnknown,Release,p)
+#define IPersistStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IPersistStream_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IPersistStream_Release(p)            ICOM_CALL (Release,p)
 /*** IPersist methods ***/
-#define IPersistStream_GetClassID(p,a)       ICOM_ICALL1(IPersist,GetClassID,p,a)
-/*** IPersistStream ***/
-#define IPersist_Stream_IsDirty(p)       ICOM_CALL(IsDirty,p)
-#define IPersist_Stream_Load(p,a)        ICOM_CALL1(Load,p,a)
-#define IPersist_Stream_Save(p,a,b)      ICOM_CALL2(Save,p,a,b)
-#define IPersist_Stream_GetSizeMax(p,a)  ICOM_CALL(GetSizeMax,p)
+#define IPersistStream_GetClassID(p,a) ICOM_CALL1(GetClassID,p,a)
+/*** IPersistStream methods ***/
+#define IPersistStream_IsDirty(p)      ICOM_CALL (IsDirty,p)
+#define IPersistStream_Load(p,a)       ICOM_CALL1(Load,p,a)
+#define IPersistStream_Save(p,a,b)     ICOM_CALL2(Save,p,a,b)
+#define IPersistStream_GetSizeMax(p,a) ICOM_CALL1(GetSizeMax,p,a)
 #endif
 
 
 /*****************************************************************************
  * IProgressNotify interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IProgressNotify
+#define IProgressNotify_METHODS \
+    ICOM_METHOD4(HRESULT,OnProgress, DWORD,dwProgressCurrent, DWORD,dwProgressMaximum, BOOL32,fAccurate, BOOL32,fOwner)
+#define IProgressNotify_IMETHODS \
+    IUnknown_IMETHODS \
+    IProgressNotify_METHODS
+ICOM_DEFINE(IProgressNotify,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IProgressNotify_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IProgressNotify_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IProgressNotify_Release(p)            ICOM_CALL (Release,p)
+/*** IProgressNotify methods ***/
+#define IProgressNotify_OnProgress(p,a,b,c,d) ICOM_CALL4(OnProgress,p,a,b,c,d)
+#endif
 
 
 /*****************************************************************************
  * IRootStorage interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IRootStorage
+#define IRootStorage_METHODS \
+    ICOM_METHOD1(HRESULT,SwitchToFile, LPOLESTR32,pszFile)
+#define IRootStorage_IMETHODS \
+    IUnknown_IMETHODS \
+    IRootStorage_METHODS
+ICOM_DEFINE(IRootStorage,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IRootStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IRootStorage_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IRootStorage_Release(p)            ICOM_CALL (Release,p)
+/*** IRootStorage methods ***/
+#define IRootStorage_SwitchToFile(p,a) ICOM_CALLSwitchToFile(,p,a)
+#endif
 
 
 /*****************************************************************************
  * ISequentialStream interface
  */
 #define ICOM_INTERFACE ISequentialStream
-ICOM_BEGIN(ISequentialStream,IUnknown)
-    ICOM_METHOD3(HRESULT,Read,        void*,pv, ULONG,cb, ULONG*,pcbRead);
-    ICOM_METHOD3(HRESULT,Write,       const void*,pv, ULONG,cb, ULONG*,pcbWritten);
-ICOM_END(ISequentialStream)
+#define ISequentialStream_METHODS \
+    ICOM_METHOD3(HRESULT,Read,  void*,pv, ULONG,cb, ULONG*,pcbRead) \
+    ICOM_METHOD3(HRESULT,Write, const void*,pv, ULONG,cb, ULONG*,pcbWritten)
+#define ISequentialStream_IMETHODS \
+    IUnknown_IMETHODS \
+    ISequentialStream_METHODS
+ICOM_DEFINE(ISequentialStream,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define ISequentialStream_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define ISequentialStream_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define ISequentialStream_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define ISequentialStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define ISequentialStream_AddRef(p)             ICOM_CALL (AddRef,p)
+#define ISequentialStream_Release(p)            ICOM_CALL (Release,p)
 /*** ISequentialStream methods ***/
 #define ISequentialStream_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
 #define ISequentialStream_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
@@ -321,30 +454,33 @@ ICOM_END(ISequentialStream)
  * IStorage interface
  */
 #define ICOM_INTERFACE IStorage16
-ICOM_BEGIN(IStorage16,IUnknown)
-    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm)
-    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR16,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm)
-    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg)
-    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR16,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg)
-    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB16,snb16Exclude, IStorage16*,pstgDest)
-    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR16,pwcsName, IStorage16*,pstgDest, LPCOLESTR16,pwcsNewName, DWORD,grfFlags)
-    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags)
-    ICOM_METHOD (HRESULT,Revert)
-    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum)
-    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR16,pwcsName)
-    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR16,pwcsOldName, LPCOLESTR16,pwcsNewName)
-    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR16,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime)
-    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid)
-    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask)
+#define IStorage16_METHODS \
+    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm) \
+    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR16,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm) \
+    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg) \
+    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR16,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg) \
+    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB16,snb16Exclude, IStorage16*,pstgDest) \
+    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR16,pwcsName, IStorage16*,pstgDest, LPCOLESTR16,pwcsNewName, DWORD,grfFlags) \
+    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags) \
+    ICOM_METHOD (HRESULT,Revert) \
+    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum) \
+    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR16,pwcsName) \
+    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR16,pwcsOldName, LPCOLESTR16,pwcsNewName) \
+    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR16,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
+    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid) \
+    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask) \
     ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag)
-ICOM_END(IStorage16)
+#define IStorage16_IMETHODS \
+    IUnknown_IMETHODS \
+    IStorage16_METHODS
+ICOM_DEFINE(IStorage16,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IStorage16_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IStorage16_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IStorage16_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IStorage16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStorage16_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStorage16_Release(p)            ICOM_CALL (Release,p)
 /*** IStorage16 methods ***/
 #define IStorage16_CreateStream(p,a,b,c,d,e)  ICOM_CALL5(CreateStream,p,a,b,c,d,e)
 #define IStorage16_OpenStream(p,a,b,c,d,e)    ICOM_CALL5(OpenStream,p,a,b,c,d,e)
@@ -365,30 +501,33 @@ ICOM_END(IStorage16)
 
 
 #define ICOM_INTERFACE IStorage32
-ICOM_BEGIN(IStorage32,IUnknown)
-    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream32**,ppstm);
-    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR32,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream32**,ppstm);
-    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage32**,ppstg);
-    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR32,pwcsName, IStorage32*,pstgPriority, DWORD,grfMode, SNB32,snb16Exclude, DWORD,reserved, IStorage32**,ppstg);
-    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB32,snb16Exclude, IStorage32*,pstgDest);
-    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR32,pwcsName, IStorage32*,pstgDest, LPCOLESTR32,pwcsNewName, DWORD,grfFlags);
-    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags);
-    ICOM_METHOD (HRESULT,Revert);
-    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum);
-    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR32,pwcsName);
-    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR32,pwcsOldName, LPCOLESTR32,pwcsNewName);
-    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR32,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime);
-    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid);
-    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask);
-    ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag);
-ICOM_END(IStorage32)
+#define IStorage32_METHODS \
+    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream32**,ppstm) \
+    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR32,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream32**,ppstm) \
+    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR32,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage32**,ppstg) \
+    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR32,pwcsName, IStorage32*,pstgPriority, DWORD,grfMode, SNB32,snb16Exclude, DWORD,reserved, IStorage32**,ppstg) \
+    ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB32,snb16Exclude, IStorage32*,pstgDest) \
+    ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR32,pwcsName, IStorage32*,pstgDest, LPCOLESTR32,pwcsNewName, DWORD,grfFlags) \
+    ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags) \
+    ICOM_METHOD (HRESULT,Revert) \
+    ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum) \
+    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR32,pwcsName) \
+    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR32,pwcsOldName, LPCOLESTR32,pwcsNewName) \
+    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR32,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
+    ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid) \
+    ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask) \
+    ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag)
+#define IStorage32_IMETHODS \
+    IUnknown_IMETHODS \
+    IStorage32_METHODS
+ICOM_DEFINE(IStorage32,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IStorage32_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IStorage32_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IStorage32_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IStorage32_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStorage32_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStorage32_Release(p)            ICOM_CALL (Release,p)
 /*** IStorage32 methods ***/
 #define IStorage32_CreateStream(p,a,b,c,d,e)  ICOM_CALL5(CreateStream,p,a,b,c,d,e)
 #define IStorage32_OpenStream(p,a,b,c,d,e)    ICOM_CALL5(OpenStream,p,a,b,c,d,e)
@@ -409,9 +548,9 @@ ICOM_END(IStorage32)
 #ifndef __WINE__
 /* Duplicated for WINELIB */
 /*** IUnknown methods ***/
-#define IStorage_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IStorage_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IStorage_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IStorage_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStorage_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStorage_Release(p)            ICOM_CALL (Release,p)
 /*** IStorage methods ***/
 #define IStorage_CreateStream(p,a,b,c,d,e)  ICOM_CALL5(CreateStream,p,a,b,c,d,e)
 #define IStorage_OpenStream(p,a,b,c,d,e)    ICOM_CALL5(OpenStream,p,a,b,c,d,e)
@@ -436,27 +575,30 @@ ICOM_END(IStorage32)
  * IStream interface
  */
 #define ICOM_INTERFACE IStream16
-ICOM_BEGIN(IStream16,ISequentialStream)
-    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition); 
-    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize);
-    ICOM_METHOD4(HRESULT,CopyTo,      IStream16*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten);
-    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags);
-    ICOM_METHOD (HRESULT,Revert);
-    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag);
-    ICOM_METHOD1(HRESULT,Clone,       IStream16**,ppstm);
-ICOM_END(IStream16)
+#define IStream16_METHODS \
+    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition) \
+    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize) \
+    ICOM_METHOD4(HRESULT,CopyTo,      IStream16*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten) \
+    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags) \
+    ICOM_METHOD (HRESULT,Revert) \
+    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
+    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
+    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag) \
+    ICOM_METHOD1(HRESULT,Clone,       IStream16**,ppstm)
+#define IStream16_IMETHODS \
+    ISequentialStream_IMETHODS \
+    IStream16_METHODS
+ICOM_DEFINE(IStream16,ISequentialStream)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IStream16_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IStream16_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IStream16_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IStream16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStream16_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStream16_Release(p)            ICOM_CALL (Release,p)
 /*** ISequentialStream methods ***/
-#define IStream16_Read(p,a,b,c)  ICOM_ICALL3(ISequentialStream,Read,p,a,b,c)
-#define IStream16_Write(p,a,b,c) ICOM_ICALL3(ISequentialStream,Write,p,a,b,c)
+#define IStream16_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
+#define IStream16_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
 /*** IStream16 methods ***/
 #define IStream16_Seek(p)               ICOM_CALL3(Seek,p)
 #define IStream16_SetSize(p,a,b)        ICOM_CALL1(SetSize,p,a,b)
@@ -471,27 +613,30 @@ ICOM_END(IStream16)
 
 
 #define ICOM_INTERFACE IStream32
-ICOM_BEGIN(IStream32,ISequentialStream)
-    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition); 
-    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize);
-    ICOM_METHOD4(HRESULT,CopyTo,      IStream32*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten);
-    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags);
-    ICOM_METHOD (HRESULT,Revert);
-    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType);
-    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag);
-    ICOM_METHOD1(HRESULT,Clone,       IStream32**,ppstm);
-ICOM_END(IStream32)
+#define IStream32_METHODS \
+    ICOM_METHOD3(HRESULT,Seek,        LARGE_INTEGER,dlibMove, DWORD,dwOrigin, ULARGE_INTEGER*,plibNewPosition) \
+    ICOM_METHOD1(HRESULT,SetSize,     ULARGE_INTEGER,libNewSize) \
+    ICOM_METHOD4(HRESULT,CopyTo,      IStream32*,pstm, ULARGE_INTEGER,cb, ULARGE_INTEGER*,pcbRead, ULARGE_INTEGER*,pcbWritten) \
+    ICOM_METHOD1(HRESULT,Commit,      DWORD,grfCommitFlags) \
+    ICOM_METHOD (HRESULT,Revert) \
+    ICOM_METHOD3(HRESULT,LockRegion,  ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
+    ICOM_METHOD3(HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset, ULARGE_INTEGER,cb, DWORD,dwLockType) \
+    ICOM_METHOD2(HRESULT,Stat,        STATSTG*,pstatstg, DWORD,grfStatFlag) \
+    ICOM_METHOD1(HRESULT,Clone,       IStream32**,ppstm)
+#define IStream32_IMETHODS \
+    ISequentialStream_IMETHODS \
+    IStream32_METHODS
+ICOM_DEFINE(IStream32,ISequentialStream)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IStream32_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IStream32_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IStream32_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IStream32_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStream32_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStream32_Release(p)            ICOM_CALL (Release,p)
 /*** ISequentialStream methods ***/
-#define IStream32_Read(p,a,b,c)  ICOM_ICALL3(ISequentialStream,Read,p,a,b,c)
-#define IStream32_Write(p,a,b,c) ICOM_ICALL3(ISequentialStream,Write,p,a,b,c)
+#define IStream32_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
+#define IStream32_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
 /*** IStream32 methods ***/
 #define IStream32_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
 #define IStream32_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
@@ -506,12 +651,12 @@ ICOM_END(IStream32)
 #ifndef __WINE__
 /* Duplicated for WINELIB */
 /*** IUnknown methods ***/
-#define IStream_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IStream_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IStream_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStream_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStream_Release(p)            ICOM_CALL (Release,p)
 /*** ISequentialStream methods ***/
-#define IStream_Read(p,a,b,c)  ICOM_ICALL3(ISequentialStream,Read,p,a,b,c)
-#define IStream_Write(p,a,b,c) ICOM_ICALL3(ISequentialStream,Write,p,a,b,c)
+#define IStream_Read(p,a,b,c)  ICOM_CALL3(Read,p,a,b,c)
+#define IStream_Write(p,a,b,c) ICOM_CALL3(Write,p,a,b,c)
 /*** IStream methods ***/
 #define IStream_Seek(p,a,b,c)         ICOM_CALL3(Seek,p,a,b,c)
 #define IStream_SetSize(p,a)          ICOM_CALL1(SetSize,p,a)
@@ -544,5 +689,17 @@ HRESULT WINAPI StgOpenStorage32(const OLECHAR32* pwcsName,IStorage32* pstgPriori
 
 HRESULT WINAPI WriteClassStg32(IStorage32* pStg, REFCLSID rclsid);
 #define WriteClassStg WINELIB_NAME(WriteClassStg)
+
+
+/*****************************************************************************
+ * Other storage API
+ */
+
+/* FIXME: not implemented */
+BOOL32 WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFileTime);
+
+/* FIXME: not implemented */
+BOOL32 WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
+
 
 #endif /* __WINE_WINE_OBJ_STORAGE_H */

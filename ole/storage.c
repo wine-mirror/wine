@@ -681,7 +681,7 @@ typedef struct
  *		IStream16_QueryInterface	[STORAGE.518]
  */
 HRESULT WINAPI IStream16_fnQueryInterface(
-	LPUNKNOWN iface,REFIID refiid,LPVOID *obj
+	IStream16* iface,REFIID refiid,LPVOID *obj
 ) {
 	ICOM_THIS(IStream16Impl,iface);
 	char    xrefiid[50];
@@ -698,7 +698,7 @@ HRESULT WINAPI IStream16_fnQueryInterface(
 /******************************************************************************
  * IStream16_AddRef [STORAGE.519]
  */
-ULONG WINAPI IStream16_fnAddRef(LPUNKNOWN iface) {
+ULONG WINAPI IStream16_fnAddRef(IStream16* iface) {
 	ICOM_THIS(IStream16Impl,iface);
 	return ++(This->ref);
 }
@@ -706,7 +706,7 @@ ULONG WINAPI IStream16_fnAddRef(LPUNKNOWN iface) {
 /******************************************************************************
  * IStream16_Release [STORAGE.520]
  */
-ULONG WINAPI IStream16_fnRelease(LPUNKNOWN iface) {
+ULONG WINAPI IStream16_fnRelease(IStream16* iface) {
 	ICOM_THIS(IStream16Impl,iface);
 	FlushFileBuffers(This->hf);
 	This->ref--;
@@ -769,7 +769,7 @@ HRESULT WINAPI IStream16_fnSeek(
  *		IStream16_Read	[STORAGE.521]
  */
 HRESULT WINAPI IStream16_fnRead(
-        LPSEQUENTIALSTREAM iface,void  *pv,ULONG cb,ULONG  *pcbRead
+        IStream16* iface,void  *pv,ULONG cb,ULONG  *pcbRead
 ) {
 	ICOM_THIS(IStream16Impl,iface);
 	BYTE	block[BIGSIZE];
@@ -830,7 +830,7 @@ HRESULT WINAPI IStream16_fnRead(
  *		IStream16_Write	[STORAGE.522]
  */
 HRESULT WINAPI IStream16_fnWrite(
-        LPSEQUENTIALSTREAM iface,const void *pv,ULONG cb,ULONG *pcbWrite
+        IStream16* iface,const void *pv,ULONG cb,ULONG *pcbWrite
 ) {
 	ICOM_THIS(IStream16Impl,iface);
 	BYTE	block[BIGSIZE];
@@ -1094,20 +1094,16 @@ HRESULT WINAPI IStream16_fnWrite(
 static void _create_istream16(LPSTREAM16 *str) {
 	IStream16Impl*	lpst;
 
-	if (!strvt16.bvt.bvt.fnQueryInterface) {
+	if (!strvt16.fnQueryInterface) {
 		HMODULE16	wp = GetModuleHandle16("STORAGE");
 		if (wp>=32) {
-		  /* FIXME: what is this WIN32_GetProcAddress16. Should the name be IStream16_QueryInterface of IStream16_fnQueryInterface */
-#define VTENT(xfn)  strvt16.bvt.bvt.fn##xfn = (void*)WIN32_GetProcAddress16(wp,"IStream16_"#xfn);assert(strvt16.bvt.bvt.fn##xfn)
+		  /* FIXME: what is This WIN32_GetProcAddress16. Should the name be IStream16_QueryInterface of IStream16_fnQueryInterface */
+#define VTENT(xfn)  strvt16.fn##xfn = (void*)WIN32_GetProcAddress16(wp,"IStream16_"#xfn);assert(strvt16.fn##xfn)
 			VTENT(QueryInterface);
 			VTENT(AddRef);
 			VTENT(Release);
-#undef VTENT
-#define VTENT(xfn)  strvt16.bvt.fn##xfn = (void*)WIN32_GetProcAddress16(wp,"IStream16_"#xfn);assert(strvt16.bvt.fn##xfn)
 			VTENT(Read);
 			VTENT(Write);
-#undef VTENT
-#define VTENT(xfn)  strvt16.fn##xfn = (void*)WIN32_GetProcAddress16(wp,"IStream16_"#xfn);assert(strvt16.fn##xfn)
 			VTENT(Seek);
 			VTENT(SetSize);
 			VTENT(CopyTo);
@@ -1122,16 +1118,12 @@ static void _create_istream16(LPSTREAM16 *str) {
 			memcpy(segstrvt16,&strvt16,sizeof(strvt16));
 			segstrvt16 = (ICOM_VTABLE(IStream16)*)SEGPTR_GET(segstrvt16);
 		} else {
-#define VTENT(xfn) strvt16.bvt.bvt.fn##xfn = IStream16_fn##xfn;
+#define VTENT(xfn) strvt16.fn##xfn = IStream16_fn##xfn;
 			VTENT(QueryInterface);
 			VTENT(AddRef);
 			VTENT(Release);
-#undef VTENT
-#define VTENT(xfn) strvt16.bvt.fn##xfn = IStream16_fn##xfn;
 			VTENT(Read);
 			VTENT(Write);
-#undef VTENT
-#define VTENT(xfn) strvt16.fn##xfn = IStream16_fn##xfn;
 			VTENT(Seek);
 	/*
 			VTENT(CopyTo);
@@ -1173,7 +1165,7 @@ typedef struct
  *		IStream32_QueryInterface	[VTABLE]
  */
 HRESULT WINAPI IStream32_fnQueryInterface(
-	LPUNKNOWN iface,REFIID refiid,LPVOID *obj
+	IStream32* iface,REFIID refiid,LPVOID *obj
 ) {
 	ICOM_THIS(IStream32Impl,iface);
 	char    xrefiid[50];
@@ -1191,7 +1183,7 @@ HRESULT WINAPI IStream32_fnQueryInterface(
 /******************************************************************************
  * IStream32_AddRef [VTABLE]
  */
-ULONG WINAPI IStream32_fnAddRef(LPUNKNOWN iface) {
+ULONG WINAPI IStream32_fnAddRef(IStream32* iface) {
 	ICOM_THIS(IStream32Impl,iface);
 	return ++(This->ref);
 }
@@ -1199,7 +1191,7 @@ ULONG WINAPI IStream32_fnAddRef(LPUNKNOWN iface) {
 /******************************************************************************
  * IStream32_Release [VTABLE]
  */
-ULONG WINAPI IStream32_fnRelease(LPUNKNOWN iface) {
+ULONG WINAPI IStream32_fnRelease(IStream32* iface) {
 	ICOM_THIS(IStream32Impl,iface);
 	FlushFileBuffers(This->hf);
 	This->ref--;
@@ -1229,7 +1221,7 @@ typedef struct
  *		IStorage16_QueryInterface	[STORAGE.500]
  */
 HRESULT WINAPI IStorage16_fnQueryInterface(
-	LPUNKNOWN iface,REFIID refiid,LPVOID *obj
+	IStorage16* iface,REFIID refiid,LPVOID *obj
 ) {
 	ICOM_THIS(IStorage16Impl,iface);
 	char    xrefiid[50];
@@ -1247,7 +1239,7 @@ HRESULT WINAPI IStorage16_fnQueryInterface(
 /******************************************************************************
  * IStorage16_AddRef [STORAGE.501]
  */
-ULONG WINAPI IStorage16_fnAddRef(LPUNKNOWN iface) {
+ULONG WINAPI IStorage16_fnAddRef(IStorage16* iface) {
 	ICOM_THIS(IStorage16Impl,iface);
 	return ++(This->ref);
 }
@@ -1255,7 +1247,7 @@ ULONG WINAPI IStorage16_fnAddRef(LPUNKNOWN iface) {
 /******************************************************************************
  * IStorage16_Release [STORAGE.502]
  */
-ULONG WINAPI IStorage16_fnRelease(LPUNKNOWN iface) {
+ULONG WINAPI IStorage16_fnRelease(IStorage16* iface) {
 	ICOM_THIS(IStorage16Impl,iface);
 	This->ref--;
 	if (This->ref)
@@ -1455,12 +1447,12 @@ HRESULT WINAPI IStorage16_fnOpenStorage(
 	lstrcpyAtoW(name,pwcsName);
 	newpps = STORAGE_look_for_named_pps(lpstg->hf,This->stde.pps_dir,name);
 	if (newpps==-1) {
-		IStream16_fnRelease((IUnknown*)lpstg);
+		IStream16_fnRelease((IStream16*)lpstg);
 		return E_FAIL;
 	}
 
 	if (1!=STORAGE_get_pps_entry(lpstg->hf,newpps,&(lpstg->stde))) {
-		IStream16_fnRelease((IUnknown*)lpstg);
+		IStream16_fnRelease((IStream16*)lpstg);
 		return E_FAIL;
 	}
 	lpstg->ppsent		= newpps;
@@ -1490,12 +1482,12 @@ HRESULT WINAPI IStorage16_fnOpenStream(
 	lstrcpyAtoW(name,pwcsName);
 	newpps = STORAGE_look_for_named_pps(lpstr->hf,This->stde.pps_dir,name);
 	if (newpps==-1) {
-		IStream16_fnRelease((IUnknown*)lpstr);
+		IStream16_fnRelease((IStream16*)lpstr);
 		return E_FAIL;
 	}
 
 	if (1!=STORAGE_get_pps_entry(lpstr->hf,newpps,&(lpstr->stde))) {
-		IStream16_fnRelease((IUnknown*)lpstr);
+		IStream16_fnRelease((IStream16*)lpstr);
 		return E_FAIL;
 	}
 	lpstr->offset.LowPart	= 0;
@@ -1510,15 +1502,13 @@ HRESULT WINAPI IStorage16_fnOpenStream(
 static void _create_istorage16(LPSTORAGE16 *stg) {
 	IStorage16Impl*	lpst;
 
-	if (!stvt16.bvt.fnQueryInterface) {
+	if (!stvt16.fnQueryInterface) {
 		HMODULE16	wp = GetModuleHandle16("STORAGE");
 		if (wp>=32) {
-#define VTENT(xfn)  stvt16.bvt.fn##xfn = (void*)WIN32_GetProcAddress16(wp,"IStorage16_"#xfn);
+#define VTENT(xfn)  stvt16.fn##xfn = (void*)WIN32_GetProcAddress16(wp,"IStorage16_"#xfn);
 			VTENT(QueryInterface)
 			VTENT(AddRef)
 			VTENT(Release)
-#undef VTENT
-#define VTENT(xfn)  stvt16.fn##xfn = (void*)WIN32_GetProcAddress16(wp,"IStorage16_"#xfn);
 			VTENT(CreateStream)
 			VTENT(OpenStream)
 			VTENT(CreateStorage)
@@ -1539,12 +1529,10 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 			memcpy(segstvt16,&stvt16,sizeof(stvt16));
 			segstvt16 = (ICOM_VTABLE(IStorage16)*)SEGPTR_GET(segstvt16);
 		} else {
-#define VTENT(xfn) stvt16.bvt.fn##xfn = IStorage16_fn##xfn;
+#define VTENT(xfn) stvt16.fn##xfn = IStorage16_fn##xfn;
 			VTENT(QueryInterface)
 			VTENT(AddRef)
 			VTENT(Release)
-#undef VTENT
-#define VTENT(xfn) stvt16.fn##xfn = IStorage16_fn##xfn;
 			VTENT(CreateStream)
 			VTENT(OpenStream)
 			VTENT(CreateStorage)
@@ -1615,7 +1603,7 @@ HRESULT WINAPI StgCreateDocFile16(
 		i++;
 	}
 	if (ret!=1) {
-		IStorage16_fnRelease((IUnknown*)lpstg); /* will remove it */
+		IStorage16_fnRelease((IStorage16*)lpstg); /* will remove it */
 		return E_FAIL;
 	}
 
@@ -1707,7 +1695,7 @@ HRESULT WINAPI StgOpenStorage16(
 		i++;
 	}
 	if (ret!=1) {
-		IStorage16_fnRelease((IUnknown*)lpstg); /* will remove it */
+		IStorage16_fnRelease((IStorage16*)lpstg); /* will remove it */
 		return E_FAIL;
 	}
 	return S_OK;
