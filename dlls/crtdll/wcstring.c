@@ -372,21 +372,32 @@ LPWSTR __cdecl CRTDLL_wcstok( LPWSTR str, LPCWSTR delim )
 
 /*********************************************************************
  *           CRTDLL_wcstombs    (CRTDLL.521)
+ *
+ * FIXME: the reason I do not use wcstombs is that it seems to fail
+ *        for any latin-1 valid character. Not good.
  */
 INT __cdecl CRTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
 {
-    wchar_t *buffer, *p;
-    int ret;
-
-    int size = (CRTDLL_wcslen(src) + 1) * sizeof(wchar_t);
-    if (!(buffer = CRTDLL_malloc( size ))) return -1;
-    p = buffer;
-    while ((*p++ = (wchar_t)*src++));
-    ret = wcstombs( dst, buffer, n );
-    CRTDLL_free( buffer );
-    return ret;
+    int copied=0;
+    while ((n>0) && *src) {
+    	int ret;
+	/* FIXME: could potentially overflow if we ever have MB of 2 bytes*/
+	ret = wctomb(dst,(wchar_t)*src);
+	if (ret<0) {
+	    /* FIXME: sadly, some versions of glibc do not like latin characters
+	     * as UNICODE chars for some reason (like german umlauts). Just
+	     * copy those anyway. MM 991106
+	     */
+	    *dst=*src;
+	    ret = 1;
+	}
+	dst	+= ret;
+	n	-= ret;
+	copied	+= ret;
+	src++;
+    }
+    return copied;
 }
-
 
 /*********************************************************************
  *           CRTDLL_wctomb    (CRTDLL.524)
