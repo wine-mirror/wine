@@ -127,7 +127,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
 static void PROPSHEET_CleanUp();
 static int PROPSHEET_GetPageIndex(HPROPSHEETPAGE hpage, PropSheetInfo* psInfo);
 static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags);
-static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg);
+static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg, const PropSheetInfo* psInfo);
 static BOOL PROPSHEET_IsDialogMessage(HWND hwnd, LPMSG lpMsg);
 static INT PROPSHEET_DoDialogBox( HWND hwnd, HWND owner);
 
@@ -483,7 +483,7 @@ static BOOL PROPSHEET_IsTooSmallWizard(HWND hwndDlg, PropSheetInfo* psInfo)
 {
   RECT rcSheetRect, rcPage, rcLine, rcSheetClient;
   HWND hwndLine = GetDlgItem(hwndDlg, IDC_SUNKEN_LINE);
-  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg);
+  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg, psInfo);
 
   GetClientRect(hwndDlg, &rcSheetClient);
   GetWindowRect(hwndDlg, &rcSheetRect);
@@ -605,7 +605,7 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
   RECT rc,tabRect;
   int buttonHeight, lineHeight;
-  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg);
+  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg, psInfo);
   WND * wndPtr = WIN_FindWndPtr( hwndDlg );
   DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
 
@@ -765,7 +765,7 @@ static BOOL PROPSHEET_AdjustButtonsWizard(HWND hwndParent,
   int x, y;
   int num_buttons = 3;
   int buttonWidth, buttonHeight, lineHeight, lineWidth;
-  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndParent);
+  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndParent, psInfo);
 
   if (psInfo->hasHelp)
     num_buttons++;
@@ -886,33 +886,47 @@ static PADDING_INFO PROPSHEET_GetPaddingInfo(HWND hwndDlg)
  *            PROPSHEET_GetPaddingInfoWizard
  *
  * Returns the layout information.
- * Horizontal spacing is the distance between the Cancel and Help buttons.
  * Vertical spacing is the distance between the line and the buttons.
+ * Do NOT use the Help button to gather padding information when it isn't mapped
+ * (PSH_HASHELP), as app writers aren't forced to supply correct coordinates
+ * for it in this case !
+ * FIXME: I'm not sure about any other coordinate problems with these evil
+ * buttons. Fix it in case additional problems appear or maybe calculate
+ * a padding in a completely different way, as this is somewhat messy.
  */
-static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg)
+static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg, const PropSheetInfo*
+ psInfo)
 {
   PADDING_INFO padding;
   RECT rc;
   HWND hwndControl;
-  POINT ptHelp, ptCancel, ptLine;
+  INT idButton;
+  POINT ptButton, ptLine;
 
-  /* Help button */
-  hwndControl = GetDlgItem(hwndDlg, IDHELP);
+  if (psInfo->hasHelp)
+  {
+	idButton = IDHELP;
+  }
+  else
+  {
+    if (psInfo->ppshheader.dwFlags & PSH_WIZARD)
+    {
+	idButton = IDC_NEXT_BUTTON;
+    }
+    else
+    {
+	/* hopefully this is ok */
+	idButton = IDCANCEL;
+    }
+  }
+  
+  hwndControl = GetDlgItem(hwndDlg, idButton);
   GetWindowRect(hwndControl, &rc);
 
-  ptHelp.x = rc.left;
-  ptHelp.y = rc.top;
+  ptButton.x = rc.left;
+  ptButton.y = rc.top;
 
-  ScreenToClient(hwndDlg, &ptHelp);
-
-  /* Cancel button */
-  hwndControl = GetDlgItem(hwndDlg, IDCANCEL);
-  GetWindowRect(hwndControl, &rc);
-
-  ptCancel.x = rc.right;
-  ptCancel.y = rc.top;
-
-  ScreenToClient(hwndDlg, &ptCancel);
+  ScreenToClient(hwndDlg, &ptButton);
 
   /* Line */
   hwndControl = GetDlgItem(hwndDlg, IDC_SUNKEN_LINE);
@@ -923,9 +937,13 @@ static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg)
 
   ScreenToClient(hwndDlg, &ptLine);
 
-  padding.x = ptHelp.x - ptCancel.x;
-  padding.y = ptHelp.y - ptLine.y;
+  padding.y = ptButton.y - ptLine.y;
 
+  if (padding.y < 0)
+	  ERR("padding negative ! Please report this !\n");
+
+  /* this is most probably not correct, but the best we have now */
+  padding.x = padding.y;
   return padding;
 }
 
@@ -1054,7 +1072,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   pageHeight = rc.bottom - rc.top;
 
   if (psInfo->ppshheader.dwFlags & PSH_WIZARD)
-    padding = PROPSHEET_GetPaddingInfoWizard(hwndParent);
+    padding = PROPSHEET_GetPaddingInfoWizard(hwndParent, psInfo);
   else
   {
     /*
@@ -1710,7 +1728,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
     index = PROPSHEET_GetPageIndex(hpage, psInfo);
   }
 
-  /* Make shure that index is within range */
+  /* Make sure that index is within range */
   if (index < 0 || index >= psInfo->nPages)
   {
       TRACE("Could not find page to remove!\n");
