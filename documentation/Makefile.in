@@ -27,6 +27,7 @@ WINE_DEVEL_SRCS = \
 	architecture.sgml \
 	consoles.sgml \
 	cvs-regression.sgml \
+	ddraw.sgml \
 	debugger.sgml \
 	debugging.sgml \
 	documentation.sgml \
