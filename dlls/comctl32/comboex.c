@@ -2165,7 +2165,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case CB_SETITEMDATA:
 	case WM_SETTEXT:
 	case WM_GETTEXT:
-	    FIXME("(0x%x 0x%x 0x%lx): possible missing fucntion\n", 
+	    FIXME("(0x%x 0x%x 0x%lx): possibly missing function\n",
 		  uMsg, wParam, lParam);
 	    return COMBOEX_Forward (hwnd, uMsg, wParam, lParam);
 
