@@ -5,7 +5,7 @@
 # ALTNAMES     : alternate names for this dll (optional)
 # EXTRALIBS    : extra libraries to link in (optional)
 # SPEC_SRCS16  : interface definition files for 16-bit dlls (optional)
-# DLLMODE      : (optional) subsystem mode (for native dlls)
+# SUBSYSTEM    : (optional) subsystem (for native dlls)
 #
 # plus all variables required by the global Make.rules.in
 #
@@ -27,7 +27,7 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MODULE).so: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(IMPORTLIBS) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(RC_SRCS:.rc=.res) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(RC_SRCS:.rc=.res) $(SUBSYSTEM:%=-Wb,--subsystem,%) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for .dll files
 
@@ -56,7 +56,7 @@ crosstest:: $(SUBDIRS:%=%/__crosstest__)
 # Rule to explicitly generate the .spec.c for debugging
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(IMPORTLIBS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --dll $(SRCDIR)/$(MAINSPEC) $(DLLMODE:%=--mode %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --dll $(SRCDIR)/$(MAINSPEC) $(SUBSYSTEM:%=--subsystem %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 # Rules for auto documentation
 
