@@ -762,6 +762,19 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		}
 		break;
 
+        case WM_IME_CHAR:
+            if (!unicode)
+            {
+                WCHAR charW;
+                CHAR  strng[2];
+
+                strng[0] = wParam >> 8;
+                strng[1] = wParam & 0xff;
+                MultiByteToWideChar(CP_ACP, 0, strng, 2, &charW, 1);
+		EDIT_WM_Char(es, charW);
+		break;
+            }
+            /* fall through */
 	case WM_CHAR:
 	{
 		WCHAR charW;

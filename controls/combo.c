@@ -2063,6 +2063,7 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                 return  0;
 
 	case WM_CHAR:
+	case WM_IME_CHAR:
 	case WM_KEYDOWN:
 	{
 		HWND hwndTarget;
