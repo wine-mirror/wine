@@ -160,6 +160,8 @@ static UINT SHELL_ExecuteW(WCHAR *lpCmd, void *env, LPSHELLEXECUTEINFOW sei, BOO
         retval = ERROR_BAD_FORMAT;
     }
 
+    TRACE("returning %u\n", retval);
+
     sei->hInstApp = (HINSTANCE)retval;
     return retval;
 }
@@ -842,6 +844,8 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
         retval = (UINT)ShellExecuteW(sei->hwnd, lpOperation, lpstrTmpFile, NULL, NULL, 0);
     }
 
+    TRACE("retval %u\n", retval);
+
     if (retval <= 32)
     {
         sei->hInstApp = (HINSTANCE)retval;
@@ -923,6 +927,8 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
         seiW.lpClass = NULL;
 
     ret = ShellExecuteExW32 (&seiW, SHELL_ExecuteW);
+
+    sei->hInstApp = seiW.hInstApp;
 
     if (wVerb) SHFree(wVerb);
     if (wFile) SHFree(wFile);
