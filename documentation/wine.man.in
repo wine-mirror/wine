@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "Nov 27, 2000" "Version 20001026" "Windows On Unix"
+.TH WINE 1 "Feb 13, 2001" "Version 20010112" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -50,8 +50,8 @@ component of
 # is required and can be either + or -.  Note that 
 there is not a space after the comma between names. yyy are either the
 name of a whole DLL or a single API entry by name you either
-want to include or exclude from the relay listing. These names must be in
-the case as names used in the relaylisting. You can do the same for snoop.
+want to include or exclude from the relay listing.  Case doesn't matter
+for these.  You can do the same for snoop.
 .PP
 For instance:
 .PP
@@ -65,11 +65,11 @@ will turn on DLL warning messages and all heap messages.
 will turn off all FIXME messages, turn on cursor warning messages, and turn
 on all relay messages (API calls).
 .br 
-.I --debugmsg -relay=LeaveCriticalSection:EnterCriticalSection
-will turn on all relay messages except for LeaveCriticalSection and
-EnterCriticalSection.
+.I --debugmsg -relay=rtlleavecriticalsection:RtlEnterCriticalSection
+will turn on all relay messages except for RtlLeaveCriticalSection and
+RtlEnterCriticalSection.
 .br 
-.I --debugmsg +relay=ADVAPI32
+.I --debugmsg +relay=advapi32
 will only turn on relay messages into the ADVAPI32 code.
 .PP
 The full list of names is:
