@@ -836,8 +836,8 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
      */
     if (mode != EXEC_CONT && mode != EXEC_FINISH)
     {
-	DEBUG_FindNearestSymbol( addr, TRUE, NULL, 0, &syminfo.list);
-	if( syminfo.list.sourcefile != NULL )
+	DEBUG_FindNearestSymbol(addr, TRUE, NULL, 0, &syminfo.list);
+	if (syminfo.list.sourcefile != NULL)
 	{
 	    DEBUG_List(&syminfo.list, NULL, 0);
 	}
@@ -847,8 +847,8 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
     /* If there's no breakpoint and we are not single-stepping, then
      * either we must have encountered an int3 in the Windows program
      * or someone is trying to stop us
-     * If the later, (no int3 opcode at current address) then stop, 
-     * otherwise, let's skip it. 
+     * If the later, (no int3 opcode at current address) then stop,
+     * otherwise, let's skip it.
      */
     if ((bpnum == -1) && code == EXCEPTION_BREAKPOINT)
     {

@@ -399,7 +399,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
 
    if (num == 0) {
       return FALSE;
-   } else if (!DEBUG_interactiveP || num == 1) {
+   } else if (!DEBUG_InteractiveP || num == 1) {
       i = 0;
    } else {
       char	buffer[256];

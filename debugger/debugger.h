@@ -241,7 +241,7 @@ extern	DBG_THREAD*	DEBUG_CurrThread;
 extern	DWORD		DEBUG_CurrTid;
 extern	DWORD		DEBUG_CurrPid;
 extern  CONTEXT		DEBUG_context;
-extern  BOOL		DEBUG_interactiveP;
+extern  BOOL		DEBUG_InteractiveP;
 extern  enum exit_mode  DEBUG_ExitMode;
 
 #define DEBUG_READ_MEM(addr, buf, len) \
@@ -516,21 +516,30 @@ extern struct datatype * DEBUG_GetBasicType(enum debug_type_basic);
 #define DBG_CHN_WARN	4
 #define DBG_CHN_FIXME	8
 #define DBG_CHN_TRACE	16
-extern void	DEBUG_OutputA(int chn, const char* buffer, int len);
-extern void	DEBUG_OutputW(int chn, const WCHAR* buffer, int len);
+extern void	        DEBUG_OutputA(int chn, const char* buffer, int len);
+extern void	        DEBUG_OutputW(int chn, const WCHAR* buffer, int len);
 #ifdef __GNUC__
-extern int	DEBUG_Printf(int chn, const char* format, ...) __attribute__((format (printf,2,3)));
+extern int	        DEBUG_Printf(int chn, const char* format, ...) __attribute__((format (printf,2,3)));
 #else
-extern int	DEBUG_Printf(int chn, const char* format, ...);
+extern int	        DEBUG_Printf(int chn, const char* format, ...);
 #endif
 extern DBG_INTVAR*	DEBUG_GetIntVar(const char*);
-extern BOOL DEBUG_Attach(DWORD pid, BOOL cofe);
-extern BOOL DEBUG_Detach(void);
-extern void DEBUG_Run(const char* args);
+extern BOOL             DEBUG_Attach(DWORD pid, BOOL cofe);
+extern BOOL             DEBUG_Detach(void);
+extern void             DEBUG_Run(const char* args);
+extern DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h, const char* imageName);
 extern DBG_PROCESS* 	DEBUG_GetProcess(DWORD pid);
+extern void             DEBUG_DelProcess(DBG_PROCESS* p);
+extern DBG_THREAD*	DEBUG_AddThread(DBG_PROCESS* p, DWORD tid, HANDLE h, LPVOID start, LPVOID teb);
 extern DBG_THREAD* 	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid);
+extern void             DEBUG_DelThread(DBG_THREAD* t);
+extern BOOL             DEBUG_ProcessGetString(char* buffer, int size, HANDLE hp, LPSTR addr);
+extern BOOL             DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LPVOID addr);
+extern void             DEBUG_WaitNextException(DWORD cont, int count, int mode);
 extern int curr_frame;
-extern int automatic_mode;
+
+/* gdbproxy.c */
+extern BOOL DEBUG_GdbRemote(unsigned int);
 
 /* Choose your allocator! */
 #if 1

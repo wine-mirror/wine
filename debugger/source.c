@@ -196,7 +196,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 
 	  if( sl == NULL )
 	    {
-                if (!automatic_mode)
+                if (DEBUG_InteractiveP)
                 {
                     char zbuf[256];
                     /*
@@ -495,4 +495,3 @@ DEBUG_Disassemble(const DBG_VALUE *xstart,const DBG_VALUE *xend,int offset)
   DEBUG_LastDisassemble = last;
   return;
 }
-

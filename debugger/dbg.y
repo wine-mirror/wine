@@ -105,30 +105,21 @@ line: command
     ;
 
 command:
-      tQUIT tEOL		{ DEBUG_ExitMode = EXIT_QUIT; return 1; }
+      tQUIT tEOL		{ /*DEBUG_Quit();*/ return 1; }
     | tHELP tEOL                { DEBUG_Help(); }
     | tHELP tINFO tEOL          { DEBUG_HelpInfo(); }
-    | tCONT tEOL                { DEBUG_CurrThread->exec_count = 1;
-				  DEBUG_CurrThread->exec_mode = EXEC_CONT; return 1; }
-    | tPASS tEOL                { DEBUG_ExitMode = EXIT_PASS; return 1; }
-    | tCONT tNUM tEOL         	{ DEBUG_CurrThread->exec_count = $2;
-				  DEBUG_CurrThread->exec_mode = EXEC_CONT; return 1; }
-    | tSTEP tEOL               	{ DEBUG_CurrThread->exec_count = 1;
-				  DEBUG_CurrThread->exec_mode = EXEC_STEP_INSTR; return 1; }
-    | tNEXT tEOL                { DEBUG_CurrThread->exec_count = 1;
-				  DEBUG_CurrThread->exec_mode = EXEC_STEP_OVER; return 1; }
-    | tSTEP tNUM tEOL           { DEBUG_CurrThread->exec_count = $2;
-				  DEBUG_CurrThread->exec_mode = EXEC_STEP_INSTR; return 1; }
-    | tNEXT tNUM tEOL           { DEBUG_CurrThread->exec_count = $2;
-				  DEBUG_CurrThread->exec_mode = EXEC_STEP_OVER; return 1; }
-    | tSTEPI tEOL               { DEBUG_CurrThread->exec_count = 1;
-				  DEBUG_CurrThread->exec_mode = EXEC_STEPI_INSTR; return 1; }
-    | tNEXTI tEOL               { DEBUG_CurrThread->exec_count = 1;
-				  DEBUG_CurrThread->exec_mode = EXEC_STEPI_OVER; return 1; }
-    | tSTEPI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2;
-			 	  DEBUG_CurrThread->exec_mode = EXEC_STEPI_INSTR; return 1; }
-    | tNEXTI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2;
-                                  DEBUG_CurrThread->exec_mode = EXEC_STEPI_OVER; return 1; }
+    | tPASS tEOL                { DEBUG_WaitNextException(DBG_EXCEPTION_NOT_HANDLED, 0, 0); }
+    | tCONT tEOL                { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_CONT); }
+    | tCONT tNUM tEOL         	{ DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_CONT); }
+    | tSTEP tEOL               	{ DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEP_INSTR); }
+    | tSTEP tNUM tEOL           { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEP_INSTR); }
+    | tNEXT tEOL                { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEP_OVER); }
+    | tNEXT tNUM tEOL           { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEP_OVER); }
+    | tSTEPI tEOL               { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEPI_INSTR); }
+    | tSTEPI tNUM tEOL          { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEPI_INSTR); }
+    | tNEXTI tEOL               { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEPI_OVER); }
+    | tNEXTI tNUM tEOL          { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEPI_OVER); }
+    | tFINISH tEOL	       	{ DEBUG_WaitNextException(DBG_CONTINUE, 0,  EXEC_FINISH); }
     | tABORT tEOL              	{ kill(getpid(), SIGABRT); }
     | tMODE tNUM tEOL          	{ mode_command($2); }
     | tMODE tVM86 tEOL         	{ DEBUG_CurrThread->dbg_mode = MODE_VM86; }
@@ -142,8 +133,6 @@ command:
     | tDOWN tEOL	       	{ DEBUG_SetFrame( curr_frame - 1 );  }
     | tDOWN tNUM tEOL	       	{ DEBUG_SetFrame( curr_frame - $2 ); }
     | tFRAME tNUM tEOL         	{ DEBUG_SetFrame( $2 ); }
-    | tFINISH tEOL	       	{ DEBUG_CurrThread->exec_count = 0;
-				  DEBUG_CurrThread->exec_mode = EXEC_FINISH; return 1; }
     | tSHOW tDIR tEOL	       	{ DEBUG_ShowDir(); }
     | tDIR pathname tEOL       	{ DEBUG_AddPath( $2 ); }
     | tDIR tEOL		       	{ DEBUG_NukePath(); }
@@ -158,8 +147,8 @@ command:
     | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
     | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2); }
     | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
-    | tATTACH tNUM tEOL		{ if (DEBUG_Attach($2, FALSE)) return 1; }
-    | tDETACH tEOL              { DEBUG_ExitMode = EXIT_DETACH; return 1; }
+    | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE); }
+    | tDETACH tEOL              { return DEBUG_Detach(); /* FIXME: we shouldn't return, but since we cannot simply clean the symbol table, exit debugger for now */ }
     | list_command
     | disassemble_command
     | set_command
@@ -173,7 +162,7 @@ command:
     | noprocess_state
     ;
 
-set_command: 
+set_command:
       tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2,$4); DEBUG_FreeExprMem(); }
     | tSET '+' tIDENTIFIER tEOL {DEBUG_DbgChannel(TRUE, NULL, $3);}
     | tSET '-' tIDENTIFIER tEOL {DEBUG_DbgChannel(FALSE, NULL, $3);}
@@ -415,6 +404,7 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
       break;
    default:
       DEBUG_Printf(DBG_CHN_MESG, "Exception %lx\n", GetExceptionCode());
+      DEBUG_ExternalDebugger();
       break;
    }
 
@@ -433,8 +423,6 @@ void	DEBUG_Parser(void)
     yydebug = 0;
 #endif
     yyin = stdin;
-
-    DEBUG_ExitMode = EXIT_CONTINUE;
 
     ret_ok = FALSE;
     do {
