@@ -12,7 +12,6 @@
 #include "config.h"
 #include "winnt.h"
 #include "stackframe.h"
-#include "syslevel.h"
 #include "module.h"
 #include "debugtools.h"
 
@@ -188,10 +187,6 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
     DPRINTF( ") ret=%08x tid=%08lx\n", ret_addr, GetCurrentThreadId() );
     ret64 = (relay->argtypes & 0x80000000) && (nb_args < 16);
 
-    /* the user driver functions may be called with the window lock held */
-    if (memcmp( buffer, "x11drv.", 7 ) && memcmp( buffer, "ttydrv.", 7 ))
-      SYSLEVEL_CheckNotLevel( 2 );
-
     if (relay->ret == 0xc3) /* cdecl */
     {
         LONGLONG (*cfunc)() = relay->orig;
@@ -285,9 +280,6 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
         DPRINTF( "Ret  %s() retval=%08x ret=%08x tid=%08lx\n",
                  buffer, (UINT)ret, ret_addr, GetCurrentThreadId() );
 
-    if (memcmp( buffer, "x11drv.", 7 ) && memcmp( buffer, "ttydrv.", 7 ))
-      SYSLEVEL_CheckNotLevel( 2 );
-
     return ret;
 }
 
@@ -339,8 +331,6 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
             context->Ebp, context->Esp, context->SegDs,
             context->SegEs, context->SegGs, context->EFlags );
 
-    SYSLEVEL_CheckNotLevel( 2 );
-
     /* Now call the real function */
     switch(nb_args)
     {
@@ -383,8 +373,6 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
     DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx gs=%04lx flags=%08lx\n",
             context->Ebp, context->Esp, context->SegDs,
             context->SegEs, context->SegGs, context->EFlags );
-
-    SYSLEVEL_CheckNotLevel( 2 );
 }
 
 void WINAPI RELAY_CallFrom32Regs(void);
