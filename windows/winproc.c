@@ -260,7 +260,7 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
 
     /* Check for a linear pointer */
 
-    if (HEAP_IsInsideHeap( WinProcHeap, 0, (LPVOID)handle ))
+    if (HeapValidate( WinProcHeap, 0, (LPVOID)handle ))
     {
         ptr = (BYTE *)handle;
         /* First check if it is the jmp address */
@@ -278,7 +278,7 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
     if (!IsBadReadPtr16((SEGPTR)handle,sizeof(WINDOWPROC)-sizeof(proc->thunk)))
     {
         ptr = (BYTE *)PTR_SEG_TO_LIN(handle);
-        if (!HEAP_IsInsideHeap( WinProcHeap, 0, ptr )) return NULL;
+        if (!HeapValidate( WinProcHeap, 0, ptr )) return NULL;
         /* It must be the thunk address */
         if (*ptr == 0x58 /* popl eax */) ptr -= (int)&((WINDOWPROC *)0)->thunk;
         /* Now we have a pointer to the WINDOWPROC struct */
@@ -2181,6 +2181,8 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
                              UINT16 *pmsg16, WPARAM16 *pwparam16,
                              LPARAM *plparam )
 {
+    *pmsg16    = LOWORD(msg32);
+    *pwparam16 = LOWORD(wParam32);
     switch(msg32)
     {
     case LB_ADDSTRING:
@@ -2193,10 +2195,9 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         {
             LPSTR str = SEGPTR_STRDUP_WtoA( (LPWSTR)*plparam );
             if (!str) return -1;
-            *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
-	*pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING);
+        *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING);
         return 1;
 
     case CB_ADDSTRING:
@@ -2208,10 +2209,9 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         {
             LPSTR str = SEGPTR_STRDUP_WtoA( (LPWSTR)*plparam );
             if (!str) return -1;
-            *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
-	*pmsg16 = (UINT16)msg32 + (CB_ADDSTRING16 - CB_ADDSTRING);
+        *pmsg16 = (UINT16)msg32 + (CB_ADDSTRING16 - CB_ADDSTRING);
         return 1;
 
     case WM_NCCREATE:
@@ -2227,8 +2227,6 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             cls  = SEGPTR_STRDUP_WtoA( cs32->lpszClass );
             cs->lpszName  = SEGPTR_GET(name);
             cs->lpszClass = SEGPTR_GET(cls);
-            *pmsg16    = (UINT16)msg32;
-            *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(cs);
         }
         return 1;
@@ -2244,8 +2242,6 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             cls  = SEGPTR_STRDUP_WtoA( cs32->szClass );
             cs->szTitle = SEGPTR_GET(name);
             cs->szClass = SEGPTR_GET(cls);
-            *pmsg16    = (UINT16)msg32;
-            *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(cs);
         }
         return 1;
@@ -2253,8 +2249,6 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         {
             LPSTR str = SEGPTR_STRDUP_WtoA( (LPWSTR)*plparam );
             if (!str) return -1;
-            *pmsg16    = (UINT16)msg32;
-            *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
         return 1;
@@ -2265,7 +2259,6 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             LPSTR str = (LPSTR) SEGPTR_ALLOC( 256 ); /* fixme: fixed sized buffer */
             if (!str) return -1;
             *pmsg16    = (msg32 == LB_GETTEXT)? LB_GETTEXT16 : CB_GETLBTEXT16;
-            *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
         return 1;
