@@ -61,6 +61,7 @@ INSTALLED_INCLUDES = \
 	richedit.h \
 	rpc.h \
 	servprov.h \
+	setupapi.h \
 	shellapi.h \
 	shlguid.h \
 	shlobj.h \
