@@ -829,7 +829,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     DC *dc = physDev ? physDev->dc : NULL;
     WORD 		 index = 0;
-    HPALETTE16		 hPal = (dc)? dc->hPalette: GetStockObject(DEFAULT_PALETTE);
+    HPALETTE		 hPal = (dc)? dc->hPalette: GetStockObject(DEFAULT_PALETTE);
     unsigned char	 spec_type = color >> 24;
     PALETTEOBJ* 	 palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 

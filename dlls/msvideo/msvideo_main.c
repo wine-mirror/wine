@@ -672,7 +672,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			ret = icdb16;
 
 			COPY(icdb,dwFlags);
-			COPY(icdb,hpal);
+			icdb->hpal = HPALETTE_32(icdb16->hpal);
 			COPY(icdb,hwnd);
 			COPY(icdb,hdc);
 			COPY(icdb,xDst);

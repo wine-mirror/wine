@@ -117,6 +117,10 @@ HIC16   VFWAPI  ICOpen16(DWORD,DWORD,UINT16);
 HIC16   VFWAPI  ICOpenFunction16(DWORD,DWORD,UINT16,FARPROC16);
 LRESULT VFWAPI  ICSendMessage16(HIC16,UINT16,DWORD,DWORD);
 
+/* handle <-> handle16 conversions */
+#define HPALETTE_32(h16)	((HPALETTE)(ULONG_PTR)(h16))
+#define HPALETTE_16(h32)	(LOWORD(h32))
+
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */

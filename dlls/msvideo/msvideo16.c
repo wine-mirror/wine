@@ -32,13 +32,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 #define HDC_32(h16)		((HDC)(ULONG_PTR)(h16))
 #define HDRAWDIB_32(h16)	((HDRAWDIB)(ULONG_PTR)(h16))
 #define HIC_32(h16)		((HIC)(ULONG_PTR)(h16))
-#define HPALETTE_32(h16)	((HPALETTE)(ULONG_PTR)(h16))
 
 /* handle --> handle16 conversions */
 #define HDC_16(h32)		(LOWORD(h32))
 #define HDRAWDIB_16(h32)	(LOWORD(h32))
 #define HIC_16(h32)		(LOWORD(h32))
-#define HPALETTE_16(h32)	(LOWORD(h32))
 
 
 /***********************************************************************
