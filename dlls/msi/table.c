@@ -1147,7 +1147,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
 static UINT TABLE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    UINT offset, num_rows, n;
+    UINT offset, n;
 
     if( !tv->table )
         return ERROR_INVALID_PARAMETER;
@@ -1162,7 +1162,6 @@ static UINT TABLE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val
         return ERROR_FUNCTION_FAILED;
     }
 
-    offset = row + (tv->columns[col-1].offset/2) * num_rows;
     n = bytes_per_column( &tv->columns[col-1] );
     switch( n )
     {
