@@ -33,6 +33,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,13 +59,12 @@
 # include <sys/strtio.h>
 #endif
 
-#include "windef.h"
 #include "winbase.h"
-#include "heap.h"
-#include "wine/port.h"
-#include "wine/server.h"
 #include "winerror.h"
+
+#include "wine/server.h"
 #include "file.h"
+#include "heap.h"
 
 #include "debugtools.h"
 

@@ -3381,7 +3381,6 @@ BOOL      WINAPI CheckMenuRadioItem(HMENU,UINT,UINT,UINT,UINT);
 BOOL      WINAPI CheckRadioButton(HWND,UINT,UINT,UINT);
 HWND      WINAPI ChildWindowFromPoint(HWND,POINT);
 HWND      WINAPI ChildWindowFromPointEx(HWND,POINT,UINT);
-BOOL      WINAPI ClearCommBreak(HANDLE);
 BOOL      WINAPI ClientToScreen(HWND,LPPOINT);
 BOOL      WINAPI ClipCursor(const RECT*);
 BOOL      WINAPI CloseClipboard(void);
@@ -3531,7 +3530,6 @@ BOOL        WINAPI EnumWindowStationsA(WINSTAENUMPROCA,LPARAM);
 BOOL        WINAPI EnumWindowStationsW(WINSTAENUMPROCW,LPARAM);
 #define     EnumWindowStations WINELIB_NAME_AW(EnumWindowStations)
 BOOL      WINAPI EqualRect(const RECT*,const RECT*);
-BOOL      WINAPI EscapeCommFunction(HANDLE,UINT);
 INT       WINAPI ExcludeUpdateRgn(HDC,HWND);
 #define     ExitWindows(a,b) ExitWindowsEx(EWX_LOGOFF,0xffffffff)
 INT       WINAPI FillRect(HDC,const RECT*,HBRUSH);
@@ -3820,7 +3818,6 @@ LONG        WINAPI SetClassLongW(HWND,INT,LONG);
 WORD        WINAPI SetClassWord(HWND,INT,WORD);
 HANDLE    WINAPI SetClipboardData(UINT,HANDLE);
 HWND      WINAPI SetClipboardViewer(HWND);
-BOOL      WINAPI SetCommBreak(HANDLE);
 HCURSOR   WINAPI SetCursor(HCURSOR);
 BOOL      WINAPI SetCursorPos(INT,INT);
 BOOL      WINAPI SetDeskWallPaper(LPCSTR);

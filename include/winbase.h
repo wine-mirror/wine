@@ -1244,6 +1244,7 @@ BOOL        WINAPI BuildCommDCBAndTimeoutsA(LPCSTR,LPDCB,LPCOMMTIMEOUTS);
 BOOL        WINAPI BuildCommDCBAndTimeoutsW(LPCWSTR,LPDCB,LPCOMMTIMEOUTS);
 #define     BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
 BOOL        WINAPI CancelWaitableTimer(HANDLE);
+BOOL        WINAPI ClearCommBreak(HANDLE);
 BOOL        WINAPI ClearCommError(HANDLE,LPDWORD,LPCOMSTAT);
 BOOL        WINAPI ClearEventLogA(HANDLE,LPCSTR);
 BOOL        WINAPI ClearEventLogW(HANDLE,LPCWSTR);
@@ -1302,6 +1303,7 @@ BOOL        WINAPI DeregisterEventSource(HANDLE);
 BOOL        WINAPI DisableThreadLibraryCalls(HMODULE);
 BOOL        WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 BOOL        WINAPI DuplicateHandle(HANDLE,HANDLE,HANDLE,HANDLE*,DWORD,BOOL,DWORD);
+BOOL        WINAPI EscapeCommFunction(HANDLE,UINT);
 BOOL      WINAPI EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,
                                             ENUMRESLANGPROCA,LONG);
 BOOL      WINAPI EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,
@@ -1545,6 +1547,7 @@ DWORD       WINAPI SearchPathA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI SearchPathW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     SearchPath WINELIB_NAME_AW(SearchPath)
 BOOL        WINAPI SetCommConfig(HANDLE,LPCOMMCONFIG);
+BOOL        WINAPI SetCommBreak(HANDLE);
 BOOL        WINAPI SetCommMask(HANDLE,DWORD);
 BOOL        WINAPI SetCommState(HANDLE,LPDCB);
 BOOL        WINAPI SetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
