@@ -9,8 +9,10 @@
 #include "debugtools.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "winversion.h"
 #include "heap.h"
 #include "ldt.h"
+#include "syslevel.h"
 
 DEFAULT_DEBUG_CHANNEL(win)
 
@@ -21,8 +23,12 @@ DEFAULT_DEBUG_CHANNEL(win)
 BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
                          DWORD dwData )
 {
-    return WinHelpA( hWnd, lpHelpFile, wCommand,
-                       (DWORD)PTR_SEG_TO_LIN(dwData) );
+  BOOL ret;
+  /* We might call WinExec() */
+  SYSLEVEL_ReleaseWin16Lock();
+  ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)PTR_SEG_TO_LIN(dwData) );
+  SYSLEVEL_RestoreWin16Lock();
+  return ret;
 }
 
 
@@ -36,32 +42,34 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 	HWND hDest;
 	LPWINHELP lpwh;
 	HGLOBAL16 hwh;
+	HINSTANCE winhelp;
 	int size,dsize,nlen;
-        if (wCommand != HELP_QUIT)  /* FIXME */
-	{
-            if (WinExec("winhelp.exe -x",SW_SHOWNORMAL) <= 32)
-		return FALSE;
 
-	    /* NOTE: Probably, this should be directed yield, 
-		     to let winhelp open the window in all cases. */
-	    Yield16();
-	}
 
 	if(!WM_WINHELP) 
-	{
-		WM_WINHELP=RegisterWindowMessageA("WM_WINHELP");
-		if(!WM_WINHELP)
-			return FALSE;
-	}
+	  {
+	    WM_WINHELP=RegisterWindowMessageA("WM_WINHELP");
+	    if(!WM_WINHELP)
+	      return FALSE;
+	  }
 
 	hDest = FindWindowA( "MS_WINHELP", NULL );
-	if(!hDest)
-        {
-		if(wCommand == HELP_QUIT)
-			return TRUE;
-		else
-			return FALSE;
+	if(!hDest) {
+	  if(wCommand == HELP_QUIT)
+	    return TRUE;
+	  else
+	    if ( VERSION_GetVersion() == WIN31 ) {
+	      winhelp = WinExec ( "winhelp.exe -x", SW_SHOWNORMAL );
+	      Yield16();
+	    }
+	    else {
+	      winhelp = WinExec ( "winhlp32.exe -x", SW_SHOWNORMAL );
+	    }	  
+	  if ( winhelp <= 32 ) return FALSE;
+	  if ( ! ( hDest = FindWindowA ( "MS_WINHELP", NULL ) )) return FALSE;
         }
+
+
 	switch(wCommand)
 	{
 		case HELP_CONTEXT:
