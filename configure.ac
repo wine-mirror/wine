@@ -1772,7 +1772,7 @@ then
 fi
 
 echo
-echo "Configure finished.  Do 'make depend && make' to compile Wine."
+echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."
 echo
 
 dnl Local Variables:
