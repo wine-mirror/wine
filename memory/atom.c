@@ -131,7 +131,7 @@ static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
         }
         if (*atomstr) return FALSE;
     }
-    if (!atom || (atom >= MAXINTATOM))
+    if (atom >= MAXINTATOM)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         atom = 0;
@@ -158,7 +158,7 @@ static BOOL ATOM_IsIntAtomW(LPCWSTR atomstr,WORD *atomid)
         }
         if (*atomstr) return FALSE;
     }
-    if (!atom || (atom >= MAXINTATOM))
+    if (atom >= MAXINTATOM)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         atom = 0;
@@ -502,18 +502,17 @@ ATOM WINAPI AddAtomW( LPCWSTR str )
 static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
 {
     TRACE( "(%s) %x\n", local ? "local" : "global", atom );
-    if (atom < MAXINTATOM) atom = 0;
-    else
+    if (atom >= MAXINTATOM)
     {
         SERVER_START_REQ( delete_atom )
         {
             req->atom = atom;
             req->local = local;
-            if (!wine_server_call_err( req )) atom = 0;
+            wine_server_call_err( req );
         }
         SERVER_END_REQ;
     }
-    return atom;
+    return 0;
 }
 
 
@@ -774,11 +773,6 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
         }
         SERVER_END_REQ;
         if (!len) return 0;
-    }
-    if (count <= len)
-    {
-        SetLastError( ERROR_MORE_DATA );
-        return 0;
     }
     TRACE( "(%s) %x -> %s\n", local ? "local" : "global", atom, debugstr_w(buffer) );
     return len;
