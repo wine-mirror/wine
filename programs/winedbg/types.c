@@ -617,7 +617,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
 	    }
 	}
       m = (struct member *) DBG_alloc(sizeof(struct member));
-      if( m == FALSE )
+      if( m == NULL )
 	{
 	  return FALSE;
 	}
@@ -946,79 +946,87 @@ leave:
   return;
 }
 
-int
-DEBUG_DumpTypes(void)
+static void DEBUG_DumpAType(struct datatype* dt, BOOL deep)
 {
-  struct datatype * dt = NULL;
-  struct member * m;
-  int hash;
-  int nm;
-  char * name;
-  char * member_name;
+    char* name = (dt->name) ? dt->name : "--none--";
 
-  for(hash = 0; hash < NR_TYPE_HASH + 1; hash++)
+/* EPP     DEBUG_Printf(DBG_CHN_MESG, "0x%08lx ", (unsigned long)dt); */
+    switch (dt->type)
     {
-      for( dt = type_hash_table[hash]; dt; dt = dt->next )
-	{
-	  name =  "none";
-	  if( dt->name != NULL )
-	    {
-	      name = dt->name;
-	    }
-	  switch(dt->type)
-	    {
-	    case DT_BASIC:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - BASIC(%s)\n",
-			   (unsigned long)dt, name);
-	      break;
-	    case DT_POINTER:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - POINTER(%s)(%08lx)\n",
-			   (unsigned long)dt, name, (unsigned long)dt->un.pointer.pointsto);
-	      break;
-	    case DT_STRUCT:
-	      member_name = "none";
-	      nm = 0;
-	      if( dt->un.structure.members != NULL
-		  && dt->un.structure.members->name != NULL )
-		{
-		  member_name = dt->un.structure.members->name;
-		  for( m = dt->un.structure.members; m; m = m->next)
-		    {
-		      nm++;
-		    }
-		}
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - STRUCT(%s) %d %d %s\n",
-			   (unsigned long)dt, name, dt->un.structure.size, nm, member_name);
-	      break;
-	    case DT_ARRAY:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - ARRAY(%s)(%08lx)\n",
-			   (unsigned long)dt, name, (unsigned long)dt->un.array.basictype);
-	      break;
-	    case DT_ENUM:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - ENUM(%s)\n",
-			   (unsigned long)dt, name);
-	      break;
-	    case DT_BITFIELD:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - BITFIELD(%s)\n",
-			   (unsigned long)dt, name);
-	      break;
-	    case DT_FUNC:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - FUNC(%s)(%08lx)\n",
-			   (unsigned long)dt, name, (unsigned long)dt->un.funct.rettype);
-	      break;
-	    default:
-	      DEBUG_Printf(DBG_CHN_ERR, "Unknown type???\n");
-	      break;
-	    }
-	}
+    case DT_BASIC:
+        DEBUG_Printf(DBG_CHN_MESG, "BASIC(%s)", name);
+        break;
+    case DT_POINTER:
+        DEBUG_Printf(DBG_CHN_MESG, "POINTER(%s)<", name);
+        DEBUG_DumpAType(dt->un.pointer.pointsto, FALSE);
+        DEBUG_Printf(DBG_CHN_MESG, ">");
+        break;
+    case DT_STRUCT:
+        DEBUG_Printf(DBG_CHN_MESG, "STRUCT(%s) %d {",
+                     name, dt->un.structure.size);
+        if (dt->un.structure.members != NULL)
+        {
+            struct member * m;
+            for (m = dt->un.structure.members; m; m = m->next)
+            {
+                DEBUG_Printf(DBG_CHN_MESG, " %s(%d", 
+                             m->name, m->offset / 8);
+                if (m->offset % 8 != 0)
+                    DEBUG_Printf(DBG_CHN_MESG, ".%d", m->offset / 8);
+                DEBUG_Printf(DBG_CHN_MESG, "/%d", m->size / 8);
+                if (m->size % 8 != 0)
+                    DEBUG_Printf(DBG_CHN_MESG, ".%d", m->size % 8);
+                DEBUG_Printf(DBG_CHN_MESG, ")");
+            }
+        }
+        DEBUG_Printf(DBG_CHN_MESG, " }");
+        break;
+    case DT_ARRAY:
+        DEBUG_Printf(DBG_CHN_MESG, "ARRAY(%s)[", name);
+        DEBUG_DumpAType(dt->un.array.basictype, FALSE);
+        DEBUG_Printf(DBG_CHN_MESG, "]");
+        break;
+    case DT_ENUM:
+        DEBUG_Printf(DBG_CHN_MESG, "ENUM(%s)", name);
+        break;
+    case DT_BITFIELD:
+        DEBUG_Printf(DBG_CHN_MESG, "BITFIELD(%s)", name);
+        break;
+    case DT_FUNC:
+        DEBUG_Printf(DBG_CHN_MESG, "FUNC(%s)(", name);
+        DEBUG_DumpAType(dt->un.funct.rettype, FALSE);
+        DEBUG_Printf(DBG_CHN_MESG, ")");
+        break;
+    default:
+        DEBUG_Printf(DBG_CHN_ERR, "Unknown type???");
+        break;
     }
-  return TRUE;
+    if (deep) DEBUG_Printf(DBG_CHN_MESG, "\n");
 }
 
+int DEBUG_DumpTypes(void)
+{
+    struct datatype * dt = NULL;
+    int hash;
+
+    for (hash = 0; hash < NR_TYPE_HASH + 1; hash++)
+    {
+        for (dt = type_hash_table[hash]; dt; dt = dt->next)
+	{
+            DEBUG_DumpAType(dt, TRUE);
+	}
+    }
+    return TRUE;
+}
 
 enum debug_type DEBUG_GetType(struct datatype * dt)
 {
   return dt->type;
+}
+
+const char* DEBUG_GetName(struct datatype * dt)
+{
+  return dt->name;
 }
 
 struct datatype *

@@ -511,11 +511,13 @@ extern long long int DEBUG_GetExprValue(const DBG_VALUE * addr, char ** format);
 extern int DEBUG_SetBitfieldParams(struct datatype * dt, int offset,
 				   int nbits, struct datatype * dt2);
 extern int DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2);
+extern const char* DEBUG_GetName(struct datatype * dt);
 extern enum debug_type DEBUG_GetType(struct datatype * dt);
 extern struct datatype * DEBUG_TypeCast(enum debug_type, const char *);
 extern int DEBUG_PrintTypeCast(const struct datatype *);
 extern int DEBUG_PrintType( const DBG_VALUE* addr );
 extern struct datatype * DEBUG_GetBasicType(enum debug_type_basic);
+extern int DEBUG_DumpTypes(void);
 
   /* debugger/winedbg.c */
 #define DBG_CHN_MESG	1
