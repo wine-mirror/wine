@@ -1205,6 +1205,27 @@ UINT WINAPI GetACP(void)
 }
 
 
+/******************************************************************************
+ *              SetCPGlobal   (KERNEL32.@)
+ *
+ * Set the current Ansi code page Id for the system.
+ *
+ * PARAMS
+ *    acp [I] code page ID to be the new ACP.
+ *
+ * RETURNS
+ *    The previous ACP.
+ */
+UINT WINAPI SetCPGlobal( UINT acp )
+{
+    UINT ret = GetACP();
+    const union cptable *new_cptable = wine_cp_get_table( acp );
+
+    if (new_cptable) ansi_cptable = new_cptable;
+    return ret;
+}
+
+
 /***********************************************************************
  *              GetOEMCP   (KERNEL32.@)
  *

@@ -737,6 +737,7 @@
 @ stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr)
 @ stdcall SearchPathA(str str str long ptr ptr)
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr)
+@ stdcall SetCPGlobal(long)
 @ stdcall SetCommBreak(long)
 @ stdcall SetCommConfig(long ptr long)
 @ stdcall SetCommMask(long ptr)
