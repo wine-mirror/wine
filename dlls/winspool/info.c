@@ -40,10 +40,11 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "wine/library.h"
-#include "winspool.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wingdi.h"
+#include "winspool.h"
 #include "winternl.h"
 #include "wine/windef16.h"
 #include "wine/unicode.h"

@@ -20,7 +20,11 @@
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
+
+#include "winbase.h"
+#include "wingdi.h"
 #include "winspool.h"
+
 #include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"

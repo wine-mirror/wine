@@ -20,11 +20,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#include "winbase.h"
+#include "winerror.h"
+#include "wingdi.h"
 #include "winspool.h"
+
 #include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
-#include "winerror.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 

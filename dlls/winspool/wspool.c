@@ -21,6 +21,8 @@
 
 
 #include "config.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "winspool.h"
 #include "wine/debug.h"
 

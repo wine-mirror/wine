@@ -22,10 +22,6 @@
 #ifndef __WINE_WINSPOOL_H
 #define __WINE_WINSPOOL_H
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1135,10 +1131,3 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 #endif
 
 #endif  /* __WINE_WINSPOOL_H */
-
-
-
-
-
-
-
