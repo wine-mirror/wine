@@ -51,7 +51,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	do {
 	    *cp = '\0';
 	    cp--;
-	} while(cp > line && isspace(*cp));
+	} while(cp >= line && isspace(*cp));
 
 	curpos = line;
 	while(*curpos) {
@@ -205,7 +205,8 @@ static AFM *PSDRV_AFMParse(char const *file)
 	    else if(!strncmp("Black", value, 5))
 	        afm->Weight = FW_BLACK;
 	    else {
-	        FIXME("%s: Unkown AFM Weight '%s'\n", file,value);
+		WARN("%s specifies unknown Weight '%s'; treating as Roman\n",
+		     file, value);
 	        afm->Weight = FW_NORMAL;
 	    }
 	    continue;
