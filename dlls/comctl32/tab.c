@@ -765,9 +765,9 @@ static LRESULT TAB_AdjustRect(
     {
       /* Add the height of the tabs. */
       if (lStyle & TCS_BOTTOM)
-        prc->right += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->right += (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
       else
-        prc->left -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->left -= (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
 
       /* FIXME: not sure if these InflateRect's need to have different values for TCS_VERTICAL */
       /* Inflate the rectangle for the padding */
@@ -787,9 +787,9 @@ static LRESULT TAB_AdjustRect(
 
       /* Remove the height of the tabs. */
       if (lStyle & TCS_BOTTOM)
-        prc->right -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->right -= (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
       else
-        prc->left += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->left += (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
     }
   }
   else {
@@ -797,9 +797,9 @@ static LRESULT TAB_AdjustRect(
     {
       /* Add the height of the tabs. */
       if (lStyle & TCS_BOTTOM)
-        prc->bottom += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->bottom += (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
       else
-        prc->top -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->top -= (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
 
       /* Inflate the rectangle for the padding */
       InflateRect(prc, DISPLAY_AREA_PADDINGX, DISPLAY_AREA_PADDINGY);
@@ -817,9 +817,9 @@ static LRESULT TAB_AdjustRect(
 
       /* Remove the height of the tabs. */
       if (lStyle & TCS_BOTTOM)
-        prc->bottom -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->bottom -= (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
       else
-        prc->top += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
+        prc->top += (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
     }
   }
 
@@ -857,7 +857,7 @@ static LRESULT TAB_OnHScroll(
 }
 
 /******************************************************************************
- * TAB_SetupScroling
+ * TAB_SetupScrolling
  *
  * This method will check the current scrolling state and make sure the 
  * scrolling control is displayed (or not).
@@ -1009,8 +1009,9 @@ static void TAB_SetItemBounds (HWND hwnd)
    */
   GetClientRect(hwnd, &clientRect);
 
-  /* if TCS_VERTICAL then swap the height and width so this code places the tabs along the top of the rectangle */
-  /* and we can just rotate them after rather than duplicate all of the below code */
+  /* if TCS_VERTICAL then swap the height and width so this code places the
+     tabs along the top of the rectangle and we can just rotate them after 
+     rather than duplicate all of the below code */
   if(lStyle & TCS_VERTICAL)
   {
      iTemp = clientRect.bottom;
@@ -1020,7 +1021,7 @@ static void TAB_SetItemBounds (HWND hwnd)
 
   /* The leftmost item will be "0" aligned */
   curItemLeftPos = 0;
-  curItemRowCount = 0;
+  curItemRowCount = infoPtr->uNumItem ? 1 : 0;
 
   if (!(lStyle & TCS_FIXEDWIDTH) && !((lStyle & TCS_OWNERDRAWFIXED) && infoPtr->fSizeSet) )
   {
@@ -1106,7 +1107,7 @@ static void TAB_SetItemBounds (HWND hwnd)
     }
 
     infoPtr->items[curItem].rect.bottom = 0;
-    infoPtr->items[curItem].rect.top = curItemRowCount;
+    infoPtr->items[curItem].rect.top = curItemRowCount - 1;
 
     TRACE("TextSize: %li\n", size.cx);
     TRACE("Rect: T %i, L %i, B %i, R %i\n", 
@@ -1160,8 +1161,8 @@ static void TAB_SetItemBounds (HWND hwnd)
        *
        */
 
-      tabPerRow = infoPtr->uNumItem / (infoPtr->uNumRows + 1);
-      remTab = infoPtr->uNumItem % (infoPtr->uNumRows + 1);
+      tabPerRow = infoPtr->uNumItem / (infoPtr->uNumRows);
+      remTab = infoPtr->uNumItem % (infoPtr->uNumRows);
 
       for (iItm=0,iRow=0,iCount=0,curItemLeftPos=0;
            iItm<infoPtr->uNumItem;
@@ -1891,21 +1892,25 @@ static void TAB_DrawBorder (HWND hwnd, HDC hdc)
   /*
    * Adjust for the style
    */
-  if ((lStyle & TCS_BOTTOM) && !(lStyle & TCS_VERTICAL))
+
+  if (infoPtr->uNumItem)
   {
-    rect.bottom -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
-  }
-  else if((lStyle & TCS_BOTTOM) && (lStyle & TCS_VERTICAL))
-  {
-    rect.right -= (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
-  }
-  else if(lStyle & TCS_VERTICAL)
-  {
-    rect.left += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 2;
-  }
-  else /* not TCS_VERTICAL and not TCS_BOTTOM */
-  {
-    rect.top += (infoPtr->tabHeight - 2) * (infoPtr->uNumRows + 1) + 1;
+    if ((lStyle & TCS_BOTTOM) && !(lStyle & TCS_VERTICAL))
+    {
+      rect.bottom -= (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
+    }
+    else if((lStyle & TCS_BOTTOM) && (lStyle & TCS_VERTICAL))
+    {
+      rect.right -= (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
+    }
+    else if(lStyle & TCS_VERTICAL)
+    {
+      rect.left += (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 2;
+    }
+    else /* not TCS_VERTICAL and not TCS_BOTTOM */
+    {
+      rect.top += (infoPtr->tabHeight - 2) * infoPtr->uNumRows + 1;
+    }
   }
 
   /*
@@ -1986,7 +1991,7 @@ static DWORD
 TAB_GetRowCount (HWND hwnd )
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
-  
+
   return infoPtr->uNumRows;
 }
 
@@ -2038,7 +2043,7 @@ static void TAB_EnsureSelectionVisible(
 
   /* set the items row to the bottommost row or topmost row depending on
    * style */
-  if ((infoPtr->uNumRows > 0) && !(lStyle & TCS_BUTTONS))
+  if ((infoPtr->uNumRows > 1) && !(lStyle & TCS_BUTTONS))
   {
       INT newselected;
       INT iTargetRow;
@@ -2048,8 +2053,9 @@ static void TAB_EnsureSelectionVisible(
       else
         newselected = infoPtr->items[iSelected].rect.top;
 
-      /* the target row is always the number of rows as 0 is the row furthest from the clientRect */
-      iTargetRow = infoPtr->uNumRows;
+      /* the target row is always (number of rows - 1)
+         as row 0 is furthest from the clientRect */
+      iTargetRow = infoPtr->uNumRows - 1;
 
       if (newselected != iTargetRow)
       {
@@ -2148,6 +2154,9 @@ static void TAB_InvalidateTabArea(
 {
   RECT clientRect;
   DWORD lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  INT lastRow = infoPtr->uNumRows - 1;
+
+  if (lastRow < 0) return;
 
   GetClientRect(hwnd, &clientRect);
 
@@ -2155,27 +2164,27 @@ static void TAB_InvalidateTabArea(
   {
     clientRect.top = clientRect.bottom -
                    infoPtr->tabHeight -
-                   (infoPtr->uNumRows) * (infoPtr->tabHeight - 2) -
-                   ((lStyle & TCS_BUTTONS) ? (infoPtr->uNumRows) * BUTTON_SPACINGY : 0) - 2;
+                   lastRow * (infoPtr->tabHeight - 2) -
+                   ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) - 2;
   }
   else if((lStyle & TCS_BOTTOM) && (lStyle & TCS_VERTICAL))
   {
     clientRect.left = clientRect.right - infoPtr->tabHeight -
-                      (infoPtr->uNumRows) * (infoPtr->tabHeight - 2) -
-                      ((lStyle & TCS_BUTTONS) ? (infoPtr->uNumRows) * BUTTON_SPACINGY : 0) - 2;
+                      lastRow * (infoPtr->tabHeight - 2) -
+                      ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) - 2;
   }
   else if(lStyle & TCS_VERTICAL)
   {
     clientRect.right = clientRect.left + infoPtr->tabHeight +
-                       (infoPtr->uNumRows) * (infoPtr->tabHeight - 2) -
-                      ((lStyle & TCS_BUTTONS) ? (infoPtr->uNumRows) * BUTTON_SPACINGY : 0) + 1;
+                       lastRow * (infoPtr->tabHeight - 2) -
+                      ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) + 1;
 
   }
   else
   {
     clientRect.bottom = clientRect.top + infoPtr->tabHeight +
-                      (infoPtr->uNumRows) * (infoPtr->tabHeight - 2) +
-                      ((lStyle & TCS_BUTTONS) ? (infoPtr->uNumRows) * BUTTON_SPACINGY : 0) + 1;
+                      lastRow * (infoPtr->tabHeight - 2) +
+                      ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) + 1;
   }
 
   InvalidateRect(hwnd, &clientRect, TRUE);
