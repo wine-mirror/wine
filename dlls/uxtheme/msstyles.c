@@ -960,10 +960,10 @@ HRESULT MSSTYLES_GetPropertyColor(PTHEME_PROPERTY tp, COLORREF *pColor)
  */
 HRESULT MSSTYLES_GetPropertyFont(PTHEME_PROPERTY tp, HDC hdc, LOGFONTW *pFont)
 {
-    const WCHAR szBold[] = {'b','o','l','d','\0'};
-    const WCHAR szItalic[] = {'i','t','a','l','i','c','\0'};
-    const WCHAR szUnderline[] = {'u','n','d','e','r','l','i','n','e','\0'};
-    const WCHAR szStrikeOut[] = {'s','t','r','i','k','e','o','u','t','\0'};
+    static const WCHAR szBold[] = {'b','o','l','d','\0'};
+    static const WCHAR szItalic[] = {'i','t','a','l','i','c','\0'};
+    static const WCHAR szUnderline[] = {'u','n','d','e','r','l','i','n','e','\0'};
+    static const WCHAR szStrikeOut[] = {'s','t','r','i','k','e','o','u','t','\0'};
     int pointSize;
     WCHAR attr[32];
     LPCWSTR lpCur = tp->lpValue;

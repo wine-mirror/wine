@@ -236,7 +236,7 @@ static	BOOL MSACM_WriteCache(PWINE_ACMDRIVERID padid)
 /***********************************************************************
  *           MSACM_RegisterDriver()
  */
-PWINE_ACMDRIVERID MSACM_RegisterDriver(LPWSTR pszDriverAlias, LPWSTR pszFileName,
+PWINE_ACMDRIVERID MSACM_RegisterDriver(LPCWSTR pszDriverAlias, LPCWSTR pszFileName,
 				       HINSTANCE hinstModule)
 {
     PWINE_ACMDRIVERID	padid;
@@ -285,10 +285,10 @@ void MSACM_RegisterAllDrivers(void)
 {
     LPWSTR pszBuffer;
     DWORD dwBufferLength;
-    static WCHAR msacm32[] = {'m','s','a','c','m','3','2','.','d','l','l','\0'};
-    static WCHAR msacmW[] = {'M','S','A','C','M','.'};
-    static WCHAR drv32[] = {'d','r','i','v','e','r','s','3','2','\0'};
-    static WCHAR sys[] = {'s','y','s','t','e','m','.','i','n','i','\0'};
+    static const WCHAR msacm32[] = {'m','s','a','c','m','3','2','.','d','l','l','\0'};
+    static const WCHAR msacmW[] = {'M','S','A','C','M','.'};
+    static const WCHAR drv32[] = {'d','r','i','v','e','r','s','3','2','\0'};
+    static const WCHAR sys[] = {'s','y','s','t','e','m','.','i','n','i','\0'};
 
     /* FIXME
      *  What if the user edits system.ini while the program is running?

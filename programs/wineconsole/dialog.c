@@ -608,8 +608,8 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
         SendDlgItemMessage(hDlg, IDC_CNF_CLOSE_EXIT, BM_SETCHECK,
                            (di->config.exit_on_die) ? BST_CHECKED : BST_UNCHECKED, 0L);
         {
-            static WCHAR        s1[] = {'W','i','n','3','2',0};
-            static WCHAR        s2[] = {'E','m','a','c','s',0};
+            static const WCHAR s1[] = {'W','i','n','3','2',0};
+            static const WCHAR s2[] = {'E','m','a','c','s',0};
 
             SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_ADDSTRING,
                                0, (LPARAM)s1);

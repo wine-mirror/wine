@@ -1316,10 +1316,10 @@ static void test_VariantTimeToDosDateTime(void)
 
 static void test_VarFormatNumber(void)
 {
-  static WCHAR szSrc1[] = { '1','\0' };
-  static WCHAR szResult1[] = { '1','.','0','0','\0' };
-  static WCHAR szSrc2[] = { '-','1','\0' };
-  static WCHAR szResult2[] = { '(','1','.','0','0',')','\0' };
+  static const WCHAR szSrc1[] = { '1','\0' };
+  static const WCHAR szResult1[] = { '1','.','0','0','\0' };
+  static const WCHAR szSrc2[] = { '-','1','\0' };
+  static const WCHAR szResult2[] = { '(','1','.','0','0',')','\0' };
   char buff[8];
   HRESULT hres;
   VARIANT v;

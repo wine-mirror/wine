@@ -588,8 +588,8 @@ void get_tokentable(token_t **tab, int *len)
  */
 int yylex(void)
 {
-	static WCHAR ustr_dot1[] = { '.', '\n', 0 };
-	static WCHAR ustr_dot2[] = { '.', '\r', '\n', 0 };
+	static const WCHAR ustr_dot1[] = { '.', '\n', 0 };
+	static const WCHAR ustr_dot2[] = { '.', '\r', '\n', 0 };
 	static int isinit = 0;
 	int ch;
 

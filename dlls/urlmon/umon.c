@@ -41,7 +41,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 /* native urlmon.dll uses this key, too */
-static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
+static const WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
 /*static BOOL registered_wndclass = FALSE;*/
 

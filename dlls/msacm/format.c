@@ -317,8 +317,8 @@ MMRESULT WINAPI acmFormatDetailsA(HACMDRIVER had, PACMFORMATDETAILSA pafd,
 MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD fdwDetails)
 {
     MMRESULT			mmr;
-    static WCHAR		fmt1[] = {'%','d',' ','H','z',0};
-    static WCHAR		fmt2[] = {';',' ','%','d',' ','b','i','t','s',0};
+    static const WCHAR		fmt1[] = {'%','d',' ','H','z',0};
+    static const WCHAR		fmt2[] = {';',' ','%','d',' ','b','i','t','s',0};
     ACMFORMATTAGDETAILSA	aftd;
 
     TRACE("(%p, %p, %ld)\n", had, pafd, fdwDetails);

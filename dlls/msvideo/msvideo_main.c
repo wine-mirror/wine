@@ -272,7 +272,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     HDRVR		hdrv;
     WINE_HIC*           whic;
     BOOL                bIs16;
-    static WCHAR        drv32W[] = {'d','r','i','v','e','r','s','3','2','\0'};
+    static const WCHAR  drv32W[] = {'d','r','i','v','e','r','s','3','2','\0'};
     reg_driver*         driver;
 
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);

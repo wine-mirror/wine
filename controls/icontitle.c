@@ -86,7 +86,7 @@ HWND ICONTITLE_Create( HWND owner )
  */
 static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
 {
-    static WCHAR emptyTitleText[] = {'<','.','.','.','>',0};
+    static const WCHAR emptyTitleText[] = {'<','.','.','.','>',0};
     WCHAR str[80];
     HDC hDC;
     HFONT hPrevFont;

@@ -682,9 +682,9 @@ static	LRESULT G711_DriverDetails(PACMDRIVERDETAILSW add)
  */
 static	LRESULT	G711_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
-    static WCHAR szPcm[]={'P','C','M',0};
-    static WCHAR szALaw[]={'A','-','L','a','w',0};
-    static WCHAR szULaw[]={'U','-','L','a','w',0};
+    static const WCHAR szPcm[]={'P','C','M',0};
+    static const WCHAR szALaw[]={'A','-','L','a','w',0};
+    static const WCHAR szULaw[]={'U','-','L','a','w',0};
 
     switch (dwQuery)
     {

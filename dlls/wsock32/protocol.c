@@ -53,11 +53,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 /* name of the protocols
  */
-static WCHAR NameIpx[]   = {'I', 'P', 'X', '\0'};
-static WCHAR NameSpx[]   = {'S', 'P', 'X', '\0'};
-static WCHAR NameSpxII[] = {'S', 'P', 'X', ' ', 'I', 'I', '\0'};
-static WCHAR NameTcp[]   = {'T', 'C', 'P', '/', 'I', 'P', '\0'};
-static WCHAR NameUdp[]   = {'U', 'D', 'P', '/', 'I', 'P', '\0'};
+static const WCHAR NameIpx[]   = {'I', 'P', 'X', '\0'};
+static const WCHAR NameSpx[]   = {'S', 'P', 'X', '\0'};
+static const WCHAR NameSpxII[] = {'S', 'P', 'X', ' ', 'I', 'I', '\0'};
+static const WCHAR NameTcp[]   = {'T', 'C', 'P', '/', 'I', 'P', '\0'};
+static const WCHAR NameUdp[]   = {'U', 'D', 'P', '/', 'I', 'P', '\0'};
 
 /*****************************************************************************
  *          WSOCK32_EnterSingleProtocol [internal]

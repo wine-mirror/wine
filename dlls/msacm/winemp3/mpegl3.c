@@ -200,8 +200,8 @@ static	LRESULT MPEG3_DriverDetails(PACMDRIVERDETAILSW add)
  */
 static	LRESULT	MPEG3_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
-    static WCHAR szPcm[]={'P','C','M',0};
-    static WCHAR szMpeg3[]={'M','P','e','g','3',0};
+    static const WCHAR szPcm[]={'P','C','M',0};
+    static const WCHAR szMpeg3[]={'M','P','e','g','3',0};
 
     switch (dwQuery)
     {

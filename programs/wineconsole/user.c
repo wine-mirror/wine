@@ -1355,7 +1355,7 @@ static int WCUSER_MainLoop(struct inner_data* data)
  */
 enum init_return WCUSER_InitBackend(struct inner_data* data)
 {
-    static WCHAR wClassName[] = {'W','i','n','e','C','o','n','s','o','l','e','C','l','a','s','s',0};
+    static const WCHAR wClassName[] = {'W','i','n','e','C','o','n','s','o','l','e','C','l','a','s','s',0};
 
     WNDCLASS		wndclass;
 

@@ -546,7 +546,7 @@ static void _tryLoadProvider(PWSTR moduleName)
         WARN("failed to load %s\n", debugstr_w(moduleName));
 }
 
-static WCHAR securityProvidersKeyW[] = {
+static const WCHAR securityProvidersKeyW[] = {
  'S','Y','S','T','E','M','\\','C','u','r','r','e','n','t','C','o','n','t','r',
  'o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','S','e','c','u','r',
  'i','t','y','P','r','o','v','i','d','e','r','s','\0'

@@ -337,7 +337,7 @@ typedef struct _WINE_ACMDRIVERID
 extern HANDLE MSACM_hHeap;
 extern PWINE_ACMDRIVERID MSACM_pFirstACMDriverID;
 extern PWINE_ACMDRIVERID MSACM_pLastACMDriverID;
-extern PWINE_ACMDRIVERID MSACM_RegisterDriver(LPWSTR pszDriverAlias, LPWSTR pszFileName,
+extern PWINE_ACMDRIVERID MSACM_RegisterDriver(LPCWSTR pszDriverAlias, LPCWSTR pszFileName,
 					      HINSTANCE hinstModule);
 extern void MSACM_RegisterAllDrivers(void);
 extern PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p);
