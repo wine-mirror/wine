@@ -303,5 +303,9 @@ UINT WINAPI WSOCK32_inet_network(const char *cp)
  */
 struct netent * WINAPI WSOCK32_getnetbyname(const char *name)
 {
+#ifdef HAVE_GETNETBYNAME
     return getnetbyname(name);
+#else
+    return NULL;
+#endif
 }

@@ -216,61 +216,6 @@ int strncasecmp( const char *str1, const char *str2, size_t n )
 #endif /* HAVE_STRNCASECMP */
 
 /***********************************************************************
- *		getnetbyaddr
- */
-#ifndef HAVE_GETNETBYADDR
-struct netent *getnetbyaddr(unsigned long net, int type)
-{
-    errno = ENOSYS;
-    return NULL;
-}
-#endif /* defined(HAVE_GETNETBYNAME) */
-
-/***********************************************************************
- *		getnetbyname
- */
-#ifndef HAVE_GETNETBYNAME
-struct netent *getnetbyname(const char *name)
-{
-    errno = ENOSYS;
-    return NULL;
-}
-#endif /* defined(HAVE_GETNETBYNAME) */
-
-/***********************************************************************
- *		getprotobyname
- */
-#ifndef HAVE_GETPROTOBYNAME
-struct protoent *getprotobyname(const char *name)
-{
-    errno = ENOSYS;
-    return NULL;
-}
-#endif /* !defined(HAVE_GETPROTOBYNAME) */
-
-/***********************************************************************
- *		getprotobynumber
- */
-#ifndef HAVE_GETPROTOBYNUMBER
-struct protoent *getprotobynumber(int proto)
-{
-    errno = ENOSYS;
-    return NULL;
-}
-#endif /* !defined(HAVE_GETPROTOBYNUMBER) */
-
-/***********************************************************************
- *		getservbyport
- */
-#ifndef HAVE_GETSERVBYPORT
-struct servent *getservbyport(int port, const char *proto)
-{
-    errno = ENOSYS;
-    return NULL;
-}
-#endif /* !defined(HAVE_GETSERVBYPORT) */
-
-/***********************************************************************
  *		getsockopt
  */
 #ifndef HAVE_GETSOCKOPT

@@ -423,6 +423,7 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 		}
 		break;
 	case AQ_GETPROTO: {
+#if defined(HAVE_GETPROTOBYNAME) && defined(HAVE_GETPROTOBYNUMBER)
 			struct protoent *pe;
 			char *copy_protoent = targetptr;
                         EnterCriticalSection( &csWSgetXXXbyYYY );
@@ -445,6 +446,9 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
                             fail = WSANO_DATA;
 			}
                         LeaveCriticalSection( &csWSgetXXXbyYYY );
+#else
+                        fail = WSANO_DATA;
+#endif
 		}
 		break;
 	case AQ_GETSERV: {
@@ -453,7 +457,11 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
                         EnterCriticalSection( &csWSgetXXXbyYYY );
 			se = (aq->flags & AQ_NAME)?
 				getservbyname(aq->serv_name,aq->serv_proto) :
+#ifdef HAVE_GETSERVBYPORT
 				getservbyport(aq->serv_port,aq->serv_proto);
+#else
+                                NULL;
+#endif
 			if (se) {
 				size = WS_copy_se(copy_servent,(char*)aq->sbuf,aq->sbuflen,se,aq->flags);
 				if (size < 0) {

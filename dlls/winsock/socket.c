@@ -2996,7 +2996,7 @@ struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
 static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 {
     WIN_protoent* retval = NULL;
-
+#ifdef HAVE_GETPROTOBYNAME
     struct protoent*     proto;
     EnterCriticalSection( &csWSgetXXXbyYYY );
     if( (proto = getprotobyname(name)) != NULL )
@@ -3011,6 +3011,7 @@ static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
         SetLastError(WSANO_DATA);
     }
     LeaveCriticalSection( &csWSgetXXXbyYYY );
+#endif
     return retval;
 }
 
@@ -3040,6 +3041,7 @@ struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
 static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 {
     WIN_protoent* retval = NULL;
+#ifdef HAVE_GETPROTOBYNUMBER
     struct protoent*     proto;
     EnterCriticalSection( &csWSgetXXXbyYYY );
     if( (proto = getprotobynumber(number)) != NULL )
@@ -3054,6 +3056,7 @@ static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
         SetLastError(WSANO_DATA);
     }
     LeaveCriticalSection( &csWSgetXXXbyYYY );
+#endif
     return retval;
 }
 
@@ -3134,6 +3137,7 @@ struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
 static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
 {
     WIN_servent* retval = NULL;
+#ifdef HAVE_GETSERVBYPORT
     struct servent*     serv;
     if (!proto || wsi_strtolo( proto, NULL )) {
         EnterCriticalSection( &csWSgetXXXbyYYY );
@@ -3151,6 +3155,7 @@ static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag
         LeaveCriticalSection( &csWSgetXXXbyYYY );
     }
     else SetLastError(WSAENOBUFS);
+#endif
     return retval;
 }
 

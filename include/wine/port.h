@@ -61,23 +61,6 @@ typedef unsigned int size_t;
 typedef int ssize_t;
 #endif
 
-#if !defined(HAVE_GETNETBYADDR) && !defined(HAVE_GETNETBYNAME)
-struct netent {
-  char         *n_name;
-  char        **n_aliases;
-  int           n_addrtype;
-  unsigned long n_net;
-};
-#endif /* !defined(HAVE_GETNETBYADDR) && !defined(HAVE_GETNETBYNAME) */
-
-#if !defined(HAVE_GETPROTOBYNAME) && !defined(HAVE_GETPROTOBYNUMBER)
-struct  protoent {
-  char  *p_name;
-  char **p_aliases;
-  int    p_proto;
-};
-#endif /* !defined(HAVE_GETPROTOBYNAME) && !defined(HAVE_GETPROTOBYNUMBER) */
-
 #ifndef HAVE_STATFS
 # ifdef __BEOS__
 #  define STATFS_HAS_BFREE
@@ -186,29 +169,9 @@ struct statfs;
 int clone(int (*fn)(void *arg), void *stack, int flags, void *arg);
 #endif /* !defined(HAVE_CLONE) && defined(linux) */
 
-#ifndef HAVE_GETNETBYADDR
-struct netent *getnetbyaddr(unsigned long net, int type);
-#endif /* defined(HAVE_GETNETBYNAME) */
-
-#ifndef HAVE_GETNETBYNAME
-struct netent *getnetbyname(const char *name);
-#endif /* defined(HAVE_GETNETBYNAME) */
-
 #ifndef HAVE_GETPAGESIZE
 size_t getpagesize(void);
 #endif  /* HAVE_GETPAGESIZE */
-
-#ifndef HAVE_GETPROTOBYNAME
-struct protoent *getprotobyname(const char *name);
-#endif /* !defined(HAVE_GETPROTOBYNAME) */
-
-#ifndef HAVE_GETPROTOBYNUMBER
-struct protoent *getprotobynumber(int proto);
-#endif /* !defined(HAVE_GETPROTOBYNUMBER) */
-
-#ifndef HAVE_GETSERVBYPORT
-struct servent *getservbyport(int port, const char *proto);
-#endif /* !defined(HAVE_GETSERVBYPORT) */
 
 #ifndef HAVE_GETSOCKOPT
 int getsockopt(int socket, int level, int option_name, void *option_value, size_t *option_len);
@@ -325,12 +288,7 @@ extern long interlocked_xchg_add( long *dest, long incr );
 #define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
 
 #define clone             __WINE_NOT_PORTABLE(clone)
-#define getnetbyaddr      __WINE_NOT_PORTABLE(getnetbyaddr)
-#define getnetbyname      __WINE_NOT_PORTABLE(getnetbyname)
 #define getpagesize       __WINE_NOT_PORTABLE(getpagesize)
-#define getprotobyname    __WINE_NOT_PORTABLE(getprotobyname)
-#define getprotobynumber  __WINE_NOT_PORTABLE(getprotobynumber)
-#define getservbyport     __WINE_NOT_PORTABLE(getservbyport)
 #define getsockopt        __WINE_NOT_PORTABLE(getsockopt)
 #define inet_network      __WINE_NOT_PORTABLE(inet_network)
 #define lstat             __WINE_NOT_PORTABLE(lstat)
