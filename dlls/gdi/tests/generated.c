@@ -27,7 +27,7 @@
  * Windows API extension
  */
 
-#if (_MSC_VER >= 1300) && defined(__cplusplus)
+#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)
 # define FIELD_ALIGNMENT(type, field) __alignof(((type*)0)->field)
 #elif defined(__GNUC__)
 # define FIELD_ALIGNMENT(type, field) __alignof__(((type*)0)->field)
@@ -35,7 +35,7 @@
 /* FIXME: Not sure if is possible to do without compiler extension */
 #endif
 
-#if (_MSC_VER >= 1300) && defined(__cplusplus)
+#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)
 # define _TYPE_ALIGNMENT(type) __alignof(type)
 #elif defined(__GNUC__)
 # define _TYPE_ALIGNMENT(type) __alignof__(type)
@@ -58,7 +58,7 @@
 #ifdef FIELD_ALIGNMENT
 # define TEST_FIELD_ALIGNMENT(type, field, align) \
    ok(FIELD_ALIGNMENT(type, field) == align, \
-       "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")", \
+       "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")\n", \
            FIELD_ALIGNMENT(type, field))
 #else
 # define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)
@@ -66,7 +66,7 @@
 
 #define TEST_FIELD_OFFSET(type, field, offset) \
     ok(FIELD_OFFSET(type, field) == offset, \
-        "FIELD_OFFSET(" #type ", " #field ") == %ld (expected " #offset ")", \
+        "FIELD_OFFSET(" #type ", " #field ") == %ld (expected " #offset ")\n", \
              FIELD_OFFSET(type, field))
 
 #ifdef _TYPE_ALIGNMENT
@@ -78,13 +78,13 @@
 
 #ifdef TYPE_ALIGNMENT
 #define TEST_TYPE_ALIGNMENT(type, align) \
-    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")", TYPE_ALIGNMENT(type))
+    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", TYPE_ALIGNMENT(type))
 #else
 # define TEST_TYPE_ALIGNMENT(type, align) do { } while (0)
 #endif
 
 #define TEST_TYPE_SIZE(type, size) \
-    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")", sizeof(type))
+    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")\n", sizeof(type))
 
 /***********************************************************************
  * Test macros
@@ -104,10 +104,10 @@
     TEST_TYPE_SIZE(*(type)0, size)
 
 #define TEST_TYPE_SIGNED(type) \
-    ok((type) -1 < 0, "(" #type ") -1 < 0");
+    ok((type) -1 < 0, "(" #type ") -1 < 0\n");
 
 #define TEST_TYPE_UNSIGNED(type) \
-     ok((type) -1 > 0, "(" #type ") -1 > 0");
+     ok((type) -1 > 0, "(" #type ") -1 > 0\n");
 
 static void test_pack_ABC(void)
 {
