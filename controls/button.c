@@ -759,9 +759,23 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 	    if (wndPtr->dwStyle & WS_DISABLED) state |= DFCS_INACTIVE;
 
+	    /* rbox must have the correct height */ 
+ 	    delta = rbox.bottom - rbox.top - checkBoxHeight;
+	    if (delta > 0) 
+	    {  
+		int ofs = (abs(delta) / 2);
+		rbox.bottom -= ofs + 1;
+		rbox.top = rbox.bottom - checkBoxHeight;
+	    }
+	    else if (delta < 0)
+	    {
+		int ofs = (abs(delta) / 2);
+		rbox.top -= ofs + 1;
+		rbox.bottom = rbox.top + checkBoxHeight;
+	    }
+
 	    DrawFrameControl( hDC, &rbox, DFC_BUTTON, state );
         }
-
 
         if( textlen && action != ODA_SELECT )
         {

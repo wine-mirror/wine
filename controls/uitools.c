@@ -705,13 +705,12 @@ static BOOL UITOOLS95_DFC_ButtonPush(HDC dc, LPRECT r, UINT uFlags)
  * however there because MS uses a TrueType font (Marlett) to draw
  * the buttons.
  */
-#define DFC_CHECKPOINTSMAX      6
 
 static BOOL UITOOLS95_DFC_ButtonCheck(HDC dc, LPRECT r, UINT uFlags)
 {
-    RECT myr;
-    int SmallDiam = UITOOLS_MakeSquareRect(r, &myr);
+    RECT myr, bar;
     UINT flags = BF_RECT | BF_ADJUST;
+    UITOOLS_MakeSquareRect(r, &myr);
 
     if(uFlags & DFCS_FLAT) flags |= BF_FLAT;
     else if(uFlags & DFCS_MONO) flags |= BF_MONO;
@@ -729,34 +728,20 @@ static BOOL UITOOLS95_DFC_ButtonCheck(HDC dc, LPRECT r, UINT uFlags)
 
     if(uFlags & DFCS_CHECKED)
     {
-        POINT CheckPoints[DFC_CHECKPOINTSMAX];
-        int i;
-        HBRUSH hbsave;
-        HPEN hpsave;
+        int i, k;
+        i = (uFlags & DFCS_INACTIVE) || (uFlags & 0xff) == DFCS_BUTTON3STATE ?
+		COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
 
-        /* FIXME: This comes very close to M$'s checkmark, but not */
-        /* exactly... When small or large there is a few pixels */
-        /* shift. Not bad, but could be better :) */
-        UITOOLS_MakeSquareRect(r, &myr);
-        CheckPoints[0].x = myr.left + 253*SmallDiam/1000;
-        CheckPoints[0].y = myr.top  + 345*SmallDiam/1000;
-        CheckPoints[1].x = myr.left + 409*SmallDiam/1000;
-        CheckPoints[1].y = CheckPoints[0].y + (CheckPoints[1].x-CheckPoints[0].x);
-        CheckPoints[2].x = myr.left + 690*SmallDiam/1000;
-        CheckPoints[2].y = CheckPoints[1].y - (CheckPoints[2].x-CheckPoints[1].x);
-        CheckPoints[3].x = CheckPoints[2].x;
-        CheckPoints[3].y = CheckPoints[2].y + 3*SmallDiam/16;
-        CheckPoints[4].x = CheckPoints[1].x;
-        CheckPoints[4].y = CheckPoints[1].y + 3*SmallDiam/16;
-        CheckPoints[5].x = CheckPoints[0].x;
-        CheckPoints[5].y = CheckPoints[0].y + 3*SmallDiam/16;
-
-        i = (uFlags & DFCS_INACTIVE) || (uFlags & 0xff) == DFCS_BUTTON3STATE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
-        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
-        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
-        Polygon(dc, CheckPoints, DFC_CHECKPOINTSMAX);
-        SelectObject(dc, hpsave);
-        SelectObject(dc, hbsave);
+        /* draw 7 bars, with h=3w to form the check */
+        bar.left = myr.left;
+	bar.top = myr.top + 2;
+        for (k = 0; k < 7; k++) {
+            bar.left = bar.left + 1;
+	    bar.top = (k < 3) ? bar.top + 1 : bar.top - 1;
+	    bar.bottom = bar.top + 3;
+   	    bar.right = bar.left + 1;
+            FillRect(dc, &bar, GetSysColorBrush(i));
+	}
     }
     return TRUE;
 }
@@ -779,7 +764,6 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     int BorderShrink = SmallDiam / 16;
     HPEN hpsave;
     HBRUSH hbsave;
-    int xe, ye;
     int xc, yc;
 
     if(BorderShrink < 1) BorderShrink = 1;
@@ -788,9 +772,6 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     {
         FillRect(dc, r, (HBRUSH)GetStockObject(BLACK_BRUSH));
     }
-
-    xe = myr.left;
-    ye = myr.top  + SmallDiam - SmallDiam/2;
 
     xc = myr.left + SmallDiam - SmallDiam/2;
     yc = myr.top  + SmallDiam - SmallDiam/2;
@@ -805,7 +786,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     if((uFlags & 0xff) == DFCS_BUTTONRADIOMASK)
     {
         hbsave = (HBRUSH)SelectObject(dc, GetStockObject(BLACK_BRUSH));
-        Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+        Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hbsave);
     }
     else
@@ -814,7 +795,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         {
             hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_WINDOWFRAME));
             hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_WINDOWFRAME));
-            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+            Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
             SelectObject(dc, hbsave);
             SelectObject(dc, hpsave);
         }
@@ -822,11 +803,11 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         {
             hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_BTNHIGHLIGHT));
             hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
-            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
+            Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.left-1, myr.bottom, myr.right+1, myr.top);
 
             SelectObject(dc, GetSysColorPen(COLOR_BTNSHADOW));
             SelectObject(dc, GetSysColorBrush(COLOR_BTNSHADOW));
-            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
+            Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.right+1, myr.top, myr.left-1, myr.bottom);
 
             myr.left   += BorderShrink;
             myr.right  -= BorderShrink;
@@ -835,11 +816,11 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
 
             SelectObject(dc, GetSysColorPen(COLOR_3DLIGHT));
             SelectObject(dc, GetSysColorBrush(COLOR_3DLIGHT));
-            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
+            Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.left-1, myr.bottom, myr.right+1, myr.top);
 
             SelectObject(dc, GetSysColorPen(COLOR_3DDKSHADOW));
             SelectObject(dc, GetSysColorBrush(COLOR_3DDKSHADOW));
-            Pie(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
+            Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.right+1, myr.top, myr.left-1, myr.bottom);
             SelectObject(dc, hbsave);
             SelectObject(dc, hpsave);
         }
@@ -852,7 +833,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         i= !(uFlags & (DFCS_INACTIVE|DFCS_PUSHED)) ? COLOR_WINDOW : COLOR_BTNFACE;
         hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
         hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
-        Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+        Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hbsave);
         SelectObject(dc, hpsave);
     }
@@ -869,7 +850,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
         hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
         hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
-        Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
+        Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hpsave);
         SelectObject(dc, hbsave);
     }
