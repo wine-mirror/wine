@@ -88,16 +88,6 @@ HRESULT WINAPI URLMON_DllGetClassObject(REFCLSID rclsid, REFIID riid,
 }
 
 /***********************************************************************
- *		DllRegisterServer (URLMON.@)
- */
-HRESULT WINAPI URLMON_DllRegisterServer(void)
-{
-    FIXME("(void): stub\n");
-
-    return S_OK;
-}
-
-/***********************************************************************
  *		DllRegisterServerEx (URLMON.@)
  */
 HRESULT WINAPI URLMON_DllRegisterServerEx(void)
@@ -105,16 +95,6 @@ HRESULT WINAPI URLMON_DllRegisterServerEx(void)
     FIXME("(void): stub\n");
 
     return E_FAIL;
-}
-
-/***********************************************************************
- *		DllUnregisterServer (URLMON.@)
- */
-HRESULT WINAPI URLMON_DllUnregisterServer(void)
-{
-    FIXME("(void): stub\n");
-
-    return S_OK;
 }
 
 /**************************************************************************
