@@ -489,7 +489,6 @@ TREEVIEW_TVItemFromItem(TREEVIEW_INFO *infoPtr, UINT mask, TVITEMW *tvItem, TREE
     tvItem->state = item->state;
     tvItem->stateMask = 0;
     tvItem->iImage = item->iImage;
-    tvItem->iImage = item->iImage;
     tvItem->iSelectedImage = item->iSelectedImage;
     tvItem->cChildren = item->cChildren;
     tvItem->lParam = item->lParam;
@@ -973,6 +972,9 @@ TREEVIEW_AllocateItem(TREEVIEW_INFO *infoPtr)
 
     if (!newItem)
 	return NULL;
+
+    newItem->iImage = -1;
+    newItem->iSelectedImage = -1;
 
     if (DPA_InsertPtr(infoPtr->items, INT_MAX, newItem) == -1)
     {
@@ -2435,7 +2437,7 @@ TREEVIEW_DrawItem(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
 	 * non-selected image.
 	 */
 
-	if ((wineItem->state & TVIS_SELECTED) && (wineItem->iSelectedImage))
+	if ((wineItem->state & TVIS_SELECTED) && (wineItem->iSelectedImage >= 0))
 	{
 	    /* The item is currently selected */
 	    imageIndex = wineItem->iSelectedImage;
