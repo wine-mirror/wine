@@ -114,9 +114,9 @@
 	  If you're using Debian, simply install the winesetuptk
 	  package (as root):
 	</para>
-        <screen>
+  <screen>
   <prompt># </prompt><userinput>apt-get install winesetuptk</userinput>
-        </screen>
+  </screen>
 	<para>
 	  If you're using another distribution, search for the package on
 	  the net.
@@ -138,9 +138,9 @@
 	  tree, change to the main directory of it and then run (as
 	  user):
 	</para>
-        <screen>
+  <screen>
   <prompt>$ </prompt><userinput>./tools/wineinstall</userinput>
-        </screen>
+  </screen>
 	<para>
 	  Doing so will compile Wine, install Wine and configure the
 	  Wine environment (either by providing access to a Windows
@@ -176,10 +176,10 @@
 
         To run it, run in a <glossterm>terminal</glossterm> in the Wine source tree directory:
       </para>
-      <screen>
+  <screen>
   <prompt>$ </><userinput>cd tools</>
   <prompt>$ </><userinput>perl ./winecheck</>
-      </screen>
+  </screen>
       <para>
 	The winecheck output will be a percentage score indicating Wine
 	configuration correctness.
@@ -288,10 +288,10 @@
 	  need to copy over our sample configuration file to the
 	  standard Wine configuration file location, do in a
 	  <glossterm>terminal</glossterm>:
-          <screen>
+  <screen>
   <prompt>$ </><userinput>mkdir ~/.wine/</>
   <prompt>$ </><userinput>cp <replaceable>dir_to_wine_source_code</replaceable>/documentation/samples/config ~/.wine/config</>
-          </screen>
+  </screen>
 	  Otherwise, simply use the already existing configuration file
 	  at <filename>~/.wine/config</filename>.
 	</para>
@@ -519,8 +519,6 @@
           </para>
           <para>
             <programlisting>"DefaultLoadOrder" =" native, builtin"</programlisting>
-          </para>
-          <para>
             This setting is a comma-delimited list of the order in
             which to attempt loading DLLs. If the first option fails,
             it will try the second, and so on. The order specified
@@ -546,75 +544,59 @@
           <title>The [DllOverrides] Section</title>
           <para>
             The format for this section is the same for each line:
-            <programlisting>
-  &lt;DLL>{,&lt;DLL>,&lt;DLL>...} = &lt;FORM>{,&lt;FORM>,&lt;FORM>...}
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>&lt;DLL>{,&lt;DLL>,&lt;DLL>...} = &lt;FORM>{,&lt;FORM>,&lt;FORM>...}</programlisting>
             For example, to load built-in KERNEL pair (case doesn't
             matter here):
-            <programlisting>
-  "kernel,kernel32" = "builtin"
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>"kernel,kernel32" = "builtin"</programlisting>
             To load the native COMMDLG pair, but if that doesn't work
             try built-in:
-            <programlisting>
-  "commdlg,comdlg32" = "native, builtin"
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>"commdlg,comdlg32" = "native, builtin"</programlisting>
             To load the native COMCTL32:
-            <programlisting>
-  "comctl32" = "native"
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>"comctl32" = "native"</programlisting>
             Here is a good generic setup (As it is defined in config
             that was included with your wine package):
             <programlisting>
-  [DllOverrides]
-  "rpcrt4"       = "builtin, native"
-  "oleaut32"     = "builtin, native"
-  "ole32"        = "builtin, native"
-  "commdlg"      = "builtin, native"
-  "comdlg32"     = "builtin, native"
-  "ver"          = "builtin, native"
-  "version"      = "builtin, native"
-  "shell"        = "builtin, native"
-  "shell32"      = "builtin, native"
-  "shfolder"     = "builtin, native"
-  "shlwapi"      = "builtin, native"
-  "shdocvw"      = "builtin, native"
-  "lzexpand"     = "builtin, native"
-  "lz32"         = "builtin, native"
-  "comctl32"     = "builtin, native"
-  "commctrl"     = "builtin, native"
-  "advapi32"     = "builtin, native"
-  "crtdll"       = "builtin, native"
-  "mpr"          = "builtin, native"
-  "winspool.drv" = "builtin, native"
-  "ddraw"        = "builtin, native"
-  "dinput"       = "builtin, native"
-  "dsound"       = "builtin, native"
-  "opengl32"     = "builtin, native"
-  "msvcrt"       = "native, builtin"
-  "msvideo"      = "builtin, native"
-  "msvfw32"      = "builtin, native"
-  "mcicda.drv"   = "builtin, native"
-  "mciseq.drv"   = "builtin, native"
-  "mciwave.drv"  = "builtin, native"
-  "mciavi.drv"   = "native, builtin"
-  "mcianim.drv"  = "native, builtin"
-  "msacm.drv"    = "builtin, native"
-  "msacm"        = "builtin, native"
-  "msacm32"      = "builtin, native"
-  "midimap.drv"  = "builtin, native"
-  ; you can specify programs too
-  "notepad.exe"  = "native, builtin"
-  ; default for all other DLLs
-  "*" = "native, builtin"
+[DllOverrides]
+"rpcrt4"       = "builtin, native"
+"oleaut32"     = "builtin, native"
+"ole32"        = "builtin, native"
+"commdlg"      = "builtin, native"
+"comdlg32"     = "builtin, native"
+"ver"          = "builtin, native"
+"version"      = "builtin, native"
+"shell"        = "builtin, native"
+"shell32"      = "builtin, native"
+"shfolder"     = "builtin, native"
+"shlwapi"      = "builtin, native"
+"shdocvw"      = "builtin, native"
+"lzexpand"     = "builtin, native"
+"lz32"         = "builtin, native"
+"comctl32"     = "builtin, native"
+"commctrl"     = "builtin, native"
+"advapi32"     = "builtin, native"
+"crtdll"       = "builtin, native"
+"mpr"          = "builtin, native"
+"winspool.drv" = "builtin, native"
+"ddraw"        = "builtin, native"
+"dinput"       = "builtin, native"
+"dsound"       = "builtin, native"
+"opengl32"     = "builtin, native"
+"msvcrt"       = "native, builtin"
+"msvideo"      = "builtin, native"
+"msvfw32"      = "builtin, native"
+"mcicda.drv"   = "builtin, native"
+"mciseq.drv"   = "builtin, native"
+"mciwave.drv"  = "builtin, native"
+"mciavi.drv"   = "native, builtin"
+"mcianim.drv"  = "native, builtin"
+"msacm.drv"    = "builtin, native"
+"msacm"        = "builtin, native"
+"msacm32"      = "builtin, native"
+"midimap.drv"  = "builtin, native"
+; you can specify programs too
+"notepad.exe"  = "native, builtin"
+; default for all other DLLs
+"*" = "native, builtin"
             </programlisting>
           </para>
           <note>
@@ -632,8 +614,6 @@
           </para>
           <para>
             <programlisting>"Resolution" = "96"</programlisting>
-          </para>
-          <para>
             Since the way X handles fonts is different from the way
             Windows does, wine uses a special mechanism to deal with
             them. It must scale them using the number defined in the
@@ -656,11 +636,7 @@
             The <literal>Alias</literal> setting allows you to map an X font to a font
             used in wine. This is good for apps that need a special font you don't have,
             but a good replacement exists. The syntax is like so:
-            <programlisting>
-  "AliasX" = "[Fake windows name],[Real X name]"&lt;,optional "masking" section>
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>"AliasX" = "[Fake windows name],[Real X name]"&lt;,optional "masking" section></programlisting>
             Pretty straightforward. Replace "AliasX" with "Alias0",
             then "Alias1" and so on. The fake windows name is the name
             that the font will be under a windows app in wine. The
@@ -673,19 +649,10 @@
           <para>
             Here is an example of an alias without masking. The font will show up in windows
             apps as "Google".
-
-            <programlisting>
-  "Alias0" = "Foo,--google-"
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>"Alias0" = "Foo,--google-"</programlisting>
             Here is an example with masking enabled. The font will show up as "Foo" in
             windows apps.
-            <programlisting>
-  "Alias1" = "Foo,--google-,subst"
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>"Alias1" = "Foo,--google-,subst"</programlisting>
             For more information check out the <link linkend="config-fonts-main">Fonts</link>
   	    chapter.
           </para>
@@ -702,8 +669,6 @@
             The [serialports] section tells wine what serial ports it
             is allowed to use.
             <programlisting>"ComX" = "/dev/ttySY"</programlisting>
-          </para>
-          <para>
             Replace <literal>X</literal> with the number of the COM
             port in Windows (1-8) and <literal>Y</literal> with the
             number of it in <literal>X</literal> (Usually the number
@@ -713,8 +678,6 @@
             not always necessary to define any COM ports (An optional
             setting). Here is an example:
             <programlisting>"Com1" = "/dev/ttyS0"</programlisting>
-          </para>
-          <para>
             Use as many of these as you like in the section to define
             all of the COM ports you need.
           </para>
@@ -722,8 +685,6 @@
             The [parallelports] section sets up any parallel ports
             that will be allowed access under wine.
             <programlisting>"LptX" = "/dev/lpY"</programlisting>
-          </para>
-          <para>
             Sounds familiar? Syntax is just like the COM port setting.
             Replace <literal>X</literal> with a value from 1-4 as it
             is in Windows and <literal>Y</literal> with a value from
@@ -733,8 +694,6 @@
             the other section, LptX can equal any device (Maybe
             <medialabel>/dev/printer</medialabel>). Here is an
             example:  <programlisting>"Lpt1" = "/dev/lp0"</programlisting>
-          </para>
-          <para>
             The [spooler] section will inform wine where to spool
             print jobs. Use this if you want to try printing. Wine
             docs claim that spooling is "rather primitive" at this
@@ -743,13 +702,9 @@
             for example) to a file or a command. Here is an example,
             mapping LPT1 to the file <filename>out.ps</filename>:
             <programlisting>"LPT1:" = "out.ps"</programlisting>
-          </para>
-          <para>
             The following command maps printing jobs to LPT1 to the
             command <command>lpr</command>. Notice  the |:
             <programlisting>"LPT1:" = "|lpr"</programlisting>
-          </para>
-          <para>
             The [ports] section is usually useful only for people who
             need direct port access for programs requiring dongles or
             scanners. <emphasis>If you don't need it, don't use
@@ -1004,9 +959,7 @@
 	  configuration on Linux, then <emphasis>make sure</emphasis> to add
 	  the <quote>unhide</quote> mount option to the CD-ROM file system
 	  entry in <filename>/etc/fstab</filename>, e.g.:
-	  <programlisting>
-/dev/cdrom /cdrom  iso9660 ro,noauto,users,unhide 0 0
-	  </programlisting>
+	  <programlisting>/dev/cdrom /cdrom  iso9660 ro,noauto,users,unhide 0 0</programlisting>
 	  Several Windows program setup CD-ROMs or other CD-ROMs chose
 	  to do such braindamaged things as marking very important setup
 	  helper files on the CD-ROM as <quote>hidden</quote>.
@@ -1296,11 +1249,7 @@ And here is a setup for Drive A, a generic floppy drive:
             access</emphasis>!!
         </para>
         <para>
-          <programlisting>
-"Path" = "c:\\windows;c:\\windows\\system;c:\\blanco"
-          </programlisting>
-        </para>
-        <para>
+          <programlisting>"Path" = "c:\\windows;c:\\windows\\system;c:\\blanco"</programlisting>
           Behaves like the <envar>PATH</envar> setting on UNIX
           boxes. When wine is run like <userinput>wine
             sol.exe</userinput>, if <filename>sol.exe</filename>
@@ -1313,9 +1262,7 @@ And here is a setup for Drive A, a generic floppy drive:
           <filename>"c:\\windows;c:\\windows\\system"</filename>).
         </para>
         <para id="dirsymlinks">
-          <programlisting>
-"ShowDirSymlinks" = "1"
-          </programlisting>
+          <programlisting>"ShowDirSymlinks" = "1"</programlisting>
           Wine doesn't pass directory symlinks to Windows programs by
           default, as doing so may crash some programs that do
           recursive lookups of whole subdirectory trees
@@ -1626,9 +1573,9 @@ And here is a setup for Drive A, a generic floppy drive:
             from a <filename>~/.wine/config</filename> file does this:
           </para>
           <programlisting>
-  [Drive C]
-  "Path" = "/c"
-  "Type" = "hd"
+[Drive C]
+"Path" = "/c"
+"Type" = "hd"
           </programlisting>
           <para>
             Although VFAT filesystems are preferable to FAT filesystems
@@ -1646,13 +1593,13 @@ And here is a setup for Drive A, a generic floppy drive:
             either case, by default, the permissions will probably be
             configured so that they look like:
           </para>
-          <screen>
+  <screen>
   <prompt>~></prompt><userinput>cd /c</userinput>
   <prompt>/c></prompt><userinput>ls -l</userinput>
   <computeroutput>-rwxr-xr-x   1 root     root           91 Oct 10 17:58 autoexec.bat
   -rwxr-xr-x   1 root     root          245 Oct 10 17:58 config.sys
   drwxr-xr-x  41 root     root        16384 Dec 30  1998 windows</computeroutput>
-          </screen>
+  </screen>
           <para>
             where all the files are owned by "root", are in the "root"
             group and are only writable by "root"
@@ -1714,20 +1661,20 @@ And here is a setup for Drive A, a generic floppy drive:
             results in the files on the FAT filesystem having permissions similar
             to files created by root.  For example:
           </para>
-          <screen>
+  <screen>
   <prompt>~></prompt><userinput>whoami</userinput>
   <computeroutput>root</computeroutput>
   <prompt>~></prompt><userinput>touch root_file</userinput>
   <prompt>~></prompt><userinput>ls -l root_file</userinput>
   <computeroutput></computeroutput>-rw-r--r--   1 root     root            0 Dec 10 00:20 root_file
-          </screen>
+  </screen>
           <para>
             which matches the owner, group and permissions of files seen
             on the FAT filesystem except for the missing 'x's.  The
             permissions on the FAT filesystem can be changed by changing
             root's umask (unset permissions bits).  For example:
           </para>
-          <screen>
+  <screen>
   <prompt>~></prompt><userinput>umount /c</userinput>
   <prompt>~></prompt><userinput>umask</userinput>
   <computeroutput>022</computeroutput>
@@ -1738,7 +1685,7 @@ And here is a setup for Drive A, a generic floppy drive:
   <computeroutput>-rwx---r--   1 root     root           91 Oct 10 17:58 autoexec.bat
   -rwx---r--   1 root     root          245 Oct 10 17:58 config.sys
   drwx---r--  41 root     root        16384 Dec 30  1998 windows</computeroutput>
-          </screen>
+  </screen>
           <para>
             Mounting the FAT filesystem with a umask of
             <literal>000</literal> gives all users complete control over
@@ -1749,7 +1696,7 @@ And here is a setup for Drive A, a generic floppy drive:
             and <literal>umask</literal>.  They can each be specified
             when the filesystem is manually mounted.  For example:
           </para>
-          <screen>
+  <screen>
   <prompt>~></prompt><userinput>umount /c</userinput>
   <prompt>~></prompt><userinput>mount -o uid=500 -o gid=500 -o umask=002 /c</userinput>
   <prompt>~></prompt><userinput>cd /c</userinput>
@@ -1757,17 +1704,17 @@ And here is a setup for Drive A, a generic floppy drive:
   <computeroutput>-rwxrwxr-x   1 sle      sle            91 Oct 10 17:58 autoexec.bat
   -rwxrwxr-x   1 sle      sle           245 Oct 10 17:58 config.sys
   drwxrwxr-x  41 sle      sle         16384 Dec 30  1998 windows</computeroutput>
-          </screen>
+  </screen>
           <para>
             which gives "sle" complete control over
             <filename>/c</filename>.  The options listed above can be
             made permanent by adding them to the
             <filename>/etc/fstab</filename> file:
           </para>
-          <screen>
+  <screen>
   <prompt>~></prompt><userinput>grep /c /etc/fstab</userinput>
   <computeroutput>/dev/hda1  /c  vfat  uid=500,gid=500,umask=002,exec,dev,suid,rw 1 1</computeroutput>
-          </screen>
+  </screen>
           <para>
             Note that the umask of <literal>002</literal> is common in
             the user private group file permission scheme.  On FAT file
@@ -1795,7 +1742,7 @@ And here is a setup for Drive A, a generic floppy drive:
             lack of root access.  On this system a shadow directory
             might be set up in the following manner:
           </para>
-          <screen>
+  <screen>
   <prompt>~></prompt><userinput>cd /</userinput>
   <prompt>/></prompt><userinput>mkdir c_shadow</userinput>
   <prompt>/></prompt><userinput>cd c_shadow</userinput>
@@ -1803,8 +1750,8 @@ And here is a setup for Drive A, a generic floppy drive:
   <prompt>/c_shadow></prompt><userinput>rm windows AnApp</userinput>
   <prompt>/c_shadow></prompt><userinput>cp -R /c_/{windows,AnApp} .</userinput>
   <prompt>/c_shadow></prompt><userinput>chmod -R 777 windows AnApp</userinput>
-<prompt>/c_shadow></prompt><userinput>perl -p -i -e 's|/c$|/c_shadow|g' ~/.wine/config</userinput>
-          </screen>
+  <prompt>/c_shadow></prompt><userinput>perl -p -i -e 's|/c$|/c_shadow|g' ~/.wine/config</userinput>
+  </screen>
           <para>
           The above gives everyone complete read and write access to
           the <filename>windows</filename> and
@@ -1922,31 +1869,31 @@ And here is a setup for Drive A, a generic floppy drive:
           read from the device on both CD-ROM and floppy; serial
           numbers on floppy only:
         </para>
-        <screen>
-      [Drive A]
-      "Path" = "/mnt/floppy"
-      "Type" = "floppy"
-      "Device" = "/dev/fd0"
-      "Filesystem" = "msdos"
+        <programlisting>
+[Drive A]
+"Path" = "/mnt/floppy"
+"Type" = "floppy"
+"Device" = "/dev/fd0"
+"Filesystem" = "msdos"
 
-      [Drive R]
-      "Path" = "/mnt/cdrom"
-      "Type" = "cdrom"
-      "Device" = "/dev/hda1"
-      "Filesystem" = "win95"
-        </screen>
+[Drive R]
+"Path" = "/mnt/cdrom"
+"Type" = "cdrom"
+"Device" = "/dev/hda1"
+"Filesystem" = "win95"
+        </programlisting>
         <para>
           Here's an example of overriding the CD-ROM label:
         </para>
-        <screen>
-      [Drive J]
-      "Path" = "/mnt/cdrom"
-      "Type" = "cdrom"
-      "Label" = "X234GCDSE"
-      ; note that the device isn't really needed here as we have a fixed label
-      "Device" = "/dev/cdrom"
-      "Filesystem" = "msdos"
-        </screen>
+        <programlisting>
+[Drive J]
+"Path" = "/mnt/cdrom"
+"Type" = "cdrom"
+"Label" = "X234GCDSE"
+; note that the device isn't really needed here as we have a fixed label
+"Device" = "/dev/cdrom"
+"Filesystem" = "msdos"
+        </programlisting>
       </sect3>
 
       <sect3>

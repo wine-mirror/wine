@@ -36,10 +36,10 @@
 	workarounds for certain programs etc.).
 	In the main Wine source code directory in a <glossterm>terminal</glossterm>, run:
       </para>
-<screen>
-<prompt>$ </><userinput>cd programs/regedit</>
-<prompt>$ </><userinput>./regedit ../../winedefault.reg</>
-</screen>
+  <screen>
+  <prompt>$ </><userinput>cd programs/regedit</>
+  <prompt>$ </><userinput>./regedit ../../winedefault.reg</>
+  </screen>
     </sect2>
 
     <sect2>
@@ -232,19 +232,19 @@
         files (which we assume will reside in
         <filename>/usr/local/etc</filename> here), with:
       </para>
-      <screen>
-cd ~/.wine
-cp system.reg /usr/local/etc/wine.systemreg
-cp wine.userreg /usr/local/etc/wine.userreg
-      </screen>
+  <screen>
+  cd ~/.wine
+  cp system.reg /usr/local/etc/wine.systemreg
+  cp wine.userreg /usr/local/etc/wine.userreg
+  </screen>
       <para>
         and perhaps even symlink these back to the administrator's
         account, to make it easier to install apps system-wide later:
       </para>
-      <screen>
-ln -sf /usr/local/etc/wine.systemreg system.reg
-ln -sf /usr/local/etc/wine.userreg wine.userreg
-      </screen>
+  <screen>
+  ln -sf /usr/local/etc/wine.systemreg system.reg
+  ln -sf /usr/local/etc/wine.userreg wine.userreg
+  </screen>
       <para>
         Note that the <filename>tools/wineinstall</filename> script
         already does all of this for you, if you install Wine source as root.

@@ -520,7 +520,7 @@
           <itemizedlist>
             <listitem>
 	      <para>
-	        <literallayout>A computer ;-)</literallayout>
+	        A computer ;-)
                 <literallayout>  Wine: only PCs >= i386 are supported at the moment.</literallayout>
                 <literallayout>  Winelib: selected other platforms are supported, but can be tricky.</literallayout>
 	      </para>

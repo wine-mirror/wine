@@ -48,12 +48,12 @@
 	  .deb package file to.  Once there, type these commands,
 	  adapting the package file name as required:
         </para>
-<screen>
-<prompt>$ </><userinput>su -</>
-Password:
-<prompt># </><userinput>cd /home/user</>
-<prompt># </><userinput>dpkg -i wine_<replaceable>0.0.20030115-1</>.deb</>
-</screen>
+  <screen>
+  <prompt>$ </><userinput>su -</>
+  Password:
+  <prompt># </><userinput>cd /home/user</>
+  <prompt># </><userinput>dpkg -i wine_<replaceable>0.0.20030115-1</>.deb</>
+  </screen>
         <para>
 	  (Type the root password at the "Password:" prompt)
 	</para>
@@ -69,17 +69,17 @@ Password:
 	  Uninstalling an installed Wine Debian package can be done by
 	  running:
 	</para>
-<screen>
-<prompt># </><userinput>dpkg -l|grep wine</>
-</screen>
+  <screen>
+  <prompt># </><userinput>dpkg -l|grep wine</>
+  </screen>
         <para>
 	  The second column of the output (if any) of this command will
 	  indicate the installed packages dealing with "wine".
 	  The corresponding packages can be uninstalled by running:
 	</para>
-<screen>
-<prompt># </><userinput>dpkg -r <replaceable>&lt;package_name&gt;</></>
-</screen>
+  <screen>
+  <prompt># </><userinput>dpkg -r <replaceable>&lt;package_name&gt;</></>
+  </screen>
         <para>
 	  where &lt;package_name&gt; is the name of the Wine-related package
 	  which you want to uninstall.
@@ -93,9 +93,9 @@ Password:
 	  Once there, type this one command as root, adapting the
 	  package file name as required:
         </para>
-<screen>
-<prompt># </><userinput>rpm -ivh wine-<replaceable>20020605-2.i386</>.rpm</>
-</screen>
+  <screen>
+  <prompt># </><userinput>rpm -ivh wine-<replaceable>20020605-2.i386</>.rpm</>
+  </screen>
         <para>
           You may also want to install the
           <systemitem>wine-devel</systemitem> package.
@@ -104,16 +104,16 @@ Password:
 	  Uninstalling an installed Wine RPM package can be done by
 	  running:
 	</para>
-<screen>
-<prompt># </><userinput>rpm -qa|grep -i wine</>
-</screen>
+  <screen>
+  <prompt># </><userinput>rpm -qa|grep -i wine</>
+  </screen>
         <para>
 	  This command will indicate the installed packages dealing with "wine".
 	  The corresponding packages can be uninstalled by running:
 	</para>
-<screen>
-<prompt># </><userinput>rpm -e <replaceable>&lt;package_name&gt;</></>
-</screen>
+  <screen>
+  <prompt># </><userinput>rpm -e <replaceable>&lt;package_name&gt;</></>
+  </screen>
         <para>
 	  where &lt;package_name&gt; is the name of the Wine-related package
 	  which you want to uninstall.
@@ -128,9 +128,9 @@ Password:
         If you are in the directory of the Wine version that you just
 	compiled (e.g. by having run <command>make depend && make</command>), then you may now install this Wine version by running as <glossterm>root</glossterm>:
       </para>
-<screen>
-<prompt># </><userinput>make install</>
-</screen>
+  <screen>
+  <prompt># </><userinput>make install</>
+  </screen>
       <para>
         This will copy the Wine binary files to their final destination
 	in your system. You can then proceed to the <link
@@ -143,9 +143,9 @@ Password:
 	source code version, then change to the main directory of this
 	version and run as <glossterm>root</glossterm>:
       </para>
-<screen>
-<prompt># </><userinput>make uninstall</>
-</screen>
+  <screen>
+  <prompt># </><userinput>make uninstall</>
+  </screen>
     </sect1>
   </chapter>
 

@@ -265,11 +265,10 @@
         <title>Red Hat Linux</title>
 
         <para>
-          Red Hat users can use <ulink url="http://rpmfind.net/linux/RPM/">
-            rpmfind.net</ulink> to track down available Wine RPM binaries.
-          <ulink url="http://rpmfind.net/linux/RPM/WByName.html">This
-            page</ulink> contains a list of all rpmfind packages that start with
-          the letter "W", including a few Wine packages.
+          Red Hat users can use the
+          <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
+          sourceforge.net Wine page</ulink> to get the RPM most suitable for
+          their system.
         </para>
       </sect2>
 
@@ -301,12 +300,12 @@
         If you want to install Wine from the FreeBSD CD-ROM, run in a
 	<glossterm>terminal</glossterm>:
         </para>
-<screen>
-<prompt>$ </><userinput>su -</>
-<prompt># </><userinput>mount /cdrom</>
-<prompt># </><userinput>cd /cdrom/packages/All</>
-<prompt># </><userinput>pkg_add wine_.X.X.X.tgz</>
-</screen>
+  <screen>
+  <prompt>$ </><userinput>su -</>
+  <prompt># </><userinput>mount /cdrom</>
+  <prompt># </><userinput>cd /cdrom/packages/All</>
+  <prompt># </><userinput>pkg_add wine_.X.X.X.tgz</>
+  </screen>
          <para>
 	 </para>
          <para>
@@ -407,22 +406,8 @@
           </listitem>
           <listitem>
             <para>
-              <ulink url="ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/">
-                ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/
-              </ulink>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <ulink url="ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/">
-                ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/
-              </ulink>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <ulink url="ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/">
-                ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/
+              <ulink url="http://prdownloads.sourceforge.net/wine/">
+                http://prdownloads.sourceforge.net/wine/
               </ulink>
             </para>
           </listitem>
@@ -443,9 +428,9 @@
 	  switch to the directory containing the file you just
 	  downloaded. Then extract the source in a
 	  <glossterm>terminal</glossterm> with (e.g.):
-<screen>
-<prompt>$ </><userinput>tar xvzf wine-<replaceable>20030115</>.tar.gz</>
-</screen>
+  <screen>
+  <prompt>$ </><userinput>tar xvzf wine-<replaceable>20030115</>.tar.gz</>
+  </screen>
         </para>
 	<para>
 	  Just in case you happen to get a Wine archive that uses
@@ -484,9 +469,9 @@
             To check whether this is the case, please run in a
 	    <glossterm>terminal</glossterm>:
           </para>
-          <screen>
-          <prompt>$ </><userinput>cvs</>
-          </screen>
+  <screen>
+  <prompt>$ </><userinput>cvs</>
+  </screen>
           <para>
             If this was successful, then you should have gotten a nice CVS
             "Usage" help output.  Otherwise (e.g. an error "cvs: command
@@ -503,9 +488,9 @@
           <para>
             First, you should do a
           </para>
-          <screen>
-          <prompt>$ </><userinput>touch ~/.cvspass</>
-          </screen>
+  <screen>
+  <prompt>$ </><userinput>touch ~/.cvspass</>
+  </screen>
           <para>
             to create or update the file <filename>.cvspass</filename> in
             your home directory, since CVS needs this file (for password
@@ -527,9 +512,9 @@ checkout -P
             </programlisting>
             Create the file with an <glossterm>editor</glossterm>
             of your choice, either by running
-            <screen>
-            <prompt>$ </><userinput>&lt;editor&gt; ~/.cvsrc</>
-            </screen>
+  <screen>
+  <prompt>$ </><userinput>&lt;editor&gt; ~/.cvsrc</>
+  </screen>
             , where &lt;editor&gt; is the editor you want to use (e.g.
             <command>joe</command>, <command>ae</command>,
             <command>vi</command>),
@@ -548,9 +533,9 @@ checkout -P
 	    server and checkout (download) the Wine source code.
 	    First, let's do the server login:
 	  </para>
-          <screen>
-          <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine login</>
-          </screen>
+  <screen>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine login</>
+  </screen>
 	  <para>
 	    If <command>cvs</command> successfully connects to the CVS server,
 	    then you will get a "CVS password:" prompt.
@@ -568,9 +553,9 @@ checkout -P
 	    might be your user's home directory.
 	    To download the Wine tree into the subdirectory <filename>wine/</filename>, run:
 	  </para>
-          <screen>
-          <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine checkout wine</>
-          </screen>
+  <screen>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine checkout wine</>
+  </screen>
 	  <para>
 	    Downloading the CVS tree might take a while (some minutes
 	    to few hours), depending on your connection speed.
@@ -579,24 +564,24 @@ checkout -P
 	    <filename>wine/</filename> directory is in, by running
 	    <command>pwd</command> (Print Working Directory):
 	  </para>
-          <screen>
-          <prompt>$ </><userinput>pwd</>
-          </screen>
+  <screen>
+  <prompt>$ </><userinput>pwd</>
+  </screen>
 	  <para>
 	    Later, you will be able to change to this directory by
 	    running:
 	  </para>
-          <screen>
-          <prompt>$ </><userinput>cd <replaceable>&lt;some_dir&gt;</></>
-          </screen>
+  <screen>
+  <prompt>$ </><userinput>cd <replaceable>&lt;some_dir&gt;</></>
+  </screen>
 	  <para>
 	    , where &lt;some_dir&gt; is the directory that
 	    <command>pwd</command> gave you.
 	    By running
 	  </para>
-          <screen>
-          <prompt>$ </><userinput>cd wine</>
-          </screen>
+  <screen>
+  <prompt>$ </><userinput>cd wine</>
+  </screen>
 	  <para>
 	    , you can now change to the directory of the Wine CVS tree
 	    you just downloaded. Since you now have a fully working Wine
@@ -621,10 +606,10 @@ checkout -P
 	  To proceed with updating Wine, simply <command>cd</command>
 	  to the Wine CVS tree directory, then run:
 	</para>
-        <screen>
-        <prompt>$ </><userinput>make distclean</>
-        <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine update</>
-        </screen>
+  <screen>
+  <prompt>$ </><userinput>make distclean</>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine update</>
+  </screen>
 	<para>
 	  The <command>make distclean</command> part is optional, but
 	  it's a good idea to remove old build and compile configuration
@@ -645,16 +630,16 @@ checkout -P
 	  mailing list</>, and received a patch file to fix the bug.
 	  You can apply the patch with the <command>patch</> command,
 	  which takes a streamed patch from <filename>stdin</>:
-<screen>
-<prompt>$ </><userinput>cd wine</>
-<prompt>$ </><userinput>patch -p0 &lt;<replaceable>../patch_to_apply.diff</></>
-</screen>
+  <screen>
+  <prompt>$ </><userinput>cd wine</>
+  <prompt>$ </><userinput>patch -p0 &lt;<replaceable>../patch_to_apply.diff</></>
+  </screen>
         </para>
         <para>
           To remove the patch, use the <parameter>-R</> option:
-<screen>
-<prompt>$ </><userinput>patch -p0 -R &lt;<replaceable>../patch_to_apply.diff</></>
-</screen>
+  <screen>
+  <prompt>$ </><userinput>patch -p0 -R &lt;<replaceable>../patch_to_apply.diff</></>
+  </screen>
         </para>
         <para>
           If you want to do a test run to see if the patch will apply
@@ -662,10 +647,9 @@ checkout -P
           newer version of the tree), you can use the
           <parameter>--dry-run</> parameter to run the patch
           without writing to any files:
-<screen>
-<prompt>$ </><userinput>patch -p0 --dry-run &lt;<replaceable>../patch_to_apply.d
-iff</></>
-</screen>
+  <screen>
+  <prompt>$ </><userinput>patch -p0 --dry-run &lt;<replaceable>../patch_to_apply.diff</></>
+  </screen>
         </para>
         <para>
           <command>patch</> is pretty smart about extracting
