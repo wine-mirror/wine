@@ -1716,14 +1716,18 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     }
     else if (!enable && !retvalue)
     {
+        HWND focus_wnd, capture_wnd;
+
         SendMessageA( hwnd, WM_CANCELMODE, 0, 0);
 
         WIN_SetStyle( hwnd, style | WS_DISABLED );
 
-        if (hwnd == GetFocus() || IsChild(hwnd, GetFocus()))
+        focus_wnd = GetFocus();
+        if (hwnd == focus_wnd || IsChild(hwnd, focus_wnd))
             SetFocus( 0 );  /* A disabled window can't have the focus */
 
-        if (hwnd == GetCapture() || IsChild(hwnd, GetCapture()))
+        capture_wnd = GetCapture();
+        if (hwnd == capture_wnd || IsChild(hwnd, capture_wnd))
             ReleaseCapture();  /* A disabled window can't capture the mouse */
 
         SendMessageA( hwnd, WM_ENABLE, FALSE, 0 );
