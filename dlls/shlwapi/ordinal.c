@@ -9,6 +9,7 @@
 
 #include "windef.h"
 #include "wine/undocshell.h"
+#include "wine/unicode.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
@@ -141,12 +142,12 @@ DWORD WINAPI SHLWAPI_193 ()
  *  check me!
  */
 LPWSTR WINAPI SHLWAPI_215 (
-	LPSTR lpStrSrc,
+	LPWSTR lpStrSrc,
 	LPVOID lpwStrDest,
 	int len)
 {
-	WARN("(%s %p %u)\n",lpStrSrc,lpwStrDest,len);
-	return NTDLL_wcsncpy(lpwStrDest, lpStrSrc, len);
+	WARN("(%p %p %u)\n",lpStrSrc,lpwStrDest,len);
+	return strncpyW(lpwStrDest, lpStrSrc, len);
 }
 
 /*************************************************************************

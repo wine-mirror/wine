@@ -191,7 +191,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 
     case GETTECHNOLOGY: {
         LPSTR x=PTR_SEG_TO_LIN(segout);
-        lstrcpyA(lpvOutData,x);
+        strcpy(lpvOutData,x);
         SEGPTR_FREE(x);
 	break;
     }
@@ -205,7 +205,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     }
     case GETFACENAME: {
         LPSTR x = (LPSTR)PTR_SEG_TO_LIN(segout);
-        lstrcpyA(lpvOutData,x);
+        strcpy(lpvOutData,x);
         SEGPTR_FREE(x);
         break;
     }

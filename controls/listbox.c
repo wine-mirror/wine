@@ -712,7 +712,7 @@ static LRESULT LISTBOX_GetText( WND *wnd, LB_DESCR *descr, INT index,
     {
         if (!buffer)
 		return strlen(descr->items[index].str);
-        lstrcpyA( buffer, descr->items[index].str );
+        strcpy( buffer, descr->items[index].str );
         return strlen(buffer);
     } else {
     	if (buffer)

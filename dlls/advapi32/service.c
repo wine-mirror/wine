@@ -10,10 +10,11 @@
 #include "winsvc.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wine/unicode.h"
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(advapi)
+DEFAULT_DEBUG_CHANNEL(advapi);
 
 static DWORD   start_dwNumServiceArgs;
 static LPWSTR *start_lpServiceArgVectors;
@@ -352,7 +353,7 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
           dwDesiredAccess);
 
     lstrcpyAtoW(lpServiceKey,str);
-    lstrcatW(lpServiceKey,lpServiceName);
+    strcatW(lpServiceKey,lpServiceName);
 
     TRACE("Opening reg key %s\n", debugstr_w(lpServiceKey));
 
@@ -410,7 +411,7 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
 
     if(lpDisplayName)
     {
-        r = RegSetValueExA(hKey, "DisplayName", 0, REG_SZ, lpDisplayName, lstrlenA(lpDisplayName) );
+        r = RegSetValueExA(hKey, "DisplayName", 0, REG_SZ, lpDisplayName, strlen(lpDisplayName) );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
@@ -431,7 +432,7 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
     if(lpBinaryPathName)
     {
         r = RegSetValueExA(hKey, "ImagePath", 0, REG_SZ, 
-                           lpBinaryPathName,lstrlenA(lpBinaryPathName)+1 );
+                           lpBinaryPathName,strlen(lpBinaryPathName)+1 );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
@@ -439,7 +440,7 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
     if(lpLoadOrderGroup)
     {
         r = RegSetValueExA(hKey, "Group", 0, REG_SZ, 
-                           lpLoadOrderGroup, lstrlenA(lpLoadOrderGroup)+1 );
+                           lpLoadOrderGroup, strlen(lpLoadOrderGroup)+1 );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
@@ -455,7 +456,7 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
 
         /* determine the length of a double null terminated multi string */
         do {
-            len += (lstrlenA(&lpDependencies[len])+1);
+            len += (strlen(&lpDependencies[len])+1);
         } while (lpDependencies[len++]); 
         
         /* fixme: this should be unicode */

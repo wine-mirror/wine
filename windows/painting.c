@@ -8,6 +8,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "wine/unicode.h"
 #include "region.h"
 #include "win.h"
 #include "queue.h"
@@ -1483,7 +1484,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
     if((opcode == DST_TEXT || opcode == DST_PREFIXTEXT) && !len)    /* The string is '\0' terminated */
     {
         if(unicode)
-            len = lstrlenW((LPWSTR)lp);
+            len = strlenW((LPWSTR)lp);
         else if(_32bit)
             len = strlen((LPSTR)lp);
         else

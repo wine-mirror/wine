@@ -7,11 +7,12 @@
 #include <string.h>
 #include <assert.h>
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "wine/obj_moniker.h"
 #include "debugtools.h"
 #include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /* represent the first size table and it's increment block size */
 #define  BLOCK_TAB_SIZE 10 
@@ -379,7 +380,7 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, 
 
         if (This->bindCtxTable[This->bindCtxTableLastIndex].pkeyObj==NULL)
             return E_OUTOFMEMORY;
-        lstrcpyW(This->bindCtxTable[This->bindCtxTableLastIndex].pkeyObj,pszkey);
+        strcpyW(This->bindCtxTable[This->bindCtxTableLastIndex].pkeyObj,pszkey);
 }
 
     This->bindCtxTableLastIndex++;

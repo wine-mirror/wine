@@ -8,9 +8,10 @@
 #include "winerror.h"
 #include "debugtools.h"
 #include "wine/obj_inplace.h"
+#include "wine/unicode.h"
 #include "ole2.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 #define  BLOCK_TAB_SIZE 5 /* represent the first size table and it's increment block size */
 
@@ -1353,7 +1354,7 @@ HRESULT WINAPI CompositeMonikerImpl_GetDisplayName(IMoniker* iface,
         if (*ppszDisplayName==NULL)
             return E_OUTOFMEMORY;
 
-        lstrcatW(*ppszDisplayName,tempStr);
+        strcatW(*ppszDisplayName,tempStr);
 
         CoTaskMemFree(tempStr);
         IMoniker_Release(tempMk);

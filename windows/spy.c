@@ -832,7 +832,7 @@ const char *SPY_GetWndName( HWND hwnd )
         WIN_ReleaseWndPtr(pWnd);
 
     }
-    else lstrcpyA( wnd_buffer, "\"NULL\"" );
+    else strcpy( wnd_buffer, "\"NULL\"" );
     return wnd_buffer;
 }
 /***********************************************************************

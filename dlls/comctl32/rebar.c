@@ -22,6 +22,7 @@
 
 #include "winbase.h"
 #include "wingdi.h"
+#include "wine/unicode.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -1207,7 +1208,7 @@ REBAR_InsertBandW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	INT len = lstrlenW (lprbbi->lpText);
 	if (len > 0) {
 	    lpBand->lpText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyW (lpBand->lpText, lprbbi->lpText);
+	    strcpyW (lpBand->lpText, lprbbi->lpText);
 	}
     }
 
@@ -1436,7 +1437,7 @@ REBAR_SetBandInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lprbbi->lpText) {
 	    INT len = lstrlenW (lprbbi->lpText);
 	    lpBand->lpText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyW (lpBand->lpText, lprbbi->lpText);
+	    strcpyW (lpBand->lpText, lprbbi->lpText);
 	}
     }
 

@@ -18,6 +18,7 @@
 
 #include "windef.h"
 #include "wine/winbase16.h"
+#include "wine/unicode.h"
 #include "winerror.h"
 #include "instance.h"
 #include "ldt.h"
@@ -629,7 +630,7 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
 	req->local = local;
         if (server_call( REQ_GET_ATOM_NAME )) return 0;
         lstrcpynWtoA( buffer, req->name, count );
-        len = lstrlenW( req->name );
+        len = strlenW( req->name );
     }
     if (count <= len)
     {
@@ -697,7 +698,7 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
 	req->local = local;
         if (server_call( REQ_GET_ATOM_NAME )) return 0;
         lstrcpynW( buffer, req->name, count );
-        len = lstrlenW( req->name );
+        len = strlenW( req->name );
     }
     if (count <= len)
     {

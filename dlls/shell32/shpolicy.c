@@ -495,8 +495,8 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 	}
 
 	/* we have a known policy */
-      	lstrcpyA(regstr, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\");
-	lstrcatA(regstr, sh32_policy_table[polidx].appstr);
+      	strcpy(regstr, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\");
+	strcat(regstr, sh32_policy_table[polidx].appstr);
 
 	/* first check if this policy has been cached, return it if so */
 	if (sh32_policy_table[polidx].cache != SHELL_NO_POLICY)

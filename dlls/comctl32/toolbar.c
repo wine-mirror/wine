@@ -32,6 +32,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/unicode.h"
 #include "commctrl.h"
 #include "imagelist.h"
 #include "cache.h"
@@ -1488,7 +1489,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
             infoPtr->strings[infoPtr->nNumStrings] =
                 COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-            lstrcpyW (infoPtr->strings[infoPtr->nNumStrings], szString);
+            strcpyW (infoPtr->strings[infoPtr->nNumStrings], szString);
             infoPtr->nNumStrings++;
         }
     }
@@ -1519,7 +1520,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    infoPtr->strings[infoPtr->nNumStrings] =
 		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-	    lstrcpyW (infoPtr->strings[infoPtr->nNumStrings], p);
+	    strcpyW (infoPtr->strings[infoPtr->nNumStrings], p);
 	    infoPtr->nNumStrings++;
 
 	    p += (len+1);
@@ -2026,7 +2027,7 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lParam == 0)
 	return -1;
 
-    lstrcpyW ((LPWSTR)lParam, (LPWSTR)infoPtr->strings[nStringIndex]);
+    strcpyW ((LPWSTR)lParam, (LPWSTR)infoPtr->strings[nStringIndex]);
 
     return lstrlenW ((LPWSTR)infoPtr->strings[nStringIndex]);
 }

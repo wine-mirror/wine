@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "oleauto.h"    /* for SysAllocString(....) */
 #include "wine/obj_olefont.h"
 #include "wine/obj_storage.h"
@@ -17,7 +18,7 @@
 #include "heap.h"
 #include "connpt.h" /* for CreateConnectionPoint */
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /***********************************************************************
  * Declaration of constants used when serializing the font object.
@@ -376,7 +377,7 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
   newObject->description.lpstrName = HeapAlloc(GetProcessHeap(),
 					       0, 
 					       (lstrlenW(fontDesc->lpstrName)+1) * sizeof(WCHAR));
-  lstrcpyW(newObject->description.lpstrName, fontDesc->lpstrName);
+  strcpyW(newObject->description.lpstrName, fontDesc->lpstrName);
   newObject->description.cySize         = fontDesc->cySize;
   newObject->description.sWeight        = fontDesc->sWeight;
   newObject->description.sCharset       = fontDesc->sCharset;
@@ -587,7 +588,7 @@ static HRESULT WINAPI OLEFontImpl_put_Name(
   if (this->description.lpstrName==0)
     return E_OUTOFMEMORY;
 
-  lstrcpyW(this->description.lpstrName, name);
+  strcpyW(this->description.lpstrName, name);
   TRACE("new name %s\n", debugstr_w(this->description.lpstrName));
   OLEFont_SendNotify(this, DISPID_FONT_NAME);
   return S_OK;
@@ -925,7 +926,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
     logFont.lfClipPrecision   = CLIP_DEFAULT_PRECIS;
     logFont.lfQuality         = DEFAULT_QUALITY;
     logFont.lfPitchAndFamily  = DEFAULT_PITCH;
-    lstrcpyW(logFont.lfFaceName,this->description.lpstrName);
+    strcpyW(logFont.lfFaceName,this->description.lpstrName);
 
     this->gdiFont = CreateFontIndirectW(&logFont);
   }

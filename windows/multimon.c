@@ -8,6 +8,7 @@
 #include "wingdi.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "wine/unicode.h"
 
 /**********************************************************************/
 
@@ -84,7 +85,7 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 	
 	if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXA))
-            lstrcpyA(((MONITORINFOEXA*)lpMonitorInfo)->szDevice, "DISPLAY");
+            strcpy(((MONITORINFOEXA*)lpMonitorInfo)->szDevice, "DISPLAY");
 
         return TRUE;
     }
@@ -111,7 +112,7 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
         if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXW))
-            lstrcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, (LPCWSTR)"D\0I\0S\0P\0L\0A\0Y\0\0");
+            strcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, (LPCWSTR)"D\0I\0S\0P\0L\0A\0Y\0\0");
 
         return TRUE;
     }

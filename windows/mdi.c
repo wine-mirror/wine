@@ -73,6 +73,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/unicode.h"
 #include "win.h"
 #include "heap.h"
 #include "nonclient.h"
@@ -1141,25 +1142,25 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
 
 	    static const WCHAR lpBracket[]  = {' ','-',' ','[',0};
 	    static const WCHAR lpBracket2[]  = {']',0};
-	    int	i_frame_text_length = lstrlenW(ci->frameTitle);
-	    int	i_child_text_length = lstrlenW(childWnd->text);
+	    int	i_frame_text_length = strlenW(ci->frameTitle);
+	    int	i_child_text_length = strlenW(childWnd->text);
 
 	    lstrcpynW( lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH);
 
 	    if( i_frame_text_length + 6 < MDI_MAXTITLELENGTH )
             {
-		lstrcatW( lpBuffer, lpBracket );
+		strcatW( lpBuffer, lpBracket );
 
 		if( i_frame_text_length + i_child_text_length + 6 < MDI_MAXTITLELENGTH )
 		{
-		    lstrcatW( lpBuffer, childWnd->text );
-		    lstrcatW( lpBuffer, lpBracket2 );
+		    strcatW( lpBuffer, childWnd->text );
+		    strcatW( lpBuffer, lpBracket2 );
 		}
 		else
 		{
 		    lstrcpynW( lpBuffer + i_frame_text_length + 4, 
 				 childWnd->text, MDI_MAXTITLELENGTH - i_frame_text_length - 5 );
-		    lstrcatW( lpBuffer, lpBracket2 );
+		    strcatW( lpBuffer, lpBracket2 );
 		}
 	    }
 	}
@@ -2338,7 +2339,7 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
 
                SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM) pWnd->text);
                SendMessageA(hListBox, LB_SETITEMDATA, i, (LPARAM) pWnd);
-               length = lstrlenW(pWnd->text);
+               length = strlenW(pWnd->text);
                WIN_ReleaseWndPtr(pWnd);
 
                if (length > widest)

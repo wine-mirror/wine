@@ -317,7 +317,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     else
     {
         info->className = (LPCSTR)p;
-        p += lstrlenW( (LPCWSTR)p ) + 1;
+        p += strlenW( (LPCWSTR)p ) + 1;
     }
 
     if (GET_WORD(p) == 0xffff)  /* Is it an integer id? */
@@ -328,7 +328,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     else
     {
 	info->windowName = (LPCSTR)p;
-        p += lstrlenW( (LPCWSTR)p ) + 1;
+        p += strlenW( (LPCWSTR)p ) + 1;
     }
 
     TRACE("    %s %s %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
@@ -566,7 +566,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     default:
         result->menuName = (LPCSTR)p;
         TRACE(" MENU %s\n", debugstr_w( (LPCWSTR)p ));
-        p += lstrlenW( (LPCWSTR)p ) + 1;
+        p += strlenW( (LPCWSTR)p ) + 1;
         break;
     }
 
@@ -586,14 +586,14 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     default:
         result->className = (LPCSTR)p;
         TRACE(" CLASS %s\n", debugstr_w( (LPCWSTR)p ));
-        p += lstrlenW( (LPCWSTR)p ) + 1;
+        p += strlenW( (LPCWSTR)p ) + 1;
         break;
     }
 
     /* Get the window caption */
 
     result->caption = (LPCSTR)p;
-    p += lstrlenW( (LPCWSTR)p ) + 1;
+    p += strlenW( (LPCWSTR)p ) + 1;
     TRACE(" CAPTION %s\n", debugstr_w( (LPCWSTR)result->caption ) );
 
     /* Get the font name */
@@ -613,7 +613,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
             result->italic = FALSE;
         }
 	result->faceName = (LPCSTR)p;
-        p += lstrlenW( (LPCWSTR)p ) + 1;
+        p += strlenW( (LPCWSTR)p ) + 1;
 	TRACE(" FONT %d, %s, %d, %s\n",
               result->pointSize, debugstr_w( (LPCWSTR)result->faceName ),
               result->weight, result->italic ? "TRUE" : "FALSE" );

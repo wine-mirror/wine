@@ -1887,7 +1887,7 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (pti->mask & TCIF_TEXT) {
     len = lstrlenA (pti->pszText);
     infoPtr->items[iItem].pszText = COMCTL32_Alloc (len+1);
-    lstrcpyA (infoPtr->items[iItem].pszText, pti->pszText);
+    strcpy (infoPtr->items[iItem].pszText, pti->pszText);
     infoPtr->items[iItem].cchTextMax = pti->cchTextMax;
   }
   
@@ -1955,7 +1955,7 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
    len=lstrlenA (tabItem->pszText);
    if (len>wineItem->cchTextMax) 
      wineItem->pszText= COMCTL32_ReAlloc (wineItem->pszText, len+1);
-   lstrcpyA (wineItem->pszText, tabItem->pszText);
+   strcpy (wineItem->pszText, tabItem->pszText);
   }
 
   /*

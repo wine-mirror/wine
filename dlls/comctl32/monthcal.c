@@ -362,8 +362,7 @@ static void MONTHCAL_DrawDay(HDC hdc, MONTHCAL_INFO *infoPtr, int day, int month
     SetBkColor(hdc, oldBk);
   }
 
-  DrawTextA(hdc, buf, lstrlenA(buf), &r, 
-                         DT_CENTER | DT_VCENTER | DT_SINGLELINE );
+  DrawTextA(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
 
   /* draw a rectangle around the currently selected days text */
   if((day==infoPtr->curSelDay) && (month==infoPtr->currentMonth)) {
@@ -468,10 +467,10 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
   * MCM_HitTestInfo wants month & year rects, so prepare these now.
   *(no, we can't draw them separately; the whole text is centered) 
   */
-  GetTextExtentPoint32A(hdc, buf, lstrlenA(buf), &size);
+  GetTextExtentPoint32A(hdc, buf, strlen(buf), &size);
   titlemonth->left = title->right / 2 - size.cx / 2;
   titleyear->right = title->right / 2 + size.cx / 2;
-  GetTextExtentPoint32A(hdc, thisMonthtxt, lstrlenA(thisMonthtxt), &size);
+  GetTextExtentPoint32A(hdc, thisMonthtxt, strlen(thisMonthtxt), &size);
   titlemonth->right = titlemonth->left + size.cx;
   titleyear->right = titlemonth->right;
  
@@ -652,8 +651,7 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 
     if(IntersectRect(&rcTemp, &(ps->rcPaint), rtoday))
     {
-      DrawTextA(hdc, buf, lstrlenA(buf), rtoday, 
-                         DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+      DrawTextA(hdc, buf, -1, rtoday, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
     }
     SelectObject(hdc, infoPtr->hFont);
   }
@@ -672,8 +670,7 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     weeknum/=7;
     for(i=0; i<6; i++) {
       sprintf(buf, "%d", weeknum + i);
-      DrawTextA(hdc, buf, lstrlenA(buf), weeknums, 
-                         DT_CENTER | DT_BOTTOM | DT_SINGLELINE );
+      DrawTextA(hdc, buf, -1, weeknums, DT_CENTER | DT_BOTTOM | DT_SINGLELINE );
       weeknums->top+=textHeight * 1.25;
       weeknums->bottom+=textHeight * 1.25;
     }

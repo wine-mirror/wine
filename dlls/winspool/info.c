@@ -15,12 +15,13 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wine/unicode.h"
 #include "debugtools.h"
 #include "heap.h"
 #include "commctrl.h"
 #include "winnls.h"
 
-DEFAULT_DEBUG_CHANNEL(winspool)
+DEFAULT_DEBUG_CHANNEL(winspool);
 
 CRITICAL_SECTION PRINT32_RegistryBlocker;
 
@@ -1733,7 +1734,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
     if(size <= cbBuf) {
         cbBuf -= size;
 	if(unicode)
-	    lstrcpyW((LPWSTR)ptr, DriverName);
+	    strcpyW((LPWSTR)ptr, DriverName);
 	else
 	    WideCharToMultiByte(CP_ACP, 0, DriverName, -1, ptr, size, NULL,
 				NULL);
@@ -1766,7 +1767,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 	if(size <= cbBuf) {
 	    cbBuf -= size;
 	    if(unicode)
-	        lstrcpyW((LPWSTR)ptr, pEnvironment);
+	        strcpyW((LPWSTR)ptr, pEnvironment);
 	    else
 	        WideCharToMultiByte(CP_ACP, 0, pEnvironment, -1, ptr, size,
 				    NULL, NULL);

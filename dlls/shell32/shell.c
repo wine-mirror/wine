@@ -13,7 +13,6 @@
 #include "wine/winbase16.h"
 #include "wine/shell16.h"
 #include "winerror.h"
-#include "file.h"
 #include "heap.h"
 #include "ldt.h"
 #include "module.h"
@@ -159,7 +158,7 @@ UINT16 WINAPI DragQueryFile16(
 	  }
 	}
     
-	i = lstrlenA(lpDrop);
+	i = strlen(lpDrop);
 	i++;
 	if (!lpszFile ) goto end;   /* needed buffer size */
 	i = (wLength > i) ? i : wLength;

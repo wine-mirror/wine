@@ -1965,7 +1965,7 @@ INT WINAPI LCMapStringW(
     return 0;
   }
   if (srclen==-1) 
-    srclen = lstrlenW(srcstr)+1;
+    srclen = strlenW(srcstr)+1;
 
   /* FIXME: Both this function and it's companion LCMapStringA()
    * completely ignore the "lcid" parameter.  In place of the "lcid"
@@ -2358,8 +2358,8 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 
 	/* Is strcmp defaulting to string sort or to word sort?? */
 	/* FIXME: Handle NORM_STRINGSORT */
-	l1 = (l1==-1)?lstrlenW(s1):l1;
-	l2 = (l2==-1)?lstrlenW(s2):l2;
+	l1 = (l1==-1)?strlenW(s1):l1;
+	l2 = (l2==-1)?strlenW(s2):l2;
 	len = l1<l2 ? l1:l2;
 	ret = (fdwStyle & NORM_IGNORECASE) ? strncmpiW(s1,s2,len) : strncmpW(s1,s2,len);
 	/* not equal, return 1 or 3 */
@@ -2759,9 +2759,9 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	 inpos--;
 
 	 /* cat buf onto the output */
-	 outlen = lstrlenW(buf);
+	 outlen = strlenW(buf);
 	 if (outpos + buflen < outlen) {
-            lstrcpyW( output + outpos, buf );
+            strcpyW( output + outpos, buf );
 	    outpos += buflen;
 	 } else {
             lstrcpynW( output + outpos, buf, outlen - outpos );
@@ -3651,7 +3651,7 @@ INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
  FIXME("%s: stub, no reformating done\n",debugstr_w(lpvalue));
 
  lstrcpynW( lpNumberStr, lpvalue, cchNumber );
- return cchNumber? lstrlenW( lpNumberStr ) : 0;
+ return cchNumber? strlenW( lpNumberStr ) : 0;
 }
 
 /**************************************************************************

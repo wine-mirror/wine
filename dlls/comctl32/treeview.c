@@ -2014,7 +2014,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
       TRACE("(%p,%s)\n", &tvItem->pszText, tvItem->pszText); 
       len = lstrlenA (tvItem->pszText)+1;
       wineItem->pszText= COMCTL32_Alloc (len+1);
-      lstrcpyA (wineItem->pszText, tvItem->pszText);
+      strcpy (wineItem->pszText, tvItem->pszText);
       wineItem->cchTextMax=len;
     }
     else 

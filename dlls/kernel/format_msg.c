@@ -13,6 +13,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "wine/unicode.h"
 
 #include "heap.h"
 #include "debugtools.h"
@@ -116,7 +117,7 @@ static INT load_messageW( HMODULE instance, UINT id, WORD lang,
     {
 	if (retval) {
 	    lstrcpynAtoW( buffer, buffer2, buflen );
-	    retval = lstrlenW( buffer );
+	    retval = strlenW( buffer );
 	}
 	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
@@ -474,7 +475,7 @@ DWORD WINAPI FormatMessageW(
 						/* possible invalid pointers */
 						xarr[1]=*(argliststart+1);
 						xarr[2]=*(argliststart+2);
-						sprintfbuf=HeapAlloc(GetProcessHeap(),0,lstrlenW((LPWSTR)argliststart[0])*2+1);
+						sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlenW((LPWSTR)argliststart[0])*2+1);
 
 						/* CMF - This makes a BIG assumption about va_list */
 						vsprintf(sprintfbuf, fmtstr, (va_list) xarr);
@@ -537,8 +538,8 @@ DWORD WINAPI FormatMessageW(
 	HeapFree(GetProcessHeap(),0,target);
 	if (from) HeapFree(GetProcessHeap(),0,from);
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
-			lstrlenW(*(LPWSTR*)lpBuffer):
-			lstrlenW(lpBuffer);
+			strlenW(*(LPWSTR*)lpBuffer):
+			strlenW(lpBuffer);
 #else
 	return 0;
 #endif /* __i386__ */

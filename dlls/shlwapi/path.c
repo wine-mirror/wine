@@ -286,32 +286,6 @@ LPWSTR WINAPI PathFindExtensionW(LPCWSTR lpszPath)
 }
 
 /*************************************************************************
- * PathGetExtensionA		[internal]
- *
- * NOTES
- *  exported by ordinal
- *  return value points to the first char after the dot
- */
-LPSTR WINAPI PathGetExtensionA(LPCSTR lpszPath)
-{
-	TRACE("(%s)\n",lpszPath);
-
-	lpszPath = PathFindExtensionA(lpszPath);
-	return (LPSTR)(*lpszPath?(lpszPath+1):lpszPath);
-}
-
-/*************************************************************************
- * PathGetExtensionW		[internal]
- */
-LPWSTR WINAPI PathGetExtensionW(LPCWSTR lpszPath)
-{
-	TRACE("(%s)\n",debugstr_w(lpszPath));
-
-	lpszPath = PathFindExtensionW(lpszPath);
-	return (LPWSTR)(*lpszPath?(lpszPath+1):lpszPath);
-}
-
-/*************************************************************************
  * PathGetArgsA		[SHLWAPI.@]
  *
  * NOTES
@@ -661,7 +635,7 @@ void WINAPI PathRemoveBlanksW(LPWSTR str)
 	if(str)
 	{
 	  while (*x==' ') x = CharNextW(x);
-	  if (x!=str) lstrcpyW(str,x);
+	  if (x!=str) strcpyW(str,x);
 	  x=str+strlenW(str)-1;
 	  while (*x==' ') x = CharPrevW(str, x);
 	  if (*x==' ') *x='\0';
@@ -726,7 +700,7 @@ VOID WINAPI PathUnquoteSpacesA(LPSTR str)
 	if (str[len-1]!='"')
 	  return;
 	str[len-1]='\0';
-	lstrcpyA(str,str+1);
+	strcpy(str,str+1);
 	return;
 }
 
@@ -805,24 +779,6 @@ BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR sOtherDirs)
 {
 	FIXME("%s %s\n",debugstr_w(sFile), debugstr_w(sOtherDirs));
 	return FALSE;
-}
-
-/*************************************************************************
- * PathCleanupSpecA	[SHLWAPI.@]
- */
-DWORD WINAPI PathCleanupSpecA(LPSTR x, LPSTR y)
-{
-	FIXME("(%p %s, %p %s) stub\n",x,debugstr_a(x),y,debugstr_a(y));
-	return TRUE;
-}
-
-/*************************************************************************
- * PathCleanupSpecW	[SHLWAPI.@]
- */
-DWORD WINAPI PathCleanupSpecW(LPWSTR x, LPWSTR y)
-{
-	FIXME("(%p %s, %p %s) stub\n",x,debugstr_w(x),y,debugstr_w(y));
-	return TRUE;
 }
 
 /*************************************************************************
@@ -962,42 +918,6 @@ BOOL WINAPI PathIsRootW(LPCWSTR lpszPath)
 	}
 	return FALSE;
 
-}
-
-/*************************************************************************
- *  PathIsExeA		[internal]
- */
-BOOL WINAPI PathIsExeA (LPCSTR lpszPath)
-{
-	LPCSTR lpszExtension = PathGetExtensionA(lpszPath);
-	int i = 0;
-	static char * lpszExtensions[6] = {"exe", "com", "pid", "cmd", "bat", NULL };
-	
-	TRACE("path=%s\n",lpszPath);
-
-	for(i=0; lpszExtensions[i]; i++)
-	  if (!strcasecmp(lpszExtension,lpszExtensions[i])) return TRUE;
-	  
-	return FALSE;
-}
-
-/*************************************************************************
- *  PathIsExeW		[internal]
- */
-BOOL WINAPI PathIsExeW (LPCWSTR lpszPath)
-{
-	LPCWSTR lpszExtension = PathGetExtensionW(lpszPath);
-	int i = 0;
-	static WCHAR lpszExtensions[6][4] =
-	  {{'e','x','e','\0'}, {'c','o','m','\0'}, {'p','i','d','\0'},
-	   {'c','m','d','\0'}, {'b','a','t','\0'}, {'\0'} };
-	
-	TRACE("path=%s\n",debugstr_w(lpszPath));
-
-	for(i=0; lpszExtensions[i]; i++)
-	  if (!strcmpiW(lpszExtension,lpszExtensions[i])) return TRUE;
-	  
-	return FALSE;
 }
 
 /*************************************************************************
@@ -1618,9 +1538,9 @@ BOOL WINAPI PathAddExtensionW(
 	  if (*(PathFindExtensionW(pszPath))) return FALSE;
 
 	  if (!pszExtension || *pszExtension=='\0')
-	    lstrcatW(pszPath, ext);
+	    strcatW(pszPath, ext);
 	  else
-	    lstrcatW(pszPath, pszExtension);
+	    strcatW(pszPath, pszExtension);
 	}
 	return TRUE;
 

@@ -133,6 +133,14 @@ static inline int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
     return *str1 - *str2;
 }
 
+static inline WCHAR *strncpyW( WCHAR *str1, const WCHAR *str2, int n )
+{
+    WCHAR *ret = str1;
+    while (n-- > 0) if (!(*str1++ = *str2++)) break;
+    while (n-- > 0) *str1++ = 0;
+    return ret;
+}
+
 static inline WCHAR *strcatW( WCHAR *dst, const WCHAR *src )
 {
     strcpyW( dst + strlenW(dst), src );

@@ -35,9 +35,6 @@ void WINAPI PathUnquoteSpacesW(LPWSTR str);
 int WINAPI PathParseIconLocationA(LPSTR lpszPath);
 int WINAPI PathParseIconLocationW(LPWSTR lpszPath);
 
-BOOL WINAPI PathIsExeA(LPCSTR lpszPath);
-BOOL WINAPI PathIsExeW(LPCWSTR lpszPath);
-
 BOOL WINAPI PathIsDirectoryA(LPCSTR lpszPath);
 BOOL WINAPI PathIsDirectoryW(LPCWSTR lpszPath);
 

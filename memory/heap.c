@@ -11,6 +11,7 @@
 #include <string.h>
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
+#include "wine/unicode.h"
 #include "selectors.h"
 #include "global.h"
 #include "winbase.h"
@@ -1670,7 +1671,7 @@ LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
     LPWSTR p = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
     if(p) {
         SET_EIP(p);
-        lstrcpyW( p, str );
+        strcpyW( p, str );
     }
     return p;
 }

@@ -77,7 +77,7 @@ BOOL VFWAPI ICInfo(
 					return TRUE;
 				}
 			}
-			s=s+lstrlenA(s)+1; /* either next char or \0 */
+			s=s+strlen(s)+1; /* either next char or \0 */
 		}
 	}
 	return FALSE;
@@ -295,7 +295,7 @@ HIC VFWAPI ICLocate(
 					}
 				}
 			}
-			s += lstrlenA(s) + 1;
+			s += strlen(s) + 1;
 		}
 	}
 	HeapFree(GetProcessHeap(),0,pszBuffer);

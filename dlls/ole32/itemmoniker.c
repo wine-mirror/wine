@@ -12,8 +12,9 @@
 #include "winerror.h"
 #include "debugtools.h"
 #include "wine/obj_inplace.h"
+#include "wine/unicode.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /* ItemMoniker data structure */
 typedef struct ItemMonikerImpl{
@@ -355,8 +356,8 @@ HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDe
     if ((This->itemName==NULL)||(This->itemDelimiter==NULL))
         return E_OUTOFMEMORY;
 
-    lstrcpyW(This->itemName,lpszItem);
-    lstrcpyW(This->itemDelimiter,lpszDelim);
+    strcpyW(This->itemName,lpszItem);
+    strcpyW(This->itemDelimiter,lpszDelim);
 
     return S_OK;
 }
@@ -799,8 +800,8 @@ HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,
     if (*ppszDisplayName==NULL)
         return E_OUTOFMEMORY;
 
-    lstrcpyW(*ppszDisplayName,This->itemDelimiter);
-    lstrcatW(*ppszDisplayName,This->itemName);
+    strcpyW(*ppszDisplayName,This->itemDelimiter);
+    strcatW(*ppszDisplayName,This->itemName);
     
     return S_OK;
 }

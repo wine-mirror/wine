@@ -89,7 +89,7 @@ static void COMDLG32_FR_HandleWMCommand(HWND hDlgWnd, COMDLG32_FR_Data *pData, i
                                 }
                                 else
                                 {
-                                	lstrcpyA(pData->user_fr.fra->lpstrFindWhat, pData->fr.lpstrFindWhat);
+                                	strcpy(pData->user_fr.fra->lpstrFindWhat, pData->fr.lpstrFindWhat);
                                 }
 				SendMessageA(pData->fr.hwndOwner, FindReplaceMessage, 0, (LPARAM)pData->user_fr.fra);
                         }
@@ -121,8 +121,8 @@ Replace:
                                 }
                                 else
                                 {
-                                	lstrcpyA(pData->user_fr.fra->lpstrFindWhat, pData->fr.lpstrFindWhat);
-                                	lstrcpyA(pData->user_fr.fra->lpstrReplaceWith, pData->fr.lpstrReplaceWith);
+                                	strcpy(pData->user_fr.fra->lpstrFindWhat, pData->fr.lpstrFindWhat);
+                                	strcpy(pData->user_fr.fra->lpstrReplaceWith, pData->fr.lpstrReplaceWith);
                                 }
 				SendMessageA(pData->fr.hwndOwner, FindReplaceMessage, 0, (LPARAM)pData->user_fr.fra);
                         }

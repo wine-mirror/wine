@@ -1428,9 +1428,9 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
     
 	pfa->next = NULL;
 	pfa->faTypeFace = (LPSTR)(pfa + 1);
-	lstrcpyA( pfa->faTypeFace, lpTypeFace );
+	strcpy( pfa->faTypeFace, lpTypeFace );
 	pfa->faAlias = pfa->faTypeFace + j;
-	lstrcpyA( pfa->faAlias, lpAlias );
+	strcpy( pfa->faAlias, lpAlias );
 
         TRACE("added alias '%s' for '%s'\n", lpAlias, lpTypeFace );
 

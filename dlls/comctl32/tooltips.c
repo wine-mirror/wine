@@ -60,6 +60,7 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "wine/unicode.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -810,7 +811,7 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    TRACE("add text %s!\n",
 		   debugstr_w(lpToolInfo->lpszText));
 	    toolPtr->lpszText =	COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyW (toolPtr->lpszText, lpToolInfo->lpszText);
+	    strcpyW (toolPtr->lpszText, lpToolInfo->lpszText);
 	}
     }
 
@@ -1269,7 +1270,7 @@ TOOLTIPS_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpToolInfo);
     if (nTool == -1) return 0;
 
-    lstrcpyW (lpToolInfo->lpszText, infoPtr->tools[nTool].lpszText);
+    strcpyW (lpToolInfo->lpszText, infoPtr->tools[nTool].lpszText);
 
     return 0;
 }
@@ -1748,7 +1749,7 @@ TOOLTIPS_SetToolInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (lpToolInfo->lpszText) {
 		INT len = lstrlenW (lpToolInfo->lpszText);
 		toolPtr->lpszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-		lstrcpyW (toolPtr->lpszText, lpToolInfo->lpszText);
+		strcpyW (toolPtr->lpszText, lpToolInfo->lpszText);
 	    }
 	}
     }
@@ -1920,7 +1921,7 @@ TOOLTIPS_UpdateTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (lpToolInfo->lpszText) {
 		INT len = lstrlenW (lpToolInfo->lpszText);
 		toolPtr->lpszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-		lstrcpyW (toolPtr->lpszText, lpToolInfo->lpszText);
+		strcpyW (toolPtr->lpszText, lpToolInfo->lpszText);
 	    }
 	}
     }

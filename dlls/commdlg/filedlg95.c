@@ -345,7 +345,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
     s = (LPWSTR)ofn->lpstrFilter;
     while (*s) {
       lstrcpyWtoA(x,s);
-      x+=lstrlenA(x)+1;
+      x+=strlen(x)+1;
       s+=lstrlenW(s)+1;
     }
     *x=0;
@@ -369,7 +369,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
     s = (LPWSTR)ofn->lpstrCustomFilter;
     while (*s) {
       lstrcpyWtoA(x,s);
-      x+=lstrlenA(x)+1;
+      x+=strlen(x)+1;
       s+=lstrlenW(s)+1;
     }
     *x=0;
@@ -1122,8 +1122,8 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPSTR lpstrFileList, UINT nFileCou
     }
   }
 
-  nSizePath = lstrlenA(lpstrPathSpec);
-  lstrcpyA( lpstrFile, lpstrPathSpec);
+  nSizePath = strlen(lpstrPathSpec);
+  strcpy( lpstrFile, lpstrPathSpec);
   memcpy( lpstrFile + nSizePath + 1, lpstrFileList, sizeUsed );
 
   fodInfos->ofnInfos->nFileOffset = nSizePath + 1;
@@ -2229,7 +2229,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 
           if ( ! IsPidlFolder(fodInfos->Shell.FOIShellFolder, pidl) ) /* Ignore folders */
 	  {
-            nLength += lstrlenA( lpstrTemp ) + 3;
+            nLength += strlen( lpstrTemp ) + 3;
             nFiles++;
 	  }
           COMDLG32_SHFree( pidl );
@@ -2261,14 +2261,14 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
             if ( nFiles > 1)
 	    {
               *lpstrCurrFile++ =  '\"';
-              lstrcpyA( lpstrCurrFile, lpstrTemp );
-              lpstrCurrFile += lstrlenA( lpstrTemp );
-              lstrcpyA( lpstrCurrFile, "\" " );
+              strcpy( lpstrCurrFile, lpstrTemp );
+              lpstrCurrFile += strlen( lpstrTemp );
+              strcpy( lpstrCurrFile, "\" " );
               lpstrCurrFile += 2;
 	    }
 	    else
 	    {
-              lstrcpyA( lpstrAllFile, lpstrTemp );
+              strcpy( lpstrAllFile, lpstrTemp );
 	    }
 	  }
           COMDLG32_SHFree( (LPVOID) pidl );

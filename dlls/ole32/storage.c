@@ -13,12 +13,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "windef.h"
+#include "ntddk.h"
 #include "winerror.h"
 #include "wine/winestring.h"
 #include "wine/winbase16.h"
 #include "wingdi.h"
 #include "wtypes.h"
-#include "file.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "heap.h"
@@ -372,10 +372,12 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
 	DPRINTF("guid: %s\n",debugstr_guid(&(stde->pps_guid)));
 	if (stde->pps_type !=2) {
 		time_t	t;
-
-		t = DOSFS_FileTimeToUnixTime(&(stde->pps_ft1),NULL);
+                DWORD dw;
+		RtlTimeToSecondsSince1970(&(stde->pps_ft1),&dw);
+                t = dw;
 		DPRINTF("ts1: %s\n",ctime(&t));
-		t = DOSFS_FileTimeToUnixTime(&(stde->pps_ft2),NULL);
+		RtlTimeToSecondsSince1970(&(stde->pps_ft2),&dw);
+                t = dw;
 		DPRINTF("ts2: %s\n",ctime(&t));
 	}
 	DPRINTF("startblock: %ld\n",stde->pps_sb);
@@ -1350,7 +1352,7 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 	assert(STORAGE_put_pps_entry(lpstg->hf,x,&stde));
 	assert(1==STORAGE_get_pps_entry(lpstg->hf,ppsent,&(lpstg->stde)));
 	lstrcpyAtoW(lpstg->stde.pps_rawname,pwcsName);
-	lpstg->stde.pps_sizeofname = lstrlenA(pwcsName)*2+2;
+	lpstg->stde.pps_sizeofname = strlen(pwcsName)*2+2;
 	lpstg->stde.pps_next	= -1;
 	lpstg->stde.pps_prev	= -1;
 	lpstg->stde.pps_dir	= -1;
@@ -1403,7 +1405,7 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 	assert(STORAGE_put_pps_entry(lpstr->hf,x,&stde));
 	assert(1==STORAGE_get_pps_entry(lpstr->hf,ppsent,&(lpstr->stde)));
 	lstrcpyAtoW(lpstr->stde.pps_rawname,pwcsName);
-	lpstr->stde.pps_sizeofname = lstrlenA(pwcsName)*2+2;
+	lpstr->stde.pps_sizeofname = strlen(pwcsName)*2+2;
 	lpstr->stde.pps_next	= -1;
 	lpstr->stde.pps_prev	= -1;
 	lpstr->stde.pps_dir	= -1;

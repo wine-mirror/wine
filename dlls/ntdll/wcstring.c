@@ -163,10 +163,7 @@ INT __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
  */
 LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
 {
-    LPWSTR ret = s1;
-    while (n-- > 0) if (!(*s1++ = *s2++)) break;
-    while (n-- > 0) *s1++ = 0;
-    return ret;
+    return strncpyW( s1, s2, n );
 }
 
 

@@ -14,6 +14,7 @@
 #include "debugtools.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/unicode.h"
 
 #include "dplayx_global.h"
 #include "dplayx_messages.h" /* For CreateMessageReceptionThread only */
@@ -129,10 +130,10 @@ LPSTR DPLAYX_strdupA( DWORD flags, LPCSTR str )
 LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str );
 LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str )
 {                   
-  INT len = lstrlenW(str) + 1;
+  INT len = strlenW(str) + 1;
   LPWSTR p = DPLAYX_PrivHeapAlloc( flags, len * sizeof(WCHAR) );
   if(p) {
-    lstrcpyW( p, str );
+    strcpyW( p, str );
   }
   return p;
 }
@@ -501,18 +502,18 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     /* Session names may or may not exist */
     if( src->lpSessionDesc->sess.lpszSessionNameA )
     {
-      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->sess.lpszSessionNameA );
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->sess.lpszSessionNameA );
       dest->lpSessionDesc->sess.lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  
-        lstrlenA( (LPSTR)dest->lpSessionDesc->sess.lpszSessionName ) + 1;
+        strlen( (LPSTR)dest->lpSessionDesc->sess.lpszSessionName ) + 1;
     }
 
     if( src->lpSessionDesc->pass.lpszPasswordA )
     {
-      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPasswordA );
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPasswordA );
       dest->lpSessionDesc->pass.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace += 
-        lstrlenA( (LPSTR)dest->lpSessionDesc->pass.lpszPasswordA ) + 1;
+        strlen( (LPSTR)dest->lpSessionDesc->pass.lpszPasswordA ) + 1;
     }
   }
 
@@ -525,18 +526,18 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
 
     if( src->lpPlayerName->psn.lpszShortNameA )
     {
-      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortNameA );
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortNameA );
       dest->lpPlayerName->psn.lpszShortNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  
-        lstrlenA( (LPSTR)dest->lpPlayerName->psn.lpszShortNameA ) + 1;
+        strlen( (LPSTR)dest->lpPlayerName->psn.lpszShortNameA ) + 1;
     }
 
     if( src->lpPlayerName->pln.lpszLongNameA )
     {
-      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongNameA );
+      strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongNameA );
       dest->lpPlayerName->pln.lpszLongNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  
-        lstrlenA( (LPSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 ;
+        strlen( (LPSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 ;
     }
 
   }
@@ -613,18 +614,18 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     /* Session names may or may not exist */
     if( src->lpSessionDesc->sess.lpszSessionName )
     {
-      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, dest->lpSessionDesc->sess.lpszSessionName );
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, dest->lpSessionDesc->sess.lpszSessionName );
       src->lpSessionDesc->sess.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( lstrlenW( (LPWSTR)dest->lpSessionDesc->sess.lpszSessionName ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpSessionDesc->sess.lpszSessionName ) + 1 );
     }
 
     if( src->lpSessionDesc->pass.lpszPassword )
     {
-      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPassword );
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPassword );
       dest->lpSessionDesc->pass.lpszPassword = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( lstrlenW( (LPWSTR)dest->lpSessionDesc->pass.lpszPassword ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpSessionDesc->pass.lpszPassword ) + 1 );
     }
   }
 
@@ -637,18 +638,18 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
    
     if( src->lpPlayerName->psn.lpszShortName )
     {
-      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortName );
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortName );
       dest->lpPlayerName->psn.lpszShortName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( lstrlenW( (LPWSTR)dest->lpPlayerName->psn.lpszShortName ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpPlayerName->psn.lpszShortName ) + 1 );
     }
 
     if( src->lpPlayerName->pln.lpszLongName )
     {
-      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongName );
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongName );
       dest->lpPlayerName->pln.lpszLongName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
-        ( lstrlenW( (LPWSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 );
+        ( strlenW( (LPWSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 );
     }
 
   }
@@ -796,12 +797,12 @@ DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpConn )
 
     if( lpConn->lpSessionDesc->sess.lpszSessionNameA )
     {
-      dwTotalSize += lstrlenA( lpConn->lpSessionDesc->sess.lpszSessionNameA ) + 1;
+      dwTotalSize += strlen( lpConn->lpSessionDesc->sess.lpszSessionNameA ) + 1;
     }
  
     if( lpConn->lpSessionDesc->pass.lpszPasswordA )
     {
-      dwTotalSize += lstrlenA( lpConn->lpSessionDesc->pass.lpszPasswordA ) + 1;
+      dwTotalSize += strlen( lpConn->lpSessionDesc->pass.lpszPasswordA ) + 1;
     }
   }
 
@@ -811,12 +812,12 @@ DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpConn )
 
     if( lpConn->lpPlayerName->psn.lpszShortNameA )
     {
-      dwTotalSize += lstrlenA( lpConn->lpPlayerName->psn.lpszShortNameA ) + 1;
+      dwTotalSize += strlen( lpConn->lpPlayerName->psn.lpszShortNameA ) + 1;
     }
 
     if( lpConn->lpPlayerName->pln.lpszLongNameA )
     {
-      dwTotalSize += lstrlenA( lpConn->lpPlayerName->pln.lpszLongNameA ) + 1;
+      dwTotalSize += strlen( lpConn->lpPlayerName->pln.lpszLongNameA ) + 1;
     }
 
   }
@@ -844,13 +845,13 @@ DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpConn )
     if( lpConn->lpSessionDesc->sess.lpszSessionName )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpConn->lpSessionDesc->sess.lpszSessionName ) + 1 );
+        ( strlenW( lpConn->lpSessionDesc->sess.lpszSessionName ) + 1 );
     }
 
     if( lpConn->lpSessionDesc->pass.lpszPassword )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpConn->lpSessionDesc->pass.lpszPassword ) + 1 );
+        ( strlenW( lpConn->lpSessionDesc->pass.lpszPassword ) + 1 );
     }
   }
 
@@ -861,13 +862,13 @@ DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpConn )
     if( lpConn->lpPlayerName->psn.lpszShortName )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpConn->lpPlayerName->psn.lpszShortName ) + 1 );
+        ( strlenW( lpConn->lpPlayerName->psn.lpszShortName ) + 1 );
     }
 
     if( lpConn->lpPlayerName->pln.lpszLongName )
     {
       dwTotalSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpConn->lpPlayerName->pln.lpszLongName ) + 1 );
+        ( strlenW( lpConn->lpPlayerName->pln.lpszLongName ) + 1 );
     }
 
   }

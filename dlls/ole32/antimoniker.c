@@ -7,10 +7,11 @@
 #include <assert.h>
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "wine/obj_moniker.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /* AntiMoniker data structure */
 typedef struct AntiMonikerImpl{
@@ -530,7 +531,7 @@ HRESULT WINAPI AntiMonikerImpl_GetDisplayName(IMoniker* iface,
     if (*ppszDisplayName==NULL)
         return E_OUTOFMEMORY;
 
-    lstrcpyW(*ppszDisplayName,back);
+    strcpyW(*ppszDisplayName,back);
     
     return S_OK;
 }

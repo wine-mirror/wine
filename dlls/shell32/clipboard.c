@@ -132,7 +132,7 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	  
 	  _ILSimpleGetText(apidl[i], szFileName + rootsize, MAX_PATH - rootsize);
 	  size = strlen(szFileName) + 1;
-	  lstrcpyA(((char*)pDropFiles)+offset, szFileName);
+	  strcpy(((char*)pDropFiles)+offset, szFileName);
 	  offset += size;
 	}
 

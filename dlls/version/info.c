@@ -17,7 +17,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ver)
+DEFAULT_DEBUG_CHANNEL(ver);
 
 
 /******************************************************************************
@@ -176,9 +176,9 @@ typedef struct
     ( (LPBYTE)(base) + ((((LPBYTE)(ptr) - (LPBYTE)(base)) + 3) & ~3) )
 
 #define VersionInfo16_Value( ver )  \
-    DWORD_ALIGN( (ver), (ver)->szKey + lstrlenA((ver)->szKey) + 1 )
+    DWORD_ALIGN( (ver), (ver)->szKey + strlen((ver)->szKey) + 1 )
 #define VersionInfo32_Value( ver )  \
-    DWORD_ALIGN( (ver), (ver)->szKey + lstrlenW((ver)->szKey) + 1 )
+    DWORD_ALIGN( (ver), (ver)->szKey + strlenW((ver)->szKey) + 1 )
 
 #define VersionInfo16_Children( ver )  \
     (VS_VERSION_INFO_STRUCT16 *)( VersionInfo16_Value( ver ) + \

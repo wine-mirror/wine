@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "wine/unicode.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -208,7 +209,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	    GetObjectA (phdi->hbm, sizeof(BITMAP), (LPVOID)&bmp);
 
 	    textRect = r;
-            DrawTextW (hdc, phdi->pszText, lstrlenW (phdi->pszText),
+            DrawTextW (hdc, phdi->pszText, -1,
 	   	  &textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
 	    tx = textRect.right - textRect.left;
 	    ry = r.bottom - r.top;
@@ -263,7 +264,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
             r.left += 3;
 	    r.right -= 3;
 	    SetTextColor (hdc, bHotTrack ? COLOR_HIGHLIGHT : COLOR_BTNTEXT);
-            DrawTextW (hdc, phdi->pszText, lstrlenW (phdi->pszText),
+            DrawTextW (hdc, phdi->pszText, -1,
 	   	  &r, uTextJustify|DT_VCENTER|DT_SINGLELINE);
             if (oldBkMode != TRANSPARENT)
                 SetBkMode(hdc, oldBkMode);
@@ -821,7 +822,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (!phdi->pszText) /* null pointer check */
 	    phdi->pszText = "";
 	if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
-	    len = lstrlenA (phdi->pszText);
+	    len = strlen (phdi->pszText);
 	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 	    lstrcpyAtoW (lpItem->pszText, phdi->pszText);
 	}
@@ -905,9 +906,9 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (!phdi->pszText) /* null pointer check */
 	    phdi->pszText = &wide_null_char;	
 	if (phdi->pszText != LPSTR_TEXTCALLBACKW) {
-	    len = lstrlenW (phdi->pszText);
+	    len = strlenW (phdi->pszText);
 	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-	    lstrcpyW (lpItem->pszText, phdi->pszText);
+	    strcpyW (lpItem->pszText, phdi->pszText);
 	}
 	else
 	    lpItem->pszText = LPSTR_TEXTCALLBACKW;
@@ -1018,7 +1019,7 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		lpItem->pszText = NULL;
 	    }
 	    if (phdi->pszText) {
-		INT len = lstrlenA (phdi->pszText);
+		INT len = strlen (phdi->pszText);
 		lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 		lstrcpyAtoW (lpItem->pszText, phdi->pszText);
 	    }
@@ -1081,9 +1082,9 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		lpItem->pszText = NULL;
 	    }
 	    if (phdi->pszText) {
-		INT len = lstrlenW (phdi->pszText);
+		INT len = strlenW (phdi->pszText);
 		lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-		lstrcpyW (lpItem->pszText, phdi->pszText);
+		strcpyW (lpItem->pszText, phdi->pszText);
 	    }
 	}
 	else

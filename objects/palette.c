@@ -900,6 +900,6 @@ BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
     }
 
     /* behavior 3: if buffer size OK and pointer not NULL, copy and return size */
-    lstrcpyA(lpszFilename, WINEICM);
+    strcpy(lpszFilename, WINEICM);
     return TRUE;
 }

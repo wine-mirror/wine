@@ -572,9 +572,6 @@ LPWSTR WINAPI PathFindExtensionW(LPCWSTR path);
 #define  PathFindExtension WINELIB_NAME_AW(PathFindExtension)
 LPVOID WINAPI PathFindExtensionAW(LPCVOID path); 
 
-LPSTR WINAPI PathGetExtensionA(LPCSTR lpszPath);
-LPWSTR WINAPI PathGetExtensionW(LPCWSTR lpszPath);
-#define  PathGetExtension WINELIB_NAME_AW(PathGetExtension)
 LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath); 
 
 LPSTR WINAPI PathGetArgs(LPCSTR lpszPath);
@@ -704,10 +701,6 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs);
 LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf );
 LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf );
 #define  StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
-
-DWORD WINAPI PathCleanupSpecA(LPSTR x, LPSTR y);
-DWORD WINAPI PathCleanupSpecW(LPWSTR x, LPWSTR y);
-#define  PathCleanupSpec WINELIB_NAME_AW(PathCleanupSpec)
 
 /****************************************************************************
  * Shell Namespace Routines

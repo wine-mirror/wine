@@ -35,11 +35,12 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "ole2.h"
 #include "wine/obj_oleview.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /****************************************************************************
  * DefaultHandler
@@ -832,14 +833,14 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
   {
       if ((this->containerApp = HeapAlloc( GetProcessHeap(), 0,
                                            (lstrlenW(szContainerApp) + 1) * sizeof(WCHAR) )))
-          lstrcpyW( this->containerApp, szContainerApp );
+          strcpyW( this->containerApp, szContainerApp );
   }
 
   if (szContainerObj != NULL)
   {
       if ((this->containerObj = HeapAlloc( GetProcessHeap(), 0,
                                            (lstrlenW(szContainerObj) + 1) * sizeof(WCHAR) )))
-          lstrcpyW( this->containerObj, szContainerObj );
+          strcpyW( this->containerObj, szContainerObj );
   }
   return S_OK;
 }

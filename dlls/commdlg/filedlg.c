@@ -272,11 +272,11 @@ static void FILEDLG_StripEditControl(HWND hwnd)
     GetDlgItemTextW( hwnd, edt1, temp, sizeof(temp) );
     cp = strrchrW(temp, '\\');
     if (cp != NULL) {
-	lstrcpyW(temp, cp+1);
+	strcpyW(temp, cp+1);
     }
     cp = strrchrW(temp, ':');
     if (cp != NULL) {
-	lstrcpyW(temp, cp+1);
+	strcpyW(temp, cp+1);
     }
     /* FIXME: shouldn't we do something with the result here? ;-) */
 }
@@ -346,7 +346,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
 	 }
     }
     /* list of directories */
-    lstrcpyW(buffer, FILE_star);
+    strcpyW(buffer, FILE_star);
     return DlgDirListW(hWnd, buffer, lst2, stc1, DDL_EXCLUSIVE | DDL_DIRECTORY);
 }
 
@@ -712,15 +712,15 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
           pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC);
 	  SendDlgItemMessageW(hWnd, lst2, LB_GETTEXT, lRet,
 			     (LPARAM)pstr);
-          lstrcpyW( tmpstr, pstr );
+          strcpyW( tmpstr, pstr );
           HeapFree(GetProcessHeap(), 0, pstr);
           /* get the selected directory in tmpstr */
 	  if (tmpstr[0] == '[')
 	    {
 	      tmpstr[lstrlenW(tmpstr) - 1] = 0;
-	      lstrcpyW(tmpstr,tmpstr+1);
+	      strcpyW(tmpstr,tmpstr+1);
 	    }
-	  lstrcatW(tmpstr, FILE_bslash);
+	  strcatW(tmpstr, FILE_bslash);
           /* directory *has* to be changed before notifying the hook */
           SetCurrentDirectoryW( tmpstr );
           /* notify the app */
@@ -789,7 +789,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
 	    }
 	  else
 	    {
-	      lstrcpyW(tmpstr2, tmpstr);
+	      strcpyW(tmpstr2, tmpstr);
 	      *tmpstr=0;
 	    }
 
@@ -802,7 +802,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
       /* try appending a wildcard and reading the directory */
       pstr2 = tmpstr + lstrlenW(tmpstr);
       if (pstr == NULL || *(pstr+1) != 0)
-	lstrcatW(tmpstr, FILE_bslash);
+	strcatW(tmpstr, FILE_bslash);
       lRet = SendDlgItemMessageW(hWnd, cmb1, CB_GETCURSEL, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       ofnW->nFilterIndex = lRet + 1;
@@ -830,7 +830,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
 	  lstrcpynW(tmpstr2, pstr+1, sizeof(tmpstr2) );
 	  /* Should we MessageBox() if this fails? */
 	  if (!FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
-	  lstrcpyW(tmpstr, tmpstr2);
+	  strcpyW(tmpstr, tmpstr2);
 	}
       else SetDlgItemTextW( hWnd, edt1, tmpstr );
       FILEDLG_UpdateResult(lfs, tmpstr, tmpstr2);

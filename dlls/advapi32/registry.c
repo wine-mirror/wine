@@ -20,8 +20,7 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
-#include "winversion.h"
-#include "file.h"
+#include "wine/unicode.h"
 #include "heap.h"
 #include "server.h"
 #include "debugtools.h"
@@ -56,8 +55,8 @@ static inline DWORD copy_nameW( LPWSTR dest, LPCWSTR name )
 {
     if (name)
     {
-        if (lstrlenW(name) > MAX_PATH) return ERROR_MORE_DATA;
-        lstrcpyW( dest, name );
+        if (strlenW(name) > MAX_PATH) return ERROR_MORE_DATA;
+        strcpyW( dest, name );
     }
     else dest[0] = 0;
     return ERROR_SUCCESS;
@@ -307,8 +306,8 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
     req->index = index;
     if ((ret = reg_server_call( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
 
-    len = lstrlenW( req->name ) + 1;
-    cls_len = lstrlenW( req->class ) + 1;
+    len = strlenW( req->name ) + 1;
+    cls_len = strlenW( req->class ) + 1;
     if (len > *name_len) return ERROR_MORE_DATA;
     if (class_len && (cls_len > *class_len)) return ERROR_MORE_DATA;
 
@@ -319,7 +318,7 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
         if (class) memcpy( class, req->class, cls_len * sizeof(WCHAR) );
         *class_len = cls_len - 1;
     }
-    if (ft) DOSFS_UnixTimeToFileTime( req->modif, ft, 0 );
+    if (ft) RtlSecondsSince1970ToTime( req->modif, ft );
     return ERROR_SUCCESS;
 }
 
@@ -342,8 +341,8 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
     req->index = index;
     if ((ret = reg_server_call( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
 
-    len = lstrlenW( req->name ) + 1;
-    cls_len = lstrlenW( req->class ) + 1;
+    len = strlenW( req->name ) + 1;
+    cls_len = strlenW( req->class ) + 1;
     if (len > *name_len) return ERROR_MORE_DATA;
     if (class_len && (cls_len > *class_len)) return ERROR_MORE_DATA;
 
@@ -354,7 +353,7 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
         if (class) memcpyWtoA( class, req->class, cls_len );
         *class_len = cls_len - 1;
     }
-    if (ft) DOSFS_UnixTimeToFileTime( req->modif, ft, 0 );
+    if (ft) RtlSecondsSince1970ToTime( req->modif, ft );
     return ERROR_SUCCESS;
 }
 
@@ -411,7 +410,7 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
     TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
 
-    if (class && !class_len && (VERSION_GetVersion() == NT40))
+    if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
         return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
@@ -419,21 +418,21 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
 
     if (class)
     {
-        if (class_len && (lstrlenW(req->class) + 1 > *class_len))
+        if (class_len && (strlenW(req->class) + 1 > *class_len))
         {
-            *class_len = lstrlenW(req->class);
+            *class_len = strlenW(req->class);
             return ERROR_MORE_DATA;
         }
-        lstrcpyW( class, req->class );
+        strcpyW( class, req->class );
     }
-    if (class_len) *class_len = lstrlenW( req->class );
+    if (class_len) *class_len = strlenW( req->class );
     if (subkeys) *subkeys = req->subkeys;
     if (max_subkey) *max_subkey = req->max_subkey;
     if (max_class) *max_class = req->max_class;
     if (values) *values = req->values;
     if (max_value) *max_value = req->max_value;
     if (max_data) *max_data = req->max_data;
-    if (modif) DOSFS_UnixTimeToFileTime( req->modif, modif, 0 );
+    if (modif) RtlSecondsSince1970ToTime( req->modif, modif );
     return ERROR_SUCCESS;
 }
 
@@ -453,7 +452,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
     TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
 
-    if (class && !class_len && (VERSION_GetVersion() == NT40))
+    if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
         return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
@@ -461,21 +460,21 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
 
     if (class)
     {
-        if (class_len && (lstrlenW(req->class) + 1 > *class_len))
+        if (class_len && (strlenW(req->class) + 1 > *class_len))
         {
-            *class_len = lstrlenW(req->class);
+            *class_len = strlenW(req->class);
             return ERROR_MORE_DATA;
         }
         lstrcpyWtoA( class, req->class );
     }
-    if (class_len) *class_len = lstrlenW( req->class );
+    if (class_len) *class_len = strlenW( req->class );
     if (subkeys) *subkeys = req->subkeys;
     if (max_subkey) *max_subkey = req->max_subkey;
     if (max_class) *max_class = req->max_class;
     if (values) *values = req->values;
     if (max_value) *max_value = req->max_value;
     if (max_data) *max_data = req->max_data;
-    if (modif) DOSFS_UnixTimeToFileTime( req->modif, modif, 0 );
+    if (modif) RtlSecondsSince1970ToTime( req->modif, modif );
     return ERROR_SUCCESS;
 }
 
@@ -670,7 +669,7 @@ DWORD WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, DW
     }
 
     ret = RegSetValueExW( subkey, NULL, 0, REG_SZ, (LPBYTE)data,
-                          (lstrlenW( data ) + 1) * sizeof(WCHAR) );
+                          (strlenW( data ) + 1) * sizeof(WCHAR) );
     if (subkey != hkey) RegCloseKey( subkey );
     return ret;
 }
@@ -906,7 +905,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
     req->offset = 0;
     if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
 
-    len = lstrlenW( req->name ) + 1;
+    len = strlenW( req->name ) + 1;
     if (len > *val_count) return ERROR_MORE_DATA;
     memcpy( value, req->name, len * sizeof(WCHAR) );
     *val_count = len - 1;
@@ -959,7 +958,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
     req->offset = 0;
     if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
 
-    len = lstrlenW( req->name ) + 1;
+    len = strlenW( req->name ) + 1;
     if (len > *val_count) return ERROR_MORE_DATA;
     memcpyWtoA( value, req->name, len );
     *val_count = len - 1;

@@ -15,6 +15,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winbase16.h"
+#include "winerror.h"
+#include "windef.h"
+#include "wingdi.h"
+#include "wine/winuser16.h"
+#include "wine/unicode.h"
 #include "class.h"
 #include "heap.h"
 #include "win.h"
@@ -23,12 +28,8 @@
 #include "toolhelp.h"
 #include "winproc.h"
 #include "debugtools.h"
-#include "winerror.h"
-#include "windef.h"
-#include "wingdi.h"
-#include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(class)
+DEFAULT_DEBUG_CHANNEL(class);
 
 
 static CLASS *firstClass = NULL;
@@ -156,8 +157,8 @@ static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
     if (HIWORD(classPtr->menuNameA)) SEGPTR_FREE( classPtr->menuNameA );
     if (classPtr->menuNameW) HeapFree( SystemHeap, 0, classPtr->menuNameW );
     if ((classPtr->menuNameW = HeapAlloc( SystemHeap, 0,
-                                         (lstrlenW(name)+1)*sizeof(WCHAR) )))
-        lstrcpyW( classPtr->menuNameW, name );
+                                         (strlenW(name)+1)*sizeof(WCHAR) )))
+        strcpyW( classPtr->menuNameW, name );
     classPtr->menuNameA = 0;
 }
 
@@ -225,8 +226,8 @@ static void CLASS_SetClassNameW( CLASS *classPtr, LPCWSTR name )
     if (HIWORD(classPtr->classNameA)) SEGPTR_FREE( classPtr->classNameA );
     if (classPtr->classNameW) HeapFree( SystemHeap, 0, classPtr->classNameW );
     if ((classPtr->classNameW = HeapAlloc( SystemHeap, 0,
-                                         (lstrlenW(name)+1)*sizeof(WCHAR) )))
-        lstrcpyW( classPtr->classNameW, name );
+                                         (strlenW(name)+1)*sizeof(WCHAR) )))
+        strcpyW( classPtr->classNameW, name );
     classPtr->classNameA = 0;
 }
 

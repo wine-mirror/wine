@@ -660,7 +660,7 @@ static LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 			       (LPARAM)buffer);	          
 		GetObjectA( hBitmapTT, sizeof(bm), &bm );
 		TextOutA(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
-                           lpdi->rcItem.top, buffer, lstrlenA(buffer));
+                           lpdi->rcItem.top, buffer, strlen(buffer));
 #if 0
 		nFontType = SendMessageA(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
 		  /* FIXME: draw bitmap if truetype usage */
@@ -680,14 +680,14 @@ static LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		SendMessageA(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
 		               (LPARAM)buffer);
 		TextOutA(lpdi->hDC, lpdi->rcItem.left,
-                           lpdi->rcItem.top, buffer, lstrlenA(buffer));
+                           lpdi->rcItem.top, buffer, strlen(buffer));
 		break;
 
     case cmb4:	/* TRACE(commdlg,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
 		SendMessageA(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
     		               (LPARAM)buffer);
 		TextOutA(lpdi->hDC, lpdi->rcItem.left +  25+5,
-                           lpdi->rcItem.top, buffer, lstrlenA(buffer));
+                           lpdi->rcItem.top, buffer, strlen(buffer));
 		cr = SendMessageA(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
 		hBrush = CreateSolidBrush(cr);
 		if (hBrush)

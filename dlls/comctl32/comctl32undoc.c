@@ -475,7 +475,7 @@ FreeMRUListA (HANDLE hMRUList)
     if (!(hmru->dwParam1 & 1001)) {
 	RegSetValueExA (hmru->hKeyMRU, "MRUList", 0, REG_SZ,
 			  hmru->lpszMRUString,
-			  lstrlenA (hmru->lpszMRUString));
+			  strlen (hmru->lpszMRUString));
     }
 
 
@@ -685,7 +685,7 @@ Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
     TRACE("(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
 
     if (!lpDest && lpSrc)
-	return lstrlenA (lpSrc);
+	return strlen (lpSrc);
 
     if (nMaxLen == 0)
 	return 0;
@@ -695,7 +695,7 @@ Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
 	return 0;
     }
 
-    len = lstrlenA (lpSrc);
+    len = strlen (lpSrc);
     if (len >= nMaxLen)
 	len = nMaxLen - 1;
 
@@ -722,10 +722,10 @@ Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
     TRACE("(%p %p)\n", lppDest, lpSrc);
  
     if (lpSrc) {
-	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, lstrlenA (lpSrc) + 1);
+	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, strlen (lpSrc) + 1);
 	if (!ptr)
 	    return FALSE;
-	lstrcpyA (ptr, lpSrc);
+	strcpy (ptr, lpSrc);
 	*lppDest = ptr;
     }
     else {
@@ -758,7 +758,7 @@ Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
     TRACE("(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
 
     if (!lpDest && lpSrc)
-	return lstrlenW (lpSrc);
+	return strlenW (lpSrc);
 
     if (nMaxLen == 0)
 	return 0;
@@ -768,7 +768,7 @@ Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
 	return 0;
     }
 
-    len = lstrlenW (lpSrc);
+    len = strlenW (lpSrc);
     if (len >= nMaxLen)
 	len = nMaxLen - 1;
 
@@ -795,11 +795,11 @@ Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
     TRACE("(%p %p)\n", lppDest, lpSrc);
  
     if (lpSrc) {
-	INT len = lstrlenW (lpSrc) + 1;
+	INT len = strlenW (lpSrc) + 1;
 	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len * sizeof(WCHAR));
 	if (!ptr)
 	    return FALSE;
-	lstrcpyW (ptr, lpSrc);
+	strcpyW (ptr, lpSrc);
 	*lppDest = ptr;
     }
     else {

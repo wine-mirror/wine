@@ -17,6 +17,7 @@
 
 #include "winbase.h" /* for lstrlenW() and the likes */
 #include "winnls.h"
+#include "wine/unicode.h"
 #include "debugtools.h"
 
 #include "storage32.h"
@@ -25,7 +26,7 @@
 #include "winreg.h"
 #include "wine/wingdi16.h"
 
-DEFAULT_DEBUG_CHANNEL(storage)
+DEFAULT_DEBUG_CHANNEL(storage);
 
 #define FILE_BEGIN 0
 
@@ -684,7 +685,7 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
     if (renamedProperty.sizeOfNameString > PROPERTY_NAME_BUFFER_LEN)
       return STG_E_INVALIDNAME;
   
-    lstrcpyW(renamedProperty.name, pwcsNewName);
+    strcpyW(renamedProperty.name, pwcsNewName);
  
     renamedProperty.propertyType  = currentProperty.propertyType;
     renamedProperty.startingBlock = currentProperty.startingBlock;
@@ -858,7 +859,7 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   if (newStreamProperty.sizeOfNameString > PROPERTY_NAME_BUFFER_LEN)
     return STG_E_INVALIDNAME;
 
-  lstrcpyW(newStreamProperty.name, pwcsName);
+  strcpyW(newStreamProperty.name, pwcsName);
 
   newStreamProperty.propertyType  = PROPTYPE_STREAM;
   newStreamProperty.startingBlock = BLOCK_END_OF_CHAIN;
@@ -1043,7 +1044,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   if (newProperty.sizeOfNameString > PROPERTY_NAME_BUFFER_LEN)
     return STG_E_INVALIDNAME;
 
-  lstrcpyW(newProperty.name, pwcsName);
+  strcpyW(newProperty.name, pwcsName);
 
   newProperty.propertyType  = PROPTYPE_STORAGE;
   newProperty.startingBlock = BLOCK_END_OF_CHAIN;
@@ -3981,7 +3982,7 @@ void StorageUtl_CopyPropertyToSTATSTG(
     destination->pwcsName = 
       CoTaskMemAlloc((lstrlenW(source->name)+1)*sizeof(WCHAR));
 
-    lstrcpyW((LPWSTR)destination->pwcsName, source->name);
+    strcpyW((LPWSTR)destination->pwcsName, source->name);
   }
   
   switch (source->propertyType)

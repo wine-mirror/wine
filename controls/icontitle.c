@@ -11,6 +11,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
+#include "wine/unicode.h"
 #include "win.h"
 #include "heap.h"
 
@@ -70,7 +71,7 @@ static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
     if( length )
     {
 	str = HeapAlloc( GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR) );
-	lstrcpyW( str, wnd->owner->text );
+	strcpyW( str, wnd->owner->text );
 	while( str[length - 1] == ' ' ) /* remove trailing spaces */
 	{ 
 	    str[--length] = '\0';

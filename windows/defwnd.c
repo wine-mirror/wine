@@ -93,7 +93,7 @@ void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text )
 
     if (wndPtr->text) HeapFree(SystemHeap, 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(SystemHeap, 0, count * sizeof(WCHAR))))
-	lstrcpyW( wndPtr->text, text );
+	strcpyW( wndPtr->text, text );
     else
         ERR("Not enough memory for window text");
 

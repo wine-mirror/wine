@@ -13,6 +13,7 @@
  */
 
 #include "winbase.h"
+#include "wine/unicode.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -422,7 +423,7 @@ STATUSBAR_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	result = part->text ? lstrlenW (part->text) : 0;
 	result |= (part->style << 16);
 	if (lParam)
-	    lstrcpyW ((LPWSTR)lParam, part->text);
+	    strcpyW ((LPWSTR)lParam, part->text);
     }
     return result;
 }
@@ -744,7 +745,7 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	/* duplicate string */
 	if (text && (len = lstrlenW(text))) {
 	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-	    lstrcpyW(part->text, text);
+	    strcpyW(part->text, text);
 	}
     }
     part->style = style;
@@ -875,7 +876,7 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lpCreate->lpszName &&
 	    (len = lstrlenW ((LPCWSTR)lpCreate->lpszName))) {
 	    self->parts[0].text = COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyW (self->parts[0].text, (LPCWSTR)lpCreate->lpszName);
+	    strcpyW (self->parts[0].text, (LPCWSTR)lpCreate->lpszName);
 	}
     }
     else {
@@ -976,7 +977,7 @@ STATUSBAR_WMGetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
     len = lstrlenW (infoPtr->parts[0].text);
     if (wParam > len) {
 	if (infoPtr->bUnicode)
-	    lstrcpyW ((LPWSTR)lParam, infoPtr->parts[0].text);
+	    strcpyW ((LPWSTR)lParam, infoPtr->parts[0].text);
 	else
 	    lstrcpyWtoA ((LPSTR)lParam, infoPtr->parts[0].text);
 	return len;
@@ -1085,7 +1086,7 @@ STATUSBAR_WMSetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->bUnicode) {
 	if (lParam && (len = lstrlenW((LPCWSTR)lParam))) {
 	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-	    lstrcpyW (part->text, (LPCWSTR)lParam);
+	    strcpyW (part->text, (LPCWSTR)lParam);
 	}
     }
     else {

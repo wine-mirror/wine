@@ -87,7 +87,7 @@ void MSACM_RegisterAllDrivers(void)
 		    MSACM_RegisterDriver(s, s2, 0);
 		}
 	    }  
-	    s += lstrlenA(s) + 1; /* Either next char or \0 */
+	    s += strlen(s) + 1; /* Either next char or \0 */
 	}
     }
     
