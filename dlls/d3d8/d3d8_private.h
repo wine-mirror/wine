@@ -55,10 +55,11 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #include "d3d8.h"
 
 /* Device caps */
+#define MAX_PALETTES      256
 #define MAX_STREAMS       16
 #define MAX_ACTIVE_LIGHTS 8
 #define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
-#define MAX_LEVELS 256
+#define MAX_LEVELS        256
 
 /* Other useful values */
 #define HIGHEST_RENDER_STATE 174
@@ -272,12 +273,15 @@ struct IDirect3DDevice8Impl
     float                         lightPosn[MAX_ACTIVE_LIGHTS][4];
     float                         lightDirn[MAX_ACTIVE_LIGHTS][4];
 
+    /* palettes texture management */
+    PALETTEENTRY                  palettes[MAX_PALETTES][256];
+    UINT                          currentPalette;
+
     /* Optimization */
     D3DMATRIX                     lastProj;
     D3DMATRIX                     lastView;
     D3DMATRIX                     lastWorld0;
     D3DMATRIX                     lastTexTrans[8];
-
 
     /* OpenGL related */
     GLXContext                    glCtx;
@@ -1132,6 +1136,8 @@ DWORD fmt2glType(D3DFORMAT fmt);
 /**
  * Internals debug functions
  */
+const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
+const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3dressourcetype(D3DRESOURCETYPE res);
 

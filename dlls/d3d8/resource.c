@@ -83,11 +83,13 @@ HRESULT  WINAPI        IDirect3DResource8Impl_FreePrivateData(LPDIRECT3DRESOURCE
 }
 DWORD    WINAPI        IDirect3DResource8Impl_SetPriority(LPDIRECT3DRESOURCE8 iface, DWORD PriorityNew) {
     ICOM_THIS(IDirect3DResource8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return 0;
 }
 DWORD    WINAPI        IDirect3DResource8Impl_GetPriority(LPDIRECT3DRESOURCE8 iface) {
     ICOM_THIS(IDirect3DResource8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return 0;
 }
 void     WINAPI        IDirect3DResource8Impl_PreLoad(LPDIRECT3DRESOURCE8 iface) {
     ICOM_THIS(IDirect3DResource8Impl,iface);

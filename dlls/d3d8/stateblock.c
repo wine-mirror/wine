@@ -55,6 +55,7 @@ static const float idmatrix[16] = {
 HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* This) {
     D3DLINEPATTERN lp;
     int i;
+    int j;
     LPDIRECT3DDEVICE8 iface = (LPDIRECT3DDEVICE8) This;
 
     /* Note this may have a large overhead but it should only be executed
@@ -153,8 +154,8 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_NORMALORDER, D3DORDER_LINEAR);
 
     /* Texture Stage States - Put directly into state block, we will call function below */
-    for (i=0; i<This->TextureUnits;i++) {
-        memcpy(&This->StateBlock->transforms[D3DTS_TEXTURE0+i], &idmatrix, sizeof(idmatrix));
+    for (i = 0; i < This->TextureUnits; i++) {
+        memcpy(&This->StateBlock->transforms[D3DTS_TEXTURE0 + i], &idmatrix, sizeof(idmatrix));
         This->StateBlock->texture_state[i][D3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
         This->StateBlock->texture_state[i][D3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
         This->StateBlock->texture_state[i][D3DTSS_COLORARG2             ] = D3DTA_CURRENT;
@@ -226,6 +227,17 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
         /* Reapply all the texture state information to this texture */
         setupTextureStates(iface, i);
     }
+
+    /* defaulting palettes */
+    for (i = 0; i < MAX_PALETTES; ++i) {
+      for (j = 0; j < 256; ++j) {
+	This->palettes[i][j].peRed   = 0xFF;
+	This->palettes[i][j].peGreen = 0xFF;
+	This->palettes[i][j].peBlue  = 0xFF;
+	This->palettes[i][j].peFlags = 0xFF;
+      }
+    }
+    This->currentPalette = 0;
 
     TRACE("-----------------------> Device defaults now set up...\n");
 

@@ -138,6 +138,7 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
     TRACE("(%p) : About to load texture\n", This);
     for (i = 0; i < This->levels; i++) {
       if (i == 0 && This->surfaces[0][i]->textureName != 0 && This->Dirty == FALSE) {
+	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 #if defined(GL_VERSION_1_3)
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
 #else

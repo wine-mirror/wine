@@ -28,7 +28,7 @@
 
 #include "d3d8_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 /* trace: */
 #if 0
@@ -131,7 +131,17 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       return D3DERR_INVALIDCALL;
     }
 
-    TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+    if (This == This->Device->backBuffer || This == This->Device->frontBuffer || This->Device->depthStencilBuffer) {
+      if (This == This->Device->backBuffer) {
+	TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+      } else if (This == This->Device->frontBuffer) {
+	TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+      } else if (This == This->Device->depthStencilBuffer) {
+	TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+      }
+    } else {
+      TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
+    }
 
     pLockedRect->Pitch = This->bytesPerPixel * This->myDesc.Width;  /* Bytes / row */    
     
@@ -183,25 +193,50 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 	}
 	vcheckGLcall("glReadBuffer");
 
+	/** TODO: use an enhanced version of fmt2glintFmt here instad this switch */
+#if 0
 	switch (This->myDesc.Format) { 
 	case D3DFMT_R5G6B5:
-	  {
-	    glReadPixels(This->lockedRect.left, This->lockedRect.top, 
-			 This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
-			 GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pLockedRect->pBits);
-	    vcheckGLcall("glReadPixels");
+	  { 
+	    /*
+	      glReadPixels(This->lockedRect.left, This->lockedRect.top, 
+	                   This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
+	                   GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pLockedRect->pBits);
+	      vcheckGLcall("glReadPixels");
+	    */
+	    long j;
+	    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
+	      glReadPixels(This->lockedRect.left, 
+			   This->lockedRect.bottom - j - 1, 
+			   This->lockedRect.right - This->lockedRect.left, 
+			   1,
+			   GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pLockedRect->pBits);
+	      vcheckGLcall("glReadPixels");
+	    }
 	  }
 	  break;
 	case D3DFMT_R8G8B8:
 	  {
+	    /*
 	    glReadPixels(This->lockedRect.left, This->lockedRect.top, 
 			 This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
 			 GL_RGB, GL_UNSIGNED_BYTE, pLockedRect->pBits);
 	    vcheckGLcall("glReadPixels");
+	    */
+	    long j;
+	    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
+	      glReadPixels(This->lockedRect.left, 
+			   This->lockedRect.bottom - j - 1, 
+			   This->lockedRect.right - This->lockedRect.left, 
+			   1,
+			   GL_RGB, GL_UNSIGNED_BYTE, pLockedRect->pBits);
+	      vcheckGLcall("glReadPixels");
+	    }
 	  }
 	  break;
 	case D3DFMT_A8R8G8B8:
 	  {
+	    /*
 	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
 	    vcheckGLcall("glPixelStorei");
 	    glReadPixels(This->lockedRect.left, This->lockedRect.top, 
@@ -210,10 +245,37 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 	    vcheckGLcall("glReadPixels");
 	    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
 	    vcheckGLcall("glPixelStorei");
+	    */
+	    long j;
+	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
+	    vcheckGLcall("glPixelStorei");
+	    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
+	      glReadPixels(This->lockedRect.left, 
+			   This->lockedRect.bottom - j - 1, 
+			   This->lockedRect.right - This->lockedRect.left, 
+			   1,
+			   GL_BGRA, GL_UNSIGNED_BYTE, pLockedRect->pBits);
+	    vcheckGLcall("glReadPixels");
+	    }
+	    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
+	    vcheckGLcall("glPixelStorei");
 	  }
 	  break;
 	default:
 	  FIXME("Unsupported Format %u in locking func\n", This->myDesc.Format);
+	}
+#endif
+
+	{
+	  long j;
+	  for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
+	    glReadPixels(This->lockedRect.left, 
+			 This->lockedRect.bottom - j - 1, 
+			 This->lockedRect.right - This->lockedRect.left, 
+			 1,
+			 fmt2glFmt(This->myDesc.Format), fmt2glType(This->myDesc.Format), pLockedRect->pBits);
+	    vcheckGLcall("glReadPixels");
+	  }
 	}
 
 	glReadBuffer(prev_read);
@@ -262,7 +324,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       }
     }
 
-    TRACE("returning pBits=%p, pitch=%d\n", pLockedRect->pBits, pLockedRect->Pitch);
+    TRACE("returning memory@%p, pitch(%d) dirtyfied(%d)\n", pLockedRect->pBits, pLockedRect->Pitch, This->Dirty);
 
     This->locked = TRUE;
     return D3D_OK;
@@ -275,7 +337,18 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
       return D3DERR_INVALIDCALL;
     }
 
-    TRACE("(%p) : see if behavior is correct\n", This);
+    if (This == This->Device->backBuffer || This == This->Device->frontBuffer || This->Device->depthStencilBuffer) {
+      if (This == This->Device->backBuffer) {
+	TRACE("(%p, backBuffer) : dirtyfied(%d)\n", This, This->Dirty);
+      } else if (This == This->Device->frontBuffer) {
+	TRACE("(%p, frontBuffer) : dirtyfied(%d)\n", This, This->Dirty);
+      } else if (This == This->Device->depthStencilBuffer) {
+	TRACE("(%p, stencilBuffer) : dirtyfied(%d)\n", This, This->Dirty);
+      }
+    } else {
+      TRACE("(%p) : dirtyfied(%d)\n", This, This->Dirty);
+    }
+    /*TRACE("(%p) see if behavior is correct\n", This);*/
 
     if (FALSE == This->Dirty) {
       TRACE("(%p) : Not Dirtified so nothing to do, return now\n", This);
@@ -311,7 +384,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
       if (This == This->Device->backBuffer || This == This->Device->frontBuffer) {
 	GLint  prev_store;
 	GLenum prev_draw;
-	
+	GLint  prev_rasterpos[4];
+
 	ENTER_GL();
 	
 	glFlush();
@@ -319,6 +393,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
 	vcheckGLcall("glIntegerv");
 	glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
+	vcheckGLcall("glIntegerv");
+	glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
 	vcheckGLcall("glIntegerv");
 
 	if (This == This->Device->backBuffer) {
@@ -362,6 +438,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 
 	glDrawBuffer(prev_draw);
 	vcheckGLcall("glDrawBuffer");
+	glRasterPos3iv(&prev_rasterpos[0]);
+	vcheckGLcall("glRasterPos3iv");
 	LEAVE_GL();
       } else {
 	FIXME("unsupported unlocking to Rendering surface surf@%p usage(%lu)\n", This, This->myDesc.Usage);

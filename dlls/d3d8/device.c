@@ -78,12 +78,43 @@ do {                                                                            
 
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
 
+const char* debug_d3ddevicetype(D3DDEVTYPE devtype) {
+  switch (devtype) {
+#define DEVTYPE_TO_STR(dev) case dev: return #dev
+    DEVTYPE_TO_STR(D3DDEVTYPE_HAL);
+    DEVTYPE_TO_STR(D3DDEVTYPE_REF);
+    DEVTYPE_TO_STR(D3DDEVTYPE_SW);    
+#undef DEVTYPE_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DDEVTYPE!\n", devtype);
+    return "unrecognized";
+  }
+}
+
+const char* debug_d3dusage(DWORD usage) {
+  switch (usage) {
+#define D3DUSAGE_TO_STR(u) case u: return #u
+    D3DUSAGE_TO_STR(D3DUSAGE_RENDERTARGET);
+    D3DUSAGE_TO_STR(D3DUSAGE_DEPTHSTENCIL);
+    D3DUSAGE_TO_STR(D3DUSAGE_WRITEONLY);
+    D3DUSAGE_TO_STR(D3DUSAGE_SOFTWAREPROCESSING);
+    D3DUSAGE_TO_STR(D3DUSAGE_DONOTCLIP);
+    D3DUSAGE_TO_STR(D3DUSAGE_POINTS);
+    D3DUSAGE_TO_STR(D3DUSAGE_RTPATCHES);
+    D3DUSAGE_TO_STR(D3DUSAGE_NPATCHES);
+    D3DUSAGE_TO_STR(D3DUSAGE_DYNAMIC);
+#undef D3DUSAGE_TO_STR
+  case 0: return "none";
+  default:
+    FIXME("Unrecognized %lu Usage!\n", usage);
+    return "unrecognized";
+  }
+}
 
 const char* debug_d3dformat(D3DFORMAT fmt) {
   switch (fmt) {
 #define FMT_TO_STR(fmt) case fmt: return #fmt
     FMT_TO_STR(D3DFMT_UNKNOWN);
-
     FMT_TO_STR(D3DFMT_R8G8B8);
     FMT_TO_STR(D3DFMT_A8R8G8B8);
     FMT_TO_STR(D3DFMT_X8R8G8B8);
@@ -95,21 +126,17 @@ const char* debug_d3dformat(D3DFORMAT fmt) {
     FMT_TO_STR(D3DFMT_A8);
     FMT_TO_STR(D3DFMT_A8R3G3B2);
     FMT_TO_STR(D3DFMT_X4R4G4B4);
-
     FMT_TO_STR(D3DFMT_A8P8);
     FMT_TO_STR(D3DFMT_P8);
-
     FMT_TO_STR(D3DFMT_L8);
     FMT_TO_STR(D3DFMT_A8L8);
     FMT_TO_STR(D3DFMT_A4L4);
-
     FMT_TO_STR(D3DFMT_V8U8);
     FMT_TO_STR(D3DFMT_L6V5U5);
     FMT_TO_STR(D3DFMT_X8L8V8U8);
     FMT_TO_STR(D3DFMT_Q8W8V8U8);
     FMT_TO_STR(D3DFMT_V16U16);
     FMT_TO_STR(D3DFMT_W11V11U10);
-
     FMT_TO_STR(D3DFMT_UYVY);
     FMT_TO_STR(D3DFMT_YUY2);
     FMT_TO_STR(D3DFMT_DXT1);
@@ -117,7 +144,6 @@ const char* debug_d3dformat(D3DFORMAT fmt) {
     FMT_TO_STR(D3DFMT_DXT3);
     FMT_TO_STR(D3DFMT_DXT4);
     FMT_TO_STR(D3DFMT_DXT5);
-    
     FMT_TO_STR(D3DFMT_D16_LOCKABLE);
     FMT_TO_STR(D3DFMT_D32);
     FMT_TO_STR(D3DFMT_D15S1);
@@ -125,7 +151,6 @@ const char* debug_d3dformat(D3DFORMAT fmt) {
     FMT_TO_STR(D3DFMT_D16);
     FMT_TO_STR(D3DFMT_D24X8);
     FMT_TO_STR(D3DFMT_D24X4S4);
-
     FMT_TO_STR(D3DFMT_VERTEXDATA);
     FMT_TO_STR(D3DFMT_INDEX16);
     FMT_TO_STR(D3DFMT_INDEX32);
@@ -149,6 +174,22 @@ const char* debug_d3dressourcetype(D3DRESOURCETYPE res) {
 #undef  RES_TO_STR
   default:
     FIXME("Unrecognized %u D3DRESOURCETYPE!\n", res);
+    return "unrecognized";
+  }
+}
+
+const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType) {
+  switch (PrimitiveType) {
+#define PRIM_TO_STR(prim) case prim: return #prim;
+    PRIM_TO_STR(D3DPT_POINTLIST);
+    PRIM_TO_STR(D3DPT_LINELIST);
+    PRIM_TO_STR(D3DPT_LINESTRIP);
+    PRIM_TO_STR(D3DPT_TRIANGLELIST);
+    PRIM_TO_STR(D3DPT_TRIANGLESTRIP);
+    PRIM_TO_STR(D3DPT_TRIANGLEFAN);
+#undef  PRIM_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DPRIMITIVETYPE!\n", PrimitiveType);
     return "unrecognized";
   }
 }
@@ -182,21 +223,21 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
     if (This->UpdateStateBlock->VertexShader > VS_HIGHESTFIXEDFXF) {
       vertex_shader = VERTEX_SHADER(This->UpdateStateBlock->VertexShader);
       if (NULL == vertex_shader) {
-          ERR("trying to use unitialised vertex shader: %lu\n", This->UpdateStateBlock->VertexShader);
+          ERR_(d3d_shader)("trying to use unitialised vertex shader: %lu\n", This->UpdateStateBlock->VertexShader);
           return ;
       }
       if (NULL == vertex_shader->function) {
-          TRACE("vertex shader declared without program, using FVF pure mode\n");
+          TRACE_(d3d_shader)("vertex shader declared without program, using FVF pure mode\n");
       } else {
           useVertexShaderFunction = TRUE;
       }
       fvf = (D3DFORMAT) This->UpdateStateBlock->vertexShaderDecl->fvf;
-      TRACE("vertex shader declared FVF: %lx\n", This->UpdateStateBlock->vertexShaderDecl->fvf);
+      TRACE_(d3d_shader)("vertex shader declared FVF: %08lx\n", This->UpdateStateBlock->vertexShaderDecl->fvf);
       memset(&vertex_shader->input, 0, sizeof(VSHADERINPUTDATA8));
 
       /** init Constants */
       if (TRUE == This->UpdateStateBlock->Changed.vertexShaderConstant) {
-	TRACE("vertex shader init Constant\n");
+	TRACE_(d3d_shader)("vertex shader init Constant\n");
 	IDirect3DVertexShaderImpl_SetConstantF(vertex_shader, 0, (CONST FLOAT*) &This->UpdateStateBlock->vertexShaderConstant[0], 96);
       }
 
@@ -1046,24 +1087,26 @@ SHORT bytesPerPixel(D3DFORMAT fmt) {
 
     switch (fmt) {
     /* color buffer */
+    case D3DFMT_P8:               retVal = 1; break;
     case D3DFMT_A4R4G4B4:         retVal = 2; break;
-    case D3DFMT_A8R8G8B8:         retVal = 4; break;
-    case D3DFMT_X8R8G8B8:         retVal = 4; break;
-    case D3DFMT_R8G8B8:           retVal = 3; break;
     case D3DFMT_R5G6B5:           retVal = 2; break;
+    case D3DFMT_X1R5G5B5:         retVal = 2; break;
     case D3DFMT_A1R5G5B5:         retVal = 2; break;
+    case D3DFMT_R8G8B8:           retVal = 3; break;
+    case D3DFMT_X8R8G8B8:         retVal = 4; break;
+    case D3DFMT_A8R8G8B8:         retVal = 4; break;
     /* depth/stencil buffer */
     case D3DFMT_D16_LOCKABLE:     retVal = 2; break;
-    case D3DFMT_D32:              retVal = 4; break;
-    case D3DFMT_D15S1:            retVal = 2; break;
-    case D3DFMT_D24S8:            retVal = 4; break;
     case D3DFMT_D16:              retVal = 2; break;
-    case D3DFMT_D24X8:            retVal = 4; break;
+    case D3DFMT_D15S1:            retVal = 2; break;
     case D3DFMT_D24X4S4:          retVal = 4; break;
+    case D3DFMT_D24S8:            retVal = 4; break;
+    case D3DFMT_D24X8:            retVal = 4; break;
+    case D3DFMT_D32:              retVal = 4; break;
     /* unknown */				  
     case D3DFMT_UNKNOWN:
       /* Guess at the highest value of the above */
-      TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %d\n", fmt);
+      TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
       retVal = 4;
       break;
 
@@ -1087,7 +1130,7 @@ GLint fmt2glintFmt(D3DFORMAT fmt) {
     case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
     default:
         FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = 4;
+        retVal = GL_RGB8;
     }
     TRACE("fmt2glintFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
@@ -1104,7 +1147,7 @@ GLenum fmt2glFmt(D3DFORMAT fmt) {
     case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
     default:
         FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = 4;
+        retVal = GL_BGR;
     }
     TRACE("fmt2glFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
@@ -1121,7 +1164,7 @@ DWORD fmt2glType(D3DFORMAT fmt) {
     case D3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
     default:
         FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = 4;
+        retVal = GL_UNSIGNED_BYTE;
     }
     TRACE("fmt2glType for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
@@ -1386,14 +1429,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDisplayMode(LPDIRECT3DDEVICE8 iface, D3
     switch (bpp) {
     case  8: pMode->Format       = D3DFMT_R8G8B8; break;
     case 16: pMode->Format       = D3DFMT_R5G6B5; break;
-    case 24: pMode->Format       = D3DFMT_R8G8B8; break;
+    case 24: /*pMode->Format       = D3DFMT_R8G8B8; break; */
     case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
     default: 
        FIXME("Unrecognized display mode format\n");
        pMode->Format       = D3DFMT_UNKNOWN;
     }
 
-    FIXME("(%p) : returning w(%d) h(%d) rr(%d) fmt(%d)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format);
+    FIXME("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate, 
+	  pMode->Format, debug_d3dformat(pMode->Format));
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetCreationParameters(LPDIRECT3DDEVICE8 iface, D3DDEVICE_CREATION_PARAMETERS *pParameters) {
@@ -1475,7 +1519,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* Allocate the storage for the device */
-    TRACE("(%p) : W(%d) H(%d), Lvl(%d) Usage(%ld), Fmt(%d), Pool(%d)\n", This, Width, Height, Levels, Usage, Format, Pool);
+    TRACE("(%p) : W(%d) H(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%d)\n", This, Width, Height, Levels, Usage, Format, debug_d3dformat(Format), Pool);
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTexture8Impl));
     object->lpVtbl = &Direct3DTexture8_Vtbl;
     object->Device = This;
@@ -1532,7 +1576,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* Allocate the storage for it */
-    TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%d), Pool(%d)\n", This, Width, Height, Depth, Levels, Usage, Format, Pool);
+    TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%d)\n", This, Width, Height, Depth, Levels, Usage, Format, debug_d3dformat(Format), Pool);
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolumeTexture8Impl));
     object->lpVtbl = &Direct3DVolumeTexture8_Vtbl;
     object->ResourceType = D3DRTYPE_VOLUMETEXTURE;
@@ -1594,7 +1638,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         volume->myDesc.Size     = (Width * volume->bytesPerPixel) * Height * Depth;
         volume->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->myDesc.Size);
 
-        TRACE("(%p) : Volume at w(%d) h(%d) d(%d) fmt(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Depth, Format, 
+        TRACE("(%p) : Volume at w(%d) h(%d) d(%d) fmt(%u,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Depth, Format, debug_d3dformat(Format),
                   volume, volume->allocatedMemory, volume->myDesc.Size);
 
         tmpW = max(1, tmpW / 2);
@@ -1613,7 +1657,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     UINT tmpW;
 
     /* Allocate the storage for it */
-    TRACE("(%p) : Len(%d), Lvl(%d) Usage(%ld), Fmt(%d), Pool(%d)\n", This, EdgeLength, Levels, Usage, Format, Pool);
+    TRACE("(%p) : Len(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%d)\n", This, EdgeLength, Levels, Usage, Format, debug_d3dformat(Format), Pool);
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DCubeTexture8Impl));
     object->lpVtbl = &Direct3DCubeTexture8_Vtbl;
     object->ref = 1;
@@ -1686,7 +1730,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface,
     IDirect3DIndexBuffer8Impl *object;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : Len=%d, Use=%lx, Format=%x, Pool=%d\n", This, Length, Usage, Format, Pool);
+    TRACE("(%p) : Len=%d, Use=%lx, Format=(%u,%s), Pool=%d\n", This, Length, Usage, Format, debug_d3dformat(Format), Pool);
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DIndexBuffer8Impl));
@@ -1742,7 +1786,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface
     object->lockable = Lockable;
     object->locked = FALSE;
 
-    TRACE("(%p) : w(%d) h(%d) fmt(%d) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, Lockable, *ppSurface, object->allocatedMemory, object->myDesc.Size);
+    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), Lockable, *ppSurface, object->allocatedMemory, object->myDesc.Size);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, IDirect3DSurface8** ppSurface) {
@@ -1774,10 +1818,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE
     object->bytesPerPixel = bytesPerPixel(Format);
     object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
-    object->lockable = TRUE;
+    object->lockable = (D3DFMT_D16_LOCKABLE == Format) ? TRUE : FALSE;
     object->locked = FALSE;
 
-    TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, *ppSurface, object->allocatedMemory, object->myDesc.Size);
+    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->myDesc.Size);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, IDirect3DSurface8** ppSurface) {
@@ -1807,7 +1851,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     object->lockable = TRUE;
     object->locked = FALSE;
 
-    TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, *ppSurface, object->allocatedMemory, object->myDesc.Size);
+    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->myDesc.Size);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pSourceSurface,CONST RECT* pSourceRectsArray,UINT cRects,
@@ -2256,12 +2300,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
 
     if (d3dts < 256) { 
       switch (d3dts) {
-#if 0
-      case D3DTS_WORLDMATRIX(0): /* WORLDMATRIX(0) == 256! so not here */
-        conv_mat(lpmatrix, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)]);
-        break;
-#endif
-
       case D3DTS_VIEW:
         conv_mat(lpmatrix, &This->StateBlock->transforms[D3DTS_VIEW]);
         break;
@@ -2288,6 +2326,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
     } else {
       /** 
        * Indexed Vertex Blending Matrices 256 -> 511 
+       *  where WORLDMATRIX(0) == 256!
        */
       /** store it */
       conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts]);
@@ -3752,7 +3791,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         } else if (textureType == D3DRTYPE_CUBETEXTURE) {
 	  /* Standard Cube texture */
 	  FIXME("Standard Cube texture\n");
-	  /*This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_4D;*/
+	  
+	  This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_CUBE_MAP_ARB;
 
 	  /* Load up the texture now */
 	  IDirect3DCubeTexture8Impl_PreLoad((LPDIRECT3DCUBETEXTURE8) pTexture);
@@ -3963,6 +4003,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                         glDisable(GL_TEXTURE_3D);
                         checkGLcall("Disable GL_TEXTURE_3D");
                     }
+                    if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_CUBE_MAP_ARB) {
+                        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                        checkGLcall("Enable GL_TEXTURE_CUBE_MAP");
+                    } else {
+                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                        checkGLcall("Disable GL_TEXTURE_CUBE_MAP");
+                    }
                 }
 
                 /* Re-Enable GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT */
@@ -4065,6 +4112,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 #endif
                     FIXME("DotProduct3 extension requested but not supported via this version of opengl\n");
                     break;
+
 
                 case D3DTOP_SUBTRACT                  :
 #if defined(GL_VERSION_1_3)
@@ -4176,9 +4224,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             /** 
              * Be careful the value of the mask 0xF0000 come from d3d8types.h infos 
              */
-            switch (Value & 0xFFFFFF00) {
+            switch (Value & 0xFFFF0000) {
             case D3DTSS_TCI_PASSTHRU:
               /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
+	      glDisable(GL_TEXTURE_GEN_S);
+	      glDisable(GL_TEXTURE_GEN_T);
+	      glDisable(GL_TEXTURE_GEN_R);
               break;
 
             case D3DTSS_TCI_CAMERASPACEPOSITION:
@@ -4217,12 +4268,82 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
               }
               break;
 
+#if defined(GL_ARB_texture_cube_map) || defined(GL_NV_texgen_reflection)
+	    case D3DTSS_TCI_CAMERASPACENORMAL:
+	      {
+		float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glLoadIdentity();
+                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                glPopMatrix();
+
+		glEnable(GL_TEXTURE_GEN_S);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB);
+                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB)");
+		glEnable(GL_TEXTURE_GEN_T);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB);
+                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB)");
+		glEnable(GL_TEXTURE_GEN_R);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+		glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB);
+                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB)");
+	      }
+	      break;
+#endif
+
+#if defined(GL_ARB_texture_cube_map) || defined(GL_NV_texgen_reflection)
+	    case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
+	      {
+
+		float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glLoadIdentity();
+                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                glPopMatrix();
+		
+		glEnable(GL_TEXTURE_GEN_S);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB)");
+		glEnable(GL_TEXTURE_GEN_T);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB)");
+		glEnable(GL_TEXTURE_GEN_R);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+		glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB)");
+	      }
+	      break;
+#endif
+
             /* Unhandled types: */
-            case D3DTSS_TCI_CAMERASPACENORMAL:
-            case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
             default:
                 /* Todo: */
-                /* ? disable GL_TEXTURE_GEN_n ? */
+                /* ? disable GL_TEXTURE_GEN_n ? */ 
+	        glDisable(GL_TEXTURE_GEN_S);
+	        glDisable(GL_TEXTURE_GEN_T);
+	        glDisable(GL_TEXTURE_GEN_R);
                 FIXME("Unhandled D3DTSS_TEXCOORDINDEX %lx\n", Value);
                 break;
             }
@@ -4283,34 +4404,54 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ValidateDevice(LPDIRECT3DDEVICE8 iface, DW
     TRACE("(%p) : stub\n", This);    /* FIXME: Needs doing, but called often and is harmless */
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetInfo(LPDIRECT3DDEVICE8 iface, DWORD DevInfoID,void* pDevInfoStruct,DWORD DevInfoStructSize) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetInfo(LPDIRECT3DDEVICE8 iface, DWORD DevInfoID, void* pDevInfoStruct, DWORD DevInfoStructSize) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber,CONST PALETTEENTRY* pEntries) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : setting p[%u] <= RGBA(%02x,%02x,%02x,%02x)\n", This, PaletteNumber,
+          pEntries->peRed, pEntries->peGreen, pEntries->peBlue, pEntries->peFlags);
+    memcpy(&This->palettes[PaletteNumber], pEntries, 256 * sizeof(PALETTEENTRY));
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber,PALETTEENTRY* pEntries) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, PALETTEENTRY* pEntries) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    memcpy(pEntries, &This->palettes[PaletteNumber], 256 * sizeof(PALETTEENTRY));
+    FIXME("(%p) : returning p[%u] => RGBA(%02x,%02x,%02x,%02x)\n", This, PaletteNumber,
+          pEntries->peRed, pEntries->peGreen, pEntries->peBlue, pEntries->peFlags);
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : Setting to (%u)\n", This, PaletteNumber);
+    This->currentPalette = PaletteNumber;
+#if defined(GL_EXT_paletted_texture)
+    glColorTableEXT(GL_TEXTURE_2D,    /* target */
+		    GL_RGBA,          /* internal format */
+		    256,              /* table size */
+		    GL_RGBA,          /* table format */
+		    GL_UNSIGNED_BYTE, /* table type */
+		    &This->palettes[PaletteNumber]);
+    checkGLcall("glColorTableEXT");
+#endif
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetCurrentTexturePalette(LPDIRECT3DDEVICE8 iface, UINT *PaletteNumber) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    *PaletteNumber = This->currentPalette;
+    FIXME("(%p) : Returning (%u)\n", This, *PaletteNumber);
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT StartVertex,UINT PrimitiveCount) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) {
 
     IDirect3DVertexBuffer8     *pVB;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     pVB = This->StateBlock->stream_source[0];
 
-    TRACE("(%p) : Type=%d, Start=%d, Count=%d\n", This, PrimitiveType, StartVertex, PrimitiveCount);
+    TRACE("(%p) : Type=(%d,%s), Start=%d, Count=%d\n", This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType), StartVertex, PrimitiveCount);
 
     DrawPrimitiveI(iface, PrimitiveType, PrimitiveCount, FALSE,
                    This->StateBlock->VertexShader, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory, StartVertex, -1, 0, NULL, 0);
@@ -4328,7 +4469,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
     pIB = This->StateBlock->pIndexData;
     pVB = This->StateBlock->stream_source[0];
 
-    TRACE("(%p) : Type=%d, min=%d, CountV=%d, startIdx=%d, countP=%d \n", This, PrimitiveType,
+    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, countP=%d \n", This, 
+          PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
           minIndex, NumVertices, startIndex, primCount);
 
     IDirect3DIndexBuffer8Impl_GetDesc(pIB, &IdxBufDsc);
@@ -4347,7 +4489,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT PrimitiveCount,CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    TRACE("(%p) : Type=%d, pCount=%d, pVtxData=%p, Stride=%d\n", This, PrimitiveType, PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
+    TRACE("(%p) : Type=(%d,%s), pCount=%d, pVtxData=%p, Stride=%d\n", This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType), 
+          PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
 
     if (This->StateBlock->stream_source[0] != NULL) IDirect3DVertexBuffer8Impl_Release(This->StateBlock->stream_source[0]);
 
@@ -4366,7 +4509,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVICE8 i
                                                              UINT VertexStreamZeroStride) {
     int idxStride;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : Type=%d, MinVtxIdx=%d, NumVIdx=%d, PCount=%d, pidxdata=%p, IdxFmt=%d, pVtxdata=%p, stride=%d\n", This, PrimitiveType,
+    TRACE("(%p) : Type=(%d,%s), MinVtxIdx=%d, NumVIdx=%d, PCount=%d, pidxdata=%p, IdxFmt=%d, pVtxdata=%p, stride=%d\n", This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
           MinVertexIndex, NumVertexIndices, PrimitiveCount, pIndexData,  IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 
     if (This->StateBlock->stream_source[0] != NULL) IDirect3DVertexBuffer8Impl_Release(This->StateBlock->stream_source[0]);
@@ -4612,7 +4755,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface,
     *pHandle = VS_HIGHESTFIXEDFXF + i;
 
     object->function = pFunction;
-    for (i = 0; 0xFFFFFFFF != pFunction[i]; ++i) ;
+    for (i = 0; D3DPS_END() != pFunction[i]; ++i) ;
     object->functionLength = i + 1;
 
     return D3D_OK;

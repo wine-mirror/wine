@@ -30,7 +30,7 @@
 
 #include "d3d8_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 /**
  * DirectX9 SDK download
@@ -65,7 +65,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
  */
 
 /** Vertex Shader Declaration data types tokens */
-static CONST char* VertexShaderDeclDataTypes [] = {
+#define MAX_VSHADER_DECL_TYPES 8
+static CONST char* VertexShaderDeclDataTypes[] = {
   "D3DVSDT_FLOAT1",
   "D3DVSDT_FLOAT2",
   "D3DVSDT_FLOAT3",
@@ -77,7 +78,7 @@ static CONST char* VertexShaderDeclDataTypes [] = {
   NULL
 };
 
-static CONST char* VertexShaderDeclRegister [] = {
+static CONST char* VertexShaderDeclRegister[] = {
   "D3DVSDE_POSITION",
   "D3DVSDE_BLENDWEIGHT",
   "D3DVSDE_BLENDINDICES",
@@ -99,7 +100,7 @@ static CONST char* VertexShaderDeclRegister [] = {
 };
 
 /** todo check decl validity */
-inline static DWORD Direct3DVextexShaderDeclarationImpl_ParseToken(const DWORD* pToken) {
+/*inline static*/ DWORD Direct3DVextexShaderDeclarationImpl_ParseToken(const DWORD* pToken) {
   const DWORD token = *pToken;
   DWORD tokenlen = 1;
 
@@ -143,16 +144,24 @@ inline static DWORD Direct3DVextexShaderDeclarationImpl_ParseToken(const DWORD* 
       TRACE(" 0x%08lx CONST(%lu, %lu)\n", token, constaddress, count);
       ++pToken;
       for (i = 0; i < count; ++i) {
+#if 0
 	TRACE("        c[%lu] = (0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n", 
 		constaddress, 
 		*pToken, 
 		*(pToken + 1), 
 		*(pToken + 2), 
 		*(pToken + 3));
+#endif
+	TRACE("        c[%lu] = (%8f, %8f, %8f, %8f)\n", 
+		constaddress, 
+		 *(float*) pToken, 
+		 *(float*) (pToken + 1), 
+		 *(float*) (pToken + 2), 
+		 *(float*) (pToken + 3));
 	pToken += 4; 
 	++constaddress;
       }
-      tokenlen = count + 1;
+      tokenlen = (4 * count) + 1;
     }
     break;
   case D3DVSD_TOKEN_EXT:
@@ -225,7 +234,11 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	default: 
 	  /** errooooorr mismatched use of a register, invalid fvf computing */
 	  invalid_fvf = TRUE;
-	  TRACE("Mismatched use in VertexShader declaration of D3DVSDE_POSITION register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
+	  if (type >= MAX_VSHADER_DECL_TYPES) {
+	    TRACE("Mismatched use in VertexShader declaration of D3DVSDE_POSITION register: unsupported and unrecognized type %08lx\n", type);
+	  } else {
+	    TRACE("Mismatched use in VertexShader declaration of D3DVSDE_POSITION register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
+	  }
 	}
 	break;
 
@@ -354,7 +367,8 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* T
   SHORT u, v, r, t;
   DWORD dw;
 
-  /*TRACE("(%p) - This:%p - stream:%p, startIdx=%lu, idxDecal=%lu\n", vshader, This, vertexFirstStream, StartVertexIndex, idxDecal);*/
+  TRACE("(%p) - This:%p - stream:%p, startIdx=%lu, idxDecal=%lu\n", vshader, This, vertexFirstStream, StartVertexIndex, idxDecal);
+
   while (D3DVSD_END() != *pToken) {
     token = *pToken;
     tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);

@@ -41,19 +41,62 @@ enum x11drv_escape_codes
     X11DRV_GET_FONT,      /* get current X font for a DC */
 };
 
-#define NUM_MODES 10
-static const int modes[NUM_MODES][3] = {
-    {640, 480, 85},
-    {800, 600, 85},
-    {1024, 768, 85},
-    {1152, 864, 85},
-    {1280, 768, 85},
-    {1280, 960, 85},
-    {1280, 1024, 85},
-    {1600, 900, 85},
-    {1600, 1024, 85},
-    {1600, 1200, 85}
+#define NUM_MODES 20
+static const int modes[NUM_MODES][4] = {
+    {640, 480, 85, 16},
+    {640, 480, 85, 32},
+
+    {800, 600, 85, 16},
+    {800, 600, 85, 32},
+
+    {1024, 768, 85, 16},
+    {1024, 768, 85, 32},
+
+    {1152, 864, 85, 16},
+    {1152, 864, 85, 32},
+
+    {1280, 768, 85, 16},
+    {1280, 768, 85, 32},
+
+    {1280, 960, 85, 16},
+    {1280, 960, 85, 32},
+
+    {1280, 1024, 85, 16},
+    {1280, 1024, 85, 32},
+
+    {1600, 900, 85, 16},
+    {1600, 900, 85, 32},
+
+    {1600, 1024, 85, 16},
+    {1600, 1024, 85, 32},
+
+    {1600, 1200, 85, 16},
+    {1600, 1200, 85, 32}
 };
+
+#define NUM_FORMATS 7
+static const D3DFORMAT device_formats[NUM_FORMATS] = {
+  D3DFMT_P8,
+  D3DFMT_R3G3B2,
+  D3DFMT_R5G6B5, 
+  D3DFMT_X1R5G5B5,
+  D3DFMT_X4R4G4B4,
+  D3DFMT_R8G8B8,
+  D3DFMT_X8R8G8B8
+};
+
+inline static int get_bpp_from_format(D3DFORMAT fmt) {
+  switch (fmt) {
+  case D3DFMT_P8:        return  8;
+  case D3DFMT_R3G3B2:    return  8;
+  case D3DFMT_R5G6B5:    return 16;
+  case D3DFMT_X1R5G5B5:  return 16;
+  case D3DFMT_X4R4G4B4:  return 16;
+  case D3DFMT_R8G8B8:    return 24;
+  case D3DFMT_X8R8G8B8:  return 32;
+  default:               return 16;
+  }
+}
 
 /* retrieve the X display to use on a given DC */
 inline static Display *get_display( HDC hdc )
@@ -132,7 +175,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
         pIdentifier->SubSysId = 0;
         pIdentifier->Revision = 0;
         /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
-        if (Flags & D3DENUM_NO_WHQL_LEVEL ) {
+        if (Flags & D3DENUM_NO_WHQL_LEVEL) {
             pIdentifier->WHQLLevel = 0;
         } else {
             pIdentifier->WHQLLevel = 1;
@@ -159,12 +202,14 @@ UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
         int maxHeight       = GetSystemMetrics(SM_CYSCREEN);
         int i;
 
-        for (i=0; i<NUM_MODES; i++) {
+        for (i = 0; i < NUM_MODES; i++) {
             if (modes[i][0] > maxWidth || modes[i][1] > maxHeight) {
-                return i+1;
+  	        TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, i + 1);
+                return i + 1;
             }
         }
-        return NUM_MODES+1;
+	TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, NUM_MODES);
+        return NUM_MODES + 1;
     } else {
         FIXME("Adapter not primary display\n");
     }
@@ -176,7 +221,7 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
                                                             UINT Adapter, UINT Mode, D3DDISPLAYMODE* pMode) {
     ICOM_THIS(IDirect3D8Impl,iface);
 
-    TRACE("(%p}->(Adapter: %d, mode: %d, pMode=%p)\n", This, Adapter, Mode, pMode);
+    TRACE("(%p}->(Adapter:%d, mode:%d, pMode:%p)\n", This, Adapter, Mode, pMode);
 
     if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
@@ -190,27 +235,29 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
             pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
             pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
             pMode->RefreshRate  = 85; /*FIXME: How to identify? */
-        } else if (Mode < (NUM_MODES+1)) {
-            pMode->Width        = modes[Mode-1][0];
-            pMode->Height       = modes[Mode-1][1];
-            pMode->RefreshRate  = modes[Mode-1][2];
+	    bpp                 = 32;
+        } else if (Mode < (NUM_MODES + 1)) {
+            pMode->Width        = modes[Mode - 1][0];
+            pMode->Height       = modes[Mode - 1][1];
+            pMode->RefreshRate  = modes[Mode - 1][2];
+	    bpp                 = modes[Mode - 1][3];
         } else {
             TRACE("Requested mode out of range %d\n", Mode);
             return D3DERR_INVALIDCALL;
         }
 
         hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        bpp = GetDeviceCaps(hdc, BITSPIXEL);
+        bpp = min(GetDeviceCaps(hdc, BITSPIXEL), bpp);
         DeleteDC(hdc);
 
         switch (bpp) {
-        case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
-        case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
-        case 24: pMode->Format       = D3DFMT_R5G6B5;   break; /* Make 24bit appear as 16 bit */
-        case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
-        default: pMode->Format       = D3DFMT_UNKNOWN;
+        case  8: pMode->Format = D3DFMT_R3G3B2;   break;
+        case 16: pMode->Format = D3DFMT_R5G6B5;   break;
+        case 24: /* pMode->Format = D3DFMT_R5G6B5;   break;*/ /* Make 24bit appear as 16 bit */
+        case 32: pMode->Format = D3DFMT_A8R8G8B8; break;
+        default: pMode->Format = D3DFMT_UNKNOWN;
         }
-        TRACE("W %d H %d rr %d fmt %x\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format);
+        TRACE("W %d H %d rr %d fmt (%x,%s) bpp %u\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
 
     } else {
         FIXME("Adapter not primary display\n");
@@ -243,7 +290,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
         switch (bpp) {
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
         case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
-        case 24: pMode->Format       = D3DFMT_R5G6B5;   break; /* Make 24bit appear as 16 bit */
+        case 24: /*pMode->Format       = D3DFMT_R5G6B5;   break;*/ /* Make 24bit appear as 16 bit */
         case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
         default: pMode->Format       = D3DFMT_UNKNOWN;
         }
@@ -261,8 +308,13 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
                                                             D3DFORMAT BackBufferFormat, BOOL Windowed) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, CheckType:%x, DispFmt:%x, BackBuf:%x, Win? %d): stub\n", This, Adapter, CheckType,
-          DisplayFormat, BackBufferFormat, Windowed);
+    FIXME("(%p)->(Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
+	  This, 
+	  Adapter, 
+	  CheckType, debug_d3ddevicetype(CheckType),
+          DisplayFormat, debug_d3dformat(DisplayFormat),
+	  BackBufferFormat, debug_d3dformat(BackBufferFormat),
+	  Windowed);
     return D3D_OK;
 }
 
@@ -270,9 +322,16 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
                                                             DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, DevType: %x, AdptFmt: %d, Use: %ld, ResTyp: %x, CheckFmt: %d)\n", This, Adapter, DeviceType,
-          AdapterFormat, Usage, RType, CheckFormat);
-    switch(CheckFormat) {
+    FIXME("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n", 
+          This, 
+	  Adapter, 
+	  DeviceType, debug_d3ddevicetype(DeviceType), 
+	  AdapterFormat, debug_d3dformat(AdapterFormat), 
+	  Usage, debug_d3dusage(Usage),
+	  RType, debug_d3dressourcetype(RType), 
+	  CheckFormat, debug_d3dformat(CheckFormat));
+
+    switch (CheckFormat) {
     case D3DFMT_UYVY:
     case D3DFMT_YUY2:
     case D3DFMT_DXT1:
@@ -283,11 +342,12 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
     case D3DFMT_X8L8V8U8:
     case D3DFMT_L6V5U5:
     case D3DFMT_V8U8:
-	   /* Since we do not support these formats right now, don't pretend to. */
-	   return D3DERR_NOTAVAILABLE;
-	default:
-            break;
+      /* Since we do not support these formats right now, don't pretend to. */
+      return D3DERR_NOTAVAILABLE;
+    default:
+      break;
     }
+
     return D3D_OK;
 }
 
@@ -295,17 +355,46 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
                                                             BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, DevType: %x, SurfFmt: %x, Win? %d, MultiSamp: %x)\n", This, Adapter, DeviceType,
-          SurfaceFormat, Windowed, MultiSampleType);
-    return D3D_OK;
+    FIXME("(%p)->(Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x)\n", 
+	  This, 
+	  Adapter, 
+	  DeviceType, debug_d3ddevicetype(DeviceType),
+          SurfaceFormat, debug_d3dformat(SurfaceFormat),
+	  Windowed, 
+	  MultiSampleType);
+  
+    if (D3DMULTISAMPLE_NONE == MultiSampleType)
+      return D3D_OK;
+    return D3DERR_NOTAVAILABLE;
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch     (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
                                                             D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, DevType: %x, AdptFmt: %x, RendrTgtFmt: %x, DepthStencilFmt: %x)\n", This, Adapter, DeviceType,
-          AdapterFormat, RenderTargetFormat, DepthStencilFormat);
+    FIXME("(%p)->(Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
+	  This, 
+	  Adapter, 
+	  DeviceType, debug_d3ddevicetype(DeviceType),
+          AdapterFormat, debug_d3dformat(AdapterFormat),
+	  RenderTargetFormat, debug_d3dformat(RenderTargetFormat), 
+	  DepthStencilFormat, debug_d3dformat(DepthStencilFormat));
+
+#if 0
+    switch (DepthStencilFormat) {
+    case D3DFMT_D24X4S4:
+    case D3DFMT_D24X8: 
+    case D3DFMT_D24S8: 
+    case D3DFMT_D32:
+      /**
+       * as i don't know how to really check hard caps of graphics cards
+       * i prefer to not permit 32bit zbuffers enumeration (as few cards can do it)
+       */
+      return D3DERR_NOTAVAILABLE;
+    default:
+      break;
+    }
+#endif
     return D3D_OK;
 }
 
@@ -384,13 +473,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
                            D3DTEXOPCAPS_MODULATE | D3DTEXOPCAPS_MODULATE2X | D3DTEXOPCAPS_MODULATE4X |
                            D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_SELECTARG2 | D3DTEXOPCAPS_DISABLE;
 #if defined(GL_VERSION_1_3)
-    pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3;
+    pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3 | D3DTEXOPCAPS_SUBTRACT;
 #endif
               /* FIXME: Add D3DTEXOPCAPS_ADDSMOOTH D3DTEXOPCAPS_BLENDCURRENTALPHA D3DTEXOPCAPS_BLENDDIFFUSEALPHA D3DTEXOPCAPS_BLENDFACTORALPHA 
                             D3DTEXOPCAPS_BLENDTEXTUREALPHA D3DTEXOPCAPS_BLENDTEXTUREALPHAPM D3DTEXOPCAPS_BUMPENVMAP D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
                             D3DTEXOPCAPS_LERP D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA 
                             D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA D3DTEXOPCAPS_MULTIPLYADD 
-                            D3DTEXOPCAPS_PREMODULATE D3DTEXOPCAPS_SUBTRACT */
+                            D3DTEXOPCAPS_PREMODULATE */
 
     {
         GLint gl_max;
@@ -427,8 +516,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
     pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
     pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
 
+#if 0
     pCaps->PixelShaderVersion = D3DPS_VERSION(1,1);
     pCaps->MaxPixelShaderValue = 1.0;
+#else
+    pCaps->PixelShaderVersion = 0;
+    pCaps->MaxPixelShaderValue = 0.0;
+#endif
 
     return D3D_OK;
 }
@@ -478,7 +572,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->CreateParms.hFocusWindow = hFocusWindow;
     object->CreateParms.BehaviorFlags = BehaviourFlags;
 
-    *ppReturnedDeviceInterface = (LPDIRECT3DDEVICE8)object;
+    *ppReturnedDeviceInterface = (LPDIRECT3DDEVICE8) object;
 
     /* Initialize settings */
     object->PresentParms.BackBufferCount = 1; /* Opengl only supports one? */
@@ -488,9 +582,18 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     /* Initialize openGl */
     {
         HDC hDc;
-        int          dblBuf[]={GLX_STENCIL_SIZE,8,GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
+	/*int dblBuf[] = {GLX_STENCIL_SIZE,8,GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};*/
+        int dblBuf[] = {GLX_RGBA, 
+			GLX_STENCIL_SIZE, 8, /*  2 */
+			GLX_DEPTH_SIZE,  16, /*  4 */
+#if 0
+			GLX_RED_SIZE,     8, /*  6 */ 
+			GLX_GREEN_SIZE,   8, /*  8 */
+			GLX_BLUE_SIZE,    8, /* 10 */
+			GLX_ALPHA_SIZE,   8, /* 12 */
+#endif
+			GLX_DOUBLEBUFFER, None};
         /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
-	/*int          dblBuf[]={GLX_RGBA,GLX_RED_SIZE,4,GLX_GREEN_SIZE,4,GLX_BLUE_SIZE,4,GLX_DOUBLEBUFFER,None}; */
 
         /* Which hwnd are we using? */
 /*      if (pPresentationParameters->Windowed) { */
@@ -510,6 +613,39 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         hDc = GetDC(whichHWND);
         object->display = get_display(hDc);
 
+
+	TRACE("(%p)->(DepthStencil:(%u,%s), BackBufferFormat:(%u,%s))\n", This, 
+	      pPresentationParameters->AutoDepthStencilFormat, debug_d3dformat(pPresentationParameters->AutoDepthStencilFormat),
+	      pPresentationParameters->BackBufferFormat, debug_d3dformat(pPresentationParameters->BackBufferFormat));
+
+	
+#if 0
+	if (TRUE == pPresentationParameters->EnableAutoDepthStencil) {
+	  switch (pPresentationParameters->AutoDepthStencilFormat) {
+	  case D3DFMT_D16_LOCKABLE: dblBuf[2] =  8; dblBuf[4] = 16; break;
+	  case D3DFMT_D16:          dblBuf[2] =  8; dblBuf[4] = 16; break;
+	  case D3DFMT_D15S1:        dblBuf[2] =  1; dblBuf[4] = 16; break;
+	  case D3DFMT_D24X4S4:      dblBuf[2] =  4; dblBuf[4] = 24; break;
+	  case D3DFMT_D24S8:        dblBuf[2] =  8; dblBuf[4] = 24; break;
+	  case D3DFMT_D24X8:        dblBuf[2] =  8; dblBuf[4] = 24; break;
+	  case D3DFMT_D32:          dblBuf[2] =  8; dblBuf[4] = 32; break;
+	  default:                  dblBuf[2] =  8; dblBuf[4] = 16; break;
+	  }
+	}
+	
+	switch (pPresentationParameters->BackBufferFormat) {
+	case D3DFMT_R3G3B2:   dblBuf[6] = 3; dblBuf[8] = 3; dblBuf[10] = 2; dblBuf[12] = 0; break;
+	case D3DFMT_R5G6B5:   dblBuf[6] = 5; dblBuf[8] = 6; dblBuf[10] = 5; dblBuf[12] = 0; break;
+	case D3DFMT_X1R5G5B5: dblBuf[6] = 5; dblBuf[8] = 5; dblBuf[10] = 5; dblBuf[12] = 0; break;
+	case D3DFMT_A1R5G5B5: dblBuf[6] = 5; dblBuf[8] = 5; dblBuf[10] = 5; dblBuf[12] = 1; break;
+	case D3DFMT_X4R4G4B4: dblBuf[6] = 4; dblBuf[8] = 4; dblBuf[10] = 4; dblBuf[12] = 0; break;
+	case D3DFMT_R8G8B8:   dblBuf[6] = 8; dblBuf[8] = 8; dblBuf[10] = 8; dblBuf[12] = 0; break;
+	case D3DFMT_X8R8G8B8: dblBuf[6] = 8; dblBuf[8] = 8; dblBuf[10] = 8; dblBuf[12] = 0; break;
+	case D3DFMT_A8R8G8B8: dblBuf[6] = 8; dblBuf[8] = 8; dblBuf[10] = 8; dblBuf[12] = 8; break;
+	default:              dblBuf[6] = 5; dblBuf[8] = 6; dblBuf[10] = 5; dblBuf[12] = 0; break;
+	}
+#endif
+
         ENTER_GL();
 	object->visInfo = glXChooseVisual(object->display, DefaultScreen(object->display), dblBuf);
 	if (NULL == object->visInfo) {
@@ -519,7 +655,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 	   * second try using wine initialized visual ...
 	   * must be fixed reworking wine-glx init
 	   */
-	  template.visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+	  template.visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
 	  object->visInfo = XGetVisualInfo(object->display, VisualIDMask, &template, &num);
 	  if (NULL == object->visInfo) {
 	    ERR("cannot really get XVisual\n"); 
@@ -543,7 +679,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         return D3DERR_INVALIDCALL;
     } else {
         TRACE("Context created (HWND=%p, glContext=%p, Window=%ld, VisInfo=%p)\n",
-			whichHWND, object->glCtx, object->win, object->visInfo);
+	      whichHWND, object->glCtx, object->win, object->visInfo);
     }
 
     /* If not windowed, need to go fullscreen, and resize the HWND to the appropriate  */
@@ -551,7 +687,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     if (!pPresentationParameters->Windowed) {
         FIXME("Requested full screen support not implemented, expect windowed operation\n");
         SetWindowPos(whichHWND, HWND_TOP, 0, 0, pPresentationParameters->BackBufferWidth,
-            pPresentationParameters->BackBufferHeight, SWP_SHOWWINDOW);
+                     pPresentationParameters->BackBufferHeight, SWP_SHOWWINDOW);
     }
 
     TRACE("Creating back buffer\n");
@@ -559,16 +695,16 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
        then the corresponding dimension of the client area of the hDeviceWindow
        (or the focus window, if hDeviceWindow is NULL) is taken. */
     if (pPresentationParameters->Windowed && ((pPresentationParameters->BackBufferWidth  == 0) ||
-                                              (pPresentationParameters->BackBufferHeight  == 0))) {
+                                              (pPresentationParameters->BackBufferHeight == 0))) {
         RECT Rect;
 
         GetClientRect(whichHWND, &Rect);
 
-        if (pPresentationParameters->BackBufferWidth  == 0) {
+        if (pPresentationParameters->BackBufferWidth == 0) {
            pPresentationParameters->BackBufferWidth = Rect.right;
            TRACE("Updating width to %d\n", pPresentationParameters->BackBufferWidth);
         }
-        if (pPresentationParameters->BackBufferHeight  == 0) {
+        if (pPresentationParameters->BackBufferHeight == 0) {
            pPresentationParameters->BackBufferHeight = Rect.bottom;
            TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
         }

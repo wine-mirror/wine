@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 /* Shader debugging - Change the following line to enable debugging of software
       vertex shaders                                                             */
-#if 0
+#if 1
 # define VSTRACE(A) TRACE A
 # define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
 #else 
@@ -603,6 +603,8 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
   TRACE_VECTOR(input->V[D3DVSDE_TEXCOORD0]);
   TRACE_VECTOR(input->V[D3DVSDE_TEXCOORD1]);
 #endif
+
+  TRACE_VECTOR(vshader->data->C[64]);
 
   /* the first dword is the version tag */
   /* TODO: parse it */

@@ -61,7 +61,7 @@ ULONG WINAPI IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface) {
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        for (i=0; i<This->levels; i++) {
+        for (i = 0; i < This->levels; i++) {
             if (This->surfaces[i] != NULL) {
                 TRACE("(%p) : Releasing surface %p\n", This, This->surfaces[i]);
                 IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) This->surfaces[i]);
@@ -98,63 +98,62 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_FreePrivateData(LPDIRECT3DTEXTURE8 
 }
 DWORD    WINAPI        IDirect3DTexture8Impl_SetPriority(LPDIRECT3DTEXTURE8 iface, DWORD PriorityNew) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return 0;
 }
 DWORD    WINAPI        IDirect3DTexture8Impl_GetPriority(LPDIRECT3DTEXTURE8 iface) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return 0;
 }
 void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
     int i;
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     TRACE("(%p) : About to load texture\n", This);
-    for (i=0; i<This->levels; i++) 
-    {
-
-        if (i==0 && This->surfaces[i]->textureName != 0 && This->Dirty == FALSE) {
-            glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
-            checkGLcall("glBindTexture");
-            TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
-            /* No need to walk through all mip-map levels, since already all assigned */
-            i = This->levels;
-
-        } else {
-            if (i==0) {
-
-                if (This->surfaces[i]->textureName == 0) {
-                    glGenTextures(1, &This->surfaces[i]->textureName);
-                    checkGLcall("glGenTextures");
-                    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
-                }
-
-                glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
-                checkGLcall("glBindTexture");
-
-                TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->levels-1);   
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels-1);
-                checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels)");
-
-            }
-            TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
-                  GL_TEXTURE_2D, i, fmt2glintFmt(This->format), This->surfaces[i]->myDesc.Width,
-                  This->surfaces[i]->myDesc.Height, 0, fmt2glFmt(This->format),fmt2glType(This->format),
-                  This->surfaces[i]->allocatedMemory);
-            glTexImage2D(GL_TEXTURE_2D, i,
-                         fmt2glintFmt(This->format),
-                         This->surfaces[i]->myDesc.Width,
-                         This->surfaces[i]->myDesc.Height,
-                         0,
-                         fmt2glFmt(This->format),
-                         fmt2glType(This->format),
-                         This->surfaces[i]->allocatedMemory
-                        );
-            checkGLcall("glTexImage2D");
-
-            /* Removed glTexParameterf now TextureStageStates are initialized at startup */
-            This->Dirty = FALSE;
-        }
+    for (i = 0; i < This->levels; i++) {
+      if (i == 0 && This->surfaces[i]->textureName != 0 && This->Dirty == FALSE) {
+	glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
+	checkGLcall("glBindTexture");
+	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
+	/* No need to walk through all mip-map levels, since already all assigned */
+	i = This->levels;
+      } else {
+	if (i == 0) {
+	  if (This->surfaces[i]->textureName == 0) {
+	    glGenTextures(1, &This->surfaces[i]->textureName);
+	    checkGLcall("glGenTextures");
+	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
+	  }
+	  
+	  glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
+	  checkGLcall("glBindTexture");
+	  
+	  TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->levels - 1);   
+	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels - 1);
+	  checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels)");
+	  
+	}
+	TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
+	      GL_TEXTURE_2D, i, fmt2glintFmt(This->format), 
+	      This->surfaces[i]->myDesc.Width, This->surfaces[i]->myDesc.Height, 
+	      0, fmt2glFmt(This->format), fmt2glType(This->format),
+	      This->surfaces[i]->allocatedMemory);
+	glTexImage2D(GL_TEXTURE_2D, 
+		     i,
+		     fmt2glintFmt(This->format),
+		     This->surfaces[i]->myDesc.Width,
+		     This->surfaces[i]->myDesc.Height,
+		     0,
+		     fmt2glFmt(This->format),
+		     fmt2glType(This->format),
+		     This->surfaces[i]->allocatedMemory);
+	checkGLcall("glTexImage2D");
+	
+	/* Removed glTexParameterf now TextureStageStates are initialized at startup */
+	This->Dirty = FALSE;
+      }
     }
-    return;
+    return ;
 }
 D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
@@ -165,11 +164,13 @@ D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface) {
 /* IDirect3DTexture8 IDirect3DBaseTexture8 Interface follow: */
 DWORD    WINAPI        IDirect3DTexture8Impl_SetLOD(LPDIRECT3DTEXTURE8 iface, DWORD LODNew) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return 0;
 }
 DWORD    WINAPI        IDirect3DTexture8Impl_GetLOD(LPDIRECT3DTEXTURE8 iface) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return 0;
 }
 DWORD    WINAPI        IDirect3DTexture8Impl_GetLevelCount(LPDIRECT3DTEXTURE8 iface) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
@@ -183,7 +184,7 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 ifa
 
     if (Level < This->levels) {
         TRACE("(%p) Level (%d)\n", This, Level);
-        return IDirect3DSurface8Impl_GetDesc((LPDIRECT3DSURFACE8)This->surfaces[Level], pDesc);
+        return IDirect3DSurface8Impl_GetDesc((LPDIRECT3DSURFACE8) This->surfaces[Level], pDesc);
     } else {
         FIXME("(%p) Level (%d)\n", This, Level);
     }
