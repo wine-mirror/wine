@@ -3109,7 +3109,7 @@ BOOL WINAPI CommConfigDialogW(
 }
 
 /***********************************************************************
- *           GetCommConfig     (KERNEL32.283)
+ *           GetCommConfig     (KERNEL32.@)
  *
  * Fill in the COMMCONFIG structure for the comm port hFile
  *
@@ -3126,18 +3126,21 @@ BOOL WINAPI CommConfigDialogW(
  */
 BOOL WINAPI GetCommConfig(
     HANDLE       hFile,        /* [in] The communications device. */
-    LPCOMMCONFIG lpCommConfig) /* [out] The communications configuration of the device (if it fits). */
-#if 0 /* FIXME: Why is this "commented" out? */
+    LPCOMMCONFIG lpCommConfig, /* [out] The communications configuration of the device (if it fits). */
     LPDWORD      lpdwSize)     /* [in/out] Initially the size of the configuration buffer/structure,
                                   afterwards the number of bytes copied to the buffer or 
                                   the needed size of the buffer. */
-#endif
 {
     BOOL r;
 
     TRACE("(%x %p)\n",hFile,lpCommConfig);
 
     if(lpCommConfig == NULL)
+        return FALSE;
+
+    r = *lpdwSize < sizeof(COMMCONFIG);
+    *lpdwSize = sizeof(COMMCONFIG);
+    if(!r)   
         return FALSE;
 
     lpCommConfig->dwSize = sizeof(COMMCONFIG);

@@ -1333,7 +1333,7 @@ BOOL      WINAPI FreeEnvironmentStringsW(LPWSTR);
 VOID        WINAPI FreeLibraryAndExitThread(HINSTANCE,DWORD);
 PVOID       WINAPI FreeSid(PSID);
 UINT        WINAPI GetACP(void);
-BOOL        WINAPI GetCommConfig(HANDLE,LPCOMMCONFIG);
+BOOL        WINAPI GetCommConfig(HANDLE,LPCOMMCONFIG,LPDWORD);
 BOOL        WINAPI GetCommMask(HANDLE,LPDWORD);
 BOOL        WINAPI GetCommModemStatus(HANDLE,LPDWORD);
 BOOL        WINAPI GetCommProperties(HANDLE,LPCOMMPROP);

@@ -324,7 +324,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall GetBinaryTypeA(ptr ptr) GetBinaryTypeA
 @ stdcall GetBinaryTypeW(ptr ptr) GetBinaryTypeW
 @ stdcall GetCPInfo(long ptr) GetCPInfo
-@ stdcall GetCommConfig(long ptr) GetCommConfig
+@ stdcall GetCommConfig(long ptr long) GetCommConfig
 @ stdcall GetCommMask(long ptr) GetCommMask
 @ stdcall GetCommModemStatus(long ptr) GetCommModemStatus
 @ stdcall GetCommProperties(long ptr) GetCommProperties
