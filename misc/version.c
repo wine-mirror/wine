@@ -317,6 +317,32 @@ WINDOWS_VERSION VERSION_GetVersion(void)
 	return pdb->winver;
 }
 
+/**********************************************************************
+ *         VERSION_AppWinVer
+ * Returns the window version in case Wine emulates a later version
+ * of windows then the application expects.
+ * 
+ * In a number of cases when windows runs an application that was
+ * designed for an earlier windows version, windows reverts
+ * to "old" behaviour of that earlier version.
+ * 
+ * An example is a disabled  edit control that needs to be painted. 
+ * Old style behaviour is to send a WM_CTLCOLOREDIT message. This was 
+ * changed in Win95, NT4.0 by a WM_CTLCOLORSTATIC message _only_ for 
+ * applications with an expected version 0f 4.0 or higher.
+ * 
+ */
+DWORD VERSION_AppWinVer(void)
+{
+    WINDOWS_VERSION ver = VERSION_GetVersion();
+    DWORD dwEmulatedVersion=MAKELONG( VersionData[ver].getVersionEx.dwMinorVersion, 
+                    VersionData[ver].getVersionEx.dwMajorVersion);
+    /* fixme: this may not be 100% correct; see discussion on the
+     * wine developer list in Nov 1999 */
+    DWORD dwProcVersion = GetProcessVersion(0);
+    return dwProcVersion < dwEmulatedVersion ? dwProcVersion : dwEmulatedVersion; 
+}
+
 
 /**********************************************************************
  *         VERSION_GetVersionName

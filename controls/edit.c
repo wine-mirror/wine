@@ -23,6 +23,7 @@
 #include "debugtools.h"
 #include "callback.h"
 #include "tweak.h"
+#include "winversion.h"
 
 DECLARE_DEBUG_CHANNEL(combo)
 DECLARE_DEBUG_CHANNEL(edit)
@@ -3103,7 +3104,8 @@ static LRESULT EDIT_WM_EraseBkGnd(WND *wnd, EDITSTATE *es, HDC dc)
 	HBRUSH brush;
 	RECT rc;
 
-        if (!es->bEnableState || (es->style & ES_READONLY))
+        if ( VERSION_AppWinVer() >= 0x40000 &&(
+                    !es->bEnableState || (es->style & ES_READONLY)))
                 brush = (HBRUSH)EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else
                 brush = (HBRUSH)EDIT_SEND_CTLCOLOR(wnd, dc);
@@ -3710,7 +3712,8 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 	}
 	if (es->font)
 		old_font = SelectObject(dc, es->font);
-        if (!es->bEnableState || (es->style & ES_READONLY))
+        if ( VERSION_AppWinVer() >= 0x40000 &&(
+                    !es->bEnableState || (es->style & ES_READONLY)))
                 EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else
                 EDIT_SEND_CTLCOLOR(wnd, dc);
