@@ -1994,13 +1994,12 @@ typedef struct tagNMTVGETINFOTIPW
 
 
 
-
-
-
-
 #define TreeView_InsertItemA(hwnd, phdi) \
   (INT)SendMessageA((hwnd), TVM_INSERTITEMA, 0, \
                             (LPARAM)(LPTVINSERTSTRUCTA)(phdi))
+#define TreeView_InsertItemW(hwnd,phdi) \
+  (INT)SendMessageW((hwnd), TVM_INSERTITEMW, 0, \
+                            (LPARAM)(LPTVINSERTSTRUCTW)(phdi))  
 #define TreeView_DeleteItem(hwnd, hItem) \
   (BOOL)SendMessageA((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
 #define TreeView_DeleteAllItems(hwnd) \

@@ -1870,7 +1870,55 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
    return (LRESULT) iItem;
 }
+static LRESULT
+TREEVIEW_InsertItemW(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TVINSERTSTRUCTW *tvisW;
+    TVINSERTSTRUCTA tvisA;
+    LRESULT lRes;
 
+    tvisW = (LPTVINSERTSTRUCTW)lParam;
+
+    tvisA.hParent = tvisW->hParent;
+    tvisA.hInsertAfter = tvisW->hInsertAfter;
+
+    tvisA.DUMMYUNIONNAME.item.mask           = tvisW->DUMMYUNIONNAME.item.mask;
+    tvisA.DUMMYUNIONNAME.item.hItem          = tvisW->DUMMYUNIONNAME.item.hItem;
+    tvisA.DUMMYUNIONNAME.item.state          = tvisW->DUMMYUNIONNAME.item.state;
+    tvisA.DUMMYUNIONNAME.item.stateMask      = tvisW->DUMMYUNIONNAME.item.stateMask;
+    tvisA.DUMMYUNIONNAME.item.cchTextMax     = tvisW->DUMMYUNIONNAME.item.cchTextMax;
+
+    if(tvisW->DUMMYUNIONNAME.item.pszText)
+    {
+	if (tvisW->DUMMYUNIONNAME.item.pszText!=LPSTR_TEXTCALLBACKW) 
+	{ 
+	    int len = lstrlenW (tvisW->DUMMYUNIONNAME.item.pszText)+1;
+	    tvisA.DUMMYUNIONNAME.item.pszText = COMCTL32_Alloc (len);
+	    lstrcpyWtoA (tvisA.DUMMYUNIONNAME.item.pszText,
+			 tvisW->DUMMYUNIONNAME.item.pszText );
+	}
+	else 
+	{
+	    tvisA.DUMMYUNIONNAME.item.pszText = LPSTR_TEXTCALLBACKA;
+	    tvisA.DUMMYUNIONNAME.item.cchTextMax = 0;
+	}
+    }
+
+    tvisA.DUMMYUNIONNAME.item.iImage         = tvisW->DUMMYUNIONNAME.item.iImage;
+    tvisA.DUMMYUNIONNAME.item.iSelectedImage = tvisW->DUMMYUNIONNAME.item.iSelectedImage;
+    tvisA.DUMMYUNIONNAME.item.cChildren      = tvisW->DUMMYUNIONNAME.item.cChildren;
+    tvisA.DUMMYUNIONNAME.item.lParam         = tvisW->DUMMYUNIONNAME.item.lParam;
+
+    lRes = TREEVIEW_InsertItemA(hwnd,wParam,(LPARAM)&tvisA);
+
+    if (tvisA.DUMMYUNIONNAME.item.pszText!=LPSTR_TEXTCALLBACKA) 
+    {
+	COMCTL32_Free(tvisA.DUMMYUNIONNAME.item.pszText);
+    }
+
+    return lRes;
+
+}
 
 
 
@@ -3458,8 +3506,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
           return TREEVIEW_InsertItemA (hwnd, wParam, lParam);
 
     	case TVM_INSERTITEMW:
-      		FIXME("Unimplemented msg TVM_INSERTITEM32W\n");
-      		return 0;
+      		return TREEVIEW_InsertItemW(hwnd,wParam,lParam);;
 
     	case TVM_DELETEITEM:
       		return TREEVIEW_DeleteItem (hwnd, wParam, lParam);
@@ -3715,4 +3762,6 @@ TREEVIEW_Unregister (void)
     if (GlobalFindAtomA (WC_TREEVIEWA))
 	UnregisterClassA (WC_TREEVIEWA, (HINSTANCE)NULL);
 }
+
+
 

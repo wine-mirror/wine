@@ -150,7 +150,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	        tvins.hInsertAfter = hPrev;
 	        tvins.hParent      = hParent;
 
-	        hPrev = (HTREEITEM)TreeView_InsertItemA (hwndTreeView, &tvins);
+	        hPrev = (HTREEITEM)TreeView_InsertItemW (hwndTreeView, &tvins);
 
 	      }
 	    }
