@@ -1,6 +1,7 @@
 name	shell
 type	win16
 owner	shell32
+rsrc	version16.res
 
   1 pascal   RegOpenKey(long str ptr) RegOpenKey16
   2 pascal   RegCreateKey(long str ptr) RegCreateKey16

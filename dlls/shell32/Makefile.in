@@ -45,7 +45,15 @@ C_SRCS = \
 	systray.c
 
 RC_SRCS= shres.rc
+RC_SRCS16 = version16.rc
 
 @MAKE_DLL_RULES@
+
+# Special rules for 16-bit resource files
+
+version16.res: version16.rc
+	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/version16.rc
+
+shell.spec.c: version16.res
 
 ### Dependencies:

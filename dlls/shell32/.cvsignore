@@ -3,3 +3,4 @@ shell.spec.c
 shell32.dll.dbg.c
 shell32.spec.c
 shres.res
+version16.res
