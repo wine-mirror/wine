@@ -1063,6 +1063,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
            data->client_rect.right, data->client_rect.bottom,
            (unsigned int)data->whole_window, (unsigned int)data->client_window );
 
+    /* yes, even if the CBT hook was called with HWND_TOP */
     if ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
         WIN_LinkWindow( hwnd, wndPtr->parent, HWND_BOTTOM );
     else

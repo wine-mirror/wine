@@ -591,7 +591,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     {
 	case HCBT_CREATEWND:
 	{
-	    DWORD style;
+	    LONG style;
 	    CBT_CREATEWNDA *createwnd = (CBT_CREATEWNDA *)lParam;
 	    trace("HCBT_CREATEWND: hwnd %p, parent %p, style %08lx\n",
 		  (HWND)wParam, createwnd->lpcs->hwndParent, createwnd->lpcs->style);
@@ -954,12 +954,13 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
 
             if (GetWindowLongA(cs->hwndParent, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
             {
-                ok(cs->style == (mdi_cs->style | WS_CHILD | WS_CLIPSIBLINGS),
+                LONG style = mdi_cs->style | WS_CHILD | WS_CLIPSIBLINGS;
+                ok(cs->style == style,
                    "cs->style does not match (%08lx)\n", cs->style);
             }
             else
             {
-                DWORD style = mdi_cs->style;
+                LONG style = mdi_cs->style;
                 style &= ~WS_POPUP;
                 style |= WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION |
                     WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
@@ -1222,6 +1223,66 @@ static void test_SetMenu(HWND parent)
     DestroyMenu(hMenu);
 }
 
+static void test_window_tree(HWND parent, const DWORD *style, const int *order, int total)
+{
+    HWND child[5], hwnd;
+    int i;
+
+    assert(total <= 5);
+
+    hwnd = GetWindow(parent, GW_CHILD);
+    ok(!hwnd, "have to start without children to perform the test\n");
+
+    for (i = 0; i < total; i++)
+    {
+        child[i] = CreateWindowExA(0, "static", "", style[i], 0,0,10,10,
+                                   parent, 0, 0, NULL);
+        trace("child[%d] = %p\n", i, child[i]);
+        ok(child[i] != 0, "CreateWindowEx failed to create child window\n");
+    }
+
+    hwnd = GetWindow(parent, GW_CHILD);
+    ok(hwnd != 0, "GetWindow(GW_CHILD) failed\n");
+    ok(hwnd == GetWindow(child[total - 1], GW_HWNDFIRST), "GW_HWNDFIRST is wrong\n");
+
+    for (i = 0; i < total; i++)
+    {
+        trace("hwnd[%d] = %p\n", i, hwnd);
+        ok(child[order[i]] == hwnd, "Z order of child #%d is wrong\n", i);
+
+        hwnd = GetWindow(hwnd, GW_HWNDNEXT);
+    }
+
+    for (i = 0; i < total; i++)
+        ok(DestroyWindow(child[i]), "DestroyWindow failed\n");
+}
+
+static void test_children_zorder(HWND parent)
+{
+    const DWORD simple_style[5] = { WS_CHILD, WS_CHILD, WS_CHILD, WS_CHILD,
+                                    WS_CHILD };
+    const int simple_order[5] = { 0, 1, 2, 3, 4 };
+
+    const DWORD complex_style[5] = { WS_CHILD, WS_CHILD | WS_MAXIMIZE,
+                             WS_CHILD | WS_VISIBLE, WS_CHILD,
+                             WS_CHILD | WS_MAXIMIZE | WS_VISIBLE };
+    const int complex_order_1[1] = { 0 };
+    const int complex_order_2[2] = { 1, 0 };
+    const int complex_order_3[3] = { 1, 0, 2 };
+    const int complex_order_4[4] = { 1, 0, 2, 3 };
+    const int complex_order_5[5] = { 4, 1, 0, 2, 3 };
+
+    /* simple WS_CHILD */
+    test_window_tree(parent, simple_style, simple_order, 5);
+
+    /* complex children styles */
+    test_window_tree(parent, complex_style, complex_order_1, 1);
+    test_window_tree(parent, complex_style, complex_order_2, 2);
+    test_window_tree(parent, complex_style, complex_order_3, 3);
+    test_window_tree(parent, complex_style, complex_order_4, 4);
+    test_window_tree(parent, complex_style, complex_order_5, 5);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -1251,6 +1312,8 @@ START_TEST(win)
     test_icons();
     test_SetWindowPos(hwndMain);
     test_SetMenu(hwndMain);
+
+    test_children_zorder(hwndMain);
 
     UnhookWindowsHookEx(hhook);
 }
