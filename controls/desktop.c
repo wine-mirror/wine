@@ -24,8 +24,11 @@ DESKTOP_DRIVER *DESKTOP_Driver = NULL;
  */
 BOOL DESKTOP_IsSingleWindow()
 {
+  BOOL retvalue;
   DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-  return MONITOR_IsSingleWindow(pDesktop->pPrimaryMonitor);
+  retvalue = MONITOR_IsSingleWindow(pDesktop->pPrimaryMonitor);
+  WIN_ReleaseDesktop();
+  return retvalue;
 }
 
 /***********************************************************************
