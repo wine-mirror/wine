@@ -200,10 +200,6 @@ typedef struct {
     HANDLE			hThread;
     DWORD			dwThreadID;
     OSS_MSG_RING		msgRing;
-
-    /* DirectSound stuff */
-    LPBYTE			mapping;
-    DWORD			maplen;
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -221,10 +217,6 @@ typedef struct {
     DWORD			dwThreadID;
     HANDLE			hStartUpEvent;
     OSS_MSG_RING		msgRing;
-
-    /* DirectSound stuff */
-    LPBYTE                      mapping;
-    DWORD                       maplen;
 } WINE_WAVEIN;
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEDRV];
@@ -1699,10 +1691,6 @@ static DWORD wodClose(WORD wDevID)
 	if (wwo->hThread != INVALID_HANDLE_VALUE) {
 	    OSS_AddRingMessage(&wwo->msgRing, WINE_WM_CLOSING, 0, TRUE);
 	}
-	if (wwo->mapping) {
-	    munmap(wwo->mapping, wwo->maplen);
-	    wwo->mapping = NULL;
-	}
 
         OSS_DestroyRingMessage(&wwo->msgRing);
 
@@ -2100,6 +2088,8 @@ struct IDsDriverBufferImpl
     IDsDriverImpl*              drv;
     DWORD                       buflen;
     WAVEFORMATEX                wfx;
+    LPBYTE                      mapping;
+    DWORD                       maplen;
 
     /* IDsDriverNotifyImpl fields */
     IDsDriverNotifyImpl*        notify;
@@ -2318,28 +2308,27 @@ ICOM_VTABLE(IDsDriverNotify) dsdnvt =
  *                  Low level DSOUND implementation                     *
  *======================================================================*/
 
-static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
+static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
 {
-    WINE_WAVEOUT *wwo = &(WOutDev[dsdb->drv->wDevID]);
     TRACE("(%p)\n",dsdb);
-    if (!wwo->mapping) {
-	wwo->mapping = mmap(NULL, wwo->maplen, PROT_WRITE, MAP_SHARED,
-			    wwo->ossdev->fd, 0);
-	if (wwo->mapping == (LPBYTE)-1) {
-	    TRACE("(%p): Could not map sound device for direct access (%s)\n", dsdb, strerror(errno));
-	    return DSERR_GENERIC;
-	}
-	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, wwo->mapping, wwo->maplen);
+    if (!dsdb->mapping) {
+        dsdb->mapping = mmap(NULL, dsdb->maplen, PROT_WRITE, MAP_SHARED,
+                             WOutDev[dsdb->drv->wDevID].ossdev->fd, 0);
+        if (dsdb->mapping == (LPBYTE)-1) {
+            TRACE("(%p): Could not map sound device for direct access (%s)\n", dsdb, strerror(errno));
+            return DSERR_GENERIC;
+        }
+        TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, dsdb->mapping, dsdb->maplen);
 
 	/* for some reason, es1371 and sblive! sometimes have junk in here.
 	 * clear it, or we get junk noise */
 	/* some libc implementations are buggy: their memset reads from the buffer...
 	 * to work around it, we have to zero the block by hand. We don't do the expected:
-	 * memset(wwo->mapping,0, wwo->maplen);
+	 * memset(dsdb->mapping,0, dsdb->maplen);
 	 */
 	{
-	    unsigned char*	p1 = wwo->mapping;
-	    unsigned		len = wwo->maplen;
+            unsigned char*      p1 = dsdb->mapping;
+            unsigned            len = dsdb->maplen;
 	    unsigned char	silence = (dsdb->wfx.wBitsPerSample == 8) ? 128 : 0;
 	    unsigned long	ulsilence = (dsdb->wfx.wBitsPerSample == 8) ? 0x80808080 : 0;
 
@@ -2363,17 +2352,16 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
     return DS_OK;
 }
 
-static HRESULT DSDB_UnmapPrimary(IDsDriverBufferImpl *dsdb)
+static HRESULT DSDB_UnmapBuffer(IDsDriverBufferImpl *dsdb)
 {
-    WINE_WAVEOUT *wwo = &(WOutDev[dsdb->drv->wDevID]);
     TRACE("(%p)\n",dsdb);
-    if (wwo->mapping) {
-	if (munmap(wwo->mapping, wwo->maplen) < 0) {
-	    ERR("(%p): Could not unmap sound device (%s)\n", dsdb, strerror(errno));
-	    return DSERR_GENERIC;
-	}
-	wwo->mapping = NULL;
-	TRACE("(%p): sound device unmapped\n", dsdb);
+    if (dsdb->mapping) {
+        if (munmap(dsdb->mapping, dsdb->maplen) < 0) {
+            ERR("(%p): Could not unmap sound device (%s)\n", dsdb, strerror(errno));
+            return DSERR_GENERIC;
+        }
+        dsdb->mapping = NULL;
+        TRACE("(%p): sound device unmapped\n", dsdb);
     }
     return DS_OK;
 }
@@ -2440,7 +2428,7 @@ static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
     }
     if (This == This->drv->primary)
 	This->drv->primary = NULL;
-    DSDB_UnmapPrimary(This);
+    DSDB_UnmapBuffer(This);
     HeapFree(GetProcessHeap(),0,This);
     TRACE("ref=0\n");
     return 0;
@@ -2753,15 +2741,16 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
 
     /* check how big the DMA buffer is now */
     if (ioctl(WOutDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
-	ERR("ioctl(%s, SNDCTL_DSP_GETOSPACE) failed (%s)\n", WOutDev[This->wDevID].ossdev->dev_name, strerror(errno));
+        ERR("ioctl(%s, SNDCTL_DSP_GETOSPACE) failed (%s)\n",
+            WOutDev[This->wDevID].ossdev->dev_name, strerror(errno));
 	HeapFree(GetProcessHeap(),0,*ippdsdb);
 	*ippdsdb = NULL;
 	return DSERR_GENERIC;
     }
-    WOutDev[This->wDevID].maplen = (*ippdsdb)->buflen = info.fragstotal * info.fragsize;
+    (*ippdsdb)->maplen = (*ippdsdb)->buflen = info.fragstotal * info.fragsize;
 
     /* map the DMA buffer */
-    err = DSDB_MapPrimary(*ippdsdb);
+    err = DSDB_MapBuffer(*ippdsdb);
     if (err != DS_OK) {
 	HeapFree(GetProcessHeap(),0,*ippdsdb);
 	*ippdsdb = NULL;
@@ -2769,8 +2758,8 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     }
 
     /* primary buffer is ready to go */
-    *pdwcbBufferSize	= WOutDev[This->wDevID].maplen;
-    *ppbBuffer		= WOutDev[This->wDevID].mapping;
+    *pdwcbBufferSize    = (*ippdsdb)->maplen;
+    *ppbBuffer          = (*ippdsdb)->mapping;
 
     /* some drivers need some extra nudging after mapping */
     WOutDev[This->wDevID].ossdev->bOutputEnabled = FALSE;
@@ -3685,6 +3674,8 @@ struct IDsCaptureDriverBufferImpl
     DWORD                               buflen;
     LPBYTE                              buffer;
     DWORD                               writeptr;
+    LPBYTE                              mapping;
+    DWORD                               maplen;
 
     /* IDsDriverNotifyImpl fields */
     IDsCaptureDriverNotifyImpl*         notify;
@@ -3903,58 +3894,29 @@ ICOM_VTABLE(IDsDriverNotify) dscdnvt =
  *                  Low level DSOUND capture implementation             *
  *======================================================================*/
 
-static HRESULT DSDB_MapCapture(IDsCaptureDriverBufferImpl *dscdb)
+static HRESULT DSCDB_MapBuffer(IDsCaptureDriverBufferImpl *dscdb)
 {
-    WINE_WAVEIN *wwi = &(WInDev[dscdb->drv->wDevID]);
-    if (!wwi->mapping) {
-	wwi->mapping = mmap(NULL, wwi->maplen, PROT_WRITE, MAP_SHARED,
-			    wwi->ossdev->fd, 0);
-	if (wwi->mapping == (LPBYTE)-1) {
-	    TRACE("(%p): Could not map sound device for direct access (%s)\n", dscdb, strerror(errno));
-	    return DSERR_GENERIC;
-	}
-	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dscdb, wwi->mapping, wwi->maplen);
-
-	/* for some reason, es1371 and sblive! sometimes have junk in here.
-	 * clear it, or we get junk noise */
-	/* some libc implementations are buggy: their memset reads from the buffer...
-	 * to work around it, we have to zero the block by hand. We don't do the expected:
-	 * memset(wwo->mapping,0, wwo->maplen);
-	 */
-	{
-	    char*	p1 = wwi->mapping;
-	    unsigned	len = wwi->maplen;
-
-	    if (len >= 16) /* so we can have at least a 4 long area to store... */
-	    {
-		/* the mmap:ed value is (at least) dword aligned
-		 * so, start filling the complete unsigned long:s
-		 */
-		int		b = len >> 2;
-		unsigned long*	p4 = (unsigned long*)p1;
-
-		while (b--) *p4++ = 0;
-		/* prepare for filling the rest */
-		len &= 3;
-		p1 = (unsigned char*)p4;
-	    }
-	    /* in all cases, fill the remaining bytes */
-	    while (len-- != 0) *p1++ = 0;
-	}
+    if (!dscdb->mapping) {
+        dscdb->mapping = mmap(NULL, dscdb->maplen, PROT_READ, MAP_SHARED,
+                              WInDev[dscdb->drv->wDevID].ossdev->fd, 0);
+        if (dscdb->mapping == (LPBYTE)-1) {
+            TRACE("(%p): Could not map sound device for direct access (%s)\n", dscdb, strerror(errno));
+            return DSERR_GENERIC;
+        }
+        TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dscdb, dscdb->mapping, dscdb->maplen);
     }
     return DS_OK;
 }
 
-static HRESULT DSDB_UnmapCapture(IDsCaptureDriverBufferImpl *dscdb)
+static HRESULT DSCDB_UnmapBuffer(IDsCaptureDriverBufferImpl *dscdb)
 {
-    WINE_WAVEIN *wwi = &(WInDev[dscdb->drv->wDevID]);
-    if (wwi->mapping) {
-	if (munmap(wwi->mapping, wwi->maplen) < 0) {
-	    ERR("(%p): Could not unmap sound device (%s)\n", dscdb, strerror(errno));
-	    return DSERR_GENERIC;
-	}
-	wwi->mapping = NULL;
-	TRACE("(%p): sound device unmapped\n", dscdb);
+    if (dscdb->mapping) {
+        if (munmap(dscdb->mapping, dscdb->maplen) < 0) {
+            ERR("(%p): Could not unmap sound device (%s)\n", dscdb, strerror(errno));
+            return DSERR_GENERIC;
+        }
+        dscdb->mapping = NULL;
+        TRACE("(%p): sound device unmapped\n", dscdb);
     }
     return DS_OK;
 }
@@ -4014,7 +3976,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     if (--This->ref)
 	return This->ref;
-    DSDB_UnmapCapture(This);
+    DSCDB_UnmapBuffer(This);
     if (This->notify)
 	IDsDriverNotify_Release((PIDSDRIVERNOTIFY)This->notify);
     if (This->property_set)
@@ -4306,10 +4268,10 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
 	*ippdscdb = NULL;
 	return DSERR_GENERIC;
     }
-    WInDev[This->wDevID].maplen = (*ippdscdb)->buflen = info.fragstotal * info.fragsize;
+    (*ippdscdb)->maplen = (*ippdscdb)->buflen = info.fragstotal * info.fragsize;
 
     /* map the DMA buffer */
-    err = DSDB_MapCapture(*ippdscdb);
+    err = DSCDB_MapBuffer(*ippdscdb);
     if (err != DS_OK) {
 	HeapFree(GetProcessHeap(),0,*ippdscdb);
 	*ippdscdb = NULL;
@@ -4317,8 +4279,8 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
     }
 
     /* capture buffer is ready to go */
-    *pdwcbBufferSize	= WInDev[This->wDevID].maplen;
-    *ppbBuffer		= WInDev[This->wDevID].mapping;
+    *pdwcbBufferSize    = (*ippdscdb)->maplen;
+    *ppbBuffer          = (*ippdscdb)->mapping;
 
     /* some drivers need some extra nudging after mapping */
     WInDev[This->wDevID].ossdev->bInputEnabled = FALSE;
