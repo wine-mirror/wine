@@ -722,8 +722,8 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    infoPtr->AccelVect = 0;
 	    infoPtr->AccelIndex = -1;
 	    infoPtr->CurVal = 0;
-	    infoPtr->MinVal = 0;
-	    infoPtr->MaxVal = 9999;
+	    infoPtr->MinVal = 100;
+	    infoPtr->MaxVal = 0;
 	    infoPtr->Base  = 10; /* Default to base 10  */
 	    infoPtr->Buddy = 0;  /* No buddy window yet */
 	    infoPtr->Flags = 0;  /* And no flags        */
