@@ -9,7 +9,6 @@
 #include "wine/winbase16.h"
 #include "hook.h"
 #include "callback.h"
-#include "task.h"
 #include "user.h"
 #include "heap.h"
 #include "module.h"
