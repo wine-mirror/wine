@@ -80,6 +80,7 @@ DLLs (under dlls/):
 	msacm/msadp32/		- MS ADPCM Audio Codec
 	msacm/msg711/		- MS G711 Audio Codec (includes A-Law & MU-Law)
 	msacm/winemp3/		- Mpeg Layer 3 Audio Codec
+	mscms/			- Color Management System
 	msdmo/			- DirectX Media Objects
 	mshtml/			- MS HTML component
 	msi/			- Microsoft Installer

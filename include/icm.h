@@ -98,6 +98,14 @@ typedef struct tagPROFILE {
     DWORD cbDataSize;
 } PROFILE, *PPROFILE, *LPPROFILE;
 
+HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
+HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);
+#define    OpenColorProfile WINELIB_NAME_AW(OpenColorProfile)
+BOOL       WINAPI CloseColorProfile(HPROFILE);
+
+#define PROFILE_FILENAME    1
+#define PROFILE_MEMBUFFER   2
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = mscms.dll
+IMPORTS   = kernel32
+EXTRALIBS = @LCMSLIBS@
+
+C_SRCS = \
+	mscms_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

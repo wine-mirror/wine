@@ -631,6 +631,15 @@ AC_CHECK_HEADERS(libaudioio.h,
                   [AUDIOIOLIBS="-laudioio"
                    AC_DEFINE(HAVE_LIBAUDIOIO, 1, [Define if you have libaudioIO])])])
 
+dnl **** Check for lcms ****
+
+AC_CHECK_HEADERS(lcms.h,
+    [AC_CHECK_LIB(lcms,cmsOpenProfileFromFile,
+        [AC_DEFINE(HAVE_LCMS,1,[Define if you have lcms libs and headers])
+         AC_SUBST(LCMSLIBS,"-llcms")
+    ])
+])
+
 dnl **** Check for capi4linux ****
 
 AC_CHECK_HEADERS(capi20.h,[
@@ -1596,6 +1605,7 @@ dlls/msacm/msadp32/Makefile
 dlls/msacm/msg711/Makefile
 dlls/msacm/winemp3/Makefile
 dlls/msacm/tests/Makefile
+dlls/mscms/Makefile
 dlls/msdmo/Makefile
 dlls/mshtml/Makefile
 dlls/msi/Makefile

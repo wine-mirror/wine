@@ -76,6 +76,7 @@ BASEDIRS = \
 	msacm/msadp32 \
 	msacm/msg711 \
 	msacm/winemp3 \
+	mscms \
 	msdmo \
 	mshtml \
 	msi \
@@ -311,6 +312,7 @@ SYMLINKS_SO = \
 	msacm.drv.so \
 	msacm32.dll.so \
 	msadp32.acm.so \
+	mscms.dll.so \
 	msdmo.dll.so \
 	msg711.acm.so \
 	mshtml.dll.so \
@@ -644,6 +646,9 @@ msacm.dll.so : msacm32.dll.so
 
 msadp32.acm.so: msacm/msadp32/msadp32.acm.so
 	$(RM) $@ && $(LN_S) msacm/msadp32/msadp32.acm.so $@
+
+mscms.dll.so: mscms/mscms.dll.so
+	$(RM) $@ && $(LN_S) mscms/mscms.dll.so $@
 
 msdmo.dll.so: msdmo/msdmo.dll.so
 	$(RM) $@ && $(LN_S) msdmo/msdmo.dll.so $@
@@ -1025,6 +1030,7 @@ IMPORT_LIBS = \
 	libmlang.$(IMPLIBEXT) \
 	libmpr.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
+	libmscms.$(IMPLIBEXT) \
 	libmsdmo.$(IMPLIBEXT) \
 	libmshtml.$(IMPLIBEXT) \
 	libmsi.$(IMPLIBEXT) \
@@ -1388,6 +1394,11 @@ libmsacm32.def: msacm/msacm32.spec.def
 	$(RM) $@ && $(LN_S) msacm/msacm32.spec.def $@
 libmsacm32.a: msacm/msacm32.spec.def
 	$(DLLTOOL) -k -l $@ -d msacm/msacm32.spec.def
+
+libmscms.def: mscms/mscms.spec.def
+	$(RM) $@ && $(LN_S) mscms/mscms.spec.def $@
+libmscms.a: mscms/mscms.spec.def
+	$(DLLTOOL) -k -l $@ -d mscms/mscms.spec.def
 
 libmsdmo.def: msdmo/msdmo.spec.def
 	$(RM) $@ && $(LN_S) msdmo/msdmo.spec.def $@
@@ -1777,6 +1788,7 @@ mapi32/mapi32.spec.def: $(WINEBUILD)
 mlang/mlang.spec.def: $(WINEBUILD)
 mpr/mpr.spec.def: $(WINEBUILD)
 msacm/msacm32.spec.def: $(WINEBUILD)
+mscms/mscms.spec.def: $(WINEBUILD)
 msdmo/msdmo.spec.def: $(WINEBUILD)
 mshtml/mshtml.spec.def: $(WINEBUILD)
 msi/msi.spec.def: $(WINEBUILD)
@@ -1921,6 +1933,7 @@ mpr/mpr.dll.so: mpr
 winmm/wavemap/msacm.drv.so: winmm/wavemap
 msacm/msacm32.dll.so: msacm
 msacm/msadp32/msadp32.acm.so: msacm/msadp32
+mscms/mscms.dll.so: mscms
 msdmo/msdmo.dll.so: msdmo
 msacm/msg711/msg711.acm.so: msacm/msg711
 mshtml/mshtml.dll.so: mshtml

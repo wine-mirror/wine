@@ -239,6 +239,12 @@
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
+/* Define if you have lcms libs and headers */
+#undef HAVE_LCMS
+
+/* Define to 1 if you have the <lcms.h> header file. */
+#undef HAVE_LCMS_H
+
 /* Define if you have libaudioIO */
 #undef HAVE_LIBAUDIOIO
 
