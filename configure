@@ -6231,7 +6231,6 @@ dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
-dlls/wnaspi32/Makefile
 documentation/Makefile
 documentation/wine.conf.man
 documentation/wine.man
@@ -6447,7 +6446,6 @@ dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
-dlls/wnaspi32/Makefile
 documentation/Makefile
 documentation/wine.conf.man
 documentation/wine.man

@@ -1,17 +1,18 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winaspi
+MODULE    = wnaspi32
+SOVERSION = 1.0
+ALTNAMES  = winaspi
 
-SPEC_SRCS = winaspi.spec
+SPEC_SRCS = wnaspi32.spec winaspi.spec
 
 C_SRCS = \
-	winaspi16.c
+	aspi.c \
+	winaspi16.c \
+	winaspi32.c
 
-all: $(MODULE).o
-
-@MAKE_RULES@
+@MAKE_DLL_RULES@
 
 ### Dependencies:

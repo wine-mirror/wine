@@ -12,7 +12,9 @@
 
 #include "winbase.h"
 #include "aspi.h"
+#include "winescsi.h"
 #include "winaspi.h"
+#include "winescsi.h"
 #include "options.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -520,33 +522,3 @@ DWORD WINAPI GetASPIDLLVersion16()
 #endif
 }
 
-
-void WINAPI ASPI_DOS_func(CONTEXT86 *context)
-{
-	WORD *stack = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
-	DWORD ptrSRB = *(DWORD *)&stack[2];
-
-	ASPI_SendASPICommand(ptrSRB, ASPI_DOS);
-
-	/* simulate a normal RETF sequence as required by DPMI CallRMProcFar */
-	EIP_reg(context) = *(stack++);
-	CS_reg(context)  = *(stack++);
-	ESP_reg(context) += 2*sizeof(WORD);
-}
-
-
-/* returns the address of a real mode callback to ASPI_DOS_func() */
-void ASPI_DOS_HandleInt(CONTEXT86 *context)
-{
-#ifdef linux
-	FARPROC16 *p = (FARPROC16 *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
-	if ((CX_reg(context) == 4) || (CX_reg(context) == 5))
-	{
-	*p = DPMI_AllocInternalRMCB(ASPI_DOS_func);
-	TRACE("allocated real mode proc %p\n", *p);
-	    AX_reg(context) = CX_reg(context);
-	}
-	else
-#endif
-	SET_CFLAG(context);
-}

@@ -37,7 +37,6 @@ LIBSUBDIRS = \
 	dlls/mouse \
 	dlls/mpr \
 	dlls/ntdll \
-	dlls/winaspi \
 	files \
 	graphics \
 	graphics/enhmetafiledrv \
@@ -114,7 +113,6 @@ LIBOBJS = \
 	dlls/mouse/mouse.o \
 	dlls/mpr/mpr.o \
 	dlls/ntdll/ntdll.o \
-	dlls/winaspi/winaspi.o \
 	files/files.o \
 	graphics/graphics.o \
 	graphics/enhmetafiledrv/enhmetafiledrv.o \

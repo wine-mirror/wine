@@ -7,6 +7,7 @@ MODULE    = msdos
 
 C_SRCS = \
 	devices.c \
+	dosaspi.c \
 	dosconf.c \
 	dosmem.c \
 	dpmi.c \

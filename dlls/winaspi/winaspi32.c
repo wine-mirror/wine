@@ -12,6 +12,7 @@
 #include "winbase.h"
 #include "aspi.h"
 #include "wnaspi32.h"
+#include "winescsi.h"
 #include "options.h"
 #include "heap.h"
 #include "debugtools.h"
