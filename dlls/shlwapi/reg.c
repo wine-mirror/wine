@@ -1240,6 +1240,8 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
   if (pcbData) dwUnExpDataLen = *pcbData;
 
   dwRet = RegQueryValueExW(hKey, lpszValue, lpReserved, &dwType, pvData, &dwUnExpDataLen);
+  if (dwRet!=ERROR_SUCCESS && dwRet!=ERROR_MORE_DATA)
+      return dwRet;
 
   if (pcbData && (dwType == REG_EXPAND_SZ))
   {
@@ -1248,7 +1250,7 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
     /* Expand type REG_EXPAND_SZ into REG_SZ */
     LPWSTR szData;
 
-    /* If the caller didn't supply a buffer or the buffer is to small we have
+    /* If the caller didn't supply a buffer or the buffer is too small we have
      * to allocate our own
      */
     if ((!pvData) || (dwRet == ERROR_MORE_DATA) )
