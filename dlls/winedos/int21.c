@@ -1730,7 +1730,7 @@ static void INT21_LongFilename( CONTEXT86 *context )
     switch (AL_reg(context))
     {
     case 0x0d: /* RESET DRIVE */
-        INT_Int21Handler( context );
+        INT_BARF( context, 0x21 );
         break;
 
     case 0x39: /* LONG FILENAME - MAKE DIRECTORY */
@@ -1790,14 +1790,73 @@ static void INT21_LongFilename( CONTEXT86 *context )
     case 0x6c: /* LONG FILENAME - CREATE OR OPEN FILE */
     case 0xa0: /* LONG FILENAME - GET VOLUME INFORMATION */
     case 0xa1: /* LONG FILENAME - "FindClose" - TERMINATE DIRECTORY SEARCH */
-    case 0xa6: /* LONG FILENAME - GET FILE INFO BY HANDLE */
-    case 0xa7: /* LONG FILENAME - CONVERT TIME */
-    case 0xa8: /* LONG FILENAME - GENERATE SHORT FILENAME */
-    case 0xa9: /* LONG FILENAME - SERVER CREATE OR OPEN FILE */
-    case 0xaa: /* LONG FILENAME - SUBST */
         INT_Int21Handler( context );
         break;
 
+    case 0xa6: /* LONG FILENAME - GET FILE INFO BY HANDLE */
+        {
+            HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
+            BY_HANDLE_FILE_INFORMATION *info =
+                CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+            
+            TRACE( "LONG FILENAME - GET FILE INFO BY HANDLE\n" );
+            
+            if (!GetFileInformationByHandle(handle, info))
+                bSetDOSExtendedError = TRUE;
+        }
+        break;
+
+    case 0xa7: /* LONG FILENAME - CONVERT TIME */
+        switch (BL_reg(context))
+        {
+        case 0x00: /* FILE TIME TO DOS TIME */
+            {
+                WORD      date, time;
+                FILETIME *filetime = CTX_SEG_OFF_TO_LIN(context,
+                                                        context->SegDs,
+                                                        context->Esi);
+
+                TRACE( "LONG FILENAME - FILE TIME TO DOS TIME\n" );
+
+                FileTimeToDosDateTime( filetime, &date, &time );
+
+                SET_DX( context, date );
+                SET_CX( context, time );
+
+                /*
+                 * FIXME: BH has number of 10-millisecond units 
+                 * past time in CX.
+                 */
+                SET_BH( context, 0 );
+            }
+            break;
+
+        case 0x01: /* DOS TIME TO FILE TIME */
+            {
+                FILETIME *filetime = CTX_SEG_OFF_TO_LIN(context,
+                                                        context->SegEs,
+                                                        context->Edi);
+
+                TRACE( "LONG FILENAME - DOS TIME TO FILE TIME\n" );
+
+                /*
+                 * FIXME: BH has number of 10-millisecond units 
+                 * past time in CX.
+                 */
+                DosDateTimeToFileTime( DX_reg(context), CX_reg(context),
+                                       filetime );
+            }
+            break;
+
+        default:
+            INT_BARF( context, 0x21 );
+            break;
+        }
+        break;
+
+    case 0xa8: /* LONG FILENAME - GENERATE SHORT FILENAME */
+    case 0xa9: /* LONG FILENAME - SERVER CREATE OR OPEN FILE */
+    case 0xaa: /* LONG FILENAME - SUBST */
     default:
         INT_BARF( context, 0x21 );
     }
