@@ -109,10 +109,21 @@ enum IMAGE {
 #define	Frame_CalcFrameClient(hwnd, prt) ((BOOL)SNDMSG(hwnd, FRM_CALC_CLIENT, 0, (LPARAM)(PRECT)prt))
 
 
+#ifndef _NO_EXTENSIONS
+#define	_SHELL_FOLDERS
+
+#include <objbase.h>
+#include <shlobj.h>
+#endif
+
+
 typedef struct
 {
   HANDLE	hInstance;
   HACCEL	haccel;
+  ATOM			hframeClass;
+  HWND			hwndParent;
+
   HWND		hMainWnd;
   HMENU		hMenuFrame;
   HMENU		hWindowsMenu;
@@ -133,6 +144,12 @@ typedef struct
   BOOL		prescan_node;	/*TODO*/
 
   UINT		wStringTableOffset;
+
+#ifdef _SHELL_FOLDERS
+  IShellFolder*	iDesktop;
+  IMalloc*		iMalloc;
+  UINT			cfStrFName;
+#endif
 } WINEFILE_GLOBALS;
 
 extern WINEFILE_GLOBALS Globals;
