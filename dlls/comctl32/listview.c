@@ -7382,8 +7382,11 @@ static INT WINAPI LISTVIEW_CallBackCompare(
 static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-    int nCount;
+    int nCount, i;
     UINT lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+    HDPA *hdpaSubItems=NULL;
+    LISTVIEW_ITEM *pLVItem=NULL;
+
 
     if (lStyle & LVS_OWNERDATA)
       return FALSE;
@@ -7399,6 +7402,20 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	infoPtr->lParamSort = (LPARAM)wParam;
 	
         DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, hwnd);
+    }
+
+    /* Adjust selections so that they are the way they should be after
+       the sort (otherwise, the list items move around, but whatever
+       is at the item's previous original position will be selected instead) */
+    for (i=0; i < nCount; i++)
+    {
+       hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
+       pLVItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
+
+       if (pLVItem->state & LVIS_SELECTED)
+          LISTVIEW_AddSelectionRange(hwnd, i, i);
+       else
+          LISTVIEW_RemoveSelectionRange(hwnd, i, i);
     }
 
     /* align the items */
