@@ -34,8 +34,8 @@ FONTFAMILY *PSDRV_AFMFontList = NULL;
  */
 static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 {
-    char line[256], valbuf[256];
-    char *cp, *item, *value, *curpos, *endpos;
+    unsigned char line[256], valbuf[256];
+    unsigned char *cp, *item, *value, *curpos, *endpos;
     int i;
     AFMMETRICS *metric;
 
@@ -63,7 +63,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    while(isspace(*value))
 	        value++;
 	    cp = endpos = strchr(value, ';');
-	    if (!cp) { ERR("missing ;, failed.\n"); return; }
+	    if (!cp) { ERR("missing ;, failed. [%s]\n", line); return; }
 	    while(isspace(*--cp))
 	        ;
 	    memcpy(valbuf, value, cp - value + 1);
@@ -126,11 +126,12 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 static AFM *PSDRV_AFMParse(char const *file)
 {
     FILE *fp;
-    char buf[256];
-    char *value;
+    unsigned char buf[256];
+    unsigned char *value;
     AFM *afm;
-    char *cp;
+    unsigned char *cp;
     int afmfile = 0; 
+    int c;
 
     TRACE("parsing '%s'\n", file);
 
@@ -146,31 +147,29 @@ static AFM *PSDRV_AFMParse(char const *file)
     }
 
     cp = buf; 
-    while ( ( *cp = fgetc ( fp ) ) != EOF ) {
-      if ( *cp == '\r' || *cp == '\n' || cp - buf == sizeof(buf)-1 ) {
-	if ( cp == buf ) 
-	  continue;
-	*(cp+1)='\0';
-      }
-      else {
-	cp ++; 
-	continue;
-      }
-      
-      cp = buf + strlen(buf);
-      do {
-	  *cp = '\0';
-	    cp--;
-	} while(cp > buf && isspace(*cp));
-	cp = buf; 
-
-	if ( afmfile == 0 && strncmp ( buf, "StartFontMetrics", 16 ) ) {
-	  HeapFree ( PSDRV_Heap, 0, afm ); 
-	  return NULL;
+    while ( ( c = fgetc ( fp ) ) != EOF ) {
+	*cp = c;
+	if ( *cp == '\r' || *cp == '\n' || cp - buf == sizeof(buf)-2 ) {
+	    if ( cp == buf ) 
+		continue;
+	    *(cp+1)='\0';
 	}
 	else {
-	  afmfile = 1; 
+	    cp ++; 
+	    continue;
 	}
+      
+	cp = buf + strlen(buf);
+	do {
+	    *cp = '\0';
+	    cp--;
+	} while(cp > buf && isspace(*cp));
+
+	cp = buf; 
+
+	if ( afmfile == 0 && strncmp ( buf, "StartFontMetrics", 16 ) )
+	    break;
+	afmfile = 1; 
 
         value = strchr(buf, ' ');
 	if(value)
@@ -276,8 +275,15 @@ static AFM *PSDRV_AFMParse(char const *file)
     }
     fclose(fp);
 
-    if(afm->FontName == NULL)
+    if (afmfile == 0) {
+	HeapFree ( PSDRV_Heap, 0, afm ); 
+	return NULL;
+    }
+
+    if(afm->FontName == NULL) {
         WARN("%s contains no FontName.\n", file);
+	afm->FontName = HEAP_strdupA(PSDRV_Heap, 0, "nofont");
+    }
     if(afm->FullName == NULL)
         afm->FullName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
     if(afm->FamilyName == NULL)
