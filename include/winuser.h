@@ -2060,6 +2060,7 @@ typedef PVOID *LPMENUTEMPLATE;
 #define SS_RIGHTJUST        0x00000400L
 #define SS_REALSIZEIMAGE    0x00000800L
 #define SS_SUNKEN           0x00001000L
+#define SS_ENDELLIPSIS      0x00004000L
 
 /* Static Control Messages */
 #define STM_SETICON       0x0170
