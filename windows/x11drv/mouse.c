@@ -33,7 +33,6 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
     Pixmap pixmapBits, pixmapMask, pixmapAll;
     XColor fg, bg;
     Cursor cursor = None;
-    BOOL DesktopWinExists = FALSE;
 
     if (!ptr)  /* Create an empty cursor */
     {
@@ -144,32 +143,6 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
     if (X11DRV_MOUSE_XCursor != None) XFreeCursor( display, X11DRV_MOUSE_XCursor );
     X11DRV_MOUSE_XCursor = cursor;
 
-    if (WIN_GetDesktop() != NULL)
-    {
-		DesktopWinExists = TRUE;
-		WIN_ReleaseDesktop();
-	}
-    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display) || !DesktopWinExists)
-    {
-        /* Set the cursor on the desktop window */
-        XDefineCursor( display, X11DRV_GetXRootWindow(), cursor );
-    }
-    else
-    {
-        /* FIXME: this won't work correctly with native USER !*/
-
-        /* Set the same cursor for all top-level windows */
-        HWND hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
-        while(hwnd)
-        {
-            WND *tmpWnd = WIN_FindWndPtr(hwnd);
-            Window win = X11DRV_WND_FindXWindow(tmpWnd );
-            if (win && win!=DefaultRootWindow(display))
-                XDefineCursor( display, win, cursor );
-            hwnd = GetWindow( hwnd, GW_HWNDNEXT );
-            WIN_ReleaseWndPtr(tmpWnd);
-        }
-    }
     return TRUE;
 }
 
@@ -178,11 +151,37 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
  */
 void X11DRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
 {
-    WIN_LockWnds();
+    BOOL success;
+
     EnterCriticalSection( &X11DRV_CritSection );
-    CALL_LARGE_STACK( X11DRV_MOUSE_DoSetCursor, lpCursor );
+    success = CALL_LARGE_STACK( X11DRV_MOUSE_DoSetCursor, lpCursor );
     LeaveCriticalSection( &X11DRV_CritSection );
-    WIN_UnlockWnds();
+    if ( !success ) return;
+
+    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display))
+    {
+        /* If in desktop mode, set the cursor on the desktop window */
+
+        XDefineCursor( display, X11DRV_GetXRootWindow(), X11DRV_MOUSE_XCursor );
+    }
+    else
+    {
+        /* Else, set the same cursor for all top-level windows */
+
+        /* FIXME: we should not reference USER internals here, but native USER 
+                  works only in desktop mode anyway, so this should not matter */
+
+        HWND hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
+        while(hwnd)
+        {
+            WND *tmpWnd = WIN_FindWndPtr(hwnd);
+            Window win = X11DRV_WND_FindXWindow(tmpWnd );
+            if (win && win!=DefaultRootWindow(display))
+                XDefineCursor( display, win, X11DRV_MOUSE_XCursor );
+            hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+            WIN_ReleaseWndPtr(tmpWnd);
+        }
+    }
 }
 
 /***********************************************************************
