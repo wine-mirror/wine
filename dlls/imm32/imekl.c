@@ -12,6 +12,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "winnls.h"
 #include "winreg.h"
 #include "immddk.h"
 

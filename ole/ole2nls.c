@@ -723,7 +723,7 @@ static char *GetLocaleSubkeyName( DWORD lctype )
 /******************************************************************************
  *		SetLocaleInfoA	[KERNEL32.@]
  */
-BOOL WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
+BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
 {
     HKEY    hKey;
     char    *pacKey;
@@ -2458,13 +2458,13 @@ static inline int OLE2NLS_EstimateMappingLength(LCID lcid, DWORD dwMapFlags,
  * 
  * Quite inefficient.
  */
-UINT WINAPI CompareStringA(
-    DWORD lcid,     /* [in] locale ID */
+int WINAPI CompareStringA(
+    LCID lcid,      /* [in] locale ID */
     DWORD fdwStyle, /* [in] comparison-style options */
     LPCSTR s1,      /* [in] first string */
-    DWORD l1,       /* [in] length of first string */
+    int l1,         /* [in] length of first string */
     LPCSTR s2,      /* [in] second string */
-    DWORD l2)       /* [in] length of second string */
+    int l2)         /* [in] length of second string */
 {
   int mapstring_flags;
   int len1,len2;
@@ -2524,8 +2524,8 @@ UINT WINAPI CompareStringA(
  * FIXME :  Does only string sort.  Should
  * be reimplemented the same way as CompareStringA.
  */
-UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle, 
-                               LPCWSTR s1, DWORD l1, LPCWSTR s2,DWORD l2)
+int WINAPI CompareStringW(LCID lcid, DWORD fdwStyle,
+                          LPCWSTR s1, int l1, LPCWSTR s2, int l2)
 {
 	int len,ret;
 	if(fdwStyle & NORM_IGNORENONSPACE)
@@ -2589,7 +2589,7 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 static INT OLE_GetFormatA(LCID locale,
 			    DWORD flags,
 			    DWORD tflags,
-			    LPSYSTEMTIME xtime,
+			    const SYSTEMTIME* xtime,
 			    LPCSTR _format, 	/*in*/
 			    LPSTR date,		/*out*/
 			    INT datelen)
@@ -2800,7 +2800,7 @@ static INT OLE_GetFormatA(LCID locale,
  * OLE_GetFormatW [INTERNAL]
  */
 static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
-			    LPSYSTEMTIME xtime,
+			    const SYSTEMTIME* xtime,
 			    LPCWSTR format,
 			    LPWSTR output, INT outlen)
 {
@@ -3045,7 +3045,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
  *
  */
 INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
-			      LPSYSTEMTIME xtime,
+			      const SYSTEMTIME* xtime,
 			      LPCSTR format, LPSTR date,INT datelen) 
 {
    
@@ -3120,7 +3120,7 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
  *
  */
 INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
-			      LPSYSTEMTIME xtime,
+			      const SYSTEMTIME* xtime,
 			      LPCWSTR format,
 			      LPWSTR date, INT datelen)
 {
@@ -4161,14 +4161,14 @@ static LCID OLE2NLS_CheckLocale (LCID locale)
 INT WINAPI 
 GetTimeFormatA(LCID locale,        /* [in]  */
 	       DWORD flags,        /* [in]  */
-	       LPSYSTEMTIME xtime, /* [in]  */ 
+	       const SYSTEMTIME* xtime, /* [in]  */
 	       LPCSTR format,      /* [in]  */
 	       LPSTR timestr,      /* [out] */
 	       INT timelen         /* [in]  */) 
 { char format_buf[40];
   LPCSTR thisformat;
   SYSTEMTIME t;
-  LPSYSTEMTIME thistime;
+  const SYSTEMTIME* thistime;
   LCID thislocale=0;
   DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
   INT ret;
@@ -4209,14 +4209,14 @@ GetTimeFormatA(LCID locale,        /* [in]  */
 INT WINAPI 
 GetTimeFormatW(LCID locale,        /* [in]  */
 	       DWORD flags,        /* [in]  */
-	       LPSYSTEMTIME xtime, /* [in]  */ 
+	       const SYSTEMTIME* xtime, /* [in]  */
 	       LPCWSTR format,     /* [in]  */
 	       LPWSTR timestr,     /* [out] */
 	       INT timelen         /* [in]  */) 
 {	WCHAR format_buf[40];
 	LPCWSTR thisformat;
 	SYSTEMTIME t;
-	LPSYSTEMTIME thistime;
+	const SYSTEMTIME* thistime;
 	LCID thislocale=0;
 	DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
 	INT ret;
