@@ -258,6 +258,9 @@ static void test_safearray(void)
 	LONG		l;
 	unsigned char	*ptr1, *ptr2;
 
+	hres = SafeArrayDestroy( NULL);
+	ok( hres == S_OK, "SafeArrayDestroy( NULL) returned 0x%lx\n", hres);
+
 	bound.cElements	= 1;
 	bound.lLbound	= 0;
 	a = SafeArrayCreate(-1, 1, &bound);
