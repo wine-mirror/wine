@@ -793,21 +793,23 @@ UCHAR WINAPI Netbios(PNCB ncb)
 
     if (cmd == NCBENUM)
         ncb->ncb_retcode = ncb->ncb_cmd_cplt = ret = nbEnum(ncb);
+    else if (cmd == NCBADDNAME)
+    {
+        FIXME("NCBADDNAME: stub, returning success");
+        ncb->ncb_retcode = ncb->ncb_cmd_cplt = ret = NRC_GOODRET;
+    }
     else
     {
-        NetBIOSAdapter *adapter = nbGetAdapter(ncb->ncb_lana_num);
+        NetBIOSAdapter *adapter;
 
+        /* Apps not specifically written for WinNT won't do an NCBENUM first,
+         * so make sure the table has been enumerated at least once
+         */
+        if (!gNBTable.enumerated)
+            nbInternalEnum();
+        adapter = nbGetAdapter(ncb->ncb_lana_num);
         if (!adapter)
-        {
-            if (cmd == NCBRESET || cmd == NCBADDNAME)
-            {
-              if (cmd == NCBADDNAME)
-                FIXME("NCBADDNAME: stub, returning success");
-              ret = NRC_GOODRET;
-            }
-            else
-              ret = NRC_BRIDGE;
-	}
+            ret = NRC_BRIDGE;
         else
         {
             if (adapter->shuttingDown)
