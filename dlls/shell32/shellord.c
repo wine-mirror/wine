@@ -1258,3 +1258,8 @@ HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
 {	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",v,w,x,y,z);
 	return 0;
 }
+
+HRESULT shell32_654 (DWORD x, DWORD y)
+{	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,y);
+	return 0;
+}

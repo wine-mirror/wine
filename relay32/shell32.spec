@@ -367,7 +367,7 @@ init	Shell32LibMain
  651 stdcall ReadCabinetState (long long) ReadCabinetState 
  652 stdcall WriteCabinetState (long) WriteCabinetState
  653 stdcall PathProcessCommand (long long long long) PathProcessCommand
-
+ 654 stdcall shell32_654 (long long) shell32_654
  660 stdcall FileIconInit (long) FileIconInit
 
  680 stdcall IsUserAdmin () IsUserAdmin
