@@ -15,6 +15,7 @@ C_SRCS = \
 	joystick.c \
 	lolvldrv.c \
 	mci.c \
+	message16.c \
 	mmio.c \
 	playsound.c \
 	time.c \
