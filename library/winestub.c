@@ -5,6 +5,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "debugtools.h"
 
 extern int PASCAL WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
