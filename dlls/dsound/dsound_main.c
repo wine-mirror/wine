@@ -49,6 +49,7 @@
  * - dsshow.exe, from DirectX 5.2 SDK (1998/12/04):
  *   Initializes the DLL properly with CoCreateInstance(), but the
  *   FileOpen dialog box is broken - could not test properly
+ * - The Dilbert Desktop Game: works (SB16)
  */
 
 #include "config.h"
@@ -241,7 +242,7 @@ static void _dump_DSBCAPS(DWORD xmask) {
 	int	i;
 
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
-		if (flags[i].mask & xmask)
+		if ((flags[i].mask & xmask) == flags[i].mask)
 			DPRINTF("%s ",flags[i].name);
 }
 
@@ -952,7 +953,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER iface)
 
 static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER iface) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-/*	TRACE(dsound,"(%p) ref was %ld\n",This, This->ref); */
+/*	TRACE("(%p) ref was %ld\n",This, This->ref); */
 
 	return ++(This->ref);
 }
@@ -960,7 +961,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	int	i;
 
-/*	TRACE(dsound,"(%p) ref was %ld\n",This, This->ref); */
+/*	TRACE("(%p) ref was %ld\n",This, This->ref); */
 
 	if (--This->ref)
 		return This->ref;
@@ -1191,6 +1192,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFrequency(
 		return DSERR_INVALIDPARAM;
 
 	*freq = This->freq;
+	TRACE("-> %d\n", *freq);
 
 	return DS_OK;
 }
@@ -1306,9 +1308,10 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		return DSERR_INVALIDPARAM;
 	
 	if (TRACE_ON(dsound)) {
-		TRACE("(size=%ld)\n",dsbd->dwSize);
-		TRACE("(flags=0x%08lx\n",dsbd->dwFlags);
+		TRACE("(structsize=%ld)\n",dsbd->dwSize);
+		TRACE("(flags=0x%08lx:\n",dsbd->dwFlags);
 		_dump_DSBCAPS(dsbd->dwFlags);
+		DPRINTF(")\n");
 		TRACE("(bufferbytes=%ld)\n",dsbd->dwBufferBytes);
 		TRACE("(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
 	}
@@ -1316,7 +1319,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 	wfex = dsbd->lpwfxFormat;
 
 	if (wfex)
-		TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld"
+		TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
 		   "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
 		   wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
 		   wfex->nAvgBytesPerSec, wfex->nBlockAlign, 
@@ -1749,7 +1752,7 @@ static inline void get_fields(const IDirectSoundBufferImpl *dsb, BYTE *buf, INT 
 {
 	INT16	*bufs = (INT16 *) buf;
 
-	/* TRACE(dsound, "(%p)", buf); */
+	/* TRACE("(%p)", buf); */
 	if ((dsb->wfx.wBitsPerSample == 8) && dsb->wfx.nChannels == 2) {
 		*fl = cvtU8toS16(*buf);
 		*fr = cvtU8toS16(*(buf + 1));
