@@ -235,25 +235,30 @@ BOOL WINAPI SetDeskWallPaper( LPCSTR filename )
  *
  * Set the desktop pattern.
  */
-BOOL DESKTOP_SetPattern( LPCSTR pattern )
+BOOL DESKTOP_SetPattern( LPCWSTR pattern )
 {
     int pat[8];
 
     if (hbrushPattern) DeleteObject( hbrushPattern );
+    hbrushPattern = 0;
     memset( pat, 0, sizeof(pat) );
-    if (pattern && sscanf( pattern, " %d %d %d %d %d %d %d %d",
-			   &pat[0], &pat[1], &pat[2], &pat[3],
-			   &pat[4], &pat[5], &pat[6], &pat[7] ))
+    if (pattern)
     {
-	WORD pattern[8];
-	HBITMAP hbitmap;
-	int i;
+        char buffer[64];
+        WideCharToMultiByte( CP_ACP, 0, pattern, -1, buffer, sizeof(buffer), NULL, NULL );
+        if (sscanf( buffer, " %d %d %d %d %d %d %d %d",
+                    &pat[0], &pat[1], &pat[2], &pat[3],
+                    &pat[4], &pat[5], &pat[6], &pat[7] ))
+        {
+            WORD pattern[8];
+            HBITMAP hbitmap;
+            int i;
 
-	for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
-	hbitmap = CreateBitmap( 8, 8, 1, 1, (LPSTR)pattern );
-	hbrushPattern = CreatePatternBrush( hbitmap );
-	DeleteObject( hbitmap );
+            for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
+            hbitmap = CreateBitmap( 8, 8, 1, 1, (LPSTR)pattern );
+            hbrushPattern = CreatePatternBrush( hbitmap );
+            DeleteObject( hbitmap );
+        }
     }
-    else hbrushPattern = 0;
     return TRUE;
 }

@@ -47,7 +47,7 @@ struct builtin_class_descr
 
 
 /* desktop */
-extern BOOL DESKTOP_SetPattern( LPCSTR pattern );
+extern BOOL DESKTOP_SetPattern( LPCWSTR pattern );
 
 /* icon title */
 extern HWND ICONTITLE_Create( HWND hwnd );
