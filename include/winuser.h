@@ -1202,6 +1202,17 @@ typedef struct {
 #define DISP_CHANGE_BADMODE    (-2)
 #define DISP_CHANGE_NOTUPDATED (-3)
 #define DISP_CHANGE_BADFLAGS   (-4)
+#define DISP_CHANGE_BADPARAM   (-5)
+
+/* ChangeDisplaySettings.dwFlags */
+#define	CDS_UPDATEREGISTRY	0x00000001
+#define	CDS_TEST		0x00000002
+#define	CDS_FULLSCREEN		0x00000004
+#define	CDS_GLOBAL		0x00000008
+#define	CDS_SET_PRIMARY		0x00000010
+#define	CDS_RESET		0x40000000
+#define	CDS_SETRECT		0x20000000
+#define	CDS_NORESET		0x10000000
 
 /* flags to FormatMessage */
 #define	FORMAT_MESSAGE_ALLOCATE_BUFFER	0x00000100
@@ -3019,6 +3030,12 @@ LRESULT     WINAPI CallWindowProcA(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI CallWindowProcW(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 #define     CallWindowProc WINELIB_NAME_AW(CallWindowProc)
 BOOL      WINAPI ChangeClipboardChain(HWND,HWND);
+LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
+LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
+#define     ChangeDisplaySettings WINELIB_NAME_AW(ChangeDisplaySettings)
+LONG        WINAPI ChangeDisplaySettingsExA(LPCSTR,LPDEVMODEA,HWND,DWORD,LPARAM);
+LONG        WINAPI ChangeDisplaySettingsExW(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPARAM);
+#define     ChangeDisplaySettingsEx WINELIB_NAME_AW(ChangeDisplaySettingsEx)
 BOOL      WINAPI ChangeMenuA(HMENU,UINT,LPCSTR,UINT,UINT);
 BOOL      WINAPI ChangeMenuW(HMENU,UINT,LPCWSTR,UINT,UINT);
 #define     ChangeMenu WINELIB_NAME_AW(ChangeMenu)

@@ -322,13 +322,50 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
     return FALSE;
 }
 
+static void _dump_CDS_flags(DWORD flags) {
+#define X(x) if (flags & CDS_##x) MESSAGE(""#x ",");
+	X(UPDATEREGISTRY);X(TEST);X(FULLSCREEN);X(GLOBAL);
+	X(SET_PRIMARY);X(RESET);X(SETRECT);X(NORESET);
+#undef X
+}
 
 /***********************************************************************
  *           ChangeDisplaySettingA    (USER32.589)
  */
 LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 {
-  FIXME_(system)(": stub\n");
+  FIXME_(system)("(%p,0x%08lx), stub\n",devmode,flags);
+  MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
+  if (devmode==NULL)
+    FIXME_(system)("   devmode=NULL (return to default mode)\n");
+  else if ( (devmode->dmBitsPerPel != DESKTOP_GetScreenDepth()) 
+	    || (devmode->dmPelsHeight != DESKTOP_GetScreenHeight())
+	    || (devmode->dmPelsWidth != DESKTOP_GetScreenWidth()) )
+
+  {
+
+    if (devmode->dmFields & DM_BITSPERPEL)
+      FIXME_(system)("   bpp=%ld\n",devmode->dmBitsPerPel);
+    if (devmode->dmFields & DM_PELSWIDTH)
+      FIXME_(system)("   width=%ld\n",devmode->dmPelsWidth);
+    if (devmode->dmFields & DM_PELSHEIGHT)
+      FIXME_(system)("   height=%ld\n",devmode->dmPelsHeight);
+    FIXME_(system)(" (Putting X in this mode beforehand might help)\n"); 
+    /* we don't, but the program ... does not need to know */
+    return DISP_CHANGE_SUCCESSFUL; 
+  }
+  return DISP_CHANGE_SUCCESSFUL;
+}
+
+/***********************************************************************
+ *           ChangeDisplaySettingExA    (USER32.604)
+ */
+LONG WINAPI ChangeDisplaySettingsExA( 
+	LPCSTR devname, LPDEVMODEA devmode, HWND hwnd, DWORD flags,
+	LPARAM lparam
+) {
+  FIXME_(system)("(%s,%p,0x%04x,0x%08lx,0x%08lx), stub\n",devname,devmode,hwnd,flags,lparam);
+  MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
   if (devmode==NULL)
     FIXME_(system)("   devmode=NULL (return to default mode)\n");
   else if ( (devmode->dmBitsPerPel != DESKTOP_GetScreenDepth()) 
