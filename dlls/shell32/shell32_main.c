@@ -893,22 +893,31 @@ void WINAPI ShellDDEInit(BOOL start)
 
 HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
-	if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
+    /* FIXME: shouldn't these values come from the version resource? */
+    if (pdvi->cbSize == sizeof(DLLVERSIONINFO) ||
+     pdvi->cbSize == sizeof(DLLVERSIONINFO2))
+    {
+        pdvi->dwMajorVersion = 4;
+        pdvi->dwMinorVersion = 72;
+        pdvi->dwBuildNumber = 3110;
+        pdvi->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
+        if (pdvi->cbSize == sizeof(DLLVERSIONINFO2))
+        {
+            DLLVERSIONINFO2 *pdvi2 = (DLLVERSIONINFO2 *)pdvi;
+
+            pdvi2->dwFlags = 0;
+            pdvi2->ullVersion = MAKEDLLVERULL(4, 72, 3110, 0);
+        }
+        TRACE("%lu.%lu.%lu.%lu\n",
+           pdvi->dwMajorVersion, pdvi->dwMinorVersion,
+           pdvi->dwBuildNumber, pdvi->dwPlatformID);
+        return S_OK;
+    }
+    else
 	{
-	  WARN("wrong DLLVERSIONINFO size from app\n");
-	  return E_INVALIDARG;
-	}
-
-	pdvi->dwMajorVersion = 4;
-	pdvi->dwMinorVersion = 72;
-	pdvi->dwBuildNumber = 3110;
-	pdvi->dwPlatformID = 1;
-
-	TRACE("%lu.%lu.%lu.%lu\n",
-	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
-	   pdvi->dwBuildNumber, pdvi->dwPlatformID);
-
-	return S_OK;
+        WARN("wrong DLLVERSIONINFO size from app\n");
+        return E_INVALIDARG;
+    }
 }
 /*************************************************************************
  * global variables of the shell32.dll
