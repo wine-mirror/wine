@@ -146,17 +146,19 @@ BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc);
 #define WINE_FILEVERSIONSTR "5.80"
 
 /* Our internal stack structure of the window procedures to subclass */
+typedef struct _SUBCLASSPROCS {
+    SUBCLASSPROC subproc;
+    UINT_PTR id;
+    DWORD_PTR ref;
+    struct _SUBCLASSPROCS *next;
+} SUBCLASSPROCS, *LPSUBCLASSPROCS;
+
 typedef struct
 {
-   struct {
-      SUBCLASSPROC subproc;
-      UINT_PTR id;
-      DWORD_PTR ref;
-   } SubclassProcs[31];
-   int stackpos;
-   int stacknum;
-   int wndprocrecursion;
+   SUBCLASSPROCS *SubclassProcs;
+   SUBCLASSPROCS *stackpos;
    WNDPROC origproc;
+   BOOL running;
 } SUBCLASS_INFO, *LPSUBCLASS_INFO;
 
 /* undocumented functions */
