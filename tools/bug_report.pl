@@ -51,7 +51,7 @@ $var0 = qq{
 	    doing so it leaves out the long descriptions.
 };
 print do_var($var0)."\n";
-until ($debuglevel == 1 or $debuglevel == 2 or $debuglevel == 3) {
+until ($debuglevel >= 1 and $debuglevel <= 3) {
 	print "Enter your level of WINE expertise (1-3): ";
 	$debuglevel=<STDIN>;
 	chomp $debuglevel;
@@ -119,37 +119,31 @@ if ($outfile ne "no file" and $dbgoutfile eq "no file") {
 	}
 }
 
-print "Looking for wine...\n";
 $whereis=`whereis wine`;
 chomp $whereis;
-print "Choose one of the following options:\n";
+print "\nWhere is your copy of Wine located?\n\n";
 $whereis =~ s/^wine\: //;
 @locations = split(/\s/,$whereis);
-print "1. Unlisted (I'll prompt you for a new location\n";
-print "2. Unsure (I'll use #3, that's probably it)\n";
+print "1 - Unlisted (I'll prompt you for a new location\n";
+print "2 - Unsure (I'll use #3, that's probably it)\n";
 $i=2;
 foreach $location (@locations) {
 	$i++;
-	print "$i. $location\n";
+	print "$i - $location\n";
 }
+print "\n";
 sub select_wineloc {
-	print "Enter the number that corresponds to wine's location:";
+	do
+		{
+		print "Enter the number the corresponds to Wine's location: ";
 	$wineloc=<STDIN>;
 	chomp $wineloc;
-	$yes = 1 if $wineloc == 1 or $wineloc == 2;
-	$i=3;
-	foreach $location (@locations) {
-		$yes = 1 if $wineloc eq $i++;
-	}
-	while ($yes ne "1") {
-		print "Enter the number the corresponds to wine's location:";
-		$wineloc=<STDIN>;
-		chomp $wineloc;
 		$i=1;
 		foreach $location (@locations) {
 			$yes = 1 if $wineloc eq $i++;
 		}
 	}
+	while ($yes ne "1");
 	if ($wineloc == 1) {
 		$var25 = qq{
 		Enter the full path to wine (Example: /usr/bin/wine):
