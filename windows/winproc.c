@@ -29,7 +29,7 @@ DECLARE_DEBUG_CHANNEL(relay)
 DECLARE_DEBUG_CHANNEL(win)
 
 /* Window procedure 16-to-32-bit thunk,
- * see BuildSpec16Files() in tools/build.c */
+ * see BuildSpec16File() in tools/build.c */
 
 #include "pshpack1.h"
 typedef struct
@@ -49,7 +49,7 @@ typedef struct
 #include "poppack.h"
 
 /* Window procedure 32-to-16-bit thunk,
- * see BuildSpec32Files() in tools/build.c */
+ * see BuildSpec32File() in tools/build.c */
 
 typedef struct
 {

@@ -468,7 +468,7 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
  *		X11DRV_WND_FindDesktopXWindow	[Internal]
  *
  * Find the actual X window which needs be restacked.
- * Used by X11DRV_SetWindowPos().
+ * Used by X11DRV_WND_SetWindowPos().
  */
 static Window X11DRV_WND_FindDesktopXWindow( WND *wndPtr )
 {
@@ -503,7 +503,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
     WND *winposPtr = WIN_FindWndPtr( winpos->hwnd );
     if ( !winposPtr ) return;
 
-    if(!wndPtr->hwndSelf) wndPtr = NULL; /* FIXME: WND destroyed, shouldn't happend!!! */
+    if(!wndPtr->hwndSelf) wndPtr = NULL; /* FIXME: WND destroyed, shouldn't happen!!! */
   
     if (!(winpos->flags & SWP_SHOWWINDOW) && (winpos->flags & SWP_HIDEWINDOW))
     {

@@ -1765,7 +1765,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_InsertItem (hwnd, wParam, lParam);
       
     case TCM_INSERTITEMW:
-      FIXME("Unimplemented msg TCM_INSERTITEM32W\n");
+      FIXME("Unimplemented msg TCM_INSERTITEMW\n");
       return 0;
       
     case TCM_SETITEMEXTRA:
