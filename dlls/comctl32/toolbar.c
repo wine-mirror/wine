@@ -4634,6 +4634,11 @@ TOOLBAR_SetVersion (HWND hwnd, INT iVersion)
     return iOldVersion;
 }
 
+static LRESULT TOOLBAR_Unkwn45D(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    FIXME("hwnd=%p wParam %08x lParam %08lx stub!\n", hwnd, wParam, lParam);
+    return 0;
+}
 
 /*********************************************************************/
 /*                                                                   */
@@ -4687,6 +4692,13 @@ TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return (LRESULT)nOldHotItem;
 }
 
+static LRESULT TOOLBAR_Unkwn460(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TRACE("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+
+    InvalidateRect(hwnd, NULL, TRUE);
+    return 0;
+}
 
 static LRESULT
 TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -4717,7 +4729,6 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    RECT rc;
 	    HWND hwndParent = GetParent(hwnd);
 
-	    InvalidateRect(hwnd, 0, 1);
 	    GetWindowRect(hwnd, &rc);
 	    MapWindowPoints(0, hwndParent, (LPPOINT)&rc, 2);
 	    TRACE("mapped to (%ld,%ld)-(%ld,%ld)\n",
@@ -4740,6 +4751,14 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     TRACE("[0463] set to -> 0x%08lx 0x%08lx\n",
 	  lpsize->cx, lpsize->cy);
+    return 1;
+}
+
+static LRESULT TOOLBAR_Unkwn464(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TRACE("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+
+    InvalidateRect(hwnd, NULL, TRUE);
     return 1;
 }
 
@@ -5966,12 +5985,20 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_SETUNICODEFORMAT:
 	    return TOOLBAR_SetUnicodeFormat (hwnd, wParam, lParam);
 
+	case TB_UNKWN45D:
+	    return TOOLBAR_Unkwn45D(hwnd, wParam, lParam);
+
 	case TB_UNKWN45E:
 	    return TOOLBAR_Unkwn45E (hwnd, wParam, lParam);
+
+	case TB_UNKWN460:
+	    return TOOLBAR_Unkwn460(hwnd, wParam, lParam);
 
 	case TB_UNKWN463:
 	    return TOOLBAR_Unkwn463 (hwnd, wParam, lParam);
 
+	case TB_UNKWN464:
+	    return TOOLBAR_Unkwn464(hwnd, wParam, lParam);
 
 /* Common Control Messages */
 
