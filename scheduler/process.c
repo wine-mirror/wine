@@ -40,6 +40,8 @@ const K32OBJ_OPS PROCESS_Ops =
     PROCESS_Destroy      /* destroy */
 };
 
+static DWORD PROCESS_InitialProcessID = 0;
+
 
 /***********************************************************************
  *           PROCESS_Current
@@ -49,6 +51,18 @@ PDB32 *PROCESS_Current(void)
     return THREAD_Current()->process;
 }
 
+/***********************************************************************
+ *           PROCESS_Initial
+ *
+ * FIXME: This works only while running all processes in the same
+ *        address space (or, at least, the initial process is mapped
+ *        into all address spaces as is KERNEL32 in Windows 95)
+ *
+ */
+PDB32 *PROCESS_Initial(void)
+{
+    return PROCESS_IdToPDB( PROCESS_InitialProcessID );
+}
 
 /***********************************************************************
  *           PROCESS_GetPtr
@@ -95,6 +109,11 @@ static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
     if (!(pdb->env_db = HeapAlloc(SystemHeap,HEAP_ZERO_MEMORY,sizeof(ENVDB))))
         return FALSE;
     InitializeCriticalSection( &pdb->env_db->section );
+
+    /* Allocate startup info */
+    if (!(pdb->env_db->startup_info = 
+          HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFO32A) )))
+        return FALSE;
 
     /* Allocate the standard handles */
 
@@ -235,8 +254,10 @@ BOOL32 PROCESS_Init(void)
 
     /* Create the initial process and thread structures */
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
-    if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL, NULL, NULL ))) return FALSE;
+    if (!(thdb = THREAD_Create( pdb, 0, TRUE, NULL, NULL, NULL, NULL ))) return FALSE;
     thdb->unix_pid = getpid();
+
+    PROCESS_InitialProcessID = PDB_TO_PROCESS_ID(pdb);
 
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = thdb->teb_sel;
@@ -736,12 +757,24 @@ BOOL32 WINAPI WriteProcessMemory(HANDLE32 hProcess, LPVOID lpBaseAddress,
 
 /***********************************************************************
  *           ConvertToGlobalHandle    		(KERNEL32)
- * FIXME: this is not correctly implemented...
  */
-HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 h)
+HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 hSrc)
 {
-	FIXME(process,"(%d): stub\n",h);
-	return h;
+    HANDLE32 hProcessInit, hDest;
+
+    /* Get a handle to the initial process */
+    hProcessInit = OpenProcess( PROCESS_ALL_ACCESS, FALSE, PROCESS_InitialProcessID );
+
+    /* Duplicate the handle into the initial process */
+    if ( !DuplicateHandle( GetCurrentProcess(), hSrc, hProcessInit, &hDest,
+                           0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE ) )
+        hDest = 0;
+
+    /* Close initial process handle */
+    CloseHandle( hProcessInit );
+
+    /* Return obfuscated global handle */
+    return hDest? HANDLE_LOCAL_TO_GLOBAL( hDest ) : 0;
 }
 
 /***********************************************************************

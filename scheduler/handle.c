@@ -155,6 +155,11 @@ K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
     K32OBJ *ptr = NULL;
 
     SYSTEM_LOCK();
+    if (HANDLE_IS_GLOBAL( handle ))
+    {
+        handle = HANDLE_GLOBAL_TO_LOCAL( handle );
+        pdb = PROCESS_Initial();
+    }
     if ((handle > 0) && (handle < pdb->handle_table->count))
     {
         HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];

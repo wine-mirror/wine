@@ -138,9 +138,17 @@ extern BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle,
                                 K32OBJ *ptr, DWORD access );
 extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );
 
+/* Global handle macros */
+#define HANDLE_OBFUSCATOR         ((DWORD)0x544a4def)
+#define HANDLE_IS_GLOBAL(h)       (((DWORD)(h) ^ HANDLE_OBFUSCATOR) < 0x10000)
+#define HANDLE_LOCAL_TO_GLOBAL(h) ((HANDLE32)((DWORD)(h) ^ HANDLE_OBFUSCATOR))
+#define HANDLE_GLOBAL_TO_LOCAL(h) ((HANDLE32)((DWORD)(h) ^ HANDLE_OBFUSCATOR))
+
+
 /* scheduler/process.c */
 extern BOOL32 PROCESS_Init( void );
 extern PDB32 *PROCESS_Current(void);
+extern PDB32 *PROCESS_Initial(void);
 extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern PDB32 *PROCESS_IdToPDB( DWORD id );
 extern PDB32 *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,

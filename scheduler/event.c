@@ -338,7 +338,8 @@ static void EVENT_Destroy( K32OBJ *obj )
  */
 HANDLE32 WINAPI VWin32_EventCreate(VOID)
 {
-    return CreateEvent32A( NULL, FALSE, 0, NULL );
+    HANDLE32 hEvent = CreateEvent32A( NULL, FALSE, 0, NULL );
+    return ConvertToGlobalHandle( hEvent );
 }
 
 /***********************************************************************
