@@ -45,7 +45,7 @@ static void DCE_DumpCache(void)
 {
     DCE *dce;
     
-    WIN_LockWnds();
+    USER_Lock();
     dce = firstDCE;
     
     DPRINTF("DCE:\n");
@@ -58,7 +58,7 @@ static void DCE_DumpCache(void)
 	dce = dce->next;
     }
 
-    WIN_UnlockWnds();
+    USER_Unlock();
 }
 
 /***********************************************************************
@@ -119,7 +119,7 @@ DCE* DCE_FreeDCE( DCE *dce )
 
     if (!dce) return NULL;
 
-    WIN_LockWnds();
+    USER_Lock();
 
     ppDCE = &firstDCE;
 
@@ -133,7 +133,7 @@ DCE* DCE_FreeDCE( DCE *dce )
 	DeleteObject(dce->hClipRgn);
     HeapFree( GetProcessHeap(), 0, dce );
 
-    WIN_UnlockWnds();
+    USER_Unlock();
     
     return *ppDCE;
 }
@@ -147,7 +147,7 @@ void DCE_FreeWindowDCE( WND* pWnd )
 {
     DCE *pDCE;
 
-    WIN_LockWnds();
+    USER_Lock();
     pDCE = firstDCE;
 
     while( pDCE )
@@ -192,7 +192,7 @@ void DCE_FreeWindowDCE( WND* pWnd )
 	pDCE = pDCE->next;
     }
     
-    WIN_UnlockWnds();
+    USER_Unlock();
 }
 
 
@@ -603,7 +603,7 @@ INT WINAPI ReleaseDC(
     DCE * dce;
     INT nRet = 0;
 
-    WIN_LockWnds();
+    USER_Lock();
     dce = firstDCE;
     
     TRACE("%04x %04x\n", hwnd, hdc );
@@ -614,7 +614,7 @@ INT WINAPI ReleaseDC(
 	if ( dce->DCXflags & DCX_DCEBUSY )
             nRet = DCE_ReleaseDC( dce );
 
-    WIN_UnlockWnds();
+    USER_Unlock();
 
     return nRet;
 }
@@ -635,7 +635,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
     assert(dce->hDC == hDC);
 
     /* Grab the windows lock before doing anything else  */
-    WIN_LockWnds();
+    USER_Lock();
 
     switch( code )
     {
@@ -672,7 +672,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 	   FIXME("unknown code\n");
     }
 
-  WIN_UnlockWnds();  /* Release the wnd lock */
+  USER_Unlock();  /* Release the wnd lock */
   return retv;
 }
 
@@ -694,13 +694,13 @@ HWND WINAPI WindowFromDC( HDC hDC )
     DCE *dce;
     HWND hwnd;
 
-    WIN_LockWnds();
+    USER_Lock();
     dce = firstDCE;
     
     while (dce && (dce->hDC != hDC)) dce = dce->next;
 
     hwnd = dce ? dce->hwndCurrent : 0;
-    WIN_UnlockWnds();
+    USER_Unlock();
     
     return hwnd;
 }

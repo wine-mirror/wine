@@ -38,27 +38,7 @@ static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
 /* thread safeness */
-static SYSLEVEL WIN_SysLevel = { CRITICAL_SECTION_INIT, 2 };
-
-/***********************************************************************
- *           WIN_LockWnds
- *
- *   Locks access to all WND structures for thread safeness
- */
-void WIN_LockWnds( void )
-{
-    _EnterSysLevel( &WIN_SysLevel );
-}
-
-/***********************************************************************
- *           WIN_UnlockWnds
- *
- *  Unlocks access to all WND structures
- */
-void WIN_UnlockWnds( void )
-{
-    _LeaveSysLevel( &WIN_SysLevel );
-}
+extern SYSLEVEL USER_SysLevel;  /* FIXME */
 
 /***********************************************************************
  *           WIN_SuspendWndsLock
@@ -68,11 +48,11 @@ void WIN_UnlockWnds( void )
  */
 int WIN_SuspendWndsLock( void )
 {
-    int isuspendedLocks = _ConfirmSysLevel( &WIN_SysLevel );
+    int isuspendedLocks = _ConfirmSysLevel( &USER_SysLevel );
     int count = isuspendedLocks;
 
     while ( count-- > 0 )
-        _LeaveSysLevel( &WIN_SysLevel );
+        _LeaveSysLevel( &USER_SysLevel );
 
     return isuspendedLocks;
 }
@@ -85,7 +65,7 @@ int WIN_SuspendWndsLock( void )
 void WIN_RestoreWndsLock( int ipreviousLocks )
 {
     while ( ipreviousLocks-- > 0 )
-        _EnterSysLevel( &WIN_SysLevel );
+        _EnterSysLevel( &USER_SysLevel );
 }
 
 /***********************************************************************
@@ -100,7 +80,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
     if (!hwnd || HIWORD(hwnd)) goto error2;
     ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
     /* Lock all WND structures for thread safeness*/
-    WIN_LockWnds();
+    USER_Lock();
     /*and increment destruction monitoring*/
      ptr->irefCount++;
 
@@ -114,7 +94,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
     return ptr;
  error:
     /* Unlock all WND structures for thread safeness*/
-    WIN_UnlockWnds();
+    USER_Unlock();
     /* and decrement destruction monitoring value */
      ptr->irefCount--;
 
@@ -136,7 +116,7 @@ WND *WIN_LockWndPtr(WND *initWndPtr)
     if(!initWndPtr) return 0;
 
     /* Lock all WND structures for thread safeness*/
-    WIN_LockWnds();
+    USER_Lock();
     /*and increment destruction monitoring*/
     initWndPtr->irefCount++;
     
@@ -168,7 +148,7 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
          ERR("forgot a Lock on %p somewhere\n",wndPtr);
      }
      /*unlock all WND structures for thread safeness*/
-     WIN_UnlockWnds();
+     USER_Unlock();
 }
 
 /***********************************************************************

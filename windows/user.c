@@ -31,6 +31,9 @@ DECLARE_DEBUG_CHANNEL(system);
 DECLARE_DEBUG_CHANNEL(win);
 DECLARE_DEBUG_CHANNEL(win32);
 
+SYSLEVEL USER_SysLevel = { CRITICAL_SECTION_INIT("USER_SysLevel"), 2 };
+
+
 /***********************************************************************
  *		GetFreeSystemResources (USER.284)
  */
@@ -87,6 +90,36 @@ INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
 
     return 1;
 }
+
+
+/***********************************************************************
+ *           USER_Lock
+ */
+void USER_Lock(void)
+{
+    _EnterSysLevel( &USER_SysLevel );
+}
+
+
+/***********************************************************************
+ *           USER_Unlock
+ */
+void USER_Unlock(void)
+{
+    _LeaveSysLevel( &USER_SysLevel );
+}
+
+
+/***********************************************************************
+ *           USER_CheckNotLock
+ *
+ * Make sure that we don't hold the user lock.
+ */
+void USER_CheckNotLock(void)
+{
+    _CheckNotSysLevel( &USER_SysLevel );
+}
+
 
 /**********************************************************************
  *           USER_ModuleUnload
