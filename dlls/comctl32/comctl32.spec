@@ -92,7 +92,7 @@ init	COMCTL32_LibMain
  84 stdcall PropertySheetA(ptr) PropertySheetA
  85 stdcall PropertySheetW(ptr) PropertySheetW
  86 stdcall UninitializeFlatSB(long) UninitializeFlatSB
- 87 stub _TrackMouseEvent
+ 87 stdcall _TrackMouseEvent(ptr) _TrackMouseEvent
 
 151 stdcall CreateMRUListA(ptr) CreateMRUListA
 152 stdcall FreeMRUList(ptr) FreeMRUListA

@@ -849,3 +849,105 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 
     return S_OK;
 }
+
+
+static int iTrackMax = 0;
+static HWND TrackingList[10];
+static UINT_PTR timer;
+
+static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
+	int i = 0;
+	POINT pos;
+	HWND hwnd;
+	BOOL keepTracking = FALSE;
+	GetCursorPos(&pos);
+	hwnd = WindowFromPoint(pos);
+	/* Loop through the list of windows waiting on mouse exit */
+	while (i < iTrackMax) {
+		if (TrackingList[i] != hwnd) 
+			PostMessageA(TrackingList[i], WM_MOUSELEAVE, 0, 0);
+		else
+			keepTracking = TRUE;
+
+
+		i++;
+	}
+	
+	if (keepTracking) {
+		iTrackMax = 1;
+		TrackingList[0] = hwnd;
+	}
+	else
+		KillTimer(0, timer);
+}
+
+/***********************************************************************
+ * _TrackMouseEvent [COMCTL32.25]
+ *
+ * Requests notification of mouse events
+ *
+ * PARAMS
+ *     ptme [I,O] pointer to TRACKMOUSEEVENT information structure.
+ *
+ * RETURNS
+ *     Success: non-zero
+ *     Failure: zero
+ *
+ */
+
+BOOL WINAPI
+_TrackMouseEvent (TRACKMOUSEEVENT *ptme)
+{
+    DWORD flags = 0;
+	int i;
+	BOOL cancel = 0, hover = 0, leave = 0, query = 0;
+	if (ptme->cbSize != sizeof(TRACKMOUSEEVENT)) {
+        WARN("wrong TRACKMOUSEEVENT size from app");
+	return E_INVALIDARG;
+    }
+
+    TRACE("%lx, %lx, %x, %lx\n", ptme->cbSize, ptme->dwFlags, ptme->hwndTrack, ptme->dwHoverTime);
+
+	flags = ptme->dwFlags;
+    if ( flags & TME_CANCEL ) {
+		cancel = 1;
+		flags &= ~ TME_CANCEL;
+	}
+    if ( flags & TME_HOVER  ) {
+		hover = 1;
+		flags &= ~ TME_HOVER;
+		FIXME("TME_HOVER unimplemented\n" );
+	}
+    if ( flags & TME_LEAVE ) {
+		leave = 1;
+		flags &= ~ TME_LEAVE;
+	}
+    if ( flags & TME_QUERY ) {
+		query = 1;
+		flags &= ~ TME_QUERY;
+		FIXME("TME_QUERY unimplemented\n" );
+	}
+
+	if ( flags )
+		FIXME("Unknown flag(s) %ld\n", flags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_QUERY) );
+
+	if (leave) {
+		if (cancel) {
+			for (i = 0; i < iTrackMax; i++) 
+				if (TrackingList[i] == ptme->hwndTrack) 
+					TrackingList[i] = TrackingList[--iTrackMax];
+		}
+		else {
+			if (iTrackMax == sizeof (TrackingList) / sizeof *TrackingList) 
+				return FALSE;
+
+			/* Add hwndTrack to the track list */
+			TrackingList[iTrackMax++] = ptme->hwndTrack;
+			if (!timer)
+				timer = SetTimer(0, 0, 50, TrackMouseEventProc);
+		}
+	}
+
+	return TRUE;
+}
+

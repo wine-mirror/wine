@@ -477,6 +477,35 @@ BOOL     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM);
 #define ImageList_RemoveAll(himl) ImageList_Remove(himl,-1)
 
 
+#ifndef WM_MOUSEHOVER
+#define WM_MOUSEHOVER                   0x02A1
+#define WM_MOUSELEAVE                   0x02A3
+#endif
+
+#ifndef TME_HOVER
+
+#define TME_HOVER       0x00000001
+#define TME_LEAVE       0x00000002
+#define TME_QUERY       0x40000000
+#define TME_CANCEL      0x80000000
+
+
+#define HOVER_DEFAULT   0xFFFFFFFF
+
+typedef struct tagTRACKMOUSEEVENT {
+    DWORD cbSize;
+    DWORD dwFlags;
+    HWND  hwndTrack;
+    DWORD dwHoverTime;
+} TRACKMOUSEEVENT, *LPTRACKMOUSEEVENT;
+
+#endif 
+
+BOOL
+WINAPI
+_TrackMouseEvent(
+    LPTRACKMOUSEEVENT lpEventTrack);
+
 /* Flat Scrollbar control */
 
 #define FLATSB_CLASS16        "flatsb_class"
