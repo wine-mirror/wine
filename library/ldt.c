@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include "winbase.h"
+#define WINE_EXPORT_LDT_COPY
 #include "wine/library.h"
 
 #ifdef __i386__

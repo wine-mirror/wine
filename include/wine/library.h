@@ -72,7 +72,17 @@ extern void wine_ldt_get_entry( unsigned short sel, LDT_ENTRY *entry );
 extern int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry );
 
 /* the local copy of the LDT */
-extern struct __wine_ldt_copy
+#ifdef __CYGWIN__
+# ifdef WINE_EXPORT_LDT_COPY
+#  define WINE_LDT_EXTERN __declspec(dllexport)
+# else
+#  define WINE_LDT_EXTERN __declspec(dllimport)
+# endif
+#else
+# define WINE_LDT_EXTERN extern
+#endif
+
+WINE_LDT_EXTERN struct __wine_ldt_copy
 {
     void         *base[8192];  /* base address or 0 if entry is free   */
     unsigned long limit[8192]; /* limit in bytes or 0 if entry is free */
