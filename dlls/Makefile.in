@@ -448,7 +448,7 @@ rasapi32/librasapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 richedit/libriched32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 rpcrt4/librpcrt4.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 serialui/libserialui.@LIBEXT@: libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-setupapi/libsetupapi.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+setupapi/libsetupapi.@LIBEXT@: libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 shdocvw/libshdocvw.@LIBEXT@: libole32.@LIBEXT@ libntdll.@LIBEXT@
 shell32/libshell32.@LIBEXT@: libole32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 shfolder/libshfolder.@LIBEXT@: libshell32.@LIBEXT@
