@@ -404,6 +404,24 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
         case 0x0f: /* extended instruction */
             switch(instr[1])
             {
+	    case 0x20: /* mov cr4, eax */
+	    	if (instr[2]!=0xe0) 
+			break;
+		/* CR4 register . See linux/arch/i386/mm/init.c, X86_CR4_ defs
+		 * bit 0: VME	Virtual Mode Exception ?
+		 * bit 1: PVI	Protected mode Virtual Interrupt
+		 * bit 2: TSD	Timestamp disable
+		 * bit 3: DE	Debugging extensions
+		 * bit 4: PSE	Page size extensions
+		 * bit 5: PAE   Physical address extension
+		 * bit 6: MCE	Machine check enable
+		 * bit 7: PGE   Enable global pages
+		 * bit 8: PCE	Enable performance counters at IPL3
+		 */
+		fprintf(stderr,"mov cr4,eax at 0x%08lx\n",EIP_sig(context));
+		EAX_sig(context) = 0;
+		EIP_sig(context) += prefixlen+3;
+		return TRUE;
 #ifdef FS_sig
             case 0xa1: /* pop fs */
                 {
