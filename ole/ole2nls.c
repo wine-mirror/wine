@@ -201,6 +201,10 @@ LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN_SWISS)	/*0x0810*/
 #include "nls/its.nls"
 LANG_END
 
+LANG_BEGIN (LANG_JAPANESE, SUBLANG_DEFAULT)	/*0x0411*/
+#include "nls/jpn.nls"
+LANG_END
+
 LANG_BEGIN (LANG_KOREAN, SUBLANG_KOREAN)	/*0x0412*/
 #include "nls/kor.nls"
 LANG_END
@@ -2371,23 +2375,26 @@ INT WINAPI LCMapStringW(
   }
   if (srclen==-1) 
     srclen = lstrlenW(srcstr)+1;
+
+  if (dstlen==0)
+    return srclen;  
+  if (dstlen<srclen) 
+  {
+    SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    return 0;
+  }
   if (mapflags & LCMAP_SORTKEY) 
   {
     FIXME_(string)("(0x%04lx,0x%08lx,%p,%d,%p,%d): "
-	  "unimplemented flags: 0x%08lx\n",
+	  "unimplemented flags: 0x%08lx.  Ignoring LC_COLLATE.\n",
 	  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
-    return 0;
+    memcpy(dststr, srcstr, srclen * sizeof(*srcstr));
+    return srclen;
   }
   else
   {
     int (*f)(int)=identity; 
 
-    if (dstlen==0)
-      return srclen;  
-    if (dstlen<srclen) {
-      SetLastError(ERROR_INSUFFICIENT_BUFFER);
-      return 0;
-    }
     if (mapflags & LCMAP_UPPERCASE)
       f = toupper;
     else if (mapflags & LCMAP_LOWERCASE)
