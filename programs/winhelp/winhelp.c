@@ -197,6 +197,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     /* Create primary window */
     WINHELP_RegisterWinClasses();
     hlpfile = WINHELP_LookupHelpFile(cmdline);
+    if (!hlpfile)
+        return 0;
     WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
                                    WINHELP_GetWindowInfo(hlpfile, "main"), show);
 
