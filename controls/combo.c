@@ -1055,11 +1055,14 @@ static INT CBUpdateLBox( LPHEADCOMBO lphc, BOOL bSelect )
        HeapFree( GetProcessHeap(), 0, pText );
    }
 
-   SendMessageA( lphc->hWndLBox, LB_SETCURSEL, (WPARAM)(bSelect ? idx : -1), 0 );
+   if (idx >= 0)
+   {
+       SendMessageA( lphc->hWndLBox, LB_SETCURSEL, (WPARAM)(bSelect ? idx : -1), 0 );
 
        /* probably superfluous but Windows sends this too */
-   SendMessageA( lphc->hWndLBox, LB_SETCARETINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0 );
-   SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0 );
+       SendMessageA( lphc->hWndLBox, LB_SETCARETINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0 );
+       SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)(idx < 0 ? 0 : idx), 0 );
+   }
    return idx;
 }
 
@@ -1086,11 +1089,13 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 				(WPARAM)index, (LPARAM)pText );
 	   }
        }
-   }
 
-   lphc->wState |= (CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
-   SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)"" );
-   lphc->wState &= ~(CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
+       lphc->wState |= (CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
+       SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)"" );
+       lphc->wState &= ~(CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
+   }
+   else
+       InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
 
    if( lphc->wState & CBF_FOCUSED )
       SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
