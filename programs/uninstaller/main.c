@@ -52,9 +52,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(uninstaller);
 char appname[18];
 
 static char about_string[] =
-    "Windows program uninstaller (C) 2000 by Andreas Mohr <andi@lisas.de>";
+    "Wine Application Uninstaller (C) 2004 by Andreas Mohr <andi@lisas.de> and Hannu Valtonen <Hannu.Valtonen@hut.fi>";
 static char program_description[] =
-	"Welcome to the Wine uninstaller !\n\nThe purpose of this program is to let you get rid of all those fantastic programs that somehow manage to always take way too much space on your HDD :-)";
+	"Please select the application you wish to uninstall:";
 
 typedef struct {
     char *key;
@@ -117,7 +117,7 @@ void RemoveSpecificProgram(char *name)
         UninstallProgram();
     else
     {
-        fprintf(stderr, "Error: could not match program [%s]\n", name);
+        fprintf(stderr, "Error: could not match application [%s]\n", name);
     }
 }
 
@@ -134,7 +134,7 @@ int main( int argc, char *argv[])
     {
         token = argv[i++];
 
-        /* Handle requests just to list the programs */
+        /* Handle requests just to list the applications */
         if( !lstrcmpA( token, "--list" ) )
         {
             ListUninstallPrograms();
@@ -172,7 +172,7 @@ int main( int argc, char *argv[])
     wc.lpszClassName = appname;
 
     if (!RegisterClass(&wc)) exit(1);
-    hWnd = CreateWindow( appname, appname,
+    hWnd = CreateWindow( appname, "Wine Application Uninstaller",
         WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         NULL_HANDLE, NULL_HANDLE, hInst, NULL );
@@ -199,7 +199,7 @@ int FetchUninstallInformation(void)
     HKEY hkeyUninst, hkeyApp;
     int i;
     DWORD sizeOfSubKeyName=255, displen, uninstlen;
-    char   subKeyName[256];
+    char subKeyName[256];
     char key_app[1024];
     char *p;
 
@@ -282,7 +282,7 @@ void UninstallProgram(void)
 	    res = GetExitCodeProcess(info.hProcess, &exit_code);
 	    WINE_TRACE("%d: %08lx\n", res, exit_code);
 #ifdef DEL_REG_KEY
-	    /* delete the program's uninstall entry */
+	    /* delete the application's uninstall entry */
 	    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGSTR_PATH_UNINSTALL,
 		0, KEY_READ, &hkey) == ERROR_SUCCESS)
 	    {
@@ -306,7 +306,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     HDC hdc;
     PAINTSTRUCT ps;
     TEXTMETRIC tm;
-    int cxChar, cyChar, i, y, bx, by, maxx, maxy, wx, wy;
+    int cxChar, cyChar, i, y, bx, maxx, maxy, wx, wy;
     static HWND hwndList = 0, hwndEdit = 0;
     DWORD style;
     RECT rect;
@@ -325,20 +325,26 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	style |= LBS_MULTIPLESEL;
 #endif
 	bx = maxx = cxChar * 5;
-	by = maxy = cyChar * 3;
+	y = maxy = cyChar * 1;
+	CreateWindow("static", program_description,
+		WS_CHILD|WS_VISIBLE|SS_LEFT,
+		maxx, maxy,
+		cxChar * sizeof(program_description), cyChar * 1,
+		hWnd, (HMENU)1,
+		((LPCREATESTRUCT)lParam)->hInstance, NULL);
+	maxy += cyChar * 2; /*static text + distance */
 	hwndList = CreateWindow("listbox", NULL,
 		style,
 		maxx, maxy,
-		cxChar * 50 + GetSystemMetrics(SM_CXVSCROLL), cyChar * 20,
+		cxChar * 50 + GetSystemMetrics(SM_CXVSCROLL), cyChar * 10,
 		hWnd, (HMENU) 1,
 		(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
-
 	GetWindowRect(hwndList, &rect);
-	y = by;
-	maxx += (rect.right - rect.left)*1.1;
+	maxx += (rect.right - rect.left)*1.1;	
 	maxy += (rect.bottom - rect.top)*1.1;
 	wx = 20*cxChar;
 	wy = 7*cyChar/4;
+	y = cyChar * 3;
 	for (i=0; i < NUM; i++)
 	{
 	    button[i].hwnd = CreateWindow("button", button[i].text,
@@ -351,15 +357,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		    PostQuitMessage(0);
 	    y += 2*cyChar;
 	}
-	CreateWindow("static", program_description,
-		WS_CHILD|WS_VISIBLE|SS_LEFT,
-		bx, maxy,
-		cxChar * 50, wy,
-		hWnd, (HMENU)1,
-		((LPCREATESTRUCT)lParam)->hInstance, NULL);
-	maxx += wx + cxChar * 5; /* button + right border */
-	maxy += cyChar * 5 + cyChar * 2; /* static text + distance */
-	CreateWindow("static", "command line to be executed:",
+	maxx += wx + cxChar * 5;
+	CreateWindow("static", "Command line to be executed:",
 		WS_CHILD|WS_VISIBLE|SS_LEFT,
 		bx, maxy,
 		cxChar * 50, cyChar,
@@ -368,10 +367,10 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	maxy += cyChar;
 	hwndEdit = CreateWindow("edit", NULL,
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_LEFT|ES_MULTILINE|ES_READONLY,
-		bx, maxy, maxx-(2*bx), (cyChar*6)+4,
+		bx, maxy, maxx-(2*bx), (cyChar*2)+4,
 		hWnd, (HMENU)1,
 		((LPCREATESTRUCT)lParam)->hInstance, NULL);
-	maxy += (cyChar*6)+4 + cyChar * 3; /* edit ctrl + bottom border */
+	maxy += (cyChar*2)+4 + cyChar * 3; /* edit ctrl + bottom border */
 	SetWindowPos(	hWnd, 0,
 			0, 0, maxx, maxy,
 			SWP_NOMOVE);
@@ -442,7 +441,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
 	else
 	if ((HWND)lParam == button[1].hwnd) /* About button */
-	    MessageBox(0, about_string, "About", MB_OK);
+	    MessageBox(0, about_string, "About Wine Application Uninstaller", MB_OK);
 	else
 	if ((HWND)lParam == button[2].hwnd) /* Exit button */
 	    PostQuitMessage(0);
