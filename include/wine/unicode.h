@@ -179,38 +179,15 @@ inline static int isprintW( WCHAR wc )
 
 static inline unsigned int strlenW( const WCHAR *str )
 {
-#if defined(__i386__) && defined(__GNUC__)
-    int dummy, res;
-    __asm__ __volatile__( "cld\n\t"
-                          "repnz\n\t"
-                          "scasw\n\t"
-                          "notl %0"
-                          : "=c" (res), "=&D" (dummy)
-                          : "0" (0xffffffff), "1" (str), "a" (0) );
-    return res - 1;
-#else
     const WCHAR *s = str;
     while (*s) s++;
     return s - str;
-#endif
 }
 
 static inline WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
 {
-#if defined(__i386__) && defined(__GNUC__)
-    int dummy1, dummy2, dummy3;
-    __asm__ __volatile__( "cld\n"
-                          "1:\tlodsw\n\t"
-                          "stosw\n\t"
-                          "testw %%ax,%%ax\n\t"
-                          "jne 1b"
-                          : "=&S" (dummy1), "=&D" (dummy2), "=&a" (dummy3)
-                          : "0" (src), "1" (dst)
-                          : "memory" );
-#else
     WCHAR *p = dst;
     while ((*p++ = *src++));
-#endif
     return dst;
 }
 
