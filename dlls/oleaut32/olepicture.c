@@ -1083,10 +1083,32 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       }
     }
 
-    /* Map to in picture coordinates */    
-    for (i=0;i<gid->Height;i++) 
-	for (j=0;j<gid->Width;j++) 
-	    bytes[(gid->Top+i)*(padding)+gid->Left+j]=si->RasterBits[i*gid->Width+j];
+    /* Map to in picture coordinates */
+    for (i = 0, j = 0; i < gid->Height; i++) {
+        if (gif->Image.Interlace) {
+            memcpy(
+                bytes + (gid->Top + j) * padding + gid->Left,
+                si->RasterBits + i * gid->Width,
+                gid->Width);
+
+            /* Lower bits of interlaced counter encode current interlace */
+            if (j & 1) j += 2;      /* Currently filling odd rows */
+            else if (j & 2) j += 4; /* Currently filling even rows not multiples of 4 */
+            else j += 8;            /* Currently filling every 8th row or 4th row in-between */
+
+            if (j >= gid->Height && i < gid->Height && (j & 1) == 0) {
+                /* End of current interlace, go to next interlace */
+                if (j & 2) j = 1;       /* Next iteration fills odd rows */
+                else if (j & 4) j = 2;  /* Next iteration fills even rows not mod 4 and not mod 8 */
+                else j = 4;             /* Next iteration fills rows in-between rows mod 6 */
+            }
+        } else {
+            memcpy(
+                bytes + (gid->Top + i) * padding + gid->Left,
+                si->RasterBits + i * gid->Width,
+                gid->Width);
+        }
+    }
 
     bmi->bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biWidth		= gif->SWidth;
