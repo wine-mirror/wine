@@ -114,6 +114,7 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
  */
 BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
+    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
     RECT rcWork;
 
     if ((hMonitor == xPRIMARY_MONITOR) &&
@@ -128,7 +129,7 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
         if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXW))
-            strcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, (LPCWSTR)"D\0I\0S\0P\0L\0A\0Y\0\0");
+            strcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, displayW);
 
         return TRUE;
     }
