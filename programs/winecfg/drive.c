@@ -605,15 +605,15 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 	  case IDC_COMBO_LETTER: {
 	    int item = SendDlgItemMessage(hDlg, IDC_COMBO_LETTER, CB_GETCURSEL, 0, 0);
-	    char newLetter;
-	    SendDlgItemMessage(hDlg, IDC_COMBO_LETTER, CB_GETLBTEXT, item, (LPARAM) &newLetter);
-	    
+	    char newLetter[4];
+	    SendDlgItemMessage(hDlg, IDC_COMBO_LETTER, CB_GETLBTEXT, item, (LPARAM) newLetter);
+
 	    if (HIWORD(wParam) != CBN_SELCHANGE) break;
-	    if (newLetter == editDriveEntry->letter) break;
-	    	    
-	    WINE_TRACE("changing drive letter to %c\n", newLetter);
-        moveDrive(editDriveEntry, &drives[getDrive(newLetter)]);
-        editDriveEntry = &drives[getDrive(newLetter)];
+	    if (newLetter[0] == editDriveEntry->letter) break;
+
+	    WINE_TRACE("changing drive letter to %c\n", newLetter[0]);
+            moveDrive(editDriveEntry, &drives[getDrive(newLetter[0])]);
+            editDriveEntry = &drives[getDrive(newLetter[0])];
 	    refreshDriveDlg(driveDlgHandle);
 	    break;
 	  }
