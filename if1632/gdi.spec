@@ -331,19 +331,19 @@ file	gdi.exe
 504 stub PlayEnhMetafileRecord
 505 stub SetEnhMetafileBits
 506 stub SetMetaRgn
-508 stub ExtSelectClipRgn
+508 pascal16 ExtSelectClipRgn(word word word) ExtSelectClipRgn16
 511 pascal16 AbortPath(word) AbortPath16
 512 pascal16 BeginPath(word) BeginPath16
 513 pascal16 CloseFigure(word) CloseFigure16
 514 pascal16 EndPath(word) EndPath16
-515 stub FillPath
-516 stub FlattenPath
+515 pascal16 FillPath(word) FillPath16
+516 pascal16 FlattenPath(word) FlattenPath16
 517 pascal16 GetPath(word ptr ptr word) GetPath16
-518 stub PathToRegion
-519 stub SelectClipPath
-520 stub StrokeAndFillPath
-521 stub StrokePath
-522 stub WidenPath
+518 pascal16 PathToRegion(word) PathToRegion16
+519 pascal16 SelectClipPath(word word) SelectClipPath16
+520 pascal16 StrokeAndFillPath(word) StrokeAndFillPath16
+521 pascal16 StrokePath(word) StrokePath16
+522 pascal16 WidenPath(word) WidenPath16
 523 stub ExtCreatePen
 524 pascal16 GetArcDirection(word) GetArcDirection16
 525 pascal16 SetArcDirection(word word) SetArcDirection16

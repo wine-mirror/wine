@@ -299,6 +299,13 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
    }
 }
 
+/***********************************************************************
+ *           PathToRegion16    (GDI.518)
+ */
+HRGN16 WINAPI PathToRegion16(HDC16 hdc)
+{
+  return (HRGN16) PathToRegion((HDC) hdc);
+}
 
 /***********************************************************************
  *           PathToRegion32    (GDI32.261)
@@ -337,6 +344,13 @@ HRGN WINAPI PathToRegion(HDC hdc)
    return hrgnRval;
 }
 
+/***********************************************************************
+ *           FillPath16    (GDI.515)
+ */
+BOOL16 WINAPI FillPath16(HDC16 hdc)
+{
+  return (BOOL16) FillPath((HDC) hdc); 
+}
 
 /***********************************************************************
  *           FillPath32    (GDI32.100)
@@ -424,6 +438,13 @@ BOOL WINAPI FillPath(HDC hdc)
    }
 }
 
+/***********************************************************************
+ *           SelectClipPath16    (GDI.519)
+ */
+BOOL16 WINAPI SelectClipPath16(HDC16 hdc, INT16 iMode)
+{
+  return (BOOL16) SelectClipPath((HDC) hdc, iMode);
+}
 
 /***********************************************************************
  *           SelectClipPath32    (GDI32.296)
@@ -1126,6 +1147,16 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[],
 }
 
 /*******************************************************************
+ *      FlattenPath16 [GDI.516]
+ *
+ *
+ */
+BOOL16 WINAPI FlattenPath16(HDC16 hdc)
+{
+  return (BOOL16) FlattenPath((HDC) hdc);
+}
+
+/*******************************************************************
  *      FlattenPath32 [GDI32.103]
  *
  *
@@ -1134,6 +1165,16 @@ BOOL WINAPI FlattenPath(HDC hdc)
 {
         FIXME("FlattenPath, stub\n");
         return 0;
+}
+
+/*******************************************************************
+ *      StrokeAndFillPath16 [GDI.520]
+ *
+ *
+ */
+BOOL16 WINAPI StrokeAndFillPath16(HDC16 hdc)
+{
+  return (BOOL16) StrokeAndFillPath((HDC) hdc);
 }
 
 /*******************************************************************
@@ -1148,6 +1189,16 @@ BOOL WINAPI StrokeAndFillPath(HDC hdc)
 }
 
 /*******************************************************************
+ *      StrokePath16 [GDI.521]
+ *
+ *
+ */
+BOOL16 WINAPI StrokePath16(HDC16 hdc)
+{
+  return (BOOL16) StrokePath((HDC) hdc);
+}
+
+/*******************************************************************
  *      StrokePath [GDI32.353]
  *
  *
@@ -1156,6 +1207,16 @@ BOOL WINAPI StrokePath(HDC hdc)
 {
         FIXME("StrokePath, stub\n");
         return 0;
+}
+
+/*******************************************************************
+ *      WidenPath16 [GDI.522]
+ *
+ *
+ */
+BOOL16 WINAPI WidenPath16(HDC16 hdc)
+{
+  return (BOOL16) WidenPath((HDC) hdc);
 }
 
 /*******************************************************************

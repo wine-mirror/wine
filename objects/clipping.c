@@ -68,6 +68,14 @@ INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
 }
 
 /******************************************************************************
+ *		ExtSelectClipRgn16	[GDI.508]
+ */
+INT16 WINAPI ExtSelectClipRgn16( HDC16 hdc, HRGN16 hrgn, INT16 fnMode )
+{
+  return (INT16) ExtSelectClipRgn((HDC) hdc, (HRGN) hrgn, fnMode);
+}
+
+/******************************************************************************
  *		ExtSelectClipRgn	[GDI32.97]
  */
 INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
