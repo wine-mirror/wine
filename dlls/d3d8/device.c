@@ -31,7 +31,7 @@
 #include "wine/debug.h"
 
 /** define  GL_GLEXT_PROTOTYPES for having extensions prototypes defined */
-#define GL_GLEXT_PROTOTYPES
+/*#define GL_GLEXT_PROTOTYPES*/
 #include "d3d8_private.h"
 
 /** currently desactiving 1_4 support as mesa doesn't implement all 1_4 support while defining it */
@@ -119,6 +119,13 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
       fvf = (D3DFORMAT) This->UpdateStateBlock->vertexShaderDecl->fvf;
       TRACE("vertex shader declared FVF: %lx\n", This->UpdateStateBlock->vertexShaderDecl->fvf);
       memset(&vertex_shader->input, 0, sizeof(VSHADERINPUTDATA8));
+
+      /** init Constants */
+      if (TRUE == This->UpdateStateBlock->Changed.vertexShaderConstant) {
+	TRACE("vertex shader init Constant\n");
+	IDirect3DVertexShaderImpl_SetConstantF(vertex_shader, 0, (CONST FLOAT*) &This->UpdateStateBlock->vertexShaderConstant[0], 96);
+      }
+
     }
 
     {
@@ -451,7 +458,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
 		    memset(&vertex_shader->output, 0, sizeof(VSHADEROUTPUTDATA8));
                     IDirect3DVertexShaderImpl_ExecuteSW(vertex_shader, &vertex_shader->input, &vertex_shader->output);
-                    
+                    /*
                     TRACE_VECTOR(vertex_shader->output.oPos);
                     TRACE_VECTOR(vertex_shader->output.oD[0]);
 		    TRACE_VECTOR(vertex_shader->output.oD[1]);
@@ -462,7 +469,11 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 		    TRACE_VECTOR(vertex_shader->data->C[1]);
 		    TRACE_VECTOR(vertex_shader->data->C[2]);
 		    TRACE_VECTOR(vertex_shader->data->C[3]);
-                    /**/
+		    TRACE_VECTOR(vertex_shader->data->C[4]);
+		    TRACE_VECTOR(vertex_shader->data->C[5]);
+		    TRACE_VECTOR(vertex_shader->data->C[6]);
+		    TRACE_VECTOR(vertex_shader->data->C[7]);
+                    */
 		    x = vertex_shader->output.oPos.x;
                     y = vertex_shader->output.oPos.y;
                     z = vertex_shader->output.oPos.z;
@@ -3141,8 +3152,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     /* Make appropriate texture active */
     TRACE("Activating appropriate texture state %ld\n", Stage);
     if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+        glActiveTexture(GL_TEXTURE0 + Stage);
+        checkGLcall("glActiveTexture");
+#else
         glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
         checkGLcall("glActiveTextureARB");
+#endif
+
     } else if (Stage>0) {
         FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
     }
@@ -3700,43 +3717,41 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, CONST void* pConstantData, DWORD ConstantCount) {
   ICOM_THIS(IDirect3DDevice8Impl,iface);
-  IDirect3DVertexShaderImpl* object;
-  DWORD Handle = This->UpdateStateBlock->VertexShader;
 
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
+    /*ERR("(%p) : SetVertexShaderConstant C[%lu] invalid\n", This, Register);*/
     return D3DERR_INVALIDCALL;
   }
-  object = VERTEX_SHADER(Handle);
-  if (NULL == object || NULL == pConstantData) {
+  if (NULL == pConstantData) {
     return D3DERR_INVALIDCALL;
   }
   if (ConstantCount > 1) {
     FLOAT* f = (FLOAT*)pConstantData;
     UINT i;
-    FIXME("(%p) : SetVertexShaderConstant %p, C[%lu..%lu]=\n", This, object, Register, Register + ConstantCount - 1);
+    FIXME("(%p) : SetVertexShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
     for (i = 0; i < ConstantCount; ++i) {
       DPRINTF("{%f, %f, %f, %f}\n", f[0], f[1], f[2], f[3]);
       f += 4;
     }
   } else { 
     FLOAT* f = (FLOAT*)pConstantData;
-    FIXME("(%p) : SetVertexShaderConstant %p, C[%lu]={%f, %f, %f, %f}\n", This, object, Register, f[0], f[1], f[2], f[3]);
+    FIXME("(%p) : SetVertexShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
   }
-  return IDirect3DVertexShaderImpl_SetConstantF(object, Register, pConstantData, ConstantCount);
+  This->UpdateStateBlock->Changed.vertexShaderConstant = TRUE;
+  memcpy(&This->UpdateStateBlock->vertexShaderConstant[Register], pConstantData, ConstantCount * 4 * sizeof(FLOAT));
+  return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, void* pConstantData, DWORD ConstantCount) {
   ICOM_THIS(IDirect3DDevice8Impl,iface);
-  IDirect3DVertexShaderImpl* object;
-  DWORD Handle = This->UpdateStateBlock->VertexShader;
 
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
     return D3DERR_INVALIDCALL;
   }
-  object = VERTEX_SHADER(Handle);
-  if (NULL == object || NULL == pConstantData) {
+  if (NULL == pConstantData) {
     return D3DERR_INVALIDCALL;
   }
-  return IDirect3DVertexShaderImpl_GetConstantF(object, Register, pConstantData, ConstantCount);
+  memcpy(pConstantData, &This->UpdateStateBlock->vertexShaderConstant[Register], ConstantCount * 4 * sizeof(FLOAT));
+  return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3DDEVICE8 iface, DWORD Handle, void* pData, DWORD* pSizeOfData) {
   /*ICOM_THIS(IDirect3DDevice8Impl,iface);*/

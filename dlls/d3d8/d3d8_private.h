@@ -876,6 +876,7 @@ typedef struct SAVEDSTATES {
         BOOL                      transform[HIGHEST_TRANSFORMSTATE];
         BOOL                      viewport;
         BOOL                      vertexShader;
+        BOOL                      vertexShaderConstant;
         BOOL                      vertexShaderDecl;
         BOOL                      pixelShader;
         BOOL                      renderstate[HIGHEST_RENDER_STATE];
@@ -946,7 +947,6 @@ struct  IDirect3DStateBlockImpl {
   
   /* Vertex Shader */
   DWORD                     VertexShader;
-  /* TODO: Vertex Shader Constant */
 
   /* Vertex Shader Declaration */
   IDirect3DVertexShaderDeclarationImpl* vertexShaderDecl;
@@ -958,6 +958,9 @@ struct  IDirect3DStateBlockImpl {
   /* Indexed Vertex Blending */
   D3DVERTEXBLENDFLAGS       vertex_blend;
   FLOAT                     tween_factor;
+
+  /* Vertex Shader Constant */
+  D3DSHADERVECTOR           vertexShaderConstant[D3D8_VSHADER_MAX_CONSTANTS];
 };
 
 /* exported Interfaces */

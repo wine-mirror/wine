@@ -574,7 +574,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 
     glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
     object->maxLights = min(MAX_ACTIVE_LIGHTS, gl_max);
-    TRACE("Lights support - max lights =%d\n", gl_max);
+    TRACE("Lights support - max lights=%d\n", gl_max);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
