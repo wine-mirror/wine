@@ -18,8 +18,46 @@ typedef struct IBinding IBinding,*LPBINDING;
 
 DEFINE_GUID(IID_IBindStatusCallback, 0x79EAC9C1, 0xBAF9, 0x11CE,
 	0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);
-
 typedef struct IBindStatusCallback IBindStatusCallback,*LPBINDSTATUSCALLBACK;
+
+DEFINE_GUID(IID_IBindHost, 0XFC4801A1, 0X2BA9, 0X11CF,
+    0XA2, 0X29, 0X00, 0XAA, 0X00, 0X3D, 0X73, 0X52);
+typedef struct IBindHost IBindHost,*LPBINDHOST;
+
+DEFINE_GUID(IID_IWinInetInfo, 0x79EAC9D6, 0xBAFA, 0x11CE,
+    0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0X0B);
+typedef struct IWinInetInfo IWinInetInfo,*LPWININETINFO;
+
+DEFINE_GUID(IID_IWinInetHttpInfo, 0x79EAC9D8, 0xBAFA, 0x11CE,
+    0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0X0B);
+typedef struct IWinInetHttpInfo IWinInetHttpInfo,*LPWININETHTTPINFO;
+
+typedef enum {
+	BINDF_ASYNCHRONOUS = 0x00000001,
+	BINDF_ASYNCSTORAGE = 0x00000002,
+	BINDF_NOPROGRESSIVERENDERING = 0x00000004,
+	BINDF_OFFLINEOPERATION = 0x00000008,
+	BINDF_GETNEWESTVERSION = 0x00000010,
+	BINDF_NOWRITECACHE = 0x00000020,
+	BINDF_NEEDFILE = 0x00000040,
+	BINDF_PULLDATA = 0x00000080,
+	BINDF_IGNORESECURITYPROBLEM = 0x00000100,
+	BINDF_RESYNCHRONIZE = 0x00000200,
+	BINDF_HYPERLINK = 0x00000400,
+	BINDF_NO_UI = 0x00000800,
+	BINDF_SILENTOPERATION = 0x00001000,
+	BINDF_PRAGMA_NO_CACHE = 0x00002000,
+	BINDF_GETCLASSOBJECT = 0x00004000,
+	BINDF_RESERVED_1 = 0x00008000,
+	BINDF_FREE_THREADED = 0x00010000,
+	BINDF_DIRECT_READ = 0x00020000,
+	BINDF_FORMS_SUBMIT = 0x00040000,
+	BINDF_GETFROMCACHE_IF_NET_FAIL = 0x00080000,
+	BINDF_FROMURLMON = 0x00100000,
+	BINDF_FWD_BACK = 0x00200000,
+	BINDF_PREFERDEFAULTHANDLER = 0x00400000,
+	BINDF_RESERVED_3 = 0x00800000
+} BINDF;
 
 typedef struct _tagBINDINFO {
     ULONG cbSize;
@@ -44,6 +82,42 @@ typedef enum {
     BSCF_DATAFULLYAVAILABLE = 0x08,
     BSCF_AVAILABLEDATASIZEUNKNOWN = 0x10
 } BSCF;
+
+typedef enum BINDSTATUS {
+	BINDSTATUS_FINDINGRESOURCE,
+	BINDSTATUS_CONNECTING,
+	BINDSTATUS_REDIRECTING,
+	BINDSTATUS_BEGINDOWNLOADDATA,
+	BINDSTATUS_DOWNLOADINGDATA,
+	BINDSTATUS_ENDDOWNLOADDATA,
+	BINDSTATUS_BEGINDOWNLOADCOMPONENTS,
+	BINDSTATUS_INSTALLINGCOMPONENTS,
+	BINDSTATUS_ENDDOWNLOADCOMPONENTS,
+	BINDSTATUS_USINGCACHEDCOPY,
+	BINDSTATUS_SENDINGREQUEST,
+	BINDSTATUS_CLASSIDAVAILABLE,
+	BINDSTATUS_MIMETYPEAVAILABLE,
+	BINDSTATUS_CACHEFILENAMEAVAILABLE,
+	BINDSTATUS_BEGINSYNCOPERATION,
+	BINDSTATUS_ENDSYNCOPERATION,
+	BINDSTATUS_BEGINUPLOADDATA,
+	BINDSTATUS_UPLOADINGDATA,
+	BINDSTATUS_ENDUPLOADINGDATA,
+	BINDSTATUS_PROTOCOLCLASSID,
+	BINDSTATUS_ENCODING,
+	BINDSTATUS_VERFIEDMIMETYPEAVAILABLE,
+	BINDSTATUS_CLASSINSTALLLOCATION,
+	BINDSTATUS_DECODING,
+	BINDSTATUS_LOADINGMIMEHANDLER,
+	BINDSTATUS_CONTENTDISPOSITIONATTACH,
+	BINDSTATUS_FILTERREPORTMIMETYPE,
+	BINDSTATUS_CLSIDCANINSTANTIATE,
+	BINDSTATUS_IUNKNOWNAVAILABLE,
+	BINDSTATUS_DIRECTBIND,
+	BINDSTATUS_RAWMIMETYPE,
+	BINDSTATUS_PROXYDETECTING,
+	BINDSTATUS_ACCEPTRANGES
+} BINDSTATUS;
 
 #define MK_S_ASYNCHRONOUS 0x000401E8
 #define S_ASYNCHRONOUS    MK_S_ASYNCHRONOUS
@@ -109,6 +183,85 @@ ICOM_DEFINE(IBindStatusCallback,IUnknown)
 #define IBindStatusCallback_GetBindInfo(p,a,b)         ICOM_CALL2(GetBindInfo,p,a,b)
 #define IBindStatusCallback_OnDataAvailable(p,a,b,c,d) ICOM_CALL4(OnDataAvailable,p,a,b,c,d)
 #define IBindStatusCallback_OnObjectAvailable(p,a,b)   ICOM_CALL2(OnObjectAvailable,p,a,b)
+
+/*****************************************************************************
+ * IBindHost interface
+ */
+#define ICOM_INTERFACE IBindHost
+#define IBindHost_METHODS \
+    ICOM_METHOD4 (HRESULT,CreateMoniker,              LPOLESTR,szName, IBindCtx*,pBC, IMoniker**,ppmk, DWORD,dwReserved) \
+    ICOM_METHOD5 (HRESULT,MonikerBindToStorage,       IMoniker*,pMk, IBindCtx*,pBC, IBindStatusCallback*,pBSC, REFIID,riid, LPVOID*,ppvObj) \
+    ICOM_METHOD5 (HRESULT,MonikerBindToObject,        IMoniker*,pMk, IBindCtx*,pBC, IBindStatusCallback*,pBSC, REFIID,riid, LPVOID*,ppvObj)
+#define IBindHost_IMETHODS \
+    IUnknown_IMETHODS \
+    IBindHost_METHODS
+ICOM_DEFINE(IBindHost,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IBindHost_QueryInterface(p,a,b)                   ICOM_CALL2(QueryInterface,p,a,b)
+#define IBindHost_AddRef(p)                               ICOM_CALL (AddRef,p)
+#define IBindHost_Release(p)                              ICOM_CALL (Release,p)
+/*** IBindHost methods ***/
+#define IBindHost_CreateMoniker(p,a,b,c,d)                ICOM_CALL4(CreateMoniker,p,a,b,c,d)
+#define IBindHost_MonikerBindToStorage(p,a,b,c,d,e)       ICOM_CALL5(MonikerBindToStorage,p,a,b,c,d,e)
+#define IBindHost_MonikerBindToObject(p,a,b,c,d,e)        ICOM_CALL5(MonikerBindToObject,p,a,b,c,d,e)
+
+/*** IUnknown methods ***/
+typedef enum _tagQUERYOPTION {
+    QUERY_EXPIRATION_DATE = 1,
+    QUERY_TIME_OF_LAST_CHANGE,
+    QUERY_CONTENT_ENCODING,
+    QUERY_CONTENT_TYPE,
+    QUERY_REFRESH,
+    QUERY_RECOMBINE,
+    QUERY_CAN_NAVIGATE,
+    QUERY_USES_NETWORK,
+    QUERY_IS_CACHED,
+    QUERY_IS_INSTALLEDENTRY,
+    QUERY_IS_CACHED_OR_MAPPED,
+    QUERY_USES_CACHE,
+    QUERY_IS_SECURE,
+    QUERY_IS_SAFE
+} QUERYOPTION;
+
+/*****************************************************************************
+ * IWinInetInfo interface
+ */
+#define ICOM_INTERFACE IWinInetInfo
+#define IWinInetInfo_METHODS \
+    ICOM_METHOD3 (HRESULT,QueryOption,       DWORD,dwOption, LPVOID,pBuffer, DWORD*,pcbBuf)
+#define IWinInetInfo_IMETHODS \
+    IUnknown_IMETHODS \
+    IWinInetInfo_METHODS
+ICOM_DEFINE(IWinInetInfo,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IWinInetInfo_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
+#define IWinInetInfo_AddRef(p)                  ICOM_CALL (AddRef,p)
+#define IWinInetInfo_Release(p)                 ICOM_CALL (Release,p)
+/*** IWinInetInfo methods ***/
+#define IWinInetInfo_QueryOption(p,a,b,c)       ICOM_CALL3(QueryOption,p,a,b,c)
+
+/*****************************************************************************
+ * IWinInetHttpInfo interface
+ */
+#define ICOM_INTERFACE IWinInetHttpInfo
+#define IWinInetHttpInfo_METHODS \
+    ICOM_METHOD5 (HRESULT,QueryInfo, DWORD,dwOption, LPVOID,pBuffer, DWORD*,pcbBuf, DWORD*,pdwFlags, DWORD*,pdwReserved)
+#define IWinInetHttpInfo_IMETHODS \
+    IWinInetInfo_IMETHODS \
+    IWinInetHttpInfo_METHODS
+ICOM_DEFINE(IWinInetHttpInfo,IWinInetInfo)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IWinInetHttpInfo_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
+#define IWinInetHttpInfo_AddRef(p)              ICOM_CALL (AddRef,p)
+#define IWinInetHttpInfo_Release(p)             ICOM_CALL (Release,p)
+/*** IWinInetHttpInfo methods ***/
+#define IWinInetHttpInfo_QueryInfo(p,a,b,c,d,e) ICOM_CALL5(QueryInfo,p,a,b,c,d,e)
 
 HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPWSTR szURL, IMoniker **ppmk);
 HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc, IBindStatusCallback **ppbsc, DWORD dwReserved);
