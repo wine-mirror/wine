@@ -70,7 +70,7 @@ static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
 
     if( length )
     {
-	str = HeapAlloc( GetProcessHeap(), 0, length + 1 );
+	str = HeapAlloc( GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR) );
 	lstrcpyW( str, wnd->owner->text );
 	while( str[length - 1] == ' ' ) /* remove trailing spaces */
 	{ 
