@@ -38,6 +38,7 @@ LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
 AR        = ar rc
 RM        = rm -f
+MV        = mv
 MKDIR     = mkdir -p
 C2MAN     = @C2MAN@
 LDCONFIG  = @LDCONFIG@
@@ -46,8 +47,9 @@ MANSPECS  = -w $(TOPSRCDIR)/relay32/gdi32.spec \
 	    -w $(TOPSRCDIR)/relay32/comctl32.spec \
 	    -w $(TOPSRCDIR)/relay32/comdlg32.spec \
 	    -w $(TOPSRCDIR)/relay32/kernel32.spec 
-LINT      = lclint
-LINTFLAGS = +posixlib +gnuextensions +trytorecover
+LINT      = @LINT@
+LINTFLAGS = @LINTFLAGS@
+ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
@@ -74,6 +76,8 @@ includedir      = @includedir@/wine
 
 OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o) \
        $(SPEC_SRCS:.spec=.spec.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
+
+LINTS = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
@@ -112,6 +116,9 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o)
 
 .c.glue.s:
 	$(BUILD) @BUILDFLAGS@ -o $@ -glue $<
+
+.c.ln:
+	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
 
 # Rule to rebuild the resource compiler
 
@@ -154,8 +161,16 @@ html: $(C_SRCS)
 
 # Rule for linting
 
-lint:
-	for i in $(C_SRCS); do $(LINT) $(LINTFLAGS) -D__WINE__ $(OPTIONS) $(DIVINCL) $(X_CFLAGS) $$i; done
+$(MODULE).ln : $(LINTS)
+	if test "$(LINTS)" ; \
+	then \
+		$(LINT) $(ALLLINTFLAGS) -o$(MODULE) $(LINTS) ; \
+	        $(MV) llib-l$(MODULE).ln $(MODULE).ln ; \
+	else \
+		$(LINT) $(ALLLINTFLAGS) -C$(MODULE) /dev/null ; \
+	fi
+
+lint:: $(MODULE).ln
 
 # Misc. rules
 
@@ -167,7 +182,7 @@ depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 
 clean::
-	$(RM) *.o \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(SPEC_SRCS:.spec=.spec.c) $(GLUE:.c=.glue.s) $(PROGRAMS)
+	$(RM) *.o *.ln \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(SPEC_SRCS:.spec=.spec.c) $(GLUE:.c=.glue.s) $(PROGRAMS)
 
 dummy:
 

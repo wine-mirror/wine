@@ -104,6 +104,9 @@ DEPENDSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
 # Sub-directories to run make install into
 INSTALLSUBDIRS = $(DOCSUBDIRS) $(INCSUBDIRS)
 
+# Sub-directories to run make lint into
+LINTSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
+
 LIBOBJS = \
 	controls/controls.o \
 	console/console.o \
@@ -165,6 +168,13 @@ ALT_LINK    = @ALT_LINK@
 
 all: Makefile Make.rules $(MAIN_TARGET)
 
+LIBLINTS = $(LIBOBJS:.o=.ln) 
+X11LINTS = $(X11OBJS:.o=.ln)
+EMULINTS = $(EMUOBJS:.o=.ln)
+
+lint:: llib-lwine.ln $(EMULINTS)
+	$(LINT) $(ALLLINTFLAGS) -L. -lwine $(EMULINTS)
+
 @MAKE_RULES@
 
 Make.rules: Make.rules.in configure
@@ -188,6 +198,9 @@ libwine.a: $(LIBOBJS) $(X11OBJS)
 	$(RM) $@
 	$(AR) $@ $(LIBOBJS) $(X11OBJS)
 	$(RANLIB) $@
+
+llib-lwine.ln : $(LIBLINTS) $(X11LINTS)
+	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS) $(X11LINTS)
 
 libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
 	$(LDSHARED) -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS)
@@ -217,6 +230,10 @@ $(X11OBJS) $(EMUOBJS) $(LIBOBJS): $(TOOLSUBDIRS) dummy
 
 $(BUILDSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
+
+$(LIBLINTS) $(X11LINTS) $(EMULINTS): dummy
+	@echo $@ | sed 's%\(.*\)\/[^\/]*%cd \1 \&\& make lint%' | sh
+
 
 install_programs: dummy
 	@cd programs; $(SUBMAKE) install

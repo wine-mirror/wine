@@ -72,6 +72,16 @@ AC_PROG_LN_S
 AC_CHECK_PROG(C2MAN,c2man,c2man,true)
 AC_PATH_PROG(LDCONFIG, ldconfig, false, /sbin:/usr/sbin:$PATH)
 
+dnl Check for lint
+AC_CHECK_PROGS(LINT, lclint lint)
+if test "$LINT" = "lint"
+then
+  LINTFLAGS="$LINTFLAGS -errchk=%all,no%longptr64 -errhdr=%user -Ncheck=macro -Nlevel=4"
+  dnl LINTFLAGS='-D_SIZE_T "-Dsize_t=unsigned long" -errchk=longptr64'
+fi
+AC_SUBST(LINT)
+AC_SUBST(LINTFLAGS)
+
 dnl **** Check for some libraries ****
 
 dnl Check for -lm for BeOS
@@ -738,6 +748,7 @@ yes
 if test "$ac_cv_cpp_def_i386" = "yes"
 then
     CFLAGS="$CFLAGS -D__i386__"
+    LINTFLAGS="$LINTFLAGS -D__i386__"
 fi
 
 dnl $GCC is set by autoconf
