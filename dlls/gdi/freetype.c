@@ -352,7 +352,7 @@ static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N'
  *    Key            Meaning
  *  FIXEDFON.FON    FixedSys
  *  FONTS.FON       System
- *  OEMFONT.FON     Termial
+ *  OEMFONT.FON     Terminal
  *  LogPixels       Current dpi set by the display control panel applet
  *                  (HKLM\\Software\\Microsft\\Windows NT\\CurrentVersion\\FontDPI
  *                  also has a LogPixels value that appears to mirror this)

@@ -122,9 +122,9 @@ static const LOGFONTW AnsiVarFont =
  */
 
 /*
- * language-dependenet stock fonts for all known charsets
- * please see TranslateCharsetInfo (objects/font.c) and
- * CharsetBindingInfo (graphics/x11drv/xfont.c),
+ * language-dependent stock fonts for all known charsets
+ * please see TranslateCharsetInfo (dlls/gdi/font.c) and
+ * CharsetBindingInfo (dlls/x11drv/xfont.c),
  * and modify entries for your language if needed.
  */
 struct DefaultFontInfo
