@@ -411,12 +411,6 @@ char *INT21_DriveName(int drive)
       }
     return drivestring;
 }
-static BOOL INT21_CreateFile( CONTEXT86 *context )
-{
-    SET_AX( context, _lcreat16( CTX_SEG_OFF_TO_LIN(context, context->SegDs,
-                                                   context->Edx ), CX_reg(context) ) );
-    return (AX_reg(context) == (WORD)HFILE_ERROR16);
-}
 
 static HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
 {
@@ -425,110 +419,6 @@ static HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
     return Win32HandleToDosFileHandle( CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
                                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                              CREATE_NEW, attr, 0 ));
-}
-
-static void OpenExistingFile( CONTEXT86 *context )
-{
-    SET_AX( context, _lopen16( CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
-                               AL_reg(context) ));
-    if (AX_reg(context) == (WORD)HFILE_ERROR16)
-    {
-        SET_AX( context, GetLastError() );
-        SET_CFLAG(context);
-    }
-}
-
-static BOOL INT21_ExtendedOpenCreateFile(CONTEXT86 *context )
-{
-  BOOL bExtendedError = FALSE;
-  BYTE action = DL_reg(context);
-
-  /* Shuffle arguments to call OpenExistingFile */
-  SET_AL( context, BL_reg(context) );
-  SET_DX( context, SI_reg(context) );
-  /* BX,CX and DX should be preserved */
-  OpenExistingFile(context);
-
-  if ((context->EFlags & 0x0001) == 0) /* File exists */
-  {
-      UINT16	uReturnCX = 0;
-
-      /* Now decide what do do */
-
-      if ((action & 0x07) == 0)
-      {
-	  _lclose16( AX_reg(context) );
-	  SET_AX( context, 0x0050 );	/*File exists*/
-	  SET_CFLAG(context);
-	  WARN("extended open/create: failed because file exists \n");
-      }
-      else if ((action & 0x07) == 2)
-      {
-	/* Truncate it, but first check if opened for write */
-	if ((BL_reg(context) & 0x0007)== 0)
-	{
-            _lclose16( AX_reg(context) );
-            WARN("extended open/create: failed, trunc on ro file\n");
-            SET_AX( context, 0x000C );	/*Access code invalid*/
-            SET_CFLAG(context);
-	}
-	else
-	{
-		TRACE("extended open/create: Closing before truncate\n");
-                if (_lclose16( AX_reg(context) ))
-		{
-		   WARN("extended open/create: close before trunc failed\n");
-		   SET_AX( context, 0x0019 );	/*Seek Error*/
-		   SET_CX( context, 0 );
-		   SET_CFLAG(context);
-		}
-		/* Shuffle arguments to call CreateFile */
-
-		TRACE("extended open/create: Truncating\n");
-		SET_AL( context, BL_reg(context) );
-		/* CX is still the same */
-		SET_DX( context, SI_reg(context) );
-		bExtendedError = INT21_CreateFile(context);
-
-		if (context->EFlags & 0x0001) 	/*no file open, flags set */
-		{
-		    WARN("extended open/create: trunc failed\n");
-		    return bExtendedError;
-		}
-		uReturnCX = 0x3;
-	}
-      }
-      else uReturnCX = 0x1;
-
-      SET_CX( context, uReturnCX );
-  }
-  else /* file does not exist */
-  {
-      RESET_CFLAG(context); /* was set by OpenExistingFile(context) */
-      if ((action & 0xF0)== 0)
-      {
-	SET_CX( context, 0 );
-	SET_CFLAG(context);
-	WARN("extended open/create: failed, file dosen't exist\n");
-      }
-      else
-      {
-        /* Shuffle arguments to call CreateFile */
-        TRACE("extended open/create: Creating\n");
-        SET_AL( context, BL_reg(context) );
-        /* CX should still be the same */
-        SET_DX( context, SI_reg(context) );
-        bExtendedError = INT21_CreateFile(context);
-        if (context->EFlags & 0x0001)  /*no file open, flags set */
-	{
-  	    WARN("extended open/create: create failed\n");
-	    return bExtendedError;
-        }
-        SET_CX( context, 2 );
-      }
-  }
-
-  return bExtendedError;
 }
 
 
@@ -858,18 +748,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         if (!INT21_GetFreeDiskSpace(context)) SET_AX( context, 0xffff );
         break;
 
-    case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
-        TRACE("CREAT flag 0x%02x %s\n",CX_reg(context),
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        bSetDOSExtendedError = INT21_CreateFile( context );
-        break;
-
-    case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
-        TRACE("OPEN mode 0x%02x %s\n",AL_reg(context),
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        OpenExistingFile(context);
-        break;
-
     case 0x44: /* IOCTL */
         switch (AL_reg(context))
         {
@@ -915,15 +793,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
     case 0x5a: /* CREATE TEMPORARY FILE */
         TRACE("CREATE TEMPORARY FILE\n");
         bSetDOSExtendedError = !INT21_CreateTempFile(context);
-        break;
-
-    case 0x5b: /* CREATE NEW FILE */
-        TRACE("CREATE NEW FILE 0x%02x for %s\n", CX_reg(context),
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        SET_AX( context,
-               _lcreat16_uniq( CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
-                               CX_reg(context) ));
-        bSetDOSExtendedError = (AX_reg(context) != 0);
         break;
 
     case 0x5e:
@@ -990,12 +859,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             else SET_AX( context, 1 );
             break;
         }
-        break;
-
-    case 0x6C: /* Extended Open/Create*/
-        TRACE("EXTENDED OPEN/CREATE %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edi));
-        bSetDOSExtendedError = INT21_ExtendedOpenCreateFile(context);
         break;
 
     case 0x71: /* MS-DOS 7 (Windows95) - LONG FILENAME FUNCTIONS */
@@ -1074,12 +937,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	      break;
 	  }
 	  break;
-        case 0x6c:  /* Create or open file */
-            TRACE("LONG FILENAME - CREATE OR OPEN FILE %s\n",
-		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Esi));
-	  /* translate Dos 7 action to Dos 6 action */
-	    bSetDOSExtendedError = INT21_ExtendedOpenCreateFile(context);
-	    break;
 
         default:
             FIXME("Unimplemented long file name function:\n");

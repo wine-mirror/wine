@@ -519,6 +519,209 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_CreateFile
+ *
+ * Handler for:
+ * - function 0x3c
+ * - function 0x3d
+ * - function 0x5b
+ * - function 0x6c
+ * - subfunction 0x6c of function 0x71
+ */
+static BOOL INT21_CreateFile( CONTEXT86 *context, 
+                              DWORD      pathSegOff,
+                              BOOL       returnStatus,
+                              WORD       dosAccessShare,
+                              BYTE       dosAction )
+{
+    WORD   dosStatus;
+    char  *pathA = CTX_SEG_OFF_TO_LIN(context, context->SegDs, pathSegOff);
+    WCHAR  pathW[MAX_PATH];   
+    DWORD  winAccess;
+    DWORD  winAttributes;
+    HANDLE winHandle;
+    DWORD  winMode;
+    DWORD  winSharing;
+
+    TRACE( "CreateFile called: function=%02x, action=%02x, access/share=%04x, "
+           "create flags=%04x, file=%s.\n",
+           AH_reg(context), dosAction, dosAccessShare, CX_reg(context), pathA );
+
+    /*
+     * Application tried to create/open a file whose name 
+     * ends with a backslash. This is not allowed.
+     *
+     * FIXME: This needs to be validated, especially the return value.
+     */
+    if (pathA[strlen(pathA) - 1] == '/')
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return FALSE;
+    }
+
+    /*
+     * Convert DOS action flags into Win32 creation disposition parameter.
+     */ 
+    switch(dosAction)
+    {
+    case 0x01:
+        winMode = OPEN_EXISTING;
+        break;
+    case 0x02:
+        winMode = TRUNCATE_EXISTING;
+        break;
+    case 0x10:
+        winMode = CREATE_NEW;
+        break;
+    case 0x11:
+        winMode = OPEN_ALWAYS;
+        break;
+    case 0x12:
+        winMode = CREATE_ALWAYS;
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    /*
+     * Convert DOS access/share flags into Win32 desired access parameter.
+     */ 
+    switch(dosAccessShare & 0x07)
+    {
+    case OF_READ:
+        winAccess = GENERIC_READ;
+        break;
+    case OF_WRITE:
+        winAccess = GENERIC_WRITE;
+        break;
+    case OF_READWRITE:
+        winAccess = GENERIC_READ | GENERIC_WRITE;
+        break;
+    case 0x04:
+        /*
+         * Read-only, do not modify file's last-access time (DOS7).
+         *
+         * FIXME: How to prevent modification of last-access time?
+         */
+        winAccess = GENERIC_READ;
+        break;
+    default:
+        winAccess = 0;
+    }
+
+    /*
+     * Convert DOS access/share flags into Win32 share mode parameter.
+     */ 
+    switch(dosAccessShare & 0x70)
+    {
+    case OF_SHARE_EXCLUSIVE:  
+        winSharing = 0; 
+        break;
+    case OF_SHARE_DENY_WRITE: 
+        winSharing = FILE_SHARE_READ; 
+        break;
+    case OF_SHARE_DENY_READ:  
+        winSharing = FILE_SHARE_WRITE; 
+        break;
+    case OF_SHARE_DENY_NONE:
+    case OF_SHARE_COMPAT:
+    default:
+        winSharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    }
+
+    /*
+     * FIXME: Bit (dosAccessShare & 0x80) represents inheritance.
+     *        What to do with this bit?
+     * FIXME: Bits in the high byte of dosAccessShare are not supported.
+     *        See both function 0x6c and subfunction 0x6c of function 0x71 for
+     *        definition of these bits.
+     */
+
+    /*
+     * Convert DOS create attributes into Win32 flags and attributes parameter.
+     */
+    if (winMode == OPEN_EXISTING || winMode == TRUNCATE_EXISTING)
+    {
+        winAttributes = 0;
+    }
+    else
+    {        
+        WORD dosAttributes = CX_reg(context);
+
+        if (dosAttributes & FILE_ATTRIBUTE_LABEL)
+        {
+            /*
+             * Application tried to create volume label entry.
+             * This is difficult to support so we do not allow it.
+             *
+             * FIXME: If volume does not already have a label, 
+             *        this function is supposed to succeed.
+             */
+            SetLastError( ERROR_ACCESS_DENIED );
+            return TRUE;
+        }
+
+        winAttributes = dosAttributes & 
+            (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | 
+             FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE);
+    }
+
+    /*
+     * Open the file.
+     */
+    MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
+
+    winHandle = CreateFileW( pathW, winAccess, winSharing, NULL, 
+                             winMode, winAttributes, 0 );
+
+    if (winHandle == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    /*
+     * Determine DOS file status.
+     *
+     * 1 = file opened
+     * 2 = file created
+     * 3 = file replaced
+     */
+    switch(winMode)
+    {
+    case OPEN_EXISTING:
+        dosStatus = 1;
+        break;
+    case TRUNCATE_EXISTING:
+        dosStatus = 3; 
+        break;
+    case CREATE_NEW:
+        dosStatus = 2;
+        break;
+    case OPEN_ALWAYS:
+        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 1 : 2;
+        break;
+    case CREATE_ALWAYS:
+        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 3 : 2;
+        break;
+    default:
+        dosStatus = 0;
+    }
+
+    /*
+     * Return DOS file handle and DOS status.
+     */
+    SET_AX( context, Win32HandleToDosFileHandle(winHandle) );
+
+    if (returnStatus)
+        SET_CX( context, dosStatus );
+
+    TRACE( "CreateFile finished: handle=%d, status=%d.\n", 
+           AX_reg(context), dosStatus );
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           INT21_BufferedInput
  *
  * Handler for function 0x0a and reading from console using
@@ -2156,7 +2359,15 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x60: /* LONG FILENAME - CONVERT PATH */
+        INT_Int21Handler( context );
+        break;
+
     case 0x6c: /* LONG FILENAME - CREATE OR OPEN FILE */
+        if (!INT21_CreateFile( context, context->Esi, TRUE,
+                               BX_reg(context), DL_reg(context) ))
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0xa0: /* LONG FILENAME - GET VOLUME INFORMATION */
     case 0xa1: /* LONG FILENAME - "FindClose" - TERMINATE DIRECTORY SEARCH */
         INT_Int21Handler( context );
@@ -2917,8 +3128,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
+        if (!INT21_CreateFile( context, context->Edx, FALSE, 
+                               OF_READWRITE | OF_SHARE_COMPAT, 0x12 ))
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
-        INT_Int21Handler( context );
+        if (!INT21_CreateFile( context, context->Edx, FALSE, 
+                               AL_reg(context), 0x01 ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x3e: /* "CLOSE" - CLOSE FILE */
@@ -3267,8 +3485,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x5a: /* CREATE TEMPORARY FILE */
-    case 0x5b: /* CREATE NEW FILE */ 
         INT_Int21Handler( context );
+        break;
+
+    case 0x5b: /* CREATE NEW FILE */ 
+        if (!INT21_CreateFile( context, context->Edx, FALSE,
+                               OF_READWRITE | OF_SHARE_COMPAT, 0x10 ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x5c: /* "FLOCK" - RECORD LOCKING */
@@ -3381,7 +3604,9 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x6c: /* EXTENDED OPEN/CREATE */
-        INT_Int21Handler( context );
+        if (!INT21_CreateFile( context, context->Esi, TRUE,
+                               BX_reg(context), DL_reg(context) ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x70: /* MSDOS 7 - GET/SET INTERNATIONALIZATION INFORMATION */
