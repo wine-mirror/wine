@@ -35,6 +35,7 @@
 /* command-line options */
 int debug_level = 0;
 int master_socket_timeout = 3;  /* master socket timeout in seconds, default is 3 s */
+int foreground = 0;
 const char *server_argv0;
 
 /* name space for synchronization objects */
@@ -49,6 +50,7 @@ static void usage(void)
     fprintf(stderr, "options:\n");
     fprintf(stderr, "   -d<n>  set debug level to <n>\n");
     fprintf(stderr, "   -p[n]  make server persistent, optionally for n seconds\n");
+    fprintf(stderr, "   -f     remain in the foreground for debugging\n");
     fprintf(stderr, "   -w     wait until the current wineserver terminates\n");
     fprintf(stderr, "   -k[n]  kill the current wineserver, optionally with signal n\n");
     fprintf(stderr, "   -h     display this help message\n");
@@ -69,6 +71,9 @@ static void parse_args( int argc, char *argv[] )
             case 'd':
                 if (isdigit(argv[i][2])) debug_level = atoi( argv[i] + 2 );
                 else debug_level++;
+                break;
+            case 'f':
+                foreground = 1;
                 break;
             case 'h':
                 usage();

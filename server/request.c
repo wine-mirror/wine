@@ -705,7 +705,7 @@ static void acquire_lock(void)
 /* open the master server socket and start waiting for new clients */
 void open_master_socket(void)
 {
-    int pid, status, sync_pipe[2];
+    int fd, pid, status, sync_pipe[2];
     char dummy;
 
     /* make sure no request is larger than the maximum size */
@@ -713,36 +713,51 @@ void open_master_socket(void)
     assert( sizeof(union generic_reply) == sizeof(struct request_max_size) );
 
     create_server_dir();
-    if (pipe( sync_pipe ) == -1) fatal_perror( "pipe" );
 
-    pid = fork();
-    switch( pid )
+    if (!foreground)
     {
-    case 0:  /* child */
-        setsid();
-        close( sync_pipe[0] );
+        if (pipe( sync_pipe ) == -1) fatal_perror( "pipe" );
+        pid = fork();
+        switch( pid )
+        {
+        case 0:  /* child */
+            setsid();
+            close( sync_pipe[0] );
 
+            acquire_lock();
+
+            /* close stdin and stdout */
+            if ((fd = open( "/dev/null", O_RDWR )) != -1)
+            {
+                dup2( fd, 0 );
+                dup2( fd, 1 );
+                close( fd );
+            }
+
+            /* signal parent */
+            write( sync_pipe[1], &dummy, 1 );
+            close( sync_pipe[1] );
+            break;
+
+        case -1:
+            fatal_perror( "fork" );
+            break;
+
+        default:  /* parent */
+            close( sync_pipe[1] );
+
+            /* wait for child to signal us and then exit */
+            if (read( sync_pipe[0], &dummy, 1 ) == 1) _exit(0);
+
+            /* child terminated, propagate exit status */
+            wait4( pid, &status, 0, NULL );
+            if (WIFEXITED(status)) _exit( WEXITSTATUS(status) );
+            _exit(1);
+        }
+    }
+    else  /* remain in the foreground */
+    {
         acquire_lock();
-
-        /* signal parent */
-        write( sync_pipe[1], &dummy, 1 );
-        close( sync_pipe[1] );
-        break;
-
-    case -1:
-        fatal_perror( "fork" );
-        break;
-
-    default:  /* parent */
-        close( sync_pipe[1] );
-
-        /* wait for child to signal us and then exit */
-        if (read( sync_pipe[0], &dummy, 1 ) == 1) _exit(0);
-
-        /* child terminated, propagate exit status */
-        wait4( pid, &status, 0, NULL );
-        if (WIFEXITED(status)) _exit( WEXITSTATUS(status) );
-        _exit(1);
     }
 
     /* setup msghdr structure constant fields */
