@@ -1030,6 +1030,10 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     NMTBCUSTOMDRAW tbcd;
     DWORD ntfret;
 
+    /* the app has told us not to redraw the toolbar */
+    if (!infoPtr->bDoRedraw)
+        return;
+
     /* if imagelist belongs to the app, it can be changed
        by the app after setting it */
     if (GETDEFIMAGELIST(infoPtr, 0) != infoPtr->himlInt)
@@ -2424,7 +2428,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
          infoPtr->nNumBitmaps += nButtons;
     }
 
-    InvalidateRect(hwnd, NULL, FALSE);
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return nIndex;
 }
@@ -2491,7 +2495,7 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
-    InvalidateRect(hwnd, NULL, FALSE);
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return TRUE;
 }
@@ -2559,7 +2563,7 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
-    InvalidateRect(hwnd, NULL, FALSE);
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return TRUE;
 }
@@ -2901,11 +2905,8 @@ TOOLBAR_CheckButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if( bChecked != LOWORD(lParam) )
     {
-	if (nOldIndex != -1)
-        {
-            InvalidateRect(hwnd, &infoPtr->buttons[nOldIndex].rect,
-                TOOLBAR_HasText(infoPtr, &infoPtr->buttons[nOldIndex]));
-        }
+        if (nOldIndex != -1)
+            InvalidateRect(hwnd, &infoPtr->buttons[nOldIndex].rect, TRUE);
         InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
 
@@ -3042,10 +3043,7 @@ TOOLBAR_EnableButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* redraw the button only if the state of the button changed */
     if(bState != (btnPtr->fsState & TBSTATE_ENABLED))
-    {
-        InvalidateRect(hwnd, &btnPtr->rect,
-            TOOLBAR_HasText(infoPtr, btnPtr));
-    }
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
@@ -3552,7 +3550,7 @@ TOOLBAR_Indeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState |= TBSTATE_INDETERMINATE;
 
     if(oldState != btnPtr->fsState)
-        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
@@ -3945,7 +3943,7 @@ TOOLBAR_PressButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
     if(oldState != btnPtr->fsState)
-        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
     return TRUE;
 }
@@ -4049,7 +4047,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACE(" pos %d  %d old bitmaps replaced by %d new ones.\n",
             pos, nOldBitmaps, nNewBitmaps);
 
-    InvalidateRect(hwnd, NULL, FALSE);
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return TRUE;
 }
@@ -4392,7 +4390,7 @@ TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_AutoSize(hwnd);
 
-    InvalidateRect(hwnd, NULL, FALSE);
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return (LRESULT)dwTemp;
 }
@@ -4438,15 +4436,13 @@ TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
         {
             btnPtr = &infoPtr->buttons[(INT)wParam];
             btnPtr->bHot = TRUE;
-	        InvalidateRect (hwnd, &btnPtr->rect,
-                    TOOLBAR_HasText(infoPtr, btnPtr));
+	        InvalidateRect (hwnd, &btnPtr->rect, TRUE);
         }
         if (nOldHotItem>=0)
         {
             btnPtr = &infoPtr->buttons[nOldHotItem];
             btnPtr->bHot = FALSE;
-	        InvalidateRect (hwnd, &btnPtr->rect,
-                    TOOLBAR_HasText(infoPtr, btnPtr));
+	        InvalidateRect (hwnd, &btnPtr->rect, TRUE);
         }
     }
 
@@ -4481,7 +4477,6 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	  hwnd, (INT)infoPtr->himlDef, infoPtr->nNumBitmaps,
 	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
 
-    /* FIXME: redraw ? */
     InvalidateRect(hwnd, NULL, TRUE);
 
     return (LRESULT)himlTemp;
@@ -4602,7 +4597,7 @@ TOOLBAR_SetRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
         TOOLBAR_CalcToolbar (hwnd);
 
         /* repaint toolbar */
-        InvalidateRect(hwnd, NULL, FALSE);
+        InvalidateRect(hwnd, NULL, TRUE);
     }
 
     /* return bounding rectangle */
@@ -4634,7 +4629,7 @@ TOOLBAR_SetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((btnPtr->fsState & TBSTATE_HIDDEN) != (LOWORD(lParam) & TBSTATE_HIDDEN)) {
 	btnPtr->fsState = LOWORD(lParam);
 	TOOLBAR_CalcToolbar (hwnd);
-	InvalidateRect(hwnd, 0, TOOLBAR_HasText(infoPtr, btnPtr));
+	InvalidateRect(hwnd, 0, TRUE);
 	return TRUE;
     }
 
@@ -4642,8 +4637,7 @@ TOOLBAR_SetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if(btnPtr->fsState != LOWORD(lParam))
     {
         btnPtr->fsState = LOWORD(lParam);
-        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
-            btnPtr));
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
 
     return TRUE;
@@ -4712,7 +4706,7 @@ TOOLBAR_SetColorScheme (HWND hwnd, LPCOLORSCHEME lParam)
 
     infoPtr->clrBtnHighlight = lParam->clrBtnHighlight;
     infoPtr->clrBtnShadow = lParam->clrBtnShadow;
-    InvalidateRect(hwnd, 0, 0);
+    InvalidateRect(hwnd, NULL, TRUE);
     return 0;
 }
 
@@ -4824,14 +4818,12 @@ TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((INT)wParam >=0) {
 	btnPtr = &infoPtr->buttons[(INT)wParam];
 	btnPtr->bHot = (no_hi) ? FALSE : TRUE;
-	InvalidateRect (hwnd, &btnPtr->rect,
-			TOOLBAR_HasText(infoPtr, btnPtr));
+	InvalidateRect (hwnd, &btnPtr->rect, TRUE);
     }
     if (nOldHotItem>=0) {
 	btnPtr = &infoPtr->buttons[nOldHotItem];
 	btnPtr->bHot = FALSE;
-	InvalidateRect (hwnd, &btnPtr->rect,
-			TOOLBAR_HasText(infoPtr, btnPtr));
+	InvalidateRect (hwnd, &btnPtr->rect, TRUE);
     }
     GetFocus();
     TRACE("old item=%d, new item=%d, flags=%08lx, notify=%d\n",
@@ -5156,8 +5148,7 @@ TOOLBAR_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
-        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
-            btnPtr));
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
     else if (GetWindowLongA (hwnd, GWL_STYLE) & CCS_ADJUSTABLE)
 	TOOLBAR_Customize (hwnd);
@@ -5226,7 +5217,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->bHot = FALSE;
 
         if (btnPtr->fsState & TBSTATE_ENABLED)
-	    InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
+	    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 	UpdateWindow(hwnd);
 	SetCapture (hwnd);
 
@@ -5296,11 +5287,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	if (nOldIndex != -1)
-        {
-            InvalidateRect(hwnd, &infoPtr->buttons[nOldIndex].rect,
-                TOOLBAR_HasText(infoPtr, &infoPtr->buttons[nOldIndex]));
-        }
+        if (nOldIndex != -1)
+            InvalidateRect(hwnd, &infoPtr->buttons[nOldIndex].rect, TRUE);
 
 	/*
 	 * now we can ReleaseCapture, which triggers CAPTURECHANGED msg,
@@ -5363,8 +5351,7 @@ TOOLBAR_CaptureChanged(HWND hwnd)
         infoPtr->nOldHit = -1;
 
         if (btnPtr->fsState & TBSTATE_ENABLED)
-            InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
-              btnPtr));
+            InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
     return 0;
 }
@@ -5388,8 +5375,7 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	hotBtnPtr->bHot = FALSE;
 	rc1 = hotBtnPtr->rect;
 	InflateRect (&rc1, 1, 1);
-        InvalidateRect (hwnd, &rc1, TOOLBAR_HasText(infoPtr,
-            hotBtnPtr));
+        InvalidateRect (hwnd, &rc1, TRUE);
     }
 
     /* If the last button we were over is depressed then make it not */
@@ -5481,11 +5467,9 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	/* now invalidate the old and new buttons so they will be painted */
 	if (oldBtnPtr)
-	    InvalidateRect (hwnd, &oldBtnPtr->rect,
-			    TOOLBAR_HasText(infoPtr, oldBtnPtr));
+	    InvalidateRect (hwnd, &oldBtnPtr->rect, TRUE);
 	if (btnPtr)
-	    InvalidateRect(hwnd, &btnPtr->rect,
-			   TOOLBAR_HasText(infoPtr, btnPtr));
+	    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
 	if (infoPtr->bCaptured) {
 	    btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
@@ -5934,7 +5918,7 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 
     TOOLBAR_AutoSize (hwnd);
 
-    InvalidateRect(hwnd, NULL, FALSE);
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return 0;
 }
