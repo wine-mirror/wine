@@ -236,6 +236,7 @@ typedef struct tagDIOCRegs {
 #define VWIN32_DIOC_DOS_INT25     2 /* This is the Absolute Disk Read command - Interrupt 25h */
 #define VWIN32_DIOC_DOS_INT26     3 /* This is the Absolute Disk Write command - Interrupt 25h */
 #define VWIN32_DIOC_DOS_INT13     4 /* This is Interrupt 13h commands */
+#define VWIN32_DIOC_SIMCTRLC      5 /* Simulate Ctrl-C */
 #define VWIN32_DIOC_DOS_DRIVEINFO 6 /* This is Interrupt 21h Function 730X commands */
 
 /* Important: All MS_DOS data structures must be packed on a one-byte boundary - good old 16 bit. */

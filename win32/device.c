@@ -74,6 +74,12 @@ static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
+static BOOL32 DeviceIo_VWin32(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
+
 /*
  * VxD names are taken from the Win95 DDK
  */
@@ -130,7 +136,7 @@ struct VxDInfo
     { "VXDLDR",   0x0027, NULL, NULL },
     { "NDIS",     0x0028, NULL, NULL },
     { "BIOS_EXT", 0x0029, NULL, NULL },
-    { "VWIN32",   0x002A, NULL, NULL },
+    { "VWIN32",   0x002A, NULL, DeviceIo_VWin32 },
     { "VCOMM",    0x002B, NULL, NULL },
     { "SPOOLER",  0x002C, NULL, NULL },
     { "WIN32S",   0x002D, NULL, NULL },
@@ -837,6 +843,106 @@ static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 
     return retv;
 }
+
+ 
+/***********************************************************************
+ *           DeviceIo_VWin32
+ */
+
+static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT *pCxt )
+{
+    memset( pCxt, 0, sizeof(CONTEXT) );
+    /* Note: segment registers == 0 means that CTX_SEG_OFF_TO_LIN
+             will interpret 32-bit register contents as linear pointers */
+
+    pCxt->ContextFlags=CONTEXT_INTEGER|CONTEXT_CONTROL;
+    pCxt->Eax = pIn->reg_EAX;
+    pCxt->Ebx = pIn->reg_EBX;
+    pCxt->Ecx = pIn->reg_ECX;
+    pCxt->Edx = pIn->reg_EDX;
+    pCxt->Esi = pIn->reg_ESI;
+    pCxt->Edi = pIn->reg_EDI;
+
+    /* FIXME: Only partial CONTEXT_CONTROL */
+    pCxt->EFlags = pIn->reg_Flags;
+}
+
+static void CONTEXT_2_DIOCRegs( CONTEXT *pCxt, DIOC_REGISTERS *pOut )
+{
+    memset( pOut, 0, sizeof(DIOC_REGISTERS) );
+
+    pOut->reg_EAX = pCxt->Eax;
+    pOut->reg_EBX = pCxt->Ebx;
+    pOut->reg_ECX = pCxt->Ecx;
+    pOut->reg_EDX = pCxt->Edx;
+    pOut->reg_ESI = pCxt->Esi;
+    pOut->reg_EDI = pCxt->Edi;
+
+    /* FIXME: Only partial CONTEXT_CONTROL */
+    pOut->reg_Flags = pCxt->EFlags;
+}
+
+
+static BOOL32 DeviceIo_VWin32(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped)
+{
+    BOOL32 retv = TRUE;
+
+    switch (dwIoControlCode)
+    {
+    case VWIN32_DIOC_DOS_IOCTL:
+    case VWIN32_DIOC_DOS_INT13:
+    case VWIN32_DIOC_DOS_INT25:
+    case VWIN32_DIOC_DOS_INT26:
+    {
+        CONTEXT cxt;
+        DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
+        DIOC_REGISTERS *pOut = (DIOC_REGISTERS *)lpvOutBuffer;
+
+        TRACE( win32, "Control '%s': "
+                      "eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
+                      "edx=0x%08lx, esi=0x%08lx, edi=0x%08lx ",
+                      (dwIoControlCode == VWIN32_DIOC_DOS_IOCTL)? "VWIN32_DIOC_DOS_IOCTL" :
+                      (dwIoControlCode == VWIN32_DIOC_DOS_INT13)? "VWIN32_DIOC_DOS_INT13" :
+                      (dwIoControlCode == VWIN32_DIOC_DOS_INT25)? "VWIN32_DIOC_DOS_INT25" :
+                      (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" : "???",
+                      pIn->reg_EAX, pIn->reg_EBX, pIn->reg_ECX,
+                      pIn->reg_EDX, pIn->reg_ESI, pIn->reg_EDI );
+
+        DIOCRegs_2_CONTEXT( pIn, &cxt );
+
+        switch (dwIoControlCode)
+        {
+        case VWIN32_DIOC_DOS_IOCTL: DOS3Call( &cxt ); break; /* Call int 21h */
+        case VWIN32_DIOC_DOS_INT13: INT_Int13Handler( &cxt ); break;
+        case VWIN32_DIOC_DOS_INT25: INT_Int25Handler( &cxt ); break;
+        case VWIN32_DIOC_DOS_INT26: INT_Int26Handler( &cxt ); break;
+        }
+
+        CONTEXT_2_DIOCRegs( &cxt, pOut );
+    }
+    break;
+
+    case VWIN32_DIOC_SIMCTRLC:
+        FIXME(win32, "Control VWIN32_DIOC_SIMCTRLC not implemented\n");
+        retv = FALSE;
+        break;
+
+    default:
+        FIXME(win32, "Unknown Control %ld\n", dwIoControlCode);
+        retv = FALSE;
+        break;
+    }
+
+    return retv;
+}
+
+
+
+
 
 /* this is used by some Origin games */
 static BOOL32 DeviceIo_MONODEBG(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
