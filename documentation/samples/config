@@ -1,6 +1,9 @@
 WINE REGISTRY Version 2
 ;; All keys relative to \\Machine\\Software\\Wine\\Wine\\Config
 
+;; If you think it is nescessary to show others your complete config for a 
+;; bug report, filter out empty lines and comments with
+;; grep -v "^;" ~/.wine/config | grep '.' 
 ;;
 ;; MS-DOS drives configuration
 ;;
