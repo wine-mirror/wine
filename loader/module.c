@@ -720,34 +720,59 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
  */
 HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {
-    LPCSTR p = NULL;
+    LPCSTR p, args = NULL;
+    LPCSTR name_beg, name_end;
     LPSTR name, cmdline;
-    int len;
+    int arglen;
     HINSTANCE16 ret;
     char buffer[MAX_PATH];
 
-    if ( ( *lpCmdLine == '"' )  &&  ( p = strchr ( lpCmdLine+1, '"' ) ) )
-      p = strchr ( p, ' ' );
-    else 
-      p = strchr( lpCmdLine, ' ' );
-    if ( p )
+    if (*lpCmdLine == '"') /* has to be only one and only at beginning ! */
     {
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, p - lpCmdLine + 1 )))
-            return ERROR_NOT_ENOUGH_MEMORY;
-        memcpy( name, lpCmdLine, p - lpCmdLine );
-        name[p - lpCmdLine] = 0;
-        p++;
-        len = strlen(p);
-        cmdline = SEGPTR_ALLOC( len + 2 );
-        cmdline[0] = (BYTE)len;
-        strcpy( cmdline + 1, p );
+      name_beg = lpCmdLine+1;
+      p = strchr ( lpCmdLine+1, '"' );
+      if (p)
+      {
+	  name_end = p;
+	  args = strchr ( p, ' ' );
+      }
+      else /* yes, even valid with trailing '"' missing */
+	  name_end = lpCmdLine+strlen(lpCmdLine);
+    }
+    else 
+    {
+      name_beg = lpCmdLine;
+      args = strchr( lpCmdLine, ' ' );
+      name_end = args ? args : lpCmdLine+strlen(lpCmdLine);
+    }
+
+    if ((name_beg == lpCmdLine) && (!args))
+    { /* just use the original cmdline string as file name */
+        name = (LPSTR)lpCmdLine;
     }
     else
     {
-        name = (LPSTR)lpCmdLine;
-        cmdline = SEGPTR_ALLOC(2);
-        cmdline[0] = cmdline[1] = 0;
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, name_end - name_beg + 1 )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        memcpy( name, name_beg, name_end - name_beg );
+        name[name_end - name_beg] = '\0';
     }
+
+    if (args)
+    {
+	args++;
+	arglen = strlen(args);
+	cmdline = SEGPTR_ALLOC( 2 + arglen );
+	cmdline[0] = (BYTE)arglen;
+	strcpy( cmdline + 1, args );
+    }
+    else
+    {
+	cmdline = SEGPTR_ALLOC( 2 );
+	cmdline[0] = cmdline[1] = 0;
+    }
+
+    TRACE("name: %s, cmdline: %.*s\n", name, cmdline[0], &cmdline[1]);
 
     if (SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL ))
     {
