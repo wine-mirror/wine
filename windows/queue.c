@@ -252,7 +252,7 @@ void QUEUE_Signal( HTASK16 hTask )
         }
     SYSTEM_UNLOCK();
 
-    if ( !wakeup )
+/*    if ( !wakeup )*/
         PostEvent( hTask );
 }
 
