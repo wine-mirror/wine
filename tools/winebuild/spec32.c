@@ -26,7 +26,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <string.h>
 
 #include "winbase.h"
@@ -439,12 +438,16 @@ void BuildSpec32File( FILE *outfile )
 
 #ifdef HAVE_GETPAGESIZE
     page_size = getpagesize();
-#else
-# ifdef __svr4__
+#elif defined(__svr4__)
     page_size = sysconf(_SC_PAGESIZE);
-# else
+#elif defined(_WINDOWS)
+    {
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        page_size = si.dwPageSize;
+    }
+#else
 #   error Cannot get the page size on this platform
-# endif
 #endif
 
     AssignOrdinals();

@@ -25,9 +25,7 @@
 #include "config.h"
 
 #include <ctype.h>
-#include <unistd.h>
 
-#include "winnt.h"
 #include "thread.h"
 #include "stackframe.h"
 

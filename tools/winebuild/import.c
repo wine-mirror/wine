@@ -23,10 +23,8 @@
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 
-#include "winnt.h"
 #include "build.h"
 
 struct import
