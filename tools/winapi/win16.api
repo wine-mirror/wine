@@ -1234,7 +1234,7 @@ void
 
 void
 
-%%wineps16.dll
+%%wineps16.drv
 
 %long
 
@@ -1296,6 +1296,42 @@ BOOL
 %word
 
 HWND16
+
+
+%%wintab.dll
+
+%long
+
+DWORD
+LPARAM
+LRESULT
+
+%ptr
+
+LPBYTE
+LPINT16
+LPLOGCONTEXT16
+LPVOID
+LPWTHOOKPROC16
+UINT16 *
+WTCONFIGPROC16
+WTENUMPROC16
+WTHOOKPROC16
+
+%str
+
+LPSTR
+
+%word
+
+BOOL16
+HCTX16
+HMGR16
+HWND16
+HWTHOOK16
+INT16
+UINT16
+WPARAM16
 
 %%winsock.dll
 

@@ -42,10 +42,12 @@ use config qw(
 use output qw($output);
 use winapi_check_options qw($options);
 
-if($options->progress) {
-    $output->enable_progress;
-} else {
-    $output->disable_progress;
+BEGIN {
+    if($options->progress) {
+	$output->enable_progress;
+    } else {
+	$output->disable_progress;
+    }
 }
 
 use modules qw($modules);
@@ -94,7 +96,7 @@ if ($options->global) {
 		    }
 		} elsif(-e "$wine_dir/include/$header") {
 		    $include2info{$file}{includes}{"include/$header"}++;
-		} else {
+		} elsif ($header ne "config.h") {
 		    $output->write("$file: #include \"$header\" is not a local include\n");
 		}
 	    }
@@ -536,11 +538,11 @@ foreach my $file (@c_files) {
 			} else {
 			    $include = "$header";
 			}
-		    } elsif($header eq "controls.h") { # FIXME: Kludge
+		    } elsif($header =~ /^(?:controls\.h|message\.h)$/) { # FIXME: Kludge
 			$include = "dlls/user/$header";
-		    } elsif($header eq "ts_xlib.h") { # FIXME: Kludge
+		    } elsif($header =~ /^(?:ts_xlib\.h|winproc\.h|x11font\.h|)$/) { # FIXME: Kludge
 			$include = "dlls/x11drv/$header";
-		    } elsif($check_local) {
+		    } elsif($check_local && $header ne "config.h") {
 			$output->write("$file: #include \"$header\": file not found\n");
 		    }
 
@@ -611,12 +613,12 @@ foreach my $file (@c_files) {
 				$include2info{$name}{used}++;
 			    }
 			}
-		    } elsif($header eq "controls.h") { # FIXME: Kludge
+		    } elsif($header =~ /^(?:controls\.h|message\.h)$/) { # FIXME: Kludge
 			$include2info{"dlls/user/$header"}{used}++;
 			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
 			}
-		    } elsif($header eq "ts_xlib.h") { # FIXME: Kludge
+		    } elsif($header =~ /^(?:ts_xlib\.h|winproc\.h|x11font\.h|)$/) { # FIXME: Kludge
 			$include2info{"dlls/x11drv/$header"}{used}++;
 			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
@@ -626,7 +628,7 @@ foreach my $file (@c_files) {
 			foreach my $name (keys(%{$include2info{"include/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
 			}
-		    } else {
+		    } elsif ($header ne "config.h") {
 			$output->write("$file: #include \"$header\" is not a local include\n");
 		    }
 		}

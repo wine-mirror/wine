@@ -412,7 +412,7 @@ sub check_file {
 	    }
 
 	    if($options->cross_call_unicode_ascii) {
-		if($name =~ /W$/) {
+		if($name =~ /(?<!A)W$/) {
 		    for my $called_name (@called_names) {
 			if($called_name =~ /A$/) {
 			    $output->write("$file: $module: $name: illegal call to $called_name (Unicode -> ASCII)\n");

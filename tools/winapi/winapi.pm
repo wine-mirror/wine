@@ -293,6 +293,19 @@ sub parse_spec_file {
 		$calling_convention .= " -register";
 	    }
 
+	    if ($internal_name =~ /^(.*?)\.(.*?)$/) {
+		my $forward_module = $1;
+		my $forward_name = $2;
+
+		if (0) {
+		    $calling_convention .= " -forward";
+		} else {
+		    $calling_convention = "forward";
+		}
+
+		$$function_forward{$module}{$external_name} = [$forward_module, $forward_name];
+	    }
+
             if($external_name ne "@") {
                 $$module_external_calling_convention{$module}{$external_name} = $calling_convention;
             } else {

@@ -48,6 +48,10 @@ dlls/crypt32
 
 dlls/d3d8
 
+% dlls/d3dx8/d3dx8.spec
+
+dlls/d3dx8
+
 % dlls/dciman32/dciman32.spec
 
 dlls/dciman32
@@ -484,15 +488,11 @@ dlls/winaspi
 
 dlls/winedos
 
-% dlls/winedos/winedos16.spec
-
-dlls/winedos
-
 % dlls/wineps/wineps.spec
 
 dlls/wineps
 
-% dlls/wineps/wineps16.spec
+% dlls/wineps/wineps16.drv.spec
 
 dlls/wineps
 
@@ -548,6 +548,10 @@ dlls/winmm/winealsa
 
 dlls/winmm/wineaudioio
 
+% dlls/winmm/winejack/winejack.drv.spec
+
+dlls/winmm/winejack
+
 % dlls/winmm/winenas/winenas.drv.spec
 
 dlls/winmm/winenas
@@ -573,6 +577,14 @@ dlls/winnls
 % dlls/winsock/winsock.spec
 
 dlls/winsock
+
+% dlls/wintab32/wintab.spec
+
+dlls/wintab32
+
+% dlls/wintab32/wintab32.spec
+
+dlls/wintab32
 
 % dlls/winsock/ws2_32.spec
 
