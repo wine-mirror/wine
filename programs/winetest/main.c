@@ -332,7 +332,7 @@ run_tests (char *logname, const char *tag)
     FILE *logfile;
     char build_tag[128];
 
-    SetErrorMode (SEM_FAILCRITICALERRORS);
+    SetErrorMode (SEM_NOGPFAULTERRORBOX);
 
     if (!(wineloader = getenv("WINELOADER"))) wineloader = "wine";
 
