@@ -100,6 +100,7 @@ typedef struct {
     LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
     LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
     LPWAVEHDR			lpLoopPtr;              /* pointer of first buffer in loop, if any */
+    DWORD			dwLoops;		/* private copy of loop counter */
     
     DWORD			dwLastFragDone;		/* time in ms, when last played fragment will be actually played */
     DWORD			dwPlayedTotal;		/* number of bytes played since opening */
@@ -356,7 +357,7 @@ LONG OSS_WaveInit(void)
 static DWORD OSS_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1, 
 			      DWORD dwParam2)
 {
-    TRACE("wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
+    TRACE("wDevID = %04X wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
     
     switch (wMsg) {
     case WOM_OPEN:
@@ -447,7 +448,11 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 		if (wwo->lpLoopPtr) {
 		    WARN("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 		} else {
+		    TRACE("Starting loop (%ldx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 		    wwo->lpLoopPtr = lpWaveHdr;
+		    /* Windows does not touch WAVEHDR.dwLoops,
+		     * so we need to make an internal copy */
+		    wwo->dwLoops = lpWaveHdr->dwLoops;
 		}
 	    }
 	}
@@ -474,7 +479,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 
 		/* WAVEHDR written, go to next one */
 		if ((lpWaveHdr->dwFlags & WHDR_ENDLOOP) && wwo->lpLoopPtr) {
-		    if (--wwo->lpLoopPtr->dwLoops > 0) {
+		    if (--wwo->dwLoops > 0) {
 			wwo->lpPlayPtr = wwo->lpLoopPtr;
 		    } else {
 			/* last one played */
