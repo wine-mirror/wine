@@ -64,7 +64,7 @@ static int GetIcon(LPITEMIDLIST lpi, UINT32 uFlags)
 	return sfi.iIcon;
 }
 
-static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq,LPTV_ITEM lpTV_ITEM)
+static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq,LPTVITEM32A lpTV_ITEM)
 {	TRACE (shell,"%p %p\n",lpifq, lpTV_ITEM);
 
 	lpTV_ITEM->iImage = GetIcon(lpifq, SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
@@ -98,8 +98,8 @@ static BOOL32 GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPSTR
 
 static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hParent)
 {
-	TV_ITEM         tvi;
-	TV_INSERTSTRUCT tvins;
+	TVITEM32A 			tvi;
+	TVINSERTSTRUCT32A 	tvins;
 	HTREEITEM       hPrev = 0;
 	LPENUMIDLIST    lpe=0;
 	LPITEMIDLIST	pidlTemp=0;
@@ -145,7 +145,7 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 	        lptvid->lpifq	= ILCombine(pidl, pidlTemp);
 	        GetNormalAndSelectedIcons(lptvid->lpifq, &tvi);
 
-	        tvins.item         = tvi;
+	        tvins.DUMMYUNIONNAME.item         = tvi;
 	        tvins.hInsertAfter = hPrev;
 	        tvins.hParent      = hParent;
 
@@ -168,7 +168,7 @@ Done:
 
 static LRESULT MsgNotify(HWND32 hWnd,  UINT32 CtlID, LPNMHDR lpnmh)
 {	
-	NM_TREEVIEW	*pnmtv   = (NM_TREEVIEW *)lpnmh;
+	NMTREEVIEW32A	*pnmtv   = (NMTREEVIEW32A *)lpnmh;
 	LPTV_ITEMDATA	lptvid;  //Long pointer to TreeView item data
 	LPSHELLFOLDER	lpsf2=0;
 	

@@ -184,7 +184,13 @@ typedef struct tagNMTTCUSTOMDRAW
 
 #define STATUSCLASSNAME16	"msctls_statusbar"
 #define STATUSCLASSNAME32A	"msctls_statusbar32"
-#define STATUSCLASSNAME32W	L"msctls_statusbar32"
+/* Does not work. gcc creates 4 byte wide strings.
+ * #define STATUSCLASSNAME32W	L"msctls_statusbar32"
+ */
+static const WCHAR	_scn32w[] = {
+'m','s','c','t','l','s','_','s','t','a','t','u','s','b','a','r','3','2',0
+};
+#define STATUSCLASSNAME32W	_scn32w
 #define STATUSCLASSNAME		WINELIB_NAME_AW(STATUSCLASSNAME)
 
 #define SBT_NOBORDERS		0x0100
@@ -1755,7 +1761,7 @@ typedef struct {
       INT32  iSelectedImage;
       INT32  cChildren;
       LPARAM lParam;
-} TVITEMA, *LPTVITEMA;
+} TVITEM32A, *LPTVITEM32A;
 
 typedef struct {
       UINT32 mask;
@@ -1763,15 +1769,15 @@ typedef struct {
       UINT32 state;
       UINT32 stateMask;
       LPWSTR pszText;
-      int cchTextMax;
-      int iImage;
-      int iSelectedImage;
-      int cChildren;
+      INT32 cchTextMax;
+      INT32 iImage;
+      INT32 iSelectedImage;
+      INT32 cChildren;
       LPARAM lParam;
-} TVITEMW, *LPTVITEMW;
+} TVITEM32W, *LPTVITEM32W;
 
-#define LPTV_ITEM LPTVITEMA
-#define TV_ITEM TVITEMA
+#define TV_ITEM     WINELIB_NAME(TV_ITEM)
+#define LPTV_ITEM   WINELIB_NAME(LPTV_ITEM)
 
 typedef struct {
       UINT32 mask;
@@ -1784,8 +1790,8 @@ typedef struct {
       INT32  iSelectedImage;
       INT32  cChildren;
       LPARAM lParam;
-      int iIntegral;
-} TVITEMEXA, *LPTVITEMEXA;
+      INT32 iIntegral;
+} TVITEMEX32A, *LPTVITEMEX32A;
 
 typedef struct {
       UINT32 mask;
@@ -1793,63 +1799,78 @@ typedef struct {
       UINT32 state;
       UINT32 stateMask;
       LPWSTR pszText;
-      int cchTextMax;
-      int iImage;
-      int iSelectedImage;
-      int cChildren;
+      INT32 cchTextMax;
+      INT32 iImage;
+      INT32 iSelectedImage;
+      INT32 cChildren;
       LPARAM lParam;
-      int iIntegral;
-} TVITEMEXW, *LPTV_ITEMEXW;
+      INT32 iIntegral;
+} TVITEMEX32W, *LPTV_ITEMEX32W;
 
-#define TV_ITEMEX TVITEMEXA
-#define LPTV_ITEMEXA LPTVITEMEXA
+#define TV_ITEMEX   WINELIB_NAME(TV_ITEM)
+#define LPTV_ITEMEX WINELIB_NAME(LPTV_ITEM)
 
-typedef struct tagTVINSERTSTRUCTA {
+
+typedef struct tagTVINSERTSTRUCT32A {
         HTREEITEM hParent;
         HTREEITEM hInsertAfter;
-        TVITEMA item;
-} TVINSERTSTRUCTA, *LPTVINSERTSTRUCTA;
+        union {
+           TVITEMEX32A itemex;
+           TVITEM32A   item;
+        } DUMMYUNIONNAME;
+} TVINSERTSTRUCT32A, *LPTVINSERTSTRUCT32A;
 
-typedef struct tagTVINSERTSTRUCTW {
+typedef struct tagTVINSERTSTRUCT32W {
         HTREEITEM hParent;
         HTREEITEM hInsertAfter;
-        TVITEMW item;
-} TVINSERTSTRUCTW, *LPTVINSERTSTRUCTW;
+        union {
+           TVITEMEX32W itemex;
+           TVITEM32W   item;
+        } DUMMYUNIONNAME;
+} TVINSERTSTRUCT32W, *LPTVINSERTSTRUCT32W;
 
-#define TV_INSERTSTRUCT TVINSERTSTRUCTA
-#define LPTV_INSERTSTRUCT LPTVINSERTSTRUCTA
+#define TV_INSERTSTRUCT   WINELIB_NAME(TVINSERTSTRUCT)
+#define LPTV_INSERTSTRUCT WINELIB_NAME(LPTVINSERTSTRUCT)
 
-typedef struct tagNMTREEVIEWA {
+#define TVINSERTSTRUCT_V1_SIZE32A CCSIZEOF_STRUCT(TVINSERTSTRUCT32A, item)
+#define TVINSERTSTRUCT_V1_SIZE32W CCSIZEOF_STRUCT(TVINSERTSTRUCT32W, item)
+#define TVINSERTSTRUCT_V1_SIZE    WINELIB_NAME_AW(TVINSERTSTRUCT_V1_SIZE)
+
+
+
+
+typedef struct tagNMTREEVIEW32A {
 	NMHDR	hdr;
 	UINT32	action;
-	TVITEMA	itemOld;
-	TVITEMA	itemNew;
+	TVITEM32A	itemOld;
+	TVITEM32A	itemNew;
 	POINT32	ptDrag;
-} NMTREEVIEWA, *LPNMTREEVIEWA;
+} NMTREEVIEW32A, *LPNMTREEVIEW32A;
 
-typedef struct tagNMTREEVIEWW {
+typedef struct tagNMTREEVIEW32W {
 	NMHDR	hdr;
 	UINT32	action;
-	TVITEMW	itemOld;
-	TVITEMW	itemNew;
+	TVITEM32W	itemOld;
+	TVITEM32W	itemNew;
 	POINT32	ptDrag;
-} NMTREEVIEWW, *LPNMTREEVIEWW;
+} NMTREEVIEW32W, *LPNMTREEVIEW32W;
 
-#define NM_TREEVIEW NMTREEVIEWA
-#define LPNM_TREEVIEW LPNMTREEVIEWA
+#define NMTREEVIEW     WINELIB_NAME_AW(NMTREEVIEW)
+#define LPNMTREEVIEW   WINELIB_NAME_AW(LPNMTREEVIEW)
 
-typedef struct tagTVDISPINFOA {
+typedef struct tagTVDISPINFO32A {
 	NMHDR	hdr;
-	TVITEMA	item;
-} NMTVDISPINFOA, *LPNMTVDISPINFOA;
+	TVITEM32A	item;
+} NMTVDISPINFO32A, *LPNMTVDISPINFO32A;
 
-typedef struct tagTVDISPINFOW {
+typedef struct tagTVDISPINFO32W {
 	NMHDR	hdr;
-	TVITEMW	item;
-} NMTVDISPINFOW, *LPNMTVDISPINFOW;
+	TVITEM32W	item;
+} NMTVDISPINFO32W, *LPNMTVDISPINFO32W;
 
-#define NMTVDISPINFO            NMTVDISPINFOA
-#define LPNMTVDISPINFO          LPNMTVDISPINFOA
+#define NMTVDISPINFO            WINELIB_NAME_AW(NMTVDISPINFO)
+#define LPNMTVDISPINFO          WINELIB_NAME_AW(LPNMTVDISPINFO)
+#define TV_DISPINFO             NMTVDISPINFO
 
 typedef INT32 (CALLBACK *PFNTVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
@@ -1871,9 +1892,51 @@ typedef struct tagTVHITTESTINFO {
 
 #define TV_HITTESTINFO TVHITTESTINFO
 
+
+/* Custom Draw Treeview */
+
+#define NMTVCUSTOMDRAW_V3_SIZE CCSIZEOF_STRUCT(NMTVCUSTOMDRAW, clrTextBk)
+
+#define TVCDRF_NOIMAGES     0x00010000
+
+typedef struct tagNMTVCUSTOMDRAW
+{
+    NMCUSTOMDRAW nmcd;
+    COLORREF     clrText;
+    COLORREF     clrTextBk;
+    INT32 iLevel;                 /* IE>0x0400 */
+} NMTVCUSTOMDRAW, *LPNMTVCUSTOMDRAW;
+
+/* Treeview tooltips */
+
+typedef struct tagNMTVGETINFOTIP32A
+{
+    NMHDR hdr;
+    LPSTR pszText;
+    INT32 cchTextMax;
+    HTREEITEM hItem;
+    LPARAM lParam;
+} NMTVGETINFOTIP32A, *LPNMTVGETINFOTIP32A;
+
+typedef struct tagNMTVGETINFOTIP32W
+{
+    NMHDR hdr;
+    LPWSTR pszText;
+    INT32 cchTextMax;
+    HTREEITEM hItem;
+    LPARAM lParam;
+} NMTVGETINFOTIP32W, *LPNMTVGETINFOTIP32W;
+
+
+#define NMTVGETINFOTIP          WINELIB_NAME(NMTVGETINFOTIP)
+
+
+
+
+
 #define TreeView_InsertItem32A(hwnd, phdi) \
   (INT32)SendMessage32A((hwnd), TVM_INSERTITEM32A, 0, \
-                            (LPARAM)(LPTVINSERTSTRUCTA)(phdi))
+                            (LPARAM)(LPTVINSERTSTRUCT32A)(phdi))
 #define TreeView_DeleteItem(hwnd, hItem) \
   (BOOL32)SendMessage32A((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
 #define TreeView_DeleteAllItems(hwnd) \
@@ -1945,10 +2008,10 @@ typedef struct tagTVHITTESTINFO {
 */
 
 #define TreeView_GetItem32A(hwnd, pitem) \
- (BOOL32)SendMessage32A((hwnd), TVM_GETITEM32A, 0, (LPARAM) (TVITEMA *)(pitem))
+ (BOOL32)SendMessage32A((hwnd), TVM_GETITEM32A, 0, (LPARAM) (TVITEM32A *)(pitem))
 
 #define TreeView_SetItem32A(hwnd, pitem) \
- (BOOL32)SendMessage32A((hwnd), TVM_SETITEM32A, 0, (LPARAM)(const TVITEMA *)(pitem)) 
+ (BOOL32)SendMessage32A((hwnd), TVM_SETITEM32A, 0, (LPARAM)(const TVITEM32A *)(pitem)) 
 
 #define TreeView_EditLabel(hwnd, hitem) \
     (HWND)SendMessage32A((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
@@ -2432,6 +2495,7 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCS_BOTTOM              0x0002
 #define TCS_RIGHT               0x0002
 #define TCS_MULTISELECT         0x0004  /* allow multi-select in button mode */
+#define TCS_FLATBUTTONS         0x0008
 #define TCS_FORCEICONLEFT       0x0010
 #define TCS_FORCELABELLEFT      0x0020
 #define TCS_HOTTRACK            0x0040
@@ -2447,6 +2511,9 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCS_OWNERDRAWFIXED      0x2000
 #define TCS_TOOLTIPS            0x4000
 #define TCS_FOCUSNEVER          0x8000
+#define TCS_EX_FLATSEPARATORS   0x00000001  /* to be used with */
+#define TCS_EX_REGISTERDROP     0x00000002  /* TCM_SETEXTENDEDSTYLE */
+
 
 #define TCM_FIRST		0x1300
 
@@ -2492,6 +2559,17 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCIF_RTLREADING		0x0004
 #define TCIF_PARAM		0x0008
 #define TCIF_STATE		0x0010
+
+#define TCIS_BUTTONPRESSED      0x0001
+#define TCIS_HIGHLIGHTED 0x0002
+
+
+/* constants for TCHITTESTINFO */
+
+#define TCHT_NOWHERE      0x01
+#define TCHT_ONITEMICON   0x02
+#define TCHT_ONITEMLABEL  0x04
+#define TCHT_ONITEM       (TCHT_ONITEMICON | TCHT_ONITEMLABEL)
 
 
 typedef struct tagTCITEM32A {
