@@ -173,6 +173,40 @@ static void REGISTRY_Init(void) {
  * SaveOnlyUpdatedKeys=yes
  */
 
+/* Same as RegSaveKey but with Unix pathnames */
+static void save_key( HKEY hkey, const char *filename )
+{
+    struct save_registry_request *req = get_req_buffer();
+    int count = 0;
+    DWORD ret;
+    HANDLE handle;
+
+    char *name = xmalloc( strlen(filename) + 10 );
+    char *p = strrchr( name, '/' );
+    if (p) p++;
+    else p = name;
+
+    for (;;)
+    {
+        sprintf( p, "reg%04x.tmp", count++ );
+        handle = FILE_CreateFile( name, GENERIC_WRITE, 0, NULL,
+                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
+        if (handle != INVALID_HANDLE_VALUE) break;
+        if ((ret = GetLastError()) != ERROR_FILE_EXISTS) return;
+    }
+
+    req->hkey = hkey;
+    req->file = handle;
+    ret = server_call_noerr( REQ_SAVE_REGISTRY );
+    CloseHandle( handle );
+    if (ret) unlink( name );
+    else if (rename( name, filename ) == -1)
+    {
+        ERR( "Failed to move %s to %s: ", name, filename );
+        perror( "rename" );
+        unlink( name );
+    }
+}
 
 
 /******************************************************************************
@@ -201,7 +235,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
         fn = xmalloc( MAX_PATHNAME_LEN ); 
         if (writeToAlt && PROFILE_GetWineIniString( "registry", "AltCurrentUserFile", "",
                                                     fn, MAX_PATHNAME_LEN - 1))
-            RegSaveKeyA( HKEY_CURRENT_USER, fn, NULL );
+            save_key( HKEY_CURRENT_USER, fn );
         free (fn);
 
         if (home && writeToHome)
@@ -214,7 +248,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
             /* create the directory. don't care about errorcodes. */
             mkdir(fn,0755); /* drwxr-xr-x */
             strcat(fn,"/"SAVE_CURRENT_USER);
-            RegSaveKeyA( HKEY_CURRENT_USER, fn, NULL );
+            save_key( HKEY_CURRENT_USER, fn );
             free(fn);
         }
         break;
@@ -223,7 +257,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
         fn = xmalloc ( MAX_PATHNAME_LEN);
         if (writeToAlt && PROFILE_GetWineIniString( "Registry", "AltLocalMachineFile", "", 
                                                     fn, MAX_PATHNAME_LEN - 1))
-            RegSaveKeyA( HKEY_LOCAL_MACHINE, fn, NULL );
+            save_key( HKEY_LOCAL_MACHINE, fn );
         free (fn);
 
         if (home && writeToHome)
@@ -232,7 +266,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
                                strlen(SAVE_LOCAL_MACHINE) + 2);
             strcpy(fn,home);
             strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
-            RegSaveKeyA( HKEY_LOCAL_MACHINE, fn, NULL );
+            save_key( HKEY_LOCAL_MACHINE, fn );
             free(fn);
         }
         break;
@@ -240,7 +274,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
         fn = xmalloc( MAX_PATHNAME_LEN );
         if (writeToAlt && PROFILE_GetWineIniString( "Registry", "AltUserFile", "", 
                                                     fn, MAX_PATHNAME_LEN - 1))
-            RegSaveKeyA( HKEY_USERS, fn, NULL );
+            save_key( HKEY_USERS, fn );
         free (fn);
 
         if (home && writeToHome)
@@ -249,7 +283,7 @@ static void SHELL_SaveRegistryBranch(HKEY hkey)
                                strlen(SAVE_LOCAL_USERS_DEFAULT) + 2);
             strcpy(fn,home);
             strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_USERS_DEFAULT);
-            RegSaveKeyA( HKEY_USERS, fn, NULL );
+            save_key( HKEY_USERS, fn );
             free(fn);
         }
         break;
@@ -466,13 +500,13 @@ static int _wine_loadsubkey( FILE *F, HKEY hkey, int level, char **buf, int *buf
             }
 	    if (!_wine_loadsubkey(F,subkey,level+1,buf,buflen))
 	       if (!_wine_read_line(F,buf,buflen))
-		  return 1;
+		  goto done;
             continue;
         }
 
 		/* let the caller handle this line */
 		if (i<level || **buf=='\0')
-			return 1;
+			goto done;
 
 		/* it can be: a value or a keyname. Parse the name first */
 		s=_wine_read_USTRING(s,&name);
@@ -481,6 +515,7 @@ static int _wine_loadsubkey( FILE *F, HKEY hkey, int level, char **buf, int *buf
 		switch (0) {
 		default:
 			if (*s=='\0') {
+                                if (subkey) RegCloseKey( subkey );
 				subkey=_find_or_add_key(hkey,name);
 			} else {
 				LPBYTE		data;
@@ -531,8 +566,10 @@ static int _wine_loadsubkey( FILE *F, HKEY hkey, int level, char **buf, int *buf
 		}
 		/* read the next line */
 		if (!_wine_read_line(F,buf,buflen))
-			return 1;
+			goto done;
     }
+ done:
+    if (subkey) RegCloseKey( subkey );
     return 1;
 }
 
@@ -915,18 +952,17 @@ static void _w95_walkrgkn( HKEY prevkey, char *off,
   }
 
   subkey = _w95_processKey(prevkey, dke->nrLS, dke->nrMS, info);
-  /* XXX <-- This is a hack*/
-  if (!subkey) subkey = prevkey;
 
   if (dke->nextsub != -1 && 
       ((dke->nextsub - 0x20) < info->rgknsize) 
       && (dke->nextsub > 0x20)) {
     
-    _w95_walkrgkn(subkey, 
+    _w95_walkrgkn(subkey ? subkey : prevkey, /* XXX <-- This is a hack*/
 		  info->rgknbuffer + dke->nextsub - 0x20, 
 		  info);
   }
-  
+  if (subkey) RegCloseKey( subkey );
+
   if (dke->next != -1 && 
       ((dke->next - 0x20) < info->rgknsize) && 
       (dke->next > 0x20)) {
@@ -1119,6 +1155,7 @@ __w31_dumptree(	unsigned short idx,
 				idx=dir->sibling_idx;
 				continue;
 			}
+                        if (subkey) RegCloseKey( subkey );
                         if (RegCreateKeyA( hkey, tail, &subkey ) != ERROR_SUCCESS) subkey = 0;
 			/* only add if leaf node or valued node */
 			if (dir->value_idx!=0||dir->child_idx==0) {
@@ -1126,7 +1163,7 @@ __w31_dumptree(	unsigned short idx,
 					val=(struct _w31_valent*)&tab[dir->value_idx];
 					memcpy(tail,&txt[val->string_off],val->length);
 					tail[val->length]='\0';
-                                        RegSetValueA( hkey, NULL, REG_SZ, tail, 0 );
+                                        RegSetValueA( subkey, NULL, REG_SZ, tail, 0 );
 				}
 			}
 		} else {
@@ -1135,6 +1172,7 @@ __w31_dumptree(	unsigned short idx,
 		__w31_dumptree(dir->child_idx,txt,tab,head,subkey,lastmodified,level+1);
 		idx=dir->sibling_idx;
 	}
+        if (subkey) RegCloseKey( subkey );
 }
 
 
