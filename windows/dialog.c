@@ -1073,6 +1073,11 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
         dlgInfo->flags |= DF_END;
     }
 
+    /* Windows sets the focus to the dialog itself first in EndDialog */
+
+    if (IsChild(hwnd, GetFocus()))
+       SetFocus(wndPtr->hwndSelf);
+
     /* Paint Shop Pro 4.14 calls EndDialog for a CreateDialog* dialog,
      * which isn't "normal". Only DialogBox* dialogs may be EndDialog()ed.
      * Just hide the window 
@@ -1163,6 +1168,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                             SendMessageA( hwndControl, WM_LBUTTONUP, 0, 0);
                         }
                         RetVal = TRUE;
+			WIN_ReleaseWndPtr(wndPtr);
                         break;
                     }
                 }
@@ -1182,6 +1188,10 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
 		hwndControl = GetParent( hwndControl );
 		if (hwndControl == hwndDlg)
 		{
+		    if(hwnd==hwndDlg){  /* prevent endless loop */
+		        hwndNext=hwnd;
+			break;
+		    }
 		    hwndNext = GetWindow( hwndDlg, GW_CHILD );
 		}
 		else

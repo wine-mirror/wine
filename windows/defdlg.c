@@ -53,7 +53,11 @@ static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
 {
     if (!infoPtr->hwndFocus || IsIconic(hwnd)) return FALSE;
     if (!IsWindow( infoPtr->hwndFocus )) return FALSE;
-    DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
+
+    /* Don't set the focus back to controls if EndDialog is already called.*/
+    if (!(infoPtr->flags & DF_END))
+       DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
+
     /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
        sometimes losing focus when receiving WM_SETFOCUS messages. */
     return TRUE;
