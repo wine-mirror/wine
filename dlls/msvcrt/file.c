@@ -1585,7 +1585,7 @@ WCHAR *MSVCRT_fgetws(WCHAR *s, int size, MSVCRT_FILE* file)
 MSVCRT_wint_t MSVCRT_fputwc(MSVCRT_wint_t wc, MSVCRT_FILE* file)
 {
   WCHAR mwc=wc;
-  if (MSVCRT_fwrite( &mwc, 1, sizeof(mwc), file) != sizeof(mwc))
+  if (MSVCRT_fwrite( &mwc, sizeof(mwc), 1, file) != 1)
     return MSVCRT_WEOF;
   return wc;
 }
@@ -2149,6 +2149,8 @@ MSVCRT_size_t MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t n
 {
   MSVCRT_size_t wrcnt=size * nmemb;
   int written = 0;
+  if (size == 0)
+      return 0;
   if(file->_cnt) { 
 	int pcnt=(file->_cnt>wrcnt)? file->_cnt: wrcnt;
 	memcpy(file->_ptr, ptr, pcnt);
@@ -2180,7 +2182,8 @@ MSVCRT_size_t MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t n
  */
 int MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 {
-  return MSVCRT_fwrite(s,strlen(s),1,file) == 1 ? 0 : MSVCRT_EOF;
+    size_t len = strlen(s);
+    return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
 }
 
 /*********************************************************************
@@ -2188,7 +2191,8 @@ int MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
  */
 int MSVCRT_fputws(const WCHAR *s, MSVCRT_FILE* file)
 {
-  return MSVCRT_fwrite(s,strlenW(s),1,file) == 1 ? 0 : MSVCRT_EOF;
+    size_t len = strlenW(s);
+    return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
 }
 
 /*********************************************************************
@@ -2246,10 +2250,9 @@ int MSVCRT_putchar(int c)
  */
 int MSVCRT_puts(const char *s)
 {
-  int retval = MSVCRT_EOF;
-  if (MSVCRT_fwrite(s,strlen(s),1,MSVCRT_stdout) == 1)
+    size_t len = strlen(s);
+    if (MSVCRT_fwrite(s,sizeof(*s),len,MSVCRT_stdout) != len) return MSVCRT_EOF;
     return MSVCRT_fwrite("\n",1,1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
-  return retval;
 }
 
 /*********************************************************************
@@ -2257,10 +2260,10 @@ int MSVCRT_puts(const char *s)
  */
 int _putws(const WCHAR *s)
 {
-  static const WCHAR nl = (WCHAR)L'\n';
-  if (MSVCRT_fwrite(s,strlenW(s),1,MSVCRT_stdout) == 1)
+    static const WCHAR nl = '\n';
+    size_t len = strlenW(s);
+    if (MSVCRT_fwrite(s,sizeof(*s),len,MSVCRT_stdout) != len) return MSVCRT_EOF;
     return MSVCRT_fwrite(&nl,sizeof(nl),1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
-  return MSVCRT_EOF;
 }
 
 /*********************************************************************
@@ -2412,7 +2415,7 @@ int MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valist)
     if (!(mem = (char *)MSVCRT_malloc(resize)))
       return MSVCRT_EOF;
   }
-  retval = MSVCRT_fwrite(mem, 1, written, file);
+  retval = MSVCRT_fwrite(mem, sizeof(*mem), written, file);
   if (mem != buf)
     MSVCRT_free (mem);
   return retval;
@@ -2438,7 +2441,7 @@ int MSVCRT_vfwprintf(MSVCRT_FILE* file, const WCHAR *format, va_list valist)
     if (!(mem = (WCHAR *)MSVCRT_malloc(resize*sizeof(*mem))))
       return MSVCRT_EOF;
   }
-  retval = MSVCRT_fwrite(mem, 1, written * sizeof (WCHAR), file);
+  retval = MSVCRT_fwrite(mem, sizeof(*mem), written, file);
   if (mem != buf)
     MSVCRT_free (mem);
   return retval;
