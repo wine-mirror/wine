@@ -365,6 +365,9 @@
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
 
+/* Define if you have the <sys/reg.h> header file.  */
+#undef HAVE_SYS_REG_H
+
 /* Define if you have the <sys/shm.h> header file.  */
 #undef HAVE_SYS_SHM_H
 

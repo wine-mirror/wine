@@ -660,6 +660,7 @@ AC_CHECK_HEADERS(\
 	sys/mount.h \
 	sys/msg.h \
 	sys/param.h \
+	sys/reg.h \
 	sys/signal.h \
 	sys/shm.h \
 	sys/socket.h \

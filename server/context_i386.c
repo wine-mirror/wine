@@ -10,7 +10,9 @@
 
 #include <assert.h>
 #include <errno.h>
+#ifdef HAVE_SYS_REG_H
 #include <sys/reg.h>
+#endif
 #include <sys/ptrace.h>
 #include <sys/user.h>
 #include <unistd.h>
