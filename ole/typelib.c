@@ -19,7 +19,8 @@
 #include "debug.h"
 
 /****************************************************************************
- *	QueryPathOfRegTypeLib			(TYPELIB.14)
+ *		QueryPathOfRegTypeLib16	[TYPELIB.14]
+ *
  * the path is "Classes\Typelib\<guid>\<major>.<minor>\<lcid>\win16\"
  * RETURNS
  *	path of typelib
@@ -56,7 +57,7 @@ QueryPathOfRegTypeLib16(
 }
  
 /****************************************************************************
- *	QueryPathOfRegTypeLib			(OLEAUT32.164)
+ *		QueryPathOfRegTypeLib32	[OLEAUT32.164]
  * RETURNS
  *	path of typelib
  */
@@ -111,7 +112,7 @@ HRESULT WINAPI LoadTypeLib(
 }
 
 /******************************************************************************
- * LoadTypeLib				(OLEAUT32.161)
+ *		LoadTypeLib32	[OLEAUT32.161]
  * Loads and registers a type library
  * NOTES
  *    Docs: OLECHAR FAR* szFile
@@ -131,7 +132,7 @@ HRESULT WINAPI LoadTypeLib32(
 }
 
 /******************************************************************************
- * RegisterTypeLib				(OLEAUT32.163)
+ *		RegisterTypeLib32	[OLEAUT32.163]
  * Adds information about a type library to the System Registry           
  * NOTES
  *    Docs: ITypeLib FAR * ptlib

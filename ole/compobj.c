@@ -33,7 +33,7 @@ LPMALLOC32 currentMalloc32=NULL;
 HTASK16 hETask = 0;
 WORD Table_ETask[62];
 
-/***********************************************************************
+/******************************************************************************
  *           CoBuildVersion [COMPOBJ.1]
  *
  * RETURNS
@@ -45,8 +45,8 @@ DWORD WINAPI CoBuildVersion()
     return (rmm<<16)+rup;
 }
 
-/***********************************************************************
- *           CoInitialize	[COMPOBJ.2]
+/******************************************************************************
+ *		CoInitialize16	[COMPOBJ.2]
  * Set the win16 IMalloc used for memory management
  */
 HRESULT WINAPI CoInitialize16(
@@ -56,8 +56,8 @@ HRESULT WINAPI CoInitialize16(
     return S_OK;
 }
 
-/***********************************************************************
- *           CoInitialize	(OLE32.26)
+/******************************************************************************
+ *		CoInitialize32	[OLE32.26]
  * Set the win32 IMalloc used for memorymanagement
  */
 HRESULT WINAPI CoInitialize32(
@@ -91,8 +91,9 @@ HRESULT WINAPI CoGetMalloc16(
     return S_OK;
 }
 
-/***********************************************************************
- *           CoGetMalloc32    [OLE32.4]
+/******************************************************************************
+ *		CoGetMalloc32	[OLE32.20]
+ *
  * RETURNS
  *	The current win32 IMalloc
  */
@@ -118,8 +119,8 @@ OLESTATUS WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
     return S_OK;
 }
 
-/***********************************************************************
- *           CoDisconnectObject
+/******************************************************************************
+ *		CoDisconnectObject	[COMPOBJ.15]
  */
 OLESTATUS WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
@@ -140,16 +141,16 @@ BOOL16 WINAPI IsEqualGUID(
     return !memcmp( g1, g2, sizeof(GUID) );
 }
 
-/***********************************************************************
- *           CLSIDFromString [COMPOBJ.20]
+/******************************************************************************
+ *		CLSIDFromString16	[COMPOBJ.20]
  * Converts a unique identifier from it's string representation into 
  * the GUID struct.
+ *
+ * Class id: DWORD-WORD-WORD-BYTES[2]-BYTES[6] 
+ *
  * RETURNS
  *	the converted GUID
  */
-
-/* Class id: DWORD-WORD-WORD-BYTES[2]-BYTES[6] */
-
 OLESTATUS WINAPI CLSIDFromString16(
 	LPCOLESTR16 idstr,	/* [in] string representation of guid */
 	CLSID *id		/* [out] GUID converted from string */
@@ -216,8 +217,8 @@ OLESTATUS WINAPI CLSIDFromString16(
   return S_OK;
 }
 
-/***********************************************************************
- *           CLSIDFromString (OLE32.3)
+/******************************************************************************
+ *		CLSIDFromString32	[OLE32.3]
  * Converts a unique identifier from it's string representation into 
  * the GUID struct.
  * RETURNS
@@ -234,8 +235,8 @@ OLESTATUS WINAPI CLSIDFromString32(
     return ret;
 }
 
-/***********************************************************************
- *           WINE_StringFromCLSID 				[internal]
+/******************************************************************************
+ *		WINE_StringFromCLSID	[???]
  * Converts a GUID into the respective string representation.
  * RETURNS
  *	the string representation and OLESTATUS
@@ -277,8 +278,8 @@ OLESTATUS WINAPI WINE_StringFromCLSID(
   return OLE_OK;
 }
 
-/***********************************************************************
- *           StringFromCLSID 	[COMPOBJ.19]
+/******************************************************************************
+ *		StringFromCLSID16	[COMPOBJ.19]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
@@ -317,8 +318,8 @@ OLESTATUS WINAPI StringFromCLSID16(
     return WINE_StringFromCLSID(id,PTR_SEG_TO_LIN(*idstr));
 }
 
-/***********************************************************************
- *           StringFromCLSID 	[OLE32.151]
+/******************************************************************************
+ *		StringFromCLSID32	[OLE32.151]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
@@ -343,8 +344,8 @@ OLESTATUS WINAPI StringFromCLSID32(
 	return ret;
 }
 
-/***********************************************************************
- *           StringFromGUID2 (OLE32.152)
+/******************************************************************************
+ *		StringFromGUID2	[COMPOBJ.76] [OLE32.152]
  *
  * Converts a global unique identifier into a string of an API-
  * specified fixed format. (The usual {.....} stuff.)
@@ -366,8 +367,8 @@ StringFromGUID2(REFGUID id, LPOLESTR32 str, INT32 cmax)
   return strlen(xguid);
 }
 
-/***********************************************************************
- *           CLSIDFromProgID [COMPOBJ.61]
+/******************************************************************************
+ *		CLSIDFromProgID16	[COMPOBJ.61]
  * Converts a program id into the respective GUID. (By using a registry lookup)
  * RETURNS
  *	riid associated with the progid
@@ -397,8 +398,8 @@ OLESTATUS WINAPI CLSIDFromProgID16(
 	return CLSIDFromString16(buf2,riid);
 }
 
-/***********************************************************************
- *           CLSIDFromProgID (OLE32.2)
+/******************************************************************************
+ *		CLSIDFromProgID32	[OLE32.2]
  * Converts a program id into the respective GUID. (By using a registry lookup)
  * RETURNS
  *	riid associated with the progid
@@ -442,8 +443,9 @@ OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 	return 0;
 }
 
-/***********************************************************************
- *		CoRegisterClassObject [COMPOBJ.5]
+/******************************************************************************
+ *		CoRegisterClassObject16	[COMPOBJ.5]
+ *
  * Don't know where it registers it ...
  */
 OLESTATUS WINAPI CoRegisterClassObject16(
@@ -463,8 +465,9 @@ OLESTATUS WINAPI CoRegisterClassObject16(
 	return 0;
 }
 
-/***********************************************************************
- *		CoRegisterClassObject (OLE32.36)
+/******************************************************************************
+ *		CoRegisterClassObject32	[OLE32.36]
+ *
  * Don't know where it registers it ...
  */
 OLESTATUS WINAPI CoRegisterClassObject32(
@@ -508,8 +511,8 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     return hres;
 }
 
-/***********************************************************************
- *		CoRegisterMessageFilter [COMPOBJ.27]
+/******************************************************************************
+ *		CoRegisterMessageFilter16	[COMPOBJ.27]
  */
 OLESTATUS WINAPI CoRegisterMessageFilter16(
 	LPMESSAGEFILTER lpMessageFilter,
@@ -611,8 +614,8 @@ HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
     return 0;
 }
 
-/***********************************************************************
- *           CoLockObjectExternal (COMPOBJ.63)
+/******************************************************************************
+ *		CoLockObjectExternal16	[COMPOBJ.63]
  */
 HRESULT WINAPI CoLockObjectExternal16(
     LPUNKNOWN pUnk,		/* [in] object to be locked */
@@ -622,8 +625,9 @@ HRESULT WINAPI CoLockObjectExternal16(
     FIXME(ole,"(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
     return S_OK;
 }
-/***********************************************************************
- *           CoLockObjectExternal (OLE32.31)
+
+/******************************************************************************
+ *		CoLockObjectExternal32	[OLE32.31]
  */
 HRESULT WINAPI CoLockObjectExternal32(
     LPUNKNOWN pUnk,		/* [in] object to be locked */

@@ -13,8 +13,8 @@
 
 LONG	OLE_current_handle;
 
-/***********************************************************************
- *           OleRegisterServer
+/******************************************************************************
+ *		OleRegisterServer16	[OLESVR.2]
  */
 OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
                                       LHSERVER *hRet, HINSTANCE16 hServer,
@@ -26,8 +26,8 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleBlockServer
+/******************************************************************************
+ *		OleBlockServer16	[OLESVR.4]
  */
 OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 {
@@ -35,8 +35,8 @@ OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleBlockServer
+/******************************************************************************
+ *		OleBlockServer32	[OLESVR32.4]
  */
 OLESTATUS WINAPI OleBlockServer32(LHSERVER hServer)
 {
@@ -44,8 +44,8 @@ OLESTATUS WINAPI OleBlockServer32(LHSERVER hServer)
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleUnblockServer
+/******************************************************************************
+ *		OleUnblockServer16	[OLESVR.5]
  */
 OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 {
@@ -55,8 +55,8 @@ OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleUnblockServer
+/******************************************************************************
+ *		OleUnblockServer32	[OLESVR32.5]
  */
 OLESTATUS WINAPI OleUnblockServer32(LHSERVER hServer, BOOL32 *block)
 {
@@ -67,7 +67,7 @@ OLESTATUS WINAPI OleUnblockServer32(LHSERVER hServer, BOOL32 *block)
 }
 
 /***********************************************************************
- *           OleRegisterServerDoc
+ *		OleRegisterServerDoc16	[OLESVR.6]
  */
 OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
@@ -78,8 +78,8 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleRevokeServerDoc
+/******************************************************************************
+ *		OleRevokeServerDoc16	[OLESVR.7]
  */
 OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 {
@@ -87,8 +87,8 @@ OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleRevokeServerDoc
+/******************************************************************************
+ *		OleRevokeServerDoc32	[OLESVR32.7]
  */
 OLESTATUS WINAPI OleRevokeServerDoc32(LHSERVERDOC hServerDoc)
 {
@@ -96,8 +96,8 @@ OLESTATUS WINAPI OleRevokeServerDoc32(LHSERVERDOC hServerDoc)
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleRevokeServer
+/******************************************************************************
+ *		OleRevokeServer	[OLESVR.3]
  */
 OLESTATUS WINAPI OleRevokeServer(LHSERVER hServer)
 {
@@ -120,8 +120,8 @@ OLESTATUS WINAPI OleRegisterServerDoc32( LHSERVER hServer, LPCSTR docname,
     return OLE_OK;
 }
 
-/***********************************************************************
- *           OleRenameServerDoc32
+/******************************************************************************
+ *		OleRenameServerDoc32	[OLESVR32.8]
  *
  */
 OLESTATUS WINAPI OleRenameServerDoc32(LHSERVERDOC hDoc, LPCSTR newName)

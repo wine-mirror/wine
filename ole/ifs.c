@@ -20,8 +20,12 @@
 #include "module.h"
 #include "debug.h"
 
-/****************************************************************************
+/*
  * IUnknown
+ */
+
+/******************************************************************************
+ *		IUnknown_AddRef	[???]
  */
 static ULONG WINAPI IUnknown_AddRef(LPUNKNOWN this) { 
 	TRACE(relay,"(%p)->AddRef()\n",this);
@@ -66,19 +70,29 @@ IUnknown_Constructor() {
 	return unk;
 }
 
-/****************************************************************************
- * IMalloc16
+/*
+ * IMalloc
+ */
+
+/******************************************************************************
+ *		IMalloc16_AddRef	[COMPOBJ.501]
  */
 ULONG WINAPI IMalloc16_AddRef(LPMALLOC16 this) {
 	TRACE(relay,"(%p)->AddRef()\n",this);
 	return 1; /* cannot be freed */
 }
 
+/******************************************************************************
+ *		IMalloc16_Release	[COMPOBJ.502]
+ */
 ULONG WINAPI IMalloc16_Release(LPMALLOC16 this) {
 	TRACE(relay,"(%p)->Release()\n",this);
 	return 1; /* cannot be freed */
 }
 
+/******************************************************************************
+ *		IMalloc16_QueryInterface	[COMPOBJ.500]
+ */
 HRESULT WINAPI IMalloc16_QueryInterface(LPMALLOC16 this,REFIID refiid,LPVOID *obj) {
 	char	xrefiid[50];
 
@@ -167,19 +181,29 @@ IMalloc16_Constructor() {
 	return (LPMALLOC16)SEGPTR_GET(this);
 }
 
-/****************************************************************************
+/*
  * IMalloc32
+ */
+
+/******************************************************************************
+ *		IMalloc32_AddRef	[???]
  */
 static ULONG WINAPI IMalloc32_AddRef(LPMALLOC32 this) {
 	TRACE(relay,"(%p)->AddRef()\n",this);
 	return 1; /* cannot be freed */
 }
 
+/******************************************************************************
+ *		IMalloc32_Release	[???]
+ */
 static ULONG WINAPI IMalloc32_Release(LPMALLOC32 this) {
 	TRACE(relay,"(%p)->Release()\n",this);
 	return 1; /* cannot be freed */
 }
 
+/******************************************************************************
+ *		IMalloc32_QueryInterface	[???]
+ */
 static HRESULT WINAPI IMalloc32_QueryInterface(LPMALLOC32 this,REFIID refiid,LPVOID *obj) {
 	char	xrefiid[50];
 
@@ -243,11 +267,14 @@ IMalloc32_Constructor() {
 	this->ref = 1;
 	return this;
 }
+
 /****************************************************************************
  * API Functions
  */
-/****************************************************************************
- * 		IsValidInterface		(OLE32.78)
+
+/******************************************************************************
+ *		IsValidInterface32	[OLE32.78]
+ *
  * RETURNS
  *  True, if the passed pointer is a valid interface
  */

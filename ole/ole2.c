@@ -10,8 +10,8 @@
 #include "process.h"
 #include "debug.h"
 
-/***********************************************************************
- *           OleBuildVersion     [OLE.1]
+/******************************************************************************
+ *		OleBuildVersion	[OLE2.1]
  */
 DWORD WINAPI OleBuildVersion()
 {
@@ -28,8 +28,8 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
     return S_OK;
 }
 
-/***********************************************************************
- * CoGetCurrentProcess [OLE2.2][OLE32.108]
+/******************************************************************************
+ *		CoGetCurrentProcess	[COMPOBJ.34] [OLE2.2][OLE32.108]
  *
  * NOTES
  *   Is DWORD really the correct return type for this function?
@@ -38,8 +38,8 @@ DWORD WINAPI CoGetCurrentProcess() {
 	return (DWORD)PROCESS_Current();
 }
 
-/***********************************************************************
- *           OleUnitialize       (OLE2.3) (OLE32.131)
+/******************************************************************************
+ *		OleUninitialize	[OLE2.3] [OLE32.131]
  */
 void WINAPI OleUninitialize(void)
 {
@@ -54,8 +54,8 @@ HRESULT WINAPI OleFlushClipboard()
     return S_OK;
 }
 
-/***********************************************************************
- *           CoRegisterMessageFilter   [OLE32.38]
+/******************************************************************************
+ *		CoRegisterMessageFilter32	[OLE32.38]
  */
 HRESULT WINAPI CoRegisterMessageFilter32(
     LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
@@ -68,16 +68,16 @@ HRESULT WINAPI CoRegisterMessageFilter32(
     return S_OK;
 }
 
-/***********************************************************************
- *           OleInitializeWOW (OLE32.27)
+/******************************************************************************
+ *		OleInitializeWOW	[OLE32.109]
  */
 HRESULT WINAPI OleInitializeWOW(DWORD x) {
         FIXME(ole,"(0x%08lx),stub!\n",x);
         return 0;
 }
 
-/***********************************************************************
- *           GetRunningObjectTable (OLE2.30)
+/******************************************************************************
+ *		GetRunningObjectTable16	[OLE2.30]
  */
 HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
 	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);

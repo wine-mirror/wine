@@ -21,8 +21,8 @@
 #include "module.h"
 #include "debug.h"
 
-/****************************************************************************
- *		CreateFileMoniker	(OLE2.28)
+/******************************************************************************
+ *		CreateFileMoniker16	[OLE2.28]
  */
 HRESULT WINAPI
 CreateFileMoniker16(
@@ -32,8 +32,9 @@ CreateFileMoniker16(
 	FIXME(ole,"(%s,%p),stub!\n",lpszPathName,ppmk);
 	return E_FAIL;
 }
-/****************************************************************************
- *		CreateFileMoniker	(OLE32.55)
+
+/******************************************************************************
+ *		CreateFileMoniker32	[OLE32.55]
  */
 HRESULT WINAPI
 CreateFileMoniker32(

@@ -561,7 +561,7 @@ BOOL32  WINAPI RtlDosPathNameToNtPathName_U(
  */
 DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,DWORD x6)
 {
-	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx): stub\n",
+	FIXME(ntdll,"(%08lx,0x%08lx,%08lx,%08lx,%08lx,%08lx): stub\n",
 	      x1,flags,x3,x4,alignment,x6);
 	/* returns file io completion status */
 	return 0;

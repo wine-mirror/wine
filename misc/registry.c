@@ -177,7 +177,7 @@ static void add_handle( HKEY hkey, LPKEYSTRUCT lpkey, REGSAM accessmask )
 {
     int i;
 
-    TRACE(reg,"(%x,%p,%lx)\n",hkey,lpkey,accessmask);
+    TRACE(reg,"(0x%x,%p,0x%lx)\n",hkey,lpkey,accessmask);
     /* Check for duplicates */
     for (i=0;i<nrofopenhandles;i++) {
         if (openhandles[i].lpkey==lpkey) {
@@ -213,7 +213,7 @@ static LPKEYSTRUCT get_handle( HKEY hkey )
     for (i=0; i<nrofopenhandles; i++)
         if (openhandles[i].hkey == hkey)
             return openhandles[i].lpkey;
-    WARN(reg, "Could not find handle %x\n",hkey);
+    WARN(reg, "Could not find handle 0x%x\n",hkey);
     return NULL;
 }
 
@@ -237,7 +237,7 @@ static DWORD remove_handle( HKEY hkey )
             break;
 
     if (i == nrofopenhandles) {
-        WARN(reg, "Could not find handle %x\n",hkey);
+        WARN(reg, "Could not find handle 0x%x\n",hkey);
         return ERROR_INVALID_HANDLE;
     }
 
@@ -1741,7 +1741,7 @@ DWORD WINAPI RegOpenKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey, DWORD dwReserved,
 	LPWSTR		*wps;
 	int		wpc,i;
 
-    TRACE(reg,"(%x,%s,%ld,%lx,%p)\n", hkey,debugstr_w(lpszSubKey),dwReserved,
+    TRACE(reg,"(0x%x,%s,%ld,%lx,%p)\n", hkey,debugstr_w(lpszSubKey),dwReserved,
           samDesired,retkey);
 
     lpNextKey = lookup_hkey( hkey );
@@ -2123,7 +2123,7 @@ DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
 	LPKEYSTRUCT	lpkey;
 	int		i;
 
-    TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n", hkey, debugstr_w(lpValueName),
+    TRACE(reg,"(0x%x,%s,%p,%p,%p,%ld)\n", hkey, debugstr_w(lpValueName),
           lpdwReserved, lpdwType, lpbData, lpcbData?*lpcbData:0);
 
     lpkey = lookup_hkey(hkey);

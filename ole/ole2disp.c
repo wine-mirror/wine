@@ -17,6 +17,9 @@
    represents BSTR as a 16:16 far pointer, and the strings
    as ISO-8859 */
 
+/******************************************************************************
+ *		BSTR_AllocBytes	[Internal]
+ */
 static BSTR16 BSTR_AllocBytes(int n)
 {
     void *ptr = SEGPTR_ALLOC(n);
@@ -33,8 +36,8 @@ static void* BSTR_GetAddr(BSTR16 in)
     return in ? PTR_SEG_TO_LIN(in) : 0;
 }
 
-/***********************************************************************
- *           SysAllocString         [OLE2DISP.2]
+/******************************************************************************
+ *		SysAllocString16	[OLE2DISP.2]
  */
 BSTR16 WINAPI SysAllocString16(LPOLESTR16 in)
 {
@@ -44,16 +47,16 @@ BSTR16 WINAPI SysAllocString16(LPOLESTR16 in)
 	return out;
 }
 
-/***********************************************************************
- *           SysAllocString         [OLEAUT32.2]
+/******************************************************************************
+ *		SysAllocString32	[OLEAUT32.2]
  */
 BSTR32 WINAPI SysAllocString32(LPOLESTR32 in)
 {
 	return HEAP_strdupW(GetProcessHeap(),0,in);
 }
 
-/***********************************************************************
- *           SysReAllocString       [OLE2DISP.3]
+/******************************************************************************
+ *		SysReAllocString16	[OLE2DISP.3]
  */
 INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPOLESTR16 in)
 {
@@ -63,8 +66,8 @@ INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPOLESTR16 in)
 	return 1;
 }
 
-/***********************************************************************
- *           SysReAllocString       [OLEAUT32.3]
+/******************************************************************************
+ *		SysReAllocString32	[OLEAUT32.3]
  */
 INT32 WINAPI SysReAllocString32(LPBSTR32 old,LPOLESTR32 in)
 {
@@ -74,8 +77,8 @@ INT32 WINAPI SysReAllocString32(LPBSTR32 old,LPOLESTR32 in)
 	return 1;
 }
 
-/***********************************************************************
- *           SysAllocStringLen      [OLE2DISP.4]
+/******************************************************************************
+ *		SysAllocStringLen16	[OLE2DISP.4]
  */
 BSTR16 WINAPI SysAllocStringLen16(char *in, int len)
 {
@@ -85,8 +88,8 @@ BSTR16 WINAPI SysAllocStringLen16(char *in, int len)
 	return out;
 }
 
-/***********************************************************************
- *           SysReAllocStringLen    [OLE2DISP.5]
+/******************************************************************************
+ *		SysReAllocStringLen16	[OLE2DISP.5]
  */
 int WINAPI SysReAllocStringLen16(BSTR16 *old,char *in,int len)
 {
@@ -96,24 +99,24 @@ int WINAPI SysReAllocStringLen16(BSTR16 *old,char *in,int len)
 	return 1;
 }
 
-/***********************************************************************
- *           SysFreeString          [OLE2DISP.6]
+/******************************************************************************
+ *		SysFreeString16	[OLE2DISP.6]
  */
 void WINAPI SysFreeString16(BSTR16 in)
 {
 	BSTR_Free(in);
 }
 
-/***********************************************************************
- *           SysFreeString          [OLEAUT32.6]
+/******************************************************************************
+ *		SysFreeString32	[OLEAUT32.6]
  */
 void WINAPI SysFreeString32(BSTR32 in)
 {
 	HeapFree(GetProcessHeap(),0,in);
 }
 
-/***********************************************************************
- *           SysStringLen           [OLE2DISP.7]
+/******************************************************************************
+ *		SysStringLen16	[OLE2DISP.7]
  */
 int WINAPI SysStringLen16(BSTR16 str)
 {
