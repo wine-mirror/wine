@@ -1550,7 +1550,7 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
     
     /* free memory ?*/
     if ((hdpa->nMaxCount - hdpa->nItemCount) >= hdpa->nGrow) {
-	INT nNewItems = MIN(hdpa->nGrow * 2, hdpa->nItemCount);
+	INT nNewItems = MAX(hdpa->nGrow * 2, hdpa->nItemCount);
 	nSize = nNewItems * sizeof(LPVOID);
 	lpDest = (LPVOID)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
 				      hdpa->ptrs, nSize);
