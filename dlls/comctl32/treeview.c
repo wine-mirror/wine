@@ -600,7 +600,6 @@ static LRESULT
 TREEVIEW_SetInsertMark (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
-  HDC hdc;
 
   FIXME("%d %ld\n",wParam,lParam);
   if (!TREEVIEW_ValidItem (infoPtr, (HTREEITEM)lParam)) return 0;
@@ -609,9 +608,7 @@ TREEVIEW_SetInsertMark (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->insertBeforeorAfter=(BOOL) wParam;
   infoPtr->insertMarkItem=(HTREEITEM) lParam;
   
-  hdc = GetDC (hwnd);
-  TREEVIEW_Refresh (hwnd, hdc);
-  ReleaseDC(hwnd,hdc);
+  InvalidateRect(hwnd, NULL, FALSE);
 
   return 1;
 }
@@ -1053,7 +1050,6 @@ TREEVIEW_GetItemRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TREEVIEW_ITEM *wineItem;
   HTREEITEM     *iItem;
   LPRECT        lpRect   = (LPRECT)lParam;
-  HDC 			hdc;
 
   TRACE("\n");
   /* 
@@ -1063,9 +1059,7 @@ TREEVIEW_GetItemRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return FALSE;
 
   if (infoPtr->Timer & TV_REFRESH_TIMER_SET) {
-  	hdc = GetDC (hwnd);
-  	TREEVIEW_Refresh (hwnd, hdc); /* we want a rect for the current view */  
-  	ReleaseDC(hwnd,hdc);
+	InvalidateRect(hwnd, NULL, FALSE);  	
    }
 
 
@@ -1362,7 +1356,7 @@ TREEVIEW_HandleTimer (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	case TV_REFRESH_TIMER:
 		KillTimer (hwnd, TV_REFRESH_TIMER);
 		infoPtr->Timer &= ~TV_REFRESH_TIMER_SET;
-    InvalidateRect(hwnd, NULL, FALSE);
+		InvalidateRect(hwnd, NULL, FALSE);
 		return 0;
 	case TV_EDIT_TIMER:
 		KillTimer (hwnd, TV_EDIT_TIMER);
@@ -1530,7 +1524,6 @@ TREEVIEW_GetNextItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
   TREEVIEW_ITEM *wineItem, *returnItem;
   INT iItem = (INT)lParam, retval = 0, flag  = (INT)wParam;
-  HDC hdc;
 
   switch (flag) {
   case TVGN_ROOT:
@@ -1542,9 +1535,7 @@ TREEVIEW_GetNextItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
     break;
 
   case TVGN_FIRSTVISIBLE: /* FIXME:we should only recalculate, not redraw */
-    hdc = GetDC (hwnd);
-    TREEVIEW_Refresh (hwnd, hdc);
-    ReleaseDC(hwnd,hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
     retval = (INT)infoPtr->firstVisible;
     break;
 
@@ -2483,12 +2474,9 @@ TREEVIEW_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TREEVIEW_StyleChanged (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  HDC hdc;
-  
   TRACE("(%x %lx)\n",wParam,lParam);
-  hdc = GetDC (hwnd);
-  TREEVIEW_Refresh (hwnd, hdc);
-  ReleaseDC(hwnd,hdc);
+
+  InvalidateRect(hwnd, NULL, FALSE);  
 
   return 0;
 }
