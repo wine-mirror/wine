@@ -13,6 +13,8 @@
  *   - Unicode suppport (under construction).
  *   - Fix TOOLBAR_SetButtonInfo32A/W.
  *   - Customize dialog (under construction).
+ *   - TBSTYLE_AUTOSIZE for toolbar and buttons.
+ *   - I_IMAGECALLBACK support.
  *
  * Testing:
  *   - Run tests using Waite Group Windows95 API Bible Volume 2.
@@ -75,14 +77,27 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
     HFONT  hOldFont;
     INT    nOldBkMode;
     COLORREF clrOld;
+    LPWSTR lpText = NULL;
+
+    TRACE ("iString: %lx\n", btnPtr->iString);
+
+    /* get a pointer to the text */
+    if (HIWORD(btnPtr->iString) != 0)
+	lpText = (LPWSTR)btnPtr->iString;
+    else if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings))
+	lpText = infoPtr->strings[btnPtr->iString];
+
+    TRACE ("lpText: \"%s\"\n", debugstr_w(lpText));
 
     /* draw text */
-    if ((btnPtr->iString > -1) && (btnPtr->iString < infoPtr->nNumStrings)) {
+    if (lpText) {
 
 	InflateRect (&rcText, -3, -3);
 
 	if (himl && btnPtr->iBitmap>=0) {
-		if (dwStyle & TBSTYLE_LIST) {
+		if ((dwStyle & TBSTYLE_LIST) &&
+		    ((btnPtr->fsStyle & TBSTYLE_AUTOSIZE) == 0) &&
+		    (btnPtr->iBitmap != I_IMAGENONE)) {
 		    rcText.left += infoPtr->nBitmapWidth;
 		}
 		else {
@@ -98,22 +113,18 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 	if (!(nState & TBSTATE_ENABLED)) {
 	    clrOld = SetTextColor (hdc, GetSysColor (COLOR_3DHILIGHT));
 	    OffsetRect (&rcText, 1, 1);
-	    DrawTextW (hdc, infoPtr->strings[btnPtr->iString], -1,
-			 &rcText, infoPtr->dwDTFlags);
+	    DrawTextW (hdc, lpText, -1, &rcText, infoPtr->dwDTFlags);
 	    SetTextColor (hdc, GetSysColor (COLOR_3DSHADOW));
 	    OffsetRect (&rcText, -1, -1);
-	    DrawTextW (hdc, infoPtr->strings[btnPtr->iString], -1,
-			 &rcText, infoPtr->dwDTFlags);
+	    DrawTextW (hdc, lpText, -1, &rcText, infoPtr->dwDTFlags);
 	}
 	else if (nState & TBSTATE_INDETERMINATE) {
 	    clrOld = SetTextColor (hdc, GetSysColor (COLOR_3DSHADOW));
-	    DrawTextW (hdc, infoPtr->strings[btnPtr->iString], -1,
-			 &rcText, infoPtr->dwDTFlags);
+	    DrawTextW (hdc, lpText, -1, &rcText, infoPtr->dwDTFlags);
 	}
 	else {
 	    clrOld = SetTextColor (hdc, GetSysColor (COLOR_BTNTEXT));
-	    DrawTextW (hdc, infoPtr->strings[btnPtr->iString], -1,
-			 &rcText, infoPtr->dwDTFlags);
+	    DrawTextW (hdc, lpText, -1, &rcText, infoPtr->dwDTFlags);
 	}
 
 	SetTextColor (hdc, clrOld);
@@ -199,6 +210,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	return;
 
     rc = btnPtr->rect;
+
+    TRACE("iBitmap: %d\n", btnPtr->iBitmap);
 
     /* separator */
     if (btnPtr->fsStyle & TBSTYLE_SEP) {
@@ -325,6 +338,7 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
     HDC hdc;
     HFONT hOldFont;
     SIZE sz;
+    LPWSTR lpText = NULL;
 
 
     lpSize->cx = 0;
@@ -337,7 +351,12 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
 	if (!(btnPtr->fsState & TBSTATE_HIDDEN) &&
 	    (btnPtr->iString > -1) &&
 	    (btnPtr->iString < infoPtr->nNumStrings)) {
-	    LPWSTR lpText = infoPtr->strings[btnPtr->iString];
+	    /* get a pointer to the text */
+	    if (HIWORD(btnPtr->iString) != 0)
+		lpText = (LPWSTR)btnPtr->iString;
+	    else if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings))
+		lpText = infoPtr->strings[btnPtr->iString];
+
 	    GetTextExtentPoint32W (hdc, lpText, lstrlenW (lpText), &sz);
 	    if (sz.cx > lpSize->cx)
 		lpSize->cx = sz.cx;
@@ -538,11 +557,12 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	if (infoPtr->buttons[i].iBitmap >=0)
 	    usesBitmaps = TRUE;
 
-    if (sizeString.cy > 0)
+    if (sizeString.cy > 0) {
         if (usesBitmaps)
 	  infoPtr->nButtonHeight = sizeString.cy + infoPtr->nBitmapHeight + 6;
         else 
           infoPtr->nButtonHeight = sizeString.cy + 6;
+    }
     else if (infoPtr->nButtonHeight < infoPtr->nBitmapHeight + 6)
 	infoPtr->nButtonHeight = infoPtr->nBitmapHeight + 6;
 
@@ -1266,6 +1286,7 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (p == NULL)
 	    return -1;
 	TRACE("adding string(s) from array!\n");
+
 	nIndex = infoPtr->nNumStrings;
 	while (*p) {
 	    len = lstrlenA (p);
@@ -1312,24 +1333,58 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			     szString, 256);
 
 	TRACE("len=%d \"%s\"\n", len, debugstr_w(szString));
-	nIndex = infoPtr->nNumStrings;
-	if (infoPtr->nNumStrings == 0) {
-	    infoPtr->strings =
-		COMCTL32_Alloc (sizeof(LPWSTR));
-	}
-	else {
-	    LPWSTR *oldStrings = infoPtr->strings;
-	    infoPtr->strings =
-		COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
-	    memcpy (&infoPtr->strings[0], &oldStrings[0],
-		    sizeof(LPWSTR) * infoPtr->nNumStrings);
-	    COMCTL32_Free (oldStrings);
-	}
+	TRACE("First char: 0x%x\n", *szString);
+	if (szString[0] == L'|')
+	{
+	    PWSTR p = szString + 1;
+		
+	    nIndex = infoPtr->nNumStrings;
+	    while (*p != L'|') {
 
-	infoPtr->strings[infoPtr->nNumStrings] =
-	    COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-	lstrcpyW (infoPtr->strings[infoPtr->nNumStrings], szString);
-	infoPtr->nNumStrings++;
+	    if (infoPtr->nNumStrings == 0) {
+		infoPtr->strings =
+		    COMCTL32_Alloc (sizeof(LPWSTR));
+	    }
+	    else {
+		LPWSTR *oldStrings = infoPtr->strings;
+		infoPtr->strings =
+		    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+		memcpy (&infoPtr->strings[0], &oldStrings[0],
+			sizeof(LPWSTR) * infoPtr->nNumStrings);
+		COMCTL32_Free (oldStrings);
+	    }
+
+	    len = COMCTL32_StrChrW (p, L'|') - p;
+	    TRACE("len=%d \"%s\"\n", len, debugstr_w(p));
+	    infoPtr->strings[infoPtr->nNumStrings] =
+		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+	    lstrcpyW (infoPtr->strings[infoPtr->nNumStrings], p);
+	    infoPtr->nNumStrings++;
+
+		p += (len+1);
+	    }
+	}
+	else
+	{
+            nIndex = infoPtr->nNumStrings;
+            if (infoPtr->nNumStrings == 0) {
+                infoPtr->strings =
+                    COMCTL32_Alloc (sizeof(LPWSTR));
+            }
+            else {
+                LPWSTR *oldStrings = infoPtr->strings;
+                infoPtr->strings =
+                    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+                memcpy (&infoPtr->strings[0], &oldStrings[0],
+                        sizeof(LPWSTR) * infoPtr->nNumStrings);
+                COMCTL32_Free (oldStrings);
+            }
+
+            infoPtr->strings[infoPtr->nNumStrings] =
+                COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+            lstrcpyW (infoPtr->strings[infoPtr->nNumStrings], szString);
+            infoPtr->nNumStrings++;
+        }
     }
     else {
 	LPWSTR p = (LPWSTR)lParam;
@@ -1341,8 +1396,8 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	nIndex = infoPtr->nNumStrings;
 	while (*p) {
 	    len = lstrlenW (p);
-	    TRACE("len=%d \"%s\"\n", len, debugstr_w(p));
 
+	    TRACE("len=%d \"%s\"\n", len, debugstr_w(p));
 	    if (infoPtr->nNumStrings == 0) {
 		infoPtr->strings =
 		    COMCTL32_Alloc (sizeof(LPWSTR));
