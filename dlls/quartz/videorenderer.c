@@ -181,7 +181,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     sdesc.dwSize = sizeof(sdesc);
     hr = IPin_ConnectionMediaType(This->ppPins[0], &amt);
     if (FAILED(hr)) {
-	ERR("Unable to retreive media type\n");
+	ERR("Unable to retrieve media type\n");
 	return hr;
     }
     format = (VIDEOINFOHEADER*)amt.pbFormat;

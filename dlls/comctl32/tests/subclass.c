@@ -161,8 +161,8 @@ static void ok_sequence(const struct message *expected, const char *context)
         expected++;
         actual++;
     }
-    ok(!expected->procnum, "Recieved less messages then expected\n");
-    ok(!actual->procnum, "Recieved more messages then expected\n");
+    ok(!expected->procnum, "Received fewer messages than expected\n");
+    ok(!actual->procnum, "Received more messages than expected\n");
     flush_sequence();
 }
 

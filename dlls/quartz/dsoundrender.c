@@ -111,7 +111,7 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
 
     hr = IPin_ConnectionMediaType(This->ppPins[0], &amt);
     if (FAILED(hr)) {
-	ERR("Unable to retreive media type\n");
+	ERR("Unable to retrieve media type\n");
 	return hr;
     }
 

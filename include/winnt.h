@@ -2636,7 +2636,7 @@ typedef struct tagMESSAGE_RESOURCE_DATA {
  */
 
 /*
- * First a constant for the following typdefs.
+ * First a constant for the following typedefs.
  */
 
 #define ANYSIZE_ARRAY   1

@@ -627,7 +627,7 @@ static void wave_out_test_device(int device)
                                     WAVE_MAPPED,&capsA);
     }
 
-    /* Try a PCMWAVEFORMAT aligned next to an unaccessable page for bounds
+    /* Try a PCMWAVEFORMAT aligned next to an unaccessible page for bounds
      * checking */
     twoPages = VirtualAlloc(NULL, 2 * dwPageSize, MEM_RESERVE | MEM_COMMIT,
                             PAGE_READWRITE);

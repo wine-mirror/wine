@@ -84,7 +84,7 @@ static DWORD AVIDec_SendSampleData(AVIDecImpl* This, LPBYTE data, DWORD size)
 
     hr = IPin_ConnectionMediaType(This->ppPins[0], &amt);
     if (FAILED(hr)) {
-	ERR("Unable to retreive media type\n");
+	ERR("Unable to retrieve media type\n");
 	goto error;
     }
     format = (VIDEOINFOHEADER*)amt.pbFormat;
@@ -121,7 +121,7 @@ static DWORD AVIDec_SendSampleData(AVIDecImpl* This, LPBYTE data, DWORD size)
 
     res = ICDecompress(This->hvid, 0, &format->bmiHeader, data, &bi, pbDstStream);
     if (res != ICERR_OK)
-        ERR("Error occured during the decompression (%lx)\n", res);
+        ERR("Error occurred during the decompression (%lx)\n", res);
     
     hr = OutputPin_SendSample((OutputPin*)This->ppPins[1], pSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {

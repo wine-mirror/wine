@@ -38,7 +38,7 @@ extern "C" {
  * type model where int and long are 32 bit and pointer is 64-bit.
  */
 
-/* Type model indepent typedefs */
+/* Type model independent typedefs */
 /* The __intXX types are native types defined by the MS C compiler.
  * Apps that make use of them before they get defined here, can
  * simply add to the command line:

@@ -75,7 +75,7 @@ static void test_mktime()
     local_time = mktime(&my_tm);
     ok(((DWORD)local_time == SECSPERDAY), "mktime returned 0x%08lx\n",(DWORD)local_time);
 
-    /* TEST that we are indepentant from the TZ variable */
+    /* TEST that we are independent from the TZ variable */
     /*Argh, msvcrt doesn't have setenv() */
     _snprintf(TZ_env,255,"TZ=%s",(getenv("TZ")?getenv("TZ"):""));
     putenv("TZ=GMT");
