@@ -556,12 +556,6 @@ BOOL WINAPI UpdateDebugInfoFileEx(
   PIMAGE_NT_HEADERS NtHeaders, DWORD OldChecksum
 );
 
-/***********************************************************************
- * Wine specific
- */
-
-extern HANDLE IMAGEHLP_hHeap;
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

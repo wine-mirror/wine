@@ -50,6 +50,8 @@ static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
   148,        /* SizeOfImage; */
 };
 
+extern HANDLE IMAGEHLP_hHeap;
+
 /***********************************************************************
  *		EnumerateLoadedModules (IMAGEHLP.@)
  */
