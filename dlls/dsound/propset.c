@@ -860,15 +860,29 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 		for (wod = 0; wod < devs; ++wod) {
 		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 		    if (err == DS_OK) {
+			DWORD size;
 			memset(&data, 0, sizeof(data));
 			data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 			data.WaveDeviceId = wod;
 			data.DeviceId = renderer_guids[wod];
 			data.Description = desc.szDesc;
 			data.Module = desc.szDrvName;
-			data.Interface = "Interface";
-			TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
-			(ppd->Callback)(&data, ppd->Context);
+			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDEVICEINTERFACESIZE,(DWORD_PTR)&size,0));
+			if (err == DS_OK) {
+			    WCHAR * nameW = HeapAlloc(GetProcessHeap(),0,size);
+			    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDEVICEINTERFACE,(DWORD_PTR)nameW,size));
+			    if (err == DS_OK) {
+				CHAR * szInterface = HeapAlloc(GetProcessHeap(),0,size/sizeof(WCHAR));
+				WideCharToMultiByte( CP_ACP, 0, nameW, size/sizeof(WCHAR), szInterface, size/sizeof(WCHAR), NULL, NULL );
+				data.Interface = szInterface;
+
+				TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
+				(ppd->Callback)(&data, ppd->Context);
+
+				HeapFree(GetProcessHeap(),0,szInterface);
+			    }
+			    HeapFree(GetProcessHeap(),0,nameW);
+			}
 		    }
 		}
 
@@ -876,15 +890,29 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 		for (wid = 0; wid < devs; ++wid) {
 		    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 		    if (err == DS_OK) {
+			DWORD size;
 			memset(&data, 0, sizeof(data));
 			data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 			data.WaveDeviceId = wid;
 			data.DeviceId = capture_guids[wid];
 			data.Description = desc.szDesc;
 			data.Module = desc.szDrvName;
-			data.Interface = "Interface";
-			TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
-			(ppd->Callback)(&data, ppd->Context);
+			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDEVICEINTERFACESIZE,(DWORD_PTR)&size,0));
+			if (err == DS_OK) {
+			    WCHAR * nameW = HeapAlloc(GetProcessHeap(),0,size);
+			    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDEVICEINTERFACE,(DWORD_PTR)nameW,size));
+			    if (err == DS_OK) {
+				CHAR * szInterface = HeapAlloc(GetProcessHeap(),0,size/sizeof(WCHAR));
+				WideCharToMultiByte( CP_ACP, 0, nameW, size/sizeof(WCHAR), szInterface, size/sizeof(WCHAR), NULL, NULL );
+				data.Interface = szInterface;
+
+				TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
+				(ppd->Callback)(&data, ppd->Context);
+
+				HeapFree(GetProcessHeap(),0,szInterface);
+			    }
+			    HeapFree(GetProcessHeap(),0,nameW);
+			}
 		    }
 		}
 
@@ -925,25 +953,33 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 		for (wod = 0; wod < devs; ++wod) {
 		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 		    if (err == DS_OK) {
-			/* FIXME: this is a memory leak */
 			WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
-			WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
+			DWORD size;
+			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0));
+			if (err == DS_OK) {
+			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,size);
+			    err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wInterface, size));
+			    if (err == DS_OK) {
+				memset(&data, 0, sizeof(data));
+				data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
+				data.WaveDeviceId = wod;
+				data.DeviceId = renderer_guids[wod];
 
-			memset(&data, 0, sizeof(data));
-			data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
-			data.WaveDeviceId = wod;
-			data.DeviceId = renderer_guids[wod];
+				MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100 );
+				MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, wModule, 0x100 );
 
-			MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
-			MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, wModule, 0x100 );
-			MultiByteToWideChar( CP_ACP, 0, "Interface", -1, wInterface, 0x100 );
+				data.Description = wDescription;
+				data.Module = wModule;
+				data.Interface = wInterface;
 
-			data.Description = wDescription;
-			data.Module = wModule;
-			data.Interface = wInterface;
-			TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
-			(ppd->Callback)(&data, ppd->Context);
+				TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
+				(ppd->Callback)(&data, ppd->Context);
+			    }
+			    HeapFree(GetProcessHeap(),0,wInterface);
+			}
+			HeapFree(GetProcessHeap(),0,wDescription);
+			HeapFree(GetProcessHeap(),0,wModule);
 		    }
 		}
 
@@ -951,25 +987,32 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 		for (wid = 0; wid < devs; ++wid) {
 		    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 		    if (err == DS_OK) {
-			/* FIXME: this is a memory leak */
 			WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
-			WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
+			DWORD size;
+			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0));
+			if (err == DS_OK) {
+			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,size);
+			    err = mmErr(waveInMessage((HWAVEIN)wod, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wInterface, size));
+			    if (err == DS_OK) {
+				memset(&data, 0, sizeof(data));
+				data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
+				data.WaveDeviceId = wid;
+				data.DeviceId = capture_guids[wid];
 
-			memset(&data, 0, sizeof(data));
-			data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
-			data.WaveDeviceId = wid;
-			data.DeviceId = capture_guids[wid];
+				MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100 );
+				MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, wModule, 0x100 );
 
-			MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
-			MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, wModule, 0x100 );
-			MultiByteToWideChar( CP_ACP, 0, "Interface", -1, wInterface, 0x100 );
-
-			data.Description = wDescription;
-			data.Module = wModule;
-			data.Interface = wInterface;
-			TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
-			(ppd->Callback)(&data, ppd->Context);
+				data.Description = wDescription;
+				data.Module = wModule;
+				data.Interface = wInterface;
+				TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
+				(ppd->Callback)(&data, ppd->Context);
+			    }
+			    HeapFree(GetProcessHeap(),0,wInterface);
+			}
+			HeapFree(GetProcessHeap(),0,wDescription);
+			HeapFree(GetProcessHeap(),0,wModule);
 		    }
 		}
 
