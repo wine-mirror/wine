@@ -401,6 +401,18 @@ static const struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
     { 0 }
 };
 
+static const struct message WmSetRedrawFalseSeq[] =
+{
+    { WM_SETREDRAW, sent|wparam, 0 },
+    { 0 }
+};
+
+static const struct message WmSetRedrawTrueSeq[] =
+{
+    { WM_SETREDRAW, sent|wparam, 1 },
+    { 0 }
+};
+
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
 
@@ -492,6 +504,31 @@ static void ok_sequence(const struct message *expected, const char *context)
     flush_sequence();
 }
 
+static void test_WM_SETREDRAW(HWND hwnd)
+{
+    DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
+
+    flush_sequence();
+
+    SendMessageA(hwnd, WM_SETREDRAW, FALSE, 0);
+    ok_sequence(WmSetRedrawFalseSeq, "SetRedraw:FALSE");
+
+    ok(!(GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should NOT be set\n");
+    ok(!IsWindowVisible(hwnd), "IsWindowVisible() should return FALSE\n");
+
+    flush_sequence();
+    SendMessageA(hwnd, WM_SETREDRAW, TRUE, 0);
+    ok_sequence(WmSetRedrawTrueSeq, "SetRedraw:TRUE");
+
+    ok(GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(IsWindowVisible(hwnd), "IsWindowVisible() should return TRUE");
+
+    /* restore original WS_VISIBLE state */
+    SetWindowLongA(hwnd, GWL_STYLE, style);
+
+    flush_sequence();
+}
+
 /* test if we receive the right sequence of messages */
 static void test_messages(void)
 {
@@ -503,9 +540,15 @@ static void test_messages(void)
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create overlapped window\n");
     ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
+
+    /* test WM_SETREDRAW on a not visible top level window */
+    test_WM_SETREDRAW(hwnd);
     
     ShowWindow(hwnd, SW_SHOW);
     ok_sequence(WmShowOverlappedSeq, "ShowWindow:overlapped");
+
+    /* test WM_SETREDRAW on a visible top level window */
+    test_WM_SETREDRAW(hwnd);
 
     DestroyWindow(hwnd);
     ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped");
@@ -528,10 +571,15 @@ static void test_messages(void)
     hbutton = CreateWindowExA(0, "TestWindowClass", "Test button", WS_CHILDWINDOW,
                               0, 100, 50, 50, hchild, 0, 0, NULL);
     ok (hbutton != 0, "Failed to create button window\n");
-    flush_sequence();
+
+    /* test WM_SETREDRAW on a not visible child window */
+    test_WM_SETREDRAW(hchild);
 
     ShowWindow(hchild, SW_SHOW);
     ok_sequence(WmShowChildSeq, "ShowWindow:child");
+
+    /* test WM_SETREDRAW on a visible child window */
+    test_WM_SETREDRAW(hchild);
 
     SetFocus(hchild);
     flush_sequence();
