@@ -215,7 +215,7 @@ void pdump (LPCITEMIDLIST pidl)
 
 	      pidltemp = _dbg_ILGetNext(pidltemp);
 
-	    } while (pidltemp);
+	    } while (pidltemp && pidltemp->mkid.cb);
 	  }
 	  else
 	  {
@@ -275,7 +275,7 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	      }
 	    }
 	    pidltemp = _dbg_ILGetNext(pidltemp);
-	  } while (pidltemp);
+	  } while (pidltemp && pidltemp->mkid.cb);
 	}
 	return ret;
 }
