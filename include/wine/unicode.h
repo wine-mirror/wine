@@ -63,13 +63,13 @@ static inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch
 
 static inline WCHAR tolowerW( WCHAR ch )
 {
-    extern WCHAR casemap_lower[];
+    extern const WCHAR casemap_lower[];
     return ch + casemap_lower[casemap_lower[ch >> 8] + (ch & 0xff)];
 }
 
 static inline WCHAR toupperW( WCHAR ch )
 {
-    extern WCHAR casemap_upper[];
+    extern const WCHAR casemap_upper[];
     return ch + casemap_upper[casemap_upper[ch >> 8] + (ch & 0xff)];
 }
 
@@ -77,7 +77,7 @@ static inline WCHAR toupperW( WCHAR ch )
 /* and the C2_* type in the high 4 bits */
 static inline unsigned short get_char_typeW( WCHAR ch )
 {
-    extern unsigned short wctype_table[];
+    extern const unsigned short wctype_table[];
     return wctype_table[wctype_table[ch >> 8] + (ch & 0xff)];
 }
 
