@@ -3248,9 +3248,9 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] HDC : device context handle
- * [I] LISTVIEW_ITEM * : item
  * [I] INT : item index
- * [I] RECT * : clipping rectangle
+ * [I] RECT : clipping rectangle
+ * [O] RECT * : The text rectangle about which to draw the focus
  *
  * RETURN:
  * None
@@ -3259,10 +3259,11 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
                                    RECT *SuggestedFocus)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); 
-  UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
   WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-  INT nDrawPosX, nLabelWidth, rcWidth;
   LVITEMW lvItem;
+  UINT uFormat = DT_TOP | DT_CENTER | DT_WORDBREAK | DT_NOPREFIX |
+                 DT_EDITCONTROL ;
+  /* Maintain this format in line with the one in LISTVIEW_UpdateLargeItemRect*/
   RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, bottom=%d)\n",
@@ -3286,19 +3287,42 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
     rcTemp.right = infoPtr->rcList.right;
   else
     rcTemp.right+=WIDTH_PADDING;
+    /* The comment doesn't say WIDTH_PADDING applies to large icons */
   
   TRACE("background rect (%d,%d)-(%d,%d)\n",
         rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom);
   
   LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
+
+  /* Figure out text colours etc. depending on state
+   * At least the following states exist; there may be more.
+   * Many items may be selected
+   * At most one item may have the focus
+   * The application may not actually be active currently
+   * 1. The item is not selected in any way
+   * 2. The cursor is flying over the icon or text and the text is being 
+   *    expanded because it is not fully displayed currently.
+   * 3. The item is selected and is focussed, i.e. the user has not clicked
+   *    in the blank area of the window, and the window (or application?)
+   *    still has the focus.
+   * 4. As 3 except that a different window has the focus
+   * 5. The item is the selected item of all the items, but the user has
+   *    clicked somewhere else on the window.
+   * Only a few of these are handled currently. In particular 2 is not yet
+   * handled since we do not support the functionality currently (or at least
+   * we didn't when I wrote this)
+   */
+
   if (lvItem.state & LVIS_SELECTED)
   {
     /* set item colors */ 
     SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
     SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+    SetBkMode (hdc, OPAQUE);
     /* set raster mode */
     SetROP2(hdc, R2_XORPEN);
+    /* When exactly is it in XOR? while being dragged? */
   }
   else
   {
@@ -3306,7 +3330,6 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
     if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
     {
        SetBkMode(hdc, TRANSPARENT);
-       textoutOptions &= ~ETO_OPAQUE;
     }
     else
     {
@@ -3319,24 +3342,37 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
     SetROP2(hdc, R2_COPYPEN);
   }
 
+  /* In cases 2,3 and 5 (see above) the full text is displayed, with word
+   * wrapping and long words split.
+   * In cases 1 and 4 only a portion of the text is displayed with word
+   * wrapping and both word and end ellipsis.  (I don't yet know about path
+   * ellipsis)
+   */
+  uFormat |= ( (lvItem.state & LVIS_FOCUSED) && infoPtr->bFocus) ?
+          DT_NOCLIP
+      :
+          DT_WORD_ELLIPSIS | DT_END_ELLIPSIS;
+
   /* draw the icon */
   if (infoPtr->himlNormal != NULL)
   {
-    if ((lvItem.state & LVIS_SELECTED) && (lvItem.iImage>=0))
+    if (lvItem.iImage >= 0)
     {
-      ImageList_Draw(infoPtr->himlNormal, lvItem.iImage, hdc, rcItem.left, 
-                     rcItem.top, ILD_SELECTED);
-    }
-    else if (lvItem.iImage>=0)
-    {
-      ImageList_Draw(infoPtr->himlNormal, lvItem.iImage, hdc, rcItem.left, 
-                     rcItem.top, ILD_NORMAL);
+      ImageList_Draw (infoPtr->himlNormal, lvItem.iImage, hdc, rcItem.left, 
+                      rcItem.top,
+                      (lvItem.state & LVIS_SELECTED) ? ILD_SELECTED : ILD_NORMAL);
     }
   }
 
+  /* Draw the text below the icon */
+
   /* Don't bother painting item being edited */
-  if (infoPtr->hwndEdit && lvItem.state & LVIS_FOCUSED)
+  if ((infoPtr->hwndEdit && (lvItem.state & LVIS_FOCUSED)) ||
+      !lstrlenW(lvItem.pszText))
+  {
+    SetRectEmpty(SuggestedFocus);
     return;
+  }
 
   /* Since rcItem.left is left point of icon, compute left point of item box */
   rcItem.left -= ((infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2);
@@ -3353,56 +3389,36 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   
   InflateRect(&rcItem, -(2*CAPTION_BORDER), 0);
   rcItem.top += infoPtr->iconSize.cy + ICON_BOTTOM_PADDING; 
-  nLabelWidth = ListView_GetStringWidthW(hwnd, lvItem.pszText);
-  TRACE("rect for text sizing (%d,%d)-(%d,%d), text width %d\n",
-        rcItem.left, rcItem.top, rcItem.right, rcItem.bottom,
-        nLabelWidth);
-  
-  /* append an ellipse ('...') if the caption won't fit in the rect */
-  rcWidth = max(0, rcItem.right - rcItem.left);
-  if (nLabelWidth > rcWidth)
-  {
-      /* give or take a couple, how many average sized chars would fit? */
-      INT nCharsFit = infoPtr->ntmAveCharWidth > 0 ? 
-	      	      rcWidth/infoPtr->ntmAveCharWidth + 2 : 0;
-      INT eos = min(strlenW(lvItem.pszText), nCharsFit);
-      if (eos > 0) lvItem.pszText[eos-1] = '.';
-      if (eos > 1) lvItem.pszText[eos-2] = '.';
-      if (eos < 3) lvItem.pszText[eos] = '\0'; 
-      for ( ; eos > 2; eos--) 
-      {
- 	 lvItem.pszText[eos - 3] = '.';
- 	 lvItem.pszText[eos] = '\0';
- 	 if (ListView_GetStringWidthW(hwnd, lvItem.pszText) <= rcWidth) break;
-      }
-  }
 
-  InflateRect(&rcItem, 2*CAPTION_BORDER, 0);
-  nDrawPosX = infoPtr->iconSpacing.cx - 2*CAPTION_BORDER - nLabelWidth;
-  if (nDrawPosX > 1)
-  {
-    rcItem.left += nDrawPosX / 2;
-    rcItem.right = rcItem.left + nLabelWidth + 2*CAPTION_BORDER;
-  }
-  else
-  {
-    rcItem.left += 1;
-    rcItem.right = rcItem.left + infoPtr->iconSpacing.cx - 1;
-  }
 
   /* draw label */  
-  rcItem.bottom = rcItem.top + infoPtr->ntmHeight + HEIGHT_PADDING; 
-  TRACE("rect for text (%d,%d)-(%d,%d)\n",
-        rcItem.left, rcItem.top, rcItem.right, rcItem.bottom);
-  if (lstrlenW(lvItem.pszText))
-  {
-    ExtTextOutW(hdc, rcItem.left + CAPTION_BORDER, rcItem.top, textoutOptions, 
-                &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
 
-    CopyRect(SuggestedFocus, &rcItem);
+  /* I am sure of most of the uFormat values.  However I am not sure about
+   * whether we need or do not need the following:
+   * DT_EXTERNALLEADING, DT_INTERNAL, DT_CALCRECT, DT_NOFULLWIDTHCHARBREAK,
+   * DT_PATH_ELLIPSIS, DT_RTLREADING, 
+   * We certainly do not need
+   * DT_BOTTOM, DT_VCENTER, DT_MODIFYSTRING, DT_LEFT, DT_RIGHT, DT_PREFIXONLY,
+   * DT_SINGLELINE, DT_TABSTOP, DT_EXPANDTABS
+   */
+
+  /* If the text is being drawn without clipping (i.e. the full text) then we
+   * need to jump through a few hoops to ensure that it all gets displayed and
+   * that the background is complete
+   */
+  if (uFormat & DT_NOCLIP)
+  {
+      HBRUSH hBrush = CreateSolidBrush(GetBkColor (hdc));
+      DrawTextW (hdc, lvItem.pszText, -1, &rcItem, uFormat | DT_CALCRECT);
+      FillRect(hdc, &rcItem, hBrush);
+      DeleteObject(hBrush);
   }
-  else
-    SetRectEmpty(SuggestedFocus);
+  /* else ? What if we are losing the focus? will we not get a complete 
+   * background?
+   */
+  DrawTextW (hdc, lvItem.pszText, -1, &rcItem, uFormat);
+
+  CopyRect(SuggestedFocus, &rcItem);
 }
 
 /***
