@@ -43,15 +43,19 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_QueryInterface(LPDIRECT3DVOLUMETEXTUR
 
 ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+
     if (ref == 0) {
         IWineD3DVolumeTexture_Release(This->wineD3DVolumeTexture);
         HeapFree(GetProcessHeap(), 0, This);

@@ -46,14 +46,19 @@ HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(LPDIRECT3DDEVICE9 iface, REFI
 
 ULONG WINAPI IDirect3DDevice9Impl_AddRef(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    ULONG ref = --This->ref;
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+
     if (ref == 0) {
       IDirect3D9_Release((LPDIRECT3D9) This->direct3d);
       IWineD3DDevice_Release(This->WineD3DDevice);

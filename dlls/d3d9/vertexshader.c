@@ -41,15 +41,19 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9
 
 ULONG WINAPI IDirect3DVertexShader9Impl_AddRef(LPDIRECT3DVERTEXSHADER9 iface) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
     }

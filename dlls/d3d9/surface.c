@@ -42,14 +42,19 @@ HRESULT WINAPI IDirect3DSurface9Impl_QueryInterface(LPDIRECT3DSURFACE9 iface, RE
 
 ULONG WINAPI IDirect3DSurface9Impl_AddRef(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI IDirect3DSurface9Impl_Release(LPDIRECT3DSURFACE9 iface) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+
+    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+
     if (ref == 0) {
         IWineD3DSurface_Release(This->wineD3DSurface);
         HeapFree(GetProcessHeap(), 0, This);

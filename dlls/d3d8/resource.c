@@ -50,14 +50,19 @@ HRESULT WINAPI IDirect3DResource8Impl_QueryInterface(LPDIRECT3DRESOURCE8 iface,R
 
 ULONG WINAPI IDirect3DResource8Impl_AddRef(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI IDirect3DResource8Impl_Release(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
-    ULONG ref = --This->ref;
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
     return ref;

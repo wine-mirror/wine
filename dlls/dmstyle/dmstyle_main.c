@@ -38,13 +38,13 @@ static HRESULT WINAPI SectionCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,
 
 static ULONG WINAPI SectionCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI SectionCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI SectionCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -82,13 +82,13 @@ static HRESULT WINAPI StyleCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LP
 
 static ULONG WINAPI StyleCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI StyleCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI StyleCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -124,13 +124,13 @@ static HRESULT WINAPI ChordTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID ri
 
 static ULONG WINAPI ChordTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ChordTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ChordTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -166,13 +166,13 @@ static HRESULT WINAPI CommandTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID 
 
 static ULONG WINAPI CommandTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI CommandTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI CommandTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -208,13 +208,13 @@ static HRESULT WINAPI StyleTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID ri
 
 static ULONG WINAPI StyleTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI StyleTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI StyleTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -250,13 +250,13 @@ static HRESULT WINAPI MotifTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID ri
 
 static ULONG WINAPI MotifTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI MotifTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI MotifTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -292,13 +292,13 @@ static HRESULT WINAPI AuditionTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID
 
 static ULONG WINAPI AuditionTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI AuditionTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI AuditionTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -334,13 +334,13 @@ static HRESULT WINAPI MuteTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID rii
 
 static ULONG WINAPI MuteTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI MuteTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI MuteTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {

@@ -38,13 +38,13 @@ static HRESULT WINAPI ScriptAutoImplSegmentCF_QueryInterface(LPCLASSFACTORY ifac
 
 static ULONG WINAPI ScriptAutoImplSegmentCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptAutoImplSegmentCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptAutoImplSegmentCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -82,13 +82,13 @@ static HRESULT WINAPI ScriptTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID r
 
 static ULONG WINAPI ScriptTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -124,13 +124,13 @@ static HRESULT WINAPI AudioVBScriptCF_QueryInterface(LPCLASSFACTORY iface,REFIID
 
 static ULONG WINAPI AudioVBScriptCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI AudioVBScriptCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI AudioVBScriptCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -168,13 +168,13 @@ static HRESULT WINAPI ScriptCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,L
 
 static ULONG WINAPI ScriptCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -210,13 +210,13 @@ static HRESULT WINAPI ScriptAutoImplPerformanceCF_QueryInterface(LPCLASSFACTORY 
 
 static ULONG WINAPI ScriptAutoImplPerformanceCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptAutoImplPerformanceCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptAutoImplPerformanceCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -254,13 +254,13 @@ static HRESULT WINAPI ScriptSourceCodeLoaderCF_QueryInterface(LPCLASSFACTORY ifa
 
 static ULONG WINAPI ScriptSourceCodeLoaderCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptSourceCodeLoaderCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptSourceCodeLoaderCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -298,13 +298,13 @@ static HRESULT WINAPI ScriptAutoImplSegmentStateCF_QueryInterface(LPCLASSFACTORY
 
 static ULONG WINAPI ScriptAutoImplSegmentStateCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptAutoImplSegmentStateCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptAutoImplSegmentStateCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -342,13 +342,13 @@ static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_QueryInterface(LPCLASSFACT
 
 static ULONG WINAPI ScriptAutoImplAudioPathConfigCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptAutoImplAudioPathConfigCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -386,13 +386,13 @@ static HRESULT WINAPI ScriptAutoImplAudioPathCF_QueryInterface(LPCLASSFACTORY if
 
 static ULONG WINAPI ScriptAutoImplAudioPathCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptAutoImplAudioPathCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptAutoImplAudioPathCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -430,13 +430,13 @@ static HRESULT WINAPI ScriptAutoImplSongCF_QueryInterface(LPCLASSFACTORY iface,R
 
 static ULONG WINAPI ScriptAutoImplSongCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ScriptAutoImplSongCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI ScriptAutoImplSongCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {

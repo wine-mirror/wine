@@ -42,14 +42,19 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER9
 
 ULONG WINAPI IDirect3DVertexBuffer9Impl_AddRef(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI IDirect3DVertexBuffer9Impl_Release(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+
+    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+
     if (ref == 0) {
         IWineD3DVertexBuffer_Release(This->wineD3DVertexBuffer);
         HeapFree(GetProcessHeap(), 0, This);
