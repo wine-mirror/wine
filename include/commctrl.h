@@ -102,6 +102,12 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 #define NM_CHAR                 (NM_FIRST-18)
 #define NM_TOOLTIPSCREATED      (NM_FIRST-19)
 
+#define HANDLE_WM_NOTIFY(hwnd, wParam, lParam, fn) \
+    (fn)((hwnd), (int)(wParam), (NMHDR*)(lParam))
+#define FORWARD_WM_NOTIFY(hwnd, idFrom, pnmhdr, fn) \
+    (LRESULT)(fn)((hwnd), WM_NOTIFY, (WPARAM)(int)(idFrom), (LPARAM)(NMHDR*)(pnmhdr))
+
+
 /* callback constants */
 #define LPSTR_TEXTCALLBACKA    ((LPSTR)-1L)
 #define LPSTR_TEXTCALLBACKW    ((LPWSTR)-1L)
