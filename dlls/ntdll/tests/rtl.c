@@ -31,28 +31,65 @@
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
+static SIZE_T    (WINAPI  *pRtlCompareMemory)(LPCVOID,LPCVOID,SIZE_T);
 static SIZE_T    (WINAPI  *pRtlCompareMemoryUlong)(PULONG, SIZE_T, ULONG);
+static VOID      (WINAPI  *pRtlMoveMemory)(LPVOID,LPCVOID,SIZE_T);
+static VOID      (WINAPI  *pRtlFillMemory)(LPVOID,SIZE_T,BYTE);
+static VOID      (WINAPI  *pRtlFillMemoryUlong)(LPVOID,SIZE_T,ULONG);
+static VOID      (WINAPI  *pRtlZeroMemory)(LPVOID,SIZE_T);
 static ULONGLONG (WINAPIV *pRtlUlonglongByteSwap)(ULONGLONG source);
 static ULONG     (WINAPI  *pRtlUniform)(PULONG);
 static ULONG     (WINAPI  *pRtlRandom)(PULONG);
 static BOOLEAN   (WINAPI  *pRtlAreAllAccessesGranted)(ACCESS_MASK, ACCESS_MASK);
 static BOOLEAN   (WINAPI  *pRtlAreAnyAccessesGranted)(ACCESS_MASK, ACCESS_MASK);
+static DWORD     (WINAPI  *pRtlComputeCrc32)(DWORD,const BYTE*,INT);
 
+#define LEN 16
+static const char* src_src = "This is a test!"; /* 16 bytes long, incl NUL */
+static ULONG src_aligned_block[4];
+static ULONG dest_aligned_block[32];
+static const char *src = (const char*)src_aligned_block;
+static char* dest = (char*)dest_aligned_block;
 
 static void InitFunctionPtrs(void)
 {
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed");
     if (hntdll) {
+	pRtlCompareMemory = (void *)GetProcAddress(hntdll, "RtlCompareMemory");
 	pRtlCompareMemoryUlong = (void *)GetProcAddress(hntdll, "RtlCompareMemoryUlong");
+	pRtlMoveMemory = (void *)GetProcAddress(hntdll, "RtlMoveMemory");
+	pRtlFillMemory = (void *)GetProcAddress(hntdll, "RtlFillMemory");
+	pRtlFillMemoryUlong = (void *)GetProcAddress(hntdll, "RtlFillMemoryUlong");
+	pRtlZeroMemory = (void *)GetProcAddress(hntdll, "RtlZeroMemory");
 	pRtlUlonglongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlonglongByteSwap");
 	pRtlUniform = (void *)GetProcAddress(hntdll, "RtlUniform");
 	pRtlRandom = (void *)GetProcAddress(hntdll, "RtlRandom");
 	pRtlAreAllAccessesGranted = (void *)GetProcAddress(hntdll, "RtlAreAllAccessesGranted");
 	pRtlAreAnyAccessesGranted = (void *)GetProcAddress(hntdll, "RtlAreAnyAccessesGranted");
-    } /* if */
+	pRtlComputeCrc32 = (void *)GetProcAddress(hntdll, "RtlComputeCrc32");
+    }
+    strcpy((char*)src_aligned_block, src_src);
+    ok(strlen(src) == 15, "Source must be 16 bytes long!\n");
 }
 
+#define COMP(str1,str2,cmplen,len) size = pRtlCompareMemory(str1, str2, cmplen); \
+  ok(size == len, "Expected %ld, got %ld\n", size, (SIZE_T)len)
+
+static void test_RtlCompareMemory(void)
+{
+  SIZE_T size;
+
+  if (!pRtlCompareMemory)
+    return;
+
+  strcpy(dest, src);
+
+  COMP(src,src,0,0);
+  COMP(src,src,LEN,LEN);
+  dest[0] = 'x';
+  COMP(src,dest,LEN,0);
+}
 
 static void test_RtlCompareMemoryUlong(void)
 {
@@ -99,6 +136,100 @@ static void test_RtlCompareMemoryUlong(void)
     ok(result == 8, "RtlCompareMemoryUlong(%p, 9, 0x0123) returns %lu, expected 8\n", a, result);
 }
 
+#define COPY(len) memset(dest,0,sizeof(dest_aligned_block)); pRtlMoveMemory(dest, src, len)
+#define CMP(str) ok(strcmp(dest,str) == 0, "Expected '%s', got '%s'\n", str, dest)
+
+static void test_RtlMoveMemory(void)
+{
+  if (!pRtlMoveMemory)
+    return;
+
+  /* Length should be in bytes and not rounded. Use strcmp to ensure we
+   * didn't write past the end (it checks for the final NUL left by memset)
+   */
+  COPY(0); CMP("");
+  COPY(1); CMP("T");
+  COPY(2); CMP("Th");
+  COPY(3); CMP("Thi");
+  COPY(4); CMP("This");
+  COPY(5); CMP("This ");
+  COPY(6); CMP("This i");
+  COPY(7); CMP("This is");
+  COPY(8); CMP("This is ");
+  COPY(9); CMP("This is a");
+
+  /* Overlapping */
+  strcpy(dest, src); pRtlMoveMemory(dest, dest + 1, strlen(src) - 1);
+  CMP("his is a test!!");
+  strcpy(dest, src); pRtlMoveMemory(dest + 1, dest, strlen(src));
+  CMP("TThis is a test!");
+}
+
+#define FILL(len) memset(dest,0,sizeof(dest_aligned_block)); strcpy(dest, src); pRtlFillMemory(dest,len,'x')
+
+static void test_RtlFillMemory(void)
+{
+  if (!pRtlFillMemory)
+    return;
+
+  /* Length should be in bytes and not rounded. Use strcmp to ensure we
+   * didn't write past the end (the remainder of the string should match)
+   */
+  FILL(0); CMP("This is a test!");
+  FILL(1); CMP("xhis is a test!");
+  FILL(2); CMP("xxis is a test!");
+  FILL(3); CMP("xxxs is a test!");
+  FILL(4); CMP("xxxx is a test!");
+  FILL(5); CMP("xxxxxis a test!");
+  FILL(6); CMP("xxxxxxs a test!");
+  FILL(7); CMP("xxxxxxx a test!");
+  FILL(8); CMP("xxxxxxxxa test!");
+  FILL(9); CMP("xxxxxxxxx test!");
+}
+
+#define LFILL(len) memset(dest,0,sizeof(dest_aligned_block)); strcpy(dest, src); pRtlFillMemoryUlong(dest,len,val)
+
+static void test_RtlFillMemoryUlong(void)
+{
+  ULONG val = ('x' << 24) | ('x' << 16) | ('x' << 8) | 'x';
+  if (!pRtlFillMemoryUlong)
+    return;
+
+  /* Length should be in bytes and not rounded. Use strcmp to ensure we
+   * didn't write past the end (the remainder of the string should match)
+   */
+  LFILL(0); CMP("This is a test!");
+  LFILL(1); CMP("This is a test!");
+  LFILL(2); CMP("This is a test!");
+  LFILL(3); CMP("This is a test!");
+  LFILL(4); CMP("xxxx is a test!");
+  LFILL(5); CMP("xxxx is a test!");
+  LFILL(6); CMP("xxxx is a test!");
+  LFILL(7); CMP("xxxx is a test!");
+  LFILL(8); CMP("xxxxxxxxa test!");
+  LFILL(9); CMP("xxxxxxxxa test!");
+}
+
+#define ZERO(len) memset(dest,0,sizeof(dest_aligned_block)); strcpy(dest, src); pRtlZeroMemory(dest,len)
+#define MCMP(str) ok(memcmp(dest,str,LEN) == 0, "Memcmp failed\n")
+
+static void test_RtlZeroMemory(void)
+{
+  if (!pRtlZeroMemory)
+    return;
+
+  /* Length should be in bytes and not rounded. */
+  ZERO(0); MCMP("This is a test!");
+  ZERO(1); MCMP("\0his is a test!");
+  ZERO(2); MCMP("\0\0is is a test!");
+  ZERO(3); MCMP("\0\0\0s is a test!");
+  ZERO(4); MCMP("\0\0\0\0 is a test!");
+  ZERO(5); MCMP("\0\0\0\0\0is a test!");
+  ZERO(6); MCMP("\0\0\0\0\0\0s a test!");
+  ZERO(7); MCMP("\0\0\0\0\0\0\0 a test!");
+  ZERO(8); MCMP("\0\0\0\0\0\0\0\0a test!");
+  ZERO(9); MCMP("\0\0\0\0\0\0\0\0\0 test!");
+}
 
 static void test_RtlUlonglongByteSwap(void)
 {
@@ -626,7 +757,7 @@ static const all_accesses_t all_accesses[] = {
 
 static void test_RtlAreAllAccessesGranted(void)
 {
-    int test_num;
+    size_t test_num;
     BOOLEAN result;
 
     for (test_num = 0; test_num < NB_ALL_ACCESSES; test_num++) {
@@ -663,7 +794,7 @@ static const any_accesses_t any_accesses[] = {
 
 static void test_RtlAreAnyAccessesGranted(void)
 {
-    int test_num;
+    size_t test_num;
     BOOLEAN result;
 
     for (test_num = 0; test_num < NB_ANY_ACCESSES; test_num++) {
@@ -677,12 +808,27 @@ static void test_RtlAreAnyAccessesGranted(void)
     } /* for */
 }
 
+static void test_RtlComputeCrc32()
+{
+  DWORD crc = 0;
+
+  if (!pRtlComputeCrc32)
+    return;
+
+  crc = pRtlComputeCrc32(crc, src, LEN);
+  ok(crc == 0x40861dc2,"Expected 0x40861dc2, got %8lx\n", crc);
+}
 
 START_TEST(rtl)
 {
     InitFunctionPtrs();
 
+    test_RtlCompareMemory();
     test_RtlCompareMemoryUlong();
+    test_RtlMoveMemory();
+    test_RtlFillMemory();
+    test_RtlFillMemoryUlong();
+    test_RtlZeroMemory();
     if (pRtlUlonglongByteSwap) {
 	test_RtlUlonglongByteSwap();
     } /* if */
@@ -690,4 +836,5 @@ START_TEST(rtl)
     test_RtlRandom();
     test_RtlAreAllAccessesGranted();
     test_RtlAreAnyAccessesGranted();
+    test_RtlComputeCrc32();
 }
