@@ -213,6 +213,7 @@ static void FONT_LogFontAToW( const LOGFONTA *fontA, LPLOGFONTW fontW )
     memcpy(fontW, fontA, sizeof(LOGFONTA) - LF_FACESIZE);
     MultiByteToWideChar(CP_ACP, 0, fontA->lfFaceName, -1, fontW->lfFaceName,
 			LF_FACESIZE);
+    fontW->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
 static void FONT_LogFontWToA( const LOGFONTW *fontW, LPLOGFONTA fontA )
@@ -220,6 +221,7 @@ static void FONT_LogFontWToA( const LOGFONTW *fontW, LPLOGFONTA fontA )
     memcpy(fontA, fontW, sizeof(LOGFONTA) - LF_FACESIZE);
     WideCharToMultiByte(CP_ACP, 0, fontW->lfFaceName, -1, fontA->lfFaceName,
 			LF_FACESIZE, NULL, NULL);
+    fontA->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
 static void FONT_EnumLogFontExWTo16( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEX16 font16 )

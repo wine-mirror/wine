@@ -1,4 +1,5 @@
 Makefile
+gdiobj.ok
 generated.ok
 metafile.ok
 testlist.c
