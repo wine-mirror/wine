@@ -76,6 +76,77 @@ const TEST_URL_ESCAPE TEST_ESCAPE[] = {
     {"http://www.winehq.org/tests4\r", URL_ESCAPE_SPACES_ONLY, 0, S_OK, "http://www.winehq.org/tests4\r"},
     {"http://www.winehq.org/tests5\r", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY, 0, S_OK, "http://www.winehq.org/tests5\r"},
     {"/direct/swhelp/series6/6.2i_latestservicepack.dat\r", URL_ESCAPE_SPACES_ONLY, 0, S_OK, "/direct/swhelp/series6/6.2i_latestservicepack.dat\r"},
+
+    {"file://////foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
+    {"file://///foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
+    {"file:////foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
+    {"file:///localhost/foo/bar\\baz", 0, 0, S_OK, "file:///localhost/foo/bar/baz"},
+    {"file:///foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
+    {"file://loCalHost/foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
+    {"file://foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
+    {"file:/localhost/foo/bar\\baz", 0, 0, S_OK, "file:///localhost/foo/bar/baz"},
+    {"file:/foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
+    {"file:foo/bar\\baz", 0, 0, S_OK, "file:foo/bar/baz"},
+    {"file:\\foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
+    {"file:\\\\foo/bar\\baz", 0, 0, S_OK, "file://foo/bar/baz"},
+    {"file:\\\\\\foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
+    {"file:\\\\localhost\\foo/bar\\baz", 0, 0, S_OK, "file:///foo/bar/baz"},
+    {"file:///f oo/b?a r\\baz", 0, 0, S_OK, "file:///f%20oo/b?a r\\baz"},
+    {"file:///foo/b#a r\\baz", 0, 0, S_OK, "file:///foo/b%23a%20r/baz"},
+    {"file:///f o^&`{}|][\"<>\\%o/b#a r\\baz", 0, 0, S_OK, "file:///f%20o%5E%26%60%7B%7D%7C%5D%5B%22%3C%3E/%o/b%23a%20r/baz"},
+    {"file:///f o%o/b?a r\\b%az", URL_ESCAPE_PERCENT, 0, S_OK, "file:///f%20o%25o/b?a r\\b%az"},
+    {"file:/foo/bar\\baz", URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "file:%2Ffoo%2Fbar%5Cbaz"},
+
+    {"foo/b%ar\\ba?z\\", URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "foo%2Fb%ar%5Cba%3Fz%5C"},
+    {"foo/b%ar\\ba?z\\", URL_ESCAPE_PERCENT | URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "foo%2Fb%25ar%5Cba%3Fz%5C"},
+    {"foo/bar\\ba?z\\", 0, 0, S_OK, "foo/bar%5Cba?z\\"},
+    {"/foo/bar\\ba?z\\", 0, 0, S_OK, "/foo/bar%5Cba?z\\"},
+    {"/foo/bar\\ba#z\\", 0, 0, S_OK, "/foo/bar%5Cba#z\\"},
+    {"/foo/%5C", 0, 0, S_OK, "/foo/%5C"},
+    {"/foo/%5C", URL_ESCAPE_PERCENT, 0, S_OK, "/foo/%255C"},
+
+    {"http://////foo/bar\\baz", 0, 0, S_OK, "http://////foo/bar/baz"},
+    {"http://///foo/bar\\baz", 0, 0, S_OK, "http://///foo/bar/baz"},
+    {"http:////foo/bar\\baz", 0, 0, S_OK, "http:////foo/bar/baz"},
+    {"http:///foo/bar\\baz", 0, 0, S_OK, "http:///foo/bar/baz"},
+    {"http://localhost/foo/bar\\baz", 0, 0, S_OK, "http://localhost/foo/bar/baz"},
+    {"http://foo/bar\\baz", 0, 0, S_OK, "http://foo/bar/baz"},
+    {"http:/foo/bar\\baz", 0, 0, S_OK, "http:/foo/bar/baz"},
+    {"http:foo/bar\\ba?z\\", 0, 0, S_OK, "http:foo%2Fbar%2Fba?z\\"},
+    {"http:foo/bar\\ba#z\\", 0, 0, S_OK, "http:foo%2Fbar%2Fba#z\\"},
+    {"http:\\foo/bar\\baz", 0, 0, S_OK, "http:/foo/bar/baz"},
+    {"http:\\\\foo/bar\\baz", 0, 0, S_OK, "http://foo/bar/baz"},
+    {"http:\\\\\\foo/bar\\baz", 0, 0, S_OK, "http:///foo/bar/baz"},
+    {"http:\\\\\\\\foo/bar\\baz", 0, 0, S_OK, "http:////foo/bar/baz"},
+    {"http:/fo ?o/b ar\\baz", 0, 0, S_OK, "http:/fo%20?o/b ar\\baz"},
+    {"http:fo ?o/b ar\\baz", 0, 0, S_OK, "http:fo%20?o/b ar\\baz"},
+    {"http:/foo/bar\\baz", URL_ESCAPE_SEGMENT_ONLY, 0, S_OK, "http:%2Ffoo%2Fbar%5Cbaz"},
+
+    {"https://foo/bar\\baz", 0, 0, S_OK, "https://foo/bar/baz"},
+    {"https:/foo/bar\\baz", 0, 0, S_OK, "https:/foo/bar/baz"},
+    {"https:\\foo/bar\\baz", 0, 0, S_OK, "https:/foo/bar/baz"},
+
+    {"foo:////foo/bar\\baz", 0, 0, S_OK, "foo:////foo/bar%5Cbaz"},
+    {"foo:///foo/bar\\baz", 0, 0, S_OK, "foo:///foo/bar%5Cbaz"},
+    {"foo://localhost/foo/bar\\baz", 0, 0, S_OK, "foo://localhost/foo/bar%5Cbaz"},
+    {"foo://foo/bar\\baz", 0, 0, S_OK, "foo://foo/bar%5Cbaz"},
+    {"foo:/foo/bar\\baz", 0, 0, S_OK, "foo:/foo/bar%5Cbaz"},
+    {"foo:foo/bar\\baz", 0, 0, S_OK, "foo:foo%2Fbar%5Cbaz"},
+    {"foo:\\foo/bar\\baz", 0, 0, S_OK, "foo:%5Cfoo%2Fbar%5Cbaz"},
+    {"foo:/foo/bar\\ba?\\z", 0, 0, S_OK, "foo:/foo/bar%5Cba?\\z"},
+    {"foo:/foo/bar\\ba#\\z", 0, 0, S_OK, "foo:/foo/bar%5Cba#\\z"},
+
+    {"mailto:/fo/o@b\\%a?\\r.b#\\az", 0, 0, S_OK, "mailto:%2Ffo%2Fo@b%5C%a%3F%5Cr.b%23%5Caz"},
+    {"mailto:fo/o@b\\%a?\\r.b#\\az", 0, 0, S_OK, "mailto:fo%2Fo@b%5C%a%3F%5Cr.b%23%5Caz"},
+    {"mailto:fo/o@b\\%a?\\r.b#\\az", URL_ESCAPE_PERCENT, 0, S_OK, "mailto:fo%2Fo@b%5C%25a%3F%5Cr.b%23%5Caz"},
+
+    {"ftp:fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:fo%2Fo@bar.baz%2Ffoo%2Fbar"},
+    {"ftp:/fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:/fo/o@bar.baz/foo/bar"},
+    {"ftp://fo/o@bar.baz/fo?o\\bar", 0, 0, S_OK, "ftp://fo/o@bar.baz/fo?o\\bar"},
+    {"ftp://fo/o@bar.baz/fo#o\\bar", 0, 0, S_OK, "ftp://fo/o@bar.baz/fo#o\\bar"},
+    {"ftp://localhost/o@bar.baz/fo#o\\bar", 0, 0, S_OK, "ftp://localhost/o@bar.baz/fo#o\\bar"},
+    {"ftp:///fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:///fo/o@bar.baz/foo/bar"},
+    {"ftp:////fo/o@bar.baz/foo/bar", 0, 0, S_OK, "ftp:////fo/o@bar.baz/foo/bar"}
 };
 
 typedef struct _TEST_URL_COMBINE {
@@ -178,10 +249,22 @@ static void test_url_escape(const char *szUrl, DWORD dwFlags, HRESULT dwExpectRe
 {
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
     DWORD dwEscaped;
-
+    WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
+    WCHAR *urlW, *expected_urlW;
     dwEscaped=INTERNET_MAX_URL_LENGTH;
-    ok(UrlEscapeA(szUrl, szReturnUrl, &dwEscaped, dwFlags) == dwExpectReturn, "UrlEscapeA didn't return 0x%08lx\n", dwExpectReturn);
-    ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected \"%s\", but got \"%s\"\n", szExpectUrl, szReturnUrl);
+
+    ok(UrlEscapeA(szUrl, szReturnUrl, &dwEscaped, dwFlags) == dwExpectReturn, "UrlEscapeA didn't return 0x%08lx from \"%s\"\n", dwExpectReturn, szUrl);
+    ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected \"%s\", but got \"%s\" from \"%s\"\n", szExpectUrl, szReturnUrl, szUrl);
+    
+    dwEscaped = INTERNET_MAX_URL_LENGTH;
+    urlW = GetWideString(szUrl);
+    expected_urlW = GetWideString(szExpectUrl);
+    ok(UrlEscapeW(urlW, ret_urlW, &dwEscaped, dwFlags) == dwExpectReturn, "UrlEscapeW didn't return 0x%08lx from \"%s\"\n", dwExpectReturn, szUrl);
+    WideCharToMultiByte(CP_ACP,0,ret_urlW,-1,szReturnUrl,INTERNET_MAX_URL_LENGTH,0,0);
+    ok(strcmpW(ret_urlW, expected_urlW)==0, "Expected \"%s\", but got \"%s\" from \"%s\" flags %08lx\n", szExpectUrl, szReturnUrl, szUrl, dwFlags);
+    FreeWideString(urlW);
+    FreeWideString(expected_urlW);
+
 }
 static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, const char *szExpectUrl)
 {

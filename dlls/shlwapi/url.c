@@ -30,6 +30,7 @@
 #include "wine/unicode.h"
 #include "wininet.h"
 #include "winreg.h"
+#include "winternl.h"
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "wine/debug.h"
@@ -117,96 +118,6 @@ static const unsigned char HashDataLookup[256] = {
  0xB4, 0x2F, 0x6D, 0x2C, 0x26, 0x1F, 0x95, 0x87, 0x00, 0xD8, 0x34, 0x3F, 0x17,
  0x25, 0x45, 0x27, 0x75, 0x92, 0xB8, 0xA3, 0xC8, 0xDE, 0xEB, 0xF8, 0xF3, 0xDB,
  0x0A, 0x98, 0x83, 0x7B, 0xE5, 0xCB, 0x4C, 0x78, 0xD1 };
-
-static inline BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
-{
-
-    if (isalnum(ch))
-        return FALSE;
-
-    if(dwFlags & URL_ESCAPE_SPACES_ONLY) {
-        if(ch == ' ')
-	    return TRUE;
-	else
-	    return FALSE;
-    }
-
-    if ((dwFlags & URL_ESCAPE_PERCENT) && (ch == '%'))
-	return TRUE;
-
-    if (ch <= 31 || ch >= 127)
-	return TRUE;
-
-    else {
-        switch (ch) {
-	case ' ':
-	case '<':
-	case '>':
-	case '\"':
-	case '{':
-	case '}':
-	case '|':
-/*	case '\\': */
-	case '^':
-	case ']':
-	case '[':
-	case '`':
-	case '&':
-	    return TRUE;
-
-	case '/':
-	case '?':
-	    if (dwFlags & URL_ESCAPE_SEGMENT_ONLY) return TRUE;
-	default:
-	    return FALSE;
-	}
-    }
-}
-
-static inline BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags)
-{
-
-    if (isalnumW(ch))
-        return FALSE;
-
-    if(dwFlags & URL_ESCAPE_SPACES_ONLY) {
-        if(ch == L' ')
-	    return TRUE;
-	else
-	    return FALSE;
-    }
-
-    if ((dwFlags & URL_ESCAPE_PERCENT) && (ch == L'%'))
-	return TRUE;
-
-    if (ch <= 31 || ch >= 127)
-	return TRUE;
-
-    else {
-        switch (ch) {
-	case L' ':
-	case L'<':
-	case L'>':
-	case L'\"':
-	case L'{':
-	case L'}':
-	case L'|':
-	case L'\\':
-	case L'^':
-	case L']':
-	case L'[':
-	case L'`':
-	case L'&':
-	    return TRUE;
-
-	case L'/':
-	case L'?':
-	    if (dwFlags & URL_ESCAPE_SEGMENT_ONLY) return TRUE;
-	default:
-	    return FALSE;
-	}
-    }
-}
 
 static BOOL URL_JustLocation(LPCWSTR str)
 {
@@ -857,6 +768,107 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 
 /*************************************************************************
  *      UrlEscapeA	[SHLWAPI.@]
+ */
+
+HRESULT WINAPI UrlEscapeA(
+	LPCSTR pszUrl,
+	LPSTR pszEscaped,
+	LPDWORD pcchEscaped,
+	DWORD dwFlags)
+{
+    WCHAR bufW[INTERNET_MAX_URL_LENGTH];
+    WCHAR *escapedW = bufW;
+    UNICODE_STRING urlW;
+    HRESULT ret;
+    DWORD lenW = sizeof(bufW)/sizeof(WCHAR), lenA;
+
+    if(!RtlCreateUnicodeStringFromAsciiz(&urlW, pszUrl))
+        return E_INVALIDARG;
+    if((ret = UrlEscapeW(urlW.Buffer, escapedW, &lenW, dwFlags)) == E_POINTER) {
+        escapedW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+        ret = UrlEscapeW(urlW.Buffer, escapedW, &lenW, dwFlags);
+    }
+    if(ret == S_OK) {
+        RtlUnicodeToMultiByteSize(&lenA, escapedW, lenW * sizeof(WCHAR));
+        if(*pcchEscaped > lenA) {
+            RtlUnicodeToMultiByteN(pszEscaped, *pcchEscaped - 1, &lenA, escapedW, lenW * sizeof(WCHAR));
+            pszEscaped[lenA] = 0;
+            *pcchEscaped = lenA;
+        } else {
+            *pcchEscaped = lenA + 1;
+            ret = E_POINTER;
+        }
+    }
+    if(escapedW != bufW) HeapFree(GetProcessHeap(), 0, escapedW);
+    RtlFreeUnicodeString(&urlW);
+    return ret;
+}
+
+#define WINE_URL_BASH_AS_SLASH    0x01
+#define WINE_URL_COLLAPSE_SLASHES 0x02
+#define WINE_URL_ESCAPE_SLASH     0x04
+#define WINE_URL_ESCAPE_HASH      0x08
+#define WINE_URL_ESCAPE_QUESTION  0x10
+#define WINE_URL_STOP_ON_HASH     0x20
+#define WINE_URL_STOP_ON_QUESTION 0x40
+
+static inline BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags, DWORD int_flags)
+{
+
+    if (isalnumW(ch))
+        return FALSE;
+
+    if(dwFlags & URL_ESCAPE_SPACES_ONLY) {
+        if(ch == ' ')
+	    return TRUE;
+	else
+	    return FALSE;
+    }
+
+    if ((dwFlags & URL_ESCAPE_PERCENT) && (ch == '%'))
+	return TRUE;
+
+    if (ch <= 31 || ch >= 127)
+	return TRUE;
+
+    else {
+        switch (ch) {
+	case ' ':
+	case '<':
+	case '>':
+	case '\"':
+	case '{':
+	case '}':
+	case '|':
+	case '\\':
+	case '^':
+	case ']':
+	case '[':
+	case '`':
+	case '&':
+	    return TRUE;
+
+	case '/':
+            if (int_flags & WINE_URL_ESCAPE_SLASH) return TRUE;
+            return FALSE;
+
+	case '?':
+	    if (int_flags & WINE_URL_ESCAPE_QUESTION) return TRUE;
+            return FALSE;
+
+        case '#':
+            if (int_flags & WINE_URL_ESCAPE_HASH) return TRUE;
+            return FALSE;
+
+	default:
+	    return FALSE;
+	}
+    }
+}
+
+
+/*************************************************************************
+ *      UrlEscapeW	[SHLWAPI.@]
  *
  * Converts unsafe characters in a Url into escape sequences.
  *
@@ -871,12 +883,12 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
  *           contains its length.
  *  Failure: E_POINTER, if pszEscaped is not large enough. In this case
  *           pcchEscaped is set to the required length.
-
+ *
  * Converts unsafe characters into their escape sequences.
  *
  * NOTES
  * - By default this function stops converting at the first '?' or
- *  '#' character (MSDN does not document this).
+ *  '#' character.
  * - If dwFlags contains URL_ESCAPE_SPACES_ONLY then only spaces are
  *   converted, but the conversion continues past a '?' or '#'.
  * - Note that this function did not work well (or at all) in shlwapi version 4.
@@ -887,82 +899,6 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
  *|     URL_DONT_ESCAPE_EXTRA_INFO
  *|     URL_ESCAPE_SEGMENT_ONLY
  *|     URL_ESCAPE_PERCENT
- */
-HRESULT WINAPI UrlEscapeA(
-	LPCSTR pszUrl,
-	LPSTR pszEscaped,
-	LPDWORD pcchEscaped,
-	DWORD dwFlags)
-{
-    LPCSTR src;
-    DWORD needed = 0, ret;
-    BOOL stop_escaping = FALSE;
-    char next[3], *dst = pszEscaped;
-    INT len;
-
-    TRACE("(%s %p %lx 0x%08lx)\n", debugstr_a(pszUrl), pszEscaped,
-	  pcchEscaped?*pcchEscaped:0, dwFlags);
-
-    if(!pszUrl || !pszEscaped || !pcchEscaped)
-	return E_INVALIDARG;
-
-    if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |
-		   URL_ESCAPE_SEGMENT_ONLY |
-		   URL_DONT_ESCAPE_EXTRA_INFO |
-		   URL_ESCAPE_PERCENT))
-        FIXME("Unimplemented flags: %08lx\n", dwFlags);
-
-    /* fix up flags */
-    if (dwFlags & URL_ESCAPE_SPACES_ONLY)
-	/* if SPACES_ONLY specified, reset the other controls */
-	dwFlags &= ~(URL_DONT_ESCAPE_EXTRA_INFO |
-		     URL_ESCAPE_PERCENT |
-		     URL_ESCAPE_SEGMENT_ONLY);
-
-    else
-	/* if SPACES_ONLY *not* specified then assume DONT_ESCAPE_EXTRA_INFO */
-	dwFlags |= URL_DONT_ESCAPE_EXTRA_INFO;
-
-    for(src = pszUrl; *src; src++) {
-        if(!(dwFlags & URL_ESCAPE_SEGMENT_ONLY) &&
-	   (dwFlags & URL_DONT_ESCAPE_EXTRA_INFO) &&
-	   (*src == '#' || *src == '?'))
-	    stop_escaping = TRUE;
-
-	if(URL_NeedEscapeA(*src, dwFlags) && stop_escaping == FALSE) {
-	    /* TRACE("escaping %c\n", *src); */
-	    next[0] = '%';
-	    next[1] = hexDigits[(*src >> 4) & 0xf];
-	    next[2] = hexDigits[*src & 0xf];
-	    len = 3;
-	} else {
-	    /* TRACE("passing %c\n", *src); */
-	    next[0] = *src;
-	    len = 1;
-	}
-
-	if(needed + len <= *pcchEscaped) {
-	    memcpy(dst, next, len);
-	    dst += len;
-	}
-	needed += len;
-    }
-
-    if(needed < *pcchEscaped) {
-        *dst = '\0';
-	ret = S_OK;
-    } else {
-        needed++; /* add one for the '\0' */
-	ret = E_POINTER;
-    }
-    *pcchEscaped = needed;
-    return ret;
-}
-
-/*************************************************************************
- *      UrlEscapeW	[SHLWAPI.@]
- *
- * See UrlEscapeA.
  */
 HRESULT WINAPI UrlEscapeW(
 	LPCWSTR pszUrl,
@@ -975,6 +911,10 @@ HRESULT WINAPI UrlEscapeW(
     BOOL stop_escaping = FALSE;
     WCHAR next[5], *dst = pszEscaped;
     INT len;
+    PARSEDURLW parsed_url;
+    DWORD int_flags;
+    DWORD slashes = 0;
+    static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszEscaped,
 	  pcchEscaped, dwFlags);
@@ -999,39 +939,101 @@ HRESULT WINAPI UrlEscapeW(
 	/* if SPACES_ONLY *not* specified the assume DONT_ESCAPE_EXTRA_INFO */
 	dwFlags |= URL_DONT_ESCAPE_EXTRA_INFO;
 
-    for(src = pszUrl; *src; src++) {
-	/*
-	 * if(!(dwFlags & URL_ESCAPE_SPACES_ONLY) &&
-	 *   (*src == L'#' || *src == L'?'))
-	 *    stop_escaping = TRUE;
-	 */
-        if(!(dwFlags & URL_ESCAPE_SEGMENT_ONLY) &&
-	   (dwFlags & URL_DONT_ESCAPE_EXTRA_INFO) &&
-	   (*src == L'#' || *src == L'?'))
-	    stop_escaping = TRUE;
 
-	if(URL_NeedEscapeW(*src, dwFlags) && stop_escaping == FALSE) {
-	    /* TRACE("escaping %c\n", *src); */
-	    next[0] = L'%';
-	    /*
-	     * I would have assumed that the W form would escape
-	     * the character with 4 hex digits (or even 8),
-	     * however, experiments show that native shlwapi escapes
-	     * with only 2 hex digits.
-	     *   next[1] = hexDigits[(*src >> 12) & 0xf];
-	     *   next[2] = hexDigits[(*src >> 8) & 0xf];
-	     *   next[3] = hexDigits[(*src >> 4) & 0xf];
-	     *   next[4] = hexDigits[*src & 0xf];
-	     *   len = 5;
-	     */
-	    next[1] = hexDigits[(*src >> 4) & 0xf];
-	    next[2] = hexDigits[*src & 0xf];
-	    len = 3;
-	} else {
-	    /* TRACE("passing %c\n", *src); */
-	    next[0] = *src;
-	    len = 1;
-	}
+    int_flags = 0;
+    if(dwFlags & URL_ESCAPE_SEGMENT_ONLY) {
+        int_flags = WINE_URL_ESCAPE_QUESTION | WINE_URL_ESCAPE_HASH | WINE_URL_ESCAPE_SLASH;
+    } else {
+        parsed_url.cbSize = sizeof(parsed_url);
+        if(ParseURLW(pszUrl, &parsed_url) != S_OK)
+            parsed_url.nScheme = URL_SCHEME_INVALID;
+
+        TRACE("scheme = %d (%s)\n", parsed_url.nScheme, debugstr_wn(parsed_url.pszProtocol, parsed_url.cchProtocol));
+
+        if(dwFlags & URL_DONT_ESCAPE_EXTRA_INFO)
+            int_flags = WINE_URL_STOP_ON_HASH | WINE_URL_STOP_ON_QUESTION;
+
+        switch(parsed_url.nScheme) {
+        case URL_SCHEME_FILE:
+            int_flags |= WINE_URL_BASH_AS_SLASH | WINE_URL_COLLAPSE_SLASHES | WINE_URL_ESCAPE_HASH;
+            int_flags &= ~WINE_URL_STOP_ON_HASH;
+            break;
+
+        case URL_SCHEME_HTTP:
+        case URL_SCHEME_HTTPS:
+            int_flags |= WINE_URL_BASH_AS_SLASH;
+            if(parsed_url.pszSuffix[0] != '/' && parsed_url.pszSuffix[0] != '\\')
+                int_flags |= WINE_URL_ESCAPE_SLASH;
+            break;
+
+        case URL_SCHEME_MAILTO:
+            int_flags |= WINE_URL_ESCAPE_SLASH | WINE_URL_ESCAPE_QUESTION | WINE_URL_ESCAPE_HASH;
+            int_flags &= ~(WINE_URL_STOP_ON_QUESTION | WINE_URL_STOP_ON_HASH);
+            break;
+
+        case URL_SCHEME_INVALID:
+            break;
+
+        case URL_SCHEME_FTP:
+        default:
+            if(parsed_url.pszSuffix[0] != '/')
+                int_flags |= WINE_URL_ESCAPE_SLASH;
+            break;
+        }
+    }
+
+    for(src = pszUrl; *src; ) {
+        WCHAR cur = *src;
+        len = 0;
+        
+        if((int_flags & WINE_URL_COLLAPSE_SLASHES) && src == pszUrl + parsed_url.cchProtocol + 1) {
+            int localhost_len = sizeof(localhost)/sizeof(WCHAR) - 1;
+            while(cur == '/' || cur == '\\') {
+                slashes++;
+                cur = *++src;
+            }
+            if(slashes == 2 && !strncmpiW(src, localhost, localhost_len)) { /* file://localhost/ -> file:/// */
+                if(*(src + localhost_len) == '/' || *(src + localhost_len) == '\\')
+                src += localhost_len + 1;
+                slashes = 3;
+            }
+
+            switch(slashes) {
+            case 1:
+            case 3:
+                next[0] = next[1] = next[2] = '/';
+                len = 3;
+                break;
+            case 0:
+                len = 0;
+                break;
+            default:
+                next[0] = next[1] = '/';
+                len = 2;
+                break;
+            }
+        }
+        if(len == 0) {
+
+            if(cur == '#' && (int_flags & WINE_URL_STOP_ON_HASH))
+                stop_escaping = TRUE;
+
+            if(cur == '?' && (int_flags & WINE_URL_STOP_ON_QUESTION))
+                stop_escaping = TRUE;
+
+            if(cur == '\\' && (int_flags & WINE_URL_BASH_AS_SLASH) && !stop_escaping) cur = '/';
+
+            if(URL_NeedEscapeW(cur, dwFlags, int_flags) && stop_escaping == FALSE) {
+                next[0] = L'%';
+                next[1] = hexDigits[(cur >> 4) & 0xf];
+                next[2] = hexDigits[cur & 0xf];
+                len = 3;
+            } else {
+                next[0] = cur;
+                len = 1;
+            }
+            src++;
+        }
 
 	if(needed + len <= *pcchEscaped) {
 	    memcpy(dst, next, len*sizeof(WCHAR));
@@ -1041,7 +1043,7 @@ HRESULT WINAPI UrlEscapeW(
     }
 
     if(needed < *pcchEscaped) {
-        *dst = L'\0';
+        *dst = '\0';
 	ret = S_OK;
     } else {
         needed++; /* add one for the '\0' */
