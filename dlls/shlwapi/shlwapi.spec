@@ -705,8 +705,8 @@ init SHLWAPI_LibMain
 @ stdcall PathUndecorateW(wstr) PathUndecorateW
 @ stub    PathUnExpandEnvStringsA
 @ stub    PathUnExpandEnvStringsW
-@ stub    SHCopyKeyA
-@ stub    SHCopyKeyW
+@ stdcall SHCopyKeyA(long str long long) SHCopyKeyA
+@ stdcall SHCopyKeyW(long wstr long long) SHCopyKeyW
 @ stub    SHAutoComplete
 @ stdcall SHCreateStreamOnFileA(str long ptr) SHCreateStreamOnFileA
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) SHCreateStreamOnFileW

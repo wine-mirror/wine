@@ -28,6 +28,10 @@
 #include "winuser.h"
 #include "shlwapi.h"
 
+// Keys used for testing
+#define REG_TEST_KEY        "Software\\Wine\\Test"
+#define REG_CURRENT_VERSION "Software\\Microsoft\\Windows NT\\CurrentVersion"
+
 static char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
 static char * sTestpath2 = "%FOO%\\subdir1";
 
@@ -45,7 +49,7 @@ static void create_test_entrys(void)
         SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
         SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
 
-	ok(!RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hKey), "RegCreateKeyA failed");
+	ok(!RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKey), "RegCreateKeyA failed");
 
 	if (hKey)
 	{
@@ -71,24 +75,24 @@ static void test_SHGetValue(void)
 	strcpy(buf, sEmptyBuffer);
 	dwSize = MAX_PATH;
 	dwType = -1;
-	ok(! SHGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "Test1", &dwType, buf, &dwSize), "SHGetValueA failed");
+	ok(! SHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", &dwType, buf, &dwSize), "SHGetValueA failed");
 	ok( 0 == strcmp(sExpTestpath1, buf), "(%s,%s)", buf, sExpTestpath1);
 	ok( REG_SZ == dwType, "(%lx)", dwType);
 
 	strcpy(buf, sEmptyBuffer);
 	dwSize = MAX_PATH;
 	dwType = -1;
-	ok(! SHGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "Test2", &dwType, buf, &dwSize), "SHGetValueA failed");
+	ok(! SHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test2", &dwType, buf, &dwSize), "SHGetValueA failed");
 	ok( 0 == strcmp(sTestpath1, buf) , "(%s)", buf);
 	ok( REG_SZ == dwType , "(%lx)", dwType);
 }
 
-static void test_SHGetTegPath(void)
+static void test_SHGetRegPath(void)
 {
 	char buf[MAX_PATH];
 
 	strcpy(buf, sEmptyBuffer);
-	ok(! SHRegGetPathA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "Test1", buf, 0), "SHRegGetPathA failed");
+	ok(! SHRegGetPathA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", buf, 0), "SHRegGetPathA failed");
 	ok( 0 == strcmp(sExpTestpath1, buf) , "(%s)", buf);
 }
 
@@ -103,7 +107,7 @@ static void test_SHQUeryValueEx(void)
 	int nUsedBuffer1;
 	int nUsedBuffer2;
 
-	ok(! RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Wine\\Test", 0,  KEY_QUERY_VALUE, &hKey), "test4 RegOpenKey");
+	ok(! RegOpenKeyExA(HKEY_CURRENT_USER, REG_TEST_KEY, 0,  KEY_QUERY_VALUE, &hKey), "test4 RegOpenKey");
 
 	/****** SHQueryValueExA ******/
 
@@ -189,10 +193,59 @@ static void test_SHQUeryValueEx(void)
 	RegCloseKey(hKey);
 }
 
+
+static void test_SHCopyKey(void)
+{
+	HKEY hKeySrc, hKeyDst;
+
+	// Delete existing destination sub keys
+	hKeyDst = (HKEY)0;
+	if (!RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) && hKeyDst)
+	{
+		SHDeleteKeyA(hKeyDst, NULL);
+		RegCloseKey(hKeyDst);
+	}
+
+	hKeyDst = (HKEY)0;
+	if (RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) || !hKeyDst)
+	{
+		ok(0, "didn't open dest");
+		return;
+	}
+
+	hKeySrc = (HKEY)0;
+	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, REG_CURRENT_VERSION, &hKeySrc) || !hKeySrc)
+	{
+		ok(0, "didn't open source");
+		return;
+	}
+
+
+	ok (!SHCopyKeyA(hKeyDst, NULL, hKeySrc, 0), "failed copy");
+
+	RegCloseKey(hKeySrc);
+	RegCloseKey(hKeyDst);
+
+	/* Check we copied the sub keys, i.e. AeDebug from the default wine registry */
+	hKeyDst = (HKEY)0;
+	if (RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\AeDebug", &hKeyDst) || !hKeyDst)
+	{
+		ok(0, "didn't open copy");
+		return;
+	}
+
+	/* And the we copied the values too */
+	ok(!SHQueryValueExA(hKeyDst, "Debugger", NULL, NULL, NULL, NULL), "SHQueryValueExA failed");
+
+	RegCloseKey(hKeyDst);
+}
+
+
 START_TEST(shreg)
 {
 	create_test_entrys();
 	test_SHGetValue();
 	test_SHQUeryValueEx();
-	test_SHGetTegPath();
+	test_SHGetRegPath();
+	test_SHCopyKey();
 }

@@ -1792,3 +1792,135 @@ HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
     TRACE("new key is %08x\n", newKey);
     return newKey;
 }
+
+
+/*************************************************************************
+ * SHCopyKeyA	[SHLWAPI.@]
+ *
+ * Copy a key and its values/sub keys to another location.
+ *
+ * PARAMS
+ *  hKeyDst    [I] Destination key
+ *  lpszSubKey [I] Sub key under hKeyDst, or NULL to use hKeyDst directly
+ *  hKeySrc    [I] Source key to copy from
+ *  dwReserved [I] Reserved, must be 0
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS. The key is copied to the destination key.
+ *  Failure: A standard windows error code.
+ *
+ * NOTES
+ *  If hKeyDst is a key under hKeySrc, this function will misbehave
+ *  (It will loop until out of stack, or the registry is full).
+ */
+DWORD WINAPI SHCopyKeyA(HKEY hKeyDst, LPCSTR lpszSubKey, HKEY hKeySrc, DWORD dwReserved)
+{
+  WCHAR szSubKeyW[MAX_PATH];
+
+  TRACE("(hkey=0x%08x,%s,%0x08x,%ld)\n", hKeyDst, debugstr_a(lpszSubKey), hKeySrc, dwReserved);
+
+  if (lpszSubKey)
+    MultiByteToWideChar(0, 0, lpszSubKey, -1, szSubKeyW, MAX_PATH);
+
+  return SHCopyKeyW(hKeyDst, lpszSubKey ? szSubKeyW : NULL, hKeySrc, dwReserved);
+}
+
+/*************************************************************************
+ * SHCopyKeyW	[SHLWAPI.@]
+ *
+ * See SHCopyKeyA.
+ */
+DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dwReserved)
+{
+  DWORD dwKeyCount = 0, dwValueCount = 0, dwMaxKeyLen = 0;
+  DWORD  dwMaxValueLen = 0, dwMaxDataLen = 0, i;
+  BYTE buff[1024];
+  LPVOID lpBuff = (LPVOID)buff;
+  WCHAR szName[MAX_PATH], *lpszName = szName;
+  DWORD dwRet = S_OK;
+
+  TRACE("hkey=0x%08x,%s,%0x08x,%ld)\n", hKeyDst, debugstr_w(lpszSubKey), hKeySrc, dwReserved);
+
+  if(!hKeyDst || !hKeySrc)
+    dwRet = ERROR_INVALID_PARAMETER;
+  else
+  {
+    /* Open destination key */
+    if(lpszSubKey)
+      dwRet = RegOpenKeyExW(hKeyDst, lpszSubKey, 0, KEY_ALL_ACCESS, &hKeyDst);
+
+    if(dwRet)
+      hKeyDst = 0; /* Don't close this key since we didn't open it */
+    else
+    {
+      /* Get details about sub keys and values */
+      dwRet = RegQueryInfoKeyW(hKeySrc, NULL, NULL, NULL, &dwKeyCount, &dwMaxKeyLen,
+                               NULL, &dwValueCount, &dwMaxValueLen, &dwMaxDataLen,
+                               NULL, NULL);
+      if(!dwRet)
+      {
+        if (dwMaxValueLen > dwMaxKeyLen)
+          dwMaxKeyLen = dwMaxValueLen; /* Get max size for key/value names */
+
+        if (dwMaxKeyLen++ > MAX_PATH - 1)
+          lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxKeyLen * sizeof(WCHAR));
+
+        if (dwMaxDataLen > sizeof(buff))
+          lpBuff = HeapAlloc(GetProcessHeap(), 0, dwMaxDataLen);
+
+        if (!lpszName || !lpBuff)
+          dwRet = ERROR_NOT_ENOUGH_MEMORY;
+      }
+    }
+  }
+
+  /* Copy all the sub keys */
+  for(i = 0; i < dwKeyCount && !dwRet; i++)
+  {
+    HKEY hSubKeySrc, hSubKeyDst;
+    DWORD dwSize = dwMaxKeyLen;
+
+    dwRet = RegEnumKeyExW(hKeySrc, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
+
+    if(!dwRet)
+    {
+      /* Open source sub key */
+      dwRet = RegOpenKeyExW(hKeySrc, lpszName, 0, KEY_READ, &hSubKeySrc);
+
+      if(!dwRet)
+      {
+        /* Create destination sub key */
+        dwRet = RegCreateKeyW(hKeyDst, lpszName, &hSubKeyDst);
+
+        if(!dwRet)
+        {
+          /* Recursively copy keys and values from the sub key */
+          dwRet = SHCopyKeyW(hSubKeyDst, NULL, hSubKeySrc, 0);
+          RegCloseKey(hSubKeyDst);
+        }
+      }
+      RegCloseKey(hSubKeySrc);
+    }
+  }
+
+  /* Copy all the values in this key */
+  for (i = 0; i < dwValueCount && !dwRet; i++)
+  {
+    DWORD dwNameSize = dwMaxKeyLen, dwType, dwLen = dwMaxDataLen;
+
+    dwRet = RegEnumValueW(hKeySrc, i, lpszName, &dwNameSize, NULL, &dwType, buff, &dwLen);
+
+    if (!dwRet)
+      dwRet = SHSetValueW(hKeyDst, NULL, lpszName, dwType, lpBuff, dwLen);
+  }
+
+  /* Free buffers if allocated */
+  if (lpszName != szName)
+    HeapFree(GetProcessHeap(), 0, lpszName);
+  if (lpBuff != buff)
+    HeapFree(GetProcessHeap(), 0, lpBuff);
+
+  if (lpszSubKey && hKeyDst)
+    RegCloseKey(hKeyDst);
+  return dwRet;
+}
