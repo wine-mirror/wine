@@ -780,7 +780,8 @@ static void test_MoveFileA(void)
     /* FIXME: if we create a file with wildcards we can't delete it now that DeleteFile works correctly */
     ret = MoveFileA(source, dest);
     ok(!ret, "MoveFileA: shouldn't move to wildcard file\n");
-    ok(GetLastError() == ERROR_INVALID_NAME,
+    ok(GetLastError() == ERROR_INVALID_NAME || /* NT */
+       GetLastError() == ERROR_FILE_NOT_FOUND, /* Win9x */
        "MoveFileA: with wildcards, unexpected error %ld\n", GetLastError());
     if (ret || (GetLastError() != ERROR_INVALID_NAME))
     {
