@@ -1,0 +1,94 @@
+/*
+ * Defines the COM interfaces and APIs related to OLE font support.
+ *
+ * Depends on 'obj_base.h'.
+ */
+
+#ifndef __WINE_WINE_OBJ_OLEFONT_H
+#define __WINE_WINE_OBJ_OLEFONT_H
+
+#include "windows.h"
+#include "wintypes.h"
+
+/*****************************************************************************
+ * Predeclare the interfaces
+ */
+DEFINE_GUID(IID_IFont, 0xBEF6E002, 0xA874, 0x101A, 0x8B, 0xBA, 0x00, 0xAA, 0x00, 0x30, 0x0C, 0xAB);
+typedef struct IFont IFont,*LPFONT;
+
+DEFINE_GUID(IID_IFontDisp, 0xBEF6E003, 0xA874, 0x101A, 0x8B, 0xBA, 0x00, 0xAA, 0x00, 0x30, 0x0C, 0xAB);
+typedef struct IFontDisp IFontDisp,*LPFONTDISP;
+
+typedef TEXTMETRIC32W TEXTMETRICOLE;
+
+/*****************************************************************************
+ * IFont interface
+ */
+#define ICOM_INTERFACE IFont
+#define IFont_METHODS \
+  ICOM_METHOD1(HRESULT, get_Name, BSTR32*, pname); \
+  ICOM_METHOD1(HRESULT, put_Name, BSTR32, name); \
+  ICOM_METHOD1(HRESULT, get_Size, CY*, psize); \
+  ICOM_METHOD1(HRESULT, put_Size, CY, size); \
+  ICOM_METHOD1(HRESULT, get_Bold, BOOL32*, pbold); \
+  ICOM_METHOD1(HRESULT, put_Bold, BOOL32, bold); \
+  ICOM_METHOD1(HRESULT, get_Italic, BOOL32*, pitalic); \
+  ICOM_METHOD1(HRESULT, put_Italic, BOOL32, italic); \
+  ICOM_METHOD1(HRESULT, get_Underline, BOOL32*, punderline); \
+  ICOM_METHOD1(HRESULT, put_Underline, BOOL32, underline); \
+  ICOM_METHOD1(HRESULT, get_Strikethrough, BOOL32*, pstrikethrough); \
+  ICOM_METHOD1(HRESULT, put_Strikethrough, BOOL32, strikethrough); \
+  ICOM_METHOD1(HRESULT, get_Weight, short*, pweight); \
+  ICOM_METHOD1(HRESULT, put_Weight, short, weight); \
+  ICOM_METHOD1(HRESULT, get_Charset, short*, pcharset); \
+  ICOM_METHOD1(HRESULT, put_Charset, short, charset); \
+  ICOM_METHOD1(HRESULT, get_hFont, HFONT32*, phfont); \
+  ICOM_METHOD1(HRESULT, put_hFont, HFONT32, hfont); \
+  ICOM_METHOD1(HRESULT, Clone, IFont**, ppfont); \
+  ICOM_METHOD1(HRESULT, IsEqual, IFont*, pFontOther); \
+  ICOM_METHOD2(HRESULT, SetRatio, long, cyLogical, long, cyHimetric); \
+  ICOM_METHOD1(HRESULT, QueryTextMetrics, TEXTMETRICOLE*, ptm); \
+  ICOM_METHOD1(HRESULT, AddRefHfont, HFONT32, hfont); \
+  ICOM_METHOD1(HRESULT, ReleaseHfont, HFONT32, hfont); \
+  ICOM_METHOD1(HRESULT, SetHdc, HDC32, hdc);     
+#define IFont_IMETHODS \
+  ICOM_INHERITS(IFont,IUnknown)
+ICOM_DEFINE(IFont,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IFont_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
+#define IFont_AddRef(p)              ICOM_CALL (AddRef,p)
+#define IFont_Release(p)             ICOM_CALL (Release,p)
+/*** IFont methods ***/
+#define IFont_getName(p,a)           ICOM_CALL1(get_Name,p,a)
+#define IFont_putName(p,a)           ICOM_CALL1(put_Name,p,a)
+#define IFont_get_Size(p,a)          ICOM_CALL1(get_Size,p,a)
+#define IFont_put_Size(p,a)          ICOM_CALL1(put_Size,p,a)
+#define IFont_get_Bold(p,a)          ICOM_CALL1(get_Bold,a)
+#define IFont_put_Bold(p,a)          ICOM_CALL1(put_Bold,a)
+#define IFont_get_Italic(p,a)        ICOM_CALL1(get_Italic,a)
+#define IFont_put_Italic(p,a)        ICOM_CALL1(put_Italic,a)
+#define IFont_get_Underline(p,a)     ICOM_CALL1(get_Underline,a)
+#define IFont_put_Underline(p,a)     ICOM_CALL1(put_Underline,a)
+#define IFont_get_Strikethrough(p,a) ICOM_CALL1(get_Strikethrough,a)
+#define IFont_put_Strikethrough(p,a) ICOM_CALL1(put_Strikethrough,a)
+#define IFont_get_Weight(p,a)        ICOM_CALL1(get_Weight,a)
+#define IFont_put_Weight(p,a)        ICOM_CALL1(put_Weight,a)
+#define IFont_get_Charset(p,a)       ICOM_CALL1(get_Charset,a)
+#define IFont_put_Charset(p,a)       ICOM_CALL1(put_Charset,a)
+#define IFont_get_hFont(p,a)         ICOM_CALL1(get_hFont,a)
+#define IFont_put_hFont(p,a)         ICOM_CALL1(put_hFont,a)
+#define IFont_Clone(p,a)             ICOM_CALL1(Clone,a)
+#define IFont_IsEqual(p,a)           ICOM_CALL1(IsEqual,a)
+#define IFont_SetRatio(p,a,b)        ICOM_CALL2(SetRatio,a,b)
+#define IFont_QueryTextMetrics(p,a)  ICOM_CALL1(QueryTextMetrics,a)
+#define IFont_AddRefHfont(p,a)       ICOM_CALL1(AddRefHfont,a)
+#define IFont_ReleaseHfont(p,a)      ICOM_CALL1(ReleaseHfont,a)
+#define IFont_SetHdc(p,a)            ICOM_CALL1(SetHdc,a)
+#endif
+
+#endif /* __WINE_WINE_OBJ_OLEFONT_H */
+
+

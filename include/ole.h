@@ -19,8 +19,6 @@
 #define OLESTR32(x) L##x	/* probably wrong */
 #define OLESTR WINELIB_NAME(OLESTR)
 
-typedef LONG DISPID;
-
 /* object types */
 #define OT_LINK		1
 #define OT_EMBEDDED	2

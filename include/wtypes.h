@@ -199,6 +199,7 @@ typedef struct _ACL {
     WORD Sbz2;
 } ACL, *PACL;
 
+typedef DWORD SECURITY_INFORMATION;
 typedef WORD SECURITY_DESCRIPTOR_CONTROL;
 
 /* The security descriptor structure */

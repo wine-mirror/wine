@@ -3,6 +3,7 @@
 
 #include <ole.h>
 #include "mapidefs.h"
+#include "oaidl.h"
 
 BSTR16 WINAPI SysAllocString16(LPOLESTR16);
 BSTR32 WINAPI SysAllocString32(LPOLESTR32);
@@ -22,9 +23,6 @@ int WINAPI SysReAllocStringLen32(BSTR32*, WCHAR*, int);
 int WINAPI SysStringLen16(BSTR16);
 int WINAPI SysStringLen32(BSTR32);
 #define SysStringLen WINELIB_NAME(SysStringLen)
-
-typedef void ITypeLib;
-typedef ITypeLib * LPTYPELIB;
 
 /*****************************************************************
  *  SafeArray defines and structs 
@@ -144,141 +142,6 @@ SafeArrayCreateVector32(VARTYPE vt, LONG lLbound, ULONG cElements);
 HRESULT WINAPI 
 SafeArrayRedim32(SAFEARRAY *psa, SAFEARRAYBOUND *psaboundNew);
 #define SafeArrayRedim WINELIB_NAME(SafeArrayRedim)
-
-
-/*
- * Data types for Variants.
- */
-
-enum VARENUM {
-	VT_EMPTY = 0,
-	VT_NULL = 1,
-	VT_I2 = 2,
-	VT_I4 = 3,
-	VT_R4 = 4,
-	VT_R8 = 5,
-	VT_CY = 6,
-	VT_DATE = 7,
-	VT_BSTR = 8,
-	VT_DISPATCH = 9,
-	VT_ERROR  = 10,
-	VT_BOOL = 11,
-	VT_VARIANT	= 12,
-	VT_UNKNOWN	= 13,
-	VT_DECIMAL	= 14,
-	VT_I1 = 16,
-	VT_UI1	= 17,
-	VT_UI2	= 18,
-	VT_UI4	= 19,
-	VT_I8 = 20,
-	VT_UI8	= 21,
-	VT_INT	= 22,
-	VT_UINT = 23,
-	VT_VOID = 24,
-	VT_HRESULT	= 25,
-	VT_PTR	= 26,
-	VT_SAFEARRAY  = 27,
-	VT_CARRAY = 28,
-	VT_USERDEFINED	= 29,
-	VT_LPSTR  = 30,
-	VT_LPWSTR = 31,
-	VT_FILETIME = 64,
-	VT_BLOB = 65,
-	VT_STREAM = 66,
-	VT_STORAGE	= 67,
-	VT_STREAMED_OBJECT	= 68,
-	VT_STORED_OBJECT  = 69,
-	VT_BLOB_OBJECT	= 70,
-	VT_CF = 71,
-	VT_CLSID  = 72,
-	VT_VECTOR = 0x1000,
-	VT_ARRAY  = 0x2000,
-	VT_BYREF  = 0x4000,
-	VT_RESERVED = 0x8000,
-	VT_ILLEGAL	= 0xffff,
-	VT_ILLEGALMASKED  = 0xfff,
-	VT_TYPEMASK = 0xfff
-};
-
-/* the largest valide type
- */
-#define VT_MAXVALIDTYPE VT_CLSID
-
-
-/*
- * Declarations of the VARIANT structure and the VARIANT APIs.
- */
-
-/* S_OK 			   : Success.
- * DISP_E_BADVARTYPE   : The variant type vt in not a valid type of variant.
- * DISP_E_OVERFLOW	   : The data pointed to by pvarSrc does not fit in the destination type.
- * DISP_E_TYPEMISMATCH : The variant type vt is not a valid type of variant.
- * E_INVALIDARG 	   : One argument is invalid.
- * E_OUTOFMEMORY	   : Memory could not be allocated for the conversion.
- * DISP_E_ARRAYISLOCKED : The variant contains an array that is locked.
- */
-
-typedef struct tagVARIANT VARIANT;
-typedef struct tagVARIANT VARIANTARG;
-
-struct tagVARIANT {
-	VARTYPE vt;
-	WORD wReserved1;
-	WORD wReserved2;
-	WORD wReserved3;
-	union
-	{
-		/* By value.
-		 */
-		CHAR cVal;
-		USHORT uiVal;
-		ULONG ulVal;
-		INT32 intVal;
-		UINT32 uintVal;
-		BYTE bVal;
-		short iVal;
-		long lVal;
-		float fltVal;
-		double dblVal;
-		VARIANT_BOOL boolVal;
-		SCODE scode;
-		DATE date;
-		BSTR32 bstrVal;
-		CY cyVal;
-        /*
-        DECIMAL decVal;
-		IUnknown* punkVal;
-		IDispatch* pdispVal;
-        SAFEARRAY* parray;
-        */
-
-		/* By reference
-		 */
-		CHAR* pcVal;
-		USHORT* puiVal;
-		ULONG* pulVal;
-		INT32* pintVal;
-		UINT32* puintVal;
-		BYTE* pbVal;
-		short* piVal;
-		long* plVal;
-		float* pfltVal;
-		double* pdblVal;
-		VARIANT_BOOL* pboolVal;
-		SCODE* pscode;
-		DATE* pdate;
-		BSTR32* pbstrVal;
-		VARIANT* pvarVal;
-		PVOID byref;
-		CY* pcyVal;
-        /*
-        DECIMAL* pdecVal;
-		IUnknown** ppunkVal;
-		IDispatch** ppdispVal;
-        SAFEARRAY** pparray;
-        */
-	} u;
-};
 
 
 /* These are macros that help accessing the VARIANT date type.

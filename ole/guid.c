@@ -8,6 +8,9 @@
  * don't even all belong to the same DLL !!!
  */
 #include "oleobj.h"
+#include "oleidl.h"
+#include "oaidl.h"
+#include "ocidl.h"
 #include "objbase.h"
 #include "servprov.h"
 #include "ddraw.h"

@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "windows.h"
+#include "winerror.h"
 #include "ole.h"
 #include "ole2.h"
 #include "oleauto.h"
@@ -278,6 +279,19 @@ int WINAPI SysStringLen32(BSTR32 str)
 }
 
 /******************************************************************************
+ *             SysStringByteLen  [OLEAUT32.149]
+ *
+ * The Windows documentation states that the length returned by this function
+ * is not necessarely the same as the length returned by the _lstrlenW method.
+ * It is the same number that was passed in as the "len" parameter if the
+ * string was allocated with a SysAllocStringLen method call.
+ */
+int WINAPI SysStringByteLen(BSTR32 str)
+{
+  return SysStringLen32(str)*sizeof(WCHAR);
+}
+
+/******************************************************************************
  * CreateDispTypeInfo [OLE2DISP.31]
  */
 OLESTATUS WINAPI CreateDispTypeInfo(
@@ -300,3 +314,22 @@ OLESTATUS WINAPI RegisterActiveObject(
 	FIXME(ole,"(%p,%s,0x%08lx,%p):stub\n",punk,buf,dwFlags,pdwRegister);
 	return 0;
 }
+
+/******************************************************************************
+ *		OleTranslateColor	[OLEAUT32.421]
+ */
+INT32 WINAPI OleTranslateColor(
+  LONG clr,
+  HPALETTE32  hpal,
+  COLORREF* pColorRef)
+{
+  FIXME(ole,"():stub\n");
+
+  *pColorRef = clr;
+
+  return S_OK;
+}
+
+
+
+

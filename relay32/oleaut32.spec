@@ -128,11 +128,11 @@ type win32
 146 stub DispCallFunc
 147 stdcall VariantChangeTypeEx(ptr ptr) VariantChangeTypeEx32
 148 stub SafeArrayPtrOfIndex
-149 stub SysStringByteLen
+149 stdcall SysStringByteLen(ptr) SysStringByteLen
 150 stub SysAllocStringByteLen
 160 stub CreateTypeLib
 161 stdcall LoadTypeLib (ptr ptr) LoadTypeLib32
-162 stub LoadRegTypeLib 
+162 stdcall LoadRegTypeLib (ptr long long long ptr) LoadRegTypeLib
 163 stdcall RegisterTypeLib(ptr str str) RegisterTypeLib32
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr) QueryPathOfRegTypeLib32
 165 stub LHashValOfNameSys
@@ -285,8 +285,8 @@ type win32
 417 stub OleCreatePropertyFrame
 418 stub OleLoadPicture
 419 stub OleCreatePictureIndirect
-420 stub OleCreateFontIndirect
-421 stub OleTranslateColor
+420 stdcall OleCreateFontIndirect(ptr ptr ptr) OleCreateFontIndirect
+421 stdcall OleTranslateColor(long long long) OleTranslateColor
 422 stub OleLoadPictureFile
 423 stub OleSavePictureFile
 424 stub OleLoadPicturePath

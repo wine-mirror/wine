@@ -139,6 +139,24 @@ HRESULT WINAPI LoadTypeLib32(
 }
 
 /******************************************************************************
+ *		LoadRegTypeLib	[OLEAUT32.162]
+ */
+HRESULT WINAPI LoadRegTypeLib(
+  REFGUID        rguid,
+  unsigned short wVerMajor,
+  unsigned short wVerMinor,
+  LCID           lcid,
+  void**         pptLib)
+{
+  FIXME(ole, "(): stub\n");
+
+  if (pptLib!=0)
+    *pptLib=0;
+  
+  return E_FAIL;
+}
+
+/******************************************************************************
  *		RegisterTypeLib32	[OLEAUT32.163]
  * Adds information about a type library to the System Registry           
  * NOTES
