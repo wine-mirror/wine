@@ -1962,9 +1962,6 @@ HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
     return 0;
 }
 
-static int nStatCounter = 0;	 /* global */
-static HMODULE hOleAut32 = 0;	 /* global */
-
 /***********************************************************************
  *           CoGetState [OLE32.@]
  *
@@ -1990,7 +1987,6 @@ HRESULT WINAPI CoGetState(IUnknown ** ppv)
 /***********************************************************************
  *           CoSetState [OLE32.@]
  *
- * NOTES: FIXME: protect this with a crst
  */
 HRESULT WINAPI CoSetState(IUnknown * pv)
 {
@@ -2002,15 +1998,11 @@ HRESULT WINAPI CoSetState(IUnknown * pv)
 
 	if (pv) {
 	    IUnknown_AddRef(pv);
-	    nStatCounter++;
-	    if (nStatCounter == 1) LoadLibraryA("OLEAUT32.DLL");
 	}
 
 	if (apt->state) {
 	    TRACE("-- release %p now\n", apt->state);
 	    IUnknown_Release(apt->state);
-	    nStatCounter--;
-	    if (!nStatCounter) FreeLibrary(hOleAut32);
 	}
 	apt->state = pv;
 	return S_OK;
