@@ -1799,9 +1799,9 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBuffer *dsb)
 
 	len = DSOUND_FRAGLEN;			/* The most we will use */
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
-		temp = ((primarybuf->wfx.nAvgBytesPerSec * dsb->buflen) /
+		temp = MulDiv32(primarybuf->wfx.nAvgBytesPerSec, dsb->buflen,
 			dsb->nAvgBytesPerSec) -
-			((primarybuf->wfx.nAvgBytesPerSec * dsb->playpos) /
+		       MulDiv32(primarybuf->wfx.nAvgBytesPerSec, dsb->playpos,
 			dsb->nAvgBytesPerSec);
 		len = (len > temp) ? temp : len;
 	}
