@@ -2105,21 +2105,29 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                     DWORD versize;
                     UINT sz;
                     LPVOID version;
+                    static const WCHAR name[] = 
+                    {'\\',0};
+                    static const WCHAR name_fmt[] = 
+                    {'%','u','.','%','u','.','%','u','.','%','u',0};
                     WCHAR filever[0x100];
-                    static const WCHAR name[] =
-                        {'\\','V','a','r','F','i','l','e','I','n','f','o',
-                         '\\','F','i','l','e','V','e','r','s','i','o','n',0};
+                    VS_FIXEDFILEINFO *lpVer;
 
-                    FIXME("Version comparison.. Untried Untested and most "
-                          "likely very very wrong\n");
+                    FIXME("Version comparison.. \n");
                     versize = GetFileVersionInfoSizeW(file->TargetPath,&handle);
                     version = HeapAlloc(GetProcessHeap(),0,versize);
                     GetFileVersionInfoW(file->TargetPath, 0, versize, version);
-                    sz = 0x100;
-                    VerQueryValueW(version,name,(LPVOID)filever,&sz);
-                    HeapFree(GetProcessHeap(),0,version);
-                
-                    if (strcmpW(version,file->Version)<0)
+
+                    VerQueryValueW(version, name, (LPVOID*)&lpVer, &sz);
+
+                    sprintfW(filever,name_fmt,
+                        HIWORD(lpVer->dwFileVersionMS),
+                        LOWORD(lpVer->dwFileVersionMS),
+                        HIWORD(lpVer->dwFileVersionLS),
+                        LOWORD(lpVer->dwFileVersionLS));
+
+                    TRACE("new %s old %s\n", debugstr_w(file->Version),
+                          debugstr_w(filever));
+                    if (strcmpiW(filever,file->Version)<0)
                     {
                         file->State = 2;
                         FIXME("cost should be diff in size\n");
@@ -2127,6 +2135,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                     }
                     else
                         file->State = 3;
+                    HeapFree(GetProcessHeap(),0,version);
                 }
                 else
                     file->State = 3;
@@ -2586,8 +2595,17 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
             if (!MoveFileW(file->SourcePath,file->TargetPath))
             {
                 rc = GetLastError();
-                ERR("Unable to move file (error %d)\n", rc);
-                break;
+                ERR("Unable to move file (%s -> %s) (error %d)\n",
+                     debugstr_w(file->SourcePath), debugstr_w(file->TargetPath),
+                      rc);
+                if (rc == ERROR_ALREADY_EXISTS && file->State == 2)
+                {
+                    CopyFileW(file->SourcePath,file->TargetPath,FALSE);
+                    DeleteFileW(file->SourcePath);
+                    rc = 0;
+                }
+                else
+                    break;
             }
             else
                 file->State = 4;
