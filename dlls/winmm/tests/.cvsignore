@@ -1,4 +1,5 @@
 Makefile
 capture.ok
+mixer.ok
 testlist.c
 wave.ok
