@@ -1102,15 +1102,15 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 		    {
 		    case 1:
 			/* mono... so R = L */
-			mcdu->dwValue = (LOBYTE(LOWORD(val)) * 65536L) / 100;
+			mcdu->dwValue = ((LOBYTE(LOWORD(val)) * 65536.0) / 100.0) + 0.5;
 			TRACE("Reading RL = %ld\n", mcdu->dwValue);
 			break;
 		    case 2:
 			/* stereo, left is paDetails[0] */
-			mcdu->dwValue = (LOBYTE(LOWORD(val)) * 65536L) / 100;
+			mcdu->dwValue = ((LOBYTE(LOWORD(val)) * 65536.0) / 100.0) + 0.5;
 			TRACE("Reading L = %ld\n", mcdu->dwValue);
                         mcdu++;
-			mcdu->dwValue = (HIBYTE(LOWORD(val)) * 65536L) / 100;
+			mcdu->dwValue = ((HIBYTE(LOWORD(val)) * 65536.0) / 100.0) + 0.5;
 			TRACE("Reading R = %ld\n", mcdu->dwValue);
 			break;
 		    default:
@@ -1301,10 +1301,10 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 		    case 2:
 			/* stereo, left is paDetails[0] */
 			TRACE("Setting L to %ld\n", mcdu->dwValue);
-			val = ((mcdu->dwValue * 100) >> 16);
+			val = ((mcdu->dwValue * 100.0) / 65536.0) + 0.5;
                         mcdu++;
 			TRACE("Setting R to %ld\n", mcdu->dwValue);
-			val += ((mcdu->dwValue * 100) >> 16) << 8;
+			val += (int)(((mcdu->dwValue * 100) / 65536.0) + 0.5) << 8;
 			break;
 		    default:
 			WARN("Unsupported cChannels (%ld)\n", lpmcd->cChannels);
