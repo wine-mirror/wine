@@ -159,7 +159,7 @@ static ICOM_VTABLE(IStorage) Storage32Impl_Vtbl =
     StorageImpl_SetElementTimes,
     StorageBaseImpl_SetClass,
     StorageImpl_SetStateBits,
-    StorageBaseImpl_Stat
+    StorageImpl_Stat
 };
 
 /*
@@ -1679,6 +1679,32 @@ HRESULT WINAPI StorageImpl_DestroyElement(
 }
 
 
+/************************************************************************ 
+ * StorageImpl_Stat (IStorage) 
+ * 
+ * This method will retrieve information about this storage object. 
+ *  
+ * See Windows documentation for more details on IStorage methods. 
+ */
+HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
+                                 STATSTG*  pstatstg,     /* [out] */
+                                 DWORD     grfStatFlag)  /* [in] */
+{
+  StorageImpl* const This = (StorageImpl*)iface;
+  HRESULT result = StorageBaseImpl_Stat( iface, pstatstg, grfStatFlag );
+
+  if ( !FAILED(result) && ((grfStatFlag & STATFLAG_NONAME) == 0) && This->pwcsName )
+  {
+      CoTaskMemFree(pstatstg->pwcsName);
+      pstatstg->pwcsName = CoTaskMemAlloc((lstrlenW(This->pwcsName)+1)*sizeof(WCHAR));
+      strcpyW(pstatstg->pwcsName, This->pwcsName);
+  }
+
+  return result;
+}
+
+
+
 /*********************************************************************
  *
  * Internal Method
@@ -2094,6 +2120,7 @@ HRESULT WINAPI StorageImpl_SetStateBits(
 HRESULT StorageImpl_Construct(
   StorageImpl* This,
   HANDLE       hFile,
+  LPCOLESTR    pwcsName,
   ILockBytes*  pLkbyt,
   DWORD        openFlags,
   BOOL         fileBased,
@@ -2103,7 +2130,7 @@ HRESULT StorageImpl_Construct(
   StgProperty currentProperty;
   BOOL      readSuccessful;
   ULONG       currentPropertyIndex;
-  
+
   if ( FAILED( validateSTGM(openFlags) ))
     return STG_E_INVALIDFLAG;
 
@@ -2126,6 +2153,17 @@ HRESULT StorageImpl_Construct(
    */
   This->hFile = hFile;
   
+  /*
+   * Store copy of file path.
+   */
+  if(pwcsName) {
+      This->pwcsName = HeapAlloc(GetProcessHeap(), 0, 
+                                (lstrlenW(pwcsName)+1)*sizeof(WCHAR));
+      if (!This->pwcsName)
+         return STG_E_INSUFFICIENTMEMORY;
+      strcpyW(This->pwcsName, pwcsName); 
+  }
+
   /*
    * Initialize the big block cache.
    */
@@ -2288,6 +2326,9 @@ void StorageImpl_Destroy(
   StorageImpl* This)
 {
   TRACE("(%p)\n", This);
+
+  if(This->pwcsName)
+    HeapFree(GetProcessHeap(), 0, This->pwcsName);
 
   BlockChainStream_Destroy(This->smallBlockRootChain);
   BlockChainStream_Destroy(This->rootBlockChain);
@@ -5360,6 +5401,7 @@ HRESULT WINAPI StgCreateDocfile(
   hr = StorageImpl_Construct(
          newStorage,
          hFile,
+        pwcsName,
          NULL,
          grfMode,
          TRUE,
@@ -5477,6 +5519,7 @@ HRESULT WINAPI StgOpenStorage(
   hr = StorageImpl_Construct(
          newStorage,
          hFile,
+        pwcsName,
          NULL,
          grfMode,
          TRUE,
@@ -5533,6 +5576,7 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
   hr = StorageImpl_Construct(
          newStorage,
          0,
+        0,
          plkbyt,
          grfMode,
          FALSE,
@@ -5597,6 +5641,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
   hr = StorageImpl_Construct(
          newStorage,
          0,
+        0,
          plkbyt,
          grfMode,
          FALSE,

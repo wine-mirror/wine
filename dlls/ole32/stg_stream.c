@@ -379,12 +379,11 @@ HRESULT WINAPI StgStreamImpl_Read(
    */
   This->currentPosition.s.LowPart += *pcbRead;
   
-  /*
-   * The function returns S_OK if the buffer was filled completely
-   * it returns S_FALSE if the end of the stream is reached before the
-   * buffer is filled
+  /* 
+   * The function returns S_OK if at least one byte could be read.
+   * FIXME: What should be returned if pcbRead argument is NULL?
    */
-  if(*pcbRead == cb)
+  if (*pcbRead > 0)
     return S_OK;
   
   return S_FALSE;

@@ -298,7 +298,8 @@ struct StorageImpl
    * class
    */
   HANDLE           hFile;      /* Physical support for the Docfile */
-  
+  LPOLESTR         pwcsName;   /* Full path of the document file */
+
   /*
    * File header
    */
@@ -378,13 +379,18 @@ HRESULT WINAPI StorageImpl_SetStateBits(
             IStorage*      iface,
             DWORD          grfStateBits, /* [in] */ 
             DWORD          grfMask);     /* [in] */ 
-        
+
+HRESULT WINAPI StorageImpl_Stat(IStorage* iface,
+                                STATSTG*  pstatstg,     /* [out] */
+                                DWORD     grfStatFlag); /* [in] */
+
 void StorageImpl_Destroy(
 	    StorageImpl* This);
 
 HRESULT StorageImpl_Construct(
             StorageImpl* This,
             HANDLE       hFile,
+            LPCOLESTR    pwcsName,
             ILockBytes*  pLkbyt,
             DWORD        openFlags,
             BOOL         fileBased,
