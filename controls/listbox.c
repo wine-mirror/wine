@@ -762,7 +762,7 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPARAM lParam, BOOL 
         else
         {
             LPSTR buffer = (LPSTR)lParam;
-            return WideCharToMultiByte(CP_ACP, 0, descr->items[index].str, -1, buffer, 0x7FFFFFFF, NULL, NULL);
+            return WideCharToMultiByte(CP_ACP, 0, descr->items[index].str, -1, buffer, 0x7FFFFFFF, NULL, NULL) - 1;
         }
     } else {
         if (lParam)
