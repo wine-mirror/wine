@@ -1033,6 +1033,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 	if (!current_line) /* Error occurred start is not inside previous buffer */
 	{
 		FIXME(" modification occurred outside buffer\n");
+		ReleaseDC(es->hwndSelf, dc);
 		return;
 	}
 
