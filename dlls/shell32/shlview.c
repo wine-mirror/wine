@@ -314,6 +314,15 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
         This->ListViewSortInfo.nHeaderID = -1;
         This->ListViewSortInfo.nLastHeaderID = -1;
 
+       if (This->FolderSettings.fFlags & FWF_DESKTOP) {
+         if (0)  /* FIXME: look into registry vale HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewShadow and activate drop shadows */
+           ListView_SetTextBkColor(This->hWndList, CLR_NONE);
+         else
+           ListView_SetTextBkColor(This->hWndList, GetSysColor(COLOR_DESKTOP));
+
+         ListView_SetTextColor(This->hWndList, RGB(255,255,255));
+       }
+
         /*  UpdateShellSettings(); */
 	return TRUE;
 }
