@@ -129,6 +129,9 @@ static inline DWORD copy_nameAtoW( LPWSTR dest, LPCSTR name )
  *    sa         [I] Address of key security structure
  *    retkey     [O] Address of buffer for opened handle
  *    dispos     [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
+ *
+ * NOTES
+ *  in case of failing remains retkey untouched
  */
 DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
@@ -233,6 +236,9 @@ DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
  * RETURNS
  *    Success: ERROR_SUCCESS
  *    Failure: Error code
+ *
+ * NOTES
+ *  in case of failing is retkey = 0
  */
 DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
 {
@@ -242,6 +248,7 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
     TRACE( "(0x%x,%s,%ld,%lx,%p)\n", hkey, debugstr_w(name), reserved, access, retkey );
 
     if (!retkey) return ERROR_INVALID_PARAMETER;
+    *retkey = 0;
 
     req->parent = hkey;
     req->access = access;
@@ -263,6 +270,7 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
     TRACE( "(0x%x,%s,%ld,%lx,%p)\n", hkey, debugstr_a(name), reserved, access, retkey );
 
     if (!retkey) return ERROR_INVALID_PARAMETER;
+    *retkey = 0;
 
     req->parent = hkey;
     req->access = access;
@@ -284,6 +292,9 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
  * RETURNS
  *    Success: ERROR_SUCCESS
  *    Failure: Error code
+ *
+ * NOTES
+ *  in case of failing is retkey = 0
  */
 DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
 {
