@@ -38,6 +38,7 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "interrupt",    /* TYPE_INTERRUPT */
     "stub",         /* TYPE_STUB */
     "stdcall",      /* TYPE_STDCALL */
+    "stdcall64",    /* TYPE_STDCALL64 */
     "cdecl",        /* TYPE_CDECL */
     "varargs",      /* TYPE_VARARGS */
     "extern",       /* TYPE_EXTERN */
@@ -167,7 +168,7 @@ static void ParseExportFunction( ORDDEF *odp )
     switch(SpecType)
     {
     case SPEC_WIN16:
-        if (odp->type == TYPE_STDCALL)
+        if (odp->type == TYPE_STDCALL || odp->type == TYPE_STDCALL64)
             fatal_error( "'stdcall' not supported for Win16\n" );
         if (odp->type == TYPE_VARARGS)
 	    fatal_error( "'varargs' not supported for Win16\n" );
@@ -183,7 +184,7 @@ static void ParseExportFunction( ORDDEF *odp )
     token = GetToken();
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
-    for (i = 0; i < sizeof(odp->u.func.arg_types)-1; i++)
+    for (i = 0; i < sizeof(odp->u.func.arg_types); i++)
     {
 	token = GetToken();
 	if (*token == ')')
@@ -206,7 +207,7 @@ static void ParseExportFunction( ORDDEF *odp )
         else if (!strcmp(token, "double"))
         {
             odp->u.func.arg_types[i++] = 'l';
-            odp->u.func.arg_types[i] = 'l';
+            if (i < sizeof(odp->u.func.arg_types)) odp->u.func.arg_types[i] = 'l';
         }
         else fatal_error( "Unknown variable type '%s'\n", token );
 
@@ -372,6 +373,7 @@ static void ParseOrdinal(int ordinal)
     case TYPE_PASCAL_16:
     case TYPE_PASCAL:
     case TYPE_STDCALL:
+    case TYPE_STDCALL64:
     case TYPE_VARARGS:
     case TYPE_CDECL:
         ParseExportFunction( odp );

@@ -149,6 +149,7 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
             fprintf( outfile, "%s", odp->u.ext.link_name );
             break;
         case TYPE_STDCALL:
+        case TYPE_STDCALL64:
         case TYPE_VARARGS:
         case TYPE_CDECL:
             fprintf( outfile, "%s", odp->u.func.link_name);
@@ -220,6 +221,7 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
         ORDDEF *odp = Ordinals[i];
 
         if (odp && ((odp->type == TYPE_STDCALL) ||
+                    (odp->type == TYPE_STDCALL64) ||
                     (odp->type == TYPE_CDECL) ||
                     (odp->type == TYPE_REGISTER)))
         {
@@ -232,6 +234,9 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
 
             switch(odp->type)
             {
+            case TYPE_STDCALL64:
+                if (j < 16) mask |= 0x80000000;
+                /* fall through */
             case TYPE_STDCALL:
                 fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc2, 0x%04x, %s, 0x%08x }",
                          strlen(odp->u.func.arg_types) * sizeof(int),
@@ -310,6 +315,7 @@ void BuildSpec32File( FILE *outfile )
             fprintf( outfile, "extern void %s();\n", odp->u.ext.link_name );
             break;
         case TYPE_STDCALL:
+        case TYPE_STDCALL64:
         case TYPE_VARARGS:
         case TYPE_CDECL:
             fprintf( outfile, "extern void %s();\n", odp->u.func.link_name );

@@ -43,6 +43,7 @@ typedef enum
     TYPE_INTERRUPT,    /* interrupt handler function (Win16) */
     TYPE_STUB,         /* unimplemented stub */
     TYPE_STDCALL,      /* stdcall function (Win32) */
+    TYPE_STDCALL64,    /* stdcall function with 64-bit return (Win32) */
     TYPE_CDECL,        /* cdecl function (Win32) */
     TYPE_VARARGS,      /* varargs function (Win32) */
     TYPE_EXTERN,       /* external symbol (Win32) */
@@ -75,7 +76,7 @@ typedef struct
 typedef struct
 {
     int  n_args;
-    char arg_types[32];
+    char arg_types[17];
     char link_name[80];
 } ORD_FUNCTION;
 

@@ -70,7 +70,7 @@ typedef struct
     DWORD         callfrom32 WINE_PACKED;  /* RELAY_CallFrom32 relative addr */
     BYTE          ret;                     /* 0xc2 ret $n  or  0xc3 ret */
     WORD          args;                    /* nb of args to remove from the stack */
-    FARPROC       orig;                    /* original entry point */
+    void         *orig;                    /* original entry point */
     DWORD         argtypes;                /* argument types */
 } DEBUG_ENTRY_POINT;
 
@@ -166,10 +166,11 @@ static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemas
  * (esp+4)   ret_addr
  * (esp)     return addr to relay code
  */
-static int RELAY_CallFrom32( int ret_addr, ... )
+static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
 {
-    int ret;
+    LONGLONG ret;
     char buffer[80];
+    BOOL ret64;
 
     int *args = &ret_addr + 1;
     /* Relay addr is the return address for this function */
@@ -182,6 +183,7 @@ static int RELAY_CallFrom32( int ret_addr, ... )
     DPRINTF( "Call %s(", buffer );
     RELAY_PrintArgs( args, nb_args, relay->argtypes );
     DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, __get_fs() );
+    ret64 = (relay->argtypes & 0x80000000) && (nb_args < 16);
 
     /* the user driver functions may be called with the window lock held */
     if (memcmp( buffer, "x11drv.", 7 ) && memcmp( buffer, "ttydrv.", 7 ))
@@ -189,7 +191,7 @@ static int RELAY_CallFrom32( int ret_addr, ... )
 
     if (relay->ret == 0xc3) /* cdecl */
     {
-        LRESULT (*cfunc)() = (LRESULT(*)())relay->orig;
+        LONGLONG (*cfunc)() = relay->orig;
         switch(nb_args)
         {
         case 0: ret = cfunc(); break;
@@ -232,7 +234,7 @@ static int RELAY_CallFrom32( int ret_addr, ... )
     }
     else  /* stdcall */
     {
-        FARPROC func = relay->orig;
+        LONGLONG (WINAPI *func)() = relay->orig;
         switch(nb_args)
         {
         case 0: ret = func(); break;
@@ -273,8 +275,12 @@ static int RELAY_CallFrom32( int ret_addr, ... )
             assert(FALSE);
         }
     }
-    DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
-             buffer, ret, ret_addr, __get_fs() );
+    if (ret64)
+        DPRINTF( "Ret  %s() retval=%08x%08x ret=%08x fs=%04x\n",
+                 buffer, (UINT)(ret >> 32), (UINT)ret, ret_addr, __get_fs() );
+    else
+        DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
+                 buffer, (UINT)ret, ret_addr, __get_fs() );
 
     if (memcmp( buffer, "x11drv.", 7 ) && memcmp( buffer, "ttydrv.", 7 ))
       SYSLEVEL_CheckNotLevel( 2 );
