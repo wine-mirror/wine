@@ -27,6 +27,8 @@ C_SRCS = \
 	typelib.c \
 	variant.c
 
+C_SRCS16 = typelib16.c
+
 RC_SRCS = version.rc
 
 SUBDIRS = tests
