@@ -96,6 +96,7 @@ typedef struct
 	INT line_count;		/* number of lines */
 	INT y_offset;			/* scroll offset in number of lines */
 	BOOL bCaptureState; /* flag indicating whether mouse was captured */
+	BOOL bEnableState;             /* flag keeping the enable state */
 	/*
 	 *	only for multi line controls
 	 */
@@ -747,6 +748,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 
 	case WM_ENABLE:
 		DPRINTF_EDIT_MSG32("WM_ENABLE");
+                es->bEnableState = (BOOL) wParam;
 		InvalidateRect(hwnd, NULL, TRUE);
 		break;
 
@@ -3097,7 +3099,7 @@ static LRESULT EDIT_WM_EraseBkGnd(WND *wnd, EDITSTATE *es, HDC dc)
 	HBRUSH brush;
 	RECT rc;
 
-        if (!IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
+        if (!es->bEnableState || (es->style & ES_READONLY))
                 brush = (HBRUSH)EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else
                 brush = (HBRUSH)EDIT_SEND_CTLCOLOR(wnd, dc);
@@ -3660,7 +3662,7 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 	RECT rc;
 	RECT rcLine;
 	RECT rcRgn;
-	BOOL rev = IsWindowEnabled(wnd->hwndSelf) &&
+	BOOL rev = es->bEnableState &&
 				((es->flags & EF_FOCUSED) ||
 					(es->style & ES_NOHIDESEL));
 
@@ -3689,11 +3691,12 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 	}
 	if (es->font)
 		old_font = SelectObject(dc, es->font);
-        if (!IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
+        if (!es->bEnableState || (es->style & ES_READONLY))
                 EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else
                 EDIT_SEND_CTLCOLOR(wnd, dc);
-	if (!IsWindowEnabled(wnd->hwndSelf))
+
+	if (!es->bEnableState)
 		SetTextColor(dc, GetSysColor(COLOR_GRAYTEXT));
 	GetClipBox(dc, &rcRgn);
 	if (es->style & ES_MULTILINE) {
