@@ -1,14 +1,13 @@
-This is release 20040309 of Wine, a free implementation of Windows on
+This is release 20040408 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-WHAT'S NEW with Wine-20040309: (see ChangeLog for details)
-        - Much improved winegcc tool, now used to build Wine itself.
-        - VxDs are now separate libraries for better modularity.
-        - Improvements and simplifications to the drive configuration.
-        - New setupapi INF script to create the initial registry.
-        - Many improvements to the various multimedia dlls.
+WHAT'S NEW with Wine-20040408: (see ChangeLog for details)
+        - DOS devices and drives are now configured through symlinks.
+        - Many shell32 improvements.
+        - New task manager merged from ReactOS.
+        - First version of wineprefixcreate tool for initial setup.
         - Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,8 +16,8 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20040309.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20040309.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20040408.tar.gz
+  http://prdownloads.sourceforge.net/wine/Wine-20040408.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 These locations also hold pre-built documentation packages in various
