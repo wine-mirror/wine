@@ -780,8 +780,13 @@ BOOL TASK_Reschedule(void)
 
     if (hTask == hCurrentTask) 
     {
-       TRACE(task, "returning to the current task(%04x)\n", hTask );
-       return FALSE;  /* Nothing to do */
+        /* Allow Win32 threads to thunk down even while a Win16 task is
+           in a tight PeekMessage() or Yield() loop ... */
+        SYSLEVEL_ReleaseWin16Lock();
+        SYSLEVEL_RestoreWin16Lock();
+
+        TRACE(task, "returning to the current task(%04x)\n", hTask );
+        return FALSE;  /* Nothing to do */
     }
     pNewTask = (TDB *)GlobalLock16( hTask );
     TRACE(task, "Switching to task %04x (%.8s)\n",
