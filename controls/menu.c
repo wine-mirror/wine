@@ -2002,7 +2002,7 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
  * Return the handle of the submenu, or hmenu if no submenu to display.
  */
 static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
-                                  BOOL selectFirst )
+                                  BOOL selectFirst, UINT wFlags )
 {
     RECT rect;
     POPUPMENU *menu;
@@ -2032,7 +2032,9 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
     /* message must be send before using item,
        because nearly everything may by changed by the application ! */
 
-    SendMessageA( hwndOwner, WM_INITMENUPOPUP, item->hSubMenu,
+    /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
+    if (!(wFlags & TPM_NONOTIFY))
+       SendMessageA( hwndOwner, WM_INITMENUPOPUP, item->hSubMenu,
 		   MAKELONG( menu->FocusedItem, IS_SYSTEM_MENU(menu) ));
 
     item = &menu->items[menu->FocusedItem];
@@ -2167,7 +2169,7 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
 	}
     }
     else
-	pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hMenu, TRUE );
+	pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hMenu, TRUE, wFlags);
 
     return 0;
 }
@@ -2202,7 +2204,7 @@ static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id )
  *
  * Return TRUE if we can go on with menu tracking.
  */
-static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu )
+static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 {
     TRACE("%p hmenu=0x%04x\n", pmt, hPtMenu);
 
@@ -2225,7 +2227,7 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu )
 	    /* If the popup menu is not already "popped" */
 	    if(!(item->fState & MF_MOUSESELECT ))
 	    {
-		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE );
+		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE, wFlags );
 
 		/* In win31, a newly popped menu always remain opened for the next buttonup */
 		if(TWEAK_WineLook == WIN31_LOOK)
@@ -2284,7 +2286,7 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
  *
  * Return TRUE if we can go on with menu tracking.
  */
-static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu )
+static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 {
     UINT id = NO_SELECTED_ITEM;
     POPUPMENU *ptmenu = NULL;
@@ -2306,7 +2308,7 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu )
     else if( ptmenu->FocusedItem != id )
     {
 	    MENU_SwitchTracking( pmt, hPtMenu, id );
-	    pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE );
+	    pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hPtMenu, FALSE, wFlags);
     }
     return TRUE;
 }
@@ -2461,7 +2463,7 @@ static BOOL MENU_SuspendPopup( MTRACKER* pmt, UINT16 uMsg )
  *
  * Handle a VK_LEFT key event in a menu. 
  */
-static void MENU_KeyLeft( MTRACKER* pmt )
+static void MENU_KeyLeft( MTRACKER* pmt, UINT wFlags )
 {
     POPUPMENU *menu;
     HMENU hmenutmp, hmenuprev;
@@ -2502,8 +2504,8 @@ static void MENU_KeyLeft( MTRACKER* pmt )
 	    * unless there is another displacement coming up */
 
 	    if( !MENU_SuspendPopup( pmt, WM_KEYDOWN ) )
-		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd,
-						pmt->hTopMenu, TRUE );
+		pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd,
+						pmt->hTopMenu, TRUE, wFlags);
 	}
     }
 }
@@ -2514,7 +2516,7 @@ static void MENU_KeyLeft( MTRACKER* pmt )
  *
  * Handle a VK_RIGHT key event in a menu.
  */
-static void MENU_KeyRight( MTRACKER* pmt )
+static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
 {
     HMENU hmenutmp;
     POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( pmt->hTopMenu );
@@ -2531,7 +2533,7 @@ static void MENU_KeyRight( MTRACKER* pmt )
 	/* If already displaying a popup, try to display sub-popup */
 
 	hmenutmp = pmt->hCurrentMenu;
-	pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hmenutmp, TRUE );
+	pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hmenutmp, TRUE, wFlags);
 
 	/* if subpopup was displayed then we are done */
 	if (hmenutmp != pmt->hCurrentMenu) return;
@@ -2560,8 +2562,8 @@ static void MENU_KeyRight( MTRACKER* pmt )
 
 	if( hmenutmp || pmt->trackFlags & TF_SUSPENDPOPUP )
 	    if( !MENU_SuspendPopup(pmt, WM_KEYDOWN) )
-		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, 
-						       pmt->hTopMenu, TRUE );
+		pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, 
+						       pmt->hTopMenu, TRUE, wFlags);
     }
 }
 
@@ -2594,7 +2596,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     fEndMenu = FALSE;
     if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu ))) return FALSE;
 
-    if (wFlags & TPM_BUTTONDOWN) MENU_ButtonDown( &mt, hmenu );
+    if (wFlags & TPM_BUTTONDOWN) MENU_ButtonDown( &mt, hmenu, wFlags );
 
     EVENT_Capture( mt.hOwnerWnd, HTMENU );
 
@@ -2633,7 +2635,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    /* fall through */
 		case WM_LBUTTONDBLCLK:
 		case WM_LBUTTONDOWN:
-		    fRemove = fEndMenu = !MENU_ButtonDown( &mt, hmenu );
+		    fRemove = fEndMenu = !MENU_ButtonDown( &mt, hmenu, wFlags );
 		    break;
 		
 		case WM_RBUTTONUP:
@@ -2665,7 +2667,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
                          ( (msg.wParam & MK_LBUTTON) ||
                            ((wFlags & TPM_RIGHTBUTTON) && (msg.wParam & MK_RBUTTON))) )
 
-			fEndMenu |= !MENU_MouseMove( &mt, hmenu );
+			fEndMenu |= !MENU_MouseMove( &mt, hmenu, wFlags );
 
 	    } /* switch(msg.message) - mouse */
 	}
@@ -2691,17 +2693,17 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
 		    menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( mt.hCurrentMenu );
 		    if (!(menu->wFlags & MF_POPUP))
-			mt.hCurrentMenu = MENU_ShowSubPopup( mt.hOwnerWnd, mt.hTopMenu, TRUE );
+			mt.hCurrentMenu = MENU_ShowSubPopup(mt.hOwnerWnd, mt.hTopMenu, TRUE, wFlags);
 		    else      /* otherwise try to move selection */
 			MENU_MoveSelection( mt.hOwnerWnd, mt.hCurrentMenu, ITEM_NEXT );
 		    break;
 
 		case VK_LEFT:
-		    MENU_KeyLeft( &mt );
+		    MENU_KeyLeft( &mt, wFlags );
 		    break;
 		    
 		case VK_RIGHT:
-		    MENU_KeyRight( &mt );
+		    MENU_KeyRight( &mt, wFlags );
 		    break;
 		    
 		case VK_ESCAPE:
@@ -2795,15 +2797,21 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 /***********************************************************************
  *           MENU_InitTracking
  */
-static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup)
+static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 {
-
     TRACE("hwnd=0x%04x hmenu=0x%04x\n", hWnd, hMenu);
 
     HideCaret(0);
-    SendMessageA( hWnd, WM_ENTERMENULOOP, bPopup, 0 );
+
+    /* Send WM_ENTERMENULOOP and WM_INITMENU message only if TPM_NONOTIFY flag is not specified */
+    if (!(wFlags & TPM_NONOTIFY))
+       SendMessageA( hWnd, WM_ENTERMENULOOP, bPopup, 0 );
+
     SendMessageA( hWnd, WM_SETCURSOR, hWnd, HTCAPTION );
-    SendMessageA( hWnd, WM_INITMENU, hMenu, 0 );
+
+    if (!(wFlags & TPM_NONOTIFY))
+       SendMessageA( hWnd, WM_INITMENU, hMenu, 0 );
+
     return TRUE;
 }
 /***********************************************************************
@@ -2827,14 +2835,14 @@ void MENU_TrackMouseMenuBar( WND* wndPtr, INT ht, POINT pt )
 {
     HWND  hWnd = wndPtr->hwndSelf;
     HMENU hMenu = (ht == HTSYSMENU) ? wndPtr->hSysMenu : wndPtr->wIDmenu;
+    UINT wFlags = TPM_ENTERIDLEEX | TPM_BUTTONDOWN | TPM_LEFTALIGN | TPM_LEFTBUTTON;
 
     TRACE("pwnd=%p ht=0x%04x (%ld,%ld)\n", wndPtr, ht, pt.x, pt.y);
 
     if (IsMenu(hMenu))
     {
-	MENU_InitTracking( hWnd, hMenu, FALSE );
-	MENU_TrackMenu( hMenu, TPM_ENTERIDLEEX | TPM_BUTTONDOWN | 
-		        TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, hWnd, NULL );
+	MENU_InitTracking( hWnd, hMenu, FALSE, wFlags );
+	MENU_TrackMenu( hMenu, wFlags, pt.x, pt.y, hWnd, NULL );
 	MENU_ExitTracking(hWnd);
     }
 }
@@ -2849,6 +2857,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT wParam, INT vkey)
 {
    UINT uItem = NO_SELECTED_ITEM;
    HMENU hTrackMenu; 
+   UINT wFlags = TPM_ENTERIDLEEX | TPM_LEFTALIGN | TPM_LEFTBUTTON;
 
     /* find window that has a menu */
  
@@ -2870,7 +2879,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT wParam, INT vkey)
 
     if (IsMenu( hTrackMenu ))
     {
-	MENU_InitTracking( wndPtr->hwndSelf, hTrackMenu, FALSE );
+	MENU_InitTracking( wndPtr->hwndSelf, hTrackMenu, FALSE, wFlags );
 
         if( vkey && vkey != VK_SPACE )
         {
@@ -2892,8 +2901,7 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT wParam, INT vkey)
 	    else if( vkey )
 		PostMessageA( wndPtr->hwndSelf, WM_KEYDOWN, VK_DOWN, 0L );
 
-	    MENU_TrackMenu( hTrackMenu, TPM_ENTERIDLEEX | TPM_LEFTALIGN | TPM_LEFTBUTTON,
-			    0, 0, wndPtr->hwndSelf, NULL );
+	    MENU_TrackMenu( hTrackMenu, wFlags, 0, 0, wndPtr->hwndSelf, NULL );
 	}
 
 	MENU_ExitTracking (wndPtr->hwndSelf);
@@ -2927,8 +2935,12 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
 {
     BOOL ret = FALSE;
 
-    MENU_InitTracking(hWnd, hMenu, TRUE);
-    SendMessageA( hWnd, WM_INITMENUPOPUP, hMenu, 0);
+    MENU_InitTracking(hWnd, hMenu, TRUE, wFlags);
+
+    /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
+    if (!(wFlags & TPM_NONOTIFY))
+        SendMessageA( hWnd, WM_INITMENUPOPUP, hMenu, 0);
+
     if (MENU_ShowPopup( hWnd, hMenu, 0, x, y, 0, 0 ))
 	ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd, lpRect );
     MENU_ExitTracking(hWnd);
