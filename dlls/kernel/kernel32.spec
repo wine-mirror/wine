@@ -1027,7 +1027,7 @@
 @ stdcall OpenWaitableTimerW(long long wstr)
 @ stub ReadConsoleInputExA
 @ stub ReadConsoleInputExW
-@ stub ReadDirectoryChangesW
+@ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
 @ stub ReadFileScatter
 @ stub SetConsoleIcon
 @ stdcall SetConsoleInputExeNameA(ptr)

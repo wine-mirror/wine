@@ -130,3 +130,14 @@ FARPROC16 WINAPI FileCDR16(FARPROC16 x)
     FIXME("(0x%8x): stub\n", (int) x);
     return (FARPROC16)TRUE;
 }
+
+BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL subtree,
+                                   DWORD filter, LPDWORD returned, LPOVERLAPPED overlapped,
+                                   LPOVERLAPPED_COMPLETION_ROUTINE completion )
+{
+    FIXME( "%p %p 0x%08lx %d 0x%08lx %p %p %p\n", handle, buffer, len, subtree, filter,
+           returned, overlapped, completion );
+
+    SetLastError( ERROR_INVALID_FUNCTION );
+    return FALSE;
+}
