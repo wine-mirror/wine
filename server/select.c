@@ -208,6 +208,13 @@ static void sighup_handler()
 #endif
 }
 
+/* SIGTERM handler */
+static void sigterm_handler()
+{
+    close_registry();
+    exit(1);
+}
+
 /* server main loop */
 void select_loop(void)
 {
@@ -219,6 +226,9 @@ void select_loop(void)
     sigemptyset( &sigset );
     sigaddset( &sigset, SIGCHLD );
     sigaddset( &sigset, SIGHUP );
+    sigaddset( &sigset, SIGINT );
+    sigaddset( &sigset, SIGQUIT );
+    sigaddset( &sigset, SIGTERM );
     sigprocmask( SIG_BLOCK, &sigset, NULL );
 
     /* set the handlers */
@@ -228,6 +238,10 @@ void select_loop(void)
     sigaction( SIGCHLD, &action, NULL );
     action.sa_handler = sighup_handler;
     sigaction( SIGHUP, &action, NULL );
+    action.sa_handler = sigterm_handler;
+    sigaction( SIGINT, &action, NULL );
+    sigaction( SIGQUIT, &action, NULL );
+    sigaction( SIGTERM, &action, NULL );
 
     while (active_users)
     {
