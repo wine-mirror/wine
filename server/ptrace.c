@@ -168,6 +168,7 @@ void stop_thread( struct thread *thread )
     if (!thread->attached)
         if (attach_thread( thread )) return;  /* this will have stopped it */
     /* attached already, or attach failed -> send a signal */
+    if (!thread->unix_pid) return;
     kill( thread->unix_pid, SIGSTOP );
     if (thread->attached) wait4_thread( thread, SIGSTOP );
 }
