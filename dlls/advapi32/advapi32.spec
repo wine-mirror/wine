@@ -241,7 +241,7 @@
 @ stub SetServiceObjectSecurity
 @ stdcall SetServiceStatus(long long)SetServiceStatus
 @ stdcall SetThreadToken (ptr ptr) SetThreadToken
-@ stub SetTokenInformation
+@ stdcall SetTokenInformation (long long ptr long) SetTokenInformation
 @ stdcall StartServiceA(long long ptr) StartServiceA
 @ stdcall StartServiceCtrlDispatcherA(ptr) StartServiceCtrlDispatcherA
 @ stdcall StartServiceCtrlDispatcherW(ptr) StartServiceCtrlDispatcherW

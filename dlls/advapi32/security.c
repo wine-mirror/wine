@@ -110,9 +110,9 @@ AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
  * CheckTokenMembership [ADVAPI32.@]
  *
  * PARAMS
- *   TokenHandle []
- *   SidToCheck  []
- *   IsMember    []
+ *   TokenHandle [I]
+ *   SidToCheck  [I]
+ *   IsMember    [O]
  */
 BOOL WINAPI
 CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
@@ -128,18 +128,76 @@ CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
  * GetTokenInformation [ADVAPI32.@]
  *
  * PARAMS
- *   token           []
- *   tokeninfoclass  []
- *   tokeninfo       []
- *   tokeninfolength []
- *   retlen          []
+ *   token           [I]
+ *   tokeninfoclass  [I]
+ *   tokeninfo       [O]
+ *   tokeninfolength [I]
+ *   retlen          [O]
  *
  */
 BOOL WINAPI
 GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength, LPDWORD retlen )
 {
-	CallWin32ToNt (NtQueryInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength, retlen));
+    TRACE("(%x, %s, %p, %ld, %p): \n",
+          token,
+          (tokeninfoclass == TokenUser) ? "TokenUser" :
+          (tokeninfoclass == TokenGroups) ? "TokenGroups" :
+          (tokeninfoclass == TokenPrivileges) ? "TokenPrivileges" :
+          (tokeninfoclass == TokenOwner) ? "TokenOwner" :
+          (tokeninfoclass == TokenPrimaryGroup) ? "TokenPrimaryGroup" :
+          (tokeninfoclass == TokenDefaultDacl) ? "TokenDefaultDacl" :
+          (tokeninfoclass == TokenSource) ? "TokenSource" :
+          (tokeninfoclass == TokenType) ? "TokenType" :
+          (tokeninfoclass == TokenImpersonationLevel) ? "TokenImpersonationLevel" :
+          (tokeninfoclass == TokenStatistics) ? "TokenStatistics" :
+          (tokeninfoclass == TokenRestrictedSids) ? "TokenRestrictedSids" :
+          (tokeninfoclass == TokenSessionId) ? "TokenSessionId" :
+          (tokeninfoclass == TokenGroupsAndPrivileges) ? "TokenGroupsAndPrivileges" :
+          (tokeninfoclass == TokenSessionReference) ? "TokenSessionReference" :
+          (tokeninfoclass == TokenSandBoxInert) ? "TokenSandBoxInert" :
+          "Unknown",
+          tokeninfo, tokeninfolength, retlen);
+    CallWin32ToNt (NtQueryInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength, retlen));
+}
+
+/******************************************************************************
+ * SetTokenInformation [ADVAPI32.@]
+ *
+ * PARAMS
+ *   token           [I]
+ *   tokeninfoclass  [I]
+ *   tokeninfo       [I]
+ *   tokeninfolength [I]
+ *
+ */
+BOOL WINAPI
+SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
+		     LPVOID tokeninfo, DWORD tokeninfolength )
+{
+    FIXME("(%x, %s, %p, %ld): stub\n",
+          token,
+          (tokeninfoclass == TokenUser) ? "TokenUser" :
+          (tokeninfoclass == TokenGroups) ? "TokenGroups" :
+          (tokeninfoclass == TokenPrivileges) ? "TokenPrivileges" :
+          (tokeninfoclass == TokenOwner) ? "TokenOwner" :
+          (tokeninfoclass == TokenPrimaryGroup) ? "TokenPrimaryGroup" :
+          (tokeninfoclass == TokenDefaultDacl) ? "TokenDefaultDacl" :
+          (tokeninfoclass == TokenSource) ? "TokenSource" :
+          (tokeninfoclass == TokenType) ? "TokenType" :
+          (tokeninfoclass == TokenImpersonationLevel) ? "TokenImpersonationLevel" :
+          (tokeninfoclass == TokenStatistics) ? "TokenStatistics" :
+          (tokeninfoclass == TokenRestrictedSids) ? "TokenRestrictedSids" :
+          (tokeninfoclass == TokenSessionId) ? "TokenSessionId" :
+          (tokeninfoclass == TokenGroupsAndPrivileges) ? "TokenGroupsAndPrivileges" :
+          (tokeninfoclass == TokenSessionReference) ? "TokenSessionReference" :
+          (tokeninfoclass == TokenSandBoxInert) ? "TokenSandBoxInert" :
+          "Unknown",
+          tokeninfo, tokeninfolength);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
 }
 
 /*************************************************************************
