@@ -39,6 +39,8 @@
 
 /* do not add NLS specific stuff below that line */
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 CORE RCDATA
 BEGIN
 "open\0", 0x00000803L, MCI_COMMAND_HEAD,
