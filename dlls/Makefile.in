@@ -384,70 +384,70 @@ libwsock32.@LIBEXT@: wsock32/libwsock32.@LIBEXT@
 libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) x11drv/libx11drv.@LIBEXT@ $@
 
-# Inter-dll dependencies (only necessary for .so)
+# Inter-dll dependencies (only necessary for dynamic libs)
 
-advapi32/libadvapi32.so: libkernel32.so libntdll.so
-avifil32/libavifil32.so: libmsvfw32.so libkernel32.so libntdll.so
-comctl32/libcomctl32.so: libuser32.so libgdi32.so libadvapi32.so libkernel32.so libntdll.so
-commdlg/libcomdlg32.so: libshell32.so libshlwapi.so libcomctl32.so libwinspool.drv.so libuser32.so libgdi32.so libkernel32.so libntdll.so
-crtdll/libcrtdll.so: libkernel32.so libntdll.so
-dciman32/libdciman32.so: libntdll.so
-ddraw/libddraw.so: libuser32.so libx11drv.so libgdi32.so libkernel32.so
-dinput/libdinput.so: libuser32.so libkernel32.so libntdll.so
-dplay/libdplay.so: libdplayx.so
-dplayx/libdplayx.so: libwinmm.so libole32.so libuser32.so libadvapi32.so libkernel32.so libntdll.so
-dsound/libdsound.so: libwinmm.so libkernel32.so libntdll.so
-gdi/libgdi32.so: libadvapi32.so libkernel32.so libntdll.so
-icmp/libicmp.so: libkernel32.so libntdll.so
-imagehlp/libimagehlp.so: libkernel32.so libntdll.so
-imm32/libimm32.so: libkernel32.so libntdll.so
-kernel/libkernel32.so: libntdll.so
-lzexpand/liblz32.so: libkernel32.so libntdll.so
-mpr/libmpr.so: libkernel32.so libntdll.so
-msacm/libmsacm32.so: libwinmm.so libuser32.so libadvapi32.so libkernel32.so libntdll.so
-msnet32/libmsnet32.so: libntdll.so
-msvideo/libmsvfw32.so: libwinmm.so libuser32.so libgdi32.so libkernel32.so libntdll.so
-odbc32/libodbc32.so: libntdll.so
-ole32/libole32.so: libadvapi32.so libuser32.so libgdi32.so librpcrt4.so libkernel32.so libntdll.so
-oleaut32/liboleaut32.so: libole32.so libuser32.so libgdi32.so libadvapi32.so libkernel32.so libntdll.so
-olecli/libolecli32.so: libole32.so libgdi32.so libkernel32.so libntdll.so
-oledlg/liboledlg.so: libntdll.so
-olepro32/libolepro32.so: liboleaut32.so libntdll.so
-olesvr/libolesvr32.so: libkernel32.so libntdll.so
-opengl32/libopengl32.so: libx11drv.so libkernel32.so
-psapi/libpsapi.so: libkernel32.so libntdll.so
-rasapi32/librasapi32.so: libkernel32.so libntdll.so
-richedit/libriched32.so: libuser32.so libkernel32.so libntdll.so
-rpcrt4/librpcrt4.so: libkernel32.so libntdll.so
-serialui/libserialui.so: libuser32.so libadvapi32.so libkernel32.so libntdll.so
-setupapi/libsetupapi.so: libadvapi32.so libkernel32.so libntdll.so
-shell32/libshell32.so: libole32.so libshlwapi.so libcomctl32.so libuser32.so libgdi32.so libadvapi32.so libkernel32.so libntdll.so
-shfolder/libshfolder.so: libshell32.so
-shlwapi/libshlwapi.so: libadvapi32.so libuser32.so libgdi32.so libkernel32.so libntdll.so
-tapi32/libtapi32.so: libkernel32.so libntdll.so
-ttydrv/libttydrv.so: libuser32.so libgdi32.so libkernel32.so libntdll.so
-urlmon/liburlmon.so: libole32.so libntdll.so
-user/libuser32.so: libgdi32.so libadvapi32.so libkernel32.so libntdll.so
-version/libversion.so: liblz32.so libkernel32.so libntdll.so
-win32s/libw32skrnl.so: libkernel32.so libntdll.so
-winaspi/libwnaspi32.so: libadvapi32.so libkernel32.so libntdll.so
-wineps/libwineps.so: libuser32.so libgdi32.so libkernel32.so libntdll.so
-wininet/libwininet.so: libuser32.so libkernel32.so libntdll.so
-winmm/joystick/libjoystick.drv.so: libwinmm.so libuser32.so libntdll.so
-winmm/libwinmm.so: libuser32.so libadvapi32.so libkernel32.so libntdll.so
-winmm/mcianim/libmcianim.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winmm/mciavi/libmciavi.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winmm/mcicda/libmcicda.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winmm/mciseq/libmciseq.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winmm/mciwave/libmciwave.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winmm/midimap/libmidimap.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winmm/wavemap/libmsacm.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winmm/wineoss/libwineoss.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
-winsock/libws2_32.so: libuser32.so libkernel32.so libntdll.so
-winspool/libwinspool.drv.so: libadvapi32.so libkernel32.so libntdll.so
-wow32/libwow32.so: libkernel32.so
-wsock32/libwsock32.so: libws2_32.so libkernel32.so libntdll.so
-x11drv/libx11drv.so: libuser32.so libgdi32.so libkernel32.so
+advapi32/libadvapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+avifil32/libavifil32.@LIBEXT@: libmsvfw32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+comctl32/libcomctl32.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+commdlg/libcomdlg32.@LIBEXT@: libshell32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libwinspool.drv.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+crtdll/libcrtdll.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+dciman32/libdciman32.@LIBEXT@: libntdll.@LIBEXT@
+ddraw/libddraw.@LIBEXT@: libuser32.@LIBEXT@ libx11drv.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@
+dinput/libdinput.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+dplay/libdplay.@LIBEXT@: libdplayx.@LIBEXT@
+dplayx/libdplayx.@LIBEXT@: libwinmm.@LIBEXT@ libole32.@LIBEXT@ libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+dsound/libdsound.@LIBEXT@: libwinmm.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+gdi/libgdi32.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+icmp/libicmp.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+imagehlp/libimagehlp.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+imm32/libimm32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+kernel/libkernel32.@LIBEXT@: libntdll.@LIBEXT@
+lzexpand/liblz32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+mpr/libmpr.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+msacm/libmsacm32.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+msnet32/libmsnet32.@LIBEXT@: libntdll.@LIBEXT@
+msvideo/libmsvfw32.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+odbc32/libodbc32.@LIBEXT@: libntdll.@LIBEXT@
+ole32/libole32.@LIBEXT@: libadvapi32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ librpcrt4.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+oleaut32/liboleaut32.@LIBEXT@: libole32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+olecli/libolecli32.@LIBEXT@: libole32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+oledlg/liboledlg.@LIBEXT@: libntdll.@LIBEXT@
+olepro32/libolepro32.@LIBEXT@: liboleaut32.@LIBEXT@ libntdll.@LIBEXT@
+olesvr/libolesvr32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+opengl32/libopengl32.@LIBEXT@: libx11drv.@LIBEXT@ libkernel32.@LIBEXT@
+psapi/libpsapi.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+rasapi32/librasapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+richedit/libriched32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+rpcrt4/librpcrt4.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+serialui/libserialui.@LIBEXT@: libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+setupapi/libsetupapi.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+shell32/libshell32.@LIBEXT@: libole32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+shfolder/libshfolder.@LIBEXT@: libshell32.@LIBEXT@
+shlwapi/libshlwapi.@LIBEXT@: libadvapi32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+tapi32/libtapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+ttydrv/libttydrv.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+urlmon/liburlmon.@LIBEXT@: libole32.@LIBEXT@ libntdll.@LIBEXT@
+user/libuser32.@LIBEXT@: libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+version/libversion.@LIBEXT@: liblz32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+win32s/libw32skrnl.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winaspi/libwnaspi32.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+wineps/libwineps.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+wininet/libwininet.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/joystick/libjoystick.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/libwinmm.@LIBEXT@: libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/mcianim/libmcianim.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/mciavi/libmciavi.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/mcicda/libmcicda.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/mciseq/libmciseq.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/mciwave/libmciwave.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/midimap/libmidimap.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/wavemap/libmsacm.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/wineoss/libwineoss.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winsock/libws2_32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winspool/libwinspool.drv.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+wow32/libwow32.@LIBEXT@: libkernel32.@LIBEXT@
+wsock32/libwsock32.@LIBEXT@: libws2_32.@LIBEXT@ libntdll.@LIBEXT@
+x11drv/libx11drv.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@
 
 $(DLLFILES): dummy
 	@cd `dirname $@` && $(MAKE)
