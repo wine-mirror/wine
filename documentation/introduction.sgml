@@ -40,8 +40,8 @@
               running Windows and the other running Linux, and if you
               have some sort of X server software running on the Windows
               system, you can export Linux applications onto the Windows
-              system.  Unfortunately, most decent win32 X servers are
-              commercial products, many of which cost quite a lot.
+              system. A free X server is available at
+	      <ulink url="http://xfree86.cygwin.com/">http://xfree86.cygwin.com/</ulink>.
               However, this doesn't solve the problem if you only own
               one computer system.
             </para>
