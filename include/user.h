@@ -30,13 +30,13 @@
 extern WORD USER_HeapSel;
 
 #define USER_HEAP_ALLOC(size) \
-            LOCAL_Alloc( USER_HeapSel, LMEM_FIXED, (size) )
+            ((HANDLE)(ULONG_PTR)LOCAL_Alloc( USER_HeapSel, LMEM_FIXED, (size) ))
 #define USER_HEAP_REALLOC(handle,size) \
-            LOCAL_ReAlloc( USER_HeapSel, (handle), (size), LMEM_FIXED )
+            ((HANDLE)(ULONG_PTR)LOCAL_ReAlloc( USER_HeapSel, LOWORD(handle), (size), LMEM_FIXED ))
 #define USER_HEAP_FREE(handle) \
-            LOCAL_Free( USER_HeapSel, (handle) )
+            LOCAL_Free( USER_HeapSel, LOWORD(handle) )
 #define USER_HEAP_LIN_ADDR(handle)  \
-         ((handle) ? MapSL(MAKESEGPTR(USER_HeapSel, (handle))) : NULL)
+         ((handle) ? MapSL(MAKESEGPTR(USER_HeapSel, LOWORD(handle))) : NULL)
 
 #define GET_WORD(ptr)  (*(WORD *)(ptr))
 #define GET_DWORD(ptr) (*(DWORD *)(ptr))

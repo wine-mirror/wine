@@ -595,7 +595,7 @@ inline static LRESULT call_hook( HOOKDATA *data, INT fromtype, INT code,
  */
 static HHOOK HOOK_GetNextHook( HHOOK hook )
 {
-    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
+    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook );
 
     if (!data || !hook) return 0;
     if (data->next) return HHOOK_32(data->next);
@@ -696,7 +696,7 @@ static BOOL HOOK_RemoveHook( HHOOK hook )
 
     TRACE("Removing hook %04x\n", hook );
 
-    if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook)))) return FALSE;
+    if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook))) return FALSE;
     if (data->flags & HOOK_INUSE)
     {
         /* Mark it for deletion later on */
@@ -724,7 +724,7 @@ static BOOL HOOK_RemoveHook( HHOOK hook )
     if (!*prevHandle) return FALSE;
     *prevHandle = data->next;
 
-    USER_HEAP_FREE(HHOOK_16(hook));
+    USER_HEAP_FREE( hook );
     return TRUE;
 }
 
@@ -738,7 +738,7 @@ static HHOOK HOOK_FindValidHook( HHOOK hook )
 
     for (;;)
     {
-	if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook)))) return 0;
+	if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook ))) return 0;
 	if (data->proc) return hook;
 	hook = HHOOK_32(data->next);
     }
@@ -754,7 +754,7 @@ static LRESULT HOOK_CallHook( HHOOK hook, INT fromtype, INT code,
 {
     MESSAGEQUEUE *queue;
     HANDLE16 prevHandle;
-    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
+    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook );
     LRESULT ret;
 
     if (!(queue = QUEUE_Current())) return 0;
@@ -883,7 +883,7 @@ void HOOK_FreeQueueHooks(void)
 	{
 	  next = HOOK_GetNextHook(hook);
 
-	  hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
+	  hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook );
 	  if( hptr && hptr->ownerQueue )
 	    {
 	      hptr->flags &= HOOK_MAPTYPE;
@@ -977,7 +977,7 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 
     while (hook)
     {
-        HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hook));
+        HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook );
         if (data->proc == proc) break;
         hook = HOOK_GetNextHook( hook );
     }
@@ -1034,7 +1034,7 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wParam,
 
     if (!(next = HOOK_GetNextHook(hhook))) return 0;
 
-    oldhook = (HOOKDATA *)USER_HEAP_LIN_ADDR(HHOOK_16(hhook));
+    oldhook = (HOOKDATA *)USER_HEAP_LIN_ADDR( hhook );
     fromtype = oldhook->flags & HOOK_MAPTYPE;
 
     if (fromtype == HOOK_WIN16)
