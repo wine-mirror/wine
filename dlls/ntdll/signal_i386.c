@@ -1152,7 +1152,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     sigaddset( &sig_act.sa_mask, SIGINT );
     sigaddset( &sig_act.sa_mask, SIGUSR2 );
 
-#if defined(linux) || defined(__NetBSD__)
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     sig_act.sa_flags = SA_RESTART;
 #elif defined (__svr4__) || defined(_SCO_DS)
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
