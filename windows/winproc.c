@@ -696,7 +696,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case WM_SYSDEADCHAR:
     case EM_SETPASSWORDCHAR:
         {
-            char ch = LOWORD(*pwparam);
+            BYTE ch = LOWORD(*pwparam);
             WCHAR wch;
             MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
             *pwparam = MAKEWPARAM( wch, HIWORD(*pwparam) );
@@ -953,7 +953,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case EM_SETPASSWORDCHAR:
         {
             WCHAR wch = LOWORD(*pwparam);
-            char ch;
+            BYTE ch;
             WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
             *pwparam = MAKEWPARAM( ch, HIWORD(*pwparam) );
         }
@@ -1464,7 +1464,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
                            WPARAM *pwparam32, LPARAM *plparam )
 {
-    char ch;
+    BYTE ch;
     WCHAR wch;
 
     *pmsg32=(UINT)msg16;
@@ -2246,7 +2246,7 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
                              UINT16 *pmsg16, WPARAM16 *pwparam16,
                              LPARAM *plparam )
 {
-    char ch;
+    BYTE ch;
     WCHAR wch;
 
     *pmsg16    = LOWORD(msg32);
@@ -2429,6 +2429,9 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
     LRESULT result;
     int unmap;
 
+    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+
     if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
         ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
                        SPY_GetMsgName(msg, hwnd), wParam, lParam );
@@ -2451,6 +2454,9 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
 {
     LRESULT result;
     int unmap;
+
+    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
         ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
@@ -2511,6 +2517,9 @@ static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
     UINT16 msg16;
     MSGPARAM16 mp16;
 
+    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+
     mp16.lParam = lParam;
     if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
@@ -2532,6 +2541,9 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
 {
     UINT16 msg16;
     MSGPARAM16 mp16;
+
+    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     mp16.lParam = lParam;
     if (WINPROC_MapMsg32WTo16( hwnd, msg, wParam, &msg16, &mp16.wParam,
