@@ -3,9 +3,6 @@
 
 #include "ddraw.h"
 
-/* This is needed for GL_LIGHT */
-#include "wine_gl.h"
-
 /*****************************************************************************
  * Predeclare the interfaces
  */
