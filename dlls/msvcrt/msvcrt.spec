@@ -385,7 +385,7 @@ debug_channels (msvcrt)
 @ cdecl _mbsnset(str long long) _mbsnset
 @ stub _mbspbrk #(str str)
 @ cdecl _mbsrchr(str long) _mbsrchr
-@ stub _mbsrev #(str)
+@ cdecl _mbsrev(str) _mbsrev
 @ cdecl _mbsset(str long) _mbsset
 @ cdecl _mbsspn(str str) _mbsspn
 @ stub _mbsspnp #(str str)

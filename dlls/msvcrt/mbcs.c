@@ -602,3 +602,51 @@ int _ismbcspace( unsigned int c)
   FIXME("%c\n",c);
   return 0;
 }
+
+/*********************************************************************
+ *              _mbsrev (MSVCRT.@)
+ */
+char *_mbsrev(char *str)
+{
+    int i, len = _mbslen(str);
+    char *p, *temp=MSVCRT_malloc(len*2);
+
+    if(!temp)
+        return str;
+
+    /* unpack multibyte string to temp buffer */
+    p=str;
+    for(i=0; i<len; i++)
+    {
+        if (MSVCRT_isleadbyte(*p))
+        {
+            temp[i*2]=*p++;
+            temp[i*2+1]=*p++;
+        }
+        else
+        {
+            temp[i*2]=*p++;
+            temp[i*2+1]=0;
+        }
+    }
+
+    /* repack it in the reverse order */
+    p=str;
+    for(i=len-1; i>=0; i--)
+    {
+        if(MSVCRT_isleadbyte(temp[i*2]))
+        {
+            *p++=temp[i*2];
+            *p++=temp[i*2+1];
+        }
+        else
+        {
+            *p++=temp[i*2];
+        }
+    }
+
+    MSVCRT_free(temp);
+
+    return str;
+}
+
