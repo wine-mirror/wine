@@ -295,10 +295,10 @@ typedef HRESULT (CALLBACK *LPFNVIEWCALLBACK)(
 
 typedef struct _CSFV
 {
-  UINT             uSize;
+  UINT             cbSize;
   IShellFolder*    pshf;
   IShellView*      psvOuter;
-  LPCITEMIDLIST    pidlFolder;
+  LPCITEMIDLIST    pidl;
   LONG             lEvents;
   LPFNVIEWCALLBACK pfnCallback;
   FOLDERVIEWMODE   fvm;
@@ -365,6 +365,7 @@ HRESULT WINAPI SHCreateShellFolderViewEx(LPCSFV pshfvi, IShellView **ppshv);
 #define SFVM_GETDEFERREDVIEWSETTINGS  92 /* undocumented */
 
 /* Types and definitions for the SFM_* parameters */
+#include <pshpack8.h>
 
 #define QCMINFO_PLACE_BEFORE          0
 #define QCMINFO_PLACE_AFTER           1
@@ -382,7 +383,7 @@ typedef struct _QCMINFO_IDMAP
 
 typedef struct _QCMINFO
 {
-    HMENU hMenu;
+    HMENU hmenu;
     UINT indexMenu;
     UINT idCmdFirst;
     UINT idCmdLast;
@@ -402,6 +403,8 @@ typedef struct _TBINFO
     UINT cbuttons;
     UINT uFlags;
 } TBINFO, *LPTBINFO;
+
+#include <poppack.h>
 
 /****************************************************************************
 *	SHShellFolderView_Message API

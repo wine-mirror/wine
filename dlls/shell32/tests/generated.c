@@ -824,11 +824,24 @@ static void test_pack_LPCITEMIDLIST(void)
     TEST_TYPE_POINTER(LPCITEMIDLIST, 3, 1);
 }
 
+static void test_pack_LPCSHITEMID(void)
+{
+    /* LPCSHITEMID */
+    TEST_TYPE(LPCSHITEMID, 4, 4);
+    TEST_TYPE_POINTER(LPCSHITEMID, 3, 1);
+}
+
 static void test_pack_LPITEMIDLIST(void)
 {
     /* LPITEMIDLIST */
     TEST_TYPE(LPITEMIDLIST, 4, 4);
     TEST_TYPE_POINTER(LPITEMIDLIST, 3, 1);
+}
+
+static void test_pack_LPSHELLDETAILS(void)
+{
+    /* LPSHELLDETAILS */
+    TEST_TYPE(LPSHELLDETAILS, 4, 4);
 }
 
 static void test_pack_LPSHITEMID(void)
@@ -838,12 +851,31 @@ static void test_pack_LPSHITEMID(void)
     TEST_TYPE_POINTER(LPSHITEMID, 3, 1);
 }
 
+static void test_pack_LPSTRRET(void)
+{
+    /* LPSTRRET */
+    TEST_TYPE(LPSTRRET, 4, 4);
+}
+
+static void test_pack_SHELLDETAILS(void)
+{
+    /* SHELLDETAILS (pack 1) */
+    TEST_FIELD(SHELLDETAILS, int, fmt, 0, 4, 1);
+    TEST_FIELD(SHELLDETAILS, int, cxChar, 4, 4, 1);
+}
+
 static void test_pack_SHITEMID(void)
 {
     /* SHITEMID (pack 1) */
     TEST_TYPE(SHITEMID, 3, 1);
     TEST_FIELD(SHITEMID, WORD, cb, 0, 2, 1);
     TEST_FIELD(SHITEMID, BYTE[1], abID, 2, 1, 1);
+}
+
+static void test_pack_STRRET(void)
+{
+    /* STRRET (pack 4) */
+    TEST_FIELD(STRRET, UINT, uType, 0, 4, 4);
 }
 
 static void test_pack_AUTO_SCROLL_DATA(void)
@@ -906,6 +938,17 @@ static void test_pack_CIDA(void)
     TEST_TYPE(CIDA, 8, 1);
     TEST_FIELD(CIDA, UINT, cidl, 0, 4, 1);
     TEST_FIELD(CIDA, UINT[1], aoffset, 4, 4, 1);
+}
+
+static void test_pack_CSFV(void)
+{
+    /* CSFV (pack 1) */
+    TEST_FIELD(CSFV, UINT, cbSize, 0, 4, 1);
+    TEST_FIELD(CSFV, IShellFolder*, pshf, 4, 4, 1);
+    TEST_FIELD(CSFV, IShellView*, psvOuter, 8, 4, 1);
+    TEST_FIELD(CSFV, LPCITEMIDLIST, pidl, 12, 4, 1);
+    TEST_FIELD(CSFV, LONG, lEvents, 16, 4, 1);
+    TEST_FIELD(CSFV, LPFNVIEWCALLBACK, pfnCallback, 20, 4, 1);
 }
 
 static void test_pack_DROPFILES(void)
@@ -1009,6 +1052,12 @@ static void test_pack_LPCABINETSTATE(void)
     TEST_TYPE_POINTER(LPCABINETSTATE, 12, 1);
 }
 
+static void test_pack_LPCSFV(void)
+{
+    /* LPCSFV */
+    TEST_TYPE(LPCSFV, 4, 4);
+}
+
 static void test_pack_LPDROPFILES(void)
 {
     /* LPDROPFILES */
@@ -1044,11 +1093,24 @@ static void test_pack_LPFILEGROUPDESCRIPTORW(void)
     TEST_TYPE_POINTER(LPFILEGROUPDESCRIPTORW, 596, 1);
 }
 
+static void test_pack_LPFNVIEWCALLBACK(void)
+{
+    /* LPFNVIEWCALLBACK */
+    TEST_TYPE(LPFNVIEWCALLBACK, 4, 4);
+}
+
 static void test_pack_LPIDA(void)
 {
     /* LPIDA */
     TEST_TYPE(LPIDA, 4, 4);
     TEST_TYPE_POINTER(LPIDA, 8, 1);
+}
+
+static void test_pack_LPQCMINFO(void)
+{
+    /* LPQCMINFO */
+    TEST_TYPE(LPQCMINFO, 4, 4);
+    TEST_TYPE_POINTER(LPQCMINFO, 20, 4);
 }
 
 static void test_pack_LPSHChangeDWORDAsIDList(void)
@@ -1086,6 +1148,13 @@ static void test_pack_LPSHELLSTATE(void)
     TEST_TYPE_POINTER(LPSHELLSTATE, 32, 1);
 }
 
+static void test_pack_LPTBINFO(void)
+{
+    /* LPTBINFO */
+    TEST_TYPE(LPTBINFO, 4, 4);
+    TEST_TYPE_POINTER(LPTBINFO, 8, 4);
+}
+
 static void test_pack_PBROWSEINFOA(void)
 {
     /* PBROWSEINFOA */
@@ -1098,6 +1167,33 @@ static void test_pack_PBROWSEINFOW(void)
     /* PBROWSEINFOW */
     TEST_TYPE(PBROWSEINFOW, 4, 4);
     TEST_TYPE_POINTER(PBROWSEINFOW, 32, 4);
+}
+
+static void test_pack_QCMINFO(void)
+{
+    /* QCMINFO (pack 8) */
+    TEST_TYPE(QCMINFO, 20, 4);
+    TEST_FIELD(QCMINFO, HMENU, hmenu, 0, 4, 4);
+    TEST_FIELD(QCMINFO, UINT, indexMenu, 4, 4, 4);
+    TEST_FIELD(QCMINFO, UINT, idCmdFirst, 8, 4, 4);
+    TEST_FIELD(QCMINFO, UINT, idCmdLast, 12, 4, 4);
+    TEST_FIELD(QCMINFO, QCMINFO_IDMAP const*, pIdMap, 16, 4, 4);
+}
+
+static void test_pack_QCMINFO_IDMAP(void)
+{
+    /* QCMINFO_IDMAP (pack 8) */
+    TEST_TYPE(QCMINFO_IDMAP, 12, 4);
+    TEST_FIELD(QCMINFO_IDMAP, UINT, nMaxIds, 0, 4, 4);
+    TEST_FIELD(QCMINFO_IDMAP, QCMINFO_IDMAP_PLACEMENT[1], pIdList, 4, 8, 4);
+}
+
+static void test_pack_QCMINFO_IDMAP_PLACEMENT(void)
+{
+    /* QCMINFO_IDMAP_PLACEMENT (pack 8) */
+    TEST_TYPE(QCMINFO_IDMAP_PLACEMENT, 8, 4);
+    TEST_FIELD(QCMINFO_IDMAP_PLACEMENT, UINT, id, 0, 4, 4);
+    TEST_FIELD(QCMINFO_IDMAP_PLACEMENT, UINT, fFlags, 4, 4, 4);
 }
 
 static void test_pack_SHChangeDWORDAsIDList(void)
@@ -1159,6 +1255,14 @@ static void test_pack_SHELLVIEWID(void)
     TEST_TYPE(SHELLVIEWID, 16, 4);
 }
 
+static void test_pack_TBINFO(void)
+{
+    /* TBINFO (pack 8) */
+    TEST_TYPE(TBINFO, 8, 4);
+    TEST_FIELD(TBINFO, UINT, cbuttons, 0, 4, 4);
+    TEST_FIELD(TBINFO, UINT, uFlags, 4, 4, 4);
+}
+
 static void test_pack(void)
 {
     test_pack_APPBARDATA();
@@ -1179,6 +1283,7 @@ static void test_pack(void)
     test_pack_COAUTHIDENTITY();
     test_pack_COAUTHINFO();
     test_pack_COSERVERINFO();
+    test_pack_CSFV();
     test_pack_DRAGINFOA();
     test_pack_DRAGINFOW();
     test_pack_DROPFILES();
@@ -1208,6 +1313,8 @@ static void test_pack(void)
     test_pack_LPCABINETSTATE();
     test_pack_LPCITEMIDLIST();
     test_pack_LPCOLESTR();
+    test_pack_LPCSFV();
+    test_pack_LPCSHITEMID();
     test_pack_LPCY();
     test_pack_LPDECIMAL();
     test_pack_LPDRAGINFOA();
@@ -1217,13 +1324,16 @@ static void test_pack(void)
     test_pack_LPFILEDESCRIPTORW();
     test_pack_LPFILEGROUPDESCRIPTORA();
     test_pack_LPFILEGROUPDESCRIPTORW();
+    test_pack_LPFNVIEWCALLBACK();
     test_pack_LPGUID();
     test_pack_LPIDA();
     test_pack_LPITEMIDLIST();
     test_pack_LPOLESTR();
+    test_pack_LPQCMINFO();
     test_pack_LPSHChangeDWORDAsIDList();
     test_pack_LPSHChangeProductKeyAsIDList();
     test_pack_LPSHDESCRIPTIONID();
+    test_pack_LPSHELLDETAILS();
     test_pack_LPSHELLEXECUTEINFOA();
     test_pack_LPSHELLEXECUTEINFOW();
     test_pack_LPSHELLFLAGSTATE();
@@ -1233,6 +1343,8 @@ static void test_pack(void)
     test_pack_LPSHITEMID();
     test_pack_LPSHNAMEMAPPINGA();
     test_pack_LPSHNAMEMAPPINGW();
+    test_pack_LPSTRRET();
+    test_pack_LPTBINFO();
     test_pack_NOTIFYICONDATAA();
     test_pack_NOTIFYICONDATAW();
     test_pack_OLECHAR();
@@ -1243,6 +1355,9 @@ static void test_pack(void)
     test_pack_PNOTIFYICONDATAW();
     test_pack_PRINTEROP_FLAGS();
     test_pack_PROPID();
+    test_pack_QCMINFO();
+    test_pack_QCMINFO_IDMAP();
+    test_pack_QCMINFO_IDMAP_PLACEMENT();
     test_pack_RemHBITMAP();
     test_pack_RemHENHMETAFILE();
     test_pack_RemHGLOBAL();
@@ -1253,6 +1368,7 @@ static void test_pack(void)
     test_pack_SHChangeNotifyEntry();
     test_pack_SHChangeProductKeyAsIDList();
     test_pack_SHDESCRIPTIONID();
+    test_pack_SHELLDETAILS();
     test_pack_SHELLEXECUTEINFOA();
     test_pack_SHELLEXECUTEINFOW();
     test_pack_SHELLFLAGSTATE();
@@ -1265,6 +1381,8 @@ static void test_pack(void)
     test_pack_SHITEMID();
     test_pack_SHNAMEMAPPINGA();
     test_pack_SHNAMEMAPPINGW();
+    test_pack_STRRET();
+    test_pack_TBINFO();
     test_pack_UP_BYTE_BLOB();
     test_pack_UP_FLAGGED_BYTE_BLOB();
     test_pack_UP_FLAGGED_WORD_BLOB();

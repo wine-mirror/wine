@@ -1979,7 +1979,7 @@ sub parse_c_variable {
 	}
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*(?:const\s*)?\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
 	$type = "$sign$1";
 	$name = $2;
 

@@ -963,7 +963,7 @@ HRESULT WINAPI SHCreateShellFolderViewEx(
 	HRESULT hRes;
 
 	TRACE("sf=%p pidl=%p cb=%p mode=0x%08x parm=%p\n",
-	  psvcbi->pshf, psvcbi->pidlFolder, psvcbi->pfnCallback,
+	  psvcbi->pshf, psvcbi->pidl, psvcbi->pfnCallback,
 	  psvcbi->fvm, psvcbi->psvOuter);
 
 	psf = IShellView_Constructor(psvcbi->pshf);
