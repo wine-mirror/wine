@@ -124,7 +124,12 @@ VHSTR WINAPI vsmStringAdd16(LPCSTR lpszName)
     {
 	index = vhstr_alloc;
 	vhstr_alloc += 20;
-	vhstrlist = HeapReAlloc(heap, HEAP_ZERO_MEMORY, vhstrlist,
+
+	if (vhstrlist)
+	    vhstrlist = HeapReAlloc(heap, HEAP_ZERO_MEMORY, vhstrlist,
+					sizeof(VHSTR_STRUCT *) * vhstr_alloc);
+	else
+	    vhstrlist = HeapAlloc(heap, HEAP_ZERO_MEMORY,
 					sizeof(VHSTR_STRUCT *) * vhstr_alloc);
     }
     if (index == 0xffff)
@@ -229,7 +234,11 @@ RETERR16 VCP_VirtnodeCreate(LPVCPFILESPEC vfsSrc, LPVCPFILESPEC vfsDst, WORD fl,
     if (vn_last == vn_num)
     {
 	vn_num += 20;
-        pvnlist = HeapReAlloc(heap, HEAP_ZERO_MEMORY, pvnlist,
+	if (pvnlist)
+	    pvnlist = HeapReAlloc(heap, HEAP_ZERO_MEMORY, pvnlist,
+		    		sizeof(LPVIRTNODE *) * vn_num);
+	else
+	    pvnlist = HeapAlloc(heap, HEAP_ZERO_MEMORY, 
 		    		sizeof(LPVIRTNODE *) * vn_num);
     }
     pvnlist[vn_last] = HeapAlloc(heap, HEAP_ZERO_MEMORY, sizeof(VIRTNODE));

@@ -334,10 +334,17 @@ static int AllocEntry(void)
   }
 
   TRACE("Growing cache\n");
-  glyphsetCache = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+  
+  if (glyphsetCache)
+    glyphsetCache = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			      glyphsetCache,
 			      (glyphsetCacheSize + INIT_CACHE_SIZE)
 			      * sizeof(*glyphsetCache));
+  else
+    glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+			      (glyphsetCacheSize + INIT_CACHE_SIZE)
+			      * sizeof(*glyphsetCache));
+
   for(best = i = glyphsetCacheSize; i < glyphsetCacheSize + INIT_CACHE_SIZE;
       i++) {
     glyphsetCache[i].next = i + 1;
@@ -538,18 +545,36 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 
     if(entry->nrealized <= glyph) {
         entry->nrealized = (glyph / 128 + 1) * 128;
-	entry->realized = HeapReAlloc(GetProcessHeap(),
+
+	if (entry->realized)
+	    entry->realized = HeapReAlloc(GetProcessHeap(),
 				      HEAP_ZERO_MEMORY,
 				      entry->realized,
 				      entry->nrealized * sizeof(BOOL));
+	else
+	    entry->realized = HeapAlloc(GetProcessHeap(),
+				      HEAP_ZERO_MEMORY,
+				      entry->nrealized * sizeof(BOOL));
+
 	if(entry->glyphset == 0) {
-	  entry->bitmaps = HeapReAlloc(GetProcessHeap(),
+	  if (entry->bitmaps)
+	    entry->bitmaps = HeapReAlloc(GetProcessHeap(),
 				      HEAP_ZERO_MEMORY,
 				      entry->bitmaps,
 				      entry->nrealized * sizeof(entry->bitmaps[0]));
-	  entry->gis = HeapReAlloc(GetProcessHeap(),
+	  else
+	    entry->bitmaps = HeapAlloc(GetProcessHeap(),
+				      HEAP_ZERO_MEMORY,
+				      entry->nrealized * sizeof(entry->bitmaps[0]));
+
+	  if (entry->gis)
+	    entry->gis = HeapReAlloc(GetProcessHeap(),
 				   HEAP_ZERO_MEMORY,
 				   entry->gis,
+				   entry->nrealized * sizeof(entry->gis[0]));
+	  else
+	    entry->gis = HeapAlloc(GetProcessHeap(),
+				   HEAP_ZERO_MEMORY,
 				   entry->nrealized * sizeof(entry->gis[0]));
 	}
     }
