@@ -97,6 +97,9 @@ typedef struct
    BYTE  bStyle;
 } MYTOOLINFO, *LPMYTOOLINFO;
 
+extern 	LPCVOID _Resource_Men_MENU_001_0_data;
+extern 	LPCVOID _Resource_Men_MENU_002_0_data;
+
 MYTOOLINFO g_Tools[] = 
 { {IDM_VIEW_FILES, 0, IDS_TB_VIEW_FILES, IDS_MI_VIEW_FILES, 0, TBSTATE_ENABLED, TBSTYLE_BUTTON},
   {-1, 0, 0, 0, 0, 0, 0}   
@@ -495,12 +498,23 @@ void ShellView_MergeFileMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
 /**************************************************************************
 * ShellView_MergeViewMenu()
 */   
+
 void ShellView_MergeViewMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
-{	TRACE(shell,"(%p)->(submenu=0x%08x) stub\n",this,hSubMenu);
+{	MENUITEMINFO32A	mii;
+
+	TRACE(shell,"(%p)->(submenu=0x%08x)\n",this,hSubMenu);
+
 	if(hSubMenu)
 	{ /*add a separator at the correct position in the menu*/
 	  _InsertMenuItem(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, 0, MFT_SEPARATOR, NULL, MFS_ENABLED);
-	  _InsertMenuItem(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, IDM_VIEW_FILES, MFT_STRING, TEXT("_View"), MFS_ENABLED);
+
+	  ZeroMemory(&mii, sizeof(mii));
+	  mii.cbSize = sizeof(mii);
+	  mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;;
+          mii.fType = MFT_STRING;
+ 	  mii.dwTypeData = "View";
+	  mii.hSubMenu = LoadMenuIndirect32A(&_Resource_Men_MENU_001_0_data);
+	  InsertMenuItem32A(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
 	}
 }
 /**************************************************************************
@@ -770,6 +784,52 @@ LRESULT ShellView_OnSettingChange(LPSHELLVIEW this, LPCSTR lpszSection)
 	return 0;
 }
 /**************************************************************************
+* ShellView_OnCommand()
+*/   
+LRESULT ShellView_OnCommand(LPSHELLVIEW this,DWORD dwCmdID, DWORD dwCmd, HWND32 hwndCmd)
+{	TRACE(shell,"(%p)->(0x%08lx 0x%08lx 0x%08x) stub\n",this, dwCmdID, dwCmd, hwndCmd);
+	switch(dwCmdID)
+	{ case IDM_VIEW_FILES:
+	    g_bViewKeys = ! g_bViewKeys;
+	    IShellView_Refresh(this);
+	    break;
+
+	  case IDM_VIEW_IDW:
+	    g_bShowIDW = ! g_bShowIDW;
+	    ShellView_AddRemoveDockingWindow(this, g_bShowIDW);
+	    break;
+   
+	  case IDM_MYFILEITEM:
+	    MessageBeep32(MB_OK);
+	    break;
+
+	  case FCIDM_SHVIEW_SMALLICON:
+	    this->FolderSettings.ViewMode = FVM_SMALLICON;
+	    SetStyle (this, LVS_SMALLICON, LVS_TYPEMASK);
+	    break;
+
+	  case FCIDM_SHVIEW_BIGICON:
+	    this->FolderSettings.ViewMode = FVM_ICON;
+	    SetStyle (this, LVS_ICON, LVS_TYPEMASK);
+	    break;
+
+	  case FCIDM_SHVIEW_LISTVIEW:
+	    this->FolderSettings.ViewMode = FVM_LIST;
+	    SetStyle (this, LVS_LIST, LVS_TYPEMASK);
+	    break;
+
+	  case FCIDM_SHVIEW_REPORTVIEW:
+	    this->FolderSettings.ViewMode = FVM_DETAILS;
+	    SetStyle (this, LVS_REPORT, LVS_TYPEMASK);
+	    break;
+
+	  default:
+	    FIXME(shell,"-- COMMAND unhandled\n");
+	}
+	return 0;
+}
+
+/**************************************************************************
 *   ShellView_GetSelections()
 *
 * RETURNS
@@ -823,13 +883,9 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 
 	/* look, what's selected and create a context menu object of it*/
 	if(ShellView_GetSelections(this))
-	{ this->pSFParent->lpvtbl->fnGetUIObjectOf(	this->pSFParent,
-							this->hWndParent,
-							this->uSelected,
-							this->aSelectedItems,
-							(REFIID)&IID_IContextMenu,
-							NULL,
-							(LPVOID *)&pContextMenu);
+	{ this->pSFParent->lpvtbl->fnGetUIObjectOf( this->pSFParent, this->hWndParent, this->uSelected,
+						    this->aSelectedItems, (REFIID)&IID_IContextMenu,
+						    NULL, (LPVOID *)&pContextMenu);
    
 	  if(pContextMenu)
 	  { TRACE(shell,"-- pContextMenu\n");
@@ -850,8 +906,7 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 	      { if( fDefault )
 	        { TRACE(shell,"-- get menu default command\n");
 
-	          uCommand = 0;
-	          nMenuIndex = 0;
+	          uCommand = nMenuIndex = 0;
        	          ZeroMemory(&mii, sizeof(mii));
 	          mii.cbSize = sizeof(mii);
 	          mii.fMask = MIIM_STATE | MIIM_ID;
@@ -867,102 +922,39 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 	        else
 	        { TRACE(shell,"-- track popup\n");
 	          uCommand = TrackPopupMenu32( hMenu,TPM_LEFTALIGN | TPM_RETURNCMD,x,y,0,this->hWnd,NULL);
-	        }
+	        }		
          
 	        if(uCommand > 0)
 	        { TRACE(shell,"-- uCommand=%u\n", uCommand);
-	          if (((uCommand-MENU_OFFSET) == IDM_EXPLORE) || ((uCommand-MENU_OFFSET)  == IDM_OPEN))
-		  { if (IsInCommDlg(this))			/* are we part of a commctrl? */
-		    { TRACE(shell,"-- dlg: OnDefaultCommand\n");
-		      OnDefaultCommand(this);
-		    }
-		    else					/* we are acting with a full featured IShellBrowser */
-		    { TRACE(shell,"-- explorer: BrowseObject pidl =%p\n", this->aSelectedItems[0]);
-		      /*wFlags = SBSP_SAMEBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
-		      IShellBrowser_BrowseObject(this->pShellBrowser, this->aSelectedItems[0], wFlags);*/
-		      {	int i = ILGetSize( this->aSelectedItems[0] );
-			char commandline[255];
-	                STARTUPINFO32A  startupinfo;
-			PROCESS_INFORMATION processinformation;
-			HGLOBAL32 hmem;
-
-	                ZeroMemory(&startupinfo,sizeof(STARTUPINFO32A));
-			startupinfo.cb = sizeof(STARTUPINFO32A);
-						
-		        hmem = SHAllocShared ( this->aSelectedItems[0], i, 0);
-			
-			sprintf (commandline, " /N,/IDList,:%li", (DWORD)SHLockShared(hmem,0));
-			CreateProcess32A("explorer.exe", commandline, NULL, NULL, FALSE, 0, 
-					NULL, NULL, &startupinfo, &processinformation);
-			SHUnlockShared(hmem);
-			
-		      }
-		    }
+	          if (IsInCommDlg(this) && (((uCommand-MENU_OFFSET)==IDM_EXPLORE) || ((uCommand-MENU_OFFSET)==IDM_OPEN)))
+		  { TRACE(shell,"-- dlg: OnDefaultCommand\n");
+		    OnDefaultCommand(this);
 		  }
 		  else
-		  { TRACE(shell,"-- invoke command\n");
-		    ZeroMemory(&cmi, sizeof(cmi));
-	            cmi.cbSize = sizeof(cmi);
-	            cmi.hwnd = this->hWndParent;
-	            cmi.lpVerb = (LPCSTR)MAKEINTRESOURCE32A(uCommand - MENU_OFFSET);
-		    pContextMenu->lpvtbl->fnInvokeCommand(pContextMenu, &cmi);
+		  { TRACE(shell,"-- explore -- invoke command\n");
+		      ZeroMemory(&cmi, sizeof(cmi));
+	              cmi.cbSize = sizeof(cmi);
+	              cmi.hwnd = this->hWndParent;
+	              cmi.lpVerb = (LPCSTR)MAKEINTRESOURCE32A(uCommand - MENU_OFFSET);
+		      pContextMenu->lpvtbl->fnInvokeCommand(pContextMenu, &cmi);
 		  }
 	        }
 	        DestroyMenu32(hMenu);
 	      }
 	    }
-	    pContextMenu->lpvtbl->fnRelease(pContextMenu);
+	    if (pContextMenu)
+	      pContextMenu->lpvtbl->fnRelease(pContextMenu);
 	  }
 	  SHFree(this->aSelectedItems);
 	  this->aSelectedItems=NULL;
 	  this->uSelected=0;
 	}
-}
-
-/**************************************************************************
-* ShellView_OnCommand()
-*/   
-LRESULT ShellView_OnCommand(LPSHELLVIEW this,DWORD dwCmdID, DWORD dwCmd, HWND32 hwndCmd)
-{	TRACE(shell,"(%p)->(0x%08lx 0x%08lx 0x%08x) stub\n",this, dwCmdID, dwCmd, hwndCmd);
-	switch(dwCmdID)
-	{ case IDM_VIEW_FILES:
-	    g_bViewKeys = ! g_bViewKeys;
-	    IShellView_Refresh(this);
-	    break;
-
-	  case IDM_VIEW_IDW:
-	    g_bShowIDW = ! g_bShowIDW;
-	    ShellView_AddRemoveDockingWindow(this, g_bShowIDW);
-	    break;
-   
-	  case IDM_MYFILEITEM:
-	    MessageBeep32(MB_OK);
-	    break;
-
-	  case FCIDM_SHVIEW_SMALLICON:
-	    this->FolderSettings.ViewMode = FVM_SMALLICON;
-	    SetStyle (this, LVS_SMALLICON, LVS_TYPEMASK);
-	    break;
-
-	  case FCIDM_SHVIEW_BIGICON:
-	    this->FolderSettings.ViewMode = FVM_ICON;
-	    SetStyle (this, LVS_ICON, LVS_TYPEMASK);
-	    break;
-
-	  case FCIDM_SHVIEW_LISTVIEW:
-	    this->FolderSettings.ViewMode = FVM_LIST;
-	    SetStyle (this, LVS_LIST, LVS_TYPEMASK);
-	    break;
-
-	  case FCIDM_SHVIEW_REPORTVIEW:
-	    this->FolderSettings.ViewMode = FVM_DETAILS;
-	    SetStyle (this, LVS_REPORT, LVS_TYPEMASK);
-	    break;
-
-	  default:
-	    FIXME(shell,"-- COMMAND unhandled\n");
+	else	/* background context menu */
+	{ hMenu = LoadMenuIndirect32A(&_Resource_Men_MENU_002_0_data);
+	  uCommand = TrackPopupMenu32( GetSubMenu32(hMenu,0),TPM_LEFTALIGN | TPM_RETURNCMD,x,y,0,this->hWnd,NULL);
+	  ShellView_OnCommand(this, uCommand, 0,0);
+	  DestroyMenu32(hMenu);
 	}
-	return 0;
 }
 
 /**************************************************************************

@@ -305,10 +305,12 @@ LPSTR WINAPI PathCombine32A(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile)
 	if (PathIsRoot32A(lpszFile))
 	{ strcpy(szDest,lpszFile);
 	}
-	strcpy(sTemp,lpszDir);
-	PathAddBackslash32A(sTemp);
-	strcat(sTemp,lpszFile);
-	strcpy(szDest,sTemp);
+	else
+	{ strcpy(sTemp,lpszDir);
+	  PathAddBackslash32A(sTemp);
+	  strcat(sTemp,lpszFile);
+	  strcpy(szDest,sTemp);
+	}
 	return szDest;
 }
 LPWSTR WINAPI PathCombine32W(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile) 
@@ -326,10 +328,12 @@ LPWSTR WINAPI PathCombine32W(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
 	if (PathIsRoot32W(lpszFile))
 	{ lstrcpy32W(szDest,lpszFile);
 	}
-	lstrcpy32W(sTemp,lpszDir);
-	PathAddBackslash32W(sTemp);
-	lstrcat32W(sTemp,lpszFile);
-	lstrcpy32W(szDest,sTemp);
+	else
+	{ lstrcpy32W(sTemp,lpszDir);
+	  PathAddBackslash32W(sTemp);
+	  lstrcat32W(sTemp,lpszFile);
+	  lstrcpy32W(szDest,sTemp);
+	}
 	return szDest;
 }
 LPVOID WINAPI PathCombine32AW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile) 

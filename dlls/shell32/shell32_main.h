@@ -39,6 +39,7 @@ extern HICON32	WINAPI SIC_GetIcon (LPSTR sSourceFile, DWORD dwSourceIndex, BOOL3
 
 /* Classes Root */
 extern BOOL32 WINAPI HCR_MapTypeToValue ( LPSTR szExtension, LPSTR szFileType, DWORD len);
+extern BOOL32 WINAPI HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len );
 
 HGLOBAL32	WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID);
 LPVOID		WINAPI SHLockShared(HANDLE32 hmem, DWORD procID);
