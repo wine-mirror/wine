@@ -680,8 +680,6 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
                                       LPPROCESS_INFORMATION lpProcessInfo,
                                       BOOL useWine )
 {
-    DOS_FULL_NAME full_name;
-    const char *unixfilename = filename;
     const char *argv[256], **argptr;
     char *cmdline = NULL;
     BOOL iconic = FALSE;
@@ -694,18 +692,19 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
             iconic = TRUE;
 
     /* Build argument list */
-
     argptr = argv;
     if ( !useWine )
     {
         char *p;
+	const char *unixfilename = filename;
+	DOS_FULL_NAME full_name;
+
         p = cmdline = strdup(lpCmdLine);
         if (strchr(filename, '/') || strchr(filename, ':') || strchr(filename, '\\'))
         {
             if ( DOSFS_GetFullName( filename, TRUE, &full_name ) )
                 unixfilename = full_name.long_name;
         }
-        *argptr++ = unixfilename;
         if (iconic) *argptr++ = "-iconic";
         while (1)
         {
@@ -714,6 +713,8 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
             *argptr++ = p;
             while (*p && *p != ' ' && *p != '\t') p++;
         }
+	/* overwrite program name gotten from tidy_cmd */
+	argv[0] = unixfilename;
     }
     else
     {
@@ -936,6 +937,9 @@ static BOOL make_lpCommandLine_name( LPCSTR line, LPSTR name, int namelen,
 	}
         TRACE("checking if file exists '%s'\n", name);
         retlen = SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, &lastpart);
+	if (!retlen)
+	   retlen = SearchPathA( NULL, name, NULL, sizeof(buffer), buffer, &lastpart);
+   
         if ( retlen && (retlen < sizeof(buffer)) )  break;
     } while (1);
 
@@ -1009,7 +1013,8 @@ static BOOL make_lpApplicationName_name( LPCSTR line, LPSTR name, int namelen)
 	  break;    /* exit if out of input string */
     } while (1);
 
-    if (!SearchPathA( NULL, buffer, ".exe", namelen, name, NULL )) {
+    if (!SearchPathA( NULL, buffer, ".exe", namelen, name, NULL ) && 
+	!SearchPathA( NULL, buffer, NULL, namelen, name, NULL ) ) {
         TRACE("file not found '%s'\n", buffer );
         return FALSE;
     }
