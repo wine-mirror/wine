@@ -378,7 +378,7 @@ HMETAFILE WINAPI CloseMetaFile(
  */
 BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
 {
-    DWORD len;
+    DWORD len, size;
     METAHEADER *mh;
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
 
@@ -386,9 +386,17 @@ BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
     {
     case METAFILE_MEMORY:
 	len = physDev->mh->mtSize * 2 + rlen;
-	mh = HeapReAlloc( GetProcessHeap(), 0, physDev->mh, len );
-        if (!mh) return FALSE;
-        physDev->mh = mh;
+	/* reallocate memory if needed */
+        size = HeapSize( GetProcessHeap(), 0, physDev->mh );
+        if (len > size)
+        {
+            /*expand size*/
+            size += size / 2 + rlen;
+            mh = HeapReAlloc( GetProcessHeap(), 0, physDev->mh, size);
+            if (!mh) return FALSE;
+            physDev->mh = mh;
+            TRACE("Reallocated metafile: new size is %ld\n",size);
+        }
 	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
         break;
     case METAFILE_DISK:
