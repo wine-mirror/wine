@@ -1759,7 +1759,25 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     if(!face && best)
         face = best;
     else if(!face) {
-        face = family->FirstFace;
+        best = NULL;
+        for(face = family->FirstFace; face; face = face->next) {
+            if(face->scalable)
+                break;
+            if(height > 0)
+                newdiff = height - (signed int)(face->size.y_ppem >> 6);
+            else
+                newdiff = -height - ((signed int)(face->size.y_ppem >> 6) - face->size.internal_leading);
+            if(!best || (diff > 0 && newdiff < diff && newdiff >= 0) ||
+               (diff < 0 && newdiff > diff)) {
+                TRACE("%ld is better for %d diff was %d\n", face->size.y_ppem >> 6, height, diff);
+                diff = newdiff;
+                best = face;
+                if(diff == 0)
+                    break;
+            }
+        }
+        if(!face && best)
+            face = best;
 	if(it && !face->Italic) ret->fake_italic = TRUE;
 	if(bd && !face->Bold) ret->fake_bold = TRUE;
     }
