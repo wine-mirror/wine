@@ -20,13 +20,25 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "wine/test.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "winuser.h"
-#include "wine/test.h"
+
+#ifndef IDI_APPLICATIONA
+#define IDI_APPLICATIONA IDI_APPLICATION
+#endif
+#ifndef IDC_ARROWA
+#define IDC_ARROWA IDC_ARROW
+#endif
+
+#define eq(received, expected, label, type) \
+        ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
+
 
 /* FIXME: should fix the tests to not require this */
-static inline int has_unicode(void) { return 1; }
+static int has_unicode(void) { return 1; }
 
 #define SPI_SETBEEP_REGKEY           "Control Panel\\Sound"
 #define SPI_SETBEEP_VALNAME          "Beep"
@@ -118,12 +130,15 @@ params:
 */
 static void test_change_message( UINT action, char *reg_section )
 {
-    ok( 1 == change_counter, "Each message is processed" );
+    ok( 1 == change_counter,
+        "Missed a message: change_counter=%d", change_counter );
     change_counter = 0;
-    ok( action == change_last_param, "Correct action is processed" );
+    ok( action == change_last_param,
+        "Wrong action %d != %d", action, change_last_param );
     change_last_param = 0;
     ok( !strcmp( reg_section, change_reg_section ),
-        "Unexpected registry section" );
+        "Unexpected registry section %s != %s",
+        reg_section, change_reg_section );
     strcpy( change_reg_section, "");
 }
 
@@ -146,12 +161,9 @@ static void _test_reg_key( LPSTR subKey, LPSTR valName, LPSTR testValue, char *f
     RegOpenKeyA( HKEY_CURRENT_USER, subKey, &hKey );
     RegQueryValueExA( hKey, valName, NULL, &type, value, &valueLen );
     RegCloseKey( hKey );
-    if(strcmp( testValue, value ))
-        printf( "subKey: %s, valName: %s, testValue: %s, value: %s "
-                "called from %s, line %i\n",
-                subKey, valName, testValue, value, file, line);
     ok( !strcmp( testValue, value ),
-        "System parameter registry key expected value" );
+        "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s",
+        subKey, valName, testValue, value );
 }
 
 #define test_reg_key( subKey, valName, testValue ) \
@@ -162,7 +174,8 @@ static void test_SPI_SETBEEP( void )                   /*      2 */
     BOOL old_b;
     BOOL b;
     BOOL curr_val;
-    
+
+    trace("testing SPI_{GET,SET}BEEP\n");
     SystemParametersInfoA( SPI_GETBEEP, 0, &old_b, 0 );
 
     curr_val = TRUE;
@@ -172,13 +185,13 @@ static void test_SPI_SETBEEP( void )                   /*      2 */
                   SPI_SETBEEP_VALNAME,
                   curr_val ? "Yes" : "No" );
     SystemParametersInfoA( SPI_GETBEEP, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
+    eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
     if (has_unicode())
     {
         SystemParametersInfoW( SPI_GETBEEP, 0, &b, 0 );
-        ok( curr_val == b, "retrieved value is the same as set" );
+        eq( b, curr_val, "SystemParametersInfoW", "%d" );
     }
-    
+
     /* is a message sent for the second change? */
     SystemParametersInfoA( SPI_SETBEEP, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     test_change_message( SPI_SETBEEP, "" );
@@ -193,11 +206,11 @@ static void test_SPI_SETBEEP( void )                   /*      2 */
                   SPI_SETBEEP_VALNAME,
                   curr_val ? "Yes" : "No" );
     SystemParametersInfoA( SPI_GETBEEP, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
+    eq( b, curr_val, "registry modification", "%d" );
     if (has_unicode())
     {
         SystemParametersInfoW( SPI_GETBEEP, 0, &b, 0 );
-        ok( curr_val == b, "retrieved value is the same as set" );
+        eq( b, curr_val, "SystemParametersInfoW", "%d" );
     }
     ok( MessageBeep( MB_OK ), "Return value of MessageBeep when sound is disabled" );
 
@@ -221,7 +234,6 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
 
     char buf[20];
     int i;
-    POINT mv;
 
     aw_turn++;
     if (has_unicode() && (aw_turn % 2))        /* call unicode version each second call */
@@ -238,7 +250,8 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
     SystemParametersInfoA( SPI_GETMOUSE, 0, mi, 0 );
     for (i = 0; i < 3; i++)
     {
-        ok(mi[i] == curr_val[i], "retrieved value is the same as set");
+        ok(mi[i] == curr_val[i],
+           "incorrect value for %d: %d != %d", i, mi[i], curr_val[i]);
     }
 
     if (has_unicode())
@@ -246,13 +259,15 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
         SystemParametersInfoW( SPI_GETMOUSE, 0, mi, 0 );
         for (i = 0; i < 3; i++)
         {
-            ok(mi[i] == curr_val[i], "retrieved value is the same as set");
+            ok(mi[i] == curr_val[i],
+               "incorrect value for %d: %d != %d", i, mi[i], curr_val[i]);
         }
     }
 
 #if 0  /* FIXME: this always fails for me  - AJ */
     for (i = 0; i < nchange; i++)
     {
+        POINT mv;
         mouse_event( MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
         mouse_event( MOUSEEVENTF_MOVE, req_change[i].x, req_change[i].y, 0, 0 );
         GetCursorPos( &mv );
@@ -281,7 +296,8 @@ static void test_SPI_SETMOUSE( void )                  /*      4 */
     POINT proj_change8[] = { {6, 6}, {28, 6}, {32, 6}, {40, 40}, {44, 40}, {400, 400} };
 
     int nchange = sizeof( req_change ) / sizeof( POINT );
-    
+
+    trace("testing SPI_{GET,SET}MOUSE\n");
     SystemParametersInfoA( SPI_GETMOUSE, 0, old_mi, 0 );
 
     run_spi_setmouse_test( curr_val, req_change, proj_change1, nchange );
@@ -336,17 +352,20 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     test_reg_key( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, buf ); \
     if (curr_val == 0) curr_val = 1; \
     SystemParametersInfoA( SPI_GETBORDER, 0, &border, 0 ); \
-    ok( border == border, "retrieved value is the same as set" ); \
+    eq( border, curr_val, "SPI_{GET,SET}BORDER", "%d"); \
     frame = curr_val + GetSystemMetrics( SM_CXDLGFRAME ); \
-    ok( frame == GetSystemMetrics( SM_CXFRAME ), "In synch with SM_CXFRAME" ); \
-    ok( frame == GetSystemMetrics( SM_CYFRAME ), "In synch with SM_CYFRAME" ); \
-    ok( frame == GetSystemMetrics( SM_CXSIZEFRAME ), "In synch with SM_CXSIZEFRAME" ); \
-    ok( frame == GetSystemMetrics( SM_CYSIZEFRAME ), "In synch with SM_CYSIZEFRAME" )
+    eq( frame, GetSystemMetrics( SM_CXFRAME ), "SM_CXFRAME", "%d" ); \
+    eq( frame, GetSystemMetrics( SM_CYFRAME ), "SM_CYFRAME", "%d" ); \
+    eq( frame, GetSystemMetrics( SM_CXSIZEFRAME ), "SM_CXSIZEFRAME", "%d" ); \
+    eq( frame, GetSystemMetrics( SM_CYSIZEFRAME ), "SM_CYSIZEFRAME", "%d" )
 
-    /* These tests hang when XFree86 4.0 for Windows is running (tested on WinNT, SP2,
-       Cygwin/XFree 4.1.0. Skip the test when XFree86 is running. */
+    /* These tests hang when XFree86 4.0 for Windows is running (tested on
+     *  WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is 
+     * running.
+     */
     if (!FindWindowA( NULL, "Cygwin/XFree86" ))
     {
+        trace("testing SPI_{GET,SET}BORDER\n");
         SystemParametersInfoA( SPI_GETBORDER, 0, &old_border, 0 );
 
         curr_val = 1;
@@ -360,14 +379,14 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
 
         curr_val = 20;
         TEST_SETBORDER;
-    
+
         /* This will restore sane values if the test hang previous run. */
         if ( old_border == 7 || old_border == 20 )
             old_border = 1;
 
         SystemParametersInfoA( SPI_SETBORDER, old_border, 0, SPIF_UPDATEINIFILE );
     }
-    
+
 #undef TEST_SETBORDER
 }
 
@@ -378,6 +397,7 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     UINT speed;
     char buf[10];
 
+    trace("testing SPI_{GET,SET}KEYBOARDSPEED\n");
     SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &old_speed, 0 );
 
     curr_val = 0;
@@ -388,7 +408,7 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     test_reg_key( SPI_SETKEYBOARDSPEED_REGKEY, SPI_SETKEYBOARDSPEED_VALNAME, buf );
 
     SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &speed, 0 );
-    ok( curr_val == speed, "retrieved value is the same as set" );
+    eq( speed, curr_val, "SPI_{GET,SET}KEYBOARDSPEED", "%d" );
 
     curr_val = 32;
     SystemParametersInfoA( SPI_SETKEYBOARDSPEED, curr_val, 0,
@@ -399,7 +419,7 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     test_reg_key( SPI_SETKEYBOARDSPEED_REGKEY, SPI_SETKEYBOARDSPEED_VALNAME, buf );
 
     SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &speed, 0 );
-    ok( curr_val == speed, "retrieved value is the same as set" );
+    eq( speed, curr_val, "registry modification", "%d");
 
     SystemParametersInfoA( SPI_SETKEYBOARDSPEED, old_speed, 0, SPIF_UPDATEINIFILE );
 }
@@ -411,6 +431,7 @@ static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
     UINT curr_val;
     char buf[10];
 
+    trace("testing SPI_ICONHORIZONTALSPACING\n");
     /* default value: 75 */
     SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &old_spacing, 0 );
 
@@ -423,10 +444,9 @@ static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
                   SPI_ICONHORIZONTALSPACING_VALNAME, buf );
 
     SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
-    ok( curr_val == spacing, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_CXICONSPACING ),
-        "in synch with SM_CXICONSPACING" );
-    
+    eq( spacing, curr_val, "ICONHORIZONTALSPACING", "%d");
+    eq( GetSystemMetrics( SM_CXICONSPACING ), curr_val, "SM_CXICONSPACING", "%d" );
+
     curr_val = 10;
     SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, curr_val, 0,
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
@@ -437,9 +457,8 @@ static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
                   SPI_ICONHORIZONTALSPACING_VALNAME, buf );
 
     SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &spacing, 0 );
-    ok( curr_val == spacing, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_CXICONSPACING ),
-        "in synch with SM_CXICONSPACING" );
+    eq( spacing, curr_val, "ICONHORIZONTALSPACING", "%d" );
+    eq( GetSystemMetrics( SM_CXICONSPACING ), curr_val, "SM_CXICONSPACING", "%d" );
 
     SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, old_spacing, 0,
                           SPIF_UPDATEINIFILE );
@@ -452,6 +471,7 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
     UINT curr_val;
     char buf[10];
 
+    trace("testing SPI_{GET,SET}SCREENSAVETIMEOUT\n");
     SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &old_timeout, 0 );
 
     curr_val = 0;
@@ -463,7 +483,7 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
                   SPI_SETSCREENSAVETIMEOUT_VALNAME, buf );
 
     SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0 );
-    ok( curr_val == timeout, "retrieved value is the same as set" );
+    eq( timeout, curr_val, "SPI_{GET,SET}SCREENSAVETIMEOUT", "%d" );
 
     curr_val = 50000;
     SystemParametersInfoA( SPI_SETSCREENSAVETIMEOUT, curr_val, 0,
@@ -474,7 +494,7 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
                   SPI_SETSCREENSAVETIMEOUT_VALNAME, buf );
 
     SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0 );
-    ok( curr_val == timeout, "retrieved value is the same as set" );
+    eq( timeout, curr_val, "SPI_{GET,SET}SCREENSAVETIMEOUT", "%d" );
 
     SystemParametersInfoA( SPI_SETSCREENSAVETIMEOUT, old_timeout, 0,
                           SPIF_UPDATEINIFILE );
@@ -486,6 +506,7 @@ static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
     BOOL b;
     BOOL curr_val;
 
+    trace("testing SPI_{GET,SET}SCREENSAVEACTIVE\n");
     SystemParametersInfoA( SPI_GETSCREENSAVEACTIVE, 0, &old_b, 0 );
 
     curr_val = TRUE;
@@ -497,7 +518,7 @@ static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETSCREENSAVEACTIVE, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
+    eq( b, curr_val, "SPI_{GET,SET}SCREENSAVEACTIVE", "%d" );
 
     curr_val = FALSE;
     SystemParametersInfoA( SPI_SETSCREENSAVEACTIVE, curr_val, 0,
@@ -508,7 +529,7 @@ static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETSCREENSAVEACTIVE, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
+    eq( b, curr_val, "SPI_{GET,SET}SCREENSAVEACTIVE", "%d" );
 
     SystemParametersInfoA( SPI_SETSCREENSAVEACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
 }
@@ -520,37 +541,37 @@ static void test_SPI_SETGRIDGRANULARITY( void )        /*     19 */
 
 static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
 {
-    UINT old_speed;
-    UINT speed;
+    UINT old_delay;
+    UINT delay;
     UINT curr_val;
     char buf[10];
 
-    SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &old_speed, 0 );
+    trace("testing SPI_{GET,SET}KEYBOARDDELAY\n");
+    SystemParametersInfoA( SPI_GETKEYBOARDDELAY, 0, &old_delay, 0 );
 
     curr_val = 0;
-    SystemParametersInfoA( SPI_SETKEYBOARDSPEED, curr_val, 0,
+    SystemParametersInfoA( SPI_SETKEYBOARDDELAY, curr_val, 0,
                            SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    test_change_message( SPI_SETKEYBOARDSPEED, "" );
+    test_change_message( SPI_SETKEYBOARDDELAY, "" );
     sprintf( buf, "%d", curr_val );
-    test_reg_key( SPI_SETKEYBOARDSPEED_REGKEY,
-                  SPI_SETKEYBOARDSPEED_VALNAME, buf );
+    test_reg_key( SPI_SETKEYBOARDDELAY_REGKEY,
+                  SPI_SETKEYBOARDDELAY_VALNAME, buf );
 
-    SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &speed, 0 );
-    ok( curr_val == speed, "retrieved value is the same as set" );
+    SystemParametersInfoA( SPI_GETKEYBOARDDELAY, 0, &delay, 0 );
+    eq( delay, curr_val, "SPI_{GET,SET}KEYBOARDDELAY", "%d" );
 
-    curr_val = 32;
-    SystemParametersInfoA( SPI_SETKEYBOARDSPEED, curr_val, 0,
+    curr_val = 3;      /* max value */
+    SystemParametersInfoA( SPI_SETKEYBOARDDELAY, curr_val, 0,
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    curr_val = 31;      /* max value */
-    test_change_message( SPI_SETKEYBOARDSPEED, "" );
+    test_change_message( SPI_SETKEYBOARDDELAY, "" );
     sprintf( buf, "%d", curr_val );
-    test_reg_key( SPI_SETKEYBOARDSPEED_REGKEY,
-                  SPI_SETKEYBOARDSPEED_VALNAME, buf );
+    test_reg_key( SPI_SETKEYBOARDDELAY_REGKEY,
+                  SPI_SETKEYBOARDDELAY_VALNAME, buf );
 
-    SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &speed, 0 );
-    ok( curr_val == speed, "retrieved value is the same as set" );
+    SystemParametersInfoA( SPI_GETKEYBOARDDELAY, 0, &delay, 0 );
+    eq( delay, curr_val, "SPI_{GET,SET}KEYBOARDDELAY", "%d" );
 
-    SystemParametersInfoA( SPI_SETKEYBOARDSPEED, old_speed, 0, SPIF_UPDATEINIFILE );
+    SystemParametersInfoA( SPI_SETKEYBOARDDELAY, old_delay, 0, SPIF_UPDATEINIFILE );
 }
 
 static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
@@ -560,6 +581,7 @@ static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
     UINT curr_val;
     char buf[10];
 
+    trace("testing SPI_ICONVERTICALSPACING\n");
     /* default value: 75 */
     SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &old_spacing, 0 );
 
@@ -572,10 +594,9 @@ static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
                   SPI_ICONVERTICALSPACING_VALNAME, buf );
 
     SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &spacing, 0 );
-    ok( curr_val == spacing, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_CYICONSPACING ),
-        "in synch with SM_CYICONSPACING" );
-    
+    eq( spacing, curr_val, "ICONVERTICALSPACING", "%d" );
+    eq( GetSystemMetrics( SM_CYICONSPACING ), curr_val, "SM_CYICONSPACING", "%d" );
+
     curr_val = 10;
     SystemParametersInfoA( SPI_ICONVERTICALSPACING, curr_val, 0,
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
@@ -586,9 +607,8 @@ static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
                   SPI_ICONVERTICALSPACING_VALNAME, buf );
 
     SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &spacing, 0 );
-    ok( curr_val == spacing, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_CYICONSPACING ),
-        "in synch with SM_CYICONSPACING" );
+    eq( spacing, curr_val, "ICONVERTICALSPACING", "%d" );
+    eq( GetSystemMetrics( SM_CYICONSPACING ), curr_val, "SM_CYICONSPACING", "%d" );
 
     SystemParametersInfoA( SPI_ICONVERTICALSPACING, old_spacing, 0,
                           SPIF_UPDATEINIFILE );
@@ -600,10 +620,13 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
     BOOL b;
     BOOL curr_val;
 
-    /* These tests hang when XFree86 4.0 for Windows is running (tested on WinNT, SP2,
-       Cygwin/XFree 4.1.0. Skip the test when XFree86 is running. */
+    /* These tests hang when XFree86 4.0 for Windows is running (tested on 
+     * WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is 
+     * running.
+     */
     if (!FindWindowA( NULL, "Cygwin/XFree86" ))
     {
+        trace("testing SPI_{GET,SET}ICONTITLEWRAP\n");
         SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &old_b, 0 );
 
         curr_val = TRUE;
@@ -615,7 +638,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
                       curr_val ? "1" : "0" );
 
         SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &b, 0 );
-        ok( curr_val == b, "retrieved value is the same as set" );
+        eq( b, curr_val, "SPI_{GET,SET}ICONTITLEWRAP", "%d" );
 
         curr_val = FALSE;
         SystemParametersInfoA( SPI_SETICONTITLEWRAP, curr_val, 0,
@@ -626,7 +649,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
                       curr_val ? "1" : "0" );
 
         SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &b, 0 );
-        ok( curr_val == b, "retrieved value is the same as set" );
+        eq( b, curr_val, "SPI_{GET,SET}ICONTITLEWRAP", "%d" );
 
         SystemParametersInfoA( SPI_SETICONTITLEWRAP, old_b, 0, SPIF_UPDATEINIFILE );
     }
@@ -638,6 +661,7 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
     BOOL b;
     BOOL curr_val;
 
+    trace("testing SPI_{GET,SET}MENUDROPALIGNMENT\n");
     SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &old_b, 0 );
 
     curr_val = TRUE;
@@ -649,9 +673,8 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_MENUDROPALIGNMENT ),
-        "In synch with SM_MENUDROPALIGNMENT" );
+    eq( b, curr_val, "SPI_{GET,SET}MENUDROPALIGNMENT", "%d" );
+    eq( GetSystemMetrics( SM_MENUDROPALIGNMENT ), curr_val, "SM_MENUDROPALIGNMENT", "%d" );
 
     curr_val = FALSE;
     SystemParametersInfoA( SPI_SETMENUDROPALIGNMENT, curr_val, 0,
@@ -662,9 +685,8 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_MENUDROPALIGNMENT ),
-        "In synch with SM_MENUDROPALIGNMENT" );
+    eq( b, curr_val, "SPI_{GET,SET}MENUDROPALIGNMENT", "%d" );
+    eq( GetSystemMetrics( SM_MENUDROPALIGNMENT ), curr_val, "SM_MENUDROPALIGNMENT", "%d" );
 
     SystemParametersInfoA( SPI_SETMENUDROPALIGNMENT, old_b, 0,
                            SPIF_UPDATEINIFILE );
@@ -676,6 +698,7 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
     UINT curr_val;
     char buf[10];
 
+    trace("testing SPI_SETDOUBLECLKWIDTH\n");
     old_width = GetSystemMetrics( SM_CXDOUBLECLK );
 
     curr_val = 0;
@@ -685,8 +708,7 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
     sprintf( buf, "%d", curr_val );
     test_reg_key( SPI_SETDOUBLECLKWIDTH_REGKEY,
                   SPI_SETDOUBLECLKWIDTH_VALNAME, buf );
-    ok( curr_val == GetSystemMetrics( SM_CXDOUBLECLK ),
-        "retrieved value is the same as set" );
+    eq( GetSystemMetrics( SM_CXDOUBLECLK ), curr_val, "SM_CXDOUBLECLK", "%d" );
 
     curr_val = 10000;
     SystemParametersInfoA( SPI_SETDOUBLECLKWIDTH, curr_val, 0,
@@ -695,8 +717,7 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
     sprintf( buf, "%d", curr_val );
     test_reg_key( SPI_SETDOUBLECLKWIDTH_REGKEY,
                   SPI_SETDOUBLECLKWIDTH_VALNAME, buf );
-    ok( curr_val == GetSystemMetrics( SM_CXDOUBLECLK ),
-        "retrieved value is the same as set" );
+    eq( GetSystemMetrics( SM_CXDOUBLECLK ), curr_val, "SM_CXDOUBLECLK", "%d" );
 
     SystemParametersInfoA( SPI_SETDOUBLECLKWIDTH, old_width, 0,
                           SPIF_UPDATEINIFILE );
@@ -708,6 +729,7 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
     UINT curr_val;
     char buf[10];
 
+    trace("testing SPI_SETDOUBLECLKHEIGHT\n");
     old_height = GetSystemMetrics( SM_CYDOUBLECLK );
 
     curr_val = 0;
@@ -717,8 +739,7 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
     sprintf( buf, "%d", curr_val );
     test_reg_key( SPI_SETDOUBLECLKHEIGHT_REGKEY,
                   SPI_SETDOUBLECLKHEIGHT_VALNAME, buf );
-    ok( curr_val == GetSystemMetrics( SM_CYDOUBLECLK ),
-        "retrieved value is the same as set" );
+    eq( GetSystemMetrics( SM_CYDOUBLECLK ), curr_val, "SM_CYDOUBLECLK", "%d" );
 
     curr_val = 10000;
     SystemParametersInfoA( SPI_SETDOUBLECLKHEIGHT, curr_val, 0,
@@ -727,8 +748,7 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
     sprintf( buf, "%d", curr_val );
     test_reg_key( SPI_SETDOUBLECLKHEIGHT_REGKEY,
                   SPI_SETDOUBLECLKHEIGHT_VALNAME, buf );
-    ok( curr_val == GetSystemMetrics( SM_CYDOUBLECLK ),
-        "retrieved value is the same as set" );
+    eq( GetSystemMetrics( SM_CYDOUBLECLK ), curr_val, "SM_CYDOUBLECLK", "%d" );
 
     SystemParametersInfoA( SPI_SETDOUBLECLKHEIGHT, old_height, 0,
                           SPIF_UPDATEINIFILE );
@@ -741,6 +761,7 @@ static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
     UINT old_time;
     char buf[10];
 
+    trace("testing SPI_SETDOUBLECLICKTIME\n");
     old_time = GetDoubleClickTime();
 
     curr_val = 0;
@@ -751,8 +772,7 @@ static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
     test_reg_key( SPI_SETDOUBLECLICKTIME_REGKEY,
                   SPI_SETDOUBLECLICKTIME_VALNAME, buf );
     curr_val = 500; /* used value for 0 */
-    ok( curr_val ==  GetDoubleClickTime(),
-        "retrieved value is the same as set" );
+    eq( GetDoubleClickTime(), curr_val, "GetDoubleClickTime", "%d" );
 
     curr_val = 1000;
     SystemParametersInfoA( SPI_SETDOUBLECLICKTIME, curr_val, 0,
@@ -761,8 +781,7 @@ static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
     sprintf( buf, "%d", curr_val );
     test_reg_key( SPI_SETDOUBLECLICKTIME_REGKEY,
                   SPI_SETDOUBLECLICKTIME_VALNAME, buf );
-    ok( curr_val ==  GetDoubleClickTime(),
-        "retrieved value is the same as set" );
+    eq( GetDoubleClickTime(), curr_val, "GetDoubleClickTime", "%d" );
 
     saved_val = curr_val;
 
@@ -772,16 +791,14 @@ static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
     test_reg_key( SPI_SETDOUBLECLICKTIME_REGKEY,
                   SPI_SETDOUBLECLICKTIME_VALNAME, buf );
     curr_val = 500; /* used value for 0 */
-    ok( curr_val ==  GetDoubleClickTime(),
-        "retrieved value is the same as set" );
+    eq( GetDoubleClickTime(), curr_val, "GetDoubleClickTime", "%d" );
 
     curr_val = 1000;
     SetDoubleClickTime( curr_val );
     sprintf( buf, "%d", saved_val );
     test_reg_key( SPI_SETDOUBLECLICKTIME_REGKEY,
                   SPI_SETDOUBLECLICKTIME_VALNAME, buf );
-    ok( curr_val ==  GetDoubleClickTime(),
-        "retrieved value is the same as set" );
+    eq( GetDoubleClickTime(), curr_val, "GetDoubleClickTime", "%d" );
 
     SystemParametersInfoA(SPI_SETDOUBLECLICKTIME, old_time, 0, SPIF_UPDATEINIFILE);
 }
@@ -791,6 +808,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
     BOOL old_b;
     BOOL curr_val;
 
+    trace("testing SPI_SETMOUSEBUTTONSWAP\n");
     old_b = GetSystemMetrics( SM_SWAPBUTTON );
 
     curr_val = TRUE;
@@ -800,8 +818,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
     test_reg_key( SPI_SETMOUSEBUTTONSWAP_REGKEY,
                   SPI_SETMOUSEBUTTONSWAP_VALNAME,
                   curr_val ? "1" : "0" );
-    ok( curr_val == GetSystemMetrics( SM_SWAPBUTTON ),
-        "In synch with SM_SWAPBUTTON" );
+    eq( GetSystemMetrics( SM_SWAPBUTTON ), curr_val, "SM_SWAPBUTTON", "%d" );
 
     curr_val = FALSE;
     SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, curr_val, 0,
@@ -810,8 +827,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
     test_reg_key( SPI_SETMOUSEBUTTONSWAP_REGKEY,
                   SPI_SETMOUSEBUTTONSWAP_VALNAME,
                   curr_val ? "1" : "0" );
-    ok( curr_val == GetSystemMetrics( SM_SWAPBUTTON ),
-        "In synch with SM_SWAPBUTTON" );
+    eq( GetSystemMetrics( SM_SWAPBUTTON ), curr_val, "SM_SWAPBUTTON", "%d" );
 
     SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, old_b, 0,
                            SPIF_UPDATEINIFILE );
@@ -855,6 +871,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
     BOOL b;
     BOOL curr_val;
 
+    trace("testing SPI_{GET,SET}DRAGFULLWINDOWS\n");
     SystemParametersInfoA( SPI_GETDRAGFULLWINDOWS, 0, &old_b, 0 );
 
     curr_val = TRUE;
@@ -866,7 +883,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETDRAGFULLWINDOWS, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
+    eq( b, curr_val, "SPI_{GET,SET}DRAGFULLWINDOWS", "%d" );
 
     curr_val = FALSE;
     SystemParametersInfoA( SPI_SETDRAGFULLWINDOWS, curr_val, 0,
@@ -877,7 +894,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETDRAGFULLWINDOWS, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
+    eq( b, curr_val, "SPI_{GET,SET}DRAGFULLWINDOWS", "%d" );
 
     SystemParametersInfoA( SPI_SETDRAGFULLWINDOWS, old_b, 0, SPIF_UPDATEINIFILE );
 }
@@ -889,6 +906,7 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
     RECT area;
     RECT curr_val;
 
+    trace("testing SPI_{GET,SET}WORKAREA\n");
     SystemParametersInfoA(SPI_GETWORKAREA, 0, &old_area, 0);
 
     curr_val.left = 1;
@@ -899,14 +917,10 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
                            SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     test_change_message( SPI_SETWORKAREA, "" );
     SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
-    ok( curr_val.left    == area.left,
-        "retrieved value is the same as set" );
-    ok( curr_val.top     == area.top,
-       "retrieved value is the same as set" );
-    ok( curr_val.right   == area.right,
-        "retrieved value is the same as set" );
-    ok( curr_val.bottom  == area.bottom,
-        "retrieved value is the same as set" );
+    eq( area.left,   curr_val.left,   "left",   "%d" );
+    eq( area.top,    curr_val.top,    "top",    "%d" );
+    eq( area.right,  curr_val.right,  "right",  "%d" );
+    eq( area.bottom, curr_val.bottom, "bottom", "%d" );
 
     curr_val.left = 2;
     curr_val.top = 2;
@@ -916,14 +930,10 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     test_change_message( SPI_SETWORKAREA, "" );
     SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
-    ok( curr_val.left    == area.left,
-        "retrieved value is the same as set" );
-    ok( curr_val.top     == area.top,
-       "retrieved value is the same as set" );
-    ok( curr_val.right   == area.right,
-        "retrieved value is the same as set" );
-    ok( curr_val.bottom  == area.bottom,
-        "retrieved value is the same as set" );
+    eq( area.left,   curr_val.left,   "left",   "%d" );
+    eq( area.top,    curr_val.top,    "top",    "%d" );
+    eq( area.right,  curr_val.right,  "right",  "%d" );
+    eq( area.bottom, curr_val.bottom, "bottom", "%d" );
 
     SystemParametersInfoA(SPI_SETWORKAREA, 0, &old_area, SPIF_UPDATEINIFILE);
 }
@@ -934,6 +944,7 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
     BOOL b;
     BOOL curr_val;
 
+    trace("testing SPI_{GET,SET}SHOWSOUNDS\n");
     SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &old_b, 0 );
 
     curr_val = TRUE;
@@ -945,9 +956,8 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_SHOWSOUNDS ),
-        "in synch with SM_SHOWSOUNDS" );
+    eq( b, curr_val, "SPI_GETSHOWSOUNDS", "%d" );
+    eq( GetSystemMetrics( SM_SHOWSOUNDS ), curr_val, "SM_SHOWSOUNDS", "%d" );
 
     curr_val = FALSE;
     SystemParametersInfoA( SPI_SETSHOWSOUNDS, curr_val, 0,
@@ -958,9 +968,8 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
                   curr_val ? "1" : "0" );
 
     SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &b, 0 );
-    ok( curr_val == b, "retrieved value is the same as set" );
-    ok( curr_val == GetSystemMetrics( SM_SHOWSOUNDS ),
-        "in synch with SM_SHOWSOUNDS" );
+    eq( b, curr_val, "SPI_GETSHOWSOUNDS", "%d" );
+    eq( GetSystemMetrics( SM_SHOWSOUNDS ), curr_val, "SM_SHOWSOUNDS", "%d" );
 
     SystemParametersInfoA( SPI_SETSHOWSOUNDS, old_b, 0, SPIF_UPDATEINIFILE );
 }
