@@ -939,8 +939,12 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 
       /* check for path delimiters and reproduce them */
       if ( longpath[lp] == '\\' || longpath[lp] == '/' ) {
-	tmpshortpath[sp] = longpath[lp];
-	sp++;
+	if (!sp || tmpshortpath[sp-1]!= '\\') 
+        {
+	    /* strip double "\\" */
+	    tmpshortpath[sp] = '\\';
+	    sp++;
+        }
 	lp++;
 	continue;
       }
@@ -967,6 +971,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
       SetLastError ( ERROR_FILE_NOT_FOUND );
       return 0;
     }
+    tmpshortpath[sp] = 0;
 
     lstrcpynA ( shortpath, tmpshortpath, shortlen );
     TRACE("returning %s\n", debugstr_a(shortpath) );
