@@ -281,7 +281,7 @@ POPUPMENU *MENU_GetMenu(HMENU hMenu)
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hMenu);
     if (!IS_A_MENU(menu)) 
     {
-        ERR("invalid menu handle=%x, ptr=%p, magic=%x\n", hMenu, menu, menu? menu->wMagic:0); 
+        WARN("invalid menu handle=%x, ptr=%p, magic=%x\n", hMenu, menu, menu? menu->wMagic:0); 
         menu = NULL;
     }
     return menu;
@@ -1887,18 +1887,16 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
 
     /* Find where to insert new item */
 
-    if ((pos==(UINT)-1) || ((flags & MF_BYPOSITION) && (pos == menu->nItems))) {
-        /* Special case: append to menu */
-        /* Some programs specify the menu length to do that */
-        pos = menu->nItems;
+    if (flags & MF_BYPOSITION) {
+        if (pos > menu->nItems) 
+            pos = menu->nItems;
     } else {
         if (!MENU_FindItem( &hMenu, &pos, flags )) 
-        {
-            FIXME("item %x not found\n", pos );
-            return NULL;
+            pos = menu->nItems;
+        else {
+            if (!(menu = MENU_GetMenu( hMenu )))
+                return NULL;
         }
-        if (!(menu = MENU_GetMenu(hMenu)))
-            return NULL;
     }
 
     /* Create new items array */
