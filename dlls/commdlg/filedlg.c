@@ -1368,23 +1368,19 @@ static BOOL Commdlg_GetFileNameW( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
  *    TRUE on succes: user enters a valid file
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
- * BUGS
- *    unknown, calls its 16-bit equivalent.
  */
 BOOL WINAPI GetOpenFileNameA(
-                             LPOPENFILENAMEA ofn /* address of init structure */
-                             )
+	LPOPENFILENAMEA ofn) /* address of init structure */
 {
-    if( (TWEAK_WineLook>WIN31_LOOK) &&
-	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
+    if(TWEAK_WineLook>WIN31_LOOK)
     {
         return GetFileDialog95A(ofn, OPEN_DIALOG);
     }
     else
     {
-   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
-   return Commdlg_GetFileNameA(dofunction,ofn);
-}
+       BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
+       return Commdlg_GetFileNameA(dofunction,ofn);
+    }
 }
 
 /***********************************************************************
@@ -1396,23 +1392,19 @@ BOOL WINAPI GetOpenFileNameA(
  *    TRUE on succes: user enters a valid file
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
- * BUGS
- *    unknown, calls its 16-bit equivalent.
  */
 BOOL WINAPI GetOpenFileNameW(
-                             LPOPENFILENAMEW ofn /* address of init structure */
-                             )
+	LPOPENFILENAMEW ofn) /* address of init structure */
 {
-    if( (TWEAK_WineLook>WIN31_LOOK) &&
-	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
+    if(TWEAK_WineLook>WIN31_LOOK)
     {
         return GetFileDialog95W(ofn, OPEN_DIALOG);
     }
     else
     {
-   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
-   return Commdlg_GetFileNameW(dofunction,ofn);
-}
+       BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
+       return Commdlg_GetFileNameW(dofunction,ofn);
+    }
 }
 
 /***********************************************************************
@@ -1424,18 +1416,16 @@ BOOL WINAPI GetOpenFileNameW(
  *    TRUE on succes: user enters a valid file
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
- * BUGS
- *    unknown, calls its 16-bit equivalent.
  */
 BOOL WINAPI GetSaveFileNameA(
-                             LPOPENFILENAMEA ofn /* address of init structure */
-                             )
+	LPOPENFILENAMEA ofn) /* address of init structure */
 {
-    if( (TWEAK_WineLook>WIN31_LOOK) &&
-	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
+    if(TWEAK_WineLook>WIN31_LOOK)
     {
         return GetFileDialog95A(ofn, SAVE_DIALOG);
-    } else {
+    } 
+    else
+    {
 	BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
 	return Commdlg_GetFileNameA(dofunction,ofn);
     }
@@ -1450,18 +1440,16 @@ BOOL WINAPI GetSaveFileNameA(
  *    TRUE on succes: user enters a valid file
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
- * BUGS
- *    unknown, calls its 16-bit equivalent.
  */
 BOOL WINAPI GetSaveFileNameW(
-                             LPOPENFILENAMEW ofn /* address of init structure */
-                             )
+	LPOPENFILENAMEW ofn) /* address of init structure */
 {
-    if( (TWEAK_WineLook>WIN31_LOOK) &&
-	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
+    if( TWEAK_WineLook>WIN31_LOOK)
     {
         return GetFileDialog95W(ofn, SAVE_DIALOG);
-    } else {
+    } 
+    else
+    {
 	BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
 	return Commdlg_GetFileNameW(dofunction,ofn);
     }
