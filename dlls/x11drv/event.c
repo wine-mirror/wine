@@ -382,17 +382,6 @@ inline static BOOL can_activate_window( HWND hwnd )
 
 
 /**********************************************************************
- *              set_focus_error_handler
- *
- * Handler for X errors happening during XSetInputFocus call.
- */
-static int set_focus_error_handler( Display *display, XErrorEvent *event, void *arg )
-{
-    return (event->error_code == BadMatch);
-}
-
-
-/**********************************************************************
  *              set_focus
  */
 static void set_focus( HWND hwnd, Time time )
@@ -409,12 +398,10 @@ static void set_focus( HWND hwnd, Time time )
 
     if (win)
     {
-        Display *display = thread_display();
         TRACE( "setting focus to %p (%lx) time=%ld\n", focus, win, time );
-        X11DRV_expect_error( display, set_focus_error_handler, NULL );
-        XSetInputFocus( display, win, RevertToParent, time );
-        XSync( display, False );
-        if (X11DRV_check_error()) TRACE("got BadMatch, ignoring\n" );
+        wine_tsx11_lock();
+        XSetInputFocus( thread_display(), win, RevertToParent, time );
+        wine_tsx11_unlock();
     }
 }
 

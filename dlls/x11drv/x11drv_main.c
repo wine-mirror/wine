@@ -38,6 +38,18 @@
 #include <X11/XKBlib.h>
 #endif
 
+#define BOOL X_BOOL
+#define BYTE X_BYTE
+#define INT8 X_INT8
+#define INT16 X_INT16
+#define INT32 X_INT32
+#include <X11/Xproto.h>
+#undef BOOL
+#undef BYTE
+#undef INT8
+#undef INT16
+#undef INT32
+
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -100,6 +112,18 @@ static int (*old_error_handler)( Display *, XErrorEvent * );
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
 /***********************************************************************
+ *		ignore_error
+ *
+ * Check if the X error is one we can ignore.
+ */
+static inline BOOL ignore_error( Display *display, XErrorEvent *event )
+{
+    if (event->request_code == X_SetInputFocus && event->error_code == BadMatch) return TRUE;
+    return FALSE;
+}
+
+
+/***********************************************************************
  *		X11DRV_expect_error
  *
  * Setup a callback function that will be called on an X error.  The
@@ -145,9 +169,16 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
     {
         if ((err_callback_result = err_callback( display, error_evt, err_callback_arg )))
         {
-            TRACE( "got expected error\n" );
+            TRACE( "got expected error %d req %d\n",
+                   error_evt->error_code, error_evt->request_code );
             return 0;
         }
+    }
+    if (ignore_error( display, error_evt ))
+    {
+        TRACE( "got ignored error %d req %d\n",
+               error_evt->error_code, error_evt->request_code );
+        return 0;
     }
     if (synchronous) DebugBreak();  /* force an entry in the debugger */
     old_error_handler( display, error_evt );
