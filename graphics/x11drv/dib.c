@@ -3793,6 +3793,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   BITMAPINFOHEADER *bi = &bmi->bmiHeader;
   INT effHeight, totalSize;
   BITMAP bm;
+  LPVOID mapBits = NULL;
   
   TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
 	bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
@@ -3814,8 +3815,21 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
     ? bi->biSizeImage : bm.bmWidthBytes * effHeight;
   
   if (section)
-    bm.bmBits = MapViewOfFile(section, FILE_MAP_ALL_ACCESS, 
-			      0L, offset, totalSize);
+  {
+      SYSTEM_INFO SystemInfo;
+      DWORD mapOffset;
+      INT mapSize;
+
+      GetSystemInfo( &SystemInfo );
+      mapOffset = offset - (offset % SystemInfo.dwAllocationGranularity);
+      mapSize = totalSize + (offset - mapOffset);
+      mapBits = MapViewOfFile( section,
+			       FILE_MAP_ALL_ACCESS, 
+			       0L,
+			       mapOffset,
+			       mapSize );
+      bm.bmBits = (char *)mapBits + (offset - mapOffset);
+  }
   else if (ovr_pitch && offset)
     bm.bmBits = (LPVOID) offset;
   else {
@@ -3916,7 +3930,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       if (bm.bmBits)
         {
 	  if (section)
-	    UnmapViewOfFile(bm.bmBits), bm.bmBits = NULL;
+	    UnmapViewOfFile(mapBits), bm.bmBits = NULL;
 	  else if (!offset)
 	    VirtualFree(bm.bmBits, 0L, MEM_RELEASE), bm.bmBits = NULL;
         }

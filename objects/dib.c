@@ -930,7 +930,12 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
         if (dib->dsBm.bmBits)
         {
             if (dib->dshSection)
-                UnmapViewOfFile(dib->dsBm.bmBits);
+	    {
+		SYSTEM_INFO SystemInfo;
+		GetSystemInfo( &SystemInfo );
+		UnmapViewOfFile( (char *)dib->dsBm.bmBits -
+				 (dib->dsOffset % SystemInfo.dwAllocationGranularity) );
+	    }
             else if (!dib->dsOffset)
                 VirtualFree(dib->dsBm.bmBits, 0L, MEM_RELEASE );
         }
