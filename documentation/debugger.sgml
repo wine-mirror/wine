@@ -143,7 +143,7 @@ winedbg "hl.exe -windowed"
           <command>attach</command> command, pick up the
           <varname>wpid</varname> of the <varname>W-process</varname>
           you want to debug. This is (for now) a neat feature for the
-          following reasons: 
+          following reasons:
         </para>
         <itemizedlist>
           <listitem>
@@ -164,7 +164,7 @@ winedbg "hl.exe -windowed"
           When an exception occurs, Wine checks if the <varname>W-process</varname> is
           debugged. If so, the exception event is sent to the
           debugger, which takes care of it: end of the story. This
-          mechanism is part of the standard Windows' debugging API. 
+          mechanism is part of the standard Windows' debugging API.
         </para>
         <para>
           If the <varname>W-process</varname> is not debugged, Wine
@@ -341,7 +341,7 @@ winedbg "hl.exe -windowed"
       |          |       |Argument(s). This one is a win16 segmented pointer.
       |          |Function called.
       |The module, the function is called in. In this case it is KERNEL.
-		        
+
 |Ret  KERNEL.90: LSTRLEN() retval=0x0004 ret=01e7:2ce7 ds=0227
                                   ^^^^^^
 				  |Returnvalue is 16 bit and has the value 4.
@@ -421,7 +421,7 @@ winedbg "hl.exe -windowed"
           then enter its internal debugger and you can proceed as
           explained above. Also, you can use
           <parameter>--debug</parameter> switch and then you can get into
-          internal debugger by pressing 
+          internal debugger by pressing
           <keycombo><keycap>Ctrl</keycap><keycap>C</keycap></keycombo> in
           the terminal where you run Wine.
         </para>
@@ -535,7 +535,7 @@ call KERNEL.LSTRLEN
 
         <para>
           Let's debug the infamous Word <filename>SHARE.EXE</filename>
-          messagebox: 
+          messagebox:
         </para>
         <screen>
 |marcus@jet $ wine winword.exe
@@ -612,7 +612,7 @@ call KERNEL.LSTRLEN
                                    ^^^^^^ HFILE_ERROR16, yes, it failed.
 
 |Call USER.1: MESSAGEBOX(0x0000,0x09278376"Sie mussen Windows verlassen und SHARE.EXE laden bevor Sie Word starten.",0x00000000,0x1030) ret=060f:084f ds=0927
-        </screen>           
+        </screen>
         <para>
           And MessageBox'ed.
         </para>
@@ -754,7 +754,7 @@ Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
             <variablelist>
               <varlistentry>
                 <term>
-                  <application>IDA</application>: 
+                  <application>IDA</application>:
                   <filename>
                     <ulink url="ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip">
                       ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip</ulink>
@@ -1041,7 +1041,7 @@ wine -debug myprog.exe
           Those options can be read/written while inside
           <command>WineDbg</command>, as part of the debugger
           expressions. To refer to one of these options, its name must
-          be  prefixed by a <literal>$</literal> sign. For example, 
+          be  prefixed by a <literal>$</literal> sign. For example,
         </para>
         <programlisting>
 set $BreakAllThreadsStartup = 1
@@ -1134,8 +1134,8 @@ set $BreakAllThreadsStartup = 1
               <listitem>
                 <para>
                   Set to <literal>TRUE</literal> if the debugger stops
-                  when a DLL is loaded into memory; when the debugger 
-                  is invoked after a crash, the DLLs already mapped in 
+                  when a DLL is loaded into memory; when the debugger
+                  is invoked after a crash, the DLLs already mapped in
                   memory will not trigger this break.
                   <literal>FALSE</literal> by default.
                 </para>
@@ -1152,7 +1152,7 @@ set $BreakAllThreadsStartup = 1
               <term><varname>ConChannelMask</varname></term>
               <listitem>
                 <para>
-                  Mask of active debugger output channels on console 
+                  Mask of active debugger output channels on console
                 </para>
               </listitem>
             </varlistentry>
@@ -1213,7 +1213,7 @@ UseXTerm = 1
           </orderedlist>
           <para>
             Those variables also allow, for example for debugging
-            purposes, to use: 
+            purposes, to use:
           </para>
           <screen>
 ConChannelMask = 0xfff
@@ -1233,7 +1233,7 @@ UseXTerm = 1
             on.
           </para>
         </sect3>
-        
+
         <sect3>
           <title>Context information</title>
 
@@ -1300,11 +1300,11 @@ mode 32		switch to 32 bit mode
 
         <screen>
 cont		continue execution until next breakpoint or exception.
-pass		pass the exception event up to the filter chain. 
+pass		pass the exception event up to the filter chain.
 step		continue execution until next C line of code (enters
 		function call)
 next 		continue execution until next C line of code (doesn't
-		enter function call) 
+		enter function call)
 stepi		execute next assembly instruction (enters function
 		call)
 nexti		execute next assembly instruction (doesn't enter
@@ -1329,7 +1329,7 @@ cond N		removes any a existing condition to (break|watch)point N
 cond N &lt;expr&gt;	adds condition &lt;expr&gt; to (break|watch)point N. &lt;expr&gt;
 		will be evaluated each time the breakpoint is hit. If
 		the result is a zero value, the breakpoint isn't
-		triggered 
+		triggered
 break * N	adds a breakpoint at address N
 break &lt;id&gt;	adds a breakpoint at the address of symbol &lt;id&gt;
 break &lt;id&gt; N	adds a breakpoint at the address of symbol &lt;id&gt; (N ?)
@@ -1341,17 +1341,17 @@ watch &lt;id&gt;	adds a watch command (on write) at the address of
 info break	lists all (break|watch)points (with state)
         </screen>
 	<para>
-	  When setting a breakpoint on an &lt;id&gt;, if several symbols with this 
-	  &lt;id&gt; exist, the debugger will prompt for the symbol you want to use. 
+	  When setting a breakpoint on an &lt;id&gt;, if several symbols with this
+	  &lt;id&gt; exist, the debugger will prompt for the symbol you want to use.
 	  Pick up the one you want from its number.
 	</para>
         <para>
-          Alternatively you can specify a DLL in the &lt;id&gt; (for example 
+          Alternatively you can specify a DLL in the &lt;id&gt; (for example
           MYDLL.DLL.myFunc for function myFunc of
           <filename>G:\AnyPath\MyDll.dll)</filename>.
         </para>
         <para>
-          You can use the symbol <emphasis>EntryPoint</emphasis> to stand for 
+          You can use the symbol <emphasis>EntryPoint</emphasis> to stand for
           the entry point of the Dll.
         </para>
       </sect2>
@@ -1370,7 +1370,7 @@ dn		goes down one frame in current thread's stack
 dn N		goes down N frames in current thread's stack
 frame N		set N as the current frame for current thread's stack
 info local	prints information on local variables for current
-		function 
+		function
         </screen>
       </sect2>
 
@@ -1414,7 +1414,7 @@ list foo.c:1,56	lists source lines from line 1 up to 56 in file foo.c
 display		lists the active displays
 info display	(same as above command)
 display &lt;expr&gt;	adds a display for expression &lt;expr&gt;
-display /fmt &lt;expr&gt;	adds a display for expression &lt;expr&gt;. Printing 
+display /fmt &lt;expr&gt;	adds a display for expression &lt;expr&gt;. Printing
 		evaluated &lt;expr&gt; is done using the given format (see
 		print command for more on formats)
 del display N	deletes display #N
@@ -1450,7 +1450,7 @@ info segment N	prints information on segment N
 info segment	lists all allocated segments
 info stack	prints the values on top of the stack
 info map	lists all virtual mappings used by the debugged
-		program 
+		program
 info wnd N	prints information of Window of handle N
 walk wnd	lists all the window hierarchy starting from the
 		desktop window
@@ -1470,13 +1470,13 @@ x &lt;expr&gt;	examines memory at &lt;expr&gt; address
 x /fmt &lt;expr&gt;	examines memory at &lt;expr&gt; address using format /fmt
 print &lt;expr&gt;	prints the value of &lt;expr&gt; (possibly using its type)
 print /fmt &lt;expr&gt;	prints the value of &lt;expr&gt; (possibly using its
-		type) 
-set &lt;lval&gt;=&lt;expr&gt;	writes the value of &lt;expr&gt; in &lt;lval&gt; 
+		type)
+set &lt;lval&gt;=&lt;expr&gt;	writes the value of &lt;expr&gt; in &lt;lval&gt;
 whatis &lt;expr&gt;	prints the C type of expression &lt;expr&gt;
         </screen>
         <para>
           <filename>/fmt</filename> is either <filename>/&lt;letter&gt;</filename> or
-          <filename>/&lt;count&gt;&lt;letter&gt;</filename> letter can be	
+          <filename>/&lt;count&gt;&lt;letter&gt;</filename> letter can be
         </para>
         <screen>
 s =&gt; an ASCII string
@@ -1486,14 +1486,14 @@ x =&gt; 32 bit unsigned hexadecimal integer
 d =&gt; 32 bit signed decimal integer
 w =&gt; 16 bit unsigned hexadecimal integer
 c =&gt; character (only printable 0x20-0x7f are actually
-     printed) 
+     printed)
 b =&gt; 8 bit unsigned hexadecimal integer
         </screen>
       </sect2>
 
       <sect2>
 	<title>Expressions</title>
-	
+
 	<para>
 	  Expressions in Wine Debugger are mostly written in a C form. However, there
 	  are a few discrepancies:
@@ -1506,7 +1506,7 @@ b =&gt; 8 bit unsigned hexadecimal integer
 	    </listitem>
 	    <listitem>
 	      <para>
-	        The debugger will try to distinguish this writing with structure operations. 
+	        The debugger will try to distinguish this writing with structure operations.
 		Therefore, you can only use the previous writing in operations manipulating
 		symbols ({break|watch}points, type information command...).
 	      </para>
@@ -1514,9 +1514,21 @@ b =&gt; 8 bit unsigned hexadecimal integer
 	  </itemizedlist>
 	</para>
       </sect2>
+      <sect2>
+          <title>debug messages</title>
+	      <para>
+               It is possible to turn on and off debug messages as you are debuging using
+               the set command.
+              </para>
+            <screen>
+set + warn win	=&gt; turn on warn on 'win' channel
+set + win	=&gt; turn on warn/fixme/err/trace on 'win' channel
+set - win	=&gt; turn off warn/fixme/err/trace on 'win' channel
+set - fixme	=&gt; turn off the 'fixme' class
+            </screen>
+      </sect2>
 
     </sect1>
-
 
     <sect1 id="dbg-others">
       <title>Other debuggers</title>

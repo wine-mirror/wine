@@ -15,7 +15,13 @@
           construction functions. However, there is still a lot of
           work to be done to polish things up. To make my life
           easier, please follow the guidelines described in this
-          document. 
+          document.
+        </para>
+
+        <para>
+          It is possible to turn on and of debugging output from
+          within the debuger using the set command. Please see the
+          WineDbg Command Reference section for how to do this.
         </para>
       </note>
 
@@ -25,7 +31,7 @@
           <function>fprintf</function>  (or
           <function>printf</function>) to output things. Also, instead
           of writing  FIXMEs in the source, output a FIXME message if
-          you can. 
+          you can.
         </para>
         <para>
           At the end of the document, there is a "Style Guide" for
@@ -46,7 +52,7 @@
               <para>
                 Messages in this class relate to behavior of Wine that
                 does not correspond to standard Windows behavior and
-                that should be fixed. 
+                that should be fixed.
               </para>
               <para>Examples: stubs, semi-implemented features, etc.</para>
             </listitem>
@@ -60,7 +66,7 @@
                 that is, you should output an error message when the
                 code detects a condition which should not happen. In
                 other words, important things that are not warnings
-                (see below), are errors. 
+                (see below), are errors.
               </para>
               <para>
                 Examples: unexpected change in internal state, etc.
@@ -77,7 +83,7 @@
                 when you encounter something unexpected (ex: could not
                 open a file) but the function deals correctly with the
                 situation (that is, according to the docs). If you do
-                not deal correctly with it, output a fixme. 
+                not deal correctly with it, output a fixme.
               </para>
               <para>
                 Examples: fail to access a resource required by the
@@ -368,11 +374,11 @@ void some_func(tabs)
   dbg_decl_str(listbox, 256);                   /* declare the string */
 
   for (i = 0; i &lt; descr->nb_tabs; i++) {
-    descr->tabs[i] = *p++&lt;&lt;1; 
+    descr->tabs[i] = *p++&lt;&lt;1;
     if(TRACING(listbox))                         /* write in it only if
       dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
   }
-  TRACE(listbox, "Listbox %04x: settabstops %s", 
+  TRACE(listbox, "Listbox %04x: settabstops %s",
 	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 }
         </programlisting>
@@ -388,21 +394,21 @@ void some_func(tabs)
   dbg_decl_str(listbox, 256);                   /* declare the string      */
 
   for (i = 0; i &lt; descr->nb_tabs; i++) {
-    descr->tabs[i] = *p++&lt;&lt;1;  
+    descr->tabs[i] = *p++&lt;&lt;1;
     if(TRACING(listbox))                         /* write in it only if
       dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
   }
-  TRACE(listbox, "Listbox %04x: settabstops %s\n", 
+  TRACE(listbox, "Listbox %04x: settabstops %s\n",
 	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 
   dbg_reset_str(listbox);                        /* !!!reset the string!!! */
   for (i = 0; i &lt; descr->extrainfo_nr; i++) {
-    descr->extrainfo = *p+1; 
+    descr->extrainfo = *p+1;
     if(TRACING(listbox))                         /* write in it only if
       dsprintf(listbox,"%3d ",descr->extrainfo); /* we are gonna output it */
   }
 
-  TRACE(listbox, "Listbox %04x: extrainfo %s\n", 
+  TRACE(listbox, "Listbox %04x: extrainfo %s\n",
 	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 
 }
@@ -451,7 +457,7 @@ if(YYY(xxx))
               <para>
                 name the string EXACTLY like the debugging channel on
                 which is going to be output. Please see the above
-                example. 
+                example.
               </para>
             </listitem>
           </itemizedlist>
@@ -566,7 +572,7 @@ LPSTR debugres(const void *id);
             </para>
             <screen>
     --debugmsg +all      -- enables all debug messages
-    --debugmsg -all      -- disables all debug messages   
+    --debugmsg -all      -- disables all debug messages
     --debugmsg yyy+all   -- enables debug messages for class yyy on all
                            channels.
     --debugmsg yyy-all   -- disables debug messages for class yyy on all
@@ -611,7 +617,7 @@ LPSTR debugres(const void *id);
         <para>
           This will result in an executable that, when stripped, is
           about 15%-20% smaller.  Note, however, that you will not be
-          able to effectively debug Wine without these messages.  
+          able to effectively debug Wine without these messages.
         </para>
         <para>
           This feature has not been extensively tested--it may subtly
@@ -631,7 +637,7 @@ LPSTR debugres(const void *id);
         <screen>
 yyy:xxx:fff &lt;message>
 
-where: 
+where:
   yyy = the class (fixme, err, warn, trace)
   xxx = the channel (atom, win, font, etc)
   fff = the function name
@@ -652,7 +658,7 @@ where:
             <para>
               if you want to output the parameters of the function, do
               it as the first thing and include them in parentheses,
-              like this: 
+              like this:
               <programlisting>
 YYY(xxx, "(%d,%p,etc)...\n", par1, par2, ...);
               </programlisting>
@@ -721,7 +727,7 @@ FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
               <programlisting>
 HANDLE32 WINAPI YourFunc(LPCSTR s)
 {
-    FIXME(xxx, "(%s): stub\n", debugstr_a(s)); 
+    FIXME(xxx, "(%s): stub\n", debugstr_a(s));
 }
               </programlisting>
             </para>
@@ -743,8 +749,8 @@ HANDLE32 WINAPI YourFunc(LPCSTR res)
 HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 {
 [...]
-    TRACE(resource, "module=%04x name=%s type=%s\n", 
-		 hModule, debugres(PTR_SEG_TO_LIN(name)), 
+    TRACE(resource, "module=%04x name=%s type=%s\n",
+		 hModule, debugres(PTR_SEG_TO_LIN(name)),
 		 debugres(PTR_SEG_TO_LIN(type)) );
 [...]
 }
@@ -758,7 +764,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
               <literal>MSG</literal> macro. Use it like a
               <function>printf</function>:
               <programlisting>
-MSG( "Definition of drive %d is incorrect!\n", drive ); 
+MSG( "Definition of drive %d is incorrect!\n", drive );
               </programlisting>
               However, note that there are <emphasis>very</emphasis> few
               valid uses of this macro. Most messages are debugging
