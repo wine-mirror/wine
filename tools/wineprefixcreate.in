@@ -26,10 +26,11 @@ usage()
     echo "Usage: $0 [options]"
     echo ""
     echo "Options:"
-    echo "  --help                 Display this message"
-    echo "  --prefix <dir>         Prefix directory to create (defaults to \$WINEPREFIX or ~/.wine)"
-    echo "  --update               Update the prefix directory if it already exists"
-    echo "  --use-wine-tree <dir>  Run from the Wine source tree <dir>"
+    echo "  -h, --help                 Display this message"
+    echo "      --prefix <dir>         Directory to create (default: \$WINEPREFIX or ~/.wine)"
+    echo "  -q, --quiet                Don't print status messages"
+    echo "  -u, --update               Update the prefix directory if it already exists"
+    echo "      --use-wine-tree <dir>  Run from the Wine source tree <dir>"
     echo ""
 }
 
@@ -39,11 +40,12 @@ dlldir="@dlldir@"
 datadir="@datadir@/wine"
 
 do_update=0
+quiet=0
 
 while [ $# -gt 0 ]
 do
     case "$1" in
-        --help)
+        -h|--help)
             usage
             exit 0
             ;;
@@ -51,8 +53,12 @@ do
             WINEPREFIX="$2"
             shift 2
             ;;
-        --update)
+        -u|--update)
             do_update=1
+            shift
+            ;;
+        -q|--quiet)
+            quiet=1
             shift
             ;;
         --use-wine-tree)
@@ -69,6 +75,7 @@ do
             shift 2
             ;;
         *)
+            echo "Unknown option $1"
             usage
             exit 1
             ;;
@@ -77,19 +84,10 @@ done
 
 WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
 
-if [ -d "$WINEPREFIX" ]
-then
-    if [ $do_update = 0 ]
-    then
-        echo "The $WINEPREFIX directory already exists, aborting"
-        exit 1
-    fi
+if [ -d "$WINEPREFIX" ] || mkdir "$WINEPREFIX"; then :
 else
-    if mkdir "$WINEPREFIX"; then :
-    else
-        echo "Could not create $WINEPREFIX, aborting"
-        exit 1
-    fi
+    echo "Could not create $WINEPREFIX, aborting"
+    exit 1
 fi
 
 WINEPREFIX=`cd "$WINEPREFIX" && pwd`
@@ -160,7 +158,13 @@ ${WINELOADER:-wine} rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 
 if [ $do_update = 0 ]
 then
     ${WINESERVER:-wineserver} -w
-    echo "$WINEPREFIX created successfully."
+    if [ $quiet = 0 ]
+    then
+        echo "$WINEPREFIX created successfully."
+    fi
 else
-    echo "$WINEPREFIX updated successfully."
+    if [ $quiet = 0 ]
+    then
+        echo "$WINEPREFIX updated successfully."
+    fi
 fi

@@ -23,9 +23,11 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -48,7 +50,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <stdarg.h>
 
 #include "ntstatus.h"
 #include "thread.h"
@@ -623,6 +624,116 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 
 
 /***********************************************************************
+ *           rm_rf
+ *
+ * Remove a directory and all its contents; helper for create_config_dir.
+ */
+static void rm_rf( const char *path )
+{
+    int err = errno;  /* preserve errno */
+    DIR *dir;
+    char *buffer, *p;
+    struct stat st;
+    struct dirent *de;
+
+    if (!(buffer = malloc( strlen(path) + 256 + 1 ))) goto done;
+    strcpy( buffer, path );
+    p = buffer + strlen(buffer);
+    *p++ = '/';
+
+    if ((dir = opendir( path )))
+    {
+        while ((de = readdir( dir )))
+        {
+            if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
+            strcpy( p, de->d_name );
+            if (unlink( buffer ) != -1) continue;
+            if (errno == EISDIR ||
+                (errno == EPERM && !lstat( buffer, &st ) && S_ISDIR(st.st_mode)))
+            {
+                /* recurse in the sub-directory */
+                rm_rf( buffer );
+            }
+        }
+        closedir( dir );
+    }
+    free( buffer );
+    rmdir( path );
+done:
+    errno = err;
+}
+
+
+/***********************************************************************
+ *           create_config_dir
+ *
+ * Create the wine configuration dir (~/.wine).
+ */
+static void create_config_dir(void)
+{
+    const char *config_dir = wine_get_config_dir();
+    char *tmp_dir;
+    int fd;
+    pid_t pid, wret;
+
+    if (!(tmp_dir = malloc( strlen(config_dir) + sizeof("-XXXXXX") )))
+        fatal_error( "out of memory\n" );
+    strcpy( tmp_dir, config_dir );
+    strcat( tmp_dir, "-XXXXXX" );
+    if ((fd = mkstemps( tmp_dir, 0 )) == -1)
+        fatal_perror( "can't get temp file name for %s", config_dir );
+    close( fd );
+    unlink( tmp_dir );
+    if (mkdir( tmp_dir, 0777 ) == -1)
+        fatal_perror( "cannot create temp dir %s", tmp_dir );
+
+    MESSAGE( "wine: creating configuration directory '%s'...\n", config_dir );
+    pid = fork();
+    if (pid == -1)
+    {
+        rmdir( tmp_dir );
+        fatal_perror( "fork" );
+    }
+    if (!pid)
+    {
+        const char *argv[5];
+
+        argv[0] = "wineprefixcreate";
+        argv[1] = "--quiet";
+        argv[2] = "--prefix";
+        argv[3] = tmp_dir;
+        argv[4] = NULL;
+        wine_exec_wine_binary( argv[0], (char **)argv, NULL );
+        rmdir( tmp_dir );
+        fatal_perror( "could not exec wineprefixcreate" );
+    }
+    else
+    {
+        int status;
+
+        while ((wret = waitpid( pid, &status, 0 )) != pid)
+        {
+            if (wret == -1 && errno != EINTR) fatal_perror( "wait4" );
+        }
+        if (!WIFEXITED(status) || WEXITSTATUS(status))
+        {
+            rm_rf( tmp_dir );
+            fatal_error( "wineprefixcreate failed while creating '%s'.\n", config_dir );
+        }
+    }
+    if (rename( tmp_dir, config_dir ) == -1)
+    {
+        rm_rf( tmp_dir );
+        if (errno != EEXIST && errno != ENOTEMPTY)
+            fatal_perror( "rename '%s' to '%s'", tmp_dir, config_dir );
+        /* else it was probably created by a concurrent wine process */
+    }
+    free( tmp_dir );
+    MESSAGE( "wine: '%s' created successfully.\n", config_dir );
+}
+
+
+/***********************************************************************
  *           server_init_process
  *
  * Start the server and create the initial socket pair.
@@ -632,6 +743,13 @@ void server_init_process(void)
     int size;
     char *oldcwd;
     obj_handle_t dummy_handle;
+    const char *server_dir = wine_get_server_dir();
+
+    if (!server_dir)  /* this means the config dir doesn't exist */
+    {
+        create_config_dir();
+        server_dir = wine_get_server_dir();
+    }
 
     /* retrieve the current directory */
     for (size = 512; ; size *= 2)
@@ -645,7 +763,7 @@ void server_init_process(void)
     }
 
     /* connect to the server */
-    fd_socket = server_connect( oldcwd, wine_get_server_dir() );
+    fd_socket = server_connect( oldcwd, server_dir );
 
     /* switch back to the starting directory */
     if (oldcwd)

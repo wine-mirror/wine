@@ -33,10 +33,11 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
+#include "wine/library.h"
 
-static const char * const server_config_dir = "/.wine";        /* config dir relative to $HOME */
-static const char * const server_root_prefix = "/tmp/.wine-";  /* prefix for server root dir */
-static const char * const server_dir_prefix = "/server-";      /* prefix for server dir */
+static const char server_config_dir[] = "/.wine";        /* config dir relative to $HOME */
+static const char server_root_prefix[] = "/tmp/.wine-";  /* prefix for server root dir */
+static const char server_dir_prefix[] = "/server-";      /* prefix for server dir */
 
 static char *config_dir;
 static char *server_dir;
@@ -100,11 +101,40 @@ inline static void remove_trailing_slashes( char *path )
     while (len > 1 && path[len-1] == '/') path[--len] = 0;
 }
 
+/* initialize the server directory value */
+static void init_server_dir( dev_t dev, ino_t ino )
+{
+    const char *user = wine_get_user_name();
+    char *p;
+
+    server_dir = xmalloc( sizeof(server_root_prefix) + strlen(user) + sizeof(server_dir_prefix) +
+                          2*sizeof(dev) + 2*sizeof(ino) );
+    strcpy( server_dir, server_root_prefix );
+    p = server_dir + sizeof(server_root_prefix) - 1;
+    strcpy( p, user );
+    while (*p)
+    {
+        if (*p == '/') *p = '!';
+        p++;
+    }
+    strcpy( p, server_dir_prefix );
+    p += sizeof(server_dir_prefix) - 1;
+
+    if (sizeof(dev) > sizeof(unsigned long) && dev > ~0UL)
+        sprintf( p, "%lx%08lx-", (unsigned long)(dev >> 32), (unsigned long)dev );
+    else
+        sprintf( p, "%lx-", (unsigned long)dev );
+
+    if (sizeof(ino) > sizeof(unsigned long) && ino > ~0UL)
+        sprintf( p, "%lx%08lx", (unsigned long)(ino >> 32), (unsigned long)ino );
+    else
+        sprintf( p, "%lx", (unsigned long)ino );
+}
+
 /* initialize all the paths values */
 static void init_paths(void)
 {
     struct stat st;
-    char *p;
 
     const char *home = getenv( "HOME" );
     const char *user = NULL;
@@ -139,46 +169,30 @@ static void init_paths(void)
         if (config_dir[0] != '/')
             fatal_error( "invalid directory %s in WINEPREFIX: not an absolute path\n", prefix );
         if (stat( config_dir, &st ) == -1)
-            fatal_perror( "cannot open %s as specified in WINEPREFIX", config_dir );
+        {
+            if (errno != ENOENT)
+                fatal_perror( "cannot open %s as specified in WINEPREFIX", config_dir );
+            fatal_error( "the '%s' directory specified in WINEPREFIX doesn't exist.\n"
+                         "You may want to create it by running 'wineprefixcreate'.\n", config_dir );
+        }
     }
     else
     {
         if (!home) fatal_error( "could not determine your home directory\n" );
         if (home[0] != '/') fatal_error( "your home directory %s is not an absolute path\n", home );
-        config_dir = xmalloc( strlen(home) + strlen(server_config_dir) + 1 );
+        config_dir = xmalloc( strlen(home) + sizeof(server_config_dir) );
         strcpy( config_dir, home );
         remove_trailing_slashes( config_dir );
         strcat( config_dir, server_config_dir );
         if (stat( config_dir, &st ) == -1)
+        {
+            if (errno == ENOENT) return;  /* will be created later on */
             fatal_perror( "cannot open %s", config_dir );
+        }
     }
     if (!S_ISDIR(st.st_mode)) fatal_error( "%s is not a directory\n", config_dir );
 
-    /* build server_dir */
-
-    server_dir = xmalloc( strlen(server_root_prefix) + strlen(user) + strlen( server_dir_prefix ) +
-                          2*sizeof(st.st_dev) + 2*sizeof(st.st_ino) + 2 );
-    strcpy( server_dir, server_root_prefix );
-    p = server_dir + strlen(server_dir);
-    strcpy( p, user );
-    while (*p)
-    {
-        if (*p == '/') *p = '!';
-        p++;
-    }
-    strcpy( p, server_dir_prefix );
-
-    if (sizeof(st.st_dev) > sizeof(unsigned long) && st.st_dev > ~0UL)
-        sprintf( server_dir + strlen(server_dir), "%lx%08lx-",
-                 (unsigned long)(st.st_dev >> 32), (unsigned long)st.st_dev );
-    else
-        sprintf( server_dir + strlen(server_dir), "%lx-", (unsigned long)st.st_dev );
-
-    if (sizeof(st.st_ino) > sizeof(unsigned long) && st.st_ino > ~0UL)
-        sprintf( server_dir + strlen(server_dir), "%lx%08lx",
-                 (unsigned long)(st.st_ino >> 32), (unsigned long)st.st_ino );
-    else
-        sprintf( server_dir + strlen(server_dir), "%lx", (unsigned long)st.st_ino );
+    init_server_dir( st.st_dev, st.st_ino );
 }
 
 /* initialize the argv0 path */
@@ -232,7 +246,21 @@ const char *wine_get_config_dir(void)
 /* return the full name of the server directory (the one containing the socket) */
 const char *wine_get_server_dir(void)
 {
-    if (!server_dir) init_paths();
+    if (!server_dir)
+    {
+        if (!config_dir) init_paths();
+        else
+        {
+            struct stat st;
+
+            if (stat( config_dir, &st ) == -1)
+            {
+                if (errno != ENOENT) fatal_error( "cannot stat %s\n", config_dir );
+                return NULL;  /* will have to try again once config_dir has been created */
+            }
+            init_server_dir( st.st_dev, st.st_ino );
+        }
+    }
     return server_dir;
 }
 
