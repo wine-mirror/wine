@@ -432,7 +432,7 @@ char *
 run_tests (char *logname, const char *tag)
 {
     int nr_of_files = 0, nr_of_tests = 0, i;
-    char *tempdir;
+    char *tempdir, *shorttempdir;
     int logfile;
     char *strres, *eol, *nextline;
     DWORD strsize;
@@ -459,9 +459,17 @@ run_tests (char *logname, const char *tag)
     tempdir = tempnam (0, "wct");
     if (!tempdir)
         report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
-    report (R_DIR, tempdir);
-    if (!CreateDirectory (tempdir, NULL))
+    shorttempdir = strdup (tempdir);
+    if (shorttempdir) {         /* try stable path for ZoneAlarm */
+        strstr (shorttempdir, "wct")[3] = 0;
+        if (CreateDirectoryA (shorttempdir, NULL)) {
+            free (tempdir);
+            tempdir = shorttempdir;
+        } else free (shorttempdir);
+    }
+    if (tempdir != shorttempdir && !CreateDirectoryA (tempdir, NULL))
         report (R_FATAL, "Could not create directory: %s", tempdir);
+    report (R_DIR, tempdir);
 
     xprintf ("Version 3\n");
     strres = extract_rcdata (WINE_BUILD, STRINGRES, &strsize);
