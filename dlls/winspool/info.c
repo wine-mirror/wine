@@ -569,7 +569,7 @@ static LPPRINTER_INFO_2W PRINTER_INFO_2AtoW(HANDLE heap, LPPRINTER_INFO_2A piA)
     piW->pDriverName = asciitounicode(&usBuffer,piA->pDriverName);
     piW->pComment = asciitounicode(&usBuffer,piA->pComment);
     piW->pLocation = asciitounicode(&usBuffer,piA->pLocation);
-    piW->pDevMode = GdiConvertToDevmodeW(piA->pDevMode);
+    piW->pDevMode = piA->pDevMode ? GdiConvertToDevmodeW(piA->pDevMode) : NULL;
     piW->pSepFile = asciitounicode(&usBuffer,piA->pSepFile);
     piW->pPrintProcessor = asciitounicode(&usBuffer,piA->pPrintProcessor);
     piW->pDatatype = asciitounicode(&usBuffer,piA->pDatatype);
@@ -784,7 +784,7 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
 
     if(pDefault) {
         DefaultW.pDatatype = asciitounicode(&usBuffer,pDefault->pDatatype);
-	DefaultW.pDevMode = GdiConvertToDevmodeW(pDefault->pDevMode);
+	DefaultW.pDevMode = pDefault->pDevMode ? GdiConvertToDevmodeW(pDefault->pDevMode) : NULL;
 	DefaultW.DesiredAccess = pDefault->DesiredAccess;
 	pDefaultW = &DefaultW;
     }
