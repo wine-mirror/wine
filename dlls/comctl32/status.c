@@ -647,20 +647,22 @@ STATUSBAR_SetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	part = &self->parts[part_num];
     if (!part) return FALSE;
-    part->style = style;
+
+    if (!(part->style & SBT_OWNERDRAW) && part->text)
+	COMCTL32_Free (part->text);
+    part->text = 0;
+
     if (style & SBT_OWNERDRAW) {
 	part->text = (LPWSTR)text;
     }
     else {
 	/* duplicate string */
-	if (part->text)
-	    COMCTL32_Free (part->text);
-	part->text = 0;
 	if (text && (len = lstrlenA(text))) {
 	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 	    lstrcpyAtoW (part->text, text);
 	}
     }
+    part->style = style;
 
     hdc = GetDC (hwnd);
     STATUSBAR_RefreshPart (hwnd, part, hdc);
@@ -688,20 +690,22 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	part = &self->parts[part_num];
     if (!part) return FALSE;
-    part->style = style;
+
+    if (!(part->style & SBT_OWNERDRAW) && part->text)
+	COMCTL32_Free (part->text);
+    part->text = 0;
+
     if (style & SBT_OWNERDRAW) {
 	part->text = text;
     }
     else {
 	/* duplicate string */
-	if (part->text)
-	    COMCTL32_Free (part->text);
-	part->text = 0;
 	if (text && (len = lstrlenW(text))) {
 	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
 	    lstrcpyW(part->text, text);
 	}
     }
+    part->style = style;
 
     hdc = GetDC (hwnd);
     STATUSBAR_RefreshPart (hwnd, part, hdc);
