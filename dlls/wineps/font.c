@@ -87,6 +87,9 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 	    strcpy(FaceName, "Helvetica");
 	else if(!strcmp(FaceName, "Times New Roman"))
 	    strcpy(FaceName, "Times");
+	else if(!strcmp(FaceName, "Courier New"))
+	    strcpy(FaceName, "Courier");
+
 	for(family = physDev->pi->Fonts; family; family = family->next) {
 	    if(!strcmp(FaceName, family->FamilyName))
 		break;
