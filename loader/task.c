@@ -68,35 +68,12 @@ static TDB *TASK_GetPtr( HTASK16 hTask )
 
 
 /***********************************************************************
- *	     TASK_GetCurrent
- */
-TDB *TASK_GetCurrent(void)
-{
-    return TASK_GetPtr( GetCurrentTask() );
-}
-
-
-/***********************************************************************
  *           GetCurrentTask   (KERNEL32.@)
  */
 HTASK16 WINAPI GetCurrentTask(void)
 {
     return NtCurrentTeb()->htask16;
 }
-
-/***********************************************************************
- *           GetCurrentPDB   (KERNEL.37)
- *
- * UNDOC: returns PSP of KERNEL in high word
- */
-DWORD WINAPI GetCurrentPDB16(void)
-{
-    TDB *pTask;
-
-    if (!(pTask = TASK_GetCurrent())) return 0;
-    return MAKELONG(pTask->hPDB, 0); /* FIXME */
-}
-
 
 /***********************************************************************
  *           GetExePtrHelper
@@ -145,20 +122,6 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
 
     return 0;
 }
-
-/***********************************************************************
- *           GetExePtr   (KERNEL.133)
- */
-HMODULE16 WINAPI WIN16_GetExePtr( HANDLE16 handle )
-{
-    HTASK16 hTask = 0;
-    HMODULE16 hModule = GetExePtrHelper( handle, &hTask );
-    STACK16FRAME *frame = CURRENT_STACK16;
-    frame->ecx = hModule;
-    if (hTask) frame->es = hTask;
-    return hModule;
-}
-
 
 /***********************************************************************
  *           K228   (KERNEL.228)

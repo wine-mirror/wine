@@ -1586,6 +1586,104 @@ void WINAPI FreeLibrary16( HINSTANCE16 handle )
 }
 
 
+/***********************************************************************
+ *          GetModuleHandle16 (KERNEL32.@)
+ */
+HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
+{
+    HMODULE16	hModule = hFirstModule;
+    LPSTR	s;
+    BYTE	len, *name_table;
+    char	tmpstr[MAX_PATH];
+    NE_MODULE *pModule;
+
+    TRACE("(%s)\n", name);
+
+    if (!HIWORD(name)) return GetExePtr(LOWORD(name));
+
+    len = strlen(name);
+    if (!len) return 0;
+
+    lstrcpynA(tmpstr, name, sizeof(tmpstr));
+
+    /* If 'name' matches exactly the module name of a module:
+     * Return its handle.
+     */
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
+    {
+	pModule = NE_GetPtr( hModule );
+        if (!pModule) break;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
+
+        name_table = (BYTE *)pModule + pModule->name_table;
+        if ((*name_table == len) && !strncmp(name, name_table+1, len))
+            return hModule;
+    }
+
+    /* If uppercased 'name' matches exactly the module name of a module:
+     * Return its handle
+     */
+    for (s = tmpstr; *s; s++) *s = FILE_toupper(*s);
+
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
+    {
+	pModule = NE_GetPtr( hModule );
+        if (!pModule) break;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
+
+        name_table = (BYTE *)pModule + pModule->name_table;
+	/* FIXME: the strncasecmp is WRONG. It should not be case insensitive,
+	 * but case sensitive! (Unfortunately Winword 6 and subdlls have
+	 * lowercased module names, but try to load uppercase DLLs, so this
+	 * 'i' compare is just a quickfix until the loader handles that
+	 * correctly. -MM 990705
+	 */
+        if ((*name_table == len) && !FILE_strncasecmp(tmpstr, name_table+1, len))
+            return hModule;
+    }
+
+    /* If the base filename of 'name' matches the base filename of the module
+     * filename of some module (case-insensitive compare):
+     * Return its handle.
+     */
+
+    /* basename: search backwards in passed name to \ / or : */
+    s = tmpstr + strlen(tmpstr);
+    while (s > tmpstr)
+    {
+        if (s[-1]=='/' || s[-1]=='\\' || s[-1]==':')
+		break;
+	s--;
+    }
+
+    /* search this in loaded filename list */
+    for (hModule = hFirstModule; hModule ; hModule = pModule->next)
+    {
+        char		*loadedfn;
+	OFSTRUCT	*ofs;
+
+	pModule = NE_GetPtr( hModule );
+        if (!pModule) break;
+	if (!pModule->fileinfo) continue;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
+
+        ofs = (OFSTRUCT*)((BYTE *)pModule + pModule->fileinfo);
+	loadedfn = ((char*)ofs->szPathName) + strlen(ofs->szPathName);
+	/* basename: search backwards in pathname to \ / or : */
+	while (loadedfn > (char*)ofs->szPathName)
+	{
+	    if (loadedfn[-1]=='/' || loadedfn[-1]=='\\' || loadedfn[-1]==':')
+		    break;
+	    loadedfn--;
+	}
+	/* case insensitive compare ... */
+	if (!FILE_strcasecmp(loadedfn, s))
+	    return hModule;
+    }
+    return 0;
+}
+
+
 /**********************************************************************
  *	    GetModuleName    (KERNEL.27)
  */
