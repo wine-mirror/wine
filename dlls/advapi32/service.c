@@ -1026,6 +1026,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     static const WCHAR szDependencies[] = {
         'D','e','p','e','n','d','e','n','c','i','e','s',0};
     HKEY hKey = ((struct sc_handle*) hService)->u.service.hkey;
+    WCHAR str_buffer[ MAX_PATH ];
     LONG r;
     DWORD type, val, sz, total, n;
     LPBYTE p;
@@ -1036,10 +1037,20 @@ QueryServiceConfigW( SC_HANDLE hService,
     /* calculate the size required first */
     total = sizeof (QUERY_SERVICE_CONFIGW);
 
-    sz = 0;
-    r = RegQueryValueExW( hKey, szImagePath, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-        total += sz;
+    sz = sizeof(str_buffer);
+    r = RegQueryValueExW( hKey, szImagePath, 0, &type, (LPBYTE) str_buffer, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
+    {
+        sz = ExpandEnvironmentStringsW(str_buffer,NULL,0);
+        if( 0 == sz ) return FALSE;
+
+        total += sizeof(WCHAR) * sz;
+    }
+    else
+    {
+       /* FIXME: set last error */
+       return FALSE;
+    }
 
     sz = 0;
     r = RegQueryValueExW( hKey, szGroup, 0, &type, NULL, &sz );
@@ -1091,13 +1102,22 @@ QueryServiceConfigW( SC_HANDLE hService,
     p = (LPBYTE) &lpServiceConfig[1];
     n = total - sizeof (QUERY_SERVICE_CONFIGW);
 
-    sz = n;
-    r = RegQueryValueExW( hKey, szImagePath, 0, &type, p, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    sz = sizeof(str_buffer);
+    r = RegQueryValueExW( hKey, szImagePath, 0, &type, (LPBYTE) str_buffer, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
     {
+        sz = ExpandEnvironmentStringsW(str_buffer, (LPWSTR) p, n);
+        sz *= sizeof(WCHAR);
+        if( 0 == sz || sz > n ) return FALSE;
+
         lpServiceConfig->lpBinaryPathName = (LPWSTR) p;
         p += sz;
         n -= sz;
+    }
+    else
+    {
+       /* FIXME: set last error */
+       return FALSE;
     }
 
     sz = n;
