@@ -773,13 +773,15 @@ INT WINAPI GetDIBits(
 
 /***********************************************************************
  *           CreateDIBitmap    (GDI32.@)
+ *
+ * Creates a DDB (device dependent bitmap) from a DIB.
+ * The DDB will have the same color depth as the reference DC.
  */
 HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
                             DWORD init, LPCVOID bits, const BITMAPINFO *data,
                             UINT coloruse )
 {
     HBITMAP handle;
-    BOOL fColor;
     DWORD width;
     int height;
     WORD bpp;
@@ -789,91 +791,26 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     if (DIB_GetBitmapInfo( header, &width, &height, &bpp, &compr ) == -1) return 0;
     if (height < 0) height = -height;
 
-    /* Check if we should create a monochrome or color bitmap. */
-    /* We create a monochrome bitmap only if it has exactly 2  */
-    /* colors, which are black followed by white, nothing else.  */
-    /* In all other cases, we create a color bitmap.           */
-
-    if (bpp != 1) fColor = TRUE;
-    else if ((coloruse != DIB_RGB_COLORS) || !data) fColor = FALSE;
+    if (hdc == NULL)
+        handle = CreateBitmap( width, height, 1, 1, NULL );
     else
-    {
-        if (data->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-        {
-            RGBQUAD *rgb = data->bmiColors;
-            DWORD col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
-
-	    /* Check if the first color of the colormap is black */
-	    if ((col == RGB(0,0,0)))
-            {
-                rgb++;
-                col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
-		/* If the second color is white, create a monochrome bitmap */
-                fColor =  (col != RGB(0xff,0xff,0xff));
-            }
-	    /* Note : If the first color of the colormap is white
-	       followed by black, we have to create a color bitmap.
-	       If we don't the white will be displayed in black later on!*/
-            else fColor = TRUE;
-        }
-        else if (data->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
-        {
-            RGBTRIPLE *rgb = ((BITMAPCOREINFO *)data)->bmciColors;
-            DWORD col = RGB( rgb->rgbtRed, rgb->rgbtGreen, rgb->rgbtBlue );
-            if ((col == RGB(0,0,0)))
-            {
-                rgb++;
-                col = RGB( rgb->rgbtRed, rgb->rgbtGreen, rgb->rgbtBlue );
-                fColor = (col != RGB(0xff,0xff,0xff));
-            }
-            else fColor = TRUE;
-        }
-        else if (data->bmiHeader.biSize == sizeof(BITMAPV4HEADER))
-        { /* FIXME: correct ? */
-            RGBQUAD *rgb = data->bmiColors;
-            DWORD col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
-
-	    /* Check if the first color of the colormap is black */
-	    if ((col == RGB(0,0,0)))
-            {
-                rgb++;
-                col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
-		/* If the second color is white, create a monochrome bitmap */
-                fColor =  (col != RGB(0xff,0xff,0xff));
-            }
-	    /* Note : If the first color of the colormap is white
-	       followed by black, we have to create a color bitmap.
-	       If we don't the white will be displayed in black later on!*/
-            else fColor = TRUE;
-        }
-        else
-        {
-            ERR("(%ld): wrong/unknown size for data\n",
-                     data->bmiHeader.biSize );
-            return 0;
-        }
-    }
-
-    /* Now create the bitmap */
-
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-
-    if (fColor)
-        handle = CreateBitmap( width, height, GetDeviceCaps( hdc, PLANES ),
-                               GetDeviceCaps( hdc, BITSPIXEL ), NULL );
-    else handle = CreateBitmap( width, height, 1, 1, NULL );
+        handle = CreateCompatibleBitmap( hdc, width, height );
 
     if (handle)
     {
         if (init == CBM_INIT) SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
-        else if (!BITMAP_SetOwnerDC( handle, dc ))
+
+        else if (hdc && ((dc = DC_GetDCPtr( hdc )) != NULL) )
         {
-            DeleteObject( handle );
-            handle = 0;
+            if (!BITMAP_SetOwnerDC( handle, dc ))
+            {
+                DeleteObject( handle );
+                handle = 0;
+            }
+            GDI_ReleaseObj( hdc );
         }
     }
 
-    GDI_ReleaseObj( hdc );
     return handle;
 }
 

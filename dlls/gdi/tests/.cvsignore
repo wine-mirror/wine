@@ -1,4 +1,5 @@
 Makefile
+bitmap.ok
 gdiobj.ok
 generated.ok
 metafile.ok

@@ -224,6 +224,56 @@ static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 }
 
 
+/***********************************************************************
+ *          is_dib_monochrome
+ *
+ * Returns whether a DIB can be converted to a monochrome DDB.
+ *
+ * A DIB can be converted if its color table contains only black and
+ * white. Black must be the first color in the color table.
+ *
+ * Note : If the first color in the color table is white followed by
+ *        black, we can't convert it to a monochrome DDB with
+ *        SetDIBits, because black and white would be inverted.
+ */
+static BOOL is_dib_monochrome( const BITMAPINFO* info )
+{
+    if (info->bmiHeader.biBitCount != 1) return FALSE;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        RGBTRIPLE *rgb = ((BITMAPCOREINFO *) info)->bmciColors;
+    
+        /* Check if the first color is black */
+        if ((rgb->rgbtRed == 0) && (rgb->rgbtGreen == 0) && (rgb->rgbtBlue == 0))
+        {
+            rgb++;
+
+            /* Check if the second color is white */
+            return ((rgb->rgbtRed == 0xff) && (rgb->rgbtGreen == 0xff)
+                 && (rgb->rgbtBlue == 0xff));
+        }
+        else return FALSE;
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        RGBQUAD *rgb = info->bmiColors;
+
+        /* Check if the first color is black */
+        if ((rgb->rgbRed == 0) && (rgb->rgbGreen == 0) &&
+            (rgb->rgbBlue == 0) && (rgb->rgbReserved == 0))
+        {
+            rgb++;
+
+            /* Check if the second color is white */
+            return ((rgb->rgbRed == 0xff) && (rgb->rgbGreen == 0xff)
+                 && (rgb->rgbBlue == 0xff) && (rgb->rgbReserved == 0));
+        }
+        else return FALSE;
+    }
+}
+
+
 /**********************************************************************
  *	    CURSORICON_FindSharedIcon
  */
@@ -657,8 +707,17 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
                 }
 		if (!res) { DeleteObject(hXorBits); hXorBits = 0; }
 	      }
-	    } else hXorBits = CreateDIBitmap( screen_dc, &pInfo->bmiHeader,
-		CBM_INIT, (char*)bmi + size, pInfo, DIB_RGB_COLORS );
+	    } else {
+              if (is_dib_monochrome(bmi)) {
+                  hXorBits = CreateBitmap(width, height, 1, 1, NULL);
+                  SetDIBits(screen_dc, hXorBits, 0, height,
+                     (char*)bmi + size, pInfo, DIB_RGB_COLORS);
+              }
+	      else
+                  hXorBits = CreateDIBitmap(screen_dc, &pInfo->bmiHeader,
+                     CBM_INIT, (char*)bmi + size, pInfo, DIB_RGB_COLORS); 
+	    }
+
 	    if( hXorBits )
 	    {
 		char* xbits = (char *)bmi + size +
@@ -700,9 +759,13 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
                 }
 		if (!res) { DeleteObject(hAndBits); hAndBits = 0; }
 	      }
-	    } else hAndBits = CreateDIBitmap( screen_dc, &pInfo->bmiHeader,
-	      CBM_INIT, xbits, pInfo, DIB_RGB_COLORS );
+	    } else {
+              hAndBits = CreateBitmap(width, height, 1, 1, NULL);
+              
+              if (hAndBits) SetDIBits(screen_dc, hAndBits, 0, height,
+                             xbits, pInfo, DIB_RGB_COLORS);
 
+	    }
 		if( !hAndBits ) DeleteObject( hXorBits );
 	    }
 	    HeapFree( GetProcessHeap(), 0, pInfo );
@@ -1170,7 +1233,7 @@ HICON WINAPI CreateIcon(
         iinfo.hbmColor = CreateDIBitmap( hdc, &bmi.bmiHeader,
                                          CBM_INIT, lpXORbits,
                                          &bmi, DIB_RGB_COLORS );
-
+        
         hIcon=CreateIconIndirect(&iinfo);
         DeleteObject(iinfo.hbmMask);
         DeleteObject(iinfo.hbmColor);
@@ -1957,7 +2020,7 @@ static void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
 /**********************************************************************
  *       BITMAP_Load
  */
-static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
+static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
 {
     HBITMAP hbitmap = 0;
     HRSRC hRsrc;
@@ -1975,6 +2038,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
           if (HIWORD(name)) return 0;
           instance = user32_module;
       }
+
       if (!(hRsrc = FindResourceW( instance, name, (LPWSTR)RT_BITMAP ))) return 0;
       if (!(handle = LoadResource( instance, hRsrc ))) return 0;
 
@@ -1985,8 +2049,10 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
         if (!(ptr = map_fileW( name ))) return 0;
         info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
     }
+
     size = bitmap_info_size(info, DIB_RGB_COLORS);
     if ((hFix = GlobalAlloc(0, size))) fix_info=GlobalLock(hFix);
+
     if (fix_info) {
       BYTE pix;
 
@@ -1994,9 +2060,11 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
       pix = *((LPBYTE)info + size);
       DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
       if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+
       if (screen_dc)
       {
         char *bits = (char *)info + size;
+
 	if (loadflags & LR_CREATEDIBSECTION) {
           DIBSECTION dib;
 	  hbitmap = CreateDIBSection(screen_dc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
@@ -2005,14 +2073,28 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
                     DIB_RGB_COLORS);
         }
         else {
-          hbitmap = CreateDIBitmap( screen_dc, &fix_info->bmiHeader, CBM_INIT,
-                                      bits, fix_info, DIB_RGB_COLORS );
+            /* If it's possible, create a monochrome bitmap */
+
+            LONG height = fix_info->bmiHeader.biHeight;
+            if (height < 0) height = -height;
+
+            if (is_dib_monochrome(fix_info))
+              hbitmap = CreateBitmap(fix_info->bmiHeader.biWidth, height, 1, 1, NULL);
+            else
+              hbitmap = CreateBitmap(fix_info->bmiHeader.biWidth, height,
+                          GetDeviceCaps(screen_dc, PLANES),
+                          GetDeviceCaps(screen_dc, BITSPIXEL), NULL);
+
+            SetDIBits(screen_dc, hbitmap, 0, height, bits, info, DIB_RGB_COLORS);
 	}
       }
+
       GlobalUnlock(hFix);
       GlobalFree(hFix);
     }
+
     if (loadflags & LR_LOADFROMFILE) UnmapViewOfFile( ptr );
+
     return hbitmap;
 }
 

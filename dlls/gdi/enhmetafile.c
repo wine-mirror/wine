@@ -196,6 +196,55 @@ static const char *get_emr_name(DWORD type)
    return NULL;
 }
 
+/***********************************************************************
+ *          is_dib_monochrome
+ *
+ * Returns whether a DIB can be converted to a monochrome DDB.
+ *
+ * A DIB can be converted if its color table contains only black and
+ * white. Black must be the first color in the color table.
+ *
+ * Note : If the first color in the color table is white followed by
+ *        black, we can't convert it to a monochrome DDB with
+ *        SetDIBits, because black and white would be inverted.
+ */
+static BOOL is_dib_monochrome( const BITMAPINFO* info )
+{
+    if (info->bmiHeader.biBitCount != 1) return FALSE;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        RGBTRIPLE *rgb = ((BITMAPCOREINFO *) info)->bmciColors;
+    
+        /* Check if the first color is black */
+        if ((rgb->rgbtRed == 0) && (rgb->rgbtGreen == 0) && (rgb->rgbtBlue == 0))
+        {
+            rgb++;
+
+            /* Check if the second color is white */
+            return ((rgb->rgbtRed == 0xff) && (rgb->rgbtGreen == 0xff)
+                 && (rgb->rgbtBlue == 0xff));
+        }
+        else return FALSE;
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        RGBQUAD *rgb = info->bmiColors;
+
+        /* Check if the first color is black */
+        if ((rgb->rgbRed == 0) && (rgb->rgbGreen == 0) &&
+            (rgb->rgbBlue == 0) && (rgb->rgbReserved == 0))
+        {
+            rgb++;
+
+            /* Check if the second color is white */
+            return ((rgb->rgbRed == 0xff) && (rgb->rgbGreen == 0xff)
+                 && (rgb->rgbBlue == 0xff) && (rgb->rgbReserved == 0));
+        }
+        else return FALSE;
+    }
+}
+
 /****************************************************************************
  *          EMF_Create_HENHMETAFILE
  */
@@ -1619,11 +1668,30 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_CREATEMONOBRUSH:
     {
-	PEMRCREATEMONOBRUSH pCreateMonoBrush = (PEMRCREATEMONOBRUSH)mr;
-	BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pCreateMonoBrush->offBmi);
-	HBITMAP hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-		(BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
+        PEMRCREATEMONOBRUSH pCreateMonoBrush = (PEMRCREATEMONOBRUSH)mr;
+        BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pCreateMonoBrush->offBmi);
+        HBITMAP hBmp;
+
+        /* Need to check if the bitmap is monochrome, and if the
+           two colors are really black and white */
+        if (is_dib_monochrome(pbi))
+        {
+          /* Top-down DIBs have a negative height */
+          LONG height = pbi->bmiHeader.biHeight;
+          if (height < 0) height = -height;
+
+          hBmp = CreateBitmap(pbi->bmiHeader.biWidth, height, 1, 1, NULL);
+          SetDIBits(hdc, hBmp, 0, pbi->bmiHeader.biHeight,
+              (BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
+        }
+	else
+	{
+	  hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+              (BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
+        }
+
 	(handletable->objectHandle)[pCreateMonoBrush->ihBrush] = CreatePatternBrush(hBmp);
+
 	/* CreatePatternBrush created a copy of the bitmap */
 	DeleteObject(hBmp);
 	break;
@@ -1652,7 +1720,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             SelectObject(hdcSrc, hBrushOld);
             DeleteObject(hBrush);
 
-            hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+            hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
                                   (BYTE *)mr + pBitBlt->offBitsSrc, pbi, pBitBlt->iUsageSrc);
             hBmpOld = SelectObject(hdcSrc, hBmp);
 
@@ -1694,7 +1762,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             SelectObject(hdcSrc, hBrushOld);
             DeleteObject(hBrush);
 
-            hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+            hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
                                   (BYTE *)mr + pStretchBlt->offBitsSrc, pbi, pStretchBlt->iUsageSrc);
             hBmpOld = SelectObject(hdcSrc, hBmp);
 
@@ -1728,11 +1796,13 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	DeleteObject(hBrush);
 
 	pbi = (BITMAPINFO *)((BYTE *)mr + pMaskBlt->offBmiMask);
-	hBmpMask = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-			      (BYTE *)mr + pMaskBlt->offBitsMask, pbi, pMaskBlt->iUsageMask);
+	hBmpMask = CreateBitmap(pbi->bmiHeader.biWidth, pbi->bmiHeader.biHeight,
+	             1, 1, NULL);
+	SetDIBits(hdc, hBmpMask, 0, pbi->bmiHeader.biHeight,
+	  (BYTE *)mr + pMaskBlt->offBitsMask, pbi, pMaskBlt->iUsageMask);
 
 	pbi = (BITMAPINFO *)((BYTE *)mr + pMaskBlt->offBmiSrc);
-	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+	hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
 			      (BYTE *)mr + pMaskBlt->offBitsSrc, pbi, pMaskBlt->iUsageSrc);
 	hBmpOld = SelectObject(hdcSrc, hBmp);
 	MaskBlt(hdc,
@@ -1778,11 +1848,13 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	DeleteObject(hBrush);
 
 	pbi = (BITMAPINFO *)((BYTE *)mr + pPlgBlt->offBmiMask);
-	hBmpMask = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-			      (BYTE *)mr + pPlgBlt->offBitsMask, pbi, pPlgBlt->iUsageMask);
+	hBmpMask = CreateBitmap(pbi->bmiHeader.biWidth, pbi->bmiHeader.biHeight,
+	             1, 1, NULL);
+	SetDIBits(hdc, hBmpMask, 0, pbi->bmiHeader.biHeight,
+	  (BYTE *)mr + pPlgBlt->offBitsMask, pbi, pPlgBlt->iUsageMask);
 
 	pbi = (BITMAPINFO *)((BYTE *)mr + pPlgBlt->offBmiSrc);
-	hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+	hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
 			      (BYTE *)mr + pPlgBlt->offBitsSrc, pbi, pPlgBlt->iUsageSrc);
 	hBmpOld = SelectObject(hdcSrc, hBmp);
 	PlgBlt(hdc,

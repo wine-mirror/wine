@@ -6,6 +6,7 @@ TESTDLL   = gdi32.dll
 IMPORTS   = user32 gdi32
 
 CTESTS = \
+	bitmap.c \
 	gdiobj.c \
 	generated.c \
 	metafile.c
