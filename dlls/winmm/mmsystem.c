@@ -5321,3 +5321,12 @@ void WINAPI WMMMidiRunOnce16(void)
 {
 	FIXME("(), stub!\n");
 }
+
+/**************************************************************************
+ * 			OutputDebugStr	 	[MMSYSTEM.30]
+ */
+void WINAPI OutputDebugStr16(
+    LPCSTR str) /* [in] The message to be logged and given to the debugger. */
+{
+    OutputDebugStringA( str );
+}
