@@ -296,6 +296,12 @@ int DEBUG_ReadLine(const char* pfx, char* buf, int size)
     char*       line = NULL;
     size_t      len = 0;
 
+    /* first alloc of our current buffer */
+    line = HeapAlloc(GetProcessHeap(), 0, len = 2);
+    assert(line);
+    line[0] = '\n';
+    line[1] = '\0';		      
+	
     DEBUG_FetchEntireLine(pfx, &line, &len, FALSE);
     len = strlen(line);
     /* remove trailing \n */
