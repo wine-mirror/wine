@@ -1615,7 +1615,6 @@ static BOOL PROPSHEET_Apply(HWND hwndDlg, LPARAM lParam)
   int i;
   HWND hwndPage;
   PSHNOTIFY psn;
-  LRESULT msgResult;
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwndDlg,
                                                     PropSheetInfoStr);
 
@@ -1649,9 +1648,14 @@ static BOOL PROPSHEET_Apply(HWND hwndDlg, LPARAM lParam)
     hwndPage = psInfo->proppage[i].hwndPage;
     if (hwndPage)
     {
-       msgResult = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
-       if (msgResult == PSNRET_INVALID_NOCHANGEPAGE)
-          return FALSE;
+       switch (SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn))
+       {
+       case PSNRET_INVALID:
+           PROPSHEET_ShowPage(hwndDlg, i, psInfo);
+           /* fall through */
+       case PSNRET_INVALID_NOCHANGEPAGE:
+           return FALSE;
+       }
     }
   }
 
