@@ -207,7 +207,7 @@ int main(int argc,char**argv)
  }
  if (img==(void*)-1) {
   fprintf(stderr,"DOS memory map failed, error=%s\n",strerror(errno));
-  fprintf(stderr,"in attempt to map %s, offset %08lX, length 110000, to offset 0\n",argv[0],fofs);
+  fprintf(stderr,"in attempt to map %s, offset %08lX, length 110000, to offset 0\n",argv[0],(long)fofs);
   return 1;
  }
 /* initialize signals and system timer */

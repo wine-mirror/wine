@@ -246,18 +246,25 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
   return ret_value;
 }
 
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)	(typeof(ddiavt.fun))
+#else
+# define XCAST(fun)	(void*)
+#endif
+
 static ICOM_VTABLE(IDirectInputA) ddiavt = 
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectInputAImpl_QueryInterface,
-	IDirectInputAImpl_AddRef,
-	IDirectInputAImpl_Release,
-	IDirectInputAImpl_CreateDevice,
-	IDirectInputAImpl_EnumDevices,
-	IDirectInputAImpl_GetDeviceStatus,
-	IDirectInputAImpl_RunControlPanel,
-	IDirectInputAImpl_Initialize
+	XCAST(QueryInterface)IDirectInputAImpl_QueryInterface,
+	XCAST(AddRef)IDirectInputAImpl_AddRef,
+	XCAST(Release)IDirectInputAImpl_Release,
+	XCAST(CreateDevice)IDirectInputAImpl_CreateDevice,
+	XCAST(EnumDevices)IDirectInputAImpl_EnumDevices,
+	XCAST(GetDeviceStatus)IDirectInputAImpl_GetDeviceStatus,
+	XCAST(RunControlPanel)IDirectInputAImpl_RunControlPanel,
+	XCAST(Initialize)IDirectInputAImpl_Initialize
 };
+#undef XCAST
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)	(typeof(ddi7avt.fun))
