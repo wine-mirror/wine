@@ -740,11 +740,18 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
                                    HEAP_ZERO_MEMORY, sizeof(*wm) );
     wm->module = hModule;
 
+    if ( builtin ) 
+        wm->flags |= WINE_MODREF_INTERNAL;
+    if ( flags & DONT_RESOLVE_DLL_REFERENCES )
+        wm->flags |= WINE_MODREF_DONT_RESOLVE_REFS;
+    if ( flags & LOAD_LIBRARY_AS_DATAFILE )
+        wm->flags |= WINE_MODREF_LOAD_AS_DATAFILE;
+
     wm->type = MODULE32_PE;
-    wm->binfmt.pe.flags = builtin? PE_MODREF_INTERNAL : 0;
     wm->binfmt.pe.pe_export = pe_export;
     wm->binfmt.pe.pe_import = pe_import;
     wm->binfmt.pe.pe_resource = pe_resource;
+    wm->binfmt.pe.tlsindex = -1;
 
     if ( pe_export ) 
         modname = (char *)RVA( pe_export->Name );
@@ -753,8 +760,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
         /* try to find out the name from the OFSTRUCT */
         char *s;
         modname = ofs->szPathName;
-        while ((s=strchr(modname,'\\')))
-            modname = s+1;
+        if ((s=strrchr(modname,'\\'))) modname = s+1;
     }
     wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
 
@@ -766,8 +772,11 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 
     /* Link MODREF into process list */
 
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+
     wm->next = PROCESS_Current()->modref_list;
     PROCESS_Current()->modref_list = wm;
+    if ( wm->next ) wm->next->prev = wm;
 
     if ( !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) )
     {
@@ -776,6 +785,9 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
         PROCESS_Current()->exe_modref = wm;
     }
 
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+
+
     /* Dump Exports */
 
     if ( pe_export )
@@ -783,16 +795,23 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 
     /* Fixup Imports */
 
-    if ( pe_import && fixup_imports( wm ) ) 
+    if (    pe_import && fixup_imports( wm ) 
+         && !( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE )
+         && !( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS ) ) 
     {
         /* remove entry from modref chain */
-        WINE_MODREF **xwm;
-        for ( xwm = &PROCESS_Current()->modref_list; *xwm; xwm = &(*xwm)->next )
-            if ( *xwm == wm )
-            {
-                *xwm = wm->next;
-                break;
-            }
+        EnterCriticalSection( &PROCESS_Current()->crit_section );
+
+        if ( !wm->prev )
+            PROCESS_Current()->modref_list = wm->next;
+        else
+            wm->prev->next = wm->next;
+
+        if ( wm->next ) wm->next->prev = wm->prev;
+        wm->next = wm->prev = NULL;
+
+        LeaveCriticalSection( &PROCESS_Current()->crit_section );
+
         /* FIXME: there are several more dangling references
          * left. Including dlls loaded by this dll before the
          * failed one. Unrolling is rather difficult with the
@@ -943,15 +962,6 @@ void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved)
 {
     if (wm->type!=MODULE32_PE)
     	return;
-    if (wm->binfmt.pe.flags & PE_MODREF_NO_DLL_CALLS)
-    	return;
-    if (type==DLL_PROCESS_ATTACH)
-    {
-        if (wm->binfmt.pe.flags & PE_MODREF_PROCESS_ATTACHED)
-            return;
-
-        wm->binfmt.pe.flags |= PE_MODREF_PROCESS_ATTACHED;
-    }
 
     /*  DLL_ATTACH_PROCESS:
      *		lpreserved is NULL for dynamic loads, not-NULL for static loads
@@ -979,7 +989,7 @@ void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved)
  * Pointers in those structs are not RVAs but real pointers which have been
  * relocated by do_relocations() already.
  */
-void PE_InitTls(THDB *thdb)
+void PE_InitTls( void )
 {
 	WINE_MODREF		*wm;
 	PE_MODREF		*pem;
@@ -987,10 +997,9 @@ void PE_InitTls(THDB *thdb)
 	DWORD			size,datasize;
 	LPVOID			mem;
 	PIMAGE_TLS_DIRECTORY	pdir;
-	PDB			*pdb = thdb->process;
         int delta;
 	
-	for (wm = pdb->modref_list;wm;wm=wm->next) {
+	for (wm = PROCESS_Current()->modref_list;wm;wm=wm->next) {
 		if (wm->type!=MODULE32_PE)
 			continue;
 		pem = &(wm->binfmt.pe);
@@ -1002,11 +1011,10 @@ void PE_InitTls(THDB *thdb)
 			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
 		
 		
-		if (!(pem->flags & PE_MODREF_TLS_ALLOCED)) {
-			pem->tlsindex = THREAD_TlsAlloc(thdb);
+		if ( pem->tlsindex == -1 ) {
+			pem->tlsindex = TlsAlloc();
 			*pdir->AddressOfIndex=pem->tlsindex;   
 		}
-		pem->flags |= PE_MODREF_TLS_ALLOCED;
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
 		mem=VirtualAlloc(0,size,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
@@ -1018,21 +1026,8 @@ void PE_InitTls(THDB *thdb)
 		     if (*cbs)
 		       FIXME(win32, "TLS Callbacks aren't going to be called\n");
 		}
-		/* Don't use TlsSetValue, we are in the wrong thread */
-		thdb->tls_array[pem->tlsindex] = mem;
+
+		TlsSetValue( pem->tlsindex, mem );
 	}
 }
 
-/****************************************************************************
- *		DisableThreadLibraryCalls (KERNEL32.74)
- * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
- */
-BOOL WINAPI DisableThreadLibraryCalls(HMODULE hModule)
-{
-	WINE_MODREF	*wm;
-
-	for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next)
-		if ((wm->module == hModule) && (wm->type==MODULE32_PE))
-			wm->binfmt.pe.flags|=PE_MODREF_NO_DLL_CALLS;
-	return TRUE;
-}

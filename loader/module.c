@@ -73,37 +73,84 @@ WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 static void MODULE_DoInitializeDLLs( WINE_MODREF *wm,
                                      DWORD type, LPVOID lpReserved )
 {
-    int i;
+    WINE_MODREF *xwm;
+    int i, skip = FALSE;
 
-    assert( wm && !wm->initDone );
-    TRACE( module, "(%08x,%ld,%p) - START\n", 
-           wm->module, type, lpReserved );
+    assert( wm && !(wm->flags & WINE_MODREF_MARKER) );
+    TRACE( module, "(%s,%08x,%ld,%p) - START\n", 
+           wm->modname, wm->module, type, lpReserved );
 
     /* Tag current MODREF to prevent recursive loop */
-    wm->initDone = TRUE;
+    wm->flags |= WINE_MODREF_MARKER;
 
-    /* Recursively initialize all child DLLs */
-    for ( i = 0; i < wm->nDeps; i++ )
-        if ( wm->deps[i] && !wm->deps[i]->initDone )
-            MODULE_DoInitializeDLLs( wm->deps[i], type, lpReserved );
-
-    /* Now we can call the initialization routine */
-    switch ( wm->type )
+    switch ( type )
     {
-    case MODULE32_PE:
-        PE_InitDLL( wm, type, lpReserved );
+    default:
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+        /* Recursively attach all DLLs this one depends on */
+        for ( i = 0; i < wm->nDeps; i++ )
+            if ( wm->deps[i] && !(wm->deps[i]->flags & WINE_MODREF_MARKER) )
+                MODULE_DoInitializeDLLs( wm->deps[i], type, lpReserved );
         break;
 
-    case MODULE32_ELF:
-    	/* no need to do that, dlopen() already does */
-    	break;
-    default:
-    	ERR(module, "wine_modref type %d not handled.\n", wm->type);
+    case DLL_PROCESS_DETACH:
+    case DLL_THREAD_DETACH:
+        /* Recursively detach all DLLs that depend on this one */
+        for ( xwm = PROCESS_Current()->modref_list; xwm; xwm = xwm->next )
+            if ( !(xwm->flags & WINE_MODREF_MARKER) )
+                for ( i = 0; i < xwm->nDeps; i++ )
+                    if ( xwm->deps[i] == wm )
+                    {
+                        MODULE_DoInitializeDLLs( xwm, type, lpReserved );
+                        break;
+                    }
         break;
     }
 
-    TRACE( module, "(%08x,%ld,%p) - END\n", 
-           wm->module, type, lpReserved );
+    /* Evaluate module flags */
+
+    if (    ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
+         || ( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS )
+         || ( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) )
+        skip = TRUE;
+
+    if ( type == DLL_PROCESS_ATTACH )
+        if ( wm->flags & WINE_MODREF_PROCESS_ATTACHED )
+            skip = TRUE;
+        else
+            wm->flags |= WINE_MODREF_PROCESS_ATTACHED;
+
+    if ( type == DLL_PROCESS_DETACH )
+        if ( wm->flags & WINE_MODREF_PROCESS_DETACHED )
+            skip = TRUE;
+        else
+            wm->flags |= WINE_MODREF_PROCESS_DETACHED;
+
+    if ( !skip )
+    {
+        /* Now we can call the initialization routine */
+        TRACE( module, "(%s,%08x,%ld,%p) - CALL\n", 
+               wm->modname, wm->module, type, lpReserved );
+
+        switch ( wm->type )
+        {
+        case MODULE32_PE:
+            PE_InitDLL( wm, type, lpReserved );
+            break;
+
+        case MODULE32_ELF:
+            /* no need to do that, dlopen() already does */
+            break;
+
+        default:
+           ERR(module, "wine_modref type %d not handled.\n", wm->type);
+           break;
+        }
+    }
+
+    TRACE( module, "(%s,%08x,%ld,%p) - END\n", 
+           wm->modname, wm->module, type, lpReserved );
 }
 
 void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
@@ -119,7 +166,7 @@ void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
 
     /* First, check whether initialization is currently in progress */
     for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-        if ( wm->initDone )
+        if ( wm->flags & WINE_MODREF_MARKER )
         {
             inProgress = TRUE;
             break;
@@ -135,7 +182,7 @@ void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
         if ( root )
         {
             wm = MODULE32_LookupHMODULE( root );
-            if ( wm && !wm->initDone )
+            if ( wm && !(wm->flags & WINE_MODREF_MARKER) )
                 MODULE_DoInitializeDLLs( wm, type, lpReserved );
         }
         else
@@ -147,9 +194,26 @@ void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
         if ( !root )
         {
             /* If called for main EXE, initialize all DLLs */
-            for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-                if ( !wm->initDone )
-                    MODULE_DoInitializeDLLs( wm, type, lpReserved );
+            switch ( type )
+            {
+            default:  /* Hmmm. */
+            case DLL_PROCESS_ATTACH:
+            case DLL_THREAD_ATTACH:
+                for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+                    if ( !wm->next )
+                        break;
+                for ( ; wm; wm = wm->prev )
+                    if ( !(wm->flags & WINE_MODREF_MARKER) )
+                        MODULE_DoInitializeDLLs( wm, type, lpReserved );
+                break;
+
+            case DLL_PROCESS_DETACH:
+            case DLL_THREAD_DETACH:
+                for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+                    if ( !(wm->flags & WINE_MODREF_MARKER) )
+                        MODULE_DoInitializeDLLs( wm, type, lpReserved );
+                break;
+            }
         }
         else
         {
@@ -160,13 +224,56 @@ void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
 
         /* We're finished, so we reset all recursion flags */
         for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-            wm->initDone = FALSE;
+            wm->flags &= ~WINE_MODREF_MARKER;
     }
 
     TRACE( module, "(%08x,%ld,%p) - END\n", root, type, lpReserved );
 
     /* Release critical section */
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
+}
+
+/****************************************************************************
+ *              DisableThreadLibraryCalls (KERNEL32.74)
+ *
+ * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
+ */
+BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
+{
+    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
+    if ( !wm ) return FALSE;
+
+    wm->flags |= WINE_MODREF_NO_DLL_CALLS;
+    return TRUE;
+}
+
+/****************************************************************************
+ *              MODULE_IncRefCount
+ */
+static void MODULE_IncRefCount( HMODULE hModule )
+{
+    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
+    if ( !wm ) return;
+
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    wm->refCount++;
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+}
+
+/****************************************************************************
+ *              MODULE_DecRefCount
+ */
+static int MODULE_DecRefCount( HMODULE hModule )
+{
+    int retv;
+    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
+    if ( !wm ) return 0;
+
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    if ( ( retv = wm->refCount ) > 0 ) wm->refCount--;
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+
+    return retv;
 }
 
 
@@ -1103,15 +1210,14 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname,HFILE hfile,DWORD flags)
     HMODULE hmod;
     hmod = MODULE_LoadLibraryExA( libname, hfile, flags );
 
-    /* at least call not the dllmain...*/
-    if ( DONT_RESOLVE_DLL_REFERENCES==flags || LOAD_LIBRARY_AS_DATAFILE==flags )
-    { FIXME(module,"flag not properly supported %lx\n", flags);
-      return hmod;
-    }
+    if ( hmod >= 32 )
+    {
+        /* Increment RefCount */
+        MODULE_IncRefCount( hmod );
 
-    /* initialize DLL just loaded */
-    if ( hmod >= 32 )       
-        MODULE_InitializeDLLs( hmod, DLL_PROCESS_ATTACH, (LPVOID)-1 );
+        /* Initialize DLL just loaded */
+        MODULE_InitializeDLLs( hmod, DLL_PROCESS_ATTACH, NULL );
+    }
 
     return hmod;
 }
@@ -1159,8 +1265,10 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HFILE hfile,DWORD flags)
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
-    FIXME(module,"(0x%08x): stub\n", hLibModule);
-    return TRUE;  /* FIXME */
+    if ( MODULE_DecRefCount( hLibModule ) != 1 ) return TRUE;
+
+    FIXME(module,"(0x%08x): should unload now\n", hLibModule);
+    return TRUE; /* FIXME */
 }
 
 /***********************************************************************

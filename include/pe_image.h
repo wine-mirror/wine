@@ -11,12 +11,6 @@ typedef struct {
 	PIMAGE_IMPORT_DESCRIPTOR	pe_import;
 	PIMAGE_EXPORT_DIRECTORY	pe_export;
 	PIMAGE_RESOURCE_DIRECTORY	pe_resource;
-	int				flags;
-#define PE_MODREF_PROCESS_ATTACHED	0x00000001
-#define PE_MODREF_NO_DLL_CALLS		0x00000002
-#define PE_MODREF_RELOCS_DONE		0x00000004
-#define PE_MODREF_TLS_ALLOCED		0x00000008
-#define PE_MODREF_INTERNAL		0x00000010
 	int				tlsindex;
 } PE_MODREF;
 
@@ -41,8 +35,7 @@ extern BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCST
                               BOOL inherit, LPSTARTUPINFOA startup,
                               LPPROCESS_INFORMATION info );
 
-struct _THDB; /* forward definition */
-extern void PE_InitTls(struct _THDB*);
+extern void PE_InitTls(void);
 extern void PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);
 
 extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY,LPCSTR,DWORD,BOOL);

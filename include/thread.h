@@ -123,7 +123,6 @@ extern THDB *THREAD_Create( struct _PDB *pdb, DWORD flags,
 extern THDB *THREAD_Current(void);
 extern BOOL THREAD_IsWin16( THDB *thdb );
 extern THDB *THREAD_IdToTHDB( DWORD id );
-extern DWORD THREAD_TlsAlloc( THDB *thread );
 
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( THDB *thread );

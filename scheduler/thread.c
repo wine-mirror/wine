@@ -261,7 +261,6 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
     if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, sa )) goto error;
     thdb->next = THREAD_First;
     THREAD_First = thdb;
-    PE_InitTls( thdb );
     return thdb;
 
 error:
@@ -282,6 +281,7 @@ static void THREAD_Start(void)
 {
     THDB *thdb = THREAD_Current();
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
+    PE_InitTls();
     MODULE_InitializeDLLs( 0, DLL_THREAD_ATTACH, NULL );
     ExitThread( func( thdb->entry_arg ) );
 }
@@ -412,10 +412,17 @@ void WINAPI SetLastErrorEx(
 
 
 /**********************************************************************
- *           THREAD_TlsAlloc
+ * TlsAlloc [KERNEL32.530]  Allocates a TLS index.
+ *
+ * Allocates a thread local storage index
+ *
+ * RETURNS
+ *    Success: TLS Index
+ *    Failure: 0xFFFFFFFF
  */
-DWORD THREAD_TlsAlloc(THDB *thread)
+DWORD WINAPI TlsAlloc( void )
 {
+    THDB *thread = THREAD_Current();
     DWORD i, mask, ret = 0;
     DWORD *bits = thread->process->tls_bits;
     EnterCriticalSection( &thread->process->crit_section );
@@ -434,21 +441,6 @@ DWORD THREAD_TlsAlloc(THDB *thread)
     *bits |= mask;
     LeaveCriticalSection( &thread->process->crit_section );
     return ret + i;
-}
-
-
-/**********************************************************************
- * TlsAlloc [KERNEL32.530]  Allocates a TLS index.
- *
- * Allocates a thread local storage index
- *
- * RETURNS
- *    Success: TLS Index
- *    Failure: 0xFFFFFFFF
- */
-DWORD WINAPI TlsAlloc(void)
-{
-    return THREAD_TlsAlloc(THREAD_Current());
 }
 
 

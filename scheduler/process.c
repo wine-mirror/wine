@@ -363,14 +363,14 @@ void PROCESS_Start(void)
 
     /* Initialize thread-local storage */
 
-    PE_InitTls( thdb );
+    PE_InitTls();
 
     if (PE_HEADER(pModule->module32)->OptionalHeader.Subsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI)
         AllocConsole();
 
     /* Now call the entry point */
 
-    MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
+    MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)1 );
     entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
                                             OptionalHeader.AddressOfEntryPoint);
     TRACE(relay, "(entryproc=%p)\n", entry );
@@ -509,7 +509,7 @@ error:
  */
 void WINAPI ExitProcess( DWORD status )
 {
-    MODULE_InitializeDLLs( 0, DLL_PROCESS_DETACH, NULL );
+    MODULE_InitializeDLLs( 0, DLL_PROCESS_DETACH, (LPVOID)1 );
 
     if ( THREAD_IsWin16( THREAD_Current() ) )
         TASK_KillCurrentTask( status );

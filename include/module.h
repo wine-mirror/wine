@@ -111,6 +111,7 @@ typedef enum { MODULE32_PE=1, MODULE32_ELF /* ,... */ } MODULE32_TYPE;
 typedef struct _wine_modref
 {
 	struct _wine_modref	*next;
+	struct _wine_modref	*prev;
 	MODULE32_TYPE		type;
 	union {
 		PE_MODREF	pe;
@@ -121,12 +122,23 @@ typedef struct _wine_modref
 
 	int			nDeps;
 	struct _wine_modref	**deps;
-	int			initDone;
+
+	int			flags;
+	int			refCount;
 
 	char			*modname;
 	char			*shortname;
 	char 			*longname;
 } WINE_MODREF;
+
+#define WINE_MODREF_INTERNAL              0x00000001
+#define WINE_MODREF_NO_DLL_CALLS          0x00000002
+#define WINE_MODREF_PROCESS_ATTACHED      0x00000004
+#define WINE_MODREF_PROCESS_DETACHED      0x00000008
+#define WINE_MODREF_LOAD_AS_DATAFILE      0x00000010
+#define WINE_MODREF_DONT_RESOLVE_REFS     0x00000020
+#define WINE_MODREF_MARKER                0x80000000
+
 
 
 /* Resource types */
