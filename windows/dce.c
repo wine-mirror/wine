@@ -443,7 +443,7 @@ static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
     if( pWndStart->pDriver->pIsSelfClipping( pWndStart ) )
         return TRUE; /* The driver itself will do the clipping */
 
-    for (WIN_LockWndPtr(pWndStart); pWndStart != pWndEnd; WIN_UpdateWndPtr(&pWndStart,pWndStart->next))
+    for (WIN_LockWndPtr(pWndStart); (pWndStart && (pWndStart != pWndEnd)); WIN_UpdateWndPtr(&pWndStart,pWndStart->next))
     {
         if( !(pWndStart->dwStyle & WS_VISIBLE) ) continue;
 	    
