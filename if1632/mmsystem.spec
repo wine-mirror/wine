@@ -9,8 +9,8 @@ type	win16
 8      stub    WMMMIDIRUNONCE
 30     pascal16 OutputDebugStr(str) OutputDebugString16
 31     pascal  DriverCallback(long word word word long long long) DriverCallback16
-32     stub    STACKENTER
-33     stub    STACKLEAVE
+32     pascal  StackEnter() StackEnterLeave16
+33     pascal  StackLeave() StackEnterLeave16
 34     stub    MMDRVINSTALL
 101    pascal  joyGetNumDevs() joyGetNumDevs16
 102    pascal  joyGetDevCaps(word ptr word) joyGetDevCaps16
@@ -136,11 +136,11 @@ type	win16
 903    pascal  mmTaskSignal(word) mmTaskSignal16
 904    pascal  mmGetCurrentTask() WIN16_GetCurrentTask #just the same
 905    pascal  mmTaskYield() mmTaskYield16
-1100   pascal  DRVOPEN(str str long) DrvOpen
-1101   pascal  DRVCLOSE(word long long) DrvClose
-1102   pascal  DRVSENDMESSAGE(word word long long) DrvSendMessage
-1103   pascal  drvGetModuleHandle(word) DrvGetModuleHandle16
-1104   pascal  DRVDEFDRIVERPROC(long word word long long) DrvDefDriverProc
+1100   pascal  DrvOpen(str str long) DrvOpen
+1101   pascal  DrvClose(word long long) DrvClose
+1102   pascal  DrvSendMessage(word word long long) DrvSendMessage
+1103   pascal  DrvGetModuleHandle(word) DrvGetModuleHandle16
+1104   pascal  DrvDefDriverProc(long word word long long) DrvDefDriverProc
 1120   pascal  mmThreadCreate(ptr ptr long long) mmThreadCreate16
 1121   pascal  mmThreadSignal(word) mmThreadSignal16
 1122   pascal  mmThreadBlock(word) mmThreadBlock16
