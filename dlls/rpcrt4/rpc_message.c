@@ -46,11 +46,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  */
 RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 {
+  RpcBinding* bind = (RpcBinding*)pMsg->Handle;
   void* buf;
 
   TRACE("(%p): BufferLength=%d\n", pMsg, pMsg->BufferLength);
   /* FIXME: pfnAllocate? */
-  buf = HeapReAlloc(GetProcessHeap(), 0, pMsg->Buffer, pMsg->BufferLength);
+  if (bind->server) {
+    /* it turns out that the original buffer data must still be available
+     * while the RPC server is marshalling a reply, so we should not deallocate
+     * it, we'll leave deallocating the original buffer to the RPC server */
+    buf = HeapAlloc(GetProcessHeap(), 0, pMsg->BufferLength);
+  } else {
+    buf = HeapReAlloc(GetProcessHeap(), 0, pMsg->Buffer, pMsg->BufferLength);
+  }
   TRACE("Buffer=%p\n", buf);
   if (buf) pMsg->Buffer = buf;
   /* FIXME: which errors to return? */
@@ -62,7 +70,7 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
  */
 RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
 {
-  TRACE("(%p)\n", pMsg);
+  TRACE("(%p) Buffer=%p\n", pMsg, pMsg->Buffer);
   /* FIXME: pfnFree? */
   HeapFree(GetProcessHeap(), 0, pMsg->Buffer);
   pMsg->Buffer = NULL;

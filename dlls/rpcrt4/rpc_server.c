@@ -171,7 +171,10 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf
   }
 
   /* clean up */
-  HeapFree(GetProcessHeap(), 0, msg.Buffer);
+  if (msg.Buffer == buf) msg.Buffer = NULL;
+  TRACE("freeing Buffer=%p\n", buf);
+  HeapFree(GetProcessHeap(), 0, buf);
+  I_RpcFreeBuffer(&msg);
   msg.Buffer = NULL;
 }
 
