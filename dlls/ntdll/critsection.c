@@ -155,14 +155,14 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         {
             const char *name = (char *)crit->DebugInfo;
             if (!name) name = "?";
-            ERR( "section %p %s wait timed out, retrying (60 sec) tid=%04lx\n",
-                 crit, debugstr_a(name), GetCurrentThreadId() );
+            ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
+                 crit, debugstr_a(name), GetCurrentThreadId(), (DWORD)crit->OwningThread );
             time.QuadPart = -60000 * 10000;
             status = NtWaitForSingleObject( sem, FALSE, &time );
             if ( status == WAIT_TIMEOUT && TRACE_ON(relay) )
             {
-                ERR( "section %p %s wait timed out, retrying (5 min) tid=%04lx\n",
-                     crit, debugstr_a(name), GetCurrentThreadId() );
+                ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (5 min)\n",
+                     crit, debugstr_a(name), GetCurrentThreadId(), (DWORD) crit->OwningThread );
                 time.QuadPart = -300000 * (ULONGLONG)10000;
                 status = NtWaitForSingleObject( sem, FALSE, &time );
             }
