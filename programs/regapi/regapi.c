@@ -20,7 +20,7 @@
  * Defines and consts
  */
 #define IDENTICAL             0 
-#define COMMAND_COUNT         5
+#define COMMAND_COUNT         7
 
 #define KEY_MAX_LEN           1024 
 #define STDIN_MAX_LEN         2048
@@ -97,6 +97,8 @@ static void doDeleteValue(LPSTR lpsLine);
 static void doCreateKey(LPSTR lpsLine);
 static void doDeleteKey(LPSTR lpsLine);
 static void doQueryValue(LPSTR lpsLine);
+static void doRegisterDLL(LPSTR lpsLine);
+static void doUnregisterDLL(LPSTR lpsLine);
 
 /*
  * current supported api
@@ -106,7 +108,9 @@ static const char* commandNames[COMMAND_COUNT] = {
   "deleteValue", 
   "createKey",
   "deleteKey",
-  "queryValue"
+  "queryValue",
+  "registerDLL",
+  "unregisterDLL"
 };
 
 /*
@@ -117,7 +121,9 @@ static const commandAPI commandAPIs[COMMAND_COUNT] = {
   doDeleteValue, 
   doCreateKey,
   doDeleteKey,
-  doQueryValue
+  doQueryValue,
+  doRegisterDLL,
+  doUnregisterDLL
 };
 
 /* 
@@ -128,7 +134,9 @@ static const BOOL commandSaveRegistry[COMMAND_COUNT] = {
   TRUE,
   TRUE,
   TRUE,
-  FALSE
+  FALSE,
+  TRUE,
+  TRUE
 };
 
 /* 
@@ -212,6 +220,11 @@ static char helpText[] =
 "              \"Value2\"\n"
 "              \"Valuen\"\n"
 "              ...\n"
+"           registerDLL\n"
+"               The input file format is a list of DLLs to register\n"
+"\n"
+"           unregisterDLL\n"
+"               The input file format is a list of DLLs to unregister\n"
 "                                February 1999.\n"
 ;
               
@@ -916,6 +929,72 @@ static void doDeleteKey(LPSTR line)   {
  */
 static void doCreateKey(LPSTR line)   { 
   printf ("regapi: createKey not yet implemented\n");
+}
+
+/******************************************************************************
+ * This funtion is the main entry point to the registerDLL action.  It 
+ * receives the currently read line, then loads and registers the requested DLLs
+ */
+static void doRegisterDLL(LPSTR stdInput) { 
+  HMODULE theLib = 0;
+  UINT retVal = 0;
+
+  /* Check for valid input */
+  if (stdInput == NULL)             
+    return;
+
+  /* Load and register the library, then free it */
+  theLib = LoadLibrary(stdInput);
+  if (theLib)
+  {
+    FARPROC lpfnDLLRegProc = GetProcAddress(theLib, "DllRegisterServer");
+    if (lpfnDLLRegProc)
+      retVal = (*lpfnDLLRegProc)();
+    else
+      printf("regapi: Couldn't find DllRegisterServer proc in '%s'.\n", stdInput);
+
+    if (retVal != S_OK)
+      printf("regapi: DLLRegisterServer error 0x%x in '%s'.\n", retVal, stdInput);      
+
+    FreeLibrary(theLib);
+  }
+  else
+  {
+    printf("regapi: Could not load DLL '%s'.\n", stdInput); 
+  }
+}
+
+/******************************************************************************
+ * This funtion is the main entry point to the unregisterDLL action.  It 
+ * receives the currently read line, then loads and unregisters the requested DLLs
+ */
+static void doUnregisterDLL(LPSTR stdInput) { 
+  HMODULE theLib = 0;
+  UINT retVal = 0;
+
+  /* Check for valid input */
+  if (stdInput == NULL)             
+    return;
+
+  /* Load and unregister the library, then free it */
+  theLib = LoadLibrary(stdInput);
+  if (theLib)
+  {
+    FARPROC lpfnDLLRegProc = GetProcAddress(theLib, "DllUnregisterServer");
+    if (lpfnDLLRegProc)
+      retVal = (*lpfnDLLRegProc)();
+    else
+      printf("regapi: Couldn't find DllUnregisterServer proc in '%s'.\n", stdInput);
+
+    if (retVal != S_OK)
+      printf("regapi: DLLUnregisterServer error 0x%x in '%s'.\n", retVal, stdInput);      
+
+    FreeLibrary(theLib);
+  }
+  else
+  {
+    printf("regapi: Could not load DLL '%s'.\n", stdInput); 
+  }
 }
 
 /******************************************************************************
