@@ -1306,6 +1306,71 @@ TREEVIEW_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
+static LRESULT
+TREEVIEW_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+  LPTVITEMEXA    tvItem;
+  TREEVIEW_ITEM *wineItem;
+  INT         iItem;
+
+  tvItem=(LPTVITEMEXA) lParam;
+  iItem=(INT)tvItem->hItem;
+
+  wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem);
+  if (!wineItem) return FALSE;
+
+   if (tvItem->mask & TVIF_CHILDREN) {
+		if (TVIF_CHILDREN==I_CHILDRENCALLBACK)
+			FIXME("I_CHILDRENCALLBACK not supported\n");
+        tvItem->cChildren=wineItem->cChildren;
+   }
+
+   if (tvItem->mask & TVIF_HANDLE) {
+        tvItem->hItem=wineItem->hItem;
+   }
+
+   if (tvItem->mask & TVIF_IMAGE) {
+        tvItem->iImage=wineItem->iImage;
+   }
+
+   if (tvItem->mask & TVIF_INTEGRAL) {
+        tvItem->iIntegral=wineItem->iIntegral;
+   }
+
+   /* undocumented: windows ignores TVIF_PARAM and
+	 * always sets lParam
+	 */
+   tvItem->lParam=wineItem->lParam;
+
+   if (tvItem->mask & TVIF_SELECTEDIMAGE) {
+        tvItem->iSelectedImage=wineItem->iSelectedImage;
+   }
+
+   if (tvItem->mask & TVIF_STATE) {
+        tvItem->state=wineItem->state & tvItem->stateMask;
+   }
+
+#if 0
+   if (tvItem->mask & TVIF_TEXT) {
+	if (wineItem->pszText == LPSTR_TEXTCALLBACKW) {
+	    tvItem->pszText = LPSTR_TEXTCALLBACKW;  /* FIXME:send notification? */
+		ERR(" GetItem called with LPSTR_TEXTCALLBACK\n");
+	}
+	else if (wineItem->pszText) {
+	    lstrcpynAtoW (tvItem->pszText, wineItem->pszText, tvItem->cchTextMax);
+	}
+   }
+#endif
+  wineItem->pszText = NULL;
+
+  TRACE("item %d<%p>, txt %p, img %p, action %x\n",
+    iItem, tvItem, tvItem->pszText, &tvItem->iImage, tvItem->mask);
+
+  return TRUE;
+}
+
+
 
 /* FIXME: check implementation of TVGN_NEXT/TVGN_NEXTVISIBLE */
 
@@ -3959,8 +4024,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return TREEVIEW_GetItemA (hwnd, wParam, lParam);
 
     	case TVM_GETITEMW:
-      		FIXME("Unimplemented msg TVM_GETITEMW\n");
-      		return 0;
+      		return TREEVIEW_GetItemW (hwnd, wParam, lParam);
 
     	case TVM_SETITEMA:
       		return TREEVIEW_SetItemA (hwnd, wParam, lParam);
