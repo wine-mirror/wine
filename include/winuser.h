@@ -1849,6 +1849,21 @@ typedef struct
     RECT   rcExclude;
 } TPMPARAMS, *LPTPMPARAMS;
 
+
+/*
+ * Combobox information
+ */
+typedef struct tagCOMBOBOXINFO
+{
+    DWORD cbSize;
+    RECT  rcItem;
+    RECT  rcButton;
+    DWORD stateButton;
+    HWND  hwndCombo;
+    HWND  hwndItem;
+    HWND  hwndList;
+} COMBOBOXINFO, *PCOMBOBOXINFO, *LPCOMBOBOXINFO;
+
 /* FIXME: not sure this one is correct */
 typedef struct {
   UINT    cbSize;
@@ -3714,6 +3729,7 @@ BOOL      WINAPI ExitWindowsEx(UINT,DWORD);
 BOOL      WINAPI GetIconInfo(HICON,PICONINFO);
 HKL       WINAPI GetKeyboardLayout(DWORD);
 INT       WINAPI GetKeyboardLayoutList(INT,HKL *);
+BOOL      WINAPI GetComboBoxInfo(HWND,PCOMBOBOXINFO);
 DWORD     WINAPI GetMenuContextHelpId(HMENU);
 UINT      WINAPI GetMenuDefaultItem(HMENU,UINT,UINT);
 BOOL      WINAPI GetMenuInfo(HMENU,LPMENUINFO);

@@ -228,6 +228,7 @@ init	UserClientDllInitialize
 @ stdcall GetClipboardFormatNameW(long ptr long) GetClipboardFormatNameW
 @ stdcall GetClipboardOwner() GetClipboardOwner
 @ stdcall GetClipboardViewer() GetClipboardViewer
+@ stdcall GetComboBoxInfo(long ptr) GetComboBoxInfo
 @ stdcall GetCursor() GetCursor
 @ stdcall GetCursorInfo(ptr) GetCursorInfo
 @ stdcall GetCursorPos(ptr) GetCursorPos
