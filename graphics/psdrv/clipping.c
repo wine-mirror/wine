@@ -7,8 +7,8 @@
 
 #include "gdi.h"
 #include "psdrv.h"
-#include "region.h"
 #include "debugtools.h"
+#include "winbase.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -18,23 +18,38 @@ DEFAULT_DEBUG_CHANNEL(psdrv)
 VOID PSDRV_SetDeviceClipping( DC *dc )
 {
     CHAR szArrayName[] = "clippath";
-    RGNOBJ *obj = (RGNOBJ *)GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
-    if (!obj)
-    {
-        ERR_(psdrv)("Rgn is 0. Please report this.\n");
+    DWORD size;
+    RGNDATA *rgndata;
+
+    TRACE("hdc=%04x\n", dc->hSelf);
+
+    if (dc->w.hGCClipRgn == 0) {
+        ERR("Rgn is 0. Please report this.\n");
 	return;
     }
 
-    TRACE_(psdrv)("dc=%p", dc);
-    
-    if (obj->rgn->numRects > 0)
+    size = GetRegionData(dc->w.hGCClipRgn, 0, NULL);
+    if(!size) {
+        ERR("Invalid region\n");
+	return;
+    }
+
+    rgndata = HeapAlloc( GetProcessHeap(), 0, size );
+    if(!rgndata) {
+        ERR("Can't allocate buffer\n");
+	return;
+    }
+
+    GetRegionData(dc->w.hGCClipRgn, size, rgndata);
+
+    if (rgndata->rdh.nCount > 0)
     {
         INT i;
-        RECT *pRect = obj->rgn->rects;
+        RECT *pRect = (RECT *)rgndata->Buffer;
 
-        PSDRV_WriteArrayDef(dc, szArrayName, obj->rgn->numRects * 4);
+        PSDRV_WriteArrayDef(dc, szArrayName, rgndata->rdh.nCount * 4);
 
-        for (i = 0; i < obj->rgn->numRects; i++, pRect++)
+        for (i = 0; i < rgndata->rdh.nCount; i++, pRect++)
         {
             PSDRV_WriteArrayPut(dc, szArrayName, i * 4,
                                 pRect->left);
@@ -48,4 +63,6 @@ VOID PSDRV_SetDeviceClipping( DC *dc )
     }
     
     PSDRV_WriteRectClip(dc, szArrayName);
+    HeapFree( GetProcessHeap(), 0, rgndata );
+    return;
 }
