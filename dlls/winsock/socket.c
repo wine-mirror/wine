@@ -243,67 +243,50 @@ static HANDLE 	_WSHeap = 0;
 #define WS_FREE(ptr) \
 	HeapFree(_WSHeap, 0, (ptr) )
 
-static INT         _ws_sock_ops[] =
-       { WS_SO_DEBUG, WS_SO_REUSEADDR, WS_SO_KEEPALIVE, WS_SO_DONTROUTE,
-         WS_SO_BROADCAST, WS_SO_LINGER, WS_SO_OOBINLINE, WS_SO_SNDBUF,
-         WS_SO_RCVBUF, WS_SO_ERROR, WS_SO_TYPE,
+#define MAP_OPTION(opt) { WS_##opt, opt }
+
+static const int ws_sock_map[][2] =
+{
+    MAP_OPTION( SO_DEBUG ),
+    MAP_OPTION( SO_REUSEADDR ),
+    MAP_OPTION( SO_KEEPALIVE ),
+    MAP_OPTION( SO_DONTROUTE ),
+    MAP_OPTION( SO_BROADCAST ),
+    MAP_OPTION( SO_LINGER ),
+    MAP_OPTION( SO_OOBINLINE ),
+    MAP_OPTION( SO_SNDBUF ),
+    MAP_OPTION( SO_RCVBUF ),
+    MAP_OPTION( SO_ERROR ),
+    MAP_OPTION( SO_TYPE ),
 #ifdef SO_RCVTIMEO
-	 WS_SO_RCVTIMEO,
+    MAP_OPTION( SO_RCVTIMEO ),
 #endif
 #ifdef SO_SNDTIMEO
-	 WS_SO_SNDTIMEO,
+    MAP_OPTION( SO_SNDTIMEO ),
 #endif
-	 0 };
-static int           _px_sock_ops[] =
-       { SO_DEBUG, SO_REUSEADDR, SO_KEEPALIVE, SO_DONTROUTE, SO_BROADCAST,
-         SO_LINGER, SO_OOBINLINE, SO_SNDBUF, SO_RCVBUF, SO_ERROR, SO_TYPE,
-#ifdef SO_RCVTIMEO
-	 SO_RCVTIMEO,
-#endif
-#ifdef SO_SNDTIMEO
-	 SO_SNDTIMEO,
-#endif
-	};
-
-static INT _ws_tcp_ops[] = {
-#ifdef TCP_NODELAY
-	WS_TCP_NODELAY,
-#endif
-	0
-};
-static int _px_tcp_ops[] = {
-#ifdef TCP_NODELAY
-	TCP_NODELAY,
-#endif
-	0
+    { 0, 0 }
 };
 
-static const int _ws_ip_ops[] =
+static const int ws_tcp_map[][2] =
 {
-    WS_IP_MULTICAST_IF,
-    WS_IP_MULTICAST_TTL,
-    WS_IP_MULTICAST_LOOP,
-    WS_IP_ADD_MEMBERSHIP,
-    WS_IP_DROP_MEMBERSHIP,
-    WS_IP_OPTIONS,
-    WS_IP_HDRINCL,
-    WS_IP_TOS,
-    WS_IP_TTL,
-    0
+#ifdef TCP_NODELAY
+    MAP_OPTION( TCP_NODELAY ),
+#endif
+    { 0, 0 }
 };
 
-static const int _px_ip_ops[] =
+static const int ws_ip_map[][2] =
 {
-    IP_MULTICAST_IF,
-    IP_MULTICAST_TTL,
-    IP_MULTICAST_LOOP,
-    IP_ADD_MEMBERSHIP,
-    IP_DROP_MEMBERSHIP,
-    IP_OPTIONS,
-    IP_HDRINCL,
-    IP_TOS,
-    IP_TTL,
-    0
+    MAP_OPTION( IP_MULTICAST_IF ),
+    MAP_OPTION( IP_MULTICAST_TTL ),
+    MAP_OPTION( IP_MULTICAST_LOOP ),
+    MAP_OPTION( IP_ADD_MEMBERSHIP ),
+    MAP_OPTION( IP_DROP_MEMBERSHIP ),
+    MAP_OPTION( IP_OPTIONS ),
+    MAP_OPTION( IP_HDRINCL ),
+    MAP_OPTION( IP_TOS ),
+    MAP_OPTION( IP_TTL ),
+    { 0, 0 }
 };
 
 static DWORD opentype_tls_index = -1;  /* TLS index for SO_OPENTYPE flag */
@@ -492,33 +475,38 @@ static int convert_sockopt(INT *level, INT *optname)
   {
      case WS_SOL_SOCKET:
         *level = SOL_SOCKET;
-        for(i=0; _ws_sock_ops[i]; i++)
-            if( _ws_sock_ops[i] == *optname ) break;
-        if( _ws_sock_ops[i] ) {
-	    *optname = _px_sock_ops[i];
-	    return 1;
-	}
+        for(i=0; ws_sock_map[i][0]; i++)
+        {
+            if( ws_sock_map[i][0] == *optname )
+            {
+                *optname = ws_sock_map[i][1];
+                return 1;
+            }
+        }
         FIXME("Unknown SOL_SOCKET optname 0x%x\n", *optname);
         break;
      case WS_IPPROTO_TCP:
         *level = IPPROTO_TCP;
-        for(i=0; _ws_tcp_ops[i]; i++)
-		if ( _ws_tcp_ops[i] == *optname ) break;
-        if( _ws_tcp_ops[i] ) {
-	    *optname = _px_tcp_ops[i];
-	    return 1;
-	}
+        for(i=0; ws_tcp_map[i][0]; i++)
+        {
+            if ( ws_tcp_map[i][0] == *optname )
+            {
+                *optname = ws_tcp_map[i][1];
+                return 1;
+            }
+        }
         FIXME("Unknown IPPROTO_TCP optname 0x%x\n", *optname);
 	break;
      case WS_IPPROTO_IP:
         *level = IPPROTO_IP;
-	for(i=0; _ws_ip_ops[i]; i++) {
-	    if (_ws_ip_ops[i] == *optname ) break;
-	}
-	if( _ws_ip_ops[i] ) {
-	    *optname = _px_ip_ops[i];
-	    return 1;
-	}
+        for(i=0; ws_ip_map[i][0]; i++)
+        {
+            if (ws_ip_map[i][0] == *optname )
+            {
+                *optname = ws_ip_map[i][1];
+                return 1;
+            }
+        }
 	FIXME("Unknown IPPROTO_IP optname 0x%x\n", *optname);
 	break;
      default: FIXME("Unimplemented or unknown socket level\n");
