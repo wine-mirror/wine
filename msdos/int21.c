@@ -429,6 +429,14 @@ static BOOL INT21_CreateFile( CONTEXT *context )
     return (AX_reg(context) == (WORD)HFILE_ERROR16);
 }
 
+static HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
+{
+    /* Mask off all flags not explicitly allowed by the doc */
+    attr &= FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+    return FILE_AllocDosHandle( CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
+                                             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                             CREATE_NEW, attr, -1 ));
+}
 
 static void OpenExistingFile( CONTEXT *context )
 {
@@ -1524,9 +1532,7 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
         TRACE(int21,"CREAT flag 0x%02x %s\n",CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context)));
-        AX_reg(context) = _lcreat16( CTX_SEG_OFF_TO_LIN(context,  DS_reg(context),
-                                                        EDX_reg(context) ), CX_reg(context) );
-        bSetDOSExtendedError = (AX_reg(context) == (WORD)HFILE_ERROR16);
+        bSetDOSExtendedError = INT21_CreateFile( context );
         break;
 
     case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
@@ -1973,8 +1979,8 @@ void WINAPI DOS3Call( CONTEXT *context )
         TRACE(int21,"CREATE NEW FILE 0x%02x for %s\n", CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context)));
         bSetDOSExtendedError = ((AX_reg(context) = 
-               _lcreat16_uniq( CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context)), 0 ))
-								== (WORD)HFILE_ERROR16);
+               _lcreat16_uniq( CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context)),
+                               CX_reg(context) )) == (WORD)HFILE_ERROR16);
         break;
 
     case 0x5d: /* NETWORK */

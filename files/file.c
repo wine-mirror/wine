@@ -1196,32 +1196,21 @@ UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
  */
 HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
-    TRACE(file, "%s %02x\n", path, attr );
     return FILE_AllocDosHandle( _lcreat( path, attr ) );
 }
 
 
 /***********************************************************************
- *           _lcreat32   (KERNEL32.593)
+ *           _lcreat   (KERNEL32.593)
  */
 HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 {
+    /* Mask off all flags not explicitly allowed by the doc */
+    attr &= FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
     TRACE(file, "%s %02x\n", path, attr );
     return CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
-                          FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                          CREATE_ALWAYS, attr, -1 );
-}
-
-
-/***********************************************************************
- *           _lcreat16_uniq   (Not a Windows API)
- */
-HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
-{
-    TRACE(file, "%s %02x\n", path, attr );
-    return FILE_AllocDosHandle( CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
-                                               FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                                               CREATE_NEW, attr, -1 ));
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                        CREATE_ALWAYS, attr, -1 );
 }
 
 

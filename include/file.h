@@ -48,7 +48,6 @@ extern int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low );
 extern HFILE16 FILE_AllocDosHandle( HANDLE handle );
 extern BOOL FILE_InitProcessDosHandles( void );
 extern HANDLE FILE_GetHandle( HFILE16 hfile );
-extern HFILE16 _lcreat16_uniq( LPCSTR path, INT attr );
 
 /* files/directory.c */
 extern int DIR_Init(void);
