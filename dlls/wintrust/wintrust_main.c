@@ -24,6 +24,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "guiddef.h"
+#include "wintrust.h"
+#include "mscat.h"
 
 #include "wine/debug.h"
 
@@ -32,8 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 /***********************************************************************
  *		CryptCATAdminAcquireContext (WINTRUST.@)
  */
-BOOL WINAPI CryptCATAdminAcquireContext(/* HCATADMIN */ void *catAdmin,
-					GUID *sysSystem, DWORD dwFlags )
+BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
+					const GUID *sysSystem, DWORD dwFlags )
 {
     FIXME("%p %s %lx\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -43,7 +45,7 @@ BOOL WINAPI CryptCATAdminAcquireContext(/* HCATADMIN */ void *catAdmin,
 /***********************************************************************
  *		WinVerifyTrust (WINTRUST.@)
  */
-LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  LPVOID ActionData )
+LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
 {
     FIXME("(hwnd %p ActionId %p ActionData %p): stub (nothing will be verified)\n",
             hwnd, ActionID,  ActionData);

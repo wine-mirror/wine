@@ -154,6 +154,7 @@ WINDOWS_INCLUDES = \
 	msacm.h \
 	msacmdlg.h \
 	msacmdrv.h \
+	mscat.h \
 	msi.h \
 	msiquery.h \
 	mssip.h \
@@ -238,6 +239,7 @@ WINDOWS_INCLUDES = \
 	wintab.h \
 	wintabx.h \
 	winternl.h \
+	wintrust.h \
 	winuser.h \
 	winver.h \
 	wnaspi32.h \

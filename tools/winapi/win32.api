@@ -4511,13 +4511,16 @@ LPWSTR
 
 %long
 
+BOOL
+DWORD
 HWND
 LONG
 
 %ptr
 
 GUID *
-LPVOID
+HCATADMIN *
+WINTRUST_DATA *
 
 %%wnaspi32.dll
 
