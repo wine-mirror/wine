@@ -35,6 +35,7 @@ WINDOWS_INCLUDES = \
 	d3dtypes.h \
 	d3dvec.inl \
 	d3dx8core.h \
+	dbghelp.h \
 	dde.h \
 	ddeml.h \
 	ddraw.h \
