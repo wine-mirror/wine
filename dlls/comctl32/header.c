@@ -144,6 +144,8 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
     RECT r;
     INT  oldBkMode;
 
+    TRACE("DrawItem(iItem %d bHotTrack %d)\n", iItem, bHotTrack);
+
     if (!infoPtr->bRectsValid)
     	HEADER_SetItemBounds(hwnd);
     
@@ -275,7 +277,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	    DeleteDC (hdcBitmap);
 	}
 
-	if (phdi->fmt & HDF_IMAGE) {
+	if ((phdi->fmt & HDF_IMAGE) && (infoPtr->himl)) {
 	  r.left +=3;
 	  /* FIXME: (r.bottom- (infoPtr->himl->cy))/2 should horicontal center the image
 	     It looks like it doesn't work as expected*/
@@ -1025,13 +1027,14 @@ HEADER_Layout (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-HEADER_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
+HEADER_SetImageList (HWND hwnd, HIMAGELIST himl)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HIMAGELIST himlOld;
 
+    TRACE("(himl 0x%x)\n", (int)himl);
     himlOld = infoPtr->himl;
-    infoPtr->himl = (HIMAGELIST)lParam;
+    infoPtr->himl = himl;
 
     /* FIXME: Refresh needed??? */
 
@@ -1395,7 +1398,9 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    HEADER_DrawTrackLine (hwnd, hdc, infoPtr->xOldTrack);
             ReleaseDC (hwnd, hdc);
 			if (HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGINGA, infoPtr->iMoveItem, HDI_WIDTH))
+	    {
 		infoPtr->items[infoPtr->iMoveItem].cxy = infoPtr->nOldWidth;
+	    }
 	    else {
 		nWidth = pt.x - infoPtr->items[infoPtr->iMoveItem].rect.left + infoPtr->xTrackOffset;
 		if (nWidth < 0)
@@ -1667,7 +1672,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 /*	case HDM_SETHOTDIVIDER: */
 
 	case HDM_SETIMAGELIST:
-	    return HEADER_SetImageList (hwnd, wParam, lParam);
+	    return HEADER_SetImageList (hwnd, (HIMAGELIST)lParam);
 
 	case HDM_SETITEMA:
 	    return HEADER_SetItemA (hwnd, wParam, lParam);
