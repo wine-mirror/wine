@@ -380,6 +380,9 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 
 	if (hPopupMenu)
 	{
+            if (GetClassLongW(hWnd, GCL_STYLE) & CS_NOCLOSE)
+                DeleteMenu(hPopupMenu, SC_CLOSE, MF_BYCOMMAND);
+
 	    InsertMenuW( hMenu, -1, MF_SYSMENU | MF_POPUP | MF_BYPOSITION,
                          (UINT_PTR)hPopupMenu, NULL );
 
@@ -3248,15 +3251,18 @@ UINT WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
     {
 	if (menu->hSysMenuOwner != 0)
 	{
+            RECT rc;
 	    POPUPMENU* parentMenu;
 
 	    /* Get the parent menu to access*/
 	    if (!(parentMenu = MENU_GetMenu(menu->hSysMenuOwner)))
 		return (UINT)-1;
 
-	    /* Refresh the frame to reflect the change*/
-	    SetWindowPos(parentMenu->hWnd, 0, 0, 0, 0, 0,
-		         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+            /* Refresh the frame to reflect the change */
+            GetWindowRect(parentMenu->hWnd, &rc);
+            MapWindowPoints(0, parentMenu->hWnd, (POINT *)&rc, 2);
+            rc.bottom = 0;
+            RedrawWindow(parentMenu->hWnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN);
 	}
     }
 

@@ -2849,6 +2849,47 @@ static void test_showwindow(void)
     flush_sequence();
 }
 
+static void test_sys_menu(HWND hwnd)
+{
+    HMENU hmenu;
+    UINT state;
+
+    /* test existing window without CS_NOCLOSE style */
+    hmenu = GetSystemMenu(hwnd, FALSE);
+    ok(hmenu != 0, "GetSystemMenu error %ld\n", GetLastError());
+
+    state = GetMenuState(hmenu, SC_CLOSE, MF_BYCOMMAND);
+    ok(state != 0xffffffff, "wrong SC_CLOSE state %x\n", state);
+    ok(!(state & (MF_DISABLED | MF_GRAYED)), "wrong SC_CLOSE state %x\n", state);
+
+    EnableMenuItem(hmenu, SC_CLOSE, MF_BYCOMMAND | MF_GRAYED);
+    ok_sequence(WmEmptySeq, "WmEnableMenuItem", FALSE);
+
+    state = GetMenuState(hmenu, SC_CLOSE, MF_BYCOMMAND);
+    ok(state != 0xffffffff, "wrong SC_CLOSE state %x\n", state);
+    ok((state & (MF_DISABLED | MF_GRAYED)) == MF_GRAYED, "wrong SC_CLOSE state %x\n", state);
+
+    EnableMenuItem(hmenu, SC_CLOSE, 0);
+    ok_sequence(WmEmptySeq, "WmEnableMenuItem", FALSE);
+
+    state = GetMenuState(hmenu, SC_CLOSE, MF_BYCOMMAND);
+    ok(state != 0xffffffff, "wrong SC_CLOSE state %x\n", state);
+    ok(!(state & (MF_DISABLED | MF_GRAYED)), "wrong SC_CLOSE state %x\n", state);
+
+    /* test new window with CS_NOCLOSE style */
+    hwnd = CreateWindowExA(0, "NoCloseWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+
+    hmenu = GetSystemMenu(hwnd, FALSE);
+    ok(hmenu != 0, "GetSystemMenu error %ld\n", GetLastError());
+
+    state = GetMenuState(hmenu, SC_CLOSE, MF_BYCOMMAND);
+    ok(state == 0xffffffff, "wrong SC_CLOSE state %x\n", state);
+
+    DestroyWindow(hwnd);
+}
+
 /* test if we receive the right sequence of messages */
 static void test_messages(void)
 {
@@ -2912,6 +2953,9 @@ static void test_messages(void)
     SetWindowPos( hwnd, 0, 0, 0, 200, 200, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE );
     ok_sequence(WmSWP_ResizePopupSeq, "SetWindowPos:ResizePopup", FALSE );
 
+    test_sys_menu(hwnd);
+
+    flush_sequence();
     DestroyWindow(hwnd);
     ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped", FALSE);
 
@@ -4648,6 +4692,10 @@ static BOOL RegisterWindowClasses(void)
 
     cls.lpfnWndProc = DefWindowProcA;
     cls.lpszClassName = "SimpleWindowClass";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.style = CS_NOCLOSE;
+    cls.lpszClassName = "NoCloseWindowClass";
     if(!RegisterClassA(&cls)) return FALSE;
 
     ok(GetClassInfoA(0, "#32770", &cls), "GetClassInfo failed\n");

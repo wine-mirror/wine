@@ -891,9 +891,9 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
 	hSysMenu = GetSystemMenu(hwnd, FALSE);
 	state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
 
-	/* Draw a grayed close button if disabled and a normal one if SC_CLOSE is not there */
+	/* Draw a grayed close button if disabled or if SC_CLOSE is not there */
 	NC_DrawCloseButton (hwnd, hdc, FALSE,
-			    ((((state & MF_DISABLED) || (state & MF_GRAYED))) && (state != 0xFFFFFFFF)));
+			    (state & (MF_DISABLED | MF_GRAYED)) || (state == 0xFFFFFFFF));
 	r.right -= GetSystemMetrics(SM_CYCAPTION) - 1;
 
 	if ((style & WS_MAXIMIZEBOX) || (style & WS_MINIMIZEBOX))
@@ -1451,9 +1451,17 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
 
     case HTSYSMENU:
-        if (!(GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE))
+        {
+            HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
+            UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
+ 
+            /* If the item close of the sysmenu is disabled or not there do nothing */
+            if ((state & (MF_DISABLED | MF_GRAYED)) || (state == 0xFFFFFFFF))
+                break;
+
             SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, lParam );
-	break;
+            break;
+        }
 
     case HTHSCROLL:
         SendMessageW( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
