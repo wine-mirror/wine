@@ -65,6 +65,62 @@ static int nb_delayed = 0;      /* number of delayed dlls */
 static int total_imports = 0;   /* total number of imported functions */
 static int total_delayed = 0;   /* total number of imported functions in delayed DLLs */
 
+/* list of symbols that are ignored by default */
+static const char * const default_ignored_symbols[] =
+{
+    "abs",
+    "acos",
+    "asin",
+    "atan",
+    "atan2",
+    "atof",
+    "atoi",
+    "atol",
+    "bsearch",
+    "ceil",
+    "cos",
+    "cosh",
+    "div",
+    "exp",
+    "fabs",
+    "floor",
+    "fmod",
+    "frexp",
+    "labs",
+    "ldiv",
+    "log",
+    "log10",
+    "memchr",
+    "memcmp",
+    "memcpy",
+    "memmove",
+    "memset",
+    "modf",
+    "pow",
+    "qsort",
+    "sin",
+    "sinh",
+    "sprintf",
+    "sqrt",
+    "sscanf",
+    "strcat",
+    "strchr",
+    "strcmp",
+    "strcpy",
+    "strcspn",
+    "strlen",
+    "strncat",
+    "strncmp",
+    "strncpy",
+    "strpbrk",
+    "strrchr",
+    "strspn",
+    "strstr",
+    "tan",
+    "tanh",
+    "vsprintf"
+};
+
 /* compare function names; helper for resolve_imports */
 static int name_cmp( const void *name, const void *entry )
 {
@@ -239,15 +295,55 @@ void add_import_dll( const char *name, int delay )
     dll_imports[nb_imports++] = imp;
 }
 
-/* Add a symbol to the ignored symbol list */
+/* initialize the list of ignored symbols */
+static void init_ignored_symbols(void)
+{
+    int i;
+
+    nb_ignore_symbols = sizeof(default_ignored_symbols)/sizeof(default_ignored_symbols[0]);
+    ignore_size = nb_ignore_symbols + 32;
+    ignore_symbols = xmalloc( ignore_size * sizeof(*ignore_symbols) );
+    for (i = 0; i < nb_ignore_symbols; i++)
+        ignore_symbols[i] = xstrdup( default_ignored_symbols[i] );
+}
+
+/* add a symbol to the ignored symbol list */
+/* if the name starts with '-' the symbol is removed instead */
 void add_ignore_symbol( const char *name )
 {
-    if (nb_ignore_symbols == ignore_size)
+    int i;
+
+    if (!ignore_symbols) init_ignored_symbols();  /* first time around, fill list with defaults */
+
+    if (name[0] == '-')  /* remove it */
     {
-        ignore_size += 32;
-        ignore_symbols = xrealloc( ignore_symbols, ignore_size * sizeof(*ignore_symbols) );
+        if (!name[1])  /* remove everything */
+        {
+            for (i = 0; i < nb_ignore_symbols; i++) free( ignore_symbols[i] );
+            nb_ignore_symbols = 0;
+        }
+        else
+        {
+            for (i = 0; i < nb_ignore_symbols; i++)
+            {
+                if (!strcmp( ignore_symbols[i], name+1 ))
+                {
+                    free( ignore_symbols[i] );
+                    memmove( &ignore_symbols[i], &ignore_symbols[i+1], nb_ignore_symbols - i - 1 );
+                    nb_ignore_symbols--;
+                }
+            }
+        }
     }
-    ignore_symbols[nb_ignore_symbols++] = xstrdup( name );
+    else
+    {
+        if (nb_ignore_symbols == ignore_size)
+        {
+            ignore_size += 32;
+            ignore_symbols = xrealloc( ignore_symbols, ignore_size * sizeof(*ignore_symbols) );
+        }
+        ignore_symbols[nb_ignore_symbols++] = xstrdup( name );
+    }
 }
 
 /* add a function to the list of imports from a given dll */
@@ -454,6 +550,7 @@ static void remove_ignored_symbols(void)
 {
     int i;
 
+    if (!ignore_symbols) init_ignored_symbols();
     sort_symbols( ignore_symbols, nb_ignore_symbols );
     for (i = 0; i < nb_undef_symbols; i++)
     {

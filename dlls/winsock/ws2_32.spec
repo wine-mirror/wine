@@ -58,7 +58,7 @@
 54  stdcall  getprotobynumber(long) WS_getprotobynumber
 55  stdcall  getservbyname(str str) WS_getservbyname
 56  stdcall  getservbyport(long str) WS_getservbyport
-57  stdcall  -noimport gethostname(ptr long) WS_gethostname
+57  stdcall  gethostname(ptr long) WS_gethostname
 58  stub     WSAJoinLeaf
 59  stub     WSALookupServiceBeginA
 60  stub     WSALookupServiceBeginW

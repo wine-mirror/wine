@@ -914,14 +914,14 @@
 @ cdecl _wcsupr(wstr) NTDLL__wcsupr
 @ cdecl _wtoi(wstr) NTDLL__wtoi
 @ cdecl _wtol(wstr) NTDLL__wtol
-@ cdecl -noimport abs(long) abs
-@ cdecl -noimport atan(double) atan
-@ cdecl -noimport atoi(str) atoi
-@ cdecl -noimport atol(str) atol
-@ cdecl -noimport ceil(double) ceil
-@ cdecl -noimport cos(double) cos
-@ cdecl -noimport fabs(double) fabs
-@ cdecl -noimport floor(double) floor
+@ cdecl abs(long) abs
+@ cdecl atan(double) atan
+@ cdecl atoi(str) atoi
+@ cdecl atol(str) atol
+@ cdecl ceil(double) ceil
+@ cdecl cos(double) cos
+@ cdecl fabs(double) fabs
+@ cdecl floor(double) floor
 @ cdecl isalpha(long) isalpha
 @ cdecl isdigit(long) isdigit
 @ cdecl islower(long) islower
@@ -931,42 +931,42 @@
 @ cdecl iswalpha(long) NTDLL_iswalpha
 @ cdecl iswctype(long long) NTDLL_iswctype
 @ cdecl isxdigit(long) isxdigit
-@ cdecl -noimport labs(long) labs
-@ cdecl -noimport log(double) log
+@ cdecl labs(long) labs
+@ cdecl log(double) log
 @ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
-@ cdecl -noimport memchr(ptr long long) memchr
-@ cdecl -noimport memcmp(ptr ptr long) memcmp
-@ cdecl -noimport memcpy(ptr ptr long) memcpy
-@ cdecl -noimport memmove(ptr ptr long) memmove
-@ cdecl -noimport memset(ptr long long) memset
-@ cdecl -noimport pow(double double) pow
-@ cdecl -noimport qsort(ptr long long ptr) qsort
-@ cdecl -noimport sin(double) sin
-@ varargs -noimport sprintf(str str) sprintf
-@ cdecl -noimport sqrt(double) sqrt
-@ varargs -noimport sscanf(str str) sscanf
-@ cdecl -noimport strcat(str str) strcat
-@ cdecl -noimport strchr(str long) strchr
-@ cdecl -noimport strcmp(str str) strcmp
-@ cdecl -noimport strcpy(ptr str) strcpy
-@ cdecl -noimport strcspn(str str) strcspn
-@ cdecl -noimport strlen(str) strlen
-@ cdecl -noimport strncat(str str long) strncat
-@ cdecl -noimport strncmp(str str long) strncmp
-@ cdecl -noimport strncpy(ptr str long) strncpy
-@ cdecl -noimport strpbrk(str str) strpbrk
-@ cdecl -noimport strrchr(str long) strrchr
-@ cdecl -noimport strspn(str str) strspn
-@ cdecl -noimport strstr(str str) strstr
-@ cdecl -noimport strtol(str ptr long) strtol
-@ cdecl -noimport strtoul(str ptr long) strtoul
+@ cdecl memchr(ptr long long) memchr
+@ cdecl memcmp(ptr ptr long) memcmp
+@ cdecl memcpy(ptr ptr long) memcpy
+@ cdecl memmove(ptr ptr long) memmove
+@ cdecl memset(ptr long long) memset
+@ cdecl pow(double double) pow
+@ cdecl qsort(ptr long long ptr) qsort
+@ cdecl sin(double) sin
+@ varargs sprintf(str str) sprintf
+@ cdecl sqrt(double) sqrt
+@ varargs sscanf(str str) sscanf
+@ cdecl strcat(str str) strcat
+@ cdecl strchr(str long) strchr
+@ cdecl strcmp(str str) strcmp
+@ cdecl strcpy(ptr str) strcpy
+@ cdecl strcspn(str str) strcspn
+@ cdecl strlen(str) strlen
+@ cdecl strncat(str str long) strncat
+@ cdecl strncmp(str str long) strncmp
+@ cdecl strncpy(ptr str long) strncpy
+@ cdecl strpbrk(str str) strpbrk
+@ cdecl strrchr(str long) strrchr
+@ cdecl strspn(str str) strspn
+@ cdecl strstr(str str) strstr
+@ cdecl strtol(str ptr long) strtol
+@ cdecl strtoul(str ptr long) strtoul
 @ varargs swprintf(wstr wstr) NTDLL_swprintf
-@ cdecl -noimport tan(double) tan
+@ cdecl tan(double) tan
 @ cdecl tolower(long) tolower
 @ cdecl toupper(long) toupper
 @ cdecl towlower(long) NTDLL_towlower
 @ cdecl towupper(long) NTDLL_towupper
-@ cdecl -noimport vsprintf(ptr str ptr) vsprintf
+@ cdecl vsprintf(ptr str ptr) vsprintf
 @ cdecl wcscat(wstr wstr) NTDLL_wcscat
 @ cdecl wcschr(wstr long) NTDLL_wcschr
 @ cdecl wcscmp(wstr wstr) NTDLL_wcscmp

@@ -57,7 +57,6 @@ static const char * const TypeNames[TYPE_NBTYPES] =
 
 static const char * const FlagNames[] =
 {
-    "noimport",    /* FLAG_NOIMPORT */
     "norelay",     /* FLAG_NORELAY */
     "noname",      /* FLAG_NONAME */
     "ret64",       /* FLAG_RET64 */
@@ -288,8 +287,6 @@ static void ParseExtern( ORDDEF *odp )
 {
     if (SpecType == SPEC_WIN16) fatal_error( "'extern' not supported for Win16\n" );
     odp->link_name = xstrdup( GetToken(0) );
-    /* 'extern' definitions are not available for implicit import */
-    odp->flags |= FLAG_NOIMPORT;
 }
 
 

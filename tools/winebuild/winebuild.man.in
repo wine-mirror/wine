@@ -101,11 +101,13 @@ Win16 modules); default is no local heap.
 .BI \-I\  directory
 Ignored for compatibility with the C compiler.
 .TP
-.BI \-i\  symbol[,symbol]
+.BI \-i\  [-]symbol[,[-]symbol]
 Specify a list of symbols that should be ignored when resolving
 undefined symbols against the imported libraries. This forces these
 symbols to be resolved from the Unix C library (or from another Unix
-library linked with the application).
+library linked with the application). If a symbol is prefixed by '-'
+it is removed from the list instead of being added; a stand-alone '-'
+clears the whole list.
 .TP
 .BI \-K\  flags
 Ignored for compatibility with the C compiler.
@@ -212,10 +214,6 @@ for automatic ordinal allocation (Win32 only).
 is a series of optional flags, preceded by a '-' character. The
 supported flags are:
 .RS
-.TP
-.B -noimport
-The entry point is not made available for importing from Winelib
-applications (Win32 only).
 .TP
 .B -norelay
 The entry point is not displayed in relay debugging traces (Win32

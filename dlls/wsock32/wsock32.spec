@@ -27,7 +27,7 @@
  54 forward getprotobynumber ws2_32.getprotobynumber
  55 forward getservbyname ws2_32.getservbyname
  56 forward getservbyport ws2_32.getservbyport
- 57 forward -noimport gethostname ws2_32.gethostname
+ 57 forward gethostname ws2_32.gethostname
 101 forward WSAAsyncSelect ws2_32.WSAAsyncSelect
 102 forward WSAAsyncGetHostByAddr ws2_32.WSAAsyncGetHostByAddr
 103 forward WSAAsyncGetHostByName ws2_32.WSAAsyncGetHostByName

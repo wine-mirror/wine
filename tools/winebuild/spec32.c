@@ -301,7 +301,6 @@ static int output_exports( FILE *outfile, int nr_exports )
 
     for (i = 0; i < nb_names; i++)
     {
-        if (Names[i]->flags & FLAG_NOIMPORT) continue;
         /* check for invalid characters in the name */
         for (p = Names[i]->name; *p; p++)
             if (!isalnum(*p) && *p != '_' && *p != '.') break;
@@ -318,7 +317,6 @@ static int output_exports( FILE *outfile, int nr_exports )
     {
         ORDDEF *odp = EntryPoints[i];
 
-        if (odp->flags & FLAG_NOIMPORT) continue;
         if (odp->name || !odp->export_name) continue;
         /* check for invalid characters in the name */
         for (p = odp->export_name; *p; p++)
@@ -867,9 +865,10 @@ void BuildDef32File(FILE *outfile)
     for(i = 0; i < nb_entry_points; i++)
     {
         ORDDEF *odp = EntryPoints[i];
+        int is_data = 0;
 
         if (!odp) continue;
-        if (odp->flags & (FLAG_NOIMPORT|FLAG_REGISTER)) continue;
+        if (odp->flags & FLAG_REGISTER) continue;
         if (odp->type == TYPE_STUB) continue;
 
         if (odp->name) name = odp->name;
@@ -881,9 +880,11 @@ void BuildDef32File(FILE *outfile)
         switch(odp->type)
         {
         case TYPE_EXTERN:
+        case TYPE_VARIABLE:
+            is_data = 1;
+            /* fall through */
         case TYPE_VARARGS:
         case TYPE_CDECL:
-        case TYPE_VARIABLE:
             /* try to reduce output */
             if(strcmp(name, odp->link_name))
                 fprintf(outfile, "=%s", odp->link_name);
@@ -910,7 +911,8 @@ void BuildDef32File(FILE *outfile)
         default:
             assert(0);
         }
-        fprintf(outfile, " @%d%s\n", odp->ordinal, odp->name ? "" : " NONAME" );
+        fprintf(outfile, " @%d%s%s\n", odp->ordinal,
+                odp->name ? "" : " NONAME", is_data ? " DATA" : "" );
     }
 }
 
