@@ -301,6 +301,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(
         if (This->driver)
             IDsDriver_Release(This->driver);
 
+	HeapFree(GetProcessHeap(),0,This->tmp_buffer);
         RtlDeleteResource(&This->buffer_list_lock);
         This->mixlock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection(&This->mixlock);
@@ -809,6 +810,8 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     pDS->primary        = NULL;
     pDS->speaker_config = DSSPEAKER_STEREO | (DSSPEAKER_GEOMETRY_NARROW << 16);
     pDS->initialized    = FALSE;
+    pDS->tmp_buffer     = NULL;
+    pDS->tmp_buffer_len = 0;
 
     /* 3D listener initial parameters */
     pDS->listener       = NULL;

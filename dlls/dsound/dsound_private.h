@@ -95,6 +95,8 @@ struct IDirectSoundImpl
     DSBUFFERDESC                dsbd;
     DWORD                       speaker_config;
     BOOL                        initialized;
+    LPBYTE                      tmp_buffer;
+    DWORD                       tmp_buffer_len;
 
     /* DirectSound3DListener fields */
     IDirectSound3DListenerImpl*	listener;

@@ -368,20 +368,20 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	}
 }
 
-static void *tmp_buffer;
-static size_t tmp_buffer_len = 0;
-
-static void *DSOUND_tmpbuffer(size_t len)
+static LPBYTE DSOUND_tmpbuffer(IDirectSoundImpl *dsound, DWORD len)
 {
-  if (len>tmp_buffer_len) {
-    void *new_buffer = realloc(tmp_buffer, len);
-    if (new_buffer) {
-      tmp_buffer = new_buffer;
-      tmp_buffer_len = len;
+    TRACE("(%p,%ld)\n",dsound,len);
+
+    if (len > dsound->tmp_buffer_len) {
+        if (dsound->tmp_buffer)
+            dsound->tmp_buffer = HeapReAlloc(GetProcessHeap(), 0, dsound->tmp_buffer, len);
+        else
+            dsound->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, len);
+
+        dsound->tmp_buffer_len = len;
     }
-    return new_buffer;
-  }
-  return tmp_buffer;
+
+    return dsound->tmp_buffer;
 }
 
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
@@ -407,9 +407,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 		return 0;
 	}
 
-	/* Been seeing segfaults in malloc() for some reason... */
-	TRACE("allocating buffer (size = %d)\n", len);
-	if ((buf = ibuf = (BYTE *) DSOUND_tmpbuffer(len)) == NULL)
+	if ((buf = ibuf = DSOUND_tmpbuffer(dsb->dsound, len)) == NULL)
 		return 0;
 
 	TRACE("MixInBuffer (%p) len = %d, dest = %ld\n", dsb, len, writepos);
@@ -518,8 +516,7 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 	nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
 	len = len / nBlockAlign * nBlockAlign;  /* data alignment */
 
-	TRACE("allocating buffer (size = %ld)\n", len);
-	if ((buf = ibuf = (BYTE *) DSOUND_tmpbuffer(len)) == NULL)
+	if ((buf = ibuf = DSOUND_tmpbuffer(dsb->dsound, len)) == NULL)
 		return;
 
 	TRACE("PhaseCancel (%p) len = %ld, dest = %ld\n", dsb, len, writepos);
