@@ -532,40 +532,21 @@ void CLASS_RemoveWindow( CLASS *cls )
  */
 ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 {
-    ATOM atom;
-    CLASS *classPtr;
-    int iSmIconWidth, iSmIconHeight;
-    HINSTANCE hInstance = HINSTANCE_32(GetExePtr(wc->hInstance));
+    WNDCLASSEX16 wcex;
 
-    if (!(atom = GlobalAddAtomA( MapSL(wc->lpszClassName) ))) return 0;
-    if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
-    {
-        GlobalDeleteAtom( atom );
-        return 0;
-    }
-
-    TRACE("atom=%04x wndproc=%08lx hinst=%p bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
-          atom, (DWORD)wc->lpfnWndProc, hInstance,
-          wc->hbrBackground, wc->style, wc->cbClsExtra,
-          wc->cbWndExtra, classPtr,
-          HIWORD(wc->lpszClassName) ? (char *)MapSL(wc->lpszClassName) : "" );
-
-    iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
-    iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
-
-    classPtr->hIcon         = HICON_32(wc->hIcon);
-    classPtr->hIconSm       = CopyImage(classPtr->hIcon, IMAGE_ICON,
-					iSmIconWidth, iSmIconHeight,
-					LR_COPYFROMRESOURCE);
-    classPtr->hCursor       = HCURSOR_32(wc->hCursor);
-    classPtr->hbrBackground = HBRUSH_32(wc->hbrBackground);
-
-    WINPROC_SetProc( &classPtr->winprocA, (WNDPROC)wc->lpfnWndProc,
-                     WIN_PROC_16, WIN_PROC_CLASS );
-    CLASS_SetMenuNameA( classPtr, MapSL(wc->lpszMenuName) );
-
-    return atom;
+    wcex.cbSize        = sizeof(wcex);
+    wcex.style         = wc->style;
+    wcex.lpfnWndProc   = wc->lpfnWndProc;
+    wcex.cbClsExtra    = wc->cbClsExtra;
+    wcex.cbWndExtra    = wc->cbWndExtra;
+    wcex.hInstance     = wc->hInstance;
+    wcex.hIcon         = wc->hIcon;
+    wcex.hCursor       = wc->hCursor;
+    wcex.hbrBackground = wc->hbrBackground;
+    wcex.lpszMenuName  = wc->lpszMenuName;
+    wcex.lpszClassName = wc->lpszClassName;
+    wcex.hIconSm       = 0;
+    return RegisterClassEx16( &wcex );
 }
 
 
@@ -577,39 +558,21 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
  */
 ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* [in] Address of structure with class data */
 {
-    ATOM atom;
-    int iSmIconWidth, iSmIconHeight;
-    CLASS *classPtr;
+    WNDCLASSEXA wcex;
 
-    if (!(atom = GlobalAddAtomA( wc->lpszClassName ))) return 0;
-
-    if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
-    {
-        GlobalDeleteAtom( atom );
-        return 0;
-    }
-
-    TRACE("atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
-          atom, wc->lpfnWndProc, wc->hInstance,
-          wc->hbrBackground, wc->style, wc->cbClsExtra,
-          wc->cbWndExtra, classPtr,
-          HIWORD(wc->lpszClassName) ? wc->lpszClassName : "" );
-
-    iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
-    iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
-
-    classPtr->hIcon         = wc->hIcon;
-    classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
-					iSmIconWidth, iSmIconHeight,
-					LR_COPYFROMRESOURCE);
-    classPtr->hCursor       = wc->hCursor;
-    classPtr->hbrBackground = wc->hbrBackground;
-
-    WINPROC_SetProc( &classPtr->winprocA, wc->lpfnWndProc,
-                     WIN_PROC_32A, WIN_PROC_CLASS );
-    CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
-    return atom;
+    wcex.cbSize        = sizeof(wcex);
+    wcex.style         = wc->style;
+    wcex.lpfnWndProc   = wc->lpfnWndProc;
+    wcex.cbClsExtra    = wc->cbClsExtra;
+    wcex.cbWndExtra    = wc->cbWndExtra;
+    wcex.hInstance     = wc->hInstance;
+    wcex.hIcon         = wc->hIcon;
+    wcex.hCursor       = wc->hCursor;
+    wcex.hbrBackground = wc->hbrBackground;
+    wcex.lpszMenuName  = wc->lpszMenuName;
+    wcex.lpszClassName = wc->lpszClassName;
+    wcex.hIconSm       = 0;
+    return RegisterClassExA( &wcex );
 }
 
 
@@ -618,38 +581,21 @@ ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* [in] Address of structure w
  */
 ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
 {
-    ATOM atom;
-    int iSmIconWidth, iSmIconHeight;
-    CLASS *classPtr;
+    WNDCLASSEXW wcex;
 
-    if (!(atom = GlobalAddAtomW( wc->lpszClassName ))) return 0;
-
-    if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
-    {
-        GlobalDeleteAtom( atom );
-        return 0;
-    }
-
-    TRACE("atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
-          atom, wc->lpfnWndProc, wc->hInstance,
-          wc->hbrBackground, wc->style, wc->cbClsExtra,
-          wc->cbWndExtra, classPtr );
-
-    iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
-    iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
-
-    classPtr->hIcon         = wc->hIcon;
-    classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
-					iSmIconWidth, iSmIconHeight,
-					LR_COPYFROMRESOURCE);
-    classPtr->hCursor       = wc->hCursor;
-    classPtr->hbrBackground = wc->hbrBackground;
-
-    WINPROC_SetProc( &classPtr->winprocW, wc->lpfnWndProc,
-                     WIN_PROC_32W, WIN_PROC_CLASS );
-    CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
-    return atom;
+    wcex.cbSize        = sizeof(wcex);
+    wcex.style         = wc->style;
+    wcex.lpfnWndProc   = wc->lpfnWndProc;
+    wcex.cbClsExtra    = wc->cbClsExtra;
+    wcex.cbWndExtra    = wc->cbWndExtra;
+    wcex.hInstance     = wc->hInstance;
+    wcex.hIcon         = wc->hIcon;
+    wcex.hCursor       = wc->hCursor;
+    wcex.hbrBackground = wc->hbrBackground;
+    wcex.lpszMenuName  = wc->lpszMenuName;
+    wcex.lpszClassName = wc->lpszClassName;
+    wcex.hIconSm       = 0;
+    return RegisterClassExW( &wcex );
 }
 
 
@@ -1125,113 +1071,73 @@ UINT WINAPI RealGetWindowClassW( HWND hwnd, LPWSTR buffer, UINT count )
  */
 BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASS16 *wc )
 {
-    ATOM atom;
-    CLASS *classPtr;
-    HINSTANCE hInstance = HINSTANCE_32(GetExePtr( hInst16 ));
+    WNDCLASSEX16 wcex;
+    UINT16 ret = GetClassInfoEx16( hInst16, name, &wcex );
 
-    TRACE("%p %s %p\n",hInstance, debugstr_a(MapSL(name)), wc);
-
-    if (!(atom = GlobalFindAtomA( MapSL(name) )) ||
-        !(classPtr = CLASS_FindClassByAtom( atom, hInstance )))
-        return FALSE;
-    if ((hInstance != classPtr->hInstance) &&
-        !(classPtr->style & CS_GLOBALCLASS)) /*BWCC likes to pass hInstance=0*/
-        return FALSE;
-    wc->style         = (UINT16)classPtr->style;
-    wc->lpfnWndProc   = CLASS_GetProc( classPtr, WIN_PROC_16 );
-    wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
-    wc->cbWndExtra    = (INT16)classPtr->cbWndExtra;
-    wc->hInstance     = classPtr->style & CS_GLOBALCLASS ? GetModuleHandle16("USER") : HINSTANCE_16(classPtr->hInstance);
-    wc->hIcon         = HICON_16(classPtr->hIcon);
-    wc->hCursor       = HCURSOR_16(classPtr->hCursor);
-    wc->hbrBackground = HBRUSH_16(classPtr->hbrBackground);
-    wc->lpszClassName = name;
-    wc->lpszMenuName  = CLASS_GetMenuName16( classPtr );
-
-    /* We must return the atom of the class here instead of just TRUE. */
-    return atom;
+    if (ret)
+    {
+        wc->style         = wcex.style;
+        wc->lpfnWndProc   = wcex.lpfnWndProc;
+        wc->cbClsExtra    = wcex.cbClsExtra;
+        wc->cbWndExtra    = wcex.cbWndExtra;
+        wc->hInstance     = wcex.hInstance;
+        wc->hIcon         = wcex.hIcon;
+        wc->hCursor       = wcex.hCursor;
+        wc->hbrBackground = wcex.hbrBackground;
+        wc->lpszMenuName  = wcex.lpszMenuName;
+        wc->lpszClassName = wcex.lpszClassName;
+    }
+    return ret;
 }
 
 
 /***********************************************************************
  *		GetClassInfoA (USER32.@)
  */
-BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name,
-                               WNDCLASSA *wc )
+BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name, WNDCLASSA *wc )
 {
-    ATOM atom;
-    CLASS *classPtr;
+    WNDCLASSEXA wcex;
+    UINT ret = GetClassInfoExA( hInstance, name, &wcex );
 
-    TRACE("%p %p %p\n",hInstance, name, wc);
-
-    /* workaround: if hInstance=NULL you expect to get the system classes
-    but this classes (as example from comctl32.dll SysListView) won't be
-    registered with hInstance=NULL in WINE because of the late loading
-    of this dll. fixes file dialogs in WinWord95 (jsch)*/
-
-    if (!(atom=GlobalFindAtomA(name)) || !(classPtr=CLASS_FindClassByAtom(atom,hInstance)))
-        return FALSE;
-
-    if (!(classPtr->style & CS_GLOBALCLASS) &&
-        classPtr->hInstance &&
-        (hInstance != classPtr->hInstance))
+    if (ret)
     {
-        if (hInstance) return FALSE;
-        WARN("systemclass %s (hInst=0) demanded but only class with hInst!=0 found\n",name);
+        wc->style         = wcex.style;
+        wc->lpfnWndProc   = wcex.lpfnWndProc;
+        wc->cbClsExtra    = wcex.cbClsExtra;
+        wc->cbWndExtra    = wcex.cbWndExtra;
+        wc->hInstance     = wcex.hInstance;
+        wc->hIcon         = wcex.hIcon;
+        wc->hCursor       = wcex.hCursor;
+        wc->hbrBackground = wcex.hbrBackground;
+        wc->lpszMenuName  = wcex.lpszMenuName;
+        wc->lpszClassName = wcex.lpszClassName;
     }
-
-    wc->style         = classPtr->style;
-    wc->lpfnWndProc   = (WNDPROC)CLASS_GetProc( classPtr, WIN_PROC_32A );
-    wc->cbClsExtra    = classPtr->cbClsExtra;
-    wc->cbWndExtra    = classPtr->cbWndExtra;
-    wc->hInstance     = hInstance;
-    wc->hIcon         = (HICON)classPtr->hIcon;
-    wc->hCursor       = (HCURSOR)classPtr->hCursor;
-    wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
-    wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
-    wc->lpszClassName = name;
-
-    /* We must return the atom of the class here instead of just TRUE. */
-    return atom;
+    return ret;
 }
 
 
 /***********************************************************************
  *		GetClassInfoW (USER32.@)
  */
-BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
-                               WNDCLASSW *wc )
+BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
 {
-    ATOM atom;
-    CLASS *classPtr;
+    WNDCLASSEXW wcex;
+    UINT ret = GetClassInfoExW( hInstance, name, &wcex );
 
-    TRACE("%p %p %p\n",hInstance, name, wc);
-
-    if (	!(atom=GlobalFindAtomW(name)) ||
-		!(classPtr=CLASS_FindClassByAtom(atom,hInstance))
-    )
-        return FALSE;
-
-    if (!(classPtr->style & CS_GLOBALCLASS) &&
-        classPtr->hInstance &&
-        (hInstance != classPtr->hInstance))
+    if (ret)
     {
-        if (hInstance) return FALSE;
-        WARN("systemclass %s (hInst=0) demanded but only class with hInst!=0 found\n",debugstr_w(name));
+        wc->style         = wcex.style;
+        wc->lpfnWndProc   = wcex.lpfnWndProc;
+        wc->cbClsExtra    = wcex.cbClsExtra;
+        wc->cbWndExtra    = wcex.cbWndExtra;
+        wc->hInstance     = wcex.hInstance;
+        wc->hIcon         = wcex.hIcon;
+        wc->hCursor       = wcex.hCursor;
+        wc->hbrBackground = wcex.hbrBackground;
+        wc->lpszMenuName  = wcex.lpszMenuName;
+        wc->lpszClassName = wcex.lpszClassName;
     }
-    wc->style         = classPtr->style;
-    wc->lpfnWndProc   = (WNDPROC)CLASS_GetProc( classPtr, WIN_PROC_32W );
-    wc->cbClsExtra    = classPtr->cbClsExtra;
-    wc->cbWndExtra    = classPtr->cbWndExtra;
-    wc->hInstance     = hInstance;
-    wc->hIcon         = (HICON)classPtr->hIcon;
-    wc->hCursor       = (HCURSOR)classPtr->hCursor;
-    wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
-    wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );
-    wc->lpszClassName = name;
-
-    /* We must return the atom of the class here instead of just TRUE. */
-    return atom;
+    return ret;
 }
 
 
