@@ -2190,7 +2190,7 @@ BOOL WINAPI SetDefaultCommConfigW(
 
 
 /***********************************************************************
- *           GetDefaultCommConfigA   (KERNEL32.@)
+ *           GetDefaultCommConfigW   (KERNEL32.@)
  *
  *   Acquires the default configuration of the specified communication device. (unicode)
  *
@@ -2199,22 +2199,24 @@ BOOL WINAPI SetDefaultCommConfigW(
  *   True on successful reading of the default configuration,
  *   if the device is not found or the buffer is too small.
  */
-BOOL WINAPI GetDefaultCommConfigA(
-    LPCSTR       lpszName, /* [in] The ascii name of the device targeted for configuration. */
+BOOL WINAPI GetDefaultCommConfigW(
+    LPCWSTR      lpszName, /* [in] The unicode name of the device targeted for configuration. */
     LPCOMMCONFIG lpCC,     /* [out] The default configuration for the device. */
     LPDWORD      lpdwSize) /* [in/out] Initially the size of the default configuration buffer,
                               afterwards the number of bytes copied to the buffer or
                               the needed size of the buffer. */
 {
      LPDCB lpdcb = &(lpCC->dcb);
-     char  temp[40];
+     WCHAR temp[40];
+     const WCHAR comW[] = {'C','O','M',0};
+     const WCHAR formatW[] = {'C','O','M','%','c',':','3','8','4','0','0',',','n',',','8',',','1',0};
 
-     if (strncasecmp(lpszName,"COM",3)) {
-        ERR("not implemented for <%s>\n", lpszName);
+     if (strncmpiW(lpszName,comW,3)) {
+        ERR("not implemented for <%s>\n", debugstr_w(lpszName));
         return FALSE;
      }
 
-     TRACE("(%s %p %ld)\n", lpszName, lpCC, *lpdwSize );
+     TRACE("(%s %p %ld)\n", debugstr_w(lpszName), lpCC, *lpdwSize );
      if (*lpdwSize < sizeof(COMMCONFIG)) {
          *lpdwSize = sizeof(COMMCONFIG);
          return FALSE;
@@ -2228,38 +2230,38 @@ BOOL WINAPI GetDefaultCommConfigA(
      lpCC->dwProviderOffset = 0L;
      lpCC->dwProviderSize = 0L;
 
-     sprintf( temp, "COM%c:38400,n,8,1", lpszName[3]);
-     FIXME("setting %s as default\n", temp);
+     sprintfW( temp, formatW, lpszName[3]);
+     FIXME("setting %s as default\n", debugstr_w(temp));
 
-     return BuildCommDCBA( temp, lpdcb);
+     return BuildCommDCBW( temp, lpdcb);
 }
 
 /**************************************************************************
- *         GetDefaultCommConfigW		(KERNEL32.@)
+ *         GetDefaultCommConfigA		(KERNEL32.@)
  *
- *   Acquires the default configuration of the specified communication device. (unicode)
+ *   Acquires the default configuration of the specified communication device. (ascii)
  *
  *  RETURNS
  *
  *   True on successful reading of the default configuration,
  *   if the device is not found or the buffer is too small.
  */
-BOOL WINAPI GetDefaultCommConfigW(
-    LPCWSTR      lpszName, /* [in] The unicode name of the device targeted for configuration. */
+BOOL WINAPI GetDefaultCommConfigA(
+    LPCSTR       lpszName, /* [in] The ascii name of the device targeted for configuration. */
     LPCOMMCONFIG lpCC,     /* [out] The default configuration for the device. */
     LPDWORD      lpdwSize) /* [in/out] Initially the size of the default configuration buffer,
 			      afterwards the number of bytes copied to the buffer or
                               the needed size of the buffer. */
 {
 	BOOL ret = FALSE;
-	LPSTR	lpszNameA;
+	UNICODE_STRING lpszNameW;
 
-	TRACE("(%p,%p,%ld)\n",lpszName,lpCC,*lpdwSize);
-	lpszNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszName );
-	if (lpszNameA)
-	{
-	ret=GetDefaultCommConfigA(lpszNameA,lpCC,lpdwSize);
-        HeapFree( GetProcessHeap(), 0, lpszNameA );
-	}
+	TRACE("(%s,%p,%ld)\n",lpszName,lpCC,*lpdwSize);
+	if(lpszName) RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
+	else lpszNameW.Buffer = NULL;
+
+	if(lpszNameW.Buffer) ret = GetDefaultCommConfigW(lpszNameW.Buffer,lpCC,lpdwSize);
+
+	RtlFreeUnicodeString(&lpszNameW);
 	return ret;
 }
