@@ -5495,6 +5495,80 @@ static void test_DestroyWindow(void)
     ok(!IsWindow(child4), "child4 still exists");
 }
 
+
+static const struct message WmDispatchPaint[] = {
+    { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent },
+    { 0 }
+};
+
+static LRESULT WINAPI DispatchMessageCheckProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_PAINT)
+    {
+        trace( "Got WM_PAINT, ignoring\n" );
+        return 0;
+    }
+    return MsgCheckProcA( hwnd, message, wParam, lParam );
+}
+
+static void test_DispatchMessage(void)
+{
+    RECT rect;
+    MSG msg;
+    int count;
+    HWND hwnd = CreateWindowA( "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                               100, 100, 200, 200, 0, 0, 0, NULL);
+    ShowWindow( hwnd, SW_SHOW );
+    UpdateWindow( hwnd );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    SetWindowLongPtrA( hwnd, GWL_WNDPROC, (LONG_PTR)DispatchMessageCheckProc );
+
+    SetRect( &rect, -5, -5, 5, 5 );
+    RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE|RDW_ERASE|RDW_FRAME );
+    count = 0;
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        if (msg.message != WM_PAINT) DispatchMessage( &msg );
+        else
+        {
+            flush_sequence();
+            DispatchMessage( &msg );
+            /* DispatchMessage will send WM_NCPAINT if non client area is still invalid after WM_PAINT */
+            if (!count) ok_sequence( WmDispatchPaint, "WmDispatchPaint", FALSE );
+            else ok_sequence( WmEmptySeq, "WmEmpty", FALSE );
+            if (++count > 10) break;
+        }
+    }
+    ok( msg.message == WM_PAINT && count > 10, "WM_PAINT messages stopped\n" );
+
+    trace("now without DispatchMessage\n");
+    flush_sequence();
+    RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE|RDW_ERASE|RDW_FRAME );
+    count = 0;
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        if (msg.message != WM_PAINT) DispatchMessage( &msg );
+        else
+        {
+            HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+            flush_sequence();
+            /* this will send WM_NCCPAINT just like DispatchMessage does */
+            GetUpdateRgn( hwnd, hrgn, TRUE );
+            ok_sequence( WmDispatchPaint, "WmDispatchPaint", FALSE );
+            DeleteObject( hrgn );
+            GetClientRect( hwnd, &rect );
+            ValidateRect( hwnd, &rect );  /* this will stop WM_PAINTs */
+            ok( !count, "Got multiple WM_PAINTs\n" );
+            if (++count > 10) break;
+        }
+    }
+}
+
+
 START_TEST(msg)
 {
     HMODULE user32 = GetModuleHandleA("user32.dll");
@@ -5544,6 +5618,7 @@ START_TEST(msg)
     test_timers();
     test_set_hook();
     test_DestroyWindow();
+    test_DispatchMessage();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)

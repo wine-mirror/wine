@@ -795,6 +795,13 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
                      msg->wParam, msg->lParam );
 
+    if (msg->message == WM_PAINT)
+    {
+        /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
+        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+        GetUpdateRgn( msg->hwnd, hrgn, TRUE );
+        DeleteObject( hrgn );
+    }
     return retval;
 }
 
@@ -866,6 +873,13 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
                      msg->wParam, msg->lParam );
 
+    if (msg->message == WM_PAINT)
+    {
+        /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
+        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+        GetUpdateRgn( msg->hwnd, hrgn, TRUE );
+        DeleteObject( hrgn );
+    }
     return retval;
 }
 
