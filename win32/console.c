@@ -9,8 +9,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
+#include <strings.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -597,8 +599,39 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
                                      COORD dwBufferCoord,
                                      LPSMALL_RECT lpWriteRegion)
 {
-    FIXME(console, "(...):stub\n");
-    return FALSE;
+    int i,j,off=0,lastattr=-1;
+    char	buffer[200];
+    DWORD	res;
+    static int colormap[8] = {
+    	0,4,2,6,
+	1,5,3,7,
+    };
+
+    TRACE(console,"wr: top = %d, bottom=%d, left=%d,right=%d\n",
+    	lpWriteRegion->Top,
+    	lpWriteRegion->Bottom,
+    	lpWriteRegion->Left,
+    	lpWriteRegion->Right
+    );
+
+    for (i=lpWriteRegion->Top;i<=lpWriteRegion->Bottom;i++) {
+    	sprintf(buffer,"%c[%d;%dH",27,i,lpWriteRegion->Left);
+	WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
+	if (lastattr != lpBuffer[off].Attributes) {
+		lastattr = lpBuffer[off].Attributes;
+		sprintf(buffer,"%c[0;3%d;4%d",27,colormap[lastattr&7],colormap[(lastattr&0x70)>>4]);
+		if (lastattr & FOREGROUND_INTENSITY)
+			strcat(buffer,";1");
+		/* BACKGROUND_INTENSITY */
+		strcat(buffer,"m");
+		WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
+	}
+	for (j=lpWriteRegion->Left;j<=lpWriteRegion->Right;j++)
+		WriteFile(hConsoleOutput,&(lpBuffer[off++].Char.AsciiChar),1,&res,NULL);
+    }
+    sprintf(buffer,"%c[0m",27);
+    WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -832,11 +865,50 @@ BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
                                   DWORD cInRecords,
                                   LPDWORD lpcRead)
 {
-    pirBuffer = NULL;
-    cInRecords = 0;
-    *lpcRead = 0;
-    FIXME(console,"(%d,%p,%ld,%p): stub\n",hConsoleInput, pirBuffer,
-          cInRecords, lpcRead);
+    fd_set infds;
+    int	i,fd = FILE_GetUnixHandle(hConsoleInput);
+    struct timeval tv;
+    char	inchar;
+    DWORD	res;
+    static int keystate[256];
+    LPINPUT_RECORD	ir = pirBuffer;
+
+    TRACE(console,"(%d,%p,%ld,%p): stub\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
+
+    memset(&tv,0,sizeof(tv));
+    FD_ZERO(&infds);
+    FD_SET(fd,&infds);
+    select(fd+1,&infds,NULL,NULL,&tv);
+
+    if (FD_ISSET(fd,&infds)) {
+    	ReadFile(hConsoleInput,&inchar,1,&res,NULL);
+	for (i=0;i<256;i++)  {
+	    if (keystate[i] && i!=inchar) {
+	    	ir->EventType = 1;
+	    	ir->Event.KeyEvent.bKeyDown = 0;
+	    	ir->Event.KeyEvent.wRepeatCount = 0;
+	    	ir->Event.KeyEvent.wVirtualKeyCode = 0;
+	    	ir->Event.KeyEvent.wVirtualScanCode = 0;
+	    	ir->Event.KeyEvent.uChar.AsciiChar = i;
+	    	ir->Event.KeyEvent.dwControlKeyState = 0;
+		ir++;
+		keystate[i]=0;
+	    }
+	}
+
+	ir->EventType = 1; /* Key_event */
+	ir->Event.KeyEvent.bKeyDown = 1;
+	ir->Event.KeyEvent.wRepeatCount = 0;
+	ir->Event.KeyEvent.wVirtualKeyCode = 0;
+	ir->Event.KeyEvent.wVirtualScanCode = 0;
+	ir->Event.KeyEvent.uChar.AsciiChar = inchar;
+	ir->Event.KeyEvent.dwControlKeyState = 0;
+	keystate[inchar]=1;
+	ir++;
+	*lpcRead = ir-pirBuffer;
+    } else {
+	*lpcRead = 0;
+    }
     return TRUE;
 }
 
