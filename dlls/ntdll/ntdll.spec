@@ -573,20 +573,20 @@
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stub SaveEm87Context
 @ stdcall ZwAcceptConnectPort(long long long long long long) NtAcceptConnectPort
-@ stub ZwAccessCheck
+@ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub ZwAccessCheckAndAuditAlarm
 @ stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustPrivilegesToken
-@ stub ZwAdjustPrivilegesToken
+@ stdcall ZwAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
 @ stub ZwAlertResumeThread
 @ stub ZwAlertThread
-@ stub ZwAllocateLocallyUniqueId
-@ stub ZwAllocateUuids
+@ stdcall ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
+@ stdcall ZwAllocateUuids(ptr ptr ptr) NtAllocateUuids
 @ stdcall ZwAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
 @ stub ZwCallbackReturn
 @ stub ZwCancelIoFile
 @ stub ZwCancelTimer
-@ stub ZwClearEvent
-@ stub ZwClose
+@ stdcall ZwClearEvent(long) NtClearEvent
+@ stdcall ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
 @ stdcall ZwCompleteConnectPort(long) NtCompleteConnectPort
 @ stdcall ZwConnectPort(long long long long long long long long) NtConnectPort
@@ -605,8 +605,8 @@
 @ stub ZwCreateProcess
 @ stub ZwCreateProfile
 @ stdcall ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
-@ stub ZwCreateSemaphore
-@ stub ZwCreateSymbolicLinkObject
+@ stdcall ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
+@ stdcall ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
 @ stub ZwCreateThread
 @ stdcall ZwCreateTimer(ptr long ptr long) NtCreateTimer
 @ stub ZwCreateToken
@@ -615,7 +615,7 @@
 @ stdcall ZwDeleteKey(long) NtDeleteKey
 @ stdcall ZwDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall ZwDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
-@ stub ZwDisplayString
+@ stdcall ZwDisplayString(ptr) NtDisplayString
 @ stdcall ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall ZwDuplicateToken(long long long long long long) NtDuplicateToken
 @ stub ZwEnumerateBus
@@ -655,8 +655,8 @@
 @ stub ZwOpenProcess
 @ stdcall ZwOpenProcessToken(long long long) NtOpenProcessToken
 @ stdcall ZwOpenSection(ptr long ptr) NtOpenSection
-@ stub ZwOpenSemaphore
-@ stub ZwOpenSymbolicLinkObject
+@ stdcall ZwOpenSemaphore(long long ptr) NtOpenSemaphore
+@ stdcall ZwOpenSymbolicLinkObject (long long long) NtOpenSymbolicLinkObject
 @ stub ZwOpenThread
 @ stdcall ZwOpenThreadToken(long long long long) NtOpenThreadToken
 @ stub ZwOpenTimer
@@ -665,13 +665,13 @@
 @ stub ZwPrivilegeObjectAuditAlarm
 @ stub ZwPrivilegedServiceAuditAlarm
 @ stdcall ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
-@ stub ZwPulseEvent
+@ stdcall ZwPulseEvent(long ptr) NtPulseEvent
 @ stub ZwQueryAttributesFile
 @ stub ZwQueryDefaultLocale
 @ stdcall ZwQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
 @ stdcall ZwQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
-@ stub ZwQueryEvent
+@ stdcall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
 @ stdcall ZwQueryInformationFile(long long long long long) NtQueryInformationFile
 @ stub ZwQueryInformationPort
 @ stdcall ZwQueryInformationProcess(long long long long long) NtQueryInformationProcess
@@ -682,20 +682,20 @@
 @ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey
 @ stub ZwQueryMutant
 @ stdcall ZwQueryObject(long long long long long) NtQueryObject
-@ stub ZwQueryPerformanceCounter
-@ stub ZwQuerySection
-@ stub ZwQuerySecurityObject
-@ stub ZwQuerySemaphore
-@ stub ZwQuerySymbolicLinkObject
+@ stdcall ZwQueryPerformanceCounter (long long) NtQueryPerformanceCounter
+@ stdcall ZwQuerySection (long long long long long) NtQuerySection
+@ stdcall ZwQuerySecurityObject (long long long long long) NtQuerySecurityObject
+@ stdcall ZwQuerySemaphore (long long long long long) NtQuerySemaphore
+@ stdcall ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
 @ stub ZwQuerySystemEnvironmentValue
 @ stdcall ZwQuerySystemInformation(long long long long) NtQuerySystemInformation
 @ stdcall ZwQuerySystemTime(ptr) NtQuerySystemTime
 @ stub ZwQueryTimer
-@ stub ZwQueryTimerResolution
+@ stdcall ZwQueryTimerResolution(long long long) NtQueryTimerResolution
 @ stdcall ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
 @ stdcall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
 @ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
-@ stub ZwRaiseException
+@ stdcall ZwRaiseException(ptr ptr long) NtRaiseException
 @ stub ZwRaiseHardError
 @ stdcall ZwReadFile(long long long long long long long long long) NtReadFile
 @ stub ZwReadRequestData
@@ -704,7 +704,7 @@
 @ stdcall ZwRegisterThreadTerminatePort(long) NtRegisterThreadTerminatePort
 @ stub ZwReleaseMutant
 @ stub ZwReleaseProcessMutant
-@ stub ZwReleaseSemaphore
+@ stdcall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stub ZwRemoveIoCompletion
 @ stdcall ZwReplaceKey(ptr long ptr) NtReplaceKey
 @ stub ZwReplyPort
@@ -712,7 +712,7 @@
 @ stub ZwReplyWaitReplyPort
 @ stub ZwRequestPort
 @ stdcall ZwRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
-@ stub ZwResetEvent
+@ stdcall ZwResetEvent(long ptr) NtResetEvent
 @ stdcall ZwRestoreKey(long long long) NtRestoreKey
 @ stdcall ZwResumeThread(long long) NtResumeThread
 @ stdcall ZwSaveKey(long long) NtSaveKey
@@ -736,7 +736,7 @@
 @ stub ZwSetLowEventPair
 @ stub ZwSetLowWaitHighEventPair
 @ stub ZwSetLowWaitHighThread
-@ stub ZwSetSecurityObject
+@ stdcall ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stub ZwSetSystemEnvironmentValue
 @ stub ZwSetSystemInformation
 @ stub ZwSetSystemPowerState
@@ -750,7 +750,7 @@
 @ stub ZwStopProfile
 @ stub ZwSuspendThread
 @ stub ZwSystemDebugControl
-@ stub ZwTerminateProcess
+@ stdcall ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall ZwTerminateThread(long long) NtTerminateThread
 @ stub ZwTestAlert
 @ stub ZwUnloadDriver
