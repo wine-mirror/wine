@@ -110,6 +110,15 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 /******************************************************************************
  *  RtlEqualSid		[NTDLL.@]
  *
+ * Determine if two SIDs are equal.
+ *
+ * PARAMS
+ *  pSid1 [I] Source SID
+ *  pSid2 [I] SID to compare with
+ *
+ * RETURNS
+ *  TRUE, if pSid1 is equal to pSid2,
+ *  FALSE otherwise.
  */
 BOOL WINAPI RtlEqualSid( PSID pSid1, PSID pSid2 )
 {
@@ -145,6 +154,14 @@ BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2)
 
 /******************************************************************************
  *  RtlFreeSid		[NTDLL.@]
+ *
+ * Free the resources used by a SID.
+ *
+ * PARAMS
+ *  pSid [I] SID to Free.
+ *
+ * RETURNS
+ *  STATUS_SUCCESS.
  */
 DWORD WINAPI RtlFreeSid(PSID pSid)
 {
@@ -156,8 +173,13 @@ DWORD WINAPI RtlFreeSid(PSID pSid)
 /**************************************************************************
  * RtlLengthRequiredSid	[NTDLL.@]
  *
+ * Determine the amount of memory a SID will use
+ *
  * PARAMS
- *   nSubAuthorityCount []
+ *   nrofsubauths [I] Number of Sub Authorities in the SID.
+ *
+ * RETURNS
+ *   The size, in bytes, of a SID with nrofsubauths Sub Authorities.
  */
 DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
 {
@@ -166,6 +188,14 @@ DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
 
 /**************************************************************************
  *                 RtlLengthSid				[NTDLL.@]
+ *
+ * Determine the amount of memory a SID is using
+ *
+ * PARAMS
+ *  pSid [I] SID to ge the size of.
+ *
+ * RETURNS
+ *  The size, in bytes, of pSid.
  */
 DWORD WINAPI RtlLengthSid(PSID pSid)
 {
@@ -176,6 +206,17 @@ DWORD WINAPI RtlLengthSid(PSID pSid)
 
 /**************************************************************************
  *                 RtlInitializeSid			[NTDLL.@]
+ *
+ * Initialise a SID.
+ *
+ * PARAMS
+ *  pSid                 [I] SID to initialise
+ *  pIdentifierAuthority [I] Identifier Authority
+ *  nSubAuthorityCount   [I] Number of Sub Authorities
+ *
+ * RETURNS
+ *  Success: TRUE. pSid is initialised withe the details given.
+ *  Failure: FALSE, if nSubAuthorityCount is >= SID_MAX_SUB_AUTHORITIES.
  */
 BOOL WINAPI RtlInitializeSid(
 	PSID pSid,
@@ -200,9 +241,14 @@ BOOL WINAPI RtlInitializeSid(
 /**************************************************************************
  *                 RtlSubAuthoritySid			[NTDLL.@]
  *
+ * Return the Sub Authority of a SID
+ *
  * PARAMS
- *   pSid          []
- *   nSubAuthority []
+ *   pSid          [I] SID to get the Sub Authority from.
+ *   nSubAuthority [I] Sub Authority number.
+ *
+ * RETURNS
+ *   A pointer to The Sub Authority value of pSid.
  */
 LPDWORD WINAPI RtlSubAuthoritySid( PSID pSid, DWORD nSubAuthority )
 {
@@ -212,8 +258,13 @@ LPDWORD WINAPI RtlSubAuthoritySid( PSID pSid, DWORD nSubAuthority )
 /**************************************************************************
  * RtlIdentifierAuthoritySid	[NTDLL.@]
  *
+ * Return the Identifier Authority of a SID.
+ *
  * PARAMS
- *   pSid []
+ *   pSid [I] SID to get the Identifier Authority from.
+ *
+ * RETURNS
+ *   A pointer to the Identifier Authority value of pSid.
  */
 PSID_IDENTIFIER_AUTHORITY WINAPI RtlIdentifierAuthoritySid( PSID pSid )
 {
@@ -223,9 +274,13 @@ PSID_IDENTIFIER_AUTHORITY WINAPI RtlIdentifierAuthoritySid( PSID pSid )
 /**************************************************************************
  *                 RtlSubAuthorityCountSid		[NTDLL.@]
  *
+ * Get the number of Sub Authorities in a SID.
+ *
  * PARAMS
- *   pSid          []
- *   nSubAuthority []
+ *   pSid [I] SID to get the count from.
+ *
+ * RETURNS
+ *  A pointer to the Sub Authority count of pSid.
  */
 LPBYTE WINAPI RtlSubAuthorityCountSid(PSID pSid)
 {
@@ -250,8 +305,14 @@ DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID
 /******************************************************************************
  * RtlValidSid [NTDLL.@]
  *
+ * Determine if a SID is valid.
+ *
  * PARAMS
- *   pSid []
+ *   pSid [I] SID to check
+ *
+ * RETURNS
+ *   TRUE if pSid is valid,
+ *   FALSE otherwise.
  */
 BOOL WINAPI
 RtlValidSid( PSID pSid )
@@ -283,10 +344,15 @@ RtlValidSid( PSID pSid )
 /**************************************************************************
  * RtlCreateSecurityDescriptor			[NTDLL.@]
  *
+ * Initialise a SECURITY_DESCRIPTOR.
+ *
+ * PARAMS
+ *  lpsd [O] Descriptor to initialise.
+ *  rev  [I] Revision, must be set to SECURITY_DESCRIPTOR_REVISION.
+ *
  * RETURNS:
- *  0 success,
- *  STATUS_INVALID_OWNER, STATUS_PRIVILEGE_NOT_HELD, STATUS_NO_INHERITANCE,
- *  STATUS_NO_MEMORY
+ *  Success: STATUS_SUCCESS.
+ *  Failure: STATUS_UNKNOWN_REVISION if rev is incorrect.
  */
 NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 	PSECURITY_DESCRIPTOR lpsd,
@@ -301,6 +367,14 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 /**************************************************************************
  * RtlValidSecurityDescriptor			[NTDLL.@]
  *
+ * Determine if a SECURITY_DESCRIPTOR is valid.
+ *
+ * PARAMS
+ *  SecurityDescriptor [I] Descriptor to check.
+ *
+ * RETURNS
+ *   Success: STATUS_SUCCESS.
+ *   Failure: STATUS_INVALID_SECURITY_DESCR or STATUS_UNKNOWN_REVISION.
  */
 NTSTATUS WINAPI RtlValidSecurityDescriptor(
 	PSECURITY_DESCRIPTOR SecurityDescriptor)
@@ -577,7 +651,7 @@ NTSTATUS WINAPI RtlCreateAcl(PACL acl,DWORD size,DWORD rev)
 	acl->AclRevision	= rev;
 	acl->AclSize		= size;
 	acl->AceCount		= 0;
-	return 0;
+	return STATUS_SUCCESS;
 }
 
 /**************************************************************************
@@ -682,6 +756,7 @@ RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 
 /******************************************************************************
  *  NtAccessCheck		[NTDLL.@]
+ *  ZwAccessCheck		[NTDLL.@]
  */
 NTSTATUS WINAPI
 NtAccessCheck(
