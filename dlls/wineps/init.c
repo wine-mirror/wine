@@ -444,6 +444,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     DWORD ppdType;
     char* ppdFileName = NULL;
     HKEY hkey;
+    BOOL using_default_devmode = FALSE;
 
     TRACE("'%s'\n", name);
 
@@ -473,8 +474,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	    goto cleanup;
 	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
 	strcpy(pi->Devmode->dmPublic.dmDeviceName,name);
-	DrvSetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
-		 REG_BINARY, (LPBYTE)&DefaultDevmode, sizeof(DefaultDevmode) );
+	using_default_devmode = TRUE;
 
 	/* need to do something here AddPrinter?? */
     }
@@ -559,6 +559,23 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	    ppdFileName);
 	goto closeprinter;
     }
+
+
+    if(using_default_devmode) {
+        DWORD papersize;
+
+	if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IPAPERSIZE | LOCALE_RETURN_NUMBER,
+			  (LPWSTR)&papersize, sizeof(papersize))) {
+	    PSDRV_DEVMODEA dm;
+	    memset(&dm, 0, sizeof(dm));
+	    dm.dmPublic.dmFields = DM_PAPERSIZE;
+	    dm.dmPublic.u1.s1.dmPaperSize = papersize;
+	    PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
+	}
+	DrvSetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
+		 REG_BINARY, (LPBYTE)pi->Devmode, sizeof(DefaultDevmode) );
+    }
+
 
     /*
      *	This is a hack.  The default paper size should be read in as part of
