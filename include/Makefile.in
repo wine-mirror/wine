@@ -26,6 +26,7 @@ IDL_SRCS = \
 	propidl.idl \
 	pstore.idl \
 	richole.idl \
+	sensevts.idl \
 	servprov.idl \
 	shldisp.idl \
 	shobjidl.idl \
