@@ -24,6 +24,8 @@ typedef struct CMemoryAllocator
 	MA_IMemAllocatorImpl	memalloc;
 
 	/* IMemAllocator fields. */
+	CRITICAL_SECTION	csMem;
+	ALLOCATOR_PROPERTIES	prop;
 } CMemoryAllocator;
 
 #define	CMemoryAllocator_THIS(iface,member)		CMemoryAllocator*	This = ((CMemoryAllocator*)(((char*)iface)-offsetof(CMemoryAllocator,member)))

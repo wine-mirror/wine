@@ -471,8 +471,8 @@ ICOM_DEFINE(IBaseFilter,IMediaFilter)
     /*** IPersist methods ***/
 #define IBaseFilter_GetClassID(p,a1) ICOM_CALL1(GetClassID,p,a1)
     /*** IMediaFilter methods ***/
-#define IBaseFilter_Stop(p,a1) ICOM_CALL1(Stop,p,a1)
-#define IBaseFilter_Pause(p,a1) ICOM_CALL1(Pause,p,a1)
+#define IBaseFilter_Stop(p) ICOM_CALL (Stop,p)
+#define IBaseFilter_Pause(p) ICOM_CALL (Pause,p)
 #define IBaseFilter_Run(p,a1) ICOM_CALL1(Run,p,a1)
 #define IBaseFilter_GetState(p,a1,a2) ICOM_CALL2(GetState,p,a1,a2)
 #define IBaseFilter_SetSyncSource(p,a1) ICOM_CALL1(SetSyncSource,p,a1)

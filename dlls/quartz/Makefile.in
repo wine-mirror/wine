@@ -10,6 +10,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	amerror.c \
+	amundoc.c \
 	complist.c \
 	devenum.c \
 	devmon.c \
@@ -40,6 +41,7 @@ C_SRCS = \
 	memalloc.c \
 	monprop.c \
 	regsvr.c \
+	seekpass.c \
 	sysclock.c
 
 @MAKE_DLL_RULES@

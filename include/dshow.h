@@ -13,9 +13,9 @@
 #include "control.h"
 #include "evcode.h"
 #include "uuids.h"
-/*#include "errors.h"*/  /* not yet */
+#include "errors.h"
 /*#include "edevdefs.h"*/  /* not yet */
-/*#include "audevcod.h"*/  /* not yet */
+#include "audevcod.h"
 /*#include "dvdevcod.h"*/  /* not yet */
 
 #ifndef AM_NOVTABLE

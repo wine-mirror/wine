@@ -90,8 +90,11 @@ IFilterMapper_fnRegisterFilterInstance(IFilterMapper* iface,CLSID clsid,LPCWSTR 
 		return hr;
 
 	/* FIXME */
-	return IFilterMapper_RegisterFilter(iface,
-		*pclsidMedia,lpwszName,0x60000000);
+	/* this doesn't work. */
+	/* return IFilterMapper_RegisterFilter(iface,
+		*pclsidMedia,lpwszName,0x60000000); */
+
+	return E_NOTIMPL;
 }
 
 static HRESULT WINAPI
@@ -136,7 +139,10 @@ IFilterMapper_fnUnregisterFilterInstance(IFilterMapper* iface,CLSID clsidMedia)
 	FIXME("(%p)->(%s)\n",This,debugstr_guid(&clsidMedia));
 
 	/* FIXME */
-	return IFilterMapper_UnregisterFilter(iface,clsidMedia);
+	/* this doesn't work. */
+	/* return IFilterMapper_UnregisterFilter(iface,clsidMedia); */
+
+	return E_NOTIMPL;
 }
 
 static HRESULT WINAPI

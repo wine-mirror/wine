@@ -120,6 +120,9 @@ typedef struct CFilterGraph
 	CRITICAL_SECTION	m_csGraphVersion;
 	LONG	m_lGraphVersion;
 	/* IMediaControl fields. */
+	/* IMediaFilter fields. */
+	CRITICAL_SECTION	m_csGraphState;
+	FILTER_STATE	m_stateGraph; /* must NOT accessed directly! */
 	/* IMediaEvent fields. */
 	HANDLE	m_hMediaEvent;
 	/* IMediaEventSink fields. */
@@ -133,6 +136,9 @@ typedef struct CFilterGraph
 #define	CFilterGraph_THIS(iface,member)		CFilterGraph*	This = ((CFilterGraph*)(((char*)iface)-offsetof(CFilterGraph,member)))
 #define	CFilterGraph_IPersist(th)		((IPersist*)&((th)->persist))
 #define	CFilterGraph_IDispatch(th)		((IDispatch*)&((th)->disp))
+#define	CFilterGraph_IFilterGraph2(th)		((IFilterGraph2*)&((th)->fgraph))
+#define	CFilterGraph_IMediaFilter(th)		((IMediaFilter*)&((th)->mediafilter))
+#define	CFilterGraph_IMediaControl(th)		((IMediaControl*)&((th)->mediacontrol))
 
 HRESULT QUARTZ_CreateFilterGraph(IUnknown* punkOuter,void** ppobj);
 

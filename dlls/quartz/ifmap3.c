@@ -80,7 +80,15 @@ IFilterMapper3_fnUnregisterFilter(IFilterMapper3* iface,const CLSID* pclsidCateg
 		debugstr_w(lpwszInst),
 		debugstr_guid(rclsidFilter));
 
-	return E_NOTIMPL;
+	if ( pclsidCategory == NULL )
+		pclsidCategory = &CLSID_LegacyAmFilterCategory;
+
+	/* FIXME */
+	return QUARTZ_RegisterAMovieFilter(
+		pclsidCategory,
+		rclsidFilter,
+		NULL, 0,
+		NULL, lpwszInst, FALSE );
 }
 
 
@@ -94,7 +102,25 @@ IFilterMapper3_fnRegisterFilter(IFilterMapper3* iface,REFCLSID rclsidFilter,LPCW
 		ppMoniker,debugstr_guid(pclsidCategory),
 		debugstr_w(lpwszInst),pRF2 );
 
-	return E_NOTIMPL;
+	if ( lpName == NULL || pRF2 == NULL )
+		return E_POINTER;
+
+	if ( ppMoniker != NULL )
+	{
+		FIXME( "ppMoniker != NULL - not implemented!\n" );
+		return E_NOTIMPL;
+	}
+
+	if ( pclsidCategory == NULL )
+		pclsidCategory = &CLSID_LegacyAmFilterCategory;
+
+	/* FIXME!! - all members in REGFILTER2 are ignored ! */
+
+	return QUARTZ_RegisterAMovieFilter(
+		pclsidCategory,
+		rclsidFilter,
+		NULL, 0,
+		lpName, lpwszInst, TRUE );
 }
 
 

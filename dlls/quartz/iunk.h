@@ -33,6 +33,13 @@ typedef struct QUARTZ_IFEntry
 	size_t		ofsVTPtr;	/* offset from IUnknown. */
 } QUARTZ_IFEntry;
 
+typedef struct QUARTZ_IFDelegation
+{
+	struct QUARTZ_IFDelegation*	pNext;
+	HRESULT (*pOnQueryInterface)(
+		IUnknown* punk, const IID* piid, void** ppobj );
+} QUARTZ_IFDelegation;
+
 typedef struct QUARTZ_IUnkImpl
 {
 	/* pointer of IUnknown interface. */
@@ -41,6 +48,8 @@ typedef struct QUARTZ_IUnkImpl
 	/* array of supported IIDs and offsets. */
 	const QUARTZ_IFEntry*	pEntries;
 	DWORD	dwEntries;
+	/* list of delegation handlers. */
+	QUARTZ_IFDelegation*	pDelegationFirst;
 	/* called on final release. */
 	void (*pOnFinalRelease)(IUnknown* punk);
 
@@ -53,6 +62,8 @@ typedef struct QUARTZ_IUnkImpl
 
 
 void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl, IUnknown* punkOuter );
+void QUARTZ_IUnkAddDelegation(
+	QUARTZ_IUnkImpl* pImpl, QUARTZ_IFDelegation* pDelegation );
 
 
 #endif	/* WINE_DSHOW_IUNK_H */

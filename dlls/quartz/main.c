@@ -20,6 +20,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "devenum.h"
 #include "fmap.h"
 #include "fmap2.h"
+#include "seekpass.h"
 
 
 typedef struct QUARTZ_CLASSENTRY
@@ -63,6 +64,7 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_SystemDeviceEnum, &QUARTZ_CreateSystemDeviceEnum },
 	{ &CLSID_FilterMapper, &QUARTZ_CreateFilterMapper },
 	{ &CLSID_FilterMapper2, &QUARTZ_CreateFilterMapper2 },
+	{ &CLSID_SeekingPassThru, &QUARTZ_CreateSeekingPassThru },
 	{ NULL, NULL },
 };
 
@@ -175,7 +177,7 @@ static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL doloc
 	ICOM_THIS(IClassFactoryImpl,iface);
 	HRESULT	hr;
 
-	FIXME("(%p)->(%d),stub!\n",This,dolock);
+	TRACE("(%p)->(%d)\n",This,dolock);
 	if (dolock)
 		hr = IClassFactory_AddRef(iface);
 	else
@@ -334,30 +336,5 @@ HRESULT WINAPI QUARTZ_DllUnregisterServer( void )
 	return E_FAIL;
 }
 
-
-/***********************************************************************
- *		AmpFactorToDB (QUARTZ.@)
- *
- *	undocumented.
- *  (converting from Amp to dB?)
- *
- */
-DWORD WINAPI QUARTZ_AmpFactorToDB( DWORD dw )
-{
-	FIXME( "(%08lx): undocumented API - stub!\n", dw );
-	return 0;
-}
-
-/***********************************************************************
- *		DBToAmpFactor (QUARTZ.@)
- *
- *	undocumented.
- *  (converting from dB to Amp?)
- */
-DWORD WINAPI QUARTZ_DBToAmpFactor( DWORD dw )
-{
-	FIXME( "(%08lx): undocumented API - stub!\n", dw );
-	return 0;
-}
 
 

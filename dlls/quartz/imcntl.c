@@ -14,6 +14,7 @@
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "wine/obj_oleaut.h"
+#include "oleauto.h"
 #include "strmif.h"
 #include "control.h"
 #include "uuids.h"
@@ -102,9 +103,10 @@ IMediaControl_fnRun(IMediaControl* iface)
 {
 	CFilterGraph_THIS(iface,mediacontrol);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IMediaFilter_Run( CFilterGraph_IMediaFilter(This),
+			(REFERENCE_TIME)0 );
 }
 
 static HRESULT WINAPI
@@ -112,19 +114,36 @@ IMediaControl_fnPause(IMediaControl* iface)
 {
 	CFilterGraph_THIS(iface,mediacontrol);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IMediaFilter_Pause( CFilterGraph_IMediaFilter(This) );
 }
 
 static HRESULT WINAPI
 IMediaControl_fnStop(IMediaControl* iface)
 {
 	CFilterGraph_THIS(iface,mediacontrol);
+	HRESULT	hr;
+	FILTER_STATE	fs;
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	hr = IMediaControl_GetState(iface,INFINITE,(OAFilterState*)&fs);
+	if ( SUCCEEDED(hr) && fs == State_Running )
+	{
+		hr = IMediaControl_Pause(iface);
+		if ( SUCCEEDED(hr) )
+			hr = IMediaControl_GetState(iface,INFINITE,(OAFilterState*)&fs);
+	}
+
+	if ( SUCCEEDED(hr) && fs == State_Paused )
+	{
+		hr = IMediaFilter_Stop(CFilterGraph_IMediaFilter(This));
+		if ( SUCCEEDED(hr) )
+			hr = IMediaControl_GetState(iface,INFINITE,(OAFilterState*)&fs);
+	}
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -132,19 +151,34 @@ IMediaControl_fnGetState(IMediaControl* iface,LONG lTimeOut,OAFilterState* pFilt
 {
 	CFilterGraph_THIS(iface,mediacontrol);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IMediaFilter_GetState( CFilterGraph_IMediaFilter(This), (DWORD)lTimeOut, (FILTER_STATE*)pFilterState );
 }
 
 static HRESULT WINAPI
 IMediaControl_fnRenderFile(IMediaControl* iface,BSTR bstrFileName)
 {
 	CFilterGraph_THIS(iface,mediacontrol);
+	UINT	uLen;
+	WCHAR*	pwszName;
+	HRESULT	hr;
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	uLen = SysStringLen(bstrFileName);
+	pwszName = (WCHAR*)QUARTZ_AllocMem( sizeof(WCHAR) * (uLen+1) );
+	if ( pwszName == NULL )
+		return E_OUTOFMEMORY;
+	memcpy( pwszName, bstrFileName, sizeof(WCHAR)*uLen );
+	pwszName[uLen] = (WCHAR)0;
+
+	hr = IFilterGraph2_RenderFile(
+		CFilterGraph_IFilterGraph2(This), pwszName, NULL );
+
+	QUARTZ_FreeMem( pwszName );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -182,9 +216,9 @@ IMediaControl_fnStopWhenReady(IMediaControl* iface)
 {
 	CFilterGraph_THIS(iface,mediacontrol);
 
-	FIXME("(%p)->()\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return IMediaFilter_Stop( CFilterGraph_IMediaFilter(This) );
 }
 
 

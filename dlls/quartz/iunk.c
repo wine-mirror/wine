@@ -24,6 +24,8 @@ IUnknown_fnQueryInterface(IUnknown* iface,REFIID riid,LPVOID *ppobj)
 	ICOM_THIS(QUARTZ_IUnkImpl,iface);
 	size_t	ofs;
 	DWORD	dwIndex;
+	QUARTZ_IFDelegation*	pDelegation;
+	HRESULT	hr;
 
 	TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
@@ -49,8 +51,24 @@ IUnknown_fnQueryInterface(IUnknown* iface,REFIID riid,LPVOID *ppobj)
 		}
 		if ( dwIndex == This->dwEntries )
 		{
-			FIXME("unknown interface: %s\n",debugstr_guid(riid));
-			return E_NOINTERFACE;
+			hr = E_NOINTERFACE;
+
+			/* delegation */
+			pDelegation = This->pDelegationFirst;
+			while ( pDelegation != NULL )
+			{
+				hr = (*pDelegation->pOnQueryInterface)( iface, riid, ppobj );
+				if ( hr != E_NOINTERFACE )
+					break;
+				pDelegation = pDelegation->pNext;
+			}
+
+			if ( hr == E_NOINTERFACE )
+			{
+				FIXME("unknown interface: %s\n",debugstr_guid(riid));
+			}
+
+			return hr;
 		}
 	}
 
@@ -106,12 +124,20 @@ void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl, IUnknown* punkOuter )
 	ICOM_VTBL(pImpl) = &iunknown;
 	pImpl->pEntries = NULL;
 	pImpl->dwEntries = 0;
+	pImpl->pDelegationFirst = NULL;
 	pImpl->pOnFinalRelease = NULL;
 	pImpl->ref = 1;
 	pImpl->punkControl = (IUnknown*)pImpl;
 
-	/* for delegation. */
+	/* for implementing aggregation. */
 	if ( punkOuter != NULL )
 		pImpl->punkControl = punkOuter;
+}
+
+void QUARTZ_IUnkAddDelegation(
+	QUARTZ_IUnkImpl* pImpl, QUARTZ_IFDelegation* pDelegation )
+{
+	pDelegation->pNext = pImpl->pDelegationFirst;
+	pImpl->pDelegationFirst = pDelegation;
 }
 

@@ -57,9 +57,40 @@ static HRESULT WINAPI
 IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropReq,ALLOCATOR_PROPERTIES* pPropActual)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
+	long	padding;
 
-	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+	TRACE( "(%p)->(%p,%p)\n", This, pPropReq, pPropActual );
+
+	if ( pPropReq == NULL || pPropActual == NULL )
+		return E_POINTER;
+	if ( pPropReq->cBuffers < 0 ||
+	     pPropReq->cbBuffer < 0 ||
+	     pPropReq->cbAlign < 0 ||
+	     pPropReq->cbPrefix < 0 )
+		return E_INVALIDARG;
+
+	if ( ( pPropReq->cbAlign & (pPropReq->cbAlign-1) ) != 0 )
+		return E_INVALIDARG;
+
+	EnterCriticalSection( &This->csMem );
+
+	This->prop.cBuffers = pPropReq->cBuffers;
+	This->prop.cbBuffer = pPropReq->cbBuffer;
+	This->prop.cbAlign = pPropReq->cbAlign;
+	This->prop.cbPrefix = pPropReq->cbPrefix;
+
+	if ( This->prop.cbAlign == 0 )
+		This->prop.cbAlign = 1;
+	padding = This->prop.cbAlign -
+		( (This->prop.cbBuffer+This->prop.cbPrefix) % This->prop.cbAlign );
+
+	This->prop.cbBuffer += padding;
+
+	memcpy( pPropActual, &This->prop, sizeof(ALLOCATOR_PROPERTIES) );
+
+	LeaveCriticalSection( &This->csMem );
+
+	return NOERROR;
 }
 
 static HRESULT WINAPI
@@ -67,8 +98,18 @@ IMemAllocator_fnGetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pProp)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
 
-	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+	TRACE( "(%p)->(%p)\n", This, pProp );
+
+	if ( pProp == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->csMem );
+
+	memcpy( pProp, &This->prop, sizeof(ALLOCATOR_PROPERTIES) );
+
+	LeaveCriticalSection( &This->csMem );
+
+	return NOERROR;
 }
 
 static HRESULT WINAPI
@@ -129,7 +170,12 @@ static ICOM_VTABLE(IMemAllocator) imemalloc =
 HRESULT CMemoryAllocator_InitIMemAllocator( CMemoryAllocator* pma )
 {
 	TRACE("(%p)\n",pma);
+
 	ICOM_VTBL(&pma->memalloc) = &imemalloc;
+
+	ZeroMemory( &pma->prop, sizeof(pma->prop) );
+
+	InitializeCriticalSection( &pma->csMem );
 
 	return NOERROR;
 }
@@ -137,4 +183,8 @@ HRESULT CMemoryAllocator_InitIMemAllocator( CMemoryAllocator* pma )
 void CMemoryAllocator_UninitIMemAllocator( CMemoryAllocator* pma )
 {
 	TRACE("(%p)\n",pma);
+
+	IMemAllocator_Decommit( (IMemAllocator*)(&pma->memalloc) );
+
+	DeleteCriticalSection( &pma->csMem );
 }

@@ -79,6 +79,10 @@ static void QUARTZ_DestroyFilterGraph(IUnknown* punk)
 	CFilterGraph_THIS(punk,unk);
 	int	i;
 
+	/* At first, call Stop. */
+	IMediaControl_Stop( CFilterGraph_IMediaControl(This) );
+	IMediaFilter_Stop( CFilterGraph_IMediaFilter(This) );
+
 	i = 0;
 	while ( FGRAPH_Init[i].pInit != NULL )
 	{

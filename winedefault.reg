@@ -271,6 +271,11 @@
 @="quartz.dll"
 "ThreadingModel"="Both"
 
+# CLSID_SeekingPassThru
+[HKEY_CLASSES_ROOT\CLSID\{060AF76C-68DD-11D0-8FC1-00C04FD9189D}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
+
 
 # DirectShow filter categories
 [HKEY_CLASSES_ROOT\CLSID\{DA4E3DA0-D07D-11D0-BD50-00A0C911CE86}]
