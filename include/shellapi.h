@@ -345,7 +345,16 @@ typedef struct _NOTIFYICONDATAA
 	UINT uFlags;
 	UINT uCallbackMessage;
 	HICON hIcon;
-	CHAR szTip[64];
+	CHAR szTip[128];
+	DWORD dwState;
+	DWORD dwStateMask;
+	CHAR szInfo[256];
+	union {
+	    UINT uTimeout;
+	    UINT uVersion;
+	} DUMMYUNIONNAME;
+	CHAR szInfoTitle[64];
+	DWORD dwInfoFlags;
 } NOTIFYICONDATAA, *PNOTIFYICONDATAA;
 
 typedef struct _NOTIFYICONDATAW
@@ -355,7 +364,16 @@ typedef struct _NOTIFYICONDATAW
 	UINT uFlags;
 	UINT uCallbackMessage;
 	HICON hIcon;
-	WCHAR szTip[64];
+	WCHAR szTip[128];
+	DWORD dwState;
+	DWORD dwStateMask;
+	WCHAR szInfo[256];
+	union {
+	    UINT uTimeout;
+	    UINT uVersion;
+	} DUMMYUNIONNAME;
+	WCHAR szInfoTitle[64];
+	DWORD dwInfoFlags;
 } NOTIFYICONDATAW, *PNOTIFYICONDATAW;
 
 DECL_WINELIB_TYPE_AW(NOTIFYICONDATA)
