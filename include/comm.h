@@ -20,7 +20,7 @@ struct DosDeviceStruct {
     unsigned obuf_size,obuf_head,obuf_tail;
     /* notifications */
     int wnd, n_read, n_write;
-    HANDLE service;
+    HANDLE s_read, s_write;
 };
 
 extern void COMM_Init(void);

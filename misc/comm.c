@@ -272,9 +272,15 @@ static void CALLBACK comm_notification( ULONG_PTR private )
       if (ptr->obuf_tail >= ptr->obuf_size)
 	ptr->obuf_tail = 0;
       /* flag event */
-      if ((ptr->obuf_tail == ptr->obuf_head) && (ptr->eventmask & EV_TXEMPTY)) {
-	*(WORD*)(unknown[cid]) |= EV_TXEMPTY;
-	mask |= CN_EVENT;
+      if (ptr->obuf_tail == ptr->obuf_head) {
+	if (ptr->s_write) {
+	  SERVICE_Delete( ptr->s_write );
+	  ptr->s_write = INVALID_HANDLE_VALUE;
+	}
+        if (ptr->eventmask & EV_TXEMPTY) {
+	  *(WORD*)(unknown[cid]) |= EV_TXEMPTY;
+	  mask |= CN_EVENT;
+	}
       }
     }
   } while (len > 0);
@@ -290,6 +296,24 @@ static void CALLBACK comm_notification( ULONG_PTR private )
     TRACE("notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
     PostMessage16(ptr->wnd, WM_COMMNOTIFY, cid, mask);
   }
+}
+
+static void comm_waitread(struct DosDeviceStruct *ptr)
+{
+  if (ptr->s_read != INVALID_HANDLE_VALUE) return;
+  ptr->s_read = SERVICE_AddObject( FILE_DupUnixHandle( ptr->fd,
+                                     GENERIC_READ | SYNCHRONIZE ),
+                                    comm_notification,
+                                    (ULONG_PTR)ptr );
+}
+
+static void comm_waitwrite(struct DosDeviceStruct *ptr)
+{
+  if (ptr->s_write != INVALID_HANDLE_VALUE) return;
+  ptr->s_write = SERVICE_AddObject( FILE_DupUnixHandle( ptr->fd,
+                                      GENERIC_WRITE | SYNCHRONIZE ),
+                                     comm_notification,
+                                     (ULONG_PTR)ptr );
 }
 
 /**************************************************************************
@@ -456,12 +480,9 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			  return IE_MEMORY;
 			}
 
-                        COM[port].service = SERVICE_AddObject( FILE_DupUnixHandle( COM[port].fd,
-                                                     GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE ),
-                                                               comm_notification,
-                                                               (ULONG_PTR)&COM[port] );
-			/* bootstrap notifications, just in case */
-			comm_notification( (ULONG_PTR)&COM[port] );
+                        COM[port].s_read = INVALID_HANDLE_VALUE;
+                        COM[port].s_write = INVALID_HANDLE_VALUE;
+                        comm_waitread( &COM[port] );
 			return port;
 		}
 	} 
@@ -502,7 +523,8 @@ INT16 WINAPI CloseComm16(INT16 cid)
 		/* COM port */
 		SEGPTR_FREE(unknown[cid]); /* [LW] */
 
-                SERVICE_Delete( COM[cid].service );
+		SERVICE_Delete( COM[cid].s_write );
+		SERVICE_Delete( COM[cid].s_read );
 		/* free buffers */
 		free(ptr->outbuf);
 		free(ptr->inbuf);
@@ -1178,10 +1200,12 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 	  if (write(ptr->fd, &chTransmit, 1) == -1) {
 	    /* didn't work, queue it */
 	    ptr->xmit = chTransmit;
+	    comm_waitwrite(ptr);
 	  }
 	} else {
 	  /* data in queue, let this char be transmitted next */
 	  ptr->xmit = chTransmit;
+	  comm_waitwrite(ptr);
 	}
 
 	ptr->commerror = 0;
@@ -1311,6 +1335,7 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 	    ptr->obuf_head = 0;
 	  lpvBuf += status;
 	  length += status;
+	  comm_waitwrite(ptr);
 	}
 
 	ptr->commerror = 0;	
