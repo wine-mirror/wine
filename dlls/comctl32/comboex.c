@@ -329,8 +329,18 @@ static void
 COMBOEX_CopyItem (COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item, COMBOBOXEXITEMW *cit)
 {
     if (cit->mask & CBEIF_TEXT) {
-        cit->pszText        = item->pszText;
-        cit->cchTextMax     = item->cchTextMax;
+        /*
+         * when given a text buffer actually use that buffer
+         */
+        if (cit->pszText)
+        {
+            lstrcpynW(cit->pszText,item->pszText,cit->cchTextMax);
+        }
+        else
+        {
+            cit->pszText        = item->pszText;
+            cit->cchTextMax     = item->cchTextMax;
+        }
     }
     if (cit->mask & CBEIF_IMAGE)
 	cit->iImage         = item->iImage;
