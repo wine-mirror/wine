@@ -176,47 +176,27 @@ PDB *PROCESS_IdToPDB( DWORD id )
  * USIG_FLAGS_FAULT
  *     The signal is being sent due to a fault.
  */
-void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadOrProcessId, HMODULE hModule )
+static void PROCESS_CallUserSignalProcHelper( UINT uCode, DWORD dwThreadOrProcessId,
+                                              HMODULE hModule, DWORD flags, DWORD startup_flags )
 {
-    PDB *pdb;
-    STARTUPINFOA *startup;
     DWORD dwFlags = 0;
-
-    /* Get thread or process ID */
-
-    if ( dwThreadOrProcessId == 0 )
-    {
-        if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-            dwThreadOrProcessId = GetCurrentThreadId();
-        else
-            dwThreadOrProcessId = GetCurrentProcessId();
-    }
 
     /* Determine dwFlags */
 
-    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-        pdb = PROCESS_Current();
-    else
-        pdb = PROCESS_IdToPDB( dwThreadOrProcessId );
+    if ( !(flags & PDB32_WIN16_PROC) ) dwFlags |= USIG_FLAGS_WIN32;
 
-    startup = pdb->env_db? pdb->env_db->startup_info : NULL;
-
-    if ( !(pdb->flags & PDB32_WIN16_PROC) )
-        dwFlags |= USIG_FLAGS_WIN32;
-
-    if ( !(pdb->flags & PDB32_CONSOLE_PROC) )
-        dwFlags |= USIG_FLAGS_GUI;
+    if ( !(flags & PDB32_CONSOLE_PROC) ) dwFlags |= USIG_FLAGS_GUI;
 
     if ( dwFlags & USIG_FLAGS_GUI )
     {
         /* Feedback defaults to ON */
-        if ( !(startup && (startup->dwFlags & STARTF_FORCEOFFFEEDBACK)) )
+        if ( !(startup_flags & STARTF_FORCEOFFFEEDBACK) )
             dwFlags |= USIG_FLAGS_FEEDBACK;
     }
     else
     {
         /* Feedback defaults to OFF */
-        if ( startup && (startup->dwFlags & STARTF_FORCEONFEEDBACK) )
+        if (startup_flags & STARTF_FORCEONFEEDBACK)
             dwFlags |= USIG_FLAGS_FEEDBACK;
     }
 
@@ -229,6 +209,22 @@ void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadOrProcessId, HMODULE 
 
     if ( Callout.UserSignalProc )
         Callout.UserSignalProc( uCode, dwThreadOrProcessId, dwFlags, hModule );
+}
+
+/* Call USER signal proc for the current thread/process */
+void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
+{
+    DWORD dwThreadOrProcessId;
+
+    /* Get thread or process ID */
+    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
+        dwThreadOrProcessId = GetCurrentThreadId();
+    else
+        dwThreadOrProcessId = GetCurrentProcessId();
+
+    PROCESS_CallUserSignalProcHelper( uCode, dwThreadOrProcessId, hModule,
+                                      PROCESS_Current()->flags,
+                                      PROCESS_Current()->env_db->startup_info->dwFlags );
 }
 
 
@@ -321,15 +317,17 @@ static BOOL PROCESS_CreateEnvDB(void)
     struct init_process_reply reply;
     STARTUPINFOA *startup;
     ENVDB *env_db;
+    char cmd_line[4096];
+    int len;
     PDB *pdb = PROCESS_Current();
 
     /* Retrieve startup info from the server */
 
     req.dummy = 0;
     CLIENT_SendRequest( REQ_INIT_PROCESS, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+    if (CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply), cmd_line, sizeof(cmd_line) ))
+        return FALSE;
 
-#if 0
     /* Allocate the env DB */
 
     if (!(env_db = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB) )))
@@ -340,25 +338,22 @@ static BOOL PROCESS_CreateEnvDB(void)
     /* Allocate and fill the startup info */
     if (!(startup = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
         return FALSE;
-    pdb->env_db->startup_info = startup;
-#else
-    startup = pdb->env_db->startup_info;
-#endif
-    startup->dwFlags = reply.start_flags;
-    pdb->env_db->hStdin  = startup->hStdInput  = reply.hstdin;
-    pdb->env_db->hStdout = startup->hStdOutput = reply.hstdout;
-    pdb->env_db->hStderr = startup->hStdError  = reply.hstderr;
+    env_db->startup_info = startup;
+    startup->dwFlags     = reply.start_flags;
+    startup->wShowWindow = reply.cmd_show;
+    env_db->hStdin  = startup->hStdInput  = reply.hstdin;
+    env_db->hStdout = startup->hStdOutput = reply.hstdout;
+    env_db->hStderr = startup->hStdError  = reply.hstderr;
 
-#if 0  /* FIXME */
     /* Copy the parent environment */
 
-    if (!ENV_InheritEnvironment( pdb, env )) return FALSE;
+    if (!ENV_InheritEnvironment( pdb, reply.env_ptr )) return FALSE;
 
     /* Copy the command line */
 
     if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
         return FALSE;
-#endif
+
     return TRUE;
 }
 
@@ -474,21 +469,19 @@ void PROCESS_Start(void)
     /* FIXME: this is a hack */
     pdb->modref_list = PROCESS_Initial()->modref_list;
 
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
-
     /* Initialize the critical section */
     InitializeCriticalSection( &pdb->crit_section );
 
-#if 0
     /* Create the heap */
 
     if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, header->SizeOfHeapReserve,
                                   header->SizeOfHeapCommit ))) goto error;
     pdb->heap_list = pdb->heap;
-#endif
 
     /* Create the environment db */
     if (!PROCESS_CreateEnvDB()) goto error;
+
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
 
     /* Create a task for this process */
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
@@ -498,7 +491,18 @@ void PROCESS_Start(void)
     /* Link the task in the task list */
     TASK_StartTask( pdb->task );
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+
+    /* Signal the parent process to continue */
+    SetEvent( pdb->load_done_evt );
+    CloseHandle( pdb->load_done_evt );
+    pdb->load_done_evt = INVALID_HANDLE_VALUE;
+
+    /* Send the debug event to the debugger */
+    entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
+                                            OptionalHeader.AddressOfEntryPoint);
+    if (pdb->flags & PDB32_DEBUGGED)
+        DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
 
     /* Create 32-bit MODREF */
     if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
@@ -507,7 +511,7 @@ void PROCESS_Start(void)
     assert( pdb->exe_modref );
     pdb->exe_modref->refCount++;
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );   /* FIXME: correct location? */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );   /* FIXME: correct location? */
 
     /* Initialize thread-local storage */
 
@@ -516,24 +520,13 @@ void PROCESS_Start(void)
     if ( pdb->flags & PDB32_CONSOLE_PROC )
         AllocConsole();
 
-    /* Signal the parent process to continue */
-    SetEvent( pdb->load_done_evt );
-    CloseHandle( pdb->load_done_evt );
-    pdb->load_done_evt = INVALID_HANDLE_VALUE;
-
     /* Now call the entry point */
 
     EnterCriticalSection( &pdb->crit_section );
     MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
     LeaveCriticalSection( &pdb->crit_section );
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
-
-    entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
-                                            OptionalHeader.AddressOfEntryPoint);
-
-    if (pdb->flags & PDB32_DEBUGGED)
-        DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
     TRACE_(relay)("(entryproc=%p)\n", entry );
     ExitProcess( entry(NULL) );
@@ -585,6 +578,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         req.hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
         req.hstderr = GetStdHandle( STD_ERROR_HANDLE );
     }
+    req.cmd_show = startup->wShowWindow;
+    req.env_ptr = (void*)env;  /* FIXME: hack */
     CLIENT_SendRequest( REQ_NEW_PROCESS, -1, 2,
                         &req, sizeof(req), cmd_line, strlen(cmd_line) + 1 );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
@@ -598,25 +593,26 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     if (pModule->module32)
     {
+        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
+    }
+    else  /* 16-bit process */
+    {
+        size = 0;
+        pdb->flags |= PDB32_WIN16_PROC;
+    }
+
+    /* Create the main thread */
+
+    if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
+        goto error;
+    info->hThread     = server_thandle;
+    info->dwThreadId  = (DWORD)thdb->server_tid;
+    thdb->startup     = PROCESS_Start;
+
+    if (pModule->module32)
+    {
         HANDLE handles[2];
         DWORD exitcode;
-
-        /* Create the main thread */
-        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
-        if (!(thdb = THREAD_Create( pdb, 0L, size, TRUE, tsa, &server_thandle ))) 
-            goto error;
-        info->hThread     = server_thandle;
-        info->dwThreadId  = (DWORD)thdb->server_tid;
-        thdb->startup     = PROCESS_Start;
-
-        /* Create the heap */
-	size  = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapReserve;
-	commit = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapCommit;
-        if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
-        pdb->heap_list = pdb->heap;
-
-        /* Inherit the env DB from the parent */
-        if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
 
         /* Create the load-done event */
         load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL );
@@ -624,7 +620,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                          info->hProcess, &pdb->load_done_evt, 0, TRUE, DUPLICATE_SAME_ACCESS );
 
         /* Call USER signal proc */
-        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
+        PROCESS_CallUserSignalProcHelper( USIG_PROCESS_CREATE, info->dwProcessId, 0,
+                                          pdb->flags, startup->dwFlags );
 
         /* Set the process module (FIXME: hack) */
         pdb->module = pModule->self;
@@ -655,9 +652,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     }
     else  /* Create a 16-bit process */
     {
-        /* Setup process flags */
-        pdb->flags |= PDB32_WIN16_PROC;
-
         /* Create the heap */
 	size = 0x10000;
 	commit = 0;
@@ -666,13 +660,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
         /* Inherit the env DB from the parent */
         if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
-
-        /* Create the main thread */
-        if (!(thdb = THREAD_Create( pdb, 0L, 0, hInstance == 0, tsa, &server_thandle ))) 
-            goto error;
-        info->hThread     = server_thandle;
-        info->dwThreadId  = (DWORD)thdb->server_tid;
-        thdb->startup     = PROCESS_Start;
 
         /* Duplicate the standard handles */
         if ((!(pdb->env_db->startup_info->dwFlags & STARTF_USESTDHANDLES)) && !inherit)
@@ -686,7 +673,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         }
 
         /* Call USER signal proc */
-        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
+        PROCESS_CallUserSignalProcHelper( USIG_PROCESS_CREATE, info->dwProcessId, 0,
+                                          pdb->flags, startup->dwFlags );
 
         /* Create a Win16 task for this process */
         if (startup->dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup->wShowWindow;
