@@ -24,28 +24,28 @@
 MAIN_MENU MENU LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 {
  POPUP "&File" {
-  MENUITEM "&Open", 0x101
+  MENUITEM "&Open", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Print", 0x104
-  MENUITEM "Printer &setup...", 0x106
+  MENUITEM "&Print", MNID_FILE_PRINT
+  MENUITEM "Printer &setup...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Exit", 0x108
+  MENUITEM "&Exit", MNID_FILE_EXIT
  }
  POPUP "&Edit" {
-   MENUITEM "&Copy...", 0x10A
+   MENUITEM "&Copy...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Annotate...", 0x10C
+   MENUITEM "&Annotate...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Bookmark" {
-   MENUITEM "&Define...", 0x10E
+   MENUITEM "&Define...", MNID_BKMK_DEFINE
  }
  POPUP "&Help" {
-   MENUITEM "Help &on help", 0x110
-   MENUITEM "Always on &top", 0x111
+   MENUITEM "Help &on help", MNID_HELP_HELPON
+   MENUITEM "Always on &top", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Info...", 0x113
+   MENUITEM "&Info...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&About WINE", 0x114
+   MENUITEM "&About WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -53,16 +53,17 @@ MAIN_MENU MENU LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 /* Strings */
 STRINGTABLE DISCARDABLE LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"WINE Help"
-WHERROR, 		"ERROR"
-WARNING,  		"WARNING"
-INFO,  			"Information"
-NOT_IMPLEMENTED, 	"Not implemented"
-HLPFILE_ERROR_s, 	"Error while reading the help file `%s'"
-CONTENTS, 		"&Contents"
-SEARCH, 		"&Search"
-BACK, 			"&Back"
-HISTORY, 		"&History"
-ALL_FILES, 		"All files (*.*)"
-HELP_FILES_HLP, 	"Help files (*.hlp)"
+STID_WINE_HELP, 	"WINE Help"
+STID_WHERROR, 		"ERROR"
+STID_WARNING,  		"WARNING"
+STID_INFO,  		"Information"
+STID_NOT_IMPLEMENTED, 	"Not implemented"
+STID_HLPFILE_ERROR_s, 	"Error while reading the help file `%s'"
+STID_CONTENTS, 		"&Contents"
+STID_SEARCH, 		"&Search"
+STID_BACK, 		"&Back"
+STID_HISTORY, 		"&History"
+STID_TOPICS,		"&Topics"
+STID_ALL_FILES, 	"All files (*.*)"
+STID_HELP_FILES_HLP, 	"Help files (*.hlp)"
 }

@@ -24,28 +24,28 @@
 MAIN_MENU MENU LANGUAGE LANG_DANISH, SUBLANG_NEUTRAL
 {
  POPUP "&Filer" {
-  MENUITEM "Å&bn...", 0x101
+  MENUITEM "Å&bn...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Udskriv emne", 0x104
-  MENUITEM "&Indstil printer", 0x106
+  MENUITEM "&Udskriv emne", MNID_FILE_PRINT
+  MENUITEM "&Indstil printer", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Afslut", 0x108
+  MENUITEM "&Afslut", MNID_FILE_EXIT
  }
  POPUP "&Rediger" {
-   MENUITEM "K&opier...", 0x10A
+   MENUITEM "K&opier...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Anmærk...", 0x10C
+   MENUITEM "&Anmærk...", MNID_EDIT_ANNOTATE
  }
  POPUP "Bog&mærke" {
-   MENUITEM "&Definer...", 0x10E
+   MENUITEM "&Definer...", MNID_BKMK_DEFINE
  }
  POPUP "&Hjælp" {
-   MENUITEM "&Brug af Hjælp", 0x110
-   MENUITEM "Altid &øverst", 0x111
+   MENUITEM "&Brug af Hjælp", MNID_HELP_HELPON
+   MENUITEM "Altid &øverst", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Info...", 0x113
+   MENUITEM "&Info...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "Om &WINE", 0x114
+   MENUITEM "Om &WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -54,16 +54,17 @@ MAIN_MENU MENU LANGUAGE LANG_DANISH, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_DANISH, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"WINE Hjælp"
-WHERROR, 		"FEJL"
-WARNING,  		"ADVARSEL"
-INFO,  			"Information"
-NOT_IMPLEMENTED, 	"Ikke implementeret"
-HLPFILE_ERROR_s, 	"Fejl ved læsning af filen `%s'"
-CONTENTS, 		"&Indhold"
-SEARCH, 		"&Søg"
-BACK, 			"&Tilbage"
-HISTORY, 		"&Oversigt"
-ALL_FILES, 		"Alle filer (*.*)"
-HELP_FILES_HLP, 	"Hjælpe filer (*.hlp)"
+STID_WINE_HELP, 	"WINE Hjælp"
+STID_WHERROR, 		"FEJL"
+STID_WARNING,  		"ADVARSEL"
+STID_INFO,  		"Information"
+STID_NOT_IMPLEMENTED, 	"Ikke implementeret"
+STID_HLPFILE_ERROR_s, 	"Fejl ved læsning af filen `%s'"
+STID_CONTENTS, 		"&Indhold"
+STID_SEARCH, 		"&Søg"
+STID_BACK, 		"&Tilbage"
+STID_HISTORY, 		"&Oversigt"
+STID_TOPICS, 		"To&pics"
+STID_ALL_FILES, 	"Alle filer (*.*)"
+STID_HELP_FILES_HLP, 	"Hjælpe filer (*.hlp)"
 }

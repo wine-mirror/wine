@@ -25,28 +25,28 @@
 MAIN_MENU MENU LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {
  POPUP "&Arkiv" {
-  MENUITEM "&Öppna...", 0x101
+  MENUITEM "&Öppna...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Skriv ut", 0x104
-  MENUITEM "Skrivar &inställningar...", 0x106
+  MENUITEM "&Skriv ut", MNID_FILE_PRINT
+  MENUITEM "Skrivar &inställningar...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Avsluta", 0x108
+  MENUITEM "&Avsluta", MNID_FILE_EXIT
  }
  POPUP "&Redigera" {
-   MENUITEM "&Kopiera...", 0x10A
+   MENUITEM "&Kopiera...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Markera...", 0x10C
+   MENUITEM "&Markera...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Bokmärke" {
-   MENUITEM "&Defingera...", 0x10E
+   MENUITEM "&Defingera...", MNID_BKMK_DEFINE
  }
  POPUP "&Hjälp" {
-   MENUITEM "Användningen &av hjälp", 0x110
-   MENUITEM "Alltid &överst", 0x111
+   MENUITEM "Användningen &av hjälp", MNID_HELP_HELPON
+   MENUITEM "Alltid &överst", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Information...", 0x113
+   MENUITEM "&Information...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&Om WINE", 0x114
+   MENUITEM "&Om WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -55,16 +55,17 @@ MAIN_MENU MENU LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"WINE Hjälp"
-WHERROR, 		"FEL"
-WARNING,  		"VARNING"
-INFO,  			"Information"
-NOT_IMPLEMENTED, 	"Ej implementererat"
-HLPFILE_ERROR_s, 	"FEL vid läsning av hjälp filen `%s'"
-CONTENTS, 		"&Innehåll"
-SEARCH, 		"&Sök"
-BACK, 			"&Tillbaka"
-HISTORY, 		"&Översikt"
-ALL_FILES, 		"Alla filer (*.*))"
-HELP_FILES_HLP, 	"Hjälp filer (*.hlp)"
+STID_WINE_HELP, 	"WINE Hjälp"
+STID_WHERROR, 		"FEL"
+STID_WARNING,  		"VARNING"
+STID_INFO,  		"Information"
+STID_NOT_IMPLEMENTED, 	"Ej implementererat"
+STID_HLPFILE_ERROR_s, 	"FEL vid läsning av hjälp filen `%s'"
+STID_CONTENTS, 		"&Innehåll"
+STID_SEARCH, 		"&Sök"
+STID_BACK, 		"&Tillbaka"
+STID_HISTORY, 		"&Översikt"
+STID_TOPICS,		"T&opics"
+STID_ALL_FILES, 	"Alla filer (*.*))"
+STID_HELP_FILES_HLP, 	"Hjälp filer (*.hlp)"
 }

@@ -319,11 +319,11 @@ void MACRO_FileOpen(void)
     CHAR szzFilter[2 * MAX_STRING_LEN + 100];
     LPSTR p = szzFilter;
 
-    LoadString(Globals.hInstance, 0X12B, p, MAX_STRING_LEN);
+    LoadString(Globals.hInstance, STID_HELP_FILES_HLP, p, MAX_STRING_LEN);
     p += strlen(p) + 1;
     lstrcpy(p, "*.hlp");
     p += strlen(p) + 1;
-    LoadString(Globals.hInstance, 0x12A, p, MAX_STRING_LEN);
+    LoadString(Globals.hInstance, STID_ALL_FILES, p, MAX_STRING_LEN);
     p += strlen(p) + 1;
     lstrcpy(p, "*.*");
     p += strlen(p) + 1;

@@ -25,28 +25,28 @@
 MAIN_MENU MENU LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 {
  POPUP "&Arquiv" {
-  MENUITEM "A&brir...", 0x101
+  MENUITEM "A&brir...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Imprimir", 0x104
-  MENUITEM "&Configurar Impressora...", 0x106
+  MENUITEM "&Imprimir", MNID_FILE_PRINT
+  MENUITEM "&Configurar Impressora...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Sair", 0x108
+  MENUITEM "&Sair", MNID_FILE_EXIT
  }
  POPUP "&Editar" {
-   MENUITEM "&Copiar...", 0x10A
+   MENUITEM "&Copiar...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Anotar...", 0x10C
+   MENUITEM "&Anotar...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Marcador" {
-   MENUITEM "&Definir...", 0x10E
+   MENUITEM "&Definir...", MNID_BKMK_DEFINE
  }
  POPUP "&Ajuda" {
-   MENUITEM "Ajuda &na ajuda", 0x110
-   MENUITEM "Sempre &visível", 0x111
+   MENUITEM "Ajuda &na ajuda", MNID_HELP_HELPON
+   MENUITEM "Sempre &visível", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Info...", 0x113
+   MENUITEM "&Info...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&Sobre WINE", 0x114
+   MENUITEM "&Sobre WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -55,16 +55,17 @@ MAIN_MENU MENU LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"Ajuda WINE"
-WHERROR, 		"ERRO"
-WARNING,  		"AVISO"
-INFO,  			"Informaçãi"
-NOT_IMPLEMENTED, 	"Não implementado"
-HLPFILE_ERROR_s, 	"Foi encontrado um erro enquanto lia `%s'"
-CONTENTS, 		"&Conteúdo"
-SEARCH, 		"&Procurar"
-BACK, 			"&Voltar"
-HISTORY, 		"&Histórico"
-ALL_FILES, 		"Todos os arquivo (*.*)"
-HELP_FILES_HLP, 	"Arquivos de ajuda (*.hlp)"
+STID_WINE_HELP, 	"Ajuda WINE"
+STID_WHERROR, 		"ERRO"
+STID_WARNING,  		"AVISO"
+STID_INFO,  		"Informaçãi"
+STID_NOT_IMPLEMENTED, 	"Não implementado"
+STID_HLPFILE_ERROR_s, 	"Foi encontrado um erro enquanto lia `%s'"
+STID_CONTENTS, 		"&Conteúdo"
+STID_SEARCH, 		"&Procurar"
+STID_BACK, 		"&Voltar"
+STID_HISTORY, 		"&Histórico"
+STID_TOPICS,		"&Topics"
+STID_ALL_FILES, 	"Todos os arquivo (*.*)"
+STID_HELP_FILES_HLP, 	"Arquivos de ajuda (*.hlp)"
 }

@@ -25,28 +25,28 @@
 MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 {
  POPUP "&Tiedosto" {
-  MENUITEM "&Avaa...", 0x101
+  MENUITEM "&Avaa...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Tulosta", 0x104
-  MENUITEM "&Kirjoittimen asetukset...", 0x106
+  MENUITEM "&Tulosta", MNID_FILE_PRINT
+  MENUITEM "&Kirjoittimen asetukset...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Lopeta", 0x108
+  MENUITEM "&Lopeta", MNID_FILE_EXIT
  }
  POPUP "&Muokkaa" {
-   MENUITEM "&Kopioi...", 0x10A
+   MENUITEM "&Kopioi...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Huomautus...", 0x10C
+   MENUITEM "&Huomautus...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Kirjanmerkki" {
-   MENUITEM "&Aseta...", 0x10E
+   MENUITEM "&Aseta...", MNID_BKMK_DEFINE
  }
  POPUP "&Ohje" {
-   MENUITEM "&Ohjeen käyttö", 0x110
-   MENUITEM "&Aina päällimmäisenä", 0x111
+   MENUITEM "&Ohjeen käyttö", MNID_HELP_HELPON
+   MENUITEM "&Aina päällimmäisenä", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "T&ietoja...", 0x113
+   MENUITEM "T&ietoja...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&Tietoja WINEstä", 0x114
+   MENUITEM "&Tietoja WINEstä", MNID_HELP_WINE
 #endif
  }
 }
@@ -55,16 +55,17 @@ MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"WINE Ohje"
-WHERROR, 		"VIRHE"
-WARNING,  		"VAROITUS"
-INFO,  			"Tietoja"
-NOT_IMPLEMENTED, 	"Ei käytettävissä"
-HLPFILE_ERROR_s, 	"Virhe luettaessa ohjetiedostoa `%s'"
-CONTENTS, 		"&Sisällys"
-SEARCH, 		"&Etsi"
-BACK, 			"&Takaisin"
-HISTORY, 		"&Luetut"
-ALL_FILES, 		"Kaikki tiedostot (*.*)"
-HELP_FILES_HLP, 	"Ohjetiedostot (*.hlp)"
+STID_WINE_HELP, 	"WINE Ohje"
+STID_WHERROR, 		"VIRHE"
+STID_WARNING,  		"VAROITUS"
+STID_INFO,  		"Tietoja"
+STID_NOT_IMPLEMENTED, 	"Ei käytettävissä"
+STID_HLPFILE_ERROR_s, 	"Virhe luettaessa ohjetiedostoa `%s'"
+STID_CONTENTS, 		"&Sisällys"
+STID_SEARCH, 		"&Etsi"
+STID_BACK, 		"&Takaisin"
+STID_HISTORY, 		"&Luetut"
+STID_TOPICS,		"T&opics"
+STID_ALL_FILES, 	"Kaikki tiedostot (*.*)"
+STID_HELP_FILES_HLP, 	"Ohjetiedostot (*.hlp)"
 }

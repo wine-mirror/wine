@@ -24,28 +24,28 @@
 MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 {
  POPUP "&File" {
-  MENUITEM "&Megnyitás...", 0x101
+  MENUITEM "&Megnyitás...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Nyomtatás", 0x104
-  MENUITEM "Nyomtató &beállítás...", 0x106
+  MENUITEM "&Nyomtatás", MNID_FILE_PRINT
+  MENUITEM "Nyomtató &beállítás...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Kilépés", 0x108
+  MENUITEM "&Kilépés", MNID_FILE_EXIT
  }
  POPUP "&Szerkesztés" {
-   MENUITEM "&Másolás...", 0x10A
+   MENUITEM "&Másolás...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Annotate...", 0x10C
+   MENUITEM "&Annotate...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Könyvjelzõ" {
-   MENUITEM "&Definiálás...", 0x10E
+   MENUITEM "&Definiálás...", MNID_BKMK_DEFINE
  }
  POPUP "&Segítség" {
-   MENUITEM "Segítség &a segítségrõl", 0x110
-   MENUITEM "Mindig &legfelül", 0x111
+   MENUITEM "Segítség &a segítségrõl", MNID_HELP_HELPON
+   MENUITEM "Mindig &legfelül", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Információ...", 0x113
+   MENUITEM "&Információ...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&&A WINE-ról", 0x114
+   MENUITEM "&&A WINE-ról", MNID_HELP_WINE
 #endif
  }
 }
@@ -54,16 +54,17 @@ MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"WINE segítség"
-WHERROR, 		"HIBA"
-WARNING,  		"FIGYELMEZTETÉS"
-INFO,  			"Információ"
-NOT_IMPLEMENTED, 	"Nincs implementálva"
-HLPFILE_ERROR_s, 	"Hiba a `%s' file olvasásakor"
-CONTENTS, 		"&Tartalom"
-SEARCH, 		"&Keresés"
-BACK, 			"&Vissza"
-HISTORY, 		"&History"
-ALL_FILES, 		"Minden file (*.*)"
-HELP_FILES_HLP, 	"Segítség file-ok (*.hlp)"
+STID_WINE_HELP, 	"WINE segítség"
+STID_WHERROR, 		"HIBA"
+STID_WARNING,  		"FIGYELMEZTETÉS"
+STID_INFO,  		"Információ"
+STID_NOT_IMPLEMENTED, 	"Nincs implementálva"
+STID_HLPFILE_ERROR_s, 	"Hiba a `%s' file olvasásakor"
+STID_CONTENTS, 		"&Tartalom"
+STID_SEARCH, 		"&Keresés"
+STID_BACK, 		"&Vissza"
+STID_HISTORY, 		"&History"
+STID_TOPICS,		"T&opics"
+STID_ALL_FILES, 	"Minden file (*.*)"
+STID_HELP_FILES_HLP, 	"Segítség file-ok (*.hlp)"
 }

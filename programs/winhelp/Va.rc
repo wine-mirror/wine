@@ -29,28 +29,28 @@
 MAIN_MENU MENU LANGUAGE LANG_, SUBLANG_NEUTRAL
 {
  POPUP "&Datoteca" {
-  MENUITEM "&Rivir", 0x101
+  MENUITEM "&Rivir", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Stampar tema", 0x104
-  MENUITEM "&Installaziun dal stampader...", 0x106
+  MENUITEM "&Stampar tema", MNID_FILE_PRINT
+  MENUITEM "&Installaziun dal stampader...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Finir", 0x108
+  MENUITEM "&Finir", MNID_FILE_EXIT
  }
  POPUP "&Lavurar" {
-   MENUITEM "Capchar", 0x10A
+   MENUITEM "Capchar", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Annotaziun...", 0x10C
+   MENUITEM "&Annotaziun...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Marca" {
-   MENUITEM "&Definir...", 0x10E
+   MENUITEM "&Definir...", MNID_BKMK_DEFINE
  }
  POPUP "&Agüd" {
-   MENUITEM "&Douvrar l'agüd", 0x110
-   MENUITEM "Adüna da&vant", 0x111
+   MENUITEM "&Douvrar l'agüd", MNID_HELP_HELPON
+   MENUITEM "Adüna da&vant", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "I&nfuormaziuns", 0x113
+   MENUITEM "I&nfuormaziuns", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "Davart &WINE", 0x114
+   MENUITEM "Davart &WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -69,6 +69,7 @@ CONTENTS, 		"&Cuntgnü"
 SEARCH, 		"&Tscherchar"
 BACK, 			"&Inavo"
 HISTORY, 		"&Fin qua"
+TOPICS,			"T&opics"
 ALL_FILES, 		"Tuot las datotecas (*.*)"
 HELP_FILES_HLP, 	"Datotecas d'agüd (*.hlp)"
 }

@@ -25,28 +25,28 @@
 MAIN_MENU MENU LANGUAGE LANG_WALON, SUBLANG_NEUTRAL
 {
  POPUP "&Fitchî" {
-  MENUITEM "&Drovî...", 0x101
+  MENUITEM "&Drovî...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Rexhe", 0x104
-  MENUITEM "&Apontiaedje del scrirece...", 0x106
+  MENUITEM "&Rexhe", MNID_FILE_PRINT
+  MENUITEM "&Apontiaedje del scrirece...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "Moussî &Foû", 0x108
+  MENUITEM "Moussî &Foû", MNID_FILE_EXIT
  }
  POPUP "&Candjî" {
-   MENUITEM "&Copyî...", 0x10A
+   MENUITEM "&Copyî...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Sicrîre...", 0x10C
+   MENUITEM "&Sicrîre...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Rimårkes" {
-   MENUITEM "&Defini...", 0x10E
+   MENUITEM "&Defini...", MNID_BKMK_DEFINE
  }
  POPUP "&Aide" {
-   MENUITEM "&Aide so l' Aide", 0x110
-   MENUITEM "Todi &Visibe", 0x111
+   MENUITEM "&Aide so l' Aide", MNID_HELP_HELPON
+   MENUITEM "Todi &Visibe", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Informåcion...", 0x113
+   MENUITEM "&Informåcion...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "Å &dfait di WINEE", 0x114
+   MENUITEM "Å &dfait di WINEE", MNID_HELP_WINE
 #endif
  }
 }
@@ -55,16 +55,17 @@ MAIN_MENU MENU LANGUAGE LANG_WALON, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_WALON, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"Aidance di WINE"
-WHERROR, 		"AROKE"
-WARNING,  		"ADVERTIXHMINT"
-INFO,  			"Informåcion"
-NOT_IMPLEMENTED, 	"Nén co possibe"
-HLPFILE_ERROR_s, 	"Yåk n' a nén stî å moumint di lere li fitchî d' aide `%s'"
-CONTENTS, 		"Å&dvins"
-SEARCH, 		"C&werî"
-BACK, 			"Èn &Erî"
-HISTORY, 		"&Istwere"
-ALL_FILES, 		"Tos les fitchîs (*.*)"
-HELP_FILES_HLP, 	"Fitchîs d' aide (*.hlp)"
+STID_WINE_HELP, 	"Aidance di WINE"
+STID_WHERROR, 		"AROKE"
+STID_WARNING,  		"ADVERTIXHMINT"
+STID_INFO,  		"Informåcion"
+STID_NOT_IMPLEMENTED, 	"Nén co possibe"
+STID_HLPFILE_ERROR_s, 	"Yåk n' a nén stî å moumint di lere li fitchî d' aide `%s'"
+STID_CONTENTS, 		"Å&dvins"
+STID_SEARCH, 		"C&werî"
+STID_BACK, 		"Èn &Erî"
+STID_HISTORY, 		"&Istwere"
+STID_TOPICS,		"&Topics"
+STID_ALL_FILES, 	"Tos les fitchîs (*.*)"
+STID_HELP_FILES_HLP, 	"Fitchîs d' aide (*.hlp)"
 }

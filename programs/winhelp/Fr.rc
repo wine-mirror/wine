@@ -24,28 +24,28 @@
 MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
  POPUP "&Fichier" {
-  MENUITEM "&Ouvrir", 0x101
+  MENUITEM "&Ouvrir", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "Im&primer", 0x104
-  MENUITEM "&Configuration de l'imprimante...", 0x106
+  MENUITEM "Im&primer", MNID_FILE_PRINT
+  MENUITEM "&Configuration de l'imprimante...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Quitter", 0x108
+  MENUITEM "&Quitter", MNID_FILE_EXIT
  }
  POPUP "&Edition" {
-   MENUITEM "&Copier...", 0x10A
+   MENUITEM "&Copier...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Annotation...", 0x10C
+   MENUITEM "&Annotation...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Signet" {
-   MENUITEM "&Définir...", 0x10E
+   MENUITEM "&Définir...", MNID_BKMK_DEFINE
  }
  POPUP "&?" {
-   MENUITEM "&Utiliser l'aide", 0x110
-   MENUITEM "&Toujours visible", 0x111
+   MENUITEM "&Utiliser l'aide", MNID_HELP_HELPON
+   MENUITEM "&Toujours visible", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Info...", 0x113
+   MENUITEM "&Info...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&A propos de WINE", 0x114
+   MENUITEM "&A propos de WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -54,16 +54,17 @@ MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"Aide de WINE"
-WHERROR, 		"ERREUR"
-WARNING,  		"ATTENTION"
-INFO,  			"Information"
-NOT_IMPLEMENTED, 	"Non implementé"
-HLPFILE_ERROR_s, 	"Une erreur est survenue en lisant le fichier d'aide `%s'"
-CONTENTS, 		"&Index"
-SEARCH, 		"&Rechercher"
-BACK, 			"&Précédent"
-HISTORY, 		"&Historique"
-ALL_FILES, 		"Tout fichier (*.*)"
-HELP_FILES_HLP, 	"Fichiers d'aide (*.hlp)"
+STID_WINE_HELP, 	"Aide de WINE"
+STID_WHERROR, 		"ERREUR"
+STID_WARNING,  		"ATTENTION"
+STID_INFO,  		"Information"
+STID_NOT_IMPLEMENTED, 	"Non implementé"
+STID_HLPFILE_ERROR_s, 	"Une erreur est survenue en lisant le fichier d'aide `%s'"
+STID_CONTENTS, 		"&Index"
+STID_SEARCH, 		"&Rechercher"
+STID_BACK, 		"&Précédent"
+STID_HISTORY, 		"&Historique"
+STID_TOPICS,		"&Topics"
+STID_ALL_FILES, 	"Tout fichier (*.*)"
+STID_HELP_FILES_HLP, 	"Fichiers d'aide (*.hlp)"
 }

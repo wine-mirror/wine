@@ -24,28 +24,28 @@
 MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
  POPUP "&Datei" {
-  MENUITEM "Ö&ffnen...", 0x101
+  MENUITEM "Ö&ffnen...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "Thema &drucken", 0x104
-  MENUITEM "Drucker&einrichtung...", 0x106
+  MENUITEM "Thema &drucken", MNID_FILE_PRINT
+  MENUITEM "Drucker&einrichtung...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Beenden", 0x108
+  MENUITEM "&Beenden", MNID_FILE_EXIT
  }
  POPUP "&Bearbeiten" {
-   MENUITEM "&Kopieren...", 0x10A
+   MENUITEM "&Kopieren...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Anmerken...", 0x10C
+   MENUITEM "&Anmerken...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Lesezeichen" {
-   MENUITEM "&Definieren...", 0x10E
+   MENUITEM "&Definieren...", MNID_BKMK_DEFINE
  }
  POPUP "&Hilfe" {
-   MENUITEM "&Hilfe benutzen", 0x110
-   MENUITEM "Immer im &Vordergrund", 0x111
+   MENUITEM "&Hilfe benutzen", MNID_HELP_HELPON
+   MENUITEM "Immer im &Vordergrund", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Info...", 0x113
+   MENUITEM "&Info...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&Über WINE", 0x114
+   MENUITEM "&Über WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -54,16 +54,17 @@ MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
-WINE_HELP, 		"WINE Hilfe"
-WHERROR, 		"FEHLER"
-WARNING,  		"ACHTUNG"
-INFO,  			"Information"
-NOT_IMPLEMENTED, 	"Nicht implementiert"
-HLPFILE_ERROR_s, 	"Fehler beim Lesen der Hilfe-Datei `%s'"
-CONTENTS, 		"&Inhalt"
-SEARCH, 		"&Suchen"
-BACK, 			"&Zurück"
-HISTORY, 		"&Bisher"
-ALL_FILES, 		"Alle Dateien (*.*)"
-HELP_FILES_HLP, 	"Hilfe-Dateien (*.hlp)"
+STID_WINE_HELP, 	"WINE Hilfe"
+STID_WHERROR, 		"FEHLER"
+STID_WARNING,  		"ACHTUNG"
+STID_INFO,  		"Information"
+STID_NOT_IMPLEMENTED, 	"Nicht implementiert"
+STID_HLPFILE_ERROR_s, 	"Fehler beim Lesen der Hilfe-Datei `%s'"
+STID_CONTENTS, 		"&Inhalt"
+STID_SEARCH, 		"&Suchen"
+STID_BACK, 		"&Zurück"
+STID_HISTORY, 		"&Bisher"
+STID_TOPICS, 		"&Topics"
+STID_ALL_FILES, 	"Alle Dateien (*.*)"
+STID_HELP_FILES_HLP, 	"Hilfe-Dateien (*.hlp)"
 }

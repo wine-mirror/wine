@@ -151,10 +151,6 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
                                      BOOL bPopup, HWND hParentWnd, LPPOINT mouse, INT nCmdShow)
 {
     CHAR    szCaption[MAX_STRING_LEN];
-    CHAR    szContents[MAX_STRING_LEN];
-    CHAR    szSearch[MAX_STRING_LEN];
-    CHAR    szBack[MAX_STRING_LEN];
-    CHAR    szHistory[MAX_STRING_LEN];
     SIZE    size   = {CW_USEDEFAULT, 0/*CW_USEDEFAULT*/};
     POINT   origin = {240, 0};
     LPSTR   ptr;
@@ -217,14 +213,18 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
         MACRO_CreateButton("BTN_TEST", "&Test", "MacroTest");
     if (bPrimary && page)
     {
-        LoadString(Globals.hInstance, 0x126, szContents, sizeof(szContents));
-        LoadString(Globals.hInstance, 0x127,   szSearch,   sizeof(szSearch));
-        LoadString(Globals.hInstance, 0x128,     szBack,     sizeof(szBack));
-        LoadString(Globals.hInstance, 0x129,  szHistory,  sizeof(szHistory));
-        MACRO_CreateButton("BTN_CONTENTS", szContents, "Contents()");
-        MACRO_CreateButton("BTN_SEARCH",   szSearch,   "Search()");
-        MACRO_CreateButton("BTN_BACK",     szBack,     "Back()");
-        MACRO_CreateButton("BTN_HISTORY",  szHistory,  "History()");
+        CHAR    buffer[MAX_STRING_LEN];
+
+        LoadString(Globals.hInstance, STID_CONTENTS, buffer, sizeof(buffer));
+        MACRO_CreateButton("BTN_CONTENTS", buffer, "Contents()");
+        LoadString(Globals.hInstance, STID_SEARCH,buffer, sizeof(buffer));
+        MACRO_CreateButton("BTN_SEARCH", buffer, "Search()");
+        LoadString(Globals.hInstance, STID_BACK, buffer, sizeof(buffer));
+        MACRO_CreateButton("BTN_BACK", buffer, "Back()");
+        LoadString(Globals.hInstance, STID_HISTORY, buffer, sizeof(buffer));
+        MACRO_CreateButton("BTN_HISTORY", buffer, "History()");
+        LoadString(Globals.hInstance, STID_TOPICS, buffer, sizeof(buffer));
+        MACRO_CreateButton("BTN_TOPICS", buffer, "Finder()");
     }
 
     /* Initialize file specific pushbuttons */
@@ -268,7 +268,7 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
             }
 
     /* Create main Window */
-    if (!page) LoadString(Globals.hInstance, 0x120, szCaption, sizeof(szCaption));
+    if (!page) LoadString(Globals.hInstance, STID_WINE_HELP, szCaption, sizeof(szCaption));
     hWnd = CreateWindow(bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
                         page ? page->file->lpszTitle : szCaption,
                         bPopup ? WS_POPUPWINDOW | WS_BORDER : WS_OVERLAPPEDWINDOW,
@@ -319,7 +319,7 @@ BOOL WINHELP_CreateHelpWindowByHash(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWind
             page = lHash ? HLPFILE_PageByHash(szFile_hlp, lHash) : HLPFILE_Contents(szFile_hlp);
             if (!page)
 	    {
-                WINHELP_MessageBoxIDS_s(HLPFILE_ERROR_s, lpszFile, WHERROR, MB_OK);
+                WINHELP_MessageBoxIDS_s(STID_HLPFILE_ERROR_s, lpszFile, STID_WHERROR, MB_OK);
                 if (Globals.win_list) return FALSE;
 	    }
 	}
@@ -386,28 +386,23 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         switch (wParam)
 	{
             /* Menu FILE */
-	case 0x101:			MACRO_FileOpen();       break;
-	case 0x104:			MACRO_Print();          break;
-	case 0x106:			MACRO_PrinterSetup();   break;
-	case 0x108:			MACRO_Exit();           break;
+	case MNID_FILE_OPEN:    MACRO_FileOpen();       break;
+	case MNID_FILE_PRINT:	MACRO_Print();          break;
+	case MNID_FILE_SETUP:	MACRO_PrinterSetup();   break;
+	case MNID_FILE_EXIT:	MACRO_Exit();           break;
 
             /* Menu EDIT */
-	case 0x10A:     	        MACRO_CopyDialog();     break;
-	case 0x10C:        	        MACRO_Annotate();       break;
+	case MNID_EDIT_COPYDLG: MACRO_CopyDialog();     break;
+	case MNID_EDIT_ANNOTATE:MACRO_Annotate();       break;
 
             /* Menu Bookmark */
-	case 0x10E:			MACRO_BookmarkDefine(); break;
+	case MNID_BKMK_DEFINE:  MACRO_BookmarkDefine(); break;
 
             /* Menu Help */
-	case 0x110:			MACRO_HelpOn();         break;
-	case 0x111:			MACRO_HelpOnTop();      break;
-
-            /* Menu Info */
-	case 0x113:			MACRO_About();          break;
-
-	case 0x114:
-            ShellAbout(hWnd, "WINE", "Help", 0);
-            break;
+	case MNID_HELP_HELPON:	MACRO_HelpOn();         break;
+	case MNID_HELP_HELPTOP: MACRO_HelpOnTop();      break;
+	case MNID_HELP_ABOUT:	MACRO_About();          break;
+	case MNID_HELP_WINE:    ShellAbout(hWnd, "WINE", "Help", 0); break;
 
 	default:
             /* Buttons */
@@ -416,7 +411,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             if (button)
                 MACRO_ExecuteMacro(button->lpszMacro);
             else
-                WINHELP_MessageBoxIDS(0x124, 0x121, MB_OK);
+                WINHELP_MessageBoxIDS(STID_NOT_IMPLEMENTED, 0x121, MB_OK);
             break;
 	}
         break;

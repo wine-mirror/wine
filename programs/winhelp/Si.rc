@@ -23,28 +23,28 @@
 MAIN_MENU MENU LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 {
  POPUP "&Datoteka" {
-  MENUITEM "&Odpri ...", 0x101
+  MENUITEM "&Odpri ...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "Na&tisni temo ...", 0x104
-  MENUITEM "&Priprava tiskalnika", 0x106
+  MENUITEM "Na&tisni temo ...", MNID_FILE_PRINT
+  MENUITEM "&Priprava tiskalnika", MNID_FILE_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "Iz&hod", 0x108
+  MENUITEM "Iz&hod", MNID_FILE_EXIT
  }
  POPUP "&Urejanje" {
-   MENUITEM "&Kopiraj", 0x10A
+   MENUITEM "&Kopiraj", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Pripombe ...", 0x10C
+   MENUITEM "&Pripombe ...", MNID_EDIT_ANNOTATE
  }
  POPUP "&Zaznamek" {
-   MENUITEM "&Doloèi ...", 0x10E
+   MENUITEM "&Doloèi ...", MNID_BKMK_DEFINE
  }
  POPUP "&Pomoè" {
-   MENUITEM "&O pomoèi", 0x110
-   MENUITEM "Vedno na &vrhu", 0x111
+   MENUITEM "&O pomoèi", MNID_HELP_HELPON
+   MENUITEM "Vedno na &vrhu", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Informacije ...", 0x113
+   MENUITEM "&Informacije ...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&O WINE", 0x114
+   MENUITEM "&O WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -52,16 +52,16 @@ MAIN_MENU MENU LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 /* Strings */
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 {
-WINE_HELP, 		"WINE Pomoè"
-WHERROR, 		"NAPAKA"
-WARNING,  		"OPOZORILO"
-INFO,  			"Informacija"
-NOT_IMPLEMENTED, 	"Ni (še) na voljo"
-HLPFILE_ERROR_s, 	"Napaka pri branju datoteke `%s'"
-CONTENTS, 		"&Teme pomoèi"
-SEARCH, 		"&Iskanje"
-BACK, 			"&Nazaj"
-HISTORY, 		"&Zgodovina"
-ALL_FILES, 		"Vse datiteke (*.*)"
-HELP_FILES_HLP, 	"Datoteke s pomoèjo (*.hlp)"
+STID_WINE_HELP, 		"WINE Pomoè"
+STID_WHERROR, 		"NAPAKA"
+STID_WARNING,  		"OPOZORILO"
+STID_INFO,  			"Informacija"
+STID_NOT_IMPLEMENTED, 	"Ni (še) na voljo"
+STID_HLPFILE_ERROR_s, 	"Napaka pri branju datoteke `%s'"
+STID_CONTENTS, 		"&Teme pomoèi"
+STID_SEARCH, 		"&Iskanje"
+STID_BACK, 			"&Nazaj"
+STID_HISTORY, 		"&Zgodovina"
+STID_ALL_FILES, 		"Vse datiteke (*.*)"
+STID_HELP_FILES_HLP, 	"Datoteke s pomoèjo (*.hlp)"
 }
