@@ -366,6 +366,6 @@ DECL_HANDLER(get_next_hook)
         reply->proc = next->proc;
         reply->prev_unicode = hook->unicode;
         reply->next_unicode = next->unicode;
-        if (hook->module) set_reply_data( hook->module, hook->module_size );
+        if (next->module) set_reply_data( next->module, next->module_size );
     }
 }
