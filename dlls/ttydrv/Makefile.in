@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ttydrv
 SOVERSION = 1.0
+EXTRALIBS = $(LIBS)
 
 SPEC_SRCS = ttydrv.spec
 
