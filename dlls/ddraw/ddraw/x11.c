@@ -639,6 +639,14 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 	return create_direct3d2(obj,This);
     if ( IsEqualGUID( &IID_IDirect3D3, refiid ) ) 
         return create_direct3d3(obj,This);
+#else
+    if ( IsEqualGUID( &IID_IDirect3D, refiid ) ||
+         IsEqualGUID( &IID_IDirect3D2, refiid ) ||
+         IsEqualGUID( &IID_IDirect3D3, refiid )
+       )
+    {
+       ERR( "Cannot provide 3D support without OpenGL/Mesa installed\n" );
+    } 
 #endif
     FIXME("(%p):interface for IID %s _NOT_ found!\n",This,debugstr_guid(refiid));
     return OLE_E_ENUM_NOMORE;

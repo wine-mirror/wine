@@ -82,6 +82,13 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_QueryInterface(
 	TRACE("  Creating IDirect3DTexture interface (%p)\n", *obj);
 	return S_OK;
     }
+#else
+    if ( IsEqualGUID( &IID_IDirect3DTexture2, refiid ) ||
+         IsEqualGUID( &IID_IDirect3DTexture, refiid )
+       )
+    {
+       ERR( "Cannot provide 3D support without OpenGL/Mesa installed\n" );
+    }
 #endif /* HAVE_OPENGL */
     FIXME("(%p):interface for IID %s NOT found!\n",This,debugstr_guid(refiid));
     return OLE_E_ENUM_NOMORE;
