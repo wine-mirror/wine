@@ -19,14 +19,15 @@
  */
 
 #include "wine/test.h"
-#include "wine/debug.h"
 #include <windows.h>
 
-static BOOL cmpStrAW(const char* a, const WCHAR* b, DWORD len)
+static BOOL cmpStrAW(const char* a, const WCHAR* b, DWORD lenA, DWORD lenB)
 {
     WCHAR       aw[1024];
 
-    MultiByteToWideChar( CP_ACP, 0, a, len, aw, sizeof(aw) / sizeof(aw[0]) );
+    DWORD len = MultiByteToWideChar( AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0,
+                                     a, lenA, aw, sizeof(aw) / sizeof(aw[0]) );
+    if (len != lenB) return FALSE;
     return memcmp(aw, b, len * sizeof(WCHAR)) == 0;
 }
 
@@ -35,7 +36,7 @@ static void testGetModuleFileName(const char* name)
     HMODULE     hMod;
     char        bufA[MAX_PATH];
     WCHAR       bufW[MAX_PATH];
-    DWORD       len1A, len1W, len2A, len2W, l;
+    DWORD       len1A, len1W, len2A, len2W;
 
     hMod = (name) ? GetModuleHandle(name) : NULL;
 
@@ -46,10 +47,9 @@ static void testGetModuleFileName(const char* name)
     memset(bufW, '-', sizeof(bufW));
     len1W = GetModuleFileNameW(hMod, bufW, sizeof(bufW) / sizeof(WCHAR));
     ok(len1W > 0, "Getting module filename for handle %p\n", hMod);
-    ok(len1A == len1W, "Didn't get same A/W lengths (%ld/%ld)\n", len1A, len1W);
     ok(len1A == strlen(bufA), "Unexpected length of GetModuleFilenameA (%ld/%d)\n", len1A, strlen(bufA));
     ok(len1W == lstrlenW(bufW), "Unexpected length of GetModuleFilenameW (%ld/%d)\n", len1W, lstrlenW(bufW));
-    ok(cmpStrAW(bufA, bufW, l = min(len1A, len1W)), "Comparing GetModuleFilenameAW results\n");
+    ok(cmpStrAW(bufA, bufW, len1A, len1W), "Comparing GetModuleFilenameAW results\n");
 
     /* second test with a buffer too small */
     memset(bufA, '-', sizeof(bufA));
@@ -58,9 +58,7 @@ static void testGetModuleFileName(const char* name)
     memset(bufW, '-', sizeof(bufW));
     len2W = GetModuleFileNameW(hMod, bufW, len1W / 2);
     ok(len2W > 0, "Getting module filename for handle %p\n", hMod);
-    ok(len2A == len2W, "Didn't get same A/W lengths (%ld/%ld)\n", len2A, len2W);
-    l = min(len2A, len2W);
-    ok(cmpStrAW(bufA, bufW, l), "Comparing GetModuleFilenameAW results with buffer too small %s / %s\n", wine_dbgstr_an(bufA, l), wine_dbgstr_wn(bufW, l));
+    ok(cmpStrAW(bufA, bufW, len2A, len2W), "Comparing GetModuleFilenameAW results with buffer too small\n" );
     ok(len1A / 2 == len2A, "Correct length in GetModuleFilenameA with buffer too small (%ld/%ld)\n", len1A / 2, len2A);
     ok(len1W / 2 == len2W, "Correct length in GetModuleFilenameW with buffer too small (%ld/%ld)\n", len1W / 2, len2W);
 }
