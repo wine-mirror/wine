@@ -224,7 +224,7 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
         </itemizedlist>
       </para>
       <para>
-        After running winemaker I like to edit the Makefile.in to add the line
+        After running winemaker I like to edit the Makefile to add the line
         CEXTRA = -Wall just before the DEFINES =.
       </para>
       <para>

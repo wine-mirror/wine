@@ -400,23 +400,6 @@
             </listitem>
           </varlistentry>
           <varlistentry>
-            <term><option>Running the configure script</option></term>
-            <listitem>
-              <para>
-                Before you run <command>make</command> you must run the
-                autoconf <command>configure</command> script. The goal of this
-                step is to analyze your system and generate customized
-                makefiles from the <filename>Makefile.in</filename> files. This
-                is also when you have to tell where Winelib resides on your
-                system. If wine is installed in a single directory or you have
-                the Wine sources compiled somewhere then you can just run
-                <command>./configure --with-wine=/usr/local/bin</command>
-                or <command>./configure --with-wine=~/wine</command>
-                respectively.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
             <term><option>Running make</option></term>
             <listitem>
               <para>
@@ -427,9 +410,10 @@
                 <itemizedlist>
                   <listitem>
                     <para>
-                      review the <filename>Makefile.in</filename> files to
-                      adjust the default compilation and link options set by
-                      winemaker. See the <xref linkend="source-analysis"
+                      review the <filename>Makefile</filename> files to
+                      adjust what winemaker thinks are the binaries you are
+                      trying to build and which sources should be used for
+                      each. See the <xref linkend="source-analysis"
                       endterm="source-analysis.title"> section for some hints.
                     </para>
                   </listitem>
@@ -441,12 +425,6 @@
                     </para>
                   </listitem>
                 </itemizedlist>
-              </para>
-              <para>
-                If you find yourself modifying the Makefile.in to specify the
-                location of the Wine header or library files then go back to
-                the previous step (the configure script) and use the various
-                --with-wine-* options to specify where they are.
               </para>
             </listitem>
           </varlistentry>
