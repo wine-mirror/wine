@@ -108,26 +108,27 @@ static const WCHAR c_collen[] = {'C',':','\\',0};
 static const WCHAR cszbs[]={'\\',0};
 
 const static WCHAR szCreateFolders[] =
-    {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
+{'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
 const static WCHAR szCostFinalize[] =
-    {'C','o','s','t','F','i','n','a','l','i','z','e',0};
+{'C','o','s','t','F','i','n','a','l','i','z','e',0};
 const static WCHAR szInstallFiles[] =
-    {'I','n','s','t','a','l','l','F','i','l','e','s',0};
+{'I','n','s','t','a','l','l','F','i','l','e','s',0};
 const static WCHAR szDuplicateFiles[] =
-    {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
+{'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 const static WCHAR szWriteRegistryValues[] =
 {'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
 const static WCHAR szCostInitialize[] =
-    {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
-const static WCHAR szFileCost[] = {'F','i','l','e','C','o','s','t',0};
+{'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
+const static WCHAR szFileCost[] = 
+{'F','i','l','e','C','o','s','t',0};
 const static WCHAR szInstallInitialize[] = 
-    {'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
+{'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
 const static WCHAR szInstallValidate[] = 
-    {'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
+{'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
 const static WCHAR szLaunchConditions[] = 
-    {'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
+{'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
 const static WCHAR szProcessComponents[] = 
-    {'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
+{'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
 const static WCHAR szRegisterTypeLibraries[] = 
 {'R','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r',
 'i','e','s',0};
@@ -155,10 +156,108 @@ const static WCHAR szInstallFinalize[] =
 {'I','n','s','t','a','l','l','F','i','n','a','l','i','z','e',0};
 const static WCHAR szForceReboot[] = 
 {'F','o','r','c','e','R','e','b','o','o','t',0};
-const static WCHAR szResolveSource[] = 
+const static WCHAR szResolveSource[] =
 {'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
-const static WCHAR szAppSearch[] =
+const static WCHAR szAppSearch[] = 
 {'A','p','p','S','e','a','r','c','h',0};
+const static WCHAR szAllocateRegistrySpace[] = 
+{'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y','S','p','a','c','e',0};
+const static WCHAR szBindImage[] = 
+{'B','i','n','d','I','m','a','g','e',0};
+const static WCHAR szCCPSearch[] = 
+{'C','C','P','S','e','a','r','c','h',0};
+const static WCHAR szDeleteServices[] = 
+{'D','e','l','e','t','e','S','e','r','v','i','c','e','s',0};
+const static WCHAR szDisableRollback[] = 
+{'D','i','s','a','b','l','e','R','o','l','l','b','a','c','k',0};
+const static WCHAR szExecuteAction[] = 
+{'E','x','e','c','u','t','e','A','c','t','i','o','n',0};
+const static WCHAR szFindRelatedProducts[] = 
+{'F','i','n','d','R','e','l','a','t','e','d','P','r','o','d','u','c','t','s',0};
+const static WCHAR szInstallAdminPackage[] = 
+{'I','n','s','t','a','l','l','A','d','m','i','n','P','a','c','k','a','g','e',0};
+const static WCHAR szInstallSFPCatalogFile[] = 
+{'I','n','s','t','a','l','l','S','F','P','C','a','t','a','l','o','g','F','i','l','e',0};
+const static WCHAR szIsolateComponents[] = 
+{'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t','s',0};
+const static WCHAR szMigrateFeatureStates[] = 
+{'M','i','g','r','a','t','e','F','e','a','t','u','r','e','S','t','a','t','e','s',0};
+const static WCHAR szMoveFiles[] = 
+{'M','o','v','e','F','i','l','e','s',0};
+const static WCHAR szMsiPublishAssemblies[] = 
+{'M','s','i','P','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
+const static WCHAR szMsiUnpublishAssemblies[] = 
+{'M','s','i','U','n','p','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
+const static WCHAR szInstallODBC[] = 
+{'I','n','s','t','a','l','l','O','D','B','C',0};
+const static WCHAR szInstallServices[] = 
+{'I','n','s','t','a','l','l','S','e','r','v','i','c','e','s',0};
+const static WCHAR szPatchFiles[] = 
+{'P','a','t','c','h','F','i','l','e','s',0};
+const static WCHAR szPublishComponents[] = 
+{'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
+const static WCHAR szRegisterComPlus[] =
+{'R','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
+const static WCHAR szRegisterExtensionInfo[] =
+{'R','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n','I','n','f','o',0};
+const static WCHAR szRegisterFonts[] =
+{'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
+const static WCHAR szRegisterMIMEInfo[] =
+{'R','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
+const static WCHAR szRegisterUser[] =
+{'R','e','g','i','s','t','e','r','U','s','e','r',0};
+const static WCHAR szRemoveDuplicateFiles[] =
+{'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
+const static WCHAR szRemoveEnvironmentStrings[] =
+{'R','e','m','o','v','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
+const static WCHAR szRemoveExistingProducts[] =
+{'R','e','m','o','v','e','E','x','i','s','t','i','n','g','P','r','o','d','u','c','t','s',0};
+const static WCHAR szRemoveFiles[] =
+{'R','e','m','o','v','e','F','i','l','e','s',0};
+const static WCHAR szRemoveFolders[] =
+{'R','e','m','o','v','e','F','o','l','d','e','r','s',0};
+const static WCHAR szRemoveIniValues[] =
+{'R','e','m','o','v','e','I','n','i','V','a','l','u','e','s',0};
+const static WCHAR szRemoveODBC[] =
+{'R','e','m','o','v','e','O','D','B','C',0};
+const static WCHAR szRemoveRegistryValues[] =
+{'R','e','m','o','v','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
+const static WCHAR szRemoveShortcuts[] =
+{'R','e','m','o','v','e','S','h','o','r','t','c','u','t','s',0};
+const static WCHAR szRMCCPSearch[] =
+{'R','M','C','C','P','S','e','a','r','c','h',0};
+const static WCHAR szScheduleReboot[] =
+{'S','c','h','e','d','u','l','e','R','e','b','o','o','t',0};
+const static WCHAR szSelfUnregModules[] =
+{'S','e','l','f','U','n','r','e','g','M','o','d','u','l','e','s',0};
+const static WCHAR szSetODBCFolders[] =
+{'S','e','t','O','D','B','C','F','o','l','d','e','r','s',0};
+const static WCHAR szStartServices[] =
+{'S','t','a','r','t','S','e','r','v','i','c','e','s',0};
+const static WCHAR szStopServices[] =
+{'S','t','o','p','S','e','r','v','i','c','e','s',0};
+const static WCHAR szUnpublishComponents[] =
+{'U','n','p','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
+const static WCHAR szUnpublishFeatures[] =
+{'U','n','p','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
+const static WCHAR szUnregisterClassInfo[] =
+{'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
+const static WCHAR szUnregisterComPlus[] =
+{'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
+const static WCHAR szUnregisterExtensionInfo[] =
+{'U','n','r','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n','I','n','f','o',0};
+const static WCHAR szUnregisterFonts[] =
+{'U','n','r','e','g','i','s','t','e','r','F','o','n','t','s',0};
+const static WCHAR szUnregisterMIMEInfo[] =
+{'U','n','r','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
+const static WCHAR szUnregisterProgIdInfo[] =
+{'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
+const static WCHAR szUnregisterTypeLibraries[] =
+{'U','n','r','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r','i','e','s',0};
+const static WCHAR szValidateProductID[] =
+{'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
+const static WCHAR szWriteEnvironmentStrings[] =
+{'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
 
 struct _actions {
     LPCWSTR action;
@@ -166,30 +265,79 @@ struct _actions {
 };
 
 struct _actions StandardActions[] = {
+    { szAllocateRegistrySpace, NULL},
     { szAppSearch, ACTION_AppSearch },
+    { szBindImage, NULL},
+    { szCCPSearch, NULL},
     { szCostFinalize, ACTION_CostFinalize },
     { szCostInitialize, ACTION_CostInitialize },
     { szCreateFolders, ACTION_CreateFolders },
     { szCreateShortcuts, ACTION_CreateShortcuts },
+    { szDeleteServices, NULL},
+    { szDisableRollback, NULL},
     { szDuplicateFiles, ACTION_DuplicateFiles},
+    { szExecuteAction, NULL},
     { szFileCost, ACTION_FileCost },
+    { szFindRelatedProducts, NULL},
     { szForceReboot, ACTION_ForceReboot },
+    { szInstallAdminPackage, NULL},
     { szInstallExecute, ACTION_InstallExecute },
     { szInstallExecuteAgain, ACTION_InstallExecute },
     { szInstallFiles, ACTION_InstallFiles},
     { szInstallFinalize, ACTION_InstallFinalize },
     { szInstallInitialize, ACTION_InstallInitialize },
+    { szInstallSFPCatalogFile, NULL},
     { szInstallValidate, ACTION_InstallValidate },
+    { szIsolateComponents, NULL},
     { szLaunchConditions, ACTION_LaunchConditions },
+    { szMigrateFeatureStates, NULL},
+    { szMoveFiles, NULL},
+    { szMsiPublishAssemblies, NULL},
+    { szMsiUnpublishAssemblies, NULL},
+    { szInstallODBC, NULL},
+    { szInstallServices, NULL},
+    { szPatchFiles, NULL},
     { szProcessComponents, ACTION_ProcessComponents },
+    { szPublishComponents, NULL},
     { szPublishFeatures, ACTION_PublishFeatures },
     { szPublishProduct, ACTION_PublishProduct },
     { szRegisterClassInfo, ACTION_RegisterClassInfo },
+    { szRegisterComPlus, NULL},
+    { szRegisterExtensionInfo, NULL},
+    { szRegisterFonts, NULL},
+    { szRegisterMIMEInfo, NULL},
     { szRegisterProduct, ACTION_RegisterProduct },
     { szRegisterProgIdInfo, ACTION_RegisterProgIdInfo },
     { szRegisterTypeLibraries, ACTION_RegisterTypeLibraries },
+    { szRegisterUser, NULL},
+    { szRemoveDuplicateFiles, NULL},
+    { szRemoveEnvironmentStrings, NULL},
+    { szRemoveExistingProducts, NULL},
+    { szRemoveFiles, NULL},
+    { szRemoveFolders, NULL},
+    { szRemoveIniValues, NULL},
+    { szRemoveODBC, NULL},
+    { szRemoveRegistryValues, NULL},
+    { szRemoveShortcuts, NULL},
     { szResolveSource, ACTION_ResolveSource},
+    { szRMCCPSearch, NULL},
+    { szScheduleReboot, NULL},
     { szSelfRegModules, ACTION_SelfRegModules },
+    { szSelfUnregModules, NULL},
+    { szSetODBCFolders, NULL},
+    { szStartServices, NULL},
+    { szStopServices, NULL},
+    { szUnpublishComponents, NULL},
+    { szUnpublishFeatures, NULL},
+    { szUnregisterClassInfo, NULL},
+    { szUnregisterComPlus, NULL},
+    { szUnregisterExtensionInfo, NULL},
+    { szUnregisterFonts, NULL},
+    { szUnregisterMIMEInfo, NULL},
+    { szUnregisterProgIdInfo, NULL},
+    { szUnregisterTypeLibraries, NULL},
+    { szValidateProductID, NULL},
+    { szWriteEnvironmentStrings, NULL},
     { szWriteIniValues, ACTION_WriteIniValues },
     { szWriteRegistryValues, ACTION_WriteRegistryValues},
     { NULL, NULL},
@@ -372,11 +520,14 @@ DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data )
 
         MSI_RecordSetStringW(rec,0,ptr);
         MSI_FormatRecordW(package,rec,size_buf,&size);
-        if (size > 0)
+        if (size >= 0)
         {
             size++;
             *data = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
-            MSI_FormatRecordW(package,rec,*data,&size);
+            if (size > 1)
+                MSI_FormatRecordW(package,rec,*data,&size);
+            else
+                *data[0] = 0;
             msiobj_release( &rec->hdr );
             return sizeof(WCHAR)*size;
         }
@@ -1093,7 +1244,15 @@ BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, UINT* rc)
         {
             ui_actioninfo(package, action, TRUE, 0);
             ui_actionstart(package, action);
-            *rc = StandardActions[i].handler(package);
+            if (StandardActions[i].handler)
+            {
+                *rc = StandardActions[i].handler(package);
+            }
+            else
+            {
+                FIXME("UNHANDLED Standard Action %s\n",debugstr_w(action));
+                *rc = ERROR_SUCCESS;
+            }
             ui_actioninfo(package, action, FALSE, *rc);
             ret = TRUE;
             break;
