@@ -31,35 +31,38 @@ depend:: $(RC_SRCS:.rc=.h)
 
 $(RC_SRCS:.rc=.s): $(WRC)
 
-expand: expand.o
+$(WINESTUB):
+	@cd ../library && $(SUBMAKE)
+
+expand: expand.o $(WINESTUB)
 	$(CC) -o expand expand.o $(LDOPTIONS) $(ALL_LIBS)
 
-hello: hello.o
+hello: hello.o $(WINESTUB)
 	$(CC) -o hello hello.o $(LDOPTIONS) $(ALL_LIBS)
 
-hello2: hello2.o
+hello2: hello2.o $(WINESTUB)
 	$(CC) -o hello2 hello2.o $(LDOPTIONS) $(ALL_LIBS)
 
-hello3: hello3res.o hello3.o
+hello3: hello3res.o hello3.o $(WINESTUB)
 	$(CC) -o hello3 hello3.o hello3res.o $(LDOPTIONS) $(ALL_LIBS)
 hello3.o: hello3res.h
 
-hello4: hello4.o
+hello4: hello4.o $(WINESTUB)
 	$(CC) -o hello4 hello4.o $(LDOPTIONS) $(ALL_LIBS)
 
-hello5: hello5.o
+hello5: hello5.o $(WINESTUB)
 	$(CC) -o hello5 hello5.o $(LDOPTIONS) $(ALL_LIBS)
 
-new: new.o
+new: new.o $(WINESTUB)
 	$(CC) -o new new.o $(LDOPTIONS) $(ALL_LIBS)
 
-rolex: rolex.o
+rolex: rolex.o $(WINESTUB)
 	$(CC) -o rolex rolex.o $(LDOPTIONS) $(ALL_LIBS)
 
-vartest: vartest.o
+vartest: vartest.o $(WINESTUB)
 	$(CC) -o vartest vartest.o $(LDOPTIONS) $(ALL_LIBS)
 
-volinfo: volinfo.o
+volinfo: volinfo.o $(WINESTUB)
 	$(CC) -o volinfo volinfo.o $(LDOPTIONS) $(ALL_LIBS)
 
 ### Dependencies:
