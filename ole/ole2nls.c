@@ -1325,11 +1325,10 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 
 
 /******************************************************************************
- *		OLE_GetFormatA	[Internal]
+ *		OLE_GetFormatW	[Internal]
  *
- * FIXME
- *    If datelen == 0, it should return the reguired string length.
- *
+ * dateformat is set TRUE if being called for a date, false for a time
+
  This function implements stuff for GetDateFormat() and
  GetTimeFormat().
 
@@ -1359,221 +1358,6 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
   ''   (within a quoted string) indicates a literal '
 
  These functions REQUIRE valid locale, date,  and format.
- */
-static INT OLE_GetFormatA(LCID locale,
-			    DWORD flags,
-			    DWORD tflags,
-			    const SYSTEMTIME* xtime,
-			    LPCSTR _format, 	/*in*/
-			    LPSTR date,		/*out*/
-			    INT datelen)
-{
-   INT inpos, outpos;
-   int count, type, inquote, Overflow;
-   char buf[40];
-   char format[40];
-   char * pos;
-   int buflen;
-
-   const char * _dgfmt[] = { "%d", "%02d" };
-   const char ** dgfmt = _dgfmt - 1;
-
-   /* report, for debugging */
-   TRACE("(0x%lx,0x%lx, 0x%lx, time(y=%d m=%d wd=%d d=%d,h=%d,m=%d,s=%d), fmt=%p \'%s\' , %p, len=%d)\n",
-   	 locale, flags, tflags,
-	 xtime->wYear,xtime->wMonth,xtime->wDayOfWeek,xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
-	 _format, _format, date, datelen);
-
-   if(datelen == 0) {
-     FIXME("datelen = 0, returning 255\n");
-     return 255;
-   }
-
-   /* initalize state variables and output buffer */
-   inpos = outpos = 0;
-   count = 0; inquote = 0; Overflow = 0;
-   type = '\0';
-   date[0] = buf[0] = '\0';
-
-   strcpy(format,_format);
-
-   /* alter the formatstring, while it works for all languages now in wine
-   its possible that it fails when the time looks like ss:mm:hh as example*/
-   if (tflags & (TIME_NOMINUTESORSECONDS))
-   { if ((pos = strstr ( format, ":mm")))
-     { memcpy ( pos, pos+3, strlen(format)-(pos-format)-2 );
-     }
-   }
-   if (tflags & (TIME_NOSECONDS))
-   { if ((pos = strstr ( format, ":ss")))
-     { memcpy ( pos, pos+3, strlen(format)-(pos-format)-2 );
-     }
-   }
-
-   for (inpos = 0;; inpos++) {
-      /* TRACE("STATE inpos=%2d outpos=%2d count=%d inquote=%d type=%c buf,date = %c,%c\n", inpos, outpos, count, inquote, type, buf[inpos], date[outpos]); */
-      if (inquote) {
-	 if (format[inpos] == '\'') {
-	    if (format[inpos+1] == '\'') {
-	       inpos += 1;
-	       date[outpos++] = '\'';
-	    } else {
-	       inquote = 0;
-	       continue; /* we did nothing to the output */
-	    }
-	 } else if (format[inpos] == '\0') {
-	    date[outpos++] = '\0';
-	    if (outpos > datelen) Overflow = 1;
-	    break;
-	 } else {
-	    date[outpos++] = format[inpos];
-	    if (outpos > datelen) {
-	       Overflow = 1;
-	       date[outpos-1] = '\0'; /* this is the last place where
-					 it's safe to write */
-	       break;
-	    }
-	 }
-      } else if (  (count && (format[inpos] != type))
-		   || count == 4
-		   || (count == 2 && strchr("ghHmst", type)) ) {
-	    if (type == 'h' && (tflags & TIME_FORCE24HOURFORMAT)) type= 'H';
-	    if (type == 'd') {
-	       if (count == 4) {
-		  GetLocaleInfoA(locale,
-				   LOCALE_SDAYNAME1
-				   + (xtime->wDayOfWeek+6)%7,
-				   buf, sizeof(buf));
-	       } else if (count == 3) {
-			   GetLocaleInfoA(locale,
-					    LOCALE_SABBREVDAYNAME1
-					    + (xtime->wDayOfWeek+6)%7,
-					    buf, sizeof(buf));
-		      } else {
-		  sprintf(buf, dgfmt[count], xtime->wDay);
-	       }
-	    } else if (type == 'M') {
-	       if (count == 3) {
-		  GetLocaleInfoA(locale,
-				   LOCALE_SABBREVMONTHNAME1
-				   + xtime->wMonth - 1,
-				   buf, sizeof(buf));
-	       } else if (count == 4) {
-		  GetLocaleInfoA(locale,
-				   LOCALE_SMONTHNAME1
-				   + xtime->wMonth - 1,
-				   buf, sizeof(buf));
-		 } else {
-		  sprintf(buf, dgfmt[count], xtime->wMonth);
-	       }
-	    } else if (type == 'y') {
-	       if (count == 4) {
-		      sprintf(buf, "%d", xtime->wYear);
-	       } else if (count == 3) {
-		  strcpy(buf, "yyy");
-		  WARN("unknown format, c=%c, n=%d\n",  type, count);
-		 } else {
-		  sprintf(buf, dgfmt[count], xtime->wYear % 100);
-	       }
-	    } else if (type == 'g') {
-	       if        (count == 2) {
-		  FIXME("LOCALE_ICALENDARTYPE unimp.\n");
-		  strcpy(buf, "AD");
-	    } else {
-		  strcpy(buf, "g");
-		  WARN("unknown format, c=%c, n=%d\n", type, count);
-	       }
-	    } else if (type == 'h') {
-	       /* gives us hours 1:00 -- 12:00 */
-	       sprintf(buf, dgfmt[count], (xtime->wHour-1)%12 +1);
-	    } else if (type == 'H') {
-	       /* 24-hour time */
-	       sprintf(buf, dgfmt[count], xtime->wHour);
-	    } else if ( type == 'm') {
-	       sprintf(buf, dgfmt[count], xtime->wMinute);
-	    } else if ( type == 's') {
-	       sprintf(buf, dgfmt[count], xtime->wSecond);
-	    } else if (type == 't') {
-               if ((tflags & TIME_NOTIMEMARKER))
-                  buf[0]='\0';
-               else if (count == 1) {
-		  sprintf(buf, "%c", (xtime->wHour < 12) ? 'A' : 'P');
-               } else if (count == 2) {
-                 /* sprintf(buf, "%s", (xtime->wHour < 12) ? "AM" : "PM"); */
-                  GetLocaleInfoA(locale,
-                           (xtime->wHour<12)
-                           ? LOCALE_S1159 : LOCALE_S2359,
-                           buf, sizeof(buf));
-               }
-	    };
-
-	    /* we need to check the next char in the format string
-	       again, no matter what happened */
-	    inpos--;
-
-	    /* add the contents of buf to the output */
-	    buflen = strlen(buf);
-	    if (outpos + buflen < datelen) {
-	       date[outpos] = '\0'; /* for strcat to hook onto */
-		 strcat(date, buf);
-	       outpos += buflen;
-	    } else {
-	       date[outpos] = '\0';
-	       strncat(date, buf, datelen - outpos);
-		 date[datelen - 1] = '\0';
-		 SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	       WARN("insufficient buffer\n");
-		 return 0;
-	    }
-
-	    /* reset the variables we used to keep track of this item */
-	    count = 0;
-	    type = '\0';
-	 } else if (format[inpos] == '\0') {
-	    /* we can't check for this at the loop-head, because
-	       that breaks the printing of the last format-item */
-	    date[outpos] = '\0';
-	    break;
-         } else if (count) {
-	    /* continuing a code for an item */
-	    count +=1;
-	    continue;
-	 } else if (strchr("hHmstyMdg", format[inpos])) {
-	    type = format[inpos];
-	    count = 1;
-	    continue;
-	 } else if (format[inpos] == '\'') {
-	    inquote = 1;
-	    continue;
-       } else {
-	    date[outpos++] = format[inpos];
-	 }
-      /* now deal with a possible buffer overflow */
-      if (outpos >= datelen) {
-       date[datelen - 1] = '\0';
-       SetLastError(ERROR_INSUFFICIENT_BUFFER);
-       return 0;
-      }
-   }
-
-   if (Overflow) {
-      SetLastError(ERROR_INSUFFICIENT_BUFFER);
-   };
-
-   /* finish it off with a string terminator */
-   outpos++;
-   /* sanity check */
-   if (outpos > datelen-1) outpos = datelen-1;
-   date[outpos] = '\0';
-
-   TRACE("returns string '%s', len %d\n", date, outpos);
-   return outpos;
-}
-
-/******************************************************************************
- * OLE_GetFormatW [INTERNAL]
- *
- * dateformat is set TRUE if being called for a date, false for a time
  */
 static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			    const SYSTEMTIME* xtime,
@@ -1760,6 +1544,50 @@ too_short:
  *		GetDateFormatA	[KERNEL32.@]
  * Makes an ASCII string of the date
  *
+ * Acts the same as GetDateFormatW(),  except that it's ASCII.
+ */
+INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
+			      const SYSTEMTIME* xtime,
+			      LPCSTR format, LPSTR date, INT datelen)
+{
+  INT ret;
+  LPWSTR wformat = NULL;
+  LPWSTR wdate = NULL;  
+
+  if (format)
+  {
+    wformat = HeapAlloc(GetProcessHeap(), 0,
+                        (strlen(format) + 1) * sizeof(wchar_t));
+
+    MultiByteToWideChar(CP_ACP, 0, format, -1, wformat, strlen(format) + 1);
+  }
+
+  if (date && datelen)
+  {
+    wdate = HeapAlloc(GetProcessHeap(), 0,
+                      (datelen + 1) * sizeof(wchar_t));
+  }
+
+  ret = GetDateFormatW(locale, flags, xtime, wformat, wdate, datelen);
+
+  if (wdate)
+  {
+    WideCharToMultiByte(CP_ACP, 0, wdate, ret, date, datelen, NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, wdate);
+  }
+
+  if (wformat)
+  {
+    HeapFree(GetProcessHeap(), 0, wformat);
+  }
+
+  return ret;
+}
+
+/******************************************************************************
+ *		GetDateFormatW	[KERNEL32.@]
+ * Makes a Unicode string of the date
+ *
  * This function uses format to format the date,  or,  if format
  * is NULL, uses the default for the locale.  format is a string
  * of literal fields and characters as follows:
@@ -1777,81 +1605,7 @@ too_short:
  * - yyyy four-digit year
  * - gg   era string
  *
- */
-INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
-			      const SYSTEMTIME* xtime,
-			      LPCSTR format, LPSTR date,INT datelen)
-{
-
-  char format_buf[40];
-  LPCSTR thisformat;
-  SYSTEMTIME t;
-  LPSYSTEMTIME thistime;
-  LCID thislocale;
-  INT ret;
-  FILETIME ft;
-  BOOL res;
-
-  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
-	      locale,flags,xtime,format,date,datelen);
-
-  if (!locale) {
-     locale = LOCALE_SYSTEM_DEFAULT;
-     };
-
-  if (locale == LOCALE_SYSTEM_DEFAULT) {
-     thislocale = GetSystemDefaultLCID();
-  } else if (locale == LOCALE_USER_DEFAULT) {
-     thislocale = GetUserDefaultLCID();
-  } else {
-     thislocale = locale;
-   };
-
-  if (xtime == NULL) {
-     GetSystemTime(&t);
-  } else {
-      /* Silently correct wDayOfWeek by transforming to FileTime and back again */
-      res=SystemTimeToFileTime(xtime,&ft);
-      /* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error */
-      /*FIXME: SystemTimeToFileTime doesn't yet do that check */
-      if(!res)
-	{
-	  SetLastError(ERROR_INVALID_PARAMETER);
-	  return 0;
-	}
-      FileTimeToSystemTime(&ft,&t);
-
-  };
-  thistime = &t;
-
-  if (format == NULL) {
-     GetLocaleInfoA(thislocale, ((flags&DATE_LONGDATE)
-				   ? LOCALE_SLONGDATE
-				   : LOCALE_SSHORTDATE),
-		      format_buf, sizeof(format_buf));
-     thisformat = format_buf;
-  } else {
-     thisformat = format;
-  };
-
-
-  ret = OLE_GetFormatA(thislocale, flags, 0, thistime, thisformat,
-		       date, datelen);
-
-
-   TRACE(
-	       "GetDateFormatA() returning %d, with data=%s\n",
-	       ret, date);
-  return ret;
-}
-
-/******************************************************************************
- *		GetDateFormatW	[KERNEL32.@]
- * Makes a Unicode string of the date
- *
- * Acts the same as GetDateFormatA(),  except that it's Unicode.
  * Accepts & returns sizes as counts of Unicode characters.
- *
  */
 INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 			      const SYSTEMTIME* xtime,
@@ -2957,39 +2711,37 @@ GetTimeFormatA(LCID locale,        /* [in]  */
 	       LPCSTR format,      /* [in]  */
 	       LPSTR timestr,      /* [out] */
 	       INT timelen         /* [in]  */)
-{ char format_buf[40];
-  LPCSTR thisformat;
-  SYSTEMTIME t;
-  const SYSTEMTIME* thistime;
-  LCID thislocale=0;
-  DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
+{
   INT ret;
+  LPWSTR wformat = NULL;
+  LPWSTR wtime = NULL;  
 
-  TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,xtime,format,timestr,timelen);
-
-  thislocale = OLE2NLS_CheckLocale ( locale );
-
-  if (format == NULL)
-  { if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
-    { thislocale = GetSystemDefaultLCID();
-    }
-    GetLocaleInfoA(thislocale, thisflags, format_buf, sizeof(format_buf));
-    thisformat = format_buf;
-  }
-  else
-  { thisformat = format;
+  if (format)
+  {
+    wformat = HeapAlloc(GetProcessHeap(), 0,
+                        (strlen(format) + 1) * sizeof(wchar_t));
+    MultiByteToWideChar(CP_ACP, 0, format, -1, wformat, strlen(format) + 1);
   }
 
-  if (xtime == NULL) /* NULL means use the current local time */
-  { GetLocalTime(&t);
-    thistime = &t;
+  if (timestr && timelen)
+  {
+    wtime = HeapAlloc(GetProcessHeap(), 0,
+                      (timelen + 1) * sizeof(wchar_t));
   }
-  else
-  { thistime = xtime;
-  /* Check that hour,min and sec is in range */
+
+  ret = GetTimeFormatW(locale, flags, xtime, wformat, wtime, timelen);
+
+  if (wtime)
+  {
+    WideCharToMultiByte(CP_ACP, 0, wtime, ret, timestr, timelen, NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, wtime);
   }
-  ret = OLE_GetFormatA(thislocale, thisflags, flags, thistime, thisformat,
-  			 timestr, timelen);
+
+  if (wformat)
+  {
+    HeapFree(GetProcessHeap(), 0, wformat);
+  }
+
   return ret;
 }
 

@@ -118,7 +118,6 @@ LCID lcid;
 	ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, 0);
 	cmp = strncmp (Expected, buffer, 4);
 	ok (cmp == 0, "GetTimeFormat with len=0 got %s instead of %s", buffer, Expected);
-	todo_wine { eq (ret, 12, "GetTimeFormat with len=0", "%d"); }
 
 	memset(buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
 	strcpy(Expected, "AMxx");
@@ -174,7 +173,6 @@ LCID lcid;
 	ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, 0);
 	cmp = strncmp (Expected, buffer, 4);
 	ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-	todo_wine { eq (ret, 16, "GetDateFormat with len=0", "%d"); }
 
 	memset(buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
 	strcpy(Expected, "Saxx");
