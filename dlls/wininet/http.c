@@ -399,7 +399,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         InternetCrackUrlA(proxy, 0, 0, &UrlComponents);
         if (strlen(UrlComponents.lpszHostName)) {
 			 /* for constant 13 see above */
-             char* url = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhr->lpszHostName) + strlen(lpwhr->lpszPath) + 13);
+             char* url = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhs->lpszServerName) + strlen(lpwhr->lpszPath) + 13);
 
              if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
                  UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
