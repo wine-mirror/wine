@@ -540,7 +540,6 @@ struct IDirect3DResource9Impl
 
     /* IDirect3DResource9 fields */
     IWineD3DResource       *wineD3DResource;
-    IDirect3DDevice9       *device;
 };
 
 /* IUnknown: */
@@ -578,7 +577,6 @@ struct IDirect3DSurface9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
 
     /* IDirect3DSurface9 fields */
@@ -724,13 +722,7 @@ struct IDirect3DBaseTexture9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DBaseTexture9 fields */
-    BOOL                    Dirty;
-    D3DFORMAT               format;
-    UINT                    levels;
+    IWineD3DBaseTexture    *wineD3DBaseTexture;
 };
 
 /* IUnknown: */
@@ -776,7 +768,6 @@ struct IDirect3DCubeTexture9Impl
     DWORD                     ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl     *Device;
     D3DRESOURCETYPE           ResourceType;
 
     /* IDirect3DBaseTexture9 fields */
@@ -840,7 +831,6 @@ struct IDirect3DTexture9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
 
     /* IDirect3DBaseTexture9 fields */
@@ -905,7 +895,6 @@ struct IDirect3DVolumeTexture9Impl
     DWORD                       ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
 
     /* IDirect3DBaseTexture9 fields */

@@ -1,7 +1,7 @@
 /*
  * IDirect3DBaseTexture9 implementation
  *
- * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2002-2004 Jason Edmeades
  *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
@@ -43,15 +43,17 @@ HRESULT WINAPI IDirect3DBaseTexture9Impl_QueryInterface(LPDIRECT3DBASETEXTURE9 i
 ULONG WINAPI IDirect3DBaseTexture9Impl_AddRef(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 ULONG WINAPI IDirect3DBaseTexture9Impl_Release(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-    if (ref == 0)
+    if (ref == 0) {
+        IWineD3DBaseTexture_Release(This->wineD3DBaseTexture);
         HeapFree(GetProcessHeap(), 0, This);
+    }
     return ref;
 }
 
@@ -63,41 +65,38 @@ HRESULT WINAPI IDirect3DBaseTexture9Impl_GetDevice(LPDIRECT3DBASETEXTURE9 iface,
 
 HRESULT WINAPI IDirect3DBaseTexture9Impl_SetPrivateData(LPDIRECT3DBASETEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DBaseTexture_SetPrivateData(This->wineD3DBaseTexture, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DBaseTexture9Impl_GetPrivateData(LPDIRECT3DBASETEXTURE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DBaseTexture_GetPrivateData(This->wineD3DBaseTexture, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DBaseTexture9Impl_FreePrivateData(LPDIRECT3DBASETEXTURE9 iface, REFGUID refguid) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DBaseTexture_FreePrivateData(This->wineD3DBaseTexture, refguid);
 }
 
 DWORD WINAPI IDirect3DBaseTexture9Impl_SetPriority(LPDIRECT3DBASETEXTURE9 iface, DWORD PriorityNew) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    return IDirect3DResource9Impl_SetPriority((LPDIRECT3DRESOURCE9) This, PriorityNew);
+    return IWineD3DBaseTexture_SetPriority(This->wineD3DBaseTexture, PriorityNew);
 }
 
 DWORD WINAPI IDirect3DBaseTexture9Impl_GetPriority(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    return IDirect3DResource9Impl_GetPriority((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DBaseTexture_GetPriority(This->wineD3DBaseTexture);
 }
 
 void WINAPI IDirect3DBaseTexture9Impl_PreLoad(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    IWineD3DBaseTexture_PreLoad(This->wineD3DBaseTexture);
     return ;
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DBaseTexture9Impl_GetType(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
-    return IDirect3DResource9Impl_GetType((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DBaseTexture_GetType(This->wineD3DBaseTexture);
 }
 
 /* IDirect3DBaseTexture9 Interface follow: */

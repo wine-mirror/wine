@@ -269,6 +269,26 @@ typedef struct IWineD3DIndexBufferImpl
 extern IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
 
 /*****************************************************************************
+ * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
+ */
+typedef struct IWineD3DBaseTextureClass
+{
+    UINT                    levels;
+
+} IWineD3DBaseTextureClass;
+
+typedef struct IWineD3DBaseTextureImpl
+{
+    /* IUnknown & WineD3DResource Information     */
+    IWineD3DIndexBufferVtbl  *lpVtbl;
+    IWineD3DResourceClass     resource;
+    IWineD3DBaseTextureClass  baseTexture;
+
+} IWineD3DBaseTextureImpl;
+
+extern IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl;
+
+/*****************************************************************************
  * IWineD3DStateBlock implementation structure
  */
 

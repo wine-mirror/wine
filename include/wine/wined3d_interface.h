@@ -85,6 +85,7 @@ typedef struct IWineD3DDevice         IWineD3DDevice;
 typedef struct IWineD3DResource       IWineD3DResource;
 typedef struct IWineD3DVertexBuffer   IWineD3DVertexBuffer;
 typedef struct IWineD3DIndexBuffer    IWineD3DIndexBuffer;
+typedef struct IWineD3DBaseTexture    IWineD3DBaseTexture;
 typedef struct IWineD3DStateBlock     IWineD3DStateBlock;
 
 /*****************************************************************************
@@ -253,7 +254,7 @@ DECLARE_INTERFACE_(IWineD3DResource,IUnknown)
  * WineD3DVertexBuffer interface 
  */
 #define INTERFACE IWineD3DVertexBuffer
-DECLARE_INTERFACE_(IWineD3DVertexBuffer,IDirect3DResource8)
+DECLARE_INTERFACE_(IWineD3DVertexBuffer,IWineD3DResource)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
@@ -301,7 +302,7 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IDirect3DResource8)
  * WineD3DIndexBuffer interface 
  */
 #define INTERFACE IWineD3DIndexBuffer
-DECLARE_INTERFACE_(IWineD3DIndexBuffer,IDirect3DResource8)
+DECLARE_INTERFACE_(IWineD3DIndexBuffer,IWineD3DResource)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
@@ -343,6 +344,62 @@ DECLARE_INTERFACE_(IWineD3DIndexBuffer,IDirect3DResource8)
 #define IWineD3DIndexBuffer_Lock(p,a,b,c,d)              (p)->lpVtbl->Lock(p,a,b,c,d)
 #define IWineD3DIndexBuffer_Unlock(p)                    (p)->lpVtbl->Unlock(p)
 #define IWineD3DIndexBuffer_GetDesc(p,a)                 (p)->lpVtbl->GetDesc(p,a)
+#endif
+
+/*****************************************************************************
+ * IWineD3DBaseTexture interface
+ *   Note at d3d8 this does NOT extend Resource, but at d3d9 it does
+ *     since most functions are common anyway, it makes sense to extend it
+ */
+#define INTERFACE IWineD3DBaseTexture
+DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DResource methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
+    STDMETHOD(FreePrivateData)(THIS_ REFGUID  refguid) PURE;
+    STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
+    STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
+    STDMETHOD_(void,PreLoad)(THIS) PURE;
+    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    /*** IWineD3DBaseTexture methods ***/
+    STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
+    STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
+    STDMETHOD_(DWORD, GetLevelCount)(THIS) PURE;
+    STDMETHOD(SetAutoGenFilterType)(THIS_ D3DTEXTUREFILTERTYPE FilterType) PURE;
+    STDMETHOD_(D3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
+    STDMETHOD_(void, GenerateMipSubLevels)(THIS) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DBaseTexture_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DBaseTexture_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IWineD3DBaseTexture_Release(p)                 (p)->lpVtbl->Release(p)
+/*** IWineD3DBaseTexture methods: IDirect3DResource9 ***/
+#define IWineD3DBaseTexture_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+#define IWineD3DBaseTexture_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DBaseTexture_SetPrivateData(p,a,b,c,d)  (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
+#define IWineD3DBaseTexture_GetPrivateData(p,a,b,c)    (p)->lpVtbl->GetPrivateData(p,a,b,c)
+#define IWineD3DBaseTexture_FreePrivateData(p,a)       (p)->lpVtbl->FreePrivateData(p,a)
+#define IWineD3DBaseTexture_SetPriority(p,a)           (p)->lpVtbl->SetPriority(p,a)
+#define IWineD3DBaseTexture_GetPriority(p)             (p)->lpVtbl->GetPriority(p)
+#define IWineD3DBaseTexture_PreLoad(p)                 (p)->lpVtbl->PreLoad(p)
+#define IWineD3DBaseTexture_GetType(p)                 (p)->lpVtbl->GetType(p)
+/*** IWineD3DBaseTexture methods ***/
+#define IWineD3DBaseTexture_SetLOD(p,a)                (p)->lpVtbl->SetLOD(p,a)
+#define IWineD3DBaseTexture_GetLOD(p)                  (p)->lpVtbl->GetLOD(p)
+#define IWineD3DBaseTexture_GetLevelCount(p)           (p)->lpVtbl->GetLevelCount(p)
+#define IWineD3DBaseTexture_SetAutoGenFilterType(p,a)  (p)->lpVtbl->SetAutoGenFilterType(p,a)
+#define IWineD3DBaseTexture_GetAutoGenFilterType(p)    (p)->lpVtbl->GetAutoGenFilterType(p)
+#define IWineD3DBaseTexture_GenerateMipSubLevels(p)    (p)->lpVtbl->GenerateMipSubLevels(p)
 #endif
 
 /*****************************************************************************

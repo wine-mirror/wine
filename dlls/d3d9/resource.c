@@ -59,9 +59,9 @@ ULONG WINAPI IDirect3DResource9Impl_Release(LPDIRECT3DRESOURCE9 iface) {
 /* IDirect3DResource9 Interface follow: */
 HRESULT WINAPI IDirect3DResource9Impl_GetDevice(LPDIRECT3DRESOURCE9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->device);
-    *ppDevice = (LPDIRECT3DDEVICE9) This->device;
-    IDirect3DDevice9Impl_AddRef(*ppDevice);
+    IWineD3DDevice *myDevice = NULL;
+    IWineD3DResource_GetDevice(This->wineD3DResource, &myDevice);
+    IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
     return D3D_OK;
 }
 
