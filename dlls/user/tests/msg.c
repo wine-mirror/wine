@@ -162,7 +162,7 @@ static const struct message WmCreateChildSeq[] = {
     { WM_CREATE, sent },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
-    { WM_PARENTNOTIFY, sent|parent|wparam, 1 },
+    { WM_PARENTNOTIFY, sent|parent|wparam, WM_CREATE },
     { 0 }
 };
 /* CreateWindow (for maximized child window, not initially visible) */
@@ -179,7 +179,7 @@ static const struct message WmCreateMaximizedChildSeq[] = {
     { WM_NCCALCSIZE, sent },
     { WM_WINDOWPOSCHANGED, sent },
     { WM_SIZE, sent|defwinproc },
-    { WM_PARENTNOTIFY, sent|parent|wparam, 1 },
+    { WM_PARENTNOTIFY, sent|parent|wparam, WM_CREATE },
     { 0 }
 };
 /* ShowWindow (for child window) */
@@ -193,7 +193,7 @@ static const struct message WmShowChildSeq[] = {
 /* DestroyWindow (for child window) */
 static const struct message WmDestroyChildSeq[] = {
     { HCBT_DESTROYWND, hook },
-    { WM_PARENTNOTIFY, sent|parent|wparam, 2 },
+    { WM_PARENTNOTIFY, sent|parent|wparam, WM_DESTROY },
     { WM_SHOWWINDOW, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ERASEBKGND, sent|parent|optional },
