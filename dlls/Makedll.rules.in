@@ -34,11 +34,6 @@ $(MODULE).tmp.o: $(ALL_OBJS) Makefile.in
 	$(LDCOMBINE) $(ALL_OBJS) -o $@
 	-$(STRIP) --strip-unneeded $@
 
-# Rule for 16-bit glue
-
-$(MODULE).glue.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) -o $@ --glue -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
-
 # Rules for .dll files
 
 $(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) $(IMPORTLIBS) Makefile.in

@@ -155,7 +155,6 @@ extern int output_res16_directory( unsigned char *buffer );
 extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
 extern int parse_debug_channels( const char *srcdir, const char *filename );
 
-extern void BuildGlue( FILE *outfile, const char *srcdir, char **argv );
 extern void BuildRelays16( FILE *outfile );
 extern void BuildRelays32( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile );

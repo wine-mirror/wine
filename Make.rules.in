@@ -100,7 +100,7 @@ prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
-                  *.flc *.spec.c *.spec.def *.glue.c *.dbg.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
+                  *.flc *.spec.c *.spec.def *.dbg.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
 
 OBJS = $(C_SRCS:.c=.o) $(EXTRA_OBJS)
 

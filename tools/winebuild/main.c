@@ -85,7 +85,6 @@ enum exec_mode_values
     MODE_NONE,
     MODE_SPEC,
     MODE_EXE,
-    MODE_GLUE,
     MODE_DEF,
     MODE_DEBUG,
     MODE_RELAY16,
@@ -148,7 +147,6 @@ static const char usage_str[] =
 "       --def=FILE.SPEC      Build a .def file from a spec file\n"
 "       --exe=NAME           Build a .c file for the named executable\n"
 "       --debug [FILES]      Build a .c file with the debug channels declarations\n"
-"       --glue [FILES]       Build the 16-bit glue for the source files\n"
 "       --relay16            Build the 16-bit relay assembly routines\n"
 "       --relay32            Build the 32-bit relay assembly routines\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
@@ -159,7 +157,6 @@ enum long_options_values
     LONG_OPT_DEF,
     LONG_OPT_EXE,
     LONG_OPT_DEBUG,
-    LONG_OPT_GLUE,
     LONG_OPT_RELAY16,
     LONG_OPT_RELAY32,
     LONG_OPT_VERSION
@@ -173,7 +170,6 @@ static const struct option long_options[] =
     { "def",      1, 0, LONG_OPT_DEF },
     { "exe",      1, 0, LONG_OPT_EXE },
     { "debug",    0, 0, LONG_OPT_DEBUG },
-    { "glue",     0, 0, LONG_OPT_GLUE },
     { "relay16",  0, 0, LONG_OPT_RELAY16 },
     { "relay32",  0, 0, LONG_OPT_RELAY32 },
     { "version",  0, 0, LONG_OPT_VERSION },
@@ -328,9 +324,6 @@ static char **parse_options( int argc, char **argv )
         case LONG_OPT_DEBUG:
             set_exec_mode( MODE_DEBUG );
             break;
-        case LONG_OPT_GLUE:
-            set_exec_mode( MODE_GLUE );
-            break;
         case LONG_OPT_RELAY16:
             set_exec_mode( MODE_RELAY16 );
             break;
@@ -420,9 +413,6 @@ int main(int argc, char **argv)
         break;
     case MODE_DEBUG:
         BuildDebugFile( output_file, current_src_dir, argv );
-        break;
-    case MODE_GLUE:
-        BuildGlue( output_file, current_src_dir, argv );
         break;
     case MODE_RELAY16:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );

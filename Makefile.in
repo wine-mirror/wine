@@ -126,10 +126,10 @@ crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
 # Misc rules
 
 TAGS etags:
-	etags `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.glue.c' -a -not -name '*.dbg.c' -print`
+	etags `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.dbg.c' -print`
 
 tags ctags:
-	ctags --c-types=+px `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.glue.c' -a -not -name '*.dbg.c' -print`
+	ctags --c-types=+px `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.dbg.c' -print`
 
 manpages:
 	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w

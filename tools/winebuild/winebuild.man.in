@@ -53,13 +53,6 @@ should be a list of C files to search for debug channel
 definitions. The resulting C file must be compiled and linked with the
 dll.
 .TP
-.B \--glue
-Build a C file containing the glue code for the 16-bit calls contained
-in the
-.I input files.
-These calls must be specified in the source files using special
-markers, as described in the \fBGLUE FUNCTIONS\fR section.
-.TP
 .B \--relay16
 Generate the assembly code for the 16-bit relay routines. This is for
 Wine internal usage only, you should never need to use this option.
@@ -72,7 +65,7 @@ Wine internal usage only, you should never need to use this option.
 .BI \-C,\ --source-dir= directory
 Change to the specified directory before reading source files. Only
 meaningful in
-.BR \--debug\  and\  --glue\  modes.
+.BR \--debug\  mode.
 .TP
 .BI \-D\  symbol
 Ignored for compatibility with the C compiler.
@@ -406,42 +399,6 @@ This declaration defines an ordinal as an absolute value.
 will be the name available for dynamic linking.
 .I data
 can be a decimal number or a hex number preceeded by "0x".
-.SH "GLUE FUNCTIONS"
-Glue functions are used to call down to 16-bit code from a 32-bit
-function. This is done by declaring a special type of function
-prototype in the source file that needs to call to 16-bit code, and
-processing the source file through
-.I winebuild --glue.
-.PP
-These prototypes must be of one of the following forms:
-.PP
-.B extern WORD CALLBACK \fIprefix\fB_CallTo16_word_\fIxxx\fB( FARPROC16 func, \fIargs\fB );
-.br
-.B extern LONG CALLBACK \fIprefix\fB_CallTo16_long_\fIxxx\fB( FARPROC16 func, \fIargs\fB );
-.PP
-The
-.I prefix
-can be anything you need to make the function names unique inside a
-given dll. The
-.I xxx
-characters specify the type of the arguments, with one letter for each
-argument. A \fBw\fR indicates a WORD argument, a \fBl\fR indicates a
-LONG argument.
-.PP
-All the CallTo16 prototypes must be located between the special
-markers
-.B ### start build ###
-and
-.B ### stop build ###
-(which have to be inside C comments of course).
-.PP
-Here's what a real life example looks like:
-.PP
-.B /* ### start build ### */
-.br
-.B extern WORD CALLBACK PRTDRV_CallTo16_word_ww(FARPROC16,WORD,WORD);
-.br
-.B /* ### stop build ### */
 .SH AUTHORS
 .B winebuild
 has been worked on by many people over the years. The main authors are
