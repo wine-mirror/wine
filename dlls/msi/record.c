@@ -434,7 +434,10 @@ UINT WINAPI MsiRecordReadStream(MSIHANDLE handle, unsigned int iField, char *buf
         return ERROR_INVALID_FIELD;
 
     if( rec->fields[iField].type != MSIFIELD_STREAM )
+    {
+        *sz = 0;
         return ERROR_INVALID_FIELD;
+    }
 
     stm = rec->fields[iField].u.stream;
     if( !stm )

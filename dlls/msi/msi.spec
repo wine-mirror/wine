@@ -160,7 +160,7 @@
 160 stdcall MsiViewFetch(long ptr)
 161 stub MsiViewGetErrorA
 162 stub MsiViewGetErrorW
-163 stub MsiViewModify
+163 stdcall MsiViewModify(long long long)
 164 stdcall MsiDatabaseIsTablePersistentA(long str)
 165 stdcall MsiDatabaseIsTablePersistentW(long wstr)
 166 stdcall MsiViewGetColumnInfo(long long ptr)

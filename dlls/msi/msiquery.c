@@ -194,7 +194,8 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
             ERR("Error getting column type for %d\n", i );
             continue;
         }
-        if( type != MSITYPE_BINARY)
+        if (( type != MSITYPE_BINARY) && (type != (MSITYPE_BINARY |
+                                                   MSITYPE_NULLABLE)))
         {
             ret = view->ops->fetch_int( view, query->row, i, &ival );
             if( ret )
@@ -422,5 +423,12 @@ UINT WINAPI MsiGetComponentStateW(MSIHANDLE hInstall, LPWSTR szFeature,
                   INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
 {
     FIXME("%ld %s %p %p\n", hInstall, debugstr_w(szFeature), piInstalled, piAction);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiViewModify(MSIHANDLE hView, MSIMODIFY eModifyMode, MSIHANDLE
+hRecord)
+{
+    FIXME("%ld %x %ld\n",hView, eModifyMode, hRecord);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
