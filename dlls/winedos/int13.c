@@ -116,7 +116,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
         return;
     }
 
-    if ( (floppy_fd = DRIVE_OpenDevice( drive_nr, O_NONBLOCK)) == -1)
+    if ( (floppy_fd = DRIVE_OpenDevice( drive_nr, O_RDONLY|O_NONBLOCK)) == -1)
     {
         WARN("Can't determine floppy geometry !\n");
         INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */
