@@ -1089,7 +1089,7 @@ static IDirectInputDevice8WVtbl JoystickWvt =
 
 #else  /* HAVE_CORRECT_LINUXINPUT_H */
 
-struct dinput_device joystick_linuxinput_device = {
+const struct dinput_device joystick_linuxinput_device = {
   "Wine Linux-input joystick driver",
   NULL,
   NULL,
