@@ -3005,19 +3005,6 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
                              SendMessageA( descr->owner, msg, wParam, lParam );
         break;
 
-    case WM_DROPOBJECT:
-    case WM_QUERYDROPOBJECT:
-    case WM_DRAGSELECT:
-    case WM_DRAGMOVE:
-	if( !descr->lphc )
-        {
-            LPDRAGINFO16 dragInfo = MapSL( lParam );
-            dragInfo->l = LISTBOX_GetItemFromPoint( descr, dragInfo->pt.x,
-                                                dragInfo->pt.y );
-            return SendMessage16( HWND_16(descr->owner), msg, wParam, lParam );
-        }
-	break;
-
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
             WARN("[%04x]: unknown msg %04x wp %08x lp %08lx\n",

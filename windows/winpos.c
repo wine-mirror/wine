@@ -1177,8 +1177,8 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
 	   hwnd, hwndInsertAfter, x, y, cx, cy, flags);
     if(TRACE_ON(win)) dump_winpos_flags(flags);
 
-    winpos.hwnd = hwnd;
-    winpos.hwndInsertAfter = hwndInsertAfter;
+    winpos.hwnd = WIN_GetFullHandle(hwnd);
+    winpos.hwndInsertAfter = WIN_GetFullHandle(hwndInsertAfter);
     winpos.x = x;
     winpos.y = y;
     winpos.cx = cx;
@@ -1242,7 +1242,7 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
               /* Merge with the other changes */
             if (!(flags & SWP_NOZORDER))
             {
-                pDWP->winPos[i].hwndInsertAfter = hwndAfter;
+                pDWP->winPos[i].hwndInsertAfter = WIN_GetFullHandle(hwndAfter);
             }
             if (!(flags & SWP_NOMOVE))
             {

@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "wownt32.h"
 #include "user.h"
+#include "win.h"
 
 /* handle to handle 16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
@@ -266,6 +267,149 @@ BOOL16 WINAPI DestroyCursor16(HCURSOR16 hCursor)
 {
   return DestroyIcon32(hCursor, 0);
 }
+
+/*******************************************************************
+ *			DRAG_QueryUpdate16
+ *
+ * Recursively find a child that contains spDragInfo->pt point
+ * and send WM_QUERYDROPOBJECT. Helper for DragObject16.
+ */
+static BOOL DRAG_QueryUpdate16( HWND hQueryWnd, SEGPTR spDragInfo )
+{
+    BOOL bResult = 0;
+    WPARAM wParam;
+    POINT pt, old_pt;
+    LPDRAGINFO16 ptrDragInfo = MapSL(spDragInfo);
+    RECT tempRect;
+    HWND child;
+
+    if (!IsWindowEnabled(hQueryWnd)) return FALSE;
+
+    old_pt.x = ptrDragInfo->pt.x;
+    old_pt.y = ptrDragInfo->pt.y;
+    pt = old_pt;
+    ScreenToClient( hQueryWnd, &pt );
+    child = ChildWindowFromPointEx( hQueryWnd, pt, CWP_SKIPINVISIBLE );
+    if (!child) return FALSE;
+
+    if (child != hQueryWnd)
+    {
+        wParam = 0;
+        if (DRAG_QueryUpdate16( child, spDragInfo )) return TRUE;
+    }
+    else
+    {
+        GetClientRect( hQueryWnd, &tempRect );
+        wParam = !PtInRect( &tempRect, pt );
+    }
+
+    ptrDragInfo->pt.x = pt.x;
+    ptrDragInfo->pt.y = pt.y;
+    ptrDragInfo->hScope = HWND_16(hQueryWnd);
+
+    bResult = SendMessage16( HWND_16(hQueryWnd), WM_QUERYDROPOBJECT, wParam, spDragInfo );
+
+    if (!bResult)
+    {
+        ptrDragInfo->pt.x = old_pt.x;
+        ptrDragInfo->pt.y = old_pt.y;
+    }
+    return bResult;
+}
+
+
+/******************************************************************************
+ *		DragObject (USER.464)
+ */
+DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
+                           HANDLE16 hOfStruct, WORD szList, HCURSOR16 hCursor )
+{
+    MSG	msg;
+    LPDRAGINFO16 lpDragInfo;
+    SEGPTR	spDragInfo;
+    HCURSOR 	hOldCursor=0, hBummer=0;
+    HGLOBAL16	hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO16));
+    HCURSOR	hCurrentCursor = 0;
+    HWND16	hCurrentWnd = 0;
+
+    lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
+    spDragInfo = K32WOWGlobalLock16(hDragInfo);
+
+    if( !lpDragInfo || !spDragInfo ) return 0L;
+
+    if (!(hBummer = LoadCursorA(0, MAKEINTRESOURCEA(OCR_NO))))
+    {
+        GlobalFree16(hDragInfo);
+        return 0L;
+    }
+
+    if(hCursor) hOldCursor = SetCursor(HCURSOR_32(hCursor));
+
+    lpDragInfo->hWnd   = hWnd;
+    lpDragInfo->hScope = 0;
+    lpDragInfo->wFlags = wObj;
+    lpDragInfo->hList  = szList; /* near pointer! */
+    lpDragInfo->hOfStruct = hOfStruct;
+    lpDragInfo->l = 0L;
+
+    SetCapture( HWND_32(hWnd) );
+    ShowCursor( TRUE );
+
+    do
+    {
+        GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST );
+
+       *(lpDragInfo+1) = *lpDragInfo;
+
+	lpDragInfo->pt.x = msg.pt.x;
+	lpDragInfo->pt.y = msg.pt.y;
+
+	/* update DRAGINFO struct */
+	if( DRAG_QueryUpdate16(WIN_Handle32(hwndScope), spDragInfo) > 0 )
+	    hCurrentCursor = HCURSOR_32(hCursor);
+	else
+        {
+            hCurrentCursor = hBummer;
+            lpDragInfo->hScope = 0;
+	}
+	if( hCurrentCursor )
+	    SetCursor(hCurrentCursor);
+
+	/* send WM_DRAGLOOP */
+	SendMessage16( hWnd, WM_DRAGLOOP, (WPARAM16)(hCurrentCursor != hBummer),
+	                                  (LPARAM) spDragInfo );
+	/* send WM_DRAGSELECT or WM_DRAGMOVE */
+	if( hCurrentWnd != lpDragInfo->hScope )
+	{
+	    if( hCurrentWnd )
+	        SendMessage16( hCurrentWnd, WM_DRAGSELECT, 0,
+		       (LPARAM)MAKELONG(LOWORD(spDragInfo)+sizeof(DRAGINFO16),
+				        HIWORD(spDragInfo)) );
+	    hCurrentWnd = lpDragInfo->hScope;
+	    if( hCurrentWnd )
+                SendMessage16( hCurrentWnd, WM_DRAGSELECT, 1, (LPARAM)spDragInfo);
+	}
+	else
+	    if( hCurrentWnd )
+	        SendMessage16( hCurrentWnd, WM_DRAGMOVE, 0, (LPARAM)spDragInfo);
+
+    } while( msg.message != WM_LBUTTONUP && msg.message != WM_NCLBUTTONUP );
+
+    ReleaseCapture();
+    ShowCursor( FALSE );
+
+    if( hCursor ) SetCursor(hOldCursor);
+
+    if( hCurrentCursor != hBummer )
+	msg.lParam = SendMessage16( lpDragInfo->hScope, WM_DROPOBJECT,
+				   (WPARAM16)hWnd, (LPARAM)spDragInfo );
+    else
+        msg.lParam = 0;
+    GlobalFree16(hDragInfo);
+
+    return (DWORD)(msg.lParam);
+}
+
 
 /**********************************************************************
  *          DrawFrameControl  (USER.656)

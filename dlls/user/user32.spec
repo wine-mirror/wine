@@ -672,7 +672,6 @@ init	UserClientDllInitialize
 @ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
 @ stdcall GetDriverModuleHandle16(long) GetDriverModuleHandle16
 @ stdcall OpenDriver16(str str long) OpenDriver16
-@ stdcall PostAppMessage16(long long long long) PostAppMessage16
 @ stdcall SendDriverMessage16(long long long long) SendDriverMessage16
 @ stdcall UserYield16() UserYield16
 
@@ -696,7 +695,6 @@ init	UserClientDllInitialize
 @ cdecl WINPOS_ShowIconTitle(long long) WINPOS_ShowIconTitle
 @ cdecl WIN_FindWndPtr(long) WIN_FindWndPtr
 @ cdecl WIN_GetPtr(long) WIN_GetPtr
-@ cdecl WIN_Handle32(long) WIN_Handle32
 @ cdecl WIN_LinkWindow(long long long) WIN_LinkWindow
 @ cdecl WIN_ListChildren(long) WIN_ListChildren
 @ cdecl WIN_ListParents(long) WIN_ListParents

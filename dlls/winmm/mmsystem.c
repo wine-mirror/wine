@@ -1813,7 +1813,7 @@ void	WINAPI	mmTaskBlock16(HINSTANCE16 WINE_UNUSED hInst)
 LRESULT	WINAPI mmTaskSignal16(HTASK16 ht)
 {
     TRACE("(%04x);\n", ht);
-    return PostAppMessage16(ht, WM_USER, 0, 0);
+    return PostThreadMessageW( HTASK_32(ht), WM_USER, 0, 0 );
 }
 
 /**************************************************************************

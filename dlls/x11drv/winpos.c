@@ -749,7 +749,6 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     /* hwndInsertAfter must be a sibling of the window */
     if ((winpos->hwndInsertAfter != HWND_TOP) && (winpos->hwndInsertAfter != HWND_BOTTOM))
     {
-        winpos->hwndInsertAfter = WIN_GetFullHandle( winpos->hwndInsertAfter );
         if (GetAncestor( winpos->hwndInsertAfter, GA_PARENT ) != wndPtr->parent) ret = FALSE;
         else
         {
