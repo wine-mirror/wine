@@ -938,12 +938,15 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
     std.tymed = pFormatetc->tymed = TYMED_ISTORAGE;
 
     hStorage = GlobalAlloc(GMEM_SHARE|GMEM_MOVEABLE, 0);
+    if (hStorage == NULL)
+      HANDLE_ERROR( E_OUTOFMEMORY );
     hr = CreateILockBytesOnHGlobal(hStorage, FALSE, &ptrILockBytes);
     hr = StgCreateDocfileOnILockBytes(ptrILockBytes, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &std.u.pstg);
 
     if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->pIDataObjectSrc, pFormatetc, &std)))
     {
       WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%lx)\n", hr);
+      GlobalFree(hStorage);
       return hr;
     }
 
@@ -1023,10 +1026,11 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
   else
   {
     if (FAILED(hr = IDataObject_GetData(pIDataObject, pFormatetc, &std)))
-  {
-    WARN("() : IDataObject_GetData failed to render clipboard data! (%lx)\n", hr);
-    return hr;
-  }
+    {
+        WARN("() : IDataObject_GetData failed to render clipboard data! (%lx)\n", hr);
+        GlobalFree(hStorage);
+        return hr;
+    }
 
     /* To put a copy back on the clipboard */
 
@@ -1079,7 +1083,10 @@ static HGLOBAL OLEClipbrd_GlobalDupMem( HGLOBAL hGlobalSrc )
     pGlobalSrc = GlobalLock(hGlobalSrc);
     pGlobalDest = GlobalLock(hGlobalDest);
     if ( !pGlobalSrc || !pGlobalDest )
+    {
+      GlobalFree(hGlobalDest);
       return 0;
+    }
 
     memcpy(pGlobalDest, pGlobalSrc, cBytes);
 
