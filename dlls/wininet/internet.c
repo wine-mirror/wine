@@ -392,7 +392,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
  * Return last wininet error description on the calling thread
  *
  * RETURNS
- *    TRUE on success of writting to buffer
+ *    TRUE on success of writing to buffer
  *    FALSE on failure
  *
  */

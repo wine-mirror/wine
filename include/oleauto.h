@@ -622,8 +622,8 @@ typedef struct
 #define NUMPRS_TRAILING_MINUS 0x00020 /* Trailing '-' sign */
 #define NUMPRS_HEX_OCT        0x00040 /* Octal number (with a leading 0) */
 #define NUMPRS_PARENS         0x00080 /* Parentheses for negative numbers */
-#define NUMPRS_DECIMAL        0x00100 /* Decimal seperator */
-#define NUMPRS_THOUSANDS      0x00200 /* Thousands seperator */
+#define NUMPRS_DECIMAL        0x00100 /* Decimal separator */
+#define NUMPRS_THOUSANDS      0x00200 /* Thousands separator */
 #define NUMPRS_CURRENCY       0x00400 /* Currency symbol */
 #define NUMPRS_EXPONENT       0x00800 /* Exponent (e.g. "e-14") */
 #define NUMPRS_USE_ALL        0x01000 /* Parse the entire string */

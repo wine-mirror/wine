@@ -39,7 +39,7 @@ extern "C" {
 #define SDDL_SACL                           TEXT("S")
 
 /*
- * SDDL Seperators - character version
+ * SDDL Separators - character version
  */
 #define SDDL_SEPERATORC                     TEXT(";")
 #define SDDL_DELIMINATORC                   TEXT(":")
@@ -47,7 +47,7 @@ extern "C" {
 #define SDDL_ACE_ENDC                       TEXT(")")
 
 /*
- * SDDL Seperators - string version
+ * SDDL Separators - string version
  */
 #define SDDL_SEPERATOR                     TEXT(";")
 #define SDDL_DELIMINATOR                   TEXT(":")
