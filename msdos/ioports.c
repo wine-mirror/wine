@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include "windef.h"
 #include "callback.h"
-#include "options.h"
+#include "file.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 

@@ -40,7 +40,6 @@
 #include "dce.h"
 #include "wine/debug.h"
 #include "input.h"
-#include "options.h"
 #include "win.h"
 #include "winpos.h"
 #include "windef.h"

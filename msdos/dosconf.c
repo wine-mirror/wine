@@ -31,7 +31,6 @@
 #include "file.h"
 #include "miscemu.h"
 #include "msdos.h"
-#include "options.h"
 
 #include "wine/debug.h"
 

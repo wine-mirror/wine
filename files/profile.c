@@ -39,7 +39,6 @@
 #include "file.h"
 #include "heap.h"
 #include "wine/debug.h"
-#include "options.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(profile);
@@ -951,50 +950,6 @@ int PROFILE_GetWineIniString( const char *section, const char *key_name,
 }
 
 
-/***********************************************************************
- *           PROFILE_EnumWineIniString
- *
- * Get a config string from the wine.ini file.
- */
-BOOL PROFILE_EnumWineIniString( const char *section, int index,
-                                char *name, int name_len, char *buffer, int len )
-{
-    char tmp[PROFILE_MAX_LINE_LEN];
-    HKEY hkey;
-    DWORD err, type;
-    DWORD count = sizeof(tmp);
-
-    if (RegOpenKeyA( wine_profile_key, section, &hkey )) return FALSE;
-    err = RegEnumValueA( hkey, index, name, (DWORD*)&name_len, NULL, &type, tmp, &count );
-    RegCloseKey( hkey );
-    if (!err)
-    {
-        PROFILE_CopyEntry( buffer, tmp, len, TRUE );
-        TRACE( "('%s',%d): returning '%s'='%s'\n", section, index, name, buffer );
-    }
-    return !err;
-}
-
-
-/***********************************************************************
- *           PROFILE_GetWineIniInt
- *
- * Get a config integer from the wine.ini file.
- */
-int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def )
-{
-    char buffer[20];
-    char *p;
-    long result;
-
-    PROFILE_GetWineIniString( section, key_name, "", buffer, sizeof(buffer) );
-    if (!buffer[0]) return def;
-    /* FIXME: strtol wrong ?? see GetPrivateProfileIntA */
-    result = strtol( buffer, &p, 0 );
-    return (p == buffer) ? 0  /* No digits at all */ : (int)result;
-}
-
-
 /******************************************************************************
  *
  *   int  PROFILE_GetWineIniBool(
@@ -1148,30 +1103,6 @@ void PROFILE_UsageWineIni(void)
     /* RTFM, so to say */
 }
 
-/***********************************************************************
- *           PROFILE_GetStringItem
- *
- *  Convenience function that turns a string 'xxx, yyy, zzz' into 
- *  the 'xxx\0 yyy, zzz' and returns a pointer to the 'yyy, zzz'.
- */
-char* PROFILE_GetStringItem( char* start )
-{
-    char* lpchX, *lpch;
-
-    for (lpchX = start, lpch = NULL; *lpchX != '\0'; lpchX++ )
-    {
-        if( *lpchX == ',' )
-        {
-            if( lpch ) *lpch = '\0'; else *lpchX = '\0';
-            while( *(++lpchX) )
-                if( !PROFILE_isspace(*lpchX) ) return lpchX;
-        }
-	else if( PROFILE_isspace( *lpchX ) && !lpch ) lpch = lpchX;
-	     else lpch = NULL;
-    }
-    if( lpch ) *lpch = '\0';
-    return NULL;
-}
 
 /********************* API functions **********************************/
 

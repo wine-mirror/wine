@@ -19,9 +19,6 @@
  */
 
 #include "windows.h"
-#ifdef WINELIB
-#include "options.h"
-#endif
 #include "progman.h"
 
 /* Class names */

@@ -49,7 +49,6 @@
 #include "file.h"
 #include "callback.h"
 #include "msdos.h"
-#include "options.h"
 #include "miscemu.h"
 #include "task.h"
 #include "wine/debug.h"

@@ -27,7 +27,6 @@
 #include "windef.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "options.h"
 #include "file.h"
 #include "module.h"
 #include "wine/debug.h"

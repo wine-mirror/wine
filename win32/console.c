@@ -43,7 +43,6 @@
 #include "wine/server.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "options.h"
 #include "msvcrt/excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);

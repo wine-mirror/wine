@@ -56,7 +56,6 @@
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "file.h"
-#include "options.h"
 
 #include "wine/debug.h"
 
@@ -1047,10 +1046,12 @@ static void _save_at_exit(HKEY hkey,LPCSTR path)
 static void _init_registry_saving( HKEY hkey_users_default )
 {
     int all;
-    int period;
+    int period = 0;
+    char buffer[20];
 
-    all  = PROFILE_GetWineIniBool("registry","SaveOnlyUpdatedKeys",1);
-    period = PROFILE_GetWineIniInt("registry","PeriodicSave",0);
+    all = !PROFILE_GetWineIniBool("registry","SaveOnlyUpdatedKeys",1);
+    PROFILE_GetWineIniString( "registry", "PeriodicSave", "", buffer, sizeof(buffer) );
+    if (buffer[0]) period = atoi(buffer);
 
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
     _set_registry_levels(1,!all,period*1000);

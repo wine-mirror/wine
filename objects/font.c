@@ -26,7 +26,6 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "font.h"
-#include "options.h"
 #include "wine/debug.h"
 #include "gdi.h"
 

@@ -35,7 +35,6 @@
 #include "ntddk.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "options.h"
 #include "wine/debug.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(file);
@@ -60,20 +59,4 @@ FARPROC16 WINAPI FileCDR16(FARPROC16 x)
 {
 	FIXME_(file)("(0x%8x): stub\n", (int) x);
 	return (FARPROC16)TRUE;
-}
-
-/***********************************************************************
- *           GetTickCount       (USER.13)
- *           GetCurrentTime     (USER.15)
- *           GetTickCount       (KERNEL32.@)
- *           GetSystemMSecCount (SYSTEM.6)
- *
- * Returns the number of milliseconds, modulo 2^32, since the start
- * of the wineserver.
- */
-DWORD WINAPI GetTickCount(void)
-{
-    struct timeval t;
-    gettimeofday( &t, NULL );
-    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - server_startticks;
 }

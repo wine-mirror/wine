@@ -21,7 +21,6 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include "options.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 

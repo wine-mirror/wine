@@ -115,7 +115,7 @@ static char *main_exe_name_ptr = main_exe_name;
 static HANDLE main_exe_file;
 static int main_create_flags;
 
-unsigned int server_startticks;
+static unsigned int server_startticks;
 
 /* memory/environ.c */
 extern struct _ENVDB *ENV_InitStartupInfo( handle_t info_handle, size_t info_size,
@@ -1781,6 +1781,23 @@ VOID WINAPI SetFileApisToANSI(void)
 BOOL WINAPI AreFileApisANSI(void)
 {
     return !(current_process.flags & PDB32_FILE_APIS_OEM);
+}
+
+
+/***********************************************************************
+ *           GetTickCount       (USER.13)
+ *           GetCurrentTime     (USER.15)
+ *           GetTickCount       (KERNEL32.@)
+ *           GetSystemMSecCount (SYSTEM.6)
+ *
+ * Returns the number of milliseconds, modulo 2^32, since the start
+ * of the wineserver.
+ */
+DWORD WINAPI GetTickCount(void)
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - server_startticks;
 }
 
 

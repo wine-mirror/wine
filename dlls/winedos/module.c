@@ -45,7 +45,6 @@
 #include "wine/debug.h"
 #include "dosexe.h"
 #include "dosvm.h"
-#include "options.h"
 #include "vga.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);

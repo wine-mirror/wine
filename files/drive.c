@@ -60,7 +60,6 @@
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "options.h"
 #include "task.h"
 #include "wine/debug.h"
 #include "wine/server.h"

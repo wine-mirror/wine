@@ -27,8 +27,8 @@
 #include "windef.h"
 #include "miscemu.h"
 #include "msdos.h"
+#include "file.h"
 #include "wine/debug.h"
-#include "options.h"
 
 /**********************************************************************
  *	    INT_Int11Handler (WPROCS.117)

@@ -43,7 +43,6 @@
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "options.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosfs);

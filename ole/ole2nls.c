@@ -34,7 +34,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
-#include "options.h"
 #include "winver.h"
 #include "winnls.h"
 #include "winreg.h"
