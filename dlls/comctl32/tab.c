@@ -1488,14 +1488,6 @@ TAB_DrawItemInterior
   SetTextColor(hdc, (iItem == infoPtr->iHotTracked) ?
                      comctl32_color.clrHighlight : comctl32_color.clrBtnText);
 
-  /*
-   * Deflate the rectangle to acount for the padding
-   */
-  if(lStyle & TCS_VERTICAL)
-    InflateRect(drawRect, -infoPtr->uVItemPadding, -infoPtr->uHItemPadding);
-  else
-    InflateRect(drawRect, -infoPtr->uHItemPadding, -infoPtr->uVItemPadding);
-
 
   /*
    * if owner draw, tell the owner to draw
@@ -1517,13 +1509,14 @@ TAB_DrawItemInterior
     dis.CtlID      = id;
     dis.itemID     = iItem;
     dis.itemAction = ODA_DRAWENTIRE;
+    dis.itemState = 0;
     if ( iItem == infoPtr->iSelected )
-      dis.itemState = ODS_SELECTED;
-    else
-      dis.itemState = 0;
+      dis.itemState |= ODS_SELECTED;
+    if (infoPtr->uFocus == iItem) 
+      dis.itemState |= ODS_FOCUS;
     dis.hwndItem = hwnd;		/* */
     dis.hDC      = hdc;
-    dis.rcItem   = *drawRect;		/* */
+    CopyRect(&dis.rcItem,drawRect);
     dis.itemData = infoPtr->items[iItem].lParam;
 
     /*
@@ -1549,6 +1542,14 @@ TAB_DrawItemInterior
     /* used to center the icon and text in the tab */
     RECT rcText;
     INT center_offset;
+
+    /*
+     * Deflate the rectangle to acount for the padding
+     */
+    if(lStyle & TCS_VERTICAL)
+      InflateRect(drawRect, -infoPtr->uVItemPadding, -infoPtr->uHItemPadding);
+    else
+      InflateRect(drawRect, -infoPtr->uHItemPadding, -infoPtr->uVItemPadding);
 
     /* set rcImage to drawRect, we will use top & left in our ImageList_Draw call */
     rcImage = *drawRect;
