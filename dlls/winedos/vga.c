@@ -52,6 +52,8 @@ static DirectDrawCreateProc pDirectDrawCreate;
 
 static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high );
 
+static HWND vga_hwnd = (HWND) NULL;
+
 /*
  * For simplicity, I'm creating a second palette.
  * 16 color accesses will use these pointers and insert
@@ -247,7 +249,6 @@ static void WINAPI VGA_DoExit(ULONG_PTR arg)
 static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 {
     LRESULT	res;
-    HWND	hwnd;
     ModeSet *par = (ModeSet *)arg;
     par->ret=1;
 
@@ -267,11 +268,19 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             ERR("DirectDraw is not available (res = %lx)\n",res);
             return;
         }
-	hwnd = CreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,par->Xres,par->Yres,0,0,0,NULL);
-	if (!hwnd) {
-	    ERR("Failed to create user window.\n");
-	}
-        if ((res=IDirectDraw_SetCooperativeLevel(lpddraw,hwnd,DDSCL_FULLSCREEN|DDSCL_EXCLUSIVE))) {
+        if (!vga_hwnd) {
+            vga_hwnd = CreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,par->Xres,par->Yres,0,0,0,NULL);
+            if (!vga_hwnd) {
+                ERR("Failed to create user window.\n");
+                IDirectDraw_Release(lpddraw);
+                lpddraw=NULL;
+                return;
+            }
+        }
+        else
+            SetWindowPos(vga_hwnd,0,0,0,par->Xres,par->Yres,SWP_NOMOVE|SWP_NOZORDER);
+
+        if ((res=IDirectDraw_SetCooperativeLevel(lpddraw,vga_hwnd,DDSCL_FULLSCREEN|DDSCL_EXCLUSIVE))) {
 	    ERR("Could not set cooperative level to exclusive (%lx)\n",res);
 	}
 
