@@ -684,6 +684,7 @@ typedef struct
 #define HEBREW_CHARSET        (BYTE)177	/* CP1255, -iso8859-8 */
 #define ARABIC_CHARSET        (BYTE)178	/* CP1256, -iso8859-6 */
 #define BALTIC_CHARSET        (BYTE)186	/* CP1257, -iso8859-13 */
+#define VIETNAMESE_CHARSET    (BYTE)163 /* CP1258 */
 #define RUSSIAN_CHARSET       (BYTE)204	/* CP1251, -iso8859-5 */
 #define EE_CHARSET	      (BYTE)238	/* CP1250, -iso8859-2 */
 #define EASTEUROPE_CHARSET    EE_CHARSET
@@ -1235,6 +1236,7 @@ typedef struct
 #define GGO_METRICS         0
 #define GGO_BITMAP          1
 #define GGO_NATIVE          2
+#define GGO_BEZIER          3
 #define GGO_GRAY2_BITMAP    4
 #define GGO_GRAY4_BITMAP    5
 #define GGO_GRAY8_BITMAP    6
@@ -1365,6 +1367,7 @@ typedef struct
 
 #define TT_PRIM_LINE    1
 #define TT_PRIM_QSPLINE 2
+#define TT_PRIM_CSPLINE 3
 #define TT_POLYGON_TYPE 24
 
 /* Get/SetSystemPaletteUse() values */
@@ -3046,11 +3049,19 @@ typedef struct _BLENDFUNCTION
 #define GDI_ERROR                               (0xFFFFFFFFL)
 #define HGDI_ERROR                              ((HANDLE)0xFFFFFFFFL)
 
+/* AddFontResourceEx flags */
+#define FR_PRIVATE  0x10
+#define FR_NOT_ENUM 0x20
+
+
 INT         WINAPI AbortDoc(HDC);
 BOOL        WINAPI AbortPath(HDC);
 INT         WINAPI AddFontResourceA(LPCSTR);
 INT         WINAPI AddFontResourceW(LPCWSTR);
 #define     AddFontResource WINELIB_NAME_AW(AddFontResource)
+INT         WINAPI AddFontResourceExA(LPCSTR, DWORD, PVOID);
+INT         WINAPI AddFontResourceExW(LPCWSTR, DWORD, PVOID);
+#define     AddFontResourceEx WINELIB_NAME_AW(AddFontResourceEx)
 BOOL        WINAPI AlphaBlend(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
 BOOL        WINAPI AngleArc(HDC, INT, INT, DWORD, FLOAT, FLOAT);
 BOOL        WINAPI AnimatePalette(HPALETTE,UINT,UINT,const PALETTEENTRY*);
@@ -3331,6 +3342,9 @@ BOOL      WINAPI RectVisible(HDC,const RECT*);
 BOOL      WINAPI RemoveFontResourceA(LPCSTR);
 BOOL      WINAPI RemoveFontResourceW(LPCWSTR);
 #define     RemoveFontResource WINELIB_NAME_AW(RemoveFontResource)
+BOOL        WINAPI RemoveFontResourceExA(LPCSTR, DWORD, PVOID);
+BOOL        WINAPI RemoveFontResourceExW(LPCWSTR, DWORD, PVOID);
+#define     RemoveFontResourceEx WINELIB_NAME_AW(RemoveFontResourceEx)
 HDC       WINAPI ResetDCA(HDC,const DEVMODEA *);
 HDC       WINAPI ResetDCW(HDC,const DEVMODEW *);
 #define     ResetDC WINELIB_NAME_AW(ResetDC)

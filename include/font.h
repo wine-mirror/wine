@@ -38,6 +38,7 @@ extern void FONT_EnumLogFontEx16ToW(const ENUMLOGFONTEX16*, LPENUMLOGFONTEXW);
 
 extern LPWSTR FONT_mbtowc(HDC, LPCSTR, INT, INT*, UINT*);
 
+extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID);
 extern GdiFont WineEngCreateFontInstance(DC*, HFONT);
 extern BOOL WineEngDestroyFontInstance(HFONT handle);
 extern DWORD WineEngEnumFonts(LPLOGFONTW, DEVICEFONTENUMPROC, LPARAM);
@@ -51,7 +52,9 @@ extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
 extern UINT WineEngGetOutlineTextMetrics(GdiFont, UINT, LPOUTLINETEXTMETRICW);
 extern BOOL WineEngGetTextExtentPoint(GdiFont, LPCWSTR, INT, LPSIZE);
 extern BOOL WineEngGetTextExtentPointI(GdiFont, const WORD *, INT, LPSIZE);
+extern INT  WineEngGetTextFace(GdiFont, INT, LPWSTR);
 extern BOOL WineEngGetTextMetrics(GdiFont, LPTEXTMETRICW);
 extern BOOL WineEngInit(void);
+extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID);
 
 #endif /* __WINE_FONT_H */

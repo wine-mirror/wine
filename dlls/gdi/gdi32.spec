@@ -10,6 +10,8 @@ init    MAIN_GdiInit
 @ stdcall AbortDoc(long) AbortDoc
 @ stdcall AbortPath(long) AbortPath
 @ stdcall AddFontResourceA(str) AddFontResourceA
+@ stdcall AddFontResourceExA(str long ptr) AddFontResourceExA
+@ stdcall AddFontResourceExW(wstr long ptr) AddFontResourceExW
 @ stub AddFontResourceTracking
 @ stdcall AddFontResourceW(wstr) AddFontResourceW
 @ stdcall AngleArc(long long long long long long) AngleArc
@@ -319,6 +321,8 @@ init    MAIN_GdiInit
 @ stdcall RectVisible(long ptr) RectVisible
 @ stdcall Rectangle(long long long long long) Rectangle
 @ stdcall RemoveFontResourceA(str) RemoveFontResourceA
+@ stdcall RemoveFontResourceExA(str long ptr) RemoveFontResourceExA
+@ stdcall RemoveFontResourceExW(wstr long ptr) RemoveFontResourceExW
 @ stub RemoveFontResourceTracking
 @ stdcall RemoveFontResourceW(wstr) RemoveFontResourceW
 @ stdcall ResetDCA(long ptr) ResetDCA

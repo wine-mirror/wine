@@ -98,8 +98,8 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { HEBREW_CHARSET, 1255, FS(5)},
   { ARABIC_CHARSET, 1256, FS(6)},
   { BALTIC_CHARSET, 1257, FS(7)},
+  { VIETNAMESE_CHARSET, 1258, FS(8)},
   /* reserved by ANSI */
-  { DEFAULT_CHARSET, 0, FS(0)},
   { DEFAULT_CHARSET, 0, FS(0)},
   { DEFAULT_CHARSET, 0, FS(0)},
   { DEFAULT_CHARSET, 0, FS(0)},
@@ -125,7 +125,7 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { DEFAULT_CHARSET, 0, FS(0)},
   /* reserved for system */
   { DEFAULT_CHARSET, 0, FS(0)},
-  { DEFAULT_CHARSET, 0, FS(0)},
+  { SYMBOL_CHARSET, CP_SYMBOL, FS(31)},
 };
 
 /* ### start build ### */
@@ -1104,7 +1104,9 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
 
-    if ((font = (FONTOBJ *) GDI_GetObjPtr( dc->hFont, FONT_MAGIC )))
+    if(dc->gdiFont)
+        ret = WineEngGetTextFace(dc->gdiFont, count, name);
+    else if ((font = (FONTOBJ *) GDI_GetObjPtr( dc->hFont, FONT_MAGIC )))
     {
         if (name)
         {
@@ -1393,11 +1395,11 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
      * therefore we have to convert them to logical */
 
 #define WDPTOLP(x) ((x<0)?					\
-		(-abs((x)*dc->wndExtX/dc->vportExtX)):		\
-		(abs((x)*dc->wndExtX/dc->vportExtX)))
+		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\
+		(abs(INTERNAL_XDSTOWS(dc, (x)))))
 #define HDPTOLP(y) ((y<0)?					\
-		(-abs((y)*dc->wndExtY/dc->vportExtY)):		\
-		(abs((y)*dc->wndExtY/dc->vportExtY)))
+		(-abs(INTERNAL_YDSTOWS(dc, (y)))):		\
+		(abs(INTERNAL_YDSTOWS(dc, (y)))))
 
     metrics->tmHeight           = HDPTOLP(metrics->tmHeight);
     metrics->tmAscent           = HDPTOLP(metrics->tmAscent);
@@ -2242,7 +2244,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 			 DWORD dwFlags)
 {
     WCHAR *lpStringW;
-    INT uCountW;
+    INT uCountW, i;
     GCP_RESULTSW resultsW;
     DWORD ret;
     UINT font_cp;
@@ -2261,9 +2263,14 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 
     ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, &resultsW, dwFlags);
 
-    if(lpResults->lpOutString)
-	WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
-			    lpResults->lpOutString, uCount, NULL, NULL );
+    if(lpResults->lpOutString) {
+        if(font_cp != CP_SYMBOL)
+	    WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
+				lpResults->lpOutString, uCount, NULL, NULL );
+	else
+	    for(i = 0; i < uCount; i++)
+	        lpResults->lpOutString[i] = (CHAR)resultsW.lpOutString[i];
+    }
 
     HeapFree(GetProcessHeap(), 0, lpStringW);
     HeapFree(GetProcessHeap(), 0, resultsW.lpOutString);
@@ -2482,38 +2489,50 @@ BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
  *
  *  Can be either .FON, or .FNT, or .TTF, or .FOT font file.
  *
- *  FIXME: Load header and find the best-matching font in the fontList;
- * 	   fixup dfPoints if all metrics are identical, otherwise create
- *	   new fontAlias. When soft font support is ready this will
- *	   simply create a new fontResource ('filename' will go into
- *	   the pfr->resource field) with FR_SOFTFONT/FR_SOFTRESOURCE
- *	   flag set.
  */
 INT16 WINAPI AddFontResource16( LPCSTR filename )
 {
     return AddFontResourceA( filename );
 }
 
-
 /***********************************************************************
  *           AddFontResourceA    (GDI32.@)
  */
 INT WINAPI AddFontResourceA( LPCSTR str )
 {
-    FIXME("(%s): stub! Read the Wine User Guide on how to install "
-            "this font manually.\n", debugstr_a(str));
-    return 1;
+    return AddFontResourceExA( str, 0, NULL);
 }
-
 
 /***********************************************************************
  *           AddFontResourceW    (GDI32.@)
  */
 INT WINAPI AddFontResourceW( LPCWSTR str )
 {
-    FIXME("(%s): stub! Read the Wine User Guide on how to install "
-            "this font manually.\n", debugstr_w(str));
-    return 1;
+    return AddFontResourceExW(str, 0, NULL);
+}
+
+
+/***********************************************************************
+ *           AddFontResourceExA    (GDI32.@)
+ */
+INT WINAPI AddFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
+{
+    DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    LPWSTR strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    INT ret;
+
+    MultiByteToWideChar(CP_ACP, 0, str, -1, strW, len);
+    ret = AddFontResourceExW(strW, fl, pdv);
+    HeapFree(GetProcessHeap(), 0, strW);
+    return ret;
+}
+
+/***********************************************************************
+ *           AddFontResourceExW    (GDI32.@)
+ */
+INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
+{
+    return WineEngAddFontResourceEx(str, fl, pdv);
 }
 
 /***********************************************************************
@@ -2521,48 +2540,44 @@ INT WINAPI AddFontResourceW( LPCWSTR str )
  */
 BOOL16 WINAPI RemoveFontResource16( LPCSTR str )
 {
-    FIXME("(%s): stub\n", debugstr_a(str));
-    return TRUE;
+    return RemoveFontResourceA(str);
 }
-
 
 /***********************************************************************
  *           RemoveFontResourceA    (GDI32.@)
  */
 BOOL WINAPI RemoveFontResourceA( LPCSTR str )
 {
-/*  This is how it should look like */
-/*
-    fontResource** ppfr;
-    BOOL32 retVal = FALSE;
-
-    EnterCriticalSection( &crtsc_fonts_X11 );
-    for( ppfr = &fontList; *ppfr; ppfr = &(*ppfr)->next )
-	 if( !strcasecmp( (*ppfr)->lfFaceName, str ) )
-	 {
-	     if(((*ppfr)->fr_flags & (FR_SOFTFONT | FR_SOFTRESOURCE)) &&
-		 (*ppfr)->hOwnerProcess == GetCurrentProcess() )
-	     {
-		 if( (*ppfr)->fo_count )
-		     (*ppfr)->fr_flags |= FR_REMOVED;
-		 else
-		     XFONT_RemoveFontResource( ppfr );
-	     }
-	     retVal = TRUE;
-	 }
-    LeaveCriticalSection( &crtsc_fonts_X11 );
-    return retVal;
- */
-    FIXME("(%s): stub\n", debugstr_a(str));
-    return TRUE;
+    return RemoveFontResourceExA(str, 0, 0);
 }
-
 
 /***********************************************************************
  *           RemoveFontResourceW    (GDI32.@)
  */
 BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
 {
-    FIXME("(%s): stub\n", debugstr_w(str) );
-    return TRUE;
+    return RemoveFontResourceExW(str, 0, 0);
+}
+
+/***********************************************************************
+ *           RemoveFontResourceExA    (GDI32.@)
+ */
+BOOL WINAPI RemoveFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
+{
+    DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    LPWSTR strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    INT ret;
+
+    MultiByteToWideChar(CP_ACP, 0, str, -1, strW, len);
+    ret = RemoveFontResourceExW(strW, fl, pdv);
+    HeapFree(GetProcessHeap(), 0, strW);
+    return ret;
+}
+
+/***********************************************************************
+ *           RemoveFontResourceExW    (GDI32.@)
+ */
+BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
+{
+    return WineEngRemoveFontResourceEx(str, fl, pdv);
 }
