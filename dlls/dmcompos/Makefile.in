@@ -11,9 +11,11 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	chordmap.c \
+	chordmaptrack.c \
 	composer.c \
 	dmcompos_main.c \
-	regsvr.c
+	regsvr.c \
+	signposttrack.c
 
 RC_SRCS = version.rc
 

@@ -32,7 +32,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and

@@ -22,7 +22,6 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "wingdi.h"
-#include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
 #include "winternl.h"
@@ -41,14 +40,14 @@ HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID ri
 {
 	ICOM_THIS(IDirectMusic8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusic2) ||
-	    IsEqualGUID(riid, &IID_IDirectMusic8))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IDirectMusic2) ||
+	    IsEqualIID (riid, &IID_IDirectMusic8)) {
 		IDirectMusic8Impl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
@@ -65,8 +64,7 @@ ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface)
 	ICOM_THIS(IDirectMusic8Impl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -132,7 +130,7 @@ HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rcls
 	
 	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_guid(rclsidPort), pPortParams, ppPort, pUnkOuter);
 	for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &PortCaps); i++) {				
-		if (IsEqualGUID(rclsidPort, &PortCaps.guidPort)) {		
+		if (IsEqualCLSID (rclsidPort, &PortCaps.guidPort)) {		
 			This->ppPorts = HeapReAlloc(GetProcessHeap(), 0, This->ppPorts, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
 			if (NULL == This->ppPorts[This->nrofports]) {
 				*ppPort = (LPDIRECTMUSICPORT)NULL;
@@ -310,9 +308,9 @@ HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC8 *ppDM, 
 	IDirectMusic8Impl *dmusic;
 
 	TRACE("(%p,%p,%p)\n",lpcGUID, ppDM, pUnkOuter);
-	if (IsEqualGUID(lpcGUID, &IID_IDirectMusic) ||
-	    IsEqualGUID(lpcGUID, &IID_IDirectMusic2) ||
-	    IsEqualGUID(lpcGUID, &IID_IDirectMusic8)) {
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusic) ||
+	    IsEqualIID (lpcGUID, &IID_IDirectMusic2) ||
+	    IsEqualIID (lpcGUID, &IID_IDirectMusic8)) {
 		dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
 		if (NULL == dmusic) {
 			*ppDM = (LPDIRECTMUSIC8) NULL;
@@ -328,7 +326,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC8 *ppDM, 
 		*ppDM = (LPDIRECTMUSIC8) dmusic;
 		return S_OK;
 	}
-	WARN("No interface found\n");
 	
+	WARN("No interface found\n");
 	return E_NOINTERFACE;
 }

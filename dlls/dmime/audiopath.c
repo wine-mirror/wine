@@ -25,20 +25,20 @@
 
 #include "dmime_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
-/* IDirectMusicAudioPath IUnknown parts follow: */
+/* IDirectMusicAudioPath IUnknown part: */
 HRESULT WINAPI IDirectMusicAudioPathImpl_QueryInterface (LPDIRECTMUSICAUDIOPATH iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicAudioPath))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IDirectMusicAudioPath)) {
 		IDirectMusicAudioPathImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
@@ -55,14 +55,13 @@ ULONG WINAPI IDirectMusicAudioPathImpl_Release (LPDIRECTMUSICAUDIOPATH iface)
 	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
 }
 
-/* IDirectMusicAudioPath Interface follow: */
+/* IDirectMusicAudioPath IDirectMusicAudioPath part: */
 HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, WORD dwIndex, REFGUID iidInterface, void** ppObject)
 {
 	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
@@ -72,12 +71,12 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 	switch (dwStage) {
 	case DMUS_PATH_BUFFER:
 	  {
-	    if (IsEqualGUID(iidInterface,&IID_IDirectSoundBuffer8)) {
-	      IDirectSoundBuffer8_QueryInterface(This->pDSBuffer, &IID_IDirectSoundBuffer8, ppObject);
+	    if (IsEqualIID (iidInterface, &IID_IDirectSoundBuffer8)) {
+	      IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSoundBuffer8, ppObject);
 	      TRACE("returning %p\n",*ppObject);
 	      return S_OK;
-	    } else if (IsEqualGUID(iidInterface,&IID_IDirectSound3DBuffer)) {
-	      IDirectSoundBuffer8_QueryInterface(This->pDSBuffer, &IID_IDirectSound3DBuffer, ppObject);
+	    } else if (IsEqualIID (iidInterface, &IID_IDirectSound3DBuffer)) {
+	      IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSound3DBuffer, ppObject);
 	      TRACE("returning %p\n",*ppObject);
 	      return S_OK;
 	    } else {
@@ -87,10 +86,10 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 	  break;
 
 	case DMUS_PATH_PRIMARY_BUFFER: {
-	  if (IsEqualGUID(iidInterface,&IID_IDirectSound3DListener)) {
-	    IDirectSoundBuffer8_QueryInterface(This->pPrimary, &IID_IDirectSound3DListener, ppObject);
+	  if (IsEqualIID (iidInterface, &IID_IDirectSound3DListener)) {
+	    IDirectSoundBuffer8_QueryInterface (This->pPrimary, &IID_IDirectSound3DListener, ppObject);
 	    return S_OK;
-	  }else {
+	  } else {
 	    FIXME("bad iid...\n");
 	  }
 	}
@@ -98,7 +97,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 
 	case DMUS_PATH_AUDIOPATH_GRAPH:
 	  {
-	    if (IsEqualGUID(iidInterface, &IID_IDirectMusicGraph)) {
+	    if (IsEqualIID (iidInterface, &IID_IDirectMusicGraph)) {
 	      if (NULL == This->pToolGraph) {
 		IDirectMusicGraphImpl* pGraph;
 		pGraph = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));		
@@ -198,12 +197,214 @@ ICOM_VTABLE(IDirectMusicAudioPath) DirectMusicAudioPath_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicAudioPath (LPCGUID lpcGUID, LPDIRECTMUSICAUDIOPATH* ppDMCAPath, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicAudioPath))
-	{
-		FIXME("Not yet\n");
-		return E_NOINTERFACE;
+	IDirectMusicAudioPathImpl* path;
+	
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicAudioPath)) {
+		path = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicAudioPathImpl));
+		if (NULL == path) {
+			*ppDMCAPath = (LPDIRECTMUSICAUDIOPATH) NULL;
+			return E_OUTOFMEMORY;
+		}
+		path->lpVtbl = &DirectMusicAudioPath_Vtbl;
+		path->ref = 1;
+		*ppDMCAPath = (LPDIRECTMUSICAUDIOPATH) path;
+		return S_OK;
+	}
+	
+	WARN("No interface found\n");
+	return E_NOINTERFACE;
+}
+
+/*****************************************************************************
+ * IDirectMusicAudioPathObject implementation
+ */
+/* IDirectMusicAudioPathObject IUnknown part: */
+HRESULT WINAPI IDirectMusicAudioPathObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IDirectMusicAudioPathObject,iface);
+
+	if (IsEqualIID (riid, &IID_IUnknown) 
+		|| IsEqualIID (riid, &IID_IDirectMusicObject)) {
+		IDirectMusicAudioPathObject_AddRef(iface);
+		*ppobj = This;
+		return S_OK;
+	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
+		IPersistStream_AddRef ((LPPERSISTSTREAM)This->pStream);
+		*ppobj = (LPPERSISTSTREAM)This->pStream;
+		return S_OK;
+	} else if (IsEqualIID (riid, &IID_IDirectMusicAudioPath)) {
+		IDirectMusicAudioPath_AddRef ((LPDIRECTMUSICAUDIOPATH)This->pAudioPath);
+		*ppobj = (LPDIRECTMUSICAUDIOPATH)This->pAudioPath;
+		return S_OK;
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+ULONG WINAPI IDirectMusicAudioPathObject_AddRef (LPDIRECTMUSICOBJECT iface)
+{
+	ICOM_THIS(IDirectMusicAudioPathObject,iface);
+	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	return ++(This->ref);
+}
+
+ULONG WINAPI IDirectMusicAudioPathObject_Release (LPDIRECTMUSICOBJECT iface)
+{
+	ICOM_THIS(IDirectMusicAudioPathObject,iface);
+	ULONG ref = --This->ref;
+	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	if (ref == 0) {
+		HeapFree(GetProcessHeap(), 0, This);
+	}
+	return ref;
+}
+
+/* IDirectMusicAudioPathObject IDirectMusicObject part: */
+HRESULT WINAPI IDirectMusicAudioPathObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
+{
+	ICOM_THIS(IDirectMusicAudioPathObject,iface);
+
+	TRACE("(%p, %p)\n", This, pDesc);
+	pDesc = This->pDesc;
+	
+	return S_OK;
+}
+
+HRESULT WINAPI IDirectMusicAudioPathObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
+{
+	ICOM_THIS(IDirectMusicAudioPathObject,iface);
+
+	TRACE("(%p, %p)\n", This, pDesc);
+	This->pDesc = pDesc;
+
+	return S_OK;
+}
+
+HRESULT WINAPI IDirectMusicAudioPathObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc)
+{
+	ICOM_THIS(IDirectMusicAudioPathObject,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pStream, pDesc);
+
+	return S_OK;
+}
+
+ICOM_VTABLE(IDirectMusicObject) DirectMusicAudioPathObject_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectMusicAudioPathObject_QueryInterface,
+	IDirectMusicAudioPathObject_AddRef,
+	IDirectMusicAudioPathObject_Release,
+	IDirectMusicAudioPathObject_GetDescriptor,
+	IDirectMusicAudioPathObject_SetDescriptor,
+	IDirectMusicAudioPathObject_ParseDescriptor
+};
+
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicAudioPathObject (LPCGUID lpcGUID, LPDIRECTMUSICOBJECT* ppObject, LPUNKNOWN pUnkOuter)
+{
+	IDirectMusicAudioPathObject *obj;
+	
+	TRACE("(%p,%p,%p)\n", lpcGUID, ppObject, pUnkOuter);
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicObject)) {
+		obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicAudioPathObject));
+		if (NULL == obj) {
+			*ppObject = (LPDIRECTMUSICOBJECT) NULL;
+			return E_OUTOFMEMORY;
+		}
+		obj->lpVtbl = &DirectMusicAudioPathObject_Vtbl;
+		obj->ref = 1;
+		/* prepare IPersistStream */
+		obj->pStream = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicAudioPathObjectStream));
+		obj->pStream->lpVtbl = &DirectMusicAudioPathObjectStream_Vtbl;
+		obj->pStream->ref = 1;	
+		obj->pStream->pParentObject = obj;
+		/* prepare IDirectMusicAudioPath */
+		DMUSIC_CreateDirectMusicAudioPath (&IID_IDirectMusicAudioPath, (LPDIRECTMUSICAUDIOPATH*)&obj->pAudioPath, NULL);
+		obj->pAudioPath->pObject = obj;
+		*ppObject = (LPDIRECTMUSICOBJECT) obj;
+		return S_OK;
 	}
 	WARN("No interface found\n");
 	
-	return E_NOINTERFACE;	
+	return E_NOINTERFACE;
 }
+	
+/*****************************************************************************
+ * IDirectMusicAudioPathObjectStream implementation
+ */
+/* IDirectMusicAudioPathObjectStream IUnknown part: */
+HRESULT WINAPI IDirectMusicAudioPathObjectStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IDirectMusicAudioPathObjectStream,iface);
+
+	if (IsEqualIID (riid, &IID_IUnknown)
+		|| IsEqualIID (riid, &IID_IPersistStream)) {
+		IDirectMusicAudioPathObjectStream_AddRef(iface);
+		*ppobj = This;
+		return S_OK;
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+ULONG WINAPI IDirectMusicAudioPathObjectStream_AddRef (LPPERSISTSTREAM iface)
+{
+	ICOM_THIS(IDirectMusicAudioPathObjectStream,iface);
+	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	return ++(This->ref);
+}
+
+ULONG WINAPI IDirectMusicAudioPathObjectStream_Release (LPPERSISTSTREAM iface)
+{
+	ICOM_THIS(IDirectMusicAudioPathObjectStream,iface);
+	ULONG ref = --This->ref;
+	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	if (ref == 0) {
+		HeapFree(GetProcessHeap(), 0, This);
+	}
+	return ref;
+}
+
+/* IDirectMusicAudioPathObjectStream IPersist part: */
+HRESULT WINAPI IDirectMusicAudioPathObjectStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID)
+{
+	return E_NOTIMPL;
+}
+
+/* IDirectMusicAudioPathObjectStream IPersistStream part: */
+HRESULT WINAPI IDirectMusicAudioPathObjectStream_IsDirty (LPPERSISTSTREAM iface)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT WINAPI IDirectMusicAudioPathObjectStream_Load (LPPERSISTSTREAM iface, IStream* pStm)
+{
+	FIXME(": Loading not implemented yet\n");
+	return S_OK;
+}
+
+HRESULT WINAPI IDirectMusicAudioPathObjectStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT WINAPI IDirectMusicAudioPathObjectStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize)
+{
+	return E_NOTIMPL;
+}
+
+ICOM_VTABLE(IPersistStream) DirectMusicAudioPathObjectStream_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectMusicAudioPathObjectStream_QueryInterface,
+	IDirectMusicAudioPathObjectStream_AddRef,
+	IDirectMusicAudioPathObjectStream_Release,
+	IDirectMusicAudioPathObjectStream_GetClassID,
+	IDirectMusicAudioPathObjectStream_IsDirty,
+	IDirectMusicAudioPathObjectStream_Load,
+	IDirectMusicAudioPathObjectStream_Save,
+	IDirectMusicAudioPathObjectStream_GetSizeMax
+};

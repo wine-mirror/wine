@@ -19,15 +19,8 @@
 
 #include "dmloader_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
-
-/******************************************************************
- *		DirectMusicLoader ClassFactory
- *
- *
- */
- 
 typedef struct
 {
     /* IUnknown fields */
@@ -35,7 +28,10 @@ typedef struct
     DWORD                       ref;
 } IClassFactoryImpl;
 
-static HRESULT WINAPI DMLOADCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+/******************************************************************
+ *		DirectMusicLoader ClassFactory
+ */
+static HRESULT WINAPI LoaderCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
@@ -43,26 +39,26 @@ static HRESULT WINAPI DMLOADCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,L
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DMLOADCF_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI LoaderCF_AddRef(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI DMLOADCF_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI LoaderCF_Release(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI DMLOADCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI LoaderCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	if (IsEqualGUID (&IID_IDirectMusicLoader, riid) ||
-	    IsEqualGUID (&IID_IDirectMusicLoader8, riid)) {
+	if (IsEqualIID (&IID_IDirectMusicLoader, riid) ||
+	    IsEqualIID (&IID_IDirectMusicLoader8, riid)) {
 	  return DMUSIC_CreateDirectMusicLoader(riid, (LPDIRECTMUSICLOADER8*) ppobj, pOuter);
 	}
 	
@@ -70,23 +66,80 @@ static HRESULT WINAPI DMLOADCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pO
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DMLOADCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+static HRESULT WINAPI LoaderCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DMLOADCF_Vtbl = {
+static ICOM_VTABLE(IClassFactory) LoaderCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	DMLOADCF_QueryInterface,
-	DMLOADCF_AddRef,
-	DMLOADCF_Release,
-	DMLOADCF_CreateInstance,
-	DMLOADCF_LockServer
+	LoaderCF_QueryInterface,
+	LoaderCF_AddRef,
+	LoaderCF_Release,
+	LoaderCF_CreateInstance,
+	LoaderCF_LockServer
 };
 
-static IClassFactoryImpl DMLOADER_CF = {&DMLOADCF_Vtbl, 1 };
+static IClassFactoryImpl Loader_CF = {&LoaderCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicContainer ClassFactory
+ */
+static HRESULT WINAPI ContainerCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ContainerCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI ContainerCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI ContainerCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicContainer)) {
+	  return DMUSIC_CreateDirectMusicContainer (riid, (LPDIRECTMUSICCONTAINER*) ppobj, pOuter);
+	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
+		return DMUSIC_CreateDirectMusicContainerObject (riid, (LPDIRECTMUSICOBJECT*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI ContainerCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) ContainerCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	ContainerCF_QueryInterface,
+	ContainerCF_AddRef,
+	ContainerCF_Release,
+	ContainerCF_CreateInstance,
+	ContainerCF_LockServer
+};
+
+static IClassFactoryImpl Container_CF = {&ContainerCF_Vtbl, 1 };
 
 /******************************************************************
  *		DllMain
@@ -130,11 +183,16 @@ HRESULT WINAPI DMLOADER_DllCanUnloadNow(void)
 HRESULT WINAPI DMLOADER_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    if (IsEqualCLSID (&IID_IClassFactory, riid)) {
-      *ppv = (LPVOID) &DMLOADER_CF;
-      IClassFactory_AddRef((IClassFactory*)*ppv);
-      return S_OK;
-    }
+    if (IsEqualCLSID (rclsid, &CLSID_DirectMusicLoader) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Loader_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicContainer) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Container_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	}
+	
     WARN("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

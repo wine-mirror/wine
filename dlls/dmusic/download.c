@@ -41,12 +41,13 @@ HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD if
 {
 	ICOM_THIS(IDirectMusicDownloadImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicDownload))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) 
+		|| IsEqualIID (riid, &IID_IDirectMusicDownload)) {
 		IDirectMusicDownloadImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
@@ -63,8 +64,7 @@ ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface)
 	ICOM_THIS(IDirectMusicDownloadImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -92,12 +92,11 @@ ICOM_VTABLE(IDirectMusicDownload) DirectMusicDownload_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicDownload (LPCGUID lpcGUID, LPDIRECTMUSICDOWNLOAD* ppDMDL, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicDownload))
-	{
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicDownload)) {
 		FIXME("Not yet\n");
 		return E_NOINTERFACE;
 	}
-	WARN("No interface found\n");
 	
+	WARN("No interface found\n");
 	return E_NOINTERFACE;	
 }

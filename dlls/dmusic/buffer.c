@@ -43,12 +43,13 @@ HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface (LPDIRECTMUSICBUFFER iface,
 {
 	ICOM_THIS(IDirectMusicBufferImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicBuffer))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) 
+		|| IsEqualIID (riid, &IID_IDirectMusicBuffer)) {
 		IDirectMusicBufferImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
@@ -65,8 +66,7 @@ ULONG WINAPI IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface)
 	ICOM_THIS(IDirectMusicBufferImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -214,12 +214,11 @@ ICOM_VTABLE(IDirectMusicBuffer) DirectMusicBuffer_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicBuffer (LPCGUID lpcGUID, LPDIRECTMUSICBUFFER* ppDMBuff, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicBuffer))
-	{
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicBuffer)) {
 		FIXME("Not yet\n");
 		return E_NOINTERFACE;
 	}
-	WARN("No interface found\n");
 	
+	WARN("No interface found\n");
 	return E_NOINTERFACE;	
 }

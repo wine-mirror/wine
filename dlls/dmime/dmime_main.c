@@ -19,15 +19,8 @@
 
 #include "dmime_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
-
-/******************************************************************
- *		DirectMusicInteractiveEngine ClassFactory
- *
- *
- */
- 
 typedef struct
 {
     /* IUnknown fields */
@@ -35,7 +28,10 @@ typedef struct
     DWORD                       ref;
 } IClassFactoryImpl;
 
-static HRESULT WINAPI DMIMECF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+/******************************************************************
+ *		DirectMusicPerformance ClassFactory
+ */
+static HRESULT WINAPI PerformanceCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
@@ -43,70 +39,842 @@ static HRESULT WINAPI DMIMECF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LP
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DMIMECF_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI PerformanceCF_AddRef(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI DMIMECF_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI PerformanceCF_Release(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI DMIMECF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI PerformanceCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	if (IsEqualGUID (riid, &IID_IDirectMusicPerformance) ||
-	    IsEqualGUID (riid, &IID_IDirectMusicPerformance8)) {
+	if (IsEqualIID (riid, &IID_IDirectMusicPerformance) ||
+	    IsEqualIID (riid, &IID_IDirectMusicPerformance8)) {
 		return DMUSIC_CreateDirectMusicPerformance (riid, (LPDIRECTMUSICPERFORMANCE8*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicSegment) ||
-		IsEqualGUID (riid, &IID_IDirectMusicSegment8)) {
-		return DMUSIC_CreateDirectMusicSegment (riid, (LPDIRECTMUSICSEGMENT8*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicSegmentState) ||
-		IsEqualGUID (riid, &IID_IDirectMusicSegmentState8)) {
-		return DMUSIC_CreateDirectMusicSegmentState (riid, (LPDIRECTMUSICSEGMENTSTATE8*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicGraph)) {
-		return DMUSIC_CreateDirectMusicGraph (riid, (LPDIRECTMUSICGRAPH*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicAudioPath)) {
-		return DMUSIC_CreateDirectMusicSong (riid, (LPDIRECTMUSICSONG*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicAudioPath)) {
-		return DMUSIC_CreateDirectMusicAudioPath (riid, (LPDIRECTMUSICAUDIOPATH*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicTool) ||
-		IsEqualGUID (riid, &IID_IDirectMusicTool8)) {
-		return DMUSIC_CreateDirectMusicTool (riid, (LPDIRECTMUSICTOOL8*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicTrack) ||
-		IsEqualGUID (riid, &IID_IDirectMusicTrack8)) {
-		return DMUSIC_CreateDirectMusicTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicPatternTrack)) {
-		return DMUSIC_CreateDirectMusicPatternTrack (riid, (LPDIRECTMUSICPATTERNTRACK*) ppobj, pOuter);
 	}
 
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DMIMECF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+static HRESULT WINAPI PerformanceCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DMIMECF_Vtbl = {
+static ICOM_VTABLE(IClassFactory) PerformanceCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	DMIMECF_QueryInterface,
-	DMIMECF_AddRef,
-	DMIMECF_Release,
-	DMIMECF_CreateInstance,
-	DMIMECF_LockServer
+	PerformanceCF_QueryInterface,
+	PerformanceCF_AddRef,
+	PerformanceCF_Release,
+	PerformanceCF_CreateInstance,
+	PerformanceCF_LockServer
 };
 
-static IClassFactoryImpl DMIME_CF = {&DMIMECF_Vtbl, 1 };
+static IClassFactoryImpl Performance_CF = {&PerformanceCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicSegment ClassFactory
+ */
+static HRESULT WINAPI SegmentCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SegmentCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SegmentCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SegmentCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicSegment) ||
+	    IsEqualIID (riid, &IID_IDirectMusicSegment8)) {
+		return DMUSIC_CreateDirectMusicSegment (riid, (LPDIRECTMUSICSEGMENT8*) ppobj, pOuter);
+	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
+		return DMUSIC_CreateDirectMusicSegmentObject (riid, (LPDIRECTMUSICOBJECT*) ppobj, pOuter);
+	}
+
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SegmentCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SegmentCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SegmentCF_QueryInterface,
+	SegmentCF_AddRef,
+	SegmentCF_Release,
+	SegmentCF_CreateInstance,
+	SegmentCF_LockServer
+};
+
+static IClassFactoryImpl Segment_CF = {&SegmentCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicSegmentState ClassFactory
+ */
+static HRESULT WINAPI SegmentStateCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SegmentStateCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SegmentStateCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SegmentStateCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicSegmentState) ||
+		IsEqualIID (riid, &IID_IDirectMusicSegmentState8)) {
+		return DMUSIC_CreateDirectMusicSegmentState (riid, (LPDIRECTMUSICSEGMENTSTATE8*) ppobj, pOuter);
+	}
+
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SegmentStateCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SegmentStateCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SegmentStateCF_QueryInterface,
+	SegmentStateCF_AddRef,
+	SegmentStateCF_Release,
+	SegmentStateCF_CreateInstance,
+	SegmentStateCF_LockServer
+};
+
+static IClassFactoryImpl SegmentState_CF = {&SegmentStateCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicGraph ClassFactory
+ */
+static HRESULT WINAPI GraphCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI GraphCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI GraphCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI GraphCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicGraph)) {
+		return DMUSIC_CreateDirectMusicGraph (riid, (LPDIRECTMUSICGRAPH*) ppobj, pOuter);
+	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
+		return DMUSIC_CreateDirectMusicGraphObject (riid, (LPDIRECTMUSICOBJECT*) ppobj, pOuter);
+	}
+
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI GraphCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) GraphCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	GraphCF_QueryInterface,
+	GraphCF_AddRef,
+	GraphCF_Release,
+	GraphCF_CreateInstance,
+	GraphCF_LockServer
+};
+
+static IClassFactoryImpl Graph_CF = {&GraphCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicTempoTrack ClassFactory
+ */
+static HRESULT WINAPI TempoTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TempoTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI TempoTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI TempoTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicTempoTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI TempoTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) TempoTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	TempoTrackCF_QueryInterface,
+	TempoTrackCF_AddRef,
+	TempoTrackCF_Release,
+	TempoTrackCF_CreateInstance,
+	TempoTrackCF_LockServer
+};
+
+static IClassFactoryImpl TempoTrack_CF = {&TempoTrackCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicSeqTrack ClassFactory
+ */
+static HRESULT WINAPI SeqTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SeqTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SeqTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SeqTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicSeqTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SeqTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SeqTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SeqTrackCF_QueryInterface,
+	SeqTrackCF_AddRef,
+	SeqTrackCF_Release,
+	SeqTrackCF_CreateInstance,
+	SeqTrackCF_LockServer
+};
+
+static IClassFactoryImpl SeqTrack_CF = {&SeqTrackCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicSysExTrack ClassFactory
+ */
+static HRESULT WINAPI SysExTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SysExTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SysExTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SysExTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicSysExTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SysExTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SysExTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SysExTrackCF_QueryInterface,
+	SysExTrackCF_AddRef,
+	SysExTrackCF_Release,
+	SysExTrackCF_CreateInstance,
+	SysExTrackCF_LockServer
+};
+
+static IClassFactoryImpl SysExTrack_CF = {&SysExTrackCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicTimeSigTrack ClassFactory
+ */
+static HRESULT WINAPI TimeSigTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TimeSigTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI TimeSigTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI TimeSigTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicTimeSigTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI TimeSigTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) TimeSigTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	TimeSigTrackCF_QueryInterface,
+	TimeSigTrackCF_AddRef,
+	TimeSigTrackCF_Release,
+	TimeSigTrackCF_CreateInstance,
+	TimeSigTrackCF_LockServer
+};
+
+static IClassFactoryImpl TimeSigTrack_CF = {&TimeSigTrackCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicParamControlTrack ClassFactory
+ */
+static HRESULT WINAPI ParamControlTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ParamControlTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI ParamControlTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI ParamControlTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicParamControlTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI ParamControlTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) ParamControlTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	ParamControlTrackCF_QueryInterface,
+	ParamControlTrackCF_AddRef,
+	ParamControlTrackCF_Release,
+	ParamControlTrackCF_CreateInstance,
+	ParamControlTrackCF_LockServer
+};
+
+static IClassFactoryImpl ParamControlTrack_CF = {&ParamControlTrackCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicMarkerTrack ClassFactory
+ */
+static HRESULT WINAPI MarkerTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MarkerTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI MarkerTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI MarkerTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicMarkerTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI MarkerTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) MarkerTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	MarkerTrackCF_QueryInterface,
+	MarkerTrackCF_AddRef,
+	MarkerTrackCF_Release,
+	MarkerTrackCF_CreateInstance,
+	MarkerTrackCF_LockServer
+};
+
+static IClassFactoryImpl MarkerTrack_CF = {&MarkerTrackCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicLyricsTrack ClassFactory
+ */
+static HRESULT WINAPI LyricsTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI LyricsTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI LyricsTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI LyricsTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicLyricsTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI LyricsTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) LyricsTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	LyricsTrackCF_QueryInterface,
+	LyricsTrackCF_AddRef,
+	LyricsTrackCF_Release,
+	LyricsTrackCF_CreateInstance,
+	LyricsTrackCF_LockServer
+};
+
+static IClassFactoryImpl LyricsTrack_CF = {&LyricsTrackCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicSong ClassFactory
+ */
+static HRESULT WINAPI SongCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SongCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SongCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SongCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicSong)) {
+		return DMUSIC_CreateDirectMusicPerformance (riid, (LPDIRECTMUSICPERFORMANCE8*) ppobj, pOuter);
+	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
+		return DMUSIC_CreateDirectMusicSongObject (riid, (LPDIRECTMUSICOBJECT*) ppobj, pOuter);
+	}
+
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SongCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SongCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SongCF_QueryInterface,
+	SongCF_AddRef,
+	SongCF_Release,
+	SongCF_CreateInstance,
+	SongCF_LockServer
+};
+
+static IClassFactoryImpl Song_CF = {&SongCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicSegTriggerTrack ClassFactory
+ */
+static HRESULT WINAPI SegTriggerTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SegTriggerTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SegTriggerTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SegTriggerTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicSegTriggerTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SegTriggerTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SegTriggerTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SegTriggerTrackCF_QueryInterface,
+	SegTriggerTrackCF_AddRef,
+	SegTriggerTrackCF_Release,
+	SegTriggerTrackCF_CreateInstance,
+	SegTriggerTrackCF_LockServer
+};
+
+static IClassFactoryImpl SegTriggerTrack_CF = {&SegTriggerTrackCF_Vtbl, 1 };
+
+
+
+
+/******************************************************************
+ *		DirectMusicAudioPath ClassFactory
+ */
+static HRESULT WINAPI AudioPathCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI AudioPathCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI AudioPathCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI AudioPathCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicAudioPath)) {
+		return DMUSIC_CreateDirectMusicAudioPath (riid, (LPDIRECTMUSICAUDIOPATH*) ppobj, pOuter);
+	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
+		return DMUSIC_CreateDirectMusicAudioPathObject (riid, (LPDIRECTMUSICOBJECT*) ppobj, pOuter);
+	}
+
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI AudioPathCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) AudioPathCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	AudioPathCF_QueryInterface,
+	AudioPathCF_AddRef,
+	AudioPathCF_Release,
+	AudioPathCF_CreateInstance,
+	AudioPathCF_LockServer
+};
+
+static IClassFactoryImpl AudioPath_CF = {&AudioPathCF_Vtbl, 1 };
+
+/******************************************************************
+ *		DirectMusicWaveTrack ClassFactory
+ */
+static HRESULT WINAPI WaveTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI WaveTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI WaveTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI WaveTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicWaveTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);	
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI WaveTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) WaveTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	WaveTrackCF_QueryInterface,
+	WaveTrackCF_AddRef,
+	WaveTrackCF_Release,
+	WaveTrackCF_CreateInstance,
+	WaveTrackCF_LockServer
+};
+
+static IClassFactoryImpl WaveTrack_CF = {&WaveTrackCF_Vtbl, 1 };
 
 /******************************************************************
  *		DllMain
@@ -117,7 +885,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
-            DisableThreadLibraryCalls(hinstDLL);
+		DisableThreadLibraryCalls(hinstDLL);
 		/* FIXME: Initialisation */
 	}
 	else if (fdwReason == DLL_PROCESS_DETACH)
@@ -150,11 +918,68 @@ HRESULT WINAPI DMIME_DllCanUnloadNow(void)
 HRESULT WINAPI DMIME_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    if (IsEqualCLSID (&IID_IClassFactory, riid)) {
-      *ppv = (LPVOID) &DMIME_CF;
-      IClassFactory_AddRef((IClassFactory*)*ppv);
-      return S_OK;
-    }
+    if (IsEqualCLSID (rclsid, &CLSID_DirectMusicPerformance) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Performance_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSegment) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Segment_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSegmentState) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &SegmentState_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicGraph) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Graph_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicTempoTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &TempoTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSeqTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &SeqTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSysExTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &SysExTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicTimeSigTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &TimeSigTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicParamControlTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &ParamControlTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicMarkerTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &MarkerTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicLyricsTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &LyricsTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSong) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Song_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSegTriggerTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &SegTriggerTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicAudioPath) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &AudioPath_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicWaveTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &WaveTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} 
+	
     WARN("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

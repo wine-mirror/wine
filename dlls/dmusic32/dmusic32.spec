@@ -1,2 +1,2 @@
-1 stub CreateCDirectMusicEmulatePort
-2 stub EnumLegacyDevices
+1 stdcall CreateCDirectMusicEmulatePort (ptr ptr ptr) DMUSIC32_CreateCDirectMusicEmulatePort
+2 stdcall EnumLegacyDevices (ptr ptr) DMUSIC32_EnumLegacyDevices

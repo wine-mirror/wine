@@ -25,18 +25,17 @@
 
 #include "dmime_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 
-/* IDirectMusicTool8 IUnknown part follow: */
+/* IDirectMusicTool8 IUnknown part: */
 HRESULT WINAPI IDirectMusicTool8Impl_QueryInterface (LPDIRECTMUSICTOOL8 iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicTool8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicTool) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicTool8))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IDirectMusicTool) ||
+	    IsEqualIID (riid, &IID_IDirectMusicTool8)) {
 		IDirectMusicTool8Impl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
@@ -57,14 +56,13 @@ ULONG WINAPI IDirectMusicTool8Impl_Release (LPDIRECTMUSICTOOL8 iface)
 	ICOM_THIS(IDirectMusicTool8Impl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
 }
 
-/* IDirectMusicTool Interface follow: */
+/* IDirectMusicTool8 IDirectMusicTool part: */
 HRESULT WINAPI IDirectMusicTool8Impl_Init (LPDIRECTMUSICTOOL8 iface, IDirectMusicGraph* pGraph)
 {
 	ICOM_THIS(IDirectMusicTool8Impl,iface);
@@ -119,7 +117,7 @@ HRESULT WINAPI IDirectMusicTool8Impl_Flush (LPDIRECTMUSICTOOL8 iface, IDirectMus
 	return S_OK;
 }
 
-/* IDirectMusicTool8 Interface part follow: */
+/* IDirectMusicTool8 IDirectMusicTool8 part: */
 HRESULT WINAPI IDirectMusicTool8Impl_Clone (LPDIRECTMUSICTOOL8 iface, IDirectMusicTool** ppTool)
 {
 	ICOM_THIS(IDirectMusicTool8Impl,iface);
@@ -147,8 +145,7 @@ ICOM_VTABLE(IDirectMusicTool8) DirectMusicTool8_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicTool (LPCGUID lpcGUID, LPDIRECTMUSICTOOL8 *ppDMTool, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicComposer))
-	{
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicComposer)) {
 		FIXME("Not yet\n");
 		return E_NOINTERFACE;
 	}

@@ -26,21 +26,21 @@
 
 #include "dmsynth_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
-/* IDirectMusicSynth8 IUnknown parts follow: */
+/* IDirectMusicSynth8 IUnknown part: */
 HRESULT WINAPI IDirectMusicSynth8Impl_QueryInterface (LPDIRECTMUSICSYNTH8 iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicSynth) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicSynth8))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IDirectMusicSynth) ||
+	    IsEqualIID (riid, &IID_IDirectMusicSynth8)) {
 		IDirectMusicSynth8Impl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
@@ -57,14 +57,13 @@ ULONG WINAPI IDirectMusicSynth8Impl_Release (LPDIRECTMUSICSYNTH8 iface)
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
 }
 
-/* IDirectMusicSynth Interface parts follow: */
+/* IDirectMusicSynth8 IDirectMusicSynth part: */
 HRESULT WINAPI IDirectMusicSynth8Impl_Open (LPDIRECTMUSICSYNTH8 iface, LPDMUS_PORTPARAMS pPortParams)
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
@@ -223,7 +222,7 @@ HRESULT WINAPI IDirectMusicSynth8Impl_GetAppend (LPDIRECTMUSICSYNTH8 iface, DWOR
 	return S_OK;
 }
 
-/* IDirectMusicSynth8 Interface parts follow: */
+/* IDirectMusicSynth8 IDirectMusicSynth8 part: */
 HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, DWORD dwVoiceId, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwDLId, long prPitch, long vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart, SAMPLE_TIME stLoopEnd)
 {
 	ICOM_THIS(IDirectMusicSynth8Impl,iface);
@@ -305,8 +304,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynth (LPCGUID lpcGUID, LPDIRECTMUSICSYNT
 	IDirectMusicSynth8Impl *dmsynth;
 	
 	TRACE("(%p,%p,%p)\n", lpcGUID, ppDMSynth, pUnkOuter);
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicSynth) ||
-		IsEqualGUID (lpcGUID, &IID_IDirectMusicSynth8))	{
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicSynth) ||
+		IsEqualIID (lpcGUID, &IID_IDirectMusicSynth8))	{
 		dmsynth = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynth8Impl));
 		if (NULL == dmsynth) {
 			*ppDMSynth = (LPDIRECTMUSICSYNTH8) NULL;

@@ -31,19 +31,46 @@
 #include "dmusicf.h"
 #include "dsound.h"
 
+
+typedef struct _DMUS_PRIVATE_CACHE_ENTRY
+{
+	GUID guidObject;
+	WCHAR pwzFileName[MAX_PATH];
+    IDirectMusicObject* pObject;
+} DMUS_PRIVATE_CACHE_ENTRY, *LPDMUS_PRIVATE_CACHE_ENTRY;
+
+typedef struct _DMUS_PRIVATE_OBJECT_REFERENCE DMUS_PRIVATE_OBJECT_REFERENCE;
+
+struct _DMUS_PRIVATE_OBJECT_REFERENCE {
+    DMUS_PRIVATE_OBJECT_REFERENCE* pNext;
+	WCHAR pwsFileName[MAX_PATH];
+    GUID guidObject;
+    IDirectMusicObject* pObject;
+};
+
 /*****************************************************************************
  * Interfaces
  */
 typedef struct IDirectMusicLoader8Impl IDirectMusicLoader8Impl;
 typedef struct IDirectMusicContainerImpl IDirectMusicContainerImpl;
-typedef struct IDirectMusicGetLoaderImpl IDirectMusicGetLoaderImpl;
+
+typedef struct IDirectMusicContainerObject IDirectMusicContainerObject;
+typedef struct IDirectMusicContainerObjectStream IDirectMusicContainerObjectStream;
+
+typedef struct ILoaderStream ILoaderStream;
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
 extern ICOM_VTABLE(IDirectMusicLoader8) DirectMusicLoader8_Vtbl;
 extern ICOM_VTABLE(IDirectMusicContainer) DirectMusicContainer_Vtbl;
-extern ICOM_VTABLE(IDirectMusicGetLoader) DirectMusicGetLoader_Vtbl;
+
+extern ICOM_VTABLE(IDirectMusicObject) DirectMusicContainerObject_Vtbl;
+extern ICOM_VTABLE(IPersistStream) DirectMusicContainerObjectStream_Vtbl;
+
+extern ICOM_VTABLE(IUnknown) LoaderStream_Unknown_Vtbl;
+extern ICOM_VTABLE(IStream) LoaderStream_Stream_Vtbl;
+extern ICOM_VTABLE(IDirectMusicGetLoader) LoaderStream_GetLoader_Vtbl;
 
 /*****************************************************************************
  * ClassFactory
@@ -56,10 +83,10 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoader (LPCGUID lpcGUID, LPDIRECTM
  * return always an IDirectMusicContainerImpl
  */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicContainer (LPCGUID lpcGUID, LPDIRECTMUSICCONTAINER *ppDMCon, LPUNKNOWN pUnkOuter);
-/* can support IID_IDirectMusicGetLoader
- * return always an IDirectMusicGetLoaderImpl
- */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicGetLoader (LPCGUID lpcGUID, LPDIRECTMUSICGETLOADER *ppDMGetLoad, LPUNKNOWN pUnkOuter);
+
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicContainerObject (LPCGUID lpcGUID, LPDIRECTMUSICOBJECT* ppObject, LPUNKNOWN pUnkOuter);
+
+extern HRESULT WINAPI DMUSIC_CreateLoaderStream (LPSTREAM *ppStream);
 
 /*****************************************************************************
  * IDirectMusicLoader8Impl implementation structure
@@ -71,8 +98,11 @@ struct IDirectMusicLoader8Impl
   DWORD          ref;
 
   /* IDirectMusicLoaderImpl fields */
-  WCHAR          wzSearchPath[MAX_PATH];
-  /* IDirectMusicLoader8Impl fields */ 
+  WCHAR wzSearchPath[MAX_PATH];
+	
+  /* simple cache */
+  LPDMUS_PRIVATE_CACHE_ENTRY pCache; /* cache entries */
+  DWORD dwCacheSize; /* nr. of entries */
 };
 
 /* IUnknown: */
@@ -104,6 +134,7 @@ struct IDirectMusicContainerImpl
   DWORD          ref;
 
   /* IDirectMusicContainerImpl fields */
+  IDirectMusicContainerObject* pObject;
 };
 
 /* IUnknown: */
@@ -113,23 +144,94 @@ extern ULONG WINAPI   IDirectMusicContainerImpl_Release (LPDIRECTMUSICCONTAINER 
 /* IDirectMusicContainer: */
 extern HRESULT WINAPI IDirectMusicContainerImpl_EnumObject (LPDIRECTMUSICCONTAINER iface, REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc, WCHAR* pwszAlias);
 
+
 /*****************************************************************************
- * IDirectMusicGetLoaderImpl implementation structure
+ * IDirectMusicContainerObject implementation structure
  */
-struct IDirectMusicGetLoaderImpl
+struct IDirectMusicContainerObject
 {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicGetLoader);
+  ICOM_VFIELD(IDirectMusicObject);
   DWORD          ref;
 
-  /* IDirectMusicGetLoaderImpl fields */
+  /* IDirectMusicObjectImpl fields */
+  LPDMUS_OBJECTDESC pDesc;
+  IDirectMusicContainerObjectStream* pStream;
+  IDirectMusicContainerImpl* pContainer;
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicGetLoaderImpl_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicGetLoaderImpl_AddRef (LPDIRECTMUSICGETLOADER iface);
-extern ULONG WINAPI   IDirectMusicGetLoaderImpl_Release (LPDIRECTMUSICGETLOADER iface);
+extern HRESULT WINAPI IDirectMusicContainerObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj);
+extern ULONG WINAPI   IDirectMusicContainerObject_AddRef (LPDIRECTMUSICOBJECT iface);
+extern ULONG WINAPI   IDirectMusicContainerObject_Release (LPDIRECTMUSICOBJECT iface);
+/* IDirectMusicObject: */
+extern HRESULT WINAPI IDirectMusicContainerObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc);
+extern HRESULT WINAPI IDirectMusicContainerObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc);
+extern HRESULT WINAPI IDirectMusicContainerObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc);
+
+/*****************************************************************************
+ * IDirectMusicContainerObjectStream implementation structure
+ */
+struct IDirectMusicContainerObjectStream
+{
+  /* IUnknown fields */
+  ICOM_VFIELD (IPersistStream);
+  DWORD          ref;
+
+  /* IPersistStreamImpl fields */
+  IDirectMusicContainerObject* pParentObject;
+};
+
+/* IUnknown: */
+extern HRESULT WINAPI IDirectMusicContainerObjectStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
+extern ULONG WINAPI IDirectMusicContainerObjectStream_AddRef (LPPERSISTSTREAM iface);
+extern ULONG WINAPI IDirectMusicContainerObjectStream_Release (LPPERSISTSTREAM iface);
+/* IPersist: */
+extern HRESULT WINAPI IDirectMusicContainerObjectStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID);
+/* IPersistStream: */
+extern HRESULT WINAPI IDirectMusicContainerObjectStream_IsDirty (LPPERSISTSTREAM iface);
+extern HRESULT WINAPI IDirectMusicContainerObjectStream_Load (LPPERSISTSTREAM iface, IStream* pStm);
+extern HRESULT WINAPI IDirectMusicContainerObjectStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
+extern HRESULT WINAPI IDirectMusicContainerObjectStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
+
+
+/*****************************************************************************
+ * ILoaderStream implementation structure
+ */
+struct ILoaderStream
+{
+  /* IUnknown fields */
+  ICOM_VTABLE(IStream) *StreamVtbl;
+  ICOM_VTABLE(IDirectMusicGetLoader) *GetLoaderVtbl;
+  DWORD          ref;
+
+  /* ILoaderStream fields */
+  IDirectMusicLoader8Impl* pLoader;
+  HANDLE hFile;
+  WCHAR wzFileName[MAX_PATH]; /* for clone */
+};
+
+/* Custom: */
+extern HRESULT WINAPI ILoaderStream_Attach (ILoaderStream* iface, LPCWSTR wzFile, IDirectMusicLoader *pLoader);
+extern void WINAPI ILoaderStream_Detach (ILoaderStream* iface);
 /* IDirectMusicGetLoader: */
-extern HRESULT WINAPI IDirectMusicGetLoaderImpl_GetLoader (LPDIRECTMUSICGETLOADER iface, IDirectMusicLoader** ppLoader);
+extern HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, void** ppobj);
+extern ULONG WINAPI ILoaderStream_IDirectMusicGetLoader_AddRef (LPDIRECTMUSICGETLOADER iface);
+extern ULONG WINAPI ILoaderStream_IDirectMusicGetLoader_Release (LPDIRECTMUSICGETLOADER iface);
+extern HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_GetLoader (LPDIRECTMUSICGETLOADER iface, IDirectMusicLoader **ppLoader);
+/* IStream: */
+extern HRESULT WINAPI ILoaderStream_IStream_QueryInterface (LPSTREAM iface, REFIID riid, void** ppobj);
+extern ULONG WINAPI ILoaderStream_IStream_AddRef (LPSTREAM iface);
+extern ULONG WINAPI ILoaderStream_IStream_Release (LPSTREAM iface);extern HRESULT WINAPI ILoaderStream_IStream_Read (IStream* iface, void* pv, ULONG cb, ULONG* pcbRead);
+extern HRESULT WINAPI ILoaderStream_IStream_Write (LPSTREAM iface, const void* pv, ULONG cb, ULONG* pcbWritten);
+extern HRESULT WINAPI ILoaderStream_IStream_Seek (LPSTREAM iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition);
+extern HRESULT WINAPI ILoaderStream_IStream_SetSize (LPSTREAM iface, ULARGE_INTEGER libNewSize);
+extern HRESULT WINAPI ILoaderStream_IStream_CopyTo (LPSTREAM iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten);
+extern HRESULT WINAPI ILoaderStream_IStream_Commit (LPSTREAM iface, DWORD grfCommitFlags);
+extern HRESULT WINAPI ILoaderStream_IStream_Revert (LPSTREAM iface);
+extern HRESULT WINAPI ILoaderStream_IStream_LockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+extern HRESULT WINAPI ILoaderStream_IStream_UnlockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+extern HRESULT WINAPI ILoaderStream_IStream_Stat (LPSTREAM iface, STATSTG* pstatstg, DWORD grfStatFlag);
+extern HRESULT WINAPI ILoaderStream_IStream_Clone (LPSTREAM iface, IStream** ppstm);
 
 #endif	/* __WINE_DMLOADER_PRIVATE_H */

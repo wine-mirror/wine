@@ -32,12 +32,12 @@ HRESULT WINAPI IDirectMusicPortImpl_QueryInterface (LPDIRECTMUSICPORT iface, REF
 {
 	ICOM_THIS(IDirectMusicPortImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicPort))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicPort)) {
 		IDirectMusicPortImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
@@ -54,8 +54,7 @@ ULONG WINAPI IDirectMusicPortImpl_Release (LPDIRECTMUSICPORT iface)
 	ICOM_THIS(IDirectMusicPortImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -246,7 +245,7 @@ ICOM_VTABLE(IDirectMusicPort) DirectMusicPort_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicPort (LPCGUID lpcGUID, LPDIRECTMUSICPORT* ppDMPort, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicPort))
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicPort))
 	{
 		FIXME("Not yet\n");
 		return E_NOINTERFACE;

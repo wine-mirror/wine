@@ -10,9 +10,16 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	auditiontrack.c \
+	chordtrack.c \
+	commandtrack.c \
 	dmstyle_main.c \
+	melodyformulationtrack.c \
+	motiftrack.c \
+	mutetrack.c \
+	regsvr.c \
 	style.c \
-	regsvr.c
+	styletrack.c
 
 RC_SRCS = version.rc
 

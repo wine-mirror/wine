@@ -19,15 +19,8 @@
 
 #include "dmband_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
-
-/******************************************************************
- *		DirectMusicBand ClassFactory
- *
- *
- */
- 
 typedef struct
 {
     /* IUnknown fields */
@@ -35,7 +28,11 @@ typedef struct
     DWORD                       ref;
 } IClassFactoryImpl;
 
-static HRESULT WINAPI DMBCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+/******************************************************************
+ *		DirectMusicBand ClassFactory
+ */
+ 
+static HRESULT WINAPI BandCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
@@ -43,49 +40,109 @@ static HRESULT WINAPI DMBCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVO
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DMBCF_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI BandCF_AddRef(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI DMBCF_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI BandCF_Release(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI DMBCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI BandCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	if (IsEqualGUID (riid, &IID_IDirectMusicBand)) {
+	if (IsEqualIID (riid, &IID_IDirectMusicBand)) {
 		return DMUSIC_CreateDirectMusicBand (riid, (LPDIRECTMUSICBAND*) ppobj, pOuter);
-
+	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
+		return DMUSIC_CreateDirectMusicBandObject (riid, (LPDIRECTMUSICOBJECT*) ppobj, pOuter);
 	}
+	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DMBCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+static HRESULT WINAPI BandCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DMBCF_Vtbl = {
+static ICOM_VTABLE(IClassFactory) BandCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	DMBCF_QueryInterface,
-	DMBCF_AddRef,
-	DMBCF_Release,
-	DMBCF_CreateInstance,
-	DMBCF_LockServer
+	BandCF_QueryInterface,
+	BandCF_AddRef,
+	BandCF_Release,
+	BandCF_CreateInstance,
+	BandCF_LockServer
 };
 
-static IClassFactoryImpl DMBAND_CF = {&DMBCF_Vtbl, 1 };
+static IClassFactoryImpl Band_CF = {&BandCF_Vtbl, 1 };
+
+
+/******************************************************************
+ *		DirectMusicBandTrack ClassFactory
+ */
+ 
+static HRESULT WINAPI BandTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI BandTrackCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI BandTrackCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI BandTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicTrack) 
+		|| IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+		return DMUSIC_CreateDirectMusicBandTrack (riid, (LPDIRECTMUSICTRACK8*) ppobj, pOuter);
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI BandTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) BandTrackCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	BandTrackCF_QueryInterface,
+	BandTrackCF_AddRef,
+	BandTrackCF_Release,
+	BandTrackCF_CreateInstance,
+	BandTrackCF_LockServer
+};
+
+static IClassFactoryImpl BandTrack_CF = {&BandTrackCF_Vtbl, 1 };
 
 /******************************************************************
  *		DllMain
@@ -129,11 +186,17 @@ HRESULT WINAPI DMBAND_DllCanUnloadNow(void)
 HRESULT WINAPI DMBAND_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    if (IsEqualCLSID (&IID_IClassFactory, riid)) {
-      *ppv = (LPVOID) &DMBAND_CF;
-      IClassFactory_AddRef((IClassFactory*)*ppv);
-      return S_OK;
-    }
+
+	if (IsEqualCLSID (rclsid, &CLSID_DirectMusicBand) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Band_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicBandTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &BandTrack_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;	
+	}
+	
     WARN("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

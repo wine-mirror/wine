@@ -25,20 +25,20 @@
 
 #include "dmime_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 /* IDirectMusicPatternTrack IUnknown parts follow: */
 HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERNTRACK iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicPatternTrack))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IDirectMusicPatternTrack)) {
 		IDirectMusicPatternTrackImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
@@ -55,8 +55,7 @@ ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK ifa
 	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -104,12 +103,12 @@ ICOM_VTABLE(IDirectMusicPatternTrack) DirectMusicPatternTrack_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicPatternTrack (LPCGUID lpcGUID, LPDIRECTMUSICPATTERNTRACK *ppDMPtrnTrack, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicComposer))
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicComposer))
 	{
 		FIXME("Not yet\n");
 		return E_NOINTERFACE;
 	}
-	WARN("No interface found\n");
 	
+	WARN("No interface found\n");
 	return E_NOINTERFACE;	
 }

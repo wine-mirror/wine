@@ -12,7 +12,8 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	dmscript_main.c \
 	regsvr.c \
-	script.c
+	script.c \
+	scripttrack.c
 
 RC_SRCS = version.rc
 

@@ -25,21 +25,21 @@
 
 #include "dmime_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
-/* IDirectMusicPerformance8 IUnknown part follow: */
+/* IDirectMusicPerformance8 IUnknown part: */
 HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSICPERFORMANCE8 iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicPerformance) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicPerformance8))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IDirectMusicPerformance) ||
+	    IsEqualIID (riid, &IID_IDirectMusicPerformance8)) {
 		IDirectMusicPerformance8Impl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
@@ -56,20 +56,19 @@ ULONG WINAPI IDirectMusicPerformance8Impl_Release (LPDIRECTMUSICPERFORMANCE8 ifa
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
 }
 
-/* IDirectMusicPerformance8 IDirectMusicPerformance Interface part follow: */
+/* IDirectMusicPerformance8 IDirectMusicPerformance Interface part: */
 HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusic** ppDirectMusic, LPDIRECTSOUND pDirectSound, HWND hWnd)
 {
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 
 	FIXME("(iface = %p, dmusic = %p, dsound = %p, hwnd = %p)\n", This, ppDirectMusic, pDirectSound, hWnd);
-        if (This->pDirectMusic || This->pDirectSound)
+ 	if (This->pDirectMusic || This->pDirectSound)
 	  return DMUS_E_ALREADY_INITED;
 	
 	if (NULL != pDirectSound) {
@@ -93,7 +92,6 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 ifac
 	    IDirectMusic8_AddRef((LPDIRECTMUSIC8) *ppDirectMusic);
 	  }
 	}
-
 	
 	return S_OK;
 }
@@ -316,18 +314,18 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannelBlock (LPDIRECTMUSICPE
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 
 	FIXME("(%p, %ld, %p, %ld): semi-stub\n", This, dwBlockNum, pPort, dwGroup-1);
-        range = 16 * dwBlockNum;
-        j = 0;
+	range = 16 * dwBlockNum;
+	j = 0;
                 
-        for (i = range; i < range+16; i++)
-        {
-                /*TRACE("Setting PChannel[%i] to port %p, group %ld, MIDI port %i\n", i, pPort, dwGroup-1, j); */
-                This->PChannel[i].port = pPort; 
-                This->PChannel[i].group = dwGroup - 1; /* first index is always zero */
-                This->PChannel[i].channel = j; /* FIXME: should this be assigned? */
-                j++;
-        }
-        return S_OK;
+	for (i = range; i < range+16; i++) {
+		/*TRACE("Setting PChannel[%i] to port %p, group %ld, MIDI port %i\n", i, pPort, dwGroup-1, j); */
+		This->PChannel[i].port = pPort; 
+		This->PChannel[i].group = dwGroup - 1; /* first index is always zero */
+		This->PChannel[i].channel = j; /* FIXME: should this be assigned? */
+		j++;
+	}
+
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwPChannel, IDirectMusicPort* pPort, DWORD dwGroup, DWORD dwMChannel)
@@ -393,13 +391,13 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_GetGlobalParam (LPDIRECTMUSICPERFORM
 
 	TRACE("(%p, %s, %p, %ld): stub\n", This, debugstr_guid(rguidType), pParam, dwSize);
 	
-	if (IsEqualGUID(rguidType, &GUID_PerfAutoDownload))
+	if (IsEqualGUID (rguidType, &GUID_PerfAutoDownload))
 		memcpy(pParam, &This->fAutoDownload, sizeof(&This->fAutoDownload));
-	if (IsEqualGUID(rguidType, &GUID_PerfMasterGrooveLevel))
+	if (IsEqualGUID (rguidType, &GUID_PerfMasterGrooveLevel))
 		memcpy(pParam, &This->cMasterGrooveLevel, sizeof(&This->cMasterGrooveLevel));
-	if (IsEqualGUID(rguidType, &GUID_PerfMasterTempo))
+	if (IsEqualGUID (rguidType, &GUID_PerfMasterTempo))
 		memcpy(pParam, &This->fMasterTempo, sizeof(&This->fMasterTempo));
-	if (IsEqualGUID(rguidType, &GUID_PerfMasterVolume))
+	if (IsEqualGUID (rguidType, &GUID_PerfMasterVolume))
 		memcpy(pParam, &This->lMasterVolume, sizeof(&This->lMasterVolume));
 
 	return S_OK;
@@ -411,23 +409,19 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_SetGlobalParam (LPDIRECTMUSICPERFORM
 
 	TRACE("(%p, %s, %p, %ld)\n", This, debugstr_guid(rguidType), pParam, dwSize);
 	
-	if (IsEqualGUID(rguidType, &GUID_PerfAutoDownload))
-	{
+	if (IsEqualGUID (rguidType, &GUID_PerfAutoDownload)) {
 		memcpy(&This->fAutoDownload, pParam, dwSize);
 		TRACE("=> AutoDownload set to %d\n", This->fAutoDownload);
 	}
-	if (IsEqualGUID(rguidType, &GUID_PerfMasterGrooveLevel))
-	{
+	if (IsEqualGUID (rguidType, &GUID_PerfMasterGrooveLevel)) {
 		memcpy(&This->cMasterGrooveLevel, pParam, dwSize);
 		TRACE("=> MasterGrooveLevel set to %i\n", This->cMasterGrooveLevel);
 	}
-	if (IsEqualGUID(rguidType, &GUID_PerfMasterTempo))
-	{
+	if (IsEqualGUID (rguidType, &GUID_PerfMasterTempo)) {
 		memcpy(&This->fMasterTempo, pParam, dwSize);
 		TRACE("=> MasterTempo set to %f\n", This->fMasterTempo);
 	}
-	if (IsEqualGUID(rguidType, &GUID_PerfMasterVolume))
-	{
+	if (IsEqualGUID (rguidType, &GUID_PerfMasterVolume)) {
 		memcpy(&This->lMasterVolume, pParam, dwSize);
 		TRACE("=> MasterVolume set to %li\n", This->lMasterVolume);
 	}
@@ -528,7 +522,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
 {
 	IDirectSound* dsound;
 	
-        ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+    ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	FIXME("(%p, %p, %p, %p, %lx, %lu, %lx, %p): to check\n", This, ppDirectMusic, ppDirectSound, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
 
 	if (This->pDirectMusic || This->pDirectSound)
@@ -537,7 +531,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
 	if (NULL != ppDirectSound && NULL != *ppDirectSound) {
 	  dsound = *ppDirectSound;
 	} else {
-	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &dsound, NULL);
+	  DirectSoundCreate8 (&IID_IDirectSound8, (LPDIRECTSOUND8*) &dsound, NULL);
 	  if (!dsound)
 	    return DSERR_NODRIVER;
 	  if (ppDirectSound)
@@ -650,7 +644,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	}
 
 	/* FIXME: Should we create one secondary buffer for each PChannel? */
-	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
+	IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
 	default_path->pDSBuffer = (IDirectSoundBuffer*) buffer;
 
 	/* Update description for creating primary buffer */
@@ -658,7 +652,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	desc.dwBufferBytes = 0;
 	desc.lpwfxFormat = NULL;
 
-	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
+	IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
 
 	default_path->pPrimary = (IDirectSoundBuffer*) buffer;
 
@@ -671,21 +665,21 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 
 HRESULT WINAPI IDirectMusicPerformance8ImplSetDefaultAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicAudioPath* pAudioPath)
 {
-       ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 
-       	FIXME("(%p, %p): semi-stub\n", This, pAudioPath);
-
-       if (NULL != This->pDefaultPath) {
-         IDirectMusicAudioPathImpl_Release((LPDIRECTMUSICAUDIOPATH) This->pDefaultPath);
-	 ((IDirectMusicAudioPathImpl*) This->pDefaultPath)->pPerf = NULL;
-         This->pDefaultPath = NULL;
-       }
-       This->pDefaultPath = pAudioPath;
-       if (NULL != This->pDefaultPath) {
-         IDirectMusicAudioPathImpl_AddRef((LPDIRECTMUSICAUDIOPATH) This->pDefaultPath);
-	 ((IDirectMusicAudioPathImpl*) This->pDefaultPath)->pPerf = (IDirectMusicPerformance8*) This;
-       }
-       return S_OK;
+	FIXME("(%p, %p): semi-stub\n", This, pAudioPath);
+	if (NULL != This->pDefaultPath) {
+		IDirectMusicAudioPathImpl_Release((LPDIRECTMUSICAUDIOPATH) This->pDefaultPath);
+		((IDirectMusicAudioPathImpl*) This->pDefaultPath)->pPerf = NULL;
+		This->pDefaultPath = NULL;
+	}
+	This->pDefaultPath = pAudioPath;
+	if (NULL != This->pDefaultPath) {
+		IDirectMusicAudioPathImpl_AddRef((LPDIRECTMUSICAUDIOPATH) This->pDefaultPath);
+		((IDirectMusicAudioPathImpl*) This->pDefaultPath)->pPerf = (IDirectMusicPerformance8*) This;
+	}
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplGetDefaultAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicAudioPath** ppAudioPath)
@@ -776,8 +770,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformance (LPCGUID lpcGUID, LPDIRECTMUS
 	IDirectMusicPerformance8Impl *pPerf;
 
 	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMPerf, pUnkOuter);
-	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicPerformance) ||
-	    IsEqualGUID(lpcGUID, &IID_IDirectMusicPerformance8)) {
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicPerformance) ||
+	    IsEqualIID (lpcGUID, &IID_IDirectMusicPerformance8)) {
 		pPerf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformance8Impl));
 		if (NULL == pPerf)
 		{

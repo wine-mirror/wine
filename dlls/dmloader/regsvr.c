@@ -32,7 +32,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
@@ -503,7 +503,7 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
  */
 static struct regsvr_coclass const coclass_list[] = {
     {   &CLSID_DirectMusicLoader,
-        "DirectMusicLoader",
+    "DirectMusicLoader",
 	NULL,
 	"dmloader.dll",
 	"Both",
@@ -511,7 +511,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Microsoft.DirectMusicLoader"
     },
     {   &CLSID_DirectMusicContainer,
-        "DirectMusicContainer",
+    "DirectMusicContainer",
 	NULL,
 	"dmloader.dll",
 	"Both",

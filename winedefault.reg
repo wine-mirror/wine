@@ -2086,6 +2086,9 @@
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBandTrack.1\CLSID]
 @="{D2AC2894-B39B-11D1-8704-00600893B1BD}"
 
+[HKEY_LOCAL_MACHINE\Software\Microsoft\DirectMusic]
+@=""
+"GMFilePath"="c:\\windows\\system32\\drivers\\gm.dls"
 [HKEY_LOCAL_MACHINE\Software\Microsoft\DirectMusic\SoftwareSynths\{58C2B4D0-46E7-11D1-89AC-00A0C9054129}]
 @=""
 "Description"="Microsoft Software Synthesizer"

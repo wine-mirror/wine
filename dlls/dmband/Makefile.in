@@ -11,6 +11,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	band.c \
+	bandtrack.c \
 	dmband_main.c \
 	regsvr.c
 

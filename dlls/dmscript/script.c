@@ -25,20 +25,20 @@
 
 #include "dmscript_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 
-/* IDirectMusicScript IUnknown parts follow: */
+/* IDirectMusicScript IUnknown part: */
 HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface (LPDIRECTMUSICSCRIPT iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicScriptImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicScript))
-	{
+	if (IsEqualIID(riid, &IID_IUnknown) || 
+	    IsEqualIID(riid, &IID_IDirectMusicScript)) {
 		IDirectMusicScriptImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+	
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
@@ -55,14 +55,13 @@ ULONG WINAPI IDirectMusicScriptImpl_Release (LPDIRECTMUSICSCRIPT iface)
 	ICOM_THIS(IDirectMusicScriptImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
 }
 
-/* IDirectMusicScript Interface follow: */
+/* IDirectMusicScript IDirectMusicScript part: */
 HRESULT WINAPI IDirectMusicScriptImpl_Init (LPDIRECTMUSICSCRIPT iface, IDirectMusicPerformance* pPerformance, DMUS_SCRIPT_ERRORINFO* pErrorInfo)
 {
 	ICOM_THIS(IDirectMusicScriptImpl,iface);
@@ -174,12 +173,214 @@ ICOM_VTABLE(IDirectMusicScript) DirectMusicScript_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicScript (LPCGUID lpcGUID, LPDIRECTMUSICSCRIPT* ppDMScript, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicScript))
-	{
-		FIXME("Not yet\n");
-		return E_NOINTERFACE;
+	IDirectMusicScriptImpl* dmscript;
+	
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicScript)) {
+		dmscript = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicScriptImpl));
+		if (NULL == dmscript) {
+			*ppDMScript = (LPDIRECTMUSICSCRIPT) NULL;
+			return E_OUTOFMEMORY;
+		}
+		dmscript->lpVtbl = &DirectMusicScript_Vtbl;
+		dmscript->ref = 1;
+		*ppDMScript = (LPDIRECTMUSICSCRIPT) dmscript;
+		return S_OK;
+	}
+	
+	WARN("No interface found\n");
+	return E_NOINTERFACE;	
+}
+
+/*****************************************************************************
+ * IDirectMusicScriptObject implementation
+ */
+/* IDirectMusicScriptObject IUnknown part: */
+HRESULT WINAPI IDirectMusicScriptObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IDirectMusicScriptObject,iface);
+
+	if (IsEqualIID (riid, &IID_IUnknown) 
+		|| IsEqualIID(riid, &IID_IDirectMusicObject)) {
+		IDirectMusicScriptObject_AddRef(iface);
+		*ppobj = This;
+		return S_OK;
+	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
+		IPersistStream_AddRef ((LPPERSISTSTREAM)This->pStream);
+		*ppobj = (LPPERSISTSTREAM)This->pStream;
+		return S_OK;
+	} else if (IsEqualIID (riid, &IID_IDirectMusicScript)) {
+		IDirectMusicScript_AddRef ((LPDIRECTMUSICSCRIPT)This->pScript);
+		*ppobj = (LPDIRECTMUSICSCRIPT)This->pScript;
+		return S_OK;
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+ULONG WINAPI IDirectMusicScriptObject_AddRef (LPDIRECTMUSICOBJECT iface)
+{
+	ICOM_THIS(IDirectMusicScriptObject,iface);
+	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	return ++(This->ref);
+}
+
+ULONG WINAPI IDirectMusicScriptObject_Release (LPDIRECTMUSICOBJECT iface)
+{
+	ICOM_THIS(IDirectMusicScriptObject,iface);
+	ULONG ref = --This->ref;
+	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	if (ref == 0) {
+		HeapFree(GetProcessHeap(), 0, This);
+	}
+	return ref;
+}
+
+/* IDirectMusicScriptObject IDirectMusicObject part: */
+HRESULT WINAPI IDirectMusicScriptObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
+{
+	ICOM_THIS(IDirectMusicScriptObject,iface);
+
+	TRACE("(%p, %p)\n", This, pDesc);
+	pDesc = This->pDesc;
+	
+	return S_OK;
+}
+
+HRESULT WINAPI IDirectMusicScriptObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
+{
+	ICOM_THIS(IDirectMusicScriptObject,iface);
+
+	TRACE("(%p, %p)\n", This, pDesc);
+	This->pDesc = pDesc;
+
+	return S_OK;
+}
+
+HRESULT WINAPI IDirectMusicScriptObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc)
+{
+	ICOM_THIS(IDirectMusicScriptObject,iface);
+
+	FIXME("(%p, %p, %p): stub\n", This, pStream, pDesc);
+
+	return S_OK;
+}
+
+ICOM_VTABLE(IDirectMusicObject) DirectMusicScriptObject_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectMusicScriptObject_QueryInterface,
+	IDirectMusicScriptObject_AddRef,
+	IDirectMusicScriptObject_Release,
+	IDirectMusicScriptObject_GetDescriptor,
+	IDirectMusicScriptObject_SetDescriptor,
+	IDirectMusicScriptObject_ParseDescriptor
+};
+
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicScriptObject (LPCGUID lpcGUID, LPDIRECTMUSICOBJECT* ppObject, LPUNKNOWN pUnkOuter)
+{
+	IDirectMusicScriptObject *obj;
+	
+	TRACE("(%p,%p,%p)\n", lpcGUID, ppObject, pUnkOuter);
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicObject)) {
+		obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicScriptObject));
+		if (NULL == obj) {
+			*ppObject = (LPDIRECTMUSICOBJECT) NULL;
+			return E_OUTOFMEMORY;
+		}
+		obj->lpVtbl = &DirectMusicScriptObject_Vtbl;
+		obj->ref = 1;
+		/* prepare IPersistStream */
+		obj->pStream = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicScriptObjectStream));
+		obj->pStream->lpVtbl = &DirectMusicScriptObjectStream_Vtbl;
+		obj->pStream->ref = 1;	
+		obj->pStream->pParentObject = obj;
+		/* prepare IDirectMusicScript */
+		DMUSIC_CreateDirectMusicScript (&IID_IDirectMusicScript, (LPDIRECTMUSICSCRIPT*)&obj->pScript, NULL);
+		obj->pScript->pObject = obj;
+		*ppObject = (LPDIRECTMUSICOBJECT) obj;
+		return S_OK;
 	}
 	WARN("No interface found\n");
 	
-	return E_NOINTERFACE;	
+	return E_NOINTERFACE;
 }
+	
+/*****************************************************************************
+ * IDirectMusicScriptObjectStream implementation
+ */
+/* IDirectMusicScriptObjectStream IUnknown part: */
+HRESULT WINAPI IDirectMusicScriptObjectStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IDirectMusicScriptObjectStream,iface);
+
+	if (IsEqualIID (riid, &IID_IUnknown)
+		|| IsEqualIID (riid, &IID_IPersistStream)) {
+		IDirectMusicScriptObjectStream_AddRef(iface);
+		*ppobj = This;
+		return S_OK;
+	}
+	
+	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+ULONG WINAPI IDirectMusicScriptObjectStream_AddRef (LPPERSISTSTREAM iface)
+{
+	ICOM_THIS(IDirectMusicScriptObjectStream,iface);
+	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	return ++(This->ref);
+}
+
+ULONG WINAPI IDirectMusicScriptObjectStream_Release (LPPERSISTSTREAM iface)
+{
+	ICOM_THIS(IDirectMusicScriptObjectStream,iface);
+	ULONG ref = --This->ref;
+	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	if (ref == 0) {
+		HeapFree(GetProcessHeap(), 0, This);
+	}
+	return ref;
+}
+
+/* IDirectMusicScriptObjectStream IPersist part: */
+HRESULT WINAPI IDirectMusicScriptObjectStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID)
+{
+	return E_NOTIMPL;
+}
+
+/* IDirectMusicScriptObjectStream IPersistStream part: */
+HRESULT WINAPI IDirectMusicScriptObjectStream_IsDirty (LPPERSISTSTREAM iface)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT WINAPI IDirectMusicScriptObjectStream_Load (LPPERSISTSTREAM iface, IStream* pStm)
+{
+	FIXME(": Loading not implemented yet\n");
+	return S_OK;
+}
+
+HRESULT WINAPI IDirectMusicScriptObjectStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT WINAPI IDirectMusicScriptObjectStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize)
+{
+	return E_NOTIMPL;
+}
+
+ICOM_VTABLE(IPersistStream) DirectMusicScriptObjectStream_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectMusicScriptObjectStream_QueryInterface,
+	IDirectMusicScriptObjectStream_AddRef,
+	IDirectMusicScriptObjectStream_Release,
+	IDirectMusicScriptObjectStream_GetClassID,
+	IDirectMusicScriptObjectStream_IsDirty,
+	IDirectMusicScriptObjectStream_Load,
+	IDirectMusicScriptObjectStream_Save,
+	IDirectMusicScriptObjectStream_GetSizeMax
+};

@@ -32,13 +32,13 @@ HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFII
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IReferenceClock))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IReferenceClock)) {
 		IReferenceClockImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
@@ -55,8 +55,7 @@ ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface)
 	ICOM_THIS(IReferenceClockImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -117,7 +116,7 @@ HRESULT WINAPI DMUSIC_CreateReferenceClock (LPCGUID lpcGUID, IReferenceClock** p
 {
 	IReferenceClockImpl* clock;
 	
-	if (IsEqualGUID (lpcGUID, &IID_IReferenceClock))
+	if (IsEqualIID (lpcGUID, &IID_IReferenceClock))
 	{
 		clock = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IReferenceClockImpl));
 		if (NULL == clock) {
@@ -132,7 +131,7 @@ HRESULT WINAPI DMUSIC_CreateReferenceClock (LPCGUID lpcGUID, IReferenceClock** p
 		*ppRC = (IReferenceClock *) clock;
 		return S_OK;
 	}
-	WARN("No interface found\n");
 	
+	WARN("No interface found\n");
 	return E_NOINTERFACE;	
 }

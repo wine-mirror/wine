@@ -19,15 +19,8 @@
 
 #include "dmsynth_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
-
-/******************************************************************
- *		DirectMusicSynthesizer ClassFactory
- *
- *
- */
- 
 typedef struct
 {
     /* IUnknown fields */
@@ -35,7 +28,10 @@ typedef struct
     DWORD                       ref;
 } IClassFactoryImpl;
 
-static HRESULT WINAPI DMSYCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+/******************************************************************
+ *		DirectMusicSynth ClassFactory
+ */
+static HRESULT WINAPI SynthCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
@@ -43,52 +39,106 @@ static HRESULT WINAPI DMSYCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPV
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DMSYCF_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI SynthCF_AddRef(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI DMSYCF_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI SynthCF_Release(LPCLASSFACTORY iface)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
 
-static HRESULT WINAPI DMSYCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI SynthCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	if (IsEqualGUID (riid, &IID_IDirectMusicSynth) ||
-		IsEqualGUID (riid, &IID_IDirectMusicSynth8)) {
+	if (IsEqualIID (riid, &IID_IDirectMusicSynth) ||
+		IsEqualIID (riid, &IID_IDirectMusicSynth8)) {
 		return DMUSIC_CreateDirectMusicSynth (riid, (LPDIRECTMUSICSYNTH8*)ppobj, pOuter);
-	} else if (IsEqualGUID (riid, &IID_IDirectMusicSynthSink)) {
-		return DMUSIC_CreateDirectMusicSynthSink (riid, (LPDIRECTMUSICSYNTHSINK*)ppobj, pOuter);
-	}
+		}
+		
 	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DMSYCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+static HRESULT WINAPI SynthCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
 	FIXME("(%p)->(%d),stub!\n", This, dolock);
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DMSYCF_Vtbl = {
+static ICOM_VTABLE(IClassFactory) SynthCF_Vtbl = {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	DMSYCF_QueryInterface,
-	DMSYCF_AddRef,
-	DMSYCF_Release,
-	DMSYCF_CreateInstance,
-	DMSYCF_LockServer
+	SynthCF_QueryInterface,
+	SynthCF_AddRef,
+	SynthCF_Release,
+	SynthCF_CreateInstance,
+	SynthCF_LockServer
 };
 
-static IClassFactoryImpl DMSYNTH_CF = {&DMSYCF_Vtbl, 1 };
+static IClassFactoryImpl Synth_CF = {&SynthCF_Vtbl, 1 };
 
+/******************************************************************
+ *		DirectMusicSynthSink ClassFactory
+ */
+static HRESULT WINAPI SynthSinkCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SynthSinkCF_AddRef(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SynthSinkCF_Release(LPCLASSFACTORY iface)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SynthSinkCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+	if (IsEqualIID (riid, &IID_IDirectMusicSynthSink)) {
+		return DMUSIC_CreateDirectMusicSynthSink (riid, (LPDIRECTMUSICSYNTHSINK*)ppobj, pOuter);
+	}
+		
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SynthSinkCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n", This, dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SynthSinkCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SynthSinkCF_QueryInterface,
+	SynthSinkCF_AddRef,
+	SynthSinkCF_Release,
+	SynthSinkCF_CreateInstance,
+	SynthSinkCF_LockServer
+};
+
+static IClassFactoryImpl SynthSink_CF = {&SynthSinkCF_Vtbl, 1 };
+	
 /******************************************************************
  *		DllMain
  *
@@ -131,11 +181,16 @@ HRESULT WINAPI DMSYNTH_DllCanUnloadNow(void)
 HRESULT WINAPI DMSYNTH_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    if (IsEqualCLSID (&IID_IClassFactory, riid)) {
-      *ppv = (LPVOID) &DMSYNTH_CF;
-      IClassFactory_AddRef((IClassFactory*)*ppv);
-      return S_OK;
-    }
+    if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSynth) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &Synth_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;		
+	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSynth) && IsEqualIID (riid, &IID_IClassFactory)) {
+		*ppv = (LPVOID) &SynthSink_CF;
+		IClassFactory_AddRef((IClassFactory*)*ppv);
+		return S_OK;		
+	} 
+
     WARN("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

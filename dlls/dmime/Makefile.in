@@ -13,14 +13,22 @@ C_SRCS = \
 	audiopath.c \
 	dmime_main.c \
 	graph.c \
+	lyricstrack.c \
+	markertrack.c \
+	paramcontroltrack.c \
 	patterntrack.c \
 	performance.c \
 	regsvr.c \
 	segment.c \
 	segmentstate.c \
+	segtriggertrack.c \
+	seqtrack.c \
 	song.c \
+	sysextrack.c \
+	tempotrack.c \
+	timesigtrack.c \
 	tool.c \
-	track.c
+	wavetrack.c
 
 RC_SRCS = version.rc
 

@@ -25,18 +25,17 @@
 
 #include "dmime_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 
-/* IDirectMusicSegmentState8 IUnknown part follow: */
+/* IDirectMusicSegmentState8 IUnknown part: */
 HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMENTSTATE8 iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicSegmentState) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicSegmentState8))
-	{
+	if (IsEqualIID(riid, &IID_IUnknown) || 
+	    IsEqualIID(riid, &IID_IDirectMusicSegmentState) ||
+	    IsEqualIID(riid, &IID_IDirectMusicSegmentState8)) {
 		IDirectMusicSegmentState8Impl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
@@ -57,14 +56,13 @@ ULONG WINAPI IDirectMusicSegmentState8Impl_Release (LPDIRECTMUSICSEGMENTSTATE8 i
 	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
 }
 
-/* IDirectMusicSegmentState Interface part follow: */
+/* IDirectMusicSegmentState8 IDirectMusicSegmentState part: */
 HRESULT WINAPI IDirectMusicSegmentState8Impl_GetRepeats (LPDIRECTMUSICSEGMENTSTATE8 iface,  DWORD* pdwRepeats)
 {
 	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
@@ -110,7 +108,7 @@ HRESULT WINAPI IDirectMusicSegmentState8Impl_GetStartPoint (LPDIRECTMUSICSEGMENT
 	return S_OK;
 }
 
-/* IDirectMusicSegmentState8 Interface part follow: */
+/* IDirectMusicSegmentState8 IDirectMusicSegmentState8 part: */
 HRESULT WINAPI IDirectMusicSegmentState8Impl_SetTrackConfig (LPDIRECTMUSICSEGMENTSTATE8 iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff)
 {
 	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
@@ -147,8 +145,8 @@ ICOM_VTABLE(IDirectMusicSegmentState8) DirectMusicSegmentState8_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentState (LPCGUID lpcGUID, LPDIRECTMUSICSEGMENTSTATE8 *ppDMSeg, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicComposer))
-	{
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicSegmentState)
+		|| IsEqualIID (lpcGUID, &IID_IDirectMusicSegmentState8)) {
 		FIXME("Not yet\n");
 		return E_NOINTERFACE;
 	}

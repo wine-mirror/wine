@@ -32,7 +32,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
@@ -528,7 +528,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	"DMScript"
     },
     {   &CLSID_DirectMusicScript,
-        "DirectMusic Script Object",
+    "DirectMusic Script Object",
 	NULL,
 	"dmscript.dll",
 	"Both",

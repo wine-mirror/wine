@@ -12,8 +12,8 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	container.c \
 	dmloader_main.c \
-	getloader.c \
 	loader.c \
+	loaderstream.c \
 	regsvr.c
 
 RC_SRCS = version.rc

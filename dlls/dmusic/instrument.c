@@ -32,12 +32,13 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_QueryInterface (LPDIRECTMUSICINSTRUMEN
 {
 	ICOM_THIS(IDirectMusicInstrumentImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicInstrument))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown)
+		|| IsEqualIID (riid, &IID_IDirectMusicInstrument)) {
 		IDirectMusicInstrumentImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
+
 	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
@@ -54,8 +55,7 @@ ULONG WINAPI IDirectMusicInstrumentImpl_Release (LPDIRECTMUSICINSTRUMENT iface)
 	ICOM_THIS(IDirectMusicInstrumentImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -67,7 +67,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_GetPatch (LPDIRECTMUSICINSTRUMENT ifac
 	ICOM_THIS(IDirectMusicInstrumentImpl,iface);
 
 	TRACE("(%p, %p)\n", This, pdwPatch);
-	*pdwPatch = This->patch;
+	*pdwPatch = This->dwPatch;
 	
 	return S_OK;
 }
@@ -77,7 +77,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_SetPatch (LPDIRECTMUSICINSTRUMENT ifac
 	ICOM_THIS(IDirectMusicInstrumentImpl,iface);
 
 	TRACE("(%p, %ld)\n", This, dwPatch);
-	This->patch = dwPatch;
+	This->dwPatch = dwPatch;
 
 	return S_OK;
 }
@@ -95,12 +95,11 @@ ICOM_VTABLE(IDirectMusicInstrument) DirectMusicInstrument_Vtbl =
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicInstrument (LPCGUID lpcGUID, LPDIRECTMUSICINSTRUMENT* ppDMInstr, LPUNKNOWN pUnkOuter)
 {
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicInstrument))
-	{
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicInstrument)) {
 		FIXME("Not yet\n");
 		return E_NOINTERFACE;
 	}
+
 	WARN("No interface found\n");
-	
 	return E_NOINTERFACE;	
 }

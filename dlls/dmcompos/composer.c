@@ -25,16 +25,15 @@
 
 #include "dmcompos_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
+WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
 /* IDirectMusicComposer IUnknown parts follow: */
 HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectMusicComposerImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicComposer))
-	{
+	if (IsEqualIID (riid, &IID_IUnknown) || 
+	    IsEqualIID (riid, &IID_IDirectMusicComposer)) {
 		IDirectMusicComposerImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
@@ -55,8 +54,7 @@ ULONG WINAPI IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER iface)
 	ICOM_THIS(IDirectMusicComposerImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -136,8 +134,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicComposer (LPCGUID lpcGUID, LPDIRECTMUSICC
 {
 	IDirectMusicComposerImpl* dmcompos;
 	
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicComposer))
-	{
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicComposer)) {
 		dmcompos = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicComposerImpl));
 		if (NULL == dmcompos) {
 			*ppDMCP = (LPDIRECTMUSICCOMPOSER) NULL;
