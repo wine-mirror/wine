@@ -977,7 +977,20 @@ typedef struct tagCOMMTIMEOUTS {
 
 typedef void CALLBACK (*PAPCFUNC)(ULONG_PTR);
 typedef void CALLBACK (*PTIMERAPCROUTINE)(LPVOID,DWORD,DWORD);
-  
+
+typedef enum _COMPUTER_NAME_FORMAT
+{
+	ComputerNameNetBIOS,
+	ComputerNameDnsHostname,
+	ComputerNameDnsDomain,
+	ComputerNameDnsFullyQualified,
+	ComputerNamePhysicalNetBIOS,
+	ComputerNamePhysicalDnsHostname,
+	ComputerNamePhysicalDnsDomain,
+	ComputerNamePhysicalDnsFullyQualified,
+	ComputerNameMax
+} COMPUTER_NAME_FORMAT;
+
 /*DWORD WINAPI GetVersion( void );*/
 BOOL WINAPI GetVersionExA(OSVERSIONINFOA*);
 BOOL WINAPI GetVersionExW(OSVERSIONINFOW*);
@@ -1063,6 +1076,7 @@ BOOL        WINAPI BuildCommDCBAndTimeoutsW(LPCWSTR,LPDCB,LPCOMMTIMEOUTS);
 #define     BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
 BOOL        WINAPI CancelIo(HANDLE);
 BOOL        WINAPI CancelWaitableTimer(HANDLE);
+BOOL        WINAPI CheckTokenMembership(HANDLE,PSID,PBOOL);
 BOOL        WINAPI ClearCommBreak(HANDLE);
 BOOL        WINAPI ClearCommError(HANDLE,LPDWORD,LPCOMSTAT);
 BOOL        WINAPI ClearEventLogA(HANDLE,LPCSTR);
@@ -1179,9 +1193,12 @@ BOOL        WINAPI GetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
 LPSTR       WINAPI GetCommandLineA(void);
 LPWSTR      WINAPI GetCommandLineW(void);
 #define     GetCommandLine WINELIB_NAME_AW(GetCommandLine)
-BOOL      WINAPI GetComputerNameA(LPSTR,LPDWORD);
-BOOL      WINAPI GetComputerNameW(LPWSTR,LPDWORD);
+BOOL        WINAPI GetComputerNameA(LPSTR,LPDWORD);
+BOOL        WINAPI GetComputerNameW(LPWSTR,LPDWORD);
 #define     GetComputerName WINELIB_NAME_AW(GetComputerName)
+BOOL        WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
+BOOL        WINAPI GetComputerNameExW(COMPUTER_NAME_FORMAT,LPWSTR,LPDWORD);
+#define     GetComputerNameEx WINELIB_NAME_AW(GetComputerNameEx)
 HANDLE      WINAPI GetCurrentProcess(void);
 HANDLE      WINAPI GetCurrentThread(void);
 BOOL        WINAPI GetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,LPDWORD);

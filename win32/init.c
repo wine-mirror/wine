@@ -8,6 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
+
 #include "winnls.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -33,9 +35,16 @@ BOOL WINAPI GetComputerNameA(LPSTR name,LPDWORD size)
     BOOL ret;
     __TRY
     {
-      ret = (-1!=gethostname(name,*size));
-      if (ret)
-	*size = strlen(name);
+	char host_name[256];
+	TRACE("*size = %ld\n", *size);
+	ret = (gethostname(host_name, sizeof(host_name)) != -1);
+	if (ret)
+	{
+	    lstrcpynA(name, host_name, *size);
+	    *size = strlen(name);
+	}
+	else
+	    WARN("gethostname: %s\n", strerror(errno));
     }
     __EXCEPT(page_fault)
     {
@@ -43,7 +52,8 @@ BOOL WINAPI GetComputerNameA(LPSTR name,LPDWORD size)
       return FALSE;
     }
     __ENDTRY
-     
+
+    TRACE("returning (%ld) %s\n", *size, debugstr_a(name));
     return ret;
 }
 
@@ -60,3 +70,14 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
     return ret;
 }
 
+BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD size)
+{
+    FIXME("(%d, %p, %p) semi-stub!\n", type, name, size);
+    return GetComputerNameA(name, size);
+}
+
+BOOL WINAPI GetComputerNameExW(COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD size)
+{
+    FIXME("(%d, %p, %p) semi-stub!\n", type, name, size);
+    return GetComputerNameW(name, size);
+}

@@ -226,6 +226,7 @@ debug_channels (comm console debugstr dll int resource stress thunk toolhelp
 @ stdcall DebugBreak() DebugBreak
 @ stdcall DefineDosDeviceA(long str str) DefineDosDeviceA
 @ stub DefineDosDeviceW
+@ stub DelayLoadFailureHook
 @ stdcall DeleteAtom(long) DeleteAtom
 @ forward DeleteCriticalSection ntdll.RtlDeleteCriticalSection
 @ stdcall DeleteFileA(str) DeleteFileA
@@ -336,6 +337,8 @@ debug_channels (comm console debugstr dll int resource stress thunk toolhelp
 @ stdcall GetCompressedFileSizeA(long ptr) GetCompressedFileSizeA
 @ stdcall GetCompressedFileSizeW(long ptr) GetCompressedFileSizeW
 @ stdcall GetComputerNameA(ptr ptr) GetComputerNameA
+@ stdcall GetComputerNameExA(long ptr ptr) GetComputerNameExA
+@ stdcall GetComputerNameExW(long ptr ptr) GetComputerNameExW
 @ stdcall GetComputerNameW(ptr ptr) GetComputerNameW
 @ stdcall GetConsoleCP() GetConsoleCP
 @ stdcall GetConsoleCursorInfo(long ptr) GetConsoleCursorInfo
