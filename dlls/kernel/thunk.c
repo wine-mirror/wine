@@ -1930,6 +1930,10 @@ BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 
 /**********************************************************************
  *		_KERNEL32_99
+ *
+ * Checks whether the clock has to be switched from daylight
+ * savings time to standard time or vice versa.
+ *
  */
 DWORD WINAPI _KERNEL32_99(DWORD x)
 {
