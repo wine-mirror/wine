@@ -74,7 +74,6 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
     PENOBJ * penPtr;
     HPEN hpen;
 
-    if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnWidth = pen->lopnWidth;
@@ -105,11 +104,11 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
     penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK; 
     
-    /* PS_USERSTYLE and PS_ALTERNATE workaround */   
-    if((penPtr->logpen.lopnStyle & PS_STYLE_MASK) > PS_INSIDEFRAME)
+    /* PS_USERSTYLE workaround */   
+    if((penPtr->logpen.lopnStyle & PS_STYLE_MASK) == PS_USERSTYLE)
        penPtr->logpen.lopnStyle = 
          (penPtr->logpen.lopnStyle & ~PS_STYLE_MASK) | PS_SOLID;
-    
+
     penPtr->logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1; 
     penPtr->logpen.lopnWidth.y = 0;
     penPtr->logpen.lopnColor = brush->lbColor;
