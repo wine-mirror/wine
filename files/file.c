@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>
@@ -40,6 +41,10 @@
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
+static BOOL32 FILE_Signaled(K32OBJ *ptr, DWORD tid);
+static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id);
+static void FILE_AddWait(K32OBJ *ptr, DWORD tid);
+static void FILE_RemoveWait(K32OBJ *ptr, DWORD thread_id);
 static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
 			LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped);
 static BOOL32 FILE_Write(K32OBJ *ptr, LPCVOID lpBuffer, DWORD nNumberOfChars,
@@ -48,12 +53,11 @@ static void FILE_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS FILE_Ops =
 {
-    /* Object cannot be waited upon (FIXME: for now) */
-    NULL,              /* signaled */
-    NULL,              /* satisfied */
-    NULL,              /* add_wait */
-    NULL,              /* remove_wait */
-    FILE_Read,	        /* read */
+    FILE_Signaled,     /* signaled */
+    FILE_Satisfied,    /* satisfied */
+    FILE_AddWait,      /* add_wait */
+    FILE_RemoveWait,   /* remove_wait */
+    FILE_Read,	       /* read */
     FILE_Write,        /* write */
     FILE_Destroy       /* destroy */
 };
@@ -102,6 +106,42 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file )
     return handle;
 }
 
+static BOOL32 FILE_Signaled(K32OBJ *ptr, DWORD thread_id)
+{
+	fd_set	fds,*readfds = NULL,*writefds = NULL;
+	struct timeval tv;
+	FILE_OBJECT *file = (FILE_OBJECT *)ptr;
+
+	FD_ZERO(&fds);
+	FD_SET(file->unix_handle,&fds);
+	if (file->mode == OF_READ) readfds = &fds;
+	if (file->mode == OF_WRITE) writefds = &fds;
+	if (file->mode == OF_READWRITE) {writefds = &fds; readfds = &fds;}
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	assert(readfds || writefds);
+	if (select(file->unix_handle+1,readfds,writefds,NULL,&tv)>0)
+		return TRUE; /* we triggered one fd. Whereever. */
+	return FALSE;
+}
+
+static void FILE_AddWait(K32OBJ *ptr, DWORD thread_id)
+{
+	TRACE(file,"(),stub\n");
+	return;
+}
+
+static void FILE_RemoveWait(K32OBJ *ptr, DWORD thread_id)
+{
+	TRACE(file,"(),stub\n");
+	return;
+}
+
+static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id)
+{
+	TRACE(file,"(),stub\n");
+	return TRUE;
+}
 
 /* FIXME: lpOverlapped is ignored */
 static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
