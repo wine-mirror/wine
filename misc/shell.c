@@ -65,82 +65,191 @@ static UINT16	uMsgWndDestroyed = 0;
 static UINT16	uMsgShellActivate = 0;
 
 /*************************************************************************
- *				DragAcceptFiles		[SHELL.9]
+ *				DragAcceptFiles32		[SHELL32.54]
  */
-void WINAPI DragAcceptFiles(HWND16 hWnd, BOOL16 b)
-{ WND* wnd = WIN_FindWndPtr(hWnd);
-
-    if( wnd )
-	wnd->dwExStyle = b? wnd->dwExStyle | WS_EX_ACCEPTFILES
-			  : wnd->dwExStyle & ~WS_EX_ACCEPTFILES;
+void WINAPI DragAcceptFiles32(HWND32 hWnd, BOOL32 b)
+{
+  WND* wnd = WIN_FindWndPtr(hWnd);
+  
+  if( wnd )
+    wnd->dwExStyle = b? wnd->dwExStyle | WS_EX_ACCEPTFILES
+                      : wnd->dwExStyle & ~WS_EX_ACCEPTFILES;
 }
 
+/*************************************************************************
+ *				DragAcceptFiles16		[SHELL.9]
+ */
+void WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b)
+{
+  DragAcceptFiles32(hWnd, b);
+}
 
 /*************************************************************************
- *				DragQueryFile		[SHELL.11]
+ *				SHELL_DragQueryFile	[internal]
+ * 
  */
-UINT16 WINAPI DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile,
+static UINT32 SHELL_DragQueryFile(LPSTR lpDrop, LPWSTR lpwDrop, UINT32 lFile, 
+				  LPSTR lpszFile, LPWSTR lpszwFile, UINT32 lLength)
+{
+    UINT32 i;
+
+    i = 0;
+    if (lpDrop) {
+    while (i++ < lFile) {
+	while (*lpDrop++); /* skip filename */
+	if (!*lpDrop) 
+	  return (lFile == 0xFFFFFFFF) ? i : 0;  
+      }
+    }
+    if (lpwDrop) {
+      while (i++ < lFile) {
+	while (*lpwDrop++); /* skip filename */
+	if (!*lpwDrop) 
+	  return (lFile == 0xFFFFFFFF) ? i : 0;  
+      }
+    }
+    
+    if (lpDrop)  i = lstrlen32A(lpDrop);
+    if (lpwDrop) i = lstrlen32W(lpwDrop);
+    i++;
+    if (!lpszFile && !lpszwFile) {
+      return i;   /* needed buffer size */
+    }
+    i = (lLength > i) ? i : lLength;
+    if (lpszFile) {
+      if (lpDrop) lstrcpyn32A (lpszFile,  lpDrop,  i);
+      else        lstrcpynWtoA(lpszFile,  lpwDrop, i);
+    } else {
+      if (lpDrop) lstrcpynAtoW(lpszwFile, lpDrop,  i);
+      else        lstrcpyn32W (lpszwFile, lpwDrop, i);
+    }
+    return i;
+}
+
+/*************************************************************************
+ *				DragQueryFile32A	[SHELL32.81] [shell32.82]
+ */
+UINT32 WINAPI DragQueryFile32A(HDROP32 hDrop, UINT32 lFile, LPSTR lpszFile,
+			      UINT32 lLength)
+{ /* hDrop is a global memory block allocated with GMEM_SHARE 
+     * with DROPFILESTRUCT as a header and filenames following
+     * it, zero length filename is in the end */       
+    
+    LPDROPFILESTRUCT32 lpDropFileStruct;
+    LPSTR lpCurrent;
+    UINT32 i;
+    
+    TRACE(shell,"(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
+    
+    lpDropFileStruct = (LPDROPFILESTRUCT32) GlobalLock32(hDrop); 
+    if(!lpDropFileStruct)
+      return 0;
+
+    lpCurrent = (LPSTR) lpDropFileStruct + lpDropFileStruct->lSize;
+    i = SHELL_DragQueryFile(lpCurrent, NULL, lFile, lpszFile, NULL, lLength);
+    GlobalUnlock32(hDrop);
+    return i;
+}
+
+/*************************************************************************
+ *				DragQueryFile32W	[shell32.133]
+ */
+UINT32 WINAPI DragQueryFile32W(HDROP32 hDrop, UINT32 lFile, LPWSTR lpszwFile,
+			      UINT32 lLength)
+{
+    LPDROPFILESTRUCT32 lpDropFileStruct;
+    LPWSTR lpwCurrent;
+    UINT32 i;
+    
+    TRACE(shell,"(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszwFile,lLength);
+    
+    lpDropFileStruct = (LPDROPFILESTRUCT32) GlobalLock32(hDrop); 
+    if(!lpDropFileStruct)
+      return 0;
+
+    lpwCurrent = (LPWSTR) lpDropFileStruct + lpDropFileStruct->lSize;
+    i = SHELL_DragQueryFile(NULL, lpwCurrent, lFile, NULL, lpszwFile,lLength);
+    GlobalUnlock32(hDrop);
+    return i;
+}
+/*************************************************************************
+ *				DragQueryFile16		[SHELL.11]
+ */
+UINT16 WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile,
                             WORD wLength)
 { /* hDrop is a global memory block allocated with GMEM_SHARE 
      * with DROPFILESTRUCT as a header and filenames following
      * it, zero length filename is in the end */       
     
-    LPDROPFILESTRUCT lpDropFileStruct;
+    LPDROPFILESTRUCT16 lpDropFileStruct;
     LPSTR lpCurrent;
     WORD  i;
     
-  TRACE(shell,"(%04x, %i, %p, %u)\n",
-		hDrop,wFile,lpszFile,wLength);
+    TRACE(shell,"(%04x, %x, %p, %u)\n", hDrop,wFile,lpszFile,wLength);
     
-    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop); 
-  if(!lpDropFileStruct)
-    return 0;
-
+    lpDropFileStruct = (LPDROPFILESTRUCT16) GlobalLock16(hDrop); 
+    if(!lpDropFileStruct)
+      return 0;
+    
     lpCurrent = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
-    
-    i = 0;
-    while (i++ < wFile)
-  { while (*lpCurrent++);  /* skip filename */
-	if (!*lpCurrent) 
-	    return (wFile == 0xFFFF) ? i : 0;  
-    }
-    
-    i = strlen(lpCurrent); 
-  if (!lpszFile)
-    return i+1;   /* needed buffer size */
-    
-    i = (wLength > i) ? i : wLength-1;
-    strncpy(lpszFile, lpCurrent, i);
-    lpszFile[i] = '\0';
 
+    i = (WORD)SHELL_DragQueryFile(lpCurrent, NULL, wFile==0xffff?0xffffffff:wFile,
+				  lpszFile, NULL, wLength);
     GlobalUnlock16(hDrop);
     return i;
 }
 
 
+
 /*************************************************************************
- *				DragFinish		[SHELL.12]
+ *				DragFinish32		[SHELL32.80]
  */
-void WINAPI DragFinish(HDROP16 h)
+void WINAPI DragFinish32(HDROP32 h)
+{ TRACE(shell,"\n");
+    GlobalFree32((HGLOBAL32)h);
+}
+
+/*************************************************************************
+ *				DragFinish16		[SHELL.12]
+ */
+void WINAPI DragFinish16(HDROP16 h)
 { TRACE(shell,"\n");
     GlobalFree16((HGLOBAL16)h);
 }
 
 
 /*************************************************************************
- *				DragQueryPoint		[SHELL.13]
+ *				DragQueryPoint32		[SHELL32.135]
  */
-BOOL16 WINAPI DragQueryPoint(HDROP16 hDrop, POINT16 *p)
-{ LPDROPFILESTRUCT lpDropFileStruct;  
-    BOOL16           bRet;
+BOOL32 WINAPI DragQueryPoint32(HDROP32 hDrop, POINT32 *p)
+{
+  LPDROPFILESTRUCT32 lpDropFileStruct;  
+  BOOL32             bRet;
   TRACE(shell,"\n");
-    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop);
+  lpDropFileStruct = (LPDROPFILESTRUCT32) GlobalLock32(hDrop);
+  
+  memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT32));
+  bRet = lpDropFileStruct->fInNonClientArea;
+  
+  GlobalUnlock32(hDrop);
+  return bRet;
+}
 
-    memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT16));
-    bRet = lpDropFileStruct->fInNonClientArea;
-
-    GlobalUnlock16(hDrop);
-    return bRet;
+/*************************************************************************
+ *				DragQueryPoint16		[SHELL.13]
+ */
+BOOL16 WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p)
+{
+  LPDROPFILESTRUCT16 lpDropFileStruct;  
+  BOOL16           bRet;
+  TRACE(shell,"\n");
+  lpDropFileStruct = (LPDROPFILESTRUCT16) GlobalLock16(hDrop);
+  
+  memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT16));
+  bRet = lpDropFileStruct->fInNonClientArea;
+  
+  GlobalUnlock16(hDrop);
+  return bRet;
 }
 
 /*************************************************************************

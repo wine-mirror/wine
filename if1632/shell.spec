@@ -8,10 +8,10 @@ type	win16
   5 pascal   RegSetValue(long str long str long) RegSetValue16
   6 pascal   RegQueryValue(long str ptr ptr) RegQueryValue16
   7 pascal   RegEnumKey(long long ptr long) RegEnumKey16
-  9 pascal16 DragAcceptFiles(word word) DragAcceptFiles
- 11 pascal16 DragQueryFile(word s_word ptr s_word) DragQueryFile
- 12 pascal16 DragFinish(word) DragFinish
- 13 pascal16 DragQueryPoint(word ptr) DragQueryPoint
+  9 pascal16 DragAcceptFiles(word word) DragAcceptFiles16
+ 11 pascal16 DragQueryFile(word s_word ptr s_word) DragQueryFile16
+ 12 pascal16 DragFinish(word) DragFinish16
+ 13 pascal16 DragQueryPoint(word ptr) DragQueryPoint16
  20 pascal16 ShellExecute(word str str str str s_word) ShellExecute16
  21 pascal16 FindExecutable(str str ptr) FindExecutable16
  22 pascal16 ShellAbout(word ptr ptr word) ShellAbout16

@@ -68,14 +68,40 @@ typedef WORD FILEOP_FLAGS;
 typedef WORD PRINTEROP_FLAGS;
 
 /******************************
-* DROPFILESTRUCT
+* DRAG&DROP API
 */
 typedef struct { 	   /* structure for dropped files */ 
 	WORD		wSize;
 	POINT16		ptMousePos;   
 	BOOL16		fInNonClientArea;
 	/* memory block with filenames follows */     
-} DROPFILESTRUCT, *LPDROPFILESTRUCT; 
+} DROPFILESTRUCT16, *LPDROPFILESTRUCT16; 
+
+typedef struct { 	   /* structure for dropped files */ 
+	DWORD		lSize;
+	POINT32		ptMousePos;   
+	BOOL32		fInNonClientArea;
+        BOOL32          fWideChar;
+	/* memory block with filenames follows */     
+} DROPFILESTRUCT32, *LPDROPFILESTRUCT32; 
+
+DECL_WINELIB_TYPE(DROPFILESTRUCT)
+DECL_WINELIB_TYPE(LPDROPFILESTRUCT)
+
+void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);
+void        WINAPI DragAcceptFiles32(HWND32 hWnd, BOOL32 b);
+#define     DragAcceptFiles WINELIB_NAME(DragAcceptFiles)
+UINT16      WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength);
+UINT32      WINAPI DragQueryFile32A(HDROP32 hDrop, UINT32 lFile, LPSTR lpszFile, UINT32 lLength);
+UINT32      WINAPI DragQueryFile32W(HDROP32 hDrop, UINT32 lFile, LPWSTR lpszFile, UINT32 lLength);
+#define     DragQueryFile WINELIB_NAME_AW(DragQueryFile)
+void        WINAPI DragFinish32(HDROP32 h);
+void        WINAPI DragFinish16(HDROP16 h);
+#define     DragFinish WINELIB_NAME(DragFinish)
+BOOL32      WINAPI DragQueryPoint32(HDROP32 hDrop, POINT32 *p);
+BOOL16      WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p);
+#define     DragQueryPoint WINELIB_NAME(DragQueryPoint)
+
 
 /****************************************************************************
 * NOTIFYICONDATA 

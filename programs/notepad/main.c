@@ -103,7 +103,7 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
           break;
 
        case WM_DROPFILES:
-          DragQueryFiles(wParam, 0, szFileName, sizeof(szFileName));
+          DragQueryFile(wParam, 0, szFileName, sizeof(szFileName));
           printf("file %s to be opened by drag and drop !\n", szFileName);
           DragFinish(wParam);
           break;

@@ -59,7 +59,7 @@ init	Shell32LibMain
   51 stdcall PathResolve(str long long) PathResolve
   52 stdcall PathGetArgs(str) PathGetArgs
   53 stub DoEnvironmentSubstW@8  # exported by name
-  54 stdcall DragAcceptFiles(long long) DragAcceptFiles   # exported by name
+  54 stdcall DragAcceptFiles(long long) DragAcceptFiles32
   55 stub PathQuoteSpaces
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces
   57 stdcall PathGetDriveNumber (str) PathGetDriveNumber32
@@ -85,9 +85,9 @@ init	Shell32LibMain
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
   78 stdcall OleStrToStrN(str long wstr long) OleStrToStrN
   79 stdcall StrToOleStrN(wstr long str long) StrToOleStrN
-  80 stub DragFinish   # exported by name
-  81 stub DragQueryFile   # exported by name
-  82 stub DragQueryFileA   # exported by name
+  80 stdcall DragFinish(long) DragFinish32
+  81 stdcall DragQueryFile(long long ptr long) DragQueryFile32A
+  82 stdcall DragQueryFileA(long long ptr long) DragQueryFile32A
   83 stub CIDLData_CreateFromIDArray
   84 stub SHIsBadInterfacePtr
   85 stdcall OpenRegStream(long long long long) OpenRegStream
@@ -138,9 +138,9 @@ init	Shell32LibMain
  130 stub DAD_DragEnter
  131 stub DAD_DragEnterEx
  132 stub DAD_DragLeave
- 133 stub DragQueryFileW   # exported by name
+ 133 stdcall DragQueryFileW(long long ptr long) DragQueryFile32W
  134 stub DAD_DragMove
- 135 stub DragQueryPoint   # exported by name
+ 135 stdcall DragQueryPoint(long ptr) DragQueryPoint32
  136 stub DAD_SetDragImage
  137 stdcall DAD_ShowDragImage (long) DAD_ShowDragImage
  138 stub DuplicateIcon   # exported by name
