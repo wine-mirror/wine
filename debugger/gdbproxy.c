@@ -2033,7 +2033,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
             /* this should be the first event we get,
              * and the only one of this type  */
             assert(gdbctx->process == NULL && de.dwProcessId == DEBUG_CurrPid);
-            //gdbctx->dwProcessId = pid;
+            /*gdbctx->dwProcessId = pid; */
             if (!gdb_startup(gdbctx, &de, flags)) return FALSE;
             assert(!gdbctx->in_trap);
         }

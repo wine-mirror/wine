@@ -28,7 +28,7 @@
 #include "winuser.h"
 #include "shlwapi.h"
 
-// Keys used for testing
+/* Keys used for testing */
 #define REG_TEST_KEY        "Software\\Wine\\Test"
 #define REG_CURRENT_VERSION "Software\\Microsoft\\Windows NT\\CurrentVersion"
 
@@ -198,7 +198,7 @@ static void test_SHCopyKey(void)
 {
 	HKEY hKeySrc, hKeyDst;
 
-	// Delete existing destination sub keys
+	/* Delete existing destination sub keys */
 	hKeyDst = (HKEY)0;
 	if (!RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) && hKeyDst)
 	{
