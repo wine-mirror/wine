@@ -1017,12 +1017,12 @@ INT WINAPI MulDiv(
 #if (SIZEOF_LONG_LONG >= 8)
     long long ret;
     if (!nDivisor) return -1;
-    ret = ((long long)nMultiplicand * nMultiplier) / nDivisor;
+    ret = (((long long)nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
     if ((ret > 2147483647) || (ret < -2147483647)) return -1;
     return ret;
 #else
     if (!nDivisor) return -1;
-    return (nMultiplicand * nMultiplier) / nDivisor;
+    return ((nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
 #endif
 }
 /*******************************************************************
