@@ -4,12 +4,10 @@
  * Copyright 2001 TransGaming Technologies, Inc.
  */
 
-#include "config.h"
-#include <string.h>
-
 /* FIXME: ChangeDisplaySettings ought to be able to use this */
 
-#ifdef HAVE_LIBXXF86VM
+#include "config.h"
+#include <string.h>
 
 #include "ts_xlib.h"
 #include "ts_xf86vmode.h"
@@ -23,6 +21,8 @@
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
+
+#ifdef HAVE_LIBXXF86VM
 
 static int xf86vm_event, xf86vm_error, xf86vm_major, xf86vm_minor;
 
