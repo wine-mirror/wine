@@ -1912,7 +1912,7 @@ sub generate_project_files
       print FILEO "\t-\$(STRIP) \$(STRIPFLAGS) \$\@\n";
       print FILEO "\n";
       print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_SPEC_SRCS) \$(${canon}_SPEC_SRCS:.spec=.tmp.o) \$(${canon}_RC_SRCS:.rc=.res)\n";
-      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(${canon}_DLLS:%=-l%) \$(WINE_DLL_PATH) \$(${canon}_RC_SRCS:%.rc=-res %.res) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
+      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(${canon}_DLLS:%=-l%) \$(${canon}_RC_SRCS:%.rc=-res %.res) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
       print FILEO "\n";
       my $t_name=@$target[$T_NAME];
       if (@$target[$T_TYPE]!=$TT_DLL) {
