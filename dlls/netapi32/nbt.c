@@ -66,14 +66,15 @@
  */
 
 #include "config.h"
-
 #include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
+#include "winsock2.h"
 #include "wine/debug.h"
 #include "winreg.h"
 #include "iphlpapi.h"
-#include "winsock2.h"
+
 #include "netbios.h"
 #include "nbnamecache.h"
 
@@ -297,7 +298,7 @@ static UCHAR NetBTWaitForNameResponse(NetBTAdapter *adapter, SOCKET fd,
     while (!found && ret == NRC_GOODRET && (now = GetTickCount()) < waitUntil)
     {
         DWORD msToWait = waitUntil - now;
-        FD_SET fds;
+        struct fd_set fds;
         struct timeval timeout = { msToWait / 1000, msToWait % 1000 };
         int r;
 
