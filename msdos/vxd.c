@@ -178,6 +178,48 @@ void WINAPI VXD_VMD ( CONTEXT86 *context )
 }
 
 /***********************************************************************
+ *           VXD_VXDLoader
+ */
+void WINAPI VXD_VXDLoader( CONTEXT86 *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE("[%04x] VXDLoader\n", (UINT16)service);
+
+    switch (service)
+    {
+    case 0x0000: /* get version */
+	TRACE("returning version\n");
+	AX_reg(context) = 0x0000;
+	DX_reg(context) = VXD_WinVersion();
+	RESET_CFLAG(context);
+	break;
+
+    case 0x0001: /* load device */
+	FIXME("load device %04lx:%04x (%s)\n",
+	      DS_reg(context), DX_reg(context),
+	      debugstr_a(PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context))));
+	AX_reg(context) = 0x0000;
+	ES_reg(context) = 0x0000;
+	DI_reg(context) = 0x0000;
+	RESET_CFLAG(context);
+	break;
+
+    case 0x0002: /* unload device */
+	FIXME("unload device (%08lx)\n", EBX_reg(context));
+	AX_reg(context) = 0x0000;
+	RESET_CFLAG(context);
+	break;
+
+    default:
+	VXD_BARF( context, "VXDLDR" );
+	AX_reg(context) = 0x000B; /* invalid function number */
+	SET_CFLAG(context);
+	break;
+    }	
+}
+
+/***********************************************************************
  *           VXD_Shell
  */
 void WINAPI VXD_Shell( CONTEXT86 *context )

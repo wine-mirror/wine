@@ -41,6 +41,7 @@ owner	kernel32
 423 register VXD_Shell() VXD_Shell
 433 register VXD_PageFile() VXD_PageFile
 438 register VXD_APM() VXD_APM
+439 register VXD_VXDLoader() VXD_VXDLoader
 445 register VXD_Win32s() VXD_Win32s
 451 register VXD_ConfigMG() VXD_ConfigMG
 455 register VXD_Enable() VXD_Enable
