@@ -9113,8 +9113,8 @@ void        WINAPI SetDlgItemInt16(HWND16,INT16,UINT16,BOOL16);
 void        WINAPI SetDlgItemInt32(HWND32,INT32,UINT32,BOOL32);
 #define     SetDlgItemInt WINELIB_NAME(SetDlgItemInt)
 void        WINAPI SetDlgItemText16(HWND16,INT16,SEGPTR);
-void        WINAPI SetDlgItemText32A(HWND32,INT32,LPCSTR);
-void        WINAPI SetDlgItemText32W(HWND32,INT32,LPCWSTR);
+BOOL32      WINAPI SetDlgItemText32A(HWND32,INT32,LPCSTR);
+BOOL32      WINAPI SetDlgItemText32W(HWND32,INT32,LPCWSTR);
 #define     SetDlgItemText WINELIB_NAME_AW(SetDlgItemText)
 VOID        WINAPI SetDoubleClickTime16(UINT16);
 BOOL32      WINAPI SetDoubleClickTime32(UINT32);

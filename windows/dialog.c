@@ -1377,18 +1377,18 @@ void WINAPI SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
 /*******************************************************************
  *           SetDlgItemText32A   (USER32.478)
  */
-void WINAPI SetDlgItemText32A( HWND32 hwnd, INT32 id, LPCSTR lpString )
+BOOL32 WINAPI SetDlgItemText32A( HWND32 hwnd, INT32 id, LPCSTR lpString )
 {
-    SendDlgItemMessage32A( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+    return SendDlgItemMessage32A( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
 /*******************************************************************
  *           SetDlgItemText32W   (USER32.479)
  */
-void WINAPI SetDlgItemText32W( HWND32 hwnd, INT32 id, LPCWSTR lpString )
+BOOL32 WINAPI SetDlgItemText32W( HWND32 hwnd, INT32 id, LPCWSTR lpString )
 {
-    SendDlgItemMessage32W( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+    return SendDlgItemMessage32W( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
