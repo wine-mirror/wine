@@ -1734,7 +1734,7 @@ static int nStatCounter = 0;	 /* global */
 static HMODULE hOleAut32 = 0;	 /* global */
 
 /***********************************************************************
- *           CoGetState [OLE32.@]
+ *           CoGetState [OLE32.24]
  *
  * NOTES: might be incomplete
  */

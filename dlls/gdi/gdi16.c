@@ -1253,6 +1253,7 @@ void WINAPI Resurrection16(HDC16 hdc,
 
 /**********************************************************************
  *	     CreateMetaFile     (GDI.125)
+ *	     CreateMetaFile16   (GDI32.@)
  */
 HDC16 WINAPI CreateMetaFile16( LPCSTR filename )
 {

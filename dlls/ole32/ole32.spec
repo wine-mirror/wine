@@ -23,7 +23,7 @@ init	OLE32_DllEntryPoint
  21 stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) CoGetMarshalSizeMax
  22 stdcall CoGetPSClsid(ptr ptr) CoGetPSClsid
  23 stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) CoGetStandardMarshal
- 24 stub CoGetState
+ 24 stdcall CoGetState(ptr) CoGetState
  25 stub CoGetTreatAsClass          # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  26 stdcall CoInitialize(ptr) CoInitialize
  27 stdcall CoInitializeWOW(long long) CoInitializeWOW

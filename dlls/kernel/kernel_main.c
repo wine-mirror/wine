@@ -156,7 +156,11 @@ LONG WINAPI KERNEL_nop(void)
     return 0;
 }
 
-BOOL WINAPI SwitchToThread(VOID)
+/***********************************************************************
+ *		SwitchToThread (KERNEL32.@)
+ */
+
+BOOL WINAPI SwitchToThread(void)
 {
     Sleep(0);
     return 1;

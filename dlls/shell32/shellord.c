@@ -1008,7 +1008,7 @@ BOOL WINAPI DAD_DragMove(POINT p)
     return FALSE;
 }
 /*************************************************************************
- * DAD_Leave				[SHELL32.132]
+ * DAD_DragLeave				[SHELL32.132]
  *
  */
 BOOL WINAPI DAD_DragLeave(VOID)

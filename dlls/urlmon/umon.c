@@ -393,7 +393,8 @@ static void CALLBACK URLMON_InternetCallback(HINTERNET hinet, /*DWORD_PTR*/ DWOR
 	    This->filesize = len;
 	    break;
 	  }
-
+	}
+    }
 
     return;
 }
