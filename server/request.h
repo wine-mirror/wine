@@ -66,31 +66,6 @@ inline static void set_req_data_size( const void *req, size_t size )
     ((struct request_header *)req)->var_size = size;
 }
 
-
-#define REQUEST_END(req) ((char *)(req) + MAX_REQUEST_LENGTH - sizeof(struct server_buffer_info))
-
-/* get the remaining size in the request buffer for object of a given size */
-static inline int get_req_size( const void *req, const void *ptr, size_t typesize )
-{
-    return (REQUEST_END(req) - (char *)ptr) / typesize;
-}
-
-/* get the length of a request string, without going past the end of the request */
-static inline size_t get_req_strlen( const void *req, const char *str )
-{
-    const char *p = str;
-    while (*p && (p < REQUEST_END(req) - 1)) p++;
-    return p - str;
-}
-
-/* same as above for Unicode */
-static inline size_t get_req_strlenW( const void *req, const WCHAR *str )
-{
-    const WCHAR *p = str;
-    while (*p && (p < (WCHAR *)REQUEST_END(req) - 1)) p++;
-    return p - str;
-}
-
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 

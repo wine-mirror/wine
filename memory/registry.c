@@ -28,14 +28,6 @@
 DEFAULT_DEBUG_CHANNEL(reg);
 
 
-/* Unicode->Ansi conversion without string delimiters */
-static LPSTR memcpyWtoA( LPSTR dst, LPCWSTR src, INT n )
-{
-    LPSTR p = dst;
-    while (n-- > 0) *p++ = (CHAR)*src++;
-    return dst;
-}
-
 /* check if value type needs string conversion (Ansi<->Unicode) */
 static inline int is_string( DWORD type )
 {
@@ -49,47 +41,6 @@ static inline int reg_server_call( enum request req )
     if (res) res = RtlNtStatusToDosError(res);
     return res;
 }
-
-/******************************************************************************
- *           RegCreateKeyExW   [ADVAPI32.131]
- *
- * PARAMS
- *    hkey       [I] Handle of an open key
- *    name       [I] Address of subkey name
- *    reserved   [I] Reserved - must be 0
- *    class      [I] Address of class string
- *    options    [I] Special options flag
- *    access     [I] Desired security access
- *    sa         [I] Address of key security structure
- *    retkey     [O] Address of buffer for opened handle
- *    dispos     [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
- *
- * NOTES
- *  in case of failing retkey remains untouched
- */
-DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
-                              DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
-                              LPHKEY retkey, LPDWORD dispos )
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW, classW;
-
-    if (reserved) return ERROR_INVALID_PARAMETER;
-    if (!(access & KEY_ALL_ACCESS) || (access & ~KEY_ALL_ACCESS)) return ERROR_ACCESS_DENIED;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = hkey;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, name );
-    RtlInitUnicodeString( &classW, class );
-
-    return RtlNtStatusToDosError( NtCreateKey( retkey, access, &attr, 0,
-                                               &classW, options, dispos ) );
-}
-
 
 /******************************************************************************
  *           RegCreateKeyExA   [ADVAPI32.130]
@@ -130,18 +81,6 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
 
 
 /******************************************************************************
- *           RegCreateKeyW   [ADVAPI32.132]
- */
-DWORD WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
-{
-    /* FIXME: previous implementation converted ERROR_INVALID_HANDLE to ERROR_BADKEY, */
-    /* but at least my version of NT (4.0 SP5) doesn't do this.  -- AJ */
-    return RegCreateKeyExW( hkey, name, 0, NULL, REG_OPTION_NON_VOLATILE,
-                            KEY_ALL_ACCESS, NULL, retkey, NULL );
-}
-
-
-/******************************************************************************
  *           RegCreateKeyA   [ADVAPI32.129]
  */
 DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
@@ -150,43 +89,6 @@ DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
                             KEY_ALL_ACCESS, NULL, retkey, NULL );
 }
 
-
-
-/******************************************************************************
- *           RegOpenKeyExW   [ADVAPI32.150]
- *
- * Opens the specified key
- *
- * Unlike RegCreateKeyEx, this does not create the key if it does not exist.
- *
- * PARAMS
- *    hkey       [I] Handle of open key
- *    name       [I] Name of subkey to open
- *    reserved   [I] Reserved - must be zero
- *    access     [I] Security access mask
- *    retkey     [O] Handle to open key
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
- *
- * NOTES
- *  in case of failing is retkey = 0
- */
-DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = hkey;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( NtOpenKey( retkey, access, &attr ) );
-}
 
 
 /******************************************************************************
@@ -218,117 +120,11 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
 
 
 /******************************************************************************
- *           RegOpenKeyW   [ADVAPI32.151]
- *
- * PARAMS
- *    hkey    [I] Handle of open key
- *    name    [I] Address of name of subkey to open
- *    retkey  [O] Handle to open key
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
- *
- * NOTES
- *  in case of failing is retkey = 0
- */
-DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
-{
-    return RegOpenKeyExW( hkey, name, 0, KEY_ALL_ACCESS, retkey );
-}
-
-
-/******************************************************************************
  *           RegOpenKeyA   [ADVAPI32.148]
  */
 DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 {
     return RegOpenKeyExA( hkey, name, 0, KEY_ALL_ACCESS, retkey );
-}
-
-
-/******************************************************************************
- *           RegOpenCurrentUser   [ADVAPI32]
- * FIXME: This function is supposed to retrieve a handle to the
- * HKEY_CURRENT_USER for the user the current thread is impersonating.
- * Since Wine does not currently allow threads to impersonate other users,
- * this stub should work fine.
- */
-DWORD WINAPI RegOpenCurrentUser( REGSAM access, PHKEY retkey )
-{
-    return RegOpenKeyExA( HKEY_CURRENT_USER, "", 0, access, retkey );
-}
-
-
-
-/******************************************************************************
- *           RegEnumKeyExW   [ADVAPI32.139]
- *
- * PARAMS
- *    hkey         [I] Handle to key to enumerate
- *    index        [I] Index of subkey to enumerate
- *    name         [O] Buffer for subkey name
- *    name_len     [O] Size of subkey buffer
- *    reserved     [I] Reserved
- *    class        [O] Buffer for class string
- *    class_len    [O] Size of class buffer
- *    ft           [O] Time key last written to
- */
-DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_len,
-                            LPDWORD reserved, LPWSTR class, LPDWORD class_len, FILETIME *ft )
-{
-    NTSTATUS status;
-    char buffer[256], *buf_ptr = buffer;
-    KEY_NODE_INFORMATION *info = (KEY_NODE_INFORMATION *)buffer;
-    DWORD total_size;
-
-    TRACE( "(0x%x,%ld,%p,%p(%ld),%p,%p,%p,%p)\n", hkey, index, name, name_len,
-           name_len ? *name_len : -1, reserved, class, class_len, ft );
-
-    if (reserved) return ERROR_INVALID_PARAMETER;
-
-    status = NtEnumerateKey( hkey, index, KeyNodeInformation,
-                             buffer, sizeof(buffer), &total_size );
-
-    while (status == STATUS_BUFFER_OVERFLOW)
-    {
-        /* retry with a dynamically allocated buffer */
-        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
-        if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
-            return ERROR_NOT_ENOUGH_MEMORY;
-        info = (KEY_NODE_INFORMATION *)buf_ptr;
-        status = NtEnumerateKey( hkey, index, KeyNodeInformation,
-                                 buf_ptr, total_size, &total_size );
-    }
-
-    if (!status)
-    {
-        DWORD len = info->NameLength / sizeof(WCHAR);
-        DWORD cls_len = info->ClassLength / sizeof(WCHAR);
-
-        if (ft) *ft = info->LastWriteTime;
-
-        if (len >= *name_len || (class_len && (cls_len >= *class_len)))
-            status = STATUS_BUFFER_OVERFLOW;
-        else
-        {
-            *name_len = len;
-            memcpy( name, info->Name, info->NameLength );
-            name[len] = 0;
-            if (class_len)
-            {
-                *class_len = cls_len;
-                if (class)
-                {
-                    memcpy( class, buf_ptr + info->ClassOffset, info->ClassLength );
-                    class[cls_len] = 0;
-                }
-            }
-        }
-    }
-
-    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
-    return RtlNtStatusToDosError( status );
 }
 
 
@@ -400,103 +196,11 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
 
 
 /******************************************************************************
- *           RegEnumKeyW   [ADVAPI32.140]
- */
-DWORD WINAPI RegEnumKeyW( HKEY hkey, DWORD index, LPWSTR name, DWORD name_len )
-{
-    return RegEnumKeyExW( hkey, index, name, &name_len, NULL, NULL, NULL, NULL );
-}
-
-
-/******************************************************************************
  *           RegEnumKeyA   [ADVAPI32.137]
  */
 DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 {
     return RegEnumKeyExA( hkey, index, name, &name_len, NULL, NULL, NULL, NULL );
-}
-
-
-/******************************************************************************
- *           RegQueryInfoKeyW   [ADVAPI32.153]
- *
- * PARAMS
- *    hkey       [I] Handle to key to query
- *    class      [O] Buffer for class string
- *    class_len  [O] Size of class string buffer
- *    reserved   [I] Reserved
- *    subkeys    [O] Buffer for number of subkeys
- *    max_subkey [O] Buffer for longest subkey name length
- *    max_class  [O] Buffer for longest class string length
- *    values     [O] Buffer for number of value entries
- *    max_value  [O] Buffer for longest value name length
- *    max_data   [O] Buffer for longest value data length
- *    security   [O] Buffer for security descriptor length
- *    modif      [O] Modification time
- *
- * - win95 allows class to be valid and class_len to be NULL 
- * - winnt returns ERROR_INVALID_PARAMETER if class is valid and class_len is NULL
- * - both allow class to be NULL and class_len to be NULL 
- * (it's hard to test validity, so test !NULL instead)
- */
-DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWORD reserved,
-                               LPDWORD subkeys, LPDWORD max_subkey, LPDWORD max_class,
-                               LPDWORD values, LPDWORD max_value, LPDWORD max_data,
-                               LPDWORD security, FILETIME *modif )
-{
-    NTSTATUS status;
-    char buffer[256], *buf_ptr = buffer;
-    KEY_FULL_INFORMATION *info = (KEY_FULL_INFORMATION *)buffer;
-    DWORD total_size;
-
-    TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
-           reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
-
-    if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
-        return ERROR_INVALID_PARAMETER;
-
-    status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
-
-    if (class)
-    {
-        /* retry with a dynamically allocated buffer */
-        while (status == STATUS_BUFFER_OVERFLOW)
-        {
-            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
-            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
-                return ERROR_NOT_ENOUGH_MEMORY;
-            info = (KEY_FULL_INFORMATION *)buf_ptr;
-            status = NtQueryKey( hkey, KeyFullInformation, buf_ptr, total_size, &total_size );
-        }
-
-        if (!status)
-        {
-            if (class_len && (info->ClassLength/sizeof(WCHAR) + 1 > *class_len))
-            {
-                status = STATUS_BUFFER_OVERFLOW;
-            }
-            else
-            {
-                memcpy( class, buf_ptr + info->ClassOffset, info->ClassLength );
-                class[info->ClassLength/sizeof(WCHAR)] = 0;
-            }
-        }
-    }
-
-    if (!status || status == STATUS_BUFFER_OVERFLOW)
-    {
-        if (class_len) *class_len = info->ClassLength / sizeof(WCHAR);
-        if (subkeys) *subkeys = info->SubKeys;
-        if (max_subkey) *max_subkey = info->MaxNameLen;
-        if (max_class) *max_class = info->MaxClassLen;
-        if (values) *values = info->Values;
-        if (max_value) *max_value = info->MaxValueNameLen;
-        if (max_data) *max_data = info->MaxValueDataLen;
-        if (modif) *modif = info->LastWriteTime;
-    }
-
-    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
-    return RtlNtStatusToDosError( status );
 }
 
 
@@ -591,32 +295,6 @@ DWORD WINAPI RegCloseKey( HKEY hkey )
 
 
 /******************************************************************************
- *           RegDeleteKeyW   [ADVAPI32.134]
- *
- * PARAMS
- *    hkey   [I] Handle to open key
- *    name   [I] Name of subkey to delete
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
- */
-DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
-{
-    DWORD ret;
-    HKEY tmp;
-
-    if (!name || !*name) return NtDeleteKey( hkey );
-    if (!(ret = RegOpenKeyExW( hkey, name, 0, 0, &tmp )))
-    {
-        ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
-        RegCloseKey( tmp );
-    }
-    return ret;
-}
-
-
-/******************************************************************************
  *           RegDeleteKeyA   [ADVAPI32.133]
  */
 DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
@@ -633,45 +311,6 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
     return ret;
 }
 
-
-
-/******************************************************************************
- *           RegSetValueExW   [ADVAPI32.170]
- *
- * Sets the data and type of a value under a register key
- *
- * PARAMS
- *    hkey       [I] Handle of key to set value for
- *    name       [I] Name of value to set
- *    reserved   [I] Reserved - must be zero
- *    type       [I] Flag for value type
- *    data       [I] Address of value data
- *    count      [I] Size of value data
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
- *
- * NOTES
- *   win95 does not care about count for REG_SZ and finds out the len by itself (js) 
- *   NT does definitely care (aj)
- */
-DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
-                             DWORD type, CONST BYTE *data, DWORD count )
-{
-    UNICODE_STRING nameW;
-
-    if (count && is_string(type))
-    {
-        LPCWSTR str = (LPCWSTR)data;
-        /* if user forgot to count terminating null, add it (yes NT does this) */
-        if (str[count / sizeof(WCHAR) - 1] && !str[count / sizeof(WCHAR)])
-            count += sizeof(WCHAR);
-    }
-
-    RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( NtSetValueKey( hkey, &nameW, 0, type, data, count ) );
-}
 
 
 /******************************************************************************
@@ -714,30 +353,6 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
 
 
 /******************************************************************************
- *           RegSetValueW   [ADVAPI32.171]
- */
-DWORD WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, DWORD count )
-{
-    HKEY subkey = hkey;
-    DWORD ret;
-
-    TRACE("(0x%x,%s,%ld,%s,%ld)\n", hkey, debugstr_w(name), type, debugstr_w(data), count );
-
-    if (type != REG_SZ) return ERROR_INVALID_PARAMETER;
-
-    if (name && name[0])  /* need to create the subkey */
-    {
-        if ((ret = RegCreateKeyW( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
-    }
-
-    ret = RegSetValueExW( subkey, NULL, 0, REG_SZ, (LPBYTE)data,
-                          (strlenW( data ) + 1) * sizeof(WCHAR) );
-    if (subkey != hkey) RegCloseKey( subkey );
-    return ret;
-}
-
-
-/******************************************************************************
  *           RegSetValueA   [ADVAPI32.168]
  */
 DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
@@ -758,86 +373,6 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
     return ret;
 }
 
-
-
-/******************************************************************************
- *           RegQueryValueExW   [ADVAPI32.158]
- *
- * Retrieves type and data for a specified name associated with an open key
- *
- * PARAMS
- *    hkey      [I]   Handle of key to query
- *    name      [I]   Name of value to query
- *    reserved  [I]   Reserved - must be NULL
- *    type      [O]   Address of buffer for value type.  If NULL, the type
- *                        is not required.
- *    data      [O]   Address of data buffer.  If NULL, the actual data is
- *                        not required.
- *    count     [I/O] Address of data buffer size
- *
- * RETURNS 
- *    ERROR_SUCCESS:   Success
- *    ERROR_MORE_DATA: !!! if the specified buffer is not big enough to hold the data
- * 		       buffer is left untouched. The MS-documentation is wrong (js) !!!
- */
-DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWORD type,
-                               LPBYTE data, LPDWORD count )
-{
-    NTSTATUS status;
-    UNICODE_STRING name_str;
-    DWORD total_size;
-    char buffer[256], *buf_ptr = buffer;
-    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    static const int info_size = sizeof(*info) - sizeof(info->Data);
-
-    TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
-          hkey, debugstr_w(name), reserved, type, data, count, count ? *count : 0 );
-
-    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
-
-    RtlInitUnicodeString( &name_str, name );
-
-    if (data) total_size = min( sizeof(buffer), *count + info_size );
-    else total_size = info_size;
-
-    status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
-                              buffer, total_size, &total_size );
-    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
-
-    if (data)
-    {
-        /* retry with a dynamically allocated buffer */
-        while (status == STATUS_BUFFER_OVERFLOW && total_size - info_size <= *count)
-        {
-            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
-            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
-                return ERROR_NOT_ENOUGH_MEMORY;
-            info = (KEY_VALUE_PARTIAL_INFORMATION *)buf_ptr;
-            status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
-                                      buf_ptr, total_size, &total_size );
-        }
-
-        if (!status)
-        {
-            memcpy( data, buf_ptr + info_size, total_size - info_size );
-            /* if the type is REG_SZ and data is not 0-terminated
-             * and there is enough space in the buffer NT appends a \0 */
-            if (total_size - info_size <= *count-sizeof(WCHAR) && is_string(info->Type))
-            {
-                WCHAR *ptr = (WCHAR *)(data + total_size - info_size);
-                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
-            }
-        }
-        else if (status != STATUS_BUFFER_OVERFLOW) goto done;
-    }
-
-    if (type) *type = info->Type;
-    if (count) *count = total_size - info_size;
-
- done:
-    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
-    return RtlNtStatusToDosError(status);
-}
 
 
 /******************************************************************************
@@ -931,33 +466,6 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 
 
 /******************************************************************************
- *           RegQueryValueW   [ADVAPI32.159]
- */
-DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR name, LPWSTR data, LPLONG count )
-{
-    DWORD ret;
-    HKEY subkey = hkey;
-
-    TRACE("(%x,%s,%p,%ld)\n", hkey, debugstr_w(name), data, count ? *count : 0 );
-
-    if (name && name[0])
-    {
-        if ((ret = RegOpenKeyW( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
-    }
-    ret = RegQueryValueExW( subkey, NULL, NULL, NULL, (LPBYTE)data, count );
-    if (subkey != hkey) RegCloseKey( subkey );
-    if (ret == ERROR_FILE_NOT_FOUND)
-    {
-        /* return empty string if default value not found */
-        if (data) *data = 0;
-        if (count) *count = 1;
-        ret = ERROR_SUCCESS;
-    }
-    return ret;
-}
-
-
-/******************************************************************************
  *           RegQueryValueA   [ADVAPI32.156]
  */
 DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
@@ -985,77 +493,16 @@ DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
 
 
 /******************************************************************************
- *           RegEnumValueW   [ADVAPI32.142]
- *
- * PARAMS
- *    hkey       [I] Handle to key to query
- *    index      [I] Index of value to query
- *    value      [O] Value string
- *    val_count  [I/O] Size of value buffer (in wchars)
- *    reserved   [I] Reserved
- *    type       [O] Type code
- *    data       [O] Value data
- *    count      [I/O] Size of data buffer (in bytes)
- */
-
-DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_count,
-                            LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
-{
-    DWORD ret, len;
-    struct enum_key_value_request *req = get_req_buffer();
-
-    TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
-          hkey, index, value, val_count, reserved, type, data, count );
-
-    /* NT only checks count, not val_count */
-    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
-
-    req->hkey = hkey;
-    req->index = index;
-    req->offset = 0;
-    if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
-
-    len = strlenW( req->name ) + 1;
-    if (len > *val_count) return ERROR_MORE_DATA;
-    memcpy( value, req->name, len * sizeof(WCHAR) );
-    *val_count = len - 1;
-
-    if (data)
-    {
-        if (*count < req->len) ret = ERROR_MORE_DATA;
-        else
-        {
-            /* copy the data */
-            unsigned int max = server_remaining( req->data );
-            unsigned int pos = 0;
-            while (pos < req->len)
-            {
-                unsigned int len = min( req->len - pos, max );
-                memcpy( data + pos, req->data, len );
-                if ((pos += len) >= req->len) break;
-                req->offset = pos;
-                if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
-            }
-        }
-        /* if the type is REG_SZ and data is not 0-terminated
-         * and there is enough space in the buffer NT appends a \0 */
-        if (req->len && is_string(req->type) &&
-            (req->len < *count) && ((WCHAR *)data)[req->len-1]) ((WCHAR *)data)[req->len] = 0;
-    }
-    if (type) *type = req->type;
-    if (count) *count = req->len;
-    return ret;
-}
-
-
-/******************************************************************************
  *           RegEnumValueA   [ADVAPI32.141]
  */
 DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
                             LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
 {
-    DWORD ret, len, total_len;
-    struct enum_key_value_request *req = get_req_buffer();
+    NTSTATUS status;
+    DWORD total_size;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+    static const int info_size = sizeof(*info) - sizeof(info->Name);
 
     TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
@@ -1063,67 +510,82 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
     /* NT only checks count, not val_count */
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    req->index = index;
-    req->offset = 0;
-    if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+    total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
+    if (data) total_size += *count;
+    total_size = min( sizeof(buffer), total_size );
 
-    len = strlenW( req->name ) + 1;
-    if (len > *val_count) return ERROR_MORE_DATA;
-    memcpyWtoA( value, req->name, len );
-    *val_count = len - 1;
+    status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                  buffer, total_size, &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
-    total_len = is_string( req->type ) ? req->len/sizeof(WCHAR) : req->len;
-
-    if (data)
+    /* we need to fetch the contents for a string type even if not requested,
+     * because we need to compute the length of the ASCII string. */
+    if (value || data || is_string(info->Type))
     {
-        if (*count < total_len) ret = ERROR_MORE_DATA;
-        else
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
         {
-            /* copy the data */
-            unsigned int max = server_remaining( req->data );
-            unsigned int pos = 0;
-            while (pos < req->len)
-            {
-                unsigned int len = min( req->len - pos, max );
-                if (is_string( req->type ))
-                    memcpyWtoA( data + pos/sizeof(WCHAR), (WCHAR *)req->data, len/sizeof(WCHAR) );
-                else
-                    memcpy( data + pos, req->data, len );
-                if ((pos += len) >= req->len) break;
-                req->offset = pos;
-                if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
-            }
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
+            status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                          buf_ptr, total_size, &total_size );
         }
-        /* if the type is REG_SZ and data is not 0-terminated
-         * and there is enough space in the buffer NT appends a \0 */
-        if (total_len && is_string(req->type) && (total_len < *count) && data[total_len-1])
-            data[total_len] = 0;
+
+        if (status) goto done;
+
+        if (value)
+        {
+            DWORD len = WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
+                                             NULL, 0, NULL, NULL );
+            if (len >= *val_count)
+            {
+                status = STATUS_BUFFER_OVERFLOW;
+                goto done;
+            }
+            WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
+                                 value, len, NULL, NULL );
+            value[len] = 0;
+            *val_count = len;
+        }
+
+        if (is_string(info->Type))
+        {
+            DWORD len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->DataOffset),
+                                             (total_size - info->DataOffset) / sizeof(WCHAR),
+                                             NULL, 0, NULL, NULL );
+            if (data && len)
+            {
+                if (len > *count)
+                {
+                    status = STATUS_BUFFER_OVERFLOW;
+                    goto done;
+                }
+                WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->DataOffset),
+                                     (total_size - info->DataOffset) / sizeof(WCHAR),
+                                     data, len, NULL, NULL );
+                /* if the type is REG_SZ and data is not 0-terminated
+                 * and there is enough space in the buffer NT appends a \0 */
+                if (len < *count && data[len-1]) data[len] = 0;
+            }
+            info->DataLength = len;
+        }
+        else if (data)
+        {
+            if (total_size - info->DataOffset > *count) status = STATUS_BUFFER_OVERFLOW;
+            else memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+        }
     }
 
-    if (count) *count = total_len;
-    if (type) *type = req->type;
-    return ret;
+    if (type) *type = info->Type;
+    if (count) *count = info->DataLength;
+
+ done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError(status);
 }
 
-
-
-/******************************************************************************
- *           RegDeleteValueW   [ADVAPI32.136]
- *
- * PARAMS
- *    hkey   [I] handle to key
- *    name   [I] name of value to delete
- *
- * RETURNS
- *    error status
- */
-DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
-{
-    UNICODE_STRING nameW;
-    RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( NtDeleteValueKey( hkey, &nameW ) );
-}
 
 
 /******************************************************************************
@@ -1143,51 +605,6 @@ DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
         RtlFreeUnicodeString( &nameW );
     }
     return RtlNtStatusToDosError( status );
-}
-
-
-/******************************************************************************
- *           RegLoadKeyW   [ADVAPI32.185]
- *
- * PARAMS
- *    hkey      [I] Handle of open key
- *    subkey    [I] Address of name of subkey
- *    filename  [I] Address of filename for registry information
- */
-LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
-{
-    HANDLE file;
-    DWORD ret, len, err = GetLastError();
-
-    TRACE( "(%x,%s,%s)\n", hkey, debugstr_w(subkey), debugstr_w(filename) );
-
-    if (!filename || !*filename) return ERROR_INVALID_PARAMETER;
-    if (!subkey || !*subkey) return ERROR_INVALID_PARAMETER;
-
-    len = strlenW( subkey ) * sizeof(WCHAR);
-    if (len > MAX_PATH*sizeof(WCHAR)) return ERROR_INVALID_PARAMETER;
-
-    if ((file = CreateFileW( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL, -1 )) == INVALID_HANDLE_VALUE)
-    {
-        ret = GetLastError();
-        goto done;
-    }
-
-    SERVER_START_REQ
-    {
-        struct load_registry_request *req = server_alloc_req( sizeof(*req), len );
-        req->hkey  = hkey;
-        req->file  = file;
-        memcpy( server_data_ptr(req), subkey, len );
-        ret = reg_server_call( REQ_LOAD_REGISTRY );
-    }
-    SERVER_END_REQ;
-    CloseHandle( file );
-
- done:
-    SetLastError( err );  /* restore the last error code */
-    return ret;
 }
 
 
@@ -1289,17 +706,5 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 
 done:
     SetLastError( err );  /* restore last error code */
-    return ret;
-}
-
-
-/******************************************************************************
- *           RegSaveKeyW   [ADVAPI32.166]
- */
-LONG WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
-{
-    LPSTR fileA = HEAP_strdupWtoA( GetProcessHeap(), 0, file );
-    DWORD ret = RegSaveKeyA( hkey, fileA, sa );
-    if (fileA) HeapFree( GetProcessHeap(), 0, fileA );
     return ret;
 }

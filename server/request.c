@@ -365,6 +365,9 @@ void open_master_socket(void)
     struct sockaddr_un addr;
     int fd, slen;
 
+    /* make sure no request is larger than the maximum size */
+    assert( sizeof(union generic_request) == sizeof(struct request_max_size) );
+
     create_server_dir();
     if ((fd = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
     addr.sun_family = AF_UNIX;

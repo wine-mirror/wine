@@ -311,148 +311,154 @@ NTSTATUS WINAPI NtQueryKey( HANDLE handle, KEY_INFORMATION_CLASS info_class,
     return ret;
 }
 
+
+/* fill the key value info structure for a specific info class */
+static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *info,
+                                 DWORD length, int type, int name_len, int data_len )
+{
+    switch(info_class)
+    {
+    case KeyValueBasicInformation:
+        {
+            KEY_VALUE_BASIC_INFORMATION keyinfo;
+            keyinfo.TitleIndex = 0;
+            keyinfo.Type       = type;
+            keyinfo.NameLength = name_len;
+            length = min( length, sizeof(keyinfo) - sizeof(keyinfo.Name) );
+            memcpy( info, &keyinfo, length );
+            break;
+        }
+    case KeyValueFullInformation:
+        {
+            KEY_VALUE_FULL_INFORMATION keyinfo;
+            keyinfo.TitleIndex = 0;
+            keyinfo.Type       = type;
+            keyinfo.DataOffset = sizeof(keyinfo) - sizeof(keyinfo.Name) + name_len;
+            keyinfo.DataLength = data_len;
+            keyinfo.NameLength = name_len;
+            length = min( length, sizeof(keyinfo) - sizeof(keyinfo.Name) );
+            memcpy( info, &keyinfo, length );
+            break;
+        }
+    case KeyValuePartialInformation:
+        {
+            KEY_VALUE_PARTIAL_INFORMATION keyinfo;
+            keyinfo.TitleIndex = 0;
+            keyinfo.Type       = type;
+            keyinfo.DataLength = data_len;
+            length = min( length, sizeof(keyinfo) - sizeof(keyinfo.Data) );
+            memcpy( info, &keyinfo, length );
+            break;
+        }
+    default:
+        break;
+    }
+}
+
+
 /******************************************************************************
  *  NtEnumerateValueKey	[NTDLL] 
  *  ZwEnumerateValueKey
  */
-NTSTATUS WINAPI NtEnumerateValueKey(
-	HANDLE KeyHandle,
-	ULONG Index,
-	KEY_VALUE_INFORMATION_CLASS KeyInformationClass,
-	PVOID KeyInformation,
-	ULONG Length,
-	PULONG ResultLength)
+NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
+                                     KEY_VALUE_INFORMATION_CLASS info_class,
+                                     void *info, DWORD length, DWORD *result_len )
 {
-	struct enum_key_value_request *req = get_req_buffer();
-	UINT NameLength;
-	NTSTATUS ret;
-	
-	TRACE("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p)\n",
-	KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
+    NTSTATUS ret;
+    char *data_ptr, *name_ptr;
+    int fixed_size = 0, name_len = 0, data_len = 0, offset = 0, type = 0, total_len = 0;
 
-	req->hkey = KeyHandle;
-	req->index = Index;
-	if ((ret = server_call_noerr(REQ_ENUM_KEY_VALUE)) != STATUS_SUCCESS) return ret;
+    TRACE( "(0x%x,%lu,%d,%p,%ld)\n", handle, index, info_class, info, length );
 
- 	switch (KeyInformationClass)
-	{
-	  case KeyBasicInformation:
-	    {
-	      PKEY_VALUE_BASIC_INFORMATION kbi = KeyInformation;
-	      
-	      NameLength = strlenW(req->name) * sizeof(WCHAR);
-	      *ResultLength = sizeof(KEY_VALUE_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
-	      if (*ResultLength > Length) return STATUS_BUFFER_TOO_SMALL;
+    /* compute the length we want to retrieve */
+    switch(info_class)
+    {
+    case KeyValueBasicInformation:
+        fixed_size = sizeof(KEY_VALUE_BASIC_INFORMATION) - sizeof(WCHAR);
+        name_ptr = (char *)info + fixed_size;
+        data_ptr = NULL;
+        break;
+    case KeyValueFullInformation:
+        fixed_size = sizeof(KEY_VALUE_FULL_INFORMATION) - sizeof(WCHAR);
+        name_ptr = data_ptr = (char *)info + fixed_size;
+        break;
+    case KeyValuePartialInformation:
+        fixed_size = sizeof(KEY_VALUE_PARTIAL_INFORMATION) - sizeof(UCHAR);
+        name_ptr = NULL;
+        data_ptr = (char *)info + fixed_size;
+        break;
+    default:
+        FIXME( "Information class %d not implemented\n", info_class );
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (length > fixed_size) data_len = length - fixed_size;
 
-	      kbi->TitleIndex = 0;
-	      kbi->Type = req->type;
-	      kbi->NameLength = NameLength;
-	      memcpy(kbi->Name, req->name, kbi->NameLength);
-	    }
-	    break;
-	  case KeyValueFullInformation:
-	    {
-	      PKEY_VALUE_FULL_INFORMATION kbi = KeyInformation;
-	      UINT DataOffset;
+    do
+    {
+        size_t reqlen = data_len + sizeof(WCHAR);
+        if (name_ptr && !offset) reqlen += MAX_PATH*sizeof(WCHAR);
+        reqlen = min( reqlen, REQUEST_MAX_VAR_SIZE );
 
-	      NameLength = strlenW(req->name) * sizeof(WCHAR);
-	      DataOffset = sizeof(KEY_VALUE_FULL_INFORMATION) - sizeof(WCHAR) + NameLength;
-	      *ResultLength = DataOffset + req->len;
+        SERVER_START_REQ
+        {
+            struct enum_key_value_request *req = server_alloc_req( sizeof(*req), reqlen );
 
-	      if (*ResultLength > Length) return STATUS_BUFFER_TOO_SMALL;
+            req->hkey = handle;
+            req->index = index;
+            req->offset = offset;
 
-	      kbi->TitleIndex = 0;
-	      kbi->Type = req->type;
-	      kbi->DataOffset = DataOffset;
-	      kbi->DataLength = req->len;
-	      kbi->NameLength = NameLength;
-	      memcpy(kbi->Name, req->name, kbi->NameLength);
-	      memcpy(((LPBYTE)kbi) + DataOffset, req->data, req->len);
-	    }
-	    break;
-	  case KeyValuePartialInformation:
-	    {
-	      PKEY_VALUE_PARTIAL_INFORMATION kbi = KeyInformation;
-	      
-	      *ResultLength = sizeof(KEY_VALUE_PARTIAL_INFORMATION) - sizeof(WCHAR) + req->len;
+            if (!(ret = server_call_noerr( REQ_ENUM_KEY_VALUE )))
+            {
+                size_t size = server_data_size(req) - sizeof(WCHAR);
+                WCHAR *name = server_data_ptr(req);
+                if (!offset)  /* name is only present on the first request */
+                {
+                    name_len = *name++;
+                    size -= name_len;
+                    if (name_ptr)
+                    {
+                        if (name_len > data_len)  /* overflow */
+                        {
+                            memcpy( name_ptr, name, data_len );
+                            data_len = 0;
+                            ret = STATUS_BUFFER_OVERFLOW;
+                        }
+                        else
+                        {
+                            memcpy( name_ptr, name, name_len );
+                            data_len -= name_len;
+                            if (data_ptr) data_ptr += name_len;
+                        }
+                    }
+                    name += name_len / sizeof(WCHAR);
+                }
+                else name++;  /* skip 0 length */
 
-	      if (*ResultLength > Length) return STATUS_BUFFER_TOO_SMALL;
+                if (data_ptr)
+                {
+                    size = min( size, data_len );
+                    memcpy( data_ptr + offset, name, size );
+                    offset += size;
+                    data_len -= size;
+                }
+                type = req->type;
+                total_len = req->len;
+            }
+        }
+        SERVER_END_REQ;
+        if (ret) return ret;
+    } while (data_len && data_ptr && offset < total_len);
 
-	      kbi->TitleIndex = 0;
-	      kbi->Type = req->type;
-	      kbi->DataLength = req->len;
-	      memcpy(kbi->Data, req->data, req->len);
-	    }
-	    break;
-	  default:
-	    FIXME("not implemented\n");
-	}
-	return STATUS_SUCCESS;
+    *result_len = total_len + fixed_size + (name_ptr ? name_len : 0);
+
+    if (data_ptr && offset < total_len) ret = STATUS_BUFFER_OVERFLOW;
+    if (length < fixed_size) ret = STATUS_BUFFER_OVERFLOW;
+
+    copy_key_value_info( info_class, info, length, type, name_len, total_len );
+    return ret;
+
 }
 
-/******************************************************************************
- *  NtFlushKey	[NTDLL] 
- *  ZwFlushKey
- */
-NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
-{
-	FIXME("(0x%08x) stub!\n",
-	KeyHandle);
-	return 1;
-}
-
-/******************************************************************************
- *  NtLoadKey	[NTDLL] 
- *  ZwLoadKey
- */
-NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTES *file )
-{
-    FIXME("stub!\n");
-    dump_ObjectAttributes(attr);
-    dump_ObjectAttributes(file);
-    return STATUS_SUCCESS;
-}
-
-/******************************************************************************
- *  NtNotifyChangeKey	[NTDLL] 
- *  ZwNotifyChangeKey
- */
-NTSTATUS WINAPI NtNotifyChangeKey(
-	IN HANDLE KeyHandle,
-	IN HANDLE Event,
-	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-	IN PVOID ApcContext OPTIONAL,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	IN ULONG CompletionFilter,
-	IN BOOLEAN Asynchroneous,
-	OUT PVOID ChangeBuffer,
-	IN ULONG Length,
-	IN BOOLEAN WatchSubtree)
-{
-	FIXME("(0x%08x,0x%08x,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
-	KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
-	Asynchroneous, ChangeBuffer, Length, WatchSubtree);
-	return STATUS_SUCCESS;
-}
-
-/******************************************************************************
- * NtQueryMultipleValueKey [NTDLL]
- * ZwQueryMultipleValueKey
- */
-
-NTSTATUS WINAPI NtQueryMultipleValueKey(
-	HANDLE KeyHandle,
-	PVALENTW ListOfValuesToQuery,
-	ULONG NumberOfItems,
-	PVOID MultipleValueInformation,
-	ULONG Length,
-	PULONG  ReturnLength)
-{
-	FIXME("(0x%08x,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
-	KeyHandle, ListOfValuesToQuery, NumberOfItems, MultipleValueInformation,
-	Length,ReturnLength);
-	return STATUS_SUCCESS;
-}
 
 /******************************************************************************
  * NtQueryValueKey [NTDLL]
@@ -531,41 +537,73 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     if (offset < total_len) ret = STATUS_BUFFER_OVERFLOW;
     if (length < fixed_size) ret = STATUS_BUFFER_OVERFLOW;
 
-    switch(info_class)
-    {
-    case KeyValueBasicInformation:
-        {
-            KEY_VALUE_BASIC_INFORMATION keyinfo;
-            keyinfo.TitleIndex = 0;
-            keyinfo.Type       = type;
-            keyinfo.NameLength = 0;
-            memcpy( info, &keyinfo, min(fixed_size,length) );
-            break;
-        }
-    case KeyValueFullInformation:
-        {
-            KEY_VALUE_FULL_INFORMATION keyinfo;
-            keyinfo.TitleIndex = 0;
-            keyinfo.Type       = type;
-            keyinfo.DataOffset = fixed_size;
-            keyinfo.DataLength = total_len;
-            keyinfo.NameLength = 0;
-            memcpy( info, &keyinfo, min(fixed_size,length) );
-            break;
-        }
-    case KeyValuePartialInformation:
-        {
-            KEY_VALUE_PARTIAL_INFORMATION keyinfo;
-            keyinfo.TitleIndex = 0;
-            keyinfo.Type       = type;
-            keyinfo.DataLength = total_len;
-            memcpy( info, &keyinfo, min(fixed_size,length) );
-            break;
-        }
-    default:
-        break;
-    }
+    copy_key_value_info( info_class, info, length, type, 0, total_len );
     return ret;
+}
+
+
+/******************************************************************************
+ *  NtFlushKey	[NTDLL] 
+ *  ZwFlushKey
+ */
+NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
+{
+	FIXME("(0x%08x) stub!\n",
+	KeyHandle);
+	return 1;
+}
+
+/******************************************************************************
+ *  NtLoadKey	[NTDLL] 
+ *  ZwLoadKey
+ */
+NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTES *file )
+{
+    FIXME("stub!\n");
+    dump_ObjectAttributes(attr);
+    dump_ObjectAttributes(file);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *  NtNotifyChangeKey	[NTDLL] 
+ *  ZwNotifyChangeKey
+ */
+NTSTATUS WINAPI NtNotifyChangeKey(
+	IN HANDLE KeyHandle,
+	IN HANDLE Event,
+	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+	IN PVOID ApcContext OPTIONAL,
+	OUT PIO_STATUS_BLOCK IoStatusBlock,
+	IN ULONG CompletionFilter,
+	IN BOOLEAN Asynchroneous,
+	OUT PVOID ChangeBuffer,
+	IN ULONG Length,
+	IN BOOLEAN WatchSubtree)
+{
+	FIXME("(0x%08x,0x%08x,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
+	KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
+	Asynchroneous, ChangeBuffer, Length, WatchSubtree);
+	return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * NtQueryMultipleValueKey [NTDLL]
+ * ZwQueryMultipleValueKey
+ */
+
+NTSTATUS WINAPI NtQueryMultipleValueKey(
+	HANDLE KeyHandle,
+	PVALENTW ListOfValuesToQuery,
+	ULONG NumberOfItems,
+	PVOID MultipleValueInformation,
+	ULONG Length,
+	PULONG  ReturnLength)
+{
+	FIXME("(0x%08x,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
+	KeyHandle, ListOfValuesToQuery, NumberOfItems, MultipleValueInformation,
+	Length,ReturnLength);
+	return STATUS_SUCCESS;
 }
 
 /******************************************************************************

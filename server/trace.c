@@ -42,26 +42,6 @@ static void dump_uints( const int *ptr, int len )
     fputc( '}', stderr );
 }
 
-static void dump_bytes( const unsigned char *ptr, int len )
-{
-    fputc( '{', stderr );
-    while (len > 0)
-    {
-        fprintf( stderr, "%02x", *ptr++ );
-        if (--len) fputc( ',', stderr );
-    }
-    fputc( '}', stderr );
-}
-
-static void dump_path_t( const void *req, const path_t *path )
-{
-    const WCHAR *str = *path;
-    size_t len = get_req_strlenW( req, str );
-    fprintf( stderr, "L\"" );
-    dump_strW( str, len, stderr, "\"\"" );
-    fputc( '\"', stderr );
-}
-
 static void dump_context( const CONTEXT *context )
 {
 #ifdef __i386__
@@ -259,14 +239,6 @@ static size_t dump_varargs_input_records( const void *req )
     }
     fputc( '}', stderr );
     return get_size(req);
-}
-
-/* dumping for functions for requests that have a variable part */
-
-static void dump_varargs_enum_key_value_reply( const struct enum_key_value_request *req )
-{
-    int count = min( req->len - req->offset, get_req_size( req, req->data, 1 ));
-    dump_bytes( req->data, count );
 }
 
 typedef void (*dump_func)( const void *req );
@@ -1224,10 +1196,10 @@ static void dump_enum_key_value_reply( const struct enum_key_value_request *req 
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " len=%d,", req->len );
     fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
-    fprintf( stderr, "," );
+    cur_pos += dump_varargs_unicode_len_str( req );
+    fputc( ',', stderr );
     fprintf( stderr, " data=" );
-    dump_varargs_enum_key_value_reply( req );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_delete_key_value_request( const struct delete_key_value_request *req )

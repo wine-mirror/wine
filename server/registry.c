@@ -792,7 +792,7 @@ static void set_value( struct key *key, WCHAR *name, int type, unsigned int tota
 }
 
 /* get a key value */
-static size_t get_value( struct key *key, WCHAR *name, unsigned int offset,
+static size_t get_value( struct key *key, const WCHAR *name, unsigned int offset,
                          unsigned int maxlen, int *type, int *len, void *data )
 {
     struct key_value *value;
@@ -820,25 +820,50 @@ static size_t get_value( struct key *key, WCHAR *name, unsigned int offset,
 }
 
 /* enumerate a key value */
-static void enum_value( struct key *key, int i, WCHAR *name, unsigned int offset,
-                        unsigned int maxlen, int *type, int *len, void *data )
+static size_t enum_value( struct key *key, int i, unsigned int offset,
+                          unsigned int maxlen, int *type, int *len, void *data )
 {
     struct key_value *value;
+    size_t ret = 0;
 
     if (i < 0 || i > key->last_value) set_error( STATUS_NO_MORE_ENTRIES );
     else
     {
+        WCHAR *name_ptr = data;
         value = &key->values[i];
-        strcpyW( name, value->name );
         *type = value->type;
         *len  = value->len;
-        if (value->data && offset < value->len)
+
+        if (maxlen >= sizeof(WCHAR))
         {
-            if (maxlen > value->len - offset) maxlen = value->len - offset;
-            memcpy( data, (char *)value->data + offset, maxlen );
+            size_t name_len = 0;
+
+            /* copy the name only the first time (offset==0),
+             * otherwise store an empty name in the buffer
+             */
+            maxlen -= sizeof(WCHAR);
+            ret += sizeof(WCHAR);
+            if (!offset)
+            {
+                name_len = strlenW( value->name ) * sizeof(WCHAR);
+                if (name_len > maxlen) name_len = maxlen;
+            }
+            *name_ptr++ = name_len;
+            memcpy( name_ptr, value->name, name_len );
+            maxlen -= name_len;
+            ret += name_len;
+            data = (char *)name_ptr + name_len;
+
+            if (value->data && offset < value->len)
+            {
+                if (maxlen > value->len - offset) maxlen = value->len - offset;
+                memcpy( data, (char *)value->data + offset, maxlen );
+                ret += maxlen;
+            }
         }
         if (debug_level > 1) dump_operation( key, value, "Enum" );
     }
+    return ret;
 }
 
 /* delete a value */
@@ -1674,16 +1699,16 @@ DECL_HANDLER(get_key_value)
 DECL_HANDLER(enum_key_value)
 {
     struct key *key;
-    unsigned int max = get_req_size( req, req->data, sizeof(req->data[0]) );
+    size_t len = 0;
 
     req->len = 0;
-    req->name[0] = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        enum_value( key, req->index, req->name, req->offset, max,
-                    &req->type, &req->len, req->data );
+        len = enum_value( key, req->index, req->offset, get_req_data_size(req),
+                          &req->type, &req->len, get_req_data(req) );
         release_object( key );
     }
+    set_req_data_size( req, len );
 }
 
 /* delete a value of a registry key */

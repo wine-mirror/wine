@@ -27,14 +27,6 @@
 DEFAULT_DEBUG_CHANNEL(reg);
 
 
-/* Unicode->Ansi conversion without string delimiters */
-static LPSTR memcpyWtoA( LPSTR dst, LPCWSTR src, INT n )
-{
-    LPSTR p = dst;
-    while (n-- > 0) *p++ = (CHAR)*src++;
-    return dst;
-}
-
 /* check if value type needs string conversion (Ansi<->Unicode) */
 static inline int is_string( DWORD type )
 {
@@ -1000,8 +992,11 @@ DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
 DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_count,
                             LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
 {
-    DWORD ret, len;
-    struct enum_key_value_request *req = get_req_buffer();
+    NTSTATUS status;
+    DWORD total_size;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+    static const int info_size = sizeof(*info) - sizeof(info->Name);
 
     TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
@@ -1009,41 +1004,65 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
     /* NT only checks count, not val_count */
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    req->index = index;
-    req->offset = 0;
-    if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+    total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
+    if (data) total_size += *count;
+    total_size = min( sizeof(buffer), total_size );
 
-    len = strlenW( req->name ) + 1;
-    if (len > *val_count) return ERROR_MORE_DATA;
-    memcpy( value, req->name, len * sizeof(WCHAR) );
-    *val_count = len - 1;
+    status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                  buffer, total_size, &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
-    if (data)
+    if (value || data)
     {
-        if (*count < req->len) ret = ERROR_MORE_DATA;
-        else
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
         {
-            /* copy the data */
-            unsigned int max = server_remaining( req->data );
-            unsigned int pos = 0;
-            while (pos < req->len)
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
+            status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                          buf_ptr, total_size, &total_size );
+        }
+
+        if (status) goto done;
+
+        if (value)
+        {
+            if (info->NameLength/sizeof(WCHAR) >= *val_count)
             {
-                unsigned int len = min( req->len - pos, max );
-                memcpy( data + pos, req->data, len );
-                if ((pos += len) >= req->len) break;
-                req->offset = pos;
-                if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+                status = STATUS_BUFFER_OVERFLOW;
+                goto done;
+            }
+            memcpy( value, info->Name, info->NameLength );
+            *val_count = info->NameLength / sizeof(WCHAR);
+            value[*val_count] = 0;
+        }
+
+        if (data)
+        {
+            if (total_size - info->DataOffset > *count)
+            {
+                status = STATUS_BUFFER_OVERFLOW;
+                goto done;
+            }
+            memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+            if (total_size - info->DataOffset <= *count-sizeof(WCHAR) && is_string(info->Type))
+            {
+                /* if the type is REG_SZ and data is not 0-terminated
+                 * and there is enough space in the buffer NT appends a \0 */
+                WCHAR *ptr = (WCHAR *)(data + total_size - info->DataOffset);
+                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
             }
         }
-        /* if the type is REG_SZ and data is not 0-terminated
-         * and there is enough space in the buffer NT appends a \0 */
-        if (req->len && is_string(req->type) &&
-            (req->len < *count) && ((WCHAR *)data)[req->len-1]) ((WCHAR *)data)[req->len] = 0;
     }
-    if (type) *type = req->type;
-    if (count) *count = req->len;
-    return ret;
+
+    if (type) *type = info->Type;
+    if (count) *count = info->DataLength;
+
+ done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError(status);
 }
 
 
@@ -1053,8 +1072,11 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
 DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
                             LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
 {
-    DWORD ret, len, total_len;
-    struct enum_key_value_request *req = get_req_buffer();
+    NTSTATUS status;
+    DWORD total_size;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+    static const int info_size = sizeof(*info) - sizeof(info->Name);
 
     TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
@@ -1062,47 +1084,80 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
     /* NT only checks count, not val_count */
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    req->index = index;
-    req->offset = 0;
-    if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+    total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
+    if (data) total_size += *count;
+    total_size = min( sizeof(buffer), total_size );
 
-    len = strlenW( req->name ) + 1;
-    if (len > *val_count) return ERROR_MORE_DATA;
-    memcpyWtoA( value, req->name, len );
-    *val_count = len - 1;
+    status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                  buffer, total_size, &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
-    total_len = is_string( req->type ) ? req->len/sizeof(WCHAR) : req->len;
-
-    if (data)
+    /* we need to fetch the contents for a string type even if not requested,
+     * because we need to compute the length of the ASCII string. */
+    if (value || data || is_string(info->Type))
     {
-        if (*count < total_len) ret = ERROR_MORE_DATA;
-        else
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
         {
-            /* copy the data */
-            unsigned int max = server_remaining( req->data );
-            unsigned int pos = 0;
-            while (pos < req->len)
-            {
-                unsigned int len = min( req->len - pos, max );
-                if (is_string( req->type ))
-                    memcpyWtoA( data + pos/sizeof(WCHAR), (WCHAR *)req->data, len/sizeof(WCHAR) );
-                else
-                    memcpy( data + pos, req->data, len );
-                if ((pos += len) >= req->len) break;
-                req->offset = pos;
-                if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
-            }
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
+            status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                          buf_ptr, total_size, &total_size );
         }
-        /* if the type is REG_SZ and data is not 0-terminated
-         * and there is enough space in the buffer NT appends a \0 */
-        if (total_len && is_string(req->type) && (total_len < *count) && data[total_len-1])
-            data[total_len] = 0;
+
+        if (status) goto done;
+
+        if (value)
+        {
+            DWORD len = WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
+                                             NULL, 0, NULL, NULL );
+            if (len >= *val_count)
+            {
+                status = STATUS_BUFFER_OVERFLOW;
+                goto done;
+            }
+            WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
+                                 value, len, NULL, NULL );
+            value[len] = 0;
+            *val_count = len;
+        }
+
+        if (is_string(info->Type))
+        {
+            DWORD len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->DataOffset),
+                                             (total_size - info->DataOffset) / sizeof(WCHAR),
+                                             NULL, 0, NULL, NULL );
+            if (data && len)
+            {
+                if (len > *count)
+                {
+                    status = STATUS_BUFFER_OVERFLOW;
+                    goto done;
+                }
+                WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->DataOffset),
+                                     (total_size - info->DataOffset) / sizeof(WCHAR),
+                                     data, len, NULL, NULL );
+                /* if the type is REG_SZ and data is not 0-terminated
+                 * and there is enough space in the buffer NT appends a \0 */
+                if (len < *count && data[len-1]) data[len] = 0;
+            }
+            info->DataLength = len;
+        }
+        else if (data)
+        {
+            if (total_size - info->DataOffset > *count) status = STATUS_BUFFER_OVERFLOW;
+            else memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+        }
     }
 
-    if (count) *count = total_len;
-    if (type) *type = req->type;
-    return ret;
+    if (type) *type = info->Type;
+    if (count) *count = info->DataLength;
+
+ done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError(status);
 }
 
 

@@ -44,9 +44,6 @@ struct request_max_size
 /* max size of the variable part of a request */
 #define REQUEST_MAX_VAR_SIZE  1024
 
-/* a path name for server requests (Unicode) */
-typedef WCHAR path_t[MAX_PATH+1];
-
 
 /* definitions of the event data depending on the event code */
 struct debug_event_exception
@@ -1094,8 +1091,8 @@ struct enum_key_value_request
     IN  unsigned int offset;       /* offset for getting data */
     OUT int          type;         /* value type */
     OUT int          len;          /* value data len */
-    OUT path_t       name;         /* value name */
-    OUT unsigned char data[1];     /* value data */
+    OUT VARARG(name,unicode_len_str);  /* value name */
+    OUT VARARG(data,bytes);        /* value data */
 };
 
 
@@ -1591,7 +1588,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 28
+#define SERVER_PROTOCOL_VERSION 29
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
