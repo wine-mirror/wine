@@ -832,6 +832,26 @@ void test_LCMapStringA(void)
     ok(ret == ret2, "lengths of sort keys must be equal\n");
     ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
 
+    /* test LCMAP_SORTKEY | NORM_IGNORENONSPACE */
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORENONSPACE,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringA must succeed\n");
+    ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       lower_case, -1, buf2, sizeof(buf2));
+    ok(ret2, "LCMapStringA must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+
+    /* test LCMAP_SORTKEY | NORM_IGNORESYMBOLS */
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORESYMBOLS,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringA must succeed\n");
+    ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       symbols_stripped, -1, buf2, sizeof(buf2));
+    ok(ret2, "LCMapStringA must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+
     /* test NORM_IGNORENONSPACE */
     lstrcpyA(buf, "foo");
     ret = LCMapStringA(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE,
@@ -953,6 +973,26 @@ void test_LCMapStringW(void)
     ok(ret, "LCMapStringW must succeed\n");
     ret2 = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
                        lower_case, -1, buf2, sizeof(buf2));
+    ok(ret2, "LCMapStringW must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(p_buf, p_buf2), "sort keys must be equal\n");
+
+    /* test LCMAP_SORTKEY | NORM_IGNORENONSPACE */
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORENONSPACE,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringW must succeed\n");
+    ret2 = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       lower_case, -1, buf2, sizeof(buf2));
+    ok(ret2, "LCMapStringW must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(p_buf, p_buf2), "sort keys must be equal\n");
+
+    /* test LCMAP_SORTKEY | NORM_IGNORESYMBOLS */
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORESYMBOLS,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringW must succeed\n");
+    ret2 = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       symbols_stripped, -1, buf2, sizeof(buf2));
     ok(ret2, "LCMapStringW must succeed\n");
     ok(ret == ret2, "lengths of sort keys must be equal\n");
     ok(!lstrcmpA(p_buf, p_buf2), "sort keys must be equal\n");
