@@ -68,11 +68,26 @@ void WINAPI INT_Int16Handler( CONTEXT *context )
       break;
 
    case 0x10: /* Get Enhanced Keystroke */
-      FIXME(int16, "Get Enhanced Keystroke - Not Supported\n");
+      TRACE(int16, "Get Enhanced Keystroke - Partially supported\n");
+      /* Returns: AH = Scan code
+                  AL = ASCII character */   
+      CONSOLE_GetKeystroke(&AH_reg(context), &AL_reg(context));
       break;
+  
 
    case 0x11: /* Check for Enhanced Keystroke */
-      FIXME(int16, "Check for Enhanced Keystroke - Not Supported\n");
+      /* Returns: ZF set if no keystroke */
+      /*          AH = Scan code */
+      /*          AL = ASCII character */
+      TRACE(int16, "Check for Enhanced Keystroke - Partially supported\n");
+      if (!CONSOLE_CheckForKeystroke(&AH_reg(context), &AL_reg(context)))
+      {
+          SET_ZFLAG(context);
+      }
+      else
+      {
+          RESET_ZFLAG(context);
+      }
       break;
 
    case 0x12: /* Get Extended Shift States */

@@ -225,6 +225,19 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
             break;
         }
         break;
+    case 0xd2:
+	switch(AL_reg(context))
+	{
+	case 0x01: /* Quarterdeck RPCI - QEMM/QRAM - PCL-838.EXE functions */
+	    if(BX_reg(context) == 0x5145 && CX_reg(context) == 0x4D4D 
+	      && DX_reg(context) == 0x3432)
+		TRACE(int, "Check for QEMM v5.0+ (not installed)\n");
+		break;
+	default:
+	    INT_BARF( context, 0x2f );
+	    break;
+	}
+	break;
     case 0xd7:  /* Banyan Vines */
         switch (AL_reg(context))
         {
@@ -236,6 +249,19 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
             break;
         }
         break;
+    case 0xde:
+	switch(AL_reg(context))
+	{
+	case 0x01:   /* Quarterdeck QDPMI.SYS - DESQview */
+	    if(BX_reg(context) == 0x4450 && CX_reg(context) == 0x4d49 
+	      && DX_reg(context) == 0x8f4f)
+		TRACE(int, "Check for QDPMI.SYS (not installed)\n");
+		break;
+	default:
+	    INT_BARF( context, 0x2f );
+	    break;
+	}
+	break;
     case 0xfa:  /* Watcom debugger check, returns 0x666 if installed */
         break;
     default:

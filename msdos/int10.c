@@ -114,7 +114,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
 		case 0x00: /* 40x25 */
             	case 0x01:
                 	VGA_Exit();
-                	TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
+                	TRACE(int10, "Set VESA Text Mode - 0x0%x\n",
                 	   BX_reg(context));
                 	CONSOLE_ResizeScreen(40, 25);
                 	CONSOLE_ClearScreen();
@@ -124,46 +124,26 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
             	case 0x03:
             	case 0x07:
             	    VGA_Exit();
-            	    TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
+            	    TRACE(int10, "Set VESA Text Mode - 0x0%x\n",
             	       BX_reg(context));
             	    CONSOLE_ResizeScreen(80, 25);
             	    CONSOLE_ClearScreen();
                     DOSMEM_BiosData()->VideoColumns = 80;
             	    break;
-	        case 0x04:
-                    TRACE(int10, "Setting VGA 320x200 4-color mode\n");
-                    VGA_SetMode(320,200,2); /* FIXME is this right/supported? */
-                    break;
-	        case 0x05:
-                    TRACE(int10, "Setting VGA 320x200 4-color mode\n");
-                    VGA_SetMode(320,200,2); /* FIXME is this right/supported? */
-                    break;
-  	        case 0x06:
-                    TRACE(int10, "Setting VGA 640x200 2-color mode\n");
-                    VGA_SetMode(640,200,1); /* FIXME is this right/supported? */
-                    break;
 	        case 0x0D:
-                    TRACE(int10, "Setting VGA 320x200 16-color mode\n");
+                    TRACE(int10, "Setting VESA 320x200 16-color mode\n");
                     VGA_SetMode(320,200,4);
                     break;
  	        case 0x0E:
-                    TRACE(int10, "Setting VGA 640x200 16-color mode\n");
+                    TRACE(int10, "Setting VESA 640x200 16-color mode\n");
                     VGA_SetMode(640,200,4); 
                     break;
- 	        case 0x0F:
-                    TRACE(int10, "Setting VGA 640x350 2-color mode\n");
-                    VGA_SetMode(640,350,1); /* FIXME is this right/supported? */
-                    break;
 	        case 0x10:
-                    TRACE(int10, "Setting VGA 640x350 16-color mode\n");
+                    TRACE(int10, "Setting VESA 640x350 16-color mode\n");
                     VGA_SetMode(640,350,4);
                     break;
-	        case 0x11:
-                    TRACE(int10, "Setting VGA 640x480 2-color mode\n");
-                    VGA_SetMode(640,480,1); /* FIXME is this right/supported? */
-                    break;
 	        case 0x12:
-                    TRACE(int10, "Setting VGA 640x480 16-color mode\n");
+                    TRACE(int10, "Setting VESA 640x480 16-color mode\n");
                     VGA_SetMode(640,480,4);
                     break;
                 case 0x13:
@@ -337,7 +317,6 @@ else {
                    AL_reg(context));
                 CONSOLE_ResizeScreen(40, 25);
                 CONSOLE_ClearScreen();
-                DOSMEM_BiosData()->VideoMode = AL_reg(context);
                 DOSMEM_BiosData()->VideoColumns = 40;
                 break;                
             case 0x02:
@@ -348,18 +327,33 @@ else {
                    AL_reg(context));
                 CONSOLE_ResizeScreen(80, 25);
                 CONSOLE_ClearScreen();
-                DOSMEM_BiosData()->VideoMode = AL_reg(context);
                 DOSMEM_BiosData()->VideoColumns = 80;
+                break;
+	    case 0x0D:
+                TRACE(int10, "Setting VGA 320x200 16-color mode\n");
+                VGA_SetMode(320,200,4);
+                break;
+	    case 0x0E:
+                TRACE(int10, "Setting VGA 640x200 16-color mode\n");
+                VGA_SetMode(640,200,4); 
+                break;
+	    case 0x10:
+                TRACE(int10, "Setting VGA 640x350 16-color mode\n");
+                VGA_SetMode(640,350,4);
+                break;
+	    case 0x12:
+                TRACE(int10, "Setting VGA 640x480 16-color mode\n");
+                VGA_SetMode(640,480,4);
                 break;
             case 0x13:
                 TRACE(int10, "Setting VGA 320x200 256-color mode\n");
                 VGA_SetMode(320,200,8);
-                DOSMEM_BiosData()->VideoMode = AL_reg(context);
                 break;
             default:
                 FIXME(int10, "Set Video Mode (0x%x) - Not Supported\n", 
                    AL_reg(context));
         }
+        DOSMEM_BiosData()->VideoMode = AL_reg(context);
         break;
 
     case 0x01: /* SET CURSOR SHAPE */

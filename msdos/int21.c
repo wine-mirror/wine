@@ -1149,7 +1149,6 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x26: /* CREATE NEW PROGRAM SEGMENT PREFIX */
     case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
     case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
-    case 0x54: /* GET VERIFY FLAG */
         INT_BARF( context, 0x21 );
         break;
 
@@ -1902,6 +1901,11 @@ void WINAPI DOS3Call( CONTEXT *context )
                 BX_reg(context) = LOWORD(lol);
         }
         break;
+
+    case 0x54: /* Get Verify Flag */
+	TRACE(int21,"Get Verify Flag - Not Supported\n");
+	AL_reg(context) = 0x00;  /* pretend we can tell. 00h = off 01h = on */
+	break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
         TRACE(int21,"RENAME %s to %s\n",
