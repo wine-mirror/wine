@@ -11,7 +11,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include "winbase.h"
 #include "debugtools.h"
 #include "shell.h"
@@ -29,10 +28,7 @@ DEFAULT_DEBUG_CHANNEL(pidl)
 DECLARE_DEBUG_CHANNEL(shell)
 
 void pdump (LPCITEMIDLIST pidl)
-{	DWORD type;
-	char * szData;
-	char * szShortName;
-	char szName[MAX_PATH];
+{
 	BOOL bIsShellDebug;
 	
 	LPITEMIDLIST pidltemp = pidl;
@@ -55,13 +51,21 @@ void pdump (LPCITEMIDLIST pidl)
 	  { 
 	    do
 	    {
-	      type   = _ILGetDataPointer(pidltemp)->type;
-	      szData = _ILGetTextPointer(pidltemp);
-	      szShortName = _ILGetSTextPointer(pidltemp);
-	      _ILSimpleGetText(pidltemp, szName, MAX_PATH);
+	      DWORD dwAttrib = 0;
+	      LPPIDLDATA pData   = _ILGetDataPointer(pidltemp);
+	      DWORD type         = pData->type;
+	      LPSTR szLongName   = _ILGetTextPointer(pidltemp);
+	      LPSTR szShortName  = _ILGetSTextPointer(pidltemp);
+	      char szName[MAX_PATH];
 
-	      MESSAGE ("-- pidl=%p size=%u type=%lx name=%s (%s,%s)\n",
-	               pidltemp, pidltemp->mkid.cb,type,szName,debugstr_a(szData), debugstr_a(szShortName));
+	      _ILSimpleGetText(pidltemp, szName, MAX_PATH);
+	      if( PT_FOLDER == type)
+	        dwAttrib = pData->u.folder.uFileAttribs;
+	      else if( PT_VALUE == type)
+	        dwAttrib = pData->u.file.uFileAttribs;
+
+	      MESSAGE ("-- pidl=%p size=%u type=%lx attr=0x%08lx name=%s (%s,%s)\n",
+	               pidltemp, pidltemp->mkid.cb,type,dwAttrib,szName,debugstr_a(szLongName), debugstr_a(szShortName));
 
 	      pidltemp = ILGetNext(pidltemp);
 
@@ -677,25 +681,23 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL bEnd)
  *     exported by ordinal
  */
 DWORD WINAPI ILFree(LPITEMIDLIST pidl) 
-{	TRACE("(pidl=0x%08lx)\n",(DWORD)pidl);
+{
+	TRACE("(pidl=0x%08lx)\n",(DWORD)pidl);
 
-	if (!pidl)
-	  return FALSE;
-
-	return SHFree(pidl);
+	if(!pidl) return FALSE;
+	SHFree(pidl);
+	return TRUE;
 }
 /*************************************************************************
  * ILGlobalFree [SHELL32.156]
  *
  */
-DWORD WINAPI ILGlobalFree( LPITEMIDLIST pidl)
+void WINAPI ILGlobalFree( LPCITEMIDLIST pidl)
 {
 	TRACE("%p\n",pidl);
 
-	if (!pidl)
-	  return FALSE;
-
-	return pCOMCTL32_Free (pidl);
+	if(!pidl) return;
+	pCOMCTL32_Free(pidl);
 }
 /*************************************************************************
  * ILCreateFromPath [SHELL32.157]
@@ -858,7 +860,8 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 {
 	TRACE_(shell)("sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
 	
-	if (! psf || !dest )  return E_INVALIDARG;
+	pdump(pidl);
+	if (!psf || !dest )  return E_INVALIDARG;
 
 	switch (nFormat)
 	{
@@ -894,6 +897,10 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
  */
 HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
 {
+	TRACE_(shell)("sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+
+	pdump(pidl);
+
 	if (! psf || !dest )  return E_INVALIDARG;
 
 	switch (nFormat)
@@ -955,6 +962,11 @@ BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
 	if(_ILIsDesktop(pidl))
 	{
 	   SHGetSpecialFolderPathA(0, pszPath, CSIDL_DESKTOPDIRECTORY, FALSE);	
+	}
+	else if (_ILIsSpecialFolder(ILFindLastID(pidl)))
+	{
+	  /* we are somewhere in a special folder */
+	  return FALSE;
 	}
 	else
 	{
@@ -1539,6 +1551,8 @@ BOOL _ILGetFileDateTime(LPCITEMIDLIST pidl, FILETIME *pFt)
 {
     LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 
+    if(! pdata) return FALSE;
+
     switch (pdata->type)
     { 
         case PT_FOLDER:
@@ -1587,6 +1601,8 @@ DWORD _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 	DWORD dwSize;
 	
+	if(! pdata) return 0;
+
 	switch (pdata->type)
 	{
 	  case PT_VALUE:
@@ -1678,7 +1694,8 @@ void _ILGetFileType(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
  * RETURNS
  *     Attributes
  *
- * NOTES
+ * FIXME
+ *  return value 0 in case of error is a valid return value
  *     
  */
 DWORD _ILGetFileAttributes(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
@@ -1686,6 +1703,8 @@ DWORD _ILGetFileAttributes(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	LPPIDLDATA pData =_ILGetDataPointer(pidl);
 	WORD wAttrib = 0;
 	int i;
+
+	if(! pData) return 0;
 
 	switch(pData->type)
 	{

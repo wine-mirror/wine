@@ -6,10 +6,6 @@
  * This is the view visualizing the data provied by the shellfolder.
  * No direct access to data from pidls should be done from here. 
  * 
- * FIXME: There is not jet a official interface defined to manipulate
- * the objects shown in the view (rename, move...). This should be
- * implemented as additional interface to IShellFolder.
- *
  * FIXME: The order by part of the background context menu should be
  * buily according to the columns shown.
  *
@@ -471,7 +467,7 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
 */   
 static int LV_FindItemByPidl(
 	IShellViewImpl * This,
-	LPITEMIDLIST pidl)
+	LPCITEMIDLIST pidl)
 {
 	LVITEMA lvItem;
 	ZeroMemory(&lvItem, sizeof(LVITEMA));
@@ -491,11 +487,11 @@ static int LV_FindItemByPidl(
 /**********************************************************
 * LV_AddItem()
 */
-static BOOLEAN LV_AddItem(IShellViewImpl * This, LPITEMIDLIST pidl)
+static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 {
 	LVITEMA	lvItem;
 
-	FIXME("(%p)(pidl=%p)\n", This, pidl);
+	TRACE("(%p)(pidl=%p)\n", This, pidl);
 
 	ZeroMemory(&lvItem, sizeof(lvItem));	/* create the listview item*/
 	lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;	/*set the mask*/
@@ -509,11 +505,11 @@ static BOOLEAN LV_AddItem(IShellViewImpl * This, LPITEMIDLIST pidl)
 /**********************************************************
 * LV_DeleteItem()
 */
-static BOOLEAN LV_DeleteItem(IShellViewImpl * This, LPITEMIDLIST pidl)
+static BOOLEAN LV_DeleteItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 {
 	int nIndex;
 
-	FIXME("(%p)(pidl=%p)\n", This, pidl);
+	TRACE("(%p)(pidl=%p)\n", This, pidl);
 
 	nIndex = LV_FindItemByPidl(This, ILFindLastID(pidl));
 	return (-1==ListView_DeleteItem(This->hWndList, nIndex))? FALSE: TRUE;
@@ -522,12 +518,12 @@ static BOOLEAN LV_DeleteItem(IShellViewImpl * This, LPITEMIDLIST pidl)
 /**********************************************************
 * LV_RenameItem()
 */
-static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPITEMIDLIST pidlOld, LPITEMIDLIST pidlNew )
+static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCITEMIDLIST pidlNew )
 {
 	int nItem;
 	LVITEMA lvItem;
 
-	FIXME("(%p)(pidlold=%p pidlnew=%p)\n", This, pidlOld, pidlNew);
+	TRACE("(%p)(pidlold=%p pidlnew=%p)\n", This, pidlOld, pidlNew);
 
 	nItem = LV_FindItemByPidl(This, ILFindLastID(pidlOld));
 	if ( -1 != nItem )
@@ -603,13 +599,8 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 
 	  /* in a commdlg This works as a filemask*/
 	  if ( IncludeObject(This, pidl)==S_OK )
-	  {
-	    if(! LV_AddItem(This, pidl)) SHFree(pidl);	/* insert failed: PIDL not owned by the LV */
-	  }
-	  else
-	  {
-	    SHFree(pidl);	/* not inserted */
-	  }
+	    LV_AddItem(This, pidl);
+	  SHFree(pidl);
 	}
 
 	/*turn the listview's redrawing back on and force it to draw*/
@@ -1199,7 +1190,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    if (ShellView_GetSelections(This))
 	    {  
 	      IDataObject * pda;
-	      DWORD dwAttributes;
+	      DWORD dwAttributes = SFGAO_CANLINK;
 	      DWORD dwEffect = DROPEFFECT_COPY | DROPEFFECT_MOVE;
 	      
 	      if(GetShellOle())
