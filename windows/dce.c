@@ -377,10 +377,9 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 	INT xoffset = lprect->left;
 	INT yoffset = lprect->top;
 
-	while( !(wndPtr->flags & WIN_NATIVE) ) 
+	while( !(wndPtr->flags & WIN_NATIVE) &&
+	   ( wndPtr = WIN_LockWndPtr(wndPtr->parent)) )
 	{
-	    wndPtr = WIN_LockWndPtr(wndPtr->parent);
-
 	    if ( (wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
             {
                 WIN_ReleaseWndPtr(wndPtr);
