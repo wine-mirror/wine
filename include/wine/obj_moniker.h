@@ -1,7 +1,7 @@
 /*
  * Defines the COM interfaces and APIs related to the moniker functionality.
  *
- * This file depends on 'obj_storage.h' and 'obj_base.h'.
+ * This file depends on 'obj_storage.h' and 'obj_base.h' and 'obj_misc.h' (IEnumString).
  */
 
 

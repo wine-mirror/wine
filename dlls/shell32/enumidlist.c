@@ -74,7 +74,7 @@ LPENUMIDLIST IEnumIDList_Constructor( LPCSTR lpszPath, DWORD dwFlags)
 }
 
 /**************************************************************************
- *  EnumIDList::QueryInterface
+ *  EnumIDList_QueryInterface
  */
 static HRESULT WINAPI IEnumIDList_QueryInterface(
   LPENUMIDLIST this, REFIID riid, LPVOID *ppvObj)

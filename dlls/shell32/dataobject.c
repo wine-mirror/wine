@@ -11,7 +11,6 @@
 #include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"
 #include "wine/obj_dataobject.h"
-#include "objbase.h"
 #include "pidl.h"
 #include "winerror.h"
 #include "shell32_main.h"

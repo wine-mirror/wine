@@ -714,7 +714,7 @@ HRESULT WINAPI CLSIDFromString32(
 }
 
 /******************************************************************************
- *		WINE_StringFromCLSID	[???]
+ *		WINE_StringFromCLSID	[Internal]
  * Converts a GUID into the respective string representation.
  *
  * NOTES

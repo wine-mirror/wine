@@ -9,9 +9,9 @@
 #include "wine/obj_channel.h"
 #include "wine/obj_clientserver.h"
 #include "wine/obj_storage.h"
-#include "wine/obj_marshal.h"
 
 /* the following depend on obj_storage.h */
+#include "wine/obj_marshal.h"
 #include "wine/obj_moniker.h"
 #include "wine/obj_propertystorage.h"
 
