@@ -41,7 +41,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 
 /**********************************************************************/
 
-#define NB_BUTTONS   5     /* Windows can handle 3 buttons and the wheel too */
+#ifndef Button6Mask
+#define Button6Mask (1<<13)
+#endif
+#ifndef Button7Mask
+#define Button7Mask (1<<14)
+#endif
+
+#define NB_BUTTONS   7     /* Windows can handle 5 buttons and the wheel too */
 
 static const UINT button_down_flags[NB_BUTTONS] =
 {
@@ -49,7 +56,9 @@ static const UINT button_down_flags[NB_BUTTONS] =
     MOUSEEVENTF_MIDDLEDOWN,
     MOUSEEVENTF_RIGHTDOWN,
     MOUSEEVENTF_WHEEL,
-    MOUSEEVENTF_WHEEL
+    MOUSEEVENTF_WHEEL,
+    MOUSEEVENTF_XDOWN,
+    MOUSEEVENTF_XDOWN
 };
 
 static const UINT button_up_flags[NB_BUTTONS] =
@@ -58,7 +67,9 @@ static const UINT button_up_flags[NB_BUTTONS] =
     MOUSEEVENTF_MIDDLEUP,
     MOUSEEVENTF_RIGHTUP,
     0,
-    0
+    0,
+    MOUSEEVENTF_XUP,
+    MOUSEEVENTF_XUP
 };
 
 POINT cursor_pos;
@@ -89,6 +100,8 @@ static inline void update_button_state( unsigned int state )
     key_state_table[VK_LBUTTON] = (state & Button1Mask ? 0x80 : 0);
     key_state_table[VK_MBUTTON] = (state & Button2Mask ? 0x80 : 0);
     key_state_table[VK_RBUTTON] = (state & Button3Mask ? 0x80 : 0);
+    key_state_table[VK_XBUTTON1]= (state & Button6Mask ? 0x80 : 0);
+    key_state_table[VK_XBUTTON2]= (state & Button7Mask ? 0x80 : 0);
 }
 
 
@@ -130,7 +143,7 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 
     if (window != data->grab_window &&
         /* ignore event if a button is pressed, since the mouse is then grabbed too */
-        !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask)))
+        !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
         SERVER_START_REQ( update_window_zorder )
         {
@@ -323,6 +336,18 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
     if (flags & MOUSEEVENTF_WHEEL)
     {
         queue_raw_mouse_message( WM_MOUSEWHEEL, hwnd, pt.x, pt.y, data, time,
+                                 extra_info, injected_flags );
+    }
+    if (flags & MOUSEEVENTF_XDOWN)
+    {
+        key_state_table[VK_XBUTTON1 + data - 1] |= 0xc0;
+        queue_raw_mouse_message( WM_XBUTTONDOWN, hwnd, pt.x, pt.y, data, time,
+                                 extra_info, injected_flags );
+    }
+    if (flags & MOUSEEVENTF_XUP)
+    {
+        key_state_table[VK_XBUTTON1 + data - 1] &= ~0x80;
+        queue_raw_mouse_message( WM_XBUTTONUP, hwnd, pt.x, pt.y, data, time,
                                  extra_info, injected_flags );
     }
 }
@@ -724,6 +749,12 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     case 4:
         wData = -WHEEL_DELTA;
         break;
+    case 5:
+        wData = XBUTTON1;
+        break;
+    case 6:
+        wData = XBUTTON2;
+        break;
     }
 
     update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
@@ -740,15 +771,26 @@ void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
 {
     XButtonEvent *event = &xev->xbutton;
     int buttonNum = event->button - 1;
+    WORD wData = 0;
     POINT pt;
 
     if (buttonNum >= NB_BUTTONS || !button_up_flags[buttonNum]) return;
     if (!hwnd) return;
 
+    switch (buttonNum)
+    {
+    case 5:
+        wData = XBUTTON1;
+        break;
+    case 6:
+        wData = XBUTTON2;
+        break;
+    }
+
     update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
 
     X11DRV_send_mouse_input( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE,
-                             pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
+                             pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
 
 

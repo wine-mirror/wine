@@ -1115,6 +1115,9 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_XBUTTONUP        0x020C
 #define WM_XBUTTONDBLCLK    0x020D
 
+#define XBUTTON1            0x0001
+#define XBUTTON2            0x0002
+
 #define WM_MOUSEFIRST       0x0200
 #define WM_MOUSELAST        0x020D
 
@@ -2558,6 +2561,8 @@ typedef struct tagCBTACTIVATESTRUCT
 #define MOUSEEVENTF_RIGHTUP     0x0010
 #define MOUSEEVENTF_MIDDLEDOWN  0x0020
 #define MOUSEEVENTF_MIDDLEUP    0x0040
+#define MOUSEEVENTF_XDOWN       0x0080
+#define MOUSEEVENTF_XUP         0x0100
 #define MOUSEEVENTF_WHEEL       0x0800
 #define MOUSEEVENTF_ABSOLUTE    0x8000
 

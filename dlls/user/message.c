@@ -47,7 +47,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
-#define WM_NCMOUSELAST  WM_NCMBUTTONDBLCLK
+#define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
 
 #define MAX_PACK_COUNT 4
 
@@ -1704,7 +1704,8 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
 
     if ((msg->message == WM_LBUTTONDOWN) ||
         (msg->message == WM_RBUTTONDOWN) ||
-        (msg->message == WM_MBUTTONDOWN))
+        (msg->message == WM_MBUTTONDOWN) ||
+        (msg->message == WM_XBUTTONDOWN))
     {
         BOOL update = remove;
 
@@ -1718,6 +1719,7 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
         {
            if ((msg->message == clk_msg.message) &&
                (msg->hwnd == clk_msg.hwnd) &&
+               (msg->wParam == clk_msg.wParam) &&
                (msg->time - clk_msg.time < GetDoubleClickTime()) &&
                (abs(msg->pt.x - clk_msg.pt.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
                (abs(msg->pt.y - clk_msg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
@@ -1774,7 +1776,8 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
 
     if ((msg->message == WM_LBUTTONDOWN) ||
         (msg->message == WM_RBUTTONDOWN) ||
-        (msg->message == WM_MBUTTONDOWN))
+        (msg->message == WM_MBUTTONDOWN) ||
+        (msg->message == WM_XBUTTONDOWN))
     {
         /* Send the WM_PARENTNOTIFY,
          * note that even for double/nonclient clicks
