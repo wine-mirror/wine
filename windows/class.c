@@ -379,11 +379,14 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
 
     /* Fix the extra bytes value */
 
-    if (classExtra < 0) classExtra = 0;
-    else if (classExtra > 40)  /* Extra bytes are limited to 40 in Win32 */
+    if (classExtra < 0 || winExtra < 0)
+    {
+         SetLastError( ERROR_INVALID_PARAMETER );
+         return NULL;
+    }
+    if (classExtra > 40)  /* Extra bytes are limited to 40 in Win32 */
         WARN("Class extra bytes %d is > 40\n", classExtra);
-    if (winExtra < 0) winExtra = 0;
-    else if (winExtra > 40)    /* Extra bytes are limited to 40 in Win32 */
+    if (winExtra > 40)    /* Extra bytes are limited to 40 in Win32 */
         WARN("Win extra bytes %d is > 40\n", winExtra );
 
     classPtr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLASS) + classExtra );

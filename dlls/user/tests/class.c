@@ -310,6 +310,7 @@ static void test_instances(void)
 
     cls.lpszMenuName  = "main_module";
     cls.hInstance = main_module;
+
     ok( RegisterClassA( &cls ), "Failed to register local class for main module\n" );
     check_class( main_module, name, "main_module" );
     check_instance( name, main_module, main_module, main_module );
@@ -323,6 +324,29 @@ static void test_instances(void)
     check_instance( name, kernel32, kernel32, kernel32 );
     check_thread_instance( name, kernel32, kernel32, kernel32 );
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
+
+    /* Bug 2631 - Supplying an invalid number of bytes fails */
+    cls.cbClsExtra    = 0;
+    cls.cbWndExtra    = -1;
+    SetLastError(0xdeadbeef);
+    ok( ((RegisterClassA( &cls ) == 0) && (GetLastError() == ERROR_INVALID_PARAMETER)),
+          "Failed with invalid number of WndExtra bytes\n");
+
+    cls.cbClsExtra    = -1;
+    cls.cbWndExtra    = 0;
+    SetLastError(0xdeadbeef);
+    ok( ((RegisterClassA( &cls ) == 0) && (GetLastError() == ERROR_INVALID_PARAMETER)),
+          "Failed with invalid number of ClsExtra bytes\n");
+
+    cls.cbClsExtra    = -1;
+    cls.cbWndExtra    = -1;
+    SetLastError(0xdeadbeef);
+    ok( ((RegisterClassA( &cls ) == 0) && (GetLastError() == ERROR_INVALID_PARAMETER)),
+          "Failed with invalid number of ClsExtra and cbWndExtra bytes\n");
+
+    cls.cbClsExtra    = 0;
+    cls.cbWndExtra    = 0;
+    SetLastError(0xdeadbeef);
 
     /* setting global flag doesn't change status of class */
     hwnd = CreateWindowExA( 0, name, "test", 0, 0, 0, 0, 0, 0, 0, main_module, 0 );
