@@ -489,7 +489,7 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
     ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
 #define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
     ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
-#define ICOM_METHOD11(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,tj,nj,nk) \
+#define ICOM_METHOD11(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk) \
     ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k);
 
 #define ICOM_VMETHOD(xfn) \
