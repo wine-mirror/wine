@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debugtools.h"
+#include "winreg.h"
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"
+#include "wine/undocshell.h"
 #include "winerror.h"
 
 #include "pidl.h"
@@ -37,35 +39,308 @@ typedef struct
 static struct ICOM_VTABLE(IEnumIDList) eidlvt;
 
 /**************************************************************************
- *  IEnumIDList_fnConstructor
+ *  AddToEnumList()
+ */
+static BOOL AddToEnumList(
+	IEnumIDList * iface,
+	LPITEMIDLIST pidl)
+{
+	ICOM_THIS(IEnumIDListImpl,iface);
+
+	LPENUMLIST  pNew;
+
+	TRACE("(%p)->(pidl=%p)\n",This,pidl);
+	pNew = (LPENUMLIST)SHAlloc(sizeof(ENUMLIST));
+	if(pNew)
+	{
+	  /*set the next pointer */
+	  pNew->pNext = NULL;
+	  pNew->pidl = pidl;
+
+	  /*is This the first item in the list? */
+	  if(!This->mpFirst)
+	  {
+	    This->mpFirst = pNew;
+	    This->mpCurrent = pNew;
+	  }
+
+	  if(This->mpLast)
+	  {
+	    /*add the new item to the end of the list */
+	    This->mpLast->pNext = pNew;
+	  }
+	 
+	  /*update the last item pointer */
+	  This->mpLast = pNew;
+	  TRACE("-- (%p)->(first=%p, last=%p)\n",This,This->mpFirst,This->mpLast);
+	  return TRUE;
+	}
+	return FALSE;
+}
+
+/**************************************************************************
+ *  CreateFolderEnumList()
+ */
+static BOOL CreateFolderEnumList(
+	IEnumIDList * iface,
+	LPCSTR lpszPath,
+	DWORD dwFlags)
+{
+	ICOM_THIS(IEnumIDListImpl,iface);
+
+	LPITEMIDLIST	pidl=NULL;
+	WIN32_FIND_DATAA stffile;	
+	HANDLE hFile;
+	CHAR  szPath[MAX_PATH];
+
+	TRACE("(%p)->(path=%s flags=0x%08lx) \n",This,debugstr_a(lpszPath),dwFlags);
+
+	if(!lpszPath || !lpszPath[0]) return FALSE;
+
+	strcpy(szPath, lpszPath);
+	PathAddBackslashA(szPath);
+	strcat(szPath,"*.*");
+
+	/*enumerate the folders*/
+	if(dwFlags & SHCONTF_FOLDERS)
+	{ 
+	  TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",This,debugstr_a(szPath));
+	  hFile = FindFirstFileA(szPath,&stffile);
+	  if ( hFile != INVALID_HANDLE_VALUE )
+	  {
+	    do
+	    {
+	      if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
+	      {
+		pidl = _ILCreateFolder (&stffile);
+		if(pidl && AddToEnumList((IEnumIDList*)This, pidl))
+		{
+		  continue;
+		}
+		return FALSE;
+	      }
+	    } while( FindNextFileA(hFile,&stffile));
+	    FindClose (hFile);
+	  }
+	}
+
+	/*enumerate the non-folder items (values) */
+	if(dwFlags & SHCONTF_NONFOLDERS)
+	{
+	  TRACE("-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",This,debugstr_a(szPath));
+	  hFile = FindFirstFileA(szPath,&stffile);
+	  if ( hFile != INVALID_HANDLE_VALUE )
+	  {
+	    do
+	    {
+	      if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
+	      {
+		pidl = _ILCreateValue(&stffile);
+		if(pidl && AddToEnumList((IEnumIDList*)This, pidl))
+		{
+		  continue;
+		}
+		return FALSE;
+	      }
+	    } while( FindNextFileA(hFile,&stffile));
+	    FindClose (hFile);
+	  } 
+	}
+	return TRUE;
+}
+
+/**************************************************************************
+ *  CreateDesktopEnumList()
+ */
+static BOOL CreateDesktopEnumList(
+	IEnumIDList * iface,
+	DWORD dwFlags)
+{
+	ICOM_THIS(IEnumIDListImpl,iface);
+
+	LPITEMIDLIST	pidl=NULL;
+	HKEY hkey;
+	char	szPath[MAX_PATH];
+
+	TRACE("(%p)->(flags=0x%08lx) \n",This,dwFlags);
+
+	/*enumerate the root folders */
+	if(dwFlags & SHCONTF_FOLDERS)
+	{ 
+	  /*create the pidl for This item */
+	  pidl = _ILCreateMyComputer();
+	  if(pidl)
+	  {
+	    if(!AddToEnumList((IEnumIDList*)This, pidl))
+	      return FALSE;
+	  }
+
+	  if (! RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\explorer\\desktop\\NameSpace", 0, KEY_READ, &hkey))
+	  {
+	    char iid[50];
+	    int i=0;
+
+	    while (1)
+	    {
+	      DWORD size = sizeof (iid);
+
+	      if (ERROR_SUCCESS!=RegEnumKeyExA(hkey, i, iid, &size, 0, NULL, NULL, NULL))
+	        break;
+
+	      pidl = _ILCreateSpecial(iid);
+
+	      if(pidl)
+	        AddToEnumList((IEnumIDList*)This, pidl);
+
+	      i++;
+	    }
+	    RegCloseKey(hkey);
+	  }
+	}
+
+	/*enumerate the elements in %windir%\desktop */
+	SHGetSpecialFolderPathA(0, szPath, CSIDL_DESKTOPDIRECTORY, FALSE);
+	CreateFolderEnumList( (IEnumIDList*)This, szPath, dwFlags);
+	
+	return TRUE;
+}
+
+/**************************************************************************
+ *  CreateMyCompEnumList()
+ */
+static BOOL CreateMyCompEnumList(
+	IEnumIDList * iface,
+	DWORD dwFlags)
+{
+	ICOM_THIS(IEnumIDListImpl,iface);
+
+	LPITEMIDLIST	pidl=NULL;
+	DWORD		dwDrivemap;
+	CHAR		szDriveName[4];
+	HKEY		hkey;
+
+	TRACE("(%p)->(flags=0x%08lx) \n",This,dwFlags);
+
+	/*enumerate the folders*/
+	if(dwFlags & SHCONTF_FOLDERS)
+	{
+	  dwDrivemap = GetLogicalDrives();
+	  strcpy (szDriveName,"A:\\");
+	  while (szDriveName[0]<='Z')
+	  {
+	    if(dwDrivemap & 0x00000001L)
+	    {
+	      pidl = _ILCreateDrive(szDriveName);
+	      if(pidl)
+	      {
+		if(!AddToEnumList((IEnumIDList*)This, pidl))
+	          return FALSE;
+	      }
+	    }
+	    szDriveName[0]++;
+	    dwDrivemap = dwDrivemap >> 1;
+	  }
+
+	  TRACE("-- (%p)-> enumerate (mycomputer shell extensions)\n",This);
+	  if (! RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\explorer\\mycomputer\\NameSpace", 0, KEY_READ, &hkey))
+	  {
+	    char iid[50];
+	    int i=0;
+
+	    while (1)
+	    {
+	      DWORD size = sizeof (iid);
+
+	      if (ERROR_SUCCESS!=RegEnumKeyExA(hkey, i, iid, &size, 0, NULL, NULL, NULL))
+	        break;
+
+	      pidl = _ILCreateSpecial(iid);
+
+	      if(pidl)
+	        AddToEnumList((IEnumIDList*)This, pidl);
+
+	      i++;
+	    }
+	    RegCloseKey(hkey);
+	  }
+	}
+	return TRUE;
+}
+
+/**************************************************************************
+*   DeleteList()
+*/
+static BOOL DeleteList(
+	IEnumIDList * iface)
+{
+	ICOM_THIS(IEnumIDListImpl,iface);
+
+	LPENUMLIST  pDelete;
+
+	TRACE("(%p)->()\n",This);
+	
+	while(This->mpFirst)
+	{ pDelete = This->mpFirst;
+	  This->mpFirst = pDelete->pNext;
+	  SHFree(pDelete->pidl);
+	  SHFree(pDelete);
+	}
+	This->mpFirst = This->mpLast = This->mpCurrent = NULL;
+	return TRUE;
+}
+
+/**************************************************************************
+ *  IEnumIDList_Folder_Constructor
+ *
  */
 
 IEnumIDList * IEnumIDList_Constructor(
 	LPCSTR lpszPath,
-	DWORD dwFlags)
-{	IEnumIDListImpl*	lpeidl;
+	DWORD dwFlags,
+	DWORD dwKind)
+{
+	IEnumIDListImpl*	lpeidl;
+	BOOL			ret = FALSE;	
 
-	lpeidl = (IEnumIDListImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IEnumIDListImpl));
-	if (! lpeidl)
-	  return NULL;
+	lpeidl = (IEnumIDListImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumIDListImpl));
 
-	lpeidl->ref = 1;
-	lpeidl->lpvtbl = &eidlvt;
-	lpeidl->mpFirst=NULL;
-	lpeidl->mpLast=NULL;
-	lpeidl->mpCurrent=NULL;
+	TRACE("(%p)->(%s flags=0x%08lx kind=0x%08lx)\n",lpeidl,debugstr_a(lpszPath),dwFlags, dwKind);
 
-	TRACE("(%p)->(%s flags=0x%08lx)\n",lpeidl,debugstr_a(lpszPath),dwFlags);
+	if (lpeidl)
+	{
+	  lpeidl->ref = 1;
+	  lpeidl->lpvtbl = &eidlvt;
 
-	if(!IEnumIDList_CreateEnumList((IEnumIDList*)lpeidl, lpszPath, dwFlags))
-	{ if (lpeidl)
-	  { HeapFree(GetProcessHeap(),0,lpeidl);
+	  switch (dwKind)
+	  {
+	    case EIDL_DESK:
+	      ret = CreateDesktopEnumList((IEnumIDList*)lpeidl, dwFlags);
+	      break;
+
+	    case EIDL_MYCOMP:
+	      ret = CreateMyCompEnumList((IEnumIDList*)lpeidl, dwFlags);
+	      break;
+
+	    case EIDL_FILE:
+	      ret = CreateFolderEnumList((IEnumIDList*)lpeidl, lpszPath, dwFlags);
+	      break;
 	  }
-	  return NULL;
+
+	  if(ret)
+	  {
+	    shell32_ObjCount++;
+	  }
+	  else
+	  {
+	    if (lpeidl)
+	    {
+	      HeapFree(GetProcessHeap(),0,lpeidl);
+	    }
+	  }
 	}
 
 	TRACE("-- (%p)->()\n",lpeidl);
-	shell32_ObjCount++;
+
 	return (IEnumIDList*)lpeidl;
 }
 
@@ -129,7 +404,7 @@ static ULONG WINAPI IEnumIDList_fnRelease(
 
 	if (!--(This->ref)) 
 	{ TRACE(" destroying IEnumIDList(%p)\n",This);
-	  IEnumIDList_DeleteList((IEnumIDList*)This);
+	  DeleteList((IEnumIDList*)This);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
@@ -227,175 +502,6 @@ static HRESULT WINAPI IEnumIDList_fnClone(
 	TRACE("(%p)->() to (%p)->() E_NOTIMPL\n",This,ppenum);
 	return E_NOTIMPL;
 }
-/**************************************************************************
- *  EnumIDList_CreateEnumList()
- *  fixme: devices not handled
- *  fixme: add wildcards to path
- */
-static BOOL WINAPI IEnumIDList_fnCreateEnumList(
-	IEnumIDList * iface,
-	LPCSTR lpszPath,
-	DWORD dwFlags)
-{
-	ICOM_THIS(IEnumIDListImpl,iface);
-
-	LPITEMIDLIST	pidl=NULL;
-	LPPIDLDATA 	pData=NULL;
-	WIN32_FIND_DATAA stffile;	
-	HANDLE hFile;
-	DWORD dwDrivemap;
-	CHAR  szDriveName[4];
-	CHAR  szPath[MAX_PATH];
-
-	TRACE("(%p)->(path=%s flags=0x%08lx) \n",This,debugstr_a(lpszPath),dwFlags);
-
-	if (lpszPath && lpszPath[0]!='\0')
-	{ strcpy(szPath, lpszPath);
-	  PathAddBackslashA(szPath);
-	  strcat(szPath,"*.*");
-	}
-
-	/*enumerate the folders*/
-	if(dwFlags & SHCONTF_FOLDERS)
-	{ /* special case - we can't enumerate the Desktop level Objects (MyComputer,Nethood...
-	  so we need to fake an enumeration of those.*/
-	  if(!lpszPath)
-	  { TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS (special) items\n",This);
-	    /*create the pidl for This item */
-	    pidl = _ILCreateMyComputer();
-	    if(pidl)
-	    { if(!IEnumIDList_AddToEnumList((IEnumIDList*)This, pidl))
-	        return FALSE;
-	    }
-	  }   
-	  else if (lpszPath[0]=='\0') /* enumerate the drives*/
-	  { TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS (drives)\n",This);
-	    dwDrivemap = GetLogicalDrives();
-	    strcpy (szDriveName,"A:\\");
-	    while (szDriveName[0]<='Z')
-	    { if(dwDrivemap & 0x00000001L)
-	      { pidl = _ILCreateDrive(szDriveName);
-	        if(pidl)
-	        { if(!IEnumIDList_AddToEnumList((IEnumIDList*)This, pidl))
-	          return FALSE;
-	        }
-	      }
-	      szDriveName[0]++;
-	      dwDrivemap = dwDrivemap >> 1;
-	    }   
-	  }
-	  else
-	  { TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",This,debugstr_a(szPath));
-	    hFile = FindFirstFileA(szPath,&stffile);
-	    if ( hFile != INVALID_HANDLE_VALUE )
-	    { do
-	      { if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
-	        { pidl = _ILCreateFolder( stffile.cAlternateFileName, stffile.cFileName);
-	          if(pidl)
-	          { pData = _ILGetDataPointer(pidl);
-	            FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
-	            pData->u.folder.dwFileSize = stffile.nFileSizeLow;
-	            pData->u.folder.uFileAttribs=stffile.dwFileAttributes;
-	            if(!IEnumIDList_AddToEnumList((IEnumIDList*)This, pidl))
-	            {  return FALSE;
-	            }
-	          }
-	          else
-	          { return FALSE;
-	          }   
-	        }
-	      } while( FindNextFileA(hFile,&stffile));
-			FindClose (hFile);
-	    }
-	  }   
-	}   
-	/*enumerate the non-folder items (values) */
-	if(dwFlags & SHCONTF_NONFOLDERS)
-	{ if(lpszPath)
-	  { TRACE("-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",This,debugstr_a(szPath));
-	    hFile = FindFirstFileA(szPath,&stffile);
-	    if ( hFile != INVALID_HANDLE_VALUE )
-	    { do
-	      { if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
-	        { pidl = _ILCreateValue( stffile.cAlternateFileName, stffile.cFileName);
-	          if(pidl)
-	          { pData = _ILGetDataPointer(pidl);
-	            FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.file.uFileDate,&pData->u.file.uFileTime);
-	            pData->u.file.dwFileSize = stffile.nFileSizeLow;
-	            pData->u.file.uFileAttribs=stffile.dwFileAttributes;
-	            if(!IEnumIDList_AddToEnumList((IEnumIDList*)This, pidl))
-	            { return FALSE;
-	            }
-	          }
-	          else
-	          { return FALSE;
-	          }   
-	        }
-	      } while( FindNextFileA(hFile,&stffile));
-	      FindClose (hFile);
-	    } 
-	  }
-	} 
-	return TRUE;
-}
-
-/**************************************************************************
- *  EnumIDList_AddToEnumList()
- */
-static BOOL WINAPI IEnumIDList_fnAddToEnumList(
-	IEnumIDList * iface,
-	LPITEMIDLIST pidl)
-{
-	ICOM_THIS(IEnumIDListImpl,iface);
-
- LPENUMLIST  pNew;
-
-  TRACE("(%p)->(pidl=%p)\n",This,pidl);
-  pNew = (LPENUMLIST)SHAlloc(sizeof(ENUMLIST));
-  if(pNew)
-  { /*set the next pointer */
-    pNew->pNext = NULL;
-    pNew->pidl = pidl;
-
-    /*is This the first item in the list? */
-    if(!This->mpFirst)
-    { This->mpFirst = pNew;
-      This->mpCurrent = pNew;
-    }
-   
-    if(This->mpLast)
-    { /*add the new item to the end of the list */
-      This->mpLast->pNext = pNew;
-    }
-   
-    /*update the last item pointer */
-    This->mpLast = pNew;
-    TRACE("-- (%p)->(first=%p, last=%p)\n",This,This->mpFirst,This->mpLast);
-    return TRUE;
-  }
-  return FALSE;
-}
-/**************************************************************************
-*   EnumIDList_DeleteList()
-*/
-static BOOL WINAPI IEnumIDList_fnDeleteList(
-	IEnumIDList * iface)
-{
-	ICOM_THIS(IEnumIDListImpl,iface);
-
-	LPENUMLIST  pDelete;
-
-	TRACE("(%p)->()\n",This);
-	
-	while(This->mpFirst)
-	{ pDelete = This->mpFirst;
-	  This->mpFirst = pDelete->pNext;
-	  SHFree(pDelete->pidl);
-	  SHFree(pDelete);
-	}
-	This->mpFirst = This->mpLast = This->mpCurrent = NULL;
-	return TRUE;
-}
 
 /**************************************************************************
  *  IEnumIDList_fnVTable
@@ -410,7 +516,4 @@ static ICOM_VTABLE (IEnumIDList) eidlvt =
 	IEnumIDList_fnSkip,
 	IEnumIDList_fnReset,
 	IEnumIDList_fnClone,
-	IEnumIDList_fnCreateEnumList,
-	IEnumIDList_fnAddToEnumList,
-	IEnumIDList_fnDeleteList
 };
