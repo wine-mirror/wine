@@ -53,6 +53,10 @@ typedef struct _TEB
     struct _PDB32 *process;      /* 30 owning process (used by NT3.51 applets)*/
 } TEB;
 
+/* Thread exception flags */
+#define TEBF_WIN32  0x0001
+#define TEBF_TRAP   0x0002
+
 /* Event waiting structure */
 typedef struct
 {

@@ -182,6 +182,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
     thdb->teb.except      = (void *)-1;
     thdb->teb.htask16     = 0; /* FIXME */
     thdb->teb.self        = &thdb->teb;
+    thdb->teb.flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
     thdb->teb.tls_ptr     = thdb->tls_array;
     thdb->teb.process     = pdb;
     thdb->wait_list       = &thdb->wait_struct;
