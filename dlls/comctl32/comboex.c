@@ -594,6 +594,7 @@ COMBOEX_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     tmpcit.mask = cit->mask;
     tmpcit.iItem = cit->iItem;
+    tmpcit.pszText = 0;
     COMBOEX_GetItemW (hwnd, wParam, (LPARAM) &tmpcit);
 
     len = WideCharToMultiByte (CP_ACP, 0, tmpcit.pszText, -1, 0, 0, NULL, NULL);
@@ -719,6 +720,7 @@ COMBOEX_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     SendMessageW (infoPtr->hwndCombo, CB_INSERTSTRING, 
 		  (WPARAM)cit->iItem, (LPARAM)item);
 
+    memset (&nmcit.ceItem, 0, sizeof(nmcit.ceItem));
     COMBOEX_CopyItem (infoPtr, item, &nmcit.ceItem);
     COMBOEX_NotifyItem (infoPtr, CBEN_INSERTITEM, &nmcit);
 
@@ -1477,6 +1479,7 @@ COMBOEX_WM_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     infoPtr->nb_items--;
 
+    memset (&nmcit.ceItem, 0, sizeof(nmcit.ceItem));
     COMBOEX_CopyItem (infoPtr, olditem, &nmcit.ceItem);
     COMBOEX_NotifyItem (infoPtr, CBEN_DELETEITEM, &nmcit);
 
