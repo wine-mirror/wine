@@ -1422,6 +1422,22 @@ TAB_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
               (infoPtr->uNumItem - iItem) * sizeof(TAB_ITEM));
     
     COMCTL32_Free (oldItems);
+
+    /*
+     * Readjust the selected index.
+     */
+    if ((iItem == infoPtr->iSelected) && (iItem > 0))
+      infoPtr->iSelected--;
+      
+    if (iItem < infoPtr->iSelected)
+      infoPtr->iSelected--;
+
+    /*
+     * Reposition and repaint tabs.
+     */
+    TAB_SetItemBounds(hwnd);
+    TAB_InvalidateTabArea(hwnd,infoPtr);
+
     bResult = TRUE;
   }
 
