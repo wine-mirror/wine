@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include "windef.h"
@@ -105,14 +106,86 @@ static void test_info_size(void)
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( (ERROR_FILE_NOT_FOUND == GetLastError()) || 
+    ok( (ERROR_FILE_NOT_FOUND == GetLastError()) ||
 	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
 	(MY_LAST_ERROR == GetLastError()),
 	"Last error wrong! ERROR_FILE_NOT_FOUND/ERROR_RESOURCE_DATA_NOT_FOUND "
 	"(XP)/0x%08lx (NT4) expected, got 0x%08lx\n", MY_LAST_ERROR, GetLastError());
 }
 
+static void VersionDwordLong2String(DWORDLONG Version, LPSTR lpszVerString)
+{
+    WORD a, b, c, d;
+
+    a = (WORD)(Version >> 48);
+    b = (WORD)((Version >> 32) & 0xffff);
+    c = (WORD)((Version >> 16) & 0xffff);
+    d = (WORD)(Version & 0xffff);
+
+    sprintf(lpszVerString, "%d.%d.%d.%d", a, b, c, d);
+
+    return;
+}
+
+static void test_info(void)
+{
+    DWORD hdl, retval;
+    PVOID pVersionInfo = NULL;
+    BOOL boolret;
+    VS_FIXEDFILEINFO *pFixedVersionInfo;
+    UINT uiLength;
+    char VersionString[MAX_PATH];
+    DWORDLONG dwlVersion;
+
+    hdl = 0x55555555;
+    SetLastError(MY_LAST_ERROR);
+    retval = GetFileVersionInfoSizeA( "kernel32.dll", &hdl);
+    ok( retval,
+	"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08lx\n",
+	retval);
+    ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
+	"Last error wrong! NO_ERROR/0x%08lx (NT4)  expected, got 0x%08lx\n",
+	MY_LAST_ERROR, GetLastError());
+    ok( hdl == 0L,
+	"Handle wrong! 0L expected, got 0x%08lx\n", hdl);
+
+    if ( retval == 0 || hdl != 0)
+        return;
+
+    pVersionInfo = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retval );
+    ok(pVersionInfo != 0, "HeapAlloc failed\n" );
+    if (pVersionInfo == 0)
+        return;
+
+    boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, 0);
+    ok (!boolret, "GetFileVersionInfoA should have failed: GetLastError = 0x%08lx\n", GetLastError());
+    ok (GetLastError() == ERROR_INVALID_DATA,
+        "Last error wrong! ERROR_INVALID_DATA expected, got 0x%08lx\n",
+        GetLastError());
+
+    boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, pVersionInfo );
+    ok (boolret, "GetFileVersionInfoA failed: GetLastError = 0x%08lx\n", GetLastError());
+    if (!boolret)
+        return;
+
+    boolret = VerQueryValueA( pVersionInfo, "\\", (LPVOID *)&pFixedVersionInfo, &uiLength );
+    ok (boolret, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
+    if (!boolret)
+        return;
+
+    dwlVersion = (((DWORDLONG)pFixedVersionInfo->dwFileVersionMS) << 32) +
+        pFixedVersionInfo->dwFileVersionLS;
+
+    VersionDwordLong2String(dwlVersion, VersionString);
+
+    trace("kernel32.dll version: %s\n", VersionString);
+
+    boolret = VerQueryValueA( pVersionInfo, "\\", (LPVOID *)&pFixedVersionInfo, 0);
+    ok (boolret, "VerQueryValue failed: GetLastError = 0x%08lx\n", GetLastError());
+}
+
 START_TEST(info)
 {
     test_info_size();
+    test_info();
 }

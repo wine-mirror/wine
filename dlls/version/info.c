@@ -582,6 +582,11 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
+    if (!data)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
     else filenameW.Buffer = NULL;
     len = VERSION_GetFileVersionInfo_PE(filenameW.Buffer, datasize, data);
@@ -628,6 +633,11 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_w(filename), handle, datasize, data );
 
+    if (!data)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     len = VERSION_GetFileVersionInfo_PE(filename, datasize, data);
     /* 0xFFFFFFFF means: file is a PE module, but VERSION_INFO not found */
     if (len == 0xFFFFFFFF)
@@ -740,7 +750,8 @@ DWORD WINAPI VersionInfo16_QueryValue( VS_VERSION_INFO_STRUCT16 *info, LPCSTR lp
 
     /* Return value */
     *lplpBuffer = VersionInfo16_Value( info );
-    *puLen = info->wValueLength;
+    if (puLen)
+        *puLen = info->wValueLength;
 
     return TRUE;
 }
@@ -825,7 +836,8 @@ DWORD WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
 
     /* Return value */
     *lplpBuffer = VersionInfo32_Value( info );
-    *puLen = info->wValueLength;
+    if (puLen)
+        *puLen = info->wValueLength;
 
     return TRUE;
 }
