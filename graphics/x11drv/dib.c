@@ -1692,75 +1692,6 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
         break;
 
     case 15:
-        {
-            const void* srcbits;
-            const WORD* srcpixel;
-            BYTE* dstbyte;
-
-            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
-
-            if (bmpImage->red_mask==0x7c00) {
-                /* ==== rgb 555 bmp -> pal 1 dib ==== */
-                for (h=0; h<lines; h++) {
-                    BYTE dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 2,
-                                  ((srcval >>  7) & 0xf8) | /* r */
-                                  ((srcval >> 12) & 0x07),
-                                  ((srcval >>  2) & 0xf8) | /* g */
-                                  ((srcval >>  7) & 0x07),
-                                  ((srcval <<  3) & 0xf8) | /* b */
-                                  ((srcval >>  2) & 0x07) ) << (7-(x&7)) );
-                        if ((x&7)==7) {
-                            *dstbyte++=dstval;
-                            dstval=0;
-                        }
-                    }
-                    if ((dstwidth&7)!=0) {
-                        *dstbyte=dstval;
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
-            } else {
-                /* ==== bgr 555 bmp -> pal 1 dib ==== */
-                for (h=0; h<lines; h++) {
-                    WORD dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        BYTE srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 2,
-                                  ((srcval <<  3) & 0xf8) | /* r */
-                                  ((srcval >>  2) & 0x07),
-                                  ((srcval >>  2) & 0xf8) | /* g */
-                                  ((srcval >>  7) & 0x07),
-                                  ((srcval >>  7) & 0xf8) | /* b */
-                                  ((srcval >> 12) & 0x07) ) << (7-(x&7)) );
-                        if ((x&7)==7) {
-                            *dstbyte++=dstval;
-                            dstval=0;
-                        }
-                    }
-                    if ((dstwidth&7)!=0) {
-                        *dstbyte=dstval;
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
-            }
-        }
-        break;
-
     case 16:
         {
             const void* srcbits;
@@ -1769,64 +1700,132 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (bmpImage->red_mask==0xf800) {
-                /* ==== rgb 565 bmp -> pal 1 dib ==== */
-                for (h=0; h<lines; h++) {
-                    BYTE dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 2,
-                                  ((srcval >>  8) & 0xf8) | /* r */
-                                  ((srcval >> 13) & 0x07),
-                                  ((srcval >>  3) & 0xfc) | /* g */
-                                  ((srcval >>  9) & 0x03),
-                                  ((srcval <<  3) & 0xf8) | /* b */
-                                  ((srcval >>  2) & 0x07) ) << (7-(x&7)) );
-                        if ((x&7)==7) {
-                            *dstbyte++=dstval;
-                            dstval=0;
+            if (bmpImage->green_mask==0x03e0) {
+                if (bmpImage->red_mask==0x7c00) {
+                    /* ==== rgb 555 bmp -> pal 1 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        BYTE dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 2,
+                                      ((srcval >>  7) & 0xf8) | /* r */
+                                      ((srcval >> 12) & 0x07),
+                                      ((srcval >>  2) & 0xf8) | /* g */
+                                      ((srcval >>  7) & 0x07),
+                                      ((srcval <<  3) & 0xf8) | /* b */
+                                      ((srcval >>  2) & 0x07) ) << (7-(x&7)) );
+                            if ((x&7)==7) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
                         }
+                        if ((dstwidth&7)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
                     }
-                    if ((dstwidth&7)!=0) {
-                        *dstbyte=dstval;
+                } else if (bmpImage->blue_mask==0x7c00) {
+                    /* ==== bgr 555 bmp -> pal 1 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        WORD dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            BYTE srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 2,
+                                      ((srcval <<  3) & 0xf8) | /* r */
+                                      ((srcval >>  2) & 0x07),
+                                      ((srcval >>  2) & 0xf8) | /* g */
+                                      ((srcval >>  7) & 0x07),
+                                      ((srcval >>  7) & 0xf8) | /* b */
+                                      ((srcval >> 12) & 0x07) ) << (7-(x&7)) );
+                            if ((x&7)==7) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
+                        }
+                        if ((dstwidth&7)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
                     }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
+                } else {
+                    goto notsupported;
+                }
+            } else if (bmpImage->green_mask==0x07e0) {
+                if (bmpImage->red_mask==0xf800) {
+                    /* ==== rgb 565 bmp -> pal 1 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        BYTE dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 2,
+                                      ((srcval >>  8) & 0xf8) | /* r */
+                                      ((srcval >> 13) & 0x07),
+                                      ((srcval >>  3) & 0xfc) | /* g */
+                                      ((srcval >>  9) & 0x03),
+                                      ((srcval <<  3) & 0xf8) | /* b */
+                                      ((srcval >>  2) & 0x07) ) << (7-(x&7)) );
+                            if ((x&7)==7) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
+                        }
+                        if ((dstwidth&7)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
+                    }
+                } else if (bmpImage->blue_mask==0xf800) {
+                    /* ==== bgr 565 bmp -> pal 1 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        BYTE dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 2,
+                                      ((srcval <<  3) & 0xf8) | /* r */
+                                      ((srcval >>  2) & 0x07),
+                                      ((srcval >>  3) & 0xfc) | /* g */
+                                      ((srcval >>  9) & 0x03),
+                                      ((srcval >>  8) & 0xf8) | /* b */
+                                      ((srcval >> 13) & 0x07) ) << (7-(x&7)) );
+                            if ((x&7)==7) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
+                        }
+                        if ((dstwidth&7)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
+                    }
+                } else {
+                    goto notsupported;
                 }
             } else {
-                /* ==== bgr 565 bmp -> pal 1 dib ==== */
-                for (h=0; h<lines; h++) {
-                    BYTE dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 2,
-                                  ((srcval <<  3) & 0xf8) | /* r */
-                                  ((srcval >>  2) & 0x07),
-                                  ((srcval >>  3) & 0xfc) | /* g */
-                                  ((srcval >>  9) & 0x03),
-                                  ((srcval >>  8) & 0xf8) | /* b */
-                                  ((srcval >> 13) & 0x07) ) << (7-(x&7)) );
-                        if ((x&7)==7) {
-                            *dstbyte++=dstval;
-                            dstval=0;
-                        }
-                    }
-                    if ((dstwidth&7)!=0) {
-                        *dstbyte=dstval;
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
+                goto notsupported;
             }
         }
         break;
@@ -1842,7 +1841,10 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
             bytes_per_pixel=(bmpImage->bits_per_pixel==24?3:4);
 
-            if (bmpImage->red_mask==0xff0000) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (bmpImage->blue_mask==0xff) {
                 /* ==== rgb 888 or 0888 bmp -> pal 1 dib ==== */
                 for (h=0; h<lines; h++) {
                     BYTE dstval;
@@ -1903,7 +1905,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
             unsigned long white = (1 << bmpImage->bits_per_pixel) - 1;
 
             /* ==== any bmp format -> pal 1 dib ==== */
-            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 1 bit DIB\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 1 bit DIB\n",
                   bmpImage->bits_per_pixel, bmpImage->red_mask,
                   bmpImage->green_mask, bmpImage->blue_mask );
 
@@ -2064,75 +2066,6 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
         break;
 
     case 15:
-        {
-            const void* srcbits;
-            const WORD* srcpixel;
-            BYTE* dstbyte;
-
-            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
-
-            if (bmpImage->red_mask==0x7c00) {
-                /* ==== rgb 555 bmp -> pal 4 dib ==== */
-                for (h=0; h<lines; h++) {
-                    BYTE dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 16,
-                                  ((srcval >>  7) & 0xf8) | /* r */
-                                  ((srcval >> 12) & 0x07),
-                                  ((srcval >>  2) & 0xf8) | /* g */
-                                  ((srcval >>  7) & 0x07),
-                                  ((srcval <<  3) & 0xf8) | /* b */
-                                  ((srcval >>  2) & 0x07) ) << ((1-(x&1))<<2) );
-                        if ((x&1)==1) {
-                            *dstbyte++=dstval;
-                            dstval=0;
-                        }
-                    }
-                    if ((dstwidth&1)!=0) {
-                        *dstbyte=dstval;
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
-            } else {
-                /* ==== bgr 555 bmp -> pal 4 dib ==== */
-                for (h=0; h<lines; h++) {
-                    WORD dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 16,
-                                  ((srcval <<  3) & 0xf8) | /* r */
-                                  ((srcval >>  2) & 0x07),
-                                  ((srcval >>  2) & 0xf8) | /* g */
-                                  ((srcval >>  7) & 0x07),
-                                  ((srcval >>  7) & 0xf8) | /* b */
-                                  ((srcval >> 12) & 0x07) ) << ((1-(x&1))<<2) );
-                        if ((x&1)==1) {
-                            *dstbyte++=dstval;
-                            dstval=0;
-                        }
-                    }
-                    if ((dstwidth&1)!=0) {
-                        *dstbyte=dstval;
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
-            }
-        }
-        break;
-
     case 16:
         {
             const void* srcbits;
@@ -2141,64 +2074,132 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (bmpImage->red_mask==0xf800) {
-                /* ==== rgb 565 bmp -> pal 4 dib ==== */
-                for (h=0; h<lines; h++) {
-                    BYTE dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 16,
-                                  ((srcval >>  8) & 0xf8) | /* r */
-                                  ((srcval >> 13) & 0x07),
-                                  ((srcval >>  3) & 0xfc) | /* g */
-                                  ((srcval >>  9) & 0x03),
-                                  ((srcval <<  3) & 0xf8) | /* b */
-                                  ((srcval >>  2) & 0x07) ) << ((1-(x&1))<<2) );
-                        if ((x&1)==1) {
-                            *dstbyte++=dstval;
-                            dstval=0;
+            if (bmpImage->green_mask==0x03e0) {
+                if (bmpImage->red_mask==0x7c00) {
+                    /* ==== rgb 555 bmp -> pal 4 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        BYTE dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 16,
+                                      ((srcval >>  7) & 0xf8) | /* r */
+                                      ((srcval >> 12) & 0x07),
+                                      ((srcval >>  2) & 0xf8) | /* g */
+                                      ((srcval >>  7) & 0x07),
+                                      ((srcval <<  3) & 0xf8) | /* b */
+                                      ((srcval >>  2) & 0x07) ) << ((1-(x&1))<<2) );
+                            if ((x&1)==1) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
                         }
+                        if ((dstwidth&1)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
                     }
-                    if ((dstwidth&1)!=0) {
-                        *dstbyte=dstval;
+                } else if (bmpImage->blue_mask==0x7c00) {
+                    /* ==== bgr 555 bmp -> pal 4 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        WORD dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 16,
+                                      ((srcval <<  3) & 0xf8) | /* r */
+                                      ((srcval >>  2) & 0x07),
+                                      ((srcval >>  2) & 0xf8) | /* g */
+                                      ((srcval >>  7) & 0x07),
+                                      ((srcval >>  7) & 0xf8) | /* b */
+                                      ((srcval >> 12) & 0x07) ) << ((1-(x&1))<<2) );
+                            if ((x&1)==1) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
+                        }
+                        if ((dstwidth&1)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
                     }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
+                } else {
+                    goto notsupported;
+                }
+            } else if (bmpImage->green_mask==0x07e0) {
+                if (bmpImage->red_mask==0xf800) {
+                    /* ==== rgb 565 bmp -> pal 4 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        BYTE dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 16,
+                                      ((srcval >>  8) & 0xf8) | /* r */
+                                      ((srcval >> 13) & 0x07),
+                                      ((srcval >>  3) & 0xfc) | /* g */
+                                      ((srcval >>  9) & 0x03),
+                                      ((srcval <<  3) & 0xf8) | /* b */
+                                      ((srcval >>  2) & 0x07) ) << ((1-(x&1))<<2) );
+                            if ((x&1)==1) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
+                        }
+                        if ((dstwidth&1)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
+                    }
+                } else if (bmpImage->blue_mask==0xf800) {
+                    /* ==== bgr 565 bmp -> pal 4 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        WORD dstval;
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        dstval=0;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            dstval|=(X11DRV_DIB_GetNearestIndex
+                                     (colors, 16,
+                                      ((srcval <<  3) & 0xf8) | /* r */
+                                      ((srcval >>  2) & 0x07),
+                                      ((srcval >>  3) & 0xfc) | /* g */
+                                      ((srcval >>  9) & 0x03),
+                                      ((srcval >>  8) & 0xf8) | /* b */
+                                      ((srcval >> 13) & 0x07) ) << ((1-(x&1))<<2) );
+                            if ((x&1)==1) {
+                                *dstbyte++=dstval;
+                                dstval=0;
+                            }
+                        }
+                        if ((dstwidth&1)!=0) {
+                            *dstbyte=dstval;
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
+                    }
+                } else {
+                    goto notsupported;
                 }
             } else {
-                /* ==== bgr 565 bmp -> pal 4 dib ==== */
-                for (h=0; h<lines; h++) {
-                    WORD dstval;
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    dstval=0;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        dstval|=(X11DRV_DIB_GetNearestIndex
-                                 (colors, 16,
-                                  ((srcval <<  3) & 0xf8) | /* r */
-                                  ((srcval >>  2) & 0x07),
-                                  ((srcval >>  3) & 0xfc) | /* g */
-                                  ((srcval >>  9) & 0x03),
-                                  ((srcval >>  8) & 0xf8) | /* b */
-                                  ((srcval >> 13) & 0x07) ) << ((1-(x&1))<<2) );
-                        if ((x&1)==1) {
-                            *dstbyte++=dstval;
-                            dstval=0;
-                        }
-                    }
-                    if ((dstwidth&1)!=0) {
-                        *dstbyte=dstval;
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
+                goto notsupported;
             }
         }
         break;
@@ -2211,7 +2212,10 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (bmpImage->red_mask==0xff0000) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (bmpImage->blue_mask==0xff) {
                 /* ==== rgb 888 bmp -> pal 4 dib ==== */
                 for (h=0; h<lines; h++) {
                     srcbyte=srcbits;
@@ -2284,7 +2288,10 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (bmpImage->red_mask==0xff0000) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (bmpImage->blue_mask==0xff) {
                 /* ==== rgb 0888 bmp -> pal 4 dib ==== */
                 for (h=0; h<lines; h++) {
                     srcbyte=srcbits;
@@ -2354,7 +2361,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
             BYTE* dstbyte;
 
             /* ==== any bmp format -> pal 4 dib ==== */
-            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 4 bit DIB\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 4 bit DIB\n",
                   bmpImage->bits_per_pixel, bmpImage->red_mask,
                   bmpImage->green_mask, bmpImage->blue_mask );
             for (h=lines-1; h>=0; h--) {
@@ -2619,57 +2626,6 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
        break;
 
     case 15:
-        {
-            const void* srcbits;
-            const WORD* srcpixel;
-            BYTE* dstbyte;
-
-            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
-
-            if (bmpImage->red_mask==0x7c00) {
-                /* ==== rgb 555 bmp -> pal 8 dib ==== */
-                for (h=0; h<lines; h++) {
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        *dstbyte++=X11DRV_DIB_GetNearestIndex
-                            (colors, 256,
-                             ((srcval >>  7) & 0xf8) | /* r */
-                             ((srcval >> 12) & 0x07),
-                             ((srcval >>  2) & 0xf8) | /* g */
-                             ((srcval >>  7) & 0x07),
-                             ((srcval <<  3) & 0xf8) | /* b */
-                             ((srcval >>  2) & 0x07) );
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
-            } else {
-                /* ==== bgr 555 bmp -> pal 8 dib ==== */
-                for (h=0; h<lines; h++) {
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        *dstbyte++=X11DRV_DIB_GetNearestIndex
-                            (colors, 256,
-                             ((srcval <<  3) & 0xf8) | /* r */
-                             ((srcval >>  2) & 0x07),
-                             ((srcval >>  2) & 0xf8) | /* g */
-                             ((srcval >>  7) & 0x07),
-                             ((srcval >>  7) & 0xf8) | /* b */
-                             ((srcval >> 12) & 0x07) );
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
-           }
-        }
-        break;
-
     case 16:
         {
             const void* srcbits;
@@ -2678,49 +2634,99 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (bmpImage->red_mask==0xf800) {
-                /* ==== rgb 565 bmp -> pal 8 dib ==== */
-                for (h=0; h<lines; h++) {
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        *dstbyte++=X11DRV_DIB_GetNearestIndex
-                            (colors, 256,
-                             ((srcval >>  8) & 0xf8) | /* r */
-                             ((srcval >> 13) & 0x07),
-                             ((srcval >>  3) & 0xfc) | /* g */
-                             ((srcval >>  9) & 0x03),
-                             ((srcval <<  3) & 0xf8) | /* b */
-                             ((srcval >>  2) & 0x07) );
+            if (bmpImage->green_mask==0x03e0) {
+                if (bmpImage->red_mask==0x7c00) {
+                    /* ==== rgb 555 bmp -> pal 8 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            *dstbyte++=X11DRV_DIB_GetNearestIndex
+                                (colors, 256,
+                                 ((srcval >>  7) & 0xf8) | /* r */
+                                 ((srcval >> 12) & 0x07),
+                                 ((srcval >>  2) & 0xf8) | /* g */
+                                 ((srcval >>  7) & 0x07),
+                                 ((srcval <<  3) & 0xf8) | /* b */
+                                 ((srcval >>  2) & 0x07) );
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
                     }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
+                } else if (bmpImage->blue_mask==0x7c00) {
+                    /* ==== bgr 555 bmp -> pal 8 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            *dstbyte++=X11DRV_DIB_GetNearestIndex
+                                (colors, 256,
+                                 ((srcval <<  3) & 0xf8) | /* r */
+                                 ((srcval >>  2) & 0x07),
+                                 ((srcval >>  2) & 0xf8) | /* g */
+                                 ((srcval >>  7) & 0x07),
+                                 ((srcval >>  7) & 0xf8) | /* b */
+                                 ((srcval >> 12) & 0x07) );
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
+                    }
+                } else {
+                    goto notsupported;
+                }
+            } else if (bmpImage->green_mask==0x07e0) {
+                if (bmpImage->red_mask==0xf800) {
+                    /* ==== rgb 565 bmp -> pal 8 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            *dstbyte++=X11DRV_DIB_GetNearestIndex
+                                (colors, 256,
+                                 ((srcval >>  8) & 0xf8) | /* r */
+                                 ((srcval >> 13) & 0x07),
+                                 ((srcval >>  3) & 0xfc) | /* g */
+                                 ((srcval >>  9) & 0x03),
+                                 ((srcval <<  3) & 0xf8) | /* b */
+                                 ((srcval >>  2) & 0x07) );
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
+                    }
+                } else if (bmpImage->blue_mask==0xf800) {
+                    /* ==== bgr 565 bmp -> pal 8 dib ==== */
+                    for (h=0; h<lines; h++) {
+                        srcpixel=srcbits;
+                        dstbyte=dstbits;
+                        for (x=0; x<dstwidth; x++) {
+                            WORD srcval;
+                            srcval=*srcpixel++;
+                            *dstbyte++=X11DRV_DIB_GetNearestIndex
+                                (colors, 256,
+                                 ((srcval <<  3) & 0xf8) | /* r */
+                                 ((srcval >>  2) & 0x07),
+                                 ((srcval >>  3) & 0xfc) | /* g */
+                                 ((srcval >>  9) & 0x03),
+                                 ((srcval >>  8) & 0xf8) | /* b */
+                                 ((srcval >> 13) & 0x07) );
+                        }
+                        srcbits -= bmpImage->bytes_per_line;
+                        dstbits += linebytes;
+                    }
+                } else {
+                    goto notsupported;
                 }
             } else {
-                /* ==== bgr 565 bmp -> pal 8 dib ==== */
-                for (h=0; h<lines; h++) {
-                    srcpixel=srcbits;
-                    dstbyte=dstbits;
-                    for (x=0; x<dstwidth; x++) {
-                        WORD srcval;
-                        srcval=*srcpixel++;
-                        *dstbyte++=X11DRV_DIB_GetNearestIndex
-                            (colors, 256,
-                             ((srcval <<  3) & 0xf8) | /* r */
-                             ((srcval >>  2) & 0x07),
-                             ((srcval >>  3) & 0xfc) | /* g */
-                             ((srcval >>  9) & 0x03),
-                             ((srcval >>  8) & 0xf8) | /* b */
-                             ((srcval >> 13) & 0x07) );
-                    }
-                    srcbits -= bmpImage->bytes_per_line;
-                    dstbits += linebytes;
-                }
-           }
-      }
-      break;
+                goto notsupported;
+            }
+        }
+        break;
 
     case 24:
     case 32:
@@ -2733,7 +2739,10 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
             bytes_per_pixel=(bmpImage->bits_per_pixel==24?3:4);
 
-            if (bmpImage->red_mask==0xff0000) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (bmpImage->blue_mask==0xff) {
                 /* ==== rgb 888 or 0888 bmp -> pal 8 dib ==== */
                 for (h=0; h<lines; h++) {
                     srcbyte=srcbits;
@@ -2771,7 +2780,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
 
     default:
     notsupported:
-        FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 8 bit DIB\n",
+        WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 8 bit DIB\n",
               bmpImage->depth, bmpImage->red_mask,
               bmpImage->green_mask, bmpImage->blue_mask );
     updatesection:
@@ -2928,48 +2937,6 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
     switch (bmpImage->depth)
     {
     case 15:
-        {
-            char* dstbits;
-
-            srcbits=srcbits+left*2;
-            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
-
-            if (gSrc==bmpImage->green_mask) {
-                if (rSrc == bmpImage->red_mask) {
-                    /* ==== rgb 555 dib -> rgb 555 bmp ==== */
-                    /* ==== bgr 555 dib -> bgr 555 bmp ==== */
-                    X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,2,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                } else {
-                    /* ==== rgb 555 dib -> bgr 555 bmp ==== */
-                    /* ==== bgr 555 dib -> rgb 555 bmp ==== */
-                    X11DRV_DIB_Convert_555_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                }
-            } else {
-                if (rSrc==bmpImage->red_mask || bSrc==bmpImage->blue_mask) {
-                    /* ==== rgb 565 dib -> rgb 555 bmp ==== */
-                    /* ==== bgr 565 dib -> bgr 555 bmp ==== */
-                    X11DRV_DIB_Convert_565_to_555_asis
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                } else {
-                    /* ==== rgb 565 dib -> bgr 555 bmp ==== */
-                    /* ==== bgr 565 dib -> rgb 555 bmp ==== */
-                    X11DRV_DIB_Convert_565_to_555_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                }
-            }
-        }
-        break;
-
     case 16:
         {
             char* dstbits;
@@ -2977,38 +2944,76 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
             srcbits=srcbits+left*2;
             dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
 
-            if (gSrc==bmpImage->green_mask) {
-                if (rSrc==bmpImage->red_mask && bSrc==bmpImage->blue_mask) {
-                    /* ==== rgb 565 dib -> rgb 565 bmp ==== */
-                    /* ==== bgr 565 dib -> bgr 565 bmp ==== */
-                    X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,2,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
+            if (bmpImage->green_mask==0x03e0) {
+                if (gSrc==bmpImage->green_mask) {
+                    if (rSrc==bmpImage->red_mask) {
+                        /* ==== rgb 555 dib -> rgb 555 bmp ==== */
+                        /* ==== bgr 555 dib -> bgr 555 bmp ==== */
+                        X11DRV_DIB_Convert_any_asis
+                            (dstwidth,lines,2,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else if (rSrc==bmpImage->blue_mask) {
+                        /* ==== rgb 555 dib -> bgr 555 bmp ==== */
+                        /* ==== bgr 555 dib -> rgb 555 bmp ==== */
+                        X11DRV_DIB_Convert_555_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    }
                 } else {
-                    /* ==== rgb 565 dib -> bgr 565 bmp ==== */
-                    /* ==== bgr 565 dib -> rgb 565 bmp ==== */
-                    X11DRV_DIB_Convert_565_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
+                    if (rSrc==bmpImage->red_mask || bSrc==bmpImage->blue_mask) {
+                        /* ==== rgb 565 dib -> rgb 555 bmp ==== */
+                        /* ==== bgr 565 dib -> bgr 555 bmp ==== */
+                        X11DRV_DIB_Convert_565_to_555_asis
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else {
+                        /* ==== rgb 565 dib -> bgr 555 bmp ==== */
+                        /* ==== bgr 565 dib -> rgb 555 bmp ==== */
+                        X11DRV_DIB_Convert_565_to_555_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    }
+                }
+            } else if (bmpImage->green_mask==0x07e0) {
+                if (gSrc==bmpImage->green_mask) {
+                    if (rSrc==bmpImage->red_mask) {
+                        /* ==== rgb 565 dib -> rgb 565 bmp ==== */
+                        /* ==== bgr 565 dib -> bgr 565 bmp ==== */
+                        X11DRV_DIB_Convert_any_asis
+                            (dstwidth,lines,2,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else {
+                        /* ==== rgb 565 dib -> bgr 565 bmp ==== */
+                        /* ==== bgr 565 dib -> rgb 565 bmp ==== */
+                        X11DRV_DIB_Convert_565_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    }
+                } else {
+                    if (rSrc==bmpImage->red_mask || bSrc==bmpImage->blue_mask) {
+                        /* ==== rgb 555 dib -> rgb 565 bmp ==== */
+                        /* ==== bgr 555 dib -> bgr 565 bmp ==== */
+                        X11DRV_DIB_Convert_555_to_565_asis
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else {
+                        /* ==== rgb 555 dib -> bgr 565 bmp ==== */
+                        /* ==== bgr 555 dib -> rgb 565 bmp ==== */
+                        X11DRV_DIB_Convert_555_to_565_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    }
                 }
             } else {
-                if (rSrc==bmpImage->red_mask || bSrc==bmpImage->blue_mask) {
-                    /* ==== rgb 555 dib -> rgb 565 bmp ==== */
-                    /* ==== bgr 555 dib -> bgr 565 bmp ==== */
-                    X11DRV_DIB_Convert_555_to_565_asis
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                } else {
-                    /* ==== rgb 555 dib -> bgr 565 bmp ==== */
-                    /* ==== bgr 555 dib -> rgb 565 bmp ==== */
-                    X11DRV_DIB_Convert_555_to_565_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                }
+                goto notsupported;
             }
         }
         break;
@@ -3020,9 +3025,12 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
             srcbits=srcbits+left*2;
             dstbits=bmpImage->data+left*3+(lines-1)*bmpImage->bytes_per_line;
 
-            if (gSrc==0x03e0) {
-                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
-                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
+                       (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+                if (gSrc==0x03e0) {
                     /* ==== rgb 555 dib -> rgb 888 bmp ==== */
                     /* ==== bgr 555 dib -> bgr 888 bmp ==== */
                     X11DRV_DIB_Convert_555_to_888_asis
@@ -3030,19 +3038,18 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
                 } else {
-                    /* ==== rgb 555 dib -> bgr 888 bmp ==== */
-                    /* ==== bgr 555 dib -> rgb 888 bmp ==== */
-                    X11DRV_DIB_Convert_555_to_888_reverse
+                    /* ==== rgb 565 dib -> rgb 888 bmp ==== */
+                    /* ==== bgr 565 dib -> bgr 888 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_888_asis
                         (dstwidth,lines,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
                 }
             } else {
-                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
-                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
-                    /* ==== rgb 565 dib -> rgb 888 bmp ==== */
-                    /* ==== bgr 565 dib -> bgr 888 bmp ==== */
-                    X11DRV_DIB_Convert_565_to_888_asis
+                if (gSrc==0x03e0) {
+                    /* ==== rgb 555 dib -> bgr 888 bmp ==== */
+                    /* ==== bgr 555 dib -> rgb 888 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_888_reverse
                         (dstwidth,lines,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
@@ -3066,9 +3073,12 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
             srcbits=srcbits+left*2;
             dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
 
-            if (gSrc==0x03e0) {
-                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
-                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
+                       (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+                if (gSrc==0x03e0) {
                     /* ==== rgb 555 dib -> rgb 0888 bmp ==== */
                     /* ==== bgr 555 dib -> bgr 0888 bmp ==== */
                     X11DRV_DIB_Convert_555_to_0888_asis
@@ -3076,19 +3086,18 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
                 } else {
-                    /* ==== rgb 555 dib -> bgr 0888 bmp ==== */
-                    /* ==== bgr 555 dib -> rgb 0888 bmp ==== */
-                    X11DRV_DIB_Convert_555_to_0888_reverse
+                    /* ==== rgb 565 dib -> rgb 0888 bmp ==== */
+                    /* ==== bgr 565 dib -> bgr 0888 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_0888_asis
                         (dstwidth,lines,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
                 }
             } else {
-                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
-                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
-                    /* ==== rgb 565 dib -> rgb 0888 bmp ==== */
-                    /* ==== bgr 565 dib -> bgr 0888 bmp ==== */
-                    X11DRV_DIB_Convert_565_to_0888_asis
+                if (gSrc==0x03e0) {
+                    /* ==== rgb 555 dib -> bgr 0888 bmp ==== */
+                    /* ==== bgr 555 dib -> rgb 0888 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_0888_reverse
                         (dstwidth,lines,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
@@ -3104,6 +3113,12 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
         }
         break;
 
+    default:
+    notsupported:
+        WARN("from 16 bit DIB (%lx,%lx,%lx) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
+              rSrc, gSrc, bSrc, bmpImage->bits_per_pixel, bmpImage->red_mask,
+              bmpImage->green_mask, bmpImage->blue_mask );
+        /* fall through */
     case 1:
     case 4:
     case 8:
@@ -3133,10 +3148,11 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                 gMask2=0x03;
             }
 
+            srcbits+=2*left;
+
             /* We could split it into four separate cases to optimize 
              * but it is probably not worth it.
              */
-            srcbits+=2*left;
             for (h=lines-1; h>=0; h--) {
                 srcpixel=(const WORD*)srcbits;
                 for (x=left; x<dstwidth+left; x++) {
@@ -3144,21 +3160,18 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                     BYTE red,green,blue;
                     srcval=*srcpixel++ << 16;
                     red=  ((srcval >> rShift1) & 0xf8) |
-                          ((srcval >> rShift2) & 0x07);
+                        ((srcval >> rShift2) & 0x07);
                     green=((srcval >> gShift1) & gMask1) |
-                          ((srcval >> gShift2) & gMask2);
+                        ((srcval >> gShift2) & gMask2);
                     blue= ((srcval >> bShift1) & 0xf8) |
-                          ((srcval >> bShift2) & 0x07);
+                        ((srcval >> bShift2) & 0x07);
                     XPutPixel(bmpImage, x, h,
-                              X11DRV_PALETTE_ToPhysical(dc, RGB(red,green,blue)));
+                              X11DRV_PALETTE_ToPhysical
+                              (dc, RGB(red,green,blue)));
                 }
                 srcbits += linebytes;
             }
         }
-        break;
-
-    default:
-        FIXME("16 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
         break;
     }
 }
@@ -3190,85 +3203,82 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
     switch (bmpImage->depth)
     {
     case 15:
-        {
-            const char* srcbits;
-
-            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
-
-            if (gDst==bmpImage->green_mask) {
-                if (rDst==bmpImage->red_mask) {
-                    /* ==== rgb 555 bmp -> rgb 555 dib ==== */
-                    /* ==== bgr 555 bmp -> bgr 555 dib ==== */
-                    X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,2,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                } else {
-                    /* ==== rgb 555 bmp -> bgr 555 dib ==== */
-                    /* ==== bgr 555 bmp -> rgb 555 dib ==== */
-                    X11DRV_DIB_Convert_555_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                }
-            } else {
-                if (rDst==bmpImage->red_mask || bDst==bmpImage->blue_mask) {
-                    /* ==== rgb 555 bmp -> rgb 565 dib ==== */
-                    /* ==== bgr 555 bmp -> bgr 565 dib ==== */
-                    X11DRV_DIB_Convert_555_to_565_asis
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                } else {
-                    /* ==== rgb 555 bmp -> bgr 565 dib ==== */
-                    /* ==== bgr 555 bmp -> rgb 565 dib ==== */
-                    X11DRV_DIB_Convert_555_to_565_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                }
-            }
-        }
-        break;
-
     case 16:
         {
             const char* srcbits;
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (gDst==bmpImage->green_mask) {
-                if (rDst == bmpImage->red_mask) {
-                    /* ==== rgb 565 bmp -> rgb 565 dib ==== */
-                    /* ==== bgr 565 bmp -> bgr 565 dib ==== */
-                    X11DRV_DIB_Convert_any_asis
-                        (dstwidth,lines,2,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
+            if (bmpImage->green_mask==0x03e0) {
+                if (gDst==bmpImage->green_mask) {
+                    if (rDst==bmpImage->red_mask) {
+                        /* ==== rgb 555 bmp -> rgb 555 dib ==== */
+                        /* ==== bgr 555 bmp -> bgr 555 dib ==== */
+                        X11DRV_DIB_Convert_any_asis
+                            (dstwidth,lines,2,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        /* ==== rgb 555 bmp -> bgr 555 dib ==== */
+                        /* ==== bgr 555 bmp -> rgb 555 dib ==== */
+                        X11DRV_DIB_Convert_555_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    }
                 } else {
-                    /* ==== rgb 565 bmp -> bgr 565 dib ==== */
-                    /* ==== bgr 565 bmp -> rgb 565 dib ==== */
-                    X11DRV_DIB_Convert_565_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
+                    if (rDst==bmpImage->red_mask || bDst==bmpImage->blue_mask) {
+                        /* ==== rgb 555 bmp -> rgb 565 dib ==== */
+                        /* ==== bgr 555 bmp -> bgr 565 dib ==== */
+                        X11DRV_DIB_Convert_555_to_565_asis
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        /* ==== rgb 555 bmp -> bgr 565 dib ==== */
+                        /* ==== bgr 555 bmp -> rgb 565 dib ==== */
+                        X11DRV_DIB_Convert_555_to_565_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    }
+                }
+            } else if (bmpImage->green_mask==0x07e0) {
+                if (gDst==bmpImage->green_mask) {
+                    if (rDst == bmpImage->red_mask) {
+                        /* ==== rgb 565 bmp -> rgb 565 dib ==== */
+                        /* ==== bgr 565 bmp -> bgr 565 dib ==== */
+                        X11DRV_DIB_Convert_any_asis
+                            (dstwidth,lines,2,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        /* ==== rgb 565 bmp -> bgr 565 dib ==== */
+                        /* ==== bgr 565 bmp -> rgb 565 dib ==== */
+                        X11DRV_DIB_Convert_565_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    }
+                } else {
+                    if (rDst==bmpImage->red_mask || bDst==bmpImage->blue_mask) {
+                        /* ==== rgb 565 bmp -> rgb 555 dib ==== */
+                        /* ==== bgr 565 bmp -> bgr 555 dib ==== */
+                        X11DRV_DIB_Convert_565_to_555_asis
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        /* ==== rgb 565 bmp -> bgr 555 dib ==== */
+                        /* ==== bgr 565 bmp -> rgb 555 dib ==== */
+                        X11DRV_DIB_Convert_565_to_555_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    }
                 }
             } else {
-                if (rDst==bmpImage->red_mask || bDst==bmpImage->blue_mask) {
-                    /* ==== rgb 565 bmp -> rgb 555 dib ==== */
-                    /* ==== bgr 565 bmp -> bgr 555 dib ==== */
-                    X11DRV_DIB_Convert_565_to_555_asis
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                } else {
-                    /* ==== rgb 565 bmp -> bgr 555 dib ==== */
-                    /* ==== bgr 565 bmp -> rgb 555 dib ==== */
-                    X11DRV_DIB_Convert_565_to_555_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                }
+                goto notsupported;
             }
         }
         break;
@@ -3279,9 +3289,12 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (gDst==0x03e0) {
-                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
                     (bDst==0x1f && bmpImage->blue_mask==0xff)) {
+                if (gDst==0x03e0) {
                     /* ==== rgb 888 bmp -> rgb 555 dib ==== */
                     /* ==== bgr 888 bmp -> bgr 555 dib ==== */
                     X11DRV_DIB_Convert_888_to_555_asis
@@ -3289,19 +3302,18 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
                 } else {
-                    /* ==== rgb 888 bmp -> bgr 555 dib ==== */
-                    /* ==== bgr 888 bmp -> rgb 555 dib ==== */
-                    X11DRV_DIB_Convert_888_to_555_reverse
+                    /* ==== rgb 888 bmp -> rgb 565 dib ==== */
+                    /* ==== rgb 888 bmp -> rgb 565 dib ==== */
+                    X11DRV_DIB_Convert_888_to_565_asis
                         (dstwidth,lines,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
                 }
             } else {
-                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
-                    (bDst==0x1f && bmpImage->blue_mask==0xff)) {
-                    /* ==== rgb 888 bmp -> rgb 565 dib ==== */
-                    /* ==== rgb 888 bmp -> rgb 565 dib ==== */
-                    X11DRV_DIB_Convert_888_to_565_asis
+                if (gDst==0x03e0) {
+                    /* ==== rgb 888 bmp -> bgr 555 dib ==== */
+                    /* ==== bgr 888 bmp -> rgb 555 dib ==== */
+                    X11DRV_DIB_Convert_888_to_555_reverse
                         (dstwidth,lines,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
@@ -3324,9 +3336,12 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (gDst==0x03e0) {
-                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
-                    (bDst==0x1f && bmpImage->blue_mask==0xff)) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
+                       (bDst==0x1f && bmpImage->blue_mask==0xff)) {
+                if (gDst==0x03e0) {
                     /* ==== rgb 0888 bmp -> rgb 555 dib ==== */
                     /* ==== bgr 0888 bmp -> bgr 555 dib ==== */
                     X11DRV_DIB_Convert_0888_to_555_asis
@@ -3334,19 +3349,18 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
                 } else {
-                    /* ==== rgb 0888 bmp -> bgr 555 dib ==== */
-                    /* ==== bgr 0888 bmp -> rgb 555 dib ==== */
-                    X11DRV_DIB_Convert_0888_to_555_reverse
+                    /* ==== rgb 0888 bmp -> rgb 565 dib ==== */
+                    /* ==== bgr 0888 bmp -> bgr 565 dib ==== */
+                    X11DRV_DIB_Convert_0888_to_565_asis
                         (dstwidth,lines,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
                 }
             } else {
-                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
-                    (bDst==0x1f && bmpImage->blue_mask==0xff)) {
-                    /* ==== rgb 0888 bmp -> rgb 565 dib ==== */
-                    /* ==== bgr 0888 bmp -> bgr 565 dib ==== */
-                    X11DRV_DIB_Convert_0888_to_565_asis
+                if (gDst==0x03e0) {
+                    /* ==== rgb 0888 bmp -> bgr 555 dib ==== */
+                    /* ==== bgr 0888 bmp -> rgb 555 dib ==== */
+                    X11DRV_DIB_Convert_0888_to_555_reverse
                         (dstwidth,lines,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
@@ -3451,7 +3465,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
             int rShift,gShift,bShift;
             WORD* dstpixel;
 
-            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 16 bit DIB %lx,%lx,%lx\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 16 bit DIB (%lx,%lx,%lx)\n",
                   bmpImage->depth, bmpImage->red_mask,
                   bmpImage->green_mask, bmpImage->blue_mask,
                   rDst, gDst, bDst);
@@ -3519,7 +3533,10 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
             srcbits=srcbits+left*3;
             dstbits=bmpImage->data+left*3+(lines-1)*bmpImage->bytes_per_line;
 
-            if (rSrc==bmpImage->red_mask) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (rSrc==bmpImage->red_mask) {
                 /* ==== rgb 888 dib -> rgb 888 bmp ==== */
                 /* ==== bgr 888 dib -> bgr 888 bmp ==== */
                 X11DRV_DIB_Convert_any_asis
@@ -3536,6 +3553,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
             }
             break;
         }
+        /* fall through */
 
     case 32:
         {
@@ -3544,7 +3562,10 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
             srcbits=srcbits+left*3;
             dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
 
-            if (rSrc==bmpImage->red_mask) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (rSrc==bmpImage->red_mask) {
                 /* ==== rgb 888 dib -> rgb 0888 bmp ==== */
                 /* ==== bgr 888 dib -> bgr 0888 bmp ==== */
                 X11DRV_DIB_Convert_888_to_0888_asis
@@ -3563,31 +3584,6 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
         }
 
     case 15:
-        {
-            char* dstbits;
-
-            srcbits=srcbits+left*3;
-            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
-
-            if ((rSrc==0xff && bmpImage->red_mask==0x1f) ||
-                (bSrc==0xff && bmpImage->blue_mask==0x1f)) {
-                /* ==== rgb 888 dib -> rgb 555 bmp ==== */
-                /* ==== bgr 888 dib -> bgr 555 bmp ==== */
-                X11DRV_DIB_Convert_888_to_555_asis
-                    (dstwidth,lines,
-                     srcbits,linebytes,
-                     dstbits,-bmpImage->bytes_per_line);
-            } else {
-                /* ==== rgb 888 dib -> bgr 555 bmp ==== */
-                /* ==== bgr 888 dib -> rgb 555 bmp ==== */
-                X11DRV_DIB_Convert_888_to_555_reverse
-                    (dstwidth,lines,
-                     srcbits,linebytes,
-                     dstbits,-bmpImage->bytes_per_line);
-            }
-        }
-        break;
-
     case 16:
         {
             char* dstbits;
@@ -3595,25 +3591,58 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
             srcbits=srcbits+left*3;
             dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
 
-            if ((rSrc==0xff && bmpImage->red_mask==0x1f) ||
-                (bSrc==0xff && bmpImage->blue_mask==0x1f)) {
-                /* ==== rgb 888 dib -> rgb 565 bmp ==== */
-                /* ==== bgr 888 dib -> bgr 565 bmp ==== */
-                X11DRV_DIB_Convert_888_to_565_asis
-                    (dstwidth,lines,
-                     srcbits,linebytes,
-                     dstbits,-bmpImage->bytes_per_line);
+            if (bmpImage->green_mask==0x03e0) {
+                if ((rSrc==0xff0000 && bmpImage->red_mask==0x7f00) ||
+                    (bSrc==0xff0000 && bmpImage->blue_mask==0x7f00)) {
+                    /* ==== rgb 888 dib -> rgb 555 bmp ==== */
+                    /* ==== bgr 888 dib -> bgr 555 bmp ==== */
+                    X11DRV_DIB_Convert_888_to_555_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else if ((rSrc==0xff && bmpImage->red_mask==0x7f00) ||
+                           (bSrc==0xff && bmpImage->blue_mask==0x7f00)) {
+                    /* ==== rgb 888 dib -> bgr 555 bmp ==== */
+                    /* ==== bgr 888 dib -> rgb 555 bmp ==== */
+                    X11DRV_DIB_Convert_888_to_555_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    goto notsupported;
+                }
+            } else if (bmpImage->green_mask==0x07e0) {
+                if ((rSrc==0xff0000 && bmpImage->red_mask==0xf800) ||
+                    (bSrc==0xff0000 && bmpImage->blue_mask==0xf800)) {
+                    /* ==== rgb 888 dib -> rgb 565 bmp ==== */
+                    /* ==== bgr 888 dib -> bgr 565 bmp ==== */
+                    X11DRV_DIB_Convert_888_to_565_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else if ((rSrc==0xff && bmpImage->red_mask==0xf800) ||
+                           (bSrc==0xff && bmpImage->blue_mask==0xf800)) {
+                    /* ==== rgb 888 dib -> bgr 565 bmp ==== */
+                    /* ==== bgr 888 dib -> rgb 565 bmp ==== */
+                    X11DRV_DIB_Convert_888_to_565_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    goto notsupported;
+                }
             } else {
-                /* ==== rgb 888 dib -> bgr 565 bmp ==== */
-                /* ==== bgr 888 dib -> rgb 565 bmp ==== */
-                X11DRV_DIB_Convert_888_to_565_reverse
-                    (dstwidth,lines,
-                     srcbits,linebytes,
-                     dstbits,-bmpImage->bytes_per_line);
+                goto notsupported;
             }
         }
         break;
 
+    default:
+    notsupported:
+        WARN("from 24 bit DIB (%lx,%lx,%lx) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
+              rSrc, gSrc, bSrc, bmpImage->bits_per_pixel, bmpImage->red_mask,
+              bmpImage->green_mask, bmpImage->blue_mask );
+        /* fall through */
     case 1:
     case 4:
     case 8:
@@ -3634,12 +3663,6 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                 srcbits += linebytes;
             }
         }
-        break;
-
-    default:
-        FIXME("from 24 bit DIB to %d bit bitmap with mask R,G,B %lx,%lx,%lx\n",
-              bmpImage->bits_per_pixel, bmpImage->red_mask,
-              bmpImage->green_mask, bmpImage->blue_mask );
         break;
     }
 }
@@ -3674,7 +3697,10 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (rDst==bmpImage->red_mask) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (rDst==bmpImage->red_mask) {
                 /* ==== rgb 888 bmp -> rgb 888 dib ==== */
                 /* ==== bgr 888 bmp -> bgr 888 dib ==== */
                 X11DRV_DIB_Convert_any_asis
@@ -3691,6 +3717,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
             }
             break;
         }
+        /* fall through */
 
     case 32:
         {
@@ -3698,7 +3725,10 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if (rDst==bmpImage->red_mask) {
+            if (bmpImage->green_mask!=0x00ff00 ||
+                (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+            } else if (rDst==bmpImage->red_mask) {
                 /* ==== rgb 888 bmp -> rgb 0888 dib ==== */
                 /* ==== bgr 888 bmp -> bgr 0888 dib ==== */
                 X11DRV_DIB_Convert_0888_to_888_asis
@@ -3717,51 +3747,54 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
         }
 
     case 15:
-        {
-            const char* srcbits;
-
-            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
-
-            if ((rDst==0xff && bmpImage->red_mask==0x1f) ||
-                (bDst==0xff && bmpImage->blue_mask==0x1f)) {
-                /* ==== rgb 555 bmp -> rgb 888 dib ==== */
-                /* ==== bgr 555 bmp -> bgr 888 dib ==== */
-                X11DRV_DIB_Convert_555_to_888_asis
-                    (dstwidth,lines,
-                     srcbits,-bmpImage->bytes_per_line,
-                     dstbits,linebytes);
-            } else {
-                /* ==== rgb 555 bmp -> bgr 888 dib ==== */
-                /* ==== bgr 555 bmp -> rgb 888 dib ==== */
-                X11DRV_DIB_Convert_555_to_888_reverse
-                    (dstwidth,lines,
-                     srcbits,-bmpImage->bytes_per_line,
-                     dstbits,linebytes);
-            }
-        }
-        break;
-
     case 16:
         {
             const char* srcbits;
 
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-            if ((rDst==0xff && bmpImage->red_mask==0x1f) ||
-                (bDst==0xff && bmpImage->blue_mask==0x1f)) {
-                /* ==== rgb 565 bmp -> rgb 888 dib ==== */
-                /* ==== bgr 565 bmp -> bgr 888 dib ==== */
-                X11DRV_DIB_Convert_565_to_888_asis
-                    (dstwidth,lines,
-                     srcbits,-bmpImage->bytes_per_line,
-                     dstbits,linebytes);
+            if (bmpImage->green_mask==0x03e0) {
+                if ((rDst==0xff0000 && bmpImage->red_mask==0x7f00) ||
+                    (bDst==0xff0000 && bmpImage->blue_mask==0x7f00)) {
+                    /* ==== rgb 555 bmp -> rgb 888 dib ==== */
+                    /* ==== bgr 555 bmp -> bgr 888 dib ==== */
+                    X11DRV_DIB_Convert_555_to_888_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else if ((rDst==0xff && bmpImage->red_mask==0x7f00) ||
+                           (bDst==0xff && bmpImage->blue_mask==0x7f00)) {
+                    /* ==== rgb 555 bmp -> bgr 888 dib ==== */
+                    /* ==== bgr 555 bmp -> rgb 888 dib ==== */
+                    X11DRV_DIB_Convert_555_to_888_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    goto notsupported;
+                }
+            } else if (bmpImage->green_mask==0x07e0) {
+                if ((rDst==0xff0000 && bmpImage->red_mask==0xf800) ||
+                    (bDst==0xff0000 && bmpImage->blue_mask==0xf800)) {
+                    /* ==== rgb 565 bmp -> rgb 888 dib ==== */
+                    /* ==== bgr 565 bmp -> bgr 888 dib ==== */
+                    X11DRV_DIB_Convert_565_to_888_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else if ((rDst==0xff && bmpImage->red_mask==0xf800) ||
+                           (bDst==0xff && bmpImage->blue_mask==0xf800)) {
+                    /* ==== rgb 565 bmp -> bgr 888 dib ==== */
+                    /* ==== bgr 565 bmp -> rgb 888 dib ==== */
+                    X11DRV_DIB_Convert_565_to_888_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    goto notsupported;
+                }
             } else {
-                /* ==== rgb 565 bmp -> bgr 888 dib ==== */
-                /* ==== bgr 565 bmp -> rgb 888 dib ==== */
-                X11DRV_DIB_Convert_565_to_888_reverse
-                    (dstwidth,lines,
-                     srcbits,-bmpImage->bytes_per_line,
-                     dstbits,linebytes);
+                goto notsupported;
             }
         }
         break;
@@ -3824,9 +3857,10 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
             /* ==== any bmp format -> 888 dib ==== */
             BYTE* dstbyte;
 
-            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 24 bit DIB\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 24 bit DIB (%lx,%lx,%lx)\n",
                   bmpImage->depth, bmpImage->red_mask,
-                  bmpImage->green_mask, bmpImage->blue_mask );
+                  bmpImage->green_mask, bmpImage->blue_mask,
+                  rDst, gDst, bDst );
 
             /* Windows only supports one 24bpp DIB format: rgb 888 */
             for (h = lines - 1; h >= 0; h--) {
@@ -3887,6 +3921,10 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                     (dstwidth,lines,
                      srcbits,linebytes,
                      dstbits,-bmpImage->bytes_per_line);
+            } else if (bmpImage->green_mask!=0x00ff00 ||
+                       (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+                /* the tests below assume sane bmpImage masks */
             } else if (rSrc==bmpImage->blue_mask && gSrc==bmpImage->green_mask && bSrc==bmpImage->red_mask) {
                 /* ==== rgb 0888 dib -> bgr 888 bmp ==== */
                 /* ==== bgr 0888 dib -> rgb 888 bmp ==== */
@@ -3894,7 +3932,7 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                     (dstwidth,lines,
                      srcbits,linebytes,
                      dstbits,-bmpImage->bytes_per_line);
-            } else if (bmpImage->red_mask==0xff0000) {
+            } else if (bmpImage->blue_mask==0xff) {
                 /* ==== any 0888 dib -> rgb 888 bmp ==== */
                 X11DRV_DIB_Convert_any0888_to_rgb888
                     (dstwidth,lines,
@@ -3911,6 +3949,7 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
             }
             break;
         }
+        /* fall through */
 
     case 32:
         {
@@ -3927,6 +3966,10 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                         (dstwidth,lines,4,
                          srcbits,linebytes,
                          dstbits,-bmpImage->bytes_per_line);
+                } else if (bmpImage->green_mask!=0x00ff00 ||
+                           (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                    goto notsupported;
+                    /* the tests below assume sane bmpImage masks */
                 } else if (rSrc==bmpImage->blue_mask && bSrc==bmpImage->red_mask) {
                     /* ==== rgb 0888 dib -> bgr 0888 bmp ==== */
                     /* ==== bgr 0888 dib -> rgb 0888 bmp ==== */
@@ -3943,6 +3986,10 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                          dstbits,-bmpImage->bytes_per_line,
                          bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
                 }
+            } else if (bmpImage->green_mask!=0x00ff00 ||
+                       (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+                /* the tests below assume sane bmpImage masks */
             } else {
                 /* ==== any 0888 dib -> any 0888 bmp ==== */
                 X11DRV_DIB_Convert_0888_any
@@ -3956,52 +4003,6 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
         break;
 
     case 15:
-        {
-            char* dstbits;
-
-            srcbits=srcbits+left*4;
-            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
-
-            if (rSrc==0xff0000 && gSrc==0x00ff00 && bSrc==0x0000ff) {
-                if (bmpImage->blue_mask==0x1f) {
-                    /* ==== rgb 0888 dib -> rgb 555 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_555_asis
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                } else {
-                    /* ==== rgb 0888 dib -> bgr 555 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_555_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                }
-            } else if (rSrc==0x0000ff && gSrc==0x00ff00 && bSrc==0xff0000) {
-                if (bmpImage->red_mask==0x1f) {
-                    /* ==== bgr 0888 dib -> bgr 555 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_555_asis
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                } else {
-                    /* ==== bgr 0888 dib -> rgb 555 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_555_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
-                }
-            } else {
-                /* ==== any 0888 dib -> rgb or bgr 555 bmp ==== */
-                X11DRV_DIB_Convert_any0888_to_5x5
-                    (dstwidth,lines,
-                     srcbits,linebytes,
-                     rSrc,gSrc,bSrc,
-                     dstbits,-bmpImage->bytes_per_line,
-                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
-            }
-        }
-        break;
-
     case 16:
         {
             char* dstbits;
@@ -4010,45 +4011,111 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
             dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
 
             if (rSrc==0xff0000 && gSrc==0x00ff00 && bSrc==0x0000ff) {
-                if (bmpImage->blue_mask==0x1f) {
-                    /* ==== rgb 0888 dib -> rgb 565 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_565_asis
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
+                if (bmpImage->green_mask==0x03e0) {
+                    if (bmpImage->red_mask==0x7f00) {
+                        /* ==== rgb 0888 dib -> rgb 555 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_555_asis
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else if (bmpImage->blue_mask==0x7f00) {
+                        /* ==== rgb 0888 dib -> bgr 555 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_555_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else {
+                        goto notsupported;
+                    }
+                } else if (bmpImage->green_mask==0x07e0) {
+                    if (bmpImage->red_mask==0xf800) {
+                        /* ==== rgb 0888 dib -> rgb 565 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_565_asis
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else if (bmpImage->blue_mask==0xf800) {
+                        /* ==== rgb 0888 dib -> bgr 565 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_565_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else {
+                        goto notsupported;
+                    }
                 } else {
-                    /* ==== rgb 0888 dib -> bgr 565 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_565_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
+                    goto notsupported;
                 }
             } else if (rSrc==0x0000ff && gSrc==0x00ff00 && bSrc==0xff0000) {
-                if (bmpImage->red_mask==0x1f) {
-                    /* ==== bgr 0888 dib -> bgr 565 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_565_asis
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
+                if (bmpImage->green_mask==0x03e0) {
+                    if (bmpImage->blue_mask==0x7f00) {
+                        /* ==== bgr 0888 dib -> bgr 555 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_555_asis
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else if (bmpImage->red_mask==0x7f00) {
+                        /* ==== bgr 0888 dib -> rgb 555 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_555_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else {
+                        goto notsupported;
+                    }
+                } else if (bmpImage->green_mask==0x07e0) {
+                    if (bmpImage->blue_mask==0xf800) {
+                        /* ==== bgr 0888 dib -> bgr 565 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_565_asis
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else if (bmpImage->red_mask==0xf800) {
+                        /* ==== bgr 0888 dib -> rgb 565 bmp ==== */
+                        X11DRV_DIB_Convert_0888_to_565_reverse
+                            (dstwidth,lines,
+                             srcbits,linebytes,
+                             dstbits,-bmpImage->bytes_per_line);
+                    } else {
+                        goto notsupported;
+                    }
                 } else {
-                    /* ==== bgr 0888 dib -> rgb 565 bmp ==== */
-                    X11DRV_DIB_Convert_0888_to_565_reverse
-                        (dstwidth,lines,
-                         srcbits,linebytes,
-                         dstbits,-bmpImage->bytes_per_line);
+                    goto notsupported;
                 }
             } else {
-                /* ==== any 0888 dib -> rgb or bgr 565 bmp ==== */
-                X11DRV_DIB_Convert_any0888_to_5x5
-                    (dstwidth,lines,
-                     srcbits,linebytes,
-                     rSrc,gSrc,bSrc,
-                     dstbits,-bmpImage->bytes_per_line,
-                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+                if (bmpImage->green_mask==0x03e0 &&
+                    (bmpImage->red_mask==0x7f00 ||
+                     bmpImage->blue_mask==0x7f00)) {
+                    /* ==== any 0888 dib -> rgb or bgr 555 bmp ==== */
+                    X11DRV_DIB_Convert_any0888_to_5x5
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         rSrc,gSrc,bSrc,
+                         dstbits,-bmpImage->bytes_per_line,
+                         bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+                } else if (bmpImage->green_mask==0x07e0 &&
+                           (bmpImage->red_mask==0xf800 ||
+                            bmpImage->blue_mask==0xf800)) {
+                    /* ==== any 0888 dib -> rgb or bgr 565 bmp ==== */
+                    X11DRV_DIB_Convert_any0888_to_5x5
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         rSrc,gSrc,bSrc,
+                         dstbits,-bmpImage->bytes_per_line,
+                         bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+                } else {
+                    goto notsupported;
+                }
             }
         }
         break;
 
+    default:
+    notsupported:
+        WARN("from 32 bit DIB (%lx,%lx,%lx) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
+              rSrc, gSrc, bSrc, bmpImage->bits_per_pixel, bmpImage->red_mask,
+              bmpImage->green_mask, bmpImage->blue_mask );
+        /* fall through */
     case 1:
     case 4:
     case 8:
@@ -4076,10 +4143,6 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                 srcbits += linebytes;
             }
         }
-        break;
-
-    default:
-        FIXME("32 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
         break;
     }
 
@@ -4124,6 +4187,10 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                     (dstwidth,lines,
                      srcbits,-bmpImage->bytes_per_line,
                      dstbits,linebytes);
+            } else if (bmpImage->green_mask!=0x00ff00 ||
+                       (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+                /* the tests below assume sane bmpImage masks */
             } else if (rDst==bmpImage->blue_mask && gDst==bmpImage->green_mask && bDst==bmpImage->red_mask) {
                 /* ==== rgb 888 bmp -> bgr 0888 dib ==== */
                 /* ==== bgr 888 bmp -> rgb 0888 dib ==== */
@@ -4131,7 +4198,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                     (dstwidth,lines,
                      srcbits,-bmpImage->bytes_per_line,
                      dstbits,linebytes);
-            } else if (bmpImage->red_mask==0xff0000) {
+            } else if (bmpImage->blue_mask==0xff) {
                 /* ==== rgb 888 bmp -> any 0888 dib ==== */
                 X11DRV_DIB_Convert_rgb888_to_any0888
                     (dstwidth,lines,
@@ -4148,6 +4215,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
             }
             break;
         }
+        /* fall through */
 
     case 32:
         {
@@ -4163,6 +4231,10 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                         (dstwidth,lines,4,
                          srcbits,-bmpImage->bytes_per_line,
                          dstbits,linebytes);
+                } else if (bmpImage->green_mask!=0x00ff00 ||
+                           (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                    goto notsupported;
+                    /* the tests below assume sane bmpImage masks */
                 } else if (rDst==bmpImage->blue_mask && bDst==bmpImage->red_mask) {
                     /* ==== rgb 0888 bmp -> bgr 0888 dib ==== */
                     /* ==== bgr 0888 bmp -> rgb 0888 dib ==== */
@@ -4179,6 +4251,10 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                          dstbits,linebytes,
                          rDst,gDst,bDst);
                 }
+            } else if (bmpImage->green_mask!=0x00ff00 ||
+                       (bmpImage->red_mask|bmpImage->blue_mask)!=0xff00ff) {
+                goto notsupported;
+                /* the tests below assume sane bmpImage masks */
             } else {
                 /* ==== any 0888 bmp -> any 0888 dib ==== */
                 X11DRV_DIB_Convert_0888_any
@@ -4192,51 +4268,6 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
         break;
 
     case 15:
-        {
-            const char* srcbits;
-
-            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
-
-            if (rDst==0xff0000 && gDst==0x00ff00 && bDst==0x0000ff) {
-                if (bmpImage->blue_mask==0x1f) {
-                    /* ==== rgb 555 bmp -> rgb 0888 dib ==== */
-                    X11DRV_DIB_Convert_555_to_0888_asis
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                } else {
-                    /* ==== bgr 555 bmp -> rgb 0888 dib ==== */
-                    X11DRV_DIB_Convert_555_to_0888_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                }
-            } else if (rDst==0x0000ff && gDst==0x00ff00 && bDst==0xff0000) {
-                if (bmpImage->red_mask==0x1f) {
-                    /* ==== bgr 555 bmp -> bgr 0888 dib ==== */
-                    X11DRV_DIB_Convert_555_to_0888_asis
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                } else {
-                    /* ==== rgb 555 bmp -> bgr 0888 dib ==== */
-                    X11DRV_DIB_Convert_555_to_0888_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
-                }
-            } else {
-                /* ==== rgb or bgr 555 bmp -> any 0888 dib ==== */
-                X11DRV_DIB_Convert_5x5_to_any0888
-                    (dstwidth,lines,
-                     srcbits,-bmpImage->bytes_per_line,
-                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
-                     dstbits,linebytes,
-                     rDst,gDst,bDst);
-            }
-        }
-        break;
-
     case 16:
         {
             const char* srcbits;
@@ -4244,41 +4275,101 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
             srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
             if (rDst==0xff0000 && gDst==0x00ff00 && bDst==0x0000ff) {
-                if (bmpImage->blue_mask==0x1f) {
-                    /* ==== rgb 565 bmp -> rgb 0888 dib ==== */
-                    X11DRV_DIB_Convert_565_to_0888_asis
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
+                if (bmpImage->green_mask==0x03e0) {
+                    if (bmpImage->red_mask==0x7f00) {
+                        /* ==== rgb 555 bmp -> rgb 0888 dib ==== */
+                        X11DRV_DIB_Convert_555_to_0888_asis
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else if (bmpImage->blue_mask==0x7f00) {
+                        /* ==== bgr 555 bmp -> rgb 0888 dib ==== */
+                        X11DRV_DIB_Convert_555_to_0888_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        goto notsupported;
+                    }
+                } else if (bmpImage->green_mask==0x07e0) {
+                    if (bmpImage->red_mask==0xf800) {
+                        /* ==== rgb 565 bmp -> rgb 0888 dib ==== */
+                        X11DRV_DIB_Convert_565_to_0888_asis
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else if (bmpImage->blue_mask==0xf800) {
+                        /* ==== bgr 565 bmp -> rgb 0888 dib ==== */
+                        X11DRV_DIB_Convert_565_to_0888_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        goto notsupported;
+                    }
                 } else {
-                    /* ==== bgr 565 bmp -> rgb 0888 dib ==== */
-                    X11DRV_DIB_Convert_565_to_0888_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
+                    goto notsupported;
                 }
             } else if (rDst==0x0000ff && gDst==0x00ff00 && bDst==0xff0000) {
-                if (bmpImage->red_mask==0x1f) {
-                /* ==== bgr 565 bmp -> bgr 0888 dib ==== */
-                    X11DRV_DIB_Convert_565_to_0888_asis
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
+                if (bmpImage->green_mask==0x03e0) {
+                    if (bmpImage->blue_mask==0x7f00) {
+                        /* ==== bgr 555 bmp -> bgr 0888 dib ==== */
+                        X11DRV_DIB_Convert_555_to_0888_asis
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else if (bmpImage->red_mask==0x7f00) {
+                        /* ==== rgb 555 bmp -> bgr 0888 dib ==== */
+                        X11DRV_DIB_Convert_555_to_0888_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        goto notsupported;
+                    }
+                } else if (bmpImage->green_mask==0x07e0) {
+                    if (bmpImage->blue_mask==0xf800) {
+                        /* ==== bgr 565 bmp -> bgr 0888 dib ==== */
+                        X11DRV_DIB_Convert_565_to_0888_asis
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else if (bmpImage->red_mask==0xf800) {
+                        /* ==== rgb 565 bmp -> bgr 0888 dib ==== */
+                        X11DRV_DIB_Convert_565_to_0888_reverse
+                            (dstwidth,lines,
+                             srcbits,-bmpImage->bytes_per_line,
+                             dstbits,linebytes);
+                    } else {
+                        goto notsupported;
+                    }
                 } else {
-                /* ==== rgb 565 bmp -> bgr 0888 dib ==== */
-                    X11DRV_DIB_Convert_565_to_0888_reverse
-                        (dstwidth,lines,
-                         srcbits,-bmpImage->bytes_per_line,
-                         dstbits,linebytes);
+                    goto notsupported;
                 }
             } else {
-                /* ==== rgb or bgr 565 bmp -> any 0888 dib ==== */
-                X11DRV_DIB_Convert_5x5_to_any0888
-                    (dstwidth,lines,
-                     srcbits,-bmpImage->bytes_per_line,
-                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
-                     dstbits,linebytes,
-                     rDst,gDst,bDst);
+                if (bmpImage->green_mask==0x03e0 &&
+                    (bmpImage->red_mask==0x7f00 ||
+                     bmpImage->blue_mask==0x7f00)) {
+                    /* ==== rgb or bgr 555 bmp -> any 0888 dib ==== */
+                    X11DRV_DIB_Convert_5x5_to_any0888
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
+                         dstbits,linebytes,
+                         rDst,gDst,bDst);
+                } else if (bmpImage->green_mask==0x07e0 &&
+                           (bmpImage->red_mask==0xf800 ||
+                            bmpImage->blue_mask==0xf800)) {
+                    /* ==== rgb or bgr 565 bmp -> any 0888 dib ==== */
+                    X11DRV_DIB_Convert_5x5_to_any0888
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
+                         dstbits,linebytes,
+                         rDst,gDst,bDst);
+                } else {
+                    goto notsupported;
+                }
             }
         }
         break;
@@ -4346,7 +4437,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
             int rShift,gShift,bShift;
             DWORD* dstpixel;
 
-            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 32 bit DIB %lx,%lx,%lx\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 32 bit DIB (%lx,%lx,%lx)\n",
                   bmpImage->depth, bmpImage->red_mask,
                   bmpImage->green_mask, bmpImage->blue_mask,
                   rDst,gDst,bDst);
