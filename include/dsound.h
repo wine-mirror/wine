@@ -262,7 +262,7 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 #define IDirectSoundBuffer_GetVolume(p,a)              ICOM_CALL1(GetVolume,p,a)
 #define IDirectSoundBuffer_GetPan(p,a)                 ICOM_CALL1(GetPan,p,a)
 #define IDirectSoundBuffer_GetFrequency(p,a)           ICOM_CALL1(GetFrequency,p,a)
-#define IDirectSoundBuffer_GetStatus(p,a)              ICOM_CALL1(GetStatus,p,a
+#define IDirectSoundBuffer_GetStatus(p,a)              ICOM_CALL1(GetStatus,p,a)
 #define IDirectSoundBuffer_Initialize(p,a,b)           ICOM_CALL2(Initialize,p,a,b)
 #define IDirectSoundBuffer_Lock(p,a,b,c,d,e,f,g)       ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
 #define IDirectSoundBuffer_Play(p,a,b,c)               ICOM_CALL3(Play,p,a,b,c)
@@ -272,7 +272,7 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 #define IDirectSoundBuffer_SetPan(p,a)                 ICOM_CALL1(SetPan,p,a)
 #define IDirectSoundBuffer_SetFrequency(p,a)           ICOM_CALL1(SetFrequency,p,a)
 #define IDirectSoundBuffer_Stop(p)                     ICOM_CALL (Stop,p)
-#define IDirectSoundBuffer_Unlock(p,a,b,c,d)           ICOM_CALL4(Unlock,p,a,b,c,)
+#define IDirectSoundBuffer_Unlock(p,a,b,c,d)           ICOM_CALL4(Unlock,p,a,b,c,d)
 #define IDirectSoundBuffer_Restore(p)                  ICOM_CALL (Restore,p)
 
 
