@@ -38,7 +38,6 @@ char*	g_lpstrFileName = NULL;
 char*   g_lpstrInputFile = NULL;
 int	b_to_binary = 0;
 int	b_force_overwrite = 0;
-LPBYTE p_in_file = NULL;
 
 static char*    errorOpenFile = "Unable to open file.\n";
 static char*    errorRCFormat = "Unexpexted syntax in rc file line %i\n";
@@ -102,9 +101,11 @@ void parse_options(int argc, char **argv)
 
 int insert_hex (char * infile, FILE * outfile)
 {
+#ifdef	HAVE_MMAP
 	unsigned int i;
 	int 		fd;
 	struct stat	st;
+	LPBYTE p_in_file = NULL;
 
 	if( (fd = open( infile, O_RDONLY))==-1 ) 
 	{
@@ -129,7 +130,46 @@ int insert_hex (char * infile, FILE * outfile)
 	fprintf (outfile, "'\n}");
         munmap(p_in_file, st.st_size);
         close(fd);
-	return 1;	
+	return 1;
+#else	/* HAVE_MMAP */
+	FILE*	fp;
+	struct stat	st;
+	unsigned int	i;
+	int		c;
+
+	fp = fopen( infile, "r" );
+	if ( fp == NULL )
+	{
+	  fprintf(stderr, errorOpenFile );
+	  exit(1);
+	}
+	if (fstat(fileno(fp), &st) == -1)
+	{
+	  fprintf(stderr, errorOpenFile );
+	  fclose(fp);
+	  exit(1);
+	}
+
+	fprintf (outfile, "{\n '");
+	i = 0;
+	while (1)
+	{
+	  c = fgetc(fp);
+	  if ( c == EOF )
+	  {
+	    fprintf(stderr, errorOpenFile );
+	    fclose(fp);
+	    exit(1);
+	  }
+	  fprintf(outfile, "%02X", c);
+	  if (++i >= st.st_size) break;
+	  fprintf(outfile, "%s", (i == (i & 0xfffffff0)) ? "'\n '" :" ");
+	}
+	fprintf (outfile, "'\n}");
+
+	fclose(fp);
+	return 1;
+#endif	/* HAVE_MMAP */
 }
 
 int convert_to_res ()

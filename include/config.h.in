@@ -203,6 +203,9 @@
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 
+/* Define if you have the mmap function.  */
+#undef HAVE_MMAP
+
 /* Define if you have the openpty function.  */
 #undef HAVE_OPENPTY
 

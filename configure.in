@@ -719,6 +719,7 @@ AC_CHECK_FUNCS(\
 	getsockopt \
 	inet_network \
 	memmove \
+	mmap \
 	rfork \
 	select \
 	sendmsg \
