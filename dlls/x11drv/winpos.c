@@ -66,9 +66,9 @@ static void clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
     int x, y;
 
     /* first check if we have anything to do */
-    for (ptr = win->child; ptr != last; ptr = ptr->next)
+    for (ptr = win->child; ptr && ptr != last; ptr = ptr->next)
         if (ptr->dwStyle & WS_VISIBLE) break;
-    if (ptr == last) return; /* no children to clip */
+    if (!ptr || ptr == last) return; /* no children to clip */
 
     if (whole_window)
     {
