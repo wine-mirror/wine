@@ -270,8 +270,6 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 
 	if( pWndParent != pWndPrev )
 	{
-	    BOOL32 bFixupDCE = IsWindowVisible32(wndPtr->hwndSelf);
-
 	    if ( X11DRV_WND_GetXWindow(wndPtr) )
 	    {
 		/* Toplevel window needs to be reparented.  Used by Tk 8.0 */
@@ -279,8 +277,6 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 		TSXDestroyWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
 		((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = None;
 	    }
-	    else if( bFixupDCE )
-		DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
 
 	    WIN_UnlinkWindow(wndPtr->hwndSelf);
 	    wndPtr->parent = pWndParent;
@@ -324,12 +320,6 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
                 }
             }
 	    WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
-
-	    if( bFixupDCE )
-	    {
-	        DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
-		UpdateWindow32(wndPtr->hwndSelf);
-	    }
 	}
 	return pWndPrev;
     } /* failure */
