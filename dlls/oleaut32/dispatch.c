@@ -39,6 +39,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
 
+static IDispatch * WINAPI StdDispatch_Construct(IUnknown * punkOuter, void * pvThis, ITypeInfo * pTypeInfo);
 
 /******************************************************************************
  *		DispInvoke (OLEAUT32.30)
@@ -164,9 +165,12 @@ HRESULT WINAPI CreateStdDispatch(
 	ITypeInfo* ptinfo,
 	IUnknown** ppunkStdDisp)
 {
-	FIXME("(%p,%p,%p,%p),stub\n",punkOuter, pvThis, ptinfo,
-               ppunkStdDisp);
-	return E_NOTIMPL;
+    TRACE("(%p, %p, %p, %p)\n", punkOuter, pvThis, ptinfo, ppunkStdDisp);
+
+    *ppunkStdDisp = (LPUNKNOWN)StdDispatch_Construct(punkOuter, pvThis, ptinfo);
+    if (!*ppunkStdDisp)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 /******************************************************************************
@@ -179,4 +183,141 @@ HRESULT WINAPI CreateDispTypeInfo(
 {
 	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
 	return 0;
+}
+
+typedef struct
+{
+    ICOM_VFIELD(IDispatch);
+    IUnknown * outerUnknown;
+    void * pvThis;
+    ITypeInfo * pTypeInfo;
+    ULONG ref;
+} StdDispatch;
+
+static HRESULT WINAPI StdDispatch_QueryInterface(
+  LPDISPATCH iface,
+  REFIID riid,
+  void** ppvObject)
+{
+    ICOM_THIS(StdDispatch, iface);
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppvObject);
+
+    if (This->outerUnknown)
+        return IUnknown_QueryInterface(This->outerUnknown, riid, ppvObject);
+
+    if (IsEqualIID(riid, &IID_IDispatch) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObject = (LPVOID)This;
+	IUnknown_AddRef((LPUNKNOWN)*ppvObject);
+	return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI StdDispatch_AddRef(LPDISPATCH iface)
+{
+    ICOM_THIS(StdDispatch, iface);
+    TRACE("()\n");
+    This->ref++;
+    if (This->outerUnknown)
+        return IUnknown_AddRef(This->outerUnknown);
+    else
+        return This->ref;
+}
+
+static ULONG WINAPI StdDispatch_Release(LPDISPATCH iface)
+{
+    ICOM_THIS(StdDispatch, iface);
+    ULONG ret;
+    TRACE("(%p)->()\n", This);
+
+    This->ref--;
+
+    if (This->outerUnknown)
+        ret = IUnknown_Release(This->outerUnknown);
+    else
+        ret = This->ref;
+
+    if (This->ref <= 0)
+        CoTaskMemFree(This);
+
+    return ret;
+}
+
+static HRESULT WINAPI StdDispatch_GetTypeInfoCount(LPDISPATCH iface, UINT * pctinfo)
+{
+    TRACE("(%p)\n", pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI StdDispatch_GetTypeInfo(LPDISPATCH iface, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
+{
+    ICOM_THIS(StdDispatch, iface);
+    TRACE("(%d, %lx, %p)\n", iTInfo, lcid, ppTInfo);
+
+    if (iTInfo != 0)
+        return DISP_E_BADINDEX;
+    *ppTInfo = This->pTypeInfo;
+    return S_OK;
+}
+
+static HRESULT WINAPI StdDispatch_GetIDsOfNames(LPDISPATCH iface, REFIID riid, LPOLESTR * rgszNames, UINT cNames, LCID lcid, DISPID * rgDispId)
+{
+    ICOM_THIS(StdDispatch, iface);
+    TRACE("(%s, %p, %d, 0x%lx, %p)\n", debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    if (!IsEqualGUID(riid, &IID_NULL))
+    {
+        FIXME(" expected riid == IID_NULL\n");
+        return E_INVALIDARG;
+    }
+    return DispGetIDsOfNames(This->pTypeInfo, rgszNames, cNames, rgDispId);
+}
+
+static HRESULT WINAPI StdDispatch_Invoke(LPDISPATCH iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS * pDispParams, VARIANT * pVarResult, EXCEPINFO * pExcepInfo, UINT * puArgErr)
+{
+    ICOM_THIS(StdDispatch, iface);
+    TRACE("(%ld, %s, 0x%lx, 0x%x, %p, %p, %p, %p)\n", dispIdMember, debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    if (!IsEqualGUID(riid, &IID_NULL))
+    {
+        FIXME(" expected riid == IID_NULL\n");
+        return E_INVALIDARG;
+    }
+    return DispInvoke(This->pvThis, This->pTypeInfo, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static ICOM_VTABLE(IDispatch) StdDispatch_VTable =
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  StdDispatch_QueryInterface,
+  StdDispatch_AddRef,
+  StdDispatch_Release,
+  StdDispatch_GetTypeInfoCount,
+  StdDispatch_GetTypeInfo,
+  StdDispatch_GetIDsOfNames,
+  StdDispatch_Invoke
+};
+
+static IDispatch * WINAPI StdDispatch_Construct(
+  IUnknown * punkOuter,
+  void * pvThis,
+  ITypeInfo * pTypeInfo)
+{
+    StdDispatch * pStdDispatch;
+
+    pStdDispatch = CoTaskMemAlloc(sizeof(StdDispatch));
+    if (!pStdDispatch)
+        return (IDispatch *)pStdDispatch;
+
+    pStdDispatch->lpVtbl = &StdDispatch_VTable;
+    pStdDispatch->outerUnknown = punkOuter;
+    pStdDispatch->pvThis = pvThis;
+    pStdDispatch->pTypeInfo = pTypeInfo;
+    pStdDispatch->ref = 1;
+
+    return (IDispatch *)pStdDispatch;
 }
