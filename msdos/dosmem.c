@@ -13,6 +13,7 @@
 #include "global.h"
 #include "ldt.h"
 #include "miscemu.h"
+#include "vga.h"
 #include "module.h"
 #include "task.h"
 #include "debug.h"
@@ -202,7 +203,7 @@ static void DOSMEM_FillBiosSegment(void)
     pBiosData->MemSize              = 640;
     pBiosData->NextKbdCharPtr       = 0x1e;
     pBiosData->FirstKbdCharPtr      = 0x1e;
-    pBiosData->VideoMode            = 0;
+    pBiosData->VideoMode            = 3;
     pBiosData->VideoColumns         = 80;
     pBiosData->VideoPageSize        = 80 * 25 * 2;
     pBiosData->VideoPageStartAddr   = 0xb800;
