@@ -57,6 +57,7 @@ void *ELFDLL_dlopen(const char *libname, int flags)
 
 	/* First try the default path search of dlopen() */
 	handle = dlopen(libname, flags);
+	/* do NOT call dlerror() here ! (check after return) */
 	if(handle)
 		return handle;
 
@@ -100,10 +101,9 @@ void *ELFDLL_dlopen(const char *libname, int flags)
 		TRACE("Trying dlopen('%s', %d)\n", buffer, flags);
 
 		handle = dlopen(buffer, flags);
+		/* do NOT call dlerror() here ! (check after return) */
 		if(handle)
 			return handle;
-		else
-			TRACE("possible dlopen() error: %s\n", dlerror());
 	}
 	return NULL;
 }
