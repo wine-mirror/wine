@@ -872,3 +872,119 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
                          sizeof(data->cAlternateFileName), NULL, NULL );
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           OpenFile   (KERNEL32.@)
+ */
+HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
+{
+    HANDLE handle;
+    FILETIME filetime;
+    WORD filedatetime[2];
+
+    if (!ofs) return HFILE_ERROR;
+
+    TRACE("%s %s %s %s%s%s%s%s%s%s%s%s\n",name,
+          ((mode & 0x3 )==OF_READ)?"OF_READ":
+          ((mode & 0x3 )==OF_WRITE)?"OF_WRITE":
+          ((mode & 0x3 )==OF_READWRITE)?"OF_READWRITE":"unknown",
+          ((mode & 0x70 )==OF_SHARE_COMPAT)?"OF_SHARE_COMPAT":
+          ((mode & 0x70 )==OF_SHARE_DENY_NONE)?"OF_SHARE_DENY_NONE":
+          ((mode & 0x70 )==OF_SHARE_DENY_READ)?"OF_SHARE_DENY_READ":
+          ((mode & 0x70 )==OF_SHARE_DENY_WRITE)?"OF_SHARE_DENY_WRITE":
+          ((mode & 0x70 )==OF_SHARE_EXCLUSIVE)?"OF_SHARE_EXCLUSIVE":"unknown",
+          ((mode & OF_PARSE )==OF_PARSE)?"OF_PARSE ":"",
+          ((mode & OF_DELETE )==OF_DELETE)?"OF_DELETE ":"",
+          ((mode & OF_VERIFY )==OF_VERIFY)?"OF_VERIFY ":"",
+          ((mode & OF_SEARCH )==OF_SEARCH)?"OF_SEARCH ":"",
+          ((mode & OF_CANCEL )==OF_CANCEL)?"OF_CANCEL ":"",
+          ((mode & OF_CREATE )==OF_CREATE)?"OF_CREATE ":"",
+          ((mode & OF_PROMPT )==OF_PROMPT)?"OF_PROMPT ":"",
+          ((mode & OF_EXIST )==OF_EXIST)?"OF_EXIST ":"",
+          ((mode & OF_REOPEN )==OF_REOPEN)?"OF_REOPEN ":""
+        );
+
+
+    ofs->cBytes = sizeof(OFSTRUCT);
+    ofs->nErrCode = 0;
+    if (mode & OF_REOPEN) name = ofs->szPathName;
+
+    if (!name) return HFILE_ERROR;
+
+    TRACE("%s %04x\n", name, mode );
+
+    /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
+       Are there any cases where getting the path here is wrong?
+       Uwe Bonnes 1997 Apr 2 */
+    if (!GetFullPathNameA( name, sizeof(ofs->szPathName), ofs->szPathName, NULL )) goto error;
+
+    /* OF_PARSE simply fills the structure */
+
+    if (mode & OF_PARSE)
+    {
+        ofs->fFixedDisk = (GetDriveTypeA( ofs->szPathName ) != DRIVE_REMOVABLE);
+        TRACE("(%s): OF_PARSE, res = '%s'\n", name, ofs->szPathName );
+        return 0;
+    }
+
+    /* OF_CREATE is completely different from all other options, so
+       handle it first */
+
+    if (mode & OF_CREATE)
+    {
+        DWORD access, sharing;
+        FILE_ConvertOFMode( mode, &access, &sharing );
+        if ((handle = CreateFileA( name, GENERIC_READ | GENERIC_WRITE,
+                                   sharing, NULL, CREATE_ALWAYS,
+                                   FILE_ATTRIBUTE_NORMAL, 0 )) == INVALID_HANDLE_VALUE)
+            goto error;
+    }
+    else
+    {
+        /* Now look for the file */
+
+        if (!SearchPathA( NULL, name, NULL, sizeof(ofs->szPathName), ofs->szPathName, NULL ))
+            goto error;
+
+        TRACE("found %s\n", debugstr_a(ofs->szPathName) );
+
+        if (mode & OF_DELETE)
+        {
+            if (!DeleteFileA( ofs->szPathName )) goto error;
+            TRACE("(%s): OF_DELETE return = OK\n", name);
+            return TRUE;
+        }
+
+        handle = (HANDLE)_lopen( ofs->szPathName, mode );
+        if (handle == INVALID_HANDLE_VALUE) goto error;
+
+        GetFileTime( handle, NULL, NULL, &filetime );
+        FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );
+        if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
+        {
+            if (ofs->Reserved1 != filedatetime[0] || ofs->Reserved2 != filedatetime[1] )
+            {
+                CloseHandle( handle );
+                WARN("(%s): OF_VERIFY failed\n", name );
+                /* FIXME: what error here? */
+                SetLastError( ERROR_FILE_NOT_FOUND );
+                goto error;
+            }
+        }
+        ofs->Reserved1 = filedatetime[0];
+        ofs->Reserved2 = filedatetime[1];
+    }
+    TRACE("(%s): OK, return = %p\n", name, handle );
+    if (mode & OF_EXIST)  /* Return TRUE instead of a handle */
+    {
+        CloseHandle( handle );
+        return TRUE;
+    }
+    else return (HFILE)handle;
+
+error:  /* We get here if there was an error opening the file */
+    ofs->nErrCode = GetLastError();
+    WARN("(%s): return = HFILE_ERROR error= %d\n", name,ofs->nErrCode );
+    return HFILE_ERROR;
+}

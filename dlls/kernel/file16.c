@@ -76,6 +76,188 @@ BOOL16 WINAPI WriteProfileString16( LPCSTR section, LPCSTR entry,
 }
 
 
+/* get the search path for the current module; helper for OpenFile16 */
+static char *get_search_path(void)
+{
+    UINT len;
+    char *ret, *p, module[OFS_MAXPATHNAME];
+
+    module[0] = 0;
+    if (GetCurrentTask() && GetModuleFileName16( GetCurrentTask(), module, sizeof(module) ))
+    {
+        if (!(p = strrchr( module, '\\' ))) p = module;
+        *p = 0;
+    }
+
+    len = (2 +                                              /* search order: first current dir */
+           GetSystemDirectoryA( NULL, 0 ) + 1 +             /* then system dir */
+           GetWindowsDirectoryA( NULL, 0 ) + 1 +            /* then windows dir */
+           strlen( module ) + 1 +                           /* then module path */
+           GetEnvironmentVariableA( "PATH", NULL, 0 ) + 1); /* then look in PATH */
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
+    strcpy( ret, ".;" );
+    p = ret + 2;
+    GetSystemDirectoryA( p, ret + len - p );
+    p += strlen( p );
+    *p++ = ';';
+    GetWindowsDirectoryA( p, ret + len - p );
+    p += strlen( p );
+    *p++ = ';';
+    if (module[0])
+    {
+        strcpy( p, module );
+        p += strlen( p );
+        *p++ = ';';
+    }
+    GetEnvironmentVariableA( "PATH", p, ret + len - p );
+    return ret;
+}
+
+/***********************************************************************
+ *           OpenFile   (KERNEL.74)
+ *           OpenFileEx (KERNEL.360)
+ */
+HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
+{
+    HFILE hFileRet;
+    HANDLE handle;
+    FILETIME filetime;
+    WORD filedatetime[2];
+    char *p, *filename;
+
+    if (!ofs) return HFILE_ERROR;
+
+    TRACE("%s %s %s %s%s%s%s%s%s%s%s%s\n",debugstr_a(name),
+          ((mode & 0x3 )==OF_READ)?"OF_READ":
+          ((mode & 0x3 )==OF_WRITE)?"OF_WRITE":
+          ((mode & 0x3 )==OF_READWRITE)?"OF_READWRITE":"unknown",
+          ((mode & 0x70 )==OF_SHARE_COMPAT)?"OF_SHARE_COMPAT":
+          ((mode & 0x70 )==OF_SHARE_DENY_NONE)?"OF_SHARE_DENY_NONE":
+          ((mode & 0x70 )==OF_SHARE_DENY_READ)?"OF_SHARE_DENY_READ":
+          ((mode & 0x70 )==OF_SHARE_DENY_WRITE)?"OF_SHARE_DENY_WRITE":
+          ((mode & 0x70 )==OF_SHARE_EXCLUSIVE)?"OF_SHARE_EXCLUSIVE":"unknown",
+          ((mode & OF_PARSE )==OF_PARSE)?"OF_PARSE ":"",
+          ((mode & OF_DELETE )==OF_DELETE)?"OF_DELETE ":"",
+          ((mode & OF_VERIFY )==OF_VERIFY)?"OF_VERIFY ":"",
+          ((mode & OF_SEARCH )==OF_SEARCH)?"OF_SEARCH ":"",
+          ((mode & OF_CANCEL )==OF_CANCEL)?"OF_CANCEL ":"",
+          ((mode & OF_CREATE )==OF_CREATE)?"OF_CREATE ":"",
+          ((mode & OF_PROMPT )==OF_PROMPT)?"OF_PROMPT ":"",
+          ((mode & OF_EXIST )==OF_EXIST)?"OF_EXIST ":"",
+          ((mode & OF_REOPEN )==OF_REOPEN)?"OF_REOPEN ":""
+        );
+
+    ofs->cBytes = sizeof(OFSTRUCT);
+    ofs->nErrCode = 0;
+    if (mode & OF_REOPEN) name = ofs->szPathName;
+
+    if (!name) return HFILE_ERROR;
+
+    /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
+       Are there any cases where getting the path here is wrong?
+       Uwe Bonnes 1997 Apr 2 */
+    if (!GetFullPathNameA( name, sizeof(ofs->szPathName), ofs->szPathName, NULL )) goto error;
+
+    /* OF_PARSE simply fills the structure */
+
+    if (mode & OF_PARSE)
+    {
+        ofs->fFixedDisk = (GetDriveType16( ofs->szPathName[0]-'A' ) != DRIVE_REMOVABLE);
+        TRACE("(%s): OF_PARSE, res = '%s'\n", name, ofs->szPathName );
+        return 0;
+    }
+
+    /* OF_CREATE is completely different from all other options, so
+       handle it first */
+
+    if (mode & OF_CREATE)
+    {
+        DWORD access, sharing;
+        FILE_ConvertOFMode( mode, &access, &sharing );
+        if ((handle = CreateFileA( ofs->szPathName, GENERIC_READ | GENERIC_WRITE,
+                                   sharing, NULL, CREATE_ALWAYS,
+                                   FILE_ATTRIBUTE_NORMAL, 0 ))== INVALID_HANDLE_VALUE)
+            goto error;
+    }
+    else
+    {
+        /* If OF_SEARCH is set, ignore the given path */
+
+        filename = ofs->szPathName;
+        if ((mode & OF_SEARCH) && !(mode & OF_REOPEN))
+        {
+            /* First try the file name as is */
+            if (GetFileAttributesA( filename ) != INVALID_FILE_ATTRIBUTES) filename = NULL;
+            else
+            {
+                /* Now remove the path */
+                if (filename[0] && (filename[1] == ':')) filename += 2;
+                if ((p = strrchr( filename, '\\' ))) filename = p + 1;
+                if ((p = strrchr( filename, '/' ))) filename = p + 1;
+                if (!filename[0])
+                {
+                    SetLastError( ERROR_FILE_NOT_FOUND );
+                    goto error;
+                }
+            }
+        }
+
+        /* Now look for the file */
+
+        if (filename)
+        {
+            BOOL found;
+            char *path = get_search_path();
+
+            if (!path) goto error;
+            found = SearchPathA( path, filename, NULL, sizeof(ofs->szPathName),
+                                 ofs->szPathName, NULL );
+            HeapFree( GetProcessHeap(), 0, path );
+            if (!found) goto error;
+        }
+
+        TRACE("found %s\n", debugstr_a(ofs->szPathName) );
+
+        if (mode & OF_DELETE)
+        {
+            if (!DeleteFileA( ofs->szPathName )) goto error;
+            TRACE("(%s): OF_DELETE return = OK\n", name);
+            return 1;
+        }
+
+        handle = (HANDLE)_lopen( ofs->szPathName, mode );
+        if (handle == INVALID_HANDLE_VALUE) goto error;
+
+        GetFileTime( handle, NULL, NULL, &filetime );
+        FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );
+        if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
+        {
+            if (ofs->Reserved1 != filedatetime[0] || ofs->Reserved2 != filedatetime[1] )
+            {
+                CloseHandle( handle );
+                WARN("(%s): OF_VERIFY failed\n", name );
+                /* FIXME: what error here? */
+                SetLastError( ERROR_FILE_NOT_FOUND );
+                goto error;
+            }
+        }
+        ofs->Reserved1 = filedatetime[0];
+        ofs->Reserved2 = filedatetime[1];
+    }
+
+    TRACE("(%s): OK, return = %p\n", name, handle );
+    hFileRet = Win32HandleToDosFileHandle( handle );
+    if (hFileRet == HFILE_ERROR16) goto error;
+    if (mode & OF_EXIST) _lclose16( hFileRet ); /* Return the handle, but close it first */
+    return hFileRet;
+
+error:  /* We get here if there was an error opening the file */
+    ofs->nErrCode = GetLastError();
+    WARN("(%s): return = HFILE_ERROR error= %d\n", name,ofs->nErrCode );
+    return HFILE_ERROR16;
+}
+
+
 /***********************************************************************
  *           _lclose   (KERNEL.81)
  */
