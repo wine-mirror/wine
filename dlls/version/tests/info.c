@@ -32,9 +32,10 @@ static void test_info_size(void)
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError(),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND expected, got 0x%08lx\n",
-	GetLastError());
+    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
+	(ERROR_INVALID_PARAMETER == GetLastError()),
+	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_INVALID_PARAMETER "
+	"(98) expected, got 0x%08lx\n", GetLastError());
 
     hdl = 0x55555555;
     SetLastError(-1L);
@@ -42,9 +43,10 @@ static void test_info_size(void)
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError(),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND expected, got 0x%08lx\n",
-	GetLastError());
+    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
+	(ERROR_INVALID_PARAMETER == GetLastError()),
+	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_INVALID_PARAMETER "
+	"(98) expected, got 0x%08lx\n", GetLastError());
     ok( hdl == 0L,
 	"Handle wrong! 0L expected, got 0x%08lx\n", hdl);
 
@@ -53,9 +55,10 @@ static void test_info_size(void)
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError(),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND expected, got 0x%08lx\n",
-	GetLastError());
+    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
+	(ERROR_BAD_PATHNAME == GetLastError()),
+	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_BAD_PATHNAME "
+	"(98) expected, got 0x%08lx\n", GetLastError());
 
     hdl = 0x55555555;
     SetLastError(-1L);
@@ -63,9 +66,10 @@ static void test_info_size(void)
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError(),
-	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND expected, got 0x%08lx\n",
-	GetLastError());
+    ok( (ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
+	(ERROR_BAD_PATHNAME == GetLastError()),
+	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_BAD_PATHNAME "
+	"(98) expected, got 0x%08lx\n", GetLastError());
     ok( hdl == 0L,
 	"Handle wrong! 0L expected, got 0x%08lx\n", hdl);
 
@@ -95,9 +99,10 @@ static void test_info_size(void)
     ok( !retval,
 	"GetFileVersionInfoSizeA result wrong! 0L expected, got 0x%08lx\n",
 	retval);
-    ok( ERROR_FILE_NOT_FOUND == GetLastError(),
-	"Last error wrong! ERROR_FILE_NOT_FOUND expected, got 0x%08lx\n",
-	GetLastError());
+    ok( (ERROR_FILE_NOT_FOUND == GetLastError()) || 
+	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()),
+	"Last error wrong! ERROR_FILE_NOT_FOUND/ERROR_RESOURCE_DATA_NOT_FOUND "
+	"(XP) expected, got 0x%08lx\n", GetLastError());
 }
 
 START_TEST(info)
