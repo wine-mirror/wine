@@ -534,6 +534,11 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
     if (!(load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL ))) goto error;
     
+    /* the DEBUG_ONLY_THIS_PROCESS flag seems simply equivalent
+     * to DEBUG_PROCESS, contrary to Microsoft documentation (surprised?) */
+    if (flags & DEBUG_ONLY_THIS_PROCESS)
+        flags = (flags & ~DEBUG_ONLY_THIS_PROCESS) | DEBUG_PROCESS;
+
     /* Create the process on the server side */
 
     req->inherit      = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
