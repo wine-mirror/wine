@@ -213,7 +213,6 @@ ICOM_VTABLE(IDirectMusic) DirectMusic_Vtbl =
 	IDirectMusicImpl_SetDirectSound
 };
 
-
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC *ppDM, LPUNKNOWN pUnkOuter)
 {
@@ -231,7 +230,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC *ppDM, L
 		}
 
 		dmusic->lpVtbl = &DirectMusic_Vtbl;
-		dmusic->ref = 0;
+		dmusic->ref = 1;
 		*ppDM = (LPDIRECTMUSIC)dmusic;
 		return S_OK;
 	}

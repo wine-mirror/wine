@@ -263,6 +263,29 @@ ICOM_VTABLE(IDirectMusicLoader8) DirectMusicLoader8_Vtbl =
 	IDirectMusicLoader8Impl_LoadObjectFromFile
 };
 
+HRESULT WINAPI DMUSIC_CreateDirectMusicLoader8 (LPCGUID lpcGUID, LPDIRECTMUSICLOADER8 *ppDMLoad8, LPUNKNOWN pUnkOuter)
+{
+	IDirectMusicLoader8Impl *dmloader8;
+
+	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMLoad8, pUnkOuter);
+	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicLoader8))
+	{
+		dmloader8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicImpl));
+		if (NULL == dmloader8)
+		{
+			*ppDMLoad8 = (LPDIRECTMUSICLOADER8)NULL;
+			return E_OUTOFMEMORY;
+		}
+		dmloader8->lpVtbl = &DirectMusicLoader8_Vtbl;
+		dmloader8->ref = 1;
+		*ppDMLoad8 = (LPDIRECTMUSICLOADER8)dmloader8;
+		return S_OK;
+	}
+	WARN("No interface found\n");
+	
+	return E_NOINTERFACE;
+}
+
 
 /* IDirectMusicGetLoader IUnknown parts follow: */
 HRESULT WINAPI IDirectMusicGetLoaderImpl_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, LPVOID *ppobj)

@@ -387,12 +387,12 @@ ICOM_VTABLE(IDirectMusicPerformance) DirectMusicPerformance_Vtbl =
 	IDirectMusicPerformanceImpl_RhythmToTime
 };
 
+/* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicPerformance (LPCGUID lpcGUID, LPDIRECTMUSICPERFORMANCE *ppDMPerf, LPUNKNOWN pUnkOuter)
 {
 	IDirectMusicPerformanceImpl *pPerf;
 
 	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMPerf, pUnkOuter);
-
 	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicPerformance))
 	{
 		pPerf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformanceImpl));
@@ -401,16 +401,16 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformance (LPCGUID lpcGUID, LPDIRECTMUS
 			*ppDMPerf = (LPDIRECTMUSICPERFORMANCE)NULL;
 			return E_OUTOFMEMORY;
 		}
-
 		pPerf->lpVtbl = &DirectMusicPerformance_Vtbl;
 		pPerf->ref = 1;
 		*ppDMPerf = (LPDIRECTMUSICPERFORMANCE)pPerf;
 		return S_OK;
 	}
-
 	WARN("No interface found\n");
+	
 	return E_NOINTERFACE;
 }
+
 
 /* IDirectMusicPerformance8 IUnknown parts follow: */
 HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSICPERFORMANCE8 iface, REFIID riid, LPVOID *ppobj)
@@ -805,3 +805,27 @@ ICOM_VTABLE(IDirectMusicPerformance8) DirectMusicPerformance8_Vtbl =
 	IDirectMusicPerformance8ImplGetDefaultAudioPath,
 	IDirectMusicPerformance8ImplGetParamEx
 };
+
+/* for ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicPerformance8 (LPCGUID lpcGUID, LPDIRECTMUSICPERFORMANCE8 *ppDMPerf8, LPUNKNOWN pUnkOuter)
+{
+	IDirectMusicPerformance8Impl *pPerf8;
+
+	TRACE("(%p,%p,%p)\n",lpcGUID, ppDMPerf8, pUnkOuter);
+	if (IsEqualGUID(lpcGUID, &IID_IDirectMusicPerformance8))
+	{
+		pPerf8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformance8Impl));
+		if (NULL == pPerf8)
+		{
+			*ppDMPerf8 = (LPDIRECTMUSICPERFORMANCE8)NULL;
+			return E_OUTOFMEMORY;
+		}
+		pPerf8->lpVtbl = &DirectMusicPerformance8_Vtbl;
+		pPerf8->ref = 1;
+		*ppDMPerf8 = (LPDIRECTMUSICPERFORMANCE8)pPerf8;
+		return S_OK;
+	}
+	WARN("No interface found\n");
+	
+	return E_NOINTERFACE;
+}

@@ -69,6 +69,14 @@ static HRESULT WINAPI DMCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
 	{
 		return DMUSIC_CreateDirectMusicPerformance (riid, (LPDIRECTMUSICPERFORMANCE*)ppobj, pOuter);
 	}
+	if (IsEqualGUID (&IID_IDirectMusicPerformance8, riid))
+	{
+		return DMUSIC_CreateDirectMusicPerformance8 (riid, (LPDIRECTMUSICPERFORMANCE8*)ppobj, pOuter);
+	}
+	if (IsEqualGUID (&IID_IDirectMusicLoader8, riid))
+	{
+		return DMUSIC_CreateDirectMusicLoader8 (riid, (LPDIRECTMUSICLOADER8*)ppobj, pOuter);
+	}
 	
     WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
