@@ -168,7 +168,9 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   __ASM_NAME("vm86_return_end") ":\n\t"
                   "ret" );
 
-#define __HAVE_VM86
+#ifdef HAVE_SYS_VM86_H
+# define __HAVE_VM86
+#endif
 
 #endif  /* linux */
 
