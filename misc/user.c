@@ -12,14 +12,14 @@
 #include "user.h"
 #include "task.h"
 #include "queue.h"
-#include "class.h"
 #include "win.h"
 #include "hook.h"
 #include "debug.h"
 #include "toolhelp.h"
 
-#ifndef WINELIB
 WORD USER_HeapSel = 0;
+
+#ifndef WINELIB
 
 extern void 	TIMER_NukeTimers(HWND, HQUEUE );
 extern HTASK	TASK_GetNextTask(HTASK);

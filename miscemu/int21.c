@@ -85,7 +85,7 @@ extern char TempDirectory[];
 
 BYTE *GetCurrentDTA(void)
 {
-    TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     return (BYTE *)PTR_SEG_TO_LIN( pTask->dta );
 }
 
@@ -1009,8 +1009,8 @@ void DOS3Call( struct sigcontext_struct context )
 
     case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
         {
-            TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
-            pTask->dta = MAKELONG( DX_reg(&context), DS_reg(&context) );
+            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+            pTask->dta = PTR_SEG_OFF_TO_SEGPTR(DS_reg(&context),DX_reg(&context));
             dprintf_int(stddeb, "int21: Set DTA: %08lx\n", pTask->dta);
         }
         break;
@@ -1030,7 +1030,7 @@ void DOS3Call( struct sigcontext_struct context )
 		
     case 0x25: /* SET INTERRUPT VECTOR */
         INT_SetHandler( AL_reg(&context),
-                        MAKELONG( DX_reg(&context), DS_reg(&context) ) );
+                   PTR_SEG_OFF_TO_SEGPTR( DS_reg(&context), DX_reg(&context)));
         break;
 
     case 0x2a: /* GET SYSTEM DATE */
@@ -1056,7 +1056,7 @@ void DOS3Call( struct sigcontext_struct context )
 
     case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
         {
-            TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
             ES_reg(&context) = SELECTOROF( pTask->dta );
             BX_reg(&context) = OFFSETOF( pTask->dta );
         }
@@ -1175,8 +1175,8 @@ void DOS3Call( struct sigcontext_struct context )
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
         {
             LONG result = _hread( BX_reg(&context),
-                                  (SEGPTR)MAKELONG( DX_reg(&context),
-                                                    DS_reg(&context) ),
+                                  PTR_SEG_OFF_TO_SEGPTR( DS_reg(&context),
+                                                         DX_reg(&context) ),
                                   CX_reg(&context) );
             if (result == -1)
             {
@@ -1608,15 +1608,15 @@ void DOS3Call( struct sigcontext_struct context )
 
 BOOL INT21_Init(void)
 {
-    if ((DosHeapHandle = GlobalAlloc(GMEM_FIXED,sizeof(struct DosHeap))) == 0)
+    if (!(DosHeapHandle = GlobalAlloc16(GMEM_FIXED,sizeof(struct DosHeap))))
     {
         fprintf( stderr, "INT21_Init: Out of memory\n");
         return FALSE;
     }
-    heap = (struct DosHeap *) GlobalLock(DosHeapHandle);
+    heap = (struct DosHeap *) GlobalLock16(DosHeapHandle);
 
     dpb = &heap->dpb;
-    dpbsegptr = MAKELONG( (int)&heap->dpb - (int)heap, DosHeapHandle );
+    dpbsegptr = PTR_SEG_OFF_TO_SEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
     heap->InDosFlag = 0;
     strcpy(heap->biosdate, "01/01/80");
     return TRUE;

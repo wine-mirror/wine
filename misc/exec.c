@@ -165,8 +165,8 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 	else
 		nlen = 0;
 	size = sizeof(WINHELP) + nlen + dsize;
-	hwh = GlobalAlloc(0,size);
-	lpwh = GlobalLock(hwh);
+	hwh = GlobalAlloc16(0,size);
+	lpwh = GlobalLock16(hwh);
 	lpwh->size = size;
 	lpwh->command = wCommand;
 	if(nlen) {
@@ -178,6 +178,6 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 		lpwh->ofsData = sizeof(WINHELP)+nlen;
 	} else
 		lpwh->ofsData = 0;
-	GlobalUnlock(hwh);
+	GlobalUnlock16(hwh);
 	return SendMessage(hDest,WM_WINHELP,hWnd,hwh);
 }

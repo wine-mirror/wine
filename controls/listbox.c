@@ -130,14 +130,9 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
     lphl->hDrawItemStruct = 0;
   }
 
-#if 0
-  HeapHandle = GlobalAlloc(GMEM_FIXED, LIST_HEAP_SIZE);
-  HeapBase = GlobalLock(HeapHandle);
-  HEAP_Init(&lphl->Heap, HeapBase, LIST_HEAP_SIZE);
-#endif
 /* WINELIBS list boxes do not operate on local heaps */
 #ifndef WINELIB
-  lphl->HeapSel = GlobalAlloc(GMEM_FIXED,LIST_HEAP_SIZE);
+  lphl->HeapSel = GlobalAlloc16(GMEM_FIXED,LIST_HEAP_SIZE);
   LocalInit( lphl->HeapSel, 0, LIST_HEAP_SIZE-1);
 #else
   lphl->HeapSel = 0;
@@ -150,7 +145,7 @@ void DestroyListBoxStruct(LPHEADLIST lphl)
     USER_HEAP_FREE(lphl->hDrawItemStruct);
 
   /* XXX need to free lphl->Heap */
-  GlobalFree(lphl->HeapSel);
+  GlobalFree16(lphl->HeapSel);
   free(lphl);
 }
 
@@ -184,11 +179,14 @@ int ListMaxFirstVisible(LPHEADLIST lphl)
 
 void ListBoxUpdateWindow(HWND hwnd, LPHEADLIST lphl, BOOL repaint)
 {
-  SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
-  if (lphl->ItemsPerColumn != 0) {
+  WND *wndPtr = WIN_FindWndPtr(hwnd);
+
+  if (wndPtr->dwStyle & WS_VSCROLL)
+    SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
+  if ((wndPtr->dwStyle & WS_HSCROLL) && (lphl->ItemsPerColumn != 0))
     SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible /
 		   lphl->ItemsPerColumn + 1, TRUE);
-  }
+
   if (repaint && lphl->bRedrawFlag) {
     InvalidateRect(hwnd, NULL, TRUE);
   }
@@ -328,7 +326,8 @@ void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)
   SendMessage(lphl->hParent, WM_MEASUREITEM, 0, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
 
   if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
-    lphl->StdItemHeight = lpmeasure->itemHeight;
+    if (lpmeasure->itemHeight > lphl->StdItemHeight)
+      lphl->StdItemHeight = lpmeasure->itemHeight;
     lpls->mis.itemHeight = lpmeasure->itemHeight;
   }
 
@@ -354,6 +353,7 @@ LPLISTSTRUCT ListBoxCreateItem(LPHEADLIST lphl, int id)
 
   return lplsnew;
 }
+
 
 
 int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
@@ -393,7 +393,7 @@ int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
     hStr = LIST_HEAP_ALLOC(lphl, LMEM_MOVEABLE, strlen(newstr) + 1);
     str = (LPSTR)LIST_HEAP_ADDR(lphl, hStr);
     if (str == NULL) return LB_ERRSPACE;
-    strcpy(str, newstr);
+    strcpy(str, newstr); 
     lplsnew->itemText = str;
     /* I'm not so sure about the next one */
     lplsnew->mis.itemData = 0;
@@ -783,8 +783,10 @@ static LONG LBCreate(HWND hwnd, WORD wParam, LONG lParam)
   GetClientRect(hwnd,&rect);
   lphl->ColumnsWidth = rect.right - rect.left;
 
-  SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
-  SetScrollRange(hwnd, SB_HORZ, 1, 1, TRUE);
+  if (dwStyle & WS_VSCROLL) 
+    SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
+  if (dwStyle & WS_HSCROLL) 
+    SetScrollRange(hwnd, SB_HORZ, 1, 1, TRUE);
 
   return 0;
 }
@@ -1306,7 +1308,6 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   DC    *dc    = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
   RECT  rect, paintRect, scratchRect;
   int   i, top, height, maxwidth, ipc;
-
 
   top = 0;
 

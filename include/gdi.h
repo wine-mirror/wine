@@ -198,12 +198,7 @@ typedef struct tagDC
 #define DC_SAVED      2   /* It is a saved DC */
 
   /* Last 32 bytes are reserved for stock object handles */
-#ifdef WINELIB32
-/* Stupid overloading (see DefWindowProc, case WM_ERASEBKGND) */
-#define GDI_HEAP_SIZE               (COLOR_BTNHIGHLIGHT+1)
-#else
-#define GDI_HEAP_SIZE               0xffe0  
-#endif
+#define GDI_HEAP_SIZE               0xffe0
 
   /* First handle possible for stock objects (must be >= GDI_HEAP_SIZE) */
 #define FIRST_STOCK_HANDLE          GDI_HEAP_SIZE
@@ -249,15 +244,6 @@ typedef struct tagDC
 
   /* GDI local heap */
 
-#ifdef WINELIB
-
-#define GDI_HEAP_ALLOC(size)     LocalAlloc (LMEM_FIXED,size)
-#define GDI_HEAP_LIN_ADDR(handle)  LocalLock (handle)
-#define GDI_HEAP_SEG_ADDR(handle)  LocalLock (handle)
-#define GDI_HEAP_FREE(handle)      LocalFree (handle)
-
-#else
-
 extern WORD GDI_HeapSel;
 
 #define GDI_HEAP_ALLOC(size) \
@@ -268,10 +254,14 @@ extern WORD GDI_HeapSel;
             LOCAL_Free( GDI_HeapSel, (handle) )
 #define GDI_HEAP_LIN_ADDR(handle)  \
             ((handle) ? PTR_SEG_OFF_TO_LIN(GDI_HeapSel, (handle)) : NULL)
+
+#ifdef WINELIB
+#define GDI_HEAP_SEG_ADDR(handle) ((SEGPTR)GDI_HEAP_LIN_ADDR(handle))
+#else
 #define GDI_HEAP_SEG_ADDR(handle)  \
             ((handle) ? MAKELONG((handle), GDI_HeapSel) : 0)
 
-#endif
+#endif  /* WINELIB */
 
 extern BOOL GDI_Init(void);
 extern HANDLE GDI_AllocObject( WORD, WORD );

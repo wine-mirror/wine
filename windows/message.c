@@ -127,7 +127,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	if (dbl_click && (hittest == HTCLIENT))
 	{
 	    /* Check whether window wants the double click message. */
-            dbl_click = (pWnd->class->wc.style & CS_DBLCLKS) != 0;
+            dbl_click = (pWnd->class->style & CS_DBLCLKS) != 0;
 	}
 
 	if (dbl_click) switch(msg->message)
@@ -410,7 +410,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     while(1)
     {    
 	hQueue   = GetTaskQueue(0);
-        msgQueue = (MESSAGEQUEUE *)GlobalLock( hQueue );
+        msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
         if (!msgQueue) return FALSE;
 
 	  /* First handle a message put by SendMessage() */
@@ -706,7 +706,7 @@ void WaitMessage( void )
     DDE_GetRemoteMessage();
 #endif  /* CONFIG_IPC */
     
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return;
     if ((queue->wPostQMsg) || 
         (queue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
         (queue->msgCount) || (QUEUE_GetSysQueue()->msgCount) )

@@ -69,6 +69,8 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
     HWND     wnd;
     MSG      msg;
     WNDCLASS class;
+    char className[] = "class";  /* To make sure className >= 0x10000 */
+    char winName[] = "Test app";
 
     if (!prev){
 	class.style = CS_HREDRAW | CS_VREDRAW;
@@ -80,12 +82,12 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 	class.hCursor    = LoadCursor (0, IDC_ARROW);
 	class.hbrBackground = GetStockObject (WHITE_BRUSH);
 	class.lpszMenuName = 0;
-	class.lpszClassName = (SEGPTR)"class";
+	class.lpszClassName = (SEGPTR)className;
     }
     if (!RegisterClass (&class))
 	return FALSE;
 
-    wnd = CreateWindow ("class", "Test app", WS_OVERLAPPEDWINDOW,
+    wnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
 			LoadMenu(inst,"MAIN"), inst, 0);
     ShowWindow (wnd, show);

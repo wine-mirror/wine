@@ -43,7 +43,7 @@ struct _EXCEPTION_POINTERS;
 
 typedef LONG (TOP_LEVEL_EXCEPTION_FILTER)(struct _EXCEPTION_POINTERS *);
 
-WINAPI  TOP_LEVEL_EXCEPTION_FILTER *SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER *func);
+TOP_LEVEL_EXCEPTION_FILTER *SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER *func);
 
 /*WINAPI int  SetErrorMode(int);*/
 
@@ -114,39 +114,36 @@ typedef struct {
 
 /*DWORD WINAPI GetVersion( void );*/
 
-int
-WINAPI WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);
+int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);
 
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE 	    0x0002
 
-DECLARE_HANDLE(HACCEL);
-
-HACCEL WINAPI LoadAcceleratorsA(   HINSTANCE, const char *);
+HACCEL LoadAcceleratorsA(   HINSTANCE, const char *);
 #define FreeModule(hLibModule) FreeLibrary((hLibModule))
 #define MakeProcInstance(lpProc,hInstance) (lpProc)
 #define FreeProcInstance(lpProc) (lpProc)
 
 
-WINAPI void     DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
-WINAPI void     EnterCriticalSection(CRITICAL_SECTION *lpCrit);
-WINAPI int      GetCurrentProcessId(void);
-WINAPI HANDLE32 GetProcessHeap(void);
-WINAPI LPVOID   HeapAlloc(HANDLE32,DWORD,DWORD);
-WINAPI DWORD    HeapCompact(HANDLE32,DWORD);
-WINAPI HANDLE32 HeapCreate(DWORD,DWORD,DWORD);
-WINAPI BOOL     HeapDestroy(HANDLE32);
-WINAPI BOOL     HeapFree(HANDLE32,DWORD,LPVOID);
-WINAPI BOOL     HeapLock(HANDLE32);
-WINAPI LPVOID   HeapReAlloc(HANDLE32,DWORD,LPVOID,DWORD);
-WINAPI DWORD    HeapSize(HANDLE32,DWORD,LPVOID);
-WINAPI BOOL     HeapUnlock(HANDLE32);
-WINAPI BOOL     HeapValidate(HANDLE32,DWORD,LPVOID);
-WINAPI void     InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
-WINAPI void     LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
-WINAPI HANDLE   OpenProcess(DWORD access, BOOL inherit, DWORD id);
-WINAPI int      TerminateProcess(HANDLE h, int ret);
-WINAPI LPVOID   VirtualAlloc(LPVOID addr,DWORD size,DWORD type,DWORD protect);
-WINAPI BOOL     VirtualFree( LPVOID addr, DWORD size, DWORD type );
+void     DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
+void     EnterCriticalSection(CRITICAL_SECTION *lpCrit);
+int      GetCurrentProcessId(void);
+HANDLE32 GetProcessHeap(void);
+LPVOID   HeapAlloc(HANDLE32,DWORD,DWORD);
+DWORD    HeapCompact(HANDLE32,DWORD);
+HANDLE32 HeapCreate(DWORD,DWORD,DWORD);
+BOOL     HeapDestroy(HANDLE32);
+BOOL     HeapFree(HANDLE32,DWORD,LPVOID);
+BOOL     HeapLock(HANDLE32);
+LPVOID   HeapReAlloc(HANDLE32,DWORD,LPVOID,DWORD);
+DWORD    HeapSize(HANDLE32,DWORD,LPVOID);
+BOOL     HeapUnlock(HANDLE32);
+BOOL     HeapValidate(HANDLE32,DWORD,LPVOID);
+void     InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
+void     LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
+HANDLE   OpenProcess(DWORD access, BOOL inherit, DWORD id);
+int      TerminateProcess(HANDLE h, int ret);
+LPVOID   VirtualAlloc(LPVOID addr,DWORD size,DWORD type,DWORD protect);
+BOOL     VirtualFree( LPVOID addr, DWORD size, DWORD type );
 
 #endif  /* __WINE_WINBASE_H */

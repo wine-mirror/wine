@@ -48,7 +48,7 @@ typedef struct {
 typedef struct
 {
 	UINT TextWidth;		/* width of the widest line in pixels */
-	HLOCAL hBuf;
+	HLOCAL16 hBuf;
 	char *text;
 	HFONT hFont;
 	LINEDEF *LineDefs;
@@ -64,7 +64,7 @@ typedef struct
 	UINT SelStart;		/* offset of selection start, == SelEnd if no selection */
 	UINT SelEnd;		/* offset of selection end == current caret position */
 	UINT NumTabStops;
-	LPINT TabStops;
+	LPINT16 TabStops;
 	EDITWORDBREAKPROC WordBreakProc;
 	char PasswordChar;
 } EDITSTATE;
@@ -858,7 +858,7 @@ static void EDIT_InvalidateText(WND *wndPtr, UINT start, UINT end)
 	RECT rcWnd;
 	RECT rcLine;
 	RECT rcUpdate;
-	UINT line;
+	UINT l;
 
 	if (end == start )
 		return;
@@ -894,10 +894,10 @@ static void EDIT_InvalidateText(WND *wndPtr, UINT start, UINT end)
 				&rcLine);
 		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
 			InvalidateRect(wndPtr->hwndSelf, &rcUpdate, FALSE);
-		for (line = sl + 1 ; line < el ; line++) {
-			EDIT_GetLineRect(wndPtr, line, 0,
+		for (l = sl + 1 ; l < el ; l++) {
+			EDIT_GetLineRect(wndPtr, l, 0,
 				(UINT)EDIT_EM_LineLength(wndPtr,
-					(UINT)EDIT_EM_LineIndex(wndPtr, line, 0L), 0L),
+					(UINT)EDIT_EM_LineIndex(wndPtr, l, 0L), 0L),
 				&rcLine);
 			if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
 				InvalidateRect(wndPtr->hwndSelf, &rcUpdate, FALSE);
@@ -1262,7 +1262,7 @@ static UINT EDIT_PaintText(WND *wndPtr, HDC hdc, INT x, INT y, UINT line, UINT c
 	UINT ret;
 	char *text;
 	UINT li;
-	INT xoff;
+	UINT xoff;
 
 	if (!count)
 		return 0;
@@ -1318,7 +1318,7 @@ static LRESULT EDIT_ReplaceSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	const char *str = (char *)lParam;
 	int strl = strlen(str);
-	int tl = EDIT_WM_GetTextLength(wndPtr, 0, 0L);
+	UINT tl = (UINT)EDIT_WM_GetTextLength(wndPtr, 0, 0L);
 	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
 	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
 	int i;
@@ -1365,24 +1365,24 @@ static LRESULT EDIT_ReplaceSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 static void EDIT_ScrollIntoView(WND *wndPtr)
 {
 	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	int l = EDIT_EM_LineFromChar(wndPtr, e, 0L);
-	int lineindex = EDIT_EM_LineIndex(wndPtr, l, 0L);
-	int firstvis = (int)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
-	int vislinecount = EDIT_GetVisibleLineCount(wndPtr);
-	int wndwidth = EDIT_GetWndWidth(wndPtr);
-	int charwidth = EDIT_GetAveCharWidth(wndPtr);
-	int x = EDIT_WndXFromCol(wndPtr, l, e - lineindex);
+	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
+	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
+	UINT fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
+	UINT vlc = EDIT_GetVisibleLineCount(wndPtr);
+	UINT ww = EDIT_GetWndWidth(wndPtr);
+	UINT cw = EDIT_GetAveCharWidth(wndPtr);
+	INT x = EDIT_WndXFromCol(wndPtr, l, e - li);
 	int dy = 0;
 	int dx = 0;
 
-	if (l >= firstvis + vislinecount)
-		dy = l - vislinecount + 1 - firstvis;
-	if (l < firstvis)
-		dy = l - firstvis;
+	if (l >= fv + vlc)
+		dy = l - vlc + 1 - fv;
+	if (l < fv)
+		dy = l - fv;
 	if (x < 0)
-		dx = x - wndwidth / HSCROLL_FRACTION / charwidth * charwidth;
-	if (x > wndwidth)
-		dx = x - (HSCROLL_FRACTION - 1) * wndwidth / HSCROLL_FRACTION / charwidth * charwidth;
+		dx = x - ww / HSCROLL_FRACTION / cw * cw;
+	if (x > ww)
+		dx = x - (HSCROLL_FRACTION - 1) * ww / HSCROLL_FRACTION / cw * cw;
 	if (dy || dx) {
 		EDIT_EM_LineScroll(wndPtr, 0, MAKELPARAM(dy, dx));
 		if (dy) 
@@ -1404,24 +1404,24 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 {	
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	char *text = EDIT_GetPointer(wndPtr);
-	int ret;
+	INT ret;
 	HDC hdc;
 	HFONT hFont;
 	HFONT oldFont = 0;
-	int linecount = (int)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
-	int lineindex = EDIT_EM_LineIndex(wndPtr, line, 0L);
-	int linelength = EDIT_EM_LineLength(wndPtr, lineindex, 0L);
-	int xoffset = EDIT_GetXOffset(wndPtr);
+	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
+	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, line, 0L);
+	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, li, 0L);
+	UINT xoff = EDIT_GetXOffset(wndPtr);
 
 	hdc = GetDC(wndPtr->hwndSelf);
 	hFont = (HFONT)EDIT_WM_GetFont(wndPtr, 0, 0L);
 	if (hFont)
 		oldFont = SelectObject(hdc, hFont);
-	line = MAX(0, MIN(line, linecount - 1));
-	col = MAX(0, MIN(col, linelength));
+	line = MAX(0, MIN(line, lc - 1));
+	col = MIN(col, ll);
 	ret = LOWORD(GetTabbedTextExtent(hdc,
-			text + lineindex, col,
-			es->NumTabStops, es->TabStops)) - xoffset;
+			text + li, col,
+			es->NumTabStops, es->TabStops)) - xoff;
 	if (hFont)
 		SelectObject(hdc, oldFont);
 	ReleaseDC(wndPtr->hwndSelf, hdc);
@@ -1438,10 +1438,10 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
  */
 static INT EDIT_WndYFromLine(WND *wndPtr, UINT line)
 {
-	int firstvis = (int)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
-	int lineheight = EDIT_GetLineHeight(wndPtr);
+	UINT fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
+	UINT lh = EDIT_GetLineHeight(wndPtr);
 
-	return (line - firstvis) * lineheight;
+	return (line - fv) * lh;
 }
 
 
@@ -1458,7 +1458,7 @@ static INT EDIT_WndYFromLine(WND *wndPtr, UINT line)
  */
 static INT EDIT_WordBreakProc(char *s, INT index, INT count, INT action)
 {
-	int ret = 0;
+	INT ret = 0;
 
 	dprintf_edit(stddeb, "edit: EDIT_WordBreakProc: s=%p, index=%d"
 			", count=%d, action=%d\n", s, index, count, action);
@@ -1582,17 +1582,17 @@ static LRESULT EDIT_EM_GetLine(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	char *src;
 	char *dst;
 	UINT len;
-	int i;
-	int linecount = (int)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
+	UINT i;
+	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 
 	if (!IsMultiLine(wndPtr))
 		wParam = 0;
-	if ((UINT)wParam >= linecount)
+	if ((UINT)wParam >= lc)
 		return 0L;
 	text = EDIT_GetPointer(wndPtr);
-	src = text + EDIT_EM_LineIndex(wndPtr, wParam, 0L);
+	src = text + (UINT)EDIT_EM_LineIndex(wndPtr, wParam, 0L);
 	dst = (char *)PTR_SEG_TO_LIN(lParam);
-	len = MIN(*(WORD *)dst, EDIT_EM_LineLength(wndPtr, wParam, 0L));
+	len = MIN(*(WORD *)dst, (UINT)EDIT_EM_LineLength(wndPtr, wParam, 0L));
 	for (i = 0 ; i < len ; i++) {
 		*dst = *src;
 		src++;
@@ -1669,7 +1669,7 @@ static LRESULT EDIT_EM_GetSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  *
  *	EM_GETTHUMB
  *
- *	undocumented: is this right ?
+ *	FIXME: undocumented: is this right ?
  *
  */
 static LRESULT EDIT_EM_GetThumb(WND *wndPtr, WPARAM wParam, LPARAM lParam)
@@ -1723,14 +1723,14 @@ static LRESULT EDIT_EM_LimitText(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_EM_LineFromChar(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	int l;
+	UINT l;
 
 	if (!IsMultiLine(wndPtr))
 		return 0L;
 	if ((INT)wParam == -1)
 		wParam = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	l = (int)EDIT_EM_GetLineCount(wndPtr, 0, 0L) - 1;
-	while (EDIT_EM_LineIndex(wndPtr, l, 0L) > (UINT)wParam)
+	l = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L) - 1;
+	while ((UINT)EDIT_EM_LineIndex(wndPtr, l, 0L) > (UINT)wParam)
 		l--;
 	return (LRESULT)l;
 }
@@ -1745,16 +1745,17 @@ static LRESULT EDIT_EM_LineIndex(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	UINT e;
-	int l;
+	UINT l;
+	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 
 	if ((INT)wParam == -1) {
 		e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-		l = (int)EDIT_EM_GetLineCount(wndPtr, 0, 0L) - 1;
+		l = lc - 1;
 		while (es->LineDefs[l].offset > e)
 			l--;
 		return (LRESULT)es->LineDefs[l].offset;
 	}
-	if ((UINT)wParam >= es->LineCount)
+	if ((UINT)wParam >= lc)
 		return -1L;
 	return (LRESULT)es->LineDefs[(UINT)wParam].offset;
 }
@@ -1768,21 +1769,21 @@ static LRESULT EDIT_EM_LineIndex(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT EDIT_EM_LineLength(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
-	UINT selstart;
-	UINT selend;
-	int startline;
-	int endline;
+	UINT s;
+	UINT e;
+	UINT sl;
+	UINT el;
 
 	if (!IsMultiLine(wndPtr))
 		return (LRESULT)es->LineDefs[0].length;
 	if ((INT)wParam == -1) {
-		selstart = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-		selend = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-		startline = EDIT_EM_LineFromChar(wndPtr, selstart, 0L);
-		endline = EDIT_EM_LineFromChar(wndPtr, selend, 0L);
-		return (LRESULT)(selstart - es->LineDefs[startline].offset +
-				es->LineDefs[endline].offset +
-				es->LineDefs[endline].length - selend);
+		s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		sl = (UINT)EDIT_EM_LineFromChar(wndPtr, s, 0L);
+		el = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
+		return (LRESULT)(s - es->LineDefs[sl].offset +
+				es->LineDefs[el].offset +
+				es->LineDefs[el].length - e);
 	}
 	return (LRESULT)es->LineDefs[(UINT)EDIT_EM_LineFromChar(wndPtr, wParam, 0L)].length;
 }
@@ -1796,28 +1797,24 @@ static LRESULT EDIT_EM_LineLength(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
-	int linecount = (int)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
-	int firstvis = (int)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
-	int newfirstvis = firstvis + (INT)LOWORD(lParam);
-	int xoffset = EDIT_GetXOffset(wndPtr);
-	int newxoffset = xoffset + (INT)HIWORD(lParam);
-	int textwidth = EDIT_GetTextWidth(wndPtr);
-	int dx;
-	int dy;
+	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
+	UINT fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
+	UINT nfv = MAX(0, fv + (INT)LOWORD(lParam));
+	UINT xoff = EDIT_GetXOffset(wndPtr);
+	UINT nxoff = MAX(0, xoff + (INT)HIWORD(lParam));
+	UINT tw = EDIT_GetTextWidth(wndPtr);
+	INT dx;
+	INT dy;
 	POINT pos;
 	HRGN hRgn;
 
-	if (newfirstvis < 0)
-		newfirstvis = 0;
-	if (newfirstvis >= linecount)
-		newfirstvis = linecount - 1;
+	if (nfv >= lc)
+		nfv = lc - 1;
 
-	if (newxoffset < 0)
-		newxoffset = 0;
-	if (newxoffset >= textwidth)
-		newxoffset = textwidth;
-	dx = xoffset - newxoffset;
-	dy = EDIT_WndYFromLine(wndPtr, firstvis) - EDIT_WndYFromLine(wndPtr, newfirstvis);
+	if (nxoff >= tw)
+		nxoff = tw;
+	dx = xoff - nxoff;
+	dy = EDIT_WndYFromLine(wndPtr, fv) - EDIT_WndYFromLine(wndPtr, nfv);
 	if (dx || dy) {
 		if (wndPtr->hwndSelf == GetFocus())
 			HideCaret(wndPtr->hwndSelf);
@@ -1830,8 +1827,8 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 			DeleteObject(hRgn);
 			ScrollWindow(wndPtr->hwndSelf, dx, dy, NULL, NULL);
 		}
-		es->FirstVisibleLine = newfirstvis;
-		es->XOffset = newxoffset;
+		es->FirstVisibleLine = nfv;
+		es->XOffset = nxoff;
 		if (IsVScrollBar(wndPtr))
 			SetScrollPos(wndPtr->hwndSelf, SB_VERT,
 				EDIT_WM_VScroll(wndPtr, EM_GETTHUMB, 0L), TRUE);
@@ -1888,7 +1885,7 @@ static LRESULT EDIT_EM_SetHandle(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		/*
 		 *	old buffer is freed by caller
 		 */
-		es->hBuf = (HLOCAL)wParam;
+		es->hBuf = (HLOCAL16)wParam;
 		es->BufSize = LOCAL_Size(wndPtr->hInstance, es->hBuf) - 1;
 		es->LineCount = 0;
 		es->FirstVisibleLine = 0;
@@ -1898,6 +1895,7 @@ static LRESULT EDIT_EM_SetHandle(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		EDIT_BuildLineDefs(wndPtr);
 		if (EDIT_GetRedraw(wndPtr))
 			InvalidateRect(wndPtr->hwndSelf, NULL, TRUE);
+		EDIT_ScrollIntoView(wndPtr);
 	}
 	return 0L;
 }
@@ -1982,9 +1980,9 @@ static LRESULT EDIT_EM_SetSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	UINT ne = HIWORD(lParam);
 	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
 	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	int el;
-	int elineindex;
-	int tl = EDIT_WM_GetTextLength(wndPtr, 0, 0L);
+	UINT el;
+	UINT eli;
+	UINT tl = (UINT)EDIT_WM_GetTextLength(wndPtr, 0, 0L);
 
 	if ((INT)ns == -1) {
 		ns = e;
@@ -1997,9 +1995,9 @@ static LRESULT EDIT_EM_SetSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	es->SelStart = ns;
 	es->SelEnd = ne;
 	if (wndPtr->hwndSelf == GetFocus()) {
-		el = EDIT_EM_LineFromChar(wndPtr, ne, 0L);
-		elineindex = EDIT_EM_LineIndex(wndPtr, el, 0L);
-		SetCaretPos(EDIT_WndXFromCol(wndPtr, el, ne - elineindex),
+		el = (UINT)EDIT_EM_LineFromChar(wndPtr, ne, 0L);
+		eli = (UINT)EDIT_EM_LineIndex(wndPtr, el, 0L);
+		SetCaretPos(EDIT_WndXFromCol(wndPtr, el, ne - eli),
 				EDIT_WndYFromLine(wndPtr, el));
 	}
 	if (!wParam)
@@ -2038,9 +2036,9 @@ static LRESULT EDIT_EM_SetTabStops(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	if (!wParam)
 		es->TabStops = NULL;
 	else {
-		es->TabStops = (LPINT)xmalloc(wParam * sizeof(unsigned short));
-		memcpy(es->TabStops, (LPINT)PTR_SEG_TO_LIN(lParam),
-				(UINT)wParam * sizeof(INT));
+		es->TabStops = (LPINT16)xmalloc(wParam * sizeof(INT16));
+		memcpy(es->TabStops, (LPINT16)PTR_SEG_TO_LIN(lParam),
+				(UINT)wParam * sizeof(INT16));
 	}
 	return 1L;
 }
@@ -2158,14 +2156,14 @@ static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	if (e == s)
 		return -1L;
 	ORDER_UINT(s, e);
-	hdst = GlobalAlloc(GMEM_MOVEABLE, (DWORD)(e - s + 1));
-	dst = GlobalLock(hdst);
+	hdst = GlobalAlloc16(GMEM_MOVEABLE, (DWORD)(e - s + 1));
+	dst = GlobalLock16(hdst);
 	text = EDIT_GetPointer(wndPtr);
 	src = text + s;
 	for (i = 0 ; i < e - s ; i++)
 		*dst++ = *src++;
 	*dst = '\0';
-	GlobalUnlock(hdst);
+	GlobalUnlock16(hdst);
 	OpenClipboard(wndPtr->hwndSelf);
 	EmptyClipboard();
 	SetClipboardData(CF_TEXT, hdst);
@@ -2208,8 +2206,15 @@ static LRESULT EDIT_WM_Create(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		es->BufLimit = BUFLIMIT_SINGLE;
 		es->PasswordChar = (cs->style & ES_PASSWORD) ? '*' : '\0';
 	}
+	if (!LOCAL_HeapSize(wndPtr->hInstance)) {
+		if (!LocalInit(wndPtr->hInstance, 0, GlobalSize(wndPtr->hInstance))) {
+			fprintf(stderr, "edit: WM_CREATE: could not initialize local heap\n");
+			return -1L;
+		}
+		dprintf_edit(stddeb, "edit: WM_CREATE: local heap initialized\n");
+	}
 	if (!(es->hBuf = LOCAL_Alloc(wndPtr->hInstance, LMEM_MOVEABLE, es->BufSize + 1))) {
-		fprintf(stderr, "edit: WM_CREATE: unable to heap buffer, please report !\n");
+		fprintf(stderr, "edit: WM_CREATE: unable to allocate buffer\n");
 		return -1L;
 	}
 	es->BufSize = LOCAL_Size(wndPtr->hInstance, es->hBuf) - 1;
@@ -2348,11 +2353,9 @@ static LRESULT EDIT_WM_GetText(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_GetTextLength(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT ret;
 	char *text = EDIT_GetPointer(wndPtr);
 
-	ret = (LRESULT)strlen(text);
-	return ret;
+	return (LRESULT)strlen(text);
 }
  
 
@@ -2365,43 +2368,43 @@ static LRESULT EDIT_WM_GetTextLength(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_HScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	int wndwidth = EDIT_GetWndWidth(wndPtr);
-	int textwidth = EDIT_GetTextWidth(wndPtr);
-	int charwidth = EDIT_GetAveCharWidth(wndPtr);
-	int xoffset = EDIT_GetXOffset(wndPtr);
-	int dx = 0;
+	UINT ww = EDIT_GetWndWidth(wndPtr);
+	UINT tw = EDIT_GetTextWidth(wndPtr);
+	UINT cw = EDIT_GetAveCharWidth(wndPtr);
+	UINT xoff = EDIT_GetXOffset(wndPtr);
+	INT dx = 0;
 	BOOL not = TRUE;
 	LRESULT ret = 0L;
 
 	switch (wParam) {
 	case SB_LINELEFT:
-		dx = -charwidth;
+		dx = -cw;
 		break;
 	case SB_LINERIGHT:
-		dx = charwidth;
+		dx = cw;
 		break;
 	case SB_PAGELEFT:
-		dx = -wndwidth / HSCROLL_FRACTION / charwidth * charwidth;
+		dx = -ww / HSCROLL_FRACTION / cw * cw;
 		break;
 	case SB_PAGERIGHT:
-		dx = wndwidth / HSCROLL_FRACTION / charwidth * charwidth;
+		dx = ww / HSCROLL_FRACTION / cw * cw;
 		break;
 	case SB_LEFT:
-		dx = -xoffset;
+		dx = -xoff;
 		break;
 	case SB_RIGHT:
-		dx = textwidth - xoffset;
+		dx = tw - xoff;
 		break;
 	case SB_THUMBTRACK:
 /*
  *		not = FALSE;
  */
 	case SB_THUMBPOSITION:
-		dx = LOWORD(lParam) * textwidth / 100 - xoffset;
+		dx = LOWORD(lParam) * tw / 100 - xoff;
 		break;
 	/* The next two are undocumented ! */
 	case EM_GETTHUMB:
-		ret = textwidth ? MAKELONG(xoffset * 100 / textwidth, 0) : 0;
+		ret = tw ? MAKELONG(xoff * 100 / tw, 0) : 0;
 		break;
 	case EM_LINESCROLL:
 		dx = LOWORD(lParam);
@@ -2539,11 +2542,11 @@ static LRESULT EDIT_WM_KillFocus(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_LButtonDblClk(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	int s;
+	UINT s;
 	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT l = EDIT_EM_LineFromChar(wndPtr, e, 0L);
-	int li = EDIT_EM_LineIndex(wndPtr, l, 0L);
-	int ll = EDIT_EM_LineLength(wndPtr, e, 0L);
+	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
+	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
+	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, e, 0L);
 	char *text = EDIT_GetPointer(wndPtr);
 
 	s = li + EDIT_CallWordBreakProc(wndPtr, text + li, e - li, ll, WB_LEFT);
@@ -2575,7 +2578,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	l = MIN(fv + vlc - 1, MAX(fv, l));
 	x = MIN(EDIT_GetWndWidth(wndPtr), MAX(0, x));
 	c = EDIT_ColFromWndX(wndPtr, l, x);
-	li = EDIT_EM_LineIndex(wndPtr, l, 0L);
+	li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 	e = li + c;
 	if (GetKeyState(VK_SHIFT) & 0x8000)
 		s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
@@ -2625,7 +2628,7 @@ static LRESULT EDIT_WM_MouseMove(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		x = MIN(EDIT_GetWndWidth(wndPtr), MAX(0, x));
 		c = EDIT_ColFromWndX(wndPtr, l, x);
 		s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-		li = EDIT_EM_LineIndex(wndPtr, l, 0L);
+		li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 		EDIT_EM_SetSel(wndPtr, 1, MAKELPARAM(s, li + c));
 	}
 	return 0L;
@@ -2639,10 +2642,11 @@ static LRESULT EDIT_WM_MouseMove(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	PAINTSTRUCT ps;
-	int i;
-	int firstvis = (int)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
+	UINT i;
+	UINT fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
+	UINT vlc = EDIT_GetVisibleLineCount(wndPtr);
+	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 	HDC hdc;
 	HFONT hFont;
 	HFONT oldFont = 0;
@@ -2663,7 +2667,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	if (!IsWindowEnabled(wndPtr->hwndSelf))
 		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 	GetClipBox(hdc, &rcRgn);
-	for (i = firstvis ; i <= MIN(firstvis + EDIT_GetVisibleLineCount(wndPtr), firstvis + es->LineCount - 1) ; i++ ) {
+	for (i = fv ; i <= MIN(fv + vlc, fv + lc - 1) ; i++ ) {
 		EDIT_GetLineRect(wndPtr, i, 0, -1, &rcLine);
 		if (IntersectRect(&rc, &rcRgn, &rcLine))
 			EDIT_PaintLine(wndPtr, hdc, i, rev);
@@ -2687,9 +2691,9 @@ static LRESULT EDIT_WM_Paste(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 
 	OpenClipboard(wndPtr->hwndSelf);
 	if ((hsrc = GetClipboardData(CF_TEXT))) {
-		src = (char *)GlobalLock(hsrc);
+		src = (char *)GlobalLock16(hsrc);
 		EDIT_ReplaceSel(wndPtr, 0, (LPARAM)src);
-		GlobalUnlock(hsrc);
+		GlobalUnlock16(hsrc);
 	}
 	CloseClipboard();
 	return -1L;
@@ -2749,7 +2753,7 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	if (es->hFont)
 		oldFont = SelectObject(hdc, es->hFont);
 	GetTextMetrics(hdc, &tm);
-	es->LineHeight = HIWORD(GetTextExtent(hdc, "", 0));
+	es->LineHeight = HIWORD(GetTextExtent(hdc, "X", 1));
 	es->AveCharWidth = tm.tmAveCharWidth;
 	if (es->hFont)
 		SelectObject(hdc, oldFont);
@@ -2794,6 +2798,7 @@ static LRESULT EDIT_WM_SetText(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		EDIT_EM_ReplaceSel(wndPtr, 0, lParam);
 	EDIT_EM_EmptyUndoBuffer(wndPtr, 0, 0L);
 	EDIT_EM_SetModify(wndPtr, TRUE, 0L);
+	EDIT_ScrollIntoView(wndPtr);
 	return 0L;
 }
 
@@ -2825,10 +2830,10 @@ static LRESULT EDIT_WM_Size(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_VScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	int linecount = (int)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
-	int firstvis = (int)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
-	int vislinecount = EDIT_GetVisibleLineCount(wndPtr);
-	int dy = 0;
+	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
+	UINT fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
+	UINT vlc = EDIT_GetVisibleLineCount(wndPtr);
+	INT dy = 0;
 	BOOL not = TRUE;
 	LRESULT ret = 0L;
 
@@ -2840,27 +2845,27 @@ static LRESULT EDIT_WM_VScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		dy = 1;
 		break;
 	case SB_PAGEUP:
-		dy = -vislinecount;
+		dy = -vlc;
 		break;
 	case SB_PAGEDOWN:
-		dy = vislinecount;
+		dy = vlc;
 		break;
 	case SB_TOP:
-		dy = -firstvis;
+		dy = -fv;
 		break;
 	case SB_BOTTOM:
-		dy = linecount - 1 - firstvis;
+		dy = lc - 1 - fv;
 		break;
 	case SB_THUMBTRACK:
 /*
  *		not = FALSE;
  */
 	case SB_THUMBPOSITION:
-		dy = LOWORD(lParam) * (linecount - 1) / 100 - firstvis;
+		dy = LOWORD(lParam) * (lc - 1) / 100 - fv;
 		break;
 	/* The next two are undocumented ! */
 	case EM_GETTHUMB:
-		ret = (linecount > 1) ? MAKELONG(firstvis * 100 / (linecount - 1), 0) : 0L;
+		ret = (lc > 1) ? MAKELONG(fv * 100 / (lc - 1), 0) : 0L;
 		break;
 	case EM_LINESCROLL:
 		dy = LOWORD(lParam);

@@ -44,12 +44,13 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 
 WORD CallTo16_word_ ( FARPROC func, WORD arg ) { return func(arg); }
 
-void GlobalFreeAll(HANDLE owner)
+#if 0
+void GlobalFreeAll(HGLOBAL16 owner)
 {
   WINELIB_UNIMP("GlobalFreeAll()");
 }
 
-SEGPTR WIN16_GlobalLock(HGLOBAL h) 
+SEGPTR WIN16_GlobalLock16(HGLOBAL16 h) 
   { return (SEGPTR)h; }
 HLOCAL LOCAL_Free(WORD ds, HLOCAL handle) 
   { return LocalFree(handle); }
@@ -128,6 +129,7 @@ HGLOBAL GlobalHandle(LPCVOID a)
   fprintf(stderr,"JBP: GlobalHandle() ignored.\n");
   return 0;
 }
+#endif
 
 extern LRESULT ACTIVATEAPP_callback(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);

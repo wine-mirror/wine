@@ -80,7 +80,7 @@ HMODULE WIN32_GetModuleHandle(char *module)
 /* Freecell uses the result of GetModuleHandleA(0) as the hInstance in
 all calls to e.g. CreateWindowEx. */
     if (module == NULL) {
-	TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+	TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 	hModule = pTask->hInstance;
     } else
 	hModule = GetModuleHandle(module);

@@ -456,7 +456,7 @@ BOOL RestoreDC( HDC hdc, short level )
 /***********************************************************************
  *           CreateDC    (GDI.53)
  */
-HDC CreateDC( LPCTSTR driver, LPCTSTR device, LPCTSTR output, const DEVMODE* initData )
+HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
 {
     DC * dc;
     HANDLE handle;
@@ -500,7 +500,7 @@ HDC CreateDC( LPCTSTR driver, LPCTSTR device, LPCTSTR output, const DEVMODE* ini
 /***********************************************************************
  *           CreateIC    (GDI.153)
  */
-HDC CreateIC( LPCTSTR driver, LPCTSTR device, LPCTSTR output, const DEVMODE* initData )
+HDC CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC( driver, device, output, initData );

@@ -442,15 +442,15 @@ HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor )
     sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
     sizeAnd = bmpXor->bitmap.bmHeight * ((bmpXor->bitmap.bmWidth+15) / 16 * 2);
 
-    if (!(handle = GlobalAlloc( GMEM_MOVEABLE,
-                                sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
+    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
+                                  sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
         DeleteObject( hXorBits );
         DeleteObject( hAndBits );
         return 0;
     }
 
-    pInfo = (CURSORICONINFO *)GlobalLock( handle );
+    pInfo = (CURSORICONINFO *)GlobalLock16( handle );
     pInfo->ptHotSpot.x   = hotspot.x;
     pInfo->ptHotSpot.y   = hotspot.y;
     pInfo->nWidth        = bmpXor->bitmap.bmWidth;

@@ -11,18 +11,18 @@
 
 typedef struct
 {
-    HGLOBAL handle;
+    HGLOBAL16 handle;
     WORD sel;
     int shmid;
 } SHMDATA;
 
-extern HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
-                                   HGLOBAL hOwner, BOOL isCode,
-                                   BOOL is32Bit, BOOL isReadOnly,
-				   SHMDATA *shmdata);
-extern BOOL GLOBAL_FreeBlock( HGLOBAL handle );
-extern HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
-                             BOOL isCode, BOOL is32Bit, BOOL isReadOnly );
-extern WORD GlobalHandleToSel( HGLOBAL handle );
+extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, const void *ptr, DWORD size,
+                                     HGLOBAL16 hOwner, BOOL isCode,
+                                     BOOL is32Bit, BOOL isReadOnly,
+                                     SHMDATA *shmdata);
+extern BOOL GLOBAL_FreeBlock( HGLOBAL16 handle );
+extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner,
+                               BOOL isCode, BOOL is32Bit, BOOL isReadOnly );
+extern WORD GlobalHandleToSel( HGLOBAL16 handle );
 
 #endif  /* __WINE_GLOBAL_H */

@@ -5,27 +5,27 @@ type	win16
 2   stub ExitKernel
 3   pascal GetVersion() GetVersion
 4   pascal16 LocalInit(word word word) LocalInit
-5   pascal16 LocalAlloc(word word) LocalAlloc
-6   pascal16 LocalReAlloc(word word word) LocalReAlloc
-7   pascal16 LocalFree(word) LocalFree
-8   pascal16 LocalLock(word) LocalLock
-9   pascal16 LocalUnlock(word) LocalUnlock
-10  pascal16 LocalSize(word) LocalSize
-11  pascal16 LocalHandle(word) LocalHandle
-12  pascal16 LocalFlags(word) LocalFlags
-13  pascal16 LocalCompact(word) LocalCompact
+5   pascal16 LocalAlloc(word word) LocalAlloc16
+6   pascal16 LocalReAlloc(word word word) LocalReAlloc16
+7   pascal16 LocalFree(word) LocalFree16
+8   pascal16 LocalLock(word) LocalLock16
+9   pascal16 LocalUnlock(word) LocalUnlock16
+10  pascal16 LocalSize(word) LocalSize16
+11  pascal16 LocalHandle(word) LocalHandle16
+12  pascal16 LocalFlags(word) LocalFlags16
+13  pascal16 LocalCompact(word) LocalCompact16
 14  pascal16 LocalNotify(long) LocalNotify
-15  pascal16 GlobalAlloc(word long) GlobalAlloc
-16  pascal16 GlobalReAlloc(word long word) GlobalReAlloc
-17  pascal16 GlobalFree(word) GlobalFree
-18  pascal GlobalLock(word) WIN16_GlobalLock
-19  pascal16 GlobalUnlock(word) GlobalUnlock
-20  pascal GlobalSize(word) GlobalSize
-21  pascal GlobalHandle(word) GlobalHandle
-22  pascal16 GlobalFlags(word) GlobalFlags
+15  pascal16 GlobalAlloc(word long) GlobalAlloc16
+16  pascal16 GlobalReAlloc(word long word) GlobalReAlloc16
+17  pascal16 GlobalFree(word) GlobalFree16
+18  pascal GlobalLock(word) WIN16_GlobalLock16
+19  pascal16 GlobalUnlock(word) GlobalUnlock16
+20  pascal GlobalSize(word) GlobalSize16
+21  pascal GlobalHandle(word) GlobalHandle16
+22  pascal16 GlobalFlags(word) GlobalFlags16
 23  pascal16 LockSegment(word) LockSegment
 24  pascal16 UnlockSegment(word) UnlockSegment
-25  pascal GlobalCompact(long) GlobalCompact
+25  pascal GlobalCompact(long) GlobalCompact16
 26  pascal16 GlobalFreeAll(word) GlobalFreeAll
 27  stub GetModuleName
 28  stub GlobalMasterHandle
@@ -111,13 +111,13 @@ type	win16
 112 pascal16 GlobalUnWire(word) GlobalUnWire
 113 equate __AHSHIFT 3
 114 equate __AHINCR 8
-115 pascal OutputDebugString(ptr) OutputDebugString
+115 pascal16 OutputDebugString(ptr) OutputDebugString
 116 stub InitLib
 117 pascal16 OldYield() OldYield
 118 register GetTaskQueueDS() GetTaskQueueDS
 119 register GetTaskQueueES() GetTaskQueueES
 120 stub UndefDynLink
-121 pascal16 LocalShrink(word word) LocalShrink
+121 pascal16 LocalShrink(word word) LocalShrink16
 122 pascal16 IsTaskLocked() IsTaskLocked
 123 stub KbdRst
 124 return EnableKernel 0 0

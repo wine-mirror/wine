@@ -99,6 +99,7 @@ multimedia/Makefile
 objects/Makefile
 programs/Makefile
 programs/progman/Makefile
+programs/winhelp/Makefile
 rc/Makefile
 resources/Makefile
 tools/Makefile

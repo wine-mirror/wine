@@ -1057,11 +1057,13 @@ static void BuildSpec16Files(void)
             printf( "/* %s.%d */\n", DLLName, i);
             printf( "\tpushw %%bp\n" );
             printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
-            printf( "\tlcall $0x%04x, $" PREFIX "CallFrom16_%s_%s\n",
-                    WINE_CODE_SELECTOR,
+            /* FreeBSD does not understand lcall, so do it the hard way */
+            printf( "\t.byte 0x9a /*lcall*/\n" );
+            printf( "\t.long " PREFIX "CallFrom16_%s_%s\n",
                     (odp->type == TYPE_REGISTER) ? "regs" :
                     (odp->type == TYPE_PASCAL) ? "long" : "word",
                     fdp->arg_types );
+            printf( "\t.word 0x%04x\n", WINE_CODE_SELECTOR );
             printf( "\tnop\n" );
             printf( "\tnop\n\n" );
             odp->offset = code_offset;
@@ -1411,8 +1413,11 @@ static void BuildCallFrom16Func( char *profile )
 
     /* Save 16-bit ds and es */
 
-    printf( "\tmovw %%ds,-10(%%ebp)\n" );
-    printf( "\tmovw %%es,-6(%%ebp)\n" );
+    /* Stupid FreeBSD assembler doesn't know these either */
+    /* printf( "\tmovw %%ds,-10(%%ebp)\n" ); */
+    printf( "\t.byte 0x66,0x8c,0x5d,0xf6\n" );
+    /* printf( "\tmovw %%es,-6(%%ebp)\n" ); */
+    printf( "\t.byte 0x66,0x8c,0x45,0xfa\n" );
 
     /* Restore 32-bit ds and es */
 

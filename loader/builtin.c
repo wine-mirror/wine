@@ -96,13 +96,16 @@ extern const DLL_DESCRIPTOR W32SYS_Descriptor;
 extern const DLL_DESCRIPTOR ADVAPI32_Descriptor;
 extern const DLL_DESCRIPTOR COMCTL32_Descriptor;
 extern const DLL_DESCRIPTOR COMDLG32_Descriptor;
+extern const DLL_DESCRIPTOR CRTDLL_Descriptor;
 extern const DLL_DESCRIPTOR OLE32_Descriptor;
 extern const DLL_DESCRIPTOR GDI32_Descriptor;
 extern const DLL_DESCRIPTOR KERNEL32_Descriptor;
+extern const DLL_DESCRIPTOR NTDLL_Descriptor;
 extern const DLL_DESCRIPTOR SHELL32_Descriptor;
 extern const DLL_DESCRIPTOR USER32_Descriptor;
 extern const DLL_DESCRIPTOR WPROCS32_Descriptor;
 extern const DLL_DESCRIPTOR WINSPOOL_Descriptor;
+extern const DLL_DESCRIPTOR WSOCK32_Descriptor;
 
 /* Table of all built-in DLLs */
 
@@ -141,13 +144,16 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &ADVAPI32_Descriptor, 0 },
     { &COMCTL32_Descriptor, 0 },
     { &COMDLG32_Descriptor, 0 },
+    { &CRTDLL_Descriptor, 0 },
     { &OLE32_Descriptor,    0 },
     { &GDI32_Descriptor,    0 },
     { &KERNEL32_Descriptor, DLL_FLAG_ALWAYS_USED },
+    { &NTDLL_Descriptor,  0 },
     { &SHELL32_Descriptor,  0 },
     { &USER32_Descriptor,   0 },
     { &WPROCS32_Descriptor, DLL_FLAG_ALWAYS_USED },
     { &WINSPOOL_Descriptor, 0 },
+    { &WSOCK32_Descriptor, 0 },
     /* Last entry */
     { NULL, 0 }
 };
@@ -214,7 +220,7 @@ HMODULE BUILTIN_LoadModule( LPCSTR name, BOOL force )
 
     dprintf_module( stddeb, "Built-in %s: hmodule=%04x\n",
                     table->descr->name, hModule );
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->self = hModule;
 
     if (pModule->flags & NE_FFLAGS_WIN32)
@@ -243,7 +249,7 @@ HMODULE BUILTIN_LoadModule( LPCSTR name, BOOL force )
         pSegTable->selector = GLOBAL_Alloc( GMEM_FIXED, minsize,
                                             hModule, FALSE, FALSE, FALSE );
         if (!pSegTable->selector) return 0;
-        if (pSegTable->minsize) memcpy( GlobalLock( pSegTable->selector ),
+        if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->selector ),
                                         descr->data_start, pSegTable->minsize);
         if (pModule->heap_size)
             LocalInit( pSegTable->selector, pSegTable->minsize, minsize );
@@ -266,7 +272,7 @@ NE_MODULE *BUILTIN_GetEntryPoint( WORD cs, WORD ip, WORD *pOrd, char **ppName )
     register BYTE *p;
     NE_MODULE *pModule;
 
-    if (!(pModule = MODULE_GetPtr( FarGetOwner( GlobalHandle(cs) ))))
+    if (!(pModule = MODULE_GetPtr( FarGetOwner( GlobalHandle16(cs) ))))
         return NULL;
 
     /* Search for the ordinal */

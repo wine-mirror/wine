@@ -4,6 +4,7 @@
 #define WINDOWS_H
 
 #include "wintypes.h"
+#include "winuser.h"
 
 #ifndef WINELIB
 #pragma pack(1)
@@ -41,47 +42,6 @@ typedef struct {
 typedef PAINTSTRUCT *PPAINTSTRUCT;
 typedef PAINTSTRUCT *NPPAINTSTRUCT;
 typedef PAINTSTRUCT *LPPAINTSTRUCT;
-
-
-  /* Window classes */
-
-typedef struct {
-	WORD	style;
-	WNDPROC	lpfnWndProc WINE_PACKED;
-	INT	cbClsExtra, cbWndExtra;
-	HANDLE	hInstance;
-	HICON	hIcon;
-	HCURSOR	hCursor;
-	HBRUSH	hbrBackground;
-	SEGPTR  lpszMenuName WINE_PACKED;
-	SEGPTR  lpszClassName WINE_PACKED;
-} WNDCLASS, *LPWNDCLASS;
-
-#define CS_VREDRAW          0x0001
-#define CS_HREDRAW          0x0002
-#define CS_KEYCVTWINDOW     0x0004
-#define CS_DBLCLKS          0x0008
-#define CS_OWNDC            0x0020
-#define CS_CLASSDC          0x0040
-#define CS_PARENTDC         0x0080
-#define CS_NOKEYCVT         0x0100
-#define CS_NOCLOSE          0x0200
-#define CS_SAVEBITS         0x0800
-#define CS_BYTEALIGNCLIENT  0x1000
-#define CS_BYTEALIGNWINDOW  0x2000
-#define CS_GLOBALCLASS      0x4000
-
-  /* Offsets for GetClassLong() and GetClassWord() */
-#define GCL_MENUNAME        (-8)
-#define GCW_HBRBACKGROUND   (-10)
-#define GCW_HCURSOR         (-12)
-#define GCW_HICON           (-14)
-#define GCW_HMODULE         (-16)
-#define GCW_CBWNDEXTRA      (-18)
-#define GCW_CBCLSEXTRA      (-20)
-#define GCL_WNDPROC         (-24)
-#define GCW_STYLE           (-26)
-#define GCW_ATOM            (-32)
 
   /* Windows */
 
@@ -206,8 +166,8 @@ typedef struct
   /* WM_NCCALCSIZE parameter structure */
 typedef struct
 {
-    RECT	   rgrc[3];
-    WINDOWPOS FAR* lppos;
+    RECT    rgrc[3];
+    SEGPTR  lppos;
 } NCCALCSIZE_PARAMS;
 
   /* WM_NCCALCSIZE return flags */
@@ -423,8 +383,6 @@ typedef struct tagMSG
   POINT	  pt WINE_PACKED;
 } MSG, *LPMSG;
 	
-typedef WORD ATOM;
-
 #define MAKEINTATOM(i)   ((SEGPTR)MAKELONG((i),0))
 
   /* Raster operations */
@@ -1224,8 +1182,7 @@ typedef struct tagDCB
     char EofChar;
     char EvtChar;
     UINT TxDelay WINE_PACKED;
-} DCB;
-typedef DCB FAR* LPDCB;
+} DCB, *LPDCB;
 
 typedef struct tagCOMSTAT
 {
@@ -1443,7 +1400,7 @@ typedef struct tagDRAGINFO {
 	HANDLE  hOfStruct;
 	POINT	pt WINE_PACKED;
 	LONG	l  WINE_PACKED;
-}	DRAGINFO, FAR* LPDRAGINFO;
+} DRAGINFO, *LPDRAGINFO;
 
 #define DRAGOBJ_PROGRAM		0x0001
 #define DRAGOBJ_DATA		0x0002
@@ -1877,6 +1834,11 @@ typedef struct tagDRAGINFO {
 #define SW_INVALIDATE          0x0002
 #define SW_ERASE               0x0003
 
+/* CreateWindow() coordinates */
+#define CW_USEDEFAULT16 ((INT16)0x8000)
+#define CW_USEDEFAULT32 ((INT32)0x80000000)
+#define CW_USEDEFAULT   WINELIB_NAME(CW_USEDEFAULT)
+
 /* Button control styles */
 #define BS_PUSHBUTTON          0x00000000L
 #define BS_DEFPUSHBUTTON       0x00000001L
@@ -2163,9 +2125,6 @@ typedef struct tagDRAGINFO {
 #define EM_SCROLL              (WM_USER+5)
 #define EM_GETTHUMB            (WM_USER+14)
 
-typedef int (CALLBACK *EDITWORDBREAKPROC)(LPSTR lpch, int ichCurrent,
-					  int cch, int code);
-
 /* EDITWORDBREAKPROC code values */
 #define WB_LEFT         0
 #define WB_RIGHT        1
@@ -2193,9 +2152,7 @@ typedef struct
     HDC         hDC;
     RECT        rcItem WINE_PACKED;
     DWORD       itemData WINE_PACKED;
-} DRAWITEMSTRUCT;
-typedef DRAWITEMSTRUCT NEAR* PDRAWITEMSTRUCT;
-typedef DRAWITEMSTRUCT FAR* LPDRAWITEMSTRUCT;
+} DRAWITEMSTRUCT, *PDRAWITEMSTRUCT, *LPDRAWITEMSTRUCT;
 
 typedef struct
 {
@@ -2205,9 +2162,7 @@ typedef struct
     UINT        itemWidth;
     UINT        itemHeight;
     DWORD       itemData WINE_PACKED;
-} MEASUREITEMSTRUCT;
-typedef MEASUREITEMSTRUCT NEAR* PMEASUREITEMSTRUCT;
-typedef MEASUREITEMSTRUCT FAR* LPMEASUREITEMSTRUCT;
+} MEASUREITEMSTRUCT, *PMEASUREITEMSTRUCT, *LPMEASUREITEMSTRUCT;
 
 typedef struct
 {
@@ -2216,9 +2171,7 @@ typedef struct
     UINT       itemID;
     HWND       hwndItem;
     DWORD      itemData;
-} DELETEITEMSTRUCT;
-typedef DELETEITEMSTRUCT NEAR* PDELETEITEMSTRUCT;
-typedef DELETEITEMSTRUCT FAR* LPDELETEITEMSTRUCT;
+} DELETEITEMSTRUCT, *PDELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
 
 typedef struct
 {
@@ -2229,9 +2182,7 @@ typedef struct
     DWORD       itemData1;
     UINT        itemID2;
     DWORD       itemData2 WINE_PACKED;
-} COMPAREITEMSTRUCT;
-typedef COMPAREITEMSTRUCT NEAR* PCOMPAREITEMSTRUCT;
-typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
+} COMPAREITEMSTRUCT, *PCOMPAREITEMSTRUCT, *LPCOMPAREITEMSTRUCT;
 
 /* WM_KEYUP/DOWN/CHAR HIWORD(lParam) flags */
 #define KF_EXTENDED         0x0100
@@ -2340,6 +2291,7 @@ typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 #define GMEM_LOWER          GMEM_NOT_BANKED
 #define GMEM_DISCARDED      0x4000
 #define GMEM_LOCKCOUNT      0x00ff
+#define GMEM_INVALID_HANDLE 0x8000
 
 #define GHND                (GMEM_MOVEABLE | GMEM_ZEROINIT)
 #define GPTR                (GMEM_FIXED | GMEM_ZEROINIT)
@@ -2616,7 +2568,7 @@ typedef struct {
 #define HELP_SETWINPOS      0x0203
 
 typedef struct {
-        TCHAR  dmDeviceName[32];
+        CHAR   dmDeviceName[32];
         WORD   dmSpecVersion;
         WORD   dmDriverVersion;
         WORD   dmSize;
@@ -2635,7 +2587,7 @@ typedef struct {
         short  dmYResolution;
         short  dmTTOption;
         short  dmCollate;
-        TCHAR  dmFormName[32];
+        CHAR   dmFormName[32];
         WORD   dmUnusedPadding;
         WORD   dmBitsPerPel;
         DWORD  dmPelsWidth;
@@ -2718,7 +2670,7 @@ HBITMAP    CreateCompatibleBitmap(HDC,INT,INT);
 HDC        CreateCompatibleDC(HDC);
 HCURSOR    CreateCursor(HANDLE,INT,INT,INT,INT,const BYTE*,const BYTE*);
 HANDLE     CreateCursorIconIndirect(HANDLE,CURSORICONINFO*,const BYTE*,const BYTE*);
-HDC        CreateDC(LPCTSTR,LPCTSTR,LPCTSTR,const DEVMODE*);
+HDC        CreateDC(LPCSTR,LPCSTR,LPCSTR,const DEVMODE*);
 HBRUSH     CreateDIBPatternBrush(HGLOBAL,UINT);
 HBITMAP    CreateDIBitmap(HDC,BITMAPINFOHEADER*,DWORD,LPVOID,BITMAPINFO*,UINT);
 HWND       CreateDialog(HINSTANCE,SEGPTR,HWND,DLGPROC);
@@ -2731,23 +2683,21 @@ HRGN       CreateEllipticRgnIndirect(LPRECT);
 HFONT      CreateFont(INT,INT,INT,INT,INT,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,LPCSTR);
 HFONT      CreateFontIndirect(const LOGFONT*);
 HBRUSH     CreateHatchBrush(INT,COLORREF);
-HDC        CreateIC(LPCTSTR,LPCTSTR,LPCTSTR,const DEVMODE*);
+HDC        CreateIC(LPCSTR,LPCSTR,LPCSTR,const DEVMODE*);
 HICON      CreateIcon(HINSTANCE,INT,INT,BYTE,BYTE,const BYTE*,const BYTE*);
 HMENU      CreateMenu(void);
-HDC        CreateMetaFile(LPCTSTR);
+HDC        CreateMetaFile(LPCSTR);
 HPALETTE   CreatePalette(const LOGPALETTE*);
 HBRUSH     CreatePatternBrush(HBITMAP);
 HPEN       CreatePen(INT,INT,COLORREF);
 HPEN       CreatePenIndirect(const LOGPEN*);
-HRGN       CreatePolyPolygonRgn(const POINT*,const INT*,INT,INT);
+HRGN       CreatePolyPolygonRgn(const POINT*,const INT16*,INT,INT);
 HRGN       CreatePolygonRgn(const POINT*,INT,INT);
 HMENU      CreatePopupMenu(void);
 HRGN       CreateRectRgn(INT,INT,INT,INT);
 HRGN       CreateRectRgnIndirect(const RECT*);
 HRGN       CreateRoundRectRgn(INT,INT,INT,INT,INT,INT);
 HBRUSH     CreateSolidBrush(COLORREF);
-HWND       CreateWindow(SEGPTR,SEGPTR,DWORD,INT,INT,INT,INT,HWND,HMENU,HINSTANCE,SEGPTR);
-HWND       CreateWindowEx(DWORD,SEGPTR,SEGPTR,DWORD,INT,INT,INT,INT,HWND,HMENU,HINSTANCE,SEGPTR);
 BOOL       DPtoLP(HDC,LPPOINT,INT);
 void       DebugBreak(void);
 LRESULT    DefDlgProc(HWND,UINT,WPARAM,LPARAM);
@@ -2782,7 +2732,7 @@ DWORD      DragObject(HWND, HWND, WORD, HANDLE, WORD, HCURSOR);
 void       DrawFocusRect(HDC,const RECT*);
 BOOL       DrawIcon(HDC,INT,INT,HICON);
 void       DrawMenuBar(HWND);
-INT        DrawText(HDC,LPCTSTR,INT,LPRECT,UINT);
+INT        DrawText(HDC,LPCSTR,INT,LPRECT,UINT);
 DWORD      DumpIcon(SEGPTR,WORD*,SEGPTR*,SEGPTR*);
 BOOL       Ellipse(HDC,INT,INT,INT,INT);
 BOOL       EmptyClipboard(void);
@@ -2795,8 +2745,8 @@ BOOL       EndDialog(HWND,INT);
 BOOL       EndPaint(HWND,const PAINTSTRUCT*);
 BOOL       EnumChildWindows(HWND,WNDENUMPROC,LPARAM);
 UINT       EnumClipboardFormats(UINT);
-INT        EnumFontFamilies(HDC,LPCTSTR,FONTENUMPROC,LPARAM);
-INT        EnumFonts(HDC,LPCTSTR,FONTENUMPROC,LPARAM);
+INT        EnumFontFamilies(HDC,LPCSTR,FONTENUMPROC,LPARAM);
+INT        EnumFonts(HDC,LPCSTR,FONTENUMPROC,LPARAM);
 BOOL       EnumMetaFile(HDC,HMETAFILE,MFENUMPROC,LPARAM);
 INT        EnumObjects(HDC,INT,GOBJENUMPROC,LPARAM);
 INT        EnumProps(HWND,PROPENUMPROC);
@@ -2811,7 +2761,7 @@ int        ExcludeUpdateRgn(HDC,HWND);
 int        ExcludeVisRect(HDC,short,short,short,short);
 BOOL       ExitWindows(DWORD,WORD);
 BOOL       ExtFloodFill(HDC,INT,INT,COLORREF,WORD);
-BOOL       ExtTextOut(HDC,short,short,WORD,LPRECT,LPSTR,WORD,LPINT);
+BOOL       ExtTextOut(HDC,short,short,WORD,LPRECT,LPSTR,WORD,LPINT16);
 HICON      ExtractIcon(HINSTANCE,LPCSTR,WORD);
 WORD       FarGetOwner(HANDLE);
 void       FarSetOwner(HANDLE,HANDLE);
@@ -2824,6 +2774,7 @@ ATOM       FindAtom(SEGPTR);
 HINSTANCE  FindExecutable(LPCSTR,LPCSTR,LPSTR);
 HRSRC      FindResource(HINSTANCE,SEGPTR,SEGPTR);
 HWND       FindWindow(SEGPTR,LPSTR);
+HWND       FindWindowEx(HWND,HWND,SEGPTR,LPSTR);
 BOOL       FlashWindow(HWND,BOOL);
 BOOL       FloodFill(HDC,INT,INT,COLORREF);
 int        FlushComm(int,int);
@@ -2852,10 +2803,7 @@ HWND       GetCapture(void);
 WORD       GetCaretBlinkTime(void);
 void       GetCaretPos(LPPOINT);
 BOOL       GetCharABCWidths(HDC,UINT,UINT,LPABC);
-BOOL       GetCharWidth(HDC,WORD,WORD,LPINT);
-BOOL       GetClassInfo(HANDLE,SEGPTR,LPWNDCLASS);
-LONG       GetClassLong(HWND,short);
-int        GetClassName(HWND,LPSTR,short);
+BOOL       GetCharWidth(HDC,WORD,WORD,LPINT16);
 WORD       GetClassWord(HWND,short);
 void       GetClientRect(HWND,LPRECT);
 int        GetClipBox(HDC,LPRECT);
@@ -2897,7 +2845,7 @@ WORD       GetDriveType(INT);
 int        GetEnvironment(LPSTR,LPSTR,WORD);
 HMODULE    GetExePtr(HANDLE);
 HWND       GetFocus(void);
-DWORD      GetFreeSpace(WORD);
+DWORD      GetFreeSpace(UINT16);
 DWORD      GetHeapSpaces(HMODULE);
 BOOL       GetInputState(void);
 int        GetInstanceData(HANDLE,WORD,int);
@@ -2952,7 +2900,7 @@ WORD       GetROP2(HDC);
 WORD       GetRelAbs(HDC);
 int        GetRgnBox(HRGN,LPRECT);
 int        GetScrollPos(HWND,int);
-void       GetScrollRange(HWND,int,LPINT,LPINT);
+void       GetScrollRange(HWND,int,LPINT16,LPINT16);
 DWORD      GetSelectorBase(WORD);
 DWORD      GetSelectorLimit(WORD);
 HANDLE     GetStockObject(int);
@@ -2966,7 +2914,7 @@ int        GetSystemMetrics(WORD);
 WORD       GetSystemPaletteEntries(HDC,WORD,WORD,LPPALETTEENTRY);
 WORD       GetSystemPaletteUse(HDC);
 VOID       GetSystemTime(LPSYSTEMTIME); /* Win32 */
-DWORD      GetTabbedTextExtent(HDC,LPSTR,int,int,LPINT);
+DWORD      GetTabbedTextExtent(HDC,LPSTR,int,int,LPINT16);
 HINSTANCE  GetTaskDS(void);
 HQUEUE     GetTaskQueue(HTASK);
 BYTE       GetTempDrive(BYTE);
@@ -2978,7 +2926,7 @@ DWORD      GetTextExtent(HDC,LPCSTR,short);
 BOOL       GetTextExtentPoint(HDC,LPCSTR,short,LPSIZE);
 INT        GetTextFace(HDC,INT,LPSTR);
 BOOL       GetTextMetrics(HDC,LPTEXTMETRIC);
-LPINT      GetThresholdEvent(void);
+LPINT16    GetThresholdEvent(void);
 int        GetThresholdStatus(void);
 DWORD      GetTickCount(void);
 HWND       GetTopWindow(HWND);
@@ -3006,34 +2954,21 @@ int        GetWindowTextLength(HWND);
 WORD       GetWindowWord(HWND,short);
 UINT       GetWindowsDirectory(LPSTR,UINT);
 ATOM       GlobalAddAtom(SEGPTR);
-HGLOBAL    GlobalAlloc(WORD,DWORD);
-DWORD      GlobalCompact(DWORD);
 DWORD      GlobalDOSAlloc(DWORD);
 WORD       GlobalDOSFree(WORD);
 ATOM       GlobalDeleteAtom(ATOM);
 ATOM       GlobalFindAtom(SEGPTR);
-void       GlobalFix(HGLOBAL);
-WORD       GlobalFlags(HGLOBAL);
-HGLOBAL    GlobalFree(HGLOBAL);
-void       GlobalFreeAll(HANDLE);
+void       GlobalFix(HGLOBAL16);
+void       GlobalFreeAll(HGLOBAL16);
 WORD       GlobalGetAtomName(ATOM,LPSTR,short);
-#ifdef WINELIB32
-HGLOBAL    GlobalHandle(LPCVOID); /* Win32 */
-#else
-DWORD      GlobalHandle(UINT); /* Win16 */
-#endif
-HGLOBAL    GlobalLRUNewest(HGLOBAL);
-HGLOBAL    GlobalLRUOldest(HGLOBAL);
-LPVOID     GlobalLock(HGLOBAL);
+HGLOBAL16  GlobalLRUNewest(HGLOBAL16);
+HGLOBAL16  GlobalLRUOldest(HGLOBAL16);
 void       GlobalNotify(FARPROC);
-WORD       GlobalPageLock(HGLOBAL);
-WORD       GlobalPageUnlock(HGLOBAL);
-HGLOBAL    GlobalReAlloc(HGLOBAL,DWORD,WORD);
-DWORD      GlobalSize(HGLOBAL);
-BOOL       GlobalUnWire(HGLOBAL);
-void       GlobalUnfix(HGLOBAL);
-BOOL       GlobalUnlock(HGLOBAL);
-SEGPTR     GlobalWire(HGLOBAL);
+WORD       GlobalPageLock(HGLOBAL16);
+WORD       GlobalPageUnlock(HGLOBAL16);
+BOOL       GlobalUnWire(HGLOBAL16);
+void       GlobalUnfix(HGLOBAL16);
+SEGPTR     GlobalWire(HGLOBAL16);
 BOOL       GrayString(HDC,HBRUSH,FARPROC,LPARAM,INT,INT,INT,INT,INT);
 void       HideCaret(HWND);
 BOOL       HiliteMenuItem(HWND,HMENU,UINT,UINT);
@@ -3089,18 +3024,8 @@ HMENU      LoadMenuIndirect(SEGPTR);
 HANDLE     LoadModule(LPCSTR,LPVOID);
 HGLOBAL    LoadResource(HINSTANCE,HRSRC);
 int        LoadString(HANDLE,WORD,LPSTR,int);
-HANDLE     LocalAlloc(WORD,WORD);
-UINT       LocalCompact(WORD);
-UINT       LocalFlags(HLOCAL);
-HANDLE     LocalFree(HANDLE);
-HANDLE     LocalHandle(WORD);
 BOOL       LocalInit(HANDLE,WORD,WORD);
-NPVOID     LocalLock(HLOCAL);
 FARPROC    LocalNotify(FARPROC);
-HANDLE     LocalReAlloc(HANDLE,WORD,WORD);
-UINT       LocalShrink(HANDLE,WORD);
-UINT       LocalSize(HLOCAL);
-BOOL       LocalUnlock(HANDLE);
 LPVOID     LockResource(HGLOBAL);
 HGLOBAL    LockSegment(HGLOBAL);
 HMENU      LookupMenuHandle(HMENU,INT);
@@ -3114,7 +3039,6 @@ BOOL       ModifyMenu(HMENU,UINT,UINT,UINT,SEGPTR);
 DWORD      MoveTo(HDC,short,short);
 BOOL       MoveToEx(HDC,short,short,LPPOINT);
 BOOL       MoveWindow(HWND,short,short,short,short,BOOL);
-INT        MulDiv(INT,INT,INT);
 DWORD      OemKeyScan(WORD);
 BOOL       OemToAnsi(LPSTR,LPSTR);
 void       OemToAnsiBuff(LPSTR,LPSTR,INT);
@@ -3130,7 +3054,7 @@ int        OpenComm(LPCSTR,UINT,UINT);
 HFILE      OpenFile(LPCSTR,OFSTRUCT*,UINT);
 BOOL       OpenIcon(HWND);
 int        OpenSound(void);
-void       OutputDebugString(LPSTR);
+void       OutputDebugString(LPCSTR);
 void       PaintRect(HWND,HWND,HDC,HBRUSH,LPRECT);
 BOOL       PaintRgn(HDC,HRGN);
 BOOL       PatBlt(HDC,short,short,short,short,DWORD);
@@ -3138,7 +3062,7 @@ BOOL       PeekMessage(LPMSG,HWND,WORD,WORD,WORD);
 BOOL       Pie(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 BOOL       PlayMetaFile(HDC,HANDLE);
 void       PlayMetaFileRecord(HDC,LPHANDLETABLE,LPMETARECORD,WORD);
-BOOL       PolyPolygon(HDC,LPPOINT,LPINT,WORD);
+BOOL       PolyPolygon(HDC,LPPOINT,LPINT16,WORD);
 BOOL       Polygon(HDC,LPPOINT,int);
 BOOL       Polyline(HDC,LPPOINT,int);
 BOOL       PostAppMessage(HANDLE,WORD,WORD,LONG);
@@ -3212,7 +3136,6 @@ DWORD      RegQueryInfoKeyW(HKEY,LPWSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
 		LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,FILETIME*);
 DWORD      RegQueryInfoKeyA(HKEY,LPSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
 		LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,FILETIME*);
-ATOM       RegisterClass(LPWNDCLASS);
 WORD       RegisterClipboardFormat(LPCSTR);
 WORD       RegisterWindowMessage(SEGPTR);
 void       ReleaseCapture(void);
@@ -3254,7 +3177,6 @@ DWORD      SetBrushOrg(HDC,short,short);
 HWND       SetCapture(HWND);
 void       SetCaretBlinkTime(WORD);
 void       SetCaretPos(short,short);
-LONG       SetClassLong(HWND,short,LONG);
 WORD       SetClassWord(HWND,short,WORD);
 HANDLE     SetClipboardData(WORD,HANDLE);
 HWND       SetClipboardViewer(HWND);
@@ -3303,7 +3225,7 @@ WORD       SetSelectorLimit(WORD,DWORD);
 int        SetSoundNoise(int,int);
 WORD       SetStretchBltMode(HDC,WORD);
 LONG       SetSwapAreaSize(WORD);
-void       SetSysColors(int,LPINT,COLORREF*);
+void       SetSysColors(int,LPINT16,COLORREF*);
 HWND       SetSysModalWindow(HWND);
 WORD       SetSystemPaletteUse(HDC,WORD);
 WORD       SetSystemTimer(HWND,WORD,WORD,FARPROC);
@@ -3354,7 +3276,7 @@ void       SwitchStackBack(void);
 void       SwitchStackTo(WORD,WORD,WORD);
 int        SyncAllVoices(void);
 BOOL       SystemParametersInfo(UINT,UINT,LPVOID,UINT);
-LONG       TabbedTextOut(HDC,short,short,LPSTR,short,short,LPINT,short);
+LONG       TabbedTextOut(HDC,short,short,LPSTR,short,short,LPINT16,short);
 BOOL       TextOut(HDC,short,short,LPSTR,short);
 int        Throw(LPCATCHBUF,int);
 int        ToAscii(WORD,WORD,LPSTR,LPVOID,WORD);
@@ -3369,7 +3291,6 @@ BOOL       UnhookWindowsHookEx(HHOOK);
 BOOL       UnionRect(LPRECT,LPRECT,LPRECT);
 void       UnlockSegment(HGLOBAL);
 BOOL       UnrealizeObject(HBRUSH);
-BOOL       UnregisterClass(SEGPTR,HANDLE);
 int        UpdateColors(HDC);
 void       UpdateWindow(HWND);
 void       ValidateCodeSegments(void);
@@ -3377,7 +3298,7 @@ LPSTR      ValidateFreeSpaces(void);
 void       ValidateRect(HWND,LPRECT);
 void       ValidateRgn(HWND,HRGN);
 WORD       VkKeyScan(WORD);
-SEGPTR     WIN16_GlobalLock(HGLOBAL);
+SEGPTR     WIN16_GlobalLock16(HGLOBAL16);
 SEGPTR     WIN16_LockResource(HANDLE);
 SEGPTR     WIN16_lstrcpyn(SEGPTR,SEGPTR,WORD);
 void       WaitMessage(void);
@@ -3407,7 +3328,85 @@ SEGPTR     lstrcpy(SEGPTR,SEGPTR);
 LPSTR      lstrcpyn(LPSTR,LPCSTR,int);
 INT        lstrlen(LPCSTR);
 int        wsprintf(LPSTR,LPSTR,...);
-int        wvsprintf(LPSTR,LPSTR,LPSTR);
+int        wvsprintf(LPSTR,LPCSTR,LPCSTR);
+
+
+/* Declarations for functions that exist both in Win16 and Win32 */
+
+HWND       CreateWindow16(SEGPTR,SEGPTR,DWORD,INT16,INT16,INT16,INT16,HWND,HMENU,HINSTANCE,SEGPTR);
+#define    CreateWindow32A(className,titleName,style,x,y,width,height,\
+                           parent,menu,instance,param) \
+           CreateWindowEx32A(0,className,titleName,style,x,y,width,height,\
+                           parent,menu,instance,param)
+#define    CreateWindow32W(className,titleName,style,x,y,width,height,\
+                           parent,menu,instance,param) \
+           CreateWindowEx32W(0,className,titleName,style,x,y,width,height,\
+                           parent,menu,instance,param)
+#define    CreateWindow WINELIB_NAME_AW(CreateWindow)
+HWND       CreateWindowEx16(DWORD,SEGPTR,SEGPTR,DWORD,INT16,INT16,INT16,INT16,HWND,HMENU,HINSTANCE,SEGPTR);
+HWND32     CreateWindowEx32A(DWORD,LPCSTR,LPCSTR,DWORD,INT32,INT32,INT32,INT32,HWND32,HMENU32,HINSTANCE32,LPVOID);
+HWND32     CreateWindowEx32W(DWORD,LPCWSTR,LPCWSTR,DWORD,INT32,INT32,INT32,INT32,HWND32,HMENU32,HINSTANCE32,LPVOID);
+#define    CreateWindowEx WINELIB_NAME_AW(CreateWindowEx)
+HGLOBAL16  GlobalAlloc16(UINT16,DWORD);
+HGLOBAL32  GlobalAlloc32(UINT32,DWORD);
+#define    GlobalAlloc WINELIB_NAME(GlobalAlloc)
+DWORD      GlobalCompact16(DWORD);
+DWORD      GlobalCompact32(DWORD);
+#define    GlobalCompact WINELIB_NAME(GlobalCompact)
+UINT16     GlobalFlags16(HGLOBAL16);
+UINT32     GlobalFlags32(HGLOBAL32);
+#define    GlobalFlags WINELIB_NAME(GlobalFlags)
+HGLOBAL16  GlobalFree16(HGLOBAL16);
+HGLOBAL32  GlobalFree32(HGLOBAL32);
+#define    GlobalFree WINELIB_NAME(GlobalFree)
+DWORD      GlobalHandle16(WORD);
+HGLOBAL32  GlobalHandle32(LPCVOID);
+#define    GlobalHandle WINELIB_NAME(GlobalHandle)
+LPVOID     GlobalLock16(HGLOBAL16);
+LPVOID     GlobalLock32(HGLOBAL32);
+#define    GlobalLock WINELIB_NAME(GlobalLock)
+HGLOBAL16  GlobalReAlloc16(HGLOBAL16,DWORD,UINT16);
+HGLOBAL32  GlobalReAlloc32(HGLOBAL32,DWORD,UINT32);
+#define    GlobalReAlloc WINELIB_NAME(GlobalReAlloc)
+DWORD      GlobalSize16(HGLOBAL16);
+DWORD      GlobalSize32(HGLOBAL32);
+#define    GlobalSize WINELIB_NAME(GlobalSize)
+BOOL       GlobalUnlock16(HGLOBAL16);
+BOOL       GlobalUnlock32(HGLOBAL32);
+#define    GlobalUnlock WINELIB_NAME(GlobalUnlock)
+HLOCAL16   LocalAlloc16(UINT16,WORD);
+HLOCAL32   LocalAlloc32(UINT32,DWORD);
+#define    LocalAlloc WINELIB_NAME(LocalAlloc)
+UINT16     LocalCompact16(UINT16);
+UINT32     LocalCompact32(UINT32);
+#define    LocalCompact WINELIB_NAME(LocalCompact)
+UINT16     LocalFlags16(HLOCAL16);
+UINT32     LocalFlags32(HLOCAL32);
+#define    LocalFlags WINELIB_NAME(LocalFlags)
+HLOCAL16   LocalFree16(HLOCAL16);
+HLOCAL32   LocalFree32(HLOCAL32);
+#define    LocalFree WINELIB_NAME(LocalFree)
+HLOCAL16   LocalHandle16(WORD);
+HLOCAL32   LocalHandle32(LPCVOID);
+#define    LocalHandle WINELIB_NAME(LocalHandle)
+SEGPTR     LocalLock16(HLOCAL16);
+LPVOID     LocalLock32(HLOCAL32);
+#define    LocalLock WINELIB_NAME(LocalLock)
+HLOCAL16   LocalReAlloc16(HLOCAL16,WORD,UINT16);
+HLOCAL32   LocalReAlloc32(HLOCAL32,DWORD,UINT32);
+#define    LocalReAlloc WINELIB_NAME(LocalReAlloc)
+UINT16     LocalShrink16(HGLOBAL16,UINT16);
+UINT32     LocalShrink32(HGLOBAL32,UINT32);
+#define    LocalShrink WINELIB_NAME(LocalShrink)
+UINT16     LocalSize16(HLOCAL16);
+UINT32     LocalSize32(HLOCAL32);
+#define    LocalSize WINELIB_NAME(LocalSize)
+BOOL       LocalUnlock16(HLOCAL16);
+BOOL       LocalUnlock32(HLOCAL32);
+#define    LocalUnlock WINELIB_NAME(LocalUnlock)
+INT16      MulDiv16(INT16,INT16,INT16);
+INT32      MulDiv32(INT32,INT32,INT32);
+#define    MulDiv WINELIB_NAME(MulDiv)
 
 #ifdef WINELIB
 #define WINELIB_UNIMP(x) fprintf (stderr, "WineLib: Unimplemented %s\n", x)

@@ -62,9 +62,12 @@ static BOOL fEndMenuCalled = FALSE;
   ((DWORD)MAKELONG( (WORD)(item)->hText, (item)->xTab ))
 
 extern void NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down);  /* nonclient.c */
+static HMENU MENU_CopySysMenu(void);
 
 static HBITMAP hStdCheck = 0;
 static HBITMAP hStdMnArrow = 0;
+static HMENU MENU_DefSysMenu = 0;  /* Default system menu */
+
 
 /* we _can_ use global popup window because there's no way 2 menues can
  * be tracked at the same time.
@@ -95,7 +98,23 @@ BOOL MENU_Init()
     arrow_bitmap_width = bm.bmWidth;
     arrow_bitmap_height = bm.bmHeight;
 
+    if (!(MENU_DefSysMenu = MENU_CopySysMenu()))
+    {
+        fprintf( stderr, "Unable to create default system menu\n" );
+        return FALSE;
+    }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           MENU_GetDefSysMenu
+ *
+ * Return the default system menu.
+ */
+HMENU MENU_GetDefSysMenu(void)
+{
+    return MENU_DefSysMenu;
 }
 
 
@@ -124,7 +143,7 @@ static HMENU MENU_CopySysMenu(void)
     POPUPMENU *menu;
 
     if (!(handle = SYSRES_LoadResource( SYSRES_MENU_SYSMENU ))) return 0;
-    hMenu = LoadMenuIndirect( WIN16_GlobalLock( handle ) );
+    hMenu = LoadMenuIndirect( WIN16_GlobalLock16( handle ) );
     SYSRES_FreeResource( handle );
     if (!hMenu)
     {
@@ -246,7 +265,7 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
     int i;
     LONG menuchar;
 
-    if (!IsMenu( hmenu )) hmenu = GetSystemMenu( hwndOwner, FALSE);
+    if (!IsMenu( hmenu )) hmenu = WIN_FindWndPtr(hwndOwner)->hSysMenu;
     if (!hmenu) return -1;
 
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
@@ -692,7 +711,7 @@ BOOL MENU_SwitchTPWndTo( HTASK hTask)
 {
   /* This is supposed to be called when popup is hidden */
 
-  TDB* task = (TDB*)GlobalLock(hTask);
+  TDB* task = (TDB*)GlobalLock16(hTask);
 
   if( !task ) return 0;
 
@@ -730,7 +749,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
 
     if (!pTopPWnd)
     {
-	pTopPWnd = WIN_FindWndPtr(CreateWindow( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
+	pTopPWnd = WIN_FindWndPtr(CreateWindow16( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
 				   		WS_POPUP | WS_BORDER, x, y, 
 				   		menu->Width + 2*SYSMETRICS_CXBORDER,
 				   		menu->Height + 2*SYSMETRICS_CYBORDER,
@@ -742,7 +761,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
     if( uSubPWndLevel )
     {
 	/* create new window for the submenu */
-	HWND  hWnd = CreateWindow( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
+	HWND  hWnd = CreateWindow16( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
                                    WS_POPUP | WS_BORDER, x, y,
                                    menu->Width + 2*SYSMETRICS_CXBORDER,
                                    menu->Height + 2*SYSMETRICS_CYBORDER,
@@ -818,12 +837,12 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex )
 #ifdef WINELIB32
 /* FIX: LostInfo */
             SendMessage( hwndOwner, WM_MENUSELECT,
-                         MAKEWPARAM( (DWORD)GetSystemMenu( lppop->hWnd, FALSE ),
+                         MAKEWPARAM( WIN_FindWndPtr(lppop->hWnd)->hSysMenu,
 				     lppop->wFlags | MF_MOUSESELECT ),
 			 (LPARAM)hmenu );
 #else
             SendMessage( hwndOwner, WM_MENUSELECT,
-                         GetSystemMenu( lppop->hWnd, FALSE ),
+                         WIN_FindWndPtr(lppop->hWnd)->hSysMenu,
                          MAKELONG( lppop->wFlags | MF_MOUSESELECT, hmenu ) );
 #endif
         }
@@ -1111,7 +1130,7 @@ static HMENU MENU_GetSubPopup( HMENU hmenu )
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
     if (menu->FocusedItem == NO_SELECTED_ITEM) return 0;
     else if (menu->FocusedItem == SYSMENU_SELECTED)
-	return GetSystemMenu( menu->hWnd, FALSE );
+	return WIN_FindWndPtr(menu->hWnd)->hSysMenu;
 
     item = ((MENUITEM *)USER_HEAP_LIN_ADDR(menu->hItems)) + menu->FocusedItem;
     if (!(item->item_flags & MF_POPUP) || !(item->item_flags & MF_MOUSESELECT))
@@ -1135,7 +1154,7 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu )
     if (menu->FocusedItem == NO_SELECTED_ITEM) return;
     if (menu->FocusedItem == SYSMENU_SELECTED)
     {
-	hsubmenu = GetSystemMenu( menu->hWnd, FALSE );
+	hsubmenu = WIN_FindWndPtr(menu->hWnd)->hSysMenu;
     }
     else
     {
@@ -1345,7 +1364,7 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
     {
 	if (!MENU_IsInSysMenu( menu, pt )) return FALSE;
 	id = SYSMENU_SELECTED;
-	hsubmenu = GetSystemMenu( menu->hWnd, FALSE );
+	hsubmenu = WIN_FindWndPtr(menu->hWnd)->hSysMenu;
     }	
 
     if (menu->FocusedItem != id) return FALSE;
@@ -1498,7 +1517,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
 			    HWND hwnd, LPRECT lprect )
 {
     MSG *msg;
-    HLOCAL hMsg;
+    HLOCAL16 hMsg;
     POPUPMENU *menu;
     HMENU hmenuCurrent = hmenu;
     BOOL fClosed = FALSE, fRemove;
@@ -2219,7 +2238,10 @@ BOOL DestroyMenu(HMENU hMenu)
 {
     LPPOPUPMENU lppop;
     dprintf_menu(stddeb,"DestroyMenu (%04x) !\n", hMenu);
+
     if (hMenu == 0) return FALSE;
+    /* Silently ignore attempts to destroy default system menu */
+    if (hMenu == MENU_DefSysMenu) return TRUE;
     lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu);
     if (!lppop || (lppop->wMagic != MENU_MAGIC)) return FALSE;
     lppop->wMagic = 0;  /* Mark it as destroyed */
@@ -2252,6 +2274,11 @@ HMENU GetSystemMenu(HWND hWnd, BOOL bRevert)
     WND *wndPtr = WIN_FindWndPtr( hWnd );
     if (!wndPtr) return 0;
 
+    if (!wndPtr->hSysMenu || (wndPtr->hSysMenu == MENU_DefSysMenu))
+    {
+        wndPtr->hSysMenu = MENU_CopySysMenu();
+        return wndPtr->hSysMenu;
+    }
     if (!bRevert) return wndPtr->hSysMenu;
     if (wndPtr->hSysMenu) DestroyMenu(wndPtr->hSysMenu);
     wndPtr->hSysMenu = MENU_CopySysMenu();
@@ -2267,7 +2294,8 @@ BOOL SetSystemMenu( HWND hwnd, HMENU hMenu )
     WND *wndPtr;
 
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
-    if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
+    if (wndPtr->hSysMenu && (wndPtr->hSysMenu != MENU_DefSysMenu))
+        DestroyMenu( wndPtr->hSysMenu );
     wndPtr->hSysMenu = hMenu;
     return TRUE;
 }

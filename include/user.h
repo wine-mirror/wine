@@ -10,16 +10,6 @@
 #include "ldt.h"
 #include "local.h"
 
-#ifdef WINELIB
-
-#define USER_HEAP_ALLOC(size) LocalAlloc (LMEM_FIXED, size)
-#define USER_HEAP_REALLOC(handle,size) LocalReAlloc (handle,size,LMEM_FIXED)
-#define USER_HEAP_LIN_ADDR(handle) LocalLock (handle)
-#define USER_HEAP_SEG_ADDR(handle) LocalLock (handle)
-#define USER_HEAP_FREE(handle) LocalFree (handle)
-
-#else  /* WINELIB */
-
 extern WORD USER_HeapSel;
 
 #define USER_HEAP_ALLOC(size) \
@@ -30,9 +20,12 @@ extern WORD USER_HeapSel;
             LOCAL_Free( USER_HeapSel, (handle) )
 #define USER_HEAP_LIN_ADDR(handle)  \
             ((handle) ? PTR_SEG_OFF_TO_LIN(USER_HeapSel, (handle)) : NULL)
+
+#ifdef WINELIB
+#define USER_HEAP_SEG_ADDR(handle)  ((SEGPTR)(USER_HEAP_LIN_ADDR(handle)))
+#else
 #define USER_HEAP_SEG_ADDR(handle)  \
             ((handle) ? MAKELONG((handle), USER_HeapSel) : 0)
-
 #endif  /* WINELIB */
 
 #endif  /* USER_H */

@@ -289,8 +289,8 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 #endif
 	bufsize = 64000;
 	lpWaveHdr = &MCIWavDev[wDevID].WaveHdr;
-	hData = GlobalAlloc(GMEM_MOVEABLE, bufsize);
-	lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock(hData);
+	hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
+	lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock16(hData);
 	lpWaveHdr->dwUser = 0L;
 	lpWaveHdr->dwFlags = 0L;
 	lpWaveHdr->dwLoops = 0L;
@@ -312,8 +312,8 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		}
 	dwRet = wodMessage(0, WODM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	if (lpWaveHdr->lpData != NULL) {
-		GlobalUnlock(hData);
-		GlobalFree(hData);
+		GlobalUnlock16(hData);
+		GlobalFree16(hData);
 		lpWaveHdr->lpData = NULL;
 		}
 	USER_HEAP_FREE(hWaveHdr);
@@ -358,8 +358,8 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 		}
 	bufsize = 64000;
 	lpWaveHdr = &MCIWavDev[wDevID].WaveHdr;
-	hData = GlobalAlloc(GMEM_MOVEABLE, bufsize);
-	lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock(hData);
+	hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
+	lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock16(hData);
 	lpWaveHdr->dwBufferLength = bufsize;
 	lpWaveHdr->dwUser = 0L;
 	lpWaveHdr->dwFlags = 0L;
@@ -382,8 +382,8 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	dwRet = widMessage(0, WIDM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	dprintf_mciwave(stddeb,"WAVE_mciRecord // after WIDM_UNPREPARE \n");
 	if (lpWaveHdr->lpData != NULL) {
-		GlobalUnlock(hData);
-		GlobalFree(hData);
+		GlobalUnlock16(hData);
+		GlobalFree16(hData);
 		lpWaveHdr->lpData = NULL;
 		}
 	USER_HEAP_FREE(hWaveHdr);

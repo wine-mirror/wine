@@ -279,9 +279,9 @@ HANDLE LoadAccelerators(HANDLE instance, SEGPTR lpTableName)
 
     lp = (BYTE *)LockResource(rsc_mem);
     n = SizeofResource( instance, hRsrc ) / sizeof(ACCELENTRY);
-    hAccel = GlobalAlloc(GMEM_MOVEABLE, 
+    hAccel = GlobalAlloc16(GMEM_MOVEABLE, 
     	sizeof(ACCELHEADER) + (n + 1)*sizeof(ACCELENTRY));
-    lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
+    lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
     lpAccelTbl->wCount = 0;
     for (i = 0; i < n; i++) {
 	lpAccelTbl->tbl[i].type = *(lp++);
@@ -296,7 +296,7 @@ HANDLE LoadAccelerators(HANDLE instance, SEGPTR lpTableName)
 		lpAccelTbl->tbl[i].type);
 	lpAccelTbl->wCount++;
  	}
-    GlobalUnlock(hAccel);
+    GlobalUnlock16(hAccel);
     FreeResource( rsc_mem );
     return hAccel;
 }
@@ -318,7 +318,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 
     dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x !\n", hAccel);
 
-    lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
+    lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
     for (i = 0; i < lpAccelTbl->wCount; i++) {
 	if(lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) {
 	    if(msg->wParam == lpAccelTbl->tbl[i].wEvent &&
@@ -332,7 +332,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 			    (SHIFT_ACCEL | CONTROL_ACCEL | ALT_ACCEL))) {
 		    SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval,
 				0x00010000L);
-		    GlobalUnlock(hAccel);
+		    GlobalUnlock16(hAccel);
 		    return 1;
 	        }
 		if (msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
@@ -343,12 +343,12 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
 		msg->message == WM_CHAR) {
 		SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
-		GlobalUnlock(hAccel);
+		GlobalUnlock16(hAccel);
 		return 1;
 		}
 	    }
 	}
-    GlobalUnlock(hAccel);
+    GlobalUnlock16(hAccel);
     return 0;
 }
 

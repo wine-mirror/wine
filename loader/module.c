@@ -43,7 +43,7 @@ static HANDLE hInitialStack32 = 0;
  */
 NE_MODULE *MODULE_GetPtr( HMODULE hModule )
 {
-    NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hModule );
+    NE_MODULE *pModule = (NE_MODULE *)GlobalLock16( hModule );
     if (!pModule || (pModule->magic != NE_SIGNATURE) ||
         (pModule->self != hModule)) return NULL;
     return pModule;
@@ -177,7 +177,7 @@ void MODULE_DumpModule( HMODULE hmodule )
     printf( "\nNon-resident names table:\n" );
     if (pModule->nrname_handle)
     {
-        pstr = (char *)GlobalLock( pModule->nrname_handle );
+        pstr = (char *)GlobalLock16( pModule->nrname_handle );
         while (*pstr)
         {
             printf( "%*.*s: %d\n", *pstr, *pstr, pstr + 1,
@@ -275,11 +275,11 @@ static WORD MODULE_Ne2MemFlags(WORD flags)
 DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
 {
     WORD size = wSize << wElem;
-    HANDLE hMem = GlobalAlloc( MODULE_Ne2MemFlags(wFlags), size);
-#ifdef WINELIB32
-    return (DWORD)GlobalLock(hMem);
+    HANDLE hMem = GlobalAlloc16( MODULE_Ne2MemFlags(wFlags), size);
+#ifdef WINELIB
+    return (DWORD)GlobalLock16(hMem);
 #else
-    WORD selector = HIWORD(GlobalLock(hMem));
+    WORD selector = HIWORD(WIN16_GlobalLock16(hMem));
     return MAKELONG(hMem, selector);
 #endif
 }
@@ -421,10 +421,10 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
              /* entry table length */
            ne_header.entry_tab_length;
 
-    hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
+    hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
     if (!hModule) return (HMODULE)11;  /* invalid exe */
     FarSetOwner( hModule, hModule );
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
     memcpy( pModule, &ne_header, sizeof(ne_header) );
     pModule->count = 0;
     pModule->pe_module = NULL;
@@ -485,7 +485,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
     }
     else
     {
-        GlobalFree( hModule );
+        GlobalFree16( hModule );
         return (HMODULE)11;  /* invalid exe */
     }
 
@@ -508,7 +508,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                ne_header.moduleref_tab_offset - ne_header.rname_tab_offset,
                pData ))
     {
-        GlobalFree( hModule );
+        GlobalFree16( hModule );
         return (HMODULE)11;  /* invalid exe */
     }
     pData += ne_header.moduleref_tab_offset - ne_header.rname_tab_offset;
@@ -532,7 +532,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                ne_header.entry_tab_offset - ne_header.iname_tab_offset,
                pData ))
     {
-        GlobalFree( hModule );
+        GlobalFree16( hModule );
         return (HMODULE)11;  /* invalid exe */
     }
     pData += ne_header.entry_tab_offset - ne_header.iname_tab_offset;
@@ -544,7 +544,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                ne_header.entry_tab_length,
                pData ))
     {
-        GlobalFree( hModule );
+        GlobalFree16( hModule );
         return (HMODULE)11;  /* invalid exe */
     }
     pData += ne_header.entry_tab_length;
@@ -557,16 +557,16 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                                                hModule, FALSE, FALSE, FALSE );
         if (!pModule->nrname_handle)
         {
-            GlobalFree( hModule );
+            GlobalFree16( hModule );
             return (HMODULE)11;  /* invalid exe */
         }
-        buffer = GlobalLock( pModule->nrname_handle );
+        buffer = GlobalLock16( pModule->nrname_handle );
         _llseek( hFile, ne_header.nrname_tab_offset, SEEK_SET );
         if (FILE_Read( hFile, buffer, ne_header.nrname_tab_length )
               != ne_header.nrname_tab_length)
         {
-            GlobalFree( pModule->nrname_handle );
-            GlobalFree( hModule );
+            GlobalFree16( pModule->nrname_handle );
+            GlobalFree16( hModule );
             return (HMODULE)11;  /* invalid exe */
         }
     }
@@ -581,8 +581,8 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                                     hModule, FALSE, FALSE, FALSE );
         if (!pModule->dlls_to_init)
         {
-            if (pModule->nrname_handle) GlobalFree( pModule->nrname_handle );
-            GlobalFree( hModule );
+            if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
+            GlobalFree16( hModule );
             return (HMODULE)11;  /* invalid exe */
         }
     }
@@ -640,7 +640,7 @@ WORD MODULE_GetOrdinal( HMODULE hModule, const char *name )
       /* Now search the non-resident names table */
 
     if (!pModule->nrname_handle) return 0;  /* No non-resident table */
-    cpnt = (char *)GlobalLock( pModule->nrname_handle );
+    cpnt = (char *)GlobalLock16( pModule->nrname_handle );
 
       /* Skip the first entry (module description string) */
     cpnt += *cpnt + 1 + sizeof(WORD);
@@ -704,7 +704,7 @@ SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = (WORD)(DWORD)NE_SEG_TABLE(pModule)[sel-1].selector;
-    return (SEGPTR)MAKELONG( offset, sel );
+    return PTR_SEG_OFF_TO_SEGPTR( sel, offset );
 }
 
 
@@ -893,7 +893,7 @@ static void MODULE_FreeModule( HMODULE hModule )
     pSegment = NE_SEG_TABLE( pModule );
     for (i = 1; i <= pModule->seg_count; i++, pSegment++)
     {
-        GlobalFree( pSegment->selector );
+        GlobalFree16( pSegment->selector );
     }
 
       /* Free the referenced modules */
@@ -906,9 +906,9 @@ static void MODULE_FreeModule( HMODULE hModule )
 
       /* Free the module storage */
 
-    if (pModule->nrname_handle) GlobalFree( pModule->nrname_handle );
-    if (pModule->dlls_to_init) GlobalFree( pModule->dlls_to_init );
-    GlobalFree( hModule );
+    if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
+    if (pModule->dlls_to_init) GlobalFree16( pModule->dlls_to_init );
+    GlobalFree16( hModule );
 
       /* Remove module from cache */
 
@@ -978,7 +978,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
           /* Load the referenced DLLs */
 
         pModRef = (WORD *)((char *)pModule + pModule->modref_table);
-        pDLLs = (WORD *)GlobalLock( pModule->dlls_to_init );
+        pDLLs = (WORD *)GlobalLock16( pModule->dlls_to_init );
         for (i = 0; i < pModule->modref_count; i++, pModRef++)
         {
             char buffer[256];
@@ -1059,8 +1059,8 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
 		  /* Create the 32-bit stack frame */
 		  
-		  *(DWORD *)GlobalLock(hInitialStack32) = 0xDEADBEEF;
-		  stack32Top = (char*)GlobalLock(hInitialStack32) + 
+		  *(DWORD *)GlobalLock16(hInitialStack32) = 0xDEADBEEF;
+		  stack32Top = (char*)GlobalLock16(hInitialStack32) + 
 		    0x10000;
 		  frame32 = (STACK32FRAME *)stack32Top - 1;
 		  frame32->saved_esp = (DWORD)stack32Top;
@@ -1073,7 +1073,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		  frame32->retaddr = 0;
 		  frame32->codeselector = WINE_CODE_SELECTOR;
 		  /* pTask->esp = (DWORD)frame32; */
-		  IF1632_Stack32_base = WIN16_GlobalLock(hInitialStack32);
+		  IF1632_Stack32_base = WIN16_GlobalLock16(hInitialStack32);
 
 		}
                 /* FIXME: we probably need a DOS handle here */
@@ -1086,8 +1086,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		IF1632_Saved16_sp = oldsp;
 		for (i = 2; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
 		if (hInitialStack32){
-		  GlobalUnlock (hInitialStack32);
-		  GlobalFree (hInitialStack32);
+		  GlobalFree16(hInitialStack32);
 		  IF1632_Stack32_base = hInitialStack32 = 0;
 		}
 	} 
@@ -1116,8 +1115,8 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
         pModule->count++;
     }
 #else
-    hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(NE_MODULE) );
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(NE_MODULE));
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->count = 1;
     pModule->magic = NE_SIGNATURE;
     pModule->self = hModule;
@@ -1249,24 +1248,24 @@ void FreeLibrary( HANDLE handle )
 HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 {
     LOADPARAMS params;
-    HLOCAL cmdShowHandle, cmdLineHandle;
+    HGLOBAL16 cmdShowHandle, cmdLineHandle;
     HANDLE handle;
     WORD *cmdShowPtr;
     char *p, *cmdline, filename[256];
     static int use_load_module = 1;
 
-    if (!(cmdShowHandle = GlobalAlloc( 0, 2 * sizeof(WORD) ))) return 0;
-    if (!(cmdLineHandle = GlobalAlloc( 0, 256 ))) return 0;
+    if (!(cmdShowHandle = GlobalAlloc16( 0, 2 * sizeof(WORD) ))) return 0;
+    if (!(cmdLineHandle = GlobalAlloc16( 0, 256 ))) return 0;
 
       /* Store nCmdShow */
 
-    cmdShowPtr = (WORD *)GlobalLock( cmdShowHandle );
+    cmdShowPtr = (WORD *)GlobalLock16( cmdShowHandle );
     cmdShowPtr[0] = 2;
     cmdShowPtr[1] = nCmdShow;
 
       /* Build the filename and command-line */
 
-    cmdline = (char *)GlobalLock( cmdLineHandle );
+    cmdline = (char *)GlobalLock16( cmdLineHandle );
     lstrcpyn( filename, lpCmdLine, sizeof(filename) - 4 /* for extension */ );
     for (p = filename; *p && (*p != ' ') && (*p != '\t'); p++);
     if (*p) lstrcpyn( cmdline, p + 1, 128 );
@@ -1284,8 +1283,8 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 #else
 	params.hEnvironment = (HANDLE)SELECTOROF( GetDOSEnvironment() );
 #endif  /* WINELIB */
-	params.cmdLine  = (SEGPTR)WIN16_GlobalLock( cmdLineHandle );
-	params.showCmd  = (SEGPTR)WIN16_GlobalLock( cmdShowHandle );
+	params.cmdLine  = (SEGPTR)WIN16_GlobalLock16( cmdLineHandle );
+	params.showCmd  = (SEGPTR)WIN16_GlobalLock16( cmdShowHandle );
 	params.reserved = 0;
 	handle = LoadModule( filename, &params );
 	if (handle == 2)  /* file not found */
@@ -1360,8 +1359,8 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 	}
     }
 
-    GlobalFree( cmdShowHandle );
-    GlobalFree( cmdLineHandle );
+    GlobalFree16( cmdShowHandle );
+    GlobalFree16( cmdLineHandle );
 
 #if 0
     if (handle < (HANDLE)32)	/* Error? */

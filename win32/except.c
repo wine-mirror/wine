@@ -175,7 +175,7 @@ VOID EXC_RaiseException(DWORD dwExceptionCode,
  *  fancy debugging information. It does nothing now!
  */
  
-DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
+DWORD UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
    PEXCEPTION_RECORD pRecord;
    PCONTEXT          pContext;
@@ -206,7 +206,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
  *
  */
   
-WINAPI LPTOP_LEVEL_EXCEPTION_FILTER 
+LPTOP_LEVEL_EXCEPTION_FILTER 
         SetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER efilter)
 {  
    pTopExcHandler=efilter;

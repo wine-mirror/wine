@@ -32,7 +32,7 @@ typedef struct {
         BOOL    HasStrings;
         BOOL    OwnerDrawn;
 	WORD    iNumStops;
-	LPINT   TabStops;
+	LPINT16 TabStops;
 	HANDLE  hDrawItemStruct;
         BOOL    needMeasure;
 	HANDLE	HeapSel;

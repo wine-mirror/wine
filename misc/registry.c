@@ -105,7 +105,7 @@ remove_handle(HKEY hkey) {
 		if (openhandles[i].hkey==hkey)
 			break;
 	if (i==nrofopenhandles) {
-		dprintf_reg(stddeb,"remove_handle:Didn't find handle %lx?\n",hkey);
+		dprintf_reg(stddeb,"remove_handle:Didn't find handle %08x?\n",hkey);
 		return;
 	}
 	memcpy(	openhandles+i,
@@ -728,8 +728,7 @@ SHELL_LoadRegistry() {
  */
 
 /* RegOpenKeyExW		[ADVAPI32.150] */
-WINAPI DWORD
-RegOpenKeyExW(
+DWORD RegOpenKeyExW(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -776,8 +775,7 @@ RegOpenKeyExW(
 }
 
 /* RegOpenKeyW			[ADVAPI32.151] */
-WINAPI DWORD
-RegOpenKeyW(
+DWORD RegOpenKeyW(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -790,8 +788,7 @@ RegOpenKeyW(
 
 
 /* RegOpenKeyExA		[ADVAPI32.149] */
-WINAPI DWORD
-RegOpenKeyExA(
+DWORD RegOpenKeyExA(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -815,8 +812,7 @@ RegOpenKeyExA(
 }
 
 /* RegOpenKeyA			[ADVAPI32.148] */
-WINAPI DWORD
-RegOpenKeyA(
+DWORD RegOpenKeyA(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -828,8 +824,7 @@ RegOpenKeyA(
 }
 
 /* RegOpenKey			[SHELL.1] [KERNEL.217] */
-WINAPI DWORD
-RegOpenKey(
+DWORD RegOpenKey(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -854,8 +849,7 @@ RegOpenKey(
  */
 
 /* RegCreateKeyExW		[ADVAPI32.131] */
-WINAPI DWORD
-RegCreateKeyExW(
+DWORD RegCreateKeyExW(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -955,8 +949,7 @@ RegCreateKeyExW(
 }
 
 /* RegCreateKeyW		[ADVAPI32.132] */
-WINAPI DWORD
-RegCreateKeyW(
+DWORD RegCreateKeyW(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -981,8 +974,7 @@ RegCreateKeyW(
 }
 
 /* RegCreateKeyExA		[ADVAPI32.130] */
-WINAPI DWORD
-RegCreateKeyExA(
+DWORD RegCreateKeyExA(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -1034,8 +1026,7 @@ RegCreateKeyExA(
 }
 
 /* RegCreateKeyA		[ADVAPI32.129] */
-WINAPI DWORD
-RegCreateKeyA(
+DWORD RegCreateKeyA(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1059,8 +1050,7 @@ RegCreateKeyA(
 }
 
 /* RegCreateKey			[SHELL.2] [KERNEL.218] */
-WINAPI DWORD
-RegCreateKey(
+DWORD RegCreateKey(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1084,8 +1074,7 @@ RegCreateKey(
  */
 
 /* RegQueryValueExW		[ADVAPI32.158] */
-WINAPI DWORD
-RegQueryValueExW(
+DWORD RegQueryValueExW(
 	HKEY	hkey,
 	LPWSTR	lpszValueName,
 	LPDWORD	lpdwReserved,
@@ -1096,7 +1085,7 @@ RegQueryValueExW(
 	LPKEYSTRUCT	lpkey;
 	int		i;
 
-	dprintf_reg(stddeb,"RegQueryValueExW(%lx,%s,%p,%p,%p,%p)\n",
+	dprintf_reg(stddeb,"RegQueryValueExW(%x,%s,%p,%p,%p,%p)\n",
 		hkey,W2C(lpszValueName,0),lpdwReserved,lpdwType,lpbData,lpcbData
 	);
 
@@ -1141,8 +1130,7 @@ RegQueryValueExW(
 }
 
 /* RegQueryValueW		[ADVAPI32.159] */
-WINAPI DWORD
-RegQueryValueW(
+DWORD RegQueryValueW(
 	HKEY	hkey,
 	LPWSTR	lpszSubKey,
 	LPWSTR	lpszData,
@@ -1151,7 +1139,7 @@ RegQueryValueW(
 	HKEY	xhkey;
 	DWORD	ret,lpdwType;
 
-	dprintf_reg(stddeb,"RegQueryValueW(%lx,%s,%p,%p)\n->",
+	dprintf_reg(stddeb,"RegQueryValueW(%x,%s,%p,%p)\n->",
 		hkey,W2C(lpszSubKey,0),lpszData,lpcbData
 	);
 
@@ -1178,8 +1166,7 @@ RegQueryValueW(
 }
 
 /* RegQueryValueExA		[ADVAPI32.157] */
-WINAPI DWORD
-RegQueryValueExA(
+DWORD RegQueryValueExA(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	LPDWORD	lpdwReserved,
@@ -1192,7 +1179,7 @@ RegQueryValueExA(
 	DWORD	ret,myxlen;
 	DWORD	*mylen;
 
-	dprintf_reg(stddeb,"RegQueryValueExA(%lx,%s,%p,%p,%p,%p)\n->",
+	dprintf_reg(stddeb,"RegQueryValueExA(%x,%s,%p,%p,%p,%p)\n->",
 		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,lpcbData
 	);
 	if (lpbData) {
@@ -1250,8 +1237,7 @@ RegQueryValueExA(
 }
 
 /* RegQueryValueEx		[KERNEL.225] */
-WINAPI DWORD
-RegQueryValueEx(
+DWORD RegQueryValueEx(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	LPDWORD	lpdwReserved,
@@ -1259,7 +1245,7 @@ RegQueryValueEx(
 	LPBYTE	lpbData,
 	LPDWORD	lpcbData
 ) {
-	dprintf_reg(stddeb,"RegQueryValueEx(%lx,%s,%p,%p,%p,%p)\n",
+	dprintf_reg(stddeb,"RegQueryValueEx(%x,%s,%p,%p,%p,%p)\n",
 		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,lpcbData
 	);
 	return RegQueryValueExA(	
@@ -1273,8 +1259,7 @@ RegQueryValueEx(
 }
 
 /* RegQueryValueA		[ADVAPI32.156] */
-WINAPI DWORD
-RegQueryValueA(
+DWORD RegQueryValueA(
 	HKEY	hkey,
 	LPSTR	lpszSubKey,
 	LPSTR	lpszData,
@@ -1283,7 +1268,7 @@ RegQueryValueA(
 	HKEY	xhkey;
 	DWORD	ret,lpdwType;
 
-	dprintf_reg(stddeb,"RegQueryValueA(%lx,%s,%p,%p)\n",
+	dprintf_reg(stddeb,"RegQueryValueA(%x,%s,%p,%p)\n",
 		hkey,lpszSubKey,lpszData,lpcbData
 	);
 
@@ -1310,14 +1295,13 @@ RegQueryValueA(
 }
 
 /* RegQueryValue		[SHELL.6] [KERNEL.224] */
-WINAPI DWORD
-RegQueryValue(
+DWORD RegQueryValue(
 	HKEY	hkey,
 	LPSTR	lpszSubKey,
 	LPSTR	lpszData,
 	LPDWORD	lpcbData
 ) {
-	dprintf_reg(stddeb,"RegQueryValueA(%lx,%s,%p,%p)\n",
+	dprintf_reg(stddeb,"RegQueryValueA(%x,%s,%p,%p)\n",
 		hkey,lpszSubKey,lpszData,lpcbData
 	);
 	return RegQueryValueA(hkey,lpszSubKey,lpszData,lpcbData);
@@ -1332,8 +1316,7 @@ RegQueryValue(
  */
 
 /* RegSetValueExW		[ADVAPI32.170] */
-WINAPI DWORD
-RegSetValueExW(
+DWORD RegSetValueExW(
 	HKEY	hkey,
 	LPWSTR	lpszValueName,
 	DWORD	dwReserved,
@@ -1344,7 +1327,7 @@ RegSetValueExW(
 	LPKEYSTRUCT	lpkey;
 	int		i;
 
-	dprintf_reg(stddeb,"RegSetValueExW(%lx,%s,%ld,%ld,%p,%ld)\n",
+	dprintf_reg(stddeb,"RegSetValueExW(%x,%s,%ld,%ld,%p,%ld)\n",
 		hkey,W2C(lpszValueName,0),dwReserved,dwType,lpbData,cbData
 	);
 	/* we no longer care about the lpbData dwType here... */
@@ -1384,8 +1367,7 @@ RegSetValueExW(
 }
 
 /* RegSetValueExA		[ADVAPI32.169] */
-WINAPI DWORD
-RegSetValueExA(
+DWORD RegSetValueExA(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	DWORD	dwReserved,
@@ -1397,7 +1379,7 @@ RegSetValueExA(
 	LPWSTR	lpszValueNameW;
 	DWORD	ret;
 
-	dprintf_reg(stddeb,"RegSetValueExA(%lx,%s,%ld,%ld,%p,%ld)\n->",
+	dprintf_reg(stddeb,"RegSetValueExA(%x,%s,%ld,%ld,%p,%ld)\n->",
 		hkey,lpszValueName,dwReserved,dwType,lpbData,cbData
 	);
 	if ((1<<dwType) & UNICONVMASK) {
@@ -1418,8 +1400,7 @@ RegSetValueExA(
 }
 
 /* RegSetValueEx		[KERNEL.226] */
-WINAPI DWORD
-RegSetValueEx(
+DWORD RegSetValueEx(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	DWORD	dwReserved,
@@ -1427,15 +1408,14 @@ RegSetValueEx(
 	LPBYTE	lpbData,
 	DWORD	cbData
 ) {
-	dprintf_reg(stddeb,"RegSetValueEx(%lx,%s,%ld,%ld,%p,%ld)\n->",
+	dprintf_reg(stddeb,"RegSetValueEx(%x,%s,%ld,%ld,%p,%ld)\n->",
 		hkey,lpszValueName,dwReserved,dwType,lpbData,cbData
 	);
 	return RegSetValueExA(hkey,lpszValueName,dwReserved,dwType,lpbData,cbData);
 }
 
 /* RegSetValueW			[ADVAPI32.171] */
-WINAPI DWORD
-RegSetValueW(
+DWORD RegSetValueW(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	DWORD	dwType,
@@ -1445,7 +1425,7 @@ RegSetValueW(
 	HKEY	xhkey;
 	DWORD	ret;
 
-	dprintf_reg(stddeb,"RegSetValueW(%lx,%s,%ld,%s,%ld)\n->",
+	dprintf_reg(stddeb,"RegSetValueW(%x,%s,%ld,%s,%ld)\n->",
 		hkey,W2C(lpszSubKey,0),dwType,W2C(lpszData,0),cbData
 	);
 	if (lpszSubKey && *lpszSubKey) {
@@ -1471,8 +1451,7 @@ RegSetValueW(
 
 }
 /* RegSetValueA			[ADVAPI32.168] */
-WINAPI DWORD
-RegSetValueA(
+DWORD RegSetValueA(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwType,
@@ -1482,7 +1461,7 @@ RegSetValueA(
 	DWORD	ret;
 	HKEY	xhkey;
 
-	dprintf_reg(stddeb,"RegSetValueA(%lx,%s,%ld,%s,%ld)\n->",
+	dprintf_reg(stddeb,"RegSetValueA(%x,%s,%ld,%s,%ld)\n->",
 		hkey,lpszSubKey,dwType,lpszData,cbData
 	);
 	if (lpszSubKey && *lpszSubKey) {
@@ -1505,8 +1484,7 @@ RegSetValueA(
 }
 
 /* RegSetValue			[KERNEL.221] [SHELL.5] */
-WINAPI DWORD
-RegSetValue(
+DWORD RegSetValue(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwType,
@@ -1514,7 +1492,7 @@ RegSetValue(
 	DWORD	cbData
 ) {
 	DWORD	ret;
-	dprintf_reg(stddeb,"RegSetValue(%lx,%s,%ld,%s,%ld)\n->",
+	dprintf_reg(stddeb,"RegSetValue(%x,%s,%ld,%s,%ld)\n->",
 		hkey,lpszSubKey,dwType,lpszData,cbData
 	);
 	ret=RegSetValueA(hkey,lpszSubKey,dwType,lpszData,cbData);
@@ -1530,8 +1508,7 @@ RegSetValue(
  */
 
 /* RegEnumKeyExW		[ADVAPI32.139] */
-WINAPI DWORD
-RegEnumKeyExW(
+DWORD RegEnumKeyExW(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPWSTR	lpszName,
@@ -1543,7 +1520,7 @@ RegEnumKeyExW(
 ) {
 	LPKEYSTRUCT	lpkey,lpxkey;
 
-	dprintf_reg(stddeb,"RegEnumKeyExW(%lx,%ld,%p,%ld,%p,%p,%p,%p)\n",
+	dprintf_reg(stddeb,"RegEnumKeyExW(%x,%ld,%p,%ld,%p,%p,%p,%p)\n",
 		hkey,iSubkey,lpszName,*lpcchName,lpdwReserved,lpszClass,lpcchClass,ft
 	);
 	lpkey=lookup_hkey(hkey);
@@ -1571,8 +1548,7 @@ RegEnumKeyExW(
 }
 
 /* RegEnumKeyW			[ADVAPI32.140] */
-WINAPI DWORD
-RegEnumKeyW(
+DWORD RegEnumKeyW(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPWSTR	lpszName,
@@ -1580,14 +1556,13 @@ RegEnumKeyW(
 ) {
 	FILETIME	ft;
 
-	dprintf_reg(stddeb,"RegEnumKeyW(%lx,%ld,%p,%ld)\n->",
+	dprintf_reg(stddeb,"RegEnumKeyW(%x,%ld,%p,%ld)\n->",
 		hkey,iSubkey,lpszName,lpcchName
 	);
 	return RegEnumKeyExW(hkey,iSubkey,lpszName,&lpcchName,NULL,NULL,NULL,&ft);
 }
 /* RegEnumKeyExA		[ADVAPI32.138] */
-WINAPI DWORD
-RegEnumKeyExA(
+DWORD RegEnumKeyExA(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPSTR	lpszName,
@@ -1601,7 +1576,7 @@ RegEnumKeyExA(
 	LPWSTR	lpszNameW,lpszClassW;
 
 
-	dprintf_reg(stddeb,"RegEnumKeyExA(%lx,%ld,%p,%ld,%p,%p,%p,%p)\n->",
+	dprintf_reg(stddeb,"RegEnumKeyExA(%x,%ld,%p,%ld,%p,%p,%p,%p)\n->",
 		hkey,iSubkey,lpszName,*lpcchName,lpdwReserved,lpszClass,lpcchClass,ft
 	);
 	if (lpszName) {
@@ -1644,8 +1619,7 @@ RegEnumKeyExA(
 }
 
 /* RegEnumKeyA			[ADVAPI32.137] */
-WINAPI DWORD
-RegEnumKeyA(
+DWORD RegEnumKeyA(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPSTR	lpszName,
@@ -1653,7 +1627,7 @@ RegEnumKeyA(
 ) {
 	FILETIME	ft;
 
-	dprintf_reg(stddeb,"RegEnumKeyA(%lx,%ld,%p,%ld)\n->",
+	dprintf_reg(stddeb,"RegEnumKeyA(%x,%ld,%p,%ld)\n->",
 		hkey,iSubkey,lpszName,lpcchName
 	);
 	return	RegEnumKeyExA(
@@ -1669,14 +1643,13 @@ RegEnumKeyA(
 }
 
 /* RegEnumKey			[SHELL.7] [KERNEL.216] */
-WINAPI DWORD
-RegEnumKey(
+DWORD RegEnumKey(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPSTR	lpszName,
 	DWORD	lpcchName
 ) {
-	dprintf_reg(stddeb,"RegEnumKey(%lx,%ld,%p,%ld)\n->",
+	dprintf_reg(stddeb,"RegEnumKey(%x,%ld,%p,%ld)\n->",
 		hkey,iSubkey,lpszName,lpcchName
 	);
 	return RegEnumKeyA(hkey,iSubkey,lpszName,lpcchName);
@@ -1690,8 +1663,7 @@ RegEnumKey(
  */
 
 /* RegEnumValueW		[ADVAPI32.142] */
-WINAPI DWORD
-RegEnumValueW(
+DWORD RegEnumValueW(
 	HKEY	hkey,
 	DWORD	iValue,
 	LPWSTR	lpszValue,
@@ -1704,7 +1676,7 @@ RegEnumValueW(
 	LPKEYSTRUCT	lpkey;
 	LPKEYVALUE	val;
 
-	dprintf_reg(stddeb,"RegEnumValueW(%ld,%ld,%p,%p,%p,%p,%p,%p)\n",
+	dprintf_reg(stddeb,"RegEnumValueW(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
 		hkey,iValue,lpszValue,lpcchValue,lpdReserved,lpdwType,lpbData,lpcbData
 	);
 	lpkey = lookup_hkey(hkey);
@@ -1737,8 +1709,7 @@ RegEnumValueW(
 }
 
 /* RegEnumValueA		[ADVAPI32.141] */
-WINAPI DWORD
-RegEnumValueA(
+DWORD RegEnumValueA(
 	HKEY	hkey,
 	DWORD	iValue,
 	LPSTR	lpszValue,
@@ -1752,7 +1723,7 @@ RegEnumValueA(
 	LPBYTE	lpbDataW;
 	DWORD	ret,lpcbDataW;
 
-	dprintf_reg(stddeb,"RegEnumValueA(%ld,%ld,%p,%p,%p,%p,%p,%p)\n",
+	dprintf_reg(stddeb,"RegEnumValueA(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
 		hkey,iValue,lpszValue,lpcchValue,lpdReserved,lpdwType,lpbData,lpcbData
 	);
 
@@ -1795,8 +1766,7 @@ RegEnumValueA(
 }
 
 /* RegEnumValue			[KERNEL.223] */
-WINAPI DWORD
-RegEnumValue(
+DWORD RegEnumValue(
 	HKEY	hkey,
 	DWORD	iValue,
 	LPSTR	lpszValue,
@@ -1806,7 +1776,7 @@ RegEnumValue(
 	LPBYTE	lpbData,
 	LPDWORD	lpcbData
 ) {
-	dprintf_reg(stddeb,"RegEnumValue(%ld,%ld,%p,%p,%p,%p,%p,%p)\n",
+	dprintf_reg(stddeb,"RegEnumValue(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
 		hkey,iValue,lpszValue,lpcchValue,lpdReserved,lpdwType,lpbData,lpcbData
 	);
 	return RegEnumValueA(
@@ -1825,9 +1795,8 @@ RegEnumValue(
  *  Close registry key
  */
 /* RegCloseKey			[SHELL.3] [KERNEL.220] [ADVAPI32.126] */
-WINAPI DWORD
-RegCloseKey(HKEY hkey) {
-	dprintf_reg(stddeb,"RegCloseKey(%ld)\n",hkey);
+DWORD RegCloseKey(HKEY hkey) {
+	dprintf_reg(stddeb,"RegCloseKey(%x)\n",hkey);
 	remove_handle(hkey);
 	return ERROR_SUCCESS;
 }
@@ -1838,13 +1807,12 @@ RegCloseKey(HKEY hkey) {
  * RegDeleteKey -> RegDeleteKeyA -> RegDeleteKeyW
  */
 /* RegDeleteKeyW		[ADVAPI32.134] */
-WINAPI DWORD
-RegDeleteKeyW(HKEY hkey,LPWSTR lpszSubKey) {
+DWORD RegDeleteKeyW(HKEY hkey,LPWSTR lpszSubKey) {
 	LPKEYSTRUCT	*lplpPrevKey,lpNextKey,lpxkey;
 	LPWSTR		*wps;
 	int		wpc,i;
 
-	dprintf_reg(stddeb,"RegDeleteKeyW(%ld,%s)\n",
+	dprintf_reg(stddeb,"RegDeleteKeyW(%x,%s)\n",
 		hkey,W2C(lpszSubKey,0)
 	);
 	lpNextKey	= lookup_hkey(hkey);
@@ -1895,12 +1863,11 @@ RegDeleteKeyW(HKEY hkey,LPWSTR lpszSubKey) {
 }
 
 /* RegDeleteKeyA		[ADVAPI32.133] */
-WINAPI DWORD
-RegDeleteKeyA(HKEY hkey,LPCSTR lpszSubKey) {
+DWORD RegDeleteKeyA(HKEY hkey,LPCSTR lpszSubKey) {
 	LPWSTR	lpszSubKeyW;
 	DWORD	ret;
 
-	dprintf_reg(stddeb,"RegDeleteKeyA(%ld,%s)\n",
+	dprintf_reg(stddeb,"RegDeleteKeyA(%x,%s)\n",
 		hkey,lpszSubKey
 	);
 	lpszSubKeyW=strdupA2W(lpszSubKey);
@@ -1910,9 +1877,8 @@ RegDeleteKeyA(HKEY hkey,LPCSTR lpszSubKey) {
 }
 
 /* RegDeleteKey			[SHELL.4] [KERNEL.219] */
-WINAPI DWORD
-RegDeleteKey(HKEY hkey,LPCSTR lpszSubKey) {
-	dprintf_reg(stddeb,"RegDeleteKey(%ld,%s)\n",
+DWORD RegDeleteKey(HKEY hkey,LPCSTR lpszSubKey) {
+	dprintf_reg(stddeb,"RegDeleteKey(%x,%s)\n",
 		hkey,lpszSubKey
 	);
 	return RegDeleteKeyA(hkey,lpszSubKey);
@@ -1925,13 +1891,12 @@ RegDeleteKey(HKEY hkey,LPCSTR lpszSubKey) {
  * RegDeleteValue -> RegDeleteValueA -> RegDeleteValueW
  */
 /* RegDeleteValueW		[ADVAPI32.136] */
-WINAPI DWORD
-RegDeleteValueW(HKEY hkey,LPWSTR lpszValue) {
+DWORD RegDeleteValueW(HKEY hkey,LPWSTR lpszValue) {
 	DWORD		i;
 	LPKEYSTRUCT	lpkey;
 	LPKEYVALUE	val;
 
-	dprintf_reg(stddeb,"RegDeleteValueW(%ld,%s)\n",
+	dprintf_reg(stddeb,"RegDeleteValueW(%x,%s)\n",
 		hkey,W2C(lpszValue,0)
 	);
 	lpkey=lookup_hkey(hkey);
@@ -1965,14 +1930,11 @@ RegDeleteValueW(HKEY hkey,LPWSTR lpszValue) {
 }
 
 /* RegDeleteValueA		[ADVAPI32.135] */
-WINAPI DWORD
-RegDeleteValueA(HKEY hkey,LPSTR lpszValue) {
+DWORD RegDeleteValueA(HKEY hkey,LPSTR lpszValue) {
 	LPWSTR	lpszValueW;
 	DWORD	ret;
 
-	dprintf_reg(stddeb,"RegDeleteValueA(%ld,%s)\n",
-		hkey,lpszValue
-	);
+	dprintf_reg( stddeb, "RegDeleteValueA(%x,%s)\n", hkey,lpszValue );
 	if (lpszValue)
 		lpszValueW=strdupA2W(lpszValue);
 	else
@@ -1984,26 +1946,21 @@ RegDeleteValueA(HKEY hkey,LPSTR lpszValue) {
 }
 
 /* RegDeleteValue		[KERNEL.222] */
-WINAPI DWORD
-RegDeleteValue(HKEY hkey,LPSTR lpszValue) {
-	dprintf_reg(stddeb,"RegDeleteValue(%ld,%s)\n",
-		hkey,lpszValue
-	);
+DWORD RegDeleteValue(HKEY hkey,LPSTR lpszValue) {
+	dprintf_reg( stddeb,"RegDeleteValue(%x,%s)\n", hkey,lpszValue );
 	return RegDeleteValueA(hkey,lpszValue);
 }
 
 /* RegFlushKey			[ADVAPI32.143] [KERNEL.227] */
-WINAPI DWORD
-RegFlushKey(HKEY hkey) {
-	dprintf_reg(stddeb,"RegFlushKey(%ld), STUB.\n",hkey);
+DWORD RegFlushKey(HKEY hkey) {
+	dprintf_reg(stddeb,"RegFlushKey(%x), STUB.\n",hkey);
 	return SHELL_ERROR_SUCCESS;
 }
 
 /* FIXME: lpcchXXXX ... is this counting in WCHARS or in BYTEs ?? */
 
 /* RegQueryInfoKeyW		[ADVAPI32.153] */
-WINAPI DWORD
-RegQueryInfoKeyW(
+DWORD RegQueryInfoKeyW(
 	HKEY	hkey,
 	LPWSTR	lpszClass,
 	LPDWORD	lpcchClass,
@@ -2021,7 +1978,7 @@ RegQueryInfoKeyW(
 	int		nrofkeys,maxsubkey,maxclass,maxvalues,maxvname,maxvdata;
 	int		i;
 
-	dprintf_reg(stddeb,"RegQueryInfoKeyW(%lx,......)\n",hkey);
+	dprintf_reg(stddeb,"RegQueryInfoKeyW(%x,......)\n",hkey);
 	lpkey=lookup_hkey(hkey);
 	if (!lpkey)
 		return SHELL_ERROR_BADKEY;
@@ -2079,8 +2036,7 @@ RegQueryInfoKeyW(
 }
 
 /* RegQueryInfoKeyA		[ADVAPI32.152] */
-WINAPI DWORD
-RegQueryInfoKeyA(
+DWORD RegQueryInfoKeyA(
 	HKEY	hkey,
 	LPSTR	lpszClass,
 	LPDWORD	lpcchClass,
@@ -2097,7 +2053,7 @@ RegQueryInfoKeyA(
 	LPWSTR		lpszClassW;
 	DWORD		ret;
 
-	dprintf_reg(stddeb,"RegQueryInfoKeyA(%lx,......)\n",hkey);
+	dprintf_reg(stddeb,"RegQueryInfoKeyA(%x,......)\n",hkey);
 	if (lpszClass) {
 		*lpcchClass*= 2;
 		lpszClassW  = (LPWSTR)xmalloc(*lpcchClass);

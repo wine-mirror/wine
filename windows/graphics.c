@@ -808,7 +808,7 @@ BOOL Polygon (HDC hdc, LPPOINT pt, int count)
 /**********************************************************************
  *          PolyPolygon  (GDI.450)
  */
-BOOL PolyPolygon( HDC hdc, LPPOINT pt, LPINT counts, WORD polygons )
+BOOL PolyPolygon( HDC hdc, LPPOINT pt, LPINT16 counts, WORD polygons )
 {
     HRGN hrgn;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -999,8 +999,8 @@ BOOL FloodFill( HDC hdc, INT x, INT y, COLORREF color )
 /**********************************************************************
  *          DrawEdge  (USER.659)
  */
-BOOL WINAPI 
-DrawEdge(HDC hdc, LPRECT qrc, UINT edge, UINT flags) {
+BOOL DrawEdge(HDC hdc, LPRECT qrc, UINT edge, UINT flags)
+{
 	fprintf(stdnimp,"DrawEdge(%x,%p,%d,%x), empty stub!\n",
 		hdc,qrc,edge,flags
 	);
@@ -1010,8 +1010,8 @@ DrawEdge(HDC hdc, LPRECT qrc, UINT edge, UINT flags) {
 /**********************************************************************
  *          DrawFrameControl  (USER.656)
  */
-BOOL WINAPI 
-DrawFrameControl(HDC hdc, LPRECT qrc, UINT edge, UINT flags) {
+BOOL DrawFrameControl(HDC hdc, LPRECT qrc, UINT edge, UINT flags)
+{
 	fprintf(stdnimp,"DrawFrameControl(%x,%p,%d,%x), empty stub!\n",
 		hdc,qrc,edge,flags
 	);

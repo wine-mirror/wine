@@ -22,10 +22,10 @@ HGLOBAL	BSTRheapsel=0;
 
 static BSTR BSTR_AllocBytes(int n)
 {
-	HLOCAL mem;
+	HLOCAL16 mem;
 	if(!BSTRheapsel)
 	{
-		BSTRheapsel=GlobalAlloc(GMEM_FIXED,BSTR_HEAP_SIZE);
+		BSTRheapsel=GlobalAlloc16(GMEM_FIXED,BSTR_HEAP_SIZE);
 		LocalInit(BSTRheapsel,0,BSTR_HEAP_SIZE-1);
 	}
 	if(!BSTRheapsel)

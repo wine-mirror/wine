@@ -4,8 +4,6 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef WINELIB
-
 #include <string.h>
 #include "windows.h"
 #include "ldt.h"
@@ -73,6 +71,7 @@ WORD FreeSelector( WORD sel )
     dprintf_selector( stddeb, "FreeSelector(%04x)\n", sel );
     if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
     count = (GET_SEL_LIMIT(sel) >> 16) + 1;
+    sel &= ~(__AHINCR - 1);  /* clear bottom bits of selector */
     nextsel = sel + (count << __AHSHIFT);
     memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
     /* FIXME: is it correct to free the whole array? */
@@ -484,5 +483,3 @@ SEGPTR MAKE_SEGPTR(void * ptr)
     return ((entry << 16) | ((unsigned) ptr & 0xffff));
 }
 #endif
-
-#endif  /* WINELIB */

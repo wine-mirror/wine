@@ -66,8 +66,6 @@ typedef struct {
 	WORD id WINE_PACKED;
 } DLGITEMTEMPLATE32;
 
-#define CW_USEDEFAULT32	0x80000000
-
 typedef struct tagMSG32
 {
 	DWORD hwnd;

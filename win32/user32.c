@@ -26,53 +26,6 @@
 #include "stddebug.h"
 
 /***********************************************************************
- *           RegisterClassA      (USER32.426)
- */
-ATOM USER32_RegisterClassA(WNDCLASSA* wndclass)
-{
-	WNDCLASS copy;
-	HANDLE classh = 0, menuh = 0;
-	SEGPTR classsegp, menusegp;
-	char *classbuf, *menubuf;
-
-	ATOM retval;
-	copy.style=wndclass->style;
-	ALIAS_RegisterAlias(0,0,(DWORD)wndclass->lpfnWndProc);
-	copy.lpfnWndProc=wndclass->lpfnWndProc;
-	copy.cbClsExtra=wndclass->cbClsExtra;
-	copy.cbWndExtra=wndclass->cbWndExtra;
-	copy.hInstance=(HINSTANCE)wndclass->hInstance;
-	copy.hIcon=(HICON)wndclass->hIcon;
-	copy.hCursor=(HCURSOR)wndclass->hCursor;
-	copy.hbrBackground=(HBRUSH)wndclass->hbrBackground;
-
-	/* FIXME: There has to be a better way of doing this - but neither
-	malloc nor alloca will work */
-
-	if(wndclass->lpszMenuName)
-	{
-		menuh = GlobalAlloc(0, strlen(wndclass->lpszMenuName)+1);
-		menusegp = WIN16_GlobalLock(menuh);
-		menubuf = PTR_SEG_TO_LIN(menusegp);
-		strcpy( menubuf, wndclass->lpszMenuName);
-		copy.lpszMenuName=menusegp;
-	}else
-		copy.lpszMenuName=0;
-	if(wndclass->lpszClassName)
-	{
-		classh = GlobalAlloc(0, strlen(wndclass->lpszClassName)+1);
-		classsegp = WIN16_GlobalLock(classh);
-		classbuf = PTR_SEG_TO_LIN(classsegp);
-		strcpy( classbuf, wndclass->lpszClassName);
-		copy.lpszClassName=classsegp;
-	}
-	retval = RegisterClass(&copy);
-	GlobalFree(menuh);
-	GlobalFree(classh);
-	return retval;
-}
-
-/***********************************************************************
  *          GetMessageA          (USER32.269)
  */
 BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max)
@@ -145,23 +98,24 @@ BOOL USER32_TranslateMessage(MSG32* lpmsg)
 }
 
 /***********************************************************************
- *         CreateWindowExA        (USER32.82)
+ *         CreateWindowEx32A        (USER32.82)
  */
-DWORD USER32_CreateWindowExA(long flags,char* class,char *title,
-	long style,int x,int y,int width,int height,DWORD parent,DWORD menu,
-	DWORD instance,DWORD param)
+HWND32 CreateWindowEx32A( DWORD flags, LPCSTR class, LPCSTR title,
+                          DWORD style, INT32 x, INT32 y, INT32 width,
+                          INT32 height, HWND32 parent, HMENU32 menu,
+                          HINSTANCE32 instance, LPVOID param )
 {
-    DWORD retval;
+    HWND32 retval;
     HANDLE classh=0, titleh=0;
     SEGPTR classsegp=0, titlesegp=0;
     char *classbuf, *titlebuf;
 	int usec,uset;
 
     /*Have to translate CW_USEDEFAULT */
-    if(x==CW_USEDEFAULT32)x=CW_USEDEFAULT;
-    if(y==CW_USEDEFAULT32)y=CW_USEDEFAULT;
-    if(width==CW_USEDEFAULT32)width=CW_USEDEFAULT;
-    if(height==CW_USEDEFAULT32)height=CW_USEDEFAULT;
+    if(x==CW_USEDEFAULT32)x=CW_USEDEFAULT16;
+    if(y==CW_USEDEFAULT32)y=CW_USEDEFAULT16;
+    if(width==CW_USEDEFAULT32)width=CW_USEDEFAULT16;
+    if(height==CW_USEDEFAULT32)height=CW_USEDEFAULT16;
 
     /* FIXME: There has to be a better way of doing this - but neither
     malloc nor alloca will work */
@@ -169,39 +123,40 @@ DWORD USER32_CreateWindowExA(long flags,char* class,char *title,
 	uset = HIWORD(title);
 
 	if(usec){
-    	classh = GlobalAlloc(0, strlen(class)+1);
-    	classsegp = WIN16_GlobalLock(classh);
+    	classh = GlobalAlloc16(0, strlen(class)+1);
+    	classsegp = WIN16_GlobalLock16(classh);
     	classbuf = PTR_SEG_TO_LIN(classsegp);
     	strcpy( classbuf, class );
 	}
 	if(uset){
-    	titleh = GlobalAlloc(0, strlen(title)+1);
-    	titlesegp = WIN16_GlobalLock(titleh);
+    	titleh = GlobalAlloc16(0, strlen(title)+1);
+    	titlesegp = WIN16_GlobalLock16(titleh);
     	titlebuf = PTR_SEG_TO_LIN(titlesegp);
     	strcpy( titlebuf, title );
 	}
     
-    retval = (DWORD) CreateWindowEx(flags,(usec ? classsegp : (SEGPTR)class),
+    retval = (HWND32)CreateWindowEx16(flags,(usec ? classsegp : (SEGPTR)class),
 				  (uset ? titlesegp : (SEGPTR)title),style,x,y,width,height,
 				  (HWND)parent,(HMENU)menu,(HINSTANCE)instance,
 				  (DWORD)param);
-    if(usec)GlobalFree(classh);
-    if(uset)GlobalFree(titleh);
+    if(usec)GlobalFree16(classh);
+    if(uset)GlobalFree16(titleh);
     return retval;
 }
 
-DWORD USER32_CreateWindowExW(long flags,LPCWSTR class,LPCWSTR title,
-	long style,int x,int y,int width,int height,DWORD parent,DWORD menu,
-	DWORD instance,DWORD param)
+HWND32 CreateWindowEx32W( DWORD flags, LPCWSTR class, LPCWSTR title,
+                          DWORD style, INT32 x, INT32 y, INT32 width,
+                          INT32 height, HWND32 parent, HMENU32 menu,
+                          HINSTANCE32 instance, LPVOID param )
 {
-	HWND hwnd;
+        HWND32 hwnd;
 	LPSTR c,t;
 	int usec,uset;
 	usec=HIWORD(class);
 	uset=HIWORD(title);
 	c = usec ? STRING32_DupUniToAnsi(class) : (LPSTR)class;
 	t = uset ? STRING32_DupUniToAnsi(title) : (LPSTR)title;
-	hwnd=USER32_CreateWindowExA(flags,c,t,style,x,y,width,height,parent,menu,
+	hwnd=CreateWindowEx32A(flags,c,t,style,x,y,width,height,parent,menu,
 		instance,param);
 	if(usec)free(c);
 	if(uset)free(t);
@@ -328,8 +283,8 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 	rect.right -= rect.left;
 	rect.bottom -= rect.top;
 
-	if(dlgTempl->x == CW_USEDEFAULT)
-		rect.left = rect.top = CW_USEDEFAULT;
+	if(dlgTempl->x == CW_USEDEFAULT16)
+		rect.left = rect.top = CW_USEDEFAULT16;
 	else{
 		rect.left += dlgTempl->x * xUnit / 4;
 		rect.top += dlgTempl->y * yUnit / 8;
@@ -338,7 +293,7 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 	}
 
 	/* FIXME: Here is the place to consider A */
-	hwnd = USER32_CreateWindowExW(exStyle, (LPWSTR)ClassName, (LPWSTR)szCaption,
+	hwnd = CreateWindowEx32W(exStyle, (LPWSTR)ClassName, (LPWSTR)szCaption,
 		dlgTempl->style & ~WS_VISIBLE, 
 		rect.left, rect.top, rect.right, rect.bottom,
 		hWndParent, hMenu, hInst, 0);
@@ -407,7 +362,7 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 			fprintf(stderr,"having data\n");
 		}
 		ptr++;
-		hwndCtrl = USER32_CreateWindowExW(WS_EX_NOPARENTNOTIFY,
+		hwndCtrl = CreateWindowEx32W(WS_EX_NOPARENTNOTIFY,
 			(LPWSTR)ClassId, (LPWSTR)Text,
 			dlgitem->style | WS_CHILD,
 			dlgitem->x * xUnit / 4,

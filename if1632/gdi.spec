@@ -124,7 +124,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 125 pascal16 CreateMetaFile(ptr) CreateMetaFile
 126 pascal16 CloseMetaFile(word) CloseMetaFile
 127 pascal16 DeleteMetaFile(word) DeleteMetaFile
-128 pascal16 MulDiv(s_word s_word s_word) MulDiv
+128 pascal16 MulDiv(s_word s_word s_word) MulDiv16
 129 pascal16 SaveVisRgn(word) SaveVisRgn
 130 pascal16 RestoreVisRgn(word) RestoreVisRgn
 131 pascal16 InquireVisRgn(word) InquireVisRgn

@@ -303,7 +303,10 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
       /* Erase/update window */
 
-    if (flags & RDW_UPDATENOW) SendMessage( hwnd, WM_PAINT, 0, 0 );
+    if (flags & RDW_UPDATENOW)
+    {
+        if (wndPtr->hrgnUpdate) SendMessage( hwnd, WM_PAINT, 0, 0 );
+    }
     else if (flags & RDW_ERASENOW)
     {
         if (wndPtr->flags & WIN_NEEDS_NCPAINT)
@@ -318,7 +321,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
               /* Don't send WM_ERASEBKGND to icons */
               /* (WM_ICONERASEBKGND is sent during processing of WM_NCPAINT) */
                 if (!(wndPtr->dwStyle & WS_MINIMIZE) ||
-                    !wndPtr->class->wc.hIcon)
+                    !wndPtr->class->hIcon)
                 {
                     if (SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 ))
                         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;

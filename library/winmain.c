@@ -8,7 +8,7 @@
 extern int MAIN_Init(void);
 extern BOOL WIDGETS_Init(void);
 extern BOOL WIN_CreateDesktopWindow(void);
-extern int PASCAL WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
+extern int WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 extern void TASK_Reschedule(void);
 extern int USER_InitApp(HINSTANCE);
 

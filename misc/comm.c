@@ -426,7 +426,7 @@ int FlushComm(int fd, int fnQueue)
 	}
 }  
 
-int GetCommError(int fd, COMSTAT FAR *lpStat)
+int GetCommError(int fd, COMSTAT *lpStat)
 {
 	int temperror;
 
@@ -437,7 +437,7 @@ int GetCommError(int fd, COMSTAT FAR *lpStat)
 	return(temperror);
 }
 
-UINT FAR* SetCommEventMask(int fd, UINT fuEvtMask)
+UINT * SetCommEventMask(int fd, UINT fuEvtMask)
 {
     	dprintf_comm(stddeb,
 		"SetCommEventMask: fd %d, mask %d\n", fd, fuEvtMask);
@@ -453,7 +453,7 @@ UINT GetCommEventMask(int fd, int fnEvtClear)
 	return eventmask;
 }
 
-int SetCommState(DCB FAR *lpdcb)
+int SetCommState(DCB *lpdcb)
 {
 	struct termios port;
 	struct DosDeviceStruct *ptr;
@@ -652,7 +652,7 @@ int SetCommState(DCB FAR *lpdcb)
 	}
 }
 
-int GetCommState(int fd, DCB FAR *lpdcb)
+int GetCommState(int fd, DCB *lpdcb)
 {
 	struct termios port;
 

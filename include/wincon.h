@@ -196,140 +196,62 @@ typedef BOOL HANDLER_ROUTINE (WORD ctrltype);
 #define ENABLE_WRAP_AT_EOL_OUTPUT 0x02
 
 
-BOOL WINAPI AllocConsole (VOID);
+BOOL AllocConsole (VOID);
 
 
-HANDLE WINAPI CreateConsoleScreenBuffer (DWORD access,
-					 DWORD mode,
-					 CONST SECURITY_ATTRIBUTES * lattr,
-					 DWORD flags,
-					 VOID * ptr);
-
-BOOL WINAPI FillConsoleOutputAttribute (HANDLE h,
-					WORD attr,
-					DWORD len,
-					COORD co,
-					DWORD * done);
-
-BOOL WINAPI FillConsoleOutputCharacterA (HANDLE h,
-					 CHAR c,
-					 DWORD len,
-					 COORD co,
-					 DWORD * done);
-
-
-BOOL WINAPI FlushBuffer (HANDLE h);
-
-BOOL WINAPI FreeConsole (VOID);
-BOOL WINAPI GenerateConsoleCtrlEvent (DWORD  ev,    DWORD group);
-UINT WINAPI GetConsoleCP (VOID);
-BOOL WINAPI GetConsoleCursorInfo (HANDLE h, CONSOLE_CURSOR_INFO *info);
-BOOL WINAPI GetConsoleMode (HANDLE h, DWORD * mode);
-UINT WINAPI GetConsoleOutputCP (VOID);
-BOOL WINAPI GetConsoleScreenBufferInfo (HANDLE h, CONSOLE_SCREEN_BUFFER_INFO *
-					ptr);
-
-DWORD WINAPI GetConsoleTitleA (LPSTR str, DWORD len);
-
-
-COORD WINAPI GetLargestConsoleWindowSize (HANDLE h);
-
-BOOL WINAPI GetNumberOfConsoleInputEvents (HANDLE h,
-					   DWORD * n);
-
-BOOL WINAPI GetNumberOfConsoleMouseButtons (DWORD * n);
-
-BOOL WINAPI PeekConsoleInputA (HANDLE h,
-			       INPUT_RECORD * ptr,
-			       DWORD len,
-			       DWORD * done);
-
-
-
-BOOL WINAPI ReadConsoleA (HANDLE h,
-			  VOID * ptr,
-			  DWORD len,
-			  DWORD * done,
-			  VOID * res);
-
-BOOL WINAPI ReadConsoleInputA (HANDLE h,
-			       INPUT_RECORD * ptr,
-			       DWORD len,
-			       DWORD * done);
-
-BOOL WINAPI ReadConsoleOutputA (HANDLE h,
-				CHAR_INFO * ptr,
-				COORD size,
-				COORD fred,
-				SMALL_RECT * reg);
-
-BOOL WINAPI ReadConsoleOutputAttribute (HANDLE h,
-					WORD * attr,
-					DWORD len,
-					COORD rc,
-					DWORD * done);
-
-BOOL WINAPI ReadConsoleOutputCharacterA (HANDLE h,
-					 LPSTR c,
-					 DWORD len,
-					 COORD rc,
-					 DWORD * done);
-
-BOOL WINAPI ScrollConsoleScreenBufferA (HANDLE h,
-					CONST SMALL_RECT * sr,
-					CONST SMALL_RECT * cr,
-					COORD cpos,
-					CONST CHAR_INFO * i);
-
-
-BOOL WINAPI SetConsoleActiveScreenBuffer (HANDLE h);
-BOOL WINAPI SetConsoleCP (UINT i);
-BOOL WINAPI SetConsoleCtrlHandler (HANDLER_ROUTINE * func,  BOOL a);
-
-BOOL WINAPI SetConsoleCursorInfo (HANDLE h,  CONST CONSOLE_CURSOR_INFO * info);
-
-BOOL WINAPI SetConsoleCursorPosition (HANDLE h, COORD pos);
-
-BOOL WINAPI SetConsoleMode (HANDLE h, DWORD mode);
-
-BOOL WINAPI SetConsoleOutputCP (UINT i);
-BOOL WINAPI SetConsoleScreenBufferSize (HANDLE h, COORD size);
-BOOL WINAPI SetConsoleTextAttribute (HANDLE h,
-				     WORD attrs);
-BOOL WINAPI SetConsoleTitleA (const char * str);
-
-BOOL WINAPI SetConsoleWindowInfo (HANDLE h,
-				  BOOL abs, 
-				  CONST SMALL_RECT * wnd);
-
-BOOL WINAPI WriteConsoleA (HANDLE h, 
-			   CONST VOID *   ptr,
-			   DWORD slen,
-			   DWORD * done,
-			   VOID * res);
-
-BOOL WINAPI WriteConsoleInputA (HANDLE	h, 
-				CONST INPUT_RECORD * ptr,
-				DWORD len, 
-				DWORD * done);
-
-BOOL WINAPI WriteConsoleOutputA (HANDLE  h,
-				 CONST CHAR_INFO * ptr,
-				 COORD size, 
-				 COORD fred, 
-				 SMALL_RECT* where);
-
-BOOL WINAPI WriteConsoleOutputAttribute (HANDLE h,
-					 CONST WORD *attr,
-					 DWORD len,
-					 COORD co,
-					 DWORD * done);
-
-BOOL WINAPI WriteConsoleOutputCharacterA (HANDLE h,
-					  const char * c,
-					  DWORD len,
-					  COORD co,
-					  DWORD * done);
+HANDLE CreateConsoleScreenBuffer (DWORD access, DWORD mode,
+                                  CONST SECURITY_ATTRIBUTES * lattr,
+                                  DWORD flags, VOID * ptr);
+BOOL FillConsoleOutputAttribute (HANDLE h, WORD attr, DWORD len,
+                                 COORD co, DWORD * done);
+BOOL FillConsoleOutputCharacterA (HANDLE h, CHAR c, DWORD len,
+                                  COORD co, DWORD * done);
+BOOL FlushBuffer (HANDLE h);
+BOOL FreeConsole (VOID);
+BOOL GenerateConsoleCtrlEvent (DWORD  ev,    DWORD group);
+UINT GetConsoleCP (VOID);
+BOOL GetConsoleCursorInfo (HANDLE h, CONSOLE_CURSOR_INFO *info);
+BOOL GetConsoleMode (HANDLE h, DWORD * mode);
+UINT GetConsoleOutputCP (VOID);
+BOOL GetConsoleScreenBufferInfo (HANDLE h, CONSOLE_SCREEN_BUFFER_INFO * ptr);
+DWORD GetConsoleTitleA (LPSTR str, DWORD len);
+COORD GetLargestConsoleWindowSize (HANDLE h);
+BOOL GetNumberOfConsoleInputEvents (HANDLE h, DWORD * n);
+BOOL GetNumberOfConsoleMouseButtons (DWORD * n);
+BOOL PeekConsoleInputA (HANDLE h, INPUT_RECORD * ptr, DWORD len, DWORD * done);
+BOOL ReadConsoleA (HANDLE h, VOID * ptr, DWORD len, DWORD * done, VOID * res);
+BOOL ReadConsoleInputA (HANDLE h, INPUT_RECORD * ptr, DWORD len, DWORD * done);
+BOOL ReadConsoleOutputA (HANDLE h, CHAR_INFO * ptr, COORD size,
+                         COORD fred, SMALL_RECT * reg);
+BOOL ReadConsoleOutputAttribute (HANDLE h, WORD * attr, DWORD len,
+                                 COORD rc, DWORD * done);
+BOOL ReadConsoleOutputCharacterA (HANDLE h, LPSTR c, DWORD len,
+                                  COORD rc, DWORD * done);
+BOOL ScrollConsoleScreenBufferA (HANDLE h, CONST SMALL_RECT * sr,
+                                 CONST SMALL_RECT * cr, COORD cpos,
+                                 CONST CHAR_INFO * i);
+BOOL SetConsoleActiveScreenBuffer (HANDLE h);
+BOOL SetConsoleCP (UINT i);
+BOOL SetConsoleCtrlHandler (HANDLER_ROUTINE * func,  BOOL a);
+BOOL SetConsoleCursorInfo (HANDLE h,  CONST CONSOLE_CURSOR_INFO * info);
+BOOL SetConsoleCursorPosition (HANDLE h, COORD pos);
+BOOL SetConsoleMode (HANDLE h, DWORD mode);
+BOOL SetConsoleOutputCP (UINT i);
+BOOL SetConsoleScreenBufferSize (HANDLE h, COORD size);
+BOOL SetConsoleTextAttribute (HANDLE h, WORD attrs);
+BOOL SetConsoleTitleA (const char * str);
+BOOL SetConsoleWindowInfo (HANDLE h, BOOL abs, CONST SMALL_RECT * wnd);
+BOOL WriteConsoleA (HANDLE h, CONST VOID *   ptr, DWORD slen,
+                    DWORD * done, VOID * res);
+BOOL WriteConsoleInputA (HANDLE	h, CONST INPUT_RECORD * ptr,
+                         DWORD len, DWORD * done);
+BOOL WriteConsoleOutputA (HANDLE  h, CONST CHAR_INFO * ptr,
+                          COORD size, COORD fred, 
+                          SMALL_RECT* where);
+BOOL WriteConsoleOutputAttribute (HANDLE h, CONST WORD *attr, DWORD len,
+                                  COORD co, DWORD * done);
+BOOL WriteConsoleOutputCharacterA (HANDLE h, const char * c, DWORD len,
+                                   COORD co, DWORD * done);
 #endif
 #endif
 

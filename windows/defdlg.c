@@ -147,8 +147,8 @@ LRESULT DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	      /* Free dialog heap (if created) */
 	    if (dlgInfo->hDialogHeap)
 	    {
-		GlobalUnlock(dlgInfo->hDialogHeap);
-		GlobalFree(dlgInfo->hDialogHeap);
+		GlobalUnlock16(dlgInfo->hDialogHeap);
+		GlobalFree16(dlgInfo->hDialogHeap);
 		dlgInfo->hDialogHeap = 0;
 	    }
 

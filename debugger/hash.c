@@ -241,7 +241,7 @@ void DEBUG_LoadEntryPoints(void)
         /* Now search the non-resident names table */
 
         if (!pModule->nrname_handle) continue;  /* No non-resident table */
-        cpnt = (char *)GlobalLock( pModule->nrname_handle );
+        cpnt = (char *)GlobalLock16( pModule->nrname_handle );
         while (*cpnt)
         {
             cpnt += *cpnt + 1 + sizeof(WORD);

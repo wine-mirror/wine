@@ -107,7 +107,7 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 /**************************************************************************
 * 				MIDI_ReadByte			[internal]	
 */
-static DWORD MIDI_ReadByte(UINT wDevID, BYTE FAR *lpbyt)
+static DWORD MIDI_ReadByte(UINT wDevID, BYTE *lpbyt)
 {
 #ifdef linux
 	if (lpbyt != NULL) {

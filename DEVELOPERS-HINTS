@@ -1,7 +1,8 @@
 This is intended to be a document to help new developers get started.
 Existing developers should feel free to add their comments.
 
-MEMORY AND SEGMENTS:
+MEMORY AND SEGMENTS
+===================
 
 NE (Win16) executables consist of multiple segments.  The Wine loader
 loads each segment into a unique location in the Wine processes memory
@@ -41,7 +42,59 @@ pointers, instead of something like 'LPSTR' or 'char *'.  As SEGPTR is
 defined as a DWORD, you'll get a compilation warning if you mistakenly
 use it as a regular 32-bit pointer.
 
-API ENTRY POINTS:
+
+NAMING CONVENTIONS FOR API FUNCTIONS AND TYPES
+==============================================
+
+In order to support both Win16 and Win32 APIs within the same source
+code, as well as share the include files between the emulator and the
+library, the following convention must be used in naming all API
+functions and types. If the Windows API uses the name 'xxx', the Wine
+code must use:
+
+ - 'xxx16' for the 16-bit version,
+ - 'xxx32' for the 32-bit version when no ASCII/Unicode strings are
+   involved,
+ - 'xxx32A' for the 32-bit version with ASCII strings,
+ - 'xxx32W' for the 32-bit version with Unicode strings.
+
+You should then use the macros WINELIB_NAME[_AW](xxx) or
+DECL_WINELIB_TYPE[_AW](xxx) (defined in include/wintypes.h) to define
+the correct 'xxx' function or type for Winelib. When compiling the
+emulator, 'xxx' is _not_ defined, meaning that you must always specify
+explicitly whether you want the 16-bit or 32-bit version.
+
+Note: if 'xxx' is the same in Win16 and Win32, you can simply use the
+same name as Windows.
+
+Examples:
+
+typedef short INT16;
+typedef int INT32;
+DECL_WINELIB_TYPE(INT);
+
+typedef struct { /* Win32 ASCII data structure */ } WNDCLASS32A;
+typedef struct { /* Win32 Unicode data structure */ } WNDCLASS32W;
+typedef struct { /* Win16 data structure */ } WNDCLASS16;
+DECL_WINELIB_TYPE_AW(WNDCLASS);
+
+ATOM RegisterClass16( WNDCLASS16 * );
+ATOM RegisterClass32A( WNDCLASS32A * );
+ATOM RegisterClass32W( WNDCLASS32W * );
+#define RegisterClass WINELIB_NAME_AW(RegisterClass)
+
+The Winelib user can then say:
+
+    INT i;
+    WNDCLASS wc = { ... };
+    RegisterClass( &wc );
+
+and this will use the correct declaration depending on the definition
+of the symbols WINELIB16, WINELIB32 and UNICODE.
+
+
+API ENTRY POINTS
+================
 
 Because Win16 programs use a 16-bit stack and because they can only
 call 16:16 addressed functions, all API entry points must be at low
@@ -57,7 +110,9 @@ files contain tables used by relay.c to translate arguments and transfer
 control to the proper handler.  The format of the *.spec files is
 documented in the file "tools/build-spec.txt".
 
-DEBUG MESSAGES:
+
+DEBUG MESSAGES
+==============
 
 To display a message only during debugging, you normally write something
 like this:

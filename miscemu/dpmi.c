@@ -178,7 +178,7 @@ void INT_Int31Handler( struct sigcontext_struct context )
 
     case 0x0205:  /* Set protected mode interrupt vector */
 	INT_SetHandler( BL_reg(&context),
-                       (SEGPTR)MAKELONG( DX_reg(&context), CX_reg(&context) ));
+                     PTR_SEG_OFF_TO_SEGPTR(CX_reg(&context),DX_reg(&context)));
 	break;
 
     case 0x0300:  /* Simulate real mode interrupt 

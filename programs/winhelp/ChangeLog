@@ -1,0 +1,7 @@
+Mon Apr 29 19:48:15 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [winhelp.c] [winhelp.h] [hlpfile.c] [hlpfile.h]
+	[macro.c] [macro.h] [macro.lex.l] [macro.yacc.y]
+ 	[string.c] [En.rc] [De.rc] [Xx.rc] [hlp2sgml.c]
+	Original by Ulrich Schmid
+

@@ -23,7 +23,7 @@ LPSTR GetCommandLineA(void)
 {
     static char buffer[256];
     char *cp;
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
+    PDB *pdb = (PDB *)GlobalLock16( GetCurrentPDB() );
 
 #ifndef WINELIB
     strcpy(buffer, MODULE_GetModuleName( GetExePtr(GetCurrentTask()) ) );

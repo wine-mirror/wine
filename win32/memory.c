@@ -316,3 +316,12 @@ BOOL WIN32_IsBadWritePtr(void* ptr, unsigned int bytes)
 	/* FIXME: Should make check based on actual mappings, here */
 	return FALSE;
 }
+/******************************************************************
+ *                   IsBadWritePtr
+ */
+BOOL WIN32_IsBadCodePtr(void* ptr, unsigned int bytes)
+{
+	dprintf_global(stddeb,"IsBadCodePtr(%x,%x)\n",ptr,bytes);
+	/* FIXME: Should make check based on actual mappings, here */
+	return FALSE;
+}

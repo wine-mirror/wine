@@ -14,6 +14,8 @@
 #include "stddebug.h"
 #include "debug.h"
 
+static HANDLE32 ProcessHeap = 0;  /* FIXME: should be in process database */
+
 /***********************************************************************
  *           ExitProcess   (KERNEL32.100)
  */
@@ -26,7 +28,7 @@ void ExitProcess(DWORD status)
 /***********************************************************************
  *           CreateMutexA    (KERNEL32.52)
  */
-WINAPI HANDLE32 CreateMutexA (SECURITY_ATTRIBUTES *sa, BOOL on, const char *a)
+HANDLE32 CreateMutexA (SECURITY_ATTRIBUTES *sa, BOOL on, const char *a)
 {
 	return 0;
 }
@@ -34,7 +36,7 @@ WINAPI HANDLE32 CreateMutexA (SECURITY_ATTRIBUTES *sa, BOOL on, const char *a)
 /***********************************************************************
  *           ReleaseMutex    (KERNEL32.435)
  */
-WINAPI BOOL ReleaseMutex (HANDLE32 h)
+BOOL ReleaseMutex (HANDLE32 h)
 {
 	return 0;
 }
@@ -42,7 +44,7 @@ WINAPI BOOL ReleaseMutex (HANDLE32 h)
 /***********************************************************************
  *           CreateEventA    (KERNEL32.43)
  */
-WINAPI HANDLE32 CreateEventA (SECURITY_ATTRIBUTES *sa, BOOL au, BOOL on, const char
+HANDLE32 CreateEventA (SECURITY_ATTRIBUTES *sa, BOOL au, BOOL on, const char
 *name)
 {
 	return 0;
@@ -50,28 +52,28 @@ WINAPI HANDLE32 CreateEventA (SECURITY_ATTRIBUTES *sa, BOOL au, BOOL on, const c
 /***********************************************************************
  *           SetEvent    (KERNEL32.487)
  */
-WINAPI BOOL SetEvent (HANDLE32 h)
+BOOL SetEvent (HANDLE32 h)
 {
 	return 0;
 }
 /***********************************************************************
  *           ResetEvent    (KERNEL32.439)
  */
-WINAPI BOOL ResetEvent (HANDLE32 h)
+BOOL ResetEvent (HANDLE32 h)
 {
 	return 0;
 }
 /***********************************************************************
  *           WaitForSingleObject    (KERNEL32.561)
  */
-DWORD WINAPI WaitForSingleObject(HANDLE32 h, DWORD a)
+DWORD WaitForSingleObject(HANDLE32 h, DWORD a)
 {
 	return 0;
 }
 /***********************************************************************
  *           DuplicateHandle    (KERNEL32.78)
  */
-BOOL WINAPI DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, BOOL f, DWORD g)
+BOOL DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, BOOL f, DWORD g)
 {
 	*d = b;
 	return 1;
@@ -79,9 +81,18 @@ BOOL WINAPI DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DW
 /***********************************************************************
  *           GetCurrentProcess    (KERNEL32.198)
  */
-HANDLE32 WINAPI GetCurrentProcess(void)
+HANDLE32 GetCurrentProcess(void)
 {
 	return 0;
+}
+
+/***********************************************************************
+ *           GetProcessHeap    (KERNEL32.259)
+ */
+HANDLE32 GetProcessHeap(void)
+{
+    if (!ProcessHeap) ProcessHeap = HeapCreate( 0, 0x10000, 0 );
+    return ProcessHeap;
 }
 
 /***********************************************************************
@@ -89,7 +100,7 @@ HANDLE32 WINAPI GetCurrentProcess(void)
  * copied from LoadLibrary
  * This does not currently support built-in libraries
  */
-HANDLE32 WINAPI LoadLibraryA(char *libname)
+HANDLE32 LoadLibraryA(char *libname)
 {
 	HANDLE handle;
 	dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
@@ -113,7 +124,7 @@ HANDLE32 WINAPI LoadLibraryA(char *libname)
 /***********************************************************************
  *          WIN32_GetProcAddress
  */
-void* WINAPI WIN32_GetProcAddress(HANDLE32 hModule, char* function)
+void* WIN32_GetProcAddress(HANDLE32 hModule, char* function)
 {
 	dprintf_module( stddeb, "WIN32_GetProcAddress(%08x,%s)\n",
 		hModule, function);

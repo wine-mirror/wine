@@ -89,7 +89,7 @@ base	1
 0080 stub CreateMenu
 0081 stub CreatePopupMenu
 0082 stdcall CreateWindowExA(long ptr ptr long long long long long 
-							long long long ptr)	USER32_CreateWindowExA
+				long long long ptr) CreateWindowEx32A
 0083 stub CreateWindowExW
 0084 stub CreateWindowStationA
 0085 stub CreateWindowStationW
@@ -237,7 +237,7 @@ base	1
 0225 stub GetClipboardViewer
 0226 stub GetCursor
 0227 stub GetCursorInfo
-0228 stub GetCursorPos
+0228 stdcall GetCursorPos(ptr) GetCursorPos
 0229 stdcall GetDC(long) GetDC
 0230 stub GetDCEx
 0231 stdcall GetDesktopWindow() GetDesktopWindow
@@ -435,7 +435,7 @@ base	1
 0423 stub PtInRect
 0424 stub QuerySendMessage
 0425 stub RedrawWindow
-0426 stdcall RegisterClassA(ptr)	USER32_RegisterClassA
+0426 stdcall RegisterClassA(ptr) RegisterClass32A
 0427 stub RegisterClassExA
 0428 stub RegisterClassExW
 0429 stub RegisterClassW

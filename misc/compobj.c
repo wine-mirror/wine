@@ -19,7 +19,7 @@ DWORD currentMalloc=0;
 /***********************************************************************
  *           CoBuildVersion [COMPOBJ.1]
  */
-DWORD WINAPI CoBuildVersion()
+DWORD CoBuildVersion()
 {
 	dprintf_ole(stddeb,"CoBuildVersion()\n");
 	return (rmm<<16)+rup;
@@ -29,7 +29,7 @@ DWORD WINAPI CoBuildVersion()
  *           CoInitialize	[COMPOBJ.2]
  * lpReserved is an IMalloc pointer in 16bit OLE. We just stored it as-is.
  */
-HRESULT WINAPI CoInitialize(DWORD lpReserved)
+HRESULT CoInitialize(DWORD lpReserved)
 {
 	dprintf_ole(stdnimp,"CoInitialize\n");
 	/* remember the LPMALLOC, maybe somebody wants to read it later on */
@@ -48,7 +48,7 @@ void CoUnitialize()
 /***********************************************************************
  *           CoGetMalloc    [COMPOBJ.4]
  */
-HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
+HRESULT CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
 {
 	if(currentMalloc)
 	{
@@ -63,9 +63,7 @@ HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
 /***********************************************************************
  *           CoDisconnectObject
  */
-OLESTATUS WINAPI CoDisconnectObject(
-	LPUNKNOWN lpUnk,
-	DWORD reserved)
+OLESTATUS CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
     dprintf_ole(stdnimp,"CoDisconnectObject:%p %lx\n",lpUnk,reserved);
     return OLE_OK;

@@ -15,6 +15,7 @@
 #include "sysmetrics.h"
 #include "cursoricon.h"
 #include "event.h"
+#include "menu.h"
 #include "nonclient.h"
 #include "queue.h"
 #include "winpos.h"
@@ -97,10 +98,10 @@ void WIN_DumpWindow( HWND hwnd )
              ptr->ptIconPos.y, ptr->ptMaxPos.x, ptr->ptMaxPos.y, ptr->hSysMenu,
              ptr->flags, ptr->hProp, ptr->hVScroll, ptr->hHScroll );
 
-    if (ptr->class->wc.cbWndExtra)
+    if (ptr->class->cbWndExtra)
     {
         fprintf( stderr, "extra bytes:" );
-        for (i = 0; i < ptr->class->wc.cbWndExtra; i++)
+        for (i = 0; i < ptr->class->cbWndExtra; i++)
             fprintf( stderr, " %02x", *((BYTE*)ptr->wExtra+i) );
         fprintf( stderr, "\n" );
     }
@@ -324,7 +325,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     }
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
     if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
-    if (wndPtr->class->wc.style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
+    if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
     wndPtr->class->cWindows--;
     USER_HEAP_FREE( hwnd );
 }
@@ -361,7 +362,7 @@ BOOL WIN_CreateDesktopWindow(void)
     if (!(class = CLASS_FindClassByName( DESKTOP_CLASS_ATOM, 0 )))
 	return FALSE;
 
-    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+class->wc.cbWndExtra );
+    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+class->cbWndExtra );
     if (!hwndDesktop) return FALSE;
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
@@ -386,7 +387,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hmemTaskQ         = 0; /* Desktop does not belong to a task */
     pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->hwndLastActive    = hwndDesktop;
-    pWndDesktop->lpfnWndProc       = class->wc.lpfnWndProc;
+    pWndDesktop->lpfnWndProc       = class->lpfnWndProc;
     pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |
                                      WS_CLIPSIBLINGS;
     pWndDesktop->dwExStyle         = 0;
@@ -398,7 +399,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->flags             = 0;
     pWndDesktop->window            = rootWindow;
     pWndDesktop->hSysMenu          = 0;
-    pWndDesktop->hProp	      = 0;
+    pWndDesktop->hProp             = 0;
     EVENT_RegisterWindow( pWndDesktop->window, hwndDesktop );
     SendMessage( hwndDesktop, WM_NCCREATE, 0, 0 );
     if ((hdc = GetDC( hwndDesktop )) != 0)
@@ -411,23 +412,23 @@ BOOL WIN_CreateDesktopWindow(void)
 
 
 /***********************************************************************
- *           CreateWindow   (USER.41)
+ *           CreateWindow16   (USER.41)
  */
-HWND CreateWindow( SEGPTR className, SEGPTR windowName,
-		   DWORD style, INT x, INT y, INT width, INT height,
-		   HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
+HWND CreateWindow16( SEGPTR className, SEGPTR windowName,
+                     DWORD style, INT16 x, INT16 y, INT16 width, INT16 height,
+                     HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
-    return CreateWindowEx( 0, className, windowName, style,
+    return CreateWindowEx16( 0, className, windowName, style,
 			   x, y, width, height, parent, menu, instance, data );
 }
 
 
 /***********************************************************************
- *           CreateWindowEx   (USER.452)
+ *           CreateWindowEx16   (USER.452)
  */
-HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
-		     DWORD style, INT x, INT y, INT width, INT height,
-		     HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
+HWND CreateWindowEx16(DWORD exStyle, SEGPTR className, SEGPTR windowName,
+                      DWORD style, INT16 x, INT16 y, INT16 width, INT16 height,
+                      HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
     HANDLE hwnd;
     CLASS *classPtr;
@@ -452,8 +453,8 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 		exStyle, style, x, y, width, height,
 		parent, menu, instance, (DWORD)data);
 
-    if (x == CW_USEDEFAULT) x = y = 0;
-    if (width == CW_USEDEFAULT)
+    if (x == CW_USEDEFAULT16) x = y = 0;
+    if (width == CW_USEDEFAULT16)
     {
 	width = 600;
 	height = 400;
@@ -494,7 +495,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 
       /* Create the window structure */
 
-    hwnd = USER_HEAP_ALLOC( sizeof(WND)+classPtr->wc.cbWndExtra );
+    hwnd = USER_HEAP_ALLOC( sizeof(WND)+classPtr->cbWndExtra );
     if (!hwnd) {
 	dprintf_win(stddeb,"CreateWindowEx: Out of memory\n");
 	return 0;
@@ -519,7 +520,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     wndPtr->hmemTaskQ      = GetTaskQueue(0);
     wndPtr->hrgnUpdate     = 0;
     wndPtr->hwndLastActive = hwnd;
-    wndPtr->lpfnWndProc    = classPtr->wc.lpfnWndProc;
+    wndPtr->lpfnWndProc    = classPtr->lpfnWndProc;
     wndPtr->dwStyle        = style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = exStyle;
     wndPtr->wIDmenu        = 0;
@@ -527,21 +528,18 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     wndPtr->flags          = 0;
     wndPtr->hVScroll       = 0;
     wndPtr->hHScroll       = 0;
-    wndPtr->hSysMenu       = 0;
+    wndPtr->hSysMenu       = MENU_GetDefSysMenu();
     wndPtr->hProp          = 0;
 
-    if (classPtr->wc.cbWndExtra)
-	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
+    if (classPtr->cbWndExtra)
+	memset( wndPtr->wExtra, 0, classPtr->cbWndExtra );
     classPtr->cWindows++;
 
       /* Get class or window DC if needed */
 
-    if (classPtr->wc.style & CS_OWNDC)
-        wndPtr->hdce = DCE_AllocDCE( DCE_WINDOW_DC );
-    else if (classPtr->wc.style & CS_CLASSDC)
-        wndPtr->hdce = classPtr->hdce;
-    else
-        wndPtr->hdce = 0;
+    if (classPtr->style & CS_OWNDC) wndPtr->hdce = DCE_AllocDCE(DCE_WINDOW_DC);
+    else if (classPtr->style & CS_CLASSDC) wndPtr->hdce = classPtr->hdce;
+    else wndPtr->hdce = 0;
 
       /* Insert the window in the linked list */
 
@@ -588,7 +586,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 	}
         win_attr.colormap      = COLOR_WinColormap;
         win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
-        win_attr.save_under    = ((classPtr->wc.style & CS_SAVEBITS) != 0);
+        win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
         win_attr.cursor        = CURSORICON_XCursor;
         wndPtr->window = XCreateWindow( display, rootWindow, x, y,
                                         width, height, 0, CopyFromParent,
@@ -612,12 +610,10 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     if ((style & WS_CAPTION) && !(style & WS_CHILD))
     {
         if (menu) SetMenu(hwnd, menu);
-        else if (classPtr->wc.lpszMenuName)
-            SetMenu( hwnd, LoadMenu( instance, classPtr->wc.lpszMenuName ) );
+        else if (classPtr->lpszMenuName)
+            SetMenu( hwnd, LoadMenu( instance, classPtr->lpszMenuName ) );
     }
     else wndPtr->wIDmenu = (UINT)menu;
-
-    GetSystemMenu( hwnd, TRUE );  /* Create a copy of the system menu */
 
       /* Send the WM_CREATE message */
 
@@ -643,7 +639,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     else
     {
 	WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
-			       NULL, NULL, NULL, &wndPtr->rectClient );
+			       NULL, NULL, 0, &wndPtr->rectClient );
 	wmcreate = SendMessage(hwnd, WM_CREATE, 0, (LPARAM)MAKE_SEGPTR(&createStruct));
     }
 
@@ -758,7 +754,14 @@ BOOL OpenIcon(HWND hWnd)
 /***********************************************************************
  *           FindWindow   (USER.50)
  */
-HWND FindWindow( SEGPTR ClassMatch, LPSTR TitleMatch )
+HWND FindWindow( SEGPTR ClassMatch, LPSTR TitleMatch ) {
+    return FindWindowEx((HWND)0,(HWND)0,ClassMatch,TitleMatch);
+}
+/***********************************************************************
+ *           FindWindowEx   (USER.427)
+ */
+HWND 
+FindWindowEx(HWND parent,HWND childafter,SEGPTR ClassMatch,LPSTR TitleMatch )
 {
     WND *wndPtr;
     CLASS *class = NULL;
@@ -769,7 +772,23 @@ HWND FindWindow( SEGPTR ClassMatch, LPSTR TitleMatch )
             return 0;
     }
 
-    wndPtr = pWndDesktop->child;
+    if (parent) {
+    	wndPtr = WIN_FindWndPtr(parent);
+    	if (wndPtr == NULL)
+    		wndPtr = pWndDesktop;
+    	wndPtr = wndPtr->child;
+    } else
+	wndPtr = pWndDesktop->child;
+    if (childafter) {
+	while (wndPtr)
+	{
+	    if (childafter == wndPtr->hwndSelf) {
+	    	wndPtr = wndPtr->next;
+	    	break;
+	    }
+	    wndPtr = wndPtr->next;
+	}
+    }
     while (wndPtr)
     {
 	if (!class || (wndPtr->class == class))
@@ -1524,7 +1543,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
  LPDRAGINFO	lpDragInfo;
  SEGPTR		spDragInfo;
  HCURSOR 	hDragCursor=0, hOldCursor=0, hBummer=0;
- HANDLE		hDragInfo  = GlobalAlloc( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO));
+ HANDLE		hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO));
  WND           *wndPtr = WIN_FindWndPtr(hWnd);
  DWORD		dwRet = 0;
  short	 	dragDone = 0;
@@ -1532,8 +1551,8 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
  HWND		hCurrentWnd = 0;
  WORD	        btemp;
 
- lpDragInfo = (LPDRAGINFO) GlobalLock(hDragInfo);
- spDragInfo = (SEGPTR) WIN16_GlobalLock(hDragInfo);
+ lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
+ spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
 
  if( !lpDragInfo || !spDragInfo ) return 0L;
 
@@ -1541,7 +1560,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
 
  if( !hBummer || !wndPtr )
    {
-        GlobalFree(hDragInfo);
+        GlobalFree16(hDragInfo);
         return 0L;
    }
 
@@ -1549,7 +1568,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
    {
 	if( !(hDragCursor = CURSORICON_IconToCursor(hCursor)) )
 	  {
-	   GlobalFree(hDragInfo);
+	   GlobalFree16(hDragInfo);
 	   return 0L;
 	  }
 
@@ -1632,7 +1651,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
  if( hCurrentCursor != hBummer ) 
 	dwRet = SendMessage( lpDragInfo->hScope, WM_DROPOBJECT, 
 			     (WPARAM)hWnd, (LPARAM)spDragInfo );
- GlobalFree(hDragInfo);
+ GlobalFree16(hDragInfo);
 
  return dwRet;
 }

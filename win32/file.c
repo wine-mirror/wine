@@ -38,7 +38,7 @@ static int TranslateAccessFlags(DWORD access_flags);
  *           OpenFileMappingA             (KERNEL32.397)
  *
  */
-WINAPI HANDLE32 OpenFileMapping(DWORD access, BOOL inherit,const char *fname)
+HANDLE32 OpenFileMapping(DWORD access, BOOL inherit,const char *fname)
 {
 	return 0;
 }
@@ -47,7 +47,7 @@ WINAPI HANDLE32 OpenFileMapping(DWORD access, BOOL inherit,const char *fname)
  *
  */
 int TranslateProtectionFlags(DWORD);
-WINAPI HANDLE32 CreateFileMapping(HANDLE32 h,SECURITY_ATTRIBUTES *ats,
+HANDLE32 CreateFileMapping(HANDLE32 h,SECURITY_ATTRIBUTES *ats,
   DWORD pot,  DWORD sh,  DWORD hlow,  const char * lpName )
 {
     FILE_OBJECT *file_obj;
@@ -94,8 +94,8 @@ WINAPI HANDLE32 CreateFileMapping(HANDLE32 h,SECURITY_ATTRIBUTES *ats,
  *           MapViewOfFileEx                  (KERNEL32.386)
  *
  */
-WINAPI void *MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offhi,
-                             DWORD offlo, DWORD size, DWORD st)
+void *MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offhi,
+                      DWORD offlo, DWORD size, DWORD st)
 {
     if (!size) size = ((FILEMAP_OBJECT *)handle)->size;
     return mmap ((caddr_t)st, size, ((FILEMAP_OBJECT *)handle)->prot, 
@@ -108,8 +108,8 @@ WINAPI void *MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offhi,
  *           GetFileInformationByHandle       (KERNEL32.219)
  *
  */
-DWORD WINAPI GetFileInformationByHandle(FILE_OBJECT *hFile, 
-                                        BY_HANDLE_FILE_INFORMATION *lpfi)
+DWORD GetFileInformationByHandle(FILE_OBJECT *hFile, 
+                                 BY_HANDLE_FILE_INFORMATION *lpfi)
 {
   struct stat file_stat;
     int rc;

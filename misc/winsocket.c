@@ -1104,8 +1104,8 @@ static void send_message( HWND hWnd, u_int wMsg, HANDLE handle, long lParam)
 }
 
 
-HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, const char *addr,
-		 INT len, INT type, char *buf, INT buflen)
+HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, LPCSTR addr,
+                             INT len, INT type, LPSTR buf, INT buflen)
 {
 	HANDLE handle;
 	struct hostent *host;
@@ -1139,8 +1139,8 @@ HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, const char *addr,
 }
 
 
-HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, const char *name, 
-			char *buf, INT buflen)
+HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, LPCSTR name, 
+                             LPSTR buf, INT buflen)
 {
 	HANDLE handle;
 	struct hostent *host;
@@ -1174,8 +1174,8 @@ HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, const char *name,
 }                     
 
 
-HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, const char *name, 
-			char *buf, INT buflen)
+HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, LPCSTR name, 
+                              LPSTR buf, INT buflen)
 {
 	HANDLE handle;
 	struct protoent *proto;
@@ -1210,7 +1210,7 @@ HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, const char *name,
 
 
 HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number, 
-			char *buf, INT buflen)
+                                LPSTR buf, INT buflen)
 {
 	HANDLE handle;
 	struct protoent *proto;
@@ -1244,8 +1244,8 @@ HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number,
 }
 
 
-HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, const char *name, 
-			const char *proto, char *buf, INT buflen)
+HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, LPCSTR name, 
+                             LPCSTR proto, LPSTR buf, INT buflen)
 {
 	HANDLE handle;
 	struct servent *service;
@@ -1279,8 +1279,8 @@ HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, const char *name,
 }
 
 
-HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, const char 
-			*proto, char *buf, INT buflen)
+HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, LPCSTR proto,
+                             LPSTR buf, INT buflen)
 {
 	HANDLE handle;
 	struct servent *service;
@@ -1508,10 +1508,10 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 
 	/* alloc winsock heap */
 
-    if ((HeapHandle = GlobalAlloc(GMEM_FIXED,sizeof(struct WinSockHeap))) == 0)
+    if ((HeapHandle = GlobalAlloc16(GMEM_FIXED,sizeof(struct WinSockHeap))) == 0)
 	return WSASYSNOTREADY;
 
-    Heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
+    Heap = (struct WinSockHeap *) GlobalLock16(HeapHandle);
 
     /* return winsock information */
     memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data)); 

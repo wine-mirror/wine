@@ -50,7 +50,7 @@ UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
     dprintf_reg(stddeb,"DragQueryFile(%04x, %i, %p, %u)\n",
 		hDrop,wFile,lpszFile,wLength);
     
-    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
+    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop); 
     if(!lpDropFileStruct)
     {
 	dprintf_reg(stddeb,"DragQueryFile: unable to lock handle!\n");
@@ -73,7 +73,7 @@ UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
     strncpy(lpszFile, lpCurrent, i);
     lpszFile[i] = '\0';
     
-    GlobalUnlock(hDrop);
+    GlobalUnlock16(hDrop);
     return i;
 }
 
@@ -83,24 +83,24 @@ UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
  */
 void DragFinish(HDROP h)
 {
-    GlobalFree((HGLOBAL)h);
+    GlobalFree16((HGLOBAL16)h);
 }
 
 
 /*************************************************************************
  *				DragQueryPoint		[SHELL.13]
  */
-BOOL DragQueryPoint(HDROP hDrop, POINT FAR *p)
+BOOL DragQueryPoint(HDROP hDrop, POINT *p)
 {
     LPDROPFILESTRUCT lpDropFileStruct;  
     BOOL             bRet;
 
-    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
+    lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop);
 
     memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
     bRet = lpDropFileStruct->fInNonClientArea;
 
-    GlobalUnlock(hDrop);
+    GlobalUnlock16(hDrop);
     return bRet;
 }
 
@@ -179,11 +179,11 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpPar
 	  }
 	} else {
 	  fprintf(stddeb,"ShellExecute: No %s\\shell\\%s\\command found for \"%s\" suffix.\n",subclass,lpOperation,p);
-	  return (HINSTANCE)14; /* unknown type */
+	  return (HINSTANCE)31; /* unknown type */
 	}
       } else {
 	fprintf(stddeb,"ShellExecute: No operation found for \"%s\" suffix.\n",p);
-	return (HINSTANCE)14; /* file not found */
+	return (HINSTANCE)31; /* file not found */
       }
     }
     dprintf_exec(stddeb,"ShellExecute:starting %s\n",cmd);
@@ -202,7 +202,7 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
         return 31;		/* no association */
 }
 
-static char AppName[128], AppMisc[906];
+static char AppName[128], AppMisc[1536];
 
 /*************************************************************************
  *				AboutDlgProc		[SHELL.33]
@@ -313,7 +313,7 @@ HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WOR
  BYTE*	ptr;
  HANDLE handle = DirectResAlloc( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
 
- if( (ptr = (BYTE*)GlobalLock( handle )) )
+ if( (ptr = (BYTE*)GlobalLock16( handle )) )
    {
     _llseek( hFile, (DWORD)pNInfo->offset << sizeShift, SEEK_SET);
      FILE_Read( hFile, (char*)ptr, pNInfo->length << sizeShift);
@@ -340,8 +340,8 @@ HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIco
 
   if( hFile == HFILE_ERROR || !n ) return 0;
 
-  hRet = GlobalAlloc( GMEM_MOVEABLE, sizeof(HICON)*n);
-  RetPtr = (HICON*)GlobalLock(hRet);
+  hRet = GlobalAlloc16( GMEM_FIXED, sizeof(HICON)*n);
+  RetPtr = (HICON*)GlobalLock16(hRet);
 
  *RetPtr = (n == 0xFFFF)? 0: 1;				/* error return values */
 
@@ -397,7 +397,7 @@ HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIco
 		       hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + (i - nIconIndex), 
 										 *(WORD*)pData );
 		       RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
-		       GlobalFree(hIcon); 
+		       GlobalFree16(hIcon); 
 		     }
 
 		  for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
@@ -429,10 +429,10 @@ HICON ExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
 
   if( handle )
     {
-      HICON* ptr = (HICON*)GlobalLock(handle);
+      HICON* ptr = (HICON*)GlobalLock16(handle);
       HICON  hIcon = *ptr;
 
-      GlobalFree(handle);
+      GlobalFree16(handle);
       return hIcon;
     }
   return 0;

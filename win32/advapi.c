@@ -16,7 +16,7 @@
  *           GetUserNameA   [ADVAPI32.67]
  */
 
-BOOL WINAPI GetUserNameA(LPSTR lpszName, LPDWORD lpSize)
+BOOL GetUserNameA(LPSTR lpszName, LPDWORD lpSize)
 {
   size_t len;
   char *name;

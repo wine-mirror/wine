@@ -6,6 +6,19 @@ ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 LANGUAGES   = En De Fr
 LICENSELANG = En
 
+# Installation infos
+
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+bindir          = @bindir@
+libdir          = @libdir@
+sysconfdir      = @sysconfdir@
+mandir          = @mandir@/man1
+manext          = .1
+
 MOSTOBJS = \
 	dialog.o \
 	group.o \
@@ -30,10 +43,15 @@ all: check_winerc $(PROGRAMS)
 progman: $(MOSTOBJS) $(STRINGOBJS) $(WINELIB)
 	$(CC) -o progman $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
+install: dummy
+	$(INSTALL_PROGRAM) progman $(bindir)/progman
+
 clean::
 	$(RM) accel.c accel.h $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h) progman
 
 accel.c accel.h: $(WINERC) Xx.rc
 $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
+
+dummy:
 
 ### Dependencies:

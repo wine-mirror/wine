@@ -4,8 +4,6 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef WINELIB
-
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -25,16 +23,16 @@
   /* Global arena block */
 typedef struct
 {
-    DWORD    base;           /* Base address (0 if discarded) */
-    DWORD    size;           /* Size in bytes (0 indicates a free block) */
-    HGLOBAL  handle;         /* Handle for this block */
-    HGLOBAL  hOwner;         /* Owner of this block */
-    BYTE     lockCount;      /* Count of GlobalFix() calls */
-    BYTE     pageLockCount;  /* Count of GlobalPageLock() calls */
-    BYTE     flags;          /* Allocation flags */
-    BYTE     selCount;       /* Number of selectors allocated for this block */
+    DWORD     base;          /* Base address (0 if discarded) */
+    DWORD     size;          /* Size in bytes (0 indicates a free block) */
+    HGLOBAL16 handle;        /* Handle for this block */
+    HGLOBAL16 hOwner;        /* Owner of this block */
+    BYTE      lockCount;     /* Count of GlobalFix() calls */
+    BYTE      pageLockCount; /* Count of GlobalPageLock() calls */
+    BYTE      flags;         /* Allocation flags */
+    BYTE      selCount;      /* Number of selectors allocated for this block */
 #ifdef CONFIG_IPC
-    int      shmid;
+    int       shmid;
 #endif
 } GLOBALARENA;
 
@@ -94,10 +92,10 @@ void debug_handles()
  *
  * Create a global heap block for a fixed range of linear memory.
  */
-HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
-                            HGLOBAL hOwner, BOOL isCode,
-                            BOOL is32Bit, BOOL isReadOnly,
-			    SHMDATA *shmdata  )
+HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
+                              HGLOBAL16 hOwner, BOOL isCode,
+                              BOOL is32Bit, BOOL isReadOnly,
+                              SHMDATA *shmdata  )
 {
     WORD sel, selcount;
     GLOBALARENA *pArena;
@@ -158,7 +156,7 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
  * Free a block allocated by GLOBAL_CreateBlock, without touching
  * the associated linear memory range.
  */
-BOOL GLOBAL_FreeBlock( HGLOBAL handle )
+BOOL GLOBAL_FreeBlock( HGLOBAL16 handle )
 {
     WORD sel;
 
@@ -173,13 +171,13 @@ BOOL GLOBAL_FreeBlock( HGLOBAL handle )
 /***********************************************************************
  *           GLOBAL_Alloc
  *
- * Implementation of GlobalAlloc()
+ * Implementation of GlobalAlloc16()
  */
-HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
-                      BOOL isCode, BOOL is32Bit, BOOL isReadOnly )
+HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
+                        BOOL isCode, BOOL is32Bit, BOOL isReadOnly )
 {
     void *ptr;
-    HGLOBAL handle;
+    HGLOBAL16 handle;
     SHMDATA shmdata;
 
     dprintf_global( stddeb, "GlobalAlloc: %ld flags=%04x\n", size, flags );
@@ -265,11 +263,11 @@ WORD DDE_GlobalHandleToSel( HGLOBAL handle )
 
 
 /***********************************************************************
- *           GlobalAlloc   (KERNEL.15)
+ *           GlobalAlloc16   (KERNEL.15)
  */
-HGLOBAL GlobalAlloc( WORD flags, DWORD size )
+HGLOBAL16 GlobalAlloc16( UINT16 flags, DWORD size )
 {
-    HANDLE owner = GetCurrentPDB();
+    HANDLE16 owner = GetCurrentPDB();
 
     if (flags & GMEM_DDESHARE)
         owner = GetExePtr(owner);  /* Make it a module handle */
@@ -278,9 +276,9 @@ HGLOBAL GlobalAlloc( WORD flags, DWORD size )
 
 
 /***********************************************************************
- *           GlobalReAlloc   (KERNEL.16)
+ *           GlobalReAlloc16   (KERNEL.16)
  */
-HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
+HGLOBAL16 GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
 {
     WORD selcount;
     DWORD oldsize;
@@ -288,14 +286,14 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     GLOBALARENA *pArena, *pNewArena;
     WORD sel = GlobalHandleToSel( handle );
 
-    dprintf_global( stddeb, "GlobalReAlloc: %04x %ld flags=%04x\n",
+    dprintf_global( stddeb, "GlobalReAlloc16: %04x %ld flags=%04x\n",
                     handle, size, flags );
     if (!handle) return 0;
     
 #ifdef CONFIG_IPC
     if (Options.ipc && (flags & GMEM_DDESHARE || is_dde_handle(handle))) {
 	fprintf(stdnimp,
-		"GlobalReAlloc: shared memory reallocating unimplemented\n"); 
+               "GlobalReAlloc16: shared memory reallocating unimplemented\n"); 
 	return 0;
     }
 #endif  /* CONFIG_IPC */
@@ -384,13 +382,13 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
 
 
 /***********************************************************************
- *           GlobalFree   (KERNEL.17)
+ *           GlobalFree16   (KERNEL.17)
  */
-HGLOBAL GlobalFree( HGLOBAL handle )
+HGLOBAL16 GlobalFree16( HGLOBAL16 handle )
 {
-    void *ptr = GlobalLock( handle );
+    void *ptr = GlobalLock16( handle );
 
-    dprintf_global( stddeb, "GlobalFree: %04x\n", handle );
+    dprintf_global( stddeb, "GlobalFree16: %04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_GlobalFree(handle);
@@ -401,80 +399,84 @@ HGLOBAL GlobalFree( HGLOBAL handle )
 
 
 /***********************************************************************
- *           WIN16_GlobalLock   (KERNEL.18)
+ *           WIN16_GlobalLock16   (KERNEL.18)
  *
- * This is the GlobalLock() function used by 16-bit code.
+ * This is the GlobalLock16() function used by 16-bit code.
  */
-SEGPTR WIN16_GlobalLock( HGLOBAL handle )
+SEGPTR WIN16_GlobalLock16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "WIN16_GlobalLock(%04x) -> %08lx\n",
+#ifndef WINELIB
+    dprintf_global( stddeb, "WIN16_GlobalLock16(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
     if (!handle) return 0;
 
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle))
-        return (SEGPTR)MAKELONG( 0, DDE_GlobalHandleToSel(handle) );
+        return PTR_SEG_OFF_TO_SEGPTR( DDE_GlobalHandleToSel(handle), 0 );
 #endif  /* CONFIG_IPC */
 
     if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
-    return (SEGPTR)MAKELONG( 0, GlobalHandleToSel(handle) );
+    return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(handle), 0 );
+#else  /* WINELIB */
+    return GlobalLock16( handle );
+#endif  /* WINELIB */
 }
 
 
 /***********************************************************************
- *           GlobalLock   (KERNEL.18)
+ *           GlobalLock16   (KERNEL.18)
  *
- * This is the GlobalLock() function used by 32-bit code.
+ * This is the GlobalLock16() function used by 32-bit code.
  */
-LPVOID GlobalLock( HGLOBAL handle )
+LPVOID GlobalLock16( HGLOBAL16 handle )
 {
     if (!handle) return 0;
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_AttachHandle(handle, NULL);
 #endif
-    return (LPSTR)GET_ARENA_PTR(handle)->base;
+    return (LPVOID)GET_ARENA_PTR(handle)->base;
 }
 
 
 /***********************************************************************
- *           GlobalUnlock   (KERNEL.19)
+ *           GlobalUnlock16   (KERNEL.19)
  */
-BOOL GlobalUnlock( HGLOBAL handle )
+BOOL GlobalUnlock16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalUnlock: %04x\n", handle );
+    dprintf_global( stddeb, "GlobalUnlock16: %04x\n", handle );
     return 0;
 }
 
 
 /***********************************************************************
- *           GlobalSize   (KERNEL.20)
+ *           GlobalSize16   (KERNEL.20)
  */
-DWORD GlobalSize( HGLOBAL handle )
+DWORD GlobalSize16( HGLOBAL16 handle )
 {
-    dprintf_global( stddeb, "GlobalSize: %04x\n", handle );
+    dprintf_global( stddeb, "GlobalSize16: %04x\n", handle );
     if (!handle) return 0;
     return GET_ARENA_PTR(handle)->size;
 }
 
 
 /***********************************************************************
- *           GlobalHandle   (KERNEL.21)
+ *           GlobalHandle16   (KERNEL.21)
  */
-DWORD GlobalHandle( WORD sel )
+DWORD GlobalHandle16( WORD sel )
 {
-    dprintf_global( stddeb, "GlobalHandle: %04x\n", sel );
+    dprintf_global( stddeb, "GlobalHandle16: %04x\n", sel );
     return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
 }
 
 
 /***********************************************************************
- *           GlobalFlags   (KERNEL.22)
+ *           GlobalFlags16   (KERNEL.22)
  */
-WORD GlobalFlags( HGLOBAL handle )
+UINT16 GlobalFlags16( HGLOBAL16 handle )
 {
     GLOBALARENA *pArena;
 
-    dprintf_global( stddeb, "GlobalFlags: %04x\n", handle );
+    dprintf_global( stddeb, "GlobalFlags16: %04x\n", handle );
     pArena = GET_ARENA_PTR(handle);
     return pArena->lockCount |
            ((pArena->flags & GA_DISCARDABLE) ? GMEM_DISCARDABLE : 0) |
@@ -507,9 +509,9 @@ void UnlockSegment( HGLOBAL handle )
 
 
 /***********************************************************************
- *           GlobalCompact   (KERNEL.25)
+ *           GlobalCompact16   (KERNEL.25)
  */
-DWORD GlobalCompact( DWORD desired )
+DWORD GlobalCompact16( DWORD desired )
 {
     return GLOBAL_MAX_ALLOC_SIZE;
 }
@@ -518,7 +520,7 @@ DWORD GlobalCompact( DWORD desired )
 /***********************************************************************
  *           GlobalFreeAll   (KERNEL.26)
  */
-void GlobalFreeAll( HANDLE owner )
+void GlobalFreeAll( HGLOBAL16 owner )
 {
     DWORD i;
     GLOBALARENA *pArena;
@@ -527,7 +529,7 @@ void GlobalFreeAll( HANDLE owner )
     for (i = 0; i < globalArenaSize; i++, pArena++)
     {
         if ((pArena->size != 0) && (pArena->hOwner == owner))
-            GlobalFree( pArena->handle );
+            GlobalFree16( pArena->handle );
     }
 }
 
@@ -535,18 +537,18 @@ void GlobalFreeAll( HANDLE owner )
 /***********************************************************************
  *           GlobalWire   (KERNEL.111)
  */
-SEGPTR GlobalWire( HGLOBAL handle )
+SEGPTR GlobalWire( HGLOBAL16 handle )
 {
-    return WIN16_GlobalLock( handle );
+    return WIN16_GlobalLock16( handle );
 }
 
 
 /***********************************************************************
  *           GlobalUnWire   (KERNEL.112)
  */
-BOOL GlobalUnWire( HGLOBAL handle )
+BOOL GlobalUnWire( HGLOBAL16 handle )
 {
-    return GlobalUnlock( handle );
+    return GlobalUnlock16( handle );
 }
 
 
@@ -555,7 +557,7 @@ BOOL GlobalUnWire( HGLOBAL handle )
  */
 DWORD GlobalDOSAlloc( DWORD size )
 {
-    WORD sel = GlobalAlloc( GMEM_FIXED, size );
+    WORD sel = GlobalAlloc16( GMEM_FIXED, size );
     if (!sel) return 0;
     return MAKELONG( sel, sel /* this one ought to be a real-mode segment */ );
 }
@@ -566,7 +568,7 @@ DWORD GlobalDOSAlloc( DWORD size )
  */
 WORD GlobalDOSFree( WORD sel )
 {
-    return GlobalFree( GlobalHandle(sel) ) ? sel : 0;
+    return GlobalFree16( GlobalHandle16(sel) ) ? sel : 0;
 }
 
 
@@ -583,7 +585,7 @@ LONG SetSwapAreaSize( WORD size )
 /***********************************************************************
  *           GlobalLRUOldest   (KERNEL.163)
  */
-HGLOBAL GlobalLRUOldest( HGLOBAL handle )
+HGLOBAL16 GlobalLRUOldest( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalLRUOldest: %04x\n", handle );
     if (handle == (HGLOBAL)-1) handle = CURRENT_DS;
@@ -594,7 +596,7 @@ HGLOBAL GlobalLRUOldest( HGLOBAL handle )
 /***********************************************************************
  *           GlobalLRUNewest   (KERNEL.164)
  */
-HGLOBAL GlobalLRUNewest( HGLOBAL handle )
+HGLOBAL16 GlobalLRUNewest( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalLRUNewest: %04x\n", handle );
     if (handle == (HGLOBAL)-1) handle = CURRENT_DS;
@@ -605,7 +607,7 @@ HGLOBAL GlobalLRUNewest( HGLOBAL handle )
 /***********************************************************************
  *           GetFreeSpace   (KERNEL.169)
  */
-DWORD GetFreeSpace( UINT wFlags )
+DWORD GetFreeSpace( UINT16 wFlags )
 {
     return GLOBAL_MAX_ALLOC_SIZE;
 }
@@ -614,7 +616,7 @@ DWORD GetFreeSpace( UINT wFlags )
 /***********************************************************************
  *           GlobalPageLock   (KERNEL.191)
  */
-WORD GlobalPageLock( HGLOBAL handle )
+WORD GlobalPageLock( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalPageLock: %04x\n", handle );
     return ++(GET_ARENA_PTR(handle)->pageLockCount);
@@ -624,7 +626,7 @@ WORD GlobalPageLock( HGLOBAL handle )
 /***********************************************************************
  *           GlobalPageUnlock   (KERNEL.192)
  */
-WORD GlobalPageUnlock( HGLOBAL handle )
+WORD GlobalPageUnlock( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalPageUnlock: %04x\n", handle );
     return --(GET_ARENA_PTR(handle)->pageLockCount);
@@ -634,7 +636,7 @@ WORD GlobalPageUnlock( HGLOBAL handle )
 /***********************************************************************
  *           GlobalFix   (KERNEL.197)
  */
-void GlobalFix( HGLOBAL handle )
+void GlobalFix( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalFix: %04x\n", handle );
     GET_ARENA_PTR(handle)->lockCount++;
@@ -644,7 +646,7 @@ void GlobalFix( HGLOBAL handle )
 /***********************************************************************
  *           GlobalUnfix   (KERNEL.198)
  */
-void GlobalUnfix( HGLOBAL handle )
+void GlobalUnfix( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalUnfix: %04x\n", handle );
     GET_ARENA_PTR(handle)->lockCount--;
@@ -672,7 +674,7 @@ WORD FarGetOwner( HANDLE handle )
 /***********************************************************************
  *           GlobalHandleToSel   (TOOLHELP.50)
  */
-WORD GlobalHandleToSel( HGLOBAL handle )
+WORD GlobalHandleToSel( HGLOBAL16 handle )
 {
     dprintf_toolhelp( stddeb, "GlobalHandleToSel: %04x\n", handle );
     if (!handle) return 0;
@@ -752,7 +754,7 @@ BOOL GlobalInfo( GLOBALINFO *pInfo )
 /***********************************************************************
  *           GlobalEntryHandle   (TOOLHELP.54)
  */
-BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL hItem )
+BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 {
     return FALSE;
 }
@@ -761,7 +763,7 @@ BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL hItem )
 /***********************************************************************
  *           GlobalEntryModule   (TOOLHELP.55)
  */
-BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE hModule, WORD wSeg )
+BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg )
 {
     return FALSE;
 }
@@ -818,23 +820,98 @@ BOOL MemManInfo( MEMMANINFO *pInfo )
 #endif
 }
 
-/***********************************************************************
- *               GlobalAlloc32
- * implements    GlobalAlloc        (KERNEL32.316)
- *               LocalAlloc         (KERNEL32.372)
- */
-void *GlobalAlloc32(int flags,int size)
-{
-    dprintf_global(stddeb,"GlobalAlloc32(%x,%x)\n",flags,size);
-    return malloc(size);
-}
-
-/***********************************************************************
- *               GlobalLock32
- */
-void* GlobalLock32(DWORD ptr)
-{
-	return (void*)ptr;
-}
+#ifndef WINELIB
 
 #endif  /* WINELIB */
+
+/***********************************************************************
+ *           GlobalAlloc32   (KERNEL32.315)
+ */
+HGLOBAL32 GlobalAlloc32( UINT32 flags, DWORD size )
+{
+    DWORD heapFlags = 0;
+
+    if (flags & GMEM_MOVEABLE)
+        fprintf( stderr, "GlobalAlloc32: unimplemented flag GMEM_MOVEABLE\n" );
+
+    if (flags & GMEM_ZEROINIT) heapFlags |= HEAP_ZERO_MEMORY;
+    return (HGLOBAL32)HeapAlloc( GetProcessHeap(), heapFlags, size );
+}
+
+
+/***********************************************************************
+ *           GlobalCompact32   (KERNEL32.316)
+ */
+DWORD GlobalCompact32( DWORD minfree )
+{
+    return 0;  /* GlobalCompact does nothing in Win32 */
+}
+
+
+/***********************************************************************
+ *           GlobalFlags32   (KERNEL32.321)
+ */
+UINT32 GlobalFlags32( HGLOBAL32 handle )
+{
+    return 0;
+}
+
+
+/***********************************************************************
+ *           GlobalFree32   (KERNEL32.322)
+ */
+HGLOBAL32 GlobalFree32( HGLOBAL32 handle )
+{
+    return HeapFree( GetProcessHeap(), 0, (LPVOID)handle ) ? 0 : handle;
+}
+
+
+/***********************************************************************
+ *           GlobalHandle32   (KERNEL32.325)
+ */
+HGLOBAL32 GlobalHandle32( LPCVOID ptr )
+{
+    return (HGLOBAL32)ptr;
+}
+
+
+/***********************************************************************
+ *           GlobalLock32   (KERNEL32.326)
+ */
+LPVOID GlobalLock32( HGLOBAL32 handle )
+{
+    return (LPVOID)handle;
+}
+
+
+/***********************************************************************
+ *           GlobalReAlloc32   (KERNEL32.328)
+ */
+HGLOBAL32 GlobalReAlloc32( HGLOBAL32 handle, DWORD size, UINT32 flags )
+{
+    if (flags & GMEM_MODIFY)
+    {
+        fprintf( stderr, "GlobalReAlloc32: GMEM_MODIFY not supported\n" );
+        return 0;
+    }
+
+    return (HGLOBAL32)HeapReAlloc( GetProcessHeap(), 0, (LPVOID)handle, size );
+}
+
+
+/***********************************************************************
+ *           GlobalSize32   (KERNEL32.329)
+ */
+DWORD GlobalSize32( HGLOBAL32 handle )
+{
+    return HeapSize( GetProcessHeap(), 0, (LPVOID)handle );
+}
+
+
+/***********************************************************************
+ *           GlobalUnlock32   (KERNEL32.332)
+ */
+BOOL GlobalUnlock32( HGLOBAL32 handle )
+{
+    return TRUE;
+}

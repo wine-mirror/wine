@@ -3,6 +3,6 @@
 #include "shell.h"
 #include "kernel32.h"
 
-BOOL WINAPI GetUserNameA (char * lpBuffer, DWORD  *nSize);
+BOOL GetUserNameA (char * lpBuffer, DWORD  *nSize);
 
 #endif  /* __WINE_ADVAPI32_H */

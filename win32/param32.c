@@ -28,7 +28,7 @@ BOOL WIN32_MoveToEx(HDC hdc,int x,int y,POINT32* p32)
 	}
 }
 
-BOOL WIN32_GetTextExtentPointA(HDC hdc, LPCTSTR str, int length, SIZE32* lpsize)
+BOOL WIN32_GetTextExtentPointA(HDC hdc, LPCSTR str, int length, SIZE32* lpsize)
 
 {
         SIZE s;
@@ -40,7 +40,7 @@ BOOL WIN32_GetTextExtentPointA(HDC hdc, LPCTSTR str, int length, SIZE32* lpsize)
         return retval;
 }
 
-ATOM WIN32_GlobalAddAtomA(LPCTSTR str)
+ATOM WIN32_GlobalAddAtomA(LPCSTR str)
 {
     char buffer[256];  /* 16-bit atoms are limited to 255 anyway */
     lstrcpyn( buffer, str, sizeof(buffer) );

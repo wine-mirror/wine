@@ -1,0 +1,63 @@
+TOPSRC   = @top_srcdir@
+MODULE   = none
+PROGRAMS = winhelp hlp2sgml
+ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+
+LANGUAGES   = En De
+
+# Installation infos
+
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+bindir          = @bindir@
+libdir          = @libdir@
+sysconfdir      = @sysconfdir@
+mandir          = @mandir@/man1
+manext          = .1
+
+MOSTOBJS = \
+	winhelp.o \
+	hlpfile.o \
+	macro.o \
+	y.tab.o \
+	lex.yy.o
+
+STRINGOBJS = \
+	string.o \
+	$(LANGUAGES:%=%.o)
+
+C_SRCS = $(MOSTOBJS:.o=.c) $(STRINGOBJS:.o=.c) hlp2sgml.c
+
+all: check_winerc $(PROGRAMS)
+
+@MAKE_RULES@
+
+# Some strings need addresses >= 0x10000
+winhelp: $(MOSTOBJS) $(STRINGOBJS) $(WINELIB)
+	$(CC) -o winhelp $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
+
+hlp2sgml: hlp2sgml.o hlpfile.o
+	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o
+
+install: dummy
+	$(INSTALL_PROGRAM) winhelp $(bindir)/winhelp
+	$(INSTALL_PROGRAM) hlp2sgml $(bindir)/hlp2sgml
+
+clean::
+	$(RM) $(PROGRAMS) lex.yy.c y.tab.c y.tab.h
+	$(RM) $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h)
+
+y.tab.c y.tab.h: macro.yacc.y
+	$(YACC) -d -t macro.yacc.y
+
+lex.yy.c: macro.lex.l
+	$(LEX) -8 -I macro.lex.l
+
+$(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
+
+dummy:
+
+### Dependencies:

@@ -643,10 +643,10 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
      */
     if (IsIconic(hwnd))
     {
-        if (wndPtr->class->wc.hIcon)
+        if (wndPtr->class->hIcon)
         {
             SendMessage(hwnd, WM_ICONERASEBKGND, (WPARAM)hdc, 0);
-            DrawIcon( hdc, 0, 0, wndPtr->class->wc.hIcon );
+            DrawIcon( hdc, 0, 0, wndPtr->class->hIcon );
         }
         ReleaseDC(hwnd, hdc);
         wndPtr->flags &= ~WIN_INTERNAL_PAINT;
@@ -782,9 +782,9 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	{
 	    WND *wndPtr;
 	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
-	    if (wndPtr->class->wc.hCursor)
+	    if (wndPtr->class->hCursor)
 	    {
-		SetCursor( wndPtr->class->wc.hCursor );
+		SetCursor( wndPtr->class->hCursor );
 		return TRUE;
 	    }
 	    else return FALSE;
@@ -1261,30 +1261,31 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
 {
     /*
      * if this is an icon, send a restore since we are handling
      * a double click
      */
-    if (IsIconic(hwnd))
+    if (pWnd->dwStyle & WS_MINIMIZE)
     {
-      SendMessage(hwnd, WM_SYSCOMMAND, SC_RESTORE, lParam);
-      return 0;
+        SendMessage( pWnd->hwndSelf, WM_SYSCOMMAND, SC_RESTORE, lParam );
+        return 0;
     } 
 
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
         /* stop processing if WS_MAXIMIZEBOX is missing */
-
-        if( GetWindowLong( hwnd , GWL_STYLE) & WS_MAXIMIZEBOX )
-            SendMessage( hwnd, WM_SYSCOMMAND,
-                         IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, lParam );
+        if (pWnd->dwStyle & WS_MAXIMIZEBOX)
+            SendMessage( pWnd->hwndSelf, WM_SYSCOMMAND,
+                      (pWnd->dwStyle & WS_MAXIMIZE) ? SC_RESTORE : SC_MAXIMIZE,
+                      lParam );
 	break;
 
     case HTSYSMENU:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_CLOSE, lParam );
+        if (!(pWnd->class->style & CS_NOCLOSE))
+            SendMessage( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
 	break;
     }
     return 0;

@@ -13,15 +13,16 @@
   /* excepted that they need DS as the first parameter. This    */
   /* allows managing several heaps from the emulation library.  */
 
-extern HLOCAL LOCAL_Alloc( HANDLE ds, WORD flags, WORD size );
-extern HLOCAL LOCAL_ReAlloc( HANDLE ds, HLOCAL handle, WORD size, WORD flags );
-extern HLOCAL LOCAL_Free( HANDLE ds, HLOCAL handle );
-extern HLOCAL LOCAL_Handle( HANDLE ds, WORD addr );
-extern WORD LOCAL_Size( HANDLE ds, HLOCAL handle );
-extern WORD LOCAL_Flags( HANDLE ds, HLOCAL handle );
-extern WORD LOCAL_HeapSize( HANDLE ds );
-extern WORD LOCAL_CountFree( WORD ds );
-extern LPSTR LOCAL_Lock( HANDLE ds, HLOCAL handle );
-extern BOOL LOCAL_Unlock( HANDLE ds, HLOCAL handle );
+extern HLOCAL16 LOCAL_Alloc( HANDLE16 ds, UINT16 flags, WORD size );
+extern HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle,
+                               WORD size, UINT16 flags );
+extern HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle );
+extern HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr );
+extern UINT16 LOCAL_Size( HANDLE16 ds, HLOCAL16 handle );
+extern UINT16 LOCAL_Flags( HANDLE16 ds, HLOCAL16 handle );
+extern UINT16 LOCAL_HeapSize( HANDLE16 ds );
+extern UINT16 LOCAL_CountFree( HANDLE16 ds );
+extern LPSTR LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle );
+extern BOOL LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle );
 
 #endif  /* __WINE_LOCAL_H */

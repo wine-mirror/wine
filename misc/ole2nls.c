@@ -18,7 +18,7 @@
 /***********************************************************************
  *           GetUserDefaultLCID       (OLE2NLS.1)
  */
-DWORD WINAPI GetUserDefaultLCID()
+DWORD GetUserDefaultLCID()
 {
 /* Default sorting, neutral sublanguage */
     switch(Options.language)
@@ -42,7 +42,7 @@ DWORD WINAPI GetUserDefaultLCID()
 /***********************************************************************
  *         GetSystemDefaultLCID       (OLE2NLS.2)
  */
-DWORD WINAPI GetSystemDefaultLCID()
+DWORD GetSystemDefaultLCID()
 {
 	return GetUserDefaultLCID();
 }
@@ -50,7 +50,7 @@ DWORD WINAPI GetSystemDefaultLCID()
 /***********************************************************************
  *         GetUserDefaultLangID       (OLE2NLS.3)
  */
-WORD WINAPI GetUserDefaultLangID()
+WORD GetUserDefaultLangID()
 {
 	return (WORD)GetUserDefaultLCID();
 }
@@ -58,7 +58,7 @@ WORD WINAPI GetUserDefaultLangID()
 /***********************************************************************
  *         GetSystemDefaultLangID     (OLE2NLS.4)
  */
-WORD WINAPI GetSystemDefaultLangID()
+WORD GetSystemDefaultLangID()
 {
 	return GetUserDefaultLangID();
 }
@@ -67,7 +67,7 @@ WORD WINAPI GetSystemDefaultLangID()
  *         GetLocaleInfoA             (OLE2NLS.5)
  * Is the last parameter really WORD for Win16?
  */
-int WINAPI GetLocaleInfoA(DWORD lcid,DWORD LCType,LPSTR buf,WORD len)
+int GetLocaleInfoA(DWORD lcid,DWORD LCType,LPSTR buf,WORD len)
 {
 	char *retString;
     int retLen;

@@ -34,7 +34,7 @@ BOOL GetThreadContext(HANDLE hThread, void *lpContext)
 /***********************************************************************
  *           GetCurrentThread    (KERNEL32.200)
  */
-HANDLE WINAPI GetCurrentThread(void)
+HANDLE GetCurrentThread(void)
 {
 	return 0;
 }
@@ -42,12 +42,12 @@ HANDLE WINAPI GetCurrentThread(void)
 /**********************************************************************
  *          Critical Sections are currently ignored
  */
-void WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit)
+void InitializeCriticalSection(CRITICAL_SECTION *lpCrit)
 {
 	memset(lpCrit,0,sizeof(CRITICAL_SECTION));
 }
 
-void WINAPI EnterCriticalSection(CRITICAL_SECTION* lpCrit)
+void EnterCriticalSection(CRITICAL_SECTION* lpCrit)
 {
     if (lpCrit->LockCount)
         fprintf( stderr, "Error: re-entering critical section %08lx\n",
@@ -55,7 +55,7 @@ void WINAPI EnterCriticalSection(CRITICAL_SECTION* lpCrit)
     lpCrit->LockCount++;
 }
 
-void WINAPI LeaveCriticalSection(CRITICAL_SECTION* lpCrit)
+void LeaveCriticalSection(CRITICAL_SECTION* lpCrit)
 {
     if (!lpCrit->LockCount)
         fprintf( stderr, "Error: leaving critical section %08lx again\n",
@@ -63,7 +63,7 @@ void WINAPI LeaveCriticalSection(CRITICAL_SECTION* lpCrit)
     lpCrit->LockCount--;
 }
 
-void WINAPI DeleteCriticalSection(CRITICAL_SECTION* lpCrit)
+void DeleteCriticalSection(CRITICAL_SECTION* lpCrit)
 {
 	return;
 }
@@ -74,7 +74,7 @@ void WINAPI DeleteCriticalSection(CRITICAL_SECTION* lpCrit)
 static LPVOID* Tls=0;
 static int TlsCount=0;
 
-DWORD WINAPI TlsAlloc()
+DWORD TlsAlloc()
 {
 	if(!Tls){
 		TlsCount++;

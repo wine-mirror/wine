@@ -46,9 +46,29 @@ Today it works well for:
 * English 
 * German
 * French
+* Italian
+* Korean
 ...to be continued......
 
 Thank you.
 
 Albrecht Kleine
 kleine@ak.sax.de
+
+**************************************************************
+1996, May, 2nd
+
+Subject ChooseFont
+
+Just like ChooseColor, please copy CHOSEFONT from sysres_EN.rc,
+and translate it to your language. It's okay for:
+
+* English
+* German
+.....
+
+Thank you.
+
+Albrecht Kleine
+kleine@ak.sax.de
+

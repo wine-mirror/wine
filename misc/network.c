@@ -154,7 +154,7 @@ int WNetUnlockQueueData(LPSTR szQueue)
  *				WNetGetConnection	[USER.512]
  */
 int WNetGetConnection(LPSTR lpLocalName, 
-	LPSTR lpRemoteName, UINT FAR *cbRemoteName)
+	LPSTR lpRemoteName, UINT *cbRemoteName)
 {
     const char *path;
 
@@ -393,7 +393,7 @@ UINT WNetEnumResource(HANDLE hEnum, DWORD cRequ,
  *				WNetOpenEnum		[USER.???]
  */
 UINT WNetOpenEnum(DWORD dwScope, DWORD dwType, 
-	LPNETRESOURCE lpNet, HANDLE FAR *lphEnum)
+	LPNETRESOURCE lpNet, HANDLE *lphEnum)
 {
 	printf("EMPTY STUB !!! WNetOpenEnum(%08lX, %08lX, %p, %p);\n",
                dwScope, dwType, lpNet, lphEnum);

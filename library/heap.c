@@ -19,8 +19,6 @@
 /* Controls the blocks per handle table */
 #define MAXBLOCKS 1024
 
-static char Copyright [] = "Copyright (C) 1994 Miguel de Icaza";
-
 typedef struct handle_table {
     struct handle_table *next;
     void *blocks [MAXBLOCKS];
@@ -166,12 +164,12 @@ BOOL GlobalUnlock (HANDLE hMem)
     return LocalUnlock (hMem);
 }
 
-WORD GlobalFlags (HANDLE hMem)
+WORD GlobalFlags16(HANDLE hMem)
 {
     return LocalFlags (hMem);
 }
 
-DWORD GlobalSize (HANDLE hMem)
+DWORD GlobalSize16(HANDLE hMem)
 {
     return LocalSize (hMem);
 }
@@ -184,7 +182,7 @@ DWORD GlobalCompact(DWORD desired)
 	return 0x01000000;	/* Should check the available core. */
 }
 
-HANDLE GlobalReAlloc(HANDLE hMem, DWORD new_size, WORD flags)
+HANDLE GlobalReAlloc16(HANDLE hMem, DWORD new_size, WORD flags)
 {
     if (!(flags & GMEM_MODIFY))
 	return LocalReAlloc (hMem, new_size, flags);
@@ -208,7 +206,9 @@ DWORD int GlobalHandle(WORD selector)
 
 #endif
 
-#else /* WINELIB16 */
+#endif /* WINELIB16 */
+
+#if 0
 
 typedef struct { DWORD Size; DWORD Padding[3]; } HeapData;
 
@@ -319,17 +319,17 @@ BOOL GlobalUnlock (HANDLE hMem)
   return 0;
 }
 
-WORD GlobalFlags (HANDLE hMem)
+WORD GlobalFlags32(HANDLE hMem)
 {
   return LocalFlags (hMem);
 }
 
-DWORD GlobalSize (HANDLE hMem)
+DWORD GlobalSize32(HANDLE hMem)
 {
   return HEAP_Size (hMem);
 }
 
-HANDLE GlobalReAlloc(HANDLE hMem, DWORD new_size, WORD flags)
+HANDLE GlobalReAlloc32(HANDLE hMem, DWORD new_size, WORD flags)
 {
   if (!(flags & GMEM_MODIFY))
     return HEAP_ReAlloc (hMem, new_size, flags);

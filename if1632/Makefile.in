@@ -8,6 +8,7 @@ DLLS	= \
 	comdlg32.spec \
 	commdlg.spec \
 	compobj.spec \
+	crtdll.spec	\
 	ddeml.spec \
 	gdi.spec \
 	gdi32.spec \
@@ -17,6 +18,7 @@ DLLS	= \
 	lzexpand.spec \
 	mmsystem.spec \
 	mouse.spec \
+	ntdll.spec	\
 	ole2.spec \
 	ole2conv.spec \
 	ole2disp.spec \
@@ -40,7 +42,8 @@ DLLS	= \
 	winsock.spec \
 	winspool.spec \
 	wprocs.spec \
-	wprocs32.spec
+	wprocs32.spec \
+	wsock32.spec
 
 SPEC_FILES = $(DLLS:.spec=.S)
 

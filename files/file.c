@@ -101,7 +101,7 @@ static void FILE_GetPDBFiles( BYTE **files, WORD *nbFiles )
 {
     PDB *pdb;
 
-    if ((pdb = (PDB *)GlobalLock( GetCurrentPDB() )) != NULL)
+    if ((pdb = (PDB *)GlobalLock16( GetCurrentPDB() )) != NULL)
     {
         *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
         *nbFiles = pdb->nbFiles;
@@ -219,7 +219,7 @@ void FILE_CloseAllFiles( HANDLE hPDB )
 {
     BYTE *files;
     WORD count;
-    PDB *pdb = (PDB *)GlobalLock( hPDB );
+    PDB *pdb = (PDB *)GlobalLock16( hPDB );
 
     if (!pdb) return;
     files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
@@ -572,7 +572,7 @@ HFILE FILE_Dup( HFILE hFile )
 HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 )
 {
     DOS_FILE *file;
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
+    PDB *pdb = (PDB *)GlobalLock16( GetCurrentPDB() );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
 
     dprintf_file( stddeb, "FILE_Dup2 for handle %d\n", hFile1 );
@@ -702,7 +702,8 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
                       name, ofs->szPathName, hFileRet );
         /* Return the handle, but close it first */
         FILE_FreeTaskHandle( hFileRet );
-        return hFileRet;
+/*        return hFileRet; */
+        return 0;  /* Progman seems to like this better */
     }
 
     /* OF_CREATE is completely different from all other options, so
@@ -875,7 +876,7 @@ INT _lread( HFILE hFile, SEGPTR buffer, WORD count )
 /***********************************************************************
  *           _lcreat   (KERNEL.83)
  */
-INT _lcreat( LPCSTR path, INT attr )
+HFILE _lcreat( LPCSTR path, INT attr )
 {
     DOS_FILE *file;
     HFILE handle;
@@ -893,7 +894,7 @@ INT _lcreat( LPCSTR path, INT attr )
 /***********************************************************************
  *           _lcreat_uniq   (Not a Windows API)
  */
-INT _lcreat_uniq( LPCSTR path, INT attr )
+HFILE _lcreat_uniq( LPCSTR path, INT attr )
 {
     DOS_FILE *file;
     HFILE handle;
@@ -1021,7 +1022,7 @@ LONG _hwrite( HFILE hFile, LPCSTR buffer, LONG count )
 WORD SetHandleCount( WORD count )
 {
     HANDLE hPDB = GetCurrentPDB();
-    PDB *pdb = (PDB *)GlobalLock( hPDB );
+    PDB *pdb = (PDB *)GlobalLock16( hPDB );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
     WORD i;
 
@@ -1048,10 +1049,10 @@ WORD SetHandleCount( WORD count )
         {
             memcpy( pdb->fileHandles, files, 20 );
 #ifdef WINELIB
-            GlobalFree( (HGLOBAL)pdb->fileHandlesPtr );
+            GlobalFree32( (HGLOBAL32)pdb->fileHandlesPtr );
             pdb->fileHandlesPtr = (SEGPTR)pdb->fileHandles;
 #else
-            GlobalFree( GlobalHandle( SELECTOROF(pdb->fileHandlesPtr) ));
+            GlobalFree16( GlobalHandle16( SELECTOROF(pdb->fileHandlesPtr) ));
             pdb->fileHandlesPtr = (SEGPTR)MAKELONG( 0x18,
                                                    GlobalHandleToSel( hPDB ) );
 #endif
@@ -1061,13 +1062,17 @@ WORD SetHandleCount( WORD count )
     else  /* More than 20, need a new file handles table */
     {
         BYTE *newfiles;
-        HANDLE newhandle = GlobalAlloc( GMEM_MOVEABLE, count );
+#ifdef WINELIB
+        newfiles = (BYTE *)GlobalAlloc32( GMEM_FIXED, count );
+#else
+        HANDLE newhandle = GlobalAlloc16( GMEM_MOVEABLE, count );
         if (!newhandle)
         {
             DOS_ERROR( ER_OutOfMemory, EC_OutOfResource, SA_Abort, EL_Memory );
             return pdb->nbFiles;
         }
-        newfiles = (BYTE *)GlobalLock( newhandle );
+        newfiles = (BYTE *)GlobalLock16( newhandle );
+#endif  /* WINELIB */
         if (count > pdb->nbFiles)
         {
             memcpy( newfiles, files, pdb->nbFiles );
@@ -1075,12 +1080,13 @@ WORD SetHandleCount( WORD count )
         }
         else memcpy( newfiles, files, count );
 #ifdef WINELIB
-        if (pdb->nbFiles > 20) GlobalFree( (HGLOBAL)pdb->fileHandlesPtr );
+        if (pdb->nbFiles > 20) GlobalFree32( (HGLOBAL32)pdb->fileHandlesPtr );
+        pdb->fileHandlesPtr = (SEGPTR)newfiles;
 #else
         if (pdb->nbFiles > 20)
-            GlobalFree( GlobalHandle( SELECTOROF(pdb->fileHandlesPtr) ));
-#endif
-        pdb->fileHandlesPtr = WIN16_GlobalLock( newhandle );
+            GlobalFree16( GlobalHandle16( SELECTOROF(pdb->fileHandlesPtr) ));
+        pdb->fileHandlesPtr = WIN16_GlobalLock16( newhandle );
+#endif  /* WINELIB */
         pdb->nbFiles = count;
     }
     return pdb->nbFiles;

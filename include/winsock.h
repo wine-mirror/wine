@@ -22,7 +22,7 @@
  */
 typedef u_int	SOCKET;
 
-extern int PASCAL FAR __WSAFDIsSet(SOCKET, fd_set FAR *);
+extern int __WSAFDIsSet(SOCKET, fd_set *);
 
 /*
  * Internet address (old style... should be updated)
@@ -46,10 +46,8 @@ typedef struct WSAData {
         char                    szSystemStatus[WSASYS_STATUS_LEN+1];
         unsigned short          iMaxSockets;
         unsigned short          iMaxUdpDg;
-        char FAR *              lpVendorInfo;
-} WSADATA;
-
-typedef WSADATA FAR *LPWSADATA;
+        char                   *lpVendorInfo;
+} WSADATA, *LPWSADATA;
 
 /*
  * This is used instead of -1, since the
@@ -192,91 +190,44 @@ extern "C" {
 
 /* Microsoft Windows Extension function prototypes */
 
-INT PASCAL FAR WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
-
-INT PASCAL FAR WSACleanup(void);
-
-void PASCAL FAR WSASetLastError(INT iError);
-
-INT PASCAL FAR WSAGetLastError(void);
-
-BOOL PASCAL FAR WSAIsBlocking(void);
-
-INT PASCAL FAR WSAUnhookBlockingHook(void);
-
-FARPROC PASCAL FAR WSASetBlockingHook(FARPROC lpBlockFunc);
-
-INT PASCAL FAR WSACancelBlockingCall(void);
-
-HANDLE PASCAL FAR WSAAsyncGetServByName(HWND hWnd, u_int wMsg,
-                                        const char FAR *name, 
-                                        const char FAR *proto,
-                                        char FAR *buf, INT buflen);
-
-HANDLE PASCAL FAR WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port,
-                                        const char FAR *proto, char FAR *buf,
-                                        INT buflen);
-
-HANDLE PASCAL FAR WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg,
-                                         const char FAR *name, char FAR *buf,
-                                         INT buflen);
-
-HANDLE PASCAL FAR WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg,
-                                           INT number, char FAR *buf,
-                                           INT buflen);
-
-HANDLE PASCAL FAR WSAAsyncGetHostByName(HWND hWnd, u_int wMsg,
-                                        const char FAR *name, char FAR *buf,
-                                        INT buflen);
-
-HANDLE PASCAL FAR WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg,
-                                        const char FAR *addr, INT len, INT type,
-                                        char FAR *buf, INT buflen);
-
-INT PASCAL FAR WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
-
-INT PASCAL FAR WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent);
+INT WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
+INT WSACleanup(void);
+void WSASetLastError(INT iError);
+INT WSAGetLastError(void);
+BOOL WSAIsBlocking(void);
+INT WSAUnhookBlockingHook(void);
+FARPROC WSASetBlockingHook(FARPROC lpBlockFunc);
+INT WSACancelBlockingCall(void);
+HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg,
+                             LPCSTR name, LPCSTR proto,
+                             LPSTR buf, INT buflen);
+HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port,
+                             LPCSTR proto, LPSTR buf, INT buflen);
+HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg,
+                              LPCSTR name, LPSTR buf, INT buflen);
+HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg,
+                                INT number, LPSTR buf, INT buflen);
+HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg,
+                             LPCSTR name, LPSTR buf, INT buflen);
+HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, LPCSTR addr, INT len,
+                             INT type, LPSTR buf, INT buflen);
+INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
+INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent);
 
 #ifdef __cplusplus
 }
 #endif
 
 /* Microsoft Windows Extended data types */
-typedef struct sockaddr SOCKADDR;
-typedef struct sockaddr *PSOCKADDR;
-typedef struct sockaddr FAR *LPSOCKADDR;
-
-typedef struct sockaddr_in SOCKADDR_IN;
-typedef struct sockaddr_in *PSOCKADDR_IN;
-typedef struct sockaddr_in FAR *LPSOCKADDR_IN;
-
-typedef struct linger LINGER;
-typedef struct linger *PLINGER;
-typedef struct linger FAR *LPLINGER;
-
-typedef struct in_addr IN_ADDR;
-typedef struct in_addr *PIN_ADDR;
-typedef struct in_addr FAR *LPIN_ADDR;
-
-typedef struct fd_set FD_SET;
-typedef struct fd_set *PFD_SET;
-typedef struct fd_set FAR *LPFD_SET;
-
-typedef struct hostent HOSTENT;
-typedef struct hostent *PHOSTENT;
-typedef struct hostent FAR *LPHOSTENT;
-
-typedef struct servent SERVENT;
-typedef struct servent *PSERVENT;
-typedef struct servent FAR *LPSERVENT;
-
-typedef struct protoent PROTOENT;
-typedef struct protoent *PPROTOENT;
-typedef struct protoent FAR *LPPROTOENT;
-
-typedef struct timeval TIMEVAL;
-typedef struct timeval *PTIMEVAL;
-typedef struct timeval FAR *LPTIMEVAL;
+typedef struct sockaddr SOCKADDR, *PSOCKADDR, *LPSOCKADDR;
+typedef struct sockaddr_in SOCKADDR_IN, *PSOCKADDR_IN, *LPSOCKADDR_IN;
+typedef struct linger LINGER, *PLINGER, *LPLINGER;
+typedef struct in_addr IN_ADDR, *PIN_ADDR, *LPIN_ADDR;
+typedef struct fd_set FD_SET, *PFD_SET, *LPFD_SET;
+typedef struct hostent HOSTENT, *PHOSTENT, *LPHOSTENT;
+typedef struct servent SERVENT, *PSERVENT, *LPSERVENT;
+typedef struct protoent PROTOENT, *PPROTOENT, *LPPROTOENT;
+typedef struct timeval TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
 
 /*
  * Windows message parameter composition and decomposition

@@ -50,7 +50,7 @@ static HANDLE HOOK_GetHook( short id , HQUEUE hQueue )
     MESSAGEQUEUE *queue;
     HANDLE hook = 0;
 
-    if ((queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(hQueue) )) != NULL)
+    if ((queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(hQueue) )) != NULL)
         hook = queue->hooks[id - WH_FIRST_HOOK];
     if (!hook) hook = HOOK_systemHooks[id - WH_FIRST_HOOK];
     return hook;
@@ -103,7 +103,7 @@ HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
 
     if (hQueue)
     {
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock( hQueue );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
         data->next = queue->hooks[id - WH_FIRST_HOOK];
         queue->hooks[id - WH_FIRST_HOOK] = handle;
     }
@@ -141,7 +141,7 @@ static BOOL HOOK_RemoveHook( HANDLE hook )
 
     if (data->ownerQueue)
     {
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock( data->ownerQueue );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( data->ownerQueue );
         if (!queue) return FALSE;
         prevHook = &queue->hooks[data->id - WH_FIRST_HOOK];
     }
@@ -182,7 +182,7 @@ static DWORD HOOK_CallHook( HANDLE hook, short code,
 
     /* Now call it */
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
     data->inHookProc = 1;
@@ -326,7 +326,7 @@ DWORD DefHookProc( short code, WORD wParam, DWORD lParam, HHOOK *hhook )
     MESSAGEQUEUE *queue;
     HANDLE next;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     if (!(next = HOOK_GetNextHook( queue->hCurHook ))) return 0;
     return HOOK_CallHook( next, code, wParam, lParam );
 }

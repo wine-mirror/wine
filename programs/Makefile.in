@@ -1,4 +1,4 @@
-SUBDIRS = progman
+SUBDIRS = progman winhelp
 
 all: $(SUBDIRS)
 
@@ -7,6 +7,9 @@ $(SUBDIRS): dummy
 
 depend:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) depend); done
+
+install:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) install); done
 
 clean:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) clean); done

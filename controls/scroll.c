@@ -956,7 +956,7 @@ DWORD SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
 /*************************************************************************
  *           GetScrollRange   (USER.65)
  */
-void GetScrollRange(HWND hwnd, int nBar, LPINT lpMin, LPINT lpMax)
+void GetScrollRange(HWND hwnd, int nBar, LPINT16 lpMin, LPINT16 lpMax)
 {
     SCROLLINFO *infoPtr;
 

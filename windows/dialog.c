@@ -311,8 +311,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     rect.right -= rect.left;
     rect.bottom -= rect.top;
 
-    if ((INT)template.x == CW_USEDEFAULT)
-        rect.left = rect.top = CW_USEDEFAULT;
+    if ((INT16)template.x == CW_USEDEFAULT16)
+        rect.left = rect.top = CW_USEDEFAULT16;
     else
     {
         rect.left += template.x * xUnit / 4;
@@ -321,7 +321,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
             ClientToScreen( owner, (POINT *)&rect );
     }
 
-    hwnd = CreateWindowEx( exStyle, template.className, template.caption, 
+    hwnd = CreateWindowEx16( exStyle, template.className, template.caption, 
 			   template.style & ~WS_VISIBLE,
 			   rect.left, rect.top, rect.right, rect.bottom,
 			   owner, hMenu, hInst, (SEGPTR)0 );
@@ -332,23 +332,6 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 	return 0;
     }
     wndPtr = WIN_FindWndPtr( hwnd );
-
-      /* Purge junk from system menu */
-      /* FIXME: this doesn't belong here */
-
-    DeleteMenu(wndPtr->hSysMenu,SC_SIZE,MF_BYCOMMAND);
-    if (!(wndPtr->dwStyle & WS_MAXIMIZEBOX) )
-    {
-        DeleteMenu(wndPtr->hSysMenu,SC_MAXIMIZE,MF_BYCOMMAND);
-        if( !(wndPtr->dwStyle & WS_MINIMIZEBOX) )
-        {
-            DeleteMenu(wndPtr->hSysMenu,SC_MINIMIZE,MF_BYCOMMAND);
-            DeleteMenu(wndPtr->hSysMenu,SC_RESTORE,MF_BYCOMMAND);
-        }
-    }
-    else
-        if (!(wndPtr->dwStyle & WS_MINIMIZEBOX) )
-            DeleteMenu(wndPtr->hSysMenu,SC_MINIMIZE,MF_BYCOMMAND);
 
       /* Create control windows */
 
@@ -400,7 +383,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
         {
 	    if (!dlgInfo->hDialogHeap)
             {
-		dlgInfo->hDialogHeap = GlobalAlloc(GMEM_FIXED, 0x10000);
+		dlgInfo->hDialogHeap = GlobalAlloc16(GMEM_FIXED, 0x10000);
 		if (!dlgInfo->hDialogHeap)
                 {
 		    fprintf(stderr,"CreateDialogIndirectParam: Insufficient memory to create heap for edit control\n");
@@ -408,7 +391,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 		}
 		LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);
 	    }
-	    hwndCtrl = CreateWindowEx(WS_EX_NOPARENTNOTIFY, className, winName,
+	    hwndCtrl = CreateWindowEx16(WS_EX_NOPARENTNOTIFY, className, winName,
                                       header.style | WS_CHILD,
                                       header.x * xUnit / 4,
                                       header.y * yUnit / 8,
@@ -419,14 +402,15 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 	}
 	else
         {
-	    hwndCtrl = CreateWindowEx(WS_EX_NOPARENTNOTIFY, className, winName,
-                                      header.style | WS_CHILD,
-                                      header.x * xUnit / 4,
-                                      header.y * yUnit / 8,
-                                      header.cx * xUnit / 4,
-                                      header.cy * yUnit / 8,
-                                      hwnd, (HMENU)header.id,
-                                      hInst, (SEGPTR)0 );
+	    hwndCtrl = CreateWindowEx16( WS_EX_NOPARENTNOTIFY, className,
+                                         winName,
+                                         header.style | WS_CHILD,
+                                         header.x * xUnit / 4,
+                                         header.y * yUnit / 8,
+                                         header.cx * xUnit / 4,
+                                         header.cy * yUnit / 8,
+                                         hwnd, (HMENU)header.id,
+                                         hInst, (SEGPTR)0 );
 	}
 
         /* Make the control last one in Z-order, so that controls remain
@@ -553,9 +537,9 @@ INT DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
     HWND hwnd;
     SEGPTR ptr;
 
-    if (!(ptr = (SEGPTR)WIN16_GlobalLock( dlgTemplate ))) return -1;
+    if (!(ptr = (SEGPTR)WIN16_GlobalLock16( dlgTemplate ))) return -1;
     hwnd = CreateDialogIndirectParam( hInst, ptr, owner, dlgProc, param );
-    GlobalUnlock( dlgTemplate );
+    GlobalUnlock16( dlgTemplate );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }

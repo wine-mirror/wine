@@ -41,7 +41,7 @@ heap	65520
 39  pascal16 BeginPaint(word ptr) BeginPaint
 40  pascal16 EndPaint(word ptr) EndPaint
 41  pascal16 CreateWindow(segptr segptr long s_word s_word s_word s_word
-	                  word word word segptr) CreateWindow
+	                  word word word segptr) CreateWindow16
 42  pascal16 ShowWindow(word word) ShowWindow
 43  pascal16 CloseWindow(word) CloseWindow
 44  pascal16 OpenIcon(word) OpenIcon
@@ -57,7 +57,7 @@ heap	65520
 54  pascal16 EnumWindows(segptr long) EnumWindows
 55  pascal16 EnumChildWindows(word segptr long) EnumChildWindows
 56  pascal16 MoveWindow(word word word word word word) MoveWindow
-57  pascal16 RegisterClass(ptr) RegisterClass
+57  pascal16 RegisterClass(ptr) RegisterClass16
 58  pascal16 GetClassName(word ptr word) GetClassName
 59  pascal16 SetActiveWindow(word) SetActiveWindow
 60  pascal16 GetActiveWindow() GetActiveWindow
@@ -356,7 +356,7 @@ heap	65520
 400 stub FinalUserInit
 402 pascal16 GetPriorityClipboardFormat(word ptr s_word)
              GetPriorityClipboardFormat
-403 pascal16 UnregisterClass(segptr word) UnregisterClass
+403 pascal16 UnregisterClass(segptr word) UnregisterClass16
 404 pascal16 GetClassInfo(word segptr ptr) GetClassInfo
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor
 407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon
@@ -372,13 +372,11 @@ heap	65520
 416 pascal16 TrackPopupMenu(word word word word word word ptr) TrackPopupMenu
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps
-420 pascal16 wsprintf() windows_wsprintf
-# windows_wsprintf() handles arguments itself, as libc can't handle an
-# 16-bit stack. DLLRelay() will pass 16-bit stack pointer as 1st arg.
+420 pascal16 wsprintf() wsprintf
 421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf
 422 stub DlgDirSelectEx
 423 stub DlgDirSelectComboBoxEx
-427 stub FindWindowEx
+427 pascal16 FindWindowEx(word word segptr ptr) FindWindowEx
 428 stub TileWindows
 429 stub CascadeWindows
 430 pascal16 lstrcmp(ptr ptr) lstrcmp
@@ -400,7 +398,7 @@ heap	65520
 450 stub CreateIconFromResourceEx
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel
 452 pascal16 CreateWindowEx(long segptr segptr long s_word s_word s_word s_word
-                            word word word segptr) CreateWindowEx
+                            word word word segptr) CreateWindowEx16
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx
 455 pascal16 GetIconID(word long) GetIconID
 456 pascal16 LoadIconHandler(word word) LoadIconHandler

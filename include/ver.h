@@ -127,36 +127,36 @@ typedef struct tagVS_FIXEDFILEINFO {
 	DWORD   dwFileDateLS;
 } VS_FIXEDFILEINFO;
 
-DWORD WINAPI
+DWORD
 GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off);
 
-DWORD WINAPI
+DWORD
 GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		DWORD off,DWORD reslen,LPVOID data
 );
 
-DWORD WINAPI
+DWORD
 GetFileVersionInfoSize(LPCSTR filename,LPDWORD handle);
 
-DWORD WINAPI
+DWORD
 GetFileVersionInfo(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data);
 
-DWORD WINAPI
+DWORD
 VerFindFile(
 	UINT flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
 	LPSTR curdir,UINT *curdirlen,LPSTR destdir,UINT*destdirlen
 );
 
-DWORD WINAPI
+DWORD
 VerInstallFile(
 	UINT flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
 	LPCSTR destdir,LPSTR tmpfile,UINT*tmpfilelen
 );
 
-DWORD WINAPI
+DWORD
 VerLanguageName(UINT lang,LPSTR langname,UINT langnamelen);
 
-DWORD WINAPI
+DWORD
 VerQueryValue(SEGPTR block,LPCSTR subblock,SEGPTR *buffer,UINT *buflen);
 
 /*

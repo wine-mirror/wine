@@ -176,7 +176,7 @@ int DRIVE_IsValid( int drive )
  */
 int DRIVE_GetCurrentDrive(void)
 {
-    TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     if (pTask && (pTask->curdrive & 0x80)) return pTask->curdrive & ~0x80;
     return DRIVE_CurDrive;
 }
@@ -187,7 +187,7 @@ int DRIVE_GetCurrentDrive(void)
  */
 int DRIVE_SetCurrentDrive( int drive )
 {
-    TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     if (!DRIVE_IsValid( drive ))
     {
         DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
@@ -270,7 +270,7 @@ const char * DRIVE_GetRoot( int drive )
  */
 const char * DRIVE_GetDosCwd( int drive )
 {
-    TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     if (!DRIVE_IsValid( drive )) return NULL;
 
     /* Check if we need to change the directory to the new task. */
@@ -291,7 +291,7 @@ const char * DRIVE_GetDosCwd( int drive )
  */
 const char * DRIVE_GetUnixCwd( int drive )
 {
-    TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     if (!DRIVE_IsValid( drive )) return NULL;
 
     /* Check if we need to change the directory to the new task. */
@@ -356,7 +356,7 @@ int DRIVE_Chdir( int drive, const char *path )
     char buffer[MAX_PATHNAME_LEN];
     const char *unix_cwd, *dos_cwd;
     BYTE attr;
-    TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
     dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:,%s)\n", 'A' + drive, path );
     strcpy( buffer, "A:" );

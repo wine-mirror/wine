@@ -41,7 +41,7 @@ void LoadStartupDrivers(void)
 /**************************************************************************
  *				SendDriverMessage		[USER.251]
  */
-LRESULT WINAPI SendDriverMessage(HDRVR hDriver, WORD msg, LPARAM lParam1, LPARAM lParam2)
+LRESULT SendDriverMessage(HDRVR hDriver, WORD msg, LPARAM lParam1, LPARAM lParam2)
 {
 	dprintf_driver(stdnimp,"SendDriverMessage(%04x, %04X, %08lX, %08lX);\n",
 						hDriver, msg, lParam1, lParam2);
@@ -68,8 +68,8 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 		if (lpdrv->lpNextItem == NULL) break;
 		lpdrv = lpdrv->lpNextItem;
 		}
-	hDrvr = GlobalAlloc(GMEM_MOVEABLE, sizeof(DRIVERITEM));
-	lpnewdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
+	hDrvr = GlobalAlloc16(GMEM_MOVEABLE, sizeof(DRIVERITEM));
+	lpnewdrv = (LPDRIVERITEM) GlobalLock16(hDrvr);
 	if (lpnewdrv == NULL) return 0;
 	lpnewdrv->dis.length = sizeof(DRIVERINFOSTRUCT);
 	lpnewdrv->dis.hModule = 0;
@@ -91,7 +91,7 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 		lpdrv->lpNextItem = lpnewdrv;
 		lpnewdrv->lpPrevItem = lpdrv;
 		}
-	lpnewdrv->lpDrvProc = NULL;
+	lpnewdrv->lpDrvProc = (DRIVERPROC)NULL;
     	dprintf_driver(stddeb,"OpenDriver // hDrvr=%04x loaded !\n", hDrvr);
 	return hDrvr;
 }
@@ -104,14 +104,14 @@ LRESULT CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 	LPDRIVERITEM	lpdrv;
     	dprintf_driver(stddeb,
 		"CloseDriver(%04x, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
-	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
+	lpdrv = (LPDRIVERITEM) GlobalLock16(hDrvr);
 	if (lpdrv != NULL && lpdrv->dis.hDriver == hDrvr) {
 		if (lpdrv->lpPrevItem)
 			((LPDRIVERITEM)lpdrv->lpPrevItem)->lpNextItem = lpdrv->lpNextItem;
 		if (lpdrv->lpNextItem)
 			((LPDRIVERITEM)lpdrv->lpNextItem)->lpPrevItem = lpdrv->lpPrevItem;
-		GlobalUnlock(hDrvr);
-		GlobalFree(hDrvr);
+		GlobalUnlock16(hDrvr);
+		GlobalFree16(hDrvr);
         dprintf_driver(stddeb,"CloseDriver // hDrvr=%04x closed !\n", hDrvr);
 		return TRUE;
 		}
@@ -126,10 +126,10 @@ HANDLE GetDriverModuleHandle(HDRVR hDrvr)
 	LPDRIVERITEM	lpdrv;
 	HANDLE			hModule = 0;
     	dprintf_driver(stddeb,"GetDriverModuleHandle(%04x);\n", hDrvr);
-	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
+	lpdrv = (LPDRIVERITEM) GlobalLock16(hDrvr);
 	if (lpdrv != NULL) {
 		hModule = lpdrv->dis.hModule;
-		GlobalUnlock(hDrvr);
+		GlobalUnlock16(hDrvr);
 		}
 	return hModule;
 }
@@ -176,10 +176,10 @@ BOOL GetDriverInfo(HDRVR hDrvr, LPDRIVERINFOSTRUCT lpDrvInfo)
 	LPDRIVERITEM	lpdrv;
     	dprintf_driver(stddeb,"GetDriverInfo(%04x, %p);\n", hDrvr, lpDrvInfo);
 	if (lpDrvInfo == NULL) return FALSE;
-	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
+	lpdrv = (LPDRIVERITEM) GlobalLock16(hDrvr);
 	if (lpdrv == NULL) return FALSE;
 	memcpy(lpDrvInfo, &lpdrv->dis, sizeof(DRIVERINFOSTRUCT));
-	GlobalUnlock(hDrvr);
+	GlobalUnlock16(hDrvr);
 	return TRUE;
 }
 
@@ -202,7 +202,7 @@ HDRVR GetNextDriver(HDRVR hDrvr, DWORD dwFlags)
 					lpDrvItemList->dis.hDriver);
 		return lpDrvItemList->dis.hDriver;
 		}
-	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
+	lpdrv = (LPDRIVERITEM) GlobalLock16(hDrvr);
 	if (lpdrv != NULL) {
 		if (dwFlags & GND_REVERSE) {
 			if (lpdrv->lpPrevItem) 
@@ -212,7 +212,7 @@ HDRVR GetNextDriver(HDRVR hDrvr, DWORD dwFlags)
 			if (lpdrv->lpNextItem) 
 				hRetDrv = ((LPDRIVERITEM)lpdrv->lpNextItem)->dis.hDriver;
 			}
-		GlobalUnlock(hDrvr);
+		GlobalUnlock16(hDrvr);
 		}
     	dprintf_driver(stddeb,"GetNextDriver // return %04x !\n", hRetDrv);
 	return hRetDrv;

@@ -209,7 +209,7 @@ typedef DWORD ( *PEXCEPTION_HANDLER)( PEXCEPTION_RECORD          pexcrec,
  * function pointer to a UnhandledExceptionFilter();
  */
 
-typedef long (WINAPI *__PTOP_EXCFILTER)
+typedef long (*__PTOP_EXCFILTER)
                    (PEXCEPTION_POINTERS ExceptionInfo);
 
 typedef __PTOP_EXCFILTER PTOP_LEVER_EXCEPTION_FILTER;
@@ -253,8 +253,8 @@ DWORD EXC_CallUnhandledExceptionFilter( PEXCEPTION_RECORD precord,
 
 void EXC_Init(void);
 
-BOOL WINAPI RaiseException(DWORD exccode, DWORD excflags,
-                           DWORD nargs, const LPDWORD pargs);
+BOOL RaiseException(DWORD exccode, DWORD excflags,
+                    DWORD nargs, const LPDWORD pargs);
 
 /*
  *  this undocumented function is called when an exception
@@ -270,14 +270,14 @@ BOOL WINAPI RaiseException(DWORD exccode, DWORD excflags,
  *  context.   
  */
 
-BOOL  WINAPI RtlUnwind( PEXCEPTION_FRAME pestframe,
-                        LPVOID unusedEIP,
-                        PEXCEPTION_RECORD pexcrec,
-                        DWORD contextEAX );
+BOOL RtlUnwind( PEXCEPTION_FRAME pestframe,
+                LPVOID unusedEIP,
+                PEXCEPTION_RECORD pexcrec,
+                DWORD contextEAX );
 
-DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers);
+DWORD UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers);
 
-__PTOP_EXCFILTER WINAPI SetUnhandledExceptionFilter(
+__PTOP_EXCFILTER SetUnhandledExceptionFilter(
       LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
   
 #endif  /* __WINE_EXCEPT_H */

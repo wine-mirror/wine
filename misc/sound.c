@@ -83,7 +83,7 @@ INT CountVoiceNotes(INT x)
         return 0;
 }
 
-LPINT GetThresholdEvent(void)
+LPINT16 GetThresholdEvent(void)
 {
 	fprintf(stderr, "GetThresholdEvent()\n");
         return NULL;

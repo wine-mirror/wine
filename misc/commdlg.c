@@ -28,6 +28,7 @@ static	HBITMAP		hFolder2 = 0;
 static	HBITMAP		hFloppy = 0;
 static	HBITMAP		hHDisk = 0;
 static	HBITMAP		hCDRom = 0;
+static  HBITMAP 	hBitmapTT = 0;
 
 /***********************************************************************
  * 				FileDlg_Init			[internal]
@@ -715,11 +716,11 @@ BOOL FindText(LPFINDREPLACE lpFind)
      */
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_FIND_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    if (!(ptr = (SEGPTR)WIN16_GlobalLock( hDlgTmpl ))) return -1;
+    if (!(ptr = (SEGPTR)WIN16_GlobalLock16( hDlgTmpl ))) return -1;
     bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
                                       MODULE_GetWndProcEntry16("FindTextDlgProc"),
                                       (DWORD)lpFind );
-    GlobalUnlock( hDlgTmpl );
+    GlobalUnlock16( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
@@ -744,11 +745,11 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
      */
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_REPLACE_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    if (!(ptr = (SEGPTR)WIN16_GlobalLock( hDlgTmpl ))) return -1;
+    if (!(ptr = (SEGPTR)WIN16_GlobalLock16( hDlgTmpl ))) return -1;
     bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
                                       MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
                                       (DWORD)lpFind );
-    GlobalUnlock( hDlgTmpl );
+    GlobalUnlock16( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
@@ -2150,8 +2151,6 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
 
 /***********************************************************************
  *                        ChooseFont   (COMMDLG.15)     
-     --April 1996--
-     please note: ChooseFont etc. are still under construction
  */
 BOOL ChooseFont(LPCHOOSEFONT lpChFont)
 {
@@ -2167,63 +2166,516 @@ BOOL ChooseFont(LPCHOOSEFONT lpChFont)
     return bRet;
 }
 
-/***********************************************************************
- *           FontStyleEnumProc   (COMMDLG.18)
- */
-int FontStyleEnumProc(LOGFONT *lf ,TEXTMETRIC *tm, int fonttype, LPARAM lParam)
+
+#define TEXT_EXTRAS 4
+#define TEXT_COLORS 16
+
+static const COLORREF textcolors[TEXT_COLORS]=
 {
- dprintf_commdlg(stddeb,"FontStyleEnumProc: font=%s (height=%d)\n",lf->lfFaceName,lf->lfHeight);
- return 1;
+ 0x00000000L,0x00000080L,0x00008000L,0x00008080L,
+ 0x00800000L,0x00800080L,0x00808000L,0x00808080L,
+ 0x00c0c0c0L,0x000000ffL,0x0000ff00L,0x0000ffffL,
+ 0x00ff0000L,0x00ff00ffL,0x00ffff00L,0x00FFFFFFL
+};
+
+/***********************************************************************
+ *                          CFn_HookCallChk                 [internal]
+ */
+static BOOL CFn_HookCallChk(LPCHOOSEFONT lpcf)
+{
+ if (lpcf)
+  if(lpcf->Flags & CF_ENABLEHOOK)
+   if (lpcf->lpfnHook)
+    return TRUE;
+ return FALSE;
 }
 
 /***********************************************************************
- *           FontFamilyEnumProc   (COMMDLG.19)
+ *                FontFamilyEnumProc                       (COMMDLG.19)
  */
-int FontFamilyEnumProc(LOGFONT *lf ,TEXTMETRIC *tm, int fonttype, LPARAM lParam)
+int FontFamilyEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM lParam)
 {
- dprintf_commdlg(stddeb,"FontFamilyEnumProc: font=%s\n",lf->lfFaceName);
- return 1;
+  int i;
+  WORD w;
+  HWND hwnd=LOWORD(lParam);
+
+  dprintf_commdlg(stddeb,"FontFamilyEnumProc: font=%s (nFontType=%d)\n",
+     			lplf->lfFaceName,nFontType);
+  i=SendMessage(hwnd,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(lplf->lfFaceName));
+  if (i!=CB_ERR)
+  {
+    w=(lplf->lfCharSet << 8) | lplf->lfPitchAndFamily;
+    SendMessage(hwnd, CB_SETITEMDATA,i,MAKELONG(nFontType,w));
+    return 1 ;
+  }
+  else
+    return 0;
 }
 
 /***********************************************************************
- *           ColorDlgProc   (COMMDLG.16)
+ *                 FontStyleEnumProc                     (COMMDLG.18)
  */
-LRESULT FormatCharDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
+int FontStyleEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM lParam)
+{
+  int j;
+  char buffer[20];
+/*  HWND hcmb2=LOWORD(lParam);*/
+  HWND hcmb3=HIWORD(lParam);
+  LPLOGFONT lf=lplf;
+
+  dprintf_commdlg(stddeb,"FontStyleEnumProc: (nFontType=%d)\n",nFontType);
+  dprintf_commdlg(stddeb,"  %s h=%d w=%d e=%d o=%d wg=%d i=%d u=%d s=%d ch=%d op=%d cp=%d q=%d pf=%xh\n",
+	lf->lfFaceName,lf->lfHeight,lf->lfWidth,lf->lfEscapement,lf->lfOrientation,
+	lf->lfWeight,lf->lfItalic,lf->lfUnderline,lf->lfStrikeOut,lf->lfCharSet,
+	lf->lfOutPrecision,lf->lfClipPrecision,lf->lfQuality,lf->lfPitchAndFamily);
+
+#if 1         /* VERSION A: use some predefined height values */                       
+  /* FIXME: if (!(nFontType & RASTER_FONTTYPE))......... */
+  {
+    int sizes[]={8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72,0};  
+    int i;
+    if (!SendMessage(hcmb3,CB_GETCOUNT,0,0)) 
+    {
+      i=0;
+      while (sizes[i])
+      {
+        sprintf(buffer,"%3d",sizes[i++]);
+        j=SendMessage(hcmb3,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+        SendMessage(hcmb3, CB_SETITEMDATA, j, MAKELONG(sizes[i],0));
+      }
+    }
+  }
+  return 0; 
+#endif
+
+#if 0        /* VERSION B: use only lplf->lfHeight values */
+  {
+    if (lplf->lfHeight)
+    {
+      sprintf(buffer,"%3d",lplf->lfHeight);
+      j=SendMessage(hcmb3,CB_FINDSTRING,-1,(LPARAM)MAKE_SEGPTR(buffer));
+      if (j==CB_ERR)
+      {
+       j=SendMessage(hcmb3,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+       SendMessage(hcmb3, CB_SETITEMDATA, j, MAKELONG(lplf->lfHeight,lplf->lfWidth));
+      } 
+    } 
+  }
+  return 1 ;
+#endif  
+
+}
+
+
+/***********************************************************************
+ *           CFn_WMInitDialog                            [internal]
+ */
+LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
   HDC hdc;
-  FARPROC  enumCallback;
-  
-  switch (wMsg) 
+  int i,j,res,init=0;
+  long l;
+  char buffer[32];
+  FARPROC enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
+  LPLOGFONT lpxx;
+  HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
+  LPCHOOSEFONT lpcf;
+
+  SetWindowLong(hDlg, DWL_USER, lParam); 
+  lpcf=(LPCHOOSEFONT)lParam;
+  lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
+  dprintf_commdlg(stddeb,"FormatCharDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+
+  if (lpcf->lStructSize != sizeof(CHOOSEFONT))
+  {
+    dprintf_commdlg(stddeb,"WM_INITDIALOG: structure size failure !!!\n");
+    EndDialog (hDlg, 0); 
+    return FALSE;
+  }
+  if (!hBitmapTT)
+    hBitmapTT = LoadBitmap(0, MAKEINTRESOURCE(OBM_TRTYPE));
+			 
+  if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
+    ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
+  if (!(lpcf->Flags & CF_APPLY))
+    ShowWindow(GetDlgItem(hDlg,psh3),SW_HIDE);
+  if (lpcf->Flags & CF_EFFECTS)
+  {
+    for (res=1,i=0;res && i<TEXT_COLORS;i++)
     {
-    case WM_INITDIALOG:
-      dprintf_commdlg(stddeb,"FormatCharDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow(hDlg, SW_SHOWNORMAL);
-      hdc = GetDC(hDlg);
-      if (hdc)
+      /* FIXME: load color name from resource:  res=LoadString(...,i+....,buffer,.....); */
+      j=SendDlgItemMessage(hDlg,cmb4,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR("[color name]"));
+      SendDlgItemMessage(hDlg,cmb4, CB_SETITEMDATA,j,textcolors[j]);
+      /* look for a fitting value in color combobox */
+      if (textcolors[j]==lpcf->rgbColors)
+        SendDlgItemMessage(hDlg,cmb4, CB_SETCURSEL,j,0);
+    }
+  }
+  else
+  {
+    ShowWindow(GetDlgItem(hDlg,cmb4),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,chx1),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,chx2),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,grp1),SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg,stc4),SW_HIDE);
+  }
+  
+  /* perhaps this stuff should be moved to FontStyleEnumProc() ?? */
+  strcpy(buffer,"Regular"); 	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
+  j=SendDlgItemMessage(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+  SendDlgItemMessage(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_NORMAL,0));
+  strcpy(buffer,"Bold");       	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
+  j=SendDlgItemMessage(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+  SendDlgItemMessage(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_BOLD,0));
+  strcpy(buffer,"Italic");	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
+  j=SendDlgItemMessage(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+  SendDlgItemMessage(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_NORMAL,1));
+  strcpy(buffer,"Bold Italic");	/* LoadString(hInst,.... ,buffer,LF_FACESIZE);*/
+  j=SendDlgItemMessage(hDlg,cmb2,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+  SendDlgItemMessage(hDlg,cmb2, CB_SETITEMDATA, j, MAKELONG(FW_BOLD,1));
+  
+  hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+  if (hdc)
+  {
+    if (!EnumFontFamilies (hdc, NULL,enumCallback,(LPARAM)GetDlgItem(hDlg,cmb1)))
+      dprintf_commdlg(stddeb,"WM_INITDIALOG: EnumFontFamilies returns 0\n");
+    if (lpcf->Flags & CF_INITTOLOGFONTSTRUCT)
+    {
+      /* look for fitting font name in combobox1 */
+      j=SendDlgItemMessage(hDlg,cmb1,CB_FINDSTRING,-1,(LONG)lpxx->lfFaceName);
+      if (j!=CB_ERR)
       {
-       HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
-       /*  
-         currently only called for testing of 2 necessary EnumProcs 
-       */
-       enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
-       EnumFontFamilies (hdc, NULL,enumCallback ,NULL); 
-       enumCallback = MODULE_GetWndProcEntry16("FontStyleEnumProc");
-       EnumFontFamilies(hdc, /* for example : */ "COURIER",enumCallback,NULL);
-       ReleaseDC(hDlg,hdc);
-       SetCursor(hcursor);
+        SendDlgItemMessage(hDlg,cmb1,CB_SETCURSEL,j,0);
+	SendMessage(hDlg,WM_COMMAND,cmb1,MAKELONG(GetDlgItem(hDlg,cmb1),CBN_SELCHANGE));
+        init=1;
+        /* look for fitting font style in combobox2 */
+        l=MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:FW_NORMAL,lpxx->lfItalic !=0);
+        for (i=0;i<TEXT_EXTRAS;i++)
+        {
+          if (l==SendDlgItemMessage(hDlg,cmb2, CB_GETITEMDATA,i,0))
+            SendDlgItemMessage(hDlg,cmb2,CB_SETCURSEL,i,0);
+        }
+      
+        /* look for fitting font size in combobox3 */
+        j=SendDlgItemMessage(hDlg,cmb3,CB_GETCOUNT,0,0);
+        for (i=0;i<j;i++)
+        {
+          if (lpxx->lfHeight==(int)SendDlgItemMessage(hDlg,cmb3, CB_GETITEMDATA,i,0))
+            SendDlgItemMessage(hDlg,cmb3,CB_SETCURSEL,i,0);
+        }
       }
-      return (TRUE);
-    case WM_COMMAND:
-      switch (wParam)
-	{
-	case IDOK:
-	  EndDialog(hDlg, TRUE);
-	  return(TRUE);
-	case IDCANCEL:
-	  EndDialog(hDlg, FALSE);
-	  return(TRUE);
+      if (!init)
+      {
+        SendDlgItemMessage(hDlg,cmb1,CB_SETCURSEL,0,0);
+	SendMessage(hDlg,WM_COMMAND,cmb1,MAKELONG(GetDlgItem(hDlg,cmb1),CBN_SELCHANGE));      
+      }
+    }
+    if (lpcf->Flags & CF_USESTYLE && lpcf->lpszStyle)
+    {
+      j=SendDlgItemMessage(hDlg,cmb2,CB_FINDSTRING,-1,(LONG)lpcf->lpszStyle);
+      if (j!=CB_ERR)
+      {
+        j=SendDlgItemMessage(hDlg,cmb2,CB_SETCURSEL,j,0);
+        SendMessage(hDlg,WM_COMMAND,cmb2,MAKELONG(GetDlgItem(hDlg,cmb2),CBN_SELCHANGE));
+      }
+    }
+  }
+  else
+  {
+    dprintf_commdlg(stddeb,"WM_INITDIALOG: HDC failure !!!\n");
+    EndDialog (hDlg, 0); 
+    return FALSE;
+  }
+
+  if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
+    ReleaseDC(hDlg,hdc);
+  res=TRUE;
+  if (CFn_HookCallChk(lpcf))
+    res=CallWindowProc(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+  SetCursor(hcursor);   
+  return res;
+}
+
+
+/***********************************************************************
+ *           CFn_WMMeasureItem                           [internal]
+ */
+LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
+{
+  BITMAP bm;
+  LPMEASUREITEMSTRUCT lpmi=PTR_SEG_TO_LIN((LPMEASUREITEMSTRUCT)lParam);
+  if (!hBitmapTT)
+    hBitmapTT = LoadBitmap(0, MAKEINTRESOURCE(OBM_TRTYPE));
+  GetObject(hBitmapTT, sizeof(BITMAP), (LPSTR)&bm);
+  lpmi->itemHeight=bm.bmHeight;
+  /* FIXME: use MAX of bm.bmHeight and tm.tmHeight .*/
+  return 0;
+}
+
+
+/***********************************************************************
+ *           CFn_WMDrawItem                              [internal]
+ */
+LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
+{
+  HBRUSH hBrush;
+  char buffer[40];
+  BITMAP bm;
+  COLORREF cr;
+  RECT rect;
+#if 0  
+  HDC hMemDC;
+  int nFontType;
+  HBITMAP hBitmap; /* for later TT usage */
+#endif  
+  LPDRAWITEMSTRUCT lpdi = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
+
+  if (lpdi->itemID == 0xFFFF) 			/* got no items */
+    DrawFocusRect(lpdi->hDC, &lpdi->rcItem);
+  else
+  {
+   if (lpdi->CtlType == ODT_COMBOBOX)
+   {
+     hBrush = SelectObject(lpdi->hDC, GetStockObject(LTGRAY_BRUSH));
+     SelectObject(lpdi->hDC, hBrush);
+     FillRect(lpdi->hDC, &lpdi->rcItem, hBrush);
+   }
+   else
+     return TRUE;	/* this should never happen */
+
+   rect=lpdi->rcItem;
+   switch (lpdi->CtlID)
+   {
+    case cmb1:	/* dprintf_commdlg(stddeb,"WM_Drawitem cmb1\n"); */
+		SendMessage(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
+			(LPARAM)MAKE_SEGPTR(buffer));	          
+		GetObject(hBitmapTT, sizeof(BITMAP), (LPSTR)&bm);
+		TextOut(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
+			lpdi->rcItem.top, buffer, lstrlen(buffer));
+#if 0
+		nFontType = SendMessage(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
+		  /* FIXME: draw bitmap if truetype usage */
+		if (nFontType&TRUETYPE_FONTTYPE)
+		{
+		  hMemDC = CreateCompatibleDC(lpdi->hDC);
+		  hBitmap = SelectObject(hMemDC, hBitmapTT);
+		  BitBlt(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
+			bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		  SelectObject(hMemDC, hBitmap);
+		  DeleteDC(hMemDC);
+		}
+#endif
+		break;
+    case cmb2:
+    case cmb3:	/* dprintf_commdlg(stddeb,"WM_DRAWITEN cmb2,cmb3\n"); */
+		SendMessage(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
+			(LPARAM)MAKE_SEGPTR(buffer));
+		TextOut(lpdi->hDC, lpdi->rcItem.left,
+			lpdi->rcItem.top, buffer, lstrlen(buffer));
+		break;
+
+    case cmb4:	/* dprintf_commdlg(stddeb,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
+		SendMessage(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
+    		    (LPARAM)MAKE_SEGPTR(buffer));
+		TextOut(lpdi->hDC, lpdi->rcItem.left +  25+5,
+			lpdi->rcItem.top, buffer, lstrlen(buffer));
+		cr = SendMessage(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
+		hBrush = CreateSolidBrush(cr);
+		if (hBrush)
+		{
+		  hBrush = SelectObject (lpdi->hDC, hBrush) ;
+		  rect.right=rect.left+25;
+		  rect.top++;
+		  rect.left+=5;
+		  rect.bottom--;
+		  Rectangle(lpdi->hDC,rect.left,rect.top,rect.right,rect.bottom);
+		  DeleteObject (SelectObject (lpdi->hDC, hBrush)) ;
+		}
+		rect=lpdi->rcItem;
+		rect.left+=25+5;
+		break;
+
+    default:	return TRUE;	/* this should never happen */
+   }
+   if (lpdi->itemState ==ODS_SELECTED)
+     InvertRect(lpdi->hDC, &rect);
+ }
+ return TRUE;
+}
+
+/***********************************************************************
+ *           CFn_WMCtlColor                              [internal]
+ */
+LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM wParam, LPARAM lParam)
+{
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
+
+  if (lpcf->Flags & CF_EFFECTS)
+   if (HIWORD(lParam)==CTLCOLOR_STATIC && GetDlgCtrlID(LOWORD(lParam))==stc6)
+   {
+     SetTextColor(wParam,lpcf->rgbColors);
+     return GetStockObject(WHITE_BRUSH);
+   }
+  return 0;
+}
+
+/***********************************************************************
+ *           CFn_WMCommand                               [internal]
+ */
+LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
+{
+  char buffer[200];
+  FARPROC enumCallback;
+  HFONT hFont/*,hFontOld*/;
+  int i,j;
+  long l;
+  HDC hdc;
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER); 
+  LPLOGFONT lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
+  
+  dprintf_commdlg(stddeb,"FormatCharDlgProc // WM_COMMAND lParam=%08lX\n", lParam);
+  switch (wParam)
+  {
+	case cmb1:if (HIWORD(lParam)==CBN_SELCHANGE)
+		  {
+		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+		    if (hdc)
+		    {
+		      /* only if cmb2 is refilled in  FontStyleEnumProc():
+       		                 SendDlgItemMessage(hDlg,cmb2,CB_RESETCONTENT,0,0); 
+		       */
+		      SendDlgItemMessage(hDlg,cmb3,CB_RESETCONTENT,0,0);
+		      i=SendDlgItemMessage(hDlg,cmb1,CB_GETCURSEL,0,0);
+		      if (i!=CB_ERR)
+		      {
+		        HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
+                        SendDlgItemMessage(hDlg,cmb1,CB_GETLBTEXT,i,(LPARAM)MAKE_SEGPTR(buffer));
+	                dprintf_commdlg(stddeb,"WM_COMMAND/cmb1 =>%s\n",buffer);
+		        enumCallback = MODULE_GetWndProcEntry16("FontStyleEnumProc");
+       		        EnumFontFamilies(hdc,buffer,enumCallback,
+		             MAKELONG(GetDlgItem(hDlg,cmb2),GetDlgItem(hDlg,cmb3)));
+		        SetCursor(hcursor);        
+		      }
+		      if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
+ 		        ReleaseDC(hDlg,hdc);
+ 		    }
+ 		    else
+                    {
+                      dprintf_commdlg(stddeb,"WM_COMMAND: HDC failure !!!\n");
+                      EndDialog (hDlg, 0); 
+                      return TRUE;
+                    }
+	          }
+	case chx1:
+	case chx2:
+	case cmb2:
+	case cmb3:if (HIWORD(lParam)==CBN_SELCHANGE || HIWORD(lParam)== BN_CLICKED )
+	          {
+                    dprintf_commdlg(stddeb,"WM_COMMAND/cmb2,3 =%08lX\n", lParam);
+		    i=SendDlgItemMessage(hDlg,cmb1,CB_GETCURSEL,0,0);
+		    if (i==CB_ERR)
+                      i=SendDlgItemMessage(hDlg,cmb1,WM_GETTEXT,20,(LPARAM)MAKE_SEGPTR(buffer));
+                    else
+                    {
+		      SendDlgItemMessage(hDlg,cmb1,CB_GETLBTEXT,i,(LPARAM)MAKE_SEGPTR(buffer));
+		      l=SendDlgItemMessage(hDlg,cmb1,CB_GETITEMDATA,i,0);
+		      j=HIWORD(l);
+		      lpcf->nFontType = LOWORD(l);
+		      /* FIXME:   lpcf->nFontType |= ....  SIMULATED_FONTTYPE and so */
+		      /* same value reported to the EnumFonts
+		       call back with the extra FONTTYPE_...  bits added */
+		      lpxx->lfPitchAndFamily=j&0xff;
+		      lpxx->lfCharSet=j>>8;
+                    }
+                    strcpy(lpxx->lfFaceName,buffer);
+		    i=SendDlgItemMessage(hDlg,cmb2,CB_GETCURSEL,0,0);
+		    if (i!=CB_ERR)
+		    {
+		      l=SendDlgItemMessage(hDlg,cmb2,CB_GETITEMDATA,i,0);
+		      if (0!=(lpxx->lfItalic=HIWORD(l)))
+		        lpcf->nFontType |= ITALIC_FONTTYPE;
+		      if ((lpxx->lfWeight=LOWORD(l)) > FW_MEDIUM)
+		        lpcf->nFontType |= BOLD_FONTTYPE;
+		    }
+		    i=SendDlgItemMessage(hDlg,cmb3,CB_GETCURSEL,0,0);
+		    if (i!=CB_ERR)
+		    {
+		      l=SendDlgItemMessage(hDlg,cmb3,CB_GETITEMDATA,i,0);
+		      lpxx->lfHeight=-LOWORD(l);
+		      lpxx->lfWidth = 0;  /* FYI: lfWidth is in HIWORD(l); */
+		    }
+		    lpxx->lfStrikeOut=IsDlgButtonChecked(hDlg,chx1);
+		    lpxx->lfUnderline=IsDlgButtonChecked(hDlg,chx2);
+		    lpxx->lfOrientation=lpxx->lfEscapement=0;
+		    lpxx->lfOutPrecision=OUT_DEFAULT_PRECIS;
+		    lpxx->lfClipPrecision=CLIP_DEFAULT_PRECIS;
+		    lpxx->lfQuality=DEFAULT_QUALITY;
+
+		    hFont=CreateFontIndirect(lpxx);
+		    if (hFont)
+		      SendDlgItemMessage(hDlg,stc6,WM_SETFONT,hFont,TRUE);
+		    /* FIXME: Delete old font ...? */  
+                  }
+                  break;
+
+	case cmb4:i=SendDlgItemMessage(hDlg,cmb4,CB_GETCURSEL,0,0);
+		  if (i!=CB_ERR)
+		  {
+		   lpcf->rgbColors=textcolors[i];
+		   InvalidateRect(GetDlgItem(hDlg,stc6),NULL,0);
+		  }
+		  break;
+	
+	case psh15:i=RegisterWindowMessage(MAKE_SEGPTR(HELPMSGSTRING));
+		  if (lpcf->hwndOwner)
+		    SendMessage(lpcf->hwndOwner,i,0,(LPARAM)lpcf);
+		  if (CFn_HookCallChk(lpcf))
+		    CallWindowProc(lpcf->lpfnHook,hDlg,WM_COMMAND,psh15,(LPARAM)lpcf);
+		  break;
+
+	case IDOK:EndDialog(hDlg, TRUE);
+		  return(TRUE);
+	case IDCANCEL:EndDialog(hDlg, FALSE);
+		  return(TRUE);
 	}
       return(FALSE);
+}
+
+
+/***********************************************************************
+ *           FormatCharDlgProc   (COMMDLG.16)
+             FIXME: 1. some strings are "hardcoded", but it's better load from sysres
+                    2. some CF_.. flags are not supported
+                    3. some TType extensions
+ */
+LRESULT FormatCharDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+  LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong(hDlg, DWL_USER);  
+  if (message!=WM_INITDIALOG)
+  {
+   int res=0;
+   if (!lpcf)
+      return FALSE;
+   if (CFn_HookCallChk(lpcf))
+     res=CallWindowProc(lpcf->lpfnHook,hDlg,message,wParam,lParam);
+   if (res)
+    return res;
+  }
+  else
+    return CFn_WMInitDialog(hDlg,wParam,lParam);
+  switch (message)
+    {
+      case WM_MEASUREITEM:
+                        return CFn_WMMeasureItem(hDlg,wParam,lParam);
+      case WM_DRAWITEM:
+                        return CFn_WMDrawItem(hDlg,wParam,lParam);
+      case WM_CTLCOLOR:
+                        return CFn_WMCtlColor(hDlg,wParam,lParam);
+      case WM_COMMAND:
+                        return CFn_WMCommand(hDlg,wParam,lParam);
+      case WM_CHOOSEFONT_GETLOGFONT: 
+                        /* FIXME:  current logfont back to caller */
+                        break;
     }
   return FALSE;
 }

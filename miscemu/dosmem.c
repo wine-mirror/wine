@@ -154,7 +154,7 @@ void DOSMEM_Tick(void)
  */
 void DOSMEM_FillBiosSegment(void)
 {
-    pBiosData = (BIOSDATA *)GlobalLock( DOSMEM_BiosSeg );
+    pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosSeg );
 
       /* Clear all unused values */
     memset( pBiosData, 0, sizeof(*pBiosData) );

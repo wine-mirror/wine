@@ -15,8 +15,8 @@
 #include <string.h>
 #include "windows.h"
 
-char* AppName = "Rolex";
-char* WindowName = "Rolex";
+char AppName[] = "Rolex";
+char WindowName[] = "Rolex";
 int WindowWidth = 100;
 int WindowHeight = 121;
 COLORREF FaceColor = RGB(192,192,192);

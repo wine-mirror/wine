@@ -442,3 +442,34 @@ BOOL IsGDIObject(HANDLE handle)
     /* FIXME: should check magic here */
     return (object != NULL);
 }
+
+
+/***********************************************************************
+ *           MulDiv16   (GDI.128)
+ */
+INT16 MulDiv16( INT16 foo, INT16 bar, INT16 baz )
+{
+    INT32 ret;
+    if (!baz) return -32768;
+    ret = (foo * bar) / baz;
+    if ((ret > 32767) || (ret < -32767)) return -32768;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           MulDiv32   (KERNEL32.391)
+ */
+INT32 MulDiv32( INT32 foo, INT32 bar, INT32 baz )
+{
+#ifdef __GNUC__
+    long long ret;
+    if (!baz) return -1;
+    ret = ((long long)foo * bar) / baz;
+    if ((ret > 2147483647) || (ret < -2147483647)) return -1;
+    return ret;
+#else
+    if (!baz) return -1;
+    return (foo * bar) / baz;
+#endif
+}

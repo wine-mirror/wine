@@ -312,7 +312,7 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 
     ci->nActiveChildren++;
  
-    hwnd = CreateWindow( cs->szClass, cs->szTitle,
+    hwnd = CreateWindow16( cs->szClass, cs->szTitle,
 			  WS_CHILD | WS_BORDER | WS_CAPTION | WS_CLIPSIBLINGS |
 			  WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU |
 			  WS_THICKFRAME | WS_VISIBLE | cs->style,
@@ -1433,8 +1433,8 @@ void ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  short 	 newPos=-1;
  short 	 curPos;
  short 	 length;
- INT 	 minPos;
- INT 	 maxPos;
+ INT16 	 minPos;
+ INT16 	 maxPos;
  short   shift;
 
  if( !wndPtr ) return;

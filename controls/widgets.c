@@ -15,7 +15,7 @@
 #include "module.h"
 #include "stackframe.h"
 
-static WNDCLASS WIDGETS_BuiltinClasses[] =
+static WNDCLASS16 WIDGETS_BuiltinClasses[] =
 {
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
           (WNDPROC)"ButtonWndProc", 0, sizeof(BUTTONINFO),
@@ -61,7 +61,7 @@ BOOL WIDGETS_Init(void)
 {
     int i;
     char name[20];
-    WNDCLASS *class = WIDGETS_BuiltinClasses;
+    WNDCLASS16 *class = WIDGETS_BuiltinClasses;
 
     for (i = 0; i < NB_BUILTIN_CLASSES; i++, class++)
     {
@@ -69,7 +69,7 @@ BOOL WIDGETS_Init(void)
         class->lpszClassName = MAKE_SEGPTR(name);
         class->hCursor = LoadCursor( 0, IDC_ARROW );
         class->lpfnWndProc = MODULE_GetWndProcEntry16( (char *)class->lpfnWndProc );
-        if (!RegisterClass( class )) return FALSE;
+        if (!RegisterClass16( class )) return FALSE;
     }
     return TRUE;
 }

@@ -25,8 +25,8 @@ void QUEUE_DumpQueue( HQUEUE hQueue )
 {
     MESSAGEQUEUE *pq; 
 
-    if (!(pq = (MESSAGEQUEUE*) GlobalLock( hQueue )) ||
-        GlobalSize(hQueue) < sizeof(MESSAGEQUEUE) + pq->queueSize*sizeof(QMSG))
+    if (!(pq = (MESSAGEQUEUE*) GlobalLock16( hQueue )) ||
+        GlobalSize16(hQueue) < sizeof(MESSAGEQUEUE)+pq->queueSize*sizeof(QMSG))
     {
         fprintf( stderr, "%04x is not a queue handle\n", hQueue );
         return;
@@ -65,7 +65,7 @@ void QUEUE_WalkQueues(void)
     fprintf( stderr, "Queue Size Msgs Task\n" );
     while (hQueue)
     {
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock( hQueue );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
         if (!queue)
         {
             fprintf( stderr, "*** Bad queue handle %04x\n", hQueue );
@@ -94,13 +94,13 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
     dprintf_msg(stddeb,"Creating message queue...\n");
 
     queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
-    if (!(hQueue = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
+    if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
         return 0;
-    msgQueue = (MESSAGEQUEUE *) GlobalLock( hQueue );
+    msgQueue = (MESSAGEQUEUE *) GlobalLock16( hQueue );
     msgQueue->msgSize = sizeof(QMSG);
     msgQueue->queueSize = size;
     msgQueue->wWinVersion = 0;  /* FIXME? */
-    GlobalUnlock( hQueue );
+    GlobalUnlock16( hQueue );
     return hQueue;
 }
 
@@ -112,7 +112,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
  */
 BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue )
 {
-    MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock(hQueue);
+    MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock16(hQueue);
     HQUEUE *pPrev;
 
     dprintf_msg(stddeb,"Deleting message queue %04x\n", hQueue);
@@ -126,11 +126,11 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue )
     pPrev = &hFirstQueue;
     while (*pPrev && (*pPrev != hQueue))
     {
-        MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock(*pPrev);
+        MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock16(*pPrev);
         pPrev = &msgQ->next;
     }
     if (*pPrev) *pPrev = msgQueue->next;
-    GlobalFree( hQueue );
+    GlobalFree16( hQueue );
     return 1;
 }
 
@@ -146,7 +146,7 @@ BOOL QUEUE_CreateSysMsgQueue( int size )
     if (size > MAX_QUEUE_SIZE) size = MAX_QUEUE_SIZE;
     else if (size <= 0) size = 1;
     if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( size ))) return FALSE;
-    sysMsgQueue = (MESSAGEQUEUE *) GlobalLock( hmemSysMsgQueue );
+    sysMsgQueue = (MESSAGEQUEUE *) GlobalLock16( hmemSysMsgQueue );
     return TRUE;
 }
 
@@ -170,7 +170,7 @@ BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG * msg, DWORD extraInfo )
     int pos;
     MESSAGEQUEUE *msgQueue;
 
-    if (!(msgQueue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return FALSE;
+    if (!(msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return FALSE;
     pos = msgQueue->nextFreeMessage;
 
       /* Check if queue is full */
@@ -311,7 +311,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
  */
 HTASK QUEUE_GetQueueTask( HQUEUE hQueue )
 {
-    MESSAGEQUEUE *queue = GlobalLock( hQueue );
+    MESSAGEQUEUE *queue = GlobalLock16( hQueue );
     return (queue) ? queue->hTask : 0 ;
 }
 
@@ -323,7 +323,7 @@ void QUEUE_IncPaintCount( HQUEUE hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wPaintCount++;
     queue->status |= QS_PAINT;
     queue->tempStatus |= QS_PAINT;    
@@ -337,7 +337,7 @@ void QUEUE_DecPaintCount( HQUEUE hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wPaintCount--;
     if (!queue->wPaintCount) queue->status &= ~QS_PAINT;
 }
@@ -350,7 +350,7 @@ void QUEUE_IncTimerCount( HQUEUE hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wTimerCount++;
     queue->status |= QS_TIMER;
     queue->tempStatus |= QS_TIMER;
@@ -364,7 +364,7 @@ void QUEUE_DecTimerCount( HQUEUE hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
     queue->wTimerCount--;
     if (!queue->wTimerCount) queue->status &= ~QS_TIMER;
 }
@@ -377,7 +377,7 @@ void PostQuitMessage( INT exitCode )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return;
     queue->wPostQMsg = TRUE;
     queue->wExitCode = (WORD)exitCode;
 }
@@ -417,7 +417,7 @@ BOOL SetMessageQueue( int size )
     if ((hQueue = GetTaskQueue(0)) != 0) QUEUE_DeleteMsgQueue( hQueue );
 
     /* Link new queue into list */
-    queuePtr = (MESSAGEQUEUE *)GlobalLock( hNewQueue );
+    queuePtr = (MESSAGEQUEUE *)GlobalLock16( hNewQueue );
     queuePtr->hTask = GetCurrentTask();
     queuePtr->next  = hFirstQueue;
     hFirstQueue = hNewQueue;
@@ -435,7 +435,7 @@ DWORD GetQueueStatus( UINT flags )
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     ret = MAKELONG( queue->tempStatus, queue->status );
     queue->tempStatus = 0;
     return ret & MAKELONG( flags, flags );
@@ -449,7 +449,7 @@ BOOL GetInputState()
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return FALSE;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return FALSE;
     return queue->status & (QS_KEY | QS_MOUSEBUTTON);
 }
 
@@ -461,7 +461,7 @@ DWORD GetMessagePos(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     return queue->GetMessagePosVal;
 }
 
@@ -473,7 +473,7 @@ LONG GetMessageTime(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     return queue->GetMessageTimeVal;
 }
 
@@ -485,6 +485,6 @@ LONG GetMessageExtraInfo(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     return queue->GetMessageExtraInfoVal;
 }

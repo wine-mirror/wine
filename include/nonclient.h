@@ -7,7 +7,7 @@
 #ifndef __WINE_NONCLIENT_H
 #define __WINE_NONCLIENT_H
 
-#include "windows.h"
+#include "win.h"
 
 extern void NC_GetInsideRect( HWND hwnd, RECT *rect );
 extern void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
@@ -18,7 +18,7 @@ extern LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
 extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
 extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
 extern LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam );
+extern LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam);
 extern LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt );
 extern LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
 

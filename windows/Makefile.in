@@ -26,7 +26,6 @@ C_SRCS = \
 	syscolor.c \
 	sysmetrics.c \
 	timer.c \
-	utility.c \
 	win.c \
 	winpos.c
 

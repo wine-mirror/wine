@@ -695,7 +695,7 @@ BOOL GetCharABCWidths(HDC hdc, UINT wFirstChar, UINT wLastChar, LPABC lpABC)
 /***********************************************************************
  *           GetCharWidth    (GDI.350)
  */
-BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
+BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT16 lpBuffer)
 {
     int i, j;
     XFontStruct *xfont;
@@ -857,7 +857,7 @@ void InitFontsList(void)
 /*************************************************************************
  *				EnumFonts			[GDI.70]
  */
-INT EnumFonts(HDC hDC, LPCTSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData)
+INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData)
 {
   HANDLE       hLog;
   HANDLE       hMet;
@@ -927,7 +927,7 @@ INT EnumFonts(HDC hDC, LPCTSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpDat
 /*************************************************************************
  *				EnumFontFamilies	[GDI.330]
  */
-INT EnumFontFamilies(HDC hDC, LPCTSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM lpData)
+INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM lpData)
 {
   HANDLE       	hLog;
   HANDLE       	hMet;

@@ -331,8 +331,8 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
     sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
     sizeAnd = bmpAnd->bitmap.bmHeight * bmpAnd->bitmap.bmWidthBytes;
 
-    if (!(handle = GlobalAlloc( GMEM_MOVEABLE,
-                                sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
+    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
+                                  sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
         DeleteObject( hXorBits );
         DeleteObject( hAndBits );
@@ -342,7 +342,7 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
     /* Make it owned by the module */
     if (hInstance) FarSetOwner( handle, GetExePtr(hInstance) );
 
-    info = (CURSORICONINFO *)GlobalLock( handle );
+    info = (CURSORICONINFO *)GlobalLock16( handle );
     info->ptHotSpot.x   = hotspot.x;
     info->ptHotSpot.y   = hotspot.y;
     info->nWidth        = bmpXor->bitmap.bmWidth;
@@ -357,7 +357,7 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
     GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
     DeleteObject( hXorBits );
     DeleteObject( hAndBits );
-    GlobalUnlock( handle );
+    GlobalUnlock16( handle );
     return handle;
 }
 
@@ -413,15 +413,15 @@ static HANDLE CURSORICON_Copy( HANDLE hInstance, HANDLE handle )
     int size;
     HANDLE hNew;
 
-    if (!(ptrOld = (char *)GlobalLock( handle ))) return 0;
+    if (!(ptrOld = (char *)GlobalLock16( handle ))) return 0;
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
-    size = GlobalSize( handle );
-    hNew = GlobalAlloc( GMEM_MOVEABLE, size );
+    size = GlobalSize16( handle );
+    hNew = GlobalAlloc16( GMEM_MOVEABLE, size );
     FarSetOwner( hNew, hInstance );
-    ptrNew = (char *)GlobalLock( hNew );
+    ptrNew = (char *)GlobalLock16( hNew );
     memcpy( ptrNew, ptrOld, size );
-    GlobalUnlock( handle );
-    GlobalUnlock( hNew );
+    GlobalUnlock16( handle );
+    GlobalUnlock16( hNew );
     return hNew;
 }
 
@@ -437,7 +437,7 @@ HCURSOR CURSORICON_IconToCursor(HICON hIcon)
  CURSORICONINFO *ptr = NULL;
 
  if(hIcon)
-    if (!(ptr = (CURSORICONINFO*)GlobalLock( hIcon ))) return FALSE;
+    if (!(ptr = (CURSORICONINFO*)GlobalLock16( hIcon ))) return FALSE;
        if (ptr->bPlanes * ptr->bBitsPerPixel == 1)
           {
             return hIcon; /* assuming it's a cursor */
@@ -447,7 +447,7 @@ HCURSOR CURSORICON_IconToCursor(HICON hIcon)
 	   /* kludge */
 
 	   HTASK hTask = GetCurrentTask();
-	   TDB*  pTask = (TDB *)GlobalLock(hTask);
+	   TDB*  pTask = (TDB *)GlobalLock16(hTask);
 
 	   if(!pTask) return 0;
 
@@ -542,11 +542,11 @@ HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
     if (!(handle = DirectResAlloc(hInstance, 0x10,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
-    ptr = (char *)GlobalLock( handle );
+    ptr = (char *)GlobalLock16( handle );
     memcpy( ptr, info, sizeof(*info) );
     memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );
     memcpy( ptr + sizeof(CURSORICONINFO) + sizeAnd, lpXORbits, sizeXor );
-    GlobalUnlock( handle );
+    GlobalUnlock16( handle );
     return handle;
 }
 
@@ -594,7 +594,7 @@ BOOL DestroyIcon( HICON hIcon )
 {
     dprintf_icon( stddeb, "DestroyIcon: %04x\n", hIcon );
     /* FIXME: should check for OEM icon here */
-    return (GlobalFree( hIcon ) != 0);
+    return (GlobalFree16( hIcon ) != 0);
 }
 
 
@@ -605,7 +605,7 @@ BOOL DestroyCursor( HCURSOR hCursor )
 {
     dprintf_cursor( stddeb, "DestroyCursor: %04x\n", hCursor );
     /* FIXME: should check for OEM cursor here */
-    return (GlobalFree( hCursor ) != 0);
+    return (GlobalFree16( hCursor ) != 0);
 }
 
 
@@ -619,7 +619,7 @@ BOOL DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
     HBITMAP hXorBits, hAndBits;
     COLORREF oldFg, oldBg;
 
-    if (!(ptr = (CURSORICONINFO *)GlobalLock( hIcon ))) return FALSE;
+    if (!(ptr = (CURSORICONINFO *)GlobalLock16( hIcon ))) return FALSE;
     if (!(hMemDC = CreateCompatibleDC( hdc ))) return FALSE;
     hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, (char *)(ptr+1));
     hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
@@ -639,7 +639,7 @@ BOOL DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
     DeleteDC( hMemDC );
     if (hXorBits) DeleteObject( hXorBits );
     if (hAndBits) DeleteObject( hAndBits );
-    GlobalUnlock( hIcon );
+    GlobalUnlock16( hIcon );
     SetTextColor( hdc, oldFg );
     SetBkColor( hdc, oldBg );
     return TRUE;
@@ -694,7 +694,7 @@ static BOOL CURSORICON_SetCursor( HCURSOR hCursor )
         CURSORICONINFO *ptr;
         XImage *image;
 
-        if (!(ptr = (CURSORICONINFO*)GlobalLock( hCursor ))) return FALSE;
+        if (!(ptr = (CURSORICONINFO*)GlobalLock16( hCursor ))) return FALSE;
         if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
         {
             fprintf( stderr, "Cursor %04x has more than 1 bpp!\n", hCursor );
@@ -778,7 +778,7 @@ static BOOL CURSORICON_SetCursor( HCURSOR hCursor )
         if (pixmapAll) XFreePixmap( display, pixmapAll );
         if (pixmapBits) XFreePixmap( display, pixmapBits );
         if (pixmapMask) XFreePixmap( display, pixmapMask );
-        GlobalUnlock( hCursor );
+        GlobalUnlock16( hCursor );
     }
 
     if (cursor == None) return FALSE;

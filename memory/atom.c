@@ -159,6 +159,7 @@ static ATOM ATOM_AddAtom( WORD selector, SEGPTR name )
     if (!entry) return 0;
     /* Reload the table ptr in case it moved in linear memory */
     table = ATOM_GetTable( selector, FALSE );
+    str = PTR_SEG_TO_LIN( name );
     entryPtr = ATOM_MakePtr( selector, entry );
     entryPtr->next = table->entries[hash];
     entryPtr->refCount = 1;

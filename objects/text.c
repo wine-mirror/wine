@@ -184,7 +184,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 /***********************************************************************
  *           DrawText    (USER.85)
  */
-INT DrawText( HDC hdc, LPCTSTR str, INT i_count, LPRECT rect, UINT flags )
+INT DrawText( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags )
 {
     SIZE size;
     const char *strPtr;
@@ -286,7 +286,7 @@ INT DrawText( HDC hdc, LPCTSTR str, INT i_count, LPRECT rect, UINT flags )
  *           ExtTextOut    (GDI.351)
  */
 BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
-                 LPSTR str, WORD count, LPINT lpDx )
+                 LPSTR str, WORD count, LPINT16 lpDx )
 {
     int dir, ascent, descent, i;
     XCharStruct info;
@@ -518,7 +518,7 @@ BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam,
  *       than TA_LEFT|TA_TOP. But we want bug-for-bug compatibility :-)
  */
 LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count, 
-                         int cTabStops, LPINT lpTabPos, int nTabOrg,
+                         int cTabStops, LPINT16 lpTabPos, int nTabOrg,
                          BOOL fDisplayText)
 {
     WORD defWidth;
@@ -574,7 +574,7 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
  *           TabbedTextOut    (USER.196)
  */
 LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count, 
-                    short cTabStops, LPINT lpTabPos, short nTabOrg )
+                    short cTabStops, LPINT16 lpTabPos, short nTabOrg )
 {
     dprintf_text( stddeb, "TabbedTextOut: %04x %d,%d '%*.*s' %d\n",
                   hdc, x, y, count, count, lpstr, count );
@@ -587,7 +587,7 @@ LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count,
  *           GetTabbedTextExtent    (USER.197)
  */
 DWORD GetTabbedTextExtent( HDC hdc, LPSTR lpstr, int count, 
-                          int cTabStops, LPINT lpTabPos )
+                          int cTabStops, LPINT16 lpTabPos )
 {
     dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%*.*s' %d\n",
                   hdc, count, count, lpstr, count );

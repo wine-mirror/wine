@@ -298,7 +298,7 @@ HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc )
     pNameInfo->handle = NE_AllocResource( hModule, hRsrc, 0 );
     pNameInfo->usage = 1;
     lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
-    read( fd, GlobalLock( pNameInfo->handle ),
+    read( fd, GlobalLock16( pNameInfo->handle ),
           (int)pNameInfo->length << sizeShift );
     return pNameInfo->handle;
 }
@@ -311,7 +311,7 @@ SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle )
 {
     /* May need to reload the resource if discarded */
 
-    return (SEGPTR)WIN16_GlobalLock( handle );
+    return (SEGPTR)WIN16_GlobalLock16( handle );
 }
 
 
@@ -337,7 +337,7 @@ BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
                 if (pNameInfo->usage > 0) pNameInfo->usage--;
                 if (pNameInfo->usage == 0)
                 {
-                    GlobalFree( pNameInfo->handle );
+                    GlobalFree16( pNameInfo->handle );
                     pNameInfo->handle = 0;
                 }
                 return TRUE;

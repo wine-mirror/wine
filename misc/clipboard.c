@@ -28,8 +28,7 @@ typedef struct tagCLIPFORMAT {
     DWORD	BufSize;
     void	*PrevFormat;
     void	*NextFormat;
-} CLIPFORMAT;
-typedef CLIPFORMAT FAR* LPCLIPFORMAT;
+} CLIPFORMAT, *LPCLIPFORMAT;
 
 static HWND hWndClipboardOwner = 0;
 static HWND hWndViewer = 0;
@@ -87,7 +86,7 @@ BOOL EmptyClipboard()
     while(TRUE) {
 	if (lpFormat == NULL) break;
 	if (lpFormat->hData != 0) {
-	    GlobalFree(lpFormat->hData);
+	    GlobalFree16(lpFormat->hData);
 	    lpFormat->hData = 0;
 	    }
 	lpFormat = lpFormat->NextFormat;
@@ -130,7 +129,7 @@ HANDLE SetClipboardData(WORD wFormat, HANDLE hData)
     XSetSelectionOwner(display,XA_PRIMARY,WIN_GetXWindow(hWndClipboardOwner),CurrentTime);
     wineOwnsSelection = True;
     dprintf_clipboard(stddeb,"Getting selection\n");
-    if (lpFormat->hData != 0) GlobalFree(lpFormat->hData);
+    if (lpFormat->hData != 0) GlobalFree16(lpFormat->hData);
     lpFormat->hData = hData;
     return lpFormat->hData;
 }
@@ -339,7 +338,7 @@ HWND GetOpenClipboardWindow()
 /**************************************************************************
  *			GetPriorityClipboardFormat	[USER.402]
  */
-int GetPriorityClipboardFormat(WORD FAR *lpPriorityList, short nCount)
+int GetPriorityClipboardFormat(WORD *lpPriorityList, short nCount)
 {
     dprintf_clipboard(stdnimp,
 	"GetPriorityClipboardFormat(%p, %d) !\n", lpPriorityList, nCount);
@@ -377,9 +376,9 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
 	    hText=0;
 	} else {
 	    dprintf_clipboard(stddeb,"Selection is %s\n",val);
-	    hText=GlobalAlloc(GMEM_MOVEABLE, nitems+1);
-	    memcpy(GlobalLock(hText),val,nitems+1);
-	    GlobalUnlock(hText);
+	    hText=GlobalAlloc16(GMEM_MOVEABLE, nitems+1);
+	    memcpy(GlobalLock16(hText),val,nitems+1);
+	    GlobalUnlock16(hText);
 	}
 	XFree(val);
     }
@@ -388,7 +387,7 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
 	if (lpFormat->wFormatID == CF_TEXT) break;
 	lpFormat = lpFormat->NextFormat;
 	}
-    if (lpFormat->hData != 0) GlobalFree(lpFormat->hData);
+    if (lpFormat->hData != 0) GlobalFree16(lpFormat->hData);
     wait_for_selection=False;
     lpFormat->hData = hText;
     dprintf_clipboard(stddeb,"Received selection\n");

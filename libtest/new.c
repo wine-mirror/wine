@@ -9,7 +9,7 @@ long FAR PASCAL ChildProc(HWND, WORD, WPARAM, LPARAM);
 int PASCAL WinMain (HANDLE hInstance, HANDLE hPrevInstance,
 		    LPSTR lpszCmdParam, int nCmdShow)
     {
-    static char szAppName[] = "ClassLook" ;
+    char szAppName[] = "ClassLook" ;
     HWND        hwnd ;
     MSG		msg ;
     WNDCLASS    wndclass ;
@@ -32,7 +32,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE hPrevInstance,
 	 }
 
     hwnd = CreateWindow (szAppName,	/* window class name */
-		  "ClassLook",		/* window caption */
+		  szAppName,		/* window caption */
 		  WS_OVERLAPPEDWINDOW,	/* window style */
 		  CW_USEDEFAULT,	/* initial x position */
 		  CW_USEDEFAULT,	/* initial y position */
@@ -60,6 +60,7 @@ long FAR PASCAL WndProc (HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
     PAINTSTRUCT	ps ;
     RECT	rect ;
     WNDCLASS    wndclass ;
+    char clsName[] = "SecondClass";
 
     static HWND	hChild;
 
@@ -75,11 +76,11 @@ long FAR PASCAL WndProc (HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
     	     wndclass.hCursor		= LoadCursor (NULL, IDC_CROSS) ;
     	     wndclass.hbrBackground	= GetStockObject (LTGRAY_BRUSH) ;
     	     wndclass.lpszMenuName	= NULL ;
-    	     wndclass.lpszClassName	= "SecondClass" ;
+    	     wndclass.lpszClassName	= clsName;
 
 	     RegisterClass (&wndclass);
               
-             hChild = CreateWindow("SecondClass","Child Window",
+             hChild = CreateWindow(clsName,"Child Window",
                  WS_CHILD | WS_VISIBLE | WS_BORDER,
                  10, 10, 580, 380, hwnd, NULL, ghInstance, NULL);
              ShowWindow(hChild, SW_SHOW);
@@ -106,7 +107,7 @@ long FAR PASCAL ChildProc(HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
     HDC			hDC;
     PAINTSTRUCT		ps;
     WNDCLASS		wndClass;
-    char*		classes[]={"EDIT","BUTTON","LISTBOX","STATIC","SCROLLBAR","COMBOBOX","COMBOLBOX", NULL};
+    char		*classes[]={"EDIT","BUTTON","LISTBOX","STATIC","SCROLLBAR","COMBOBOX","COMBOLBOX", NULL};
     char**		curr;
     char		buf[256];
     RECT	rect ;

@@ -1,4 +1,102 @@
 ----------------------------------------------------------------------
+Mon May  6 12:56:26 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [DEVELOPERS-HINTS]
+	Added paragraph on naming conventions for Win16/Win32/Winelib.
+
+	* [controls/menu.c]
+	Create a default system menu that is the same for all windows
+	instead of making a copy every time.
+
+	* [include/wintypes.h]
+	Added WINELIB_NAME and DECL_WINELIB_TYPE macros.
+	Added xx16 and xx32 definitions for most types. General clean-up.
+
+	* [memory/global.c] [memory/local.c] [*/*]
+	Renamed Global and Local heap functions to xxx16. Added all xxx32
+	versions of the same functions.
+
+	* [memory/selector.c]
+	Mask out lower bits of selector in FreeSelector().
+
+	* [misc/lstr.c]
+	Fixed wvsprintf().
+
+	* [windows/class.c]
+	Changed the class structure to make Win32 support easier.
+
+	* [windows/defwnd.c]
+	Added handling of WM_INITMENUPOPUP for system menu to gray out
+	invalid options.
+
+	* [windows/winpos.c]
+	Bug fix: the WINDOSPOS structure pointer in WM_NCCALCSIZE must be
+	a SEGPTR.
+
+Sun May  5 03:51:26 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [memory/local.c]
+	Implementation of moveable and (rudimentary) support for
+ 	discardable local memory, plus several bug fixes.
+
+Sat May  4 18:33:35 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [include/windows.h] [windows/win.c] [if1632/user.spec] 
+	FindWindowEx() implemented (someone reported it was missing
+	for FrameMaker 4.1).
+
+	* [if1632/kernel32.spec] [if1632/user32.spec] [win32/memory.c]
+	  [win32/resource.c]
+	Misc small stubs/small functions which bring win95 binaries
+	further down the road. (IsBadCodePtr, LocalReAlloc,GetCursorPos)
+	Small fix in WIN32_LoadAcceleratorsA.
+
+Fri May  3 19:43:12 1996  Frans van Dorsselaer <dorssel@rulhm1.LeidenUniv.nl>
+
+	* [controls/edit.c] [controls/EDIT.TODO]
+	Changed / fixed some types and typecasts.
+	Fixed the scrollbar reset after WM_SETHANDLE / WM_SETTEXT.
+	Added heap initialization in WM_CREATE.
+
+Fri May  3 19:30:02 1996  Greg Kreider <kreider@natlab.research.philips.com>
+
+	* [controls/combo.c] [controls/listbox.c]
+	Pass WM_[HV]SCROLL to listbox, but not combo.
+	Don't try to redraw non-existant scroll bars (changes dwStyle flags).
+	Combo box gets border.
+	Combo box includes button (otherwise button won't trigger dropdown).
+	Proper border around RectButton.
+	Check size consistancy of combo, listbox, and button after resizing 
+	or before painting.  These routines still aren't completely correct.
+	Localize size checks in separate routines.
+	Listboxes are white.
+
+Thu May  2 19:21:23 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [controls/combo.c][include/commdlg.h][include/commdlg.c]
+	  [resources/sysres_De.rc][resources/sysres_En.rc]
+	Introduced ChooseFont dialog, but needed some patches in 
+	handling of comboboxes with edit controls.
+
+Tue Apr 30 00:33:27 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [programs/winhelp/*]
+	Added a help viewer and a simple `.hlp' to `.sgml' converter.
+
+Mon Apr 29 14:17:57 1996  Tristan Tarrant <tst@sthinc.demon.co.uk>
+
+	* [resources/sysres_*.rc] [misc/shell.c]
+	Modified size of "About" dialog boxes.
+
+Sat Apr 27 18:10:11 Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [if1632/Makefile.in][loader/builtin.c]
+	crtdll.spec, ntdll.spec, wsock32.spec: new files.
+
+	* [loader/pe_image.c]
+	Fix error message if import by ordinal failed.
+
+----------------------------------------------------------------------
 Sun Apr 28 14:32:43 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [Makefile.in]

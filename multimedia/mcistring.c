@@ -2161,7 +2161,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
  		if (!STRCMP(MCISTR_cmdtable[i].cmd,cmd)) {
  			res=MCISTR_cmdtable[i].fun(
  				wDevID,uDevTyp,lpstrReturnString,
- 				uReturnLength,dev,keywords,nrofkeywords,
+ 				uReturnLength,dev,(LPSTR*)keywords,nrofkeywords,
  				dwFlags
  			);
  			break;

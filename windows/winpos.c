@@ -855,7 +855,7 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
  */
 LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
 			    RECT *oldWindowRect, RECT *oldClientRect,
-			    WINDOWPOS *winpos, RECT *newClientRect )
+			    SEGPTR winpos, RECT *newClientRect )
 {
     NCCALCSIZE_PARAMS params;
     LONG result;
@@ -1337,7 +1337,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       {
          result = WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
 				    &wndPtr->rectWindow, &wndPtr->rectClient,
-				    &winpos, &newClientRect );
+				    MAKE_SEGPTR(&winpos), &newClientRect );
 
          /* FIXME: WVR_ALIGNxxx */
 

@@ -5,6 +5,12 @@
 #ifndef COMMDLG_H
 #define COMMDLG_H
 
+#include "wintypes.h"		/* needed for CHOOSEFONT structure */
+
+#ifndef WINELIB
+#pragma pack(1)
+#endif
+
 #define RT_CURSOR           MAKEINTRESOURCE(1)
 #define RT_BITMAP           MAKEINTRESOURCE(2)
 #define RT_ICON             MAKEINTRESOURCE(3)
@@ -77,10 +83,10 @@ typedef struct {
 	HWND		hwndOwner;
 	HWND		hInstance;
 	COLORREF	rgbResult;
-	COLORREF	FAR* lpCustColors;
+	COLORREF       *lpCustColors;
 	DWORD 		Flags;
 	LPARAM		lCustData;
-	UINT		(CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM);
+	UINT		(*lpfnHook)(HWND, UINT, WPARAM, LPARAM);
 	LPCSTR 		lpTemplateName;
 	} CHOOSECOLOR;
 typedef CHOOSECOLOR *LPCHOOSECOLOR;
@@ -135,22 +141,22 @@ typedef struct {
 	HDC            	        hDC;                /* printer DC/IC or NULL    */
 	SEGPTR                  lpLogFont;          /* ptr. to a LOGFONT struct */
 	short			iPointSize;         /* 10 * size in points of selected font */
-	DWORD			Flags;              /* enum. type flags         */
+	DWORD			Flags WINE_PACKED;  /* enum. type flags         */
 	COLORREF		rgbColors;          /* returned text color      */
 	LPARAM	                lCustData;          /* data passed to hook fn.  */
 /*	UINT (CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM);*/
         FARPROC                 lpfnHook;
 	SEGPTR			lpTemplateName;     /* custom template name     */
 	HINSTANCE		hInstance;          /* instance handle of.EXE that   */
-										/* contains cust. dlg. template  */
-	SEGPTR			lpszStyle;          /* return the style field here   */
-										/* must be LF_FACESIZE or bigger */
-	UINT			nFontType;          /* same value reported to the    */
-										/* EnumFonts callback with the   */
-										/* extra FONTTYPE_ bits added    */
-	short			nSizeMin;           /* minimum pt size allowed & */
-	short			nSizeMax;           /* max pt size allowed if    */
-										/* CF_LIMITSIZE is used      */
+							/* contains cust. dlg. template  */
+	SEGPTR			lpszStyle WINE_PACKED;  /* return the style field here   */
+							/* must be LF_FACESIZE or bigger */
+	UINT			nFontType;          	/* same value reported to the    */
+						    	/* EnumFonts callback with the   */
+							/* extra FONTTYPE_ bits added    */
+	short			nSizeMin WINE_PACKED;   /* minimum pt size allowed & */
+	short			nSizeMax WINE_PACKED;   /* max pt size allowed if    */
+							/* CF_LIMITSIZE is used      */
 	} CHOOSEFONT;
 typedef CHOOSEFONT *LPCHOOSEFONT;
 
@@ -308,6 +314,10 @@ LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT FormatCharDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+
+#ifndef WINELIB
+#pragma pack(4)
+#endif
 
 #endif 		/* #ifdef COMMDLG_H */
 

@@ -249,7 +249,7 @@ HRGN CreatePolygonRgn( const POINT * points, INT count, INT mode )
 /***********************************************************************
  *           CreatePolyPolygonRgn    (GDI.451)
  */
-HRGN CreatePolyPolygonRgn( const POINT * points, const INT * count,
+HRGN CreatePolyPolygonRgn( const POINT * points, const INT16 * count,
 			   INT nbpolygons, INT mode )
 {
     RGNOBJ * obj;

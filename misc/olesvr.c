@@ -17,12 +17,9 @@ LONG	OLE_current_handle;
 /***********************************************************************
  *           OleRegisterServer
  */
-OLESTATUS WINAPI OleRegisterServer(
-	LPCSTR	name,
-	LPOLESERVER serverStruct,
-	LHSERVER FAR *hRet,
-	HINSTANCE hServer,
-	OLE_SERVER_USE use)
+OLESTATUS OleRegisterServer( LPCSTR name, LPOLESERVER serverStruct,
+                             LHSERVER *hRet, HINSTANCE hServer,
+                             OLE_SERVER_USE use )
 {
     dprintf_ole(stdnimp,"OleRegisterServer:%s\n",name);
     *hRet=++OLE_current_handle;
@@ -33,7 +30,7 @@ OLESTATUS WINAPI OleRegisterServer(
 /***********************************************************************
  *           OleBlockServer
  */
-OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
+OLESTATUS OleBlockServer(LHSERVER hServer)
 {
     fprintf(stdnimp,"OleBlockServer:%ld\n",hServer);
     return OLE_OK;
@@ -42,7 +39,7 @@ OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
 /***********************************************************************
  *           OleUnblockServer
  */
-OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL FAR *block)
+OLESTATUS OleUnblockServer(LHSERVER hServer, BOOL *block)
 {
     fprintf(stdnimp,"OleUnblockServer:%ld\n",hServer);
     /* no more blocked messages :) */
@@ -53,11 +50,8 @@ OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL FAR *block)
 /***********************************************************************
  *           OleRegisterServerDoc
  */
-OLESTATUS WINAPI OleRegisterServerDoc(
-	LHSERVER hServer,
-	LPCSTR docname,
-	LPOLESERVERDOC document,
-	LHSERVERDOC FAR *hRet)
+OLESTATUS OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
+                                LPOLESERVERDOC document, LHSERVERDOC *hRet)
 {
     dprintf_ole(stdnimp,"OleRegisterServerDoc:%ld,%s\n", hServer, docname);
     *hRet=++OLE_current_handle;
@@ -67,7 +61,7 @@ OLESTATUS WINAPI OleRegisterServerDoc(
 /***********************************************************************
  *           OleRevokeServerDoc
  */
-OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC hServerDoc)
+OLESTATUS OleRevokeServerDoc(LHSERVERDOC hServerDoc)
 {
     dprintf_ole(stdnimp,"OleRevokeServerDoc:%ld\n",hServerDoc);
     return OLE_OK;
@@ -76,7 +70,7 @@ OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC hServerDoc)
 /***********************************************************************
  *           OleRevokeServer
  */
-OLESTATUS WINAPI OleRevokeServer(LHSERVER hServer)
+OLESTATUS OleRevokeServer(LHSERVER hServer)
 {
     dprintf_ole(stdnimp,"OleRevokeServer:%ld\n",hServer);
     return OLE_OK;

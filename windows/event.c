@@ -562,7 +562,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 
 	WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
 			       &wndPtr->rectWindow, &wndPtr->rectClient,
-			       &winpos, &newClientRect );
+			       MAKE_SEGPTR(&winpos), &newClientRect );
 
 	/* Set new size and position */
 	wndPtr->rectWindow = newWindowRect;
@@ -593,10 +593,10 @@ static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
             /* Don't worry if we can't open */
 	    BOOL couldOpen=OpenClipboard(hwnd);
 	    hText=GetClipboardData(CF_TEXT);
-	    text=GlobalLock(hText);
+	    text=GlobalLock16(hText);
 	    XChangeProperty(display,request,rprop,XA_STRING,
 		8,PropModeReplace,text,strlen(text));
-	    GlobalUnlock(hText);
+	    GlobalUnlock16(hText);
 	    /* close only if we opened before */
 	    if(couldOpen)CloseClipboard();
 	}

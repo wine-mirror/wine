@@ -5,14 +5,18 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-#include "ldt.h"
 #include "windows.h"
+#include "ldt.h"
+#include "module.h"
+#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 #define ToUpper(c)	toupper(c)
 #define ToLower(c)	tolower(c)
@@ -314,4 +318,128 @@ void OemToAnsiBuff(LPSTR lpOemStr, LPSTR lpAnsiStr, INT nLength)
   int i;
   for(i=0;i<nLength;i++)
     lpAnsiStr[i]=Oem2Ansi[(unsigned char)(lpOemStr[i])];
+}
+
+
+/***********************************************************************
+ *           OutputDebugString   (KERNEL.115)
+ */
+void OutputDebugString( LPCSTR str )
+{
+    char *module;
+    char *p, *buffer = xmalloc( strlen(str)+1 );
+    /* Remove CRs */
+    for (p = buffer; *str; str++) if (*str != '\r') *p++ = *str;
+    *p = '\0';
+    if ((p > buffer) && (p[-1] == '\n')) p[1] = '\0'; /* Remove trailing \n */
+    module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
+    fprintf( stderr, "OutputDebugString: %s says '%s'\n",
+             module ? module : "???", buffer );
+             
+}
+
+
+/***********************************************************************
+ *           wsprintf   (USER.420)
+ */
+#ifndef WINELIB
+int wsprintf( LPSTR dummy1, LPSTR dummy2, ... )
+{
+    LPSTR lpOutput, lpFormat;
+    DWORD *win_stack = (DWORD *)CURRENT_STACK16->args;
+
+    lpOutput = (LPSTR) PTR_SEG_TO_LIN(*win_stack);
+    win_stack++;
+    lpFormat = (LPSTR) PTR_SEG_TO_LIN(*win_stack);
+    win_stack++;
+
+    return wvsprintf( lpOutput, lpFormat, (LPCSTR)win_stack );
+}
+#else  /* WINELIB */
+int wsprintf(LPSTR lpOutput, LPSTR lpFormat, ...)
+{
+    va_list valist;
+    int ArgCnt;
+
+    va_start(valist, lpFormat);
+    ArgCnt = vsprintf(lpOutput, lpFormat, valist);
+    va_end(valist);
+
+    return ArgCnt;
+}
+#endif  /* WINELIB */
+
+
+/***********************************************************************
+ *           wvsprintf   (USER.421)
+ */
+int wvsprintf( LPSTR buf, LPCSTR format, LPCSTR args )
+{
+    LPCSTR ptr;
+    DWORD stack[512], *stack_ptr;
+    BOOL fLarge;
+
+    /* Create the 32-bit stack for libc's vsprintf() */
+
+    for (stack_ptr = stack, ptr = format; *ptr; ptr++)
+    {
+        if (*ptr != '%' || *++ptr == '%')
+            continue;
+
+        /* skip width/precision */
+        while (*ptr == '-' || *ptr == '+' || *ptr == '.' ||
+               *ptr == ' ' || isdigit(*ptr) || *ptr == '#')
+            ptr++;
+
+        /* handle modifier */
+        fLarge = ((*ptr == 'l') || (*ptr == 'L'));
+        if (fLarge) ptr++;
+
+        switch (*ptr)
+        {
+        case 's':
+            *stack_ptr++ = (DWORD)PTR_SEG_TO_LIN(*(DWORD*)args);
+            args += sizeof(DWORD);
+            break;
+
+        case 'c':
+/* windows' wsprintf() %c ignores 0's, we replace 0 with SPACE to make sure
+   that the remaining part of the string isn't ignored by the winapp */
+            *stack_ptr++ = (DWORD)(*(WORD*)args ? *(WORD*)args : ' ');
+            args += sizeof(WORD);
+            break;
+
+        case 'd':
+        case 'i':
+            if (!fLarge)
+            {
+                *stack_ptr++ = (DWORD)(INT32)(*(INT16 *)args);
+                args += sizeof(INT16);
+                break;
+            }
+            /* else fall through */
+        case 'u':
+        case 'x':
+        case 'X':
+            if (fLarge)
+            {
+                *stack_ptr++ = *(DWORD*)args;
+                args += sizeof(DWORD);
+            }
+            else
+            {
+                *stack_ptr++ = *(WORD*)args;
+                args += sizeof(WORD);
+            }
+            break;
+
+        default:
+            *stack_ptr++ = 0;
+            args += sizeof(WORD);
+            fprintf( stderr, "wsprintf: oops, unknown format %c!\n", *ptr );
+            break;
+        }
+    }
+
+    return vsprintf( buf, format, stack );
 }

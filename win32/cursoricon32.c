@@ -368,7 +368,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
     sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
     sizeAnd = bmpAnd->bitmap.bmHeight * bmpAnd->bitmap.bmWidthBytes;
 
-    if (!(hRes = GlobalAlloc( GMEM_MOVEABLE,
+    if (!(hRes = GlobalAlloc16( GMEM_MOVEABLE,
                                 sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
         DeleteObject( hXorBits );
@@ -379,7 +379,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
     /* Make it owned by the module */
     if (hInstance) FarSetOwner( hRes, (WORD)(DWORD)GetExePtr(hInstance) );
 
-    info = (CURSORICONINFO *)GlobalLock( hRes );
+    info = (CURSORICONINFO *)GlobalLock16( hRes );
     info->ptHotSpot.x   = hotspot.x;
     info->ptHotSpot.y   = hotspot.y;
     info->nWidth        = bmpXor->bitmap.bmWidth;
@@ -394,7 +394,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
     GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
     DeleteObject( hXorBits );
     DeleteObject( hAndBits );
-    GlobalUnlock( hRes );
+    GlobalUnlock16( hRes );
     return hRes;
 }
 

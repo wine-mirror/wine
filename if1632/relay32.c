@@ -52,15 +52,16 @@ LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
 			return result;
 		case WM_NCCALCSIZE:
 			STRUCT32_NCCALCSIZE16to32Flat(lParam,&st.nccs);
-			if(((NCCALCSIZE_PARAMS*)lParam)->lppos) {
-				STRUCT32_WINDOWPOS16to32(((NCCALCSIZE_PARAMS*)lParam)->lppos,&wp);
-				st.nccs.lppos=&wp;
-			} else
-				st.nccs.lppos= 0;
+			if(wParam && ((NCCALCSIZE_PARAMS*)lParam)->lppos)
+                        {
+                            STRUCT32_WINDOWPOS16to32(PTR_SEG_TO_LIN(((NCCALCSIZE_PARAMS*)lParam)->lppos),&wp);
+                            st.nccs.lppos=&wp;
+			}
+                        else st.nccs.lppos= 0;
 			result=CallWndProc32(func,hwnd,message,wParam,(int)&st.nccs);
 			STRUCT32_NCCALCSIZE32to16Flat(&st.nccs,lParam);
-			if(((NCCALCSIZE_PARAMS*)lParam)->lppos)
-				STRUCT32_WINDOWPOS32to16(&wp,((NCCALCSIZE_PARAMS*)lParam)->lppos);
+			if(wParam && ((NCCALCSIZE_PARAMS*)lParam)->lppos)
+				STRUCT32_WINDOWPOS32to16(&wp,PTR_SEG_TO_LIN(((NCCALCSIZE_PARAMS*)lParam)->lppos));
 			return result;
 		case WM_NCCREATE:
 			lpcs = (CREATESTRUCT*)lParam;

@@ -77,9 +77,8 @@ typedef struct
 BOOL GlobalInfo( GLOBALINFO *pInfo );
 BOOL GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags );
 BOOL GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags) ;
-BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL hItem );
-BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE hModule, WORD wSeg );
-WORD GlobalHandleToSel( HGLOBAL handle );
+BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
+BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg );
 
 /* Local heap */
 
@@ -92,7 +91,7 @@ typedef struct
 typedef struct
 {
     DWORD   dwSize;
-    HLOCAL  hHandle;
+    HLOCAL16  hHandle;
     WORD    wAddress;
     WORD    wSize;
     WORD    wFlags;
@@ -333,7 +332,7 @@ struct {
 struct {
 	DWORD	dwSize;
 	UINT	wErrCode;
-	VOID	FAR*	lpInfo;	/* depends on wErrCode */
+	VOID   *lpInfo; /* depends on wErrCode */
 } NFYLOGERROR;
 
 /* called for parameter errors? */
@@ -342,6 +341,6 @@ struct {
 	DWORD	dwSize;
 	UINT	wErrCode;
 	FARPROC	lpfnErrorAddr;
-	void FAR* FAR* lpBadParam;
+	void  **lpBadParam;
 } NFYLOGPARAMERROR;
 #endif /* __TOOLHELP_H */

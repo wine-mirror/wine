@@ -60,7 +60,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
                     segnum, pSeg->selector );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     size = pSeg->size ? pSeg->size : 0x10000;
-    mem = GlobalLock(pSeg->selector);
+    mem = GlobalLock16(pSeg->selector);
     if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1) {	
 #ifndef WINELIB
  	/* Implement self loading segments */
@@ -231,7 +231,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	    }
 	    else
 	    {
-                address = MAKELONG( rep->target2, pSegTable[rep->target1-1].selector );
+                address = PTR_SEG_OFF_TO_SEGPTR( pSegTable[rep->target1-1].selector, rep->target2 );
 	    }
 	    
 	    dprintf_fixup(stddeb,"%d: %04x:%04x\n", 
@@ -517,12 +517,12 @@ void NE_InitializeDLLs( HMODULE hModule )
     {
 	HANDLE to_init = pModule->dlls_to_init;
 	pModule->dlls_to_init = 0;
-        for (pDLL = (HMODULE *)GlobalLock( to_init ); *pDLL; pDLL++)
+        for (pDLL = (HMODULE *)GlobalLock16( to_init ); *pDLL; pDLL++)
         {
             NE_InitializeDLLs( *pDLL );
             NE_InitDLL( *pDLL );
         }
-        GlobalFree( to_init );
+        GlobalFree16( to_init );
     }
     NE_InitDLL( hModule );
 }

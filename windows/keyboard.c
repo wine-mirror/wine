@@ -37,7 +37,7 @@ INT GetKeyState(INT keycode)
 /**********************************************************************
  *		GetKeyboardState			[USER.222]
  */
-void GetKeyboardState(BYTE FAR *lpKeyState)
+void GetKeyboardState(BYTE *lpKeyState)
 {
     if (lpKeyState != NULL) {
 	KeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] >> 8;
@@ -50,7 +50,7 @@ void GetKeyboardState(BYTE FAR *lpKeyState)
 /**********************************************************************
  *      SetKeyboardState            [USER.223]
  */
-void SetKeyboardState(BYTE FAR *lpKeyState)
+void SetKeyboardState(BYTE *lpKeyState)
 {
     if (lpKeyState != NULL) {
 	memcpy(KeyStateTable, lpKeyState, 256);

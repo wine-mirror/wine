@@ -89,7 +89,7 @@ typedef struct
     DWORD   compat_flags WINE_PACKED;   /* Compatibility flags */
     BYTE    unused4[14];
     HANDLE  hPDB;                       /* Selector of PDB (i.e. PSP) */
-    DWORD   dta WINE_PACKED;            /* Current DTA */
+    SEGPTR  dta WINE_PACKED;            /* Current DTA */
     BYTE    curdrive;                   /* Current drive */
     BYTE    curdir[65];                 /* Current directory */
     WORD    nCmdShow;                   /* cmdShow parameter to WinMain */

@@ -318,24 +318,24 @@ base	1
 0312 stub GetWindowsDirectoryW
 0313 stdcall GlobalAddAtomA(long) WIN32_GlobalAddAtomA
 0314 stub GlobalAddAtomW
-0315	stdcall GlobalAlloc(long long)	GlobalAlloc32
-0316 stub GlobalCompact
+0315 stdcall GlobalAlloc(long long) GlobalAlloc32
+0316 stdcall GlobalCompact(long) GlobalCompact32
 0317 stub GlobalDeleteAtom
 0318 stub GlobalFindAtomA
 0319 stub GlobalFindAtomW
 0320 stub GlobalFix
-0321 stub GlobalFlags
-0322 stub GlobalFree
+0321 stdcall GlobalFlags(long) GlobalFlags32
+0322 stdcall GlobalFree(long) GlobalFree32
 0323 stub GlobalGetAtomNameA
 0324 stub GlobalGetAtomNameW
-0325 stub GlobalHandle
-0326 stdcall GlobalLock(long)	GlobalLock32
+0325 stdcall GlobalHandle(ptr) GlobalHandle32
+0326 stdcall GlobalLock(long) GlobalLock32
 0327 stub GlobalMemoryStatus
-0328 stub GlobalReAlloc
-0329 stub GlobalSize
+0328 stdcall GlobalReAlloc(long long long) GlobalReAlloc32
+0329 stdcall GlobalSize(long) GlobalSize32
 0330 stub GlobalUnWire
 0331 stub GlobalUnfix
-0332 stub GlobalUnlock
+0332 stdcall GlobalUnlock(long) GlobalUnlock32
 0333 stub GlobalWire
 0334 stdcall HeapAlloc(long long long) HeapAlloc
 0335 stdcall HeapCompact(long long) HeapCompact
@@ -354,7 +354,7 @@ base	1
 0348 stub InterlockedExchange
 0349 stub InterlockedIncrement
 0350 stub InvalidateConsoleDIBits
-0351 stub IsBadCodePtr
+0351 stdcall IsBadCodePtr(ptr long)	WIN32_IsBadCodePtr
 0352 stub IsBadHugeReadPtr
 0353 stub IsBadHugeWritePtr
 0354 stdcall IsBadReadPtr(ptr long)	WIN32_IsBadReadPtr
@@ -374,17 +374,17 @@ base	1
 0368 stub LoadLibraryW
 0369 stub LoadModule
 0370 stdcall LoadResource(long long) LoadResource32
-0371	stdcall LocalAlloc(long long)	GlobalAlloc32
-0372 stub LocalCompact
+0371 stdcall LocalAlloc(long long) LocalAlloc32
+0372 stdcall LocalCompact(long) LocalCompact32
 0373 stub LocalFileTimeToFileTime
-0374 stub LocalFlags
-0375 stub LocalFree
-0376 stub LocalHandle
-0377 stdcall LocalLock(long)	GlobalLock32
-0378 stub LocalReAlloc
-0379 stub LocalShrink
-0380 stub LocalSize
-0381 stub LocalUnlock
+0374 stdcall LocalFlags(long) LocalFlags32
+0375 stdcall LocalFree(long) LocalFree32
+0376 stdcall LocalHandle(ptr) LocalHandle32
+0377 stdcall LocalLock(long) LocalLock32
+0378 stdcall LocalReAlloc(long long long) LocalReAlloc32
+0379 stdcall LocalShrink(long long) LocalShrink32
+0380 stdcall LocalSize(long) LocalSize32
+0381 stdcall LocalUnlock(long) LocalUnlock32
 0382 stub LockFile
 0383 stub LockFileEx
 0384 stub LockResource
@@ -394,7 +394,7 @@ base	1
 0388 stub MoveFileExA
 0389 stub MoveFileExW
 0390 stub MoveFileW
-0391 stub MulDiv
+0391 stdcall MulDiv(long long long) MulDiv32
 0392 stdcall MultiByteToWideChar(long long ptr long ptr long) MultiByteToWideChar
 0393 stub OpenConsoleW
 0394 stub OpenEventA

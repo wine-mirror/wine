@@ -34,6 +34,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "options.h"
 #include "spy.h"
 #include "task.h"
+#include "user.h"
 #include "dce.h"
 #include "pe_image.h"
 #include "stddebug.h"
@@ -61,7 +62,13 @@ int MAIN_Init(void)
     /* Initialize message spying */
     if (!SPY_Init()) return 0;
 
-#ifndef WINELIB
+#ifdef WINELIB
+    /* Create USER and GDI heap */
+    USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
+    LocalInit( USER_HeapSel, 0, 0xffff );
+    GDI_HeapSel  = GlobalAlloc16( GMEM_FIXED, GDI_HEAP_SIZE );
+    LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
+#else
       /* Initialize relay code */
     if (!RELAY_Init()) return 0;
 

@@ -74,7 +74,7 @@ BOOL TASK_Init(void)
  */
 HTASK TASK_GetNextTask( HTASK hTask )
 {
-    TDB* pTask = (TDB*)GlobalLock(hTask);
+    TDB* pTask = (TDB*)GlobalLock16(hTask);
 
     if (pTask->hNext) return pTask->hNext;
     return (hFirstTask != hTask) ? hFirstTask : 0; 
@@ -141,8 +141,8 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 
     /* Now allocate the environment */
 
-    if (!(handle = GlobalAlloc( GMEM_FIXED, size ))) return 0;
-    p = (char *)GlobalLock( handle );
+    if (!(handle = GlobalAlloc16( GMEM_FIXED, size ))) return 0;
+    p = (char *)GlobalLock16( handle );
 
     /* And fill it with the Unix environment */
 
@@ -181,7 +181,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 
     /* Display it */
 
-    p = (char *) GlobalLock( handle );
+    p = (char *) GlobalLock16( handle );
     dprintf_task(stddeb, "Master DOS environment at %p\n", p);
     for (; *p; p += strlen(p) + 1) dprintf_task(stddeb, "    %s\n", p);
     dprintf_task( stddeb, "Progname: %s\n", p+3 );
@@ -198,11 +198,11 @@ static void TASK_LinkTask( HTASK hTask )
     HTASK *prevTask;
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
     prevTask = &hFirstTask;
     while (*prevTask)
     {
-        TDB *prevTaskPtr = (TDB *)GlobalLock( *prevTask );
+        TDB *prevTaskPtr = (TDB *)GlobalLock16( *prevTask );
         if (prevTaskPtr->priority >= pTask->priority) break;
         prevTask = &prevTaskPtr->hNext;
     }
@@ -223,12 +223,12 @@ static void TASK_UnlinkTask( HTASK hTask )
     prevTask = &hFirstTask;
     while (*prevTask && (*prevTask != hTask))
     {
-        pTask = (TDB *)GlobalLock( *prevTask );
+        pTask = (TDB *)GlobalLock16( *prevTask );
         prevTask = &pTask->hNext;
     }
     if (*prevTask)
     {
-        pTask = (TDB *)GlobalLock( *prevTask );
+        pTask = (TDB *)GlobalLock16( *prevTask );
         *prevTask = pTask->hNext;
         pTask->hNext = 0;
         nTaskCount--;
@@ -248,7 +248,7 @@ static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
     WORD free;
     THUNKS *pThunk;
 
-    pThunk = (THUNKS *)((BYTE *)GlobalLock( handle ) + offset);
+    pThunk = (THUNKS *)((BYTE *)GlobalLock16( handle ) + offset);
     pThunk->next = 0;
     pThunk->magic = THUNK_MAGIC;
     pThunk->free = (int)&pThunk->thunks - (int)pThunk;
@@ -274,7 +274,7 @@ static SEGPTR TASK_AllocThunk( HTASK hTask )
     THUNKS *pThunk;
     WORD sel, base;
     
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
     sel = pTask->hCSAlias;
     pThunk = &pTask->thunks;
     base = (int)pThunk - (int)pTask;
@@ -289,12 +289,12 @@ static SEGPTR TASK_AllocThunk( HTASK hTask )
             TASK_CreateThunks( sel, 0, MIN_THUNKS );
             pThunk->next = sel;
         }
-        pThunk = (THUNKS *)GlobalLock( sel );
+        pThunk = (THUNKS *)GlobalLock16( sel );
         base = 0;
     }
     base += pThunk->free;
     pThunk->free = *(WORD *)((BYTE *)pThunk + pThunk->free);
-    return MAKELONG( base, sel );
+    return PTR_SEG_OFF_TO_SEGPTR( sel, base );
 }
 #endif
 
@@ -311,14 +311,14 @@ static BOOL TASK_FreeThunk( HTASK hTask, SEGPTR thunk )
     THUNKS *pThunk;
     WORD sel, base;
     
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
     sel = pTask->hCSAlias;
     pThunk = &pTask->thunks;
     base = (int)pThunk - (int)pTask;
     while (sel && (sel != HIWORD(thunk)))
     {
         sel = pThunk->next;
-        pThunk = (THUNKS *)GlobalLock( sel );
+        pThunk = (THUNKS *)GlobalLock16( sel );
         base = 0;
     }
     if (!sel) return FALSE;
@@ -339,7 +339,7 @@ static BOOL TASK_FreeThunk( HTASK hTask, SEGPTR thunk )
 static void TASK_CallToStart(void)
 {
     int cs_reg, ds_reg, ip_reg;
-    TDB *pTask = (TDB *)GlobalLock( hCurrentTask );
+    TDB *pTask = (TDB *)GlobalLock16( hCurrentTask );
     NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
@@ -406,24 +406,24 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     hTask = GLOBAL_Alloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB),
                           hModule, FALSE, FALSE, FALSE );
     if (!hTask) return 0;
-    pTask = (TDB *)GlobalLock( hTask );
+    pTask = (TDB *)GlobalLock16( hTask );
 
       /* Allocate the new environment block */
 
     if (!(hParentEnv = hEnvironment))
     {
-        TDB *pParent = (TDB *)GlobalLock( hCurrentTask );
+        TDB *pParent = (TDB *)GlobalLock16( hCurrentTask );
         hParentEnv = pParent ? pParent->pdb.environment : hDOSEnvironment;
     }
     /* FIXME: do we really need to make a copy also when */
     /*        we don't use the parent environment? */
-    if (!(hEnvironment = GlobalAlloc( GMEM_FIXED, GlobalSize( hParentEnv ) )))
+    if (!(hEnvironment = GlobalAlloc16( GMEM_FIXED, GlobalSize16(hParentEnv))))
     {
-        GlobalFree( hTask );
+        GlobalFree16( hTask );
         return 0;
     }
-    memcpy( GlobalLock( hEnvironment ), GlobalLock( hParentEnv ),
-            GlobalSize( hParentEnv ) );
+    memcpy( GlobalLock16( hEnvironment ), GlobalLock16( hParentEnv ),
+            GlobalSize16( hParentEnv ) );
 
       /* Get current directory */
     
@@ -501,8 +501,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
       /* Default DTA overwrites command-line */
 
-    pTask->dta = MAKELONG( (int)&pTask->pdb.cmdLine - (int)&pTask->pdb,
-                           pTask->hPDB );
+    pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
+                                (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
 
       /* Allocate the 32-bit stack */
 
@@ -512,8 +512,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
       /* Create the 32-bit stack frame */
 
-    *(DWORD *)GlobalLock(pTask->hStack32) = 0xDEADBEEF;
-    stack32Top = (char*)GlobalLock(pTask->hStack32) + STACK32_SIZE;
+    *(DWORD *)GlobalLock16(pTask->hStack32) = 0xDEADBEEF;
+    stack32Top = (char*)GlobalLock16(pTask->hStack32) + STACK32_SIZE;
     frame32 = (STACK32FRAME *)stack32Top - 1;
     frame32->saved_esp = (DWORD)stack32Top;
     frame32->edi = 0;
@@ -583,7 +583,7 @@ static void TASK_DeleteTask( HTASK hTask )
     TDB *pTask;
     HANDLE hPDB;
 
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
     hPDB = pTask->hPDB;
 
     /* Free the task module */
@@ -601,7 +601,7 @@ static void TASK_DeleteTask( HTASK hTask )
 
     /* Free the task structure itself */
 
-    GlobalFree( hTask );
+    GlobalFree16( hTask );
 
     /* Free all memory used by this task (including the 32-bit stack, */
     /* the environment block and the thunk segments). */
@@ -622,7 +622,7 @@ void TASK_KillCurrentTask( int exitCode )
 {
     extern void EXEC_ExitWindows( int retCode );
 
-    TDB* pTask = (TDB*) GlobalLock( hCurrentTask );
+    TDB* pTask = (TDB*) GlobalLock16( hCurrentTask );
 
     /* Perform USER cleanup */
 
@@ -685,13 +685,13 @@ void TASK_Reschedule(void)
 
       /* Find a task to yield to */
 
-    pOldTask = (TDB *)GlobalLock( hCurrentTask );
+    pOldTask = (TDB *)GlobalLock16( hCurrentTask );
     if (pOldTask && pOldTask->hYieldTo)
     {
         /* If a task is stored in hYieldTo of the current task (put there */
         /* by DirectedYield), yield to it only if it has events pending.  */
         hTask = pOldTask->hYieldTo;
-        if (!(pNewTask = (TDB *)GlobalLock( hTask )) || !pNewTask->nEvents)
+        if (!(pNewTask = (TDB *)GlobalLock16( hTask )) || !pNewTask->nEvents)
             hTask = 0;
     }
 
@@ -700,7 +700,7 @@ void TASK_Reschedule(void)
         hTask = hFirstTask;
         while (hTask)
         {
-            pNewTask = (TDB *)GlobalLock( hTask );
+            pNewTask = (TDB *)GlobalLock16( hTask );
             if (pNewTask->nEvents && (hTask != hCurrentTask)) break;
             hTask = pNewTask->hNext;
         }
@@ -713,7 +713,7 @@ void TASK_Reschedule(void)
 
     if (!hTask) return;  /* Do nothing */
 
-    pNewTask = (TDB *)GlobalLock( hTask );
+    pNewTask = (TDB *)GlobalLock16( hTask );
     dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
                   hTask, pNewTask->module_name );
 
@@ -743,7 +743,7 @@ void TASK_Reschedule(void)
     IF1632_Saved16_ss   = pNewTask->ss;
     IF1632_Saved16_sp   = pNewTask->sp;
     IF1632_Saved32_esp  = pNewTask->esp;
-    IF1632_Stack32_base = WIN16_GlobalLock( pNewTask->hStack32 );
+    IF1632_Stack32_base = WIN16_GlobalLock16( pNewTask->hStack32 );
 #endif
 }
 
@@ -767,7 +767,7 @@ void InitTask( struct sigcontext_struct context )
 #ifndef WINELIB
     EAX_reg(&context) = 0;
 #endif
-    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return;
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
     if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return;
 
     if (firstTask)
@@ -835,7 +835,7 @@ BOOL WaitEvent( HTASK hTask )
     TDB *pTask;
 
     if (!hTask) hTask = hCurrentTask;
-    pTask = (TDB *)GlobalLock( hTask );
+    pTask = (TDB *)GlobalLock16( hTask );
     if (pTask->nEvents > 0)
     {
         pTask->nEvents--;
@@ -856,7 +856,7 @@ void PostEvent( HTASK hTask )
     TDB *pTask;
 
     if (!hTask) hTask = hCurrentTask;
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
     pTask->nEvents++;
 }
 
@@ -870,7 +870,7 @@ void SetPriority( HTASK hTask, int delta )
     int newpriority;
 
     if (!hTask) hTask = hCurrentTask;
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
     newpriority = pTask->priority + delta;
     if (newpriority < -32) newpriority = -32;
     else if (newpriority > 15) newpriority = 15;
@@ -909,7 +909,7 @@ void OldYield(void)
 {
     TDB *pCurTask;
 
-    pCurTask = (TDB *)GlobalLock( hCurrentTask );
+    pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     if (pCurTask) pCurTask->nEvents++;  /* Make sure we get back here */
     TASK_SCHEDULE();
     if (pCurTask) pCurTask->nEvents--;
@@ -923,7 +923,7 @@ void DirectedYield( HTASK hTask )
 {
     TDB *pCurTask;
 
-    if ((pCurTask = (TDB *)GlobalLock( hCurrentTask )) != NULL)
+    if ((pCurTask = (TDB *)GlobalLock16( hCurrentTask )) != NULL)
         pCurTask->hYieldTo = hTask;
 
     OldYield();
@@ -993,9 +993,9 @@ HANDLE GetCodeHandle( FARPROC proc )
 
     /* Check if it is really a thunk */
     if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
-        handle = GlobalHandle( thunk[6] + (thunk[7] << 8) );
+        handle = GlobalHandle16( thunk[6] + (thunk[7] << 8) );
     else
-        handle = GlobalHandle( HIWORD(proc) );
+        handle = GlobalHandle16( HIWORD(proc) );
 
     return handle;
 #else
@@ -1013,7 +1013,7 @@ HQUEUE SetTaskQueue( HANDLE hTask, HQUEUE hQueue )
     TDB *pTask;
 
     if (!hTask) hTask = hCurrentTask;
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
 
     hPrev = pTask->hQueue;
     pTask->hQueue = hQueue;
@@ -1032,7 +1032,7 @@ HQUEUE GetTaskQueue( HANDLE hTask )
     TDB *pTask;
 
     if (!hTask) hTask = hCurrentTask;
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
     return pTask->hQueue;
 }
 
@@ -1080,7 +1080,7 @@ HANDLE GetCurrentPDB(void)
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
     return pTask->hPDB;
 }
 
@@ -1090,10 +1090,10 @@ HANDLE GetCurrentPDB(void)
  */
 int GetInstanceData( HANDLE instance, WORD buffer, int len )
 {
-    char *ptr = (char *)GlobalLock( instance );
+    char *ptr = (char *)GlobalLock16( instance );
     if (!ptr || !len) return 0;
     if ((int)buffer + len >= 0x10000) len = 0x10000 - buffer;
-    memcpy( ptr + buffer, (char *)GlobalLock( CURRENT_DS ) + buffer, len );
+    memcpy( ptr + buffer, (char *)GlobalLock16( CURRENT_DS ) + buffer, len );
     return len;
 }
 
@@ -1106,7 +1106,7 @@ UINT SetErrorMode( UINT mode )
     TDB *pTask;
     UINT oldMode;
 
-    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
     oldMode = pTask->error_mode;
     pTask->error_mode = mode;
     return oldMode;
@@ -1120,8 +1120,8 @@ SEGPTR GetDOSEnvironment(void)
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
-    return (SEGPTR)WIN16_GlobalLock( pTask->pdb.environment );
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
+    return (SEGPTR)WIN16_GlobalLock16( pTask->pdb.environment );
 }
 
 
@@ -1141,7 +1141,7 @@ HINSTANCE GetTaskDS(void)
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
     return pTask->hInstance;
 }
 
@@ -1153,8 +1153,8 @@ BOOL IsTask( HTASK hTask )
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock( hTask ))) return FALSE;
-    if (GlobalSize( hTask ) < sizeof(TDB)) return FALSE;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return FALSE;
+    if (GlobalSize16( hTask ) < sizeof(TDB)) return FALSE;
     return (pTask->magic == TDB_MAGIC);
 }
 
@@ -1170,7 +1170,7 @@ HMODULE GetExePtr( HANDLE handle )
 
       /* Check for module handle */
 
-    if (!(ptr = GlobalLock( handle ))) return 0;
+    if (!(ptr = GlobalLock16( handle ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return handle;
 
       /* Check the owner for module handle */
@@ -1180,7 +1180,7 @@ HMODULE GetExePtr( HANDLE handle )
 #else
     owner = NULL;
 #endif
-    if (!(ptr = GlobalLock( owner ))) return 0;
+    if (!(ptr = GlobalLock16( owner ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return owner;
 
       /* Search for this handle and its owner inside all tasks */
@@ -1188,7 +1188,7 @@ HMODULE GetExePtr( HANDLE handle )
     hTask = hFirstTask;
     while (hTask)
     {
-        TDB *pTask = (TDB *)GlobalLock( hTask );
+        TDB *pTask = (TDB *)GlobalLock16( hTask );
         if ((hTask == handle) ||
             (pTask->hInstance == handle) ||
             (pTask->hQueue == handle) ||
@@ -1223,7 +1223,7 @@ BOOL TaskNext( TASKENTRY *lpte )
 
     dprintf_toolhelp( stddeb, "TaskNext(%p): task=%04x\n", lpte, lpte->hNext );
     if (!lpte->hNext) return FALSE;
-    pTask = (TDB *)GlobalLock( lpte->hNext );
+    pTask = (TDB *)GlobalLock16( lpte->hNext );
     if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;
     pInstData = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( pTask->hInstance, 0 );
     lpte->hTask         = lpte->hNext;

@@ -28,6 +28,30 @@ static short iF10Key = 0;
 static short iMenuSysKey = 0;
 
 /***********************************************************************
+ *           DEFWND_InitSysMenuPopup
+ *
+ * Handle the WM_INITMENUPOPUP message on the system menu.
+ */
+static void DEFWND_InitSysMenuPopup( HMENU hmenu, DWORD style, DWORD clsStyle )
+{
+    BOOL gray;
+
+    gray = !(style & WS_THICKFRAME) || (style & (WS_MAXIMIZE | WS_MINIMIZE));
+    EnableMenuItem( hmenu, SC_SIZE, (gray ? MF_GRAYED : MF_ENABLED) );
+    gray = ((style & WS_MAXIMIZE) != 0);
+    EnableMenuItem( hmenu, SC_MOVE, (gray ? MF_GRAYED : MF_ENABLED) );
+    gray = !(style & WS_MINIMIZEBOX) || (style & WS_MINIMIZE);
+    EnableMenuItem( hmenu, SC_MINIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
+    gray = !(style & WS_MAXIMIZEBOX) || (style & WS_MAXIMIZE);
+    EnableMenuItem( hmenu, SC_MAXIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
+    gray = !(style & (WS_MAXIMIZE | WS_MINIMIZE));
+    EnableMenuItem( hmenu, SC_RESTORE, (gray ? MF_GRAYED : MF_ENABLED) );
+    gray = (clsStyle & CS_NOCLOSE) != 0;
+    EnableMenuItem( hmenu, SC_CLOSE, (gray ? MF_GRAYED : MF_ENABLED) );
+}
+
+
+/***********************************************************************
  *           DEFWND_SetText
  *
  * Set the window text.
@@ -87,7 +111,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
-	return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
+	return NC_HandleNCLButtonDblClk( wndPtr, wParam, lParam );
 
     case WM_NCACTIVATE:
 	return NC_HandleNCActivate( hwnd, wParam );
@@ -162,18 +186,18 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
-	    if (!wndPtr->class->wc.hbrBackground) return 0;
-            if (wndPtr->class->wc.hbrBackground <= (HBRUSH)(COLOR_MAX+1))
+	    if (!wndPtr->class->hbrBackground) return 0;
+            if (wndPtr->class->hbrBackground <= (HBRUSH)(COLOR_MAX+1))
             {
                  HBRUSH hbrush;
                  hbrush = CreateSolidBrush(
-                     GetSysColor(((DWORD)wndPtr->class->wc.hbrBackground)-1));
+                     GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
                  FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
                  DeleteObject (hbrush);
             }
             else
 	         FillWindow( GetParent(hwnd), hwnd, (HDC)wParam,
-                             wndPtr->class->wc.hbrBackground );
+                             wndPtr->class->hbrBackground );
 	    return 1;
 	}
 
@@ -338,6 +362,13 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	ShowWindow(hwnd,(wParam)? SW_SHOWNOACTIVATE: SW_HIDE);
 	break; 
 
+    case WM_INITMENUPOPUP:
+        /* Not absolutely sure this belongs here -- AJ */
+        if (HIWORD(lParam))  /* system menu */
+            DEFWND_InitSysMenuPopup( (HMENU)wParam, wndPtr->dwStyle,
+                                     wndPtr->class->style );
+        break;
+
     case WM_CANCELMODE:
 
 	/* EndMenu() should be called if in menu state but currently it's
@@ -378,5 +409,3 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     }
     return 0;
 }
-
-

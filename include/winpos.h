@@ -37,7 +37,7 @@ extern BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus);
 extern BOOL WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
 extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 				   RECT *newWindowRect, RECT *oldWindowRect,
-				   RECT *oldClientRect, WINDOWPOS *winpos,
+				   RECT *oldClientRect, SEGPTR winpos,
 				   RECT *newClientRect );
 extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos );
 extern INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd );

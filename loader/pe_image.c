@@ -34,8 +34,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-static HANDLE32 ProcessHeap;  /* FIXME: should be in process database */
-
 void my_wcstombs(char * result, u_short * source, int len)
 {
   while(len--) {
@@ -164,10 +162,10 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
   	i++;
 
   /* Now, allocate memory for dlls_to_init */
-  ne_mod = GlobalLock(hModule);
+  ne_mod = GlobalLock16(hModule);
   ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,(i+1) * sizeof(HMODULE),
                                       hModule, FALSE, FALSE, FALSE );
-  mod_ptr = GlobalLock(ne_mod->dlls_to_init);
+  mod_ptr = GlobalLock16(ne_mod->dlls_to_init);
   /* load the modules and put their handles into the list */
   for(i=0,pe_imp = pe->pe_import;pe_imp->ModuleName;pe_imp++)
   {
@@ -207,22 +205,28 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
 		dprintf_win32(stddeb,"--- Ordinal %s,%d\n", Module, ordinal);
 		*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
 			ordinal);
+	  	if(!*thunk_list)
+	  	{
+	  		fprintf(stderr,"No implementation for %s.%d\n",Module, 
+				ordinal);
+			fixup_failed=1;
+	  	}
 	  }else{ /* import by name */
 	  dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
 	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
 				pe_name->Name);
-
-#else
-	  fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
-#endif
-		}
 	  if(!*thunk_list)
 	  {
 	  	fprintf(stderr,"No implementation for %s.%d(%s)\n",Module, 
 			pe_name->Hint, pe_name->Name);
 		fixup_failed=1;
 	  }
+
+#else
+	  fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
+#endif
+		}
 
 	  import_list++;
 	  thunk_list++;
@@ -552,12 +556,12 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
                /* several empty tables */
                8;
 
-	hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
+	hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
 	if (!hModule) return (HINSTANCE)11;  /* invalid exe */
 
 	FarSetOwner( hModule, hModule );
 	
-	pModule = (NE_MODULE*)GlobalLock(hModule);
+	pModule = (NE_MODULE*)GlobalLock16(hModule);
 
 	/* Set all used entries */
 	pModule->magic=NE_SIGNATURE;
@@ -623,18 +627,12 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	if ((pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)) {
 /*            PE_InitDLL(hModule); */
         } else {
-            ProcessHeap = HeapCreate( 0, 0x10000, 0 );
             TASK_CreateTask(hModule,hInstance,0,
 		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),
 		*((WORD*)PTR_SEG_TO_LIN(params->showCmd)+1));
             PE_InitializeDLLs(hModule);
 	}
 	return hInstance;
-}
-
-HANDLE32 GetProcessHeap(void)
-{
-    return ProcessHeap;
 }
 
 int USER_InitApp(HINSTANCE hInstance);
@@ -651,7 +649,7 @@ void PE_Win32CallToStart(struct sigcontext_struct context)
     hModule = GetExePtr( GetCurrentTask() );
     pModule = MODULE_GetPtr( hModule );
     USER_InitApp( hModule );
-    fs=(int)GlobalAlloc(GHND,0x10000);
+    fs=(int)GlobalAlloc16(GHND,0x10000);
     PE_InitTEB(fs);
     __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
     CallTaskStart32( (FARPROC)(pModule->pe_module->load_addr + 
@@ -706,9 +704,9 @@ void PE_InitTEB(int hTEB)
     TDB *pTask;
     TEB *pTEB;
 
-    pTask = (TDB *)(GlobalLock(GetCurrentTask() & 0xffff));
+    pTask = (TDB *)(GlobalLock16(GetCurrentTask() & 0xffff));
     pTEB = (TEB *)(PTR_SEG_OFF_TO_LIN(hTEB, 0));
-    pTEB->stack = (void *)(GlobalLock(pTask->hStack32));
+    pTEB->stack = (void *)(GlobalLock16(pTask->hStack32));
     pTEB->Except = (void *)(-1); 
     pTEB->TEBDSAlias = pTEB;
     pTEB->taskid = getpid();
@@ -723,12 +721,12 @@ void PE_InitializeDLLs(HMODULE hModule)
 	{
 		HANDLE to_init = pModule->dlls_to_init;
 		pModule->dlls_to_init = 0;
-		for (pDLL = (HMODULE *)GlobalLock( to_init ); *pDLL; pDLL++)
+		for (pDLL = (HMODULE *)GlobalLock16( to_init ); *pDLL; pDLL++)
 		{
 			PE_InitializeDLLs( *pDLL );
 			PE_InitDLL( *pDLL );
 		}
-		GlobalFree( to_init );
+		GlobalFree16( to_init );
 	}
 	PE_InitDLL( hModule );
 }

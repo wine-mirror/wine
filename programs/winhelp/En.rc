@@ -1,0 +1,48 @@
+/*
+ * Help Viewer
+ *
+ * Copyright 1996 Ulrich Schmid
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  En
+#define LANGUAGE_NUMBER              0
+
+/* Menu */
+
+#define MENU_FILE                    "&File"
+#define MENU_FILE_OPEN               "&Open..."
+#define MENU_FILE_PRINT              "&Print"
+#define MENU_FILE_PRINTER_SETUP      "Printer &setup..."
+#define MENU_FILE_EXIT               "&Exit"
+
+#define MENU_EDIT                    "&Edit"
+#define MENU_EDIT_COPY_DIALOG        "&Copy..."
+#define MENU_EDIT_ANNOTATE           "&Annotate..."
+
+#define MENU_BOOKMARK                "&Bookmark"
+#define MENU_BOOKMARK_DEFINE         "&Define..."
+
+#define MENU_HELP                    "&Help"
+#define MENU_HELP_ON_HELP            "Help &on help"
+#define MENU_HELP_ON_TOP             "Always on &top"
+#define MENU_HELP_INFO               "&Info..."
+#define MENU_HELP_ABOUT_WINE         "&About WINE"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "WINE Help"
+#define STRING_ERROR                 "ERROR"
+#define STRING_WARNING               "WARNING"
+#define STRING_INFO                  "Information"
+#define STRING_NOT_IMPLEMENTED       "Not implemented"
+#define STRING_HLPFILE_ERROR_s       "Error while reading the help file `%s'"
+#define STRING_CONTENTS              "&Contents"
+#define STRING_SEARCH                "&Search"
+#define STRING_BACK                  "&Back"
+#define STRING_HISTORY               "&History"
+#define STRING_ALL_FILES             "All files (*.*)"
+#define STRING_HELP_FILES_HLP        "Help files (*.hlp)"
+
+#include "Xx.rc"

@@ -160,7 +160,7 @@ COLORREF GetSysColor(short nIndex)
  *             SetSysColors          (USER.181)
  */
 
-void SetSysColors(int nChanges, LPINT lpSysColor, COLORREF *lpColorValues)
+void SetSysColors(int nChanges, LPINT16 lpSysColor, COLORREF *lpColorValues)
 {
     int i;
 

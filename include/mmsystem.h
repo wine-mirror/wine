@@ -36,8 +36,7 @@ typedef struct {
             DWORD songptrpos;   /* song pointer position */
             } midi;
         } u;
-    } MMTIME;
-typedef MMTIME FAR  *LPMMTIME;
+} MMTIME,  *LPMMTIME;
 
 #define TIME_MS         0x0001  /* time in milliseconds */
 #define TIME_SAMPLES    0x0002  /* number of wave samples */
@@ -109,9 +108,7 @@ typedef MMTIME FAR  *LPMMTIME;
 #define CALLBACK_TASK       0x00020000l    /* dwCallback is a HTASK */
 #define CALLBACK_FUNCTION   0x00030000l    /* dwCallback is a FARPROC */
 
-typedef void (CALLBACK DRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
-
-typedef DRVCALLBACK FAR *LPDRVCALLBACK;
+typedef void (*LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define MM_MICROSOFT            1       /* Microsoft Corp. */
 
@@ -151,13 +148,9 @@ BOOL sndPlaySound(LPCSTR lpszSoundName, UINT uFlags);
 #define WAVERR_SYNC           (WAVERR_BASE + 3)    /* device is synchronous */
 #define WAVERR_LASTERROR      (WAVERR_BASE + 3)    /* last error in range */
 
-DECLARE_HANDLE(HWAVE);
-DECLARE_HANDLE(HWAVEIN);
-DECLARE_HANDLE(HWAVEOUT);
-typedef HWAVEIN FAR *LPHWAVEIN;
-typedef HWAVEOUT FAR *LPHWAVEOUT;
-typedef DRVCALLBACK WAVECALLBACK;
-typedef WAVECALLBACK FAR *LPWAVECALLBACK;
+typedef HWAVEIN *LPHWAVEIN;
+typedef HWAVEOUT *LPHWAVEOUT;
+typedef LPDRVCALLBACK LPWAVECALLBACK;
 
 #define WOM_OPEN        MM_WOM_OPEN
 #define WOM_CLOSE       MM_WOM_CLOSE
@@ -178,10 +171,9 @@ typedef struct wavehdr_tag {
     DWORD       dwUser;                 /* for client's use */
     DWORD       dwFlags;                /* assorted flags (see defines) */
     DWORD       dwLoops;                /* loop control counter */
-    struct wavehdr_tag FAR *lpNext;     /* reserved for driver */
+    struct wavehdr_tag *lpNext;         /* reserved for driver */
     DWORD       reserved;               /* reserved for driver */
-} WAVEHDR;
-typedef WAVEHDR FAR  *LPWAVEHDR;
+} WAVEHDR, *LPWAVEHDR;
 
 #define WHDR_DONE       0x00000001  /* done bit */
 #define WHDR_PREPARED   0x00000002  /* set if this header has been prepared */
@@ -197,8 +189,7 @@ typedef struct {
     DWORD   dwFormats;             /* formats supported */
     UINT    wChannels;             /* number of sources supported */
     DWORD   dwSupport;             /* functionality supported by driver */
-} WAVEOUTCAPS;
-typedef WAVEOUTCAPS FAR  *LPWAVEOUTCAPS;
+} WAVEOUTCAPS, *LPWAVEOUTCAPS;
 
 #define WAVECAPS_PITCH          0x0001   /* supports pitch control */
 #define WAVECAPS_PLAYBACKRATE   0x0002   /* supports playback rate control */
@@ -213,8 +204,7 @@ typedef struct {
     char    szPname[MAXPNAMELEN];    /* product name (NULL terminated string) */
     DWORD   dwFormats;               /* formats supported */
     UINT    wChannels;               /* number of channels supported */
-} WAVEINCAPS;
-typedef WAVEINCAPS FAR  *LPWAVEINCAPS;
+} WAVEINCAPS, *LPWAVEINCAPS;
 
 #define WAVE_INVALIDFORMAT     0x00000000       /* invalid format */
 #define WAVE_FORMAT_1M08       0x00000001       /* 11.025 kHz, Mono,   8-bit  */
@@ -237,66 +227,64 @@ typedef struct {
     DWORD   nSamplesPerSec WINE_PACKED;		/* sample rate */
     DWORD   nAvgBytesPerSec WINE_PACKED;	/* for buffer estimation */
     WORD    nBlockAlign; 					/* block size of data */
-} WAVEFORMAT;
-typedef WAVEFORMAT FAR  *LPWAVEFORMAT;
+} WAVEFORMAT, *LPWAVEFORMAT;
 
 #define WAVE_FORMAT_PCM     1
 
 typedef struct {
     WAVEFORMAT  wf;
     WORD        wBitsPerSample;
-} PCMWAVEFORMAT;
-typedef PCMWAVEFORMAT FAR  *LPPCMWAVEFORMAT;
+} PCMWAVEFORMAT, *LPPCMWAVEFORMAT;
 
 UINT waveOutGetNumDevs(void);
-UINT waveOutGetDevCaps(UINT uDeviceID, WAVEOUTCAPS FAR* lpCaps,
+UINT waveOutGetDevCaps(UINT uDeviceID, WAVEOUTCAPS * lpCaps,
     UINT uSize);
-UINT waveOutGetVolume(UINT uDeviceID, DWORD FAR* lpdwVolume);
+UINT waveOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
 UINT waveOutSetVolume(UINT uDeviceID, DWORD dwVolume);
 UINT waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveOutOpen(HWAVEOUT FAR* lphWaveOut, UINT uDeviceID,
+UINT waveOutOpen(HWAVEOUT * lphWaveOut, UINT uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
 UINT waveOutClose(HWAVEOUT hWaveOut);
 UINT waveOutPrepareHeader(HWAVEOUT hWaveOut,
-     WAVEHDR FAR* lpWaveOutHdr, UINT uSize);
+     WAVEHDR * lpWaveOutHdr, UINT uSize);
 UINT waveOutUnprepareHeader(HWAVEOUT hWaveOut,
-    WAVEHDR FAR* lpWaveOutHdr, UINT uSize);
-UINT waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR FAR* lpWaveOutHdr,
+    WAVEHDR * lpWaveOutHdr, UINT uSize);
+UINT waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR * lpWaveOutHdr,
     UINT uSize);
 UINT waveOutPause(HWAVEOUT hWaveOut);
 UINT waveOutRestart(HWAVEOUT hWaveOut);
 UINT waveOutReset(HWAVEOUT hWaveOut);
 UINT waveOutBreakLoop(HWAVEOUT hWaveOut);
-UINT waveOutGetPosition(HWAVEOUT hWaveOut, MMTIME FAR* lpInfo,
+UINT waveOutGetPosition(HWAVEOUT hWaveOut, MMTIME * lpInfo,
     UINT uSize);
-UINT waveOutGetPitch(HWAVEOUT hWaveOut, DWORD FAR* lpdwPitch);
+UINT waveOutGetPitch(HWAVEOUT hWaveOut, DWORD * lpdwPitch);
 UINT waveOutSetPitch(HWAVEOUT hWaveOut, DWORD dwPitch);
-UINT waveOutGetPlaybackRate(HWAVEOUT hWaveOut, DWORD FAR* lpdwRate);
+UINT waveOutGetPlaybackRate(HWAVEOUT hWaveOut, DWORD * lpdwRate);
 UINT waveOutSetPlaybackRate(HWAVEOUT hWaveOut, DWORD dwRate);
-UINT waveOutGetID(HWAVEOUT hWaveOut, UINT FAR* lpuDeviceID);
+UINT waveOutGetID(HWAVEOUT hWaveOut, UINT * lpuDeviceID);
 
 DWORD waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage, DWORD dw1, DWORD dw2);
 
 UINT waveInGetNumDevs(void);
-UINT waveInGetDevCaps(UINT uDeviceID, WAVEINCAPS FAR* lpCaps,
+UINT waveInGetDevCaps(UINT uDeviceID, WAVEINCAPS * lpCaps,
     UINT uSize);
 UINT waveInGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT waveInOpen(HWAVEIN FAR* lphWaveIn, UINT uDeviceID,
+UINT waveInOpen(HWAVEIN * lphWaveIn, UINT uDeviceID,
     const LPWAVEFORMAT lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
 UINT waveInClose(HWAVEIN hWaveIn);
 UINT waveInPrepareHeader(HWAVEIN hWaveIn,
-    WAVEHDR FAR* lpWaveInHdr, UINT uSize);
+    WAVEHDR * lpWaveInHdr, UINT uSize);
 UINT waveInUnprepareHeader(HWAVEIN hWaveIn,
-    WAVEHDR FAR* lpWaveInHdr, UINT uSize);
+    WAVEHDR * lpWaveInHdr, UINT uSize);
 UINT waveInAddBuffer(HWAVEIN hWaveIn,
-    WAVEHDR FAR* lpWaveInHdr, UINT uSize);
+    WAVEHDR * lpWaveInHdr, UINT uSize);
 UINT waveInStart(HWAVEIN hWaveIn);
 UINT waveInStop(HWAVEIN hWaveIn);
 UINT waveInReset(HWAVEIN hWaveIn);
-UINT waveInGetPosition(HWAVEIN hWaveIn, MMTIME FAR* lpInfo,
+UINT waveInGetPosition(HWAVEIN hWaveIn, MMTIME * lpInfo,
     UINT uSize);
-UINT waveInGetID(HWAVEIN hWaveIn, UINT FAR* lpuDeviceID);
+UINT waveInGetID(HWAVEIN hWaveIn, UINT * lpuDeviceID);
 
 DWORD waveInMessage(HWAVEIN hWaveIn, UINT uMessage, DWORD dw1, DWORD dw2);
 
@@ -308,18 +296,14 @@ DWORD waveInMessage(HWAVEIN hWaveIn, UINT uMessage, DWORD dw1, DWORD dw2);
 #define MIDIERR_INVALIDSETUP  (MIDIERR_BASE + 5)   /* invalid setup */
 #define MIDIERR_LASTERROR     (MIDIERR_BASE + 5)   /* last error in range */
 
-DECLARE_HANDLE(HMIDI);
-DECLARE_HANDLE(HMIDIIN);
-DECLARE_HANDLE(HMIDIOUT);
-typedef HMIDIIN FAR *LPHMIDIIN;
-typedef HMIDIOUT FAR *LPHMIDIOUT;
-typedef DRVCALLBACK MIDICALLBACK;
-typedef MIDICALLBACK FAR *LPMIDICALLBACK;
+typedef HMIDIIN  *LPHMIDIIN;
+typedef HMIDIOUT  *LPHMIDIOUT;
+typedef LPDRVCALLBACK LPMIDICALLBACK;
 #define MIDIPATCHSIZE   128
 typedef WORD PATCHARRAY[MIDIPATCHSIZE];
-typedef WORD FAR *LPPATCHARRAY;
+typedef WORD *LPPATCHARRAY;
 typedef WORD KEYARRAY[MIDIPATCHSIZE];
-typedef WORD FAR *LPKEYARRAY;
+typedef WORD *LPKEYARRAY;
 
 #define MIM_OPEN        MM_MIM_OPEN
 #define MIM_CLOSE       MM_MIM_CLOSE
@@ -352,8 +336,7 @@ typedef struct {
     UINT    wNotes;                /* max # of notes (internal synth only) */
     UINT    wChannelMask;          /* channels used (internal synth only) */
     DWORD   dwSupport;             /* functionality supported by driver */
-} MIDIOUTCAPS;
-typedef MIDIOUTCAPS FAR  *LPMIDIOUTCAPS;
+} MIDIOUTCAPS, *LPMIDIOUTCAPS;
 
 #define MOD_MIDIPORT    1  /* output port */
 #define MOD_SYNTH       2  /* generic internal synth */
@@ -370,8 +353,7 @@ typedef struct {
     UINT    wPid;                  /* product ID */
     VERSION vDriverVersion;        /* version of the driver */
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
-} MIDIINCAPS;
-typedef MIDIINCAPS FAR  *LPMIDIINCAPS;
+} MIDIINCAPS, *LPMIDIINCAPS;
 
 typedef struct {
     LPSTR       lpData;               /* pointer to locked data block */
@@ -379,10 +361,9 @@ typedef struct {
     DWORD       dwBytesRecorded;      /* used for input only */
     DWORD       dwUser;               /* for client's use */
     DWORD       dwFlags;              /* assorted flags (see defines) */
-    struct midihdr_tag FAR *lpNext;   /* reserved for driver */
+    struct midihdr_tag *lpNext;       /* reserved for driver */
     DWORD       reserved;             /* reserved for driver */
-} MIDIHDR;
-typedef MIDIHDR FAR  *LPMIDIHDR;
+} MIDIHDR, *LPMIDIHDR;
 
 #define MHDR_DONE       0x00000001       /* done bit */
 #define MHDR_PREPARED   0x00000002       /* set if header prepared */
@@ -390,27 +371,27 @@ typedef MIDIHDR FAR  *LPMIDIHDR;
 
 UINT midiOutGetNumDevs(void);
 UINT midiOutGetDevCaps(UINT uDeviceID,
-    MIDIOUTCAPS FAR* lpCaps, UINT uSize);
-UINT midiOutGetVolume(UINT uDeviceID, DWORD FAR* lpdwVolume);
+    MIDIOUTCAPS * lpCaps, UINT uSize);
+UINT midiOutGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
 UINT midiOutSetVolume(UINT uDeviceID, DWORD dwVolume);
 UINT midiOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT midiOutOpen(HMIDIOUT FAR* lphMidiOut, UINT uDeviceID,
+UINT midiOutOpen(HMIDIOUT * lphMidiOut, UINT uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
 UINT midiOutClose(HMIDIOUT hMidiOut);
 UINT midiOutPrepareHeader(HMIDIOUT hMidiOut,
-    MIDIHDR FAR* lpMidiOutHdr, UINT uSize);
+    MIDIHDR * lpMidiOutHdr, UINT uSize);
 UINT midiOutUnprepareHeader(HMIDIOUT hMidiOut,
-    MIDIHDR FAR* lpMidiOutHdr, UINT uSize);
+    MIDIHDR * lpMidiOutHdr, UINT uSize);
 UINT midiOutShortMsg(HMIDIOUT hMidiOut, DWORD dwMsg);
 UINT midiOutLongMsg(HMIDIOUT hMidiOut,
-    MIDIHDR FAR* lpMidiOutHdr, UINT uSize);
+    MIDIHDR * lpMidiOutHdr, UINT uSize);
 UINT midiOutReset(HMIDIOUT hMidiOut);
 UINT midiOutCachePatches(HMIDIOUT hMidiOut,
-    UINT uBank, WORD FAR* lpwPatchArray, UINT uFlags);
+    UINT uBank, WORD * lpwPatchArray, UINT uFlags);
 UINT midiOutCacheDrumPatches(HMIDIOUT hMidiOut,
-    UINT uPatch, WORD FAR* lpwKeyArray, UINT uFlags);
-UINT midiOutGetID(HMIDIOUT hMidiOut, UINT FAR* lpuDeviceID);
+    UINT uPatch, WORD * lpwKeyArray, UINT uFlags);
+UINT midiOutGetID(HMIDIOUT hMidiOut, UINT * lpuDeviceID);
 
 DWORD midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage, DWORD dw1, DWORD dw2);
 
@@ -418,19 +399,19 @@ UINT midiInGetNumDevs(void);
 UINT midiInGetDevCaps(UINT uDeviceID,
     LPMIDIINCAPS lpCaps, UINT uSize);
 UINT midiInGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
-UINT midiInOpen(HMIDIIN FAR* lphMidiIn, UINT uDeviceID,
+UINT midiInOpen(HMIDIIN * lphMidiIn, UINT uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags);
 UINT midiInClose(HMIDIIN hMidiIn);
 UINT midiInPrepareHeader(HMIDIIN hMidiIn,
-    MIDIHDR FAR* lpMidiInHdr, UINT uSize);
+    MIDIHDR * lpMidiInHdr, UINT uSize);
 UINT midiInUnprepareHeader(HMIDIIN hMidiIn,
-    MIDIHDR FAR* lpMidiInHdr, UINT uSize);
+    MIDIHDR * lpMidiInHdr, UINT uSize);
 UINT midiInAddBuffer(HMIDIIN hMidiIn,
-    MIDIHDR FAR* lpMidiInHdr, UINT uSize);
+    MIDIHDR * lpMidiInHdr, UINT uSize);
 UINT midiInStart(HMIDIIN hMidiIn);
 UINT midiInStop(HMIDIIN hMidiIn);
 UINT midiInReset(HMIDIIN hMidiIn);
-UINT midiInGetID(HMIDIIN hMidiIn, UINT FAR* lpuDeviceID);
+UINT midiInGetID(HMIDIIN hMidiIn, UINT * lpuDeviceID);
 
 DWORD midiInMessage(HMIDIIN hMidiIn, UINT uMessage, DWORD dw1, DWORD dw2);
 
@@ -443,8 +424,7 @@ typedef struct {
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
     UINT    wTechnology;           /* type of device */
     DWORD   dwSupport;             /* functionality supported by driver */
-} AUXCAPS;
-typedef AUXCAPS FAR  *LPAUXCAPS;
+} AUXCAPS, *LPAUXCAPS;
 
 #define AUXCAPS_CDAUDIO    1       /* audio from internal CD-ROM drive */
 #define AUXCAPS_AUXIN      2       /* audio from auxiliary input jacks */
@@ -453,9 +433,9 @@ typedef AUXCAPS FAR  *LPAUXCAPS;
 #define AUXCAPS_LRVOLUME        0x0002  /* separate left-right volume control */
 
 UINT auxGetNumDevs(void);
-UINT auxGetDevCaps(UINT uDeviceID, AUXCAPS FAR* lpCaps, UINT uSize);
+UINT auxGetDevCaps(UINT uDeviceID, AUXCAPS * lpCaps, UINT uSize);
 UINT auxSetVolume(UINT uDeviceID, DWORD dwVolume);
-UINT auxGetVolume(UINT uDeviceID, DWORD FAR* lpdwVolume);
+UINT auxGetVolume(UINT uDeviceID, DWORD * lpdwVolume);
 
 DWORD auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2);
 
@@ -463,9 +443,7 @@ DWORD auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2);
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
 #define TIMERR_STRUCT         (TIMERR_BASE+33)     /* time struct size */
 
-typedef void (CALLBACK TIMECALLBACK) (UINT uTimerID, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
-
-typedef TIMECALLBACK FAR *LPTIMECALLBACK;
+typedef void (*LPTIMECALLBACK) (UINT uTimerID, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define TIME_ONESHOT    0   /* program timer for single event */
 #define TIME_PERIODIC   1   /* program for continuous periodic event */
@@ -473,15 +451,14 @@ typedef TIMECALLBACK FAR *LPTIMECALLBACK;
 typedef struct {
     UINT    wPeriodMin;     /* minimum period supported  */
     UINT    wPeriodMax;     /* maximum period supported  */
-    } TIMECAPS;
-typedef TIMECAPS FAR  *LPTIMECAPS;
+} TIMECAPS, *LPTIMECAPS;
 
-UINT timeGetSystemTime(MMTIME FAR* lpTime, UINT uSize);
+UINT timeGetSystemTime(MMTIME * lpTime, UINT uSize);
 DWORD timeGetTime(void);
 UINT timeSetEvent(UINT uDelay, UINT uResolution,
     LPTIMECALLBACK lpFunction, DWORD dwUser, UINT uFlags);
 UINT timeKillEvent(UINT uTimerID);
-UINT timeGetDevCaps(TIMECAPS FAR* lpTimeCaps, UINT uSize);
+UINT timeGetDevCaps(TIMECAPS * lpTimeCaps, UINT uSize);
 UINT timeBeginPeriod(UINT uPeriod);
 UINT timeEndPeriod(UINT uPeriod);
 
@@ -515,21 +492,19 @@ typedef struct {
     UINT wNumButtons;           /* number of buttons */
     UINT wPeriodMin;            /* minimum message period when captured */
     UINT wPeriodMax;            /* maximum message period when captured */
-    } JOYCAPS;
-typedef JOYCAPS FAR  *LPJOYCAPS;
+} JOYCAPS, *LPJOYCAPS;
 
 typedef struct {
     UINT wXpos;                 /* x position */
     UINT wYpos;                 /* y position */
     UINT wZpos;                 /* z position */
     UINT wButtons;              /* button states */
-    } JOYINFO;
-typedef JOYINFO FAR  *LPJOYINFO;
+} JOYINFO, *LPJOYINFO;
 
-UINT joyGetDevCaps(UINT uJoyID, JOYCAPS FAR* lpCaps, UINT uSize);
+UINT joyGetDevCaps(UINT uJoyID, JOYCAPS * lpCaps, UINT uSize);
 UINT joyGetNumDevs(void);
-UINT joyGetPos(UINT uJoyID, JOYINFO FAR* lpInfo);
-UINT joyGetThreshold(UINT uJoyID, UINT FAR* lpuThreshold);
+UINT joyGetPos(UINT uJoyID, JOYINFO * lpInfo);
+UINT joyGetThreshold(UINT uJoyID, UINT * lpuThreshold);
 UINT joyReleaseCapture(UINT uJoyID);
 UINT joySetCapture(HWND hwnd, UINT uJoyID, UINT uPeriod,
     BOOL bChanged);
@@ -550,10 +525,8 @@ UINT joySetThreshold(UINT uJoyID, UINT uThreshold);
 #define CFSEPCHAR       '+'             /* compound file name separator char. */
 
 typedef DWORD           FOURCC;         /* a four character code */
-DECLARE_HANDLE(HMMIO);                  /* a handle to an open file */
-typedef LONG (CALLBACK MMIOPROC)(LPSTR lpmmioinfo, UINT uMessage,
+typedef LONG (*LPMMIOPROC)(LPSTR lpmmioinfo, UINT uMessage,
             LPARAM lParam1, LPARAM lParam2);
-typedef MMIOPROC FAR *LPMMIOPROC;
 
 typedef struct {
         DWORD           dwFlags;        /* general status flags */
@@ -575,8 +548,7 @@ typedef struct {
         DWORD           dwReserved1;    /* reserved for MMIO use */
         DWORD           dwReserved2;    /* reserved for MMIO use */
         HMMIO           hmmio;          /* handle to open file */
-} MMIOINFO;
-typedef MMIOINFO FAR  *LPMMIOINFO;
+} MMIOINFO, *LPMMIOINFO;
 
 typedef struct _MMCKINFO
 {
@@ -585,8 +557,7 @@ typedef struct _MMCKINFO
         FOURCC          fccType;        /* form type or list type */
         DWORD           dwDataOffset;   /* offset of data portion of chunk */
         DWORD           dwFlags;        /* flags used by MMIO functions */
-} MMCKINFO;
-typedef MMCKINFO FAR  *LPMMCKINFO;
+} MMCKINFO, *LPMMCKINFO;
 
 #define MMIO_RWMODE     0x00000003      /* open file for reading/writing/both */
 #define MMIO_SHAREMODE  0x00000070      /* file sharing mode number */
@@ -653,30 +624,30 @@ typedef MMCKINFO FAR  *LPMMCKINFO;
 FOURCC mmioStringToFOURCC(LPCSTR sz, UINT uFlags);
 LPMMIOPROC mmioInstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
     DWORD dwFlags);
-HMMIO mmioOpen(LPSTR szFileName, MMIOINFO FAR* lpmmioinfo,
+HMMIO mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo,
     DWORD dwOpenFlags);
 
 UINT mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
-     MMIOINFO FAR* lpmmioinfo, DWORD dwRenameFlags);
+     MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
 
 UINT mmioClose(HMMIO hmmio, UINT uFlags);
 LONG mmioRead(HMMIO hmmio, HPSTR pch, LONG cch);
 LONG mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch);
 LONG mmioSeek(HMMIO hmmio, LONG lOffset, int iOrigin);
-UINT mmioGetInfo(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags);
-UINT mmioSetInfo(HMMIO hmmio, const MMIOINFO FAR* lpmmioinfo, UINT uFlags);
+UINT mmioGetInfo(HMMIO hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
+UINT mmioSetInfo(HMMIO hmmio, const MMIOINFO * lpmmioinfo, UINT uFlags);
 UINT mmioSetBuffer(HMMIO hmmio, LPSTR pchBuffer, LONG cchBuffer,
     UINT uFlags);
 UINT mmioFlush(HMMIO hmmio, UINT uFlags);
-UINT mmioAdvance(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags);
+UINT mmioAdvance(HMMIO hmmio, MMIOINFO * lpmmioinfo, UINT uFlags);
 LONG mmioSendMessage(HMMIO hmmio, UINT uMessage,
     LPARAM lParam1, LPARAM lParam2);
-UINT mmioDescend(HMMIO hmmio, MMCKINFO FAR* lpck,
-    const MMCKINFO FAR* lpckParent, UINT uFlags);
-UINT mmioAscend(HMMIO hmmio, MMCKINFO FAR* lpck, UINT uFlags);
-UINT mmioCreateChunk(HMMIO hmmio, MMCKINFO FAR* lpck, UINT uFlags);
+UINT mmioDescend(HMMIO hmmio, MMCKINFO * lpck,
+    const MMCKINFO * lpckParent, UINT uFlags);
+UINT mmioAscend(HMMIO hmmio, MMCKINFO * lpck, UINT uFlags);
+UINT mmioCreateChunk(HMMIO hmmio, MMCKINFO * lpck, UINT uFlags);
 
-typedef UINT (CALLBACK *YIELDPROC) (UINT uDeviceID, DWORD dwYieldData);
+typedef UINT (*YIELDPROC) (UINT uDeviceID, DWORD dwYieldData);
 
 DWORD mciSendCommand (UINT uDeviceID, UINT uMessage,
     DWORD dwParam1, DWORD dwParam2);
@@ -691,7 +662,7 @@ BOOL mciSetYieldProc (UINT uDeviceID, YIELDPROC fpYieldProc,
     DWORD dwYieldData);
 
 HTASK mciGetCreatorTask(UINT uDeviceID);
-YIELDPROC mciGetYieldProc (UINT uDeviceID, DWORD FAR* lpdwYieldData);
+YIELDPROC mciGetYieldProc (UINT uDeviceID, DWORD * lpdwYieldData);
 
 #define MCIERR_INVALID_DEVICE_ID        (MCIERR_BASE + 1)
 #define MCIERR_UNRECOGNIZED_KEYWORD     (MCIERR_BASE + 3)
@@ -953,8 +924,7 @@ YIELDPROC mciGetYieldProc (UINT uDeviceID, DWORD FAR* lpdwYieldData);
 
 typedef struct {
 	DWORD   dwCallback;
-	} MCI_GENERIC_PARMS;
-typedef MCI_GENERIC_PARMS FAR *LPMCI_GENERIC_PARMS;
+} MCI_GENERIC_PARMS, *LPMCI_GENERIC_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -963,43 +933,37 @@ typedef struct {
 	LPCSTR  lpstrDeviceType;
 	LPCSTR  lpstrElementName;
 	LPCSTR  lpstrAlias;
-	} MCI_OPEN_PARMS;
-typedef MCI_OPEN_PARMS FAR *LPMCI_OPEN_PARMS;
+} MCI_OPEN_PARMS, *LPMCI_OPEN_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
-	} MCI_PLAY_PARMS;
-typedef MCI_PLAY_PARMS FAR *LPMCI_PLAY_PARMS;
+} MCI_PLAY_PARMS, *LPMCI_PLAY_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwTo;
-	} MCI_SEEK_PARMS;
-typedef MCI_SEEK_PARMS FAR *LPMCI_SEEK_PARMS;
+} MCI_SEEK_PARMS, *LPMCI_SEEK_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwReturn;
 	DWORD   dwItem;
 	DWORD   dwTrack;
-	} MCI_STATUS_PARMS;
-typedef MCI_STATUS_PARMS FAR * LPMCI_STATUS_PARMS;
+} MCI_STATUS_PARMS, *LPMCI_STATUS_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPSTR   lpstrReturn;
 	DWORD   dwRetSize;
-	} MCI_INFO_PARMS;
-typedef MCI_INFO_PARMS FAR * LPMCI_INFO_PARMS;
+} MCI_INFO_PARMS, *LPMCI_INFO_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwReturn;
 	DWORD   dwItem;
-	} MCI_GETDEVCAPS_PARMS;
-typedef MCI_GETDEVCAPS_PARMS FAR * LPMCI_GETDEVCAPS_PARMS;
+} MCI_GETDEVCAPS_PARMS, *LPMCI_GETDEVCAPS_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -1008,15 +972,13 @@ typedef struct {
 	DWORD   dwNumber;
 	UINT    wDeviceType;
 	UINT    wReserved0;
-	} MCI_SYSINFO_PARMS;
-typedef MCI_SYSINFO_PARMS FAR * LPMCI_SYSINFO_PARMS;
+} MCI_SYSINFO_PARMS, *LPMCI_SYSINFO_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwTimeFormat;
 	DWORD   dwAudio;
-	} MCI_SET_PARMS;
-typedef MCI_SET_PARMS FAR *LPMCI_SET_PARMS;
+} MCI_SET_PARMS, *LPMCI_SET_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -1024,33 +986,28 @@ typedef struct {
 	UINT    wReserved0;
 	HWND    hwndBreak;
 	UINT    wReserved1;
-	} MCI_BREAK_PARMS;
-typedef MCI_BREAK_PARMS FAR * LPMCI_BREAK_PARMS;
+} MCI_BREAK_PARMS, *LPMCI_BREAK_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpstrSoundName;
-	} MCI_SOUND_PARMS;
-typedef MCI_SOUND_PARMS FAR * LPMCI_SOUND_PARMS;
+} MCI_SOUND_PARMS, *LPMCI_SOUND_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpfilename;
-	} MCI_SAVE_PARMS;
-typedef MCI_SAVE_PARMS FAR * LPMCI_SAVE_PARMS;
+} MCI_SAVE_PARMS, *LPMCI_SAVE_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpfilename;
-	} MCI_LOAD_PARMS;
-typedef MCI_LOAD_PARMS FAR * LPMCI_LOAD_PARMS;
+} MCI_LOAD_PARMS, *LPMCI_LOAD_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
-	} MCI_RECORD_PARMS;
-typedef MCI_RECORD_PARMS FAR *LPMCI_RECORD_PARMS;
+} MCI_RECORD_PARMS, *LPMCI_RECORD_PARMS;
 
 #define MCI_VD_MODE_PARK                (MCI_VD_OFFSET + 1)
 
@@ -1095,20 +1052,17 @@ typedef struct {
 	DWORD   dwFrom;
 	DWORD   dwTo;
 	DWORD   dwSpeed;
-	} MCI_VD_PLAY_PARMS;
-typedef MCI_VD_PLAY_PARMS FAR *LPMCI_VD_PLAY_PARMS;
+} MCI_VD_PLAY_PARMS, *LPMCI_VD_PLAY_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwFrames;
-	} MCI_VD_STEP_PARMS;
-typedef MCI_VD_STEP_PARMS FAR *LPMCI_VD_STEP_PARMS;
+} MCI_VD_STEP_PARMS, *LPMCI_VD_STEP_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpstrCommand;
-	} MCI_VD_ESCAPE_PARMS;
-typedef MCI_VD_ESCAPE_PARMS FAR *LPMCI_VD_ESCAPE_PARMS;
+} MCI_VD_ESCAPE_PARMS, *LPMCI_VD_ESCAPE_PARMS;
 
 #define MCI_WAVE_OPEN_BUFFER            0x00010000L
 
@@ -1144,15 +1098,13 @@ typedef struct {
 	LPCSTR  lpstrElementName;
 	LPCSTR  lpstrAlias;
 	DWORD   dwBufferSeconds;
-	} MCI_WAVE_OPEN_PARMS;
-typedef MCI_WAVE_OPEN_PARMS FAR *LPMCI_WAVE_OPEN_PARMS;
+} MCI_WAVE_OPEN_PARMS, *LPMCI_WAVE_OPEN_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
-	} MCI_WAVE_DELETE_PARMS;
-typedef MCI_WAVE_DELETE_PARMS FAR *LPMCI_WAVE_DELETE_PARMS;
+} MCI_WAVE_DELETE_PARMS, *LPMCI_WAVE_DELETE_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -1172,8 +1124,7 @@ typedef struct {
 	UINT    wReserved4;
 	UINT    wBitsPerSample;
 	UINT    wReserved5;
-	} MCI_WAVE_SET_PARMS;
-typedef MCI_WAVE_SET_PARMS FAR * LPMCI_WAVE_SET_PARMS;
+} MCI_WAVE_SET_PARMS, * LPMCI_WAVE_SET_PARMS;
 
 #define     MCI_SEQ_DIV_PPQN            (0 + MCI_SEQ_OFFSET)
 #define     MCI_SEQ_DIV_SMPTE_24        (1 + MCI_SEQ_OFFSET)
@@ -1209,8 +1160,7 @@ typedef struct {
 	DWORD   dwSlave;
 	DWORD   dwMaster;
 	DWORD   dwOffset;
-	} MCI_SEQ_SET_PARMS;
-typedef MCI_SEQ_SET_PARMS FAR * LPMCI_SEQ_SET_PARMS;
+} MCI_SEQ_SET_PARMS, *LPMCI_SEQ_SET_PARMS;
 
 #define MCI_ANIM_OPEN_WS                0x00010000L
 #define MCI_ANIM_OPEN_PARENT            0x00020000L
@@ -1271,22 +1221,19 @@ typedef struct {
 	DWORD   dwStyle;
 	HWND    hWndParent;
 	UINT    wReserved1;
-	} MCI_ANIM_OPEN_PARMS;
-typedef MCI_ANIM_OPEN_PARMS FAR *LPMCI_ANIM_OPEN_PARMS;
+} MCI_ANIM_OPEN_PARMS, *LPMCI_ANIM_OPEN_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 	DWORD   dwSpeed;
-	} MCI_ANIM_PLAY_PARMS;
-typedef MCI_ANIM_PLAY_PARMS FAR *LPMCI_ANIM_PLAY_PARMS;
+} MCI_ANIM_PLAY_PARMS, *LPMCI_ANIM_PLAY_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	DWORD   dwFrames;
-	} MCI_ANIM_STEP_PARMS;
-typedef MCI_ANIM_STEP_PARMS FAR *LPMCI_ANIM_STEP_PARMS;
+} MCI_ANIM_STEP_PARMS, *LPMCI_ANIM_STEP_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -1295,8 +1242,7 @@ typedef struct {
 	UINT    nCmdShow;
 	UINT    wReserved2;
 	LPCSTR  lpstrText;
-	} MCI_ANIM_WINDOW_PARMS;
-typedef MCI_ANIM_WINDOW_PARMS FAR * LPMCI_ANIM_WINDOW_PARMS;
+} MCI_ANIM_WINDOW_PARMS, *LPMCI_ANIM_WINDOW_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -1306,15 +1252,13 @@ typedef struct {
 #else   /* ifdef MCI_USE_OFFEXT */
 	RECT    rc;
 #endif  /* ifdef MCI_USE_OFFEXT */
-	} MCI_ANIM_RECT_PARMS;
-typedef MCI_ANIM_RECT_PARMS FAR * LPMCI_ANIM_RECT_PARMS;
+} MCI_ANIM_RECT_PARMS, *LPMCI_ANIM_RECT_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	RECT    rc;
 	HDC     hDC;
-	} MCI_ANIM_UPDATE_PARMS;
-typedef MCI_ANIM_UPDATE_PARMS FAR * LPMCI_ANIM_UPDATE_PARMS;
+} MCI_ANIM_UPDATE_PARMS, *LPMCI_ANIM_UPDATE_PARMS;
 
 #define MCI_OVLY_OPEN_WS                0x00010000L
 #define MCI_OVLY_OPEN_PARENT            0x00020000L
@@ -1357,8 +1301,7 @@ typedef struct {
 	DWORD   dwStyle;
 	HWND    hWndParent;
 	UINT    wReserved1;
-	} MCI_OVLY_OPEN_PARMS;
-typedef MCI_OVLY_OPEN_PARMS FAR *LPMCI_OVLY_OPEN_PARMS;
+} MCI_OVLY_OPEN_PARMS, *LPMCI_OVLY_OPEN_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -1367,8 +1310,7 @@ typedef struct {
 	UINT    nCmdShow;
 	UINT    wReserved2;
 	LPCSTR  lpstrText;
-	} MCI_OVLY_WINDOW_PARMS;
-typedef MCI_OVLY_WINDOW_PARMS FAR * LPMCI_OVLY_WINDOW_PARMS;
+} MCI_OVLY_WINDOW_PARMS, *LPMCI_OVLY_WINDOW_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
@@ -1378,22 +1320,19 @@ typedef struct {
 #else   /* ifdef MCI_USE_OFFEXT */
 	RECT    rc;
 #endif  /* ifdef MCI_USE_OFFEXT */
-	} MCI_OVLY_RECT_PARMS;
-typedef MCI_OVLY_RECT_PARMS FAR * LPMCI_OVLY_RECT_PARMS;
+} MCI_OVLY_RECT_PARMS, *LPMCI_OVLY_RECT_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpfilename;
 	RECT    rc;
-	} MCI_OVLY_SAVE_PARMS;
-typedef MCI_OVLY_SAVE_PARMS FAR * LPMCI_OVLY_SAVE_PARMS;
+} MCI_OVLY_SAVE_PARMS, *LPMCI_OVLY_SAVE_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpfilename;
 	RECT    rc;
-	} MCI_OVLY_LOAD_PARMS;
-typedef MCI_OVLY_LOAD_PARMS FAR * LPMCI_OVLY_LOAD_PARMS;
+} MCI_OVLY_LOAD_PARMS, *LPMCI_OVLY_LOAD_PARMS;
 
 
 /**************************************************************
@@ -1525,23 +1464,20 @@ typedef struct {
 	DWORD   	dwInstance;
 	HMIDIOUT	hMidi;
 	DWORD   	dwFlags;
-	}	PORTALLOC;
-typedef PORTALLOC FAR *LPPORTALLOC;
+} PORTALLOC, *LPPORTALLOC;
 
 typedef struct {
 	HWAVE			hWave;
 	LPWAVEFORMAT	lpFormat;
 	DWORD			dwCallBack;
 	DWORD			dwInstance;
-	} WAVEOPENDESC;
-typedef WAVEOPENDESC FAR *LPWAVEOPENDESC;
+} WAVEOPENDESC, *LPWAVEOPENDESC;
 
 typedef struct {
 	HMIDI			hMidi;
 	DWORD			dwCallback;
 	DWORD			dwInstance;
-	} MIDIOPENDESC;
-typedef MIDIOPENDESC FAR *LPMIDIOPENDESC;
+} MIDIOPENDESC, *LPMIDIOPENDESC;
 
 typedef struct {
 	UINT			wDelay;
@@ -1549,8 +1485,7 @@ typedef struct {
 	LPTIMECALLBACK	lpFunction;
 	DWORD			dwUser;
 	UINT			wFlags;
-	} TIMEREVENT;
-typedef TIMEREVENT FAR *LPTIMEREVENT;
+} TIMEREVENT, *LPTIMEREVENT;
 
 typedef struct {
 	UINT    wDeviceID;				/* device ID */
@@ -1559,8 +1494,7 @@ typedef struct {
 									/* filled in by the driver */
 	UINT    wType;					/* driver type */
 									/* filled in by the driver */
-	} MCI_OPEN_DRIVER_PARMS;
-typedef MCI_OPEN_DRIVER_PARMS FAR * LPMCI_OPEN_DRIVER_PARMS;
+} MCI_OPEN_DRIVER_PARMS, * LPMCI_OPEN_DRIVER_PARMS;
 
 DWORD mciGetDriverData(UINT uDeviceID);
 BOOL  mciSetDriverData(UINT uDeviceID, DWORD dwData);

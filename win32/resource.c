@@ -221,9 +221,9 @@ HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
 
     lp = (BYTE *)LockResource32(rsc_mem);
     n = SizeofResource( instance, hRsrc ) / sizeof(ACCELENTRY);
-    hAccel = GlobalAlloc(GMEM_MOVEABLE, 
+    hAccel = GlobalAlloc16(GMEM_MOVEABLE, 
     	sizeof(ACCELHEADER) + (n + 1)*sizeof(ACCELENTRY));
-    lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
+    lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
     lpAccelTbl->wCount = 0;
     for (i = 0; i < n; i++) {
 	lpAccelTbl->tbl[i].type = *(lp++);
@@ -238,7 +238,7 @@ HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
 		lpAccelTbl->tbl[i].type);
 	lpAccelTbl->wCount++;
  	}
-    GlobalUnlock(hAccel);
+    GlobalUnlock16(hAccel);
     FreeResource( rsc_mem );
     return hAccel;
 #else
@@ -249,9 +249,15 @@ HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
 
 HANDLE32 WIN32_LoadAcceleratorsA(HINSTANCE instance, LPCSTR lpTableName)
 {
-	LPWSTR uni=STRING32_DupAnsiToUni(lpTableName);
-	HANDLE32 result=WIN32_LoadAcceleratorsW(instance,uni);
-	free(uni);
+	LPWSTR		uni;
+	HANDLE32	result;
+	if (HIWORD(lpTableName))
+		uni=STRING32_DupAnsiToUni(lpTableName);
+	else
+		uni=(LPWSTR)lpTableName;
+	result=WIN32_LoadAcceleratorsW(instance,uni);
+	if (HIWORD(uni))
+		free(uni);
 	return result;
 }
 
@@ -317,13 +323,13 @@ WIN32_LoadStringA(HINSTANCE instance, DWORD resource_id, LPSTR buffer, int bufle
     return retval;
 }
 
-HICON LoadIconW32(HINSTANCE hisnt, LPCTSTR lpszIcon)
+HICON LoadIconW32(HINSTANCE hisnt, LPCWSTR lpszIcon)
 
 {
 	return LoadIcon(0, IDI_APPLICATION);
 }
 
-HICON LoadIconA32(HINSTANCE hinst, LPCTSTR lpszIcon)
+HICON LoadIconA32(HINSTANCE hinst, LPCSTR lpszIcon)
 
 {
 	return LoadIconW32(hinst, lpszIcon);
