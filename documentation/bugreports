@@ -47,8 +47,8 @@ likely to get answered and fixed):
 	- Any other information you think may be relevant or helpful, such as
 		X server version in case of X problems, libc version etc.
 
-2) Re-run the program with the -debugmsg +relay,+snoop option 
-   (i.e., 'wine -debugmsg +relay,+snoop sol.exe').
+2) Re-run the program with the -debugmsg +relay option 
+   (i.e., 'wine -debugmsg +relay sol.exe').
 
 	If Wine crashes while running your program, it is important that we
 	have this information to have a chance at figuring out what is causing
@@ -56,22 +56,28 @@ likely to get answered and fixed):
 	though, so it's best to output it to a file.  When the Wine-dbg> prompt
 	appears, type 'quit'.
 
-	To accomplish this, use the following commands:
+	You might want to try +relay,+snoop instead of +relay, but please note
+    that +snoop is pretty unstable and often will crash earlier than a
+    simple +relay !
+	If this is the case, then please use *only* +relay !!
+	A bug report with a crash in +snoop code is useless in most cases !
+
+	To get the trace output, use the following commands:
 
 	all shells:
-	    echo quit|wine -debugmsg +relay,+snoop [other_options] program_name >& filename.out; tail -n 100 filename.out > report_file
+	    echo quit|wine -debugmsg +relay [other_options] program_name >& filename.out; tail -n 100 filename.out > report_file
 	(This will print wine's debug msgs only to the file and then
 	auto-quit. It's probably a good idea to use this command, since wine
 	prints out so many debug msgs that they flood the terminal, eating CPU.)
 	
 	tcsh and other csh-like shells:
 
-	    wine -debugmsg +relay,+snoop [other_options] program_name |& tee filename.out
+	    wine -debugmsg +relay [other_options] program_name |& tee filename.out
 	    tail -100 filename.out > report_file
 
 	bash and other sh-like shells:
 
-	    wine -debugmsg +relay,+snoop [other_options] program_name 2>&1 | tee filename.out
+	    wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out
 	    tail -100 filename.out > report_file
 
 	'report_file' will now contain the last hundred lines of the debugging
