@@ -13,10 +13,10 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "heap.h"
+#include "selectors.h"
 #include "file.h"
 #include "mmsystem.h"
 #include "debugtools.h"
-#include "xmalloc.h"
 
 DEFAULT_DEBUG_CHANNEL(mmio)
 
@@ -303,7 +303,11 @@ static HMMIO16 MMIO_Open(LPSTR szFileName, MMIOINFO16 * lpmmioinfo,
 		}
 	} else
 	if (lpmminfo->fccIOProc == FOURCC_MEM) {
-		if ((result = mmioSetBuffer16(hmmio, lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer, 0))) {
+		if ((result = mmioSetBuffer16(hmmio, 
+												(use16) ? 
+												    PTR_SEG_TO_LIN(lpmmioinfo->pchBuffer) : 
+												    lpmmioinfo->pchBuffer, 
+												lpmmioinfo->cchBuffer, 0))) {
 			if (lpmmioinfo)
 				lpmmioinfo->wErrorRet = result;
 			return 0;
