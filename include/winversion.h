@@ -7,6 +7,7 @@ typedef enum
 {
     WIN31, /* Windows 3.1 */
     WIN95,   /* Windows 95 */
+    WIN98,   /* Windows 98 */
     NT351,   /* Windows NT 3.51 */
     NT40,    /* Windows NT 4.0 */  
     NB_WINDOWS_VERSIONS

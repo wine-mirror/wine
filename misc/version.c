@@ -49,6 +49,15 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
             VER_PLATFORM_WIN32_WINDOWS, "Win95"
 	}
     },
+    /* WIN98 */
+    {
+	0x07005F03,	/* FIXME: need DOS value from real Win98 */
+	0xC0000A04,
+	{
+	    sizeof(OSVERSIONINFOA), 4, 10, 0x40A07CE,
+	    VER_PLATFORM_WIN32_WINDOWS, "Win98"
+	}
+    },
     /* NT351 */
     {
         0x05000A03,
@@ -73,6 +82,7 @@ static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
 {
     "win31",
     "win95",
+    "win98",
     "nt351",
     "nt40"
 };
@@ -280,6 +290,8 @@ char *VERSION_GetVersionName()
       return "Windows 3.1";
     case WIN95:  
       return "Windows 95";
+    case WIN98:
+      return "Windows 98";
     case NT351:
       return "Windows NT 3.51";
     case NT40:
@@ -483,6 +495,7 @@ UINT WINAPI OaBuildVersion()
         case 0x80000a03: /* Win 3.1 */
 		return 0x140fd1; /* from Win32s 1.1e */
         case 0xc0000004: /* Win 95 */
+	 case 0xc0000a04: /* Win 98: verified same as Win95 */
 		return 0x1e10a9; /* some older version: 0x0a0bd3 */
         case 0x04213303: /* NT 3.51 */
 		FIXME("NT 3.51 version value unknown !\n");
