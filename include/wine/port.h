@@ -27,6 +27,7 @@
 
 #define _GNU_SOURCE  /* for pread/pwrite */
 #include <fcntl.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef HAVE_DIRECT_H
@@ -115,6 +116,20 @@ struct statfs;
 #ifndef O_LARGEFILE
 # define O_LARGEFILE 0
 #endif
+
+
+/****************************************************************
+ * Constants
+ */
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2 1.570796326794896619
+#endif
+
 
 /* Macros to define assembler functions somewhat portably */
 
