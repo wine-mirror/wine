@@ -809,7 +809,7 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
 
     TRACE(msg,"task %04x size %i\n", GetCurrentTask(), size); 
 
-    if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
+    if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return FALSE;
 
     if( !(hNewQueue = QUEUE_CreateMsgQueue( size ))) 
     {
