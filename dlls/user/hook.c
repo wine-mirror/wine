@@ -363,6 +363,7 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 
     SERVER_START_REQ( remove_hook )
     {
+        req->handle = 0;
         req->id   = id;
         req->proc = proc;
         ret = !wine_server_call_err( req );
