@@ -21,7 +21,7 @@ extern "C" {
 
 #define	VS_FILE_INFO		16
 #define	VS_VERSION_INFO		1
-#define	VS_USER_INFO		100
+#define	VS_USER_DEFINED		100
 
 #define	VS_FFI_SIGNATURE	0xfeef04bdL	/* FileInfo Magic */
 #define	VS_FFI_STRUCVERSION	0x00010000L	/* struc version 1.0 */
