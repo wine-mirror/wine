@@ -13,7 +13,8 @@ C_SRCS = dplay.c \
          dplobby.c \
          dpclassfactory.c \
          dplayx_main.c \
-         dplayx_global.c
+         dplayx_global.c \
+         name_server.c
 
 
 @MAKE_DLL_RULES@

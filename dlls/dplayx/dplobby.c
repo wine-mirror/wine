@@ -1,6 +1,6 @@
 /* Direct Play Lobby 2 & 3 Implementation
  *
- * Copyright 1998,1999 - Peter Hunnisett
+ * Copyright 1998,1999,2000 - Peter Hunnisett
  *
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
@@ -843,6 +843,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
   LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
   DWORD  dwIndex, sizeOfSubKeyName=50;
   char   subKeyName[51];
+  FILETIME filetime;
 
   TRACE(" (%p)->(%p,%p,%p,0x%08lx)\n", This, lpEnumAddressTypeCallback, guidSP, lpContext, dwFlags );
 
@@ -863,7 +864,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
 
     /* Need to loop over the service providers in the registry */
     if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                         0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
+                         0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
     {
       /* Hmmm. Does this mean that there are no service providers? */
       ERR(": no service providers?\n");
@@ -872,8 +873,9 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
 
     /* Traverse all the service providers we have available */
     for( dwIndex=0;
-         RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
-         ++dwIndex )
+         RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
+                        NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
+         ++dwIndex, sizeOfSubKeyName=50 )
     {
 
       HKEY     hkServiceProvider, hkServiceProviderAt;
@@ -885,12 +887,13 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
       DWORD    dwAtIndex;
       LPSTR    atKey = "Address Types";
       LPSTR    guidDataSubKey   = "Guid";
+      FILETIME filetime;
 
 
       TRACE(" this time through: %s\n", subKeyName );
 
       /* Get a handle for this particular service provider */
-      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
                          &hkServiceProvider ) != ERROR_SUCCESS )
       {
          ERR(": what the heck is going on?\n" );
@@ -918,17 +921,18 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
       }
 
       /* Get a handle for this particular service provider */
-      if( RegOpenKeyExA( hkServiceProvider, atKey, 0, KEY_QUERY_VALUE,
+      if( RegOpenKeyExA( hkServiceProvider, atKey, 0, KEY_READ,
                          &hkServiceProviderAt ) != ERROR_SUCCESS )
       {
-        WARN(": No Address Types registry data sub key/members\n" );
+        TRACE(": No Address Types registry data sub key/members\n" );
         break;
       }
 
       /* Traverse all the address type we have available */
       for( dwAtIndex=0;
-           RegEnumKeyA( hkServiceProviderAt, dwAtIndex, atSubKey, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
-           ++dwAtIndex )
+           RegEnumKeyExA( hkServiceProviderAt, dwAtIndex, atSubKey, &sizeOfSubKeyName,
+                          NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
+           ++dwAtIndex, sizeOfSubKeyName=50 )
       {
         TRACE( "Found Address Type GUID %s\n", atSubKey );
 
@@ -997,6 +1001,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
   LPSTR guidDataSubKey   = "Guid";
   DWORD dwIndex, sizeOfSubKeyName=50;
   char subKeyName[51];
+  FILETIME filetime;
 
   TRACE("(%p)->(%p,%p,0x%08lx)\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
 
@@ -1012,7 +1017,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
 
   /* Need to loop over the service providers in the registry */
   if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                     0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
+                     0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
   {
     /* Hmmm. Does this mean that there are no service providers? */
     ERR(": no service providers?\n");
@@ -1021,8 +1026,8 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
 
   /* Traverse all registered applications */
   for( dwIndex=0;
-       RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
-       ++dwIndex )
+       RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName, NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
+       ++dwIndex, sizeOfSubKeyName=50 )
   {
 
     HKEY       hkServiceProvider;
@@ -1035,7 +1040,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
     TRACE(" this time through: %s\n", subKeyName );
 
     /* Get a handle for this particular service provider */
-    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
                        &hkServiceProvider ) != ERROR_SUCCESS )
     {
        ERR(": what the heck is going on?\n" );

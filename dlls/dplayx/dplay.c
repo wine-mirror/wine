@@ -1,6 +1,6 @@
 /* Direct Play 2,3,4 Implementation
  *
- * Copyright 1998,1999 - Peter Hunnisett
+ * Copyright 1998,1999,2000 - Peter Hunnisett
  *
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "winerror.h"
+#include "winbase.h"
 #include "winnt.h"
 #include "winreg.h"
 #include "dplay.h"
@@ -16,6 +17,7 @@
 
 #include "dpinit.h"
 #include "dplayx_global.h"
+#include "name_server.h"
 
 /* FIXME: This stuff shouldn't really be here. It indicates a poor architectural coupling */
 #include "dplobby.h"
@@ -54,15 +56,26 @@ typedef struct tagDirectPlayIUnknownData
   CRITICAL_SECTION  DP_lock;
 } DirectPlayIUnknownData;
 
+typedef struct _enumSessionAsyncCallbackData
+{
+  LPDPENUMSESSIONSCALLBACK2 cb;
+  LPVOID lpContext;
+  DWORD dwTimeout;
+} EnumSessionAsyncCallbackData;
+
 /* Contains all dp1 and dp2 data members */
 typedef struct tagDirectPlay2Data
 {
-  BOOL dummy;
+  BOOL   bConnectionOpen;
+
+  HANDLE hEnumSessionThread;
+
+  EnumSessionAsyncCallbackData enumSessionAsyncCallbackData;
 } DirectPlay2Data;
 
 typedef struct tagDirectPlay3Data
 {
-  BOOL connectionInitialized;
+  BOOL bConnectionInitialized;
 } DirectPlay3Data;
 
 typedef struct tagDirectPlay4Data
@@ -142,6 +155,14 @@ BOOL DP_CreateDirectPlay2( LPVOID lpDP )
     return FALSE;
   }
 
+  This->dp2->bConnectionOpen = FALSE;
+
+  This->dp2->hEnumSessionThread = INVALID_HANDLE_VALUE;
+
+  This->dp2->enumSessionAsyncCallbackData.cb        = NULL; 
+  This->dp2->enumSessionAsyncCallbackData.lpContext = NULL;
+  This->dp2->enumSessionAsyncCallbackData.dwTimeout = INFINITE;
+
   return TRUE;
 }
 
@@ -149,6 +170,12 @@ BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
 {
   ICOM_THIS(IDirectPlay2AImpl,lpDP);
 
+  if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
+  {
+    TerminateThread( This->dp2->hEnumSessionThread, 0 );
+    CloseHandle( This->dp2->hEnumSessionThread );
+  }
+  
   /* Delete the contents */
   HeapFree( GetProcessHeap(), 0, This->dp2 );
 
@@ -166,7 +193,7 @@ BOOL DP_CreateDirectPlay3( LPVOID lpDP )
     return FALSE;
   }
 
-  This->dp3->connectionInitialized = FALSE;
+  This->dp3->bConnectionInitialized = FALSE;
 
   return TRUE;
 }
@@ -608,7 +635,12 @@ static HRESULT WINAPI DirectPlay2AImpl_CreatePlayer
           ( LPDIRECTPLAY2A iface, LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
+
   FIXME("(%p)->(%p,%p,%d,%p,0x%08lx,0x%08lx): stub\n", This, lpidPlayer, lpPlayerName, hEvent, lpData, dwDataSize, dwFlags );
+
+  /* FIXME: Should send DPMSG_CREATEPLAYERORGROUP message to everyone, local and remote, that
+            belongs to this session */
+
   return DP_OK;
 }
 
@@ -718,12 +750,113 @@ static HRESULT WINAPI DirectPlay2WImpl_EnumPlayers
   return DP_OK;
 }
 
+void DP_SendSessionRequestBroadcast()
+{
+  FIXME( ": stub\n" );
+} 
+
+void DP_InvokeEnumSessionCallbacksA( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
+                                     LPVOID lpContext )
+{
+  FIXME( ": stub\n" );
+}
+
+static DWORD CALLBACK DP_EnumSessionsSpwanThreadA( LPVOID lpContext )
+{
+  ICOM_THIS(IDirectPlay2Impl,lpContext);
+  DWORD dwTimeout = This->dp2->enumSessionAsyncCallbackData.dwTimeout;
+
+  TRACE( "->(%p)->(0x%08lx)\n", This, dwTimeout );
+
+  /* FIXME: Don't think this is exactly right. It'll do for now */
+  for( ;; )
+  {
+    /* 2: Send the broadcast for session enumeration */
+    DP_SendSessionRequestBroadcast( NULL, 0 ); /* Should pass lpsd */
+
+    SleepEx( dwTimeout, FALSE ); 
+
+    DP_InvokeEnumSessionCallbacksA( This->dp2->enumSessionAsyncCallbackData.cb,
+                                    This->dp2->enumSessionAsyncCallbackData.lpContext );
+  }
+
+  return 0;
+}
+
 static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
           ( LPDIRECTPLAY2A iface, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
             LPVOID lpContext, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
-  FIXME("(%p)->(%p,0x%08lx,%p,%p,0x%08lx): stub\n", This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags );
+
+  TRACE("(%p)->(%p,0x%08lx,%p,%p,0x%08lx)\n", This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags );
+
+  if( dwTimeout == 0 )
+  {
+    FIXME( ": should provide a dependent dwTimeout\n" );
+    dwTimeout = 5 * 1000; /* 5 seconds */
+  }
+
+  if( dwFlags & DPENUMSESSIONS_STOPASYNC )
+  {
+    /* Does a thread exist? If so we were doing an async enum session */
+    if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
+    {
+      /* FIXME: This needs to be send an event to the thread to clean itself up */
+      TerminateThread( This->dp2->hEnumSessionThread, 0 );
+      CloseHandle( This->dp2->hEnumSessionThread );
+
+      This->dp2->hEnumSessionThread = INVALID_HANDLE_VALUE;
+
+      This->dp2->enumSessionAsyncCallbackData.cb        = NULL;
+      This->dp2->enumSessionAsyncCallbackData.lpContext = NULL;
+      This->dp2->enumSessionAsyncCallbackData.dwTimeout = INFINITE;
+
+      return DP_OK;
+    }
+  
+    /* Indicate some sort of error... */
+    WARN( "STOPASYNC attempted when no async running\n" );  
+    return DP_OK;
+  }
+
+  /* FIXME: Interface locking sucks in this method */
+
+  if( ( dwFlags & DPENUMSESSIONS_ASYNC ) )
+  {
+    DWORD dwThreadId;
+ 
+    /* See if we've already created a thread to service this interface */
+    if( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
+    {
+
+      This->dp2->enumSessionAsyncCallbackData.cb        = lpEnumSessionsCallback2;
+      This->dp2->enumSessionAsyncCallbackData.lpContext = lpContext;
+      This->dp2->enumSessionAsyncCallbackData.dwTimeout = dwTimeout;
+
+      TRACE( ": creating EnumSessions thread\n" );
+    
+      This->dp2->hEnumSessionThread = CreateThread( NULL,
+                                                    0,
+                                                    DP_EnumSessionsSpwanThreadA,
+                                                    This,
+                                                    0,
+                                                    &dwThreadId );
+    }
+
+    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, lpContext );
+  }
+  else
+  {
+    /* Send the broadcast for session enumeration */
+    /* FIXME: How to handle the replies? Queue? */
+    DP_SendSessionRequestBroadcast( lpsd, dwFlags );
+
+    SleepEx( dwTimeout, FALSE ); 
+ 
+    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, lpContext );
+  }
+
   return DP_OK;
 }
 
@@ -903,7 +1036,33 @@ static HRESULT WINAPI DirectPlay2AImpl_Open
           ( LPDIRECTPLAY2A iface, LPDPSESSIONDESC2 lpsd, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
+
   FIXME("(%p)->(%p,0x%08lx): stub\n", This, lpsd, dwFlags );
+
+  if( This->dp2->bConnectionOpen )
+  {
+    TRACE( ": rejecting already open connection.\n" );
+    return DPERR_ALREADYINITIALIZED;
+  }
+
+  /* When we open we need to stop any EnumSession activity */
+  IDirectPlayX_EnumSessions( iface, NULL, 0, NULL, NULL, DPENUMSESSIONS_STOPASYNC ); 
+
+  if( dwFlags & DPOPEN_CREATE )
+  {
+    dwFlags &= ~DPOPEN_CREATE;
+
+    /* Rightoo - this computer is the host and the local computer needs to be
+       the name server so that others can join this session */
+    DPLAYX_NS_SetLocalComputerAsNameServer( lpsd );
+
+  }
+
+  if( dwFlags )
+  {
+    ERR( ": ignored dwFlags 0x%08lx\n", dwFlags );
+  }
+
   return DP_OK;
 }
 
@@ -1105,12 +1264,13 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
     HKEY hkResult;
     LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
     LPSTR guidDataSubKey   = "Guid";
-    DWORD dwIndex, sizeOfSubKeyName=50;
     char subKeyName[51]; 
+    DWORD dwIndex, sizeOfSubKeyName=50;
+    FILETIME filetime;
 
     /* Need to loop over the service providers in the registry */
     if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                         0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
+                         0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
     {
       /* Hmmm. Does this mean that there are no service providers? */
       ERR(": no service providers?\n");
@@ -1120,8 +1280,9 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
 
     /* Traverse all the service providers we have available */
     for( dwIndex=0;
-         RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
-         ++dwIndex )
+         RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName, 
+                        NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
+         ++dwIndex, sizeOfSubKeyName=51 )
     {
 
       HKEY     hkServiceProvider;
@@ -1139,7 +1300,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       TRACE(" this time through: %s\n", subKeyName );
 
       /* Get a handle for this particular service provider */
-      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
                          &hkServiceProvider ) != ERROR_SUCCESS )
       {
          ERR(": what the heck is going on?\n" );
@@ -1269,7 +1430,7 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
     return DPERR_INVALIDFLAGS;
   }
 
-  if( This->dp3->connectionInitialized == TRUE )
+  if( This->dp3->bConnectionInitialized == TRUE )
   {
     return DPERR_ALREADYINITIALIZED;
   }
@@ -1303,7 +1464,7 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
 #endif
 
   /* This interface is now initialized */
-  This->dp3->connectionInitialized = TRUE;
+  This->dp3->bConnectionInitialized = TRUE;
 
   return DP_OK;
 }
@@ -1320,7 +1481,11 @@ static HRESULT WINAPI DirectPlay3AImpl_SecureOpen
           ( LPDIRECTPLAY3A iface, LPCDPSESSIONDESC2 lpsd, DWORD dwFlags, LPCDPSECURITYDESC lpSecurity, LPCDPCREDENTIALS lpCredentials )
 {
   ICOM_THIS(IDirectPlay3Impl,iface);
+
   FIXME("(%p)->(%p,0x%08lx,%p,%p): stub\n", This, lpsd, dwFlags, lpSecurity, lpCredentials );
+
+  IDirectPlayX_EnumSessions( iface, NULL, 0, NULL, NULL, DPENUMSESSIONS_STOPASYNC );
+
   return DP_OK;
 }
 
@@ -1928,6 +2093,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
   DWORD  dwIndex;
   DWORD  sizeOfSubKeyName=50;
   char   subKeyName[51]; 
+  FILETIME filetime;
 
   TRACE(": lpEnumCallback=%p lpContext=%p\n", lpEnumCallback, lpContext );
 
@@ -1938,7 +2104,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
 
   /* Need to loop over the service providers in the registry */
   if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                       0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
+                       0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
   {
     /* Hmmm. Does this mean that there are no service providers? */ 
     ERR(": no service providers?\n");
@@ -1947,8 +2113,9 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
 
   /* Traverse all the service providers we have available */
   for( dwIndex=0;
-       RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
-       ++dwIndex )
+       RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName, 
+                      NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
+       ++dwIndex, sizeOfSubKeyName=50 )
   {
     LPSTR    majVerDataSubKey = "dwReserved1";  
     LPSTR    minVerDataSubKey = "dwReserved2";  
@@ -1963,7 +2130,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
     TRACE(" this time through: %s\n", subKeyName );
 
     /* Get a handle for this particular service provider */
-    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
                          &hkServiceProvider ) != ERROR_SUCCESS )
     {
       ERR(": what the heck is going on?\n" );

@@ -1,12 +1,35 @@
 This file contains information on the implementation of the direct play
-and direct play lobby features. 
+and direct play lobby features. There's lots to do and I'm not exactly
+implementing it overnight! Please lend a hand.
 
-Most methods and APIs are not implemented at this point. Examine the code
-to see what has been implemented.  Stay tuned for some information here once
-there is more implementation (and I figure out what the heck I'm doing).
+Most methods and APIs are but stubs at this point. Examine the code
+to see what has been implemented. Use -debugmsg +dplay to get a 
+reasonably thourough description of what's going on.
 
-The files are include/dplay.h, include/dplobby.h, multimedia/dplobby.c and multimedia/dplay.c. 
-The .c files will be moved to appropriate dll directories at some later time.
+Associated header files are include/dplay.h, include/dplobby.h.
+
+Implementation of the DPLAY and DPLAYX dlls are both in the dlls/dplayx
+directory.
+
+dplay.c: Implementation of all the direct play object interfaces.
+dplobby.c: Implementation of all the direct play lobby interfaces.
+dpclassfactory.c: Implementation of the COM class factory which can create either
+                  direct play lobby or direct play lobby interfaces.
+dplayx_global.c: Implementation of all things which are associated with dplay on
+                 the computer - ie shared resources and such. Methods in this
+                 compilation unit should not call anything out side this unit.
+name_server.c: Implementation of all things which are associated with the name
+               server functionality
+dplayx_main.c: LibMain executed for loading and unloading the dll. This will make
+               the call to dplayx_global.c to request initialization and destruction
+               of any global data.
+
+Presently the architectural relationship between this files is a little shakey, but
+isn't so sufficiently bad that it needs fixing yet.
+
+Everything right now will run in the context of the calling thread, but at some
+point in the future the code will actually be far enough along to create a thread
+for session management.
 
 I think I can safely say that any application which requires direct play
 or direct play lobby will not work at this point. Priority will be to get
@@ -42,12 +65,16 @@ TODO:
   - (done) Implement a lib main for the dplayx dll (required for RunApplication, etc.)
   - Figure out how to share the global memory correctly
   - Ensure that all dll stubs are present and the ordinals are correct
-  - (started)Implementation of functionality
+  - (started) Implementation of functionality
   - Addition of DirectX 7.0 functionality for direct play (try to catch that moving train)
   - bug fixes ;)
   - Implement some WineLib test programs using sdk programs as a skeleton
-  - Change all RegEnumKey calls to RegEnumKeyEx and change enumeration pattern to allow
-    error handling.
+  - (done) Change all RegEnumKey calls to RegEnumKeyEx.
+  - Change RegEnumKeyEx enumeration pattern to allow error handling.
+  - Add in appropriate RegCloseKey calls for all the opening we're doing...
+  - Fix all the buffer sizes for registry calls. They're off by one - but in a safe direction.
+  - Find out how to call the service provider dlls - they don't have a published interface!
+  - Fix race condition on interface destruction
 
 Programs to make work:
   - lserver.exe (from sdk)
