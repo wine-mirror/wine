@@ -920,16 +920,8 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	     IsEqualGUID( &IID_IDirectSoundCapture8, riid ) ) {
 		return DirectSoundCaptureCreate8(0,(LPDIRECTSOUNDCAPTURE8*)ppobj,pOuter);
 	}
-	/* DxDiag tries to create this */
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
-		FIXME("(%p,%p,%s,%p) IID_IKsPropertySet not implemented\n",
-			This,pOuter,debugstr_guid(riid),ppobj);
-		/* FIXME: what is DxDiag looking for here? */
-#if 0
 		return IKsPropertySetImpl_Create(0,(IKsPropertySetImpl**)ppobj);
-#else
-		return E_NOINTERFACE;
-#endif
 	}
 
 	FIXME("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	

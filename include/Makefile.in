@@ -54,6 +54,7 @@ WINDOWS_INCLUDES = \
 	docobj.h \
 	dplay.h \
 	dplobby.h \
+	dsconf.h \
 	dsdriver.h \
 	dshow.h \
 	dsound.h \
