@@ -332,7 +332,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        break;
 
 	    default:
-	        ERR("Unhandled dwRenderStateType %s !\n", _get_renderstate(dwRenderStateType));
+	        ERR("Unhandled dwRenderStateType %s (%08x) !\n", _get_renderstate(dwRenderStateType), dwRenderStateType);
 	}
 	LEAVE_GL();
     }

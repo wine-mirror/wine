@@ -705,34 +705,21 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf((float *) glThis->proj_mat);
     } else if ((glThis->last_vertices_transformed == FALSE) && (vertex_transformed == TRUE)) {
-        GLdouble height, width, minZ, maxZ;
+        GLdouble height, width, minZ, maxZ, minX, minY;
       
         glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	if (glThis->parent.current_viewport == NULL) {
-	    ERR("No current viewport !\n");
-	    /* Using standard values */
-	    height = 640.0;
-	    width = 480.0;
-	    minZ = -10.0;
-	    maxZ = 10.0;
-	} else {
-	    if (glThis->parent.current_viewport->use_vp2 == 1) {
-	        height = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dwHeight;
-		width  = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dwWidth;
-		minZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dvMinZ;
-		maxZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dvMaxZ;
-	    } else {
-	        height = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dwHeight;
-		width  = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dwWidth;
-		minZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dvMinZ;
-		maxZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dvMaxZ;
-	    }
-	}
-	glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);
+	minX   = (GLdouble) glThis->parent.active_viewport.dwX;
+	minY   = (GLdouble) glThis->parent.active_viewport.dwY;
+	height = (GLdouble) glThis->parent.active_viewport.dwHeight;
+	width  = (GLdouble) glThis->parent.active_viewport.dwWidth;
+	minZ   = (GLdouble) glThis->parent.active_viewport.dvMinZ;
+	maxZ   = (GLdouble) glThis->parent.active_viewport.dvMaxZ;
+
+	glOrtho(minX, width, height, minY, -minZ, -maxZ);
     }
     
     if ((glThis->last_vertices_lit == TRUE) && (vertex_lit == FALSE)) {
@@ -941,8 +928,9 @@ inline static void handle_diffuse_and_specular(DWORD *color_d, DWORD *color_s) {
 inline static void handle_texture(D3DVALUE *coords) {
     glTexCoord2fv(coords);
 }
-inline static void handle_textures(D3DVALUE *coords, int num_coords) {
-
+inline static void handle_textures(D3DVALUE *coords, int tex_index) {
+    /* For the moment, draw only the first texture.. */
+    if (tex_index == 0) glTexCoord2fv(coords);
 }
 
 static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
@@ -1071,6 +1059,50 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 	        D3DVALUE *position =
 		  (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 		handle_xyzrhw(position);
+	    }
+
+	    if (TRACE_ON(ddraw)) {
+	        int tex_index;
+
+		if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
+		    D3DVALUE *position =
+		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
+		    TRACE(" %f %f %f", position[0], position[1], position[2]);
+		} else if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
+		    D3DVALUE *position =
+		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
+		    TRACE(" %f %f %f %f", position[0], position[1], position[2], position[3]);
+		}
+	        if (d3dvtVertexType & D3DFVF_NORMAL) { 
+		    D3DVALUE *normal = 
+		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->normal.lpvData) + i * lpD3DDrawPrimStrideData->normal.dwStride);	    
+		    DPRINTF(" / %f %f %f", normal[0], normal[1], normal[2]);
+		}
+		if (d3dvtVertexType & D3DFVF_DIFFUSE) {
+		    DWORD *color_d = 
+		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
+		    DPRINTF(" / %02lx %02lx %02lx %02lx",
+			    (*color_d >> 16) & 0xFF,
+			    (*color_d >>  8) & 0xFF,
+			    (*color_d >>  0) & 0xFF,
+			    (*color_d >> 24) & 0xFF);
+		}
+	        if (d3dvtVertexType & D3DFVF_SPECULAR) { 
+		    DWORD *color_s = 
+		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
+		    DPRINTF(" / %02lx %02lx %02lx %02lx",
+			    (*color_s >> 16) & 0xFF,
+			    (*color_s >>  8) & 0xFF,
+			    (*color_s >>  0) & 0xFF,
+			    (*color_s >> 24) & 0xFF);
+		}
+		for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+                    D3DVALUE *tex_coord =
+		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
+				    i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
+		    DPRINTF(" / %f %f", tex_coord[0], tex_coord[1]);
+		}
+		DPRINTF("\n");
 	    }
 	}
     } else {

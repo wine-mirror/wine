@@ -220,7 +220,19 @@ Main_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
                                        LPD3DVIEWPORT7 lpData)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lpData);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpData);
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" viewport is : \n");
+	TRACE("    - dwX = %ld   dwY = %ld\n",
+	      lpData->dwX, lpData->dwY);
+	TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
+	      lpData->dwWidth, lpData->dwHeight);
+	TRACE("    - dvMinZ = %f   dvMaxZ = %f\n",
+	      lpData->dvMinZ, lpData->dvMaxZ);
+    }
+    This->active_viewport = *lpData;
+
     return DD_OK;
 }
 
@@ -239,7 +251,20 @@ Main_IDirect3DDeviceImpl_7_GetViewport(LPDIRECT3DDEVICE7 iface,
                                        LPD3DVIEWPORT7 lpData)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lpData);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpData);
+
+    *lpData = This->active_viewport;
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" returning viewport : \n");
+	TRACE("    - dwX = %ld   dwY = %ld\n",
+	      lpData->dwX, lpData->dwY);
+	TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
+	      lpData->dwWidth, lpData->dwHeight);
+	TRACE("    - dvMinZ = %f   dvMaxZ = %f\n",
+	      lpData->dvMinZ, lpData->dvMaxZ);
+    }
+
     return DD_OK;
 }
 
@@ -703,6 +728,23 @@ Main_IDirect3DDeviceImpl_3_2T_SetCurrentViewport(LPDIRECT3DDEVICE3 iface,
     This->current_viewport->active_device = This;
     This->current_viewport->activate(This->current_viewport);    
     
+    /* And copy the values in the structure used by the device */
+    if (This->current_viewport->use_vp2) {
+        This->active_viewport.dwX = This->current_viewport->viewports.vp2.dwX;
+	This->active_viewport.dwY = This->current_viewport->viewports.vp2.dwY;
+	This->active_viewport.dwHeight = This->current_viewport->viewports.vp2.dwHeight;
+	This->active_viewport.dwWidth = This->current_viewport->viewports.vp2.dwWidth;
+	This->active_viewport.dvMinZ = This->current_viewport->viewports.vp2.dvMinZ;
+	This->active_viewport.dvMaxZ = This->current_viewport->viewports.vp2.dvMaxZ;
+    } else {
+        This->active_viewport.dwX = This->current_viewport->viewports.vp1.dwX;
+	This->active_viewport.dwY = This->current_viewport->viewports.vp1.dwY;
+	This->active_viewport.dwHeight = This->current_viewport->viewports.vp1.dwHeight;
+	This->active_viewport.dwWidth = This->current_viewport->viewports.vp1.dwWidth;
+	This->active_viewport.dvMinZ = This->current_viewport->viewports.vp1.dvMinZ;
+	This->active_viewport.dvMaxZ = This->current_viewport->viewports.vp1.dvMaxZ;
+    }
+
     return DD_OK;
 }
 

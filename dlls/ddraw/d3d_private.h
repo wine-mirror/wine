@@ -170,6 +170,8 @@ struct IDirect3DDeviceImpl
 
     IDirect3DViewportImpl *viewport_list;
     IDirect3DViewportImpl *current_viewport;
+    D3DVIEWPORT7 active_viewport;
+
     IDirectDrawSurfaceImpl *current_texture[MAX_TEXTURES];
 
     void (*set_context)(IDirect3DDeviceImpl*);
