@@ -170,10 +170,7 @@ double      MSVCRT(atof)(const char*);
 int         MSVCRT(atoi)(const char*);
 long        MSVCRT(atol)(const char*);
 void*       MSVCRT(calloc)(MSVCRT(size_t),MSVCRT(size_t));
-#ifdef __i386__
-__int64    MSVCRT(div)(int,int);
-unsigned __int64 MSVCRT(ldiv)(long,long);
-#else
+#ifndef __i386__
 MSVCRT(div_t) MSVCRT(div)(int,int);
 MSVCRT(ldiv_t) MSVCRT(ldiv)(long,long);
 #endif
@@ -242,6 +239,30 @@ static inline _onexit_t onexit(_onexit_t func) { return _onexit(func); }
 static inline int putenv(const char* str) { return _putenv(str); }
 static inline void swab(char* src, char* dst, int len) { _swab(src, dst, len); }
 static inline char* ultoa(unsigned long value, char* str, int radix) { return _ultoa(value, str, radix); }
+
+#ifdef __i386__
+static inline div_t __wine_msvcrt_div(int num, int denom)
+{
+    extern unsigned __int64 div(int,int);
+    div_t ret;
+    unsigned __int64 res = div(num,denom);
+    ret.quot = (int)res;
+    ret.rem  = (int)(res >> 32);
+    return ret;
+}
+static inline ldiv_t __wine_msvcrt_ldiv(long num, long denom)
+{
+    extern unsigned __int64 ldiv(long,long);
+    ldiv_t ret;
+    unsigned __int64 res = ldiv(num,denom);
+    ret.quot = (long)res;
+    ret.rem  = (long)(res >> 32);
+    return ret;
+}
+#define div(num,denom) __wine_msvcrt_div(num,denom)
+#define ldiv(num,denom) __wine_msvcrt_ldiv(num,denom)
+#endif
+
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_STDLIB_H */

@@ -737,12 +737,10 @@ char *_gcvt( double number, int ndigit, char *buff )
  *	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-LONGLONG MSVCRT_div(int num, int denom)
+unsigned __int64 MSVCRT_div(int num, int denom)
 {
-  LONGLONG retval;
   div_t dt = div(num,denom);
-  retval = ((LONGLONG)dt.rem << 32) | dt.quot;
-  return retval;
+  return ((unsigned __int64)dt.rem << 32) | (unsigned int)dt.quot;
 }
 #else
 /*********************************************************************
@@ -769,12 +767,10 @@ MSVCRT_div_t MSVCRT_div(int num, int denom)
  * 	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-ULONGLONG MSVCRT_ldiv(long num, long denom)
+unsigned __int64 MSVCRT_ldiv(long num, long denom)
 {
-  ULONGLONG retval;
   ldiv_t ldt = ldiv(num,denom);
-  retval = ((ULONGLONG)ldt.rem << 32) | (ULONG)ldt.quot;
-  return retval;
+  return ((unsigned __int64)ldt.rem << 32) | (unsigned long)ldt.quot;
 }
 #else
 /*********************************************************************
