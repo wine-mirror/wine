@@ -139,7 +139,7 @@ import ole32.dll
 163 stdcall RegisterTypeLib(ptr str str) RegisterTypeLib
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr) QueryPathOfRegTypeLib
 165 stub LHashValOfNameSys
-166 stub LHashValOfNameSysA
+166 stdcall LHashValOfNameSysA(long long str) LHashValOfNameSysA
 170 stdcall OaBuildVersion() OaBuildVersion
 171 stub ClearCustData
 180 stub CreateTypeLib2
@@ -293,3 +293,4 @@ import ole32.dll
 422 stub OleLoadPictureFile
 423 stub OleSavePictureFile
 424 stub OleLoadPicturePath
+425 stub OleLoadPictureEx

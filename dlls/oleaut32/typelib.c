@@ -184,7 +184,7 @@ HRESULT WINAPI LoadTypeLibEx(
 {
     LPSTR p;
     HRESULT res;
-    TRACE("('%s',%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
+    TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
     
     p=HEAP_strdupWtoA(GetProcessHeap(),0,szFile);
     
@@ -192,9 +192,8 @@ HRESULT WINAPI LoadTypeLibEx(
         FIXME ("registration of typelibs not supported yet!\n");
 
     res= TLB_ReadTypeLib(p, pptLib);
-    /* XXX need to free p ?? */
-
-    TRACE(" returns %ld\n",res);
+    HeapFree(GetProcessHeap(),0,p);
+    TRACE(" returns %08lx\n",res);
 
     return res;
 }
@@ -294,6 +293,15 @@ DWORD WINAPI OaBuildVersion16(void)
 	FIXME_(ole)("Version value not known yet. Please investigate it !");
 		return 0;
     }
+}
+
+/********************************************************************
+ *           LHashValOfNameSysA     [OLEAUT32]
+ */
+HRESULT WINAPI LHashValOfNameSysA(SYSKIND sys, LCID lcid, LPSTR name)
+{
+    FIXME("%s\n", name);
+    return 0;
 }
 
 /* for better debugging info leave the static out for the time being */
@@ -636,6 +644,7 @@ static void TLB_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
     }
     TLB_Read(&(pVar->vt), sizeof(VARTYPE), pcx, 
         pcx->pTblDir->pCustData.offset + offset );
+    TRACE("Vartype = %x\n", pVar->vt);
     switch(pVar->vt){
         case VT_EMPTY:  /* FIXME: is this right? */
         case VT_NULL:   /* FIXME: is this right? */
@@ -665,15 +674,19 @@ static void TLB_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
         case VT_BSTR    :{
             char * ptr;
             TLB_Read(&size, sizeof(INT), pcx, DO_NOT_SEEK );
-            ptr=TLB_Alloc(size);/* allocate temp buffer */
-            TLB_Read(ptr, size, pcx, DO_NOT_SEEK ); /* read string (ANSI) */
-            V_UNION(pVar, bstrVal)=SysAllocStringLen(NULL,size);
-            /* FIXME: do we need a AtoW conversion here? */
-            V_UNION(pVar, bstrVal[size])=L'\0';
-            while(size--) V_UNION(pVar, bstrVal[size])=ptr[size];
-            TLB_Free(ptr);
-        }
-            size=-4; break;
+	    if(size <= 0) {
+	        FIXME("BSTR length = %d?\n", size);
+	    } else {
+                ptr=TLB_Alloc(size);/* allocate temp buffer */
+		TLB_Read(ptr, size, pcx, DO_NOT_SEEK); /* read string (ANSI) */
+		V_UNION(pVar, bstrVal)=SysAllocStringLen(NULL,size);
+		/* FIXME: do we need a AtoW conversion here? */
+		V_UNION(pVar, bstrVal[size])=L'\0';
+		while(size--) V_UNION(pVar, bstrVal[size])=ptr[size];
+		TLB_Free(ptr);
+	    }
+	}
+	size=-4; break;
     /* FIXME: this will not work AT ALL when the variant contains a pointer */
         case VT_DISPATCH :
         case VT_VARIANT : 
@@ -700,7 +713,7 @@ static void TLB_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
 
     if(size>0) /* (big|small) endian correct? */
         TLB_Read(&(V_UNION(pVar, iVal)), size, pcx, DO_NOT_SEEK );
-        return ;
+    return;
 }
 /*
  * create a linked list with custom data
@@ -1078,7 +1091,7 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib **ppTypeLib)
     hinstDLL = LoadLibraryExA(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES|LOAD_LIBRARY_AS_DATAFILE|LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!hinstDLL)
     {
-        ERR("error: couldn't load the DLL");
+        ERR("error: couldn't load the DLL %s\n", pszFileName);
 	goto err1;
     }
 
@@ -1469,7 +1482,7 @@ static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
 	ITypeLib2 *iface, 
 	LPTLIBATTR *ppTLibAttr)
 {
-	ICOM_THIS( ITypeLibImpl, iface);
+    ICOM_THIS( ITypeLibImpl, iface);
     TRACE("(%p)\n",This);
     /* FIXME: must do a copy here */
     *ppTLibAttr=&This->LibAttr;
@@ -1516,11 +1529,11 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         if(pBstrName)
             *pBstrName=TLB_DupAtoBstr(This->Name);
         if(pBstrDocString)
-            *pBstrName=TLB_DupAtoBstr(This->DocString);
+            *pBstrDocString=TLB_DupAtoBstr(This->DocString);
         if(pdwHelpContext)
             *pdwHelpContext=This->dwHelpContext;
         if(pBstrHelpFile)
-            *pBstrName=TLB_DupAtoBstr(This->HelpFile);
+            *pBstrHelpFile=TLB_DupAtoBstr(This->HelpFile);
     }else {/* for a typeinfo */
         result=ITypeLib2_fnGetTypeInfo(iface, index, &pTInfo);
         if(SUCCEEDED(result)){
@@ -1553,7 +1566,8 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
     int i;
     PCHAR astr= HEAP_strdupWtoA( GetProcessHeap(), 0, szNameBuf );
 
-    TRACE("\n");
+    TRACE("(%p)->(%s,%08lx,%p)\n", This, debugstr_w(szNameBuf), lHashVal,
+	  pfName);
 
     *pfName=TRUE;
     if(!strcmp(astr,This->Name)) goto ITypeLib2_fnIsName_exit;
@@ -1633,7 +1647,7 @@ static VOID WINAPI ITypeLib2_fnReleaseTLibAttr(
 	ITypeLib2 *iface,
 	TLIBATTR *pTLibAttr)
 {
-	ICOM_THIS( ITypeLibImpl, iface);
+    ICOM_THIS( ITypeLibImpl, iface);
     TRACE("freeing (%p)\n",This);
     /* nothing to do */
 }
@@ -1752,7 +1766,7 @@ static HRESULT WINAPI ITypeLib2_fnGetAllCustData(
 	ITypeLib2 * iface,
         CUSTDATA *pCustData)
 {
-	ICOM_THIS( ITypeLibImpl, iface);
+    ICOM_THIS( ITypeLibImpl, iface);
     TLBCustData *pCData;
     int i;
     TRACE("(%p) returning %d items\n", This, This->ctCustData); 
