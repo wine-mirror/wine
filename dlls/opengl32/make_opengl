@@ -490,16 +490,7 @@ close(REGISTRY);
 #
 open(SPEC, ">" . $spec_file);
 
-print SPEC "name opengl32
-type win32
-init OpenGL32_Init
-
-import user32.dll
-import x11drv.dll
-import kernel32.dll
-import ntdll.dll
-
-debug_channels (opengl)
+print SPEC "init OpenGL32_Init
 
 @  stdcall wglCreateContext(long) wglCreateContext
 @  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
