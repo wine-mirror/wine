@@ -44,4 +44,11 @@ lex.yy.c: debug.l
 winedbg: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(DLL_LINK) $(LIBS)
 
+install:: $(PROGRAMS)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) winedbg $(bindir)/winedbg
+
+uninstall::
+	$(RM) $(bindir)/winedbg
+
 ### Dependencies:

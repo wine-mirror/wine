@@ -23,50 +23,6 @@ MODULE    = wine
 SOVERSION = 1.0
 SONAME    = libwine.so
 
-TOOLSUBDIRS = tools
-
-LIBSUBDIRS = \
-	controls \
-	console \
-	dlls/advapi32 \
-	dlls/crtdll \
-	dlls/kernel \
-	dlls/ntdll \
-	files \
-	graphics \
-	graphics/enhmetafiledrv \
-	graphics/metafiledrv \
-	graphics/win16drv \
-	if1632 \
-	library \
-	loader \
-	loader/ne \
-	loader/dos \
-	memory \
-	misc \
-	msdos \
-	objects \
-	ole \
-	relay32 \
-	resources \
-	scheduler \
-	unicode \
-	win32 \
-	windows
-
-EMUSUBDIRS = \
-	miscemu \
-	server
-
-PROGSUBDIRS = \
-	debugger \
-	libtest \
-	programs
-
-DOCSUBDIRS = documentation
-
-INCSUBDIRS = include
-
 # Stand-alone programs
 PROGRAMS = \
 	loader/dos/dosmod \
@@ -76,21 +32,53 @@ PROGRAMS = \
 LIBPROGRAMS = \
 	debugger/winedbg
 
-# Sub-directories to run make into
+# Sub-directories to run make depend/clean into
 SUBDIRS = \
-	$(TOOLSUBDIRS) \
-	$(LIBSUBDIRS) \
-	$(DLLDIR) \
-	$(EMUSUBDIRS) \
-	$(PROGSUBDIRS) \
-	$(DOCSUBDIRS) \
-	include
+	console \
+	controls \
+	debugger \
+	dlls \
+	dlls/advapi32 \
+	dlls/crtdll \
+	dlls/kernel \
+	dlls/ntdll \
+	documentation \
+	files \
+	graphics \
+	graphics/enhmetafiledrv \
+	graphics/metafiledrv \
+	graphics/win16drv \
+	if1632 \
+	include \
+	library \
+	libtest \
+	loader \
+	loader/dos \
+	loader/ne \
+	memory \
+	misc \
+	miscemu \
+	msdos \
+	objects \
+	ole \
+	programs \
+	relay32 \
+	resources \
+	scheduler \
+	server \
+	tools \
+	unicode \
+	win32 \
+	windows
 
 # Sub-directories to run make install into
-INSTALLSUBDIRS = $(DLLDIR) $(DOCSUBDIRS) $(INCSUBDIRS)
-
-# Sub-directories to run make lint into
-LINTSUBDIRS = $(LIBSUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
+INSTALLSUBDIRS = \
+	debugger \
+	dlls \
+	documentation \
+	include \
+	server \
+	tools
 
 LIBOBJS = \
 	controls/controls.o \
@@ -126,9 +114,7 @@ DLLOBJS = $(DLLS:%=dlls/lib%.@LIBEXT@)
 
 EXTRA_OBJS = $(LIBOBJS)
 
-EMU_TARGET = @EMU_TARGET@
-
-all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) lib$(MODULE).$(LIBEXT) $(DLLDIR) $(EMU_TARGET)
+all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) wine
 	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 
@@ -160,19 +146,15 @@ install_a: lib$(MODULE).a
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	$(INSTALL_DATA) lib$(MODULE).a $(libdir)/lib$(MODULE).a
 
-install_wine: wine
+install:: all $(LIBEXT:%=install_%) $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
-
-install:: $(PROGRAMS) $(LIBPROGRAMS) $(EMU_TARGET:%=install_%) $(LIBEXT:%=install_%)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
-	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver
 	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
-	$(INSTALL_PROGRAM) debugger/winedbg $(bindir)/winedbg
+	-$(LDCONFIG)
 
-uninstall::
+uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION)
-	cd $(bindir) && $(RM) wine wineserver dosmod winedbg
+	cd $(bindir) && $(RM) wine dosmod
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
 	$(LDSHARED) $(OBJS) -o $@
@@ -185,31 +167,24 @@ lib$(MODULE).a: $(OBJS) Makefile.in Make.rules.in
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
-checklink::
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LIBS) && $(RM) checklink
-
-$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS): $(TOOLSUBDIRS) dummy
+$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
-$(DLLDIR): $(TOOLSUBDIRS) dummy
+$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(DLLDIR): tools
 
-$(LIBPROGRAMS): lib$(MODULE).$(LIBEXT) $(DLLDIR)
+$(LIBPROGRAMS): tools dlls lib$(MODULE).$(LIBEXT)
 
 $(LIBLINTS) $(EMULINTS): dummy
 	@cd `dirname $@` && $(MAKE) lint
+
+checklink::
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LIBS) && $(RM) checklink
 
 install_programs: dummy
 	@cd programs && $(MAKE) install
 
 uninstall_programs: dummy
 	@cd programs && $(MAKE) uninstall
-
-install::
-	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) install) || exit 1; done
-	-$(LDCONFIG)
-
-uninstall::
-	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) uninstall) || exit 1; done
 
 checklink::
 	@cd dlls && $(MAKE) checklink
@@ -219,11 +194,11 @@ TAGS etags:
 
 manpages:
 	-$(MKDIR) $(TOPOBJDIR)/documentation/man3w
-	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) man); done
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) man); done
 
 htmlpages:
 	-$(MKDIR) $(TOPOBJDIR)/documentation/html
-	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) html); done
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::
 	$(RM) wine libwine.so.1.0 TAGS

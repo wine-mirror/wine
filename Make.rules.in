@@ -54,11 +54,11 @@ LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
-BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
-MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
-WRC       = $(TOPOBJDIR)/tools/wrc/wrc@PROGEXT@
+BUILD     = $(TOPOBJDIR)/tools/build
+MAKEDEP   = $(TOPOBJDIR)/tools/makedep
+WRC       = $(TOPOBJDIR)/tools/wrc/wrc
 WRCFLAGS  = -c -s -p $*
-WMC       = $(TOPOBJDIR)/tools/wmc/wmc@PROGEXT@
+WMC       = $(TOPOBJDIR)/tools/wmc/wmc
 DLLDIR    = $(TOPOBJDIR)/dlls
 @SET_MAKE@
 
@@ -199,22 +199,22 @@ all: Makefile
 # Rule to rebuild the resource compiler
 
 $(WRC) check_wrc:
-	cd $(TOPOBJDIR)/tools/wrc && $(MAKE) wrc@PROGEXT@
+	cd $(TOPOBJDIR)/tools/wrc && $(MAKE) wrc
 
 # Rule to rebuild the message compiler
 
 $(WMC) check_wmc:
-	cd $(TOPOBJDIR)/tools/wmc && $(MAKE) wmc@PROGEXT@
+	cd $(TOPOBJDIR)/tools/wmc && $(MAKE) wmc
 
 # Rule to rebuild the 'makedep' program
 
 $(MAKEDEP) check_makedep:
-	cd $(TOPOBJDIR)/tools && $(MAKE) makedep@PROGEXT@
+	cd $(TOPOBJDIR)/tools && $(MAKE) makedep
 
 # Rule to rebuild the 'build' program
 
 $(BUILD) checkbuild:
-	cd $(TOPOBJDIR)/tools && $(MAKE) build@PROGEXT@
+	cd $(TOPOBJDIR)/tools && $(MAKE) build
 
 # Rule for main module
 
@@ -271,6 +271,14 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+
+# Rules for installing
+
+$(SUBDIRS:%=%/__install__): dummy
+	cd `dirname $@` && $(MAKE) install
+
+$(SUBDIRS:%=%/__uninstall__): dummy
+	cd `dirname $@` && $(MAKE) uninstall
 
 # Misc. rules
 

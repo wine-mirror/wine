@@ -44,4 +44,11 @@ all: $(PROGRAMS)
 wineserver: $(OBJS)
 	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBS)
 
+install:: $(PROGRAMS)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) wineserver $(bindir)/wineserver
+
+uninstall::
+	$(RM) $(bindir)/wineserver
+
 ### Dependencies:

@@ -4,7 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = build@PROGEXT@ makedep@PROGEXT@ fnt2bdf@PROGEXT@ bin2res@PROGEXT@
+PROGRAMS = build makedep fnt2bdf bin2res
 MODULE   = none
 
 C_SRCS = build.c makedep.c fnt2bdf.c bin2res.c
@@ -24,16 +24,24 @@ all: $(PROGRAMS) wmc wrc
 
 @MAKE_RULES@
 
-build@PROGEXT@: build.o
-	$(CC) $(CFLAGS) -o build@PROGEXT@ build.o
+build: build.o
+	$(CC) $(CFLAGS) -o build build.o
 
-makedep@PROGEXT@: makedep.o
-	$(CC) $(CFLAGS) -o makedep@PROGEXT@ makedep.o
+makedep: makedep.o
+	$(CC) $(CFLAGS) -o makedep makedep.o
 
-fnt2bdf@PROGEXT@: fnt2bdf.o
-	$(CC) $(CFLAGS) -o fnt2bdf@PROGEXT@ fnt2bdf.o
+fnt2bdf: fnt2bdf.o
+	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o
 
-bin2res@PROGEXT@: bin2res.o
-	$(CC) $(CFLAGS) -o bin2res@PROGEXT@ bin2res.o
+bin2res: bin2res.o
+	$(CC) $(CFLAGS) -o bin2res bin2res.o
+
+install:: $(PROGRAMS) $(SUBDIRS:%=%/__install__)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) build $(bindir)/winebuild
+	$(INSTALL_PROGRAM) fnt2bdf $(bindir)/fnt2bdf
+
+uninstall:: $(PROGRAMS) $(SUBDIRS:%=%/__uninstall__)
+	$(RM) $(bindir)/winebuild $(bindir)/fnt2bdf
 
 ### Dependencies:

@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 LEXOPT    = -Cf #-w -b
 YACCOPT   = #-v
 
-PROGRAMS = wrc@PROGEXT@
+PROGRAMS = wrc
 MODULE   = none
 
 C_SRCS = \
@@ -29,8 +29,8 @@ depend: y.tab.h ppy.tab.h
 
 @MAKE_RULES@
 
-wrc@PROGEXT@: $(OBJS)
-	$(CC) $(CFLAGS) -o wrc@PROGEXT@ $(OBJS) $(LEXLIB)
+wrc: $(OBJS)
+	$(CC) $(CFLAGS) -o wrc $(OBJS) $(LEXLIB)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y
