@@ -31,6 +31,7 @@ static NTSTATUS (WINAPI *pRtlDestroyEnvironment)(PWSTR);
 static NTSTATUS (WINAPI *pRtlQueryEnvironmentVariable_U)(PWSTR, PUNICODE_STRING, PUNICODE_STRING);
 static void     (WINAPI *pRtlSetCurrentEnvironment)(PWSTR, PWSTR*);
 static NTSTATUS (WINAPI *pRtlSetEnvironmentVariable)(PWSTR*, PUNICODE_STRING, PUNICODE_STRING);
+static NTSTATUS (WINAPI *pRtlExpandEnvironmentStrings_U)(LPWSTR, PUNICODE_STRING, PUNICODE_STRING, PULONG);
 
 static WCHAR  small_env[] = {'f','o','o','=','t','o','t','o',0,
                              'f','o','=','t','i','t','i',0,
@@ -79,8 +80,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         {NULL, 0, 0, NULL}
     };
 
-    WCHAR               bn[256];
-    WCHAR               bv[256];
+    WCHAR               bn[257];
+    WCHAR               bv[257];
     UNICODE_STRING      name;
     UNICODE_STRING      value;
     const struct test*  test;
@@ -94,6 +95,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         value.Length = 0;
         value.MaximumLength = test->len * 2;
         value.Buffer = bv;
+        bv[test->len] = '@';
 
         pRtlMultiByteToUnicodeN( bn, sizeof(bn), NULL, test->var, strlen(test->var)+1 );
         nts = pRtlQueryEnvironmentVariable_U(small_env, &name, &value);
@@ -105,7 +107,10 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
             pRtlMultiByteToUnicodeN( bn, sizeof(bn), NULL, test->val, strlen(test->val)+1 );
             ok( value.Length == strlen(test->val) * sizeof(WCHAR), "Wrong length %d/%d for %s",
                 value.Length, strlen(test->val) * sizeof(WCHAR), test->var );
-            ok( strcmpW(bv, bn) == 0, "Wrong result for %s", test->var );
+            ok((value.Length == strlen(test->val) * sizeof(WCHAR) && strncmpW(bv, bn, test->len) == 0) ||
+	       strcmpW(bv, bn) == 0, 
+	       "Wrong result for %s/%d", test->var, test->len);
+            ok(bv[test->len] == '@', "Writing too far away in the buffer for %s/%d", test->var, test->len);
             break;
         case STATUS_BUFFER_TOO_SMALL:
             ok( value.Length == strlen(test->val) * sizeof(WCHAR), 
@@ -193,6 +198,84 @@ static void testSet(void)
     ok(pRtlDestroyEnvironment(env) == STATUS_SUCCESS, "Destroying environment");
 }
 
+static void testExpand(void)
+{
+    static const struct test
+    {
+        const char *src;
+        const char *dst;
+    } tests[] =
+    {
+        {"hello%foo%world",             "hellototoworld"},
+        {"hello%=oOH%world",            "helloIIIworld"},
+        {"hello%foo",                   "hello%foo"},
+        {"hello%bar%world",             "hello%bar%world"},
+        /*
+         * {"hello%foo%world%=oOH%eeck",   "hellototoworldIIIeeck"},
+         * Interestingly enough, with a 8 WCHAR buffers, we get on 2k:
+         *      helloIII
+         * so it seems like strings overflowing the buffer are written 
+         * (troncated) but the write cursor is not advanced :-/
+         */
+        {NULL, NULL}
+    };
+
+    const struct test*  test;
+    NTSTATUS            nts;
+    UNICODE_STRING      us_src, us_dst;
+    WCHAR               src[256], dst[256], rst[256];
+    ULONG               ul;
+
+    for (test = tests; test->src; test++)
+    {
+        pRtlMultiByteToUnicodeN(src, sizeof(src), NULL, test->src, strlen(test->src)+1);
+        pRtlMultiByteToUnicodeN(rst, sizeof(rst), NULL, test->dst, strlen(test->dst)+1);
+
+        us_src.Length = strlen(test->src) * sizeof(WCHAR);
+        us_src.MaximumLength = us_src.Length + 2;
+        us_src.Buffer = src;
+
+        us_dst.Length = 0;
+        us_dst.MaximumLength = 0;
+        us_dst.Buffer = NULL;
+
+        nts = pRtlExpandEnvironmentStrings_U(small_env, &us_src, &us_dst, &ul);
+        ok(ul == strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR), 
+           "Wrong  returned length for %s: %lu <> %u", 
+           test->src, ul, strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR));
+
+        us_dst.Length = 0;
+        us_dst.MaximumLength = sizeof(dst);
+        us_dst.Buffer = dst;
+
+        nts = pRtlExpandEnvironmentStrings_U(small_env, &us_src, &us_dst, &ul);
+        ok(nts == STATUS_SUCCESS, "Call failed (%lu)", nts);
+        ok(ul == us_dst.Length + sizeof(WCHAR), 
+           "Wrong returned length for %s: %lu <> %u", 
+           test->src, ul, us_dst.Length + sizeof(WCHAR));
+        ok(ul == strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR), 
+           "Wrong  returned length for %s: %lu <> %u", 
+           test->src, ul, strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR));
+        ok(strcmpW(dst, rst) == 0, "Wrong result for %s: expecting %s", 
+           test->src, test->dst);
+
+        us_dst.Length = 0;
+        us_dst.MaximumLength = 8 * sizeof(WCHAR);
+        us_dst.Buffer = dst;
+        dst[8] = '-';
+        nts = pRtlExpandEnvironmentStrings_U(small_env, &us_src, &us_dst, &ul);
+        ok(nts == STATUS_BUFFER_TOO_SMALL, "Call failed (%lu)", nts);
+        ok(ul == strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR), 
+           "Wrong  returned length for %s (with buffer too small): %lu <> %u", 
+           test->src, ul, strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR));
+        ok(strncmpW(dst, rst, 8) == 0, 
+           "Wrong result for %s (with buffer too small): expecting %s", 
+           test->src, test->dst);
+        ok(dst[8] == '-', "Writing too far in buffer (got %c/%d)", dst[8], dst[8]);
+    }
+
+}
+
 START_TEST(env)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
@@ -203,7 +286,9 @@ START_TEST(env)
     pRtlQueryEnvironmentVariable_U = (void*)GetProcAddress(mod, "RtlQueryEnvironmentVariable_U");
     pRtlSetCurrentEnvironment = (void*)GetProcAddress(mod, "RtlSetCurrentEnvironment");
     pRtlSetEnvironmentVariable = (void*)GetProcAddress(mod, "RtlSetEnvironmentVariable");
+    pRtlExpandEnvironmentStrings_U = (void*)GetProcAddress(mod, "RtlExpandEnvironmentStrings_U");
 
     testQuery();
     testSet();
+    testExpand();
 }
