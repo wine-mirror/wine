@@ -538,17 +538,18 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
         if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-                close(mixer);
                 strncpy(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
                 strcpy(ossdev->ds_desc.szDrvName, "wineoss.drv");
                 strncpy(ossdev->out_caps.szPname, info.name, sizeof(info.name));
                 TRACE("%s\n", ossdev->ds_desc.szDesc);
             } else {
-                ERR("%s: can't read info!\n", ossdev->mixer_name);
-                OSS_CloseDevice(ossdev);
-                close(mixer);
-                return FALSE;
+                /* FreeBSD up to at least 5.2 provides this ioctl, but does not
+                 * implement it properly, and there are probably similar issues
+                 * on other platforms, so we warn but try to go ahead.
+                 */
+                WARN("%s: cannot read SOUND_MIXER_INFO!\n", ossdev->mixer_name);
             }
+            close(mixer);
         } else {
             ERR("%s: %s\n", ossdev->mixer_name , strerror( errno ));
             OSS_CloseDevice(ossdev);
@@ -680,15 +681,16 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
         if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-                close(mixer);
                 strncpy(ossdev->in_caps.szPname, info.name, sizeof(info.name));
                 TRACE("%s\n", ossdev->ds_desc.szDesc);
             } else {
-                ERR("%s: can't read info!\n", ossdev->mixer_name);
-                OSS_CloseDevice(ossdev);
-                close(mixer);
-                return FALSE;
+                /* FreeBSD up to at least 5.2 provides this ioctl, but does not
+                 * implement it properly, and there are probably similar issues
+                 * on other platforms, so we warn but try to go ahead.
+                 */
+                WARN("%s: cannot read SOUND_MIXER_INFO!\n", ossdev->mixer_name);
             }
+            close(mixer);
         } else {
             ERR("%s: %s\n", ossdev->mixer_name, strerror(errno));
             OSS_CloseDevice(ossdev);
