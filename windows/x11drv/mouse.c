@@ -177,7 +177,7 @@ void X11DRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
     {
         /* If in desktop mode, set the cursor on the desktop window */
 
-        XDefineCursor( display, X11DRV_GetXRootWindow(), X11DRV_MOUSE_XCursor );
+        TSXDefineCursor( display, X11DRV_GetXRootWindow(), X11DRV_MOUSE_XCursor );
     }
     else
     {
@@ -192,7 +192,7 @@ void X11DRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
             WND *tmpWnd = WIN_FindWndPtr(hwnd);
             Window win = X11DRV_WND_FindXWindow(tmpWnd );
             if (win && win!=DefaultRootWindow(display))
-                XDefineCursor( display, win, X11DRV_MOUSE_XCursor );
+                TSXDefineCursor( display, win, X11DRV_MOUSE_XCursor );
             hwnd = GetWindow( hwnd, GW_HWNDNEXT );
             WIN_ReleaseWndPtr(tmpWnd);
         }
