@@ -43,6 +43,8 @@ my %options_long = (
     "old" => { default => 0, description => "use the old parser" },
     "headers" => { default => 0, description => "parse the .h files as well" },
 
+    "implemented" => { default => 0, parent => "old", description => "implemented functions extraction" },
+    "pseudo-implemented" => { default => 0, parent => "implemented", description => "pseudo implemented functions extraction" },
     "struct" => { default => 0, parent => "headers", description => "struct extraction" },
     "spec-files" => { default => 0, parent => "old", description => "spec files extraction" },
     "stub-statistics" => { default => 0, parent => "old", description => "stub statistics" },

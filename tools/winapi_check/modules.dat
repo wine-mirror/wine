@@ -159,9 +159,9 @@ dlls/msimg32
 
 dlls/msisys
 
-% dlls/msrle32/msrle32.spec
+% dlls/msvideo/msrle32/msrle32.spec
 
-dlls/msrle32
+dlls/msvideo/msrle32
 
 % dlls/msvcrt/msvcrt.spec
 

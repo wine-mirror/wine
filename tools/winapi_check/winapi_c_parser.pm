@@ -208,6 +208,8 @@ sub parse_c_file {
 	my $old_function = shift;
 
 	my $function = new c_function;
+
+	$function->file($old_function->file);
 	
 	$function->begin_line($old_function->function_line);
 	$function->begin_column(0);
@@ -219,6 +221,17 @@ sub parse_c_file {
 	$function->calling_convention($old_function->calling_convention);
 	$function->name($old_function->internal_name);
 
+	if(defined($old_function->argument_types)) {
+	    $function->argument_types([@{$old_function->argument_types}]);
+	}
+	if(defined($old_function->argument_names)) {
+	    $function->argument_names([@{$old_function->argument_names}]);
+	}
+
+	$function->statements_line($old_function->statements_line);
+	$function->statements_column(0);
+	$function->statements($old_function->statements);
+	
 	&$$found_function($function);
     };
 

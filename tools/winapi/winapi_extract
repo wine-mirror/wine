@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# Copyright 2001 Patrik Stridvall
+# Copyright 2002 Patrik Stridvall
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -45,7 +45,7 @@ use winapi_c_parser;
 use winapi_function;
 
 use vars qw($win16api $win32api @winapis);
-if ($options->spec_files || $options->winetest) {
+if ($options->spec_files || $options->implemented || $options->stub_statistics || $options->winetest) {
     require winapi;
     import winapi qw($win16api $win32api @winapis);
 }
@@ -161,24 +161,29 @@ sub documentation_specifications {
 
 my %module_pseudo_stub;
 
-sub statements_stub {
+sub statements_pseudo_stub {
     my $function = shift;
 
+    my $pseudo_stub = 0;
     my $statements = $function->statements;
     if(defined($statements) && $statements =~ /FIXME[^;]*stub/s) {
 	if($options->win16) {
 	    my $external_name16 = $function->external_name16;
 	    foreach my $module16 ($function->modules16) {
 		$module_pseudo_stub{$module16}{$external_name16}++;
+		$pseudo_stub = 1;
 	    }
 	}
 	if($options->win32) {
 	    my $external_name32 = $function->external_name32;
 	    foreach my $module32 ($function->modules32) {
 		$module_pseudo_stub{$module32}{$external_name32}++;
+		$pseudo_stub = 1;
 	    }
 	}
     }
+
+    return $pseudo_stub;
 }
 
 my @h_files = ();
@@ -189,7 +194,7 @@ if($options->headers) {
 }
 
 my @c_files = ();
-if(1 || $options->spec_files || $options->pseudo_stub_statistics) {
+if($options->spec_files || $options->pseudo_implemented || $options->pseudo_stub_statistics) {
     @c_files = $options->c_files;
     @c_files = files_skip(@c_files);
     @c_files = files_filter("winelib", @c_files);
@@ -267,13 +272,13 @@ foreach my $file (@h_files, @c_files) {
 	}
 
 	my $old_function;
-	if($options->stub_statistics) {
+	if($options->implemented || $options->stub_statistics) {
 	    $old_function = 'winapi_function'->new;
 	} else {
 	    $old_function = 'function'->new;
 	}
 
-	$function->file($file);
+	$old_function->file($function->file);
 	$old_function->debug_channels([]); # FIXME: Not complete
 
 	$old_function->documentation_line(0); # FIXME: Not complete
@@ -298,15 +303,35 @@ foreach my $file (@h_files, @c_files) {
 	    documentation_specifications($old_function);
 	}
 
-	if($options->stub_statistics) {
-	    statements_stub($old_function);
-	}
-
 	if ($function->statements) {
 	    $function = undef;
 	    &$update_output();
 	} else {
 	    $function = undef;
+	}
+
+	my $pseudo_stub = 0;
+	if ($options->pseudo_implemented || $options->pseudo_stub_statistics) {
+	    $pseudo_stub = statements_pseudo_stub($old_function);
+	}
+
+	my $module = $old_function->module;
+	my $external_name = $old_function->external_name;
+	my $statements = $old_function->statements;
+	if ($options->pseudo_implemented && $module && $external_name && $statements) {
+	    my @external_names = split(/\s*&\s*/, $external_name);
+	    my @modules = split(/\s*&\s*/, $module);
+
+	    my @external_names2;
+	    while(defined(my $external_name = shift @external_names) &&
+		  defined(my $module = shift @modules))
+	    {
+		if ($pseudo_stub) {
+		    $output->write("$module.$external_name: pseudo implemented\n");
+		} else {
+		    $output->write("$module.$external_name: implemented\n");
+		}
+	    }
 	}
     };
     $parser->set_found_function_callback($found_function);
@@ -353,6 +378,41 @@ foreach my $file (@h_files, @c_files) {
     }
 
     $output->prefix("");
+}
+
+
+if($options->implemented && !$options->pseudo_implemented) {
+    foreach my $winapi (@winapis) {
+	my $type = $winapi->name;
+
+	if($type eq "win16" && !$options->win16) { next; }
+	if($type eq "win32" && !$options->win32) { next; }
+
+	foreach my $module ($winapi->all_modules) {
+	    foreach my $external_name ($winapi->all_functions_in_module($module)) {
+		 my $external_calling_convention =
+		     $winapi->function_external_calling_convention_in_module($module, $external_name);
+
+		 if($external_calling_convention eq "forward") {
+		     (my $forward_module, my $forward_external_name) =
+			 $winapi->function_forward_final_destination($module, $external_name);
+
+		     my $forward_external_calling_convention =
+			 $winapi->function_external_calling_convention_in_module($forward_module, $forward_external_name);
+
+		     if(!defined($forward_external_calling_convention)) {
+			 next;
+		     }
+
+		     $external_calling_convention = $forward_external_calling_convention;
+		 }
+
+		 if ($external_calling_convention ne "stub") {
+		     $output->write("*.spec: $module.$external_name: implemented\n");
+		 }
+	    }
+	}
+    }
 }
 
 sub output_function {
