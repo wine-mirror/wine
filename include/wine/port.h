@@ -173,6 +173,28 @@ struct statfs;
 int clone(int (*fn)(void *arg), void *stack, int flags, void *arg);
 #endif /* !defined(HAVE_CLONE) && defined(linux) */
 
+#ifndef HAVE_GETOPT_LONG
+extern char *optarg;
+extern int optind;
+extern int opterr;
+extern int optopt;
+
+struct option
+{
+    const char *name;
+    int has_arg;
+    int *flag;
+    int val;
+};
+
+extern int getopt_long (int ___argc, char *const *___argv,
+                        const char *__shortopts,
+                        const struct option *__longopts, int *__longind);
+extern int getopt_long_only (int ___argc, char *const *___argv,
+                             const char *__shortopts,
+                             const struct option *__longopts, int *__longind);
+#endif  /* HAVE_GETOPT_LONG */
+
 #ifndef HAVE_GETPAGESIZE
 size_t getpagesize(void);
 #endif  /* HAVE_GETPAGESIZE */

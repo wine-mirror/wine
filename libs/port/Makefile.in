@@ -6,6 +6,8 @@ VPATH     = @srcdir@
 MODULE    = libwine_port.a
 
 C_SRCS = \
+	getopt.c \
+	getopt1.c \
 	getpagesize.c \
 	lstat.c \
 	memmove.c \
