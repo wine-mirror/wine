@@ -741,7 +741,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT St
     *pStream = This->stateBlock->stream_source[StreamNumber];
     *pStride = This->stateBlock->stream_stride[StreamNumber];
     *pOffset = This->stateBlock->stream_offset[StreamNumber];
-    IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
+    if (*pStream != NULL) IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
     return D3D_OK;
 }
 

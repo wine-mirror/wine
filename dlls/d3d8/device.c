@@ -4344,7 +4344,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 iface, U
     TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber, This->StateBlock->stream_source[StreamNumber], This->StateBlock->stream_stride[StreamNumber]);
     *pStream = This->StateBlock->stream_source[StreamNumber];
     *pStride = This->StateBlock->stream_stride[StreamNumber];
-    IDirect3DVertexBuffer8Impl_AddRef((LPDIRECT3DVERTEXBUFFER8) *pStream);
+    if (*pStream != NULL) IDirect3DVertexBuffer8Impl_AddRef((LPDIRECT3DVERTEXBUFFER8) *pStream);
     return D3D_OK;
 }
 
