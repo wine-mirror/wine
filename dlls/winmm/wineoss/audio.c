@@ -288,6 +288,11 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
     int fd, val, rc;
     TRACE("(%p,%d)\n",ossdev,strict_format);
 
+    TRACE("open_access=%s\n",
+        ossdev->open_access == O_RDONLY ? "O_RDONLY" :
+        ossdev->open_access == O_WRONLY ? "O_WRONLY" :
+        ossdev->open_access == O_RDWR ? "O_RDWR" : "Unknown");
+
     if ((fd = open(ossdev->dev_name, ossdev->open_access|O_NDELAY, 0)) == -1)
     {
         WARN("Couldn't open %s (%s)\n", ossdev->dev_name, strerror(errno));
@@ -512,6 +517,102 @@ const static int win_std_formats[2][2][5]=
        WAVE_FORMAT_2S16,  WAVE_FORMAT_1S16}},
     };
 
+static void OSS_Info(int fd)
+{
+    /* Note that this only reports the formats supported by the hardware.
+     * The driver may support other formats and do the conversions in
+     * software which is why we don't use this value
+     */
+    int oss_mask, oss_caps;
+    if (ioctl(fd, SNDCTL_DSP_GETFMTS, &oss_mask) >= 0) {
+        TRACE("Formats=%08x ( ", oss_mask);
+        if (oss_mask & AFMT_MU_LAW) TRACE("AFMT_MU_LAW ");
+        if (oss_mask & AFMT_A_LAW) TRACE("AFMT_A_LAW ");
+        if (oss_mask & AFMT_IMA_ADPCM) TRACE("AFMT_IMA_ADPCM ");
+        if (oss_mask & AFMT_U8) TRACE("AFMT_U8 ");
+        if (oss_mask & AFMT_S16_LE) TRACE("AFMT_S16_LE ");
+        if (oss_mask & AFMT_S16_BE) TRACE("AFMT_S16_BE ");
+        if (oss_mask & AFMT_S8) TRACE("AFMT_S8 ");
+        if (oss_mask & AFMT_U16_LE) TRACE("AFMT_U16_LE ");
+        if (oss_mask & AFMT_U16_BE) TRACE("AFMT_U16_BE ");
+        if (oss_mask & AFMT_MPEG) TRACE("AFMT_MPEG ");
+#ifdef AFMT_AC3
+        if (oss_mask & AFMT_AC3) TRACE("AFMT_AC3 ");
+#endif
+#ifdef AFMT_VORBIS
+        if (oss_mask & AFMT_VORBIS) TRACE("AFMT_VORBIS ");
+#endif
+#ifdef AFMT_S32_LE
+        if (oss_mask & AFMT_S32_LE) TRACE("AFMT_S32_LE ");
+#endif
+#ifdef AFMT_S32_BE
+        if (oss_mask & AFMT_S32_BE) TRACE("AFMT_S32_BE ");
+#endif
+#ifdef AFMT_FLOAT
+        if (oss_mask & AFMT_FLOAT) TRACE("AFMT_FLOAT ");
+#endif
+#ifdef AFMT_S24_LE
+        if (oss_mask & AFMT_S24_LE) TRACE("AFMT_S24_LE ");
+#endif
+#ifdef AFMT_S24_BE 
+        if (oss_mask & AFMT_S24_BE) TRACE("AFMT_S24_BE ");
+#endif
+#ifdef AFMT_SPDIF_RAW
+        if (oss_mask & AFMT_SPDIF_RAW) TRACE("AFMT_SPDIF_RAW ");
+#endif
+        TRACE(")\n");
+    }
+    if (ioctl(fd, SNDCTL_DSP_GETCAPS, &oss_caps) >= 0) {
+        TRACE("Caps=%08x\n",oss_caps);
+        TRACE("\tRevision: %d\n", oss_caps&DSP_CAP_REVISION);
+        TRACE("\tDuplex: %s\n", oss_caps & DSP_CAP_DUPLEX ? "true" : "false");
+        TRACE("\tRealtime: %s\n", oss_caps & DSP_CAP_REALTIME ? "true" : "false");
+        TRACE("\tBatch: %s\n", oss_caps & DSP_CAP_BATCH ? "true" : "false");
+        TRACE("\tCoproc: %s\n", oss_caps & DSP_CAP_COPROC ? "true" : "false");
+        TRACE("\tTrigger: %s\n", oss_caps & DSP_CAP_TRIGGER ? "true" : "false");
+        TRACE("\tMmap: %s\n", oss_caps & DSP_CAP_MMAP ? "true" : "false");
+#ifdef DSP_CAP_MULTI
+        TRACE("\tMulti: %s\n", oss_caps & DSP_CAP_MULTI ? "true" : "false");
+#endif
+#ifdef DSP_CAP_BIND
+        TRACE("\tBind: %s\n", oss_caps & DSP_CAP_BIND ? "true" : "false");
+#endif
+#ifdef DSP_CAP_INPUT
+        TRACE("\tInput: %s\n", oss_caps & DSP_CAP_INPUT ? "true" : "false");
+#endif
+#ifdef DSP_CAP_OUTPUT
+        TRACE("\tOutput: %s\n", oss_caps & DSP_CAP_OUTPUT ? "true" : "false");
+#endif
+#ifdef DSP_CAP_VIRTUAL
+        TRACE("\tVirtual: %s\n", oss_caps & DSP_CAP_VIRTUAL ? "true" : "false");
+#endif
+#ifdef DSP_CAP_ANALOGOUT
+        TRACE("\tAnalog Out: %s\n", oss_caps & DSP_CAP_ANALOGOUT ? "true" : "false");
+#endif
+#ifdef DSP_CAP_ANALOGIN
+        TRACE("\tAnalog In: %s\n", oss_caps & DSP_CAP_ANALOGIN ? "true" : "false");
+#endif
+#ifdef DSP_CAP_DIGITALOUT
+        TRACE("\tDigital Out: %s\n", oss_caps & DSP_CAP_DIGITALOUT ? "true" : "false");
+#endif
+#ifdef DSP_CAP_DIGITALIN
+        TRACE("\tDigital In: %s\n", oss_caps & DSP_CAP_DIGITALIN ? "true" : "false");
+#endif
+#ifdef DSP_CAP_ADMASK
+        TRACE("\tA/D Mask: %s\n", oss_caps & DSP_CAP_ADMASK ? "true" : "false");
+#endif
+#ifdef DSP_CAP_SHADOW
+        TRACE("\tShadow: %s\n", oss_caps & DSP_CAP_SHADOW ? "true" : "false");
+#endif
+#ifdef DSP_CH_MASK
+        TRACE("\tChannel Mask: %x\n", oss_caps & DSP_CH_MASK);
+#endif
+#ifdef DSP_CAP_SLAVE
+        TRACE("\tSlave: %s\n", oss_caps & DSP_CAP_SLAVE ? "true" : "false");
+#endif
+    }
+}
+
 /******************************************************************
  *		OSS_WaveOutInit
  *
@@ -523,7 +624,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     int f,c,r;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
-    if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
+    if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0,-1,-1,-1) != 0)
+        return FALSE;
+
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
 #ifdef SOUND_MIXER_INFO
@@ -552,6 +655,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     }
 #endif /* SOUND_MIXER_INFO */
 
+    if (WINE_TRACE_ON(wave))
+        OSS_Info(ossdev->fd);
+
     /* FIXME: some programs compare this string against the content of the
      * registry for MM drivers. The names have to match in order for the
      * program to work (e.g. MS win9x mplayer.exe)
@@ -576,45 +682,6 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     ossdev->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     ossdev->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
                                                                                 
-    if (WINE_TRACE_ON(wave)) {
-        /* Note that this only reports the formats supported by the hardware.
-         * The driver may support other formats and do the conversions in
-         * software which is why we don't use this value
-         */
-        int oss_mask, oss_caps;
-        ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &oss_mask);
-        TRACE("OSS dsp out mask=%08x ( ", oss_mask);
-        if (oss_mask & AFMT_MU_LAW) TRACE("AFMT_MU_LAW ");
-        if (oss_mask & AFMT_A_LAW) TRACE("AFMT_A_LAW ");
-        if (oss_mask & AFMT_IMA_ADPCM) TRACE("AFMT_IMA_ADPCM ");
-        if (oss_mask & AFMT_U8) TRACE("AFMT_U8 ");
-        if (oss_mask & AFMT_S16_LE) TRACE("AFMT_S16_LE ");
-        if (oss_mask & AFMT_S16_BE) TRACE("AFMT_S16_BE ");
-        if (oss_mask & AFMT_S8) TRACE("AFMT_S8 ");
-        if (oss_mask & AFMT_U16_LE) TRACE("AFMT_U16_LE ");
-        if (oss_mask & AFMT_U16_BE) TRACE("AFMT_U16_BE ");
-        if (oss_mask & AFMT_MPEG) TRACE("AFMT_MPEG ");
-#ifdef AFMT_AC3
-        if (oss_mask & AFMT_AC3) TRACE("AFMT_AC3 ");
-#endif
-        TRACE(")\n");
-        ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &oss_caps);
-        TRACE("Caps=%08x\n",oss_caps);
-        TRACE("\tRevision: %d\n", oss_caps&DSP_CAP_REVISION);
-        TRACE("\tDuplex: %s\n", oss_caps & DSP_CAP_DUPLEX ? "true" : "false");
-        TRACE("\tRealtime: %s\n", oss_caps & DSP_CAP_REALTIME ? "true" : "false");
-        TRACE("\tBatch: %s\n", oss_caps & DSP_CAP_BATCH ? "true" : "false");
-        TRACE("\tCoproc: %s\n", oss_caps & DSP_CAP_COPROC ? "true" : "false");
-        TRACE("\tTrigger: %s\n", oss_caps & DSP_CAP_TRIGGER ? "true" : "false");
-        TRACE("\tMmap: %s\n", oss_caps & DSP_CAP_MMAP ? "true" : "false");
-#ifdef DSP_CAP_MULTI
-        TRACE("\tMulti: %s\n", oss_caps & DSP_CAP_MULTI ? "true" : "false");
-#endif
-#ifdef DSP_CAP_BIND
-        TRACE("\tBind: %s\n", oss_caps & DSP_CAP_BIND ? "true" : "false");
-#endif
-    }
-
     /* We must first set the format and the stereo mode as some sound cards
      * may support 44kHz mono but not 44kHz stereo. Also we must
      * systematically check the return value of these ioctls as they will
@@ -662,7 +729,6 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     }
 
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &arg) == 0) {
-        TRACE("OSS dsp out caps=%08X\n", arg);
         if (arg & DSP_CAP_TRIGGER)
             ossdev->bTriggerSupport = TRUE;
         if ((arg & DSP_CAP_REALTIME) && !(arg & DSP_CAP_BATCH)) {
@@ -717,7 +783,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
     if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0,-1,-1,-1) != 0)
-	return FALSE;
+        return FALSE;
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
@@ -745,6 +811,9 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     }
 #endif /* SOUND_MIXER_INFO */
 
+    if (WINE_TRACE_ON(wave))
+        OSS_Info(ossdev->fd);
+
     /* See comment in OSS_WaveOutInit */
 #ifdef EMULATE_SB16
     ossdev->in_caps.wMid = 0x0002;
@@ -763,16 +832,6 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     ossdev->dsc_caps.dwFlags = 0;
     ossdev->dsc_caps.dwFormats = 0x00000000;
     ossdev->dsc_caps.dwChannels = 1;
-
-    if (WINE_TRACE_ON(wave)) {
-        /* Note that this only reports the formats supported by the hardware.
-         * The driver may support other formats and do the conversions in
-         * software which is why we don't use this value
-         */
-        int oss_mask;
-        ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &oss_mask);
-        TRACE("OSS dsp out mask=%08x\n", oss_mask);
-    }
 
     /* See the comment in OSS_WaveOutInit */
     for (f=0;f<2;f++) {
@@ -808,7 +867,6 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     }
 
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &arg) == 0) {
-        TRACE("OSS dsp in caps=%08X\n", arg);
         if (arg & DSP_CAP_TRIGGER)
             ossdev->bTriggerSupport = TRUE;
         if ((arg & DSP_CAP_TRIGGER) && (arg & DSP_CAP_MMAP) &&
@@ -822,7 +880,8 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 	    ossdev->in_caps_support |= WAVECAPS_SAMPLEACCURATE;
     }
     OSS_CloseDevice(ossdev);
-    TRACE("in dwFormats = %08lX\n", ossdev->in_caps.dwFormats);
+    TRACE("in dwFormats = %08lX, in_caps_support = %08lX\n",
+        ossdev->in_caps.dwFormats, ossdev->in_caps_support);
     return TRUE;
 }
 
@@ -834,13 +893,21 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 {
     int 	caps;
-    TRACE("(%p)\n",ossdev);
+    TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
-    if (OSS_OpenDevice(ossdev, O_RDWR, NULL, 0,-1,-1,-1) != 0) return;
+    if (OSS_OpenDevice(ossdev, O_RDWR, NULL, 0,-1,-1,-1) != 0)
+        return;
+
+    ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
+
+    TRACE("%s\n", ossdev->ds_desc.szDesc);
+
+    if (WINE_TRACE_ON(wave))
+        OSS_Info(ossdev->fd);
+
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0)
-    {
-	ossdev->full_duplex = (caps & DSP_CAP_DUPLEX);
-    }
+        ossdev->full_duplex = (caps & DSP_CAP_DUPLEX);
+
     OSS_CloseDevice(ossdev);
 }
 
@@ -988,7 +1055,6 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
 
         /* fast messages have to be added at the start of the queue */
         omr->msg_toget = (omr->msg_toget + omr->ring_buffer_size - 1) % omr->ring_buffer_size;
-
         omr->messages[omr->msg_toget].msg = msg;
         omr->messages[omr->msg_toget].param = param;
         omr->messages[omr->msg_toget].hEvent = hEvent;
@@ -1226,7 +1292,11 @@ static BOOL wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     if (toWrite > 0)
     {
         written = write(wwo->ossdev->fd, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite);
-        if (written <= 0) return FALSE;
+        if (written <= 0) {
+            TRACE("write(%s, %p, %ld) failed (%s) returned %d\n", wwo->ossdev->dev_name,
+                wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite, strerror(errno), written);
+            return FALSE;
+        }
     }
     else
         written = 0;
@@ -1608,11 +1678,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	audio_fragment = 0x00100000 + shift;	/* 16 fragments of 2^shift */
     }
 
-    TRACE("using %d %d byte fragments (%ld ms)\n", audio_fragment >> 16,
-	1 << (audio_fragment & 0xffff), 
+    TRACE("requesting %d %d byte fragments (%ld ms/fragment)\n",
+        audio_fragment >> 16, 1 << (audio_fragment & 0xffff), 
 	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
 
-    if (wwo->state != WINE_WS_CLOSED) return MMSYSERR_ALLOCATED;
+    if (wwo->state != WINE_WS_CLOSED) {
+        WARN("already allocated\n");
+        return MMSYSERR_ALLOCATED;
+    }
+
     /* we want to be able to mmap() the device, which means it must be opened readable,
      * otherwise mmap() will fail (at least under Linux) */
     ret = OSS_OpenDevice(wwo->ossdev,
@@ -1657,6 +1731,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOTENABLED;
     }
 
+    TRACE("got %d %d byte fragments (%d ms/fragment)\n", info.fragstotal,
+        info.fragsize, (info.fragsize * 1000) / (wwo->ossdev->sample_rate * 
+        (wwo->ossdev->stereo ? 2 : 1) * 
+        (wwo->ossdev->format == AFMT_U8 ? 1 : 2)));
+        
     /* Check that fragsize is correct per our settings above */
     if ((info.fragsize > 1024) && (LOWORD(audio_fragment) <= 10)) {
 	/* we've tried to set 1K fragments or less, but it didn't work */
@@ -1947,27 +2026,33 @@ static DWORD wodBreakLoop(WORD wDevID)
  */
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
-    int 	mixer;
+    int		mixer;
     int		volume;
     DWORD	left, right;
     DWORD	last_left, last_right;
 
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
 
-    if (lpdwVol == NULL)
-	return MMSYSERR_NOTENABLED;
-    if (wDevID >= numOutDev) 
-	return MMSYSERR_INVALPARAM;
+    if (lpdwVol == NULL) {
+        WARN("not enabled\n");
+        return MMSYSERR_NOTENABLED;
+    }
+    if (wDevID >= numOutDev) {
+        WARN("invalid parameter\n"); 
+        return MMSYSERR_INVALPARAM;
+    }
 
     if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_RDONLY|O_NDELAY)) < 0) {
-	WARN("mixer device not available !\n");
-	return MMSYSERR_NOTENABLED;
+        WARN("mixer device not available !\n");
+        return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_READ_PCM, &volume) == -1) {
-	WARN("ioctl(%s, SOUND_MIXER_READ_PCM) failed (%s)\n", WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
-	return MMSYSERR_NOTENABLED;
+        WARN("ioctl(%s, SOUND_MIXER_READ_PCM) failed (%s)\n", 
+             WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
+        return MMSYSERR_NOTENABLED;
     }
     close(mixer);
+
     left = LOBYTE(volume);
     right = HIBYTE(volume);
     TRACE("left=%ld right=%ld !\n", left, right);
@@ -1986,7 +2071,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
  */
 static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
-    int 	mixer;
+    int		mixer;
     int		volume;
     DWORD	left, right;
 
@@ -1997,19 +2082,19 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     volume = left + (right << 8);
 
     if (wDevID >= numOutDev) {
-	WARN("invalid parameter: wDevID > %d\n", numOutDev);
-	return MMSYSERR_INVALPARAM;
+        WARN("invalid parameter: wDevID > %d\n", numOutDev);
+        return MMSYSERR_INVALPARAM;
     }
-
     if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_WRONLY|O_NDELAY)) < 0) {
-	WARN("mixer device not available !\n");
-	return MMSYSERR_NOTENABLED;
+        WARN("mixer device not available !\n");
+        return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_WRITE_PCM, &volume) == -1) {
-	WARN("ioctl(%s, SOUND_MIXER_WRITE_PCM) failed (%s)\n", WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
-	return MMSYSERR_NOTENABLED;
+        WARN("ioctl(%s, SOUND_MIXER_WRITE_PCM) failed (%s)\n",
+            WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
+        return MMSYSERR_NOTENABLED;
     } else {
-	TRACE("volume=%04x\n", (unsigned)volume);
+        TRACE("volume=%04x\n", (unsigned)volume);
     }
     close(mixer);
 
@@ -2611,7 +2696,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 		    return DS_OK;
 	    }	 
 	}
-	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
+        ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
+            WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
 	WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
 	return DSERR_GENERIC;
     }
@@ -2708,7 +2794,8 @@ static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
     return ref;
 }
 
-static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDESC pDesc)
+static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface,
+                                                  PDSDRIVERDESC pDesc)
 {
     ICOM_THIS(IDsDriverImpl,iface);
     TRACE("(%p,%p)\n",iface,pDesc);
@@ -2717,7 +2804,8 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
     memcpy(pDesc, &(WOutDev[This->wDevID].ossdev->ds_desc), sizeof(DSDRIVERDESC));
 
     pDesc->dwFlags |= DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
-	DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK;
+        DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK |
+        DSDDESC_DONTNEEDSECONDARYLOCK;
     pDesc->dnDevNode		= WOutDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId		= 0;
     pDesc->wReserved		= 0;
@@ -3120,7 +3208,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                                      wwi->dwFragmentSize);
 
                     TRACE("bytesRead=%ld (direct)\n", bytesRead);
-		    if (bytesRead != (DWORD) -1)
+                    if (bytesRead != (DWORD) -1)
 		    {
 			/* update number of bytes recorded in current buffer and by this device */
                         lpWaveHdr->dwBytesRecorded += bytesRead;
@@ -3142,6 +3230,10 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
 			    lpWaveHdr = lpNext;
 			}
+                    } else {
+                        TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->ossdev->dev_name,
+                            lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
+                            wwi->dwFragmentSize, strerror(errno));
                     }
                 }
                 else
@@ -3151,6 +3243,12 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                     pOffset = buffer;
 
                     TRACE("bytesRead=%ld (local)\n", bytesRead);
+
+                    if (bytesRead == (DWORD) -1) {
+                        TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->ossdev->dev_name,
+                            buffer, wwi->dwFragmentSize, strerror(errno));
+                        continue;
+                    }
 
                     /* copy data in client buffers */
                     while (bytesRead != (DWORD) -1 && bytesRead > 0)
@@ -3366,7 +3464,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEIN*	wwi;
-    int                 fragment_size;
+    audio_buf_info      info;
     int                 audio_fragment;
     DWORD               ret;
 
@@ -3375,7 +3473,10 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
-    if (wDevID >= numInDev) return MMSYSERR_BADDEVICEID;
+    if (wDevID >= numInDev) {
+        WARN("bad device id: %d >= %d\n", wDevID, numInDev);
+        return MMSYSERR_BADDEVICEID;
+    }
 
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
@@ -3433,7 +3534,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	}
     }
 
-    TRACE("using %d %d byte fragments (%ld ms)\n", audio_fragment >> 16,
+    TRACE("requesting %d %d byte fragments (%ld ms)\n", audio_fragment >> 16,
 	1 << (audio_fragment & 0xffff), 
 	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
 
@@ -3465,15 +3566,20 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    wwi->format.wf.nChannels;
     }
 
-    ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETBLKSIZE, &fragment_size);
-    if (fragment_size == -1) {
-	WARN("ioctl(%s, SNDCTL_DSP_GETBLKSIZE) failed (%s)\n",
-	    wwi->ossdev->dev_name, strerror(errno));
+    if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
+        ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
+            wwi->ossdev->dev_name, strerror(errno));
         OSS_CloseDevice(wwi->ossdev);
 	wwi->state = WINE_WS_CLOSED;
 	return MMSYSERR_NOTENABLED;
     }
-    wwi->dwFragmentSize = fragment_size;
+
+    TRACE("got %d %d byte fragments (%d ms/fragment)\n", info.fragstotal,
+        info.fragsize, (info.fragsize * 1000) / (wwi->ossdev->sample_rate * 
+        (wwi->ossdev->stereo ? 2 : 1) * 
+        (wwi->ossdev->format == AFMT_U8 ? 1 : 2)));
+        
+    wwi->dwFragmentSize = info.fragsize;
 
     TRACE("dwFragmentSize=%lu\n", wwi->dwFragmentSize);
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
@@ -4358,9 +4464,9 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
     (*ippdscdb)->lpVtbl = &dscdbvt;
     (*ippdscdb)->ref          = 1;
     (*ippdscdb)->drv          = This;
-    (*ippdscdb)->notify       = 0;
+    (*ippdscdb)->notify       = NULL;
     (*ippdscdb)->notify_index = 0;
-    (*ippdscdb)->property_set = 0;
+    (*ippdscdb)->property_set = NULL;
 
     if (WInDev[This->wDevID].state == WINE_WS_CLOSED) {
 	WAVEOPENDESC desc;
