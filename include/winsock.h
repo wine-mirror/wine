@@ -26,14 +26,14 @@
 # endif
 #endif
 
-#ifndef _WINSOCKAPI_
-#define _WINSOCKAPI_
-
 #ifndef __WINE__
 # include "windows.h"
 #else
 # include "windef.h"
 #endif
+
+#ifndef _WINSOCKAPI_
+#define _WINSOCKAPI_
 
 /*
  * Setup phase
