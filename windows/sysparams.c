@@ -501,8 +501,10 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	*(UINT *)pvParam = 400; /* default for menu dropdowns */
 	break;
     WINE_SPI_FIXME(SPI_SETMOUSEHOVERTIME);	/*    103  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
-                
-    WINE_SPI_FIXME(SPI_GETWHEELSCROLLLINES);	/*    104  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+              
+    case SPI_GETWHEELSCROLLLINES:		/*    104  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+	*(UINT *)pvParam = 3; /* default for num scroll lines */  
+	break;
     WINE_SPI_FIXME(SPI_SETWHEELSCROLLLINES);	/*    105  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 
     WINE_SPI_FIXME(SPI_GETSHOWIMEUI);		/*    110  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
