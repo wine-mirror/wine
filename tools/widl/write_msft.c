@@ -1551,6 +1551,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
                 typelib->typelib_header.dispatchpos = typelib->typelib_typeinfo_offsets[typeinfo->typekind >> 16];
             }
 #endif
+            break;
 
         case ATTR_VERSION:
             typeinfo->version = attr->u.ival;
