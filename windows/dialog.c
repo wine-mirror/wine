@@ -825,14 +825,11 @@ HWND WINAPI CreateDialogParamA( HINSTANCE hInst, LPCSTR name,
                                     HWND owner, DLGPROC dlgProc,
                                     LPARAM param )
 {
-    if (HIWORD(name))
-    {
-        LPWSTR str = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-        HWND hwnd = CreateDialogParamW( hInst, str, owner, dlgProc, param);
-        HeapFree( GetProcessHeap(), 0, str );
-        return hwnd;
-    }
-    return CreateDialogParamW( hInst, (LPCWSTR)name, owner, dlgProc, param );
+    HANDLE hrsrc = FindResourceA( hInst, name, RT_DIALOGA );
+    if (!hrsrc) return 0;
+    return CreateDialogIndirectParamA( hInst,
+                                         (LPVOID)LoadResource(hInst, hrsrc),
+                                         owner, dlgProc, param );
 }
 
 
