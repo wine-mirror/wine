@@ -2578,13 +2578,20 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
  */
 INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 {
-    FIXME("(0x%x 0x%x 0x%lx): empty stub!\n",
+    DC *dc;
+
+    FIXME("(0x%lx 0x%lx 0x%lx): empty stub!\n",
 	   hDC, hRgn, dwCode);
 
     switch (dwCode)
     {
 	case 1:
 	    return GetClipRgn (hDC, hRgn);
+
+	case 4:
+	    dc = DC_GetDCPtr (hDC);
+	    CombineRgn (hRgn, dc->w.hVisRgn, 0, RGN_COPY);
+	    return 1;
 
 	default:
 	    return -1;
