@@ -323,8 +323,9 @@ then {
     echo "We need to install wine as root user, do you want us to build wine,"
     echo "'su root' and install Wine?  Enter 'no' to continue without installing"
     conf_yesno_answer "(yes/no) "
+    ROOTINSTALL="$ANSWER"
 
-    if [ "$ANSWER" = "yes" ]
+    if [ "$ROOTINSTALL" = "yes" ]
     then {
       # start out with the basic command
       sucommand="make install"
@@ -344,26 +345,31 @@ then {
         # run ldconfig always just in case some updated files dont get linked
         sucommand="$sucommand;$ac_cv_path_LDCONFIG"
       fi
+    }
+    fi # [ "$ROOTINSTALL" = "yes" ]
 
-      echo
+    echo
 
-      echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever,"
-      echo "in the meantime..."
-      echo
-      std_sleep
+    echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever,"
+    echo "in the meantime..."
+    echo
+    std_sleep
 
-      # try to just make wine, if this fails 'make depend' and try to remake
-      if ! { make; }
+    # try to just make wine, if this fails 'make depend' and try to remake
+    if ! { make; }
+    then {
+      if ! { make depend && make; }
       then {
-        if ! { make depend && make; }
-        then {
-          echo
-          echo "Compilation failed, aborting install."
-          exit 1
-        }
-        fi
+        echo
+        echo "Compilation failed, aborting install."
+        exit 1
       }
       fi
+    }
+    fi
+
+    if [ "$ROOTINSTALL" = "yes" ]
+    then {
       echo
 
       echo "Performing 'make install' as root to install binaries, enter root password"
@@ -415,7 +421,7 @@ then {
       echo "in your logon scripts."
       echo
     }
-    fi
+    fi # [ "$ROOTINSTALL" = "yes" ]
   }
   fi # [ `whoami` != 'root' ]
 
