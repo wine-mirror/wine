@@ -508,6 +508,7 @@ serialize_param(
 	}
 	ITypeInfo_GetTypeAttr(tinfo2,&tattr);
 	switch (tattr->typekind) {
+	case TKIND_DISPATCH:
 	case TKIND_INTERFACE:
 	    if (writeit)
 	       hres=_marshal_interface(buf,&(tattr->guid),(LPUNKNOWN)arg);
@@ -556,24 +557,10 @@ serialize_param(
 	    if (debugout) MESSAGE("}");
 	    break;
 	}
-	default: {
-	    TYPEDESC tdesc2;
-
-	    if (debugout) MESSAGE("U{");
-	    memset(&tdesc2,0,sizeof(tdesc2));
-	    tdesc2.vt = tattr->typekind;
-	    hres = serialize_param(
-			tinfo2,
-			writeit,
-			debugout,
-			dealloc,
-			&tdesc2,
-			arg,
-			buf
-	    );
-	    if (debugout) MESSAGE("}");
+	default:
+	    FIXME("Unhandled typekind %d\n",tattr->typekind);
+	    hres = E_FAIL;
 	    break;
-	}
 	}
 	ITypeInfo_Release(tinfo2);
 	return hres;
@@ -878,6 +865,7 @@ deserialize_param(
 		if (alloc)
 		    *arg = (DWORD)HeapAlloc(GetProcessHeap(),0,tattr->cbSizeInstance);
 		switch (tattr->typekind) {
+		case TKIND_DISPATCH:
 		case TKIND_INTERFACE:
 		    if (readit)
 			hres = _unmarshal_interface(buf,&(tattr->guid),(LPUNKNOWN*)arg);
@@ -910,24 +898,10 @@ deserialize_param(
 		    if (debugout) MESSAGE("}");
 		    break;
 		}
-		default: {
-		    TYPEDESC tdesc2;
-
-		    if (debugout) MESSAGE("U{");
-		    memset(&tdesc2,0,sizeof(tdesc2));
-		    tdesc2.vt = tattr->typekind;
-		    hres = deserialize_param(
-				tinfo2,
-				readit,
-				debugout,
-				alloc,
-				&tdesc2,
-				(DWORD*)*arg,
-				buf
-		    );
-		    if (debugout) MESSAGE("}");
+		default:
+		    ERR("Unhandled typekind %d\n",tattr->typekind);
+		    hres = E_FAIL;
 		    break;
-		}
 		}
 	    }
 	    if (hres)
