@@ -22,7 +22,7 @@
 DEFAULT_DEBUG_CHANNEL(win)
 
   /* Last COLOR id */
-#define COLOR_MAX   COLOR_BTNHIGHLIGHT
+#define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
 
   /* bits in the dwKeyData */
 #define KEYDATA_ALT 		0x2000
