@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #endif
 
+#include "cguid.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
