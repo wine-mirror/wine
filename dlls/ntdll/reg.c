@@ -45,44 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 /* maximum length of a key/value name in bytes (without terminating null) */
 #define MAX_NAME_LENGTH ((MAX_PATH-1) * sizeof(WCHAR))
 
-/* RtlQueryRegistryValues structs and defines */
-#define RTL_REGISTRY_ABSOLUTE             0
-#define RTL_REGISTRY_SERVICES             1
-#define RTL_REGISTRY_CONTROL              2
-#define RTL_REGISTRY_WINDOWS_NT           3
-#define RTL_REGISTRY_DEVICEMAP            4
-#define RTL_REGISTRY_USER                 5
-
-#define RTL_REGISTRY_HANDLE       0x40000000
-#define RTL_REGISTRY_OPTIONAL     0x80000000
-
-#define RTL_QUERY_REGISTRY_SUBKEY         0x00000001
-#define RTL_QUERY_REGISTRY_TOPKEY         0x00000002
-#define RTL_QUERY_REGISTRY_REQUIRED       0x00000004
-#define RTL_QUERY_REGISTRY_NOVALUE        0x00000008
-#define RTL_QUERY_REGISTRY_NOEXPAND       0x00000010
-#define RTL_QUERY_REGISTRY_DIRECT         0x00000020
-#define RTL_QUERY_REGISTRY_DELETE         0x00000040
-
-typedef NTSTATUS (WINAPI *PRTL_QUERY_REGISTRY_ROUTINE)( PCWSTR ValueName,
-                                                        ULONG  ValueType,
-                                                        PVOID  ValueData,
-                                                        ULONG  ValueLength,
-                                                        PVOID  Context,
-                                                        PVOID  EntryContext);
-
-typedef struct _RTL_QUERY_REGISTRY_TABLE
-{
-  PRTL_QUERY_REGISTRY_ROUTINE  QueryRoutine;
-  ULONG  Flags;
-  PWSTR  Name;
-  PVOID  EntryContext;
-  ULONG  DefaultType;
-  PVOID  DefaultData;
-  ULONG  DefaultLength;
-} RTL_QUERY_REGISTRY_TABLE, *PRTL_QUERY_REGISTRY_TABLE;
-
-
 /******************************************************************************
  * NtCreateKey [NTDLL.@]
  * ZwCreateKey [NTDLL.@]
@@ -1221,7 +1183,7 @@ out:
  * RETURNS
  *  STATUS_SUCCESS if the specified key exists, or an NTSTATUS error code.
  */
-NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG  RelativeTo, IN PWSTR  Path)
+NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
 {
     HKEY handle;
     NTSTATUS status;
@@ -1252,7 +1214,7 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG  RelativeTo, IN PWSTR  Path)
  * RETURNS
  *  STATUS_SUCCESS if the specified key is sucesfully deleted, or an NTSTATUS error code.
  */
-NTSTATUS RtlDeleteRegistryValue(IN ULONG RelativeTo, IN PCWSTR Path, IN PCWSTR ValueName)
+NTSTATUS WINAPI RtlDeleteRegistryValue(IN ULONG RelativeTo, IN PCWSTR Path, IN PCWSTR ValueName)
 {
     NTSTATUS status;
     HKEY handle;

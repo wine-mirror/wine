@@ -31,6 +31,8 @@
 #include "stdlib.h"
 #include "wine/unicode.h"
 
+#ifndef __WINE_WINTERNL_H
+
 /* RtlQueryRegistryValues structs and defines */
 #define RTL_REGISTRY_ABSOLUTE             0
 #define RTL_REGISTRY_SERVICES             1
@@ -66,6 +68,8 @@ typedef struct _RTL_QUERY_REGISTRY_TABLE {
   PVOID  DefaultData;
   ULONG  DefaultLength;
 } RTL_QUERY_REGISTRY_TABLE, *PRTL_QUERY_REGISTRY_TABLE;
+
+#endif
 
 static NTSTATUS (WINAPI * pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, LPCSTR);
 static NTSTATUS (WINAPI * pRtlFreeUnicodeString)(PUNICODE_STRING);

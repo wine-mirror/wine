@@ -1345,6 +1345,45 @@ typedef void (CALLBACK *PRTL_THREAD_START_ROUTINE)(LPVOID); /* FIXME: not the ri
 #define SE_CREATE_GLOBAL_PRIVILEGE       30L
 #define SE_MAX_WELL_KNOWN_PRIVILEGE      SE_CREATE_GLOBAL_PRIVILEGE
 
+
+/* Rtl*Registry* functions structs and defines */
+#define RTL_REGISTRY_ABSOLUTE             0
+#define RTL_REGISTRY_SERVICES             1
+#define RTL_REGISTRY_CONTROL              2
+#define RTL_REGISTRY_WINDOWS_NT           3
+#define RTL_REGISTRY_DEVICEMAP            4
+#define RTL_REGISTRY_USER                 5
+
+#define RTL_REGISTRY_HANDLE       0x40000000
+#define RTL_REGISTRY_OPTIONAL     0x80000000
+
+#define RTL_QUERY_REGISTRY_SUBKEY         0x00000001
+#define RTL_QUERY_REGISTRY_TOPKEY         0x00000002
+#define RTL_QUERY_REGISTRY_REQUIRED       0x00000004
+#define RTL_QUERY_REGISTRY_NOVALUE        0x00000008
+#define RTL_QUERY_REGISTRY_NOEXPAND       0x00000010
+#define RTL_QUERY_REGISTRY_DIRECT         0x00000020
+#define RTL_QUERY_REGISTRY_DELETE         0x00000040
+
+typedef NTSTATUS (WINAPI *PRTL_QUERY_REGISTRY_ROUTINE)( PCWSTR ValueName,
+                                                        ULONG  ValueType,
+                                                        PVOID  ValueData,
+                                                        ULONG  ValueLength,
+                                                        PVOID  Context,
+                                                        PVOID  EntryContext);
+
+typedef struct _RTL_QUERY_REGISTRY_TABLE
+{
+  PRTL_QUERY_REGISTRY_ROUTINE  QueryRoutine;
+  ULONG  Flags;
+  PWSTR  Name;
+  PVOID  EntryContext;
+  ULONG  DefaultType;
+  PVOID  DefaultData;
+  ULONG  DefaultLength;
+} RTL_QUERY_REGISTRY_TABLE, *PRTL_QUERY_REGISTRY_TABLE;
+
+
 /***********************************************************************
  * Function declarations
  */
@@ -1515,6 +1554,7 @@ BOOLEAN   WINAPI RtlAreBitsSet(PCRTL_BITMAP,ULONG,ULONG);
 BOOLEAN   WINAPI RtlAreBitsClear(PCRTL_BITMAP,ULONG,ULONG);
 
 NTSTATUS  WINAPI RtlCharToInteger(PCSZ,ULONG,PULONG);
+NTSTATUS  WINAPI RtlCheckRegistryKey(ULONG, PWSTR);
 void      WINAPI RtlClearAllBits(PRTL_BITMAP);
 void      WINAPI RtlClearBits(PRTL_BITMAP,ULONG,ULONG);
 ULONG     WINAPI RtlCompactHeap(HANDLE,ULONG);
@@ -1544,6 +1584,7 @@ NTSTATUS  WINAPI RtlCreateUserThread(HANDLE,const SECURITY_DESCRIPTOR*,BOOLEAN,P
 
 NTSTATUS  WINAPI RtlDeleteAce(PACL,DWORD);
 NTSTATUS  WINAPI RtlDeleteCriticalSection(RTL_CRITICAL_SECTION *);
+NTSTATUS  WINAPI RtlDeleteRegistryValue(ULONG, PCWSTR, PCWSTR);
 void      WINAPI RtlDeleteResource(LPRTL_RWLOCK);
 DWORD     WINAPI RtlDeleteSecurityObject(DWORD);
 PRTL_USER_PROCESS_PARAMETERS WINAPI RtlDeNormalizeProcessParams(RTL_USER_PROCESS_PARAMETERS*);
@@ -1681,6 +1722,7 @@ BOOLEAN   WINAPI RtlPrefixUnicodeString(const UNICODE_STRING*,const UNICODE_STRI
 
 NTSTATUS  WINAPI RtlQueryEnvironmentVariable_U(PWSTR,PUNICODE_STRING,PUNICODE_STRING);
 NTSTATUS  WINAPI RtlQueryInformationAcl(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
+NTSTATUS  WINAPI RtlQueryRegistryValues(ULONG, PCWSTR, PRTL_QUERY_REGISTRY_TABLE, PVOID, PVOID);
 NTSTATUS  WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION);
 
 void      WINAPI RtlRaiseException(PEXCEPTION_RECORD);
