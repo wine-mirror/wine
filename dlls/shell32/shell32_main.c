@@ -30,6 +30,7 @@
 DECLARE_DEBUG_CHANNEL(exec)
 DECLARE_DEBUG_CHANNEL(shell)
 
+#define MORE_DEBUG 1
 /*************************************************************************
  * CommandLineToArgvW			[SHELL32.7]
  */
@@ -100,97 +101,90 @@ void WINAPI Control_RunDLL( HWND hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
 DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                               SHFILEINFOA *psfi, UINT sizeofpsfi,
                               UINT flags )
-{	CHAR		szTemp[MAX_PATH];
-	LPPIDLDATA 	pData;
-	LPITEMIDLIST	pPidlTemp = NULL;
-	DWORD		ret=0, dwfa = dwFileAttributes;
+{
+	char szLoaction[MAX_PATH];
+	int iIndex;
+	DWORD ret = TRUE, dwAttributes = 0;
+	IShellFolder * psfParent = NULL;
+	IExtractIcon * pei = NULL;
+	LPITEMIDLIST	pidlLast, pidl = NULL;
+	HRESULT hr = S_OK;
 
-	TRACE_(shell)("(%s,0x%lx,%p,0x%x,0x%x)\n",
-	      path,dwFileAttributes,psfi,sizeofpsfi,flags);
+	TRACE_(shell)("(%s,0x%lx,%p,0x%x,0x%x)\n", 
+	  (flags & SHGFI_PIDL)? "pidl" : path, dwFileAttributes, psfi, sizeofpsfi, flags);
 
-	/* translate the pidl to a path*/
+#ifdef MORE_DEBUG
+	ZeroMemory(psfi, sizeof(SHFILEINFOA));
+#endif
+	if ((flags & SHGFI_USEFILEATTRIBUTES) && (flags & (SHGFI_ATTRIBUTES|SHGFI_EXETYPE|SHGFI_PIDL)))
+	  return FALSE;
+	
+	/* translate the path into a pidl only when SHGFI_USEFILEATTRIBUTES in not specified 
+	   the pidl functions fail on not existing file names */
 	if (flags & SHGFI_PIDL)
-	{ pPidlTemp = (LPCITEMIDLIST)path;
-	  SHGetPathFromIDListA (pPidlTemp, szTemp);
-	  TRACE_(shell)("pidl=%p is %s\n", path, szTemp);
-	}
-	else
-	{ strcpy(szTemp,path);
-	  TRACE_(shell)("path=%s\n", szTemp);
-	}
-
-	if (flags & SHGFI_ATTRIBUTES)
-	{ if (flags & SHGFI_PIDL)
-	  {
-	    /*
-	     * We have to test for the desktop folder first because ILGetDataPointer returns
-	     * NULL on the desktop folder.
-	     */
-	    if (_ILIsDesktop((LPCITEMIDLIST)path))
-	    { psfi->dwAttributes = 0xb0000154;
-	      ret = TRUE;
-	    }
-	    else
-	    { pData = _ILGetDataPointer((LPCITEMIDLIST)path);
-	      	
-	      switch (pData->type)
-	      { case PT_DESKTOP:
-		  psfi->dwAttributes = 0xb0000154;
-	        case PT_MYCOMP:
-		  psfi->dwAttributes = 0xb0000154;
-		case PT_SPECIAL:
-		  psfi->dwAttributes = 0xa0000000;
-		case PT_DRIVE:
-		  psfi->dwAttributes = 0xf0000144;
-		case PT_FOLDER:
-		  psfi->dwAttributes = 0xe0000177;
-		case PT_VALUE:
-		  psfi->dwAttributes = 0x40000177;
-	      }
-	      ret=TRUE;
-	    }
-	  }
-	  else
-	  { if (! (flags & SHGFI_USEFILEATTRIBUTES))
-	      dwfa = GetFileAttributesA (szTemp);
-
-	    psfi->dwAttributes = SFGAO_FILESYSTEM;
-	    if (dwfa == FILE_ATTRIBUTE_DIRECTORY) 
-	      psfi->dwAttributes |= SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
-	    ret=TRUE;
-	  }
-	  WARN_(shell)("file attributes, semi-stub\n");
-	}
-
-	if (flags & SHGFI_DISPLAYNAME)
 	{
-	  if (flags & SHGFI_PIDL)
+	  pidl = (LPCITEMIDLIST) path;
+	}
+	else if (!(flags & SHGFI_USEFILEATTRIBUTES))
+	{
+	  hr = SHILCreateFromPathA ( path, &pidl, &dwAttributes);
+	  /* note: the attributes in ISF::ParseDisplayName are not implemented */
+	}
+	
+	/* get the parent shellfolder */
+	if (pidl)
+	{
+	  hr = SHBindToParent( pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidlLast);
+	}
+	
+	/* get the attributes of the child */
+	if (SUCCEEDED(hr) && (flags & SHGFI_ATTRIBUTES))
+	{
+	  if (!(flags & SHGFI_ATTR_SPECIFIED))
 	  {
-	    _ILSimpleGetText(ILFindLastID(pPidlTemp), psfi->szDisplayName, MAX_PATH);
+	    psfi->dwAttributes = 0xffffffff;
+	  }
+	  IShellFolder_GetAttributesOf(psfParent, 1 , &pidlLast, &(psfi->dwAttributes));
+	}
+
+	/* get the displayname */
+	if (SUCCEEDED(hr) && (flags & SHGFI_DISPLAYNAME))
+	{ 
+	  if (flags & SHGFI_USEFILEATTRIBUTES)
+	  {
+	    strcpy (psfi->szDisplayName, PathFindFilenameA(path));
 	  }
 	  else
 	  {
-	    lstrcpynA(psfi->szDisplayName,PathFindFilenameA(path), MAX_PATH);
+	    STRRET str;
+	    hr = IShellFolder_GetDisplayNameOf(psfParent, pidlLast, SHGDN_INFOLDER, &str);
+	    StrRetToStrNA (psfi->szDisplayName, MAX_PATH, &str, pidlLast);
 	  }
-	  TRACE_(shell)("displayname=%s\n", psfi->szDisplayName);
-	  ret=TRUE;
 	}
 
-	if (flags & SHGFI_TYPENAME)
-	{ FIXME_(shell)("get the file type, stub\n");
-	  strcpy(psfi->szTypeName,"FIXME: Type");
-	  ret=TRUE;
+	/* get the type name */
+	if (SUCCEEDED(hr) && (flags & SHGFI_TYPENAME))
+	{
+	  if(_ILIsValue(pidlLast))
+	  {
+	    char sTemp[64];
+	    if (_ILGetExtension (pidlLast, sTemp, 64))
+	    {
+	      if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE) 
+	          && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
+	      {
+	        lstrcpynA (psfi->szTypeName, sTemp, 74);
+	        strcat (psfi->szTypeName, "-file");
+	      }
+	    }
+	  }
+	  else
+	  {
+	    strcpy(psfi->szTypeName, "Folder");
+	  }
 	}
 
-	if (flags & SHGFI_ICONLOCATION)
-	{ FIXME_(shell)("location of icon, stub\n");
-	  strcpy(psfi->szDisplayName,"");
-	  ret=TRUE;
-	}
-
-	if (flags & SHGFI_EXETYPE)
-	  FIXME_(shell)("type of executable, stub\n");
-
+	/* ### icons ###*/
 	if (flags & SHGFI_LINKOVERLAY)
 	  FIXME_(shell)("set icon to link, stub\n");
 
@@ -203,47 +197,88 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	if (flags & SHGFI_SHELLICONSIZE)
 	  FIXME_(shell)("set icon to shell size, stub\n");
 
-	if (flags & SHGFI_USEFILEATTRIBUTES)
-	  FIXME_(shell)("use the dwFileAttributes, stub\n");
+	/* get the iconlocation */
+	if (SUCCEEDED(hr) && (flags & SHGFI_ICONLOCATION ))
+	{
+	  UINT uDummy,uFlags;
+	  hr = IShellFolder_GetUIObjectOf(psfParent, 0, 1, &pidlLast, &IID_IExtractIconA, &uDummy, (LPVOID*)&pei);
+
+	  if (SUCCEEDED(hr))
+	  {
+	    hr = IExtractIconA_GetIconLocation(pei, 0, szLoaction, MAX_PATH, &iIndex, &uFlags);
+	    /* fixme what to do with the index? */
+
+	    if(uFlags != GIL_NOTFILENAME)
+	      strcpy (psfi->szDisplayName, szLoaction);
+	    else
+	      ret = FALSE;
+	      
+	    IExtractIconA_Release(pei);
+	  }
+	}
+
+	/* get icon index (or load icon)*/
+	if (SUCCEEDED(hr) && (flags & (SHGFI_ICON | SHGFI_SYSICONINDEX)))
+	{
+	  if (flags & SHGFI_USEFILEATTRIBUTES)
+	  {
+	    char sTemp [MAX_PATH];
+	    char * szExt;
+	    DWORD dwNr=0;
+
+	    lstrcpynA(sTemp, path, MAX_PATH);
+	    szExt = (LPSTR) PathFindExtensionA(sTemp);
+	    if( szExt && HCR_MapTypeToValue(szExt, sTemp, MAX_PATH, TRUE)
+              && HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
+            {
+              if (!strcmp("%1",sTemp))            /* icon is in the file */
+              {
+                strcpy(sTemp, path);
+              }
+	      /* FIXME: if sTemp contains a valid filename, get the icon 
+	         from there, index is in dwNr
+	      */
+              psfi->iIcon = 2;
+            }
+            else                                  /* default icon */
+            {
+              psfi->iIcon = 0;
+            }          
+	  }
+	  else
+	  {
+	    if (!(PidlToSicIndex(psfParent, pidlLast, (flags && SHGFI_LARGEICON), &(psfi->iIcon))))
+	    {
+	      ret = FALSE;
+	    }
+	  }
+	  if (ret) 
+	  {
+	    ret = (DWORD) ((flags && SHGFI_LARGEICON) ? ShellBigIconList : ShellSmallIconList);
+	  }
+	}
+
+	/* icon handle */
+	if (SUCCEEDED(hr) && (flags & SHGFI_ICON))
+	  psfi->hIcon = pImageList_GetIcon((flags && SHGFI_LARGEICON) ? ShellBigIconList:ShellSmallIconList, psfi->iIcon, ILD_NORMAL);
+
+
+	if (flags & SHGFI_EXETYPE)
+	  FIXME_(shell)("type of executable, stub\n");
 
 	if (flags & (SHGFI_UNKNOWN1 | SHGFI_UNKNOWN2 | SHGFI_UNKNOWN3))
 	  FIXME_(shell)("unknown attribute!\n");
-	
-	if (flags & SHGFI_ICON)
-	{ FIXME_(shell)("icon handle\n");
-	  if (flags & SHGFI_SMALLICON)
-	  { TRACE_(shell)("set to small icon\n"); 
-	    psfi->hIcon=pImageList_GetIcon(ShellSmallIconList,32,ILD_NORMAL);
-	    ret = (DWORD) ShellSmallIconList;
-	  }
-	  else
-	  { TRACE_(shell)("set to big icon\n");
-	    psfi->hIcon=pImageList_GetIcon(ShellBigIconList,32,ILD_NORMAL);
-	    ret = (DWORD) ShellBigIconList;
-	  }      
-	}
 
-	if (flags & SHGFI_SYSICONINDEX)
-	{ IShellFolder * sf;
-	  if (!pPidlTemp)
-	  { pPidlTemp = ILCreateFromPathA (szTemp);
-	  }
-	  if (SUCCEEDED (SHGetDesktopFolder (&sf)))
-	  { psfi->iIcon = SHMapPIDLToSystemImageListIndex (sf, pPidlTemp, 0);
-	    IShellFolder_Release(sf);
-	  }
-	  TRACE_(shell)("-- SYSICONINDEX %i\n", psfi->iIcon);
+	if (psfParent)
+	  IShellFolder_Release(psfParent);
 
-	  if (flags & SHGFI_SMALLICON)
-	  { TRACE_(shell)("set to small icon\n"); 
-	    ret = (DWORD) ShellSmallIconList;
-	  }
-	  else        
-	  { TRACE_(shell)("set to big icon\n");
-	    ret = (DWORD) ShellBigIconList;
-	  }
-	}
+	if (hr != S_OK)
+	  ret = FALSE;
 
+#ifdef MORE_DEBUG
+	TRACE_(shell) ("icon=0x%08x index=0x%08x attr=0x%08lx name=%s type=%s\n", 
+		psfi->hIcon, psfi->iIcon, psfi->dwAttributes, psfi->szDisplayName, psfi->szTypeName);
+#endif
 	return ret;
 }
 
@@ -719,73 +754,92 @@ LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
 HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
 HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
 
-static BOOL		bShell32IsInitialized = 0;
+/* ole2 */
+HRESULT (WINAPI* pOleInitialize)(LPVOID reserved);
+void (WINAPI* pOleUninitialize)(void);
+HRESULT (WINAPI* pDoDragDrop)(IDataObject* pDataObject, IDropSource * pDropSource, DWORD dwOKEffect, DWORD *pdwEffect);
+HRESULT (WINAPI* pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
+HRESULT (WINAPI* pRevokeDragDrop)(HWND hwnd);
+
 static HINSTANCE	hComctl32;
+static HINSTANCE	hOle32;
 static INT		shell32_RefCount = 0;
 
 INT		shell32_ObjCount = 0;
 HINSTANCE	shell32_hInstance; 
-
 HIMAGELIST	ShellSmallIconList = 0;
 HIMAGELIST	ShellBigIconList = 0;
-HDPA		sic_hdpa = 0;
 
 /*************************************************************************
  * SHELL32 LibMain
  *
+ * NOTES
+ *  calling oleinitialize here breaks sone apps.
  */
 
 BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
-{	HMODULE hUser32;
+{
+	HMODULE	hUser32;
 
 	TRACE_(shell)("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
-
-	shell32_hInstance = hinstDLL;
 
 	switch (fdwReason)
 	{
 	  case DLL_PROCESS_ATTACH:
-	    if (!bShell32IsInitialized)
-	    {
-	      hComctl32 = LoadLibraryA("COMCTL32.DLL");	
-	      hUser32 = GetModuleHandleA("USER32");
-
-	      if (hComctl32 && hUser32)
-	      {
-	        pDLLInitComctl=(void*)GetProcAddress(hComctl32,"InitCommonControlsEx");
-	        if (pDLLInitComctl)
-	        { pDLLInitComctl(NULL);
-	        }
-	        pImageList_Create=(void*)GetProcAddress(hComctl32,"ImageList_Create");
-	        pImageList_AddIcon=(void*)GetProcAddress(hComctl32,"ImageList_AddIcon");
-	        pImageList_ReplaceIcon=(void*)GetProcAddress(hComctl32,"ImageList_ReplaceIcon");
-	        pImageList_GetIcon=(void*)GetProcAddress(hComctl32,"ImageList_GetIcon");
-	        pImageList_GetImageCount=(void*)GetProcAddress(hComctl32,"ImageList_GetImageCount");
-	        pImageList_Draw=(void*)GetProcAddress(hComctl32,"ImageList_Draw");
-	        pImageList_SetBkColor=(void*)GetProcAddress(hComctl32,"ImageList_SetBkColor");
-		
-	        /* imports by ordinal, pray that it works*/
-	        pCOMCTL32_Alloc=(void*)GetProcAddress(hComctl32, (LPCSTR)71L);
-	        pCOMCTL32_Free=(void*)GetProcAddress(hComctl32, (LPCSTR)73L);
-	        pDPA_Create=(void*)GetProcAddress(hComctl32, (LPCSTR)328L);
-	        pDPA_Destroy=(void*)GetProcAddress(hComctl32, (LPCSTR)329L);
-	        pDPA_GetPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)332L);
-	        pDPA_InsertPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)334L);
-	        pDPA_DeletePtr=(void*)GetProcAddress(hComctl32, (LPCSTR)336L);
-	        pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
-	        pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
-	        /* user32 */
-	        pLookupIconIdFromDirectoryEx=(void*)GetProcAddress(hUser32,"LookupIconIdFromDirectoryEx");
-	        pCreateIconFromResourceEx=(void*)GetProcAddress(hUser32,"CreateIconFromResourceEx");
-	      }
-	      else
-	      { ERR_(shell)("P A N I C SHELL32 loading failed\n");
-	        return FALSE;
-	      }
-	      SIC_Initialize();
-	      bShell32IsInitialized = TRUE;
-	    }
 	    shell32_RefCount++;
+	    if (shell32_hInstance)
+	    {
+	      ERR_(shell)("shell32.dll instantiated twice in one address space!\n"); 
+	    }
+
+	    shell32_hInstance = hinstDLL;
+
+	    hComctl32 = LoadLibraryA("COMCTL32.DLL");	
+	    hOle32 = LoadLibraryA("OLE32.DLL");
+	    hUser32 = GetModuleHandleA("USER32");
+
+	    if (!hComctl32 || !hUser32 || !hOle32)
+	    {
+	      ERR_(shell)("P A N I C SHELL32 loading failed\n");
+	      return FALSE;
+	    }
+
+	    /* comctl32 */
+	    pDLLInitComctl=(void*)GetProcAddress(hComctl32,"InitCommonControlsEx");
+	    pImageList_Create=(void*)GetProcAddress(hComctl32,"ImageList_Create");
+	    pImageList_AddIcon=(void*)GetProcAddress(hComctl32,"ImageList_AddIcon");
+	    pImageList_ReplaceIcon=(void*)GetProcAddress(hComctl32,"ImageList_ReplaceIcon");
+	    pImageList_GetIcon=(void*)GetProcAddress(hComctl32,"ImageList_GetIcon");
+	    pImageList_GetImageCount=(void*)GetProcAddress(hComctl32,"ImageList_GetImageCount");
+	    pImageList_Draw=(void*)GetProcAddress(hComctl32,"ImageList_Draw");
+	    pImageList_SetBkColor=(void*)GetProcAddress(hComctl32,"ImageList_SetBkColor");
+	    pCOMCTL32_Alloc=(void*)GetProcAddress(hComctl32, (LPCSTR)71L);
+	    pCOMCTL32_Free=(void*)GetProcAddress(hComctl32, (LPCSTR)73L);
+	    pDPA_Create=(void*)GetProcAddress(hComctl32, (LPCSTR)328L);
+	    pDPA_Destroy=(void*)GetProcAddress(hComctl32, (LPCSTR)329L);
+	    pDPA_GetPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)332L);
+	    pDPA_InsertPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)334L);
+	    pDPA_DeletePtr=(void*)GetProcAddress(hComctl32, (LPCSTR)336L);
+	    pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
+	    pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
+	    /* user32 */
+	    pLookupIconIdFromDirectoryEx=(void*)GetProcAddress(hUser32,"LookupIconIdFromDirectoryEx");
+	    pCreateIconFromResourceEx=(void*)GetProcAddress(hUser32,"CreateIconFromResourceEx");
+	    /* ole2 */
+	    pOleInitialize=(void*)GetProcAddress(hOle32,"OleInitialize");
+	    pOleUninitialize=(void*)GetProcAddress(hOle32,"OleUninitialize");
+	    pDoDragDrop=(void*)GetProcAddress(hOle32,"DoDragDrop");
+	    pRegisterDragDrop=(void*)GetProcAddress(hOle32,"RegisterDragDrop");
+	    pRevokeDragDrop=(void*)GetProcAddress(hOle32,"RevokeDragDrop");
+
+	    /* initialize the common controls */
+	    if (pDLLInitComctl)
+	    {
+	      pDLLInitComctl(NULL);
+	    }
+
+	    SIC_Initialize();
+
 	    break;
 
 	  case DLL_THREAD_ATTACH:
@@ -798,26 +852,31 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	  case DLL_PROCESS_DETACH:
 	    shell32_RefCount--;
+
+	    pOleUninitialize();
+	    FreeLibrary(hOle32);
+	    FreeLibrary(hComctl32);
+
 	    if ( !shell32_RefCount )
 	    { 
-	      bShell32IsInitialized = FALSE;
+	      shell32_hInstance = 0;
 
 	      if (pdesktopfolder) 
-	      { IShellFolder_Release(pdesktopfolder);
+	      {
+	        IShellFolder_Release(pdesktopfolder);
 	        pdesktopfolder = NULL;
 	      }
 
 	      SIC_Destroy();
-	      FreeLibrary(hComctl32);
 
 	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)
-	      { WARN_(shell)("leaving with %u objects left (memory leak)\n", shell32_ObjCount);
+	      {
+	        WARN_(shell)("leaving with %u objects left (memory leak)\n", shell32_ObjCount);
 	      }
 	    }
 	    TRACE_(shell)("refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);
-	    break;	      
+	    break;
 	}
-
 	return TRUE;
 }
