@@ -437,9 +437,11 @@ LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
  */
 LONG WINAPI LZCopy( HFILE src, HFILE dest )
 {
-	int	usedlzinit=0,ret,wret;
+	int	usedlzinit = 0, ret, wret;
 	LONG	len;
-	HFILE	oldsrc = src;
+	HFILE	oldsrc = src, srcfd;
+	FILETIME filetime;
+	struct	lzstate	*lzs;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
 	/* we need that weird typedef, for i can't seem to get function pointer
@@ -476,6 +478,13 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 		if (wret!=ret)
 			return LZERROR_WRITE;
 	}
+
+	/* Maintain the timestamp of source file to destination file */
+	srcfd = (!(lzs = GET_LZ_STATE(src))) ? src : lzs->realfd;
+	GetFileTime((HANDLE)srcfd, NULL, NULL, &filetime);
+	SetFileTime((HANDLE)dest, NULL, NULL, &filetime);
+
+	/* close handle */
 	if (usedlzinit)
 		LZClose(src);
 	return len;
