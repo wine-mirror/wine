@@ -85,7 +85,7 @@ type	win16
 162 register INT_Int3eHandler(word) BUILTIN_DefaultIntHandler
 163 register INT_Int3fHandler(word) BUILTIN_DefaultIntHandler
 164 register INT_Int40Handler(word) BUILTIN_DefaultIntHandler
-165 register INT_Int41Handler(word) BUILTIN_DefaultIntHandler
+165 register INT_Int41Handler(word) INT_Int41Handler
 166 register INT_Int42Handler(word) BUILTIN_DefaultIntHandler
 167 register INT_Int43Handler(word) BUILTIN_DefaultIntHandler
 168 register INT_Int44Handler(word) BUILTIN_DefaultIntHandler
@@ -285,10 +285,13 @@ type	win16
 405 register VXD_Timer() VXD_Timer
 409 register VXD_Reboot() VXD_Reboot
 410 register VXD_VDD() VXD_VDD
+412 register VXD_VMD() VXD_VMD
 414 register VXD_Comm() VXD_Comm
 #415 register VXD_Printer() VXD_Printer
 423 register VXD_Shell() VXD_Shell
 433 register VXD_PageFile() VXD_PageFile
+438 register VXD_APM() VXD_APM
 445 register VXD_Win32s() VXD_Win32s
 451 register VXD_ConfigMG() VXD_ConfigMG
+455 register VXD_Enable() VXD_Enable
 1490 register VXD_TimerAPI() VXD_TimerAPI

@@ -134,7 +134,7 @@ void VXD_VDD ( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
-    TRACE(vxd,"[%04x] VMM  \n", (UINT16)service);
+    TRACE(vxd,"[%04x] VDD  \n", (UINT16)service);
 
     switch(service)
     {
@@ -145,6 +145,27 @@ void VXD_VDD ( CONTEXT *context )
 
     default:
         VXD_BARF( context, "VDD" );
+    }
+}
+
+/***********************************************************************
+ *           VXD_VMD
+ */
+void VXD_VMD ( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] VMD  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "VMD" );
     }
 }
 
@@ -170,7 +191,6 @@ void WINAPI VXD_Shell( CONTEXT *context )
     case 0x0003:
     case 0x0004:
     case 0x0005:
-	TRACE(vxd,"VxD Shell: EDX = %08lx\n",EDX_reg(context));
 	VXD_BARF( context, "shell" );
 	break;
 
@@ -200,9 +220,28 @@ void WINAPI VXD_Shell( CONTEXT *context )
     case 0x0014:
     case 0x0015:
     case 0x0016:
+	VXD_BARF( context, "SHELL" );
+	break;
+
+    /* the new Win95 shell API */
+    case 0x0100:     /* get version */
+        AX_reg(context) = VXD_WinVersion();
+	break;
+
+    case 0x0104:   /* retrieve Hook_Properties list */
+    case 0x0105:   /* call Hook_Properties callbacks */
+	VXD_BARF( context, "SHELL" );
+	break;
+
+    case 0x0106:   /* install timeout callback */
+	TRACE( vxd, "VxD Shell: ignoring shell callback (%ld sec.)\n",
+                    EBX_reg( context ) );
+	SET_CFLAG(context);
+	break;
+
+    case 0x0107:   /* get version of any VxD */
     default:
- 	TRACE(vxd,"VxD Shell: EDX = %08lx\n",EDX_reg(context)); 
-	VXD_BARF( context, "shell");
+	VXD_BARF( context, "SHELL" );
 	break;
     }
 }
@@ -318,6 +357,48 @@ void VXD_ConfigMG ( CONTEXT *context )
 
     default:
         VXD_BARF( context, "CONFIGMG" );
+    }
+}
+
+/***********************************************************************
+ *           VXD_Enable
+ */
+void VXD_Enable ( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] Enable  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "ENABLE" );
+    }
+}
+
+/***********************************************************************
+ *           VXD_APM
+ */
+void VXD_APM ( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] APM  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "APM" );
     }
 }
 

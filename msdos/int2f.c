@@ -158,6 +158,8 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
             break;  /* not installed */
         case 0x12:  /* realtime compression interface */
             break;  /* not installed */
+        case 0x32:  /* patch IO.SYS (???) */
+            break;  /* we have no IO.SYS, so we can't patch it :-/ */
         default:
             INT_BARF( context, 0x2f );
         }
@@ -250,6 +252,10 @@ static void do_int2f_16( CONTEXT *context )
         BX_reg(context) = (LOWORD(GetVersion16()) << 8) |
                           (LOWORD(GetVersion16()) >> 8);
         CX_reg(context) = (GetWinFlags() & WF_ENHANCED) ? 3 : 2;
+        break;
+
+    case 0x0b:  /* Identify Windows-aware TSRs */
+        /* we don't have any pre-Windows TSRs */
         break;
 
     case 0x11:  /* Get Shell Parameters - (SHELL= in CONFIG.SYS) */
