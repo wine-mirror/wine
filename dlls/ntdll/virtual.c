@@ -1162,15 +1162,15 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
     NTSTATUS status = STATUS_SUCCESS;
     struct file_view *view;
 
+    TRACE("%p %p %08lx %lx %08lx\n", process, addr, size, type, protect );
+
+    if (!size) return STATUS_INVALID_PARAMETER;
+
     if (!is_current_process( process ))
     {
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-
-    TRACE("%p %08lx %lx %08lx\n", addr, size, type, protect );
-
-    if (!size) return STATUS_INVALID_PARAMETER;
 
     /* Round parameters to a page boundary */
 
@@ -1268,13 +1268,13 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
     LPVOID addr = *addr_ptr;
     DWORD size = *size_ptr;
 
+    TRACE("%p %p %08lx %lx\n", process, addr, size, type );
+
     if (!is_current_process( process ))
     {
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-
-    TRACE("%p %08lx %lx\n", addr, size, type );
 
     /* Fix the parameters */
 
@@ -1344,13 +1344,13 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *
     DWORD prot, size = *size_ptr;
     LPVOID addr = *addr_ptr;
 
+    TRACE("%p %p %08lx %08lx\n", process, addr, size, new_prot );
+
     if (!is_current_process( process ))
     {
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-
-    TRACE("%p %08lx %08lx\n", addr, size, new_prot );
 
     /* Fix the parameters */
 
@@ -1608,14 +1608,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     HANDLE shared_file;
     BOOL removable = FALSE;
 
+    TRACE("handle=%p process=%p addr=%p off=%lx%08lx size=%x access=%lx\n",
+          handle, process, *addr_ptr, offset->u.HighPart, offset->u.LowPart, size, protect );
+
     if (!is_current_process( process ))
     {
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-
-    TRACE("handle=%p addr=%p off=%lx%08lx size=%x access=%lx\n",
-          handle, *addr_ptr, offset->u.HighPart, offset->u.LowPart, size, protect );
 
     /* Check parameters */
 
