@@ -347,6 +347,13 @@ static void     doChild(const char* file, const char* option)
         }
     }
 
+    if (option && strcmp(option, "exit_code") == 0)
+    {
+        childPrintf(hFile, "[ExitCode]\nvalue=%d\n\n", 123);
+        CloseHandle(hFile);
+        ExitProcess(123);
+    }
+
     CloseHandle(hFile);
 }
 
@@ -1135,6 +1142,35 @@ static void test_Console(void)
     assert(DeleteFileA(resfile) != 0);
 }
 
+static  void    test_ExitCode(void)
+{
+    char                buffer[MAX_PATH];
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+    DWORD               code;
+
+    /* let's start simplistic */
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    get_file_name(resfile);
+    sprintf(buffer, "%s tests/process.c %s exit_code", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info), "CreateProcess");
+
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+
+    ok(GetExitCodeProcess(info.hProcess, &code), "Getting exit code");
+    okChildInt("ExitCode", "value", code);
+
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -1153,6 +1189,7 @@ START_TEST(process)
     test_SuspendFlag();
     test_DebuggingFlag();
     test_Console();
+    test_ExitCode();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)
