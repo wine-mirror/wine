@@ -336,7 +336,7 @@ HRESULT WINAPI ITSS_IStorageImpl_OpenStream(
     if( pwcsName[0] == '/' )
     {
         WCHAR *p = &path[strlenW( path ) - 1];
-        while( ( path <= p ) && ( *p = '/' ) )
+        while( ( path <= p ) && ( *p == '/' ) )
             *p-- = 0;
     }
     strcatW( path, pwcsName );

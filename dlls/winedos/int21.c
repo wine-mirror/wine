@@ -2630,7 +2630,7 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
             TRACE("IOCTL - SET LOGICAL DRIVE MAP for drive %s\n",
 		  INT21_DriveName( BL_reg(context)));
             dev[0] = 'A' + drive; dev[1] = ':'; dev[2] = 0;
-            tgt[0] = 'A' + drive + 1; dev[1] = ':'; dev[2] = '\\'; dev[3] = 0;
+            tgt[0] = 'A' + drive + 1; tgt[1] = ':'; tgt[2] = '\\'; tgt[3] = 0;
             if (!DefineDosDeviceW(DDD_RAW_TARGET_PATH, dev, tgt))
 	    {
 		SET_CFLAG(context);
