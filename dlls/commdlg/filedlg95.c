@@ -769,7 +769,7 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 {
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwndParentDlg,FileOpenDlgInfosStr);
 
-    TRACE("0x%p 0x%04x\n",hwndParentDlg, uCode);
+    TRACE("%p 0x%04x\n",hwndParentDlg, uCode);
 
     if(!fodInfos) return 0;
 
@@ -1587,7 +1587,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   int nOpenAction;
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 
-  TRACE("hwnd=0x%p\n", hwnd);
+  TRACE("hwnd=%p\n", hwnd);
 
   /* get the files from the edit control */
   nFileCount = FILEDLG95_FILENAME_GetFileNames(hwnd, &lpstrFileList, &sizeUsed);
@@ -1974,7 +1974,7 @@ static BOOL FILEDLG95_SHELL_ExecuteCommand(HWND hwnd, LPCSTR lpVerb)
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 
   IContextMenu * pcm;
-  TRACE("(0x%p,%p)\n", hwnd, lpVerb);
+  TRACE("(%p,%p)\n", hwnd, lpVerb);
 
   if(SUCCEEDED(IShellView_GetItemObject(fodInfos->Shell.FOIShellView,
 					SVGIO_BACKGROUND,

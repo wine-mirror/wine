@@ -565,7 +565,7 @@ DWORD WINAPI SetThreadIdealProcessor(
     HANDLE hThread,          /* [in] Specifies the thread of interest */
     DWORD dwIdealProcessor)  /* [in] Specifies the new preferred processor */
 {
-    FIXME("(0x%p): stub\n",hThread);
+    FIXME("(%p): stub\n",hThread);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return -1L;
 }

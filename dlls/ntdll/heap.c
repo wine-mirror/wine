@@ -1332,7 +1332,7 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
 
     if (!entry->lpData) /* first call (init) ? */
     {
-        TRACE("begin walking of heap 0x%p.\n", heap);
+        TRACE("begin walking of heap %p.\n", heap);
         currentheap = &heapPtr->subheap;
         ptr = (char*)currentheap + currentheap->headerSize;
     }

@@ -1658,7 +1658,7 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
                                      SIZE_T maxset)
 {
-    FIXME("(0x%p,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
+    FIXME("(%p,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
     if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
         /* Trim the working set to zero */
         /* Swap the process out of physical RAM */
@@ -1672,7 +1672,7 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T minset,
                                      PSIZE_T maxset)
 {
-	FIXME("(0x%p,%p,%p): stub\n",hProcess,minset,maxset);
+	FIXME("(%p,%p,%p): stub\n",hProcess,minset,maxset);
 	/* 32 MB working set size */
 	if (minset) *minset = 32*1024*1024;
 	if (maxset) *maxset = 32*1024*1024;

@@ -1899,7 +1899,7 @@ static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
  */
 HANDLE	WINAPI	OpenVxDHandle(HANDLE hHandleRing3)
 {
-	FIXME( "(0x%p), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
+	FIXME( "(%p), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
 	return hHandleRing3;
 }
 

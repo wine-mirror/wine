@@ -210,7 +210,7 @@ NTSTATUS WINAPI NtReadFile (
 	int fd, result, flags, ret;
 	enum fd_type type;
 
-	FIXME("(0x%p,0x%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
+	FIXME("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
 		FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
 
 	if (IsBadWritePtr( Buffer, Length ) ||
@@ -273,7 +273,7 @@ NTSTATUS WINAPI NtWriteFile (
 	PLARGE_INTEGER ByteOffset,
 	PULONG Key)
 {
-	FIXME("(0x%p,0x%p,%p,%p,%p,%p,0x%08lx,%p,%p),stub!\n",
+	FIXME("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),stub!\n",
 	FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
 	return 0;
 }
@@ -294,7 +294,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(
 	OUT PVOID OutputBuffer,
 	IN ULONG OutputBufferSize)
 {
-	FIXME("(0x%p,0x%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): empty stub\n",
+	FIXME("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): empty stub\n",
 	DeviceHandle, Event, UserApcRoutine, UserApcContext,
 	IoStatusBlock, IoControlCode, InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
 	return 0;
@@ -316,7 +316,7 @@ NTSTATUS WINAPI NtFsControlFile(
 	OUT PVOID OutputBuffer,
 	IN ULONG OutputBufferSize)
 {
-	FIXME("(0x%p,0x%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): stub\n",
+	FIXME("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): stub\n",
 	DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,IoControlCode,
 	InputBuffer,InputBufferSize,OutputBuffer,OutputBufferSize);
 	return 0;
@@ -333,7 +333,7 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
         ULONG Length,
 	FS_INFORMATION_CLASS FsInformationClass)
 {
-	FIXME("(0x%p,%p,%p,0x%08lx,0x%08x) stub\n",
+	FIXME("(%p,%p,%p,0x%08lx,0x%08x) stub\n",
 	FileHandle,IoStatusBlock,FsInformation,Length,FsInformationClass);
 	return 0;
 }
@@ -349,7 +349,7 @@ NTSTATUS WINAPI NtQueryInformationFile(
 	ULONG Length,
 	FILE_INFORMATION_CLASS FileInformationClass)
 {
-	FIXME("(0x%p,%p,%p,0x%08lx,0x%08x),stub!\n",
+	FIXME("(%p,%p,%p,0x%08lx,0x%08x),stub!\n",
 	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
 	return 0;
 }
@@ -365,7 +365,7 @@ NTSTATUS WINAPI NtSetInformationFile(
 	ULONG Length,
 	FILE_INFORMATION_CLASS FileInformationClass)
 {
-	FIXME("(0x%p,%p,%p,0x%08lx,0x%08x)\n",
+	FIXME("(%p,%p,%p,0x%08lx,0x%08x)\n",
 	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
 	return 0;
 }
@@ -388,7 +388,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile(
 	IN PUNICODE_STRING FileName OPTIONAL,
 	IN BOOLEAN RestartScan)
 {
-	FIXME("(0x%p 0x%p %p %p %p %p 0x%08lx 0x%08x 0x%08x %p 0x%08x\n",
+	FIXME("(%p %p %p %p %p %p 0x%08lx 0x%08x 0x%08x %p 0x%08x\n",
 	FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation,
 	Length, FileInformationClass, ReturnSingleEntry,
 	debugstr_us(FileName),RestartScan);
@@ -408,7 +408,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 {
 	ULONG len = 0;
 
-	FIXME("(0x%p %p %p 0x%08lx 0x%08x) stub!\n",
+	FIXME("(%p %p %p 0x%08lx 0x%08x) stub!\n",
 	FileHandle, IoStatusBlock, FSInformation, Length, FSInformationClass);
 
 	switch ( FSInformationClass )

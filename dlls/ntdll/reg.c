@@ -55,7 +55,7 @@ NTSTATUS WINAPI NtCreateKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTR
 {
     NTSTATUS ret;
 
-    TRACE( "(0x%p,%s,%s,%lx,%lx,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
+    TRACE( "(%p,%s,%s,%lx,%lx,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, retkey );
 
     if (attr->ObjectName->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
@@ -77,7 +77,7 @@ NTSTATUS WINAPI NtCreateKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTR
         }
     }
     SERVER_END_REQ;
-    TRACE("<- 0x%p\n", *retkey);
+    TRACE("<- %p\n", *retkey);
     return ret;
 }
 
@@ -95,7 +95,7 @@ NTSTATUS WINAPI NtOpenKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTRIB
     NTSTATUS ret;
     DWORD len = attr->ObjectName->Length;
 
-    TRACE( "(0x%p,%s,%lx,%p)\n", attr->RootDirectory,
+    TRACE( "(%p,%s,%lx,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
 
     if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
@@ -110,7 +110,7 @@ NTSTATUS WINAPI NtOpenKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTRIB
         *retkey = reply->hkey;
     }
     SERVER_END_REQ;
-    TRACE("<- 0x%p\n", *retkey);
+    TRACE("<- %p\n", *retkey);
     return ret;
 }
 
@@ -143,7 +143,7 @@ NTSTATUS WINAPI NtDeleteValueKey( HKEY hkey, const UNICODE_STRING *name )
 {
     NTSTATUS ret;
 
-    TRACE( "(0x%p,%s)\n", hkey, debugstr_us(name) );
+    TRACE( "(%p,%s)\n", hkey, debugstr_us(name) );
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
     SERVER_START_REQ( delete_key_value )
@@ -328,7 +328,7 @@ NTSTATUS WINAPI NtEnumerateValueKey( HKEY handle, ULONG index,
     void *ptr;
     size_t fixed_size;
 
-    TRACE( "(0x%p,%lu,%d,%p,%ld)\n", handle, index, info_class, info, length );
+    TRACE( "(%p,%lu,%d,%p,%ld)\n", handle, index, info_class, info, length );
 
     /* compute the length we want to retrieve */
     switch(info_class)
@@ -376,7 +376,7 @@ NTSTATUS WINAPI NtQueryValueKey( HKEY handle, const UNICODE_STRING *name,
     UCHAR *data_ptr;
     int fixed_size = 0;
 
-    TRACE( "(0x%p,%s,%d,%p,%ld)\n", handle, debugstr_us(name), info_class, info, length );
+    TRACE( "(%p,%s,%d,%p,%ld)\n", handle, debugstr_us(name), info_class, info, length );
 
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
@@ -424,7 +424,7 @@ NTSTATUS WINAPI NtQueryValueKey( HKEY handle, const UNICODE_STRING *name,
  */
 NTSTATUS WINAPI NtFlushKey(HKEY KeyHandle)
 {
-	FIXME("(0x%p) stub!\n",
+	FIXME("(%p) stub!\n",
 	KeyHandle);
 	return 1;
 }
@@ -457,7 +457,7 @@ NTSTATUS WINAPI NtNotifyChangeKey(
 	IN ULONG Length,
 	IN BOOLEAN WatchSubtree)
 {
-	FIXME("(0x%p,0x%p,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
+	FIXME("(%p,%p,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
 	KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
 	Asynchroneous, ChangeBuffer, Length, WatchSubtree);
 	return STATUS_SUCCESS;
@@ -476,7 +476,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
 	ULONG Length,
 	PULONG  ReturnLength)
 {
-	FIXME("(0x%p,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
 	KeyHandle, ListOfValuesToQuery, NumberOfItems, MultipleValueInformation,
 	Length,ReturnLength);
 	return STATUS_SUCCESS;
@@ -491,7 +491,7 @@ NTSTATUS WINAPI NtReplaceKey(
 	IN HKEY Key,
 	IN POBJECT_ATTRIBUTES ReplacedObjectAttributes)
 {
-	FIXME("(0x%p),stub!\n", Key);
+	FIXME("(%p),stub!\n", Key);
 	dump_ObjectAttributes(ObjectAttributes);
 	dump_ObjectAttributes(ReplacedObjectAttributes);
 	return STATUS_SUCCESS;
@@ -505,7 +505,7 @@ NTSTATUS WINAPI NtRestoreKey(
 	HANDLE FileHandle,
 	ULONG RestoreFlags)
 {
-	FIXME("(0x%p,0x%p,0x%08lx) stub\n",
+	FIXME("(%p,%p,0x%08lx) stub\n",
 	KeyHandle, FileHandle, RestoreFlags);
 	return STATUS_SUCCESS;
 }
@@ -517,7 +517,7 @@ NTSTATUS WINAPI NtSaveKey(
 	IN HKEY KeyHandle,
 	IN HANDLE FileHandle)
 {
-	FIXME("(0x%p,0x%p) stub\n",
+	FIXME("(%p,%p) stub\n",
 	KeyHandle, FileHandle);
 	return STATUS_SUCCESS;
 }
@@ -531,7 +531,7 @@ NTSTATUS WINAPI NtSetInformationKey(
 	IN PVOID KeyInformation,
 	IN ULONG KeyInformationLength)
 {
-	FIXME("(0x%p,0x%08x,%p,0x%08lx) stub\n",
+	FIXME("(%p,0x%08x,%p,0x%08lx) stub\n",
 	KeyHandle, KeyInformationClass, KeyInformation, KeyInformationLength);
 	return STATUS_SUCCESS;
 }
@@ -550,7 +550,7 @@ NTSTATUS WINAPI NtSetValueKey( HKEY hkey, const UNICODE_STRING *name, ULONG Titl
 {
     NTSTATUS ret;
 
-    TRACE( "(0x%p,%s,%ld,%p,%ld)\n", hkey, debugstr_us(name), type, data, count );
+    TRACE( "(%p,%s,%ld,%p,%ld)\n", hkey, debugstr_us(name), type, data, count );
 
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
@@ -574,7 +574,7 @@ NTSTATUS WINAPI NtSetValueKey( HKEY hkey, const UNICODE_STRING *name, ULONG Titl
 NTSTATUS WINAPI NtUnloadKey(
 	IN HKEY KeyHandle)
 {
-	FIXME("(0x%p) stub\n",
+	FIXME("(%p) stub\n",
 	KeyHandle);
 	return STATUS_SUCCESS;
 }

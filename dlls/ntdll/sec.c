@@ -709,7 +709,7 @@ NtSetSecurityObject(
         IN SECURITY_INFORMATION SecurityInformation,
         IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
-	FIXME("0x%p 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
+	FIXME("%p 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
 	return STATUS_SUCCESS;
 }
 

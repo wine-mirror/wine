@@ -54,7 +54,7 @@ NTSTATUS WINAPI NtQueryObject(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	FIXME("(0x%p,0x%08x,%p,0x%08lx,%p): stub\n",
+	FIXME("(%p,0x%08x,%p,0x%08lx,%p): stub\n",
 	ObjectHandle, ObjectInformationClass, ObjectInformation, Length, ResultLength);
 	return 0;
 }
@@ -85,7 +85,7 @@ NtQuerySecurityObject(
 	PISECURITY_DESCRIPTOR_RELATIVE psd = (PISECURITY_DESCRIPTOR_RELATIVE)Buffer;
 	UINT BufferIndex = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
-	FIXME("(0x%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
 	Object, RequestedInformation, pSecurityDesriptor, Length, ResultLength);
 
 	RequestedInformation &= 0x0000000f;
@@ -271,7 +271,7 @@ NTSTATUS WINAPI NtWaitForSingleObject(
 	IN BOOLEAN Alertable,
 	IN PLARGE_INTEGER Time)
 {
-	FIXME("(0x%p,0x%08x,%p),stub!\n",Object,Alertable,Time);
+	FIXME("(%p,0x%08x,%p),stub!\n",Object,Alertable,Time);
 	return 0;
 }
 
@@ -338,7 +338,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject(
 	IN OUT PULONG ObjectIndex,
 	OUT PULONG DataWritten OPTIONAL)
 {
-	FIXME("(0x%p,%p,0x%08lx,0x%08x,0x%08x,%p,%p) stub\n",
+	FIXME("(%p,%p,0x%08lx,0x%08x,0x%08x,%p,%p) stub\n",
 		DirObjHandle, DirObjInformation, BufferLength, GetNextIndex,
 		IgnoreInputIndex, ObjectIndex, DataWritten);
     return 0xc0000000; /* We don't have any. Whatever. (Yet.) */
@@ -385,7 +385,7 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject(
 	IN OUT PUNICODE_STRING LinkTarget,
 	OUT PULONG ReturnedLength OPTIONAL)
 {
-	FIXME("(0x%p,%p,%p) stub\n",
+	FIXME("(%p,%p,%p) stub\n",
 	LinkHandle, debugstr_us(LinkTarget), ReturnedLength);
 
 	return 0;

@@ -85,7 +85,7 @@ static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
     	return exe_modref;
 
     if (!HIWORD(hmod)) {
-    	ERR("tried to lookup 0x%p in win32 module handler!\n",hmod);
+    	ERR("tried to lookup %p in win32 module handler!\n",hmod);
         SetLastError( ERROR_INVALID_HANDLE );
 	return NULL;
     }
@@ -1262,7 +1262,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
                     pwm->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
                     PE_fixup_imports( pwm );
 		}
-		TRACE("Already loaded module '%s' at 0x%p, count=%d\n", filename, pwm->module, pwm->refCount);
+		TRACE("Already loaded module '%s' at %p, count=%d\n", filename, pwm->module, pwm->refCount);
                 if (allocated_libdir)
                 {
                     HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
@@ -1308,7 +1308,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
 		if(pwm)
 		{
 			/* Initialize DLL just loaded */
-			TRACE("Loaded module '%s' at 0x%p\n", filename, pwm->module);
+			TRACE("Loaded module '%s' at %p\n", filename, pwm->module);
                         if (!TRACE_ON(module))
                             TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
 			/* Set the refCount here so that an attach failure will */
