@@ -99,6 +99,10 @@ void SYSDEPS_SetCurThread( TEB *teb )
     /* On non-i386 Solaris, we use the LWP private pointer */
     _lwp_setprivate( teb );
 #endif
+
+#ifdef HAVE_NPTL
+    teb->pthread_data = (void *)pthread_self();
+#endif
 }
 
 
@@ -160,7 +164,6 @@ int SYSDEPS_SpawnThread( TEB *teb )
     pthread_attr_t attr;
 
     pthread_attr_init( &attr );
-    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
     pthread_attr_setstack( &attr, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
     if (pthread_create( &id, &attr, (void * (*)(void *))SYSDEPS_StartThread, teb )) return -1;
     return 0;
@@ -277,9 +280,29 @@ void SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg )
 void SYSDEPS_ExitThread( int status )
 {
     TEB *teb = NtCurrentTeb();
+    DWORD size = 0;
+
+#ifdef HAVE_NPTL
+    static TEB *teb_to_free;
+    TEB *free_teb;
+
+    if ((free_teb = interlocked_xchg_ptr( (void **)&teb_to_free, teb )) != NULL)
+    {
+        void *ptr;
+
+        TRACE("freeing prev teb %p stack %p fs %04x\n",
+              free_teb, free_teb->stack_base, free_teb->teb_sel );
+
+        pthread_join( (pthread_t)free_teb->pthread_data, &ptr );
+        wine_ldt_free_fs( free_teb->teb_sel );
+        ptr = free_teb->stack_base;
+        NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
+    }
+    SIGNAL_Block();
+    SYSDEPS_AbortThread( status );
+#else
     struct thread_cleanup_info info;
     MEMORY_BASIC_INFORMATION meminfo;
-    DWORD size = 0;
 
     NtQueryVirtualMemory( GetCurrentProcess(), teb->stack_top, MemoryBasicInformation,
                           &meminfo, sizeof(meminfo), NULL );
@@ -288,17 +311,13 @@ void SYSDEPS_ExitThread( int status )
     info.status     = status;
 
     SIGNAL_Block();
-
-#ifdef HAVE_NPTL
-    SYSDEPS_AbortThread( status );
-#else
-    SIGNAL_Reset();
     size = 0;
     NtFreeVirtualMemory( GetCurrentProcess(), &teb->stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
     close( teb->wait_fd[0] );
     close( teb->wait_fd[1] );
     close( teb->reply_fd );
     close( teb->request_fd );
+    SIGNAL_Reset();
     teb->stack_low = get_temp_stack();
     teb->stack_top = (char *) teb->stack_low + TEMP_STACK_SIZE;
     SYSDEPS_SwitchToThreadStack( cleanup_thread, &info );
