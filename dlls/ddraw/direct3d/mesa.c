@@ -81,9 +81,9 @@ static HRESULT WINAPI MESA_IDirect3DImpl_EnumDevices(
 
     /* Call functions defined in d3ddevices.c */
     if (!d3d_OpenGL_dx3(cb, context))
-	return DD_OK;
+	return D3D_OK;
 
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3DImpl_CreateLight(
@@ -95,7 +95,7 @@ static HRESULT WINAPI MESA_IDirect3DImpl_CreateLight(
     /* Call the creation function that is located in d3dlight.c */
     *lplight = d3dlight_create_dx3(This);
 
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3DImpl_CreateMaterial(
@@ -105,7 +105,7 @@ static HRESULT WINAPI MESA_IDirect3DImpl_CreateMaterial(
     TRACE("(%p)->(%p,%p): stub\n", This, lpmaterial, lpunk);
     /* Call the creation function that is located in d3dviewport.c */
     *lpmaterial = d3dmaterial_create(This);
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3DImpl_CreateViewport(
@@ -117,7 +117,7 @@ static HRESULT WINAPI MESA_IDirect3DImpl_CreateViewport(
     /* Call the creation function that is located in d3dviewport.c */
     *lpviewport = d3dviewport_create(This);
 
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3DImpl_FindDevice(
@@ -127,7 +127,7 @@ static HRESULT WINAPI MESA_IDirect3DImpl_FindDevice(
     ICOM_THIS(IDirect3DImpl,iface);
     FIXME("(%p)->(%p,%p): stub\n", This, lpfinddevsrc, lpfinddevrst);
 
-    return DD_OK;
+    return D3D_OK;
 }
 
 ICOM_VTABLE(IDirect3D) mesa_d3dvt = 
@@ -209,8 +209,8 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_EnumDevices(
 
     /* Call functions defined in d3ddevices.c */
     if (!d3d_OpenGL(cb, context))
-	return DD_OK;
-    return DD_OK;
+	return D3D_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3D2Impl_CreateLight(
@@ -222,7 +222,7 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_CreateLight(
     /* Call the creation function that is located in d3dlight.c */
     *lplight = d3dlight_create(This);
 
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3D2Impl_CreateMaterial(
@@ -234,7 +234,7 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_CreateMaterial(
     /* Call the creation function that is located in d3dviewport.c */
     *lpmaterial = d3dmaterial2_create(This);
 
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3D2Impl_CreateViewport(
@@ -246,7 +246,7 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_CreateViewport(
     /* Call the creation function that is located in d3dviewport.c */
     *lpviewport = d3dviewport2_create(This);
 
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3D2Impl_FindDevice(
@@ -255,7 +255,7 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_FindDevice(
 {
     ICOM_THIS(IDirect3D2Impl,iface);
     FIXME("(%p)->(%p,%p): stub\n", This, lpfinddevsrc, lpfinddevrst);
-    return DD_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI MESA_IDirect3D2Impl_CreateDevice(
@@ -268,7 +268,7 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_CreateDevice(
 
     if (is_OpenGL(rguid, (IDirectDrawSurfaceImpl*)surface, (IDirect3DDevice2Impl**)device, This)) {
 	IDirect3D2_AddRef(iface);
-	return DD_OK;
+	return D3D_OK;
     }
 
     return DDERR_INVALIDPARAMS;
@@ -287,6 +287,53 @@ ICOM_VTABLE(IDirect3D2) mesa_d3d2vt =
     MESA_IDirect3D2Impl_FindDevice,
     MESA_IDirect3D2Impl_CreateDevice
 };
+
+static HRESULT WINAPI MESA_IDirect3D3Impl_CreateVertexBuffer(
+    LPDIRECT3D3 iface,
+    LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc,
+    LPDIRECT3DVERTEXBUFFER* lplpD3DVertBuf,
+    DWORD dwFlags,
+    LPUNKNOWN lpUnk)
+{
+  FIXME(":stub\n");
+  return D3D_OK;
+}
+
+static HRESULT WINAPI MESA_IDirect3D3Impl_EnumZBufferFormats(
+    LPDIRECT3D3 iface,
+    REFCLSID riidDevice,
+    LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,
+    LPVOID lpContext)
+{
+  FIXME(":stub\n");
+  return DDERR_NOZBUFFERHW; /* Pretend we don't have valid HW */
+}
+
+static HRESULT WINAPI MESA_IDirect3D3Impl_EvictManagedTextures(
+    LPDIRECT3D3 iface)
+{
+  FIXME(":stub\n");
+  return D3D_OK;
+}
+
+
+ICOM_VTABLE(IDirect3D3) mesa_d3d3vt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    MESA_IDirect3D2Impl_QueryInterface,
+    IDirect3D2Impl_AddRef,
+    MESA_IDirect3D2Impl_Release,
+    MESA_IDirect3D2Impl_EnumDevices,
+    MESA_IDirect3D2Impl_CreateLight,
+    MESA_IDirect3D2Impl_CreateMaterial,
+    MESA_IDirect3D2Impl_CreateViewport,
+    MESA_IDirect3D2Impl_FindDevice,
+    MESA_IDirect3D2Impl_CreateDevice,
+    MESA_IDirect3D3Impl_CreateVertexBuffer,
+    MESA_IDirect3D3Impl_EnumZBufferFormats,
+    MESA_IDirect3D3Impl_EvictManagedTextures
+};
+
 
 HRESULT create_direct3d(LPVOID *obj,IDirectDraw2Impl* ddraw) {
     IDirect3DImpl* d3d;
@@ -315,3 +362,21 @@ HRESULT create_direct3d2(LPVOID *obj,IDirectDraw2Impl* ddraw) {
     TRACE("  Creating IDirect3D2 interface (%p)\n", *obj);
     return S_OK;
 }
+
+HRESULT create_direct3d3(LPVOID *obj,IDirectDraw2Impl* ddraw) {
+    IDirect3D3Impl* d3d;
+
+    d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
+    d3d->ref = 1;
+    d3d->ddraw = ddraw;
+    d3d->private = NULL; /* unused for now */
+
+    IDirectDraw_AddRef((LPDIRECTDRAW)ddraw);
+    ICOM_VTBL(d3d) = &mesa_d3d3vt;
+    *obj = (LPUNKNOWN)d3d;
+
+    TRACE("  Creating IDirect3D3 interface (%p)\n", *obj);
+
+    return S_OK;
+}
+

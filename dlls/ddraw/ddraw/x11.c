@@ -655,6 +655,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 	return create_direct3d(obj,This);
     if ( IsEqualGUID( &IID_IDirect3D2, refiid ) )
 	return create_direct3d2(obj,This);
+    if ( IsEqualGUID( &IID_IDirect3D3, refiid ) ) 
+        return create_direct3d3(obj,This);
 #endif
     FIXME("(%p):interface for IID %s _NOT_ found!\n",This,debugstr_guid(refiid));
     return OLE_E_ENUM_NOMORE;

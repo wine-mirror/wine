@@ -70,21 +70,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(
 	DPRINTF("\n");
     }
 
-    if (dwFlags & DDENUM_NONDISPLAYDEVICES) {
-	FIXME("no non-display devices supported.\n");
-	return DD_OK;
-    }
-/* Hmm. Leave this out.
-    if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES) {
-	FIXME("no attached secondary devices supported.\n");
-	return DD_OK;
-    }
- */
-    if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES) {
-	FIXME("no detached secondary devices supported.\n");
-	return DD_OK;
-    }
-
+    /* Invoke callback for what flags we do support */
     for (i=0;i<MAX_DDRAW_DRIVERS;i++) {
 	if (!ddraw_drivers[i])
 	    continue;
@@ -105,6 +91,20 @@ HRESULT WINAPI DirectDrawEnumerateExA(
 	if (!lpCallback(NULL,"WINE (default)", "display", lpContext, 0))
 	    return DD_OK;
     }
+
+    /* Unsupported flags */
+    if (dwFlags & DDENUM_NONDISPLAYDEVICES) {
+	FIXME("no non-display devices supported.\n");
+    }
+/* Hmm. Leave this out.
+    if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES) {
+	FIXME("no attached secondary devices supported.\n");
+    }
+ */
+    if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES) {
+	FIXME("no detached secondary devices supported.\n");
+    }
+
     return DD_OK;
 }
 
@@ -269,7 +269,8 @@ HRESULT WINAPI DirectDrawCreate(
 	     ( IsEqualGUID( &zeroGUID,  lpGUID ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw,  lpGUID ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw2, lpGUID ) ) ||
-	     ( IsEqualGUID( &IID_IDirectDraw4, lpGUID ) )
+	     ( IsEqualGUID( &IID_IDirectDraw4, lpGUID ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw7, lpGUID ) )
 	) {
 	    /* choose an interface out of the list */
 	    for (i=0;i<nrof_ddraw_drivers;i++) {
@@ -321,6 +322,15 @@ HRESULT WINAPI DirectDrawCreate(
     wc.lpszClassName	= "WINE_DirectDraw";
     (*ilplpDD)->d.winclass = RegisterClassA(&wc);
     return ret;
+}
+
+
+HRESULT WINAPI DirectDrawCreateEx(
+	LPGUID lpGUID, LPVOID* lplpDD, REFIID iid, LPUNKNOWN pUnkOuter
+) {
+  FIXME(":semi stub\n");
+  /* I don't know about what functionality is unique to Ex */
+  return DirectDrawCreate(lpGUID,(LPDIRECTDRAW)lplpDD,pUnkOuter);
 }
 
 /*******************************************************************************

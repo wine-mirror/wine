@@ -13,10 +13,11 @@ import x11drv.dll
 @ stub DSoundHelp
 @ stdcall DirectDrawCreate(ptr ptr ptr) DirectDrawCreate
 @ stdcall DirectDrawCreateClipper(long ptr ptr) DirectDrawCreateClipper
+@ stdcall DirectDrawCreateEx(ptr ptr ptr ptr) DirectDrawCreateEx
 @ stdcall DirectDrawEnumerateA(ptr ptr) DirectDrawEnumerateA
+@ stdcall DirectDrawEnumerateW(ptr ptr) DirectDrawEnumerateW
 @ stdcall DirectDrawEnumerateExA(ptr ptr long) DirectDrawEnumerateExA
 @ stdcall DirectDrawEnumerateExW(ptr ptr long) DirectDrawEnumerateExW
-@ stdcall DirectDrawEnumerateW(ptr ptr) DirectDrawEnumerateW
 @ stdcall DllCanUnloadNow() DDRAW_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) DDRAW_DllGetClassObject
 @ stub GetNextMipMap

@@ -16,6 +16,8 @@
  */
 typedef struct IDirect3DImpl IDirect3DImpl;
 typedef struct IDirect3D2Impl IDirect3D2Impl;
+typedef struct IDirect3D3Impl IDirect3D3Impl;
+
 typedef struct IDirect3DLightImpl IDirect3DLightImpl;
 typedef struct IDirect3DMaterial2Impl IDirect3DMaterial2Impl;
 typedef struct IDirect3DTexture2Impl IDirect3DTexture2Impl;
@@ -28,6 +30,7 @@ typedef struct IDirect3DDevice2Impl IDirect3DDevice2Impl;
 
 extern ICOM_VTABLE(IDirect3D)	mesa_d3dvt;
 extern ICOM_VTABLE(IDirect3D2)	mesa_d3d2vt;
+extern ICOM_VTABLE(IDirect3D3)  mesa_d3d3vt;
 
 /*****************************************************************************
  * IDirect3D implementation structure
@@ -54,6 +57,18 @@ struct IDirect3D2Impl
     IDirectDrawImpl*	ddraw;
     LPVOID		private;
 };
+
+struct IDirect3D3Impl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirect3D3);
+    DWORD                    ref;
+    /* IDirect3D2 fields */
+    IDirectDrawImpl*    ddraw;
+    LPVOID              private;
+    /* IDirect3D3 fields */
+};
+
 
 extern HRESULT WINAPI IDirect3DImpl_QueryInterface(
     LPDIRECT3D iface,REFIID refiid,LPVOID *obj
