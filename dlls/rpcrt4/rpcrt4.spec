@@ -354,11 +354,16 @@
 @ stub NdrConformantStructMarshall
 @ stub NdrConformantStructMemorySize
 @ stub NdrConformantStructUnmarshall
-@ stub NdrConformantVaryingArrayBufferSize
-@ stub NdrConformantVaryingArrayFree
-@ stub NdrConformantVaryingArrayMarshall
+@ stdcall NdrConformantVaryingArrayBufferSize(ptr ptr ptr)
+@ stdcall NdrConformantVaryingArrayFree(ptr ptr ptr)
+@ stdcall NdrConformantVaryingArrayMarshall(ptr ptr ptr)
+@ stdcall NdrConformantVaryingArrayMemorySize(ptr ptr)
+@ stdcall NdrConformantVaryingArrayUnmarshall(ptr ptr ptr long)
+@ stub NdrConformantVaryingStructBufferSize
+@ stub NdrConformantVaryingStructFree
+@ stub NdrConformantVaryingStructMarshall
 @ stub NdrConformantVaryingStructMemorySize
-@ stub NdrConformantVaryingArrayUnmarshall
+@ stub NdrConformantVaryingStructUnmarshall
 @ stub NdrEncapsulatedUnionBufferSize
 @ stub NdrEncapsulatedUnionFree
 @ stub NdrEncapsulatedUnionMarshall
@@ -409,8 +414,8 @@
 @ stdcall NdrSimpleStructMarshall(ptr ptr ptr)
 @ stdcall NdrSimpleStructMemorySize(ptr ptr)
 @ stdcall NdrSimpleStructUnmarshall(ptr ptr ptr long)
-@ stub NdrSimpleTypeMarshall
-@ stub NdrSimpleTypeUnmarshall
+@ stdcall NdrSimpleTypeMarshall(ptr ptr long)
+@ stdcall NdrSimpleTypeUnmarshall(ptr ptr long)
 @ stdcall NdrUserMarshalBufferSize(ptr ptr ptr)
 @ stdcall NdrUserMarshalFree(ptr ptr ptr)
 @ stdcall NdrUserMarshalMarshall(ptr ptr ptr)

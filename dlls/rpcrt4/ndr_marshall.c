@@ -1159,6 +1159,27 @@ unsigned char * WINAPI NdrSimpleStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   return NULL;
 }
 
+
+/***********************************************************************
+ *           NdrSimpleStructUnmarshall [RPCRT4.@]
+ */
+void WINAPI NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                   unsigned char FormatChar )
+{
+    FIXME("stub\n");
+}
+
+
+/***********************************************************************
+ *           NdrSimpleStructUnmarshall [RPCRT4.@]
+ */
+void WINAPI NdrSimpleTypeUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                     unsigned char FormatChar )
+{
+    FIXME("stub\n");
+}
+
+
 /***********************************************************************
  *           NdrSimpleStructBufferSize [RPCRT4.@]
  */
@@ -1746,6 +1767,64 @@ void WINAPI NdrConformantArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
 
   EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
+
+
+/***********************************************************************
+ *           NdrConformantVaryingArrayMarshall  [RPCRT4.@]
+ */
+unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStubMsg,
+                                                         unsigned char* pMemory,
+                                                         PFORMAT_STRING pFormat )
+{
+    FIXME( "stub\n" );
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           NdrConformantVaryingArrayUnmarshall  [RPCRT4.@]
+ */
+unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pStubMsg,
+                                                           unsigned char** ppMemory,
+                                                           PFORMAT_STRING pFormat,
+                                                           unsigned char fMustAlloc )
+{
+    FIXME( "stub\n" );
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           NdrConformantVaryingArrayFree  [RPCRT4.@]
+ */
+void WINAPI NdrConformantVaryingArrayFree( PMIDL_STUB_MESSAGE pStubMsg,
+                                           unsigned char* pMemory,
+                                           PFORMAT_STRING pFormat )
+{
+    FIXME( "stub\n" );
+}
+
+
+/***********************************************************************
+ *           NdrConformantVaryingArrayBufferSize  [RPCRT4.@]
+ */
+void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
+                                                 unsigned char* pMemory, PFORMAT_STRING pFormat )
+{
+    FIXME( "stub\n" );
+}
+
+
+/***********************************************************************
+ *           NdrConformantVaryingArrayMemorySize  [RPCRT4.@]
+ */
+unsigned long WINAPI NdrConformantVaryingArrayMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
+                                                          PFORMAT_STRING pFormat )
+{
+    FIXME( "stub\n" );
+    return 0;
+}
+
 
 /***********************************************************************
  *           NdrComplexArrayMarshall [RPCRT4.@]
