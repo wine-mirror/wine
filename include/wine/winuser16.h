@@ -275,7 +275,7 @@ typedef struct /* not sure if the 16bit version is correct */
 
 typedef struct
 {
-    LPVOID      lpCreateParams;
+    SEGPTR      lpCreateParams;
     HINSTANCE16 hInstance;
     HMENU16     hMenu;
     HWND16      hwndParent;

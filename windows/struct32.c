@@ -90,7 +90,7 @@ void STRUCT32_WINDOWPOS16to32( const WINDOWPOS16* from, WINDOWPOS* to )
 void STRUCT32_CREATESTRUCT32Ato16( const CREATESTRUCTA* from,
                                    CREATESTRUCT16* to )
 {
-    to->lpCreateParams = from->lpCreateParams;
+    to->lpCreateParams = (SEGPTR)from->lpCreateParams;
     to->hInstance      = HINSTANCE_16(from->hInstance);
     to->hMenu          = HMENU_16(from->hMenu);
     to->hwndParent     = HWND_16(from->hwndParent);
@@ -105,7 +105,7 @@ void STRUCT32_CREATESTRUCT32Ato16( const CREATESTRUCTA* from,
 void STRUCT32_CREATESTRUCT16to32A( const CREATESTRUCT16* from,
                                    CREATESTRUCTA *to )
 {
-    to->lpCreateParams = from->lpCreateParams;
+    to->lpCreateParams = (LPVOID)from->lpCreateParams;
     to->hInstance      = HINSTANCE_32(from->hInstance);
     to->hMenu          = HMENU_32(from->hMenu);
     to->hwndParent     = WIN_Handle32(from->hwndParent);
@@ -141,4 +141,3 @@ void STRUCT32_MDICREATESTRUCT16to32A( const MDICREATESTRUCT16* from,
     to->style  = from->style;
     to->lParam = from->lParam;
 }
-
