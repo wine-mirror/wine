@@ -13,6 +13,11 @@ C_SRCS = \
 	async.c \
 	socket.c
 
+CTESTS = \
+	tests/sock.c
+
+EXTRASUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
