@@ -1557,7 +1557,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,H
 					  b_info,
 					  usage,
 					  &(This->s.bitmap_data),
-					  NULL,
+					  (HANDLE)0,
 					  0);
     EndPaint(This->s.ddraw->d.mainWindow,&This->s.ddraw->d.ps);
     TRACE(ddraw, "DIBSection at : %p\n", This->s.bitmap_data);
@@ -3643,6 +3643,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(
 #ifdef HAVE_LIBXXF86DGA
         ICOM_THIS(IDirectDraw2Impl,iface);
 	TRACE(ddraw,"(%p)->GetCaps(%p,%p)\n",This,caps1,caps2);
+	if (!caps1 && !caps2)
+	   return DDERR_INVALIDPARAMS;
 	if (caps1) {
 		caps1->dwVidMemTotal = This->e.dga.fb_memsize;
 		caps1->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED);		/* we can do anything */
