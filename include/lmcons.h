@@ -22,6 +22,8 @@
 /* Types */
 
 #define NET_API_STATUS          DWORD
+#define API_RET_TYPE            NET_API_STATUS
+#define NET_API_FUNCTION        WINAPI
 
 #define MAX_PREFERRED_LENGTH            ((DWORD) -1)
 
