@@ -5,6 +5,8 @@ VPATH     = @srcdir@
 MODULE    = dciman32
 SOVERSION = 1.0
 
+C_SRCS = dciman_main.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

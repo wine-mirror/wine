@@ -5,6 +5,8 @@ VPATH     = @srcdir@
 MODULE    = msnet32
 SOVERSION = 1.0
 
+C_SRCS = msnet_main.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

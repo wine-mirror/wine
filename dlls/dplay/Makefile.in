@@ -5,6 +5,8 @@ VPATH     = @srcdir@
 MODULE    = dplay
 SOVERSION = 1.0
 
+C_SRCS = dplay_main.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

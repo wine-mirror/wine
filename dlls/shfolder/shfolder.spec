@@ -1,5 +1,7 @@
 name shfolder
 type win32
 
-@ stdcall SHGetFolderPathA(long long long long ptr) SHGetFolderPathA
-@ stdcall SHGetFolderPathW(long long long long ptr) SHGetFolderPathW
+import shell32
+
+@ forward SHGetFolderPathA shell32.SHGetFolderPathA
+@ forward SHGetFolderPathW shell32.SHGetFolderPathW

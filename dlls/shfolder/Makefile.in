@@ -6,6 +6,8 @@ MODULE    = shfolder
 SOVERSION = 1.0
 IMPORTS   = shell32
 
+C_SRCS = shfolder_main.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
