@@ -632,7 +632,7 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
     BOOL changed = FALSE;
 
     if (style & SBT_OWNERDRAW) {
-         TRACE("part %d, text %x\n",nPart,text);
+         TRACE("part %d, text %p\n",nPart,text);
     }
     else TRACE("part %d, text %s\n", nPart, debugstr_t(text, isW));
 
