@@ -269,6 +269,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DWORD offset = 0;
     THDB *thdb = THREAD_Current();
+    int iWndsLocks;
 
     /* Window procedures want ax = hInstance, ds = es = ss */
     
@@ -309,6 +310,8 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 	}
     }
 
+    iWndsLocks = WIN_SuspendWndsLock();
+
     args = (WORD *)THREAD_STACK16(thdb) - 5;
     args[0] = LOWORD(lParam);
     args[1] = HIWORD(lParam);
@@ -318,6 +321,9 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 
     ret = CallTo16_sreg_( &context, 5 * sizeof(WORD) );
     if (offset) STACK16_POP( thdb, offset );
+
+    WIN_RestoreWndsLock(iWndsLocks);
+
     return ret;
 }
 
