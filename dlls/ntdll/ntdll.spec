@@ -200,6 +200,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall NtReplaceKey(ptr long ptr) NtReplaceKey 
 @ stub NtReplyPort
 @ stdcall NtReplyWaitReceivePort(long long long long) NtReplyWaitReceivePort
+@ stub NtReplyWaitReceivePortEx
 @ stub NtReplyWaitReplyPort
 @ stub NtRequestPort
 @ stdcall NtRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
@@ -207,6 +208,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall NtRestoreKey(long long long) NtRestoreKey
 @ stdcall NtResumeThread(long long) NtResumeThread
 @ stdcall NtSaveKey(long long) NtSaveKey
+@ stub NtSecureConnectPort
 @ stub NtSetContextThread
 @ stub NtSetDefaultHardErrorPort
 @ stub NtSetDefaultLocale

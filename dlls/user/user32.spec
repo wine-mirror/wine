@@ -333,6 +333,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall HiliteMenuItem(long long long long) HiliteMenuItem
 @ stub ImpersonateDdeClientWindow
 @ stdcall InSendMessage() InSendMessage
+@ stub InSendMessageEx
 @ stdcall InflateRect(ptr long long) InflateRect
 @ stdcall InsertMenuA(long long long long ptr) InsertMenuA
 @ stdcall InsertMenuItemA(long long long ptr) InsertMenuItemA
@@ -413,6 +414,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall ModifyMenuW(long long long long ptr) ModifyMenuW
 @ stdcall MoveWindow(long long long long long long) MoveWindow
 @ stdcall MsgWaitForMultipleObjects(long ptr long long long) MsgWaitForMultipleObjects
+@ stub MsgWaitForMultipleObjectsEx
 @ stdcall OemKeyScan(long) OemKeyScan
 @ stdcall OemToCharA(ptr ptr) OemToCharA
 @ stdcall OemToCharBuffA(ptr ptr long) OemToCharBuffA
@@ -581,6 +583,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long) UpdateWindow
 @ stub UserClientDllInitialize
+@ stub UserHandleGrantAccess
 @ stdcall UserRealizePalette(long) UserRealizePalette
 @ stub UserRegisterWowHandlers
 @ stdcall ValidateRect(long ptr) ValidateRect

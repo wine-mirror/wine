@@ -29,6 +29,7 @@ debug_channels (advapi reg)
 @ stdcall ClearEventLogW (long wstr) ClearEventLogW
 @ stdcall CloseEventLog (long) CloseEventLog
 @ stdcall CloseServiceHandle(long) CloseServiceHandle
+@ stub CommandLineFromMsiDescriptor
 @ stdcall ControlService(long long ptr) ControlService
 @ stdcall CopySid(long ptr ptr) CopySid
 @ stub CreatePrivateObjectSecurity
@@ -94,6 +95,7 @@ debug_channels (advapi reg)
 @ stdcall GetFileSecurityW(wstr long ptr long ptr) GetFileSecurityW
 @ stub GetKernelObjectSecurity
 @ stdcall GetLengthSid(ptr) GetLengthSid
+@ stub GetMangledSiteSid
 @ stdcall GetNumberOfEventLogRecords (long ptr) GetNumberOfEventLogRecords
 @ stdcall GetOldestEventLogRecord (long ptr) GetOldestEventLogRecord
 @ stub GetPrivateObjectSecurity
@@ -111,6 +113,7 @@ debug_channels (advapi reg)
 @ stdcall GetSidLengthRequired(long) GetSidLengthRequired
 @ stdcall GetSidSubAuthority(ptr long) GetSidSubAuthority
 @ stdcall GetSidSubAuthorityCount(ptr) GetSidSubAuthorityCount
+@ stub GetSiteSidFromToken
 @ stdcall GetTokenInformation(long long ptr long ptr) GetTokenInformation
 @ stdcall GetUserNameA(ptr ptr) GetUserNameA
 @ stdcall GetUserNameW(ptr ptr) GetUserNameW
@@ -122,7 +125,10 @@ debug_channels (advapi reg)
 @ stdcall InitializeSid(ptr ptr long) InitializeSid
 @ stub InitiateSystemShutdownA
 @ stub InitiateSystemShutdownW
+@ stub InstallApplication
+@ stub IsProcessRestricted
 @ forward IsTextUnicode ntdll.RtlIsTextUnicode
+@ stub IsTokenRestricted
 @ stub IsValidAcl
 @ stdcall IsValidSecurityDescriptor(ptr) IsValidSecurityDescriptor
 @ stdcall IsValidSid(ptr) IsValidSid
@@ -198,6 +204,7 @@ debug_channels (advapi reg)
 @ stdcall RegOpenKeyExA(long str long long ptr) RegOpenKeyExA
 @ stdcall RegOpenKeyExW(long wstr long long ptr) RegOpenKeyExW
 @ stdcall RegOpenKeyW(long wstr ptr) RegOpenKeyW
+@ stub RegOpenUserClassesRoot
 @ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyA
 @ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyW
 @ stub RegQueryMultipleValuesA

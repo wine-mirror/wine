@@ -582,6 +582,8 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall OpenFile(str ptr long) OpenFile
 @ stdcall OpenFileMappingA(long long str) OpenFileMappingA
 @ stdcall OpenFileMappingW(long long wstr) OpenFileMappingW
+@ stub OpenJobObjectA
+@ stub OpenJobObjectW
 @ stdcall OpenMutexA(long long str) OpenMutexA
 @ stdcall OpenMutexW(long long wstr) OpenMutexW
 @ stdcall OpenProcess(long long long) OpenProcess
