@@ -808,9 +808,9 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 	case WM_MOUSEACTIVATE:
 		/*
 		 *	FIXME: maybe DefWindowProc() screws up, but it seems that
-		 *		modalless dialog boxes need this.  If we don't do this, the focus
+		 *		modeless dialog boxes need this.  If we don't do this, the focus
 		 *		will _not_ be set by DefWindowProc() for edit controls in a
-		 *		modalless dialog box ???
+		 *		modeless dialog box ???
 		 */
 		DPRINTF_EDIT_MSG32("WM_MOUSEACTIVATE");
 		SetFocus(wnd->hwndSelf);
@@ -2236,14 +2236,17 @@ static INT EDIT_EM_LineLength(WND *wnd, EDITSTATE *es, INT index)
 		return lstrlenA(es->text);
 
 	if (index == -1) {
-		/* FIXME: broken
-		INT32 sl = EDIT_EM_LineFromChar(wnd, es, es->selection_start);
-		INT32 el = EDIT_EM_LineFromChar(wnd, es, es->selection_end);
-		return es->selection_start - es->line_defs[sl].offset +
-				es->line_defs[el].offset +
-				es->line_defs[el].length - es->selection_end;
-		*/
-		return 0;
+		/* get the number of remaining non-selected chars of selected lines */
+		INT32 li;
+		INT32 count;
+		li = EDIT_EM_LineFromChar(wnd, es, es->selection_start);
+		/* # chars before start of selection area */
+		count = es->selection_start - EDIT_EM_LineIndex(wnd, es, li);
+		li = EDIT_EM_LineFromChar(wnd, es, es->selection_end);
+		/* # chars after end of selection */
+		count += EDIT_EM_LineIndex(wnd, es, li) +
+			EDIT_EM_LineLength(wnd, es, li) - es->selection_end;
+		return count;
 	}
 	line_def = es->first_line_def;
 	index -= line_def->length;
@@ -2769,7 +2772,7 @@ static void EDIT_EM_SetSel(WND *wnd, EDITSTATE *es, UINT start, UINT end, BOOL a
 		es->flags &= ~EF_AFTER_WRAP;
 	if (es->flags & EF_FOCUSED)
 		EDIT_SetCaretPos(wnd, es, end, after_wrap);
-/* This is little  bit more efficient than before, not sure if it can be improved. FIXME? */
+/* This is a little bit more efficient than before, not sure if it can be improved. FIXME? */
         ORDER_UINT(start, end);
         ORDER_UINT(end, old_end);
         ORDER_UINT(start, old_start);
