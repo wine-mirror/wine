@@ -1302,8 +1302,6 @@ INT WINAPI FrameRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
     HBRUSH prevBrush;
     RECT r = *rect;
 
-    LPtoDP(hdc, (POINT *)&r, 2);
-
     if ( (r.right <= r.left) || (r.bottom <= r.top) ) return 0;
     if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
     
