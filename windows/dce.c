@@ -257,7 +257,7 @@ static INT DCE_ReleaseDC( DCE* dce )
  *
  * It is called from SetWindowPos() and EVENT_MapNotify - we have to
  * mark as dirty all busy DCEs for windows that have pWnd->parent as
- * an ansector and whose client rect intersects with specified update
+ * an ancestor and whose client rect intersects with specified update
  * rectangle. In addition, pWnd->parent DCEs may need to be updated if
  * DCX_CLIPCHILDREN flag is set.  */
 BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
@@ -1099,6 +1099,6 @@ BOOL16 WINAPI LockWindowUpdate16( HWND16 hwnd )
  */
 BOOL WINAPI LockWindowUpdate( HWND hwnd )
 {
-    /* FIXME? DCX_LOCKWINDOWUPDATE is unimplemented */
+    FIXME("DCX_LOCKWINDOWUPDATE is unimplemented\n");
     return TRUE;
 }

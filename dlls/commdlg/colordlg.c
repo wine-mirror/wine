@@ -454,11 +454,11 @@ static void CC_PaintTriangle( HWND hDlg, int y)
    height = rect.bottom;
    hDC = GetDC(hDlg);
    points[0].y = rect.top;
-   points[0].x = rect.right;           /*  |  /|  */
-   ClientToScreen(hwnd, points);    /*  | / |  */
-   ScreenToClient(hDlg, points);    /*  |<  |  */
-   oben = points[0].y;                 /*  | \ |  */
-				     /*  |  \|  */
+   points[0].x = rect.right;     /*  |  /|  */
+   ClientToScreen(hwnd, points); /*  | / |  */
+   ScreenToClient(hDlg, points); /*  |<  |  */
+   oben = points[0].y;           /*  | \ |  */
+                                 /*  |  \|  */
    temp = (long)height * (long)y;
    points[0].y = oben + height - temp / (long)MAXVERT;
    points[1].y = points[0].y + w;

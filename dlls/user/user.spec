@@ -484,7 +484,7 @@ owner	user32
 522 stub WNetDisable
 523 pascal16 WNetRestoreConnection(word ptr) WNetRestoreConnection16
 524 pascal16 WNetWriteJob(word ptr ptr) WNetWriteJob16
-525 pascal16 WnetConnectDialog(word word) WNetConnectDialog
+525 pascal16 WNetConnectDialog(word word) WNetConnectDialog
 526 pascal16 WNetDisconnectDialog(word word) WNetDisconnectDialog16
 527 pascal16 WNetConnectionDialog(word word) WNetConnectionDialog16
 528 pascal16 WNetViewQueueDialog(word ptr) WNetViewQueueDialog16

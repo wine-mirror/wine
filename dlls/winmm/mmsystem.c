@@ -3336,7 +3336,7 @@ static	MMRESULT WINAPI MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT l
 	return MMSYSERR_NOMEM;	
     }
 
-    /* wait for thread to have started, and for it's queue to be created */
+    /* wait for thread to have started, and for its queue to be created */
     {
 	DWORD	count;
 

@@ -169,7 +169,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     iWndsLocks = WIN_SuspendWndsLock();
     retvalue = WINPROC_wrapper( proc, hwnd, msg, wParam, lParam );
     WIN_RestoreWndsLock(iWndsLocks);
-    TRACE_(relay)("(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx) ret=%08lx\n",
+    TRACE_(relay)("(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
                    proc, hwnd, SPY_GetMsgName(msg), wParam, lParam, retvalue );
     return retvalue;
 }

@@ -5,6 +5,7 @@
  ***************************************************************************************/
 
 #include <assert.h>
+#include <string.h>
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
@@ -244,7 +245,7 @@ HRESULT WINAPI FileMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 
     TRACE("(%p,%p)\n",iface,pStm);
 
-    /* this function locate and read from the stream the filePath string writen by FileMonikerImpl_Save */
+    /* this function locates and reads from the stream the filePath string written by FileMonikerImpl_Save */
 
     /* first WORD is non significative */
     res=IStream_Read(pStm,&wbuffer,sizeof(WORD),&bread);
@@ -322,9 +323,9 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
 {
     /* this function saves data of this object. In the begining I thougth that I have just to write
      * the filePath string on Stream. But, when I tested this function whith windows programs samples !
-     * I noted that it was not the case. So I analysed data writen by this function on Windows system and 
+     * I noted that it was not the case. So I analysed data written by this function on Windows system and 
      * what did this function do exactly ! but I have no idear a bout its logic !
-     * I guessed data who must be writen on stream wich is:
+     * I guessed data who must be written on stream wich is:
      * 1) WORD constant:zero 2) length of the path string ("\0" included) 3) path string type A
      * 4) DWORD constant : 0xDEADFFFF 5) ten WORD constant: zero  6) DWORD: double-length of the the path
      * string type W ("\0" not included) 7) WORD constant: 0x3 8) filePath unicode string.
@@ -338,7 +339,7 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
     CHAR*     filePathA;
     DWORD  len;
 
-    DWORD  constant1 = 0xDEADFFFF; /* these constants are detected after analysing the data structure writen by */
+    DWORD  constant1 = 0xDEADFFFF; /* these constants are detected after analysing the data structure written by */
     WORD   constant2 = 0x3;        /* FileMoniker_Save function in a windows program system */
 
     WORD   zero=0;
@@ -351,7 +352,7 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
     if (pStm==NULL)
         return E_POINTER;
 
-    /* write a DWORD seted to 0 : constant */
+    /* write a DWORD set to 0 : constant */
     res=IStream_Write(pStm,&zero,sizeof(WORD),NULL);
 
     /* write length of filePath string ( "\0" included )*/
@@ -364,11 +365,11 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
     res=IStream_Write(pStm,filePathA,len,NULL);
     HeapFree(GetProcessHeap(),0,filePathA);
 
-    /* write a DWORD seted to 0xDEADFFFF: constant */
+    /* write a DWORD set to 0xDEADFFFF: constant */
     res=IStream_Write(pStm,&constant1,sizeof(DWORD),NULL);
 	
     len--;
-    /* write 10 times a DWORD seted to 0 : constants */
+    /* write 10 times a DWORD set to 0 : constants */
     for(i=0;i<10;i++)
         res=IStream_Write(pStm,&zero,sizeof(WORD),NULL);
 	
@@ -388,7 +389,7 @@ HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
     /* write double-length (hexa representation) of the path string ( "\0" included ) */
     res=IStream_Write(pStm,&doubleLenHex,sizeof(DWORD),NULL);
 
-    /* write a WORD seted to 0x3: constant */
+    /* write a WORD set to 0x3: constant */
     res=IStream_Write(pStm,&constant2,sizeof(WORD),NULL);
 
     /* write path unicode string */

@@ -514,7 +514,7 @@ ATOM WINAPI AddAtomW( LPCWSTR str )
 
 static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
 {
-    TRACE( "(%s) %x\n", local ? "local" : "glbal", atom );
+    TRACE( "(%s) %x\n", local ? "local" : "global", atom );
     if (atom < MIN_STR_ATOM) atom = 0;
     else
     {

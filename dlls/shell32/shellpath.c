@@ -705,10 +705,10 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"SendTo",
 	"SendTo"
     },
-    { /* CSIDL_BITBUCKET (??) */
+    { /* CSIDL_BITBUCKET (is this c:\recycled ?) */
 	0, 1, /* FIXME */
 	NULL,
-	NULL
+	"recycled"
     },
     { /* CSIDL_STARTMENU */
 	9, HKCU,

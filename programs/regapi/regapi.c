@@ -100,7 +100,7 @@ static void doRegisterDLL(LPSTR lpsLine);
 static void doUnregisterDLL(LPSTR lpsLine);
 
 /*
- * current supported api
+ * Currently supported api
  */
 static const char* commandNames[COMMAND_COUNT] = {
   "setValue", 
@@ -139,7 +139,7 @@ static const BOOL commandSaveRegistry[COMMAND_COUNT] = {
 };
 
 /* 
- * Generic prototyes
+ * Generic prototypes
  */
 static DWORD   getDataType(LPSTR *lpValue);
 static LPSTR   getRegKeyName(LPSTR lpLine);

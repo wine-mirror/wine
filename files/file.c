@@ -167,7 +167,7 @@ void FILE_SetDosError(void)
         SetLastError( ERROR_BAD_FORMAT );
         break;
     default:
-        WARN( "unknown file error: %s", strerror(save_errno) );
+        WARN("unknown file error: %s\n", strerror(save_errno) );
         SetLastError( ERROR_GEN_FAILURE );
         break;
     }
@@ -880,8 +880,8 @@ found:
       /* Probable FIXME:
 	 As our loader closes the files after loading the executable,
 	 we can't find the running executable with FILE_InUse.
-	 Perhaps the loader should keep the file open.
-	 Recheck against how Win handles that case */
+	 The loader should keep the file open, as Windows does that, too.
+       */
       {
 	char *last = strrchr(full_name.long_name,'/');
 	if (!last)
@@ -2190,8 +2190,8 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHig
  * RETURNS
  *   success: TRUE
  *   failure: FALSE
- * NOTES
  *
+ * NOTES
  * Per Microsoft docs, the third parameter (reserved) must be set to 0.
  */
 BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,

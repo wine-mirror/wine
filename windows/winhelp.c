@@ -78,11 +78,11 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 	if(!hDest) {
 	  if(wCommand == HELP_QUIT) return TRUE;
           if (WinExec ( "winhlp32.exe -x", SW_SHOWNORMAL ) < 32) {
-	      FIXME("cant start winhlp32.exe -x?\n");
+	      ERR("can't start winhlp32.exe -x ?\n");
 	      return FALSE;
 	  }
 	  if ( ! ( hDest = FindWindowA ( "MS_WINHELP", NULL ) )) {
-	      FIXME("did not find MS_WINHELP\n");
+	      FIXME("did not find MS_WINHELP (FindWindow() failed, maybe global window handling still unimplemented)\n");
 	      return FALSE;
 	  }
         }
