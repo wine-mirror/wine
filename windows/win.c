@@ -2641,15 +2641,20 @@ void WINAPI ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
  */
 BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
 {
-    WND *pWnd;
-    pWnd = WIN_LockWndPtr(pWndDesktop->child);
-    while (pWnd)
+    UINT totalChild=0, count=0;
+
+    WND **pWnd = WIN_BuildWinArray(WIN_GetDesktop(), 0, &totalChild);
+
+    if (!pWnd) return TRUE;
+
+    for (; count < totalChild; count++)
     {
-        if (pWnd->owner && (pWnd->owner->hwndSelf == owner) &&
-            (pWnd->dwStyle & WS_POPUP))
-            ShowWindow( pWnd->hwndSelf, fShow ? SW_SHOW : SW_HIDE );
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
+        if (pWnd[count]->owner && (pWnd[count]->owner->hwndSelf == owner) && (pWnd[count]->dwStyle & WS_POPUP))
+            SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, fShow ? SW_SHOW : SW_HIDE,IsIconic(owner) ? SW_PARENTOPENING : SW_PARENTCLOSING);
     }
+
+    WIN_ReleaseDesktop();    
+    WIN_ReleaseWinArray(pWnd);
     return TRUE;
 }
 
