@@ -230,6 +230,9 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
     BITMAPINFO *info=(BITMAPINFO*)data;
     LOGBRUSH logbrush;
 
+    if (!data)
+        return NULL;
+
     TRACE("%p %ldx%ld %dbpp\n", info, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight,  info->bmiHeader.biBitCount);
 
