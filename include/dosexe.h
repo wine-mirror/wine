@@ -29,7 +29,7 @@ typedef struct _DOSTASK {
  pid_t task;
 } DOSTASK, *LPDOSTASK;
 
-#ifdef linux
+#if defined(linux) && defined(__i386__)
 
 #define MZ_SUPPORTED
 
@@ -40,7 +40,7 @@ extern int MZ_InitMemory( LPDOSTASK lpDosTask, struct _NE_MODULE *pModule );
 extern void MZ_KillModule( LPDOSTASK lpDosTask );
 extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
-#endif /* linux */
+#endif /* linux-i386 */
 
 #define V86_FLAG 0x00020000
 
