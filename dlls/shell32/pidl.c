@@ -29,16 +29,9 @@ DECLARE_DEBUG_CHANNEL(shell);
 
 void pdump (LPCITEMIDLIST pidl)
 {
-	BOOL bIsShellDebug;
-	
 	LPITEMIDLIST pidltemp = pidl;
 	if (!TRACE_ON(pidl))
 	  return;
-
-	/* silence the sub-functions */
-	bIsShellDebug = TRACE_ON(shell);
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, FALSE);
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, FALSE);
 
 	if (! pidltemp)
 	{
@@ -77,20 +70,12 @@ void pdump (LPCITEMIDLIST pidl)
 	  }
 	  pcheck(pidl);
 	}
-
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, bIsShellDebug);
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, TRUE);
-
 }
 #define BYTES_PRINTED 32
 BOOL pcheck (LPCITEMIDLIST pidl)
-{       DWORD type, ret=TRUE;
-	BOOL bIsPidlDebug;
-
+{
+        DWORD type, ret=TRUE;
         LPITEMIDLIST pidltemp = pidl;
-
-	bIsPidlDebug = TRACE_ON(shell);
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, FALSE);
 
         if (pidltemp && pidltemp->mkid.cb)
         { do
@@ -137,7 +122,6 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	    pidltemp = ILGetNext(pidltemp);
 	  } while (pidltemp->mkid.cb);
 	}
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, bIsPidlDebug);
 	return ret;
 }
 
@@ -660,8 +644,6 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
 {
 	WORD len;
-	
-	TRACE("(pidl=%p)\n",pidl);
 
 	if(pidl)
 	{

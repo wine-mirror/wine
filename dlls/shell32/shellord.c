@@ -1470,20 +1470,12 @@ HRESULT WINAPI CIDLData_CreateFromIDArray(
 {
     INT i;
     HWND hwnd = 0;   /*FIXME: who should be hwnd of owner? set to desktop */
-    BOOL boldpidl;
 
-    if (TRACE_ON(shell)) {
-	TRACE("(%p, %ld, %p, %p)\n", pidlFolder, cpidlFiles,
-	      lppidlFiles, ppdataObject);
-	boldpidl = TRACE_ON(pidl);
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, FALSE);
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, TRUE);
+    TRACE("(%p, %ld, %p, %p)\n", pidlFolder, cpidlFiles, lppidlFiles, ppdataObject);
+    if (TRACE_ON(pidl))
+    {
 	pdump (pidlFolder);
-	for (i=0; i<cpidlFiles; i++){
-	    pdump (lppidlFiles[i]);
-	}
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, TRUE);
-	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, boldpidl);
+	for (i=0; i<cpidlFiles; i++) pdump (lppidlFiles[i]);
     }
     *ppdataObject = IDataObject_Constructor( hwnd, pidlFolder,
 					     lppidlFiles, cpidlFiles);
