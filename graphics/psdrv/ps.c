@@ -251,11 +251,9 @@ int PSDRV_WriteSpool(DC *dc, LPSTR lpData, WORD cch)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
-    if(physDev->job.NeedPageHeader) {
-	physDev->job.PageNo++;
-        if( !PSDRV_WriteNewPage(dc) )
+    if(physDev->job.OutOfPage) { /* Will get here after NEWFRAME Escape */
+        if( !PSDRV_StartPage(dc) )
 	    return FALSE;
-	physDev->job.NeedPageHeader = FALSE;
     }
     return WriteSpool16( physDev->job.hJob, lpData, cch );
 }
@@ -282,26 +280,20 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 
 
 
-INT PSDRV_WriteHeader( DC *dc, char *title, int len )
+INT PSDRV_WriteHeader( DC *dc, LPCSTR title )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    char *buf, *titlebuf, *orient, vectbuf[256];
+    char *buf, *orient, vectbuf[256];
     INPUTSLOT *slot;
     PAGESIZE *page;
     int urx, ury, i, j;
 
-    titlebuf = (char *)HeapAlloc( PSDRV_Heap, 0, len+1 );
-    if(!titlebuf) {
-        WARN("HeapAlloc failed\n");
-        return 0;
-    }
-    memcpy(titlebuf, title, len);
-    titlebuf[len] = '\0';
+    TRACE("'%s'\n", title);
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) + len + 30);
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +
+			     strlen(title) + 30 );
     if(!buf) {
         WARN("HeapAlloc failed\n");
-	HeapFree( PSDRV_Heap, 0, titlebuf );
         return 0;
     }
 
@@ -319,16 +311,14 @@ INT PSDRV_WriteHeader( DC *dc, char *title, int len )
 
     /* FIXME should do something better with BBox */
 
-    sprintf(buf, psheader, titlebuf, 0, 0, urx, ury, orient);		
+    sprintf(buf, psheader, title, 0, 0, urx, ury, orient);		
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
         WARN("WriteSpool error\n");
-	HeapFree( PSDRV_Heap, 0, titlebuf );
 	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
     }
-    HeapFree( PSDRV_Heap, 0, titlebuf );
     HeapFree( PSDRV_Heap, 0, buf );
 
     WriteSpool16( physDev->job.hJob, psbeginprolog, strlen(psbeginprolog) );

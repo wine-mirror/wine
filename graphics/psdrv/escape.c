@@ -7,12 +7,13 @@
 #include "psdrv.h"
 #include "debugtools.h"
 #include "winspool.h"
+#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
 
 INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
-                              SEGPTR lpInData, SEGPTR lpOutData )
+		  SEGPTR lpInData, SEGPTR lpOutData )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
@@ -38,13 +39,11 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
         if(!physDev->job.hJob) {
 	    FIXME("hJob == 0. Now what?\n");
-	    return 0;
+	    return SP_ERROR;
 	}
-
-	if(!PSDRV_WriteEndPage( dc ))
-	    return 0;
-
-	physDev->job.NeedPageHeader = TRUE;
+	
+	if(!PSDRV_EndPage( dc ))
+	    return SP_ERROR;
 	return 1;
           
     case QUERYESCSUPPORT:
@@ -86,46 +85,35 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	return 1;
 
     case STARTDOC:
+      {
+	DOCINFOA doc;
+	char *name = NULL;
+	INT16 ret;
+
         TRACE("STARTDOC\n");
-        if(physDev->job.hJob) {
-	    FIXME("hJob != 0. Now what?\n");
-	    return 0;
-	}
 
-	physDev->job.hJob = OpenJob16(physDev->job.output,
-				    PTR_SEG_TO_LIN(lpInData), dc->hSelf);
-	if(!physDev->job.hJob) {
-	    WARN("OpenJob failed\n");
-	    return 0;
+	/* lpInData may not be 0 terminated so we must copy it */
+	if(lpInData) {
+	    name = HeapAlloc( GetProcessHeap(), 0, cbInput+1 );
+	    memcpy(name, PTR_SEG_TO_LIN(lpInData), cbInput);
+	    name[cbInput] = '\0';
 	}
-	physDev->job.banding = FALSE;
-	physDev->job.NeedPageHeader = FALSE;
-	physDev->job.PageNo = 1;
-	if(!PSDRV_WriteHeader( dc, PTR_SEG_TO_LIN(lpInData), cbInput ))
-	    return 0;
+	doc.cbSize = sizeof(doc);
+	doc.lpszDocName = name;
+	doc.lpszOutput = doc.lpszDatatype = NULL;
+	doc.fwType = 0;
 
-	if(!PSDRV_WriteNewPage( dc ))
-	    return 0;
-	return 1;
+	ret = PSDRV_StartDoc(dc, &doc);
+	if(name) HeapFree( GetProcessHeap(), 0, name );
+	if(ret <= 0) return -1;
+	ret = PSDRV_StartPage(dc);
+	if(ret <= 0) return -1;
+	return ret;
+      }
 
     case ENDDOC:
         TRACE("ENDDOC\n");
-        if(!physDev->job.hJob) {
-	    FIXME("hJob == 0. Now what?\n");
-	    return 0;
-	}
-
-	physDev->job.NeedPageHeader = FALSE;
-
-	if(!PSDRV_WriteFooter( dc ))
-	    return 0;
-
-        if( CloseJob16( physDev->job.hJob ) == SP_ERROR ) {
-	    WARN("CloseJob error\n");
-	    return 0;
-	}
-	physDev->job.hJob = 0;
-	return 1;
+	return PSDRV_EndDoc( dc );
 
     case GETPHYSPAGESIZE:
         {
@@ -256,4 +244,100 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         FIXME("Unimplemented code 0x%x\n", nEscape);
 	return 0;
     }
+}
+
+/************************************************************************
+ *           PSDRV_StartPage
+ */
+INT PSDRV_StartPage( DC *dc )
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+
+    if(!physDev->job.OutOfPage) {
+        FIXME("Already started a page?\n");
+	return 1;
+    }
+    physDev->job.PageNo++;
+    if(!PSDRV_WriteNewPage( dc ))
+        return 0;
+    physDev->job.OutOfPage = FALSE;
+    return 1;
+}
+
+	
+/************************************************************************
+ *           PSDRV_EndPage
+ */
+INT PSDRV_EndPage( DC *dc )
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+
+    if(physDev->job.OutOfPage) {
+        FIXME("Already ended a page?\n");
+	return 1;
+    }
+    if(!PSDRV_WriteEndPage( dc ))
+        return 0;
+    physDev->job.OutOfPage = TRUE;
+    return 1;
+}
+
+
+/************************************************************************
+ *           PSDRV_StartDoc
+ */
+INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc )
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+
+    if(physDev->job.hJob) {
+        FIXME("hJob != 0. Now what?\n");
+	return 0;
+    }
+
+    if(doc->lpszOutput) {
+        HeapFree( PSDRV_Heap, 0, physDev->job.output );
+	physDev->job.output = HEAP_strdupA( PSDRV_Heap, 0, doc->lpszOutput );
+    }
+    physDev->job.hJob = OpenJob16(physDev->job.output,  doc->lpszDocName,
+				  dc->hSelf);
+    if(!physDev->job.hJob) {
+        WARN("OpenJob failed\n");
+	return 0;
+    }
+    physDev->job.banding = FALSE;
+    physDev->job.OutOfPage = TRUE;
+    physDev->job.PageNo = 0;
+    if(!PSDRV_WriteHeader( dc, doc->lpszDocName ))
+        return 0;
+
+    return physDev->job.hJob;
+}
+
+
+/************************************************************************
+ *           PSDRV_EndDoc
+ */
+INT PSDRV_EndDoc( DC *dc )
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+
+    if(!physDev->job.hJob) {
+        FIXME("hJob == 0. Now what?\n");
+	return 0;
+    }
+
+    if(!physDev->job.OutOfPage) {
+        WARN("Somebody forgot a EndPage\n");
+	PSDRV_EndPage( dc );
+    }
+    if(!PSDRV_WriteFooter( dc ))
+        return 0;
+
+    if( CloseJob16( physDev->job.hJob ) == SP_ERROR ) {
+        WARN("CloseJob error\n");
+	return 0;
+    }
+    physDev->job.hJob = 0;
+    return 1;
 }

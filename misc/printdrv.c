@@ -25,6 +25,7 @@
 #include "callback.h"
 #include "xmalloc.h"
 #include "options.h"
+#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(print)
 
@@ -39,74 +40,65 @@ static char Printers[]		= "System\\CurrentControlSet\\Control\\Print\\Printers\\
  */
 INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 {
-  INT16 retVal;
-  TRACE("(%p)\n", lpdoc );
-  TRACE("%d 0x%lx:0x%p 0x%lx:0x%p\n",lpdoc->cbSize,
-	lpdoc->lpszDocName,PTR_SEG_TO_LIN(lpdoc->lpszDocName),
-	lpdoc->lpszOutput,PTR_SEG_TO_LIN(lpdoc->lpszOutput));
-  TRACE("%d %s %s\n",lpdoc->cbSize,
-	(LPSTR)PTR_SEG_TO_LIN(lpdoc->lpszDocName),
-	(LPSTR)PTR_SEG_TO_LIN(lpdoc->lpszOutput));
-  retVal =  Escape16(hdc, STARTDOC,
-    strlen((LPSTR)PTR_SEG_TO_LIN(lpdoc->lpszDocName)), lpdoc->lpszDocName, 0);
-  TRACE("Escape16 returned %d\n",retVal);
-  return retVal;
+    DOCINFOA docA;
+
+    docA.cbSize = lpdoc->cbSize;
+    docA.lpszDocName = PTR_SEG_TO_LIN(lpdoc->lpszDocName);
+    docA.lpszOutput = PTR_SEG_TO_LIN(lpdoc->lpszOutput);
+    docA.lpszDatatype = NULL;
+    docA.fwType = 0;
+
+    return StartDocA(hdc, &docA);
 }
 
 /******************************************************************
- *                  EndPage16  [GDI.380]
+ *                  StartDocA  [GDI32.347]
  *
  */
-INT16 WINAPI EndPage16( HDC16 hdc )
+INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 {
-  INT16 retVal;
-  retVal =  Escape16(hdc, NEWFRAME, 0, 0, 0);
-  TRACE("Escape16 returned %d\n",retVal);
-  return retVal;
-}
+    DC *dc = DC_GetDCPtr( hdc );
 
-/******************************************************************
- *                  StartDoc32A  [GDI32.347]
- *
- */
-INT WINAPI StartDocA(HDC hdc ,const DOCINFOA* doc)
-{
     TRACE("DocName = '%s' Output = '%s' Datatype = '%s'\n",
 	  doc->lpszDocName, doc->lpszOutput, doc->lpszDatatype);
-    return  Escape(hdc,
-		   STARTDOC,
-		   strlen(doc->lpszDocName),
-		   doc->lpszDocName,
-		   0);
+
+    if(!dc) return 0;
+
+    if(dc->funcs->pStartDoc)
+        return dc->funcs->pStartDoc( dc, doc );
+    else
+        return Escape(hdc, STARTDOC, strlen(doc->lpszDocName),
+		      doc->lpszDocName, 0);
 }
 
 /*************************************************************************
- *                  StartDoc32W [GDI32.348]
+ *                  StartDocW [GDI32.348]
  * 
  */
-INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc) {
-  FIXME("stub\n");
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
-  return 0; /* failure*/
-}
-
-/******************************************************************
- *                  StartPage32  [GDI32.349]
- *
- */
-INT WINAPI StartPage(HDC hdc)
+INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 {
-  FIXME("stub\n");
-  return 1;
-}
+    DOCINFOA docA;
+    INT ret;
 
-/******************************************************************
- *                  EndPage32  [GDI32.77]
- *
- */
-INT WINAPI EndPage(HDC hdc)
-{
-  return Escape(hdc, NEWFRAME, 0, 0, 0);
+    docA.cbSize = doc->cbSize;
+    docA.lpszDocName = doc->lpszDocName ? 
+      HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszDocName ) : NULL;
+    docA.lpszOutput = doc->lpszOutput ?
+      HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszOutput ) : NULL;
+    docA.lpszDatatype = doc->lpszDatatype ?
+      HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszDatatype ) : NULL;
+    docA.fwType = doc->fwType;
+
+    ret = StartDocA(hdc, &docA);
+
+    if(docA.lpszDocName)
+        HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDocName );
+    if(docA.lpszOutput)
+        HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszOutput );
+    if(docA.lpszDatatype)
+        HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDatatype );
+
+    return ret;
 }
 
 /******************************************************************
@@ -115,16 +107,71 @@ INT WINAPI EndPage(HDC hdc)
  */
 INT16 WINAPI EndDoc16(HDC16 hdc)
 {
-  return  Escape16(hdc, ENDDOC, 0, 0, 0);
+    return EndDoc(hdc);
 }
 
 /******************************************************************
- *                  EndDoc32  [GDI32.76]
+ *                  EndDoc  [GDI32.76]
  *
  */
 INT WINAPI EndDoc(HDC hdc)
 {
-  return Escape(hdc, ENDDOC, 0, 0, 0);
+    DC *dc = DC_GetDCPtr( hdc );
+    if(!dc) return 0;
+
+    if(dc->funcs->pEndDoc)
+        return dc->funcs->pEndDoc( dc );
+    else
+        return Escape(hdc, ENDDOC, 0, 0, 0);
+}
+
+/******************************************************************
+ *                  StartPage16  [GDI.379]
+ *
+ */
+INT16 WINAPI StartPage16(HDC16 hdc)
+{
+    return StartPage(hdc);
+}
+
+/******************************************************************
+ *                  StartPage  [GDI32.349]
+ *
+ */
+INT WINAPI StartPage(HDC hdc)
+{
+    DC *dc = DC_GetDCPtr( hdc );
+    if(!dc) return 0;
+
+    if(dc->funcs->pStartPage)
+        return dc->funcs->pStartPage( dc );
+
+    FIXME("stub\n");
+    return 1;
+}
+
+/******************************************************************
+ *                  EndPage16  [GDI.380]
+ *
+ */
+INT16 WINAPI EndPage16( HDC16 hdc )
+{
+    return EndPage(hdc);
+}
+
+/******************************************************************
+ *                  EndPage  [GDI32.77]
+ *
+ */
+INT WINAPI EndPage(HDC hdc)
+{
+    DC *dc = DC_GetDCPtr( hdc );
+    if(!dc) return 0;
+
+    if(dc->funcs->pEndPage)
+        return dc->funcs->pEndPage( dc );
+    else
+        return Escape(hdc, NEWFRAME, 0, 0, 0);
 }
 
 /******************************************************************************
@@ -132,20 +179,25 @@ INT WINAPI EndDoc(HDC hdc)
  */
 INT16 WINAPI AbortDoc16(HDC16 hdc)
 {
-  return Escape16(hdc, ABORTDOC, 0, 0, 0);
+    return AbortDoc(hdc);
 }
 
 /******************************************************************************
- *                 AbortDoc32  [GDI32.0]
+ *                 AbortDoc  [GDI32.105]
  */
 INT WINAPI AbortDoc(HDC hdc)
 {
-    FIXME("(%d): stub\n", hdc);
-    return 1;
+    DC *dc = DC_GetDCPtr( hdc );
+    if(!dc) return 0;
+
+    if(dc->funcs->pAbortDoc)
+        return dc->funcs->pAbortDoc( dc );
+    else
+        return Escape(hdc, ABORTDOC, 0, 0, 0);
 }
 
 /**********************************************************************
- *           QueryAbort   (GDI.155)
+ *           QueryAbort16   (GDI.155)
  *
  *  Calls the app's AbortProc function if avail.
  *
@@ -363,7 +415,7 @@ static PPRINTJOB FindPrintJobFromHandle(HANDLE16 hHandle)
 }
 
 /* TTD Need to do some DOS->UNIX file conversion here */
-static int CreateSpoolFile(LPSTR pszOutput)
+static int CreateSpoolFile(LPCSTR pszOutput)
 {
     int fd=-1;
     char psCmd[1024];
@@ -378,7 +430,7 @@ static int CreateSpoolFile(LPSTR pszOutput)
     TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
 	  psCmd, pszOutput);
     if (!*psCmd)
-        psCmdP = pszOutput;
+        psCmdP = (char *)pszOutput;
     else
     {
         while (*psCmdP && isspace(*psCmdP))
@@ -444,7 +496,7 @@ static int FreePrintJob(HANDLE16 hJob)
  *           OpenJob   (GDI.240)
  *
  */
-HANDLE16 WINAPI OpenJob16(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
+HANDLE16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 {
     HANDLE16 hHandle = (HANDLE16)SP_ERROR;
     PPRINTJOB pPrintJob;

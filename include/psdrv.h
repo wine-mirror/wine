@@ -214,9 +214,9 @@ typedef struct {
 typedef struct {
     HANDLE16		hJob;
     LPSTR		output;		/* Output file/port */
-    BOOL              banding;        /* Have we received a NEXTBAND */
-    BOOL		NeedPageHeader; /* Page header not sent yet */
-    INT		PageNo;
+    BOOL		banding;        /* Have we received a NEXTBAND */
+    BOOL		OutOfPage;      /* Page header not sent yet */
+    INT			PageNo;
 } JOB;
 
 typedef struct {
@@ -263,7 +263,7 @@ extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 		     COLORREF wincolor );
 
 
-extern INT PSDRV_WriteHeader( DC *dc, char *title, int len );
+extern INT PSDRV_WriteHeader( DC *dc, LPCSTR title );
 extern INT PSDRV_WriteFooter( DC *dc );
 extern INT PSDRV_WriteNewPage( DC *dc );
 extern INT PSDRV_WriteEndPage( DC *dc );
@@ -315,6 +315,8 @@ extern BOOL PSDRV_Chord( DC *dc, INT left, INT top, INT right,
 			   INT xend, INT yend );
 extern BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right,
 			     INT bottom );
+extern INT PSDRV_EndDoc( DC *dc );
+extern INT PSDRV_EndPage( DC *dc );
 extern BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				     DEVICEFONTENUMPROC proc, LPARAM lp );
 extern INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
@@ -349,11 +351,14 @@ extern COLORREF PSDRV_SetBkColor( DC *dc, COLORREF color );
 extern VOID PSDRV_SetDeviceClipping( DC *dc );
 extern COLORREF PSDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color );
 extern COLORREF PSDRV_SetTextColor( DC *dc, COLORREF color );
+extern INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc );
+extern INT PSDRV_StartPage( DC *dc );
 extern INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst,
-				  INT widthDst, INT heightDst, INT xSrc,
-				  INT ySrc, INT widthSrc, INT heightSrc,
-				  const void *bits, const BITMAPINFO *info,
-				  UINT wUsage, DWORD dwRop );
+				INT widthDst, INT heightDst, INT xSrc,
+				INT ySrc, INT widthSrc, INT heightSrc,
+				const void *bits, const BITMAPINFO *info,
+				UINT wUsage, DWORD dwRop );
+
 extern INT PSDRV_ExtDeviceMode(HWND hwnd, LPDEVMODEA lpdmOutput,
 			       LPSTR lpszDevice, LPSTR lpszPort,
 			       LPDEVMODEA lpdmInput, LPSTR lpszProfile,

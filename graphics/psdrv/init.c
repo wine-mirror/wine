@@ -36,8 +36,8 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pDeleteObject */
     PSDRV_DeviceCapabilities,        /* pDeviceCapabilities */
     PSDRV_Ellipse,                   /* pEllipse */
-    NULL,                            /* pEndDoc */
-    NULL,                            /* pEndPage */
+    PSDRV_EndDoc,                    /* pEndDoc */
+    PSDRV_EndPage,                   /* pEndPage */
     PSDRV_EnumDeviceFonts,           /* pEnumDeviceFonts */
     PSDRV_Escape,                    /* pEscape */
     NULL,                            /* pExcludeClipRect */
@@ -95,8 +95,8 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSetViewportOrg (optional) */
     NULL,                            /* pSetWindowExt (optional) */
     NULL,                            /* pSetWindowOrg (optional) */
-    NULL,                            /* pStartDoc */
-    NULL,                            /* pStartPage */
+    PSDRV_StartDoc,                  /* pStartDoc */
+    PSDRV_StartPage,                 /* pStartPage */
     NULL,                            /* pStretchBlt */
     PSDRV_StretchDIBits              /* pStretchDIBits */
 };
