@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmusic.dll
-IMPORTS   = dsound winmm user32 kernel32
+IMPORTS   = dsound winmm ole32 user32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@

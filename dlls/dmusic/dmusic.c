@@ -21,11 +21,22 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "config.h"
+
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "wingdi.h"
+#include "winuser.h"
+#include "winerror.h"
+#include "mmsystem.h"
+#include "winternl.h"
+#include "mmddk.h"
+#include "wine/windef16.h"
+#include "wine/winbase16.h"
 #include "wine/debug.h"
+#include "dsound.h"
 
 #include "dmusic_private.h"
 
@@ -69,14 +80,21 @@ ULONG WINAPI   IDirectMusicImpl_Release (LPDIRECTMUSIC iface)
 /* IDirectMusic Interface follow: */
 HRESULT WINAPI IDirectMusicImpl_EnumPort (LPDIRECTMUSIC iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps)
 {
-	/* FIXME: this is only for making DXCapsViewer display something */
-	static const WCHAR name_WINE_SYNTHESIZER[] = {'W','i','n','e',' ','S','y','n','t','h','e','s','i','z','e','r',0};
+	ICOM_THIS(IDirectMusicImpl,iface);
+	int numMIDI = midiOutGetNumDevs();
+	int numWAVE = waveOutGetNumDevs();
+	int i;
+	
+	TRACE("(%p, %ld, %p)\n", This, dwIndex, pPortCaps);
+	TRACE("1 software synth. + %i WAVE + %i MIDI available\n", numWAVE, numMIDI);
 
+	/* i guess the first port shown is always software synthesizer */
 	if (dwIndex == 0)
 	{
+		TRACE("enumerating 'Microsoft Software Synthesizer' port\n");
 		pPortCaps->dwSize = sizeof(DMUS_PORTCAPS);
 		pPortCaps->dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
-		/*pPortCaps->guidPort;*/ /* FIXME */
+		pPortCaps->guidPort = CLSID_DirectMusicSynth;
 		pPortCaps->dwClass = DMUS_PC_OUTPUTCLASS;
 		pPortCaps->dwType = DMUS_PORT_WINMM_DRIVER;
 		pPortCaps->dwMemorySize = DMUS_PC_SYSTEMMEMORY;
@@ -84,11 +102,29 @@ HRESULT WINAPI IDirectMusicImpl_EnumPort (LPDIRECTMUSIC iface, DWORD dwIndex, LP
 		pPortCaps->dwMaxVoices = 1000;
 		pPortCaps->dwMaxAudioChannels = -1;
 		pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
-		wsprintfW(pPortCaps->wszDescription, name_WINE_SYNTHESIZER);
+		MultiByteToWideChar (CP_ACP, 0, "Microsotf Synthesizer", -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
 		return S_OK;
 	}
 
-	FIXME("partial-stub (only first port supported)\n");
+	/* then return digital sound ports */
+	for (i = 1; i <= numWAVE; i++)
+	{
+		TRACE("enumerating 'digital sound' ports\n");	
+		if (i == dwIndex)
+		{
+			DirectSoundEnumerateA((LPDSENUMCALLBACKA)register_waveport, (VOID*)pPortCaps);
+			return S_OK;	
+		}
+	}
+
+	/* finally, list all *real* MIDI ports*/
+	for (i = numWAVE+1; i <= numWAVE + numMIDI; i++) 
+	{
+		TRACE("enumerating 'real MIDI' ports\n");		
+		if (i == dwIndex)
+			FIXME("Found MIDI port, but *real* MIDI ports not supported yet\n");
+	}
+	
 	return S_FALSE;
 }
 
@@ -132,8 +168,26 @@ HRESULT WINAPI IDirectMusicImpl_Activate (LPDIRECTMUSIC iface, BOOL fEnable)
 
 HRESULT WINAPI IDirectMusicImpl_GetDefaultPort (LPDIRECTMUSIC iface, LPGUID pguidPort)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	HKEY hkGUID;
+	DWORD returnTypeGUID, sizeOfReturnBuffer = 50;
+	char returnBuffer[51];
+	GUID defaultPortGUID;
+	WCHAR    buff[51];
+	
+	if (RegOpenKeyExA (HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic\\Defaults" , 0, KEY_READ, &hkGUID) != ERROR_SUCCESS)
+	{
+		ERR(": registry entry missing\n" );
+	}
+	if (RegQueryValueExA (hkGUID, "DefaultOutputPort", NULL, &returnTypeGUID, returnBuffer, &sizeOfReturnBuffer) != ERROR_SUCCESS)
+	{
+		ERR(": missing GUID registry data members\n" );
+	}
+	/* FIXME: Check return types to ensure we're interpreting data right */
+	MultiByteToWideChar (CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR));
+	CLSIDFromString ((LPCOLESTR)buff, &defaultPortGUID);
+	*pguidPort = defaultPortGUID;
+	
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicImpl_SetDirectSound (LPDIRECTMUSIC iface, LPDIRECTSOUND pDirectSound, HWND hWnd)
@@ -551,3 +605,22 @@ ICOM_VTABLE(IDirectMusicObject) DirectMusicObject_Vtbl =
 	IDirectMusicObjectImpl_SetDescriptor,
 	IDirectMusicObjectImpl_ParseDescriptor
 };
+
+
+/* helper stuff */
+void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVOID lpContext)
+{
+	LPDMUS_PORTCAPS pPortCaps = (LPDMUS_PORTCAPS)lpContext;
+	
+	pPortCaps->dwSize = sizeof(DMUS_PORTCAPS);
+	pPortCaps->dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
+	pPortCaps->guidPort = *lpGUID;
+	pPortCaps->dwClass = DMUS_PC_OUTPUTCLASS;
+	pPortCaps->dwType = DMUS_PORT_WINMM_DRIVER;
+	pPortCaps->dwMemorySize = DMUS_PC_SYSTEMMEMORY;
+	pPortCaps->dwMaxChannelGroups = 1000;
+	pPortCaps->dwMaxVoices = 1000;
+	pPortCaps->dwMaxAudioChannels = -1;
+	pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
+	MultiByteToWideChar (CP_ACP, 0, lpszDesc, -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
+}

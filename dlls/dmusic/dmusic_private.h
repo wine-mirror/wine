@@ -1234,4 +1234,9 @@ extern HRESULT WINAPI IDirectMusicSongImpl_Download (LPDIRECTMUSICSONG iface, IU
 extern HRESULT WINAPI IDirectMusicSongImpl_Unload (LPDIRECTMUSICSONG iface, IUnknown* pAudioPath);
 extern HRESULT WINAPI IDirectMusicSongImpl_EnumSegment (LPDIRECTMUSICSONG iface, DWORD dwIndex, IDirectMusicSegment** ppSegment);
 
+/*****************************************************************************
+ * Helper Functions
+ */
+void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVOID lpContext);
+
 #endif	/* __WINE_DMUSIC_PRIVATE_H */
