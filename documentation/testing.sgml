@@ -4,7 +4,7 @@
     <sect1 id="testing-intro">
       <title>Introduction</title>
       <para>
-        With more The Windows API follows no standard, it is itself a defacto
+        With more The Windows API follows no standard, it is itself a de facto
         standard, and deviations from that standard, even small ones, often
         cause applications to crash or misbehave in some way. Furthermore
         a conformance test suite is the most accurate (if not necessarily
@@ -173,6 +173,80 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
     </sect1>
 
 
+    <sect1 id="cross-compiling-tests">
+      <title>Cross-compiling the tests with MinGW</title>
+      <sect2>
+        <title>Setup of the MinGW cross-compiling environment</title>
+        <para>
+          The most daunting problem while trying to cross-compile the Wine
+          tests is the setup of the MinGW cross-compiling environment. Here
+          are some instructions for different Linux distributions and *BSD
+          systems to help with this problem.
+        </para>
+        <sect3>
+          <title>Debian GNU/Linux</title>
+          <para>
+            On Debian all you need to do is type <command>apt-get install
+            mingw32</>.
+          </para>
+        </sect3>
+        <sect3>
+          <title>Red Hat Linux like rpm systems</title>
+          <para>
+            This includes Fedora Core, Red Hat Enterprise Linux, Mandrake,
+            most probably SuSE Linux too, etc. But this list isn't exhaustive;
+            the following steps should probably work on any rpm based system.
+          </para>
+          <itemizedlist>
+            <listitem><para>
+              Download the mingw-binutils  and mingw-gcc  srpm's from
+              <ulink url="http://ftp.redhat.com/pub/contrib/libc6/SRPMS/">
+              http://ftp.redhat.com/pub/contrib/libc6/SRPMS/</ulink>.
+            </para></listitem>
+            <listitem><para>
+              Download the mingw srpm from
+              <ulink url="http://ftp.redhat.com/pub/contrib/libc6/noarch/SRPMS/">
+              http://ftp.redhat.com/pub/contrib/libc6/noarch/SRPMS/</ulink>.
+            </para></listitem>
+            <listitem><para>
+              Build the mingw and mingw-binutils rpm's (<command>rpmbuild
+              --rebuild $SRPM</>) and install them.
+            </para></listitem>
+            <listitem><para>
+              After the above step you can build the mingw-gcc rpm too.
+              Install it.
+            </para></listitem>
+          </itemizedlist>
+        </sect3>
+        <sect3>
+          <title>*BSD</title>
+          <para>
+            The *BSD systems have in their ports collection a port for the
+            MinGW cross-compiling environment. Please see the documentation
+            of your system about how to build and install a port.
+          </para>
+        </sect3>
+      </sect2>
+      <sect2>
+      <title>Compiling the tests</title>
+      <para>
+        Having the cross-compiling environment set up the generation of the
+        Windows executables is easy by using the Wine build system.
+      </para>
+      <para>
+        If you had already run <command>configure</>, then delete
+        <filename>config.cache</> and re-run <command>configure</>.
+        You can then run <command>make crosstest</>. To sum up:
+<screen>
+<prompt>$ </><userinput>rm config.cache</>
+<prompt>$ </><userinput>./configure</>
+<prompt>$ </><userinput>make crosstest</>
+</screen>
+      </para>
+      </sect2>
+    </sect1>
+
+
     <sect1 id="testing-windows">
       <title>Building and running the tests on Windows</title>
       <sect2>
@@ -255,34 +329,6 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
           development mailing list and update this documentation with the
           result of your inquiry.
         </para>
-      </sect2>
-      <sect2>
-        <title>Cross compiling with MinGW on Linux</title>
-        <para>
-          Here is how to generate Windows executables for the tests straight
-          from the comfort of Linux.
-        </para>
-        <itemizedlist>
-          <listitem><para>
-            First you need to get the MinGW cross-compiler. On Debian all
-            you need to do is type <command>apt-get install mingw32</>.
-          </para></listitem>
-          <listitem><para>
-            If you had already run <command>configure</>, then delete
-            <filename>config.cache</> and re-run <command>configure</>.
-            You can then run <command>make crosstest</>. To sum up:
-<screen>
-<prompt>$ </><userinput>rm config.cache</>
-<prompt>$ </><userinput>./configure</>
-<prompt>$ </><userinput>make crosstest</>
-</screen>
-          </para></listitem>
-          <listitem><para>
-            If you get an error when compiling <filename>winsock.h</> then
-            you probably need to apply the following patch:
-            <ulink url="http://www.winehq.org/hypermail/wine-patches/2002/12/0157.html">http://www.winehq.org/hypermail/wine-patches/2002/12/0157.html</>
-          </para></listitem>
-        </itemizedlist>
       </sect2>
     </sect1>
 
