@@ -717,15 +717,13 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     break;
 
     case 0x1b: /* FUNCTIONALITY/STATE INFORMATION */
-        FIXME("Get functionality/state information - partially implemented\n");
+        TRACE("Get functionality/state information\n");
         if (BX_reg(context) == 0x0)
         {
           AL_reg(context) = 0x1b;
-          if (ISV86(context)) /* real */
-            context->SegEs = 0xf000;
-          else
-            context->SegEs = DOSMEM_BiosSysSeg;
-          BX_reg(context) = 0xe000;
+          /* Copy state information structure to ES:DI */
+          memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
+              DOSMEM_BiosSys()+0xe010,sizeof(VIDEOSTATE));
         }
         break;
 
