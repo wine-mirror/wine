@@ -7,32 +7,77 @@
 #
 # This program is subject to the same license as Wine (www.winehq.com).
 
+=head1 NAME
+
+genpatch - A utility that generates patches for submission to
+wine-patches@winehq.com
+
+=head1 SYNOPSIS
+
+genpatch [B<-v>] [B<-n> patch_name] [B<-f> patch_file]
+         [B<-c> change_log] [B<-m> modified_files]
+         [B<-a> added_files]
+
+=head1 DESCRIPTION
+
+The genpatch utility generated patches for submission to
+wine-patches@winehq by acting as a wrapper to "cvs diff".  The "B<-v>"
+switch specifies that verbose output should be generated.  The "B<-n>"
+switch overrides the patch name ("Name" field) which defaults to a
+numeric UTC date.  The "B<-f>" switch overrides the filename of the patch
+which defaults to "patches/<patch_name>.diff".  The "B<-c>" switch
+specifies the CVS change log entry ("ChangeLog" field) which can be
+seen when "cvs log" is invoked.  The "B<-m>" ("ModifiedFiles" field) and
+"B<-a>" ("AddedFiles" field) switches override the set of files that
+would normally be included by the "cvs diff".  Normally "cvs diff"
+includes all files modified relative to the deltas indicated by the
+"CVS/Entries" file and ignores all newly added files.  The "B<-m>" switch
+specifies a whitespace separated list of files that were modified.
+The "B<-a>" switch specifies a whitespace separated list of files that
+were added.
+
+=head1 EXAMPLE
+
+genpatch B<-n> NLSFix B<-c> "various fixes for NLS support" \
+    B<-m> ole/ole2nls.c B<-a> ole/ole3nls.c
+
+The above generates a patch named "NLSFix" in "patches/NLSFix.diff"
+that includes a modification to "ole/ole2nls.c" and a newly added
+"ole/ole3nls.c".
+
+=cut
+
+use strict;
+
 use Getopt::Std;
 use File::Basename;
 use POSIX qw(strftime);
-use strict;
 
-my $gen_date;    # date the patch was generated
-my %options;     # command line options
-my @new_files;   # new files as an array
-my $new_file;    # new file being considered
-my $patches_dir; # location of the patch file
+my $gen_date;       # date the patch was generated
+my %options;        # command line options
+my @modified_files; # optional list of files that were modified
+my @added_files;    # added files as an array
+my $added_file;     # added file being considered
+my $patches_dir;    # location of the patch file
+my $cvs_line;       # line of output from CVS
+my $mod_files_str;  # string that describes the modified files
 
 # Default the patch name to the UTC time.  Use a more descriptive date for the
 # patch generation date.
 $options{n} = strftime "%Y%m%d%H%M", gmtime;
 $gen_date = strftime "%Y/%m/%d %H:%M:%S UTC", gmtime;
 
-unless(getopts("n:c:f:a:", \%options))
+unless(getopts("vn:f:c:m:a:", \%options))
 {
-    print STDERR "Usage: $0 [-n patch_name] [-c change_log] [-f patch_file] " .
-        "[-a new_files]\n";
+    print STDERR "Usage: $0 [-v] [-n patch_name] [-f patch_file] " .
+        "[-c change_log] [-m modified_files] [-a added_files]\n";
     exit 1;
 }
 
 $options{f} = "patches/$options{n}.diff" unless(exists $options{f});
 $patches_dir = dirname $options{f};
-@new_files = split ' ', $options{a};
+@added_files = split ' ', $options{a};
+@modified_files = split ' ', $options{m};
 
 if(-d $patches_dir)
 {
@@ -48,25 +93,40 @@ else
         die "Unable to mkdir $patches_dir: $!";
 }
 
-print "Generating $options{f}.\n";
+$mod_files_str = exists($options{m}) ? $options{m} : "<see cvs diff>";
+print "Generating $options{f}.\n" if($options{v});
 open OPT_F, ">$options{f}" or die "Unable to open $options{f} for write: $!";
 print OPT_F <<EOF;
 Name: $options{n}
 ChangeLog: $options{c}
 GenDate: $gen_date
-NewFiles: $options{a}
+ModifiedFiles: $mod_files_str
+AddedFiles: $options{a}
 EOF
 
-foreach $new_file (@new_files)
+print "Invoking cvs diff.\n" if($options{v});
+open CVS_IN, "cvs diff -u @modified_files|" or die "Unable to invoke cvs: $!";
+while($cvs_line = <CVS_IN>)
 {
-    print "Adding $new_file as a new file.\n";
-    open DIFF_IN, "diff -u /dev/null $new_file|" or die "Unable to " .
+    chomp $cvs_line;
+    if($cvs_line =~ /^\? (.*)/)
+    {
+        push @added_files, $1 unless(exists $options{a});
+    }
+    else
+    {
+        print OPT_F <CVS_IN>;
+    }
+}
+close CVS_IN;
+
+foreach $added_file (@added_files)
+{
+    print "Adding $added_file as a new file.\n" if($options{v});
+    open DIFF_IN, "diff -u /dev/null $added_file|" or die "Unable to " .
         "invoke diff: $!";
     print OPT_F <DIFF_IN>;
     close DIFF_IN;
 }
 
-print "Invoking cvs diff.\n";
-open CVS_IN, "cvs diff -u|" or die "Unable to invoke cvs: $!";
-print OPT_F <CVS_IN>;
-close CVS_IN;
+close OPT_F;
