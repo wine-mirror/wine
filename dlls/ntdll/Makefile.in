@@ -33,8 +33,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/memory/string.c \
 	$(TOPOBJDIR)/memory/virtual.c \
 	$(TOPOBJDIR)/misc/cpu.c \
-	$(TOPOBJDIR)/misc/error.c \
-	$(TOPOBJDIR)/misc/main.c \
 	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
 	$(TOPOBJDIR)/misc/version.c \

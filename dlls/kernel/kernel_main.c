@@ -226,3 +226,14 @@ BOOL WINAPI SwitchToThread(void)
     Sleep(0);
     return 1;
 }
+
+/***********************************************************************
+ *           Beep   (KERNEL32.@)
+ */
+BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
+{
+    static const char beep = '\a';
+    /* dwFreq and dwDur are ignored by Win95 */
+    if (isatty(2)) write( 2, &beep, 1 );
+    return TRUE;
+}

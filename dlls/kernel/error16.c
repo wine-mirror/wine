@@ -288,4 +288,3 @@ void WINAPI HandleParamError( CONTEXT86 *context )
 		context->SegEs = 0;
 	}
 }
-

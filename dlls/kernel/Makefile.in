@@ -47,6 +47,7 @@ C_SRCS = \
 	wowthunk.c
 
 C_SRCS16 = \
+	error16.c \
 	registry16.c \
 	system.c
 
