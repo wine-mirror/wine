@@ -144,16 +144,18 @@ static LPVOID WINAPI IMalloc_fnAlloc(LPMALLOC iface, DWORD cb) {
 	TRACE("(%ld)\n",cb);
 
 	if(Malloc32.pSpy) {
+	    DWORD preAllocResult;
+	    
 	    EnterCriticalSection(&IMalloc32_SpyCS);
-	    cb = IMallocSpy_PreAlloc(Malloc32.pSpy, cb);
-	    if (0==cb) {
-	        /* PreAlloc can force Alloc to fail */
-	        LeaveCriticalSection(&IMalloc32_SpyCS);
+	    preAllocResult = IMallocSpy_PreAlloc(Malloc32.pSpy, cb);
+	    if ((cb != 0) && (preAllocResult == 0)) {
+		/* PreAlloc can force Alloc to fail, but not if cb == 0 */
+		TRACE("returning null\n");
+		LeaveCriticalSection(&IMalloc32_SpyCS);
 		return NULL;
 	    }
 	}
-
-
+ 	
 	addr = HeapAlloc(GetProcessHeap(),0,cb);
 
 	if(Malloc32.pSpy) {
