@@ -73,7 +73,7 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID);
 INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 
 BOOL16 WINAPI IsEqualGUID16(GUID* g1,GUID* g2);
-BOOL WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
+BOOL WINAPI IsEqualGUID(REFGUID rguid1,REFGUID rguid2);
 /*#define IsEqualGUID WINELIB_NAME(IsEqualGUID)*/
 #if defined(__cplusplus) && !defined(CINTERFACE)
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(&(rguid1), &(rguid2), sizeof(GUID)))
