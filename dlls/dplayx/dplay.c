@@ -540,7 +540,7 @@ static ULONG WINAPI DirectPlay2AImpl_Release
   }
   LeaveCriticalSection( &This->unk->DP_lock );
 
-  TRACE("ref count decremeneted to %lu for %p\n", refCount, This );
+  TRACE("ref count decremented to %lu for %p\n", refCount, This );
 
   /* Deallocate if this is the last reference to the object */
   if( refCount == 0 )

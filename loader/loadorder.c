@@ -168,8 +168,8 @@ static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
 /***************************************************************************
  *	AddLoadOrder	(internal, static)
  *
- * Adds an entry in the list of overrides. If the entry exists then the
- * override parameter determines whether it will be overwriten.
+ * Adds an entry in the list of overrides. If the entry exists, then the
+ * override parameter determines whether it will be overwritten.
  */
 static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
 {
@@ -213,9 +213,9 @@ static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
 /***************************************************************************
  *	AddLoadOrderSet	(internal, static)
  *
- * Adds an set of entries in the list of overrides from the key parameter.
- * If the entry exists then the override parameter determines whether it
- * will be overwriten.
+ * Adds a set of entries in the list of overrides from the key parameter.
+ * If the entry exists, then the override parameter determines whether it
+ * will be overwritten.
  */
 static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
 {
@@ -300,7 +300,7 @@ endit:
  *	MODULE_InitLoadOrder	(internal)
  *
  * Initialize the load order from the wine.conf file.
- * The section has tyhe following format:
+ * The section has the following format:
  * Section:
  *	[DllDefaults]
  *
@@ -310,11 +310,11 @@ endit:
  * environment (see note in code below).
  *
  *	DefaultLoadOrder=native,elfdll,so,builtin
- * A comma seperated list of module-types to try to load in that specific
+ * A comma separated list of module types to try to load in that specific
  * order. The DefaultLoadOrder key is used as a fallback when a module is
- * not specified explicitely. If the DefaultLoadOrder key is not found, 
+ * not specified explicitly. If the DefaultLoadOrder key is not found, 
  * then the order "dll,elfdll,so,bi" is used
- * The possible module-types are:
+ * The possible module types are:
  *	- native	Native windows dll files
  *	- elfdll	Dlls encapsulated in .so libraries
  *	- so		Native .so libraries mapped to dlls
@@ -384,7 +384,7 @@ BOOL MODULE_InitLoadOrder(void)
 	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,e,s,b", buffer, sizeof(buffer));
 	if(!nbuffer)
 	{
-		MESSAGE("MODULE_InitLoadOrder: misteriously read nothing from default loadorder\n");
+		MESSAGE("MODULE_InitLoadOrder: mysteriously read nothing from default loadorder\n");
 		return FALSE;
 	}
 

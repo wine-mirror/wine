@@ -387,7 +387,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
                 {
                     CREATESTRUCTA cs;
                     cs.lpCreateParams = NULL;
-                    cs.hInstance = 0; /* not used if following call */
+                    cs.hInstance = 0; /* not used in following call */
                     cs.hMenu = 0; /* not used in following call */
                     cs.hwndParent = pWndParent->hwndSelf;
                     cs.cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;

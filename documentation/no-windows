@@ -61,3 +61,6 @@ C:\windows is really /home/ego/wine/drives/c).
 - Put regedit.exe in the C:\windows directory (office95 imports
   a *.reg file when it runs with a empty registry, don't know
   about office97).
+
+- Also add winhelp.exe and winhlp32.exe if you want to be able to browse
+  through your programs' help function.

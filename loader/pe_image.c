@@ -509,7 +509,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     /* Check signature */
     if ( nt->Signature != IMAGE_NT_SIGNATURE )
     {
-        WARN("%s image doesn't have PE signature, but 0x%08lx\n", nt->Signature );
+        WARN("%s image doesn't have PE signature, but 0x%08lx\n", filename, nt->Signature );
         goto error;
     }
 

@@ -93,6 +93,9 @@ file contained in the source distribution.
 .TP
 .I -backingstore
 Turn on backing store
+Backingstore stores pixels of obscured window parts off-screen.
+This buffer is used to restore these parts faster once they are to reappear,
+but it consumes additional memory of course.
 .TP
 .I -config filename
 Use the named configuration file rather than the default

@@ -98,15 +98,15 @@ BOOL PROCESS_IsCurrent( HANDLE handle )
  *
  * Convert a process id to a PDB, making sure it is valid.
  */
-PDB *PROCESS_IdToPDB( DWORD id )
+PDB *PROCESS_IdToPDB( DWORD pid )
 {
     PDB *pdb;
 
-    if (!id) return PROCESS_Current();
+    if (!pid) return PROCESS_Current();
     pdb = PROCESS_First;
     while (pdb)
     {
-        if ((DWORD)pdb->server_pid == id) return pdb;
+        if ((DWORD)pdb->server_pid == pid) return pdb;
         pdb = pdb->next;
     }
     SetLastError( ERROR_INVALID_PARAMETER );

@@ -75,7 +75,8 @@ Miscellaneous:
 
  * SGI window manager treats Wine windows as topmost.
 
- * KDE window manager puts popup windows like menus below the main window.
+ * KDE window manager and icewm put popup windows like menus
+   below the main window.
 
  * Write shows blank space instead of Paintbrush OLE1 object ( GetDIBits()? ).
 

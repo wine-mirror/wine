@@ -131,6 +131,8 @@ see what information is required.
 
 7. GETTING MORE INFORMATION
 
+DOCU:	grep -i "SearchString" `find documentation/`|more
+
 FAQ:	The Wine FAQ is located at http://www.winehq.com/faq.html.
 
 WWW:	A great deal of information about Wine is available from WineHQ at
@@ -138,7 +140,7 @@ WWW:	A great deal of information about Wine is available from WineHQ at
 	are available on the wine-patches mailing list; see 
 	http://www.winehq.com/dev.html#ml for more information.
 
-HOWTO:	A pre-release version of the Wine HOWTO is available at
+HOWTO:	The Wine HOWTO is available at
 	http://www.westfalen.de/witch/wine-HOWTO.txt .
 
 Usenet:	Please browse old messages on http://www.dejanews.com/ to check whether 
@@ -149,6 +151,8 @@ Usenet:	Please browse old messages on http://www.dejanews.com/ to check whether
 	comp.emulators.ms-windows.wine. Please read the file 
 	documentation/bugreports to see what information should be included 
 	in a bug report.
+
+IRC:	Online help is available at channel #WineHQ on IRCnet.
 
 CVS:	The current Wine development tree is available through CVS.
 	Go to http://www.winehq.com/dev.html for more information.

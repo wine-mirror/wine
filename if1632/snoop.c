@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include "winbase.h"
+#include "winuser.h"
 #include "winnt.h"
 #include "heap.h"
 #include "global.h"

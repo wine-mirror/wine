@@ -521,7 +521,7 @@ HRESULT WINAPI StorageBaseImpl_Stat(
 {
   ICOM_THIS(StorageBaseImpl,iface);
   StgProperty    curProperty;
-  BOOL         readSucessful;
+  BOOL         readSuccessful;
 
   TRACE("(%p, %p, %lx)\n", 
 	iface, pstatstg, grfStatFlag);
@@ -535,12 +535,12 @@ HRESULT WINAPI StorageBaseImpl_Stat(
   /*
    * Read the information from the property.
    */
-  readSucessful = StorageImpl_ReadProperty(
+  readSuccessful = StorageImpl_ReadProperty(
                     This->ancestorStorage,
                     This->rootPropertySetIndex,
                     &curProperty);
 
-  if (readSucessful)
+  if (readSuccessful)
   {
     StorageUtl_CopyPropertyToSTATSTG(
       pstatstg, 
@@ -1056,7 +1056,7 @@ static ULONG getFreeProperty(
 {
   ULONG       currentPropertyIndex = 0;
   ULONG       newPropertyIndex     = PROPERTY_NULL;
-  BOOL      readSucessful        = TRUE;
+  BOOL      readSuccessful        = TRUE;
   StgProperty currentProperty;
 
   do
@@ -1064,10 +1064,10 @@ static ULONG getFreeProperty(
     /*
      * Start by reading the root property
      */
-    readSucessful = StorageImpl_ReadProperty(storage->ancestorStorage,
+    readSuccessful = StorageImpl_ReadProperty(storage->ancestorStorage,
                                                currentPropertyIndex,
                                                &currentProperty);
-    if (readSucessful)
+    if (readSuccessful)
     {
       if (currentProperty.sizeOfNameString == 0)
       {
@@ -1091,7 +1091,7 @@ static ULONG getFreeProperty(
   /* 
    * grow the property chain 
    */
-  if (! readSucessful)
+  if (! readSuccessful)
   {
     StgProperty    emptyProperty;
     ULARGE_INTEGER newSize;
@@ -2027,7 +2027,7 @@ HRESULT StorageImpl_Construct(
 {
   HRESULT     hr = S_OK;
   StgProperty currentProperty;
-  BOOL      readSucessful;
+  BOOL      readSuccessful;
   ULONG       currentPropertyIndex;
   
   if ( FAILED( validateSTGM(openFlags) ))
@@ -2175,12 +2175,12 @@ HRESULT StorageImpl_Construct(
   
   do
   {
-    readSucessful = StorageImpl_ReadProperty(
+    readSuccessful = StorageImpl_ReadProperty(
                       This, 
                       currentPropertyIndex, 
                       &currentProperty);
     
-    if (readSucessful)
+    if (readSuccessful)
     {
       if ( (currentProperty.sizeOfNameString != 0 ) &&
            (currentProperty.propertyType     == PROPTYPE_ROOT) )
@@ -2191,9 +2191,9 @@ HRESULT StorageImpl_Construct(
 
     currentPropertyIndex++;
     
-  } while (readSucessful && (This->rootPropertySetIndex == PROPERTY_NULL) );
+  } while (readSuccessful && (This->rootPropertySetIndex == PROPERTY_NULL) );
   
-  if (!readSucessful)
+  if (!readSuccessful)
   {
     /* TODO CLEANUP */
     return E_FAIL;
@@ -2922,20 +2922,20 @@ BOOL StorageImpl_ReadProperty(
 {
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
   ULARGE_INTEGER offsetInPropSet;
-  BOOL         readSucessful;
+  BOOL         readSuccessful;
   ULONG          bytesRead;
 
   offsetInPropSet.s.HighPart = 0;
   offsetInPropSet.s.LowPart  = index * PROPSET_BLOCK_SIZE;
   
-  readSucessful = BlockChainStream_ReadAt(
+  readSuccessful = BlockChainStream_ReadAt(
                     This->rootBlockChain,
                     offsetInPropSet,
                     PROPSET_BLOCK_SIZE,
                     currentProperty,
                     &bytesRead);
   
-  if (readSucessful)
+  if (readSuccessful)
   {
     memset(buffer->name, 0, sizeof(buffer->name));
     memcpy(
@@ -3003,7 +3003,7 @@ BOOL StorageImpl_ReadProperty(
     buffer->size.s.HighPart = 0;
   }
 
-  return readSucessful;
+  return readSuccessful;
 }
 
 /*********************************************************************
@@ -3016,7 +3016,7 @@ BOOL StorageImpl_WriteProperty(
 {
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
   ULARGE_INTEGER offsetInPropSet;
-  BOOL         writeSucessful;
+  BOOL         writeSuccessful;
   ULONG          bytesWritten;
 
   offsetInPropSet.s.HighPart = 0;
@@ -3091,12 +3091,12 @@ BOOL StorageImpl_WriteProperty(
       OFFSET_PS_SIZE,         
       buffer->size.s.LowPart);
 
-  writeSucessful = BlockChainStream_WriteAt(This->rootBlockChain,
+  writeSuccessful = BlockChainStream_WriteAt(This->rootBlockChain,
                                             offsetInPropSet,
                                             PROPSET_BLOCK_SIZE,
                                             currentProperty,
                                             &bytesWritten);
-  return writeSucessful;
+  return writeSuccessful;
 }
 
 BOOL StorageImpl_ReadBigBlock(
@@ -3607,7 +3607,7 @@ HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
   StgProperty rootProperty;
-  BOOL      readSucessful;
+  BOOL      readSuccessful;
 
   /*
    * Re-initialize the search stack to an empty stack
@@ -3617,12 +3617,12 @@ HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   /*
    * Read the root property from the storage.
    */
-  readSucessful = StorageImpl_ReadProperty(
+  readSuccessful = StorageImpl_ReadProperty(
                     This->parentStorage,
                     This->firstPropertyNode, 
                     &rootProperty);
 
-  if (readSucessful)
+  if (readSuccessful)
   {
     assert(rootProperty.sizeOfNameString!=0);
 
@@ -3793,7 +3793,7 @@ void IEnumSTATSTGImpl_PushSearchNode(
   ULONG             nodeToPush)
 {
   StgProperty rootProperty;
-  BOOL      readSucessful;
+  BOOL      readSuccessful;
 
   /*
    * First, make sure we're not trying to push an unexisting node.
@@ -3821,12 +3821,12 @@ void IEnumSTATSTGImpl_PushSearchNode(
   /*
    * Read the root property from the storage.
    */
-  readSucessful = StorageImpl_ReadProperty(
+  readSuccessful = StorageImpl_ReadProperty(
                     This->parentStorage,
                     nodeToPush, 
                     &rootProperty);
 
-  if (readSucessful)
+  if (readSuccessful)
   {
     assert(rootProperty.sizeOfNameString!=0);
 
@@ -3995,19 +3995,19 @@ void BlockChainStream_Destroy(BlockChainStream* This)
 ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
 {
   StgProperty chainProperty;
-  BOOL      readSucessful;
+  BOOL      readSuccessful;
 
   if (This->headOfStreamPlaceHolder != 0)
     return *(This->headOfStreamPlaceHolder);
 
   if (This->ownerPropertyIndex != PROPERTY_NULL)
   {
-    readSucessful = StorageImpl_ReadProperty(
+    readSuccessful = StorageImpl_ReadProperty(
                       This->parentStorage,
                       This->ownerPropertyIndex,
                       &chainProperty);
 
-    if (readSucessful)
+    if (readSuccessful)
     {
       return chainProperty.startingBlock;
     }
@@ -4516,16 +4516,16 @@ ULONG SmallBlockChainStream_GetHeadOfChain(
   SmallBlockChainStream* This)
 {
   StgProperty chainProperty;
-  BOOL      readSucessful;
+  BOOL      readSuccessful;
 
   if (This->ownerPropertyIndex)
   {
-    readSucessful = StorageImpl_ReadProperty(
+    readSuccessful = StorageImpl_ReadProperty(
                       This->parentStorage,
                       This->ownerPropertyIndex,
                       &chainProperty);
 
-    if (readSucessful)
+    if (readSuccessful)
     {
       return chainProperty.startingBlock;
     }

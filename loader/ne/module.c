@@ -837,12 +837,12 @@ static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
     /* Allocate the segments for this module */
 
     if (!NE_CreateAllSegments( pModule ))
-        return 8;  /* Insufficient memory */
+        return ERROR_NOT_ENOUGH_MEMORY; /* 8 */
 
     /* Load the referenced DLLs */
 
     if (!NE_LoadDLLs( pModule ))
-        return 2;
+        return ERROR_FILE_NOT_FOUND; /* 2 */
 
     /* Load the segments */
 

@@ -98,8 +98,8 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam);
    is checked beforehand, and that tree state is valid.  */
 
 /* FIXME: MS documentation says `GetNextVisibleItem' returns NULL 
-   if not succesfull'. Probably only applies to derefencing infoPtr
-   (ie we are offered a valid treeview structure)
+   if not successfull. Probably only applies to dereferencing infoPtr
+   (i.e. we are offered a valid treeview structure)
    and not whether there is a next `visible' child. 
    FIXME: check other failures.
  */
