@@ -388,6 +388,9 @@ int DRIVE_FindDriveRoot( const char **path )
         *p = '/';
     len = strlen(buffer);
 
+    /* strip off trailing slashes */
+    while (len > 0 && buffer[len - 1] == '/') buffer[--len] = 0;
+
     while (len > 0)
     {
         /* Find the drive */
@@ -405,6 +408,7 @@ int DRIVE_FindDriveRoot( const char **path )
                    TRACE( "%s -> drive %c:, root='%s', name='%s'\n",
                        *path, 'A' + drive, buffer, *path + len);
                    *path += len;
+                   if (!**path) *path = "\\";
                    return drive;
                }
             }
@@ -413,9 +417,6 @@ int DRIVE_FindDriveRoot( const char **path )
         level = 0;
         while (len > 0 && level < 1)
         {
-            /* strip off a trailing slash */
-            while (len > 0 && buffer[len - 1] == '/')
-                buffer[--len] = 0;
             /* find start of the last path component */
             while (len > 0 && buffer[len - 1] != '/')
                 --len;
@@ -423,6 +424,8 @@ int DRIVE_FindDriveRoot( const char **path )
             if (strcmp( buffer + len, "." ) != 0)
                 level += strcmp( buffer + len, ".." ) ? 1 : -1;
             buffer[len] = 0;
+            /* strip off trailing slashes */
+            while (len > 0 && buffer[len - 1] == '/') buffer[--len] = 0;
         }
     }
 

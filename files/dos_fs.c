@@ -867,7 +867,6 @@ static int DOSFS_GetPathDrive( const char **name )
  */
 BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 {
-    BOOL unixabsolute = *name == '/';
     BOOL found;
     UINT flags;
     char *p_l, *p_s, *root;
@@ -895,7 +894,7 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
     {
         while ((*name == '\\') || (*name == '/')) name++;
     }
-    else if (!unixabsolute)  /* Relative path */
+    else  /* Relative path */
     {
         lstrcpynA( root + 1, DRIVE_GetUnixCwd( full->drive ),
                      sizeof(full->long_name) - (root - full->long_name) - 1 );
@@ -1028,7 +1027,6 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
     DWORD sp = 0, lp = 0;
     int tmplen, drive;
     UINT flags;
-    BOOL unixabsolute = *longpath == '/';
 
     TRACE("%s\n", debugstr_a(longpath));
 
@@ -1046,22 +1044,12 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
       return 0;
     }
 
-    /* check for drive letter */
-    if ( longpath[1] == ':' ) {
-      tmpshortpath[0] = longpath[0];
-      tmpshortpath[1] = ':';
-      sp = 2;
-    }
-
     if ( ( drive = DOSFS_GetPathDrive ( &longpath )) == -1 ) return 0;
     flags = DRIVE_GetFlags ( drive );
 
-    if ( unixabsolute ) {
-      tmpshortpath[0] = drive + 'A';
-      tmpshortpath[1] = ':';
-      tmpshortpath[2] = '\\';
-      sp = 3;
-    }
+    tmpshortpath[0] = drive + 'A';
+    tmpshortpath[1] = ':';
+    sp = 2;
 
     while ( longpath[lp] ) {
 
@@ -2431,4 +2419,3 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
     GlobalFree16( handle );
     return TRUE;
 }
-
