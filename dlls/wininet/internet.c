@@ -182,7 +182,7 @@ LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
 
     EnterCriticalSection( &WININET_cs );
 
-    if( (handle > 0) && ( handle <= WININET_dwNextHandle ) )
+    if( (handle > 0) && ( handle <= WININET_dwMaxHandles ) )
         info = WININET_Handles[handle-1];
 
     LeaveCriticalSection( &WININET_cs );
@@ -199,7 +199,7 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
 
     EnterCriticalSection( &WININET_cs );
 
-    if( (handle > 1) && ( handle < WININET_dwNextHandle ) )
+    if( (handle > 1) && ( handle < WININET_dwMaxHandles ) )
     {
         handle--;
         if( WININET_Handles[handle] )
