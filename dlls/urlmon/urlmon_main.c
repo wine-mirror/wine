@@ -24,6 +24,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wtypes.h"
+#define NO_SHLWAPI_REG
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -120,4 +122,23 @@ HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPCSTR pcszUAOut, DWORD *cb
     }
 
     return S_OK;
+}
+
+HRESULT WINAPI CoInternetCombineUrl(LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags,
+                                    LPWSTR pwzResult, DWORD cchResult, DWORD *pcchResult, DWORD dwReserved)
+{
+    HRESULT hres;
+    DWORD size = cchResult;
+    
+    TRACE("(%s,%s,0x%08lx,%p,%ld,%p,%ld)\n", debugstr_w(pwzBaseUrl), debugstr_w(pwzRelativeUrl), dwCombineFlags,
+          pwzResult, cchResult, pcchResult, dwReserved);
+    hres = UrlCombineW(pwzBaseUrl, pwzRelativeUrl, pwzResult, &size, dwCombineFlags);
+    if(pcchResult) *pcchResult = size;
+    return hres;
+}
+
+HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCompareFlags)
+{
+    TRACE("(%s,%s,%08lx)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
+    return UrlCompareW(pwzUrl1, pwzUrl2, dwCompareFlags)==0?S_OK:S_FALSE;
 }

@@ -5,8 +5,8 @@
 @ stub BindAsyncMoniker
 @ stub CoGetClassObjectFromURL
 @ stub CoInstall
-@ stub CoInternetCombineUrl
-@ stub CoInternetCompareUrl
+@ stdcall CoInternetCombineUrl(wstr wstr long wstr long ptr long)
+@ stdcall CoInternetCompareUrl(wstr wstr long)
 @ stub CoInternetCreateSecurityManager
 @ stub CoInternetCreateZoneManager
 @ stub CoInternetGetProtocolFlags
