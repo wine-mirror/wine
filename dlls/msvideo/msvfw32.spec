@@ -44,8 +44,8 @@ debug_channels (mci msvideo)
 @ cdecl   ICDrawBegin(long long long long long long long long long ptr long long long long long long) ICDrawBegin
 @ stdcall ICGetDisplayFormat(long ptr ptr long long long) ICGetDisplayFormat
 @ stdcall ICGetInfo(long ptr long) ICGetInfo
-@ stub    ICImageCompress
-@ stub    ICImageDecompress
+@ stdcall ICImageCompress(long long ptr ptr ptr long ptr) ICImageCompress
+@ stdcall ICImageDecompress(long long ptr ptr ptr) ICImageDecompress
 @ stdcall ICInfo(long long ptr) ICInfo
 @ stub    ICInstall
 @ stdcall ICLocate(long long ptr ptr long) ICLocate

@@ -1182,3 +1182,152 @@ LRESULT WINAPI ICClose16(HIC16 hic) {
 	return ICClose(hic);
 }
 
+
+
+/***********************************************************************
+ *		ICImageCompress	[MSVFW32.@]
+ */
+HANDLE VFWAPI ICImageCompress(
+	HIC hic, UINT uiFlags,
+	LPBITMAPINFO lpbiIn, LPVOID lpBits,
+	LPBITMAPINFO lpbiOut, LONG lQuality,
+	LONG* plSize)
+{
+	FIXME("(%08x,%08x,%p,%p,%p,%ld,%p)\n",
+		hic, uiFlags, lpbiIn, lpBits, lpbiOut, lQuality, plSize);
+
+	return (HANDLE)NULL;
+}
+
+/***********************************************************************
+ *		ICImageDecompress	[MSVFW32.@]
+ */
+
+HANDLE VFWAPI ICImageDecompress(
+	HIC hic, UINT uiFlags, LPBITMAPINFO lpbiIn,
+	LPVOID lpBits, LPBITMAPINFO lpbiOut)
+{
+	HGLOBAL	hMem = (HGLOBAL)NULL;
+	BYTE*	pMem = NULL;
+	BOOL	bReleaseIC = FALSE;
+	BYTE*	pHdr = NULL;
+	LONG	cbHdr = 0;
+	BOOL	bSucceeded = FALSE;
+	BOOL	bInDecompress = FALSE;
+	DWORD	biSizeImage;
+
+	TRACE("(%08x,%08x,%p,%p,%p)\n",
+		hic, uiFlags, lpbiIn, lpBits, lpbiOut);
+
+	if ( hic == (HIC)NULL )
+	{
+		hic = ICDecompressOpen( mmioFOURCC('V','I','D','C'), 0, &lpbiIn->bmiHeader, (lpbiOut != NULL) ? &lpbiOut->bmiHeader : NULL );
+		if ( hic == (HIC)NULL )
+		{
+			WARN("no handler\n" );
+			goto err;
+		}
+		bReleaseIC = TRUE;
+	}
+	if ( uiFlags != 0 )
+	{
+		FIXME( "unknown flag %08x\n", uiFlags );
+		goto err;
+	}
+	if ( lpbiIn == NULL || lpBits == NULL )
+	{
+		WARN("invalid argument\n");
+		goto err;
+	}
+
+	if ( lpbiOut != NULL )
+	{
+		if ( lpbiOut->bmiHeader.biSize != sizeof(BITMAPINFOHEADER) )
+			goto err;
+		cbHdr = sizeof(BITMAPINFOHEADER);
+		if ( lpbiOut->bmiHeader.biCompression == 3 )
+			cbHdr += sizeof(DWORD)*3;
+		else
+		if ( lpbiOut->bmiHeader.biBitCount <= 8 )
+		{
+			if ( lpbiOut->bmiHeader.biClrUsed == 0 )
+				cbHdr += sizeof(RGBQUAD) * (1<<lpbiOut->bmiHeader.biBitCount);
+			else
+				cbHdr += sizeof(RGBQUAD) * lpbiOut->bmiHeader.biClrUsed;
+		}
+	}
+	else
+	{
+		TRACE( "get format\n" );
+
+		cbHdr = ICDecompressGetFormatSize(hic,lpbiIn);
+		if ( cbHdr < sizeof(BITMAPINFOHEADER) )
+			goto err;
+		pHdr = (BYTE*)HeapAlloc(GetProcessHeap(),0,cbHdr+sizeof(RGBQUAD)*256);
+		if ( pHdr == NULL )
+			goto err;
+		ZeroMemory( pHdr, cbHdr+sizeof(RGBQUAD)*256 );
+		if ( ICDecompressGetFormat( hic, lpbiIn, (BITMAPINFO*)pHdr ) != ICERR_OK )
+			goto err;
+		lpbiOut = (BITMAPINFO*)pHdr;
+		if ( lpbiOut->bmiHeader.biBitCount <= 8 &&
+			 ICDecompressGetPalette( hic, lpbiIn, lpbiOut ) != ICERR_OK &&
+			 lpbiIn->bmiHeader.biBitCount == lpbiOut->bmiHeader.biBitCount )
+		{
+			if ( lpbiIn->bmiHeader.biClrUsed == 0 )
+				memcpy( lpbiOut->bmiColors, lpbiIn->bmiColors, sizeof(RGBQUAD)*(1<<lpbiOut->bmiHeader.biBitCount) );
+			else
+				memcpy( lpbiOut->bmiColors, lpbiIn->bmiColors, sizeof(RGBQUAD)*lpbiIn->bmiHeader.biClrUsed );
+		}
+		if ( lpbiOut->bmiHeader.biBitCount <= 8 &&
+			 lpbiOut->bmiHeader.biClrUsed == 0 )
+			lpbiOut->bmiHeader.biClrUsed = 1<<lpbiOut->bmiHeader.biBitCount;
+
+		lpbiOut->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		cbHdr = sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*lpbiOut->bmiHeader.biClrUsed;
+	}
+
+	biSizeImage = lpbiOut->bmiHeader.biSizeImage;
+	if ( biSizeImage == 0 )
+		biSizeImage = ((((lpbiOut->bmiHeader.biWidth * lpbiOut->bmiHeader.biBitCount + 7) >> 3) + 3) & (~3)) * abs(lpbiOut->bmiHeader.biHeight);
+
+	TRACE( "call ICDecompressBegin\n" );
+
+	if ( ICDecompressBegin( hic, lpbiIn, lpbiOut ) != ICERR_OK )
+		goto err;
+	bInDecompress = TRUE;
+
+	TRACE( "cbHdr %ld, biSizeImage %ld\n", cbHdr, biSizeImage );
+
+	hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_ZEROINIT, cbHdr + biSizeImage );
+	if ( hMem == (HGLOBAL)NULL )
+	{
+		WARN( "out of memory\n" );
+		goto err;
+	}
+	pMem = (BYTE*)GlobalLock( hMem );
+	if ( pMem == NULL )
+		goto err;
+	memcpy( pMem, lpbiOut, cbHdr );
+
+	TRACE( "call ICDecompress\n" );
+	if ( ICDecompress( hic, 0, &lpbiIn->bmiHeader, lpBits, &lpbiOut->bmiHeader, pMem+cbHdr ) != ICERR_OK )
+		goto err;
+
+	bSucceeded = TRUE;
+err:
+	if ( bInDecompress )
+		ICDecompressEnd( hic );
+	if ( bReleaseIC )
+		ICClose(hic);
+	if ( pHdr != NULL )
+		HeapFree(GetProcessHeap(),0,pHdr);
+	if ( pMem != NULL )
+		GlobalUnlock( hMem );
+	if ( !bSucceeded && hMem != (HGLOBAL)NULL )
+	{
+		GlobalFree(hMem); hMem = (HGLOBAL)NULL;
+	}
+
+	return (HANDLE)hMem;
+}
