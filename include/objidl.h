@@ -18,14 +18,5 @@
 /* the following depend on obj_moniker.h */
 #include "wine/obj_dataobject.h"
 
-typedef struct  tagINTERFACEINFO
-{
-	IUnknown  *pUnk;
-	IID iid;
-	WORD wMethod;
-} INTERFACEINFO;
-typedef struct tagINTERFACEINFO *LPINTERFACEINFO;
-
-
 
 #endif /* __WINE_OBJIDL_H */

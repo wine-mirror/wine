@@ -27,13 +27,74 @@ typedef struct IServerSecurity IServerSecurity,*LPSERVERSECURITY;
 /*****************************************************************************
  * IClientSecurity interface
  */
-/* FIXME: not implemented */
+typedef struct tagSOLE_AUTHENTICATION_SERVICE
+{
+    DWORD dwAuthnSvc;
+    DWORD dwAuthzSvc;
+    OLECHAR32* pPrincipalName;
+    HRESULT hr;
+} SOLE_AUTHENTICATION_SERVICE, *PSOLE_AUTHENTICATION_SERVICE;
+
+typedef enum tagEOLE_AUTHENTICATION_CAPABILITIES
+{
+     EOAC_NONE           = 0x0,
+     EOAC_MUTUAL_AUTH    = 0x1,
+     EOAC_SECURE_REFS    = 0x2,
+     EOAC_ACCESS_CONTROL = 0x4
+} EOLE_AUTHENTICATION_CAPABILITIES;
+
+#define ICOM_INTERFACE IClientSecurity
+#define IClientSecurity_METHODS \
+     ICOM_METHOD8(HRESULT,QueryBlanket, IUnknown*,pProxy, DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR32**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pAuthInfo, DWORD*,pCapabilites); \
+    ICOM_METHOD8(HRESULT,SetBlanket,   IUnknown*,pProxy, DWORD,pAuthnSvc, DWORD,pAuthzSvc, OLECHAR32*,pServerPrincName, DWORD,pAuthnLevel, DWORD,pImpLevel, void*,pAuthInfo, DWORD,pCapabilites); \
+    ICOM_METHOD2(HRESULT,CopyProxy,    IUnknown*,pProxy, IUnknown**,ppCopy);
+#define IClientSecurity_IMETHODS \
+    ICOM_INHERITS(IClientSecurity,IUnknown)
+ICOM_DEFINE(IClientSecurity,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IClientSecurity_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IClientSecurity_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IClientSecurity_Release(p)            ICOM_CALL (Release,p)
+/*** IClientSecurity methods ***/
+#define IClientSecurity_QueryBlanket(p,a,b,c,d,e,f,g,h) ICOM_CALL8(QueryBlanket,p,a,b,c,d,e,f,g,h)
+#define IClientSecurity_SetBlanket(p,a,b,c,d,e,f,g,h)   ICOM_CALL8(SetBlanket,p,a,b,c,d,e,f,g,h)
+#define IClientSecurity_CopyProxy(p,a,b)                ICOM_CALL2(CopyProxy,p,a,b)
+#endif
+
 
 
 /*****************************************************************************
  * IExternalConnection interface
  */
-/* FIXME: not implemented */
+typedef enum tagEXTCONN
+{
+    EXTCONN_STRONG   = 0x1,
+    EXTCONN_WEAK     = 0x2,
+    EXTCONN_CALLABLE = 0x4
+} EXTCONN;
+
+#define ICOM_INTERFACE IExternalConnection
+#define IExternalConnection_METHODS \
+    ICOM_METHOD2(DWORD,AddConnection,     DWORD,extconn, DWORD,reserved); \
+    ICOM_METHOD3(DWORD,ReleaseConnection, DWORD,extconn, DWORD,reserved, BOOL32,fLastReleaseCloses);
+#define IExternalConnection_IMETHODS \
+    ICOM_INHERITS(IExternalConnection,IUnknown)
+ICOM_DEFINE(IExternalConnection,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IExternalConnection_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IExternalConnection_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IExternalConnection_Release(p)            ICOM_CALL (Release,p)
+/*** IExternalConnection methods ***/
+#define IExternalConnection_AddConnection(p,a,b)       ICOM_CALL8(AddConnection,p,a,b)
+#define IExternalConnection_ReleaseConnection(p,a,b,c) ICOM_CALL8(ReleaseConnection,p,a,b,c)
+#endif
+
 
 HRESULT WINAPI CoDisconnectObject(LPUNKNOWN lpUnk, DWORD reserved);
 
@@ -41,12 +102,62 @@ HRESULT WINAPI CoDisconnectObject(LPUNKNOWN lpUnk, DWORD reserved);
 /*****************************************************************************
  * IMessageFilter interface
  */
-/* FIXME: not implemented */
+typedef enum tagCALLTYPE
+{
+    CALLTYPE_TOPLEVEL             = 1,
+    CALLTYPE_NESTED               = 2,
+    CALLTYPE_ASYNC                = 3,
+    CALLTYPE_TOPLEVEL_CALLPENDING = 4,
+    CALLTYPE_ASYNC_CALLPENDING    = 5
+} CALLTYPE;
+
+typedef enum tagSERVERCALL
+{
+    SERVERCALL_ISHANDLED  = 0,
+    SERVERCALL_REJECTED   = 1,
+    SERVERCALL_RETRYLATER = 2
+} SERVERCALL;
+
+typedef enum tagPENDINGTYPE
+{
+    PENDINGTYPE_TOPLEVEL = 1,
+    PENDINGTYPE_NESTED   = 2
+} PENDINGTYPE;
+
+typedef enum tagPENDINGMSG
+{
+    PENDINGMSG_CANCELCALL     = 0,
+    PENDINGMSG_WAITNOPROCESS  = 1,
+    PENDINGMSG_WAITDEFPROCESS = 2
+} PENDINGMSG;
+
+typedef struct tagINTERFACEINFO
+{
+    IUnknown* pUnk;
+    IID iid;
+    WORD wMethod;
+} INTERFACEINFO,*LPINTERFACEINFO;
+
 #define ICOM_INTERFACE IMessageFilter
-ICOM_BEGIN(IMessageFilter, IUnknown)
-ICOM_END(IMessageFilter)
+#define IMessageFilter_METHODS \
+    ICOM_METHOD4(DWORD,HandleInComingCall, DWORD,dwCallType, HTASK32,htaskCaller, DWORD,dwTickCount, LPINTERFACEINFO,lpInterfaceInfo); \
+    ICOM_METHOD3(DWORD,RetryRejectedCall,  HTASK32,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType); \
+    ICOM_METHOD3(DWORD,MessagePending,     HTASK32,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType);
+#define IMessageFilter_IMETHODS \
+    ICOM_INHERITS(IMessageFilter,IUnknown)
+ICOM_DEFINE(IMessageFilter,IUnknown)
 #undef ICOM_INTERFACE
 
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IMessageFilter_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMessageFilter_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMessageFilter_Release(p)            ICOM_CALL (Release,p)
+/*** IMessageFilter methods ***/
+#define IMessageFilter_HandleInComingCall(p,a,b,c,d) ICOM_CALL4(HandleInComingCall,p,a,b,c,d)
+#define IMessageFilter_RetryRejectedCall(p,a,b,c)    ICOM_CALL3(RetryRejectedCall,p,a,b,c)
+#define IMessageFilter_MessagePending(p,a,b,c)       ICOM_CALL3(MessagePending,p,a,b,c)
+#endif
 
 
 HRESULT WINAPI CoRegisterMessageFilter16(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
@@ -57,7 +168,28 @@ HRESULT WINAPI CoRegisterMessageFilter32(LPMESSAGEFILTER lpMessageFilter,LPMESSA
 /*****************************************************************************
  * IServerSecurity interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IServerSecurity
+#define IServerSecurity_METHODS \
+    ICOM_METHOD7(HRESULT,QueryBlanket,     DWORD*,pAuthnSvc, DWORD*,pAuthzSvc, OLECHAR32**,pServerPrincName, DWORD*,pAuthnLevel, DWORD*,pImpLevel, void**,pPrivs, DWORD*,pCapabilities); \
+    ICOM_METHOD (HRESULT,ImpersonateClient); \
+    ICOM_METHOD (HRESULT,RevertToSelf); \
+    ICOM_METHOD (BOOL32,   IsImpersonating);
+#define IServerSecurity_IMETHODS \
+    ICOM_INHERITS(IServerSecurity,IUnknown)
+ICOM_DEFINE(IServerSecurity,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IServerSecurity_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IServerSecurity_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IServerSecurity_Release(p)            ICOM_CALL (Release,p)
+/*** IServerSecurity methods ***/
+#define IServerSecurity_QueryBlanket(p,a,b,c,d,e,f,g) ICOM_CALL7(QueryBlanket,p,a,b,c,d,e,f,g)
+#define IServerSecurity_ImpersonateClient(p)          ICOM_CALL (ImpersonateClient,p)
+#define IServerSecurity_RevertToSelf(p)               ICOM_CALL (RevertToSelf,p)
+#define IServerSecurity_IsImpersonating(p)            ICOM_CALL (IsImpersonating,p)
+#endif
 
 
 #endif /* __WINE_WINE_OBJ_CLIENTSERVER_H */
