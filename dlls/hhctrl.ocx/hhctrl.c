@@ -26,6 +26,7 @@
 #include "winnls.h"
 #include "winuser.h"
 #include "wine/debug.h"
+#include "htmlhelp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
@@ -34,7 +35,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
     FIXME("(%p, %s, %d, %ld): stub\n", caller, debugstr_w(filename), command, data);
 
     /* if command is HH_DISPLAY_TOPIC just display an informative message for now */
-    if (command == 0)
+    if (command == HH_DISPLAY_TOPIC)
         MessageBoxA( NULL, "HTML Help functionality is currently unimplemented.\n\n"
                      "Try installing Internet Explorer, or using a native hhctrl.ocx with the Mozilla ActiveX control.",
                      "Wine", MB_OK | MB_ICONEXCLAMATION );
