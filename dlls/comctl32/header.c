@@ -178,8 +178,11 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	dis.hDC        = hdc;
 	dis.rcItem     = r;
 	dis.itemData   = phdi->lParam;
+        oldBkMode = SetBkMode(hdc, TRANSPARENT);
 	SendMessageA (GetParent (hwnd), WM_DRAWITEM,
 			(WPARAM)dis.CtlID, (LPARAM)&dis);
+        if (oldBkMode != TRANSPARENT)
+            SetBkMode(hdc, oldBkMode);
     }
     else {
         UINT uTextJustify = DT_LEFT;
