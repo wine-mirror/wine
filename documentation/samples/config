@@ -6,7 +6,6 @@ WINE REGISTRY Version 2
 ;; grep -v "^;" ~/.wine/config | grep '.'
 
 [wine]
-"Windows" = "c:\\windows"
 "GraphicsDriver" = "x11drv"
 ;"ShowDirSymlinks" = "1"
 ;"ShowDotFiles" = "1"
@@ -146,10 +145,6 @@ WINE REGISTRY Version 2
 ;"GlobalRegistryDir" = "/etc";
 ; Global registries (stored in /etc)
 "LoadGlobalRegistryFiles" = "Y"
-; Registry periodic save timeout in seconds
-; "PeriodicSave" = "600"
-; Save only modified keys
-"SaveOnlyUpdatedKeys" = "Y"
 
 [Clipboard]
 "UsePrimary" = "0"

@@ -507,7 +507,6 @@ void SHELL_LoadRegistry( void )
     DWORD count;
     ULONG dispos;
     BOOL res;
-    int all, period;
     char tmp[1024];
 
     static const WCHAR MachineW[] = {'M','a','c','h','i','n','e',0};
@@ -520,8 +519,6 @@ void SHELL_LoadRegistry( void )
                                       'C','o','n','f','i','g','\\',
                                       'R','e','g','i','s','t','r','y',0};
     static const WCHAR load_global_reg_filesW[] = {'L','o','a','d','G','l','o','b','a','l','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
-    static const WCHAR SaveOnlyUpdatedKeysW[] = {'S','a','v','e','O','n','l','y','U','p','d','a','t','e','d','K','e','y','s',0};
-    static const WCHAR PeriodicSaveW[] = {'P','e','r','i','o','d','i','c','S','a','v','e',0};
     static const WCHAR GlobalRegistryDirW[] = {'G','l','o','b','a','l','R','e','g','i','s','t','r','y','D','i','r',0};
 
     TRACE("(void)\n");
@@ -597,32 +594,11 @@ void SHELL_LoadRegistry( void )
         load_wine_registry( hkey_local_machine, configfile );
     }
 
-    /* setup registry saving */
-
-    all = FALSE;
-    RtlInitUnicodeString( &nameW, SaveOnlyUpdatedKeysW );
-    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
-    {
-        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-        all = IS_OPTION_FALSE(str[0]);
-    }
-
-    period = 0;
-    RtlInitUnicodeString( &nameW, PeriodicSaveW );
-    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
-    {
-        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-        period = (int)strtolW(str, NULL, 10);
-    }
-
-    /* load home registry and set saving level (0 for saving everything,
-     * 1 for saving only modified keys) */
+    /* load home registries */
 
     SERVER_START_REQ( load_user_registries )
     {
         req->hkey = hkey_current_user;
-        req->saving = !all;
-        req->period = period * 1000;
         wine_server_call( req );
     }
     SERVER_END_REQ;

@@ -72,8 +72,7 @@ struct key
     int               last_value;  /* last in use value */
     int               nb_values;   /* count of allocated values in array */
     struct key_value *values;      /* values array */
-    short             flags;       /* flags */
-    short             level;       /* saving level */
+    unsigned int      flags;       /* flags */
     time_t            modif;       /* last modification time */
     struct list       notify_list; /* list of notifications */
 };
@@ -99,15 +98,10 @@ struct key_value
 /* the root of the registry tree */
 static struct key *root_key;
 
-/* keys saving level */
-/* current_level is the level that is put into all newly created or modified keys */
-/* saving_level is the minimum level that a key needs in order to get saved */
-static int current_level;
-static int saving_level;
-
-static struct timeval next_save_time;           /* absolute time of next periodic save */
-static int save_period;                         /* delay between periodic saves (ms) */
+static const int save_period = 30000;           /* delay between periodic saves (in ms) */
 static struct timeout_user *save_timeout_user;  /* saving timer */
+
+static void set_periodic_save_timer(void);
 
 /* information about where to save a registry branch */
 struct save_branch_info
@@ -235,9 +229,9 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
     int i;
 
     if (key->flags & KEY_VOLATILE) return;
-    /* save key if it has the proper level, and has either some values or no subkeys */
+    /* save key if it has either some values or no subkeys */
     /* keys with no values but subkeys are saved implicitly by saving the subkeys */
-    if ((key->level >= saving_level) && ((key->last_value >= 0) || (key->last_subkey == -1)))
+    if ((key->last_value >= 0) || (key->last_subkey == -1))
     {
         fprintf( f, "\n[" );
         if (key != base) dump_path( key, base, f );
@@ -419,7 +413,6 @@ static struct key *alloc_key( const WCHAR *name, time_t modif )
         key->nb_values   = 0;
         key->last_value  = -1;
         key->values      = NULL;
-        key->level       = current_level;
         key->modif       = modif;
         key->parent      = NULL;
         list_init( &key->notify_list );
@@ -473,7 +466,6 @@ static void touch_key( struct key *key, unsigned int change )
     struct key *k;
 
     key->modif = time(NULL);
-    key->level = max( key->level, current_level );
     make_dirty( key );
 
     /* do notifications */
@@ -1290,8 +1282,6 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     value->data = newptr;
     value->len  = len;
     value->type = type;
-    /* update the key level but not the modification time */
-    key->level = max( key->level, current_level );
     make_dirty( key );
     return 1;
 
@@ -1472,6 +1462,9 @@ static void load_user_registries( struct key *key_current_user )
     load_init_registry_from_file( filename, key_current_user );
 
     free( filename );
+
+    /* start the periodic save timer */
+    set_periodic_save_timer();
 }
 
 /* registry initialisation */
@@ -1505,20 +1498,6 @@ void init_registry(void)
     release_object( key );
 
     free( filename );
-}
-
-/* update the level of the parents of a key (only needed for the old format) */
-static int update_level( struct key *key )
-{
-    int i;
-    int max = key->level;
-    for (i = 0; i <= key->last_subkey; i++)
-    {
-        int sub = update_level( key->subkeys[i] );
-        if (sub > max) max = sub;
-    }
-    key->level = max;
-    return max;
 }
 
 /* save a registry branch to a file */
@@ -1652,10 +1631,22 @@ done:
 static void periodic_save( void *arg )
 {
     int i;
+
+    save_timeout_user = NULL;
     for (i = 0; i < save_branch_count; i++)
         save_branch( save_branch_info[i].key, save_branch_info[i].path );
-    add_timeout( &next_save_time, save_period );
-    save_timeout_user = add_timeout_user( &next_save_time, periodic_save, 0 );
+    set_periodic_save_timer();
+}
+
+/* start the periodic save timer */
+static void set_periodic_save_timer(void)
+{
+    struct timeval next;
+
+    gettimeofday( &next, 0 );
+    add_timeout( &next, save_period );
+    if (save_timeout_user) remove_timeout_user( save_timeout_user );
+    save_timeout_user = add_timeout_user( &next, periodic_save, 0 );
 }
 
 /* save the modified registry branches to disk */
@@ -1679,6 +1670,8 @@ void close_registry(void)
 {
     int i;
 
+    if (save_timeout_user) remove_timeout_user( save_timeout_user );
+    save_timeout_user = NULL;
     for (i = 0; i < save_branch_count; i++) release_object( save_branch_info[i].key );
     release_object( root_key );
 }
@@ -1879,28 +1872,10 @@ DECL_HANDLER(load_user_registries)
 {
     struct key *key;
 
-    current_level = 1;
-    saving_level  = req->saving;
-
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE | KEY_CREATE_SUB_KEY )))
     {
         load_user_registries( key );
         release_object( key );
-    }
-
-    /* set periodic save timer */
-
-    if (save_timeout_user)
-    {
-        remove_timeout_user( save_timeout_user );
-        save_timeout_user = NULL;
-    }
-    if ((save_period = req->period))
-    {
-        if (save_period < 10000) save_period = 10000;  /* limit rate */
-        gettimeofday( &next_save_time, 0 );
-        add_timeout( &next_save_time, save_period );
-        save_timeout_user = add_timeout_user( &next_save_time, periodic_save, 0 );
     }
 }
 
