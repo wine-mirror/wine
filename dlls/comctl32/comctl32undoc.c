@@ -2780,3 +2780,17 @@ BOOL WINAPI COMCTL32_415( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
 
    return TRUE;
 }
+
+/**************************************************************************
+ * @ [COMCTL32.419]
+ *
+ * FIXME: What's this supposed to do?
+ */
+
+BOOL WINAPI COMCTL32_419( DWORD a, DWORD b, DWORD c, DWORD d)
+{
+
+   FIXME("(%lx, %lx, %lx, %lx): stub!\n", a, b, c, d);
+
+   return TRUE;
+}

@@ -206,6 +206,6 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
 416 stub @
 417 stub @
 418 stub @
-419 stub @
+419 stdcall @(long long long long) COMCTL32_419
 420 stub @
 421 stub @
