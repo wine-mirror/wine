@@ -6,6 +6,7 @@
  * Copyright 1998-99 Eric Pouech
  */
 
+#include <sys/types.h>
 #include "winuser.h"
 #include "driver.h"
 #include "multimedia.h"
