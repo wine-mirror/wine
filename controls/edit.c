@@ -743,14 +743,14 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
     /* make sure rectangle is within window */
     if (rc.left >= es->ClientWidth - 1)
     {
-	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.left (%ld) is greater than right edge\n",
-	       (LONG)rc.left);
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.left (%d) is greater than right edge\n",
+	       rc.left);
 	return;
     }
     if (rc.right <= 0)
     {
-	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.right (%ld) is less than left edge\n",
-	       (LONG)rc.right);
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.right (%d) is less than left edge\n",
+	       rc.right);
 	return;
     }
     if (y - es->wtop < (rc.top / es->txtht) || 
@@ -2008,8 +2008,8 @@ static void EDIT_SetHandleMsg(HWND hwnd, WPARAM wParam)
 	es->textwidth = 0;
 	es->SelBegLine = es->SelBegCol = 0;
 	es->SelEndLine = es->SelEndCol = 0;
-	dprintf_edit(stddeb, "EDIT_SetHandleMsg: handle %04lx, textlen=%d\n",
-		     (DWORD)wParam, es->textlen);
+	dprintf_edit(stddeb, "EDIT_SetHandleMsg: handle %04x, textlen=%d\n",
+		     wParam, es->textlen);
 
 	EDIT_BuildTextPointers(hwnd);
 	es->PaintBkgd = TRUE;
@@ -2353,8 +2353,8 @@ static void EDIT_WM_Paint(HWND hwnd)
     GetClientRect(hwnd, &rc);
     IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
 
-    dprintf_edit(stddeb,"WM_PAINT: rc=(%ld,%ld), (%ld,%ld)\n", (LONG)rc.left, 
-           (LONG)rc.top, (LONG)rc.right, (LONG)rc.bottom);
+    dprintf_edit(stddeb,"WM_PAINT: rc=(%d,%d), (%d,%d)\n",
+                 rc.left, rc.top, rc.right, rc.bottom);
 
     if (es->PaintBkgd)
 	FillWindow(GetParent(hwnd), hwnd, hdc, (HBRUSH)CTLCOLOR_EDIT);

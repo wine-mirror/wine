@@ -81,7 +81,7 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
 #define CallEnumObjectsProc( func, lpobj, lParam ) \
     (*func)( lpobj, lParam )
 #define CallEnumPropProc( func, hwnd, lpstr, data ) \
-    (*func)( hwnd, lpstr, data )
+    (*func)( hwnd, (LPCTSTR)(lpstr), data )
 #define CallEnumTaskWndProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 #define CallEnumWindowsProc( func, hwnd, lParam ) \

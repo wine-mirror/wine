@@ -122,7 +122,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_MOUSEACTIVATE:
 	if (wndPtr->dwStyle & WS_CHILD)
 	{
-	    LONG ret = SendMessage( wndPtr->hwndParent, WM_MOUSEACTIVATE,
+	    LONG ret = SendMessage( wndPtr->parent->hwndSelf, WM_MOUSEACTIVATE,
 				    wParam, lParam );
 	    if (ret) return ret;
 	}
@@ -251,7 +251,8 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_SETCURSOR:
 	if (wndPtr->dwStyle & WS_CHILD)
-	    if (SendMessage(wndPtr->hwndParent, WM_SETCURSOR, wParam, lParam))
+	    if (SendMessage(wndPtr->parent->hwndSelf, WM_SETCURSOR,
+                            wParam, lParam))
 		return TRUE;
 	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
@@ -300,7 +301,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_SHOWWINDOW:
 	if( !lParam ) return 0; /* sent from ShowWindow */
 
-	if( !(wndPtr->dwStyle & WS_POPUP) || !wndPtr->hwndOwner ) 
+	if( !(wndPtr->dwStyle & WS_POPUP) || !wndPtr->owner ) 
 	      return 0;
 
 	if( wndPtr->dwStyle & WS_VISIBLE )

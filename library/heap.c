@@ -222,7 +222,7 @@ HANDLE HEAP_Alloc (WORD flags, DWORD bytes)
 	if (flags & LMEM_ZEROINIT) memset( m, 0, bytes );
     }
     m->Size=bytes-sizeof(HeapData);
-    return m+1;
+    return (HANDLE)(m+1);
 }
 
 HANDLE HEAP_Free (HANDLE hMem)
@@ -253,7 +253,7 @@ HANDLE HEAP_ReAlloc(HANDLE hMem,DWORD bytes,UINT flags)
   if(flags & LMEM_ZEROINIT && bytes > m->Size)
     memset( (char*)m+sizeof(HeapData)+m->Size, 0, bytes-m->Size );
   m->Size=bytes;
-  return m+1;
+  return (HANDLE)(m+1);
 }
 
 HANDLE LocalAlloc (WORD flags, WORD bytes)
@@ -278,7 +278,7 @@ BOOL LocalInit (HANDLE segment, WORD start, WORD end)
 
 LPVOID LocalLock (HANDLE hMem)
 {
-  return hMem;
+  return (LPVOID)hMem;
 }
 
 HANDLE LocalReAlloc (HANDLE hMem, WORD new_size, WORD flags)
@@ -311,7 +311,7 @@ HANDLE GlobalFree (HANDLE hMem)
 
 LPVOID GlobalLock (HGLOBAL hMem)
 {
-  return hMem;
+  return (LPVOID)hMem;
 }
 
 BOOL GlobalUnlock (HANDLE hMem)

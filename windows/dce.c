@@ -108,26 +108,25 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
         return FALSE;
     }
 
-    while (wndPtr->hwndParent)
+    while (wndPtr->parent)
     {
-	WND *parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
-        if (!(parentPtr->dwStyle & WS_VISIBLE) ||
-            (parentPtr->flags & WIN_NO_REDRAW) ||
-            (parentPtr->dwStyle & WS_ICONIC))
+        wndPtr = wndPtr->parent;
+        if (!(wndPtr->dwStyle & WS_VISIBLE) ||
+            (wndPtr->flags & WIN_NO_REDRAW) ||
+            (wndPtr->dwStyle & WS_ICONIC))
         {
             SetRectEmpty( lprect );  /* Clip everything */
             return FALSE;
         }
-	xoffset += parentPtr->rectClient.left;
-	yoffset += parentPtr->rectClient.top;
-	OffsetRect( lprect, parentPtr->rectClient.left,
-		    parentPtr->rectClient.top );
+	xoffset += wndPtr->rectClient.left;
+	yoffset += wndPtr->rectClient.top;
+	OffsetRect( lprect, wndPtr->rectClient.left,
+		    wndPtr->rectClient.top );
 
 	  /* Warning!! we assume that IntersectRect() handles the case */
 	  /* where the destination is the same as one of the sources.  */
-	if (!IntersectRect( lprect, lprect, &parentPtr->rectClient ))
+	if (!IntersectRect( lprect, lprect, &wndPtr->rectClient ))
             return FALSE;  /* Visible rectangle is empty */
-	wndPtr = parentPtr;
     }
     OffsetRect( lprect, -xoffset, -yoffset );
     return TRUE;
@@ -143,30 +142,28 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
  * is destroyed.  Used to implement DCX_CLIPSIBLINGS and
  * DCX_CLIPCHILDREN styles.
  */
-static HRGN DCE_ClipWindows( HWND hwndStart, HWND hwndEnd,
+static HRGN DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
                              HRGN hrgn, int xoffset, int yoffset )
 {
     HRGN hrgnNew;
-    WND *wndPtr;
 
-    if (!hwndStart) return hrgn;
+    if (!pWndStart) return hrgn;
     if (!(hrgnNew = CreateRectRgn( 0, 0, 0, 0 )))
     {
         DeleteObject( hrgn );
         return 0;
     }
-    for (; hwndStart != hwndEnd; hwndStart = wndPtr->hwndNext)
+    for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
     {
-        wndPtr = WIN_FindWndPtr( hwndStart );
-        if (!(wndPtr->dwStyle & WS_VISIBLE)) continue;
-        SetRectRgn( hrgnNew, wndPtr->rectWindow.left + xoffset,
-                    wndPtr->rectWindow.top + yoffset,
-                    wndPtr->rectWindow.right + xoffset,
-                    wndPtr->rectWindow.bottom + yoffset );
+        if (!(pWndStart->dwStyle & WS_VISIBLE)) continue;
+        SetRectRgn( hrgnNew, pWndStart->rectWindow.left + xoffset,
+                    pWndStart->rectWindow.top + yoffset,
+                    pWndStart->rectWindow.right + xoffset,
+                    pWndStart->rectWindow.bottom + yoffset );
         if (!CombineRgn( hrgn, hrgn, hrgnNew, RGN_DIFF )) break;
     }
     DeleteObject( hrgnNew );
-    if (hwndStart != hwndEnd)  /* something went wrong */
+    if (pWndStart != pWndEnd)  /* something went wrong */
     {
         DeleteObject( hrgn );
         return 0;
@@ -207,7 +204,7 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
             yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
         }
         else xoffset = yoffset = 0;
-        hrgn = DCE_ClipWindows( wndPtr->hwndChild, 0, hrgn, xoffset, yoffset );
+        hrgn = DCE_ClipWindows( wndPtr->child, NULL, hrgn, xoffset, yoffset );
         if (!hrgn) return 0;
     }
 
@@ -225,8 +222,8 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     }
     if (flags & DCX_CLIPSIBLINGS)
     {
-        hrgn = DCE_ClipWindows( GetWindow( wndPtr->hwndParent, GW_CHILD ),
-                                hwnd, hrgn, xoffset, yoffset );
+        hrgn = DCE_ClipWindows( wndPtr->parent ? wndPtr->parent->child : NULL,
+                                wndPtr, hrgn, xoffset, yoffset );
         if (!hrgn) return 0;
     }
 
@@ -234,12 +231,11 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
 
     while (wndPtr->dwStyle & WS_CHILD)
     {
-        hwnd = wndPtr->hwndParent;
-        wndPtr = WIN_FindWndPtr( hwnd );
+        wndPtr = wndPtr->parent;
         xoffset -= wndPtr->rectClient.left;
         yoffset -= wndPtr->rectClient.top;
-        hrgn = DCE_ClipWindows( GetWindow( wndPtr->hwndParent, GW_CHILD ),
-                                hwnd, hrgn, xoffset, yoffset );
+        hrgn = DCE_ClipWindows( wndPtr->parent->child, wndPtr,
+                                hrgn, xoffset, yoffset );
         if (!hrgn) return 0;
     }
     return hrgn;
@@ -275,7 +271,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
         }
         while (!wndPtr->window)
         {
-            wndPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+            wndPtr = wndPtr->parent;
             dc->w.DCOrgX += wndPtr->rectClient.left;
             dc->w.DCOrgY += wndPtr->rectClient.top;
         }
@@ -354,12 +350,12 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     {
         if (flags & DCX_PARENTCLIP)  /* Get a VisRgn for the parent */
         {
-            WND *parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+            WND *parentPtr = wndPtr->parent;
             DWORD newflags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
                                        DCX_WINDOW);
             if (parentPtr->dwStyle & WS_CLIPSIBLINGS)
                 newflags |= DCX_CLIPSIBLINGS;
-            hrgnVisible = DCE_GetVisRgn( wndPtr->hwndParent, newflags );
+            hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, newflags );
             if (flags & DCX_WINDOW)
                 OffsetRgn( hrgnVisible, -wndPtr->rectWindow.left,
                                         -wndPtr->rectWindow.top );
@@ -384,7 +380,7 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
 
-    dprintf_dc(stddeb, "GetDCEx("NPFMT","NPFMT",0x%lx): returning "NPFMT"\n", 
+    dprintf_dc(stddeb, "GetDCEx(%04x,%04x,0x%lx): returning %04x\n", 
 	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
@@ -424,7 +420,7 @@ int ReleaseDC( HWND hwnd, HDC hdc )
     HANDLE hdce;
     DCE * dce = NULL;
     
-    dprintf_dc(stddeb, "ReleaseDC: "NPFMT" "NPFMT"\n", hwnd, hdc );
+    dprintf_dc(stddeb, "ReleaseDC: %04x %04x\n", hwnd, hdc );
         
     for (hdce = firstDCE; (hdce); hdce = dce->hNext)
     {

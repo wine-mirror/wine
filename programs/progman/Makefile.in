@@ -12,8 +12,7 @@ MOSTOBJS = \
 	grpfile.o \
 	license.o \
 	main.o \
-	program.o \
-	winexec.o
+	program.o
 
 STRINGOBJS = \
 	accel.o \
@@ -29,7 +28,7 @@ all: check_winerc $(PROGRAMS)
 @MAKE_RULES@
 
 # Some strings need addresses >= 0x10000
-progman: $(MOSTOBJS) $(STRINGOBJS)
+progman: $(MOSTOBJS) $(STRINGOBJS) $(WINELIB)
 	$(CC) -o progman $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
 clean::

@@ -649,7 +649,7 @@ void GlobalUnfix( HGLOBAL handle )
 /***********************************************************************
  *           FarSetOwner   (KERNEL.403)
  */
-void FarSetOwner( HANDLE handle, WORD hOwner )
+void FarSetOwner( HANDLE handle, HANDLE hOwner )
 {
     GET_ARENA_PTR(handle)->hOwner = hOwner;
 }

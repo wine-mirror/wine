@@ -358,9 +358,8 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
         if (nBar == SB_CTL)  /* Only scrollbar controls send WM_CTLCOLOR */
         {
 #ifdef WINELIB32
-            HBRUSH hbrush = (HBRUSH)SendMessage( GetParent(hwnd), 
-						 WM_CTLCOLORSCROLLBAR,
-						 (WPARAM)hdc, (LPARAM)hwnd );
+            HBRUSH hbrush = SendMessage( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
+                                         hdc, hwnd );
 #else
             HBRUSH hbrush = SendMessage( GetParent(hwnd), WM_CTLCOLOR, hdc,
                                          MAKELONG(hwnd, CTLCOLOR_SCROLLBAR) );
@@ -505,7 +504,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
 static void SCROLL_HandleKbdEvent( HWND hwnd, WORD wParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    WORD msg;
+    WPARAM msg;
     
     switch(wParam)
     {
@@ -521,7 +520,7 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WORD wParam )
 #ifdef WINELIB32
     SendMessage( GetParent(hwnd),
                  (wndPtr->dwStyle & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
-                 (WPARAM)msg, (LPARAM)hwnd );
+                 msg, hwnd );
 #else
     SendMessage( GetParent(hwnd),
                  (wndPtr->dwStyle & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
@@ -598,8 +597,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
           return;  /* Should never happen */
     }
 
-    dprintf_scroll( stddeb, "ScrollBar Event: hwnd="NPFMT" bar=%d msg=%x pt=%ld,%ld hit=%d\n",
-                    hwnd, nBar, msg, (LONG)pt.x, (LONG)pt.y, hittest );
+    dprintf_scroll( stddeb, "ScrollBar Event: hwnd=%04x bar=%d msg=%x pt=%d,%d hit=%d\n",
+                    hwnd, nBar, msg, pt.x, pt.y, hittest );
 
     switch(trackHitTest)
     {
@@ -615,7 +614,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
             {
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                             (WPARAM)SB_LINEUP, (LPARAM)hwndCtl );
+                             SB_LINEUP, hwndCtl );
 #else
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEUP, MAKELONG( 0, hwndCtl ));
@@ -638,7 +637,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
             {
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                             (WPARAM)SB_PAGEUP, (LPARAM)hwndCtl );
+                             SB_PAGEUP, hwndCtl );
 #else
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEUP, MAKELONG( 0, hwndCtl ));
@@ -682,7 +681,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                 uTrackingPos = trackThumbPos + pos - lastClickPos;
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                             MAKEWPARAM(SB_THUMBTRACK,val), (LPARAM)hwndCtl );
+                             MAKEWPARAM(SB_THUMBTRACK,val), hwndCtl );
 #else
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_THUMBTRACK, MAKELONG( val, hwndCtl ));
@@ -703,7 +702,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
             {
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                             (WPARAM)SB_PAGEDOWN, (LPARAM)hwndCtl );
+                             SB_PAGEDOWN, hwndCtl );
 #else
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEDOWN, MAKELONG( 0, hwndCtl ));
@@ -725,7 +724,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
             {
 #ifdef WINELIB32
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                             (WPARAM)SB_LINEDOWN, (LPARAM)hwndCtl );
+                             SB_LINEDOWN, hwndCtl );
 #else
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEDOWN, MAKELONG( 0, hwndCtl ));
@@ -747,7 +746,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                                  trackThumbPos + lastMousePos - lastClickPos );
 #ifdef WINELIB32
             SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                         MAKEWPARAM(SB_THUMBPOSITION,val), (LPARAM)hwndCtl );
+                         MAKEWPARAM(SB_THUMBPOSITION,val), hwndCtl );
 #else
             SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                          SB_THUMBPOSITION, MAKELONG( val, hwndCtl ) );
@@ -756,7 +755,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         else
 #ifdef WINELIB32
             SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                         (WPARAM)SB_ENDSCROLL, (LPARAM)hwndCtl );
+                         SB_ENDSCROLL, hwndCtl );
 #else
             SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                          SB_ENDSCROLL, MAKELONG( 0, hwndCtl ) );
@@ -812,7 +811,7 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
             }
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
-        dprintf_scroll( stddeb, "ScrollBar creation, hwnd="NPFMT"\n", hwnd );
+        dprintf_scroll( stddeb, "ScrollBar creation, hwnd=%04x\n", hwnd );
         return 0;
 	
     case WM_LBUTTONDOWN:
@@ -898,7 +897,7 @@ void SetScrollRange(HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL bRedraw)
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return;
 
-    dprintf_scroll( stddeb,"SetScrollRange hwnd="NPFMT" bar=%d min=%d max=%d\n",
+    dprintf_scroll( stddeb,"SetScrollRange hwnd=%04x bar=%d min=%d max=%d\n",
                     hwnd, nBar, MinVal, MaxVal );
 
       /* Invalid range -> range is set to (0,0) */
@@ -936,7 +935,7 @@ void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return;
-    dprintf_scroll( stddeb, "ShowScrollBar: hwnd="NPFMT" bar=%d on=%d\n", hwnd, wBar, fShow );
+    dprintf_scroll( stddeb, "ShowScrollBar: hwnd=%04x bar=%d on=%d\n", hwnd, wBar, fShow );
 
     switch(wBar)
     {
@@ -1002,7 +1001,7 @@ BOOL EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
     HDC hdc;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
-    dprintf_scroll( stddeb, "EnableScrollBar: "NPFMT" %d %d\n", hwnd, nBar, flags );
+    dprintf_scroll( stddeb, "EnableScrollBar: %04x %d %d\n", hwnd, nBar, flags );
     flags &= ESB_DISABLE_BOTH;
     if (infoPtr->flags == flags) return FALSE;
     infoPtr->flags = flags;

@@ -92,7 +92,7 @@ HGLOBAL LIBRES_LoadResource( HINSTANCE hModule, HRSRC hRsrc )
  */
 LPVOID LIBRES_LockResource( HGLOBAL handle )
 {
-  return handle;
+  return (LPVOID)handle;
 }
 
 

@@ -11,14 +11,6 @@
 
 #include "windows.h"
 
-/* FIXME should use WinExec from -lwine */
-#ifdef WINELIB
-#define WinExec ProgmanWinExec
-#define WinHelp ProgmanWinHelp
-HANDLE  ProgmanWinExec(LPSTR,WORD);
-BOOL    ProgmanWinHelp(HWND,LPSTR,WORD,DWORD);
-#endif
-
 #define MAX_PATHNAME_LEN 1024
 
 /* Fallback icon */

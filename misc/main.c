@@ -831,6 +831,66 @@ LPVOID GetEnvironmentStrings(void)
     return envtable;
 }
 
+
+LPVOID GetEnvironmentStringsW(void)
+{
+    int count,len;
+    LPENVENTRY lpEnv;
+    char *envtable, *envptr;
+	WCHAR *wenvtable;
+
+    /* Count the total number of bytes we'll need for the string
+     * table.  Include the trailing nuls and the final double nul.
+     */
+    count = 1;
+    lpEnv = lpEnvList;
+    while(lpEnv != NULL)
+    {
+        if(lpEnv->Name != NULL)
+        {
+            count += strlen(lpEnv->Name) + 1;
+            count += strlen(lpEnv->Value) + 1;
+        }
+        lpEnv = lpEnv->Next;
+    }
+
+	len=count;
+    envtable = malloc(count);
+    if(envtable)
+    {
+        lpEnv = lpEnvList;
+        envptr = envtable;
+
+        while(lpEnv != NULL)
+        {
+            if(lpEnv->Name != NULL)
+            {
+                count = sprintf(envptr, "%s=%s", lpEnv->Name, lpEnv->Value);
+                envptr += count + 1;
+            }
+            lpEnv = lpEnv->Next;
+        }
+        *envptr = '\0';
+    }
+
+	wenvtable = malloc(2*len);
+	for(count=0;count<len;count++)
+		wenvtable[count]=(WCHAR)envtable[count];
+	free(envtable);
+
+    return envtable;
+}
+
+void FreeEnvironmentStringsA(void *e)
+{
+	free(e);
+}
+
+void FreeEnvironmentStringsW(void* e)
+{
+	free(e);
+}
+
 /***********************************************************************
  *	GetTimerResolution (USER.14)
  */

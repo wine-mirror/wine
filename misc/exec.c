@@ -55,7 +55,7 @@ void EXEC_ExitWindows( int retCode )
  */
 BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
 {
-    HWND hwnd, hwndDesktop;
+    HWND hwndDesktop;
     WND *wndPtr;
     HWND *list, *pWnd;
     int count, i;
@@ -70,22 +70,16 @@ BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
 
     hwndDesktop = GetDesktopWindow();
     count = 0;
-    for (hwnd = GetTopWindow(hwndDesktop); hwnd != 0; hwnd = wndPtr->hwndNext)
-    {
-        if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
         count++;
-    }
     if (!count) /* No windows, we can exit at once */
         EXEC_ExitWindows( LOWORD(dwReturnCode) );
 
       /* Now build the list of all windows */
 
-    if (!(list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
-    for (hwnd = GetTopWindow(hwndDesktop), pWnd = list; hwnd != 0; hwnd = wndPtr->hwndNext)
-    {
-        wndPtr = WIN_FindWndPtr( hwnd );
-        *pWnd++ = hwnd;
-    }
+    if (!(pWnd = list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
+    for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        *pWnd++ = wndPtr->hwndSelf;
 
       /* Now send a WM_QUERYENDSESSION message to every window */
 

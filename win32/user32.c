@@ -322,8 +322,8 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 	/* FIXME: proper modalframe handling ??*/
 	if (dlgTempl->style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
 
-	/* FIXME: AdjustWindowRectEx */
-
+        AdjustWindowRectEx( &rect, dlgTempl->style,
+                            hMenu ? TRUE : FALSE , exStyle );
 	rect.right -= rect.left;
 	rect.bottom -= rect.top;
 

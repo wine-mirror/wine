@@ -110,9 +110,9 @@ BOOL AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 	style |= WS_CAPTION;
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-    dprintf_nonclient(stddeb, "AdjustWindowRectEx: (%ld,%ld)-(%ld,%ld) %08lx %d %08lx\n",
-      (LONG)rect->left, (LONG)rect->top, (LONG)rect->right, (LONG)rect->bottom,
-      style, menu, exStyle );
+    dprintf_nonclient(stddeb, "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08lx %d %08lx\n",
+                      rect->left, rect->top, rect->right, rect->bottom,
+                      style, menu, exStyle );
 
     NC_AdjustRect( rect, style, menu, exStyle );
     return TRUE;
@@ -268,8 +268,8 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return HTERROR;
 
-    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd="NPFMT" pt=%ld,%ld\n",
-		      hwnd, (LONG)pt.x, (LONG)pt.y );
+    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd=%04x pt=%d,%d\n",
+		      hwnd, pt.x, pt.y );
 
     GetWindowRect( hwnd, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -627,7 +627,7 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    dprintf_nonclient(stddeb, "NC_DoNCPaint: "NPFMT" %d\n", hwnd, active );
+    dprintf_nonclient(stddeb, "NC_DoNCPaint: %04x %d\n", hwnd, active );
     if (!wndPtr || !(wndPtr->dwStyle & WS_VISIBLE)) return; /* Nothing to do */
 
     if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
@@ -826,7 +826,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
 	NC_GetInsideRect( hwnd, &rect );
 	OffsetRect( &rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
 	if (wndPtr->dwStyle & WS_CHILD)
-	    ClientToScreen( wndPtr->hwndParent, (POINT *)&rect );
+	    ClientToScreen( wndPtr->parent->hwndSelf, (POINT *)&rect );
 	rect.right = rect.left + SYSMETRICS_CXSIZE;
 	rect.bottom = rect.top + SYSMETRICS_CYSIZE;
 	if (!iconic) NC_DrawSysButton( hwnd, hdc, TRUE );
@@ -864,7 +864,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT *capturePoint )
 	pt.x = wndPtr->rectWindow.left + (rect.right - rect.left) / 2;
 	pt.y = wndPtr->rectWindow.top + rect.top + SYSMETRICS_CYSIZE/2;
 	if (wndPtr->dwStyle & WS_CHILD)
-	    ClientToScreen( wndPtr->hwndParent, &pt );
+	    ClientToScreen( wndPtr->parent->hwndSelf, &pt );
 	hittest = HTCAPTION;
     }
     else  /* SC_SIZE */
@@ -969,7 +969,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     NC_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
-	GetClientRect( wndPtr->hwndParent, &mouseRect );
+	GetClientRect( wndPtr->parent->hwndSelf, &mouseRect );
     else SetRect( &mouseRect, 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN );
     if (ON_LEFT_BORDER(hittest))
     {
@@ -998,7 +998,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     if (wndPtr->dwStyle & WS_CHILD)
     {
           /* Retrieve a default cache DC (without using the window style) */
-        hdc = GetDCEx( wndPtr->hwndParent, 0, DCX_CACHE );
+        hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
     }
     else
     {  /* Grab the server only when moving top-level windows without desktop */
@@ -1023,7 +1023,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 
 	pt = msg.pt;
 	if (wndPtr->dwStyle & WS_CHILD)
-	    ScreenToClient( wndPtr->hwndParent, &pt );
+	    ScreenToClient( wndPtr->parent->hwndSelf, &pt );
 
 	
 	if (msg.message == WM_KEYDOWN) switch(msg.wParam)
@@ -1066,7 +1066,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
     ReleaseCapture();
 
-    if (wndPtr->dwStyle & WS_CHILD) ReleaseDC( wndPtr->hwndParent, hdc );
+    if (wndPtr->dwStyle & WS_CHILD) ReleaseDC( wndPtr->parent->hwndSelf, hdc );
     else
     {
 	ReleaseDC( 0, hdc );
@@ -1294,10 +1294,11 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %lx %ld,%ld\n", 
-		      (DWORD)wParam, (LONG)pt.x, (LONG)pt.y );
+    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
+		      wParam, pt.x, pt.y );
 
-    if (wndPtr->dwStyle & WS_CHILD) ScreenToClient( wndPtr->hwndParent, &pt );
+    if (wndPtr->dwStyle & WS_CHILD)
+        ScreenToClient( wndPtr->parent->hwndSelf, &pt );
 
     switch (wParam & 0xfff0)
     {

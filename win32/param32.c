@@ -10,6 +10,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "struct32.h"
+#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -37,4 +38,11 @@ BOOL WIN32_GetTextExtentPointA(HDC hdc, LPCTSTR str, int length, SIZE32* lpsize)
         STRUCT32_SIZE16to32(&s, lpsize);
 
         return retval;
+}
+
+ATOM WIN32_GlobalAddAtomA(LPCTSTR str)
+{
+    char buffer[256];  /* 16-bit atoms are limited to 255 anyway */
+    lstrcpyn( buffer, str, sizeof(buffer) );
+    return GlobalAddAtom(MAKE_SEGPTR(buffer));
 }

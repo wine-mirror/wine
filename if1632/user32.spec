@@ -366,13 +366,12 @@ base	1
 0355 stdcall LoadAcceleratorsW(long ptr)	WIN32_LoadAcceleratorsW
 0356 	stdcall LoadBitmapA(long ptr) WIN32_LoadBitmapA
 0357 	stdcall LoadBitmapW(long ptr) WIN32_LoadBitmapW
-0357 stub LoadBitmapW
-0358 	stdcall LoadCursorA(long ptr) LoadCursor
+0358 	stdcall LoadCursorA(long ptr) WIN32_LoadCursorA
 0359 stub LoadCursorFromFileA
 0360 stub LoadCursorFromFileW
-0361 stub LoadCursorW
-0362 	stdcall LoadIconA(long ptr) LoadIconA32
-0363 stdcall LoadIconW(long ptr) LoadIconW32
+0361	stdcall LoadCursorW(long ptr) WIN32_LoadCursorW
+0362	stdcall LoadIconA(long ptr) WIN32_LoadIconA
+0363 	stdcall LoadIconW(long ptr) WIN32_LoadIconW
 0364 stub LoadImageA
 0365 stub LoadImageW
 0366 stub LoadKeyboardLayoutA

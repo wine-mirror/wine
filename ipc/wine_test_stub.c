@@ -97,7 +97,7 @@ WND *WIN_FindWndPtr(HWND hwnd)
   printf("WIN_FindWndPtr(%d)\n",hwnd);
   if (hwnd==0)
      return NULL;
-  win.hwndNext=0;
+  win.next=NULL;
   win.dwStyle=WS_POPUP;
   
   return &win;

@@ -1066,11 +1066,11 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
-        dprintf_bitblt( stddeb, "    vissrc=%ld,%ld-%ld,%ld visdst=%ld,%ld-%ld,%ld\n",
-                        (LONG)visRectSrc.left, (LONG)visRectSrc.top,
-                        (LONG)visRectSrc.right, (LONG)visRectSrc.bottom,
-                        (LONG)visRectDst.left, (LONG)visRectDst.top,
-                        (LONG)visRectDst.right, (LONG)visRectDst.bottom );
+        dprintf_bitblt( stddeb, "    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
+                        visRectSrc.left, visRectSrc.top,
+                        visRectSrc.right, visRectSrc.bottom,
+                        visRectDst.left, visRectDst.top,
+                        visRectDst.right, visRectDst.bottom );
     }
     else
     {
@@ -1078,9 +1078,9 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
-        dprintf_bitblt( stddeb, "    vissrc=none visdst=%ld,%ld-%ld,%ld\n",
-                        (LONG)visRectDst.left, (LONG)visRectDst.top,
-                        (LONG)visRectDst.right, (LONG)visRectDst.bottom );
+        dprintf_bitblt( stddeb, "    vissrc=none visdst=%d,%d-%d,%d\n",
+                        visRectDst.left, visRectDst.top,
+                        visRectDst.right, visRectDst.bottom );
     }
 
     width  = visRectDst.right - visRectDst.left;
@@ -1239,8 +1239,8 @@ BOOL PatBlt( HDC hdc, short left, short top,
 	return TRUE;
     }
 
-    dprintf_bitblt(stddeb, "PatBlt: "NPFMT" %d,%d %dx%d %06lx\n",
-	    hdc, left, top, width, height, rop );
+    dprintf_bitblt(stddeb, "PatBlt: %04x %d,%d %dx%d %06lx\n",
+                   hdc, left, top, width, height, rop );
 
     return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
                                  dc, left, top, width, height,
@@ -1266,7 +1266,7 @@ BOOL BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width, INT height,
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
 
     dprintf_bitblt(stddeb,
-                "BitBlt: "NPFMT" %d,%d %d bpp -> "NPFMT" %d,%d %dx%dx%d rop=%06lx\n",
+                "BitBlt: %04x %d,%d %d bpp -> %04x %d,%d %dx%dx%d rop=%06lx\n",
                 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
                 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
 
@@ -1296,7 +1296,7 @@ BOOL StretchBlt( HDC hdcDst, short xDst, short yDst,
 
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
     dprintf_bitblt(stddeb,
-          "StretchBlt: "NPFMT" %d,%d %dx%dx%d -> "NPFMT" %d,%d %dx%dx%d rop=%06lx\n",
+          "StretchBlt: %04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
                    hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
                    dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
                    widthDst, heightDst, dcDst->w.bitsPerPixel, rop );

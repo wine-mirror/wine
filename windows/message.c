@@ -50,6 +50,7 @@ static WORD doubleClickSpeed = 452;
  */
 static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 {
+    WND *pWnd;
     BOOL eatMsg = FALSE;
     INT hittest;
     static DWORD lastClickTime = 0;
@@ -75,9 +76,10 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
                                 msg->message, (LPARAM)MAKE_SEGPTR(&hook));
     }
    
-    if ((hittest = WINPOS_WindowFromPoint( msg->pt, &msg->hwnd )) != HTERROR)
+    hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
+    msg->hwnd = pWnd->hwndSelf;
+    if (hittest != HTERROR)
     {
-
         /* Send the WM_PARENTNOTIFY message */
 
         if (mouseClick) WIN_SendParentNotify( msg->hwnd, msg->message, 0,
@@ -126,9 +128,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	if (dbl_click && (hittest == HTCLIENT))
 	{
 	    /* Check whether window wants the double click message. */
-	    WND * wndPtr = WIN_FindWndPtr( msg->hwnd );
-            if (!wndPtr || !(WIN_CLASS_STYLE(wndPtr) & CS_DBLCLKS))
-                dbl_click = FALSE;
+            dbl_click = (WIN_CLASS_STYLE(pWnd) & CS_DBLCLKS) != 0;
 	}
 
 	if (dbl_click) switch(msg->message)
@@ -576,20 +576,20 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
        return TRUE;
 #endif  /* CONFIG_IPC */
     
-    if (hwnd == HWND_BROADCAST) {
-      dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
-      hwnd = GetTopWindow(GetDesktopWindow());
-      while (hwnd) {
-	if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
-	if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
-	  dprintf_msg(stddeb,"BROADCAST Message to hWnd="NPFMT" m=%04X w=%04X l=%08lX !\n",
-		      hwnd, message, wParam, lParam);
-	  PostMessage(hwnd, message, wParam, lParam);
-	}
-	hwnd = wndPtr->hwndNext;
-      }
-      dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
-      return TRUE;
+    if (hwnd == HWND_BROADCAST)
+    {
+        dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
+        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        {
+            if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
+            {
+                dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
+                            wndPtr->hwndSelf, message, wParam, lParam);
+                PostMessage( wndPtr->hwndSelf, message, wParam, lParam );
+            }
+        }
+        dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
+        return TRUE;
     }
 
     wndPtr = WIN_FindWndPtr( hwnd );
@@ -641,17 +641,14 @@ LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     if (hwnd == HWND_BROADCAST)
     {
         dprintf_msg(stddeb,"SendMessage // HWND_BROADCAST !\n");
-        hwnd = GetTopWindow(GetDesktopWindow());
-        while (hwnd)
-	{
-            if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
+        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        {
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                dprintf_msg(stddeb,"BROADCAST Message to hWnd="NPFMT" m=%04X w=%04lX l=%08lX !\n",
-                            hwnd, msg, (DWORD)wParam, lParam);
-                 ret |= SendMessage( hwnd, msg, wParam, lParam );
+                dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
+                            wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
+                ret |= SendMessage( wndPtr->hwndSelf, msg, wParam, lParam );
 	    }
-            hwnd = wndPtr->hwndNext;
         }
         dprintf_msg(stddeb,"SendMessage // End of HWND_BROADCAST !\n");
         return TRUE;
@@ -732,7 +729,7 @@ LONG DispatchMessage( const MSG* msg )
     {
 	if (msg->lParam)
         {
-#ifndef WINELIB32
+#ifndef WINELIB
             HINSTANCE ds = msg->hwnd ? WIN_GetWindowInstance( msg->hwnd )
                                      : (HINSTANCE)CURRENT_DS;
 #endif
@@ -753,7 +750,7 @@ LONG DispatchMessage( const MSG* msg )
     if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd "NPFMT"!\n", 
+	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
 		msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
@@ -768,7 +765,7 @@ LONG DispatchMessage( const MSG* msg )
  */
 WORD RegisterWindowMessage( SEGPTR str )
 {
-    dprintf_msg(stddeb, "RegisterWindowMessage: '"SPFMT"'\n", str );
+    dprintf_msg(stddeb, "RegisterWindowMessage: %08lx\n", (DWORD)str );
     return GlobalAddAtom( str );
 }
 

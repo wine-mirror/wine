@@ -175,7 +175,7 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 				0, 0, WIN_GetWindowInstance(hwnd),
 				(SEGPTR)hwnd );
   ShowWindow(lphc->hWndLBox, SW_HIDE);
-  dprintf_combo(stddeb,"Combo Creation LBox="NPFMT"!\n", lphc->hWndLBox);
+  dprintf_combo(stddeb,"Combo Creation LBox=%04x\n", lphc->hWndLBox);
   return 0;
 }
 
@@ -226,8 +226,7 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
   hOldFont = SelectObject(hdc, lphl->hFont);
 
 #ifdef WINELIB32
-  hBrush = (HBRUSH) SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
-				(LPARAM)hwnd);
+  hBrush = SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, hdc, hwnd);
 #else
   hBrush = SendMessage(lphl->hParent, WM_CTLCOLOR, hdc,
 		       MAKELONG(hwnd, CTLCOLOR_LISTBOX));
@@ -473,7 +472,7 @@ static LRESULT CBSetCurSel(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   wRet = ListBoxSetCurSel(lphl, wParam);
 
-  dprintf_combo(stddeb,"CBSetCurSel: hwnd "NPFMT" wp %x lp %lx wRet %d\n",
+  dprintf_combo(stddeb,"CBSetCurSel: hwnd %04x wp %x lp %lx wRet %d\n",
 		hwnd,wParam,lParam,wRet);
 /*  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);*/
   InvalidateRect(hwnd, NULL, TRUE);
@@ -756,8 +755,7 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
   hOldFont = SelectObject(hdc, lphl->hFont);
 #ifdef WINELIB32
-  hBrush = (HBRUSH) SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
-				(LPARAM)hwnd);
+  hBrush = SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, hdc, hwnd);
 #else
   hBrush = SendMessage(lphl->hParent, WM_CTLCOLOR, hdc,
 		       MAKELONG(hwnd, CTLCOLOR_LISTBOX));
@@ -783,7 +781,8 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
       lpls->itemRect.left   = rect.left;
       lpls->itemRect.right  = rect.right;
 
-      dprintf_listbox(stddeb,"drawing item: %ld %d %ld %d %d\n",(LONG)rect.left,top,(LONG)rect.right,top+height,lpls->itemState);
+      dprintf_listbox(stddeb,"drawing item: %d %d %d %d %d\n",
+                      rect.left,top,rect.right,top+height,lpls->itemState);
       if (lphl->OwnerDrawn) {
 	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 0);
 	if (lpls->itemState)
@@ -891,7 +890,7 @@ static LRESULT CBLMouseMove( HWND hwnd, WPARAM wParam, LPARAM lParam )
   ListBoxGetItemRect(lphl, wRet, &rectsel);
   GetClientRect(hwnd, &rect);
 
-  dprintf_combo(stddeb,"CBLMouseMove: hwnd "NPFMT" wp %x lp %lx  y %d  if %d wret %d %d,%d-%d,%d\n",
+  dprintf_combo(stddeb,"CBLMouseMove: hwnd %04x wp %x lp %lx  y %d  if %d wret %d %d,%d-%d,%d\n",
 hwnd,wParam,lParam,y,lphl->ItemFocused,wRet,rectsel.left,rectsel.top,rectsel.right,rectsel.bottom);
   
   if ((wParam & MK_LBUTTON) != 0) {
@@ -997,7 +996,7 @@ LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
  */
 BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, INT nIDLBox)
 {
-	fprintf(stdnimp,"DlgDirSelectComboBox("NPFMT", '%s', %d) \n",
+	fprintf(stdnimp,"DlgDirSelectComboBox(%04x, '%s', %d) \n",
 				hDlg, lpStr, nIDLBox);
 	return TRUE;
 }
@@ -1011,7 +1010,7 @@ INT DlgDirListComboBox( HWND hDlg, SEGPTR path, INT idCBox,
 {
     INT ret = 0;
 
-    dprintf_combo( stddeb,"DlgDirListComboBox("NPFMT",%08lx,%d,%d,%04X) \n",
+    dprintf_combo( stddeb,"DlgDirListComboBox(%04x,%08lx,%d,%d,%04X) \n",
                    hDlg, (DWORD)path, idCBox, idStatic, wType );
 
     if (idCBox)

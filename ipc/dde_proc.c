@@ -386,8 +386,7 @@ int DDE_GetRemoteMessage()
   struct msg_dat msg_dat;
   BOOL was_sent;		   /* sent/received */
   BOOL passed;
-  HWND hwnd;
-  WND	*window;
+  WND *wndPtr;
 
   if (curr_proc_idx==-1)	   /* do we have DDE initialized ? */
      return 0;
@@ -476,16 +475,17 @@ int DDE_GetRemoteMessage()
   }
 
   /* iterate through all the windows */
-  for (hwnd = GetTopWindow(GetDesktopWindow());
-       hwnd && (window = WIN_FindWndPtr(hwnd))!=NULL ;
-       hwnd = window->hwndNext) {
-     if (window->dwStyle & WS_POPUP || window->dwStyle & WS_CAPTION) {
+  for (wndPtr = WIN_FindWndPtr(GetTopWindow(GetDesktopWindow()));
+       wndPtr != NULL;
+       wndPtr = wndPtr->next)
+  {
+     if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
 	if (was_sent)
-	   SendMessage( hwnd, remote_message->message,
+	   SendMessage( wndPtr->hwndSelf, remote_message->message,
 			remote_message->wParam, remote_message->lParam );
 	else
-	   PostMessage( hwnd, remote_message->message,
-		     remote_message->wParam, remote_message->lParam );
+	   PostMessage( wndPtr->hwndSelf, remote_message->message,
+                        remote_message->wParam, remote_message->lParam );
      } /* if */
   } /* for */
 

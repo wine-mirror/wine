@@ -159,7 +159,7 @@ ATOM RegisterClass( LPWNDCLASS class )
     HCLASS handle, prevClass;
     int classExtra;
 
-    dprintf_class( stddeb, "RegisterClass: wndproc=%08lx hinst="NPFMT" name='%s' background "NPFMT"\n",
+    dprintf_class( stddeb, "RegisterClass: wndproc=%08lx hinst=%04x name='%s' background %04x\n",
                  (DWORD)class->lpfnWndProc, class->hInstance,
                  HIWORD(class->lpszClassName) ?
                   (char *)PTR_SEG_TO_LIN(class->lpszClassName) : "(int)",
@@ -258,11 +258,7 @@ BOOL UnregisterClass( SEGPTR className, HANDLE hinstance )
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     if (HIWORD(classPtr->wc.lpszMenuName))
-#ifdef WINELIB32
 	USER_HEAP_FREE( (HANDLE)classPtr->wc.lpszMenuName );
-#else
-	USER_HEAP_FREE( LOWORD(classPtr->wc.lpszMenuName) );
-#endif
     USER_HEAP_FREE( class );
     return TRUE;
 }
@@ -336,7 +332,7 @@ int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
     CLASS *classPtr;
 
     /* FIXME: We have the find the correct hInstance */
-    dprintf_class(stddeb,"GetClassName("NPFMT",%p,%d)\n",hwnd,lpClassName,maxCount);
+    dprintf_class(stddeb,"GetClassName(%04x,%p,%d)\n",hwnd,lpClassName,maxCount);
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
     
@@ -351,7 +347,7 @@ BOOL GetClassInfo( HANDLE hInstance, SEGPTR name, LPWNDCLASS lpWndClass )
 {
     CLASS *classPtr;
 
-    dprintf_class( stddeb, "GetClassInfo: hInstance="NPFMT" className=%s\n",
+    dprintf_class( stddeb, "GetClassInfo: hInstance=%04x className=%s\n",
 		   hInstance,
                    HIWORD(name) ? (char *)PTR_SEG_TO_LIN(name) : "(int)" );
 

@@ -78,32 +78,26 @@ HRGN	SCROLL_TraceChildren( HWND hScroll, short dx, short dy, WORD dcx)
 BOOL	SCROLL_ScrollChildren( HWND hScroll, short dx, short dy)
 {
  WND           *wndPtr = WIN_FindWndPtr(hScroll);
- HWND		hWnd   = wndPtr->hwndChild;
  HRGN		hUpdateRgn;
  BOOL		b = 0;
 
  if( !wndPtr || ( !dx && !dy )) return 0;
 
- dprintf_scroll(stddeb,"SCROLL_ScrollChildren: hwnd "NPFMT" dx=%i dy=%i\n",hScroll,dx,dy);
+ dprintf_scroll(stddeb,"SCROLL_ScrollChildren: hwnd %04x dx=%i dy=%i\n",hScroll,dx,dy);
 
  /* get a region in client rect invalidated by siblings and ansectors */
  hUpdateRgn = SCROLL_TraceChildren(hScroll, dx , dy, DCX_CLIPSIBLINGS);
 
- /* update children coordinates */
- while( hWnd )
-  {
-	wndPtr = WIN_FindWndPtr( hWnd );
-
+   /* update children coordinates */
+   for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
+   {
 	/* we can check if window intersects with clipRect parameter
 	 * and do not move it if not - just a thought.     - AK
 	 */
-
-	SetWindowPos(hWnd,0,wndPtr->rectWindow.left + dx,
-			    wndPtr->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
-			    SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
-			    SWP_DEFERERASE );
-
-	hWnd = wndPtr->hwndNext;
+	SetWindowPos(wndPtr->hwndSelf, 0, wndPtr->rectWindow.left + dx,
+                     wndPtr->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
+                     SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+                     SWP_DEFERERASE );
   } 
 
  /* invalidate uncovered region and paint frames */
@@ -209,11 +203,9 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
     short width, height;
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
-    dprintf_scroll(stddeb,"ScrollDC: dx=%d dy=%d, hrgnUpdate="NPFMT" rc=%i %i %i %i\n",
-                                     dx,dy,hrgnUpdate,(int)((rc)?rc->left:0),
-				                      (int)((rc)?rc->top:0),
-				                      (int)((rc)?rc->right:0),
-				                      (int)((rc)?rc->bottom:0)); 
+    dprintf_scroll(stddeb,"ScrollDC: dx=%d dy=%d, hrgnUpdate=%04x rc=%d %d %d %d\n",
+                   dx,dy,hrgnUpdate,((rc)?rc->left:0), ((rc)?rc->top:0),
+                   ((rc)?rc->right:0), ((rc)?rc->bottom:0)); 
 
     if (rc == NULL)
 	return FALSE;

@@ -91,9 +91,9 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (createStruct->lpszName)
                 {
                     HICON hicon = LoadIcon( createStruct->hInstance,
-                                            (SEGPTR)createStruct->lpszName );
+                                            createStruct->lpszName );
                     if (!hicon)  /* Try OEM icon (FIXME: is this right?) */
-                        hicon = LoadIcon( 0, (SEGPTR)createStruct->lpszName );
+                        hicon = LoadIcon( 0, createStruct->lpszName );
                     STATIC_SetIcon( hWnd, hicon );
                 }
                 return 1;
@@ -159,7 +159,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_GETFONT:
-            return (LONG)infoPtr->hFont;
+            return infoPtr->hFont;
 
 	case WM_NCHITTEST:
 	    return HTTRANSPARENT;
@@ -168,10 +168,10 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return DLGC_STATIC;
 
 	case STM_GETICON:
-	    return (LONG)infoPtr->hIcon;
+	    return infoPtr->hIcon;
 
 	case STM_SETICON:
-            lResult = (LONG)STATIC_SetIcon( hWnd, (HICON)wParam );
+            lResult = STATIC_SetIcon( hWnd, (HICON)wParam );
             InvalidateRect( hWnd, NULL, FALSE );
             UpdateWindow( hWnd );
 	    break;
@@ -230,16 +230,14 @@ static void PaintTextfn( HWND hwnd, HDC hdc )
 
     if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
 #ifdef WINELIB32
-    hBrush = (HBRUSH)SendMessage( wndPtr->hwndParent, WM_CTLCOLORSTATIC,
-				  (WPARAM)hdc, (LPARAM)hwnd );
+    hBrush = SendMessage( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
 #else
-    hBrush = SendMessage( wndPtr->hwndParent, WM_CTLCOLOR, (WORD)hdc,
+    hBrush = SendMessage( GetParent(hwnd), WM_CTLCOLOR, (WORD)hdc,
                           MAKELONG(hwnd, CTLCOLOR_STATIC));
 #endif
-    if (hBrush == (HBRUSH)NULL) hBrush = GetStockObject(WHITE_BRUSH);
+    if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect(hdc, &rc, hBrush);
-    if (text)
-	DrawText(hdc, text, -1, &rc, wFormat);
+    if (text) DrawText( hdc, text, -1, &rc, wFormat );
 }
 
 static void PaintRectfn( HWND hwnd, HDC hdc )
@@ -293,10 +291,9 @@ static void PaintIconfn( HWND hwnd, HDC hdc )
 
     GetClientRect(hwnd, &rc);
 #ifdef WINELIB32
-    hbrush = (HBRUSH)SendMessage( wndPtr->hwndParent, WM_CTLCOLORSTATIC, 
-				  (WPARAM)hdc, (LPARAM)hwnd );
+    hbrush = SendMessage( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
 #else
-    hbrush = SendMessage( wndPtr->hwndParent, WM_CTLCOLOR, hdc,
+    hbrush = SendMessage( GetParent(hwnd), WM_CTLCOLOR, hdc,
                           MAKELONG(hwnd, CTLCOLOR_STATIC));
 #endif
     FillRect( hdc, &rc, hbrush );

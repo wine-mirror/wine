@@ -59,7 +59,7 @@ BOOL OpenClipboard(HWND hWnd)
 {
     if (hWndClipboardOwner != 0) return FALSE;
     hWndClipboardOwner = hWnd;
-    dprintf_clipboard(stddeb,"OpenClipboard("NPFMT"); !\n", hWnd);
+    dprintf_clipboard(stddeb,"OpenClipboard(%04x); !\n", hWnd);
     return TRUE;
 }
 
@@ -107,7 +107,7 @@ BOOL EmptyClipboard()
 HWND GetClipboardOwner()
 {
     dprintf_clipboard(stddeb,
-		"GetClipboardOwner() = "NPFMT" !\n", hWndClipboardOwner);
+		"GetClipboardOwner() = %04x !\n", hWndClipboardOwner);
     return hWndClipboardOwner;
 }
 
@@ -119,7 +119,7 @@ HANDLE SetClipboardData(WORD wFormat, HANDLE hData)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     dprintf_clipboard(stddeb,
-		"SetClipboardDate(%04X, "NPFMT") !\n", wFormat, hData);
+		"SetClipboardDate(%04X, %04x) !\n", wFormat, hData);
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
 	if (lpFormat->wFormatID == wFormat) break;
@@ -173,7 +173,7 @@ INT CountClipboardFormats()
 	if (lpFormat == NULL) break;
 	if (lpFormat->hData != 0) {
         dprintf_clipboard(stddeb,
-		"CountClipboardFormats // Find Not Empty ("NPFMT") !\n",
+		"CountClipboardFormats // Find Not Empty (%04x) !\n",
 					lpFormat->hData);
 	    FormatCount++;
 	    }
@@ -211,7 +211,7 @@ UINT EnumClipboardFormats(UINT wFormat)
 	lpFormat = lpFormat->NextFormat;
 	}
     dprintf_clipboard(stddeb,
-		"EnumClipboardFormats // Find Not Empty Id=%04X hData="NPFMT" !\n",
+		"EnumClipboardFormats // Find Not Empty Id=%04X hData=%04x !\n",
 				lpFormat->wFormatID, lpFormat->hData);
     return lpFormat->wFormatID;
 }
@@ -279,7 +279,7 @@ int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
 HWND SetClipboardViewer(HWND hWnd)
 {
     HWND hwndPrev = hWndViewer;
-    dprintf_clipboard(stddeb,"SetClipboardViewer("NPFMT") !\n", hWnd);
+    dprintf_clipboard(stddeb,"SetClipboardViewer(%04x) !\n", hWnd);
     hWndViewer = hWnd;
     return hwndPrev;
 }
@@ -290,7 +290,7 @@ HWND SetClipboardViewer(HWND hWnd)
  */
 HWND GetClipboardViewer()
 {
-    dprintf_clipboard(stddeb,"GetClipboardFormat() = "NPFMT" !\n", hWndViewer);
+    dprintf_clipboard(stddeb,"GetClipboardFormat() = %04x !\n", hWndViewer);
     return hWndViewer;
 }
 
@@ -301,7 +301,7 @@ HWND GetClipboardViewer()
 BOOL ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 {
     dprintf_clipboard(stdnimp,
-		"ChangeClipboardChain("NPFMT", "NPFMT") !\n", hWnd, hWndNext);
+		"ChangeClipboardChain(%04x, %04x) !\n", hWnd, hWndNext);
 
      return 0;
 }
@@ -331,7 +331,7 @@ BOOL IsClipboardFormatAvailable(WORD wFormat)
 HWND GetOpenClipboardWindow()
 {
     dprintf_clipboard(stddeb,
-		"GetOpenClipboardWindow() = "NPFMT" !\n", hWndClipboardOwner);
+		"GetOpenClipboardWindow() = %04x !\n", hWndClipboardOwner);
     return hWndClipboardOwner;
 }
 
@@ -377,7 +377,7 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
 	    hText=0;
 	} else {
 	    dprintf_clipboard(stddeb,"Selection is %s\n",val);
-	    hText=GlobalAlloc(GMEM_MOVEABLE, nitems);
+	    hText=GlobalAlloc(GMEM_MOVEABLE, nitems+1);
 	    memcpy(GlobalLock(hText),val,nitems+1);
 	    GlobalUnlock(hText);
 	}

@@ -3,8 +3,7 @@
  *
  * Copyright 1993, 1994 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
-*/
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,16 +58,10 @@ BOOL DIALOG_Init()
  */
 HWND DIALOG_GetFirstTabItem( HWND hwndDlg )
 {
-    HWND hwnd;
-    WND *wndPtr = WIN_FindWndPtr( hwndDlg );
-    hwnd = wndPtr->hwndChild;
-    while(hwnd)
-    {
-        wndPtr = WIN_FindWndPtr( hwnd );
-        if (wndPtr->dwStyle & WS_TABSTOP) break;
-        hwnd = wndPtr->hwndNext;
-    }
-    return hwnd;
+    WND *pWnd = WIN_FindWndPtr( hwndDlg );
+    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
+        if (pWnd->dwStyle & WS_TABSTOP) return pWnd->hwndSelf;
+    return 0;
 }
 
 
@@ -218,8 +211,8 @@ HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     HGLOBAL hmem;
     SEGPTR data;
 
-    dprintf_dialog(stddeb, "CreateDialogParam: "NPFMT","SPFMT","NPFMT",%08lx,%ld\n",
-	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
+    dprintf_dialog(stddeb, "CreateDialogParam: %04x,%08lx,%04x,%08lx,%ld\n",
+                   hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
      
     if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
     if (!(hmem = LoadResource( hInst, hRsrc ))) return 0;
@@ -411,7 +404,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                                       header->y * yUnit / 8,
                                       header->cx * xUnit / 4,
                                       header->cy * yUnit / 8,
-                                      hwnd, (HMENU)((DWORD)header->id),
+                                      hwnd, (HMENU)header->id,
                                       dlgInfo->hDialogHeap, (SEGPTR)0 );
 	}
 	else
@@ -422,7 +415,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                                       header->y * yUnit / 8,
                                       header->cx * xUnit / 4,
                                       header->cy * yUnit / 8,
-                                      hwnd, (HMENU)((DWORD)header->id),
+                                      hwnd, (HMENU)header->id,
                                       hInst, (SEGPTR)0 );
 	}
 
@@ -523,8 +516,8 @@ INT DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 {
     HWND hwnd;
     
-    dprintf_dialog(stddeb, "DialogBoxParam: "NPFMT","SPFMT","NPFMT",%08lx,%ld\n",
-	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
+    dprintf_dialog(stddeb, "DialogBoxParam: %04x,%08lx,%04x,%08lx,%ld\n",
+                   hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
@@ -567,7 +560,7 @@ BOOL EndDialog( HWND hwnd, INT retval )
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     dlgInfo->msgResult = retval;
     dlgInfo->fEnd = TRUE;
-    dprintf_dialog(stddeb, "EndDialog: "NPFMT" %d\n", hwnd, retval );
+    dprintf_dialog(stddeb, "EndDialog: %04x %d\n", hwnd, retval );
     return TRUE;
 }
 
@@ -698,18 +691,11 @@ int GetDlgCtrlID( HWND hwnd )
  */
 HWND GetDlgItem( HWND hwndDlg, WORD id )
 {
-    HWND curChild;
-    WND * childPtr;
-    WND * wndPtr;
+    WND *pWnd;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwndDlg ))) return 0;
-    curChild = wndPtr->hwndChild;
-    while(curChild)
-    {
-	childPtr = WIN_FindWndPtr( curChild );
-	if (childPtr->wIDmenu == id) return curChild;
-	curChild = childPtr->hwndNext;
-    }
+    if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
+    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
+        if (pWnd->wIDmenu == id) return pWnd->hwndSelf;
     return 0;
 }
 
@@ -811,25 +797,20 @@ WORD IsDlgButtonChecked( HWND hwnd, WORD id )
  */
 BOOL CheckRadioButton( HWND hwndDlg, UINT firstID, UINT lastID, UINT checkID )
 {
-    HWND button = GetWindow( hwndDlg, GW_CHILD );
-    WND *wndPtr;
+    WND *pWnd = WIN_FindWndPtr( hwndDlg );
+    if (!pWnd) return FALSE;
 
-    while (button)
-    {
-	if (!(wndPtr = WIN_FindWndPtr( button ))) return FALSE;
-        if ((wndPtr->wIDmenu == firstID) || (wndPtr->wIDmenu == lastID)) break;
-	button = wndPtr->hwndNext;
-    }
-    if (!button) return FALSE;
+    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
+        if ((pWnd->wIDmenu == firstID) || (pWnd->wIDmenu == lastID)) break;
+    if (!pWnd) return FALSE;
 
-    if (wndPtr->wIDmenu == lastID)
+    if (pWnd->wIDmenu == lastID)
         lastID = firstID;  /* Buttons are in reverse order */
-    while (button)
+    while (pWnd)
     {
-	if (!(wndPtr = WIN_FindWndPtr( button ))) return FALSE;
-	SendMessage( button, BM_SETCHECK, (wndPtr->wIDmenu == checkID), 0 );
-        if (wndPtr->wIDmenu == lastID) break;
-	button = wndPtr->hwndNext;
+	SendMessage(pWnd->hwndSelf, BM_SETCHECK, (pWnd->wIDmenu == checkID),0);
+        if (pWnd->wIDmenu == lastID) break;
+	pWnd = pWnd->next;
     }
     return TRUE;
 }
@@ -865,46 +846,39 @@ void MapDialogRect( HWND hwnd, LPRECT rect )
  */
 HWND GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
 {
-    HWND hwnd, hwndStart;
-    WND * dlgPtr, * ctrlPtr, * wndPtr;
+    WND *pWnd, *pWndStart, *pWndCtrl, *pWndDlg;
 
-    if (!(dlgPtr = WIN_FindWndPtr( hwndDlg ))) return 0;
-    if (!(ctrlPtr = WIN_FindWndPtr( hwndCtrl ))) return 0;
-    if (ctrlPtr->hwndParent != hwndDlg) return 0;
+    if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
+    if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
+    if (pWndCtrl->parent != pWndDlg) return 0;
 
-    if (!fPrevious && ctrlPtr->hwndNext)  /*Check if next control is in group*/
+    if (!fPrevious && pWndCtrl->next)  /* Check if next control is in group */
     {
-	wndPtr = WIN_FindWndPtr( ctrlPtr->hwndNext );
-        if (!(wndPtr->dwStyle & WS_GROUP)) return ctrlPtr->hwndNext;
+        if (!(pWndCtrl->next->dwStyle & WS_GROUP))
+            return pWndCtrl->next->hwndSelf;
     }
 
       /* Now we will have to find the start of the group */
 
-    hwndStart = hwnd = dlgPtr->hwndChild;
-    while (hwnd)
+    for (pWnd = pWndStart = pWndDlg->child; pWnd; pWnd = pWnd->next)
     {
-	wndPtr = WIN_FindWndPtr( hwnd );
-        if (wndPtr->dwStyle & WS_GROUP) hwndStart = hwnd;  /*Start of a group*/
-	if (hwnd == hwndCtrl) break;
-	hwnd = wndPtr->hwndNext;
+        if (pWnd->dwStyle & WS_GROUP) pWndStart = pWnd;  /* Start of a group */
+	if (pWnd == pWndCtrl) break;
     }
 
-    if (!hwnd) fprintf(stderr, "GetNextDlgGroupItem: hwnd not in dialog!\n");
+    if (!pWnd) fprintf(stderr, "GetNextDlgGroupItem: hwnd not in dialog!\n");
 
       /* only case left for forward search: wraparound */
-    if (!fPrevious) return hwndStart;
-    
-    hwnd = hwndStart;
-    wndPtr = WIN_FindWndPtr( hwnd );
-    hwnd = wndPtr->hwndNext;
-    while (hwnd && (hwnd != hwndCtrl))
+    if (!fPrevious) return pWndStart->hwndSelf;
+
+    pWnd = pWndStart->next;
+    while (pWnd && (pWnd != pWndCtrl))
     {
-	wndPtr = WIN_FindWndPtr( hwnd );
-	if (wndPtr->dwStyle & WS_GROUP) break;
-	hwndStart = hwnd;
-	hwnd = wndPtr->hwndNext;
+        if (pWnd->dwStyle & WS_GROUP) break;
+        pWndStart = pWnd;
+        pWnd = pWnd->next;
     }
-    return hwndStart;
+    return pWndStart->hwndSelf;
 }
 
 
@@ -913,26 +887,24 @@ HWND GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
  */
 HWND GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
 {
-    HWND hwnd, hwndLast;
-    WND * dlgPtr, * ctrlPtr, * wndPtr;
+    WND *pWnd, *pWndLast, *pWndCtrl, *pWndDlg;
 
-    if (!(dlgPtr = WIN_FindWndPtr( hwndDlg ))) return 0;
-    if (!(ctrlPtr = WIN_FindWndPtr( hwndCtrl ))) return 0;
-    if (ctrlPtr->hwndParent != hwndDlg) return 0;
+    if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
+    if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
+    if (pWndCtrl->parent != pWndDlg) return 0;
 
-    hwndLast = hwndCtrl;
-    hwnd = ctrlPtr->hwndNext;
+    pWndLast = pWndCtrl;
+    pWnd = pWndCtrl->next;
     while (1)
     {
-	if (!hwnd) hwnd = dlgPtr->hwndChild;
-	if (hwnd == hwndCtrl) break;
-	wndPtr = WIN_FindWndPtr( hwnd );
-	if ((wndPtr->dwStyle & WS_TABSTOP) && (wndPtr->dwStyle & WS_VISIBLE))
+        if (!pWnd) pWnd = pWndDlg->child;
+        if (pWnd == pWndCtrl) break;
+	if ((pWnd->dwStyle & WS_TABSTOP) && (pWnd->dwStyle & WS_VISIBLE))
 	{
-	    hwndLast = hwnd;
+            pWndLast = pWnd;
 	    if (!fPrevious) break;
 	}
-	hwnd = wndPtr->hwndNext;
+        pWnd = pWnd->next;
     }
-    return hwndLast;
+    return pWndLast->hwndSelf;
 }

@@ -198,7 +198,7 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 
   program->hWnd =
     CreateWindow (STRING_PROGRAM_WIN_CLASS_NAME, (LPSTR)lpszName,
-		  WS_CHILD | WS_OVERLAPPEDWINDOW,
+		  WS_CHILD | WS_CAPTION,
 		  x, y, CW_USEDEFAULT, CW_USEDEFAULT,
 		  group->hWnd, 0, Globals.hInstance, 0);
 

@@ -133,4 +133,14 @@ typedef struct
 #define FILE_ATTRIBUTE_ATOMIC_WRITE     0x0200
 #define FILE_ATTRIBUTE_XACTION_WRITE    0x0400
 
+/* Could this type be considered opaque? */
+typedef struct {
+	LPVOID	DebugInfo;
+	LONG LockCount;
+	LONG RecursionCount;
+	HANDLE OwningThread;
+	HANDLE LockSemaphore;
+	DWORD Reserved;
+}CRITICAL_SECTION;
+
 #endif  /* __WINE_KERNEL32_H */

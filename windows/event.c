@@ -164,8 +164,8 @@ void EVENT_ProcessEvent( XEvent *event )
     XFindContext( display, ((XAnyEvent *)event)->window, winContext, &ptr );
     hwnd = (HWND) (int)ptr;
 
-    dprintf_event(stddeb, "Got event %s for hwnd "NPFMT"\n",
-		  event_names[event->type], hwnd );
+    dprintf_event(stddeb, "Got event %s for hwnd %04x\n",
+                  event_names[event->type], hwnd );
 
     switch(event->type)
     {
@@ -229,7 +229,7 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 
     default:    
-	dprintf_event(stddeb, "Unprocessed event %s for hwnd "NPFMT"\n",
+	dprintf_event(stddeb, "Unprocessed event %s for hwnd %04x\n",
 	        event_names[event->type], hwnd );
 	break;
     }
@@ -522,7 +522,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 
 	if (!(wndPtr = WIN_FindWndPtr( hwnd )))
 	{
-	    dprintf_event(stddeb, "ConfigureNotify: invalid HWND "NPFMT"\n", hwnd);
+	    dprintf_event(stddeb,"ConfigureNotify: invalid HWND %04x\n",hwnd);
 	    return;
 	}
 	
@@ -672,7 +672,7 @@ HWND SetCapture( HWND hwnd )
                      GrabModeAsync, GrabModeAsync,
                      None, None, CurrentTime ) == GrabSuccess)
     {
-	dprintf_win(stddeb, "SetCapture: "NPFMT"\n", hwnd);
+	dprintf_win(stddeb, "SetCapture: %04x\n", hwnd);
 	captureWnd   = hwnd;
 	return old_capture_wnd;
     }

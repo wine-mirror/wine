@@ -320,7 +320,10 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
       /* Menu Windows */
     case PM_ARRANGE:
-      SendMessage(Globals.hMDIWnd, WM_MDIICONARRANGE, 0, 0);
+      if (hActiveGroupWnd && !IsIconic(hActiveGroupWnd))
+	ArrangeIconicWindows(hActiveGroupWnd);
+      else
+	SendMessage(Globals.hMDIWnd, WM_MDIICONARRANGE, 0, 0);
       break;
 
       /* Menu Language */

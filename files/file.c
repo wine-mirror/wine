@@ -1048,8 +1048,8 @@ WORD SetHandleCount( WORD count )
         {
             memcpy( pdb->fileHandles, files, 20 );
 #ifdef WINELIB
-            GlobalFree( pdb->fileHandlesPtr );
-            pdb->fileHandlesPtr = pdb->fileHandles;
+            GlobalFree( (HGLOBAL)pdb->fileHandlesPtr );
+            pdb->fileHandlesPtr = (SEGPTR)pdb->fileHandles;
 #else
             GlobalFree( GlobalHandle( SELECTOROF(pdb->fileHandlesPtr) ));
             pdb->fileHandlesPtr = (SEGPTR)MAKELONG( 0x18,
@@ -1075,7 +1075,7 @@ WORD SetHandleCount( WORD count )
         }
         else memcpy( newfiles, files, count );
 #ifdef WINELIB
-        if (pdb->nbFiles > 20) GlobalFree( pdb->fileHandlesPtr );
+        if (pdb->nbFiles > 20) GlobalFree( (HGLOBAL)pdb->fileHandlesPtr );
 #else
         if (pdb->nbFiles > 20)
             GlobalFree( GlobalHandle( SELECTOROF(pdb->fileHandlesPtr) ));

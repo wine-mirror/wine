@@ -4,8 +4,10 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef WINPOS_H
-#define WINPOS_H
+#ifndef __WINE_WINPOS_H
+#define __WINE_WINPOS_H
+
+#include "win.h"
 
 #define DWP_MAGIC  0x5057  /* 'WP' */
 
@@ -34,6 +36,6 @@ extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 				   RECT *oldClientRect, WINDOWPOS *winpos,
 				   RECT *newClientRect );
 extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos );
-extern INT WINPOS_WindowFromPoint( POINT pt, HWND *phwnd );
+extern INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd );
 
-#endif  /* WINPOS_H */
+#endif  /* __WINE_WINPOS_H */

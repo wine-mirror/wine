@@ -64,7 +64,7 @@ BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
 WORD LOCAL_Size( WORD ds, HLOCAL handle )
   { return LocalSize(handle); }
 
-void FarSetOwner(HANDLE a, WORD b)
+void FarSetOwner(HANDLE a, HANDLE b)
 {
   WINELIB_UNIMP("FarSetOwner()");
 }

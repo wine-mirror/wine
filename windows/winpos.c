@@ -42,8 +42,8 @@ void WINPOS_FindIconPos( HWND hwnd )
     short x, y, xspacing, yspacing;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (!wndPtr) return;
-    GetClientRect( wndPtr->hwndParent, &rectParent );
+    if (!wndPtr || !wndPtr->parent) return;
+    GetClientRect( wndPtr->parent->hwndSelf, &rectParent );
     if ((wndPtr->ptIconPos.x >= rectParent.left) &&
         (wndPtr->ptIconPos.x + SYSMETRICS_CXICON < rectParent.right) &&
         (wndPtr->ptIconPos.y >= rectParent.top) &&
@@ -57,11 +57,10 @@ void WINPOS_FindIconPos( HWND hwnd )
         for (x = rectParent.left; x<=rectParent.right-xspacing; x += xspacing)
         {
               /* Check if another icon already occupies this spot */
-            HWND hwndChild = GetWindow( wndPtr->hwndParent, GW_CHILD );
-            while (hwndChild)
+            WND *childPtr = wndPtr->parent->child;
+            while (childPtr)
             {
-                WND *childPtr = WIN_FindWndPtr( hwndChild );
-                if ((childPtr->dwStyle & WS_MINIMIZE) && (hwndChild != hwnd))
+                if ((childPtr->dwStyle & WS_MINIMIZE) && (childPtr != wndPtr))
                 {
                     if ((childPtr->rectWindow.left < x + xspacing) &&
                         (childPtr->rectWindow.right >= x) &&
@@ -69,10 +68,9 @@ void WINPOS_FindIconPos( HWND hwnd )
                         (childPtr->rectWindow.bottom > y - yspacing))
                         break;  /* There's a window in there */
                 }
-                
-                hwndChild = childPtr->hwndNext;
+                childPtr = childPtr->next;
             }
-            if (!hwndChild)
+            if (!childPtr)
             {
                   /* No window was found, so it's OK for us */
                 wndPtr->ptIconPos.x = x + (xspacing - SYSMETRICS_CXICON) / 2;
@@ -129,7 +127,7 @@ void GetWindowRect( HWND hwnd, LPRECT rect )
     
     *rect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
-	MapWindowPoints( wndPtr->hwndParent, 0, (POINT *)rect, 2 );
+	MapWindowPoints( wndPtr->parent->hwndSelf, 0, (POINT *)rect, 2 );
 }
 
 
@@ -173,26 +171,24 @@ void ScreenToClient( HWND hwnd, LPPOINT lppnt )
  *
  * Find the window and hittest for a given point.
  */
-INT WINPOS_WindowFromPoint( POINT pt, HWND *phwnd )
+INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
 {
     WND *wndPtr;
-    HWND hwnd;
     INT hittest = HTERROR;
     INT x, y;
 
-    *phwnd = 0;
+    *ppWnd = NULL;
     x = pt.x;
     y = pt.y;
-    hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
+    wndPtr = WIN_GetDesktop()->child;
     for (;;)
     {
-        while (hwnd)
+        while (wndPtr)
         {
             /* If point is in window, and window is visible, and it  */
             /* is enabled (or it's a top-level window), then explore */
             /* its children. Otherwise, go to the next window.       */
 
-            wndPtr = WIN_FindWndPtr( hwnd );
             if ((wndPtr->dwStyle & WS_VISIBLE) &&
                 (!(wndPtr->dwStyle & WS_DISABLED) ||
                  ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)) &&
@@ -201,7 +197,7 @@ INT WINPOS_WindowFromPoint( POINT pt, HWND *phwnd )
                 (y >= wndPtr->rectWindow.top) &&
                 (y < wndPtr->rectWindow.bottom))
             {
-                *phwnd = hwnd;  /* Got a suitable window */
+                *ppWnd = wndPtr;  /* Got a suitable window */
 
                 /* If window is minimized or disabled, return at once */
                 if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
@@ -215,35 +211,34 @@ INT WINPOS_WindowFromPoint( POINT pt, HWND *phwnd )
 
                 x -= wndPtr->rectClient.left;
                 y -= wndPtr->rectClient.top;
-                hwnd = wndPtr->hwndChild;
+                wndPtr = wndPtr->child;
             }
-            else hwnd = wndPtr->hwndNext;
+            else wndPtr = wndPtr->next;
         }
 
         /* If nothing found, return the desktop window */
-        if (!*phwnd)
+        if (!*ppWnd)
         {
-            *phwnd = GetDesktopWindow();
+            *ppWnd = WIN_GetDesktop();
             return HTCLIENT;
         }
-        wndPtr = WIN_FindWndPtr( *phwnd );
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
-        if (wndPtr->hmemTaskQ != GetTaskQueue(0)) return HTCLIENT;
-        hittest = (INT)SendMessage( *phwnd, WM_NCHITTEST, 0,
+        if ((*ppWnd)->hmemTaskQ != GetTaskQueue(0)) return HTCLIENT;
+        hittest = (INT)SendMessage( (*ppWnd)->hwndSelf, WM_NCHITTEST, 0,
                                     MAKELONG( pt.x, pt.y ) );
         if (hittest != HTTRANSPARENT) return hittest;  /* Found the window */
 
         /* If no children found in last search, make point relative to parent*/
-        if (!hwnd)
+        if (!wndPtr)
         {
-            x += wndPtr->rectClient.left;
-            y += wndPtr->rectClient.top;
+            x += (*ppWnd)->rectClient.left;
+            y += (*ppWnd)->rectClient.top;
         }
 
         /* Restart the search from the next sibling */
-        hwnd = wndPtr->hwndNext;
-        *phwnd = wndPtr->hwndParent;
+        wndPtr = (*ppWnd)->next;
+        *ppWnd = wndPtr->parent;
     }
 }
 
@@ -253,9 +248,9 @@ INT WINPOS_WindowFromPoint( POINT pt, HWND *phwnd )
  */
 HWND WindowFromPoint( POINT pt )
 {
-    HWND hwnd;
-    WINPOS_WindowFromPoint( pt, &hwnd );
-    return hwnd;
+    WND *pWnd;
+    WINPOS_WindowFromPoint( pt, &pWnd );
+    return pWnd->hwndSelf;
 }
 
 
@@ -293,31 +288,36 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
     if( hwndFrom == hwndTo ) return;
 
       /* Translate source window origin to screen coords */
-    while(hwndFrom)
+    if (hwndFrom)
     {
-	if (!(wndPtr = WIN_FindWndPtr( hwndFrom )))
-	{
-	    fprintf( stderr, "MapWindowPoints: bad hwndFrom = "NPFMT"\n",
-		     hwndFrom); 
-	    return;
-	}
-	origin.x += wndPtr->rectClient.left;
-	origin.y += wndPtr->rectClient.top;
-	hwndFrom = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->hwndParent : 0;
+        if (!(wndPtr = WIN_FindWndPtr( hwndFrom )))
+        {
+            fprintf(stderr,"MapWindowPoints: bad hwndFrom = %04x\n",hwndFrom);
+            return;
+        }
+        while (wndPtr->parent)
+        {
+            origin.x += wndPtr->rectClient.left;
+            origin.y += wndPtr->rectClient.top;
+            wndPtr = wndPtr->parent;
+        }
     }
 
       /* Translate origin to destination window coords */
-    while(hwndTo)
+    if (hwndTo)
     {
-	if (!(wndPtr = WIN_FindWndPtr( hwndTo )))
-	{
-	    fprintf(stderr,"MapWindowPoints: bad hwndTo = "NPFMT"\n", hwndTo );
-	    return;
-	}
-	origin.x -= wndPtr->rectClient.left;
-	origin.y -= wndPtr->rectClient.top;
-	hwndTo = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->hwndParent : 0;
-    }    
+        if (!(wndPtr = WIN_FindWndPtr( hwndTo )))
+        {
+            fprintf(stderr,"MapWindowPoints: bad hwndTo = %04x\n", hwndTo );
+            return;
+        }
+        while (wndPtr->parent)
+        {
+            origin.x -= wndPtr->rectClient.left;
+            origin.y -= wndPtr->rectClient.top;
+            wndPtr = wndPtr->parent;
+        }    
+    }
 
       /* Translate points */
     for (i = 0, curpt = lppt; i < count; i++, curpt++)
@@ -391,7 +391,7 @@ BOOL MoveWindow( HWND hwnd, short x, short y, short cx, short cy, BOOL repaint)
 {    
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-    dprintf_win(stddeb, "MoveWindow: "NPFMT" %d,%d %dx%d %d\n", 
+    dprintf_win(stddeb, "MoveWindow: %04x %d,%d %dx%d %d\n", 
 	    hwnd, x, y, cx, cy, repaint );
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
@@ -410,7 +410,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 
     if (!wndPtr) return FALSE;
 
-    dprintf_win(stddeb,"ShowWindow: hwnd="NPFMT", cmd=%d\n", hwnd, cmd);
+    dprintf_win(stddeb,"ShowWindow: hwnd=%04x, cmd=%d\n", hwnd, cmd);
 
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 
@@ -717,11 +717,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     if (!(wndPtr->dwStyle & WS_CHILD))
     {
 	/* check Z-order and bring hWnd to the top */
-	wndTemp = WIN_FindWndPtr( GetDesktopWindow() );
-
-	for( ; wndTemp; wndTemp = WIN_FindWndPtr( wndTemp->hwndNext ))
-	    if( wndTemp->dwStyle & WS_VISIBLE )
-		break;
+	for (wndTemp = WIN_GetDesktop()->child; wndTemp; wndTemp = wndTemp->next)
+	    if (wndTemp->dwStyle & WS_VISIBLE) break;
 
 	if( wndTemp != wndPtr )
 	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0, 
@@ -761,18 +758,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
     /* walk up to the first unowned window */
     wndTemp = wndPtr;
-
-    while(wndTemp->hwndOwner)
-    {
-	wndTemp = WIN_FindWndPtr(wndTemp->hwndOwner);
-	if( !wndTemp)
-        {
-	    /* there must be an unowned window in hierarchy */
-	    dprintf_win(stddeb,"WINPOS_ActivateWindow: broken owner list\n");
-	    wndTemp = wndPtr;
-	    break;
-        }
-    }
+    while (wndTemp->owner) wndTemp = wndTemp->owner;
     /* and set last active owned popup */
     wndTemp->hwndLastActive = hWnd;
 
@@ -829,8 +815,8 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 	return FALSE;
 
     /* switch desktop queue to current active here */
-    if( wndPtr->hwndParent == GetDesktopWindow())
-    { }
+    if( wndPtr->parent == WIN_GetDesktop())
+        WIN_GetDesktop()->hmemTaskQ = wndPtr->hmemTaskQ;
 
     return TRUE;
 }
@@ -898,8 +884,7 @@ LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos )
 static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter )
 {
     BOOL movingUp;
-    HWND hwndCur;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *pWndAfter, *pWndCur, *wndPtr = WIN_FindWndPtr( hwnd );
 
     /* We have two possible cases:
      * - The window is moving up: we have to invalidate all areas
@@ -914,51 +899,50 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter )
     }
     else if (hwndAfter == HWND_BOTTOM)
     {
-        if (!wndPtr->hwndNext) return;  /* Already at the bottom */
+        if (!wndPtr->next) return;  /* Already at the bottom */
         movingUp = FALSE;
     }
     else
     {
-        if (wndPtr->hwndNext == hwndAfter) return;  /* Already placed right */
+        if (!(pWndAfter = WIN_FindWndPtr( hwndAfter ))) return;
+        if (wndPtr->next == pWndAfter) return;  /* Already placed right */
 
           /* Determine which window we encounter first in Z-order */
-        hwndCur = GetWindow( wndPtr->hwndParent, GW_CHILD );
-        while ((hwndCur != hwnd) && (hwndCur != hwndAfter))
-            hwndCur = GetWindow( hwndCur, GW_HWNDNEXT );
-        movingUp = (hwndCur == hwndAfter);
+        pWndCur = wndPtr->parent->child;
+        while ((pWndCur != wndPtr) && (pWndCur != pWndAfter))
+            pWndCur = pWndCur->next;
+        movingUp = (pWndCur == pWndAfter);
     }
 
     if (movingUp)
     {
-        HWND hwndPrevAfter = wndPtr->hwndNext;
+        WND *pWndPrevAfter = wndPtr->next;
         WIN_UnlinkWindow( hwnd );
         WIN_LinkWindow( hwnd, hwndAfter );
-        hwndCur = wndPtr->hwndNext;
-        while (hwndCur != hwndPrevAfter)
+        pWndCur = wndPtr->next;
+        while (pWndCur != pWndPrevAfter)
         {
-            WND *curPtr = WIN_FindWndPtr( hwndCur );
-            RECT rect = curPtr->rectWindow;
+            RECT rect = pWndCur->rectWindow;
             OffsetRect( &rect, -wndPtr->rectClient.left,
                         -wndPtr->rectClient.top );
             RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
                           RDW_FRAME | RDW_ERASE );
-            hwndCur = curPtr->hwndNext;
+            pWndCur = pWndCur->next;
         }
     }
     else  /* Moving down */
     {
-        hwndCur = wndPtr->hwndNext;
+        pWndCur = wndPtr->next;
         WIN_UnlinkWindow( hwnd );
         WIN_LinkWindow( hwnd, hwndAfter );
-        while (hwndCur != hwnd)
+        while (pWndCur != wndPtr)
         {
-            WND *curPtr = WIN_FindWndPtr( hwndCur );
             RECT rect = wndPtr->rectWindow;
-            OffsetRect( &rect, -curPtr->rectClient.left,
-                        -curPtr->rectClient.top );
-            RedrawWindow( hwndCur, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
-                          RDW_FRAME | RDW_ERASE );
-            hwndCur = curPtr->hwndNext;
+            OffsetRect( &rect, -pWndCur->rectClient.left,
+                        -pWndCur->rectClient.top );
+            RedrawWindow( pWndCur->hwndSelf, &rect, 0, RDW_INVALIDATE |
+                          RDW_ALLCHILDREN | RDW_FRAME | RDW_ERASE );
+            pWndCur = pWndCur->next;
         }
     }
 }
@@ -1055,7 +1039,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
         (hwndInsertAfter == HWND_NOTOPMOST)) hwndInsertAfter = HWND_TOP;
       /* hwndInsertAfter must be a sibling of the window */
     if ((hwndInsertAfter != HWND_TOP) && (hwndInsertAfter != HWND_BOTTOM) &&
-	(wndPtr->hwndParent != WIN_FindWndPtr(hwndInsertAfter)->hwndParent))
+	(wndPtr->parent != WIN_FindWndPtr(hwndInsertAfter)->parent))
         return FALSE;
 
       /* Fill the WINDOWPOS structure */
@@ -1133,7 +1117,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
             HRGN hrgn2 = CreateRectRgnIndirect( &wndPtr->rectWindow );
             HRGN hrgn3 = CreateRectRgn( 0, 0, 0, 0 );
             CombineRgn( hrgn3, hrgn1, hrgn2, RGN_DIFF );
-            RedrawWindow( wndPtr->hwndParent, NULL, hrgn3,
+            RedrawWindow( wndPtr->parent->hwndSelf, NULL, hrgn3,
                           RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
 
 	    /* DCE_GetVisRgn should be called for old coordinates
@@ -1182,7 +1166,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
         else
         {
             if (!(flags & SWP_NOREDRAW))
-                RedrawWindow( wndPtr->hwndParent, &wndPtr->rectWindow, 0,
+                RedrawWindow( wndPtr->parent->hwndSelf, &wndPtr->rectWindow, 0,
                               RDW_INVALIDATE | RDW_FRAME |
                               RDW_ALLCHILDREN | RDW_ERASE );
         }
@@ -1197,7 +1181,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 	    if (!IsWindow(newActive) || (newActive == winpos.hwnd))
 	    {
 		newActive = GetTopWindow( GetDesktopWindow() );
-		if (newActive == winpos.hwnd) newActive = wndPtr->hwndNext;
+		if (newActive == winpos.hwnd)
+                    newActive = wndPtr->next ? wndPtr->next->hwndSelf : 0;
 	    }	    
 	    WINPOS_ChangeActiveWindow( newActive, FALSE );
 	}
@@ -1219,7 +1204,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
                       RDW_ALLCHILDREN | /*FIXME: this should not be necessary*/
                       RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
     if (!(flags & SWP_DEFERERASE))
-        RedrawWindow( wndPtr->hwndParent, NULL, 0,
+        RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0,
                       RDW_ALLCHILDREN | RDW_ERASENOW );
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
@@ -1268,10 +1253,11 @@ HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
 
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return 0;
+    if (hwnd == GetDesktopWindow()) return 0;
 
       /* All the windows of a DeferWindowPos() must have the same parent */
 
-    parent = WIN_FindWndPtr( hwnd )->hwndParent;
+    parent = WIN_FindWndPtr( hwnd )->parent->hwndSelf;
     if (pDWP->actualCount == 0) pDWP->hwndParent = parent;
     else if (parent != pDWP->hwndParent)
     {
@@ -1355,7 +1341,7 @@ BOOL EndDeferWindowPos( HDWP hdwp )
  */
 void TileChildWindows( HWND parent, WORD action )
 {
-    printf("STUB TileChildWindows("NPFMT", %d)\n", parent, action);
+    printf("STUB TileChildWindows(%04x, %d)\n", parent, action);
 }
 
 /***********************************************************************
@@ -1363,5 +1349,5 @@ void TileChildWindows( HWND parent, WORD action )
  */
 void CascadeChildWindows( HWND parent, WORD action )
 {
-    printf("STUB CascadeChildWindows("NPFMT", %d)\n", parent, action);
+    printf("STUB CascadeChildWindows(%04x, %d)\n", parent, action);
 }

@@ -31,31 +31,19 @@ typedef unsigned short WCHAR;
 #ifdef WINELIB32
 typedef int INT;
 typedef unsigned int UINT;
-typedef short SHORT;
-typedef LONG WPARAM;
-typedef void* HANDLE;
+typedef char TCHAR;  /* Should probably eventually be unsigned short */
 typedef void* NPVOID;
 typedef void* SEGPTR;
-#define UIFMT "%u"
-#define NPFMT "%p"
-#define SPFMT "%p"
-
-/* Should probably eventually be unsigned short, but not now */
-typedef char TCHAR;
-#else
+#else  /* WINELIB32 */
 typedef short INT;
 typedef unsigned short UINT;
-typedef UINT WPARAM;
-typedef WORD HANDLE;
+typedef char TCHAR;  /* TCHAR is just char in Win16 */
 typedef WORD NPVOID;
 typedef DWORD SEGPTR;
-#define UIFMT "%hu"
-#define NPFMT "%04x"
-#define SPFMT "%08lx"
+#endif  /* WINELIB32 */
 
-/* TCHAR is just char in Win16 */
-typedef char TCHAR;
-#endif
+typedef UINT HANDLE;
+typedef UINT WPARAM;
 typedef LONG LPARAM;
 typedef LONG LRESULT;
 typedef INT HFILE;

@@ -263,7 +263,7 @@ LZRead(HFILE fd,SEGPTR segbuf,WORD toread) {
 	BYTE	*buf;
 	struct	lzstate	*lzs;
 
-	dprintf_file(stddeb,"LZRead(%d,%08lx,%d)\n",fd,segbuf,toread);
+	dprintf_file(stddeb,"LZRead(%d,%08lx,%d)\n",fd,(DWORD)segbuf,toread);
 	howmuch=toread;
 	for (i=0;i<nroflzstates;i++)
 		if (lzstates[i].lzfd==fd)

@@ -52,6 +52,6 @@ OLESTATUS WINAPI OleRevokeClientDoc(LHCLIENTDOC hServerDoc)
  */
 BOOL WINAPI OleIsDcMeta(HDC hdc)
 {
-	dprintf_ole(stddeb,"OleIsDCMeta("NPFMT")\n",hdc);
+	dprintf_ole(stddeb,"OleIsDCMeta(%04x)\n",hdc);
 	return GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0;
 }

@@ -229,6 +229,7 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, LPHKEY lphKey)
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
         case 0x80000000:
+        case 0x80000001:
           lpKey = lphRootKey; break;
         default: 
 	  dprintf_reg(stddeb,"RegOpenKey // specific key = %08lX !\n", (DWORD)hKey);
@@ -442,6 +443,7 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
         case 0x80000000:
+        case 0x80000001:
           lpKey = lphRootKey; break;
         default: 
 	  dprintf_reg(stddeb,"RegEnumKey // specific key = %08lX !\n", (DWORD)hKey);
@@ -470,7 +472,7 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 void DragAcceptFiles(HWND hWnd, BOOL b)
 {
     /* flips WS_EX_ACCEPTFILES bit according to the value of b */
-    dprintf_reg(stddeb,"DragAcceptFiles("NPFMT", %u) old exStyle %08lx\n",
+    dprintf_reg(stddeb,"DragAcceptFiles(%04x, %u) old exStyle %08lx\n",
 		hWnd,b,GetWindowLong(hWnd,GWL_EXSTYLE));
 
     SetWindowLong(hWnd,GWL_EXSTYLE,
@@ -491,7 +493,7 @@ UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
     LPSTR lpCurrent;
     WORD  i;
     
-    dprintf_reg(stddeb,"DragQueryFile("NPFMT", %i, %p, %u)\n",
+    dprintf_reg(stddeb,"DragQueryFile(%04x, %i, %p, %u)\n",
 		hDrop,wFile,lpszFile,wLength);
     
     lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
@@ -563,7 +565,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpPar
      * we have to pass the parameters. If an instance is already running,
      * we might have to send DDE commands.
      */
-    dprintf_exec(stddeb, "ShellExecute("NPFMT",'%s','%s','%s','%s',%x)\n",
+    dprintf_exec(stddeb, "ShellExecute(%04x,'%s','%s','%s','%s',%x)\n",
 		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
 		lpParameters ? lpParameters : "<null>", 
 		lpDirectory ? lpDirectory : "<null>", iShowCmd);
@@ -719,7 +721,7 @@ HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
 {
 	HICON	hIcon = 0;
 	HINSTANCE hInst2 = hInst;
-	dprintf_reg(stddeb, "ExtractIcon("NPFMT", '%s', %d\n", 
+	dprintf_reg(stddeb, "ExtractIcon(%04x, '%s', %d\n", 
 			hInst, lpszExeFileName, nIconIndex);
         return 0;
 	if (lpszExeFileName != NULL) {

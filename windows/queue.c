@@ -28,7 +28,7 @@ void QUEUE_DumpQueue( HQUEUE hQueue )
     if (!(pq = (MESSAGEQUEUE*) GlobalLock( hQueue )) ||
         GlobalSize(hQueue) < sizeof(MESSAGEQUEUE) + pq->queueSize*sizeof(QMSG))
     {
-        fprintf( stderr, NPFMT " is not a queue handle\n", hQueue );
+        fprintf( stderr, "%04x is not a queue handle\n", hQueue );
         return;
     }
 
@@ -68,7 +68,7 @@ void QUEUE_WalkQueues(void)
         MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock( hQueue );
         if (!queue)
         {
-            fprintf( stderr, "*** Bad queue handle "NPFMT"\n", hQueue );
+            fprintf( stderr, "*** Bad queue handle %04x\n", hQueue );
             return;
         }
         fprintf( stderr, "%04x %5d %4d %04x %s\n",
@@ -198,7 +198,7 @@ int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last )
 {
     int i, pos = msgQueue->nextMessage;
 
-    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=0x"NPFMT"\n\n", hwnd );
+    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=%04x\n\n", hwnd );
 
     if (!msgQueue->msgCount) return -1;
     if (!hwnd && !first && !last) return pos;

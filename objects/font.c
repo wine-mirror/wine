@@ -283,7 +283,7 @@ void FONT_GetMetrics( LOGFONT * logfont, XFontStruct * xfont,
 DWORD GetGlyphOutLine(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, 
                       DWORD cbBuffer, LPSTR lpBuffer, LPMAT2 lpmat2) 
 {
-    fprintf( stdnimp,"GetGlyphOutLine("NPFMT", '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
+    fprintf( stdnimp,"GetGlyphOutLine(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
              hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
@@ -323,7 +323,7 @@ HFONT CreateFontIndirect( const LOGFONT * font )
     fontPtr = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hfont );
     memcpy( &fontPtr->logfont, font, sizeof(LOGFONT) );
     AnsiLower( fontPtr->logfont.lfFaceName );
-    dprintf_font(stddeb,"CreateFontIndirect(%p (%d,%d)); return "NPFMT"\n",
+    dprintf_font(stddeb,"CreateFontIndirect(%p (%d,%d)); return %04x\n",
 	font, font->lfHeight, font->lfWidth, hfont);
     return hfont;
 }
@@ -370,8 +370,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
     X_PHYSFONT * stockPtr;
     HFONT prevHandle = dc->w.hFont;
     XFontStruct * fontStruct;
-    dprintf_font(stddeb,"FONT_SelectObject(%p, "NPFMT", %p)\n", 
-		     dc, hfont, font);
+    dprintf_font(stddeb,"FONT_SelectObject(%p, %04x, %p)\n", dc, hfont, font);
 
 #if 0 /* From the code in SelectObject, this can not happen */
       /* Load font if necessary */
@@ -392,9 +391,8 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
       else
 	return 0;
 
-      /*  Must be DWORD for WINELIB32 support  */
     if ((hfont >= FIRST_STOCK_FONT) && (hfont <= LAST_STOCK_FONT))
-	stockPtr = &stockFonts[(DWORD)hfont - (DWORD)FIRST_STOCK_FONT];
+	stockPtr = &stockFonts[hfont - FIRST_STOCK_FONT];
     else 
 	stockPtr = NULL;
     
@@ -405,7 +403,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
               /* If it is not a stock font, we can simply return 0 */
             if (!stockPtr) return 0;
               /* Otherwise we must try to find a substitute */
-            dprintf_font(stddeb,"Loading font 'fixed' for "NPFMT"\n", hfont );
+            dprintf_font(stddeb,"Loading font 'fixed' for %04x\n", hfont );
             font->logfont.lfPitchAndFamily &= ~VARIABLE_PITCH;
             font->logfont.lfPitchAndFamily |= FIXED_PITCH;
             fontStruct = XLoadQueryFont( display, "fixed" );
@@ -420,7 +418,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
     {
 	fontStruct = stockPtr->fstruct;
 	dprintf_font(stddeb,
-                     "FONT_SelectObject: Loaded font from cache "NPFMT" %p\n",
+                     "FONT_SelectObject: Loaded font from cache %04x %p\n",
 		     hfont, fontStruct );
     }	
 
@@ -550,9 +548,8 @@ BOOL GetTextExtentPoint( HDC hdc, LPCSTR str, short count, LPSIZE size )
     size->cy = abs((dc->u.x.font.fstruct->ascent+dc->u.x.font.fstruct->descent)
 		    * dc->w.WndExtY / dc->w.VportExtY);
 
-    dprintf_font(stddeb,"GetTextExtentPoint("NPFMT" '%*.*s' %d %p): returning %ld,%ld\n",
-		 hdc, count, count, str, count, size, (LONG)size->cx, 
-		 (LONG)size->cy );
+    dprintf_font(stddeb,"GetTextExtentPoint(%04x '%*.*s' %d %p): returning %d,%d\n",
+		 hdc, count, count, str, count, size, size->cx, size->cy );
     return TRUE;
 }
 
@@ -588,7 +585,7 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
  */
 DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
 {
-    dprintf_font(stdnimp,"SetmapperFlags("NPFMT", %08lX) // Empty Stub !\n", 
+    dprintf_font(stdnimp,"SetmapperFlags(%04x, %08lX) // Empty Stub !\n", 
 		 hDC, dwFlag); 
     return 0L;
 }
@@ -664,10 +661,6 @@ BOOL RemoveFontResource( LPSTR str )
 int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 {
 	int 	i;
-#if 0
-	dprintf_font(stddeb,"ParseFontParms('%s', %d, %p, %d);\n", 
-			lpFont, wParmsNo, lpRetStr, wMaxSiz);
-#endif
 	if (lpFont == NULL) return 0;
 	if (lpRetStr == NULL) return 0;
 	for (i = 0; (*lpFont != '\0' && i != wParmsNo); ) {
@@ -680,9 +673,6 @@ int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 		for (i = 0; (*lpFont != '\0' && *lpFont != '-' && i < wMaxSiz); i++)
 			*(lpRetStr + i) = *lpFont++;
 		*(lpRetStr + i) = '\0';
-#if 0
-		dprintf_font(stddeb,"ParseFontParms // '%s'\n", lpRetStr);
-#endif
 		return i;
 		}
 	else
@@ -789,7 +779,7 @@ INT EnumFonts(HDC hDC, LPCTSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpDat
   int          nRet = 0;
   int          i;
   
-  dprintf_font(stddeb,"EnumFonts("NPFMT", %p='%s', %08lx, %08lx)\n", 
+  dprintf_font(stddeb,"EnumFonts(%04x, %p='%s', %08lx, %08lx)\n", 
 	       hDC, lpFaceName, lpFaceName, (LONG)lpEnumFunc, lpData);
   if (lpEnumFunc == 0) return 0;
   hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
@@ -859,7 +849,7 @@ INT EnumFontFamilies(HDC hDC, LPCTSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARA
   int	       	nRet = 0;
   int	       	i;
   
-  dprintf_font(stddeb,"EnumFontFamilies("NPFMT", %p, %08lx, %08lx)\n",
+  dprintf_font(stddeb,"EnumFontFamilies(%04x, %p, %08lx, %08lx)\n",
 	       hDC, lpszFamily, (DWORD)lpEnumFunc, lpData);
   if (lpEnumFunc == 0) return 0;
   hLog = GDI_HEAP_ALLOC( sizeof(ENUMLOGFONT) );

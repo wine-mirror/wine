@@ -4,6 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <sys/types.h>
+
 #include "windows.h"
 #include "drive.h"
 #include "miscemu.h"

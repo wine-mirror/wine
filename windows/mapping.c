@@ -86,7 +86,7 @@ WORD SetMapMode( HDC hdc, WORD mode )
 	return 1;
     }
 
-    dprintf_gdi(stddeb, "SetMapMode: "NPFMT" %d\n", hdc, mode );
+    dprintf_gdi(stddeb, "SetMapMode: %04x %d\n", hdc, mode );
     
     prevMode = dc->w.MapMode;
     switch(mode)

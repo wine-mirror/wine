@@ -207,7 +207,7 @@ void fixup_imports(struct w_files* wpnt)
 
     while(*import_list)
 	{
-	  pe_name = (struct pe_import_name *) ((int) load_addr + *import_list);
+	  pe_name = (struct pe_import_name *) ((int) load_addr + ((unsigned)*import_list & ~0x80000000));
 	  if((unsigned)*import_list & 0x80000000)
 	  {
 		int ordinal=*import_list & (0x80000000-1);
@@ -652,7 +652,7 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 
         /* FIXME: Is this really the correct place to initialise the DLL? */
 	if ((wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)) {
-            PE_InitDLL(wpnt);
+            PE_InitDLL(hModule);
         } else {
             TASK_CreateTask(hModule,hInstance,0,
 		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),

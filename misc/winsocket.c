@@ -49,7 +49,13 @@ struct ipc_packet {
 #pragma pack(1)
 #endif
 
-#define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long))
+#define WINSOCK_MAX_SOCKETS	256
+#define WINSOCK_MAX_UDPDG	1024
+
+/* we are out by two with the following, is it due to byte alignment?
+ * #define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long)) 
+ */
+#define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long) - 2)
 /*#define MTYPE 0xb0b0eb05*/
 #define MTYPE 0x30b0eb05
 
@@ -152,8 +158,7 @@ static WORD wsaerrno(void)
                 fprintf(stderr, "winsock: errno %d, (%s).\n", 
                 			errno, sys_errlist[errno]);
 #else
-                fprintf(stderr, "winsock: errno %d, (%s).\n", 
-					errno, strerror(errno));
+                fprintf(stderr, "winsock: errno %d\n", errno);
 #endif
 #else
                 fprintf(stderr, "winsock: errno %d\n", errno);
@@ -242,8 +247,8 @@ static WORD wsaherrno(void)
 
         switch(h_errno)
         {
-	case TRY_AGAIN:		return WSATRY_AGAIN;
 	case HOST_NOT_FOUND:	return WSAHOST_NOT_FOUND;
+	case TRY_AGAIN:		return WSATRY_AGAIN;
 	case NO_RECOVERY:	return WSANO_RECOVERY;
 	case NO_DATA:		return WSANO_DATA; 
 /* just in case we ever get here and there are no problems */
@@ -380,6 +385,11 @@ SOCKET WINSOCK_accept(SOCKET s, struct sockaddr *addr, INT *addrlen)
 
 	dprintf_winsock(stddeb, "WSA_accept: socket %d, ptr %8x, length %d\n", s, (int) addr, *addrlen);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return INVALID_SOCKET;
+	}
+
 	if ((sock = accept(s, addr, (int *) addrlen)) < 0) {
         	errno_to_wsaerrno();
         	return INVALID_SOCKET;
@@ -389,11 +399,38 @@ SOCKET WINSOCK_accept(SOCKET s, struct sockaddr *addr, INT *addrlen)
 
 INT WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
 {
+
 	dprintf_winsock(stddeb, "WSA_bind: socket %d, ptr %8x, length %d\n", s, (int) name, namelen);
 	dump_sockaddr(name);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
+	if (namelen < sizeof(*name)) {
+		WSASetLastError(WSAEFAULT);
+		return SOCKET_ERROR;
+	}
+
+	/* check the socket family */
+	if ( ((struct sockaddr_in *)name)->sin_family != AF_INET ) {
+		WSASetLastError(WSAEAFNOSUPPORT);
+		return SOCKET_ERROR;
+	}
+
 	if (bind(s, name, namelen) < 0) {
-        	errno_to_wsaerrno();
+		switch(errno) {
+		case EBADF:
+			WSASetLastError(WSAENOTSOCK);
+			break;
+		case EADDRNOTAVAIL:
+			WSASetLastError(WSAEINVAL);
+			break;
+		default:
+			errno_to_wsaerrno();
+			break;
+		}
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -403,10 +440,18 @@ INT WINSOCK_closesocket(SOCKET s)
 {
 	dprintf_winsock(stddeb, "WSA_closesocket: socket %d\n", s);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	FD_CLR(s, &fd_in_use);
 
 	if (close(s) < 0) {
-        	errno_to_wsaerrno();
+		if (errno == EBADF)
+			WSASetLastError(WSAENOTSOCK);
+		else
+        		errno_to_wsaerrno();
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -416,6 +461,11 @@ INT WINSOCK_connect(SOCKET s, struct sockaddr *name, INT namelen)
 {
 	dprintf_winsock(stddeb, "WSA_connect: socket %d, ptr %8x, length %d\n", s, (int) name, namelen);
 	dump_sockaddr(name);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
 
 	if (connect(s, name, namelen) < 0) {
         	errno_to_wsaerrno();
@@ -428,6 +478,11 @@ INT WINSOCK_getpeername(SOCKET s, struct sockaddr *name, INT *namelen)
 {
 	dprintf_winsock(stddeb, "WSA_getpeername: socket: %d, ptr %8x, ptr %8x\n", s, (int) name, *namelen);
 	dump_sockaddr(name);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
 
 	if (getpeername(s, name, (int *) namelen) < 0) {
 		if (h_errno < 0) {
@@ -443,6 +498,12 @@ INT WINSOCK_getpeername(SOCKET s, struct sockaddr *name, INT *namelen)
 INT WINSOCK_getsockname(SOCKET s, struct sockaddr *name, INT *namelen)
 {
 	dprintf_winsock(stddeb, "WSA_getsockname: socket: %d, ptr %8x, ptr %8x\n", s, (int) name, (int) *namelen);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	if (getsockname(s, name, (int *) namelen) < 0) {
 		if (h_errno < 0) {
         		errno_to_wsaerrno();
@@ -458,10 +519,19 @@ INT
 WINSOCK_getsockopt(SOCKET s, INT level, INT optname, char *optval, INT *optlen)
 {
 	dprintf_winsock(stddeb, "WSA_getsockopt: socket: %d, opt %d, ptr %8x, ptr %8x\n", s, level, (int) optval, (int) *optlen);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	convert_sockopt(&level, &optname);
 
 	if (getsockopt(s, (int) level, optname, optval, (int *) optlen) < 0) {
-        	errno_to_wsaerrno();
+		if (errno == EBADF)
+			WSASetLastError(WSAENOTSOCK);
+		else
+        		errno_to_wsaerrno();
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -505,6 +575,11 @@ INT WINSOCK_ioctlsocket(SOCKET s, u_long cmd, u_long *argp)
 	char *ctlname;
 	dprintf_winsock(stddeb, "WSA_ioctl: socket %d, cmd %lX, ptr %8x\n", s, cmd, (int) argp);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	/* Why can't they all use the same ioctl numbers */
 	newcmd=cmd;
 	newargp=argp;
@@ -532,7 +607,10 @@ INT WINSOCK_ioctlsocket(SOCKET s, u_long cmd, u_long *argp)
 	
 
 	if (ioctl(s, newcmd, newargp) < 0) {
-        	errno_to_wsaerrno();
+		if (errno == EBADF)
+			WSASetLastError(WSAENOTSOCK);
+		else
+        		errno_to_wsaerrno();
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -541,6 +619,11 @@ INT WINSOCK_ioctlsocket(SOCKET s, u_long cmd, u_long *argp)
 INT WINSOCK_listen(SOCKET s, INT backlog)
 {
 	dprintf_winsock(stddeb, "WSA_listen: socket %d, backlog %d\n", s, backlog);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
 
 	if (listen(s, backlog) < 0) {
         	errno_to_wsaerrno();
@@ -565,6 +648,11 @@ INT WINSOCK_recv(SOCKET s, char *buf, INT len, INT flags)
 
 	dprintf_winsock(stddeb, "WSA_recv: socket %d, ptr %8x, length %d, flags %d\n", s, (int) buf, len, flags);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	if ((length = recv(s, buf, len, flags)) < 0) {
         	errno_to_wsaerrno();
         	return SOCKET_ERROR;
@@ -579,6 +667,11 @@ INT WINSOCK_recvfrom(SOCKET s, char *buf, INT len, INT flags,
 
 	dprintf_winsock(stddeb, "WSA_recvfrom: socket %d, ptr %8lx, length %d, flags %d\n", s, (unsigned long)buf, len, flags);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	if ((length = recvfrom(s, buf, len, flags, from, fromlen)) < 0) {
         	errno_to_wsaerrno();
         	return SOCKET_ERROR;
@@ -591,6 +684,11 @@ INT WINSOCK_select(INT nfds, fd_set *readfds, fd_set *writefds,
 {
 	dprintf_winsock(stddeb, "WSA_select: fd # %d, ptr %8lx, ptr %8lx, ptr %8lX\n", nfds, (unsigned long) readfds, (unsigned long) writefds, (unsigned long) exceptfds);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+/* FIXME */
 	return(select(nfds, readfds, writefds, exceptfds, timeout));
 }
 
@@ -599,6 +697,11 @@ INT WINSOCK_send(SOCKET s, char *buf, INT len, INT flags)
 	int length;
 
 	dprintf_winsock(stddeb, "WSA_send: socket %d, ptr %8lx, length %d, flags %d\n", s, (unsigned long) buf, len, flags);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
 
 	if ((length = send(s, buf, len, flags)) < 0) {
         	errno_to_wsaerrno();
@@ -614,6 +717,11 @@ INT WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags,
 
 	dprintf_winsock(stddeb, "WSA_sendto: socket %d, ptr %8lx, length %d, flags %d\n", s, (unsigned long) buf, len, flags);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	if ((length = sendto(s, buf, len, flags, to, tolen)) < 0) {
         	errno_to_wsaerrno();
         	return SOCKET_ERROR;
@@ -627,6 +735,11 @@ INT WINSOCK_setsockopt(SOCKET s, INT level, INT optname, const char *optval,
 	dprintf_winsock(stddeb, "WSA_setsockopt: socket %d, level %d, opt %d, ptr %8x, len %d\n", s, level, optname, (int) optval, optlen);
 	convert_sockopt(&level, &optname);
 	
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	if (setsockopt(s, level, optname, optval, optlen) < 0) {
         	errno_to_wsaerrno();
         	return SOCKET_ERROR;
@@ -637,6 +750,11 @@ INT WINSOCK_setsockopt(SOCKET s, INT level, INT optname, const char *optval,
 INT WINSOCK_shutdown(SOCKET s, INT how)
 {
 	dprintf_winsock(stddeb, "WSA_shutdown: socket s %d, how %d\n", s, how);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
 
 	if (shutdown(s, how) < 0) {
         	errno_to_wsaerrno();
@@ -651,24 +769,73 @@ SOCKET WINSOCK_socket(INT af, INT type, INT protocol)
 
     dprintf_winsock(stddeb, "WSA_socket: af=%d type=%d protocol=%d\n", af, type, protocol);
 
-    if ((sock = socket(af, type, protocol)) < 0) {
-        if (errno != EPERM) {
-            errno_to_wsaerrno();
-        } else {
-             /* NOTE: EPERM does not always map to WSAESOCKTNOSUPPORT
-              * so this is done as a special case
-              */
-             /* non super-user wants a raw socket */
-             dprintf_winsock(stderr, "WSA_socket: not enough privileges\n");
-             WSASetLastError(WSAESOCKTNOSUPPORT);
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return INVALID_SOCKET;
+	}
+
+    /* check the socket family */
+    switch(af) {
+    case AF_INET:
+    case AF_UNSPEC:
+        break;
+    default:
+        WSASetLastError(WSAEAFNOSUPPORT);
+        return INVALID_SOCKET;
+        break;
+    }
+
+    /* check the socket type */
+    switch(type) {
+    case SOCK_STREAM:
+    case SOCK_DGRAM:
+    case SOCK_RAW:
+        break;
+    default:
+        WSASetLastError(WSAESOCKTNOSUPPORT);
+        return INVALID_SOCKET;
+        break;
+    }
+
+    /* check the protocol type */
+    if ( protocol < 0 ) { /* don't support negative values */
+        WSASetLastError(WSAEPROTONOSUPPORT);
+        return INVALID_SOCKET;
+    }
+
+    if ( af == AF_UNSPEC) { /* did they not specify the address family? */
+        switch(protocol) {
+        case IPPROTO_TCP:
+             if (type == SOCK_STREAM) {
+                 af = AF_INET;
+                 break;
+             }
+        case IPPROTO_UDP:
+             if (type == SOCK_DGRAM) {
+                 af = AF_INET;
+                 break;
+             }
+        default:
+             WSASetLastError(WSAEPROTOTYPE);
+             return INVALID_SOCKET;
+             break;
         }
-            dprintf_winsock(stddeb, "WSA_socket: failed !\n");
-            return INVALID_SOCKET;
+    }
+
+    if ((sock = socket(af, type, protocol)) < 0) {
+        if (errno == EPERM) {
+            /* non super-user wants a raw socket */
+            fprintf(stderr, "WSA_socket: not enough privileges\n");
+            WSASetLastError(WSAESOCKTNOSUPPORT);
+        } else
+            errno_to_wsaerrno();
+        dprintf_winsock(stddeb, "WSA_socket: failed !\n");
+        return INVALID_SOCKET;
     }
     
-    if (sock > 0xffff) {
-	/* we only support socket numbers up to 0xffff. The return
-	 * value indicates there are no more descriptors available
+    if (sock > WINSOCK_MAX_SOCKETS) {
+	/* we only support socket numbers up to WINSOCK_MAX_SOCKETS.
+	 * The return value indicates no more descriptors are available
 	 */
         WSASetLastError(WSAEMFILE);
 	return INVALID_SOCKET;
@@ -688,6 +855,11 @@ SEGPTR WINSOCK_gethostbyaddr(const char *addr, INT len, INT type)
 	struct hostent *host;
 
 	dprintf_winsock(stddeb, "WSA_gethostbyaddr: ptr %8x, len %d, type %d\n", (int) addr, len, type);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return NULL;
+	}
 
 	if ((host = gethostbyaddr(addr, len, type)) == NULL) {
 		if (h_errno < 0) {
@@ -711,6 +883,11 @@ SEGPTR WINSOCK_gethostbyname(const char *name)
 
 	dprintf_winsock(stddeb, "WSA_gethostbyname: %s\n", name);
 
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return NULL;
+	}
+
 	if ((host = gethostbyname(name)) == NULL) {
 		if (h_errno < 0) {
         		errno_to_wsaerrno();
@@ -728,12 +905,16 @@ INT WINSOCK_gethostname(char *name, INT namelen)
 {
 	dprintf_winsock(stddeb, "WSA_gethostname: name %s, len %d\n", name, namelen);
 
+	if (!wsa_initted) {
+		WSASetLastError(WSANOTINITIALISED);
+        	return SOCKET_ERROR;
+	}
+
 	if (gethostname(name, namelen) < 0) {
-		if (h_errno < 0) {
-        		errno_to_wsaerrno();
-		} else {
-			herrno_to_wsaerrno();
-		}
+		if (errno == EINVAL)
+			WSASetLastError(WSAEFAULT);
+		else
+			errno_to_wsaerrno();
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -747,6 +928,11 @@ SEGPTR WINSOCK_getprotobyname(char *name)
 	struct protoent *proto;
 
 	dprintf_winsock(stddeb, "WSA_getprotobyname: name %s\n", name);
+
+	if (!wsa_initted) {
+		WSASetLastError(WSANOTINITIALISED);
+        	return NULL;
+	}
 
 	if ((proto = getprotobyname(name)) == NULL) {
 		if (h_errno < 0) {
@@ -770,12 +956,20 @@ SEGPTR WINSOCK_getprotobynumber(INT number)
 
 	dprintf_winsock(stddeb, "WSA_getprotobynumber: num %d\n", number);
 
+	if (!wsa_initted) {
+		WSASetLastError(WSANOTINITIALISED);
+        	return NULL;
+	}
+
 	if ((proto = getprotobynumber(number)) == NULL) {
+#if 0
 		if (h_errno < 0) {
         		errno_to_wsaerrno();
 		} else {
 			herrno_to_wsaerrno();
 		}
+#endif
+		WSASetLastError(WSANO_DATA);
         	return NULL;
 	}
 	CONVERT_PROTOENT(&Heap->protoent_number, proto);
@@ -794,6 +988,11 @@ SEGPTR WINSOCK_getservbyname(const char *name, const char *proto)
 		proto = "tcp";
 
 	dprintf_winsock(stddeb, "WSA_getservbyname: name %s, proto %s\n", name, proto);
+
+	if (!wsa_initted) {
+		WSASetLastError(WSANOTINITIALISED);
+        	return NULL;
+	}
 
 	if ((service = getservbyname(name, proto)) == NULL) {
 		if (h_errno < 0) {
@@ -817,6 +1016,11 @@ SEGPTR WINSOCK_getservbyport(INT port, const char *proto)
 
 	dprintf_winsock(stddeb, "WSA_getservbyport: port %d, name %s\n", port, proto);
 
+	if (!wsa_initted) {
+		WSASetLastError(WSANOTINITIALISED);
+        	return NULL;
+	}
+
 	if ((service = getservbyport(port, proto)) == NULL) {
 		if (h_errno < 0) {
         		errno_to_wsaerrno();
@@ -833,7 +1037,7 @@ SEGPTR WINSOCK_getservbyport(INT port, const char *proto)
 /******************** winsock specific functions ************************
  *
  */
-static HANDLE new_handle = 0;
+static HANDLE new_handle = 1;
 
 static HANDLE AllocWSAHandle(void)
 {
@@ -843,15 +1047,17 @@ static HANDLE AllocWSAHandle(void)
 static void recv_message(int sig)
 {
 	static struct ipc_packet message;
-	static int message_is_valid = 0;
+	int message_is_valid = 0;
 	BOOL result;
+
+	message.mtype = MTYPE;
 
 	signal(SIGUSR1, recv_message);
 	while (1) {
 
 		if (!message_is_valid) {
 			if (msgrcv(wine_key, (struct msgbuf*)&(message), 
-				   IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1) {
+				   IPC_PACKET_SIZE, 0 /*MTYPE*/, IPC_NOWAIT) == -1) {
 				perror("wine: winsock: msgrcv");
 				break;
 			}
@@ -859,7 +1065,7 @@ static void recv_message(int sig)
 
 		result = PostMessage(message.hWnd, message.wMsg,
 				     (WPARAM)message.handle, message.lParam);
-		if (result == FALSE) {
+		if (result != FALSE) {
 			message_is_valid = 1;
 			break;
 		}
@@ -868,6 +1074,8 @@ static void recv_message(int sig)
 		
 	}
 		
+    if ((wine_key = msgget(IPC_PRIVATE, 0600)) == -1)
+	perror("wine: winsock: msgget"); 
 }
 
 
@@ -884,7 +1092,7 @@ static void send_message( HWND hWnd, u_int wMsg, HANDLE handle, long lParam)
 	if (msgsnd(wine_key, (struct msgbuf*)&(message),  
 		   IPC_PACKET_SIZE, 0/*IPC_NOWAIT*/) == -1)
 		perror("wine: winsock: msgsnd");
-		
+
 	kill(getppid(), SIGUSR1);
 }
 
@@ -894,10 +1102,18 @@ HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, const char *addr,
 {
 	HANDLE handle;
 	struct hostent *host;
+	int newpid;
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return 0;
+	}
 
 	handle = AllocWSAHandle();
 
-	if (fork()) {
+	newpid = fork();
+	if (newpid) {
+		dprintf_winsock(stddeb, "forked, child is (%d)\n",newpid);
 		return handle;
 	} else {
 		if ((host = gethostbyaddr(addr, len, type)) == NULL) {
@@ -921,10 +1137,18 @@ HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, const char *name,
 {
 	HANDLE handle;
 	struct hostent *host;
+	int newpid;
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return 0;
+	}
 
 	handle = AllocWSAHandle();
 
-	if (fork()) {
+	newpid = fork();
+	if (newpid) {
+		dprintf_winsock(stddeb, "forked, child is (%d)\n",newpid);
 		return handle;
 	} else {
 		if ((host = gethostbyname(name)) == NULL) {
@@ -948,10 +1172,18 @@ HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, const char *name,
 {
 	HANDLE handle;
 	struct protoent *proto;
+	int newpid;
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return 0;
+	}
 
 	handle = AllocWSAHandle();
 
-	if (fork()) {
+	newpid = fork();
+	if (newpid) {
+		dprintf_winsock(stddeb, "forked, child is (%d)\n",newpid);
 		return handle;
 	} else {
 		if ((proto = getprotobyname(name)) == NULL) {
@@ -975,10 +1207,18 @@ HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number,
 {
 	HANDLE handle;
 	struct protoent *proto;
+	int newpid;
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return 0;
+	}
 
 	handle = AllocWSAHandle();
 
-	if (fork()) {
+	newpid = fork();
+	if (newpid) {
+		dprintf_winsock(stddeb, "forked, child is (%d)\n",newpid);
 		return handle;
 	} else {
 		if ((proto = getprotobynumber(number)) == NULL) {
@@ -1002,10 +1242,18 @@ HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, const char *name,
 {
 	HANDLE handle;
 	struct servent *service;
+	int newpid;
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return 0;
+	}
 
 	handle = AllocWSAHandle();
 
-	if (fork()) {
+	newpid = fork();
+	if (newpid) {
+		dprintf_winsock(stddeb, "forked, child is (%d)\n",newpid);
 		return handle;
 	} else {
 		if ((service = getservbyname(name, proto)) == NULL) {
@@ -1029,10 +1277,18 @@ HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, const char
 {
 	HANDLE handle;
 	struct servent *service;
+	int newpid;
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return 0;
+	}
 
 	handle = AllocWSAHandle();
 
-	if (fork()) {
+	newpid = fork();
+	if (newpid) {
+		dprintf_winsock(stddeb, "forked, child is (%d)\n",newpid);
 		return handle;
 	} else {
 		if ((service = getservbyport(port, proto)) == NULL) {
@@ -1055,8 +1311,14 @@ INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
     long event;
     fd_set read_fds, write_fds, except_fds;
     int errors = 0;
+    int newpid;
 
-    dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND "NPFMT", wMsg %d, event %ld\n", s, hWnd, wMsg, lEvent);
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
+    dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND %04x, wMsg %d, event %ld\n", s, hWnd, wMsg, lEvent);
 
     /* remove outstanding asyncselect() processes */
     /* kill */
@@ -1064,7 +1326,9 @@ INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
     if (wMsg == 0 && lEvent == 0) 
         return 0;
 
-    if (fork()) {
+    newpid = fork();
+    if (newpid) {
+        dprintf_winsock(stddeb, "forked, child is (%d)\n",newpid);
         return 0;
     } else {
         while (1) {
@@ -1099,7 +1363,12 @@ INT WSAFDIsSet(INT fd, fd_set *set)
 
 INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 {
-	dprintf_winsock(stddeb, "WSA_AsyncRequest: handle "NPFMT"\n", hAsyncTaskHandle);
+	dprintf_winsock(stddeb, "WSA_AsyncRequest: handle %04x\n", hAsyncTaskHandle);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
 
 	return 0;
 }
@@ -1107,6 +1376,12 @@ INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 INT WSACancelBlockingCall(void)
 {
 	dprintf_winsock(stddeb, "WSA_CancelBlockCall\n");
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
+
 	return 0;
 }
           
@@ -1114,14 +1389,24 @@ INT WSAGetLastError(void)
 {
 	dprintf_winsock(stddeb, "WSA_GetLastError = %x\n", wsa_errno);
 
-    return wsa_errno;
+	return wsa_errno;
 }
 
 void WSASetLastError(INT iError)
 {
 	dprintf_winsock(stddeb, "WSA_SetLastErorr %d\n", iError);
 
-    wsa_errno = iError;
+	/* technically, we should make sure that WINESockets 
+	* has been started up correctly. But since this function
+	* is also used internally, it makes no sense.
+	*
+	*if (!wsa_initted) { 
+	*	WSASetLastError(WSANOTINITIALISED);
+	*	return SOCKET_ERROR;
+	*}
+	*/
+
+	wsa_errno = iError;
 }
 
 BOOL WSAIsBlocking(void)
@@ -1134,6 +1419,12 @@ BOOL WSAIsBlocking(void)
 FARPROC WSASetBlockingHook(FARPROC lpBlockFunc)
 {
 	dprintf_winsock(stddeb, "WSA_SetBlockHook %8lx, STUB!\n", (unsigned long) lpBlockFunc);
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return NULL;
+	}
+
 	BlockFunction = lpBlockFunc;
 
 	return (FARPROC) lpBlockFunc;
@@ -1142,11 +1433,18 @@ FARPROC WSASetBlockingHook(FARPROC lpBlockFunc)
 INT WSAUnhookBlockingHook(void)
 {
 	dprintf_winsock(stddeb, "WSA_UnhookBlockingHook\n");
+
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return NULL;
+	}
+
 	BlockFunction = NULL;
 
 	return 0;
 }
 
+#ifdef 0
 WSADATA WINSOCK_data = {
         0x0101,
         0x0101,
@@ -1162,13 +1460,34 @@ WSADATA WINSOCK_data = {
 #else
 	"Unknown",
 #endif
-        128,
-	1024,
+        WINSOCK_MAX_SOCKETS,
+	WINSOCK_MAX_UDPDG,
         NULL
 };
+#endif
 
 INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 {
+
+	WSADATA WINSOCK_data = {
+        			0x0101,
+        			0x0101,
+        			"WINE Sockets",
+			#ifdef linux
+        			"Linux/i386",
+			#elif defined(__NetBSD__)
+        			"NetBSD/i386",
+			#elif defined(sunos)
+				"SunOS",
+			#elif defined(__FreeBSD__)
+				"FreeBSD",
+			#else
+				"Unknown",
+			#endif
+        			WINSOCK_MAX_SOCKETS,
+				WINSOCK_MAX_UDPDG,
+				NULL
+				};
 
     dprintf_winsock(stddeb, "WSAStartup: verReq=%x\n", wVersionRequested);
 
@@ -1186,7 +1505,9 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 	return WSASYSNOTREADY;
 
     Heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
-    memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data));
+
+    /* return winsock information */
+    memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data)); 
 
     /* ipc stuff */
 
@@ -1199,7 +1520,9 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
     
     FD_ZERO(&fd_in_use);
 
-    wsa_initted = 1;
+    /* increment our usage count */
+    wsa_initted++;
+    dprintf_winsock(stddeb, "WSAStartup: succeeded\n");
     return(0);
 }
 
@@ -1207,14 +1530,25 @@ INT WSACleanup(void)
 {
 	int fd;
 
-	if (wine_key)
-		if (msgctl(wine_key, IPC_RMID, NULL) == -1)
-			perror("wine: winsock: shmctl");
+	dprintf_winsock(stddeb, "WSACleanup (%d)\n",getpid());
 
-	for (fd = 0; fd != FD_SETSIZE; fd++)
-		if (FD_ISSET(fd, &fd_in_use))
-			close(fd);
+	if (!wsa_initted) { 
+		WSASetLastError(WSANOTINITIALISED);
+		return SOCKET_ERROR;
+	}
 
-	wsa_initted = 0;
+	/* decrement usage count */
+	wsa_initted--;
+
+	if (wsa_initted == 0) {
+		if (wine_key)
+			if (msgctl(wine_key, IPC_RMID, NULL) == -1)
+				perror("wine: winsock: msgctl");
+
+		for (fd = 0; fd != FD_SETSIZE; fd++)
+			if (FD_ISSET(fd, &fd_in_use))
+				close(fd);
+
+	}
 	return 0;
 }

@@ -134,7 +134,7 @@ void MODULE_PrintModule( HMODULE hmodule )
 
       /* Dump the module info */
 
-    printf( "Module "NPFMT":\n", hmodule );
+    printf( "Module %04x:\n", hmodule );
     printf( "count=%d flags=%04x heap=%d stack=%d\n",
             pModule->count, pModule->flags,
             pModule->heap_size, pModule->stack_size );
@@ -154,7 +154,7 @@ void MODULE_PrintModule( HMODULE hmodule )
     printf( "\nSegment table:\n" );
     pSeg = NE_SEG_TABLE( pModule );
     for (i = 0; i < pModule->seg_count; i++, pSeg++)
-        printf( "%02x: pos=%d size=%d flags=%04x minsize=%d sel="NPFMT"\n",
+        printf( "%02x: pos=%d size=%d flags=%04x minsize=%d sel=%04x\n",
                 i + 1, pSeg->filepos, pSeg->size, pSeg->flags,
                 pSeg->minsize, pSeg->selector );
 
@@ -264,7 +264,7 @@ int MODULE_OpenFile( HMODULE hModule )
     static int cachedfd = -1;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_module( stddeb, "MODULE_OpenFile("NPFMT") cache: mod="NPFMT" fd=%d\n",
+    dprintf_module( stddeb, "MODULE_OpenFile(%04x) cache: mod=%04x fd=%d\n",
                     hModule, hCachedModule, cachedfd );
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return -1;
     if (hCachedModule == hModule) return cachedfd;
@@ -273,7 +273,7 @@ int MODULE_OpenFile( HMODULE hModule )
     name = NE_MODULE_NAME( pModule );
     if (!(unixName = DOSFS_GetUnixFileName( name, TRUE )) ||
         (cachedfd = open( unixName, O_RDONLY )) == -1)
-        fprintf( stderr, "MODULE_OpenFile: can't open file '%s' for module "NPFMT"\n",
+        fprintf( stderr, "MODULE_OpenFile: can't open file '%s' for module %04x\n",
                  name, hModule );
     dprintf_module( stddeb, "MODULE_OpenFile: opened '%s' -> %d\n",
                     name, cachedfd );
@@ -461,7 +461,7 @@ HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 
     hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
     if (!hModule) return (HMODULE)11;  /* invalid exe */
-    FarSetOwner( hModule, (WORD)(DWORD)hModule );
+    FarSetOwner( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock( hModule );
     memcpy( pModule, &ne_header, sizeof(NE_MODULE) );
     pModule->count = 0;
@@ -609,7 +609,7 @@ WORD MODULE_GetOrdinal( HMODULE hModule, char *name )
 
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
 
-    dprintf_module( stddeb, "MODULE_GetOrdinal("NPFMT",'%s')\n",
+    dprintf_module( stddeb, "MODULE_GetOrdinal(%04x,'%s')\n",
                     hModule, name );
 
       /* First handle names of the form '#xxxx' */
@@ -1162,11 +1162,7 @@ BOOL FreeModule( HANDLE hModule )
  */
 HMODULE WIN16_GetModuleHandle( SEGPTR name )
 {
-#ifdef WINELIB32
-    if (HIWORD(name) == 0) return GetExePtr( name );
-#else
-    if (HIWORD(name) == 0) return GetExePtr( LOWORD(name) );
-#endif
+    if (HIWORD(name) == 0) return GetExePtr( (HANDLE)name );
     return MODULE_FindModule( PTR_SEG_TO_LIN(name) );
 }
 
@@ -1185,7 +1181,7 @@ int GetModuleUsage( HANDLE hModule )
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
-    dprintf_module( stddeb, "GetModuleUsage("NPFMT"): returning %d\n",
+    dprintf_module( stddeb, "GetModuleUsage(%04x): returning %d\n",
                     hModule, pModule->count );
     return pModule->count;
 }
@@ -1243,7 +1239,7 @@ HANDLE LoadLibrary( LPCSTR libname )
  */
 void FreeLibrary( HANDLE handle )
 {
-    dprintf_module( stddeb,"FreeLibrary: "NPFMT"\n", handle );
+    dprintf_module( stddeb,"FreeLibrary: %04x\n", handle );
     FreeModule( handle );
 }
 
@@ -1258,6 +1254,7 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
     HANDLE handle;
     WORD *cmdShowPtr;
     char *p, *cmdline, filename[256];
+    static int use_load_module = 1;
 
     if (!(cmdShowHandle = GlobalAlloc( 0, 2 * sizeof(WORD) ))) return 0;
     if (!(cmdLineHandle = GlobalAlloc( 0, 256 ))) return 0;
@@ -1271,36 +1268,97 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
       /* Build the filename and command-line */
 
     cmdline = (char *)GlobalLock( cmdLineHandle );
-    strncpy( filename, lpCmdLine, 256 );
-    filename[255] = '\0';
+    lstrcpyn( filename, lpCmdLine, sizeof(filename) - 4 /* for extension */ );
     for (p = filename; *p && (*p != ' ') && (*p != '\t'); p++);
-    if (*p)
-    {
-        strncpy( cmdline, p + 1, 128 );
-        cmdline[127] = '\0';
-    }
+    if (*p) lstrcpyn( cmdline, p + 1, 128 );
     else cmdline[0] = '\0';
     *p = '\0';
 
       /* Now load the executable file */
 
-#ifdef WINELIB32
-    params.hEnvironment = (HANDLE)GetDOSEnvironment();
-#else
-    params.hEnvironment = (HANDLE)SELECTOROF( GetDOSEnvironment() );
-#endif
-    params.cmdLine  = (SEGPTR)WIN16_GlobalLock( cmdLineHandle );
-    params.showCmd  = (SEGPTR)WIN16_GlobalLock( cmdShowHandle );
-    params.reserved = 0;
-    handle = LoadModule( filename, &params );
-    if (handle == (HANDLE)2)  /* file not found */
+    if (use_load_module)
     {
-	/* Check that the original file name did not have a suffix */
-	p = strrchr(filename, '.');
-        if (p && !(strchr(p, '/') || strchr(p, '\\')))
-            return handle;  /* filename already includes a suffix! */
-        strcat( filename, ".exe" );
-        handle = LoadModule( filename, &params );
+#ifdef WINELIB
+        /* WINELIB: Use LoadModule() only for the program itself */
+        use_load_module = 0;
+	params.hEnvironment = (HANDLE)GetDOSEnvironment();
+#else
+	params.hEnvironment = (HANDLE)SELECTOROF( GetDOSEnvironment() );
+#endif  /* WINELIB */
+	params.cmdLine  = (SEGPTR)WIN16_GlobalLock( cmdLineHandle );
+	params.showCmd  = (SEGPTR)WIN16_GlobalLock( cmdShowHandle );
+	params.reserved = 0;
+	handle = LoadModule( filename, &params );
+	if (handle == 2)  /* file not found */
+	{
+	    /* Check that the original file name did not have a suffix */
+	    p = strrchr(filename, '.');
+	    if (!p || (strchr(p, '/') && strchr(p, '\\')))
+            {
+                p = filename + strlen(filename);
+                strcpy( p, ".exe" );
+                handle = LoadModule( filename, &params );
+                *p = '\0';  /* Remove extension */
+            }
+	}
+    }
+    else handle = 2;
+
+    if (handle < 32)
+    {
+        /* Try to start it as a unix program */
+        if (!fork())
+	{
+            /* Child process */
+            const char *unixfilename;
+            const char *argv[256], **argptr;
+            int iconic = (nCmdShow == SW_SHOWMINIMIZED ||
+                          nCmdShow == SW_SHOWMINNOACTIVE);
+
+            /* get unixfilename */
+            if (strchr(filename, '/') ||
+                strchr(filename, ':') ||
+                strchr(filename, '\\'))
+                unixfilename = DOSFS_GetUnixFileName(filename, 1);
+            else unixfilename = filename;
+
+            if (unixfilename)
+            {
+                /* build argv */
+                argptr = argv;
+                if (iconic) *argptr++ = "-iconic";
+                *argptr++ = unixfilename;
+                p = cmdline;
+                while (1)
+                {
+                    while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
+                    if (!*p) break;
+                    *argptr++ = p;
+                    while (*p && *p != ' ' && *p != '\t') p++;
+                }
+                *argptr++ = 0;
+
+                /* Execute */
+                execvp(argv[0], (char**)argv);
+            }
+
+	    /* Failed ! */
+#ifdef WINELIB
+	    /* build argv */
+	    argptr = argv;
+	    *argptr++ = "wine";
+	    if (iconic) *argptr++ = "-iconic";
+	    *argptr++ = lpCmdLine;
+	    *argptr++ = 0;
+
+	    /* Execute */
+	    execvp(argv[0] , (char**)argv);
+
+	    /* Failed ! */
+	    fprintf(stderr, "WinExec: can't exec 'wine %s'\n", lpCmdLine);
+#endif
+	    exit(1);
+	}
     }
 
     GlobalFree( cmdShowHandle );
@@ -1335,20 +1393,20 @@ FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
     if (HIWORD(name) != 0)
     {
         ordinal = MODULE_GetOrdinal( hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
-        dprintf_module( stddeb, "GetProcAddress: "NPFMT" '%s'\n",
+        dprintf_module( stddeb, "GetProcAddress: %04x '%s'\n",
                         hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
     }
     else
     {
         ordinal = LOWORD(name);
-        dprintf_module( stddeb, "GetProcAddress: "NPFMT" %04x\n",
+        dprintf_module( stddeb, "GetProcAddress: %04x %04x\n",
                         hModule, ordinal );
     }
     if (!ordinal) return (FARPROC)0;
 
     ret = MODULE_GetEntryPoint( hModule, ordinal );
 
-    dprintf_module( stddeb, "GetProcAddress: returning "SPFMT"\n", ret );
+    dprintf_module( stddeb, "GetProcAddress: returning %08lx\n", (DWORD)ret );
     return (FARPROC)ret;
 }
 

@@ -68,8 +68,8 @@ void FOCUS_SwitchFocus(HWND hFocusFrom, HWND hFocusTo)
  */
 HWND SetFocus(HWND hwnd)
 {
-    HWND hWndPrevFocus, hwndTop;
-    WND *wndPtr = WIN_FindWndPtr( hwndTop = hwnd );
+    HWND hWndPrevFocus, hwndTop = hwnd;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (wndPtr)
     {
@@ -79,11 +79,8 @@ HWND SetFocus(HWND hwnd)
 	{
 	    if ( wndPtr->dwStyle & ( WS_MINIMIZE | WS_DISABLED) )
 		 return 0;
-
-	    hwndTop = wndPtr->hwndParent;
-	    wndPtr  = WIN_FindWndPtr( hwndTop );
-	    if ( !wndPtr )
-	         return 0;
+            if (!(wndPtr = wndPtr->parent)) return 0;
+	    hwndTop = wndPtr->hwndSelf;
 	}
 
 	if( hwnd == hwndFocus ) return hwnd;

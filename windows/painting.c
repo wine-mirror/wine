@@ -49,7 +49,7 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     DeleteObject( hrgnUpdate );
     if (!lps->hdc)
     {
-        fprintf( stderr, "GetDCEx() failed in BeginPaint(), hwnd="NPFMT"\n", hwnd );
+        fprintf(stderr, "GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
         return 0;
     }
 
@@ -144,13 +144,13 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
     if (rectUpdate)
     {
-        dprintf_win( stddeb, "RedrawWindow: "NPFMT" %ld,%ld-%ld,%ld "NPFMT" flags=%04x\n",
-                     hwnd, (LONG)rectUpdate->left, (LONG)rectUpdate->top,
-                     (LONG)rectUpdate->right, (LONG)rectUpdate->bottom, hrgnUpdate, flags);
+        dprintf_win(stddeb, "RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
+                    hwnd, rectUpdate->left, rectUpdate->top,
+                    rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags );
     }
     else
     {
-        dprintf_win( stddeb, "RedrawWindow: "NPFMT" NULL "NPFMT" flags=%04x\n",
+        dprintf_win( stddeb, "RedrawWindow: %04x NULL %04x flags=%04x\n",
                      hwnd, hrgnUpdate, flags);
     }
     GetClientRect( hwnd, &rectClient );
@@ -265,30 +265,28 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 	{
 	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
 	    if (!hrgn) return TRUE;
-	    for (hwnd = wndPtr->hwndChild; (hwnd); hwnd = wndPtr->hwndNext)
+	    for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
 	    {
-		if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
 		CombineRgn( hrgn, hrgnUpdate, 0, RGN_COPY );
 		OffsetRgn( hrgn, -wndPtr->rectClient.left,
 			         -wndPtr->rectClient.top );
-		RedrawWindow( hwnd, NULL, hrgn, flags );
+		RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags );
 	    }
 	    DeleteObject( hrgn );
 	}
 	else
 	{
 	    RECT rect;		
-	    for (hwnd = wndPtr->hwndChild; (hwnd); hwnd = wndPtr->hwndNext)
+	    for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
 	    {
-		if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
 		if (rectUpdate)
 		{
 		    rect = *rectUpdate;
 		    OffsetRect( &rect, -wndPtr->rectClient.left,
 			               -wndPtr->rectClient.top );
-		    RedrawWindow( hwnd, &rect, 0, flags );
+		    RedrawWindow( wndPtr->hwndSelf, &rect, 0, flags );
 		}
-		else RedrawWindow( hwnd, NULL, 0, flags );
+		else RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags );
 	    }
 	}
     }

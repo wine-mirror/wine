@@ -967,7 +967,7 @@ BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
     RECT rect;
     DC *dc;
 
-    dprintf_graphics( stddeb, "ExtFloodFill "NPFMT" %d,%d %06lx %d\n",
+    dprintf_graphics( stddeb, "ExtFloodFill %04x %d,%d %06lx %d\n",
                       hdc, x, y, color, fillType );
     dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
     if (!dc) 

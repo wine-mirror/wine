@@ -3,18 +3,11 @@
  *
  * Copyright 1993,1994 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
-*/
+ */
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-
-#if !defined  (MAXINT)
-#include <limits.h>
-#define MAXINT INT_MAX
-#endif
-
 #include <X11/Xlib.h>
+
 #include "color.h"
 #include "palette.h"
 #include "stddebug.h"
@@ -51,7 +44,7 @@ static WORD PALETTE_GetNearestIndexAndColor(HPALETTE hpalette, COLORREF *color)
     b = GetBValue(*color);
 
     entry = palPtr->logpalette.palPalEntry;
-    for (i = 0, minDist = MAXINT; minDist !=0 &&
+    for (i = 0, minDist = 0xffffff; minDist !=0 &&
          i < palPtr->logpalette.palNumEntries ; i++)
     {
 	if (entry->peFlags != 0xff)
@@ -158,7 +151,7 @@ BOOL AnimatePalette(HPALETTE hPal, UINT StartIndex, UINT NumEntries,
 WORD SetSystemPaletteUse( HDC hdc, WORD use)
 {
 	 WORD old=SystemPaletteUse;
-	 printf("SetSystemPaletteUse("NPFMT",%04X) // empty stub !!!\n", hdc, use);
+	 printf("SetSystemPaletteUse(%04x,%04x) // empty stub !!!\n", hdc, use);
 	 SystemPaletteUse=use;
 	 return old;
 }
@@ -168,7 +161,7 @@ WORD SetSystemPaletteUse( HDC hdc, WORD use)
  */
 WORD GetSystemPaletteUse( HDC hdc )
 {
-	printf("GetSystemPaletteUse("NPFMT") // empty stub !!!\n", hdc);
+	printf("GetSystemPaletteUse(%04x) // empty stub !!!\n", hdc);
 	return SystemPaletteUse;
 }
 
@@ -206,7 +199,7 @@ WORD GetSystemPaletteEntries( HDC hdc, WORD start, WORD count,
 WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
 {
     WORD index = PALETTE_GetNearestIndexAndColor( hpalette, &color );
-    dprintf_palette(stddeb,"GetNearestPaletteIndex("NPFMT",%06lx): returning %d\n", 
+    dprintf_palette(stddeb,"GetNearestPaletteIndex(%04x,%06lx): returning %d\n", 
                     hpalette, color, index );
     return index;
 }
@@ -247,7 +240,7 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
     HPALETTE prev;
     DC *dc;
 
-    dprintf_palette(stddeb, "GDISelectPalette: "NPFMT" "NPFMT"\n", hdc, hpal );
+    dprintf_palette(stddeb, "GDISelectPalette: %04x %04x\n", hdc, hpal );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     prev = dc->w.hPalette;
     dc->w.hPalette = hpal;
@@ -262,7 +255,7 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
  */
 UINT GDIRealizePalette( HDC hdc )
 {
-    dprintf_palette(stdnimp, "GDIRealizePalette: "NPFMT"\n", hdc );
+    dprintf_palette(stdnimp, "GDIRealizePalette: %04x\n", hdc );
     return 0;
 }
 

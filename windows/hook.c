@@ -71,7 +71,7 @@ HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
     if ((id < WH_FIRST_HOOK) || (id > WH_LAST_HOOK)) return 0;
     if (!(hInst = GetExePtr( hInst ))) return 0;
 
-    dprintf_hook( stddeb, "Setting hook %d: %08lx "NPFMT" "NPFMT"\n",
+    dprintf_hook( stddeb, "Setting hook %d: %08lx %04x %04x\n",
                   id, (DWORD)proc, hInst, hTask );
 
     if (hTask)  /* Task-specific hook */
@@ -84,7 +84,7 @@ HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
     if (id == WH_JOURNALPLAYBACK || id == WH_CBT ||
         id == WH_DEBUG || id == WH_SHELL)
     {
-	fprintf( stdnimp, "Unimplemented hook set: (%d,%08lx,"NPFMT","NPFMT")!\n",
+	fprintf( stdnimp, "Unimplemented hook set: (%d,%08lx,%04x,%04x)!\n",
                  id, (DWORD)proc, hInst, hTask );
     }
 
@@ -97,7 +97,7 @@ HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
     data->ownerQueue  = hQueue;
     data->ownerModule = hInst;
     data->inHookProc  = 0;
-    dprintf_hook( stddeb, "Setting hook %d: ret="NPFMT"\n", id, handle );
+    dprintf_hook( stddeb, "Setting hook %d: ret=%04x\n", id, handle );
 
     /* Insert it in the correct linked list */
 
@@ -126,7 +126,7 @@ static BOOL HOOK_RemoveHook( HANDLE hook )
     HOOKDATA *data;
     HANDLE *prevHook;
 
-    dprintf_hook( stddeb, "Removing hook "NPFMT"\n", hook );
+    dprintf_hook( stddeb, "Removing hook %04x\n", hook );
 
     if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook))) return FALSE;
     if (data->inHookProc)
@@ -187,10 +187,10 @@ static DWORD HOOK_CallHook( HANDLE hook, short code,
     queue->hCurHook = hook;
     data->inHookProc = 1;
 
-    dprintf_hook( stddeb, "Calling hook "NPFMT": %d %04lx %08lx\n",
+    dprintf_hook( stddeb, "Calling hook %04x: %d %04lx %08lx\n",
                   hook, code, (DWORD)wParam, lParam );
     ret = CallHookProc( data->proc, code, wParam, lParam );
-    dprintf_hook( stddeb, "Ret hook "NPFMT" = %08lx\n", hook, ret );
+    dprintf_hook( stddeb, "Ret hook %04x = %08lx\n", hook, ret );
 
     data->inHookProc = 0;
     queue->hCurHook = prevHook;

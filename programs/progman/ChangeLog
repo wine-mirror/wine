@@ -1,3 +1,14 @@
+Fri Mar 15 20:56:31 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [main.c]
+ 	`Arrange icons' in group windows
+
+	* [program.c]
+	No sysmenu for program windows
+
+	* [string.c]
+	Update sysmenu after language change
+
 Wed Feb 28 19:21:55 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
 
 	* [progman.h] [main.c] [group.c] [program.c] [dialog.c]

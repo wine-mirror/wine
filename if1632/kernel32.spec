@@ -71,7 +71,7 @@ base	1
 0067 stub DefineDosDeviceA
 0068 stub DefineDosDeviceW
 0069 stub DeleteAtom
-0070 stub DeleteCriticalSection
+0070 stdcall DeleteCriticalSection(ptr)	DeleteCriticalSection
 0071 stub DeleteFileA
 0072 stub DeleteFileW
 0073 stub DeviceIoControl
@@ -82,7 +82,7 @@ base	1
 0078 	stdcall DuplicateHandle(long long long ptr long long long) DuplicateHandle
 0079 stub EndUpdateResourceA
 0080 stub EndUpdateResourceW
-0081 stub EnterCriticalSection
+0081 stdcall EnterCriticalSection(ptr)	EnterCriticalSection
 0082 stub EnumCalendarInfoA
 0083 stub EnumCalendarInfoW
 0084 stub EnumDateFormatsA
@@ -142,8 +142,8 @@ base	1
 0138 stub FormatMessageA
 0139 stub FormatMessageW
 0140 stub FreeConsole
-0141 stub FreeEnvironmentStringsA
-0142 stub FreeEnvironmentStringsW
+0141 stdcall FreeEnvironmentStringsA(ptr)	FreeEnvironmentStringsA
+0142 stdcall FreeEnvironmentStringsW(ptr)	FreeEnvironmentStringsW
 0143 stub FreeLibrary
 0144 stub FreeLibraryAndExitThread
 0145 stdcall FreeResource(long) FreeResource32
@@ -213,12 +213,12 @@ base	1
 0209 stub GetDriveTypeW
 0210	stdcall GetEnvironmentStrings()	GetEnvironmentStrings
 0211 stub GetEnvironmentStringsA
-0212 stub GetEnvironmentStringsW
+0212 	stdcall GetEnvironmentStringsW()		GetEnvironmentStringsW
 0213    stdcall GetEnvironmentVariableA(ptr ptr long) GetEnvironmentVariableA
 0214 stub GetEnvironmentVariableW
 0215 stub GetExitCodeProcess
 0216 stub GetExitCodeThread
-0217 stub GetFileAttributesA
+0217 stdcall GetFileAttributesA(ptr)		GetFileAttributesA
 0218 stub GetFileAttributesW
 0219   stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
 0220 stub GetFileSize
@@ -315,7 +315,7 @@ base	1
 0310 stub GetVolumeInformationW
 0311 stub GetWindowsDirectoryA
 0312 stub GetWindowsDirectoryW
-0313 stub GlobalAddAtomA
+0313 stdcall GlobalAddAtomA(long) WIN32_GlobalAddAtomA
 0314 stub GlobalAddAtomW
 0315	stdcall GlobalAlloc(long long)	GlobalAlloc32
 0316 stub GlobalCompact
@@ -348,7 +348,7 @@ base	1
 0343 stub HeapValidate
 0344 stub HeapWalk
 0345 stub InitAtomTable
-0346 stub InitializeCriticalSection
+0346 stdcall InitializeCriticalSection(ptr)	InitializeCriticalSection
 0347 stub InterlockedDecrement
 0348 stub InterlockedExchange
 0349 stub InterlockedIncrement
@@ -366,7 +366,7 @@ base	1
 0361 stub IsValidLocale
 0362 stub LCMapStringA
 0363 stub LCMapStringW
-0364 stub LeaveCriticalSection
+0364 stdcall LeaveCriticalSection(ptr)	LeaveCriticalSection
 0365	stdcall LoadLibraryA(long)		LoadLibraryA
 0366 stub LoadLibraryExA
 0367 stub LoadLibraryExW
@@ -532,10 +532,10 @@ base	1
 0527 stub SystemTimeToTzSpecificLocalTime
 0528 stub TerminateProcess
 0529 stub TerminateThread
-0530 stub TlsAlloc
-0531 stub TlsFree
-0532 stub TlsGetValue
-0533 stub TlsSetValue
+0530 stdcall TlsAlloc()	TlsAlloc
+0531 stdcall TlsFree(long)	TlsFree
+0532 stdcall TlsGetValue(long)	TlsGetValue
+0533 stdcall TlsSetValue(long ptr)	TlsSetValue
 0534 stub TransactNamedPipe
 0535 stub TransmitCommChar
 0536 stub TrimVirtualBuffer
@@ -567,7 +567,7 @@ base	1
 0562 stub WaitForSingleObjectEx
 0563 stub WaitNamedPipeA
 0564 stub WaitNamedPipeW
-0565 stub WideCharToMultiByte
+0565 stdcall WideCharToMultiByte(long long ptr long ptr long ptr ptr)	WideCharToMultiByte
 0566 stub WinExec
 0567 stub WriteConsoleA
 0568 stub WriteConsoleInputA

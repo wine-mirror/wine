@@ -1,4 +1,90 @@
 ----------------------------------------------------------------------
+Sun Mar 24 13:13:11 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [include/win.h] [windows/*.c]
+	Replaced next, parent, child and owner handles by pointers in WND
+	structure. This should improve performance, and should be
+	reasonably safe since Microsoft did the same in Win95.
+
+	* [include/wintypes.h] [*/*]
+	Redefined HANDLE to be UINT instead of a pointer for Winelib. This
+	allows removing a lot of unnecessary casts and NPFMTs.
+
+	* [windows/caret.c]
+	Create the caret brush upon CreateCaret(); use the bitmap
+	dimensions for the caret.
+	Fixed CARET_DisplayCaret() to use PatBlt().
+
+Fri Mar 22 16:00:00 1996  Anand Kumria <akumria@ozemail.com.au>
+
+	* [misc/winsocket.c]
+	More sanity checks, fixup some erroneous return codes.
+
+	* [documentation/winsock]
+	Description of how compatible the winsock is currently.
+
+Fri Mar 22 13:05:34 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [library/winmain.c]
+	Set `lpszCmdParam' by concatenating arguments.
+
+	* [loader/module.c]
+	WinExec: accept Unix commands, use Wine emulator.
+
+Mon Mar 18 12:16:27 1996  Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [if1632/kernel32.spec][win32/thread.c][include/kernel32.h]
+	DeleteCriticalSection, EnterCriticalSection,
+ 	InitializeCriticalSection, LeaveCriticalSection, TlsAlloc,
+ 	TlsFree, TlsGetValue, TlsSetValue: new functions.
+	CRITICAL_SECTION: new structure.
+
+	* [if1632/kernel32.spec][win32/code_page.c]
+	WideCharToMultiByte: new function.
+
+	* [if1632/kernel32.spec][win32/file.c]
+	GetFileAttributesA: new function.
+
+	* [if1632/kernel32.spec][misc/main.c]
+	GetEnvironmentStringsW, FreeEnvironmentStringsA,
+ 	FreeEnvironmentStringsW: new functions.
+	
+	* [if1632/user.spec][win32/cursoricon32.c][win32/Makefile.in]
+	cursoricon32.c: new file.
+	LoadCursorA, LoadCursorW: modified implementation from LoadCursor
+ 	to WIN32_*.
+	LoadIconA, LoadIconW: modified implementation from LoadIconA32
+	to WIN32_*.
+
+	* [include/struct32.h]
+	pragma pack inserted.
+	CURSORICON32 structures added.
+
+	* [include/winnls.h]
+	Constants CP_* and WC_* added.
+
+	* [loader/pe_image.c]
+	PE_LoadModule: call PE_InitDLL with hModule rather than wpnt.
+
+Sun Mar 17 16:59:12 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [misc/commdlg.c]
+	Introduced hook function handling in file dialog.
+	Removed an unnecessary ShowWindow call in FILEDLG_WMCommand().
+
+Thu Mar 14 10:50:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [if1632/gdi32.spec]
+	Added GetNearestColor.
+
+	* [if1632/kernel32.spec]
+	Added GlobalAddAtomA.
+
+	* [win32/param32.c]
+	Added stackframe.h to includes.
+	WIN32_GlobalAddAtomA() - new function.
+
+----------------------------------------------------------------------
 Wed Mar 13 19:46:50 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/edit.c]

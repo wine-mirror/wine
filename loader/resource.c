@@ -40,7 +40,7 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "FindResource: module="NPFMT" type=", hModule );
+    dprintf_resource(stddeb, "FindResource: module=%04x type=", hModule );
     PrintId( type );
     if (HIWORD(name))  /* Check for '#xxx' name */
     {
@@ -77,7 +77,7 @@ HGLOBAL LoadResource( HMODULE hModule, HRSRC hRsrc )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "LoadResource: module="NPFMT" res="NPFMT"\n",
+    dprintf_resource(stddeb, "LoadResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -107,7 +107,7 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
     HMODULE hModule;
     WORD *pModule;
 
-    dprintf_resource(stddeb, "LockResource: handle="NPFMT"\n", handle );
+    dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return (SEGPTR)0;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -132,7 +132,7 @@ LPVOID LockResource( HGLOBAL handle )
     HMODULE hModule;
     WORD *pModule;
 
-    dprintf_resource(stddeb, "LockResource: handle="NPFMT"\n", handle );
+    dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return NULL;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -160,7 +160,7 @@ BOOL FreeResource( HGLOBAL handle )
     HMODULE hModule;
     WORD *pModule;
 
-    dprintf_resource(stddeb, "FreeResource: handle="NPFMT"\n", handle );
+    dprintf_resource(stddeb, "FreeResource: handle=%04x\n", handle );
     if (!handle) return FALSE;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -187,7 +187,7 @@ INT AccessResource( HINSTANCE hModule, HRSRC hRsrc )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "AccessResource: module="NPFMT" res="NPFMT"\n",
+    dprintf_resource(stddeb, "AccessResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -215,7 +215,7 @@ DWORD SizeofResource( HMODULE hModule, HRSRC hRsrc )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "SizeofResource: module="NPFMT" res="NPFMT"\n",
+    dprintf_resource(stddeb, "SizeofResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
 #ifndef WINELIB
@@ -242,7 +242,7 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "AllocResource: module="NPFMT" res="NPFMT" size=%ld\n",
+    dprintf_resource(stddeb, "AllocResource: module=%04x res=%04x size=%ld\n",
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -268,7 +268,8 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
  */
 HANDLE DirectResAlloc(HANDLE hInstance, WORD wType, WORD wSize)
 {
-    dprintf_resource(stddeb,"DirectResAlloc("NPFMT",%x,%x)\n",hInstance,wType,wSize);
+    dprintf_resource(stddeb,"DirectResAlloc(%04x,%04x,%04x)\n",
+                     hInstance, wType, wSize );
     hInstance = GetExePtr(hInstance);
     if(!hInstance)return 0;
     if(wType != 0x10)	/* 0x10 is the only observed value, passed from
@@ -291,10 +292,10 @@ HANDLE LoadAccelerators(HANDLE instance, SEGPTR lpTableName)
     int 	i, n;
 
     if (HIWORD(lpTableName))
-        dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" '%s'\n",
+        dprintf_accel( stddeb, "LoadAccelerators: %04x '%s'\n",
                       instance, (char *)PTR_SEG_TO_LIN( lpTableName ) );
     else
-        dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" %04x\n",
+        dprintf_accel( stddeb, "LoadAccelerators: %04x %04x\n",
                        instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResource( instance, lpTableName, RT_ACCELERATOR )))
@@ -340,7 +341,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 	msg->message != WM_SYSKEYUP &&
     	msg->message != WM_CHAR) return 0;
 
-    dprintf_accel(stddeb, "TranslateAccelerators hAccel="NPFMT" !\n", hAccel);
+    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x !\n", hAccel);
 
     lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
     for (i = 0; i < lpAccelTbl->wCount; i++) {
@@ -387,8 +388,8 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     int string_num;
     int i;
 
-    dprintf_resource(stddeb, "LoadString: instance = "NPFMT", id = %04x, buffer = %08x, "
-	   "length = %d\n", instance, resource_id, (int) buffer, buflen);
+    dprintf_resource(stddeb,"LoadString: inst=%04x id=%04x buff=%08x len=%d\n",
+                     instance, resource_id, (int) buffer, buflen);
 
     hrsrc = FindResource( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING );
     if (!hrsrc) return 0;

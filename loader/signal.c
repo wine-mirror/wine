@@ -107,6 +107,8 @@ static void SIGNAL_SetHandler( int sig, void (*func)() )
 #endif  /* linux */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
+    sigset_t sig_mask;
+    sigemptyset(&sig_mask);
     sig_act.sa_handler = func;
     sig_act.sa_flags = SA_ONSTACK;
     sig_act.sa_mask = sig_mask;
@@ -114,6 +116,8 @@ static void SIGNAL_SetHandler( int sig, void (*func)() )
 #endif  /* __FreeBSD__ || __NetBSD__ */
 
 #if defined (__svr4__)
+    sigset_t sig_mask;
+    sigemptyset(&sig_mask);
     sig_act.sa_handler = func;
     sig_act.sa_flags = SA_ONSTACK | SA_SIGINFO;
     sig_act.sa_mask = sig_mask;
@@ -136,7 +140,6 @@ void init_wine_signals(void)
     extern void stop_wait(int a);
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-    sigset_t sig_mask;
     struct sigaltstack ss;
         
 #if !defined (__FreeBSD__) 
@@ -154,11 +157,9 @@ void init_wine_signals(void)
         perror("sigstack");
         exit(1);
     }
-    sigemptyset(&sig_mask);
 #endif  /* __FreeBSD__ || __NetBSD__ */
 
 #if defined (__svr4__)
-    sigset_t sig_mask;
     struct sigaltstack ss;
         
     if ((ss.ss_sp = malloc(SIGSTKSZ) ) == NULL) {
@@ -172,7 +173,6 @@ void init_wine_signals(void)
         perror("sigstack");
         exit(1);
     }
-    sigemptyset(&sig_mask);
 #endif  /* __svr4__ */
 
     SIGNAL_SetHandler( SIGSEGV, (void (*)())win_fault );

@@ -9,10 +9,7 @@
 #pragma pack(1)
 #endif
 
-#ifdef WINELIB32
-typedef struct { SHORT x,y; } POINTS;
-#define MAKEPOINTS(l) (*((POINTS *)&(l)))
-#else
+#ifndef WINELIB32
 #define MAKEPOINT(l) (*((POINT *)&(l)))
 #endif
 typedef struct { INT cx,cy; } SIZE, *LPSIZE;
@@ -541,11 +538,7 @@ typedef struct tagLOGBRUSH
 { 
     WORD       lbStyle; 
     COLORREF   lbColor WINE_PACKED;
-#ifdef WINELIB32
-    LONG       lbHatch; 
-#else
-    INT      lbHatch; 
-#endif
+    INT        lbHatch; 
 } LOGBRUSH, *PLOGBRUSH, *NPLOGBRUSH, *LPLOGBRUSH;
 
   /* Brush styles */
@@ -2801,7 +2794,7 @@ BOOL       ExtFloodFill(HDC,INT,INT,COLORREF,WORD);
 BOOL       ExtTextOut(HDC,short,short,WORD,LPRECT,LPSTR,WORD,LPINT);
 HICON      ExtractIcon(HINSTANCE,LPCSTR,UINT);
 WORD       FarGetOwner(HANDLE);
-void       FarSetOwner(HANDLE,WORD);
+void       FarSetOwner(HANDLE,HANDLE);
 void       FatalAppExit(UINT,LPCSTR);
 void       FatalExit(int);
 int        FillRect(HDC,LPRECT,HBRUSH);

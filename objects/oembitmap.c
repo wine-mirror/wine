@@ -17,7 +17,7 @@
 #include "cursoricon.h"
 #include "stddebug.h"
 #include "debug.h"
-
+#include "xmalloc.h"
 
   /* Include OEM pixmaps */
 #include "bitmaps/obm_cdrom"
@@ -327,28 +327,34 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP *hBitmap,
                                HBITMAP *hBitmapMask, POINT *hotspot )
 {
     Pixmap pixmap, pixmask;
-    XpmAttributes attrs;
+    XpmAttributes *attrs;
     int err;
 
-    attrs.valuemask    = XpmColormap | XpmDepth | XpmColorSymbols | XpmHotspot;
-    attrs.colormap     = COLOR_WinColormap;
-    attrs.depth        = color ? screenDepth : 1;
-    attrs.colorsymbols = (attrs.depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
-    attrs.numsymbols   = (attrs.depth > 1) ? NB_COLOR_SYMBOLS : 2;
+    attrs = (XpmAttributes *)xmalloc( XpmAttributesSize() );
+    attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
+    attrs->colormap     = COLOR_WinColormap;
+    attrs->depth        = color ? screenDepth : 1;
+    attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
+    attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
         
     err = XpmCreatePixmapFromData( display, rootWindow, data,
-                                   &pixmap, &pixmask, &attrs );
+                                   &pixmap, &pixmask, attrs );
 
-    if (err != XpmSuccess) return FALSE;
+    if (err != XpmSuccess)
+    {
+        free( attrs );
+        return FALSE;
+    }
     if (hotspot)
     {
-        hotspot->x = attrs.x_hotspot;
-        hotspot->y = attrs.y_hotspot;
+        hotspot->x = attrs->x_hotspot;
+        hotspot->y = attrs->y_hotspot;
     }
-    *hBitmap = OBM_MakeBitmap( attrs.width, attrs.height,
-                               attrs.depth, pixmap );
-    if (hBitmapMask) *hBitmapMask = OBM_MakeBitmap( attrs.width, attrs.height,
-                                                    1, pixmask );
+    *hBitmap = OBM_MakeBitmap( attrs->width, attrs->height,
+                               attrs->depth, pixmap );
+    if (hBitmapMask) *hBitmapMask = OBM_MakeBitmap(attrs->width, attrs->height,
+                                                   1, pixmask );
+    free( attrs );
     if (!*hBitmap)
     {
         if (pixmap) XFreePixmap( display, pixmap );

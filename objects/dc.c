@@ -333,7 +333,7 @@ HDC GetDCState( HDC hdc )
     if (!(handle = GDI_AllocObject( sizeof(DC), DC_MAGIC ))) return 0;
     newdc = (DC *) GDI_HEAP_LIN_ADDR( handle );
 
-    dprintf_dc(stddeb, "GetDCState("NPFMT"): returning "NPFMT"\n", hdc, handle );
+    dprintf_dc(stddeb, "GetDCState(%04x): returning %04x\n", hdc, handle );
 
     memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
     memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
@@ -366,7 +366,7 @@ void SetDCState( HDC hdc, HDC hdcs )
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
     if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return;
     if (!dcs->w.flags & DC_SAVED) return;
-    dprintf_dc(stddeb, "SetDCState: "NPFMT" "NPFMT"\n", hdc, hdcs );
+    dprintf_dc(stddeb, "SetDCState: %04x %04x\n", hdc, hdcs );
 
       /* Save the regions before overwriting everything */
     hVisRgn    = dc->w.hVisRgn;
@@ -410,7 +410,7 @@ int SaveDC( HDC hdc )
     dcs = (DC *) GDI_HEAP_LIN_ADDR( hdcs );
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
-    dprintf_dc(stddeb, "SaveDC("NPFMT"): returning %d\n", hdc, dc->saveLevel+1 );
+    dprintf_dc(stddeb, "SaveDC(%04x): returning %d\n", hdc, dc->saveLevel+1 );
     return ++dc->saveLevel;
 }
 
@@ -422,7 +422,7 @@ BOOL RestoreDC( HDC hdc, short level )
 {
     DC * dc, * dcs;
 
-    dprintf_dc(stddeb, "RestoreDC: "NPFMT" %d\n", hdc, level );
+    dprintf_dc(stddeb, "RestoreDC: %04x %d\n", hdc, level );
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -459,7 +459,7 @@ HDC CreateDC( LPCTSTR driver, LPCTSTR device, LPCTSTR output, const DEVMODE* ini
     if (!handle) return 0;
     dc = (DC *) GDI_HEAP_LIN_ADDR( handle );
 
-    dprintf_dc(stddeb, "CreateDC(%s %s %s): returning "NPFMT"\n",
+    dprintf_dc(stddeb, "CreateDC(%s %s %s): returning %04x\n",
 	    driver, device, output, handle );
 
     if (!displayDevCaps)
@@ -515,7 +515,7 @@ HDC CreateCompatibleDC( HDC hdc )
     if (!handle) return 0;
     dc = (DC *) GDI_HEAP_LIN_ADDR( handle );
 
-    dprintf_dc(stddeb, "CreateCompatibleDC("NPFMT"): returning "NPFMT"\n", hdc, handle );
+    dprintf_dc(stddeb, "CreateCompatibleDC(%04x): returning %04x\n", hdc, handle );
 
       /* Create default bitmap */
     if (!(hbitmap = CreateBitmap( 1, 1, 1, 1, NULL )))
@@ -559,7 +559,7 @@ BOOL DeleteDC( HDC hdc )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
-    dprintf_dc(stddeb, "DeleteDC: "NPFMT"\n", hdc );
+    dprintf_dc(stddeb, "DeleteDC: %04x\n", hdc );
 
     while (dc->saveLevel)
     {
@@ -608,7 +608,7 @@ int GetDeviceCaps( HDC hdc, WORD cap )
 
     if (cap > sizeof(DeviceCaps)-sizeof(WORD)) return 0;
     
-    dprintf_dc(stddeb, "GetDeviceCaps("NPFMT",%d): returning %d\n",
+    dprintf_dc(stddeb, "GetDeviceCaps(%04x,%d): returning %d\n",
 	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );
     return *(WORD *)(((char *)dc->w.devCaps) + cap);
 }

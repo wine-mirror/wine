@@ -161,8 +161,7 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
 #ifdef WINELIB32
                     SendMessage( GetParent(hWnd), WM_COMMAND,
-                                 MAKEWPARAM(wndPtr->wIDmenu,BN_CLICKED),
-				 (LPARAM) hWnd );
+                                 MAKEWPARAM(wndPtr->wIDmenu,BN_CLICKED), hWnd);
 #else
                     SendMessage( GetParent(hWnd), WM_COMMAND,
                                  wndPtr->wIDmenu, MAKELPARAM(hWnd,BN_CLICKED));
@@ -199,7 +198,7 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 break;
 
         case WM_GETFONT:
-                return (LONG) infoPtr->hFont;
+                return infoPtr->hFont;
 
 	case WM_SETFOCUS:
                 infoPtr->state |= BUTTON_HASFOCUS;
@@ -281,8 +280,7 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
       /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
 #ifdef WINELIB32
-    SendMessage( GetParent(hButton), WM_CTLCOLORBTN,
-		 (WPARAM)hDC, (LPARAM)hButton );
+    SendMessage( GetParent(hButton), WM_CTLCOLORBTN, hDC, hButton );
 #else
     SendMessage( GetParent(hButton), WM_CTLCOLOR, (WORD)hDC,
                  MAKELPARAM(hButton, CTLCOLOR_BTN) );
@@ -340,8 +338,8 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
         }
     }
 
-    SelectObject(hDC, (HANDLE)hOldPen);
-    SelectObject(hDC, (HANDLE)hOldBrush);
+    SelectObject( hDC, hOldPen );
+    SelectObject( hDC, hOldBrush );
 }
 
 
@@ -364,10 +362,9 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
 #ifdef WINELIB32 /* JBP: Different in Win32 */
-    hBrush = (HBRUSH) SendMessage(GetParent(hWnd), WM_CTLCOLORBTN, (WPARAM)hDC,
-				  (LPARAM)hWnd);
+    hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLORBTN, hDC, hWnd);
 #else
-    hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
+    hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, hDC,
 			 MAKELPARAM(hWnd, CTLCOLOR_BTN));
 #endif
     if (action == ODA_DRAWENTIRE) FillRect(hDC, &rc, hBrush);
@@ -444,9 +441,9 @@ static void GB_Paint( HWND hWnd, HDC hDC, WORD action )
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
 #ifdef WINELIB32
-    SendMessage( GetParent(hWnd), WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)hWnd );
+    SendMessage( GetParent(hWnd), WM_CTLCOLORBTN, hDC, hWnd );
 #else
-    SendMessage( GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
+    SendMessage( GetParent(hWnd), WM_CTLCOLOR, hDC,
 		 MAKELPARAM(hWnd, CTLCOLOR_BTN));
 #endif
     SelectObject( hDC, sysColorObjects.hpenWindowFrame );
@@ -487,8 +484,7 @@ static void UB_Paint( HWND hWnd, HDC hDC, WORD action )
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
 #ifdef WINELIB32
-    hBrush = (HBRUSH) SendMessage(GetParent(hWnd), WM_CTLCOLORBTN, (WPARAM)hDC,
-				  (LPARAM)hWnd);
+    hBrush = SendMessage( GetParent(hWnd), WM_CTLCOLORBTN, hDC, hWnd );
 #else
     hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
 			 MAKELPARAM(hWnd, CTLCOLOR_BTN));

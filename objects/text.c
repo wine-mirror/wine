@@ -197,9 +197,8 @@ INT DrawText( HDC hdc, LPCTSTR str, INT i_count, LPRECT rect, UINT flags )
     int width = rect->right - rect->left;
     int max_width = 0;
 
-    dprintf_text(stddeb,"DrawText: '%s', %d , [(%ld,%ld),(%ld,%ld)]\n", str,
-		 count, (LONG)rect->left, (LONG)rect->top, (LONG)rect->right, 
-		 (LONG)rect->bottom);
+    dprintf_text(stddeb,"DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str,
+		 count, rect->left, rect->top, rect->right, rect->bottom);
     
     if (count == -1) count = strlen(str);
     strPtr = str;
@@ -308,11 +307,9 @@ BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
 
     dprintf_text(stddeb,"ExtTextOut: %d,%d '%*.*s', %d  flags=%d\n",
             x, y, count, count, str, count, flags);
-    if (lprect != NULL) {
-      dprintf_text(stddeb, "rect %ld %ld %ld %ld\n", (LONG)lprect->left,
-		   (LONG)lprect->top, (LONG)lprect->right,
-		   (LONG)lprect->bottom );
-    }
+    if (lprect != NULL) dprintf_text(stddeb, "rect %d %d %d %d\n",
+                                     lprect->left, lprect->top,
+                                     lprect->right, lprect->bottom );
 
       /* Setup coordinates */
 
@@ -574,7 +571,7 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
 LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count, 
                     short cTabStops, LPINT lpTabPos, short nTabOrg )
 {
-    dprintf_text( stddeb, "TabbedTextOut: "NPFMT" %d,%d '%*.*s' %d\n",
+    dprintf_text( stddeb, "TabbedTextOut: %04x %d,%d '%*.*s' %d\n",
                   hdc, x, y, count, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                lpTabPos, nTabOrg, TRUE );
@@ -587,7 +584,7 @@ LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count,
 DWORD GetTabbedTextExtent( HDC hdc, LPSTR lpstr, int count, 
                           int cTabStops, LPINT lpTabPos )
 {
-    dprintf_text( stddeb, "GetTabbedTextExtent: "NPFMT" '%*.*s' %d\n",
+    dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%*.*s' %d\n",
                   hdc, count, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                lpTabPos, 0, FALSE );

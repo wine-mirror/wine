@@ -29,11 +29,12 @@
 
 typedef struct tagWND
 {
-    HWND         hwndNext;       /* Next sibling */
-    HWND         hwndChild;      /* First child */
+    struct tagWND *next;         /* Next sibling */
+    struct tagWND *child;        /* First child */
+    struct tagWND *parent;       /* Window parent (from CreateWindow) */
+    struct tagWND *owner;        /* Window owner */
     DWORD        dwMagic;        /* Magic number (must be WND_MAGIC) */
-    HWND         hwndParent;     /* Window parent (from CreateWindow) */
-    HWND         hwndOwner;      /* Window owner */
+    HWND         hwndSelf;       /* Handle of this window */
     HCLASS       hClass;         /* Window class */
     HANDLE       hInstance;      /* Window hInstance (from CreateWindow) */
     RECT         rectClient;     /* Client area rel. to parent client area */
@@ -75,6 +76,7 @@ typedef struct tagWND
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND hwnd );
+extern WND *WIN_GetDesktop(void);
 extern void WIN_DumpWindow( HWND hwnd );
 extern void WIN_WalkWindows( HWND hwnd, int indent );
 extern Window WIN_GetXWindow( HWND hwnd );

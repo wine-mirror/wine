@@ -3,8 +3,7 @@
  *
  * Copyright  David W. Metcalfe, 1994
  *
-static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
-*/
+ */
 
 #include <string.h>
 #include <fcntl.h>
@@ -573,7 +572,7 @@ HANDLE GetMetaFileBits(HMETAFILE hmf)
     HANDLE hMem = mf->hMetaHdr;
     METAHEADER *mh = (METAHEADER *)GlobalLock(hMem);
 
-    dprintf_metafile(stddeb,"GetMetaFileBits: hmf in: "NPFMT"\n", hmf);
+    dprintf_metafile(stddeb,"GetMetaFileBits: hmf in: %04x\n", hmf);
 
     /* can't get bits of disk based metafile */
     /* FIXME: should the disk file be loaded in this case? */
@@ -589,7 +588,7 @@ HANDLE GetMetaFileBits(HMETAFILE hmf)
     GlobalUnlock(hMem);
     GlobalFree(hmf);
 
-    dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: "NPFMT"\n", hMem);
+    dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: %04x\n", hMem);
 
     return hMem;
 }
@@ -605,7 +604,7 @@ HMETAFILE SetMetaFileBits(HANDLE hMem)
     METAFILE *mf;
     METAHEADER *mh = (METAHEADER *)GlobalLock(hMem);
 
-    dprintf_metafile(stddeb,"SetMetaFileBits: hMem in: "NPFMT"\n", hMem);
+    dprintf_metafile(stddeb,"SetMetaFileBits: hMem in: %04x\n", hMem);
 
     if (!mh) return FALSE;
 
@@ -629,7 +628,7 @@ HMETAFILE SetMetaFileBits(HANDLE hMem)
     GlobalUnlock(hMem);
     GlobalUnlock(hmf);
 
-    dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: "NPFMT"\n", hmf);
+    dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %04x\n", hmf);
 
     return hmf;
 }

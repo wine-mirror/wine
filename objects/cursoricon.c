@@ -340,7 +340,7 @@ static HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
     }
 
     /* Make it owned by the module */
-    if (hInstance) FarSetOwner( handle, (WORD)(DWORD)GetExePtr(hInstance) );
+    if (hInstance) FarSetOwner( handle, GetExePtr(hInstance) );
 
     info = (CURSORICONINFO *)GlobalLock( handle );
     info->ptHotSpot.x   = hotspot.x;
@@ -417,7 +417,7 @@ static HANDLE CURSORICON_Copy( HANDLE hInstance, HANDLE handle )
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
     size = GlobalSize( handle );
     hNew = GlobalAlloc( GMEM_MOVEABLE, size );
-    FarSetOwner( hNew, (WORD)(DWORD)hInstance );
+    FarSetOwner( hNew, hInstance );
     ptrNew = (char *)GlobalLock( hNew );
     memcpy( ptrNew, ptrOld, size );
     GlobalUnlock( handle );
@@ -466,10 +466,10 @@ HCURSOR CURSORICON_IconToCursor(HICON hIcon)
 HCURSOR LoadCursor( HANDLE hInstance, SEGPTR name )
 {
     if (HIWORD(name))
-        dprintf_cursor( stddeb, "LoadCursor: "NPFMT" '%s'\n",
+        dprintf_cursor( stddeb, "LoadCursor: %04x '%s'\n",
                         hInstance, (char *)PTR_SEG_TO_LIN( name ) );
     else
-        dprintf_cursor( stddeb, "LoadCursor: "NPFMT" %04x\n",
+        dprintf_cursor( stddeb, "LoadCursor: %04x %04x\n",
                         hInstance, LOWORD(name) );
 
     return CURSORICON_Load( hInstance, name,
@@ -483,10 +483,10 @@ HCURSOR LoadCursor( HANDLE hInstance, SEGPTR name )
 HICON LoadIcon( HANDLE hInstance, SEGPTR name )
 {
     if (HIWORD(name))
-        dprintf_icon( stddeb, "LoadIcon: "NPFMT" '%s'\n",
+        dprintf_icon( stddeb, "LoadIcon: %04x '%s'\n",
                       hInstance, (char *)PTR_SEG_TO_LIN( name ) );
     else
-        dprintf_icon( stddeb, "LoadIcon: "NPFMT" %04x\n",
+        dprintf_icon( stddeb, "LoadIcon: %04x %04x\n",
                       hInstance, LOWORD(name) );
 
     return CURSORICON_Load( hInstance, name,
@@ -554,16 +554,16 @@ HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
 /***********************************************************************
  *           CopyIcon    (USER.368)
  */
-#ifdef WINELIB32
+#ifdef WINELIB
 HICON CopyIcon( HICON hIcon )
 {
-    dprintf_icon( stddeb, "CopyIcon: "NPFMT"\n", hIcon );
+    dprintf_icon( stddeb, "CopyIcon: %04x\n", hIcon );
     return CURSORICON_Copy( 0, hIcon );
 }
 #else
 HICON CopyIcon( HANDLE hInstance, HICON hIcon )
 {
-    dprintf_icon( stddeb, "CopyIcon: "NPFMT" "NPFMT"\n", hInstance, hIcon );
+    dprintf_icon( stddeb, "CopyIcon: %04x %04x\n", hInstance, hIcon );
     return CURSORICON_Copy( hInstance, hIcon );
 }
 #endif
@@ -572,16 +572,16 @@ HICON CopyIcon( HANDLE hInstance, HICON hIcon )
 /***********************************************************************
  *           CopyCursor    (USER.369)
  */
-#ifdef WINELIB32
+#ifdef WINELIB
 HCURSOR CopyCursor( HCURSOR hCursor )
 {
-    dprintf_cursor( stddeb, "CopyCursor: "NPFMT"\n", hCursor );
+    dprintf_cursor( stddeb, "CopyCursor: %04x\n", hCursor );
     return CURSORICON_Copy( 0, hCursor );
 }
 #else
 HCURSOR CopyCursor( HANDLE hInstance, HCURSOR hCursor )
 {
-    dprintf_cursor( stddeb, "CopyCursor: "NPFMT" "NPFMT"\n", hInstance, hCursor );
+    dprintf_cursor( stddeb, "CopyCursor: %04x %04x\n", hInstance, hCursor );
     return CURSORICON_Copy( hInstance, hCursor );
 }
 #endif
@@ -592,7 +592,7 @@ HCURSOR CopyCursor( HANDLE hInstance, HCURSOR hCursor )
  */
 BOOL DestroyIcon( HICON hIcon )
 {
-    dprintf_icon( stddeb, "DestroyIcon: "NPFMT"\n", hIcon );
+    dprintf_icon( stddeb, "DestroyIcon: %04x\n", hIcon );
     /* FIXME: should check for OEM icon here */
     return (GlobalFree( hIcon ) != 0);
 }
@@ -603,7 +603,7 @@ BOOL DestroyIcon( HICON hIcon )
  */
 BOOL DestroyCursor( HCURSOR hCursor )
 {
-    dprintf_cursor( stddeb, "DestroyCursor: "NPFMT"\n", hCursor );
+    dprintf_cursor( stddeb, "DestroyCursor: %04x\n", hCursor );
     /* FIXME: should check for OEM cursor here */
     return (GlobalFree( hCursor ) != 0);
 }
@@ -697,7 +697,7 @@ static BOOL CURSORICON_SetCursor( HCURSOR hCursor )
         if (!(ptr = (CURSORICONINFO*)GlobalLock( hCursor ))) return FALSE;
         if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
         {
-            fprintf( stderr, "Cursor "NPFMT" has more than 1 bpp!\n", hCursor );
+            fprintf( stderr, "Cursor %04x has more than 1 bpp!\n", hCursor );
             return FALSE;
         }
 
@@ -813,7 +813,7 @@ HCURSOR SetCursor( HCURSOR hCursor )
     HCURSOR hOldCursor;
 
     if (hCursor == hActiveCursor) return hActiveCursor;  /* No change */
-    dprintf_cursor( stddeb, "SetCursor: "NPFMT"\n", hCursor );
+    dprintf_cursor( stddeb, "SetCursor: %04x\n", hCursor );
     hOldCursor = hActiveCursor;
     hActiveCursor = hCursor;
     /* Change the cursor shape only if it is visible */
@@ -892,8 +892,7 @@ void GetCursorPos( POINT *pt )
 	pt->x = rootX + desktopX;
 	pt->y = rootY + desktopY;
     }
-    dprintf_cursor(stddeb, "GetCursorPos: ret=%ld,%ld\n", (LONG)pt->x, 
-		   (LONG)pt->y );
+    dprintf_cursor(stddeb, "GetCursorPos: ret=%d,%d\n", pt->x, pt->y );
 }
 
 
@@ -920,7 +919,7 @@ WORD GetIconID( HANDLE hResource, DWORD resType )
         return 0;
     }
 
-    dprintf_cursor( stddeb, "GetIconID: hRes="NPFMT", entries=%i\n",
+    dprintf_cursor( stddeb, "GetIconID: hRes=%04x, entries=%i\n",
                     hResource, lpDir->idCount );
 
     switch(resType)
@@ -949,7 +948,7 @@ WORD GetIconID( HANDLE hResource, DWORD resType )
  */
 HICON LoadIconHandler( HANDLE hResource, BOOL bNew )
 {
-    dprintf_cursor(stddeb,"LoadIconHandler: hRes="NPFMT"\n",hResource);
+    dprintf_cursor(stddeb,"LoadIconHandler: hRes=%04x\n",hResource);
 
     if( !bNew )
       {

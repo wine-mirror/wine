@@ -132,7 +132,7 @@ HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc )
     struct w_files *wptr = wine_files;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "LoadResource: module="NPFMT" res="NPFMT"\n",
+    dprintf_resource(stddeb, "LoadResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     while (wptr != NULL && (wptr->hModule != hModule))
@@ -169,7 +169,7 @@ BOOL FreeResource32( HANDLE32 handle )
 INT AccessResource32( HINSTANCE hModule, HRSRC hRsrc )
 {
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "AccessResource: module="NPFMT" res="NPFMT"\n",
+    dprintf_resource(stddeb, "AccessResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
 	fprintf(stderr,"AccessResource32: not implemented\n");
@@ -183,7 +183,7 @@ INT AccessResource32( HINSTANCE hModule, HRSRC hRsrc )
 DWORD SizeofResource32( HINSTANCE hModule, HRSRC hRsrc )
 {
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "SizeofResource: module="NPFMT" res="NPFMT"\n",
+    dprintf_resource(stddeb, "SizeofResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
 	fprintf(stderr,"SizeofResource32: not implemented\n");
 	return 0;
@@ -203,10 +203,10 @@ HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
     int 	i, n;
 
     if (HIWORD(lpTableName))
-        dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" '%s'\n",
+        dprintf_accel( stddeb, "LoadAccelerators: %04x '%s'\n",
                       instance, (char *)( lpTableName ) );
     else
-        dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" %04x\n",
+        dprintf_accel( stddeb, "LoadAccelerators: %04x %04x\n",
                        instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResource32( instance, lpTableName, 
@@ -261,7 +261,7 @@ WIN32_LoadStringW(HINSTANCE instance, DWORD resource_id, LPWSTR buffer, int bufl
     int string_num;
     int i;
 
-    dprintf_resource(stddeb, "LoadString: instance = "NPFMT", id = %04x, buffer = %08x, "
+    dprintf_resource(stddeb, "LoadString: instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
     hrsrc = FindResource32( instance, (LPCWSTR)((resource_id>>4)+1), 

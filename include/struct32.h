@@ -3,6 +3,10 @@
 #define _STRUCT32_H
 #include "handle32.h"
 
+#ifndef WINELIB
+#pragma pack(1)
+#endif
+
 typedef struct tagRECT32
 {
 	LONG left;
@@ -45,21 +49,21 @@ void STRUCT32_MINMAXINFO16to32(const MINMAXINFO*,MINMAXINFO32*);
 typedef struct {
 	DWORD style;
 	DWORD dwExtendedStyle;
-	WORD noOfItems;
-	short x;
-	short y;
-	WORD cx;
-	WORD cy;
+	WORD noOfItems WINE_PACKED;
+	short x WINE_PACKED;
+	short y WINE_PACKED;
+	WORD cx WINE_PACKED;
+	WORD cy WINE_PACKED;
 } DLGTEMPLATE32;
 
 typedef struct {
 	DWORD style;
 	DWORD dwExtendedStyle;
-	short x;
-	short y;
-	short cx;
-	short cy;
-	WORD id;
+	short x WINE_PACKED;
+	short y WINE_PACKED;
+	short cx WINE_PACKED;
+	short cy WINE_PACKED;
+	WORD id WINE_PACKED;
 } DLGITEMTEMPLATE32;
 
 #define CW_USEDEFAULT32	0x80000000
@@ -131,5 +135,46 @@ typedef CREATESTRUCT32	CREATESTRUCTA;
 
 void STRUCT32_CREATESTRUCT32to16(const CREATESTRUCT32*,CREATESTRUCT*);
 void STRUCT32_CREATESTRUCT16to32(const CREATESTRUCT*,CREATESTRUCT32*);
+
+typedef struct {
+	BYTE   bWidth;
+	BYTE   bHeight;
+	BYTE   bColorCount;
+	BYTE   bReserved;
+	WORD   wPlanes;
+	WORD   wBitCount;
+	DWORD  dwBytesInRes;
+	WORD   wResId WINE_PACKED;
+	/*WORD   padding;	Spec is wrong, no padding here*/
+} ICONDIRENTRY32;
+
+typedef struct {
+	WORD   wWidth;
+	WORD   wHeight;
+	WORD   wPlanes;
+	WORD   wBitCount;
+	DWORD  dwBytesInRes;
+	WORD   wResId WINE_PACKED;
+	/*WORD   padding;*/
+} CURSORDIRENTRY32;
+
+typedef union{
+	ICONDIRENTRY32	icon;
+	CURSORDIRENTRY32	cursor;
+} CURSORICONDIRENTRY32;
+
+typedef struct {
+	WORD    idReserved;
+	WORD    idType;
+	WORD    idCount;
+	/*WORD	padding;*/
+	CURSORICONDIRENTRY32	idEntries[1];
+} CURSORICONDIR32;
+
+
+
+#ifndef WINELIB
+#pragma pack(4)
+#endif
 
 #endif

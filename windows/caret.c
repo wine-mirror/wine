@@ -2,6 +2,7 @@
  * Caret functions
  *
  * Copyright 1993 David Metcalfe
+ * Copyright 1996 Frans van Dorsselaer
  */
 
 #include "windows.h"
@@ -22,8 +23,7 @@ typedef struct
     short         y;
     short         width;
     short         height;
-    COLORREF      color;
-    HBITMAP       bitmap;
+    HBRUSH        hBrush;
     WORD          timeout;
     WORD          timerid;
 } CARET;
@@ -35,7 +35,7 @@ typedef enum
     CARET_TOGGLE,
 } DISPLAY_CARET;
 
-static CARET Caret = { (HWND)0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static CARET Caret = { 0, };
 
 
 /*****************************************************************
@@ -52,9 +52,7 @@ HWND CARET_GetHwnd()
 void CARET_DisplayCaret(DISPLAY_CARET status)
 {
     HDC hdc;
-    HBRUSH hBrush;
     HBRUSH hPrevBrush;
-    HRGN rgn;
 
     if (Caret.on && (status == CARET_ON)) return;
     if (!Caret.on && (status == CARET_OFF)) return;
@@ -62,21 +60,11 @@ void CARET_DisplayCaret(DISPLAY_CARET status)
     /* So now it's always a toggle */
 
     Caret.on = !Caret.on;
-    hdc = GetDC(Caret.hwnd);
-    if (Caret.bitmap == (HBITMAP)0 || Caret.bitmap == (HBITMAP)1)
-	hBrush = CreateSolidBrush(Caret.color);
-    else
-	hBrush = CreatePatternBrush(Caret.bitmap);
-    hPrevBrush = SelectObject(hdc, (HANDLE)hBrush);
-    SetROP2(hdc, R2_XORPEN);
-    rgn = CreateRectRgn(Caret.x, Caret.y, 
-			Caret.x + Caret.width,
-			Caret.y + Caret.height);
-    FillRgn(hdc, rgn, hBrush);
-    DeleteObject( rgn );
+    if (!(hdc = GetDCEx( Caret.hwnd, 0, DCX_USESTYLE | DCX_CACHE ))) return;
+    hPrevBrush = SelectObject( hdc, Caret.hBrush );
+    PatBlt( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
     SelectObject( hdc, hPrevBrush );
-    DeleteObject( hBrush );
-    ReleaseDC(Caret.hwnd, hdc);
+    ReleaseDC( Caret.hwnd, hdc );
 }
 
   
@@ -85,8 +73,8 @@ void CARET_DisplayCaret(DISPLAY_CARET status)
  */
 WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
 {
-    dprintf_caret(stddeb,"CARET_Callback: hwnd="NPFMT", timerid=%d, "
-		"caret=%d\n", hwnd, timerid, Caret.on);
+    dprintf_caret(stddeb,"CARET_Callback: hwnd=%04x, timerid=%d, caret=%d\n",
+                  hwnd, timerid, Caret.on);
 	
     CARET_DisplayCaret(CARET_TOGGLE);
     return 0;
@@ -157,34 +145,36 @@ static void CARET_Initialize()
  */
 BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
 {
-    dprintf_caret(stddeb,"CreateCaret: hwnd="NPFMT"\n", hwnd);
+    dprintf_caret(stddeb,"CreateCaret: hwnd=%04x\n", hwnd);
 
     if (!hwnd) return FALSE;
 
     /* if cursor already exists, destroy it */
     if (Caret.hwnd) DestroyCaret();
 
-    if (bitmap && bitmap != (HBITMAP)1) Caret.bitmap = bitmap;
-
-    if (width)
-        Caret.width = width;
+    if (bitmap && (bitmap != 1))
+    {
+        BITMAP bmp;
+        if (!GetObject( bitmap, sizeof(bmp), (LPSTR)&bmp )) return FALSE;
+        Caret.width = bmp.bmWidth;
+        Caret.height = bmp.bmHeight;
+        /* FIXME: we should make a copy of the bitmap instead of a brush */
+        Caret.hBrush = CreatePatternBrush( bitmap );
+    }
     else
-	Caret.width = GetSystemMetrics(SM_CXBORDER);
-
-    if (height)
-	Caret.height = height;
-    else
-	Caret.height = GetSystemMetrics(SM_CYBORDER);
+    {
+        Caret.width = width ? width : GetSystemMetrics(SM_CXBORDER);
+        Caret.height = height ? height : GetSystemMetrics(SM_CYBORDER);
+        Caret.hBrush = CreateSolidBrush( bitmap ? GetSysColor(COLOR_GRAYTEXT) :
+                                         GetSysColor(COLOR_WINDOW) );
+    }
 
     Caret.hwnd = hwnd;
     Caret.hidden = 1;
     Caret.on = FALSE;
     Caret.x = 0;
     Caret.y = 0;
-    if (bitmap == (HBITMAP)1)
-	Caret.color = GetSysColor(COLOR_GRAYTEXT);
-    else
-	Caret.color = GetSysColor(COLOR_WINDOW);
+
     Caret.timeout = GetProfileInt( "windows", "CursorBlinkRate", 750 );
 
     CARET_Initialize();
@@ -201,9 +191,10 @@ BOOL DestroyCaret()
 {
     if (!Caret.hwnd) return FALSE;
 
-    dprintf_caret(stddeb,"DestroyCaret: hwnd="NPFMT", timerid=%d\n",
+    dprintf_caret(stddeb,"DestroyCaret: hwnd=%04x, timerid=%d\n",
 		Caret.hwnd, Caret.timerid);
 
+    DeleteObject( Caret.hBrush );
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
 
@@ -243,8 +234,8 @@ void HideCaret(HWND hwnd)
     if (!Caret.hwnd) return;
     if (hwnd && (Caret.hwnd != hwnd)) return;
 
-    dprintf_caret(stddeb,"HideCaret: hwnd="NPFMT", hidden=%d\n",
-		hwnd, Caret.hidden);
+    dprintf_caret(stddeb,"HideCaret: hwnd=%04x, hidden=%d\n",
+                  hwnd, Caret.hidden);
 
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
@@ -261,7 +252,7 @@ void ShowCaret(HWND hwnd)
     if (!Caret.hwnd) return;
     if (hwnd && (Caret.hwnd != hwnd)) return;
 
-    dprintf_caret(stddeb,"ShowCaret: hwnd="NPFMT", hidden=%d\n",
+    dprintf_caret(stddeb,"ShowCaret: hwnd=%04x, hidden=%d\n",
 		hwnd, Caret.hidden);
 
     if (Caret.hidden)
@@ -284,7 +275,7 @@ void SetCaretBlinkTime(WORD msecs)
 {
     if (!Caret.hwnd) return;
 
-    dprintf_caret(stddeb,"SetCaretBlinkTime: hwnd="NPFMT", msecs=%d\n",
+    dprintf_caret(stddeb,"SetCaretBlinkTime: hwnd=%04x, msecs=%d\n",
 		Caret.hwnd, msecs);
 
     Caret.timeout = msecs;
@@ -300,7 +291,7 @@ WORD GetCaretBlinkTime()
 {
     if (!Caret.hwnd) return 0;
 
-    dprintf_caret(stddeb,"GetCaretBlinkTime: hwnd="NPFMT", msecs=%d\n",
+    dprintf_caret(stddeb,"GetCaretBlinkTime: hwnd=%04x, msecs=%d\n",
 		Caret.hwnd, Caret.timeout);
 
     return Caret.timeout;
@@ -315,8 +306,8 @@ void GetCaretPos(LPPOINT pt)
 {
     if (!Caret.hwnd || !pt) return;
 
-    dprintf_caret(stddeb,"GetCaretPos: hwnd="NPFMT", pt=%p, x=%d, y=%d\n",
-		Caret.hwnd, pt, Caret.x, Caret.y);
+    dprintf_caret(stddeb,"GetCaretPos: hwnd=%04x, pt=%p, x=%d, y=%d\n",
+                  Caret.hwnd, pt, Caret.x, Caret.y);
 
     pt->x = Caret.x;
     pt->y = Caret.y;

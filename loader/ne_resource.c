@@ -355,7 +355,7 @@ BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
         }
         pTypeInfo = (NE_TYPEINFO *)pNameInfo;
     }
-    fprintf( stderr, "FreeResource: "NPFMT" "NPFMT" not found!\n", hModule, handle );
+    fprintf( stderr, "FreeResource: %04x %04x not found!\n", hModule, handle );
     return FALSE;
 }
 #endif /* WINELIB */

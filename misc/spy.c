@@ -432,7 +432,7 @@ void SPY_EnterMessage( int iFlag, HWND hWnd, UINT msg,
     switch(iFlag)
     {
     case SPY_DISPATCHMESSAGE:
-        dprintf_message(stddeb,"("NPFMT") message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
+        dprintf_message(stddeb,"(%04x) message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
                         hWnd, msg, SPY_GetMsgName( msg ),
                         wParam, lParam);
         break;
@@ -443,10 +443,10 @@ void SPY_EnterMessage( int iFlag, HWND hWnd, UINT msg,
             HTASK hTask = GetWindowTask(hWnd);
             if (hTask == GetCurrentTask()) strcpy( taskName, "self" );
             else if (!hTask) strcpy( taskName, "Wine" );
-            else sprintf( taskName, "task "NPFMT" %s",
+            else sprintf( taskName, "task %04x %s",
                           hTask, MODULE_GetModuleName( GetExePtr(hTask) ) );
 
-            dprintf_message(stddeb,"%*s("NPFMT") message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
+            dprintf_message(stddeb,"%*s(%04x) message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
                             SPY_IndentLevel, "", hWnd, msg,
                             SPY_GetMsgName( msg ), taskName, wParam, lParam );
             SPY_IndentLevel += SPY_INDENT_UNIT;
@@ -454,7 +454,7 @@ void SPY_EnterMessage( int iFlag, HWND hWnd, UINT msg,
         break;   
 
     case SPY_DEFWNDPROC:
-        dprintf_message(stddeb, "%*s("NPFMT") DefWindowProc: %s [%04x]  wp=%04x lp=%08lx\n",
+        dprintf_message(stddeb, "%*s(%04x) DefWindowProc: %s [%04x]  wp=%04x lp=%08lx\n",
                         SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
                         msg, wParam, lParam );
         break;
@@ -473,12 +473,12 @@ void SPY_ExitMessage( int iFlag, HWND hWnd, UINT msg, LRESULT lReturn )
     switch(iFlag)
     {
     case SPY_RESULT_INVALIDHWND: 
-        dprintf_message(stddeb,"%*s("NPFMT") message [%04x] %s HAS INVALID HWND\n",
+        dprintf_message(stddeb,"%*s(%04x) message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, msg,
                         SPY_GetMsgName( msg ) );
         break;
     case SPY_RESULT_OK:
-        dprintf_message(stddeb,"%*s("NPFMT") message [%04x] %s returned %08lx\n",
+        dprintf_message(stddeb,"%*s(%04x) message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, msg,
                         SPY_GetMsgName( msg ), lReturn );
         break;

@@ -172,17 +172,13 @@ HBRUSH CreatePatternBrush( HBITMAP hbitmap )
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
     BITMAPOBJ *bmp, *newbmp;
 
-    dprintf_gdi(stddeb, "CreatePatternBrush: "NPFMT"\n", hbitmap );
+    dprintf_gdi(stddeb, "CreatePatternBrush: %04x\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
-#ifdef WINELIB32
-    logbrush.lbHatch = (LONG)CreateBitmapIndirect( &bmp->bitmap );
-#else
     logbrush.lbHatch = (INT)CreateBitmapIndirect( &bmp->bitmap );
-#endif
     newbmp = (BITMAPOBJ *) GDI_GetObjPtr( (HANDLE)logbrush.lbHatch, BITMAP_MAGIC );
     if (!newbmp) return 0;
     XCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
@@ -200,7 +196,7 @@ HBRUSH CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
     BITMAPINFO *info, *newInfo;
     int size;
     
-    dprintf_gdi(stddeb, "CreateDIBPatternBrush: "NPFMT"\n", hbitmap );
+    dprintf_gdi(stddeb, "CreateDIBPatternBrush: %04x\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
@@ -212,11 +208,7 @@ HBRUSH CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
 	         * 8 * info->bmiHeader.biHeight;
     size += DIB_BitmapInfoSize( info, coloruse );
 
-#ifdef WINELIB32
-    if (!(logbrush.lbHatch = (LONG)GlobalAlloc( GMEM_MOVEABLE, size )))
-#else
     if (!(logbrush.lbHatch = (INT)GlobalAlloc( GMEM_MOVEABLE, size )))
-#endif
     {
 	GlobalUnlock( hbitmap );
 	return 0;
@@ -348,8 +340,8 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     BITMAPINFO * bmpInfo;
     HBRUSH prevHandle = dc->w.hBrush;
 
-    dprintf_gdi(stddeb, "Brush_SelectObject   hdc="NPFMT"  hbrush="NPFMT"\n",
-		hdc,hbrush);
+    dprintf_gdi(stddeb, "Brush_SelectObject: hdc=%04x hbrush=%04x\n",
+                hdc,hbrush);
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
     {
 	switch (brush->logbrush.lbStyle)

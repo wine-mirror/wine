@@ -1253,7 +1253,7 @@ static LONG LBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
 
-  dprintf_listbox(stddeb,"ListBox WM_SETREDRAW hWnd="NPFMT" w=%04X !\n",
+  dprintf_listbox(stddeb,"ListBox WM_SETREDRAW hWnd=%04x w=%04x !\n",
 		  hwnd, wParam);
   lphl->bRedrawFlag = wParam;
 
@@ -1365,8 +1365,8 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
       if( IntersectRect(&scratchRect,&paintRect,&lpls->itemRect) )
        {
-        dprintf_listbox(stddeb,"LBPaint: drawing item: %ld %d %ld %d %d\n",(LONG)rect.left,top,
-                            (LONG)rect.right,top+height,lpls->itemState);
+        dprintf_listbox(stddeb,"LBPaint: drawing item: %d %d %d %d %d\n",
+                        rect.left,top,rect.right,top+height,lpls->itemState);
 
         if (lphl->OwnerDrawn && (lphl->ItemFocused == i) && GetFocus() == hwnd)
            {
@@ -1401,7 +1401,7 @@ static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
-  dprintf_listbox(stddeb,"ListBox WM_SETFOCUS for "NPFMT"\n",hwnd);
+  dprintf_listbox(stddeb,"ListBox WM_SETFOCUS for %04x\n",hwnd);
   if(!(lphl->dwStyle & LBS_MULTIPLESEL) )
        if( lphl->ItemsCount && lphl->ItemFocused != -1)
          {
@@ -1429,7 +1429,7 @@ static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
-  dprintf_listbox(stddeb,"ListBox WM_KILLFOCUS for "NPFMT"\n",hwnd);
+  dprintf_listbox(stddeb,"ListBox WM_KILLFOCUS for %04x\n",hwnd);
   if (!(lphl->dwStyle & LBS_MULTIPLESEL))
      {
        if( lphl->ItemsCount )
@@ -1780,7 +1780,7 @@ static LONG LBSetCaretIndex(HWND hwnd, WORD wParam, LONG lParam)
 
   if (!(lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )) return 0;
 
-  dprintf_listbox(stddeb,"LBSetCaretIndex: hwnd "NPFMT" n=%i\n",hwnd,wParam);  
+  dprintf_listbox(stddeb,"LBSetCaretIndex: hwnd %04x n=%i\n",hwnd,wParam);  
 
   if (wParam >= lphl->ItemsCount) return LB_ERR;
 
@@ -1946,9 +1946,9 @@ static LRESULT LBPassToParent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
   WND* ptrWnd = WIN_FindWndPtr(hwnd);  
 
   if( ptrWnd )
-	if( /* !(ptrWnd->dwExStyle & WS_EX_NOPARENTNOTIFY) && */ 
-                 ptrWnd->hwndParent ) 
-		 return SendMessage(ptrWnd->hwndParent,message,wParam,lParam);
+      if( /* !(ptrWnd->dwExStyle & WS_EX_NOPARENTNOTIFY) && */ 
+          ptrWnd->parent ) 
+          return SendMessage(ptrWnd->parent->hwndSelf,message,wParam,lParam);
   return 0;
 }
 
@@ -2044,8 +2044,7 @@ BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, INT id )
     char buffer[20];
     INT i;
 
-    dprintf_listbox( stddeb, "DlgDirSelect: "NPFMT" '%s' %d\n",
-                     hDlg, lpStr, id );
+    dprintf_listbox( stddeb, "DlgDirSelect: %04x '%s' %d\n", hDlg, lpStr, id );
     if ((i = SendDlgItemMessage( hDlg, id, LB_GETCURSEL, 0, 0 )) == LB_ERR)
         return FALSE;
     SendDlgItemMessage( hDlg, id, LB_GETTEXT, i, MAKE_SEGPTR(buffer) );
@@ -2083,7 +2082,7 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
     ((attrib & DDL_POSTMSGS) ? PostMessage( hwnd, msg, wparam, lparam ) \
                              : SendMessage( hwnd, msg, wparam, lparam ))
 
-    dprintf_listbox( stddeb, "DlgDirList: "NPFMT" '%s' %d %d %04x\n",
+    dprintf_listbox( stddeb, "DlgDirList: %04x '%s' %d %d %04x\n",
                      hDlg, filespec ? filespec : "NULL",
                      idLBox, idStatic, attrib );
 

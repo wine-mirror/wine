@@ -24,6 +24,12 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+#ifdef WINELIB32
+#define UIFMT "%u"
+#else
+#define UIFMT "%hu"
+#endif
+
 extern MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
 
 /* FIXME: I need to remember the aliasname of a spec. driver. 

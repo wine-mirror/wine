@@ -555,7 +555,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
     TASK_LinkTask( hTask );
 
-    dprintf_task( stddeb, "CreateTask: module='%s' cmdline='%s' task="NPFMT"\n",
+    dprintf_task( stddeb, "CreateTask: module='%s' cmdline='%s' task=%04x\n",
                   name, cmdLine, hTask );
 
     return hTask;
@@ -699,7 +699,7 @@ void TASK_Reschedule(void)
     if (!hTask) return;  /* Do nothing */
 
     pNewTask = (TDB *)GlobalLock( hTask );
-    dprintf_task( stddeb, "Switching to task "NPFMT" (%.8s)\n",
+    dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
                   hTask, pNewTask->module_name );
 
       /* Save the stacks of the previous task (if any) */
@@ -939,8 +939,8 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
     if (!thunkaddr) return (FARPROC)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
 
-    dprintf_task( stddeb, "MakeProcInstance("SPFMT","NPFMT"): got thunk "SPFMT"\n",
-                  (SEGPTR)func, hInstance, (SEGPTR)thunkaddr );
+    dprintf_task( stddeb, "MakeProcInstance(%08lx,%04x): got thunk %08lx\n",
+                  (DWORD)func, hInstance, (DWORD)thunkaddr );
     
     *thunk++ = 0xb8;    /* movw instance, %ax */
     *thunk++ = (BYTE)(hInstance & 0xff);
@@ -958,7 +958,7 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
 void FreeProcInstance( FARPROC func )
 {
 #ifndef WINELIB32
-    dprintf_task( stddeb, "FreeProcInstance("SPFMT")\n", (SEGPTR)func );
+    dprintf_task( stddeb, "FreeProcInstance(%08lx)\n", (DWORD)func );
     TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
 #endif
 }
@@ -969,6 +969,7 @@ void FreeProcInstance( FARPROC func )
  */
 HANDLE GetCodeHandle( FARPROC proc )
 {
+#ifndef WINELIB32
     HANDLE handle;
     BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
 
@@ -982,6 +983,9 @@ HANDLE GetCodeHandle( FARPROC proc )
         handle = GlobalHandle( HIWORD(proc) );
 
     return handle;
+#else
+    return (HANDLE)proc;
+#endif
 }
 
 
@@ -1201,7 +1205,7 @@ BOOL TaskNext( TASKENTRY *lpte )
     TDB *pTask;
     INSTANCEDATA *pInstData;
 
-    dprintf_toolhelp( stddeb, "TaskNext(%p): task="NPFMT"\n", lpte, lpte->hNext );
+    dprintf_toolhelp( stddeb, "TaskNext(%p): task=%04x\n", lpte, lpte->hNext );
     if (!lpte->hNext) return FALSE;
     pTask = (TDB *)GlobalLock( lpte->hNext );
     if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;

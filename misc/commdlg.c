@@ -295,6 +295,18 @@ static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 }
 
 /***********************************************************************
+ *                              FILEDLG_HookCallChk             [internal]
+ */
+static int FILEDLG_HookCallChk(LPOPENFILENAME lpofn)
+{
+ if (lpofn)
+  if (lpofn->Flags & OFN_ENABLEHOOK)
+   if (lpofn->lpfnHook)
+    return 1;
+ return 0;   
+} 
+
+/***********************************************************************
  *                              FILEDLG_WMInitDialog            [internal]
  */
 
@@ -372,7 +384,11 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
     ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
   if (lpofn->Flags & OFN_HIDEREADONLY)
     ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE); 
-  return TRUE;
+  if (FILEDLG_HookCallChk(lpofn))
+     return (BOOL)CallWindowProc(lpofn->lpfnHook, 
+               hWnd,  WM_INITDIALOG, wParam,(LPARAM)MAKE_SEGPTR(lpofn));
+  else  
+     return TRUE;
 }
 
 /***********************************************************************
@@ -382,6 +398,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
   LONG lRet;
   LPOPENFILENAME lpofn;
+  OPENFILENAME ofn2;
   char tmpstr[512], tmpstr2[512];
   LPSTR pstr, pstr2;
   UINT control,notification;
@@ -407,6 +424,12 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet,
 			 (LPARAM)MAKE_SEGPTR(tmpstr));
       SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
+
+      if (FILEDLG_HookCallChk(lpofn))
+       CallWindowProc (lpofn->lpfnHook, hWnd,
+                  RegisterWindowMessage(MAKE_SEGPTR(LBSELCHSTRING)), 
+                  control, MAKELONG(lRet,CD_LBSELCHANGE));       
+      /* FIXME: for OFN_ALLOWMULTISELECT we need CD_LBSELSUB, CD_SELADD, CD_LBSELNOITEMS */                  
       return TRUE;
     case lst2: /* directory list */
       FILEDLG_StripEditControl(hWnd);
@@ -454,6 +477,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       return TRUE;
     case IDOK:
     almost_ok:
+      ofn2=*lpofn; /* for later restoring */
       SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, (LPARAM)MAKE_SEGPTR(tmpstr));
       pstr = strrchr(tmpstr, '\\');
       if (pstr == NULL)
@@ -507,7 +531,9 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	}
       else 
 	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
-      ShowWindow(hWnd, SW_HIDE);
+#if 0
+      ShowWindow(hWnd, SW_HIDE);   /* this should not be necessary ?! (%%%) */
+#endif
       {
 	int drive = DRIVE_GetCurrentDrive();
 	tmpstr2[0] = 'A'+ drive;
@@ -535,6 +561,20 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
           dprintf_commdlg(stddeb,"strcpy'ing '%s'\n",tmpstr); fflush(stdout);
 	  strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), tmpstr);
 	}
+      if (FILEDLG_HookCallChk(lpofn))
+      {
+       lRet= (BOOL)CallWindowProc (lpofn->lpfnHook,
+               hWnd, RegisterWindowMessage(MAKE_SEGPTR(FILEOKSTRING)), 
+               0, (LPARAM)MAKE_SEGPTR(lpofn));                        
+       if (lRet)       
+       {
+         *lpofn=ofn2; /* restore old state */
+#if 0
+         ShowWindow(hWnd, SW_SHOW);               /* only if above (%%%) SW_HIDE used */
+#endif         
+         break;
+       }
+      }
       EndDialog(hWnd, TRUE);
       return TRUE;
     case IDCANCEL:
@@ -550,6 +590,15 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
  */
 LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {  
+ LPOPENFILENAME lpofn = (LPOPENFILENAME)GetWindowLong(hWnd, DWL_USER);
+ 
+ if (wMsg!=WM_INITDIALOG)
+  if (FILEDLG_HookCallChk(lpofn))
+  {
+   LRESULT  lRet=(BOOL)CallWindowProc(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
+   if (lRet)   
+    return lRet;         /* else continue message processing */
+  }             
   switch (wMsg)
     {
     case WM_INITDIALOG:
@@ -584,6 +633,15 @@ LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
+ LPOPENFILENAME lpofn = (LPOPENFILENAME)GetWindowLong(hWnd, DWL_USER);
+ 
+ if (wMsg!=WM_INITDIALOG)
+  if (FILEDLG_HookCallChk(lpofn))
+  {
+   LRESULT  lRet=(BOOL)CallWindowProc(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
+   if (lRet)   
+    return lRet;         /* else continue message processing */
+  }             
   switch (wMsg) {
    case WM_INITDIALOG:
       return FILEDLG_WMInitDialog(hWnd, wParam, lParam);

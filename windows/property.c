@@ -31,7 +31,8 @@ BOOL SetProp( HWND hwnd, SEGPTR str, HANDLE hData )
     PROPERTY *prop;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "SetProp: "NPFMT" "SPFMT" "NPFMT"\n", hwnd, str, hData );
+    dprintf_prop( stddeb, "SetProp: %04x %08lx %04x\n",
+                  hwnd, (DWORD)str, hData );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     hProp = USER_HEAP_ALLOC( sizeof(PROPERTY) + 
                              (HIWORD(str) ? strlen(PTR_SEG_TO_LIN(str)) : 0 ));
@@ -62,7 +63,7 @@ HANDLE GetProp( HWND hwnd, SEGPTR str )
     HANDLE hProp;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "GetProp: "NPFMT" "SPFMT"\n", hwnd, str );
+    dprintf_prop( stddeb, "GetProp: %04x %08lx\n", hwnd, (DWORD)str );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     hProp = wndPtr->hProp;
     while (hProp)
@@ -88,7 +89,7 @@ HANDLE RemoveProp( HWND hwnd, SEGPTR str )
     HANDLE *hProp;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "RemoveProp: "NPFMT" "SPFMT"\n", hwnd, str );
+    dprintf_prop( stddeb, "RemoveProp: %04x %08lx\n", hwnd, (DWORD)str );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     hProp = &wndPtr->hProp;
     while (*hProp)
@@ -119,14 +120,14 @@ INT EnumProps( HWND hwnd, PROPENUMPROC func )
     HANDLE hProp;
     WND *wndPtr;
 
-    dprintf_prop( stddeb, "EnumProps: "NPFMT" %08lx\n", hwnd, (LONG)func );
+    dprintf_prop( stddeb, "EnumProps: %04x %08lx\n", hwnd, (LONG)func );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     hProp = wndPtr->hProp;
     while (hProp)
     {
         PROPERTY *prop = (PROPERTY *)USER_HEAP_LIN_ADDR(hProp);
         
-        dprintf_prop( stddeb, "  Callback: atom=%04x data="NPFMT" str='%s'\n",
+        dprintf_prop( stddeb, "  Callback: atom=%04x data=%04x str='%s'\n",
                       prop->atom, prop->hData, prop->string );
 
           /* Already get the next in case the callback */
@@ -134,7 +135,7 @@ INT EnumProps( HWND hwnd, PROPENUMPROC func )
         hProp = prop->next;
         ret = CallEnumPropProc( func, hwnd,
                                 prop->atom ? 
-				  (LONG)MAKELONG( prop->atom, 0 )
+                                  (LONG)MAKELONG( prop->atom, 0 )
 				:
                                   (LONG)(USER_HEAP_SEG_ADDR(hProp) +
                                          ((int)prop->string - (int)prop)),

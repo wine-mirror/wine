@@ -57,7 +57,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
     fd = MODULE_OpenFile( hModule );
-    dprintf_module( stddeb, "Loading segment %d, selector="NPFMT"\n",
+    dprintf_module( stddeb, "Loading segment %d, selector=%04x\n",
                     segnum, pSeg->selector );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     size = pSeg->size ? pSeg->size : 0x10000;
@@ -134,7 +134,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     read( fd, &count, sizeof(count) );
     if (!count) return TRUE;
 
-    dprintf_fixup( stddeb, "Fixups for %*.*s, segment %d, selector "NPFMT"\n",
+    dprintf_fixup( stddeb, "Fixups for %*.*s, segment %d, selector %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
@@ -173,7 +173,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
             {
                 NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
                 if (!pTarget)
-                    fprintf( stderr, "Module not found: "NPFMT", reference %d of module %*.*s\n",
+                    fprintf( stderr, "Module not found: %04x, reference %d of module %*.*s\n",
                              module, rep->target1, 
                              *((BYTE *)pModule + pModule->name_table),
                              *((BYTE *)pModule + pModule->name_table),
@@ -274,7 +274,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_LOWBYTE:
             do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-                dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x BYTE%s\n",
+                dprintf_fixup(stddeb,"    %04x:%04x:%04x BYTE%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive":"");
                 offset = *sp;
 		if(additive)
@@ -288,7 +288,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_OFFSET16:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x OFFSET16%s\n",
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x OFFSET16%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp = LOWORD(address);
@@ -300,7 +300,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_POINTER32:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x POINTER32%s\n",
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x POINTER32%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp    = LOWORD(address);
@@ -313,7 +313,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_SELECTOR:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x SELECTOR%s\n",
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x SELECTOR%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp    = HIWORD(address);

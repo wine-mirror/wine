@@ -203,7 +203,7 @@ base	1
 0199 stub GetMetaFileW
 0200 stub GetMetaRgn
 0201 stub GetMiterLimit
-0202 stub GetNearestColor
+0202 stdcall GetNearestColor(long long) GetNearestColor
 0203 stub GetNearestPaletteIndex
 0204 stdcall GetObjectA(long long ptr) WIN32_GetObject
 0205 stub GetObjectType

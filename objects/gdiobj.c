@@ -174,7 +174,7 @@ BOOL GDI_Init(void)
       /* Create default palette */
 
     if (!(hpalette = COLOR_Init())) return FALSE;
-    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( hpalette );
+    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hpalette );
 
       /* Create default bitmap */
 
@@ -217,8 +217,8 @@ BOOL GDI_FreeObject( HANDLE handle )
     GDIOBJHDR * object;
 
       /* Can't free stock objects */
-    if ((DWORD)handle >= FIRST_STOCK_HANDLE &&
-	(DWORD)handle <= LAST_STOCK_HANDLE   ) return TRUE;
+    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
+        return TRUE;
     
     object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!object) return FALSE;
@@ -240,9 +240,8 @@ GDIOBJHDR * GDI_GetObjPtr( HANDLE handle, WORD magic )
 {
     GDIOBJHDR * ptr = NULL;
 
-    if ((DWORD)handle >= FIRST_STOCK_HANDLE &&
-	(DWORD)handle <= LAST_STOCK_HANDLE   )
-      ptr = StockObjects[(DWORD)handle - FIRST_STOCK_HANDLE];
+    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
+      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     else 
       ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!ptr) return NULL;
@@ -261,7 +260,7 @@ BOOL DeleteObject( HGDIOBJ obj )
     GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( obj );
     if (!header) return FALSE;
 
-    dprintf_gdi(stddeb, "DeleteObject: "NPFMT"\n", obj );
+    dprintf_gdi(stddeb, "DeleteObject: %04x\n", obj );
 
       /* Delete object */
 
@@ -285,9 +284,9 @@ HANDLE GetStockObject( int obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
-    dprintf_gdi(stddeb, "GetStockObject: returning %ld\n",
-		(DWORD)FIRST_STOCK_HANDLE + obj );
-    return (HANDLE)((DWORD)FIRST_STOCK_HANDLE + obj);
+    dprintf_gdi(stddeb, "GetStockObject: returning %d\n",
+                FIRST_STOCK_HANDLE + obj );
+    return (HANDLE)(FIRST_STOCK_HANDLE + obj);
 }
 
 
@@ -297,12 +296,11 @@ HANDLE GetStockObject( int obj )
 int GetObject( HANDLE handle, int count, LPSTR buffer )
 {
     GDIOBJHDR * ptr = NULL;
-    dprintf_gdi(stddeb, "GetObject: "NPFMT" %d %p\n", handle, count, buffer );
+    dprintf_gdi(stddeb, "GetObject: %04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
-    if ((DWORD)handle >= FIRST_STOCK_HANDLE &&
-	(DWORD)handle <= LAST_STOCK_HANDLE   )
-      ptr = StockObjects[(DWORD)handle - FIRST_STOCK_HANDLE];
+    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
+      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     else
       ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!ptr) return 0;
@@ -332,10 +330,9 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
     GDIOBJHDR * ptr = NULL;
     DC * dc;
     
-    dprintf_gdi(stddeb, "SelectObject: "NPFMT" "NPFMT"\n", hdc, handle );
-    if ((DWORD)handle >= FIRST_STOCK_HANDLE &&
-	(DWORD)handle <= LAST_STOCK_HANDLE   )
-      ptr = StockObjects[(DWORD)handle - FIRST_STOCK_HANDLE];
+    dprintf_gdi(stddeb, "SelectObject: %04x %04x\n", hdc, handle );
+    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
+      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     else 
       ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!ptr) return 0;
@@ -369,7 +366,7 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
  */
 BOOL UnrealizeObject( HANDLE handle )
 {
-    dprintf_gdi(stdnimp, "UnrealizeObject: "NPFMT"\n", handle );
+    dprintf_gdi(stdnimp, "UnrealizeObject: %04x\n", handle );
     return TRUE;
 }
 
@@ -393,7 +390,7 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
     
     int i, retval = 0;
 
-    dprintf_gdi( stddeb, "EnumObjects: "NPFMT" %d %08lx %08lx\n",
+    dprintf_gdi( stddeb, "EnumObjects: %04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
     switch(nObjType)
     {
@@ -440,122 +437,17 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
         break;
     }
     return retval;
-#if 0
-
-  /*    HANDLE 		handle;
-   DC 			*dc;*/
-  HANDLE       	*lphObj;
-  GDIOBJHDR 	*header;
-  WORD         	wMagic;
-  LPSTR		lpLog;  	/* Point to a LOGBRUSH or LOGPEN struct */
-  HANDLE       	hLog;
-  int	       	nRet = 0;
-  
-  if (lpEnumFunc == 0) {
-    fprintf(stderr,"EnumObjects // Bad EnumProc callback address !\n");
-    return 0;
-  }
-  switch (nObjType) {
-   case OBJ_PEN:
-    wMagic = PEN_MAGIC;
-    dprintf_gdi(stddeb,"EnumObjects("NPFMT", OBJ_PEN, %08lx, %p);\n",
-		hDC, (LONG)lpEnumFunc, lpData);
-    hLog = GDI_HEAP_ALLOC( sizeof(LOGPEN) );
-    lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
-    if (lpLog == NULL) {
-      fprintf(stderr,"EnumObjects // Unable to alloc LOGPEN struct !\n");
-      return 0;
-    }
-    break;
-   case OBJ_BRUSH:
-    wMagic = BRUSH_MAGIC;
-    dprintf_gdi(stddeb,"EnumObjects("NPFMT", OBJ_BRUSH, %08lx, %p);\n",
-		hDC, (LONG)lpEnumFunc, lpData);
-    hLog = GDI_HEAP_ALLOC( sizeof(LOGBRUSH) );
-    lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
-    if (lpLog == NULL) {
-      fprintf(stderr,"EnumObjects // Unable to alloc LOGBRUSH struct !\n");
-      return 0;
-    }
-    break;
-   default:
-    fprintf(stderr,"EnumObjects("NPFMT", %04X, %08lx, %p); // Unknown OBJ type !\n", 
-	    hDC, nObjType, (LONG)lpEnumFunc, lpData);
-    return 0;
-  }
-#ifdef notdef  /* FIXME: stock object ptr won't work in callback */
-  dprintf_gdi(stddeb,"EnumObjects // Stock Objects first !\n");
-  for (i = 0; i < NB_STOCK_OBJECTS; i++) {
-    header = StockObjects[i];
-    if (header->wMagic == wMagic) {
-      PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), lpLog);
-      BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH),lpLog);
-      dprintf_gdi(stddeb,"EnumObjects // StockObj lpLog=%p lpData=%p\n", lpLog, lpData);
-      if (header->wMagic == BRUSH_MAGIC) {
-	dprintf_gdi(stddeb,"EnumObjects // StockBrush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
-	dprintf_gdi(stddeb,"EnumObjects // StockBrush lbColor=%08lX\n", ((LPLOGBRUSH)lpLog)->lbColor);
-	dprintf_gdi(stddeb,"EnumObjects // StockBrush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
-      }
-      if (header->wMagic == PEN_MAGIC) {
-	dprintf_gdi(stddeb,"EnumObjects // StockPen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
-	dprintf_gdi(stddeb,"EnumObjects // StockPen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
-	dprintf_gdi(stddeb,"EnumObjects // StockPen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
-      }
-      nRet = CallEnumObjectsProc( lpEnumFunc,
-				 GDI_HEAP_SEG_ADDR(hLog),
-				 (int)lpData );
-      dprintf_gdi(stddeb,"EnumObjects // after Callback!\n");
-      if (nRet == 0) {
-	GDI_HEAP_FREE(hLog);
-	dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");
-	return 0;
-      }
-    }
-  }
-  dprintf_gdi(stddeb,"EnumObjects // Now DC owned objects %p !\n", header);
-#endif  /* notdef */
-  
-  if (lpPenBrushList == NULL) return 0;
-  for (lphObj = lpPenBrushList; *lphObj != 0; ) {
-    dprintf_gdi(stddeb,"EnumObjects // *lphObj="NPFMT"\n", *lphObj);
-    header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR(*lphObj++);
-    if (header->wMagic == wMagic) {
-      dprintf_gdi(stddeb,"EnumObjects // DC_Obj lpLog=%p lpData=%p\n", lpLog, lpData);
-      if (header->wMagic == BRUSH_MAGIC) {
-	BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH), lpLog);
-	dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
-	dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbColor=%08lX\n", ((LPLOGBRUSH)lpLog)->lbColor);
-	dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbHatch=%04lX\n", (LONG)((LPLOGBRUSH)lpLog)->lbHatch);
-      }
-      if (header->wMagic == PEN_MAGIC) {
-	PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), lpLog);
-	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
-	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnWidth=%ld\n", (LONG)((LPLOGPEN)lpLog)->lopnWidth.x);
-	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
-      }
-      nRet = CallEnumObjectsProc(lpEnumFunc, GDI_HEAP_SEG_ADDR(hLog),
-				 (LONG)lpData);
-      if (nRet == 0)
-        break;
-    }
-  }
-  GDI_HEAP_FREE(hLog);
-  dprintf_gdi(stddeb,"EnumObjects // End of enumeration !\n");
-  return nRet;
-#endif
 }
 
 
 /***********************************************************************
- *		IsGDIObject(GDI.462)
+ *           IsGDIObject    (GDI.462)
  */
 BOOL IsGDIObject(HANDLE handle)
 {
-	GDIOBJHDR *object;
+    GDIOBJHDR *object;
 
-	object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
-	if (object)
-		return TRUE;
-	else
-		return FALSE;
+    object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+    /* FIXME: should check magic here */
+    return (object != NULL);
 }

@@ -123,7 +123,7 @@ HBITMAP CreateBitmap( INT width, INT height, UINT planes, UINT bpp, LPVOID bits 
 HBITMAP CreateCompatibleBitmap( HDC hdc, INT width, INT height )
 {
     DC * dc;
-    dprintf_gdi(stddeb, "CreateCompatibleBitmap: "NPFMT" %dx%d\n", 
+    dprintf_gdi(stddeb, "CreateCompatibleBitmap: %04x %dx%d\n", 
 		hdc, width, height );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     return CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
@@ -225,11 +225,11 @@ HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
     if (HIWORD(name))
     {
         char *str = (char *)PTR_SEG_TO_LIN( name );
-        dprintf_bitmap( stddeb, "LoadBitmap("NPFMT",'%s')\n", instance, str );
+        dprintf_bitmap( stddeb, "LoadBitmap(%04x,'%s')\n", instance, str );
         if (str[0] == '#') name = (SEGPTR)(DWORD)(WORD)atoi( str + 1 );
     }
     else
-        dprintf_bitmap( stddeb, "LoadBitmap("NPFMT",%04x)\n",
+        dprintf_bitmap( stddeb, "LoadBitmap(%04x,%04x)\n",
                         instance, LOWORD(name) );
 
     if (!instance)  /* OEM bitmap */
@@ -311,7 +311,7 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
  */
 HBITMAP CreateDiscardableBitmap(HDC hdc, INT width, INT height)
 {
-    dprintf_bitmap(stddeb,"CreateDiscardableBitmap("NPFMT", %d, %d); "
+    dprintf_bitmap(stddeb,"CreateDiscardableBitmap(%04x, %d, %d); "
 	   "// call CreateCompatibleBitmap() for now!\n",
 	   hdc, width, height);
     return CreateCompatibleBitmap(hdc, width, height);

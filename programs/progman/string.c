@@ -5,6 +5,9 @@
  */
 
 #include <windows.h>
+#ifdef WINELIB
+#include <options.h>
+#endif
 #include "progman.h"
 
 /* Class names */
@@ -33,6 +36,9 @@ static LPCSTR StringTableDe[];
 
 VOID STRING_SelectLanguage(LPCSTR lang)
 {
+  HMENU  hMainMenu;
+  HLOCAL hGroup;
+
   /* Change string table */
   Globals.StringTable = StringTableEn;
   if (!lstrcmp(lang, "De")) Globals.StringTable = StringTableDe;
@@ -51,28 +57,23 @@ VOID STRING_SelectLanguage(LPCSTR lang)
   lstrcpyn(STRING_SYMBOL_Xx  + sizeof(STRING_SYMBOL_Xx)  - 3, lang, 3);
   lstrcpyn(STRING_EXECUTE_Xx + sizeof(STRING_EXECUTE_Xx) - 3, lang, 3);
 
-  /* Destroy old menu */
-  if (Globals.hMainMenu)
+  /* Create menu */
+  hMainMenu = LoadMenu(Globals.hInstance, STRING_MAIN_Xx);
+  if (hMainMenu)
   {
-    SendMessage(Globals.hMDIWnd, WM_MDISETMENU, (WPARAM) NULL, (LPARAM) NULL);
-#if 0 /* FIXME when MDISetMenu is complete */
-    DestroyMenu(Globals.hMainMenu);
-#endif
-  }
-
-  /* Create new menu */
-  Globals.hMainMenu = LoadMenu(Globals.hInstance, STRING_MAIN_Xx);
-  if (Globals.hMainMenu)
-  {
-    Globals.hFileMenu    = GetSubMenu(Globals.hMainMenu, 0);
-    Globals.hOptionMenu  = GetSubMenu(Globals.hMainMenu, 1);
-    Globals.hWindowsMenu = GetSubMenu(Globals.hMainMenu, 2);
+    Globals.hFileMenu    = GetSubMenu(hMainMenu, 0);
+    Globals.hOptionMenu  = GetSubMenu(hMainMenu, 1);
+    Globals.hWindowsMenu = GetSubMenu(hMainMenu, 2);
 
     if (Globals.hMDIWnd)
       SendMessage(Globals.hMDIWnd, WM_MDISETMENU,
-		  (WPARAM) Globals.hMainMenu,
+		  (WPARAM) hMainMenu,
 		  (LPARAM) Globals.hWindowsMenu);
-    else SetMenu(Globals.hMainWnd, Globals.hMainMenu);
+    else SetMenu(Globals.hMainWnd, hMainMenu);
+
+    /* Destroy old menu */
+    if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
+    Globals.hMainMenu = hMainMenu;
   }
   /* Unsupported language */
   else if(lstrcmp(lang, "En")) STRING_SelectLanguage("En");
@@ -85,6 +86,17 @@ VOID STRING_SelectLanguage(LPCSTR lang)
   /* have to be last because of
    * the possible recursion */
   Globals.lpszLanguage = lang;
+#ifdef WINELIB
+  if (!lstrcmp(lang, "De")) Options.language = LANG_De;
+  if (!lstrcmp(lang, "En")) Options.language = LANG_En;
+  GetSystemMenu(Globals.hMainWnd, TRUE);
+  for (hGroup = GROUP_FirstGroup(); hGroup;
+       hGroup = GROUP_NextGroup(hGroup))
+    {
+      GROUP *group = LocalLock(hGroup);
+      GetSystemMenu(group->hWnd, TRUE);
+    }
+#endif
 }
 
 /* Local Variables:    */

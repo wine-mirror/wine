@@ -1,0 +1,65 @@
+Winsock
+
+Platform 1.
+Windows NT 3.51, build 1057, Service Pack 2
+
+Platform 2.
+Windows 3.1 with Trumpet Sockets (2.1f)
+
+Testing
+-------
+  Testing was done using the Windows Sockets API Tester (WSAT), available
+from rhino.microsoft.com/wsat/wsat594.exe. I found a number of tests that
+would not run under Wine, some that failed under Trumpet, and others under
+NT. So, I decided to use tests that at least succeeded IN FULL on all the
+test platforms.
+
+These are only the local tests.
+
+Any program which makes use of the WSAAsync* calls, pretty much won't
+work. Other program which work correctly will work ... mostly. Programs
+which are incorrect, will probably crash and burn fairly quickly.
+
+I have tried to make WINESockets as close as possible to Trumpet's.
+
+The numbers in brackets next to each platform indicate how many tests failed,
+the numbers listed on the variations line are the test that failed.
+
+Investigated
+============
+
+BINDT.TST	NT (00)    Trumpet (10)    Wine (10)
+BINDU.TST	NT (00)    Trumpet (10)    Wine (10)
+HOST.TST	NT (01)    Trumpet (06)    Wine (38)*3
+HOSTHOST.TST	NT (01)*1  Trumpet (01)*1  Wine (00) 
+HOSTNAME.TST	NT (01)    Trumpet (00)    Wine (00)*2
+INET.TST	NT (01)    Trumpet (24)*1  Wine (01)
+IOCTLT.TST	NT (00)    Trumpet (00)    Wine (06)
+IOCTLU.TST	NT (00)    Trumpet (00)    Wine (04)
+PROTO.TST	NT (00)    Trumpet (00)    Wine (41)*3
+SERV.TST	NT (00)    Trumpet (00)    Wine (50)*3
+SOCKETT.TST	NT (01)    Trumpet (00)    Wine (00)
+SOCKETU.TST	NT (03)    Trumpet (00)    Wine (00)
+START.TST	NT (00)    Trumpet (00)    Wine (08)*3
+STARTL.TST	NT (00)*4  Trumpet (00)    Wine (00)
+
+STARTH.TST	Wine crashed with two messages (from the program, methinks)
+		indicating "FREE - HEAPBADNODE - bad node in head."
+
+Unchecked
+=========
+ENOBUFST.TST	ENOBUFSU.TST
+GETOPTT.TST	GETOPTU.TST
+SETOPTT.TST	SETOPTU.TST
+All the client/server tests
+
+*1 errors in the NT and/or Trumpet were caused
+   by a mistake I made while configuring this test.
+
+*2 Wine passes these tests, because they aren't done
+   correctly not because it does everything correctly.
+
+*3 Wine crashed part way through the testing process,
+   hence the large value of tests failed.
+
+*4 NT actually supports Winsock 1.0 as well.

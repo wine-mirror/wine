@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include "windows.h"
 #include "wine.h"
+#include "xmalloc.h"
 
 extern int MAIN_Init(void);
 extern BOOL WIDGETS_Init(void);
@@ -15,6 +16,16 @@ extern int USER_InitApp(HINSTANCE);
 int _WinMain (int argc, char *argv [])
 {
   HINSTANCE hInstance;
+  LPSTR lpszCmdParam;
+  int i, len = 0;
+
+  /* Alloc szCmdParam */
+  for (i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
+  lpszCmdParam = (LPSTR) xmalloc(len + 1);
+  /* Concatenate arguments */
+  if (argc > 1) strcpy(lpszCmdParam, argv[1]);
+  else lpszCmdParam[0] = '\0';
+  for (i = 2; i < argc; i++) strcat(strcat(lpszCmdParam, " "), argv[i]);
 
   if(!MAIN_Init()) return 0; /* JBP: Needed for DosDrives[] structure, etc. */
   hInstance = WinExec( *argv, SW_SHOWNORMAL );
@@ -29,7 +40,7 @@ int _WinMain (int argc, char *argv [])
 #else
   return WinMain (hInstance,    /* hInstance */
 		  0,	        /* hPrevInstance */
-		  "",	        /* lpszCmdParam */
+		  lpszCmdParam, /* lpszCmdParam */
 		  SW_NORMAL);   /* nCmdShow */
 #endif
 }

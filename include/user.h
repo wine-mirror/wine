@@ -20,7 +20,8 @@ extern BOOL USER_HeapInit(void);
 #define USER_HEAP_LIN_ADDR(handle) LocalLock (handle)
 #define USER_HEAP_SEG_ADDR(handle) LocalLock (handle)
 #define USER_HEAP_FREE(handle) LocalFree (handle)
-#else
+
+#else  /* WINELIB */
 
 extern LPSTR USER_Heap;
 extern WORD USER_HeapSel;

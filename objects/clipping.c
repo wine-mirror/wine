@@ -67,7 +67,7 @@ int SelectClipRgn( HDC hdc, HRGN hrgn )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;
 
-    dprintf_clipping(stddeb, "SelectClipRgn: "NPFMT" "NPFMT"\n", hdc, hrgn );
+    dprintf_clipping(stddeb, "SelectClipRgn: %04x %04x\n", hdc, hrgn );
 
     if (hrgn)
     {
@@ -94,7 +94,7 @@ int SelectVisRgn( HDC hdc, HRGN hrgn )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc || !hrgn) return ERROR;
 
-    dprintf_clipping(stddeb, "SelectVisRgn: "NPFMT" "NPFMT"\n", hdc, hrgn );
+    dprintf_clipping(stddeb, "SelectVisRgn: %04x %04x\n", hdc, hrgn );
 
     retval = CombineRgn( dc->w.hVisRgn, hrgn, 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
@@ -116,7 +116,7 @@ int OffsetClipRgn( HDC hdc, short x, short y )
 	return NULLREGION;   /* ?? */
     }
 
-    dprintf_clipping(stddeb, "OffsetClipRgn: "NPFMT" %d,%d\n", hdc, x, y );
+    dprintf_clipping(stddeb, "OffsetClipRgn: %04x %d,%d\n", hdc, x, y );
 
     if (dc->w.hClipRgn)
     {
@@ -136,7 +136,7 @@ int OffsetVisRgn( HDC hdc, short x, short y )
     int retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_clipping(stddeb, "OffsetVisRgn: "NPFMT" %d,%d\n", hdc, x, y );
+    dprintf_clipping(stddeb, "OffsetVisRgn: %04x %d,%d\n", hdc, x, y );
     retval = OffsetRgn( dc->w.hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
     return retval;
@@ -195,7 +195,7 @@ int ExcludeClipRect( HDC hdc, short left, short top,
 	return NULLREGION;   /* ?? */
     }
 
-    dprintf_clipping(stddeb, "ExcludeClipRect: "NPFMT" %dx%d,%dx%d\n",
+    dprintf_clipping(stddeb, "ExcludeClipRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
     return CLIPPING_IntersectClipRect( dc, left, top, right, bottom, TRUE );
 }
@@ -216,7 +216,7 @@ int IntersectClipRect( HDC hdc, short left, short top,
 	return NULLREGION;   /* ?? */
     }
 
-    dprintf_clipping(stddeb, "IntersectClipRect: "NPFMT" %dx%d,%dx%d\n",
+    dprintf_clipping(stddeb, "IntersectClipRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
     return CLIPPING_IntersectClipRect( dc, left, top, right, bottom, FALSE );
 }
@@ -269,7 +269,7 @@ int ExcludeVisRect( HDC hdc, short left, short top, short right, short bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_clipping(stddeb, "ExcludeVisRect: "NPFMT" %dx%d,%dx%d\n",
+    dprintf_clipping(stddeb, "ExcludeVisRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
     return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, TRUE );
 }
@@ -283,7 +283,7 @@ int IntersectVisRect( HDC hdc, short left, short top,
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_clipping(stddeb, "IntersectVisRect: "NPFMT" %dx%d,%dx%d\n",
+    dprintf_clipping(stddeb, "IntersectVisRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
     return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, FALSE );
 }
@@ -297,7 +297,7 @@ BOOL PtVisible( HDC hdc, short x, short y )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
 
-    dprintf_clipping(stddeb, "PtVisible: "NPFMT" %d,%d\n", hdc, x, y );
+    dprintf_clipping(stddeb, "PtVisible: %04x %d,%d\n", hdc, x, y );
     if (!dc->w.hGCClipRgn) return FALSE;
     return PtInRegion( dc->w.hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
 }
@@ -311,9 +311,8 @@ BOOL RectVisible( HDC hdc, LPRECT rect )
     RECT tmpRect;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
-    dprintf_clipping(stddeb,"RectVisible: "NPFMT" %ld,%ldx%ld,%ld\n",
-                     hdc, (LONG)rect->left, (LONG)rect->top, (LONG)rect->right,
-		     (LONG)rect->bottom );
+    dprintf_clipping(stddeb,"RectVisible: %04x %d,%dx%d,%d\n",
+                     hdc, rect->left, rect->top, rect->right, rect->bottom );
     if (!dc->w.hGCClipRgn) return FALSE;
     /* copy rectangle to avoid overwriting by LPtoDP */
     tmpRect = *rect;
@@ -330,7 +329,7 @@ int GetClipBox( HDC hdc, LPRECT rect )
     int ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_clipping(stddeb, "GetClipBox: "NPFMT" %p\n", hdc, rect );
+    dprintf_clipping(stddeb, "GetClipBox: %04x %p\n", hdc, rect );
     ret = GetRgnBox( dc->w.hGCClipRgn, rect );
     DPtoLP( hdc, (LPPOINT)rect, 2 );
     return ret;
@@ -346,7 +345,7 @@ HRGN SaveVisRgn( HDC hdc )
     RGNOBJ *obj, *copyObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
-    dprintf_clipping(stddeb, "SaveVisRgn: "NPFMT"\n", hdc );
+    dprintf_clipping(stddeb, "SaveVisRgn: %04x\n", hdc );
     if (!dc->w.hVisRgn)
     {
         fprintf( stderr, "SaveVisRgn: hVisRgn is zero. Please report this.\n" );
@@ -373,7 +372,7 @@ int RestoreVisRgn( HDC hdc )
     RGNOBJ *obj, *savedObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc || !dc->w.hVisRgn) return ERROR;    
-    dprintf_clipping(stddeb, "RestoreVisRgn: "NPFMT"\n", hdc );
+    dprintf_clipping(stddeb, "RestoreVisRgn: %04x\n", hdc );
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC )))
 	return ERROR;
     if (!(saved = obj->header.hNext)) return ERROR;

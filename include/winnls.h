@@ -106,4 +106,13 @@
 #define NORM_IGNORESYMBOLS			4
 #define NORM_STRINGSORT				0x1000
 
+#define CP_ACP						0
+#define CP_OEMCP					1
+
+#define WC_DEFAULTCHECK				0x00000100
+#define WC_COMPOSITECHECK			0x00000200
+#define WC_DISCARDNS				0x00000010
+#define WC_SEPCHARS					0x00000020
+#define WC_DEFAULTCHAR				0x00000040
+
 #endif  /* __WINE_WINNLS_H */

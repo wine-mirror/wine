@@ -474,3 +474,24 @@ static int TranslateCreationFlags(DWORD create_flags)
 
     return rc;
 }
+
+/**************************************************************************
+ *              GetFileAttributes
+ */
+DWORD GetFileAttributesA(LPCSTR lpFileName)
+{
+	struct stat buf;
+	DWORD res=0;
+	if(stat(lpFileName,&buf)==-1)
+	{
+		SetLastError(ErrnoToLastError(errno));
+		return 0;
+	}
+    if(buf.st_mode & S_IFREG)
+        res |= FILE_ATTRIBUTE_NORMAL;
+    if(buf.st_mode & S_IFDIR)
+        res |= FILE_ATTRIBUTE_DIRECTORY;
+    if((buf.st_mode & S_IWRITE) == 0)
+        res |= FILE_ATTRIBUTE_READONLY;
+	return res;
+}
