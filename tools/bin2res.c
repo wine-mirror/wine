@@ -122,7 +122,7 @@ int insert_hex (char * infile, FILE * outfile)
 	  if (++i >= st.st_size) break;
 	  fprintf(outfile, "%s", (i == (i & 0xfffffff0)) ? "'\n '" :" ");
 	}
-	fprintf (outfile, "'\n}\n");
+	fprintf (outfile, "'\n}");
         munmap(p_in_file, st.st_size);
         close(fd);
 	return 1;	
@@ -140,8 +140,10 @@ int convert_to_res ()
 	int line = 0;
 	time_t	tinput;
 	long startpos, endpos;
-		
-	tmpnam(tmpfile);
+
+        strcpy( tmpfile, g_lpstrInputFile );
+        strcat( tmpfile, "-tmp" );
+        /* FIXME: should use better tmp name and create with O_EXCL */
 	if( (ftemp = fopen( tmpfile, "w")) == NULL ) goto error_open_file;
 	
 	if( (fin = fopen( g_lpstrInputFile, "r")) == NULL || stat(g_lpstrInputFile, &st)) goto error_open_file;
