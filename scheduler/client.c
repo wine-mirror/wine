@@ -461,8 +461,8 @@ static int server_connect( const char *oldcwd, const char *serverdir )
             if (lstat( SOCKETNAME, &st ) == -1) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
         }
 
-        /* make sure the socket is sane */
-        if (!S_ISSOCK(st.st_mode))
+        /* make sure the socket is sane (ISFIFO needed for Solaris) */
+        if (!S_ISSOCK(st.st_mode) && !S_ISFIFO(st.st_mode))
             fatal_error( "'%s/%s' is not a socket\n", serverdir, SOCKETNAME );
         if (st.st_uid != getuid())
             fatal_error( "'%s/%s' is not owned by you\n", serverdir, SOCKETNAME );
