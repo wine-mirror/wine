@@ -450,7 +450,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     stub = ipid_to_apt_and_stubbuffer(&ipid, &apt);
     if (!apt || !stub)
     {
-        if (apt) COM_ApartmentRelease(apt);
+        if (apt) apartment_release(apt);
         /* ipid_to_apt_and_stubbuffer will already have logged the error */
         return RpcRaiseException(RPC_E_DISCONNECTED);
     }
@@ -463,7 +463,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     else
         RPC_ExecuteCall((RPCOLEMESSAGE *)msg, stub);
 
-    COM_ApartmentRelease(apt);
+    apartment_release(apt);
     IRpcStubBuffer_Release(stub);
 }
 

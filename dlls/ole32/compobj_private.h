@@ -159,7 +159,6 @@ extern void* StdGlobalInterfaceTableInstance;
 extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
 HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
 
-HRESULT MARSHAL_Disconnect_Proxies(APARTMENT *apt);
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
 /* Stub Manager */
@@ -172,14 +171,14 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid);
 struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
 struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
-void apartment_disconnect_object(APARTMENT *apt, void *object);
 BOOL stub_manager_notify_unmarshal(struct stub_manager *m);
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m);
 void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs);
-HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);
 HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **stubmgr_ret);
 IRpcStubBuffer *ipid_to_apt_and_stubbuffer(const IPID *ipid, APARTMENT **stub_apt);
 HRESULT start_apartment_remote_unknown(void);
+
+HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);
 
 /* RPC Backend */
 
@@ -203,10 +202,17 @@ int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
 /* Apartment Functions */
 
-APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
-APARTMENT *COM_ApartmentFromTID(DWORD tid);
-DWORD COM_ApartmentAddRef(struct apartment *apt);
-DWORD COM_ApartmentRelease(struct apartment *apt);
+APARTMENT *apartment_findfromoxid(OXID oxid, BOOL ref);
+APARTMENT *apartment_findfromtid(DWORD tid);
+DWORD apartment_addref(struct apartment *apt);
+DWORD apartment_release(struct apartment *apt);
+HRESULT apartment_disconnectproxies(struct apartment *apt);
+void apartment_disconnectobject(struct apartment *apt, void *object);
+static inline HRESULT apartment_getoxid(struct apartment *apt, OXID *oxid)
+{
+    *oxid = apt->oxid;
+    return S_OK;
+}
 
 /* messages used by the apartment window (not compatible with native) */
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = (RPCOLEMESSAGE *), LPARAM = (IRpcStubBuffer *) */

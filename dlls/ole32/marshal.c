@@ -86,7 +86,7 @@ get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {
 }
 
 /* creates a new stub manager */
-HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags)
+HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager;
     struct ifstub       *ifstub;
@@ -94,6 +94,10 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
     IRpcStubBuffer      *stub;
     IPSFactoryBuffer    *psfb;
     HRESULT              hr;
+
+    hr = apartment_getoxid(apt, &stdobjref->oxid);
+    if (hr != S_OK)
+        return hr;
 
     hr = get_facbuf_for_iid(riid, &psfb);
     if (hr != S_OK)
@@ -115,8 +119,6 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
     else
         stdobjref->flags = SORF_NULL;
 
-    stdobjref->oxid = apt->oxid;
-
     /* FIXME: what happens if we register an interface twice with different
      * marshaling flags? */
     if ((manager = get_stub_manager_from_object(apt, obj)))
@@ -127,7 +129,10 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
 
         manager = new_stub_manager(apt, obj, mshlflags);
         if (!manager)
+        {
+            IRpcStubBuffer_Release(stub);
             return E_OUTOFMEMORY;
+        }
     }
     stdobjref->oid = manager->oid;
 
@@ -712,7 +717,7 @@ static BOOL find_proxy_manager(APARTMENT * apt, OXID oxid, OID oid, struct proxy
     return found;
 }
 
-HRESULT MARSHAL_Disconnect_Proxies(APARTMENT *apt)
+HRESULT apartment_disconnectproxies(struct apartment *apt)
 {
     struct list * cursor;
 
@@ -813,7 +818,7 @@ StdMarshalImpl_MarshalInterface(
       return E_NOINTERFACE;
   }
 
-  hres = register_ifstub(apt, &stdobjref, riid, pUnk, mshlflags);
+  hres = marshal_object(apt, &stdobjref, riid, pUnk, mshlflags);
   
   IUnknown_Release(pUnk);
   
@@ -894,6 +899,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
   HRESULT		hres;
   APARTMENT *apt = COM_CurrentApt();
   APARTMENT *stub_apt;
+  OXID oxid;
 
   TRACE("(...,%s,....)\n",debugstr_guid(riid));
 
@@ -907,9 +913,12 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
   /* read STDOBJREF from wire */
   hres = IStream_Read(pStm, &stdobjref, sizeof(stdobjref), &res);
   if (hres) return hres;
-  
+
+  hres = apartment_getoxid(apt, &oxid);
+  if (hres) return hres;
+
   /* check if we're marshalling back to ourselves */
-  if ((apt->oxid == stdobjref.oxid) && (stubmgr = get_stub_manager(apt, stdobjref.oid)))
+  if ((oxid == stdobjref.oxid) && (stubmgr = get_stub_manager(apt, stdobjref.oid)))
   {
       TRACE("Unmarshalling object marshalled in same apartment for iid %s, "
             "returning original object %p\n", debugstr_guid(riid), stubmgr->object);
@@ -929,7 +938,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
    * ignore table marshaling and normal marshaling rules regarding number of
    * unmarshals, etc, but if you abuse these rules then your proxy could end
    * up returning RPC_E_DISCONNECTED. */
-  if ((stub_apt = COM_ApartmentFromOXID(stdobjref.oxid, TRUE)))
+  if ((stub_apt = apartment_findfromoxid(stdobjref.oxid, TRUE)))
   {
       if ((stubmgr = get_stub_manager(stub_apt, stdobjref.oid)))
       {
@@ -946,7 +955,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
           hres = CO_E_OBJNOTCONNECTED;
       }
 
-      COM_ApartmentRelease(stub_apt);
+      apartment_release(stub_apt);
   }
   else
       TRACE("Treating unmarshal from OXID %s as inter-process\n",
@@ -974,7 +983,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
     hres = IStream_Read(pStm, &stdobjref, sizeof(stdobjref), &res);
     if (hres) return hres;
 
-    if (!(apt = COM_ApartmentFromOXID(stdobjref.oxid, TRUE)))
+    if (!(apt = apartment_findfromoxid(stdobjref.oxid, TRUE)))
     {
         WARN("Could not map OXID %s to apartment object\n",
             wine_dbgstr_longlong(stdobjref.oxid));
@@ -991,7 +1000,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
     stub_manager_release_marshal_data(stubmgr, stdobjref.cPublicRefs);
 
     stub_manager_int_release(stubmgr);
-    COM_ApartmentRelease(apt);
+    apartment_release(apt);
 
     return S_OK;
 }

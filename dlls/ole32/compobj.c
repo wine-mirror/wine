@@ -162,8 +162,9 @@ static CRITICAL_SECTION_DEBUG dll_cs_debug =
 };
 static CRITICAL_SECTION csOpenDllList = { &dll_cs_debug, -1, 0, 0, 0, 0 };
 
-static const WCHAR wszAptWinClass[] = {'W','I','N','E','_','O','L','E','3','2','_','A','P','T','_','C','L','A','S','S',0};
-static LRESULT CALLBACK COM_AptWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','e','a','d','W','n','d','C','l','a','s','s',' ',
+                                       '0','x','#','#','#','#','#','#','#','#',' ',0};
+static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 static void COMPOBJ_DLLList_Add(HANDLE hLibrary);
 static void COMPOBJ_DllList_FreeUnused(int Timeout);
@@ -182,7 +183,7 @@ void COMPOBJ_InitProcess( void )
      * was unmarshalled.
      */
     memset(&wclass, 0, sizeof(wclass));
-    wclass.lpfnWndProc = COM_AptWndProc;
+    wclass.lpfnWndProc = apartment_wndproc;
     wclass.hInstance = OLE32_hInstance;
     wclass.lpszClassName = wszAptWinClass;
     RegisterClassW(&wclass);
@@ -198,7 +199,7 @@ void COM_TlsDestroy()
     struct oletls *info = NtCurrentTeb()->ReservedForOle;
     if (info)
     {
-        if (info->apt) COM_ApartmentRelease(info->apt);
+        if (info->apt) apartment_release(info->apt);
         if (info->errorinfo) IErrorInfo_Release(info->errorinfo);
         if (info->state) IUnknown_Release(info->state);
         HeapFree(GetProcessHeap(), 0, info);
@@ -262,7 +263,7 @@ static APARTMENT *apartment_construct(DWORD model)
 /* gets and existing apartment if one exists or otherwise creates an apartment
  * structure which stores OLE apartment-local information and stores a pointer
  * to it in the thread-local storage */
-static APARTMENT *get_or_create_apartment(DWORD model)
+static APARTMENT *apartment_get_or_create(DWORD model)
 {
     APARTMENT *apt = COM_CurrentApt();
 
@@ -283,7 +284,7 @@ static APARTMENT *get_or_create_apartment(DWORD model)
             if (MTA)
             {
                 TRACE("entering the multithreaded apartment %s\n", wine_dbgstr_longlong(MTA->oxid));
-                COM_ApartmentAddRef(MTA);
+                apartment_addref(MTA);
             }
             else
                 MTA = apartment_construct(model);
@@ -298,14 +299,14 @@ static APARTMENT *get_or_create_apartment(DWORD model)
     return apt;
 }
 
-DWORD COM_ApartmentAddRef(struct apartment *apt)
+DWORD apartment_addref(struct apartment *apt)
 {
     DWORD refs = InterlockedIncrement(&apt->refs);
     TRACE("%s: before = %ld\n", wine_dbgstr_longlong(apt->oxid), refs - 1);
     return refs;
 }
 
-DWORD COM_ApartmentRelease(struct apartment *apt)
+DWORD apartment_release(struct apartment *apt)
 {
     DWORD ret;
 
@@ -328,7 +329,7 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
 
         TRACE("destroying apartment %p, oxid %s\n", apt, wine_dbgstr_longlong(apt->oxid));
 
-        MARSHAL_Disconnect_Proxies(apt);
+        apartment_disconnectproxies(apt);
 
         if (apt->win) DestroyWindow(apt->win);
 
@@ -358,14 +359,12 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
     return ret;
 }
 
-/* The given OXID must be local to this process: you cannot use
- * apartment windows to send RPCs to other processes. This all needs
- * to move to rpcrt4.
+/* The given OXID must be local to this process: 
  *
  * The ref parameter is here mostly to ensure people remember that
  * they get one, you should normally take a ref for thread safety.
  */
-APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref)
+APARTMENT *apartment_findfromoxid(OXID oxid, BOOL ref)
 {
     APARTMENT *result = NULL;
     struct list *cursor;
@@ -377,7 +376,7 @@ APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref)
         if (apt->oxid == oxid)
         {
             result = apt;
-            if (ref) COM_ApartmentAddRef(result);
+            if (ref) apartment_addref(result);
             break;
         }
     }
@@ -389,7 +388,7 @@ APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref)
 /* gets the apartment which has a given creator thread ID. The caller must
  * release the reference from the apartment as soon as the apartment pointer
  * is no longer required. */
-APARTMENT *COM_ApartmentFromTID(DWORD tid)
+APARTMENT *apartment_findfromtid(DWORD tid)
 {
     APARTMENT *result = NULL;
     struct list *cursor;
@@ -401,7 +400,7 @@ APARTMENT *COM_ApartmentFromTID(DWORD tid)
         if (apt->tid == tid)
         {
             result = apt;
-            COM_ApartmentAddRef(result);
+            apartment_addref(result);
             break;
         }
     }
@@ -410,17 +409,7 @@ APARTMENT *COM_ApartmentFromTID(DWORD tid)
     return result;
 }
 
-HWND COM_GetApartmentWin(OXID oxid, BOOL ref)
-{
-    APARTMENT *apt;
-
-    apt = COM_ApartmentFromOXID(oxid, ref);
-    if (!apt) return NULL;
-
-    return apt->win;
-}
-
-static LRESULT CALLBACK COM_AptWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
@@ -608,7 +597,7 @@ HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
 
   if (!(apt = COM_CurrentInfo()->apt))
   {
-    apt = get_or_create_apartment(dwCoInit);
+    apt = apartment_get_or_create(dwCoInit);
     if (!apt) return E_OUTOFMEMORY;
   }
   else if (dwCoInit != apt->model)
@@ -686,7 +675,7 @@ void WINAPI CoUninitialize(void)
 
   if (!--info->inits)
   {
-    COM_ApartmentRelease(info->apt);
+    apartment_release(info->apt);
     info->apt = NULL;
   }
 
@@ -759,7 +748,7 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
     if (!apt)
         return CO_E_NOTINITIALIZED;
 
-    apartment_disconnect_object(apt, lpUnk);
+    apartment_disconnectobject(apt, lpUnk);
 
     /* Note: native is pretty broken here because it just silently
      * fails, without returning an appropriate error code if the object was
