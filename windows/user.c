@@ -409,31 +409,37 @@ static BOOL USER_StartRebootProcess(void)
 BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
 {
     int i;
-    BOOL result;
+    BOOL result = FALSE;
     HWND *list, *phwnd;
 
     /* We have to build a list of all windows first, as in EnumWindows */
+    TRACE("(%x,%lx)\n", flags, reserved);
 
-    if (!(list = WIN_ListChildren( GetDesktopWindow() ))) return FALSE;
-
-    /* Send a WM_QUERYENDSESSION message to every window */
-
-    for (i = 0; list[i]; i++)
+    list = WIN_ListChildren( GetDesktopWindow() );
+    if (list)
     {
-        /* Make sure that the window still exists */
-        if (!IsWindow( list[i] )) continue;
-        if (!SendMessageW( list[i], WM_QUERYENDSESSION, 0, 0 )) break;
-    }
-    result = !list[i];
+        /* Send a WM_QUERYENDSESSION message to every window */
 
-    /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
+        for (i = 0; list[i]; i++)
+        {
+            /* Make sure that the window still exists */
+            if (!IsWindow( list[i] )) continue;
+            if (!SendMessageW( list[i], WM_QUERYENDSESSION, 0, 0 )) break;
+        }
+        result = !list[i];
 
-    for (phwnd = list; i > 0; i--, phwnd++)
-    {
-        if (!IsWindow( *phwnd )) continue;
-        SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
+        /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
+
+        for (phwnd = list; i > 0; i--, phwnd++)
+        {
+            if (!IsWindow( *phwnd )) continue;
+            SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
+        }
+        HeapFree( GetProcessHeap(), 0, list );
+
+        if ( !(result || (flags & EWX_FORCE) ))
+            return FALSE;
     }
-    HeapFree( GetProcessHeap(), 0, list );
 
     /* USER_DoShutdown will kill all processes except the current process */
     USER_DoShutdown();
