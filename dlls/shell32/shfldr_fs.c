@@ -677,6 +677,15 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
     return hr;
 }
 
+static const WCHAR AdvancedW[] = { 'S','O','F','T','W','A','R','E',
+ '\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+ 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l',
+ 'o','r','e','r','\\','A','d','v','a','n','c','e','d',0 };
+static const WCHAR HideFileExtW[] = { 'H','i','d','e','F','i','l','e','E','x',
+ 't',0 };
+static const WCHAR NeverShowExtW[] = { 'N','e','v','e','r','S','h','o','w','E',
+ 'x','t',0 };
+
 void SHELL_FS_ProcessDisplayFilename(LPSTR szPath, DWORD dwFlags)
 {
     /*FIXME: MSDN also mentions SHGDN_FOREDITING which is not yet handled. */
@@ -687,10 +696,9 @@ void SHELL_FS_ProcessDisplayFilename(LPSTR szPath, DWORD dwFlags)
         DWORD dwDataSize = sizeof (DWORD);
         BOOL doHide = FALSE; /* The default value is FALSE (win98 at least) */
 
-        if (!RegCreateKeyExA (HKEY_CURRENT_USER,
-         "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        if (!RegCreateKeyExW (HKEY_CURRENT_USER, AdvancedW,
          0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0)) {
-            if (!RegQueryValueExA (hKey, "HideFileExt", 0, 0, (LPBYTE) &dwData,
+            if (!RegQueryValueExW (hKey, HideFileExtW, 0, 0, (LPBYTE) &dwData,
              &dwDataSize))
                 doHide = dwData;
 
@@ -701,18 +709,17 @@ void SHELL_FS_ProcessDisplayFilename(LPSTR szPath, DWORD dwFlags)
             LPSTR ext = PathFindExtensionA(szPath);
 
             if (ext) {
-                HKEY hkey;
                 char classname[MAX_PATH];
                 LONG classlen = MAX_PATH;
 
                 if (!RegQueryValueA(HKEY_CLASSES_ROOT, ext, classname,
                  &classlen))
-                    if (!RegOpenKeyA(HKEY_CLASSES_ROOT, classname, &hkey)) {
-                        if (!RegQueryValueExA(hkey, "NeverShowExt", 0, NULL,
+                    if (!RegOpenKeyA(HKEY_CLASSES_ROOT, classname, &hKey)) {
+                        if (!RegQueryValueExW(hKey, NeverShowExtW, 0, NULL,
                          NULL, NULL))
                             doHide = TRUE;
 
-                        RegCloseKey(hkey);
+                        RegCloseKey(hKey);
                     }
             }
         }
@@ -813,9 +820,8 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
                                                 LPITEMIDLIST * pPidlOut)
 {
     _ICOM_THIS_From_IShellFolder2 (IGenericSFImpl, iface)
-    char szSrc[MAX_PATH],
-      szDest[MAX_PATH];
-    int len;
+    WCHAR szSrc[MAX_PATH], szDest[MAX_PATH];
+    LPWSTR ptr;
     BOOL bIsFolder = _ILIsFolder (ILFindLastID (pidl));
 
     TRACE ("(%p)->(%p,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl,
@@ -823,31 +829,29 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
 
     /* build source path */
     if (dwFlags & SHGDN_INFOLDER) {
-        strcpy (szSrc, This->sPathTarget);
-        PathAddBackslashA (szSrc);
-        len = strlen (szSrc);
-        _ILSimpleGetText (pidl, szSrc + len, MAX_PATH - len);
+        MultiByteToWideChar(CP_ACP, 0, This->sPathTarget, -1, szSrc, MAX_PATH);
+        ptr = PathAddBackslashW (szSrc);
+        if (ptr)
+            _ILSimpleGetTextW (pidl, ptr, MAX_PATH - (ptr - szSrc));
     } else {
         /* FIXME: Can this work with a simple PIDL? */
-        SHGetPathFromIDListA (pidl, szSrc);
+        SHGetPathFromIDListW (pidl, szSrc);
     }
 
     /* build destination path */
-    strcpy (szDest, This->sPathTarget);
-    PathAddBackslashA (szDest);
-    len = strlen (szDest);
-    WideCharToMultiByte (CP_ACP, 0, lpName, -1, szDest + len, MAX_PATH - len,
-     NULL, NULL);
-    szDest[MAX_PATH - 1] = 0;
-    TRACE ("src=%s dest=%s\n", szSrc, szDest);
-    if (MoveFileA (szSrc, szDest)) {
+    MultiByteToWideChar(CP_ACP, 0, This->sPathTarget, -1, szDest, MAX_PATH);
+    ptr = PathAddBackslashW (szDest);
+    if (ptr)
+        lstrcpynW(ptr, lpName, MAX_PATH - (ptr - szDest));
+    TRACE ("src=%s dest=%s\n", debugstr_w(szSrc), debugstr_w(szDest));
+    if (MoveFileW (szSrc, szDest)) {
         HRESULT hr = S_OK;
 
         if (pPidlOut)
-            hr = _ILCreateFromPathA(szDest, pPidlOut);
+            hr = _ILCreateFromPathW(szDest, pPidlOut);
 
         SHChangeNotify (bIsFolder ? SHCNE_RENAMEFOLDER : SHCNE_RENAMEITEM,
-         SHCNF_PATHA, szSrc, szDest);
+         SHCNF_PATHW, szSrc, szDest);
 
         return hr;
     }

@@ -569,8 +569,15 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
             {
                 if (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING)
                 {
+                    static const WCHAR clsidW[] =
+                     { 'C','L','S','I','D','\\',0 };
+                    static const WCHAR shellfolderW[] =
+                     { '\\','s','h','e','l','l','f','o','l','d','e','r',0 };
+                    static const WCHAR wantsForParsingW[] =
+                     { 'W','a','n','t','s','F','o','r','P','a','r','s','i','n',
+                     'g',0 };
                     int bWantsForParsing = FALSE;
-                    char szRegPath[100];
+                    WCHAR szRegPath[100];
                     LONG r;
 
                     /*
@@ -584,11 +591,11 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
                      * Get the "WantsFORPARSING" flag from the registry
                      */
 
-                    lstrcpyA (szRegPath, "CLSID\\");
-                    SHELL32_GUIDToStringA (clsid, &szRegPath[6]);
-                    lstrcatA (szRegPath, "\\shellfolder");
-                    r = SHGetValueA (HKEY_CLASSES_ROOT, szRegPath, 
-                                     "WantsFORPARSING", NULL, NULL, NULL);
+                    lstrcpyW (szRegPath, clsidW);
+                    SHELL32_GUIDToStringW (clsid, &szRegPath[6]);
+                    lstrcatW (szRegPath, shellfolderW);
+                    r = SHGetValueW (HKEY_CLASSES_ROOT, szRegPath, 
+                                     wantsForParsingW, NULL, NULL, NULL);
                     if (r == ERROR_SUCCESS)
                         bWantsForParsing = TRUE;
 

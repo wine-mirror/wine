@@ -206,8 +206,6 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
     LPCWSTR szNext = NULL;
     LPITEMIDLIST pidlTemp = NULL;
     HRESULT hr = S_OK;
-    char szPath[MAX_PATH];
-    DWORD len;
     CLSID clsid;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
@@ -251,13 +249,24 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 
         if (*lpszDisplayName)
         {
+            WCHAR szPath[MAX_PATH];
+            LPWSTR pathPtr;
+
             /* build a complete path to create a simple pidl */
-            lstrcpyA(szPath, This->sPathTarget);
-            PathAddBackslashA(szPath);
-            len = lstrlenA(szPath);
-            WideCharToMultiByte(CP_ACP, 0, lpszDisplayName, -1,
-                                szPath + len, MAX_PATH - len, NULL, NULL);
-            hr = _ILCreateFromPathA(szPath, &pidlTemp);
+            MultiByteToWideChar(CP_ACP, 0, This->sPathTarget, -1, szPath,
+             sizeof(szPath) / sizeof(szPath[0]));
+            pathPtr = PathAddBackslashW(szPath);
+            if (pathPtr)
+            {
+                lstrcpynW(pathPtr, lpszDisplayName,
+                          sizeof(szPath)/sizeof(szPath[0]) - (pathPtr - szPath));
+                hr = _ILCreateFromPathW(szPath, &pidlTemp);
+            }
+            else
+            {
+                /* should never reach here, but for completeness */
+                hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+            }
         }
         else
             pidlTemp = _ILCreateMyComputer();
@@ -290,6 +299,12 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 /**************************************************************************
  *  CreateDesktopEnumList()
  */
+static const WCHAR Desktop_NameSpaceW[] = { 'S','O','F','T','W','A','R','E',
+ '\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+ 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l',
+ 'o','r','e','r','\\','D','e','s','k','t','o','p','\\','N','a','m','e','s','p',
+ 'a','c','e','\0' };
+
 static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
 {
     BOOL ret = TRUE;
@@ -306,9 +321,7 @@ static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
         /* create the pidl for This item */
         ret = AddToEnumList(list, _ILCreateMyComputer());
 
-        r = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                          "SOFTWARE\\Microsoft\\Windows\\"
-                          "CurrentVersion\\explorer\\desktop\\NameSpace",
+        r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, Desktop_NameSpaceW,
                           0, KEY_READ, &hkey);
         if (ret && ERROR_SUCCESS == r)
         {
@@ -612,14 +625,21 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
                 else
                 {
                     /* get the "WantsFORPARSING" flag from the registry */
-                    char szRegPath[100];
+                    static const WCHAR clsidW[] =
+                     { 'C','L','S','I','D','\\',0 };
+                    static const WCHAR shellfolderW[] =
+                     { '\\','s','h','e','l','l','f','o','l','d','e','r',0 };
+                    static const WCHAR wantsForParsingW[] =
+                     { 'W','a','n','t','s','F','o','r','P','a','r','s','i','n',
+                     'g',0 };
+                    WCHAR szRegPath[100];
                     LONG r;
 
-                    lstrcpyA (szRegPath, "CLSID\\");
-                    SHELL32_GUIDToStringA (clsid, &szRegPath[6]);
-                    lstrcatA (szRegPath, "\\shellfolder");
-                    r = SHGetValueA(HKEY_CLASSES_ROOT, szRegPath,
-                                    "WantsFORPARSING", NULL, NULL, NULL);
+                    lstrcpyW (szRegPath, clsidW);
+                    SHELL32_GUIDToStringW (clsid, &szRegPath[6]);
+                    lstrcatW (szRegPath, shellfolderW);
+                    r = SHGetValueW(HKEY_CLASSES_ROOT, szRegPath,
+                                    wantsForParsingW, NULL, NULL, NULL);
                     if (r == ERROR_SUCCESS)
                         bWantsForParsing = TRUE;
                     else

@@ -56,4 +56,17 @@ static inline int SHELL32_GUIDToStringA (REFGUID guid, LPSTR str)
             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
+static inline int SHELL32_GUIDToStringW (REFGUID guid, LPWSTR str)
+{
+    static const WCHAR fmtW[] =
+     { '{','%','0','8','l','x','-','%','0','4','x','-','%','0','4','x','-',
+     '%','0','2','x','%','0','2','x','-',
+     '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',
+     '%','0','2','x','%','0','2','x','}',0 };
+    return sprintfW(str, fmtW,
+            guid->Data1, guid->Data2, guid->Data3,
+            guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+            guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+}
+
 void SHELL_FS_ProcessDisplayFilename(LPSTR szPath, DWORD dwFlags);
