@@ -247,6 +247,7 @@ static HIMAGELIST TOOLBAR_GetImageList(PIMLENTRY *pies, INT cies, INT id);
 static PIMLENTRY TOOLBAR_GetImageListEntry(PIMLENTRY *pies, INT cies, INT id);
 static VOID TOOLBAR_DeleteImageList(PIMLENTRY **pies, INT *cies);
 static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIST himl, INT id);
+static LRESULT TOOLBAR_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam);
 
 static LRESULT
 TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
@@ -797,7 +798,7 @@ TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, BOOL flat, const NMTBCUSTOMD
     if (flat)
     {
         if ((tbcd->nmcd.uItemState & CDIS_SELECTED) || (tbcd->nmcd.uItemState & CDIS_CHECKED))
-            DrawEdge (hdc, rcArrow, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
+            DrawEdge (hdc, rcArrow, BDR_SUNKENOUTER, BF_RECT);
         else if ( (tbcd->nmcd.uItemState & CDIS_HOT) &&
                  !(tbcd->nmcd.uItemState & CDIS_DISABLED) &&
                  !(tbcd->nmcd.uItemState & CDIS_INDETERMINATE))
@@ -806,10 +807,10 @@ TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, BOOL flat, const NMTBCUSTOMD
     else
     {
         if ((tbcd->nmcd.uItemState & CDIS_SELECTED) || (tbcd->nmcd.uItemState & CDIS_CHECKED))
-            DrawEdge (hdc, rcArrow, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
+            DrawEdge (hdc, rcArrow, EDGE_SUNKEN, BF_RECT | BF_MIDDLE);
         else
             DrawEdge (hdc, rcArrow, EDGE_RAISED,
-              BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+              BF_SOFT | BF_RECT | BF_MIDDLE);
     }
 
     if (tbcd->nmcd.uItemState & (CDIS_SELECTED | CDIS_CHECKED))
@@ -5291,8 +5292,6 @@ TOOLBAR_GetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    TBUTTON_INFO *btnPtr;
     POINT pt;
     INT   nHit;
 
@@ -5300,18 +5299,8 @@ TOOLBAR_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
     pt.y = (INT)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
-    if (nHit >= 0) {
-	btnPtr = &infoPtr->buttons[nHit];
-	if (!(btnPtr->fsState & TBSTATE_ENABLED))
-	    return 0;
-	SetCapture (hwnd);
-	infoPtr->bCaptured = TRUE;
-	infoPtr->nButtonDown = nHit;
-
-	btnPtr->fsState |= TBSTATE_PRESSED;
-
-        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
-    }
+    if (nHit >= 0)
+        TOOLBAR_LButtonDown (hwnd, wParam, lParam);
     else if (GetWindowLongA (hwnd, GWL_STYLE) & CCS_ADJUSTABLE)
 	TOOLBAR_Customize (hwnd);
 
@@ -5423,16 +5412,19 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	SetCapture (hwnd);
     }
 
-    nmtb.iItem = btnPtr->idCommand;
-    nmtb.tbButton.iBitmap = btnPtr->iBitmap;
-    nmtb.tbButton.idCommand = btnPtr->idCommand;
-    nmtb.tbButton.fsState = btnPtr->fsState;
-    nmtb.tbButton.fsStyle = btnPtr->fsStyle;
-    nmtb.tbButton.dwData = btnPtr->dwData;
-    nmtb.tbButton.iString = btnPtr->iString;
-    nmtb.cchText = 0;  /* !!! not correct */
-    nmtb.pszText = 0;  /* !!! not correct */
-    TOOLBAR_SendNotify((NMHDR *)&nmtb, infoPtr, TBN_BEGINDRAG);
+    if (nHit >=0)
+    {
+        nmtb.iItem = btnPtr->idCommand;
+        nmtb.tbButton.iBitmap = btnPtr->iBitmap;
+        nmtb.tbButton.idCommand = btnPtr->idCommand;
+        nmtb.tbButton.fsState = btnPtr->fsState;
+        nmtb.tbButton.fsStyle = btnPtr->fsStyle;
+        nmtb.tbButton.dwData = btnPtr->dwData;
+        nmtb.tbButton.iString = btnPtr->iString;
+        nmtb.cchText = 0;  /* !!! not correct */
+        nmtb.pszText = 0;  /* !!! not correct */
+        TOOLBAR_SendNotify((NMHDR *)&nmtb, infoPtr, TBN_BEGINDRAG);
+    }
 
     return 0;
 }
