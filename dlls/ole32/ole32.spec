@@ -129,7 +129,7 @@ import	kernel32
 123 stdcall OleRun(ptr) OleRun
 124 stdcall OleSave(ptr ptr long) OleSave
 125 stdcall OleSaveToStream(ptr ptr) OleSaveToStream
-126 stub OleSetAutoConvert
+126 stdcall OleSetAutoConvert(ptr ptr) OleSetAutoConvert
 127 stdcall OleSetClipboard(ptr) OleSetClipboard
 128 stdcall OleSetContainedObject(ptr long) OleSetContainedObject
 129 stdcall OleSetMenuDescriptor(long long long ptr ptr) OleSetMenuDescriptor
