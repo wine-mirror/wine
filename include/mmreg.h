@@ -114,6 +114,10 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_OLISBC			0x1003	/*  Ing C. Olivetti & C., S.p.A.  */
 #define  WAVE_FORMAT_OLIOPR			0x1004	/*  Ing C. Olivetti & C., S.p.A.  */
 
+#if !defined(WAVE_FORMAT_EXTENSIBLE)
+#define  WAVE_FORMAT_EXTENSIBLE			0xFFFE  /* Microsoft */
+#endif
+
 #define WAVE_FORMAT_DEVELOPMENT         	(0xFFFF)
 
 typedef struct adpcmcoef_tag {
