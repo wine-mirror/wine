@@ -395,7 +395,7 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 	switch (msg) {
 	case WM_DESTROY:
 		DPRINTF_EDIT_MSG32("WM_DESTROY");
-		EDIT_WM_Destroy(wnd, es);
+		if (es) EDIT_WM_Destroy(wnd, es);
                 result = 0;
                 goto END;
 
@@ -1121,12 +1121,14 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
  */
 LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    LRESULT res;
+    LRESULT res = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    res = EditWndProc_locked(wndPtr, uMsg, wParam, lParam, TRUE);
-
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        res = EditWndProc_locked(wndPtr, uMsg, wParam, lParam, TRUE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return res;
 }
 
@@ -1136,12 +1138,14 @@ LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    LRESULT res;
+    LRESULT res = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    res = EditWndProc_locked(wndPtr, uMsg, wParam, lParam, FALSE);
-
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        res = EditWndProc_locked(wndPtr, uMsg, wParam, lParam, FALSE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return res;
 }
 

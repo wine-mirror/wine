@@ -200,6 +200,9 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
     LRESULT retvalue;
     WND *wnd = WIN_FindWndPtr( hWnd );
 
+    if( !wnd )
+      return 0;
+
     switch( msg )
     {
         case WM_CREATE:

@@ -1125,6 +1125,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
  */
 static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
+    if (!IsWindow( hwnd )) return 0;
+
     switch(message)
     {
     case WM_CREATE:

@@ -1863,7 +1863,6 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
 static LRESULT ComboWndProc_locked( WND* pWnd, UINT message,
                                     WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-    if( pWnd ) {
       LPHEADCOMBO	lphc = CB_GETPTR(pWnd);
       HWND		hwnd = pWnd->hwndSelf;
 
@@ -2252,11 +2251,9 @@ static LRESULT ComboWndProc_locked( WND* pWnd, UINT message,
 		    WARN("unknown msg WM_USER+%04x wp=%04x lp=%08lx\n",
 			message - WM_USER, wParam, lParam );
 		break;
-    }
-    return unicode ? DefWindowProcW(hwnd, message, wParam, lParam) :
-		     DefWindowProcA(hwnd, message, wParam, lParam);
-  }
-  return CB_ERR;
+      }
+      return unicode ? DefWindowProcW(hwnd, message, wParam, lParam) :
+                       DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
 /***********************************************************************
@@ -2267,10 +2264,14 @@ static LRESULT ComboWndProc_locked( WND* pWnd, UINT message,
  */
 static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    WND*	pWnd = WIN_FindWndPtr(hwnd);
-    LRESULT retvalue = ComboWndProc_locked(pWnd, message, wParam, lParam, FALSE);
+    LRESULT retvalue = 0;
+    WND* pWnd = WIN_FindWndPtr(hwnd);
 
-    WIN_ReleaseWndPtr(pWnd);
+    if (pWnd)
+    {
+        retvalue = ComboWndProc_locked(pWnd, message, wParam, lParam, FALSE);
+        WIN_ReleaseWndPtr(pWnd);
+    }
     return retvalue;
 }
 
@@ -2279,9 +2280,13 @@ static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPA
  */
 static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    WND*	pWnd = WIN_FindWndPtr(hwnd);
-    LRESULT retvalue = ComboWndProc_locked(pWnd, message, wParam, lParam, TRUE);
+    LRESULT retvalue = 0;
+    WND* pWnd = WIN_FindWndPtr(hwnd);
 
-    WIN_ReleaseWndPtr(pWnd);
+    if (pWnd)
+    {
+        retvalue = ComboWndProc_locked(pWnd, message, wParam, lParam, TRUE);
+        WIN_ReleaseWndPtr(pWnd);
+    }
     return retvalue;
 }

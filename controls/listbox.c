@@ -2466,7 +2466,6 @@ static LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     LB_DESCR *descr;
     HWND	hwnd = wnd->hwndSelf;
 
-    if (!wnd) return 0;
     if (!(descr = *(LB_DESCR **)wnd->wExtra))
     {
         if (msg == WM_CREATE)
@@ -3022,10 +3021,14 @@ static LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
  */
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    WND*	wndPtr = WIN_FindWndPtr( hwnd );
-    LRESULT	res = ListBoxWndProc_locked(wndPtr, msg, wParam, lParam, FALSE);
+    LRESULT res = 0;
+    WND* wndPtr = WIN_FindWndPtr( hwnd );
 
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        res = ListBoxWndProc_locked(wndPtr, msg, wParam, lParam, FALSE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return res;
 }
 
@@ -3034,10 +3037,14 @@ static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARA
  */
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    WND*	wndPtr = WIN_FindWndPtr( hwnd );
-    LRESULT	res = ListBoxWndProc_locked(wndPtr, msg, wParam, lParam, TRUE);
+    LRESULT res = 0;
+    WND* wndPtr = WIN_FindWndPtr( hwnd );
 
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        res = ListBoxWndProc_locked(wndPtr, msg, wParam, lParam, TRUE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return res;
 }
 
@@ -3051,151 +3058,144 @@ static LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 {
     LRESULT lRet = 0;
     HWND hwnd;
+    LB_DESCR *descr = *(LB_DESCR **)wnd->wExtra;
 
-    if (wnd)
+    TRACE_(combo)("[%04x]: msg %s wp %08x lp %08lx\n",
+                  wnd->hwndSelf, SPY_GetMsgName(msg), wParam, lParam );
+
+    hwnd = wnd->hwndSelf;
+
+    if( descr || msg == WM_CREATE )
     {
-	LB_DESCR *descr = *(LB_DESCR **)wnd->wExtra;
+        LPHEADCOMBO lphc = (descr) ? descr->lphc : NULL;
 
-        TRACE_(combo)("[%04x]: msg %s wp %08x lp %08lx\n",
-		     wnd->hwndSelf, SPY_GetMsgName(msg), wParam, lParam );
-
-	hwnd = wnd->hwndSelf;
-
-	if( descr || msg == WM_CREATE )
+        switch( msg )
         {
-	    LPHEADCOMBO lphc = (descr) ? descr->lphc : NULL;
+        case WM_CREATE:
+            {
+                CREATESTRUCTA *lpcs = (CREATESTRUCTA *)lParam;
+                TRACE_(combo)("\tpassed parent handle = %p\n",lpcs->lpCreateParams);
+                lphc = (LPHEADCOMBO)(lpcs->lpCreateParams);
+                return LISTBOX_Create( wnd, lphc );
+            }
+        case WM_MOUSEMOVE:
+            if ( (TWEAK_WineLook > WIN31_LOOK) &&
+                 (CB_GETTYPE(lphc) != CBS_SIMPLE) )
+            {
+                POINT   mousePos;
+                BOOL    captured;
+                RECT    clientRect;
 
-	    switch( msg )
-	    {
-		case WM_CREATE:
-#define lpcs	((LPCREATESTRUCTA)lParam)
-		     TRACE_(combo)("\tpassed parent handle = 0x%08x\n", 
-				  (UINT)lpcs->lpCreateParams);
+                mousePos.x = (INT16)LOWORD(lParam);
+                mousePos.y = (INT16)HIWORD(lParam);
 
-		     lphc = (LPHEADCOMBO)(lpcs->lpCreateParams);
-#undef  lpcs
-		     return LISTBOX_Create( wnd, lphc );
-	        case WM_MOUSEMOVE:
-		     if ( (TWEAK_WineLook > WIN31_LOOK) &&
-			  (CB_GETTYPE(lphc) != CBS_SIMPLE) )
-		     {
-		       POINT   mousePos;
-		       BOOL    captured;
-		       RECT    clientRect;
+                /*
+                 * If we are in a dropdown combobox, we simulate that
+                 * the mouse is captured to show the tracking of the item.
+                 */
+                GetClientRect(hwnd, &clientRect);
 
-		       mousePos.x = (INT16)LOWORD(lParam);
-		       mousePos.y = (INT16)HIWORD(lParam);
+                if (PtInRect( &clientRect, mousePos ))
+                {
+                    captured = descr->captured;
+                    descr->captured = TRUE;
 
-		       /*
-			* If we are in a dropdown combobox, we simulate that
-			* the mouse is captured to show the tracking of the item.
-			*/
-		       GetClientRect(hwnd, &clientRect);
+                    LISTBOX_HandleMouseMove( wnd, descr,
+                                             mousePos.x, mousePos.y);
 
-		       if (PtInRect( &clientRect, mousePos ))
-		       {
-		           captured = descr->captured;
-		           descr->captured = TRUE;			 
-		           
-		           LISTBOX_HandleMouseMove( wnd, descr, 
-						    mousePos.x, mousePos.y);
+                    descr->captured = captured;
 
-                           descr->captured = captured;
+                }
+                else
+                {
+                    LISTBOX_HandleMouseMove( wnd, descr,
+                                             mousePos.x, mousePos.y);
+                }
 
-                       }
-                       else
-                       {
-		           LISTBOX_HandleMouseMove( wnd, descr, 
-						    mousePos.x, mousePos.y);
-                       }
+                return 0;
 
-		       return 0;
+            }
+            else
+            {
+                /*
+                 * If we are in Win3.1 look, go with the default behavior.
+                 */
+                return unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
+                    ListBoxWndProcA( hwnd, msg, wParam, lParam );
+            }
+        case WM_LBUTTONUP:
+            if (TWEAK_WineLook > WIN31_LOOK)
+            {
+                POINT mousePos;
+                RECT  clientRect;
 
-		     }
-		     else
-		     {
-		       /*
-			* If we are in Win3.1 look, go with the default behavior.
-			*/
-		       return unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
-		                        ListBoxWndProcA( hwnd, msg, wParam, lParam );
-		     }
-  	        case WM_LBUTTONUP:
-		     if (TWEAK_WineLook > WIN31_LOOK)
-		     {
-		       POINT mousePos;
-		       RECT  clientRect;
+                /*
+                 * If the mouse button "up" is not in the listbox,
+                 * we make sure there is no selection by re-selecting the
+                 * item that was selected when the listbox was made visible.
+                 */
+                mousePos.x = (INT16)LOWORD(lParam);
+                mousePos.y = (INT16)HIWORD(lParam);
 
-		       /*
-			* If the mouse button "up" is not in the listbox,
-			* we make sure there is no selection by re-selecting the
-			* item that was selected when the listbox was made visible.
-			*/
-		       mousePos.x = (INT16)LOWORD(lParam);
-		       mousePos.y = (INT16)HIWORD(lParam);
+                GetClientRect(hwnd, &clientRect);
 
-		       GetClientRect(hwnd, &clientRect);
+                /*
+                 * When the user clicks outside the combobox and the focus
+                 * is lost, the owning combobox will send a fake buttonup with
+                 * 0xFFFFFFF as the mouse location, we must also revert the
+                 * selection to the original selection.
+                 */
+                if ( (lParam == (LPARAM)-1) ||
+                     (!PtInRect( &clientRect, mousePos )) )
+                {
+                    LISTBOX_MoveCaret( wnd, descr, lphc->droppedIndex, FALSE );
+                }
+            }
+            return LISTBOX_HandleLButtonUp( wnd, descr );
+        case WM_LBUTTONDBLCLK:
+        case WM_LBUTTONDOWN:
+            return LISTBOX_HandleLButtonDownCombo(wnd, descr, msg, wParam,
+                                                  (INT16)LOWORD(lParam),
+                                                  (INT16)HIWORD(lParam) );
+        case WM_NCACTIVATE:
+            return FALSE;
+        case WM_KEYDOWN:
+            if( CB_GETTYPE(lphc) != CBS_SIMPLE )
+            {
+                /* for some reason(?) Windows makes it possible to
+                 * show/hide ComboLBox by sending it WM_KEYDOWNs */
 
-		       /*
-			* When the user clicks outside the combobox and the focus
-			* is lost, the owning combobox will send a fake buttonup with
-			* 0xFFFFFFF as the mouse location, we must also revert the
-			* selection to the original selection.
-			*/
-		       if ( (lParam == (LPARAM)-1) ||
-			    (!PtInRect( &clientRect, mousePos )) )
-		       {
-			 LISTBOX_MoveCaret( wnd,
-					    descr, 
-					    lphc->droppedIndex, 
-					    FALSE );
-		       }
-		     }
-		     return LISTBOX_HandleLButtonUp( wnd, descr );
-		case WM_LBUTTONDBLCLK:
-		case WM_LBUTTONDOWN:
-                     return LISTBOX_HandleLButtonDownCombo(wnd, descr, msg, wParam, 
-                                          (INT16)LOWORD(lParam),
-                                          (INT16)HIWORD(lParam) );
-                case WM_NCACTIVATE:
-                     return FALSE;
-		case WM_KEYDOWN:
-		     if( CB_GETTYPE(lphc) != CBS_SIMPLE )
-		     {
-			 /* for some reason(?) Windows makes it possible to
-			  * show/hide ComboLBox by sending it WM_KEYDOWNs */
+                if( (!(lphc->wState & CBF_EUI) && wParam == VK_F4) ||
+                    ( (lphc->wState & CBF_EUI) && !(lphc->wState & CBF_DROPPED)
+                      && (wParam == VK_DOWN || wParam == VK_UP)) )
+                {
+                    COMBO_FlipListbox( lphc, FALSE, FALSE );
+                    return 0;
+                }
+            }
+            return LISTBOX_HandleKeyDown( wnd, descr, wParam );
 
-		         if( (!(lphc->wState & CBF_EUI) && wParam == VK_F4) ||
-			     ( (lphc->wState & CBF_EUI) && !(lphc->wState & CBF_DROPPED)
-			       && (wParam == VK_DOWN || wParam == VK_UP)) )
-			 {
-			     COMBO_FlipListbox( lphc, FALSE, FALSE );
-                             return 0;
-			 }
-		     }
-		     return LISTBOX_HandleKeyDown( wnd, descr, wParam );
+        case LB_SETCURSEL16:
+        case LB_SETCURSEL:
+            lRet = unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
+                ListBoxWndProcA( hwnd, msg, wParam, lParam );
+            lRet =(lRet == LB_ERR) ? lRet : descr->selected_item; 
+            return lRet;
+        case WM_NCDESTROY:
+            if( CB_GETTYPE(lphc) != CBS_SIMPLE )
+                lphc->hWndLBox = 0;
+            /* fall through */
 
-		case LB_SETCURSEL16:
-		case LB_SETCURSEL:
-		     lRet = unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
-		                      ListBoxWndProcA( hwnd, msg, wParam, lParam );
-		     lRet =(lRet == LB_ERR) ? lRet : descr->selected_item; 
-		     return lRet;
-		case WM_NCDESTROY:
-		     if( CB_GETTYPE(lphc) != CBS_SIMPLE )
-			 lphc->hWndLBox = 0;
-		     /* fall through */
-
-	        default:
-                    return unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
-                                     ListBoxWndProcA( hwnd, msg, wParam, lParam );
-	    }
+        default:
+            return unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
+                ListBoxWndProcA( hwnd, msg, wParam, lParam );
         }
-        lRet = unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
-			 DefWindowProcA( hwnd, msg, wParam, lParam );
-
-        TRACE_(combo)("\t default on msg [%04x]\n", (UINT16)msg );
     }
+    lRet = unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
+        DefWindowProcA( hwnd, msg, wParam, lParam );
+
+    TRACE_(combo)("\t default on msg [%04x]\n", (UINT16)msg );
+
     return lRet;
 }
 
@@ -3211,10 +3211,14 @@ static LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg,
                                WPARAM wParam, LPARAM lParam )
 {
+    LRESULT res = 0;
     WND *wnd = WIN_FindWndPtr( hwnd );
-    LRESULT res = ComboLBWndProc_locked(wnd, msg, wParam, lParam, FALSE);
 
-    WIN_ReleaseWndPtr(wnd);
+    if (wnd)
+    {
+        res = ComboLBWndProc_locked(wnd, msg, wParam, lParam, FALSE);
+        WIN_ReleaseWndPtr(wnd);
+    }
     return res;
 }
 
@@ -3223,9 +3227,13 @@ LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg,
  */
 LRESULT WINAPI ComboLBWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
+    LRESULT res = 0;
     WND *wnd = WIN_FindWndPtr( hwnd );
-    LRESULT res = ComboLBWndProc_locked(wnd, msg, wParam, lParam, TRUE);
 
-    WIN_ReleaseWndPtr(wnd);
+    if (wnd)
+    {
+        res = ComboLBWndProc_locked(wnd, msg, wParam, lParam, TRUE);
+        WIN_ReleaseWndPtr(wnd);
+    }
     return res;
 }

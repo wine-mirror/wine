@@ -356,12 +356,14 @@ END:
  */
 static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT lResult;
+    LRESULT lResult = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    lResult = StaticWndProc_locked(wndPtr, uMsg, wParam, lParam, FALSE);
-
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        lResult = StaticWndProc_locked(wndPtr, uMsg, wParam, lParam, FALSE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return lResult;
 }
 
@@ -370,12 +372,14 @@ static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
  */
 static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT lResult;
+    LRESULT lResult = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    lResult = StaticWndProc_locked(wndPtr, uMsg, wParam, lParam, TRUE);
-
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        lResult = StaticWndProc_locked(wndPtr, uMsg, wParam, lParam, TRUE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return lResult;
 }
 

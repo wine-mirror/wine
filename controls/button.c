@@ -407,12 +407,14 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
  */
 static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT res;
+    LRESULT res = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam,TRUE);
-
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam,TRUE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return res;
 }
 
@@ -422,12 +424,14 @@ static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
  */
 static LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT res;
+    LRESULT res = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam,FALSE);
-
-    WIN_ReleaseWndPtr(wndPtr);
+    if (wndPtr)
+    {
+        res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam,FALSE);
+        WIN_ReleaseWndPtr(wndPtr);
+    }
     return res;
 }
 
