@@ -52,7 +52,6 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     LONG		cnt;
     BITMAPINFOHEADER	*bmi;
     HRESULT		hres;
-    HMODULE		avifil32 = LoadLibrary("avifil32.dll");
     PAVIFILE		avif;
     PAVISTREAM		vids=NULL,auds=NULL;
     AVIFILEINFO		afi;
@@ -64,55 +63,17 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     LPDIRECTDRAWPALETTE dpal;
     PALETTEENTRY	palent[256];
 
-
-void	(WINAPI *fnAVIFileInit)(void);
-void	(WINAPI *fnAVIFileExit)(void);
-ULONG	(WINAPI *fnAVIFileRelease)(PAVIFILE);
-ULONG	(WINAPI *fnAVIStreamRelease)(PAVISTREAM);
-HRESULT (WINAPI *fnAVIFileOpen)(PAVIFILE * ppfile,LPCTSTR szFile,UINT uMode,LPCLSID lpHandler);
-HRESULT (WINAPI *fnAVIFileInfo)(PAVIFILE ppfile,AVIFILEINFO *afi,LONG size);
-HRESULT (WINAPI *fnAVIFileGetStream)(PAVIFILE ppfile,PAVISTREAM *afi,DWORD fccType,LONG lParam);
-HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size);
-HRESULT (WINAPI *fnAVIStreamReadFormat)(PAVISTREAM iface,LONG pos,LPVOID format,LPLONG size);
-PGETFRAME (WINAPI *fnAVIStreamGetFrameOpen)(PAVISTREAM iface,LPBITMAPINFOHEADER wanted);
-LPVOID (WINAPI *fnAVIStreamGetFrame)(PGETFRAME pg,LONG pos);
-HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
-
-#define XX(x) fn##x = (void*)GetProcAddress(avifil32,#x);assert(fn##x);
-#ifdef UNICODE
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"W");assert(fn##x);
-#else
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"A");assert(fn##x);
-#endif
-	/* non character dependend routines: */
-	XX (AVIFileInit);
-	XX (AVIFileExit);
-	XX (AVIFileRelease);
-	XX (AVIFileGetStream);
-	XX (AVIStreamRelease);
-	XX (AVIStreamReadFormat);
-	XX (AVIStreamGetFrameOpen);
-	XX (AVIStreamGetFrame);
-	XX (AVIStreamGetFrameClose);
-	/* A/W routines: */
-	XXT(AVIFileOpen);
-	XXT(AVIFileInfo);
-	XXT(AVIStreamInfo);
-#undef XX
-#undef XXT
-
-
-    fnAVIFileInit();
+    AVIFileInit();
     if (GetFileAttributes(cmdline) == INVALID_FILE_ATTRIBUTES) {
     	fprintf(stderr,"Usage: aviplay <avifilename>\n");
 	exit(1);
     }
-    hres = fnAVIFileOpen(&avif,cmdline,OF_READ,NULL);
+    hres = AVIFileOpen(&avif,cmdline,OF_READ,NULL);
     if (hres) {
     	fprintf(stderr,"AVIFileOpen: 0x%08lx\n",hres);
 	exit(1);
     }
-    hres = fnAVIFileInfo(avif,&afi,sizeof(afi));
+    hres = AVIFileInfo(avif,&afi,sizeof(afi));
     if (hres) {
     	fprintf(stderr,"AVIFileInfo: 0x%08lx\n",hres);
 	exit(1);
@@ -121,12 +82,12 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     	    char buf[5];
 	    PAVISTREAM	ast;
 
-	    hres = fnAVIFileGetStream(avif,&ast,0,n);
+	    hres = AVIFileGetStream(avif,&ast,0,n);
 	    if (hres) {
 		fprintf(stderr,"AVIFileGetStream %d: 0x%08lx\n",n,hres);
 		exit(1);
 	    }
-	    hres = fnAVIStreamInfo(ast,&asi,sizeof(asi));
+	    hres = AVIStreamInfo(ast,&asi,sizeof(asi));
 	    if (hres) {
 		fprintf(stderr,"AVIStreamInfo %d: 0x%08lx\n",n,hres);
 		exit(1);
@@ -148,7 +109,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 		type[4]='\0';memcpy(type,&(asi.fccType),4);
 
 	    	fprintf(stderr,"Unhandled streamtype %s\n",type);
-	    	fnAVIStreamRelease(ast);
+	    	AVIStreamRelease(ast);
 		break;
 	    }
 	    }
@@ -160,7 +121,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     }
     cnt = sizeof(BITMAPINFOHEADER)+256*sizeof(RGBQUAD);
     bmi = HeapAlloc(GetProcessHeap(),0,cnt);
-    hres = fnAVIStreamReadFormat(vids,0,bmi,&cnt);
+    hres = AVIStreamReadFormat(vids,0,bmi,&cnt);
     if (hres) {
     	fprintf(stderr,"AVIStreamReadFormat vids: 0x%08lx\n",hres);
 	exit(1);
@@ -170,7 +131,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     /* recalculate the image size */
     bmi->biSizeImage = ((bmi->biWidth*bmi->biBitCount+31)&~0x1f)*bmi->biPlanes*bmi->biHeight/8;
     bytesline = ((bmi->biWidth*bmi->biBitCount+31)&~0x1f)*bmi->biPlanes/8;
-    vidgetframe = fnAVIStreamGetFrameOpen(vids,bmi);
+    vidgetframe = AVIStreamGetFrameOpen(vids,bmi);
     if (!vidgetframe) {
     	fprintf(stderr,"AVIStreamGetFrameOpen: failed\n");
 	exit(1);
@@ -224,7 +185,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 	LPVOID		decodedbits;
 
 /* video stuff */
-	if (!(decodedframe=fnAVIStreamGetFrame(vidgetframe,pos++)))
+	if (!(decodedframe=AVIStreamGetFrame(vidgetframe,pos++)))
 	    break;
 	lpbmi = (LPBITMAPINFOHEADER)decodedframe;
 	decodedbits = (LPVOID)(((DWORD)decodedframe)+lpbmi->biSize);
@@ -270,15 +231,15 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 	IDirectDrawSurface_Unlock(dsurf,dsdesc.lpSurface);
     }
     tend = time(NULL);
-    fnAVIStreamGetFrameClose(vidgetframe);
+    AVIStreamGetFrameClose(vidgetframe);
 
     IDirectDrawSurface_Release(dsurf);
     IDirectDraw_RestoreDisplayMode(ddraw);
     IDirectDraw_Release(ddraw);
-    if (vids) fnAVIStreamRelease(vids);
-    if (auds) fnAVIStreamRelease(auds);
+    if (vids) AVIStreamRelease(vids);
+    if (auds) AVIStreamRelease(auds);
     fprintf(stderr,"%d frames at %g frames/s\n",pos,pos*1.0/(tend-tstart));
-    fnAVIFileRelease(avif);
-    fnAVIFileExit();
+    AVIFileRelease(avif);
+    AVIFileExit();
     return 0;
 }

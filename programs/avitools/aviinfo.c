@@ -29,51 +29,22 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     int			n;
     HRESULT		hres;
-    HMODULE		avifil32 = LoadLibrary("avifil32.dll");
     PAVIFILE		avif;
     PAVISTREAM		vids,auds;
     AVIFILEINFO		afi;
     AVISTREAMINFO	asi;
 
-void	(WINAPI *fnAVIFileInit)(void);
-void	(WINAPI *fnAVIFileExit)(void);
-ULONG	(WINAPI *fnAVIFileRelease)(PAVIFILE);
-ULONG	(WINAPI *fnAVIStreamRelease)(PAVISTREAM);
-HRESULT (WINAPI *fnAVIFileOpen)(PAVIFILE * ppfile,LPCTSTR szFile,UINT uMode,LPCLSID lpHandler);
-HRESULT (WINAPI *fnAVIFileInfo)(PAVIFILE ppfile,AVIFILEINFO *afi,LONG size);
-HRESULT (WINAPI *fnAVIFileGetStream)(PAVIFILE ppfile,PAVISTREAM *afi,DWORD fccType,LONG lParam);
-HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size);
-
-#define XX(x) fn##x = (void*)GetProcAddress(avifil32,#x);assert(fn##x);
-#ifdef UNICODE
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"W");assert(fn##x);
-#else
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"A");assert(fn##x);
-#endif
-	/* Non character dependent routines: */
-	XX (AVIFileInit);
-	XX (AVIFileExit);
-	XX (AVIFileRelease);
-	XX (AVIStreamRelease);
-	XX (AVIFileGetStream);
-	/* A/W routines: */
-	XXT(AVIFileOpen);
-	XXT(AVIFileInfo);
-	XXT(AVIStreamInfo);
-#undef XX
-#undef XXT
-
-    fnAVIFileInit();
+    AVIFileInit();
     if (GetFileAttributes(cmdline) == INVALID_FILE_ATTRIBUTES) {
     	fprintf(stderr,"Usage: aviinfo <avifilename>\n");
 	exit(1);
     }
-    hres = fnAVIFileOpen(&avif,cmdline,OF_READ,NULL);
+    hres = AVIFileOpen(&avif,cmdline,OF_READ,NULL);
     if (hres) {
     	fprintf(stderr,"AVIFileOpen: 0x%08lx\n",hres);
 	exit(1);
     }
-    hres = fnAVIFileInfo(avif,&afi,sizeof(afi));
+    hres = AVIFileInfo(avif,&afi,sizeof(afi));
     if (hres) {
     	fprintf(stderr,"AVIFileInfo: 0x%08lx\n",hres);
 	exit(1);
@@ -105,12 +76,12 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
     	    char buf[5];
 	    PAVISTREAM	ast;
 
-	    hres = fnAVIFileGetStream(avif,&ast,0,n);
+	    hres = AVIFileGetStream(avif,&ast,0,n);
 	    if (hres) {
 		fprintf(stderr,"AVIFileGetStream %d: 0x%08lx\n",n,hres);
 		exit(1);
 	    }
-	    hres = fnAVIStreamInfo(ast,&asi,sizeof(asi));
+	    hres = AVIStreamInfo(ast,&asi,sizeof(asi));
 	    if (hres) {
 		fprintf(stderr,"AVIStreamInfo %d: 0x%08lx\n",n,hres);
 		exit(1);
@@ -150,9 +121,9 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
 		break;
 	    }
 	    }
-	    fnAVIStreamRelease(ast);
+	    AVIStreamRelease(ast);
     }
-    fnAVIFileRelease(avif);
-    fnAVIFileExit();
+    AVIFileRelease(avif);
+    AVIFileExit();
     return 0;
 }
