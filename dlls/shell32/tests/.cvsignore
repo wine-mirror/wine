@@ -1,6 +1,5 @@
 Makefile
 generated.ok
-shell32_test.exe.spec.c
 shlfileop.ok
 string.ok
 testlist.c

@@ -1,5 +1,4 @@
 Makefile
-oleaut32_test.exe.spec.c
 olefont.ok
 safearray.ok
 testlist.c

@@ -1,5 +1,4 @@
 Makefile
 rsrc.res
 uninstaller.exe.dbg.c
-uninstaller.exe.spec.c
 uninstaller.ico

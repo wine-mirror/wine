@@ -1,4 +1,3 @@
 Makefile
 sock.ok
 testlist.c
-ws2_32_test.exe.spec.c

@@ -1,4 +1,3 @@
 Makefile
 wineconsole.exe.dbg.c
-wineconsole.exe.spec.c
 wineconsole_res.res

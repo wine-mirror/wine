@@ -1,4 +1,3 @@
 Makefile
-ddraw_test.exe.spec.c
 ddrawmodes.ok
 testlist.c

@@ -12,7 +12,6 @@ file.ok
 format_msg.ok
 generated.ok
 heap.ok
-kernel32_test.exe.spec.c
 locale.ok
 mailslot.ok
 path.ok

@@ -1,4 +1,3 @@
 Makefile
 generated.ok
 testlist.c
-urlmon_test.exe.spec.c

@@ -2,4 +2,3 @@ Makefile
 generated.ok
 http.ok
 testlist.c
-wininet_test.exe.spec.c
