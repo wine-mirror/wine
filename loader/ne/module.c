@@ -1290,7 +1290,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
     if (pModule->flags & NE_FFLAGS_BUILTIN)
         return FALSE;  /* Can't free built-in module */
 
-    if (call_wep)
+    if (call_wep && !(pModule->flags & NE_FFLAGS_WIN32))
     {
         if (pModule->flags & NE_FFLAGS_LIBMODULE)
         {
@@ -1468,6 +1468,8 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     {
 	pModule = NE_GetPtr( hModule );
         if (!pModule) break;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->name_table;
         if ((*name_table == len) && !strncmp(name, name_table+1, len))
@@ -1519,6 +1521,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	pModule = NE_GetPtr( hModule );
         if (!pModule) break;
 	if (!pModule->fileinfo) continue;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         ofs = (OFSTRUCT*)((BYTE *)pModule + pModule->fileinfo);
 	loadedfn = ((char*)ofs->szPathName) + strlen(ofs->szPathName);
