@@ -664,7 +664,6 @@ init	UserClientDllInitialize
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
-@ stdcall CallNextHookEx16(long long long long) CallNextHookEx16
 @ stdcall CallWindowProc16(long long long long long) CallWindowProc16
 @ stdcall CloseDriver16(long long long) CloseDriver16
 @ stdcall CreateDialogIndirectParam16(long ptr long long long) CreateDialogIndirectParam16
@@ -675,7 +674,6 @@ init	UserClientDllInitialize
 @ stdcall OpenDriver16(str str long) OpenDriver16
 @ stdcall PostAppMessage16(long long long long) PostAppMessage16
 @ stdcall SendDriverMessage16(long long long long) SendDriverMessage16
-@ stdcall SetWindowsHookEx16(long long long long) SetWindowsHookEx16
 @ stdcall UserYield16() UserYield16
 
 ################################################################

@@ -60,11 +60,11 @@ static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
 static const char*	lpstrMsgWndDestroyed = "OTHERWINDOWDESTROYED";
 static const char*	lpstrMsgShellActivate = "ACTIVATESHELLWINDOW";
 
-static HWND16	SHELL_hWnd = 0;
+static HWND	SHELL_hWnd = 0;
 static HHOOK	SHELL_hHook = 0;
-static UINT16	uMsgWndCreated = 0;
-static UINT16	uMsgWndDestroyed = 0;
-static UINT16	uMsgShellActivate = 0;
+static UINT	uMsgWndCreated = 0;
+static UINT	uMsgWndDestroyed = 0;
+static UINT	uMsgShellActivate = 0;
 HINSTANCE16	SHELL_hInstance = 0;
 HINSTANCE SHELL_hInstance32;
 static int SHELL_Attach = 0;
@@ -450,25 +450,39 @@ DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
 }
 
 /*************************************************************************
+ *				SHELL_HookProc
+ *
+ * 32-bit version of the system-wide WH_SHELL hook.
+ */
+static LRESULT WINAPI SHELL_HookProc(INT code, WPARAM wParam, LPARAM lParam)
+{
+    TRACE("%i, %x, %08lx\n", code, wParam, lParam );
+
+    if (SHELL_hWnd)
+    {
+        switch( code )
+        {
+        case HSHELL_WINDOWCREATED:
+            PostMessageA( SHELL_hWnd, uMsgWndCreated, wParam, 0 );
+            break;
+        case HSHELL_WINDOWDESTROYED:
+            PostMessageA( SHELL_hWnd, uMsgWndDestroyed, wParam, 0 );
+            break;
+        case HSHELL_ACTIVATESHELLWINDOW:
+            PostMessageA( SHELL_hWnd, uMsgShellActivate, wParam, 0 );
+            break;
+        }
+    }
+    return CallNextHookEx( SHELL_hHook, code, wParam, lParam );
+}
+
+/*************************************************************************
  *				ShellHookProc		[SHELL.103]
  * System-wide WH_SHELL hook.
  */
 LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
 {
-    TRACE("%i, %04x, %08x\n", code, wParam,
-						      (unsigned)lParam );
-    if( SHELL_hHook && SHELL_hWnd )
-    {
-	UINT16	uMsg = 0;
-        switch( code )
-        {
-	    case HSHELL_WINDOWCREATED:		uMsg = uMsgWndCreated;   break;
-	    case HSHELL_WINDOWDESTROYED:	uMsg = uMsgWndDestroyed; break;
-	    case HSHELL_ACTIVATESHELLWINDOW: 	uMsg = uMsgShellActivate;
-        }
-	PostMessageA( HWND_32(SHELL_hWnd), uMsg, wParam, 0 );
-    }
-    return CallNextHookEx16( SHELL_hHook, code, wParam, lParam );
+    return SHELL_HookProc( code, wParam, lParam );
 }
 
 /*************************************************************************
@@ -483,9 +497,8 @@ BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
     case 2:  /* register hWnd as a shell window */
         if( !SHELL_hHook )
         {
-            HMODULE16 hShell = GetModuleHandle16( "SHELL" );
-            HOOKPROC16 hookProc = (HOOKPROC16)GetProcAddress16( hShell, (LPCSTR)103 );
-            SHELL_hHook = SetWindowsHookEx16( WH_SHELL, hookProc, hShell, 0 );
+            SHELL_hHook = SetWindowsHookExA( WH_SHELL, SHELL_HookProc,
+                                             GetModuleHandleA("shell32.dll"), 0 );
             if ( SHELL_hHook )
             {
                 uMsgWndCreated = RegisterWindowMessageA( lpstrMsgWndCreated );
@@ -497,7 +510,7 @@ BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
         }
 
         if ( SHELL_hHook )
-            return ((SHELL_hWnd = hWnd) != 0);
+            return ((SHELL_hWnd = HWND_32(hWnd)) != 0);
         break;
 
     default:
