@@ -3607,13 +3607,45 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 
 	dst = ((char *)This->surface_desc.lpSurface) +
 	  (pRect->top * This->surface_desc.u1.lPitch) + (pRect->left * GET_BPP(This->surface_desc));
-	for (y = (This->surface_desc.dwHeight - pRect->top - 1);
-	     y >= ((int) This->surface_desc.dwHeight - (int) pRect->bottom);
-	     y--) {
-	    glReadPixels(pRect->left, y,
-			 pRect->right - pRect->left, 1,
+
+	if (This->surface_desc.u1.lPitch != (GET_BPP(This->surface_desc) * This->surface_desc.dwWidth)) {
+	    /* Slow-path in case of 'odd' surfaces. This could be fixed using some GL options, but I
+	     * could not be bothered considering the rare cases where it may be useful :-)
+	     */
+	    for (y = (This->surface_desc.dwHeight - pRect->top - 1);
+		 y >= ((int) This->surface_desc.dwHeight - (int) pRect->bottom);
+		 y--) {
+		glReadPixels(pRect->left, y,
+			     pRect->right - pRect->left, 1,
+			     buffer_color, buffer_format, dst);
+		dst += This->surface_desc.u1.lPitch;
+	    }
+	} else {
+	    /* Faster path for surface copy. Note that I can use static variables here as I am
+	     * protected by the OpenGL critical section so this function won't be called by
+	     * two threads at the same time.
+	     */
+	    static char *buffer = NULL;
+	    static int buffer_width = 0;
+	    char *dst2 = dst + ((pRect->bottom - pRect->top) - 1) * This->surface_desc.u1.lPitch;
+	    int current_width = (pRect->right - pRect->left) * GET_BPP(This->surface_desc);
+	    
+	    glReadPixels(pRect->left, ((int) This->surface_desc.dwHeight - (int) pRect->bottom),
+			 pRect->right - pRect->left, pRect->bottom - pRect->top,
 			 buffer_color, buffer_format, dst);
-	    dst += This->surface_desc.u1.lPitch;
+
+	    if (current_width > buffer_width) {
+		if (buffer != NULL) HeapFree(GetProcessHeap(), 0, buffer);
+		buffer_width = current_width;
+		buffer = HeapAlloc(GetProcessHeap(), 0, buffer_width);
+	    }
+	    for (y = 0; y < ((pRect->bottom - pRect->top) / 2); y++) {
+		memcpy(buffer, dst, current_width);
+		memcpy(dst, dst2, current_width);
+		memcpy(dst2, buffer, current_width);
+		dst  += This->surface_desc.u1.lPitch;
+		dst2 -= This->surface_desc.u1.lPitch;
+	    }
 	}
 
 	gl_d3d_dev->state[buffer_type] = SURFACE_MEMORY;
