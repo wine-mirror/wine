@@ -431,14 +431,17 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
     {
         case WH_HINIT:
             INTERNET_CloseHandle((LPWININETAPPINFOA) lpwh);
+	    retval = TRUE;
             break; 
 
         case WH_HHTTPSESSION:
 	    HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONA) lpwh);
+	    retval = TRUE;
 	    break;
 
         case WH_HHTTPREQ:
             HTTP_CloseHTTPRequestHandle((LPWININETHTTPREQA) lpwh);
+	    retval = TRUE;
             break;
 
         case WH_HFTPSESSION:
