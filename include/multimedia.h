@@ -47,11 +47,14 @@ struct WINE_MCIDRIVER {
 	MCI_OPEN_DRIVER_PARMS16	modp;
 	MCI_OPEN_PARMS16	mop;
 	DWORD			dwPrivate;
+        YIELDPROC		lpfnYieldProc;
+        DWORD	                dwYieldData;
+        BOOL			bIs32;
 };
 
 extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
-#define MCI_GetDrv(wDevID) 		(&mciDrv[MCI_DevIDToIndex(wDevID)])
+#define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
 #define MCI_GetOpenDrv(wDevID)	(&(MCI_GetDrv(wDevID)->mop))
 
 /* function prototypes */

@@ -1094,7 +1094,9 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 	  wDevID, uDevType, lpParms->wDeviceID);
 
     dwRet = MCI_SendCommand(wDevID, MCI_OPEN_DRIVER, dwParam, (DWORD)lpParms);
-
+    MCI_GetDrv(wDevID)->lpfnYieldProc = 0;
+    MCI_GetDrv(wDevID)->dwYieldData = 0;
+    
     if (dwRet == 0) {
 	/* only handled devices fall through */
 	TRACE(mci, "wDevID = %04X wDeviceID = %d dwRet = %ld\n", wDevID, lpParms->wDeviceID, dwRet);
