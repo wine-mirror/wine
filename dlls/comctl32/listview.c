@@ -1011,13 +1011,22 @@ static inline BOOL iterator_empty(ITERATOR* i)
     return TRUE;
 }
 
+/***
+ * Create an iterator over a range.
+ */
+static inline BOOL iterator_rangeitems(ITERATOR* i, RANGE range)
+{
+    iterator_empty(i);
+    i->range = range;
+    return TRUE;
+}
 
 /***
  * Create an iterator over a bunch of ranges.
  * Please note that the iterator will take ownership of the ranges,
  * and will free them upon destruction.
  */
-static inline BOOL iterator_ranges(ITERATOR* i, RANGES ranges)
+static inline BOOL iterator_rangesitems(ITERATOR* i, RANGES ranges)
 {
     iterator_empty(i);
     i->ranges = ranges;
@@ -1051,7 +1060,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	    if (IntersectRect(&rcTemp, &rcItem, lprc))
 		i->nSpecial = infoPtr->nFocusedItem;
 	}
-	if (!(i->ranges = ranges_create(50))) return FALSE;
+	if (!(iterator_rangesitems(i, ranges_create(50)))) return FALSE;
 	/* to do better here, we need to have PosX, and PosY sorted */
 	TRACE("building icon ranges:\n");
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
@@ -1067,16 +1076,15 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
     }
     else if (uView == LVS_REPORT)
     {
-	INT lower, upper;
+	RANGE range;
 	
 	if (frame.left >= infoPtr->nItemWidth) return TRUE;
 	if (frame.top >= infoPtr->nItemHeight * infoPtr->nItemCount) return TRUE;
 	
-	lower = max(frame.top / infoPtr->nItemHeight, 0);
-	upper = min((frame.bottom - 1) / infoPtr->nItemHeight, infoPtr->nItemCount - 1);
-	if (upper < lower) return TRUE;
-	i->range.lower = lower;
-	i->range.upper = upper + 1;
+	range.lower = max(frame.top / infoPtr->nItemHeight, 0);
+	range.upper = min((frame.bottom - 1) / infoPtr->nItemHeight, infoPtr->nItemCount - 1) + 1;
+	if (range.upper <= range.lower) return TRUE;
+	if (!iterator_rangeitems(i, range)) return FALSE;
 	TRACE("    report=%s\n", debugrange(&i->range));
     }
     else
@@ -1095,7 +1103,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	
 	if (nLastCol < nFirstCol || nLastRow < nFirstRow) return TRUE;
 
-	if (!(i->ranges = ranges_create(nLastCol - nFirstCol + 1))) return FALSE;
+	if (!(iterator_rangesitems(i, ranges_create(nLastCol - nFirstCol + 1)))) return FALSE;
 	TRACE("building list ranges:\n");
 	for (nCol = nFirstCol; nCol <= nLastCol; nCol++)
 	{
@@ -2650,7 +2658,7 @@ static BOOL LISTVIEW_DeselectAllSkipItems(LISTVIEW_INFO *infoPtr, RANGES toSkip)
     
     /* need to clone the DPA because callbacks can change it */
     if (!(clone = ranges_clone(infoPtr->selectionRanges))) return FALSE;
-    iterator_ranges(&i, ranges_diff(clone, toSkip));
+    iterator_rangesitems(&i, ranges_diff(clone, toSkip));
     while(iterator_next(&i))
 	LISTVIEW_SetItemState(infoPtr, i.nItem, &lvItem);
     /* note that the iterator destructor will free the cloned range */
@@ -2868,7 +2876,7 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     }
 
     LISTVIEW_DeselectAllSkipItems(infoPtr, selection);
-    iterator_ranges(&i, selection);
+    iterator_rangesitems(&i, selection);
     while(iterator_next(&i))
 	LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
     /* this will also destroy the selection */
