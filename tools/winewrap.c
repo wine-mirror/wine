@@ -87,15 +87,15 @@ static const char *app_loader_script =
     "if [ ! -x \"$WINELOADER\" ]; then WINELOADER=\"wine\"; fi\n"
     "\n"
     "# and try to start the app\n"
-    "exec \"$WINELOADER\" $debugmsg $dll \"$apppath\" -- \"$@\"\n"
+    "exec \"$WINELOADER\" $debugmsg $dll -- \"$apppath\" \"$@\"\n"
 ;
 
 static const char *app_gui_spec =
-    "@ stdcall WinMain(ptr long ptr) WinMain\n"
+    "@ stdcall WinMain(ptr long ptr long) WinMain\n"
 ;
 
 static const char *app_cui_spec =
-    "@ stdcall main(long ptr) main\n"
+    "@ stdcall main(long ptr ptr) main\n"
 ;
 
 static const char *wrapper_code =
@@ -104,13 +104,8 @@ static const char *wrapper_code =
     " * Copyright 2002 Dimitrie O. Paun <dpaun@rogers.com>\n"
     " */\n"
     "\n"
-    "#ifndef STRICT\n"
-    "#define STRICT\n"
-    "#endif\n"
-    "\n"
     "#include <dlfcn.h>\n"
     "#include <windows.h>\n"
-    "\n"
     "\n"
     "\n"
     "/*\n"
@@ -155,10 +150,18 @@ static const char *wrapper_code =
     "static char* mfcModule   = NULL;\n"
     "\n"
     "\n"
+    "void error(const char *format, ...)\n"
+    "{\n"
+    "    va_list ap;\n"
+    "    char msg[4096];\n"
     "\n"
-    "/*\n"
-    " * Implement the main.\n"
-    " */\n"
+    "    va_start(ap, format);\n"
+    "    vsnprintf(msg, sizeof(msg), format, ap);\n"
+    "    MessageBox(NULL, msg, \"Error\", MB_OK);\n"
+    "    va_end(ap);\n"
+    "    exit(1);\n"
+    "}\n"
+    "\n"
     "\n"
     "#if GUIEXE\n"
     "typedef int WINAPI (*WinMainFunc)(HINSTANCE hInstance, HINSTANCE hPrevInstance,\n"
@@ -191,91 +194,44 @@ static const char *wrapper_code =
     "        sprintf(libName,\"%%s.so\",appName);\n"
     "        appLibrary=dlopen(libName,RTLD_NOW);\n"
     "    }\n"
-    "    if (appLibrary==NULL) {\n"
-    "        char format[]=\"Could not load the %%s library: %%s\";\n"
-    "        char* error;\n"
-    "        char* msg;\n"
-    "\n"
-    "        error=dlerror();\n"
-    "        msg=(char*)malloc(strlen(format)+strlen(libName)+strlen(error));\n"
-    "        sprintf(msg,format,libName,error);\n"
-    "        MessageBox(NULL,msg,\"dlopen error\",MB_OK);\n"
-    "        free(msg);\n"
-    "        return 1;\n"
-    "    }\n"
+    "    if (!appLibrary) error(\"Could not load the %%s library: %%s\", libName, dlerror());\n"
     "\n"
     "    /* Then if this application is MFC based, load the MFC module */\n"
     "    /* FIXME: I'm not sure this is really necessary */\n"
-    "    if (mfcModule!=NULL) {\n"
-    "        hMFC=LoadLibrary(mfcModule);\n"
-    "        if (hMFC==NULL) {\n"
-    "            char format[]=\"Could not load the MFC module %%s (%%d)\";\n"
-    "            char* msg;\n"
-    "\n"
-    "            msg=(char*)malloc(strlen(format)+strlen(mfcModule)+11);\n"
-    "            sprintf(msg,format,mfcModule,GetLastError());\n"
-    "            MessageBox(NULL,msg,\"LoadLibrary error\",MB_OK);\n"
-    "            free(msg);\n"
-    "            return 1;\n"
-    "        }\n"
+    "    if (mfcModule) {\n"
+    "        hMFC = LoadLibrary(mfcModule);\n"
+    "        if (!hMFC) error(\"Could not load the MFC module %%s (%%d)\", mfcModule, GetLastError());\n"
     "        /* MFC is a special case: the WinMain is in the MFC library,\n"
     "         * instead of the application's library.\n"
     "         */\n"
-    "        hMain=hMFC;\n"
-    "    } else {\n"
-    "        hMFC=NULL;\n"
+    "        hMain = hMFC;\n"
     "    }\n"
     "\n"
     "    /* Load the application's module */\n"
-    "    if (appModule==NULL) {\n"
-    "        appModule=appName;\n"
-    "    }\n"
-    "    hApp=LoadLibrary(appModule);\n"
-    "    if (hApp==NULL) {\n"
-    "        char format[]=\"Could not load the application's module %%s (%%d)\";\n"
-    "        char* msg;\n"
-    "\n"
-    "        msg=(char*)malloc(strlen(format)+strlen(appModule)+11);\n"
-    "        sprintf(msg,format,appModule,GetLastError());\n"
-    "        MessageBox(NULL,msg,\"LoadLibrary error\",MB_OK);\n"
-    "        free(msg);\n"
-    "        return 1;\n"
-    "    } else if (hMain==NULL) {\n"
-    "        hMain=hApp;\n"
-    "    }\n"
+    "    if (!appModule) appModule = appName;\n"
+    "    hApp = LoadLibrary(appModule);\n"
+    "    if (!hApp) error(\"Could not load the application's module %%s (%%d)\", appModule, GetLastError());\n"
+    "    if (!hMain) hMain = hApp;\n"
     "\n"
     "    /* Get the address of the application's entry point */\n"
-    "    appMain=GetProcAddress(hMain, appInit);\n"
-    "    if (appMain==NULL) {\n"
-    "        char format[]=\"Could not get the address of %%s (%%d)\";\n"
-    "        char* msg;\n"
-    "\n"
-    "        msg=(char*)malloc(strlen(format)+strlen(appInit)+11);\n"
-    "        sprintf(msg,format,appInit,GetLastError());\n"
-    "        MessageBox(NULL,msg,\"GetProcAddress error\",MB_OK);\n"
-    "        free(msg);\n"
-    "        return 1;\n"
-    "    }\n"
+    "    appMain = GetProcAddress(hMain, appInit);\n"
+    "    if (!appMain) error(\"Could not get the address of %%s (%%d)\", appInit, GetLastError());\n"
     "\n"
     "    /* And finally invoke the application's entry point */\n"
     "#if GUIEXE\n"
-    "    retcode=(*((WinMainFunc)appMain))(hApp,hPrevInstance,szCmdLine,iCmdShow);\n"
+    "    retcode = (*((WinMainFunc)appMain))(hApp, hPrevInstance, szCmdLine, iCmdShow);\n"
     "#else\n"
-    "    retcode=(*((MainFunc)appMain))(argc,argv,envp);\n"
+    "    retcode = (*((MainFunc)appMain))(argc, argv, envp);\n"
     "#endif\n"
     "\n"
     "    /* Cleanup and done */\n"
     "    FreeLibrary(hApp);\n"
-    "    if (hMFC!=NULL) {\n"
-    "        FreeLibrary(hMFC);\n"
-    "    }\n"
+    "    FreeLibrary(hMFC);\n"
     "    dlclose(appLibrary);\n"
     "    free(libName);\n"
     "\n"
     "    return retcode;\n"
     "}\n"
-#if 0
-#endif
 ;
 
 static char *output_name;
@@ -477,7 +433,7 @@ int main(int argc, char **argv)
                 if (argv[i][2] == 0) verbose = 1;
                 break;
 	    case 'V':
-		printf("winewrap v0.31\n");
+		printf("winewrap v0.40\n");
 		exit(0);
 		break;
 	    case 'C':
@@ -663,7 +619,7 @@ int main(int argc, char **argv)
 
     /* create the loader script */
     create_file(base_file, app_loader_script, base_name);
-    chmod(base_name, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+    chmod(base_file, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 
     return 0;    
 } 
