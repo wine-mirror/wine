@@ -84,7 +84,6 @@ HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
     LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWPALETTE pal
 ) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
-    DDPRIVATE(This->s.ddraw);
     IDirectDrawPaletteImpl* ipal=(IDirectDrawPaletteImpl*)pal;
 
     TRACE("(%p)->(%p)\n",This,ipal);
