@@ -231,10 +231,6 @@ int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
 
     if (coloruse == DIB_RGB_COLORS)
     {
-	int max = 1 << depth;
-
-	if (end > max) end = max;
-
         if (quads)
         {
             RGBQUAD * rgb = (RGBQUAD *)colorPtr;
@@ -294,15 +290,16 @@ int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD dept
     const void *colorPtr;
     int *colorMapping;
 
-    if ((isInfo = (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))))
+    if ((isInfo = (info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))))
     {
+        /* assume BITMAPINFOHEADER */
         colors = info->bmiHeader.biClrUsed;
         if (!colors) colors = 1 << info->bmiHeader.biBitCount;
         colorPtr = info->bmiColors;
     }
-    else  /* assume BITMAPCOREINFO */
+    else  /* BITMAPCOREHEADER */
     {
-        colors = 1 << ((BITMAPCOREHEADER *)&info->bmiHeader)->bcBitCount;
+        colors = 1 << ((BITMAPCOREHEADER *)info)->bcBitCount;
         colorPtr = (WORD *)((BITMAPCOREINFO *)info)->bmciColors;
     }
 
