@@ -595,11 +595,11 @@ RPC_STATUS WINAPI RpcStringBindingParseA( LPSTR StringBinding, LPSTR *ObjUuid,
   return RPC_S_OK;
 
 fail:
-  if (ObjUuid) RpcStringFreeA(ObjUuid);
-  if (Protseq) RpcStringFreeA(Protseq);
-  if (NetworkAddr) RpcStringFreeA(NetworkAddr);
-  if (Endpoint) RpcStringFreeA(Endpoint);
-  if (Options) RpcStringFreeA(Options);
+  if (ObjUuid) RpcStringFreeA((unsigned char**)ObjUuid);
+  if (Protseq) RpcStringFreeA((unsigned char**)Protseq);
+  if (NetworkAddr) RpcStringFreeA((unsigned char**)NetworkAddr);
+  if (Endpoint) RpcStringFreeA((unsigned char**)Endpoint);
+  if (Options) RpcStringFreeA((unsigned char**)Options);
   return RPC_S_INVALID_STRING_BINDING;
 }
 
@@ -771,11 +771,11 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING
   if (ret == RPC_S_OK)
     ret = RPCRT4_CompleteBindingA(bind, NetworkAddr, Endpoint, Options);
 
-  RpcStringFreeA(&Options);
-  RpcStringFreeA(&Endpoint);
-  RpcStringFreeA(&NetworkAddr);
-  RpcStringFreeA(&Protseq);
-  RpcStringFreeA(&ObjectUuid);
+  RpcStringFreeA((unsigned char**)&Options);
+  RpcStringFreeA((unsigned char**)&Endpoint);
+  RpcStringFreeA((unsigned char**)&NetworkAddr);
+  RpcStringFreeA((unsigned char**)&Protseq);
+  RpcStringFreeA((unsigned char**)&ObjectUuid);
 
   if (ret == RPC_S_OK) 
     *Binding = (RPC_BINDING_HANDLE)bind;
@@ -835,13 +835,13 @@ RPC_STATUS WINAPI RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, LPSTR*
 
   TRACE("(%p,%p)\n", Binding, StringBinding);
 
-  ret = UuidToStringA(&bind->ObjectUuid, &ObjectUuid);
+  ret = UuidToStringA(&bind->ObjectUuid, (unsigned char**)&ObjectUuid);
   if (ret != RPC_S_OK) return ret;
 
   ret = RpcStringBindingComposeA(ObjectUuid, bind->Protseq, bind->NetworkAddr,
                                  bind->Endpoint, NULL, StringBinding);
 
-  RpcStringFreeA(&ObjectUuid);
+  RpcStringFreeA((unsigned char**)&ObjectUuid);
 
   return ret;
 }
@@ -856,7 +856,7 @@ RPC_STATUS WINAPI RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, LPWSTR
   TRACE("(%p,%p)\n", Binding, StringBinding);
   ret = RpcBindingToStringBindingA(Binding, &str);
   *StringBinding = RPCRT4_strdupAtoW(str);
-  RpcStringFreeA(&str);
+  RpcStringFreeA((unsigned char**)&str);
   return ret;
 }
   

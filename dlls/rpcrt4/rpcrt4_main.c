@@ -190,7 +190,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  *  S_OK if successful.
  */
-RPC_STATUS WINAPI RpcStringFreeA(LPSTR* String)
+RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
 {
   HeapFree( GetProcessHeap(), 0, *String);
 
@@ -206,7 +206,7 @@ RPC_STATUS WINAPI RpcStringFreeA(LPSTR* String)
  *
  *  S_OK if successful.
  */
-RPC_STATUS WINAPI RpcStringFreeW(LPWSTR* String)
+RPC_STATUS WINAPI RpcStringFreeW(unsigned short** String)
 {
   HeapFree( GetProcessHeap(), 0, *String);
 
@@ -545,7 +545,7 @@ unsigned short WINAPI UuidHash(UUID *uuid, RPC_STATUS *Status)
  *  S_OK if successful.
  *  S_OUT_OF_MEMORY if unsucessful.
  */
-RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, LPSTR* StringUuid)
+RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
 {
   *StringUuid = HeapAlloc( GetProcessHeap(), 0, sizeof(char) * 37);
 
@@ -571,7 +571,7 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, LPSTR* StringUuid)
  *  S_OK if successful.
  *  S_OUT_OF_MEMORY if unsucessful.
  */
-RPC_STATUS WINAPI UuidToStringW(UUID *Uuid, LPWSTR* StringUuid)
+RPC_STATUS WINAPI UuidToStringW(UUID *Uuid, unsigned short** StringUuid)
 {
   char buf[37];
 
@@ -605,7 +605,7 @@ static const BYTE hex2bin[] =
 /***********************************************************************
  *		UuidFromStringA (RPCRT4.@)
  */
-RPC_STATUS WINAPI UuidFromStringA(LPSTR str, UUID *uuid)
+RPC_STATUS WINAPI UuidFromStringA(unsigned char* str, UUID *uuid)
 {
     BYTE *s = (BYTE *)str;
     int i;
@@ -646,7 +646,7 @@ RPC_STATUS WINAPI UuidFromStringA(LPSTR str, UUID *uuid)
 /***********************************************************************
  *		UuidFromStringW (RPCRT4.@)
  */
-RPC_STATUS WINAPI UuidFromStringW(LPWSTR s, UUID *uuid)
+RPC_STATUS WINAPI UuidFromStringW(unsigned short* s, UUID *uuid)
 {
     int i;
 

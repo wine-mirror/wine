@@ -250,21 +250,21 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringFreeA(LPSTR* String);
+  RpcStringFreeA(unsigned char** String);
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringFreeW(LPWSTR* String);
+  RpcStringFreeW(unsigned short** String);
 #define RpcStringFree WINELIB_NAME_AW(RpcStringFree)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  UuidToStringA( UUID* Uuid, LPSTR* StringUuid );
+  UuidToStringA( UUID* Uuid, unsigned char** StringUuid );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  UuidToStringW( UUID* Uuid, LPWSTR* StringUuid );
+  UuidToStringW( UUID* Uuid, unsigned short** StringUuid );
 #define UuidToString WINELIB_NAME_AW(UuidToString)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  UuidFromStringA( LPSTR StringUuid, UUID* Uuid );
+  UuidFromStringA( unsigned char* StringUuid, UUID* Uuid );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  UuidFromStringW( LPWSTR StringUuid, UUID* Uuid );
+  UuidFromStringW( unsigned short* StringUuid, UUID* Uuid );
 #define UuidFromString WINELIB_NAME_AW(UuidFromString)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY

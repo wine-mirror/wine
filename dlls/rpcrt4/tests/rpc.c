@@ -86,7 +86,7 @@ void UuidConversionAndComparison(void) {
     /* Uuid to String to Uuid (char) */
     for (i1 = 0; i1 < 10; i1++) {
         Uuid1 = Uuid_Table[i1];
-	ok( (UuidToStringA(&Uuid1, &str) == RPC_S_OK), "Simple UUID->String copy" );
+	ok( (UuidToStringA(&Uuid1, (unsigned char**)&str) == RPC_S_OK), "Simple UUID->String copy" );
 	ok( (UuidFromStringA(str, &Uuid2) == RPC_S_OK), "Simple String->UUID copy from generated UUID String" );
 	ok( UuidEqual(&Uuid1, &Uuid2, &rslt), "Uuid -> String -> Uuid transform" );
 	/* invalid uuid tests  -- size of valid UUID string=36 */

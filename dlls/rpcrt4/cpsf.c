@@ -160,7 +160,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   HKEY key, subkey;
 
   TRACE("(%p,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
-  UuidToStringA((UUID*)pclsid, &clsid);
+  UuidToStringA((UUID*)pclsid, (unsigned char**)&clsid);
 
   /* register interfaces to point to clsid */
   while (*pProxyFileList) {
@@ -172,9 +172,9 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
 
       TRACE("registering %s %s => %s\n", name, debugstr_guid(proxy->header.piid), clsid);
 
-      UuidToStringA((UUID*)proxy->header.piid, &iid);
+      UuidToStringA((UUID*)proxy->header.piid, (unsigned char**)&iid);
       snprintf(keyname, sizeof(keyname), "Interface\\%s", iid);
-      RpcStringFreeA(&iid);
+      RpcStringFreeA((unsigned char**)&iid);
       if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyname, 0, NULL, 0,
                           KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
         if (name)
@@ -205,7 +205,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   }
 
   /* done */
-  RpcStringFreeA(&clsid);
+  RpcStringFreeA((unsigned char**)&clsid);
   return S_OK;
 }
 
@@ -220,7 +220,7 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
   char keyname[120], module[120];
 
   TRACE("(%p,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
-  UuidToStringA((UUID*)pclsid, &clsid);
+  UuidToStringA((UUID*)pclsid, (unsigned char**)&clsid);
 
   /* unregister interfaces */
   while (*pProxyFileList) {
@@ -232,9 +232,9 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
 
       TRACE("unregistering %s %s <= %s\n", name, debugstr_guid(proxy->header.piid), clsid);
 
-      UuidToStringA((UUID*)proxy->header.piid, &iid);
+      UuidToStringA((UUID*)proxy->header.piid, (unsigned char**)&iid);
       snprintf(keyname, sizeof(keyname), "Interface\\%s", iid);
-      RpcStringFreeA(&iid);
+      RpcStringFreeA((unsigned char**)&iid);
       RegDeleteKeyA(HKEY_CLASSES_ROOT, keyname);
     }
     pProxyFileList++;
@@ -247,6 +247,6 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
   RegDeleteKeyA(HKEY_CLASSES_ROOT, keyname);
 
   /* done */
-  RpcStringFreeA(&clsid);
+  RpcStringFreeA((unsigned char**)&clsid);
   return S_OK;
 }
