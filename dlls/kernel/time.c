@@ -161,7 +161,7 @@ DWORD WINAPI GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
     tzinfo->StandardBias = 0;
     tzinfo->DaylightBias = -60;
 
-    return TIME_ZONE_ID_UNKNOWN;
+    return TIME_ZONE_ID_STANDARD;
 }
 
 
