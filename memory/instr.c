@@ -87,18 +87,6 @@ static DWORD CALLBACK timer_thread( void *dummy )
  */
 static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
 {
-    extern char Call16_Start, Call16_End;
-
-    if (IS_SELECTOR_SYSTEM(context->SegCs))
-        if (    (char *)context->Eip >= &Call16_Start
-             && (char *)context->Eip <  &Call16_End   )
-        {
-            /* Saved selector may have become invalid when the relay code */
-            /* tries to restore it. We simply clear it. */
-            *sel = 0;
-            return TRUE;
-        }
-
     if (*sel == 0x40)
     {
 #if 0  /* hack until this is moved to kernel */

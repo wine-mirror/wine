@@ -74,6 +74,7 @@ static DWORD CALLBACK start_thread16( LPVOID threadArgs )
 
 
 #ifdef __i386__
+
 /* symbols exported from relay16.s */
 extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void WINAPI wine_call_to_16_regs( CONTEXT86 *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
@@ -84,16 +85,16 @@ extern void CALL32_CBClientEx_Ret();
 extern DWORD CallTo16_DataSelector;
 extern SEGPTR CALL32_CBClient_RetAddr;
 extern SEGPTR CALL32_CBClientEx_RetAddr;
+extern BYTE Call16_Start;
+extern BYTE Call16_End;
 
 static SEGPTR call16_ret_addr;  /* segptr to CallTo16_Ret routine */
-#endif
 
 /***********************************************************************
  *           WOWTHUNK_Init
  */
 BOOL WOWTHUNK_Init(void)
 {
-#ifdef __i386__
     /* allocate the code selector for CallTo16 routines */
     WORD codesel = SELECTOR_AllocBlock( (void *)Call16_Ret_Start,
                                         (char *)Call16_Ret_End - (char *)Call16_Ret_Start,
@@ -108,7 +109,48 @@ BOOL WOWTHUNK_Init(void)
         MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClientEx_RetAddr =
         MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
-#endif
+    return TRUE;
+}
+
+
+/*************************************************************
+ *            fix_selector
+ *
+ * Fix a selector load that caused an exception if it's in the
+ * 16-bit relay code.
+ */
+static BOOL fix_selector( CONTEXT *context )
+{
+    WORD *stack;
+    BYTE *instr = (BYTE *)context->Eip;
+
+    if (instr < &Call16_Start || instr >= &Call16_End) return FALSE;
+
+    /* skip prefixes */
+    while (*instr == 0x66 || *instr == 0x67) instr++;
+
+    switch(instr[0])
+    {
+    case 0x07: /* pop es */
+    case 0x17: /* pop ss */
+    case 0x1f: /* pop ds */
+        break;
+    case 0x0f: /* extended instruction */
+        switch(instr[1])
+        {
+        case 0xa1: /* pop fs */
+        case 0xa9: /* pop gs */
+            break;
+        default:
+            return FALSE;
+        }
+        break;
+    default:
+        return FALSE;
+    }
+    stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
+    TRACE( "fixing up selector %x for pop instruction\n", *stack );
+    *stack = 0;
     return TRUE;
 }
 
@@ -128,28 +170,44 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
         NtCurrentTeb()->cur_stack = frame32->frame16;
         _LeaveWin16Lock();
     }
-    else if (!IS_SELECTOR_SYSTEM(context->SegCs))  /* check for Win16 __GP handler */
+    else
     {
-        SEGPTR gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) );
-        if (gpHandler)
+        if (IS_SELECTOR_SYSTEM(context->SegCs))
         {
-            WORD *stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
-            *--stack = context->SegCs;
-            *--stack = context->Eip;
+            if (fix_selector( context )) return ExceptionContinueExecution;
+        }
+        else /* check for Win16 __GP handler */
+        {
+            SEGPTR gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) );
+            if (gpHandler)
+            {
+                WORD *stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
+                *--stack = context->SegCs;
+                *--stack = context->Eip;
 
-            if (!IS_SELECTOR_32BIT(context->SegSs))
-                context->Esp = MAKELONG( LOWORD(context->Esp - 2*sizeof(WORD)),
-                                         HIWORD(context->Esp) );
-            else
-                context->Esp -= 2*sizeof(WORD);
+                if (!IS_SELECTOR_32BIT(context->SegSs))
+                    context->Esp = MAKELONG( LOWORD(context->Esp - 2*sizeof(WORD)),
+                                             HIWORD(context->Esp) );
+                else
+                    context->Esp -= 2*sizeof(WORD);
 
-            context->SegCs = SELECTOROF( gpHandler );
-            context->Eip   = OFFSETOF( gpHandler );
-            return ExceptionContinueExecution;
+                context->SegCs = SELECTOROF( gpHandler );
+                context->Eip   = OFFSETOF( gpHandler );
+                return ExceptionContinueExecution;
+            }
         }
     }
     return ExceptionContinueSearch;
 }
+
+#else  /* __i386__ */
+
+BOOL WOWTHUNK_Init(void)
+{
+    return TRUE;
+}
+
+#endif  /* __i386__ */
 
 
 /*

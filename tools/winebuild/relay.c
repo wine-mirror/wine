@@ -401,9 +401,12 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
         fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(EFlags) );
         fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(SegDs) );
 
-        fprintf( outfile, "\tmovw %d(%%ebx), %%es\n", CONTEXTOFFSET(SegEs) );
-        fprintf( outfile, "\tmovw %d(%%ebx), %%fs\n", CONTEXTOFFSET(SegFs) );
-        fprintf( outfile, "\tmovw %d(%%ebx), %%gs\n", CONTEXTOFFSET(SegGs) );
+        fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(SegEs) );
+        fprintf( outfile, "\tpopl %%es\n" );
+        fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(SegFs) );
+        fprintf( outfile, "\tpopl %%fs\n" );
+        fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(SegGs) );
+        fprintf( outfile, "\tpopl %%gs\n" );
 
         fprintf( outfile, "\tmovl %d(%%ebx), %%ebp\n", CONTEXTOFFSET(Ebp) );
         fprintf( outfile, "\tmovl %d(%%ebx), %%esi\n", CONTEXTOFFSET(Esi) );
@@ -565,12 +568,12 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
 
         /* Get the registers */
         fprintf( outfile, "\tpushw %d(%%edx)\n", CONTEXTOFFSET(SegDs) );
-        fprintf( outfile, "\tmovl %d(%%edx),%%eax\n", CONTEXTOFFSET(SegEs) );
-        fprintf( outfile, "\tmovw %%ax,%%es\n" );
-        fprintf( outfile, "\tmovl %d(%%edx),%%eax\n", CONTEXTOFFSET(SegFs) );
-        fprintf( outfile, "\tmovw %%ax,%%fs\n" );
-        fprintf( outfile, "\tmovl %d(%%edx),%%eax\n", CONTEXTOFFSET(SegGs) );
-        fprintf( outfile, "\tmovw %%ax,%%gs\n" );
+        fprintf( outfile, "\tpushl %d(%%edx)\n", CONTEXTOFFSET(SegEs) );
+        fprintf( outfile, "\tpopl %%es\n" );
+        fprintf( outfile, "\tpushl %d(%%edx)\n", CONTEXTOFFSET(SegFs) );
+        fprintf( outfile, "\tpopl %%fs\n" );
+        fprintf( outfile, "\tpushl %d(%%edx)\n", CONTEXTOFFSET(SegGs) );
+        fprintf( outfile, "\tpopl %%gs\n" );
         fprintf( outfile, "\tmovl %d(%%edx),%%ebp\n", CONTEXTOFFSET(Ebp) );
         fprintf( outfile, "\tmovl %d(%%edx),%%esi\n", CONTEXTOFFSET(Esi) );
         fprintf( outfile, "\tmovl %d(%%edx),%%edi\n", CONTEXTOFFSET(Edi) );
@@ -588,10 +591,10 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
         fprintf( outfile, "\tpushl %d(%%edx)\n", STACK32OFFSET(target) );
 
         /* Set %fs and %gs to the value saved by the last CallFrom16 */
-        fprintf( outfile, "\tmovw %d(%%ebp),%%ax\n", STACK16OFFSET(fs)-STACK16OFFSET(bp) );
-        fprintf( outfile, "\tmovw %%ax,%%fs\n" );
-        fprintf( outfile, "\tmovw %d(%%ebp),%%ax\n", STACK16OFFSET(gs)-STACK16OFFSET(bp) );
-        fprintf( outfile, "\tmovw %%ax,%%gs\n" );
+        fprintf( outfile, "\tpushw %d(%%ebp)\n", STACK16OFFSET(fs)-STACK16OFFSET(bp) );
+        fprintf( outfile, "\tpopw %%fs\n" );
+        fprintf( outfile, "\tpushw %d(%%ebp)\n", STACK16OFFSET(gs)-STACK16OFFSET(bp) );
+        fprintf( outfile, "\tpopw %%gs\n" );
 
         /* Set %ds and %es (and %ax just in case) equal to %ss */
         fprintf( outfile, "\tmovw %%ss,%%ax\n" );
@@ -1020,12 +1023,12 @@ static void BuildCallFrom32Regs( FILE *outfile )
     /* Note: we don't bother to restore %cs, %ds and %ss
      *       changing them in 32-bit code is a recipe for disaster anyway
      */
-    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(SegEs) - STACK_SPACE );
-    fprintf( outfile, "\tmovw %%ax,%%es\n" );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(SegFs) - STACK_SPACE );
-    fprintf( outfile, "\tmovw %%ax,%%fs\n" );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(SegGs) - STACK_SPACE );
-    fprintf( outfile, "\tmovw %%ax,%%gs\n" );
+    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(SegEs) - STACK_SPACE );
+    fprintf( outfile, "\tpopl %%es\n" );
+    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(SegFs) - STACK_SPACE );
+    fprintf( outfile, "\tpopl %%fs\n" );
+    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(SegGs) - STACK_SPACE );
+    fprintf( outfile, "\tpopl %%gs\n" );
 
     fprintf( outfile, "\tmovl %d(%%ebp),%%edi\n", CONTEXTOFFSET(Edi) - STACK_SPACE );
     fprintf( outfile, "\tmovl %d(%%ebp),%%esi\n", CONTEXTOFFSET(Esi) - STACK_SPACE );
@@ -1033,8 +1036,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tmovl %d(%%ebp),%%ecx\n", CONTEXTOFFSET(Ecx) - STACK_SPACE );
     fprintf( outfile, "\tmovl %d(%%ebp),%%ebx\n", CONTEXTOFFSET(Ebx) - STACK_SPACE );
 
-    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
-    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
     fprintf( outfile, "\tpopfl\n" );
     fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
 
