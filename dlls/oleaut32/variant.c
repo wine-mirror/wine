@@ -3484,7 +3484,7 @@ HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
 {
 	TRACE("( %f, %ld, %ld, %p ), stub\n", fltIn, lcid, dwFlags, pbstrOut );
 
-	sprintf( pBuffer, "%.7g", fltIn );
+	sprintf( pBuffer, "%.7G", fltIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
 
 	return S_OK;
@@ -3497,7 +3497,7 @@ HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstr
 {
 	TRACE("( %f, %ld, %ld, %p ), stub\n", dblIn, lcid, dwFlags, pbstrOut );
 
-	sprintf( pBuffer, "%.15g", dblIn );
+	sprintf( pBuffer, "%.15G", dblIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
 
 	return S_OK;
@@ -3515,7 +3515,7 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) 
     /* Firstly get the currency in a double, then put it in a buffer */
     rc = VarR8FromCy(cyIn, &curVal);
     if (rc == S_OK) {
-        sprintf(pBuffer, "%g", curVal);
+        sprintf(pBuffer, "%G", curVal);
         *pbstrOut = StringDupAtoBstr( pBuffer );
     }
 	return rc;

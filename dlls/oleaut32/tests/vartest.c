@@ -99,6 +99,11 @@ static HRESULT (WINAPI *pVarUI4FromI2)(short,ULONG*)=NULL;
 static HRESULT (WINAPI *pVarUI4FromR8)(double,ULONG*)=NULL;
 static HRESULT (WINAPI *pVarUI4FromStr)(OLECHAR*,LCID,ULONG,ULONG*)=NULL;
 
+/* When comparing floating point values we cannot expect an exact match
+ * because the rounding errors depend on the exact algorithm.
+ */
+#define EQ_DOUBLE(a,b)     (fabs((a)-(b))<1e-14)
+
 #define MAX_BUFFER  1024
 
 static char* WtoA( OLECHAR* p )
@@ -122,39 +127,40 @@ static OLECHAR* AtoW( char* p )
 
 static const struct _vartypes {
     int ind;
-    DWORD vcind1,vcind2,vcex1,vcex2;
+    HRESULT vcind1,vcind2,vcex1,vcex2;
+    int todoind1,todoind2,todowcex1,todowcex2;
 } vartypes[] = {
-    {0, 0, 0x80070057, 0, 0x80020008 },
-    {1, 0, 0x80070057, 0, 0x80020008 },
-    {2, 0, 0, 0, 0x80020005 },
-    {3, 0, 0, 0, 0x80020005 },
-    {4, 0, 0, 0, 0x80020005 },
-    {5, 0, 0, 0, 0x80020005 },
-    {6, 0, 0, 0, 0x80020005 },
-    {7, 0, 0, 0, 0x80020005 },
-    {77,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {78,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {79,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {80,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {81,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {82,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {83,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {84,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {85,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {86,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {87,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {88,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {89,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {90,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {91,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {92,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {93,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {94,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {95,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {96,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {97,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {98,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
-    {99,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {0, 0,          0x80070057, 0,          0x80020008,0,1 },
+    {1, 0,          0x80070057, 0,          0x80020008,0,1 },
+    {2, 0,          0,          0,          0x80020005 },
+    {3, 0,          0,          0,          0x80020005 },
+    {4, 0,          0,          0,          0x80020005 },
+    {5, 0,          0,          0,          0x80020005 },
+    {6, 0,          0,          0,          0x80020005 },
+    {7, 0,          0,          0,          0x80020005 },
+    {77,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {78,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
+    {79,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
+    {80,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {81,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
+    {82,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
+    {83,0x80020008, 0x80070057, 0,          0x80020005,0,1,1 },
+    {84,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {85,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {86,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {87,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {88,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {89,0x80020008, 0x80070057, 0,          0x80020005,0,1,1 },
+    {90,0x80020008, 0x80070057, 0,          0x80020005,0,1,1 },
+    {91,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {92,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
+    {93,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {94,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {95,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {96,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {97,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {98,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {99,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
 };
 
 static const char *strfromr8[] = {
@@ -188,16 +194,16 @@ static const char *strfromr8[] = {
 "-54321987654321",
 "654321987654321",
 "-654321987654321",
-"7.65432198765432e+15",
-"-7.65432198765432e+15",
-"8.76543219876543e+16",
-"-8.76543219876543e+16",
-"9.87654321987654e+17",
-"-9.87654321987654e+17",
-"1.98765432198765e+18",
-"-1.98765432198765e+18",
-"2.19876543219877e+19",
-"-2.19876543219877e+19",
+"7.65432198765432E+15",
+"-7.65432198765432E+15",
+"8.76543219876543E+16",
+"-8.76543219876543E+16",
+"9.87654321987654E+17",
+"-9.87654321987654E+17",
+"1.98765432198765E+18",
+"-1.98765432198765E+18",
+"2.19876543219877E+19",
+"-2.19876543219877E+19",
 "1",
 "0",
 "-1",
@@ -288,16 +294,16 @@ static const char *strfromr8[] = {
 "-54321987654322.2",
 "654321987654322",
 "-654321987654322",
-"7.65432198765432e+15",
-"-7.65432198765432e+15",
-"8.76543219876543e+16",
-"-8.76543219876543e+16",
-"9.87654321987654e+17",
-"-9.87654321987654e+17",
-"1.98765432198765e+18",
-"-1.98765432198765e+18",
-"2.19876543219877e+19",
-"-2.19876543219877e+19",
+"7.65432198765432E+15",
+"-7.65432198765432E+15",
+"8.76543219876543E+16",
+"-8.76543219876543E+16",
+"9.87654321987654E+17",
+"-9.87654321987654E+17",
+"1.98765432198765E+18",
+"-1.98765432198765E+18",
+"2.19876543219877E+19",
+"-2.19876543219877E+19",
 /* r4 tests */
 "1",
 "-1",
@@ -313,12 +319,12 @@ static const char *strfromr8[] = {
 "-654321",
 "7654321",
 "-7654321",
-"8.765432e+07",
-"-8.765432e+07",
-"9.876543e+08",
-"-9.876543e+08",
-"1.987654e+09",
-"-1.987654e+09",
+"8.765432E+07",
+"-8.765432E+07",
+"9.876543E+08",
+"-9.876543E+08",
+"1.987654E+09",
+"-1.987654E+09",
 "1",
 "0",
 "-1",
@@ -332,7 +338,7 @@ static const char *strfromr8[] = {
 "0.234",
 "-1.234",
 "1.2345",
-"0.2345001", /* FIXME: should be 0.2345 ? */
+"0.2345",
 "-1.2345",
 "1.23456",
 "0.23456",
@@ -359,16 +365,16 @@ static const char *strfromr8[] = {
 "-4322.234",
 "54322.23",
 "-54322.23",
-"654322.2", /* FIXME: should be 654322.3 */
-"-654322.2",/* FIXME: should be -654322.3 */
+"654322.3",
+"-654322.3",
 "7654322",
 "-7654322",
-"8.765432e+07",
-"-8.765432e+07",
-"9.876543e+08",
-"-9.876543e+08",
-"1.987654e+09",
-"-1.987654e+09",
+"8.765432E+07",
+"-8.765432E+07",
+"9.876543E+08",
+"-9.876543E+08",
+"1.987654E+09",
+"-1.987654E+09",
 };
 
 /* These are the strings we use for the XxxFromStr tests.
@@ -511,10 +517,10 @@ static const struct _strret_date {
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
-    { 0,           0.000000, 1 },
-    { 0,           0.034028, 1 },
-    { 0,           0.003472, 1 },
-    { 0,           0.035417, 1 },
+    { 0,           0.0, 1 },
+    { 0,           0.03402777777777, 1 },
+    { 0,           0.00347222222222, 1 },
+    { 0,           0.03541666666666, 1 },
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
@@ -526,12 +532,10 @@ static const struct _strret_date {
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
-    { 0x80020005,  0, 1 },
-    { 0x80020005,  0, 1 },
+    { 0x80020005,  0.0, 1 },
+    { 0x80020005,  0.0, 1 },
     { 0x80020005 },
-    { 0x80020005,  0, 1 },
-    { 0x80020005 },
-    { 0x80020005 },
+    { 0x80020005,  0.0, 1 },
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
@@ -539,20 +543,20 @@ static const struct _strret_date {
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
-    { 0,           35797.000000, 1 },
-    { 0,           37623.000000 },
-    { 0,           37623.000000 },
-    { 0,           37623.000000 },
-    { 0x80020005,  0, 1 },
-    { 0,           0.043090, 0, 1 },
     { 0x80020005 },
     { 0x80020005 },
-    { 0x80020005,  0, 1 },
-    { 0x80020005,  0, 1 },
+    { 0,           37623.0, 1 },
+    { 0,           37623.0 },
+    { 0,           37623.0 },
+    { 0,           37623.0 },
+    { 0x80020005,  0.0, 1 },
+    { 0,           0.04309027777777, 0, 1 },
     { 0x80020005 },
-    { 0x80020005,  0, 1 },
     { 0x80020005 },
+    { 0x80020005,  0.0, 1 },
+    { 0x80020005,  0.0, 1 },
     { 0x80020005 },
+    { 0x80020005,  0.0, 1 },
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
@@ -565,59 +569,61 @@ static const struct _strret_date {
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
-    { 0,           36161.000000, 1 },
-    { 0,           65380.000000 },
-    { 0,           2.000000 },
-    { 0,           3.000000 },
-    { 0x80020005,  0, 1 },
-    { 0,           36475.000000 },
-    { 0,           36475.000000 },
     { 0x80020005 },
     { 0x80020005 },
-    { 0,           36485.466100, 1 },
-    { 0,           36475.466100, 0, 1 },
-    { 0,           36475.966100, 0, 1 },
-    { 0x80020005,  0, 1 },
-    { 0,           36475.000127, 0, 1 },
-    { 0x80020005 },
-    { 0,           36475.466100, 0, 1 },
-    { 0x80020005 },
-    { 0,           36475.465972, 0, 1 },
-    { 0,           36475.041667, 1 },
-    { 0,           36475.000000, 1 },
-    { 0,           36475.466100, 0, 1 },
-    { 0,           36477.000000, 1 },
-    { 0x80020005 },
-    { 0,           36477.000000, 1 },
-    { 0x80020005 },
-    { 0x80020005,  0, 1 },
-    { 0,           36526.000000, 1 },
-    { 0x80020005 },
-    { 0,           36163.375000, 1 },
-    { 0,           36161.458333, 1 },
-    { 0,           36475.166667, 1 },
-    { 0x80020005,  0, 1 },
-    { 0x80020005 },
-    { 0x80020005,  0, 1 },
-    { 0x80020005 },
-    { 0,           65380.000000 },
-    { 0x80020005,  0, 1 },
-    { 0,           65380.000000 },
-    { 0,           36465.000000, 1 },
-    { 0,           36465.000000, 1 },
+    { 0,           36161.0, 1 },
+    { 0,           65380.0 },
+    { 0,           2.0},
+    { 0,           3.0 },
+    { 0x80020005,  0.0, 1 },
+    { 0,           36475.0 },
+    { 0,           36475.0 },
     { 0x80020005 },
     { 0x80020005 },
+    { 0,           36485.466099537036, 1 },
+    { 0,           36475.466099537036 },
+    { 0,           36475.966099537036 },
+    { 0x80020005,  0.0, 1 },
+    { 0,           36475.000127314815 },
     { 0x80020005 },
+    { 0,           36475.466099537036 },
     { 0x80020005 },
+    { 0,           36475.465972222222 },
+    { 0,           36475.041666666664, 1 },
+    { 0,           36475.0, 1 },
+    { 0,           36475.466099537036 },
+    { 0,           36477.0, 1 },
     { 0x80020005 },
+    { 0,           36477.0, 1 },
+    { 0x80020005 },
+    { 0x80020005,  0.0, 1 },
+    { 0,           36526.0, 1 },
+    { 0x80020005 },
+    { 0,           36163.375000000000, 1 },
+    { 0,           36161.458333333336, 1 },
+    { 0,           36475.166666666664, 1 },
+    { 0x80020005,  0.0, 1 },
+    { 0x80020005 },
+    { 0x80020005,  0.0, 1 },
+    { 0x80020005 },
+    { 0,           65380.0 },
+    { 0x80020005,  0.0, 1 },
+    { 0,           65380.0 },
+    { 0,           36465.0, 1 },
+    { 0,           36465.0, 1 },
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
     { 0x80020005 },
-    { 0,           0.045139, 1 },
-    { 0,           0.086806, 1 },
-    { 0,           0.128472, 1 },
-    { 0,           0.170139, 1 },
+    { 0x80020005 },
+    { 0x80020005 },
+    { 0x80020005 },
+    { 0x80020005 },
+    { 0x80020005 },
+    { 0,           0.045138888888889, 1 },
+    { 0,           0.086805555555556, 1 },
+    { 0,           0.128472222222222, 1 },
+    { 0,           0.170138888888889, 1 },
 };
 static const struct _strret_b {
     HRESULT error;
@@ -1694,6 +1700,7 @@ START_TEST(vartest)
 	VARIANTARG ve;
 
 	HRESULT rc;
+	LCID lcid;
 	int theInt = 0;
 	int* pInt = &theInt;
 	VARIANT_BOOL b = 0;
@@ -1722,6 +1729,7 @@ START_TEST(vartest)
 	for (i=0; i<NB_OLE_STRINGS;i++) {
 		pOleChar[i]=AtoW(_pTestStrA[i]);
 	}
+	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
 
 	/* Start testing the Low-Level API ( the coercions )
 	 */
@@ -1750,13 +1758,13 @@ START_TEST(vartest)
 
 	/* unsigned char from...
 	 */
-	trace( "\n\n======== Testing VarUI1FromXXX ========\n");
+	trace( "======== Testing VarUI1FromXXX ========\n");
 
 #define XOK "should return S_OK"
 #define XOV "should return DISP_E_OVERFLOW"
 	/* Crashes on Win95: VarUI1FromI2( 0, NULL ) */
 
-	ok(VarUI1FromStr(NULL,0,0,pByte) == DISP_E_TYPEMISMATCH,"should return DISP_E_TYPEMISMATCH");
+	ok(VarUI1FromStr(NULL, lcid, 0, pByte) == DISP_E_TYPEMISMATCH,"should return DISP_E_TYPEMISMATCH");
 	ok(S_OK == VarUI1FromI2( 0, pByte ), XOK);
 	ok(*pByte == 0,"should give 0 byte value");
 
@@ -1826,7 +1834,7 @@ START_TEST(vartest)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pByte= 42;
-            rc=VarUI1FromStr( pOleChar[i], 0, 0, pByte );
+            rc=VarUI1FromStr( pOleChar[i], lcid, 0, pByte );
             ok(rc == strrets_U1[i].error,
                "VarUI1FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_U1[i].error);
@@ -1838,7 +1846,7 @@ START_TEST(vartest)
 	}
 
 	/* unsigned short from ... */
-	trace( "\n\n======== Testing VarUI2FromXXX ========\n");
+	trace( "======== Testing VarUI2FromXXX ========\n");
 
     if (pVarUI2FromI2) {
         ok(DISP_E_OVERFLOW == pVarUI2FromI2( -1, pUShort ), XOV);
@@ -1906,12 +1914,12 @@ START_TEST(vartest)
     }
 
     if (pVarUI2FromStr) {
-        ok(DISP_E_TYPEMISMATCH == pVarUI2FromStr( NULL, 0, 0, pUShort ), "should return DISP_E_TYPEMISMATCH");
+        ok(DISP_E_TYPEMISMATCH == pVarUI2FromStr( NULL, lcid, 0, pUShort ), "should return DISP_E_TYPEMISMATCH");
 
         for (i = 0; i < NB_OLE_STRINGS; i++)
         {
             *pUShort=42;
-            rc=pVarUI2FromStr( pOleChar[i], 0, 0, pUShort );
+            rc=pVarUI2FromStr( pOleChar[i], lcid, 0, pUShort );
             ok(rc == strrets_U2[i].error,
                "VarUI2FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_U2[i].error);
@@ -1925,7 +1933,7 @@ START_TEST(vartest)
 
 	/* unsigned long from ...
 	 */
-	trace( "\n\n======== Testing VarUI4FromXXX ========\n");
+	trace( "======== Testing VarUI4FromXXX ========\n");
 
     if (pVarUI4FromI2) {
         ok(S_OK == pVarUI4FromI2( 0, NULL ), XOK);
@@ -1993,11 +2001,11 @@ START_TEST(vartest)
     }
 
     if (pVarUI4FromStr) {
-        ok(DISP_E_TYPEMISMATCH == pVarUI4FromStr( NULL, 0, 0, pULong ), "should erturn DISP_E_TYPEMISMATCH");
+        ok(DISP_E_TYPEMISMATCH == pVarUI4FromStr( NULL, lcid, 0, pULong ), "should erturn DISP_E_TYPEMISMATCH");
         for (i = 0; i < NB_OLE_STRINGS; i++)
         {
             *pULong=42;
-            rc=pVarUI4FromStr( pOleChar[i], 0, 0, pULong );
+            rc=pVarUI4FromStr( pOleChar[i], lcid, 0, pULong );
             ok(rc == strrets_U4[i].error,
                "VarUI4FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_U4[i].error);
@@ -2011,7 +2019,7 @@ START_TEST(vartest)
 
 	/* CHAR from ...
 	 */
-	trace( "\n\n======== Testing VarI1FromXXX ========\n");
+	trace( "======== Testing VarI1FromXXX ========\n");
 
     if (pVarI1FromBool) {
         ok(S_OK == pVarI1FromBool( VARIANT_TRUE, pByte ), XOK);
@@ -2063,7 +2071,7 @@ START_TEST(vartest)
         for (i = 0; i < NB_OLE_STRINGS; i++)
         {
             *pChar=42;
-            rc=pVarI1FromStr( pOleChar[i], 0, 0, pChar );
+            rc=pVarI1FromStr( pOleChar[i], lcid, 0, pChar );
             ok(rc == strrets_I1[i].error,
                "VarI1FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_I1[i].error);
@@ -2077,7 +2085,7 @@ START_TEST(vartest)
 
 	/* short from ...
 	 */
-	trace( "\n\n======== Testing VarI2FromXXX ========\n");
+	trace( "======== Testing VarI2FromXXX ========\n");
 
     if (pVarI2FromUI2) {
         ok(S_OK == pVarI2FromUI2( 32767, pShort ), XOK);
@@ -2109,7 +2117,7 @@ START_TEST(vartest)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pShort=42;
-            rc=VarI2FromStr( pOleChar[i], 0, 0, pShort );
+            rc=VarI2FromStr( pOleChar[i], lcid, 0, pShort );
             ok(rc == strrets_I2[i].error,
                "VarI2FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_I2[i].error);
@@ -2122,7 +2130,7 @@ START_TEST(vartest)
 
 	/* long from ...
 	 */
-	trace( "\n\n======== Testing VarI4FromXXX ========\n");
+	trace( "======== Testing VarI4FromXXX ========\n");
 
 	ok(S_OK == VarI4FromI2( 3, (long*)pInt ), XOK);
 	ok(*pInt == 3,"should be 3");
@@ -2153,7 +2161,7 @@ START_TEST(vartest)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pLong=42;
-            rc=VarI4FromStr( pOleChar[i], 0, 0, pLong );
+            rc=VarI4FromStr( pOleChar[i], lcid, 0, pLong );
             ok(rc == strrets_I4[i].error,
                "VarI4FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_I4[i].error);
@@ -2166,7 +2174,7 @@ START_TEST(vartest)
 
 	/* float from ...
 	 */
-	trace( "\n\n======== Testing VarR4FromXXX ========\n");
+	trace( "======== Testing VarR4FromXXX ========\n");
 
 	ok(S_OK == VarR4FromI4( 16777216, pFloat ), XOK);
 	ok(16777216.0 == *pFloat,"should be 16777216.0");
@@ -2200,7 +2208,7 @@ START_TEST(vartest)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pFloat=42.0;
-            rc=VarR4FromStr( pOleChar[i], 0, 0, pFloat );
+            rc=VarR4FromStr( pOleChar[i], lcid, 0, pFloat );
             ok(rc == strrets_R4[i].error,
                    "VarR4FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                    i,_pTestStrA[i],rc,strrets_R4[i].error);
@@ -2213,44 +2221,52 @@ START_TEST(vartest)
 
 	/* double from ...
 	 */
-	trace( "\n\n======== Testing VarR8FromXXX ========\n");
+	trace( "======== Testing VarR8FromXXX ========\n");
 
 	ok(S_OK == VarR8FromDate( 900719925474099.0, pDouble ), XOK);
 	ok(*pDouble == 900719925474099.000000,"should be 900719925474099.000000\n");
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pDouble=42.0;
-            rc=VarR8FromStr( pOleChar[i], 0, 0, pDouble );
+            rc=VarR8FromStr( pOleChar[i], lcid, 0, pDouble );
             ok(rc == strrets_R8[i].error,
                "VarR8FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_R8[i].error);
             if (rc == 0 && strrets_R8[i].error == 0) {
                 ok(*pDouble == strrets_R8[i].retval,
-                   "VarR8FromStr([%d]=\"%s\") got %g instead of %g",
+                   "VarR8FromStr([%d]=\"%s\") got %.15f instead of %.15f",
                    i,_pTestStrA[i],*pDouble,strrets_R8[i].retval);
             }
 	}
 
 	/* date from ...
 	 */
-	trace( "\n\n======== Testing VarDateFromXXX ========\n");
+	trace( "======== Testing VarDateFromXXX ========\n");
 
 	ok(S_OK == VarDateFromI4( 2958465, pDouble ), XOK);
 	ok(*pDouble == 2958465.000000,"should be 2958465.000000");
-	ok(DISP_E_OVERFLOW == VarDateFromI4( 2958466, pDouble ), XOV);
+    rc=VarDateFromI4( 2958466, pDouble );
+    ok(rc==DISP_E_OVERFLOW || rc==DISP_E_TYPEMISMATCH /* Win95 */,
+       "got %lx",rc);
 	ok(*pDouble == 2958465.000000,"should still be 2958465.000000");
 	ok(S_OK == VarDateFromI4( -657434, pDouble ), XOK);
 	ok(*pDouble == -657434.000000,"should be -657434.000000");
-	ok(DISP_E_OVERFLOW == VarDateFromI4( -657435, pDouble ), XOV);
+    rc=VarDateFromI4( -657435, pDouble );
+    ok(rc==DISP_E_OVERFLOW || rc==DISP_E_TYPEMISMATCH /* Win95 */,
+       "got %lx",rc);
 	ok(*pDouble == -657434.000000,"should still be -657434.000000");
 
 	ok(S_OK == VarDateFromR8( 2958465.9999, pDouble ), XOK);
 	ok(*pDouble == 2958465.999900, "should be 2958465.999900");
-	ok(DISP_E_OVERFLOW == VarDateFromR8( 2958466, pDouble ), XOV);
+    rc=VarDateFromR8( 2958466, pDouble );
+    ok(rc==DISP_E_OVERFLOW || rc==DISP_E_TYPEMISMATCH /* Win95 */,
+       "got %lx",rc);
 	ok(*pDouble == 2958465.999900, "should still be 2958465.999900");
 	ok(S_OK == VarDateFromR8( -657434.9999, pDouble ), XOK);
 	ok(*pDouble == -657434.999900,"should be -657434.999900");
-	ok(DISP_E_OVERFLOW == VarDateFromR8( -657435, pDouble ), XOV);
+    rc=VarDateFromR8( -657435, pDouble );
+    ok(rc==DISP_E_OVERFLOW || rc==DISP_E_TYPEMISMATCH /* Win95 */,
+       "got %lx",rc);
 	ok(*pDouble == -657434.999900,"should still be -657434.999900");
 
 	ok(S_OK == VarDateFromR8( 0.0, pDouble ), XOK);
@@ -2268,7 +2284,7 @@ START_TEST(vartest)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pDouble=42.0;
-            rc=VarDateFromStr( pOleChar[i], 0, 0, pDouble );
+            rc=VarDateFromStr( pOleChar[i], lcid, 0, pDouble );
             if (strrets_DATE[i].todo_rc) {
                 todo_wine {
                     ok(rc == strrets_DATE[i].error,
@@ -2280,25 +2296,23 @@ START_TEST(vartest)
                    "VarDateFromStr([%d]=\"%s\") rc= %lx instead of %lx",
                    i,_pTestStrA[i],rc,strrets_DATE[i].error);
             }
-            if (strrets_DATE[i].todo_rc || strrets_DATE[i].todo_val) {
-                todo_wine {
-                    if (rc == 0 && strrets_DATE[i].error == 0) {
-                        ok(*pDouble == strrets_DATE[i].retval,
-                           "VarDateFromStr([%d]=\"%s\") got %g instead of %g",
+            if (rc == 0 && strrets_DATE[i].error == 0) {
+	            if (strrets_DATE[i].todo_rc || strrets_DATE[i].todo_val) {
+		            todo_wine {
+                        ok(EQ_DOUBLE(*pDouble,strrets_DATE[i].retval),
+                           "VarDateFromStr([%d]=\"%s\") got %.15f instead of %.15f",
                            i,_pTestStrA[i],*pDouble,strrets_DATE[i].retval);
                     }
-                }
-            } else {
-                if (rc == 0 && strrets_DATE[i].error == 0) {
-                    ok(*pDouble == strrets_DATE[i].retval,
-                       "VarDateFromStr([%d]=\"%s\") got %g instead of %g",
+	            } else {
+                    ok(EQ_DOUBLE(*pDouble,strrets_DATE[i].retval),
+                       "VarDateFromStr([%d]=\"%s\") got %.15f instead of %.15f",
                        i,_pTestStrA[i],*pDouble,strrets_DATE[i].retval);
                 }
             }
 	}
 	/* bool from ...
 	 */
-	trace( "\n\n======== Testing VarBoolFromXXX ========\n");
+	trace( "======== Testing VarBoolFromXXX ========\n");
 
 	ok(S_OK == VarBoolFromI4( 0, pBool ), XOK);
 	ok(VARIANT_FALSE == *pBool, "expected FALSE");
@@ -2341,7 +2355,7 @@ START_TEST(vartest)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pBool=42;
-            rc=VarBoolFromStr( pOleChar[i], 0, 0, pBool );
+            rc=VarBoolFromStr( pOleChar[i], lcid, 0, pBool );
             ok(rc == strrets_B[i].error,
                "VarBoolFromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_B[i].error);
@@ -2354,7 +2368,7 @@ START_TEST(vartest)
 
 	/* BSTR from ...
 	 */
-	trace( "\n\n======== Testing VarBSTRFromXXX ========\n");
+	trace( "======== Testing VarBSTRFromXXX ========\n");
 
 	/* integers...
 	 */
@@ -2379,17 +2393,17 @@ START_TEST(vartest)
 		 */
 		d += ((i%9)+1) * pow( 10, i );
 
-		ok(S_OK == VarBstrFromR8( d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR8( d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
+                   "d is %.15f, should be cvt. to %s, but return val is %s",
                    d,strfromr8[off],WtoA(bstr));
                 off++;
 
-		ok(S_OK == VarBstrFromR8( -d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR8( -d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
+                   "d is %.15f, should be cvt. to %s, but return val is %s",
                    -d,strfromr8[off],WtoA(bstr));
                 off++;
 	}
@@ -2400,22 +2414,22 @@ START_TEST(vartest)
 		/* add a decimal to the real number
 		 */
 		d += ((i%9)+1) * pow( 10, (i*-1) );
-		ok(S_OK == VarBstrFromR8( d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR8( d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
+                   "d is %.15f, should be cvt. to %s, but return val is %s",
                    d,strfromr8[off],WtoA(bstr));
                 off++;
-		ok(S_OK == VarBstrFromR8( d-1, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR8( d-1, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
+                   "d is %.15f, should be cvt. to %s, but return val is %s",
                    d-1,strfromr8[off],WtoA(bstr));
                 off++;
-		ok(S_OK == VarBstrFromR8( -d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR8( -d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
+                   "d is %.15f, should be cvt. to %s, but return val is %s",
                    -d,strfromr8[off],WtoA(bstr));
                 off++;
 	}
@@ -2430,21 +2444,19 @@ START_TEST(vartest)
 		/* add a decimal to the real number
 		 */
 		d += ((i%9)+1) * pow( 10, (i*-1) );
-		ok(S_OK == VarBstrFromR8( d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR8( d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
+                   "d is %.15f, should be cvt. to %s, but return val is %s",
                    d,strfromr8[off],WtoA(bstr));
                         off++;
-		ok(S_OK == VarBstrFromR8( -d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR8( -d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
+                   "d is %.15f, should be cvt. to %s, but return val is %s",
                    -d,strfromr8[off],WtoA(bstr));
                         off++;
 	}
-
-
 
 	d=0;
 	for( i=0; i<10; i++ )
@@ -2453,17 +2465,17 @@ START_TEST(vartest)
 		/* add an integer to the real number
 		 */
 		d += ((i%9)+1) * pow( 10, i );
-		ok(S_OK == VarBstrFromR4( (float)d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR4( (float)d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
-                   d,strfromr8[off],WtoA(bstr));
+                   "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                   i,d,strfromr8[off],WtoA(bstr));
                 off++;
-		ok(S_OK == VarBstrFromR4( (float)-d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR4( (float)-d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
-                   -d,strfromr8[off],WtoA(bstr));
+                   "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                   i,-d,strfromr8[off],WtoA(bstr));
                 off++;
 	}
 	d=0;
@@ -2473,100 +2485,123 @@ START_TEST(vartest)
 		/* add a decimal to the real number
 		 */
 		d += ((i%9)+1) * pow( 10, (i*-1) );
-		ok(S_OK == VarBstrFromR4( (float)d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR4( (float)d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
-                   d,strfromr8[off],WtoA(bstr));
+                   "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                   i,d,strfromr8[off],WtoA(bstr));
                 off++;
-		ok(S_OK == VarBstrFromR4( (float)d-1, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR4( (float)(d-1), lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
 		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
-                   d-1,strfromr8[off],WtoA(bstr));
+                   "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                   i,d-1,strfromr8[off],WtoA(bstr));
                 off++;
-		ok(S_OK == VarBstrFromR4( (float)-d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR4( (float)-d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
                 ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
-                   -d,strfromr8[off],WtoA(bstr));
+                   "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                   i,-d,strfromr8[off],WtoA(bstr));
                 off++;
 	}
 
 	d=0;
 	for( i=0; i<10; i++ )
 	{
-	        char xval[80];
+        static int istodo[10]={0,0,0,0,0,1,0,0,0,0};
+	    char xval[80];
 		/* add an integer to the real number
 		 */
 		d += ((i%9)+1) * pow( 10, i );
 		/* add a decimal to the real number
 		 */
 		d += ((i%9)+1) * pow( 10, (i*-1) );
-		ok(S_OK == VarBstrFromR4( (float)d, 0, 0, &bstr ), XOK);
+		ok(S_OK == VarBstrFromR4( (float)d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
-		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
-                   d,strfromr8[off],WtoA(bstr));
-                off++;
-		ok(S_OK == VarBstrFromR4( (float)-d, 0, 0, &bstr ), XOK);
+        if (istodo[i]) {
+            todo_wine {
+                ok(!strcmp(xval,WtoA(bstr)),
+                       "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                       i,d,strfromr8[off],WtoA(bstr));
+            }
+        } else {
+            ok(!strcmp(xval,WtoA(bstr)),
+                   "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                   i,d,strfromr8[off],WtoA(bstr));
+        }
+        off++;
+		ok(S_OK == VarBstrFromR4( (float)-d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
-		ok(!strcmp(xval,WtoA(bstr)),
-                   "d is %g, should be cvt. to %s, but return val is %s",
-                   -d,strfromr8[off],WtoA(bstr));
-                off++;
+        if (istodo[i]) {
+            todo_wine {
+		        ok(!strcmp(xval,WtoA(bstr)),
+                           "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                           i,-d,strfromr8[off],WtoA(bstr));
+            }
+        } else {
+		    ok(!strcmp(xval,WtoA(bstr)),
+                       "%d: d is %.8f, should be cvt. to %s, but return val is %s",
+                       i,-d,strfromr8[off],WtoA(bstr));
+        }
+        off++;
 	}
 
-	ok(S_OK == VarBstrFromBool( 0x00, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromBool( 0x00, lcid, 0, &bstr ), XOK);
 	ok(!strcmp(WtoA(bstr),"\"False\""),"should be 'False'");
-	ok(S_OK == VarBstrFromBool( 0xFF, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromBool( 0xFF, lcid, 0, &bstr ), XOK);
 	ok(!strcmp(WtoA(bstr),"\"True\""),"should be 'True'");
 
-	ok(S_OK == VarBstrFromDate( 0.0, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromDate( 0.0, lcid, 0, &bstr ), XOK);
 	todo_wine {
 	    ok(!strcmp(WtoA(bstr),"\"12:00:00 AM\""),
                "should be '12:00:00 AM', but is %s\n",WtoA(bstr));
 	}
 
-	ok(S_OK == VarBstrFromDate( 3.34, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromDate( 3.34, lcid, 0, &bstr ), XOK);
 	todo_wine {
-	    ok(!strcmp(WtoA(bstr),"\"1/2/1900 8:09:36 AM\""),
+	    ok(strcmp(WtoA(bstr),"\"1/2/1900 8:09:36 AM\"")==0 ||
+           strcmp(WtoA(bstr),"\"1/2/00 8:09:36 AM\"")==0 /* Win95 */,
                "should be '1/2/1900 8:09:36 AM', but is %s\n",WtoA(bstr));
 	}
 
-	ok(S_OK == VarBstrFromDate( 3339.34, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromDate( 3339.34, lcid, 0, &bstr ), XOK);
 	todo_wine {
-	    ok(!strcmp(WtoA(bstr),"\"2/20/1909 8:09:36 AM\""),
+	    ok(strcmp(WtoA(bstr),"\"2/20/1909 8:09:36 AM\"")==0 ||
+           strcmp(WtoA(bstr),"\"2/20/09 8:09:36 AM\"")==0 /* Win95 */,
                "should be '2/20/1909 8:09:36 AM', but is %s\n",WtoA(bstr));
 	}
 
-	ok(S_OK == VarBstrFromDate( 365.00, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromDate( 365.00, lcid, 0, &bstr ), XOK);
 	todo_wine {
-	    ok(!strcmp(WtoA(bstr),"\"12/30/1900\""),
+	    ok(strcmp(WtoA(bstr),"\"12/30/1900\"")==0 ||
+           strcmp(WtoA(bstr),"\"12/30/00\"")==0 /* Win95 */,
                "should be '12/30/1900', but is %s\n",WtoA(bstr));
 	}
 
-	ok(S_OK == VarBstrFromDate( 365.25, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromDate( 365.25, lcid, 0, &bstr ), XOK);
 	todo_wine {
-	    ok(!strcmp(WtoA(bstr),"\"12/30/1900 6:00:00 AM\""),
+	    ok(strcmp(WtoA(bstr),"\"12/30/1900 6:00:00 AM\"")==0 ||
+           strcmp(WtoA(bstr),"\"12/30/00 6:00:00 AM\"")==0 /* Win95 */,
                "should be '12/30/1900 6:00:00 AM', but is %s\n",WtoA(bstr));
 	}
 
-	ok(S_OK == VarBstrFromDate( 1461.0, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromDate( 1461.0, lcid, 0, &bstr ), XOK);
 	todo_wine {
-	    ok(!strcmp(WtoA(bstr),"\"12/31/1903\""),
+	    ok(strcmp(WtoA(bstr),"\"12/31/1903\"")==0 ||
+           strcmp(WtoA(bstr),"\"12/31/03\"")==0 /* Win95 */,
                "should be '12/31/1903', but is %s\n",WtoA(bstr));
 	}
 
-	ok(S_OK == VarBstrFromDate( 1461.5, 0, 0, &bstr ), XOK);
+	ok(S_OK == VarBstrFromDate( 1461.5, lcid, 0, &bstr ), XOK);
 	todo_wine {
-	    ok(!strcmp(WtoA(bstr),"\"12/31/1903 12:00:00 PM\""),
+	    ok(strcmp(WtoA(bstr),"\"12/31/1903 12:00:00 PM\"")==0 ||
+           strcmp(WtoA(bstr),"\"12/31/03 12:00:00 PM\"")==0 /* Win95 */,
                "should be '12/31/1903 12:00:00 PM', but is %s\n",WtoA(bstr));
 	}
 
 	/* Test variant API...
 	 */
-	trace( "\n\n======== Testing Hi-Level Variant API ========\n");
+	trace( "======== Testing Hi-Level Variant API ========\n");
 
 	bstr = SysAllocString( pOleChar[4] );
 
@@ -2621,25 +2656,27 @@ START_TEST(vartest)
 	V_VT(&va) = VT_R8 | VT_BYREF;
 	d = 1211.123453;
 	V_UNION(&va,pdblVal) = &d;
-	ok(S_OK == VariantChangeTypeEx( &va, &va, 0, 0, VT_I2 ), XOK);
+	ok(S_OK == VariantChangeTypeEx( &va, &va, lcid, 0, VT_I2 ), XOK);
 	ok(V_VT(&va) == VT_I2,"should be type VT_I2");
 
-	V_VT(&va) = VT_INT;
+	V_VT(&va) = VT_I4;
 	V_UNION(&va,intVal) = 4;
-	ok(S_OK == VariantChangeTypeEx(&vb, &va, 0, 0, VT_BSTR ), XOK);
+	ok(S_OK == VariantChangeTypeEx(&vb, &va, lcid, 0, VT_BSTR ), XOK);
 	ok(!strcmp(WtoA(V_BSTR(&vb)),"\"4\""),"should be 4");
 
 	V_VT(&va) = VT_DATE;
 	V_UNION(&va,date) = 34465.332431;
-	ok(S_OK == VariantChangeTypeEx(&vb, &va, 0, 0, VT_BSTR ), XOK);
+	ok(S_OK == VariantChangeTypeEx(&vb, &va, lcid, 0, VT_BSTR ), XOK);
 	todo_wine {
-	    ok(!strcmp(WtoA(V_BSTR(&vb)),"\"5/11/94 7:58:42 AM\""),"should be 5/11/94 7:58:42 AM");
+	    ok(strcmp(WtoA(V_BSTR(&vb)),"\"5/11/1994 7:58:42 AM\"")==0 ||
+           strcmp(WtoA(V_BSTR(&vb)),"\"5/11/94 7:58:42 AM\"")==0 /* Win95 */,
+           "should be 5/11/94 7:58:42 AM got %s",WtoA(V_BSTR(&vb)));
 	}
 
 	bstr = pOleChar[4];
 	V_VT(&va) = VT_BSTR;
 	V_UNION(&va,bstrVal) = bstr;
-	ok(S_OK == VariantChangeTypeEx(&vb, &va, 0, 0, VT_R8 ), XOK);
+	ok(S_OK == VariantChangeTypeEx(&vb, &va, lcid, 0, VT_R8 ), XOK);
 	ok(V_R8(&vb) == -0.490000,"should be -0.49");
 
 	V_VT(&vc) = VT_BSTR | VT_BYREF;
@@ -2651,9 +2688,8 @@ START_TEST(vartest)
 	ok(E_INVALIDARG == VariantCopyInd( &vd, &va ), "expect E_INVALIDARG");
 
 	/* test what happens when bad vartypes are passed in */
-	trace( "-------------- Testing different VARTYPES ----------------\n" );
+	trace( "======== Testing different VARTYPES ========\n" );
 
-#ifdef FIXED_THIS
 	for( i=0; i<sizeof(vartypes)/sizeof(vartypes[0]); i++ )
 	{
 		    /* Trying to use variants that are set to be BSTR but
@@ -2665,37 +2701,68 @@ START_TEST(vartest)
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
 		    rc = VariantCopyInd( &vb, &va );
-		    ok(vartypes[i].vcind1 == rc,
-                       "vt %d, return value %lx, expected was %lx",
-                       vartypes[i].ind,rc,vartypes[i].vcind1);
+            if (vartypes[i].todoind1) {
+                todo_wine {
+		            ok(vartypes[i].vcind1 == rc,
+                               "%d: vt %d, return value %lx, expected was %lx",
+                               i,vartypes[i].ind,rc,vartypes[i].vcind1);
+                }
+            } else {
+		        ok(vartypes[i].vcind1 == rc,
+                           "%d: vt %d, return value %lx, expected was %lx",
+                           i,vartypes[i].ind,rc,vartypes[i].vcind1);
+            }
 		    V_VT(&va) = vartypes[i].ind | VT_BYREF;
 		    d = 4.123;
 		    V_UNION(&va,pdblVal) = &d;
 		    rc = VariantCopyInd( &vb, &va );
-		    ok(vartypes[i].vcind2 == rc,
-                       "vt %d, return value %lx, expected was %lx",
-                       vartypes[i].ind,rc,vartypes[i].vcind2);
+            if (vartypes[i].todoind2) {
+                todo_wine {
+		            ok(vartypes[i].vcind2 == rc,
+                               "%d: vt %d, return value %lx, expected was %lx",
+                               i,vartypes[i].ind,rc,vartypes[i].vcind2);
+                }
+            } else {
+		        ok(vartypes[i].vcind2 == rc,
+                           "%d: vt %d, return value %lx, expected was %lx",
+                           i,vartypes[i].ind,rc,vartypes[i].vcind2);
+            }
 		    V_VT(&va) = VT_R8;
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
-		    rc = VariantChangeTypeEx( &vb, &va, 0, 0, i );
-		    ok(vartypes[i].vcex1 == rc,
-                       "vt %d, return value %lx, expected was %lx",
-                       vartypes[i].ind,rc,vartypes[i].vcex1);
+		    rc = VariantChangeTypeEx( &vb, &va, lcid, 0, (VARTYPE)i );
+            if (vartypes[i].todowcex1) {
+                todo_wine {
+		            ok(vartypes[i].vcex1 == rc || rc == DISP_E_BADVARTYPE,
+                               "%d: vt %d, return value %lx, expected was %lx",
+                               i,vartypes[i].ind,rc,vartypes[i].vcex1);
+                }
+            } else {
+		        ok(vartypes[i].vcex1 == rc || rc == DISP_E_BADVARTYPE,
+                           "%d: vt %d, return value %lx, expected was %lx",
+                           i,vartypes[i].ind,rc,vartypes[i].vcex1);
+            }
 		    V_VT(&va) = VT_R8;
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
-		    rc = VariantChangeTypeEx( &vb, &va, 0, 0, i | VT_BYREF );
-		    ok(vartypes[i].vcex2 == rc,
-                       "vt %d, return value %lx, expected was %lx",
-                       vartypes[i].ind,rc,vartypes[i].vcex1);
+		    rc = VariantChangeTypeEx( &vb, &va, lcid, 0, (VARTYPE)(i | VT_BYREF) );
+            if (vartypes[i].todowcex2) {
+                todo_wine {
+		            ok(vartypes[i].vcex2 == rc || rc == DISP_E_BADVARTYPE,
+                               "%d: vt %d, return value %lx, expected was %lx",
+                               i,vartypes[i].ind,rc,vartypes[i].vcex2);
+                }
+            } else {
+		        ok(vartypes[i].vcex2 == rc || rc == DISP_E_BADVARTYPE,
+                           "%d: vt %d, return value %lx, expected was %lx",
+                           i,vartypes[i].ind,rc,vartypes[i].vcex2);
+            }
 
 		V_VT(&va) = 99;
 		d = 4.123;
 		V_UNION(&va,dblVal) = d;
 		ok(DISP_E_BADVARTYPE == VariantClear( &va ), "should give DISP_E_BADVARTYPE");
 	}
-#endif
 	VariantClear( &va );
 	VariantClear( &vb );
 	VariantClear( &vc );
