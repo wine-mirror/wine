@@ -687,8 +687,10 @@ debug_channels (shell)
 @ stub    UrlIsW
 @ stdcall UrlUnescapeA(str ptr ptr long) UrlUnescapeA
 @ stdcall UrlUnescapeW(wstr ptr ptr long) UrlUnescapeW
-@ varargs wnsprintfA(ptr long str)wnsprintfA
-@ varargs wnsprintfW(ptr long wstr)wnsprintfW
+@ varargs wnsprintfA(ptr long str) wnsprintfA
+@ varargs wnsprintfW(ptr long wstr) wnsprintfW
+@ forward wvnsprintfA user32.wvsnprintfA
+@ forward wvnsprintfW user32.wvsnprintfW
 
 
 # exported in later versions
