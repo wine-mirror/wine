@@ -44,6 +44,7 @@
 #define WRC_RT_VXD		(20)
 #define WRC_RT_ANICURSOR	(21)
 #define WRC_RT_ANIICON		(22)
+#define WRC_RT_DLGINIT          (240)
 #define WRC_RT_TOOLBAR		(241)  
 
 /* Default class type IDs */
@@ -145,6 +146,7 @@ enum res_e {
 	res_anicur,	/* Not implemented, no layout available */
 	res_aniico,	/* Not implemented, no layout available */
 
+	res_dlginit = WRC_RT_DLGINIT,	/* 240 */
 	res_toolbar = WRC_RT_TOOLBAR,	/* 241 */
 
 	res_menex = 256 + 4,
@@ -163,7 +165,7 @@ typedef struct control {
 	struct control	*next;		/* List of controls */
 	struct control	*prev;
 	name_id_t	*ctlclass;	/* ControlClass */
-	string_t	*title;		/* Title of control */
+	name_id_t	*title;		/* Title of control */
 	int		id;
 	int		x;		/* Position */
 	int		y;
@@ -470,6 +472,13 @@ typedef struct toolbar {
 	toolbar_item_t	*items;
 } toolbar_t;
 
+typedef struct dlginit {
+	DWORD		memopt;
+	lvc_t		lvc;
+	raw_data_t	*data;
+} dlginit_t;
+
+
 /* A top-level resource node */
 typedef struct resource {
 	struct resource	*next;
@@ -484,6 +493,7 @@ typedef struct resource {
 		cursor_group_t	*curg;
 		dialog_t	*dlg;
 		dialogex_t	*dlgex;
+		dlginit_t       *dlgi;
 		font_t		*fnt;
 		icon_t		*ico;
 		icon_group_t	*icog;
@@ -517,6 +527,11 @@ typedef struct res_count {
 	int			n_id_entries;
 	int			n_name_entries;
 } res_count_t;
+
+typedef struct style_pair {
+    	int 			style;
+	int			exstyle;
+} style_pair_t;
 
 #endif
 

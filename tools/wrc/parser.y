@@ -141,9 +141,11 @@ menuex_item_t *get_itemex_head(menuex_item_t *p);
 menu_item_t *get_item_head(menu_item_t *p);
 raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str);
 raw_data_t *merge_raw_data_int(raw_data_t *r1, int i);
+raw_data_t *merge_raw_data_long(raw_data_t *r1, int i);
 raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2);
 raw_data_t *str2raw_data(string_t *str);
 raw_data_t *int2raw_data(int i);
+raw_data_t *long2raw_data(int i);
 raw_data_t *load_file(string_t *name);
 itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid);
 event_t *add_string_event(string_t *key, int id, int flags, event_t *prev);
@@ -213,11 +215,13 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 	ver_words_t	*verw;
 	toolbar_t	*tlbar;
 	toolbar_item_t	*tlbarItems;
+	dlginit_t       *dginit;
+	style_pair_t	*styles;
 }
 
 %token tIF tIFDEF tIFNDEF tELSE tELIF tENDIF tDEFINED tNL
 %token tTYPEDEF tEXTERN
-%token <num> NUMBER
+%token <num> NUMBER LNUMBER
 %token <str> tSTRING IDENT FILENAME
 %token <raw> RAWDATA
 %token ACCELERATORS tBITMAP CURSOR DIALOG DIALOGEX MENU MENUEX MESSAGETABLE
@@ -237,6 +241,7 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %token tSTRING IDENT RAWDATA
 %token TOOLBAR BUTTON
 %token tBEGIN tEND
+%token DLGINIT
 %left LOGOR
 %left LOGAND
 %left '|'
@@ -278,7 +283,7 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %type <nid> 	nameid nameid_s ctlclass usertype
 %type <num> 	acc_opt
 %type <iptr>	loadmemopts lamo lama
-%type <fntid>	opt_font opt_exfont
+%type <fntid>	opt_font opt_exfont opt_expr
 %type <lvc>	opt_lvc
 %type <lan>	opt_language
 %type <chars>	opt_characts
@@ -288,6 +293,9 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %type <iptr>	pp_expr pp_constant
 %type <tlbar>	toolbar
 %type <tlbarItems>	toolbar_items
+%type <dginit>  dlginit
+%type <styles>  optional_style_pair 
+%type <num>	any_num
 
 %%
 
@@ -372,7 +380,7 @@ pp_expr	: pp_constant			{ $$ = $1; }
 	;
 
 pp_constant
-	: NUMBER			{ $$ = new_int($1); }
+	: any_num			{ $$ = new_int($1); }
 	| IDENT				{ $$ = NULL; }
 	| tDEFINED IDENT		{ $$ = new_int(pp_lookup($2->str.cstr) != NULL); }
 	| tDEFINED '(' IDENT ')'	{ $$ = new_int(pp_lookup($3->str.cstr) != NULL); }
@@ -475,7 +483,8 @@ resource_definition
 		else
 			$$ = NULL;
 		}
-	| font		{ $$=new_resource(res_fnt, $1, $1->memopt, dup_language(currentlanguage)); }
+	| dlginit	{ $$ = new_resource(res_dlginit, $1, $1->memopt, $1->lvc.language); }
+	| font		{ $$ = new_resource(res_fnt, $1, $1->memopt, dup_language(currentlanguage)); }
 	| icon {
 		resource_t *rsc;
 		icon_t *ico;
@@ -548,6 +557,19 @@ rcdata	: RCDATA loadmemopts opt_lvc raw_data {
 			$$->lvc.language = dup_language(currentlanguage);
 		}
 	;
+
+/* ------------------------------ DLGINIT ------------------------------ */
+dlginit	: DLGINIT loadmemopts opt_lvc raw_data {
+		$$ = new_dlginit($4, $2);
+		if($3)
+		{
+			$$->lvc = *($3);
+			free($3);
+		}
+		if(!$$->lvc.language)
+			$$->lvc.language = dup_language(currentlanguage);
+		}
+	;	  
 
 /* ------------------------------ UserType ------------------------------ */
 userres	: usertype loadmemopts FILENAME	{ $$ = new_user($1, load_file($3), $2); }
@@ -696,14 +718,7 @@ ctrls	: /* Empty */				{ $$ = NULL; }
 	| ctrls RTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
 	/* special treatment for icons, as the extent is optional */
 	| ctrls ICON nameid_s ',' expr ',' expr ',' expr iconinfo {
-		if($3->type == name_str)
-		{
-			$10->title = $3->name.s_name;
-		}
-		else
-		{
-			$10->title = NULL;
-		}
+		$10->title = $3;
 		$10->id = $5;
 		$10->x = $7;
 		$10->y = $9;
@@ -714,7 +729,9 @@ ctrls	: /* Empty */				{ $$ = NULL; }
 lab_ctrl
 	: tSTRING ',' expr ',' expr ',' expr ',' expr ',' expr optional_style {
 		$$=new_control();
-		$$->title = $1;
+		$$->title = new_name_id();
+		$$->title->type = name_str;
+		$$->title->name.s_name = $1;
 		$$->id = $3;
 		$$->x = $5;
 		$$->y = $7;
@@ -772,7 +789,7 @@ iconinfo: /* Empty */
 		}
 	;
 
-gen_ctrl: tSTRING ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr ',' expr {
+gen_ctrl: nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr ',' expr {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -786,7 +803,7 @@ gen_ctrl: tSTRING ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' 
 		$$->exstyle = $17;
 		$$->gotexstyle = TRUE;
 		}
-	| tSTRING ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr {
+	| nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -807,6 +824,12 @@ opt_font
 optional_style		/* Abbused once to get optional ExStyle */
 	: /* Empty */	{ $$ = NULL; }
 	| ',' expr	{ $$ = new_int($2); }
+	;
+
+optional_style_pair
+	: /* Enpty */		{ $$ = NULL; }
+	| ',' expr		{ $$ = new_style_pair($2, 0); }
+	| ',' expr ',' expr 	{ $$ = new_style_pair($2, $4); }
 	;
 
 ctlclass
@@ -866,6 +889,7 @@ dlgex_attribs
 	| dlgex_attribs STYLE expr	{ $$=dialogex_style($3,$1); }
 	| dlgex_attribs EXSTYLE expr	{ $$=dialogex_exstyle($3,$1); }
 	| dlgex_attribs CAPTION tSTRING { $$=dialogex_caption($3,$1); }
+	| dlgex_attribs opt_font	{ $$=dialogex_font($2,$1); }
 	| dlgex_attribs opt_exfont	{ $$=dialogex_font($2,$1); }
 	| dlgex_attribs CLASS nameid_s	{ $$=dialogex_class($3,$1); }
 	| dlgex_attribs MENU nameid	{ $$=dialogex_menu($3,$1); }
@@ -894,7 +918,7 @@ exctrls	: /* Empty */				{ $$ = NULL; }
 	| exctrls CTEXT		lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
 	| exctrls RTEXT		lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
 	/* special treatment for icons, as the extent is optional */
-	| exctrls ICON tSTRING ',' expr ',' expr ',' expr iconinfo {
+	| exctrls ICON nameid_s ',' expr ',' expr ',' expr iconinfo {
 		$10->title = $3;
 		$10->id = $5;
 		$10->x = $7;
@@ -904,7 +928,7 @@ exctrls	: /* Empty */				{ $$ = NULL; }
 	;
 
 gen_exctrl
-	: tSTRING ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ','
+	: nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ','
 	  expr ',' e_expr helpid opt_data {
 		$$=new_control();
 		$$->title = $1;
@@ -930,7 +954,7 @@ gen_exctrl
 		}
 		$$->extra = $19;
 		}
-	| tSTRING ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr opt_data {
+	| nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr opt_data {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -946,9 +970,11 @@ gen_exctrl
 	;
 
 lab_exctrl
-	: tSTRING ',' expr ',' expr ',' expr ',' expr ',' expr optional_style opt_data {
+	: tSTRING ',' expr ',' expr ',' expr ',' expr ',' expr optional_style_pair opt_data {
 		$$=new_control();
-		$$->title = $1;
+		$$->title = new_name_id();
+		$$->title->type = name_str;
+		$$->title->name.s_name = $1;
 		$$->id = $3;
 		$$->x = $5;
 		$$->y = $7;
@@ -956,16 +982,23 @@ lab_exctrl
 		$$->height = $11;
 		if($12)
 		{
-			$$->style = *($12);
+			$$->style = $12->style;
 			$$->gotstyle = TRUE;
+
+			if ($12->exstyle)
+			{
+			    $$->exstyle = $12->exstyle;
+			    $$->gotexstyle = TRUE;
+			}
 			free($12);
 		}
+
 		$$->extra = $13;
 		}
 	;
 
 exctrl_desc
-	: expr ',' expr ',' expr ',' expr ',' expr optional_style opt_data {
+	: expr ',' expr ',' expr ',' expr ',' expr optional_style_pair opt_data {
 		$$ = new_control();
 		$$->id = $1;
 		$$->x = $3;
@@ -974,8 +1007,14 @@ exctrl_desc
 		$$->height = $9;
 		if($10)
 		{
-			$$->style = *($10);
+			$$->style = $10->style;
 			$$->gotstyle = TRUE;
+
+			if ($10->exstyle)
+			{
+			    $$->exstyle = $10->exstyle;
+			    $$->gotexstyle = TRUE;
+			}
 			free($10);
 		}
 		$$->extra = $11;
@@ -991,7 +1030,15 @@ helpid	: /* Empty */	{ $$ = NULL; }
 	;
 
 opt_exfont
-	: FONT expr ',' tSTRING ',' expr ',' expr	{ $$ = new_font_id($2, $4, $6, $8); }
+	: FONT expr ',' tSTRING ',' expr ',' expr  opt_expr { $$ = new_font_id($2, $4, $6, $8); }
+	;
+
+/*
+ * FIXME: This odd expression is here to nullify an extra token found 
+ * in some appstudio produced resources which appear to do nothing.
+ */
+opt_expr: /* Empty */	{ $$ = NULL; }
+	| ',' expr	{ $$ = NULL; }
 	;
 
 /* ------------------------------ Menu ------------------------------ */
@@ -1535,9 +1582,11 @@ raw_data: tBEGIN raw_elements tEND	{ $$ = $2; }
 raw_elements
 	: RAWDATA			{ $$ = $1; }
 	| NUMBER			{ $$ = int2raw_data($1); }
+	| LNUMBER			{ $$ = long2raw_data($1); }
 	| tSTRING			{ $$ = str2raw_data($1); }
 	| raw_elements opt_comma RAWDATA   { $$ = merge_raw_data($1, $3); free($3->data); free($3); }
-	| raw_elements opt_comma NUMBER	   { $$ = merge_raw_data_int($1, $3); }
+	| raw_elements opt_comma NUMBER    { $$ = merge_raw_data_int($1, $3); }
+	| raw_elements opt_comma LNUMBER   { $$ = merge_raw_data_long($1, $3); }
 	| raw_elements opt_comma tSTRING   { $$ = merge_raw_data_str($1, $3); }
 	;
 
@@ -1564,9 +1613,14 @@ xpr	: xpr '+' xpr	{ $$ = ($1) + ($3); }
 	| '-' xpr	{ $$ = -($2); }		/* FIXME: shift/reduce conflict */
 /*	| '+' xpr	{ $$ = $2; } */
 	| '(' xpr ')'	{ $$ = $2; }
-	| NUMBER	{ $$ = $1; want_rscname = 0; }
-	| NOT NUMBER	{ $$ = 0; andmask &= ~($2); }
+	| any_num	{ $$ = $1; want_rscname = 0; }
+	| NOT any_num	{ $$ = 0; andmask &= ~($2); }
 	;
+
+any_num	: NUMBER	{ $$ = $1; }
+	| LNUMBER	{ $$ = $1; }
+	;
+
 %%
 /* Dialog specific functions */
 dialog_t *dialog_style(int st, dialog_t *dlg)
@@ -1982,10 +2036,24 @@ raw_data_t *load_file(string_t *name)
 raw_data_t *int2raw_data(int i)
 {
 	raw_data_t *rd;
+
+	if((int)((short)i) != i)
+		yywarning("Integer constant out of 16bit range (%d), truncated to %d\n", i, (short)i);
+
 	rd = new_raw_data();
 	rd->size = sizeof(short);
 	rd->data = (char *)xmalloc(rd->size);
 	*(short *)(rd->data) = (short)i;
+	return rd;
+}
+
+raw_data_t *long2raw_data(int i)
+{
+	raw_data_t *rd;
+	rd = new_raw_data();
+	rd->size = sizeof(int);
+	rd->data = (char *)xmalloc(rd->size);
+	*(int *)(rd->data) = i;
 	return rd;
 }
 
@@ -2010,6 +2078,15 @@ raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2)
 raw_data_t *merge_raw_data_int(raw_data_t *r1, int i)
 {
 	raw_data_t *t = int2raw_data(i);
+	merge_raw_data(r1, t);
+	free(t->data);
+	free(t);
+	return r1;
+}
+
+raw_data_t *merge_raw_data_long(raw_data_t *r1, int i)
+{
+	raw_data_t *t = long2raw_data(i);
 	merge_raw_data(r1, t);
 	free(t->data);
 	free(t);

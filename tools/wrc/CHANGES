@@ -1,4 +1,24 @@
 ---------------------------------------------------------------------------
+Version 1.0.12 (18-Jul-1999)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Generalized the distinction between 2 and 4 byte integers slightly through
+  a new parser state. The is now a warning when a 2 byte integer is larger
+  than 16 bit (and is truncated).
+- Fixed a couple of cosmetic things in the DLGINIT stuff so that dumping of
+  this type will work as expected.
+- Added generalized language/version/characteristics support to the DLGINIT
+  resource type.
+
+Ulrich Czekalla <ulrichc@corel.ca>
+- Added support for DLGINIT resource-type.
+- Added string continuation and embedded quoting.
+- Added numeric IDs for icons in controls.
+
+Eric Pouech <Eric.Pouech@wanadoo.fr>
+- Bugfix: Distinguish between 2 and 4 byte integers in RCDATA.
+
+---------------------------------------------------------------------------
 Version 1.0.11 (22-Apr-1999)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

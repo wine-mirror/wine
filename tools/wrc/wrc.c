@@ -90,7 +90,7 @@ char usage[] = "Usage: wrc [options...] [infile[.rc|.res]]\n"
 	;
 
 char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
-			"Copyright 1998 Bertho A. Stultiens\n"
+			"Copyright 1998,1999 Bertho A. Stultiens\n"
 			"          1994 Martin von Loewis\n";
 
 /*

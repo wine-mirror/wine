@@ -43,6 +43,7 @@ char *get_typename(resource_t* r)
 	case res_usr:   return "UserResource";
 	case res_msg:	return "MESSAGETABLE";
 	case res_ver:	return "VERSIONINFO";
+	case res_dlginit: return "DLGINIT";
 	case res_toolbar: return "TOOLBAR";
 	default: 	return "Unknown";
 	}
@@ -492,7 +493,7 @@ void dump_stringtable(stringtable_t *stt)
 void dump_control(control_t *ctrl)
 {
 	printf("Control {\n\tClass: %s\n", get_nameid_str(ctrl->ctlclass));
-	printf("\tText: "); print_string(ctrl->title); printf("\n");
+	printf("\tText: "); get_nameid_str(ctrl->title); printf("\n");
 	printf("\tId: %d\n", ctrl->id);
 	printf("\tx, y, w, h: %d, %d, %d, %d\n", ctrl->x, ctrl->y, ctrl->width, ctrl->height);
 	if(ctrl->gotstyle)
@@ -850,7 +851,7 @@ void dump_toolbar_items(toolbar_item_t *items)
 /*
  *****************************************************************************
  * Function	: dump_toolbar
- * Syntax	: void dump_toolbar(dialogex_t *toolbar)
+ * Syntax	: void dump_toolbar(toolbar_t *toolbar)
  * Input	:
  *	toolbar	- Toolbar resource descriptor
  * Output	:
@@ -863,6 +864,24 @@ void dump_toolbar(toolbar_t *toolbar)
 	dump_memopt(toolbar->memopt);
 	dump_lvc(&(toolbar->lvc));
 	dump_toolbar_items(toolbar->items);
+}
+
+/*
+ *****************************************************************************
+ * Function	: dump_dlginit
+ * Syntax	: void dump_dlginit(dlginit_t *dit)
+ * Input	:
+ *	dit	- DlgInit resource descriptor
+ * Output	:
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+void dump_dlginit(dlginit_t *dit)
+{
+	dump_memopt(dit->memopt);
+	dump_lvc(&(dit->lvc));
+	dump_raw_data(dit->data);
 }
 
 /*
@@ -944,6 +963,9 @@ void dump_resources(resource_t *top)
 			break;
 		case res_ver:
 			dump_versioninfo(top->res.ver);
+			break;
+		case res_dlginit:
+			dump_dlginit(top->res.dlgi);
 			break;
 		case res_toolbar:
 			dump_toolbar(top->res.tbt);

@@ -277,6 +277,7 @@ static struct keyword keywords[] = {
 	{ "DIALOG", DIALOG, 0, 0, 0},
 	{ "DIALOGEX", DIALOGEX, 1, 0, 0},
 	{ "DISCARDABLE", DISCARDABLE, 0, 0, 0},
+	{ "DLGINIT", DLGINIT, 0, 0, 0},
 	{ "EDITTEXT", EDITTEXT, 0, 0, 0},
 	{ "END", tEND, 0, 0, 1},
 	{ "EXSTYLE", EXSTYLE, 0, 0, 0},
@@ -584,9 +585,9 @@ void add_to_substtext(char *text, int len)
 \{			return tBEGIN;
 \}			return tEND;
 
-[0-9]+[lL]?		{ yylval.num = atoi(yytext); return NUMBER; }
-0[xX][0-9A-Fa-f]+[lL]?	{ yylval.num = strtoul(yytext,0,16); return NUMBER; }
-0[oO][0-7]+		{ yylval.num = strtoul(yytext+2,0,8); return NUMBER; }
+[0-9]+[lL]?		{ yylval.num = strtoul(yytext,  0, 10); return toupper(yytext[yyleng-1]) == 'L' ? LNUMBER : NUMBER; }
+0[xX][0-9A-Fa-f]+[lL]?	{ yylval.num = strtoul(yytext,  0, 16); return toupper(yytext[yyleng-1]) == 'L' ? LNUMBER : NUMBER; }
+0[oO][0-7]+[lL]?	{ yylval.num = strtoul(yytext+2, 0, 8); return toupper(yytext[yyleng-1]) == 'L' ? LNUMBER : NUMBER; }
 [A-Za-z_0-9]+		{
 				struct keyword *token;
 				struct pp_entry *ppp;
@@ -630,6 +631,7 @@ void add_to_substtext(char *text, int len)
 					case CURSOR:
 					case tBITMAP:
 					case MESSAGETABLE:
+					case DLGINIT:
 						push_to(yywf);
 						break;
 					case FONT:
@@ -703,6 +705,9 @@ L\"			{
 <yylstr>\\t		addwchar('\t');
 <yylstr>\\v		addwchar('\v');
 <yylstr>\\(.|\n)	addwchar(yytext[1]);
+<yylstr>\"\"		addcchar('\"');		/* "bla""bla"  -> "bla\"bla" */
+<yylstr>\\\"\"		addcchar('\"');		/* "bla\""bla" -> "bla\"bla" */
+<yylstr>\"{ws}+\"	;			/* "bla" "bla" -> "blabla" */
 <yylstr>[^\\\n\"]+	{
 				char *yptr = yytext;
 				while(*yptr)	/* FIXME: codepage translation */
@@ -745,6 +750,9 @@ L\"			{
 				while(*yptr)
 					addcchar(*yptr++);
 			}
+<yystr>\"\"		addcchar('\"');		/* "bla""bla"   -> "bla\"bla" */
+<yystr>\\\"\"		addcchar('\"');		/* "bla\""bla"  -> "bla\"bla" */
+<yystr>\"{ws}+\"	;			/* "bla" "bla"  -> "blabla" */
 
 
 

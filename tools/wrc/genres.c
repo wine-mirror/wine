@@ -457,7 +457,7 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			else
 				internal_error(__FILE__, __LINE__, "Control has no control-class");
 			if(ctrl->title)
-				put_string(res, ctrl->title, str_unicode, TRUE);
+				put_name_id(res, ctrl->title, TRUE);
 			else
 				put_word(res, 0);
 			if(ctrl->extra)
@@ -528,7 +528,7 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			else
 				internal_error(__FILE__, __LINE__, "Control has no control-class");
 			if(ctrl->title)
-				put_string(res, ctrl->title, str_char, TRUE);
+				put_name_id(res, ctrl->title, FALSE);
 			else
 				put_byte(res, 0);
 
@@ -634,7 +634,7 @@ res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 			else
 				internal_error(__FILE__, __LINE__, "Control has no control-class");
 			if(ctrl->title)
-				put_string(res, ctrl->title, str_unicode, TRUE);
+				put_name_id(res, ctrl->title, TRUE);
 			else
 				put_word(res, 0);
 			if(ctrl->extra)
@@ -1493,6 +1493,35 @@ res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
 
 /*
  *****************************************************************************
+ * Function	: dlginit2res
+ * Syntax	: res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
+ * Input	:
+ *	name	- Name/ordinal of the resource
+ *	rdt	- The dlginit descriptor
+ * Output	: New .res format structure
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
+{
+	int restag;
+	res_t *res;
+	assert(name != NULL);
+	assert(dit != NULL);
+
+	res = new_res();
+	restag = put_res_header(res, WRC_RT_DLGINIT, NULL, name, dit->memopt, &(dit->lvc));
+	put_raw_data(res, dit->data, 0);
+	/* Set ResourceSize */
+	SetResSize(res, restag);
+	if(win32)
+		put_pad(res);
+	return res;
+}
+
+/*
+ *****************************************************************************
  * Function	: prep_nid_for_label
  * Syntax	: char *prep_nid_for_label(name_id_t *nid)
  * Input	:
@@ -1615,6 +1644,7 @@ char *get_c_typename(enum res_e type)
 	case res_msg:	return "MsgTab";
 	case res_ver:	return "VerInf";
 	case res_toolbar:	return "TlBr";
+	case res_dlginit: return "DlgInit";
 	default:	return "Oops";
 	}
 }
@@ -1704,6 +1734,11 @@ void resources2res(resource_t *top)
 			if(!top->binres)
 				top->binres = toolbar2res(top->name, top->res.tbt);
 			break;
+		case res_dlginit:
+			if(!top->binres)
+			    top->binres = dlginit2res(top->name, top->res.dlgi);
+			break;
+
 		default:
 			internal_error(__FILE__, __LINE__, "Unknown resource type encountered %d in binary res generation", top->type);
 		}

@@ -263,3 +263,26 @@ toolbar_t *new_toolbar(int button_width, int button_height, toolbar_item_t *item
 	tb->items = items;
 	return tb;
 }
+
+dlginit_t *new_dlginit(raw_data_t *rd, int *memopt)
+{
+	dlginit_t *di = (dlginit_t *)xmalloc(sizeof(dlginit_t));
+	di->data = rd;
+	if(memopt)
+	{
+		di->memopt = *memopt;
+		free(memopt);
+	}
+	else
+		di->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE | WRC_MO_DISCARDABLE;
+
+	return di;
+}
+
+style_pair_t *new_style_pair(int style, int exstyle)
+{
+	style_pair_t *sp = (style_pair_t *)xmalloc(sizeof(style_pair_t));
+	sp->style = style;
+	sp->exstyle = exstyle;
+	return sp;
+}
