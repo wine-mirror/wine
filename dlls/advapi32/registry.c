@@ -1405,12 +1405,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
 /******************************************************************************
  *           RegDeleteValueW   [ADVAPI32.@]
  *
- * PARAMS
- *    hkey   [I] handle to key
- *    name   [I] name of value to delete
- *
- * RETURNS
- *    error status
+ * See RegDeleteValueA.
  */
 DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
 {
@@ -1425,6 +1420,16 @@ DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
 
 /******************************************************************************
  *           RegDeleteValueA   [ADVAPI32.@]
+ *
+ * Delete a value from the registry.
+ *
+ * PARAMS
+ *  hkey [I] Registry handle of the key holding the value
+ *  name [I] Name of the value under hkey to delete
+ *
+ * RETURNS
+ *  Success: 0
+ *  Failure: A standard Windows error code.
  */
 DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 {

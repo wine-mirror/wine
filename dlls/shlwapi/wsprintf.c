@@ -271,6 +271,17 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
 
 /***********************************************************************
  *           wvnsprintfA   (SHLWAPI.@)
+ *
+ * Print formatted output to a string, up to a maximum number of chars.
+ *
+ * PARAMS
+ * lpOut      [O] Destination for output string
+ * cchLimitIn [I] Maximum number of characters to write
+ * lpFmt      [I] Format string
+ *
+ * RETURNS
+ *  Success: The number of characters written.
+ *  Failure: -1.
  */
 INT WINAPI wvnsprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, va_list args )
 {
@@ -374,6 +385,8 @@ INT WINAPI wvnsprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, va_list args )
 
 /***********************************************************************
  *           wvnsprintfW   (SHLWAPI.@)
+ *
+ * See wvnsprintfA.
  */
 INT WINAPI wvnsprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
 {
@@ -476,6 +489,17 @@ INT WINAPI wvnsprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
 
 /*************************************************************************
  *           wnsprintfA   (SHLWAPI.@)
+ *
+ * Print formatted output to a string, up to a maximum number of chars.
+ *
+ * PARAMS
+ * lpOut      [O] Destination for output string
+ * cchLimitIn [I] Maximum number of characters to write
+ * lpFmt      [I] Format string
+ *
+ * RETURNS
+ *  Success: The number of characters written.
+ *  Failure: -1.
  */
 int WINAPIV wnsprintfA(LPSTR lpOut, int cchLimitIn, LPCSTR lpFmt, ...)
 {
@@ -491,6 +515,8 @@ int WINAPIV wnsprintfA(LPSTR lpOut, int cchLimitIn, LPCSTR lpFmt, ...)
 
 /*************************************************************************
  *           wnsprintfW   (SHLWAPI.@)
+ *
+ * See wnsprintfA.
  */
 int WINAPIV wnsprintfW(LPWSTR lpOut, int cchLimitIn, LPCWSTR lpFmt, ...)
 {

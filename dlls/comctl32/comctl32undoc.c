@@ -1809,9 +1809,9 @@ DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
  */
 
 LPVOID WINAPI
-DPA_GetPtr (const HDPA hdpa, INT i)
+DPA_GetPtr (const HDPA hdpa, INT nIndex)
 {
-    TRACE("(%p %d)\n", hdpa, i);
+    TRACE("(%p %d)\n", hdpa, nIndex);
 
     if (!hdpa)
 	return NULL;
@@ -1819,14 +1819,14 @@ DPA_GetPtr (const HDPA hdpa, INT i)
 	WARN("no pointer array.\n");
 	return NULL;
     }
-    if ((i < 0) || (i >= hdpa->nItemCount)) {
-	WARN("not enough pointers in array (%d vs %d).\n",i,hdpa->nItemCount);
+    if ((nIndex < 0) || (nIndex >= hdpa->nItemCount)) {
+	WARN("not enough pointers in array (%d vs %d).\n",nIndex,hdpa->nItemCount);
 	return NULL;
     }
 
-    TRACE("-- %p\n", hdpa->ptrs[i]);
+    TRACE("-- %p\n", hdpa->ptrs[nIndex]);
 
-    return hdpa->ptrs[i];
+    return hdpa->ptrs[nIndex];
 }
 
 

@@ -104,7 +104,7 @@ WINAPI _CreateAllAccessSecurityAttributes(
  * Get an interface to the shell explorer.
  *
  * PARAMS
- *  lpUnknown [O] pointer to recieve interface.
+ *  lppUnknown [O] pointer to recieve IUnknown interface.
  *
  * RETURNS
  *  Success: S_OK. lppUnknown contains the explorer interface.
@@ -141,8 +141,8 @@ typedef struct tagSHLWAPI_THREAD_INFO
  *   lppUnknown [O] Destination to receive object reference
  *
  * RETURNS
- *   Success: S_OK. lppUnk is set to the object reference.
- *   Failure: E_NOINTERFACE, if an error occurs or lppUnk is invalid.
+ *   Success: S_OK. lppUnknown is set to the object reference.
+ *   Failure: E_NOINTERFACE, if an error occurs or lppUnknown is NULL.
  */
 HRESULT WINAPI SHGetThreadRef(IUnknown **lppUnknown)
 {
@@ -166,11 +166,11 @@ HRESULT WINAPI SHGetThreadRef(IUnknown **lppUnknown)
  * Store a per-thread object reference.
  *
  * PARAMS
- *   lpUnk [I] Object reference to store
+ *   lpUnknown [I] Object reference to store
  *
  * RETURNS
- *   Success: S_OK. lpUnk is stored and can be retrieved by SHGetThreadRef()
- *   Failure: E_NOINTERFACE, if an error occurs or lpUnk is invalid.
+ *   Success: S_OK. lpUnknown is stored and can be retrieved by SHGetThreadRef()
+ *   Failure: E_NOINTERFACE, if an error occurs or lpUnknown is NULL.
  */
 HRESULT WINAPI SHSetThreadRef(IUnknown *lpUnknown)
 {
@@ -254,9 +254,7 @@ static DWORD WINAPI SHLWAPI_ThreadWrapper(PVOID pTi)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.16]
- *
- * SHCreateThread
+ *      SHCreateThread	[SHLWAPI.16]
  *
  * Create a new thread.
  *

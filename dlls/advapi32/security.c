@@ -94,14 +94,19 @@ BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
 
 /******************************************************************************
  * OpenProcessToken			[ADVAPI32.@]
- * Opens the access token associated with a process
+ * Opens the access token associated with a process handle.
  *
  * PARAMS
  *   ProcessHandle [I] Handle to process
  *   DesiredAccess [I] Desired access to process
  *   TokenHandle   [O] Pointer to handle of open access token
  *
- * RETURNS STD
+ * RETURNS
+ *  Success: TRUE. TokenHandle contains the access token.
+ *  Failure: FALSE.
+ *
+ * NOTES
+ *  See NtOpenProcessToken.
  */
 BOOL WINAPI
 OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess,
@@ -113,11 +118,20 @@ OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess,
 /******************************************************************************
  * OpenThreadToken [ADVAPI32.@]
  *
+ * Opens the access token associated with a thread handle.
+ *
  * PARAMS
- *   thread        []
- *   desiredaccess []
- *   openasself    []
- *   thandle       []
+ *   ThreadHandle  [I] Handle to process
+ *   DesiredAccess [I] Desired access to the thread
+ *   OpenAsSelf    [I] ???
+ *   TokenHandle   [O] Destination for the token handle
+ *
+ * RETURNS
+ *  Success: TRUE. TokenHandle contains the access token.
+ *  Failure: FALSE.
+ *
+ * NOTES
+ *  See NtOpenThreadToken.
  */
 BOOL WINAPI
 OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess,
@@ -129,13 +143,23 @@ OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess,
 /******************************************************************************
  * AdjustTokenPrivileges [ADVAPI32.@]
  *
+ * Adjust the privileges of an open token handle.
+ * 
  * PARAMS
- *   TokenHandle          []
- *   DisableAllPrivileges []
- *   NewState             []
- *   BufferLength         []
- *   PreviousState        []
- *   ReturnLength         []
+ *  TokenHandle          [I]   Handle from OpenProcessToken() or OpenThreadToken() 
+ *  DisableAllPrivileges [I]   TRUE=Remove all privileges, FALSE=Use NewState
+ *  NewState             [I]   Desired new privileges of the token
+ *  BufferLength         [I]   Length of NewState
+ *  PreviousState        [O]   Destination for the previous state
+ *  ReturnLength         [I/O] Size of PreviousState
+ *
+ *
+ * RETURNS
+ *  Success: TRUE. Privileges are set to NewState and PreviousState is updated.
+ *  Failure: FALSE.
+ *
+ * NOTES
+ *  See NtAdjustPrivilegesToken.
  */
 BOOL WINAPI
 AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
@@ -148,10 +172,16 @@ AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
 /******************************************************************************
  * CheckTokenMembership [ADVAPI32.@]
  *
+ * Determine if an access token is a member of a SID.
+ * 
  * PARAMS
- *   TokenHandle [I]
- *   SidToCheck  [I]
- *   IsMember    [O]
+ *   TokenHandle [I] Handle from OpenProcessToken() or OpenThreadToken()
+ *   SidToCheck  [I] SID that possibly contains the token
+ *   IsMember    [O] Destination for result.
+ *
+ * RETURNS
+ *  Success: TRUE. IsMember is TRUE if TokenHandle is a member, FALSE otherwise.
+ *  Failure: FALSE.
  */
 BOOL WINAPI
 CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
@@ -167,12 +197,18 @@ CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
  * GetTokenInformation [ADVAPI32.@]
  *
  * PARAMS
- *   token           [I]
- *   tokeninfoclass  [I]
- *   tokeninfo       [O]
- *   tokeninfolength [I]
- *   retlen          [O]
+ *   token           [I] Handle from OpenProcessToken() or OpenThreadToken()
+ *   tokeninfoclass  [I] A TOKEN_INFORMATION_CLASS from "winnt.h"
+ *   tokeninfo       [O] Destination for token information
+ *   tokeninfolength [I] Length of tokeninfo
+ *   retlen          [O] Destination for returned token information length
  *
+ * RETURNS
+ *  Success: TRUE. tokeninfo contains retlen bytes of token information
+ *  Failure: FALSE.
+ *
+ * NOTES
+ *  See NtQueryInformationToken.
  */
 BOOL WINAPI
 GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
@@ -203,12 +239,17 @@ GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 /******************************************************************************
  * SetTokenInformation [ADVAPI32.@]
  *
- * PARAMS
- *   token           [I]
- *   tokeninfoclass  [I]
- *   tokeninfo       [I]
- *   tokeninfolength [I]
+ * Set information for an access token.
  *
+ * PARAMS
+ *   token           [I] Handle from OpenProcessToken() or OpenThreadToken()
+ *   tokeninfoclass  [I] A TOKEN_INFORMATION_CLASS from "winnt.h"
+ *   tokeninfo       [I] Token information to set
+ *   tokeninfolength [I] Length of tokeninfo
+ *
+ * RETURNS
+ *  Success: TRUE. The information for the token is set to tokeninfo.
+ *  Failure: FALSE.
  */
 BOOL WINAPI
 SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
@@ -242,13 +283,22 @@ SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 /*************************************************************************
  * SetThreadToken [ADVAPI32.@]
  *
- * Assigns an "impersonation token" to a thread so it can assume the
+ * Assigns an 'impersonation token' to a thread so it can assume the
  * security privledges of another thread or process.  Can also remove
- * a previously assigned token.  Only supported on NT - it's a stub
- * exactly like this one on Win9X.
+ * a previously assigned token. 
  *
+ * PARAMS
+ *   thread          [O] Handle to thread to set the token for
+ *   token           [I] Token to set
+ *
+ * RETURNS
+ *  Success: TRUE. The threads access token is set to token
+ *  Failure: FALSE.
+ *
+ * NOTES
+ *  Only supported on NT or higher. On Win9X this function does nothing.
+ *  See SetTokenInformation.
  */
-
 BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
 {
     FIXME("(%p, %p): stub (NT impl. only)\n", thread, token);
@@ -608,14 +658,8 @@ DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 
 /******************************************************************************
  * LookupPrivilegeValueW			[ADVAPI32.@]
- * Retrieves LUID used on a system to represent the privilege name.
  *
- * PARAMS
- *   lpSystemName [I] Address of string specifying the system
- *   lpName       [I] Address of string specifying the privilege
- *   lpLuid       [I] Address of locally unique identifier
- *
- * RETURNS STD
+ * See LookupPrivilegeValueA.
  */
 BOOL WINAPI
 LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
@@ -629,6 +673,17 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
 
 /******************************************************************************
  * LookupPrivilegeValueA			[ADVAPI32.@]
+ *
+ * Retrieves LUID used on a system to represent the privilege name.
+ *
+ * PARAMS
+ *  lpSystemName [I] Name of the system
+ *  lpName       [I] Name of the privilege
+ *  pLuid        [O] Destination for the resulting LUD
+ *
+ * RETURNS
+ *  Success: TRUE. pLuid contains the requested LUID.
+ *  Failure: FALSE.
  */
 BOOL WINAPI
 LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid )
@@ -648,9 +703,22 @@ LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid )
 /******************************************************************************
  * GetFileSecurityA [ADVAPI32.@]
  *
- * Obtains Specified information about the security of a file or directory
- * The information obtained is constrained by the callers access rights and
- * privileges
+ * Obtains Specified information about the security of a file or directory.
+ *
+ * PARAMS
+ *  lpFileName           [I] Name of the file to get info for
+ *  RequestedInformation [I] SE_ flags from "winnt.h"
+ *  pSecurityDescriptor  [O] Destination for security information
+ *  nLength              [I] Length of pSecurityDescriptor
+ *  lpnLengthNeeded      [O] Destination for length of returned security information
+ *
+ * RETURNS
+ *  Success: TRUE. pSecurityDescriptor contains the requested information.
+ *  Failure: FALSE. lpnLengthNeeded contains the required space to return the info. 
+ *
+ * NOTES
+ *  The information returned is constrained by the callers access rights and
+ *  privileges.
  */
 BOOL WINAPI
 GetFileSecurityA( LPCSTR lpFileName,
@@ -665,16 +733,7 @@ GetFileSecurityA( LPCSTR lpFileName,
 /******************************************************************************
  * GetFileSecurityW [ADVAPI32.@]
  *
- * Obtains Specified information about the security of a file or directory
- * The information obtained is constrained by the callers access rights and
- * privileges
- *
- * PARAMS
- *   lpFileName           []
- *   RequestedInformation []
- *   pSecurityDescriptor  []
- *   nLength              []
- *   lpnLengthNeeded      []
+ * See GetFileSecurityA.
  */
 BOOL WINAPI
 GetFileSecurityW( LPCWSTR lpFileName,
@@ -881,6 +940,7 @@ LsaQueryInformationPolicy(
 
 	      struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(xdi));
 	      RtlCreateUnicodeStringFromAsciiz(&(xdi->ppdi.Name), "DOMAIN");
+
 	      xdi->ppdi.Sid = &(xdi->sid);
 	      xdi->sid.Revision = SID_REVISION;
 	      xdi->sid.SubAuthorityCount = 1;

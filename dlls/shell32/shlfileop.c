@@ -179,7 +179,7 @@ DWORD WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES
  *
  * Deletes a file. Also triggers a change notify if one exists.
  *
- * NOTES:
+ * NOTES
  *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
  *  This is Unicode on NT/2000
  */

@@ -40,6 +40,20 @@ HMODULE SHLWAPI_hversion = 0;
 DWORD SHLWAPI_ThreadRef_index = -1;
 
 /*************************************************************************
+ * SHLWAPI {SHLWAPI}
+ *
+ * The Shell Light-Weight Api dll provides a large number of utility functions
+ * which are commonly required by Win32 programs. Originally distributed with
+ * Internet Explorer as a free download, it became a core part of Windows when
+ * Internet Explorer was 'integrated' into the O/S with the release of Win98.
+ *
+ * All functions exported by ordinal are undocumented by MS. The vast majority
+ * of these are wrappers for Unicode functions that may not exist on early 16
+ * bit platforms. The remainder perform various small tasks and presumably were
+ * added to facilitate code reuse amongst the MS developers.
+ */
+
+/*************************************************************************
  * SHLWAPI DllMain
  *
  * NOTES
@@ -71,35 +85,40 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 /***********************************************************************
  * DllGetVersion [SHLWAPI.@]
  *
- * Retrieves version information of the 'SHLWAPI.DLL'
+ * Retrieve "shlwapi.dll" version information.
  *
  * PARAMS
  *     pdvi [O] pointer to version information structure.
  *
  * RETURNS
- *     Success: S_OK
- *     Failure: E_INVALIDARG
+ *     Success: S_OK. pdvi is updated with the version information
+ *     Failure: E_INVALIDARG, if pdvi->cbSize is not set correctly.
  *
  * NOTES
- *     Returns version of a SHLWAPI.dll from IE5.01.
+ *     You may pass either a DLLVERSIONINFO of DLLVERSIONINFO2 structure
+ *     as pdvi, provided that the size is set correctly.
+ *     Returns version as shlwapi.dll from IE5.01.
  */
-
 HRESULT WINAPI SHLWAPI_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
-	if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
-	{
-	  WARN("wrong DLLVERSIONINFO size from app\n");
-	  return E_INVALIDARG;
-	}
+  DLLVERSIONINFO2 *pdvi2 = (DLLVERSIONINFO2*)pdvi;
 
-	pdvi->dwMajorVersion = 5;
-	pdvi->dwMinorVersion = 0;
-	pdvi->dwBuildNumber = 2314;
-	pdvi->dwPlatformID = 1000;
+  TRACE("(%p)\n",pdvi);
 
-	TRACE("%lu.%lu.%lu.%lu\n",
-	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
-	   pdvi->dwBuildNumber, pdvi->dwPlatformID);
-
-	return S_OK;
+  switch (pdvi2->info1.cbSize)
+  {
+  case sizeof(DLLVERSIONINFO2):
+    pdvi2->dwFlags = 0;
+    pdvi2->ullVersion = MAKEDLLVERULL(5, 0, 2314, 0);
+    /* Fall through */
+  case sizeof(DLLVERSIONINFO):
+    pdvi2->info1.dwMajorVersion = 5;
+    pdvi2->info1.dwMinorVersion = 0;
+    pdvi2->info1.dwBuildNumber = 2314;
+    pdvi2->info1.dwPlatformID = 1000;
+    return S_OK;
+ }
+ if (pdvi)
+   WARN("pdvi->cbSize = %ld, unhandled\n", pdvi2->info1.cbSize);
+ return E_INVALIDARG;
 }

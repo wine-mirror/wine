@@ -259,8 +259,15 @@ static BOOL URL_JustLocation(LPCWSTR str)
 /*************************************************************************
  *      @	[SHLWAPI.1]
  *
- * Identifies the Internet "scheme" in the passed string. ASCII based.
- * Also determines start and length of item after the ':'
+ * Parse a Url into its constituent parts.
+ *
+ * PARAMS
+ *  x [I] Url to parse
+ *  y [O] Undocumented structure holding the parsed information
+ *
+ * RETURNS
+ *  Success: S_OK. y contains the parsed Url details.
+ *  Failure: An HRESULT error code.
  */
 DWORD WINAPI SHLWAPI_1 (LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
 {
@@ -314,8 +321,7 @@ DWORD WINAPI SHLWAPI_1 (LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
 /*************************************************************************
  *      @	[SHLWAPI.2]
  *
- * Identifies the Internet "scheme" in the passed string. UNICODE based.
- * Also determines start and length of item after the ':'
+ * Unicode version of SHLWAPI_1.
  */
 DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 {
@@ -375,7 +381,27 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 /*************************************************************************
  *        UrlCanonicalizeA     [SHLWAPI.@]
  *
- * Uses the W version to do job.
+ * Canonicalize a Url.
+ *
+ * PARAMS
+ *  pszUrl            [I]   Url to cCanonicalize
+ *  pszCanonicalized  [O]   Destination for converted Url.
+ *  pcchCanonicalized [I/O] Length of pszUrl, destination for length of pszCanonicalized
+ *  dwFlags           [I]   Flags controlling the conversion.
+ *
+ * RETURNS
+ *  Success: S_OK. The pszCanonicalized contains the converted Url.
+ *  Failure: E_POINTER, if *pcchCanonicalized is too small.
+ *
+ * MSDN is wrong (at 10/30/01 - go figure). This should support the
+ * following flags:                                      GLA
+ *|    URL_DONT_ESCAPE_EXTRA_INFO    0x02000000
+ *|    URL_ESCAPE_SPACES_ONLY        0x04000000
+ *|    URL_ESCAPE_PERCENT            0x00001000
+ *|    URL_ESCAPE_UNSAFE             0x10000000
+ *|    URL_UNESCAPE                  0x10000000
+ *|    URL_DONT_SIMPLIFY             0x08000000
+ *|    URL_ESCAPE_SEGMENT_ONLY       0x00002000
  */
 HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 	LPDWORD pcchCanonicalized, DWORD dwFlags)
@@ -416,16 +442,7 @@ HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 /*************************************************************************
  *        UrlCanonicalizeW     [SHLWAPI.@]
  *
- *
- * MSDN is wrong (at 10/30/01 - go figure). This should support the
- * following flags:                                      GLA
- *    URL_DONT_ESCAPE_EXTRA_INFO    0x02000000
- *    URL_ESCAPE_SPACES_ONLY        0x04000000
- *    URL_ESCAPE_PERCENT            0x00001000
- *    URL_ESCAPE_UNSAFE             0x10000000
- *    URL_UNESCAPE                  0x10000000
- *    URL_DONT_SIMPLIFY             0x08000000
- *    URL_ESCAPE_SEGMENT_ONLY       0x00002000
+ * See UrlCanonicalizeA.
  */
 HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 				LPDWORD pcchCanonicalized, DWORD dwFlags)
@@ -886,6 +903,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
  *
  * Converts unsafe characters into their escape sequences.
  *
+ * NOTES
  * The converted string is returned in pszEscaped if the buffer size
  * (which should be supplied in pcchEscaped) is large enough, in this
  * case the function returns S_OK and pcchEscaped contains the length
@@ -900,10 +918,10 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
  *
  * BUGS:
  *  Have now implemented the following flags:
- *     URL_ESCAPE_SPACES_ONLY
- *     URL_DONT_ESCAPE_EXTRA_INFO
- *     URL_ESCAPE_SEGMENT_ONLY
- *     URL_ESCAPE_PERCENT
+ *|     URL_ESCAPE_SPACES_ONLY
+ *|     URL_DONT_ESCAPE_EXTRA_INFO
+ *|     URL_ESCAPE_SEGMENT_ONLY
+ *|     URL_ESCAPE_PERCENT
  *  Initial testing seems to indicate that this is now working like
  *  native shlwapi version 5. Note that these functions did not work
  *  well (or at all) in shlwapi version 4.
@@ -980,7 +998,7 @@ HRESULT WINAPI UrlEscapeA(
 /*************************************************************************
  *      UrlEscapeW	[SHLWAPI.@]
  *
- * See UrlEscapeA for list of assumptions, bugs, and FIXMEs
+ * See UrlEscapeA.
  */
 HRESULT WINAPI UrlEscapeW(
 	LPCWSTR pszUrl,
@@ -1072,17 +1090,20 @@ HRESULT WINAPI UrlEscapeW(
  *
  * Converts escape sequences back to ordinary characters.
  *
- * If URL_ESCAPE_INPLACE is set in dwFlags then pszUnescaped and
- * pcchUnescaped are ignored and the converted string is returned in
- * pszUrl, otherwise the string is returned in pszUnescaped.
- * pcchUnescaped should contain the size of pszUnescaped on calling
- * and will contain the length the the returned string on return if
- * the buffer is big enough else it will contain the buffer size
- * required (including room for the '\0').  The function returns S_OK
- * on success or E_POINTER if the buffer is not large enough.  If the
- * URL_DONT_ESCAPE_EXTRA_INFO flag is set then the conversion stops at
- * the first occurrence of either '?' or '#'.
+ * PARAMS
+ *  pszUrl        [I/O]  Url to convert
+ *  pszUnescaped  [O]    Destination for converted Url
+ *  pcchUnescaped [I/O]  Size of output string
+ *  dwFlags       [I]    URL_ESCAPE_ Flags from "shlwapi.h"
  *
+ * RETURNS
+ *  Success: S_OK. The converted value is in pszUnescaped, or in pszUrl if
+ *           dwFlags includes URL_ESCAPE_INPLACE.
+ *  Failure: E_POINTER if the converted Url is bigger than pcchUnescaped. In
+ *           this case pcchUnescaped is set to the size required.
+ * NOTES
+ *  If dwFlags includes URL_DONT_ESCAPE_EXTRA_INFO, the conversion stops at
+ *  the first occurrence of either '?' or '#'.
  */
 HRESULT WINAPI UrlUnescapeA(
 	LPCSTR pszUrl,
@@ -1146,7 +1167,7 @@ HRESULT WINAPI UrlUnescapeA(
 /*************************************************************************
  *      UrlUnescapeW	[SHLWAPI.@]
  *
- * See UrlUnescapeA for list of assumptions, bugs, and FIXMEs
+ * See UrlUnescapeA.
  */
 HRESULT WINAPI UrlUnescapeW(
 	LPCWSTR pszUrl,
@@ -1210,21 +1231,31 @@ HRESULT WINAPI UrlUnescapeW(
 /*************************************************************************
  *      UrlGetLocationA 	[SHLWAPI.@]
  *
- * Bugs/Features:
+ * Get the location from a Url.
+ *
+ * PARAMS
+ *  pszUrl [I] Url to get the location from
+ *
+ * RETURNS
+ *  A pointer to the start of the location in pszUrl, or NULL if there is
+ *  no location.
+ *
+ * NOTES
  *  MSDN (as of 2001-11-01) says that:
  *         "The location is the segment of the URL starting with a ?
  *          or # character."
  *     Neither V4 nor V5 of shlwapi.dll implement the '?' and always return
  *     a NULL.
+ *
  *  MSDN further states that:
  *         "If a file URL has a query string, the returned string is
  *          the query string."
  *     In all test cases if the scheme starts with "fi" then a NULL is
  *     returned. V5 gives the following results:
- *       NULL     file://aa/b/cd#hohoh
- *       #hohoh   http://aa/b/cd#hohoh
- *       NULL     fi://aa/b/cd#hohoh
- *       #hohoh   ff://aa/b/cd#hohoh
+ *|       NULL     file://aa/b/cd#hohoh
+ *|       #hohoh   http://aa/b/cd#hohoh
+ *|       NULL     fi://aa/b/cd#hohoh
+ *|       #hohoh   ff://aa/b/cd#hohoh
  */
 LPCSTR WINAPI UrlGetLocationA(
 	LPCSTR pszUrl)
@@ -1246,7 +1277,7 @@ LPCSTR WINAPI UrlGetLocationA(
 /*************************************************************************
  *      UrlGetLocationW 	[SHLWAPI.@]
  *
- * See UrlGetLocationA for list of assumptions, bugs, and FIXMEs
+ * See UrlGetLocationA.
  */
 LPCWSTR WINAPI UrlGetLocationW(
 	LPCWSTR pszUrl)
@@ -1319,6 +1350,16 @@ INT WINAPI UrlCompareW(
  *      HashData	[SHLWAPI.@]
  *
  * Hash an input block into a variable sized digest.
+ * 
+ * PARAMS
+ *  lpSrc    [I] Input block
+ *  nSrcLen  [I] Length of lpSrc
+ *  lpDest   [I] Output for hash digest
+ *  nDestLen [I] Length of lpDest
+ *
+ * RETURNS
+ *  Success: TRUE. lpDest is filled with the computed hash value.
+ *  Failure: FALSE, if any argument is invalid.
  */
 BOOL WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
                      unsigned char *lpDest, INT nDestLen)
@@ -1351,7 +1392,16 @@ BOOL WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
 /*************************************************************************
  *      UrlHashA	[SHLWAPI.@]
  *
- * Hash an ASCII URL.
+ * Produce a Hash from a Url.
+ *
+ * PARAMS
+ *  pszUrl   [I] Url to hash
+ *  lpDest   [O] Destinationh for hash
+ *  nDestLen [I] Length of lpDest
+ * 
+ * RETURNS
+ *  Success: S_OK. lpDest is filled with the computed hash value.
+ *  Failure: E_INVALIDARG, if any argument is invalid.
  */
 HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
 {
@@ -1420,7 +1470,7 @@ HRESULT WINAPI UrlApplySchemeA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut, DWOR
     return ret;
 }
 
-HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
+static HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 {
     HKEY newkey;
     BOOL j;
@@ -1564,6 +1614,16 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
 
 /*************************************************************************
  *      UrlIsA  	[SHLWAPI.@]
+ *
+ * Determine if a Url is of a certain class.
+ *
+ * PARAMS
+ *  pszUrl [I] Url to check
+ *  Urlis  [I] URLIS_ constant from "shlwapi.h"
+ *
+ * RETURNS
+ *  TRUE if pszUrl belongs to the class type in Urlis.
+ *  FALSE Otherwise.
  */
 BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
 {
@@ -1595,6 +1655,8 @@ BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
 
 /*************************************************************************
  *      UrlIsW  	[SHLWAPI.@]
+ *
+ * See UrlIsA.
  */
 BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
 {
@@ -1642,6 +1704,18 @@ BOOL WINAPI UrlIsNoHistoryW(LPCWSTR pszUrl)
 
 /*************************************************************************
  *      UrlIsOpaqueA  	[SHLWAPI.@]
+ *
+ * Determine if a Url is opaque.
+ *
+ * PARAMS
+ *  pszUrl [I] Url to check
+ *
+ * RETURNS
+ *  TRUE if pszUrl is opaque,
+ *  FALSE Otherwise.
+ *
+ * NOTES
+ *  An opaque Url is one that does not start with "<protocol>://".
  */
 BOOL WINAPI UrlIsOpaqueA(LPCSTR pszUrl)
 {
@@ -1650,6 +1724,8 @@ BOOL WINAPI UrlIsOpaqueA(LPCSTR pszUrl)
 
 /*************************************************************************
  *      UrlIsOpaqueW  	[SHLWAPI.@]
+ *
+ * See UrlIsOpaqueA.
  */
 BOOL WINAPI UrlIsOpaqueW(LPCWSTR pszUrl)
 {
@@ -1662,7 +1738,7 @@ BOOL WINAPI UrlIsOpaqueW(LPCWSTR pszUrl)
  *
  * Characters tested based on RFC 1738
  */
-LPCWSTR  URL_ScanID(LPCWSTR start, LPDWORD size, WINE_URL_SCAN_TYPE type)
+static LPCWSTR  URL_ScanID(LPCWSTR start, LPDWORD size, WINE_URL_SCAN_TYPE type)
 {
     static DWORD alwayszero = 0;
     BOOL cont = TRUE;
@@ -1757,7 +1833,7 @@ LPCWSTR  URL_ScanID(LPCWSTR start, LPDWORD size, WINE_URL_SCAN_TYPE type)
 /*************************************************************************
  *  Attempt to parse URL into pieces.
  */
-LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
+static LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
 {
     LPCWSTR work;
 
@@ -1968,6 +2044,8 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 
 /*************************************************************************
  * PathIsURLW	[SHLWAPI.@]
+ *
+ * See PathIsURLA.
  */
 BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 {
@@ -1984,6 +2062,18 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 
 /*************************************************************************
  *      UrlCreateFromPathA  	[SHLWAPI.@]
+ * 
+ * Create a Url from a file path.
+ *
+ * PARAMS
+ *  pszPath [I]    Path to convert
+ *  pszUrl  [O]    Destination for the converted Url
+ *  pcchUrl [I/O]  Length of pszUrl
+ *  dwReserved [I] Reserved, must be 0
+ *
+ * RETURNS
+ *  Success: S_OK. pszUrl contains the converted path.
+ *  Failure: An HRESULT error code.
  */
 HRESULT WINAPI UrlCreateFromPathA(LPCSTR pszPath, LPSTR pszUrl, LPDWORD pcchUrl, DWORD dwReserved)
 {
@@ -2088,7 +2178,9 @@ HRESULT WINAPI UrlCreateFromPathA(LPCSTR pszPath, LPSTR pszUrl, LPDWORD pcchUrl,
 }
 
 /*************************************************************************
- *      UrlCreateFromPathA  	[SHLWAPI.@]
+ *      UrlCreateFromPathW  	[SHLWAPI.@]
+ *
+ * See UrlCreateFromPathA.
  */
 HRESULT WINAPI UrlCreateFromPathW(LPCWSTR pszPath, LPWSTR pszUrl, LPDWORD pcchUrl, DWORD dwReserved)
 {

@@ -297,11 +297,11 @@ static inline void NormalizeTimeFields(CSHORT *FieldToNormalize, CSHORT *CarryFi
  *
  * Parses Time into a TimeFields structure.
  *
- * PARAMS:
- *   liTime [I]: Time to convert to timefields.
- *   TimeFields [O]: Pointer to TIME_FIELDS structure to hold parsed info.
+ * PARAMS
+ *   liTime [I] Time to convert to timefields.
+ *   TimeFields [O] Pointer to TIME_FIELDS structure to hold parsed info.
  *
- * RETURNS:
+ * RETURNS
  *   Nothing.
  */
 VOID WINAPI RtlTimeToTimeFields(
@@ -360,11 +360,11 @@ VOID WINAPI RtlTimeToTimeFields(
  *
  * Converts a TIME_FIELDS structure to time.
  *
- * PARAMS:
- *   ftTimeFields [I]: Time fields structure to convert.
- *   Time [O]: Converted time.
+ * PARAMS
+ *   ftTimeFields [I] Time fields structure to convert.
+ *   Time [O] Converted time.
  *
- * RETURNS:
+ * RETURNS
  *   TRUE: Successfull
  *   FALSE: Failure.
  */
@@ -418,11 +418,11 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
  *
  * Converts local time to system time.
  *
- * PARAMS:
- *   LocalTime [I]: Localtime to convert.
- *   SystemTime [O]: SystemTime of the supplied localtime.
+ * PARAMS
+ *   LocalTime [I] Localtime to convert.
+ *   SystemTime [O] SystemTime of the supplied localtime.
  *
- * RETURNS:
+ * RETURNS
  *   Status.
  */
 NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
@@ -442,11 +442,11 @@ NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
  *
  * Converts system Time to local time.
  *
- * PARAMS:
- *   SystemTime [I]: System time to convert.
- *   LocalTime [O]: Local time of the supplied system time.
+ * PARAMS
+ *   SystemTime [I] System time to convert.
+ *   LocalTime [O] Local time of the supplied system time.
  *
- * RETURNS:
+ * RETURNS
  *   Nothing.
  */
 NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
@@ -466,11 +466,11 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
  *
  * Converts Time to seconds since 1970.
  *
- * PARAMS:
- *   time [I]: Time to convert.
- *   res [O]: Pointer to a LONG to recieve the seconds since 1970.
+ * PARAMS
+ *   time [I] Time to convert.
+ *   res [O] Pointer to a LONG to recieve the seconds since 1970.
  *
- * RETURNS:
+ * RETURNS
  *   TRUE: Successfull.
  *   FALSE: Failure.
  */
@@ -489,11 +489,11 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *time, PULONG res 
  *
  * Converts Time to seconds since 1980.
  *
- * PARAMS:
- *   time [I]: Time to convert.
- *   res [O]: Pointer to a integer to recieve the time since 1980.
+ * PARAMS
+ *   time [I] Time to convert.
+ *   res [O] Pointer to a integer to recieve the time since 1980.
  *
- * RETURNS:
+ * RETURNS
  *   TRUE: Successfull
  *   FALSE: Failure.
  */
@@ -512,11 +512,11 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *time, LPDWORD res
  *
  * Converts seconds since 1970 to time.
  *
- * PARAMS:
- *   time [I]: Seconds since 1970 to convert.
- *   res [O]: Seconds since 1970 in Time.
+ * PARAMS
+ *   time [I] Seconds since 1970 to convert.
+ *   res [O] Seconds since 1970 in Time.
  *
- * RETURNS:
+ * RETURNS
  *   Nothing.
  */
 void WINAPI RtlSecondsSince1970ToTime( DWORD time, LARGE_INTEGER *res )
@@ -531,11 +531,11 @@ void WINAPI RtlSecondsSince1970ToTime( DWORD time, LARGE_INTEGER *res )
  *
  * Converts seconds since 1980 to time.
  *
- * PARAMS:
- *   time [I]: Seconds since 1980 to convert.
- *   res [O]: Seconds since 1980 in Time.
+ * PARAMS
+ *   time [I] Seconds since 1980 to convert.
+ *   res [O] Seconds since 1980 in Time.
  *
- * RETURNS:
+ * RETURNS
  *   Nothing.
  */
 void WINAPI RtlSecondsSince1980ToTime( DWORD time, LARGE_INTEGER *res )
@@ -548,7 +548,7 @@ void WINAPI RtlSecondsSince1980ToTime( DWORD time, LARGE_INTEGER *res )
 /******************************************************************************
  *       RtlTimeToElapsedTimeFields [NTDLL.@]
  *
- * RETURNS:
+ * RETURNS
  *   Nothing.
  */
 void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS TimeFields )
@@ -577,10 +577,10 @@ void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS 
  *
  * Gets the current system time.
  *
- * PARAMS:
- *   time [O]: The current system time.
+ * PARAMS
+ *   time [O] The current system time.
  *
- * RETURNS:
+ * RETURNS
  *   Status.
  */
 NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER time )
@@ -597,11 +597,11 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER time )
  *
  * Helper function calculates delta local time from UTC. 
  *
- * PARAMS:
- *   utc [I]: The current utc time.
- *   pdaylight [I]: Local daylight.
+ * PARAMS
+ *   utc [I] The current utc time.
+ *   pdaylight [I] Local daylight.
  *
- * RETURNS:
+ * RETURNS
  *   The bias for the current timezone.
  */
 static int TIME_GetBias(time_t utc, int *pdaylight)
@@ -618,12 +618,12 @@ static int TIME_GetBias(time_t utc, int *pdaylight)
  *
  * Helper function that returns the given timezone as a string.
  *
- * PARAMS:
- *   utc [I]: The current utc time.
- *   bias [I]: The bias of the current timezone.
- *   dst [I]: ??
+ * PARAMS
+ *   utc [I] The current utc time.
+ *   bias [I] The bias of the current timezone.
+ *   dst [I] ??
  *
- * RETURNS:
+ * RETURNS
  *   Timezone name.
  *
  * NOTES:
@@ -657,10 +657,10 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
  *
  * Returns the timezone.
  *
- * PARAMS:
- *   tzinfo [O]: Retrieves the timezone info.
+ * PARAMS
+ *   tzinfo [O] Retrieves the timezone info.
  *
- * RETURNS:
+ * RETURNS
  *   Status.
  */
 NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
@@ -687,10 +687,10 @@ NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
  *
  * Sets the current time zone.
  *
- * PARAMS:
- *   tzinfo [I]: Timezone information used to set timezone.
+ * PARAMS
+ *   tzinfo [I] Timezone information used to set timezone.
  *
- * RETURNS:
+ * RETURNS
  *   Status.
  *
  * BUGS:
@@ -718,10 +718,10 @@ NTSTATUS WINAPI RtlSetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
  * Sets the system time.
  *
  * PARAM:
- *   NewTime [I]: The time to set the system time to.
- *   OldTime [O]: Optional (ie. can be NULL).  Old Time.
+ *   NewTime [I] The time to set the system time to.
+ *   OldTime [O] Optional (ie. can be NULL).  Old Time.
  *
- * RETURNS:
+ * RETURNS
  *   Status.
  */
 NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *OldTime)

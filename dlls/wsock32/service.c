@@ -33,15 +33,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 /******************************************************************************
  *          GetTypeByNameA     [WSOCK32.1113]
  *
- * Retrieves a service type GUID for a network service specified by name
+ * Retrieve a service type GUID for a network service specified by name.
  *
  * PARAMETERS
- *      lpServiceName -- Pointer to a zero-terminated ASCII string that uniquely represents the name of the service
- *      lpServiceType -- Pointer to a variable to receive a GUID that specifies the type of network service
+ *      lpServiceName [I] NUL-terminated ASCII string that uniquely represents the name of the service
+ *      lpServiceType [O] Destination for the service type GUID
  *
  * RETURNS
- *      Zero on success, SOCKET_ERROR on failure.
- *      GetLastError can return ERROR_SERVICE_DOES_NOT_EXIST
+ *      Success: 0. lpServiceType contains the requested GUID
+ *      Failure: SOCKET_ERROR. GetLastError() can return ERROR_SERVICE_DOES_NOT_EXIST
  *
  * NOTES
  *      Obsolete Microsoft-specific extension to Winsock 1.1.
@@ -64,22 +64,7 @@ INT WINAPI GetTypeByNameA(LPSTR lpServiceName, LPGUID lpServiceType)
 /******************************************************************************
  *          GetTypeByNameW     [WSOCK32.1114]
  *
- * Retrieves a service type GUID for a network service specified by name
- *
- * PARAMETERS
- *      lpServiceName -- Pointer to a zero-terminated Unicode string that uniquely represents the name of the service
- *      lpServiceType -- Pointer to a variable to receive a GUID that specifies the type of network service
- *
- * RETURNS
- *      Zero on success, SOCKET_ERROR on failure.
- *      GetLastError can return ERROR_SERVICE_DOES_NOT_EXIST
- *
- * NOTES
- *      Obsolete Microsoft-specific extension to Winsock 1.1.
- *      Protocol-independent name resolution provides equivalent functionality in Winsock 2.
- *
- * BUGS
- *      Unimplemented
+ * See GetTypeByNameA.
  */
 INT WINAPI GetTypeByNameW(LPWSTR lpServiceName, LPGUID lpServiceType)
 {
@@ -94,22 +79,22 @@ INT WINAPI GetTypeByNameW(LPWSTR lpServiceName, LPGUID lpServiceType)
 /******************************************************************************
  *          SetServiceA     [WSOCK32.1117]
  *
- * Registers or unregisters a network service with one or more name spaces
+ * Register or unregister a network service with one or more namespaces.
  *
  * PARAMETERS
- *      dwNameSpace         -- Name space or set of name spaces within which the function will operate
- *      dwOperation         -- Specifies the operation that the function will perform
- *      dwFlags             -- Set of bit flags that modify the function's operation
- *      lpServiceInfo       -- Pointer to a ASCII SERVICE_INFO structure
- *      lpServiceAsyncInfo  -- Reserved for future use.  Must be NULL.
- *      lpdwStatusFlags     -- Set of bit flags that receive function status information
+ *      dwNameSpace        [I] Name space or set of name spaces within which the function will operate
+ *      dwOperation        [I] Operation to perform
+ *      dwFlags            [I] Flags to modify the function's operation
+ *      lpServiceInfo      [I] Pointer to a ASCII SERVICE_INFO structure
+ *      lpServiceAsyncInfo [I] Reserved for future use.  Must be NULL.
+ *      lpdwStatusFlags    [O] Destination for function status information
  *
  * RETURNS
- *      SOCKET_ERROR on failure.
- *      GetLastError can return ERROR_ALREADY_REGISTERED
+ *      Success: 0.
+ *      Failure: SOCKET_ERROR. GetLastError() can return ERROR_ALREADY_REGISTERED
  *
  * NOTES
- *      Obsolete Microsoft-specific extension to Winsock 1.1
+ *      Obsolete Microsoft-specific extension to Winsock 1.1,
  *      Protocol-independent name resolution provides equivalent functionality in Winsock 2.
  *
  * BUGS
@@ -130,26 +115,7 @@ INT WINAPI SetServiceA(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSE
 /******************************************************************************
  *          SetServiceW     [WSOCK32.1118]
  *
- * Registers or unregisters a network service with one or more name spaces
- *
- * PARAMETERS
- *      dwNameSpace         -- Name space or set of name spaces within which the function will operate
- *      dwOperation         -- Specifies the operation that the function will perform
- *      dwFlags             -- Set of bit flags that modify the function's operation
- *      lpServiceInfo       -- Pointer to a Unicode SERVICE_INFO structure
- *      lpServiceAsyncInfo  -- Reserved for future use.  Must be NULL.
- *      lpdwStatusFlags     -- Set of bit flags that receive function status information
- *
- * RETURNS
- *      SOCKET_ERROR on failure.
- *      GetLastError can return ERROR_ALREADY_REGISTERED
- *
- * NOTES
- *      Obsolete Microsoft-specific extension to Winsock 1.1
- *      Protocol-independent name resolution provides equivalent functionality in Winsock 2.
- *
- * BUGS
- *      Unimplemented.
+ * See SetServiceA.
  */
 INT WINAPI SetServiceW(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSERVICE_INFOW lpServiceInfo,
                        LPSERVICE_ASYNC_INFO lpServiceAsyncInfo, LPDWORD lpdwStatusFlags)

@@ -113,7 +113,7 @@ static BOOL WINAPI SHLWAPI_ChrCmpA(WORD ch1, WORD ch2)
 }
 
 /*************************************************************************
- * ChrCmpIA	[SHLWAPI.385]
+ * ChrCmpIA	(SHLWAPI.385)
  *
  * Compare two characters, ignoring case.
  *
@@ -367,9 +367,9 @@ INT WINAPI StrCmpNW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
  *  The Win32 version of this function is _completely_ broken for cases
  *  where iLen is greater than the length of lpszComp. Examples:
  *
- *  StrCmpNIA("foo.gif", "foo", 5) is -1 under Win32; Should return 1.
- *  StrCmpNIA("\", "\\", 3) is 0 under Win32; Should return -1.
- *  StrCmpNIA("\", "\..\foo\", 3) is 1 under Win32; Should return -1.
+ *|  StrCmpNIA("foo.gif", "foo", 5) is -1 under Win32; Should return 1.
+ *|  StrCmpNIA("\", "\\", 3) is 0 under Win32; Should return -1.
+ *|  StrCmpNIA("\", "\..\foo\", 3) is 1 under Win32; Should return -1.
  *
  *  This implementation behaves correctly, since it is unlikely any
  *  applications actually rely on this function being broken.
@@ -893,8 +893,8 @@ BOOL WINAPI StrToIntExW(LPCWSTR lpszStr, DWORD dwFlags, LPINT lpiRet)
  *  Failure: NULL, if memory cannot be allocated
  *
  * NOTES
- *  The string memory is allocated with LocalAlloc, and so should be released
- *  by calling LocalFree.
+ *  The string memory is allocated with LocalAlloc(), and so should be released
+ *  by calling LocalFree().
  */
 LPSTR WINAPI StrDupA(LPCSTR lpszStr)
 {
@@ -1342,7 +1342,7 @@ LPWSTR WINAPI StrCatBuffW(LPWSTR lpszStr, LPCWSTR lpszCat, INT cchMax)
  * RETURNS
  *  Success: S_OK. lpszDest contains up to dwLen characters of the string.
  *           If lpStrRet is of type STRRET_WSTR, its memory is freed with
- *           CoTaskMemFree and its type set to STRRET_CSTRA.
+ *           CoTaskMemFree() and its type set to STRRET_CSTRA.
  *  Failure: E_FAIL, if any parameters are invalid.
  */
 HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, DWORD len)
@@ -1716,7 +1716,7 @@ static HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest)
 	int len = 0;
 
 	if (src) {
-     len = lstrlenA(src) + 1;
+	    len = lstrlenA(src) + 1;
 	    *dest = CoTaskMemAlloc(len);
 	} else {
 	    *dest = NULL;
@@ -1736,7 +1736,7 @@ static HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest)
 /*************************************************************************
  * SHStrDupA
  *
- * Return a Unicode copy of a string, in memory allocated by CoTaskMemAlloc.
+ * Return a Unicode copy of a string, in memory allocated by CoTaskMemAlloc().
  *
  * PARAMS
  *  lpszStr   [I] String to copy
@@ -1753,7 +1753,7 @@ HRESULT WINAPI SHStrDupA(LPCSTR src, LPWSTR * dest)
 	int len = 0;
 
 	if (src) {
-     len = MultiByteToWideChar(0,0,src,-1,0,0) * sizeof(WCHAR);
+	    len = MultiByteToWideChar(0,0,src,-1,0,0)* sizeof(WCHAR);
 	    *dest = CoTaskMemAlloc(len);
 	} else {
 	    *dest = NULL;
@@ -1902,17 +1902,19 @@ static int SHLWAPI_WriteTimeClass(LPWSTR lpszOut, DWORD dwValue,
  * NOTES
  *  This implementation mimics the Win32 behaviour of always writing a leading
  *  space before the time interval begins.
+ *
  *  iDigits is used to provide approximate times if accuracy is not important.
  *  This number of digits will be written of the first non-zero time class
  *  (hours/minutes/seconds). If this does not complete the time classification,
  *  the remaining digits are changed to zeros (i.e. The time is _not_ rounded).
  *  If there are digits remaining following the writing of a time class, the
  *  next time class will be written.
+ *
  *  For example, given dwMS represents 138 hours,43 minutes and 15 seconds, the
  *  following will result from the given values of iDigits:
  *
- *  iDigits    1        2        3        4               5               ...
- *  lpszStr   "100 hr" "130 hr" "138 hr" "138 hr 40 min" "138 hr 43 min"  ...
+ *|  iDigits    1        2        3        4               5               ...
+ *|  lpszStr   "100 hr" "130 hr" "138 hr" "138 hr 40 min" "138 hr 43 min"  ...
  */
 INT WINAPI StrFromTimeIntervalA(LPSTR lpszStr, UINT cchMax, DWORD dwMS,
                                 int iDigits)
@@ -2186,7 +2188,7 @@ typedef struct tagSHLWAPI_BYTEFORMATS
  *  lpszDest.
  *
  * NOTES
- *  There is no StrFormatByteSize64W function, it is called StrFormatByteSizeW.
+ *  There is no StrFormatByteSize64W function, it is called StrFormatByteSizeW().
  */
 LPSTR WINAPI StrFormatByteSize64A(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
 {
@@ -2293,8 +2295,8 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest,
  *  lpszDest.
  *
  * NOTES
- *  The ASCII and Unicode versions of this function accept a different
- *  integer size for dwBytes. See StrFormatByteSize64A.
+ *  The Ascii and Unicode versions of this function accept a different
+ *  integer type for dwBytes. See StrFormatByteSize64A().
  */
 LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
 {

@@ -64,11 +64,11 @@ static BOOL (WINAPI *pIsNetDrive)(DWORD);
  *
  * RETURNS
  *  Success: TRUE. lpszPath contains the newly created path.
- *  Failure: FALSE, if either path is NULL, or PathCombineA fails.
+ *  Failure: FALSE, if either path is NULL, or PathCombineA() fails.
  *
  * NOTES
  *  lpszAppend must contain at least one backslash ('\') if not NULL.
- *  Because PathCombineA is used to join the paths, the resulting
+ *  Because PathCombineA() is used to join the paths, the resulting
  *  path is also canonicalized.
  */
 BOOL WINAPI PathAppendA (LPSTR lpszPath, LPCSTR lpszAppend)
@@ -114,7 +114,7 @@ BOOL WINAPI PathAppendW(LPWSTR lpszPath, LPCWSTR lpszAppend)
  * PARAMS
  *  lpszDest [O] Destination for combined path
  *  lpszDir  [I] Directory path
- *  liszFile [I] File path
+ *  lpszFile [I] File path
  *
  * RETURNS
  *  Success: The output path
@@ -1099,7 +1099,7 @@ BOOL WINAPI SHLWAPI_4(LPWSTR lpszPath,DWORD dwWhich)
  *  dwWhich        [I] Type of executable to search for
  *
  * RETURNS
- *  TRUE  If the file was found. lpszFile contains the file name.
+ *  TRUE  If the file was found. lpszPath contains the file name.
  *  FALSE Otherwise.
  *
  * NOTES
@@ -1109,7 +1109,7 @@ BOOL WINAPI SHLWAPI_4(LPWSTR lpszPath,DWORD dwWhich)
  *  extensions are not checked.
  *
  *  Ordinals 3-6 are a classic case of MS exposing limited functionality to
- *  users (here through PathFindOnPath) and keeping advanced functionality for
+ *  users (here through PathFindOnPathA()) and keeping advanced functionality for
  *  their own developers exclusive use. Monopoly, anyone?
  */
 BOOL WINAPI SHLWAPI_3(LPSTR lpszPath,DWORD dwWhich)
@@ -1218,7 +1218,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
  *  dwWhich        [I] Type of executable to search for
  *
  * RETURNS
- *  Success: TRUE. The path to the executable is stored in sFile.
+ *  Success: TRUE. The path to the executable is stored in lpszFile.
  *  Failure: FALSE. The path to the executable is unchanged.
  */
 BOOL WINAPI SHLWAPI_5(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
@@ -1331,7 +1331,7 @@ BOOL WINAPI PathFindOnPathW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs)
  * PARAMS
  *  lpszDest [O] Destination for compacted path
  *  lpszPath [I] Source path
- *  cchMax   [I[ Maximum size of compacted path
+ *  cchMax   [I] Maximum size of compacted path
  *  dwFlags  [I] Reserved
  *
  * RETURNS
@@ -1343,8 +1343,9 @@ BOOL WINAPI PathFindOnPathW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs)
  *  The Win32 version of this function contains a bug: When cchMax == 7,
  *  8 bytes will be written to lpszDest. This bug is fixed in the Wine
  *  implementation.
+ *
  *  Some relative paths will be different when cchMax == 5 or 6. This occurs
- *  because Win32 will insert a \ in the compact filename, even if one is
+ *  because Win32 will insert a "\" in lpszDest, even if one is
  *  not present in the original path.
  */
 BOOL WINAPI PathCompactPathExA(LPSTR lpszDest, LPCSTR lpszPath,
@@ -1511,7 +1512,7 @@ BOOL WINAPI PathIsRelativeW (LPCWSTR lpszPath)
  *  lpszPath [I] Path to check
  *
  * RETURNS
- *  TRUE  If lpszPath is valid and a root path
+ *  TRUE  If lpszPath is valid and a root path,
  *  FALSE Otherwise
  */
 BOOL WINAPI PathIsRootA(LPCSTR lpszPath)
@@ -1605,8 +1606,8 @@ BOOL WINAPI PathIsRootW(LPCWSTR lpszPath)
  *  Although this function is prototyped as returning a BOOL, it returns
  *  FILE_ATTRIBUTE_DIRECTORY for success. This means that code such as:
  *
- *  if (PathIsDirectoryA("c:\\windows\\") == TRUE)
- *    ...
+ *|  if (PathIsDirectoryA("c:\\windows\\") == TRUE)
+ *|    ...
  *
  *  will always fail.
  */
@@ -1768,7 +1769,7 @@ static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
  *
  * PARAMS
  *  lpszPath [I] Path to check
- *  lpszMask [I} Search mask(s)
+ *  lpszMask [I] Search mask(s)
  *
  * RETURNS
  *  TRUE  If lpszPath is valid and is matched
@@ -1779,20 +1780,20 @@ static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
  *  pattern "*.*" is treated specially in that it matches all paths (for
  *  backwards compatability with DOS).
  */
-BOOL WINAPI PathMatchSpecA(LPCSTR name, LPCSTR mask)
+BOOL WINAPI PathMatchSpecA(LPCSTR lpszPath, LPCSTR lpszMask)
 {
-	TRACE("%s %s\n",name,mask);
+	TRACE("%s %s\n", lpszPath, lpszMask);
 
-	if (!lstrcmpA( mask, "*.*" )) return 1;   /* we don't require a period */
+	if (!lstrcmpA( lpszMask, "*.*" )) return 1;   /* we don't require a period */
 
-	while (*mask)
+	while (*lpszMask)
 	{
-	  if (PathMatchSingleMaskA(name,mask)) return 1;    /* helper function */
-	  while (*mask && *mask!=';') mask = CharNextA(mask);
-	  if (*mask==';')
+	  if (PathMatchSingleMaskA(lpszPath,lpszMask)) return 1;    /* helper function */
+	  while (*lpszMask && *lpszMask!=';') lpszMask = CharNextA(lpszMask);
+	  if (*lpszMask==';')
 	  {
-	    mask++;
-	    while (*mask==' ') mask++;      /*  masks may be separated by "; " */
+	    lpszMask++;
+	    while (*lpszMask==' ') lpszMask++;      /*  masks may be separated by "; " */
 	  }
 	}
 	return 0;
@@ -1882,7 +1883,7 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
  *  lpszPath [I] file to check
  *
  * RETURNS
- *  TRUE  If lpszPath is a given registered content type
+ *  TRUE  If lpszPath is a given registered content type,
  *  FALSE Otherwise.
  *
  * NOTES
@@ -1991,7 +1992,7 @@ BOOL WINAPI PathIsFileSpecW(LPCWSTR lpszPath)
  *  lpszPath   [i] Path to check
  *
  * RETURNS
- *  TRUE  If lpszPath has lpszPrefix as its prefix
+ *  TRUE  If lpszPath has lpszPrefix as its prefix,
  *  FALSE If either path is NULL or lpszPrefix is not a prefix
  */
 BOOL WINAPI PathIsPrefixA (LPCSTR lpszPrefix, LPCSTR lpszPath)
@@ -2030,7 +2031,7 @@ BOOL WINAPI PathIsPrefixW(LPCWSTR lpszPrefix, LPCWSTR lpszPath)
  *
  * RETURNS
  *  TRUE   If lpszPath or dwAttrib are a system folder.
- *  FALSE  If GetFileAttributesA fails or neither parameter is a system folder.
+ *  FALSE  If GetFileAttributesA() fails or neither parameter is a system folder.
  */
 BOOL WINAPI PathIsSystemFolderA(LPCSTR lpszPath, DWORD dwAttrib)
 {
@@ -2230,7 +2231,7 @@ BOOL WINAPI PathIsUNCServerShareW(LPCWSTR lpszPath)
  *  lpszPath [I] Path to cnonicalize
  *
  * RETURNS
- *  Success: TRUE.  lpszBuf contains the output path
+ *  Success: TRUE.  lpszBuf contains the output path,
  *  Failure: FALSE, If input path is invalid. lpszBuf is undefined
  */
 BOOL WINAPI PathCanonicalizeA(LPSTR lpszBuf, LPCSTR lpszPath)
@@ -2363,7 +2364,7 @@ BOOL WINAPI PathCanonicalizeW(LPWSTR lpszBuf, LPCWSTR lpszPath)
  *   lpszPath [I] Path to find next component in
  *
  * RETURNS
- *  Success: A pointer to the next component, or the end of the string
+ *  Success: A pointer to the next component, or the end of the string,
  *  Failure: NULL, If lpszPath is invalid
  *
  * NOTES
@@ -2419,15 +2420,15 @@ LPWSTR WINAPI PathFindNextComponentW(LPCWSTR lpszPath)
  *
  * PARAMS
  *  lpszPath      [O] Path to add extension to
- *  lpszExtension [I} Extension to add to lpszPath
+ *  lpszExtension [I] Extension to add to lpszPath
  *
  * RETURNS
- *  TRUE  If the path was modified
+ *  TRUE  If the path was modified,
  *  FALSE If lpszPath or lpszExtension are invalid, lpszPath has an
  *        extension allready, or the new path length is too big.
  *
  * FIXME
- *  What version of shlwapi.dll adds "exe" if pszExtension is NULL? Win2k
+ *  What version of shlwapi.dll adds "exe" if lpszExtension is NULL? Win2k
  *  does not do this, so the behaviour was removed.
  */
 BOOL WINAPI PathAddExtensionA(LPSTR lpszPath, LPCSTR lpszExtension)
@@ -2480,7 +2481,7 @@ BOOL WINAPI PathAddExtensionW(LPWSTR lpszPath, LPCWSTR lpszExtension)
  *  lpszPath [O] Path to convert.
  *
  * RETURNS
- *  TRUE  If the path was an uppercase DOS path and was converted
+ *  TRUE  If the path was an uppercase DOS path and was converted,
  *  FALSE Otherwise.
  */
 BOOL WINAPI PathMakePrettyA(LPSTR lpszPath)
@@ -2835,7 +2836,7 @@ end:
  *  ch [I] Character to get the type of
  *
  * RETURNS
- *  A set of GCT_ bit flags (from shlwapi.h) indicating the character type.
+ *  A set of GCT_ bit flags (from "shlwapi.h") indicating the character type.
  */
 UINT WINAPI PathGetCharTypeA(UCHAR ch)
 {
@@ -2909,7 +2910,7 @@ static BOOL SHLWAPI_UseSystemForSystemFolders()
  *
  * RETURNS
  *  TRUE  If the path was changed to/already was a system folder
- *  FALSE If the path is invalid or SetFileAttributesA fails
+ *  FALSE If the path is invalid or SetFileAttributesA() fails
  */
 BOOL WINAPI PathMakeSystemFolderA(LPCSTR lpszPath)
 {
@@ -2968,12 +2969,12 @@ BOOL WINAPI PathMakeSystemFolderW(LPCWSTR lpszPath)
  * Swap the file extension in a path with another extension.
  *
  * PARAMS
- *  pszPath [O] Path to swap the extension in
- *  pszExt  [I] The new extension
+ *  lpszPath [O] Path to swap the extension in
+ *  lpszExt  [I] The new extension
  *
  * RETURNS
- *  TRUE  if pszPath was modified
- *  FALSE if pszPath or pszExt is NULL, or the new path is too long
+ *  TRUE  if lpszPath was modified,
+ *  FALSE if lpszPath or lpszExt is NULL, or the new path is too long
  */
 BOOL WINAPI PathRenameExtensionA(LPSTR lpszPath, LPCSTR lpszExt)
 {
@@ -3050,7 +3051,7 @@ BOOL WINAPI PathSearchAndQualifyW(LPCWSTR lpszPath, LPWSTR lpszBuf, UINT cchBuf)
  *
  * RETURNS
  *  Success: A pointer to the next character after the root.
- *  Failure: NULL, if lpszPath is invalid, has no root or is a MB string.
+ *  Failure: NULL, if lpszPath is invalid, has no root or is a multibyte string.
  */
 LPSTR WINAPI PathSkipRootA(LPCSTR lpszPath)
 {
@@ -3118,7 +3119,7 @@ LPWSTR WINAPI PathSkipRootW(LPCWSTR lpszPath)
  *  dwFlags  [I] Flags controlling the conversion
  *
  * RETURNS
- *  Success: S_OK. lpszPath contains the URL in path format
+ *  Success: S_OK. lpszPath contains the URL in path format,
  *  Failure: An HRESULT error code such as E_INVALIDARG.
  */
 HRESULT WINAPI PathCreateFromUrlA(LPCSTR lpszUrl, LPSTR lpszPath,
@@ -3209,6 +3210,7 @@ HRESULT WINAPI PathCreateFromUrlW(LPCWSTR lpszUrl, LPWSTR lpszPath,
  *
  * NOTES
  *  lpszTo should be at least MAX_PATH in length.
+ *
  *  Calling this function with relative paths for lpszFrom or lpszTo may
  *  give erroneous results.
  *
@@ -3216,8 +3218,9 @@ HRESULT WINAPI PathCreateFromUrlW(LPCWSTR lpszUrl, LPWSTR lpszPath,
  *  may be referenced 1 byte beyond the end of the string. As a result random
  *  garbage may be written to the output path, depending on what lies beyond
  *  the last byte of the string. This bug occurs because of the behaviour of
- *  PathCommonPrefix (see notes for that function), and no workaround seems
+ *  PathCommonPrefix() (see notes for that function), and no workaround seems
  *  possible with Win32.
+ *
  *  This bug has been fixed here, so for example the relative path from "\\"
  *  to "\\" is correctly determined as "." in this implementation.
  */
@@ -3322,7 +3325,7 @@ BOOL WINAPI PathRelativePathToW(LPWSTR lpszPath, LPCWSTR lpszFrom, DWORD dwAttrF
  * RETURNS
  *  Success: TRUE.
  *  Failure: FALSE, if lpszPath is NULL, empty, not a directory, or calling
- *           SetFileAttributesA fails.
+ *           SetFileAttributesA() fails.
  */
 BOOL WINAPI PathUnmakeSystemFolderA(LPCSTR lpszPath)
 {
@@ -3435,8 +3438,8 @@ VOID WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR lpszPath)
  *  lpszPath [I] Path to check
  *
  * RETURNS
- *  TRUE  If path is a UNC share or mapped network drive
- *  FALSE If path is a local drive or cannot be determined
+ *  TRUE  If lpszPath is a UNC share or mapped network drive, or
+ *  FALSE If lpszPath is a local drive or cannot be determined
  */
 BOOL WINAPI PathIsNetworkPathA(LPCSTR lpszPath)
 {
@@ -3486,7 +3489,7 @@ BOOL WINAPI PathIsNetworkPathW(LPCWSTR lpszPath)
  *  lpszPath [I] Path to check
  *
  * RETURNS
- *  TRUE  If path is a long file name
+ *  TRUE  If path is a long file name,
  *  FALSE If path is a valid DOS 8.3 file name
  */
 BOOL WINAPI PathIsLFNFileSpecA(LPCSTR lpszPath)
@@ -3575,7 +3578,7 @@ BOOL WINAPI PathIsLFNFileSpecW(LPCWSTR lpszPath)
  *  lpszPath [I] Directory to check
  *
  * RETURNS
- *  TRUE  If the directory exists and contains no files
+ *  TRUE  If the directory exists and contains no files,
  *  FALSE Otherwise
  */
 BOOL WINAPI PathIsDirectoryEmptyA(LPCSTR lpszPath)
@@ -3645,13 +3648,13 @@ BOOL WINAPI PathIsDirectoryEmptyW(LPCWSTR lpszPath)
  *  dwCount    [I] Number of elements in lppszArray
  *
  * RETURNS
- *  Success The index of the position of lpszSuffix in lppszArray
- *  Failure 0, if any parameters are invalid or lpszSuffix is not found
+ *  Success: The index of the position of lpszSuffix in lppszArray
+ *  Failure: 0, if any parameters are invalid or lpszSuffix is not found
  *
  * NOTES
  *  The search is case sensitive.
  *  The match is made against the end of the suffix string, so for example:
- *  lpszSuffix=fooBAR matches BAR, but lpszSuffix=fooBARfoo does not.
+ *  lpszSuffix="fooBAR" matches "BAR", but lpszSuffix="fooBARfoo" does not.
  */
 int WINAPI PathFindSuffixArrayA(LPCSTR lpszSuffix, LPCSTR *lppszArray, int dwCount)
 {
@@ -3722,7 +3725,7 @@ int WINAPI PathFindSuffixArrayW(LPCWSTR lpszSuffix, LPCWSTR *lppszArray, int dwC
  *  Nothing
  *
  * NOTES
- *  A decorations form is "path[n].ext" where n is an optional decimal number.
+ *  A decorations form is "path[n].ext" where "n" is an optional decimal number.
  */
 VOID WINAPI PathUndecorateA(LPSTR lpszPath)
 {

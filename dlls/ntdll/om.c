@@ -62,14 +62,14 @@ NTSTATUS WINAPI NtQueryObject(
 /******************************************************************************
  *  NtQuerySecurityObject	[NTDLL.@]
  *
- * analogue to GetKernelObjectSecurity
+ * An ntdll analogue to GetKernelObjectSecurity().
  *
  * NOTES
  *  only the lowest 4 bit of SecurityObjectInformationClass are used
  *  0x7-0xf returns STATUS_ACCESS_DENIED (even running with system privileges)
  *
- * FIXME: we are constructing a fake sid
- *  (Administrators:Full, System:Full, Everyone:Read)
+ * FIXME
+ *  We are constructing a fake sid (Administrators:Full, System:Full, Everyone:Read)
  */
 NTSTATUS WINAPI
 NtQuerySecurityObject(
@@ -245,9 +245,15 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
 
 /**************************************************************************
  *                 NtClose				[NTDLL.@]
- * FUNCTION: Closes a handle reference to an object
- * ARGUMENTS:
- *	Handle	handle to close
+ *
+ * Close a handle reference to an object.
+ * 
+ * PARAMS
+ *  Handle [I] handle to close
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An NTSTATUS error code.
  */
 NTSTATUS WINAPI NtClose( HANDLE Handle )
 {
@@ -282,12 +288,17 @@ NTSTATUS WINAPI NtWaitForSingleObject(
 /**************************************************************************
  * NtOpenDirectoryObject [NTDLL.@]
  * ZwOpenDirectoryObject [NTDLL.@]
- * FUNCTION: Opens a namespace directory object
- * ARGUMENTS:
- *  DirectoryHandle	Variable which receives the directory handle
- *  DesiredAccess	Desired access to the directory
- *  ObjectAttributes	Structure describing the directory
- * RETURNS: Status
+ *
+ * Open a namespace directory object.
+ * 
+ * PARAMS
+ *  DirectoryHandle  [O] Destination for the new directory handle
+ *  DesiredAccess    [I] Desired access to the directory
+ *  ObjectAttributes [I] Structure describing the directory
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An NTSTATUS error code.
  */
 NTSTATUS WINAPI NtOpenDirectoryObject(
 	PHANDLE DirectoryHandle,
@@ -318,16 +329,21 @@ NTSTATUS WINAPI NtCreateDirectoryObject(
 /******************************************************************************
  * NtQueryDirectoryObject [NTDLL.@]
  * ZwQueryDirectoryObject [NTDLL.@]
- * FUNCTION: Reads information from a namespace directory
- * ARGUMENTS:
- *  DirObjInformation	Buffer to hold the data read
- *  BufferLength	Size of the buffer in bytes
- *  GetNextIndex	If TRUE then set ObjectIndex to the index of the next object
- *			If FALSE then set ObjectIndex to the number of objects in the directory
- *  IgnoreInputIndex	If TRUE start reading at index 0
- *			If FALSE start reading at the index specified by object index
- *  ObjectIndex		Zero based index into the directory, interpretation depends on IgnoreInputIndex and GetNextIndex
- *  DataWritten		Caller supplied storage for the number of bytes written (or NULL)
+ *
+ * Read information from a namespace directory.
+ * 
+ * PARAMS
+ *  DirObjHandle      [I]   Object handle
+ *  DirObjInformation [O]   Buffer to hold the data read
+ *  BufferLength      [I]   Size of the buffer in bytes
+ *  GetNextIndex      [I]   Set ObjectIndex to TRUE=next object, FALSE=last object
+ *  IgnoreInputIndex  [I]   Start reading at index TRUE=0, FALSE=ObjectIndex
+ *  ObjectIndex       [I/O] 0 based index into the directory, see IgnoreInputIndex and GetNextIndex
+ *  DataWritten       [O]   Caller supplied storage for the number of bytes written (or NULL)
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An NTSTATUS error code.
  */
 NTSTATUS WINAPI NtQueryDirectoryObject(
 	IN HANDLE DirObjHandle,
@@ -394,7 +410,8 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject(
 /******************************************************************************
  *  NtAllocateUuids   [NTDLL.@]
  *
- * I have seen lpdwCount pointing to a pointer once...
+ * NOTES
+ *  I have seen lpdwCount pointing to a pointer once...
  */
 NTSTATUS WINAPI NtAllocateUuids(LPDWORD lpdwCount, LPDWORD *p2, LPDWORD *p3)
 {

@@ -41,21 +41,41 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+/*************************************************************************
+ * TYPELIB {TYPELIB}
+ *
+ * This dll is the 16 bit version of the Typelib API, part the original
+ * implementation of Ole automation. It and its companion ole2disp.dll were
+ * superceeded by oleaut32.dll which provides 32 bit implementations of these
+ * functions and greatly extends the Ole Api.
+ *
+ * Winelib developers cannot use these functions directly, they are implemented
+ * solely for backwards compatibility with existing legacy applications.
+ *
+ * SEE ALSO
+ *  oleaut32(), ole2disp().
+ */
+
 /****************************************************************************
  *		QueryPathOfRegTypeLib	[TYPELIB.14]
  *
- * the path is "Classes\Typelib\<guid>\<major>.<minor>\<lcid>\win16\"
+ * Get the registry key of a registered type library.
+ *
  * RETURNS
- *	path of typelib
+ *  Success: S_OK. path is updated with the key name
+ *  Failure: E_FAIL, if guid was not found in the registry
+ *
+ * NOTES
+ *  The key takes the form "Classes\Typelib\<guid>\<major>.<minor>\<lcid>\win16\"
  */
 HRESULT WINAPI
 QueryPathOfRegTypeLib16(
-	REFGUID guid,	/* [in] referenced guid */
-	WORD wMaj,	/* [in] major version */
-	WORD wMin,	/* [in] minor version */
-	LCID lcid,	/* [in] locale id */
-	LPBSTR16 path	/* [out] path of typelib */
-) {
+	REFGUID guid,	/* [in] Guid to get the key name for */
+	WORD wMaj,	/* [in] Major version */
+	WORD wMin,	/* [in] Minor version */
+	LCID lcid,	/* [in] Locale Id */
+	LPBSTR16 path)	/* [out] Destination for the registry key name */
+{
 	char	xguid[80];
 	char	typelibkey[100],pathname[260];
 	DWORD	plen;
@@ -86,18 +106,20 @@ QueryPathOfRegTypeLib16(
 }
 
 /******************************************************************************
- * LoadTypeLib [TYPELIB.3]  Loads and registers a type library
- * NOTES
- *    Docs: OLECHAR FAR* szFile
- *    Docs: iTypeLib FAR* FAR* pptLib
+ * LoadTypeLib [TYPELIB.3]
+ *
+ * Load and register a type library.
  *
  * RETURNS
- *    Success: S_OK
- *    Failure: Status
+ *  Success: S_OK. pptLib contains the type libraries ITypeLib interface.
+ *  Failure: An HRESULT error code.
+ *
+ * NOTES
+ *  Both parameters are FAR pointers.
  */
 HRESULT WINAPI LoadTypeLib16(
     LPOLESTR szFile, /* [in] Name of file to load from */
-    ITypeLib** pptLib) /* [out] Pointer to pointer to loaded type library */
+    ITypeLib** pptLib) /* [out] Destination for loaded ITypeLib interface */
 {
     FIXME("(%s,%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
 
@@ -110,16 +132,26 @@ HRESULT WINAPI LoadTypeLib16(
 /****************************************************************************
  *	OaBuildVersion				(TYPELIB.15)
  *
- * known TYPELIB.DLL versions:
+ * Get the Ole Automation build version.
  *
- * OLE 2.01 no OaBuildVersion() avail	1993	--	---
- * OLE 2.02				1993-94	02     3002
- * OLE 2.03					23	730
- * OLE 2.03					03     3025
- * OLE 2.03 W98 SE orig. file !!	1993-95	10     3024
- * OLE 2.1   NT				1993-95	??	???
- * OLE 2.3.1 W95				23	700
- * OLE2 4.0  NT4SP6			1993-98	40     4277
+ * PARAMS
+ *  None
+ *
+ * RETURNS
+ *  The build version.
+ *
+ * NOTES
+ *  Known typelib.dll versions:
+ *| OLE Ver.  Comments                   Date    Build Ver.
+ *| --------  -------------------------  ----    ---------
+ *| OLE 2.01  Call not available         1993     N/A
+ *| OLE 2.02                             1993-94  02 3002
+ *| OLE 2.03                                      23 730
+ *| OLE 2.03                                      03 3025
+ *| OLE 2.03  W98 SE orig. file !!       1993-95  10 3024
+ *| OLE 2.1   NT                         1993-95  ?? ???
+ *| OLE 2.3.1 W95                                 23 700
+ *| OLE2 4.0  NT4SP6                     1993-98  40 4277
  */
 DWORD WINAPI OaBuildVersion16(void)
 {

@@ -76,7 +76,9 @@ static int SHELL_Attach = 0;
  * Initialization code for shell.dll. Automatically loads the
  * 32-bit shell32.dll to allow thunking up to 32-bit code.
  *
- * RETURNS:
+ * RETURNS
+ *  Success: TRUE. Initialization completed successfully.
+ *  Failure: FALSE.
  */
 BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
 				WORD ds, WORD HeapSize, DWORD res1, WORD res2)

@@ -224,12 +224,6 @@ HRESULT WINAPI ILSaveToStream (IStream * pStream, LPCITEMIDLIST pPidl)
 	return ret;
 }
 
-/*************************************************************************
- * SHILCreateFromPath	[SHELL32.28]
- *
- * NOTES
- *   wraper for IShellFolder::ParseDisplayName()
- */
 HRESULT WINAPI SHILCreateFromPathA (LPCSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {	LPSHELLFOLDER sf;
 	WCHAR lpszDisplayName[MAX_PATH];
@@ -248,6 +242,7 @@ HRESULT WINAPI SHILCreateFromPathA (LPCSTR path, LPITEMIDLIST * ppidl, DWORD * a
 	}
 	return ret;
 }
+
 HRESULT WINAPI SHILCreateFromPathW (LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {	LPSHELLFOLDER sf;
 	DWORD pchEaten;
@@ -262,6 +257,13 @@ HRESULT WINAPI SHILCreateFromPathW (LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * 
 	}
 	return ret;
 }
+
+/*************************************************************************
+ * SHILCreateFromPath   [SHELL32.28]
+ *
+ * NOTES
+ *   Wrapper for IShellFolder_ParseDisplayName().
+ */
 HRESULT WINAPI SHILCreateFromPathAW (LPCVOID path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {
 	if ( SHELL_OsIsUnicode())

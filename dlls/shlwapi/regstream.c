@@ -469,14 +469,14 @@ IStream * WINAPI SHOpenRegStreamW(HKEY hkey, LPCWSTR pszSubkey,
 /*************************************************************************
  * @   [SHLWAPI.12]
  *
- * Create a stream on a block of memory.
+ * Create an IStream object on a block of memory.
  *
  * PARAMS
- * lpbData   [I] Memory block to create the stream on
+ * lpbData   [I] Memory block to create the IStream object on
  * dwDataLen [I] Length of data block
  *
  * RETURNS
- * Success: A pointer to the stream object.
+ * Success: A pointer to the IStream object.
  * Failure: NULL, if any parameters are invalid or an error occurs.
  *
  * NOTES
@@ -508,16 +508,16 @@ IStream * WINAPI SHLWAPI_12(LPBYTE lpbData, DWORD dwDataLen)
 /*************************************************************************
  * SHCreateStreamWrapper   [SHLWAPI.@]
  *
- * Create a stream on a block of memory.
+ * Create an IStream object on a block of memory.
  *
  * PARAMS
- * lpbData    [I] Memory block to create the stream on
+ * lpbData    [I] Memory block to create the IStream object on
  * dwDataLen  [I] Length of data block
  * dwReserved [I] Reserved, Must be 0.
- * lppStream  [O] Destination for stream object
+ * lppStream  [O] Destination for IStream object
  *
  * RETURNS
- * Success: S_OK. lppStream contains the new stream object.
+ * Success: S_OK. lppStream contains the new IStream object.
  * Failure: E_INVALIDARG, if any parameters are invalid,
  *          E_OUTOFMEMORY if memory allocation fails.
  *

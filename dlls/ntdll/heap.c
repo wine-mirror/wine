@@ -934,6 +934,20 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
 
 /***********************************************************************
  *           RtlCreateHeap   (NTDLL.@)
+ *
+ * Create a new Heap.
+ *
+ * PARAMS
+ *  flags      [I] HEAP_ flags from "winnt.h"
+ *  addr       [I] Desired base address
+ *  totalSize  [I] Total size of the heap, or 0 for a growable heap
+ *  commitSize [I] Amount of heap space to commit
+ *  unknown    [I] Not yet understood
+ *  definition [I] Heap definition
+ *
+ * RETURNS
+ *  Success: A HANDLE to the newly created heap.
+ *  Failure: a NULL HANDLE.
  */
 HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, ULONG totalSize, ULONG commitSize,
                              PVOID unknown, PRTL_HEAP_DEFINITION definition )
@@ -969,6 +983,15 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, ULONG totalSize, ULONG com
 
 /***********************************************************************
  *           RtlDestroyHeap   (NTDLL.@)
+ *
+ * Destroy a Heap created with RtlCreateHeap().
+ *
+ * PARAMS
+ *  heap [I] Heap to destroy.
+ *
+ * RETURNS
+ *  Success: A NULL HANDLE, if heap is NULL or it was destroyed
+ *  Failure: The Heap handle, if heap is the process heap.
  */
 HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
 {
@@ -1006,7 +1029,19 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
 /***********************************************************************
  *           RtlAllocateHeap   (NTDLL.@)
  *
- * NOTE: does not set last error.
+ * Allocate a memory block from a Heap.
+ *
+ * PARAMS
+ *  heap  [I] Heap to allocate block from
+ *  flags [I] HEAP_ flags from "winnt.h"
+ *  size  [I] Size of the memory block to allocate
+ *
+ * RETURNS
+ *  Success: A pointer to the newly allocated block
+ *  Failure: NULL.
+ *
+ * NOTES
+ *  This call does not SetLastError().
  */
 PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, ULONG size )
 {
@@ -1068,6 +1103,17 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, ULONG size )
 
 /***********************************************************************
  *           RtlFreeHeap   (NTDLL.@)
+ *
+ * Free a memory block allocated with RtlAllocateHeap().
+ *
+ * PARAMS
+ *  heap  [I] Heap that block was allocated from
+ *  flags [I] HEAP_ flags from "winnt.h"
+ *  ptr   [I] Block to free
+ *
+ * RETURNS
+ *  Success: TRUE, if ptr is NULL or was freed successfully.
+ *  Failure: FALSE.
  */
 BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 {
@@ -1112,6 +1158,18 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
 /***********************************************************************
  *           RtlReAllocateHeap   (NTDLL.@)
+ *
+ * Change the size of a memory block allocated with RtlAllocateHeap().
+ *
+ * PARAMS
+ *  heap  [I] Heap that block was allocated from
+ *  flags [I] HEAP_ flags from "winnt.h"
+ *  ptr   [I] Block to resize
+ *  size  [I] Size of the memory block to allocate
+ *
+ * RETURNS
+ *  Success: A pointer to the resized block (which may be different).
+ *  Failure: NULL.
  */
 PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size )
 {
@@ -1231,6 +1289,18 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
 
 /***********************************************************************
  *           RtlCompactHeap   (NTDLL.@)
+ *
+ * Compact the free space in a Heap.
+ *
+ * PARAMS
+ *  heap  [I] Heap that block was allocated from
+ *  flags [I] HEAP_ flags from "winnt.h"
+ *
+ * RETURNS
+ *  The number of bytes compacted.
+ *
+ * NOTES
+ *  This function is a harmless stub.
  */
 ULONG WINAPI RtlCompactHeap( HANDLE heap, ULONG flags )
 {
@@ -1241,6 +1311,15 @@ ULONG WINAPI RtlCompactHeap( HANDLE heap, ULONG flags )
 
 /***********************************************************************
  *           RtlLockHeap   (NTDLL.@)
+ *
+ * Lock a Heap.
+ *
+ * PARAMS
+ *  heap  [I] Heap to lock
+ *
+ * RETURNS
+ *  Success: TRUE. The Heap is locked.
+ *  Failure: FALSE, if heap is invalid.
  */
 BOOLEAN WINAPI RtlLockHeap( HANDLE heap )
 {
@@ -1253,6 +1332,15 @@ BOOLEAN WINAPI RtlLockHeap( HANDLE heap )
 
 /***********************************************************************
  *           RtlUnlockHeap   (NTDLL.@)
+ *
+ * Unlock a Heap.
+ *
+ * PARAMS
+ *  heap  [I] Heap to unlock
+ *
+ * RETURNS
+ *  Success: TRUE. The Heap is unlocked.
+ *  Failure: FALSE, if heap is invalid.
  */
 BOOLEAN WINAPI RtlUnlockHeap( HANDLE heap )
 {
@@ -1265,6 +1353,20 @@ BOOLEAN WINAPI RtlUnlockHeap( HANDLE heap )
 
 /***********************************************************************
  *           RtlSizeHeap   (NTDLL.@)
+ *
+ * Get the actual size of a memory block allocated from a Heap.
+ *
+ * PARAMS
+ *  heap  [I] Heap that block was allocated from
+ *  flags [I] HEAP_ flags from "winnt.h"
+ *  ptr   [I] Block to get the size of
+ *
+ * RETURNS
+ *  Success: The size of the block.
+ *  Failure: -1, heap or ptr are invalid.
+ *
+ * NOTES
+ *  The size may be bigger than what was passed to RtlAllocateHeap().
  */
 ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 {
@@ -1299,20 +1401,32 @@ ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
 /***********************************************************************
  *           RtlValidateHeap   (NTDLL.@)
+ *
+ * Determine if a block is a valid alloction from a heap.
+ *
+ * PARAMS
+ *  heap  [I] Heap that block was allocated from
+ *  flags [I] HEAP_ flags from "winnt.h"
+ *  ptr   [I] Block to check
+ *
+ * RETURNS
+ *  Success: TRUE. The block was allocated from heap.
+ *  Failure: FALSE, if heap is invalid or ptr was not allocated from it.
  */
-BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, LPCVOID block )
+BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, LPCVOID ptr )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;
-    return HEAP_IsRealArena( heapPtr, flags, block, QUIET );
+    return HEAP_IsRealArena( heapPtr, flags, ptr, QUIET );
 }
 
 
 /***********************************************************************
  *           RtlWalkHeap    (NTDLL.@)
  *
- * FIXME: the PROCESS_HEAP_ENTRY flag values seem different between this
- *        function and HeapWalk. To be checked.
+ * FIXME
+ *  The PROCESS_HEAP_ENTRY flag values seem different between this
+ *  function and HeapWalk(). To be checked.
  */
 NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
 {
@@ -1422,6 +1536,16 @@ HW_end:
 
 /***********************************************************************
  *           RtlGetProcessHeaps    (NTDLL.@)
+ *
+ * Get the Heaps belonging to the current process.
+ *
+ * PARAMS
+ *  count [I] size of heaps
+ *  heaps [O] Destination array for heap HANDLE's
+ *
+ * RETURNS
+ *  Success: The number of Heaps allocated by the process.
+ *  Failure: 0.
  */
 ULONG WINAPI RtlGetProcessHeaps( ULONG count, HANDLE *heaps )
 {

@@ -288,26 +288,29 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
 }
 
 /**************************************************************************
-*		IShellFolder_fnParseDisplayName
-* PARAMETERS
-*  HWND          hwndOwner,      //[in ] Parent window for any message's
-*  LPBC          pbc,            //[in ] reserved
-*  LPOLESTR      lpszDisplayName,//[in ] "Unicode" displayname.
-*  ULONG*        pchEaten,       //[out] (unicode) characters processed
-*  LPITEMIDLIST* ppidl,          //[out] complex pidl to item
-*  ULONG*        pdwAttributes   //[out] items attributes
+* IShellFolder_ParseDisplayName {SHELL32}
+*
+* Parse a display name.
+*
+* PARAMS
+*  hwndOwner       [in]  Parent window for any message's
+*  pbc             [in]  Reserved
+*  lpszDisplayName [in]  Unicode displayname.
+*  pchEaten        [out] (unicode) characters processed
+*  ppidl           [out] complex pidl to item
+*  pdwAttributes   [out] items attributes
 *
 * NOTES
-*  every folder tries to parse only its own (the leftmost) pidl and creates a
-*  subfolder to evaluate the remaining parts
-*  now we can parse into namespaces implemented by shell extensions
+*  Every folder tries to parse only its own (the leftmost) pidl and creates a
+*  subfolder to evaluate the remaining parts.
+*  Now we can parse into namespaces implemented by shell extensions
 *
-*  behaviour on win98:	lpszDisplayName=NULL -> chrash
+*  Behaviour on win98:	lpszDisplayName=NULL -> crash
 *			lpszDisplayName="" -> returns mycoputer-pidl
 *
-* FIXME:
-*    pdwAttributes: not set
-*    pchEaten: not set like in windows
+* FIXME
+*    pdwAttributes is not set
+*    pchEaten is not set like in windows
 */
 static HRESULT WINAPI
 IShellFolder_fnParseDisplayName (IShellFolder2 * iface,

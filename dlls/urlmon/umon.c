@@ -1,12 +1,8 @@
 /*
  * UrlMon
  *
- * Copyright 1999 Corel Corporation
- *
- * Ulrich Czekalla
- *
+ * Copyright 1999 Ulrich Czekalla for Corel Corporation
  * Copyright 2002 Huw D M Davies for CodeWeavers
- *
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -806,8 +802,10 @@ static HRESULT WINAPI URLMonikerImpl_IBinding_Suspend(IBinding* iface)
 /***********************************************************************
  *           CreateAsyncBindCtxEx (URLMON.@)
  *
- * not implemented
+ * Create an asynchronous bind context.
  *
+ * FIXME
+ *   Not implemented.
  */
 HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
     IBindStatusCallback *callback, IEnumFORMATETC *format, IBindCtx** pbind,
@@ -821,13 +819,17 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
 /***********************************************************************
  *           CreateURLMoniker (URLMON.@)
  *
- * Create a url moniker
+ * Create a url moniker.
+ *
+ * PARAMS
+ *    pmkContext [I] Context
+ *    szURL      [I] Url to create the moniker for
+ *    ppmk       [O] Destination for created moniker.
  *
  * RETURNS
- *    S_OK 		success
- *    E_OUTOFMEMORY	out of memory
- *    MK_E_SYNTAX	not a valid url
- *
+ *    Success: S_OK. ppmk contains the created IMoniker object.
+ *    Failure: MK_E_SYNTAX if szURL is not a valid url, or
+ *             E_OUTOFMEMORY if memory allocation fails.
  */
 HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk)
 {
@@ -855,13 +857,18 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
 /***********************************************************************
  *           CoInternetGetSession (URLMON.@)
  *
- * Creates a session and returns a pointer to an InternetSession interface.
+ * Create a new internet session and return an IInternetSession interface
+ * representing it.
+ *
+ * PARAMS
+ *    dwSessionMode      [I] Mode for the internet session
+ *    ppIInternetSession [O] Destination for creates IInternetSession object
+ *    dwReserved         [I] Reserved, must be 0.
  *
  * RETURNS
- *    S_OK 		success
- *    E_OUTOFMEMORY	out of memory
- *    E_INVALIDARG	invalid argument
- *
+ *    Success: S_OK. ppIInternetSession contains the IInternetSession interface.
+ *    Failure: E_INVALIDARG, if any argument is invalid, or
+ *             E_OUTOFMEMORY if memory allocation fails.
  */
 HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, /*IInternetSession*/void **ppIInternetSession, DWORD dwReserved)
 {
@@ -916,13 +923,18 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
 /***********************************************************************
  *           RegisterBindStatusCallback (URLMON.@)
  *
- * Register a bind status callback
+ * Register a bind status callback.
+ *
+ * PARAMS
+ *  pbc           [I] Binding context
+ *  pbsc          [I] Callback to register
+ *  ppbscPrevious [O] Destination for previous callback
+ *  dwReserved    [I] Reserved, must be 0.
  *
  * RETURNS
- *    S_OK 		success
- *    E_INVALIDARG  invalid argument(s)
- *    E_OUTOFMEMORY	out of memory
- *
+ *    Success: S_OK.
+ *    Failure: E_INVALIDARG, if any argument is invalid, or
+ *             E_OUTOFMEMORY if memory allocation fails.
  */
 HRESULT WINAPI RegisterBindStatusCallback(
     IBindCtx *pbc,
@@ -952,13 +964,15 @@ HRESULT WINAPI RegisterBindStatusCallback(
 /***********************************************************************
  *           RevokeBindStatusCallback (URLMON.@)
  *
- * Unregister a bind status callback
+ * Unregister a bind status callback.
+ *
+ *  pbc           [I] Binding context
+ *  pbsc          [I] Callback to unregister
  *
  * RETURNS
- *    S_OK 		success
- *    E_INVALIDARG  invalid argument(s)
- *    E_FAIL pbsc wasn't registered with pbc
- *
+ *    Success: S_OK.
+ *    Failure: E_INVALIDARG, if any argument is invalid, or
+ *             E_FAIL if pbsc wasn't registered with pbc.
  */
 HRESULT WINAPI RevokeBindStatusCallback(
     IBindCtx *pbc,
@@ -988,10 +1002,15 @@ HRESULT WINAPI RevokeBindStatusCallback(
 /***********************************************************************
  *           ReleaseBindInfo (URLMON.@)
  *
- * Releases the resources used by the specified BINDINFO structure   
+ * Release the resources used by the specified BINDINFO structure.
  *
+ * PARAMS
+ *  pbindinfo [I] BINDINFO to release.
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
 {
-    FIXME("stub\n");
+    FIXME("(%p)stub!\n", pbindinfo);
 }

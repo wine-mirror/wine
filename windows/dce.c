@@ -523,12 +523,15 @@ END:
 
 /***********************************************************************
  *		GetDC (USER32.@)
+ *
+ * Get a device context.
+ *
  * RETURNS
- *	:Handle to DC
- *	NULL: Failure
+ *	Success: Handle to the device context
+ *	Failure: NULL.
  */
 HDC WINAPI GetDC(
-	     HWND hwnd /* [in] handle of window */
+	     HWND hwnd /* [in] handle of window - may be NULL */
 ) {
     if (!hwnd)
         return GetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
@@ -548,12 +551,14 @@ HDC WINAPI GetWindowDC( HWND hwnd )
 /***********************************************************************
  *		ReleaseDC (USER32.@)
  *
+ * Release a device context.
+ *
  * RETURNS
- *	1: Success
- *	0: Failure
+ *	Success: Non-zero. Resources used by hdc are released.
+ *	Failure: 0.
  */
 INT WINAPI ReleaseDC(
-             HWND hwnd /* [in] Handle of window - ignored */,
+             HWND hwnd, /* [in] Handle of window - ignored */
              HDC hdc   /* [in] Handle of device context */
 ) {
     DCE * dce;

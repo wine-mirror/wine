@@ -583,36 +583,30 @@ static int identity(int c)
  *
  * Convert a string, or generate a sort key from it.
  *
- * If (mapflags & LCMAP_SORTKEY), the function will generate
- * a sort key for the source string.  Else, it will convert it
- * accordingly to the flags LCMAP_UPPERCASE, LCMAP_LOWERCASE,...
- *
  * RETURNS
- *    Error : 0.
- *    Success : length of the result string.
+ *    Success: The length of the string written to dststr.
+ *    Failure: 0.
  *
  * NOTES
- *    If called with scrlen = -1, the function will compute the length
- *      of the 0-terminated string strsrc by itself.
- *
- *    If called with dstlen = 0, returns the buffer length that
- *      would be required.
- *
- *    NORM_IGNOREWIDTH means to compare ASCII and wide characters
+ *   -If mapflags includes LCMAP_SORTKEY, the function will generate a
+ *    sort key for srcstr. Otherwise, srcstr is converted according to
+ *    mapflags.
+ *   -If scrlen is -1, the function will compute the length of strsrc
+ *    (which must be NUL terminated)  itself.
+ *   -If dstlen is 0, The return value is the buffer length that is needed.
+ *   -NORM_IGNOREWIDTH means to compare ASCII and wide characters
  *    as if they are equal.
  *    In the only code page implemented so far, there may not be
- *    wide characters in strings passed to LCMapStringA,
+ *    wide characters in strings passed to this function,
  *    so there is nothing to be done for this flag.
  */
 INT WINAPI LCMapStringA(
-	LCID lcid,      /* [in] locale identifier created with MAKELCID;
-		                LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are
-                                predefined values. */
-	DWORD mapflags, /* [in] flags */
-	LPCSTR srcstr,  /* [in] source buffer */
-	INT srclen,     /* [in] source length */
-	LPSTR dststr,   /* [out] destination buffer */
-	INT dstlen)     /* [in] destination buffer length */
+	LCID lcid,      /* [in] Locale Id */
+	DWORD mapflags, /* [in] Flags */
+	LPCSTR srcstr,  /* [in] Source buffer */
+	INT srclen,     /* [in] Length of srcstr */
+	LPSTR dststr,   /* [out] Destination buffer */
+	INT dstlen)     /* [in] Length of dststr */
 {
   int i;
 
@@ -844,11 +838,7 @@ INT WINAPI LCMapStringA(
 /*************************************************************************
  *              LCMapStringW                [KERNEL32.@]
  *
- * Convert a string, or generate a sort key from it.
- *
- * NOTE
- *
- * See LCMapStringA for documentation
+ * See LCMapStringA.
  */
 INT WINAPI LCMapStringW(
 	LCID lcid,DWORD mapflags,LPCWSTR srcstr,INT srclen,LPWSTR dststr,

@@ -38,8 +38,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 /******************************************************************************
  * GetUserNameA [ADVAPI32.@]
  *
- * NOTE: lpSize returns the total length of the username, including the
- * terminating null character.
+ * Get the current user name.
+ *
+ * PARAMS
+ *  lpszName [O]   Destination for the user name.
+ *  lpSize   [I/O] Size of lpszName.
+ *
+ * RETURNS
+ *  Success: The length of the user name, including terminating NUL.
+ *  Failure: ERROR_MORE_DATA if *lpSize is too small.
  */
 BOOL WINAPI
 GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
@@ -64,9 +71,7 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 /******************************************************************************
  * GetUserNameW [ADVAPI32.@]
  *
- * PARAMS
- *   lpszName []
- *   lpSize   []
+ * See GetUserNameA.
  */
 BOOL WINAPI
 GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
@@ -88,21 +93,39 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 
 /******************************************************************************
  * GetCurrentHwProfileA [ADVAPI32.@]
+ *
+ * Get the current hardware profile.
+ *
+ * PARAMS
+ *  pInfo [O] Destination for hardware profile information.
+ *
+ * RETURNS
+ *  Success: TRUE. pInfo is updated with the hardware profile details.
+ *  Failure: FALSE.
  */
-BOOL WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA info)
+BOOL WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA pInfo)
 {
-	FIXME("Mostly Stub\n");
-	info->dwDockInfo = DOCKINFO_DOCKED;
-	strcpy(info->szHwProfileGuid,"{12340001-1234-1234-1234-1233456789012}");
-	strcpy(info->szHwProfileName,"Wine Profile");
+	FIXME("(%p) semi-stub\n", pInfo);
+	pInfo->dwDockInfo = DOCKINFO_DOCKED;
+	strcpy(pInfo->szHwProfileGuid,"{12340001-1234-1234-1234-1233456789012}");
+	strcpy(pInfo->szHwProfileName,"Wine Profile");
 	return 1;
 }
 
 /******************************************************************************
  * AbortSystemShutdownA [ADVAPI32.@]
  *
+ * Stop a system shutdown if one is in progress.
+ *
  * PARAMS
- * 	lpMachineName
+ *  lpMachineName [I] Name of machine to not shutdown.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ *
+ * NOTES
+ *  The Wine implementation of this function is a harmless stub.
  */
 BOOL WINAPI AbortSystemShutdownA( LPSTR lpMachineName )
 {
@@ -113,8 +136,7 @@ BOOL WINAPI AbortSystemShutdownA( LPSTR lpMachineName )
 /******************************************************************************
  * AbortSystemShutdownW [ADVAPI32.@]
  *
- * PARAMS
- * 	lpMachineName
+ * See AbortSystemShutdownA.
  */
 BOOL WINAPI AbortSystemShutdownW( LPCWSTR lpMachineName )
 {

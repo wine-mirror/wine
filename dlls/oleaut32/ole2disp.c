@@ -71,34 +71,69 @@ static void* BSTR_GetAddr(BSTR16 in)
 
 /******************************************************************************
  *		SysAllocString	[OLE2DISP.2]
+ *
+ * Create a BSTR16 from an OLESTR16 (16 Bit).
+ *
+ * PARAMS
+ *  oleStr [I] Source to create BSTR16 from
+ *
+ * RETURNS
+ *  Success: A BSTR16 allocated with SysAllocStringLen16().
+ *  Failure: NULL, if oleStr is NULL.
  */
-BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
+BSTR16 WINAPI SysAllocString16(LPCOLESTR16 oleStr)
 {
 	BSTR16 out;
 
-	if (!in) return 0;
+	if (!oleStr) return 0;
 
-	out = BSTR_AllocBytes(strlen(in)+1);
+	out = BSTR_AllocBytes(strlen(oleStr)+1);
 	if (!out) return 0;
-	strcpy(BSTR_GetAddr(out),in);
+	strcpy(BSTR_GetAddr(out),oleStr);
 	return out;
 }
 
 /******************************************************************************
  *		SysReallocString	[OLE2DISP.3]
+ *
+ * Change the length of a previously created BSTR16 (16 Bit).
+ *
+ * PARAMS
+ *  pbstr  [I] BSTR16 to change the length of
+ *  oleStr [I] New source for pbstr
+ *
+ * RETURNS
+ *  Success: 1
+ *  Failure: 0.
+ *
+ * NOTES
+ *  SysAllocStringStringLen16().
  */
-INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPCOLESTR16 in)
+INT16 WINAPI SysReAllocString16(LPBSTR16 pbstr,LPCOLESTR16 oleStr)
 {
-	BSTR16 new=SysAllocString16(in);
-	BSTR_Free(*old);
-	*old=new;
+	BSTR16 new=SysAllocString16(oleStr);
+	BSTR_Free(*pbstr);
+	*pbstr=new;
 	return 1;
 }
 
 /******************************************************************************
  *		SysAllocStringLen	[OLE2DISP.4]
+ *
+ * Create a BSTR16 from an OLESTR16 of a given character length (16 Bit).
+ *
+ * PARAMS
+ *  oleStr [I] Source to create BSTR16 from
+ *  len    [I] Length of oleStr in wide characters
+ *
+ * RETURNS
+ *  Success: A newly allocated BSTR16 from SysAllocStringByteLen16()
+ *  Failure: NULL, if len is >= 0x80000000, or memory allocation fails.
+ *
+ * NOTES
+ *  See SysAllocStringByteLen16().
  */
-BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
+BSTR16 WINAPI SysAllocStringLen16(const char *oleStr, int len)
 {
 	BSTR16 out=BSTR_AllocBytes(len+1);
 
@@ -110,8 +145,8 @@ BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
      * Since it is valid to pass a NULL pointer here, we'll initialize the
      * buffer to nul if it is the case.
      */
-    if (in != 0)
-	strcpy(BSTR_GetAddr(out),in);
+    if (oleStr != 0)
+	strcpy(BSTR_GetAddr(out),oleStr);
     else
       memset(BSTR_GetAddr(out), 0, len+1);
 
@@ -120,9 +155,25 @@ BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
 
 /******************************************************************************
  *		SysReAllocStringLen	[OLE2DISP.5]
+ *
+ * Change the length of a previously created BSTR16 (16 Bit).
+ *
+ * PARAMS
+ *  pbstr  [I] BSTR16 to change the length of
+ *  oleStr [I] New source for pbstr
+ *  len    [I] Length of oleStr in characters
+ *
+ * RETURNS
+ *  Success: 1. The size of pbstr is updated.
+ *  Failure: 0, if len >= 0x8000 or memory allocation fails.
+ *
+ * NOTES
+ *  See SysAllocStringByteLen16().
+ *  *pbstr may be changed by this function.
  */
 int WINAPI SysReAllocStringLen16(BSTR16 *old,const char *in,int len)
 {
+	/* FIXME: Check input length */
 	BSTR16 new=SysAllocStringLen16(in,len);
 	BSTR_Free(*old);
 	*old=new;
@@ -131,14 +182,30 @@ int WINAPI SysReAllocStringLen16(BSTR16 *old,const char *in,int len)
 
 /******************************************************************************
  *		SysFreeString	[OLE2DISP.6]
+ *
+ * Free a BSTR16 (16 Bit).
+ *
+ * PARAMS
+ *  str [I] String to free.
+ *
+ * RETURNS
+ *  Nothing.
  */
-void WINAPI SysFreeString16(BSTR16 in)
+void WINAPI SysFreeString16(BSTR16 str)
 {
-	BSTR_Free(in);
+	BSTR_Free(str);
 }
 
 /******************************************************************************
  *		SysStringLen	[OLE2DISP.7]
+ *
+ * Get the allocated length of a BSTR16 in characters (16 Bit).
+ *
+ * PARAMS
+ *  str [I] BSTR16 to find the length of
+ *
+ * RETURNS
+ *  The allocated length of str, or 0 if str is NULL.
  */
 int WINAPI SysStringLen16(BSTR16 str)
 {

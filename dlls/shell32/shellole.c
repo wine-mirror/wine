@@ -417,11 +417,19 @@ static ICOM_VTABLE(IMalloc) VT_Shell_IMalloc32 =
 
 /*************************************************************************
  *			 SHGetMalloc			[SHELL32.@]
- * returns the interface to shell malloc.
+ *
+ * Return the shell IMalloc interface.
+ *
+ * PARAMS
+ *  lpmal [O] Destination for IMalloc interface.
+ *
+ * RETURNS
+ *  Success: S_OK. lpmal contains the shells IMalloc interface.
+ *  Failure. An HRESULT error code.
  *
  * NOTES
- *  uses OLE32.CoGetMalloc if OLE32.DLL is already loaded.
- *  if not it uses a internal implementations as fallback.
+ *  This function will use CoGetMalloc() if OLE32.DLL is already loaded.
+ *  If not it uses an internal implementation as a fallback.
  */
 HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal)
 {

@@ -89,13 +89,17 @@ HKEY REG_GetHKEYFromHUSKEY(HUSKEY hUSKey, BOOL which)
  * SHRegOpenUSKeyA	[SHLWAPI.@]
  *
  * Opens a user-specific registry key
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from RegOpenKeyExA().
  */
 LONG WINAPI SHRegOpenUSKeyA(
-        LPCSTR Path,
-        REGSAM AccessType,
-        HUSKEY hRelativeUSKey,
-        PHUSKEY phNewUSKey,
-        BOOL fIgnoreHKCU)
+        LPCSTR Path, /* [I] Key name to open */
+        REGSAM AccessType, /* [I] Access type */
+        HUSKEY hRelativeUSKey, /* [I] Relative user key */
+        PHUSKEY phNewUSKey, /* [O] Destination for created key */
+        BOOL fIgnoreHKCU)  /* [I] TRUE=Don't check HKEY_CURRENT_USER */
 {
     HKEY openHKCUkey=0;
     HKEY openHKLMkey=0;
@@ -155,7 +159,7 @@ LONG WINAPI SHRegOpenUSKeyA(
 /*************************************************************************
  * SHRegOpenUSKeyW	[SHLWAPI.@]
  *
- * Opens a user-specific registry key
+ * See SHRegOpenUSKeyA.
  */
 LONG WINAPI SHRegOpenUSKeyW(
         LPCWSTR Path,
@@ -221,10 +225,14 @@ LONG WINAPI SHRegOpenUSKeyW(
 /*************************************************************************
  * SHRegCloseUSKey	[SHLWAPI.@]
  *
- * Closes a user-specific registry key
+ * Close a user-specific registry key
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from RegCloseKey().
  */
 LONG WINAPI SHRegCloseUSKey(
-        HUSKEY hUSKey)
+        HUSKEY hUSKey) /* [I] Key to close */
 {
     LPInternal_HUSKEY mihk = (LPInternal_HUSKEY)hUSKey;
     LONG ret = ERROR_SUCCESS;
@@ -239,16 +247,22 @@ LONG WINAPI SHRegCloseUSKey(
 
 /*************************************************************************
  *      SHRegQueryUSValueA	[SHLWAPI.@]
+ *
+ * Query a user-specific registry value.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from RegQueryValueExA().
  */
 LONG WINAPI SHRegQueryUSValueA(
-	HUSKEY hUSKey,             /* [in]  */
-	LPCSTR pszValue,
-	LPDWORD pdwType,
-	LPVOID pvData,
-	LPDWORD pcbData,
-	BOOL fIgnoreHKCU,
-	LPVOID pvDefaultData,
-	DWORD dwDefaultDataSize)
+	HUSKEY hUSKey, /* [I] Key to query */
+	LPCSTR pszValue, /* [I] Value name under hUSKey */
+	LPDWORD pdwType, /* [O] Destination for value type */
+	LPVOID pvData, /* [O] Destination for value data */
+	LPDWORD pcbData, /* [O] Destination for value length */
+	BOOL fIgnoreHKCU,  /* [I] TRUE=Don't check HKEY_CURRENT_USER */
+	LPVOID pvDefaultData, /* [I] Default data if pszValue does not exist */
+	DWORD dwDefaultDataSize) /* [I] Length of pvDefaultData */
 {
 	LONG ret = ~ERROR_SUCCESS;
 	LONG i, maxmove;
@@ -288,9 +302,11 @@ LONG WINAPI SHRegQueryUSValueA(
 
 /*************************************************************************
  *      SHRegQueryUSValueW	[SHLWAPI.@]
+ *
+ * See SHRegQueryUSValueA.
  */
 LONG WINAPI SHRegQueryUSValueW(
-	HUSKEY hUSKey,             /* [in]  */
+	HUSKEY hUSKey,
 	LPCWSTR pszValue,
 	LPDWORD pdwType,
 	LPVOID pvData,
@@ -337,18 +353,24 @@ LONG WINAPI SHRegQueryUSValueW(
 /*************************************************************************
  * SHRegGetUSValueA	[SHLWAPI.@]
  *
- * Gets a user-specific registry value
- *   Will open the key, query the value, and close the key
+ * Get a user-specific registry value.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from SHRegOpenUSKeyA() or SHRegQueryUSValueA().
+ *
+ * NOTES
+ *   This function opens pSubKey, queries the value, and then closes the key.
  */
 LONG WINAPI SHRegGetUSValueA(
-	LPCSTR   pSubKey,
-	LPCSTR   pValue,
-	LPDWORD  pwType,
-	LPVOID   pvData,
-	LPDWORD  pcbData,
-	BOOL     flagIgnoreHKCU,
-	LPVOID   pDefaultData,
-	DWORD    wDefaultDataSize)
+	LPCSTR   pSubKey, /* [I] Key name to open */
+	LPCSTR   pValue, /* [I] Value name to open */
+	LPDWORD  pwType, /* [O] Destination for the type of the value */
+	LPVOID   pvData, /* [O] Destination for the value */
+	LPDWORD  pcbData, /* [I] Destination for the length of the value **/
+	BOOL     flagIgnoreHKCU, /* [I] TRUE=Don't check HKEY_CURRENT_USER */
+	LPVOID   pDefaultData, /* [I] Default value if it doesn't exist */
+	DWORD    wDefaultDataSize) /* [I] Length of pDefaultData */
 {
 	HUSKEY myhuskey;
 	LONG ret;
@@ -371,8 +393,7 @@ LONG WINAPI SHRegGetUSValueA(
 /*************************************************************************
  * SHRegGetUSValueW	[SHLWAPI.@]
  *
- * Gets a user-specific registry value
- *   Will open the key, query the value, and close the key
+ * See SHRegGetUSValueA.
  */
 LONG WINAPI SHRegGetUSValueW(
 	LPCWSTR  pSubKey,
@@ -464,12 +485,25 @@ LONG WINAPI SHRegSetUSValueW(
 
 /*************************************************************************
  * SHRegGetBoolUSValueA   [SHLWAPI.@]
+ *
+ * Get a user-specific registry boolean value.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from SHRegOpenUSKeyA() or SHRegQueryUSValueA().
+ *
+ * NOTES
+ *   This function opens pszSubKey, queries the value, and then closes the key.
+ *
+ *   Boolean values are one of the following:
+ *   True: YES,TRUE,non-zero
+ *   False: NO,FALSE,0
  */
 BOOL WINAPI SHRegGetBoolUSValueA(
-	LPCSTR pszSubKey,
-	LPCSTR pszValue,
-	BOOL fIgnoreHKCU,
-	BOOL fDefault)
+	LPCSTR pszSubKey, /* [I] Key name to open */
+	LPCSTR pszValue, /* [I] Value name to open */
+	BOOL fIgnoreHKCU, /* [I] TRUE=Don't check HKEY_CURRENT_USER */
+	BOOL fDefault) /* [I] Default value to use if pszValue is not present */
 {
 	LONG retvalue;
 	DWORD type, datalen, work;
@@ -519,6 +553,8 @@ BOOL WINAPI SHRegGetBoolUSValueA(
 
 /*************************************************************************
  * SHRegGetBoolUSValueW	  [SHLWAPI.@]
+ *
+ * See SHRegGetBoolUSValueA.
  */
 BOOL WINAPI SHRegGetBoolUSValueW(
 	LPCWSTR pszSubKey,
@@ -578,14 +614,20 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 
 /*************************************************************************
  *      SHRegQueryInfoUSKeyA	[SHLWAPI.@]
+ *
+ * Get information about a user-specific registry key.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from RegQueryInfoKeyA().
  */
 LONG WINAPI SHRegQueryInfoUSKeyA(
-	HUSKEY hUSKey,             /* [in]  */
-	LPDWORD pcSubKeys,
-	LPDWORD pcchMaxSubKeyLen,
-	LPDWORD pcValues,
-	LPDWORD pcchMaxValueNameLen,
-	SHREGENUM_FLAGS enumRegFlags)
+	HUSKEY hUSKey, /* [I] Key to query */
+	LPDWORD pcSubKeys, /* [O] Destination for number of sub keys */
+	LPDWORD pcchMaxSubKeyLen, /* [O] Destination for the length of the biggest sub key name */
+	LPDWORD pcValues, /* [O] Destination for number of values */
+	LPDWORD pcchMaxValueNameLen,/* [O] Destination for the length of the biggest value */
+	SHREGENUM_FLAGS enumRegFlags)  /* [in] SHREGENUM_ flags from "shlwapi.h" */
 {
 	HKEY dokey;
 	LONG ret;
@@ -617,9 +659,11 @@ LONG WINAPI SHRegQueryInfoUSKeyA(
 
 /*************************************************************************
  *      SHRegQueryInfoUSKeyW	[SHLWAPI.@]
+ *
+ * See SHRegQueryInfoUSKeyA.
  */
 LONG WINAPI SHRegQueryInfoUSKeyW(
-	HUSKEY hUSKey,             /* [in]  */
+	HUSKEY hUSKey,
 	LPDWORD pcSubKeys,
 	LPDWORD pcchMaxSubKeyLen,
 	LPDWORD pcValues,
@@ -656,13 +700,19 @@ LONG WINAPI SHRegQueryInfoUSKeyW(
 
 /*************************************************************************
  *      SHRegEnumUSKeyA   	[SHLWAPI.@]
+ *
+ * Enumerate a user-specific registry key.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from RegEnumKeyExA().
  */
 LONG WINAPI SHRegEnumUSKeyA(
-	HUSKEY hUSKey,                 /* [in]  */
-	DWORD dwIndex,                 /* [in]  */
-	LPSTR pszName,                 /* [out] */
-	LPDWORD pcchValueNameLen,      /* [in/out] */
-	SHREGENUM_FLAGS enumRegFlags)  /* [in]  */
+	HUSKEY hUSKey,                 /* [in] Key to enumerate */
+	DWORD dwIndex,                 /* [in] Index within hUSKey */
+	LPSTR pszName,                 /* [out] Name of the enumerated value */
+	LPDWORD pcchValueNameLen,      /* [in/out] Length of pszName */
+	SHREGENUM_FLAGS enumRegFlags)  /* [in] SHREGENUM_ flags from "shlwapi.h" */
 {
 	HKEY dokey;
 
@@ -689,13 +739,15 @@ LONG WINAPI SHRegEnumUSKeyA(
 
 /*************************************************************************
  *      SHRegEnumUSKeyW   	[SHLWAPI.@]
+ *
+ * See SHRegEnumUSKeyA.
  */
 LONG WINAPI SHRegEnumUSKeyW(
-	HUSKEY hUSKey,                 /* [in]  */
-	DWORD dwIndex,                 /* [in]  */
-	LPWSTR pszName,                /* [out] */
-	LPDWORD pcchValueNameLen,      /* [in/out] */
-	SHREGENUM_FLAGS enumRegFlags)  /* [in]  */
+	HUSKEY hUSKey,
+	DWORD dwIndex,
+	LPWSTR pszName,
+	LPDWORD pcchValueNameLen,
+	SHREGENUM_FLAGS enumRegFlags)
 {
 	HKEY dokey;
 
@@ -722,6 +774,8 @@ LONG WINAPI SHRegEnumUSKeyW(
 
 /*************************************************************************
  *      SHRegWriteUSValueA   	[SHLWAPI.@]
+ *
+ *
  */
 LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
 				LPVOID pvData, DWORD cbData, DWORD dwFlags)
@@ -750,6 +804,8 @@ LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
 
 /*************************************************************************
  *      SHRegWriteUSValueW   	[SHLWAPI.@]
+ *
+ * See SHRegWriteUSValueA.
  */
 LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
 				LPVOID pvData, DWORD cbData, DWORD dwFlags)
@@ -790,7 +846,7 @@ LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. lpszPath contains the path.
- *   Failure: An error code from RegOpenKeyExA or SHQueryValueExA.
+ *   Failure: An error code from RegOpenKeyExA() or SHQueryValueExA().
  */
 DWORD WINAPI SHRegGetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
                            LPSTR lpszPath, DWORD dwFlags)
@@ -830,7 +886,7 @@ DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
  *   lpszSubKey [I] Name of sub key containing path to set
  *   lpszValue  [I] Name of value containing path to set
  *   lpszPath   [O] Path to write
- *   dwFlags    [I] Reserved
+ *   dwFlags    [I] Reserved, must be 0.
  *
  * RETURNS
  *   Success: ERROR_SUCCESS.
@@ -888,7 +944,7 @@ DWORD WINAPI SHRegSetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. Output parameters contain the details read.
- *   Failure: An error code from RegOpenKeyExA or SHQueryValueExA.
+ *   Failure: An error code from RegOpenKeyExA() or SHQueryValueExA().
  */
 DWORD WINAPI SHGetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pcbData)
@@ -954,11 +1010,11 @@ DWORD WINAPI SHGetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. The value is set with the data given.
- *   Failure: An error code from RegCreateKeyExA or RegSetValueExA
+ *   Failure: An error code from RegCreateKeyExA() or RegSetValueExA()
  *
  * NOTES
- *   If the sub key does not exist, it is created before the value is set. If
- *   The sub key is NULL or an empty string, then the value is added directly
+ *   If lpszSubKey does not exist, it is created before the value is set. If
+ *   lpszSubKey is NULL or an empty string, then the value is added directly
  *   to hKey instead.
  */
 DWORD WINAPI SHSetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
@@ -1017,7 +1073,7 @@ DWORD WINAPI SHSetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
 /*************************************************************************
  * SHQueryInfoKeyA   [SHLWAPI.@]
  *
- * Get information about a registry key. See RegQueryInfoKeyA.
+ * Get information about a registry key. See RegQueryInfoKeyA().
  */
 LONG WINAPI SHQueryInfoKeyA(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
                             LPDWORD pwValues, LPDWORD pwValueMax)
@@ -1056,11 +1112,11 @@ LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
  *   pcbData    [O] Optional pointer updated with the values size
  *
  * RETURNS
- *   Success: ERROR_SUCCESS. Any non-NULL output parameters are updated with
+ *   Success: ERROR_SUCCESS. Any non NULL output parameters are updated with
  *            information about the value.
  *   Failure: ERROR_OUTOFMEMORY if memory allocation fails, or the type of the
  *            data is REG_EXPAND_SZ and pcbData is NULL. Otherwise an error
- *            code from RegQueryValueExA or ExpandEnvironmentStringsA.
+ *            code from RegQueryValueExA() or ExpandEnvironmentStringsA().
  *
  * NOTES
  *   Either pwType, pvData or pcbData may be NULL if the caller doesn't want
@@ -1070,16 +1126,16 @@ LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
  *   value returned will be truncated if it is of type REG_SZ and bigger than
  *   the buffer given to store it.
  *
- *   REG_EXPAND_SZ
- *     case 1: the unexpanded string is smaller than the expanded one
- *       subcase 1: the buffer is to small to hold the unexpanded string:
+ *   REG_EXPAND_SZ:
+ *     case-1: the unexpanded string is smaller than the expanded one
+ *       subcase-1: the buffer is to small to hold the unexpanded string:
  *          function fails and returns the size of the unexpanded string.
  *
- *       subcase 2: buffer is to small to hold the expanded string:
+ *       subcase-2: buffer is to small to hold the expanded string:
  *          the function return success (!!) and the result is truncated
- *	    *** This is clearly a error in the native implemantation. ***
+ *	    *** This is clearly a error in the native implementation. ***
  *
- *     case 2: the unexpanded string is bigger than the expanded one
+ *     case-2: the unexpanded string is bigger than the expanded one
  *       The buffer must have enough space to hold the unexpanded
  *       string even if the result is smaller.
  *
@@ -1207,8 +1263,8 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. The key is deleted.
- *   Failure: An error code from RegOpenKeyExA, RegQueryInfoKeyA,
- *          RegEnumKeyExA or RegDeleteKeyA.
+ *   Failure: An error code from RegOpenKeyExA(), RegQueryInfoKeyA(),
+ *            RegEnumKeyExA() or RegDeleteKeyA().
  */
 DWORD WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey)
 {
@@ -1318,8 +1374,8 @@ DWORD WINAPI SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
  * RETURNS
  *   Success: ERROR_SUCCESS. The key is deleted.
  *   Failure: If the key is not empty, returns ERROR_KEY_HAS_CHILDREN. Otherwise
- *          returns an error code from RegOpenKeyExA, RegQueryInfoKeyA or
- *          RegDeleteKeyA.
+ *            returns an error code from RegOpenKeyExA(), RegQueryInfoKeyA() or
+ *            RegDeleteKeyA().
  */
 DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey)
 {
@@ -1385,7 +1441,7 @@ DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey)
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. The key has been deleted if it was an orphan.
- *   Failure: An error from RegOpenKeyExA, RegQueryValueExA, or RegDeleteKeyA.
+ *   Failure: An error from RegOpenKeyExA(), RegQueryValueExA(), or RegDeleteKeyA().
  */
 DWORD WINAPI SHDeleteOrphanKeyA(HKEY hKey, LPCSTR lpszSubKey)
 {
@@ -1452,7 +1508,7 @@ DWORD WINAPI SHDeleteOrphanKeyW(HKEY hKey, LPCWSTR lpszSubKey)
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. The value is deleted.
- *   Failure: An error code from RegOpenKeyExA or RegDeleteValueA.
+ *   Failure: An error code from RegOpenKeyExA() or RegDeleteValueA().
  */
 DWORD WINAPI SHDeleteValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue)
 {
@@ -1504,7 +1560,7 @@ DWORD WINAPI SHDeleteValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue)
  *
  * RETURN
  *   Success: ERROR_SUCCESS. lpszSubKey and pwLen are updated.
- *   Failure: An error code from RegEnumKeyExA.
+ *   Failure: An error code from RegEnumKeyExA().
  */
 LONG WINAPI SHEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpszSubKey,
                          LPDWORD pwLen)
@@ -1543,7 +1599,7 @@ LONG WINAPI SHEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpszSubKey,
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. Output parameters are updated.
- *   Failure: An error code from RegEnumValueA.
+ *   Failure: An error code from RegEnumValueA().
  */
 LONG WINAPI SHEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpszValue,
                          LPDWORD pwLen, LPDWORD pwType,
@@ -1575,7 +1631,20 @@ LONG WINAPI SHEnumValueW(HKEY hKey, DWORD dwIndex, LPWSTR lpszValue,
 /*************************************************************************
  * @   [SHLWAPI.205]
  *
- * Wrapper for SHGetValueA in case machine is in safe mode.
+ * Get a value from the registry.
+ *
+ * PARAMS
+ *   hKey    [I] Handle to registry key
+ *   pSubKey [I] Name of sub key containing value to get
+ *   pValue  [I] Name of value to get
+ *   pwType  [O] Destination for the values type
+ *   pvData  [O] Destination for the values data
+ *   pbData  [O] Destination for the values size
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. Output parameters contain the details read.
+ *   Failure: An error code from RegOpenKeyExA() or SHQueryValueExA(),
+ *            or ERROR_INVALID_FUNCTION in the machine is in safe mode.
  */
 DWORD WINAPI SHLWAPI_205(HKEY hkey, LPCSTR pSubKey, LPCSTR pValue,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pbData)
@@ -1843,6 +1912,14 @@ BOOL WINAPI SHLWAPI_327(LPCWSTR lpszType)
 
 /*************************************************************************
  * SHRegDuplicateHKey   [SHLWAPI.@]
+ *
+ * Create a duplicate of a registry handle.
+ *
+ * PARAMS
+ *  hKey [I] key to duplicate.
+ *
+ * RETURNS
+ *  A new handle pointing to the same key as hKey.
  */
 HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
 {
@@ -1871,7 +1948,8 @@ HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
  *
  * NOTES
  *  If hKeyDst is a key under hKeySrc, this function will misbehave
- *  (It will loop until out of stack, or the registry is full).
+ *  (It will loop until out of stack, or the registry is full). This
+ *  bug is present in Win32 also.
  */
 DWORD WINAPI SHCopyKeyA(HKEY hKeyDst, LPCSTR lpszSubKey, HKEY hKeySrc, DWORD dwReserved)
 {

@@ -51,13 +51,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(win32);
 /***********************************************************************
  *              SetLocalTime            (KERNEL32.@)
  *
- *  Sets the local time using current time zone and daylight
+ *  Set the local time using current time zone and daylight
  *  savings settings.
  *
  * RETURNS
- *
- *  True if the time was set, false if the time was invalid or the
- *  necessary permissions were not held.
+ *  Success: TRUE. The time was set
+ *  Failure: FALSE, if the time was invalid or caller does not have
+ *           permission to change the time.
  */
 BOOL WINAPI SetLocalTime(
     const SYSTEMTIME *systime) /* [in] The desired local time. */
@@ -80,15 +80,13 @@ BOOL WINAPI SetLocalTime(
 /***********************************************************************
  *           GetSystemTimeAdjustment     (KERNEL32.@)
  *
- *  Indicates the period between clock interrupt and the amount the clock
- *  is adjusted each interrupt so as to keep it insync with an external source.
+ *  Get the period between clock interrupts and the amount the clock
+ *  is adjusted each interrupt so as to keep it in sync with an external source.
  *
  * RETURNS
- *
- *  Always returns true.
+ *  TRUE.
  *
  * BUGS
- *
  *  Only the special case of disabled time adjustments is supported.
  */
 BOOL WINAPI GetSystemTimeAdjustment(
@@ -106,12 +104,12 @@ BOOL WINAPI GetSystemTimeAdjustment(
 /***********************************************************************
  *              SetSystemTime            (KERNEL32.@)
  *
- *  Sets the system time (utc).
+ *  Set the system time in utc.
  *
  * RETURNS
- *
- *  True if the time was set, false if the time was invalid or the
- *  necessary permissions were not held.
+ *  Success: TRUE. The time was set
+ *  Failure: FALSE, if the time was invalid or caller does not have
+ *           permission to change the time.
  */
 BOOL WINAPI SetSystemTime(
     const SYSTEMTIME *systime) /* [in] The desired system time. */
@@ -132,15 +130,14 @@ BOOL WINAPI SetSystemTime(
 /***********************************************************************
  *              GetTimeZoneInformation  (KERNEL32.@)
  *
- *  Fills in the a time zone information structure with values based on
- *  the current local time.
+ *  Get information about the current local time zone.
  *
  * RETURNS
- *
- *  The daylight savings time standard or TIME_ZONE_ID_INVALID if the call failed.
+ *  Success: TIME_ZONE_ID_STANDARD. tzinfo contains the time zone info.
+ *  Failure: TIME_ZONE_ID_INVALID.
  */
 DWORD WINAPI GetTimeZoneInformation(
-    LPTIME_ZONE_INFORMATION tzinfo) /* [out] The time zone structure to be filled in. */
+    LPTIME_ZONE_INFORMATION tzinfo) /* [out] Destination for time zone information */
 {
     NTSTATUS status;
     if ((status = RtlQueryTimeZoneInformation(tzinfo)))
@@ -152,11 +149,11 @@ DWORD WINAPI GetTimeZoneInformation(
 /***********************************************************************
  *              SetTimeZoneInformation  (KERNEL32.@)
  *
- *  Set the local time zone with values based on the time zone structure.
+ *  Change the settings of the current local time zone.
  *
  * RETURNS
- *
- *  True on successful setting of the time zone.
+ *  Success: TRUE. The time zone was updated with the settings from tzinfo
+ *  Failure: FALSE.
  */
 BOOL WINAPI SetTimeZoneInformation(
     const LPTIME_ZONE_INFORMATION tzinfo) /* [in] The new time zone. */
@@ -346,12 +343,11 @@ static BOOL _GetTimezoneBias(
 /***********************************************************************
  *              SystemTimeToTzSpecificLocalTime  (KERNEL32.@)
  *
- *  Converts the system time (utc) to the local time in the specified time zone.
+ *  Convert a utc system time to a local time in a given time zone.
  *
  * RETURNS
- *
- *  Returns TRUE when the local time was calculated.
- *
+ *  Success: TRUE. lpLocalTime contains the converted time
+ *  Failure: FALSE.
  */
 
 BOOL WINAPI SystemTimeToTzSpecificLocalTime(
@@ -397,13 +393,12 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
 /***********************************************************************
  *              TzSpecificLocalTimeToSystemTime  (KERNEL32.@)
  *
- *  Converts a local time to a time in Coordinated Universal Time (UTC).
+ *  Converts a local time to a time in utc.
  *
  * RETURNS
- *
- *  Returns TRUE when the utc time was calculated.
+ *  Success: TRUE. lpUniversalTime contains the converted time
+ *  Failure: FALSE.
  */
-
 BOOL WINAPI TzSpecificLocalTimeToSystemTime(
     LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The desired time zone. */
     LPSYSTEMTIME            lpLocalTime,           /* [in] The local time. */
@@ -444,15 +439,16 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
 }
 
 
-
-
 /***********************************************************************
  *              GetSystemTimeAsFileTime  (KERNEL32.@)
  *
- *  Fills in a file time structure with the current time in UTC format.
+ *  Get the current time in utc format.
+ *
+ *  RETURNS
+ *   Nothing.
  */
 VOID WINAPI GetSystemTimeAsFileTime(
-    LPFILETIME time) /* [out] The file time struct to be filled with the system time. */
+    LPFILETIME time) /* [out] Destination for the current utc time */
 {
     LARGE_INTEGER t;
     NtQuerySystemTime( &t );
@@ -482,20 +478,19 @@ static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
 /*********************************************************************
  *	GetProcessTimes				(KERNEL32.@)
  *
- *  Returns the user and kernel execution times of a process,
+ *  Get the user and kernel execution times of a process,
  *  along with the creation and exit times if known.
  *
+ * RETURNS
+ *  TRUE.
+ *
+ * NOTES
  *  olorin@fandra.org:
- *  Would be nice to subtract the cpu time, used by Wine at startup.
+ *  Would be nice to subtract the cpu time used by Wine at startup.
  *  Also, there is a need to separate times used by different applications.
  *
- * RETURNS
- *
- *  Always returns true.
- *
  * BUGS
- *
- *  lpCreationTime, lpExitTime are NOT INITIALIZED.
+ *  lpCreationTime and lpExitTime are not initialised in the Wine implementation.
  */
 BOOL WINAPI GetProcessTimes(
     HANDLE     hprocess,       /* [in] The process to be queried (obtained from PROCESS_QUERY_INFORMATION). */
@@ -541,6 +536,7 @@ int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
 /*********************************************************************
  *	GetCalendarInfoW				(KERNEL32.@)
  *
+ * See GetCalendarInfoA.
  */
 int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 			    LPWSTR lpCalData, int cchData, LPDWORD lpValue)
@@ -687,6 +683,7 @@ int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR
 /*********************************************************************
  *	SetCalendarInfoW				(KERNEL32.@)
  *
+ * See SetCalendarInfoA.
  */
 int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWSTR lpCalData)
 {
@@ -782,6 +779,16 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 
 /*********************************************************************
  *      CompareFileTime                                 (KERNEL32.@)
+ *
+ * Compare two FILETIME's to each other.
+ *
+ * PARAMS
+ *  x [I] First time
+ *  y [I] time to compare to x
+ *
+ * RETURNS
+ *  -1, 0, or 1 indicating that x is less than, equal to, or greater
+ *  than y respectively.
  */
 INT WINAPI CompareFileTime( const FILETIME *x, const FILETIME *y )
 {
@@ -800,8 +807,13 @@ INT WINAPI CompareFileTime( const FILETIME *x, const FILETIME *y )
 
 /*********************************************************************
  *      GetLocalTime                                    (KERNEL32.@)
+ *
+ * Get the current local time.
+ *
+ * RETURNS
+ *  Nothing.
  */
-VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
+VOID WINAPI GetLocalTime(LPSYSTEMTIME systime) /* [O] Destination for current time */
 {
     FILETIME lft;
     LARGE_INTEGER ft, ft2;
@@ -815,8 +827,13 @@ VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
 
 /*********************************************************************
  *      GetSystemTime                                   (KERNEL32.@)
+ *
+ * Get the current system time.
+ *
+ * RETURNS
+ *  Nothing.
  */
-VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
+VOID WINAPI GetSystemTime(LPSYSTEMTIME systime) /* [O] Destination for current time */
 {
     FILETIME ft;
     LARGE_INTEGER t;

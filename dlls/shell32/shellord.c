@@ -260,16 +260,21 @@ VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask)
 /*************************************************************************
  * SHShellFolderView_Message			[SHELL32.73]
  *
- * PARAMETERS
- *  hwndCabinet defines the explorer cabinet window that contains the
- *              shellview you need to communicate with
- *  uMsg        identifying the SFVM enum to perform
- *  lParam
+ * Send a message to an explorer cabinet window.
+ *
+ * PARAMS
+ *  hwndCabinet [I] The window containing the shellview to communicate with
+ *  dwMessage   [I] The SFVM message to send
+ *  dwParam     [I] Message parameter
+ *
+ * RETURNS
+ *  fixme.
  *
  * NOTES
  *  Message SFVM_REARRANGE = 1
+ *
  *    This message gets sent when a column gets clicked to instruct the
- *    shell view to re-sort the item list. lParam identifies the column
+ *    shell view to re-sort the item list. dwParam identifies the column
  *    that was clicked.
  */
 int WINAPI SHShellFolderView_Message(
@@ -284,12 +289,14 @@ int WINAPI SHShellFolderView_Message(
 /*************************************************************************
  * RegisterShellHook				[SHELL32.181]
  *
+ * Register a shell hook.
+ *
  * PARAMS
- *      hwnd [I]  window handle
- *      y    [I]  flag ????
+ *      hwnd   [I]  Window handle
+ *      dwType [I]  Type of hook.
  *
  * NOTES
- *     exported by ordinal
+ *     Exported by ordinal
  */
 BOOL WINAPI RegisterShellHook(
 	HWND hWnd,
@@ -298,16 +305,11 @@ BOOL WINAPI RegisterShellHook(
 	FIXME("(%p,0x%08lx):stub.\n",hWnd, dwType);
 	return TRUE;
 }
+
 /*************************************************************************
  * ShellMessageBoxW				[SHELL32.182]
  *
- * Format and output errormessage.
- *
- * idText	resource ID of title or LPSTR
- * idTitle	resource ID of title or LPSTR
- *
- * NOTES
- *     exported by ordinal
+ * See ShellMessageBoxA.
  */
 int WINAPIV ShellMessageBoxW(
 	HINSTANCE hInstance,
@@ -350,6 +352,21 @@ int WINAPIV ShellMessageBoxW(
 
 /*************************************************************************
  * ShellMessageBoxA				[SHELL32.183]
+ *
+ * Format and output an error message.
+ *
+ * PARAMS
+ *  hInstance [I] Instance handle of message creator
+ *  hWnd      [I] Window handle of message creator
+ *  lpText    [I] Resource Id of title or LPSTR
+ *  lpCaption [I] Resource Id of title or LPSTR
+ *  uType     [I] Type of error message
+ *
+ * RETURNS
+ *  A return value from MessageBoxA().
+ *
+ * NOTES
+ *     Exported by ordinal
  */
 int WINAPIV ShellMessageBoxA(
 	HINSTANCE hInstance,
