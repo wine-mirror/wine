@@ -11,48 +11,14 @@ BEGIN {
 
 use config qw(&file_directory &get_spec_files &get_makefile_in_files $current_dir $wine_dir);
 use output qw($output);
+use util qw(replace_file);
 
-########################################################################
-# _compare_files
+use msvcmaker_options qw($options);
 
-sub _compare_files {
-    my $file1 = shift;
-    my $file2 = shift;
-
-    local $/ = undef;
-
-    return -1 if !open(IN, "< $file1");
-    my $s1 = <IN>;
-    close(IN);
-
-    return 1 if !open(IN, "< $file2");
-    my $s2 = <IN>;
-    close(IN);
-
-    return $s1 cmp $s2;
-}
-
-########################################################################
-# replace_file
-
-sub replace_file {
-    my $filename = shift;
-    my $function = shift;
-
-    open(OUT, "> $filename.tmp") || die "Can't open file '$filename.tmp'";
-
-    my $result = &$function(\*OUT, @_);
-
-    close(OUT);
-
-    if($result && _compare_files($filename, "$filename.tmp")) {
-        unlink("$filename");
-        rename("$filename.tmp", $filename);
-    } else {
-        unlink("$filename.tmp");
-    }
-
-    return $result;
+if($options->progress) {
+    $output->enable_progress;
+} else {
+    $output->disable_progress;
 }
 
 ########################################################################
@@ -66,9 +32,17 @@ my $wine = 1;
 my $output_prefix_dir = "Output";
 my $no_release = 1;
 
+if ($options->wine || $options->winetest) {
+    foreach my $spec_file (@spec_files) {
+	read_spec_file($spec_file);
+    }
+}
+
 my %modules;
 
-foreach my $spec_file (@spec_files) {
+sub read_spec_file {
+    my $spec_file = shift;
+
     my $module = $spec_file;
     $module =~ s%^.*?([^/]+)\.spec$%$1%;
     $module .= ".dll" if $module !~ /\./;
@@ -289,6 +263,8 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    ($header_files, my $local_header_files) = filter_files($header_files, "$dir2/");
 	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "$dir2/");
 
+	    $modules{$module}{wine} = 1;
+	    $modules{$module}{winetest} = 0;
 	    $modules{$module}{project} = $project;
 	    $modules{$module}{type} = $type;
 	    $modules{$module}{dsp_file} = $dsp_file;
@@ -313,6 +289,8 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    ($header_files, my $local_header_files) = filter_files($header_files, "/$dir/");
 	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "/$dir/");
 
+	    $modules{$module}{wine} = 1;
+	    $modules{$module}{winetest} = 0;
 	    $modules{$module}{project} = $project;
 	    $modules{$module}{type} = $type;
 	    $modules{$module}{dsp_file} = $dsp_file;
@@ -340,6 +318,8 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    ($header_files, my $local_header_files) = filter_files($header_files, "$dir2/");
 	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "$dir2/");
 
+	    $modules{$module}{wine} = 1;
+	    $modules{$module}{winetest} = 0;
 	    $modules{$module}{project} = $project;
 	    $modules{$module}{type} = $type;
 	    $modules{$module}{dsp_file} = $dsp_file;
@@ -351,6 +331,8 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	}
     }
 
+    $modules{$module}{wine} = 1;
+    $modules{$module}{winetest} = 0;
     $modules{$module}{project} = $project;
     $modules{$module}{type} = $type;
     $modules{$module}{dsp_file} = $dsp_file;
@@ -403,6 +385,9 @@ foreach my $dsp_file (keys(%wine_test_dsp_files)) {
     }
     my $module = "$project.$type";
 
+    $modules{$module}{wine} = 0;
+    $modules{$module}{winetest} = 1;
+
     $modules{$module}{project} = $project;
     $modules{$module}{type} = $type;
     $modules{$module}{dsp_file} = $dsp_file;
@@ -421,13 +406,21 @@ foreach my $module (sort(keys(%modules))) {
     }
 }
 
+my @modules = ();
+foreach my $module (sort(keys(%modules))) {
+    if (($options->wine && $modules{$module}{wine}) ||
+	($options->winetest && $modules{$module}{winetest}))
+    {
+	push @modules, $module;
+    }
+}
+
 my $progress_output;
 my $progress_current = 0;
-my $progress_max = scalar(keys(%modules));
+my $progress_max = scalar(@modules);
 
-foreach my $module (sort(keys(%modules))) {
+foreach my $module (@modules) {
     my $dsp_file = $modules{$module}{dsp_file};
-
     replace_file("$wine_dir/$dsp_file", \&_generate_dsp, $module);
 }
 
@@ -963,11 +956,11 @@ sub _generate_dsw_footer {
     print OUT "\r\n";
 }
 
-do {
+if ($options->wine) {
     my $dsw_file = "wine.dsw";
     $output->progress("$dsw_file");
     replace_file("$wine_dir/$dsw_file", \&_generate_wine_dsw);
-};
+}
 
 sub _generate_wine_dsw {
     local *OUT = shift;
@@ -1023,11 +1016,11 @@ sub _generate_wine_dsw {
     return 1;
 }
 
-do {
+if ($options->winetest) {
     my $dsw_file = "winetest.dsw";
     $output->progress("$dsw_file");
     replace_file("$wine_dir/$dsw_file", \&_generate_winetest_dsw);
-};
+}
 
 sub _generate_winetest_dsw {
     local *OUT = shift;
@@ -1053,7 +1046,7 @@ sub _generate_winetest_dsw {
     _generate_dsw_footer(\*OUT);
 }
 
-do {
+if ($options->winetest) {
     foreach my $module (sort(keys(%modules))) {
 	next if $module !~ /_test\.exe$/;
 
@@ -1066,7 +1059,7 @@ do {
 
 	replace_file("$wine_dir/$testlist_c", \&_generate_testlist_c, \@tests);
     }
-};
+}
 
 sub _generate_testlist_c {
     local *OUT = shift;
@@ -1092,13 +1085,13 @@ sub _generate_testlist_c {
     print OUT "};\n";
 }
 
-do {
+if ($options->wine) {
     my $config_h = "include/config.h";
 
     $output->progress("$config_h");
 
     replace_file("$wine_dir/$config_h", \&_generate_config_h);
-};
+}
 
 sub _generate_config_h {
     local *OUT = shift;

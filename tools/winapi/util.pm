@@ -32,6 +32,26 @@ require Exporter;
 %EXPORT_TAGS = ();
 
 ########################################################################
+# _compare_files
+
+sub _compare_files {
+    my $file1 = shift;
+    my $file2 = shift;
+
+    local $/ = undef;
+
+    return -1 if !open(IN, "< $file1");
+    my $s1 = <IN>;
+    close(IN);
+
+    return 1 if !open(IN, "< $file2");
+    my $s2 = <IN>;
+    close(IN);
+
+    return $s1 cmp $s2;
+}
+
+########################################################################
 # append_file
 
 sub append_file {
@@ -97,9 +117,9 @@ sub replace_file {
 
     close(OUT);
 
-    if($result) {
+    if($result && _compare_files($filename, "$filename.tmp")) {
         unlink("$filename");
-        rename("$filename.tmp", "$filename");
+        rename("$filename.tmp", $filename);
     } else {
         unlink("$filename.tmp");
     }
