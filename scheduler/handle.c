@@ -271,6 +271,11 @@ static BOOL32 HANDLE_Close( PDB32 *pdb, HANDLE32 handle )
     BOOL32 ret = FALSE;
     K32OBJ *ptr;
 
+    if (HANDLE_IS_GLOBAL( handle ))
+    {
+        handle = HANDLE_GLOBAL_TO_LOCAL( handle );
+        pdb = PROCESS_Initial();
+    }
     SYSTEM_LOCK();
     if ((handle > 0) && (handle < pdb->handle_table->count))
     {
