@@ -40,8 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 /*************************************************************************
  *		ScrollDC   (X11DRV.@)
  */
-BOOL WINAPI X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
-                             const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
+BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
+                      const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
 
 {
     RECT rSrc, rClipped_src, rClip, rDst, offset;
