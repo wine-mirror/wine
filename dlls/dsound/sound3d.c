@@ -174,59 +174,63 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	
 	dsl = ds3db->dsb->dsound->listener;
 
-	/* FIXME: i guess initial volume should be that, but if it's set, sounds get too quiet */
+	/* FIXME: i guess initial volume should be that, but if it's set, sounds get too quiet.
+	          It makes sense, though: at min. distance we hear sound with practically no
+	          attuneation. If someone has idea, please do it.*/
 /*	lVolume = ds3db->lVolume; */
 	
 	switch (ds3db->ds3db.dwMode)
 	{
-		case DS3DMODE_NORMAL:
-		{
-			/* distance attuneation stuff */
-			vDistance = VectorBetweenTwoPoints(&ds3db->ds3db.vPosition, &dsl->ds3dl.vPosition);
-			flDistance = VectorMagnitude (&vDistance);
-			
-			if (flDistance > ds3db->ds3db.flMaxDistance)
-			{
-				/* some apps don't want you to hear too distant sounds... */
-				if (ds3db->dsb->dsbd.dwFlags & DSBCAPS_MUTE3DATMAXDISTANCE)
-				{
-					ds3db->dsb->volpan.lVolume = DSBVOLUME_MIN;
-					DSOUND_RecalcVolPan (&ds3db->dsb->volpan);		
-					/* i guess mixing here would be a waste of power */
-					return;
-				}
-				else
-					flDistance = ds3db->ds3db.flMaxDistance;
-			}
-			
-			if (flDistance < ds3db->ds3db.flMinDistance)
-				flDistance = ds3db->ds3db.flMinDistance;
-			/* the following formula is taken from my physics book. I think it's ok for the *real* world...i hope m$ does it that way */
-			lVolume += 10000; /* ms likes working with negative volume...i don't */
-			lVolume /= 1000; /* convert hundreths of dB into B */
-			/* intensity level (loudness) = log10(Intensity/DefaultIntensity)...therefore */
-			flIntensity = pow(10,lVolume)/DEFAULT_INTENSITY;	
-			flTemp = (flDistance/ds3db->ds3db.flMinDistance)*(flDistance/ds3db->ds3db.flMinDistance);
-			flIntensity /= flTemp;
-			lVolume = log10(flIntensity*DEFAULT_INTENSITY);
-			lVolume *= 1000; /* convert back to hundreths of dB */
-			lVolume -= 10000; /* we need to do it in ms way */
-			TRACE("dist. att: Distance = %f, MinDistance = %f => adjusting volume %ld to %ld\n", flDistance, ds3db->ds3db.flMinDistance, ds3db->lVolume, lVolume);
-
-			/* add correct conning here */
-			
-			/* at last, we got the desired volume */
-			ds3db->dsb->volpan.lVolume = lVolume;
-			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
-			DSOUND_ForceRemix (ds3db->dsb);			
-			break;
-		}
-		case DS3DMODE_HEADRELATIVE:
 		case DS3DMODE_DISABLE:
+			TRACE("3D processing disabled\n");	
 			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
 			DSOUND_ForceRemix (ds3db->dsb);
 			break;
-	}
+		case DS3DMODE_NORMAL:
+			TRACE("Normal 3D processing mode\n");
+			/* we need to calculate distance between buffer and listener*/
+			vDistance = VectorBetweenTwoPoints(&ds3db->ds3db.vPosition, &dsl->ds3dl.vPosition);
+			flDistance = VectorMagnitude (&vDistance);
+			break;
+		case DS3DMODE_HEADRELATIVE:
+			TRACE("Head-relative 3D processing mode\n");
+			/* distance between buffer and listener is same as buffer's position */
+			flDistance = VectorMagnitude (&ds3db->ds3db.vPosition);
+		break;
+	}	
+	
+	if (flDistance > ds3db->ds3db.flMaxDistance)
+	{
+		/* some apps don't want you to hear too distant sounds... */
+		if (ds3db->dsb->dsbd.dwFlags & DSBCAPS_MUTE3DATMAXDISTANCE)
+		{
+			ds3db->dsb->volpan.lVolume = DSBVOLUME_MIN;
+			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);		
+			/* i guess mixing here would be a waste of power */
+			return;
+		}
+		else
+			flDistance = ds3db->ds3db.flMaxDistance;
+	}		
+	if (flDistance < ds3db->ds3db.flMinDistance)
+				flDistance = ds3db->ds3db.flMinDistance;
+	
+	/* the following formula is taken from my physics book. I think it's ok for the *real* world...i hope m$ does it that way */
+	lVolume += 10000; /* ms likes working with negative volume...i don't */
+	lVolume /= 1000; /* convert hundreths of dB into B */
+	/* intensity level (loudness) = log10(Intensity/DefaultIntensity)...therefore */
+	flIntensity = pow(10,lVolume)/DEFAULT_INTENSITY;	
+	flTemp = (flDistance/ds3db->ds3db.flMinDistance)*(flDistance/ds3db->ds3db.flMinDistance);
+	flIntensity /= flTemp;
+	lVolume = log10(flIntensity*DEFAULT_INTENSITY);
+	lVolume *= 1000; /* convert back to hundreths of dB */
+	lVolume -= 10000; /* we need to do it in ms way */
+	TRACE("dist. att: Distance = %f, MinDistance = %f => adjusting volume %ld to %ld\n", flDistance, ds3db->ds3db.flMinDistance, ds3db->lVolume, lVolume);
+	/* add correct conning here */			
+	/* at last, we got the desired volume */
+	ds3db->dsb->volpan.lVolume = lVolume;
+	DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
+	DSOUND_ForceRemix (ds3db->dsb);
 }
 
 static void WINAPI DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
