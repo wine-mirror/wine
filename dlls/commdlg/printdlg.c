@@ -2073,9 +2073,17 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
     }
 
     switch (uMsg) {
-    case WM_COMMAND:
-        return PRINTDLG_WMCommand(hDlg, wParam, lParam, PrintStructures);
-
+    case WM_COMMAND: {
+	 /* We need to map those for the 32bit window procedure, compare
+	  * with 32Ato16 mapper in winproc.c
+	  */
+        return PRINTDLG_WMCommand(
+		hDlg,
+		MAKEWPARAM(wParam,HIWORD(lParam)),
+		LOWORD(lParam),
+		PrintStructures
+	);
+    }
     case WM_DESTROY:
 	DestroyIcon(PrintStructures->hCollateIcon);
 	DestroyIcon(PrintStructures->hNoCollateIcon);
