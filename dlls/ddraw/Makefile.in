@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw
+EXTRALIBS = $(LIBUUID)
 SOVERSION = 1.0
 IMPORTS   = user32 x11drv gdi32 kernel32
 

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shell32
 ALTNAMES  = shell
-EXTRALIBS = $(LIBUNICODE)
+EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
@@ -23,7 +23,6 @@ C_SRCS = \
 	pidl.c \
 	shell32_main.c \
 	shell.c \
-	shellguid.c \
 	shelllink.c \
 	shlmenu.c \
 	shellole.c \

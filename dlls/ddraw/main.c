@@ -18,10 +18,6 @@
 #include "wine/exception.h"
 #include "debugtools.h"
 
-#include "initguid.h"
-#include "ddraw.h"
-#include "d3d.h"
-
 /* This for all the enumeration and creation of D3D-related objects */
 #include "ddraw_private.h"
 

@@ -27,11 +27,7 @@
 #include "shell32_main.h"
 #include "shresdef.h"
 #include "shlwapi.h"
-
-#define INITGUID
-#include "initguid.h"
 #include "shellfolder.h"
-#include "wine/obj_queryassociations.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

@@ -65,6 +65,7 @@ DLLDIR    = $(TOPOBJDIR)/dlls
 LIBWINE   = -L$(TOPOBJDIR)/library -lwine
 LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11
 LIBUNICODE= -L$(TOPOBJDIR)/unicode -lwine_unicode
+LIBUUID   = -L$(TOPOBJDIR)/ole -luuid
 
 @SET_MAKE@
 

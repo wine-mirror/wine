@@ -9,10 +9,8 @@
 #include "winnls.h"
 #include "mmsystem.h"
 #include "winerror.h"
-#include "debugtools.h"
-
-#include "initguid.h"
 #include "vfw.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(avifile);
 

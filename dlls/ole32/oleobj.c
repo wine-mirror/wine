@@ -10,8 +10,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "debugtools.h"
-
-#include "initguid.h"
 #include "oleidl.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

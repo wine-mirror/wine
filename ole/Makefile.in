@@ -6,13 +6,26 @@ VPATH     = @srcdir@
 MODULE    = ole
 
 C_SRCS = \
-	ole2nls.c 
+	ole2nls.c \
+	uuid.c
 
-all: $(MODULE).o
+all: $(MODULE).o libuuid.a
 
 @MAKE_RULES@
 
-$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDCOMBINE) $(OBJS) -o $@
+$(MODULE).o: ole2nls.o Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(LDCOMBINE) ole2nls.o -o $@
+
+libuuid.a: uuid.o
+	$(RM) $@
+	$(AR) $@ uuid.o
+	$(RANLIB) $@
+
+install: libuuid.a
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_DATA) libuuid.a $(libdir)/libuuid.a
+
+uninstall::
+	cd $(libdir) && $(RM) libuuid.a
 
 ### Dependencies:

@@ -40,8 +40,6 @@
 #include "mmsystem.h"
 #include "wine/windef16.h"
 #include "debugtools.h"
-
-#include "initguid.h"
 #include "dsound.h"
 #include "dsdriver.h"
 

@@ -352,7 +352,10 @@ typedef BOOL CALLBACK (*LPDPENUMDPCALLBACKA)(
     DWORD       dwMinorVersion, /* Minor # of driver spec in lpguidSP */ 
     LPVOID      lpContext);     /* User given */
 
-typedef const GUID   *LPCGUID;
+#ifndef __LPCGUID_DEFINED__
+#define __LPCGUID_DEFINED__
+typedef const GUID *LPCGUID;
+#endif
 
 typedef const DPNAME *LPCDPNAME;
 

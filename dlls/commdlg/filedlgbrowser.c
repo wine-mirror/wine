@@ -13,9 +13,6 @@
 #include "heap.h"
 #include "debugtools.h"
 
-#define INITGUID
-#include "initguid.h"
-#include "unknwn.h"
 #include "filedlgbrowser.h"
 #include "cdlg.h"
 #include "shlguid.h"

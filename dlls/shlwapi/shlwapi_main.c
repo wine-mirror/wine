@@ -8,10 +8,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "debugtools.h"
-
-#include "initguid.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
 #include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

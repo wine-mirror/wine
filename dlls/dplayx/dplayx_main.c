@@ -8,14 +8,9 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "debugtools.h"
-
-#include "initguid.h"  /* To define the GUIDs */
-#include "dplaysp.h"
 #include "dplayx_global.h"
 
 DEFAULT_DEBUG_CHANNEL(dplay);
-
-DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static DWORD DPLAYX_dwProcessesAttached = 0;
 

@@ -33,6 +33,7 @@ LIBPROGRAMS = \
 # Libraries (not dlls) to build
 LIBRARIES = \
 	library/libwine.$(LIBEXT) \
+	ole/libuuid.a \
 	tsx11/libwine_tsx11.$(LIBEXT) \
 	unicode/libwine_unicode.$(LIBEXT)
 
@@ -44,18 +45,10 @@ LIBSYMLINKS = \
 
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
-	debugger \
-	dlls \
-	documentation \
-	include \
-	library \
+	$(INSTALLSUBDIRS) \
 	libtest \
 	miscemu \
-	programs \
-	server \
-	tools \
-	tsx11 \
-	unicode
+	programs
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
@@ -64,6 +57,7 @@ INSTALLSUBDIRS = \
 	documentation \
 	include \
 	library \
+	ole \
 	server \
 	tools \
 	tsx11 \
