@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = notepad.exe
 APPMODE   = -mwindows
-IMPORTS   = msvcrt
+IMPORTS   = comdlg32 shell32 user32 gdi32 msvcrt advapi32 kernel32
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 EXTRADEFS = -DNO_LIBWINE_PORT
 

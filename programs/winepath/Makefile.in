@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winepath.exe
 APPMODE   = -mconsole
+IMPORTS   = kernel32
 
 C_SRCS = winepath.c
 

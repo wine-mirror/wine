@@ -18,13 +18,13 @@ C_SRCS = \
 all: $(PROGRAMS:%=%$(DLLEXT)) $(PROGRAMS:.exe=$(EXEEXT))
 
 aviinfo.exe.so: aviinfo.o
-	WINEBUILD=$(WINEBUILD) $(WINEGCC) -mwindows -o $@ aviinfo.o -L$(DLLDIR) -lavifil32 $(ALL_LIBS) -lc
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ aviinfo.o -L$(DLLDIR) -lavifil32 -lkernel32 $(ALL_LIBS)
 
 aviplay.exe.so: aviplay.o
-	WINEBUILD=$(WINEBUILD) $(WINEGCC) -mwindows -o $@ aviplay.o -L$(DLLDIR) -lavifil32 -lddraw $(ALL_LIBS) -lc
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ aviplay.o -L$(DLLDIR) -lavifil32 -lddraw -lkernel32 $(ALL_LIBS)
 
 icinfo.exe.so: icinfo.o
-	WINEBUILD=$(WINEBUILD) $(WINEGCC) -mwindows -o $@ icinfo.o -L$(DLLDIR) -lmsvfw32 $(ALL_LIBS) -lc
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ icinfo.o -L$(DLLDIR) -lmsvfw32 -lkernel32 $(ALL_LIBS)
 
 aviinfo.exe: aviinfo.o
 	$(CC) -o $@ aviinfo.o -lavifil32 $(ALL_LIBS)
