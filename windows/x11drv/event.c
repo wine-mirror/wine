@@ -148,6 +148,8 @@ static BOOL bUserRepaintDisabled = TRUE;
 static INPUT_TYPE current_input_type = X11DRV_INPUT_ABSOLUTE;
 static BOOL in_transition = FALSE; /* This is not used as for today */
 
+static HANDLE service_object, service_timer;
+
 /***********************************************************************
  *           EVENT_Init
  */
@@ -161,18 +163,24 @@ void X11DRV_EVENT_Init(void)
 #endif
 
     /* Install the X event processing callback */
-    if (SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ|SYNCHRONIZE ),
-                           EVENT_ProcessAllEvents, 0 ) == INVALID_HANDLE_VALUE)
+    if ((service_object = SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ|SYNCHRONIZE ),
+                           EVENT_ProcessAllEvents, 0 )) == INVALID_HANDLE_VALUE)
     {
         ERR("cannot add service object\n");
         ExitProcess(1);
     }
 
     /* Install the XFlush timer callback */
-    if ( Options.synchronous ) 
-        TSXSynchronize( display, True );
-    else
-        SERVICE_AddTimer( 200, EVENT_Flush, 0 );
+    service_timer = SERVICE_AddTimer( 200, EVENT_Flush, 0 );
+}
+
+/***********************************************************************
+ *           X11DRV_EVENT_Cleanup
+ */
+void X11DRV_EVENT_Cleanup(void)
+{
+    SERVICE_Delete( service_timer );
+    SERVICE_Delete( service_object );
 }
 
 /***********************************************************************

@@ -11,9 +11,6 @@
 
 struct options
 {
-    char * desktopGeometry; /* NULL when no desktop */
-    char * display;         /* display name */
-    int    synchronous;     /* X synchronous mode */
     int    managed;	    /* Managed windows */
 };
 

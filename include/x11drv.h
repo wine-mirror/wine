@@ -341,6 +341,7 @@ extern BOOL X11DRV_GetClipboardData(UINT wFormat);
 extern WORD X11DRV_EVENT_XStateToKeyState( int state ) ;
 
 extern void X11DRV_EVENT_Init(void);
+extern void X11DRV_EVENT_Cleanup(void);
 extern void X11DRV_Synchronize( void );
 
 typedef enum {

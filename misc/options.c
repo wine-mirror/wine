@@ -30,9 +30,6 @@ struct option_descr
 /* default options */
 struct options Options =
 {
-    NULL,           /* desktopGeometry */
-    NULL,           /* display */
-    FALSE,          /* synchronous */
     FALSE           /* Managed windows */
 };
 
@@ -52,30 +49,15 @@ static void out_of_memory(void)
     ExitProcess(1);
 }
 
-static char *xstrdup( const char *str )
-{
-    char *ret = strdup( str );
-    if (!ret) out_of_memory();
-    return ret;
-}
-
 static void do_debugmsg( const char *arg );
-static void do_desktop( const char *arg );
-static void do_display( const char *arg );
 static void do_help( const char *arg );
-static void do_language( const char *arg );
 static void do_managed( const char *arg );
-static void do_synchronous( const char *arg );
 static void do_version( const char *arg );
 
 static const struct option_descr option_table[] =
 {
     { "debugmsg",     0, 1, 1, do_debugmsg,
       "--debugmsg name  Turn debugging-messages on or off" },
-    { "desktop",      0, 1, 1, do_desktop,
-      "--desktop geom   Use a desktop window of the given geometry" },
-    { "display",      0, 1, 0, do_display,
-      "--display name   Use the specified display" },
     { "dll",          0, 1, 1, MODULE_AddLoadOrderOption,
       "--dll name       Enable or disable built-in DLLs" },
     { "dosver",       0, 1, 1, VERSION_ParseDosVersion,
@@ -83,13 +65,8 @@ static const struct option_descr option_table[] =
       "                    Only valid with --winver win31" },
     { "help",       'h', 0, 0, do_help,
       "--help,-h        Show this help message" },
-    { "language",     0, 1, 1, do_language,
-      "--language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv,\n"
-      "                    He,Hr,Hu,It,Ja,Ko,Kw,Ms,Nl,No,Pl,Pt,Sk,Sv,Ru,Wa)" },
     { "managed",      0, 0, 0, do_managed,
       "--managed        Allow the window manager to manage created windows" },
-    { "synchronous",  0, 0, 1, do_synchronous,
-      "--synchronous    Turn on synchronous display mode" },
     { "version",    'v', 0, 0, do_version,
       "--version,-v     Display the Wine version" },
     { "winver",       0, 1, 1, VERSION_ParseWinVersion,
@@ -107,26 +84,6 @@ static void do_version( const char *arg )
 {
     MESSAGE( "%s\n", WINE_RELEASE_INFO );
     ExitProcess(0);
-}
-
-static void do_synchronous( const char *arg )
-{
-    Options.synchronous = TRUE;
-}
-
-static void do_desktop( const char *arg )
-{
-    Options.desktopGeometry = xstrdup( arg );
-}
-
-static void do_display( const char *arg )
-{
-    Options.display = xstrdup( arg );
-}
-
-static void do_language( const char *arg )
-{
-    SetEnvironmentVariableA( "LANGUAGE", arg );
 }
 
 static void do_managed( const char *arg )
@@ -346,6 +303,7 @@ static void inherit_options( char *buffer )
 void OPTIONS_Usage(void)
 {
     const struct option_descr *opt;
+    MESSAGE( "%s\n\n", WINE_RELEASE_INFO );
     MESSAGE( "Usage: %s [options] [--] program_name [arguments]\n", argv0 );
     MESSAGE("The -- has to be used if you specify arguments (of the program)\n\n");
     MESSAGE( "Options:\n" );

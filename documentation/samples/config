@@ -135,6 +135,8 @@ WINE REGISTRY Version 2
 ; Use this if you have more than one port for video on your setup 
 ; (Wine uses for now the first 'input image' it finds).
 ;; "XVideoPort" = "43"
+; Run in synchronous mode (useful for debugging X11 problems)
+;;"Synchronous" = "Y"
 
 [fonts]
 ;Read documentation/fonts before adding aliases

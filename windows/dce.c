@@ -18,7 +18,6 @@
  */
 
 #include <assert.h>
-#include "options.h"
 #include "dce.h"
 #include "win.h"
 #include "gdi.h"
@@ -295,7 +294,7 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
                         continue;
                     }
 
-		    if( !Options.desktopGeometry && wndCurrent == pDesktop )
+		    if (wndCurrent == pDesktop && !(wndCurrent->flags & WIN_NATIVE))
 		    {
 			/* don't bother with fake desktop */
                         WIN_ReleaseWndPtr(wndCurrent);

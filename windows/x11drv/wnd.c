@@ -190,6 +190,7 @@ BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr)
         _net_kde_system_tray_window_for = TSXInternAtom( display, "_NET_KDE_SYSTEM_TRAY_WINDOW_FOR", False );
 
     ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = X11DRV_GetXRootWindow();
+    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display)) wndPtr->flags |= WIN_NATIVE;
     X11DRV_WND_RegisterWindow( wndPtr );
 
     return TRUE;

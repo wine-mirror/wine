@@ -97,12 +97,6 @@ For more information on debugging messages, see the file
 in the source distribution (FIXME: outdated).
 .RE
 .TP
-.I --desktop geom
-Use a desktop window of the given geometry, e.g. "640x480"
-.TP
-.I --display name
-Use the specified X display
-.TP
 .I --dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]]
 Selects the override type and load order of dll used in the loading
 process for any dll. The default is set in the configuration
@@ -154,18 +148,9 @@ Specify the DOS version
 should imitate (e.g. 6.22) This option
 is only valid when used in conjunction with --winver win31.
 .TP
-.I --language xx
-Set the language to
-.I xx
-(one of Br, Ca, Cs, Cy, Da, De, En, Eo, Es, Fi, Fr, Ga, Gd, Gv, Hr,
-Hu, It, Ko, Kw, No, Pl, Pt, Ru, Sk, Sv, Wa)
-.TP
 .I --managed
 Create each top-level window as a properly managed X window instead of
 creating our own "sticky" window.
-.TP
-.I --synchronous
-Turn on synchronous display mode. Useful for debugging X11 graphics problems.
 .TP
 .I --winver version
 Specify which Windows version 
@@ -269,7 +254,9 @@ searched in the directories specified by the standard
 .I LD_LIBRARY_PATH
 if they are not found in the directories listed in
 .I WINEDLLPATH.
-
+.TP
+.I DISPLAY
+Specifies the X11 display to use.
 .SH CONFIGURATION FILE
 .B wine
 expects a configuration file (

@@ -58,6 +58,9 @@ Window root_window;
 
 unsigned int X11DRV_server_startticks;
 
+static BOOL synchronous;  /* run in synchronous mode? */
+static char *desktop_geometry;
+
 #ifdef NO_REENTRANT_X11
 static int* (*old_errno_location)(void);
 static int* (*old_h_errno_location)(void);
@@ -146,55 +149,45 @@ static void setup_options(void)
 
     /* --display option */
 
-    count = sizeof(buffer);
-    if (!RegQueryValueExA( hkey, "display", 0, &type, buffer, &count ))
+    strcpy( buffer, "DISPLAY=" );
+    count = sizeof(buffer) - 8;
+    if (!RegQueryValueExA( hkey, "display", 0, &type, buffer + 8, &count ))
     {
-        if (Options.display)
-        {
-            if (strcmp( buffer, Options.display ))
-                MESSAGE( "%s: warning: --display option ignored, using '%s'\n", argv0, buffer );
-        }
-        else if ((Options.display = getenv( "DISPLAY" )))
-        {
-            if (strcmp( buffer, Options.display ))
-                MESSAGE( "%s: warning: $DISPLAY variable ignored, using '%s'\n", argv0, buffer );
-        }
-        Options.display = strdup(buffer);
-    }
-    else
-    {
-        if (!Options.display && !(Options.display = getenv( "DISPLAY" )))
-        {
-            MESSAGE( "%s: no display specified\n", argv0 );
-            ExitProcess(1);
-        }
-        RegSetValueExA( hkey, "display", 0, REG_SZ, Options.display, strlen(Options.display)+1 );
+        const char *display_name = getenv( "DISPLAY" );
+        if (display_name && strcmp( buffer, display_name ))
+            MESSAGE( "x11drv: Warning: $DISPLAY variable ignored, using '%s' specified in config file\n",
+                     buffer + 8 );
+        putenv( strdup(buffer) );
     }
 
-    /* check and set --managed and --desktop options in wine config file
-     * if it was not set on command line */
+    /* check and set --managed option in wine config file if it was not set on command line */
 
-    if ((!Options.managed) && (Options.desktopGeometry == NULL))
+    if (!Options.managed)
     {
         count = sizeof(buffer);
         if (!RegQueryValueExA( hkey, "managed", 0, &type, buffer, &count ))
             Options.managed = IS_OPTION_TRUE( buffer[0] );
-
-	count = sizeof(buffer);
-        if (!RegQueryValueExA( hkey, "Desktop", 0, &type, buffer, &count ))
-            /* Imperfect validation:  If Desktop=N, then we don't turn on
-            ** the --desktop option.  We should really validate for a correct
-            ** sizing entry */
-            if (! IS_OPTION_FALSE(buffer[0]))
-                Options.desktopGeometry = strdup(buffer);
     }
-
     if (Options.managed)
 	RegSetValueExA( hkey, "managed", 0, REG_SZ, "y", 2 );
 
-    if (Options.desktopGeometry)
-        RegSetValueExA( hkey, "desktop", 0, REG_SZ, Options.desktopGeometry, strlen(Options.desktopGeometry)+1 );
-    
+    count = sizeof(buffer);
+    if (!RegQueryValueExA( hkey, "Desktop", 0, &type, buffer, &count ))
+    {
+        /* Imperfect validation:  If Desktop=N, then we don't turn on
+        ** the --desktop option.  We should really validate for a correct
+        ** sizing entry */
+        if (!IS_OPTION_FALSE(buffer[0])) desktop_geometry = strdup(buffer);
+    }
+
+    count = sizeof(buffer);
+    screen_depth = 0;
+    if (!RegQueryValueExA( hkey, "ScreenDepth", 0, &type, buffer, &count ))
+        screen_depth = atoi(buffer);
+
+    if (!RegQueryValueExA( hkey, "Synchronous", 0, &type, buffer, &count ))
+        synchronous = IS_OPTION_TRUE( buffer[0] );
+
     RegCloseKey( hkey );
 }
 
@@ -281,7 +274,7 @@ static void create_desktop( const char *geometry )
     wm_hints->flags = InputHint | StateHint;
     wm_hints->input = True;
     wm_hints->initial_state = NormalState;
-    class_hints->res_name = (char *)argv0;
+    class_hints->res_name  = "wine";
     class_hints->res_class = "Wine";
 
     TSXStringListToTextProperty( &name, 1, &window_name );
@@ -322,9 +315,9 @@ static void process_attach(void)
 
     /* Open display */
 
-    if (!(display = TSXOpenDisplay( Options.display )))
+    if (!(display = TSXOpenDisplay( NULL )))
     {
-        MESSAGE( "%s: Can't open display: %s\n", argv0, Options.display );
+        MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
         ExitProcess(1);
     }
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
@@ -334,7 +327,6 @@ static void process_attach(void)
 
     /* Initialize screen depth */
 
-    screen_depth = PROFILE_GetWineIniInt( "x11drv", "ScreenDepth", 0 );
     if (screen_depth)  /* depth specified */
     {
         int depth_count, i;
@@ -344,7 +336,7 @@ static void process_attach(void)
         TSXFree( depth_list );
         if (i >= depth_count)
 	{
-            MESSAGE( "%s: Depth %d not supported on this screen.\n", argv0, screen_depth );
+            MESSAGE( "x11drv: Depth %d not supported on this screen.\n", screen_depth );
             ExitProcess(1);
 	}
     }
@@ -358,24 +350,27 @@ static void process_attach(void)
      */
     TSXOpenIM( display, NULL, NULL, NULL);
 
-    if (Options.synchronous) XSetErrorHandler( error_handler );
+    if (synchronous)
+    {
+        XSetErrorHandler( error_handler );
+        XSynchronize( display, True );
+    }
 
     screen_width  = WidthOfScreen( screen );
     screen_height = HeightOfScreen( screen );
 
-    if (Options.desktopGeometry)
+    if (desktop_geometry)
     {
         Options.managed = FALSE;
-        create_desktop( Options.desktopGeometry );
+        create_desktop( desktop_geometry );
     }
 
     /* initialize GDI */
     if(!X11DRV_GDI_Initialize())
     {
-        MESSAGE( "%s: X11DRV Couldn't Initialize GDI.\n", argv0 );
+        ERR( "Couldn't Initialize GDI.\n" );
         ExitProcess(1);
     }
-
 
     /* save keyboard setup */
     TSXGetKeyboardControl(display, &keyboard_state);
@@ -406,17 +401,24 @@ static void process_detach(void)
     keyboard_value.bell_pitch        = keyboard_state.bell_pitch;
     keyboard_value.bell_duration     = keyboard_state.bell_duration;
     keyboard_value.auto_repeat_mode  = keyboard_state.global_auto_repeat;
-  
-    XChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent | 
-                           KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
+
+    TSXChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent |
+                             KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
 
 #ifdef HAVE_LIBXXF86VM
     /* cleanup XVidMode */
     X11DRV_XF86VM_Cleanup();
 #endif
 
+    /* cleanup event handling */
+    X11DRV_EVENT_Cleanup();
+
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
+
+    /* close the display */
+    XCloseDisplay( display );
+    display = NULL;
 
     /* restore TSX11 locking */
     wine_tsx11_lock = old_tsx11_lock;
@@ -425,14 +427,7 @@ static void process_detach(void)
     wine_errno_location = old_errno_location;
     wine_h_errno_location = old_h_errno_location;
 #endif /* NO_REENTRANT_X11 */
-
-#if 0  /* FIXME */
-    /* close the display */
-    XCloseDisplay( display );
-    display = NULL;
-
-    WND_Driver       = NULL;
-#endif
+    RtlDeleteCriticalSection( &X11DRV_CritSection );
 }
 
 
