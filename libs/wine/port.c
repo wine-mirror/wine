@@ -38,6 +38,7 @@
 #endif
 
 #include "wine/library.h"
+#include "wine/pthread.h"
 
 /***********************************************************************
  *           wine_switch_to_stack
@@ -90,6 +91,28 @@ __ASM_GLOBAL_FUNC( wine_switch_to_stack,
 #else
 #error You must implement wine_switch_to_stack for your platform
 #endif
+
+
+/***********************************************************************
+ *           wine_pthread_init_process
+ *
+ * This function is just a placeholder, it will be overridden by the pthread support code.
+ */
+void wine_pthread_init_process( const struct wine_pthread_functions *functions )
+{
+    assert(0);  /* we must never get here */
+}
+
+
+/***********************************************************************
+ *           wine_pthread_init_thread
+ *
+ * This function is just a placeholder, it will be overridden by the pthread support code.
+ */
+void wine_pthread_init_thread(void)
+{
+    assert(0);  /* we must never get here */
+}
 
 
 #if (defined(__svr4__) || defined(__NetBSD__)) && !defined(MAP_TRYFIXED)
