@@ -143,14 +143,42 @@ ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface) {
 */
 HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
     LPDIRECTDRAWCLIPPER iface, LPRECT lpRect, LPRGNDATA lpClipList,
-    LPDWORD lpdwSize
-) {
+    LPDWORD lpdwSize)
+{
     ICOM_THIS(IDirectDrawClipperImpl,iface);
-    static int warned = 0;
-    if (warned++ < 10)
-	FIXME("(%p,%p,%p,%p),stub!\n",This,lpRect,lpClipList,lpdwSize);
-    if (lpdwSize) *lpdwSize=0;
-    return DDERR_NOCLIPLIST;
+
+	TRACE("(%p,%p,%p,%p)\n", This, lpRect, lpClipList, lpdwSize);
+
+    if (This->hWnd)
+    {
+        HDC hDC = GetDCEx(This->hWnd, NULL, DCX_WINDOW);
+        if (hDC)
+        {
+            HRGN hRgn = CreateRectRgn(0,0,0,0);
+            if (GetRandomRgn(hDC, hRgn, SYSRGN))
+            {
+                if (lpRect)
+                {
+                    HRGN hRgnClip = CreateRectRgn(lpRect->left, lpRect->top,
+                        lpRect->right, lpRect->bottom);
+                    CombineRgn(hRgn, hRgn, hRgnClip, RGN_AND);
+                    DeleteObject(hRgnClip);
+                }
+                *lpdwSize = GetRegionData(hRgn, *lpdwSize, lpClipList);
+            }
+            DeleteObject(hRgn);
+            ReleaseDC(This->hWnd, hDC);
+        }
+        return DD_OK;
+    }
+    else
+    {
+        static int warned = 0;
+        if (warned++ < 10)
+            FIXME("(%p,%p,%p,%p),stub!\n",This,lpRect,lpClipList,lpdwSize);
+        if (lpdwSize) *lpdwSize=0;
+        return DDERR_NOCLIPLIST;
+    }
 }
 
 /***********************************************************************
