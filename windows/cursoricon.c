@@ -2008,6 +2008,73 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     return result;
 }
 
+/***********************************************************************
+ *           DIB_FixColorsToLoadflags
+ *
+ * Change color table entries when LR_LOADTRANSPARENT or LR_LOADMAP3DCOLORS
+ * are in loadflags
+ */
+static void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
+{
+  int colors;
+  COLORREF c_W, c_S, c_F, c_L, c_C;
+  int incr,i;
+  RGBQUAD *ptr;
+
+  if (bmi->bmiHeader.biBitCount > 8) return;
+  if (bmi->bmiHeader.biSize == sizeof(BITMAPINFOHEADER)) incr = 4;
+  else if (bmi->bmiHeader.biSize == sizeof(BITMAPCOREHEADER)) incr = 3;
+  else {
+    WARN_(resource)("Wrong bitmap header size!\n");
+    return;
+  }
+  colors = bmi->bmiHeader.biClrUsed;
+  if (!colors && (bmi->bmiHeader.biBitCount <= 8))
+    colors = 1 << bmi->bmiHeader.biBitCount;
+  c_W = GetSysColor(COLOR_WINDOW);
+  c_S = GetSysColor(COLOR_3DSHADOW);
+  c_F = GetSysColor(COLOR_3DFACE);
+  c_L = GetSysColor(COLOR_3DLIGHT);
+  if (loadflags & LR_LOADTRANSPARENT) {
+    switch (bmi->bmiHeader.biBitCount) {
+      case 1: pix = pix >> 7; break;
+      case 4: pix = pix >> 4; break;
+      case 8: break;
+      default: 
+        WARN_(resource)("(%d): Unsupported depth\n", bmi->bmiHeader.biBitCount); 
+	return;
+    }
+    if (pix >= colors) {
+      WARN_(resource)("pixel has color index greater than biClrUsed!\n");
+      return;
+    }
+    if (loadflags & LR_LOADMAP3DCOLORS) c_W = c_F;
+    ptr = (RGBQUAD*)((char*)bmi->bmiColors+pix*incr);
+    ptr->rgbBlue = GetBValue(c_W);
+    ptr->rgbGreen = GetGValue(c_W);
+    ptr->rgbRed = GetRValue(c_W);
+  }
+  if (loadflags & LR_LOADMAP3DCOLORS)
+    for (i=0; i<colors; i++) {
+      ptr = (RGBQUAD*)((char*)bmi->bmiColors+i*incr);
+      c_C = RGB(ptr->rgbRed, ptr->rgbGreen, ptr->rgbBlue);
+      if (c_C == RGB(128, 128, 128)) { 
+	ptr->rgbRed = GetRValue(c_S);
+	ptr->rgbGreen = GetGValue(c_S);
+	ptr->rgbBlue = GetBValue(c_S);
+      } else if (c_C == RGB(192, 192, 192)) { 
+	ptr->rgbRed = GetRValue(c_F);
+	ptr->rgbGreen = GetGValue(c_F);
+	ptr->rgbBlue = GetBValue(c_F);
+      } else if (c_C == RGB(223, 223, 223)) { 
+	ptr->rgbRed = GetRValue(c_L);
+	ptr->rgbGreen = GetGValue(c_L);
+	ptr->rgbBlue = GetBValue(c_L);
+      } 
+    }
+}
+
+
 /**********************************************************************
  *       BITMAP_Load
  */
