@@ -297,6 +297,9 @@ struct IDirectDrawSurfaceImpl
     HRESULT (WINAPI *SetColorKey_cb)(struct IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
     /* This is to get the D3DDevice object associated to this surface */
     struct IDirect3DDeviceImpl *d3ddevice;
+    /* This is for texture */
+    IDirectDrawSurfaceImpl *mip_main;
+    int mipmap_level;
     LPVOID tex_private;
 };
 

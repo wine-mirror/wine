@@ -193,22 +193,16 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
     {
 	HRESULT ret_value = S_OK;
 
-	/* In case the texture surface was created before the D3D creation */
 	if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) == 0) return E_NOINTERFACE;
-	/* Create a 'delayed' private field only if it is not an offscreen texture... */
+
+	/* In case the texture surface was created before the D3D creation */
 	if (This->tex_private == NULL) {
    	    if (This->ddraw_owner->d3d == NULL) {
 	        ERR("Texture created with no D3D object yet.. Not supported !\n");
 		return E_NOINTERFACE;
 	    }
 
-	    if (((This->surface_desc.dwFlags & DDSD_MIPMAPCOUNT) &&
-		 (This->surface_desc.u2.dwMipMapCount > 1)) ||
-		(This->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)) {
-	        ERR(" need to fix mipmaping in this case !!\n");
-	    }
-
-	    ret_value = This->ddraw_owner->d3d->create_texture(This->ddraw_owner->d3d, This, FALSE, NULL, 0);
+	    ret_value = This->ddraw_owner->d3d->create_texture(This->ddraw_owner->d3d, This, FALSE, This->mip_main);
 	    if (FAILED(ret_value)) return ret_value;
 	}
 	if (IsEqualGUID( &IID_IDirect3DTexture, riid )) {

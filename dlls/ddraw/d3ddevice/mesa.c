@@ -302,6 +302,9 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	if (This->current_texture[0] != NULL)
 	    IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[0], IDirect3DTexture2));
 
+	/* And warn the D3D object that this device is no longer active... */
+	This->d3d->removed_device(This->d3d, This);
+
 	ENTER_GL();
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();
@@ -1880,6 +1883,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     *obj = object;
 
     TRACE(" creating implementation at %p.\n", *obj);
+
+    /* And finally warn D3D that this device is now present */
+    object->d3d->added_device(object->d3d, object);
     
     return DD_OK;
 }

@@ -359,7 +359,7 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
     if (FAILED(hr)) return hr;
 
     if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), TRUE, 
-					     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), mipmap_level);
+					     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf));
 
     /* Create attached mipmaps if required. */
     if (more_mipmaps(&ddsd))
@@ -375,8 +375,9 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 
 	while (more_mipmaps(&mipmap_surface_desc))
 	{
+	    IDirectDrawSurfaceImpl *mipmap_impl;
+	    
 	    mipmap_level++;
-
 	    mipmap_surface_desc.u2.dwMipMapCount--;
 
 	    if (mipmap_surface_desc.dwWidth > 1)
@@ -397,8 +398,14 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 		IDirectDrawSurface7_Release(*ppSurf);
 		return hr;
 	    }
+	    
+	    /* This is needed for delayed mipmap creation */
+	    mipmap_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, mipmap);
+	    mipmap_impl->mip_main = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf);
+	    mipmap_impl->mipmap_level = mipmap_level;
+
 	    if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, mipmap), TRUE,
-						     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), mipmap_level);
+						     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf));
 
 	    IDirectDrawSurface7_AddAttachedSurface(prev_mipmap, mipmap);
 	    IDirectDrawSurface7_Release(prev_mipmap);

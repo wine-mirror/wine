@@ -78,6 +78,9 @@ typedef struct IDirect3DGLImpl
     struct IDirect3DImpl parent;
     int free_lights;
     void (*light_released)(IDirect3DImpl *, GLenum light_num);
+
+    /* This is needed for delayed texture creation */
+    struct IDirect3DDeviceImpl *current_device;
 } IDirect3DGLImpl;
 
 typedef struct IDirect3DLightGLImpl
@@ -92,7 +95,6 @@ typedef struct IDirect3DTextureGLImpl
     GLuint tex_name;
     BOOLEAN loaded; /* For the moment, this is here.. Should be part of surface management though */
     BOOLEAN first_unlock;
-    DWORD mipmap_level;
     /* This is for now used to override 'standard' surface stuff to be as transparent as possible */
     void (*final_release)(struct IDirectDrawSurfaceImpl *This);
     void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
@@ -123,7 +125,7 @@ typedef struct IDirect3DDeviceGLImpl
 
 /* All non-static functions 'exported' by various sub-objects */
 extern HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw);
-extern HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf, DWORD mipmap_level);
+extern HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf);
 extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLenum light_num);
 extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
 extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirect3DImpl *d3d);

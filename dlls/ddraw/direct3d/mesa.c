@@ -377,6 +377,38 @@ ICOM_VTABLE(IDirect3D) VTABLE_IDirect3D =
 #undef XCAST
 #endif
 
+static HRESULT d3d_add_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
+{
+    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
+ 
+    if  (glThis->current_device == NULL) {
+        /* Create delayed textures now that we have an OpenGL context...
+	   For that, go through all surface attached to our DDraw object and create
+	   OpenGL textures for all textures.. */
+        IDirectDrawSurfaceImpl *surf = This->ddraw->surfaces;
+
+	while (surf != NULL) {
+	    if (surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) {
+	        /* Found a texture.. Now create the OpenGL part */
+	        d3dtexture_create(This, surf, FALSE, surf->mip_main);
+	    }
+	    surf = surf->next_ddraw;
+	}
+    }
+    /* For the moment, only one device 'supported'... */
+    glThis->current_device = device;
+
+    return DD_OK;
+}
+
+static HRESULT d3d_remove_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
+{
+    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
+
+    glThis->current_device = NULL;
+    return DD_OK;
+}
+
 HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw)
 {
     IDirect3DImpl *object;
@@ -388,7 +420,9 @@ HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw)
     object->ref = 1;
     object->ddraw = ddraw;
     object->create_texture = d3dtexture_create;
-    
+    object->added_device = d3d_add_device;
+    object->removed_device = d3d_remove_device;
+
     ICOM_INIT_INTERFACE(object, IDirect3D,  VTABLE_IDirect3D);
     ICOM_INIT_INTERFACE(object, IDirect3D2, VTABLE_IDirect3D2);
     ICOM_INIT_INTERFACE(object, IDirect3D3, VTABLE_IDirect3D3);

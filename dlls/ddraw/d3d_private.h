@@ -54,7 +54,11 @@ struct IDirect3DImpl
     IDirectDrawImpl*	ddraw;
 
     /* Used as a callback function to create a texture */
-    HRESULT (*create_texture)(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *tex, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main, DWORD mipmap_level);
+    HRESULT (*create_texture)(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *tex, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main);
+
+    /* Used as a callback for Devices to tell to the D3D object it's been created */
+    HRESULT (*added_device)(IDirect3DImpl *d3d, IDirect3DDeviceImpl *device);
+    HRESULT (*removed_device)(IDirect3DImpl *d3d, IDirect3DDeviceImpl *device);
 };
 
 /*****************************************************************************

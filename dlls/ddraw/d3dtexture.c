@@ -105,7 +105,7 @@ HRESULT WINAPI gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *texture, DWORD dwFla
 		}
 
 		glTexSubImage2D(GL_TEXTURE_2D,
-				glThis->mipmap_level,
+				texture->mipmap_level,
 				0, 0,
 				tex_d->dwWidth, tex_d->dwHeight,
 				GL_RGBA,
@@ -200,7 +200,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			      table);           /* the color table */
 	    
 	    glTexImage2D(GL_TEXTURE_2D,       /* target */
-			 glThis->mipmap_level,                   /* level */
+			 This->mipmap_level,                   /* level */
 			 GL_COLOR_INDEX8_EXT, /* internal format */
 			 src_d->dwWidth, src_d->dwHeight, /* width, height */
 			 0,                   /* border */
@@ -222,7 +222,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	    
 	    if (init_upload)
 	        glTexImage2D(GL_TEXTURE_2D,
-			     glThis->mipmap_level,
+			     This->mipmap_level,
 			     GL_RGBA,
 			     src_d->dwWidth, src_d->dwHeight,
 			     0,
@@ -231,7 +231,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			     surface);
 	    else
 	        glTexSubImage2D(GL_TEXTURE_2D,
-				glThis->mipmap_level,
+				This->mipmap_level,
 				0, 0,
 				src_d->dwWidth, src_d->dwHeight,
 				GL_RGBA,
@@ -250,7 +250,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		   ********************** */
 	    if (init_upload)
 	        glTexImage2D(GL_TEXTURE_2D,
-			     glThis->mipmap_level,
+			     This->mipmap_level,
 			     GL_RGB,
 			     src_d->dwWidth, src_d->dwHeight,
 			     0,
@@ -259,7 +259,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			     src_d->lpSurface);
 	    else
 	        glTexSubImage2D(GL_TEXTURE_2D,
-				glThis->mipmap_level,
+				This->mipmap_level,
 				0, 0,
 				src_d->dwWidth, src_d->dwHeight,
 				GL_RGB,
@@ -269,7 +269,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
   	    if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
 		if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,
-				 glThis->mipmap_level,
+				 This->mipmap_level,
 				 GL_RGB,
 				 src_d->dwWidth, src_d->dwHeight,
 				 0,
@@ -278,7 +278,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				 src_d->lpSurface);
 		else
 		    glTexSubImage2D(GL_TEXTURE_2D,
-				    glThis->mipmap_level,
+				    This->mipmap_level,
 				    0, 0,
 				    src_d->dwWidth, src_d->dwHeight,
 				    GL_RGB,
@@ -288,7 +288,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
 		if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,
-				 glThis->mipmap_level,
+				 This->mipmap_level,
 				 GL_RGBA,
 				 src_d->dwWidth, src_d->dwHeight,
 				 0,
@@ -297,7 +297,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				 src_d->lpSurface);
 		else
 		    glTexSubImage2D(GL_TEXTURE_2D,
-				    glThis->mipmap_level,
+				    This->mipmap_level,
 				    0, 0,
 				    src_d->dwWidth, src_d->dwHeight,
 				    GL_RGBA,
@@ -306,7 +306,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
 	        if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,
-				 glThis->mipmap_level,
+				 This->mipmap_level,
 				 GL_RGBA,
 				 src_d->dwWidth, src_d->dwHeight,
 				 0,
@@ -315,7 +315,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				 src_d->lpSurface);
 		else
 		    glTexSubImage2D(GL_TEXTURE_2D,
-				    glThis->mipmap_level,
+				    This->mipmap_level,
 				    0, 0,
 				    src_d->dwWidth, src_d->dwHeight,
 				    GL_RGBA,
@@ -335,7 +335,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		
 		if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,
-				 glThis->mipmap_level,
+				 This->mipmap_level,
 				 GL_RGBA,
 				 src_d->dwWidth, src_d->dwHeight,
 				 0,
@@ -344,7 +344,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				 surface);
 		else
 		    glTexSubImage2D(GL_TEXTURE_2D,
-				    glThis->mipmap_level,
+				    This->mipmap_level,
 				    0, 0,
 				    src_d->dwWidth, src_d->dwHeight,
 				    GL_RGBA,
@@ -366,7 +366,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		
 		if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,
-				 glThis->mipmap_level,
+				 This->mipmap_level,
 				 GL_RGBA,
 				 src_d->dwWidth, src_d->dwHeight,
 				 0,
@@ -375,7 +375,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				 surface);
 		else
 		    glTexSubImage2D(GL_TEXTURE_2D,
-				    glThis->mipmap_level,
+				    This->mipmap_level,
 				    0, 0,
 				    src_d->dwWidth, src_d->dwHeight,
 				    GL_RGBA,
@@ -389,7 +389,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
 	    if (init_upload)
 	        glTexImage2D(GL_TEXTURE_2D,
-			     glThis->mipmap_level,
+			     This->mipmap_level,
 			     GL_RGB,
 			     src_d->dwWidth, src_d->dwHeight,
 			     0,
@@ -398,7 +398,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			     src_d->lpSurface);
 	    else
 	        glTexSubImage2D(GL_TEXTURE_2D,
-				glThis->mipmap_level,
+				This->mipmap_level,
 				0, 0,
 				src_d->dwWidth, src_d->dwHeight,
 				GL_RGB,
@@ -407,7 +407,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
 	    if (init_upload)
 	        glTexImage2D(GL_TEXTURE_2D,
-			     glThis->mipmap_level,
+			     This->mipmap_level,
 			     GL_RGBA,
 			     src_d->dwWidth, src_d->dwHeight,
 			     0,
@@ -416,7 +416,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			     src_d->lpSurface);
 	    else
 	        glTexSubImage2D(GL_TEXTURE_2D,
-				glThis->mipmap_level,
+				This->mipmap_level,
 				0, 0,
 				src_d->dwWidth, src_d->dwHeight,
 				GL_RGBA,
@@ -571,16 +571,18 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     
     TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DTexture2);
 
-    if (glThis->loaded == FALSE) {
-        /* Only check memory for not already loaded texture... */
-        mem_used = This->surface_desc.dwHeight *
-	           This->surface_desc.u1.lPitch;
-	if (This->ddraw_owner->allocate_memory(This->ddraw_owner, mem_used) < 0) {
-	    TRACE(" out of virtual memory... Warning application.\n");
-	    return D3DERR_TEXTURE_LOAD_FAILED;
+    if (glThis != NULL) {
+        if (glThis->loaded == FALSE) {
+	    /* Only check memory for not already loaded texture... */
+	    mem_used = This->surface_desc.dwHeight *
+	               This->surface_desc.u1.lPitch;
+	    if (This->ddraw_owner->allocate_memory(This->ddraw_owner, mem_used) < 0) {
+	        TRACE(" out of virtual memory... Warning application.\n");
+		return D3DERR_TEXTURE_LOAD_FAILED;
+	    }
 	}
+	glThis->loaded = TRUE;
     }
-    glThis->loaded = TRUE;
     
     TRACE("Copied surface %p to surface %p\n", lpD3DTextureImpl, This);
 
@@ -616,18 +618,20 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	   texture object. */
 	memcpy(dst_d->lpSurface, src_d->lpSurface, src_d->u1.lPitch * src_d->dwHeight);
 
-	/* If the GetHandle was not done, it is an error... */
-	if (glThis->tex_name == 0) ERR("Unbound GL texture !!!\n");
+	if (glThis != NULL) {
+	    /* If the GetHandle was not done, it is an error... */
+	    if (glThis->tex_name == 0) ERR("Unbound GL texture !!!\n");
 
-	ENTER_GL();
-
-	/* Now, load the texture */
-	/* d3dd->set_context(d3dd); We need to set the context somehow.... */
-
-	gltex_upload_texture(This, glThis->first_unlock);
-	glThis->first_unlock = FALSE;
-	
-	LEAVE_GL();
+	    ENTER_GL();
+	    
+	    /* Now, load the texture */
+	    /* d3dd->set_context(d3dd); We need to set the context somehow.... */
+	    
+	    gltex_upload_texture(This, glThis->first_unlock);
+	    glThis->first_unlock = FALSE;
+	    
+	    LEAVE_GL();
+	}
     }
 
     return D3D_OK;
@@ -760,50 +764,55 @@ ICOM_VTABLE(IDirect3DTexture) VTABLE_IDirect3DTexture =
 #endif
 
 HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, 
-			  IDirectDrawSurfaceImpl *main, DWORD mipmap_level)
+			  IDirectDrawSurfaceImpl *main)
 {
-    IDirect3DTextureGLImpl *private;
+    IDirect3DGLImpl *gl_d3d = (IDirect3DGLImpl *) d3d;
 
-    private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTextureGLImpl));
-    if (private == NULL) return DDERR_OUTOFMEMORY;
-
-    private->final_release = surf->final_release;
-    private->lock_update = surf->lock_update;
-    private->unlock_update = surf->unlock_update;
-    private->mipmap_level = mipmap_level;
-    
-    /* If at creation, we can optimize stuff and wait the first 'unlock' to upload a valid stuff to OpenGL.
-       Otherwise, it will be uploaded here (and may be invalid). */
-    if (at_creation == TRUE)
-        private->first_unlock = TRUE;
-    else
-        private->first_unlock = FALSE;
-    surf->final_release = gltex_final_release;
-    surf->lock_update = gltex_lock_update;
-    surf->unlock_update = gltex_unlock_update;
-    surf->tex_private = private;
-    surf->SetColorKey_cb = gltex_setcolorkey_cb;
-    
+    /* First, initialize the texture vtables... */
     ICOM_INIT_INTERFACE(surf, IDirect3DTexture,  VTABLE_IDirect3DTexture);
     ICOM_INIT_INTERFACE(surf, IDirect3DTexture2, VTABLE_IDirect3DTexture2);
+	
+    /* Only create all the private stuff if we actually have an OpenGL context.. */
+    if (gl_d3d->current_device != NULL) {
+        IDirect3DTextureGLImpl *private;
 
-    ENTER_GL();
-    if (mipmap_level == 0) {
-	glGenTextures(1, &(private->tex_name));
-	if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
-	TRACE(" GL texture created for surface %p (private data at %p and GL id %d).\n", surf, private, private->tex_name);
-    } else {
-        private->tex_name = ((IDirect3DTextureGLImpl *) (main->tex_private))->tex_name;
-	TRACE(" GL texture created for surface %p (private data at %p and GL id reusing id %d from surface %p (%p)).\n",
-	      surf, private, private->tex_name, main, main->tex_private);
-    }
+        private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTextureGLImpl));
+	if (private == NULL) return DDERR_OUTOFMEMORY;
 
-    if ((at_creation == FALSE) &&
-	((surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) == 0))
-    {
-        gltex_upload_texture(surf, TRUE);
+	private->final_release = surf->final_release;
+	private->lock_update = surf->lock_update;
+	private->unlock_update = surf->unlock_update;
+	
+	/* If at creation, we can optimize stuff and wait the first 'unlock' to upload a valid stuff to OpenGL.
+	   Otherwise, it will be uploaded here (and may be invalid). */
+	if (at_creation == TRUE)
+	    private->first_unlock = TRUE;
+	else
+	    private->first_unlock = FALSE;
+	surf->final_release = gltex_final_release;
+	surf->lock_update = gltex_lock_update;
+	surf->unlock_update = gltex_unlock_update;
+	surf->tex_private = private;
+	surf->SetColorKey_cb = gltex_setcolorkey_cb;
+	
+	ENTER_GL();
+	if (surf->mipmap_level == 0) {
+	    glGenTextures(1, &(private->tex_name));
+	    if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
+	    TRACE(" GL texture created for surface %p (private data at %p and GL id %d).\n", surf, private, private->tex_name);
+	} else {
+	    private->tex_name = ((IDirect3DTextureGLImpl *) (main->tex_private))->tex_name;
+	    TRACE(" GL texture created for surface %p (private data at %p and GL id reusing id %d from surface %p (%p)).\n",
+		  surf, private, private->tex_name, main, main->tex_private);
+	}
+
+	if ((at_creation == FALSE) &&
+	    ((surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) == 0))
+	{
+	    gltex_upload_texture(surf, TRUE);
+	}
+	LEAVE_GL();
     }
-    LEAVE_GL();
 
     return D3D_OK;
 }
