@@ -38,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(message);
 #define SPY_MAX_MSGNUM   WM_USER
 #define SPY_INDENT_UNIT  4  /* 4 spaces */
 
+#define DEBUG_SPY 0
+
 static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
     "WM_NULL",			/* 0x00 */
@@ -1410,6 +1412,45 @@ static const USER_MSG toolbar_array[] = {
           USM(TB_UNKWN464              ,0),
           {0,0,0} };
 
+static const USER_MSG tooltips_array[] = {
+          USM(TTM_ACTIVATE             ,0),
+          USM(TTM_SETDELAYTIME         ,0),
+          USM(TTM_ADDTOOLA             ,0),
+          USM(TTM_ADDTOOLW             ,0),
+          USM(TTM_DELTOOLA             ,0),
+          USM(TTM_DELTOOLW             ,0),
+          USM(TTM_NEWTOOLRECTA         ,0),
+          USM(TTM_NEWTOOLRECTW         ,0),
+          USM(TTM_RELAYEVENT           ,0),
+          USM(TTM_GETTOOLINFOA         ,0),
+          USM(TTM_GETTOOLINFOW         ,0),
+          USM(TTM_HITTESTA             ,0),
+          USM(TTM_HITTESTW             ,0),
+          USM(TTM_GETTEXTA             ,0),
+          USM(TTM_GETTEXTW             ,0),
+          USM(TTM_UPDATETIPTEXTA       ,0),
+          USM(TTM_UPDATETIPTEXTW       ,0),
+          USM(TTM_GETTOOLCOUNT         ,0),
+          USM(TTM_ENUMTOOLSA           ,0),
+          USM(TTM_ENUMTOOLSW           ,0),
+          USM(TTM_GETCURRENTTOOLA      ,0),
+          USM(TTM_GETCURRENTTOOLW      ,0),
+          USM(TTM_WINDOWFROMPOINT      ,0),
+          USM(TTM_TRACKACTIVATE        ,0),
+          USM(TTM_TRACKPOSITION        ,0),
+          USM(TTM_SETTIPBKCOLOR        ,0),
+          USM(TTM_SETTIPTEXTCOLOR      ,0),
+          USM(TTM_GETDELAYTIME         ,0),
+          USM(TTM_GETTIPBKCOLOR        ,0),
+          USM(TTM_GETTIPTEXTCOLOR      ,0),
+          USM(TTM_SETMAXTIPWIDTH       ,0),
+          USM(TTM_GETMAXTIPWIDTH       ,0),
+          USM(TTM_SETMARGIN            ,0),
+          USM(TTM_GETMARGIN            ,0),
+          USM(TTM_POP                  ,0),
+          USM(TTM_UPDATE               ,0),
+          {0,0,0} };
+
 static const USER_MSG comboex_array[] = {
           USM(CBEM_INSERTITEMA        ,0),
           USM(CBEM_SETIMAGELIST       ,0),
@@ -1473,11 +1514,12 @@ static const USER_MSG updown_array[] = {
 #undef USM
 
 static CONTROL_CLASS  cc_array[] = {
-    {WC_COMBOBOXEXW,    comboex_array, 0},
-    {REBARCLASSNAMEW,   rebar_array,   0},
-    {TOOLBARCLASSNAMEW, toolbar_array, 0},
-    {WC_PROPSHEETW,     propsht_array, 0},
-    {UPDOWN_CLASSW,     updown_array, 0},
+    {WC_COMBOBOXEXW,    comboex_array,  0},
+    {WC_PROPSHEETW,     propsht_array,  0},
+    {REBARCLASSNAMEW,   rebar_array,    0},
+    {TOOLBARCLASSNAMEW, toolbar_array,  0},
+    {TOOLTIPS_CLASSW,   tooltips_array, 0},
+    {UPDOWN_CLASSW,     updown_array,   0},
     {0, 0, 0} };
 
 
@@ -1820,16 +1862,20 @@ const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *last, UI
     while (last >= first) {
 	count = 1 + last - first;
 	if (count < 3) {
-	    /* TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
-	       code, first->value, first->name, last->value, last->name, last->len); */
+#if DEBUG_SPY
+	    TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
+	       code, first->value, first->name, last->value, last->name, last->len);
+#endif
 	    if (first->value == code) return first;
 	    if (last->value == code) return last;
 	    return NULL;
 	}
 	count = count / 2;
 	test = first + count;
-	/* TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
-	   first, last, test, test->value, code, count); */
+#if DEBUG_SPY
+	TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
+	   first, last, test, test->value, code, count);
+#endif
 	if (test->value == code) return test;
 	if (test->value > code)
 	    last = test - 1;
@@ -1856,15 +1902,19 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
     if (strncmp(sp_e->msg_name, "WM_USER+", 8) == 0) {
 	INT i = 0;
 
-	/* TRACE("looking class %s\n", sp_e->wnd_class); */
+#if DEBUG_SPY
+	TRACE("looking class %s\n", sp_e->wnd_class);
+#endif
 
 	while (cc_array[i].classname &&
 	       strcmpW(cc_array[i].classname, sp_e->wnd_class) !=0) i++;
 
 	if (!cc_array[i].classname) return;
-	/* TRACE("process class %s, first %p, last %p\n",
+#if DEBUG_SPY
+	TRACE("process class %s, first %p, last %p\n",
 	      debugstr_w(cc_array[i].classname), cc_array[i].classmsg,
-	      cc_array[i].lastmsg); */
+	      cc_array[i].lastmsg);
+#endif
 	p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
 			 sp_e->msgnum);
 	if (p) {
@@ -1955,16 +2005,20 @@ const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY 
     while (last >= first) {
 	count = 1 + last - first;
 	if (count < 3) {
-	    /* TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
-	       code, first->value, first->name, last->value, last->name, last->len); */
+#if DEBUG_SPY
+	    TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
+	       code, first->value, first->name, last->value, last->name, last->len);
+#endif
 	    if (first->value == code) return first;
 	    if (last->value == code) return last;
 	    return NULL;
 	}
 	count = count / 2;
 	test = first + count;
-	/* TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
-	   first, last, test, test->value, code, count); */
+#if DEBUG_SPY
+	TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
+	   first, last, test, test->value, code, count);
+#endif
 	if (test->value == code) return test;
 	if (test->value < code)
 	    last = test - 1;
