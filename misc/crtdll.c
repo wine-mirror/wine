@@ -2045,10 +2045,19 @@ LPSTR __cdecl CRTDLL__strdate (LPSTR date)
 {	FIXME (crtdll,"%p stub\n", date);
 	return 0;
 }
+
 /*********************************************************************
  *                  strtime           (CRTDLL.299)
  */
 LPSTR __cdecl CRTDLL__strtime (LPSTR date)
 {	FIXME (crtdll,"%p stub\n", date);
 	return 0;
+}
+
+/*********************************************************************
+ *                  _ultoa           (CRTDLL.311)
+ */
+LPSTR __cdecl CRTDLL__ultoa(UINT32 x, LPSTR buf, INT32 buflen) {
+	wsnprintf32A(buf,buflen,"%d",x);
+	return buf;
 }

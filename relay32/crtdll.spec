@@ -312,7 +312,7 @@ type	win32
 308 stub _toupper
 309 stub _tzname
 310 stub _tzset
-311 stub _ultoa
+311 cdecl _ultoa(long ptr long) CRTDLL__ultoa
 312 stub _ultow
 313 stub _umask
 314 stub _ungetch
