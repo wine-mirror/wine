@@ -108,11 +108,9 @@ void X11DRV_XF86VM_Init(void)
 {
   int nmodes, i;
   Bool ok;
+  Bool in_desktop_mode = (root_window != DefaultRootWindow(gdi_display));
 
   if (xf86vm_major) return; /* already initialized? */
-
-  /* if in desktop mode, don't use XVidMode */
-  if (root_window != DefaultRootWindow(gdi_display)) return;
 
   if (!usexvidmode) return;
 
@@ -138,11 +136,14 @@ void X11DRV_XF86VM_Init(void)
 #endif
 
       /* retrieve modes */
-      ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &modes);
+      if (!in_desktop_mode) ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &modes);
   }
   wine_tsx11_unlock();
   if (!ok) return;
 
+  /* In desktop mode, do not switch resolution... But still use the Gamma ramp stuff */
+  if (in_desktop_mode) return;
+  
   TRACE("XVidMode modes: count=%d\n", nmodes);
 
   xf86vm_mode_count = nmodes;
