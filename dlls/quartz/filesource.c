@@ -293,7 +293,12 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
 
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
-    AsyncReader * pAsyncRead = CoTaskMemAlloc(sizeof(AsyncReader));
+    AsyncReader *pAsyncRead;
+    
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+    
+    pAsyncRead = CoTaskMemAlloc(sizeof(AsyncReader));
 
     if (!pAsyncRead)
         return E_OUTOFMEMORY;

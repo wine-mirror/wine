@@ -384,6 +384,9 @@ static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     ITStorageImpl *its;
 
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+
     its = HeapAlloc( GetProcessHeap(), 0, sizeof(ITStorageImpl) );
     its->vtbl_IITStorage = &ITStorageImpl_Vtbl;
     its->ref = 1;

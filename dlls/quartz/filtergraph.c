@@ -2416,6 +2416,9 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+
     fimpl = (IFilterGraphImpl *) HeapAlloc(GetProcessHeap(), 0, sizeof(*fimpl));
     fimpl->IGraphBuilder_vtbl = &IGraphBuilder_VTable;
     fimpl->IMediaControl_vtbl = &IMediaControl_VTable;

@@ -46,6 +46,9 @@ HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     IAMMultiMediaStreamImpl* object; 
 
     FIXME("(%p,%p)\n", pUnkOuter, ppObj);
+
+    if( pUnkOuter )
+      return CLASS_E_NOAGGREGATION;
       
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAMMultiMediaStreamImpl));
     
