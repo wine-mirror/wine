@@ -784,10 +784,12 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 
 	virt_new_perm = ( virt_old_perm )  & ~0xff;
 	if ( pg_new_perm & PC_USER )
+	{
 	  if ( pg_new_perm & PC_WRITEABLE )
 	    virt_new_perm |= PAGE_EXECUTE_READWRITE;
 	  else
 	    virt_new_perm |= PAGE_EXECUTE_READ;
+	}
   
 	if ( ! VirtualProtect ( address, ( npages * psize ), virt_new_perm, &virt_old_perm ) ) {
 	  ERR("Can't change page permissions for %08lx\n", (DWORD )address );
@@ -811,8 +813,23 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 
 	return 0;
       }
+    case 0x001e: /* GetDemandPageInfo */
+      {
+	 DWORD dinfo = (DWORD)stack32_pop( context );
+         DWORD flags = (DWORD)stack32_pop( context );   
 
+	 /* GetDemandPageInfo is supposed to fill out the struct at
+          * "dinfo" with various low-level memory management information.
+          * Apps are certainly not supposed to call this, although it's
+          * demoed and documented by Pietrek on pages 441-443 of "Windows
+          * 95 System Programming Secrets" if any program needs a real
+          * implementation of this.
+	  */
 
+	 FIXME("GetDemandPageInfo(%08lx %08lx): stub!\n", dinfo, flags);
+
+	 return 0;
+      }
     default:
         if (LOWORD(service) < N_VMM_SERVICE)
             FIXME( "Unimplemented service %s (%08lx)\n",
@@ -998,6 +1015,35 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
 	}
 
 	return(0x040a); /* default to win98 */
+    }
+    break;
+
+    case 0x0020: /* Get VMCPD Version */
+    {
+	DWORD parm = (DWORD) stack32_pop(context);
+
+	FIXME("Get VMCPD Version(%08lx): partial stub!\n", parm);
+
+	/* FIXME: This is what Win98 returns, it may
+         *        not be correct in all situations.
+         *        It makes Bleem! happy though.
+         */
+
+	return 0x0405;
+    }
+
+    case 0x0029: /* Int31/DPMI dispatch */
+    {
+	DWORD callnum = (DWORD) stack32_pop(context);
+        DWORD parm    = (DWORD) stack32_pop(context);
+ 
+        TRACE("Int31/DPMI dispatch(%08lx)\n", callnum);
+
+	AX_reg(context) = callnum;
+        CX_reg(context) = parm;  
+	INT_Int31Handler(context);
+
+	return(AX_reg(context));
     }
     break;
 
