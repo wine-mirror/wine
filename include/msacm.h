@@ -11,27 +11,6 @@
 #include "mmreg.h"
 
 /***********************************************************************
- * Types
- */
-
-/* FIXME: Move to windef.h */
-#define DECLARE_HANDLE(a) \
-typedef HANDLE16 a##16; \
-typedef HANDLE a; \
-typedef a##16 *P##a##16; \
-typedef a##16 *NP##a##16; \
-typedef a##16 *LP##a##16; \
-typedef a *P##a;
-
-DECLARE_HANDLE(HACMDRIVERID)
-DECLARE_HANDLE(HACMDRIVER)
-DECLARE_HANDLE(HACMSTREAM)
-DECLARE_HANDLE(HACMOBJ)
-
-/* FIXME: Remove when define moved to windef.h */
-#undef DECLARE_HANDLE
-
-/***********************************************************************
  * Defines/Enums
  */
 

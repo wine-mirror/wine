@@ -199,12 +199,8 @@ BOOL 		WINAPI 	PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound);
 #define WAVERR_SYNC           (WAVERR_BASE + 3)    /* device is synchronous */
 #define WAVERR_LASTERROR      (WAVERR_BASE + 3)    /* last error in range */
 
-typedef HWAVEIN16 *LPHWAVEIN16;
-typedef HWAVEOUT16 *LPHWAVEOUT16;
 typedef LPDRVCALLBACK16 LPWAVECALLBACK16;
 typedef LPDRVCALLBACK LPWAVECALLBACK;
-typedef HMIXER16 *LPHMIXER16;
-typedef HMIXER *LPHMIXER;
 
 #define WOM_OPEN        MM_WOM_OPEN
 #define WOM_CLOSE       MM_WOM_CLOSE
@@ -440,8 +436,6 @@ DWORD 		WINAPI 	waveInMessage(HWAVEIN,UINT,DWORD,DWORD);
 #define MIDIERR_INVALIDSETUP  (MIDIERR_BASE + 5)   /* invalid setup */
 #define MIDIERR_LASTERROR     (MIDIERR_BASE + 5)   /* last error in range */
 
-typedef HMIDIIN16  *LPHMIDIIN16;
-typedef HMIDIOUT16  *LPHMIDIOUT16;
 typedef LPDRVCALLBACK16 LPMIDICALLBACK16;
 typedef LPDRVCALLBACK LPMIDICALLBACK;
 #define MIDIPATCHSIZE   128

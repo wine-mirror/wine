@@ -183,7 +183,20 @@ typedef void* SEGPTR;
 
 /* Handle types that exist both in Win16 and Win32. */
 
-#define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE a
+#define DECLARE_HANDLE(a) \
+	typedef HANDLE16 a##16; \
+	typedef HANDLE a; \
+	typedef a##16 *P##a##16; \
+	typedef a##16 *NP##a##16; \
+	typedef a##16 *LP##a##16; \
+	typedef a *P##a; \
+	typedef a *LP##a
+DECLARE_HANDLE(HACMDRIVERID);
+DECLARE_HANDLE(HACMDRIVER);
+DECLARE_HANDLE(HACMOBJ);
+DECLARE_HANDLE(HACMSTREAM);
+DECLARE_HANDLE(HMETAFILEPICT);
+
 DECLARE_HANDLE(HACCEL);
 DECLARE_HANDLE(HBITMAP);
 DECLARE_HANDLE(HBRUSH);
@@ -501,4 +514,4 @@ typedef const RECTL *LPCRECTL;
 }
 #endif
 
-#endif /* __WINE_WINTYPES_H */
+#endif /* __WINE_WINDEF_H */
