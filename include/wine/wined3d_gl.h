@@ -44,8 +44,6 @@
 
 #undef APIENTRY
 #define APIENTRY
-#undef CALLBACK
-#undef WINAPI
 
 /****************************************************
  * OpenGL Extensions (EXT and ARB)
@@ -795,6 +793,15 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLXFNGLXMAKECONTEXTCURRENTPROC,     glXMakeContextCurrent); \
     USE_GL_FUNC(PGLXFNGLXCHOOSEFBCONFIGPROC,         glXChooseFBConfig); \
 
+#undef APIENTRY
+#undef CALLBACK
+#undef WINAPI
+
+/* Redefines the constants */
+#define CALLBACK    __stdcall
+#define WINAPI      __stdcall
+#define APIENTRY    WINAPI
+
 /****************************************************
  * Structures       
  ****************************************************/
@@ -839,15 +846,6 @@ typedef struct _WineD3D_GLContext {
   Drawable     drawable;
   DWORD        ref;
 } WineD3D_Context;
-
-#undef APIENTRY
-#undef CALLBACK
-#undef WINAPI
-
-/* Redefines the constants */
-#define CALLBACK    __stdcall
-#define WINAPI      __stdcall
-#define APIENTRY    WINAPI
 
 #endif /* HAVE_OPENGL */
 

@@ -156,8 +156,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9 iface, U
 
 HRESULT  WINAPI  IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, (void *)pCaps);
 }
 
 HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapter) {

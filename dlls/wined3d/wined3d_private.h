@@ -68,6 +68,13 @@ extern int num_lock;
  */
 #define GL_SUPPORT(ExtName)           (This->gl_info.supported[ExtName] != 0)
 
+
+#define MAX_STREAMS  16  /* Maximum possible streams - used for fixed size arrays
+                            See MaxStreams in MSDN under GetDeviceCaps */
+
+#define WINED3D_VSHADER_MAX_CONSTANTS  96   
+                         /* Maximum number of constants provided to the shaders */
+
 /*****************************************************************************
  * IWineD3D implementation structure
  */
