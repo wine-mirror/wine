@@ -592,8 +592,8 @@ debug_channels (shell)
 @ stub    SHRegDeleteEmptyUSKeyW
 @ stub    SHRegDeleteUSValueA
 @ stub    SHRegDeleteUSValueW
-@ stub    SHRegEnumUSKeyA
-@ stub    SHRegEnumUSKeyW
+@ stdcall SHRegEnumUSKeyA(long long str ptr long) SHRegEnumUSKeyA
+@ stdcall SHRegEnumUSKeyW(long long wstr ptr long) SHRegEnumUSKeyW
 @ stub    SHRegEnumUSValueA
 @ stub    SHRegEnumUSValueW
 @ stdcall SHRegGetBoolUSValueA(str str long long)SHRegGetBoolUSValueA

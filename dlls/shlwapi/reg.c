@@ -149,6 +149,34 @@ LONG WINAPI SHRegQueryUSValueW(
 }
 
 /*************************************************************************
+ *      SHRegEnumUSKeyA   	[SHLWAPI.@]
+ */
+LONG WINAPI SHRegEnumUSKeyA(
+	HKEY hUSKey,             /* [in] FIXME: HUSKEY */
+	DWORD dwIndex,
+	LPSTR pszName,
+	LPDWORD pcchValueNameLen,
+	DWORD enumRegFlags)      /* [in] FIXME: SHREGENUM_FLAGS */
+{
+	FIXME("%s stub\n",debugstr_a(pszName));
+	return ERROR_NO_MORE_ITEMS;
+}
+
+/*************************************************************************
+ *      SHRegEnumUSKeyW   	[SHLWAPI.@]
+ */
+LONG WINAPI SHRegEnumUSKeyW(
+	HKEY hUSKey,             /* [in] FIXME: HUSKEY */
+	DWORD dwIndex,
+	LPWSTR pszName,
+	LPDWORD pcchValueNameLen,
+	DWORD enumRegFlags)      /* [in] FIXME: SHREGENUM_FLAGS */
+{
+	FIXME("%s stub\n",debugstr_w(pszName));
+	return ERROR_NO_MORE_ITEMS;
+}
+
+/*************************************************************************
  * SHRegGetPathA   [SHLWAPI.@]
  */
 DWORD WINAPI SHRegGetPathA(
