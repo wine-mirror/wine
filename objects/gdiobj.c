@@ -354,7 +354,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','P',' ','g','o','t','h','i','c','\0'} /* FIXME: Is this correct? */
+           {'M','S',' ','P','G','o','t','h','i','c','\0'}
         },
     },
     {   GB2312_CHARSET,
