@@ -18,6 +18,7 @@ extern void MAIN_ParseLanguageOption( char *arg );
 extern void MAIN_ParseModeOption( char *arg );
 
 extern BOOL RELAY_Init(void);
+extern void THUNK_InitCallout(void);
 extern int RELAY_ShowDebugmsgRelay(const char *func);
 extern void CALL32_Init( void *func, void *target, void *stack );
 

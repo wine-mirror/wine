@@ -10,7 +10,6 @@
 #include "debugger.h"
 #include "main.h"
 #include "miscemu.h"
-#include "win16drv.h"
 #include "module.h"
 #include "options.h"
 #include "process.h"
@@ -25,29 +24,10 @@ static char **MAIN_argv;
 
 
 /***********************************************************************
- *           Emulator initialisation
- */
-BOOL MAIN_EmulatorInit(void)
-{
-    /* Main initialization */
-    if (!MAIN_MainInit()) return FALSE;
-
-    /* Initialize relay code */
-    if (!RELAY_Init()) return FALSE;
-
-    /* Create the Win16 printer driver */
-    if (!WIN16DRV_Init()) return FALSE;
-
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           Main loop of initial task
  */
 void MAIN_EmulatorRun( void )
 {
-    extern void THUNK_InitCallout( void );
     char startProg[256], defProg[256];
     HINSTANCE handle;
     int i, tasks = 0;
@@ -148,7 +128,7 @@ int main( int argc, char *argv[] )
         TASK_AddTaskEntryBreakpoint = DEBUG_AddTaskEntryBreakpoint;
 
     /* Initialize everything */
-    if (!MAIN_EmulatorInit()) return 1;
+    if (!MAIN_MainInit()) return 1;
 
     /* Load kernel modules */
     if (!LoadLibrary16(  "KERNEL" )) return 1;

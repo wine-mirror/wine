@@ -176,14 +176,16 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)THUNK_CallTo16_word_ww               /* CallDrvAbortProc */
 };
 
+const CALLBACKS_TABLE *Callbacks = &CALLBACK_EmulatorTable;
+
+CALLOUT_TABLE Callout = { 0 };
+
 
 /***********************************************************************
  *           THUNK_Init
  */
 BOOL THUNK_Init(void)
 {
-    /* Set the window proc calling functions */
-    Callbacks = &CALLBACK_EmulatorTable;
     /* Initialize Thunklets */
     return THUNK_ThunkletInit();
 }

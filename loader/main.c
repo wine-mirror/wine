@@ -46,6 +46,8 @@
 #include "task.h"
 #include "debugtools.h"
 #include "psdrv.h"
+#include "win16drv.h"
+#include "callback.h"
 #include "server.h"
 #include "cursoricon.h"
 #include "loadorder.h"
@@ -100,6 +102,9 @@ BOOL MAIN_MainInit(void)
     
     /* Read DOS config.sys */
     if (!DOSCONF_ReadConfig()) return FALSE;
+
+    /* Initialize relay code */
+    if (!RELAY_Init()) return FALSE;
 
     return TRUE;
 }
@@ -182,6 +187,8 @@ BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved
     /* GDI initialisation */
     if(!GDI_Init()) return FALSE;
 
+    /* Create the Win16 printer driver */
+    if (!WIN16DRV_Init()) return FALSE;
 
     /* PSDRV initialization */
     if(!PSDRV_Init()) return FALSE;
@@ -256,9 +263,8 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
     /* Set double click time */
     SetDoubleClickTime( GetProfileIntA("windows","DoubleClickSpeed",452) );
 
-    /* Create task message queue for the initial task */
-    queueSize = GetProfileIntA( "windows", "DefaultQueueSize", 8 );
-    if (!SetMessageQueue( queueSize )) return FALSE;
+    /* Create message queue of initial thread */
+    InitThreadInput16( 0, 0 );
 
     /* Create desktop window */
     if (!WIN_CreateDesktopWindow()) return FALSE;
@@ -296,6 +302,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     if (!MAIN_MainInit()) return 0;
 
     /* Initialize KERNEL */
+    if (!LoadLibrary16(  "KERNEL" )) return 0;
     if (!LoadLibraryA( "KERNEL32" )) return 0;
 
     /* Create and switch to initial task */
@@ -311,9 +318,13 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
 
     if (!TASK_Create( pModule, FALSE )) return 0;
 
-    /* Initialize GDI and USER */
-    if (!LoadLibraryA( "GDI32.DLL" )) return 0;
-    if (!LoadLibraryA( "USER32.DLL" )) return 0;
+    /* Load system DLLs into the initial process (and initialize them) */
+    if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
+        || !LoadLibrary16("USER.EXE") || !LoadLibraryA("USER32.DLL"))
+        ExitProcess( 1 );
+
+    /* Get pointers to USER routines called by KERNEL */
+    THUNK_InitCallout();
 
     return wm->module;
 }
