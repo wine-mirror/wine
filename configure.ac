@@ -1017,6 +1017,8 @@ AC_CHECK_HEADERS(\
 	sys/sysctl.h \
 	sys/time.h \
 	sys/times.h \
+	sys/uio.h \
+	sys/un.h \
 	sys/user.h \
 	sys/v86.h \
 	sys/v86intr.h \

@@ -35,12 +35,16 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
 #include <sys/stat.h>
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

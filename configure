@@ -11645,6 +11645,8 @@ done
 
 
 
+
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -11702,6 +11704,8 @@ for ac_header in \
 	sys/sysctl.h \
 	sys/time.h \
 	sys/times.h \
+	sys/uio.h \
+	sys/un.h \
 	sys/user.h \
 	sys/v86.h \
 	sys/v86intr.h \
