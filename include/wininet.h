@@ -296,7 +296,7 @@ BOOLAPI InternetCombineUrlW(LPCWSTR ,LPCWSTR ,LPWSTR ,LPDWORD ,DWORD);
 
 INTERNETAPI HINTERNET WINAPI InternetOpenA(LPCSTR ,DWORD ,LPCSTR lpszProxy ,LPCSTR lpszProxyBypass ,DWORD);
 INTERNETAPI HINTERNET WINAPI InternetOpenW(LPCWSTR ,DWORD ,LPCWSTR lpszProxy ,LPCWSTR lpszProxyBypass ,DWORD);
-#define InternetOpen  WINELIB_NAME_AW(InternetOpen);
+#define InternetOpen  WINELIB_NAME_AW(InternetOpen)
 
 #define INTERNET_OPEN_TYPE_PRECONFIG                    0   
 #define INTERNET_OPEN_TYPE_DIRECT                       1   
@@ -312,7 +312,7 @@ INTERNETAPI HINTERNET WINAPI InternetConnectA(HINTERNET ,LPCSTR ,INTERNET_PORT ,
 	LPCSTR lpszUserName ,LPCSTR lpszPassword ,DWORD ,DWORD ,DWORD );
 INTERNETAPI HINTERNET WINAPI InternetConnectW(HINTERNET ,LPCWSTR ,INTERNET_PORT ,
 	LPCWSTR lpszUserName ,LPCWSTR lpszPassword ,DWORD ,DWORD ,DWORD );
-#define InternetConnect  WINELIB_NAME_AW(InternetConnect);
+#define InternetConnect  WINELIB_NAME_AW(InternetConnect)
 
 #define INTERNET_SERVICE_URL    0
 #define INTERNET_SERVICE_FTP    1
@@ -332,12 +332,12 @@ INTERNETAPI HINTERNET WINAPI InternetConnectW(HINTERNET ,LPCWSTR ,INTERNET_PORT 
 
 INTERNETAPI HINTERNET WINAPI InternetOpenUrlA(HINTERNET ,LPCSTR ,LPCSTR lpszHeaders ,DWORD ,DWORD ,DWORD);
 INTERNETAPI HINTERNET WINAPI InternetOpenUrlW(HINTERNET ,LPCWSTR ,LPCWSTR lpszHeaders ,DWORD ,DWORD ,DWORD);
-#define InternetOpenUrl  WINELIB_NAME_AW(InternetOpenUrl);
+#define InternetOpenUrl  WINELIB_NAME_AW(InternetOpenUrl)
 
 BOOLAPI InternetReadFile( HINTERNET ,LPVOID ,DWORD ,LPDWORD ); 
 INTERNETAPI BOOL WINAPI InternetReadFileExA( HINTERNET ,LPINTERNET_BUFFERSA ,DWORD ,DWORD );
 INTERNETAPI BOOL WINAPI InternetReadFileExW( HINTERNET ,LPINTERNET_BUFFERSW ,DWORD ,DWORD );
-#define InternetReadFileEx  WINELIB_NAME_AW(InternetReadFileEx);
+#define InternetReadFileEx  WINELIB_NAME_AW(InternetReadFileEx)
 
 #define IRF_ASYNC       WININET_API_FLAG_ASYNC
 #define IRF_SYNC        WININET_API_FLAG_SYNC
@@ -349,19 +349,19 @@ BOOLAPI InternetWriteFile(HINTERNET ,LPCVOID ,DWORD ,LPDWORD);
 BOOLAPI InternetQueryDataAvailable(HINTERNET ,LPDWORD lpdwNumberOfBytesAvailable ,DWORD ,DWORD);
 BOOLAPI InternetFindNextFileA(HINTERNET ,LPVOID);
 BOOLAPI InternetFindNextFileW(HINTERNET ,LPVOID);
-#define InternetFindNextFile  WINELIB_NAME_AW*(InternetFindNextFile);
+#define InternetFindNextFile  WINELIB_NAME_AW(InternetFindNextFile)
 
 BOOLAPI InternetQueryOptionA(HINTERNET hInternet ,DWORD ,LPVOID lpBuffer ,LPDWORD);
 BOOLAPI InternetQueryOptionW(HINTERNET hInternet ,DWORD ,LPVOID lpBuffer ,LPDWORD);
-#define InternetQueryOption  WINELIB_NAME_AW(InternetQueryOption);
+#define InternetQueryOption  WINELIB_NAME_AW(InternetQueryOption)
 
 BOOLAPI InternetSetOptionA(HINTERNET hInternet ,DWORD ,LPVOID ,DWORD);
 BOOLAPI InternetSetOptionW(HINTERNET hInternet ,DWORD ,LPVOID ,DWORD);
-#define InternetSetOption  WINELIB_NAME_AW(InternetSetOption);
+#define InternetSetOption  WINELIB_NAME_AW(InternetSetOption)
 
 BOOLAPI InternetSetOptionExA(HINTERNET hInternet ,DWORD ,LPVOID ,DWORD ,DWORD);
 BOOLAPI InternetSetOptionExW(HINTERNET hInternet ,DWORD ,LPVOID ,DWORD ,DWORD);
-#define InternetSetOptionEx  WINELIB_NAME_AW(InternetSetOptionEx);
+#define InternetSetOptionEx  WINELIB_NAME_AW(InternetSetOptionEx)
 
 BOOLAPI InternetLockRequestFile(HINTERNET ,HANDLE *);
 BOOLAPI InternetUnlockRequestFile(HANDLE);
@@ -473,7 +473,7 @@ BOOLAPI InternetUnlockRequestFile(HANDLE);
 
 BOOLAPI InternetGetLastResponseInfoA(LPDWORD ,LPSTR lpszBuffer ,LPDWORD);
 BOOLAPI InternetGetLastResponseInfoW(LPDWORD ,LPWSTR lpszBuffer ,LPDWORD);
-#define InternetGetLastResponseInfo  WINELIB_NAME_AW(InternetGetLastResponseInfo);
+#define InternetGetLastResponseInfo  WINELIB_NAME_AW(InternetGetLastResponseInfo)
 
 typedef VOID CALLBACK (*INTERNET_STATUS_CALLBACK)(HINTERNET ,DWORD ,DWORD ,
 	LPVOID lpvStatusInformation ,DWORD);
@@ -518,43 +518,43 @@ INTERNETAPI HINTERNET WINAPI FtpFindFirstFileA(HINTERNET ,LPCSTR lpszSearchFile 
 	LPWIN32_FIND_DATAA lpFindFileData ,DWORD ,DWORD);
 INTERNETAPI HINTERNET WINAPI FtpFindFirstFileW(HINTERNET ,LPCWSTR lpszSearchFile ,
 	LPWIN32_FIND_DATAW lpFindFileData ,DWORD ,DWORD);
-#define FtpFindFirstFile  WINELIB_NAME_AW(FtpFindFirstFile);
+#define FtpFindFirstFile  WINELIB_NAME_AW(FtpFindFirstFile)
 
 BOOLAPI FtpGetFileA(HINTERNET ,LPCSTR ,LPCSTR ,BOOL ,DWORD ,DWORD ,DWORD);
 BOOLAPI FtpGetFileW(HINTERNET ,LPCWSTR ,LPCWSTR ,BOOL ,DWORD ,DWORD ,DWORD);
-#define FtpGetFile  WINELIB_NAME_AW(FtpGetFileW);
+#define FtpGetFile  WINELIB_NAME_AW(FtpGetFileW)
 
 BOOLAPI FtpPutFileA(HINTERNET ,LPCSTR ,LPCSTR ,DWORD ,DWORD);
 BOOLAPI FtpPutFileW(HINTERNET ,LPCWSTR ,LPCWSTR ,DWORD ,DWORD);
-#define FtpPutFile  WINELIB_NAME_AW(FtpPutFile);
+#define FtpPutFile  WINELIB_NAME_AW(FtpPutFile)
 
 BOOLAPI FtpDeleteFileA(HINTERNET ,LPCSTR);
 BOOLAPI FtpDeleteFileW(HINTERNET ,LPCWSTR);
-#define FtpDeleteFile  WINELIB_NAME_AW(FtpDeleteFile);
+#define FtpDeleteFile  WINELIB_NAME_AW(FtpDeleteFile)
 
 BOOLAPI FtpRenameFileA(HINTERNET ,LPCSTR ,LPCSTR);
 BOOLAPI FtpRenameFileW(HINTERNET ,LPCWSTR ,LPCWSTR);
-#define FtpRenameFile  WINELIB_NAME_AW(FtpRenameFile);
+#define FtpRenameFile  WINELIB_NAME_AW(FtpRenameFile)
 
 INTERNETAPI HINTERNET WINAPI FtpOpenFileA(HINTERNET ,LPCSTR ,DWORD ,DWORD ,DWORD);
 INTERNETAPI HINTERNET WINAPI FtpOpenFileW(HINTERNET ,LPCWSTR ,DWORD ,DWORD ,DWORD);
-#define FtpOpenFile  WINELIB_NAME_AW(FtpOpenFile);
+#define FtpOpenFile  WINELIB_NAME_AW(FtpOpenFile)
 
 BOOLAPI FtpCreateDirectoryA(HINTERNET ,LPCSTR);
 BOOLAPI FtpCreateDirectoryW(HINTERNET ,LPCWSTR);
-#define FtpCreateDirectory  WINELIB_NAME_AW(FtpCreateDirectory);
+#define FtpCreateDirectory  WINELIB_NAME_AW(FtpCreateDirectory)
 
 BOOLAPI FtpRemoveDirectoryA(HINTERNET ,LPCSTR);
 BOOLAPI FtpRemoveDirectoryW(HINTERNET ,LPCWSTR);
-#define FtpRemoveDirectory  WINELIB_NAME_AW(FtpRemoveDirectory);
+#define FtpRemoveDirectory  WINELIB_NAME_AW(FtpRemoveDirectory)
 
 BOOLAPI FtpSetCurrentDirectoryA(HINTERNET ,LPCSTR);
 BOOLAPI FtpSetCurrentDirectoryW(HINTERNET ,LPCWSTR);
-#define FtpSetCurrentDirectory  WINELIB_NAME_AW(FtpSetCurrentDirectory);
+#define FtpSetCurrentDirectory  WINELIB_NAME_AW(FtpSetCurrentDirectory)
 
 BOOLAPI FtpGetCurrentDirectoryA(HINTERNET ,LPSTR ,LPDWORD);
 BOOLAPI FtpGetCurrentDirectoryW(HINTERNET ,LPWSTR ,LPDWORD);
-#define FtpGetCurrentDirectory  WINELIB_NAME_AW(FtpGetCurrentDirectory);
+#define FtpGetCurrentDirectory  WINELIB_NAME_AW(FtpGetCurrentDirectory)
 
 #define MAX_GOPHER_DISPLAY_TEXT     128
 #define MAX_GOPHER_SELECTOR_TEXT    256
@@ -591,8 +591,8 @@ typedef struct {
     WCHAR  Locator[MAX_GOPHER_LOCATOR_LENGTH + 1];
 } GOPHER_FIND_DATAW,* LPGOPHER_FIND_DATAW;
 
-DECL_WINELIB_TYPE_AW(GOPHER_FIND_DATA);
-DECL_WINELIB_TYPE_AW(LPGOPHER_FIND_DATA);
+DECL_WINELIB_TYPE_AW(GOPHER_FIND_DATA)
+DECL_WINELIB_TYPE_AW(LPGOPHER_FIND_DATA)
 
 #define GOPHER_TYPE_TEXT_FILE       0x00000001
 #define GOPHER_TYPE_DIRECTORY       0x00000002
