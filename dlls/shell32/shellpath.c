@@ -2185,9 +2185,9 @@ LPSTR WINAPI PathFindNextComponentA(LPCSTR pszPath)
 	while( *pszPath )
 	{
 	  if(*pszPath++=='\\')
-	    return pszPath;
+	    return (LPSTR) pszPath;
 	}
-	return pszPath;
+	return (LPSTR) pszPath;
 }
 
 /*************************************************************************
@@ -2198,9 +2198,9 @@ LPWSTR WINAPI PathFindNextComponentW(LPCWSTR pszPath)
 	while( *pszPath )
 	{
 	  if(*pszPath++=='\\')
-	    return pszPath;
+	    return (LPWSTR) pszPath;
 	}
-	return pszPath;
+	return (LPWSTR) pszPath;
 }
 
 /*************************************************************************

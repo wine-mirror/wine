@@ -1153,7 +1153,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
        if (infoPtr->nNumBitmaps + nButtons != imagecount)
        {
-         WARN("Desired images do not match recieved images : Previous image number %s Previous images in list %i  added %i expecting total %i, Images in list %i\n",
+         WARN("Desired images do not match recieved images : Previous image number %i Previous images in list %i  added %i expecting total %i, Images in list %i\n",
 	      infoPtr->nNumBitmaps, nCount, imagecount - nCount,
 	      infoPtr->nNumBitmaps+nButtons,imagecount);
 

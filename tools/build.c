@@ -1252,8 +1252,8 @@ static int BuildSpec32File( FILE *outfile )
 
     fprintf( outfile, "extern char pe_header[];\n" );
     fprintf( outfile, "asm(\".section .text\\n\\t\"\n" );
-    fprintf( outfile, "    \".align %d\\n\"\n", page_size );
-    fprintf( outfile, "    \"pe_header:\\t.fill %d,1,0\\n\\t\");\n", page_size );
+    fprintf( outfile, "    \".align %ld\\n\"\n", page_size );
+    fprintf( outfile, "    \"pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n", DLLName );
 
