@@ -52,6 +52,19 @@ typedef struct value_entW {
 
 typedef ACCESS_MASK REGSAM;
 
+/*
+ * InitiateSystemShutdown() reasons
+ */
+#include <reason.h>
+
+#define REASON_OTHER            (SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)
+#define REASON_UNKNOWN          SHTDN_REASON_UNKNOWN
+#define REASON_LEGACY_API       SHTDN_REASON_LEGACY_API
+#define REASON_PLANNED_FLAG     SHTDN_REASON_FLAG_PLANNED
+
+#define MAX_SHUTDOWN_TIMEOUT    (10*365*24*60*60)
+
+
 BOOL        WINAPI AbortSystemShutdownA(LPSTR);
 BOOL        WINAPI AbortSystemShutdownW(LPWSTR);
 #define     AbortSystemShutdown WINELIB_NAME_AW(AbortSystemShutdown)

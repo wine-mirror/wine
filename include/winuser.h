@@ -2526,6 +2526,7 @@ typedef struct
 #define EWX_REBOOT           2
 #define EWX_FORCE            4
 #define EWX_POWEROFF         8
+#define EWX_FORCEIFHUNG     16
 
 /* SetLastErrorEx types */
 #define	SLE_ERROR	0x00000001

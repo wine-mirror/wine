@@ -180,6 +180,7 @@ WINDOWS_INCLUDES = \
 	pshpack4.h \
 	pshpack8.h \
 	ras.h \
+	reason.h \
 	regstr.h \
 	richedit.h \
 	richole.h \
