@@ -1050,18 +1050,36 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
 	break;
     case MIXER_GETCONTROLDETAILSF_LISTTEXT:
 	{
-	    LPVOID	paDetailsW = lpmcd->paDetails;
-	    int		size = max(1, lpmcd->cChannels) * sizeof(MIXERCONTROLDETAILS_LISTTEXTA);
+	    MIXERCONTROLDETAILS_LISTTEXTW *pDetailsW = (MIXERCONTROLDETAILS_LISTTEXTW *)lpmcd->paDetails;
+            MIXERCONTROLDETAILS_LISTTEXTA *pDetailsA;
+	    int size = max(1, lpmcd->cChannels) * sizeof(MIXERCONTROLDETAILS_LISTTEXTA);
+            int i;
 
-	    if (lpmcd->u.cMultipleItems != 0 && lpmcd->u.cMultipleItems != lpmcd->u.hwndOwner) {
+	    if (lpmcd->u.cMultipleItems != 0) {
 		size *= lpmcd->u.cMultipleItems;
 	    }
-	    lpmcd->paDetails = HeapAlloc(GetProcessHeap(), 0, size);
+	    pDetailsA = (MIXERCONTROLDETAILS_LISTTEXTA *)HeapAlloc(GetProcessHeap(), 0, size);
+            lpmcd->paDetails = pDetailsA;
+            lpmcd->cbDetails = sizeof(MIXERCONTROLDETAILS_LISTTEXTA);
 	    /* set up lpmcd->paDetails */
 	    ret = mixerGetControlDetailsA(hmix, lpmcd, fdwDetails);
 	    /* copy from lpmcd->paDetails back to paDetailsW; */
-	    HeapFree(GetProcessHeap(), 0, lpmcd->paDetails);
-	    lpmcd->paDetails = paDetailsW;
+            if(ret == MMSYSERR_NOERROR) {
+                for(i=0;i<lpmcd->u.cMultipleItems*lpmcd->cChannels;i++) {
+                    pDetailsW->dwParam1 = pDetailsA->dwParam1;
+                    pDetailsW->dwParam2 = pDetailsA->dwParam2;
+                    MultiByteToWideChar( CP_ACP, 0, pDetailsA->szName, -1,
+                                         pDetailsW->szName,
+                                         sizeof(pDetailsW->szName)/sizeof(WCHAR) );
+                    pDetailsA++;
+                    pDetailsW++;
+                }
+                pDetailsA -= lpmcd->u.cMultipleItems*lpmcd->cChannels;
+                pDetailsW -= lpmcd->u.cMultipleItems*lpmcd->cChannels;
+            }
+	    HeapFree(GetProcessHeap(), 0, pDetailsA);
+	    lpmcd->paDetails = pDetailsW;
+            lpmcd->cbDetails = sizeof(MIXERCONTROLDETAILS_LISTTEXTW);
 	}
 	break;
     default:
