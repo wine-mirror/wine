@@ -48,7 +48,6 @@ static void test__hread( void )
     long bytes_read;
     long bytes_wanted;
     UINT i;
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -57,32 +56,31 @@ static void test__hread( void )
         return;
     }
 
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READ );
 
-    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%d)", filename, GetLastError());
+    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%d)", filename, GetLastError(  ) );
 
     bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
 
-    ok( strlen( sillytext ) == bytes_read, "file read size error." );
+    ok( strlen( sillytext ) == bytes_read, "file read size error" );
 
     for (bytes_wanted = 0; bytes_wanted < strlen( sillytext ); bytes_wanted++)
     {
-        ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
-        ok( _hread( filehandle, buffer, bytes_wanted ) == bytes_wanted, "erratic _hread return value." );
+        ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
+        ok( _hread( filehandle, buffer, bytes_wanted ) == bytes_wanted, "erratic _hread return value" );
         for (i = 0; i < bytes_wanted; i++)
         {
-            ok( buffer[i] == sillytext[i], "that's not what's written." );
+            ok( buffer[i] == sillytext[i], "that's not what's written" );
         }
     }
 
-    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 }
 
 
@@ -97,7 +95,6 @@ static void test__hwrite( void )
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -106,17 +103,17 @@ static void test__hwrite( void )
         return;
     }
 
-    ok( HFILE_ERROR != _hwrite( filehandle, "", 0 ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, "", 0 ), "_hwrite complains" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READ );
 
     bytes_read = _hread( filehandle, buffer, 1);
 
-    ok( 0 == bytes_read, "file read size error." );
+    ok( 0 == bytes_read, "file read size error" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READWRITE );
 
@@ -130,14 +127,14 @@ static void test__hwrite( void )
             buffer[i] = rand(  );
             checksum[0] = checksum[0] + buffer[i];
         }
-        ok( HFILE_ERROR != _hwrite( filehandle, buffer, sizeof( buffer ) ), "_hwrite complains." );
+        ok( HFILE_ERROR != _hwrite( filehandle, buffer, sizeof( buffer ) ), "_hwrite complains" );
         bytes_written = bytes_written + sizeof( buffer );
     }
 
-    ok( HFILE_ERROR != _hwrite( filehandle, checksum, 1 ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, checksum, 1 ), "_hwrite complains" );
     bytes_written++;
 
-    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
     memory_object = LocalAlloc( LPTR, bytes_written );
 
@@ -149,9 +146,9 @@ static void test__hwrite( void )
 
     contents = LocalLock( memory_object );
 
-    ok( NULL != contents, "LocalLock whines." );
+    ok( NULL != contents, "LocalLock whines" );
 
-    ok( bytes_written == _hread( filehandle, contents, bytes_written), "read length differ from write length." );
+    ok( bytes_written == _hread( filehandle, contents, bytes_written), "read length differ from write length" );
 
     checksum[0] = '\0';
     i = 0;
@@ -162,19 +159,17 @@ static void test__hwrite( void )
     }
     while (i < bytes_written - 1);
 
-    ok( checksum[0] == contents[i], "stored checksum differ from computed checksum." );
+    ok( checksum[0] == contents[i], "stored checksum differ from computed checksum" );
 
-    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 }
 
 
 static void test__lclose( void )
 {
     HFILE filehandle;
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -183,16 +178,15 @@ static void test__lclose( void )
         return;
     }
 
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this." );
+    ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this" );
 
-    ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this." );
+    ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 }
 
 
@@ -201,7 +195,6 @@ static void test__lcreat( void )
     HFILE filehandle;
     char buffer[10000];
     WIN32_FIND_DATAA search_results;
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -210,69 +203,65 @@ static void test__lcreat( void )
         return;
     }
 
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
-    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
+    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
 
-    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value." );
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
-
-    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
-
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
-
-    filehandle = _lcreat( filename, 1 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError());
-
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite shouldn't be able to write never the less." );
-
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA(filename) != 0, "DeleteFile failed (%d)", GetLastError());
 
+    filehandle = _lcreat( filename, 1 ); /* readonly */
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError(  ) );
+
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite shouldn't be able to write never the less" );
+
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
+
+    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
+
+    todo_wine
+    {
+        ok( 0 == DeleteFileA( filename ), "shouldn't be able to delete a readonly file" );
+
+        ok( SetFileAttributesA(filename, FILE_ATTRIBUTE_NORMAL ) != 0, "couldn't change attributes on file" );
+
+        ok( DeleteFileA( filename ) != 0, "now it should be possible to delete the file!" );
+    }
 
     filehandle = _lcreat( filename, 2 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError());
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError(  ) );
 
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
-    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
+    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
 
-    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value." );
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    todo_wine
-    {
-        ok( INVALID_HANDLE_VALUE == FindFirstFileA( filename, &search_results ), "should NOT be able to find file" );
-    }
+    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 
-    filehandle = _lcreat( filename, 4 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError());
+    filehandle = _lcreat( filename, 4 ); /* SYSTEM file */
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError(  ) );
 
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
-    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
+    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
 
-    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value." );
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    todo_wine
-    {
-        ok( INVALID_HANDLE_VALUE == FindFirstFileA( filename, &search_results ), "should NOT be able to find file" );
-    }
+    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 }
 
 
@@ -282,7 +271,6 @@ void test__llseek( void )
     HFILE filehandle;
     char buffer[1];
     long bytes_read;
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -293,24 +281,23 @@ void test__llseek( void )
 
     for (i = 0; i < 400; i++)
     {
-        ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+        ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
     }
     ok( HFILE_ERROR != _llseek( filehandle, 400 * strlen( sillytext ), FILE_CURRENT ), "should be able to seek" );
     ok( HFILE_ERROR != _llseek( filehandle, 27 + 35 * strlen( sillytext ), FILE_BEGIN ), "should be able to seek" );
 
     bytes_read = _hread( filehandle, buffer, 1);
-    ok( 1 == bytes_read, "file read size error." );
-    ok( buffer[0] == sillytext[27], "_llseek error. It got lost seeking..." );
+    ok( 1 == bytes_read, "file read size error" );
+    ok( buffer[0] == sillytext[27], "_llseek error, it got lost seeking" );
     ok( HFILE_ERROR != _llseek( filehandle, -400 * strlen( sillytext ), FILE_END ), "should be able to seek" );
 
     bytes_read = _hread( filehandle, buffer, 1);
-    ok( 1 == bytes_read, "file read size error." );
-    ok( buffer[0] == sillytext[0], "_llseek error. It got lost seeking..." );
-    ok( HFILE_ERROR != _llseek( filehandle, 1000000, FILE_END ), "should be able to seek past file. Poor, poor Windows programmers." );
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( 1 == bytes_read, "file read size error" );
+    ok( buffer[0] == sillytext[0], "_llseek error, it got lost seeking" );
+    ok( HFILE_ERROR != _llseek( filehandle, 1000000, FILE_END ), "should be able to seek past file; poor, poor Windows programmers" );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 }
 
 
@@ -319,7 +306,6 @@ static void test__llopen( void )
     HFILE filehandle;
     UINT bytes_read;
     char buffer[10000];
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -328,28 +314,27 @@ static void test__llopen( void )
         return;
     }
 
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READ );
     ok( HFILE_ERROR == _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite shouldn't be able to write!" );
     bytes_read = _hread( filehandle, buffer, strlen( sillytext ) );
-    ok( strlen( sillytext )  == bytes_read, "file read size error." );
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( strlen( sillytext )  == bytes_read, "file read size error" );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READWRITE );
     bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
-    ok( strlen( sillytext )  == bytes_read, "file read size error." );
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine." );
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( strlen( sillytext )  == bytes_read, "file read size error" );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine" );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_WRITE );
-    ok( HFILE_ERROR == _hread( filehandle, buffer, 1 ), "you should only be able to write this file..." );
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine." );
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR == _hread( filehandle, buffer, 1 ), "you should only be able to write this file" );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine" );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
     /* TODO - add tests for the SHARE modes  -  use two processes to pull this one off */
 }
 
@@ -361,7 +346,6 @@ static void test__lread( void )
     long bytes_read;
     UINT bytes_wanted;
     UINT i;
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -370,9 +354,9 @@ static void test__lread( void )
         return;
     }
 
-    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READ );
 
@@ -380,22 +364,21 @@ static void test__lread( void )
 
     bytes_read = _lread( filehandle, buffer, 2 * strlen( sillytext ) );
 
-    ok( strlen( sillytext ) == bytes_read, "file read size error." );
+    ok( strlen( sillytext ) == bytes_read, "file read size error" );
 
     for (bytes_wanted = 0; bytes_wanted < strlen( sillytext ); bytes_wanted++)
     {
-        ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
-        ok( _lread( filehandle, buffer, bytes_wanted ) == bytes_wanted, "erratic _hread return value." );
+        ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains" );
+        ok( _lread( filehandle, buffer, bytes_wanted ) == bytes_wanted, "erratic _hread return value" );
         for (i = 0; i < bytes_wanted; i++)
         {
-            ok( buffer[i] == sillytext[i], "that's not what's written." );
+            ok( buffer[i] == sillytext[i], "that's not what's written" );
         }
     }
 
-    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 }
 
 
@@ -410,7 +393,6 @@ static void test__lwrite( void )
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
-    int rc;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -419,17 +401,17 @@ static void test__lwrite( void )
         return;
     }
 
-    ok( HFILE_ERROR != _lwrite( filehandle, "", 0 ), "_hwrite complains." );
+    ok( HFILE_ERROR != _lwrite( filehandle, "", 0 ), "_hwrite complains" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READ );
 
     bytes_read = _hread( filehandle, buffer, 1);
 
-    ok( 0 == bytes_read, "file read size error." );
+    ok( 0 == bytes_read, "file read size error" );
 
-    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
     filehandle = _lopen( filename, OF_READWRITE );
 
@@ -443,18 +425,18 @@ static void test__lwrite( void )
             buffer[i] = rand(  );
             checksum[0] = checksum[0] + buffer[i];
         }
-        ok( HFILE_ERROR != _lwrite( filehandle, buffer, sizeof( buffer ) ), "_hwrite complains." );
+        ok( HFILE_ERROR != _lwrite( filehandle, buffer, sizeof( buffer ) ), "_hwrite complains" );
         bytes_written = bytes_written + sizeof( buffer );
     }
 
-    ok( HFILE_ERROR != _lwrite( filehandle, checksum, 1 ), "_hwrite complains." );
+    ok( HFILE_ERROR != _lwrite( filehandle, checksum, 1 ), "_hwrite complains" );
     bytes_written++;
 
-    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
     memory_object = LocalAlloc( LPTR, bytes_written );
 
-    ok( 0 != memory_object, "LocalAlloc fails. (Could be out of memory.)" );
+    ok( 0 != memory_object, "LocalAlloc fails, could be out of memory" );
 
     contents = LocalLock( memory_object );
 
@@ -462,25 +444,24 @@ static void test__lwrite( void )
 
     contents = LocalLock( memory_object );
 
-    ok( NULL != contents, "LocalLock whines." );
+    ok( NULL != contents, "LocalLock whines" );
 
-    ok( bytes_written == _hread( filehandle, contents, bytes_written), "read length differ from write length." );
+    ok( bytes_written == _hread( filehandle, contents, bytes_written), "read length differ from write length" );
 
     checksum[0] = '\0';
     i = 0;
     do
     {
-        checksum[0] = checksum[0] + contents[i];
+        checksum[0] += contents[i];
         i++;
     }
     while (i < bytes_written - 1);
 
-    ok( checksum[0] == contents[i], "stored checksum differ from computed checksum." );
+    ok( checksum[0] == contents[i], "stored checksum differ from computed checksum" );
 
-    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
+    ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
-    rc=DeleteFileA(filename);
-    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
 }
 
 
