@@ -79,7 +79,7 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) \
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
 
 .s.o:
-	$(CC) -c -o $*.o $<  
+	$(AS) -o $*.o $<  
 
 .S.o:
 	$(CC) -c -o $*.o $<  
