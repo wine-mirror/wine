@@ -44,7 +44,10 @@ static INT DCE_ReleaseDC( DCE* );
  */
 static void DCE_DumpCache(void)
 {
-    DCE* dce = firstDCE;
+    DCE *dce;
+    
+    WIN_LockWnds();
+    dce = firstDCE;
     
     DUMP("DCE:\n");
     while( dce )
@@ -55,6 +58,8 @@ static void DCE_DumpCache(void)
 	     (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
 	dce = dce->next;
     }
+
+    WIN_UnlockWnds();
 }
 
 /***********************************************************************
@@ -65,6 +70,8 @@ static void DCE_DumpCache(void)
 DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 {
     DCE * dce;
+    WND* wnd;
+    
     if (!(dce = HeapAlloc( SystemHeap, 0, sizeof(DCE) ))) return NULL;
     if (!(dce->hDC = CreateDC16( "DISPLAY", NULL, NULL, NULL )))
     {
@@ -72,6 +79,8 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 	return 0;
     }
 
+    wnd = WIN_FindWndPtr(hWnd);
+    
     /* store DCE handle in DC hook data field */
 
     SetDCHook( dce->hDC, (FARPROC16)DCHook16, (DWORD)dce );
@@ -86,17 +95,15 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 	dce->DCXflags = DCX_DCEBUSY;
 	if( hWnd )
 	{
-	    WND* wnd = WIN_FindWndPtr(hWnd);
-	
 	    if( wnd->dwStyle & WS_CLIPCHILDREN ) dce->DCXflags |= DCX_CLIPCHILDREN;
 	    if( wnd->dwStyle & WS_CLIPSIBLINGS ) dce->DCXflags |= DCX_CLIPSIBLINGS;
-
-            WIN_ReleaseWndPtr(wnd);
 	}
 	SetHookFlags16(dce->hDC,DCHF_INVALIDATEVISRGN);
     }
     else dce->DCXflags = DCX_CACHE | DCX_DCEEMPTY;
 
+    WIN_ReleaseWndPtr(wnd);
+    
     return dce;
 }
 
@@ -106,9 +113,14 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
  */
 DCE* DCE_FreeDCE( DCE *dce )
 {
-    DCE **ppDCE = &firstDCE;
+    DCE **ppDCE;
 
     if (!dce) return NULL;
+
+    WIN_LockWnds();
+
+    ppDCE = &firstDCE;
+
     while (*ppDCE && (*ppDCE != dce)) ppDCE = &(*ppDCE)->next;
     if (*ppDCE == dce) *ppDCE = dce->next;
 
@@ -118,6 +130,9 @@ DCE* DCE_FreeDCE( DCE *dce )
     if( dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN) )
 	DeleteObject(dce->hClipRgn);
     HeapFree( SystemHeap, 0, dce );
+
+    WIN_UnlockWnds();
+    
     return *ppDCE;
 }
 
@@ -128,7 +143,10 @@ DCE* DCE_FreeDCE( DCE *dce )
  */
 void DCE_FreeWindowDCE( WND* pWnd )
 {
-    DCE *pDCE = firstDCE;
+    DCE *pDCE;
+
+    WIN_LockWnds();
+    pDCE = firstDCE;
 
     while( pDCE )
     {
@@ -161,6 +179,8 @@ void DCE_FreeWindowDCE( WND* pWnd )
 	}
 	pDCE = pDCE->next;
     }
+    
+    WIN_UnlockWnds();
 }
 
 
@@ -719,6 +739,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 		}
 	    }
 	}
+
 	if (!dce) dce = (dceEmpty) ? dceEmpty : dceUnused;
         
         /* if there's no dce empty or unused, allocate a new one */
@@ -910,7 +931,11 @@ INT WINAPI ReleaseDC(
              HWND hwnd /* Handle of window - ignored */, 
              HDC hdc   /* Handle of device context */
 ) {
-    DCE * dce = firstDCE;
+    DCE * dce;
+    INT nRet = 0;
+
+    WIN_LockWnds();
+    dce = firstDCE;
     
     TRACE(dc, "%04x %04x\n", hwnd, hdc );
         
@@ -918,8 +943,11 @@ INT WINAPI ReleaseDC(
 
     if ( dce ) 
 	if ( dce->DCXflags & DCX_DCEBUSY )
-	     return DCE_ReleaseDC( dce );
-    return 0;
+            nRet = DCE_ReleaseDC( dce );
+
+    WIN_UnlockWnds();
+
+    return nRet;
 }
 
 /***********************************************************************
@@ -930,12 +958,18 @@ INT WINAPI ReleaseDC(
 BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 {
     HRGN hVisRgn;
-    DCE *dce = firstDCE;;
+    DCE *dce;
+
+    /* Grab the windows lock before doing anything else  */
+    WIN_LockWnds();
+
+    dce = firstDCE;
 
     TRACE(dc,"hDC = %04x, %i\n", hDC, code);
 
     while (dce && (dce->hDC != hDC)) dce = dce->next;
-    if (!dce) return 0;
+
+    if (!dce) goto END;
 
     switch( code )
     {
@@ -981,6 +1015,9 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
       default:
 	   FIXME(dc,"unknown code\n");
     }
+
+END:
+  WIN_UnlockWnds();  /* Release the wnd lock */
   return 0;
 }
 
@@ -999,9 +1036,18 @@ HWND16 WINAPI WindowFromDC16( HDC16 hDC )
  */
 HWND WINAPI WindowFromDC( HDC hDC )
 {
-    DCE *dce = firstDCE;
+    DCE *dce;
+    HWND hwnd;
+
+    WIN_LockWnds();
+    dce = firstDCE;
+    
     while (dce && (dce->hDC != hDC)) dce = dce->next;
-    return dce ? dce->hwndCurrent : 0;
+
+    hwnd = dce ? dce->hwndCurrent : 0;
+    WIN_UnlockWnds();
+    
+    return hwnd;
 }
 
 
