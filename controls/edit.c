@@ -1482,25 +1482,22 @@ static void EDIT_LockBuffer(WND *wnd, EDITSTATE *es)
 	}
 	if (!es->text) {
 	    CHAR *textA = NULL;
-	    INT countA = 0;
+	    UINT countA = 0;
 	    BOOL _16bit = FALSE;
 
 	    if(es->hloc32W)
 	    {
-		/*TRACE("Locking 32-bit UNICODE buffer\n");*/
-		es->text = LocalLock(es->hloc32W);
-
 		if(es->hloc32A)
 		{
 		    TRACE("Synchronizing with 32-bit ANSI buffer\n");
-		    countA = LocalSize(es->hloc32A);
 		    textA = LocalLock(es->hloc32A);
+		    countA = strlen(textA) + 1;
 		}
 		else if(es->hloc16)
 		{
 		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
-		    countA = LOCAL_Size(wnd->hInstance, es->hloc16);
 		    textA = LOCAL_Lock(wnd->hInstance, es->hloc16);
+		    countA = strlen(textA) + 1;
 		    _16bit = TRUE;
 		}
 	    }
@@ -1511,7 +1508,31 @@ static void EDIT_LockBuffer(WND *wnd, EDITSTATE *es)
 
 	    if(textA)
 	    {
-		MultiByteToWideChar(CP_ACP, 0, textA, countA, es->text, es->buffer_size);
+		HLOCAL hloc32W_new;
+		UINT countW_new = MultiByteToWideChar(CP_ACP, 0, textA, countA, NULL, 0);
+		TRACE("%d bytes translated to %d WCHARs\n", countA, countW_new);
+		if(countW_new > es->buffer_size + 1)
+		{
+		    UINT alloc_size = (countW_new * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+		    TRACE("Resizing 32-bit UNICODE buffer from %d+1 to %d WCHARs\n", es->buffer_size, countW_new);
+		    hloc32W_new = LocalReAlloc(es->hloc32W, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
+		    if(hloc32W_new)
+		    {
+			es->hloc32W = hloc32W_new;
+			es->buffer_size = LocalSize(hloc32W_new)/sizeof(WCHAR) - 1;
+			TRACE("Real new size %d+1 WCHARs\n", es->buffer_size);
+		    }
+		    else
+			WARN("FAILED! Will synchronize partially\n");
+		}
+	    }
+
+	    /*TRACE("Locking 32-bit UNICODE buffer\n");*/
+	    es->text = LocalLock(es->hloc32W);
+
+	    if(textA)
+	    {
+		MultiByteToWideChar(CP_ACP, 0, textA, countA, es->text, es->buffer_size + 1);
 		if(_16bit)
 		    LOCAL_Unlock(wnd->hInstance, es->hloc16);
 		else
@@ -2140,25 +2161,60 @@ static void EDIT_UnlockBuffer(WND *wnd, EDITSTATE *es, BOOL force)
 	    if (es->hloc32W) {
 		CHAR *textA = NULL;
 		BOOL _16bit = FALSE;
-		INT countA = 0;
+		UINT countA = 0;
+		UINT countW = strlenW(es->text) + 1;
 
 		if(es->hloc32A)
 		{
+		    UINT countA_new = WideCharToMultiByte(CP_ACP, 0, es->text, countW, NULL, 0, NULL, NULL);
 		    TRACE("Synchronizing with 32-bit ANSI buffer\n");
+		    TRACE("%d WCHARs translated to %d bytes\n", countW, countA_new);
 		    countA = LocalSize(es->hloc32A);
+		    if(countA_new > countA)
+		    {
+			HLOCAL hloc32A_new;
+			UINT alloc_size = (countA_new + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+			TRACE("Resizing 32-bit ANSI buffer from %d to %d bytes\n", countA, alloc_size);
+			hloc32A_new = LocalReAlloc(es->hloc32A, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
+			if(hloc32A_new)
+			{
+			    es->hloc32A = hloc32A_new;
+			    countA = LocalSize(hloc32A_new);
+			    TRACE("Real new size %d bytes\n", countA);
+			}
+			else
+			    WARN("FAILED! Will synchronize partially\n");
+		    }
 		    textA = LocalLock(es->hloc32A);
 		}
 		else if(es->hloc16)
 		{
+		    UINT countA_new = WideCharToMultiByte(CP_ACP, 0, es->text, countW, NULL, 0, NULL, NULL);
 		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
+		    TRACE("%d WCHARs translated to %d bytes\n", countW, countA_new);
 		    countA = LOCAL_Size(wnd->hInstance, es->hloc16);
+		    if(countA_new > countA)
+		    {
+			HLOCAL16 hloc16_new;
+			UINT alloc_size = (countA_new + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+			TRACE("Resizing 16-bit ANSI buffer from %d to %d bytes\n", countA, alloc_size);
+			hloc16_new = LOCAL_ReAlloc(wnd->hInstance, es->hloc16, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
+			if(hloc16_new)
+			{
+			    es->hloc16 = hloc16_new;
+			    countA = LOCAL_Size(wnd->hInstance, hloc16_new);
+			    TRACE("Real new size %d bytes\n", countA);
+			}
+			else
+			    WARN("FAILED! Will synchronize partially\n");
+		    }
 		    textA = LOCAL_Lock(wnd->hInstance, es->hloc16);
 		    _16bit = TRUE;
 		}
 
 		if(textA)
 		{
-		    WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, textA, countA, NULL, NULL);
+		    WideCharToMultiByte(CP_ACP, 0, es->text, countW, textA, countA, NULL, NULL);
 		    if(_16bit)
 			LOCAL_Unlock(wnd->hInstance, es->hloc16);
 		    else
