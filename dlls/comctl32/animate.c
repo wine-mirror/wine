@@ -190,19 +190,19 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
  	    FreeResource(infoPtr->hRes);
 	    infoPtr->hRes = 0;
 	}
-        HeapFree(GetProcessHeap(), 0, infoPtr->lpIndex);
+        Free (infoPtr->lpIndex);
         infoPtr->lpIndex = NULL;
 	if (infoPtr->hic) {
 	    fnIC.fnICClose(infoPtr->hic);
 	    infoPtr->hic = 0;
 	}
-        HeapFree(GetProcessHeap(), 0, infoPtr->inbih);
+        Free (infoPtr->inbih);
         infoPtr->inbih = NULL;
-        HeapFree(GetProcessHeap(), 0, infoPtr->outbih);
+        Free (infoPtr->outbih);
         infoPtr->outbih = NULL;
-	HeapFree(GetProcessHeap(), 0, infoPtr->indata);
+	Free (infoPtr->indata);
         infoPtr->indata = NULL;
-	HeapFree(GetProcessHeap(), 0, infoPtr->outdata);
+	Free (infoPtr->outdata);
         infoPtr->outdata = NULL;
     	if( infoPtr->hbmPrevFrame )
         {
@@ -557,7 +557,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    infoPtr->inbih = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
+    infoPtr->inbih = Alloc(mmckInfo.cksize);
     if (!infoPtr->inbih) {
 	WARN("Can't alloc input BIH\n");
 	return FALSE;
@@ -604,8 +604,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 
     /* FIXME: should handle the 'rec ' LIST when present */
 
-    infoPtr->lpIndex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				 infoPtr->mah.dwTotalFrames * sizeof(DWORD));
+    infoPtr->lpIndex = Alloc(infoPtr->mah.dwTotalFrames * sizeof(DWORD));
     if (!infoPtr->lpIndex) 
 	return FALSE;
 
@@ -627,7 +626,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 	infoPtr->ash.dwSuggestedBufferSize = insize;
     }
 
-    infoPtr->indata = HeapAlloc(GetProcessHeap(), 0, infoPtr->ash.dwSuggestedBufferSize);
+    infoPtr->indata = Alloc(infoPtr->ash.dwSuggestedBufferSize);
     if (!infoPtr->indata) 
 	return FALSE;
 
@@ -658,7 +657,7 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
     outSize = fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT,
 			    (DWORD)infoPtr->inbih, 0L);
 
-    infoPtr->outbih = HeapAlloc(GetProcessHeap(), 0, outSize);
+    infoPtr->outbih = Alloc(outSize);
     if (!infoPtr->outbih)
 	return FALSE;
 
@@ -669,7 +668,7 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    infoPtr->outdata = HeapAlloc(GetProcessHeap(), 0, infoPtr->outbih->biSizeImage);
+    infoPtr->outdata = Alloc(infoPtr->outbih->biSizeImage);
     if (!infoPtr->outdata) 
 	return FALSE;
 
@@ -757,12 +756,12 @@ static BOOL ANIMATE_OpenA(ANIMATE_INFO *infoPtr, HINSTANCE hInstance, LPSTR lpsz
         return ANIMATE_OpenW(infoPtr, hInstance, (LPWSTR)lpszName);
 
     len = MultiByteToWideChar(CP_ACP, 0, lpszName, -1, NULL, 0);
-    lpwszName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    lpwszName = Alloc(len * sizeof(WCHAR));
     if (!lpwszName) return FALSE;
     MultiByteToWideChar(CP_ACP, 0, lpszName, -1, lpwszName, len);
 
     result = ANIMATE_OpenW(infoPtr, hInstance, lpwszName);
-    HeapFree(GetProcessHeap(), 0, lpwszName);
+    Free (lpwszName);
     return result;
 }
 

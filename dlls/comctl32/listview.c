@@ -440,7 +440,7 @@ static inline LPWSTR textdupTtoW(LPCWSTR text, BOOL isW)
     if (!isW && is_textT(text, isW))
     {
 	INT len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)text, -1, NULL, 0);
-	wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+	wstr = Alloc(len * sizeof(WCHAR));
 	if (wstr) MultiByteToWideChar(CP_ACP, 0, (LPCSTR)text, -1, wstr, len);
     }
     TRACE("   wstr=%s\n", text == LPSTR_TEXTCALLBACKW ?  "(callback)" : debugstr_w(wstr));
@@ -449,7 +449,7 @@ static inline LPWSTR textdupTtoW(LPCWSTR text, BOOL isW)
 
 static inline void textfreeT(LPWSTR wstr, BOOL isW)
 {
-    if (!isW && is_textT(wstr, isW)) HeapFree(GetProcessHeap(), 0, wstr);
+    if (!isW && is_textT(wstr, isW)) Free (wstr);
 }
 
 /*
@@ -852,8 +852,7 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
  	    *pdi->item.pszText = 0; /* make sure we don't process garbage */
  	}
 
-	pszTempBuf = HeapAlloc(GetProcessHeap(), 0,
-	    (convertToUnicode ? sizeof(WCHAR) : sizeof(CHAR)) * cchTempBufMax);
+	pszTempBuf = Alloc( (convertToUnicode ? sizeof(WCHAR) : sizeof(CHAR)) * cchTempBufMax);
         if (!pszTempBuf) return FALSE;
 
 	if (convertToUnicode)
@@ -886,7 +885,7 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
 	                        savPszText, savCchTextMax);
         pdi->item.pszText = savPszText; /* restores our buffer */
         pdi->item.cchTextMax = savCchTextMax;
-        HeapFree(GetProcessHeap(), 0, pszTempBuf);
+        Free (pszTempBuf);
     }
     return bResult;
 }

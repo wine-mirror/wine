@@ -514,12 +514,12 @@ void WINAPI DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
 
     if ( text ) {
 	if ( (len = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 )) ) {
-	    if ( (textW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )) )
+	    if ( (textW = Alloc( len * sizeof(WCHAR) )) )
 		MultiByteToWideChar( CP_ACP, 0, text, -1, textW, len );
 	}
     }
     DrawStatusTextW( hdc, lprc, textW, style );
-    HeapFree( GetProcessHeap(), 0, textW );
+    Free( textW );
 }
 
 
@@ -1107,7 +1107,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
    if (!stack) {
       /* allocate stack */
-      stack = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SUBCLASS_INFO));
+      stack = Alloc (sizeof(SUBCLASS_INFO));
       if (!stack) {
          ERR ("Failed to allocate our Subclassing stack\n");
          return FALSE;
@@ -1136,14 +1136,14 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
       }
    }
    
-   proc = HeapAlloc(GetProcessHeap(), 0, sizeof(SUBCLASSPROCS));
+   proc = Alloc(sizeof(SUBCLASSPROCS));
    if (!proc) {
       ERR ("Failed to allocate subclass entry in stack\n");
       if (IsWindowUnicode (hWnd))
          SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
          SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
-      HeapFree (GetProcessHeap (), 0, stack);
+      Free (stack);
       RemovePropW( hWnd, COMCTL32_wSubclass );
       return FALSE;
    }
@@ -1243,7 +1243,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
          if (stack->stackpos == proc)
             stack->stackpos = stack->stackpos->next;
             
-         HeapFree (GetProcessHeap (), 0, proc);
+         Free (proc);
          ret = TRUE;
          break;
       }
@@ -1258,7 +1258,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
          SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
          SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
-      HeapFree (GetProcessHeap (), 0, stack);
+      Free (stack);
       RemovePropW( hWnd, COMCTL32_wSubclass );
    }
    
@@ -1300,7 +1300,7 @@ LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
          SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
          SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
-      HeapFree (GetProcessHeap (), 0, stack);
+      Free (stack);
       RemovePropW( hWnd, COMCTL32_wSubclass );
    }
    return ret;

@@ -33,16 +33,13 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "commctrl.h"
+#include "comctl32.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(progress);
 
 INT WINAPI StrCmpNIW(LPCWSTR,LPCWSTR,INT);
-
-#define SYSLINK_Alloc(size)        HeapAlloc(GetProcessHeap(), 0, (size))
-#define SYSLINK_Free(ptr)          HeapFree(GetProcessHeap(), 0, (ptr))
-#define SYSLINK_ReAlloc(ptr, size) HeapReAlloc(GetProcessHeap(), 0, ptr, (size))
 
 typedef struct
 {
@@ -115,8 +112,8 @@ static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
 {
     if(DocItem->Type == slLink)
     {
-        SYSLINK_Free(DocItem->u.Link.szID);
-        SYSLINK_Free(DocItem->u.Link.szUrl);
+        Free(DocItem->u.Link.szID);
+        Free(DocItem->u.Link.szUrl);
     }
 
     if(DocItem->Type == slLink && DocItem->u.Link.hRgn != NULL)
@@ -127,7 +124,7 @@ static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
     /* we don't free Text because it's just a pointer to a character in the
        entire window text string */
 
-    SYSLINK_Free(DocItem);
+    Free(DocItem);
 }
 
 /***********************************************************************
@@ -138,7 +135,7 @@ static PDOC_ITEM SYSLINK_AppendDocItem (SYSLINK_INFO *infoPtr, LPWSTR Text, UINT
                                         SL_ITEM_TYPE type, PDOC_ITEM LastItem)
 {
     PDOC_ITEM Item;
-    Item = SYSLINK_Alloc(sizeof(DOC_ITEM) + ((textlen + 1) * sizeof(WCHAR)));
+    Item = Alloc(sizeof(DOC_ITEM) + ((textlen + 1) * sizeof(WCHAR)));
     if(Item == NULL)
     {
         ERR("Failed to alloc DOC_ITEM structure!\n");
@@ -371,7 +368,7 @@ CheckParameter:
                         {
                             nc = min(lenId, strlenW(lpID));
                             nc = min(nc, MAX_LINKID_TEXT);
-                            Last->u.Link.szID = SYSLINK_Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
+                            Last->u.Link.szID = Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
                             if(Last->u.Link.szID != NULL)
                             {
                                 lstrcpynW(Last->u.Link.szID, lpID, nc + 1);
@@ -384,7 +381,7 @@ CheckParameter:
                         {
                             nc = min(lenUrl, strlenW(lpUrl));
                             nc = min(nc, L_MAX_URL_LENGTH);
-                            Last->u.Link.szUrl = SYSLINK_Alloc((L_MAX_URL_LENGTH + 1) * sizeof(WCHAR));
+                            Last->u.Link.szUrl = Alloc((L_MAX_URL_LENGTH + 1) * sizeof(WCHAR));
                             if(Last->u.Link.szUrl != NULL)
                             {
                                 lstrcpynW(Last->u.Link.szUrl, lpUrl, nc + 1);
@@ -451,7 +448,7 @@ CheckParameter:
             {
                 nc = min(lenId, strlenW(lpID));
                 nc = min(nc, MAX_LINKID_TEXT);
-                Last->u.Link.szID = SYSLINK_Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
+                Last->u.Link.szID = Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
                 if(Last->u.Link.szID != NULL)
                 {
                     lstrcpynW(Last->u.Link.szID, lpID, nc + 1);
@@ -464,7 +461,7 @@ CheckParameter:
             {
                 nc = min(lenUrl, strlenW(lpUrl));
                 nc = min(nc, L_MAX_URL_LENGTH);
-                Last->u.Link.szUrl = SYSLINK_Alloc((L_MAX_URL_LENGTH + 1) * sizeof(WCHAR));
+                Last->u.Link.szUrl = Alloc((L_MAX_URL_LENGTH + 1) * sizeof(WCHAR));
                 if(Last->u.Link.szUrl != NULL)
                 {
                     lstrcpynW(Last->u.Link.szUrl, lpUrl, nc + 1);
@@ -737,11 +734,11 @@ static VOID SYSLINK_Render (SYSLINK_INFO *infoPtr, HDC hdc)
                 
                 if(bl != NULL)
                 {
-                    bl = SYSLINK_ReAlloc(bl, ++nBlocks * sizeof(DOC_TEXTBLOCK));
+                    bl = ReAlloc(bl, ++nBlocks * sizeof(DOC_TEXTBLOCK));
                 }
                 else
                 {
-                    bl = SYSLINK_Alloc(++nBlocks * sizeof(DOC_TEXTBLOCK));
+                    bl = Alloc(++nBlocks * sizeof(DOC_TEXTBLOCK));
                 }
                 
                 if(bl != NULL)
@@ -1039,7 +1036,7 @@ static LRESULT SYSLINK_SetItem (SYSLINK_INFO *infoPtr, PLITEM Item)
     {
         if(!di->u.Link.szID)
         {
-            di->u.Link.szID = SYSLINK_Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
+            di->u.Link.szID = Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
             if(!Item->szID)
             {
                 ERR("Unable to allocate memory for link id\n");
@@ -1056,7 +1053,7 @@ static LRESULT SYSLINK_SetItem (SYSLINK_INFO *infoPtr, PLITEM Item)
     {
         if(!di->u.Link.szUrl)
         {
-            di->u.Link.szUrl = SYSLINK_Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
+            di->u.Link.szUrl = Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
             if(!Item->szUrl)
             {
                 ERR("Unable to allocate memory for link url\n");
@@ -1609,7 +1606,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
     case WM_CREATE:
         /* allocate memory for info struct */
-        infoPtr = (SYSLINK_INFO *)SYSLINK_Alloc (sizeof(SYSLINK_INFO));
+        infoPtr = Alloc (sizeof(SYSLINK_INFO));
         if (!infoPtr) return -1;
         SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
@@ -1633,8 +1630,8 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         SYSLINK_ClearDoc(infoPtr);
         if(infoPtr->Font != 0) DeleteObject(infoPtr->Font);
         if(infoPtr->LinkFont != 0) DeleteObject(infoPtr->LinkFont);
-        SYSLINK_Free (infoPtr);
         SetWindowLongPtrW(hwnd, 0, 0);
+        Free (infoPtr);
         return 0;
 
     default:

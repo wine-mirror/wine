@@ -4430,7 +4430,7 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, LPTBSAVEPARAMSW lpSave)
         res = ERROR_FILE_NOT_FOUND;
     if (!res)
     {
-        nmtbr.pData = HeapAlloc(GetProcessHeap(), 0, dwSize);
+        nmtbr.pData = Alloc(dwSize);
         nmtbr.cbData = (UINT)dwSize;
         if (!nmtbr.pData) res = ERROR_OUTOFMEMORY;
     }
@@ -4503,7 +4503,7 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, LPTBSAVEPARAMSW lpSave)
             if (infoPtr->nNumButtons > 0) ret = TRUE;
         }
     }
-    HeapFree(GetProcessHeap(), 0, nmtbr.pData);
+    Free (nmtbr.pData);
     RegCloseKey(hkey);
 
     return ret;
@@ -4535,12 +4535,12 @@ TOOLBAR_SaveRestoreA (HWND hwnd, WPARAM wParam, LPTBSAVEPARAMSA lpSave)
     if (lpSave == NULL) return 0;
 
     len = MultiByteToWideChar(CP_ACP, 0, lpSave->pszSubKey, -1, NULL, 0);
-    pszSubKey = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    pszSubKey = Alloc(len * sizeof(WCHAR));
     if (pszSubKey) goto exit;
     MultiByteToWideChar(CP_ACP, 0, lpSave->pszSubKey, -1, pszSubKey, len);
 
     len = MultiByteToWideChar(CP_ACP, 0, lpSave->pszValueName, -1, NULL, 0);
-    pszValueName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    pszValueName = Alloc(len * sizeof(WCHAR));
     if (!pszValueName) goto exit;
     MultiByteToWideChar(CP_ACP, 0, lpSave->pszValueName, -1, pszValueName, len);
 
@@ -4550,8 +4550,8 @@ TOOLBAR_SaveRestoreA (HWND hwnd, WPARAM wParam, LPTBSAVEPARAMSA lpSave)
     result = TOOLBAR_SaveRestoreW(hwnd, wParam, &SaveW);
 
 exit:
-    HeapFree(GetProcessHeap(), 0, pszValueName);
-    HeapFree(GetProcessHeap(), 0, pszSubKey);
+    Free (pszValueName);
+    Free (pszSubKey);
 
     return result;
 }
@@ -5534,7 +5534,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	DestroyWindow (infoPtr->hwndToolTip);
 
     /* delete temporary buffer for tooltip text */
-    HeapFree(GetProcessHeap(), 0, infoPtr->pszTooltipText);
+    Free (infoPtr->pszTooltipText);
 
     /* delete button data */
     if (infoPtr->buttons)
@@ -6288,7 +6288,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
     TRACE("button index = %d\n", index);
 
-    HeapFree(GetProcessHeap(), 0, infoPtr->pszTooltipText);
+    Free (infoPtr->pszTooltipText);
     infoPtr->pszTooltipText = NULL;
 
     if (index < 0)
@@ -6318,7 +6318,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
             /* need to allocate temporary buffer in infoPtr as there
              * isn't enough space in buffer passed to us by the
              * tooltip control */
-            infoPtr->pszTooltipText = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            infoPtr->pszTooltipText = Alloc((len+1)*sizeof(WCHAR));
             if (infoPtr->pszTooltipText)
             {
                 memcpy(infoPtr->pszTooltipText, tbgit.pszText, (len+1)*sizeof(WCHAR));
@@ -6356,7 +6356,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
             /* need to allocate temporary buffer in infoPtr as there
              * isn't enough space in buffer passed to us by the
              * tooltip control */
-            infoPtr->pszTooltipText = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            infoPtr->pszTooltipText = Alloc((len+1)*sizeof(WCHAR));
             if (infoPtr->pszTooltipText)
             {
                 MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, len+1, infoPtr->pszTooltipText, (len+1)*sizeof(WCHAR));
@@ -6386,7 +6386,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
             /* need to allocate temporary buffer in infoPtr as there
              * isn't enough space in buffer passed to us by the
              * tooltip control */
-            infoPtr->pszTooltipText = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            infoPtr->pszTooltipText = Alloc((len+1)*sizeof(WCHAR));
             if (infoPtr->pszTooltipText)
             {
                 memcpy(infoPtr->pszTooltipText, pszText, (len+1)*sizeof(WCHAR));
