@@ -27,6 +27,9 @@
 /* debug level */
 extern int winetest_debug;
 
+/* running in interactive mode? */
+extern int winetest_interactive;
+
 /* current platform */
 extern const char *winetest_platform;
 
@@ -73,6 +76,9 @@ extern void winetest_trace( const char *msg, ... );
 
 /* debug level */
 int winetest_debug = 1;
+
+/* interactive mode? */
+int winetest_interactive = 0;
 
 /* current platform */
 const char *winetest_platform = "windows";
@@ -314,6 +320,7 @@ int main( int argc, char **argv )
 
     if ((p = getenv( "WINETEST_PLATFORM" ))) winetest_platform = p;
     if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);
+    if ((p = getenv( "WINETEST_INTERACTIVE" ))) winetest_interactive = atoi(p);
     if ((p = getenv( "WINETEST_REPORT_SUCCESS"))) report_success = atoi(p);
     if (!argv[1]) usage( argv[0] );
 

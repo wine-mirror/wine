@@ -29,14 +29,11 @@
  * Note that in most of this test we may get MMSYSERR_BADDEVICEID errors
  * at about any time if the user starts another application that uses the
  * sound device. So we should not report these as test failures.
- */
-
-/* This test can play a test sound. But this only makes sense if someone
+ *
+ * This test can play a test tone. But this only makes sense if someone
  * is going to carefully listen to it, and would only bother everyone else.
- * So to play the test sound you have to pass the 'play' parameter:
- *     winmm_test wave play
+ * So this is only done if the test is being run in interactive mode.
  */
-static int play_la;
 
 static const unsigned int win_formats[][4]={
     {WAVE_FORMAT_1M08,  11025,  8, 1},
@@ -149,7 +146,7 @@ static void wave_out_test_deviceOut(int device, int format, DWORD flags)
     ok(rc==MMSYSERR_NOERROR,
        "waveOutPrepareHeader: device=%d rc=%d\n",device,rc);
 
-    if (play_la && rc==MMSYSERR_NOERROR) {
+    if (winetest_interactive && rc==MMSYSERR_NOERROR) {
         trace("Playing 440Hz LA at %ldx%2dx%d %04lx\n",
               wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels,flags);
         rc=waveOutSetVolume(wout,0x20002000);
@@ -263,10 +260,5 @@ static void wave_out_tests()
 
 START_TEST(wave)
 {
-    int argc;
-    char** argv;
-    argc = winetest_get_mainargs(&argv);
-    play_la=(argc >= 3 && strcmp(argv[2],"play")==0);
-
     wave_out_tests();
 }
