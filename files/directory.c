@@ -489,17 +489,20 @@ static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
  *           DIR_TryEnvironmentPath
  *
  * Helper function for DIR_SearchPath.
+ * Search in the specified path, or in $PATH if NULL.
  */
-static BOOL DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name )
+static BOOL DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name, LPCSTR envpath )
 {
     LPSTR path, next, buffer;
     BOOL ret = FALSE;
     INT len = strlen(name);
-    DWORD size = GetEnvironmentVariableA( "PATH", NULL, 0 );
+    DWORD size;
 
+    size = envpath ? strlen(envpath)+1 : GetEnvironmentVariableA( "PATH", NULL, 0 );
     if (!size) return FALSE;
     if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    if (!GetEnvironmentVariableA( "PATH", path, size )) goto done;
+    if (envpath) strcpy( path, envpath );
+    else if (!GetEnvironmentVariableA( "PATH", path, size )) goto done;
     next = path;
     while (!ret && next)
     {
@@ -563,7 +566,6 @@ static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name, BOOL win32
 DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
                       DOS_FULL_NAME *full_name, BOOL win32 )
 {
-    DWORD len;
     LPCSTR p;
     LPSTR tmp = NULL;
     BOOL ret = TRUE;
@@ -578,36 +580,34 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
         path = NULL;  /* Ignore path if name already contains a path */
     if (path && !*path) path = NULL;  /* Ignore empty path */
 
-    len = strlen(name);
-    if (ext) len += strlen(ext);
-    if (path) len += strlen(path) + 1;
-
     /* Allocate a buffer for the file name and extension */
 
-    if (path || ext)
+    if (ext)
     {
+        DWORD len = strlen(name) + strlen(ext);
         if (!(tmp = HeapAlloc( GetProcessHeap(), 0, len + 1 )))
         {
             SetLastError( ERROR_OUTOFMEMORY );
             return 0;
         }
-        if (path)
-        {
-            strcpy( tmp, path );
-            strcat( tmp, "\\" );
-            strcat( tmp, name );
-        }
-        else strcpy( tmp, name );
-        if (ext) strcat( tmp, ext );
+        strcpy( tmp, name );
+        strcat( tmp, ext );
         name = tmp;
     }
-    
-    /* If we have an explicit path, everything's easy */
 
-    if (path || (*name && (name[1] == ':')) ||
-        strchr( name, '/' ) || strchr( name, '\\' ))
+    /* If the name contains an explicit path, everything's easy */
+
+    if ((*name && (name[1] == ':')) || strchr( name, '/' ) || strchr( name, '\\' ))
     {
         ret = DOSFS_GetFullName( name, TRUE, full_name );
+        goto done;
+    }
+
+    /* Search in the specified path */
+
+    if (path)
+    {
+        ret = DIR_TryEnvironmentPath( name, full_name, path );
         goto done;
     }
 
@@ -635,7 +635,7 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     /* Try all directories in path */
 
-    ret = DIR_TryEnvironmentPath( name, full_name );
+    ret = DIR_TryEnvironmentPath( name, full_name, NULL );
 
 done:
     if (tmp) HeapFree( GetProcessHeap(), 0, tmp );
