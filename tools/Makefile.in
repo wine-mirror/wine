@@ -1,31 +1,18 @@
-CC 	= @CC@
-CFLAGS 	= @CFLAGS@
-XINCL 	= @x_includes@
 TOPSRC  = @top_srcdir@
-DIVINCL = -I$(TOPSRC)/include
 
+PROGRAM = build
+MODULE  = none
 
-all: build
+C_SRCS = build.c
 
-build: build.o
-	$(CC) $(CFLAGS) -o build build.o
+all: $(PROGRAM)
 
-.c.o:
-	$(CC) -c $(CFLAGS) $(XINCL) $(DIVINCL) -o $*.o $<
+@MAKE_RULES@
 
-depend:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
-	mv tmp_make Makefile
+$(PROGRAM): $(OBJS)
+	$(CC) $(CFLAGS) -o build $(OBJS)
 
-clean:
-	rm -f *.o \#*\# *~ *.bak build tmp_make
-
-distclean: clean
-	rm Makefile
-
-countryclean:
-
-dummy:
+clean::
+	$(RM) $(PROGRAM)
 
 ### Dependencies:

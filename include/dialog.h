@@ -11,11 +11,6 @@
 
 extern BOOL DIALOG_Init(void);
 extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );
-extern int DialogBoxIndirectPtr(HINSTANCE hInst, LPCSTR dlgTemplate,
-				HWND owner, WNDPROC dlgProc);
-extern int DialogBoxIndirectParamPtr(HINSTANCE hInst, LPCSTR dlgTemplate,
-				     HWND owner, WNDPROC dlgProc, 
-				     LPARAM param);
 
 #ifndef WINELIB
 #pragma pack(1)
@@ -67,12 +62,12 @@ typedef struct
   /* Dialog template */
 typedef struct
 {
-    DLGTEMPLATEHEADER * header;
-    unsigned char *     menuName;
-    LPSTR               className;
-    LPSTR               caption;
-    WORD                pointSize;
-    LPSTR               faceName;
+    DLGTEMPLATEHEADER  header;
+    SEGPTR             menuName;
+    SEGPTR             className;
+    SEGPTR             caption;
+    WORD               pointSize;
+    SEGPTR             faceName;
 } DLGTEMPLATE;
 
 #ifndef WINELIB

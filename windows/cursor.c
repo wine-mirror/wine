@@ -1,7 +1,7 @@
 /*
  *    WINE
 static char Copyright[] = "Copyright  Martin Ayotte, 1993";
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,35 +12,40 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include <unistd.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
 #include "neexe.h"
 #include "wine.h"
+#include "callback.h"
 #include "cursor.h"
 #include "resource.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "arch.h"
+#include "bitmap.h"
 
 static int ShowCursCount = 0;
 static HCURSOR hActiveCursor;
 static HCURSOR hEmptyCursor = 0;
 RECT	ClipCursorRect;
 
-static struct { SEGPTR name; HCURSOR cursor; } system_cursor[] =
+static struct { 
+   SEGPTR name; HCURSOR cursor; unsigned int shape;
+} system_cursor[] =
 {
-    { IDC_ARROW, 0 },
-    { IDC_IBEAM, 0 },
-    { IDC_WAIT, 0 },
-    { IDC_CROSS, 0 },
-    { IDC_UPARROW, 0 },
-    { IDC_SIZE, 0 },
-    { IDC_ICON, 0 },
-    { IDC_SIZENWSE, 0 },
-    { IDC_SIZENESW, 0 },
-    { IDC_SIZEWE, 0 },
-    { IDC_SIZENS, 0 }
+    { IDC_ARROW,    0, XC_top_left_arrow},
+    { IDC_IBEAM,    0, XC_xterm },
+    { IDC_WAIT,     0, XC_watch },
+    { IDC_CROSS,    0, XC_crosshair },
+    { IDC_UPARROW,  0, XC_based_arrow_up },
+    { IDC_SIZE,     0, XC_bottom_right_corner },
+    { IDC_ICON,     0, XC_icon },
+    { IDC_SIZENWSE, 0, XC_fleur },
+    { IDC_SIZENESW, 0, XC_fleur },
+    { IDC_SIZEWE,   0, XC_sb_h_double_arrow },
+    { IDC_SIZENS,   0, XC_sb_v_double_arrow }
 };
 
 #define NB_SYS_CURSORS  (sizeof(system_cursor)/sizeof(system_cursor[0]))
@@ -54,13 +59,13 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
     HCURSOR 	hCursor;
     HRSRC       hRsrc;
     HANDLE 	rsc_mem;
-    WORD 	*lp;
+    char        *lpbits;
     LONG        *lpl,size;
-    CURSORDESCRIP *lpcurdesc;
-    CURSORALLOC	  *lpcur;
-    HDC 	hdc;
+    CURSORALLOC *lpcur;
+    CURSORDIR   *lpcurdir;
+    CURSORDESCRIP curdesc;
+    POINT       hotspot;
     int i;
-    unsigned char *cp1,*cp2;
     dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %08lx\n",
 	   instance, cursor_name);
     if (!instance)
@@ -68,116 +73,69 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 	for (i = 0; i < NB_SYS_CURSORS; i++)
 	    if (system_cursor[i].name == cursor_name)
 	    {
-		if (system_cursor[i].cursor) return system_cursor[i].cursor;
-                else break;
+	        if (!system_cursor[i].cursor) 
+	        {
+		    hCursor = GlobalAlloc (GMEM_MOVEABLE, sizeof (Cursor));
+		    dprintf_cursor(stddeb,"LoadCursor Alloc hCursor=%X\n", hCursor);
+		    system_cursor[i].cursor = hCursor;
+		    lpcur = (CURSORALLOC *) GlobalLock(hCursor);
+		    lpcur->xcursor = XCreateFontCursor(display, system_cursor[i].shape);
+		    GlobalUnlock(hCursor);
+	        }
+	       	return system_cursor[i].cursor;
 	    }
-	if (i == NB_SYS_CURSORS) return 0;
-    }
-    hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(CURSORALLOC) + 1024L); 
-    if (hCursor == (HCURSOR)NULL) return 0;
-    if (!instance) system_cursor[i].cursor = hCursor;
-
-    dprintf_cursor(stddeb,"LoadCursor Alloc hCursor=%X\n", hCursor);
-    lpcur = (CURSORALLOC *)GlobalLock(hCursor);
-    memset(lpcur, 0, sizeof(CURSORALLOC));
-    if (instance == (HANDLE)NULL) {
-	switch((LONG)cursor_name) {
-	    case IDC_ARROW:
-		lpcur->xcursor = XCreateFontCursor(display, XC_top_left_arrow);
-		GlobalUnlock(hCursor);
-	    	return hCursor;
-	    case IDC_CROSS:
-		lpcur->xcursor = XCreateFontCursor(display, XC_crosshair);
-		GlobalUnlock(hCursor);
-	    	return hCursor;
-	    case IDC_IBEAM:
-		lpcur->xcursor = XCreateFontCursor(display, XC_xterm);
-		GlobalUnlock(hCursor);
-	    	return hCursor;
-	    case IDC_WAIT:
-		lpcur->xcursor = XCreateFontCursor(display, XC_watch);
-		GlobalUnlock(hCursor);
-	    	return hCursor;
-	    case IDC_SIZENS:
-		lpcur->xcursor = XCreateFontCursor(display, XC_sb_v_double_arrow);
-		GlobalUnlock(hCursor);
-	    	return hCursor;
-	    case IDC_SIZEWE:
-		lpcur->xcursor = XCreateFontCursor(display, XC_sb_h_double_arrow);
-		GlobalUnlock(hCursor);
-	    	return hCursor;
-            case IDC_SIZENWSE:
-            case IDC_SIZENESW:
-                lpcur->xcursor = XCreateFontCursor(display, XC_fleur);
-                GlobalUnlock(hCursor);
-                return hCursor;
-	    default:
-		break;
-	    }
-	}
-
-#if 0
-    /* this code replaces all bitmap cursors with the default cursor */
-    lpcur->xcursor = XCreateFontCursor(display, XC_top_left_arrow);
-    GlobalUnlock(hCursor);
-    return hCursor;
-#endif
-
-    if (!(hdc = GetDC(0))) return 0;
-    if (!(hRsrc = FindResource( instance, cursor_name, RT_GROUP_CURSOR )))
-    {
-	ReleaseDC(0, hdc); 
 	return 0;
     }
+
+    if (!(hRsrc = FindResource( instance, cursor_name, RT_GROUP_CURSOR )))
+	return 0;
     rsc_mem = LoadResource(instance, hRsrc );
     if (rsc_mem == (HANDLE)NULL) {
-    fprintf(stderr,"LoadCursor / Cursor %08lx not Found !\n", cursor_name);
-	ReleaseDC(0, hdc); 
-	return 0;
-	}
-    lp = (WORD *)LockResource(rsc_mem);
-    if (lp == NULL) {
-        FreeResource( rsc_mem );
-	ReleaseDC(0, hdc); 
-	return 0;
-	}
-    lpcurdesc = (CURSORDESCRIP *)(lp + 3);
-#if 0
-    dprintf_cursor(stddeb,"LoadCursor / curReserved=%X\n", *lp);
-    dprintf_cursor(stddeb,"LoadCursor / curResourceType=%X\n", *(lp + 1));
-    dprintf_cursor(stddeb,"LoadCursor / curResourceCount=%X\n", *(lp + 2));
-    dprintf_cursor(stddeb,"LoadCursor / cursor Width=%d\n", 
-		(int)lpcurdesc->Width);
-    dprintf_cursor(stddeb,"LoadCursor / cursor Height=%d\n", 
-		(int)lpcurdesc->Height);
-    dprintf_cursor(stddeb,"LoadCursor / cursor curXHotspot=%d\n", 
-		(int)lpcurdesc->curXHotspot);
-    dprintf_cursor(stddeb,"LoadCursor / cursor curYHotspot=%d\n", 
-		(int)lpcurdesc->curYHotspot);
-    dprintf_cursor(stddeb,"LoadCursor / cursor curDIBSize=%lX\n", 
-		(DWORD)lpcurdesc->curDIBSize);
-    dprintf_cursor(stddeb,"LoadCursor / cursor curDIBOffset=%lX\n", 
-		(DWORD)lpcurdesc->curDIBOffset);
-#endif
-    lpcur->descriptor = *lpcurdesc;
-    FreeResource( rsc_mem );
-    if (!(hRsrc = FindResource( instance,
-                                MAKEINTRESOURCE(lpcurdesc->curDIBOffset), 
-                                RT_CURSOR )))
-    {
-	ReleaseDC(0, hdc); 
+        fprintf(stderr,"LoadCursor / Cursor %08lx not Found !\n", cursor_name);
 	return 0;
     }
+    lpcurdir = (CURSORDIR *)LockResource(rsc_mem);
+    if (lpcurdir == NULL) {
+        FreeResource( rsc_mem );
+	return 0;
+    }
+    curdesc = *(CURSORDESCRIP *)(lpcurdir + 1);  /* CONV_CURDESC ? */
+#if 0
+    dprintf_cursor(stddeb,"LoadCursor / curReserved=%X\n", lpcurdir->cdReserved);
+    dprintf_cursor(stddeb,"LoadCursor / curResourceType=%X\n", lpcurdir->cdType);
+    dprintf_cursor(stddeb,"LoadCursor / curResourceCount=%X\n", lpcurdir->cdCount);
+    dprintf_cursor(stddeb,"LoadCursor / cursor Width=%d\n", 
+		(int)curdesc.Width);
+    dprintf_cursor(stddeb,"LoadCursor / cursor Height=%d\n", 
+		(int)curdesc.Height);
+    dprintf_cursor(stddeb,"LoadCursor / cursor curDIBSize=%lX\n", 
+		(DWORD)curdesc.curDIBSize);
+    dprintf_cursor(stddeb,"LoadCursor / cursor curDIBOffset=%lX\n",
+		(DWORD)curdesc.curDIBOffset);
+#endif
+    FreeResource( rsc_mem );
+    if (!(hRsrc = FindResource( instance,
+                                MAKEINTRESOURCE(curdesc.curDIBOffset), 
+                                RT_CURSOR )))
+	return 0;
     rsc_mem = LoadResource(instance, hRsrc );
     if (rsc_mem == (HANDLE)NULL) {
     	fprintf(stderr,
 		"LoadCursor / Cursor %08lx Bitmap not Found !\n", cursor_name);
-	ReleaseDC(0, hdc); 
+	return 0;
+    }
+    lpl = (LONG *) LockResource(rsc_mem);
+    if (lpl == NULL) {
+        FreeResource( rsc_mem );
 	return 0;
 	}
-    lpl = (LONG *)LockResource(rsc_mem);
-    lpl++;
+    hotspot = *(POINT *) lpl++;  /* CONV_POINT ? */
     size = CONV_LONG (*lpl);
+#if 0
+    if (!(hdc = GetDC(0))) {
+       FreeResource( rsc_mem );
+       return 0;
+    }
     if (size == sizeof(BITMAPCOREHEADER)){
 	CONV_BITMAPCOREHEADER (lpl);
         ((BITMAPINFOHEADER *)lpl)->biHeight /= 2;
@@ -190,40 +148,32 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
       fprintf(stderr,"No bitmap for cursor?\n");
       lpcur->hBitmap = 0;
     }
-    lpl = (LONG *)((char *)lpl + size + 8);
-  /* This is rather strange! The data is stored *BACKWARDS* and       */
-  /* mirrored! But why?? FIXME: the image must be flipped at the Y    */
-  /* axis, either here or in CreateCusor(); */
-    size = lpcur->descriptor.Height/2 * ((lpcur->descriptor.Width+7)/8);
-#if 0
-    dprintf_cursor(stddeb,"Before:\n");
-    for(i=0;i<2*size;i++)  {
-      dprintf_cursor(stddeb,"%02x ",((unsigned char *)lpl)[i]);
-      if ((i & 7) == 7) dprintf_cursor(stddeb,"\n");
-    }
-#endif
-    cp1 = (char *)lpl;
-    cp2 = cp1+2*size;
-    for(i = 0; i < size; i++)  {
-      char tmp=*--cp2;
-      *cp2 = *cp1;
-      *cp1++ = tmp;
-    }
-#if 0
-    dprintf_cursor(stddeb,"After:\n");
-    for(i=0;i<2*size;i++)  {
-      dprintf_cursor(stddeb,"%02x ",((unsigned char *)lpl)[i]);
-      if ((i & 7) == 7) dprintf_cursor(stddeb,"\n");
-    }
-#endif
-    hCursor = CreateCursor(instance, lpcur->descriptor.curXHotspot, 
- 	lpcur->descriptor.curYHotspot, lpcur->descriptor.Width,
-	lpcur->descriptor.Height/2,
-	(LPSTR)lpl, ((LPSTR)lpl)+size);
-
-    FreeResource( rsc_mem );
-    GlobalUnlock(hCursor);
     ReleaseDC(0,hdc);
+#endif
+    if (size == sizeof(BITMAPCOREHEADER))
+	lpbits = (char *)lpl + sizeof(BITMAPCOREHEADER) + 2*sizeof(RGBTRIPLE);
+    else if (size == sizeof(BITMAPINFOHEADER))
+	lpbits = (char *)lpl + sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD);
+    else  {
+      fprintf(stderr,"Invalid bitmap in cursor resource\n");
+      FreeResource(rsc_mem);
+      return 0;
+    }
+    /* The height of the cursor is the height of the XOR-Bitmap
+     * plus the height of the AND-Bitmap, so divide it by two.
+     */
+    size = curdesc.Height/2 * ((curdesc.Width+31)/32 * 4);
+#if 0
+    dprintf_cursor(stddeb,"Bitmap:\n");
+    for(i=0;i<2*size;i++)  {
+      dprintf_cursor(stddeb,"%02x ",(unsigned char) lpc[i]);
+      if ((i & 7) == 7) dprintf_cursor(stddeb,"\n");
+    }
+#endif
+    hCursor = CreateCursor(instance, hotspot.x, hotspot.y, 
+			   curdesc.Width, curdesc.Height / 2,
+			   lpbits+size, lpbits);
+    FreeResource( rsc_mem );
     return hCursor;
 }
 
@@ -252,51 +202,71 @@ HANDLE CreateCursorIconIndirect(HANDLE hInstance, LPCURSORICONINFO lpInfo,
 HCURSOR CreateCursor(HANDLE instance, short nXhotspot, short nYhotspot, 
 	short nWidth, short nHeight, LPSTR lpANDbitPlane, LPSTR lpXORbitPlane)
 {
-    HCURSOR 	hCursor;
-    CURSORALLOC	  *lpcur;
-    HDC 	hdc;
-    int         bpllen = (nWidth + 7)/8 * nHeight;
-    char        *tmpbpl = malloc(bpllen);
-    int         i;
+    HCURSOR	hCursor;
+    CURSORALLOC *lpcur;
+    int		bpl = (nWidth + 31)/32 * 4;
+    char	*tmpbits = malloc(bpl * nHeight);
+    char	*src, *dst;
+    int		i;
+    XImage	*image;
+    Pixmap	pixshape, pixmask;
+    extern void _XInitImageFuncPtrs( XImage* );
   
     XColor bkcolor,fgcolor;
     Colormap cmap = XDefaultColormap(display,XDefaultScreen(display));
     
-    dprintf_resource(stddeb,"CreateCursor: inst=%04x nXhotspot=%d  nYhotspot=%d nWidth=%d nHeight=%d\n",  
+    dprintf_resource(stddeb, "CreateCursor: inst=%04x nXhotspot=%d  nYhotspot=%d nWidth=%d nHeight=%d\n",  
        instance, nXhotspot, nYhotspot, nWidth, nHeight);
     dprintf_resource(stddeb,"CreateCursor: inst=%04x lpANDbitPlane=%p lpXORbitPlane=%p\n",
 	instance, lpANDbitPlane, lpXORbitPlane);
 
-    if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
-    hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(CURSORALLOC) + 1024L); 
-    if (hCursor == (HCURSOR)NULL) {
-	ReleaseDC(GetDesktopWindow(), hdc); 
+    image = XCreateImage( display, DefaultVisualOfScreen(screen),
+                          1, ZPixmap, 0, tmpbits,
+                          nWidth, nHeight, 32, bpl );
+    if (!image) {
+	free (tmpbits);
 	return 0;
-	}
+    }
+    image->byte_order = MSBFirst;
+    image->bitmap_bit_order = MSBFirst;
+    image->bitmap_unit = 16;
+    _XInitImageFuncPtrs(image);
+
+    hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(Cursor)); 
+    if (hCursor == (HCURSOR)NULL) {
+	XDestroyImage(image);
+	return 0;
+    }
     dprintf_cursor(stddeb,"CreateCursor Alloc hCursor=%X\n", hCursor);
     lpcur = (CURSORALLOC *)GlobalLock(hCursor);
-    memset(lpcur, 0, sizeof(CURSORALLOC));
-    lpcur->descriptor.curXHotspot = nXhotspot;
-    lpcur->descriptor.curYHotspot = nYhotspot;
-    for(i=0; i<bpllen; i++) tmpbpl[i] = ~lpANDbitPlane[i];
-    lpcur->pixmask = XCreatePixmapFromBitmapData(
-    	display, DefaultRootWindow(display), 
-        tmpbpl, nWidth, nHeight, 1, 0, 1);
-    for(i=0; i<bpllen; i++) tmpbpl[i] ^= lpXORbitPlane[i];
-    lpcur->pixshape = XCreatePixmapFromBitmapData(
-    	display, DefaultRootWindow(display),
-        tmpbpl, nWidth, nHeight, 1, 0, 1);
+
+    for(src=lpANDbitPlane, dst=tmpbits+(nHeight-1)*bpl; 
+	dst>=tmpbits; src+=bpl, dst-=bpl)
+        for(i=0; i<bpl; i++) 
+            dst[i] = ~src[i];
+    pixmask = XCreatePixmap(display, DefaultRootWindow(display), 
+			    nWidth, nHeight, 1);
+    CallTo32_LargeStack(XPutImage, 10,
+			display, pixmask, BITMAP_monoGC, image, 
+			0, 0, 0, 0, nWidth, nHeight );
+
+    for(src=lpXORbitPlane, dst=tmpbits+(nHeight-1)*bpl; 
+	dst>=tmpbits; src+=bpl, dst-=bpl)
+        for(i=0; i<bpl; i++) 
+            dst[i] = ~src[i];
+    pixshape = XCreatePixmap(display, DefaultRootWindow(display), 
+			     nWidth, nHeight, 1);
+    CallTo32_LargeStack(XPutImage, 10,
+			display, pixshape, BITMAP_monoGC, image, 
+			0, 0, 0, 0, nWidth, nHeight );
     XParseColor(display,cmap,"#000000",&fgcolor);
     XParseColor(display,cmap,"#ffffff",&bkcolor);
-    lpcur->xcursor = XCreatePixmapCursor(display,
- 	lpcur->pixshape, lpcur->pixmask, 
- 	&fgcolor, &bkcolor, lpcur->descriptor.curXHotspot, 
- 	lpcur->descriptor.curYHotspot);
-    free(tmpbpl);
-    XFreePixmap(display, lpcur->pixshape);
-    XFreePixmap(display, lpcur->pixmask);
-    ReleaseDC(GetDesktopWindow(), hdc); 
+    lpcur->xcursor = XCreatePixmapCursor(display, pixshape, pixmask,
+			                 &fgcolor, &bkcolor, nXhotspot, nYhotspot);
+    XFreePixmap(display, pixshape);
+    XFreePixmap(display, pixmask);
     GlobalUnlock(hCursor);
+    XDestroyImage(image);
     return hCursor;
 }
 
@@ -315,7 +285,7 @@ BOOL DestroyCursor(HCURSOR hCursor)
 	if (system_cursor[i].cursor == hCursor) return TRUE;
     }
     lpcur = (CURSORALLOC *)GlobalLock(hCursor);
-    if (lpcur->hBitmap != (HBITMAP)NULL) DeleteObject(lpcur->hBitmap);
+    XFreeCursor (display, lpcur->xcursor);
     GlobalUnlock(hCursor);
     GlobalFree(hCursor);
     return TRUE;
@@ -429,7 +399,7 @@ int ShowCursor(BOOL bShow)
         {
             if (!hEmptyCursor)
                 hEmptyCursor = CreateCursor( 0, 1, 1, 1, 1,
-                                             "\xFF\xFF", "\xFF\xFF" );
+					    "\xFF\xFF\xFF\xFF", "\xFF\xFF\xFF\xFF" );
             CURSOR_SetCursor( hEmptyCursor );
         }
     }

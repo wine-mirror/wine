@@ -1,58 +1,30 @@
-CC	= @CC@
-CFLAGS	= @CFLAGS@
-TOPSRC	= @top_srcdir@
-DIVINCL	= -I$(TOPSRC)/include
-BISON	= @YACC@
-FLEX	= @LEX@
-DIVDEFS	= -DUSE_READLINE
-COMPILE	= $(CC) $(CFLAGS) $(DIVINCL) $(DIVDEFS)
-LD	= @LD@
-LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
-@SET_MAKE@
+TOPSRC     = @top_srcdir@
+EXTRA_DEFS = -DUSE_READLINE
 
+MODULE = debugger
 
-MODULE	= debugger
+C_SRCS = \
+	break.c \
+	db_disasm.c \
+	hash.c \
+	info.c \
+	memory.c \
+	registers.c \
+	stack.c \
+	y.tab.c \
+	lex.yy.c
 
-SRCS	= break.c db_disasm.c hash.c info.c memory.c registers.c stack.c
+all: $(MODULE).o
 
-OBJS = $(SRCS:.c=.o) dbg.tab.o lex.yy.o
+@MAKE_RULES@
 
-all: $(MODULE).o dbg.tab.o lex.yy.o
+y.tab.c y.tab.h: dbg.y
+	$(YACC) -d -t dbg.y
 
-dbg.tab.c dbg.tab.h: dbg.y
-	$(BISON) -b dbg -d dbg.y
+lex.yy.c: debug.l
+	$(LEX) -8 -I debug.l
 
-lex.yy.c: debug.l dbg.tab.h
-	$(FLEX) -8 -I debug.l
-
-.c.o:
-	$(COMPILE) -c -o $*.o $<
- 
-$(MODULE).o: $(OBJS) readline
-	$(LD) $(LDCOMBINEFLAGS) $(OBJS) readline/readline.o -o $(MODULE).o
-
-readline: dummy
-	cd readline; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)'
-
-depend:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
-	mv tmp_make Makefile
-
-clean:
-	(cd readline; $(MAKE) clean)
-	rm -f *.o \#*\# *~ *.bak tmp_make
-	rm -f dbg.tab.c dbg.tab.h lex.yy.c y.tab.c y.tab.h
-
-distclean:
-	(cd readline; $(MAKE) distclean)
-	rm -f *.o \#*\# *~ *.bak dbg.tab.c dbg.tab.h lex.yy.c y.tab.c y.tab.h tmp_make Makefile
-
-countryclean:
-
-dbg.tab.o: dbg.tab.c
-lex.yy.o: lex.yy.c
- 
-dummy:
+clean::
+	rm -f y.tab.c y.tab.h lex.yy.c
 
 ### Dependencies:

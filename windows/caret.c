@@ -8,6 +8,7 @@ static char Copyright[] = "Copyright  David Metcalfe, 1993";
 
 #include "windows.h"
 #include "selectors.h"
+#include "alias.h"
 #include "stddebug.h"
 /* #define DEBUG_CARET */
 #include "debug.h"
@@ -94,6 +95,23 @@ static void CARET_HideCaret()
     ReleaseDC(Caret.hwnd, hdc);
 }
 
+/*****************************************************************
+ *               CARET_Initialize
+ */
+static void CARET_Initialize()
+{
+    DWORD WineProc,Win16Proc,Win32Proc;
+    static int initialized=0;
+    if(!initialized)
+    {
+      WineProc=(DWORD)CARET_Callback;
+      Win16Proc=(DWORD)GetWndProcEntry16("CARET_Callback");
+      Win32Proc=(DWORD)RELAY32_GetEntryPoint("WINPROCS32","CARET_Callback",0);
+      ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
+      initialized=1;
+    }
+}
+
 
 /*****************************************************************
  *               CreateCaret          (USER.163)
@@ -132,6 +150,8 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
 	Caret.color = GetSysColor(COLOR_WINDOWTEXT);
     Caret.timeout = 750;
     LockCaret = FALSE;
+
+    CARET_Initialize();
 
     Caret.timerid = SetSystemTimer( (HWND)0, 0, Caret.timeout,
                                 (FARPROC)GetWndProcEntry16("CARET_Callback"));
@@ -219,6 +239,8 @@ void ShowCaret(HWND hwnd)
 void SetCaretBlinkTime(WORD msecs)
 {
     if (!Caret.hwnd) return;
+
+    CARET_Initialize();
 
     KillSystemTimer( (HWND)0, Caret.timerid);
     Caret.timeout = msecs;

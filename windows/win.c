@@ -279,7 +279,7 @@ BOOL WIN_CreateDesktopWindow(void)
 /***********************************************************************
  *           CreateWindow   (USER.41)
  */
-HWND CreateWindow( LPSTR className, LPSTR windowName,
+HWND CreateWindow( SEGPTR className, SEGPTR windowName,
 		   DWORD style, short x, short y, short width, short height,
 		   HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
@@ -291,7 +291,7 @@ HWND CreateWindow( LPSTR className, LPSTR windowName,
 /***********************************************************************
  *           CreateWindowEx   (USER.452)
  */
-HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
+HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 		     DWORD style, short x, short y, short width, short height,
 		     HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
@@ -300,31 +300,25 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     WND *wndPtr;
     POINT maxSize, maxPos, minTrack, maxTrack;
     CREATESTRUCT createStruct;
-    HANDLE hwinName, hclassName;
     int wmcreate;
     XSetWindowAttributes win_attr;
 
     /* FIXME: windowName and className should be SEGPTRs */
 
+    dprintf_win( stddeb, "CreateWindowEx: " );
     if (HIWORD(windowName))
-	dprintf_win( stddeb, "CreateWindowEx: '%s' ", windowName );
+	dprintf_win( stddeb, "'%s' ", (char *)PTR_SEG_TO_LIN(windowName) );
     else
-	dprintf_win( stddeb, "CreateWindowEx: %04x ", LOWORD(windowName) );
+	dprintf_win( stddeb, "%04x ", LOWORD(windowName) );
     if (HIWORD(className))
-        dprintf_win( stddeb, "'%s' ", className );
+        dprintf_win( stddeb, "'%s' ", (char *)PTR_SEG_TO_LIN(className) );
     else
         dprintf_win( stddeb, "%04x ", LOWORD(className) );
 
     dprintf_win(stddeb, "%08lx %08lx %d,%d %dx%d %04x %04x %04x %08lx\n",
 		exStyle, style, x, y, width, height,
 		parent, menu, instance, data);
-    /* 'soundrec.exe' has negative position ! 
-       Why ? For now, here a patch : */
-    if (HIWORD(className) && !strcmp(className, "SoundRec"))
-    {
-	if (x < 0) x = 0;
-	if (y < 0) y = 0;
-    }
+
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
     {
@@ -350,15 +344,14 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	}
     }
 
+    if (!(class = CLASS_FindClassByName( className, GetExePtr(instance),
+                                         &classPtr )))
     {
-        /* FIXME!! */
-        char buff[256];
-        if (HIWORD(className)) strcpy( buff, className );
-        if (!(class = CLASS_FindClassByName( HIWORD(className) ? MAKE_SEGPTR(buff) : (SEGPTR)className,
-                                         GetExePtr( instance ), &classPtr ))) {
-            fprintf(stderr,"CreateWindow BAD CLASSNAME '%s' !\n", className);
-            return 0;
-        }
+        fprintf(stderr,"CreateWindow BAD CLASSNAME " );
+        if (HIWORD(className)) fprintf( stderr, "'%s'\n", 
+                                        (char *)PTR_SEG_TO_LIN(className) );
+        else fprintf( stderr, "%04x\n", LOWORD(className) );
+        return 0;
     }
 
       /* Correct the window style */
@@ -395,7 +388,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->hwndPrevActive = 0;
     wndPtr->hwndLastActive = hwnd;
     wndPtr->lpfnWndProc    = classPtr->wc.lpfnWndProc;
-    wndPtr->dwStyle        = style;
+    wndPtr->dwStyle        = style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = exStyle;
     wndPtr->wIDmenu        = 0;
     wndPtr->hText          = 0;
@@ -462,7 +455,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
                                         CWEventMask | CWOverrideRedirect |
                                         CWColormap | CWCursor | CWSaveUnder |
                                         CWBackingStore, &win_attr );
-        XStoreName( display, wndPtr->window, windowName );
+        XStoreName( display, wndPtr->window, PTR_SEG_TO_LIN(windowName) );
         EVENT_RegisterWindow( wndPtr->window, hwnd );
         GlobalUnlock( hCursor );
     }
@@ -486,33 +479,13 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     createStruct.x              = x;
     createStruct.y              = y;
     createStruct.style          = style;
+    createStruct.lpszName       = windowName;
+    createStruct.lpszClass      = className;
     createStruct.dwExStyle      = 0;
-    if (HIWORD(className))
-    {
-        hclassName = USER_HEAP_ALLOC( strlen(className)+1 );
-        strcpy( USER_HEAP_LIN_ADDR(hclassName), className );
-        createStruct.lpszClass = (LPSTR)USER_HEAP_SEG_ADDR(hclassName);
-    }
-    else
-    {
-        hclassName = 0;
-        createStruct.lpszClass = className;
-    }
-
-    if (HIWORD(windowName))
-    {
-        hwinName = USER_HEAP_ALLOC( strlen(windowName)+1 );
-        strcpy( USER_HEAP_LIN_ADDR(hwinName), windowName );
-        createStruct.lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
-    }
-    else
-    {
-        hwinName = 0;
-        createStruct.lpszName = windowName;
-    }
 
     wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, MAKE_SEGPTR(&createStruct) );
-    if (!wmcreate) {
+    if (!wmcreate)
+    {
 	dprintf_win(stddeb,"CreateWindowEx: WM_NCCREATE return 0\n");
 	wmcreate = -1;
     }
@@ -522,9 +495,6 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 			       NULL, NULL, NULL, &wndPtr->rectClient );
 	wmcreate = SendMessage(hwnd, WM_CREATE, 0, MAKE_SEGPTR(&createStruct));
     }
-
-    if (hclassName) USER_HEAP_FREE( hclassName );
-    if (hwinName) USER_HEAP_FREE( hwinName );
 
     if (wmcreate == -1)
     {
@@ -538,9 +508,25 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     if (style & WS_SYSMENU) wndPtr->hSysMenu = CopySysMenu();
 
     WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
-    
-    if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
-/*    if (style & WS_MINIMIZE) ShowWindow( hwnd, SW_MINIMIZE ); */
+
+    /* Show the window, maximizing or minimizing if needed */
+
+    if (wndPtr->dwStyle & WS_MINIMIZE)
+    {
+        wndPtr->dwStyle &= ~WS_MAXIMIZE;
+        WINPOS_FindIconPos( hwnd );
+        SetWindowPos( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
+                      SYSMETRICS_CXICON, SYSMETRICS_CYICON,
+                      SWP_FRAMECHANGED |
+                      (style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0 );
+    }
+    else if (wndPtr->dwStyle & WS_MAXIMIZE)
+    {
+        SetWindowPos( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
+                      SWP_FRAMECHANGED |
+                      (style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0 );
+    }
+    else if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
     dprintf_win(stddeb, "CreateWindowEx: return %04X \n", hwnd);
     return hwnd;

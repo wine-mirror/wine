@@ -65,6 +65,7 @@ int yyerror(char *);
 	| ENABLE NUM '\n'       { DEBUG_EnableBreakpoint( $2, TRUE ); }
 	| DISABLE NUM '\n'      { DEBUG_EnableBreakpoint( $2, FALSE ); }
 	| BREAK '*' addr '\n'   { DEBUG_AddBreakpoint( &$3 ); }
+        | BREAK symbol '\n'     { DEBUG_AddBreakpoint( &$2 ); }
         | BREAK '\n'            { DBG_ADDR addr = { CS_reg(DEBUG_context),
                                                     EIP_reg(DEBUG_context) };
                                   DEBUG_AddBreakpoint( &addr );
@@ -140,7 +141,7 @@ void wine_debug( int signal, struct sigcontext_struct *regs )
     char SymbolTableFile[256];
     int instr_len = 0, newmode;
 #ifdef YYDEBUG
-    yydebug = 1;
+    yydebug = 0;
 #endif
 
     yyin = stdin;

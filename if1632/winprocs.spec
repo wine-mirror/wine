@@ -26,6 +26,9 @@ id	24
 23 pascal16 CARET_Callback(word word word long) CARET_Callback
 24 pascal16 TASK_Reschedule() TASK_Reschedule
 25 pascal MMSysTimeCallback(word word word long) MMSysTimeCallback
+26 register Win32CallToStart() PE_Win32CallToStart
+27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
+28 pascal MyAlloc(word word word) MODULE_AllocateSegment
 
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt
@@ -286,4 +289,3 @@ id	24
 353 register INT_IntfdHandler(word) INT_DummyHandler
 354 register INT_IntfeHandler(word) INT_DummyHandler
 355 register INT_IntffHandler(word) INT_DummyHandler
-

@@ -19,10 +19,21 @@
 
 WIN32_builtin	*WIN32_builtin_list;
 
+/* Functions are in generated code */
+void ADVAPI32_Init();
+void COMDLG32_Init();
+void GDI32_Init();
+void KERNEL32_Init();
+void SHELL32_Init();
+void USER32_Init();
+void WINPROCS32_Init();
+
 int RELAY32_Init(void)
 {
 #ifndef WINELIB
 	/* Add a call for each DLL */
+	ADVAPI32_Init();
+	COMDLG32_Init();
 	GDI32_Init();
 	KERNEL32_Init();
 	SHELL32_Init();
@@ -37,7 +48,7 @@ WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
 {
 	WIN32_builtin *it;
 	for(it=WIN32_builtin_list;it;it=it->next)
-	if(strcmp(name,it->name)==0)
+	if(strcasecmp(name,it->name)==0)
 		return it;
 	return NULL;
 }
@@ -74,9 +85,10 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 		strcmp(item,dll->functions[hint].name)==0)
 		return dll->functions[hint].definition;
 	/* hint is incorrect, search for name */
-	for(i=1;i<dll->size;i++)
-		if(strcmp(item,dll->functions[i].name)==0)
-			return dll->functions[i].definition;
+	for(i=0;i<dll->size;i++)
+            if (dll->functions[i].name && !strcmp(item,dll->functions[i].name))
+                return dll->functions[i].definition;
+
 	/* function at hint has no name (unimplemented) */
 	if(hint && hint<dll->size && !dll->functions[hint].name)
 	{

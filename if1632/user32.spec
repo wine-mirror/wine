@@ -10,7 +10,7 @@ base	1
 0006 stub ArrangeIconicWindows
 0007 stub AttachThreadInput
 0008 stub BeginDeferWindowPos
-0009 stub BeginPaint
+0009 stdcall BeginPaint(long ptr) USER32_BeginPaint
 0010 stub BringWindowToTop
 0011 stub BroadcastSystemMessage
 0012 stub CalcChildScroll
@@ -83,7 +83,8 @@ base	1
 0079 stub CreateMDIWindowW
 0080 stub CreateMenu
 0081 stub CreatePopupMenu
-0082 stub CreateWindowExA
+0082 stdcall CreateWindowExA(long ptr ptr long long long long long 
+							long long long ptr)	USER32_CreateWindowExA
 0083 stub CreateWindowExW
 0084 stub CreateWindowStationA
 0085 stub CreateWindowStationW
@@ -126,7 +127,7 @@ base	1
 0122 stub DefFrameProcW
 0123 stub DefMDIChildProcA
 0124 stub DefMDIChildProcW
-0125 stub DefWindowProcA
+0125 stdcall DefWindowProcA(long long long long) USER32_DefWindowProcA
 0126 stub DefWindowProcW
 0127 stub DeferWindowPos
 0128 stub DeleteMenu
@@ -141,7 +142,7 @@ base	1
 0137 stub DialogBoxIndirectParamW
 0138 stub DialogBoxParamA
 0139 stub DialogBoxParamW
-0140 stub DispatchMessageA
+0140 stdcall DispatchMessageA(ptr) USER32_DispatchMessageA
 0141 stub DispatchMessageW
 0142 stub DlgDirListA
 0143 stub DlgDirListComboBoxA
@@ -176,7 +177,7 @@ base	1
 0172 stub EndDeferWindowPos
 0173 stub EndDialog
 0174 stub EndMenu
-0175 stub EndPaint
+0175 stdcall EndPaint(long ptr) USER32_EndPaint
 0176 stub EndTask
 0177 stub EnumChildWindows
 0178 stub EnumClipboardFormats
@@ -270,7 +271,7 @@ base	1
 0266 stub GetMenuState
 0267 stub GetMenuStringA
 0268 stub GetMenuStringW
-0269 stub GetMessageA
+0269 stdcall GetMessageA(ptr long long long) USER32_GetMessageA
 0270 stub GetMessageExtraInfo
 0271 stub GetMessagePos
 0272 stub GetMessageTime
@@ -427,7 +428,7 @@ base	1
 0423 stub PtInRect
 0424 stub QuerySendMessage
 0425 stub RedrawWindow
-0426 stub RegisterClassA
+0426 stdcall RegisterClassA(ptr)	USER32_RegisterClassA
 0427 stub RegisterClassExA
 0428 stub RegisterClassExW
 0429 stub RegisterClassW
@@ -534,7 +535,7 @@ base	1
 0530 stub ShowOwnedPopups
 0531 stub ShowScrollBar
 0532 stub ShowStartGlass
-0533 stub ShowWindow
+0533 stdcall ShowWindow(long long) ShowWindow
 0534 stub ShowWindowAsync
 0535 stub SubtractRect
 0536 stub SwapMouseButton
@@ -567,7 +568,7 @@ base	1
 0563 stub UnregisterClassW
 0564 stub UnregisterHotKey
 0565 stub UpdatePerUserSystemParameters
-0566 stub UpdateWindow
+0566 stdcall UpdateWindow(long) UpdateWindow
 0567 stub UserClientDllInitialize
 0568 stub UserRealizePalette
 0569 stub UserRegisterWowHandlers

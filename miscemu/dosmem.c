@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "windows.h"
 #include "global.h"
 #include "ldt.h"
@@ -137,7 +138,7 @@ BOOL DOSMEM_Init(void)
 static void DOSMEM_Alarm(void)
 {
     pBiosData->Ticks = INT1A_GetTicksSinceMidnight();
-    printf( "Ticks = %d\n", pBiosData->Ticks );
+    printf( "Ticks = %ld\n", pBiosData->Ticks );
 /*
     signal( SIGALRM, DOSMEM_Alarm );
     alarm( 1 );

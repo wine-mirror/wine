@@ -154,6 +154,7 @@ id	3
 179 pascal16 GetDCState(word) GetDCState
 180 pascal16 SetDCState(word word) SetDCState
 181 pascal16 RectInRegionOld(word ptr) RectInRegion
+188 stub GetTextExtentEx
 190 stub SetDCHook
 191 stub GetDCHook
 192 stub SetHookFlags
@@ -196,6 +197,17 @@ id	3
 250 pascal16 Copy(ptr ptr word) Copy
 253 stub DeleteSpoolPage
 254 stub SpoolFile
+267 stub StartDocPrintEra
+268 stub StartPagePrinter
+269 stub WritePrinter
+270 stub EndPagePrinter
+271 stub AbortPrinter
+272 stub EndDocPrinter
+274 stub ClosePrinter
+280 stub GetRealDriverInfo
+281 stub DrvSetPrinterData
+282 stub DrvGetPrinterData
+299 stub ENGINEGETCHARWIDTHEX
 300 stub ENGINEENUMERATEFONT
 301 stub ENGINEDELETEFONT
 302 stub ENGINEREALIZEFONT
@@ -211,6 +223,9 @@ id	3
 312 stub ConvertOutLineFontFile
 313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps
 314 stub EngineExtTextOut
+315 stub EngineRealizeFontExt
+316 stub EngineGetCharWidthStr
+317 stub EngineGetGlyphBmpExt
 330 pascal16 EnumFontFamilies(word ptr segptr long) EnumFontFamilies
 332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs
 345 pascal16 GetTextAlign(word) GetTextAlign
@@ -223,6 +238,7 @@ id	3
 352 stub GetPhysicalFontHandle
 353 stub GetAspectRatioFilter
 354 stub ShrinkGDIHeap
+355 stub FTrapping0
 360 pascal16 CreatePalette(ptr) CreatePalette
 361 pascal16 GDISelectPalette(word word) GDISelectPalette
 362 pascal16 GDIRealizePalette(word) GDIRealizePalette
@@ -248,6 +264,7 @@ id	3
 400 pascal16 FastWindowFrame(word long word word long) FastWindowFrame
 401 stub GDIMOVEBITMAP
 403 stub GDIINIT2
+404 stub GetTTGlyphIndexMap
 405 stub FINALGDIINIT
 407 stub CREATEUSERBITMAP
 409 stub CREATEUSERDISCARDABLEBITMAP
@@ -296,4 +313,65 @@ id	3
              ScaleViewportExtEx
 485 pascal16 ScaleWindowExtEx(word s_word s_word s_word s_word ptr)
              ScaleWindowExtEx
-486 stub GETASPECTRATIOFILEREX
+486 stub GETASPECTRATIOFILTEREX
+489 stub CreateDIBSection
+490 stub CloseEnhMetafile
+491 stub CopyEnhMetafile
+492 stub CreateEnhMetafile
+493 stub DeleteEnhMetafile
+495 stub GDIComment
+496 stub GetEnhMetafile
+497 stub GetEnhMetafileBits
+498 stub GetEnhMetafileDescription
+499 stub GetEnhMetafileHeader
+501 stub GetEnhMetafilePaletteEntries
+502 stub PolyBezier
+503 stub PolyBezierTo
+504 stub PlayEnhMetafileRecord
+505 stub SetEnhMetafileBits
+506 stub SetMetaRgn
+508 stub ExtSelectClipRgn
+511 stub AbortPath
+512 stub BeginPath
+513 stub CloseFigure
+514 stub EndPath
+515 stub FillPath
+516 stub FlattenPath
+517 stub GetPath
+518 stub PathToRegion
+519 stub SelectClipPath
+520 stub StrokeAndFillPath
+521 stub StrokePath
+522 stub WidenPath
+523 stub ExtCreatePen
+524 stub GetArcDirection
+525 stub SetArcDirection
+526 stub GetMiterLimit
+527 stub SetMiterLimit
+528 stub GDIParametersInfo
+529 stub CreateHalftonePalette
+602 stub SetDIBColorTable
+603 stub GetDIBColorTable
+604 stub SetSolidBrush
+605 stub SysDeleteObject
+606 stub SetMagicColors
+607 stub GetRegionData
+608 stub ExtCreateRegion
+609 stub GDIFreeResources
+610 stub GDISignalProc32
+611 stub GetRandomRgn
+612 stub GetTextCharSet
+613 stub EnumFontFamiliesEx
+614 stub AddLpkToGDI
+615 stub GetCharacterPlacement
+616 stub GetFontLanguageInfo
+650 stub BuildInverseTableDIB
+701 stub GDITHKCONNECTIONDATALS
+702 stub FT_GDIFTHKTHKCONNECTIONDATA
+703 stub FDTHKCONNECTIONDATASL
+704 stub ICMTHKCONNECTIONDATASL
+820 stub ICMCreateTransform
+821 stub ICMDeleteTransform
+822 stub ICMTranslateRGB
+823 stub ICMTranslateRGBs
+824 stub ICMCheckCOlorsInGamut

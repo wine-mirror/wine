@@ -1,3 +1,143 @@
+----------------------------------------------------------------------
+Sun Sep 17 16:47:49 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [configure.in] [*/Makefile.in] [Make.rules.in]
+	Cleaned up makefiles, added configuration option for Winelib,
+	grouped common make rules in Make.rules.in.
+
+	* [Configure]
+	Renamed to 'Configure.old'; please use 'configure' instead.
+
+	* [controls/menu.c]
+	Fixed DestroyMenu() to avoid deleting the same menu twice.
+	More fixes to WM_MENUSELECT, and added WM_INITMENU.
+
+	* [if1632/relay.c]
+	Fixed wrong register values displayed by RELAY_DebugCall32().
+
+	* [memory/local.c]
+	Fixed LocalLock() and LocalUnlock() to increment/decrement the
+	lock count for moveable blocks.
+
+	* [misc/commdlg.c] [misc/shell.c] [rc/winerc.c]
+	Modified the generated C file so that the resource information
+	(size, etc.) is also exported.
+	Modified common dialogs to use the new informations.
+
+	* [misc/main.c] [ANNOUNCE]
+	Update the list of contributors. Please let me know if I forgot
+	someone.
+
+	* [rc/sysres.rc] [rc/sysres_En.rc]
+	Moved English resources to sysres_En.rc.
+	Changed ids from numeric to symbolic for dialogs.
+
+	* [windows/dialog.c]
+	Modified template parsing to be able to pass segmented pointers to
+	CreateWindow().
+
+	* [windows/win.c]
+	CreateWindow() now takes segmented pointers for class and window
+	names.
+	Maxmimize or minimize the window upon creation if the WS_MAXIMIZE
+	or WS_MINIMIZE bits are set.
+
+Thu Sep 14 17:19:57 1995  Paul Wilhelm  <paul@paul.accessone.com>
+
+	* [controls/scroll.c]
+	Fixed scroll-bar bugs for non-client windows.
+
+Thu Sep 14 14:04:14 MET DST 1995 Jochen Hoenicke <Jochen.Hoenicke@arbi.Informatik.Uni-Oldenburg.de>
+
+	* [include/cursor.h] [windows/cursor.c]
+	Cursor is not mirrored any more and the hotspot is set right.
+
+Wed Sep 13 14:22:31 1995  Marcus Meissner  <msmeissn@faui01.informatik.uni-erlangen.de>
+
+	* [ole.h]
+	Misc small fixes.
+
+Mon Sep  4 00:01:23 1995  Jon Tombs <jon@gte.esi.us.es>
+
+	* [rc/sysres_Es.rc]
+	First attempt at Spanish [Es] language support.
+
+Sun Sep  3 13:22:33 1995     Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [include/alias.h][windows/alias.c][include/relay32.h]
+	New files
+
+	* [controls/widgets.c]
+	WIDGETS_Init: register alias window procedures
+
+	* [if1632/callback.c]
+	CallWndProc: Call alias functions if necessary
+
+	* [if1632/gdi32.spec]
+	GetStockObject, TextOutA: new relays
+
+	* [misc/user32.c][if1632/user32.spec][misc/Makefile.in][misc/Imakefile]
+	user32.c: new file
+	BeginPaint,CreateWindowExA,DefWindowProcA,DispatchMessage,EndPaint,
+	GetMessageA,RegisterClassA,ShowWindow,UpdateWindow: new relays
+
+	* [if1632/winprocs32.spec][loader/pe_image.c][loader/module.c]
+	PE_Win32CallToStart: new function
+	MODULE_CreateInstance: removed static attribute
+	LoadModule: Try loading PE image on error 21
+	PE_LoadModule: new function
+	PE_LoadImage: initialize pe_data with 0
+	
+	* [include/dlls.h][include/peexe.h]
+	moved pe_data and w_files to peexe.h
+	
+	* [misc/shell.c]
+	ShellAbout: Register AboutWndProc aliases
+
+	* [miscemu/int21.c]
+	handle 0x440A and 0xDC
+
+	* [miscemu/int2f.c]
+	handle 0x84
+
+	* [objects/dib.c]
+	CreateDIBitmap: complain if BITMAPINFOHEADER is of wrong size
+
+	* [tools/build.c]
+	include windows.h and relay32.h into generated Win32 relays,
+	don't declare the implementation as int (*)();
+	limit in WIN32_builtin was off by one
+
+	* [windows/caret.c]
+	CARET_Initialize: new function, call on strategic places
+
+	* [windows/messagebox.c]
+	MessageBox: register message box proc aliases
+
+	* [if1632/advapi32.spec][if1632/comdlg32.spec]
+	New files
+
+	* [if1632/Makefile.in][if1632/Imakefile][if1632/relay32.c]
+	added new spec files
+	RELAY32_GetBuiltinDLL: perform lookup case insensitive
+	RELAY32_GetEntryPoint: start name search at 0
+
+	* [if1632/user.spec][if1632/kernel.spec][if1632/gdi.spec]
+	Added stubs for new Win95 API
+
+Sat Sep 2 1995  Martin Roy
+
+	* [misc/commdlg.c]
+	In WM_INITDIALOG, current filter must reflect lpofn->nFilterIndex.
+  	When process IDOK button in FILEDLG_WMCommand(),
+ 	lpofn->nFilterIndex should be updated to current selection.
+
+Thu Aug 31 15:00:00 1995 Ram'on Garc'ia <ramon@ie3.clubs.etsit.upm.es>
+
+	* [loader/module.c] [loader/ne_image.c]
+	Added support of self-loading modules.
+
+---------------------------------------------------------------------
 Thu Aug 31 17:19:57 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [Configure]

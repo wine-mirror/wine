@@ -276,18 +276,15 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     *((WORD*)(&ofs->reserved[0]))=
          ((now->tm_year * 0x200) + (now->tm_mon * 0x20) + now->tm_mday);
 
-
     if (action & OF_VERIFY)
       return (verify_time != *((int*)ofs->reserved));
 
-    if (action & OF_EXIST)
-      return 0;
-    
     if ((handle = _lopen( ofs->szPathName, wStyle )) == -1)
     {
         ofs->nErrCode = 2;  /* not found */
         return -1;
     }
+    if (action & OF_EXIST) close(handle);
     return handle;
 }
 

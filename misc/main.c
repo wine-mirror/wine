@@ -28,17 +28,20 @@
 #include "stddebug.h"
 #include "debug.h"
 
-const char people[] = "Wine is available thanks to the work of "\
-"Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Erik Bos, Fons Botman, "\
-"John Brezak, Andrew Bulhak, John Burton, Paul Falstad, Olaf Flebbe, "\
-"Peter Galbavy, Cameron Heide, Jeffrey Hsu, Miguel de Icaza, "\
-"Alexandre Julliard, Jon Konrath, Scott A. Laird, Martin von Loewis, "\
-"Kenneth MacDonald, Peter MacDonald, William Magro, David Metcalfe, "\
-"Michael Patra, John Richardson, Johannes Ruscheinski, Thomas Sandford, "\
-"Constantine Sapuntzakis, Bernd Schmidt, Yngvi Sigurjonsson, Rick Sladkey, "\
-"William Smith, Erik Svendsen, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs, "\
-"Linus Torvalds, Michael Veksler, Carl Williams, Karl Guenter Wuensch, "\
-"Eric Youngdale, and James Youngman.";
+const char people[] = "Wine is available thanks to the work of "
+"Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Erik Bos, "
+"Fons Botman, John Brezak, Andrew Bulhak, John Burton, Paul Falstad, "
+"Olaf Flebbe, Peter Galbavy, Ramon Garcia, Hans de Graaf, "
+"Charles M. Hannum, Cameron Heide, Jochen Hoenicke, Jeffrey Hsu, "
+"Miguel de Icaza, Alexandre Julliard, Jon Konrath, Scott A. Laird, "
+"Martin von Loewis, Kenneth MacDonald, Peter MacDonald, William Magro, "
+"Marcus Meissner, Graham Menhennitt, David Metcalfe, Michael Patra, "
+"John Richardson, Johannes Ruscheinski, Thomas Sandford, "
+"Constantine Sapuntzakis, Daniel Schepler, Bernd Schmidt, "
+"Yngvi Sigurjonsson, Rick Sladkey, William Smith, Erik Svendsen, "
+"Goran Thyni, Jimmy Tirtawangsa, Jon Tombs, Linus Torvalds, "
+"Gregory Trubetskoy, Michael Veksler, Morten Welinder, Jan Willamowius, "
+"Carl Williams, Karl Guenter Wuensch, Eric Youngdale, and James Youngman.";
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
@@ -64,6 +67,7 @@ struct options Options =
     NULL,           /* desktopGeometry */
     NULL,           /* programName */
     FALSE,          /* usePrivateMap */
+    FALSE,          /* useFixedMap */
     FALSE,          /* synchronous */
     FALSE,          /* backing store */
     SW_SHOWNORMAL,  /* cmdShow */
@@ -84,6 +88,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-ipc",           ".ipc",             XrmoptionNoArg,  (caddr_t)"off"},
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
+    { "-fixedmap",      ".fixedmap",        XrmoptionNoArg,  (caddr_t)NULL },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
@@ -106,6 +111,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -debug          Enter debugger before starting application\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
+  "    -fixedmap       Use a \"standard\" color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -backingstore   Turn on backing store\n" \
   "    -spy file       Obsolete. Use -debugmsg +spy for Spy messages\n" \
@@ -302,6 +308,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.cmdShow = SW_SHOWMINIMIZED;
     if (MAIN_GetResource( db, ".privatemap", &value ))
 	Options.usePrivateMap = TRUE;
+    if (MAIN_GetResource( db, ".fixedmap", &value ))
+	Options.useFixedMap = TRUE;
     if (MAIN_GetResource( db, ".synchronous", &value ))
 	Options.synchronous = TRUE;
     if (MAIN_GetResource( db, ".backingstore", &value ))

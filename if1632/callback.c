@@ -10,9 +10,10 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "callback.h"
 #include "stackframe.h"
 #include "win.h"
+#include "alias.h"
+#include "relay32.h"
 #include "stddebug.h"
 #include "debug.h"
-
 
 
 /**********************************************************************
@@ -21,12 +22,23 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam )
 {
+    FUNCTIONALIAS *a;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return 0;
     SpyMessage(hwnd, message, wParam, lParam);
-    return CallWndProc( (FARPROC)func, wndPtr->hInstance, 
+
+    /* check if we have something better than 16 bit relays */
+    if(!ALIAS_UseAliases || !(a=ALIAS_LookupAlias((DWORD)func)) ||
+        (!a->wine && !a->win32))
+        return CallWndProc( (FARPROC)func, wndPtr->hInstance, 
                         hwnd, message, wParam, lParam );
+    if(a->wine)
+        return ((LONG(*)(WORD,WORD,WORD,LONG))(a->wine))
+                            (hwnd,message,wParam,lParam);
+    if(!a->win32)
+        fprintf(stderr,"Where is the Win32 callback?\n");
+    return RELAY32_CallWindowProc(a->win32,hwnd,message,wParam,lParam);
 }
 
 

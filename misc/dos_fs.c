@@ -29,11 +29,15 @@
 #include "windows.h"
 #include "msdos.h"
 #include "dos_fs.h"
-#include "autoconf.h"
 #include "comm.h"
 #include "task.h"
 #include "stddebug.h"
 #include "debug.h"
+
+#ifndef WINE_INI_GLOBAL
+/* Get the WINE_INI_GLOBAL definition from autoconf.h */
+#include "autoconf.h"
+#endif
 
 #define WINE_INI_USER "~/.winerc"
 #define MAX_DOS_DRIVES	26

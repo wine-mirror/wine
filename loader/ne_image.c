@@ -59,7 +59,41 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     size = pSeg->size ? pSeg->size : 0x10000;
     mem = GlobalLock(pSeg->selector);
-    if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
+    if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1) {	
+ 	/* Implement self loading segments */
+ 	SELFLOADHEADER *selfloadheader;
+ 	WORD oldss, oldsp, oldselector, newselector;
+ 	selfloadheader = (SELFLOADHEADER *)
+ 		PTR_SEG_OFF_TO_LIN(pSegTable->selector,0);
+ 	oldss = IF1632_Saved16_ss;
+ 	oldsp = IF1632_Saved16_sp;
+ 	oldselector = pSeg->selector;
+ 	IF1632_Saved16_ss = pModule->self_loading_sel;
+ 	IF1632_Saved16_sp = 0xFF00;
+ 	newselector =  CallTo16_word_www(selfloadheader->LoadAppSeg,
+ 		pModule->self_loading_sel, hModule, fd, segnum);
+ 	if (newselector != oldselector) {
+ 	  /* Self loaders like creating their own selectors; 
+ 	   * they love asking for trouble to Wine developers
+ 	   */
+ 	  if (segnum == pModule->dgroup) {
+ 	    memcpy(PTR_SEG_OFF_TO_LIN(oldselector,0),
+ 		   PTR_SEG_OFF_TO_LIN(newselector,0), 
+ 		   pSeg->minsize ? pSeg->minsize : 0x10000);
+ 	    FreeSelector(newselector);
+ 	    pSeg->selector = oldselector;
+ 	    fprintf(stderr, "A new selector was allocated for the dgroup segment\n"
+ 		    "Old selector is %d, new one is %d", oldselector, newselector);
+ 	  } else {
+ 	    FreeSelector(pSeg->selector);
+ 	    pSeg->selector = newselector;
+ 	  }
+ 	} 
+ 	
+ 	IF1632_Saved16_ss = oldss;
+ 	IF1632_Saved16_sp = oldsp;
+     }
+    else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
       read(fd, mem, size);
     else {
       /*
@@ -85,6 +119,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
       free(buff);
     }
 
+    pSeg->flags |= NE_SEGFLAGS_LOADED;
     if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
         return TRUE;  /* No relocation data, we are done */
 
@@ -473,4 +508,16 @@ void NE_InitializeDLLs( HMODULE hModule )
         GlobalFree( to_init );
     }
     NE_InitDLL( hModule );
+}
+
+
+/***********************************************************************
+ *           NE_PatchCodeHandle
+ *
+ * Needed for self-loading modules.
+ */
+
+/* It does nothing */
+void PatchCodeHandle(HANDLE hSel)
+{
 }

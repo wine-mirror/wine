@@ -374,7 +374,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 			FLAG1("nostatic",MCI_ANIM_OPEN_NOSTATIC);
 			if (!STRCMP(keywords[i],"parent") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_ANIM_OPEN_PARENT;
-				sscanf(keywords[i+1],"%u",&(U.animopenParams.hWndParent));
+				sscanf(keywords[i+1],"%hu",&(U.animopenParams.hWndParent));
 				i+=2;
 				continue;
 			}
@@ -406,7 +406,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 			/* looks just like anim, but without NOSTATIC */
 			if (!STRCMP(keywords[i],"parent") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_OPEN_PARENT;
-				sscanf(keywords[i+1],"%d",&(U.ovlyopenParams.hWndParent));
+				sscanf(keywords[i+1],"%hd",&(U.ovlyopenParams.hWndParent));
 				i+=2;
 				continue;
 			}
@@ -539,7 +539,7 @@ _MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef) {
 static DWORD
 MCISTR_Status(_MCISTR_PROTO_) {
 	MCI_STATUS_PARMS	statusParams;
-	int			type,i,res,timef;
+	int			type = 0,i,res,timef;
 
 	statusParams.dwCallback = 0;
 	dwFlags	|= MCI_STATUS_ITEM;
@@ -1379,10 +1379,10 @@ MCISTR_Load(_MCISTR_PROTO_) {
 		case MCI_DEVTYPE_OVERLAY:
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_RECT;
-				sscanf(keywords[i+1],"%d",&(U.ovlyloadParams.rc.left));
-				sscanf(keywords[i+2],"%d",&(U.ovlyloadParams.rc.top));
-				sscanf(keywords[i+3],"%d",&(U.ovlyloadParams.rc.right));
-				sscanf(keywords[i+4],"%d",&(U.ovlyloadParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(U.ovlyloadParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(U.ovlyloadParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(U.ovlyloadParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(U.ovlyloadParams.rc.bottom));
 				memcpy(keywords+i,keywords+(i+5),nrofkeywords-(i+5));
 				continue;
 			}
@@ -1431,10 +1431,10 @@ MCISTR_Save(_MCISTR_PROTO_) {
 		case MCI_DEVTYPE_OVERLAY:
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_RECT;
-				sscanf(keywords[i+1],"%d",&(U.ovlysaveParams.rc.left));
-				sscanf(keywords[i+2],"%d",&(U.ovlysaveParams.rc.top));
-				sscanf(keywords[i+3],"%d",&(U.ovlysaveParams.rc.right));
-				sscanf(keywords[i+4],"%d",&(U.ovlysaveParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(U.ovlysaveParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(U.ovlysaveParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(U.ovlysaveParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(U.ovlysaveParams.rc.bottom));
 				memcpy(keywords+i,keywords+(i+5),nrofkeywords-(i+5));
 				continue;
 			}
@@ -1599,10 +1599,10 @@ MCISTR_Unfreeze(_MCISTR_PROTO_) {
 		return MCIERR_UNSUPPORTED_FUNCTION;
 	i=0;while (i<nrofkeywords) {
 		if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-			sscanf(keywords[i+1],"%ld",&(unfreezeParams.rc.left));
-			sscanf(keywords[i+2],"%ld",&(unfreezeParams.rc.top));
-			sscanf(keywords[i+3],"%ld",&(unfreezeParams.rc.right));
-			sscanf(keywords[i+4],"%ld",&(unfreezeParams.rc.bottom));
+			sscanf(keywords[i+1],"%hd",&(unfreezeParams.rc.left));
+			sscanf(keywords[i+2],"%hd",&(unfreezeParams.rc.top));
+			sscanf(keywords[i+3],"%hd",&(unfreezeParams.rc.right));
+			sscanf(keywords[i+4],"%hd",&(unfreezeParams.rc.bottom));
 			dwFlags |= MCI_OVLY_RECT;
 			i+=5;
 			continue;
@@ -1624,10 +1624,10 @@ MCISTR_Freeze(_MCISTR_PROTO_) {
 		return MCIERR_UNSUPPORTED_FUNCTION;
 	i=0;while (i<nrofkeywords) {
 		if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-			sscanf(keywords[i+1],"%ld",&(freezeParams.rc.left));
-			sscanf(keywords[i+2],"%ld",&(freezeParams.rc.top));
-			sscanf(keywords[i+3],"%ld",&(freezeParams.rc.right));
-			sscanf(keywords[i+4],"%ld",&(freezeParams.rc.bottom));
+			sscanf(keywords[i+1],"%hd",&(freezeParams.rc.left));
+			sscanf(keywords[i+2],"%hd",&(freezeParams.rc.top));
+			sscanf(keywords[i+3],"%hd",&(freezeParams.rc.right));
+			sscanf(keywords[i+4],"%hd",&(freezeParams.rc.bottom));
 			dwFlags |= MCI_OVLY_RECT;
 			i+=5;
 			continue;
@@ -1665,10 +1665,10 @@ MCISTR_Put(_MCISTR_PROTO_) {
 			FLAG1("source",MCI_ANIM_PUT_SOURCE);
 			FLAG1("destination",MCI_ANIM_PUT_DESTINATION);
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-				sscanf(keywords[i+1],"%ld",&(U.animputParams.rc.left));
-				sscanf(keywords[i+2],"%ld",&(U.animputParams.rc.top));
-				sscanf(keywords[i+3],"%ld",&(U.animputParams.rc.right));
-				sscanf(keywords[i+4],"%ld",&(U.animputParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(U.animputParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(U.animputParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(U.animputParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(U.animputParams.rc.bottom));
 				dwFlags |= MCI_ANIM_RECT;
 				i+=5;
 				continue;
@@ -1680,10 +1680,10 @@ MCISTR_Put(_MCISTR_PROTO_) {
 			FLAG1("video",MCI_OVLY_PUT_VIDEO);
 			FLAG1("frame",MCI_OVLY_PUT_FRAME);
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-				sscanf(keywords[i+1],"%ld",&(U.ovlyputParams.rc.left));
-				sscanf(keywords[i+2],"%ld",&(U.ovlyputParams.rc.top));
-				sscanf(keywords[i+3],"%ld",&(U.ovlyputParams.rc.right));
-				sscanf(keywords[i+4],"%ld",&(U.ovlyputParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(U.ovlyputParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(U.ovlyputParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(U.ovlyputParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(U.ovlyputParams.rc.bottom));
 				dwFlags |= MCI_OVLY_RECT;
 				i+=5;
 				continue;
@@ -1792,17 +1792,17 @@ MCISTR_Update(_MCISTR_PROTO_) {
 	i=0;
 	while (i<nrofkeywords) {
 		if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-			sscanf(keywords[i+1],"%ld",&(updateParams.rc.left));
-			sscanf(keywords[i+2],"%ld",&(updateParams.rc.top));
-			sscanf(keywords[i+3],"%ld",&(updateParams.rc.right));
-			sscanf(keywords[i+4],"%ld",&(updateParams.rc.bottom));
+			sscanf(keywords[i+1],"%hd",&(updateParams.rc.left));
+			sscanf(keywords[i+2],"%hd",&(updateParams.rc.top));
+			sscanf(keywords[i+3],"%hd",&(updateParams.rc.right));
+			sscanf(keywords[i+4],"%hd",&(updateParams.rc.bottom));
 			dwFlags |= MCI_ANIM_RECT;
 			i+=5;
 			continue;
 		}
 		if (!STRCMP(keywords[i],"hdc") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_ANIM_UPDATE_HDC;
-			sscanf(keywords[i+1],"%d",&(updateParams.hDC));
+			sscanf(keywords[i+1],"%hd",&(updateParams.hDC));
 			i+=2;
 			continue;
 		}
@@ -1891,7 +1891,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 				if (!STRCMP(keywords[i+1],"default")) 
 					U.animwindowParams.hWnd = MCI_OVLY_WINDOW_DEFAULT;
 				else
-					sscanf(keywords[i+1],"%d",&(U.animwindowParams.hWnd));
+					sscanf(keywords[i+1],"%hd",&(U.animwindowParams.hWnd));
 				i+=2;
 				continue;
 			}
@@ -1960,7 +1960,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 				if (!STRCMP(keywords[i+1],"default")) 
 					U.ovlywindowParams.hWnd = MCI_OVLY_WINDOW_DEFAULT;
 				else
-					sscanf(keywords[i+1],"%d",&(U.ovlywindowParams.hWnd));
+					sscanf(keywords[i+1],"%hd",&(U.ovlywindowParams.hWnd));
 				i+=2;
 				continue;
 			}

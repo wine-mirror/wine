@@ -21,9 +21,9 @@ You also need to have libXpm installed on your system. The sources for
 it are probably available on the ftp site where you got Wine. They can
 also be found on ftp.x.org and all its mirror sites.
 
-To build Wine, first do a "./Configure" and then a "make" (or "gmake"
-if you're running *BSD).  The executable "wine" will be built.  "wine"
-will load and run 16-bit Windows executables. 
+To build Wine, first do a "./configure" and then a "make depend; make".
+ The executable "wine" will be built.  "wine" will load and run 16-bit
+Windows executables.
 
 To upgrade to a new release by using a patch file, first cd to the
 top-level directory of the release (the one containing this README
@@ -32,8 +32,8 @@ file). Then do a "make clean", and patch the release with:
     gunzip -c patch-file | patch -p1
 
 where "patch-file" is the name of the patch file (something like
-Wine-yymmdd.diff.gz). You can then re-run "./Configure", and then
-run "make". 
+Wine-yymmdd.diff.gz). You can then re-run "./configure", and then
+run "make depend; make".
 
 
 3. SETUP
@@ -147,9 +147,10 @@ The best place to get help or to report bugs is the Usenet newsgroup
 comp.emulators.ms-windows.wine. The Wine FAQ is posted there every
 month.
 
-If you add something, or fix a bug, please send a patch to
-wine-new@amscons.com for inclusion in the next release.
+If you add something, or fix a bug, please send a patch ('diff -u'
+format preferred) to wine-new@amscons.com for inclusion in the next
+release.
 
 --
 Alexandre Julliard
-julliard@lamisun.epfl.ch
+julliard@lrc.epfl.ch

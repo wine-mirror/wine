@@ -3,6 +3,7 @@
 MODULE = windows
 
 SRCS = \
+	alias.c \
 	caret.c \
 	class.c \
 	cursor.c \

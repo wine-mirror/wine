@@ -1,12 +1,11 @@
 TOPSRC = @top_srcdir@
-MODULE = memory
+MODULE = toolkit
 
 C_SRCS = \
-	atom.c \
-	global.c \
-	ldt.c \
-	local.c \
-	selector.c
+	arch.c \
+	heap.c \
+	sup.c \
+	winmain.c
 
 all: $(MODULE).o
 

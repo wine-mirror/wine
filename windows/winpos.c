@@ -24,7 +24,7 @@ static HWND hwndActive = 0;  /* Currently active window */
  * Find a suitable place for an iconic window.
  * The new position is stored into wndPtr->ptIconPos.
  */
-static void WINPOS_FindIconPos( HWND hwnd )
+void WINPOS_FindIconPos( HWND hwnd )
 {
     RECT rectParent;
     short x, y, xspacing, yspacing;

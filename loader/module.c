@@ -23,6 +23,7 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#include "callback.h"
 
 static HMODULE hFirstModule = 0;
 static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
@@ -244,7 +245,43 @@ int MODULE_OpenFile( HMODULE hModule )
                     name, cachedfd );
     return cachedfd;
 }
+/***********************************************************************
+ *           MODULE_Ne2MemFlags
+ */
 
+/* This function translates NE segment flags to GlobalAlloc flags */
+
+static WORD MODULE_Ne2MemFlags(WORD flags)
+{ 
+    WORD memflags = 0;
+#if 0
+    if (flags & NE_SEGFLAGS_DISCARDABLE) 
+      memflags |= GMEM_DISCARDABLE;
+    if (flags & NE_SEGFLAGS_MOVEABLE || 
+	( ! (flags & NE_SEGFLAGS_DATA) &&
+	  ! (flags & NE_SEGFLAGS_LOADED) &&
+	  ! (flags & NE_SEGFLAGS_ALLOCATED)
+	 )
+	)
+      memflags |= GMEM_MOVEABLE;
+    memflags |= GMEM_ZEROINIT;
+#else
+    memflags = GMEM_ZEROINIT | GMEM_FIXED;
+    return memflags;
+#endif
+}
+
+/***********************************************************************
+ *           MODULE_AllocateSegment (WINPROCS.26)
+ */
+
+DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
+{
+    WORD size = wSize << wElem;
+    WORD hMem = GlobalAlloc( MODULE_Ne2MemFlags(wFlags), size);
+    WORD selector = HIWORD(GlobalLock(hMem));
+    return MAKELONG(hMem, selector);
+}
 
 /***********************************************************************
  *           MODULE_CreateSegments
@@ -263,7 +300,7 @@ static BOOL MODULE_CreateSegments( HMODULE hModule )
         if (i == pModule->ss) minsize += pModule->stack_size;
 	/* The DGROUP is allocated by MODULE_CreateInstance */
         if (i == pModule->dgroup) continue;
-        pSegment->selector = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
+        pSegment->selector = GLOBAL_Alloc( MODULE_Ne2MemFlags(pSegment->flags),
                                       minsize, hModule,
                                       !(pSegment->flags & NE_SEGFLAGS_DATA),
                                       FALSE,
@@ -297,7 +334,7 @@ static HINSTANCE MODULE_GetInstance( HMODULE hModule )
 /***********************************************************************
  *           MODULE_CreateInstance
  */
-static HINSTANCE MODULE_CreateInstance( HMODULE hModule, LOADPARAMS *params )
+HINSTANCE MODULE_CreateInstance( HMODULE hModule, LOADPARAMS *params )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -848,6 +885,8 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
         if ((hModule = MODULE_LoadExeHeader( fd, &ofs )) < 32)
         {
+			if(hModule == 21)
+				return PE_LoadModule(fd,&ofs,paramBlock);
             close( fd );
             fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
                      name, hModule );
@@ -908,7 +947,46 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
           /* Load the segments */
 
-        for (i = 1; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
+	if (pModule->flags & NE_FFLAGS_SELFLOAD)
+	{
+		/* Handle self loading modules */
+		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
+		SELFLOADHEADER *selfloadheader;
+		HMODULE hselfload = GetModuleHandle("WINPROCS");
+		WORD oldss, oldsp, saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
+		fprintf (stderr, "Warning:  %*.*s is a self-loading module\n"
+                                "Support for self-loading modules is very experimental\n",
+                *((BYTE*)pModule + pModule->name_table),
+                *((BYTE*)pModule + pModule->name_table),
+                (char *)pModule + pModule->name_table + 1);
+		NE_LoadSegment( hModule, 1 );
+		selfloadheader = (SELFLOADHEADER *)
+			PTR_SEG_OFF_TO_LIN(pSegTable->selector, 0);
+		selfloadheader->EntryAddrProc = 
+                                           MODULE_GetEntryPoint(hselfload,27);
+		selfloadheader->MyAlloc  = MODULE_GetEntryPoint(hselfload,28);
+		selfloadheader->SetOwner = MODULE_GetEntryPoint(GetModuleHandle("KERNEL"),403);
+		pModule->self_loading_sel = GlobalHandleToSel(
+					GLOBAL_Alloc (GMEM_ZEROINIT,
+					0xFF00, hModule, FALSE, FALSE, FALSE)
+					);
+		oldss = IF1632_Saved16_ss;
+		oldsp = IF1632_Saved16_sp;
+		IF1632_Saved16_ss = pModule->self_loading_sel;
+		IF1632_Saved16_sp = 0xFF00;
+		CallTo16_word_ww (selfloadheader->BootApp,
+			pModule->self_loading_sel, hModule, fd);
+		/* some BootApp procs overwrite the selector of dgroup */
+		pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
+		IF1632_Saved16_ss = oldss;
+		IF1632_Saved16_sp = oldsp;
+		for (i = 2; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
+	} 
+	else
+        {
+            for (i = 1; i <= pModule->seg_count; i++)
+                NE_LoadSegment( hModule, i );
+        }
 
           /* Fixup the functions prologs */
 

@@ -718,9 +718,11 @@ static void BuildSpec32Files( char *specname )
 
     printf( "/* File generated automatically, do not edit! */\n" );
     printf( "#include <sys/types.h>\n");
+	printf( "#include \"windows.h\"\n");
     printf( "#include \"dlls.h\"\n");
     printf( "#include \"pe_image.h\"\n");
     printf( "#include \"winerror.h\"\n");
+	printf( "#include \"relay32.h\"\n");
     printf( "#include \"stddebug.h\"\n");
     printf( "#include \"debug.h\"\n");
     printf( "\nextern int RELAY32_Unimplemented();\n\n" );
@@ -758,7 +760,6 @@ static void BuildSpec32Files( char *specname )
                 if (argno!=argc-1) putchar( ',' );
             }
             printf( ")\n{\n" );
-            printf( "\textern int %s();\n", fdp->internal_name );
             printf( "\tdprintf_relay(stddeb,\"Entering %%s.%%s(");
             for (argno=0;argno<argc;argno++) printf( "%%x ");
             printf( ")\\n\", \"%s\", \"%s\"", UpperDLLName, odp->export_name);
@@ -817,7 +818,7 @@ static void BuildSpec32Files( char *specname )
     printf("};\n\n");
 
     printf( "static WIN32_builtin dll={\"%s\",functions,%d,0};\n",
-            UpperDLLName, Limit);
+            UpperDLLName, Limit+1);
 
     printf( "void %s_Init(void)\n{\n",UpperDLLName);
     printf( "\tdll.next=WIN32_builtin_list;\n");
@@ -990,14 +991,15 @@ static void BuildCall32LargeStack(void)
 
     /* Transfer the arguments */
 
-    printf( "\tleal 16(%%ebp),%%esi\n" );
     printf( "\tmovl 12(%%ebp),%%ecx\n" );
     printf( "\torl %%ecx,%%ecx\n" );
     printf( "\tje 1f\n" );
+    printf( "\tleal 16(%%ebp),%%esi\n" );
     printf( "\tshll $2,%%ecx\n" );
     printf( "\tsubl %%ecx,%%esp\n" );
     printf( "\tmovl %%esp,%%edi\n" );
     printf( "\tshrl $2,%%ecx\n" );
+    printf( "\tcld\n" );
     printf( "\trep; movsl\n" );
     printf( "1:\n" );
 

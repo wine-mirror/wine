@@ -18,6 +18,16 @@
 #include "neexe.h"
 #include "peexe.h"
 #include "pe_image.h"
+#include "relay32.h"
+#include "module.h"
+#include "alias.h"
+#include "global.h"
+#include "task.h"
+#include "ldt.h"
+#include "registers.h"
+
+#include "stddebug.h"
+#include "debug.h"
 
 #define MAP_ANONYMOUS	0x20
 
@@ -167,6 +177,7 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 	int i, result;
 
 	wpnt->pe = malloc(sizeof(struct pe_data));
+	memset(wpnt->pe,0,sizeof(struct pe_data));
 	wpnt->pe->pe_header = malloc(sizeof(struct pe_header_s));
 
 	/* read PE header */
@@ -223,6 +234,124 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
   
 	wpnt->hinstance = 0x8000;
 	return (wpnt->hinstance);
+}
+
+HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
+{
+	struct w_files *wpnt;
+	int size;
+	NE_MODULE *pModule;
+	LOADEDFILEINFO *pFileInfo;
+	SEGTABLEENTRY *pSegment;
+	char *pStr;
+	DWORD cts;
+	HMODULE hModule;
+	HINSTANCE hInstance;
+
+	ALIAS_UseAliases=1;
+
+	wpnt=malloc(sizeof(struct w_files));
+	wpnt->next=wine_files;
+	wine_files=wpnt;
+	wpnt->ofs=*ofs;
+	wpnt->fd=fd;
+	wpnt->type=0;
+	wpnt->hinstance=0;
+	wpnt->hModule=0;
+	wpnt->initialised=0;
+	lseek(fd,0,SEEK_SET);
+	wpnt->mz_header=malloc(sizeof(struct mz_header_s));
+	read(fd,wpnt->mz_header,sizeof(struct mz_header_s));
+
+	size=sizeof(NE_MODULE) +
+		/* loaded file info */
+		sizeof(LOADEDFILEINFO) + strlen(ofs->szPathName) +
+		/* segment table: DS,CS */
+		2 * sizeof(SEGTABLEENTRY) +
+		/* name table */
+		9 +
+		/* several empty tables */
+		8;
+
+	hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
+	wpnt->hModule=hModule;
+	if (!hModule) return 11;  /* invalid exe */
+
+	FarSetOwner( hModule, hModule );
+	
+	pModule = GlobalLock(hModule);
+
+	/* Set all used entries */
+	pModule->magic=NE_SIGNATURE;
+	pModule->count=1;
+	pModule->next=0;
+	pModule->flags=0;
+	pModule->dgroup=1;
+	pModule->ss=1;
+	pModule->cs=2;
+	/* Who wants to LocalAlloc for a PE Module? */
+	pModule->heap_size=0x1000;
+	pModule->stack_size=0xF000;
+	pModule->seg_count=1;
+	pModule->modref_count=0;
+	pModule->nrname_size=0;
+	pModule->seg_table=sizeof(NE_MODULE)+
+			sizeof(LOADEDFILEINFO)+strlen(ofs->szPathName);
+	pModule->fileinfo=sizeof(NE_MODULE);
+	pModule->os_flags=NE_OSFLAGS_WINDOWS;
+	pModule->expected_version=0x30A;
+
+	pFileInfo=(LOADEDFILEINFO *)(pModule + 1);
+	pFileInfo->length = sizeof(LOADEDFILEINFO)+strlen(ofs->szPathName)-1;
+	strcpy(pFileInfo->filename,ofs->szPathName);
+
+	pSegment=(SEGTABLEENTRY*)((char*)pFileInfo+pFileInfo->length+1);
+	pModule->dgroup_entry=(int)pSegment-(int)pModule;
+	pSegment->size=0;
+	pSegment->flags=NE_SEGFLAGS_DATA;
+	pSegment->minsize=0x1000;
+	pSegment++;
+
+	cts=GetWndProcEntry16("Win32CallToStart");
+	pSegment->selector=cts>>16;
+	pModule->ip=cts & 0xFFFF;
+	pSegment++;
+
+	pStr=(char*)pSegment;
+	pModule->name_table=(int)pStr-(int)pModule;
+	strcpy(pStr,"\x08W32SXXXX");
+	pStr+=9;
+
+	/* All tables zero terminated */
+	pModule->res_table=pModule->import_table=pModule->entry_table=
+		(int)pStr-(int)pModule;
+
+	PE_LoadImage(wpnt);
+
+	pModule->heap_size=0x1000;
+	pModule->stack_size=0xE000;
+
+	/* CreateInstance allocates now 64KB */
+	hInstance=MODULE_CreateInstance(hModule);
+	wpnt->hinstance=hInstance;
+
+	TASK_CreateTask(hModule,hInstance,0,
+		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),
+		*((WORD*)PTR_SEG_TO_LIN(params->showCmd)+1));
+	
+	return hInstance;
+}
+
+void PE_Win32CallToStart(struct sigcontext_struct context)
+{
+	int fs;
+	struct w_files *wpnt=wine_files;
+	fs=GlobalAlloc(GHND,0x10000);
+	fprintf(stddeb,"Going to start Win32 program\n");	
+	InitTask(context);
+	USER_InitApp(wpnt->hModule);
+	__asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
+	((void(*)())(load_addr+wpnt->pe->pe_header->opt_coff.AddressOfEntryPoint))();
 }
 
 int PE_UnloadImage(struct w_files *wpnt)

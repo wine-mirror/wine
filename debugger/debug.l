@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debugger.h"
-#include "dbg.tab.h"
+#include "y.tab.h"
 
 #ifdef USE_READLINE
 #undef YY_INPUT

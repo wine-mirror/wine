@@ -221,7 +221,7 @@ base	1
 0217 stub GetRegionData
 0218 stub GetRelAbs
 0219 stub GetRgnBox
-0220 stub GetStockObject
+0220 stdcall GetStockObject(long)	GetStockObject
 0221 stub GetStretchBltMode
 0222 stub GetSystemPaletteEntries
 0223 stub GetSystemPaletteUse
@@ -356,7 +356,7 @@ base	1
 0352 stub StrokeAndFillPath
 0353 stub StrokePath
 0354 stub SwapBuffers
-0355 stub TextOutA
+0355 stdcall TextOutA(long long long ptr long) TextOut
 0356 stub TextOutW
 0357 stub UnloadNetworkFonts
 0358 stub UnrealizeObject

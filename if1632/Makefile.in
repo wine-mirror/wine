@@ -1,17 +1,7 @@
-CC 	= @CC@
-CFLAGS 	= @CFLAGS@
-XINCL 	= @x_includes@
-TOPSRC  = @top_srcdir@
-DIVINCL = -I$(TOPSRC)/include
-LD	= @LD@
-LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
-BUILD	= $(TOPSRC)/tools/build
-@SET_MAKE@
+TOPSRC = @top_srcdir@
+BUILD  = $(TOPSRC)/tools/build
 
-
-MODULE 	= if1632
-
-SRCS 	= callback.c relay.c relay32.c
+MODULE = if1632
 
 DLLS16	= commdlg.spec compobj.spec ddeml.spec gdi.spec kernel.spec \
 	keyboard.spec mmsystem.spec mouse.spec ole2.spec ole2conv.spec \
@@ -19,21 +9,23 @@ DLLS16	= commdlg.spec compobj.spec ddeml.spec gdi.spec kernel.spec \
 	shell.spec sound.spec storage.spec stress.spec system.spec \
 	toolhelp.spec user.spec win87em.spec winprocs.spec winsock.spec
 
-DLLS32	= gdi32.spec kernel32.spec shell32.spec user32.spec winprocs32.spec
-
-
-OBJS = $(SRCS:.c=.o) $(DLLS16:.spec=.o) $(DLLS32:.spec=.o) call16.o call32.o
+DLLS32	= advapi32.spec comdlg32.spec gdi32.spec kernel32.spec shell32.spec user32.spec winprocs32.spec
 
 SPEC16_FILES = $(DLLS16:.spec=.S)
 SPEC32_FILES = $(DLLS32:.spec=.c)
 
+C_SRCS = \
+	$(SPEC32_FILES) \
+	callback.c \
+	relay.c \
+	relay32.c
+
+ASM_SRCS = \
+	$(SPEC16_FILES) \
+	call16.S \
+	call32.S
+
 .SUFFIXES: .spec
-
-.c.o:
-	$(CC) -c $(CFLAGS) $(XINCL) $(DIVINCL) -o $*.o $<
-
-.S.o:
-	$(CC) -c -o $*.o $<  
 
 .spec.S:
 	$(BUILD) -spec16 $< > $*.S
@@ -43,10 +35,12 @@ SPEC32_FILES = $(DLLS32:.spec=.c)
 
 all: checkbuild $(MODULE).o
 
-$(SPEC16_FILES) $(SPEC32_FILES): $(TOPSRC)/tools/build
+@MAKE_RULES@
 
-checkbuild:
-	cd $(TOPSRC)/tools; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)' build
+$(SPEC16_FILES) $(SPEC32_FILES): $(BUILD)
+
+$(BUILD) checkbuild:
+	cd $(TOPSRC)/tools; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)' 'LANG=$(LANG)' build
 
 call16.S: $(TOPSRC)/include/callback.h $(BUILD)
 	$(BUILD) -call16 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > call16.S
@@ -54,23 +48,7 @@ call16.S: $(TOPSRC)/include/callback.h $(BUILD)
 call32.S: $(SPEC16_FILES)
 	$(BUILD) -call32 `cat $(SPEC16_FILES) | grep CallTo32_ | sed 's/.*CallTo32_\(.*\)/\1/' | sort | uniq` > call32.S
 
-$(MODULE).o: $(OBJS)
-	$(LD) $(LDCOMBINEFLAGS) $(OBJS) -o $(MODULE).o
-
-depend:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	$(CC) $(DIVINCL) $(XINCL) -MM $(SRCS) >> tmp_make
-	mv tmp_make Makefile
-
-clean:
-	rm -f *.o \#*\# *~ *.bak tmp_make
-	rm -f $(DLLS16:.spec=.S) $(DLLS32:.spec=.c) call32.S call16.S
-
-distclean: clean
-	rm -f Makefile
-
-countryclean:
-
-dummy:
+clean::
+	rm -f $(SPEC16_FILES) $(SPEC32_FILES) call32.S call16.S
 
 ### Dependencies:

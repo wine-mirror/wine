@@ -8,38 +8,35 @@ AC_INIT(controls/edit.c)
 test -z "$CFLAGS" && CFLAGS="-g -O2 -Wall" AC_SUBST(CFLAGS)
 test -z "$LDFLAGS" && LDFLAGS=-g AC_SUBST(LDFLAGS)
 
+dnl **** Command-line arguments ****
+
+AC_ARG_WITH(library,
+[  --with-library          build Wine as a library instead of an emulator],
+[AC_DEFINE(WINELIB) MAIN_TARGET="winelib.a"],[MAIN_TARGET="wine"])
+AC_SUBST(MAIN_TARGET)
+
 AC_ARG_WITH(language,
-[  --with-language=LANG    change the default language (LANG=En/De/No)],
+[  --with-language=LANG    change the default language (LANG=En/De/No/Es)],
 [LANG="-ALANG\($withval\)"],
 [LANG="-ALANG\(En\)"],)
 AC_SUBST(LANG)
+
 AC_ARG_WITH(ipc,
 [  --with-ipc              use inter-process communication for DDE],
 [AC_DEFINE(CONFIG_IPC)])
+
 AC_ARG_WITH(malloc-debug,
 [  --with-malloc-debug     enable malloc() debugging],
 [AC_DEFINE(MALLOC_DEBUGGING)])
 
+dnl **** Check for some programs ****
+
 AC_PROG_MAKE_SET
 AC_PROG_CC
-AC_PATH_X
+AC_PATH_XTRA
 AC_PROG_YACC
 AC_PROG_LEX
-if test -n "$x_includes" ; then
-  x_includes="-I$x_includes"
-fi
-if test -n "$x_no" ; then
-  AXFILES='AXFILES='
-fi
-AC_SUBST(AXFILES)
-AC_SUBST(x_includes)
-AC_SUBST(x_libraries)
-AC_SUBST(LIBOBJS)
-
-LD=ld
-LDCOMBINEFLAGS="-r"
-AC_SUBST(LD)
-AC_SUBST(LDCOMBINEFLAGS)
+AC_PROG_RANLIB
 
 AC_CHECK_FUNCS(tcgetattr)
 AC_CHECK_HEADERS(stdlib.h)
@@ -75,8 +72,12 @@ WINE_INI_GLOBAL="\"${TOP_SRCDIR}/wine.ini\""
 fi
 fi
 AC_SUBST(WINE_INI_GLOBAL)
+AC_DEFINE_UNQUOTED(WINE_INI_GLOBAL,$WINE_INI_GLOBAL)
 
-AC_OUTPUT(controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile Makefile autoconf.h)
+MAKE_RULES=$TOP_SRCDIR/Make.rules
+AC_SUBST_FILE(MAKE_RULES)
+
+AC_OUTPUT(Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile)
 
 echo
 echo "Configure finished.  Do 'make depend; make' to compile Wine."

@@ -24,6 +24,8 @@ DWORD WINAPI GetUserDefaultLCID()
 	return 9;
 #elif #LANG(De)
 	return 7;
+#elif #LANG(Es)
+	return 7; /* Just a Guess :-) */
 #elif #LANG(No)
 	return 0x14;
 #else

@@ -303,8 +303,9 @@ static void ReadFile(struct sigcontext_struct *context)
 		return;
 	} else {
 		size = read(BX_reg(context), ptr, CX_reg(context));
-        	dprintf_int(stddeb, "int21: read (%d, void *, 0x%x) = 0x%x\n",
-                            BX_reg(context), CX_reg(context), size);
+        	dprintf_int(stddeb,"int21: read(%d, %04x:%04x, 0x%x) = 0x%x\n",
+                            BX_reg(context), DS_reg(context), DX_reg(context),
+                            CX_reg(context), size );
 		if (size == -1) {
 			errno_to_doserr();
 			AX_reg(context) = ExtendedError;
@@ -622,7 +623,7 @@ static void CloseFile(struct sigcontext_struct *context)
 {
 	dprintf_int (stddeb, "int21: close (%d)\n", BX_reg(context));
 
-	if (close(BX_reg(context)) == -1)
+	if (_lclose( BX_reg(context) ))
         {
 		errno_to_doserr();
 		AX_reg(context) = ExtendedError;
@@ -1761,6 +1762,9 @@ void DOS3Call( struct sigcontext_struct context )
 		break;
 	    }
 	    break;
+    
+      case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
+        break;
 
 	  case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
 	    break;

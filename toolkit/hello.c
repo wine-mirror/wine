@@ -1,4 +1,3 @@
-/* #include "autoconf.h" */
 #include <windows.h>
 
 void Write (HDC dc, int x, int y, char *s)

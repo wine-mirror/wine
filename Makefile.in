@@ -3,78 +3,92 @@
 # all (default):	build wine
 # clean:		remove all intermediate files
 # distclean:		also remove all files created by configure
-# countryclean:		remove all files which have to be remade if
+# langclean:		remove all files which have to be remade if
 #			a different LANGuage is selected
 # depend:		create the dependencies
 #
 # Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 #                         <patra@itp1.physik.tu-berlin.de>
 
-CC 	= @CC@
-CFLAGS 	= @CFLAGS@
-DEFS    = @DEFS@
-XINCL 	= @x_includes@
-TOPSRC  = @top_srcdir@
-DIVINCL = -I$(TOPSRC)/include
-XPM_LIB	= -lXpm
-XLIB	= -lXext -lX11
-XDIR	= -L@x_libraries@
-LDLIBS	= -lm
-LD	= @LD@
-LANG	= @LANG@
-LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
+CC 	  = @CC@
+CFLAGS 	  = @CFLAGS@
+DEFS      = @DEFS@
+LANG	  = @LANG@
+X_CFLAGS  = @X_CFLAGS@
+X_LIBS    = @X_LIBS@
+TOPSRC    = @top_srcdir@
+DIVINCL   = -I$(TOPSRC)/include
+XPM_LIB	  = -lXpm
+XLIB	  = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
+LDLIBS	  = -lm
+AR        = ar rc
+RANLIB    = @RANLIB@
+RM        = rm -f
 @SET_MAKE@
 
-COMMONSUBDIRS = controls rc ipc loader misc multimedia objects windows
+MAIN_TARGET = @MAIN_TARGET@
 
-EMUSUBDIRS = tools debugger if1632 memory miscemu
+COMMONSUBDIRS = rc controls ipc loader misc multimedia objects windows
+
+EMUSUBDIRS = tools debugger debugger/readline if1632 memory miscemu
 
 LIBSUBDIRS = toolkit
  
-COMMONOBJS = controls/controls.o ipc/ipc.o loader/loader.o misc/misc.o \
-	multimedia/multimedia.o objects/objects.o rc/rc.o \
+ALLSUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS) $(LIBSUBDIRS)
+
+COMMONOBJS = \
+	controls/controls.o \
+	ipc/ipc.o \
+	loader/loader.o \
+	misc/misc.o \
+	multimedia/multimedia.o \
+	objects/objects.o \
+	rc/rc.o \
 	windows/windows.o
 
-EMUOBJS = debugger/debugger.o if1632/if1632.o memory/memory.o miscemu/miscemu.o
+EMUOBJS = \
+	debugger/debugger.o \
+	debugger/readline/readline.o \
+	if1632/if1632.o \
+	memory/memory.o \
+	miscemu/miscemu.o
 
 LIBOBJS = toolkit/toolkit.o
- 
-
-SUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS)
-
-OBJS = $(COMMONOBJS) $(EMUOBJS)
 
 
-all: wine wine.sym
+all: $(MAIN_TARGET)
 
-wine.sym: wine
+wine: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
+	$(CC) -o wine $(COMMONOBJS) $(EMUOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 	nm wine | grep -v _compiled | sort >wine.sym
 
-wine: $(SUBDIRS) dummy
-	$(CC) -o wine $(OBJS) $(LDOPTIONS) $(XDIR) $(XPM_LIB) $(XLIB) $(LDLIBS)
+winelib.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
+	$(RM) $@
+	$(AR) $@ $(COMMONOBJS) $(LIBOBJS)
+	$(RANLIB) $@
 
-$(SUBDIRS): dummy
-	@cd $@; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)' 'LANG=$(LANG)'
+$(ALLSUBDIRS): dummy
+	@cd $@; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)' 'LANG=$(LANG)'
 
 depend:
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) depend); done
+	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) depend); done
 
 etags:
 	etags `find . -name '*.[chS]' -print`
 
 clean:
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) clean); done
-	rm -f *.o \#*\# *~ *.bak wine wine.sym TAGS
+	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean); done
+	$(RM) *.o \#*\# *~ *.bak wine wine.sym winelib.a TAGS
 
 distclean:
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) distclean); done
+	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) distclean); done
 	echo "/* autoconf.h generated automatically.  Run Configure */" >autoconf.h
 	echo "#error You must run Configure before you can build the makefiles." >>autoconf.h
-	rm -f *.o \#*\# *~ *.bak wine wine.sym TAGS
-	rm -f config.* include/config.h Makefile
+	$(RM) *.o \#*\# *~ *.bak wine wine.sym winelib.a TAGS
+	$(RM) config.* include/config.h Make.rules Makefile
 
-countryclean:
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) countryclean); done
-	rm -f wine wine.sym
+langclean:
+	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) langclean); done
+	$(RM) wine wine.sym winelib.a
 	
 dummy:

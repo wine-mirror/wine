@@ -22,8 +22,10 @@ extern int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
 
                                /* func     ds    parameters */
 extern WORD CallTo16_word_     ( FARPROC, WORD );
+extern WORD CallTo16_word_ww   ( FARPROC, WORD, WORD, WORD );
 extern WORD CallTo16_word_wl   ( FARPROC, WORD, WORD, LONG );
 extern WORD CallTo16_word_ll   ( FARPROC, WORD, LONG, LONG );
+extern WORD CallTo16_word_www  ( FARPROC, WORD, WORD, WORD, WORD );
 extern WORD CallTo16_word_wwl  ( FARPROC, WORD, WORD, WORD, LONG );
 extern WORD CallTo16_word_wlw  ( FARPROC, WORD, WORD, LONG, WORD );
 extern LONG CallTo16_long_wwl  ( FARPROC, WORD, WORD, WORD, LONG );

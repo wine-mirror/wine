@@ -14,13 +14,14 @@
 #include "windows.h"
 #include "sysmetrics.h"
 #include "combo.h"
+#include "stackframe.h"
 #include "user.h"
 #include "win.h"
-#include "stddebug.h"
-#include "debug.h"
 #include "graphics.h"
 #include "listbox.h"
 #include "dos_fs.h"
+#include "stddebug.h"
+#include "debug.h"
 
  /*
   * Note: Combos are probably implemented in a different way by Windows.
@@ -127,7 +128,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
     dprintf_combo(stddeb,"CBS_SIMPLE\n");
     SetRectEmpty(&lphc->RectButton);
     lphc->LBoxTop = lphl->StdItemHeight;
-    lphc->hWndEdit = CreateWindow(editName, "", 
+    lphc->hWndEdit = CreateWindow(MAKE_SEGPTR(editName), (SEGPTR)0, 
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
 				  0, 0, rect.right, lphl->StdItemHeight,
 				  hwnd, 1, GetWindowWord(hwnd,GWW_HINSTANCE), 0L);
@@ -141,7 +142,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
     SetWindowPos(hwnd, 0, 0, 0, rect.right - rect.left + 2*SYSMETRICS_CXBORDER,
 		 lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER,
 		 SWP_NOMOVE | SWP_NOZORDER);
-    lphc->hWndEdit = CreateWindow(editName, "",
+    lphc->hWndEdit = CreateWindow(MAKE_SEGPTR(editName), (SEGPTR)0,
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
 				  0, 0, lphc->RectButton.left, lphl->StdItemHeight,
 				  hwnd, 1, GetWindowWord(hwnd,GWW_HINSTANCE), 0L);
@@ -161,7 +162,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
   /* FIXME: WinSight says these should be CHILD windows with the TOPMOST flag
    * set. Wine doesn't support TOPMOST, and simply setting the WS_CHILD
    * flag doesn't work. */
-  lphc->hWndLBox = CreateWindow(className, "", 
+  lphc->hWndLBox = CreateWindow(MAKE_SEGPTR(className), (SEGPTR)0, 
 				WS_POPUP | WS_BORDER | WS_VSCROLL,
 				lboxrect.left, lboxrect.top,
 				lboxrect.right - lboxrect.left, 

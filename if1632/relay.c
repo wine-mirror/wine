@@ -98,7 +98,8 @@ BOOL RELAY_Init(void)
 /***********************************************************************
  *           RELAY_DebugCall32
  */
-void RELAY_DebugCall32( int func_type, char *args )
+void RELAY_DebugCall32( int func_type, char *args,
+                        void *entry_point, int args32 )
 {
     STACK16FRAME *frame;
     struct dll_table_s *table;
@@ -154,7 +155,7 @@ void RELAY_DebugCall32( int func_type, char *args )
 
     if (func_type == 2)  /* register function */
     {
-        struct sigcontext_struct *context = (struct sigcontext_struct *)args16;
+        struct sigcontext_struct *context = (struct sigcontext_struct *)&args32;
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -166,7 +167,7 @@ void RELAY_DebugCall32( int func_type, char *args )
 /***********************************************************************
  *           RELAY_DebugReturn
  */
-void RELAY_DebugReturn( int func_type, int ret_val )
+void RELAY_DebugReturn( int func_type, int ret_val, int args32 )
 {
     STACK16FRAME *frame;
     struct dll_table_s *table;
@@ -192,6 +193,13 @@ void RELAY_DebugReturn( int func_type, int ret_val )
         break;
     case 2: /* regs */
         printf( "retval=none ds=%04x\n", frame->ds );
+        {
+            struct sigcontext_struct *context = (struct sigcontext_struct *)&args32;
+            printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+                    AX_reg(context), BX_reg(context), CX_reg(context),
+                    DX_reg(context), SI_reg(context), DI_reg(context),
+                    ES_reg(context), EFL_reg(context) );
+        }
         break;
     }
 }

@@ -29,6 +29,7 @@
 /* #define DEBUG_MENUSHORTCUT */
 #include "debug.h"
 
+#include "../rc/sysres.h"
 
   /* Dimension of the menu bitmaps */
 static WORD check_bitmap_width = 0, check_bitmap_height = 0;
@@ -673,7 +674,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, WORD id, int x, int y)
     {
 	WND *wndPtr = WIN_FindWndPtr( hwndOwner );
 	if (!wndPtr) return FALSE;
-	menu->hWnd = CreateWindow( (LPSTR)POPUPMENU_CLASS_ATOM, "",
+	menu->hWnd = CreateWindow( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
 				   WS_POPUP | WS_BORDER, x, y, 
 				   menu->Width + 2*SYSMETRICS_CXBORDER,
 				   menu->Height + 2*SYSMETRICS_CYBORDER,
@@ -732,18 +733,25 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, WORD wIndex )
     if (lppop->FocusedItem != NO_SELECTED_ITEM) 
     {
 	if (lppop->FocusedItem == SYSMENU_SELECTED)
+        {
 	    NC_DrawSysButton( lppop->hWnd, hdc, TRUE );
+            SendMessage( hwndOwner, WM_MENUSELECT,
+                         GetSystemMenu( lppop->hWnd, FALSE ),
+                         MAKELONG( lppop->wFlags | MF_MOUSESELECT, hmenu ) );
+        }
 	else
 	{
 	    items[lppop->FocusedItem].item_flags |= MF_HILITE;
 	    MENU_DrawMenuItem( lppop->hWnd, hdc, &items[lppop->FocusedItem], lppop->Height,
 			       !(lppop->wFlags & MF_POPUP) );
-	    dprintf_menu(stddeb,"Sending WM_MENUSELECT %04x %04x\n", items[lppop->FocusedItem].item_id,items[lppop->FocusedItem].item_flags);
 	    SendMessage( hwndOwner, WM_MENUSELECT,
                          items[lppop->FocusedItem].item_id,
 		         MAKELONG( items[lppop->FocusedItem].item_flags | MF_MOUSESELECT, hmenu));
 	}
     }
+    else SendMessage( hwndOwner, WM_MENUSELECT, hmenu,
+                      MAKELONG( lppop->wFlags | MF_MOUSESELECT, hmenu ) );
+
     ReleaseDC( lppop->hWnd, hdc );
 }
 
@@ -1399,6 +1407,7 @@ void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
+    SendMessage( hwnd, WM_INITMENU, wndPtr->wIDmenu, 0 );
     MENU_TrackMenu( (HMENU)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		    pt.x, pt.y, hwnd, NULL );
     SendMessage( hwnd, WM_EXITMENULOOP, 0, 0 );
@@ -1415,6 +1424,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr->wIDmenu) return;
     SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
+    SendMessage( hwnd, WM_INITMENU, wndPtr->wIDmenu, 0 );
       /* Select first selectable item */
     MENU_SelectItem( hwnd, wndPtr->wIDmenu, NO_SELECTED_ITEM );
     MENU_SelectNextItem( hwnd, (HMENU)wndPtr->wIDmenu );
@@ -1425,7 +1435,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam )
 
 
 /**********************************************************************
- *			TrackPopupMenu		[USER.416]
+ *           TrackPopupMenu   (USER.416)
  */
 BOOL TrackPopupMenu( HMENU hMenu, WORD wFlags, short x, short y,
 		     short nReserved, HWND hWnd, LPRECT lpRect )
@@ -1932,28 +1942,29 @@ HMENU CreateMenu()
  */
 BOOL DestroyMenu(HMENU hMenu)
 {
-	LPPOPUPMENU lppop;
-	dprintf_menu(stddeb,"DestroyMenu (%04X) !\n", hMenu);
-	if (hMenu == 0) return FALSE;
-	lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu);
-	if (lppop == NULL) return FALSE;
-	if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
-            DestroyWindow( lppop->hWnd );
+    LPPOPUPMENU lppop;
+    dprintf_menu(stddeb,"DestroyMenu (%04X) !\n", hMenu);
+    if (hMenu == 0) return FALSE;
+    lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu);
+    if (!lppop || (lppop->wMagic != MENU_MAGIC)) return FALSE;
+    lppop->wMagic = 0;  /* Mark it as destroyed */
+    if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
+        DestroyWindow( lppop->hWnd );
 
-	if (lppop->hItems)
-	{
-	    int i;
-	    MENUITEM *item = (MENUITEM *) USER_HEAP_LIN_ADDR( lppop->hItems );
-	    for (i = lppop->nItems; i > 0; i--, item++)
-	    {
-		if (item->item_flags & MF_POPUP)
-		    DestroyMenu( item->item_id );
-	    }
-	    USER_HEAP_FREE( lppop->hItems );
-	}
-	USER_HEAP_FREE( hMenu );
-	dprintf_menu(stddeb,"DestroyMenu (%04X) // End !\n", hMenu);
-	return TRUE;
+    if (lppop->hItems)
+    {
+        int i;
+        MENUITEM *item = (MENUITEM *) USER_HEAP_LIN_ADDR( lppop->hItems );
+        for (i = lppop->nItems; i > 0; i--, item++)
+        {
+            if (item->item_flags & MF_POPUP)
+                DestroyMenu( item->item_id );
+        }
+        USER_HEAP_FREE( lppop->hItems );
+    }
+    USER_HEAP_FREE( hMenu );
+    dprintf_menu(stddeb,"DestroyMenu (%04X) // End !\n", hMenu);
+    return TRUE;
 }
 
 /**********************************************************************
@@ -2137,10 +2148,10 @@ HMENU CopySysMenu()
 {
     HMENU hMenu;
     LPPOPUPMENU menu;
-    extern unsigned char sysres_MENU_SYSMENU[];
 
-    hMenu=LoadMenuIndirect(sysres_MENU_SYSMENU);
-    if(!hMenu){
+    hMenu = LoadMenuIndirect( sysres_MENU_SYSMENU.bytes );
+    if(!hMenu)
+    {
 	dprintf_menu(stddeb,"No SYSMENU\n");
 	return 0;
     }

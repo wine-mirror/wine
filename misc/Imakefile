@@ -29,6 +29,7 @@ SRCS = \
 	spy.c \
 	stress.c \
 	user.c \
+	user32.c \
 	winsocket.c
 
 OBJS = $(SRCS:.c=.o)

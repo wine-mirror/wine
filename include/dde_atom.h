@@ -21,7 +21,7 @@ void ATOM_GlobalInit(void);
 ATOM DDE_GlobalAddAtom( SEGPTR str );
 ATOM DDE_GlobalDeleteAtom( ATOM atom );
 ATOM DDE_GlobalFindAtom( SEGPTR str );
-WORD DDE_GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
+WORD DDE_GlobalGetAtomName( ATOM atom, LPSTR buffer, short count );
 
 #endif  /* CONFIG_IPC */
 

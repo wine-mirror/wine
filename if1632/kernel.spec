@@ -27,6 +27,7 @@ id	1
 24  pascal16 UnlockSegment(word) UnlockSegment
 25  pascal GlobalCompact(long) GlobalCompact
 26  pascal16 GlobalFreeAll(word) GlobalFreeAll
+27  stub GetModuleName
 28  stub GlobalMasterHandle
 29  pascal16 Yield() Yield
 30  pascal16 WaitEvent(word) WaitEvent
@@ -105,7 +106,7 @@ id	1
 107 pascal SetErrorMode(word) SetErrorMode
 108 stub SwitchStackTo
 109 stub SwitchStackBack
-110 stub PatchCodeHandle
+110 pascal16 PatchCodeHandle(word) PatchCodeHandle
 111 pascal GlobalWire(word) GlobalWire
 112 pascal16 GlobalUnWire(word) GlobalUnWire
 113 equate __AHSHIFT 3
@@ -139,6 +140,14 @@ id	1
 139 stub DoSignal
 140 stub SetSigHandler
 141 stub InitTask1
+142 stub GetProfileSectionNames
+143 stub GetPrivateProfileSectionNames
+144 stub CreateDirectory
+145 stub RemoveDirectory
+146 stub DeleteFile
+147 stub SetLastError
+148 stub GetLastError
+149 stub GetVersionEx
 150 pascal16 DirectedYield(word) DirectedYield
 151 stub WinOldApCall
 152 pascal16 GetNumTasks() GetNumTasks
@@ -196,6 +205,26 @@ id	1
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
 207 return IsDBCSLeadByte 2 0
+216 stub RegEnumKey
+217 stub RegOpenKey
+218 stub RegCreateKey
+219 stub RegDeleteValue
+220 stub RegCloseKey
+221 stub RegSetValue
+222 stub RegDeleteValue
+223 stub RegEnumValue
+224 stub RegQueryValue
+225 stub RegQueryValueEx
+226 stub RegSetValueEx
+227 stub RegFlushKey
+#228 K228
+#229 K229
+230 stub GlobalSmartPageLock
+231 stub GlobalSmartPageUnlock
+232 stub RegLoadKey
+233 stub RegUnloadKey
+234 stub RegSaveKey
+235 stub InvalidateNlsCache
 310 pascal16 LocalHandleDelta(word) LocalHandleDelta
 311 stub GetSetKernelDosProc
 314 stub DebugDefineSegment
@@ -230,9 +259,35 @@ id	1
 349 pascal16 _hread(word ptr long) _hread
 350 pascal16 _hwrite(word ptr long) _hwrite
 #351 BUNNY_351
+352 stub lstrcatn
 353 pascal lstrcpyn(segptr segptr word) lstrcpyn
 354 stub GetAppCompatFlags
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
+360 stub OpenFileEx
+#361 PIGLET_361
 403 pascal16 FarSetOwner(word word) FarSetOwner
 404 pascal16 FarGetOwner(word) FarGetOwner
+406 stub WritePrivateProfileStruct
+407 stub GetPrivateProfileStruct
+411 stub GetCurrentDirectory
+412 stub SetCurrentDirectory
+413 stub FindFirstFile
+414 stub FindNextFile
+415 stub FindClose
+416 stub WritePrivateProfileSection
+417 stub WriteProfileSection
+418 stub GetPrivateProfileSection
+419 stub GetProfileSection
+420 stub GetFileAttributes
+421 stub SetFileAttributes
+422 stub GetDiskFreeSpace
+432 stub FileTimeToLocalFileTime
+491 stub RegisterServiceProcess
+513 stub LoadLibraryEx32W
+514 stub FreeLibrary32W
+515 stub GetProcAddress32W
+516 stub GetVDMPointer32W
+517 stub CallProc32W
+518 stub CallProcEx32W
+627 stub IsBadFlatReadWritePtr

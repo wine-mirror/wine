@@ -1,15 +1,15 @@
-This is release 950901 of Wine the MS Windows emulator.  This is still a
+This is release 950918 of Wine the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work.
 
 Patches should be submitted to "wine-new@amscons.com".  Please don't forget
 to include a ChangeLog entry.  I'll make a new release every other week.
 
-WHAT'S NEW with Wine-950901: (see ChangeLog for details)
-	- Accesses to BIOS segment 0x40 are trapped and emulated.
-	- Multimedia improvements.
-	- IPC can now be disabled at compile-time.
-	- Documentation for the IPC code.
+WHAT'S NEW with Wine-950918: (see ChangeLog for details)
+	- Support for self-loading modules.
+	- Win32 support should begin to work again.
+	- Cursor fixes.
+	- New configure script should be useable now.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -18,11 +18,11 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-    sunsite.unc.edu:/pub/Linux/ALPHA/wine/Wine-950901.tar.gz
-    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-950901.tar.gz
-    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-950901.tar.gz
-    ftp.funet.fi:/pub/OS/Linux/ALPHA/Wine/Wine-950901.tar.gz
-    aris.com:/pub/linux/ALPHA/Wine/development/Wine-950901.tar.gz
+    sunsite.unc.edu:/pub/Linux/ALPHA/wine/Wine-950918.tar.gz
+    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-950918.tar.gz
+    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-950918.tar.gz
+    ftp.funet.fi:/pub/OS/Linux/ALPHA/Wine/Wine-950918.tar.gz
+    aris.com:/pub/linux/ALPHA/Wine/development/Wine-950918.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 
@@ -36,14 +36,17 @@ reading for new developers.
 Wine is available thanks to the work of Bob Amstadt, Dag Asheim,
 Martin Ayotte, Ross Biro, Erik Bos, Fons Botman, John Brezak,
 Andrew Bulhak, John Burton, Paul Falstad, Olaf Flebbe, Peter Galbavy,
-Cameron Heide, Jeffrey Hsu, Miguel de Icaza, Alexandre Julliard,
+Ramon Garcia, Hans de Graaf, Charles M. Hannum, Cameron Heide,
+Jochen Hoenicke, Jeffrey Hsu, Miguel de Icaza, Alexandre Julliard,
 Jon Konrath, Scott A. Laird, Martin von Loewis, Kenneth MacDonald,
-Peter MacDonald, William Magro, David Metcalfe, Michael Patra,
-John Richardson, Johannes Ruscheinski, Thomas Sandford,
-Constantine Sapuntzakis, Bernd Schmidt, Yngvi Sigurjonsson, Rick Sladkey,
-William Smith, Erik Svendsen, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs,
-Linus Torvalds, Michael Veksler, Carl Williams, Karl Guenter Wuensch,
-Eric Youngdale, and James Youngman.
+Peter MacDonald, William Magro, Marcus Meissner, Graham Menhennitt,
+David Metcalfe, Michael Patra, John Richardson, Johannes Ruscheinski,
+Thomas Sandford, Constantine Sapuntzakis, Daniel Schepler,
+Bernd Schmidt, Yngvi Sigurjonsson, Rick Sladkey, William Smith,
+Erik Svendsen, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs,
+Linus Torvalds, Gregory Trubetskoy, Michael Veksler, Morten Welinder,
+Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale,
+and James Youngman.
 
 --
 Alexandre Julliard

@@ -1,39 +1,27 @@
-CC 	= @CC@
-CFLAGS 	= @CFLAGS@
-XINCL 	= @x_includes@
-TOPSRC  = @top_srcdir@
-DIVINCL = -I$(TOPSRC)/include
-LD	= @LD@
-LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
+TOPSRC = @top_srcdir@
+MODULE = objects
 
-
-MODULE 	= objects
-
-SRCS 	= bitblt.c bitmap.c brush.c clipping.c color.c dc.c dcvalues.c \
-	dib.c font.c gdiobj.c linedda.c metafile.c oembitmap.c palette.c \
-	pen.c region.c text.c
-
-OBJS = $(SRCS:.c=.o)
-
-.c.o:
-	$(CC) -c $(CFLAGS) $(XINCL) $(DIVINCL) -o $*.o $<
+C_SRCS = \
+	bitblt.c \
+	bitmap.c \
+	brush.c \
+	clipping.c \
+	color.c \
+	dc.c \
+	dcvalues.c \
+	dib.c \
+	font.c \
+	gdiobj.c \
+	linedda.c \
+	metafile.c \
+	oembitmap.c \
+	palette.c \
+	pen.c \
+	region.c \
+	text.c
 
 all: $(MODULE).o
 
-$(MODULE).o: $(OBJS)
-	$(LD) $(LDCOMBINEFLAGS) $(OBJS) -o $(MODULE).o
-
-depend:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
-	mv tmp_make Makefile
-
-clean:
-	rm -f *.o \#*\# *~ *.bak tmp_make
-
-distclean: clean
-	rm -f Makefile
-
-countryclean:
+@MAKE_RULES@
 
 ### Dependencies:

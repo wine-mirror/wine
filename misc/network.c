@@ -215,7 +215,7 @@ int WNetBrowseDialog(HWND hParent,WORD nType,LPSTR szPath)
  */
 UINT WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 {
-	printf("EMPTY STUB !!! WNetGetUser('%s', %p, %p);\n", 
+	printf("EMPTY STUB !!! WNetGetUser(%p, %p, %p);\n", 
 							lpLocalName, lpUserName, lpSize);
 	return WN_NET_ERROR;
 }

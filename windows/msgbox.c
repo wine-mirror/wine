@@ -7,8 +7,10 @@
 
 #include "windows.h"
 #include "dlgs.h"
-#include "dialog.h"
+#include "global.h"
 #include "selectors.h"
+#include "alias.h"
+#include "relay32.h"
 #include "../rc/sysres.h"
 #include "task.h"
 
@@ -175,15 +177,35 @@ LONG SystemMessageBoxProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 
 int MessageBox(HWND hWnd, LPSTR text, LPSTR title, WORD type)
 {
-  MSGBOX mbox;
+    HANDLE handle;
+    MSGBOX mbox;
+    int ret;
+    DWORD WineProc,Win16Proc,Win32Proc;
+    static int initialized = 0;
 
-  mbox.title = title;
-  mbox.text  = text;
-  mbox.type  = type;
-  return DialogBoxIndirectParamPtr(GetWindowWord(hWnd, GWW_HINSTANCE),
-				   sysres_DIALOG_MSGBOX, hWnd,
-				   GetWndProcEntry16("SystemMessageBoxProc"),
-				   (LONG)&mbox);
+    mbox.title = title;
+    mbox.text  = text;
+    mbox.type  = type;
+
+    if (!initialized)
+    {
+        WineProc=(DWORD)SystemMessageBoxProc;
+        Win16Proc=(DWORD)GetWndProcEntry16("SystemMessageBoxProc");
+        Win32Proc=(DWORD)RELAY32_GetEntryPoint("WINPROCS32","SystemMessageBoxProc",0);
+        ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
+        initialized=1;
+    }
+
+    handle = GLOBAL_CreateBlock( GMEM_FIXED, sysres_DIALOG_MSGBOX.bytes,
+                                 sysres_DIALOG_MSGBOX.size, GetCurrentPDB(),
+                                 FALSE, FALSE, TRUE, NULL );
+    if (!handle) return 0;
+    ret = DialogBoxIndirectParam( GetWindowWord(hWnd, GWW_HINSTANCE),
+                                  handle, hWnd,
+                                  GetWndProcEntry16("SystemMessageBoxProc"),
+                                  (LONG)&mbox );
+    GLOBAL_FreeBlock( handle );
+    return ret;
 }
 
 /**************************************************************************

@@ -1,0 +1,42 @@
+# Global rules shared by all makefiles
+# The makefile must define at least TOPSRC and MODULE
+
+CC 	  = @CC@
+CFLAGS 	  = @CFLAGS@
+DEFS      = @DEFS@
+LANG	  = @LANG@
+X_CFLAGS  = @X_CFLAGS@
+YACC      = @YACC@
+LEX       = @LEX@
+LEXLIB    = @LEXLIB@
+DIVINCL   = -I$(TOPSRC)/include
+ALLCFLAGS = $(CFLAGS) $(DEFS) $(LANG) $(X_CFLAGS) $(DIVINCL) $(EXTRA_DEFS)
+LDCOMBINE = ld -r
+RM        = rm -f
+@SET_MAKE@
+
+OBJS = $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o)
+
+.c.o:
+	$(CC) -c $(ALLCFLAGS) -o $*.o $<
+
+.S.o:
+	$(CC) -c -o $*.o $<  
+
+$(MODULE).o: $(OBJS)
+	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
+
+depend:: $(C_SRCS)
+	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	$(CC) $(ALLCFLAGS) -MM $(C_SRCS) >> tmp_make
+	mv tmp_make Makefile
+
+clean::
+	$(RM) *.o \#*\# *~ *.bak tmp_make
+
+distclean:: clean
+	$(RM) Makefile
+
+langclean::
+
+dummy:

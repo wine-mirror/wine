@@ -309,14 +309,14 @@ WORD SelectorAccessRights( WORD sel, WORD op, WORD val )
     if (op == 0)  /* get */
     {
         return 1 /* accessed */ |
-               (entry.read_only << 1) |
+               ((entry.read_only == 0) << 1) |
                (entry.type << 2) |
                (entry.seg_32bit << 14) |
                (entry.limit_in_pages << 15);
     }
     else  /* set */
     {
-        entry.read_only = val & 2;
+        entry.read_only = (val & 2 == 0);
         entry.type = (val >> 2) & 3;
         entry.seg_32bit = val & 0x4000;
         entry.limit_in_pages = val & 0x8000;

@@ -825,8 +825,11 @@ WORD LOCAL_Lock( WORD ds, HLOCAL handle )
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
 
     dprintf_local( stddeb, "LocalLock: %04x ", handle );
-    if (HANDLE_MOVEABLE(handle)) {
-	handle = *(WORD *)(ptr + handle);
+    if (HANDLE_MOVEABLE(handle))
+    {
+        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+        if (pEntry->lock < 255) pEntry->lock++;
+        handle = pEntry->addr;
     }
     dprintf_local( stddeb, "returning %04x\n", handle );
     return handle;
@@ -838,7 +841,18 @@ WORD LOCAL_Lock( WORD ds, HLOCAL handle )
  */
 BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
 {
-    return TRUE;
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+
+    dprintf_local( stddeb, "LocalUnlock: %04x\n", handle );
+    if (HANDLE_MOVEABLE(handle))
+    {
+        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
+        if (!pEntry->lock || (pEntry->lock == 255)) return FALSE;
+        /* For moveable block, return the new lock count */
+        /* (see _Windows_Internals_ p. 197) */
+        return --pEntry->lock;
+    }
+    else return FALSE;
 }
 
 

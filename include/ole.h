@@ -4,9 +4,17 @@
 
 typedef LPCSTR	OLE_LPCSTR;
 
+/* object types */
+#define OT_LINK		1
+#define OT_EMBEDDED	2
+#define OT_STATIC	3
+
+/* activate verbs */
+#define OLEVERB_PRIMARY	0
+
 typedef enum
 {
-    OLE_OK=0, /* Yes Sir! */
+    OLE_OK,
     OLE_WAIT_FOR_RELEASE,
     OLE_BUSY,
     OLE_ERROR_PROTECT_ONLY,
@@ -65,28 +73,64 @@ typedef enum
     OLE_WARN_DELETE_DATA = 1000
 } OLESTATUS;
 
-typedef enum{
+typedef enum {
 	OLE_SERVER_MULTI,
 	OLE_SERVER_SINGLE
 } OLE_SERVER_USE;
-/* dunno if the values are correct, somebody please check */
+
 typedef enum {
 	OLE_CHANGED,
+	OLE_SAVED,
 	OLE_CLOSED,
-	OLE_QUERY_PAINT,
-	OLE_QUERY_RETRY,
-	OLE_RELEASE,
 	OLE_RENAMED,
-	OLE_SAVED
+	OLE_QUERY_PAINT,
+	OLE_RELEASE,
+	OLE_QUERY_RETRY
 } OLE_NOTIFICATION;
+
+typedef enum {
+	olerender_none,
+	olerender_draw,
+	olerender_format
+} OLEOPT_RENDER;
+
+typedef enum {
+	oleupdate_always,
+	oleupdate_onsave,
+	oleupdate_oncall,
+	oleupdate_onclose,
+} OLEOPT_UPDATE;
 
 typedef	LONG	LHSERVER;
 typedef LONG	LHSERVERDOC;
 typedef LONG	LHCLIENTDOC;
 typedef LONG	OLECLIPFORMAT;/* dunno about this type, please change/add */
-typedef LONG	OLEOPT_UPDATE;/* dunno about this type, please change/add */
-typedef OLEOPT_UPDATE*	LPOLEOPT_UPDATE;/* dunno about this type, please change/add */
-typedef LONG	*OLE_RELEASE_METHOD;/* dunno */
+typedef OLEOPT_UPDATE*	LPOLEOPT_UPDATE;
+
+typedef enum {
+	OLE_NONE,	/* none */
+	OLE_DELETE,	/* delete object */
+	OLE_LNKPASTE,	/* link paste */
+	OLE_EMBPASTE,	/* paste(and update) */
+	OLE_SHOW,
+	OLE_RUN,
+	OLE_ACTIVATE,
+	OLE_UPDATE,
+	OLE_CLOSE,
+	OLE_RECONNECT,
+	OLE_SETUPDATEOPTIONS,
+	OLE_SERVERRUNLAUNCH,	/* unlaunch (terminate?) server */
+	OLE_LOADFROMSTREAM,	/* (auto reconnect) */
+	OLE_SETDATA,		/* OleSetData */
+	OLE_REQUESTDATA,	/* OleRequestData */
+	OLE_OTHER,
+	OLE_CREATE,
+	OLE_CREATEFROMTEMPLATE,
+	OLE_CREATELINKFROMFILE,
+	OLE_COPYFROMLNK,
+	OLE_CREATREFROMFILE,
+	OLE_CREATEINVISIBLE
+} OLE_RELEASE_METHOD;
 
 typedef struct _OLETARGETDEVICE {
 	UINT	otdDeviceNameOffset;

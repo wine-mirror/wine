@@ -593,12 +593,14 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                            (hittest == trackHitTest), FALSE );
         if (hittest == trackHitTest)
         {
-            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
+            {
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEUP, MAKELONG( 0, hwndCtl ));
+            }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -609,12 +611,14 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                              (hittest == trackHitTest), FALSE );
         if (hittest == trackHitTest)
         {
-            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
+            {
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEUP, MAKELONG( 0, hwndCtl ));
+            }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -653,12 +657,14 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                              FALSE, (hittest == trackHitTest) );
         if (hittest == trackHitTest)
         {
-            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
+            {
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEDOWN, MAKELONG( 0, hwndCtl ));
+            }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -668,12 +674,14 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                            FALSE, (hittest == trackHitTest) );
         if (hittest == trackHitTest)
         {
-            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
+            {
+                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                                SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                                (FARPROC)0 );
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEDOWN, MAKELONG( 0, hwndCtl ));
+            }
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;

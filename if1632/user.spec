@@ -39,7 +39,7 @@ id	2
 38  pascal16 GetWindowTextLength(word) GetWindowTextLength
 39  pascal16 BeginPaint(word ptr) BeginPaint
 40  pascal16 EndPaint(word ptr) EndPaint
-41  pascal16 CreateWindow(ptr ptr long s_word s_word s_word s_word
+41  pascal16 CreateWindow(segptr segptr long s_word s_word s_word s_word
 	                  word word word segptr) CreateWindow
 42  pascal16 ShowWindow(word word) ShowWindow
 43  pascal16 CloseWindow(word) CloseWindow
@@ -116,6 +116,7 @@ id	2
 115 stub ReplyMessage
 116 pascal16 PostAppMessage(word word word long) PostAppMessage
 118 pascal16 RegisterWindowMessage(long) RegisterWindowMessage
+117 stub WindowFromDC
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook
@@ -217,7 +218,7 @@ id	2
 #216 USERSEEUSERDO
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect
-219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect
+219 pascal16 CreateDialogIndirect(word segptr word segptr) CreateDialogIndirect
 220 pascal16 LoadMenuIndirect(ptr) LoadMenuIndirect
 221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
@@ -241,7 +242,7 @@ id	2
 240 pascal16 DialogBoxIndirectParam(word word word segptr long)
              DialogBoxIndirectParam
 241 pascal16 CreateDialogParam(word segptr word segptr long) CreateDialogParam
-242 pascal16 CreateDialogIndirectParam(word ptr word segptr long)
+242 pascal16 CreateDialogIndirectParam(word segptr word segptr long)
              CreateDialogIndirectParam
 243 pascal   GetDialogBaseUnits() GetDialogBaseUnits
 244 pascal16 EqualRect(ptr ptr) EqualRect
@@ -297,6 +298,7 @@ id	2
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx
 294 stub LockWindowUpdate
 #299 MOUSE_EVENT
+300 stub UnloadInstalledDrivers
 #301 BOZOSLIVEHERE :-))
 #306 BEAR306
 308 pascal   DefDlgProc(word word word long) DefDlgProc
@@ -325,12 +327,31 @@ id	2
 358 pascal16 IsMenu(word) IsMenu
 359 pascal16 GetDCEx(word word long) GetDCEx
 362 stub DCHook
-368 stub CopyIcon
+364 stub LookupIconIDFromDirectoryEx
+368 pascal16 CopyIcon(word word) CopyIcon
 369 stub CopyCursor
 370 pascal16 GetWindowPlacement(word ptr) GetWindowPlacement
 371 pascal16 SetWindowPlacement(word ptr) SetWindowPlacement
 372 stub GetInternalIconHeader
 373 pascal16 SubtractRect(ptr ptr ptr) SubtractRect
+375 stub DrawTextEx
+376 stub SetMessageExtraInfo
+378 stub SetPropEx
+379 stub GetPropEx
+380 stub RemovePropEx
+381 stub UsrMPR_ThunkData16
+382 stub SetWindowContextHelpID
+383 stub GetWindowContextHelpID
+384 stub SetMenuContextHelpID
+385 stub GetMenuContextHelpID
+389 stub LoadImage
+390 stub CopyImage
+391 stub SignalProc32
+394 stub DrawIconEx
+395 stub GetIconInfo
+397 stub RegisterClassEx
+398 stub GetClassInfoEx
+399 stub ChildWindowFromPointEx
 400 stub FinalUserInit
 402 pascal16 GetPriorityClipboardFormat(word ptr s_word)
              GetPriorityClipboardFormat
@@ -340,6 +361,7 @@ id	2
 407 pascal16 CreateIcon(word word word byte byte ptr ptr) CreateIcon
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
 	     CreateCursorIconIndirect
+409 stub InitThreadInput
 410 pascal16 InsertMenu(word word word word ptr) InsertMenu
 411 pascal16 AppendMenu(word word word ptr) AppendMenu
 412 pascal16 RemoveMenu(word word word) RemoveMenu
@@ -355,6 +377,9 @@ id	2
 421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf
 422 stub DlgDirSelectEx
 423 stub DlgDirSelectComboBoxEx
+427 stub FindWindowEx
+428 stub TileWindows
+429 stub CascadeWindows
 430 pascal16 lstrcmp(ptr ptr) lstrcmp
 431 pascal   AnsiUpper(segptr) WIN16_AnsiUpper
 432 pascal   AnsiLower(segptr) WIN16_AnsiLower
@@ -364,10 +389,16 @@ id	2
 436 pascal16 IsCharLower(byte) IsCharLower
 437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff
 438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff
+441 stub InsertMenuItem
+443 stub GetMenuItemInfo
 445 pascal   DefFrameProc(word word word word long) DefFrameProc
+446 stub SetMenuItemInfo
 447 pascal   DefMDIChildProc(word word word long) DefMDIChildProc
+448 stub DrawAnimatedRects
+449 stub DrawState
+450 stub CreateIconFromResourceEx
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel
-452 pascal16 CreateWindowEx(long ptr ptr long s_word s_word s_word s_word
+452 pascal16 CreateWindowEx(long segptr segptr long s_word s_word s_word s_word
                             word word word segptr) CreateWindowEx
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx
 455 stub GetIconId
@@ -386,6 +417,11 @@ id	2
 471 pascal16 lstrcmpi(ptr ptr) lstrcmpi
 472 pascal   AnsiNext(segptr) AnsiNext
 473 pascal   AnsiPrev(segptr segptr) AnsiPrev
+475 stub SetScrollInfo
+476 stub GetScrollInfo
+477 stub GetKeyboardLayoutName
+478 stub LoadKeyboardLayout
+479 stub MenuItemFromPoint
 480 stub GetUserLocalObjType
 #481 HARDWARE_EVENT
 482 pascal16 EnableScrollBar(word word word) EnableScrollBar
@@ -424,3 +460,57 @@ id	2
 530 pascal16 WNetGetDirectoryType(ptr ptr) WNetGetDirectoryType
 531 pascal16 WNetDirectoryNotify(word ptr word) WNetDirectoryNotify
 532 pascal16 WNetGetPropertyText(word word word ptr word) WNetGetPropertyText
+533 stub WNetInitialize
+534 stub WNetLogon
+669 stub SetWindowRgn
+600 stub GetShellWindow
+601 stub DoHotkeyStuff
+602 stub SetCheckCursorTimer
+604 stub BroadcastSystemMessage
+605 stub HackTaskMonitor
+606 stub FormatMessage
+608 stub GetForegroundWindow
+609 stub SetForegroundWindow
+610 stub DestroyIcon32
+620 stub ChangeDisplaySettings
+621 stub EnumDisplaySettings
+640 stub MsgWaitForMultipleObjects
+650 stub ActivateKeyboardLayout
+651 stub GetKeyboardLayout
+652 stub GetKeyboardLayoutList
+654 stub UnloadKeyboardLayout
+655 stub PostPostedMessages
+656 stub DrawFrameControl
+657 stub DrawCaptionTemp
+658 stub DispatchInput
+659 stub DrawEdge
+660 stub DrawCaption
+661 stub SetSysColorsTemp
+662 stub DrawMenubarTemp
+663 stub GetMenuDefaultItem
+664 stub SetMenuDefaultItem
+665 stub GetMenuItemRect
+666 stub CheckMenuRadioItem
+667 stub TrackPopupMenuEx
+668 stub SetWindowRgn
+669 stub GetWindowRgn
+800 stub CHOOSEFONT_CALLBACK16
+801 stub FINDREPLACE_CALLBACK16
+802 stub OPENFILENAME_CALLBACK16
+803 stub PRINTDLG_CALLBACK16
+804 stub CHOOSECOLOR_CALLBACK16
+819 stub PeekMessage32
+820 stub GetMessage32
+821 stub TranslateMessage32
+821 stub IsDialogMessage32
+822 stub DispatchMessage32
+825 stub PostMessage32
+826 stub PostThreadMessage32
+827 stub MessageBoxIndirect
+823 stub CallMsgFilter32
+851 stub MsgThkConnectionDataLS
+853 stub FT_USRFTHKTHKCONNECTIONDATA
+854 stub FT__USRF2THKTHKCONNECTIONDATA
+855 stub Usr32ThkConnectionDataSL
+890 stub InstallIMT
+891 stub UninstallIMT

@@ -17,24 +17,23 @@ typedef struct {
         BYTE            byBitsPix;      /* bits per pixel */
         } CURSORICONINFO, FAR *LPCURSORICONINFO;
 
+typedef struct  {
+	WORD	cdReserved;
+	WORD	cdType;
+	WORD	cdCount;
+        } CURSORDIR;
+ 
 typedef struct {
-	BYTE	Width;
-	BYTE	Reserved1;
-	BYTE	Height;
-	BYTE	Reserved2;
-	WORD	curXHotspot;
-	WORD	curYHotspot;
+	WORD	Width;
+	WORD	Height;
+	WORD	Planes;
+	WORD	BitCount;
 	DWORD	curDIBSize;
-	DWORD	curDIBOffset;
+	WORD	curDIBOffset;
 	} CURSORDESCRIP;
 
-typedef struct {
-	CURSORDESCRIP	descriptor;
-	HBITMAP		hBitmap;
-	Display		*display;
-	Pixmap		pixshape;
-	Pixmap		pixmask;
-	Cursor		xcursor;
+typedef struct  {
+	Cursor	xcursor;
 	} CURSORALLOC;
 
 extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */

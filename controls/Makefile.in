@@ -1,39 +1,20 @@
-CC 	= @CC@
-CFLAGS 	= @CFLAGS@
-XINCL 	= @x_includes@
 TOPSRC  = @top_srcdir@
-DIVINCL = -I$(TOPSRC)/include
-LD      = @LD@
-LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
 
 MODULE 	= controls
 
-SRCS 	= button.c combo.c desktop.c edit.c listbox.c menu.c scroll.c \
-	static.c widgets.c
-
-OBJS = $(SRCS:.c=.o)
-
-.c.o:
-	$(CC) -c $(CFLAGS) $(XINCL) $(DIVINCL) -o $*.o $<
+C_SRCS = \
+	button.c \
+	combo.c \
+	desktop.c \
+	edit.c \
+	listbox.c \
+	menu.c \
+	scroll.c \
+	static.c \
+	widgets.c
 
 all: $(MODULE).o
 
-$(MODULE).o: $(OBJS)
-	$(LD) $(LDCOMBINEFLAGS) $(OBJS) -o $(MODULE).o
-
-depend:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
-	mv tmp_make Makefile
-
-clean:
-	rm -f *.o \#*\# *~ *.bak tmp_make
-
-distclean: clean
-	rm -f Makefile
-
-countryclean:
-
-dummy:
+@MAKE_RULES@
 
 ### Dependencies:

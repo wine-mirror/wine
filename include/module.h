@@ -48,6 +48,7 @@ typedef struct
     HANDLE  nrname_handle;    /* Handle to non-resident name table in memory */
     WORD    min_swap_area;    /* Min. swap area size */
     WORD    expected_version; /* Expected Windows version */
+    WORD    self_loading_sel; /* Selector used for self-loading apps. procs */
 } NE_MODULE;
 
   /* Loaded file info */
@@ -71,7 +72,25 @@ typedef struct
     WORD    selector;  /* Selector of segment in memory */
 } SEGTABLEENTRY;
 
+  /* Self-loading modules contain this structure in their first segment */
+
+typedef struct
+{
+    WORD    version;		/* Must be 0xA0 */
+    WORD    reserved;   
+    FARPROC BootApp;    	/* startup procedure */
+    FARPROC LoadAppSeg; 	/* procedure to load a segment */
+    FARPROC reserved2;
+    FARPROC MyAlloc;     	/* memory allocation procedure, 
+				 * wine must write this field */
+    FARPROC EntryAddrProc;
+    FARPROC ExitProc;		/* exit procedure */
+    WORD    reserved3[4];
+    FARPROC SetOwner;           /* Set Owner procedure, exported by wine */
+} SELFLOADHEADER;
+
   /* Parameters for LoadModule() */
+
 typedef struct
 {
     HANDLE hEnvironment;  /* Environment segment */

@@ -10,8 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windows.h"
+#include "win.h"
 #include "ldt.h"
 #include "callback.h"
+#include "module.h"
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
@@ -27,6 +29,7 @@ typedef struct tagTIMERENTRY {
     WORD wDelay;
     WORD wResol;
     FARPROC lpFunc;
+    HINSTANCE hInstance;
     DWORD dwUser;
     WORD wFlags;
     WORD wTimerID;
@@ -42,6 +45,7 @@ static LPTIMERENTRY lpTimerList = NULL;
  */
 WORD MMSysTimeCallback(HWND hWnd, WORD wMsg, INT nID, DWORD dwTime)
 {
+    FARPROC	lpFunc;
     LPTIMERENTRY lpTimer = lpTimerList;
     mmSysTimeMS.u.ms += 33;
     mmSysTimeSMPTE.u.smpte.frame++;
@@ -51,8 +55,26 @@ WORD MMSysTimeCallback(HWND hWnd, WORD wMsg, INT nID, DWORD dwTime)
 	    lpTimer->wCurTime = lpTimer->wDelay;
 	    if (lpTimer->lpFunc != (FARPROC) NULL) {
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // before CallBack16 !\n");
-		CallTimeFuncProc(lpTimer->lpFunc, lpTimer->wTimerID, 0,
-				 lpTimer->dwUser, 0, 0);
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%08lx wTimerID=%04X dwUser=%08lX !\n",
+			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // hInstance=%04X !\n", lpTimer->hInstance);
+/*
+		lpFunc = MakeProcInstance(lpTimer->hInstance, lpTimer->lpFunc);
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // MakeProcInstance(lpFunc)=%p %p !\n", 
+			lpFunc, PTR_SEG_TO_LIN(lpFunc));
+*/
+		lpFunc = MODULE_GetEntryPoint( lpTimer->hInstance,
+                      MODULE_GetOrdinal(lpTimer->hInstance,"TimerCallBack" ));
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%08lx !\n", lpFunc);
+		
+		CallTo16_word_wwlll(lpTimer->lpFunc,
+			lpTimer->hInstance, lpTimer->wTimerID, 
+			0, lpTimer->dwUser, 0, 0);
+
+/*
+		CallTimeFuncProc(lpTimer->lpFunc, lpTimer->wTimerID, 
+				0, lpTimer->dwUser, 0, 0);
+*/
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
 		fflush(stdout);
 	    }
@@ -104,7 +126,7 @@ WORD timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
     WORD wNewID = 0;
     LPTIMERENTRY lpNewTimer;
     LPTIMERENTRY lpTimer = lpTimerList;
-    dprintf_mmsys(stddeb, "timeSetEvent(%u, %u, %p, %08lX, %04X);\n",
+    dprintf_mmtime(stddeb, "timeSetEvent(%u, %u, %p, %08lX, %04X);\n",
 		  wDelay, wResol, lpFunc, dwUser, wFlags);
     if (!mmTimeStarted)
 	StartMMTime();
@@ -130,6 +152,10 @@ WORD timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
     lpNewTimer->wDelay = wDelay;
     lpNewTimer->wResol = wResol;
     lpNewTimer->lpFunc = (FARPROC) lpFunc;
+    lpNewTimer->hInstance = GetTaskDS();
+	dprintf_mmtime(stddeb, "timeSetEvent // hInstance=%04X !\n", lpNewTimer->hInstance);
+	dprintf_mmtime(stddeb, "timeSetEvent // PTR_SEG_TO_LIN(lpFunc)=%p !\n", 
+				PTR_SEG_TO_LIN(lpFunc));
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
     return lpNewTimer->wTimerID;

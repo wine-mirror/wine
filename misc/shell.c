@@ -8,11 +8,13 @@
 #include <ctype.h>
 #include "windows.h"
 #include "shell.h"
+#include "global.h"
 #include "neexe.h"
 #include "selectors.h"
+#include "alias.h"
+#include "relay32.h"
 #include "../rc/sysres.h"
 #include "dlgs.h"
-#include "dialog.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -477,23 +479,39 @@ INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
  */
 INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 {
-  if (szApp) {
-    strcpy(AppName, szApp);
-  } else  {
-    *AppName = 0;
-  }
-  if (szOtherStuff) {
-    strcpy(AppMisc, szOtherStuff);
-  } else {
-    *AppMisc = 0;
-  }
-  if (!hIcon) {
-    hIcon = LoadIcon(0,MAKEINTRESOURCE(OIC_WINEICON));
-  }
-  return DialogBoxIndirectParamPtr(GetWindowWord(hWnd, GWW_HINSTANCE),
-				   sysres_DIALOG_SHELL_ABOUT_MSGBOX,
-				   hWnd, GetWndProcEntry16("AboutDlgProc"),
-				   hIcon);
+    HANDLE handle;
+    BOOL bRet;
+    DWORD WineProc,Win16Proc,Win32Proc;
+    static int initialized=0;
+
+    if (szApp) strcpy(AppName, szApp);
+    else *AppName = 0;
+
+    if (szOtherStuff) strcpy(AppMisc, szOtherStuff);
+    else *AppMisc = 0;
+
+    if (!hIcon) hIcon = LoadIcon(0,MAKEINTRESOURCE(OIC_WINEICON));
+    
+    if(!initialized)
+    {
+        WineProc=(DWORD)AboutDlgProc;
+        Win16Proc=(DWORD)GetWndProcEntry16("AboutDlgProc");
+        Win32Proc=(DWORD)RELAY32_GetEntryPoint("WINPROCS32","AboutDlgProc",0);
+        ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
+        initialized=1;
+    }
+
+    handle = GLOBAL_CreateBlock( GMEM_FIXED,
+                                 sysres_DIALOG_SHELL_ABOUT_MSGBOX.bytes,
+                                 sysres_DIALOG_SHELL_ABOUT_MSGBOX.size,
+                                 GetCurrentPDB(), FALSE, FALSE,
+                                 TRUE, NULL );
+    if (!handle) return FALSE;
+    bRet = DialogBoxIndirectParam( GetWindowWord( hWnd, GWW_HINSTANCE ),
+                                   handle, hWnd,
+                                   GetWndProcEntry16("AboutDlgProc"), hIcon );
+    GLOBAL_FreeBlock( handle );
+    return bRet;
 }
 
 /*************************************************************************

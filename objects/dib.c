@@ -680,6 +680,12 @@ HBITMAP CreateDIBitmap( HDC hdc, BITMAPINFOHEADER * header, DWORD init,
 {
     HBITMAP handle;
     
+	if(header->biSize!=sizeof(BITMAPINFOHEADER))
+	{
+		fprintf(stderr,"CreateDIBitmap: wrong size (%ld) for header\n",
+			header->biSize);
+		return 0;
+	}
     handle = CreateCompatibleBitmap( hdc, header->biWidth, header->biHeight );
 /*    handle = CreateBitmap( header->biWidth, header->biHeight,
                            1, header->biBitCount, NULL );
@@ -725,5 +731,13 @@ BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
     GlobalUnlock( hIcon );
     SetTextColor( hDC, oldFg );
     SetBkColor( hDC, oldBg );
+    return TRUE;
+}
+/***********************************************************************
+ *           CopyIcon    (USER.368)
+ */
+BOOL CopyIcon(HANDLE handle, HICON hIcon)
+{
+    printf("STUB !!! CopyIcon: %x %x\n",handle,hIcon);
     return TRUE;
 }

@@ -98,8 +98,8 @@ typedef struct {
     INT       y;
     INT       x;
     LONG      style WINE_PACKED;
-    char *    lpszName WINE_PACKED;
-    char *    lpszClass WINE_PACKED;
+    SEGPTR    lpszName WINE_PACKED;
+    SEGPTR    lpszClass WINE_PACKED;
     DWORD     dwExStyle WINE_PACKED;
 } CREATESTRUCT, *LPCREATESTRUCT;
 
@@ -111,8 +111,8 @@ typedef struct
 
 typedef struct
 {
-    LPSTR     szClass;
-    LPSTR     szTitle;
+    SEGPTR    szClass;
+    SEGPTR    szTitle;
     HANDLE    hOwner;
     INT       x;
     INT       y;
@@ -2427,6 +2427,7 @@ F(WORD,GetCaretBlinkTime)
 F(WORD,GetCurrentPDB)
 F(WORD,GetDoubleClickTime)
 F(WORD,GetNumTasks)
+F(WORD,GetTaskDS)
 F(int,CountClipboardFormats)
 F(int,GetKBCodePage)
 F(int,GetThresholdStatus)
@@ -2957,7 +2958,7 @@ Fd(HRGN,CreateEllipticRgn,short,a,short,b,short,c,short,d)
 Fd(HRGN,CreatePolyPolygonRgn,LPPOINT,a,LPINT,b,short,c,short,d)
 Fd(HRGN,CreateRectRgn,short,a,short,b,short,c,short,d)
 Fd(HWND,CreateDialog,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d)
-Fd(HWND,CreateDialogIndirect,HANDLE,a,LPCSTR,b,HWND,c,WNDPROC,d)
+Fd(HWND,CreateDialogIndirect,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d)
 Fd(INT,GetTempFileName,BYTE,a,LPCSTR,b,UINT,c,LPSTR,d)
 Fd(LONG,DefDlgProc,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,DefMDIChildProc,HWND,a,WORD,b,WORD,c,LONG,d)
@@ -3004,7 +3005,7 @@ Fe(DWORD,GetTabbedTextExtent,HDC,a,LPSTR,b,int,c,int,d,LPINT,e)
 Fe(DWORD,ScaleViewportExt,HDC,a,short,b,short,c,short,d,short,e)
 Fe(DWORD,ScaleWindowExt,HDC,a,short,b,short,c,short,d,short,e)
 Fe(HBITMAP,CreateBitmap,short,a,short,b,BYTE,c,BYTE,d,LPSTR,e)
-Fe(HWND,CreateDialogIndirectParam,HANDLE,a,LPCSTR,b,HWND,c,WNDPROC,d,LPARAM,e)
+Fe(HWND,CreateDialogIndirectParam,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d,LPARAM,e)
 Fe(HWND,CreateDialogParam,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d,LPARAM,e)
 Fe(LONG,CallWindowProc,WNDPROC,a,HWND,b,WORD,c,WORD,d,LONG,e)
 Fe(LONG,DefFrameProc,HWND,a,HWND,b,WORD,c,WORD,d,LONG,e)
@@ -3054,8 +3055,8 @@ Fi(BOOL,Chord,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,ySt
 Fi(BOOL,GrayString,HDC,a,HBRUSH,b,FARPROC,gsprc,LPARAM,lParam,INT,cch,INT,x,INT,y,INT,cx,INT,cy)
 Fi(BOOL,Pie,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fk(BOOL,StretchBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,short,i,short,j,DWORD,k)
-Fk(HWND,CreateWindow,LPSTR,a,LPSTR,b,DWORD,c,short,d,short,e,short,f,short,g,HWND,h,HMENU,i,HANDLE,j,SEGPTR,k)
-Fl(HWND,CreateWindowEx,DWORD,a,LPSTR,b,LPSTR,c,DWORD,d,short,e,short,f,short,g,short,h,HWND,i,HMENU,j,HANDLE,k,SEGPTR,l)
+Fk(HWND,CreateWindow,SEGPTR,a,SEGPTR,b,DWORD,c,short,d,short,e,short,f,short,g,HWND,h,HMENU,i,HANDLE,j,SEGPTR,k)
+Fl(HWND,CreateWindowEx,DWORD,a,SEGPTR,b,SEGPTR,c,DWORD,d,short,e,short,f,short,g,short,h,HWND,i,HMENU,j,HANDLE,k,SEGPTR,l)
 Fl(int,SetDIBitsToDevice,HDC,a,short,b,short,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l)
 Fm(int,StretchDIBits,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l,DWORD,m)
 Fn(HFONT,CreateFont,int,a,int,b,int,c,int,d,int,e,BYTE,f,BYTE,g,BYTE,h,BYTE,i,BYTE,j,BYTE,k,BYTE,l,BYTE,m,LPSTR,n)

@@ -44,7 +44,7 @@ static void do_int2f_16(struct sigcontext_struct *context)
     case 0x00:  /* Windows enhanced mode installation check */
         AX_reg(context) = Options.enhanced ? WINVERSION : 0;
         break;
-
+	
     case 0x0a:  /* Get Windows version and type */
         AX_reg(context) = 0;
         BX_reg(context) = (WINVERSION >> 8) | ((WINVERSION << 8) & 0xff00);
@@ -53,6 +53,15 @@ static void do_int2f_16(struct sigcontext_struct *context)
 
     case 0x80:  /* Release time-slice */
         break;  /* nothing to do */
+
+	case 0x84:  /* Get device API entry point */
+	    fprintf(stderr,"Application attempted to access VxD %4X\n",
+			BX_reg(context));
+		fprintf(stderr,"This device is not known to Wine.");
+		fprintf(stderr,"Expect a failure now\n");
+		ES_reg(context)=0;
+		DI_reg(context)=0;
+		break;
 
     case 0x86:  /* DPMI detect mode */
         AX_reg(context) = 0;  /* Running under DPMI */

@@ -107,8 +107,7 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
     cs->x = ci->nActiveChildren * spacing;  
     cs->y = ci->nActiveChildren * spacing;
 
-    hwnd = CreateWindowEx(0, PTR_SEG_TO_LIN(cs->szClass),
-                          PTR_SEG_TO_LIN(cs->szTitle), 
+    hwnd = CreateWindow( cs->szClass, cs->szTitle,
 			  WS_CHILD | WS_BORDER | WS_CAPTION | WS_CLIPSIBLINGS |
 			  WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU |
 			  WS_THICKFRAME | WS_VISIBLE | cs->style,
