@@ -96,6 +96,24 @@ char *audioAutoDetect(void)
   argv_new[1] = "-c";
   argv_new[3] = NULL;
 
+  /* try to detect oss */
+  fd = open("/dev/dsp", O_WRONLY | O_NONBLOCK);
+  if(fd)
+  {
+    close(fd);
+    driversFound[numFound] = "wineoss.drv";
+    name[numFound] = "OSS";
+    numFound++;
+  }
+  
+    /* try to detect alsa */
+  if(!stat("/proc/asound", &buf))
+  {
+    driversFound[numFound] = "winealsa.drv";
+    name[numFound] = "Alsa";
+    numFound++;
+  }
+
   /* try to detect arts */
   argv_new[2] = "ps awx|grep artsd|grep -v grep|grep artsd > /dev/null";
   if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
@@ -119,25 +137,6 @@ char *audioAutoDetect(void)
 
   /* try to detect audioIO (solaris) */
   /* TODO */
-
-  /* try to detect alsa */
-  if(!stat("/proc/asound", &buf))
-  {
-    driversFound[numFound] = "winealsa.drv";
-    name[numFound] = "Alsa";
-    numFound++;
-  }
-
-  /* try to detect oss */
-  fd = open("/dev/dsp", O_WRONLY | O_NONBLOCK);
-  if(fd)
-  {
-    close(fd);
-    driversFound[numFound] = "wineoss.drv";
-    name[numFound] = "OSS";
-    numFound++;
-  }
-
 
   if(numFound == 0)
   {
