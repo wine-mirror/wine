@@ -1131,8 +1131,9 @@ typedef DWORD D3DCOLOR;
 typedef struct _D3DADAPTER_IDENTIFIER9 {
     char            Driver[MAX_DEVICE_IDENTIFIER_STRING];
     char            Description[MAX_DEVICE_IDENTIFIER_STRING];
-    char            DeviceName[32];         /* Device name for GDI (ex. \\.\DISPLAY1) */
-    LARGE_INTEGER   DriverVersion;
+    char            DeviceName[32];
+    LARGE_INTEGER   DriverVersion; 
+
     DWORD           VendorId;
     DWORD           DeviceId;
     DWORD           SubSysId;
@@ -1351,6 +1352,5 @@ typedef enum _D3DQUERYTYPE {
   D3DQUERYTYPE_EVENT            = 8, 
   D3DQUERYTYPE_OCCLUSION        = 9
 } D3DQUERYTYPE;
-
 
 #endif /* __WINE_D3D9TYPES_H */

@@ -137,9 +137,9 @@ ICOM_DEFINE(IDirect3D8,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirect3D8_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirect3D8_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IDirect3D8_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirect3D8_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3D8_AddRef(p)                                (p)->lpVtbl->AddRef(p)
+#define IDirect3D8_Release(p)                               (p)->lpVtbl->Release(p)
 /*** IDirect3D8 methods ***/
 #define IDirect3D8_RegisterSoftwareDevice(p,a)              (p)->lpVtbl->RegisterSoftwareDevice(p,a)
 #define IDirect3D8_GetAdapterCount(p)                       (p)->lpVtbl->GetAdapterCount(p)
@@ -261,9 +261,9 @@ ICOM_DEFINE(IDirect3DDevice8,IUnknown)
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirect3DDevice8_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirect3DDevice8_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IDirect3DDevice8_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirect3DDevice8_QueryInterface(p,a,b)                     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DDevice8_AddRef(p)                                 (p)->lpVtbl->AddRef(p)
+#define IDirect3DDevice8_Release(p)                                (p)->lpVtbl->Release(p)
 /*** IDirect3DDevice8 methods ***/
 #define IDirect3DDevice8_TestCooperativeLevel(p)                   (p)->lpVtbl->TestCooperativeLevel(p)
 #define IDirect3DDevice8_GetAvailableTextureMem(p)                 (p)->lpVtbl->GetAvailableTextureMem(p)
@@ -277,7 +277,7 @@ ICOM_DEFINE(IDirect3DDevice8,IUnknown)
 #define IDirect3DDevice8_ShowCursor(p,a)                           (p)->lpVtbl->ShowCursor(p,a)
 #define IDirect3DDevice8_CreateAdditionalSwapChain(p,a,b)          (p)->lpVtbl->CreateAdditionalSwapChain(p,a,b)
 #define IDirect3DDevice8_Reset(p,a)                                (p)->lpVtbl->Reset(p,a)
-#define IDirect3DDevice8_Present(p,a,b,c,d)                        ICOM_CALL4,present,p,a,b,c,d)
+#define IDirect3DDevice8_Present(p,a,b,c,d)                        (p)->lpVtbl->Present(p,a,b,c,d)
 #define IDirect3DDevice8_GetBackBuffer(p,a,b,c)                    (p)->lpVtbl->GetBackBuffer(p,a,b,c)
 #define IDirect3DDevice8_GetRasterStatus(p,a)                      (p)->lpVtbl->GetRasterStatus(p,a)
 #define IDirect3DDevice8_SetGammaRamp(p,a,b)                       (p)->lpVtbl->SetGammaRamp(p,a,b)
