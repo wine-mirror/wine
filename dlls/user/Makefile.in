@@ -92,8 +92,6 @@ RC_SRCS16 = \
 
 SUBDIRS = tests
 
-EXTRA_OBJS = $(MODULE).glue.o
-
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/controls \
 	$(TOPOBJDIR)/windows \

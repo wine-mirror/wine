@@ -29,6 +29,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "wownt32.h"
 #include "dde.h"
 #include "ddeml.h"
 #include "dde/dde_private.h"
@@ -88,9 +89,6 @@ static void map3216_conv_context(CONVCONTEXT16* cc16, const CONVCONTEXT* cc32)
     cc16->dwSecurity = cc32->dwSecurity;
 }
 
-/* ### start build ### */
-extern LONG CALLBACK WDML_CallTo16_long_llllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG,LONG,LONG);
-/* ### stop build ### */
 
 /******************************************************************
  *		WDML_InvokeCallback16
@@ -104,6 +102,7 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
     DWORD               d1 = 0;
     HDDEDATA            ret;
     CONVCONTEXT16       cc16;
+    WORD args[16];
 
     switch (uType)
     {
@@ -120,8 +119,24 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
         d1 = dwData1;
         break;
     }
-    ret = (HDDEDATA)WDML_CallTo16_long_llllllll((FARPROC16)pfn, uType, uFmt, (LONG)hConv,
-                                                (LONG)hsz1, (LONG)hsz2, (LONG)hdata, d1, dwData2);
+    args[15] = HIWORD(uType);
+    args[14] = LOWORD(uType);
+    args[13] = HIWORD(uFmt);
+    args[12] = LOWORD(uFmt);
+    args[11] = HIWORD(hConv);
+    args[10] = LOWORD(hConv);
+    args[9]  = HIWORD(hsz1);
+    args[8]  = LOWORD(hsz1);
+    args[7]  = HIWORD(hsz2);
+    args[6]  = LOWORD(hsz2);
+    args[5]  = HIWORD(hdata);
+    args[4]  = LOWORD(hdata);
+    args[3]  = HIWORD(d1);
+    args[2]  = LOWORD(d1);
+    args[1]  = HIWORD(dwData2);
+    args[0]  = LOWORD(dwData2);
+    WOWCallback16Ex( (DWORD)pfn, WCB16_PASCAL, sizeof(args), args, (DWORD *)&ret );
+
     switch (uType)
     {
     case XTYP_CONNECT:

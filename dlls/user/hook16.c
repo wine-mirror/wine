@@ -71,10 +71,6 @@ struct hook16_queue_info
 };
 
 
-/* ### start build ### */
-extern LONG CALLBACK HOOK_CallTo16_long_wwl(HOOKPROC16,WORD,WORD,LONG);
-/* ### stop build ### */
-
 
 /***********************************************************************
  *           map_msg_16_to_32
@@ -112,10 +108,17 @@ inline static void map_msg_32_to_16( const MSG *msg32, MSG16 *msg16 )
 static LRESULT call_hook_16( INT id, INT code, WPARAM wp, LPARAM lp )
 {
     struct hook16_queue_info *info = QUEUE_Current()->hook16_info;
+    WORD args[4];
     LRESULT ret;
     INT prev_id = info->id;
     info->id = id;
-    ret = HOOK_CallTo16_long_wwl( info->proc[id - WH_MINHOOK], code, wp, lp );
+
+    args[3] = code;
+    args[2] = wp;
+    args[1] = HIWORD(lp);
+    args[0] = LOWORD(lp);
+    WOWCallback16Ex( (DWORD)info->proc[id - WH_MINHOOK], WCB16_PASCAL, sizeof(args), args, &ret );
+
     info->id = prev_id;
 
     /* Grrr. While the hook procedure is supposed to have an LRESULT return

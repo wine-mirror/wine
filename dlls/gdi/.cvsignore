@@ -2,7 +2,6 @@ Makefile
 dispdib.spec.c
 gdi.exe.spec.c
 gdi32.dll.dbg.c
-gdi32.dll.glue.c
 gdi32.spec.c
 gdi32.spec.def
 version.res

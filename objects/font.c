@@ -132,10 +132,6 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { SYMBOL_CHARSET, CP_SYMBOL, FS(31)},
 };
 
-/* ### start build ### */
-extern WORD CALLBACK FONT_CallTo16_word_llwl(FONTENUMPROC16,LONG,LONG,WORD,LONG);
-/* ### stop build ### */
-
 /***********************************************************************
  *              LOGFONT conversion functions.
  */
@@ -522,13 +518,24 @@ static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
     if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
 	pfe->lpLogFontParam->lfCharSet == plf->elfLogFont.lfCharSet )
     {
+        WORD args[7];
+        DWORD result;
+
         FONT_EnumLogFontExWTo16(plf, pfe->lpLogFont);
 	FONT_NewTextMetricExWTo16(ptm, pfe->lpTextMetric);
         pfe->dwFlags |= ENUM_CALLED;
         GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
 
-        ret = FONT_CallTo16_word_llwl( pfe->lpEnumFunc, pfe->segLogFont, pfe->segTextMetric,
-                                       (UINT16)fType, (LPARAM)pfe->lpData );
+        args[6] = SELECTOROF(pfe->segLogFont);
+        args[5] = OFFSETOF(pfe->segLogFont);
+        args[4] = SELECTOROF(pfe->segTextMetric);
+        args[3] = OFFSETOF(pfe->segTextMetric);
+        args[2] = fType;
+        args[1] = HIWORD(pfe->lpData);
+        args[0] = LOWORD(pfe->lpData);
+        WOWCallback16Ex( (DWORD)pfe->lpEnumFunc, WCB16_PASCAL, sizeof(args), args, &result );
+        ret = LOWORD(result);
+
         /* get the lock again and make sure the DC is still valid */
         dc = DC_GetDCPtr( pfe->hdc );
         if (!dc || dc != pfe->dc || dc->physDev != pfe->physDev)

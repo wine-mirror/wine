@@ -63,8 +63,12 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 /* under Wine use the kernel functions directly so we don't have to import wow32 */
 HANDLE WINAPI K32WOWHandle32(WORD,WOW_HANDLE_TYPE);
 WORD   WINAPI K32WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
+DWORD  WINAPI K32WOWCallback16(DWORD,DWORD);
+BOOL   WINAPI K32WOWCallback16Ex(DWORD,DWORD,DWORD,LPVOID,LPDWORD);
 #define WOWHandle32 K32WOWHandle32
 #define WOWHandle16 K32WOWHandle16
+#define WOWCallback16 K32WOWCallback16
+#define WOWCallback16Ex K32WOWCallback16Ex
 #endif
 
 #ifdef __WINESRC__

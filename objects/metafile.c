@@ -75,9 +75,6 @@ typedef struct
 #define MFHEADERSIZE (sizeof(METAHEADER))
 #define MFVERSION 0x300
 
-/* ### start build ### */
-extern WORD CALLBACK MF_CallTo16_word_wllwl(MFENUMPROC16,WORD,LONG,LONG,WORD,LONG);
-/* ### stop build ### */
 
 /******************************************************************
  *         MF_AddHandle
@@ -634,6 +631,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
     HPEN hPen;
     HBRUSH hBrush;
     HFONT hFont;
+    WORD args[8];
     BOOL16 result = TRUE, loaded = FALSE;
 
     TRACE("(%p, %04x, %p, %08lx)\n", hdc, hmf, lpEnumFunc, lpData);
@@ -661,20 +659,31 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
 
     /* loop through metafile records */
 
+    args[7] = hdc16;
+    args[6] = SELECTOROF(spht);
+    args[5] = OFFSETOF(spht);
+    args[4] = seg + (HIWORD(offset) << __AHSHIFT);
+    args[3] = LOWORD(offset);
+    args[2] = mh->mtNoObjects;
+    args[1] = HIWORD(lpData);
+    args[0] = LOWORD(lpData);
+
     while (offset < (mh->mtSize * 2))
     {
+        DWORD ret;
+
 	mr = (METARECORD *)((char *)mh + offset);
 
-        if (!MF_CallTo16_word_wllwl( lpEnumFunc, hdc16, spht,
-                                  MAKESEGPTR( seg + (HIWORD(offset) << __AHSHIFT), LOWORD(offset) ),
-                                     mh->mtNoObjects, (LONG)lpData ))
+        WOWCallback16Ex( (DWORD)lpEnumFunc, WCB16_PASCAL, sizeof(args), args, &ret );
+        if (!LOWORD(ret))
 	{
 	    result = FALSE;
 	    break;
 	}
 
-
 	offset += (mr->rdSize * 2);
+        args[4] = seg + (HIWORD(offset) << __AHSHIFT);
+        args[3] = LOWORD(offset);
     }
 
     SelectObject(hdc, hBrush);

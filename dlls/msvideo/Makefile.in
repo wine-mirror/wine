@@ -17,8 +17,6 @@ C_SRCS = \
 C_SRCS16 = \
 	msvideo16.c
 
-EXTRA_OBJS16 = $(MODULE).glue.o
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

@@ -1,6 +1,5 @@
 Makefile
 setupapi.dll.dbg.c
-setupapi.dll.glue.c
 setupapi.res
 setupapi.spec.c
 setupapi.spec.def

@@ -41,8 +41,6 @@ RC_SRCS16 = \
 MC_SRCS = \
 	messages/winerr_enu.mc
 
-EXTRA_OBJS = $(MODULE).glue.o
-
 SUBDIRS      = tests
 EXTRASUBDIRS = messages nls
 

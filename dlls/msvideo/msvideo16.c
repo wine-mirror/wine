@@ -31,9 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 
-/* ### start build ### */
-extern LONG CALLBACK MSVIDEO_CallTo16_long_lwwll(FARPROC16, LONG, WORD, WORD, LONG, LONG);
-/* ### stop build ### */
 
 /***********************************************************************
  *		DrawDibOpen		[MSVIDEO.102]
@@ -682,6 +679,7 @@ static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD l
 {
     WINE_HIC*   whic;
     LRESULT     ret = 0;
+    WORD args[8];
 
     whic = MSVIDEO_GetHicPtr(hic);
     if (whic)
@@ -692,9 +690,16 @@ static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD l
             lp2 = (DWORD)MapLS((void*)lp2);
             break;
         }
+        args[7] = HIWORD(hic);
+        args[6] = LOWORD(hic);
+        args[5] = HDRVR_16(whic->hdrv);
+        args[4] = msg;
+        args[3] = HIWORD(lp1);
+        args[2] = LOWORD(lp1);
+        args[1] = HIWORD(lp2);
+        args[0] = LOWORD(lp2);
+        WOWCallback16Ex( (DWORD)whic->driverproc16, WCB16_PASCAL, sizeof(args), args, &ret );
 
-        ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc16, 
-                                          HIC_16(hic), HDRVR_16(whic->hdrv), msg, lp1, lp2);
         switch (msg)
         {
         case DRV_OPEN:
@@ -732,8 +737,19 @@ LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lPara
         /* we've got a 16 bit driver proc... call it directly */
         if (whic->driverproc16)
         {
-            ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc16, 
-                                              (LONG)whic->hdrv, HIC_16(hic), msg, lParam1, lParam2);
+            WORD args[8];
+
+            /* FIXME: original code was passing hdrv first and hic second */
+            /* but this doesn't match what IC_Callback3216 does */
+            args[7] = HIWORD(hic);
+            args[6] = LOWORD(hic);
+            args[5] = HDRVR_16(whic->hdrv);
+            args[4] = msg;
+            args[3] = HIWORD(lParam1);
+            args[2] = LOWORD(lParam1);
+            args[1] = HIWORD(lParam2);
+            args[0] = LOWORD(lParam2);
+            WOWCallback16Ex( (DWORD)whic->driverproc16, WCB16_PASCAL, sizeof(args), args, &ret );
         }
         else
         {

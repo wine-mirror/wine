@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "wownt32.h"
 #include "setupapi.h"
 #include "setupx16.h"
 #include "setupapi_private.h"
@@ -32,22 +33,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
-/* ### start build ### */
-extern WORD CALLBACK VCP_CallTo16_word_lwwll(FARPROC16,LPVOID,UINT16,WPARAM,LPARAM,LPARAM);
-/* ### stop build ### */
-
 static FARPROC16 VCP_Proc = NULL;
 static LPARAM VCP_MsgRef = 0;
-
-#define VCP_CALLBACK(obj,msg,wParam,lParam,lParamRef) \
-	(VCP_Proc) ? \
-	VCP_CallTo16_word_lwwll(VCP_Proc, obj,msg,wParam,lParam,lParamRef) : OK;
 
 static BOOL VCP_opened = FALSE;
 
 static VCPSTATUS vcp_status;
 
 static HINSTANCE SETUPAPI_hInstance;
+
+static WORD VCP_Callback( LPVOID obj, UINT16 msg, WPARAM16 wParam, LPARAM lParam, LPARAM lParamRef )
+{
+    WORD args[8];
+    DWORD ret = OK;
+    if (VCP_Proc)
+    {
+        args[7] = HIWORD(obj);
+        args[6] = LOWORD(obj);
+        args[5] = msg;
+        args[4] = wParam;
+        args[3] = HIWORD(lParam);
+        args[2] = LOWORD(lParam);
+        args[1] = HIWORD(lParamRef);
+        args[0] = LOWORD(lParamRef);
+        WOWCallback16Ex( (DWORD)VCP_Proc, WCB16_PASCAL, sizeof(args), args, &ret );
+    }
+    return (WORD)ret;
+}
 
 /****************************** VHSTR management ******************************/
 
@@ -234,9 +246,9 @@ RETERR16 VCP_VirtnodeCreate(LPVCPFILESPEC vfsSrc, LPVCPFILESPEC vfsDst, WORD fl,
 
     lpvn->vhstrDstFinalName = 0xffff; /* FIXME: what is this ? */
 
-    cbres = VCP_CALLBACK(lpvn, VCPM_NODECREATE, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(lpvn, VCPM_NODECREATE, 0, 0, VCP_MsgRef);
     lpvn->fl |= VFNL_CREATED;
-    cbres = VCP_CALLBACK(lpvn, VCPM_NODEACCEPT, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(lpvn, VCPM_NODEACCEPT, 0, 0, VCP_MsgRef);
 
     return OK;
 }
@@ -250,7 +262,7 @@ BOOL VCP_VirtnodeDelete(LPVIRTNODE lpvnDel)
     {
 	if (pvnlist[n] == lpvnDel)
 	{
-	    cbres = VCP_CALLBACK(lpvnDel, VCPM_NODEDESTROY, 0, 0, VCP_MsgRef);
+	    cbres = VCP_Callback(lpvnDel, VCPM_NODEDESTROY, 0, 0, VCP_MsgRef);
 	    HeapFree(GetProcessHeap(), 0, lpvnDel);
 	    pvnlist[n] = NULL;
 	    return TRUE;
@@ -433,15 +445,15 @@ RETERR16 VCP_CheckPaths(void)
     LPVIRTNODE lpvn;
     RETERR16 cbres;
 
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATPATHCHECKSTART, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATPATHCHECKSTART, 0, 0, VCP_MsgRef);
     for (n = 0; n < vn_num; n++)
     {
 	lpvn = pvnlist[n];
 	if (!lpvn) continue;
         /* FIXME: check paths of all VIRTNODEs here ! */
-	cbres = VCP_CALLBACK(&lpvn->vfsDst, VCPM_CHECKPATH, 0, (DWORD)lpvn, VCP_MsgRef);
+	cbres = VCP_Callback(&lpvn->vfsDst, VCPM_CHECKPATH, 0, (DWORD)lpvn, VCP_MsgRef);
     }
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATPATHCHECKEND, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATPATHCHECKEND, 0, 0, VCP_MsgRef);
     return OK;
 }
 
@@ -452,7 +464,7 @@ RETERR16 VCP_CopyFiles(void)
     DWORD n;
     LPVIRTNODE lpvn;
 
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATCOPYSTART, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCOPYSTART, 0, 0, VCP_MsgRef);
     for (n = 0; n < vn_num; n++)
     {
 	lpvn = pvnlist[n];
@@ -462,7 +474,7 @@ RETERR16 VCP_CopyFiles(void)
         strcpy(fn_dst, VcpExplain16(lpvn, VCPEX_DST_FULL));
 	/* FIXME: what is this VCPM_VSTATWRITE here for ?
 	 * I guess it's to signal successful destination file creation */
-	cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
+	cbres = VCP_Callback(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
 
 	/* FIXME: need to do the file copy in small chunks for notifications */
 	TRACE("copying '%s' to '%s'\n", fn_src, fn_dst);
@@ -475,12 +487,12 @@ RETERR16 VCP_CopyFiles(void)
         }
 
 	vcp_status.prgFileRead.dwSoFar++;
-	cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATREAD, 0, 0, VCP_MsgRef);
+	cbres = VCP_Callback(&vcp_status, VCPM_VSTATREAD, 0, 0, VCP_MsgRef);
 	vcp_status.prgFileWrite.dwSoFar++;
-	cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
+	cbres = VCP_Callback(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
     }
 
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATCOPYEND, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCOPYEND, 0, 0, VCP_MsgRef);
     return res;
 }
 
@@ -511,13 +523,13 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
     TRACE("(%04x, '%s')\n", fl, lpszBackupDest);
 
     /* FIXME: needs to sort virtnodes in case VCPFL_INSPECIFIEDORDER
-     * is not set. This is done by VCP_CALLBACK(VCPM_NODECOMPARE) */
+     * is not set. This is done by VCP_Callback(VCPM_NODECOMPARE) */
 
     TRACE("#1\n");
     memset(&vcp_status, 0, sizeof(VCPSTATUS));
     /* yes, vcp_status.cbSize is 0 ! */
     TRACE("#2\n");
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATCLOSESTART, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCLOSESTART, 0, 0, VCP_MsgRef);
     TRACE("#3\n");
 
     res = VCP_CheckPaths();
@@ -527,7 +539,7 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
     VCP_CopyFiles();
 
     TRACE("#5\n");
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATCLOSEEND, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCLOSEEND, 0, 0, VCP_MsgRef);
     TRACE("#6\n");
     VCP_Proc = NULL;
     FreeLibrary(SETUPAPI_hInstance);
@@ -542,20 +554,20 @@ RETERR16 VCP_RenameFiles(void)
     DWORD n;
     LPVIRTNODE lpvn;
 
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATRENAMESTART, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATRENAMESTART, 0, 0, VCP_MsgRef);
     for (n = 0; n < vn_num; n++)
     {
 	lpvn = pvnlist[n];
 	if ((!lpvn) || ((lpvn->fl & VNFL_NODE_TYPE) != VNFL_RENAME)) continue;
         strcpy(fn_src, VcpExplain16(lpvn, VCPEX_SRC_FULL));
         strcpy(fn_dst, VcpExplain16(lpvn, VCPEX_DST_FULL));
-	cbres = VCP_CALLBACK(&lpvn->vfsDst, VCPM_FILEOPENOUT, 0, (LPARAM)lpvn, VCP_MsgRef);
+	cbres = VCP_Callback(&lpvn->vfsDst, VCPM_FILEOPENOUT, 0, (LPARAM)lpvn, VCP_MsgRef);
         if (!(MoveFileExA(fn_src, fn_dst, MOVEFILE_REPLACE_EXISTING)))
 	    res = ERR_VCP_IOFAIL;
 	else
 	    VCP_VirtnodeDelete(lpvn);
     }
-    cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATRENAMEEND, 0, 0, VCP_MsgRef);
+    cbres = VCP_Callback(&vcp_status, VCPM_VSTATRENAMEEND, 0, 0, VCP_MsgRef);
     return res;
 }
 
@@ -744,7 +756,7 @@ RETERR16 WINAPI vcpUICallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 	case VCPM_VSTATREAD:
 	    break;
 	case VCPM_VSTATWRITE:
-	    cbres = VCP_CALLBACK(&vcp_status, VCPM_DISKPREPINFO, 0, 0, VCP_MsgRef);
+	    cbres = VCP_Callback(&vcp_status, VCPM_DISKPREPINFO, 0, 0, VCP_MsgRef);
 	    break;
 	case VCPM_VSTATCLOSEEND:
 	    RegCloseKey(hKeyFiles);

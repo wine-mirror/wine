@@ -30,10 +30,6 @@
 
 static HWND16 hwndSysModal;
 
-/* ### start build ### */
-extern WORD CALLBACK WIN_CallTo16_word_wl(WNDENUMPROC16,WORD,LONG);
-/* ### stop build ### */
-
 struct wnd_enum_info
 {
     WNDENUMPROC16 proc;
@@ -44,7 +40,14 @@ struct wnd_enum_info
 static BOOL CALLBACK wnd_enum_callback( HWND hwnd, LPARAM param )
 {
     const struct wnd_enum_info *info = (struct wnd_enum_info *)param;
-    return WIN_CallTo16_word_wl( info->proc, HWND_16(hwnd), info->param );
+    WORD args[3];
+    DWORD ret;
+
+    args[2] = HWND_16(hwnd);
+    args[1] = HIWORD(info->param);
+    args[0] = LOWORD(info->param);
+    WOWCallback16Ex( (DWORD)info->proc, WCB16_PASCAL, sizeof(args), args, &ret );
+    return LOWORD(ret);
 }
 
 /* convert insert after window handle to 32-bit */

@@ -26,15 +26,12 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 #include "winver.h"
+#include "wownt32.h"
 #include "winemm.h"
 #include "digitalv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
-
-/* ### start build ### */
-extern WORD CALLBACK MMDRV_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
-/* ### stop build ### */
 
 /**************************************************************************
  * 				MMDRV_Callback			[internal]
@@ -44,11 +41,21 @@ static  void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam
     TRACE("CB (*%08lx)(%p %08x %08lx %08lx %08lx\n",
 	  mld->dwCallback, hDev, uMsg, mld->dwClientInstance, dwParam1, dwParam2);
 
-    if (!mld->bFrom32 && (mld->dwFlags & DCB_TYPEMASK) == DCB_FUNCTION) {
+    if (!mld->bFrom32 && (mld->dwFlags & DCB_TYPEMASK) == DCB_FUNCTION)
+    {
+        WORD args[8];
 	/* 16 bit func, call it */
 	TRACE("Function (16 bit) !\n");
-	MMDRV_CallTo16_word_wwlll((FARPROC16)mld->dwCallback, HDRVR_16(hDev), uMsg,
-				  mld->dwClientInstance, dwParam1, dwParam2);
+
+        args[7] = HDRVR_16(hDev);
+        args[6] = uMsg;
+        args[5] = HIWORD(mld->dwClientInstance);
+        args[4] = LOWORD(mld->dwClientInstance);
+        args[3] = HIWORD(dwParam1);
+        args[2] = LOWORD(dwParam1);
+        args[1] = HIWORD(dwParam2);
+        args[0] = LOWORD(dwParam2);
+        WOWCallback16Ex( mld->dwCallback, WCB16_PASCAL, sizeof(args), args, NULL );
     } else {
 	DriverCallback(mld->dwCallback, mld->dwFlags, hDev, uMsg,
 		       mld->dwClientInstance, dwParam1, dwParam2);
@@ -1729,7 +1736,19 @@ static  void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInst
 static  LRESULT    MMDRV_CallMMDrvFunc16(FARPROC16 fp16, WORD dev, WORD msg, LONG instance,
                                  LONG lp1, LONG lp2)
 {
-    return MMDRV_CallTo16_word_wwlll(fp16, dev, msg, instance, lp1, lp2);
+    WORD args[8];
+    DWORD ret;
+
+    args[7] = dev;
+    args[6] = msg;
+    args[5] = HIWORD(instance);
+    args[4] = LOWORD(instance);
+    args[3] = HIWORD(lp1);
+    args[2] = LOWORD(lp1);
+    args[1] = HIWORD(lp2);
+    args[0] = LOWORD(lp2);
+    WOWCallback16Ex( (DWORD)fp16, WCB16_PASCAL, sizeof(args), args, &ret );
+    return LOWORD(ret);
 }
 
 /**************************************************************************

@@ -30,9 +30,6 @@
 /* size of buffer needed to store an atom string */
 #define ATOM_BUFFER_SIZE 256
 
-/* ### start build ### */
-extern WORD CALLBACK PROP_CallTo16_word_wlw(PROPENUMPROC16,WORD,LONG,WORD);
-/* ### stop build ### */
 
 /***********************************************************************
  *              get_properties
@@ -306,16 +303,28 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
     {
         char string[ATOM_BUFFER_SIZE];
         SEGPTR segptr = MapLS( string );
+        WORD args[4];
+        DWORD result;
+
         for (i = 0; i < count; i++)
         {
             if (list[i].string)  /* it was a string originally */
             {
                 if (!GlobalGetAtomNameA( list[i].atom, string, ATOM_BUFFER_SIZE )) continue;
-                ret = PROP_CallTo16_word_wlw( func, hwnd, segptr, LOWORD(list[i].handle) );
+                args[3] = hwnd;
+                args[2] = SELECTOROF(segptr);
+                args[1] = OFFSETOF(segptr);
+                args[0] = LOWORD(list[i].handle);
             }
             else
-                ret = PROP_CallTo16_word_wlw( func, hwnd, list[i].atom, LOWORD(list[i].handle) );
-            if (!ret) break;
+            {
+                args[3] = hwnd;
+                args[2] = 0;
+                args[1] = list[i].atom;
+                args[0] = LOWORD(list[i].handle);
+            }
+            WOWCallback16Ex( (DWORD)func, WCB16_PASCAL, sizeof(args), args, &result );
+            if (!(ret = LOWORD(result))) break;
         }
         UnMapLS( segptr );
         HeapFree( GetProcessHeap(), 0, list );

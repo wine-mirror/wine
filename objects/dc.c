@@ -33,10 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
-/* ### start build ### */
-extern WORD CALLBACK GDI_CallTo16_word_wwll(FARPROC16,WORD,WORD,LONG,LONG);
-/* ### stop build ### */
-
 static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj );
 
 static const struct gdi_obj_funcs dc_funcs =
@@ -1147,14 +1143,24 @@ BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD dwHookData )
 /* relay function to call the 16-bit DC hook proc */
 static BOOL16 WINAPI call_dc_hook16( HDC16 hdc16, WORD code, DWORD data, LPARAM lParam )
 {
+    WORD args[6];
+    DWORD ret;
     FARPROC16 proc = NULL;
     HDC hdc = HDC_32( hdc16 );
     DC *dc = DC_GetDCPtr( hdc );
+
     if (!dc) return FALSE;
     proc = dc->hookProc;
     GDI_ReleaseObj( hdc );
     if (!proc) return FALSE;
-    return GDI_CallTo16_word_wwll( proc, hdc16, code, data, lParam );
+    args[5] = hdc16;
+    args[4] = code;
+    args[3] = HIWORD(data);
+    args[2] = LOWORD(data);
+    args[1] = HIWORD(lParam);
+    args[0] = LOWORD(lParam);
+    WOWCallback16Ex( (DWORD)proc, WCB16_PASCAL, sizeof(args), args, &ret );
+    return LOWORD(ret);
 }
 
 /***********************************************************************

@@ -30,11 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 #define HGDIOBJ_32(handle16)    ((HGDIOBJ)(ULONG_PTR)(handle16))
 #define HGDIOBJ_16(handle32)    ((HGDIOBJ16)(ULONG_PTR)(handle32))
 
-/* ### start build ### */
-extern WORD CALLBACK GDI_CallTo16_word_ll(FARPROC16,LONG,LONG);
-extern WORD CALLBACK GDI_CallTo16_word_wwl(FARPROC16,WORD,WORD,LONG);
-/* ### stop build ### */
-
 struct callback16_info
 {
     FARPROC16 proc;
@@ -45,7 +40,13 @@ struct callback16_info
 static void CALLBACK linedda_callback( INT x, INT y, LPARAM param )
 {
     const struct callback16_info *info = (struct callback16_info *)param;
-    GDI_CallTo16_word_wwl( info->proc, x, y, info->param );
+    WORD args[4];
+
+    args[3] = x;
+    args[2] = y;
+    args[1] = HIWORD(info->param);
+    args[0] = LOWORD(info->param);
+    WOWCallback16Ex( (DWORD)info->proc, WCB16_PASCAL, sizeof(args), args, NULL );
 }
 
 /* callback for EnumObjects16 */
@@ -55,16 +56,21 @@ static INT CALLBACK enum_pens_callback( void *ptr, LPARAM param )
     LOGPEN *pen = ptr;
     LOGPEN16 pen16;
     SEGPTR segptr;
-    INT ret;
+    DWORD ret;
+    WORD args[4];
 
     pen16.lopnStyle   = pen->lopnStyle;
     pen16.lopnWidth.x = pen->lopnWidth.x;
     pen16.lopnWidth.y = pen->lopnWidth.y;
     pen16.lopnColor   = pen->lopnColor;
     segptr = MapLS( &pen16 );
-    ret = GDI_CallTo16_word_ll( info->proc, segptr, info->param );
+    args[3] = SELECTOROF(segptr);
+    args[2] = OFFSETOF(segptr);
+    args[1] = HIWORD(info->param);
+    args[0] = LOWORD(info->param);
+    WOWCallback16Ex( (DWORD)info->proc, WCB16_PASCAL, sizeof(args), args, &ret );
     UnMapLS( segptr );
-    return ret;
+    return LOWORD(ret);
 }
 
 /* callback for EnumObjects16 */
@@ -74,13 +80,18 @@ static INT CALLBACK enum_brushes_callback( void *ptr, LPARAM param )
     LOGBRUSH *brush = ptr;
     LOGBRUSH16 brush16;
     SEGPTR segptr;
-    INT ret;
+    DWORD ret;
+    WORD args[4];
 
     brush16.lbStyle = brush->lbStyle;
     brush16.lbColor = brush->lbColor;
     brush16.lbHatch = brush->lbHatch;
     segptr = MapLS( &brush16 );
-    ret = GDI_CallTo16_word_ll( info->proc, segptr, info->param );
+    args[3] = SELECTOROF(segptr);
+    args[2] = OFFSETOF(segptr);
+    args[1] = HIWORD(info->param);
+    args[0] = LOWORD(info->param);
+    WOWCallback16Ex( (DWORD)info->proc, WCB16_PASCAL, sizeof(args), args, &ret );
     UnMapLS( segptr );
     return ret;
 }

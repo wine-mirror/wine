@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "wine/windef16.h"
 #include "winreg.h"
+#include "wownt32.h"
 #include "aspi.h"
 #include "winescsi.h"
 #include "wine/winaspi.h"
@@ -47,10 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(aspi);
  * 2) Make this code re-entrant for multithreading
  * 3) Only linux supported so far
  */
-
-/* ### start build ### */
-extern LONG CALLBACK ASPI_CallTo16_long_l(FARPROC16,SEGPTR);
-/* ### stop build ### */
 
 #ifdef linux
 
@@ -381,12 +378,12 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
       {
 	SEGPTR spPRB = MapLS(lpPRB);
 
-	ASPI_CallTo16_long_l(lpPRB->SRB_PostProc, spPRB);
+        WOWCallback16((DWORD)lpPRB->SRB_PostProc, spPRB);
 	UnMapLS(spPRB);
 	break;
       }
       case ASPI_WIN16:
-        ASPI_CallTo16_long_l(lpPRB->SRB_PostProc, ptrPRB);
+        WOWCallback16((DWORD)lpPRB->SRB_PostProc, ptrPRB);
 	break;
     }
   }
@@ -449,7 +446,7 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 	if (ASPIChainFunc)
 	{
 	    /* This is not the post proc, it's the chain proc this time */
-	    DWORD ret = ASPI_CallTo16_long_l(ASPIChainFunc, ptrSRB);
+	    DWORD ret = WOWCallback16((DWORD)ASPIChainFunc, ptrSRB);
 	    if (ret)
 	    {
 		lpSRB->inquiry.SRB_Status = SS_INVALID_SRB;
@@ -545,4 +542,3 @@ DWORD WINAPI GetASPIDLLVersion16()
 	return 0;
 #endif
 }
-

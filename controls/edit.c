@@ -44,6 +44,7 @@
 
 #include "winbase.h"
 #include "winnt.h"
+#include "wownt32.h"
 #include "win.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
@@ -1270,9 +1271,6 @@ static void EDIT_CalcLineWidth_SL(EDITSTATE *es)
  *		the string under examination (we can decide this for ourselves).
  *
  */
-/* ### start build ### */
-extern WORD CALLBACK EDIT_CallTo16_word_lwww(EDITWORDBREAKPROC16,SEGPTR,WORD,WORD,WORD);
-/* ### stop build ### */
 static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count, INT action)
 {
     INT ret, iWndsLocks;
@@ -1285,13 +1283,20 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 	    HGLOBAL16 hglob16;
 	    SEGPTR segptr;
 	    INT countA;
+            WORD args[5];
+            DWORD result;
 
 	    countA = WideCharToMultiByte(CP_ACP, 0, es->text + start, count, NULL, 0, NULL, NULL);
 	    hglob16 = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT, countA);
 	    segptr = K32WOWGlobalLock16(hglob16);
 	    WideCharToMultiByte(CP_ACP, 0, es->text + start, count, MapSL(segptr), countA, NULL, NULL);
-	    ret = (INT)EDIT_CallTo16_word_lwww(es->word_break_proc16,
-						segptr, index, countA, action);
+            args[4] = SELECTOROF(segptr);
+            args[3] = OFFSETOF(segptr);
+            args[2] = index;
+            args[1] = countA;
+            args[0] = action;
+            WOWCallback16Ex((DWORD)es->word_break_proc16, WCB16_PASCAL, sizeof(args), args, &result);
+            ret = LOWORD(result);
 	    GlobalUnlock16(hglob16);
 	    GlobalFree16(hglob16);
 	}

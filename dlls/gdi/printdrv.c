@@ -214,9 +214,6 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
     return ret;
 }
 
-/* ### start build ### */
-extern WORD CALLBACK PRTDRV_CallTo16_word_ww(FARPROC16,WORD,WORD);
-/* ### stop build ### */
 
 /**********************************************************************
  *           call_abort_proc16
@@ -229,7 +226,16 @@ static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
     if (!dc) return FALSE;
     proc16 = dc->pAbortProc16;
     GDI_ReleaseObj( hdc );
-    if (proc16) return PRTDRV_CallTo16_word_ww( (FARPROC16)proc16, HDC_16(hdc), code );
+    if (proc16)
+    {
+        WORD args[2];
+        DWORD ret;
+
+        args[1] = HDC_16(hdc);
+        args[0] = code;
+        WOWCallback16Ex( (DWORD)proc16, WCB16_PASCAL, sizeof(args), args, &ret );
+        return LOWORD(ret);
+    }
     return TRUE;
 }
 

@@ -2,7 +2,6 @@ Makefile
 comm.spec.c
 kernel.res
 kernel32.dll.dbg.c
-kernel32.dll.glue.c
 kernel32.spec.c
 kernel32.spec.def
 krnl386.exe.spec.c

@@ -37,6 +37,7 @@
 #include "mmsystem.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "wownt32.h"
 
 #include "wine/winuser16.h"
 #include "winemm.h"
@@ -45,11 +46,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmsys);
-
-/* ### start build ### */
-extern LONG CALLBACK MMSYSTEM_CallTo16_long_l    (FARPROC16,LONG);
-extern LONG CALLBACK MMSYSTEM_CallTo16_long_lwll (LPMMIOPROC16,LONG,WORD,LONG,LONG);
-/* ### stop build ### */
 
 static WINE_MMTHREAD*   WINMM_GetmmThread(HANDLE16);
 static LPWINE_DRIVER    DRIVER_OpenDriver16(LPCSTR, LPCSTR, LPARAM);
@@ -2115,7 +2111,7 @@ void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
     TRACE("[20-%p]\n", lpMMThd->hThread);
     lpMMThd->dwStatus = 0x20;
     if (lpMMThd->fpThread) {
-	MMSYSTEM_CallTo16_long_l(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
+	WOWCallback16((DWORD)lpMMThd->fpThread, lpMMThd->dwThreadPmt);
     }
     lpMMThd->dwStatus = 0x30;
     TRACE("[30-%p]\n", lpMMThd->hThread);
@@ -2644,6 +2640,7 @@ static LRESULT MMIO_Callback16(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage
     MMIOINFO16          mmioInfo16;
     SEGPTR		segmmioInfo16;
     LPARAM		lp1 = lParam1, lp2 = lParam2;
+    WORD args[7];
 
     memset(&mmioInfo16, 0, sizeof(MMIOINFO16));
     mmioInfo16.lDiskOffset = lpmmioinfo->lDiskOffset;
@@ -2654,10 +2651,16 @@ static LRESULT MMIO_Callback16(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage
     /* map (lParam1, lParam2) into (lp1, lp2) 32=>16 */
     if ((result = MMIO_Map32To16(uMessage, &lp1, &lp2)) != MMSYSERR_NOERROR)
         return result;
-    
+
     segmmioInfo16 = MapLS(&mmioInfo16);
-    
-    result = MMSYSTEM_CallTo16_long_lwll((LPMMIOPROC16)cb16, segmmioInfo16, uMessage, lp1, lp2);
+    args[6] = HIWORD(segmmioInfo16);
+    args[5] = LOWORD(segmmioInfo16);
+    args[4] = uMessage;
+    args[3] = HIWORD(lp1);
+    args[2] = LOWORD(lp1);
+    args[1] = HIWORD(lp2);
+    args[0] = LOWORD(lp2);
+    WOWCallback16Ex( cb16, WCB16_PASCAL, sizeof(args), args, &result );
     UnMapLS(segmmioInfo16);
     MMIO_UnMap32To16(uMessage, lParam1, lParam2, lp1, lp2);
 

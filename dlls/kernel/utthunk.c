@@ -20,6 +20,7 @@
 
 #include "wine/winbase16.h"
 #include "winternl.h"
+#include "wownt32.h"
 #include "module.h"
 #include "wine/debug.h"
 
@@ -73,9 +74,6 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
 
 VOID WINAPI UTUnRegister( HMODULE hModule );
 
-/* ### start build ### */
-extern LONG CALLBACK UTTHUNK_CallTo16_long_ll(FARPROC16,LONG,LONG);
-/* ### stop build ### */
 
 /****************************************************************************
  *		UTGlue16 (KERNEL.666) (KERNEL Wine-specific export)
@@ -108,6 +106,7 @@ static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefin
     SEGPTR segBuff, *segptrList = NULL;
     INT i, nList = 0;
     DWORD retv;
+    WORD args[4];
 
     /* Convert arguments to SEGPTRs */
 
@@ -133,7 +132,11 @@ static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefin
 
     /* Call 16-bit routine */
 
-    retv = UTTHUNK_CallTo16_long_ll( target, segBuff, dwUserDefined );
+    args[3] = SELECTOROF(segBuff);
+    args[2] = OFFSETOF(segBuff);
+    args[1] = HIWORD(dwUserDefined);
+    args[0] = LOWORD(dwUserDefined);
+    WOWCallback16Ex( (DWORD)target, WCB16_PASCAL, sizeof(args), args, &retv );
 
     /* Free temporary selectors */
 
@@ -264,16 +267,21 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
     {
         SEGPTR callback = MapLS( &ut->ut16 );
         SEGPTR segBuff  = MapLS( lpBuff );
+        WORD args[4];
+        DWORD ret;
 
-        if ( !UTTHUNK_CallTo16_long_ll( init16, callback, segBuff ) )
+        args[3] = SELECTOROF(callback);
+        args[2] = OFFSETOF(callback);
+        args[1] = SELECTOROF(segBuff);
+        args[0] = OFFSETOF(segBuff);
+        WOWCallback16Ex( (DWORD)init16, WCB16_PASCAL, sizeof(args), args, &ret );
+        UnMapLS( segBuff );
+        UnMapLS( callback );
+        if (!ret)
         {
-            UnMapLS( segBuff );
-            UnMapLS( callback );
             UTUnRegister( hModule );
             return FALSE;
         }
-        UnMapLS( segBuff );
-        UnMapLS( callback );
     }
 
     /* Return 32-bit thunk */

@@ -38,10 +38,6 @@
 WORD WINAPI DestroyIcon32(HGLOBAL16, UINT16);
 
 
-/* ### start build ### */
-extern WORD CALLBACK USER_CallTo16_word_wlw(GRAYSTRINGPROC16,WORD,LONG,WORD);
-/* ### stop build ### */
-
 struct gray_string_info
 {
     GRAYSTRINGPROC16 proc;
@@ -53,7 +49,15 @@ struct gray_string_info
 static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
 {
     const struct gray_string_info *info = (struct gray_string_info *)param;
-    return USER_CallTo16_word_wlw( info->proc, HDC_16(hdc), info->param, len );
+    WORD args[4];
+    DWORD ret;
+
+    args[3] = HDC_16(hdc);
+    args[2] = HIWORD(info->param);
+    args[1] = LOWORD(info->param);
+    args[0] = len;
+    WOWCallback16Ex( (DWORD)info->proc, WCB16_PASCAL, sizeof(args), args, &ret );
+    return LOWORD(ret);
 }
 
 /* callback for 16-bit gray string proc with string pointer */
@@ -63,7 +67,30 @@ static BOOL CALLBACK gray_string_callback_ptr( HDC hdc, LPARAM param, INT len )
     char *str = (char *)param;
 
     info = (struct gray_string_info *)(str - offsetof( struct gray_string_info, str ));
-    return USER_CallTo16_word_wlw( info->proc, HDC_16(hdc), info->param, len );
+    return gray_string_callback( hdc, (LPARAM)info, len );
+}
+
+struct draw_state_info
+{
+    DRAWSTATEPROC16 proc;
+    LPARAM          param;
+};
+
+/* callback for 16-bit DrawState functions */
+static BOOL CALLBACK draw_state_callback( HDC hdc, LPARAM lparam, WPARAM wparam, int cx, int cy )
+{
+    const struct draw_state_info *info = (struct draw_state_info *)lparam;
+    WORD args[6];
+    DWORD ret;
+
+    args[5] = HDC_16(hdc);
+    args[4] = HIWORD(info->param);
+    args[3] = LOWORD(info->param);
+    args[2] = wparam;
+    args[1] = cx;
+    args[0] = cy;
+    WOWCallback16Ex( (DWORD)info->proc, WCB16_PASCAL, sizeof(args), args, &ret );
+    return LOWORD(ret);
 }
 
 /***********************************************************************
@@ -623,6 +650,34 @@ BOOL16 WINAPI InsertMenuItem16( HMENU16 hmenu, UINT16 pos, BOOL16 byposition,
     if (IS_MENU_STRING_ITEM(miia.fType))
         miia.dwTypeData = MapSL(mii->dwTypeData);
     return InsertMenuItemA( HMENU_32(hmenu), pos, byposition, &miia );
+}
+
+
+/**********************************************************************
+ *	     DrawState    (USER.449)
+ */
+BOOL16 WINAPI DrawState16( HDC16 hdc, HBRUSH16 hbr, DRAWSTATEPROC16 func, LPARAM ldata,
+                           WPARAM16 wdata, INT16 x, INT16 y, INT16 cx, INT16 cy, UINT16 flags )
+{
+    struct draw_state_info info;
+    UINT opcode = flags & 0xf;
+
+    if (opcode == DST_TEXT || opcode == DST_PREFIXTEXT)
+    {
+        /* make sure DrawStateA doesn't try to use ldata as a pointer */
+        if (!wdata) wdata = strlen( MapSL(ldata) );
+        if (!cx || !cy)
+        {
+            SIZE s;
+            if (!GetTextExtentPoint32A( HDC_32(hdc), MapSL(ldata), wdata, &s )) return FALSE;
+            if (!cx) cx = s.cx;
+            if (!cy) cy = s.cy;
+        }
+    }
+    info.proc  = func;
+    info.param = ldata;
+    return DrawStateA( HDC_32(hdc), HBRUSH_32(hbr), draw_state_callback,
+                       (LPARAM)&info, wdata, x, y, cx, cy, flags );
 }
 
 
