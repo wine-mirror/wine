@@ -4,7 +4,7 @@
  * Copyright 1995 Bernd Schmidt
  */
 
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "dlgs.h"
 #include "heap.h"
 #include "module.h"

@@ -14,6 +14,7 @@
 #include "dce.h"
 #include "heap.h"
 #include "debug.h"
+#include "wine/winuser16.h"
 
   /* Last CTLCOLOR id */
 #define CTLCOLOR_MAX   CTLCOLOR_STATIC

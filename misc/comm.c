@@ -57,7 +57,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "comm.h"
 #ifdef HAVE_SYS_MODEM_H
 # include <sys/modem.h>

@@ -23,6 +23,7 @@
 #include "winproc.h"
 #include "debug.h"
 #include "winerror.h"
+#include "wine/winuser16.h"
 
 
 static CLASS *firstClass = NULL;

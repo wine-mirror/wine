@@ -5,6 +5,7 @@
  */
 #include <string.h>
 #include "windows.h"
+#include "wine/winuser16.h"
 #include "neexe.h"
 #include "cursoricon.h"
 #include "module.h"

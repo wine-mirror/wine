@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include "windows.h"
+#include "wine/winuser16.h"
 #include "winerror.h"
 #include "file.h"
 #include "shell.h"

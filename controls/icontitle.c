@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "windows.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
 #include "sysmetrics.h"
 #include "win.h"
 #include "desktop.h"

@@ -6,6 +6,7 @@
  */
 
 #include "windows.h"
+#include "wine/winuser16.h"
 #include "callback.h"
 #include "resource.h"
 #include "task.h"

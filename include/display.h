@@ -8,6 +8,7 @@
 #define __WINE_DISPLAY_H
 
 #include "cursoricon.h"
+#include "wine/winuser16.h"
 
 #pragma pack(1)
 typedef struct _CURSORINFO

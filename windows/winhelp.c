@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "debug.h"
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "heap.h"
 #include "ldt.h"
 

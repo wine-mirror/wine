@@ -26,6 +26,7 @@
 #include "heap.h"
 #include "sysmetrics.h"
 #include "debug.h"
+#include "wine/winuser16.h"
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 

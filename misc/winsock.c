@@ -44,6 +44,7 @@
 #include <sys/errno.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "winsock.h"
 #include "windows.h"

@@ -7,7 +7,8 @@
 
 #include "win.h"
 #include "button.h"
-#include "windows.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
 #include "tweak.h"
 
 static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action );

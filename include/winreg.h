@@ -4,7 +4,7 @@
 #ifndef __WINE_WINREG_H
 #define __WINE_WINREG_H
 
-#include "windows.h"
+#include "wintypes.h"
 
 /* FIXME: should be in security.h or whereever */
 #ifndef READ_CONTROL

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "winerror.h"
 #include "class.h"
 #include "file.h"

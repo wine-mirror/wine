@@ -17,7 +17,7 @@
 #include "debug.h"
 #include "gdi.h"
 #include "options.h"
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "winerror.h"
 #include "xmalloc.h"
 

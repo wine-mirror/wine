@@ -10,6 +10,7 @@
 #include "win.h"
 #include "desktop.h"
 #include "heap.h"
+#include "wine/winuser16.h"
 
 
 /***********************************************************************

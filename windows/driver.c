@@ -5,7 +5,7 @@
  * Copyright 1998 Marcus Meissner
  */
 
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "heap.h"
 #include "win.h"
 #include "callback.h"

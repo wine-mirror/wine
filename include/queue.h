@@ -7,6 +7,7 @@
 #ifndef __WINE_QUEUE_H
 #define __WINE_QUEUE_H
 
+#include "wine/winuser16.h"
 #include "windows.h"
 
   /* Message as stored in the queue (contains the extraInfo field) */

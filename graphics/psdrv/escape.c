@@ -3,7 +3,7 @@
  *
  *	Copyright 1998  Huw D M Davies
  */
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "psdrv.h"
 #include "debug.h"
 #include "print.h"

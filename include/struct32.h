@@ -2,6 +2,7 @@
 #ifndef __WINE__STRUCT32_H
 #define __WINE__STRUCT32_H
 #include "windows.h"
+#include "queue.h"
 
 extern void STRUCT32_MINMAXINFO32to16( const MINMAXINFO32*, MINMAXINFO16* );
 extern void STRUCT32_MINMAXINFO16to32( const MINMAXINFO16*, MINMAXINFO32* );

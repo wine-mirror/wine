@@ -8,6 +8,7 @@
 #include "metafile.h"
 #include "region.h"
 #include "debug.h"
+#include "wine/winuser16.h"
 
 #define UPDATE_DIRTY_DC(dc) \
  do { \

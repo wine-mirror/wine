@@ -23,6 +23,7 @@
 #include "debugger.h"
 #include "neexe.h"
 #include "process.h"
+#include "ts_xlib.h"
 
 #include "expr.h"
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "win.h"
 #include "bitmap.h"
 #include "cursoricon.h"

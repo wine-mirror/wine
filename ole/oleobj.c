@@ -11,6 +11,7 @@
 #include "interfaces.h"
 #include "oleobj.h"
 #include "debug.h"
+#include "windows.h"
 
 
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))

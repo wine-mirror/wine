@@ -22,7 +22,6 @@
 #include "message.h"
 #include "module.h"
 #include "miscemu.h"
-#include "queue.h"
 #include "shell.h"
 #include "callback.h"
 #include "x11drv.h"

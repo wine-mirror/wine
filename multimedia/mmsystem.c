@@ -21,7 +21,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "win.h"
 #include "heap.h"
 #include "ldt.h"

@@ -5,7 +5,7 @@
 #ifndef __WINE_OLE_H
 #define __WINE_OLE_H
 
-#include "windows.h"
+#include "wingdi.h"
 
 typedef CHAR		OLECHAR16;
 typedef OLECHAR16	*BSTR16;

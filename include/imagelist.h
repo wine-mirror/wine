@@ -6,6 +6,8 @@
  
 #ifndef __WINE_IMAGELIST_H
 #define __WINE_IMAGELIST_H
+
+#include "wingdi.h"
  
 struct _IMAGELIST
 {

@@ -2,6 +2,7 @@
 #define __WINE_STORAGE_H
 
 #include "objbase.h"
+#include "windows.h"
 
 /* Does this look like a cellar to you? */
 

@@ -1,7 +1,10 @@
 #ifndef __WINE_WINBASE_H
 #define __WINE_WINBASE_H
 
-#include "windows.h"
+#include "wintypes.h"
+
+#pragma pack(1)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -180,6 +183,113 @@ DECL_WINELIB_TYPE_AW(OSVERSIONINFO)
 #define VER_PLATFORM_WIN32_WINDOWS      1
 #define VER_PLATFORM_WIN32_NT           2
 
+typedef struct tagCOMSTAT
+{
+    BYTE   status;
+    UINT16 cbInQue WINE_PACKED;
+    UINT16 cbOutQue WINE_PACKED;
+} COMSTAT,*LPCOMSTAT;
+
+typedef struct tagDCB16
+{
+    BYTE   Id;
+    UINT16 BaudRate WINE_PACKED;
+    BYTE   ByteSize;
+    BYTE   Parity;
+    BYTE   StopBits;
+    UINT16 RlsTimeout;
+    UINT16 CtsTimeout;
+    UINT16 DsrTimeout;
+
+    UINT16 fBinary        :1;
+    UINT16 fRtsDisable    :1;
+    UINT16 fParity        :1;
+    UINT16 fOutxCtsFlow   :1;
+    UINT16 fOutxDsrFlow   :1;
+    UINT16 fDummy         :2;
+    UINT16 fDtrDisable    :1;
+
+    UINT16 fOutX          :1;
+    UINT16 fInX           :1;
+    UINT16 fPeChar        :1;
+    UINT16 fNull          :1;
+    UINT16 fChEvt         :1;
+    UINT16 fDtrflow       :1;
+    UINT16 fRtsflow       :1;
+    UINT16 fDummy2        :1;
+
+    CHAR   XonChar;
+    CHAR   XoffChar;
+    UINT16 XonLim;
+    UINT16 XoffLim;
+    CHAR   PeChar;
+    CHAR   EofChar;
+    CHAR   EvtChar;
+    UINT16 TxDelay WINE_PACKED;
+} DCB16, *LPDCB16;
+
+typedef struct tagDCB32
+{
+    DWORD DCBlength;
+    DWORD BaudRate;
+    DWORD fBinary               :1;
+    DWORD fParity               :1;
+    DWORD fOutxCtsFlow          :1;
+    DWORD fOutxDsrFlow          :1;
+    DWORD fDtrControl           :2;
+    DWORD fDsrSensitivity       :1;
+    DWORD fTXContinueOnXoff     :1;
+    DWORD fOutX                 :1;
+    DWORD fInX                  :1;
+    DWORD fErrorChar            :1;
+    DWORD fNull                 :1;
+    DWORD fRtsControl           :2;
+    DWORD fAbortOnError         :1;
+    DWORD fDummy2               :17;
+    WORD wReserved;
+    WORD XonLim;
+    WORD XoffLim;
+    BYTE ByteSize;
+    BYTE Parity;
+    BYTE StopBits;
+    char XonChar;
+    char XoffChar;
+    char ErrorChar;
+    char EofChar;
+    char EvtChar;
+} DCB32, *LPDCB32;
+
+DECL_WINELIB_TYPE(DCB)
+DECL_WINELIB_TYPE(LPDCB)
+
+
+typedef struct tagCOMMTIMEOUTS {
+	DWORD	ReadIntervalTimeout;
+	DWORD	ReadTotalTimeoutMultiplier;
+	DWORD	ReadTotalTimeoutConstant;
+	DWORD	WriteTotalTimeoutMultiplier;
+	DWORD	WriteTotalTimeoutConstant;
+} COMMTIMEOUTS,*LPCOMMTIMEOUTS;
+  
+#pragma pack(4)
+
+BOOL32      WINAPI ClearCommError(INT32,LPDWORD,LPCOMSTAT);
+BOOL32      WINAPI BuildCommDCB32A(LPCSTR,LPDCB32);
+BOOL32      WINAPI BuildCommDCB32W(LPCWSTR,LPDCB32);
+#define     BuildCommDCB WINELIB_NAME_AW(BuildCommDCB)
+BOOL32      WINAPI BuildCommDCBAndTimeouts32A(LPCSTR,LPDCB32,LPCOMMTIMEOUTS);
+BOOL32      WINAPI BuildCommDCBAndTimeouts32W(LPCWSTR,LPDCB32,LPCOMMTIMEOUTS);
+#define     BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
+BOOL32      WINAPI GetCommTimeouts(INT32,LPCOMMTIMEOUTS);
+BOOL32      WINAPI SetCommTimeouts(INT32,LPCOMMTIMEOUTS);
+BOOL32      WINAPI GetCommState32(INT32,LPDCB32);
+#define     GetCommState WINELIB_NAME(GetCommState)
+BOOL32      WINAPI SetCommState32(INT32,LPDCB32);
+#define     SetCommState WINELIB_NAME(SetCommState)
+BOOL32      WINAPI TransmitCommChar32(INT32,CHAR);
+#define     TransmitCommChar WINELIB_NAME(TransmitCommChar)
+
+  
 /*DWORD WINAPI GetVersion( void );*/
 BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16*);
 BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A*);
