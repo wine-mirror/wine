@@ -19,6 +19,7 @@
 #include <ctype.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 
 #include "wine/server.h"
@@ -33,7 +34,6 @@
 DEFAULT_DEBUG_CHANNEL(atom);
 
 #define DEFAULT_ATOMTABLE_SIZE    37
-#define MIN_STR_ATOM              0xc000
 #define MAX_ATOM_LEN              255
 
 #define ATOMTOHANDLE(atom)        ((HANDLE16)(atom) << 2)
@@ -129,7 +129,7 @@ static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
         }
         if (*atomstr) return FALSE;
     }
-    if (!atom || (atom >= MIN_STR_ATOM))
+    if (!atom || (atom >= MAXINTATOM))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         atom = 0;
@@ -156,7 +156,7 @@ static BOOL ATOM_IsIntAtomW(LPCWSTR atomstr,WORD *atomid)
         }
         if (*atomstr) return FALSE;
     }
-    if (!atom || (atom >= MIN_STR_ATOM))
+    if (!atom || (atom >= MAXINTATOM))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         atom = 0;
@@ -218,7 +218,7 @@ WORD WINAPI InitAtomTable16( WORD entries )
  */
 HANDLE16 WINAPI GetAtomHandle16( ATOM atom )
 {
-    if (atom < MIN_STR_ATOM) return 0;
+    if (atom < MAXINTATOM) return 0;
     return ATOMTOHANDLE( atom );
 }
 
@@ -299,7 +299,7 @@ ATOM WINAPI DeleteAtom16( ATOM atom )
     HANDLE16 entry, *prevEntry;
     WORD hash;
 
-    if (atom < MIN_STR_ATOM) return 0;  /* Integer atom */
+    if (atom < MAXINTATOM) return 0;  /* Integer atom */
     if (CURRENT_DS == ATOM_UserDS) return GlobalDeleteAtom( atom );
 
     TRACE("0x%x\n",atom);
@@ -380,7 +380,7 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
     TRACE("%x\n",atom);
     
     if (!count) return 0;
-    if (atom < MIN_STR_ATOM)
+    if (atom < MAXINTATOM)
     {
 	sprintf( text, "#%d", atom );
 	len = strlen(text);
@@ -516,7 +516,7 @@ ATOM WINAPI AddAtomW( LPCWSTR str )
 static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
 {
     TRACE( "(%s) %x\n", local ? "local" : "global", atom );
-    if (atom < MIN_STR_ATOM) atom = 0;
+    if (atom < MAXINTATOM) atom = 0;
     else
     {
         SERVER_START_REQ( delete_atom )
@@ -666,7 +666,7 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
         SetLastError( ERROR_MORE_DATA );
         return 0;
     }
-    if (atom < MIN_STR_ATOM)
+    if (atom < MAXINTATOM)
     {
         char name[8];
         if (!atom)
@@ -751,7 +751,7 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
         SetLastError( ERROR_MORE_DATA );
         return 0;
     }
-    if (atom < MIN_STR_ATOM)
+    if (atom < MAXINTATOM)
     {
         char name[8];
         if (!atom)
