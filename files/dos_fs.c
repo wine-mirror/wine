@@ -545,7 +545,7 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
         {
             if (!ignore_case)
             {
-                if (!lstrncmpA( long_name, name, len )) break;
+                if (!strncmp( long_name, name, len )) break;
             }
             else
             {
@@ -1867,15 +1867,15 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
     TRACE_(dosfs)("(%s,...)\n",devname?devname:"<null>");
     if (!devname) {
 	/* return known MSDOS devices */
-	lstrcpyA(buffer,"CON COM1 COM2 LPT1 NUL ");
+	strcpy(buffer,"CON COM1 COM2 LPT1 NUL ");
 	while ((s=strchr(buffer,' ')))
 		*s='\0';
 
 	lstrcpynA(target,buffer,bufsize);
 	return strlen(buffer);
     }
-    lstrcpyA(buffer,"\\DEV\\");
-    lstrcatA(buffer,devname);
+    strcpy(buffer,"\\DEV\\");
+    strcat(buffer,devname);
     if ((s=strchr(buffer,':'))) *s='\0';
     lstrcpynA(target,buffer,bufsize);
     return strlen(buffer);

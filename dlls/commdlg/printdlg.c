@@ -298,8 +298,8 @@ static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructur
          LoadStringA(COMDLG32_hInstance, (1<<i), 
                         ResourceString, 255);
          if (StatusMsg[0]!='\0')        /* append ; before next item */
-            lstrcatA(StatusMsg, "; ");         
-         lstrcatA(StatusMsg,ResourceString);
+            strcat(StatusMsg, "; ");         
+         strcat(StatusMsg,ResourceString);
         }
     }
     if (StatusMsg[0]=='\0')     /* no Status ??? */

@@ -545,7 +545,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
 		    hWndCtl = GetDlgItem( hWnd, IDC_WINE_TEXT );
 		    SendMessageA( hWndCtl, WM_GETTEXT, 512, (LPARAM)Template );
-		    if( !lstrncmpA( Template, "WINE", 4 ) )
+		    if( !strncmp( Template, "WINE", 4 ) )
 			SetWindowTextA( GetDlgItem(hWnd, IDC_STATIC_TEXT), Template );
 		    else
           { char* pch = Template + strlen(Template) - strlen(__appendix_str);
@@ -554,8 +554,8 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 					(WPARAM)-1, (LPARAM)Template );
 		    }
 
-		    lstrcpyA( Template, pstr );
-		    lstrcatA( Template, __appendix_str );
+		    strcpy( Template, pstr );
+		    strcat( Template, __appendix_str );
 		    SetWindowTextA( hWndCtl, Template );
 		    SetWindowLongA( hWnd, DWL_MSGRESULT, 1 );
 		    return TRUE;

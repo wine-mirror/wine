@@ -13,6 +13,7 @@
 # include <wctype.h>
 #endif
 #include "wine/winestring.h"
+#include "crtdll.h"
 #include "heap.h"
 #include "winnls.h"
 #include "debugtools.h"
@@ -224,7 +225,7 @@ DWORD WINAPI RtlEqualUnicodeString(PUNICODE_STRING s1,PUNICODE_STRING s2,DWORD x
 	return 0;
 	if (s1->Length != s2->Length)
 		return 1;
-	return !lstrncmpW(s1->Buffer,s2->Buffer,s1->Length/2);
+	return !CRTDLL_wcsncmp(s1->Buffer,s2->Buffer,s1->Length/2);
 }
 
 /**************************************************************************

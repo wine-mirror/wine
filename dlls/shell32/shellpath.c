@@ -10,6 +10,7 @@
 #include "winnls.h"
 #include "winversion.h"
 #include "winreg.h"
+#include "crtdll.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"
@@ -130,7 +131,7 @@ LPWSTR WINAPI PathAddBackslashW(LPWSTR path)
 {	int len;
 	TRACE("%p->%s\n",path,debugstr_w(path));
 
-	len = lstrlenW(path);
+	len = CRTDLL_wcslen(path);
 	if (len && path[len-1]!=(WCHAR)'\\') 
 	{ path[len]  = (WCHAR)'\\';
 	  path[len+1]= 0x00;
@@ -170,10 +171,10 @@ LPWSTR WINAPI PathRemoveBlanksW(LPWSTR str)
 	TRACE("%s\n",debugstr_w(str));
 	while (*x==' ') x++;
 	if (x!=str)
-	  lstrcpyW(str,x);
+	  CRTDLL_wcscpy(str,x);
 	if (!*str)
 	  return str;
-	x=str+lstrlenW(str)-1;
+	x=str+CRTDLL_wcslen(str)-1;
 	while (*x==' ')
 	  x--;
 	if (*x==' ')
@@ -319,19 +320,19 @@ LPWSTR WINAPI PathCombineW(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
 	
 	
 	if (!lpszFile || !lpszFile[0] || (lpszFile[0]==(WCHAR)'.' && !lpszFile[1]) ) 
-	{ lstrcpyW(szDest,lpszDir);
+	{ CRTDLL_wcscpy(szDest,lpszDir);
 	  return szDest;
 	}
 
 	/*  if lpszFile is a complete path don't care about lpszDir */
 	if (PathIsRootW(lpszFile))
-	{ lstrcpyW(szDest,lpszFile);
+	{ CRTDLL_wcscpy(szDest,lpszFile);
 	}
 	else
-	{ lstrcpyW(sTemp,lpszDir);
+	{ CRTDLL_wcscpy(sTemp,lpszDir);
 	  PathAddBackslashW(sTemp);
-	  lstrcatW(sTemp,lpszFile);
-	  lstrcpyW(szDest,sTemp);
+	  CRTDLL_wcscat(sTemp,lpszFile);
+	  CRTDLL_wcscpy(szDest,sTemp);
 	}
 	return szDest;
 }
@@ -625,7 +626,7 @@ VOID WINAPI PathUnquoteSpacesA(LPSTR str)
 	return;
 }
 VOID WINAPI PathUnquoteSpacesW(LPWSTR str) 
-{	DWORD len = lstrlenW(str);
+{	DWORD len = CRTDLL_wcslen(str);
 
 	TRACE("%s\n",debugstr_w(str));
 
@@ -634,7 +635,7 @@ VOID WINAPI PathUnquoteSpacesW(LPWSTR str)
 	if (str[len-1]!='"')
 	  return;
 	str[len-1]='\0';
-	lstrcpyW(str,str+1);
+	CRTDLL_wcscpy(str,str+1);
 	return;
 }
 VOID WINAPI PathUnquoteSpacesAW(LPVOID str) 

@@ -22,6 +22,7 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "commctrl.h"
+#include "crtdll.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl)
@@ -33,10 +34,8 @@ extern HANDLE COMCTL32_hHeap; /* handle to the private heap */
  * We put some function prototypes here that don't seem to belong in
  * any header file. When they find their place, we can remove them.
  */
-extern LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR, WCHAR);
 extern LPSTR WINAPI lstrrchr(LPCSTR, LPCSTR, WORD);
 extern LPWSTR WINAPI lstrrchrw(LPCWSTR, LPCWSTR, WORD);
-extern LPWSTR WINAPI strstrw(LPCWSTR, LPCWSTR);
 
 
 typedef struct _STREAMDATA
@@ -1994,7 +1993,7 @@ LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
  *
  */
 INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
-  return lstrncmpA(lpStr1, lpStr2, nChar);
+  return strncmp(lpStr1, lpStr2, nChar);
 }
 
 /**************************************************************************
@@ -2002,7 +2001,7 @@ INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
  *
  */
 INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
-  return lstrncmpW(lpStr1, lpStr2, nChar);
+  return CRTDLL_wcsncmp(lpStr1, lpStr2, nChar);
 }
 
 /**************************************************************************
@@ -2034,7 +2033,7 @@ LPSTR WINAPI COMCTL32_StrStrA( LPCSTR lpFirst, LPCSTR lpSrch) {
  *
  */
 LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
-  return strstrw(lpFirst, lpSrch);
+  return CRTDLL_wcsstr(lpFirst, lpSrch);
 }
 
 /**************************************************************************

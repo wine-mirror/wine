@@ -15,6 +15,7 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "debugtools.h"
+#include "crtdll.h"
 #include "main.h"
 
 DECLARE_DEBUG_CHANNEL(file)
@@ -2401,7 +2402,7 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 	l2 = (l2==-1)?lstrlenW(s2):l2;
 	len = l1<l2 ? l1:l2;
 	ret = (fdwStyle & NORM_IGNORECASE) ?
-		lstrncmpiW(s1,s2,len)	: lstrncmpW(s1,s2,len);
+		CRTDLL__wcsnicmp(s1,s2,len) : CRTDLL_wcsncmp(s1,s2,len);
 	/* not equal, return 1 or 3 */
 	if(ret!=0) return ret+2;
 	/* same len, return 2 */
@@ -2801,13 +2802,10 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	 /* cat buf onto the output */
 	 outlen = lstrlenW(buf);
 	 if (outpos + buflen < outlen) {
-	    output[outpos] = 0;  /* a "hook" for strcat */
-	    lstrcatW(output, buf);
+            lstrcpyW( output + outpos, buf );
 	    outpos += buflen;
 	 } else {
-	    output[outpos] = 0;
-	    lstrcatnW(output, buf, outlen - outpos);
-	    output[outlen - 1] = 0;
+            lstrcpynW( output + outpos, buf, outlen - outpos );
 	    Overflow = 1;
 	    break; /* Abnormal exit */
 	 }

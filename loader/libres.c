@@ -10,6 +10,7 @@
 #include "resource.h"
 #include "debugtools.h"
 #include "heap.h"
+#include "crtdll.h"
 #include "xmalloc.h"
 
 DEFAULT_DEBUG_CHANNEL(resource)
@@ -79,7 +80,8 @@ HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
     for(Res=ResBlock->Resources; *Res; Res++)
       if(name)
       {
-	if((*Res)->restype==typeid && !lstrncmpiW((LPCWSTR)((*Res)->resname+1), name, *((*Res)->resname)))
+	if((*Res)->restype==typeid &&
+           !CRTDLL__wcsnicmp((LPCWSTR)((*Res)->resname+1), name, *((*Res)->resname)))
 	  return (HRSRC)*Res;
       }
       else

@@ -945,14 +945,14 @@ UINT WINAPI ThunkConnect16(
 ) {
     BOOL directionSL;
 
-    if (!lstrncmpA(TD->magic, "SL01", 4))
+    if (!strncmp(TD->magic, "SL01", 4))
     {
         directionSL = TRUE;
 
         TRACE_(thunk)("SL01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
                      module16, (DWORD)TD, module32, thunkfun32, dwReason);
     }
-    else if (!lstrncmpA(TD->magic, "LS01", 4))
+    else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 

@@ -207,14 +207,14 @@ UINT WINAPI ThunkConnect32(
 ) {
     BOOL directionSL;
 
-    if (!lstrncmpA(TD->magic, "SL01", 4))
+    if (!strncmp(TD->magic, "SL01", 4))
     {
         directionSL = TRUE;
 
         TRACE_(thunk)("SL01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
                      module32, (DWORD)TD, module16, thunkfun16, dwReason);
     }
-    else if (!lstrncmpA(TD->magic, "LS01", 4))
+    else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 

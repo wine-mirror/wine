@@ -22,6 +22,7 @@
 #include "libres.h"
 #include "stackframe.h"
 #include "neexe.h"
+#include "crtdll.h"
 #include "debugtools.h"
 
 /**********************************************************************
@@ -71,7 +72,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 			entryTable[entrynum].u1.s.NameOffset);
 		if(namelen != str->Length)
 			continue;
-		if(lstrncmpiW(name,str->NameString,str->Length)==0)
+		if(CRTDLL__wcsnicmp(name,str->NameString,str->Length)==0)
 			return (PIMAGE_RESOURCE_DIRECTORY) (
 				root +
 				entryTable[entrynum].u2.s.OffsetToDirectory);
