@@ -1668,19 +1668,25 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
                                    LPABC abc )
 {
     DC *dc = DC_GetDCPtr(hdc);
-    int		i;
-    GLYPHMETRICS gm;
+    int	i;
     BOOL ret = FALSE;
 
-    if(dc->gdiFont) {
-        for (i=firstChar;i<=lastChar;i++) {
-	    GetGlyphOutlineW(hdc, i, GGO_METRICS, &gm, 0, NULL, NULL);
-	    abc[i-firstChar].abcA = gm.gmptGlyphOrigin.x;
-	    abc[i-firstChar].abcB = gm.gmBlackBoxX;
-	    abc[i-firstChar].abcC = gm.gmCellIncX - gm.gmptGlyphOrigin.x - gm.gmBlackBoxX;
+    if(dc->gdiFont)
+        ret = WineEngGetCharABCWidths( dc->gdiFont, firstChar, lastChar, abc );
+    else
+        FIXME(": stub\n");
+
+    if (ret)
+    {
+        /* convert device units to logical */
+        for( i = firstChar; i <= lastChar; i++, abc++ ) {
+            abc->abcA = INTERNAL_XDSTOWS(dc, abc->abcA);
+            abc->abcB = INTERNAL_XDSTOWS(dc, abc->abcB);
+            abc->abcC = INTERNAL_XDSTOWS(dc, abc->abcC);
 	}
-	ret = TRUE;
+        ret = TRUE;
     }
+
     GDI_ReleaseObj(hdc);
     return ret;
 }

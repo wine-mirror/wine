@@ -2377,6 +2377,31 @@ BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
 }
 
 /*************************************************************
+ * WineEngGetCharABCWidths
+ *
+ */
+BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
+			     LPABC buffer)
+{
+    UINT c;
+    GLYPHMETRICS gm;
+    FT_UInt glyph_index;
+
+    TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
+
+    for(c = firstChar; c <= lastChar; c++) {
+        glyph_index = get_glyph_index(font, c);
+        WineEngGetGlyphOutline(font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
+                               &gm, 0, NULL, NULL);
+	buffer[c - firstChar].abcA = font->gm[glyph_index].lsb;
+	buffer[c - firstChar].abcB = font->gm[glyph_index].bbx;
+	buffer[c - firstChar].abcC = font->gm[glyph_index].adv - font->gm[glyph_index].lsb -
+	  font->gm[glyph_index].bbx;
+    }
+    return TRUE;
+}
+
+/*************************************************************
  * WineEngGetTextExtentPoint
  *
  */
@@ -2552,6 +2577,13 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
 
 BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
 			 LPINT buffer)
+{
+    ERR("called but we don't have FreeType\n");
+    return FALSE;
+}
+
+BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
+			     LPABC buffer)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
