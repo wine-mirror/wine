@@ -573,8 +573,10 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
     }
     /* if len=0 return only the length, don't touch the buffer*/
     if (len) {
-	lstrcpynA(buf,retString,len);
-	return strlen(buf) + 1;
+	/* Like Windows we copy len bytes to buffer and we check len after */
+        INT ret = strlen(retString) + 1;
+        memcpy( buf, retString, min(len, ret) );
+        return (len < ret) ? 0 : ret;
     }
     return strlen(retString)+1;
 }
@@ -3270,15 +3272,12 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     /* If cchNumber is zero, then returns the number of bytes or characters 
      * required to hold the formatted number string
      */
-    if (cchNumber==0)
-        retVal = strlen(sDestination) + 1;
-    else           
+    retVal = strlen(sDestination) + 1;
+    if (cchNumber!=0)
     {
-        strncpy (lpNumberStr, sDestination, cchNumber-1);
-        *(lpNumberStr+cchNumber-1) = '\0';   /* ensure we got a NULL at the end */
-        retVal = strlen(lpNumberStr);
+        memcpy( lpNumberStr, sDestination, min(cchNumber, retVal) );
+        if (cchNumber < retVal) retVal = 0;
     }
-          
     return retVal;
 }
 
@@ -3525,15 +3524,14 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
         }
     }
 
-    if (cchCurrency == 0)
-        return strlen(pDestination) + 1;
+    retVal = strlen(pDestination) + 1;
 
-    else
+    if (cchCurrency)
     {
-        strncpy (lpCurrencyStr, pDestination, cchCurrency-1);
-        *(lpCurrencyStr+cchCurrency-1) = '\0';   /* ensure we got a NULL at the end */
-        return  strlen(lpCurrencyStr);
-    }    
+        memcpy( lpCurrencyStr, pDestination, min(cchCurrency, retVal) );
+        if (cchCurrency < retVal) retVal = 0;
+    }
+    return retVal;
 }
 
 /**************************************************************************
