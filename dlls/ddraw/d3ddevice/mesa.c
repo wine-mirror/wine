@@ -607,6 +607,45 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
+inline static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
+{
+    switch (d3dpt) {
+        case D3DPT_POINTLIST:
+            TRACE("Start POINTS\n");
+	    glBegin(GL_POINTS);
+	    break;
+
+	case D3DPT_LINELIST:
+	    TRACE("Start LINES\n");
+	    glBegin(GL_LINES);
+	    break;
+
+	case D3DPT_LINESTRIP:
+	    TRACE("Start LINE_STRIP\n");
+	    glBegin(GL_LINE_STRIP);
+	    break;
+
+	case D3DPT_TRIANGLELIST:
+	    TRACE("Start TRIANGLES\n");
+	    glBegin(GL_TRIANGLES);
+	    break;
+
+	case D3DPT_TRIANGLESTRIP:
+	    TRACE("Start TRIANGLE_STRIP\n");
+	    glBegin(GL_TRIANGLE_STRIP);
+	    break;
+
+	case D3DPT_TRIANGLEFAN:
+	    TRACE("Start TRIANGLE_FAN\n");
+	    glBegin(GL_TRIANGLE_FAN);
+	    break;
+
+	default:
+	    TRACE("Unhandled primitive\n");
+	    break;
+    }
+}
+
 inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, WORD *index,
 				  D3DVERTEXTYPE d3dvt, D3DPRIMITIVETYPE d3dpt, void *lpvertex)
 {
@@ -684,42 +723,8 @@ inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, 
 	glThis->vertex_type = d3dvt;
     }
 
-    switch (d3dpt) {
-        case D3DPT_POINTLIST:
-            TRACE("Start POINTS\n");
-	    glBegin(GL_POINTS);
-	    break;
-
-	case D3DPT_LINELIST:
-	    TRACE("Start LINES\n");
-	    glBegin(GL_LINES);
-	    break;
-
-	case D3DPT_LINESTRIP:
-	    TRACE("Start LINE_STRIP\n");
-	    glBegin(GL_LINE_STRIP);
-	    break;
-
-	case D3DPT_TRIANGLELIST:
-	    TRACE("Start TRIANGLES\n");
-	    glBegin(GL_TRIANGLES);
-	    break;
-
-	case D3DPT_TRIANGLESTRIP:
-	    TRACE("Start TRIANGLE_STRIP\n");
-	    glBegin(GL_TRIANGLE_STRIP);
-	    break;
-
-	case D3DPT_TRIANGLEFAN:
-	    TRACE("Start TRIANGLE_FAN\n");
-	    glBegin(GL_TRIANGLE_FAN);
-	    break;
-
-	default:
-	    TRACE("Unhandled primitive\n");
-	    break;
-    }
-
+    draw_primitive_start_GL(d3dpt);
+    
     /* Draw the primitives */
     for (vx_index = 0; vx_index < maxvert; vx_index++) {
         switch (d3dvt) {
@@ -748,9 +753,10 @@ inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, 
 	        D3DTLVERTEX *vx = ((D3DTLVERTEX *) lpvertex) + (index == 0 ? vx_index : index[vx_index]);
 		DWORD col = vx->u5.color;
 
-		glColor3f(((col >> 16) & 0xFF) / 255.0,
-			  ((col >>  8) & 0xFF) / 255.0,
-			  ((col >>  0) & 0xFF) / 255.0);
+		glColor4ub((col >> 24) & 0xFF,
+			   (col >> 16) & 0xFF,
+			   (col >>  8) & 0xFF,
+			   (col >>  0) & 0xFF);
 		glTexCoord2f(vx->u7.tu, vx->u8.tv);
 		if (vx->u4.rhw < 0.01)
 		    glVertex3f(vx->u1.sx,
@@ -835,6 +841,131 @@ GL_IDirect3DDeviceImpl_1_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
     return ret_value;
 }
 
+static void dump_flexible_vertex(DWORD d3dvtVertexType)
+{
+    static const flag_info flags[] = {
+        FE(D3DFVF_NORMAL),
+	FE(D3DFVF_RESERVED1),
+	FE(D3DFVF_DIFFUSE),
+	FE(D3DFVF_SPECULAR)
+    };
+    if (d3dvtVertexType & D3DFVF_RESERVED0) DPRINTF("D3DFVF_RESERVED0 ");
+    switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
+#define GEN_CASE(a) case a: DPRINTF(#a " "); break
+        GEN_CASE(D3DFVF_XYZ);
+	GEN_CASE(D3DFVF_XYZRHW);
+	GEN_CASE(D3DFVF_XYZB1);
+	GEN_CASE(D3DFVF_XYZB2);
+	GEN_CASE(D3DFVF_XYZB3);
+	GEN_CASE(D3DFVF_XYZB4);
+	GEN_CASE(D3DFVF_XYZB5);
+    }
+    DDRAW_dump_flags_(d3dvtVertexType, flags, sizeof(flags)/sizeof(flags[0]), FALSE);
+    switch (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) {
+        GEN_CASE(D3DFVF_TEX0);
+	GEN_CASE(D3DFVF_TEX1);
+	GEN_CASE(D3DFVF_TEX2);
+	GEN_CASE(D3DFVF_TEX3);
+	GEN_CASE(D3DFVF_TEX4);
+	GEN_CASE(D3DFVF_TEX5);
+	GEN_CASE(D3DFVF_TEX6);
+	GEN_CASE(D3DFVF_TEX7);
+	GEN_CASE(D3DFVF_TEX8);
+    }
+#undef GEN_CASE
+    DPRINTF("\n");
+}
+
+/* Some types used by the fast paths... */
+typedef struct {
+    float x, y, z;
+    float nx, ny, nz;
+    DWORD dwDiffuseRGBA;
+    float tu1, tv1;
+} D3DFVF_VERTEX_1;
+
+static void draw_primitive_7(IDirect3DDeviceImpl *This,
+			     D3DPRIMITIVETYPE d3dptPrimitiveType,
+			     DWORD d3dvtVertexType,
+			     LPVOID lpvVertices,
+			     DWORD dwVertexCount,
+			     LPWORD dwIndices,
+			     DWORD dwIndexCount,
+			     DWORD dwFlags)
+{
+    if (TRACE_ON(ddraw)) {
+        TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
+    }
+
+    ENTER_GL();
+    draw_primitive_start_GL(d3dptPrimitiveType);
+
+    /* Some fast paths first before the generic case.... */
+    if (d3dvtVertexType == D3DFVF_VERTEX) {
+        D3DFVF_VERTEX_1 *vertices = (D3DFVF_VERTEX_1 *) lpvVertices;
+	int index;
+
+	for (index = 0; index < dwIndexCount; index++) {
+	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	  
+	    glNormal3f(vertices[i].nx, vertices[i].ny, vertices[i].nz);
+	    glTexCoord2f(vertices[i].tu1, vertices[i].tv1);
+	    glColor4ub((vertices[i].dwDiffuseRGBA >> 24) & 0xFF,
+		       (vertices[i].dwDiffuseRGBA >> 16) & 0xFF,
+		       (vertices[i].dwDiffuseRGBA >>  8) & 0xFF,
+		       (vertices[i].dwDiffuseRGBA >>  0) & 0xFF);
+	    glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
+	    TRACE(" %f %f %f / %f %f %f (%02lx %02lx %02lx %02lx) (%f %f)\n",
+		  vertices[i].x, vertices[i].y, vertices[i].z,
+		  vertices[i].nx, vertices[i].ny, vertices[i].nz,
+		  (vertices[i].dwDiffuseRGBA >> 24) & 0xFF,
+		  (vertices[i].dwDiffuseRGBA >> 16) & 0xFF,
+		  (vertices[i].dwDiffuseRGBA >>  8) & 0xFF,
+		  (vertices[i].dwDiffuseRGBA >>  0) & 0xFF,
+		  vertices[i].tu1, vertices[i].tv1);
+	}
+    }
+    
+    glEnd();
+    LEAVE_GL();
+    TRACE("End\n");    
+}
+
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_DrawPrimitive(LPDIRECT3DDEVICE7 iface,
+					  D3DPRIMITIVETYPE d3dptPrimitiveType,
+					  DWORD d3dvtVertexType,
+					  LPVOID lpvVertices,
+					  DWORD dwVertexCount,
+					  DWORD dwFlags)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwFlags);
+
+    draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, NULL, dwVertexCount, dwFlags);
+    
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive(LPDIRECT3DDEVICE7 iface,
+						 D3DPRIMITIVETYPE d3dptPrimitiveType,
+						 DWORD d3dvtVertexType,
+						 LPVOID lpvVertices,
+						 DWORD dwVertexCount,
+						 LPWORD dwIndices,
+						 DWORD dwIndexCount,
+						 DWORD dwFlags)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
+
+    draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
+    
+    return DD_OK;
+}
+
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)     (typeof(VTABLE_IDirect3DDevice7.fun))
 #else
@@ -869,8 +1000,8 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(BeginStateBlock) Main_IDirect3DDeviceImpl_7_BeginStateBlock,
     XCAST(EndStateBlock) Main_IDirect3DDeviceImpl_7_EndStateBlock,
     XCAST(PreLoad) Main_IDirect3DDeviceImpl_7_PreLoad,
-    XCAST(DrawPrimitive) Main_IDirect3DDeviceImpl_7_3T_DrawPrimitive,
-    XCAST(DrawIndexedPrimitive) Main_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive,
+    XCAST(DrawPrimitive) GL_IDirect3DDeviceImpl_7_3T_DrawPrimitive,
+    XCAST(DrawIndexedPrimitive) GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive,
     XCAST(SetClipStatus) Main_IDirect3DDeviceImpl_7_3T_2T_SetClipStatus,
     XCAST(GetClipStatus) Main_IDirect3DDeviceImpl_7_3T_2T_GetClipStatus,
     XCAST(DrawPrimitiveStrided) Main_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided,
@@ -1044,8 +1175,97 @@ ICOM_VTABLE(IDirect3DDevice) VTABLE_IDirect3DDevice =
 #undef XCAST
 #endif
 
+/* TODO for both these functions :
+    - change / restore OpenGL parameters for pictures transfers in case they are ever modified
+      by other OpenGL code in D3D
+    - handle the case where no 'Begin / EndScene' was done between two locks
+    - handle the rectangles in the unlock too
+*/
+static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags)
+{
+    /* First, check if we need to do anything */
+    if ((This->lastlocktype & DDLOCK_WRITEONLY) == 0) {
+        GLenum buffer_type;
+	GLenum prev_read;
+	RECT loc_rect;
 
+	ENTER_GL();
 
+	glGetIntegerv(GL_READ_BUFFER, &prev_read);
+	glFlush();
+	
+        WARN(" application does a lock on a 3D surface - expect slow downs.\n");
+	if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+	    /* Application wants to lock the front buffer */
+	    glReadBuffer(GL_FRONT);
+	} else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
+	    /* Application wants to lock the back buffer */
+	    glReadBuffer(GL_BACK);
+	} else {
+	    WARN(" do not support 3D surface locking for this surface type - trying to use default buffer.\n");
+	}
+
+	if (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	    buffer_type = GL_UNSIGNED_SHORT_5_6_5;
+	} else {
+	    WARN(" unsupported pixel format.\n");
+	    LEAVE_GL();
+	    return;
+	}
+	if (pRect == NULL) {
+	    loc_rect.top = 0;
+	    loc_rect.left = 0;
+	    loc_rect.bottom = This->surface_desc.dwHeight;
+	    loc_rect.right = This->surface_desc.dwWidth;
+	} else {
+	    loc_rect = *pRect;
+	}
+	glReadPixels(loc_rect.left, loc_rect.top, loc_rect.right, loc_rect.bottom,
+		     GL_RGB, buffer_type, ((char *)This->surface_desc.lpSurface
+					   + loc_rect.top * This->surface_desc.u1.lPitch
+					   + loc_rect.left * GET_BPP(This->surface_desc)));
+	glReadBuffer(prev_read);
+	LEAVE_GL();
+    }
+}
+
+static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
+{
+    /* First, check if we need to do anything */
+    if ((This->lastlocktype & DDLOCK_READONLY) == 0) {
+        GLenum buffer_type;
+	GLenum prev_draw;
+
+	ENTER_GL();
+
+	glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
+
+        WARN(" application does an unlock on a 3D surface - expect slow downs.\n");
+	if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+	    /* Application wants to lock the front buffer */
+	    glDrawBuffer(GL_FRONT);
+	} else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
+	    /* Application wants to lock the back buffer */
+	    glDrawBuffer(GL_BACK);
+	} else {
+	    WARN(" do not support 3D surface locking for this surface type - trying to use default buffer.\n");
+	}
+
+	if (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	    buffer_type = GL_UNSIGNED_SHORT_5_6_5;
+	} else {
+	    WARN(" unsupported pixel format.\n");
+	    LEAVE_GL();
+	    return;
+	}
+
+	glDrawPixels(This->surface_desc.dwWidth, This->surface_desc.dwHeight, 
+		     GL_RGB, buffer_type, This->surface_desc.lpSurface);
+	glDrawBuffer(prev_draw);
+
+	LEAVE_GL();
+   }
+}
 
 HRESULT
 d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surface)
@@ -1057,6 +1277,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     XVisualInfo *vis;
     int num;
     XVisualInfo template;
+    GLenum buffer;
     
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDeviceGLImpl));
     if (object == NULL) return DDERR_OUTOFMEMORY;
@@ -1070,14 +1291,14 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->current_viewport = NULL;
     object->current_texture = NULL;
     object->set_context = set_context;
-    
+
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);
 
     device_context = GetDC(surface->ddraw_owner->window);
     gl_object->display = get_display(device_context);
     gl_object->drawable = get_drawable(device_context);
     ReleaseDC(surface->ddraw_owner->window,device_context);
-    
+
     ENTER_GL();
     template.visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
     vis = XGetVisualInfo(gl_object->display, VisualIDMask, &template, &num);
@@ -1105,11 +1326,28 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     /* Look for the front buffer and override its surface's Flip method (if in double buffering) */
     for (surf = surface; surf != NULL; surf = surf->surface_owner) {
         if ((surf->surface_desc.ddsCaps.dwCaps&(DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER)) == (DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER)) {
-            surface->surface_owner->aux_ctx  = (LPVOID) gl_object->display;
-            surface->surface_owner->aux_data = (LPVOID) gl_object->drawable;
-            surface->surface_owner->aux_flip = opengl_flip;
+            surf->aux_ctx  = (LPVOID) gl_object->display;
+            surf->aux_data = (LPVOID) gl_object->drawable;
+            surf->aux_flip = opengl_flip;
+	    buffer =  GL_BACK;
             break;
         }
+    }
+    /* We are not doing any double buffering.. Then force OpenGL to draw on the front buffer */
+    if (surf == NULL) {
+        TRACE(" no double buffering : drawing on the front buffer\n");
+        buffer = GL_FRONT;
+    }
+    
+    for (surf = surface; surf->prev_attached != NULL; surf = surf->prev_attached) ;
+    for (; surf != NULL; surf = surf->next_attached) {
+        if (((surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_3DDEVICE)) == (DDSCAPS_3DDEVICE)) &&
+	    ((surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER)) != (DDSCAPS_ZBUFFER))) {
+	    /* Override the Lock / Unlock function for all these surfaces */
+	    surf->lock_update = d3ddevice_lock_update;
+	    surf->unlock_update = d3ddevice_unlock_update;
+	}
+	surf->d3ddevice = object;
     }
     
     gl_object->render_state.src = GL_ONE;
@@ -1135,6 +1373,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     TRACE(" current context set\n");
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glDrawBuffer(buffer);
+    /* glDisable(GL_DEPTH_TEST); Need here to check for the presence of a ZBuffer and to reenable it when the ZBuffer is attached */
     LEAVE_GL();
 
     /* fill_device_capabilities(d3d->ddraw); */    

@@ -368,4 +368,28 @@ extern void DDRAW_dump_cooperativelevel(DWORD cooplevel);
 extern void DDRAW_dump_lockflag(DWORD lockflag);
 extern void DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *in);
 extern void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps);
+
+/* Used for generic dumping */
+typedef struct
+{
+    DWORD val;
+    const char* name;
+} flag_info;
+
+#define FE(x) { x, #x }
+
+typedef struct
+{
+    DWORD val;
+    const char* name;
+    void (*func)(const void *);
+    ptrdiff_t offset;
+} member_info;
+
+#define DDRAW_dump_flags(flags,names,num_names) DDRAW_dump_flags_(flags, names, num_names, 1)
+#define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
+
+extern void DDRAW_dump_flags_(DWORD flags, const flag_info* names, size_t num_names, int newline);
+extern void DDRAW_dump_members(DWORD flags, const void* data, const member_info* mems, size_t num_mems);
+
 #endif /* __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H */

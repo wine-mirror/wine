@@ -39,29 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /******************************************************************************
  *		debug output functions
  */
-typedef struct
-{
-    DWORD val;
-    const char* name;
-} flag_info;
-
-#define FE(x) { x, #x }
-
-typedef struct
-{
-    DWORD val;
-    const char* name;
-    void (*func)(const void *);
-    ptrdiff_t offset;
-} member_info;
-
-#define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
-
-#define DDRAW_dump_flags(flags,names,num_names) \
-     DDRAW_dump_flags_(flags, names, num_names, 1)
-
-static void DDRAW_dump_flags_(DWORD flags, const flag_info* names,
-			     size_t num_names, int newline)
+void DDRAW_dump_flags_(DWORD flags, const flag_info* names,
+		       size_t num_names, int newline)
 {
     unsigned int	i;
 
@@ -74,8 +53,8 @@ static void DDRAW_dump_flags_(DWORD flags, const flag_info* names,
         DPRINTF("\n");
 }
 
-static void DDRAW_dump_members(DWORD flags, const void* data,
-			       const member_info* mems, size_t num_mems)
+void DDRAW_dump_members(DWORD flags, const void* data,
+			const member_info* mems, size_t num_mems)
 {
     unsigned int i;
 

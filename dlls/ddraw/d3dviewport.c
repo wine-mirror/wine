@@ -438,7 +438,7 @@ GL_IDirect3DViewportImpl_3_Clear2(LPDIRECT3DVIEWPORT3 iface,
 		     ((dwColor >>  8) & 0xFF) / 255.0,
 		     ((dwColor >>  0) & 0xFF) / 255.0,
 		     ((dwColor >> 24) & 0xFF) / 255.0);
-	TRACE("Color value (ARGB) : %08lx", dwColor);
+	TRACE("Color value (ARGB) : %08lx\n", dwColor);
     }
     
     glClear(bitfield);
