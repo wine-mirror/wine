@@ -338,8 +338,9 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
       point_size = 10 * return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPoints );
       dpi = (l_cellheight * 720) / point_size;
 
-      fprintf(fs, "%d-%d-%d-%d-", l_cellheight, 10*l_cellheight, 72, 72);
-						/* point_size, dpi, dpi); */
+      fprintf(fs, "%d-%d-%d-%d-",l_cellheight, point_size, 
+            return_data_value (dfShort, &cpe_font_struct->hdr.fi.dfHorizRes),
+            return_data_value (dfShort, &cpe_font_struct->hdr.fi.dfVertRes));
 
       /* spacing */
 
@@ -379,7 +380,7 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
     else return ERROR_DATA;
 
     fprintf(fs, "SIZE  %d  %d   %d\n",  
-	l_cellheight,
+        return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPoints ),
 	return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfHorizRes),
 	return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfVertRes));   /* dfVertRes[2] */
 
