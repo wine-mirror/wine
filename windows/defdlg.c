@@ -118,9 +118,6 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     switch(msg)
     {
-	case WM_INITDIALOG:
-	    return 0;
-
         case WM_ERASEBKGND:
 	    FillWindow( hwnd, hwnd, (HDC16)wParam, (HBRUSH16)CTLCOLOR_DLG );
 	    return 1;
@@ -152,6 +149,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
             /* Delete window procedure */
             WINPROC_FreeProc( dlgInfo->dlgProc );
             dlgInfo->dlgProc = (HWINDOWPROC)0;
+	    dlgInfo->fEnd    = TRUE;	/* just in case */
 
 	      /* Window clean-up */
 	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
@@ -194,6 +192,9 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
             }
             return 0;
 
+	case WM_GETFONT: 
+	    return dlgInfo->hUserFont;
+
         case WM_CLOSE:
             EndDialog( hwnd, TRUE );
             DestroyWindow( hwnd );
@@ -202,6 +203,21 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
     return 0;
 }
 
+/***********************************************************************
+ *           DEFDLG_Signoff
+ */
+static LRESULT DEFDLG_Signoff(DIALOGINFO* dlgInfo, UINT32 msg, BOOL16 fResult)
+{
+    /* see SDK 3.1 */
+
+    if ((msg >= WM_CTLCOLORMSGBOX && msg <= WM_CTLCOLORSTATIC) ||
+	 msg == WM_CTLCOLOR || msg == WM_COMPAREITEM ||
+         msg == WM_VKEYTOITEM || msg == WM_CHARTOITEM ||
+         msg == WM_QUERYDRAGICON || msg == WM_INITDIALOG)
+        return fResult; 
+
+    return dlgInfo->msgResult;
+}
 
 /***********************************************************************
  *           DefDlgProc16   (USER.308)
@@ -214,38 +230,43 @@ LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
     
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
-
     dlgInfo->msgResult = 0;
-    if (dlgInfo->dlgProc)
-    {
-	  /* Call dialog procedure */
+
+    if (dlgInfo->dlgProc) 	/* Call dialog procedure */
 	result = (BOOL16)CallWindowProc16( (WNDPROC16)dlgInfo->dlgProc,
                                            hwnd, msg, wParam, lParam );
 
-        /* Check if window was destroyed by dialog procedure */
+    /* Check if window was destroyed by dialog procedure */
 
-	if (!IsWindow( hwnd )) return result;
-	else if( result ) return dlgInfo->msgResult;
-    }
-    
-    switch(msg)
+    if( !result && IsWindow(hwnd))
     {
-	case WM_INITDIALOG:
-        case WM_ERASEBKGND:
-	case WM_NCDESTROY:
-	case WM_SHOWWINDOW:
-	case WM_ACTIVATE:
-	case WM_SETFOCUS:
-        case DM_SETDEFID:
-        case DM_GETDEFID:
-	case WM_NEXTDLGCTL:
-        case WM_CLOSE:
-            return DEFDLG_Proc( (HWND32)hwnd, msg, (WPARAM32)wParam,
-                                lParam, dlgInfo );
+        /* callback didn't process this message */
 
-	default:
-	    return DefWindowProc16( hwnd, msg, wParam, lParam );
-    }
+        switch(msg)
+        {
+            case WM_ERASEBKGND:
+            case WM_SHOWWINDOW:
+            case WM_ACTIVATE:
+            case WM_SETFOCUS:
+            case DM_SETDEFID:
+            case DM_GETDEFID:
+            case WM_NEXTDLGCTL:
+            case WM_GETFONT:
+            case WM_CLOSE:
+            case WM_NCDESTROY:
+                return DEFDLG_Proc( (HWND32)hwnd, msg, 
+                                    (WPARAM32)wParam, lParam, dlgInfo );
+            case WM_INITDIALOG:
+            case WM_VKEYTOITEM:
+            case WM_COMPAREITEM:
+            case WM_CHARTOITEM:
+                break;
+
+            default:
+                return DefWindowProc16( hwnd, msg, wParam, lParam );
+        }
+    }   
+    return DEFDLG_Signoff(dlgInfo, msg, result);
 }
 
 
@@ -260,37 +281,43 @@ LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
-
     dlgInfo->msgResult = 0;
-    if (dlgInfo->dlgProc)
-    {
-	  /* Call dialog procedure */
-	result = (BOOL16)CallWindowProc32A( (WNDPROC32)dlgInfo->dlgProc,
+
+    if (dlgInfo->dlgProc)       /* Call dialog procedure */
+        result = (BOOL16)CallWindowProc32A( (WNDPROC32)dlgInfo->dlgProc,
                                             hwnd, msg, wParam, lParam );
 
-        /* Check if window was destroyed by dialog procedure */
+    /* Check if window was destroyed by dialog procedure */
 
-        if (!IsWindow( hwnd )) return result;
-        else if( result ) return dlgInfo->msgResult;
-    }
-    
-    switch(msg)
+    if( !result && IsWindow(hwnd))
     {
-	case WM_INITDIALOG:
-        case WM_ERASEBKGND:
-	case WM_NCDESTROY:
-	case WM_SHOWWINDOW:
-	case WM_ACTIVATE:
-	case WM_SETFOCUS:
-        case DM_SETDEFID:
-        case DM_GETDEFID:
-	case WM_NEXTDLGCTL:
-        case WM_CLOSE:
-            return DEFDLG_Proc( hwnd, msg, wParam, lParam, dlgInfo );
+        /* callback didn't process this message */
 
-	default:
-	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
+        switch(msg)
+        {
+            case WM_ERASEBKGND:
+            case WM_SHOWWINDOW:
+            case WM_ACTIVATE:
+            case WM_SETFOCUS:
+            case DM_SETDEFID:
+            case DM_GETDEFID:
+            case WM_NEXTDLGCTL:
+            case WM_GETFONT:
+            case WM_CLOSE:
+            case WM_NCDESTROY:
+                 return DEFDLG_Proc( (HWND32)hwnd, msg,
+                                     (WPARAM32)wParam, lParam, dlgInfo );
+            case WM_INITDIALOG:
+            case WM_VKEYTOITEM:
+            case WM_COMPAREITEM:
+            case WM_CHARTOITEM:
+                 break;
+
+            default:
+                 return DefWindowProc32A( hwnd, msg, wParam, lParam );
+        }
     }
+    return DEFDLG_Signoff(dlgInfo, msg, result);
 }
 
 
@@ -305,35 +332,41 @@ LRESULT DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
-
     dlgInfo->msgResult = 0;
-    if (dlgInfo->dlgProc)
-    {
-	  /* Call dialog procedure */
-	result = (BOOL16)CallWindowProc32W( (WNDPROC32)dlgInfo->dlgProc,
+
+    if (dlgInfo->dlgProc)       /* Call dialog procedure */
+        result = (BOOL16)CallWindowProc32W( (WNDPROC32)dlgInfo->dlgProc,
                                             hwnd, msg, wParam, lParam );
 
-        /* Check if window was destroyed by dialog procedure */
+    /* Check if window was destroyed by dialog procedure */
 
-        if (!IsWindow( hwnd )) return result;
-        else if( result ) return dlgInfo->msgResult;
-    }
-    
-    switch(msg)
+    if( !result && IsWindow(hwnd))
     {
-	case WM_INITDIALOG:
-        case WM_ERASEBKGND:
-	case WM_NCDESTROY:
-	case WM_SHOWWINDOW:
-	case WM_ACTIVATE:
-	case WM_SETFOCUS:
-        case DM_SETDEFID:
-        case DM_GETDEFID:
-	case WM_NEXTDLGCTL:
-        case WM_CLOSE:
-            return DEFDLG_Proc( hwnd, msg, wParam, lParam, dlgInfo );
+        /* callback didn't process this message */
 
-	default:
-	    return DefWindowProc32W( hwnd, msg, wParam, lParam );
+        switch(msg)
+        {
+            case WM_ERASEBKGND:
+            case WM_SHOWWINDOW:
+            case WM_ACTIVATE:
+            case WM_SETFOCUS:
+            case DM_SETDEFID:
+            case DM_GETDEFID:
+            case WM_NEXTDLGCTL:
+            case WM_GETFONT:
+            case WM_CLOSE:
+            case WM_NCDESTROY:
+                 return DEFDLG_Proc( (HWND32)hwnd, msg,
+                                     (WPARAM32)wParam, lParam, dlgInfo );
+            case WM_INITDIALOG:
+            case WM_VKEYTOITEM:
+            case WM_COMPAREITEM:
+            case WM_CHARTOITEM:
+                 break;
+
+            default:
+                 return DefWindowProc32W( hwnd, msg, wParam, lParam );
+        }
     }
+    return DEFDLG_Signoff(dlgInfo, msg, result);
 }

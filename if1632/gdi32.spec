@@ -34,8 +34,8 @@ base	1
 0029 stub CreateColorSpaceW
 0030 stdcall CreateCompatibleBitmap(long long long) CreateCompatibleBitmap
 0031 stdcall CreateCompatibleDC(long) CreateCompatibleDC
-0032 stub CreateDCA
-0033 stub CreateDCW
+0032 stdcall CreateDCA(ptr ptr ptr ptr) CreateDC32A
+0033 stdcall CreateDCW(ptr ptr ptr ptr) CreateDC32W
 0034 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush32
 0035 stub CreateDIBPatternBrushPt
 0036 stub CreateDIBSection
@@ -94,9 +94,9 @@ base	1
 0086 stub EnumICMProfilesA
 0087 stub EnumICMProfilesW
 0088 stub EnumMetaFile
-0089 stdcall EnumObjects(long long ptr long) EnumObjects32
+0089 stdcall EnumObjects(long long ptr long) THUNK_EnumObjects32
 0090 stdcall EqualRgn(long long) EqualRgn32
-0091 stub Escape
+0091 stdcall Escape(long long long ptr ptr) Escape
 0092 stdcall ExcludeClipRect(long long long long long) ExcludeClipRect32
 0093 stub ExtCreatePen
 0094 stub ExtCreateRegion
@@ -158,9 +158,9 @@ base	1
 0150 stub GetCharABCWidthsFloatA
 0151 stub GetCharABCWidthsFloatW
 0152 stub GetCharABCWidthsW
-0153 stub GetCharWidth32A
+0153 stdcall GetCharWidth32A(long long long long) GetCharWidth
 0154 stub GetCharWidth32W
-0155 stub GetCharWidthA
+0155 stdcall GetCharWidthA(long long long long) GetCharWidth
 0156 stub GetCharWidthFloatA
 0157 stub GetCharWidthFloatW
 0158 stub GetCharWidthW
@@ -233,14 +233,14 @@ base	1
 0225 stub GetTextCharacterExtra
 0226 stub GetTextCharset
 0227 stdcall GetTextColor(long) GetTextColor
-0228 stub GetTextExtentExPointA
-0229 stub GetTextExtentExPointW
+0228 stdcall GetTextExtentExPointA(long ptr long long ptr ptr ptr) GetTextExtentExPoint32A
+0229 stdcall GetTextExtentExPointW(long ptr long long ptr ptr ptr) GetTextExtentExPoint32W
 0230 stdcall GetTextExtentPoint32A(long ptr long ptr) GetTextExtentPoint32A
 0231 stdcall GetTextExtentPoint32W(long ptr long ptr) GetTextExtentPoint32W
 0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32ABuggy
 0233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32WBuggy
-0234 stdcall GetTextFaceA(long long ptr) GetTextFace
-0235 stub GetTextFaceW
+0234 stdcall GetTextFaceA(long long ptr) GetTextFace32A
+0235 stdcall GetTextFaceW(long long ptr) GetTextFace32W
 0236 stdcall GetTextMetricsA(long ptr) GetTextMetrics32A
 0237 stdcall GetTextMetricsW(long ptr) GetTextMetrics32W
 0238 stub GetTransform
@@ -280,8 +280,8 @@ base	1
 0272 stub PolyPolyline
 0273 stub PolyTextOutA
 0274 stub PolyTextOutW
-0275 stub Polygon
-0276 stub Polyline
+0275 stdcall Polygon(long ptr long) Polygon32
+0276 stdcall Polyline(long ptr long) Polyline32
 0277 stub PolylineTo
 0278 stdcall PtInRegion(long long long) PtInRegion32
 0279 stdcall PtVisible(long long long) PtVisible32
@@ -342,7 +342,7 @@ base	1
 0333 stub SetRelAbs
 0334 stdcall SetStretchBltMode(long long) SetStretchBltMode
 0335 stub SetSystemPaletteUse
-0336 stub SetTextAlign
+0336 stdcall SetTextAlign(long long) SetTextAlign
 0337 stub SetTextCharacterExtra
 0338 stdcall SetTextColor(long long) SetTextColor
 0339 stub SetTextJustification

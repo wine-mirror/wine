@@ -13,8 +13,11 @@
 #include "except.h"
 #include "task.h"
 #include "stddebug.h"
+#include "string32.h"
 #define DEBUG_WIN32
 #include "debug.h"
+#include "string32.h"
+#include "xmalloc.h"
   
 /* The global error value
  */
@@ -25,14 +28,10 @@ int WIN32_LastError;
  */
 BOOL CloseHandle(KERNEL_OBJECT *handle)
 {
-    if(ValidateKernelObject(handle) != 0)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return 0;
-    }
-
     if (handle<0x1000) /* FIXME: hack */
     	return CloseFileHandle(handle);
+    if (handle==0xFFFFFFFF)
+    	return FALSE;
     switch(handle->magic)
     {
         case KERNEL_OBJECT_UNUSED:
@@ -57,11 +56,11 @@ BOOL CloseHandle(KERNEL_OBJECT *handle)
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */
-HMODULE32 WIN32_GetModuleHandle(char *module)
+HMODULE32 WIN32_GetModuleHandleA(char *module)
 {
     HMODULE32 hModule;
 
-    dprintf_win32(stddeb, "GetModuleHandle: %s\n", module ? module : "NULL");
+    dprintf_win32(stddeb, "GetModuleHandleA: %s\n", module ? module : "NULL");
 /* Freecell uses the result of GetModuleHandleA(0) as the hInstance in
 all calls to e.g. CreateWindowEx. */
     if (module == NULL) {
@@ -69,17 +68,29 @@ all calls to e.g. CreateWindowEx. */
 	hModule = pTask->hInstance;
     } else
 	hModule = GetModuleHandle(module);
-    dprintf_win32(stddeb, "GetModuleHandle: returning %d\n", hModule );
+    dprintf_win32(stddeb, "GetModuleHandleA: returning %d\n", hModule );
     return hModule;
 }
+
+HMODULE32 WIN32_GetModuleHandleW(LPCWSTR module)
+{
+  HMODULE32 hModule;
+  LPSTR     modulea;
+  if(module==NULL) return WIN32_GetModuleHandleA(NULL);
+  modulea=STRING32_DupUniToAnsi(module);
+  hModule = WIN32_GetModuleHandleA(modulea);
+  free(modulea);
+  return hModule;
+}
+
 
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)
  */
-VOID GetStartupInfoA(LPSTARTUPINFO lpStartupInfo)
+VOID GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
 {
-    lpStartupInfo->cb = sizeof(STARTUPINFO);
-    lpStartupInfo->lpReserved = NULL;
+    lpStartupInfo->cb = sizeof(STARTUPINFO32A);
+    lpStartupInfo->lpReserved = "<Reserved>";
     lpStartupInfo->lpDesktop = "Desktop";
     lpStartupInfo->lpTitle = "Title";
 
@@ -91,23 +102,57 @@ VOID GetStartupInfoA(LPSTARTUPINFO lpStartupInfo)
 }
 
 /***********************************************************************
+ *              GetStartupInfoW         (KERNEL32.274)
+ */
+VOID GetStartupInfo32W(LPSTARTUPINFO32W lpStartupInfo)
+{
+    lpStartupInfo->cb = sizeof(STARTUPINFO32W);
+    lpStartupInfo->lpReserved = STRING32_DupAnsiToUni("<Reserved>");
+    lpStartupInfo->lpDesktop = STRING32_DupAnsiToUni("Desktop");
+    lpStartupInfo->lpTitle = STRING32_DupAnsiToUni("Title");
+
+    lpStartupInfo->cbReserved2 = 0;
+    lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
+    lpStartupInfo->hStdInput  = (HANDLE32)0;
+    lpStartupInfo->hStdOutput = (HANDLE32)1;
+    lpStartupInfo->hStdError  = (HANDLE32)2;
+}
+
+/***********************************************************************
  *              GetStartupInfoA         (KERNEL32.284)
- * FIXME: perhaps supply better values.
+ * FIXME: perhaps supply better values. 
+ *        add other architectures for WINELIB.
  */
 VOID
 GetSystemInfo(LPSYSTEM_INFO si) {
-    si->dwOemId		= 0x12345678;
-    si->dwPageSize	= 4096; /* 4K */
-    si->lpMinimumApplicationAddress = 0x40000000;
-    si->lpMaximumApplicationAddress = 0x80000000;
-    si->dwActiveProcessorMask       = 1;
-    si->dwNumberOfProcessors        = 1;
+    WORD cpu;
+    
+    si->u.x.wProcessorArchitecture	= PROCESSOR_ARCHITECTURE_INTEL;
+
+    si->dwPageSize			= 4096; /* 4K */
+    si->lpMinimumApplicationAddress	= 0x40000000;
+    si->lpMaximumApplicationAddress	= 0x80000000;
+    si->dwActiveProcessorMask		= 1;
+    si->dwNumberOfProcessors		= 1;
 #ifdef WINELIB
-    si->dwProcessorType             = 3;
+    /* FIXME: perhaps check compilation defines ... */
+    si->dwProcessorType			= PROCESSOR_INTEL_386;
+    cpu = 3;
 #else
-    si->dwProcessorType             = runtime_cpu();
+    cpu = runtime_cpu();
+    switch (cpu) {
+    case 4: si->dwProcessorType		= PROCESSOR_INTEL_486;
+	    break;
+    case 5: si->dwProcessorType		= PROCESSOR_INTEL_PENTIUM;
+	    break;
+    case 3:
+    default: si->dwProcessorType	= PROCESSOR_INTEL_386;
+	    break;
+    }
 #endif
-    si->dwAllocationGranularity     = 8; /* hmm? */
+    si->dwAllocationGranularity		= 8; /* hmm? */
+    si->wProcessorLevel			= cpu;
+    si->wProcessorRevision		= 0; /* FIXME, see SDK */
 }
 
 /* Initialize whatever internal data structures we need.
@@ -121,4 +166,64 @@ int KERN32_Init(void)
     EXC_Init();
 #endif
     return 1;
+}
+
+/***********************************************************************
+ *              GetComputerNameA         (KERNEL32.165)
+ */
+BOOL32
+GetComputerName32A(LPSTR name,LPDWORD size) {
+	if (-1==gethostname(name,*size))
+		return FALSE;
+	*size = lstrlen32A(name);
+	return TRUE;
+}
+
+/***********************************************************************
+ *              GetComputerNameW         (KERNEL32.166)
+ */
+BOOL32
+GetComputerName32W(LPWSTR name,LPDWORD size) {
+	LPSTR	nameA = (LPSTR)xmalloc(*size);
+
+	if (!GetComputerName32A(nameA,size)) {
+		free(nameA);
+		return FALSE;
+	}
+	lstrcpynAtoW(name,nameA,*size);
+	free(nameA);
+	/* FIXME : size correct? */
+	return TRUE;
+}
+
+/***********************************************************************
+ *           GetUserNameA   [ADVAPI32.67]
+ */
+BOOL32 GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
+{
+  size_t len;
+  char *name;
+
+  name=getlogin();
+  len = name ? strlen(name) : 0;
+  if (!len || !lpSize || len > *lpSize) {
+    if (lpszName) *lpszName = 0;
+    return 0;
+  }
+  *lpSize=len;
+  strcpy(lpszName, name);
+  return 1;
+}
+
+/***********************************************************************
+ *           GetUserNameW   [ADVAPI32.68]
+ */
+BOOL32 GetUserName32W(LPWSTR lpszName, LPDWORD lpSize)
+{
+	LPSTR name = (LPSTR)xmalloc(*lpSize);
+	DWORD	size = *lpSize;
+	BOOL32 res = GetUserName32A(name,lpSize);
+
+	lstrcpynAtoW(lpszName,name,size);
+	return res;
 }

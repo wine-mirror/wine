@@ -1075,7 +1075,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
                     char *p;
 
                     /* Try with prepending the path of the current module */
-                    GetModuleFileName( hModule, buffer, sizeof(buffer) );
+                    GetModuleFileName16( hModule, buffer, sizeof(buffer) );
                     if (!(p = strrchr( buffer, '\\' ))) p = buffer;
                     memcpy( p + 1, pstr + 1, *pstr );
                     strcpy( p + 1 + *pstr, ".dll" );
@@ -1284,9 +1284,9 @@ INT16 GetModuleUsage( HINSTANCE16 hModule )
 
 
 /**********************************************************************
- *	    GetModuleFileName    (KERNEL.49)
+ *	    GetModuleFileName16    (KERNEL.49)
  */
-INT16 GetModuleFileName( HINSTANCE16 hModule, LPSTR lpFileName, INT16 nSize )
+INT16 GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName, INT16 nSize )
 {
     NE_MODULE *pModule;
 
@@ -1294,9 +1294,43 @@ INT16 GetModuleFileName( HINSTANCE16 hModule, LPSTR lpFileName, INT16 nSize )
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     lstrcpyn32A( lpFileName, NE_MODULE_NAME(pModule), nSize );
-    dprintf_module( stddeb, "GetModuleFilename: %s\n", lpFileName );
+    dprintf_module( stddeb, "GetModuleFileName16: %s\n", lpFileName );
     return strlen(lpFileName);
 }
+
+
+/***********************************************************************
+ *              GetModuleFileName32A      (KERNEL32.235)
+ */
+DWORD GetModuleFileName32A( HMODULE32 hModule, LPSTR lpFileName, DWORD size )
+{                   
+    NE_MODULE *pModule;
+           
+    if (!hModule)
+    {
+        TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+        hModule = pTask->hInstance;
+    }
+    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
+    lstrcpyn32A( lpFileName, NE_MODULE_NAME(pModule), size );
+    dprintf_module( stddeb, "GetModuleFileName32A: %s\n", lpFileName );
+    return strlen(lpFileName);
+}                   
+ 
+
+/***********************************************************************
+ *              GetModuleFileName32W      (KERNEL32.236)
+ */
+DWORD GetModuleFileName32W( HMODULE32 hModule, LPWSTR lpFileName, DWORD size )
+{
+    LPSTR fnA = (char*)HeapAlloc( GetProcessHeap(), 0, size );
+    DWORD res = GetModuleFileName32A( hModule, fnA, size );
+    lstrcpynAtoW( lpFileName, fnA, size );
+    HeapFree( GetProcessHeap(), 0, fnA );
+    return res;
+}
+
 
 /**********************************************************************
  *	    GetModuleName    (KERNEL.27)
@@ -1314,7 +1348,7 @@ BOOL16 GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
 /***********************************************************************
  *           LoadLibrary   (KERNEL.95)
  */
-HINSTANCE16 LoadLibrary( LPCSTR libname )
+HINSTANCE16 LoadLibrary16( LPCSTR libname )
 {
     HINSTANCE16 handle;
 

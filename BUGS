@@ -5,7 +5,7 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of Dec 1 1996 -
+As of Dec 15 1996 -
 
 General:
 
@@ -15,9 +15,18 @@ General:
  * Font mapping is too generic. No soft font loading, no rotated 
    text support. [alex@amadeus.pharm.sunysb.edu]
 
- * No thread support in Win32 code. 
+ * No thread/process/kernel-object support in Win32 code. 
 
  * Very alpha printing code. [john@division.co.uk]
+
+ * No OLE and OLE32 support (including OLE interfaces etc.).
+
+ * No MS Video support (perhaps interface with xanim).
+
+ * No COMDLG32 support. (Needed badly, the Windows95 comdlg32.dll
+   doesn't work with WINE.)
+
+ * No COMMCTRL/COMCTL32 support.
 
  * No icon titles.
 	- Windows uses a special window class to display icon titles.
@@ -29,9 +38,6 @@ Miscellaneous:
  * Simple OLE actions were working in October release, got
    broken in November (in Winword "Insert Object" now results in 
    segfault right after the call to LoadModule()).
- * Write and other applications have problems with displaying partially
-   obscured bitmaps. 
- * Asynchronous Winsock services sometimes produce zombie processes.
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.
  * ScrollWindowEx() is outdated.

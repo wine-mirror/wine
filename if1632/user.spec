@@ -2,7 +2,7 @@ name	user
 type	win16
 heap	65520
 
-1   pascal16 MessageBox(word ptr ptr word) MessageBox
+1   pascal16 MessageBox(word ptr ptr word) MessageBox16
 2   stub OldExitWindows
 3   stub EnableOEMLayer
 4   stub DisableOEMLayer
@@ -37,7 +37,7 @@ heap	65520
 35  pascal16 IsWindowEnabled(word) IsWindowEnabled
 36  pascal16 GetWindowText(word segptr word) GetWindowText16
 37  pascal16 SetWindowText(word segptr) SetWindowText16
-38  pascal16 GetWindowTextLength(word) GetWindowTextLength
+38  pascal16 GetWindowTextLength(word) GetWindowTextLength16
 39  pascal16 BeginPaint(word ptr) BeginPaint16
 40  pascal16 EndPaint(word ptr) EndPaint16
 41  pascal16 CreateWindow(ptr ptr long s_word s_word s_word s_word
@@ -144,7 +144,7 @@ heap	65520
 142 pascal16 GetClipboardData(word) GetClipboardData
 143 pascal16 CountClipboardFormats() CountClipboardFormats
 144 pascal16 EnumClipboardFormats(word) EnumClipboardFormats
-145 pascal16 RegisterClipboardFormat(ptr) RegisterClipboardFormat
+145 pascal16 RegisterClipboardFormat(ptr) RegisterClipboardFormat16
 146 pascal16 GetClipboardFormatName(word ptr s_word) GetClipboardFormatName
 147 pascal16 SetClipboardViewer(word) SetClipboardViewer
 148 pascal16 GetClipboardViewer() GetClipboardViewer
@@ -423,7 +423,7 @@ heap	65520
 480 stub GetUserLocalObjType
 #481 HARDWARE_EVENT
 482 pascal16 EnableScrollBar(word word word) EnableScrollBar16
-483 pascal16 SystemParametersInfo(word word ptr word) SystemParametersInfo
+483 pascal16 SystemParametersInfo(word word ptr word) SystemParametersInfo16
 #484 __GP
 # Stubs for Hebrew version
 489 pascal16 USER_489() stub_USER_489

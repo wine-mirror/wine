@@ -603,7 +603,7 @@ UINT16 GetDriveType16( UINT16 drive )
 UINT32 GetDriveType32A( LPCSTR root )
 {
     dprintf_dosfs( stddeb, "GetDriveType32A(%s)\n", root );
-    if ((root[1] != ':') || (root[2] != '\\'))
+    if (root[1] != ':')
     {
         fprintf( stderr, "GetDriveType32A: invalid root '%s'\n", root );
         return DRIVE_DOESNOTEXIST;
@@ -657,9 +657,9 @@ UINT32 GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
         *buf = '\0';
         return 0;
     }
-    lstrcpyn32A( buf, pref, 3 );
+    lstrcpyn32A( buf, pref, MIN( 4, buflen ) );
     if (buflen) buf[0] += DRIVE_GetCurrentDrive();
-    if (buflen >= 3) lstrcpyn32A( buf + 3, s, buflen - 3 );
+    if (buflen > 3) lstrcpyn32A( buf + 3, s, buflen - 3 );
     return strlen(s) + 3; /* length of WHOLE current directory */
 }
 
@@ -682,7 +682,7 @@ UINT32 GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
 /***********************************************************************
  *           SetCurrentDirectory   (KERNEL.412)
  */
-BOOL32 SetCurrentDirectory( LPCSTR dir )
+BOOL16 SetCurrentDirectory16( LPCSTR dir )
 {
     if (dir[0] && (dir[1]==':'))
     {
@@ -696,6 +696,30 @@ BOOL32 SetCurrentDirectory( LPCSTR dir )
     }
     /* FIXME: what about empty strings? Add a \\ ? */
     return DRIVE_Chdir( DRIVE_GetCurrentDrive(), dir );
+}
+
+/***********************************************************************
+ *           SetCurrentDirectory32A   (KERNEL32.479)
+ */
+BOOL32 SetCurrentDirectory32A( LPCSTR dir )
+{
+    /* FIXME: Unauthorized Windows 95 mentions that SetCurrentDirectory 
+     * may change drive and current directory for there is no drive based
+     * currentdir table?
+     */
+    return SetCurrentDirectory16(dir);
+}
+
+/***********************************************************************
+ *           SetCurrentDirectory32W   (KERNEL32.480)
+ */
+BOOL32 SetCurrentDirectory32W( LPCWSTR dirW)
+{
+    LPSTR dir = STRING32_DupUniToAnsi(dirW);
+    BOOL32  res = SetCurrentDirectory32A(dir);
+    
+    free(dir);
+    return res;
 }
 
 
@@ -807,19 +831,19 @@ BOOL32 GetVolumeInformation32W( LPCWSTR root, LPWSTR label, DWORD label_len,
                                 DWORD *serial, DWORD *filename_len,
                                 DWORD *flags, LPWSTR fsname, DWORD fsname_len)
 {
-    LPSTR xroot    = STRING32_DupUniToAnsi(root);
-    LPSTR xvolname = (char*)xmalloc( label_len );
-    LPSTR xfsname  = (char*)xmalloc( fsname_len );
+    LPSTR xroot    = root?STRING32_DupUniToAnsi(root):NULL;
+    LPSTR xvolname = label?(char*)xmalloc( label_len ):NULL;
+    LPSTR xfsname  = fsname?(char*)xmalloc( fsname_len ):NULL;
     BOOL32 ret = GetVolumeInformation32A( xroot, xvolname, label_len, serial,
                                           filename_len, flags, xfsname,
                                           fsname_len );
     if (ret)
     {
-        STRING32_AnsiToUni( label, xvolname );
-        STRING32_AnsiToUni( fsname, xfsname );
+        if (label) STRING32_AnsiToUni( label, xvolname );
+        if (fsname) STRING32_AnsiToUni( fsname, xfsname );
     }
-    free(xroot);
-    free(xvolname);
-    free(xfsname);
+    if (xroot) free(xroot);
+    if (xvolname) free(xvolname);
+    if (xfsname) free(xfsname);
     return ret;
 }

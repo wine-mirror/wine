@@ -63,7 +63,11 @@ void DEFWND_SetText( WND *wndPtr, LPCSTR text )
     if (!text) text = "";
     if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
     wndPtr->text = HEAP_strdupA( SystemHeap, 0, text );
-    if (wndPtr->window) XStoreName( display, wndPtr->window, wndPtr->text );
+    if (wndPtr->window)
+    {
+	XStoreName( display, wndPtr->window, wndPtr->text );
+	XSetIconName( display, wndPtr->window, wndPtr->text );
+    }
 }
 
 

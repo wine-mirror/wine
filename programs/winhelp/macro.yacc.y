@@ -44,7 +44,7 @@ static LPSTR windowname;
 %token							NOT
 %token 							IF_THEN
 %token 							IF_THEN_ELSE
-%token <string>	 					STRING
+%token <string>	 					tSTRING
 %token <integer> 					INTEGER
 %token <bool_function_string>				BOOL_FUNCTION_STRING
 %token <bool_function_void>				BOOL_FUNCTION_VOID
@@ -91,49 +91,49 @@ macro:		/* Empty */ |
 			'(' ')'
 			{if (! skip) (*$1)();} |
 		VOID_FUNCTION_STRING
-			'(' STRING ')'
+			'(' tSTRING ')'
 			{if (! skip) (*$1)($3);} |
 		VOID_FUNCTION_2STRING
-			'(' STRING ',' STRING ')'
+			'(' tSTRING ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5);} |
 		VOID_FUNCTION_2STRING_UINT
-			'(' STRING ',' STRING ',' INTEGER ')'
+			'(' tSTRING ',' tSTRING ',' INTEGER ')'
 			{if (! skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_2STRING_UINT_STRING
-			'(' STRING ',' STRING ',' INTEGER ',' STRING ')'
+			'(' tSTRING ',' tSTRING ',' INTEGER ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7, $9);} |
 		VOID_FUNCTION_2STRING_2UINT_2STRING
-			'(' STRING ',' STRING ',' INTEGER ',' INTEGER ',' STRING ',' STRING ')'
+			'(' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER ',' tSTRING ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7, $9, $11, $13);} |
 		VOID_FUNCTION_2STRING_WPARAM_LPARAM_STRING
-			'(' STRING ',' STRING ',' INTEGER ',' INTEGER ',' STRING ')'
+			'(' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7, $9, $11);} |
 		VOID_FUNCTION_3STRING
-			'(' STRING ',' STRING ',' STRING ')'
+			'(' tSTRING ',' tSTRING ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_3STRING_2UINT
-			'(' STRING ',' STRING ',' STRING ',' INTEGER ',' INTEGER ')'
+			'(' tSTRING ',' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER ')'
 			{if (! skip) (*$1)($3, $5, $7, $9, $11);} |
 		VOID_FUNCTION_4STRING
-			'(' STRING ',' STRING ',' STRING ',' STRING ')'
+			'(' tSTRING ',' tSTRING ',' tSTRING ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7, $9);} |
 		VOID_FUNCTION_4STRING_UINT
-			'(' STRING ',' STRING ',' STRING ',' STRING ',' INTEGER')'
+			'(' tSTRING ',' tSTRING ',' tSTRING ',' tSTRING ',' INTEGER')'
 			{if (! skip) (*$1)($3, $5, $7, $9, $11);} |
 		VOID_FUNCTION_4STRING_2UINT
-			'(' STRING ',' STRING ',' STRING ',' STRING ',' INTEGER ',' INTEGER')'
+			'(' tSTRING ',' tSTRING ',' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER')'
 			{if (! skip) (*$1)($3, $5, $7, $9, $11, $13);} |
 		VOID_FUNCTION_STRING_UINT
-			'(' STRING ',' INTEGER ')'
+			'(' tSTRING ',' INTEGER ')'
 			{if (! skip) (*$1)($3, $5);} |
 		VOID_FUNCTION_STRING_UINT_STRING
-			'(' STRING ',' INTEGER ',' STRING ')'
+			'(' tSTRING ',' INTEGER ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_STRING_UINT_2STRING
-			'(' STRING ',' INTEGER ',' STRING ',' STRING ')'
+			'(' tSTRING ',' INTEGER ',' tSTRING ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7, $9);} |
 		VOID_FUNCTION_STRING_WPARAM_LPARAM
-			'(' STRING ',' INTEGER ',' INTEGER ')'
+			'(' tSTRING ',' INTEGER ',' INTEGER ')'
 			{if (! skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_UINT
 			'(' INTEGER ')'
@@ -142,25 +142,25 @@ macro:		/* Empty */ |
 			'(' INTEGER ',' INTEGER ')'
 			{if (! skip) (*$1)($3, $5);} |
 		VOID_FUNCTION_2UINT_STRING
-			'(' INTEGER ',' INTEGER ',' STRING ')'
+			'(' INTEGER ',' INTEGER ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_3UINT
 			'(' INTEGER ',' INTEGER ',' INTEGER ')'
 			{if (! skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_2INT_3UINT_STRING
-			'(' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' STRING ')'
+			'(' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' tSTRING ')'
 			{if (! skip) (*$1)($3, $5, $7, $9, $11, $13);} |
 		VOID_FUNCTION_FILE_WIN
 			'(' file_win ')'
 			{if (! skip) (*$1)(filename, windowname);} |
 		VOID_FUNCTION_FILE_WIN_STRING
-			'(' file_win ',' STRING ')'
+			'(' file_win ',' tSTRING ')'
 			{if (! skip) (*$1)(filename, windowname, $5);} |
 		VOID_FUNCTION_FILE_WIN_UINT
 			'(' file_win ',' INTEGER ')'
 			{if (! skip) (*$1)(filename, windowname, $5);} ;
 
-file_win:	STRING
+file_win:	tSTRING
                 {
 		  filename = windowname = $1;
 		  while (*windowname && *windowname != '>') windowname++;
@@ -168,6 +168,6 @@ file_win:	STRING
 		} ;
 
 bool_macro:     NOT '(' bool_macro ')' {$$ = ! $3;} |
-		STRING {$$ = MACRO_IsMark($1);} |
+		tSTRING {$$ = MACRO_IsMark($1);} |
 		BOOL_FUNCTION_VOID '(' ')' {$$ = (*$1)();} |
-		BOOL_FUNCTION_STRING '(' STRING ')' {$$ = (*$1)($3);} ;
+		BOOL_FUNCTION_STRING '(' tSTRING ')' {$$ = (*$1)($3);} ;

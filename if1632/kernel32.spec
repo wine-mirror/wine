@@ -7,7 +7,7 @@ base	1
 0002 stub AddConsoleAliasA
 0003 stub AddConsoleAliasW
 0004 stub AllocConsole
-0005 stub AreFileApisANSI
+0005 stdcall AreFileApisANSI() AreFileApisANSI
 0006 stub BackupRead
 0007 stub BackupSeek
 0008 stub BackupWrite
@@ -38,12 +38,12 @@ base	1
 0033 stub ConsoleSubst
 0034 stub ContinueDebugEvent
 0035 stub ConvertDefaultLocale
-0036 stub CopyFileA
+0036 stdcall CopyFileA(ptr ptr long) CopyFile32A
 0037 stub CopyFileW
 0038 stub CreateConsoleScreenBuffer
 0039 stdcall CreateDirectoryA(ptr ptr) CreateDirectory32A
-0040 stub CreateDirectoryExA
-0041 stub CreateDirectoryExW
+0040 stdcall CreateDirectoryExA(ptr ptr ptr) CreateDirectoryEx32A
+0041 stdcall CreateDirectoryExW(ptr ptr ptr) CreateDirectoryEx32W
 0042 stdcall CreateDirectoryW(ptr ptr) CreateDirectory32W
 0043 	stdcall CreateEventA(ptr long long ptr) CreateEventA
 0044 stub CreateEventW
@@ -76,7 +76,7 @@ base	1
 0071 stdcall DeleteFileA(ptr) DeleteFile32A
 0072 stdcall DeleteFileW(ptr) DeleteFile32W
 0073 stub DeviceIoControl
-0074 stub DisableThreadLibraryCalls
+0074 stdcall DisableThreadLibraryCalls(long) DisableThreadLibraryCalls
 0075 stub DisconnectNamedPipe
 0076 stdcall DosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime
 0077 stub DuplicateConsoleHandle
@@ -141,7 +141,7 @@ base	1
 0136 stub FoldStringA
 0137 stub FoldStringW
 0138 stdcall FormatMessageA() WIN32_FormatMessage32A
-0139 stub FormatMessageW
+0139 stdcall FormatMessageW() WIN32_FormatMessage32W
 0140 stub FreeConsole
 0141 stdcall FreeEnvironmentStringsA(ptr)	FreeEnvironmentStringsA
 0142 stdcall FreeEnvironmentStringsW(ptr)	FreeEnvironmentStringsW
@@ -167,8 +167,8 @@ base	1
 0162 stdcall GetCommandLineW() GetCommandLine32W
 0163 stub GetCompressedFileSizeA
 0164 stub GetCompressedFileSizeW
-0165 stub GetComputerNameA
-0166 stub GetComputerNameW
+0165 stdcall GetComputerNameA(ptr ptr) GetComputerName32A
+0166 stdcall GetComputerNameW(ptr ptr) GetComputerName32W
 0167 stub GetConsoleAliasA
 0168 stub GetConsoleAliasExesA
 0169 stub GetConsoleAliasExesLengthA
@@ -179,7 +179,7 @@ base	1
 0174 stub GetConsoleAliasesLengthA
 0175 stub GetConsoleAliasesLengthW
 0176 stub GetConsoleAliasesW
-0177 stub GetConsoleCP
+0177 stdcall GetConsoleCP() GetConsoleCP
 0178 stub GetConsoleCommandHistoryA
 0179 stub GetConsoleCommandHistoryLengthA
 0180 stub GetConsoleCommandHistoryLengthW
@@ -190,11 +190,11 @@ base	1
 0185 stub GetConsoleFontSize
 0186 stub GetConsoleHardwareState
 0187 stub GetConsoleInputWaitHandle
-0188 stub GetConsoleMode
-0189 stub GetConsoleOutputCP
+0188 stdcall GetConsoleMode(long ptr) GetConsoleMode
+0189 stdcall GetConsoleOutputCP() GetConsoleOutputCP
 0190 stdcall GetConsoleScreenBufferInfo(long ptr) GetConsoleScreenBufferInfo
-0191 stub GetConsoleTitleA
-0192 stub GetConsoleTitleW
+0191 stdcall GetConsoleTitleA(ptr long) GetConsoleTitle32A
+0192 stdcall GetConsoleTitleW(ptr long) GetConsoleTitle32W
 0193 stub GetCurrencyFormatA
 0194 stub GetCurrencyFormatW
 0195 stub GetCurrentConsoleFont
@@ -214,9 +214,9 @@ base	1
 0209 stdcall GetDriveTypeW(ptr) GetDriveType32W
 0210	stdcall GetEnvironmentStrings()	GetEnvironmentStrings
 0211 stub GetEnvironmentStringsA
-0212 	stdcall GetEnvironmentStringsW()		GetEnvironmentStringsW
-0213    stdcall GetEnvironmentVariableA(ptr ptr long) GetEnvironmentVariableA
-0214 stub GetEnvironmentVariableW
+0212 stdcall GetEnvironmentStringsW() GetEnvironmentStringsW
+0213 stdcall GetEnvironmentVariableA(ptr ptr long) GetEnvironmentVariable32A
+0214 stdcall GetEnvironmentVariableW(ptr ptr long) GetEnvironmentVariable32W
 0215 stub GetExitCodeProcess
 0216 stub GetExitCodeThread
 0217 stdcall GetFileAttributesA(ptr) GetFileAttributes32A
@@ -226,7 +226,7 @@ base	1
 0221 stdcall GetFileTime(long ptr ptr ptr) GetFileTime
 0222 stdcall GetFileType(long) GetFileType
 0223 stdcall GetFullPathNameA(ptr long ptr ptr) GetFullPathName32A
-0224 stub GetFullPathNameW
+0224 stdcall GetFullPathNameW(ptr long ptr ptr) GetFullPathName32W
 0225 stub GetHandleInformation
 0226 stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
 0227 stdcall GetLastError() GetLastError
@@ -237,10 +237,10 @@ base	1
 0232 stdcall GetLogicalDriveStringsW(long ptr) GetLogicalDriveStrings32W
 0233 stdcall GetLogicalDrives() GetLogicalDrives
 0234 stub GetMailslotInfo
-0235 stdcall GetModuleFileNameA(long ptr long) GetModuleFileName
-0236 stub GetModuleFileNameW
-0237	stdcall GetModuleHandleA(ptr)	WIN32_GetModuleHandle
-0238 stub GetModuleHandleW
+0235 stdcall GetModuleFileNameA(long ptr long) GetModuleFileName32A
+0236 stdcall GetModuleFileNameW(long ptr long) GetModuleFileName32W
+0237 stdcall GetModuleHandleA(ptr) WIN32_GetModuleHandleA
+0238 stdcall GetModuleHandleW(ptr) WIN32_GetModuleHandleW
 0239 stub GetNamedPipeHandleStateA
 0240 stub GetNamedPipeHandleStateW
 0241 stub GetNamedPipeInfo
@@ -275,9 +275,9 @@ base	1
 0270 stub GetQueuedCompletionStatus
 0271 stdcall GetShortPathNameA(ptr ptr long) GetShortPathName32A
 0272 stdcall GetShortPathNameW(ptr ptr long) GetShortPathName32W
-0273 stdcall GetStartupInfoA(ptr) GetStartupInfoA
-0274 stub GetStartupInfoW
-0275	stdcall GetStdHandle(long)	GetStdHandle
+0273 stdcall GetStartupInfoA(ptr) GetStartupInfo32A
+0274 stdcall GetStartupInfoW(ptr) GetStartupInfo32W
+0275 stdcall GetStdHandle(long)	GetStdHandle
 0276 stub GetStringTypeA
 0277 stub GetStringTypeExA
 0278 stub GetStringTypeExW
@@ -367,10 +367,10 @@ base	1
 0362 stub LCMapStringA
 0363 stub LCMapStringW
 0364 stdcall LeaveCriticalSection(ptr)	LeaveCriticalSection
-0365	stdcall LoadLibraryA(long)		LoadLibraryA
+0365 stdcall LoadLibraryA(ptr) LoadLibrary32A
 0366 stub LoadLibraryExA
 0367 stub LoadLibraryExW
-0368 stub LoadLibraryW
+0368 stdcall LoadLibraryW(ptr) LoadLibrary32W
 0369 stub LoadModule
 0370 stdcall LoadResource(long long) LoadResource32
 0371 stdcall LocalAlloc(long long) LocalAlloc32
@@ -384,7 +384,7 @@ base	1
 0379 stdcall LocalShrink(long long) LocalShrink32
 0380 stdcall LocalSize(long) LocalSize32
 0381 stdcall LocalUnlock(long) LocalUnlock32
-0382 stub LockFile
+0382 stdcall LockFile(long long long long long) LockFile
 0383 stub LockFileEx
 0384 stdcall LockResource(long) LockResource32
 0385 stdcall MapViewOfFile(long long long long long) MapViewOfFile
@@ -421,7 +421,7 @@ base	1
 0416 stub QueryPerformanceFrequency
 0417 stub QueryWin31IniFilesMappedToRegistry
 0418 stdcall RaiseException(long long long ptr) RaiseException
-0419 stub ReadConsoleA
+0419 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
 0420 stub ReadConsoleInputA
 0421 stub ReadConsoleInputW
 0422 stub ReadConsoleOutputA
@@ -429,7 +429,7 @@ base	1
 0424 stub ReadConsoleOutputCharacterA
 0425 stub ReadConsoleOutputCharacterW
 0426 stub ReadConsoleOutputW
-0427 stub ReadConsoleW
+0427 stdcall ReadConsoleW(long ptr long ptr ptr) ReadConsole32W
 0428 stdcall ReadFile(long ptr long ptr ptr) ReadFile
 0429 stub ReadFileEx
 0430 stub ReadProcessMemory
@@ -471,18 +471,18 @@ base	1
 0466 stub SetConsoleKeyShortcuts
 0467 stub SetConsoleMaximumWindowSize
 0468 stub SetConsoleMenuClose
-0469 stub SetConsoleMode
+0469 stdcall SetConsoleMode(long long) SetConsoleMode
 0470 stub SetConsoleNumberOfCommandsA
 0471 stub SetConsoleNumberOfCommandsW
 0472 stub SetConsoleOutputCP
 0473 stub SetConsolePalette
 0474 stub SetConsoleScreenBufferSize
 0475 stub SetConsoleTextAttribute
-0476 stub SetConsoleTitleA
-0477 stub SetConsoleTitleW
+0476 stdcall SetConsoleTitleA(ptr) SetConsoleTitle32A
+0477 stdcall SetConsoleTitleW(ptr) SetConsoleTitle32W
 0478 stub SetConsoleWindowInfo
-0479 stdcall SetCurrentDirectoryA(ptr) SetCurrentDirectory
-0480 stub SetCurrentDirectoryW
+0479 stdcall SetCurrentDirectoryA(ptr) SetCurrentDirectory32A
+0480 stdcall SetCurrentDirectoryW(ptr) SetCurrentDirectory32W
 0481 stub SetDefaultCommConfigA
 0482 stub SetDefaultCommConfigW
 0483 stdcall SetEndOfFile(long) SetEndOfFile
@@ -490,8 +490,8 @@ base	1
 0485 stdcall SetEnvironmentVariableW(ptr ptr) SetEnvironmentVariable32W
 0486 stdcall SetErrorMode(long) SetErrorMode
 0487 	stdcall	SetEvent(long) SetEvent
-0488 stub SetFileApisToANSI
-0489 stub SetFileApisToOEM
+0488 stdcall SetFileApisToANSI() SetFileApisToANSI
+0489 stdcall SetFileApisToOEM() SetFileApisToOEM
 0490 stdcall SetFileAttributesA(ptr long) SetFileAttributes32A
 0491 stdcall SetFileAttributesW(ptr long) SetFileAttributes32W
 0492 stdcall SetFilePointer(long long ptr long) SetFilePointer
@@ -539,8 +539,8 @@ base	1
 0534 stub TransactNamedPipe
 0535 stdcall TransmitCommChar(long long) TransmitCommChar32
 0536 stub TrimVirtualBuffer
-0537    stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
-0538 stub UnlockFile
+0537 stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
+0538 stdcall UnlockFile(long long long long long) UnlockFile
 0539 stub UnlockFileEx
 0540 stdcall UnmapViewOfFile(ptr) UnmapViewOfFile
 0541 stub UpdateResourceA
@@ -569,7 +569,7 @@ base	1
 0564 stub WaitNamedPipeW
 0565 stdcall WideCharToMultiByte(long long ptr long ptr long ptr ptr)	WideCharToMultiByte
 0566 stdcall WinExec(ptr long) WinExec
-0567 stub WriteConsoleA
+0567 stdcall WriteConsoleA(long ptr long ptr ptr) WriteConsole32A
 0568 stub WriteConsoleInputA
 0569 stub WriteConsoleInputVDMA
 0570 stub WriteConsoleInputVDMW
@@ -579,7 +579,7 @@ base	1
 0574 stub WriteConsoleOutputCharacterA
 0575 stub WriteConsoleOutputCharacterW
 0576 stub WriteConsoleOutputW
-0577 stub WriteConsoleW
+0577 stdcall WriteConsoleW(long ptr long ptr ptr) WriteConsole32W
 0578 stdcall WriteFile(long ptr long ptr ptr) WriteFile
 0579 stub WriteFileEx
 0580 stub WritePrivateProfileSectionA
@@ -649,3 +649,10 @@ base	1
 0643 stub MapSLFix
 0644 stub UnMapSLFixArray
 0645 stub dprintf
+0646 stub CreateToolhelp32Snapshot
+0647 stub Module32First
+0648 stub Module32Next
+0649 stub Process32First
+0650 stub Process32Next
+0651 stub Thread32First
+0652 stub Thread32Next

@@ -69,13 +69,13 @@ base	1
 0064 stub GetSidSubAuthority
 0065 stub GetSidSubAuthorityCount
 0066 stub GetTokenInformation
-0067 stdcall  GetUserNameA(ptr ptr) GetUserNameA
-0068 stub GetUserNameW
+0067 stdcall GetUserNameA(ptr ptr) GetUserName32A
+0068 stdcall GetUserNameW(ptr ptr) GetUserName32W
 0069 stub ImpersonateLoggedOnUser
 0070 stub ImpersonateNamedPipeClient
 0071 stub ImpersonateSelf
 0072 stub InitializeAcl
-0073 stub InitializeSecurityDescriptor
+0073 return InitializeSecurityDescriptor 8 1
 0074 stub InitializeSid
 0075 stub InitiateSystemShutdownA
 0076 stub InitiateSystemShutdownW

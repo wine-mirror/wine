@@ -1194,7 +1194,7 @@ static int BuildSpec16File( FILE *outfile )
             fprintf( outfile, "\tpushw %%bp\n" );
             fprintf( outfile, "\tpushl $" PREFIX "%s\n",odp->u.func.link_name);
             /* FreeBSD does not understand lcall, so do it the hard way */
-            fprintf( outfile, "\t.byte 0x9a /*lcall*/\n" );
+            fprintf( outfile, "\t.byte 0x9a\n" );
             fprintf( outfile, "\t.long " PREFIX "CallFrom16_%s_%s\n",
                      (odp->type == TYPE_REGISTER) ? "regs" :
                      (odp->type == TYPE_PASCAL) ? "long" : "word",

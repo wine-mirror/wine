@@ -144,7 +144,7 @@ UpdateWindow|UW		yylval = MACRO_UpdateWindow;		return VOID_FUNCTION_2STRING;
 			    {
 			      BEGIN INITIAL;
 			      *strptr++ = '\0';
-			      return STRING;
+			      return tSTRING;
 			    }
 			}
 

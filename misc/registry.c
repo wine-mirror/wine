@@ -503,7 +503,8 @@ SHELL_SaveRegistry() {
 	pwd=getpwuid(getuid());
 	if (pwd!=NULL && pwd->pw_dir!=NULL)
         {
-                char *tmp = tmpnam(NULL);
+                char *tmp;
+
 		fn=(char*)xmalloc( strlen(pwd->pw_dir) + strlen(WINE_PREFIX) +
                                    strlen(SAVE_CURRENT_USER) + 2 );
 		strcpy(fn,pwd->pw_dir);
@@ -511,12 +512,28 @@ SHELL_SaveRegistry() {
 		/* create the directory. don't care about errorcodes. */
 		mkdir(fn,0755); /* drwxr-xr-x */
 		strcat(fn,"/"SAVE_CURRENT_USER);
-		if (_savereg(key_current_user,tmp,all)) rename(tmp,fn);
+		tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
+		strcpy(tmp,fn);strcat(tmp,".tmp");
+		if (_savereg(key_current_user,tmp,all)) {
+			if (-1==rename(tmp,fn)) {
+				perror("rename tmp registry");
+				unlink(tmp);
+			}
+		}
+		free(tmp);
 		free(fn);
 		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
-		if (_savereg(key_local_machine,tmp,all)) rename(tmp,fn);
+		tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
+		strcpy(tmp,fn);strcat(tmp,".tmp");
+		if (_savereg(key_local_machine,tmp,all)) {
+			if (-1==rename(tmp,fn)) {
+				perror("rename tmp registry");
+				unlink(tmp);
+			}
+		}
+		free(tmp);
 		free(fn);
 	} else
 		fprintf(stderr,"SHELL_SaveRegistry:failed to get homedirectory of UID %d.\n",getuid());
@@ -1639,7 +1656,7 @@ DWORD RegOpenKeyEx32W(
 	i 	= 0;
 	while ((i<wpc) && (wps[i][0]=='\0')) i++;
 	lpxkey	= lpNextKey;
-	while (i<wpc) {
+	while (wps[i]) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
 			if (!lstrcmp32W(wps[i],lpxkey->keyname))

@@ -172,6 +172,14 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, INT size,
   if (lpszName >= buffer + size) return(0);
 
   /* unknown bytes 24 - 31 ignored */ 
+  /*
+    Unknown bytes should be:
+    wLogPixelsX = GET_SHORT(buffer, 24);
+    wLogPixelsY = GET_SHORT(buffer, 26);
+    byBitsPerPixel = byte at 28;
+    byPlanes     = byte at 29;
+    wReserved   = GET_SHORT(buffer, 30);
+    */
 
   hGroup = GROUP_AddGroup(lpszName, lpszGrpFile, nCmdShow, x, y,
 			  width, height, iconx, icony,

@@ -1603,7 +1603,7 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case DRV_QUERYCONFIGURE:
 			return 1;
 		case DRV_CONFIGURE:
-			MessageBox((HWND)NULL, "Sample MultiMedia Linux Driver !", 
+			MessageBox16((HWND)NULL, "Sample MultiMedia Linux Driver !", 
 								"MMLinux Driver", MB_OK);
 			return 1;
 		case DRV_INSTALL:

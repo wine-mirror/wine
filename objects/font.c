@@ -799,11 +799,18 @@ short SetTextJustification( HDC16 hdc, short extra, short breaks )
     return 1;
 }
 
+/***********************************************************************
+ *           GetTextFace16    (GDI.92)
+ */
+INT16 GetTextFace16( HDC16 hdc, INT16 count, LPSTR name )
+{
+	return GetTextFace32A(hdc,count,name);
+}
 
 /***********************************************************************
- *           GetTextFace    (GDI.92)
+ *           GetTextFace32A    (GDI32.234)
  */
-INT GetTextFace( HDC16 hdc, INT count, LPSTR name )
+INT32 GetTextFace32A( HDC32 hdc, INT32 count, LPSTR name )
 {
     FONTOBJ *font;
 
@@ -813,6 +820,19 @@ INT GetTextFace( HDC16 hdc, INT count, LPSTR name )
         return 0;
     lstrcpyn32A( name, font->logfont.lfFaceName, count );
     return strlen(name);
+}
+
+/***********************************************************************
+ *           GetTextFace32W    (GDI32.235)
+ */
+INT32 GetTextFace32W( HDC32 hdc, INT32 count, LPWSTR name )
+{
+    LPSTR nameA = (LPSTR)xmalloc(count);
+    INT32 res = GetTextFace32A(hdc,count,nameA);
+
+    lstrcpynAtoW(name,nameA,count);
+    free(nameA);
+    return res;
 }
 
 
@@ -884,7 +904,7 @@ BOOL32 GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
 BOOL32 GetTextExtentPoint32ABuggy( HDC32 hdc, LPCSTR str, INT32 count,
 				   LPSIZE32 size )
 {
-    fprintf( stderr, "GetTextExtentPoint32ABuggy: not bug compatible.\n" );
+    dprintf_font( stddeb, "GetTextExtentPoint32ABuggy: not bug compatible.\n");
     return GetTextExtentPoint32A( hdc, str, count, size );
 }
 
@@ -894,10 +914,65 @@ BOOL32 GetTextExtentPoint32ABuggy( HDC32 hdc, LPCSTR str, INT32 count,
 BOOL32 GetTextExtentPoint32WBuggy( HDC32 hdc, LPCWSTR str, INT32 count,
 				   LPSIZE32 size )
 {
-    fprintf( stderr, "GetTextExtentPoint32WBuggy: not bug compatible.\n" );
+    dprintf_font( stddeb, "GetTextExtentPoint32WBuggy: not bug compatible.\n");
     return GetTextExtentPoint32W( hdc, str, count, size );
 }
 
+
+/***********************************************************************
+ *           GetTextExtentExPoint32A    (GDI32.228)
+ */
+BOOL32 GetTextExtentExPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
+                                INT32 maxExt,LPINT32 lpnFit, LPINT32 alpDx,
+                                LPSIZE32 size )
+{
+  int index;
+  SIZE32 tSize;
+  int nFit=0;
+  int extent=0;
+  DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+  if (!dc)
+    {
+      if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
+	return FALSE;
+    }
+  if (!dc->funcs->pGetTextExtentPoint) return FALSE;
+
+  size->cx=0; size->cy=0;
+  for(index=0;index<count;index++)
+    {
+      if(!dc->funcs->pGetTextExtentPoint( dc, str, 1, &tSize )) return FALSE;
+      if(extent+tSize.cx<maxExt)
+	{
+	  extent+=tSize.cx;
+	  nFit++;
+	  str++;
+	  if(alpDx) alpDx[index]=extent;
+	  if(tSize.cy > size->cy) size->cy=tSize.cy;
+	}
+      else break;
+    }
+  size->cx=extent;
+  *lpnFit=nFit;
+  dprintf_font(stddeb,"GetTextExtentExPoint32A(%08x '%.*s' %d) returning %d %d %d\n",
+               hdc,count,str,maxExt,nFit, size->cx,size->cy);
+  return TRUE;
+}
+
+/***********************************************************************
+ *           GetTextExtentExPoint32W    (GDI32.229)
+ */
+
+BOOL32 GetTextExtentExPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
+                                INT32 maxExt, LPINT32 lpnFit, LPINT32 alpDx,
+                                LPSIZE32 size )
+{
+    char *p = STRING32_DupUniToAnsi( str );
+    BOOL32 ret = GetTextExtentExPoint32A( hdc, p, count, maxExt,
+					lpnFit, alpDx, size);
+    free( p );
+    return ret;
+}
 
 /***********************************************************************
  *           GetTextMetrics16    (GDI.93)

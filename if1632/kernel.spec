@@ -45,7 +45,7 @@ type	win16
 46  pascal16 FreeModule(word) FreeModule16
 47  pascal16 GetModuleHandle(segptr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
-49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName
+49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName16
 50  pascal GetProcAddress(word segptr) GetProcAddress16
 51  pascal MakeProcInstance(segptr word) MakeProcInstance16
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
@@ -91,7 +91,7 @@ type	win16
 92  pascal   GetTempDrive(byte) WIN16_GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
 94  stub DefineHandleTable
-95  pascal16 LoadLibrary(ptr) LoadLibrary
+95  pascal16 LoadLibrary(ptr) LoadLibrary16
 96  pascal16 FreeLibrary(word) FreeLibrary
 97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName16
 98  return GetLastDiskChange 0 0
@@ -271,10 +271,10 @@ type	win16
 406 stub WritePrivateProfileStruct
 407 stub GetPrivateProfileStruct
 411 pascal   GetCurrentDirectory(long ptr) GetCurrentDirectory16
-412 pascal16 SetCurrentDirectory(ptr) SetCurrentDirectory
-413 stub FindFirstFile
-414 stub FindNextFile
-415 stub FindClose
+412 pascal16 SetCurrentDirectory(ptr) SetCurrentDirectory16
+413 pascal16 FindFirstFile(ptr ptr) FindFirstFile16
+414 pascal16 FindNextFile(word ptr) FindNextFile16
+415 pascal16 FindClose(word) FindClose16
 416 stub WritePrivateProfileSection
 417 stub WriteProfileSection
 418 stub GetPrivateProfileSection

@@ -1289,8 +1289,8 @@ LONG MIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case DRV_QUERYCONFIGURE:
 			return 1;
 		case DRV_CONFIGURE:
-			MessageBox(0, "Sample Midi Linux Driver !", 
-								"MMLinux Driver", MB_OK);
+			MessageBox16(0, "Sample Midi Linux Driver !", 
+                                     "MMLinux Driver", MB_OK);
 			return 1;
 		case DRV_INSTALL:
 			return DRVCNF_RESTART;

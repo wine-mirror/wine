@@ -25,7 +25,7 @@ type	win16
 17  pascal16 recvfrom(word ptr word word ptr ptr) WINSOCK_recvfrom
 18  pascal16 select(word ptr ptr ptr ptr) WINSOCK_select
 19  pascal16 send(word ptr word word) WINSOCK_send
-20  pascal16 sendto(word ptr word word ptr ptr) WINSOCK_sendto
+20  pascal16 sendto(word ptr word word ptr word) WINSOCK_sendto
 21  pascal16 setsockopt(word word word ptr word) WINSOCK_setsockopt
 22  pascal16 shutdown(word word) WINSOCK_shutdown
 23  pascal16 socket(word word word) WINSOCK_socket

@@ -105,7 +105,7 @@ INT16 THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
 INT32 THUNK_EnumObjects32( HDC32 hdc, INT32 nObjType,
                            GOBJENUMPROC32 func, LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo32_4 );
+    DECL_THUNK( thunk, func, CallTo32_2 );
     return EnumObjects32( hdc, nObjType, (GOBJENUMPROC32)&thunk, lParam );
 }
 

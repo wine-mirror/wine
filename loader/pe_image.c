@@ -194,7 +194,7 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 	    char *p, buffer[256];
 
 	    /* Try with prepending the path of the current module */
-	    GetModuleFileName (hModule, buffer, sizeof (buffer));
+	    GetModuleFileName16 (hModule, buffer, sizeof (buffer));
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
@@ -388,6 +388,16 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 	/* read PE header */
 	lseek( fd, offset, SEEK_SET);
 	read( fd, pe->pe_header, sizeof(struct pe_header_s));
+
+/* FIXME: this is a *horrible* hack to make COMDLG32.DLL load OK. The
+problem needs to be fixed properly at some stage */
+
+	if (pe->pe_header->opt_coff.NumberOfRvaAndSizes != 16) {
+		printf("Short PE Header!!!\n");
+		lseek( fd, -(16 - pe->pe_header->opt_coff.NumberOfRvaAndSizes) * sizeof (struct Directory), SEEK_CUR);
+	}
+
+/* horrible hack ends !!! */
 
 	/* read sections */
 	pe->pe_seg = xmalloc(sizeof(struct pe_segment_table) * 
@@ -627,13 +637,21 @@ based on some kind of documentation would be greatly appreciated :-) */
 
 typedef struct _TEB
 {
-    void        *Except;
-    void        *stack;
-    int	        dummy1[4];
-    struct _TEB *TEBDSAlias;
-    int	        dummy2[2];
-    int	        taskid;
+    void        *Except;	/* 00 */
+    void        *stack;		/* 04 */
+    int	        dummy1[4];	/* 08 */
+    struct _TEB *TEBDSAlias;	/* 18 */
+    int	        dummy2[2];	/* 1C */
+    int	        taskid;		/* 24 */
+    int		dummy3[2];	/* 28 */
+    LPBYTE	process;	/* 30 */ /* points to current process struct */
 } TEB;
+
+/* the current process structure. Only the processheap is of interest (off 0x18) */
+struct {
+	DWORD		dummy[6];
+	HANDLE32	procheap; /* 18: Process Heap */
+} dummyprocess;
 
 void PE_InitTEB(int hTEB)
 {
@@ -646,6 +664,14 @@ void PE_InitTEB(int hTEB)
     pTEB->Except = (void *)(-1); 
     pTEB->TEBDSAlias = pTEB;
     pTEB->taskid = getpid();
+
+    dummyprocess.procheap = GetProcessHeap();
+    pTEB->process = &dummyprocess;
+}
+
+VOID
+NtCurrentTeb(CONTEXT *context) {
+	context->Eax = GlobalLock16(LOWORD(context->SegFs));
 }
 
 void PE_InitializeDLLs(HMODULE16 hModule)

@@ -32,7 +32,7 @@ static BOOL16 windrvExtTextOut16( DC *dc, INT16 x, INT16 y, UINT16 flags, const 
 #endif
 
 static BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                                 LPCSTR output, const DEVMODE* initData );
+                                 LPCSTR output, const DEVMODE16* initData );
 static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
                               SEGPTR lpInData, SEGPTR lpOutData );
 
@@ -284,7 +284,7 @@ static LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
         char *drvName = malloc(strlen(pszDriver)+5);
         strcpy(drvName, pszDriver);
         strcat(drvName, ".DRV");
-        hInst = LoadLibrary(drvName);
+        hInst = LoadLibrary16(drvName);
     }
     dprintf_win16drv(stddeb, "Loaded the library\n");
 
@@ -611,7 +611,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 
 
 BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODE* initData )
+                          const DEVMODE16* initData )
 {
     LOADED_PRINTER_DRIVER *pLPD;
     WORD wRet;
@@ -1146,7 +1146,7 @@ int WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 
     dprintf_win16drv(stddeb, "WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
 
-    nRet = MessageBox(NULL, lpMsg, "Printing Error", MB_OKCANCEL);
+    nRet = MessageBox16(0, lpMsg, "Printing Error", MB_OKCANCEL);
     return nRet;
 }
 

@@ -39,7 +39,7 @@ DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type )
 {
     DCE * dce;
     if (!(dce = HeapAlloc( SystemHeap, 0, sizeof(DCE) ))) return NULL;
-    if (!(dce->hDC = CreateDC( "DISPLAY", NULL, NULL, NULL )))
+    if (!(dce->hDC = CreateDC16( "DISPLAY", NULL, NULL, NULL )))
     {
         HeapFree( SystemHeap, 0, dce );
 	return 0;

@@ -62,7 +62,7 @@ RTEXT		return RTEXT;
 SCROLLBAR	return SCROLLBAR;
 SHIFT		return SHIFT;
 SEPARATOR	return SEPARATOR;
-STRING		return STRING;
+STRING		return tSTRING;
 STRINGTABLE	return STRINGTABLE;
 STYLE		return STYLE;
 VERSIONINFO	return VERSIONINFO;
@@ -72,7 +72,7 @@ VIRTKEY		return VIRTKEY;
 [+-]?[0-9]+	yylval.num=atoi(yytext);return NUMBER;
 0x[0-9A-Fa-f]+L?	yylval.num=strtoul(yytext,0,16);return NUMBER;
 [A-Za-z][A-Za-z_0-9]*	yylval.str=strdup(yytext);return IDENT;
-\"[^"]*\"	yylval.str=parse_c_string(yytext);return STRING;
+\"[^"]*\"	yylval.str=parse_c_string(yytext);return tSTRING;
 \'[^']*\'   yylval.str=strdup(yytext+1);return SINGLE_QUOTED;
 \n                      { line_number++; }
 [ \t\r]                 ;

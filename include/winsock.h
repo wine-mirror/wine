@@ -433,7 +433,7 @@ typedef struct  __aop
   struct __aop *next, *prev;
   int           fd[2];				/* pipe */
   int   (*aop_control)(struct __aop*, int);	/* SIGIO handler */
-  pid_t         pid;			/* child process pid */
+  pid_t         pid;				/* child process pid */
 
   /* custom data */
 
@@ -443,7 +443,6 @@ typedef struct  __aop
   unsigned	flags;
   SEGPTR	buffer_base;
   int           buflen;
-  char*         init;			/* parameter data - length is in the async_ctl */
 } ws_async_op;
 
 #define WSMSG_ASYNC_SELECT      0x0000001
@@ -462,8 +461,8 @@ typedef struct
 {
   long          mtype;          /* WSMSG_... */
 
-  UINT32        lParam;
-  UINT16        wParam;         /* socket handle */
+  UINT32        lParam;		/* WS_FD_... event */
+  UINT16        wParam;         /* socket handle - used only for MTYPE_CLIENT messages */
 } ipc_packet;
 
 #define MTYPE_PARENT_SIZE \
@@ -476,7 +475,7 @@ typedef struct
 {
   int                   fd;
   unsigned              flags;
-  ws_async_op*          p_aop;
+  ws_async_op*          p_aop;	/* AsyncSelect() handler */
 } ws_socket;
 
 typedef struct
@@ -486,6 +485,7 @@ typedef struct
   int           lEvent;
   int           lLength;
   char*		buffer;
+  char*		init;
   ipc_packet    ip;
 } ws_async_ctl;
 
@@ -500,15 +500,17 @@ typedef struct __WSINFO
 
   unsigned		flags;
   int			errno;
-  int			num_startup;
-  int                   num_async_rq;
-  int                   last_free;
-  ws_socket             sock[WS_MAX_SOCKETS_PER_THREAD];
-  int			buflen;
-  char*			buffer;
+  INT16			num_startup;
+  INT16			num_async_rq;
+  INT16			last_free;
+  UINT16		buflen;
+  char*			buffer;			/* allocated from SEGPTR heap */
+  char*			dbuffer;		/* buffer for dummies (32 bytes) */
+
+  ws_socket		sock[WS_MAX_SOCKETS_PER_THREAD];
   FARPROC16		blocking_hook;
-  HTASK16               tid;    /* owning thread id - better switch
-                                 * to TLS when it gets fixed */
+  HTASK16               tid;    		/* owning thread id - better switch
+                                 		 * to TLS when it gets fixed */
 } WSINFO, *LPWSINFO;
 
 int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
@@ -527,6 +529,7 @@ void WINSOCK_link_async_op(ws_async_op* p_aop);
 void WINSOCK_unlink_async_op(ws_async_op* p_aop);
 void WINSOCK_cancel_async_op(HTASK16 tid);
 void WINSOCK_do_async_select(void);
+void WINSOCK_Shutdown(void);
 
 UINT16 wsaErrno(void);
 UINT16 wsaHerrno(void);

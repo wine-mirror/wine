@@ -11,7 +11,7 @@
 
 
 static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODE* initData );
+                               LPCSTR output, const DEVMODE16* initData );
 static BOOL32 X11DRV_DeleteDC( DC *dc );
 
 static const DC_FUNCTIONS X11DRV_Funcs =
@@ -96,7 +96,7 @@ BOOL32 X11DRV_Init(void)
  *	     X11DRV_CreateDC
  */
 static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODE* initData )
+                               LPCSTR output, const DEVMODE16* initData )
 {
     X11DRV_PDEVICE *physDev;
 

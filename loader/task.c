@@ -351,6 +351,7 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 static void TASK_CallToStart(void)
 {
     int cs_reg, ds_reg, fs_reg, ip_reg;
+    int exit_code = 1;
     TDB *pTask = (TDB *)GlobalLock16( hCurrentTask );
     NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
@@ -372,8 +373,9 @@ static void TASK_CallToStart(void)
         PE_InitTEB( fs_reg );
         __asm__ __volatile__("movw %w0,%%fs"::"r" (fs_reg));
         PE_InitializeDLLs( pTask->hModule );
-        CallTaskStart32( (FARPROC32)(pModule->pe_module->load_addr + 
+        exit_code = CallTaskStart32((FARPROC32)(pModule->pe_module->load_addr + 
                 pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
+        TASK_KillCurrentTask( exit_code );
     }
     else
     {
@@ -402,11 +404,10 @@ static void TASK_CallToStart(void)
                         pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
                         pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
                         0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
+        /* This should never return */
+        fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
+        TASK_KillCurrentTask( 1 );
     }
-
-    /* This should never return */
-    fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
-    TASK_KillCurrentTask( 1 );
 }
 #endif
 
@@ -461,7 +462,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
       /* Get current directory */
     
-    GetModuleFileName( hModule, filename, sizeof(filename) );
+    GetModuleFileName16( hModule, filename, sizeof(filename) );
     name = strrchr(filename, '\\');
     if (name) *(name+1) = 0;
 
@@ -470,6 +471,10 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->nEvents       = 1;  /* So the task can be started */
     pTask->hSelf         = hTask;
     pTask->flags         = 0;
+
+    if (pModule->flags & NE_FFLAGS_WIN32)
+    	pTask->flags 	|= TDBF_WIN32;
+
     pTask->version       = pModule->expected_version;
     pTask->hInstance     = hInstance;
     pTask->hPrevInstance = hPrevInstance;

@@ -103,7 +103,7 @@ typedef struct
   /* TDB flags */
 #define TDBF_WINOLDAP   0x0001
 #define TDBF_OS2APP     0x0008
-#define TDBF_WIN32S     0x0010
+#define TDBF_WIN32      0x0010
 
 #pragma pack(4)
 

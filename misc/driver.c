@@ -232,8 +232,8 @@ LRESULT DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
 	return (LRESULT)0L;
 
       case DRV_CONFIGURE:
-	MessageBox( (HWND)NULL, "Driver isn't configurable !", 
-		    "Wine Driver", MB_OK );
+	MessageBox16( (HWND)NULL, "Driver isn't configurable !", 
+                      "Wine Driver", MB_OK );
 	return (LRESULT)0L;
 
       case DRV_INSTALL:

@@ -9,6 +9,8 @@
 
 #include <sys/time.h>
 #include <sys/timeb.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__svr4__) || defined(_SCO_DS)
 #ifndef _SCO_DS
@@ -21,8 +23,10 @@
 
 #include "debugger.h"
 #include "miscemu.h"
+#include "options.h"
 #include "registers.h"
 #include "win.h"
+#include "winsock.h"
 
 #if !defined(BSD4_4) || defined(linux) || defined(__FreeBSD__)
 char * cstack[4096];
@@ -66,6 +70,45 @@ static void wine_timer(int signal, int code, SIGCONTEXT *context)
     /* Should do real-time timers here */
 
     DOSMEM_Tick();
+}
+
+/**********************************************************************
+ *              SIGNAL_break
+ * 
+ * Handle Ctrl-C and such
+ */
+#ifdef linux
+static void SIGNAL_break(int signal, SIGCONTEXT context_struct)
+{
+    SIGCONTEXT *context = &context_struct;
+#elif defined(__svr4__) || defined(_SCO_DS)
+static void SIGNAL_break(int signal, void *siginfo, SIGCONTEXT *context)
+{
+#else
+static void SIGNAL_break(int signal, int code, SIGCONTEXT *context)
+{
+#endif
+    if (Options.debug) wine_debug( signal, context );  /* Enter our debugger */
+    exit(0);
+}
+
+/**********************************************************************
+ *              SIGNAL_child
+ * 
+ * wait4 terminated child processes
+ */
+#ifdef linux
+static void SIGNAL_child(int signal, SIGCONTEXT context_struct)
+{
+    SIGCONTEXT *context = &context_struct;
+#elif defined(__svr4__) || defined(_SCO_DS)
+static void SIGNAL_child(int signal, void *siginfo, SIGCONTEXT *context)
+{
+#else
+static void SIGNAL_child(int signal, int code, SIGCONTEXT *context)
+{
+#endif
+   wait4( 0, NULL, WNOHANG, NULL);
 }
 
 
@@ -206,6 +249,8 @@ BOOL32 SIGNAL_Init(void)
 #endif  /* __svr4__ || _SCO_DS */
     
     SIGNAL_SetHandler( SIGALRM, (void (*)())wine_timer, 1);
+    SIGNAL_SetHandler( SIGINT,  (void (*)())SIGNAL_break, 1);
+    SIGNAL_SetHandler( SIGCHLD, (void (*)())SIGNAL_child, 1);
     SIGNAL_SetHandler( SIGSEGV, (void (*)())SIGNAL_fault, 1);
     SIGNAL_SetHandler( SIGILL,  (void (*)())SIGNAL_fault, 1);
     SIGNAL_SetHandler( SIGFPE,  (void (*)())SIGNAL_fault, 1);

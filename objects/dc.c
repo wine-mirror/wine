@@ -15,6 +15,7 @@
 #include "debug.h"
 #include "font.h"
 #include "xmalloc.h"
+#include "string32.h"
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
 
@@ -512,9 +513,10 @@ BOOL RestoreDC( HDC16 hdc, short level )
 
 
 /***********************************************************************
- *           CreateDC    (GDI.53)
+ *           CreateDC16    (GDI.53)
  */
-HDC16 CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
+HDC16 CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
+                  const DEVMODE16 *initData )
 {
     DC * dc;
     const DC_FUNCTIONS *funcs;
@@ -540,12 +542,42 @@ HDC16 CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* init
 
 
 /***********************************************************************
+ *           CreateDC32A    (GDI32.)
+ */
+HDC32 CreateDC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
+                   const DEVMODE32A *initData )
+{
+    return CreateDC16( driver, device, output, (const DEVMODE16 *)initData );
+}
+
+
+/***********************************************************************
+ *           CreateDC32W    (GDI32.)
+ */
+HDC32 CreateDC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                   const DEVMODE32W *initData )
+{ 
+    LPSTR driverA = driver?STRING32_DupUniToAnsi(driver):NULL;
+    LPSTR deviceA = device?STRING32_DupUniToAnsi(device):NULL;
+    LPSTR outputA = output?STRING32_DupUniToAnsi(output):NULL;
+    HDC32 res;
+
+    res = CreateDC16( driverA, deviceA, outputA, (const DEVMODE16 *)initData );
+    if (driverA) free(driverA);
+    if (deviceA) free(deviceA);
+    if (outputA) free(outputA);
+    return res;
+}
+
+
+/***********************************************************************
  *           CreateIC    (GDI.153)
  */
-HDC16 CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
+HDC16 CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output,
+                const DEVMODE16* initData )
 {
       /* Nothing special yet for ICs */
-    return CreateDC( driver, device, output, initData );
+    return CreateDC16( driver, device, output, initData );
 }
 
 

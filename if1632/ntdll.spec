@@ -90,7 +90,7 @@ base	0
 086 stub NtCreateThread
 087 stub NtCreateTimer
 088 stub NtCreateToken
-089 stub NtCurrentTeb
+089 register NtCurrentTeb() NtCurrentTeb
 090 stub NtDelayExecution
 091 stub NtDeleteFile
 092 stub NtDeleteKey
@@ -303,7 +303,7 @@ base	0
 299 stub RtlCopyLuid
 300 stub RtlCopyLuidAndAttributesArray
 301 stub RtlCopySecurityDescriptor
-302 stub RtlCopySid
+302 stdcall RtlCopySid(long ptr ptr) RtlCopySid
 303 stub RtlCopySidAndAttributesArray
 304 stub RtlCopyString
 305 stub RtlCopyUnicodeString
@@ -411,7 +411,7 @@ base	0
 407 stub RtlInitializeGenericTable
 408 stub RtlInitializeRXact
 409 stub RtlInitializeResource
-410 stub RtlInitializeSid
+410 stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
 411 stub RtlInsertElementGenericTable
 412 stub RtlIntegerToChar
 413 stub RtlIntegerToUnicodeString
@@ -428,7 +428,7 @@ base	0
 424 stub RtlLargeIntegerSubtract
 425 stub RtlLargeIntegerToChar
 426 stub RtlLeaveCriticalSection
-427 stub RtlLengthRequiredSid
+427 stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
 428 stub RtlLengthSecurityDescriptor
 429 stub RtlLengthSid
 430 stub RtlLocalTimeToSystemTime
@@ -442,14 +442,14 @@ base	0
 438 stub RtlNewInstanceSecurityObject
 439 stub RtlNewSecurityGrantedAccess
 440 stub RtlNewSecurityObject
-441 stub RtlNormalizeProcessParams
+441 stdcall RtlNormalizeProcessParams(ptr) RtlNormalizeProcessParams
 442 stub RtlNtStatusToDosError
 443 stub RtlNumberGenericTableElements
 444 stub RtlNumberOfClearBits
 445 stub RtlNumberOfSetBits
 446 stub RtlOemStringToUnicodeSize
 447 stub RtlOemStringToUnicodeString
-448 stub RtlOemToUnicodeN
+448 stdcall RtlOemToUnicodeN(ptr long ptr ptr long) RtlOemToUnicodeN
 449 stub RtlOpenCurrentUser
 450 stub RtlPcToFileHeader
 451 stub RtlPrefixString
@@ -497,8 +497,8 @@ base	0
 493 stub RtlSizeHeap
 494 stub RtlSplay
 495 stub RtlStartRXact
-496 stub RtlSubAuthorityCountSid
-497 stub RtlSubAuthoritySid
+496 stdcall RtlSubAuthorityCountSid(ptr) RtlSubAuthorityCountSid
+497 stdcall RtlSubAuthoritySid(ptr long) RtlSubAuthoritySid
 498 stub RtlSubtreePredecessor
 499 stub RtlSubtreeSuccessor
 500 stub RtlSystemTimeToLocalTime
@@ -512,11 +512,11 @@ base	0
 508 stub RtlUnicodeStringToCountedOemString
 509 stub RtlUnicodeStringToInteger
 510 stub RtlUnicodeStringToOemSize
-511 stub RtlUnicodeStringToOemString
+511 stdcall RtlUnicodeStringToOemString(ptr ptr long) RtlUnicodeStringToOemString
 512 stub RtlUnicodeToCustomCPN
 513 stub RtlUnicodeToMultiByteN
 514 stub RtlUnicodeToMultiByteSize
-515 stub RtlUnicodeToOemN
+515 stdcall RtlUnicodeToOemN(ptr long ptr ptr long) RtlUnicodeToOemN
 516 stub RtlUniform
 517 stub RtlUnlockHeap
 518 stub RtlUnwind
@@ -907,16 +907,16 @@ base	0
 903 stub memchr
 904 stub memcmp
 905 stub memcpy
-906 stub memmove
+906 stdcall memmove(ptr ptr long) memmove
 907 stub memset
 908 stub pow
 909 stub qsort
 910 stub sin
-911 stub sprintf
+911 stdcall sprintf() CRTDLL_sprintf
 912 stub sqrt
-913 stub sscanf
+913 stdcall sscanf() CRTDLL_sscanf
 914 stub strcat
-915 stub strchr
+915 stdcall strchr(ptr long) strchr
 916 stub strcmp
 917 stub strcpy
 918 stub strcspn
@@ -925,7 +925,7 @@ base	0
 921 stub strncmp
 922 stub strncpy
 923 stub strpbrk
-924 stub strrchr
+924 stdcall strrchr(ptr long) strrchr
 925 stub strspn
 926 stub strstr
 927 stub swprintf

@@ -4,7 +4,7 @@ base	1
 
 0000 stub CheckEscapesA
 0001 stub CheckEscapesW
-0002 stub CommandLineToArgvW
+0002 stdcall CommandLineToArgvW(ptr ptr) CommandLineToArgvW
 0003 stub Control_FillCache_RunDLL
 0004 stub Control_RunDLL
 0005 stub DllGetClassObject
@@ -85,7 +85,7 @@ base	1
 0080 stub SheShortenPathA
 0081 stub SheShortenPathW
 0082 stdcall ShellAboutA(long ptr ptr long) ShellAbout
-0083 stub ShellAboutW
+0083 stdcall ShellAboutW(long ptr ptr long) ShellAbout32W
 0084 stdcall ShellExecuteA(long ptr ptr ptr ptr long) ShellExecute
 0085 stub ShellExecuteEx
 0086 stub ShellExecuteExA

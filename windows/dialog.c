@@ -71,7 +71,7 @@ BOOL32 DIALOG_Init()
     
       /* Calculate the dialog base units */
 
-    if (!(hdc = CreateDC( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
+    if (!(hdc = CreateDC16( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
     GetTextMetrics16( hdc, &tm );
     DeleteDC( hdc );
     xBaseUnit = tm.tmAveCharWidth;
@@ -79,7 +79,8 @@ BOOL32 DIALOG_Init()
 
       /* Dialog units are based on a proportional system font */
       /* so we adjust them a bit for a fixed font. */
-    if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH) xBaseUnit = xBaseUnit * 5 / 4;
+    if (!(tm.tmPitchAndFamily & TMPF_FIXED_PITCH))
+        xBaseUnit = xBaseUnit * 5 / 4;
 
     dprintf_dialog( stddeb, "DIALOG_Init: base units = %d,%d\n",
                     xBaseUnit, yBaseUnit );
@@ -511,7 +512,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 	    ReleaseDC32( 0, hdc );
 	    xUnit = tm.tmAveCharWidth;
 	    yUnit = tm.tmHeight;
-            if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH)
+            if (!(tm.tmPitchAndFamily & TMPF_FIXED_PITCH))
                 xBaseUnit = xBaseUnit * 5 / 4;  /* See DIALOG_Init() */
 	}
     }

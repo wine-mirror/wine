@@ -558,3 +558,80 @@ BOOL32 MoveFile32W(LPCWSTR fn1,LPCWSTR fn2)
 	free(afn2);
 	return res;
 }
+
+VOID SetFileApisToOEM()
+{
+    fprintf(stdnimp,"SetFileApisToOEM(),stub!\n");
+}
+
+VOID SetFileApisToANSI()
+{
+    fprintf(stdnimp,"SetFileApisToANSI(),stub!\n");
+}
+
+BOOL32 AreFileApisANSI()
+{
+    fprintf(stdnimp,"AreFileApisANSI(),stub!\n");
+    return TRUE;
+}
+
+
+BOOL32 CopyFile32A(LPCSTR sourcefn,LPCSTR destfn,BOOL32 failifexists)
+{
+	OFSTRUCT	of;
+	HFILE		hf1,hf2;
+	char		buffer[2048];
+	int		res,lastread,curlen;
+
+	fprintf(stddeb,"CopyFile: %s -> %s\n",sourcefn,destfn);
+	hf1 = OpenFile(sourcefn,&of,OF_READ);
+	if (hf1==HFILE_ERROR)
+		return TRUE;
+	if (failifexists) {
+		hf2 = OpenFile(sourcefn,&of,OF_WRITE);
+		if (hf2 != HFILE_ERROR)
+			return FALSE;
+		_lclose(hf2);
+	}
+	hf2 = OpenFile(sourcefn,&of,OF_WRITE);
+	if (hf2 == HFILE_ERROR)
+		return FALSE;
+	curlen = 0;
+	while ((lastread=_lread16(hf1,buffer,sizeof(buffer)))>0) {
+		curlen=0;
+		while (curlen<lastread) {
+			int	res;
+
+			res=_lwrite16(hf2,buffer+curlen,lastread-curlen);
+			if (res<=0) break;
+			curlen+=res;
+		}
+	}
+	_lclose(hf1);
+	_lclose(hf2);
+	return res>0;
+}
+
+BOOL32
+LockFile(
+	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+	DWORD nNumberOfBytesToLockLow,DWORD nNumberOfBytesToLockHigh )
+{
+	fprintf(stdnimp,"LockFile(%d,0x%08lx%08lx,0x%08lx%08lx),stub!\n",
+		hFile,dwFileOffsetHigh,dwFileOffsetLow,
+		nNumberOfBytesToLockHigh,nNumberOfBytesToLockLow
+	);
+	return TRUE;
+}
+
+BOOL32
+UnlockFile(
+	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+	DWORD nNumberOfBytesToUnlockLow,DWORD nNumberOfBytesToUnlockHigh )
+{
+	fprintf(stdnimp,"UnlockFile(%d,0x%08lx%08lx,0x%08lx%08lx),stub!\n",
+		hFile,dwFileOffsetHigh,dwFileOffsetLow,
+		nNumberOfBytesToUnlockHigh,nNumberOfBytesToUnlockLow
+	);
+	return TRUE;
+}

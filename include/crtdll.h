@@ -1,0 +1,13 @@
+#ifndef _WINE_CRTDLL_H
+#define _WINE_CRTDLL_H
+
+#define CRTDLL_LC_ALL		0
+#define CRTDLL_LC_COLLATE	1
+#define CRTDLL_LC_CTYPE		2
+#define CRTDLL_LC_MONETARY	3
+#define CRTDLL_LC_NUMERIC	4
+#define CRTDLL_LC_TIME		5
+#define CRTDLL_LC_MIN		LC_ALL
+#define CRTDLL_LC_MAX		LC_TIME
+
+#endif

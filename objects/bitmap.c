@@ -17,6 +17,12 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#ifdef PRELIMINARY_WING16_SUPPORT
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#endif
+
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
@@ -378,9 +384,27 @@ HBITMAP32 LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
 /***********************************************************************
  *           BITMAP_DeleteObject
  */
-BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap )
+BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
 {
-    XFreePixmap( display, bitmap->pixmap );
+#ifdef PRELIMINARY_WING16_SUPPORT
+    if( bmp->bitmap.bmBits )
+ 	XShmDetach( display, (XShmSegmentInfo*)bmp->bitmap.bmBits );
+#endif
+
+    XFreePixmap( display, bmp->pixmap );
+#ifdef PRELIMINARY_WING16_SUPPORT
+    if( bmp->bitmap.bmBits )
+    {
+    __ShmBitmapCtl* p = (__ShmBitmapCtl*)bmp->bitmap.bmBits;
+      WORD          sel = HIWORD(p->bits);
+      unsigned long l, limit = GetSelectorLimit(sel);
+
+      for( l = 0; l < limit; l += 0x10000, sel += __AHINCR )
+	   FreeSelector(sel);
+      shmctl(p->si.shmid, IPC_RMID, NULL); 
+      shmdt(p->si.shmaddr);  /* already marked for destruction */
+    }
+#endif
     return GDI_FreeObject( hbitmap );
 }
 

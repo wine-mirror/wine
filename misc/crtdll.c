@@ -21,6 +21,8 @@
 #include "module.h"
 #include "xmalloc.h"
 #include "heap.h"
+#include "crtdll.h"
+#include "string32.h"
 
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
 LPSTR *CRTDLL_argv_dll;         /* CRTDLL.24 */
@@ -575,6 +577,14 @@ int CRTDLL_vsprintf(DWORD *args)
     return vsprintf((char *)args[0],(char *)args[1],args+2);
 }
 
+/*********************************************************************
+ *                  vsprintf      (CRTDLL.500) (NTDLL.913)
+ */
+int CRTDLL_sscanf(DWORD *args)
+{
+    return vsscanf((char *)args[0],(char *)args[1],args+2);
+}
+
 
 /*********************************************************************
  *                  _mbscpy       (CRTDLL.200)
@@ -596,9 +606,9 @@ unsigned char* CRTDLL__mbscat(unsigned char *x,unsigned char *y)
 /*********************************************************************
  *                  _strupr       (CRTDLL.300)
  */
-CHAR* CRTDLL__strupr(CHAR *x)
+LPSTR CRTDLL__strupr(LPSTR x)
 {
-	CHAR	*y=x;
+	LPSTR	y=x;
 
 	while (*y) {
 		*y=toupper(*y);
@@ -606,6 +616,35 @@ CHAR* CRTDLL__strupr(CHAR *x)
 	}
 	return x;
 }
+
+/*********************************************************************
+ *                  _wcsupr       (CRTDLL.328)
+ */
+LPWSTR CRTDLL__wcsupr(LPWSTR x)
+{
+	LPWSTR	y=x;
+
+	while (*y) {
+		*y=toupper(*y);
+		y++;
+	}
+	return x;
+}
+
+/*********************************************************************
+ *                  _wcslwr       (CRTDLL.323)
+ */
+LPWSTR CRTDLL__wcslwr(LPWSTR x)
+{
+	LPWSTR	y=x;
+
+	while (*y) {
+		*y=tolower(*y);
+		y++;
+	}
+	return x;
+}
+
 
 /*********************************************************************
  *                  malloc        (CRTDLL.427)
@@ -655,3 +694,126 @@ DWORD CRTDLL_fclose(LPVOID x)
     dprintf_crtdll(stdnimp,"fclose(%p)\n",x);
     return 0;
 }
+
+/*********************************************************************
+ *                  setlocale           (CRTDLL.453)
+ */
+LPSTR CRTDLL_setlocale(INT32 category,LPCSTR locale)
+{
+	LPSTR categorystr;
+
+	switch (category) {
+	case CRTDLL_LC_ALL: categorystr="LC_ALL";break;
+	case CRTDLL_LC_COLLATE: categorystr="LC_COLLATE";break;
+	case CRTDLL_LC_CTYPE: categorystr="LC_CTYPE";break;
+	case CRTDLL_LC_MONETARY: categorystr="LC_MONETARY";break;
+	case CRTDLL_LC_NUMERIC: categorystr="LC_NUMERIC";break;
+	case CRTDLL_LC_TIME: categorystr="LC_TIME";break;
+	default: categorystr = "UNKNOWN?";break;
+	}
+	fprintf(stderr,"CRTDLL.setlocale(%s,%s),stub!\n",categorystr,locale);
+	return "C";
+}
+
+/*********************************************************************
+ *                  wcsspn           (CRTDLL.516)
+ */
+INT32 CRTDLL_wcsspn(LPWSTR str,LPWSTR accept)
+{
+	LPWSTR	s,t;
+
+	s=str;
+	do {
+		t=accept;
+		while (*t) { if (*t==*s) break;t++;}
+		if (!*t) break;
+		s++;
+	} while (*s);
+	return s-str; /* nr of wchars */
+}
+
+/*********************************************************************
+ *                  wcschr           (CRTDLL.504)
+ */
+LPWSTR CRTDLL_wcschr(LPWSTR str,WCHAR xchar)
+{
+	LPWSTR	s;
+
+	s=str;
+	do {
+		if (*s==xchar)
+			return s;
+	} while (*s++);
+	return NULL;
+}
+
+/*********************************************************************
+ *                  towupper           (CRTDLL.494)
+ */
+WCHAR CRTDLL_towupper(WCHAR x)
+{
+    return (WCHAR)toupper((CHAR)x);
+}
+
+/*********************************************************************
+ *                  swprintf           (CRTDLL.483)
+ */
+DWORD CRTDLL_swprintf(DWORD *args)
+{
+    return WIN32_wsprintf32W(args);
+}
+
+/*********************************************************************
+ *                  _wcsicoll           (CRTDLL.322)
+ */
+DWORD CRTDLL__wcsicoll(LPWSTR a1,LPWSTR a2)
+{
+    /* FIXME: handle collates */
+    return lstrcmpi32W(a1,a2);
+}
+
+/*********************************************************************
+ *                  wcscoll           (CRTDLL.506)
+ */
+DWORD CRTDLL_wcscoll(LPWSTR a1,LPWSTR a2)
+{
+    /* FIXME: handle collates */
+    return lstrcmp32W(a1,a2);
+}
+
+/*********************************************************************
+ *                  wcsstr           (CRTDLL.517)
+ */
+LPWSTR CRTDLL_wcsstr(LPWSTR s,LPWSTR b)
+{
+	LPWSTR	x,y,c;
+
+	x=s;
+	while (*x) {
+		if (*x==*b) {
+			y=x;c=b;
+			while (*y && *c && *y==*c) { c++;y++; }
+			if (!*c)
+				return x;
+		}
+		x++;
+	}
+	return NULL;
+}
+
+/*********************************************************************
+ *                  wcsrchr           (CRTDLL.515)
+ */
+LPWSTR CRTDLL_wcsrchr(LPWSTR str,WCHAR xchar)
+{
+	LPWSTR	s;
+
+	s=str+lstrlen32W(str);
+	do {
+		if (*s==xchar)
+			return s;
+		s--;
+	} while (s>=str);
+	return NULL;
+}
+

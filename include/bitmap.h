@@ -7,7 +7,18 @@
 #ifndef __WINE_BITMAP_H
 #define __WINE_BITMAP_H
 
+#include <X11/extensions/XShm.h>
 #include "gdi.h"
+
+#ifdef PRELIMINARY_WING16_SUPPORT
+
+typedef struct
+{
+  XShmSegmentInfo	si;
+  SEGPTR		bits;
+} __ShmBitmapCtl;
+
+#endif
 
   /* GDI logical bitmap object */
 typedef struct

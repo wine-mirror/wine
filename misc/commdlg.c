@@ -2767,7 +2767,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
                    char buffer[80];
 	           sprintf(buffer,"Select a font size between %d and %d points.",
                            lpcf->nSizeMin,lpcf->nSizeMax);
-	           MessageBox(hDlg,buffer,NULL,MB_OK);
+	           MessageBox16(hDlg,buffer,NULL,MB_OK);
 	          } 
 		  return(TRUE);
 	case IDCANCEL:EndDialog(hDlg, FALSE);

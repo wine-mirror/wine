@@ -22,6 +22,7 @@
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "string32.h"
 
 #define  CF_REGFORMATBASE 	0xC000
 
@@ -525,9 +526,9 @@ UINT16 EnumClipboardFormats(UINT16 wFormat)
 
 
 /**************************************************************************
- *			RegisterClipboardFormat	[USER.145]
+ *            RegisterClipboardFormat16  (USER.145)
  */
-WORD RegisterClipboardFormat(LPCSTR FormatName)
+UINT16 RegisterClipboardFormat16( LPCSTR FormatName )
 {
     LPCLIPFORMAT lpNewFormat; 
     LPCLIPFORMAT lpFormat = ClipFormats; 
@@ -569,6 +570,28 @@ WORD RegisterClipboardFormat(LPCSTR FormatName)
     return LastRegFormat++;
 }
 
+
+/**************************************************************************
+ *            RegisterClipboardFormat32A   (USER32.430)
+ */
+UINT32 RegisterClipboardFormat32A( LPCSTR formatName )
+{
+    return RegisterClipboardFormat16( formatName );
+}
+
+
+/**************************************************************************
+ *            RegisterClipboardFormat32W   (USER32.431)
+ */
+UINT32 RegisterClipboardFormat32W( LPCWSTR formatName )
+{
+    LPSTR aFormat;
+    UINT32 ret;
+    aFormat = STRING32_DupUniToAnsi(formatName);
+    ret = RegisterClipboardFormat32A(aFormat);
+    free(aFormat);
+    return ret;
+}
 
 /**************************************************************************
  *			GetClipboardFormatName	[USER.146]

@@ -132,7 +132,7 @@ base	1
 127 stub OleSetContainedObject
 128 stub OleSetMenuDescriptor
 129 stub OleTranslateAccelerator
-130 stub OleUninitialize
+130 return OleUninitialize 0 0
 131 stub OpenOrCreateStream
 132 stub ProgIDFromCLSID
 133 stub ReadClassStg

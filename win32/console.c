@@ -5,9 +5,12 @@
  */
 
 #include <stdio.h>
+#include <malloc.h>
 #include "windows.h"
 #include "winerror.h"
 #include "wincon.h"
+#include "string32.h"
+#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -51,11 +54,155 @@ BOOL32 GetConsoleScreenBufferInfo( HANDLE32 hConsoleOutput,
 /***********************************************************************
  *            GetLargestConsoleWindowSize   (KERNEL32.226)
  */
-COORD GetLargestConsoleWindowSize( HANDLE32 hConsoleOutput )
+DWORD GetLargestConsoleWindowSize( HANDLE32 hConsoleOutput )
 {
-    return dummyinfo.dwMaximumWindowSize;
+    return (DWORD)MAKELONG(dummyinfo.dwMaximumWindowSize.x,dummyinfo.dwMaximumWindowSize.y);
 }
 
+/***********************************************************************
+ *            GetConsoleCP   (KERNEL32.226)
+ */
+UINT32 GetConsoleCP(VOID)
+{
+    return GetACP();
+}
 
+/***********************************************************************
+ *            GetConsoleOutputCP   (KERNEL32.189)
+ */
+UINT32 GetConsoleOutputCP(VOID)
+{
+    return GetConsoleCP();
+}
 
+/***********************************************************************
+ *            GetConsoleMode   (KERNEL32.188)
+ */
+BOOL32 GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
+{
+	*mode = 	ENABLE_PROCESSED_INPUT	|
+			ENABLE_LINE_INPUT	|
+			ENABLE_ECHO_INPUT	|
+			ENABLE_WINDOW_INPUT	|
+			ENABLE_MOUSE_INPUT;
+	return TRUE;
+}
 
+/***********************************************************************
+ *            SetConsoleMode   (KERNEL32.188)
+ */
+BOOL32 SetConsoleMode(HANDLE32 hcon,DWORD mode)
+{
+    fprintf(stdnimp,"SetConsoleMode(%08lx,%08lx)\n",hcon,mode);
+    return TRUE;
+}
+
+/***********************************************************************
+ *            GetConsoleTitleA   (KERNEL32.191)
+ */
+DWORD GetConsoleTitle32A(LPSTR title,DWORD size)
+{
+    lstrcpyn32A(title,"Console",size);
+    return strlen("Console");
+}
+
+/***********************************************************************
+ *            GetConsoleTitleW   (KERNEL32.192)
+ */
+DWORD GetConsoleTitle32W(LPWSTR title,DWORD size)
+{
+    lstrcpynAtoW(title,"Console",size);
+    return strlen("Console");
+}
+
+/***********************************************************************
+ *            WriteConsoleA   (KERNEL32.567)
+ */
+BOOL32 WriteConsole32A(
+	HANDLE32 hConsoleOutput,
+	LPVOID lpBuffer,
+	DWORD nNumberOfCharsToWrite,
+	LPDWORD lpNumberOfCharsWritten,
+	LPVOID lpReserved )
+{
+	LPSTR	buf = (LPSTR)xmalloc(nNumberOfCharsToWrite+1);
+
+	lstrcpyn32A(buf,lpBuffer,nNumberOfCharsToWrite);
+	buf[nNumberOfCharsToWrite]=0;
+	fprintf(stderr,"%s",buf);
+	free(buf);
+	*lpNumberOfCharsWritten=nNumberOfCharsToWrite;
+	return TRUE;
+}
+
+/***********************************************************************
+ *            WriteConsoleW   (KERNEL32.577)
+ */
+BOOL32 WriteConsole32W(
+	HANDLE32 hConsoleOutput,
+	LPVOID lpBuffer,
+	DWORD nNumberOfCharsToWrite,
+	LPDWORD lpNumberOfCharsWritten,
+	LPVOID lpReserved )
+{
+	LPSTR	buf = (LPSTR)xmalloc(2*nNumberOfCharsToWrite+1);
+
+	lstrcpynWtoA(buf,lpBuffer,nNumberOfCharsToWrite);
+	buf[nNumberOfCharsToWrite]=0;
+	fprintf(stderr,"%s",buf);
+	free(buf);
+	*lpNumberOfCharsWritten=nNumberOfCharsToWrite;
+	return TRUE;
+}
+
+/***********************************************************************
+ *            ReadConsoleA   (KERNEL32.419)
+ */
+BOOL32 ReadConsole32A(
+	HANDLE32 hConsoleInput,
+	LPVOID lpBuffer,
+	DWORD nNumberOfCharsToRead,
+	LPDWORD lpNumberOfCharsRead,
+	LPVOID lpReserved )
+{
+	fgets(lpBuffer,nNumberOfCharsToRead,stdin);
+	*lpNumberOfCharsRead = strlen(lpBuffer);
+	return TRUE;
+}
+
+/***********************************************************************
+ *            ReadConsoleW   (KERNEL32.427)
+ */
+BOOL32 ReadConsole32W(
+	HANDLE32 hConsoleInput,
+	LPVOID lpBuffer,
+	DWORD nNumberOfCharsToRead,
+	LPDWORD lpNumberOfCharsRead,
+	LPVOID lpReserved )
+{
+	LPSTR	buf = (LPSTR)xmalloc(nNumberOfCharsToRead);
+
+	fgets(buf,nNumberOfCharsToRead,stdin);
+	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
+	*lpNumberOfCharsRead = strlen(buf);
+	return TRUE;
+}
+
+/***********************************************************************
+ *            SetConsoleTitleA   (KERNEL32.476)
+ */
+BOOL32 SetConsoleTitle32A(LPCSTR title)
+{
+    fprintf(stderr,"SetConsoleTitle(%s)\n",title);
+    return TRUE;
+}
+/***********************************************************************
+ *            SetConsoleTitleW   (KERNEL32.477)
+ */
+BOOL32 SetConsoleTitle32W(LPCWSTR title)
+{
+    LPSTR titleA = STRING32_DupUniToAnsi(title);
+    fprintf(stderr,"SetConsoleTitle(%s)\n",titleA);
+    free(titleA);
+    return TRUE;
+}

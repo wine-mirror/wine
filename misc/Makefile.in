@@ -20,6 +20,7 @@ C_SRCS = \
 	main.c \
 	mpr.c \
 	network.c \
+	ntdll.c \
 	ole2.c \
 	ole2disp.c \
 	ole2nls.c \

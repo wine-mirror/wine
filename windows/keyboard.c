@@ -2,11 +2,14 @@
  * Keyboard related functions
  *
  * Copyright 1993 Bob Amstadt
+ * Copyright 1996 Albrecht Kleine 
  */
+
 #include <stdio.h>
 #include <string.h>
 #include "win.h"
 #include "windows.h"
+#include "accel.h"
 #include "debug.h"
 
 extern BOOL MouseButtonsStates[3];
@@ -114,4 +117,148 @@ int GetAsyncKeyState(int nKey)
 
     dprintf_key(stddeb, "GetAsyncKeyState(%x) -> %x\n", nKey, retval);
     return retval;
+}
+
+
+/**********************************************************************
+ *			TranslateAccelerator 	[USER.178]
+ *
+ * FIXME: should send some WM_INITMENU or/and WM_INITMENUPOPUP  -messages
+ */
+INT16 TranslateAccelerator(HWND hWnd, HACCEL16 hAccel, LPMSG16 msg)
+{
+    ACCELHEADER	*lpAccelTbl;
+    int 	i;
+    BOOL sendmsg;
+    
+    if (hAccel == 0 || msg == NULL) return 0;
+    if (msg->message != WM_KEYDOWN &&
+    	msg->message != WM_KEYUP &&
+	msg->message != WM_SYSKEYDOWN &&
+	msg->message != WM_SYSKEYUP &&
+    	msg->message != WM_CHAR) return 0;
+
+    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
+msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
+
+    lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
+    for (sendmsg= i = 0; i < lpAccelTbl->wCount; i++) 
+    {
+     if(msg->wParam == lpAccelTbl->tbl[i].wEvent) 
+     {
+      if (msg->message == WM_CHAR) 
+      {
+        if ( !(lpAccelTbl->tbl[i].type & ALT_ACCEL) && 
+             !(lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) )
+        {
+   	  dprintf_accel(stddeb,"found accel for WM_CHAR: ('%c')",msg->wParam&0xff);
+   	  sendmsg=TRUE;
+   	}  
+      }
+      else
+      {
+       if(lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) 
+       {
+	INT mask = 0;
+        dprintf_accel(stddeb,"found accel for virt_key %04x (scan %04x)",
+  	                       msg->wParam,0xff & HIWORD(msg->lParam));                
+	if(GetKeyState(VK_SHIFT) & 0x8000) mask |= SHIFT_ACCEL;
+	if(GetKeyState(VK_CONTROL) & 0x8000) mask |= CONTROL_ACCEL;
+	if(GetKeyState(VK_MENU) & 0x8000) mask |= ALT_ACCEL;
+	if(mask == (lpAccelTbl->tbl[i].type &
+			    (SHIFT_ACCEL | CONTROL_ACCEL | ALT_ACCEL)))
+          sendmsg=TRUE;			    
+        else
+          dprintf_accel(stddeb,", but incorrect SHIFT/CTRL/ALT-state\n");
+       }
+       else
+       {
+         if (!(msg->lParam & 0x01000000))  /* no special_key */
+         {
+           if ((lpAccelTbl->tbl[i].type & ALT_ACCEL) && (msg->lParam & 0x20000000))
+           {                                                   /* ^^ ALT pressed */
+	    dprintf_accel(stddeb,"found accel for Alt-%c", msg->wParam&0xff);
+	    sendmsg=TRUE;	    
+	   } 
+         } 
+       }
+      } 
+
+      if (sendmsg)      /* found an accelerator, but send a message... ? */
+      {
+        INT16  iSysStat,iStat,mesg=0;
+        HMENU16 hSysMenu,hMenu;
+        
+        if (msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
+          mesg=1;
+        else 
+         if (GetCapture16())
+           mesg=2;
+         else
+          if (!IsWindowEnabled(hWnd))
+            mesg=3;
+          else
+          {
+            hMenu=GetMenu(hWnd);
+            hSysMenu=GetSystemMenu(hWnd,FALSE);
+            if (hSysMenu)
+              iSysStat=GetMenuState(hSysMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
+            else
+              iSysStat=-1;
+            if (hMenu)
+              iStat=GetMenuState(hMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
+            else
+              iStat=-1;
+            if (iSysStat!=-1)
+            {
+              if (iSysStat & (MF_DISABLED|MF_GRAYED))
+                mesg=4;
+              else
+                mesg=WM_SYSCOMMAND;
+            }
+            else
+            {
+              if (iStat!=-1)
+              {
+                if (IsIconic(hWnd))
+                  mesg=5;
+                else
+                {
+                 if (iStat & (MF_DISABLED|MF_GRAYED))
+                   mesg=6;
+                 else
+                   mesg=WM_COMMAND;  
+                }   
+              }
+              else
+               mesg=WM_COMMAND;  
+            }
+          }
+          if ( mesg==WM_COMMAND || mesg==WM_SYSCOMMAND )
+          {
+              dprintf_accel(stddeb,", sending %s, wParam=%0x\n",
+                  mesg==WM_COMMAND ? "WM_COMMAND" : "WM_SYSCOMMAND",
+                  lpAccelTbl->tbl[i].wIDval);
+	      SendMessage16(hWnd, mesg, lpAccelTbl->tbl[i].wIDval,0x00010000L);
+	  }
+	  else
+	  {
+	   /*  some reasons for NOT sending the WM_{SYS}COMMAND message: 
+	    *   #0: unknown (please report!)
+	    *   #1: for WM_KEYUP,WM_SYKEYUP
+	    *   #2: mouse is captured
+	    *   #3: window is disabled 
+	    *   #4: it's a disabled system menu option
+	    *   #5: it's a menu option, but window is iconic
+	    *   #6: it's a menu option, but disabled
+	    */
+	    dprintf_accel(stddeb,", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
+	  }          
+          GlobalUnlock16(hAccel);
+          return 1;         
+      }
+     }
+    }
+    GlobalUnlock16(hAccel);
+    return 0;
 }

@@ -59,7 +59,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 50  pascal16 CreateBrushIndirect(ptr) CreateBrushIndirect16
 51  pascal16 CreateCompatibleBitmap(word word word) CreateCompatibleBitmap
 52  pascal16 CreateCompatibleDC(word) CreateCompatibleDC
-53  pascal16 CreateDC(ptr ptr ptr ptr) CreateDC
+53  pascal16 CreateDC(ptr ptr ptr ptr) CreateDC16
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn16
 55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
 56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word
@@ -98,7 +98,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 89  pascal16 GetTextCharacterExtra(word) GetTextCharacterExtra
 90  pascal GetTextColor(word) GetTextColor
 91  pascal GetTextExtent(word ptr s_word) GetTextExtent
-92  pascal16 GetTextFace(word s_word ptr) GetTextFace
+92  pascal16 GetTextFace(word s_word ptr) GetTextFace16
 93  pascal16 GetTextMetrics(word ptr) GetTextMetrics16
 94  pascal GetViewportExt(word) GetViewportExt
 95  pascal GetViewportOrg(word) GetViewportOrg

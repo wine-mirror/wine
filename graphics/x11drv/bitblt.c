@@ -4,6 +4,7 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -34,6 +35,9 @@
 #define OP_ROP(opcode)    ((opcode) & 0x0f)
 
 #define MAX_OP_LEN  6  /* Longest opcode + 1 for the terminating 0 */
+
+#define SWAP_INT32(i1,i2) \
+    do { INT32 __t = *(i1); *(i1) = *(i2); *(i2) = __t; } while(0)
 
 extern void CLIPPING_UpdateGCRegion(DC* );
 
@@ -522,9 +526,9 @@ main()
  */
 static void BITBLT_StretchRow( int *rowSrc, int *rowDst,
                                INT32 startDst, INT32 widthDst,
-                               INT32 xinc, WORD mode )
+                               INT32 xinc, INT32 xoff, WORD mode )
 {
-    register INT32 xsrc = xinc * startDst;
+    register INT32 xsrc = xinc * startDst + xoff;
     rowDst += startDst;
     switch(mode)
     {
@@ -551,9 +555,9 @@ static void BITBLT_StretchRow( int *rowSrc, int *rowDst,
  */
 static void BITBLT_ShrinkRow( int *rowSrc, int *rowDst,
                               INT32 startSrc, INT32 widthSrc,
-                              INT32 xinc, WORD mode )
+                              INT32 xinc, INT32 xoff, WORD mode )
 {
-    register INT32 xdst = xinc * startSrc;
+    register INT32 xdst = xinc * startSrc + xoff;
     rowSrc += startSrc;
     switch(mode)
     {
@@ -583,6 +587,9 @@ static void BITBLT_GetRow( XImage *image, int *pdata, INT32 row,
                            int fg, int bg, BOOL32 swap)
 {
     register INT32 i;
+
+    assert( (row >= 0) && (row < image->height) );
+    assert( (start >= 0) && (width <= image->width) );
 
     pdata += swap ? start+width-1 : start;
     if (image->depth == depthDst)  /* color -> color */
@@ -636,7 +643,8 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                                  int foreground, int background, WORD mode )
 {
     int *rowSrc, *rowDst, *pixel;
-    INT32 xinc, yinc, ysrc, ydst;
+    char *pdata;
+    INT32 xinc, xoff, yinc, ysrc, ydst;
     register INT32 x, y;
     BOOL32 hstretch, vstretch, hswap, vswap;
 
@@ -646,9 +654,6 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     heightSrc = abs(heightSrc);
     widthDst  = abs(widthDst);
     heightDst = abs(heightDst);
-    
-    dprintf_bitblt( stddeb, "BITBLT_StretchImage: %dx%d -> %dx%d (mode=%d,h=%d,v=%d)\n",
-                widthSrc, heightSrc, widthDst, heightDst, mode, hswap, vswap );
 
     if (!(rowSrc = (int *)malloc( (widthSrc+widthDst)*sizeof(int) ))) return;
     rowDst = rowSrc + widthSrc;
@@ -664,43 +669,115 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     hstretch = (widthSrc < widthDst);
     vstretch = (heightSrc < heightDst);
 
-    xinc = hstretch ? ((int)widthSrc << 16) / widthDst :
-                      ((int)widthDst << 16) / widthSrc;
+    if (hstretch)
+    {
+        xinc = ((int)widthSrc << 16) / widthDst;
+        xoff = ((widthSrc << 16) - (xinc * widthDst)) / 2;
+    }
+    else
+    {
+        xinc = ((int)widthDst << 16) / widthSrc;
+        xoff = ((widthDst << 16) - (xinc * widthSrc)) / 2;
+    }
 
     if (vstretch)
     {
         yinc = ((int)heightSrc << 16) / heightDst;
         ydst = visRectDst->top;
-        ysrc = yinc * ydst + (vswap ? heightSrc<<16 : 0);
+        if (vswap)
+        {
+            ysrc = yinc * (heightDst - ydst - 1);
+            yinc = -yinc;
+        }
+        else
+            ysrc = yinc * ydst;
+
+        for ( ; (ydst < visRectDst->bottom); ysrc += yinc, ydst++)
+        {
+            if (((ysrc >> 16) < visRectSrc->top) ||
+                ((ysrc >> 16) >= visRectSrc->bottom)) continue;
+
+            /* Retrieve a source row */
+            BITBLT_GetRow( srcImage, rowSrc, (ysrc >> 16) - visRectSrc->top,
+                           hswap ? widthSrc - visRectSrc->right
+                                 : visRectSrc->left,
+                           visRectSrc->right - visRectSrc->left,
+                           dstImage->depth, foreground, background, hswap );
+
+            /* Stretch or shrink it */
+            if (hstretch)
+                BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left,
+                                   visRectDst->right - visRectDst->left,
+                                   xinc, xoff, mode );
+            else BITBLT_ShrinkRow( rowSrc, rowDst,
+                                   hswap ? widthSrc - visRectSrc->right
+                                         : visRectSrc->left,
+                                   visRectSrc->right - visRectSrc->left,
+                                   xinc, xoff, mode );
+
+            /* Store the destination row */
+            pixel = rowDst + visRectDst->right - 1;
+            y = ydst - visRectDst->top;
+            for (x = visRectDst->right-visRectDst->left-1; x >= 0; x--)
+                XPutPixel( dstImage, x, y, *pixel-- );
+            if (mode != STRETCH_DELETESCANS)
+                memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
+                        widthDst*sizeof(int) );
+
+            /* Make copies of the destination row */
+
+            pdata = dstImage->data + dstImage->bytes_per_line * y;
+            while (((ysrc + yinc) >> 16 == ysrc >> 16) &&
+                   (ydst < visRectDst->bottom-1))
+            {
+                memcpy( pdata + dstImage->bytes_per_line, pdata,
+                        dstImage->bytes_per_line );
+                pdata += dstImage->bytes_per_line;
+                ysrc += yinc;
+                ydst++;
+            }
+        }        
     }
-    else
+    else  /* Shrinking */
     {
         yinc = ((int)heightDst << 16) / heightSrc;
         ysrc = visRectSrc->top;
-        ydst = yinc * ysrc - (vswap ? (heightDst-1)<<16 : 0);
-    }
-
-    while(vstretch ? (ydst < visRectDst->bottom) : (ysrc < visRectSrc->bottom))
-    {
-          /* Retrieve a source row */
-        BITBLT_GetRow( srcImage, rowSrc, vstretch ? ysrc >> 16 : ysrc,
-                       visRectSrc->left, visRectSrc->right - visRectSrc->left,
-                       dstImage->depth, foreground, background, hswap );
-
-          /* Stretch or shrink it */
-        if (hstretch)
-            BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left +
-			       (hswap ? widthDst : 0),
-                               visRectDst->right-visRectDst->left, xinc, mode);
-        else BITBLT_ShrinkRow( rowSrc, rowDst, visRectSrc->left,
-                               visRectSrc->right-visRectSrc->left, xinc, mode);
-
-          /* When shrinking, merge several source rows into the destination */
-        if (!vstretch)
+        ydst = ((heightDst << 16) - (yinc * heightSrc)) / 2;
+        if (vswap)
         {
+            ydst += yinc * (heightSrc - ysrc - 1);
+            yinc = -yinc;
+        }
+        else
+            ydst += yinc * ysrc;
+
+        for( ; (ysrc < visRectSrc->bottom); ydst += yinc, ysrc++)
+        {
+            if (((ydst >> 16) < visRectDst->top) ||
+                ((ydst >> 16) >= visRectDst->bottom)) continue;
+
+            /* Retrieve a source row */
+            BITBLT_GetRow( srcImage, rowSrc, ysrc - visRectSrc->top,
+                           hswap ? widthSrc - visRectSrc->right
+                                 : visRectSrc->left,
+                           visRectSrc->right - visRectSrc->left,
+                           dstImage->depth, foreground, background, hswap );
+
+            /* Stretch or shrink it */
+            if (hstretch)
+                BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left,
+                                   visRectDst->right - visRectDst->left,
+                                   xinc, xoff, mode );
+            else BITBLT_ShrinkRow( rowSrc, rowDst,
+                                   hswap ? widthSrc - visRectSrc->right
+                                         : visRectSrc->left,
+                                   visRectSrc->right - visRectSrc->left,
+                                   xinc, xoff, mode );
+
+            /* Merge several source rows into the destination */
             if (mode == STRETCH_DELETESCANS)
             {
-                  /* Simply skip the overlapping rows */
+                /* Simply skip the overlapping rows */
                 while (((ydst + yinc) >> 16 == ydst >> 16) &&
                        (ysrc < visRectSrc->bottom-1))
                 {
@@ -710,59 +787,18 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
             }
             else if (((ydst + yinc) >> 16 == ydst >> 16) &&
                      (ysrc < visRectSrc->bottom-1))
-            {
-                ydst += yinc;
-                ysrc++;
                 continue;  /* Restart loop for next overlapping row */
-            }
-        }
         
-          /* Store the destination row */
-
-        pixel = rowDst + visRectDst->right - 1 + (hswap ? widthDst : 0);
-        if (vswap)
-            y = visRectDst->bottom - (vstretch ? ydst : ydst >> 16);
-        else
-            y = (vstretch ? ydst : ydst >> 16) - visRectDst->top;
-        for (x = visRectDst->right-visRectDst->left-1; x >= 0; x--)
-            XPutPixel( dstImage, x, y, *pixel-- );
-        if (mode != STRETCH_DELETESCANS)
-            memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
-                    widthDst*sizeof(int) );
-
-          /* If stretching, make copies of the destination row */
-
-        if (vstretch)
-        {
-            char *pdata = dstImage->data + dstImage->bytes_per_line * y;
-            while (((ysrc + yinc) >> 16 == ysrc >> 16) &&
-                   (ydst < visRectDst->bottom-1))
-            {
-                if (vswap)
-                {
-                    memcpy( pdata - dstImage->bytes_per_line, pdata,
-                            dstImage->bytes_per_line );
-                    pdata -= dstImage->bytes_per_line;
-                }
-                else
-                {
-                    memcpy( pdata + dstImage->bytes_per_line, pdata,
-                            dstImage->bytes_per_line );
-                    pdata += dstImage->bytes_per_line;
-                }
-                ysrc += yinc;
-                ydst++;
-            }
-            ysrc += yinc;
-            ydst++;
-        }
-        else
-        {
-            ydst += yinc;
-            ysrc++;
+            /* Store the destination row */
+            pixel = rowDst + visRectDst->right - 1;
+            y = (ydst >> 16) - visRectDst->top;
+            for (x = visRectDst->right-visRectDst->left-1; x >= 0; x--)
+                XPutPixel( dstImage, x, y, *pixel-- );
+            if (mode != STRETCH_DELETESCANS)
+                memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
+                        widthDst*sizeof(int) );
         }
     }        
-
     free( rowSrc );
 }
 
@@ -785,8 +821,14 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
 
     RECT32 rectSrc = *visRectSrc;
     RECT32 rectDst = *visRectDst;
+
+    if (widthSrc < 0) xSrc += widthSrc;
+    if (widthDst < 0) xDst += widthDst;
+    if (heightSrc < 0) ySrc += heightSrc;
+    if (heightDst < 0) yDst += heightDst;
     OffsetRect32( &rectSrc, -xSrc, -ySrc );
     OffsetRect32( &rectDst, -xDst, -yDst );
+
     /* FIXME: avoid BadMatch errors */
     imageSrc = XGetImage( display, dcSrc->u.x.drawable,
                           visRectSrc->left, visRectSrc->top,
@@ -985,55 +1027,59 @@ static BOOL32 BITBLT_GetVisRectangles( DC *dcDst, INT32 xDst, INT32 yDst,
                                        INT32 widthSrc, INT32 heightSrc,
                                        RECT32 *visRectSrc, RECT32 *visRectDst )
 {
-    RECT32 tmpRect, clipRect;
-
-    if (widthSrc < 0)  { widthSrc = -widthSrc; xSrc -= widthSrc; }
-    if (widthDst < 0)  { widthDst = -widthDst; xDst -= widthDst; }
-    if (heightSrc < 0) { heightSrc = -heightSrc; ySrc -= heightSrc; }
-    if (heightDst < 0) { heightDst = -heightDst; yDst -= heightDst; }
+    RECT32 rect, clipRect;
 
       /* Get the destination visible rectangle */
 
-    SetRect32( &tmpRect, xDst, yDst, xDst + widthDst, yDst + heightDst );
+    SetRect32( &rect, xDst, yDst, xDst + widthDst, yDst + heightDst );
+    if (widthDst < 0) SWAP_INT32( &rect.left, &rect.right );
+    if (heightDst < 0) SWAP_INT32( &rect.top, &rect.bottom );
     GetRgnBox32( dcDst->w.hGCClipRgn, &clipRect );
     OffsetRect32( &clipRect, dcDst->w.DCOrgX, dcDst->w.DCOrgY );
-    if (!IntersectRect32( visRectDst, &tmpRect, &clipRect )) return FALSE;
+    if (!IntersectRect32( visRectDst, &rect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */
 
     if (!dcSrc) return TRUE;
-    SetRect32( &tmpRect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
+    SetRect32( &rect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
+    if (widthSrc < 0) SWAP_INT32( &rect.left, &rect.right );
+    if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
     /* Apparently the clip region is only for output, so use hVisRgn here */
     GetRgnBox32( dcSrc->w.hVisRgn, &clipRect );
     OffsetRect32( &clipRect, dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
-    if (!IntersectRect32( visRectSrc, &tmpRect, &clipRect )) return FALSE;
+    if (!IntersectRect32( visRectSrc, &rect, &clipRect )) return FALSE;
 
       /* Intersect the rectangles */
 
     if ((widthSrc == widthDst) && (heightSrc == heightDst)) /* no stretching */
     {
         OffsetRect32( visRectSrc, xDst - xSrc, yDst - ySrc );
-        if (!IntersectRect32( &tmpRect, visRectSrc, visRectDst )) return FALSE;
-        *visRectSrc = *visRectDst = tmpRect;
+        if (!IntersectRect32( &rect, visRectSrc, visRectDst )) return FALSE;
+        *visRectSrc = *visRectDst = rect;
         OffsetRect32( visRectSrc, xSrc - xDst, ySrc - yDst );
     }
     else  /* stretching */
     {
-        visRectSrc->left = xDst + (visRectSrc->left-xSrc)*widthDst/widthSrc;
-        visRectSrc->top = yDst + (visRectSrc->top-ySrc)*heightDst/heightSrc;
-        visRectSrc->right = xDst +
-                            ((visRectSrc->right-xSrc) * widthDst) / widthSrc;
-        visRectSrc->bottom = yDst +
-                         ((visRectSrc->bottom-ySrc) * heightDst) / heightSrc;
-        if (!IntersectRect32( &tmpRect, visRectSrc, visRectDst )) return FALSE;
-        *visRectSrc = *visRectDst = tmpRect;
-        visRectSrc->left = xSrc + (visRectSrc->left-xDst)*widthSrc/widthDst;
-        visRectSrc->top = ySrc + (visRectSrc->top-yDst)*heightSrc/heightDst;
-        visRectSrc->right = xSrc +
-                            ((visRectSrc->right-xDst) * widthSrc) / widthDst;
-        visRectSrc->bottom = ySrc +
-                         ((visRectSrc->bottom-yDst) * heightSrc) / heightDst;
-        if (IsRectEmpty32( visRectSrc )) return FALSE;
+        /* Map source rectangle into destination coordinates */
+        rect.left = xDst + (visRectSrc->left - xSrc)*widthDst/widthSrc;
+        rect.top = yDst + (visRectSrc->top - ySrc)*heightDst/heightSrc;
+        rect.right = xDst + ((visRectSrc->right - xSrc)*widthDst)/widthSrc;
+        rect.bottom = yDst + ((visRectSrc->bottom - ySrc)*heightDst)/heightSrc;
+        if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
+        if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
+        InflateRect32( &rect, 1, 1 );  /* Avoid rounding errors */
+        if (!IntersectRect32( visRectDst, &rect, visRectDst )) return FALSE;
+
+        /* Map destination rectangle back to source coordinates */
+        rect = *visRectDst;
+        rect.left = xSrc + (visRectDst->left - xDst)*widthSrc/widthDst;
+        rect.top = ySrc + (visRectDst->top - yDst)*heightSrc/heightDst;
+        rect.right = xSrc + ((visRectDst->right - xDst)*widthSrc)/widthDst;
+        rect.bottom = ySrc + ((visRectDst->bottom - yDst)*heightSrc)/heightDst;
+        if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
+        if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
+        InflateRect32( &rect, 1, 1 );  /* Avoid rounding errors */
+        if (!IntersectRect32( visRectSrc, &rect, visRectSrc )) return FALSE;
     }
     return TRUE;
 }

@@ -14,6 +14,7 @@
 #include "miscemu.h"
 #include "drive.h"
 #include "msdos.h"
+#include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -366,11 +367,18 @@ void INT_Int31Handler( SIGCONTEXT *context )
         break;
 
     case 0x0500:  /* Get free memory information */
-        ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-        *(DWORD *)ptr = 0x00ff0000; /* Largest block available */
-        memset( ptr + 4, 0xff, 0x2c );  /* No other information supported */
-        break;
+        {
+            MEMMANINFO mmi;
 
+            mmi.dwSize = sizeof(mmi);
+            MemManInfo(&mmi);
+            ptr = (BYTE *)PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context));
+            /* the layout is just the same as MEMMANINFO, but without
+             * the dwSize entry.
+             */
+            memcpy(ptr,((char*)&mmi)+4,sizeof(mmi)-4);
+            break;
+        }
     case 0x0501:  /* Allocate memory block */
         if (!(ptr = (BYTE *)HeapAlloc( SystemHeap, 0,MAKELONG( CX_reg(context),
                                                            BX_reg(context) ))))

@@ -26,12 +26,12 @@ base	0
 022 stub shutdown
 023 stub socket
 051 stdcall gethostbyaddr(ptr long long) gethostbyaddr
-052 stub gethostbyname
+052 stdcall gethostbyname(ptr) gethostbyname
 053 stub getprotobyname
 054 stub getprotobynumber
 055 stdcall getservbyname(ptr ptr) getservbyname
 056 stub getservbyport
-057 stub gethostname
+057 stdcall gethostname(ptr long) gethostname
 101 stub WSAAsyncSelect
 102 stub WSAAsyncGetHostByAddr
 103 stub WSAAsyncGetHostByName

@@ -602,7 +602,7 @@ static void MAIN_RestoreSetup(void)
 static void called_at_exit(void)
 {
     MAIN_RestoreSetup();
-    WSACleanup();
+    WINSOCK_Shutdown();
 }
 
 /***********************************************************************
@@ -879,8 +879,8 @@ BOOL32 SetEnvironmentVariable32A( LPCSTR lpName, LPCSTR lpValue )
 {
     int rc;
 
-    rc = SetEnvironment(lpName, lpValue, strlen(lpValue) + 1);
-    return (rc > 0) ? 1 : 0;
+    rc = SetEnvironment(lpName, lpValue, lpValue?(strlen(lpValue)+1):0);
+    return (rc>0)?TRUE:FALSE;
 }
 
 
@@ -889,15 +889,13 @@ BOOL32 SetEnvironmentVariable32A( LPCSTR lpName, LPCSTR lpValue )
  */
 BOOL32 SetEnvironmentVariable32W( LPCWSTR lpName, LPCWSTR lpValue )
 {
-    LPSTR lpAName, lpAValue;
-    BOOL ret;
+    LPSTR lpNameA = STRING32_DupUniToAnsi(lpName);
+    LPSTR lpValueA = lpValue?STRING32_DupUniToAnsi(lpValue):NULL;
+    BOOL32 ret = SetEnvironmentVariable32A(lpNameA,lpValueA);
 
-    lpAName = STRING32_DupUniToAnsi( lpName );
-    lpAValue = STRING32_DupUniToAnsi ( lpValue );
-    ret = SetEnvironment(lpAName, lpAValue, strlen(lpAValue) + 1);
-    free (lpAName);
-    free (lpAValue);
-    return (ret > 0) ? 1 : 0;    
+    free (lpNameA);
+    if (lpValue) free (lpValueA);
+    return ret;
 }
 
 
@@ -926,11 +924,26 @@ int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
 }
 
 /***********************************************************************
- *      GetEnvironmentVariableA (KERNEL32.213)
+ *      GetEnvironmentVariable32A   (KERNEL32.213)
  */
-DWORD GetEnvironmentVariableA(LPSTR lpName, LPSTR lpValue, DWORD size)
+DWORD GetEnvironmentVariable32A( LPSTR lpName, LPSTR lpValue, DWORD size )
 {
     return GetEnvironment(lpName, lpValue, size);
+}
+
+/***********************************************************************
+ *      GetEnvironmentVariable32W   (KERNEL32.214)
+ */
+DWORD GetEnvironmentVariable32W( LPWSTR nameW, LPWSTR valW, DWORD size )
+{
+    LPSTR	name = nameW?STRING32_DupUniToAnsi(nameW):NULL;
+    LPSTR	val = valW?(LPSTR)xmalloc(size*2):NULL;
+    DWORD	res = GetEnvironment(name,val,size);
+
+    if (name) free(name);
+    if (val) lstrcpynAtoW(valW,val,size);
+    if (val) free(val);
+    return res;
 }
 
 /***********************************************************************
@@ -1047,9 +1060,20 @@ LONG GetTimerResolution(void)
 }
 
 /***********************************************************************
- *	SystemParametersInfo (USER.483)
+ *	SystemParametersInfo32A   (USER32.539)
  */
-BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWinIni)
+BOOL32 SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
+                                LPVOID lpvParam, UINT32 fuWinIni )
+{
+    return SystemParametersInfo16(uAction,uParam,lpvParam,fuWinIni);
+}
+
+
+/***********************************************************************
+ *	SystemParametersInfo16   (USER.483)
+ */
+BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
+                               LPVOID lpvParam, UINT16 fuWinIni )
 {
 	int timeout, temp;
 	char buffer[256];
@@ -1160,7 +1184,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			break;
 
 		case SPI_SETDESKPATTERN:
-			if ((INT) uParam == -1) {
+			if ((INT16)uParam == -1) {
 				GetProfileString32A("Desktop", "Pattern", 
 						"170 85 170 85 170 85 170 85", 
 						buffer, sizeof(buffer) );
@@ -1195,15 +1219,78 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 		case SPI_SETFASTTASKSWITCH:
 		case SPI_SETKEYBOARDDELAY:
 		case SPI_SETKEYBOARDSPEED:
-			fprintf(stderr, "SystemParametersInfo: option %d ignored.\n", uParam);
+			fprintf(stderr, "SystemParametersInfo: option %d ignored.\n", uAction);
 			break;
 
+                case SPI_GETWORKAREA:
+                    SetRect16( (RECT16 *)lpvParam, 0, 0,
+                               GetSystemMetrics( SM_CXSCREEN ),
+                               GetSystemMetrics( SM_CYSCREEN ) );
+                    break;
+
 		default:
-			fprintf(stderr, "SystemParametersInfo: unknown option %d.\n", uParam);
+			fprintf(stderr, "SystemParametersInfo: unknown option %d.\n", uAction);
 			break;
 	}
 	return 1;
 }
+
+/***********************************************************************
+ *	SystemParametersInfo32W   (USER32.540)
+ */
+BOOL32 SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
+                                LPVOID lpvParam, UINT32 fuWinIni )
+{
+    char buffer[256];
+
+    switch (uAction)
+    {
+    case SPI_SETDESKWALLPAPER:
+        if (lpvParam)
+        {
+            lstrcpynWtoA(buffer,(LPWSTR)lpvParam,sizeof(buffer));
+            return SetDeskWallPaper32(buffer);
+        }
+        return SetDeskWallPaper32(NULL);
+
+    case SPI_SETDESKPATTERN:
+        if ((INT) uParam == -1)
+        {
+            GetProfileString32A("Desktop", "Pattern", 
+                                "170 85 170 85 170 85 170 85", 
+                                buffer, sizeof(buffer) );
+            return (DESKTOP_SetPattern((LPSTR) buffer));
+        }
+        if (lpvParam)
+        {
+            lstrcpynWtoA(buffer,(LPWSTR)lpvParam,sizeof(buffer));
+            return DESKTOP_SetPattern(buffer);
+        }
+        return DESKTOP_SetPattern(NULL);
+
+    case SPI_GETICONTITLELOGFONT:
+        {
+            /* FIXME GetProfileString32A( "?", "?", "?" ) */
+            LPLOGFONT32W lpLogFont = (LPLOGFONT32W)lpvParam;
+            lpLogFont->lfHeight = 10;
+            lpLogFont->lfWidth = 0;
+            lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
+            lpLogFont->lfWeight = FW_NORMAL;
+            lpLogFont->lfItalic = lpLogFont->lfStrikeOut = lpLogFont->lfUnderline = FALSE;
+            lpLogFont->lfCharSet = ANSI_CHARSET;
+            lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+            lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+            lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+        }
+        break;
+
+    default:
+        return SystemParametersInfo32A(uAction,uParam,lpvParam,fuWinIni);
+	
+    }
+    return TRUE;
+}
+
 
 /***********************************************************************
 *	COPY (GDI.250)

@@ -407,6 +407,33 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON16 hIcon)
 }
 
 /*************************************************************************
+ *				ShellAbout32W		[SHELL32.83]
+ */
+INT32 ShellAbout32W(HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff, HICON16 hIcon)
+{
+    HGLOBAL16 handle;
+    BOOL bRet;
+
+    if (szApp) lstrcpynWtoA(AppName, szApp, sizeof(AppName));
+    else *AppName = 0;
+    AppName[sizeof(AppName)-1]=0;
+
+    if (szOtherStuff) lstrcpynWtoA(AppMisc, szOtherStuff, sizeof(AppMisc));
+    else *AppMisc = 0;
+    AppMisc[sizeof(AppMisc)-1]=0;
+
+    if (!hIcon) hIcon = LoadIcon16(0,MAKEINTRESOURCE(OIC_WINEICON));
+    handle = SYSRES_LoadResource( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX );
+    if (!handle) return FALSE;
+    bRet = DialogBoxIndirectParam16( WIN_GetWindowInstance( hWnd ),
+                                     handle, hWnd,
+                                     (DLGPROC16)MODULE_GetWndProcEntry16("AboutDlgProc"), 
+                                     (LPARAM)hIcon );
+    SYSRES_FreeResource( handle );
+    return bRet;
+}
+
+/*************************************************************************
  *				SHELL_GetResourceTable
  *
  * FIXME: Implement GetPEResourceTable in w32sys.c and call it here.
@@ -691,7 +718,7 @@ HICON16 ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,LPWORD lpiIcon)
 	else
 	  *lpiIcon = 6;   /* generic icon - found nothing */
 
-        GetModuleFileName(hInst, lpIconPath, 0x80);
+        GetModuleFileName16(hInst, lpIconPath, 0x80);
 	hIcon = LoadIcon16( hInst, MAKEINTRESOURCE(*lpiIcon));
       }
 
@@ -836,4 +863,51 @@ SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,SHFILEINFO32A *psfi,
 		path,dwFileAttributes,psfi,sizeofpsfi,flags
 	);
 	return TRUE;
+}
+
+/*************************************************************************
+ *				CommandLineToArgvW	[SHELL32.2]
+ */
+LPWSTR*
+CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs) {
+	LPWSTR	*argv,s,t;
+	int	i;
+
+	cmdline = (LPWSTR)STRING32_strdupW(cmdline); /* to get writeable copy */
+	s=cmdline;i=0;
+	while (*s) {
+		/* space */
+		if (*s==0x0020) {
+			i++;
+			s++;
+			while (*s && *s==0x0020)
+				s++;
+			continue;
+		}
+		s++;
+	}
+	argv=(LPWSTR*)xmalloc(sizeof(LPWSTR)*(i+1));
+	s=t=cmdline;
+	i=0;
+	while (*s) {
+		if (*s==0x0020) {
+			*s=0;
+			argv[i++]=(LPWSTR)STRING32_strdupW(t);
+			*s=0x0020;
+			while (*s && *s==0x0020)
+				s++;
+			if (*s)
+				t=s+1;
+			else
+				t=s;
+			continue;
+		}
+		s++;
+	}
+	if (*t)
+		argv[i++]=(LPWSTR)STRING32_strdupW(t);
+	free(cmdline);
+	argv[i]=NULL;
+	*numargs=i;
+	return argv;
 }

@@ -1607,13 +1607,29 @@ void SetWindowText32W( HWND32 hwnd, LPCWSTR lpString )
 
 
 /*******************************************************************
- *         GetWindowTextLength    (USER.38)
+ *         GetWindowTextLength16    (USER.38)
  */
-int GetWindowTextLength(HWND hwnd)
+INT16 GetWindowTextLength16( HWND16 hwnd )
 {
-    return (int)SendMessage16(hwnd, WM_GETTEXTLENGTH, 0, 0 );
+    return (INT16)SendMessage16( hwnd, WM_GETTEXTLENGTH, 0, 0 );
 }
 
+
+/*******************************************************************
+ *         GetWindowTextLength32A   (USER32.309)
+ */
+INT32 GetWindowTextLength32A( HWND32 hwnd )
+{
+    return SendMessage32A( hwnd, WM_GETTEXTLENGTH, 0, 0 );
+}
+
+/*******************************************************************
+ *         GetWindowTextLength32W   (USER32.309)
+ */
+INT32 GetWindowTextLength32W( HWND32 hwnd )
+{
+    return SendMessage32W( hwnd, WM_GETTEXTLENGTH, 0, 0 );
+}
 
 /*******************************************************************
  *         IsWindow   (USER.47) (USER32.347)

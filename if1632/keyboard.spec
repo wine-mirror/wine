@@ -16,7 +16,7 @@ type	win16
 130 pascal16 GetKeyboardType(byte) GetKeyboardType
 131 pascal16 MapVirtualKey(word word) MapVirtualKey
 132 pascal16 GetKbCodePage() GetKbCodePage
-133 pascal16 GetKeyNameText(long ptr word) GetKeyNameText
+133 pascal16 GetKeyNameText(long ptr word) GetKeyNameText16
 134 pascal16 AnsiToOemBuff(ptr ptr word) AnsiToOemBuff
 135 pascal16 OemToAnsiBuff(ptr ptr word) OemToAnsiBuff
 #136	pascal	EnableKbSysReq

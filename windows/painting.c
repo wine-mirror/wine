@@ -11,6 +11,7 @@
 #include "queue.h"
 #include "gdi.h"
 #include "dce.h"
+#include "heap.h"
 #include "stddebug.h"
 /* #define DEBUG_WIN */
 #include "debug.h"
@@ -251,6 +252,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
     HRGN32 hrgn;
     RECT32 rectClient;
     WND* wndPtr;
+    WND **list, **ppWnd;
 
     if (!hwnd) hwnd = GetDesktopWindow32();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
@@ -399,16 +401,20 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 	{
 	   if (!(hrgn = CreateRectRgn32( 0, 0, 0, 0 ))) return TRUE;
 	   if( !hrgnUpdate )
-	     {
+           {
 	        control |= (RDW_C_DELETEHRGN | RDW_C_USEHRGN);
  	        if( !(hrgnUpdate = CreateRectRgnIndirect32( rectUpdate )) )
                 {
                     DeleteObject32( hrgn );
                     return TRUE;
                 }
-	     }
-           for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
-	     if( wndPtr->dwStyle & WS_VISIBLE )
+           }
+           list = WIN_BuildWinArray( wndPtr );
+           for (ppWnd = list; *ppWnd; ppWnd++)
+           {
+               wndPtr = *ppWnd;
+               if (!IsWindow(wndPtr->hwndSelf)) continue;
+               if (wndPtr->dwStyle & WS_VISIBLE)
 	       {
                    SetRectRgn( hrgn, wndPtr->rectWindow.left,
                                wndPtr->rectWindow.top,
@@ -421,11 +427,22 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                    PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags,
                                        RDW_C_USEHRGN );
                }
+	   }
+	   HeapFree( SystemHeap, 0, list );
 	   DeleteObject32( hrgn );
 	   if (control & RDW_C_DELETEHRGN) DeleteObject32( hrgnUpdate );
 	}
-	else for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
-		  PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
+        else
+        {
+           list = WIN_BuildWinArray( wndPtr );
+           for (ppWnd = list; *ppWnd; ppWnd++)
+           {
+               wndPtr = *ppWnd;
+               if (IsWindow( wndPtr->hwndSelf ))
+                   PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
+	   }
+	   HeapFree( SystemHeap, 0, list );
+	}
 
     }
     return TRUE;

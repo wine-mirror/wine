@@ -819,3 +819,193 @@ WIN32_FormatMessage32A(DWORD *args) {
 		xargs
 	);
 }
+
+DWORD
+FormatMessage32W(
+	DWORD	dwFlags,
+	LPCVOID	lpSource,
+	DWORD	dwMessageId,
+	DWORD	dwLanguageId,
+	LPWSTR	lpBuffer,
+	DWORD	nSize,
+	LPDWORD	args /* va_list *args */
+) {
+	LPSTR	target,t;
+	DWORD	talloced;
+	LPSTR	from,f;
+	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
+	DWORD	nolinefeed = 0;
+
+	dprintf_resource(stddeb,
+		"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args
+	);
+	if (width) 
+		fprintf(stdnimp,"	- line wrapping not supported.\n");
+	from = NULL;
+	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
+		from = STRING32_DupUniToAnsi((LPWSTR)lpSource);
+	if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
+		/* gather information from system message tables ... */
+		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_SYSTEM not implemented.\n");
+	}
+	if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
+		INT32	bufsize;
+
+		dwMessageId &= 0xFFFF;
+		bufsize=LoadMessage32A(0,dwMessageId,dwLanguageId,NULL,100);
+		if (bufsize) {
+			from = (char*)xmalloc(bufsize+1);
+			LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
+		}
+	}
+	target	= (char*)xmalloc(100);
+	t	= target;
+	talloced= 100;
+	*t	= 0;
+
+#define ADD_TO_T(c) \
+	*t++=c;\
+	if (t-target == talloced) {\
+		target	= (char*)xrealloc(target,talloced*2);\
+		t	= target+talloced;\
+		talloced*=2;\
+	}
+
+	if (from) {
+		f=from;
+		while (*f) {
+			if (*f=='%') {
+				int	insertnr;
+				char	*fmtstr,*sprintfbuf,*x;
+				DWORD	*argliststart;
+
+				fmtstr = NULL;
+				f++;
+				if (!*f) {
+					ADD_TO_T('%');
+					continue;
+				}
+				switch (*f) {
+				case '1':case '2':case '3':case '4':case '5':
+				case '6':case '7':case '8':case '9':
+					insertnr=*f-'0';
+					switch (f[1]) {
+					case '0':case '1':case '2':case '3':
+					case '4':case '5':case '6':case '7':
+					case '8':case '9':
+						f++;
+						insertnr=insertnr*10+*f-'0';
+						f++;
+						break;
+					default:
+						f++;
+						break;
+					}
+					if (*f=='!') {
+						f++;
+						if (NULL!=(x=strchr(f,'!'))) {
+							*x='\0';
+							fmtstr=(char*)xmalloc(strlen(f)+2);
+							sprintf(fmtstr,"%%%s",f);
+							f=x+1;
+						}
+					} else
+						fmtstr=strdup("%s");
+					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
+						argliststart=args+insertnr-1;
+					else
+						/* FIXME: not sure that this is
+						 * correct for unix-c-varargs.
+						 */
+						argliststart=((DWORD*)&args)+insertnr-1;
+
+					if (fmtstr[strlen(fmtstr)]=='s') {
+						DWORD	xarr[3];
+
+						xarr[0]=(DWORD)STRING32_DupUniToAnsi((LPWSTR)(*(argliststart+0)));
+						/* possible invalid pointers */
+						xarr[1]=*(argliststart+1);
+						xarr[2]=*(argliststart+2);
+						sprintfbuf=(char*)xmalloc(lstrlen32W((LPWSTR)argliststart[0])*2+1);
+						vsprintf(sprintfbuf,fmtstr,xarr);
+					} else {
+						sprintfbuf=(char*)xmalloc(100);
+						vsprintf(sprintfbuf,fmtstr,argliststart);
+					}
+					x=sprintfbuf;
+					while (*x) {
+						ADD_TO_T(*x++);
+					}
+					free(sprintfbuf);
+					free(fmtstr);
+					break;
+				case '0':
+					nolinefeed=1;
+					f++;
+					break;
+				default:ADD_TO_T(*f++)
+					break;
+
+				}
+			} else {
+				ADD_TO_T(*f++)
+			}
+		}
+		*t='\0';
+	}
+	if (!nolinefeed && t[-1]!='\n')
+		ADD_TO_T('\n');
+	talloced = strlen(target)+1;
+	if (nSize && talloced<nSize)
+		target = (char*)xrealloc(target,nSize);
+	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
+		/* nSize is the MINIMUM size */
+		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc32(GMEM_ZEROINIT,talloced*2+2);
+		lstrcpynAtoW(*(LPWSTR*)lpBuffer,target,talloced);
+	} else
+		lstrcpynAtoW(lpBuffer,target,nSize);
+	free(target);
+	if (from) free(from);
+	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
+			lstrlen32W(*(LPWSTR*)lpBuffer):
+			lstrlen32W(lpBuffer);
+}
+
+/***********************************************************************
+ *           FormatMessageA   (KERNEL32.138) Emulator Version
+ */
+DWORD
+WIN32_FormatMessage32W(DWORD *args) {
+	DWORD	dwFlags		= args[0];
+	LPCVOID	lpSource	= (LPCVOID)args[1];
+	DWORD	dwMessageId	= args[2];
+	DWORD	dwLanguageId	= args[3];
+	LPWSTR	lpBuffer	= (LPWSTR)args[4];
+	DWORD	nSize		= args[5];
+	DWORD	*xargs;
+
+	/* convert possible varargs to an argument array look-a-like */
+
+	if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) {
+		xargs=(DWORD*)args[6];
+	} else {
+		/* args[6] is a pointer to a pointer to the start of 
+		 * a list of arguments.
+		 */
+		if (args[6])
+			xargs=(DWORD*)(((DWORD*)args[6])[0]);
+		else
+			xargs=NULL;
+		dwFlags|=FORMAT_MESSAGE_ARGUMENT_ARRAY;
+	}
+	return FormatMessage32W(
+		dwFlags,
+		lpSource,
+		dwMessageId,
+		dwLanguageId,
+		lpBuffer,
+		nSize,
+		xargs
+	);
+}

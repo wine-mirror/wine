@@ -21,7 +21,7 @@
 
 #define __WS_ASYNC_DEBUG	0
 
-static int		_async_io_max_fd = 0;
+static int		__async_io_max_fd = 0;
 static fd_set		__async_io_fdset;
 static ws_async_op*	__async_op_list = NULL;
 
@@ -80,8 +80,8 @@ void WINSOCK_link_async_op(ws_async_op* p_aop)
   __async_op_list = p_aop;
 
   FD_SET(p_aop->fd[0], &__async_io_fdset);
-  if( p_aop->fd[0] > _async_io_max_fd ) 
-		     _async_io_max_fd = p_aop->fd[0];
+  if( p_aop->fd[0] > __async_io_max_fd ) 
+		     __async_io_max_fd = p_aop->fd[0];
 }
 
 void WINSOCK_unlink_async_op(ws_async_op* p_aop)
@@ -91,8 +91,8 @@ void WINSOCK_unlink_async_op(ws_async_op* p_aop)
   { p_aop->prev->next = p_aop->next;
     if( p_aop->next ) p_aop->next->prev = p_aop->prev; }
   FD_CLR(p_aop->fd[0], &__async_io_fdset); 
-  if( p_aop->fd[0] == _async_io_max_fd )
-		      _async_io_max_fd--;
+  if( p_aop->fd[0] == __async_io_max_fd )
+		      __async_io_max_fd--;
 }
 
 /* ----------------------------------- SIGIO handler -
@@ -112,7 +112,7 @@ void WINSOCK_sigio(int signal)
  check_set = __async_io_fdset;
  bzero(&timeout,sizeof(timeout));
 
- while( select(_async_io_max_fd + 1,
+ while( select(__async_io_max_fd + 1,
               &check_set, NULL, NULL, &timeout) > 0)
  {
    for( p_aop = __async_op_list;
@@ -123,7 +123,7 @@ void WINSOCK_sigio(int signal)
 	      if( p_aop->pid ) 
 	      { 
 		kill(p_aop->pid, SIGKILL);
-		waitpid(p_aop->pid, NULL, 0);  
+		waitpid(p_aop->pid, NULL, WNOHANG);
 	      }
 	      WINSOCK_unlink_async_op( p_aop );
 	  }
@@ -188,7 +188,9 @@ static int notify_parent( unsigned flag )
                                MTYPE_CLIENT_SIZE, 0) == -1 )
      {
        if( errno == EINTR ) continue;
+#ifdef EIDRM
        else if( errno == EIDRM ) _exit(0);
+#endif
        else 
        { 
 	 perror("AsyncSelect(child)"); 
@@ -240,8 +242,9 @@ static void setup_sig_sets(sigset_t* sig_block)
 void WINSOCK_do_async_select()
 {
   sigset_t    sig_block;
-  int	      bytes;
+  int	      sock_type, bytes;
 
+  getsockopt(async_ctl.ws_sock->fd, SOL_SOCKET, SO_TYPE, &sock_type, &bytes);
   setup_sig_sets(&sig_block);
   setup_fd_sets();
 
@@ -249,6 +252,8 @@ void WINSOCK_do_async_select()
   {
     int		val;
 
+    if( sock_type != SOCK_STREAM )
+        async_ctl.lEvent &= ~(WS_FD_ACCEPT | WS_FD_CONNECT);
     sigprocmask( SIG_UNBLOCK, &sig_block, NULL); 
 
 #if __WS_ASYNC_DEBUG
@@ -337,12 +342,21 @@ void WINSOCK_do_async_select()
 	  if( async_ctl.lEvent & (WS_FD_READ | WS_FD_CLOSE) )
 	    if( FD_ISSET(async_ctl.ws_sock->fd, &fd_read) )
 	    {
-	      if( ioctl( async_ctl.ws_sock->fd, FIONREAD, (char*)&bytes) != -1 )
+	      int 	ok = 0;
+
+	      if( sock_type == SOCK_RAW ) ok = 1;
+	      else if( ioctl( async_ctl.ws_sock->fd, FIONREAD, (char*)&bytes) == -1 )
 	      {
-	        if( bytes )	/* got data */
-	        {
+		  async_ctl.ip.lParam = WSAMAKESELECTREPLY( WS_FD_READ, wsaErrno() );
+		  FD_CLR( async_ctl.ws_sock->fd, &fd_read );
+		  bytes = 0;
+	      }
+
+	      if( bytes || ok )	/* got data */
+	      {
 #if __WS_ASYNC_DEBUG
-		  printf("\t%i bytes pending\n", bytes );
+		  if( ok ) printf("\traw/datagram read pending\n");
+		  else printf("\t%i bytes pending\n", bytes );
 #endif
 		  if( async_ctl.lEvent & WS_FD_READ )
 		  {
@@ -358,9 +372,9 @@ void WINSOCK_do_async_select()
 			  sigprocmask( SIG_BLOCK, &sig_block, NULL);
 		       }
 		       else continue;
-	        }
-	        else		/* 0 bytes to read */
-	        {
+	      }
+	      else		/* 0 bytes to read */
+	      {
 		  val = read( async_ctl.ws_sock->fd, (char*)&bytes, 4);
 	          if( errno == EWOULDBLOCK || errno == EINTR ) 
 		  { 
@@ -379,9 +393,7 @@ void WINSOCK_do_async_select()
 		  }
 		  async_ctl.lEvent &= ~(WS_FD_CLOSE | WS_FD_READ); /* one-shot */
 		  FD_ZERO(&fd_read); FD_ZERO(&fd_write); 
-	        }
 	      }
-	      else async_ctl.ip.lParam = WSAMAKESELECTREPLY( WS_FD_READ, wsaErrno() );
 
 	      notify_parent( WSMSG_ASYNC_SELECT );
 	  }
@@ -430,8 +442,8 @@ void WS_do_async_gethost(LPWSINFO pwsi, unsigned flag )
 
   close(async_ctl.ws_aop->fd[0]);
   p_he = (flag & WSMSG_ASYNC_HOSTBYNAME)
-	 ? gethostbyname(async_ctl.ws_aop->init)
-	 : gethostbyaddr(async_ctl.ws_aop->init,
+	 ? gethostbyname(async_ctl.init)
+	 : gethostbyaddr(async_ctl.init,
 		 	 async_ctl.lLength, async_ctl.lEvent);
   if( p_he ) size = WS_dup_he(pwsi, p_he, WS_DUP_SEGPTR | WS_DUP_OFFSET );
   if( size )
@@ -441,7 +453,6 @@ void WS_do_async_gethost(LPWSINFO pwsi, unsigned flag )
      notify_parent( flag );
   }
   else _async_fail();
-  _exit(0);
 }
 
 void WS_do_async_getproto(LPWSINFO pwsi, unsigned flag )
@@ -451,7 +462,7 @@ void WS_do_async_getproto(LPWSINFO pwsi, unsigned flag )
 
   close(async_ctl.ws_aop->fd[0]);
   p_pe = (flag & WSMSG_ASYNC_PROTOBYNAME)
-	 ? getprotobyname(async_ctl.ws_aop->init)
+	 ? getprotobyname(async_ctl.init)
 	 : getprotobynumber(async_ctl.lEvent);
   if( p_pe ) size = WS_dup_pe(pwsi, p_pe, WS_DUP_SEGPTR | WS_DUP_OFFSET );
   if( size )
@@ -461,7 +472,6 @@ void WS_do_async_getproto(LPWSINFO pwsi, unsigned flag )
      notify_parent( flag );
   } 
   else _async_fail();
-  _exit(0);
 }
 
 void WS_do_async_getserv(LPWSINFO pwsi, unsigned flag )
@@ -471,8 +481,8 @@ void WS_do_async_getserv(LPWSINFO pwsi, unsigned flag )
 
   close(async_ctl.ws_aop->fd[0]);
   p_se = (flag & WSMSG_ASYNC_SERVBYNAME)
-	 ? getservbyname(async_ctl.ws_aop->init, async_ctl.buffer)
-	 : getservbyport(async_ctl.lEvent, async_ctl.ws_aop->init);
+	 ? getservbyname(async_ctl.init, async_ctl.buffer)
+	 : getservbyport(async_ctl.lEvent, async_ctl.init);
   if( p_se ) size = WS_dup_se(pwsi, p_se, WS_DUP_SEGPTR | WS_DUP_OFFSET );
   if( size )
   {
@@ -481,6 +491,5 @@ void WS_do_async_getserv(LPWSINFO pwsi, unsigned flag )
      notify_parent( flag );
   }
   else _async_fail();
-  _exit(0);
 }
 

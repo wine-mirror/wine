@@ -20,14 +20,14 @@ int yyerror(const char *s);
 	struct rc_style *style;
 }
 %token <num> NUMBER
-%token <str> STRING SINGLE_QUOTED IDENT
+%token <str> tSTRING SINGLE_QUOTED IDENT
 %token ACCELERATORS ALT ASCII tBEGIN tBITMAP CAPTION CHECKBOX CHECKED 
 %token CLASS COMBOBOX CONTROL CTEXT CURSOR DEFPUSHBUTTON DIALOG 
 %token DISCARDABLE EDITTEXT tEND FIXED FONT GRAYED GROUPBOX HELP ICON 
 %token IDENT INACTIVE LISTBOX LTEXT MENU MENUBARBREAK MENUBREAK MENUITEM 
 %token MOVEABLE LOADONCALL NOINVERT NOT NOT_SUPPORTED POPUP PRELOAD 
 %token PURE PUSHBUTTON RADIOBUTTON RCDATA RTEXT SCROLLBAR SHIFT SEPARATOR 
-%token SINGLE_QUOTED STRING STRINGTABLE STYLE VERSIONINFO VIRTKEY
+%token SINGLE_QUOTED tSTRING STRINGTABLE STYLE VERSIONINFO VIRTKEY
 %type <res> resource_file resource resources resource_definition accelerators
 %type <res> events bitmap cursor dialog dlg_attributes controls 
 %type <res> generic_control labeled_control control_desc font icon 
@@ -76,7 +76,7 @@ accelerators:	ACCELERATORS  tBEGIN  events tEND {$$=$3;$$->type=acc;}
 /* the events are collected in a gen_res, as the accelerator resource is just
    an array of events */
 events:		{$$=new_res();}
-		| STRING ',' NUMBER acc_options  events 
+		| tSTRING ',' NUMBER acc_options  events 
 			{$$=add_string_accelerator($1,$3,$4,$5);}
 		| NUMBER ',' NUMBER ',' ASCII acc_options  events 
 			{$$=add_ascii_accelerator($1,$3,$6,$7);}
@@ -88,14 +88,14 @@ acc_options:	{$$=0;}
 		| ',' SHIFT acc_options	   {$$=$3|4;}
 		| ',' CONTROL acc_options  {$$=$3|8;}
 
-bitmap:		tBITMAP load_and_memoption STRING {$$=make_bitmap(load_file($3));}
+bitmap:		tBITMAP load_and_memoption tSTRING {$$=make_bitmap(load_file($3));}
 		| tBITMAP load_and_memoption raw_data {$$=make_bitmap($3);}
 
 /* load and memory options are ignored */
 load_and_memoption:	| lamo load_and_memoption
 lamo:	PRELOAD | LOADONCALL | FIXED | MOVEABLE | DISCARDABLE | PURE
 
-cursor:		CURSOR load_and_memoption STRING {$$=make_cursor(load_file($3));}
+cursor:		CURSOR load_and_memoption tSTRING {$$=make_cursor(load_file($3));}
 		|CURSOR load_and_memoption raw_data {$$=make_cursor($3);}
 
 dialog:		DIALOG load_and_memoption NUMBER ',' NUMBER ',' NUMBER ',' NUMBER 
@@ -106,13 +106,13 @@ dialog:		DIALOG load_and_memoption NUMBER ',' NUMBER ',' NUMBER ',' NUMBER
 dlg_attributes:	{$$=new_dialog();}
 		| STYLE style dlg_attributes 
 		  {$$=dialog_style($2,$3);}
-		| CAPTION STRING dlg_attributes
+		| CAPTION tSTRING dlg_attributes
 		  {$$=dialog_caption($2,$3);}
-		| FONT NUMBER ',' STRING dlg_attributes 
+		| FONT NUMBER ',' tSTRING dlg_attributes 
 		  {$$=dialog_font($2,$4,$5);}
-		| CLASS STRING dlg_attributes
+		| CLASS tSTRING dlg_attributes
 		  {$$=dialog_class($2,$3);}
-		| MENU STRING dlg_attributes
+		| MENU tSTRING dlg_attributes
 		  {$$=dialog_menu($2,$3);}
 
 /* the controls are collected into a gen_res, and finally the dialog header 
@@ -133,7 +133,7 @@ controls:	{$$=new_res();}
 		| GROUPBOX labeled_control controls 
 		  {$$=add_control(CT_BUTTON, BS_GROUPBOX, $2, $3);}
 		/*special treatment for icons, as the extent is optional*/
-		| ICON STRING ',' NUMBER ',' NUMBER ',' NUMBER iconinfo controls
+		| ICON tSTRING ',' NUMBER ',' NUMBER ',' NUMBER iconinfo controls
 		  {$$=add_icon($2, $4, $6, $8, $9, $10);}
 		| LISTBOX control_desc controls 
 		  {$$=add_control(CT_LISTBOX, 0, $2, $3);}
@@ -149,7 +149,7 @@ controls:	{$$=new_res();}
 		  {$$=add_control(CT_SCROLLBAR, 0, $2, $3);}
 
 
-labeled_control: STRING ',' control_desc {$$=label_control_desc($1,$3);}
+labeled_control: tSTRING ',' control_desc {$$=label_control_desc($1,$3);}
 control_desc:	NUMBER ',' NUMBER ',' NUMBER ',' NUMBER ',' NUMBER optional_style 
 		{$$=create_control_desc($1,$3,$5,$7,$9,$10);}
 
@@ -162,24 +162,24 @@ iconinfo:	/*set extent and style to 0 if they are not provided */
 		| ',' NUMBER ',' NUMBER optional_style
         {$$=create_control_desc(0,0,0,$2,$4,$5);}
 
-generic_control:	STRING ',' NUMBER ',' STRING ',' style ',' NUMBER
+generic_control:	tSTRING ',' NUMBER ',' tSTRING ',' style ',' NUMBER
 		',' NUMBER ',' NUMBER ',' NUMBER
 		{$$=create_generic_control($1,$3,$5,$7,$9,$11,$13,$15);}
 
-font:		FONT load_and_memoption STRING {$$=make_font(load_file($3));}
+font:		FONT load_and_memoption tSTRING {$$=make_font(load_file($3));}
 
-icon:		ICON load_and_memoption STRING {$$=make_icon(load_file($3));}
+icon:		ICON load_and_memoption tSTRING {$$=make_icon(load_file($3));}
 		| ICON load_and_memoption raw_data {$$=make_icon($3);}
 
 menu:		MENU load_and_memoption menu_body {$$=make_menu($3);}
 /* menu items are collected in a gen_res and prefixed with the menu header*/
 menu_body:	tBEGIN item_definitions tEND {$$=$2;}
 item_definitions:	{$$=new_res();}
-		| MENUITEM STRING ',' NUMBER item_options item_definitions
+		| MENUITEM tSTRING ',' NUMBER item_options item_definitions
 		  {$$=add_menuitem($2,$4,$5,$6);}
 		| MENUITEM SEPARATOR item_definitions
 		  {$$=add_menuitem("",0,0,$3);}
-		| POPUP STRING item_options menu_body item_definitions
+		| POPUP tSTRING item_options menu_body item_definitions
 		  {$$=add_popup($2,$3,$4,$5);}
 item_options:	{$$=0;}
 		| ',' CHECKED item_options {$$=$3|MF_CHECKED;}
@@ -200,7 +200,7 @@ raw_elements:	SINGLE_QUOTED {$$=hex_to_raw($1,new_res());}
 stringtable:	STRINGTABLE load_and_memoption tBEGIN strings tEND
 			{$$=$4;}
 strings:	{$$=0;}|
-		NUMBER STRING strings {$$=0;add_str_tbl_elm($1,$2);}
+		NUMBER tSTRING strings {$$=0;add_str_tbl_elm($1,$2);}
 
 versioninfo:	VERSIONINFO NOT_SUPPORTED {$$=0;}
 

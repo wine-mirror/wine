@@ -100,7 +100,7 @@ HANDLE32 GetProcessHeap(void)
  * copied from LoadLibrary
  * This does not currently support built-in libraries
  */
-HINSTANCE32 LoadLibraryA(char *libname)
+HINSTANCE32 LoadLibrary32A(LPCSTR libname)
 {
 	HINSTANCE32 handle;
 	dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
@@ -117,6 +117,20 @@ HINSTANCE32 LoadLibraryA(char *libname)
 	if (handle >= (HINSTANCE32)32) PE_InitializeDLLs( GetExePtr(handle));
 #endif
 	return handle;
+}
+
+/***********************************************************************
+ *           LoadLibrary32W         (KERNEL32.368)
+ */
+HINSTANCE32 LoadLibrary32W(LPCWSTR libnameW)
+{
+	LPSTR libnameA = STRING32_DupUniToAnsi(libnameW);
+	HINSTANCE32 ret;
+
+	ret = LoadLibrary32A(libnameA);
+	free(libnameA);
+	return ret;
+
 }
 
 /***********************************************************************

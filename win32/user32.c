@@ -46,6 +46,16 @@ BOOL IsDialogMessage32A(DWORD hwnd, MSG32* lpmsg)
 }
 
 /***********************************************************************
+ *          IsDialogMessage32W     (USER32.342)
+ */
+BOOL IsDialogMessage32W(DWORD hwnd, MSG32* lpmsg)
+{
+	MSG16 msg;
+	STRUCT32_MSG32to16(lpmsg, &msg);
+	return IsDialogMessage(hwnd, &msg);
+}
+
+/***********************************************************************
  *         DispatchMessageA       (USER32.140)
  */
 LONG USER32_DispatchMessageA(MSG32* lpmsg)

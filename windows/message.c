@@ -524,8 +524,10 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND hwnd, UINT msg,
 
       dprintf_sendmsg(stddeb,"%*ssm: smResult = %08x\n", prevSMRL, "", (unsigned)queue->smResult );
 
-      queue->smResult->lResult = queue->SendMessageReturn;
-      queue->smResult->bPending = FALSE;
+      if (queue->smResult) { /* FIXME, smResult should always be set */
+        queue->smResult->lResult = queue->SendMessageReturn;
+        queue->smResult->bPending = FALSE;
+      }
       queue->wakeBits &= ~QS_SMRESULT;
 
       if( queue->smResult != &qCtrl )
@@ -637,7 +639,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
             msg->message = WM_QUIT;
             msg->wParam  = msgQueue->wExitCode;
             msg->lParam  = 0;
-            if( !peek ) msgQueue->wPostQMsg = 0;
+            if (flags & PM_REMOVE) msgQueue->wPostQMsg = 0;
             break;
         }
     
@@ -902,6 +904,7 @@ BOOL16 PostAppMessage16( HTASK16 hTask, UINT16 message, WPARAM16 wParam,
 LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 {
     WND * wndPtr;
+    WND **list, **ppWnd;
     LRESULT ret;
 
 #ifdef CONFIG_IPC
@@ -912,8 +915,11 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
     if (hwnd == HWND_BROADCAST16)
     {
         dprintf_msg(stddeb,"SendMessage // HWND_BROADCAST !\n");
-        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        list = WIN_BuildWinArray( WIN_GetDesktop() );
+        for (ppWnd = list; *ppWnd; ppWnd++)
         {
+            wndPtr = *ppWnd;
+            if (!IsWindow(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
                 dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
@@ -921,6 +927,7 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
                 SendMessage16( wndPtr->hwndSelf, msg, wParam, lParam );
 	    }
         }
+	HeapFree( SystemHeap, 0, list );
         dprintf_msg(stddeb,"SendMessage // End of HWND_BROADCAST !\n");
         return TRUE;
     }
@@ -975,16 +982,20 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 {
     WND * wndPtr;
+    WND **list, **ppWnd;
     LRESULT ret;
 
     if (hwnd == HWND_BROADCAST32)
     {
-        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        list = WIN_BuildWinArray( WIN_GetDesktop() );
+        for (ppWnd = list; *ppWnd; ppWnd++)
         {
-            /* FIXME: should use something like EnumWindows here */
+            wndPtr = *ppWnd;
+            if (!IsWindow(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
                 SendMessage32A( wndPtr->hwndSelf, msg, wParam, lParam );
         }
+	HeapFree( SystemHeap, 0, list );
         return TRUE;
     }
 
@@ -1031,16 +1042,20 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 {
     WND * wndPtr;
+    WND **list, **ppWnd;
     LRESULT ret;
 
     if (hwnd == HWND_BROADCAST32)
     {
-        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        list = WIN_BuildWinArray( WIN_GetDesktop() );
+        for (ppWnd = list; *ppWnd; ppWnd++)
         {
-            /* FIXME: should use something like EnumWindows here */
+            wndPtr = *ppWnd;
+            if (!IsWindow(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
                 SendMessage32W( wndPtr->hwndSelf, msg, wParam, lParam );
         }
+	HeapFree( SystemHeap, 0, list );
         return TRUE;
     }
 

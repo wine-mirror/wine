@@ -1204,8 +1204,8 @@ static void LISTBOX_MoveCaret( WND *wnd, LB_DESCR *descr, INT32 index,
             INT32 last  = MAX( descr->focus_item, descr->anchor_item );
             if (first > 0)
                 LISTBOX_SelectItemRange( wnd, descr, 0, first - 1, FALSE );
-            LISTBOX_SelectItemRange( wnd, descr, first, last, TRUE );
             LISTBOX_SelectItemRange( wnd, descr, last + 1, -1, FALSE );
+            LISTBOX_SelectItemRange( wnd, descr, first, last, TRUE );
         }
     }
     else if (!(descr->style & LBS_MULTIPLESEL) && (descr->selected_item != -1))

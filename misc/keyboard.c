@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Scott A. Laird, Erik Bos  1993, 1994";
 #include "stddebug.h"
 /* #define DEBUG_KEYBOARD */
 #include "debug.h"
+#include "xmalloc.h"
 
 
 struct KeyTableEntry {
@@ -217,6 +218,12 @@ WORD VkKeyScan(WORD cChar)
 	return -1;
 }
 
+WORD VkKeyScan32W(WORD cChar)
+{
+	/* lower part of cChar is used anyway */
+	return VkKeyScan(cChar);
+}
+
 int GetKeyboardType(int nTypeFlag)
 {
   dprintf_keyboard(stddeb,"GetKeyboardType(%d)\n",nTypeFlag);
@@ -277,7 +284,31 @@ int GetKbCodePage(void)
 	return 850;
 }
 
-int GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
+/****************************************************************************
+ *	GetKeyNameText32W   (USER32.247)
+ */
+INT32 GetKeyNameText32W(LONG lParam, LPWSTR lpBuffer, INT32 nSize)
+{
+	LPSTR buf = xmalloc(nSize);
+	int	res = GetKeyNameText32A(lParam,buf,nSize);
+
+	lstrcpynAtoW(lpBuffer,buf,nSize);
+	free(buf);
+	return res;
+}
+
+/****************************************************************************
+ *	GetKeyNameText32A   (USER32.246)
+ */
+INT32 GetKeyNameText32A(LONG lParam, LPSTR lpBuffer, INT32 nSize)
+{
+	return GetKeyNameText16(lParam,lpBuffer,nSize);
+}
+
+/****************************************************************************
+ *	GetKeyNameText16   (KEYBOARD.133)
+ */
+INT16 GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
 	int i;
 	

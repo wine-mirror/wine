@@ -587,7 +587,10 @@ HGLOBAL16 GlobalLRUNewest( HGLOBAL16 handle )
  */
 DWORD GetFreeSpace( UINT16 wFlags )
 {
-    return GLOBAL_MAX_ALLOC_SIZE;
+    MEMORYSTATUS	ms;
+
+    GlobalMemoryStatus( &ms );
+    return ms.dwAvailVirtual;
 }
 
 

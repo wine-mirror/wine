@@ -686,7 +686,8 @@ INT16 SetDIBits( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan, UINT32 lines,
                                 dc, lines, bmp->bitmap.bmBitsPixel,
                                 bits, width, bpp, info,
                                 coloruse, bmp->pixmap, BITMAP_GC(bmp), 0, 0, 0,
-                                startscan, bmp->bitmap.bmWidth, lines );
+                                height - startscan - lines,
+                                bmp->bitmap.bmWidth, lines );
 }
 
 

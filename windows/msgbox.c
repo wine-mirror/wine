@@ -5,12 +5,15 @@
  *
  */
 
+#include <stdio.h>
+#include <malloc.h>
 #include "windows.h"
 #include "dlgs.h"
 #include "module.h"
 #include "win.h"
 #include "resource.h"
 #include "task.h"
+#include "string32.h"
 
 typedef struct {
   LPCSTR title;
@@ -171,10 +174,17 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lPara
 }
 
 /**************************************************************************
- *			MessageBox  [USER.1]
+ *           MessageBox16   (USER.1)
  */
+INT16 MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type )
+{
+    return MessageBox32A( hwnd, text, title, type );
+}
 
-int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
+/**************************************************************************
+ *           MessageBox32A   (USER32.390)
+ */
+INT32 MessageBox32A( HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type )
 {
     HANDLE16 handle;
     MSGBOX mbox;
@@ -195,11 +205,37 @@ int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
 }
 
 /**************************************************************************
+ *           MessageBox32W   (USER32.395)
+ */
+INT32 MessageBox32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title, UINT32 type )
+{
+    HANDLE16 handle;
+    MSGBOX mbox;
+    int ret;
+
+    mbox.title = title?STRING32_DupUniToAnsi(title):NULL;
+    mbox.text  = text?STRING32_DupUniToAnsi(text):NULL;
+    mbox.type  = type;
+
+    fprintf(stderr,"MessageBox(%s,%s)\n",mbox.text,mbox.title);
+    handle = SYSRES_LoadResource( SYSRES_DIALOG_MSGBOX );
+    if (!handle) return 0;
+    ret = DialogBoxIndirectParam16( WIN_GetWindowInstance(hWnd),
+                                  handle, hWnd,
+                                  MODULE_GetWndProcEntry16("SystemMessageBoxProc"),
+                                  (LONG)&mbox );
+    SYSRES_FreeResource( handle );
+    if (title) free(mbox.title);
+    if (text) free(mbox.text);
+    return ret;
+}
+
+/**************************************************************************
  *			FatalAppExit  [USER.137]
  */
 
 void FatalAppExit(UINT fuAction, LPCSTR str)
 {
-  MessageBox(0, str, NULL, MB_SYSTEMMODAL | MB_OK);
+  MessageBox16(0, str, NULL, MB_SYSTEMMODAL | MB_OK);
   TASK_KillCurrentTask(0);
 }

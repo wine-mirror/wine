@@ -892,12 +892,37 @@ DWORD GetFullPathName32A( LPCSTR fn, DWORD buflen, LPSTR buf, LPSTR *lastpart)
 {
 	dprintf_file(stddeb,"GetFullPathNameA(%s)\n",fn);
 	/* FIXME */
-        if (buf)
-        {
+        if (buf) {
             lstrcpyn32A(buf,fn,buflen);
-            if (lastpart) *lastpart = strrchr(buf,'\\');
+            if (lastpart) {
+		*lastpart = strrchr(buf,'\\');
+		if (!*lastpart) *lastpart=buf;
+	    }
 	}
 	return strlen(fn);
+}
+
+/***********************************************************************
+ *           GetFullPathName32W   (KERNEL32.273)
+ */
+DWORD GetFullPathName32W(LPCWSTR fn,DWORD buflen,LPWSTR buf,LPWSTR *lastpart) {
+	LPWSTR  x;
+
+	dprintf_file(stddeb,"GetFullPathNameW(%p)\n",fn);
+	/* FIXME */
+	if (buf) {
+		lstrcpyn32W(buf,fn,buflen);
+		if (lastpart) {
+			x = buf+lstrlen32W(buf)-1;
+			while (x>=buf && *x!='\\')
+			x--;
+			if (x>=buf)
+				*lastpart=x;
+			else
+				*lastpart=buf;
+		}
+	}
+	return lstrlen32W(fn);
 }
 
 

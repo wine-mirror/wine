@@ -674,8 +674,8 @@ VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
 	dprintf_ver(stddeb,"VerQueryValue16(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
-	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(subblock)+1);
-	strcpy(s,"VS_VERSION_INFO");strcat(s,subblock);
+	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
+	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
 	b=_find_data(block,s);
 	if (b==NULL) {
 		*buflen=0;
@@ -701,8 +701,8 @@ VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	dprintf_ver(stddeb,"VerQueryValue32A(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
-	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(subblock)+1);
-	strcpy(s,"VS_VERSION_INFO");strcat(s,subblock);
+	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
+	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
 	b=_find_data(block,s);
 	if (b==NULL) {
 		*buflen=0;
@@ -730,8 +730,8 @@ VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	char		*s,*sb;
 
 	sb=strdupW2A(subblock);
-	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(sb)+1);
-	strcpy(s,"VS_VERSION_INFO");strcat(s,sb);
+	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(sb)+1);
+	strcpy(s,"VS_VERSION_INFO\\");strcat(s,sb);
 	b=_find_data(block,s);
 	if (b==NULL) {
 		*buflen=0;

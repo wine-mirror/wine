@@ -969,13 +969,43 @@ BOOL16 Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 
 
 /**********************************************************************
+ *          Polyline32   (GDI32.276)
+ */
+BOOL32 Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
+{
+    register int i;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+        fprintf( stderr, "Polyline32: Metafile Polyline not yet supported for Win32\n");
+/* win 16 code was:
+	MF_MetaPoly(dc, META_POLYLINE, pt, count); 
+	return TRUE;
+*/
+	return FALSE;
+    }
+
+    if (DC_SetupGCForPen( dc ))
+	for (i = 0; i < count-1; i ++)
+	    XDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
+		       dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
+		       dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
+		       dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
+		       dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
+    return TRUE;
+}
+
+
+/**********************************************************************
  *          Polygon16  (GDI.36)
  */
 BOOL16 Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 {
     register int i;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    XPoint *points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
+    XPoint *points;
 
     if (!dc) 
     {
@@ -985,6 +1015,50 @@ BOOL16 Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 	return TRUE;
     }
 
+    points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
+    for (i = 0; i < count; i++)
+    {
+	points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
+	points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
+    }
+    points[count] = points[0];
+
+    if (DC_SetupGCForBrush( dc ))
+	XFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
+		     points, count+1, Complex, CoordModeOrigin);
+
+    if (DC_SetupGCForPen ( dc ))
+	XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+		   points, count+1, CoordModeOrigin );
+
+    free( points );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *          Polygon32  (GDI32.275)
+ *
+ * This a copy of Polygon16 so that conversion of array of
+ * LPPOINT32 to LPPOINT16 is not necessary
+ *
+ */
+BOOL32 Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
+{
+    register int i;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    XPoint *points;
+
+    if (!dc)
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	/* FIXME: MF_MetaPoly expects LPPOINT16 not 32 */
+	/* MF_MetaPoly(dc, META_POLYGON, pt, count); */
+	return TRUE;
+    }
+
+    points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
     for (i = 0; i < count; i++)
     {
 	points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );

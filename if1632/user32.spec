@@ -349,7 +349,7 @@ base	1
 0342 stub IsDialogMessageW
 0343 stdcall IsDlgButtonChecked(long long) IsDlgButtonChecked
 0344 stdcall IsIconic(long) IsIconic
-0345 stub IsMenu
+0345 stdcall IsMenu(long) IsMenu
 0346 stdcall IsRectEmpty(ptr) IsRectEmpty32
 0347 stdcall IsWindow(long) IsWindow
 0348 stdcall IsWindowEnabled(long) IsWindowEnabled
@@ -394,12 +394,12 @@ base	1
 0387 stub MenuWindowProcA
 0388 stub MenuWindowProcW
 0389 stdcall MessageBeep(long) MessageBeep
-0390	stdcall MessageBoxA(long ptr ptr long)	MessageBox
+0390 stdcall MessageBoxA(long ptr ptr long) MessageBox32A
 0391 stub MessageBoxExA
 0392 stub MessageBoxExW
 0393 stub MessageBoxIndirectA
 0394 stub MessageBoxIndirectW
-0395 stub MessageBoxW
+0395 stdcall MessageBoxW(long ptr ptr long) MessageBox32W
 0396 stdcall ModifyMenuA(long long long long ptr) ModifyMenu32A
 0397 stdcall ModifyMenuW(long long long long ptr) ModifyMenu32W
 0398 stdcall MoveWindow(long long long long long long) MoveWindow
@@ -434,8 +434,8 @@ base	1
 0427 stdcall RegisterClassExA(ptr) RegisterClassEx32A
 0428 stdcall RegisterClassExW(ptr) RegisterClassEx32W
 0429 stdcall RegisterClassW(ptr) RegisterClass32W
-0430 stdcall RegisterClipboardFormatA(ptr) RegisterClipboardFormat
-0431 stub RegisterClipboardFormatW
+0430 stdcall RegisterClipboardFormatA(ptr) RegisterClipboardFormat32A
+0431 stdcall RegisterClipboardFormatW(ptr) RegisterClipboardFormat32W
 0432 stub RegisterHotKey
 0433 stub RegisterLogonProcess
 0434 stub RegisterSystemThread
@@ -444,7 +444,7 @@ base	1
 0437 stdcall RegisterWindowMessageW(ptr) RegisterWindowMessage32W
 0438 stdcall ReleaseCapture() ReleaseCapture
 0439 stdcall ReleaseDC(long long) ReleaseDC32
-0440 stub RemoveMenu
+0440 stdcall RemoveMenu(long long long) RemoveMenu
 0441 stdcall RemovePropA(long ptr) RemoveProp32A
 0442 stdcall RemovePropW(long ptr) RemoveProp32W
 0443 stub ReplyMessage
@@ -543,8 +543,8 @@ base	1
 0536 stdcall SwapMouseButton(long) SwapMouseButton
 0537 stub SwitchDesktop
 0538 stub SwitchToThisWindow
-0539 	stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfo
-0540 stub SystemParametersInfoW
+0539 stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfo32A
+0540 stdcall SystemParametersInfoW(long long ptr long) SystemParametersInfo32W
 0541 stub TabbedTextOutA
 0542 stub TabbedTextOutW
 0543 stub TileChildWindows

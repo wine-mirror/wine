@@ -26,11 +26,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include "windows.h"
-#include "bitmap.h"
 #include "callback.h"
 #include "cursoricon.h"
 #include "sysmetrics.h"
 #include "win.h"
+#include "bitmap.h"
 #include "struct32.h"
 #include "string32.h"
 #include "stddebug.h"

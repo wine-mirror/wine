@@ -737,7 +737,7 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
 
     if (GetCurrentTask())
     {
-        GetModuleFileName( GetCurrentTask(), ofs->szPathName, len );
+        GetModuleFileName16( GetCurrentTask(), ofs->szPathName, len );
         if ((p = strrchr( ofs->szPathName, '\\' )))
         {
             strcpy( p + 1, name );
@@ -863,7 +863,7 @@ DWORD SearchPath32A(
 
     /* Try the path of the current executable */
     if (GetCurrentTask()) {
-	GetModuleFileName(GetCurrentTask(),testpath,len);
+	GetModuleFileName16(GetCurrentTask(),testpath,len);
 	if ((p=strrchr(testpath,'\\'))) {
             strcpy(p+1,name);
             if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE)))
@@ -1334,6 +1334,23 @@ BOOL32 CreateDirectory32W( LPCWSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
     return ret;
 }
 
+/***********************************************************************
+ *           CreateDirectoryEx32A   (KERNEL32.40)
+ */
+BOOL32 CreateDirectoryEx32A( LPCSTR template, LPCSTR path,
+                             LPSECURITY_ATTRIBUTES lpsecattribs)
+{
+    return CreateDirectory32A(path,lpsecattribs);
+}
+
+/***********************************************************************
+ *           CreateDirectoryEx32W   (KERNEL32.41)
+ */
+BOOL32 CreateDirectoryEx32W( LPCWSTR template, LPCWSTR path,
+                             LPSECURITY_ATTRIBUTES lpsecattribs)
+{
+    return CreateDirectory32W(path,lpsecattribs);
+}
 
 /***********************************************************************
  *           RemoveDirectory16   (KERNEL)

@@ -483,11 +483,6 @@ LRESULT EditWndProc(HWND hwnd, UINT msg, WPARAM16 wParam, LPARAM lParam)
 		lResult = EDIT_WM_VScroll(wndPtr, wParam, lParam);
 		break;
 	default:
-                /* Some programs pass messages obtained through
-                 * RegisterWindowMessage() (>= 0xc000); we just ignore them
-                 */
-		if ((msg >= WM_USER) && (msg < 0xc000))
-			fprintf(stdnimp, "edit: undocumented message %d >= WM_USER, please report.\n", msg);
 		lResult = DefWindowProc16(hwnd, msg, wParam, lParam);
 		break;
 	}
