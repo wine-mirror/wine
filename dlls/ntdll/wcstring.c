@@ -669,7 +669,7 @@ LPWSTR __cdecl _i64tow(
  *  No check is made for value overflow, only the lower 32 bits are assigned.
  *  If str is NULL it crashes, as the native function does.
  */
-LONG __cdecl _wtol( LPWSTR str )
+LONG __cdecl _wtol( LPCWSTR str )
 {
     ULONG RunningTotal = 0;
     char bMinus = 0;
@@ -710,7 +710,7 @@ LONG __cdecl _wtol( LPWSTR str )
  *  No check is made for value overflow, only the lower 32 bits are assigned.
  *  If str is NULL it crashes, as the native function does.
  */
-int __cdecl _wtoi( LPWSTR str )
+int __cdecl _wtoi( LPCWSTR str )
 {
     return _wtol(str);
 }
@@ -732,7 +732,7 @@ int __cdecl _wtoi( LPWSTR str )
  *  No check is made for value overflow, only the lower 64 bits are assigned.
  *  If str is NULL it crashes, as the native function does.
  */
-LONGLONG  __cdecl _wtoi64( LPWSTR str )
+LONGLONG  __cdecl _wtoi64( LPCWSTR str )
 {
     ULONGLONG RunningTotal = 0;
     char bMinus = 0;
