@@ -7,6 +7,7 @@ MODULE    = libwine_uuid.a
 
 C_SRCS = \
 	dx8guid.c \
+	dx9guid.c \
 	dxguid.c \
 	uuid.c
 
