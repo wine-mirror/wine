@@ -51,6 +51,9 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 	case OEM_CHARSET:
 	    cp = GetOEMCP();
 	    break;
+	case DEFAULT_CHARSET:
+	    cp = GetACP();
+	    break;
 
 	case VISCII_CHARSET:
 	case TCVN_CHARSET:
@@ -87,7 +90,7 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 
 /***********************************************************************
  *           ExtTextOut (GDI.351)
-*/
+ */
 BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
                             const RECT16 *lprect, LPCSTR str, UINT16 count,
                             const INT16 *lpDx )
