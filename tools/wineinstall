@@ -59,7 +59,7 @@ function conf_question {
   shift 2
   echo
   local LINE="$1"
-  while shift
+  while [ $# -gt 0 ] && shift
   do {
     echo "$LINE"
     LINE="$1"
