@@ -749,16 +749,16 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
            }
 
 #define COPY_COLORKEY_FX(type) { \
-	    type *s = (type *) sbuf, *d = (type *) dbuf, *dx, tmp; \
+	    type *s, *d = (type *) dbuf, *dx, tmp; \
             for (y = sy = 0; y < dstheight; y++, sy += yinc) { \
-               (LPBYTE)s = sbase + (sy >> 16) * sdesc.u1.lPitch; \
-               (LPBYTE)dx = d; \
+               s = (type*)(sbase + (sy >> 16) * sdesc.u1.lPitch); \
+               dx = d; \
 	       for (x = sx = 0; x < dstwidth; x++, sx += xinc) { \
 		  tmp = s[sx >> 16]; \
 		  if (tmp < keylow || tmp > keyhigh) dx[0] = tmp; \
-                  (LPBYTE)dx += dstxinc; \
-	          } \
-               (LPBYTE)d += dstyinc; \
+                  dx = (type*)(((LPBYTE)dx)+dstxinc); \
+	       } \
+               d = (type*)(((LPBYTE)d)+dstyinc); \
 	    } \
             break; }
 
