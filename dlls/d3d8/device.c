@@ -535,7 +535,7 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     float col[4];
 
     /* Make appropriate texture active */
-    glActiveTextureARB(GL_TEXTURE0_ARB + i);
+    glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
     checkGLcall("glActiveTextureARB");
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
@@ -2060,16 +2060,62 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
         break;
 
+    case D3DRS_FOGENABLE                 :
+        {
+            if (Value && This->StateBlock.renderstate[D3DRS_FOGTABLEMODE] != D3DFOG_NONE) {
+               glEnable(GL_FOG);
+               checkGLcall("glEnable GL_FOG\n");
+            } else {
+               glDisable(GL_FOG);
+               checkGLcall("glDisable GL_FOG\n");
+            }
+        }
+        break;
+
+    case D3DRS_FOGCOLOR                  :
+        {
+            float col[4];
+            col[0] = ((Value >> 16) & 0xFF) / 255.0;
+            col[1] = ((Value >> 8 ) & 0xFF) / 255.0;
+            col[2] = ((Value >> 0 ) & 0xFF) / 255.0;
+            col[3] = ((Value >> 24 ) & 0xFF) / 255.0;
+
+            /* Set the default alpha blend color */
+            glFogfv(GL_FOG_COLOR, &col[0]);
+            checkGLcall("glFog GL_FOG_COLOR");
+        }
+        break;
+
+    case D3DRS_FOGSTART                  :
+        {
+            float *f = (float *)&Value;
+            glFogfv(GL_FOG_START, f);
+            checkGLcall("glFogf(GL_FOG_START, (float) Value)");
+            TRACE("Fog Start == %f\n", *f);
+        }
+        break;
+
+    case D3DRS_FOGEND                    :
+        {
+            float *f = (float *)&Value;
+            glFogfv(GL_FOG_END, f);
+            checkGLcall("glFogf(GL_FOG_END, (float) Value)");
+            TRACE("Fog End == %f\n", *f);
+        }
+        break;
+
+    case D3DRS_FOGDENSITY                :
+        {
+            glFogf(GL_FOG_DENSITY, (float) Value);
+            checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
+        }
+        break;
+
         /* Unhandled yet...! */
     case D3DRS_LINEPATTERN               :
     case D3DRS_LASTPIXEL                 :
-    case D3DRS_FOGENABLE                 :
     case D3DRS_ZVISIBLE                  :
-    case D3DRS_FOGCOLOR                  :
     case D3DRS_FOGTABLEMODE              :
-    case D3DRS_FOGSTART                  :
-    case D3DRS_FOGEND                    :
-    case D3DRS_FOGDENSITY                :
     case D3DRS_EDGEANTIALIAS             :
     case D3DRS_ZBIAS                     :
     case D3DRS_RANGEFOGENABLE            :
