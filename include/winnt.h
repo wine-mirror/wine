@@ -3375,6 +3375,13 @@ typedef enum tagSID_NAME_USE {
 #define REG_QWORD		11	/* QWORD in little endian format */
 #define REG_QWORD_LITTLE_ENDIAN	11	/* QWORD in little endian format */
 
+/* ----------------------------- begin power management --------------------- */
+
+typedef enum _LATENCY_TIME {
+	LT_DONT_CARE,
+	LT_LOWEST_LATENCY
+} LATENCY_TIME, *PLATENCY_TIME;
+
 /* ----------------------------- begin registry ----------------------------- */
 
 /* Registry security values */

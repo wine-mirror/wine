@@ -42,7 +42,6 @@ at a later date. */
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
-WINE_DECLARE_DEBUG_CHANNEL(debug);
 
 
 /****************************************************************************
@@ -51,37 +50,7 @@ WINE_DECLARE_DEBUG_CHANNEL(debug);
 BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize)
 {
     if (GetVersion() & 0x80000000) return TRUE; /* not NT, always TRUE */
-    FIXME_(debug)("(0x%08lx,%p,0x%08lx): stub\n",(DWORD)hProcess, lpBaseAddress, dwSize);
-    return TRUE;
-}
-
-/***********************************************************************
- *           GetSystemPowerStatus      (KERNEL32.@)
- */
-BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
-{
-    return FALSE;   /* no power management support */
-}
-
-
-/***********************************************************************
- *           SetSystemPowerState      (KERNEL32.@)
- */
-BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
-                                  BOOL force_flag)
-{
-    /* suspend_or_hibernate flag: w95 does not support
-       this feature anyway */
-
-    for ( ;0; )
-    {
-        if ( force_flag )
-        {
-        }
-        else
-        {
-        }
-    }
+    FIXME("(%p,%p,0x%08lx): stub\n",hProcess, lpBaseAddress, dwSize);
     return TRUE;
 }
 
@@ -199,15 +168,6 @@ BOOL WINAPI GetQueuedCompletionStatus(
     FIXME("(%p,%p,%p,%p,%ld), stub!\n",CompletionPort,lpNumberOfBytesTransferred,lpCompletionKey,lpOverlapped,dwMilliseconds);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
-}
-
-/******************************************************************************
- *           GetDevicePowerState   (KERNEL32.@)
- */
-BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
-{
-    FIXME("(hDevice %p pfOn %p): stub\n", hDevice, pfOn);
-    return TRUE; /* no information */
 }
 
 /***********************************************************************

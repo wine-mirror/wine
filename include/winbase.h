@@ -1441,6 +1441,7 @@ BOOL        WINAPI HeapWalk(HANDLE,LPPROCESS_HEAP_ENTRY);
 DWORD       WINAPI InitializeAcl(PACL,DWORD,DWORD);
 BOOL        WINAPI InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR,DWORD);
 BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
+BOOL        WINAPI IsSystemResumeAutomatic(void);
 BOOL        WINAPI IsTextUnicode(CONST LPVOID lpBuffer, int cb, LPINT lpi);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
@@ -1514,6 +1515,7 @@ BOOL        WINAPI ReleaseMutex(HANDLE);
 BOOL        WINAPI ReleaseSemaphore(HANDLE,LONG,LPLONG);
 BOOL        WINAPI ReportEventA(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCSTR *,LPVOID);
 BOOL        WINAPI ReportEventW(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCWSTR *,LPVOID);
+BOOL        WINAPI RequestWakeupLatency(LATENCY_TIME latency);
 #define     ReportEvent WINELIB_NAME_AW(ReportEvent)
 BOOL        WINAPI ResetEvent(HANDLE);
 DWORD       WINAPI ResumeThread(HANDLE);

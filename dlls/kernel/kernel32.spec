@@ -573,7 +573,7 @@
 @ stdcall IsDBCSLeadByteEx(long long)
 @ stub IsLSCallback
 @ stub IsSLCallback
-@ stub IsSystemResumeAutomatic
+@ stdcall IsSystemResumeAutomatic()
 @ stdcall IsValidCodePage(long)
 @ stub IsValidLanguageGroup
 @ stdcall IsValidLocale(long long)
@@ -691,7 +691,7 @@
 @ stdcall RemoveDirectoryA(str)
 @ stdcall RemoveDirectoryW(wstr)
 @ stub RequestDeviceWakeup
-@ stub RequestWakeupLatency
+@ stdcall RequestWakeupLatency(long)
 @ stdcall ResetEvent(long)
 @ stub ResetWriteWatch
 @ stdcall ResumeThread(long)

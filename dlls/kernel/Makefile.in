@@ -34,6 +34,7 @@ C_SRCS = \
 	lcformat.c \
 	local16.c \
 	locale.c \
+	powermgnt.c \
 	process.c \
 	resource.c \
 	resource16.c \
