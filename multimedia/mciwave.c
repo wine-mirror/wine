@@ -443,7 +443,6 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     return 0;
 }
 
-
 /**************************************************************************
  * 				WAVE_mciRecord			[internal]
  */
@@ -535,7 +534,6 @@ static DWORD WAVE_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
 }
 
-
 /**************************************************************************
  * 				WAVE_mciResume			[internal]
  */
@@ -558,7 +556,7 @@ static DWORD WAVE_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
     else		dwRet = wodMessage(wDevID, WODM_PLAY, 0, dwFlags, (DWORD)lpParms);
     return (dwRet == MMSYSERR_NOERROR) ? 0 : MCIERR_INTERNAL;
 #else
-    return 0;
+    return dwRet;
 #endif
 
 }
@@ -683,7 +681,6 @@ static DWORD WAVE_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	TRACE(mciwave, "MCI_WAVE_SET_SAMPLESPERSEC !\n");
     return 0;
 }
-
 
 /**************************************************************************
  * 				WAVE_mciStatus		[internal]
@@ -951,5 +948,3 @@ LONG MCIWAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }
-
-
