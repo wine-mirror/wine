@@ -12,7 +12,7 @@ echo "0 \"$WINE_BUILD\""
 i=0
 for test
 do
-    i=$(($i+1))
+    i=`expr $i + 1`
     echo "$i \"$test\""
 done
 echo "}"
@@ -20,6 +20,6 @@ echo "}"
 i=0
 for test
 do
-    i=$(($i+1))
+    i=`expr $i + 1`
     echo "$i USERDATA \"$test\""
 done
