@@ -1972,8 +1972,8 @@ static HBITMAP _read_bitmap(LPSTREAM pstm,int ilcFlag,int cx,int cy) {
 	nbytesperline	= (height/cy)*bytesperline;
 	for (i=0;i<height;i++) {
 	    memcpy(
-		nbits+((height-i)%cy)*nbytesperline+(i/cy)*bytesperline,
-		bits+bytesperline*(height-i),
+		nbits+((height-1-i)%cy)*nbytesperline+(i/cy)*bytesperline,
+		bits+bytesperline*(height-1-i),
 		bytesperline
 	    );
 	}
