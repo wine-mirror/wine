@@ -48,9 +48,14 @@ static void test__hread( void )
     long bytes_read;
     long bytes_wanted;
     UINT i;
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
@@ -58,10 +63,10 @@ static void test__hread( void )
 
     filehandle = _lopen( filename, OF_READ );
 
-    ok( HFILE_ERROR != filehandle, "couldn't open file again?");
-    
+    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%d)", filename, GetLastError());
+
     bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
-    
+
     ok( strlen( sillytext ) == bytes_read, "file read size error." );
 
     for (bytes_wanted = 0; bytes_wanted < strlen( sillytext ); bytes_wanted++)
@@ -76,7 +81,8 @@ static void test__hread( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 }
 
 
@@ -91,16 +97,21 @@ static void test__hwrite( void )
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
 
     ok( HFILE_ERROR != _hwrite( filehandle, "", 0 ), "_hwrite complains." );
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
 
     filehandle = _lopen( filename, OF_READ );
-    
+
     bytes_read = _hread( filehandle, buffer, 1);
 
     ok( 0 == bytes_read, "file read size error." );
@@ -155,16 +166,22 @@ static void test__hwrite( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 }
 
 
 static void test__lclose( void )
 {
     HFILE filehandle;
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
@@ -174,7 +191,8 @@ static void test__lclose( void )
 
     ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 }
 
 
@@ -183,9 +201,14 @@ static void test__lcreat( void )
     HFILE filehandle;
     char buffer[10000];
     WIN32_FIND_DATAA search_results;
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
@@ -197,10 +220,11 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 
     filehandle = _lcreat( filename, 1 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file!?" );
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError());
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite shouldn't be able to write never the less." );
 
@@ -208,11 +232,12 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 
 
     filehandle = _lcreat( filename, 2 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError());
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
@@ -227,10 +252,11 @@ static void test__lcreat( void )
         ok( INVALID_HANDLE_VALUE == FindFirstFileA( filename, &search_results ), "should NOT be able to find file" );
     }
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
-    
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
+
     filehandle = _lcreat( filename, 4 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError());
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
@@ -245,7 +271,8 @@ static void test__lcreat( void )
         ok( INVALID_HANDLE_VALUE == FindFirstFileA( filename, &search_results ), "should NOT be able to find file" );
     }
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 }
 
 
@@ -255,10 +282,15 @@ void test__llseek( void )
     HFILE filehandle;
     char buffer[1];
     long bytes_read;
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
 
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
     for (i = 0; i < 400; i++)
     {
         ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
@@ -277,7 +309,8 @@ void test__llseek( void )
     ok( HFILE_ERROR != _llseek( filehandle, 1000000, FILE_END ), "should be able to seek past file. Poor, poor Windows programmers." );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 }
 
 
@@ -286,9 +319,15 @@ static void test__llopen( void )
     HFILE filehandle;
     UINT bytes_read;
     char buffer[10000];
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
+
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
 
@@ -297,7 +336,7 @@ static void test__llopen( void )
     bytes_read = _hread( filehandle, buffer, strlen( sillytext ) );
     ok( strlen( sillytext )  == bytes_read, "file read size error." );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
-    
+
     filehandle = _lopen( filename, OF_READWRITE );
     bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
     ok( strlen( sillytext )  == bytes_read, "file read size error." );
@@ -309,7 +348,8 @@ static void test__llopen( void )
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine." );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
     /* TODO - add tests for the SHARE modes  -  use two processes to pull this one off */
 }
 
@@ -321,9 +361,14 @@ static void test__lread( void )
     long bytes_read;
     UINT bytes_wanted;
     UINT i;
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
@@ -331,10 +376,10 @@ static void test__lread( void )
 
     filehandle = _lopen( filename, OF_READ );
 
-    ok( HFILE_ERROR != filehandle, "couldn't open file again?");
-    
+    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%d)", filename, GetLastError());
+
     bytes_read = _lread( filehandle, buffer, 2 * strlen( sillytext ) );
-    
+
     ok( strlen( sillytext ) == bytes_read, "file read size error." );
 
     for (bytes_wanted = 0; bytes_wanted < strlen( sillytext ); bytes_wanted++)
@@ -349,7 +394,8 @@ static void test__lread( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 }
 
 
@@ -364,16 +410,21 @@ static void test__lwrite( void )
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
+    int rc;
 
     filehandle = _lcreat( filename, 0 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    if (filehandle == HFILE_ERROR)
+    {
+        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        return;
+    }
 
     ok( HFILE_ERROR != _lwrite( filehandle, "", 0 ), "_hwrite complains." );
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
 
     filehandle = _lopen( filename, OF_READ );
-    
+
     bytes_read = _hread( filehandle, buffer, 1);
 
     ok( 0 == bytes_read, "file read size error." );
@@ -428,7 +479,8 @@ static void test__lwrite( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile complains." );
+    rc=DeleteFileA(filename);
+    ok( rc != 0, "DeleteFile failed (%d).", GetLastError());
 }
 
 
