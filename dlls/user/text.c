@@ -75,15 +75,9 @@ DEFAULT_DEBUG_CHANNEL(text);
 #define FORWARD_SLASH '/'
 #define BACK_SLASH '\\'
 
-static const WCHAR SPACEW[] = {' ', 0};
-static const WCHAR oW[] = {'o', 0};
 static const WCHAR ELLIPSISW[] = {'.','.','.', 0};
-static const WCHAR FORWARD_SLASHW[] = {'/', 0};
-static const WCHAR BACK_SLASHW[] = {'\\', 0};
 
-static int tabstop;
 static int tabwidth;
-static int spacewidth;
 static int prefix_offset;
 
 /*********************************************************************
@@ -349,23 +343,24 @@ static int TEXT_Reprefix (const WCHAR *str, unsigned int n1, unsigned int n2,
 static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
                                   WCHAR *dest, int *len, int width, WORD format)
 {
-    int i = 0, j = 0, k;
+    int i = 0, j = 0;
     int plen = 0;
-    int numspaces;
     SIZE size;
-    int lasttab = 0;
     int wb_i = 0, wb_j = 0, wb_count = 0;
     int maxl = *len;
+    int normal_char;
 
     while (*count && j < maxl)
     {
+        normal_char = 1;
 	switch (str[i])
 	{
 	case CR:
 	case LF:
 	    if (!(format & DT_SINGLELINE))
 	    {
-		if ((*count > 1) && (str[i] == CR) && (str[i+1] == LF))
+		if ((*count > 1) && (((str[i] == CR) && (str[i+1] == LF)) ||
+                                     ((str[i] == LF) && (str[i+1] == CR))))
                 {
 		    (*count)--;
                     i++;
@@ -375,89 +370,61 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 		(*count)--;
 		return (&str[i]);
 	    }
-	    dest[j++] = str[i++];
-	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
-		(format & DT_WORDBREAK))
-	    {
-		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
-		    return NULL;
-		plen += size.cx;
-	    }
+            /* else it's just another character */
 	    break;
 	    
 	case PREFIX:
 	    if (!(format & DT_NOPREFIX) && *count > 1)
                 {
                 if (str[++i] == PREFIX)
-		    (*count)--;
+		    (*count)--; /* and treat it as just another character */
 		else {
                     prefix_offset = j;
+                    normal_char = 0; /* we are skipping the PREFIX itself */
                     break;
                 }
 	    }
-            dest[j++] = str[i++];
-            if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
-                (format & DT_WORDBREAK))
-            {
-                if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
-                    return NULL;
-                plen += size.cx;
-            }
 	    break;
 	    
 	case TAB:
 	    if (format & DT_EXPANDTABS)
 	    {
-		wb_i = ++i;
-		wb_j = j;
-		wb_count = *count;
+                if ((format & DT_WORDBREAK))
+	        {
+		    wb_i = i+1;
+		    wb_j = j;
+		    wb_count = *count;
+                }
 
-		if (!GetTextExtentPointW(hdc, &dest[lasttab], j - lasttab, &size))
-		    return NULL;
-
-		numspaces = (tabwidth - size.cx) / spacewidth;
-		for (k = 0; k < numspaces; k++)
-		    dest[j++] = SPACE;
-		plen += tabwidth - size.cx;
-		lasttab = wb_j + numspaces;
-	    }
-	    else
-	    {
-		dest[j++] = str[i++];
-		if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
-		    (format & DT_WORDBREAK))
-		{
-		    if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
-			return NULL;
-		    plen += size.cx;
-		}
+                normal_char = 0;
+                dest[j++] = str[i++];
+	        if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
+                    plen = ((plen/tabwidth)+1)*tabwidth;
 	    }
 	    break;
 
 	case SPACE:
-	    dest[j++] = str[i++];
-	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
-		(format & DT_WORDBREAK))
+            if ((format & DT_WORDBREAK))
 	    {
-		wb_i = i;
-		wb_j = j - 1;
+		wb_i = i+1;
+		wb_j = j;
 		wb_count = *count;
-		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
-		    return NULL;
-		plen += size.cx;
-	    }
+            }
 	    break;
 
 	default:
+
+	}
+        if (normal_char)
+        {
 	    dest[j++] = str[i++];
-	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
-		(format & DT_WORDBREAK))
+	    if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
 	    {
 		if (!GetTextExtentPointW(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
-	}
+        }
 
 	(*count)--;
 	if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
@@ -523,6 +490,39 @@ static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int of
     DeleteObject (hpen);
 }
 
+/* We are only going to need this until we correct the measuring in
+ * TEXT_NextLineW (coming soon)
+ */
+static int TEXT_TextExtent (HDC hdc, UINT flags, const WCHAR *line, int len, SIZE *size)
+{
+    if ((flags & DT_EXPANDTABS))
+    {
+        SIZE tsize;
+        const WCHAR *p;
+        size->cx = 0;
+        size->cy = 0;
+        while (len)
+        {
+            p = line; while (p < line+len && *p != TAB) p++;
+            if (!GetTextExtentPointW (hdc, line, p-line, &tsize)) return 0;
+            size->cx += tsize.cx;
+            if (tsize.cy > size->cy) size->cy = tsize.cy;
+            len -= (p-line);
+            line=p;
+            if (len)
+            {
+                assert (*line == TAB);
+                len--;
+                line++;
+                size->cx = ((size->cx/tabwidth)+1)*tabwidth;
+            }
+        }
+        return 1;
+    }
+    else
+	return GetTextExtentPointW(hdc, line, len, size);
+}
+
 /***********************************************************************
  *           DrawTextExW    (USER32.@)
  *
@@ -573,14 +573,10 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
         dtp->uiLengthDrawn = 0;     /* This param RECEIVES number of chars processed */
     }
 
-    tabstop = ((flags & DT_TABSTOP) && dtp) ? dtp->iTabLength : 8;
-
     if (flags & DT_EXPANDTABS)
     {
-	GetTextExtentPointW(hdc, SPACEW, 1, &size);
-	spacewidth = size.cx;
-	GetTextExtentPointW(hdc, oW, 1, &size);
-	tabwidth = size.cx * tabstop;
+        int tabstop = ((flags & DT_TABSTOP) && dtp) ? dtp->iTabLength : 8;
+	tabwidth = tm.tmAveCharWidth * tabstop;
     }
 
     if (flags & DT_CALCRECT) flags |= DT_NOCLIP;
@@ -591,7 +587,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	len = MAX_STATIC_BUFFER;
 	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags);
 
-	if (!GetTextExtentPointW(hdc, line, len, &size)) return 0;
+	if (!TEXT_TextExtent(hdc, flags, line, len, &size)) return 0;
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
 	else if (flags & DT_RIGHT) x = rect->right - size.cx;
@@ -610,6 +606,22 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
             int len_before_ellipsis;
             int len_ellipsis;
             int len_after_ellipsis;
+
+            if ((flags & DT_EXPANDTABS))
+            {
+                /* If there are tabs then we must only ellipsify the last
+                 * segment.  That will become trivial when we move the 
+                 * ellipsification into the TEXT_NextLineW (coming soon)
+                 */
+                const WCHAR *p;
+                p = line + len;
+                while (p > line)
+                    if (*(--p) == TAB)
+                    {
+                        FIXME ("Ellipsification of single line tabbed strings will be fixed shortly\n");
+                        break;
+                    }
+            }
 
             if (flags & DT_PATH_ELLIPSIS)
             {
@@ -637,12 +649,54 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	}
 	if (!(flags & DT_CALCRECT))
 	{
-           if (!ExtTextOutW( hdc, x, y,
-                             ((flags & DT_NOCLIP) ? 0 : ETO_CLIPPED) |
-                             ((flags & DT_RTLREADING) ? ETO_RTLREADING : 0),
-                    rect, line, len, NULL ))  return 0;
-            if (prefix_offset != -1)
-                TEXT_DrawUnderscore (hdc, x, y + tm.tmAscent + 1, line, prefix_offset);
+            const WCHAR *str = line;
+            int xseg = x;
+            while (len)
+            {
+                int len_seg;
+                SIZE size;
+                if ((flags & DT_EXPANDTABS))
+                {
+                    const WCHAR *p;
+                    p = str; while (p < str+len && *p != TAB) p++;
+                    len_seg = p - str;
+                    if (len_seg != len && !GetTextExtentPointW(hdc, str, len_seg, &size)) 
+                        return 0;
+                }
+                else
+                    len_seg = len;
+                   
+                if (!ExtTextOutW( hdc, xseg, y,
+                                 ((flags & DT_NOCLIP) ? 0 : ETO_CLIPPED) |
+                                 ((flags & DT_RTLREADING) ? ETO_RTLREADING : 0),
+                                 rect, str, len_seg, NULL ))  return 0;
+                if (prefix_offset != -1 && prefix_offset < len_seg)
+                {
+                    TEXT_DrawUnderscore (hdc, xseg, y + tm.tmAscent + 1, str, prefix_offset);
+                }
+                len -= len_seg;
+                str += len_seg;
+                if (len)
+                {
+                    assert ((flags & DT_EXPANDTABS) && *str == TAB);
+                    len--; str++; 
+                    xseg += ((size.cx/tabwidth)+1)*tabwidth;
+                    if (prefix_offset != -1)
+                    {
+                        if (prefix_offset < len_seg)
+                        {
+                            /* We have just drawn an underscore; we ought to
+                             * figure out where the next one is.  I am going
+                             * to leave it for now until I have a better model
+                             * for the line, which will make reprefixing easier
+                             */
+                            prefix_offset = -1;
+                        }
+                        else
+                            prefix_offset -= len_seg;
+                    }
+                }
+            }
 	}
 	else if (size.cx > max_width)
 	    max_width = size.cx;
