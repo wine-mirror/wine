@@ -2455,6 +2455,18 @@ typedef struct tagMCI_OVLY_LOAD_PARMSW {
 DECL_WINELIB_TYPE_AW(MCI_OVLY_LOAD_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_LOAD_PARMS)
 
+#ifndef NEWTRANSPARENT
+#define NEWTRANSPARENT 3
+#define QUERYROPSUPPORT 40
+#endif
+
+#define SELECTDIB 41
+#define DIBINDEX(n) MAKELONG((n),0x10FF)
+
+#ifndef SC_SCREENSAVE
+#define SC_SCREENSAVE 0xf140
+#endif
+
 #include <poppack.h>
 
 #ifdef __cplusplus
