@@ -151,29 +151,15 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 {
     MSG msg;
     HACCEL hAccel;
-    /*
-        int hCrt;
-        FILE *hf;
-        AllocConsole();
-        hCrt = _open_osfhandle((long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
-        hf = _fdopen(hCrt, "w");
-        *stdout = *hf;
-        setvbuf(stdout, NULL, _IONBF, 0);
-     
-    	wprintf(L"command line exit, hInstance = %d\n", hInstance);
-    	getch();
-    	FreeConsole();
-        return 0;
-     */
 
     if (ProcessCmdLine(lpCmdLine)) {
         return 0;
     }
 
     /* Initialize global strings */
-    LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadString(hInstance, IDC_REGEDIT_FRAME, szFrameClass, MAX_LOADSTRING);
-    LoadString(hInstance, IDC_REGEDIT, szChildClass, MAX_LOADSTRING);
+    LoadString(hInstance, IDS_APP_TITLE, szTitle, COUNT_OF(szTitle));
+    LoadString(hInstance, IDC_REGEDIT_FRAME, szFrameClass, COUNT_OF(szFrameClass));
+    LoadString(hInstance, IDC_REGEDIT, szChildClass, COUNT_OF(szChildClass));
 
     /* Store instance handle in our global variable */
     hInst = hInstance;
@@ -186,7 +172,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
     /* Main message loop */
     while (GetMessage(&msg, (HWND)NULL, 0, 0)) {
-        if (!TranslateAccelerator(msg.hwnd, hAccel, &msg) &&
+        if (!TranslateAccelerator(hFrameWnd, hAccel, &msg) &&
 	    !IsDialogMessage(hFrameWnd, &msg)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
