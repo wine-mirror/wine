@@ -251,6 +251,8 @@ DWORD IWineD3DVertexDeclarationImpl_ParseToken8(const DWORD* pToken) {
   return tokenlen;
 }
 
+DWORD IWineD3DVertexDeclarationImpl_ParseToken9(const D3DVERTEXELEMENT9* pToken);
+
 HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This, const DWORD* pDecl, IWineD3DVertexDeclarationImpl* object) { 
   const DWORD* pToken = pDecl;
   DWORD fvf = 0;
@@ -261,6 +263,8 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
   DWORD token;
   DWORD tokenlen;
   DWORD tokentype;
+  DWORD nTokens = 0;
+  D3DVERTEXELEMENT9 convTo9[128];
 
   TRACE("(%p) :  pDecl(%p)\n", This, pDecl);
 
@@ -268,7 +272,7 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
     token = *pToken;
     tokenlen = IWineD3DVertexDeclarationImpl_ParseToken8(pToken); 
     tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
-    
+
     /** FVF generation block */
     if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
       /** 
@@ -297,8 +301,15 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
       DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
       DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
 
+      convTo9[nTokens].Stream = stream;
+      convTo9[nTokens].Method = D3DDECLMETHOD_DEFAULT;
+      convTo9[nTokens].UsageIndex = 0;
+      convTo9[nTokens].Type = D3DDECLTYPE_UNUSED;
+
       switch (reg) {
       case D3DVSDE_POSITION:     
+	convTo9[nTokens].Usage = D3DDECLUSAGE_POSITION;
+	convTo9[nTokens].Type = type;
 	switch (type) {
 	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_XYZ;             break;
 	case D3DVSDT_FLOAT4:     fvf |= D3DFVF_XYZRHW;          break;
@@ -314,6 +325,8 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
 	break;
       
       case D3DVSDE_BLENDWEIGHT:
+	convTo9[nTokens].Usage = D3DDECLUSAGE_BLENDWEIGHT;
+	convTo9[nTokens].Type = type;
 	switch (type) {
 	case D3DVSDT_FLOAT1:     fvf |= D3DFVF_XYZB1;           break;
 	case D3DVSDT_FLOAT2:     fvf |= D3DFVF_XYZB2;           break;
@@ -327,6 +340,8 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
 	break;
 
       case D3DVSDE_BLENDINDICES: /* seem to be B5 as said in MSDN Dx9SDK ??  */
+	convTo9[nTokens].Usage = D3DDECLUSAGE_BLENDINDICES;
+	convTo9[nTokens].Type = type;
 	switch (type) {
 	case D3DVSDT_UBYTE4:     fvf |= D3DFVF_LASTBETA_UBYTE4;           break;
 	default: 
@@ -337,6 +352,8 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
 	break; 
 
       case D3DVSDE_NORMAL: /* TODO: only FLOAT3 supported ... another choice possible ? */
+	convTo9[nTokens].Usage = D3DDECLUSAGE_NORMAL;
+	convTo9[nTokens].Type = type;
 	switch (type) {
 	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_NORMAL;          break;
 	default: 
@@ -347,6 +364,8 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
 	break; 
 
       case D3DVSDE_PSIZE:  /* TODO: only FLOAT1 supported ... another choice possible ? */
+	convTo9[nTokens].Usage = D3DDECLUSAGE_PSIZE;
+	convTo9[nTokens].Type = type;
 	switch (type) {
         case D3DVSDT_FLOAT1:     fvf |= D3DFVF_PSIZE;           break;
 	default: 
@@ -357,6 +376,9 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
 	break;
 
       case D3DVSDE_DIFFUSE:  /* TODO: only D3DCOLOR supported */
+	convTo9[nTokens].Usage = D3DDECLUSAGE_COLOR;
+	convTo9[nTokens].UsageIndex = 0;
+	convTo9[nTokens].Type = type;
 	switch (type) {
 	case D3DVSDT_D3DCOLOR:   fvf |= D3DFVF_DIFFUSE;         break;
 	default: 
@@ -367,6 +389,9 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
 	break;
 
       case D3DVSDE_SPECULAR:  /* TODO: only D3DCOLOR supported */
+	convTo9[nTokens].Usage = D3DDECLUSAGE_COLOR;
+	convTo9[nTokens].UsageIndex = 1;
+	convTo9[nTokens].Type = type;
 	switch (type) {
 	case D3DVSDT_D3DCOLOR:	 fvf |= D3DFVF_SPECULAR;        break;
 	default: 
@@ -387,6 +412,9 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
          /* Fixme? - assume all tex coords in same stream */
          {
              int texNo = 1 + (reg - D3DVSDE_TEXCOORD0);
+	     convTo9[nTokens].Usage = D3DDECLUSAGE_TEXCOORD;
+	     convTo9[nTokens].UsageIndex = texNo;
+	     convTo9[nTokens].Type = type;
              tex = max(tex, texNo);
              switch (type) {
              case D3DVSDT_FLOAT1: fvf |= D3DFVF_TEXCOORDSIZE1(texNo); break;
@@ -402,18 +430,22 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
          break;
 
       case D3DVSDE_POSITION2:   /* maybe D3DFVF_XYZRHW instead D3DFVF_XYZ (of D3DVDE_POSITION) ... to see */
-      case D3DVSDE_NORMAL2:     /* FIXME i don't know what to do here ;( */
+      case D3DVSDE_NORMAL2:     /* FIXME i don't know what to do here ;( */	
 	FIXME("[%lu] registers in VertexShader declaration not supported yet (token:0x%08lx)\n", reg, token);
 	break;
       }
       TRACE("VertexShader declaration define %lx as current FVF\n", fvf);
     }
+    ++nTokens;
     len += tokenlen;
     pToken += tokenlen;
   }
   /* here D3DVSD_END() */
   len +=  IWineD3DVertexDeclarationImpl_ParseToken8(pToken);
-
+  
+  convTo9[nTokens].Stream = 0xFF;
+  convTo9[nTokens].Type = D3DDECLTYPE_UNUSED;
+  
   /* copy fvf if valid */
   if (FALSE == invalid_fvf) {
       fvf |= tex << D3DFVF_TEXCOUNT_SHIFT;
@@ -429,6 +461,23 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
   /* copy the declaration */
   object->pDeclaration8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->declaration8Length);
   memcpy(object->pDeclaration8, pDecl, object->declaration8Length);
+
+  /* compute convTo9 size */
+  object->declaration9NumElements = nTokens;
+  /* copy the convTo9 declaration */
+  object->pDeclaration9 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nTokens * sizeof(D3DVERTEXELEMENT9));
+  memcpy(object->pDeclaration9, convTo9, nTokens * sizeof(D3DVERTEXELEMENT9));
+
+  {
+    D3DVERTEXELEMENT9* pIt = object->pDeclaration9;
+    TRACE("dumping of D3D9 Convertion:\n");
+    while (0xFF != pIt->Stream) {
+      IWineD3DVertexDeclarationImpl_ParseToken9(pIt);
+      ++pIt;
+    }  
+    IWineD3DVertexDeclarationImpl_ParseToken9(pIt);
+  }
+
   /* returns */
   return D3D_OK;
 }
