@@ -34,8 +34,13 @@
 #include "wtypes.h"
 #include "guiddef.h"
 
+#ifndef NONAMELESSSTRUCT
 #define LISet32(li, v)   ((li).HighPart = (v) < 0 ? -1 : 0, (li).LowPart = (v))
 #define ULISet32(li, v)  ((li).HighPart = 0, (li).LowPart = (v))
+#else
+#define LISet32(li, v)   ((li).s.HighPart = (v) < 0 ? -1 : 0, (li).s.LowPart = (v))
+#define ULISet32(li, v)  ((li).s.HighPart = 0, (li).s.LowPart = (v))
+#endif
 
 /*****************************************************************************
  * GUID API

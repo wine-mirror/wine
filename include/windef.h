@@ -54,17 +54,19 @@ extern "C" {
 # define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
 #endif  /* __WINE__ */
 
-#ifndef NONAMELESSSTRUCT
-# if defined(__WINE__) || !defined(_FORCENAMELESSSTRUCT)
+#ifdef __WINE__
+# define NONAMELESSSTRUCT
+# define NONAMELESSUNION
+#else
+/* Anonymous struct support starts with gcc/g++ 2.96 */
+# if !defined(NONAMELESSSTRUCT) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ < 96)))
 #  define NONAMELESSSTRUCT
 # endif
-#endif /* !defined(NONAMELESSSTRUCT) */
-
-#ifndef NONAMELESSUNION
-# if defined(__WINE__) || !defined(_FORCENAMELESSUNION) || !defined(__cplusplus)
+/* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
+# if !defined(NONAMELESSUNION) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus)))))
 #  define NONAMELESSUNION
 # endif
-#endif /* !defined(NONAMELESSUNION) */
+#endif
 
 #ifndef NONAMELESSSTRUCT
 #define DUMMYSTRUCTNAME
