@@ -72,13 +72,13 @@ typedef struct _rtti_base_array
   const rtti_base_descriptor *bases[3]; /* First element is the class itself */
 } rtti_base_array;
 
-typedef struct _rtti_object_hierachy
+typedef struct _rtti_object_hierarchy
 {
   int unknown1;
   int unknown2;
   int array_len; /* Size of the array pointed to by 'base_classes' */
   const rtti_base_array *base_classes;
-} rtti_object_hierachy;
+} rtti_object_hierarchy;
 
 typedef struct _rtti_object_locator
 {
@@ -86,7 +86,7 @@ typedef struct _rtti_object_locator
   int base_class_offset;
   unsigned int flags;
   type_info *type_descriptor;
-  const rtti_object_hierachy *type_hierachy;
+  const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
 
 
@@ -656,7 +656,7 @@ static const rtti_base_array exception_rtti_base_array =
   }
 };
 
-static const rtti_object_hierachy exception_type_hierachy =
+static const rtti_object_hierarchy exception_type_hierarchy =
 {
   0,
   0,
@@ -670,7 +670,7 @@ static const rtti_object_locator exception_rtti =
   0,
   0,
   &exception_type_info,
-  &exception_type_hierachy
+  &exception_type_hierarchy
 };
 
 static const cxx_type_info exception_cxx_type_info =
@@ -710,7 +710,7 @@ static const rtti_base_array bad_typeid_rtti_base_array =
   }
 };
 
-static const rtti_object_hierachy bad_typeid_type_hierachy =
+static const rtti_object_hierarchy bad_typeid_type_hierarchy =
 {
   0,
   0,
@@ -724,7 +724,7 @@ static const rtti_object_locator bad_typeid_rtti =
   0,
   0,
   &bad_typeid_type_info,
-  &bad_typeid_type_hierachy
+  &bad_typeid_type_hierarchy
 };
 
 static const cxx_type_info bad_typeid_cxx_type_info =
@@ -764,7 +764,7 @@ static const rtti_base_array bad_cast_rtti_base_array =
   }
 };
 
-static const rtti_object_hierachy bad_cast_type_hierachy =
+static const rtti_object_hierarchy bad_cast_type_hierarchy =
 {
   0,
   0,
@@ -778,7 +778,7 @@ static const rtti_object_locator bad_cast_rtti =
   0,
   0,
   &bad_cast_type_info,
-  &bad_cast_type_hierachy
+  &bad_cast_type_hierarchy
 };
 
 static const cxx_type_info bad_cast_cxx_type_info =
@@ -818,7 +818,7 @@ static const rtti_base_array __non_rtti_object_rtti_base_array =
   }
 };
 
-static const rtti_object_hierachy __non_rtti_object_type_hierachy =
+static const rtti_object_hierarchy __non_rtti_object_type_hierarchy =
 {
   0,
   0,
@@ -832,7 +832,7 @@ static const rtti_object_locator __non_rtti_object_rtti =
   0,
   0,
   &__non_rtti_object_type_info,
-  &__non_rtti_object_type_hierachy
+  &__non_rtti_object_type_hierarchy
 };
 
 static const cxx_type_info __non_rtti_object_cxx_type_info =
@@ -872,7 +872,7 @@ static const rtti_base_array type_info_rtti_base_array =
   }
 };
 
-static const rtti_object_hierachy type_info_type_hierachy =
+static const rtti_object_hierarchy type_info_type_hierarchy =
 {
   0,
   0,
@@ -886,7 +886,7 @@ static const rtti_object_locator type_info_rtti =
   0,
   0,
   &type_info_type_info,
-  &type_info_type_hierachy
+  &type_info_type_hierarchy
 };
 
 /*
@@ -1166,7 +1166,7 @@ void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
   if (obj_locator)
   {
     int count = 0;
-    const rtti_object_hierachy *obj_bases = obj_locator->type_hierachy;
+    const rtti_object_hierarchy *obj_bases = obj_locator->type_hierarchy;
     const rtti_base_descriptor **base_desc = obj_bases->base_classes->bases;
     int src_offset = obj_locator->base_class_offset, dst_offset = -1;
 
