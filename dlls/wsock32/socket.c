@@ -27,7 +27,6 @@
 
 DEFAULT_DEBUG_CHANNEL(winsock);
 
-static INT (WINAPI *WS2_recv)(SOCKET s, char *buf, INT len, INT flags);
 
 /***********************************************************************
  *      WsControl()
@@ -184,7 +183,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                      /* MAC Address - Let's try to do this in a cross-platform way... */
                      #if defined(SIOCGIFHWADDR) /* Linux */
                         strcpy(ifInfo.ifr_name, ifName);
-                        if (ioctl(sock, SIOCGIFHWADDR, &ifInfo) < 0)
+                        if (ioctlsocket(sock, SIOCGIFHWADDR, (ULONG*)&ifInfo) < 0)
                         {
                            ERR ("Error obtaining MAC Address!\n");
                            close(sock);
@@ -197,7 +196,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                            IntInfo->if_physaddrlen=6;
                         }
                      #elif defined(SIOCGENADDR) /* Solaris */
-                        if (ioctl(sock, SIOCGENADDR, &ifInfo) < 0)
+                        if (ioctlsocket(sock, SIOCGENADDR, (ULONG*)&ifInfo) < 0)
                         {
                            ERR ("Error obtaining MAC Address!\n");
                            close(sock);
@@ -697,7 +696,7 @@ int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes, unsigned l
 INT WINAPI WSARecvEx(SOCKET s, char *buf, INT len, INT *flags)
 {
     FIXME("(WSARecvEx) partial packet return value not set \n");
-    return WS2_recv(s, buf, len, *flags);
+    return recv(s, buf, len, *flags);
 }
 
 
@@ -708,32 +707,4 @@ void WINAPI WS_s_perror(LPCSTR message)
 {
     FIXME("(%s): stub\n",message);
     return;
-}
-
-
-/***********************************************************************
- *		WSOCK_LibMain
- */
-BOOL WINAPI WSOCK_LibMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    static HMODULE ws2_32;
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        /* we import ws2_32 by hand, because we don't want to implicitly */
-        /* link to it; otherwise Unix calls like socket() get redirected */
-        /* to ws2_32.dll and this is not what we want. */
-
-        if (!(ws2_32 = LoadLibraryA( "ws2_32.dll" )))
-        {
-            ERR("could not load ws2_32\n" );
-            return FALSE;
-        }
-        WS2_recv = (void *)GetProcAddress( ws2_32, "recv" );
-        break;
-    case DLL_PROCESS_DETACH:
-        FreeLibrary( ws2_32 );
-        break;
-    }
-    return TRUE;
 }

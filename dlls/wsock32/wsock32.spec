@@ -1,8 +1,7 @@
 name	wsock32
 type	win32
-init	WSOCK_LibMain
 
-import	kernel32.dll
+import	ws2_32.dll
 import	ntdll.dll
 
 debug_channels (winsock)

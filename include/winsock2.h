@@ -214,6 +214,7 @@ BOOL WINAPI WSACloseEvent(WSAEVENT event);
 SOCKET WINAPI WSASocketA(int af, int type, int protocol,
                          LPWSAPROTOCOL_INFOA lpProtocolInfo,
                          GROUP g, DWORD dwFlags);
+extern INT WINAPI ioctlsocket(SOCKET s, LONG cmd, ULONG *argp);
 
 #include "poppack.h"
 
