@@ -835,9 +835,10 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 
     /* Fixup Imports */
 
-    if (    pe_import && fixup_imports( wm ) 
+    if (    pe_import
          && !( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE )
-         && !( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS ) ) 
+         && !( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS ) 
+         && fixup_imports( wm ) ) 
     {
         /* remove entry from modref chain */
         EnterCriticalSection( &PROCESS_Current()->crit_section );
