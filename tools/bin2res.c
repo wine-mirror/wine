@@ -208,7 +208,7 @@ int main(int argc, char **argv)
     const char* input_file_name = 0;
     const char* specific_file_name = 0;
 
-    while((optc = getopt(argc, argv, "axi:o:fh")) != EOF)
+    while((optc = getopt(argc, argv, "axi:o:fhv")) != EOF)
     {
 	switch(optc)
 	{
