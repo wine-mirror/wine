@@ -403,7 +403,7 @@ EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
 }
 
 char *
-run_tests (char *logname, const char *tag, const char *url)
+run_tests (char *logname, const char *tag)
 {
     int nr_of_files = 0, nr_of_tests = 0, i;
     char *tempdir;
@@ -510,12 +510,12 @@ usage ()
     fprintf (stderr, "\
 Usage: winetest [OPTION]...\n\n\
   -c       console mode, no GUI\n\
+  -e       preserve the environment\n\
   -h       print this message and exit\n\
   -q       quiet mode, no output at all\n\
   -o FILE  put report into FILE, do not submit\n\
   -s FILE  submit FILE, do not run tests\n\
-  -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n\
-  -u URL   archive URL of this executable\n");
+  -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
 }
 
 /* One can't nest strtok()-s, so here is a replacement. */
@@ -546,7 +546,8 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                     LPSTR cmdLine, int cmdShow)
 {
     char *logname = NULL;
-    const char *cp, *submit = NULL, *tag = NULL, *url = NULL;
+    const char *cp, *submit = NULL, *tag = NULL;
+    int reset_env = 1;
 
     /* initialize the revision information first */
     extract_rev_infos();
@@ -562,6 +563,9 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         case 'c':
             report (R_TEXTMODE);
             break;
+        case 'e':
+            reset_env = 0;
+            break;
         case 'h':
             usage ();
             exit (0);
@@ -570,13 +574,12 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             break;
         case 's':
             submit = mystrtok (NULL);
-            if (tag||url)
-                report (R_WARNING, "ignoring tag and url for submit");
+            if (tag)
+                report (R_WARNING, "ignoring tag for submission");
             send_file (submit);
             break;
         case 'o':
             logname = mystrtok (NULL);
-            run_tests (logname, tag, url);
             break;
         case 't':
             tag = mystrtok (NULL);
@@ -587,9 +590,6 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                 exit (2);
             }
             break;
-        case 'u':
-            url = mystrtok (NULL);
-            break;
         default:
             report (R_ERROR, "invalid option: -%c", cmdLine[1]);
             usage ();
@@ -597,9 +597,15 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         }
         cmdLine = mystrtok (NULL);
     }
-    if (!logname && !submit) {
+    if (!submit) {
+        if (reset_env && (putenv ("WINETEST_PLATFORM=windows") ||
+                          putenv ("WINETEST_DEBUG=1") || 
+                          putenv ("WINETEST_INTERACTIVE=0") ||
+                          putenv ("WINETEST_REPORT_SUCCESS=0")))
+            report (R_FATAL, "Could not reset environment: %d", errno);
+
         report (R_STATUS, "Starting up");
-        logname = run_tests (NULL, tag, url);
+        logname = run_tests (logname, tag);
         if (report (R_ASK, MB_YESNO, "Do you want to submit the "
                     "test results?") == IDYES)
             if (!send_file (logname) && remove (logname))
