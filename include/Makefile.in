@@ -83,6 +83,8 @@ WINDOWS_INCLUDES = \
 	dsdriver.h \
 	dshow.h \
 	dsound.h \
+	dxerr8.h \
+	dxerr9.h \
 	excpt.h \
 	fci.h \
 	fdi.h \
