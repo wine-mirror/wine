@@ -489,6 +489,9 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 
 extern IDirectSoundImpl* dsound;
 
+extern GUID renderer_guids[MAXWAVEDRIVERS];
+extern GUID capture_guids[MAXWAVEDRIVERS];
+
 extern HRESULT mmErr(UINT err);
 extern void setup_dsound_options(void);
 extern const char * get_device_id(LPCGUID pGuid);

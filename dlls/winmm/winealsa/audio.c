@@ -188,7 +188,6 @@ typedef struct {
 
     /* DirectSound stuff */
     DSDRIVERDESC                ds_desc;
-    GUID                        ds_guid;
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -235,7 +234,6 @@ typedef struct {
 
     /* DirectSound stuff */
     DSDRIVERDESC                ds_desc;
-    GUID                        ds_guid;
 } WINE_WAVEIN;
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
@@ -245,7 +243,6 @@ static DWORD            ALSA_WidNumDevs;
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
 
 /* These strings used only for tracing */
 static const char * getCmdString(enum win_wm_message msg)
@@ -672,12 +669,6 @@ end:
     return result;
 }
 
-#define INIT_GUID(guid, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)      \
-        guid.Data1 = l; guid.Data2 = w1; guid.Data3 = w2;               \
-        guid.Data4[0] = b1; guid.Data4[1] = b2; guid.Data4[2] = b3;     \
-        guid.Data4[3] = b4; guid.Data4[4] = b5; guid.Data4[5] = b6;     \
-        guid.Data4[6] = b7; guid.Data4[7] = b8;
-
 /******************************************************************
  *		ALSA_WaveInit
  *
@@ -713,7 +704,6 @@ LONG ALSA_WaveInit(void)
     wwo->caps.dwSupport = WAVECAPS_VOLUME;
     strcpy(wwo->ds_desc.szDesc, "WineALSA DirectSound Driver");
     strcpy(wwo->ds_desc.szDrvName, "winealsa.drv");
-    INIT_GUID(wwo->ds_guid,  0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + 0);
 
     if (!wine_dlopen("libasound.so.2", RTLD_LAZY|RTLD_GLOBAL, NULL, 0))
     {
@@ -828,7 +818,6 @@ LONG ALSA_WaveInit(void)
     wwi->caps.dwSupport = WAVECAPS_VOLUME;
     strcpy(wwi->ds_desc.szDesc, "WineALSA DirectSound Driver");
     strcpy(wwi->ds_desc.szDrvName, "winealsa.drv");
-    INIT_GUID(wwi->ds_guid, 0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + 0);
 
     snd_pcm_info_alloca(&info);
     snd_pcm_hw_params_alloca(&hw_params);
@@ -2173,7 +2162,6 @@ DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case DRV_QUERYDEVICEINTERFACE:     return wodDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
-    case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
 
     default:
 	FIXME("unknown message %d!\n", wMsg);
@@ -2733,15 +2721,6 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     memcpy(desc, &(WOutDev[wDevID].ds_desc), sizeof(DSDRIVERDESC));
-    return MMSYSERR_NOERROR;
-}
-
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
-{
-    TRACE("(%d,%p)\n",wDevID,pGuid);
-
-    memcpy(pGuid, &(WOutDev[wDevID].ds_guid), sizeof(GUID));
-
     return MMSYSERR_NOERROR;
 }
 
@@ -3551,18 +3530,6 @@ static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 }
 
 /**************************************************************************
- *                              widDsGuid                       [internal]
- */
-static DWORD widDsGuid(UINT wDevID, LPGUID pGuid)
-{
-    TRACE("(%d,%p)\n",wDevID,pGuid);
-
-    memcpy(pGuid, &(WInDev[wDevID].ds_guid), sizeof(GUID));
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 				widMessage (WINEALSA.@)
  */
 DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
@@ -3593,7 +3560,6 @@ DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case DRV_QUERYDEVICEINTERFACE:     return widDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
-    case DRV_QUERYDSOUNDGUID:	return widDsGuid     (wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }

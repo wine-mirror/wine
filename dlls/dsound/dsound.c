@@ -734,7 +734,7 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     LPCGUID lpcGUID,
     LPDIRECTSOUND8 * ppDS)
 {
-    HRESULT err = DSERR_INVALIDPARAM;
+    HRESULT err;
     PIDSDRIVER drv = NULL;
     IDirectSoundImpl* pDS;
     unsigned wod, wodn;
@@ -752,25 +752,10 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     TRACE(" expecting GUID %s.\n", debugstr_guid(lpcGUID));
 
     for (wod=0; wod<wodn; wod++) {
-        GUID guid;
-        err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)(&guid),0));
-        if (err != DS_OK) {
-            WARN("waveOutMessage failed; err=%lx\n",err);
-            *ppDS = NULL;
-            return err;
-        }
-        TRACE("got GUID %s for wod %d.\n", debugstr_guid(&guid), wod);
-        if (IsEqualGUID( lpcGUID, &guid)) {
-            err = DS_OK;
+        if (IsEqualGUID( lpcGUID, &renderer_guids[wod])) {
             found = TRUE;
             break;
         }
-    }
-
-    if (err != DS_OK) {
-        WARN("invalid parameter\n");
-        *ppDS = NULL;
-        return DSERR_INVALIDPARAM;
     }
 
     if (found == FALSE) {

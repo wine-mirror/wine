@@ -91,7 +91,6 @@ typedef struct {
 #ifdef __WINESRC__
 #define DRV_QUERYDSOUNDIFACE		(DRV_RESERVED + 20)
 #define DRV_QUERYDSOUNDDESC		(DRV_RESERVED + 21)
-#define DRV_QUERYDSOUNDGUID		(DRV_RESERVED + 22)
 #endif
 
 #define WODM_INIT		DRVM_INIT

@@ -174,8 +174,6 @@ typedef struct tagOSS_DEVICE {
     DSDRIVERDESC                ds_desc;
     DSDRIVERCAPS                ds_caps;
     DSCDRIVERCAPS               dsc_caps;
-    GUID                        ds_guid;
-    GUID                        dsc_guid;
 } OSS_DEVICE;
 
 static OSS_DEVICE   OSS_Devices[MAX_WAVEDRV];
@@ -236,8 +234,6 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv);
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
-static DWORD widDsGuid(UINT wDevID, LPGUID pGuid);
 
 /* These strings used only for tracing */
 static const char * getCmdString(enum win_wm_message msg)
@@ -308,7 +304,6 @@ static const char * getMessage(UINT msg)
     MSG_TO_STR(DRV_QUERYDEVICEINTERFACE);
     MSG_TO_STR(DRV_QUERYDSOUNDIFACE);
     MSG_TO_STR(DRV_QUERYDSOUNDDESC);
-    MSG_TO_STR(DRV_QUERYDSOUNDGUID);
     }
 #undef MSG_TO_STR
     sprintf(unknown, "UNKNOWN(0x%04x)", msg);
@@ -1166,11 +1161,6 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
           ossdev->duplex_out_caps.dwFormats, ossdev->duplex_out_caps.dwSupport);
 }
 
-#define INIT_GUID(guid, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)	\
-	guid.Data1 = l; guid.Data2 = w1; guid.Data3 = w2;		\
-	guid.Data4[0] = b1; guid.Data4[1] = b2; guid.Data4[2] = b3;	\
-	guid.Data4[3] = b4; guid.Data4[4] = b5; guid.Data4[5] = b6;	\
-	guid.Data4[6] = b7; guid.Data4[7] = b8;
 /******************************************************************
  *		OSS_WaveInit
  *
@@ -1192,9 +1182,6 @@ LONG OSS_WaveInit(void)
 	}
 
         sprintf(OSS_Devices[i].interface_name, "wineoss: %s", OSS_Devices[i].dev_name);
-
-	INIT_GUID(OSS_Devices[i].ds_guid,  0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
-	INIT_GUID(OSS_Devices[i].dsc_guid, 0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
     }
 
     /* start with output devices */
@@ -2388,7 +2375,6 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case DRV_QUERYDEVICEINTERFACE:     return wdDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
-    case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
@@ -3293,13 +3279,6 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     return MMSYSERR_NOERROR;
 }
 
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
-{
-    TRACE("(%d,%p)\n",wDevID,pGuid);
-    memcpy(pGuid, &(WOutDev[wDevID].ossdev->ds_guid), sizeof(GUID));
-    return MMSYSERR_NOERROR;
-}
-
 /*======================================================================*
  *                  Low level WAVE IN implementation			*
  *======================================================================*/
@@ -4038,7 +4017,6 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case DRV_QUERYDEVICEINTERFACE:     return wdDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
-    case DRV_QUERYDSOUNDGUID:	return widDsGuid     (wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %u!\n", wMsg);
     }
@@ -4886,15 +4864,6 @@ static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
 static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     memcpy(desc, &(WInDev[wDevID].ossdev->ds_desc), sizeof(DSDRIVERDESC));
-    return MMSYSERR_NOERROR;
-}
-
-static DWORD widDsGuid(UINT wDevID, LPGUID pGuid)
-{
-    TRACE("(%d,%p)\n",wDevID,pGuid);
-
-    memcpy(pGuid, &(WInDev[wDevID].ossdev->dsc_guid), sizeof(GUID));
-
     return MMSYSERR_NOERROR;
 }
 

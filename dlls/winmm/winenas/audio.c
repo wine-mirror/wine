@@ -189,7 +189,6 @@ static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
 
 
 /* NASFUNC */
@@ -1286,7 +1285,6 @@ DWORD WINAPI NAS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 
     case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
-    case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
@@ -1310,12 +1308,6 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine NAS DirectSound Driver");
     strcpy(desc->szDrvName, "winenas.drv");
-    return MMSYSERR_NOERROR;
-}
-
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
-{
-    memcpy(pGuid, &DSDEVID_DefaultPlayback, sizeof(GUID));
     return MMSYSERR_NOERROR;
 }
 

@@ -182,8 +182,6 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv);
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
-static DWORD widDsGuid(UINT wDevID, LPGUID pGuid);
 
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              PCMWAVEFORMAT* format)
@@ -1262,7 +1260,6 @@ DWORD WINAPI LIBAUDIOIO_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 
     case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
-    case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
@@ -1703,12 +1700,6 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine LIBAUDIOIO DirectSound Driver");
     strcpy(desc->szDrvName, "wineaudioio.drv");
-    return MMSYSERR_NOERROR;
-}
-
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
-{
-    memcpy(pGuid, &DSDEVID_DefaultPlayback, sizeof(GUID));
     return MMSYSERR_NOERROR;
 }
 
@@ -2258,7 +2249,6 @@ DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_STOP:		return widStop       (wDevID);
     case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
-    case DRV_QUERYDSOUNDGUID:	return widDsGuid     (wDevID, (LPGUID)dwParam1);
     default:
 	FIXME("unknown message %u!\n", wMsg);
     }
@@ -2282,12 +2272,6 @@ static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine LIBAUDIOIO DirectSound Driver");
     strcpy(desc->szDrvName, "wineaudioio.drv");
-    return MMSYSERR_NOERROR;
-}
-
-static DWORD widDsGuid(UINT wDevID, LPGUID pGuid)
-{
-    memcpy(pGuid, &DSDEVID_DefaultCapture, sizeof(GUID));
     return MMSYSERR_NOERROR;
 }
 

@@ -80,7 +80,6 @@ static IDirectSoundCaptureBuffer8Vtbl dscbvt;
 static IDirectSoundFullDuplexVtbl dsfdvt;
 
 static IDirectSoundCaptureImpl*       dsound_capture = NULL;
-static GUID                           capture_guids[MAXWAVEDRIVERS];
 
 static const char * captureStateString[] = {
     "STATE_STOPPED",
@@ -197,20 +196,16 @@ DirectSoundCaptureEnumerateA(
     devs = waveInGetNumDevs();
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
-	    GUID temp;
     	    for (wid = 0; wid < devs; ++wid) {
-		err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
-		if (err == DS_OK) {
-		    if (IsEqualGUID( &guid, &temp ) ) {
-			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
-	    		if (err == DS_OK) {
-			    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-		    		"Primary Sound Capture Driver",desc.szDrvName,lpContext);
-			    if (lpDSEnumCallback(NULL, "Primary Sound Capture Driver", desc.szDrvName, lpContext) == FALSE)
-				return DS_OK;
-			}
-		    }
-		}
+                if (IsEqualGUID( &guid, &capture_guids[wid] ) ) {
+                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+                    if (err == DS_OK) {
+                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+                              "Primary Sound Capture Driver",desc.szDrvName,lpContext);
+                        if (lpDSEnumCallback(NULL, "Primary Sound Capture Driver", desc.szDrvName, lpContext) == FALSE)
+                            return DS_OK;
+                    }
+                }
 	    }
 	}
     }
@@ -218,13 +213,10 @@ DirectSoundCaptureEnumerateA(
     for (wid = 0; wid < devs; ++wid) {
 	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&capture_guids[wid],0));
-	    if (err == DS_OK) {
-		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvName,lpContext);
-		if (lpDSEnumCallback(&capture_guids[wid], desc.szDesc, desc.szDrvName, lpContext) == FALSE)
-		    return DS_OK;
-	    }
+            TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+                  debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvName,lpContext);
+            if (lpDSEnumCallback(&capture_guids[wid], desc.szDesc, desc.szDrvName, lpContext) == FALSE)
+                return DS_OK;
 	} 
     }
 
@@ -266,24 +258,20 @@ DirectSoundCaptureEnumerateW(
     devs = waveInGetNumDevs();
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
-	    GUID temp;
     	    for (wid = 0; wid < devs; ++wid) {
-		err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
-		if (err == DS_OK) {
-		    if (IsEqualGUID( &guid, &temp ) ) {
-			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
-	    		if (err == DS_OK) {
-			    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-		    		"Primary Sound Capture Driver",desc.szDrvName,lpContext);
-			    MultiByteToWideChar( CP_ACP, 0, "Primary Sound Capture Driver", -1, 
-			        wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-			    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
-		    	        wName, sizeof(wName)/sizeof(WCHAR) );
-			    if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
-				return DS_OK;
-			}
-		    }
-		}
+                if (IsEqualGUID( &guid, &capture_guids[wid] ) ) {
+                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+                    if (err == DS_OK) {
+                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+                              "Primary Sound Capture Driver",desc.szDrvName,lpContext);
+                        MultiByteToWideChar( CP_ACP, 0, "Primary Sound Capture Driver", -1, 
+                                             wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+                        MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
+                                             wName, sizeof(wName)/sizeof(WCHAR) );
+                        if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
+                            return DS_OK;
+                    }
+                }
 	    }
 	}
     }
@@ -291,17 +279,14 @@ DirectSoundCaptureEnumerateW(
     for (wid = 0; wid < devs; ++wid) {
 	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&capture_guids[wid],0));
-	    if (err == DS_OK) {
-		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvName,lpContext);
-		MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, 
-		    wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-		MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
-		    wName, sizeof(wName)/sizeof(WCHAR) );
-		if (lpDSEnumCallback((LPGUID)&capture_guids[wid], wDesc, wName, lpContext) == FALSE)
-		    return DS_OK;
-	    }
+            TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+                  debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvName,lpContext);
+            MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, 
+                                 wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+            MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
+                                 wName, sizeof(wName)/sizeof(WCHAR) );
+            if (lpDSEnumCallback((LPGUID)&capture_guids[wid], wDesc, wName, lpContext) == FALSE)
+                return DS_OK;
 	} 
     }
 
@@ -552,13 +537,7 @@ IDirectSoundCaptureImpl_Initialize(
 
     /* enumerate WINMM audio devices and find the one we want */
     for (wid=0; wid<widn; wid++) {
-	GUID guid;
-	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)(&guid),0));
-	if (err != DS_OK) {
-	    WARN("waveInMessage failed; err=%lx\n",err);
-	    return err;
-	}
-    	if (IsEqualGUID( lpcGUID, &guid) ) {
+    	if (IsEqualGUID( lpcGUID, &capture_guids[wid]) ) {
 	    err = DS_OK;
 	    break;
 	}

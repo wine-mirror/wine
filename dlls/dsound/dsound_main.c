@@ -86,7 +86,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 #define DS_SND_QUEUE_MIN 12 /* min number of fragments to prebuffer */
 
 IDirectSoundImpl*	dsound = NULL;
-static GUID             device_guids[MAXWAVEDRIVERS];
+GUID                    renderer_guids[MAXWAVEDRIVERS];
+GUID                    capture_guids[MAXWAVEDRIVERS];
 
 HRESULT mmErr(UINT err)
 {
@@ -283,25 +284,17 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
     }
 
     if ( IsEqualGUID( &DSDEVID_DefaultPlayback, pGuidSrc ) ||
-    	IsEqualGUID( &DSDEVID_DefaultVoicePlayback, pGuidSrc ) ) {
-	GUID guid;
-	int err = mmErr(waveOutMessage((HWAVEOUT)ds_default_playback,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
-	if (err == DS_OK) {
-	    memcpy(pGuidDest, &guid, sizeof(GUID));
-            TRACE("returns %s\n", get_device_id(pGuidDest));
-	    return DS_OK;
-	}
+    	 IsEqualGUID( &DSDEVID_DefaultVoicePlayback, pGuidSrc ) ) {
+	memcpy(pGuidDest, &renderer_guids[ds_default_playback], sizeof(GUID));
+        TRACE("returns %s\n", get_device_id(pGuidDest));
+	return DS_OK;
     }
 
     if ( IsEqualGUID( &DSDEVID_DefaultCapture, pGuidSrc ) ||
-    	IsEqualGUID( &DSDEVID_DefaultVoiceCapture, pGuidSrc ) ) {
-	GUID guid;
-	int err = mmErr(waveInMessage((HWAVEIN)ds_default_capture,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
-	if (err == DS_OK) {
-	    memcpy(pGuidDest, &guid, sizeof(GUID));
-            TRACE("returns %s\n", get_device_id(pGuidDest));
-	    return DS_OK;
-	}
+    	 IsEqualGUID( &DSDEVID_DefaultVoiceCapture, pGuidSrc ) ) {
+	memcpy(pGuidDest, &capture_guids[ds_default_capture], sizeof(GUID));
+        TRACE("returns %s\n", get_device_id(pGuidDest));
+	return DS_OK;
     }
 
     memcpy(pGuidDest, pGuidSrc, sizeof(GUID));
@@ -344,18 +337,14 @@ HRESULT WINAPI DirectSoundEnumerateA(
     devs = waveOutGetNumDevs();
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
-	    GUID temp;
 	    for (wod = 0; wod < devs; ++wod) {
-		err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
-		if (err == DS_OK) {
-		    if (IsEqualGUID( &guid, &temp ) ) {
-			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
-			if (err == DS_OK) {
-			    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-				"Primary Sound Driver",desc.szDrvName,lpContext);
-			    if (lpDSEnumCallback(NULL, "Primary Sound Driver", desc.szDrvName, lpContext) == FALSE)
-				return DS_OK;
-			}
+                if (IsEqualGUID( &guid, &renderer_guids[wod]) ) {
+                    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+                    if (err == DS_OK) {
+                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+                              "Primary Sound Driver",desc.szDrvName,lpContext);
+                        if (lpDSEnumCallback(NULL, "Primary Sound Driver", desc.szDrvName, lpContext) == FALSE)
+                            return DS_OK;
 		    }
 		}
 	    }
@@ -365,13 +354,10 @@ HRESULT WINAPI DirectSoundEnumerateA(
     for (wod = 0; wod < devs; ++wod) {
 	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&device_guids[wod],0));
-	    if (err == DS_OK) {
-		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&device_guids[wod]),desc.szDesc,desc.szDrvName,lpContext);
-		if (lpDSEnumCallback(&device_guids[wod], desc.szDesc, desc.szDrvName, lpContext) == FALSE)
-		    return DS_OK;
-	    }
+            TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+                  debugstr_guid(&renderer_guids[wod]),desc.szDesc,desc.szDrvName,lpContext);
+            if (lpDSEnumCallback(&renderer_guids[wod], desc.szDesc, desc.szDrvName, lpContext) == FALSE)
+                return DS_OK;
 	}
     }
     return DS_OK;
@@ -412,22 +398,18 @@ HRESULT WINAPI DirectSoundEnumerateW(
     devs = waveOutGetNumDevs();
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
-	    GUID temp;
 	    for (wod = 0; wod < devs; ++wod) {
-		err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
-		if (err == DS_OK) {
-		    if (IsEqualGUID( &guid, &temp ) ) {
-			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
-			if (err == DS_OK) {
-			    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-				"Primary Sound Driver",desc.szDrvName,lpContext);
-			    MultiByteToWideChar( CP_ACP, 0, "Primary Sound Driver", -1,
-				wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-				MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
-				wName, sizeof(wName)/sizeof(WCHAR) );
-			    if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
-				return DS_OK;
-			}
+                if (IsEqualGUID( &guid, &renderer_guids[wod] ) ) {
+                    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+                    if (err == DS_OK) {
+                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+                              "Primary Sound Driver",desc.szDrvName,lpContext);
+                        MultiByteToWideChar( CP_ACP, 0, "Primary Sound Driver", -1,
+                                             wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+                        MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
+                                             wName, sizeof(wName)/sizeof(WCHAR) );
+                        if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
+                            return DS_OK;
 		    }
 		}
 	    }
@@ -437,17 +419,14 @@ HRESULT WINAPI DirectSoundEnumerateW(
     for (wod = 0; wod < devs; ++wod) {
 	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
-	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&device_guids[wod],0));
-	    if (err == DS_OK) {
-		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    debugstr_guid(&device_guids[wod]),desc.szDesc,desc.szDrvName,lpContext);
-		MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
-		    wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-		    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
-		    wName, sizeof(wName)/sizeof(WCHAR) );
-		if (lpDSEnumCallback(&device_guids[wod], wDesc, wName, lpContext) == FALSE)
-		    return DS_OK;
-	    }
+            TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+                  debugstr_guid(&renderer_guids[wod]),desc.szDesc,desc.szDrvName,lpContext);
+            MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
+                                 wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+            MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
+                                 wName, sizeof(wName)/sizeof(WCHAR) );
+            if (lpDSEnumCallback(&renderer_guids[wod], wDesc, wName, lpContext) == FALSE)
+                return DS_OK;
 	}
     }
     return DS_OK;
@@ -677,4 +656,36 @@ DWORD WINAPI DSOUND_DllCanUnloadNow(void)
 {
     FIXME("(void): stub\n");
     return S_FALSE;
+}
+
+#define INIT_GUID(guid, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)      \
+        guid.Data1 = l; guid.Data2 = w1; guid.Data3 = w2;               \
+        guid.Data4[0] = b1; guid.Data4[1] = b2; guid.Data4[2] = b3;     \
+        guid.Data4[3] = b4; guid.Data4[4] = b5; guid.Data4[5] = b6;     \
+        guid.Data4[6] = b7; guid.Data4[7] = b8;
+
+/***********************************************************************
+ *           DllMain (DSOUND.init)
+ */
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    int i;
+    TRACE("(%p 0x%lx %p)\n", hInstDLL, fdwReason, lpvReserved);
+
+    switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+        TRACE("DLL_PROCESS_ATTACH\n");
+        for (i = 0; i < MAXWAVEDRIVERS; i++) {
+            INIT_GUID(renderer_guids[i], 0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
+            INIT_GUID(capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
+        }
+        break;
+    case DLL_PROCESS_DETACH:
+        TRACE("DLL_PROCESS_DETACH\n");
+        break;
+    default:
+        TRACE("UNKNOWN REASON\n");
+        break;
+    }
+    return TRUE;
 }
