@@ -285,7 +285,7 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
    }
 
    case WM_COMMAND:
-    switch (wParam)
+    switch (LOWORD(wParam))
     {
      case IDOK:
      case IDCANCEL:
