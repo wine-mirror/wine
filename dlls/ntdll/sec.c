@@ -716,6 +716,19 @@ NTSTATUS WINAPI RtlAddAccessAllowedAce(
 	IN DWORD AccessMask,
 	IN PSID pSid)
 {
+	return RtlAddAccessAllowedAceEx( pAcl, dwAceRevision, 0, AccessMask, pSid);
+}
+ 
+/******************************************************************************
+ *  RtlAddAccessAllowedAceEx		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddAccessAllowedAceEx(
+	IN OUT PACL pAcl,
+	IN DWORD dwAceRevision,
+	IN DWORD AceFlags,
+	IN DWORD AccessMask,
+	IN PSID pSid)
+{
 	DWORD dwLengthSid;
 	ACCESS_ALLOWED_ACE * pAaAce;
 	DWORD dwSpaceLeft;
@@ -740,7 +753,7 @@ NTSTATUS WINAPI RtlAddAccessAllowedAce(
 		return STATUS_ALLOTTED_SPACE_EXCEEDED;
 
 	pAaAce->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-	pAaAce->Header.AceFlags = 0;
+	pAaAce->Header.AceFlags = AceFlags;
 	pAaAce->Header.AceSize = sizeof(*pAaAce) - sizeof(pAaAce->SidStart) + dwLengthSid;
 	pAaAce->Mask = AccessMask;
 	pAcl->AceCount++;
@@ -754,6 +767,19 @@ NTSTATUS WINAPI RtlAddAccessAllowedAce(
 NTSTATUS WINAPI RtlAddAccessDeniedAce(
 	IN OUT PACL pAcl,
 	IN DWORD dwAceRevision,
+	IN DWORD AccessMask,
+	IN PSID pSid)
+{
+	return RtlAddAccessDeniedAceEx( pAcl, dwAceRevision, 0, AccessMask, pSid);
+}
+
+/******************************************************************************
+ *  RtlAddAccessDeniedAceEx		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddAccessDeniedAceEx(
+	IN OUT PACL pAcl,
+	IN DWORD dwAceRevision,
+	IN DWORD AceFlags,
 	IN DWORD AccessMask,
 	IN PSID pSid)
 {
@@ -781,7 +807,7 @@ NTSTATUS WINAPI RtlAddAccessDeniedAce(
 		return STATUS_ALLOTTED_SPACE_EXCEEDED;
 
 	pAdAce->Header.AceType = ACCESS_DENIED_ACE_TYPE;
-	pAdAce->Header.AceFlags = 0;
+	pAdAce->Header.AceFlags = AceFlags;
 	pAdAce->Header.AceSize = sizeof(*pAdAce) - sizeof(pAdAce->SidStart) + dwLengthSid;
 	pAdAce->Mask = AccessMask;
 	pAcl->AceCount++;

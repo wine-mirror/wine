@@ -5,8 +5,9 @@
 @ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr)
 @ stub AccessCheckByType #(ptr ptr long long ptr long ptr ptr ptr ptr ptr) AccessCheckByType
 @ stdcall AddAccessAllowedAce (ptr long long ptr)
-@ stub AddAccessAllowedAceEx #(ptr long long long ptr) AddAccessAllowedAceEx
+@ stdcall AddAccessAllowedAceEx (ptr long long long ptr)
 @ stdcall AddAccessDeniedAce(ptr long long ptr)
+@ stdcall AddAccessDeniedAceEx(ptr long long long ptr)
 @ stdcall AddAce(ptr long long ptr long)
 @ stub AddAuditAccessAce
 @ stub AdjustTokenGroups
@@ -90,7 +91,7 @@
 @ stdcall FindFirstFreeAce(ptr ptr)
 @ stdcall FreeSid(ptr)
 @ stdcall GetAce(ptr long ptr)
-@ stub GetAclInformation
+@ stdcall GetAclInformation(ptr ptr long long)
 @ stdcall GetCurrentHwProfileA(ptr)
 @ stub GetEffectiveRightsFromAclA
 @ stdcall GetFileSecurityA(str long ptr long ptr)

@@ -269,7 +269,9 @@
 @ stdcall RtlAcquireResourceExclusive(ptr long)
 @ stdcall RtlAcquireResourceShared(ptr long)
 @ stdcall RtlAddAccessAllowedAce(ptr long long ptr)
+@ stdcall RtlAddAccessAllowedAceEx(ptr long long long ptr)
 @ stdcall RtlAddAccessDeniedAce(ptr long long ptr)
+@ stdcall RtlAddAccessDeniedAceEx(ptr long long long ptr)
 @ stdcall RtlAddAce(ptr long long ptr long)
 @ stub RtlAddActionToRXact
 @ stub RtlAddAttributeActionToRXact

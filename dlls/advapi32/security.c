@@ -664,6 +664,19 @@ BOOL WINAPI AddAccessAllowedAce(
 }
 
 /******************************************************************************
+ *  AddAccessAllowedAceEx [ADVAPI32.@]
+ */
+BOOL WINAPI AddAccessAllowedAceEx(
+        IN OUT PACL pAcl,
+        IN DWORD dwAceRevision,
+	IN DWORD AceFlags,
+        IN DWORD AccessMask,
+        IN PSID pSid)
+{
+	CallWin32ToNt(RtlAddAccessAllowedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
+}
+
+/******************************************************************************
  *  AddAccessDeniedAce [ADVAPI32.@]
  */
 BOOL WINAPI AddAccessDeniedAce(
@@ -676,7 +689,20 @@ BOOL WINAPI AddAccessDeniedAce(
 }
 
 /******************************************************************************
- *  AddAccessDeniedAce [ADVAPI32.@]
+ *  AddAccessDeniedAceEx [ADVAPI32.@]
+ */
+BOOL WINAPI AddAccessDeniedAceEx(
+        IN OUT PACL pAcl,
+        IN DWORD dwAceRevision,
+	IN DWORD AceFlags,
+        IN DWORD AccessMask,
+        IN PSID pSid)
+{
+	CallWin32ToNt(RtlAddAccessDeniedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
+}
+
+/******************************************************************************
+ *  AddAce [ADVAPI32.@]
  */
 BOOL WINAPI AddAce(
         IN OUT PACL pAcl,
@@ -702,6 +728,20 @@ BOOL WINAPI FindFirstFreeAce(IN PACL pAcl, LPVOID * pAce)
 BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
     CallWin32ToNt(RtlGetAce(pAcl, dwAceIndex, pAce));
+}
+
+/******************************************************************************
+ * GetAclInformation [ADVAPI32.@]
+ */
+BOOL WINAPI GetAclInformation(
+  PACL pAcl,
+  LPVOID pAclInformation,
+  DWORD nAclInformationLength,
+  ACL_INFORMATION_CLASS dwAclInformationClass)
+{
+	FIXME("(%p,%p,%ld,%d): stub\n",pAcl, pAclInformation,
+		nAclInformationLength, dwAclInformationClass);
+  return FALSE;
 }
 
 /******************************************************************************

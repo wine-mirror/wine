@@ -2763,6 +2763,12 @@ typedef struct _ACL {
     WORD Sbz2;
 } ACL, *PACL;
 
+typedef enum _ACL_INFORMATION_CLASS
+{
+  AclRevisionInformation = 1, 
+  AclSizeInformation
+} ACL_INFORMATION_CLASS;
+
 /* SECURITY_DESCRIPTOR */
 #define	SECURITY_DESCRIPTOR_REVISION	1
 #define	SECURITY_DESCRIPTOR_REVISION1	1
