@@ -18,7 +18,7 @@
 /****************************************************************************
 *  DllGetClassObject
 */
-DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
+DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID,REFIID,LPVOID*);
 
 
 
