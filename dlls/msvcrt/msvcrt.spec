@@ -625,7 +625,7 @@
 @ cdecl gets(str) MSVCRT_gets
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
-@ cdecl gmtime(ptr)
+@ cdecl gmtime(ptr) MSVCRT_gmtime
 @ cdecl is_wctype(long long) ntdll.iswctype
 @ cdecl isalnum(long) MSVCRT_isalnum
 @ cdecl isalpha(long) MSVCRT_isalpha
@@ -656,7 +656,7 @@
 @ cdecl ldexp( double long) MSVCRT_ldexp
 @ cdecl ldiv(long long) MSVCRT_ldiv
 @ cdecl localeconv() MSVCRT_localeconv
-@ cdecl localtime(ptr)
+@ cdecl localtime(ptr) MSVCRT_localtime
 @ cdecl log(double)
 @ cdecl log10(double)
 @ cdecl -i386 longjmp(ptr long) MSVCRT_longjmp

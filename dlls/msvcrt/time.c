@@ -5,6 +5,7 @@
  * Copyright 1996 Jukka Iivonen
  * Copyright 1997,2000 Uwe Bonnes
  * Copyright 2000 Jon Griffiths
+ * Copyright 2004 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,97 +39,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-/* INTERNAL: Return formatted current time/date */
-char* msvcrt_get_current_time(char* out, const char* format)
+static const int MonthLengths[2][12] =
 {
-  static const MSVCRT_time_t bad_time = (MSVCRT_time_t)-1;
-  time_t t;
-  struct tm *_tm = NULL;
-  char *retval = NULL;
+    { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+    { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+};
 
-  if (time(&t) != bad_time && (_tm = localtime(&t)) &&
-      strftime(out,9,format,_tm) == 8)
-    retval = out;
-  return retval;
-}
-
-/**********************************************************************
- *		mktime (MSVCRT.@)
- */
-MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
+static inline int IsLeapYear(int Year)
 {
-  MSVCRT_time_t res;
-  struct tm tm;
-
-  tm.tm_sec = t->tm_sec;
-  tm.tm_min = t->tm_min;
-  tm.tm_hour = t->tm_hour;
-  tm.tm_mday = t->tm_mday;
-  tm.tm_mon = t->tm_mon;
-  tm.tm_year = t->tm_year;
-  tm.tm_isdst = t->tm_isdst;
-  res = mktime(&tm);
-  if (res != -1)
-  {
-      t->tm_sec = tm.tm_sec;
-      t->tm_min = tm.tm_min;
-      t->tm_hour = tm.tm_hour;
-      t->tm_mday = tm.tm_mday;
-      t->tm_mon = tm.tm_mon;
-      t->tm_year = tm.tm_year;
-      t->tm_isdst = tm.tm_isdst;
-  }
-  return res;
-}
-
-/**********************************************************************
- *		_strdate (MSVCRT.@)
- */
-char* _strdate(char* date)
-{
-  return msvcrt_get_current_time(date,"%m/%d/%y");
-}
-
-/*********************************************************************
- *		_strtime (MSVCRT.@)
- */
-char* _strtime(char* date)
-{
-  return msvcrt_get_current_time(date,"%H:%M:%S");
-}
-
-/*********************************************************************
- *		clock (MSVCRT.@)
- */
-MSVCRT_clock_t MSVCRT_clock(void)
-{
-  struct tms alltimes;
-  clock_t res;
-
-  times(&alltimes);
-  res = alltimes.tms_utime + alltimes.tms_stime +
-        alltimes.tms_cutime + alltimes.tms_cstime;
-  /* FIXME: We need some symbolic representation for CLOCKS_PER_SEC,
-   *  10 holds only for Windows/Linux_i86)
-   */
-  return 10*res;
-}
-
-/*********************************************************************
- *		difftime (MSVCRT.@)
- */
-double MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
-{
-    return (double)(time1 - time2);
-}
-
-/*********************************************************************
- *		time (MSVCRT.@)
- */
-MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
-{
-  MSVCRT_time_t curtime = time(NULL);
-  return buf ? *buf = curtime : curtime;
+    return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
 }
 
 #define SECSPERDAY        86400
@@ -136,6 +55,184 @@ MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
 #define TICKSPERSEC       10000000
 #define TICKSPERMSEC      10000
+#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
+
+/* native uses a single static buffer for localtime/gmtime/mktime */
+static struct MSVCRT_tm tm;
+
+/**********************************************************************
+ *		mktime (MSVCRT.@)
+ */
+MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
+{
+  MSVCRT_time_t secs;
+
+  SYSTEMTIME st;
+  FILETIME lft, uft;
+  ULONGLONG time;
+
+  st.wSecond = t->tm_sec;
+  st.wMinute = t->tm_min;
+  st.wHour   = t->tm_hour;
+  st.wDay    = t->tm_mday - 1;
+  st.wMonth  = t->tm_mon;
+  st.wYear   = t->tm_year + 1900;
+
+  SystemTimeToFileTime(&st, &lft);
+  LocalFileTimeToFileTime(&lft, &uft);
+
+  time = ((ULONGLONG)uft.dwHighDateTime << 32) | uft.dwLowDateTime;
+  secs = time / TICKSPERSEC - SECS_1601_TO_1970;
+
+  return secs; 
+}
+
+/*********************************************************************
+ *      localtime (MSVCRT.@)
+ */
+struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
+{
+  int i;
+
+  FILETIME ft, lft;
+  SYSTEMTIME st;
+  DWORD tzid;
+  TIME_ZONE_INFORMATION tzinfo;
+
+  ULONGLONG time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+
+  ft.dwHighDateTime = (UINT)(time >> 32);
+  ft.dwLowDateTime  = (UINT)time;
+
+  FileTimeToLocalFileTime(&ft, &lft);
+  FileTimeToSystemTime(&lft, &st);
+
+  if (st.wYear < 1970) return NULL;
+
+  tm.tm_sec  = st.wSecond;
+  tm.tm_min  = st.wMinute;
+  tm.tm_hour = st.wHour;
+  tm.tm_mday = st.wDay;
+  tm.tm_year = st.wYear - 1900;
+  tm.tm_mon  = st.wMonth + 1;
+  tm.tm_wday = st.wDayOfWeek;
+
+  for (i = 0; i < st.wMonth; i++) {
+    tm.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
+  }
+
+  tm.tm_yday += st.wDay;
+ 
+  tzid = GetTimeZoneInformation(&tzinfo);
+
+  if (tzid == TIME_ZONE_ID_UNKNOWN) {
+    tm.tm_isdst = -1;
+  } else {
+    tm.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
+  }
+
+  return &tm;
+}
+
+struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
+{
+  int i;
+
+  FILETIME ft, lft;
+  SYSTEMTIME st;
+
+  ULONGLONG time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+
+  ft.dwHighDateTime = (UINT)(time >> 32);
+  ft.dwLowDateTime  = (UINT)time;
+
+  FileTimeToSystemTime(&lft, &st);
+
+  if (st.wYear < 1970) return NULL;
+
+  tm.tm_sec  = st.wSecond;
+  tm.tm_min  = st.wMinute;
+  tm.tm_hour = st.wHour;
+  tm.tm_mday = st.wDay;
+  tm.tm_year = st.wYear - 1900;
+  tm.tm_mon  = st.wMonth + 1;
+  tm.tm_wday = st.wDayOfWeek;
+
+  for (i = 0; i < st.wMonth; i++) {
+    tm.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
+  }
+
+  tm.tm_yday += st.wDay;
+  tm.tm_isdst = 0;
+
+  return &tm;
+}
+
+/**********************************************************************
+ *		_strdate (MSVCRT.@)
+ */
+char* _strdate(char* date)
+{
+  LPCSTR format = "MM'/'dd'/'yy";
+
+  GetDateFormatA(LOCALE_NEUTRAL, 0, NULL, format, date, 9);
+
+  return date;
+}
+
+/*********************************************************************
+ *		_strtime (MSVCRT.@)
+ */
+char* _strtime(char* date)
+{
+  LPCSTR format = "HH':'mm':'ss";
+
+  GetTimeFormatA(LOCALE_NEUTRAL, 0, NULL, format, date, 9); 
+
+  return date;
+}
+
+/*********************************************************************
+ *		clock (MSVCRT.@)
+ */
+MSVCRT_clock_t MSVCRT_clock(void)
+{
+  FILETIME ftc, fte, ftk, ftu;
+  ULONGLONG utime, ktime;
+ 
+  MSVCRT_clock_t clock;
+
+  GetProcessTimes(GetCurrentProcess(), &ftc, &fte, &ftk, &ftu);
+
+  ktime = ((ULONGLONG)ftk.dwHighDateTime << 32) | ftk.dwLowDateTime;
+  utime = ((ULONGLONG)ftu.dwHighDateTime << 32) | ftu.dwLowDateTime;
+
+  clock = ((utime + ktime) / TICKSPERSEC) * CLOCKS_PER_SEC;
+
+  return clock;
+}
+
+/*********************************************************************
+ *		difftime (MSVCRT.@)
+ */
+double MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
+{
+  return (double)(time1 - time2);
+}
+
+/*********************************************************************
+ *		time (MSVCRT.@)
+ */
+MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
+{
+  MSVCRT_time_t curtime;
+  struct _timeb tb;
+
+  _ftime(&tb);
+
+  curtime = tb.time;
+  return buf ? *buf = curtime : curtime;
+}
 
 /*********************************************************************
  *		_ftime (MSVCRT.@)
