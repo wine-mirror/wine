@@ -31,12 +31,10 @@ static const WCHAR file[] = {'t','e','s','t','.','a','v','i',0};
 
 IGraphBuilder* pgraph;
 
-static void createfiltergraph()
+static int createfiltergraph()
 {
-    HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&pgraph);
-    ok(hr==S_OK, "Creating filtergraph returned: %lx\n", hr);
+    return S_OK == CoCreateInstance(
+        &CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&pgraph);
 }
 
 static void renderfile()
@@ -92,7 +90,8 @@ START_TEST(filtergraph)
     HANDLE h;
 	
     CoInitialize(NULL);
-    createfiltergraph();
+    if (!createfiltergraph())
+        return;
 
     h = CreateFileW(file, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (h != INVALID_HANDLE_VALUE) {
