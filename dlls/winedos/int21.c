@@ -3706,6 +3706,11 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE( "NOVELL NETWARE - RETURN SHELL VERSION - ignored\n" );
         break;
 
+    case 0xff: /* DOS32 EXTENDER (DOS/4GW) - API */
+	/* we don't implement a DOS32 extender */
+        TRACE( "DOS32 EXTENDER API - ignored\n" );
+        break;
+
     default:
         INT_BARF( context, 0x21 );
         break;
