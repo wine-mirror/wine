@@ -1,0 +1,99 @@
+/*
+ * Copyright 2005 Jacek Caban
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+import "ocidl.idl";
+import "objidl.idl";
+import "oleidl.idl";
+import "oaidl.idl";
+import "docobj.idl";
+
+
+/*****************************************************************************
+ *    IDocHostUIHandler interface
+ */
+[
+    object,
+    uuid(BD3F23C0-D43E-11CF-893B-00AA00BDCE1A),
+    pointer_default(unique),
+    local
+]
+interface IDocHostUIHandler : IUnknown
+{
+    typedef struct _DOCHOSTUIINFO
+    {
+        ULONG cbSize;
+        DWORD dwFlags;
+        DWORD dwDoubleClick;
+        OLECHAR *pchHostCss;
+        OLECHAR *pchHostNS;
+    } DOCHOSTUIINFO;
+
+    HRESULT ShowContextMenu(
+        [in] DWORD dwID, 
+        [in] POINT *ppt, 
+        [in] IUnknown *pcmdtReserved,  
+        [in] IDispatch *pdispReserved);
+
+    HRESULT GetHostInfo([in, out] DOCHOSTUIINFO *pInfo);
+
+    HRESULT ShowUI(
+        [in] DWORD dwID,
+        [in] IOleInPlaceActiveObject *pActiveObject,
+        [in] IOleCommandTarget *pCommandTarget,
+        [in] IOleInPlaceFrame *pFrame,
+        [in] IOleInPlaceUIWindow *pDoc);
+
+    HRESULT HideUI();
+
+    HRESULT UpdateUI();
+
+    HRESULT EnableModeless([in] BOOL fEnable);
+
+    HRESULT OnDocWindowActivate([in] BOOL fActivate);
+
+    HRESULT OnFrameWindowActivate([in] BOOL fActivate);
+
+    HRESULT ResizeBorder(
+        [in] LPCRECT prcBorder,
+        [in] IOleInPlaceUIWindow *pUIWindow,
+        [in] BOOL fRameWindow);
+
+    HRESULT TranslateAccelerator(
+        [in] LPMSG lpMsg,
+        [in] const GUID *pguidCmdGroup, 
+        [in] DWORD nCmdID);
+
+    HRESULT GetOptionKeyPath(
+        [out] LPOLESTR *pchKey,
+        [in] DWORD dw);
+
+    HRESULT GetDropTarget(
+        [in] IDropTarget *pDropTarget, 
+        [out] IDropTarget **ppDropTarget);
+
+    HRESULT GetExternal([out] IDispatch **ppDispatch);
+
+    HRESULT TranslateUrl(
+        [in] DWORD dwTranslate,
+        [in] OLECHAR *pchURLIn,
+        [out] OLECHAR **ppchURLOut);
+
+    HRESULT FilterDataObject(
+        [in]IDataObject *pDO,
+        [out]IDataObject **ppDORet);
+}

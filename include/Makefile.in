@@ -18,6 +18,7 @@ IDL_SRCS = \
 	mediaobj.idl \
 	mlang.idl \
 	mmstream.idl \
+	mshtmhst.idl \
 	mshtml.idl \
 	oaidl.idl \
 	objidl.idl \

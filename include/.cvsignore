@@ -13,6 +13,7 @@ exdisp.h
 mediaobj.h
 mlang.h
 mmstream.h
+mshtmhst.h
 mshtml.h
 oaidl.h
 objidl.h
