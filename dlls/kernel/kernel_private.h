@@ -21,6 +21,23 @@
 #ifndef __WINE_KERNEL_PRIVATE_H
 #define __WINE_KERNEL_PRIVATE_H
 
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
+
+/* The thread information for 16-bit threads */
+/* NtCurrentTeb()->SubSystemTib points to this */
+typedef struct
+{
+    void           *unknown;    /* 00 unknown */
+    UNICODE_STRING *exe_name;   /* 04 exe module name */
+
+    /* the following fields do not exist under Windows */
+    UNICODE_STRING  exe_str;    /* exe name string pointed to by exe_name */
+} WIN16_SUBSYSTEM_TIB;
+
 HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
 BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);

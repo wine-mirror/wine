@@ -38,6 +38,7 @@
 #include "winternl.h"
 #include "thread.h"
 #include "module.h"
+#include "kernel_private.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -468,35 +469,27 @@ DWORD WINAPI GetModuleFileNameA(
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size )
 {
     ULONG magic;
+    LDR_MODULE *pldr;
+    NTSTATUS nts;
+    WIN16_SUBSYSTEM_TIB *win16_tib;
 
     lpFileName[0] = 0;
 
+    if (!hModule && ((win16_tib = NtCurrentTeb()->Tib.SubSystemTib)) && win16_tib->exe_name)
+    {
+        lstrcpynW( lpFileName, win16_tib->exe_name->Buffer, size );
+        goto done;
+    }
+
     LdrLockLoaderLock( 0, NULL, &magic );
-    if (!hModule && !(NtCurrentTeb()->tibflags & TEBF_WIN32))
-    {
-        /* 16-bit task - get current NE module name */
-        NE_MODULE *pModule = NE_GetPtr( GetCurrentTask() );
-        if (pModule)
-        {
-            WCHAR    path[MAX_PATH];
 
-            MultiByteToWideChar( CP_ACP, 0, NE_MODULE_NAME(pModule), -1, path, MAX_PATH );
-            GetLongPathNameW(path, lpFileName, size);
-        }
-    }
-    else
-    {
-        LDR_MODULE* pldr;
-        NTSTATUS    nts;
+    if (!hModule) hModule = NtCurrentTeb()->Peb->ImageBaseAddress;
+    nts = LdrFindEntryForAddress( hModule, &pldr );
+    if (nts == STATUS_SUCCESS) lstrcpynW(lpFileName, pldr->FullDllName.Buffer, size);
+    else SetLastError( RtlNtStatusToDosError( nts ) );
 
-        if (!hModule) hModule = NtCurrentTeb()->Peb->ImageBaseAddress;
-        nts = LdrFindEntryForAddress( hModule, &pldr );
-        if (nts == STATUS_SUCCESS) lstrcpynW(lpFileName, pldr->FullDllName.Buffer, size);
-        else SetLastError( RtlNtStatusToDosError( nts ) );
-
-    }
     LdrUnlockLoaderLock( 0, magic );
-
+done:
     TRACE( "%s\n", debugstr_w(lpFileName) );
     return strlenW(lpFileName);
 }

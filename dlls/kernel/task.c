@@ -256,11 +256,12 @@ static BOOL TASK_FreeThunk( SEGPTR thunk )
  *       by entering the Win16Lock while linking the task into the
  *       global task list.
  */
-static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, BYTE len )
+static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYTE len )
 {
     HTASK16 hTask;
     TDB *pTask;
     FARPROC16 proc;
+    char curdir[MAX_PATH];
     HMODULE16 hModule = pModule ? pModule->self : 0;
 
       /* Allocate the task structure */
@@ -274,26 +275,16 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
 
     pTask->hSelf = hTask;
 
-    if (teb && teb->tibflags & TEBF_WIN32)
-    {
-        pTask->flags        |= TDBF_WIN32;
-        pTask->hInstance     = hModule;
-        pTask->hPrevInstance = 0;
-        /* NOTE: for 16-bit tasks, the instance handles are updated later on
-           in NE_InitProcess */
-    }
-
     pTask->version       = pModule ? pModule->expected_version : 0x0400;
     pTask->hModule       = hModule;
     pTask->hParent       = GetCurrentTask();
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
-    pTask->teb           = teb;
-    pTask->curdrive      = DRIVE_GetCurrentDrive() | 0x80;
-    strcpy( pTask->curdir, "\\" );
-    WideCharToMultiByte(CP_ACP, 0, DRIVE_GetDosCwd(DRIVE_GetCurrentDrive()), -1,
-                        pTask->curdir + 1, sizeof(pTask->curdir) - 1, NULL, NULL);
-    pTask->curdir[sizeof(pTask->curdir) - 1] = 0; /* ensure 0 termination */
+
+    GetCurrentDirectoryA( sizeof(curdir), curdir );
+    GetShortPathNameA( curdir, curdir, sizeof(curdir) );
+    pTask->curdrive = (curdir[0] - 'A') | 0x80;
+    lstrcpynA( pTask->curdir, curdir + 2, sizeof(pTask->curdir) );
 
       /* Create the thunks block */
 
@@ -364,9 +355,6 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
     if ( !(pTask->flags & TDBF_WIN32) )
         NtCreateEvent( &pTask->hEvent, EVENT_ALL_ACCESS, NULL, TRUE, FALSE );
 
-    /* Enter task handle into thread */
-
-    if (teb) teb->htask16 = hTask;
     if (!initial_task) initial_task = hTask;
 
     return pTask;
@@ -419,18 +407,40 @@ void TASK_CreateMainTask(void)
 
     GetStartupInfoA( &startup_info );
     if (startup_info.dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup_info.wShowWindow;
-    pTask = TASK_Create( NULL, cmdShow, NtCurrentTeb(), NULL, 0 );
+    pTask = TASK_Create( NULL, cmdShow, NULL, 0 );
     if (!pTask)
     {
         ERR("could not create task for main process\n");
         ExitProcess(1);
     }
 
+    pTask->flags        |= TDBF_WIN32;
+    pTask->hInstance     = 0;
+    pTask->hPrevInstance = 0;
+    pTask->teb           = NtCurrentTeb();
+
+    NtCurrentTeb()->htask16 = pTask->hSelf;
+
     /* Add the task to the linked list */
     /* (no need to get the win16 lock, we are the only thread at this point) */
     TASK_LinkTask( pTask->hSelf );
 }
 
+
+/* allocate the win16 TIB for a new 16-bit task */
+static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
+{
+    WCHAR path[MAX_PATH];
+    WIN16_SUBSYSTEM_TIB *tib;
+    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+
+    if (!(tib = HeapAlloc( GetProcessHeap(), 0, sizeof(*tib) ))) return NULL;
+    MultiByteToWideChar( CP_ACP, 0, NE_MODULE_NAME(pModule), -1, path, MAX_PATH );
+    GetLongPathNameW( path, path, MAX_PATH );
+    if (RtlCreateUnicodeString( &tib->exe_str, path )) tib->exe_name = &tib->exe_str;
+    else tib->exe_name = NULL;
+    return tib;
+}
 
 /* startup routine for a new 16-bit thread */
 static DWORD CALLBACK task_start( TDB *pTask )
@@ -439,6 +449,7 @@ static DWORD CALLBACK task_start( TDB *pTask )
 
     NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
     NtCurrentTeb()->htask16 = pTask->hSelf;
+    NtCurrentTeb()->Tib.SubSystemTib = allocate_win16_tib( pTask );
 
     _EnterWin16Lock();
     TASK_LinkTask( pTask->hSelf );
@@ -459,7 +470,7 @@ HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
 {
     TDB *pTask;
 
-    if (!(pTask = TASK_Create( pModule, cmdShow, NULL, cmdline, len ))) return 0;
+    if (!(pTask = TASK_Create( pModule, cmdShow, cmdline, len ))) return 0;
     if (!(*hThread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)task_start, pTask, 0, NULL )))
     {
         TASK_DeleteTask( pTask->hSelf );
