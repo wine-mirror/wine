@@ -1536,6 +1536,42 @@ static void test_SafeArrayChangeTypeEx(void)
 
 }
 
+static void test_SafeArrayDestroyData (void)
+{
+  SAFEARRAYBOUND sab;
+  SAFEARRAY *sa;
+  HRESULT hres;
+  int value = 0;
+  long index[1];
+  void HUGEP *temp_pvData;
+
+  sab.lLbound = 0;
+  sab.cElements = 10;
+  sa = SafeArrayCreate(VT_INT, 1, &sab);
+  ok(sa != NULL, "Create() failed.\n");
+  if (!sa)
+    return;
+  index[0] = 1;
+  SafeArrayPutElement (sa, index, &value);
+
+/* SafeArrayDestroyData shouldn't do anything if FADF_STATIC is set. */
+  sa->fFeatures |= FADF_STATIC;
+  temp_pvData = sa->pvData;
+  hres = SafeArrayDestroyData(sa);
+  ok(hres == S_OK, "SADData FADF_STATIC failed, error code %lx.\n",hres);
+  ok(sa->pvData == temp_pvData, "SADData FADF_STATIC: pvData=%p, expected %p (fFeatures = %d).\n",
+    sa->pvData, temp_pvData, sa->fFeatures);
+
+/* Clear FADF_STATIC, now really destroy the data. */
+  sa->fFeatures ^= FADF_STATIC;
+  hres = SafeArrayDestroyData(sa);
+  ok(hres == S_OK, "SADData !FADF_STATIC failed, error code %lx.\n",hres);
+  ok(sa->pvData == NULL, "SADData !FADF_STATIC: pvData=%p, expected NULL.\n", sa->pvData);
+
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "SAD failed, error code %lx.\n", hres);
+}
+
 START_TEST(safearray)
 {
     hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -1558,6 +1594,7 @@ START_TEST(safearray)
     test_SafeArrayClear();
     test_SafeArrayCreateEx();
     test_SafeArrayCopyData();
+    test_SafeArrayDestroyData();
     test_SafeArrayGetPutElement();
     test_SafeArrayGetPutElement_BSTR();
     test_SafeArrayGetPutElement_IUnknown();
