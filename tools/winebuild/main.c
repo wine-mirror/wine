@@ -271,8 +271,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case 'm':
             if (!strcmp( optarg, "gui" )) spec->mode = SPEC_MODE_GUIEXE;
             else if (!strcmp( optarg, "cui" )) spec->mode = SPEC_MODE_CUIEXE;
-            else if (!strcmp( optarg, "guiw" )) spec->mode = SPEC_MODE_GUIEXE_UNICODE;
-            else if (!strcmp( optarg, "cuiw" )) spec->mode = SPEC_MODE_CUIEXE_UNICODE;
             else if (!strcmp( optarg, "native" )) spec->mode = SPEC_MODE_NATIVE;
             else usage(1);
             break;

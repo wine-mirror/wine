@@ -643,7 +643,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
         subsystem = IMAGE_SUBSYSTEM_NATIVE;
         break;
     case SPEC_MODE_GUIEXE:
-    case SPEC_MODE_GUIEXE_UNICODE:
         if (!init_func) init_func = "WinMain";
         fprintf( outfile,
                  "\ntypedef struct {\n"
@@ -688,36 +687,31 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
         break;
     case SPEC_MODE_CUIEXE:
-        if (!init_func) init_func = "main";
+        if (init_func)
+            fprintf( outfile, "extern int %s( int argc, char *argv[] );\n", init_func );
+        else
+        {
+            declare_weak_function( outfile, "main", "int main( int argc, char *argv[] )" );
+            declare_weak_function( outfile, "wmain", "int wmain( int argc, unsigned short *argv[] )" );
+        }
         fprintf( outfile,
                  "\nextern void __stdcall ExitProcess(int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    int ret;\n"
-                 "    extern int %s( int argc, char *argv[] );\n"
                  "    if (__wine_spec_init_state == 1)\n"
-                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
-                 "    ret = %s( __wine_main_argc, __wine_main_argv );\n"
-                 "    if (__wine_spec_init_state == 1) _fini();\n"
-                 "    ExitProcess( ret );\n"
-                 "}\n\n", init_func, init_func );
-        init_func = "__wine_exe_main";
-        subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-        break;
-    case SPEC_MODE_CUIEXE_UNICODE:
-        if (!init_func) init_func = "wmain";
+                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n" );
+        if (init_func)
+            fprintf( outfile,
+                     "    ret = %s( __wine_main_argc, __wine_main_argv );\n", init_func );
+        else
+            fprintf( outfile,
+                     "    if (wmain) ret = wmain( __wine_main_argc, __wine_main_wargv );\n"
+                     "    else ret = main( __wine_main_argc, __wine_main_argv );\n" );
         fprintf( outfile,
-                 "\nextern void __stdcall ExitProcess(int);\n"
-                 "static void __wine_exe_main(void)\n"
-                 "{\n"
-                 "    int ret;\n"
-                 "    extern int %s( int argc, unsigned short *argv[] );\n"
-                 "    if (__wine_spec_init_state == 1)\n"
-                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
-                 "    ret = %s( __wine_main_argc, __wine_main_wargv );\n"
                  "    if (__wine_spec_init_state == 1) _fini();\n"
                  "    ExitProcess( ret );\n"
-                 "}\n\n", init_func, init_func );
+                 "}\n\n" );
         init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         break;

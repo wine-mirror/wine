@@ -456,14 +456,6 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
     case SPEC_MODE_CUIEXE:
         kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
         break;
-    case SPEC_MODE_GUIEXE_UNICODE:
-        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA", spec );
-        /* fall through */
-    case SPEC_MODE_CUIEXE_UNICODE:
-        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
-        break;
     }
     if (nb_delayed)
     {
