@@ -2502,7 +2502,6 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
     {
       bResult = TRUE;
       LISTVIEW_SetSelection(infoPtr, nItem);
-      ListView_EnsureVisible(infoPtr->hwndSelf, nItem, FALSE);
     }
     else
     {
@@ -2519,9 +2518,9 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
       {
         bResult = TRUE;
         LISTVIEW_SetSelection(infoPtr, nItem);
-        ListView_EnsureVisible(infoPtr->hwndSelf, nItem, FALSE);
       }
     }
+    ListView_EnsureVisible(infoPtr->hwndSelf, nItem, FALSE);
   }
 
   UpdateWindow(infoPtr->hwndSelf); /* update client area */
