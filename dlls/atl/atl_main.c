@@ -150,3 +150,24 @@ HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* p
     TRACE("Done returning (0x%lx)\n",rc);
     return rc;
 }
+
+/***********************************************************************
+ *           AtlModuleUpdateRegistryFromResourceD         [ATL.@]
+ *
+ */
+HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR lpszRes,
+		BOOL bRegister, /* struct _ATL_REGMAP_ENTRY* */ void* pMapEntries, /* IRegistrar* */ void* pReg)
+{
+    HINSTANCE hInst = pM->m_hInst;
+    /* everything inside this function below this point
+     * should go into atl71.AtlUpdateRegistryFromResourceD
+     */
+    WCHAR module_name[MAX_PATH];
+
+    GetModuleFileNameW(hInst, module_name, MAX_PATH);
+
+    FIXME("stub %p (%s), %s, %d, %p, %p\n", hInst, debugstr_w(module_name),
+	debugstr_w(lpszRes), bRegister, pMapEntries, pReg);
+
+    return S_OK;
+}
