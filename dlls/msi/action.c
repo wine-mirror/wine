@@ -142,6 +142,7 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action);
 static UINT ACTION_InstallInitialize(MSIHANDLE hPackage);
 static UINT ACTION_InstallValidate(MSIHANDLE hPackage);
 static UINT ACTION_ProcessComponents(MSIHANDLE hPackage);
+static UINT ACTION_RegisterTypeLibraries(MSIHANDLE hPackage);
 
 static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
@@ -189,7 +190,9 @@ const static WCHAR szLaunchConditions[] =
     {'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
 const static WCHAR szProcessComponents[] = 
     {'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
-
+const static WCHAR szRegisterTypeLibraries[] = 
+{'R','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r',
+'i','e','s',0};
 
 /******************************************************** 
  * helper functions to get around current HACKS and such
@@ -241,6 +244,22 @@ inline static int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
     for (i = 0; i < package->loaded_features; i++)
     {
         if (strcmpW(Feature,package->features[i].Feature)==0)
+        {
+            rc = i;
+            break;
+        }
+    }
+    return rc;
+}
+
+inline static int get_loaded_file(MSIPACKAGE* package, LPCWSTR file)
+{
+    INT rc = -1;
+    INT i;
+
+    for (i = 0; i < package->loaded_files; i++)
+    {
+        if (strcmpW(file,package->files[i].File)==0)
         {
             rc = i;
             break;
@@ -821,17 +840,16 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         rc = ACTION_DuplicateFiles(hPackage);
     else if (strcmpW(action,szWriteRegistryValues)==0)
         rc = ACTION_WriteRegistryValues(hPackage);
+     else if (strcmpW(action,szRegisterTypeLibraries)==0)
+        rc = ACTION_RegisterTypeLibraries(hPackage);
 
     /*
      Current called during itunes but unimplemented and seem important
 
      ResolveSource  (sets SourceDir)
-     ValidateProductID (sets ProductID)
      CreateShortcuts (would be nice to have soon)
      RegisterClassInfo
      RegisterProgIdInfo (Lots to do)
-     RegisterTypeLibraries
-     RegisterUser
      RegisterProduct
      InstallFinalize
      */
@@ -3016,10 +3034,9 @@ static void resolve_keypath(MSIHANDLE hPackage, MSIPACKAGE* package, INT
     else
     {
         int j;
-        for (j = 0; j < package->loaded_files; j++)
-            if (strcmpW(package->files[j].File,cmp->KeyPath)==0)
-                break;
-        if (j < package->loaded_files)
+        j = get_loaded_file(package,cmp->KeyPath);
+
+        if (j>=0)
             strcpyW(keypath,package->files[j].TargetPath);
     }
 }
@@ -3113,6 +3130,119 @@ end:
     RegCloseKey(hkey2);
     RegCloseKey(hkey);
     return rc;
+}
+
+static UINT ACTION_RegisterTypeLibraries(MSIHANDLE hPackage)
+{
+    /* 
+     * ok this is a bit confusting.. I am given a _Component key and i believe
+     * that the file that is being registered as a type library is the "key file
+     * of that component" which i interpert to mean "The file in the KeyPath of
+     * that component" 
+     */
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const CHAR *Query = "SELECT * from TypeLib";
+    MSIPACKAGE* package;
+    ITypeLib *ptLib;
+    HRESULT res;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MsiDatabaseOpenViewA(package->db, Query, &view);
+
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    while (1)
+    {   
+        WCHAR component[0x100];
+        DWORD sz;
+        INT index;
+
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        sz = 0x100;
+        MsiRecordGetStringW(row,3,component,&sz);
+
+        index = get_loaded_component(package,component);
+        if (index < 0)
+        {
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        if (!package->components[index].Enabled ||
+            !package->components[index].FeatureState)
+        {
+            TRACE("Skipping typelib reg due to disabled component\n");
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        index = get_loaded_file(package,package->components[index].KeyPath); 
+   
+        if (index < 0)
+        {
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        res = LoadTypeLib(package->files[index].TargetPath,&ptLib);
+        if (SUCCEEDED(res))
+        {
+            WCHAR help[MAX_PATH];
+            WCHAR helpid[0x100];
+
+            sz = 0x100;
+            MsiRecordGetStringW(row,6,helpid,&sz);
+
+            resolve_folder(hPackage,helpid,help,FALSE,FALSE,NULL);
+
+            res = RegisterTypeLib(ptLib,package->files[index].TargetPath,help);
+            if (!SUCCEEDED(res))
+                ERR("Failed to register type library %s\n",
+                     debugstr_w(package->files[index].TargetPath));
+            else
+            {
+                /* yes the row has more fields than i need, but #1 is 
+                   correct and the only one i need. why make a new row */
+
+                ui_actiondata(hPackage,szRegisterTypeLibraries,row);
+                
+                TRACE("Registered %s\n",
+                       debugstr_w(package->files[index].TargetPath));
+            }
+
+            if (ptLib)
+                ITypeLib_Release(ptLib);
+        }
+        else
+            ERR("Failed to load type library %s\n",
+                debugstr_w(package->files[index].TargetPath));
+        
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    return rc;
+   
 }
 
 /* Msi functions that seem approperate here */
