@@ -576,7 +576,13 @@ REBAR_CalcHorzBand (HWND hwnd, REBAR_INFO *infoPtr, UINT rstart, UINT rend, BOOL
 
     for(i=rstart; i<rend; i++){
       lpBand = &infoPtr->bands[i];
-      if (HIDDENBAND(lpBand)) continue;
+      if (HIDDENBAND(lpBand)) {
+          SetRect (&lpBand->rcChild,
+		   lpBand->rcBand.right, lpBand->rcBand.top,
+		   lpBand->rcBand.right, lpBand->rcBand.bottom);
+	  continue;
+      }
+
       oldChild = lpBand->rcChild;
 
       /* set initial gripper rectangle */
@@ -2781,7 +2787,7 @@ REBAR_ShowBand (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("hide band %d\n", (INT)wParam);
 	lpBand->fStyle = lpBand->fStyle | RBBS_HIDDEN;
 	if (IsWindow (lpBand->hwndChild))
-	    ShowWindow (lpBand->hwndChild, SW_SHOW);
+	    ShowWindow (lpBand->hwndChild, SW_HIDE);
     }
 
     REBAR_Layout (hwnd, NULL, TRUE, FALSE);
