@@ -1,74 +1,83 @@
 #include <windows.h>
 
-void Write (HDC dc, int x, int y, char *s)
+char szAppName[] = "Hello";
+
+long FAR PASCAL WndProc(HWND, UINT, WPARAM, LPARAM);
+
+int PASCAL WinMain (HANDLE hInstance, HANDLE hPrevInst, LPSTR lpszCmdLine,
+			 int nCmdShow)
 {
-    TextOut (dc, x, y, s, strlen (s));
-}
+	HWND hwnd;
+	MSG msg;
+	WNDCLASS wndclass;
 
-LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
+	if(!hPrevInst) {
+
+		wndclass.style =  CS_HREDRAW | CS_VREDRAW;
+		wndclass.lpfnWndProc = WndProc;
+		wndclass.cbClsExtra = 0;
+		wndclass.cbWndExtra = 0;
+		wndclass.hInstance = hInstance;
+		wndclass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+		wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wndclass.hbrBackground = GetStockObject(WHITE_BRUSH);
+		wndclass.lpszMenuName = NULL;
+		wndclass.lpszClassName = szAppName;
+
+		RegisterClass(&wndclass);
+
+					
+	}
+
+	hwnd = CreateWindow(szAppName, szAppName,
+	 WS_HSCROLL | WS_VSCROLL | WS_OVERLAPPEDWINDOW,
+	 CW_USEDEFAULT, CW_USEDEFAULT, 600,
+	 400, NULL, NULL, hInstance, NULL);
+
+	ShowWindow(hwnd, nCmdShow);
+	UpdateWindow(hwnd);
+															
+									
+	while(GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}					
+	return msg.wParam;
+}					
+
+
+
+long FAR PASCAL WndProc(HWND hwnd, UINT message, WPARAM wParam,
+				LPARAM lParam)
 {
-    static short xChar, yChar;
-    HDC dc;
-    PAINTSTRUCT ps;
-    TEXTMETRIC tm;
+	HDC hdc;
+	RECT rect;
+	SIZE size;
+	PAINTSTRUCT ps;
 
-    switch (msg){
-    case WM_CREATE:
-	dc = GetDC (wnd);
-	GetTextMetrics (dc, &tm);
-	xChar = tm.tmAveCharWidth;
-	yChar = tm.tmHeight;
-	ReleaseDC (wnd, dc);
-	break;
+	switch(message) {
+			
+	case WM_PAINT:
+	    	hdc = BeginPaint(hwnd, &ps);
+		GetClientRect(hwnd, &rect);
+		InflateRect(&rect, -10, -10);
+		if( !IsRectEmpty( &rect ) )
+		{
+                    GetTextExtentPoint32(hdc, szAppName, strlen(szAppName), &size);
+		    SelectObject(hdc, GetStockObject(LTGRAY_BRUSH));
+		    Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+		    rect.left = (rect.right + rect.left - size.cx) / 2;
+		    rect.top  = (rect.bottom + rect.top - size.cy) / 2;
+		    SetBkMode(hdc, TRANSPARENT);
+		    TextOut(hdc, rect.left, rect.top, szAppName, strlen(szAppName) );
+		}
+		EndPaint(hwnd, &ps);
+		return 0;
+							
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+	return DefWindowProc(hwnd, message, wParam, lParam);
+}												
 
-    case WM_PAINT:
-	dc = BeginPaint (wnd, &ps);
-	Write (dc, xChar, yChar, "Hola");
-	EndPaint (wnd, &ps);
-	break;
-
-    case WM_DESTROY:
-	PostQuitMessage (0);
-	break;
-
-    default:
-	return DefWindowProc (wnd, msg, w, l);
-    }
-    return 0l;
-}
-
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
-{
-    HWND     wnd;
-    MSG      msg;
-    WNDCLASS class;
-    char className[] = "class";  /* To make sure className >= 0x10000 */
-    char winName[] = "Test app";
-
-    if (!prev){
-	class.style = CS_HREDRAW | CS_VREDRAW;
-	class.lpfnWndProc = WndProc;
-	class.cbClsExtra = 0;
-	class.cbWndExtra = 0;
-	class.hInstance  = inst;
-	class.hIcon      = LoadIcon (0, IDI_APPLICATION);
-	class.hCursor    = LoadCursor (0, IDC_ARROW);
-	class.hbrBackground = GetStockObject (WHITE_BRUSH);
-	class.lpszMenuName = NULL;
-	class.lpszClassName = (SEGPTR)className;
-    }
-    if (!RegisterClass (&class))
-	return FALSE;
-
-    wnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
-			0, inst, 0);
-    ShowWindow (wnd, show);
-    UpdateWindow (wnd);
-
-    while (GetMessage (&msg, 0, 0, 0)){
-	TranslateMessage (&msg);
-	DispatchMessage (&msg);
-    }
-    return 0;
-}
