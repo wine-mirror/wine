@@ -201,6 +201,13 @@ typedef struct tagNMCHAR
 #endif  /* SNDMSG */
 
 
+#ifdef __cplusplus
+#define SNDMSGA ::SendMessageA
+#define SNDMSGW ::SendMessageW
+#else
+#define SNDMSGA SendMessageA
+#define SNDMSGW SendMessageW
+#endif
 
 /* Custom Draw messages */
 
@@ -894,46 +901,46 @@ typedef struct tagNMHDDISPINFOW
 #define LPNMHDDISPINFO		WINELIB_NAME_AW(LPNMHDDISPINFO)
 
 #define Header_GetItemCount(hwndHD) \
-  (INT)SendMessageA((hwndHD),HDM_GETITEMCOUNT,0,0L)
+  (INT)SNDMSGA((hwndHD),HDM_GETITEMCOUNT,0,0L)
 #define Header_InsertItemA(hwndHD,i,phdi) \
-  (INT)SendMessageA((hwndHD),HDM_INSERTITEMA,(WPARAM)(INT)(i),(LPARAM)(const HDITEMA*)(phdi))
+  (INT)SNDMSGA((hwndHD),HDM_INSERTITEMA,(WPARAM)(INT)(i),(LPARAM)(const HDITEMA*)(phdi))
 #define Header_InsertItemW(hwndHD,i,phdi) \
-  (INT)SendMessageW((hwndHD),HDM_INSERTITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
+  (INT)SNDMSGW((hwndHD),HDM_INSERTITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
 #define Header_InsertItem WINELIB_NAME_AW(Header_InsertItem)
 #define Header_DeleteItem(hwndHD,i) \
-  (BOOL)SendMessageA((hwndHD),HDM_DELETEITEM,(WPARAM)(INT)(i),0L)
+  (BOOL)SNDMSGA((hwndHD),HDM_DELETEITEM,(WPARAM)(INT)(i),0L)
 #define Header_GetItemA(hwndHD,i,phdi) \
-  (BOOL)SendMessageA((hwndHD),HDM_GETITEMA,(WPARAM)(INT)(i),(LPARAM)(HDITEMA*)(phdi))
+  (BOOL)SNDMSGA((hwndHD),HDM_GETITEMA,(WPARAM)(INT)(i),(LPARAM)(HDITEMA*)(phdi))
 #define Header_GetItemW(hwndHD,i,phdi) \
-  (BOOL)SendMessageW((hwndHD),HDM_GETITEMW,(WPARAM)(INT)(i),(LPARAM)(HDITEMW*)(phdi))
+  (BOOL)SNDMSGW((hwndHD),HDM_GETITEMW,(WPARAM)(INT)(i),(LPARAM)(HDITEMW*)(phdi))
 #define Header_GetItem WINELIB_NAME_AW(Header_GetItem)
 #define Header_SetItemA(hwndHD,i,phdi) \
-  (BOOL)SendMessageA((hwndHD),HDM_SETITEMA,(WPARAM)(INT)(i),(LPARAM)(const HDITEMA*)(phdi))
+  (BOOL)SNDMSGA((hwndHD),HDM_SETITEMA,(WPARAM)(INT)(i),(LPARAM)(const HDITEMA*)(phdi))
 #define Header_SetItemW(hwndHD,i,phdi) \
-  (BOOL)SendMessageW((hwndHD),HDM_SETITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
+  (BOOL)SNDMSGW((hwndHD),HDM_SETITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
 #define Header_SetItem WINELIB_NAME_AW(Header_SetItem)
 #define Header_Layout(hwndHD,playout) \
-  (BOOL)SendMessageA((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
+  (BOOL)SNDMSGA((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
 #define Header_GetItemRect(hwnd,iItem,lprc) \
-  (BOOL)SendMessageA((hwnd),HDM_GETITEMRECT,(WPARAM)iItem,(LPARAM)lprc)
+  (BOOL)SNDMSGA((hwnd),HDM_GETITEMRECT,(WPARAM)iItem,(LPARAM)lprc)
 #define Header_SetImageList(hwnd,himl) \
-  (HIMAGELIST)SendMessageA((hwnd),HDM_SETIMAGELIST,0,(LPARAM)himl)
+  (HIMAGELIST)SNDMSGA((hwnd),HDM_SETIMAGELIST,0,(LPARAM)himl)
 #define Header_GetImageList(hwnd) \
-  (HIMAGELIST)SendMessageA((hwnd),HDM_GETIMAGELIST,0,0)
+  (HIMAGELIST)SNDMSGA((hwnd),HDM_GETIMAGELIST,0,0)
 #define Header_OrderToIndex(hwnd,i) \
-  (INT)SendMessageA((hwnd),HDM_ORDERTOINDEX,(WPARAM)i,0)
+  (INT)SNDMSGA((hwnd),HDM_ORDERTOINDEX,(WPARAM)i,0)
 #define Header_CreateDragImage(hwnd,i) \
-  (HIMAGELIST)SendMessageA((hwnd),HDM_CREATEDRAGIMAGE,(WPARAM)i,0)
+  (HIMAGELIST)SNDMSGA((hwnd),HDM_CREATEDRAGIMAGE,(WPARAM)i,0)
 #define Header_GetOrderArray(hwnd,iCount,lpi) \
-  (BOOL)SendMessageA((hwnd),HDM_GETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
+  (BOOL)SNDMSGA((hwnd),HDM_GETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
 #define Header_SetOrderArray(hwnd,iCount,lpi) \
-  (BOOL)SendMessageA((hwnd),HDM_SETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
+  (BOOL)SNDMSGA((hwnd),HDM_SETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
 #define Header_SetHotDivider(hwnd,fPos,dw) \
-  (INT)SendMessageA((hwnd),HDM_SETHOTDIVIDER,(WPARAM)fPos,(LPARAM)dw)
+  (INT)SNDMSGA((hwnd),HDM_SETHOTDIVIDER,(WPARAM)fPos,(LPARAM)dw)
 #define Header_SetUnicodeFormat(hwnd,fUnicode) \
-  (BOOL)SendMessageA((hwnd),HDM_SETUNICODEFORMAT,(WPARAM)(fUnicode),0)
+  (BOOL)SNDMSGA((hwnd),HDM_SETUNICODEFORMAT,(WPARAM)(fUnicode),0)
 #define Header_GetUnicodeFormat(hwnd) \
-  (BOOL)SendMessageA((hwnd),HDM_GETUNICODEFORMAT,0,0)
+  (BOOL)SNDMSGA((hwnd),HDM_GETUNICODEFORMAT,0,0)
 
 
 /* Toolbar */
@@ -2432,41 +2439,41 @@ typedef struct tagTVKEYDOWN
 #define TV_KEYDOWN      NMTVKEYDOWN
 
 #define TreeView_InsertItemA(hwnd, phdi) \
-  (HTREEITEM)SendMessageA((hwnd), TVM_INSERTITEMA, 0, \
+  (HTREEITEM)SNDMSGA((hwnd), TVM_INSERTITEMA, 0, \
                             (LPARAM)(LPTVINSERTSTRUCTA)(phdi))
 #define TreeView_InsertItemW(hwnd,phdi) \
-  (HTREEITEM)SendMessageW((hwnd), TVM_INSERTITEMW, 0, \
+  (HTREEITEM)SNDMSGW((hwnd), TVM_INSERTITEMW, 0, \
                             (LPARAM)(LPTVINSERTSTRUCTW)(phdi))
 #define TreeView_InsertItem WINELIB_NAME_AW(TreeView_InsertItem)
 
 #define TreeView_DeleteItem(hwnd, hItem) \
-  (BOOL)SendMessageA((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
+  (BOOL)SNDMSGA((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
 #define TreeView_DeleteAllItems(hwnd) \
-  (BOOL)SendMessageA((hwnd), TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT)
+  (BOOL)SNDMSGA((hwnd), TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT)
 #define TreeView_Expand(hwnd, hitem, code) \
- (BOOL)SendMessageA((hwnd), TVM_EXPAND, (WPARAM)code, \
+ (BOOL)SNDMSGA((hwnd), TVM_EXPAND, (WPARAM)code, \
 	(LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_GetItemRect(hwnd, hitem, prc, code) \
- (*(HTREEITEM *)prc = (hitem), (BOOL)SendMessageA((hwnd), \
+ (*(HTREEITEM *)prc = (hitem), (BOOL)SNDMSGA((hwnd), \
 			TVM_GETITEMRECT, (WPARAM)(code), (LPARAM)(RECT *)(prc)))
 
 #define TreeView_GetCount(hwnd) \
-    (UINT)SendMessageA((hwnd), TVM_GETCOUNT, 0, 0)
+    (UINT)SNDMSGA((hwnd), TVM_GETCOUNT, 0, 0)
 #define TreeView_GetIndent(hwnd) \
-    (UINT)SendMessageA((hwnd), TVM_GETINDENT, 0, 0)
+    (UINT)SNDMSGA((hwnd), TVM_GETINDENT, 0, 0)
 #define TreeView_SetIndent(hwnd, indent) \
-    (BOOL)SendMessageA((hwnd), TVM_SETINDENT, (WPARAM)indent, 0)
+    (BOOL)SNDMSGA((hwnd), TVM_SETINDENT, (WPARAM)indent, 0)
 
 #define TreeView_GetImageList(hwnd, iImage) \
-    (HIMAGELIST)SendMessageA((hwnd), TVM_GETIMAGELIST, iImage, 0)
+    (HIMAGELIST)SNDMSGA((hwnd), TVM_GETIMAGELIST, iImage, 0)
 
 #define TreeView_SetImageList(hwnd, himl, iImage) \
-    (HIMAGELIST)SendMessageA((hwnd), TVM_SETIMAGELIST, iImage, \
+    (HIMAGELIST)SNDMSGA((hwnd), TVM_SETIMAGELIST, iImage, \
  (LPARAM)(UINT)(HIMAGELIST)(himl))
 
 #define TreeView_GetNextItem(hwnd, hitem, code) \
-    (HTREEITEM)SendMessageA((hwnd), TVM_GETNEXTITEM, (WPARAM)code,\
+    (HTREEITEM)SNDMSGA((hwnd), TVM_GETNEXTITEM, (WPARAM)code,\
 (LPARAM)(HTREEITEM) (hitem))
 
 #define TreeView_GetChild(hwnd, hitem) \
@@ -2496,7 +2503,7 @@ typedef struct tagTVKEYDOWN
 
 
 #define TreeView_Select(hwnd, hitem, code) \
- (UINT)SendMessageA((hwnd), TVM_SELECTITEM, (WPARAM)code, \
+ (UINT)SNDMSGA((hwnd), TVM_SELECTITEM, (WPARAM)code, \
 (LPARAM)(UINT)(hitem))
 
 
@@ -2509,103 +2516,103 @@ typedef struct tagTVKEYDOWN
 
 
 #define TreeView_GetItemA(hwnd, pitem) \
- (BOOL)SendMessageA((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
+ (BOOL)SNDMSGA((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
 #define TreeView_GetItemW(hwnd, pitem) \
- (BOOL)SendMessageW((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
+ (BOOL)SNDMSGW((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
 #define TreeView_GetItem WINELIB_NAME_AW(TreeView_GetItem)
 
 #define TreeView_SetItemA(hwnd, pitem) \
- (BOOL)SendMessageA((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem))
+ (BOOL)SNDMSGA((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem))
 #define TreeView_SetItemW(hwnd, pitem) \
- (BOOL)SendMessageW((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem))
+ (BOOL)SNDMSGW((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem))
 #define TreeView_SetItem WINELIB_NAME_AW(TreeView_SetItem)
 
 #define TreeView_EditLabel(hwnd, hitem) \
-    (HWND)SendMessageA((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
+    (HWND)SNDMSGA((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_GetEditControl(hwnd) \
-    (HWND)SendMessageA((hwnd), TVM_GETEDITCONTROL, 0, 0)
+    (HWND)SNDMSGA((hwnd), TVM_GETEDITCONTROL, 0, 0)
 
 #define TreeView_GetVisibleCount(hwnd) \
-    (UINT)SendMessageA((hwnd), TVM_GETVISIBLECOUNT, 0, 0)
+    (UINT)SNDMSGA((hwnd), TVM_GETVISIBLECOUNT, 0, 0)
 
 #define TreeView_HitTest(hwnd, lpht) \
-    (HTREEITEM)SendMessageA((hwnd), TVM_HITTEST, 0,\
+    (HTREEITEM)SNDMSGA((hwnd), TVM_HITTEST, 0,\
 (LPARAM)(LPTVHITTESTINFO)(lpht))
 
 #define TreeView_CreateDragImage(hwnd, hitem) \
-    (HIMAGELIST)SendMessageA((hwnd), TVM_CREATEDRAGIMAGE, 0,\
+    (HIMAGELIST)SNDMSGA((hwnd), TVM_CREATEDRAGIMAGE, 0,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_SortChildren(hwnd, hitem, recurse) \
-    (BOOL)SendMessageA((hwnd), TVM_SORTCHILDREN, (WPARAM)recurse,\
+    (BOOL)SNDMSGA((hwnd), TVM_SORTCHILDREN, (WPARAM)recurse,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_EnsureVisible(hwnd, hitem) \
-    (BOOL)SendMessageA((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT)(hitem))
+    (BOOL)SNDMSGA((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT)(hitem))
 
 #define TreeView_SortChildrenCB(hwnd, psort, recurse) \
-    (BOOL)SendMessageA((hwnd), TVM_SORTCHILDRENCB, (WPARAM)recurse, \
+    (BOOL)SNDMSGA((hwnd), TVM_SORTCHILDRENCB, (WPARAM)recurse, \
     (LPARAM)(LPTV_SORTCB)(psort))
 
 #define TreeView_EndEditLabelNow(hwnd, fCancel) \
-    (BOOL)SendMessageA((hwnd), TVM_ENDEDITLABELNOW, (WPARAM)fCancel, 0)
+    (BOOL)SNDMSGA((hwnd), TVM_ENDEDITLABELNOW, (WPARAM)fCancel, 0)
 
 #define TreeView_GetISearchString(hwnd, lpsz) \
-    (BOOL)SendMessageA((hwnd), TVM_GETISEARCHSTRING, 0, \
+    (BOOL)SNDMSGA((hwnd), TVM_GETISEARCHSTRING, 0, \
 							(LPARAM)(LPTSTR)lpsz)
 
 #define TreeView_SetToolTips(hwnd,  hwndTT) \
-    (HWND)SendMessageA((hwnd), TVM_SETTOOLTIPS, (WPARAM)(hwndTT), 0)
+    (HWND)SNDMSGA((hwnd), TVM_SETTOOLTIPS, (WPARAM)(hwndTT), 0)
 
 #define TreeView_GetToolTips(hwnd) \
-    (HWND)SendMessageA((hwnd), TVM_GETTOOLTIPS, 0, 0)
+    (HWND)SNDMSGA((hwnd), TVM_GETTOOLTIPS, 0, 0)
 
 #define TreeView_SetItemHeight(hwnd,  iHeight) \
-    (INT)SendMessageA((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
+    (INT)SNDMSGA((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
 
 #define TreeView_GetItemHeight(hwnd) \
-    (INT)SendMessageA((hwnd), TVM_GETITEMHEIGHT, 0, 0)
+    (INT)SNDMSGA((hwnd), TVM_GETITEMHEIGHT, 0, 0)
 
 #define TreeView_SetBkColor(hwnd, clr) \
-    (COLORREF)SendMessageA((hwnd), TVM_SETBKCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SNDMSGA((hwnd), TVM_SETBKCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_SetTextColor(hwnd, clr) \
-    (COLORREF)SendMessageA((hwnd), TVM_SETTEXTCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SNDMSGA((hwnd), TVM_SETTEXTCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_GetBkColor(hwnd) \
-    (COLORREF)SendMessageA((hwnd), TVM_GETBKCOLOR, 0, 0)
+    (COLORREF)SNDMSGA((hwnd), TVM_GETBKCOLOR, 0, 0)
 
 #define TreeView_GetTextColor(hwnd) \
-    (COLORREF)SendMessageA((hwnd), TVM_GETTEXTCOLOR, 0, 0)
+    (COLORREF)SNDMSGA((hwnd), TVM_GETTEXTCOLOR, 0, 0)
 
 #define TreeView_SetScrollTime(hwnd, uTime) \
-    (UINT)SendMessageA((hwnd), TVM_SETSCROLLTIME, uTime, 0)
+    (UINT)SNDMSGA((hwnd), TVM_SETSCROLLTIME, uTime, 0)
 
 #define TreeView_GetScrollTime(hwnd) \
-    (UINT)SendMessageA((hwnd), TVM_GETSCROLLTIME, 0, 0)
+    (UINT)SNDMSGA((hwnd), TVM_GETSCROLLTIME, 0, 0)
 
 #define TreeView_SetInsertMark(hwnd, hItem, fAfter) \
-    (BOOL)SendMessageA((hwnd), TVM_SETINSERTMARK, (WPARAM)(fAfter), \
+    (BOOL)SNDMSGA((hwnd), TVM_SETINSERTMARK, (WPARAM)(fAfter), \
                        (LPARAM) (hItem))
 
 #define TreeView_SetInsertMarkColor(hwnd, clr) \
-    (COLORREF)SendMessageA((hwnd), TVM_SETINSERTMARKCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SNDMSGA((hwnd), TVM_SETINSERTMARKCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_GetInsertMarkColor(hwnd) \
-    (COLORREF)SendMessageA((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
+    (COLORREF)SNDMSGA((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
 
 #define TreeView_GetItemState(hwndTV, hti, mask) \
-   (UINT)SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
+   (UINT)SNDMSGA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
 #define TreeView_GetCheckState(hwndTV, hti) \
-   ((((UINT)(SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti),  \
+   ((((UINT)(SNDMSGA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti),  \
                      TVIS_STATEIMAGEMASK))) >> 12) -1)
 
 #define TreeView_SetLineColor(hwnd, clr) \
-    (COLORREF)SendMessageA((hwnd), TVM_SETLINECOLOR, 0, (LPARAM)(clr))
+    (COLORREF)SNDMSGA((hwnd), TVM_SETLINECOLOR, 0, (LPARAM)(clr))
 
 #define TreeView_GetLineColor(hwnd) \
-    (COLORREF)SendMessageA((hwnd), TVM_GETLINECOLOR, 0, 0)
+    (COLORREF)SNDMSGA((hwnd), TVM_GETLINECOLOR, 0, 0)
 
 #define TreeView_SetItemState(hwndTV, hti, data, _mask) \
 { TVITEM _TVi; \
@@ -2613,7 +2620,7 @@ typedef struct tagTVKEYDOWN
   _TVi.hItem = hti; \
   _TVi.stateMask = _mask; \
   _TVi.state = data; \
-  SendMessageA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
+  SNDMSGA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
 }
 
 
@@ -3319,150 +3326,150 @@ typedef struct NMLVSCROLL
 } NMLVSCROLL, *LPNMLVSCROLL;
 
 #define ListView_SetTextBkColor(hwnd,clrBk) \
-    (BOOL)SendMessageA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+    (BOOL)SNDMSGA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_SetTextColor(hwnd,clrBk) \
-    (BOOL)SendMessageA((hwnd),LVM_SETTEXTCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+    (BOOL)SNDMSGA((hwnd),LVM_SETTEXTCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_DeleteColumn(hwnd,col)\
-    (LRESULT)SendMessageA((hwnd),LVM_DELETECOLUMN,0,(LPARAM)(INT)(col))
+    (LRESULT)SNDMSGA((hwnd),LVM_DELETECOLUMN,0,(LPARAM)(INT)(col))
 #define ListView_GetColumnA(hwnd,x,col)\
-    (LRESULT)SendMessageA((hwnd),LVM_GETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
+    (LRESULT)SNDMSGA((hwnd),LVM_GETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
 #define ListView_GetColumnW(hwnd,x,col)\
-    (LRESULT)SendMessageW((hwnd),LVM_GETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
+    (LRESULT)SNDMSGW((hwnd),LVM_GETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
 #define ListView_GetColumn WINELIB_NAME_AW(ListView_GetColumn)
 #define ListView_SetColumnA(hwnd,x,col)\
-    (LRESULT)SendMessageA((hwnd),LVM_SETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
+    (LRESULT)SNDMSGA((hwnd),LVM_SETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
 #define ListView_SetColumnW(hwnd,x,col)\
-    (LRESULT)SendMessageW((hwnd),LVM_SETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
+    (LRESULT)SNDMSGW((hwnd),LVM_SETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
 #define ListView_SetColumn WINELIB_NAME_AW(ListView_SetColumn)
 
 
 #define ListView_GetNextItem(hwnd,nItem,flags) \
-    (INT)SendMessageA((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
+    (INT)SNDMSGA((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
 #define ListView_FindItemA(hwnd,nItem,plvfi) \
-    (INT)SendMessageA((hwnd),LVM_FINDITEMA,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOA*)(plvfi))
+    (INT)SNDMSGA((hwnd),LVM_FINDITEMA,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOA*)(plvfi))
 #define ListView_FindItemW(hwnd,nItem,plvfi) \
-    (INT)SendMessageW((hwnd),LVM_FINDITEMW,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOW*)(plvfi))
+    (INT)SNDMSGW((hwnd),LVM_FINDITEMW,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOW*)(plvfi))
 #define ListView_FindItem WINELIB_NAME_AW(ListView_FindItem)
 
 #define ListView_Arrange(hwnd,code) \
-    (INT)SendMessageA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
+    (INT)SNDMSGA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
 #define ListView_GetItemPosition(hwnd,i,ppt) \
-    (INT)SendMessageA((hwnd),LVM_GETITEMPOSITION,(WPARAM)(INT)(i),(LPARAM)(LPPOINT)(ppt))
+    (INT)SNDMSGA((hwnd),LVM_GETITEMPOSITION,(WPARAM)(INT)(i),(LPARAM)(LPPOINT)(ppt))
 #define ListView_GetItemRect(hwnd,i,prc,code) \
-	(BOOL)SendMessageA((hwnd), LVM_GETITEMRECT, (WPARAM)(int)(i), \
+	(BOOL)SNDMSGA((hwnd), LVM_GETITEMRECT, (WPARAM)(int)(i), \
 	((prc) ? (((RECT*)(prc))->left = (code),(LPARAM)(RECT \
 	*)(prc)) : (LPARAM)(RECT*)NULL))
 #define ListView_SetItemA(hwnd,pitem) \
-    (INT)SendMessageA((hwnd),LVM_SETITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
+    (INT)SNDMSGA((hwnd),LVM_SETITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
 #define ListView_SetItemW(hwnd,pitem) \
-    (INT)SendMessageW((hwnd),LVM_SETITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
+    (INT)SNDMSGW((hwnd),LVM_SETITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
 #define ListView_SetItem WINELIB_NAME_AW(ListView_SetItem)
 #define ListView_SetItemState(hwnd,i,pitem) \
-    (BOOL)SendMessageA((hwnd),LVM_SETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(LPLVITEMA)(pitem))
+    (BOOL)SNDMSGA((hwnd),LVM_SETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(LPLVITEMA)(pitem))
 #define ListView_GetItemState(hwnd,i,mask) \
-    (BOOL)SendMessageA((hwnd),LVM_GETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(UINT)(mask))
+    (BOOL)SNDMSGA((hwnd),LVM_GETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(UINT)(mask))
 #define ListView_GetCountPerPage(hwnd) \
-    (BOOL)SendMessageW((hwnd),LVM_GETCOUNTPERPAGE,0,0L)
+    (BOOL)SNDMSGW((hwnd),LVM_GETCOUNTPERPAGE,0,0L)
 #define ListView_GetImageList(hwnd,iImageList) \
-    (HIMAGELIST)SendMessageA((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
+    (HIMAGELIST)SNDMSGA((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
 #define ListView_GetStringWidthA(hwnd,pstr) \
-    (INT)SendMessageA((hwnd),LVM_GETSTRINGWIDTHA,0,(LPARAM)(LPCSTR)(pstr))
+    (INT)SNDMSGA((hwnd),LVM_GETSTRINGWIDTHA,0,(LPARAM)(LPCSTR)(pstr))
 #define ListView_GetStringWidthW(hwnd,pstr) \
-    (INT)SendMessageW((hwnd),LVM_GETSTRINGWIDTHW,0,(LPARAM)(LPCWSTR)(pstr))
+    (INT)SNDMSGW((hwnd),LVM_GETSTRINGWIDTHW,0,(LPARAM)(LPCWSTR)(pstr))
 #define ListView_GetStringWidth WINELIB_NAME_AW(ListView_GetStringWidth)
 #define ListView_GetTopIndex(hwnd) \
-    (BOOL)SendMessageA((hwnd),LVM_GETTOPINDEX,0,0L)
+    (BOOL)SNDMSGA((hwnd),LVM_GETTOPINDEX,0,0L)
 #define ListView_Scroll(hwnd,dx,dy) \
-    (BOOL)SendMessageA((hwnd),LVM_SCROLL,(WPARAM)(INT)(dx),(LPARAM)(INT)(dy))
+    (BOOL)SNDMSGA((hwnd),LVM_SCROLL,(WPARAM)(INT)(dx),(LPARAM)(INT)(dy))
 #define ListView_EnsureVisible(hwnd,i,fPartialOk) \
-    (BOOL)SendMessageA((hwnd),LVM_ENSUREVISIBLE,(WPARAM)(INT)i,(LPARAM)(BOOL)fPartialOk)
+    (BOOL)SNDMSGA((hwnd),LVM_ENSUREVISIBLE,(WPARAM)(INT)i,(LPARAM)(BOOL)fPartialOk)
 #define ListView_SetBkColor(hwnd,clrBk) \
-    (BOOL)SendMessageA((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+    (BOOL)SNDMSGA((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_SetImageList(hwnd,himl,iImageList) \
-    (HIMAGELIST)(UINT)SendMessageA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(UINT)(HIMAGELIST)(himl))
+    (HIMAGELIST)(UINT)SNDMSGA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(UINT)(HIMAGELIST)(himl))
 #define ListView_GetItemCount(hwnd) \
-    (INT)SendMessageA((hwnd),LVM_GETITEMCOUNT,0,0L)
+    (INT)SNDMSGA((hwnd),LVM_GETITEMCOUNT,0,0L)
 
 #define ListView_GetItemA(hwnd,pitem) \
-    (BOOL)SendMessageA((hwnd),LVM_GETITEMA,0,(LPARAM)(LVITEMA *)(pitem))
+    (BOOL)SNDMSGA((hwnd),LVM_GETITEMA,0,(LPARAM)(LVITEMA *)(pitem))
 #define ListView_GetItemW(hwnd,pitem) \
-    (BOOL)SendMessageW((hwnd),LVM_GETITEMW,0,(LPARAM)(LVITEMW *)(pitem))
+    (BOOL)SNDMSGW((hwnd),LVM_GETITEMW,0,(LPARAM)(LVITEMW *)(pitem))
 #define ListView_GetItem WINELIB_NAME_AW(ListView_GetItem)
 
 #define ListView_HitTest(hwnd,pinfo) \
-    (INT)SendMessageA((hwnd),LVM_HITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
+    (INT)SNDMSGA((hwnd),LVM_HITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
 
 #define ListView_InsertItemA(hwnd,pitem) \
-    (INT)SendMessageA((hwnd),LVM_INSERTITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
+    (INT)SNDMSGA((hwnd),LVM_INSERTITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
 #define ListView_InsertItemW(hwnd,pitem) \
-    (INT)SendMessageW((hwnd),LVM_INSERTITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
+    (INT)SNDMSGW((hwnd),LVM_INSERTITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
 #define ListView_InsertItem WINELIB_NAME_AW(ListView_InsertItem)
 
 #define ListView_DeleteAllItems(hwnd) \
-    (BOOL)SendMessageA((hwnd),LVM_DELETEALLITEMS,0,0L)
+    (BOOL)SNDMSGA((hwnd),LVM_DELETEALLITEMS,0,0L)
 
 #define ListView_InsertColumnA(hwnd,iCol,pcol) \
-    (INT)SendMessageA((hwnd),LVM_INSERTCOLUMNA,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNA *)(pcol))
+    (INT)SNDMSGA((hwnd),LVM_INSERTCOLUMNA,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNA *)(pcol))
 #define ListView_InsertColumnW(hwnd,iCol,pcol) \
-    (INT)SendMessageW((hwnd),LVM_INSERTCOLUMNW,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNW *)(pcol))
+    (INT)SNDMSGW((hwnd),LVM_INSERTCOLUMNW,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNW *)(pcol))
 #define ListView_InsertColumn WINELIB_NAME_AW(ListView_InsertColumn)
 
 #define ListView_SortItems(hwndLV,_pfnCompare,_lPrm) \
-    (BOOL)SendMessageA((hwndLV),LVM_SORTITEMS,(WPARAM)(LPARAM)_lPrm,(LPARAM)(PFNLVCOMPARE)_pfnCompare)
+    (BOOL)SNDMSGA((hwndLV),LVM_SORTITEMS,(WPARAM)(LPARAM)_lPrm,(LPARAM)(PFNLVCOMPARE)_pfnCompare)
 #define ListView_SetItemPosition(hwndLV, i, x, y) \
-    (BOOL)SendMessageA((hwndLV),LVM_SETITEMPOSITION,(WPARAM)(INT)(i),MAKELPARAM((x),(y)))
+    (BOOL)SNDMSGA((hwndLV),LVM_SETITEMPOSITION,(WPARAM)(INT)(i),MAKELPARAM((x),(y)))
 #define ListView_GetSelectedCount(hwndLV) \
-    (UINT)SendMessageA((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
+    (UINT)SNDMSGA((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
 
 #define ListView_EditLabelA(hwndLV, i) \
-    (HWND)SendMessageA((hwndLV),LVM_EDITLABELA,(WPARAM)(int)(i), 0L)
+    (HWND)SNDMSGA((hwndLV),LVM_EDITLABELA,(WPARAM)(int)(i), 0L)
 #define ListView_EditLabelW(hwndLV, i) \
-    (HWND)SendMessageW((hwndLV),LVM_EDITLABELW,(WPARAM)(int)(i), 0L)
+    (HWND)SNDMSGW((hwndLV),LVM_EDITLABELW,(WPARAM)(int)(i), 0L)
 #define ListView_EditLabel WINELIB_NAME_AW(ListView_EditLabel)
 
 #define ListView_SetItemTextA(hwndLV, i, _iSubItem, _pszText) \
 { LVITEMA _LVi; _LVi.iSubItem = _iSubItem; _LVi.pszText = _pszText;\
-  SendMessageA(hwndLV, LVM_SETITEMTEXTA, (WPARAM)i, (LPARAM) (LVITEMA*)&_LVi);}
+  SNDMSGA(hwndLV, LVM_SETITEMTEXTA, (WPARAM)i, (LPARAM) (LVITEMA*)&_LVi);}
 #define ListView_SetItemTextW(hwndLV, i, _iSubItem, _pszText) \
 { LVITEMW _LVi; _LVi.iSubItem = _iSubItem; _LVi.pszText = _pszText;\
-  SendMessageW(hwndLV, LVM_SETITEMTEXTW, (WPARAM)i, (LPARAM) (LVITEMW*)& _LVi);}
+  SNDMSGW(hwndLV, LVM_SETITEMTEXTW, (WPARAM)i, (LPARAM) (LVITEMW*)& _LVi);}
 #define ListView_SetItemText WINELIB_NAME_AW(ListView_SetItemText)
 
 #define ListView_DeleteItem(hwndLV, i) \
-    (BOOL)SendMessageA(hwndLV, LVM_DELETEITEM, (WPARAM)(int)(i), 0L)
+    (BOOL)SNDMSGA(hwndLV, LVM_DELETEITEM, (WPARAM)(int)(i), 0L)
 #define ListView_Update(hwndLV, i) \
-    (BOOL)SendMessageA((hwndLV), LVM_UPDATE, (WPARAM)(i), 0L)
+    (BOOL)SNDMSGA((hwndLV), LVM_UPDATE, (WPARAM)(i), 0L)
 #define ListView_GetColumnOrderArray(hwndLV, iCount, pi) \
-    (BOOL)SendMessageA((hwndLV), LVM_GETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
+    (BOOL)SNDMSGA((hwndLV), LVM_GETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
 #define ListView_GetExtendedListViewStyle(hwndLV) \
-    (DWORD)SendMessageA((hwndLV), LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0L)
+    (DWORD)SNDMSGA((hwndLV), LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0L)
 #define ListView_GetHotCursor(hwndLV) \
-    (HCURSOR)SendMessageA((hwndLV), LVM_GETHOTCURSOR, 0, 0L)
+    (HCURSOR)SNDMSGA((hwndLV), LVM_GETHOTCURSOR, 0, 0L)
 #define ListView_GetHotItem(hwndLV) \
-    (int)SendMessageA((hwndLV), LVM_GETHOTITEM, 0, 0L)
+    (int)SNDMSGA((hwndLV), LVM_GETHOTITEM, 0, 0L)
 #define ListView_GetItemSpacing(hwndLV, fSmall) \
-    (DWORD)SendMessageA((hwndLV), LVM_GETITEMSPACING, (WPARAM)fSmall, 0L)
+    (DWORD)SNDMSGA((hwndLV), LVM_GETITEMSPACING, (WPARAM)fSmall, 0L)
 #define ListView_GetSubItemRect(hwndLV, iItem, iSubItem, code, prc) \
-    (BOOL)SendMessageA((hwndLV), LVM_GETSUBITEMRECT, (WPARAM)(int)(iItem), \
+    (BOOL)SNDMSGA((hwndLV), LVM_GETSUBITEMRECT, (WPARAM)(int)(iItem), \
                        ((prc) ? (((LPRECT)(prc))->top = iSubItem), (((LPRECT)(prc))->left = code):0), (LPARAM)prc)
 #define ListView_GetToolTips(hwndLV) \
-    (HWND)SendMessageA((hwndLV), LVM_GETTOOLTIPS, 0, 0L)
+    (HWND)SNDMSGA((hwndLV), LVM_GETTOOLTIPS, 0, 0L)
 #define ListView_SetColumnOrderArray(hwndLV, iCount, pi) \
-    (BOOL)SendMessageA((hwndLV), LVM_SETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
+    (BOOL)SNDMSGA((hwndLV), LVM_SETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
 #define ListView_SetExtendedListViewStyle(hwndLV, dw) \
-    (DWORD)SendMessageA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dw)
+    (DWORD)SNDMSGA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dw)
 #define ListView_SetExtendedListViewStyleEx(hwndLV, dwMask, dw) \
-    (DWORD)SendMessageA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, (WPARAM)dwMask, (LPARAM)dw)
+    (DWORD)SNDMSGA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, (WPARAM)dwMask, (LPARAM)dw)
 #define ListView_SetHotCursor(hwndLV, hcur) \
-    (HCURSOR)SendMessageA((hwndLV), LVM_SETHOTCURSOR, 0, (LPARAM)hcur)
+    (HCURSOR)SNDMSGA((hwndLV), LVM_SETHOTCURSOR, 0, (LPARAM)hcur)
 #define ListView_SetHotItem(hwndLV, i) \
-    (int)SendMessageA((hwndLV), LVM_SETHOTITEM, (WPARAM)i, 0L)
+    (int)SNDMSGA((hwndLV), LVM_SETHOTITEM, (WPARAM)i, 0L)
 #define ListView_SetIconSpacing(hwndLV, cx, cy) \
-    (DWORD)SendMessageA((hwndLV), LVM_SETICONSPACING, 0, MAKELONG(cx,cy))
+    (DWORD)SNDMSGA((hwndLV), LVM_SETICONSPACING, 0, MAKELONG(cx,cy))
 #define ListView_SetToolTips(hwndLV, hwndNewHwnd) \
-    (HWND)SendMessageA((hwndLV), LVM_SETTOOLTIPS, (WPARAM)hwndNewHwnd, 0L)
+    (HWND)SNDMSGA((hwndLV), LVM_SETTOOLTIPS, (WPARAM)hwndNewHwnd, 0L)
 #define ListView_SubItemHitTest(hwndLV, plvhti) \
-    (int)SendMessageA((hwndLV), LVM_SUBITEMHITTEST, 0, (LPARAM)(LPLVHITTESTINFO)(plvhti))
+    (int)SNDMSGA((hwndLV), LVM_SUBITEMHITTEST, 0, (LPARAM)(LPLVHITTESTINFO)(plvhti))
 
 
 /* Tab Control */
@@ -3555,62 +3562,62 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
 
 /* TabCtrl Macros */
 #define TabCtrl_GetImageList(hwnd) \
-    (HIMAGELIST)SendMessageA((hwnd), TCM_GETIMAGELIST, 0, 0L)
+    (HIMAGELIST)SNDMSGA((hwnd), TCM_GETIMAGELIST, 0, 0L)
 #define TabCtrl_SetImageList(hwnd, himl) \
-    (HIMAGELIST)SendMessageA((hwnd), TCM_SETIMAGELIST, 0, (LPARAM)(UINT)(HIMAGELIST)(himl))
+    (HIMAGELIST)SNDMSGA((hwnd), TCM_SETIMAGELIST, 0, (LPARAM)(UINT)(HIMAGELIST)(himl))
 #define TabCtrl_GetItemCount(hwnd) \
-    (int)SendMessageA((hwnd), TCM_GETITEMCOUNT, 0, 0L)
+    (int)SNDMSGA((hwnd), TCM_GETITEMCOUNT, 0, 0L)
 #define TabCtrl_GetItemA(hwnd, iItem, pitem) \
-    (BOOL)SendMessageA((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGA((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
 #define TabCtrl_GetItemW(hwnd, iItem, pitem) \
-    (BOOL)SendMessageW((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGW((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
 #define TabCtrl_GetItem WINELIB_NAME_AW(TabCtrl_GetItem)
 #define TabCtrl_SetItemA(hwnd, iItem, pitem) \
-    (BOOL)SendMessageA((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGA((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
 #define TabCtrl_SetItemW(hwnd, iItem, pitem) \
-    (BOOL)SendMessageW((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGW((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
 #define TabCtrl_SetItem WINELIB_NAME_AW(TabCtrl_GetItem)
 #define TabCtrl_InsertItemA(hwnd, iItem, pitem)   \
-    (int)SendMessageA((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
+    (int)SNDMSGA((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
 #define TabCtrl_InsertItemW(hwnd, iItem, pitem)   \
-    (int)SendMessageW((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
+    (int)SNDMSGW((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
 #define TabCtrl_InsertItem WINELIB_NAME_AW(TabCtrl_InsertItem)
 #define TabCtrl_DeleteItem(hwnd, i) \
-    (BOOL)SendMessageA((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
+    (BOOL)SNDMSGA((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
 #define TabCtrl_DeleteAllItems(hwnd) \
-    (BOOL)SendMessageA((hwnd), TCM_DELETEALLITEMS, 0, 0L)
+    (BOOL)SNDMSGA((hwnd), TCM_DELETEALLITEMS, 0, 0L)
 #define TabCtrl_GetItemRect(hwnd, i, prc) \
-    (BOOL)SendMessageA((hwnd), TCM_GETITEMRECT, (WPARAM)(int)(i), (LPARAM)(RECT *)(prc))
+    (BOOL)SNDMSGA((hwnd), TCM_GETITEMRECT, (WPARAM)(int)(i), (LPARAM)(RECT *)(prc))
 #define TabCtrl_GetCurSel(hwnd) \
-    (int)SendMessageA((hwnd), TCM_GETCURSEL, 0, 0)
+    (int)SNDMSGA((hwnd), TCM_GETCURSEL, 0, 0)
 #define TabCtrl_SetCurSel(hwnd, i) \
-    (int)SendMessageA((hwnd), TCM_SETCURSEL, (WPARAM)i, 0)
+    (int)SNDMSGA((hwnd), TCM_SETCURSEL, (WPARAM)i, 0)
 #define TabCtrl_HitTest(hwndTC, pinfo) \
-    (int)SendMessageA((hwndTC), TCM_HITTEST, 0, (LPARAM)(TC_HITTESTINFO *)(pinfo))
+    (int)SNDMSGA((hwndTC), TCM_HITTEST, 0, (LPARAM)(TC_HITTESTINFO *)(pinfo))
 #define TabCtrl_SetItemExtra(hwndTC, cb) \
-    (BOOL)SendMessageA((hwndTC), TCM_SETITEMEXTRA, (WPARAM)(cb), 0L)
+    (BOOL)SNDMSGA((hwndTC), TCM_SETITEMEXTRA, (WPARAM)(cb), 0L)
 #define TabCtrl_AdjustRect(hwnd, bLarger, prc) \
-    (int)SendMessageA(hwnd, TCM_ADJUSTRECT, (WPARAM)(BOOL)bLarger, (LPARAM)(RECT *)prc)
+    (int)SNDMSGA(hwnd, TCM_ADJUSTRECT, (WPARAM)(BOOL)bLarger, (LPARAM)(RECT *)prc)
 #define TabCtrl_SetItemSize(hwnd, x, y) \
-    (DWORD)SendMessageA((hwnd), TCM_SETITEMSIZE, 0, MAKELPARAM(x,y))
+    (DWORD)SNDMSGA((hwnd), TCM_SETITEMSIZE, 0, MAKELPARAM(x,y))
 #define TabCtrl_RemoveImage(hwnd, i) \
-    (void)SendMessageA((hwnd), TCM_REMOVEIMAGE, i, 0L)
+    (void)SNDMSGA((hwnd), TCM_REMOVEIMAGE, i, 0L)
 #define TabCtrl_SetPadding(hwnd,  cx, cy) \
-    (void)SendMessageA((hwnd), TCM_SETPADDING, 0, MAKELPARAM(cx, cy))
+    (void)SNDMSGA((hwnd), TCM_SETPADDING, 0, MAKELPARAM(cx, cy))
 #define TabCtrl_GetRowCount(hwnd) \
-    (int)SendMessageA((hwnd), TCM_GETROWCOUNT, 0, 0L)
+    (int)SNDMSGA((hwnd), TCM_GETROWCOUNT, 0, 0L)
 #define TabCtrl_GetToolTips(hwnd) \
-    (HWND)SendMessageA((hwnd), TCM_GETTOOLTIPS, 0, 0L)
+    (HWND)SNDMSGA((hwnd), TCM_GETTOOLTIPS, 0, 0L)
 #define TabCtrl_SetToolTips(hwnd, hwndTT) \
-    (void)SendMessageA((hwnd), TCM_SETTOOLTIPS, (WPARAM)hwndTT, 0L)
+    (void)SNDMSGA((hwnd), TCM_SETTOOLTIPS, (WPARAM)hwndTT, 0L)
 #define TabCtrl_GetCurFocus(hwnd) \
-    (int)SendMessageA((hwnd), TCM_GETCURFOCUS, 0, 0)
+    (int)SNDMSGA((hwnd), TCM_GETCURFOCUS, 0, 0)
 #define TabCtrl_SetCurFocus(hwnd, i) \
-    SendMessageA((hwnd),TCM_SETCURFOCUS, i, 0)
+    SNDMSGA((hwnd),TCM_SETCURFOCUS, i, 0)
 #define TabCtrl_SetMinTabWidth(hwnd, x) \
-    (int)SendMessageA((hwnd), TCM_SETMINTABWIDTH, 0, x)
+    (int)SNDMSGA((hwnd), TCM_SETMINTABWIDTH, 0, x)
 #define TabCtrl_DeselectAll(hwnd, fExcludeFocus)\
-    (void)SendMessageA((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
+    (void)SNDMSGA((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
 
 
 /* constants for TCHITTESTINFO */
@@ -3902,23 +3909,23 @@ static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
     CreateWindowW(ANIMATE_CLASSW,NULL,dwStyle,0,0,0,0,hwndP,(HMENU)(id),hInstance,NULL)
 #define Animate_Create WINELIB_NAME_AW(Animate_Create)
 #define Animate_OpenA(hwnd,szName) \
-    (BOOL)SendMessageA(hwnd,ACM_OPENA,0,(LPARAM)(LPSTR)(szName))
+    (BOOL)SNDMSGA(hwnd,ACM_OPENA,0,(LPARAM)(LPSTR)(szName))
 #define Animate_OpenW(hwnd,szName) \
-    (BOOL)SendMessageW(hwnd,ACM_OPENW,0,(LPARAM)(LPWSTR)(szName))
+    (BOOL)SNDMSGW(hwnd,ACM_OPENW,0,(LPARAM)(LPWSTR)(szName))
 #define Animate_Open WINELIB_NAME_AW(Animate_Open)
 #define Animate_OpenExA(hwnd,hInst,szName) \
-    (BOOL)SendMessageA(hwnd,ACM_OPENA,(WPARAM)hInst,(LPARAM)(LPSTR)(szName))
+    (BOOL)SNDMSGA(hwnd,ACM_OPENA,(WPARAM)hInst,(LPARAM)(LPSTR)(szName))
 #define Animate_OpenExW(hwnd,hInst,szName) \
-    (BOOL)SendMessageW(hwnd,ACM_OPENW,(WPARAM)hInst,(LPARAM)(LPWSTR)(szName))
+    (BOOL)SNDMSGW(hwnd,ACM_OPENW,(WPARAM)hInst,(LPARAM)(LPWSTR)(szName))
 #define Animate_OpenEx WINELIB_NAME_AW(Animate_OpenEx)
 #define Animate_Play(hwnd,from,to,rep) \
-    (BOOL)SendMessageA(hwnd,ACM_PLAY,(WPARAM)(UINT)(rep),(LPARAM)MAKELONG(from,to))
+    (BOOL)SNDMSGA(hwnd,ACM_PLAY,(WPARAM)(UINT)(rep),(LPARAM)MAKELONG(from,to))
 #define Animate_Stop(hwnd) \
-    (BOOL)SendMessageA(hwnd,ACM_STOP,0,0)
+    (BOOL)SNDMSGA(hwnd,ACM_STOP,0,0)
 #define Animate_Close(hwnd) \
-    (BOOL)SendMessageA(hwnd,ACM_OPENA,0,0)
+    (BOOL)SNDMSGA(hwnd,ACM_OPENA,0,0)
 #define Animate_Seek(hwnd,frame) \
-    (BOOL)SendMessageA(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
+    (BOOL)SNDMSGA(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
 
 
 /**************************************************************************
@@ -4113,51 +4120,51 @@ typedef struct tagNMDAYSTATE
 /* macros */
 
 #define MonthCal_GetCurSel(hmc, pst) \
-		(BOOL)SendMessageA(hmc, MCM_GETCURSEL, 0, (LPARAM)(pst))
+		(BOOL)SNDMSGA(hmc, MCM_GETCURSEL, 0, (LPARAM)(pst))
 #define MonthCal_SetCurSel(hmc, pst)  \
-		(BOOL)SendMessageA(hmc, MCM_SETCURSEL, 0, (LPARAM)(pst))
+		(BOOL)SNDMSGA(hmc, MCM_SETCURSEL, 0, (LPARAM)(pst))
 #define MonthCal_GetMaxSelCount(hmc) \
-		(DWORD)SendMessageA(hmc, MCM_GETMAXSELCOUNT, 0, 0L)
+		(DWORD)SNDMSGA(hmc, MCM_GETMAXSELCOUNT, 0, 0L)
 #define MonthCal_SetMaxSelCount(hmc, n) \
-		(BOOL)SendMessageA(hmc, MCM_SETMAXSELCOUNT, (WPARAM)(n), 0L)
+		(BOOL)SNDMSGA(hmc, MCM_SETMAXSELCOUNT, (WPARAM)(n), 0L)
 #define MonthCal_GetSelRange(hmc, rgst) \
-		SendMessageA(hmc, MCM_GETSELRANGE, 0, (LPARAM) (rgst))
+		SNDMSGA(hmc, MCM_GETSELRANGE, 0, (LPARAM) (rgst))
 #define MonthCal_SetSelRange(hmc, rgst) \
-		SendMessageA(hmc, MCM_SETSELRANGE, 0, (LPARAM) (rgst))
+		SNDMSGA(hmc, MCM_SETSELRANGE, 0, (LPARAM) (rgst))
 #define MonthCal_GetMonthRange(hmc, gmr, rgst) \
-		(DWORD)SendMessageA(hmc, MCM_GETMONTHRANGE, (WPARAM)(gmr), (LPARAM)(rgst))
+		(DWORD)SNDMSGA(hmc, MCM_GETMONTHRANGE, (WPARAM)(gmr), (LPARAM)(rgst))
 #define MonthCal_SetDayState(hmc, cbds, rgds) \
-		SendMessageA(hmc, MCM_SETDAYSTATE, (WPARAM)(cbds), (LPARAM)(rgds))
+		SNDMSGA(hmc, MCM_SETDAYSTATE, (WPARAM)(cbds), (LPARAM)(rgds))
 #define MonthCal_GetMinReqRect(hmc, prc) \
-		SendMessageA(hmc, MCM_GETMINREQRECT, 0, (LPARAM)(prc))
+		SNDMSGA(hmc, MCM_GETMINREQRECT, 0, (LPARAM)(prc))
 #define MonthCal_SetColor(hmc, iColor, clr)\
-        SendMessageA(hmc, MCM_SETCOLOR, iColor, clr)
+        SNDMSGA(hmc, MCM_SETCOLOR, iColor, clr)
 #define MonthCal_GetColor(hmc, iColor) \
-		SendMessageA(hmc, MCM_SETCOLOR, iColor, 0)
+		SNDMSGA(hmc, MCM_SETCOLOR, iColor, 0)
 #define MonthCal_GetToday(hmc, pst)\
-		(BOOL)SendMessageA(hmc, MCM_GETTODAY, 0, (LPARAM)pst)
+		(BOOL)SNDMSGA(hmc, MCM_GETTODAY, 0, (LPARAM)pst)
 #define MonthCal_SetToday(hmc, pst)\
-		SendMessageA(hmc, MCM_SETTODAY, 0, (LPARAM)pst)
+		SNDMSGA(hmc, MCM_SETTODAY, 0, (LPARAM)pst)
 #define MonthCal_HitTest(hmc, pinfo) \
-        SendMessageA(hmc, MCM_HITTEST, 0, (LPARAM)(PMCHITTESTINFO)pinfo)
+        SNDMSGA(hmc, MCM_HITTEST, 0, (LPARAM)(PMCHITTESTINFO)pinfo)
 #define MonthCal_SetFirstDayOfWeek(hmc, iDay) \
-        SendMessageA(hmc, MCM_SETFIRSTDAYOFWEEK, 0, iDay)
+        SNDMSGA(hmc, MCM_SETFIRSTDAYOFWEEK, 0, iDay)
 #define MonthCal_GetFirstDayOfWeek(hmc) \
-        (DWORD)SendMessageA(hmc, MCM_GETFIRSTDAYOFWEEK, 0, 0)
+        (DWORD)SNDMSGA(hmc, MCM_GETFIRSTDAYOFWEEK, 0, 0)
 #define MonthCal_GetRange(hmc, rgst) \
-        (DWORD)SendMessageA(hmc, MCM_GETRANGE, 0, (LPARAM)(rgst))
+        (DWORD)SNDMSGA(hmc, MCM_GETRANGE, 0, (LPARAM)(rgst))
 #define MonthCal_SetRange(hmc, gd, rgst) \
-        (BOOL)SendMessageA(hmc, MCM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
+        (BOOL)SNDMSGA(hmc, MCM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
 #define MonthCal_GetMonthDelta(hmc) \
-        (int)SendMessageA(hmc, MCM_GETMONTHDELTA, 0, 0)
+        (int)SNDMSGA(hmc, MCM_GETMONTHDELTA, 0, 0)
 #define MonthCal_SetMonthDelta(hmc, n) \
-        (int)SendMessageA(hmc, MCM_SETMONTHDELTA, n, 0)
+        (int)SNDMSGA(hmc, MCM_SETMONTHDELTA, n, 0)
 #define MonthCal_GetMaxTodayWidth(hmc) \
-        (DWORD)SendMessageA(hmc, MCM_GETMAXTODAYWIDTH, 0, 0)
+        (DWORD)SNDMSGA(hmc, MCM_GETMAXTODAYWIDTH, 0, 0)
 #define MonthCal_SetUnicodeFormat(hwnd, fUnicode)  \
-        (BOOL)SendMessageA((hwnd), MCM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
+        (BOOL)SNDMSGA((hwnd), MCM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
 #define MonthCal_GetUnicodeFormat(hwnd)  \
-        (BOOL)SendMessageA((hwnd), MCM_GETUNICODEFORMAT, 0, 0)
+        (BOOL)SNDMSGA((hwnd), MCM_GETUNICODEFORMAT, 0, 0)
 
 
 /**************************************************************************
@@ -4317,26 +4324,26 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
 
 
 #define DateTime_GetSystemtime(hdp, pst)   \
-  (DWORD)SendMessageA (hdp, DTM_GETSYSTEMTIME , 0, (LPARAM)(pst))
+  (DWORD)SNDMSGA (hdp, DTM_GETSYSTEMTIME , 0, (LPARAM)(pst))
 #define DateTime_SetSystemtime(hdp, gd, pst)   \
-  (BOOL)SendMessageA (hdp, DTM_SETSYSTEMTIME, (LPARAM)(gd), (LPARAM)(pst))
+  (BOOL)SNDMSGA (hdp, DTM_SETSYSTEMTIME, (LPARAM)(gd), (LPARAM)(pst))
 #define DateTime_GetRange(hdp, rgst)  \
-  (DWORD)SendMessageA (hdp, DTM_GETRANGE, 0, (LPARAM)(rgst))
+  (DWORD)SNDMSGA (hdp, DTM_GETRANGE, 0, (LPARAM)(rgst))
 #define DateTime_SetRange(hdp, gd, rgst) \
-   (BOOL)SendMessageA (hdp, DTM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
+   (BOOL)SNDMSGA (hdp, DTM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
 #define DateTime_SetFormat WINELIB_NAME_AW(DateTime_SetFormat)
 #define DateTime_SetFormatA(hdp, sz)  \
-  (BOOL)SendMessageA (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
+  (BOOL)SNDMSGA (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
 #define DateTime_SetFormatW(hdp, sz)  \
-  (BOOL)SendMessageW (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
+  (BOOL)SNDMSGW (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
 #define DateTime_GetMonthCalColor(hdp, iColor) \
-  SendMessageA (hdp, DTM_GETMCCOLOR, iColor, 0)
+  SNDMSGA (hdp, DTM_GETMCCOLOR, iColor, 0)
 #define DateTime_GetMonthCal(hdp)  \
-  (HWND) SendMessageA (hdp, DTM_GETMONTHCAL, 0, 0)
+  (HWND) SNDMSGA (hdp, DTM_GETMONTHCAL, 0, 0)
 #define DateTime_SetMonthCalFont(hdp, hfont, fRedraw) \
-  SendMessageA (hdp, DTM_SETMCFONT, (WPARAM)hfont, (LPARAM)fRedraw)
+  SNDMSGA (hdp, DTM_SETMCFONT, (WPARAM)hfont, (LPARAM)fRedraw)
 #define DateTime_GetMonthCalFont(hdp) \
-  SendMessageA (hdp, DTM_GETMCFONT, 0, 0)
+  SNDMSGA (hdp, DTM_GETMCFONT, 0, 0)
 
 
 
