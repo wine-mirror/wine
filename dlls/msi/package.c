@@ -27,6 +27,7 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "shlwapi.h"
+#include "wingdi.h"
 #include "wine/debug.h"
 #include "msi.h"
 #include "msiquery.h"
@@ -162,7 +163,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     WCHAR *ptr;
     OSVERSIONINFOA OSVersion;
     DWORD verval;
-    WCHAR verstr[10], msiver[10];
+    WCHAR verstr[10], bufstr[20];
+    HDC dc;
 
     static const WCHAR cszbs[]={'\\',0};
     static const WCHAR CFF[] = 
@@ -361,16 +363,18 @@ Privileged
     /* just fudge this */
     MSI_SetPropertyW(package,szSPL,szSix);
 
-    sprintfW( msiver, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
-    MSI_SetPropertyW( package, szVersionMsi, msiver );
+    sprintfW( bufstr, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
+    MSI_SetPropertyW( package, szVersionMsi, bufstr );
 
-    /* Screen properties. FIXME: need to get correct values from system */
-    sprintfW( msiver, szScreenFormat, 800);
-    MSI_SetPropertyW( package, szScreenX, msiver );
-    sprintfW( msiver, szScreenFormat, 600);
-    MSI_SetPropertyW( package, szScreenY, msiver );
-    sprintfW( msiver, szScreenFormat, 24);
-    MSI_SetPropertyW( package, szColorBits, msiver );
+    /* Screen properties. */
+    dc = GetDC(0);
+    sprintfW( bufstr, szScreenFormat, GetDeviceCaps( dc, HORZRES ) );
+    MSI_SetPropertyW( package, szScreenX, bufstr );
+    sprintfW( bufstr, szScreenFormat, GetDeviceCaps( dc, VERTRES ));
+    MSI_SetPropertyW( package, szScreenY, bufstr );
+    sprintfW( bufstr, szScreenFormat, GetDeviceCaps( dc, BITSPIXEL ));
+    MSI_SetPropertyW( package, szColorBits, bufstr );
+    ReleaseDC(0, dc);
 }
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
