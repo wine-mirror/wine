@@ -155,6 +155,43 @@ static void init_service_handle( struct sc_handle* handle,
     handle->u.service.sc_manager = sc_manager;
 }
 
+static inline LPWSTR SERV_dup( LPCSTR str )
+{
+    UINT len;
+    LPWSTR wstr;
+
+    if( !str )
+        return NULL;
+    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, len );
+    return wstr;
+}
+
+static inline LPWSTR SERV_dupmulti( LPCSTR str )
+{
+    UINT len = 0, n = 0;
+    LPWSTR wstr;
+
+    if( !str )
+        return NULL;
+    do {
+        len += MultiByteToWideChar( CP_ACP, 0, &str[n], -1, NULL, 0 );
+        n += (strlen( &str[n] ) + 1);
+    } while (str[n]);
+    len++;
+    n++;
+
+    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, str, n, wstr, len );
+    return wstr;
+}
+
+static inline VOID SERV_free( LPWSTR wstr )
+{
+    HeapFree( GetProcessHeap(), 0, wstr );
+}
+
 /******************************************************************************
  * EnumServicesStatusA [ADVAPI32.@]
  */
@@ -759,43 +796,6 @@ error:
     return NULL;
 }
 
-
-static inline LPWSTR SERV_dup( LPCSTR str )
-{
-    UINT len;
-    LPWSTR wstr;
-
-    if( !str )
-        return NULL;
-    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, len );
-    return wstr;
-}
-
-static inline LPWSTR SERV_dupmulti( LPCSTR str )
-{
-    UINT len = 0, n = 0;
-    LPWSTR wstr;
-
-    if( !str )
-        return NULL;
-    do {
-        len += MultiByteToWideChar( CP_ACP, 0, &str[n], -1, NULL, 0 );
-        n += (strlen( &str[n] ) + 1);
-    } while (str[n]);
-    len++;
-    n++;
-    
-    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, str, n, wstr, len );
-    return wstr;
-}
-
-static inline VOID SERV_free( LPWSTR wstr )
-{
-    HeapFree( GetProcessHeap(), 0, wstr );
-}
 
 /******************************************************************************
  * CreateServiceA [ADVAPI32.@]
