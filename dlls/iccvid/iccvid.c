@@ -64,7 +64,6 @@ typedef struct
 {
     unsigned char y0, y1, y2, y3;
     char u, v;
-    unsigned long rgb0, rgb1, rgb2, rgb3;        /* should be a union */
     unsigned char r[4], g[4], b[4];
 } cvid_codebook;
 
@@ -77,6 +76,7 @@ typedef struct {
 typedef struct _ICCVID_Info
 {
     DWORD         dwMagic;
+    int           bits_per_pixel;
     cinepak_info *cvinfo;
 } ICCVID_Info;
 
@@ -103,125 +103,7 @@ static unsigned char *in_buffer, uiclip[1024], *uiclp = NULL;
 
 
 /* ---------------------------------------------------------------------- */
-static inline void read_codebook_32(cvid_codebook *c, int mode)
-{
-int uvr, uvg, uvb;
-
-    if(mode)        /* black and white */
-        {
-        c->y0 = get_byte();
-        c->y1 = get_byte();
-        c->y2 = get_byte();
-        c->y3 = get_byte();
-        c->u = c->v = 0;
-
-        c->rgb0 = (c->y0 << 16) | (c->y0 << 8) | c->y0;
-        c->rgb1 = (c->y1 << 16) | (c->y1 << 8) | c->y1;
-        c->rgb2 = (c->y2 << 16) | (c->y2 << 8) | c->y2;
-        c->rgb3 = (c->y3 << 16) | (c->y3 << 8) | c->y3;
-        }
-    else            /* colour */
-        {
-        c->y0 = get_byte();  /* luma */
-        c->y1 = get_byte();
-        c->y2 = get_byte();
-        c->y3 = get_byte();
-        c->u = get_byte(); /* chroma */
-        c->v = get_byte();
-
-        uvr = c->v << 1;
-        uvg = -((c->u+1) >> 1) - c->v;
-        uvb = c->u << 1;
-
-        c->rgb0 = (uiclp[c->y0 + uvr] << 16) | (uiclp[c->y0 + uvg] << 8) | uiclp[c->y0 + uvb];
-        c->rgb1 = (uiclp[c->y1 + uvr] << 16) | (uiclp[c->y1 + uvg] << 8) | uiclp[c->y1 + uvb];
-        c->rgb2 = (uiclp[c->y2 + uvr] << 16) | (uiclp[c->y2 + uvg] << 8) | uiclp[c->y2 + uvb];
-        c->rgb3 = (uiclp[c->y3 + uvr] << 16) | (uiclp[c->y3 + uvg] << 8) | uiclp[c->y3 + uvb];
-        }
-}
-
-
-/* ------------------------------------------------------------------------ */
-inline void cvid_v1_32(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb)
-{
-unsigned long *vptr = (unsigned long *)frm, rgb;
-int row_inc = stride/4;
-
-#ifndef ORIGINAL
-    vptr += stride*3;
-#endif
-    vptr[0] = rgb = cb->rgb0; vptr[1] = rgb;
-    vptr[2] = rgb = cb->rgb1; vptr[3] = rgb;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < (unsigned long *)limit) return;
-#else
-    vptr += row_inc; if(vptr > (unsigned long *)limit) return;
-#endif
-    vptr[0] = rgb = cb->rgb0; vptr[1] = rgb;
-    vptr[2] = rgb = cb->rgb1; vptr[3] = rgb;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < (unsigned long *)limit) return;
-#else
-    vptr += row_inc; if(vptr > (unsigned long *)limit) return;
-#endif
-    vptr[0] = rgb = cb->rgb2; vptr[1] = rgb;
-    vptr[2] = rgb = cb->rgb3; vptr[3] = rgb;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < (unsigned long *)limit) return;
-#else
-    vptr += row_inc; if(vptr > (unsigned long *)limit) return;
-#endif
-    vptr[0] = rgb = cb->rgb2; vptr[1] = rgb;
-    vptr[2] = rgb = cb->rgb3; vptr[3] = rgb;
-}
-
-
-/* ------------------------------------------------------------------------ */
-inline void cvid_v4_32(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb0,
-    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
-{
-unsigned long *vptr = (unsigned long *)frm;
-int row_inc = stride/4;
-
-#ifndef ORIGINAL
-    vptr += stride*3;
-#endif
-    vptr[0] = cb0->rgb0;
-    vptr[1] = cb0->rgb1;
-    vptr[2] = cb1->rgb0;
-    vptr[3] = cb1->rgb1;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < (unsigned long *)limit) return;
-#else
-    vptr += row_inc; if(vptr > (unsigned long *)limit) return;
-#endif
-    vptr[0] = cb0->rgb2;
-    vptr[1] = cb0->rgb3;
-    vptr[2] = cb1->rgb2;
-    vptr[3] = cb1->rgb3;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < (unsigned long *)limit) return;
-#else
-    vptr += row_inc; if(vptr > (unsigned long *)limit) return;
-#endif
-    vptr[0] = cb2->rgb0;
-    vptr[1] = cb2->rgb1;
-    vptr[2] = cb3->rgb0;
-    vptr[3] = cb3->rgb1;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < (unsigned long *)limit) return;
-#else
-    vptr += row_inc; if(vptr > (unsigned long *)limit) return;
-#endif
-    vptr[0] = cb2->rgb2;
-    vptr[1] = cb2->rgb3;
-    vptr[2] = cb3->rgb2;
-    vptr[3] = cb3->rgb3;
-}
-
-
-/* ---------------------------------------------------------------------- */
-static inline void read_codebook_24(cvid_codebook *c, int mode)
+static inline void read_codebook(cvid_codebook *c, int mode)
 {
 int uvr, uvg, uvb;
 
@@ -259,97 +141,189 @@ int uvr, uvg, uvb;
 }
 
 
-/* ------------------------------------------------------------------------ */
-void cvid_v1_24(unsigned char *vptr, unsigned char *limit, int stride, cvid_codebook *cb)
-{
-unsigned char r, g, b;
-#ifndef ORIGINAL
-int row_inc = stride+4*3;
-#else
-int row_inc = stride-4*3;
-#endif
+#define MAKECOLOUR32(r,g,b) (((r) << 16) | ((g) << 8) | (b))
+/*#define MAKECOLOUR24(r,g,b) (((r) << 16) | ((g) << 8) | (b))*/
+#define MAKECOLOUR16(r,g,b) (((r) >> 3) << 11)| (((g) >> 2) << 5)| (((b) >> 3) << 0)
+#define MAKECOLOUR15(r,g,b) (((r) >> 3) << 10)| (((g) >> 3) << 5)| (((b) >> 3) << 0)
 
+/* ------------------------------------------------------------------------ */
+static void cvid_v1_32(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb)
+{
+unsigned long *vptr = (unsigned long *)frm;
 #ifndef ORIGINAL
-    vptr += (3*stride);
-#endif
-    *vptr++ = b = cb->b[0]; *vptr++ = g = cb->g[0]; *vptr++ = r = cb->r[0];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
-    *vptr++ = b = cb->b[1]; *vptr++ = g = cb->g[1]; *vptr++ = r = cb->r[1];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < limit) return;
+int row_inc = -stride/4;
 #else
-    vptr += row_inc; if(vptr > limit) return;
+int row_inc = stride/4;
 #endif
-    *vptr++ = b = cb->b[0]; *vptr++ = g = cb->g[0]; *vptr++ = r = cb->r[0];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
-    *vptr++ = b = cb->b[1]; *vptr++ = g = cb->g[1]; *vptr++ = r = cb->r[1];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < limit) return;
-#else
-    vptr += row_inc; if(vptr > limit) return;
-#endif
-    *vptr++ = b = cb->b[2]; *vptr++ = g = cb->g[2]; *vptr++ = r = cb->r[2];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
-    *vptr++ = b = cb->b[3]; *vptr++ = g = cb->g[3]; *vptr++ = r = cb->r[3];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < limit) return;
-#else
-    vptr += row_inc; if(vptr > limit) return;
-#endif
-    *vptr++ = b = cb->b[2]; *vptr++ = g = cb->g[2]; *vptr++ = r = cb->r[2];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
-    *vptr++ = b = cb->b[3]; *vptr++ = g = cb->g[3]; *vptr++ = r = cb->r[3];
-    *vptr++ = b; *vptr++ = g; *vptr++ = r;
+int x, y;
+
+    /* fill 4x4 block of pixels with colour values from codebook */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < (unsigned long *)limit) return;
+        for (x = 0; x < 4; x++)
+            vptr[y*row_inc + x] = MAKECOLOUR32(cb->r[x/2+(y/2)*2], cb->g[x/2+(y/2)*2], cb->b[x/2+(y/2)*2]);
+    }
 }
 
 
 /* ------------------------------------------------------------------------ */
-void cvid_v4_24(unsigned char *vptr, unsigned char *limit, int stride, cvid_codebook *cb0,
+static void cvid_v4_32(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb0,
+    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
+{
+unsigned long *vptr = (unsigned long *)frm;
+#ifndef ORIGINAL
+int row_inc = -stride/4;
+#else
+int row_inc = stride/4;
+#endif
+int x, y;
+cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
+
+    /* fill 4x4 block of pixels with colour values from codebooks */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < (unsigned long *)limit) return;
+        for (x = 0; x < 4; x++)
+            vptr[y*row_inc + x] = MAKECOLOUR32(cb[x/2+(y/2)*2]->r[x%2+(y%2)*2], cb[x/2+(y/2)*2]->g[x%2+(y%2)*2], cb[x/2+(y/2)*2]->b[x%2+(y%2)*2]);
+    }
+}
+
+
+/* ------------------------------------------------------------------------ */
+static void cvid_v1_24(unsigned char *vptr, unsigned char *limit, int stride, cvid_codebook *cb)
+{
+#ifndef ORIGINAL
+int row_inc = -stride;
+#else
+int row_inc = stride;
+#endif
+int x, y;
+
+    /* fill 4x4 block of pixels with colour values from codebook */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < limit) return;
+        for (x = 0; x < 4; x++)
+        {
+            vptr[y*row_inc + x*3 + 0] = cb->b[x/2+(y/2)*2];
+            vptr[y*row_inc + x*3 + 1] = cb->g[x/2+(y/2)*2];
+            vptr[y*row_inc + x*3 + 2] = cb->r[x/2+(y/2)*2];
+        }
+    }
+}
+
+
+/* ------------------------------------------------------------------------ */
+static void cvid_v4_24(unsigned char *vptr, unsigned char *limit, int stride, cvid_codebook *cb0,
     cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
 {
 #ifndef ORIGINAL
-int row_inc = stride+4*3;
+int row_inc = -stride;
 #else
-int row_inc = stride-4*3;
+int row_inc = stride;
 #endif
+cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
+int x, y;
 
+    /* fill 4x4 block of pixels with colour values from codebooks */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < limit) return;
+        for (x = 0; x < 4; x++)
+        {
+            vptr[y*row_inc + x*3 + 0] = cb[x/2+(y/2)*2]->b[x%2+(y%2)*2];
+            vptr[y*row_inc + x*3 + 1] = cb[x/2+(y/2)*2]->g[x%2+(y%2)*2];
+            vptr[y*row_inc + x*3 + 2] = cb[x/2+(y/2)*2]->r[x%2+(y%2)*2];
+        }
+    }
+}
+
+
+/* ------------------------------------------------------------------------ */
+static void cvid_v1_16(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb)
+{
+unsigned short *vptr = (unsigned short *)frm;
 #ifndef ORIGINAL
-    vptr += (3*stride);
-#endif
-    *vptr++ = cb0->b[0]; *vptr++ = cb0->g[0]; *vptr++ = cb0->r[0];
-    *vptr++ = cb0->b[1]; *vptr++ = cb0->g[1]; *vptr++ = cb0->r[1];
-    *vptr++ = cb1->b[0]; *vptr++ = cb1->g[0]; *vptr++ = cb1->r[0];
-    *vptr++ = cb1->b[1]; *vptr++ = cb1->g[1]; *vptr++ = cb1->r[1];
-#ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < limit) return;
+int row_inc = -stride/2;
 #else
-    vptr += row_inc; if(vptr > limit) return;
+int row_inc = stride/2;
 #endif
-    *vptr++ = cb0->b[2]; *vptr++ = cb0->g[2]; *vptr++ = cb0->r[2];
-    *vptr++ = cb0->b[3]; *vptr++ = cb0->g[3]; *vptr++ = cb0->r[3];
-    *vptr++ = cb1->b[2]; *vptr++ = cb1->g[2]; *vptr++ = cb1->r[2];
-    *vptr++ = cb1->b[3]; *vptr++ = cb1->g[3]; *vptr++ = cb1->r[3];
+int x, y;
+
+    /* fill 4x4 block of pixels with colour values from codebook */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < (unsigned short *)limit) return;
+        for (x = 0; x < 4; x++)
+            vptr[y*row_inc + x] = MAKECOLOUR16(cb->r[x/2+(y/2)*2], cb->g[x/2+(y/2)*2], cb->b[x/2+(y/2)*2]);
+    }
+}
+
+
+/* ------------------------------------------------------------------------ */
+static void cvid_v4_16(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb0,
+    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
+{
+unsigned short *vptr = (unsigned short *)frm;
 #ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < limit) return;
+int row_inc = -stride/2;
 #else
-    vptr += row_inc; if(vptr > limit) return;
+int row_inc = stride/2;
 #endif
-    *vptr++ = cb2->b[0]; *vptr++ = cb2->g[0]; *vptr++ = cb2->r[0];
-    *vptr++ = cb2->b[1]; *vptr++ = cb2->g[1]; *vptr++ = cb2->r[1];
-    *vptr++ = cb3->b[0]; *vptr++ = cb3->g[0]; *vptr++ = cb3->r[0];
-    *vptr++ = cb3->b[1]; *vptr++ = cb3->g[1]; *vptr++ = cb3->r[1];
+cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
+int x, y;
+
+    /* fill 4x4 block of pixels with colour values from codebooks */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < (unsigned short *)limit) return;
+        for (x = 0; x < 4; x++)
+            vptr[y*row_inc + x] = MAKECOLOUR16(cb[x/2+(y/2)*2]->r[x%2+(y%2)*2], cb[x/2+(y/2)*2]->g[x%2+(y%2)*2], cb[x/2+(y/2)*2]->b[x%2+(y%2)*2]);
+    }
+}
+
+/* ------------------------------------------------------------------------ */
+static void cvid_v1_15(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb)
+{
+unsigned short *vptr = (unsigned short *)frm;
 #ifndef ORIGINAL
-    vptr -= row_inc; if(vptr < limit) return;
+int row_inc = -stride/2;
 #else
-    vptr += row_inc; if(vptr > limit) return;
+int row_inc = stride/2;
 #endif
-    *vptr++ = cb2->b[2]; *vptr++ = cb2->g[2]; *vptr++ = cb2->r[2];
-    *vptr++ = cb2->b[3]; *vptr++ = cb2->g[3]; *vptr++ = cb2->r[3];
-    *vptr++ = cb3->b[2]; *vptr++ = cb3->g[2]; *vptr++ = cb3->r[2];
-    *vptr++ = cb3->b[3]; *vptr++ = cb3->g[3]; *vptr++ = cb3->r[3];
+int x, y;
+
+    /* fill 4x4 block of pixels with colour values from codebook */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < (unsigned short *)limit) return;
+        for (x = 0; x < 4; x++)
+            vptr[y*row_inc + x] = MAKECOLOUR15(cb->r[x/2+(y/2)*2], cb->g[x/2+(y/2)*2], cb->b[x/2+(y/2)*2]);
+    }
+}
+
+
+/* ------------------------------------------------------------------------ */
+static void cvid_v4_15(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb0,
+    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
+{
+unsigned short *vptr = (unsigned short *)frm;
+#ifndef ORIGINAL
+int row_inc = -stride/2;
+#else
+int row_inc = stride/2;
+#endif
+cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
+int x, y;
+
+    /* fill 4x4 block of pixels with colour values from codebooks */
+    for (y = 0; y < 4; y++)
+    {
+        if (&vptr[y*row_inc] < (unsigned short *)limit) return;
+        for (x = 0; x < 4; x++)
+            vptr[y*row_inc + x] = MAKECOLOUR15(cb[x/2+(y/2)*2]->r[x%2+(y%2)*2], cb[x/2+(y/2)*2]->g[x%2+(y%2)*2], cb[x/2+(y/2)*2]->b[x%2+(y%2)*2]);
+    }
 }
 
 
@@ -389,7 +363,6 @@ void free_cvinfo( cinepak_info *cvinfo )
     ICCVID_Free( cvinfo );
 }
 
-typedef void (*fn_read_codebook)(cvid_codebook *c, int mode);
 typedef void (*fn_cvid_v1)(unsigned char *frm, unsigned char *limit,
                            int stride, cvid_codebook *cb);
 typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit, int stride,
@@ -417,7 +390,6 @@ void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
     long len, top_size, chunk_size;
     unsigned char *frm_ptr, *frm_end;
     int i, cur_strip, d0, d1, d2, d3, frm_stride, bpp = 3;
-    fn_read_codebook read_codebook = read_codebook_24;
     fn_cvid_v1 cvid_v1 = cvid_v1_24;
     fn_cvid_v4 cvid_v4 = cvid_v4_24;
 
@@ -432,15 +404,23 @@ void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 
     switch(bit_per_pixel)
         {
+        case 15:
+            bpp = 2;
+            cvid_v1 = cvid_v1_15;
+            cvid_v4 = cvid_v4_15;
+            break;
+        case 16:
+            bpp = 2;
+            cvid_v1 = cvid_v1_16;
+            cvid_v4 = cvid_v4_16;
+            break;
         case 24:
             bpp = 3;
-            read_codebook = read_codebook_24;
             cvid_v1 = cvid_v1_24;
             cvid_v4 = cvid_v4_24;
             break;
         case 32:
             bpp = 4;
-            read_codebook = read_codebook_32;
             cvid_v1 = cvid_v1_32;
             cvid_v4 = cvid_v4_32;
             break;
@@ -740,6 +720,37 @@ void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
         }
 }
 
+static void ICCVID_dump_BITMAPINFO(const BITMAPINFO * bmi)
+{
+    TRACE(
+        "planes = %d\n"
+        "bpp    = %d\n"
+        "height = %ld\n"
+        "width  = %ld\n"
+        "compr  = %s\n",
+        bmi->bmiHeader.biPlanes,
+        bmi->bmiHeader.biBitCount,
+        bmi->bmiHeader.biHeight,
+        bmi->bmiHeader.biWidth,
+        debugstr_an( (const char *)&bmi->bmiHeader.biCompression, 4 ) );
+}
+
+static inline int ICCVID_CheckMask(RGBQUAD bmiColors[3], COLORREF redMask, COLORREF blueMask, COLORREF greenMask)
+{
+    COLORREF realRedMask = MAKECOLOUR32(bmiColors[0].rgbRed, bmiColors[0].rgbGreen, bmiColors[0].rgbBlue);
+    COLORREF realBlueMask = MAKECOLOUR32(bmiColors[1].rgbRed, bmiColors[1].rgbGreen, bmiColors[1].rgbBlue);
+    COLORREF realGreenMask = MAKECOLOUR32(bmiColors[2].rgbRed, bmiColors[2].rgbGreen, bmiColors[2].rgbBlue);
+
+    TRACE("\nbmiColors[0] = 0x%08lx\nbmiColors[1] = 0x%08lx\nbmiColors[2] = 0x%08lx\n",
+        realRedMask, realBlueMask, realGreenMask);
+        
+    if ((realRedMask == redMask) &&
+        (realBlueMask == blueMask) &&
+        (realGreenMask == greenMask))
+        return TRUE;
+    return FALSE;
+}
+
 LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
 {
     TRACE("ICM_DECOMPRESS_QUERY %p %p %p\n", info, in, out);
@@ -747,35 +758,44 @@ LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
 
-    TRACE("planes = %d\n", in->bmiHeader.biPlanes );
-    TRACE("bpp    = %d\n", in->bmiHeader.biBitCount );
-    TRACE("height = %ld\n", in->bmiHeader.biHeight );
-    TRACE("width  = %ld\n", in->bmiHeader.biWidth );
-    TRACE("compr  = %lx\n", in->bmiHeader.biCompression );
+    TRACE("in: ");
+    ICCVID_dump_BITMAPINFO(in);
 
     if( in->bmiHeader.biCompression != ICCVID_MAGIC )
         return ICERR_UNSUPPORTED;
 
-    switch( in->bmiHeader.biBitCount )
-    {
-    case 24:
-    case 32:
-        break;
-    default:
-        TRACE("bitcount = %d\n", in->bmiHeader.biBitCount );
-        return ICERR_UNSUPPORTED;
-    }
-
     if( out )
     {
+        TRACE("out: ");
+        ICCVID_dump_BITMAPINFO(out);
+
         if( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes )
-            return ICERR_UNSUPPORTED;
-        if( in->bmiHeader.biBitCount != out->bmiHeader.biBitCount )
             return ICERR_UNSUPPORTED;
         if( in->bmiHeader.biHeight != out->bmiHeader.biHeight )
             return ICERR_UNSUPPORTED;
         if( in->bmiHeader.biWidth != out->bmiHeader.biWidth )
             return ICERR_UNSUPPORTED;
+
+        switch( out->bmiHeader.biBitCount )
+        {
+        case 16:
+            if ( out->bmiHeader.biCompression == BI_BITFIELDS )
+            {
+                if ( !ICCVID_CheckMask(out->bmiColors, 0x7C00, 0x03E0, 0x001F) &&
+                     !ICCVID_CheckMask(out->bmiColors, 0xF800, 0x07E0, 0x001F) )
+                {
+                    TRACE("unsupported output bit field(s) for 16-bit colors\n");
+                    return ICERR_UNSUPPORTED;
+                }
+            }
+            break;
+        case 24:
+        case 32:
+            break;
+        default:
+            TRACE("unsupported output bitcount = %d\n", out->bmiHeader.biBitCount );
+            return ICERR_UNSUPPORTED;
+        }
     }
 
     return ICERR_OK;
@@ -812,6 +832,28 @@ LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
 
+    info->bits_per_pixel = out->bmiHeader.biBitCount;
+
+    if (info->bits_per_pixel == 16)
+    {
+        if ( out->bmiHeader.biCompression == BI_BITFIELDS )
+        {
+            if ( ICCVID_CheckMask(out->bmiColors, 0x7C00, 0x03E0, 0x001F) )
+                info->bits_per_pixel = 15;
+            else if ( ICCVID_CheckMask(out->bmiColors, 0xF800, 0x07E0, 0x001F) )
+                info->bits_per_pixel = 16;
+            else
+            {
+                TRACE("unsupported output bit field(s) for 16-bit colors\n");
+                return ICERR_UNSUPPORTED;
+            }
+        }
+        else
+            info->bits_per_pixel = 15;
+    }
+
+    TRACE("bit_per_pixel = %d\n", info->bits_per_pixel);
+
     if( info->cvinfo )
         free_cvinfo( info->cvinfo );
     info->cvinfo = decode_cinepak_init();
@@ -822,7 +864,6 @@ LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO
 LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
 {
     LONG width, height;
-    WORD bit_per_pixel;
 
     TRACE("ICM_DECOMPRESS %p %p %ld\n", info, icd, size);
 
@@ -831,10 +872,9 @@ LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
 
     width  = icd->lpbiInput->biWidth;
     height = icd->lpbiInput->biHeight;
-    bit_per_pixel = icd->lpbiInput->biBitCount;
 
     decode_cinepak(info->cvinfo, icd->lpInput, icd->lpbiInput->biSizeImage,
-                   icd->lpOutput, width, height, bit_per_pixel);
+                   icd->lpOutput, width, height, info->bits_per_pixel);
 
     return ICERR_OK;
 }
@@ -842,7 +882,6 @@ LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
 LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size )
 {
     LONG width, height;
-    WORD bit_per_pixel;
 
     TRACE("ICM_DECOMPRESSEX %p %p %ld\n", info, icd, size);
 
@@ -853,10 +892,9 @@ LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size 
 
     width  = icd->lpbiSrc->biWidth;
     height = icd->lpbiSrc->biHeight;
-    bit_per_pixel = icd->lpbiSrc->biBitCount;
 
     decode_cinepak(info->cvinfo, icd->lpSrc, icd->lpbiSrc->biSizeImage,
-                   icd->lpDst, width, height, bit_per_pixel);
+                   icd->lpDst, width, height, info->bits_per_pixel);
 
     return ICERR_OK;
 }
