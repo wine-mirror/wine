@@ -101,14 +101,12 @@ LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD,DWORD);
 
 LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
 LPEXTRACTICONW	IExtractIconW_Constructor(LPITEMIDLIST);
-HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);
+HRESULT		CreateStreamOnFile (LPCWSTR pszFilename, DWORD grfMode, IStream ** ppstm);
 
 /* FIXME: rename the functions when the shell32.dll has it's own exports namespace */
 HRESULT WINAPI  SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI  SHELL32_DllCanUnloadNow(void);
 
-/* FIXME: move away */
-#define ResultFromShort(i) MAKE_SCODE(SEVERITY_SUCCESS, 0, (USHORT)(i))
 
 /* menu merging */
 #define MM_ADDSEPARATOR         0x00000001L

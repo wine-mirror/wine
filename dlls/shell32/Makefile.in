@@ -58,13 +58,6 @@ SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 
-install::
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_SCRIPT) $(TOPSRCDIR)/tools/wineshelllink $(bindir)/wineshelllink
-
-uninstall::
-	$(RM) $(bindir)/wineshelllink
-
 # Special rules for 16-bit resource files
 
 version16.res: version16.rc

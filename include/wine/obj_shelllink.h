@@ -49,7 +49,8 @@ typedef enum
  */
 typedef enum
 {	SLGP_SHORTPATH		= 0x0001,
-	SLGP_UNCPRIORITY	= 0x0002
+	SLGP_UNCPRIORITY	= 0x0002,
+	SLGP_RAWPATH		= 0x0004
 } SLGP_FLAGS;
 /*****************************************************************************
  * IShellLink interface

@@ -28,6 +28,7 @@ SUBDIRS = \
 	wineconsole \
 	winedbg \
 	winefile \
+	winemenubuilder \
 	winemine \
 	winepath \
 	winevdm \
@@ -54,6 +55,7 @@ INSTALLSUBDIRS = \
 	wineconsole \
 	winedbg \
 	winefile \
+	winemenubuilder \
 	winemine \
 	winepath \
 	winevdm \
@@ -84,6 +86,7 @@ SYMLINKS = \
 	wcmd.exe \
 	wineconsole.exe \
 	winedbg.exe \
+	winemenubuilder.exe \
 	winevdm.exe \
 	winhelp.exe
 
@@ -142,6 +145,9 @@ wineconsole.exe$(DLLEXT): wineconsole/wineconsole.exe$(DLLEXT)
 winedbg.exe$(DLLEXT): winedbg/winedbg.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedbg/winedbg.exe$(DLLEXT) $@
 
+winemenubuilder.exe$(DLLEXT): winemenubuilder/winemenubuilder.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) winemenubuilder/winemenubuilder.exe$(DLLEXT) $@
+
 winevdm.exe$(DLLEXT): winevdm/winevdm.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winevdm/winevdm.exe$(DLLEXT) $@
 
@@ -151,6 +157,7 @@ winhelp.exe$(DLLEXT): winhelp/winhelp.exe$(DLLEXT)
 wcmd/wcmd.exe$(DLLEXT): wcmd
 wineconsole/wineconsole.exe$(DLLEXT): wineconsole
 winedbg/winedbg.exe$(DLLEXT): winedbg
+winemenubuilder/winemenubuilder.exe$(DLLEXT): winemenubuilder
 winevdm/winevdm.exe$(DLLEXT): winevdm
 winhelp/winhelp.exe$(DLLEXT): winhelp
 

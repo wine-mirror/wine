@@ -9,6 +9,7 @@
  *	access in a IStream to.
  *
  * Copyright 1999 Juergen Schmied
+ * Copyright 2003 Mike McCormack for Codeweavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -73,10 +74,7 @@ static ICOM_VTABLE(IStream) stvt =
 typedef struct
 {	ICOM_VTABLE(IStream)	*lpvtst;
 	DWORD		ref;
-	LPBYTE		pImage;
-	HANDLE		hMapping;
-	DWORD		dwLength;
-	DWORD		dwPos;
+	HANDLE		handle;
 } ISHFileStream;
 
 /**************************************************************************
@@ -84,40 +82,42 @@ typedef struct
  *
  *   similar to CreateStreamOnHGlobal
  */
-HRESULT CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm)
+HRESULT CreateStreamOnFile (LPCWSTR pszFilename, DWORD grfMode, IStream ** ppstm)
 {
 	ISHFileStream*	fstr;
-	OFSTRUCT	ofs;
-	HFILE		hFile = OpenFile( pszFilename, &ofs, OF_READ );
-	HRESULT		ret = E_FAIL;
+	HANDLE		handle;
+	DWORD		access = GENERIC_READ, creat;
 
-	fstr = (ISHFileStream*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ISHFileStream));
+	if( grfMode & STGM_TRANSACTED )
+		return E_INVALIDARG;
+
+	if( grfMode & STGM_WRITE )
+		access |= GENERIC_WRITE;
+        if( grfMode & STGM_READWRITE )
+		access = GENERIC_WRITE | GENERIC_READ;
+
+	if( grfMode & STGM_CREATE )
+		creat = CREATE_ALWAYS;
+	else
+		creat = OPEN_EXISTING;
+
+	TRACE("Opening %s\n", debugstr_w(pszFilename) );
+
+	handle = CreateFileW( pszFilename, access, 0, NULL, creat, 0, NULL );
+	if( handle == INVALID_HANDLE_VALUE )
+		return E_FAIL;
+
+	fstr = (ISHFileStream*)HeapAlloc(GetProcessHeap(),
+		HEAP_ZERO_MEMORY,sizeof(ISHFileStream));
+	if( !fstr )
+		return E_FAIL;
 	fstr->lpvtst=&stvt;
 	fstr->ref = 1;
-	fstr->dwLength = GetFileSize ((HANDLE)hFile, NULL);
+	fstr->handle = handle;
 
-	if (!(fstr->hMapping = CreateFileMappingA((HANDLE)hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL)))
-	{
-	  WARN("failed to create filemap.\n");
-	  goto end_2;
-	}
-
-	if (!(fstr->pImage = MapViewOfFile(fstr->hMapping,FILE_MAP_READ,0,0,0)))
-	{
-	  WARN("failed to mmap filemap.\n");
-	  goto end_3;
-	}
-
-	ret = S_OK;
-	goto end_1;
-
-end_3:	CloseHandle(fstr->hMapping);
-end_2:	HeapFree(GetProcessHeap(), 0, fstr);
-	fstr = NULL;
-
-end_1:	_lclose(hFile);
 	(*ppstm) = (IStream*)fstr;
-	return ret;
+
+	return S_OK;
 }
 
 /**************************************************************************
@@ -169,13 +169,10 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 	TRACE("(%p)->()\n",This);
 
 	if (!--(This->ref))
-	{ TRACE(" destroying SHFileStream (%p)\n",This);
-
-	  UnmapViewOfFile(This->pImage);
-	  CloseHandle(This->hMapping);
-
-	  HeapFree(GetProcessHeap(),0,This);
-	  return 0;
+	{
+		TRACE(" destroying SHFileStream (%p)\n",This);
+		CloseHandle(This->handle);
+		HeapFree(GetProcessHeap(),0,This);
 	}
 	return This->ref;
 }
@@ -184,52 +181,64 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG
 {
 	ICOM_THIS(ISHFileStream, iface);
 
-	DWORD dwBytesToRead, dwBytesLeft;
-
 	TRACE("(%p)->(%p,0x%08lx,%p)\n",This, pv, cb, pcbRead);
 
 	if ( !pv )
-	  return STG_E_INVALIDPOINTER;
+		return STG_E_INVALIDPOINTER;
 
-	dwBytesLeft = This->dwLength - This->dwPos;
-
-	if ( 0 >= dwBytesLeft )						/* end of buffer */
-	  return S_FALSE;
-
-	dwBytesToRead = ( cb > dwBytesLeft) ? dwBytesLeft : cb;
-
-	memmove ( pv, (This->pImage) + (This->dwPos), dwBytesToRead);
-
-	This->dwPos += dwBytesToRead;					/* adjust pointer */
-
-	if (pcbRead)
-	  *pcbRead = dwBytesToRead;
+	if ( ! ReadFile( This->handle, pv, cb, pcbRead, NULL ) )
+		return E_FAIL;
 
 	return S_OK;
 }
+
 static HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG* pcbWritten)
 {
 	ICOM_THIS(ISHFileStream, iface);
 
 	TRACE("(%p)\n",This);
 
-	return E_NOTIMPL;
+	if( !pv )
+		return STG_E_INVALIDPOINTER;
+
+	if( ! WriteFile( This->handle, pv, cb, pcbWritten, NULL ) )
+		return E_FAIL;
+
+	return S_OK;
 }
+
 static HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition)
 {
+	DWORD pos, newposlo, newposhi;
+
 	ICOM_THIS(ISHFileStream, iface);
 
 	TRACE("(%p)\n",This);
 
-	return E_NOTIMPL;
+	pos = dlibMove.QuadPart; /* FIXME: truncates */
+	newposhi = 0;
+	newposlo = SetFilePointer( This->handle, pos, &newposhi, dwOrigin );
+	if( newposlo == INVALID_SET_FILE_POINTER )
+		return E_FAIL;
+
+	plibNewPosition->QuadPart = newposlo | ( (LONGLONG)newposhi<<32);
+
+	return S_OK;
 }
+
 static HRESULT WINAPI IStream_fnSetSize (IStream * iface, ULARGE_INTEGER libNewSize)
 {
 	ICOM_THIS(ISHFileStream, iface);
 
 	TRACE("(%p)\n",This);
 
-	return E_NOTIMPL;
+	if( ! SetFilePointer( This->handle, libNewSize.QuadPart, NULL, FILE_BEGIN ) )
+		return E_FAIL;
+
+	if( ! SetEndOfFile( This->handle ) )
+		return E_FAIL;
+
+	return S_OK;
 }
 static HRESULT WINAPI IStream_fnCopyTo (IStream * iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten)
 {

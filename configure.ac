@@ -1525,6 +1525,7 @@ programs/winecfg/Makefile
 programs/wineconsole/Makefile
 programs/winedbg/Makefile
 programs/winefile/Makefile
+programs/winemenubuilder/Makefile
 programs/winemine/Makefile
 programs/winepath/Makefile
 programs/winevdm/Makefile

@@ -1,0 +1,22 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winemenubuilder.exe
+APPMODE   = gui
+IMPORTS   = shell32 ole32 user32 advapi32 kernel32
+EXTRALIBS = $(LIBUUID)
+
+C_SRCS = \
+	winemenubuilder.c
+
+@MAKE_PROG_RULES@
+
+install::
+	$(MKINSTALLDIRS) $(bindir)
+	$(INSTALL_SCRIPT) $(TOPSRCDIR)/tools/wineshelllink $(bindir)/wineshelllink
+
+uninstall::
+	$(RM) $(bindir)/wineshelllink
+
+### Dependencies:
