@@ -34,9 +34,6 @@
  *
  * FIXME: lpstrCustomFilter not handled
  *
- * FIXME: if the size of lpstrFile (nMaxFile) is too small the first
- * two bytes of lpstrFile should contain the needed size
- *
  * FIXME: algorithm for selecting the initial directory is too simple
  *
  * FIXME: add to recent docs
@@ -1989,9 +1986,16 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	}
 	else
         {
-          /* FIXME set error FNERR_BUFFERTOSMALL */
+          WORD size;
+
+          size = strlenW(lpstrPathAndFile) + 1;
+          if (fodInfos->ofnInfos->Flags & OFN_ALLOWMULTISELECT)
+             size += 1;
+          /* return needed size in first two bytes of lpstrFile */
+          *(WORD *)fodInfos->ofnInfos->lpstrFile = size;
           FILEDLG95_Clean(hwnd);
           ret = EndDialog(hwnd, FALSE);
+          COMDLG32_SetCommDlgExtendedError(FNERR_BUFFERTOOSMALL);
         }
         goto ret;
       }
