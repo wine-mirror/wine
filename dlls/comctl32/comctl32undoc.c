@@ -1875,60 +1875,20 @@ DPA_GetPtrIndex (const HDPA hdpa, LPVOID p)
 INT WINAPI
 DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
 {
-    INT   nNewItems, nSize, nIndex = 0;
-    LPVOID  *lpTemp, *lpDest;
-
     TRACE("(%p %d %p)\n", hdpa, i, p);
 
-    if ((!hdpa) || (i < 0))
-	return -1;
+    if (!hdpa || i < 0) return -1;
 
-    if (!hdpa->ptrs) {
-	hdpa->ptrs =
-	    (LPVOID*)HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
-				2 * hdpa->nGrow * sizeof(LPVOID));
-	if (!hdpa->ptrs)
-	    return -1;
-	hdpa->nMaxCount = hdpa->nGrow * 2;
-        nIndex = 0;
-    }
-    else {
-	if (hdpa->nItemCount >= hdpa->nMaxCount) {
-	    TRACE("-- resizing\n");
-	    nNewItems = hdpa->nMaxCount + hdpa->nGrow;
-	    nSize = nNewItems * sizeof(LPVOID);
+    if (i >= hdpa->nItemCount)
+	return DPA_SetPtr(hdpa, i, p) ? i : -1;
 
-	    lpTemp = (LPVOID*)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
-					   hdpa->ptrs, nSize);
-	    if (!lpTemp)
-		return -1;
-	    hdpa->nMaxCount = nNewItems;
-	    hdpa->ptrs = lpTemp;
-	}
-
-	if (i >= hdpa->nItemCount) {
-	    nIndex = hdpa->nItemCount;
-	    TRACE("-- appending at %d\n", nIndex);
-	}
-	else {
-	    TRACE("-- inserting at %d\n", i);
-	    lpTemp = hdpa->ptrs + i;
-	    lpDest = lpTemp + 1;
-	    nSize  = (hdpa->nItemCount - i) * sizeof(LPVOID);
-	    TRACE("-- move dest=%p src=%p size=%x\n",
-		   lpDest, lpTemp, nSize);
-	    memmove (lpDest, lpTemp, nSize);
-	    nIndex = i;
-	}
-    }
-
-    /* insert item */
+    /* create empty spot at the end */
+    if (!DPA_SetPtr(hdpa, hdpa->nItemCount, 0)) return -1;
+    memmove (hdpa->ptrs + i + 1, hdpa->ptrs + i, (hdpa->nItemCount - i - 1) * sizeof(LPVOID));
+    hdpa->ptrs[i] = p;
     hdpa->nItemCount++;
-    hdpa->ptrs[nIndex] = p;
-
-    return nIndex;
+    return i;
 }
-
 
 /**************************************************************************
  * DPA_SetPtr [COMCTL32.335]
