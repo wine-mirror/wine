@@ -28,6 +28,8 @@ INSTALLSUBDIRS = $(SUBDIRS)
 
 EXTRASUBDIRS = winapi_check
 
+UPDATE_DESKTOP_DATABASE = update-desktop-database
+
 all: $(PROGRAMS) $(SUBDIRS)
 
 @MAKE_RULES@
@@ -46,13 +48,17 @@ wineprefixcreate: wineprefixcreate.in
 	chmod +x wineprefixcreate
 
 install:: wineprefixcreate
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext) $(datadir)/wine
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext) $(datadir)/wine $(datadir)/applications
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
 	$(INSTALL_SCRIPT) wineprefixcreate $(bindir)/wineprefixcreate
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wine.inf $(datadir)/wine/wine.inf
+	$(INSTALL_DATA) $(SRCDIR)/wine.desktop $(datadir)/applications/wine.desktop
+	-$(UPDATE_DESKTOP_DATABASE)
 
 uninstall::
-	$(RM) $(bindir)/winemaker $(bindir)/wineprefixcreate $(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(datadir)/wine/wine.inf
+	$(RM) $(bindir)/winemaker $(bindir)/wineprefixcreate $(mandir)/man$(prog_manext)/winemaker.$(prog_manext) \
+	      $(datadir)/wine/wine.inf $(datadir)/applications/wine.desktop
+	-$(UPDATE_DESKTOP_DATABASE)
 
 ### Dependencies:
