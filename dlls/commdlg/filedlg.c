@@ -328,6 +328,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
     LRESULT             lRet = TRUE;
     HCURSOR             hCursorWait, oldCursor;
 
+    TRACE("Trying to change to %s\n", debugstr_w(newPath));
     if  ( !SetCurrentDirectoryW( newPath ))
         return FALSE;
     lstrcpynW(buffer, newPath, sizeof(buffer)/sizeof(WCHAR));
@@ -646,15 +647,23 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
     int lenstr2;
     LPOPENFILENAMEW ofnW = lfs->ofnW;
     WCHAR tmpstr2[BUFFILE];
+    WCHAR *bs;
 
-    GetCurrentDirectoryW(BUFFILE, tmpstr2);
+    TRACE("%s\n", debugstr_w(tmpstr));
+    if(ofnW->Flags & OFN_NOVALIDATE)
+        tmpstr2[0] = '\0';
+    else
+        GetCurrentDirectoryW(BUFFILE, tmpstr2);
     lenstr2 = strlenW(tmpstr2);
     if (lenstr2 > 3)
         tmpstr2[lenstr2++]='\\';
     lstrcpynW(tmpstr2+lenstr2, tmpstr, BUFFILE-lenstr2);
     if (ofnW->lpstrFile)
         lstrcpynW(ofnW->lpstrFile, tmpstr2, ofnW->nMaxFile);
-    ofnW->nFileOffset = strrchrW(tmpstr2,'\\') - tmpstr2 +1;
+    if((bs = strrchrW(tmpstr2, '\\')) != NULL)
+        ofnW->nFileOffset = bs - tmpstr2 +1;
+    else
+        ofnW->nFileOffset = 0;
     ofnW->nFileExtension = 0;
     while(tmpstr2[ofnW->nFileExtension] != '.' && tmpstr2[ofnW->nFileExtension] != '\0')
         ofnW->nFileExtension++;
@@ -668,13 +677,17 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
 	char tmp[1024]; /* MAX_PATHNAME_LEN */
 	LPOPENFILENAME16 ofn16 = lfs->ofn16;
         char *dest = MapSL(ofn16->lpstrFile);
+        char *bs16;
         if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
                                   tmp, sizeof(tmp), NULL, NULL ))
             tmp[sizeof(tmp)-1] = 0;
 	GetShortPathNameA(tmp, dest, ofn16->nMaxFile);
 
 	/* the same procedure as every year... */
-        ofn16->nFileOffset = strrchr(dest,'\\') - dest +1;
+        if((bs16 = strrchr(dest, '\\')) != NULL)
+            ofn16->nFileOffset = bs16 - dest +1;
+        else
+            ofn16->nFileOffset = 0;
         ofn16->nFileExtension = 0;
         while(dest[ofn16->nFileExtension] != '.' && dest[ofn16->nFileExtension] != '\0')
             ofn16->nFileExtension++;
@@ -822,13 +835,14 @@ static LRESULT FILEDLG_TestPath( LFSPRIVATE lfs, LPWSTR path )
 	else
 	{
 	    strcpyW(tmpstr2, path);
-	    *path = 0;
+            if(!(lfs->ofnW->Flags & OFN_NOVALIDATE))
+                *path = 0;
         }
 
         TRACE("path=%s, tmpstr2=%s\n", debugstr_w(path), debugstr_w(tmpstr2));
         SetDlgItemTextW( hWnd, edt1, tmpstr2 );
         FILEDLG_ScanDir(hWnd, path);
-        return FALSE;
+        return (lfs->ofnW->Flags & OFN_NOVALIDATE) ? TRUE : FALSE;
     }
 
     /* no wildcards, we might have a directory or a filename */
@@ -886,6 +900,7 @@ static LRESULT FILEDLG_Validate( LFSPRIVATE lfs, LPWSTR path, UINT control, INT 
     else
         GetDlgItemTextW( hWnd, edt1, filename, sizeof(filename)/sizeof(WCHAR));
 
+    TRACE("got filename = %s\n", debugstr_w(filename));
     /* if we did not click in file list to get there */
     if (control != lst1)
     {
@@ -1018,6 +1033,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
         break;
 
         case IDOK:
+        TRACE("OK pressed\n");
         if (FILEDLG_Validate( lfs, NULL, control, 0, FALSE ))
             EndDialog(hWnd, TRUE);
         return TRUE;
@@ -1304,6 +1320,7 @@ BOOL WINAPI GetFileName31A(
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
+    TRACE("ofn flags %08lx\n", lpofn->Flags);
     lfs = FILEDLG_AllocPrivate((LPARAM) lpofn, LFS32A, dlgType);
     if (lfs)
     {
