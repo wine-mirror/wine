@@ -3249,11 +3249,89 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
 
 /***
  * DESCRIPTION:
+ * Draws listview items when in owner draw mode.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] hdc : device context handle
+ *
+ * RETURN:
+ * None
+ */
+static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
+{
+    INT nTop, nItem, nLast, nUpdateHeight, nUpdateWidth, rgntype;
+    UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
+    HWND hwndParent = GetParent(infoPtr->hwndSelf);
+    POINT Origin, Position;
+    DRAWITEMSTRUCT dis;
+    LVITEMW item;
+    RECT rcClip;
+    
+    TRACE("()\n");
+
+    /* figure out what to draw */
+    /* FIXME: this works for REPORT only */
+    rgntype = GetClipBox(hdc, &rcClip);
+    if (rgntype == NULLREGION) return;
+    nUpdateHeight = rcClip.bottom - rcClip.top + 1;
+    nUpdateWidth = rcClip.right - rcClip.left;
+    nTop = LISTVIEW_GetTopIndex(infoPtr);
+    nItem = nTop + (rcClip.top - infoPtr->rcList.top) / infoPtr->nItemHeight;
+    if (nItem < nTop)
+        nItem = nTop;
+    nLast = nItem + nUpdateHeight / infoPtr->nItemHeight;
+    if (nUpdateHeight % infoPtr->nItemHeight) nLast++;
+    if (nLast > infoPtr->nItemCount)
+        nLast = infoPtr->nItemCount;
+    ZeroMemory(&dis, sizeof(dis));
+    
+    /* Get scroll info once before loop */
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
+    
+
+    /* send cache hint notification */
+    if (infoPtr->dwStyle & LVS_OWNERDATA) 
+	notify_odcachehint(infoPtr, nItem, nLast);
+
+    /* iterate through the invalidated rows */ 
+    for (; nItem < nLast; nItem++)
+    {
+	item.iItem = nItem;
+	item.iSubItem = 0;
+	item.mask = LVIF_PARAM | LVIF_STATE;
+	item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+	if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
+	   
+	dis.CtlType = ODT_LISTVIEW;
+	dis.CtlID = uID;
+	dis.itemID = nItem;
+	dis.itemAction = ODA_DRAWENTIRE;
+	dis.itemState = 0;
+	if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
+	if (infoPtr->bFocus && (item.state & LVIS_FOCUSED)) dis.itemState |= ODS_FOCUS;
+	dis.hwndItem = infoPtr->hwndSelf;
+	dis.hDC = hdc;
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) continue;
+	dis.rcItem.left = Position.x + Origin.x;
+	dis.rcItem.right = dis.rcItem.left + infoPtr->nItemWidth;
+	dis.rcItem.top = Position.y + Origin.y;
+	dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
+	dis.itemData = item.lParam;
+
+	TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
+	SendMessageW(hwndParent, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+    }
+}
+
+/***
+ * DESCRIPTION:
  * Draws listview items when in report display mode.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] HDC : device context handle
+ * [I] hdc : device context handle
+ * [I] cdmode : custom draw mode
  *
  * RETURN:
  * None
@@ -3266,8 +3344,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     RECT rcItem, rcClip, rcFullSelect;
     BOOL bFullSelected, isFocused;
     DWORD cditemmode = CDRF_DODEFAULT;
-    LONG lStyle = infoPtr->dwStyle;
-    UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
     TEXTATTR tmpTa, oldTa;
     COLUMNCACHE *lpCols;
     LVCOLUMNW lvColumn;
@@ -3291,7 +3367,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
         nLast = infoPtr->nItemCount;
 
     /* send cache hint notification */
-    if (lStyle & LVS_OWNERDATA) 
+    if (infoPtr->dwStyle & LVS_OWNERDATA) 
 	notify_odcachehint(infoPtr, nItem, nLast);
 
     /* cache column info */
@@ -3341,45 +3417,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     /* iterate through the invalidated rows */ 
     for (; nItem < nLast; nItem++, nDrawPosY += infoPtr->nItemHeight)
     {
-	/* if owner wants to take a first stab at it, have it his way... */
-	if (lStyle & LVS_OWNERDRAWFIXED)
-	{
-            DRAWITEMSTRUCT dis;
-
-            TRACE("Owner Drawn\n");
-
-            item.iItem = nItem;
-	    item.iSubItem = 0;
-            item.mask = LVIF_PARAM | LVIF_STATE;
-	    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-	    if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
-	   
-	    ZeroMemory(&dis, sizeof(dis)); 
-            dis.CtlType = ODT_LISTVIEW;
-            dis.CtlID = uID;
-            dis.itemID = nItem;
-            dis.itemAction = ODA_DRAWENTIRE;
-            if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
-            if (infoPtr->bFocus && (item.state & LVIS_FOCUSED)) dis.itemState |= ODS_FOCUS;
-            dis.hwndItem = infoPtr->hwndSelf;
-            dis.hDC = hdc;
-            dis.rcItem.left = lpCols[0].rc.left;
-            dis.rcItem.right = lpCols[nColumnCount - 1].rc.right;
-            dis.rcItem.top = nDrawPosY;
-            dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
-            OffsetRect(&dis.rcItem, ptOrig.x, 0);
-            dis.itemData = item.lParam;
-
-	    TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
-            SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
-	    /* In theory we should do the default drawing if WM_DRAWITEM 
-	     * returns FALSE but, in the words of Larry McVoy, in practice
-	     * theory is different than practice, and hence there are 
-	     * important apps out there that depend on no default drawing
-	     * in LVS_OWNERDRAWFIXED. So we always skip to the next item. */
-	    continue;
-        }
-	
 	/* compute the full select rectangle, if needed */
 	if (bFullSelected)
 	{
@@ -3444,7 +3481,8 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] HDC : device context handle
+ * [I] hdc : device context handle
+ * [I] cdmode : custom draw mode
  *
  * RETURN:
  * None
@@ -3501,7 +3539,8 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] HDC : device context handle
+ * [I] hdc : device context handle
+ * [I] cdmode : custom draw mode
  *
  * RETURN:
  * None
@@ -3637,7 +3676,9 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     /* select font */
     hOldFont = SelectObject(hdc, infoPtr->hFont);
 
-    if (uView == LVS_LIST)
+    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+	LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
+    else if (uView == LVS_LIST)
 	LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
     else if (uView == LVS_REPORT)
 	LISTVIEW_RefreshReport(infoPtr, hdc, cdmode);
