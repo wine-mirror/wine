@@ -370,7 +370,7 @@
 @ stdcall RtlEqualString(ptr ptr long)
 @ stdcall RtlEqualUnicodeString(ptr ptr long)
 @ stdcall RtlEraseUnicodeString(ptr)
-@ stub RtlExpandEnvironmentStrings_U
+@ stdcall RtlExpandEnvironmentStrings_U(ptr ptr ptr ptr)
 @ stub RtlExtendHeap
 @ stdcall -ret64 RtlExtendedIntegerMultiply(long long long)
 @ stdcall -ret64 RtlExtendedLargeIntegerDivide(long long long ptr)

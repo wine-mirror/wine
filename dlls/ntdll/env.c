@@ -81,17 +81,37 @@ NTSTATUS WINAPI RtlDestroyEnvironment(PWSTR env)
     return NtFreeVirtualMemory(NtCurrentProcess(), (void**)&env, &size, MEM_RELEASE);
 }
 
+static LPCWSTR ENV_FindVariable(PCWSTR var, PCWSTR name, unsigned namelen)
+{
+    for (; *var; var += strlenW(var) + 1)
+    {
+        /* match var names, but avoid setting a var with a name including a '='
+         * (a starting '=' is valid though)
+         */
+        if (strncmpiW(var, name, namelen) == 0 && var[namelen] == '=' &&
+            strchrW(var + 1, '=') == var + namelen) 
+        {
+            return var + namelen + 1;
+        }
+    }
+    return NULL;
+}
+
 /******************************************************************
  *		RtlQueryEnvironmentVariable_U   [NTDLL.@]
  *
+ * NOTES: when the buffer is too small, the string is not written, but if the
+ *      terminating null char is the only char that cannot be written, then
+ *      all chars (except the null) are written and success is returned
+ *      (behavior of Win2k at least)
  */
 NTSTATUS WINAPI RtlQueryEnvironmentVariable_U(PWSTR env,
                                               PUNICODE_STRING name,
                                               PUNICODE_STRING value)
 {
     NTSTATUS    nts = STATUS_VARIABLE_NOT_FOUND;
-    PWSTR       var;
-    unsigned    namelen, varlen;
+    PCWSTR      var;
+    unsigned    namelen;
 
     TRACE("%s %s %p\n", debugstr_w(env), debugstr_w(name->Buffer), value);
 
@@ -106,24 +126,16 @@ NTSTATUS WINAPI RtlQueryEnvironmentVariable_U(PWSTR env,
     }
     else var = env;
 
-    for (; *var; var += varlen + 1)
+    var = ENV_FindVariable(var, name->Buffer, namelen);
+    if (var != NULL)
     {
-        varlen = strlenW(var);
-        /* match var names, but avoid setting a var with a name including a '='
-         * (a starting '=' is valid though)
-         */
-        if (strncmpiW(var, name->Buffer, namelen) == 0 && var[namelen] == '=' &&
-            strchrW(var + 1, '=') == var + namelen) 
+        value->Length = strlenW(var) * sizeof(WCHAR);
+        if (value->Length <= value->MaximumLength)
         {
-            value->Length = (varlen - namelen - 1) * sizeof(WCHAR);
-            if (value->Length <= value->MaximumLength)
-            {
-                memmove(value->Buffer, var + namelen + 1, value->Length + sizeof(WCHAR));
-                nts = STATUS_SUCCESS;
-            }
-            else nts = STATUS_BUFFER_TOO_SMALL;
-            break;
+            memmove(value->Buffer, var, min(value->Length + sizeof(WCHAR), value->MaximumLength));
+            nts = STATUS_SUCCESS;
         }
+        else nts = STATUS_BUFFER_TOO_SMALL;
     }
 
     if (!env) RtlReleasePebLock();
@@ -238,6 +250,77 @@ done:
     if (!penv) RtlReleasePebLock();
 
     return nts;
+}
+
+/******************************************************************
+ *		RtlExpandEnvironmentStrings_U (NTDLL.@)
+ *
+ */
+NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR env, const UNICODE_STRING* us_src,
+                                              PUNICODE_STRING us_dst, PULONG plen)
+{
+    DWORD       len, count, total_size = 1;  /* 1 for terminating '\0' */
+    LPCWSTR     src, p, var;
+    LPWSTR      dst;
+
+    src = us_src->Buffer;
+    count = us_dst->MaximumLength / sizeof(WCHAR);
+    dst = count ? us_dst->Buffer : NULL;
+
+    RtlAcquirePebLock();
+
+    while (*src)
+    {
+        if (*src != '%')
+        {
+            if ((p = strchrW( src, '%' ))) len = p - src;
+            else len = strlenW(src);
+            var = src;
+            src += len;
+        }
+        else  /* we are at the start of a variable */
+        {
+            if ((p = strchrW( src + 1, '%' )))
+            {
+                len = p - src - 1;  /* Length of the variable name */
+                if ((var = ENV_FindVariable( env, src + 1, len )))
+                {
+                    src += len + 2;  /* Skip the variable name */
+                    len = strlenW(var);
+                }
+                else
+                {
+                    var = src;  /* Copy original name instead */
+                    len += 2;
+                    src += len;
+                }
+            }
+            else  /* unfinished variable name, ignore it */
+            {
+                var = src;
+                len = strlenW(src);  /* Copy whole string */
+                src += len;
+            }
+        }
+        total_size += len;
+        if (dst)
+        {
+            if (count < len) len = count;
+            memcpy(dst, var, len * sizeof(WCHAR));
+            count -= len;
+            dst += len;
+        }
+    }
+
+    RtlReleasePebLock();
+
+    /* Null-terminate the string */
+    if (dst && count) *dst = '\0';
+
+    us_dst->Length = (dst) ? (dst - us_dst->Buffer) * sizeof(WCHAR): 0;
+    if (plen) *plen = total_size * sizeof(WCHAR);
+
+    return (count) ? STATUS_SUCCESS : STATUS_BUFFER_TOO_SMALL;
 }
 
 /***********************************************************************
