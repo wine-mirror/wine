@@ -752,7 +752,7 @@ static void MDITile( WND* wndClient, MDICLIENTINFO *ci, WPARAM wParam )
 	    int		x, y, xsize, ysize;
 	    int		rows, columns, r, c, i;
 
-	    rect    = wndClient->rectClient;
+	    GetClientRect(wndClient->hwndSelf,&rect);
 	    rows    = (int) sqrt((double)total);
 	    columns = total / rows;
 
