@@ -181,7 +181,7 @@ type win32
 178 stdcall waveOutSetPitch(long long) waveOutSetPitch32
 179 stdcall waveOutSetPlaybackRate(long long) waveOutSetPlaybackRate32
 180 stdcall waveOutSetVolume(long long) waveOutSetVolume32
-181 stdcall waveOutUnprepareHeader(long ptr long) waveOutPrepareHeader32
+181 stdcall waveOutUnprepareHeader(long ptr long) waveOutUnprepareHeader32
 182 stdcall waveOutWrite(long ptr long) waveOutWrite32
 183 stub winmmf_ThunkData32
 184 stub winmmsl_ThunkData32
