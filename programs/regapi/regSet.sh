@@ -39,23 +39,23 @@ if [ $1 != "/dev/null" ]; then
 else
   diff /dev/null $2.fix > $2.diff
 fi
+
 #
 # Keep only added lines
 # 
 echo "Grepping keys to add and generating cleaned fixed registry file."
-cat $2.diff | grep '^> ' | sed -e 's/^> //' > $2.toAdd
+cat $2.diff | grep '^> ' | sed -e 's/^> //' > $2.toAdd.clean
 
 # 
 # Restore the file format to the regedit export 'like' format
 #
 echo "Restoring key's in the regedit export format..."
-cat $2.toAdd | ./regRestorer.pl > $2.toAdd.final
+cat $2.toAdd.clean | ./regRestorer.pl > $2.toAdd
 
 echo "Cleaning..."
-rm $1.fix $2.fix >/dev/null 2>&1
-rm $2.diff       >/dev/null 2>&1
-rm $2.toAdd      >/dev/null 2>&1
-mv $2.toAdd.final $2.toAdd 
+rm $1.fix $2.fix    >/dev/null 2>&1
+rm $2.diff          >/dev/null 2>&1
+rm $2.toAdd.clean   >/dev/null 2>&1
 
 echo "Operation completed, result file is $2.toAdd"
 

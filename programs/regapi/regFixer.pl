@@ -8,10 +8,10 @@
 # 
 
 ${prefix} = "";
-${line}   = "";   
 
 LINE: while(<>) {
-  chomp;                    # Get rid of 0x0a
+  chomp;
+  s/\r$//;                  # Get rid of 0x0a
 
   next LINE if(/^$/);       # This is an empty line
 
@@ -21,20 +21,7 @@ LINE: while(<>) {
   }
   s/\\\\/\\/g;              # Still some more substitutions... To fix paths...
 
-  s/^  //;                  # Get rid of the stupid two spaces at the begining
-                            # they are there in the case of a multi-line thing
-
-  if (/\\$/) {              # The line ends with '\', it means it is a multi
-    s/\\$//;                # line thing, remove it.
-    
-    ${line} = "${line}${_}";# Add the current line to the line to output
-    next LINE;              # process the next line
-  }
-
-  ${line} = "${line}${_}";  # Set line to the multi line thing+the current line
-
-  print "${prefix}${line}\n";  
-  ${line} = "";             # start over...
+  print "${prefix}$_\n";  
 }
 
 

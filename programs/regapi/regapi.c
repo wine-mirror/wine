@@ -21,8 +21,8 @@
 #define IDENTICAL             0 
 #define COMMAND_COUNT         7
 
-#define KEY_MAX_LEN           1024 
-#define STDIN_MAX_LEN         2048
+#define KEY_MAX_LEN             1024 
+#define STDIN_MAX_LEN         102400
 
 /* Return values */
 #define COMMAND_NOT_FOUND     -1
@@ -163,10 +163,7 @@ static char helpText[] =
 "INPUT FILE FORMAT\n"
 "\n"
 "          setValue\n"
-"              The input file format required by the setValue command is similar\n"
-"              to the one obtained from regedit.exe export option.  The only\n"
-"              difference is that multi line values are not supported, the\n"
-"              value data must be on a single line.\n"
+"              The input file is in format, obtained from regedit.exe export.\n"
 "\n"
 "              [KEY_CLASS\\Some\\Path\\For\\A\\Key]\n"
 "              \"Value1\"=\"Data1\"\n"
@@ -994,7 +991,7 @@ static void doUnregisterDLL(LPSTR stdInput) {
  *        It then reads the STDIN line by line forwarding their processing
  *        to the appropriate method.
  */
-int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
+int PASCAL WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
   LPSTR  token          = NULL;  /* current token analized */
   LPSTR  stdInput       = NULL;  /* line read from stdin */
@@ -1075,10 +1072,11 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
               stdInput=HeapReAlloc(GetProcessHeap(),0,stdInput,strlen(stdInput)+STDIN_MAX_LEN);
 
               currentSize+=STDIN_MAX_LEN;
-    }
+          }
 
           strcat(stdInput,nextLine+2);
       }
+
     }
 
     /* 

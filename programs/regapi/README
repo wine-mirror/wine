@@ -38,16 +38,8 @@ Registry Command Line API Tool
   ( let's say we keep the added values only ).
 
   At this point we know which registry entry to add to the wine registry.  It 
-  only remains to take the format we have and reset it into a format similar
-  to the one we get from regedit.
-
-  I say "similar" because there is a tiny difference between Windows regedit 
-  export format and the format actually required by the tool.
-
-  The problem with this (and it is not a big one) is that regedit exports long 
-  data streams onto many lines, and since I don't have tons of time I setup 
-  another Perl script (regRestorer.pl) that fixes this (this could easily 
-  be done in C obviously) (left as exercise ;-) ).  
+  only remains to take the format we have and reset it into a format  we get from
+  regedit.
     
   So, once you parsed app.added into regRestorer.pl you get an app.reg ready to 
   process by regapi.
