@@ -1070,7 +1070,7 @@ void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
 	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
 	BitBlt (hdc, rect.right - (sysMetrics[SM_CYCAPTION] + 1 + bmp.bmWidth) / 2,
 		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
-		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, down ? NOTSRCCOPY : SRCCOPY);
+		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY);
 
 	SelectObject (hdcMem, hOldBmp);
 	DeleteDC (hdcMem);
