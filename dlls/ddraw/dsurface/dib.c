@@ -570,50 +570,144 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		    last_sy = sy;
 		}
 	    }
-	} else if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE)) {
-	    DWORD keylow, keyhigh;
+	} else {
+           LONG dstyinc = ddesc.u1.lPitch, dstxinc = bpp;
+           DWORD keylow = 0, keyhigh = 0;
+           if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE)) {
 
-	    if (dwFlags & DDBLT_KEYSRC) {
-		keylow  = sdesc.ddckCKSrcBlt.dwColorSpaceLowValue;
-		keyhigh = sdesc.ddckCKSrcBlt.dwColorSpaceHighValue;
-	    } else if (dwFlags & DDBLT_KEYDEST){
-		/* I'm not sure if this is correct */
-		FIXME("DDBLT_KEYDEST not fully supported yet.\n");
-		keylow  = ddesc.ddckCKDestBlt.dwColorSpaceLowValue;
-		keyhigh = ddesc.ddckCKDestBlt.dwColorSpaceHighValue;
-	    } else if (dwFlags & DDBLT_KEYSRCOVERRIDE) {
-		keylow  = lpbltfx->ddckSrcColorkey.dwColorSpaceLowValue;
-		keyhigh = lpbltfx->ddckSrcColorkey.dwColorSpaceHighValue;
-	    } else {
-		keylow  = lpbltfx->ddckDestColorkey.dwColorSpaceLowValue;
-		keyhigh = lpbltfx->ddckDestColorkey.dwColorSpaceHighValue;
-	    }
+	      if (dwFlags & DDBLT_KEYSRC) {
+		 keylow  = sdesc.ddckCKSrcBlt.dwColorSpaceLowValue;
+		 keyhigh = sdesc.ddckCKSrcBlt.dwColorSpaceHighValue;
+	      } else if (dwFlags & DDBLT_KEYDEST){
+		 keylow  = ddesc.ddckCKDestBlt.dwColorSpaceLowValue;
+		 keyhigh = ddesc.ddckCKDestBlt.dwColorSpaceHighValue;
+	      } else if (dwFlags & DDBLT_KEYSRCOVERRIDE) {
+		 keylow  = lpbltfx->ddckSrcColorkey.dwColorSpaceLowValue;
+		 keyhigh = lpbltfx->ddckSrcColorkey.dwColorSpaceHighValue;
+	      } else {
+		 keylow  = lpbltfx->ddckDestColorkey.dwColorSpaceLowValue;
+		 keyhigh = lpbltfx->ddckDestColorkey.dwColorSpaceHighValue;
+	      }
+              dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
+           }
 
-	    for (y = sy = 0; y < dstheight; y++, sy += yinc) {
-		sbuf = sbase + (sy >> 16) * sdesc.u1.lPitch;
+           if (dwFlags & DDBLT_DDFX)  {
+              LPBYTE dTopLeft, dTopRight, dBottomLeft, dBottomRight, tmp;
+              LONG tmpxy;
+              dTopLeft     = dbuf;
+              dTopRight    = dbuf+((dstwidth-1)*bpp);
+              dBottomLeft  = dTopLeft+((dstheight-1)*ddesc.u1.lPitch);
+              dBottomRight = dBottomLeft+((dstwidth-1)*bpp);
 
-#define COPYROW_COLORKEY(type) { \
-		type *s = (type *) sbuf, *d = (type *) dbuf, tmp; \
-		for (x = sx = 0; x < dstwidth; x++, sx += xinc) { \
-		    tmp = s[sx >> 16]; \
-		    if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
-		} \
-		break; }
+              if (lpbltfx->dwDDFX & DDBLTFX_ARITHSTRETCHY){
+                 /* I don't think we need to do anything about this flag */
+                 WARN("dwflags=DDBLT_DDFX nothing done for DDBLTFX_ARITHSTRETCHY\n");
+              }
+              if (lpbltfx->dwDDFX & DDBLTFX_MIRRORLEFTRIGHT) {
+                 tmp          = dTopRight;
+                 dTopRight    = dTopLeft;
+                 dTopLeft     = tmp;
+                 tmp          = dBottomRight;
+                 dBottomRight = dBottomLeft;
+                 dBottomLeft  = tmp;
+                 dstxinc = dstxinc *-1;
+              }
+              if (lpbltfx->dwDDFX & DDBLTFX_MIRRORUPDOWN) {
+                 tmp          = dTopLeft;
+                 dTopLeft     = dBottomLeft;
+                 dBottomLeft  = tmp;
+                 tmp          = dTopRight;
+                 dTopRight    = dBottomRight;
+                 dBottomRight = tmp;
+                 dstyinc = dstyinc *-1;
+              }
+              if (lpbltfx->dwDDFX & DDBLTFX_NOTEARING) {
+                 /* I don't think we need to do anything about this flag */
+                 WARN("dwflags=DDBLT_DDFX nothing done for DDBLTFX_NOTEARING\n");
+              }
+              if (lpbltfx->dwDDFX & DDBLTFX_ROTATE180) {
+                 tmp          = dBottomRight;
+                 dBottomRight = dTopLeft;
+                 dTopLeft     = tmp;
+                 tmp          = dBottomLeft;
+                 dBottomLeft  = dTopRight;
+                 dTopRight    = tmp;
+                 dstxinc = dstxinc * -1;
+                 dstyinc = dstyinc * -1;
+              }
+              if (lpbltfx->dwDDFX & DDBLTFX_ROTATE270) {
+                 tmp          = dTopLeft;
+                 dTopLeft     = dBottomLeft;
+                 dBottomLeft  = dBottomRight;
+                 dBottomRight = dTopRight;
+                 dTopRight    = tmp;
+                 tmpxy   = dstxinc;
+                 dstxinc = dstyinc;
+                 dstyinc = tmpxy;
+                 dstxinc = dstxinc * -1;
+              }
+              if (lpbltfx->dwDDFX & DDBLTFX_ROTATE90) {
+                 tmp          = dTopLeft;
+                 dTopLeft     = dTopRight;
+                 dTopRight    = dBottomRight;
+                 dBottomRight = dBottomLeft;
+                 dBottomLeft  = tmp;
+                 tmpxy   = dstxinc;
+                 dstxinc = dstyinc;
+                 dstyinc = tmpxy;
+                 dstyinc = dstyinc * -1;
+              }
+              if (lpbltfx->dwDDFX & DDBLTFX_ZBUFFERBASEDEST) {
+                 /* I don't think we need to do anything about this flag */
+                 WARN("dwflags=DDBLT_DDFX nothing done for DDBLTFX_ZBUFFERBASEDEST\n");
+              }
+              dbuf = dTopLeft;
+              dwFlags &= ~(DDBLT_DDFX);
+           }
 
-		switch (bpp) {
-		case 1: COPYROW_COLORKEY(BYTE)
-		case 2: COPYROW_COLORKEY(WORD)
-		case 4: COPYROW_COLORKEY(DWORD)
-		default:
-		    FIXME("%s color-keyed blit not implemented for bpp %d!\n",
-		    (dwFlags & DDBLT_KEYSRC) ? "Source" : "Destination", bpp*8);
-		    ret = DDERR_UNSUPPORTED;
-		    goto error;
-		}
-		dbuf += ddesc.u1.lPitch;
-	    }
-#undef COPYROW_COLORKEY
-	    dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
+#define COPY_COLORKEY_FX(type) { \
+	    type *s = (type *) sbuf, *d = (type *) dbuf, *dx, tmp; \
+            for (y = sy = 0; y < dstheight; y++, sy += yinc) { \
+               (LPBYTE)s = sbase + (sy >> 16) * sdesc.u1.lPitch; \
+               (LPBYTE)dx = d; \
+	       for (x = sx = 0; x < dstwidth; x++, sx += xinc) { \
+		  tmp = s[sx >> 16]; \
+		  if (tmp < keylow || tmp > keyhigh) dx[0] = tmp; \
+                  (LPBYTE)dx += dstxinc; \
+	          } \
+               (LPBYTE)d += dstyinc; \
+	    } \
+            break; }
+
+	    switch (bpp) {
+	    case 1: COPY_COLORKEY_FX(BYTE)
+	    case 2: COPY_COLORKEY_FX(WORD)
+	    case 4: COPY_COLORKEY_FX(DWORD)
+ 	    case 3: {LPBYTE s,d = dbuf, dx;
+		for (y = sy = 0; y < dstheight; y++, sy += yinc) {
+		    sbuf = sbase + (sy >> 16) * sdesc.u1.lPitch;
+		    dx = d;
+		    for (x = sx = 0; x < dstwidth; x++, sx+= xinc) {
+			DWORD pixel;
+			s = sbuf+3*(sx>>16);
+			pixel = (s[0]<<16)|(s[1]<<8)|s[2];
+                        if (pixel < keylow || pixel > keyhigh){
+		            dx[0] = (pixel>>16)&0xff;
+			    dx[1] = (pixel>> 8)&0xff;
+			    dx[2] = (pixel    )&0xff;
+                        }
+		        dx+= dstxinc;
+		    }
+		    d += dstyinc;
+                }
+                break;}
+	    default:
+	       FIXME("%s color-keyed blit not implemented for bpp %d!\n",
+	          (dwFlags & DDBLT_KEYSRC) ? "Source" : "Destination", bpp*8);
+		  ret = DDERR_UNSUPPORTED;
+		  goto error;
+#undef COPY_COLORKEY_FX
+            }
 	}
     }
 
