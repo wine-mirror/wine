@@ -44,12 +44,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
  * Read a file's PE header, and return the offset and size of the 
  *  security directory.
  */
-static BOOL IMAGEHLP_GetSecurityDirOffset( HANDLE handle, DWORD num,
+static BOOL IMAGEHLP_GetSecurityDirOffset( HANDLE handle, 
                                            DWORD *pdwOfs, DWORD *pdwSize )
 {
     IMAGE_DOS_HEADER dos_hdr;
     IMAGE_NT_HEADERS nt_hdr;
-    DWORD size, count, offset, len;
+    DWORD count;
     BOOL r;
     IMAGE_DATA_DIRECTORY *sd;
 
@@ -80,16 +80,35 @@ static BOOL IMAGEHLP_GetSecurityDirOffset( HANDLE handle, DWORD num,
     sd = &nt_hdr.OptionalHeader.
                     DataDirectory[IMAGE_FILE_SECURITY_DIRECTORY];
 
-    TRACE("len = %lx addr = %lx\n", sd->Size, sd->VirtualAddress);
+    TRACE("size = %lx addr = %lx\n", sd->Size, sd->VirtualAddress);
+    *pdwSize = sd->Size;
+    *pdwOfs = sd->VirtualAddress;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ * IMAGEHLP_GetCertificateOffset (INTERNAL)
+ *
+ * Read a file's PE header, and return the offset and size of the 
+ *  security directory.
+ */
+static BOOL IMAGEHLP_GetCertificateOffset( HANDLE handle, DWORD num,
+                                           DWORD *pdwOfs, DWORD *pdwSize )
+{
+    DWORD size, count, offset, len, sd_VirtualAddr;
+    BOOL r;
+
+    r = IMAGEHLP_GetSecurityDirOffset( handle, &sd_VirtualAddr, &size );
+    if( !r )
+        return FALSE;
 
     offset = 0;
-    size = sd->Size;
-
     /* take the n'th certificate */
     while( 1 )
     {
         /* read the length of the current certificate */
-        count = SetFilePointer( handle, sd->VirtualAddress + offset,
+        count = SetFilePointer( handle, sd_VirtualAddr + offset,
                                  NULL, FILE_BEGIN );
         if( count == INVALID_SET_FILE_POINTER )
             return FALSE;
@@ -113,10 +132,10 @@ static BOOL IMAGEHLP_GetSecurityDirOffset( HANDLE handle, DWORD num,
             return FALSE;
     }
 
-    *pdwOfs = sd->VirtualAddress + offset;
+    *pdwOfs = sd_VirtualAddr + offset;
     *pdwSize = len;
 
-    TRACE("len = %lx addr = %lx\n", len, sd->VirtualAddress + offset);
+    TRACE("len = %lx addr = %lx\n", len, sd_VirtualAddr + offset);
 
     return TRUE;
 }
@@ -140,14 +159,62 @@ BOOL WINAPI ImageAddCertificate(
  *		ImageEnumerateCertificates (IMAGEHLP.@)
  */
 BOOL WINAPI ImageEnumerateCertificates(
-  HANDLE FileHandle, WORD TypeFilter, PDWORD CertificateCount,
-  PDWORD Indices, DWORD IndexCount)
+    HANDLE handle, WORD TypeFilter, PDWORD CertificateCount,
+    PDWORD Indices, DWORD IndexCount)
 {
-  FIXME("(%p, %hd, %p, %p, %ld): stub\n",
-    FileHandle, TypeFilter, CertificateCount, Indices, IndexCount
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    DWORD size, count, offset, sd_VirtualAddr;
+    WIN_CERTIFICATE hdr;
+    const size_t cert_hdr_size = sizeof hdr - sizeof hdr.bCertificate;
+    BOOL r;
+
+    TRACE("%p %hd %p %p %ld\n",
+           handle, TypeFilter, CertificateCount, Indices, IndexCount);
+
+    if( Indices )
+    {
+        FIXME("Indicies not handled!\n");
+        return FALSE;
+    }
+
+    r = IMAGEHLP_GetSecurityDirOffset( handle, &sd_VirtualAddr, &size );
+    if( !r )
+        return FALSE;
+
+    offset = 0;
+    *CertificateCount = 0;
+    while( offset < size )
+    {
+        /* read the length of the current certificate */
+        count = SetFilePointer( handle, sd_VirtualAddr + offset,
+                                 NULL, FILE_BEGIN );
+        if( count == INVALID_SET_FILE_POINTER )
+            return FALSE;
+        r = ReadFile( handle, &hdr, cert_hdr_size, &count, NULL );
+        if( !r )
+            return FALSE;
+        if( count != cert_hdr_size )
+            return FALSE;
+
+        TRACE("Size = %08lx  id = %08hx\n",
+               hdr.dwLength, hdr.wCertificateType );
+
+        /* check the certificate is not too big or too small */
+        if( hdr.dwLength < cert_hdr_size )
+            return FALSE;
+        if( hdr.dwLength > (size-offset) )
+            return FALSE;
+       
+        if( (TypeFilter == CERT_SECTION_TYPE_ANY) ||
+            (TypeFilter == hdr.wCertificateType) )
+        {
+            (*CertificateCount)++;
+        }
+
+        /* next certificate */
+        offset += hdr.dwLength;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -163,7 +230,7 @@ BOOL WINAPI ImageGetCertificateData(
 
     TRACE("%p %ld %p %p\n", handle, Index, Certificate, RequiredLength);
 
-    if( !IMAGEHLP_GetSecurityDirOffset( handle, Index, &ofs, &size ) )
+    if( !IMAGEHLP_GetCertificateOffset( handle, Index, &ofs, &size ) )
         return FALSE;
 
     if( !Certificate )
@@ -200,14 +267,32 @@ BOOL WINAPI ImageGetCertificateData(
  *		ImageGetCertificateHeader (IMAGEHLP.@)
  */
 BOOL WINAPI ImageGetCertificateHeader(
-  HANDLE FileHandle, DWORD CertificateIndex,
-  PWIN_CERTIFICATE Certificateheader)
+    HANDLE handle, DWORD index, PWIN_CERTIFICATE pCert)
 {
-  FIXME("(%p, %ld, %p): stub\n",
-    FileHandle, CertificateIndex, Certificateheader
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    DWORD r, offset, ofs, size, count;
+    const size_t cert_hdr_size = sizeof *pCert - sizeof pCert->bCertificate;
+
+    TRACE("%p %ld %p\n", handle, index, pCert);
+
+    if( !IMAGEHLP_GetCertificateOffset( handle, index, &ofs, &size ) )
+        return FALSE;
+
+    if( size < cert_hdr_size )
+        return FALSE;
+
+    offset = SetFilePointer( handle, ofs, NULL, FILE_BEGIN );
+    if( offset == INVALID_SET_FILE_POINTER )
+        return FALSE;
+
+    r = ReadFile( handle, pCert, cert_hdr_size, &count, NULL );
+    if( !r )
+        return FALSE;
+    if( count != cert_hdr_size )
+        return FALSE;
+
+    TRACE("OK\n");
+
+    return TRUE;
 }
 
 /***********************************************************************
