@@ -2278,10 +2278,13 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         'C','o','n','d','i','t','i','o','n',0};
     static const WCHAR szCosting[] = {
        'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
+    static const WCHAR szlevel[] = {
+        'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szOne[] = { '1', 0 };
     UINT rc;
     MSIQUERY * view;
     DWORD i;
+    LPWSTR level;
 
     TRACE("Building Directory properties\n");
 
@@ -2483,6 +2486,12 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     }
 
     MSI_SetPropertyW(package,szCosting,szOne);
+    /* set default run level if not set */
+    level = load_dynamic_property(package,szlevel,NULL);
+    if (!level)
+        MSI_SetPropertyW(package,szlevel, szOne);
+    else
+        HeapFree(GetProcessHeap(),0,level);
     return ERROR_SUCCESS;
 }
 
@@ -4401,6 +4410,9 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         sz = 0x100;
         MSI_RecordGetStringW(row,2,buffer,&sz);
         target_folder = resolve_folder(package, buffer,FALSE,FALSE,NULL);
+
+        /* may be needed because of a bug somehwere else */
+        create_full_pathW(target_folder);
 
         sz = 0x100;
         MSI_RecordGetStringW(row,3,buffer,&sz);
