@@ -2131,6 +2131,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
 
 	if (loadflags & LR_CREATEDIBSECTION) {
           DIBSECTION dib;
+          fix_info->bmiHeader.biCompression = 0; /* DIBSection can't be compressed */
 	  hbitmap = CreateDIBSection(screen_dc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
           GetObjectA(hbitmap, sizeof(DIBSECTION), &dib);
           SetDIBits(screen_dc, hbitmap, 0, dib.dsBm.bmHeight, bits, info,
