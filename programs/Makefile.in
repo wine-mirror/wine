@@ -4,37 +4,49 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
-SUBDIRS = \
-	avitools \
-	clock \
-	cmdlgtst \
+INSTALLSUBDIRS = \
 	control \
 	notepad \
-	osversioncheck \
 	progman \
-	regapi \
 	regedit \
 	regsvr32 \
-	regtest \
 	uninstaller \
-	view \
 	wcmd \
 	wineconsole \
 	winemine \
-	winetest \
 	winhelp \
 	winver
 
-all: $(SUBDIRS)
+# Programs that are not generally useful and don't get installed
+# Use 'make everything' to build them
+OTHERSUBDIRS = \
+	avitools \
+	clock \
+	cmdlgtst \
+	osversioncheck \
+	regapi \
+	regtest \
+	view \
+	winetest
+
+SUBDIRS = $(INSTALLSUBDIRS) $(OTHERSUBDIRS)
+
+all: $(INSTALLSUBDIRS)
 
 @MAKE_RULES@
 
+everything: $(SUBDIRS)
+
+install-everything: $(SUBDIRS:%=%/__install__)
+
+uninstall-everything: $(SUBDIRS:%=%/__uninstall__)
+
+install:: $(INSTALLSUBDIRS:%=%/__install__)
+
+uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
+
 $(SUBDIRS:%=%/__checklink__): dummy
 	@cd `dirname $@` && $(MAKE) checklink
-
-install:: $(SUBDIRS:%=%/__install__)
-
-uninstall:: $(SUBDIRS:%=%/__uninstall__)
 
 checklink:: $(SUBDIRS:%=%/__checklink__)
 

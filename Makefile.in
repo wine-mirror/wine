@@ -29,8 +29,8 @@ PROGRAMS = \
 
 # Programs that link with libwine
 LIBPROGRAMS = \
-	debugger/winedbg \
-	programs/wineconsole/wineconsole
+	debugger \
+	programs
 
 # Libraries (not dlls) to build
 LIBRARIES = \
@@ -54,8 +54,7 @@ LIBSYMLINKS = \
 SUBDIRS = \
 	$(INSTALLSUBDIRS) \
 	libtest \
-	miscemu \
-	programs
+	miscemu
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
@@ -65,7 +64,7 @@ INSTALLSUBDIRS = \
 	include \
 	library \
 	ole \
-	programs/wineconsole \
+	programs \
 	server \
 	tools \
 	tsx11 \
@@ -103,7 +102,7 @@ install:: all install_wine $(INSTALLSUBDIRS:%=%/__install__)
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 	cd $(bindir) && $(RM) wine
 
-$(EMUOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
+$(EMUOBJS) $(PROGRAMS) $(LIBRARIES): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 # Symlinks to libraries that we need to link against
@@ -148,12 +147,6 @@ dlls: tools $(LIBRARIES)
 
 checklink::
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(LIBWINE) $(LIBS) && $(RM) checklink
-
-install_programs: dummy
-	@cd programs && $(MAKE) install
-
-uninstall_programs: dummy
-	@cd programs && $(MAKE) uninstall
 
 checklink::
 	@cd dlls && $(MAKE) checklink
