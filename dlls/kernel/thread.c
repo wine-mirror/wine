@@ -48,11 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 
-/* TEB of the initial thread */
-static TEB initial_teb;
-extern struct _PDB current_process;
-
-
 /***********************************************************************
  *           THREAD_InitTEB
  *
@@ -145,32 +140,6 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
                     PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
     return teb;
 }
-
-
-/***********************************************************************
- *           THREAD_Init
- *
- * Setup the initial thread.
- *
- * NOTES: The first allocated TEB on NT is at 0x7ffde000.
- */
-void THREAD_Init(void)
-{
-    static struct debug_info info;  /* debug info for initial thread */
-
-    if (!initial_teb.Tib.Self)  /* do it only once */
-    {
-        THREAD_InitTEB( &initial_teb );
-        assert( initial_teb.teb_sel );
-        info.str_pos = info.strings;
-        info.out_pos = info.output;
-        initial_teb.debug_info = &info;
-        initial_teb.Peb = (PEB *)&current_process;  /* FIXME */
-        SYSDEPS_SetCurThread( &initial_teb );
-    }
-}
-
-DECL_GLOBAL_CONSTRUCTOR(thread_init) { THREAD_Init(); }
 
 
 /***********************************************************************

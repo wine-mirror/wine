@@ -96,9 +96,7 @@ typedef struct _PDB
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
 } PDB;
 
-PDB current_process;
-
-static PEB_LDR_DATA process_ldr;
+static PDB *current_process;
 
 static HANDLE main_exe_file;
 static DWORD shutdown_flags = 0;
@@ -660,11 +658,9 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
  */
 static BOOL process_init( char *argv[] )
 {
-    static RTL_USER_PROCESS_PARAMETERS default_params;  /* default parameters if no parent */
-
     BOOL ret;
     size_t info_size = 0;
-    RTL_USER_PROCESS_PARAMETERS *params = &default_params;
+    RTL_USER_PROCESS_PARAMETERS *params;
     HANDLE hstdin, hstdout, hstderr;
 
     setbuf(stdout,NULL);
@@ -672,16 +668,13 @@ static BOOL process_init( char *argv[] )
     setlocale(LC_CTYPE,"");
 
     /* Fill the initial process structure */
-    current_process.threads           = 1;
-    current_process.running_threads   = 1;
-    current_process.ring0_threads     = 1;
-    current_process.group             = &current_process;
-    current_process.priority          = 8;  /* Normal */
-    current_process.ProcessParameters = &default_params;
-    current_process.LdrData           = &process_ldr;
-    InitializeListHead(&process_ldr.InLoadOrderModuleList);
-    InitializeListHead(&process_ldr.InMemoryOrderModuleList);
-    InitializeListHead(&process_ldr.InInitializationOrderModuleList);
+    current_process = (PDB *)NtCurrentTeb()->Peb;  /* FIXME: should be a PEB */
+    params = current_process->ProcessParameters;
+    current_process->threads           = 1;
+    current_process->running_threads   = 1;
+    current_process->ring0_threads     = 1;
+    current_process->group             = current_process;
+    current_process->priority          = 8;  /* Normal */
 
     /* Setup the server connection */
     wine_server_init_thread();
@@ -705,7 +698,7 @@ static BOOL process_init( char *argv[] )
     if (!ret) return FALSE;
 
     /* Create the process heap */
-    current_process.heap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
+    current_process->heap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
 
     if (info_size == 0)
     {
@@ -730,7 +723,7 @@ static BOOL process_init( char *argv[] )
     else
     {
         if (!(params = init_user_process_params( info_size ))) return FALSE;
-        current_process.ProcessParameters = params;
+        current_process->ProcessParameters = params;
 
         /* convert value from server:
          * + 0 => INVALID_HANDLE_VALUE
@@ -813,13 +806,14 @@ void __wine_process_init( int argc, char *argv[] )
     char error[1024];
     DWORD stack_size = 0;
     int file_exists;
+    PEB *peb = NtCurrentTeb()->Peb;
 
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
 
     argv++;  /* remove argv[0] (wine itself) */
 
-    if (!(main_exe_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer))
+    if (!(main_exe_name = peb->ProcessParameters->ImagePathName.Buffer))
     {
         WCHAR buffer[MAX_PATH];
         WCHAR exe_nameW[MAX_PATH];
@@ -838,8 +832,8 @@ void __wine_process_init( int argc, char *argv[] )
             MESSAGE( "wine: cannot open %s\n", debugstr_w(main_exe_name) );
             ExitProcess(1);
         }
-        RtlCreateUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName, buffer );
-        main_exe_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+        RtlCreateUnicodeString( &peb->ProcessParameters->ImagePathName, buffer );
+        main_exe_name = peb->ProcessParameters->ImagePathName.Buffer;
     }
 
     TRACE( "starting process name=%s file=%p argv[0]=%s\n",
@@ -862,7 +856,8 @@ void __wine_process_init( int argc, char *argv[] )
     {
     case BINARY_PE_EXE:
         TRACE( "starting Win32 binary %s\n", debugstr_w(main_exe_name) );
-        if ((current_process.module = load_pe_exe( main_exe_name, main_exe_file ))) goto found;
+        if ((peb->ImageBaseAddress = load_pe_exe( main_exe_name, main_exe_file )))
+            goto found;
         MESSAGE( "wine: could not load %s as Win32 binary\n", debugstr_w(main_exe_name) );
         ExitProcess(1);
     case BINARY_PE_DLL:
@@ -910,8 +905,7 @@ void __wine_process_init( int argc, char *argv[] )
                 {
                     *p = 0;
                     /* update the unicode string */
-                    RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
-                                          main_exe_name );
+                    RtlInitUnicodeString( &peb->ProcessParameters->ImagePathName, main_exe_name );
                 }
                 goto found;
             }
@@ -926,9 +920,9 @@ void __wine_process_init( int argc, char *argv[] )
     if (!build_command_line( __wine_main_wargv )) goto error;
 
     /* create 32-bit module for main exe */
-    if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module, CreateFileW )))
+    if (!(peb->ImageBaseAddress = BUILTIN32_LoadExeModule( peb->ImageBaseAddress, CreateFileW )))
         goto error;
-    stack_size = RtlImageNtHeader(current_process.module)->OptionalHeader.SizeOfStackReserve;
+    stack_size = RtlImageNtHeader(peb->ImageBaseAddress)->OptionalHeader.SizeOfStackReserve;
 
     /* allocate main thread stack */
     if (!THREAD_InitStack( NtCurrentTeb(), stack_size )) goto error;
@@ -1948,8 +1942,8 @@ BOOL WINAPI GetExitCodeProcess(
  */
 UINT WINAPI SetErrorMode( UINT mode )
 {
-    UINT old = current_process.error_mode;
-    current_process.error_mode = mode;
+    UINT old = current_process->error_mode;
+    current_process->error_mode = mode;
     return old;
 }
 
@@ -1966,7 +1960,7 @@ UINT WINAPI SetErrorMode( UINT mode )
 DWORD WINAPI TlsAlloc( void )
 {
     DWORD i, mask, ret = 0;
-    DWORD *bits = current_process.tls_bits;
+    DWORD *bits = current_process->tls_bits;
     RtlAcquirePebLock();
     if (*bits == 0xffffffff)
     {
@@ -2000,7 +1994,7 @@ BOOL WINAPI TlsFree(
     DWORD index) /* [in] TLS Index to free */
 {
     DWORD mask = (1 << (index & 31));
-    DWORD *bits = current_process.tls_bits;
+    DWORD *bits = current_process->tls_bits;
     if (index >= 64)
     {
         SetLastError( ERROR_INVALID_PARAMETER );

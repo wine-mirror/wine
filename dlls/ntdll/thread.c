@@ -18,13 +18,62 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include "ntstatus.h"
 #include "thread.h"
 #include "winternl.h"
+#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
+
+
+/***********************************************************************
+ *           thread_init
+ *
+ * Setup the initial thread.
+ *
+ * NOTES: The first allocated TEB on NT is at 0x7ffde000.
+ */
+DECL_GLOBAL_CONSTRUCTOR(thread_init)
+{
+    static TEB teb;
+    static PEB peb;
+    static PEB_LDR_DATA ldr;
+    static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
+    static struct debug_info info;  /* debug info for initial thread */
+
+    if (teb.Tib.Self) return;  /* do it only once */
+
+    info.str_pos = info.strings;
+    info.out_pos = info.output;
+
+    teb.Tib.ExceptionList = (void *)~0UL;
+    teb.Tib.StackBase     = (void *)~0UL;
+    teb.Tib.Self          = &teb.Tib;
+    teb.Peb               = &peb;
+    teb.tibflags          = TEBF_WIN32;
+    teb.request_fd        = -1;
+    teb.reply_fd          = -1;
+    teb.wait_fd[0]        = -1;
+    teb.wait_fd[1]        = -1;
+    teb.teb_sel           = wine_ldt_alloc_fs();
+    teb.debug_info        = &info;
+    teb.StaticUnicodeString.MaximumLength = sizeof(teb.StaticUnicodeBuffer);
+    teb.StaticUnicodeString.Buffer        = teb.StaticUnicodeBuffer;
+    InitializeListHead( &teb.TlsLinks );
+
+    peb.ProcessParameters = &params;
+    peb.LdrData = &ldr;
+    InitializeListHead( &ldr.InLoadOrderModuleList );
+    InitializeListHead( &ldr.InMemoryOrderModuleList );
+    InitializeListHead( &ldr.InInitializationOrderModuleList );
+
+    SYSDEPS_SetCurThread( &teb );
+}
 
 
 /***********************************************************************

@@ -125,7 +125,7 @@ typedef struct _TEB
     /* the following are nt specific fields */
     DWORD        pad6[624];                  /* --n 238 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
-    USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
+    WCHAR        StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     PVOID        DeallocationStack;          /* -2- e0c Base of the stack */
     LPVOID       TlsSlots[64];               /* -2- e10 Thread local storage */
     LIST_ENTRY   TlsLinks;                   /* -2- f10 */
@@ -145,7 +145,6 @@ typedef struct _TEB
 
 
 /* scheduler/thread.c */
-extern void THREAD_Init(void);
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 
 /* scheduler/sysdeps.c */
