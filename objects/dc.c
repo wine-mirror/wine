@@ -783,7 +783,11 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
       GDI_HEAP_UNLOCK( hdc );
       return 0;
     }
-    
+
+    if (((cap>=46) && (cap<88)) || ((cap>=92) && (cap<104)))
+	FIXME("(%04x,%d): unsupported DeviceCaps capability, will yield 0!\n",
+		hdc,cap
+	);
     TRACE("(%04x,%d): returning %d\n",
 	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );
     ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
