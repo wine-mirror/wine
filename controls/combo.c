@@ -1844,6 +1844,13 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	}
 	case WM_WINDOWPOSCHANGING:
 	        return  COMBO_WindowPosChanging(hwnd, lphc, (LPWINDOWPOS)lParam);
+    case WM_WINDOWPOSCHANGED:
+        /* SetWindowPos can be called on a Combobox to resize its Listbox.
+         * In that case, the Combobox itself will not be resized, so we won't
+         * get a WM_SIZE. Since we still want to update the Listbox, we have to
+         * do it here.
+         */
+        /* fall through */
 	case WM_SIZE:
 	        if( lphc->hWndLBox && 
 		  !(lphc->wState & CBF_NORESIZE) ) COMBO_Size( lphc );
