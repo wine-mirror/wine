@@ -4020,6 +4020,61 @@ end:
     return rc;
 }
 
+typedef struct {
+    CLSID       clsid;
+    LPWSTR      source;
+
+    LPWSTR      path;
+    ITypeLib    *ptLib;
+} typelib_struct;
+
+BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType, 
+                                       LPWSTR lpszName, LONG_PTR lParam)
+{
+    TLIBATTR *attr;
+    typelib_struct *tl_struct = (typelib_struct*) lParam;
+    static const WCHAR fmt[] = {'%','s','\\','%','i',0};
+    int sz; 
+    HRESULT res;
+
+    if (!IS_INTRESOURCE(lpszName))
+    {
+        ERR("Not Int Resource Name %s\n",debugstr_w(lpszName));
+        return TRUE;
+    }
+
+    sz = strlenW(tl_struct->source)+4;
+    sz *= sizeof(WCHAR);
+
+    tl_struct->path = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintfW(tl_struct->path,fmt,tl_struct->source, lpszName);
+
+    TRACE("trying %s\n", debugstr_w(tl_struct->path));
+    res = LoadTypeLib(tl_struct->path,&tl_struct->ptLib);
+    if (!SUCCEEDED(res))
+    {
+        HeapFree(GetProcessHeap(),0,tl_struct->path);
+        tl_struct->path = NULL;
+
+        return TRUE;
+    }
+
+    ITypeLib_GetLibAttr(tl_struct->ptLib, &attr);
+    if (IsEqualGUID(&(tl_struct->clsid),&(attr->guid)))
+    {
+        ITypeLib_ReleaseTLibAttr(tl_struct->ptLib, attr);
+        return FALSE;
+    }
+
+    HeapFree(GetProcessHeap(),0,tl_struct->path);
+    tl_struct->path = NULL;
+
+    ITypeLib_ReleaseTLibAttr(tl_struct->ptLib, attr);
+    ITypeLib_Release(tl_struct->ptLib);
+
+    return TRUE;
+}
+
 static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 {
     /* 
@@ -4034,8 +4089,6 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          'T','y','p','e','L','i','b',0};
-    ITypeLib *ptLib;
-    HRESULT res;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4057,6 +4110,10 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
         WCHAR component[0x100];
         DWORD sz;
         INT index;
+        LPWSTR guid;
+        typelib_struct tl_struct;
+        HMODULE module;
+        static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
 
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -4097,46 +4154,59 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
             continue;
         }
 
-        res = LoadTypeLib(package->files[index].TargetPath,&ptLib);
-        if (SUCCEEDED(res))
+        guid = load_dynamic_stringW(row,1);
+        module = LoadLibraryExW(package->files[index].TargetPath, NULL,
+                        LOAD_LIBRARY_AS_DATAFILE);
+        if (module != NULL)
         {
-            LPWSTR help;
-            WCHAR helpid[0x100];
+            CLSIDFromString(guid, &tl_struct.clsid);
+            tl_struct.source = strdupW(package->files[index].TargetPath);
+            tl_struct.path = NULL;
 
-            sz = 0x100;
-            MSI_RecordGetStringW(row,6,helpid,&sz);
+            EnumResourceNamesW(module, szTYPELIB, Typelib_EnumResNameProc, 
+                               (LONG_PTR)&tl_struct);
 
-            help = resolve_folder(package,helpid,FALSE,FALSE,NULL);
-            res = RegisterTypeLib(ptLib,package->files[index].TargetPath,help);
-            HeapFree(GetProcessHeap(),0,help);
-
-            if (!SUCCEEDED(res))
-                ERR("Failed to register type library %s\n",
-                     debugstr_w(package->files[index].TargetPath));
-            else
+            if (tl_struct.path != NULL)
             {
-                /* Yes the row has more fields than I need, but #1 is 
-                   correct and the only one I need. Why make a new row? */
+                LPWSTR help;
+                WCHAR helpid[0x100];
+                HRESULT res;
 
-                ui_actiondata(package,szRegisterTypeLibraries,row);
+                sz = 0x100;
+                MSI_RecordGetStringW(row,6,helpid,&sz);
+
+                help = resolve_folder(package,helpid,FALSE,FALSE,NULL);
+                res = RegisterTypeLib(tl_struct.ptLib,tl_struct.path,help);
+                HeapFree(GetProcessHeap(),0,help);
+
+                if (!SUCCEEDED(res))
+                    ERR("Failed to register type library %s\n", 
+                            debugstr_w(tl_struct.path));
+                else
+                {
+                    ui_actiondata(package,szRegisterTypeLibraries,row);
                 
-                TRACE("Registered %s\n",
-                       debugstr_w(package->files[index].TargetPath));
-            }
+                    TRACE("Registered %s\n", debugstr_w(tl_struct.path));
+                }
 
-            if (ptLib)
-                ITypeLib_Release(ptLib);
+                ITypeLib_Release(tl_struct.ptLib);
+                HeapFree(GetProcessHeap(),0,tl_struct.path);
+            }
+            else
+                ERR("Failed to load type library %s\n", 
+                    debugstr_w(tl_struct.source));
+       
+            FreeLibrary(module);
+            HeapFree(GetProcessHeap(),0,tl_struct.source);
         }
         else
-            ERR("Failed to load type library %s\n",
-                debugstr_w(package->files[index].TargetPath));
-        
+            ERR("Could not load file! %s\n",
+                    debugstr_w(package->files[index].TargetPath));
         msiobj_release(&row->hdr);
     }
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
     return rc;
-   
 }
 
 static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
