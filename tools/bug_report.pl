@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 ##Wine Quick Debug Report Maker Thingy (WQDRMK)
 ## Copyright (c) 1998-1999 Adam Sacarny jazz@cscweb.net ICQ: 19617831
 ##Do not say this is yours without my express permisson, or I will
@@ -39,14 +39,15 @@
 ##January 26, 1999 - Fixed various bugs...
 ##                 - Made newbie mode easier
 ##January 25, 1999 - Initial Release
-sub do_var {
-	$var=$_[0];
+use strict;
+sub do_var($) {
+	my $var=$_[0];
 	$var =~ s/\t//g;
 	return $var;
 }
 open STDERR, ">&SAVEERR"; open STDERR, ">&STDOUT";
 $ENV{'SHELL'}="/bin/bash";
-$var0 = qq{
+my $var0 = qq{
 	What is your level of Wine expertise? 1-newbie 2-intermediate 3-advanced
 
 	1 - Makes a debug report as defined in the Wine documentation. Best
@@ -59,6 +60,7 @@ $var0 = qq{
 	    doing so it leaves out the long descriptions.
 };
 print do_var($var0)."\n";
+my $debuglevel=0;
 until ($debuglevel >= 1 and $debuglevel <= 3) {
 	print "Enter your level of Wine expertise (1-3): ";
 	$debuglevel=<STDIN>;
@@ -66,7 +68,7 @@ until ($debuglevel >= 1 and $debuglevel <= 3) {
 }
 
 if ($debuglevel < 3) {
-	$var1 = qq{
+	my $var1 = qq{
 	This program will make a debug report for Wine developers. It generates
 	two files. The first one has everything asked for by the bugreports guide;
 	the second has *all* of the debug output, which can go to thousands of
@@ -82,7 +84,7 @@ if ($debuglevel < 3) {
 	};
 	print do_var($var1);
 } elsif ($debuglevel =~ 3) {
-	$var2 = qq{
+	my $var2 = qq{
 	This program will output to two files:
 	1. Formatted debug report you might want to post to the newsgroup
 	2. File with ALL the debug output (It will later be compressed with
@@ -94,9 +96,9 @@ if ($debuglevel < 3) {
 }
 
 print "\nFilename for the formatted debug report: ";
-$outfile=<STDIN>;
+my $outfile=<STDIN>;
 chomp $outfile;
-$var23 = qq{
+my $var23 = qq{
 I don't think you typed in the right filename. Let's try again.
 };
 while ($outfile =~ /^(\s)*$/) {
@@ -106,7 +108,7 @@ while ($outfile =~ /^(\s)*$/) {
 }
 
 print "Filename for full debug output: ";
-$dbgoutfile=<STDIN>;
+my $dbgoutfile=<STDIN>;
 chomp $dbgoutfile;
 while ($dbgoutfile =~ /^(\s)*$/) {
 	print do_var($var23);
@@ -114,12 +116,13 @@ while ($dbgoutfile =~ /^(\s)*$/) {
 	chomp $dbgoutfile;
 }
 
-$var31 = qq{
+my $var31 = qq{
 Since you will only be creating the formatted report, I will need a
 temporary place to put the full output.
 You may not enter "no file" for this.
 Enter the filename for the temporary file:
 };
+my $tmpoutfile;
 if ($outfile ne "no file" and $dbgoutfile eq "no file") {
 	print do_var($var31);
 	$tmpoutfile=<STDIN>;
@@ -131,20 +134,21 @@ if ($outfile ne "no file" and $dbgoutfile eq "no file") {
 	}
 }
 
-$whereis=`whereis wine`;
+my $whereis=`whereis wine`;
 chomp $whereis;
 print "\nWhere is your copy of Wine located?\n\n";
 $whereis =~ s/^wine\: //;
-@locations = split(/\s/,$whereis);
+my @locations = split(/\s/,$whereis);
 print "1 - Unlisted (I'll prompt you for a new location\n";
 print "2 - Unsure (I'll use #3, that's probably it)\n";
-$i=2;
-foreach $location (@locations) {
+my $i=2;
+foreach my $location (@locations) {
 	$i++;
 	print "$i - $location\n";
 }
 print "\n";
-sub select_wineloc {
+sub select_wineloc() {
+	my $wineloc;
 	do
 		{
 		print "Enter the number that corresponds to Wine's location: ";
@@ -153,10 +157,10 @@ sub select_wineloc {
 		}
 	while ( ! ( $wineloc >=1 and $wineloc <= 2+@locations ) );
 	if ($wineloc == 1) {
-		$var25 = qq{
+		my $var25 = qq{
 		Enter the full path to wine (Example: /usr/bin/wine):
 		};
-		$var26 = qq{
+		my $var26 = qq{
 		Please enter the full path to wine. A full path is the
 		directories leading up to a program's location, and then the
 		program. For example, if you had the program "wine" in the
@@ -179,28 +183,29 @@ sub select_wineloc {
 	else {
 		$wineloc=$locations[$wineloc-3];
 	}
+	return $wineloc;
 }
-&select_wineloc;
+my $wineloc=select_wineloc();
 print "Checking if $wineloc is stripped...\n";
-$ifstrip = `nm $wineloc 2>&1`;
+my $ifstrip = `nm $wineloc 2>&1`;
 while ($ifstrip =~ /no symbols/) {
-	$var24 = qq{
+	my $var24 = qq{
 	Your wine is stripped! Stripped versions make useless debug reports
 	If you have another location of wine that may be used, enter it now.
 	Otherwise, hit control-c and download an unstripped (Debug) version, then re-run
 	this script.
 	};
 	print do_var($var24);
-	&select_wineloc;
+	$wineloc=select_wineloc();
 	$ifstrip = `nm $wineloc 2>&1`;
 }
 while ($ifstrip =~ /not recognized/) {
-	$var26 = qq{
+	my $var26 = qq{
 	Looks like you gave me something that isn't a Wine binary (It could be a
 	text file). Try again.
 	};
 	print do_var($var26);
-	&select_wineloc;
+	$wineloc=select_wineloc();
 	print "Checking if $wineloc is stripped...\n";
 	$ifstrip = `nm $wineloc 2>&1`;
 }
@@ -217,6 +222,7 @@ print "\nWhat version of Windows are you using with Wine?\n\n".
       "8 - Windows XP\n".
       "9 - Windows Server 2003\n".
       "10 - Other\n\n";
+my $winver;
 do
 	{
 	print "Enter the number that corresponds to your Windows version: ";
@@ -250,7 +256,7 @@ if ($winver =~ 0) {
 	chomp $winver;
 }
 if ($debuglevel < 3) {
-	$var7 = qq{
+	my $var7 = qq{
 	Enter the full path to the program you want to run. Remember what you
 	were told before - a full path is the directories leading up to the
 	program and then the program's name, like /dos/windows/sol.exe, not
@@ -259,13 +265,13 @@ if ($debuglevel < 3) {
 	print do_var($var7);
 }
 if ($debuglevel =~ 3) {
-	$var8 = qq{
+	my $var8 = qq{
 	Enter the full path to the program you want to run (Example:
 	/dos/windows/sol.exe, NOT sol.exe):
 	};
 	print do_var($var8);
 }
-$program=<STDIN>;
+my $program=<STDIN>;
 chomp $program;
 while ($program =~ /^(\s)*$/) {
 	print do_var($var23);
@@ -273,19 +279,19 @@ while ($program =~ /^(\s)*$/) {
 	chomp $program;
 }
 $program =~ s/\"//g;
-$var9 = qq{
+my $var9 = qq{
 Enter the name, version, and manufacturer of the program (Example:
 Netscape Navigator 4.5):
 };
 print do_var($var9);
-$progname=<STDIN>;
+my $progname=<STDIN>;
 chomp $progname;
-$var10 = qq{
+my $var10 = qq{
 Enter 1 if your program is 16 bit (Windows 3.x), 2 if your program is 32
 bit (Windows 95, NT3.x and up), or 3 if you are unsure:
 };
 print do_var($var10);
-$progbits=<STDIN>;
+my $progbits=<STDIN>;
 chomp $progbits;
 until ($progbits == 1 or $progbits == 2 or $progbits == 3) {
 	print "You must enter 1, 2 or 3!\n";
@@ -293,15 +299,16 @@ until ($progbits == 1 or $progbits == 2 or $progbits == 3) {
 	chomp $progbits
 }
 if ($progbits =~ 1) {
-	$progbits=Win16
+	$progbits = "Win16";
 } elsif ($progbits =~ 2) {
-	$progbits=Win32
+	$progbits = "Win32";
 } else {
-	$progbits = "Unsure"
+	$progbits = "Unsure";
 }
+my $debugopts;
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
-		$var11 = qq{
+		my $var11 = qq{
 		Enter any extra debug options. Default is +relay - If you don't
 		know what options to use, just hit enter, and I'll use those (Example, the
 		developer tells you to re-run with WINEDEBUG=+dosfs,+module you would type
@@ -309,7 +316,7 @@ if ($debuglevel > 1) {
 		};
 		print do_var($var11);
 	} elsif ($debuglevel =~ 3) {
-		$var12 = qq{
+		my $var12 = qq{
 		Enter any debug options you would like to use. Just enter parts after
 		WINEDEBUG. Default is +relay:
 		};
@@ -318,9 +325,10 @@ if ($debuglevel > 1) {
 	$debugopts=<STDIN>;
 	chomp $debugopts;
 	if ($debugopts =~ /--debugmsg /) {
-		($crap, $debugopts) = split / /,$debugopts;
+		$debugopts = (split / /,$debugopts)[1];
+	}
 	if ($debugopts =~ /WINEDEBUG= /) {
-		($crap, $debugopts) = split / /,$debugopts;
+		$debugopts = (split / /,$debugopts)[1];
 	}
 	if ($debugopts =~ /^\s*$/) {
 		$debugopts="+relay";
@@ -328,9 +336,10 @@ if ($debuglevel > 1) {
 } elsif ($debuglevel =~ 1) {
 	$debugopts = "+relay";
 }
+my $lastnlines;
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
-		$var13 = qq{
+		my $var13 = qq{
 		How many trailing lines of debugging info do you want to include in the report
 		you're going to submit (First file)? If a developer asks you to include
 		the last 15000 lines, enter 15000 here. Default is 3000, which is reached by
@@ -338,7 +347,7 @@ if ($debuglevel > 1) {
 		};
 		print do_var($var13);
 	} elsif ($debuglevel =~ 3) {
-		$var14 = qq{
+		my $var14 = qq{
 		Enter how many lines of trailing debugging output you want in your nice
 		formatted report. Default is 3000:
 		};
@@ -352,8 +361,9 @@ if ($debuglevel > 1) {
 } elsif ($debuglevel =~ 1) {
 	$lastnlines=3000;
 }
+my $extraops;
 if ($debuglevel > 1) {
-	$var15 = qq{
+	my $var15 = qq{
 	Enter any extra options you want to pass to Wine.
 	};
 	print do_var($var15);
@@ -364,19 +374,20 @@ if ($debuglevel > 1) {
 }
 
 print "\nEnter the name of your distribution (Example: RedHat 9.0): ";
-$dist=<STDIN>;
+my $dist=<STDIN>;
 chomp $dist;
 
+my $configopts;
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
-		$var16 = qq{
+		my $var16 = qq{
 		When you ran ./configure to build wine, were there any special options
 		you used to do so (Example: --enable-dll)? If you didn't use any special
 		options or didn't compile Wine yourself, just hit enter:
 		};
 		print do_var($var16);
 	} elsif ($debuglevel =~ 3) {
-		$var17 = qq{
+		my $var17 = qq{
 		Enter any special options you used when running ./configure for Wine
 		(Default is none, use if you didn't compile Wine yourself):
 		};
@@ -390,9 +401,10 @@ if ($debuglevel > 1) {
 } elsif ($debuglevel =~ 1) {
 	$configopts="None";
 }
+my $winever;
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
-		$var18 = qq{
+		my $var18 = qq{
 		Is your Wine version CVS or from a .tar.gz or RPM file? As in... did you download it
 		off a website/ftpsite or did you/have you run cvs on it to update it?
 		For CVS: YYYYMMDD, where YYYY is the year (2004), MM is the month (03), and DD
@@ -401,7 +413,7 @@ if ($debuglevel > 1) {
 		};
 		print do_var($var18);
 	} elsif ($debuglevel =~ 3) {
-		$var19 = qq{
+		my $var19 = qq{
 		Is your Wine from CVS? Enter the last CVS update date for it here, in
 		YYYYMMDD form (If it's from a tarball or RPM, just hit enter):
 		};
@@ -420,18 +432,18 @@ if ($debuglevel > 1) {
 	$winever=`$wineloc -v 2>&1`;
 	chomp $winever;
 }
-$gccver=`gcc -v 2>&1`;
-($leftover,$gccver) = split /\n/,$gccver;
+my $gccver=`gcc -v 2>&1`;
+$gccver = (split /\n/,$gccver)[1];
 chomp $gccver;
-$cpu=`uname -m`;
+my $cpu=`uname -m`;
 chomp $cpu;
-$kernelver=`uname -r`;
+my $kernelver=`uname -r`;
 chomp $kernelver;
-$ostype=`uname -s`;
+my $ostype=`uname -s`;
 chomp $ostype;
-$wineneeds=`ldd $wineloc`;
+my $wineneeds=`ldd $wineloc`;
 if ($debuglevel < 3) {
-	$var20 = qq{
+	my $var20 = qq{
 	OK, now I'm going to run Wine. I will close it for you once the Wine
 	debugger comes up. NOTE: You won't see ANY debug messages. Don't
 	worry, they are being output to a file. Since there are so many, it's
@@ -442,22 +454,19 @@ if ($debuglevel < 3) {
 	};
 	print do_var($var20);
 } elsif ($debuglevel =~ 3) {
-	$var21 = qq{
+	my $var21 = qq{
 	OK, now it's time to run Wine. I will close down Wine for you after
 	the debugger is finished doing its thing.
 	};
 	print do_var($var21);
 }
-$bashver=qw("/bin/bash -version");
-if ($bashver =~ /2\./) { $outflags = "2>" }
-else { $outflags = ">\&" }
 print "Hit enter to start Wine!\n";
-$blank=<STDIN>;
-$dir=$program;
+<STDIN>;
+my $dir=$program;
 $dir=~m#(.*)/#;
 $dir=$1;
 use Cwd;
-$nowdir=getcwd;
+my $nowdir=getcwd;
 chdir($dir);
 if (!($outfile =~ /\//) and $outfile ne "no file") {
 	$outfile = "$nowdir/$outfile";
@@ -469,9 +478,12 @@ if (!($tmpoutfile =~ /\//)) {
 	$tmpoutfile = "$nowdir/$tmpoutfile";
 }
 $SIG{CHLD}=$SIG{CLD}=sub { wait };
+my $lastlines;
+sub generate_outfile();
 if ($dbgoutfile ne "no file") {
 	unlink("$dbgoutfile");
-	if ($pid=fork()) {
+	my $pid=fork();
+	if ($pid) {
 	}
 	elsif (defined $pid) {
 		close(0);close(1);close(2);
@@ -482,23 +494,24 @@ if ($dbgoutfile ne "no file") {
 	}
 	while (kill(0, $pid)) {
 		sleep(5);
-		$last = `tail -n 5 $dbgoutfile | grep Wine-dbg`;
+		my $last = `tail -n 5 $dbgoutfile | grep Wine-dbg`;
 		if ($last =~ /Wine-dbg/) {
 			kill "TERM", $pid;
-			break;
+			last;
 		}
 	}
 	if ($outfile ne "no file") {
 		$lastlines=`tail -n $lastnlines $dbgoutfile`;
 		system("gzip $dbgoutfile");
-		&generate_outfile;
+		generate_outfile();
 	}
 	else {
 		system("gzip $dbgoutfile");
 	}
 }
 elsif ($outfile ne "no file" and $dbgoutfile eq "no file") {
-	if ($pid=fork()) {
+	my $pid=fork();
+	if ($pid) {
 	}
 	elsif (defined $pid) {
 		close(0);close(1);close(2);
@@ -510,10 +523,10 @@ elsif ($outfile ne "no file" and $dbgoutfile eq "no file") {
 	print "$outfile $tmpoutfile";
 	while (kill(0, $pid)) {
 		sleep(5);
-		$last = `tail -n 5 $tmpoutfile | grep Wine-dbg`;
+		my $last = `tail -n 5 $tmpoutfile | grep Wine-dbg`;
 		if ($last =~ /Wine-dbg/) {
 			kill "TERM", $pid;
-			break;
+			last;
 		}
 	}
 	unlink($tmpoutfile);
@@ -523,20 +536,20 @@ elsif ($outfile ne "no file" and $dbgoutfile eq "no file") {
 	}
 	close(OUTFILE);
 	unlink($outfile);
-	&generate_outfile;
+	generate_outfile();
 }
 else {
-	$var27 = qq{
+	my $var27 = qq{
 	I guess you don't want me to make any debugging output. I'll send
 	it to your terminal. This will be a *lot* of output -- hit enter to
 	continue, control-c to quit.
 	Repeat: this will be a lot of output!
 	};
 	print do_var($var27);
-	$blah=<STDIN>;
+	<STDIN>;
 	system("$wineloc WINEDEBUG=$debugopts $extraops \"$program\"");
 }
-sub generate_outfile {
+sub generate_outfile() {
 open(OUTFILE,">$outfile");
 print OUTFILE <<EOM;
 Auto-generated debug report by Wine Quick Debug Report Maker Tool:
@@ -560,20 +573,20 @@ I have a copy of the full debug report, if it is needed.
 Thank you!
 EOM
 }
-$var22 = qq{
+my $var22 = qq{
 Great! We're finished making the debug report. Please go to http://bugs.winehq.org
 and enter it as a new bug. Check that nobody has already reported the same bug!
 };
-$var28 = qq{
+my $var28 = qq{
 The filename for the formatted report is:
 $outfile
 };
-$var29 = qq{
+my $var29 = qq{
 The filename for the compressed full debug is:
 $dbgoutfile.gz
 Note that it is $dbgoutfile.gz, since I compressed it with gzip for you.
 };
-$var30 = qq{
+my $var30 = qq{
 If you have any problems with this bug reporting tool,
 please submit a bug report to Wine bugtracking system at http://bugs.winehq.org
 or tell the Wine newsgroup (comp.emulators.ms-windows.wine).
