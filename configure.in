@@ -134,12 +134,6 @@ AC_SUBST(OPENGLFILES)
 OPENGLFILES=""
 AC_SUBST(OPENGL32_DLL)
 OPENGL32_DLL=""
-AC_SUBST(DGA_SRCS)
-DGA_SRCS=""
-AC_SUBST(DGA2_SRCS)
-DGA2_SRCS=""
-AC_SUBST(MESA_SRCS)
-MESA_SRCS=""
 if test "$have_x" = "yes"
 then
     XLIB="-lXext -lX11"
@@ -212,15 +206,12 @@ then
                   AC_DEFINE(HAVE_LIBXXF86DGA2)
                   AC_DEFINE(HAVE_LIBXXF86DGA)
                   X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
-                  DGA_SRCS='$(DGA_SRCS)'
-                  DGA2_SRCS='$(DGA2_SRCS)'
                ],
                 [ dnl *** If not found, look for XF86DGAQueryExtension()
                   dnl *** instead (DGA 2.0 not found)...
                   AC_CHECK_LIB(Xxf86dga, XF86DGAQueryExtension,
                     [ AC_DEFINE(HAVE_LIBXXF86DGA)
                       X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
-                      DGA_SRCS='$(DGA_SRCS)'
                     ],,
                     $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                   )
@@ -292,7 +283,6 @@ then
 		dnl Check for the presence of the library
 		AC_CHECK_LIB(GL,glXCreateContext,
 			     X_PRE_LIBS="$X_PRE_LIBS -lGL"
-			     MESA_SRCS='$(MESA_SRCS)'
 			     ,,
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
@@ -324,6 +314,20 @@ then
 
 				OPENGL32_DLL=opengl32
 			fi
+
+                        AC_CHECK_HEADERS(GL/osmesa.h,
+                            [ dnl *** If GL/osmesa.h exists...
+                                AC_CHECK_LIB(GL, OSMesaCreateContext,
+                                  AC_DEFINE(HAVE_OSMESA),
+                                  AC_CHECK_LIB(OSMesa, OSMesaCreateContext,
+                                  [ AC_DEFINE(HAVE_OSMESA)
+                                    X_PRE_LIBS="$X_PRE_LIBS -lOSMesa"
+                                  ]),
+                                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
+                                )
+                            ],
+                            AC_MSG_WARN([OSMesa not found!!])
+                        )
 		fi
 	     fi
 	 fi
@@ -1344,7 +1348,7 @@ fi
 if test "$wine_cv_opengl_version_threadsafe" = "yes" -a $OPENGL = "yes"
 then
   echo
-  echo "*** Warning: you explicitely linked in a thread-safe OpenGL version. If you"
+  echo "*** Warning: you explicitly linked in a thread-safe OpenGL version. If you"
   echo "*** experience unusual crashes on DirectDraw games, try first to disable OpenGL"
   echo "*** support before reporting bugs."
 fi

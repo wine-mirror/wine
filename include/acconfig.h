@@ -129,5 +129,8 @@
 /* Define if the X libraries support XVideo */
 #undef HAVE_XVIDEO
 
+/* Define if Mesa's OSMesa (off-screen rendering) library is present */
+#undef HAVE_OSMESA
+
 /* Define if Linux-style gethostbyname_r and gethostbyaddr_r are available */
 #undef HAVE_LINUX_GETHOSTBYNAME_R_6

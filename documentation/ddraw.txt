@@ -1,0 +1,134 @@
+This is an outline of the architecture. Many details are
+skipped, but hopefully this is useful.
+
+By Andrew Lewycky <andrew@transgaming.com>
+(with updates by Ove Kåven <ovek@transgaming.com>)
+
+
+* DirectDraw inheritance tree
+
+        Main
+         |
+        User
+         |-----------\
+        XVidMode    DGA2
+
+Most of the DirectDraw functionality is implemented in a common base
+class. Derived classes are responsible for providing display
+mode functions (Enum, Set, Restore), GetCaps, GetDevice identifier
+and internal functions called to create primary and backbuffer
+surfaces.
+
+User provides for DirectDraw capabilities based on drawing to a
+Wine window. It uses the User DirectDrawSurface implementation
+for primary and backbuffer surfaces.
+
+XVidMode attempt to use the XFree86 VidMode extension to set the
+display resolution to match the parameters to SetDisplayMode.
+
+DGA2 attempt to use the XFree86 DGA 2.x extension to set the
+display resolution and direct access to the framebuffer, if the
+full-screen-exclusive cooperative level is used. If not, it just
+uses the User implementation.
+
+
+* DirectDrawSurface inheritance tree
+
+        Main
+         |--------------\
+         |              |
+        DIB        Fake Z-Buffer
+         |
+         |------\---------\
+         |      |         |
+        User   DGA2   DIBTexture
+
+Main provides a very simple base class that does not implement any of
+the image-related functions. Therefore it does not place any
+constraints on how the surface data is stored.
+
+DIB stores the surface data in a DIB section. It is used by the Main
+DirectDraw driver to create off-screen surfaces.
+
+User implements primary and backbuffer surfaces for the User DirectDraw
+driver. If it is a primary surface, it will attempt to keep itself
+synchronized to the window.
+
+DGA2 surfaces claims an appropriate section of framebuffer space and
+lets DIB build its DIB section on top of it.
+
+Fake Z-Buffer surfaces are used by Direct3D to indicate that a primary
+surface has an associated z-buffer. For a first implementation, it
+doesn't need to store any image data since it is just a placeholder.
+
+(Actually 3D programs will rarely use Lock or GetDC on primary
+surfaces, backbuffers or z-buffers so we may want to arrange for
+lazy allocation of the DIB sections.)
+
+
+* Interface Thunks
+
+Only the most recent version of an interface needs to be implemented.
+Other versions are handled by having thunks convert their parameters
+and call the root version.
+
+Not all interface versions have thunks. Some versions could be combined
+because their parameters were compatible. For example if a structure
+changes but the structure has a dwSize field, methods using that structure
+are compatible, as long as the implementation remembers to take the dwSize
+into account.
+
+Interface thunks for Direct3D are more complicated since the paradigm
+changed between versions.
+
+
+* Logical Object Layout
+
+The objects are split into the generic part (essentially the fields for
+Main) and a private part. This is necessary because some objects
+can be created with CoCreateInstance, then Initialized later. Only
+at initialisation time do we know which class to use. Each class
+except Main declares a Part structure and adds that to its Impl.
+
+For example, the DIBTexture DirectDrawSurface implementation looks
+like this:
+
+struct DIBTexture_DirectDrawSurfaceImpl_Part
+{
+        union DIBTexture_data data; /*declared in the real header*/
+};
+
+typedef struct
+{
+        struct DIB_DirectDrawSurfaceImpl_Part dib;
+        struct DIBTexture_DirectDrawSurfaceImpl_Part dibtexture;
+} DIBTexture_DirectDrawSurfaceImpl;
+
+So the DIBTexture surface class is derived from the DIB surface
+class and it adds one piece of data, a union.
+
+Main does not have a Part structure. Its fields are stored in
+IDirectDrawImpl/IDirectDrawSurfaceImpl.
+
+To access private data, one says
+
+DIBTexture_DirectDrawSurfaceImpl* priv = This->private;
+do_something_with(priv->dibtexture.data);
+
+
+* Creating Objects
+
+Classes have two functions relevant to object creation, Create and
+Construct. To create a new object, the class' Create function is
+called. It allocates enough memory for IDirectDrawImpl or
+IDirectDrawSurfaceImpl as well as the private data for derived
+classes and then calls Construct.
+
+Each class's Construct function calls the base class's Construct,
+then does the necessary initialization.
+
+For example, creating a primary surface with the user ddraw driver
+calls User_DirectDrawSurface_Create which allocates memory for the
+object and calls User_DirectDrawSurface_Construct to initialize it.
+This calls DIB_DirectDrawSurface_Construct which calls
+Main_DirectDrawSurface_Construct.

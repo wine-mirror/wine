@@ -1,110 +1,259 @@
 /*		DirectDraw - IDirectPalette base interface
  *
  * Copyright 1997-2000 Marcus Meissner
+ * Copyright 2000 TransGaming Technologies Inc.
  */
 
 #include "config.h"
 #include "winerror.h"
-
-#include <unistd.h>
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-
-#include "ddraw_private.h"
 #include "debugtools.h"
 
+#include <assert.h>
+#include <string.h>
+
+#include "ddraw_private.h"
+#include "dpalette/main.h"
+#include "ddraw/main.h"
+
 DEFAULT_DEBUG_CHANNEL(ddraw);
+
+#define SIZE_BITS (DDPCAPS_1BIT | DDPCAPS_2BIT | DDPCAPS_4BIT | DDPCAPS_8BIT)
+
+/* For unsigned x. 0 is not a power of 2. */
+#define IS_POW_2(x) (((x) & ((x) - 1)) == 0)
+
+static ICOM_VTABLE(IDirectDrawPalette) DDRAW_Main_Palette_VTable;
 
 /******************************************************************************
  *			IDirectDrawPalette
  */
-HRESULT WINAPI IDirectDrawPaletteImpl_GetEntries(
-    LPDIRECTDRAWPALETTE iface,DWORD x,DWORD start,DWORD count,LPPALETTEENTRY palent
-) {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
-    int	i;
+HRESULT Main_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
+					 IDirectDrawImpl* pDD, DWORD dwFlags)
+{
+    if (!IS_POW_2(dwFlags & SIZE_BITS)) return DDERR_INVALIDPARAMS;
 
-    TRACE("(%p)->GetEntries(%08lx,%ld,%ld,%p)\n",This,x,start,count,palent);
+    if (dwFlags & DDPCAPS_8BITENTRIES)
+	WARN("creating palette with 8 bit entries\n");
 
-    for (i=0;i<count;i++) {
-	palent[i].peRed   = This->palents[start+i].peRed;
-	palent[i].peBlue  = This->palents[start+i].peBlue;
-	palent[i].peGreen = This->palents[start+i].peGreen;
-	palent[i].peFlags = This->palents[start+i].peFlags;
-    }
+    This->flags = dwFlags;
+    This->palNumEntries = Main_DirectDrawPalette_Size(dwFlags);
+    This->ref = 1;
+    This->final_release = Main_DirectDrawPalette_final_release;
+    ICOM_INIT_INTERFACE(This, IDirectDrawPalette, DDRAW_Main_Palette_VTable);
+
+    /* we could defer hpal creation until we need it,
+     * but does anyone have a case where it would be useful? */
+    This->hpal = CreatePalette((const LOGPALETTE*)&(This->palVersion));
+
+    Main_DirectDraw_AddPalette(pDD, This);
+
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDrawPaletteImpl_SetEntries(
-    LPDIRECTDRAWPALETTE iface,DWORD x,DWORD start,DWORD count,LPPALETTEENTRY palent
-) {
-    ICOM_THIS(IDirectDrawPaletteImpl,iface);
-    int		i;
+HRESULT
+Main_DirectDrawPalette_Create(IDirectDrawImpl* pDD, DWORD dwFlags,
+			      LPDIRECTDRAWPALETTE* ppPalette,
+			      LPUNKNOWN pUnkOuter)
+{
+    IDirectDrawPaletteImpl* This;
+    HRESULT hr;
 
-    TRACE("(%p)->SetEntries(%08lx,%ld,%ld,%p)\n", This,x,start,count,palent);
-    for (i=0;i<count;i++) {
-	This->palents[start+i].peRed = palent[i].peRed;
-	This->palents[start+i].peBlue = palent[i].peBlue;
-	This->palents[start+i].peGreen = palent[i].peGreen;
-	This->palents[start+i].peFlags = palent[i].peFlags;
+    if (pUnkOuter != NULL)
+	return CLASS_E_NOAGGREGATION; /* unchecked */
+
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
+    if (This == NULL) return E_OUTOFMEMORY;
+
+    hr = Main_DirectDrawPalette_Construct(This, pDD, dwFlags);
+    if (FAILED(hr))
+	HeapFree(GetProcessHeap(), 0, This);
+    else
+	*ppPalette = ICOM_INTERFACE(This, IDirectDrawPalette);
+
+    return hr;
+}
+
+DWORD Main_DirectDrawPalette_Size(DWORD dwFlags)
+{
+    switch (dwFlags & SIZE_BITS)
+    {
+    case DDPCAPS_1BIT: return 2;
+    case DDPCAPS_2BIT: return 4;
+    case DDPCAPS_4BIT: return 16;
+    case DDPCAPS_8BIT: return 256;
+    default: assert(0); return 256;
+    }
+}
+
+HRESULT WINAPI
+Main_DirectDrawPalette_GetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
+				  DWORD dwStart, DWORD dwCount,
+				  LPPALETTEENTRY palent)
+{
+    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+
+    TRACE("(%p)->GetEntries(%08lx,%ld,%ld,%p)\n",This,dwFlags,dwStart,dwCount,
+	  palent);
+
+    if (dwFlags != 0) return DDERR_INVALIDPARAMS; /* unchecked */
+    if (dwStart + dwCount > Main_DirectDrawPalette_Size(This->flags))
+	return DDERR_INVALIDPARAMS;
+
+    if (This->flags & DDPCAPS_8BITENTRIES)
+    {
+	int i;
+	LPBYTE entry = (LPBYTE)palent;
+
+	for (i=dwStart; i < dwCount+dwStart; i++)
+	    *entry++ = This->palents[i].peRed;
+    }
+    else
+	memcpy(palent, This->palents+dwStart, dwCount * sizeof(PALETTEENTRY));
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
+				  DWORD dwStart, DWORD dwCount,
+				  LPPALETTEENTRY palent)
+{
+    ICOM_THIS(IDirectDrawPaletteImpl,iface);
+
+    TRACE("(%p)->SetEntries(%08lx,%ld,%ld,%p)\n",This,dwFlags,dwStart,dwCount,
+	  palent);
+
+    if (This->flags & DDPCAPS_8BITENTRIES)
+    {
+	int i;
+	const BYTE* entry = (const BYTE*)palent;
+
+	for (i=dwStart; i < dwCount+dwStart; i++)
+	    This->palents[i].peRed = *entry++;
+    }
+    else {
+	memcpy(This->palents+dwStart, palent, dwCount * sizeof(PALETTEENTRY));
+
+	if (This->hpal)
+	    SetPaletteEntries(This->hpal, dwStart, dwCount, This->palents+dwStart);
+
+	if (This->flags & DDPCAPS_PRIMARYSURFACE) {
+	    /* update physical palette */
+	    LPDIRECTDRAWSURFACE7 psurf = NULL;
+	    IDirectDraw7_GetGDISurface(ICOM_INTERFACE(This->ddraw_owner,IDirectDraw7), &psurf);
+	    if (psurf) {
+		IDirectDrawSurfaceImpl *surf = ICOM_OBJECT(IDirectDrawSurfaceImpl,
+							   IDirectDrawSurface7, psurf);
+		surf->update_palette(surf, This, dwStart, dwCount, palent);
+		IDirectDrawSurface7_Release(psurf);
+	    }
+	    else ERR("can't find GDI surface!!\n");
+	}
     }
 
+#if 0
     /* Now, if we are in 'depth conversion mode', update the screen palette */
     /* FIXME: we need to update the image or we won't get palette fading. */
     if (This->ddraw->d->palette_convert != NULL)
 	This->ddraw->d->palette_convert(palent,This->screen_palents,start,count);
+#endif
+
     return DD_OK;
 }
 
-ULONG WINAPI IDirectDrawPaletteImpl_Release(LPDIRECTDRAWPALETTE iface) {
+void Main_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This)
+{
+    Main_DirectDraw_RemovePalette(This->ddraw_owner, This);
+
+    if (This->hpal) DeleteObject(This->hpal);
+}
+
+static void Main_DirectDrawPalette_Destroy(IDirectDrawPaletteImpl* This)
+{
+    This->final_release(This);
+
+    if (This->private != This+1)
+	HeapFree(GetProcessHeap(), 0, This->private);
+		     
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+void Main_DirectDrawPalette_ForceDestroy(IDirectDrawPaletteImpl* This)
+{
+    WARN("deleting palette %p with refcnt %lu\n", This, This->ref);
+    Main_DirectDrawPalette_Destroy(This);
+}
+
+ULONG WINAPI
+Main_DirectDrawPalette_Release(LPDIRECTDRAWPALETTE iface)
+{
     ICOM_THIS(IDirectDrawPaletteImpl,iface);
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
-    if (!--(This->ref)) {
-	    HeapFree(GetProcessHeap(),0,This);
-	    return S_OK;
+
+    if (!--This->ref)
+    {
+	Main_DirectDrawPalette_Destroy(This);
+	return 0;
     }
+
     return This->ref;
 }
 
-ULONG WINAPI IDirectDrawPaletteImpl_AddRef(LPDIRECTDRAWPALETTE iface) {
+ULONG WINAPI Main_DirectDrawPalette_AddRef(LPDIRECTDRAWPALETTE iface) {
     ICOM_THIS(IDirectDrawPaletteImpl,iface);
     TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
-    return ++(This->ref);
+    return ++This->ref;
 }
 
-HRESULT WINAPI IDirectDrawPaletteImpl_Initialize(
-    LPDIRECTDRAWPALETTE iface,LPDIRECTDRAW ddraw,DWORD x,LPPALETTEENTRY palent
-) {
+HRESULT WINAPI
+Main_DirectDrawPalette_Initialize(LPDIRECTDRAWPALETTE iface,
+				  LPDIRECTDRAW ddraw, DWORD dwFlags,
+				  LPPALETTEENTRY palent)
+{
     ICOM_THIS(IDirectDrawPaletteImpl,iface);
-    TRACE("(%p)->(%p,%ld,%p)\n", This, ddraw, x, palent);
+    TRACE("(%p)->(%p,%ld,%p)\n", This, ddraw, dwFlags, palent);
     return DDERR_ALREADYINITIALIZED;
 }
 
-HRESULT WINAPI IDirectDrawPaletteImpl_GetCaps(
-     LPDIRECTDRAWPALETTE iface, LPDWORD lpdwCaps )
+HRESULT WINAPI
+Main_DirectDrawPalette_GetCaps(LPDIRECTDRAWPALETTE iface, LPDWORD lpdwCaps)
 {
    ICOM_THIS(IDirectDrawPaletteImpl,iface);
-   FIXME("(%p)->(%p) stub.\n", This, lpdwCaps );
+   TRACE("(%p)->(%p)\n",This,lpdwCaps);
+
+   *lpdwCaps = This->flags;
+
    return DD_OK;
 } 
 
-HRESULT WINAPI IDirectDrawPaletteImpl_QueryInterface(
-    LPDIRECTDRAWPALETTE iface,REFIID refiid,LPVOID *obj ) 
+HRESULT WINAPI
+Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,
+				      REFIID refiid, LPVOID *obj)
 {
     ICOM_THIS(IDirectDrawPaletteImpl,iface);
-    FIXME("(%p)->(%s,%p) stub.\n",This,debugstr_guid(refiid),obj);
-    return S_OK;
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
+
+    if (IsEqualGUID(refiid, &IID_IUnknown)
+	|| IsEqualGUID(refiid, &IID_IDirectDrawPalette))
+    {
+	*obj = iface;
+	IDirectDrawPalette_AddRef(iface);
+	return S_OK;
+    }
+    else
+    {
+	return E_NOINTERFACE;
+    }
 }
 
-ICOM_VTABLE(IDirectDrawPalette) ddraw_ddpalvt = 
+static ICOM_VTABLE(IDirectDrawPalette) DDRAW_Main_Palette_VTable =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    IDirectDrawPaletteImpl_QueryInterface,
-    IDirectDrawPaletteImpl_AddRef,
-    IDirectDrawPaletteImpl_Release,
-    IDirectDrawPaletteImpl_GetCaps,
-    IDirectDrawPaletteImpl_GetEntries,
-    IDirectDrawPaletteImpl_Initialize,
-    IDirectDrawPaletteImpl_SetEntries
+    Main_DirectDrawPalette_QueryInterface,
+    Main_DirectDrawPalette_AddRef,
+    Main_DirectDrawPalette_Release,
+    Main_DirectDrawPalette_GetCaps,
+    Main_DirectDrawPalette_GetEntries,
+    Main_DirectDrawPalette_Initialize,
+    Main_DirectDrawPalette_SetEntries
 };

@@ -178,7 +178,7 @@ struct IDirect3DTexture2Impl
     /* IDirect3DTexture2 fields */
     void*			D3Ddevice; /* (void *) to use the same pointer
 					    * for both Direct3D and Direct3D2 */
-    IDirectDrawSurface4Impl*	surface;
+    IDirectDrawSurfaceImpl*	surface;
     LPVOID			private;
 };
 
@@ -535,8 +535,8 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(
 );
 
 /* All non-static functions 'exported' by various sub-objects */
-extern LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf);
-extern LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf);
+extern LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurfaceImpl* surf);
+extern LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurfaceImpl* surf);
 
 extern LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1);
 extern LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2);

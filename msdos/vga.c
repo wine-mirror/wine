@@ -100,7 +100,7 @@ int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
     if (!lpddsurf) return 1;
     if (Height) *Height=sdesc.dwHeight;
     if (Width) *Width=sdesc.dwWidth;
-    if (Depth) *Depth=sdesc.ddpfPixelFormat.u.dwRGBBitCount;
+    if (Depth) *Depth=sdesc.ddpfPixelFormat.u1.dwRGBBitCount;
     return 0;
 }
 
@@ -147,16 +147,16 @@ LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
         ERR("could not lock surface!\n");
         return NULL;
     }
-    if (Pitch) *Pitch=sdesc.lPitch;
+    if (Pitch) *Pitch=sdesc.u1.lPitch;
     if (Height) *Height=sdesc.dwHeight;
     if (Width) *Width=sdesc.dwWidth;
-    if (Depth) *Depth=sdesc.ddpfPixelFormat.u.dwRGBBitCount;
-    return sdesc.u1.lpSurface;
+    if (Depth) *Depth=sdesc.ddpfPixelFormat.u1.dwRGBBitCount;
+    return sdesc.lpSurface;
 }
 
 void VGA_Unlock(void)
 {
-    IDirectDrawSurface_Unlock(lpddsurf,sdesc.u1.lpSurface);
+    IDirectDrawSurface_Unlock(lpddsurf,sdesc.lpSurface);
 }
 
 /*** TEXT MODE ***/

@@ -342,7 +342,7 @@ ICOM_VTABLE(IDirect3D3) mesa_d3d3vt =
 #undef XCAST
 #endif
 
-HRESULT create_direct3d(LPVOID *obj,IDirectDraw2Impl* ddraw) {
+HRESULT create_direct3d(LPVOID *obj,IDirectDrawImpl* ddraw) {
     IDirect3DImpl* d3d;
 
     d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -357,7 +357,7 @@ HRESULT create_direct3d(LPVOID *obj,IDirectDraw2Impl* ddraw) {
     return S_OK;
 }
 
-HRESULT create_direct3d2(LPVOID *obj,IDirectDraw2Impl* ddraw) {
+HRESULT create_direct3d2(LPVOID *obj,IDirectDrawImpl* ddraw) {
     IDirect3D2Impl* d3d;
 
     d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -372,7 +372,7 @@ HRESULT create_direct3d2(LPVOID *obj,IDirectDraw2Impl* ddraw) {
     return S_OK;
 }
 
-HRESULT create_direct3d3(LPVOID *obj,IDirectDraw2Impl* ddraw) {
+HRESULT create_direct3d3(LPVOID *obj,IDirectDrawImpl* ddraw) {
     IDirect3D3Impl* d3d;
 
     d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));

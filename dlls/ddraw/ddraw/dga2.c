@@ -1,431 +1,407 @@
-/*		DirectDraw IDirectDraw XF86DGA interface
+/*	DirectDraw driver for XF86DGA2 primary surface
  *
- *  DGA2's specific IDirectDraw functions...
+ * Copyright 2000 TransGaming Technologies Inc.
  */
 
 #include "config.h"
 
-#include <unistd.h>
-#include <fcntl.h>
+#ifdef HAVE_LIBXXF86DGA2
+
+#include "debugtools.h"
+#include "ts_xlib.h"
+#include "ts_xf86dga2.h"
+#include "x11drv.h"
+#include <ddraw.h>
+
 #include <assert.h>
-#include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 
-#include "winerror.h"
-#include "wine/exception.h"
-#include "ddraw.h"
-#include "d3d.h"
-#include "debugtools.h"
-#include "message.h"
+#include "ddraw_private.h"
+#include "ddraw/main.h"
+#include "ddraw/user.h"
+#include "ddraw/dga2.h"
+#include "dclipper/main.h"
+#include "dpalette/main.h"
+#include "dsurface/main.h"
+#include "dsurface/dib.h"
+#include "dsurface/user.h"
+#include "dsurface/dga2.h"
+
 #include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
-#include "dga2_private.h"
+static ICOM_VTABLE(IDirectDraw7) XF86DGA2_DirectDraw_VTable;
 
-struct ICOM_VTABLE(IDirectDraw)		dga2_ddvt;
-struct ICOM_VTABLE(IDirectDraw2)	dga2_dd2vt;
-struct ICOM_VTABLE(IDirectDraw4)	dga2_dd4vt;
+static const DDDEVICEIDENTIFIER2 xf86dga2_device = 
+{
+    "XF86DGA2 Driver",
+    "WINE DirectDraw on XF86DGA2",
+    { { 0x00010001, 0x00010001 } },
+    0, 0, 0, 0,
+    /* e2dcb020-dc60-11d1-8407-9714f5d50803 */
+    {0xe2dcb020,0xdc60,0x11d1,{0x84,0x07,0x97,0x14,0xf5,0xd5,0x08,0x03}},
+    0
+};
 
-#define DDPRIVATE(x) dga2_dd_private *ddpriv = ((dga2_dd_private*)(x)->d->private)
-#define DPPRIVATE(x) dga2_dp_private *dppriv = ((dga2_dp_private*)(x)->private)
+HRESULT XF86DGA2_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
+				   IUnknown* pUnkOuter, BOOL ex);
+HRESULT XF86DGA2_DirectDraw_Initialize(IDirectDrawImpl*, const GUID*);
 
-/*******************************************************************************
- *				IDirectDraw
- */
-static HRESULT WINAPI DGA2_IDirectDraw2Impl_CreateSurface(
-    LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,
-    IUnknown *lpunk
-) {
-  HRESULT ret;
+static const ddraw_driver xf86dga2_driver =
+{
+    &xf86dga2_device,
+    20, /* XVidMode is 11 */
+    XF86DGA2_DirectDraw_Create,
+    XF86DGA2_DirectDraw_Initialize
+};
 
-  ret = DGA_IDirectDraw2Impl_CreateSurface_with_VT(iface, lpddsd, lpdsf, lpunk, &dga2_dds4vt);
+static XDGAMode* modes;
+static DWORD num_modes;
+static int dga_event, dga_error;
 
-  return ret;
-}
+/* Called from DllInit, which is synchronised so there are no threading
+ * concerns. */
+static BOOL initialize(void)
+{
+    int nmodes;
+    int major, minor;
 
-static HRESULT WINAPI DGA2_IDirectDraw2Impl_SetCooperativeLevel(
-    LPDIRECTDRAW2 iface,HWND hwnd,DWORD cooplevel
-) {
-    /* ICOM_THIS(IDirectDraw2Impl,iface); */
-    HRESULT ret;
-    int evbase, erbase;
+    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display)) return FALSE;
 
-    ret = IDirectDraw2Impl_SetCooperativeLevel(iface, hwnd, cooplevel);
+    /* FIXME: don't use PROFILE calls */
+    if (!PROFILE_GetWineIniBool("x11drv", "UseDGA", 1)) return FALSE;
 
-    if (ret != DD_OK)
-      return ret;
+    if (!TSXDGAQueryExtension(display, &dga_event, &dga_error)) return FALSE;
 
-    TSXDGAQueryExtension(display, &evbase, &erbase);
+    if (!TSXDGAQueryVersion(display, &major, &minor)) return FALSE;
+
+    if (major < 2) return FALSE; /* only bother with DGA2 */
+
+    /* test that it works */
+    if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
+	TRACE("disabling XF86DGA2 (insufficient permissions?)\n");
+	return FALSE;
+    }
+    TSXDGACloseFramebuffer(display, DefaultScreen(display));
     
-    /* Now, start handling of DGA events giving the handle to the DDraw window
-       as the window for which the event will be reported */
-    TSXDGASelectInput(display, DefaultScreen(display),
-		      KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask );
-    X11DRV_EVENT_SetDGAStatus(hwnd, evbase);
-    return DD_OK;
+    TRACE("getting XF86DGA2 mode list\n");
+    modes = TSXDGAQueryModes(display, DefaultScreen(display), &nmodes);
+    if (!modes) return FALSE;
+    num_modes = nmodes;
+
+    TRACE("enabling XF86DGA2\n");
+
+    return TRUE;
 }
 
-void _DGA2_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
-    DDPIXELFORMAT *pf = &(This->d->directdraw_pixelformat);
-    DDPRIVATE(This);
-
-    /* Now, get the device / mode description */
-    ddpriv->dev = TSXDGASetMode(display, DefaultScreen(display), mode);
-
-    ddpriv->DGA.fb_width = ddpriv->dev->mode.imageWidth;
-    TSXDGASetViewport(display,DefaultScreen(display),0,0, XDGAFlipImmediate);
-    ddpriv->DGA.fb_height = ddpriv->dev->mode.viewportHeight;
-    TRACE("video framebuffer: begin %p, width %d, memsize %d\n",
-	ddpriv->dev->data,
-	ddpriv->dev->mode.imageWidth,
-	(ddpriv->dev->mode.imageWidth *
-	 ddpriv->dev->mode.imageHeight *
-	 (ddpriv->dev->mode.bitsPerPixel / 8))
-    );
-    TRACE("viewport height: %d\n", ddpriv->dev->mode.viewportHeight);
-    /* Get the screen dimensions as seen by Wine.
-     * In that case, it may be better to ignore the -desktop mode and return the
-     * real screen size => print a warning */
-    This->d->height = GetSystemMetrics(SM_CYSCREEN);
-    This->d->width = GetSystemMetrics(SM_CXSCREEN);
-    ddpriv->DGA.fb_addr = ddpriv->dev->data;
-    ddpriv->DGA.fb_memsize = (ddpriv->dev->mode.imageWidth *
-			      ddpriv->dev->mode.imageHeight *
-			      (ddpriv->dev->mode.bitsPerPixel / 8));
-    ddpriv->DGA.vpmask = 0;
-
-    /* Fill the screen pixelformat */
-    pf->dwSize = sizeof(DDPIXELFORMAT);
-    pf->dwFourCC = 0;
-    pf->u.dwRGBBitCount = ddpriv->dev->mode.bitsPerPixel;
-    if (ddpriv->dev->mode.depth == 8) {
-	pf->dwFlags = DDPF_PALETTEINDEXED8|DDPF_RGB;
-	pf->u1.dwRBitMask = 0;
-	pf->u2.dwGBitMask = 0;
-	pf->u3.dwBBitMask = 0;
-    } else {
-	pf->dwFlags = DDPF_RGB;
-	pf->u1.dwRBitMask = ddpriv->dev->mode.redMask;
-	pf->u2.dwGBitMask = ddpriv->dev->mode.greenMask;
-	pf->u3.dwBBitMask = ddpriv->dev->mode.blueMask;
-    }
-    pf->u4.dwRGBAlphaBitMask= 0;
-    This->d->screen_pixelformat = *pf; 
+static void cleanup(void)
+{
+    TSXFree(modes);
 }
 
-static HRESULT WINAPI DGA2_IDirectDrawImpl_SetDisplayMode(
-    LPDIRECTDRAW iface,DWORD width,DWORD height,DWORD depth
-) {
-    ICOM_THIS(IDirectDrawImpl,iface);
-    DDPRIVATE(This);
-    int	i;
-    XDGAMode *modes = ddpriv->modes;
-    int mode_to_use = -1;
+static XDGAMode* choose_mode(DWORD dwWidth, DWORD dwHeight,
+		       DWORD dwRefreshRate, DWORD dwFlags)
+{
+    XDGAMode* best = NULL;
+    int i;
 
-    TRACE("(%p)->(%ld,%ld,%ld)\n", This, width, height, depth);
-
-    /* Search in the list a display mode that corresponds to what is requested */
-    for (i = 0; i < ddpriv->num_modes; i++) {
-      if ((height == modes[i].viewportHeight) &&
-	  (width == modes[i].viewportWidth) &&
-	  (depth == modes[i].depth)
-	  )
-	mode_to_use = modes[i].num;
-    }
-    
-    if (mode_to_use < 0) {
-      ERR("Could not find matching mode !!!\n");
-      return DDERR_UNSUPPORTEDMODE;
-    } else {
-      TRACE("Using mode number %d\n", mode_to_use);
-      
-      VirtualFree(ddpriv->DGA.fb_addr, 0, MEM_RELEASE);
-      TSXDGACloseFramebuffer(display, DefaultScreen(display));
-      
-      if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
-	ERR("Error opening the frame buffer !!!\n");
-	return DDERR_GENERIC;
-      }
-      
-      /* Initialize the frame buffer */
-      _DGA2_Initialize_FrameBuffer(This, mode_to_use);
-      VirtualAlloc(ddpriv->DGA.fb_addr, ddpriv->DGA.fb_memsize, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
-      
-      /* Re-get (if necessary) the DGA events */
-      TSXDGASelectInput(display, DefaultScreen(display),
-			KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask );
-
-      /* And change the DDraw parameters */
-      This->d->width	= width;
-      This->d->height	= height;
-    }
-    
-    return DD_OK;
-}
-
-static HRESULT WINAPI DGA2_IDirectDraw2Impl_CreatePalette(
-    LPDIRECTDRAW2 iface,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    IDirectDrawPaletteImpl*	ddpal;
-    dga_dp_private		*dppriv;
-    HRESULT			res;
-    int 			xsize = 0,i;
-    DDPRIVATE(This);
-
-    TRACE("(%p)->(%08lx,%p,%p,%p)\n",This,dwFlags,palent,lpddpal,lpunk);
-    res = common_IDirectDraw2Impl_CreatePalette(This,dwFlags,palent,(IDirectDrawPaletteImpl**)lpddpal,lpunk,&xsize);
-    if (res != 0)
-	return res;
-    ddpal = *(IDirectDrawPaletteImpl**)lpddpal;
-    ddpal->private = HeapAlloc(
-	GetProcessHeap(),
-	HEAP_ZERO_MEMORY,
-	sizeof(dga_dp_private)
-    );
-    dppriv = (dga_dp_private*)ddpal->private;
-
-    ICOM_VTBL(ddpal)= &dga_ddpalvt;
-    if (This->d->directdraw_pixelformat.u.dwRGBBitCount<=8) {
-	dppriv->cm = TSXDGACreateColormap(display,DefaultScreen(display), ddpriv->dev, AllocAll);
-    } else {
-	ERR("why are we doing CreatePalette in hi/truecolor?\n");
-	dppriv->cm = 0;
-    }
-    if (dppriv->cm && xsize) {
-	for (i=0;i<xsize;i++) {
-	    XColor xc;
-
-	    xc.red = ddpal->palents[i].peRed<<8;
-	    xc.blue = ddpal->palents[i].peBlue<<8;
-	    xc.green = ddpal->palents[i].peGreen<<8;
-	    xc.flags = DoRed|DoBlue|DoGreen;
-	    xc.pixel = i;
-	    TSXStoreColor(display,dppriv->cm,&xc);
+    /* Choose the smallest mode that is large enough. */
+    for (i=0; i < num_modes; i++)
+    {
+	if (modes[i].viewportWidth >= dwWidth && modes[i].viewportHeight >= dwHeight)
+	{
+	    if (best == NULL) best = &modes[i];
+	    else
+	    {
+		if (modes[i].viewportWidth < best->viewportWidth
+		    || modes[i].viewportHeight < best->viewportHeight)
+		    best = &modes[i];
+	    }
 	}
     }
+
+    /* all modes were too small, use the largest */
+    if (!best)
+    {
+	TRACE("all modes too small\n");
+
+	for (i=1; i < num_modes; i++)
+	{
+	    if (best == NULL) best = &modes[i];
+	    else
+	    {
+		if (modes[i].viewportWidth > best->viewportWidth
+		    || modes[i].viewportHeight > best->viewportHeight)
+		    best = &modes[i];
+	    }
+	}
+    }
+
+    TRACE("using %d %d for %lu %lu\n", best->viewportWidth, best->viewportHeight,
+	  dwWidth, dwHeight);
+
+    return best;
+}
+
+BOOL DDRAW_XF86DGA2_Init(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+{
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+	if (initialize())
+	    DDRAW_register_driver(&xf86dga2_driver);
+    }
+    else if (fdwReason == DLL_PROCESS_DETACH)
+    {
+	cleanup();
+    }
+
+    return TRUE;
+}
+
+/* Not called from the vtable. */
+HRESULT XF86DGA2_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
+{
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = User_DirectDraw_Construct(This, ex);
+    if (FAILED(hr)) return hr;
+
+    This->final_release = XF86DGA2_DirectDraw_final_release;
+
+    This->create_primary    = XF86DGA2_DirectDraw_create_primary;
+    This->create_backbuffer = XF86DGA2_DirectDraw_create_backbuffer;
+
+    ICOM_INIT_INTERFACE(This, IDirectDraw7, XF86DGA2_DirectDraw_VTable);
+
+    return S_OK;
+}
+
+/* This function is called from DirectDrawCreate(Ex) on the most-derived
+ * class to start construction.
+ * Not called from the vtable. */
+HRESULT XF86DGA2_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
+				   IUnknown* pUnkOuter, BOOL ex)
+{
+    HRESULT hr;
+    IDirectDrawImpl* This;
+
+    TRACE("\n");
+
+    assert(pUnkOuter == NULL);
+
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+		     sizeof(IDirectDrawImpl)
+		     + sizeof(XF86DGA2_DirectDrawImpl));
+    if (This == NULL) return E_OUTOFMEMORY;
+
+    /* Note that this relation does *not* hold true if the DD object was
+     * CoCreateInstanced then Initialized. */
+    This->private = (XF86DGA2_DirectDrawImpl *)(This+1);
+
+    hr = XF86DGA2_DirectDraw_Construct(This, ex);
+    if (FAILED(hr))
+	HeapFree(GetProcessHeap(), 0, This);
+    else
+	*pIface = ICOM_INTERFACE(This, IDirectDraw7);
+
+    return hr;
+}
+
+/* This function is called from Uninit_DirectDraw_Initialize on the
+ * most-derived-class to start initialization.
+ * Not called from the vtable. */
+HRESULT XF86DGA2_DirectDraw_Initialize(IDirectDrawImpl *This, const GUID* guid)
+{
+    HRESULT hr;
+
+    TRACE("\n");
+
+    This->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+			      sizeof(XF86DGA2_DirectDrawImpl));
+    if (This->private == NULL) return E_OUTOFMEMORY;
+
+    hr = XF86DGA2_DirectDraw_Construct(This, TRUE); /* XXX ex? */
+    if (FAILED(hr))
+    {
+	HeapFree(GetProcessHeap(), 0, This->private);
+	return hr;
+    }
+
     return DD_OK;
 }
 
-static HRESULT WINAPI DGA2_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 iface) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    TRACE("(%p)->()\n",This);
-    Sleep(1000);
-    
-    XDGACloseFramebuffer(display,DefaultScreen(display));
-    XDGASetMode(display,DefaultScreen(display), 0);
+/* Called from an internal function pointer. */
+void XF86DGA2_DirectDraw_final_release(IDirectDrawImpl *This)
+{
+    XF86DGA2_DDRAW_PRIV_VAR(priv, This);
 
+    if (priv->xf86dga2.current_mode) {
+	TSXDGASetMode(display, DefaultScreen(display), 0);
+	VirtualFree(priv->xf86dga2.current_mode->data, 0, MEM_RELEASE);
+	X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
+	X11DRV_EVENT_SetDGAStatus(0, -1);
+	TSXFree(priv->xf86dga2.current_mode);
+	TSXDGACloseFramebuffer(display, DefaultScreen(display));
+	priv->xf86dga2.current_mode = NULL;
+    }
+
+    User_DirectDraw_final_release(This);
+}
+
+HRESULT XF86DGA2_DirectDraw_create_primary(IDirectDrawImpl* This,
+					   const DDSURFACEDESC2* pDDSD,
+					   LPDIRECTDRAWSURFACE7* ppSurf,
+					   IUnknown* pUnkOuter)
+{
+    if (This->cooperative_level & DDSCL_EXCLUSIVE)
+	return XF86DGA2_DirectDrawSurface_Create(This, pDDSD, ppSurf, pUnkOuter);
+    else
+	return User_DirectDrawSurface_Create(This, pDDSD, ppSurf, pUnkOuter);
+}
+
+HRESULT XF86DGA2_DirectDraw_create_backbuffer(IDirectDrawImpl* This,
+					      const DDSURFACEDESC2* pDDSD,
+					      LPDIRECTDRAWSURFACE7* ppSurf,
+					      IUnknown* pUnkOuter,
+					      IDirectDrawSurfaceImpl* primary)
+{
+    if (This->cooperative_level & DDSCL_EXCLUSIVE)
+	return XF86DGA2_DirectDrawSurface_Create(This, pDDSD, ppSurf, pUnkOuter);
+    else
+	return User_DirectDrawSurface_Create(This, pDDSD, ppSurf, pUnkOuter);
+}
+
+HRESULT WINAPI
+XF86DGA2_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
+					LPDDDEVICEIDENTIFIER2 pDDDI,
+					DWORD dwFlags)
+{
+    *pDDDI = xf86dga2_device;
     return DD_OK;
 }
 
-static ULONG WINAPI DGA2_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    DDPRIVATE(This);
-    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
+HRESULT WINAPI
+XF86DGA2_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface)
+{
+    ICOM_THIS(IDirectDrawImpl, iface);
+    HRESULT hr;
 
-    if (!--(This->ref)) {
-      if (!--(This->d->ref)) {
-	  TRACE("Closing access to the FrameBuffer\n");
-	  VirtualFree(ddpriv->DGA.fb_addr, 0, MEM_RELEASE);
-	  TSXDGACloseFramebuffer(display, DefaultScreen(display));
-	  TRACE("Going back to normal X mode of operation\n");
-	  TSXDGASetMode(display, DefaultScreen(display), 0);
+    TRACE("\n");
 
-	  /* Set the input handling back to absolute */
-	  X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
-	  
-	  /* Remove the handling of DGA2 events */
-	  X11DRV_EVENT_SetDGAStatus(0, -1);
-	  
-	  /* Free the modes list */
-	  TSXFree(ddpriv->modes);
-          HeapFree(GetProcessHeap(),0,This->d);
-      }
-      HeapFree(GetProcessHeap(),0,This);
-      return 0;
+    hr = Main_DirectDraw_RestoreDisplayMode(iface);
+    if (SUCCEEDED(hr))
+    {
+	XF86DGA2_DDRAW_PRIV_VAR(priv, This);
+
+	if (priv->xf86dga2.current_mode)
+	{
+	    TSXDGASetMode(display, DefaultScreen(display), 0);
+	    VirtualFree(priv->xf86dga2.current_mode->data, 0, MEM_RELEASE);
+	    X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
+	    X11DRV_EVENT_SetDGAStatus(0, -1);
+	    TSXFree(priv->xf86dga2.current_mode);
+	    TSXDGACloseFramebuffer(display, DefaultScreen(display));
+	    priv->xf86dga2.current_mode = NULL;
+	}
     }
-    return This->ref;
+
+    return hr;
 }
 
-static HRESULT WINAPI DGA2_IDirectDraw2Impl_EnumDisplayModes(
-    LPDIRECTDRAW2 iface,DWORD dwFlags,LPDDSURFACEDESC lpddsfd,LPVOID context,LPDDENUMMODESCALLBACK modescb
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    DDSURFACEDESC	ddsfd;
-    DDPRIVATE(This);
-    int	i;
-    XDGAMode *modes = ddpriv->modes;
+HRESULT WINAPI
+XF86DGA2_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
+				   DWORD dwHeight, DWORD dwBPP,
+				   DWORD dwRefreshRate, DWORD dwFlags)
+{
+    ICOM_THIS(IDirectDrawImpl, iface);
 
-    TRACE("(%p)->(0x%08lx,%p,%p,%p)\n",This,dwFlags,lpddsfd,context,modescb);
-    ddsfd.dwSize = sizeof(ddsfd);
-    ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-    if (dwFlags & DDEDM_REFRESHRATES) {
-	    ddsfd.dwFlags |= DDSD_REFRESHRATE;
-	    ddsfd.u.dwRefreshRate = 60;
+    HRESULT hr;
+
+    TRACE("(%p)->(%ldx%ldx%ld,%ld Hz,%08lx)\n",This,dwWidth,dwHeight,dwBPP,dwRefreshRate,dwFlags);
+    hr = User_DirectDraw_SetDisplayMode(iface, dwWidth, dwHeight, dwBPP,
+					dwRefreshRate, dwFlags);
+
+    if (SUCCEEDED(hr))
+    {
+	XF86DGA2_DDRAW_PRIV_VAR(priv, This);
+	XDGADevice* old_mode = priv->xf86dga2.current_mode;
+	XDGAMode* new_mode;
+	int old_mode_num = old_mode ? old_mode->mode.num : 0;
+
+	new_mode = choose_mode(dwWidth, dwHeight, dwRefreshRate, dwFlags);
+
+	if (new_mode && new_mode->num != old_mode_num)
+	{
+	    XDGADevice * nm = NULL;
+	    if (old_mode || TSXDGAOpenFramebuffer(display, DefaultScreen(display)))
+		nm = TSXDGASetMode(display, DefaultScreen(display), new_mode->num);
+	    if (nm) {
+		TSXDGASetViewport(display, DefaultScreen(display), 0, 0, XDGAFlipImmediate);
+		if (old_mode) {
+		    VirtualFree(old_mode->data, 0, MEM_RELEASE);
+		    TSXFree(old_mode);
+		} else {
+		    TSXDGASelectInput(display, DefaultScreen(display),
+				      KeyPressMask|KeyReleaseMask|
+				      ButtonPressMask|ButtonReleaseMask|
+				      PointerMotionMask);
+		    X11DRV_EVENT_SetDGAStatus(This->window, dga_event);
+		    X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_RELATIVE);
+		}
+		priv->xf86dga2.current_mode = nm;
+		priv->xf86dga2.next_vofs = 0;
+		TRACE("frame buffer at %p, pitch=%d, width=%d, height=%d\n", nm->data,
+		      nm->mode.bytesPerScanline, nm->mode.imageWidth, nm->mode.imageHeight);
+		VirtualAlloc(nm->data, nm->mode.bytesPerScanline * nm->mode.imageHeight,
+			     MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
+	    } else {
+		/* argh */
+		ERR("failed\n");
+		/* XXX revert size data to previous mode */
+		if (!old_mode)
+		    TSXDGACloseFramebuffer(display, DefaultScreen(display));
+	    }
+	}
     }
-    ddsfd.ddsCaps.dwCaps = 0;
-    ddsfd.dwBackBufferCount = 1;
 
-
-    ddsfd.dwFlags |= DDSD_PITCH;
-    for (i = 0; i < ddpriv->num_modes; i++) {
-      if (TRACE_ON(ddraw)) {
-	DPRINTF("  Enumerating mode %d : %s (FB: %dx%d / VP: %dx%d) - depth %d -",
-		modes[i].num,
-		modes[i].name, modes[i].imageWidth, modes[i].imageHeight,
-		modes[i].viewportWidth, modes[i].viewportHeight,
-		modes[i].depth);
-	if (modes[i].flags & XDGAConcurrentAccess) DPRINTF(" XDGAConcurrentAccess ");
-	if (modes[i].flags & XDGASolidFillRect) DPRINTF(" XDGASolidFillRect ");
-	if (modes[i].flags & XDGABlitRect) DPRINTF(" XDGABlitRect ");
-	if (modes[i].flags & XDGABlitTransRect) DPRINTF(" XDGABlitTransRect ");
-	if (modes[i].flags & XDGAPixmap) DPRINTF(" XDGAPixmap ");
-	DPRINTF("\n");
-      }
-      /* Fill the pixel format */
-      ddsfd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-      ddsfd.ddpfPixelFormat.dwFourCC = 0;
-      ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
-      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = modes[i].bitsPerPixel;
-      if (modes[i].depth == 8) {
-	ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB|DDPF_PALETTEINDEXED8;
-	ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
-	ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
-	ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
-	ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
-      } else {
-	ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-	ddsfd.ddpfPixelFormat.u1.dwRBitMask = modes[i].redMask;
-	ddsfd.ddpfPixelFormat.u2.dwGBitMask = modes[i].greenMask;
-	ddsfd.ddpfPixelFormat.u3.dwBBitMask = modes[i].blueMask;
-      }
-      
-      ddsfd.dwWidth = modes[i].viewportWidth;
-      ddsfd.dwHeight = modes[i].viewportHeight;
-      ddsfd.lPitch = modes[i].imageWidth;
-      
-      /* Send mode to the application */
-      if (!modescb(&ddsfd,context)) return DD_OK;
-    }
-    
-    return DD_OK;
+    return hr;
 }
 
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(dga2_ddvt.fn##fun))
-#else
-# define XCAST(fun)	(void *)
-#endif
-
-struct ICOM_VTABLE(IDirectDraw) dga2_ddvt = 
+static ICOM_VTABLE(IDirectDraw7) XF86DGA2_DirectDraw_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    XCAST(QueryInterface)DGA_IDirectDraw2Impl_QueryInterface,
-    XCAST(AddRef)IDirectDraw2Impl_AddRef,
-    XCAST(Release)DGA2_IDirectDraw2Impl_Release,
-    XCAST(Compact)IDirectDraw2Impl_Compact,
-    XCAST(CreateClipper)IDirectDraw2Impl_CreateClipper,
-    XCAST(CreatePalette)DGA2_IDirectDraw2Impl_CreatePalette,
-    XCAST(CreateSurface)DGA2_IDirectDraw2Impl_CreateSurface,
-    XCAST(DuplicateSurface)IDirectDraw2Impl_DuplicateSurface,
-    XCAST(EnumDisplayModes)DGA2_IDirectDraw2Impl_EnumDisplayModes,
-    XCAST(EnumSurfaces)IDirectDraw2Impl_EnumSurfaces,
-    XCAST(FlipToGDISurface)IDirectDraw2Impl_FlipToGDISurface,
-    XCAST(GetCaps)DGA_IDirectDraw2Impl_GetCaps,
-    XCAST(GetDisplayMode)DGA_IDirectDraw2Impl_GetDisplayMode,
-    XCAST(GetFourCCCodes)IDirectDraw2Impl_GetFourCCCodes,
-    XCAST(GetGDISurface)IDirectDraw2Impl_GetGDISurface,
-    XCAST(GetMonitorFrequency)IDirectDraw2Impl_GetMonitorFrequency,
-    XCAST(GetScanLine)IDirectDraw2Impl_GetScanLine,
-    XCAST(GetVerticalBlankStatus)IDirectDraw2Impl_GetVerticalBlankStatus,
-    XCAST(Initialize)IDirectDraw2Impl_Initialize,
-    XCAST(RestoreDisplayMode)DGA2_IDirectDraw2Impl_RestoreDisplayMode,
-    XCAST(SetCooperativeLevel)DGA2_IDirectDraw2Impl_SetCooperativeLevel,
-    DGA2_IDirectDrawImpl_SetDisplayMode,
-    XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
-};
-#undef XCAST
-
-/*****************************************************************************
- * 	IDirectDraw2
- *
- */
-
-static HRESULT WINAPI DGA2_IDirectDraw2Impl_SetDisplayMode(
-    LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,DWORD dwRefreshRate, DWORD dwFlags
-) {
-    FIXME( "Ignored parameters (0x%08lx,0x%08lx)\n", dwRefreshRate, dwFlags ); 
-    return DGA2_IDirectDrawImpl_SetDisplayMode((LPDIRECTDRAW)iface,width,height,depth);
-}
-
-ICOM_VTABLE(IDirectDraw2) dga2_dd2vt = 
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    DGA_IDirectDraw2Impl_QueryInterface,
-    IDirectDraw2Impl_AddRef,
-    DGA2_IDirectDraw2Impl_Release,
-    IDirectDraw2Impl_Compact,
-    IDirectDraw2Impl_CreateClipper,
-    DGA2_IDirectDraw2Impl_CreatePalette,
-    DGA2_IDirectDraw2Impl_CreateSurface,
-    IDirectDraw2Impl_DuplicateSurface,
-    DGA2_IDirectDraw2Impl_EnumDisplayModes,
-    IDirectDraw2Impl_EnumSurfaces,
-    IDirectDraw2Impl_FlipToGDISurface,
-    DGA_IDirectDraw2Impl_GetCaps,
-    DGA_IDirectDraw2Impl_GetDisplayMode,
-    IDirectDraw2Impl_GetFourCCCodes,
-    IDirectDraw2Impl_GetGDISurface,
-    IDirectDraw2Impl_GetMonitorFrequency,
-    IDirectDraw2Impl_GetScanLine,
-    IDirectDraw2Impl_GetVerticalBlankStatus,
-    IDirectDraw2Impl_Initialize,
-    DGA2_IDirectDraw2Impl_RestoreDisplayMode,
-    DGA2_IDirectDraw2Impl_SetCooperativeLevel,
-    DGA2_IDirectDraw2Impl_SetDisplayMode,
-    IDirectDraw2Impl_WaitForVerticalBlank,
-    DGA_IDirectDraw2Impl_GetAvailableVidMem
+    Main_DirectDraw_QueryInterface,
+    Main_DirectDraw_AddRef,
+    Main_DirectDraw_Release,
+    Main_DirectDraw_Compact,
+    Main_DirectDraw_CreateClipper,
+    Main_DirectDraw_CreatePalette,
+    Main_DirectDraw_CreateSurface,
+    Main_DirectDraw_DuplicateSurface,
+    User_DirectDraw_EnumDisplayModes,
+    Main_DirectDraw_EnumSurfaces,
+    Main_DirectDraw_FlipToGDISurface,
+    User_DirectDraw_GetCaps,
+    Main_DirectDraw_GetDisplayMode,
+    Main_DirectDraw_GetFourCCCodes,
+    Main_DirectDraw_GetGDISurface,
+    Main_DirectDraw_GetMonitorFrequency,
+    Main_DirectDraw_GetScanLine,
+    Main_DirectDraw_GetVerticalBlankStatus,
+    Main_DirectDraw_Initialize,
+    XF86DGA2_DirectDraw_RestoreDisplayMode,
+    Main_DirectDraw_SetCooperativeLevel,
+    XF86DGA2_DirectDraw_SetDisplayMode,
+    Main_DirectDraw_WaitForVerticalBlank,
+    Main_DirectDraw_GetAvailableVidMem,
+    Main_DirectDraw_GetSurfaceFromDC,
+    Main_DirectDraw_RestoreAllSurfaces,
+    Main_DirectDraw_TestCooperativeLevel,
+    XF86DGA2_DirectDraw_GetDeviceIdentifier,
+    Main_DirectDraw_StartModeTest,
+    Main_DirectDraw_EvaluateMode
 };
 
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(dga2_dd4vt.fn##fun))
-#else
-# define XCAST(fun)	(void*)
-#endif
-
-ICOM_VTABLE(IDirectDraw4) dga2_dd4vt = 
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    XCAST(QueryInterface)DGA_IDirectDraw2Impl_QueryInterface,
-    XCAST(AddRef)IDirectDraw2Impl_AddRef,
-    XCAST(Release)DGA2_IDirectDraw2Impl_Release,
-    XCAST(Compact)IDirectDraw2Impl_Compact,
-    XCAST(CreateClipper)IDirectDraw2Impl_CreateClipper,
-    XCAST(CreatePalette)DGA2_IDirectDraw2Impl_CreatePalette,
-    XCAST(CreateSurface)DGA2_IDirectDraw2Impl_CreateSurface,
-    XCAST(DuplicateSurface)IDirectDraw2Impl_DuplicateSurface,
-    XCAST(EnumDisplayModes)DGA2_IDirectDraw2Impl_EnumDisplayModes,
-    XCAST(EnumSurfaces)IDirectDraw2Impl_EnumSurfaces,
-    XCAST(FlipToGDISurface)IDirectDraw2Impl_FlipToGDISurface,
-    XCAST(GetCaps)DGA_IDirectDraw2Impl_GetCaps,
-    XCAST(GetDisplayMode)DGA_IDirectDraw2Impl_GetDisplayMode,
-    XCAST(GetFourCCCodes)IDirectDraw2Impl_GetFourCCCodes,
-    XCAST(GetGDISurface)IDirectDraw2Impl_GetGDISurface,
-    XCAST(GetMonitorFrequency)IDirectDraw2Impl_GetMonitorFrequency,
-    XCAST(GetScanLine)IDirectDraw2Impl_GetScanLine,
-    XCAST(GetVerticalBlankStatus)IDirectDraw2Impl_GetVerticalBlankStatus,
-    XCAST(Initialize)IDirectDraw2Impl_Initialize,
-    XCAST(RestoreDisplayMode)DGA2_IDirectDraw2Impl_RestoreDisplayMode,
-    XCAST(SetCooperativeLevel)DGA2_IDirectDraw2Impl_SetCooperativeLevel,
-    XCAST(SetDisplayMode)DGA2_IDirectDrawImpl_SetDisplayMode,
-    XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
-    XCAST(GetAvailableVidMem)DGA_IDirectDraw2Impl_GetAvailableVidMem,
-    IDirectDraw4Impl_GetSurfaceFromDC,
-    IDirectDraw4Impl_RestoreAllSurfaces,
-    IDirectDraw4Impl_TestCooperativeLevel,
-    IDirectDraw4Impl_GetDeviceIdentifier
-};
-#undef XCAST
+#endif  /* HAVE_LIBXXF86DGA2 */

@@ -4,51 +4,42 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw
 EXTRALIBS = $(LIBUUID)
-SOVERSION = 1.0
 IMPORTS   = user32 x11drv gdi32 kernel32
 
-MESA_SRCS = \
+OPENGLFILES = \
 	d3dcommon.c \
+	d3ddevice/main.c \
 	d3ddevice/mesa.c \
 	d3dexecutebuffer.c \
 	d3dlight.c \
 	d3dmaterial.c \
 	d3dtexture.c \
 	d3dviewport.c \
+	direct3d/main.c \
 	direct3d/mesa.c \
 	mesa.c
 
-DGA_SRCS = \
-	ddraw/dga.c \
-	dpalette/dga.c \
-	dsurface/dga.c \
-	dga.c
-
-DGA2_SRCS= \
-	dga2.c \
-	dsurface/dga2.c \
-	ddraw/dga2.c
-
-XFILES = \
-	@DGA_SRCS@ \
-	@MESA_SRCS@ \
-	@DGA2_SRCS@ \
-	ddraw/x11.c \
-	dpalette/x11.c \
-	dsurface/x11.c \
-	x11.c 
-
 C_SRCS = \
-	@XFILES@ \
+	@OPENGLFILES@ \
 	convert.c \
-	d3ddevice/main.c \
 	dclipper/main.c \
+	ddraw/dga2.c \
 	ddraw/main.c \
-	direct3d/main.c \
+	ddraw/thunks.c \
+	ddraw/user.c \
+	ddraw/xvidmode.c \
 	dpalette/main.c \
+	dsurface/dga2.c \
+	dsurface/dib.c \
+	dsurface/dibtexture.c \
+	dsurface/fakezbuffer.c \
 	dsurface/main.c \
+	dsurface/thunks.c \
+	dsurface/user.c \
+	dsurface/wndproc.c \
 	helper.c \
-	main.c
+	main.c \
+	struct_convert.c
 
 EXTRASUBDIRS = \
 	d3ddevice \

@@ -1,176 +1,253 @@
-/*		DirectDrawSurface XF86DGA implementation
+/*	XF86DGA2 primary surface driver
  *
- * DGA2's specific DirectDrawSurface routines
+ * Copyright 2000 TransGaming Technologies Inc.
  */
+
 #include "config.h"
+
+#ifdef HAVE_LIBXXF86DGA2
+
+#include "ts_xlib.h"
+#include "ts_xf86dga2.h"
+#include "x11drv.h"
 #include "winerror.h"
 
-#include <unistd.h>
 #include <assert.h>
-#include <fcntl.h>
-#include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "debugtools.h"
-#include "dga2_private.h"
-#include "bitmap.h"
+#include "ddraw_private.h"
+#include "ddraw/user.h"
+#include "ddraw/dga2.h"
+#include "dsurface/main.h"
+#include "dsurface/dib.h"
+#include "dsurface/dga2.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
-#define DDPRIVATE(x) dga2_dd_private *ddpriv = ((dga2_dd_private*)(x)->d->private)
-#define DPPRIVATE(x) dga2_dp_private *dppriv = ((dga2_dp_private*)(x)->private)
-#define DSPRIVATE(x) dga2_ds_private *dspriv = ((dga2_ds_private*)(x)->private)
+static ICOM_VTABLE(IDirectDrawSurface7) XF86DGA2_IDirectDrawSurface7_VTable;
 
-static BYTE DGA2_TouchSurface(LPDIRECTDRAWSURFACE4 iface)
-{   
-    ICOM_THIS(IDirectDrawSurface4Impl,iface);
-    /* if the DIB section is in GdiMod state, we must
-     * touch the surface to get any updates from the DIB */
-    return *(BYTE*)(This->s.surface_desc.u1.lpSurface);
-}
+HRESULT
+XF86DGA2_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
+				     IDirectDrawImpl* pDD,
+				     const DDSURFACEDESC2* pDDSD)
+{
+    XF86DGA2_PRIV_VAR(priv, This);
+    XF86DGA2_DDRAW_PRIV_VAR(ddpriv, pDD);
+    HRESULT hr;
+    XDGADevice* mode;
 
-HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_Flip(
-    LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
-) {
-    ICOM_THIS(IDirectDrawSurface4Impl,iface);
-    IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
-    DWORD	xheight;
-    DSPRIVATE(This);
-    dga_ds_private	*fspriv;
-    LPBYTE	surf;
-
-    TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
-
-    DGA2_TouchSurface(iface);
-    iflipto = _common_find_flipto(This,iflipto);
-
-    /* and flip! */
-    fspriv = (dga_ds_private*)iflipto->private;
-    TSXDGASetViewport(display,DefaultScreen(display),0,fspriv->fb_height, XDGAFlipRetrace);
-    TSXDGASync(display,DefaultScreen(display));
-    TSXFlush(display);
-    if (iflipto->s.palette) {
-	DPPRIVATE(iflipto->s.palette);
-	if (dppriv->cm)
-	    TSXDGAInstallColormap(display,DefaultScreen(display),dppriv->cm);
+    TRACE("(%p,%p,%p)\n",This,pDD,pDDSD);
+    if (!ddpriv->xf86dga2.current_mode) {
+	/* we need a mode! */
+	hr = XF86DGA2_DirectDraw_SetDisplayMode(ICOM_INTERFACE(pDD, IDirectDraw7),
+						pDD->width, pDD->height,
+						pDD->pixelformat.u1.dwRGBBitCount,
+						0, 0);
+	if (FAILED(hr)) return hr;
     }
 
-    /* We need to switch the lowlevel surfaces, for DGA this is: */
-    /* The height within the framebuffer */
-    xheight		= dspriv->fb_height;
-    dspriv->fb_height	= fspriv->fb_height;
-    fspriv->fb_height	= xheight;
+    /* grab framebuffer data from current_mode */
+    mode = ddpriv->xf86dga2.current_mode;
+    priv->xf86dga2.fb_pitch = mode->mode.bytesPerScanline;
+    priv->xf86dga2.fb_vofs  = ddpriv->xf86dga2.next_vofs;
+    priv->xf86dga2.fb_addr  = mode->data +
+			      priv->xf86dga2.fb_pitch * priv->xf86dga2.fb_vofs;
+    TRACE("vofs=%ld, addr=%p\n", priv->xf86dga2.fb_vofs, priv->xf86dga2.fb_addr);
 
-    /* And the assciated surface pointer */
-    surf	                         = This->s.surface_desc.u1.lpSurface;
-    This->s.surface_desc.u1.lpSurface    = iflipto->s.surface_desc.u1.lpSurface;
-    iflipto->s.surface_desc.u1.lpSurface = surf;
+    /* fill in surface_desc before we construct DIB from it */
+    This->surface_desc = *pDDSD;
+    This->surface_desc.lpSurface = priv->xf86dga2.fb_addr;
+    This->surface_desc.u1.lPitch = priv->xf86dga2.fb_pitch;
+    This->surface_desc.dwFlags |= DDSD_LPSURFACE | DDSD_PITCH;
+
+    hr = DIB_DirectDrawSurface_Construct(This, pDD, &This->surface_desc);
+    if (FAILED(hr)) return hr;
+
+    if (This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+	priv->xf86dga2.pal = TSXDGACreateColormap(display, DefaultScreen(display), mode, AllocAll);
+	TSXDGAInstallColormap(display, DefaultScreen(display), priv->xf86dga2.pal);
+    }
+
+    ddpriv->xf86dga2.next_vofs += pDDSD->dwHeight;
+
+    ICOM_INIT_INTERFACE(This, IDirectDrawSurface7,
+			XF86DGA2_IDirectDrawSurface7_VTable);
+
+    This->final_release = XF86DGA2_DirectDrawSurface_final_release;
+    This->duplicate_surface = XF86DGA2_DirectDrawSurface_duplicate_surface;
+
+    This->flip_data   = XF86DGA2_DirectDrawSurface_flip_data;
+    This->flip_update = XF86DGA2_DirectDrawSurface_flip_update;
+
+    This->set_palette    = XF86DGA2_DirectDrawSurface_set_palette;
+    This->update_palette = XF86DGA2_DirectDrawSurface_update_palette;
+
+    This->get_display_window = XF86DGA2_DirectDrawSurface_get_display_window;
 
     return DD_OK;
 }
 
-HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_SetPalette(
-    LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWPALETTE pal
-) {
-    ICOM_THIS(IDirectDrawSurface4Impl,iface);
-    DDPRIVATE(This->s.ddraw);
-    IDirectDrawPaletteImpl* ipal=(IDirectDrawPaletteImpl*)pal;
+HRESULT
+XF86DGA2_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
+			      const DDSURFACEDESC2 *pDDSD,
+			      LPDIRECTDRAWSURFACE7 *ppSurf,
+			      IUnknown *pUnkOuter)
+{
+    IDirectDrawSurfaceImpl* This;
+    HRESULT hr;
+    assert(pUnkOuter == NULL);
 
-    TRACE("(%p)->(%p)\n",This,ipal);
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+		     sizeof(*This) + sizeof(XF86DGA2_DirectDrawSurfaceImpl));
+    if (This == NULL) return E_OUTOFMEMORY;
 
-    /* According to spec, we are only supposed to 
-     * AddRef if this is not the same palette.
-     */
-    if( This->s.palette != ipal ) {
-	dga_dp_private	*fppriv;
-	if( ipal != NULL )
-	    IDirectDrawPalette_AddRef( (IDirectDrawPalette*)ipal );
-	if( This->s.palette != NULL )
-	    IDirectDrawPalette_Release( (IDirectDrawPalette*)This->s.palette );
-	This->s.palette = ipal;
-	fppriv = (dga_dp_private*)This->s.palette->private;
+    This->private = (XF86DGA2_DirectDrawSurfaceImpl*)(This+1);
 
-	if (!fppriv->cm &&
-	    (This->s.ddraw->d->screen_pixelformat.u.dwRGBBitCount<=8) ) {
-	  int i;
-	  
-	  /* Delayed palette creation */
-	  fppriv->cm = TSXDGACreateColormap(display,DefaultScreen(display), ddpriv->dev, AllocAll);
-	    
-	  for (i=0;i<256;i++) {
-	    XColor xc;
-	    
-	    xc.red		= ipal->palents[i].peRed<<8;
-	    xc.blue		= ipal->palents[i].peBlue<<8;
-	    xc.green	= ipal->palents[i].peGreen<<8;
-	    xc.flags	= DoRed|DoBlue|DoGreen;
-	    xc.pixel	= i;
-	    TSXStoreColor(display,fppriv->cm,&xc);
-	  }
-	}
+    hr = XF86DGA2_DirectDrawSurface_Construct(This, pDD, pDDSD);
+    if (FAILED(hr))
+	HeapFree(GetProcessHeap(), 0, This);
+    else
+	*ppSurf = ICOM_INTERFACE(This, IDirectDrawSurface7);
 
-	TSXDGAInstallColormap(display,DefaultScreen(display),fppriv->cm);
+    return hr;
+}
 
-        if (This->s.hdc != 0) {
-	    /* hack: set the DIBsection color map */
-	    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(This->s.DIBsection, BITMAP_MAGIC);
-	    X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
-	    dib->colorMap = This->s.palette ? This->s.palette->screen_palents : NULL;
-	    GDI_ReleaseObj(This->s.DIBsection);
+void XF86DGA2_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This)
+{
+    XF86DGA2_PRIV_VAR(priv, This);
+
+    DIB_DirectDrawSurface_final_release(This);
+    if (priv->xf86dga2.pal)
+	TSXFreeColormap(display, priv->xf86dga2.pal);
+}
+
+void XF86DGA2_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
+					IDirectDrawPaletteImpl* pal) 
+{
+    DIB_DirectDrawSurface_set_palette(This, pal);
+}
+
+void XF86DGA2_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
+					   IDirectDrawPaletteImpl* pal,
+					   DWORD dwStart, DWORD dwCount,
+					   LPPALETTEENTRY palent)
+{
+    XF86DGA2_PRIV_VAR(priv, This);
+
+    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+	XColor c;
+	int n;
+
+	c.flags = DoRed|DoGreen|DoBlue;
+	c.pixel = dwStart;
+	for (n=0; n<dwCount; n++,c.pixel++) {
+	    c.red   = palent[n].peRed   << 8;
+	    c.green = palent[n].peGreen << 8;
+	    c.blue  = palent[n].peBlue  << 8;
+	    TSXStoreColor(display, priv->xf86dga2.pal, &c);
 	}
 	TSXFlush(display);
     }
-    return DD_OK;
 }
 
-
-ICOM_VTABLE(IDirectDrawSurface4) dga2_dds4vt = 
+HRESULT XF86DGA2_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
+						 LPDIRECTDRAWSURFACE7* ppDup)
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    IDirectDrawSurface4Impl_QueryInterface,
-    IDirectDrawSurface4Impl_AddRef,
-    DGA_IDirectDrawSurface4Impl_Release,
-    IDirectDrawSurface4Impl_AddAttachedSurface,
-    IDirectDrawSurface4Impl_AddOverlayDirtyRect,
-    IDirectDrawSurface4Impl_Blt,
-    IDirectDrawSurface4Impl_BltBatch,
-    IDirectDrawSurface4Impl_BltFast,
-    IDirectDrawSurface4Impl_DeleteAttachedSurface,
-    IDirectDrawSurface4Impl_EnumAttachedSurfaces,
-    IDirectDrawSurface4Impl_EnumOverlayZOrders,
-    DGA2_IDirectDrawSurface4Impl_Flip,
-    IDirectDrawSurface4Impl_GetAttachedSurface,
-    IDirectDrawSurface4Impl_GetBltStatus,
-    IDirectDrawSurface4Impl_GetCaps,
-    IDirectDrawSurface4Impl_GetClipper,
-    IDirectDrawSurface4Impl_GetColorKey,
-    DGA_IDirectDrawSurface4Impl_GetDC,
-    IDirectDrawSurface4Impl_GetFlipStatus,
-    IDirectDrawSurface4Impl_GetOverlayPosition,
-    IDirectDrawSurface4Impl_GetPalette,
-    IDirectDrawSurface4Impl_GetPixelFormat,
-    IDirectDrawSurface4Impl_GetSurfaceDesc,
-    IDirectDrawSurface4Impl_Initialize,
-    IDirectDrawSurface4Impl_IsLost,
-    IDirectDrawSurface4Impl_Lock,
-    IDirectDrawSurface4Impl_ReleaseDC,
-    IDirectDrawSurface4Impl_Restore,
-    IDirectDrawSurface4Impl_SetClipper,
-    IDirectDrawSurface4Impl_SetColorKey,
-    IDirectDrawSurface4Impl_SetOverlayPosition,
-    DGA2_IDirectDrawSurface4Impl_SetPalette,
-    DGA_IDirectDrawSurface4Impl_Unlock,
-    IDirectDrawSurface4Impl_UpdateOverlay,
-    IDirectDrawSurface4Impl_UpdateOverlayDisplay,
-    IDirectDrawSurface4Impl_UpdateOverlayZOrder,
-    IDirectDrawSurface4Impl_GetDDInterface,
-    IDirectDrawSurface4Impl_PageLock,
-    IDirectDrawSurface4Impl_PageUnlock,
-    IDirectDrawSurface4Impl_SetSurfaceDesc,
-    IDirectDrawSurface4Impl_SetPrivateData,
-    IDirectDrawSurface4Impl_GetPrivateData,
-    IDirectDrawSurface4Impl_FreePrivateData,
-    IDirectDrawSurface4Impl_GetUniquenessValue,
-    IDirectDrawSurface4Impl_ChangeUniquenessValue
+    return XF86DGA2_DirectDrawSurface_Create(This->ddraw_owner,
+					     &This->surface_desc, ppDup, NULL);
+}
+
+void XF86DGA2_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back)
+{
+    XF86DGA2_PRIV_VAR(front_priv, front);
+    XF86DGA2_PRIV_VAR(back_priv, back);
+
+    {
+	DWORD tmp;
+	tmp = front_priv->xf86dga2.fb_vofs;
+	front_priv->xf86dga2.fb_vofs = back_priv->xf86dga2.fb_vofs;
+	back_priv->xf86dga2.fb_vofs = tmp;
+    }
+    {
+	LPVOID tmp;
+	tmp = front_priv->xf86dga2.fb_addr;
+	front_priv->xf86dga2.fb_addr = back_priv->xf86dga2.fb_addr;
+	back_priv->xf86dga2.fb_addr = tmp;
+    }
+
+    DIB_DirectDrawSurface_flip_data(front, back);
+}
+
+void XF86DGA2_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This)
+{
+    XF86DGA2_PRIV_VAR(priv, This);
+
+    /* XXX having the Flip's dwFlags would be nice here */
+    TSXDGASetViewport(display, DefaultScreen(display),
+		      0, priv->xf86dga2.fb_vofs, XDGAFlipImmediate);
+}
+
+HWND XF86DGA2_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This)
+{
+    /* there's a potential drawable in the ddraw object's current_mode->pixmap...
+     * perhaps it's possible to use it for the Direct3D rendering as well? */
+    return 0;
+}
+
+static ICOM_VTABLE(IDirectDrawSurface7) XF86DGA2_IDirectDrawSurface7_VTable =
+{
+    Main_DirectDrawSurface_QueryInterface,
+    Main_DirectDrawSurface_AddRef,
+    Main_DirectDrawSurface_Release,
+    Main_DirectDrawSurface_AddAttachedSurface,
+    Main_DirectDrawSurface_AddOverlayDirtyRect,
+    DIB_DirectDrawSurface_Blt,
+    Main_DirectDrawSurface_BltBatch,
+    DIB_DirectDrawSurface_BltFast,
+    Main_DirectDrawSurface_DeleteAttachedSurface,
+    Main_DirectDrawSurface_EnumAttachedSurfaces,
+    Main_DirectDrawSurface_EnumOverlayZOrders,
+    Main_DirectDrawSurface_Flip,
+    Main_DirectDrawSurface_GetAttachedSurface,
+    Main_DirectDrawSurface_GetBltStatus,
+    Main_DirectDrawSurface_GetCaps,
+    Main_DirectDrawSurface_GetClipper,
+    Main_DirectDrawSurface_GetColorKey,
+    Main_DirectDrawSurface_GetDC,
+    Main_DirectDrawSurface_GetFlipStatus,
+    Main_DirectDrawSurface_GetOverlayPosition,
+    Main_DirectDrawSurface_GetPalette,
+    Main_DirectDrawSurface_GetPixelFormat,
+    Main_DirectDrawSurface_GetSurfaceDesc,
+    Main_DirectDrawSurface_Initialize,
+    Main_DirectDrawSurface_IsLost,
+    Main_DirectDrawSurface_Lock,
+    Main_DirectDrawSurface_ReleaseDC,
+    DIB_DirectDrawSurface_Restore,
+    Main_DirectDrawSurface_SetClipper,
+    Main_DirectDrawSurface_SetColorKey,
+    Main_DirectDrawSurface_SetOverlayPosition,
+    Main_DirectDrawSurface_SetPalette,
+    Main_DirectDrawSurface_Unlock,
+    Main_DirectDrawSurface_UpdateOverlay,
+    Main_DirectDrawSurface_UpdateOverlayDisplay,
+    Main_DirectDrawSurface_UpdateOverlayZOrder,
+    Main_DirectDrawSurface_GetDDInterface,
+    Main_DirectDrawSurface_PageLock,
+    Main_DirectDrawSurface_PageUnlock,
+    DIB_DirectDrawSurface_SetSurfaceDesc,
+    Main_DirectDrawSurface_SetPrivateData,
+    Main_DirectDrawSurface_GetPrivateData,
+    Main_DirectDrawSurface_FreePrivateData,
+    Main_DirectDrawSurface_GetUniquenessValue,
+    Main_DirectDrawSurface_ChangeUniquenessValue,
+    Main_DirectDrawSurface_SetPriority,
+    Main_DirectDrawSurface_GetPriority,
+    Main_DirectDrawSurface_SetLOD,
+    Main_DirectDrawSurface_GetLOD
 };
+
+#endif /* HAVE_LIBXXF86DGA2 */

@@ -14,8 +14,6 @@
 
 #undef USE_OSMESA
 
-#include "x11_private.h"
-
 /*****************************************************************************
  * IDirect3DLight MESA private structure
  */
@@ -110,8 +108,8 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		      DWORD dwRenderState, RenderState *rs) ;
 
 /* All non-static functions 'exported' by various sub-objects */
-extern LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf);
-extern LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf);
+extern LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurfaceImpl* surf);
+extern LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurfaceImpl* surf);
 
 extern LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1);
 extern LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2);
@@ -129,8 +127,8 @@ extern int d3d_OpenGL_dx3(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2Impl** device, IDirect3D2Impl* d3d);
 
-extern LPDIRECT3DTEXTURE2 mesa_d3dtexture2_create(IDirectDrawSurface4Impl*);
-extern LPDIRECT3DTEXTURE mesa_d3dtexture_create(IDirectDrawSurface4Impl*);
+extern LPDIRECT3DTEXTURE2 mesa_d3dtexture2_create(IDirectDrawSurfaceImpl*);
+extern LPDIRECT3DTEXTURE mesa_d3dtexture_create(IDirectDrawSurfaceImpl*);
 
 static const GUID WINE_UNUSED IID_D3DDEVICE2_OpenGL = {
   0x39a0da38,

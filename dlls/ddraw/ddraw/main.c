@@ -2,476 +2,989 @@
  *
  * Copyright 1997-2000 Marcus Meissner
  * Copyright 1998-2000 Lionel Ulmer (most of Direct3D stuff)
+ * Copyright 2000 TransGaming Technologies Inc.
  */
 
 /*
  * This file contains all the interface functions that are shared between
- * all interfaces. Or better, it is a "common stub" library for the IDirectDraw*
- * objects
+ * all interfaces. Or better, it is a "common stub" library for the
+ * IDirectDraw* objects
  */
 
 #include "config.h"
 
 #include <assert.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "winerror.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "debugtools.h"
 #include "options.h"
+#include "bitmap.h"
+
+#include "ddraw_private.h"
+#include "ddraw/main.h"
+#include "dclipper/main.h"
+#include "dpalette/main.h"
+#include "dsurface/main.h"
+#include "dsurface/dib.h"
+#include "dsurface/fakezbuffer.h"
+#include "dsurface/dibtexture.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
-#include "ddraw_private.h"
+extern ICOM_VTABLE(IDirectDraw) DDRAW_IDirectDraw_VTable;
+extern ICOM_VTABLE(IDirectDraw2) DDRAW_IDirectDraw2_VTable;
+extern ICOM_VTABLE(IDirectDraw4) DDRAW_IDirectDraw4_VTable;
 
-HRESULT WINAPI IDirectDraw2Impl_DuplicateSurface(
-    LPDIRECTDRAW2 iface,LPDIRECTDRAWSURFACE src,LPDIRECTDRAWSURFACE *dst
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p)->(%p,%p) simply copies\n",This,src,dst);
-    *dst = src; /* FIXME */
+static void DDRAW_UnsubclassWindow(IDirectDrawImpl* This);
+
+static void Main_DirectDraw_DeleteSurfaces(IDirectDrawImpl* This);
+static void Main_DirectDraw_DeleteClippers(IDirectDrawImpl* This);
+static void Main_DirectDraw_DeletePalettes(IDirectDrawImpl* This);
+static void LosePrimarySurface(IDirectDrawImpl* This);
+
+static const char ddProp[] = "WINE_DDRAW_Property";
+
+/* Not called from the vtable. */
+HRESULT Main_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
+{
+    /* NOTE: The creator must use HEAP_ZERO_MEMORY or equivalent. */
+    This->ref = 1;
+    This->ex = ex;
+
+    This->final_release = Main_DirectDraw_final_release;
+
+    This->create_palette = Main_DirectDrawPalette_Create;
+
+    This->create_offscreen = Main_create_offscreen;
+    This->create_texture   = Main_create_texture;
+    This->create_zbuffer   = Main_create_zbuffer;
+    /* There are no generic versions of create_{primary,backbuffer}. */
+
+    ICOM_INIT_INTERFACE(This, IDirectDraw,  DDRAW_IDirectDraw_VTable);
+    ICOM_INIT_INTERFACE(This, IDirectDraw2, DDRAW_IDirectDraw2_VTable);
+    ICOM_INIT_INTERFACE(This, IDirectDraw4, DDRAW_IDirectDraw4_VTable);
+    /* There is no generic implementation of IDD7 */
+
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
-    LPDIRECTDRAW2 iface,HWND hwnd,DWORD cooplevel
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-
-    FIXME("(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
-    _dump_cooperativelevel(cooplevel);
-    This->d->mainWindow = hwnd;
-    return DD_OK;
-}
-
-/*
- * Small helper to either use the cooperative window or create a new 
- * one (for mouse and keyboard input) and drawing in the Xlib implementation.
- * 
- * Note this just uses USER calls, so it is safe in here.
- */
-void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This) {
-    RECT	rect;
-
-    /* Do destroy only our window */
-    if (This->d->window && GetPropA(This->d->window,ddProp)) {
-	DestroyWindow(This->d->window);
-	This->d->window = 0;
+void Main_DirectDraw_final_release(IDirectDrawImpl* This)
+{
+    if (IsWindow(This->window))
+    {
+	if (GetPropA(This->window, ddProp))
+	    DDRAW_UnsubclassWindow(This);
+	else
+	    FIXME("this shouldn't happen, right?\n");
     }
-    /* Sanity check cooperative window before assigning it to drawing. */
-    if (IsWindow(This->d->mainWindow) &&
-	IsWindowVisible(This->d->mainWindow)
-    ) {
-	GetWindowRect(This->d->mainWindow,&rect);
-	if ((((rect.right-rect.left) >= This->d->width)	&&
-	     ((rect.bottom-rect.top) >= This->d->height))
-	) {
-	    This->d->window = This->d->mainWindow;
-	    /* FIXME: resizing is not windows compatible behaviour, need test */
-	    /* SetWindowPos(This->d->mainWindow,HWND_TOPMOST,0,0,This->d->width,This->d->height,SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER); */
-	    This->d->paintable = 1; /* don't wait for WM_PAINT */
-	}
-    }
-    /* ... failed, create new one. */
-    if (!This->d->window) {
-	This->d->window = CreateWindowExA(
-	    0,
-	    "WINE_DirectDraw",
-	    "WINE_DirectDraw",
-	    WS_POPUP,
-	    0,0,
-	    This->d->width,
-	    This->d->height,
-	    0,
-	    0,
-	    0,
-	    NULL
-	);
-	/*Store THIS with the window. We'll use it in the window procedure*/
-	SetPropA(This->d->window,ddProp,(LONG)This);
-	ShowWindow(This->d->window,TRUE);
-	UpdateWindow(This->d->window);
-    }
-    SetFocus(This->d->window);
+
+    Main_DirectDraw_DeleteSurfaces(This);
+    Main_DirectDraw_DeleteClippers(This);
+    Main_DirectDraw_DeletePalettes(This);
 }
 
-HRESULT WINAPI IDirectDrawImpl_SetDisplayMode(
-	LPDIRECTDRAW iface,DWORD width,DWORD height,DWORD depth
-) {
-        ICOM_THIS(IDirectDrawImpl,iface);
+/* There is no Main_DirectDraw_Create. */
 
-	FIXME("(%p)->SetDisplayMode(%ld,%ld,%ld), needs to be implemented for your display adapter!\n",This,width,height,depth);
-	This->d->width	= width;
-	This->d->height	= height;
-	_common_IDirectDrawImpl_SetDisplayMode(This);
-	return DD_OK;
-}
-
-static void fill_caps(LPDDCAPS caps) {
-    /* This function tries to fill the capabilities of Wines DDraw
-     * implementation. Needs to be fixed, though.. */
-    if (caps == NULL)
-	return;
-
-    caps->dwSize = sizeof(*caps);
-    caps->dwCaps = DDCAPS_ALPHA | DDCAPS_BLT | DDCAPS_BLTSTRETCH | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL | DDCAPS_CANBLTSYSMEM |  DDCAPS_COLORKEY | DDCAPS_PALETTE /*| DDCAPS_NOHARDWARE*/;
-    caps->dwCaps2 = DDCAPS2_CERTIFIED | DDCAPS2_NOPAGELOCKREQUIRED | DDCAPS2_WIDESURFACES;
-    caps->dwCKeyCaps = 0xFFFFFFFF; /* Should put real caps here one day... */
-    caps->dwFXCaps = 0;
-    caps->dwFXAlphaCaps = 0;
-    caps->dwPalCaps = DDPCAPS_8BIT | DDPCAPS_ALLOW256;
-    caps->dwSVCaps = 0;
-    caps->dwZBufferBitDepths = DDBD_16;
-    /* I put here 8 Mo so that D3D applications will believe they have enough
-     * memory to put textures in video memory. BTW, is this only frame buffer
-     * memory or also texture memory (for Voodoo boards for example) ?
-     */
-    caps->dwVidMemTotal = 8192 * 1024;
-    caps->dwVidMemFree = 8192 * 1024;
-    /* These are all the supported capabilities of the surfaces */
-    caps->ddsCaps.dwCaps = DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER | DDSCAPS_COMPLEX | DDSCAPS_FLIP |
-    DDSCAPS_FRONTBUFFER | DDSCAPS_LOCALVIDMEM | DDSCAPS_NONLOCALVIDMEM | DDSCAPS_OFFSCREENPLAIN |
-      /*DDSCAPS_OVERLAY |*/ DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
-	DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_GetCaps(
-    LPDIRECTDRAW2 iface,LPDDCAPS caps1,LPDDCAPS caps2
-)  {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    TRACE("(%p)->GetCaps(%p,%p)\n",This,caps1,caps2);
-
-    /* Put the same caps for the two capabilities */
-    fill_caps(caps1);
-    fill_caps(caps2);
-
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_CreateClipper(
-    LPDIRECTDRAW2 iface,DWORD x,LPDIRECTDRAWCLIPPER *lpddclip,LPUNKNOWN lpunk
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    IDirectDrawClipperImpl** ilpddclip=(IDirectDrawClipperImpl**)lpddclip;
-    FIXME("(%p)->(%08lx,%p,%p),stub!\n", This,x,ilpddclip,lpunk);
-    *ilpddclip = (IDirectDrawClipperImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawClipperImpl));
-    (*ilpddclip)->ref = 1;
-    ICOM_VTBL(*ilpddclip) = &ddclipvt;
-    return DD_OK;
-}
-
-HRESULT WINAPI common_IDirectDraw2Impl_CreatePalette(
-    IDirectDraw2Impl* This,DWORD dwFlags,LPPALETTEENTRY palent,
-    IDirectDrawPaletteImpl **lpddpal,LPUNKNOWN lpunk,int *psize
-) {
-    int size = 0;
-	  
-    if (TRACE_ON(ddraw))
-	_dump_paletteformat(dwFlags);
-	
-    *lpddpal = (IDirectDrawPaletteImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPaletteImpl));
-    if (*lpddpal == NULL) return E_OUTOFMEMORY;
-    (*lpddpal)->ref = 1;
-    (*lpddpal)->ddraw = (IDirectDrawImpl*)This;
-
-    if (dwFlags & DDPCAPS_1BIT)
-	size = 2;
-    else if (dwFlags & DDPCAPS_2BIT)
-	size = 4;
-    else if (dwFlags & DDPCAPS_4BIT)
-	size = 16;
-    else if (dwFlags & DDPCAPS_8BIT)
-	size = 256;
-    else
-	ERR("unhandled palette format\n");
-
-    *psize = size;
-    if (This->d->palette_convert == NULL) {
-	/* No depth conversion - create 8<->8 identity map */
-	int ent;
-	for (ent=0; ent<256; ent++)
-	    (*lpddpal)->screen_palents[ent] = ent;
-    }
-    if (palent) {
-	/* Now, if we are in depth conversion mode, create the screen palette */
-	if (This->d->palette_convert != NULL)	    
-	    This->d->palette_convert(palent,(*lpddpal)->screen_palents,0,size);
-
-	memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
-    } else if (This->d->palette_convert != NULL) {
-	/* In that case, put all 0xFF */
-	memset((*lpddpal)->screen_palents, 0xFF, 256 * sizeof(int));
-    }
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_CreatePalette(
-    LPDIRECTDRAW2 iface,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    IDirectDrawPaletteImpl** ilpddpal=(IDirectDrawPaletteImpl**)lpddpal;
-    int xsize;
-    HRESULT res;
-
-    TRACE("(%p)->(%08lx,%p,%p,%p)\n",This,dwFlags,palent,ilpddpal,lpunk);
-    res = common_IDirectDraw2Impl_CreatePalette(This,dwFlags,palent,ilpddpal,lpunk,&xsize);
-    if (res != 0) return res;
-    ICOM_VTBL(*ilpddpal) = &ddraw_ddpalvt;
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 iface) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    TRACE("(%p)->RestoreDisplayMode()\n", This);
-    Sleep(1000);
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_WaitForVerticalBlank(
-    LPDIRECTDRAW2 iface,DWORD x,HANDLE h
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p)->(flags=0x%08lx,handle=0x%08x)\n",This,x,h);
-    return DD_OK;
-}
-
-ULONG WINAPI IDirectDraw2Impl_AddRef(LPDIRECTDRAW2 iface) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
+ULONG WINAPI Main_DirectDraw_AddRef(LPDIRECTDRAW7 iface) {
+    ICOM_THIS(IDirectDrawImpl,iface);
     TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
 
-    return ++(This->ref);
+    return ++This->ref;
 }
 
-ULONG WINAPI IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
+ULONG WINAPI Main_DirectDraw_Release(LPDIRECTDRAW7 iface) {
+    ULONG ref;
+    ICOM_THIS(IDirectDrawImpl,iface);
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
-    if (!--(This->ref)) {
-	if (!--(This->d->ref)) {
-	    if (This->d->window && GetPropA(This->d->window,ddProp))
-		DestroyWindow(This->d->window);
-	    HeapFree(GetProcessHeap(),0,This->d);
-	}
-	HeapFree(GetProcessHeap(),0,This);
-	return S_OK;
+    ref = --This->ref;
+
+    if (ref == 0)
+    {
+	if (This->final_release != NULL)
+	    This->final_release(This);
+
+	/* We free the private. This is an artifact of the fact that I don't
+	 * have the destructors set up correctly. */
+	if (This->private != (This+1))
+	    HeapFree(GetProcessHeap(), 0, This->private);
+
+	HeapFree(GetProcessHeap(), 0, This);
     }
-    return This->ref;
+
+    return ref;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_QueryInterface(
-    LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj
+/* TODO: need to support IDirect3D. */
+HRESULT WINAPI Main_DirectDraw_QueryInterface(
+    LPDIRECTDRAW7 iface,REFIID refiid,LPVOID *obj
 ) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
+    ICOM_THIS(IDirectDrawImpl,iface);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(refiid), obj);
 
-    if ( IsEqualGUID( &IID_IUnknown, refiid ) ) {
-	*obj = This;
-	IDirectDraw2_AddRef(iface);
-	TRACE("  Creating IUnknown interface (%p)\n", *obj);
-	return S_OK;
+    if ( IsEqualGUID( &IID_IUnknown, refiid )
+	 || IsEqualGUID( &IID_IDirectDraw7, refiid ) )
+    {
+	*obj = ICOM_INTERFACE(This, IDirectDraw7);
     }
-    ERR("(%p)->(%s,%p), must be implemented by display interface!\n",This,debugstr_guid(refiid),obj);
-    return OLE_E_ENUM_NOMORE;
+    else if ( IsEqualGUID( &IID_IDirectDraw, refiid ) )
+    {
+	*obj = ICOM_INTERFACE(This, IDirectDraw);
+    }
+    else if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) )
+    {
+	*obj = ICOM_INTERFACE(This, IDirectDraw2);
+    }
+    else if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) )
+    {
+	*obj = ICOM_INTERFACE(This, IDirectDraw4);
+    }
+#ifdef HAVE_OPENGL
+    else if ( IsEqualGUID( &IID_IDirect3D3, refiid ) )
+    {
+	return create_direct3d3(obj, This);
+    }
+    else if ( IsEqualGUID( &IID_IDirect3D2, refiid ) )
+    {
+	return create_direct3d2(obj, This);
+    }
+    else if ( IsEqualGUID( &IID_IDirect3D, refiid ) )
+    {
+	return create_direct3d(obj, This);
+    }
+#endif
+    else
+    {
+	FIXME("(%p)->(%s,%p): no interface\n",This,debugstr_guid(refiid),obj);
+	return E_NOINTERFACE;
+    }
+
+    IDirectDraw7_AddRef(iface);
+    return S_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_GetVerticalBlankStatus(
-    LPDIRECTDRAW2 iface,BOOL *status
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    TRACE("(%p)->(%p)\n",This,status);
-    *status = TRUE;
+/* MSDN: "not currently implemented". */
+HRESULT WINAPI Main_DirectDraw_Compact(LPDIRECTDRAW7 iface)
+{
+    TRACE("(%p)\n", iface);
+
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_EnumDisplayModes(
-    LPDIRECTDRAW2 iface,DWORD dwFlags,LPDDSURFACEDESC lpddsfd,LPVOID context,
-    LPDDENUMMODESCALLBACK modescb
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    DDSURFACEDESC	ddsfd;
-    static struct {
-	int w,h;
-    } modes[5] = { /* some of the usual modes */
-	{512,384},
-	{640,400},
-	{640,480},
-	{800,600},
-	{1024,768},
+HRESULT WINAPI Main_DirectDraw_CreateClipper(LPDIRECTDRAW7 iface,
+					     DWORD dwFlags,
+					     LPDIRECTDRAWCLIPPER *ppClipper,
+					     IUnknown *pUnkOuter)
+{
+    ICOM_THIS(IDirectDrawImpl, iface);
+    HRESULT hr;
+
+    TRACE("(%p)->(0x%lx, %p, %p)\n", iface, dwFlags, ppClipper, pUnkOuter);
+
+    hr = DirectDrawCreateClipper(dwFlags, ppClipper, pUnkOuter);
+    if (FAILED(hr)) return hr;
+
+    /* dwFlags is passed twice, apparently an API wart. */
+    hr = IDirectDrawClipper_Initialize(*ppClipper,
+				       ICOM_INTERFACE(This, IDirectDraw),
+				       dwFlags);
+    if (FAILED(hr))
+    {
+	IDirectDrawClipper_Release(*ppClipper);
+	return hr;
+    }
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_CreatePalette(LPDIRECTDRAW7 iface, DWORD dwFlags,
+			      LPPALETTEENTRY palent,
+			      LPDIRECTDRAWPALETTE* ppPalette,
+			      LPUNKNOWN pUnknown)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    LPDIRECTDRAWPALETTE pPalette;
+    HRESULT hr;
+
+    TRACE("(%p)->(%08lx,%p,%p,%p)\n",This,dwFlags,palent,ppPalette,pUnknown);
+
+    if (ppPalette == NULL) return E_POINTER; /* unchecked */
+    if (pUnknown != NULL) return CLASS_E_NOAGGREGATION; /* unchecked */
+
+    hr = This->create_palette(This, dwFlags, &pPalette, pUnknown);
+    if (FAILED(hr)) return hr;
+
+    hr = IDirectDrawPalette_SetEntries(pPalette, 0, 0,
+				       Main_DirectDrawPalette_Size(dwFlags),
+				       palent);
+    if (FAILED(hr))
+    {
+	IDirectDrawPalette_Release(pPalette);
+	return hr;
+    }
+    else
+    {
+	*ppPalette = pPalette;
+	return DD_OK;
+    }
+}
+
+HRESULT
+Main_create_offscreen(IDirectDrawImpl* This, const DDSURFACEDESC2* pDDSD,
+		      LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter)
+{
+    assert(pOuter == NULL);
+
+    return DIB_DirectDrawSurface_Create(This, pDDSD, ppSurf, pOuter);
+}
+
+HRESULT
+Main_create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2* pDDSD,
+		    LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter,
+		    DWORD dwMipMapLevel)
+{
+    assert(pOuter == NULL);
+
+    return DIBTexture_DirectDrawSurface_Create(This, pDDSD, ppSurf, pOuter);
+}
+
+HRESULT
+Main_create_zbuffer(IDirectDrawImpl* This, const DDSURFACEDESC2* pDDSD,
+		    LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter)
+{
+    assert(pOuter == NULL);
+
+    return FakeZBuffer_DirectDrawSurface_Create(This, pDDSD, ppSurf, pOuter);
+}
+
+/* Does the texture surface described in pDDSD have any smaller mipmaps? */
+static BOOL more_mipmaps(const DDSURFACEDESC2 *pDDSD)
+{
+    return ((pDDSD->dwFlags & DDSD_MIPMAPCOUNT) && pDDSD->u2.dwMipMapCount > 1
+	    && (pDDSD->dwWidth > 1 || pDDSD->dwHeight > 1));
+}
+
+/* Create a texture surface along with any of its mipmaps. */
+static HRESULT
+create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
+	       LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pUnkOuter)
+{
+    DDSURFACEDESC2 ddsd;
+    DWORD mipmap_level = 0;
+    HRESULT hr;
+
+    assert(pUnkOuter == NULL);
+
+    /* is this check right? (pixelformat can be copied from primary) */
+    if ((pDDSD->dwFlags&(DDSD_HEIGHT|DDSD_WIDTH)) != (DDSD_HEIGHT|DDSD_WIDTH))
+	return DDERR_INVALIDPARAMS;
+
+    ddsd = *pDDSD;
+
+    if (!(ddsd.dwFlags & DDSD_PIXELFORMAT))
+    {
+	ddsd.u4.ddpfPixelFormat = This->pixelformat;
+    }
+
+    if (!(ddsd.dwFlags & DDSD_PITCH))
+    {
+	ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth,
+						  GET_BPP(ddsd)*8);
+    }
+
+    ddsd.dwFlags |= DDSD_PITCH | DDSD_PIXELFORMAT;
+
+    hr = This->create_texture(This, &ddsd, ppSurf, pUnkOuter, mipmap_level);
+    if (FAILED(hr)) return hr;
+
+    /* Create attached mipmaps if required. */
+    if (more_mipmaps(&ddsd))
+    {
+	LPDIRECTDRAWSURFACE7 mipmap;
+	LPDIRECTDRAWSURFACE7 prev_mipmap;
+	DDSURFACEDESC2 mipmap_surface_desc;
+
+	prev_mipmap = *ppSurf;
+	IDirectDrawSurface7_AddRef(prev_mipmap);
+	mipmap_surface_desc = ddsd;
+
+	while (more_mipmaps(&mipmap_surface_desc))
+	{
+	    mipmap_level++;
+
+	    mipmap_surface_desc.u2.dwMipMapCount--;
+
+	    if (mipmap_surface_desc.dwWidth > 1)
+		mipmap_surface_desc.dwWidth /= 2;
+
+	    if (mipmap_surface_desc.dwHeight > 1)
+		mipmap_surface_desc.dwHeight /= 2;
+
+	    mipmap_surface_desc.u1.lPitch
+		= DDRAW_width_bpp_to_pitch(mipmap_surface_desc.dwWidth,
+					   GET_BPP(ddsd)*8);
+
+	    hr = This->create_texture(This, &mipmap_surface_desc, &mipmap,
+				      pUnkOuter, mipmap_level);
+	    if (FAILED(hr))
+	    {
+		IDirectDrawSurface7_Release(prev_mipmap);
+		IDirectDrawSurface7_Release(*ppSurf);
+		return hr;
+	    }
+
+	    IDirectDrawSurface7_AddAttachedSurface(prev_mipmap, mipmap);
+	    IDirectDrawSurface7_Release(prev_mipmap);
+	    prev_mipmap = mipmap;
+	}
+
+	IDirectDrawSurface7_Release(prev_mipmap);
+    }
+
+    return DD_OK;
+}
+
+/* Creates a primary surface and any indicated backbuffers. */
+static HRESULT
+create_primary(IDirectDrawImpl* This, LPDDSURFACEDESC2 pDDSD,
+	       LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pUnkOuter)
+{
+    DDSURFACEDESC2 ddsd;
+    HRESULT hr;
+
+    assert(pUnkOuter == NULL);
+
+    if (This->primary_surface != NULL)
+	return DDERR_PRIMARYSURFACEALREADYEXISTS;
+
+    /* as documented (what about pitch?) */
+    if (pDDSD->dwFlags & (DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT))
+	return DDERR_INVALIDPARAMS;
+
+    ddsd = *pDDSD;
+    ddsd.dwFlags |= DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT;
+    ddsd.dwHeight = This->height;
+    ddsd.dwWidth = This->width;
+    ddsd.u1.lPitch = This->pitch;
+    ddsd.u4.ddpfPixelFormat = This->pixelformat;
+    ddsd.ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY
+	| DDSCAPS_VISIBLE | DDSCAPS_FRONTBUFFER;
+
+    if ((ddsd.dwFlags & DDSD_BACKBUFFERCOUNT) && ddsd.dwBackBufferCount > 0)
+	ddsd.ddsCaps.dwCaps |= DDSCAPS_FLIP;
+
+    hr = This->create_primary(This, &ddsd, ppSurf, pUnkOuter);
+    if (FAILED(hr)) return hr;
+
+    if (ddsd.dwFlags & DDSD_BACKBUFFERCOUNT)
+    {
+	IDirectDrawSurfaceImpl* primary;
+	LPDIRECTDRAWSURFACE7 pPrev;
+	DWORD i;
+
+	ddsd.dwFlags &= ~DDSD_BACKBUFFERCOUNT;
+	ddsd.ddsCaps.dwCaps &= ~(DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE
+				 | DDSCAPS_BACKBUFFER);
+
+	primary = ICOM_OBJECT(IDirectDrawSurfaceImpl,IDirectDrawSurface7,
+			      *ppSurf);
+	pPrev = *ppSurf;
+	IDirectDrawSurface7_AddRef(pPrev);
+
+	for (i=0; i < ddsd.dwBackBufferCount; i++)
+	{
+	    LPDIRECTDRAWSURFACE7 pBack;
+
+	    if (i == 0)
+		ddsd.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
+	    else
+		ddsd.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
+
+	    hr = This->create_backbuffer(This, &ddsd, &pBack, pUnkOuter,
+					 primary);
+
+	    if (FAILED(hr))
+	    {
+		IDirectDraw7_Release(pPrev);
+		IDirectDraw7_Release(*ppSurf);
+		return hr;
+	    }
+
+	    IDirectDrawSurface7_AddAttachedSurface(pPrev, pBack);
+	    IDirectDrawSurface7_Release(pPrev);
+	    pPrev = pBack;
+	}
+
+	IDirectDrawSurface7_Release(pPrev);
+    }
+
+    This->primary_surface = *ppSurf;
+
+    return DD_OK;
+}
+
+static HRESULT
+create_offscreen(IDirectDrawImpl* This, LPDDSURFACEDESC2 pDDSD,
+		 LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pUnkOuter)
+{
+    DDSURFACEDESC2 ddsd;
+    HRESULT hr;
+
+    /* is this check right? (pixelformat can be copied from primary) */
+    if ((pDDSD->dwFlags&(DDSD_HEIGHT|DDSD_WIDTH)) != (DDSD_HEIGHT|DDSD_WIDTH))
+	return DDERR_INVALIDPARAMS;
+
+    ddsd = *pDDSD;
+
+    if (!(ddsd.dwFlags & DDSD_PIXELFORMAT))
+    {
+	ddsd.u4.ddpfPixelFormat = This->pixelformat;
+    }
+
+    if (!(ddsd.dwFlags & DDSD_PITCH))
+    {
+	ddsd.u1.lPitch = DDRAW_width_bpp_to_pitch(ddsd.dwWidth,
+						  GET_BPP(ddsd)*8);
+    }
+
+    ddsd.dwFlags |= DDSD_PITCH | DDSD_PIXELFORMAT;
+
+    hr = This->create_offscreen(This, &ddsd, ppSurf, pUnkOuter);
+    if (FAILED(hr)) return hr;
+
+    return hr;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
+			      LPDIRECTDRAWSURFACE7 *ppSurf,
+			      IUnknown *pUnkOuter)
+{
+    HRESULT hr;
+    ICOM_THIS(IDirectDrawImpl, iface);
+
+    TRACE("(%p)->(%p,%p,%p)\n",This,pDDSD,ppSurf,pUnkOuter);
+    TRACE("Requested Caps: 0x%x\n", pDDSD->ddsCaps.dwCaps);
+
+    if (pUnkOuter != NULL)
+	return CLASS_E_NOAGGREGATION; /* unchecked */
+
+    if (!(pDDSD->dwFlags & DDSD_CAPS))
+	return DDERR_INVALIDPARAMS; /* unchecked */
+
+    if (ppSurf == NULL)
+	return E_POINTER; /* unchecked */
+
+    if (pDDSD->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+	/* create primary surface & backbuffers */
+	hr = create_primary(This, pDDSD, ppSurf, pUnkOuter);
+    }
+    else if (pDDSD->ddsCaps.dwCaps & DDSCAPS_BACKBUFFER)
+    {
+       /* create backbuffer surface */
+       hr = This->create_backbuffer(This, pDDSD, ppSurf, pUnkOuter, NULL);
+    }
+    else if (pDDSD->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
+    {
+	/* create offscreenplain surface */
+	hr = create_offscreen(This, pDDSD, ppSurf, pUnkOuter);
+    }
+    else if (pDDSD->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+    {
+	/* create z-buffer */
+	hr = This->create_zbuffer(This, pDDSD, ppSurf, pUnkOuter);
+    }
+    else if (pDDSD->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+    {
+	/* create texture */
+	hr = create_texture(This, pDDSD, ppSurf, pUnkOuter);
+    }
+    else
+    {
+	/* Otherwise, assume offscreenplain surface */
+	FIXME("App didn't request a valid surface type - assuming offscreenplain\n");
+	hr = create_offscreen(This, pDDSD, ppSurf, pUnkOuter);
+    }
+
+    if (FAILED(hr)) return hr;
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_DuplicateSurface(LPDIRECTDRAW7 iface, LPDIRECTDRAWSURFACE7 src,
+				 LPDIRECTDRAWSURFACE7* dst)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+
+    IDirectDrawSurfaceImpl *pSrc = ICOM_OBJECT(IDirectDrawSurfaceImpl,
+					       IDirectDrawSurface7, src);
+
+    TRACE("(%p)->(%p,%p)\n",This,src,dst);
+
+    return pSrc->duplicate_surface(pSrc, dst);
+}
+
+/* EnumDisplayModes */
+
+BOOL Main_DirectDraw_DDPIXELFORMAT_Match(const DDPIXELFORMAT *requested,
+					 const DDPIXELFORMAT *provided)
+{
+    /* Some flags must be present in both or neither for a match. */
+    static const DWORD must_match = DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
+	| DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_FOURCC
+	| DDPF_ZBUFFER | DDPF_STENCILBUFFER;
+
+    if ((requested->dwFlags & provided->dwFlags) != requested->dwFlags)
+	return FALSE;
+
+    if ((requested->dwFlags & must_match) != (provided->dwFlags & must_match))
+	return FALSE;
+
+    if (requested->dwFlags & DDPF_FOURCC)
+	if (requested->dwFourCC != provided->dwFourCC)
+	    return FALSE;
+
+    if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_ZBUFFER|DDPF_ALPHA
+			      |DDPF_LUMINANCE|DDPF_BUMPDUDV))
+	if (requested->u1.dwRGBBitCount != provided->u1.dwRGBBitCount)
+	    return FALSE;
+
+    if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_STENCILBUFFER
+			      |DDPF_LUMINANCE|DDPF_BUMPDUDV))
+	if (requested->u2.dwRBitMask != provided->u2.dwRBitMask)
+	    return FALSE;
+
+    if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_ZBUFFER|DDPF_BUMPDUDV))
+	if (requested->u3.dwGBitMask != provided->u3.dwGBitMask)
+	    return FALSE;
+
+    /* I could be wrong about the bumpmapping. MSDN docs are vague. */
+    if (requested->dwFlags & (DDPF_RGB|DDPF_YUV|DDPF_STENCILBUFFER
+			      |DDPF_BUMPDUDV))
+	if (requested->u4.dwBBitMask != provided->u4.dwBBitMask)
+	    return FALSE;
+
+    if (requested->dwFlags & (DDPF_ALPHAPIXELS|DDPF_ZPIXELS))
+	if (requested->u5.dwRGBAlphaBitMask != provided->u5.dwRGBAlphaBitMask)
+	    return FALSE;
+
+    return TRUE;
+}
+
+BOOL Main_DirectDraw_DDSD_Match(const DDSURFACEDESC2* requested,
+				const DDSURFACEDESC2* provided)
+{
+    struct compare_info
+    {
+	DWORD flag;
+	ptrdiff_t offset;
+	size_t size;
     };
-    static int depths[4] = {8,16,24,32};
-    int	i,j;
 
-    TRACE("(%p)->(0x%08lx,%p,%p,%p)\n",This,dwFlags,lpddsfd,context,modescb);
-    ddsfd.dwSize = sizeof(ddsfd);
-    ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-    if (dwFlags & DDEDM_REFRESHRATES) {
-	ddsfd.dwFlags |= DDSD_REFRESHRATE;
-	ddsfd.u.dwRefreshRate = 60;
+#define CMP(FLAG, FIELD)				\
+	{ DDSD_##FLAG, offsetof(DDSURFACEDESC2, FIELD),	\
+	  sizeof(((DDSURFACEDESC2 *)(NULL))->FIELD) }
+
+    static const struct compare_info compare[] = {
+	CMP(ALPHABITDEPTH, dwAlphaBitDepth),
+	CMP(BACKBUFFERCOUNT, dwBackBufferCount),
+	CMP(CAPS, ddsCaps),
+	CMP(CKDESTBLT, ddckCKDestBlt),
+	CMP(CKDESTOVERLAY, u3.ddckCKDestOverlay),
+	CMP(CKSRCBLT, ddckCKSrcBlt),
+	CMP(CKSRCOVERLAY, ddckCKSrcOverlay),
+	CMP(HEIGHT, dwHeight),
+	CMP(LINEARSIZE, u1.dwLinearSize),
+	CMP(LPSURFACE, lpSurface),
+	CMP(MIPMAPCOUNT, u2.dwMipMapCount),
+	CMP(PITCH, u1.lPitch),
+	/* PIXELFORMAT: manual */
+	CMP(REFRESHRATE, u2.dwRefreshRate),
+	CMP(TEXTURESTAGE, dwTextureStage),
+	CMP(WIDTH, dwWidth),
+	/* ZBUFFERBITDEPTH: "obsolete" */
+    };
+
+#undef CMP
+
+    int i;
+
+    if ((requested->dwFlags & provided->dwFlags) != requested->dwFlags)
+	return FALSE;
+
+    for (i=0; i < sizeof(compare)/sizeof(compare[0]); i++)
+    {
+	if (requested->dwFlags & compare[i].flag
+	    && memcmp((const char *)provided + compare[i].offset,
+		      (const char *)requested + compare[i].offset,
+		      compare[i].size) != 0)
+	    return FALSE;
     }
-    ddsfd.ddsCaps.dwCaps = 0;
-    ddsfd.dwBackBufferCount = 1;
 
-    for (i=0;i<sizeof(depths)/sizeof(depths[0]);i++) {
-	ddsfd.dwBackBufferCount = 1;
-	ddsfd.ddpfPixelFormat.dwFourCC	= 0;
-	ddsfd.ddpfPixelFormat.dwFlags 	= DDPF_RGB;
-	ddsfd.ddpfPixelFormat.u.dwRGBBitCount	= depths[i];
-	/* FIXME: those masks would have to be set in depth > 8 */
-	if (depths[i]==8) {
-	  ddsfd.ddpfPixelFormat.u1.dwRBitMask  	= 0;
-	  ddsfd.ddpfPixelFormat.u2.dwGBitMask  	= 0;
-	  ddsfd.ddpfPixelFormat.u3.dwBBitMask 	= 0;
-	  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
-	  ddsfd.ddsCaps.dwCaps=DDSCAPS_PALETTE;
-	  ddsfd.ddpfPixelFormat.dwFlags|=DDPF_PALETTEINDEXED8;
-	} else {
-	  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
-	  
-	  /* FIXME: We should query those from X itself */
-	  switch (depths[i]) {
-	  case 16:
-	    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0xF800;
-	    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x07E0;
-	    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x001F;
-	    break;
-	  case 24:
-	    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
-	    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
-	    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
-	    break;
-	  case 32:
-	    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
-	    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
-	    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
-	    break;
-	  }
-	}
+    if (requested->dwFlags & DDSD_PIXELFORMAT)
+    {
+	if (!Main_DirectDraw_DDPIXELFORMAT_Match(&requested->u4.ddpfPixelFormat,
+						 &provided->u4.ddpfPixelFormat))
+	    return FALSE;
+    }
 
-	ddsfd.dwWidth = GetSystemMetrics(SM_CXSCREEN);
-	ddsfd.dwHeight = GetSystemMetrics(SM_CYSCREEN);
-	TRACE(" enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
-	if (!modescb(&ddsfd,context)) return DD_OK;
+    return TRUE;
+}
 
-	for (j=0;j<sizeof(modes)/sizeof(modes[0]);j++) {
-	    ddsfd.dwWidth	= modes[j].w;
-	    ddsfd.dwHeight	= modes[j].h;
-	    TRACE(" enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
-	    if (!modescb(&ddsfd,context)) return DD_OK;
-	}
+#define DDENUMSURFACES_SEARCHTYPE (DDENUMSURFACES_CANBECREATED|DDENUMSURFACES_DOESEXIST)
+#define DDENUMSURFACES_MATCHTYPE (DDENUMSURFACES_ALL|DDENUMSURFACES_MATCH|DDENUMSURFACES_NOMATCH)
 
-	if (!(dwFlags & DDEDM_STANDARDVGAMODES)) {
-	    /* modeX is not standard VGA */
+/* This should be extended so that it can be used by
+ * IDirectDrawSurface7::EnumAttachedSurfaces. */
+HRESULT
+Main_DirectDraw_EnumExistingSurfaces(IDirectDrawImpl *This, DWORD dwFlags,
+				     LPDDSURFACEDESC2 lpDDSD2, LPVOID context,
+				     LPDDENUMSURFACESCALLBACK7 callback)
+{
+    IDirectDrawSurfaceImpl *surf;
+    BOOL all, nomatch;
 
-	    ddsfd.dwHeight = 200;
-	    ddsfd.dwWidth = 320;
-	    TRACE(" enumerating (320x200x%d)\n",depths[i]);
-	    if (!modescb(&ddsfd,context)) return DD_OK;
+    /* A NULL lpDDSD2 is permitted if we are enumerating all surfaces anyway */
+    if (lpDDSD2 == NULL && !(dwFlags & DDENUMSURFACES_ALL))
+	return DDERR_INVALIDPARAMS;
+
+    all = dwFlags & DDENUMSURFACES_ALL;
+    nomatch = dwFlags & DDENUMSURFACES_NOMATCH;
+
+    for (surf = This->surfaces; surf != NULL; surf = surf->next_ddraw)
+    {
+	if (all
+	    || (nomatch != Main_DirectDraw_DDSD_Match(lpDDSD2,
+						      &surf->surface_desc)))
+	{
+	    LPDIRECTDRAWSURFACE7 surface = ICOM_INTERFACE(surf,
+							  IDirectDrawSurface7);
+
+	    /* BOGUS! Violates COM rules, but MSDN says so. */
+	    IDirectDrawSurface7_AddRef(surface);
+
+	    if (callback(surface, &surf->surface_desc, context)
+		== DDENUMRET_CANCEL)
+		break;
 	}
     }
+
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_GetDisplayMode(
-    LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsfd
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    TRACE("(%p)->GetDisplayMode(%p)\n",This,lpddsfd);
-    lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-    lpddsfd->dwHeight = This->d->height;
-    lpddsfd->dwWidth = This->d->width;
-    lpddsfd->lPitch =lpddsfd->dwWidth*PFGET_BPP(This->d->directdraw_pixelformat);
-    lpddsfd->dwBackBufferCount = 2;
-    lpddsfd->u.dwRefreshRate = 60;
-    lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
-    lpddsfd->ddpfPixelFormat = This->d->directdraw_pixelformat;
-    if (TRACE_ON(ddraw))
-	_dump_surface_desc(lpddsfd);
+/* I really don't understand how this is supposed to work.
+ * We only consider dwHeight, dwWidth and ddpfPixelFormat.dwFlags. */
+HRESULT
+Main_DirectDraw_EnumCreateableSurfaces(IDirectDrawImpl *This, DWORD dwFlags,
+				       LPDDSURFACEDESC2 lpDDSD2,
+				       LPVOID context,
+				       LPDDENUMSURFACESCALLBACK7 callback)
+{
+    FIXME("This isn't going to work.\n");
+
+    if ((dwFlags & DDENUMSURFACES_MATCHTYPE) != DDENUMSURFACES_MATCH)
+	return DDERR_INVALIDPARAMS;
+
+    /* TODO: implement this.
+     * Does this work before SCL is called?
+     * Does it only consider off-screen surfaces?
+     */
+
+    return E_FAIL;
+}
+
+/* For unsigned x. 0 is not a power of 2. */
+#define IS_POW_2(x) (((x) & ((x) - 1)) == 0)
+
+HRESULT WINAPI
+Main_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
+			     LPDDSURFACEDESC2 lpDDSD2, LPVOID context,
+			     LPDDENUMSURFACESCALLBACK7 callback)
+{
+    ICOM_THIS(IDirectDrawImpl, iface);
+    TRACE("(%p)->(0x%lx, %p, %p, %p)\n", iface, dwFlags, lpDDSD2, context,
+	  callback);
+
+    if (callback == NULL)
+	return DDERR_INVALIDPARAMS;
+
+    if (dwFlags & ~(DDENUMSURFACES_SEARCHTYPE|DDENUMSURFACES_MATCHTYPE))
+	return DDERR_INVALIDPARAMS;
+
+    if (!IS_POW_2(dwFlags & DDENUMSURFACES_SEARCHTYPE)
+	|| !IS_POW_2(dwFlags & DDENUMSURFACES_MATCHTYPE))
+	return DDERR_INVALIDPARAMS;
+
+    if (dwFlags & DDENUMSURFACES_DOESEXIST)
+    {
+	return Main_DirectDraw_EnumExistingSurfaces(This, dwFlags, lpDDSD2,
+						    context, callback);
+    }
+    else
+    {
+	return Main_DirectDraw_EnumCreateableSurfaces(This, dwFlags, lpDDSD2,
+						      context, callback);
+    }
+}
+
+HRESULT WINAPI
+Main_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface,DWORD a,DWORD* b)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    FIXME("(%p)->() stub\n", This);
+
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_FlipToGDISurface(LPDIRECTDRAW2 iface) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p)->()\n",This);
+HRESULT WINAPI
+Main_DirectDraw_FlipToGDISurface(LPDIRECTDRAW7 iface)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    TRACE("(%p)->()\n",This);
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_GetMonitorFrequency(
-    LPDIRECTDRAW2 iface,LPDWORD freq
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
+/* GetCaps */
+/* GetDeviceIdentifier */
+/* GetDIsplayMode */
+
+HRESULT WINAPI
+Main_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
+			       LPDWORD pCodes)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    FIXME("(%p,%p,%p), stub\n",This,pNumCodes,pCodes);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_GetGDISurface(LPDIRECTDRAW7 iface,
+			      LPDIRECTDRAWSURFACE7 *lplpGDIDDSSurface)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    TRACE("(%p)->(%p)\n", This, lplpGDIDDSSurface);
+    TRACE("returning primary (%p)\n", This->primary_surface);
+    *lplpGDIDDSSurface = ICOM_INTERFACE(This->primary_surface, IDirectDrawSurface7);
+    if (*lplpGDIDDSSurface)
+	IDirectDrawSurface7_AddRef(*lplpGDIDDSSurface);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_GetMonitorFrequency(LPDIRECTDRAW7 iface,LPDWORD freq)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
     FIXME("(%p)->(%p) returns 60 Hz always\n",This,freq);
     *freq = 60*100; /* 60 Hz */
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_GetFourCCCodes(
-    LPDIRECTDRAW2 iface,LPDWORD x,LPDWORD y
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p,%p,%p), stub\n",This,x,y);
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_EnumSurfaces(
-    LPDIRECTDRAW2 iface,DWORD x,LPDDSURFACEDESC ddsfd,LPVOID context,
-    LPDDENUMSURFACESCALLBACK ddsfcb
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p)->(0x%08lx,%p,%p,%p),stub!\n",This,x,ddsfd,context,ddsfcb);
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_Compact( LPDIRECTDRAW2 iface ) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p)->()\n", This );
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_GetGDISurface(
-    LPDIRECTDRAW2 iface, LPDIRECTDRAWSURFACE *lplpGDIDDSSurface
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p)->(%p)\n", This, lplpGDIDDSSurface);
-    return DD_OK;
-}
-
-HRESULT WINAPI IDirectDraw2Impl_GetScanLine(
-    LPDIRECTDRAW2 iface, LPDWORD lpdwScanLine
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
+HRESULT WINAPI
+Main_DirectDraw_GetScanLine(LPDIRECTDRAW7 iface, LPDWORD lpdwScanLine)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
     FIXME("(%p)->(%p)\n", This, lpdwScanLine);
 
-    if (lpdwScanLine)
-	*lpdwScanLine = 1;
+    *lpdwScanLine = 1;
+
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface, GUID *lpGUID) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    FIXME("(%p)->(%p)\n", This, lpGUID);
+HRESULT WINAPI
+Main_DirectDraw_GetSurfaceFromDC(LPDIRECTDRAW7 iface, HDC hdc,
+				 LPDIRECTDRAWSURFACE7 *lpDDS)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    FIXME("(%p)->(%08ld,%p)\n", This, (DWORD) hdc, lpDDS);
+
     return DD_OK;
 }
 
-/*****************************************************************************
- * 	IDirectDraw2
- *
- * We only need to list the changed/new functions.
- */
-HRESULT WINAPI IDirectDraw2Impl_SetDisplayMode(
-    LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,
-    DWORD dwRefreshRate, DWORD dwFlags
-) {
-    FIXME("Ignoring parameters (0x%08lx,0x%08lx)\n", dwRefreshRate, dwFlags ); 
-    return IDirectDrawImpl_SetDisplayMode((LPDIRECTDRAW)iface,width,height,depth);
+HRESULT WINAPI
+Main_DirectDraw_GetVerticalBlankStatus(LPDIRECTDRAW7 iface, LPBOOL status)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    TRACE("(%p)->(%p)\n",This,status);
+    *status = TRUE;
+    return DD_OK;
 }
 
-HRESULT WINAPI IDirectDraw2Impl_GetAvailableVidMem(
-    LPDIRECTDRAW2 iface,LPDDSCAPS ddscaps,LPDWORD total,LPDWORD free
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
+/* If we were not initialised then Uninit_Main_IDirectDraw7_Initialize would
+ * have been called instead. */
+HRESULT WINAPI
+Main_DirectDraw_Initialize(LPDIRECTDRAW7 iface, LPGUID lpGuid)
+{
+    TRACE("(%p)->(%s)\n", iface, debugstr_guid(lpGuid));
+
+    return DDERR_ALREADYINITIALIZED;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_RestoreAllSurfaces(LPDIRECTDRAW7 iface)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    IDirectDrawSurfaceImpl* surf;
+
+    TRACE("(%p)->()\n", This);
+
+    for (surf = This->surfaces; surf != NULL; surf = surf->next_ddraw)
+	IDirectDrawSurface7_Restore(ICOM_INTERFACE(surf, IDirectDrawSurface7));
+
+    return DD_OK;
+}
+
+static void DDRAW_SubclassWindow(IDirectDrawImpl* This)
+{
+    /* Well we don't actually subclass the window yet. */
+    SetPropA(This->window, ddProp, (LONG)This);
+}
+
+static void DDRAW_UnsubclassWindow(IDirectDrawImpl* This)
+{
+    RemovePropA(This->window, ddProp);
+}
+
+HRESULT WINAPI
+Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
+				    DWORD cooplevel)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+
+    FIXME("(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
+    DDRAW_dump_cooperativelevel(cooplevel);
+
+    /* Makes realMYST test happy. */
+    if (This->cooperative_level == cooplevel
+	&& This->window == hwnd)
+	return DD_OK;
+
+    if ((This->cooperative_level & DDSCL_EXCLUSIVE) &&
+        (cooplevel & DDSCL_EXCLUSIVE))
+	return DDERR_EXCLUSIVEMODEALREADYSET;
+
+    /* XXX "It cannot be reset while the process has surfaces or palettes
+     * created." Otherwise the window can be changed??? 
+     * 
+     * This appears to be wrong - comment it out for now.
+    if (This->window)
+	return DDERR_HWNDALREADYSET; 
+    */
+
+    if (!(cooplevel & (DDSCL_EXCLUSIVE|DDSCL_NORMAL)))
+	return DDERR_INVALIDPARAMS;
+
+    This->window = hwnd;
+    This->cooperative_level = cooplevel;
+
+    ShowWindow(hwnd, SW_SHOW);
+
+    DDRAW_SubclassWindow(This);
+
+    /* TODO Does it also get resized to the current screen size? */
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
+			       DWORD dwHeight, LONG lPitch,
+			       DWORD dwRefreshRate, DWORD dwFlags,
+			       const DDPIXELFORMAT* pixelformat)
+{
+    short screenX;
+    short screenY;
+    
+    ICOM_THIS(IDirectDrawImpl,iface);
+
+    TRACE("(%p)->SetDisplayMode(%ld,%ld)\n",This,dwWidth,dwHeight);
+
+    if (!(This->cooperative_level & DDSCL_EXCLUSIVE))
+	return DDERR_NOEXCLUSIVEMODE;
+
+    if (!IsWindow(This->window))
+	return DDERR_GENERIC; /* unchecked */
+
+    LosePrimarySurface(This);
+
+    screenX = GetSystemMetrics(SM_CXSCREEN);
+    screenY = GetSystemMetrics(SM_CYSCREEN);
+    
+    This->width = dwWidth;
+    This->height = dwHeight;
+    This->pitch = lPitch;
+    This->pixelformat = *pixelformat;
+
+    /* Position the window in the center of the screen - don't center for now */
+    /* MoveWindow(This->window, (screenX-dwWidth)/2, (screenY-dwHeight)/2, 
+                  dwWidth, dwHeight, TRUE);*/
+    MoveWindow(This->window, 0, 0, dwWidth, dwHeight, TRUE);
+
+    SetFocus(This->window);
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+
+    TRACE("(%p)\n",This);
+    if (!(This->cooperative_level & DDSCL_EXCLUSIVE))
+	return DDERR_NOEXCLUSIVEMODE;
+
+    /* Lose the primary surface if the resolution changes. */
+    if (This->orig_width != This->width || This->orig_height != This->height
+	|| This->orig_pitch != This->pitch
+	|| This->orig_pixelformat.dwFlags != This->pixelformat.dwFlags
+	|| !Main_DirectDraw_DDPIXELFORMAT_Match(&This->pixelformat,
+						&This->orig_pixelformat))
+    {
+	LosePrimarySurface(This);
+    }
+
+    /* TODO Move the window back where it belongs. */
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_WaitForVerticalBlank(LPDIRECTDRAW7 iface, DWORD dwFlags,
+				     HANDLE h)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    FIXME("(%p)->(flags=0x%08lx,handle=0x%08x)\n",This,dwFlags,h);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_GetDisplayMode(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    TRACE("(%p)->GetDisplayMode(%p)\n",This,pDDSD);
+
+    pDDSD->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_PIXELFORMAT|DDSD_REFRESHRATE;
+    pDDSD->dwHeight = This->height;
+    pDDSD->dwWidth = This->width;
+    pDDSD->u1.lPitch = This->pitch;
+    pDDSD->u2.dwRefreshRate = 60;
+    pDDSD->u4.ddpfPixelFormat = This->pixelformat;
+    pDDSD->ddsCaps.dwCaps = 0;
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
+				   LPDWORD total, LPDWORD free)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
     TRACE("(%p)->(%p,%p,%p)\n", This,ddscaps,total,free);
 
     /* We have 16 MB videomemory */
@@ -480,122 +993,436 @@ HRESULT WINAPI IDirectDraw2Impl_GetAvailableVidMem(
     return DD_OK;
 }
 
-/*****************************************************************************
- * 	IDirectDraw4
- *
+HRESULT WINAPI Main_DirectDraw_TestCooperativeLevel(LPDIRECTDRAW7 iface) {
+    ICOM_THIS(IDirectDrawImpl,iface);
+    TRACE("(%p)->(): stub\n", This);
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_DirectDraw_StartModeTest(LPDIRECTDRAW7 iface, LPSIZE pModes,
+			      DWORD dwNumModes, DWORD dwFlags)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    FIXME("(%p)->() stub\n", This);
+
+    return DD_OK;
+}
+
+/*** Owned object management. */
+
+void Main_DirectDraw_AddSurface(IDirectDrawImpl* This,
+				IDirectDrawSurfaceImpl* surface)
+{
+    assert(surface->ddraw_owner == NULL || surface->ddraw_owner == This);
+
+    surface->ddraw_owner = This;
+
+    /* where should it go? */
+    surface->next_ddraw = This->surfaces;
+    surface->prev_ddraw = NULL;
+    if (This->surfaces)
+	This->surfaces->prev_ddraw = surface;
+    This->surfaces = surface;
+}
+
+void Main_DirectDraw_RemoveSurface(IDirectDrawImpl* This,
+				   IDirectDrawSurfaceImpl* surface)
+{
+    assert(surface->ddraw_owner == This);
+
+    if (This->surfaces == surface)
+	This->surfaces = surface->next_ddraw;
+
+    if (This->primary_surface == surface)
+	This->primary_surface = NULL;
+
+    if (surface->next_ddraw)
+	surface->next_ddraw->prev_ddraw = surface->prev_ddraw;
+    if (surface->prev_ddraw)
+	surface->prev_ddraw->next_ddraw = surface->next_ddraw;
+}
+
+static void Main_DirectDraw_DeleteSurfaces(IDirectDrawImpl* This)
+{
+    while (This->surfaces != NULL)
+	Main_DirectDrawSurface_ForceDestroy(This->surfaces);
+}
+
+void Main_DirectDraw_AddClipper(IDirectDrawImpl* This,
+				IDirectDrawClipperImpl* clipper)
+{
+    assert(clipper->ddraw_owner == NULL || clipper->ddraw_owner == This);
+
+    clipper->ddraw_owner = This;
+
+    clipper->next_ddraw = This->clippers;
+    clipper->prev_ddraw = NULL;
+    if (This->clippers)
+	This->clippers->prev_ddraw = clipper;
+    This->clippers = clipper;
+}
+
+void Main_DirectDraw_RemoveClipper(IDirectDrawImpl* This,
+				   IDirectDrawClipperImpl* clipper)
+{
+    assert(clipper->ddraw_owner == This);
+
+    if (This->clippers == clipper)
+	This->clippers = clipper->next_ddraw;
+
+    if (clipper->next_ddraw)
+	clipper->next_ddraw->prev_ddraw = clipper->prev_ddraw;
+    if (clipper->prev_ddraw)
+	clipper->prev_ddraw->next_ddraw = clipper->next_ddraw;
+}
+
+static void Main_DirectDraw_DeleteClippers(IDirectDrawImpl* This)
+{
+    while (This->clippers != NULL)
+	Main_DirectDrawClipper_ForceDestroy(This->clippers);
+}
+
+void Main_DirectDraw_AddPalette(IDirectDrawImpl* This,
+				IDirectDrawPaletteImpl* palette)
+{
+    assert(palette->ddraw_owner == NULL || palette->ddraw_owner == This);
+
+    palette->ddraw_owner = This;
+
+    /* where should it go? */
+    palette->next_ddraw = This->palettes;
+    palette->prev_ddraw = NULL;
+    if (This->palettes)
+	This->palettes->prev_ddraw = palette;
+    This->palettes = palette;
+}
+
+void Main_DirectDraw_RemovePalette(IDirectDrawImpl* This,
+				   IDirectDrawPaletteImpl* palette)
+{
+    assert(palette->ddraw_owner == This);
+
+    if (This->palettes == palette)
+	This->palettes = palette->next_ddraw;
+
+    if (palette->next_ddraw)
+	palette->next_ddraw->prev_ddraw = palette->prev_ddraw;
+    if (palette->prev_ddraw)
+	palette->prev_ddraw->next_ddraw = palette->next_ddraw;
+}
+
+static void Main_DirectDraw_DeletePalettes(IDirectDrawImpl* This)
+{
+    while (This->palettes != NULL)
+	Main_DirectDrawPalette_ForceDestroy(This->palettes);
+}
+
+/*** ??? */
+
+static void
+LoseSurface(IDirectDrawSurfaceImpl *surface)
+{
+    if (surface != NULL) surface->lose_surface(surface);
+}
+
+static void
+LosePrimarySurface(IDirectDrawImpl *This)
+{
+    /* MSDN: "If another application changes the display mode, the primary
+     * surface is lost, and the method returns DDERR_SURFACELOST until the
+     * primary surface is recreated to match the new display mode."
+     *
+     * We mark all the primary surfaces as lost as soon as the display
+     * mode is changed (by any application). */
+
+    LoseSurface(This->primary_surface);
+}
+
+/******************************************************************************
+ * Uninitialised DirectDraw functions
+ * 
+ * This vtable is used when a DirectDraw object is created with
+ * CoCreateInstance. The only usable method is Initialize.
  */
 
-HRESULT WINAPI IDirectDraw4Impl_GetSurfaceFromDC(
-    LPDIRECTDRAW4 iface, HDC hdc, LPDIRECTDRAWSURFACE *lpDDS
-) {
-    ICOM_THIS(IDirectDraw4Impl,iface);
-    FIXME("(%p)->(%08ld,%p)\n", This, (DWORD) hdc, lpDDS);
-
-    return DD_OK;
+void Uninit_DirectDraw_final_release(IDirectDrawImpl *This)
+{
+    Main_DirectDraw_final_release(This);
 }
 
-HRESULT WINAPI IDirectDraw4Impl_RestoreAllSurfaces(LPDIRECTDRAW4 iface) {
-    ICOM_THIS(IDirectDraw4Impl,iface);
-    FIXME("(%p)->()\n", This);
+static ICOM_VTABLE(IDirectDraw7) Uninit_DirectDraw_VTable;
 
-    return DD_OK;
+/* Not called from the vtable. */
+HRESULT Uninit_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
+{
+    HRESULT hr;
+
+    hr = Main_DirectDraw_Construct(This, ex);
+    if (FAILED(hr)) return hr;
+
+    This->final_release = Uninit_DirectDraw_final_release;
+    ICOM_INIT_INTERFACE(This, IDirectDraw7, Uninit_DirectDraw_VTable);
+
+    return S_OK;
 }
 
-HRESULT WINAPI IDirectDraw4Impl_TestCooperativeLevel(LPDIRECTDRAW4 iface) {
-    ICOM_THIS(IDirectDraw4Impl,iface);
-    FIXME("(%p)->()\n", This);
+HRESULT Uninit_DirectDraw_Create(const GUID* pGUID,
+				       LPDIRECTDRAW7* pIface,
+				       IUnknown* pUnkOuter, BOOL ex)
+{
+    HRESULT hr;
+    IDirectDrawImpl* This;
 
-    return DD_OK;
+    assert(pUnkOuter == NULL); /* XXX no: we must check this */
+
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+		     sizeof(IDirectDrawImpl));
+    if (This == NULL) return E_OUTOFMEMORY;
+
+    hr = Uninit_DirectDraw_Construct(This, ex);
+    if (FAILED(hr))
+	HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, This);
+    else
+	*pIface = ICOM_INTERFACE(This, IDirectDraw7);
+
+    return hr;
 }
 
-HRESULT WINAPI IDirectDraw4Impl_GetDeviceIdentifier(
-    LPDIRECTDRAW4 iface,LPDDDEVICEIDENTIFIER lpdddi,DWORD dwFlags
-) {
-    ICOM_THIS(IDirectDraw4Impl,iface);
-    FIXME("(%p)->(%p,%08lx)\n", This, lpdddi, dwFlags);
+static HRESULT WINAPI
+Uninit_DirectDraw_Initialize(LPDIRECTDRAW7 iface, LPGUID pDeviceGuid)
+{
+    const ddraw_driver* driver;
+    ICOM_THIS(IDirectDrawImpl, iface);
 
-    /* just guessing values */
-    strcpy(lpdddi->szDriver,"directdraw");
-    strcpy(lpdddi->szDescription,"WINE DirectDraw");
-    lpdddi->liDriverVersion.s.HighPart = 7;
-    lpdddi->liDriverVersion.s.LowPart = 0;
-    /* Do I smell PCI ids here ? -MM */
-    lpdddi->dwVendorId			= 0;
-    lpdddi->dwDeviceId			= 0;
-    lpdddi->dwSubSysId			= 0;
-    lpdddi->dwRevision			= 1;
-    memset(&(lpdddi->guidDeviceIdentifier),0,sizeof(lpdddi->guidDeviceIdentifier));
-    return DD_OK;
+    TRACE("(%p)->(%p)", iface, pDeviceGuid);
+
+    driver = DDRAW_FindDriver(pDeviceGuid);
+    /* XXX This return value is not documented. (Not checked.) */
+    if (driver == NULL) return DDERR_INVALIDDIRECTDRAWGUID;
+
+    return driver->init(This, pDeviceGuid);
 }
 
-HRESULT WINAPI IDirectDraw7Impl_StartModeTest(
-    LPDIRECTDRAW7 iface,LPSIZE lpModesToTest,DWORD dwNumEntries,DWORD dwFlags
-) {
-    FIXME("(%p)->(%p,%ld,0x%08lx),empty stub!\n",iface,
-	lpModesToTest,dwNumEntries,dwFlags
-    );
-    return DD_OK;
+static HRESULT WINAPI
+Uninit_DirectDraw_Compact(LPDIRECTDRAW7 iface)
+{
+    return DDERR_NOTINITIALIZED;
 }
 
-HRESULT WINAPI IDirectDraw7Impl_EvaluateMode(
-    LPDIRECTDRAW7 iface,DWORD dwFlags, DWORD *pSecondsUntilTimeout
-) {
-    FIXME("(%p)->(0x%08lx,%p),empty stub!\n",iface,
-	dwFlags,pSecondsUntilTimeout
-    );
-    return DD_OK;
+static HRESULT WINAPI
+Uninit_DirectDraw_CreateClipper(LPDIRECTDRAW7 iface, DWORD dwFlags,
+				LPDIRECTDRAWCLIPPER *lplpDDClipper,
+				IUnknown *pUnkOuter)
+
+{
+    return DDERR_NOTINITIALIZED;
 }
 
-HRESULT common_off_screen_CreateSurface(
-    IDirectDraw2Impl* This,IDirectDrawSurfaceImpl* lpdsf
-) {
-    int bpp;
-
-    /* The surface was already allocated when entering in this function */
-    TRACE("using system memory for a surface (%p) \n", lpdsf);
-
-    if (lpdsf->s.surface_desc.dwFlags & DDSD_ZBUFFERBITDEPTH) {
-	/* This is a Z Buffer */
-	TRACE("Creating Z-Buffer of %ld bit depth\n", lpdsf->s.surface_desc.u.dwZBufferBitDepth);
-	bpp = lpdsf->s.surface_desc.u.dwZBufferBitDepth / 8;
-    } else {
-	/* This is a standard image */
-	if (!(lpdsf->s.surface_desc.dwFlags & DDSD_PIXELFORMAT)) {
-	    /* No pixel format => use DirectDraw's format */
-	    lpdsf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
-	    lpdsf->s.surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-	}
-	bpp = GET_BPP(lpdsf->s.surface_desc);
-
-	/* When the application is requesting a 24 bpp surface and the Direct Draw bpp
-	   is set to 32, we 'upgrade' the requested bpp to 32 to make the blit faster
-	   from off-screen surface to visible surfaces.
-	   
-	   This can also happen with 15 / 16 bpp.
-	   
-	   With this, Windows Media Player works in 32 bpp mode.
-	                  Lionel
-	*/
-	if (((bpp == 3) && (PFGET_BPP(This->d->directdraw_pixelformat) == 4)) ||
-	    ((bpp == 2) && (PFGET_BPP(This->d->directdraw_pixelformat) == 2) &&
-	     (lpdsf->s.surface_desc.ddpfPixelFormat.u1.dwRBitMask != This->d->directdraw_pixelformat.u1.dwRBitMask))) {
-	  TRACE("Warning: 'upgrading' requested pixel format to screen pixel format for blit efficiency\n");
-	  TRACE("         some applications may have problems with it.\n");
-	  bpp = PFGET_BPP(This->d->directdraw_pixelformat);
-	  lpdsf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
-	}
-    }
-    
-    if (lpdsf->s.surface_desc.dwFlags & DDSD_LPSURFACE)
-	ERR("Creates a surface that is already allocated : assuming this is an application bug !\n");
-
-    lpdsf->s.surface_desc.dwFlags |= DDSD_PITCH|DDSD_LPSURFACE;
-    lpdsf->s.surface_desc.u1.lpSurface =(LPBYTE)VirtualAlloc(
-	NULL,
-	lpdsf->s.surface_desc.dwWidth * lpdsf->s.surface_desc.dwHeight * bpp,
-	MEM_RESERVE | MEM_COMMIT,
-	PAGE_READWRITE
-    );
-    lpdsf->s.surface_desc.lPitch = lpdsf->s.surface_desc.dwWidth * bpp;
-    return DD_OK;
+static HRESULT WINAPI
+Uninit_DirectDraw_CreatePalette(LPDIRECTDRAW7 iface, DWORD dwFlags,
+				LPPALETTEENTRY lpColorTable,
+				LPDIRECTDRAWPALETTE *lplpDDPalette,
+				IUnknown *pUnkOuter)
+{
+    return DDERR_NOTINITIALIZED;
 }
+
+static HRESULT WINAPI
+Uninit_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface,
+				LPDDSURFACEDESC2 lpDDSurfaceDesc,
+				LPDIRECTDRAWSURFACE7 *lplpDDSurface,
+				IUnknown *pUnkOuter)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_DuplicateSurface(LPDIRECTDRAW7 iface,
+				   LPDIRECTDRAWSURFACE7 pSurf,
+				   LPDIRECTDRAWSURFACE7 *pDupSurf)
+
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
+				   LPDDSURFACEDESC2 lpDDSD,
+				   LPVOID context,
+				   LPDDENUMMODESCALLBACK2 cb)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
+			       LPDDSURFACEDESC2 pDDSD, LPVOID context,
+			       LPDDENUMSURFACESCALLBACK7 cb)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_FlipToGDISurface(LPDIRECTDRAW7 iface)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
+			  LPDDCAPS pHELCaps)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetDisplayMode(LPDIRECTDRAW7 iface,
+				 LPDDSURFACEDESC2 pDDSD)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
+				 LPDWORD pCodes)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetGDISurface(LPDIRECTDRAW7 iface,
+				LPDIRECTDRAWSURFACE7 *pGDISurf)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetMonitorFrequency(LPDIRECTDRAW7 iface, LPDWORD pdwFreq)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetScanLine(LPDIRECTDRAW7 iface, LPDWORD pdwScanLine)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetVerticalBlankStatus(LPDIRECTDRAW7 iface, PBOOL pbIsInVB)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hWnd,
+				      DWORD dwFlags)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
+				 DWORD dwHeight, DWORD dwBPP,
+				 DWORD dwRefreshRate, DWORD dwFlags)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_WaitForVerticalBlank(LPDIRECTDRAW7 iface, DWORD dwFlags,
+				       HANDLE hEvent)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 pDDCaps,
+				     LPDWORD pdwTotal, LPDWORD pdwFree)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetSurfaceFromDC(LPDIRECTDRAW7 iface, HDC hDC,
+				   LPDIRECTDRAWSURFACE7 *pSurf)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_RestoreAllSurfaces(LPDIRECTDRAW7 iface)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_TestCooperativeLevel(LPDIRECTDRAW7 iface)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
+				      LPDDDEVICEIDENTIFIER2 pDDDI,
+				      DWORD dwFlags)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_StartModeTest(LPDIRECTDRAW7 iface, LPSIZE pszModes,
+				DWORD cModes, DWORD dwFlags)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static HRESULT WINAPI
+Uninit_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface, DWORD dwFlags,
+			       LPDWORD pTimeout)
+{
+    return DDERR_NOTINITIALIZED;
+}
+
+static ICOM_VTABLE(IDirectDraw7) Uninit_DirectDraw_VTable =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    Main_DirectDraw_QueryInterface,
+    Main_DirectDraw_AddRef,
+    Main_DirectDraw_Release,
+    Uninit_DirectDraw_Compact,
+    Uninit_DirectDraw_CreateClipper,
+    Uninit_DirectDraw_CreatePalette,
+    Uninit_DirectDraw_CreateSurface,
+    Uninit_DirectDraw_DuplicateSurface,
+    Uninit_DirectDraw_EnumDisplayModes,
+    Uninit_DirectDraw_EnumSurfaces,
+    Uninit_DirectDraw_FlipToGDISurface,
+    Uninit_DirectDraw_GetCaps,
+    Uninit_DirectDraw_GetDisplayMode,
+    Uninit_DirectDraw_GetFourCCCodes,
+    Uninit_DirectDraw_GetGDISurface,
+    Uninit_DirectDraw_GetMonitorFrequency,
+    Uninit_DirectDraw_GetScanLine,
+    Uninit_DirectDraw_GetVerticalBlankStatus,
+    Uninit_DirectDraw_Initialize,
+    Uninit_DirectDraw_RestoreDisplayMode,
+    Uninit_DirectDraw_SetCooperativeLevel,
+    Uninit_DirectDraw_SetDisplayMode,
+    Uninit_DirectDraw_WaitForVerticalBlank,
+    Uninit_DirectDraw_GetAvailableVidMem,
+    Uninit_DirectDraw_GetSurfaceFromDC,
+    Uninit_DirectDraw_RestoreAllSurfaces,
+    Uninit_DirectDraw_TestCooperativeLevel,
+    Uninit_DirectDraw_GetDeviceIdentifier,
+    Uninit_DirectDraw_StartModeTest,
+    Uninit_DirectDraw_EvaluateMode
+};

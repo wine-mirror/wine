@@ -28,7 +28,6 @@ ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3;
 #undef HAVE_BUGGY_MESAGL
 
 #define D3DDPRIVATE(x) mesa_d3dd_private *odev=((mesa_d3dd_private*)x->private)
-#define DDPRIVATE(x) x11_dd_private *ddpriv=((x11_dd_private*)(x)->d->private)
 
 #ifndef HAVE_GLEXT_PROTOTYPES
 /* This is for non-OpenGL ABI compliant glext.h headers :-) */
@@ -48,8 +47,8 @@ static const float id_mat[16] = {
  *				OpenGL static functions
  */
 static void set_context(IDirect3DDevice2Impl* This) {
+#if COMPILABLE
     D3DDPRIVATE(This);
-    DDPRIVATE(This->surface->s.ddraw);
 
 #ifdef USE_OSMESA
     OSMesaMakeCurrent(d3ddpriv->ctx, odev->buffer, GL_UNSIGNED_BYTE,
@@ -59,7 +58,8 @@ static void set_context(IDirect3DDevice2Impl* This) {
     if (glXMakeCurrent(display,ddpriv->drawable, odev->ctx) == False) {
 	ERR("Error in setting current context (context %p drawable %ld)!\n",
 	    odev->ctx, ddpriv->drawable);
-}
+    }
+#endif
 #endif
 }
 
@@ -123,6 +123,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
 }
 
 static void fill_device_capabilities(IDirectDrawImpl* ddraw) {
+#if COMPILABLE
   x11_dd_private *private = (x11_dd_private *) ddraw->d->private;
   const char *ext_string;
   Mesa_DeviceCapabilities *devcap;
@@ -140,6 +141,7 @@ static void fill_device_capabilities(IDirectDrawImpl* ddraw) {
     TRACE("Color table extension not found.\n");
   }
   LEAVE_GL();
+#endif
 }
 
 int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
@@ -201,6 +203,7 @@ is_OpenGL(
     else
       TRACE("Context created (%p)\n", odev->ctx);
     
+#if COMPILABLE
     /* Now override the surface's Flip method (if in double buffering) */
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
     {
@@ -210,6 +213,7 @@ is_OpenGL(
 	  if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
 	      ((x11_ds_private *) chain->surfaces[i]->private)->opengl_flip = TRUE;
     }
+#endif
 
 #endif
     odev->rs.src = GL_ONE;
@@ -295,21 +299,21 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   
   TRACE("Enumerating GL_RGBA unpacked (32)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  pformat->u.dwRGBBitCount = 32;
-  pformat->u1.dwRBitMask =         0xFF000000;
-  pformat->u2.dwGBitMask =         0x00FF0000;
-  pformat->u3.dwBBitMask =        0x0000FF00;
-  pformat->u4.dwRGBAlphaBitMask = 0x000000FF;
+  pformat->u1.dwRGBBitCount = 32;
+  pformat->u2.dwRBitMask =         0xFF000000;
+  pformat->u3.dwGBitMask =         0x00FF0000;
+  pformat->u4.dwBBitMask =        0x0000FF00;
+  pformat->u5.dwRGBAlphaBitMask = 0x000000FF;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGB unpacked (24)\n");
   pformat->dwFlags = DDPF_RGB;
-  pformat->u.dwRGBBitCount = 24;
-  pformat->u1.dwRBitMask =  0x00FF0000;
-  pformat->u2.dwGBitMask =  0x0000FF00;
-  pformat->u3.dwBBitMask = 0x000000FF;
-  pformat->u4.dwRGBAlphaBitMask = 0x00000000;
+  pformat->u1.dwRGBBitCount = 24;
+  pformat->u2.dwRBitMask =  0x00FF0000;
+  pformat->u3.dwGBitMask =  0x0000FF00;
+  pformat->u4.dwBBitMask = 0x000000FF;
+  pformat->u5.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
@@ -318,62 +322,62 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
      so that future version will work great. */
   TRACE("Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_6_5 (16)\n");
   pformat->dwFlags = DDPF_RGB;
-  pformat->u.dwRGBBitCount = 16;
-  pformat->u1.dwRBitMask =  0x0000F800;
-  pformat->u2.dwGBitMask =  0x000007E0;
-  pformat->u3.dwBBitMask = 0x0000001F;
-  pformat->u4.dwRGBAlphaBitMask = 0x00000000;
+  pformat->u1.dwRGBBitCount = 16;
+  pformat->u2.dwRBitMask =  0x0000F800;
+  pformat->u3.dwGBitMask =  0x000007E0;
+  pformat->u4.dwBBitMask = 0x0000001F;
+  pformat->u5.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_5_5_5_1 (16)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  pformat->u.dwRGBBitCount = 16;
-  pformat->u1.dwRBitMask =         0x0000F800;
-  pformat->u2.dwGBitMask =         0x000007C0;
-  pformat->u3.dwBBitMask =        0x0000003E;
-  pformat->u4.dwRGBAlphaBitMask = 0x00000001;
+  pformat->u1.dwRGBBitCount = 16;
+  pformat->u2.dwRBitMask =         0x0000F800;
+  pformat->u3.dwGBitMask =         0x000007C0;
+  pformat->u4.dwBBitMask =        0x0000003E;
+  pformat->u5.dwRGBAlphaBitMask = 0x00000001;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_4_4_4_4 (16)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  pformat->u.dwRGBBitCount = 16;
-  pformat->u1.dwRBitMask =         0x0000F000;
-  pformat->u2.dwGBitMask =         0x00000F00;
-  pformat->u3.dwBBitMask =        0x000000F0;
-  pformat->u4.dwRGBAlphaBitMask = 0x0000000F;
+  pformat->u1.dwRGBBitCount = 16;
+  pformat->u2.dwRBitMask =         0x0000F000;
+  pformat->u3.dwGBitMask =         0x00000F00;
+  pformat->u4.dwBBitMask =        0x000000F0;
+  pformat->u5.dwRGBAlphaBitMask = 0x0000000F;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGB packed GL_UNSIGNED_BYTE_3_3_2 (8)\n");
   pformat->dwFlags = DDPF_RGB;
-  pformat->u.dwRGBBitCount = 8;
-  pformat->u1.dwRBitMask =         0x0000F800;
-  pformat->u2.dwGBitMask =         0x000007C0;
-  pformat->u3.dwBBitMask =        0x0000003E;
-  pformat->u4.dwRGBAlphaBitMask = 0x00000001;
+  pformat->u1.dwRGBBitCount = 8;
+  pformat->u2.dwRBitMask =         0x0000F800;
+  pformat->u3.dwGBitMask =         0x000007C0;
+  pformat->u4.dwBBitMask =        0x0000003E;
+  pformat->u5.dwRGBAlphaBitMask = 0x00000001;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 #endif
 
   TRACE("Enumerating GL_ARGB (no direct OpenGL equivalent - conversion needed)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  pformat->u.dwRGBBitCount = 16;
-  pformat->u1.dwRBitMask =         0x00007C00;
-  pformat->u2.dwGBitMask =         0x000003E0;
-  pformat->u3.dwBBitMask =         0x0000001F;
-  pformat->u4.dwRGBAlphaBitMask =  0x00008000;
+  pformat->u1.dwRGBBitCount = 16;
+  pformat->u2.dwRBitMask =         0x00007C00;
+  pformat->u3.dwGBitMask =         0x000003E0;
+  pformat->u4.dwBBitMask =         0x0000001F;
+  pformat->u5.dwRGBAlphaBitMask =  0x00008000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;  
   
   TRACE("Enumerating Paletted (8)\n");
   pformat->dwFlags = DDPF_PALETTEINDEXED8;
-  pformat->u.dwRGBBitCount = 8;
-  pformat->u1.dwRBitMask =  0x00000000;
-  pformat->u2.dwGBitMask =  0x00000000;
-  pformat->u3.dwBBitMask = 0x00000000;
-  pformat->u4.dwRGBAlphaBitMask = 0x00000000;
+  pformat->u1.dwRGBBitCount = 8;
+  pformat->u2.dwRBitMask =  0x00000000;
+  pformat->u3.dwGBitMask =  0x00000000;
+  pformat->u4.dwBBitMask = 0x00000000;
+  pformat->u5.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
   
@@ -936,7 +940,7 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
     
-    fill_device_capabilities((IDirectDrawImpl *) surface->s.ddraw);
+    fill_device_capabilities((IDirectDrawImpl *) surface->ddraw_owner);
 
     return 1;
   }

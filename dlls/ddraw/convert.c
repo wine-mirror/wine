@@ -224,12 +224,36 @@ static void pixel_convert_32_to_24(
     }
 }
 
-Convert ModeEmulations[7] = {
-  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  24, 24, 0xFF0000, 0x0000FF00, 0x00FF }, { pixel_convert_32_to_24, NULL } },
-  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_32_to_8,  palette_convert_24_to_8 } },
+/* *************************************
+      16 bpp to 32 bpp
+   ************************************* */
+static void pixel_convert_16_to_32(
+	void *src, void *dst, DWORD width, DWORD height, LONG pitch,
+	IDirectDrawPaletteImpl* palette
+) {
+    unsigned int *c_src = (unsigned int *) src;
+    unsigned short *c_dst = (unsigned short *) dst;
+    int y;
+
+    for (y = height; y--; ) {
+	unsigned int * srclineend = c_src+width;
+	while (c_src < srclineend ) {
+	    *c_dst++ = (((*c_src & 0xF80000) >> 8) |
+			((*c_src & 0x00FC00) >> 5) |
+			((*c_src & 0x0000F8) >> 3));
+	    c_src++;
+	}
+	c_src+=((pitch/4)-width);
+    }
+}
+
+Convert ModeEmulations[8] = {
+  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  24, 24, 0xFF0000, 0x00FF00, 0x0000FF }, { pixel_convert_32_to_24, NULL } },
   { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  16, 16, 0xF800, 0x07E0, 0x001F }, { pixel_convert_32_to_16, NULL } },
+  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_32_to_8,  palette_convert_24_to_8 } },
   { { 24, 24,   0xFF0000,   0x00FF00,   0x0000FF }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_24_to_8,  palette_convert_24_to_8 } },
   { { 16, 15,     0x7C00,     0x03E0,     0x001F }, {  16,16, 0xf800, 0x07e0, 0x001f }, { pixel_convert_15_to_16,  NULL } },
   { { 16, 16,     0xF800,     0x07E0,     0x001F }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_16_to_8,  palette_convert_16_to_8 } },
   { { 16, 15,     0x7C00,     0x03E0,     0x001F }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_16_to_8,  palette_convert_15_to_8 } },
+  { { 16, 16,     0xF800,     0x07E0,     0x001F }, {  32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, { pixel_convert_16_to_32, NULL } }
 };
