@@ -409,7 +409,7 @@ static BOOL CLASS_UnregisterClass( ATOM atom, HINSTANCE hInstance )
     USER_Lock();
     if (atom &&
         (classPtr = CLASS_FindClassByAtom( atom, hInstance )) &&
-        (classPtr->hInstance == hInstance))
+        (!hInstance || classPtr->hInstance == hInstance))
     {
         ret = CLASS_FreeClass( classPtr );
     }
