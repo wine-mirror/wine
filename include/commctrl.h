@@ -2638,6 +2638,79 @@ typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define TCIS_BUTTONPRESSED      0x0001
 #define TCIS_HIGHLIGHTED 0x0002
 
+/* TabCtrl Macros */
+#define TabCtrl_GetImageList(hwnd) \
+				    (HIMAGELIST)SNDMSG((hwnd), TCM_GETIMAGELIST, 0, 0L)
+
+#define TabCtrl_SetImageList(hwnd, himl) \
+				    (HIMAGELIST)SNDMSG((hwnd), TCM_SETIMAGELIST, 0, (LPARAM)(UINT)(HIMAGELIST)(himl))
+
+#define TabCtrl_GetItemCount(hwnd) \
+				    (int)SNDMSG((hwnd), TCM_GETITEMCOUNT, 0, 0L)
+
+#define TabCtrl_GetItem(hwnd, iItem, pitem) \
+				    (BOOL)SNDMSG((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM FAR*)(pitem))
+
+#define TabCtrl_SetItem(hwnd, iItem, pitem) \
+				    (BOOL)SNDMSG((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM FAR*)(pitem))
+				 
+#define TabCtrl_InsertItem(hwnd, iItem, pitem)   \
+				    (int)SNDMSG((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM FAR*)(pitem))
+
+#define TabCtrl_DeleteItem(hwnd, i) \
+				    (BOOL)SNDMSG((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
+
+#define TabCtrl_DeleteAllItems(hwnd) \
+				    (BOOL)SNDMSG((hwnd), TCM_DELETEALLITEMS, 0, 0L)
+
+#define TabCtrl_GetItemRect(hwnd, i, prc) \
+				    (BOOL)SNDMSG((hwnd), TCM_GETITEMRECT, (WPARAM)(int)(i), (LPARAM)(RECT FAR*)(prc))
+
+#define TabCtrl_GetCurSel(hwnd) \
+				    (int)::SNDMSG((hwnd), TCM_GETCURSEL, 0, 0)
+
+#define TabCtrl_SetCurSel(hwnd, i) \
+				    (int)SNDMSG((hwnd), TCM_SETCURSEL, (WPARAM)i, 0)
+
+#define TabCtrl_HitTest(hwndTC, pinfo) \
+				    (int)SNDMSG((hwndTC), TCM_HITTEST, 0, (LPARAM)(TC_HITTESTINFO FAR*)(pinfo))
+
+#define TabCtrl_SetItemExtra(hwndTC, cb) \
+				    (BOOL)SNDMSG((hwndTC), TCM_SETITEMEXTRA, (WPARAM)(cb), 0L)
+
+#define TabCtrl_AdjustRect(hwnd, bLarger, prc) \
+				    (int)SNDMSG(hwnd, TCM_ADJUSTRECT, (WPARAM)(BOOL)bLarger, (LPARAM)(RECT FAR *)prc)
+
+#define TabCtrl_SetItemSize(hwnd, x, y) \
+				    (DWORD)SNDMSG((hwnd), TCM_SETITEMSIZE, 0, MAKELPARAM(x,y))
+
+#define TabCtrl_RemoveImage(hwnd, i) \
+				        (void)SNDMSG((hwnd), TCM_REMOVEIMAGE, i, 0L)
+
+#define TabCtrl_SetPadding(hwnd,  cx, cy) \
+				        (void)SNDMSG((hwnd), TCM_SETPADDING, 0, MAKELPARAM(cx, cy))
+
+#define TabCtrl_GetRowCount(hwnd) \
+				        (int)SNDMSG((hwnd), TCM_GETROWCOUNT, 0, 0L)
+
+#define TabCtrl_GetToolTips(hwnd) \
+				        (HWND)SNDMSG((hwnd), TCM_GETTOOLTIPS, 0, 0L)
+
+#define TabCtrl_SetToolTips(hwnd, hwndTT) \
+				        (void)SNDMSG((hwnd), TCM_SETTOOLTIPS, (WPARAM)hwndTT, 0L)
+
+#define TabCtrl_GetCurFocus(hwnd) \
+				    (int)SNDMSG((hwnd), TCM_GETCURFOCUS, 0, 0)
+
+#define TabCtrl_SetCurFocus(hwnd, i) \
+				    SNDMSG((hwnd),TCM_SETCURFOCUS, i, 0)
+
+#define TabCtrl_SetMinTabWidth(hwnd, x) \
+				        (int)SNDMSG((hwnd), TCM_SETMINTABWIDTH, 0, x)
+
+#define TabCtrl_DeselectAll(hwnd, fExcludeFocus)\
+				        (void)SNDMSG((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
+
 
 /* constants for TCHITTESTINFO */
 
