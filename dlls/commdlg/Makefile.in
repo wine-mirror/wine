@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = comdlg32
 SOVERSION = 1.0
 ALTNAMES  = commdlg
-IMPORTS   = winspool
+IMPORTS   = winspool.drv
 WRCEXTRA  = -s -pcomdlg32
 
 SPEC_SRCS = commdlg.spec comdlg32.spec

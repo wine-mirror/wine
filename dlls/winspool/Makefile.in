@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winspool
+MODULE    = winspool.drv
 SOVERSION = 1.0
 
 SPEC_SRCS = winspool.spec

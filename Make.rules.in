@@ -136,7 +136,7 @@ DLLS = \
 	wing \
 	wininet \
 	winmm \
-	winspool \
+	winspool.drv \
 	wnaspi32 \
 	wsock32 \
 	x11drv
