@@ -10,6 +10,7 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 /* Types */
 
@@ -123,5 +124,9 @@ int usleep (unsigned int useconds);
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
+
+#ifndef S_ISLNK
+#define S_ISLNK(mod) (0)
+#endif /* S_ISLNK */
 
 #endif /* !defined(__WINE_WINE_PORT_H) */
