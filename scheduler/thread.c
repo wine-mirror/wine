@@ -150,7 +150,7 @@ void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
     TRACE("(%p) called\n", teb );
     SERVICE_Delete( teb->cleanup );
 
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, (DWORD)teb->tid, 0 );
     
     CloseHandle( teb->event );
     while (*pptr && (*pptr != teb)) pptr = &(*pptr)->next;
@@ -277,7 +277,7 @@ error:
 static void THREAD_Start(void)
 {
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)NtCurrentTeb()->entry_point;
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, (DWORD)NtCurrentTeb()->tid, 0 );
     PE_InitTls();
     MODULE_DllThreadAttach( NULL );
 

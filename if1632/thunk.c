@@ -41,6 +41,7 @@ extern LONG CALLBACK THUNK_CallTo16_long_ll   (FARPROC16,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_lllw (FARPROC16,LONG,LONG,LONG,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
@@ -374,7 +375,6 @@ void THUNK_InitCallout(void)
         GETADDR( DispatchMessageW, "DispatchMessageW" );
         GETADDR( DispatchMessageA, "DispatchMessageA" );
         GETADDR( RedrawWindow, "RedrawWindow" );
-        GETADDR( UserSignalProc, "UserSignalProc" );
 
 #undef GETADDR
     }
@@ -399,6 +399,7 @@ void THUNK_InitCallout(void)
         GETADDR( InitThreadInput16, "InitThreadInput", word_ww );
         GETADDR( UserYield16, "UserYield", word_ );
         GETADDR( DestroyIcon32, "DestroyIcon32", word_ww );
+        GETADDR( UserSignalProc, "SignalProc32", word_lllw );
 
 #undef GETADDR
     }

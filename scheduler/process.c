@@ -185,9 +185,10 @@ PDB *PROCESS_IdToPDB( DWORD id )
  * USIG_FLAGS_FAULT
  *     The signal is being sent due to a fault.
  */
-static void PROCESS_CallUserSignalProcHelper( UINT uCode, DWORD dwThreadOrProcessId,
-                                              HMODULE hModule, DWORD flags, DWORD startup_flags )
+void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule )
 {
+    DWORD flags = PROCESS_Current()->flags;
+    DWORD startup_flags = PROCESS_Current()->env_db->startup_info->dwFlags;
     DWORD dwFlags = 0;
 
     /* Determine dwFlags */
@@ -217,25 +218,11 @@ static void PROCESS_CallUserSignalProcHelper( UINT uCode, DWORD dwThreadOrProces
     /* Call USER signal proc */
 
     if ( Callout.UserSignalProc )
-        Callout.UserSignalProc( uCode, dwThreadOrProcessId, dwFlags, hModule );
+        if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
+            Callout.UserSignalProc( uCode, dwThreadId, dwFlags, hModule );
+        else
+            Callout.UserSignalProc( uCode, GetCurrentProcessId(), dwFlags, hModule );
 }
-
-/* Call USER signal proc for the current thread/process */
-void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
-{
-    DWORD dwThreadOrProcessId;
-
-    /* Get thread or process ID */
-    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-        dwThreadOrProcessId = GetCurrentThreadId();
-    else
-        dwThreadOrProcessId = GetCurrentProcessId();
-
-    PROCESS_CallUserSignalProcHelper( uCode, dwThreadOrProcessId, hModule,
-                                      PROCESS_Current()->flags,
-                                      PROCESS_Current()->env_db->startup_info->dwFlags );
-}
-
 
 /***********************************************************************
  *           PROCESS_CreateEnvDB
@@ -436,14 +423,9 @@ void PROCESS_Start(void)
      *       in the case of a 16-bit process. Thus, we send the signal here.
      */
 
-    /* Load USER32.DLL before calling UserSignalProc (relay debugging!) */
-    LoadLibraryA( "USER32.DLL" );
-
-    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
-
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
-
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, GetCurrentThreadId(), 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
 
     /* Signal the parent process to continue */
     server_call( REQ_INIT_PROCESS_DONE );
@@ -468,7 +450,7 @@ void PROCESS_Start(void)
         PE_InitTls();
     }
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );   /* FIXME: correct location? */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );   /* FIXME: correct location? */
 
     if ( (pdb->flags & PDB32_CONSOLE_PROC) || (pdb->flags & PDB32_DOS_PROC) )
         AllocConsole();
@@ -485,7 +467,7 @@ void PROCESS_Start(void)
         TASK_AddTaskEntryBreakpoint( pdb->task );
 
     /* Now call the entry point */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
 
     switch ( type )
     {

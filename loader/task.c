@@ -462,9 +462,9 @@ void TASK_KillTask( HTASK16 hTask )
     /* Perform USER cleanup */
 
     TASK_CallTaskSignalProc( USIG16_TERMINATION, hTask );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );     /* FIXME */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, GetCurrentThreadId(), 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0, 0 );
 
     if (nTaskCount <= 1)
     {
@@ -716,6 +716,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
 
     /* Initialize implicitly loaded DLLs */
     NE_InitializeDLLs( pTask->hModule );
+    NE_DllProcessAttach( pTask->hModule );
 
     /* Registers on return are:
      * ax     1 if OK, 0 on error

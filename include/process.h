@@ -156,7 +156,7 @@ extern BOOL PROCESS_Init( void );
 extern BOOL PROCESS_IsCurrent( HANDLE handle );
 extern PDB *PROCESS_Initial(void);
 extern PDB *PROCESS_IdToPDB( DWORD id );
-extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
+extern void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule );
 extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, 
                             LPCSTR cmd_line, LPCSTR env, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
