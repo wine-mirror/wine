@@ -1734,6 +1734,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
       {
         /* activate the next page */
         PROPSHEET_ShowPage(hwndDlg, index + 1, psInfo);
+        psInfo->active_page = index;
       }
     }
     else
