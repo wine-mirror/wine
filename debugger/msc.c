@@ -1831,7 +1831,7 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
   unsigned short	      * extent_table;
   int				fd = -1;
   struct file_ent	      * fent;
-  char			      * filename[MAX_PATHNAME_LEN];
+  char			        filename[MAX_PATHNAME_LEN];
   struct file_list	      * filelist = NULL;
   unsigned int			gsym_record = 0;
   char			      * gsymtab = NULL;
