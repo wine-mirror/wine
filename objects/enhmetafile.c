@@ -1148,11 +1148,27 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_CREATEDIBPATTERNBRUSHPT:
       {
         PEMRCREATEDIBPATTERNBRUSHPT lpCreate = (PEMRCREATEDIBPATTERNBRUSHPT)mr;
+        LPVOID lpPackedStruct;
+
+        /* check that offsets and data are contained within the record */
+        if ( !( (lpCreate->cbBmi>=0) && (lpCreate->cbBits>=0) &&
+                (lpCreate->offBmi>=0) && (lpCreate->offBits>=0) &&
+                ((lpCreate->offBmi +lpCreate->cbBmi ) <= mr->nSize) &&
+                ((lpCreate->offBits+lpCreate->cbBits) <= mr->nSize) ) )
+        {
+            ERR("Invalid EMR_CREATEDIBPATTERNBRUSHPT record\n");
+            break;
+        }
 
         /* This is a BITMAPINFO struct followed directly by bitmap bits */
-        LPVOID lpPackedStruct = HeapAlloc( GetProcessHeap(),
-                                           0,
-                                           lpCreate->cbBmi + lpCreate->cbBits );
+        lpPackedStruct = HeapAlloc( GetProcessHeap(), 0,
+                                    lpCreate->cbBmi + lpCreate->cbBits );
+        if(!lpPackedStruct)
+        {
+	    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            break;
+        }
+
         /* Now pack this structure */
         memcpy( lpPackedStruct,
                 ((BYTE*)lpCreate) + lpCreate->offBmi,
@@ -1164,6 +1180,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         (handletable->objectHandle)[lpCreate->ihBrush] =
            CreateDIBPatternBrushPt( lpPackedStruct,
                                     (UINT)lpCreate->iUsage );
+
+        HeapFree(GetProcessHeap(), 0, lpPackedStruct);
 
         break;
       }
