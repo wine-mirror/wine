@@ -1640,6 +1640,7 @@ BOOL32 WINPOS_ChangeActiveWindow( HWND32 hWnd, BOOL32 mouseMsg )
 
         /* owned popups imply owner activation - not sure */
     if ((wndPtr->dwStyle & WS_POPUP) && wndPtr->owner &&
+        (wndPtr->owner->dwStyle & WS_VISIBLE ) &&
         !(wndPtr->owner->dwStyle & WS_DISABLED ))
     {
         if (!(wndPtr = wndPtr->owner)) return FALSE;
