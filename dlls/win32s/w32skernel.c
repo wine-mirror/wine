@@ -32,14 +32,12 @@
  */
 LPSTR WINAPI GetWin32sDirectory(void)
 {
-    static char sysdir[0x80];
-    LPSTR text;
+    static const char win32s[] = "\\win32s";
 
-    GetEnvironmentVariableA("winsysdir", sysdir, 0x80);
-    if (!sysdir) return NULL;
-    strcat(sysdir, "\\WIN32S");
-    text = HeapAlloc(GetProcessHeap(), 0, strlen(sysdir)+1);
-    strcpy(text, sysdir);
+    int len = GetSystemDirectoryA( NULL, 0 );
+    LPSTR text = HeapAlloc( GetProcessHeap(), 0, len + sizeof(win32s) - 1 );
+    GetSystemDirectoryA( text, len );
+    strcat( text, win32s );
     return text;
 }
 
@@ -60,4 +58,3 @@ HTASK16 WINAPI GetCurrentTask32(void)
 {
     return NtCurrentTeb()->htask16;
 }
-
