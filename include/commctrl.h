@@ -3657,7 +3657,7 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
     (BOOL)SNDMSGA((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
 #define TabCtrl_SetItemW(hwnd, iItem, pitem) \
     (BOOL)SNDMSGW((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
-#define TabCtrl_SetItem WINELIB_NAME_AW(TabCtrl_GetItem)
+#define TabCtrl_SetItem WINELIB_NAME_AW(TabCtrl_SetItem)
 #define TabCtrl_InsertItemA(hwnd, iItem, pitem)   \
     (int)SNDMSGA((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
 #define TabCtrl_InsertItemW(hwnd, iItem, pitem)   \
