@@ -9,6 +9,7 @@
 #include <locale.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #ifdef MALLOC_DEBUGGING
@@ -18,17 +19,12 @@
 #include "winbase.h"
 #include "winsock.h"
 #include "heap.h"
-#include "message.h"
 #include "msdos.h"
-#include "color.h"
 #include "options.h"
 #include "debugtools.h"
 #include "debugdefs.h"
 #include "module.h"
-#include "version.h"
 #include "winnls.h"
-#include "console.h"
-#include "gdi.h"
 #include "user.h"
 #include "windef.h"
 #include "wingdi.h"

@@ -17,7 +17,6 @@
 #include "commctrl.h"
 #include "debugtools.h"
 #include "cache.h"
-#include "win.h"
 
 DEFAULT_DEBUG_CHANNEL(tab);
 
@@ -1257,15 +1256,12 @@ TAB_DrawItemInterior
   if ( (lStyle & TCS_OWNERDRAWFIXED) && GetParent(hwnd) )
   {
     DRAWITEMSTRUCT dis;
-    WND *pwndPtr;
     UINT id;
 
     /*
      * get the control id
      */
-    pwndPtr = WIN_FindWndPtr( hwnd );
-    id = pwndPtr->wIDmenu;
-    WIN_ReleaseWndPtr(pwndPtr);
+    id = GetWindowLongA( hwnd, GWL_ID );
 
     /* 
      * put together the DRAWITEMSTRUCT

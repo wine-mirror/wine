@@ -12,7 +12,6 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "win.h"
-#include "desktop.h"
 #include "heap.h"
 
 	BOOL	bMultiLineTitle;

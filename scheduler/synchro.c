@@ -9,11 +9,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "heap.h"
-#include "process.h"
 #include "thread.h"
 #include "winerror.h"
 #include "syslevel.h"
-#include "message.h"
 #include "server.h"
 
 /***********************************************************************

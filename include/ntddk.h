@@ -990,6 +990,7 @@ DWORD WINAPI RtlIntegerToChar(DWORD x1,DWORD x2,DWORD x3,DWORD x4);
 LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x);
 DWORD WINAPI RtlNtStatusToDosError(DWORD error);
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type);
+PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule);
 
 DWORD WINAPI RtlOpenCurrentUser(
 	IN ACCESS_MASK DesiredAccess,

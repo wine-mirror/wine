@@ -26,15 +26,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "gdi.h"
 #include "heap.h"
-#include "dc.h"
-#include "win.h"
 #include "wine/exception.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "debugtools.h"
-#include "message.h"
 #include "options.h"
 
 #include "dga_private.h"

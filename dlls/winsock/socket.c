@@ -83,15 +83,13 @@
 #include "winnt.h"
 #include "heap.h"
 #include "task.h"
-#include "message.h"
-#include "miscemu.h"
 #include "wine/port.h"
 #include "services.h"
 #include "server.h"
 #include "debugtools.h"
 
 
-DEFAULT_DEBUG_CHANNEL(winsock)
+DEFAULT_DEBUG_CHANNEL(winsock);
 
 #define DEBUG_SOCKADDR 0
 #define dump_sockaddr(a) \

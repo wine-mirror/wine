@@ -8,11 +8,10 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "miscemu.h"
-#include "input.h"
 #include "debugtools.h"
 #include "dosexe.h"
 
-DEFAULT_DEBUG_CHANNEL(int)
+DEFAULT_DEBUG_CHANNEL(int);
 
 #define QUEUELEN 31
 

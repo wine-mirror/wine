@@ -14,7 +14,6 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "heap.h"
-#include "tchar.h"
 #include "winsock.h"
 
 #include <sys/types.h>
@@ -970,35 +969,35 @@ INT HTTP_GetStdHeaderIndex(LPCSTR lpszField)
 {
     INT index = -1;
 
-    if (!_stricmp(lpszField, "Content-Length"))
+    if (!strcasecmp(lpszField, "Content-Length"))
         index = HTTP_QUERY_CONTENT_LENGTH;
-    else if (!_stricmp(lpszField,"Status"))
+    else if (!strcasecmp(lpszField,"Status"))
         index = HTTP_QUERY_STATUS_CODE;
-    else if (!_stricmp(lpszField,"Content-Type"))
+    else if (!strcasecmp(lpszField,"Content-Type"))
         index = HTTP_QUERY_CONTENT_TYPE;
-    else if (!_stricmp(lpszField,"Last-Modified"))
+    else if (!strcasecmp(lpszField,"Last-Modified"))
         index = HTTP_QUERY_LAST_MODIFIED;
-    else if (!_stricmp(lpszField,"Location"))
+    else if (!strcasecmp(lpszField,"Location"))
         index = HTTP_QUERY_LOCATION;
-    else if (!_stricmp(lpszField,"Accept"))
+    else if (!strcasecmp(lpszField,"Accept"))
         index = HTTP_QUERY_ACCEPT;
-    else if (!_stricmp(lpszField,"Referer"))
+    else if (!strcasecmp(lpszField,"Referer"))
         index = HTTP_QUERY_REFERER;
-    else if (!_stricmp(lpszField,"Content-Transfer-Encoding"))
+    else if (!strcasecmp(lpszField,"Content-Transfer-Encoding"))
         index = HTTP_QUERY_CONTENT_TRANSFER_ENCODING;
-    else if (!_stricmp(lpszField,"Date"))
+    else if (!strcasecmp(lpszField,"Date"))
         index = HTTP_QUERY_DATE;
-    else if (!_stricmp(lpszField,"Server"))
+    else if (!strcasecmp(lpszField,"Server"))
         index = HTTP_QUERY_SERVER;
-    else if (!_stricmp(lpszField,"Connection"))
+    else if (!strcasecmp(lpszField,"Connection"))
         index = HTTP_QUERY_CONNECTION;
-    else if (!_stricmp(lpszField,"ETag"))
+    else if (!strcasecmp(lpszField,"ETag"))
         index = HTTP_QUERY_ETAG;
-    else if (!_stricmp(lpszField,"Accept-Ranges"))
+    else if (!strcasecmp(lpszField,"Accept-Ranges"))
         index = HTTP_QUERY_ACCEPT_RANGES;
-    else if (!_stricmp(lpszField,"Expires"))
+    else if (!strcasecmp(lpszField,"Expires"))
         index = HTTP_QUERY_EXPIRES;
-    else if (!_stricmp(lpszField,"Mime-Version"))
+    else if (!strcasecmp(lpszField,"Mime-Version"))
         index = HTTP_QUERY_MIME_VERSION;
     else
     {
@@ -1260,7 +1259,7 @@ INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQA lpwhr, LPCSTR lpszField)
 
     for (index = 0; index < lpwhr->nCustHeaders; index++)
     {
-	if (!_stricmp(lpwhr->pCustHeaders[index].lpszField, lpszField))
+	if (!strcasecmp(lpwhr->pCustHeaders[index].lpszField, lpszField))
 	    break;
 
     }

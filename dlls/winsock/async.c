@@ -84,12 +84,11 @@
 #include "winnt.h"
 #include "heap.h"
 #include "task.h"
-#include "message.h"
-#include "miscemu.h"
+#include "ldt.h"
 #include "wine/port.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(winsock)
+DEFAULT_DEBUG_CHANNEL(winsock);
 
 /* protoptypes of some functions in socket.c
  */

@@ -15,11 +15,8 @@
 
 #include "winerror.h"
 #include "heap.h"
-#include "dc.h"
-#include "win.h"
 #include "wine/exception.h"
 #include "debugtools.h"
-#include "message.h"
 
 #include "initguid.h"
 #include "ddraw.h"
@@ -232,12 +229,12 @@ static LRESULT WINAPI DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 	    ret = DefWindowProcA( ddraw->d->mainWindow, msg, wParam, lParam );
 
 	    if( !ret ) {
-		WND *tmpWnd =WIN_FindWndPtr(ddraw->d->mainWindow);
 		/* We didn't handle the message - give it to the application */
-		if (ddraw && ddraw->d->mainWindow && tmpWnd)
-		    ret = CallWindowProcA(tmpWnd->winproc,
-		ddraw->d->mainWindow, msg, wParam, lParam );
-		WIN_ReleaseWndPtr(tmpWnd);
+		if (ddraw && ddraw->d->mainWindow)
+                {
+                    WNDPROC winproc = (WNDPROC)GetWindowLongA( ddraw->d->mainWindow, GWL_WNDPROC );
+		    ret = CallWindowProcA(winproc, ddraw->d->mainWindow, msg, wParam, lParam );
+                }
 	    }
 	    return ret;
 	} /* else FALLTHROUGH */

@@ -10,7 +10,6 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
-#include "cache.h"
 #include "region.h"
 #include "path.h"
 #include "debugtools.h"

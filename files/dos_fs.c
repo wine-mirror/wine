@@ -32,12 +32,11 @@
 #include "msdos.h"
 #include "syslevel.h"
 #include "server.h"
-#include "process.h"
 #include "options.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(dosfs)
-DECLARE_DEBUG_CHANNEL(file)
+DEFAULT_DEBUG_CHANNEL(dosfs);
+DECLARE_DEBUG_CHANNEL(file);
 
 /* Define the VFAT ioctl to get both short and long file names */
 /* FIXME: is it possible to get this to work on other systems? */

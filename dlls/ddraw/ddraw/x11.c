@@ -21,7 +21,6 @@
 #include "d3d.h"
 #include "win.h"
 #include "debugtools.h"
-#include "message.h"
 #include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);

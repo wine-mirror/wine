@@ -9,7 +9,6 @@
 #include "winerror.h"
 #include "ddraw.h"
 #include "d3d.h"
-#include "message.h"
 #include "options.h"
 #include "debugtools.h"
 

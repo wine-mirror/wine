@@ -707,6 +707,8 @@ LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, ULONG size);
 
 HRESULT WINAPI CoCreateGuid(GUID* pguid);
 
+HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);
+
 void WINAPI CoFreeAllLibraries(void);
 
 void WINAPI CoFreeLibrary(HINSTANCE hLibrary);

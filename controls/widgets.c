@@ -15,7 +15,6 @@
 #include "heap.h"
 #include "mdi.h"
 #include "menu.h"
-#include "module.h"
 #include "scroll.h"
 #include "static.h"
 

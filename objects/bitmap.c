@@ -14,7 +14,6 @@
 #include "bitmap.h"
 #include "heap.h"
 #include "global.h"
-#include "cursoricon.h"
 #include "debugtools.h"
 #include "wine/winuser16.h"
 

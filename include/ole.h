@@ -273,12 +273,6 @@ OLESTATUS WINAPI OleCreateFromClip16(
 	LPCSTR name, LPOLECLIENT olecli, LHCLIENTDOC hclientdoc, LPCSTR xname,
 	LPOLEOBJECT *lpoleob, UINT16 render, UINT16 clipformat);
 
-/* com functions */
-void WINAPI CoFreeUnusedLibraries(void);
-HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);
-void WINAPI CoFreeUnusedLibraries(void);
-void WINAPI CoFreeAllLibraries(void);
-
 #ifdef __cplusplus
 } /*extern*/
 #endif

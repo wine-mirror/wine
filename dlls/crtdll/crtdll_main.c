@@ -50,7 +50,6 @@ UB 000416:
 #include "winerror.h"
 #include "ntddk.h"
 #include "debugtools.h"
-#include "module.h"
 #include "heap.h"
 #include "crtdll.h"
 #include "drive.h"

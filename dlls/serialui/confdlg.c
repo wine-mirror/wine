@@ -19,14 +19,11 @@
 
 #include "winbase.h"
 #include "winreg.h"
-#include "dialog.h"
-#include "win.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "debugtools.h"
 #include "serialui.h"
 #include "winerror.h"
-
-#include "queue.h"
-#include "message.h"
 
 DEFAULT_DEBUG_CHANNEL(comm);
 

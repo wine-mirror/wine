@@ -37,7 +37,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "heap.h"
-#include "color.h"
+#include "palette.h"
 #include "bitmap.h"
 #include "cursoricon.h"
 #include "global.h"

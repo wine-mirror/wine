@@ -16,8 +16,6 @@
 #include <time.h>
 #include "winbase.h"
 #include "winerror.h"
-#include "process.h"
-#include "thread.h"
 #include "heap.h"
 #include "server.h"
 #include "debugtools.h"

@@ -19,7 +19,6 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "wownt32.h"
-#include "ole.h"
 #include "ole2ver.h"
 #include "debugtools.h"
 #include "file.h"
@@ -519,7 +518,7 @@ HRESULT WINAPI CLSIDFromString(
 	CLSID *id		/* [out] GUID represented by above string */
 ) {
     LPOLESTR16      xid = HEAP_strdupWtoA(GetProcessHeap(),0,idstr);
-    OLESTATUS       ret = CLSIDFromString16(xid,id);
+    HRESULT       ret = CLSIDFromString16(xid,id);
 
     HeapFree(GetProcessHeap(),0,xid);
     if(ret != S_OK) { /* It appears a ProgID is also valid */
@@ -535,7 +534,7 @@ HRESULT WINAPI CLSIDFromString(
  * NOTES
  *
  * RETURNS
- *	the string representation and OLESTATUS
+ *	the string representation and HRESULT
  */
 static HRESULT WINE_StringFromCLSID(
 	const CLSID *id,	/* [in] GUID to be converted */
@@ -567,7 +566,7 @@ static HRESULT WINE_StringFromCLSID(
 
   TRACE("%p->%s\n", id, idstr);
 
-  return OLE_OK;
+  return S_OK;
 }
 
 /******************************************************************************
@@ -575,7 +574,7 @@ static HRESULT WINE_StringFromCLSID(
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
- *	the string representation and OLESTATUS
+ *	the string representation and HRESULT
  */
 HRESULT WINAPI StringFromCLSID16(
         REFCLSID id,            /* [in] the GUID to be converted */
@@ -583,7 +582,7 @@ HRESULT WINAPI StringFromCLSID16(
 
 ) {
     LPMALLOC16	mllc;
-    OLESTATUS	ret;
+    HRESULT	ret;
     DWORD	args[2];
 
     ret = CoGetMalloc16(0,&mllc);
@@ -615,14 +614,14 @@ HRESULT WINAPI StringFromCLSID16(
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
- *	the string representation and OLESTATUS
+ *	the string representation and HRESULT
  */
 HRESULT WINAPI StringFromCLSID(
         REFCLSID id,            /* [in] the GUID to be converted */
 	LPOLESTR *idstr	/* [out] a pointer to a to-be-allocated pointer pointing to the resulting string */
 ) {
 	char            buf[80];
-	OLESTATUS       ret;
+	HRESULT       ret;
 	LPMALLOC	mllc;
 
 	if ((ret=CoGetMalloc(0,&mllc)))
@@ -752,7 +751,7 @@ HRESULT WINAPI CLSIDFromProgID(
 	LPCLSID riid		/* [out] associated CLSID */
 ) {
 	LPOLESTR16 pid = HEAP_strdupWtoA(GetProcessHeap(),0,progid);
-	OLESTATUS       ret = CLSIDFromProgID16(pid,riid);
+	HRESULT       ret = CLSIDFromProgID16(pid,riid);
 
 	HeapFree(GetProcessHeap(),0,pid);
 	return ret;
@@ -803,7 +802,7 @@ HRESULT WINAPI ReadClassStm(IStream *pStm,REFCLSID rclsid)
 /***********************************************************************
  *           LookupETask (COMPOBJ.94)
  */
-OLESTATUS WINAPI LookupETask16(HTASK16 *hTask,LPVOID p) {
+HRESULT WINAPI LookupETask16(HTASK16 *hTask,LPVOID p) {
 	FIXME("(%p,%p),stub!\n",hTask,p);
 	if ((*hTask = GetCurrentTask()) == hETask) {
 		memcpy(p, Table_ETask, sizeof(Table_ETask));
@@ -815,7 +814,7 @@ OLESTATUS WINAPI LookupETask16(HTASK16 *hTask,LPVOID p) {
 /***********************************************************************
  *           SetETask (COMPOBJ.95)
  */
-OLESTATUS WINAPI SetETask16(HTASK16 hTask, LPVOID p) {
+HRESULT WINAPI SetETask16(HTASK16 hTask, LPVOID p) {
         FIXME("(%04x,%p),stub!\n",hTask,p);
 	hETask = hTask;
 	return 0;
@@ -825,7 +824,7 @@ OLESTATUS WINAPI SetETask16(HTASK16 hTask, LPVOID p) {
 /***********************************************************************
  *           CallObjectInWOW (COMPOBJ.201)
  */
-OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
+HRESULT WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
 	FIXME("(%p,%p),stub!\n",p1,p2);
 	return 0;
 }

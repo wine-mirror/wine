@@ -10,7 +10,7 @@
  *
  */
 
- #include <win.h>
+#include <windows.h>
  
  #define CHARSETSIZE 255
   

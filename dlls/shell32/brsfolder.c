@@ -4,7 +4,6 @@
 #include "winerror.h"
 #include "heap.h"
 #include "dlgs.h"
-#include "win.h"
 #include "debugtools.h"
 #include "winreg.h"
 #include "winnls.h"

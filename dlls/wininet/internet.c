@@ -22,7 +22,6 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "winsock.h"
-#include "tchar.h"
 #include "heap.h"
 
 #include "internet.h"
@@ -919,19 +918,19 @@ INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp)
     if(lpszScheme==NULL)
         return INTERNET_SCHEME_UNKNOWN;
 
-    if (!_strnicmp("ftp", lpszScheme, nMaxCmp))
+    if (!strncasecmp("ftp", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_FTP;
-    else if (!_strnicmp("gopher", lpszScheme, nMaxCmp))
+    else if (!strncasecmp("gopher", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_GOPHER;
-    else if (!_strnicmp("http", lpszScheme, nMaxCmp))
+    else if (!strncasecmp("http", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_HTTP;
-    else if (!_strnicmp("https", lpszScheme, nMaxCmp))
+    else if (!strncasecmp("https", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_HTTPS;
-    else if (!_strnicmp("file", lpszScheme, nMaxCmp))
+    else if (!strncasecmp("file", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_FILE;
-    else if (!_strnicmp("news", lpszScheme, nMaxCmp))
+    else if (!strncasecmp("news", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_NEWS;
-    else if (!_strnicmp("mailto", lpszScheme, nMaxCmp))
+    else if (!strncasecmp("mailto", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_MAILTO;
     else
         return INTERNET_SCHEME_UNKNOWN;

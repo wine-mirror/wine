@@ -19,7 +19,6 @@
 #include "wingdi.h"
 #include "wtypes.h"
 #include "file.h"
-#include "ole.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "heap.h"
@@ -1648,7 +1647,7 @@ HRESULT WINAPI
 StgIsStorageFile(LPCOLESTR fn) 
 {
 	LPOLESTR16	xfn = HEAP_strdupWtoA(GetProcessHeap(),0,fn);
-	OLESTATUS	ret = StgIsStorageFile16(xfn);
+	HRESULT	ret = StgIsStorageFile16(xfn);
 
 	HeapFree(GetProcessHeap(),0,xfn);
 	return ret;

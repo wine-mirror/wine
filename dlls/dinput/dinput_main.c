@@ -42,7 +42,6 @@
 #include "debugtools.h"
 #include "input.h"
 #include "user.h"
-#include "message.h"
 #include "mouse.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -381,7 +380,7 @@ static void fill_DataFormat(void *out, void *in, DataFormat *df) {
   }
 }
 
-static DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, DIDATAFORMAT *asked_format, int *offset) {
+static DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) {
   DataFormat *ret;
   DataTransform *dt;
   int i, j;

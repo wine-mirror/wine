@@ -18,10 +18,9 @@
 #include "winerror.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "tchar.h"
 #include "winnt.h"
 
-DEFAULT_DEBUG_CHANNEL(ddeml)
+DEFAULT_DEBUG_CHANNEL(ddeml);
 
 /* Has defined in atom.c file.
  */

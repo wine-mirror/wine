@@ -18,7 +18,6 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "color.h"
 #include "debugtools.h"
 #include "dce.h"
 #include "dc.h"
