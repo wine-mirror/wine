@@ -124,6 +124,7 @@ struct msg_queue
     struct timer          *next_timer;    /* next timer to expire */
     struct timeout_user   *timeout;       /* timeout for next timer to expire */
     struct thread_input   *input;         /* thread input descriptor */
+    struct hook_table     *hooks;         /* hook table */
 };
 
 static void msg_queue_dump( struct object *obj, int verbose );
@@ -219,6 +220,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->next_timer      = NULL;
         queue->timeout         = NULL;
         queue->input           = (struct thread_input *)grab_object( input );
+        queue->hooks           = NULL;
         for (i = 0; i < NB_MSG_KINDS; i++)
             queue->msg_list[i].first = queue->msg_list[i].last = NULL;
 
@@ -249,6 +251,22 @@ void free_msg_queue( struct thread *thread )
     }
     release_object( thread->queue );
     thread->queue = NULL;
+}
+
+/* get the hook table for a given thread */
+struct hook_table *get_queue_hooks( struct thread *thread )
+{
+    if (!thread->queue) return NULL;
+    return thread->queue->hooks;
+}
+
+/* set the hook table for a given thread, allocating the queue if needed */
+void set_queue_hooks( struct thread *thread, struct hook_table *hooks )
+{
+    struct msg_queue *queue = thread->queue;
+    if (!queue) queue = create_msg_queue( thread, NULL );
+    if (queue->hooks) release_object( queue->hooks );
+    queue->hooks = hooks;
 }
 
 /* check the queue status */
@@ -645,6 +663,7 @@ static void msg_queue_destroy( struct object *obj )
     }
     if (queue->timeout) remove_timeout_user( queue->timeout );
     if (queue->input) release_object( queue->input );
+    if (queue->hooks) release_object( queue->hooks );
 }
 
 static void thread_input_dump( struct object *obj, int verbose )

@@ -118,7 +118,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
     thread->queue           = NULL;
-    thread->hooks           = NULL;
     thread->wait            = NULL;
     thread->system_apc.head = NULL;
     thread->system_apc.tail = NULL;
@@ -208,7 +207,6 @@ static void cleanup_thread( struct thread *thread )
     if (thread->request_fd) release_object( thread->request_fd );
     if (thread->reply_fd) release_object( thread->reply_fd );
     if (thread->wait_fd) release_object( thread->wait_fd );
-    if (thread->hooks) release_object( thread->hooks );
     free_msg_queue( thread );
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
@@ -225,7 +223,6 @@ static void cleanup_thread( struct thread *thread )
     thread->request_fd = NULL;
     thread->reply_fd = NULL;
     thread->wait_fd = NULL;
-    thread->hooks = NULL;
 
     if (thread == booting_thread)  /* killing booting thread */
     {

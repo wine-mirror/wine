@@ -26,6 +26,7 @@
 struct thread;
 struct window;
 struct msg_queue;
+struct hook_table;
 
 enum user_object
 {
@@ -53,6 +54,8 @@ extern void close_global_hooks(void);
 /* queue functions */
 
 extern void free_msg_queue( struct thread *thread );
+extern struct hook_table *get_queue_hooks( struct thread *thread );
+extern void set_queue_hooks( struct thread *thread, struct hook_table *hooks );
 extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );

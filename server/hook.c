@@ -94,12 +94,12 @@ static struct hook_table *alloc_hook_table(void)
 static struct hook *add_hook( struct thread *thread, int index )
 {
     struct hook *hook;
-    struct hook_table *table = thread ? thread->hooks : global_hooks;
+    struct hook_table *table = thread ? get_queue_hooks(thread) : global_hooks;
 
     if (!table)
     {
         if (!(table = alloc_hook_table())) return NULL;
-        if (thread) thread->hooks = table;
+        if (thread) set_queue_hooks( thread, table );
         else global_hooks = table;
     }
     if (!(hook = mem_alloc( sizeof(*hook) ))) return NULL;
@@ -129,7 +129,7 @@ static void free_hook( struct hook *hook )
 static struct hook *find_hook( struct thread *thread, int index, void *proc )
 {
     struct list *p;
-    struct hook_table *table = thread->hooks;
+    struct hook_table *table = get_queue_hooks( thread );
 
     if (table)
     {
@@ -145,7 +145,7 @@ static struct hook *find_hook( struct thread *thread, int index, void *proc )
 /* get the hook table that a given hook belongs to */
 inline static struct hook_table *get_table( struct hook *hook )
 {
-    return hook->thread ? hook->thread->hooks : global_hooks;
+    return hook->thread ? get_queue_hooks(hook->thread) : global_hooks;
 }
 
 /* get the first hook in the chain */
@@ -304,7 +304,7 @@ DECL_HANDLER(remove_hook)
 DECL_HANDLER(start_hook_chain)
 {
     struct hook *hook;
-    struct hook_table *table = current->hooks;
+    struct hook_table *table = get_queue_hooks( current );
 
     if (req->id < WH_MINHOOK || req->id > WH_MAXHOOK)
     {
@@ -330,7 +330,7 @@ DECL_HANDLER(start_hook_chain)
 /* finished calling a hook chain */
 DECL_HANDLER(finish_hook_chain)
 {
-    struct hook_table *table = current->hooks;
+    struct hook_table *table = get_queue_hooks( current );
     int index = req->id - WH_MINHOOK;
 
     if (req->id < WH_MINHOOK || req->id > WH_MAXHOOK)
