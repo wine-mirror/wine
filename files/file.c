@@ -1122,9 +1122,12 @@ success:  /* We get here if the open was successful */
     TRACE("(%s): OK, return = %p\n", name, handle );
     if (win32)
     {
-        hFileRet = (HFILE)handle;
-        if (mode & OF_EXIST) /* Return the handle, but close it first */
+        if (mode & OF_EXIST)  /* Return TRUE instead of a handle */
+        {
             CloseHandle( handle );
+            hFileRet = TRUE;
+        }
+        else hFileRet = (HFILE)handle;
     }
     else
     {
