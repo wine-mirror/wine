@@ -743,6 +743,8 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     case MEMORY_DC_MAGIC:
     case BITMAP_MAGIC:
     case PALETTE_MAGIC:
+    case FONT_MAGIC:
+    case REGION_MAGIC:
         if (!(obj = alloc_large_heap( size, handle ))) goto error;
         break;
     }
