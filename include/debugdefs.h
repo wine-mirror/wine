@@ -121,6 +121,7 @@ char dbch_reg[] = "\003reg";
 char dbch_region[] = "\003region";
 char dbch_relay[] = "\003relay";
 char dbch_resource[] = "\003resource";
+char dbch_richedit[] = "\003richedit";
 char dbch_scroll[] = "\003scroll";
 char dbch_segment[] = "\003segment";
 char dbch_seh[] = "\003seh";
@@ -162,7 +163,6 @@ char dbch_wave[] = "\003wave";
 char dbch_win[] = "\003win";
 char dbch_win16drv[] = "\003win16drv";
 char dbch_win32[] = "\003win32";
-char dbch_winedbg[] = "\003winedbg";
 char dbch_wing[] = "\003wing";
 char dbch_wininet[] = "\003wininet";
 char dbch_winsock[] = "\003winsock";
@@ -289,6 +289,7 @@ static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_region,
     dbch_relay,
     dbch_resource,
+    dbch_richedit,
     dbch_scroll,
     dbch_segment,
     dbch_seh,
@@ -330,7 +331,6 @@ static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_win,
     dbch_win16drv,
     dbch_win32,
-    dbch_winedbg,
     dbch_wing,
     dbch_wininet,
     dbch_winsock,
