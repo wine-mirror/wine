@@ -92,6 +92,8 @@ extern BOOL WineEngDestroyFontInstance(HFONT handle);
 extern DWORD WineEngEnumFonts(LPLOGFONTW, DEVICEFONTENUMPROC, LPARAM);
 extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);
 extern DWORD WineEngGetFontData(GdiFont, DWORD, DWORD, LPVOID, DWORD);
+extern DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
+				    LPWORD pgi, DWORD flags);
 extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
 				    LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
 				    const MAT2*);

@@ -223,6 +223,8 @@ debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
 @ stdcall GetFontLanguageInfo(long) GetFontLanguageInfo
 @ stub GetFontResourceInfo
 @ stub GetFontResourceInfoW
+@ stdcall GetGlyphIndicesA(long ptr long ptr long) GetGlyphIndicesA
+@ stdcall GetGlyphIndicesW(long ptr long ptr long) GetGlyphIndicesW
 @ stub GetGlyphOutline
 @ stdcall GetGlyphOutlineA(long long long ptr long ptr ptr) GetGlyphOutlineA
 @ stdcall GetGlyphOutlineW(long long long ptr long ptr ptr) GetGlyphOutlineW

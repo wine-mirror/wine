@@ -1009,6 +1009,22 @@ static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
 }
 
 /*************************************************************
+ * WineEngGetGlyphIndices
+ *
+ * FIXME: add support for GGI_MARK_NONEXISTING_GLYPHS
+ */
+DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
+				LPWORD pgi, DWORD flags)
+{
+    INT i;
+
+    for(i = 0; i < count; i++)
+        pgi[i] = get_glyph_index(font, lpstr[i]);
+
+    return count;
+}
+
+/*************************************************************
  * WineEngGetGlyphOutline
  *
  * Behaves in exactly the same way as the win32 api GetGlyphOutline
@@ -1601,6 +1617,12 @@ BOOL WineEngDestroyFontInstance(HFONT hfont)
 DWORD WineEngEnumFonts(LPLOGFONTW plf, DEVICEFONTENUMPROC proc, LPARAM lparam)
 {
     return 1;
+}
+
+DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
+				LPWORD pgi, DWORD flags)
+{
+    return GDI_ERROR;
 }
 
 DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,

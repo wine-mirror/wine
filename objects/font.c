@@ -1776,7 +1776,7 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
     DC *dc = DC_GetDCPtr(hdc);
     DWORD ret;
 
-    TRACE("(%04x, '%c', %04x, %p, %ld, %p, %p)\n",
+    TRACE("(%04x, %04x, %04x, %p, %ld, %p, %p)\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
 
     if(!dc) return GDI_ERROR;
@@ -2000,6 +2000,47 @@ DWORD WINAPI GetFontData16(HDC16 hdc, DWORD dwTable, DWORD dwOffset,
 }
 
 /*************************************************************************
+ * GetGlyphIndicesA [GDI32.@]
+ */
+DWORD WINAPI GetGlyphIndicesA(HDC hdc, LPCSTR lpstr, INT count,
+			      LPWORD pgi, DWORD flags)
+{
+    DWORD ret;
+    WCHAR *lpstrW;
+    INT countW;
+
+    TRACE("(%04x, %s, %d, %p, 0x%lx)\n",
+	hdc, debugstr_an(lpstr, count), count, pgi, flags);
+
+    lpstrW = FONT_mbtowc(hdc, lpstr, count, &countW, NULL);
+    ret = GetGlyphIndicesW(hdc, lpstrW, countW, pgi, flags);
+    HeapFree(GetProcessHeap(), 0, lpstrW);
+
+    return ret;
+}
+
+/*************************************************************************
+ * GetGlyphIndicesW [GDI32.@]
+ */
+DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
+			      LPWORD pgi, DWORD flags)
+{
+    DC *dc = DC_GetDCPtr(hdc);
+    DWORD ret = GDI_ERROR;
+
+    TRACE("(%04x, %s, %d, %p, 0x%lx)\n",
+	hdc, debugstr_wn(lpstr, count), count, pgi, flags);
+
+    if(!dc) return GDI_ERROR;
+
+    if(dc->gdiFont)
+	ret = WineEngGetGlyphIndices(dc->gdiFont, lpstr, count, pgi, flags);
+
+    GDI_ReleaseObj(hdc);
+    return ret;
+}
+
+/*************************************************************************
  * GetCharacterPlacementA [GDI32.@]
  *
  * NOTES:
@@ -2010,41 +2051,32 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 			 INT nMaxExtent, GCP_RESULTSA *lpResults,
 			 DWORD dwFlags)
 {
-    DWORD ret=0;
-    SIZE size;
+    WCHAR *lpStringW;
+    INT uCountW;
+    GCP_RESULTSW resultsW;
+    DWORD ret;
+    UINT font_cp;
 
-    TRACE("%s 0x%08x 0x%08x 0x%08lx:stub!\n",
-          debugstr_a(lpString), uCount, nMaxExtent, dwFlags);
+    TRACE("%s, %d, %d, 0x%08lx\n",
+          debugstr_an(lpString, uCount), uCount, nMaxExtent, dwFlags);
 
-    TRACE("lpOrder=%p lpDx=%p lpCaretPos=%p lpClass=%p "
-          "lpOutString=%p lpGlyphs=%p\n",
-          lpResults->lpOrder, lpResults->lpDx, lpResults->lpCaretPos,
-          lpResults->lpClass, lpResults->lpOutString, lpResults->lpGlyphs);
+    /* both structs are equal in size */
+    memcpy(&resultsW, lpResults, sizeof(resultsW));
 
-    if(dwFlags)			FIXME("flags 0x%08lx ignored\n", dwFlags);
-    if(lpResults->lpOrder)	FIXME("reordering not implemented\n");
-    if(lpResults->lpCaretPos)	FIXME("caret positions not implemented\n");
-    if(lpResults->lpClass)	FIXME("classes not implemented\n");
-    if(lpResults->lpGlyphs)	FIXME("glyphs not implemented\n");
-
-    /* copy will do if the GCP_REORDER flag is not set */
+    lpStringW = FONT_mbtowc(hdc, lpString, uCount, &uCountW, &font_cp);
     if(lpResults->lpOutString)
-    {
-      lstrcpynA(lpResults->lpOutString, lpString, uCount);
-    }
+	resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, uCountW);
+    else
+	resultsW.lpOutString = NULL;
 
-    if (lpResults->lpDx)
-    {
-      int i, c;
-      for (i=0; i<uCount;i++)
-      { 
-        if (GetCharWidth32A(hdc, lpString[i], lpString[i], &c))
-          lpResults->lpDx[i]= c;
-      }
-    }
+    ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, &resultsW, dwFlags);
 
-    if (GetTextExtentPoint32A(hdc, lpString, uCount, &size))
-      ret = MAKELONG(size.cx, size.cy);
+    if(lpResults->lpOutString)
+	WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
+			    lpResults->lpOutString, uCount, NULL, NULL );
+
+    HeapFree(GetProcessHeap(), 0, lpStringW);
+    HeapFree(GetProcessHeap(), 0, resultsW.lpOutString);
 
     return ret;
 }
@@ -2059,36 +2091,51 @@ GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
 {
     DWORD ret=0;
     SIZE size;
+    UINT i, nSet;
 
-    TRACE("%s 0x%08x 0x%08x 0x%08lx:partial stub!\n",
-          debugstr_w(lpString), uCount, nMaxExtent, dwFlags);
+    TRACE("%s, %d, %d, 0x%08lx\n",
+          debugstr_wn(lpString, uCount), uCount, nMaxExtent, dwFlags);
 
-    TRACE("lpOrder=%p lpDx=%p lpCaretPos=%p lpClass=%p "
-          "lpOutString=%p lpGlyphs=%p\n",
-          lpResults->lpOrder, lpResults->lpDx, lpResults->lpCaretPos,
-          lpResults->lpClass, lpResults->lpOutString, lpResults->lpGlyphs);
+    TRACE("lStructSize=%ld, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
+	  "lpClass=%p, lpGlyphs=%p, nGlyphs=%u, nMaxFit=%d\n",
+	    lpResults->lStructSize, lpResults->lpOutString, lpResults->lpOrder,
+	    lpResults->lpDx, lpResults->lpCaretPos, lpResults->lpClass,
+	    lpResults->lpGlyphs, lpResults->nGlyphs, lpResults->nMaxFit);
 
     if(dwFlags)			FIXME("flags 0x%08lx ignored\n", dwFlags);
-    if(lpResults->lpOrder)	FIXME("reordering not implemented\n");
     if(lpResults->lpCaretPos)	FIXME("caret positions not implemented\n");
     if(lpResults->lpClass)	FIXME("classes not implemented\n");
-    if(lpResults->lpGlyphs)	FIXME("glyphs not implemented\n");
 
+    /* FIXME: reordering not implemented */
     /* copy will do if the GCP_REORDER flag is not set */
     if(lpResults->lpOutString)
-    {
       lstrcpynW(lpResults->lpOutString, lpString, uCount);
+
+    nSet = (UINT)uCount;
+    if(nSet > lpResults->nGlyphs)
+	nSet = lpResults->nGlyphs;
+
+    /* return number of initialized fields */
+    lpResults->nGlyphs = nSet;
+
+    if(lpResults->lpOrder)
+    {
+	for(i = 0; i < nSet; i++)
+	    lpResults->lpOrder[i] = i;
     }
 
     if (lpResults->lpDx)
     {
-      int i, c;
-      for (i=0; i<uCount;i++)
+      int c;
+      for (i = 0; i < nSet; i++)
       { 
         if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
           lpResults->lpDx[i]= c;
       }
     }
+
+    if(lpResults->lpGlyphs)
+	GetGlyphIndicesW(hdc, lpString, nSet, lpResults->lpGlyphs, 0);
 
     if (GetTextExtentPoint32W(hdc, lpString, uCount, &size))
       ret = MAKELONG(size.cx, size.cy);
