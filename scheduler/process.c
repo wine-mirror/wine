@@ -178,11 +178,28 @@ PDB *PROCESS_IdToPDB( DWORD id )
  */
 void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadOrProcessId, HMODULE hModule )
 {
-    PDB *pdb = PROCESS_Current();
-    STARTUPINFOA *startup = pdb->env_db? pdb->env_db->startup_info : NULL;
+    PDB *pdb;
+    STARTUPINFOA *startup;
     DWORD dwFlags = 0;
 
+    /* Get thread or process ID */
+
+    if ( dwThreadOrProcessId == 0 )
+    {
+        if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
+            dwThreadOrProcessId = GetCurrentThreadId();
+        else
+            dwThreadOrProcessId = GetCurrentProcessId();
+    }
+
     /* Determine dwFlags */
+
+    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
+        pdb = PROCESS_Current();
+    else
+        pdb = PROCESS_IdToPDB( dwThreadOrProcessId );
+
+    startup = pdb->env_db? pdb->env_db->startup_info : NULL;
 
     if ( !(pdb->flags & PDB32_WIN16_PROC) )
         dwFlags |= USIG_FLAGS_WIN32;
@@ -201,16 +218,6 @@ void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadOrProcessId, HMODULE 
         /* Feedback defaults to OFF */
         if ( startup && (startup->dwFlags & STARTF_FORCEONFEEDBACK) )
             dwFlags |= USIG_FLAGS_FEEDBACK;
-    }
-
-    /* Get thread or process ID */
-
-    if ( dwThreadOrProcessId == 0 )
-    {
-        if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-            dwThreadOrProcessId = GetCurrentThreadId();
-        else
-            dwThreadOrProcessId = GetCurrentProcessId();
     }
 
     /* Convert module handle to 16-bit */
