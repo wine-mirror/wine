@@ -90,6 +90,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
@@ -137,6 +138,7 @@ static const char* app_loader_template =
 
 static int keep_generated = 0;
 static strarray* tmp_files;
+static sigset_t signal_mask;
 
 struct options 
 {
@@ -169,10 +171,21 @@ static void clean_temp_files()
 	unlink(tmp_files->base[i]);
 }
 
+/* clean things up when aborting on a signal */
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
+}
+
 char* get_temp_file(const char* prefix, const char* suffix)
 {
+    int fd;
+    sigset_t old_set;
     char* tmp = strmake("%s-XXXXXX%s", prefix, suffix);
-    int fd = mkstemps( tmp, strlen(suffix) );
+
+    /* block signals while manipulating the temp files list */
+    sigprocmask( SIG_BLOCK, &signal_mask, &old_set );
+    fd = mkstemps( tmp, strlen(suffix) );
     if (fd == -1)
     {
         /* could not create it in current directory, try in /tmp */
@@ -183,7 +196,7 @@ char* get_temp_file(const char* prefix, const char* suffix)
     }
     close( fd );
     strarray_add(tmp_files, tmp);
-
+    sigprocmask( SIG_SETMASK, &old_set, NULL );
     return tmp;
 }
 
@@ -686,6 +699,14 @@ int main(int argc, char **argv)
     struct options opts;
     char* lang = 0;
     char* str;
+
+    signal( SIGHUP, exit_on_signal );
+    signal( SIGTERM, exit_on_signal );
+    signal( SIGINT, exit_on_signal );
+    sigemptyset( &signal_mask );
+    sigaddset( &signal_mask, SIGHUP );
+    sigaddset( &signal_mask, SIGTERM );
+    sigaddset( &signal_mask, SIGINT );
 
     /* setup tmp file removal at exit */
     tmp_files = strarray_alloc();

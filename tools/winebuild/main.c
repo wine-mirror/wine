@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <signal.h>
 #include <errno.h>
 #include <string.h>
 #include <stdarg.h>
@@ -128,6 +129,11 @@ static void cleanup(void)
     if (output_file_name) unlink( output_file_name );
 }
 
+/* clean things up when aborting on a signal */
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call atexit functions */
+}
 
 /*******************************************************************
  *         command-line option handling
@@ -414,6 +420,10 @@ static int parse_input_file( DLLSPEC *spec )
 int main(int argc, char **argv)
 {
     DLLSPEC *spec = alloc_dll_spec();
+
+    signal( SIGHUP, exit_on_signal );
+    signal( SIGTERM, exit_on_signal );
+    signal( SIGINT, exit_on_signal );
 
     output_file = stdout;
     argv = parse_options( argc, argv, spec );
