@@ -12,8 +12,10 @@
 #include "wine/winuser16.h"
 #include "tweak.h"
 
+static void PaintGrayOnGray( HDC hDC,HFONT hFont,RECT *rc,
+			     char *text, UINT format );
+
 static void PB_Paint( WND *wndPtr, HDC hDC, WORD action );
-static void PB_PaintGrayOnGray(HDC hDC,HFONT hFont,RECT *rc,char *text);
 static void CB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void GB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void UB_Paint( WND *wndPtr, HDC hDC, WORD action );
@@ -320,8 +322,9 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
         GetObjectA( GetSysColorBrush(COLOR_BTNFACE), sizeof(lb), &lb );
         if (wndPtr->dwStyle & WS_DISABLED &&
             GetSysColor(COLOR_GRAYTEXT)==lb.lbColor)
-            /* don't write gray text on gray bkg */
-            PB_PaintGrayOnGray(hDC,infoPtr->hFont,&rc,wndPtr->text);
+            /* don't write gray text on gray background */
+            PaintGrayOnGray( hDC,infoPtr->hFont,&rc,wndPtr->text,
+			       DT_CENTER | DT_VCENTER );
         else
         {
             SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
@@ -353,13 +356,28 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 
 /**********************************************************************
- *   Push Button sub function                               [internal]
- *   using a raster brush to avoid gray text on gray background
+ *   PB_Paint & CB_Paint sub function                        [internal]
+ *   Paint text using a raster brush to avoid gray text on gray 
+ *   background. 'format' can be a combination of DT_CENTER and 
+ *   DT_VCENTER to use this function in both PB_PAINT and 
+ *   CB_PAINT.   - Dirk Thierbach
+ *
+ *   FIXME: This and TEXT_GrayString should be eventually combined,
+ *   so calling one common function from PB_Paint, CB_Paint and
+ *   TEXT_GrayString will be enough. Also note that this
+ *   function ignores the CACHE_GetPattern funcs.
  */
 
-void PB_PaintGrayOnGray(HDC hDC,HFONT hFont,RECT *rc,char *text)
+void PaintGrayOnGray(HDC hDC,HFONT hFont,RECT *rc,char *text,
+			UINT format)
 {
-    static const int Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55};
+/*  This is the standard gray on gray pattern:
+    static const WORD Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55}; 
+*/
+/*  This pattern gives better readability with X Fonts.
+    FIXME: Maybe the user should be allowed to decide which he wants. */
+    static const WORD Pattern[] = {0x55,0xFF,0xAA,0xFF,0x55,0xFF,0xAA,0xFF}; 
+
     HBITMAP hbm  = CreateBitmap( 8, 8, 1, 1, Pattern );
     HDC hdcMem = CreateCompatibleDC(hDC);
     HBITMAP hbmMem;
@@ -368,19 +386,25 @@ void PB_PaintGrayOnGray(HDC hDC,HFONT hFont,RECT *rc,char *text)
 
     rect=*rc;
     DrawTextA( hDC, text, -1, &rect, DT_SINGLELINE | DT_CALCRECT);
+    /* now text width and height are in rect.right and rect.bottom */
     rc2=rect;
-    rect.left=(rc->right-rect.right)/2;       /* for centering text bitmap */
-    rect.top=(rc->bottom-rect.bottom)/2;
+    rect.left = rect.top = 0; /* drawing pos in hdcMem */
+    if (format & DT_CENTER) rect.left=(rc->right-rect.right)/2;
+    if (format & DT_VCENTER) rect.top=(rc->bottom-rect.bottom)/2;
     hbmMem = CreateCompatibleBitmap( hDC,rect.right,rect.bottom );
     SelectObject( hdcMem, hbmMem);
-    hBr = SelectObject( hdcMem, CreatePatternBrush(hbm) );
-    DeleteObject( hbm );
     PatBlt( hdcMem,0,0,rect.right,rect.bottom,WHITENESS);
+      /* will be overwritten by DrawText, but just in case */
     if (hFont) SelectObject( hdcMem, hFont);
     DrawTextA( hdcMem, text, -1, &rc2, DT_SINGLELINE);  
-    PatBlt( hdcMem,0,0,rect.right,rect.bottom,0xFA0089);
+      /* After draw: foreground = 0 bits, background = 1 bits */
+    hBr = SelectObject( hdcMem, CreatePatternBrush(hbm) );
+    DeleteObject( hbm );
+    PatBlt( hdcMem,0,0,rect.right,rect.bottom,0xAF0229); 
+      /* only keep the foreground bits where pattern is 1 */
     DeleteObject( SelectObject( hdcMem,hBr) );
-    BitBlt(hDC,rect.left,rect.top,rect.right,rect.bottom,hdcMem,0,0,0x990000);
+    BitBlt(hDC,rect.left,rect.top,rect.right,rect.bottom,hdcMem,0,0,SRCAND);
+      /* keep the background of the dest */
     DeleteDC( hdcMem);
     DeleteObject( hbmMem );
 }
@@ -449,11 +473,18 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
         if( textlen && action != ODA_SELECT )
         {
+	  if (wndPtr->dwStyle & WS_DISABLED &&
+	      GetSysColor(COLOR_GRAYTEXT)==GetBkColor(hDC)) {
+            /* don't write gray text on gray background */
+            PaintGrayOnGray( hDC, infoPtr->hFont, &rtext, wndPtr->text,
+			     DT_VCENTER);
+	  } else {
             if (wndPtr->dwStyle & WS_DISABLED)
                 SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
             DrawTextA( hDC, wndPtr->text, textlen, &rtext,
 			 DT_SINGLELINE | DT_VCENTER );
 	    textlen = 0; /* skip DrawText() below */
+	  }
         }
     }
 
