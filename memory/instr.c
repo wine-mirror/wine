@@ -76,6 +76,7 @@ static DWORD CALLBACK timer_thread( void *dummy )
         Sleep(55);
         DOSMEM_Tick( 0 );
     }
+    return 0; /* unreached */
 }
 
 /***********************************************************************
