@@ -194,6 +194,23 @@ static const char * wave_out_caps(DWORD dwSupport)
 #undef ADD_FLAG
 }
 
+static const char * wave_time_format(UINT type)
+{
+    static char msg[32];
+#define TIME_FORMAT(f) case f: return #f
+    switch (type) {
+    TIME_FORMAT(TIME_MS);
+    TIME_FORMAT(TIME_SAMPLES);
+    TIME_FORMAT(TIME_BYTES);
+    TIME_FORMAT(TIME_SMPTE);
+    TIME_FORMAT(TIME_MIDI);
+    TIME_FORMAT(TIME_TICKS);
+    }
+#undef TIME_FORMAT
+    sprintf(msg, "Unknown(0x%04x)", type);
+    return msg;
+}
+
 static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFORMATEX pwfx)
 {
     MMTIME mmtime;
@@ -207,6 +224,8 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
         ok(mmtime.u.cb==duration*pwfx->nAvgBytesPerSec+pwfx->wBitsPerSample/8,
            "waveOutGetPosition returned %ld bytes, should be %ld\n",
            mmtime.u.cb, (DWORD)(duration*pwfx->nAvgBytesPerSec)+pwfx->wBitsPerSample/8);
+    else
+        trace("TIME_BYTES not supported, returned %s\n",wave_time_format(mmtime.wType));
 
     mmtime.wType = TIME_SAMPLES;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
@@ -216,6 +235,8 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
         ok(mmtime.u.sample==duration*pwfx->nSamplesPerSec+1,
            "waveOutGetPosition returned %ld samples, should be %ld\n",
            mmtime.u.sample, (DWORD)(duration*pwfx->nSamplesPerSec)+1);
+    else
+        trace("TIME_SAMPLES not supported, returned %s\n",wave_time_format(mmtime.wType));
 
     mmtime.wType = TIME_MS;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
@@ -225,6 +246,8 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
         ok(mmtime.u.ms==(DWORD)(duration*1000),
            "waveOutGetPosition returned %ld ms, should be %ld\n",
            mmtime.u.ms, (DWORD)(duration*1000));
+    else
+        trace("TIME_MS not supported, returned %s\n",wave_time_format(mmtime.wType));
 
     mmtime.wType = TIME_SMPTE;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
@@ -241,6 +264,8 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
            (BYTE)(fmod(floor(duration/60), 60)),
            (BYTE)(fmod(duration,60)),
            (BYTE)(fmod(duration*mmtime.u.smpte.fps, mmtime.u.smpte.fps)));
+    else
+        trace("TIME_TIME_SMPTE not supported, returned %s\n",wave_time_format(mmtime.wType));
 }
 
 static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX pwfx, DWORD format, DWORD flags, LPWAVEOUTCAPS pcaps)
@@ -311,6 +336,10 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
               pwfx->nSamplesPerSec, pwfx->wBitsPerSample,pwfx->nChannels,
               flags & WAVE_FORMAT_DIRECT ? "WAVE_FORMAT_DIRECT" :
               flags & WAVE_MAPPED ? "WAVE_MAPPED" : "");
+
+        /* Check that the position is 0 at start */
+        check_position(device, wout, 0.0, pwfx);
+
         rc=waveOutSetVolume(wout,0x20002000);
         ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
