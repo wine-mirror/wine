@@ -82,7 +82,7 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
         }
         if (!(params = GlobalLock(hMem)))
         {
-            ERR("GlobalLock failed (%x)\n", hMem);
+            ERR("GlobalLock failed (%p)\n", hMem);
             return 0;
         }
         params[0] = uiLo;
@@ -224,7 +224,7 @@ LPARAM WINAPI ReuseDDElParam(LPARAM lParam, UINT msgIn, UINT msgOut,
  */
 BOOL WINAPI ImpersonateDdeClientWindow(HWND hWndClient, HWND hWndServer)
 {
-     FIXME("(%04x %04x): stub\n", hWndClient, hWndServer);
+     FIXME("(%p %p): stub\n", hWndClient, hWndServer);
      return FALSE;
 }
 
@@ -235,7 +235,7 @@ BOOL WINAPI ImpersonateDdeClientWindow(HWND hWndClient, HWND hWndServer)
 BOOL WINAPI DdeSetQualityOfService(HWND hwndClient, CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
 				   PSECURITY_QUALITY_OF_SERVICE pqosPrev)
 {
-     FIXME("(%04x %p %p): stub\n", hwndClient, pqosNew, pqosPrev);
+     FIXME("(%p %p %p): stub\n", hwndClient, pqosNew, pqosPrev);
      return TRUE;
 }
 
@@ -716,9 +716,9 @@ HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInstance, UINT uType, UINT uFmt, H
 
     if (pInstance == NULL)
 	return (HDDEDATA)0;
-    TRACE("invoking CB%d[%08lx] (%u %u %08lx 0x%x 0x%x %u %lu %lu)\n",
-	  pInstance->win16 ? 16 : 32, (DWORD)pInstance->callback, uType, uFmt,
-	  (DWORD)hConv, hsz1, hsz2, hdata, dwData1, dwData2);
+    TRACE("invoking CB%d[%p] (%u %u %p %p %p %p %lu %lu)\n",
+	  pInstance->win16 ? 16 : 32, pInstance->callback, uType, uFmt,
+	  hConv, hsz1, hsz2, hdata, dwData1, dwData2);
     if (pInstance->win16)
     {
 	ret = WDML_InvokeCallback16(pInstance->callback, uType, uFmt, hConv,
@@ -826,7 +826,7 @@ static HSZNode*	WDML_FindNode(WDML_INSTANCE* pInstance, HSZ hsz)
     {
 	if (pNode->hsz == hsz) break;
     }
-    if (!pNode) WARN("HSZ 0x%x not found\n", hsz);
+    if (!pNode) WARN("HSZ %p not found\n", hsz);
     return pNode;
 }
 
@@ -842,7 +842,7 @@ ATOM	WDML_MakeAtomFromHsz(HSZ hsz)
 
     if (GetAtomNameW(HSZ2ATOM(hsz), nameBuffer, MAX_BUFFER_LEN))
 	return GlobalAddAtomW(nameBuffer);
-    WARN("HSZ 0x%x not found\n", hsz);
+    WARN("HSZ %p not found\n", hsz);
     return 0;
 }
 
@@ -919,7 +919,7 @@ BOOL WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
 	    return TRUE;
 	}
     }
-    WARN("HSZ 0x%x not found\n", hsz);
+    WARN("HSZ %p not found\n", hsz);
 
     return FALSE;
 }
@@ -1008,7 +1008,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
     DWORD		ret = 0;
     WDML_INSTANCE*	pInstance;
 
-    TRACE("(%ld, 0x%x, %p, %ld, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
+    TRACE("(%ld, %p, %p, %ld, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1035,7 +1035,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     DWORD		ret = 0;
     WDML_INSTANCE*	pInstance;
 
-    TRACE("(%ld, 0x%x, %p, %ld, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
+    TRACE("(%ld, %p, %p, %ld, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1066,11 +1066,11 @@ static	HSZ	WDML_CreateString(WDML_INSTANCE* pInstance, LPCVOID ptr, int codepage
     {
     case CP_WINANSI:
 	hsz = ATOM2HSZ(AddAtomA(ptr));
-	TRACE("added atom %s with HSZ 0x%x, \n", debugstr_a(ptr), hsz);
+	TRACE("added atom %s with HSZ %p, \n", debugstr_a(ptr), hsz);
 	break;
     case CP_WINUNICODE:
 	hsz = ATOM2HSZ(AddAtomW(ptr));
-	TRACE("added atom %s with HSZ 0x%x, \n", debugstr_w(ptr), hsz);
+	TRACE("added atom %s with HSZ %p, \n", debugstr_w(ptr), hsz);
 	break;
     default:
 	ERR("Unknown code page %d\n", codepage);
@@ -1149,7 +1149,7 @@ BOOL WINAPI DdeFreeStringHandle(DWORD idInst, HSZ hsz)
     WDML_INSTANCE*	pInstance;
     BOOL		ret = FALSE;
 
-    TRACE("(%ld,0x%x): \n", idInst, hsz);
+    TRACE("(%ld,%p): \n", idInst, hsz);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1175,7 +1175,7 @@ BOOL WINAPI DdeKeepStringHandle(DWORD idInst, HSZ hsz)
     WDML_INSTANCE*	pInstance;
     BOOL		ret = FALSE;
 
-    TRACE("(%ld,0x%x): \n", idInst, hsz);
+    TRACE("(%ld,%p): \n", idInst, hsz);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1210,7 +1210,7 @@ INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
     ret1 = GetAtomNameW(HSZ2ATOM(hsz1), psz1, MAX_BUFFER_LEN);
     ret2 = GetAtomNameW(HSZ2ATOM(hsz2), psz2, MAX_BUFFER_LEN);
 
-    TRACE("(%x<%s> %x<%s>);\n", hsz1, debugstr_w(psz1), hsz2, debugstr_w(psz2));
+    TRACE("(%p<%s> %p<%s>);\n", hsz1, debugstr_w(psz1), hsz2, debugstr_w(psz2));
 
     /* Make sure we found both strings. */
     if (ret1 == 0 && ret2 == 0)
@@ -1397,7 +1397,7 @@ LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
     pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hMem);
     if (pDdh == NULL)
     {
-	ERR("Failed on GlobalLock(%04x)\n", hMem);
+	ERR("Failed on GlobalLock(%p)\n", hMem);
 	return 0;
     }
 
@@ -1826,7 +1826,7 @@ void WDML_RemoveConv(WDML_CONV* pRef, WDML_SIDE side)
  */
 BOOL WINAPI DdeEnableCallback(DWORD idInst, HCONV hConv, UINT wCmd)
 {
-    FIXME("(%ld, 0x%x, %d) stub\n", idInst, hConv, wCmd);
+    FIXME("(%ld, %p, %d) stub\n", idInst, hConv, wCmd);
 
     return 0;
 }

@@ -178,9 +178,8 @@ void LISTBOX_Dump( HWND hwnd )
     LB_DESCR *descr = (LB_DESCR *)GetWindowLongA( hwnd, 0 );
 
     TRACE( "Listbox:\n" );
-    TRACE( "hwnd=%04x descr=%08x items=%d top=%d\n",
-                     hwnd, (UINT)descr, descr->nb_items,
-                     descr->top_item );
+    TRACE( "hwnd=%p descr=%08x items=%d top=%d\n",
+           hwnd, (UINT)descr, descr->nb_items, descr->top_item );
     for (i = 0, item = descr->items; i < descr->nb_items; i++, item++)
     {
         TRACE( "%4d: %-40s %d %08lx %3d\n",
@@ -421,7 +420,7 @@ static void LISTBOX_UpdateSize( HWND hwnd, LB_DESCR *descr )
                 if ((descr->item_height - remaining) <= ncheight)
                     remaining = remaining - descr->item_height;
             }
-            TRACE("[%04x]: changing height %d -> %d\n",
+            TRACE("[%p]: changing height %d -> %d\n",
                   hwnd, descr->height, descr->height - remaining );
             SetWindowPos( hwnd, 0, 0, 0, rect.right - rect.left,
                             rect.bottom - rect.top - remaining,
@@ -429,7 +428,7 @@ static void LISTBOX_UpdateSize( HWND hwnd, LB_DESCR *descr )
             return;
         }
     }
-    TRACE("[%04x]: new size = %d,%d\n", hwnd, descr->width, descr->height );
+    TRACE("[%p]: new size = %d,%d\n", hwnd, descr->width, descr->height );
     LISTBOX_UpdatePage( hwnd, descr );
     LISTBOX_UpdateScroll( hwnd, descr );
 
@@ -590,7 +589,7 @@ static void LISTBOX_PaintItem( HWND hwnd, LB_DESCR *descr, HDC hdc,
         if (!IsWindowEnabled(hwnd)) dis.itemState |= ODS_DISABLED;
         dis.itemData     = item ? item->data : 0;
         dis.rcItem       = *rect;
-        TRACE("[%04x]: drawitem %d (%s) action=%02x state=%02x rect=%d,%d-%d,%d\n",
+        TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%d,%d-%d,%d\n",
               hwnd, index, item ? debugstr_w(item->str) : "", action,
               dis.itemState, rect->left, rect->top, rect->right, rect->bottom );
         SendMessageW(descr->owner, WM_DRAWITEM, id, (LPARAM)&dis);
@@ -610,7 +609,7 @@ static void LISTBOX_PaintItem( HWND hwnd, LB_DESCR *descr, HDC hdc,
             oldText = SetTextColor( hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
         }
 
-        TRACE("[%04x]: painting %d (%s) action=%02x rect=%d,%d-%d,%d\n",
+        TRACE("[%p]: painting %d (%s) action=%02x rect=%d,%d-%d,%d\n",
               hwnd, index, item ? debugstr_w(item->str) : "", action,
               rect->left, rect->top, rect->right, rect->bottom );
         if (!item)
@@ -748,7 +747,7 @@ static BOOL LISTBOX_SetTabStops( HWND hwnd, LB_DESCR *descr, INT count,
         INT i;
         LPINT16 p = (LPINT16)tabs;
 
-        TRACE("[%04x]: settabstops ", hwnd );
+        TRACE("[%p]: settabstops ", hwnd );
         for (i = 0; i < descr->nb_tabs; i++) {
 	    descr->tabs[i] = *p++<<1; /* FIXME */
             if (TRACE_ON(listbox)) DPRINTF("%hd ", descr->tabs[i]);
@@ -1159,7 +1158,7 @@ static LRESULT LISTBOX_SetItemHeight( HWND hwnd, LB_DESCR *descr, INT index,
     if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
         if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
-        TRACE("[%04x]: item %d height = %d\n", hwnd, index, height );
+        TRACE("[%p]: item %d height = %d\n", hwnd, index, height );
         descr->items[index].height = height;
         LISTBOX_UpdateScroll( hwnd, descr );
 	if (repaint)
@@ -1167,7 +1166,7 @@ static LRESULT LISTBOX_SetItemHeight( HWND hwnd, LB_DESCR *descr, INT index,
     }
     else if (height != descr->item_height)
     {
-        TRACE("[%04x]: new height = %d\n", hwnd, height );
+        TRACE("[%p]: new height = %d\n", hwnd, height );
         descr->item_height = height;
         LISTBOX_UpdatePage( hwnd, descr );
         LISTBOX_UpdateScroll( hwnd, descr );
@@ -1189,7 +1188,7 @@ static void LISTBOX_SetHorizontalPos( HWND hwnd, LB_DESCR *descr, INT pos )
         pos = descr->horz_extent - descr->width;
     if (pos < 0) pos = 0;
     if (!(diff = descr->horz_pos - pos)) return;
-    TRACE("[%04x]: new horz pos = %d\n", hwnd, pos );
+    TRACE("[%p]: new horz pos = %d\n", hwnd, pos );
     descr->horz_pos = pos;
     LISTBOX_UpdateScroll( hwnd, descr );
     if (abs(diff) < descr->width)
@@ -1210,7 +1209,7 @@ static LRESULT LISTBOX_SetHorizontalExtent( HWND hwnd, LB_DESCR *descr,
         return LB_OKAY;
     if (extent <= 0) extent = 1;
     if (extent == descr->horz_extent) return LB_OKAY;
-    TRACE("[%04x]: new horz extent = %d\n", hwnd, extent );
+    TRACE("[%p]: new horz extent = %d\n", hwnd, extent );
     descr->horz_extent = extent;
     if (descr->horz_pos > extent - descr->width)
         LISTBOX_SetHorizontalPos( hwnd, descr, extent - descr->width );
@@ -1226,7 +1225,7 @@ static LRESULT LISTBOX_SetHorizontalExtent( HWND hwnd, LB_DESCR *descr,
 static LRESULT LISTBOX_SetColumnWidth( HWND hwnd, LB_DESCR *descr, INT width)
 {
     if (width == descr->column_width) return LB_OKAY;
-    TRACE("[%04x]: new column width = %d\n", hwnd, width );
+    TRACE("[%p]: new column width = %d\n", hwnd, width );
     descr->column_width = width;
     LISTBOX_UpdatePage( hwnd, descr );
     return LB_OKAY;
@@ -1509,7 +1508,7 @@ static LRESULT LISTBOX_InsertItem( HWND hwnd, LB_DESCR *descr, INT index,
         mis.itemHeight = descr->item_height;
         SendMessageW( descr->owner, WM_MEASUREITEM, id, (LPARAM)&mis );
         item->height = mis.itemHeight ? mis.itemHeight : 1;
-        TRACE("[%04x]: measure item %d (%s) = %d\n",
+        TRACE("[%p]: measure item %d (%s) = %d\n",
               hwnd, index, str ? debugstr_w(str) : "", item->height );
     }
 
@@ -1570,7 +1569,7 @@ static LRESULT LISTBOX_InsertString( HWND hwnd, LB_DESCR *descr, INT index,
         return ret;
     }
 
-    TRACE("[%04x]: added item %d %s\n",
+    TRACE("[%p]: added item %d %s\n",
           hwnd, index, HAS_STRINGS(descr) ? debugstr_w(new_str) : "" );
     return index;
 }
@@ -1946,7 +1945,7 @@ static LRESULT LISTBOX_HandleLButtonDown( HWND hwnd, LB_DESCR *descr,
                                           WPARAM wParam, INT x, INT y )
 {
     INT index = LISTBOX_GetItemFromPoint( descr, x, y );
-    TRACE("[%04x]: lbuttondown %d,%d item %d\n", hwnd, x, y, index );
+    TRACE("[%p]: lbuttondown %d,%d item %d\n", hwnd, x, y, index );
     if (!descr->caret_on && (descr->in_focus)) return 0;
 
     if (!descr->in_focus)
@@ -2420,8 +2419,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 
     if( lphc )
     {
-	TRACE_(combo)("[%04x]: resetting owner %04x -> %04x\n",
-                      hwnd, descr->owner, lphc->self );
+        TRACE_(combo)("[%p]: resetting owner %p -> %p\n", hwnd, descr->owner, lphc->self );
         descr->owner = lphc->self;
     }
 
@@ -2455,7 +2453,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 	}
     }
 
-    TRACE("owner: %04x, style: %08x, width: %d, height: %d\n", descr->owner, descr->style, descr->width, descr->height);
+    TRACE("owner: %p, style: %08x, width: %d, height: %d\n", descr->owner, descr->style, descr->width, descr->height);
     return TRUE;
 }
 
@@ -2487,7 +2485,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         {
             if (!LISTBOX_Create( hwnd, NULL ))
                 return -1;
-            TRACE("creating wnd=%04x descr=%lx\n", hwnd, GetWindowLongA( hwnd, 0 ) );
+            TRACE("creating wnd=%p descr=%lx\n", hwnd, GetWindowLongA( hwnd, 0 ) );
             return 0;
         }
         /* Ignore all other messages before we get a WM_CREATE */
@@ -2495,7 +2493,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
                          DefWindowProcA( hwnd, msg, wParam, lParam );
     }
 
-    TRACE("[%04x]: msg %s wp %08x lp %08lx\n",
+    TRACE("[%p]: msg %s wp %08x lp %08lx\n",
           hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
     switch(msg)
     {
@@ -2989,7 +2987,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             RECT rect;
             HBRUSH hbrush = (HBRUSH)SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
                                               wParam, (LPARAM)hwnd );
-	    TRACE("hbrush = %04x\n", hbrush);
+	    TRACE("hbrush = %p\n", hbrush);
 	    if(!hbrush)
 		hbrush = GetSysColorBrush(COLOR_WINDOW);
 	    if(hbrush)
@@ -3007,7 +3005,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
-            WARN("[%04x]: unknown msg %04x wp %08x lp %08lx\n",
+            WARN("[%p]: unknown msg %04x wp %08x lp %08lx\n",
                  hwnd, msg, wParam, lParam );
         return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
                          DefWindowProcA( hwnd, msg, wParam, lParam );
@@ -3062,7 +3060,7 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
                          DefWindowProcA( hwnd, msg, wParam, lParam );
     }
 
-    TRACE_(combo)("[%04x]: msg %s wp %08x lp %08lx\n",
+    TRACE_(combo)("[%p]: msg %s wp %08x lp %08lx\n",
                   hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
 
     if ((lphc = descr->lphc) != NULL)

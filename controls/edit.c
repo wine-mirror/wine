@@ -154,7 +154,7 @@ typedef struct
 #define EDIT_NOTIFY_PARENT(es, wNotifyCode, str) \
 	do \
 	{ /* Notify parent which has created this edit control */ \
-	    TRACE("notification " str " sent to hwnd=%08x\n", es->hwndParent); \
+	    TRACE("notification " str " sent to hwnd=%p\n", es->hwndParent); \
 	    SendMessageW(es->hwndParent, WM_COMMAND, \
 		     MAKEWPARAM(GetWindowLongW((es->hwndSelf),GWL_ID), wNotifyCode), \
 		     (LPARAM)(es->hwndSelf)); \
@@ -419,7 +419,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	EDITSTATE *es = (EDITSTATE *)GetWindowLongW( hwnd, 0 );
 	LRESULT result = 0;
 
-        TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, msg, wParam, lParam);
+        TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hwnd, msg, wParam, lParam);
 	
 	if (!es && msg != WM_NCCREATE)
 		return DefWindowProcT(hwnd, msg, wParam, lParam, unicode);
@@ -1710,7 +1710,7 @@ static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size, BOOL honor_limit)
 	if (es->hloc32W) {
 	    UINT alloc_size = ROUND_TO_GROW((size + 1) * sizeof(WCHAR));
 	    if ((hNew32W = LocalReAlloc(es->hloc32W, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT))) {
-		TRACE("Old 32 bit handle %08x, new handle %08x\n", es->hloc32W, hNew32W);
+		TRACE("Old 32 bit handle %p, new handle %p\n", es->hloc32W, hNew32W);
 		es->hloc32W = hNew32W;
 		es->buffer_size = LocalSize(hNew32W)/sizeof(WCHAR) - 1;
 	    }
@@ -2185,7 +2185,7 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 	/* Edit window might be already destroyed */
 	if(!IsWindow(es->hwndSelf))
 	{
-	    WARN("edit hwnd %04x already destroyed\n", es->hwndSelf);
+	    WARN("edit hwnd %p already destroyed\n", es->hwndSelf);
 	    return;
     	}
 
@@ -2468,7 +2468,7 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 	    hLocal = es->hloc32A;
 	}
 
-	TRACE("Returning %04X, LocalSize() = %ld\n", hLocal, LocalSize(hLocal));
+	TRACE("Returning %p, LocalSize() = %ld\n", hLocal, LocalSize(hLocal));
 	return hLocal;
 }
 
@@ -3981,8 +3981,7 @@ static BOOL EDIT_CheckCombo(EDITSTATE *es, UINT msg, INT key)
    bDropped = TRUE;
    nEUI     = 0;
 
-   TRACE_(combo)("[%04x]: handling msg %04x (%04x)\n",
-       		     es->hwndSelf, (UINT16)msg, (UINT16)key);
+   TRACE_(combo)("[%p]: handling msg %x (%x)\n", es->hwndSelf, msg, key);
 
    if (key == VK_UP || key == VK_DOWN)
    {

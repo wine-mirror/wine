@@ -445,8 +445,7 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
     }
     else
     {
-      WARN("\thWndClipOwner (%04x) is lost!\n",
-	   hWndClipOwner);
+      WARN("\thWndClipOwner (%p) is lost!\n", hWndClipOwner);
       CLIPBOARD_ReleaseOwner();
       lpFormat->wDataPresent = 0;
       return FALSE;
@@ -752,7 +751,7 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
 {
     BOOL bRet;
 
-    TRACE("(%04x)...\n", hWnd);
+    TRACE("(%p)...\n", hWnd);
 
     if (!ClipLock)
     {
@@ -915,7 +914,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
 {
     LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
-    TRACE("(%08X, %08x) !\n", wFormat, hData);
+    TRACE("(%08X, %p) !\n", wFormat, hData);
 
     /* NOTE: If the hData is zero and current owner doesn't match
      * the window that opened the clipboard then this application
@@ -1099,8 +1098,7 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
       GlobalUnlock16(lpRender->hData16);
     }
 
-    TRACE("\treturning %04x (type %i)\n",
-			      lpRender->hData32, lpRender->wFormatID);
+    TRACE("\treturning %p (type %i)\n", lpRender->hData32, lpRender->wFormatID);
     return lpRender->hData32;
 }
 
@@ -1332,7 +1330,7 @@ HWND WINAPI SetClipboardViewer( HWND hWnd )
 {
     HWND hwndPrev = hWndViewer;
 
-    TRACE("(%04x): returning %04x\n", hWnd, hwndPrev);
+    TRACE("(%p): returning %p\n", hWnd, hwndPrev);
 
     hWndViewer = WIN_GetFullHandle( hWnd );
     return hwndPrev;
@@ -1356,7 +1354,7 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 {
     BOOL bRet = 0;
 
-    FIXME("(0x%04x, 0x%04x): stub?\n", hWnd, hWndNext);
+    FIXME("(%p, %p): stub?\n", hWnd, hWndNext);
 
     if( hWndViewer )
         bRet = !SendMessageW( hWndViewer, WM_CHANGECBCHAIN, (WPARAM)hWnd, (LPARAM)hWndNext );

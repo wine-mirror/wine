@@ -161,7 +161,7 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
     if (ret)
     {
         MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), 0, (POINT *)rect, 2 );
-        TRACE( "hwnd %04x (%d,%d)-(%d,%d)\n",
+        TRACE( "hwnd %p (%d,%d)-(%d,%d)\n",
                hwnd, rect->left, rect->top, rect->right, rect->bottom);
     }
     return ret;
@@ -179,7 +179,7 @@ int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd ))
-            FIXME( "not supported on other process window %x\n", hwnd );
+            FIXME( "not supported on other process window %p\n", hwnd );
         wndPtr = NULL;
     }
     if (!wndPtr)
@@ -212,7 +212,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
     if ((wndPtr = WIN_GetPtr( hwnd )) == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd ))
-            FIXME( "not supported on other process window %x\n", hwnd );
+            FIXME( "not supported on other process window %p\n", hwnd );
         wndPtr = NULL;
     }
     if (!wndPtr)
@@ -384,7 +384,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
     int res;
     LONG style;
 
-    TRACE("scope %04x %ld,%ld\n", hwndScope, pt.x, pt.y);
+    TRACE("scope %p %ld,%ld\n", hwndScope, pt.x, pt.y);
 
     if (!hwndScope) hwndScope = GetDesktopWindow();
     style = GetWindowLongW( hwndScope, GWL_STYLE );
@@ -405,7 +405,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
             xy.y -= rectClient.top;
             if ((ret = find_child_from_point( hwndScope, xy, hittest, MAKELONG( pt.x, pt.y ) )))
             {
-                TRACE( "found child %x\n", ret );
+                TRACE( "found child %p\n", ret );
                 return ret;
             }
         }
@@ -415,14 +415,14 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
     if (!WIN_IsCurrentThread( hwndScope ))
     {
         *hittest = HTCLIENT;
-        TRACE( "returning %x\n", hwndScope );
+        TRACE( "returning %p\n", hwndScope );
         return hwndScope;
     }
     res = SendMessageA( hwndScope, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
     if (res != HTTRANSPARENT)
     {
         *hittest = res;  /* Found the window */
-        TRACE( "returning %x\n", hwndScope );
+        TRACE( "returning %p\n", hwndScope );
         return hwndScope;
     }
     *hittest = HTNOWHERE;
@@ -509,7 +509,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
             if (hwnd == hwndTo) return;
             if (!(wndPtr = WIN_GetPtr( hwnd )))
             {
-                ERR( "bad hwndFrom = %04x\n", hwnd );
+                ERR( "bad hwndFrom = %p\n", hwnd );
                 return;
             }
             if (wndPtr == WND_OTHER_PROCESS) goto other_process;
@@ -529,7 +529,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
         {
             if (!(wndPtr = WIN_GetPtr( hwnd )))
             {
-                ERR( "bad hwndTo = %04x\n", hwnd );
+                ERR( "bad hwndTo = %p\n", hwnd );
                 return;
             }
             if (wndPtr == WND_OTHER_PROCESS) goto other_process;
@@ -637,7 +637,7 @@ BOOL WINAPI LockSetForegroundWindow( UINT lockcode )
  *		SetShellWindow (USER32.@)
  */
 HWND WINAPI SetShellWindow(HWND hwndshell)
-{   WARN("(hWnd=%08x) semi stub\n",hwndshell );
+{   WARN("(hWnd=%p) semi stub\n",hwndshell );
 
     hGlobalShellWindow = WIN_GetFullHandle( hwndshell );
     return hGlobalShellWindow;
@@ -648,7 +648,7 @@ HWND WINAPI SetShellWindow(HWND hwndshell)
  *		GetShellWindow (USER32.@)
  */
 HWND WINAPI GetShellWindow(void)
-{   WARN("(hWnd=%x) semi stub\n",hGlobalShellWindow );
+{   WARN("(hWnd=%p) semi stub\n",hGlobalShellWindow );
 
     return hGlobalShellWindow;
 }
@@ -671,8 +671,7 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
 {
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-    TRACE("%04x %d,%d %dx%d %d\n",
-	    hwnd, x, y, cx, cy, repaint );
+    TRACE("%p %d,%d %dx%d %d\n", hwnd, x, y, cx, cy, repaint );
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
 
@@ -736,7 +735,7 @@ BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
     {
         HWND title = lpPos->hwndIconTitle;
 
-	TRACE("0x%04x %i\n", hwnd, (bShow != 0) );
+	TRACE("%p %i\n", hwnd, (bShow != 0) );
 
 	if( !title )
 	    lpPos->hwndIconTitle = title = ICONTITLE_Create( hwnd );
@@ -1064,7 +1063,7 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
 
  done:
     fg = GetForegroundWindow();
-    TRACE("win = %x fg = %x\n", hwndTo, fg);
+    TRACE("win = %p fg = %p\n", hwndTo, fg);
     if (!fg || (hwnd == fg))
     {
         if (SetForegroundWindow( hwndTo )) return;
@@ -1173,8 +1172,8 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
 {
     WINDOWPOS winpos;
 
-    TRACE("hwnd %x, after %x, %d,%d (%dx%d), flags %08x\n",
-	   hwnd, hwndInsertAfter, x, y, cx, cy, flags);
+    TRACE("hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
+          hwnd, hwndInsertAfter, x, y, cx, cy, flags);
     if(TRACE_ON(win)) dump_winpos_flags(flags);
 
     winpos.hwnd = WIN_GetFullHandle(hwnd);
@@ -1358,7 +1357,7 @@ HWND WINAPI GetProgmanWindow(void)
  */
 HWND WINAPI SetShellWindowEx ( HWND hwndProgman, HWND hwndListView )
 {
-	FIXME("0x%08x 0x%08x stub\n",hwndProgman ,hwndListView );
+	FIXME("%p %p stub\n",hwndProgman ,hwndListView );
 	hGlobalShellWindow = hwndProgman;
 	return hGlobalShellWindow;
 

@@ -112,7 +112,7 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap, INT width, INT height )
     HBITMAP hBmp = 0;
     HWND prev = 0;
 
-    TRACE("hwnd=%04x\n", hwnd);
+    TRACE("hwnd=%p\n", hwnd);
 
     if (!hwnd) return FALSE;
 

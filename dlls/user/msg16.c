@@ -207,7 +207,7 @@ BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd16, UINT16 first,
                                   &msg16->msg.message, &msg16->msg.wParam,
                                   &msg16->msg.lParam ) == -1);
 
-    TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n",
+    TRACE( "message %04x, hwnd %p, filter(%04x - %04x)\n",
            msg16->msg.message, hwnd, first, last );
 
     return msg16->msg.message != WM_QUIT;
@@ -282,7 +282,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd ))
-            ERR( "cannot dispatch msg to other process window %x\n", hwnd );
+            ERR( "cannot dispatch msg to other process window %p\n", hwnd );
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
@@ -307,7 +307,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         WIN_ReleasePtr( wndPtr );
         if (validate)
         {
-            ERR( "BeginPaint not called on WM_PAINT for hwnd %x!\n", hwnd );
+            ERR( "BeginPaint not called on WM_PAINT for hwnd %p!\n", hwnd );
             /* Validate the update region to avoid infinite WM_PAINT loop */
             RedrawWindow( hwnd, NULL, 0,
                           RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );

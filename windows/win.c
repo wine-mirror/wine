@@ -348,7 +348,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
         }
         if (IsWindow( hwnd )) /* check other processes */
         {
-            ERR( "window %04x belongs to other process\n", hwnd );
+            ERR( "window %p belongs to other process\n", hwnd );
             /* DbgBreakPoint(); */
         }
     }
@@ -410,7 +410,7 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
     if (!wndPtr) return;
     if (wndPtr == WND_OTHER_PROCESS)
     {
-        if (IsWindow(hwnd)) ERR(" cannot link other process window %x\n", hwnd );
+        if (IsWindow(hwnd)) ERR(" cannot link other process window %p\n", hwnd );
         return;
     }
 
@@ -443,7 +443,7 @@ HWND WIN_SetOwner( HWND hwnd, HWND owner )
     if (!win) return 0;
     if (win == WND_OTHER_PROCESS)
     {
-        if (IsWindow(hwnd)) ERR( "cannot set owner %x on other process window %x\n", owner, hwnd );
+        if (IsWindow(hwnd)) ERR( "cannot set owner %p on other process window %p\n", owner, hwnd );
         return 0;
     }
     SERVER_START_REQ( set_window_owner )
@@ -477,7 +477,7 @@ LONG WIN_SetStyle( HWND hwnd, LONG style )
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
-            ERR( "cannot set style %lx on other process window %x\n", style, hwnd );
+            ERR( "cannot set style %lx on other process window %p\n", style, hwnd );
         return 0;
     }
     if (style == win->dwStyle)
@@ -517,7 +517,7 @@ LONG WIN_SetExStyle( HWND hwnd, LONG style )
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
-            ERR( "cannot set exstyle %lx on other process window %x\n", style, hwnd );
+            ERR( "cannot set exstyle %lx on other process window %p\n", style, hwnd );
         return 0;
     }
     if (style == win->dwExStyle)
@@ -555,7 +555,7 @@ void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClien
     if (!win) return;
     if (win == WND_OTHER_PROCESS)
     {
-        if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %x\n", hwnd );
+        if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
         return;
     }
     SERVER_START_REQ( set_window_rectangles )
@@ -577,7 +577,7 @@ void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClien
         win->rectWindow = *rectWindow;
         win->rectClient = *rectClient;
 
-        TRACE( "win %x window (%d,%d)-(%d,%d) client (%d,%d)-(%d,%d)\n", hwnd,
+        TRACE( "win %p window (%d,%d)-(%d,%d) client (%d,%d)-(%d,%d)\n", hwnd,
                rectWindow->left, rectWindow->top, rectWindow->right, rectWindow->bottom,
                rectClient->left, rectClient->top, rectClient->right, rectClient->bottom );
     }
@@ -641,7 +641,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     WND *wndPtr;
     HWND *list;
 
-    TRACE("%04x\n", hwnd );
+    TRACE("%p\n", hwnd );
 
     if (!(hwnd = WIN_IsCurrentThread( hwnd )))
     {
@@ -1007,7 +1007,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     DCE *dce;
     BOOL unicode = (type == WIN_PROC_32W);
 
-    TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%04x menu=%04x inst=%08x params=%p\n",
+    TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           (type == WIN_PROC_32W) ? debugstr_w((LPWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
           (type == WIN_PROC_32W) ? debugstr_w((LPWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
@@ -1035,7 +1035,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	/* Make sure parent is valid */
         if (!IsWindow( cs->hwndParent ))
         {
-            WARN("Bad parent %04x\n", cs->hwndParent );
+            WARN("Bad parent %p\n", cs->hwndParent );
 	    return 0;
 	}
         if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
@@ -1188,7 +1188,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
         HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0, TRUE );
 
-    TRACE("created window %04x\n", hwnd);
+    TRACE("created window %p\n", hwnd);
     return hwnd;
 }
 
@@ -1440,7 +1440,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
         return FALSE;
     }
 
-    TRACE("(%04x)\n", hwnd);
+    TRACE("(%p)\n", hwnd);
 
     /* Look whether the focus is within the tree of windows we will
      * be destroying.
@@ -1696,7 +1696,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 
     hwnd = full_handle;
 
-    TRACE("( %x, %d )\n", hwnd, enable);
+    TRACE("( %p, %d )\n", hwnd, enable);
 
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
     style = wndPtr->dwStyle;
@@ -1767,7 +1767,7 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
         if (wndPtr == WND_OTHER_PROCESS)
         {
             if (IsWindow( hwnd ))
-                FIXME( "(%d) not supported yet on other process window %x\n", offset, hwnd );
+                FIXME( "(%d) not supported yet on other process window %p\n", offset, hwnd );
             SetLastError( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
@@ -1827,7 +1827,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
-            FIXME( "set %d <- %x not supported yet on other process window %x\n",
+            FIXME( "set %d <- %x not supported yet on other process window %p\n",
                    offset, newval, hwnd );
         wndPtr = NULL;
     }
@@ -1880,7 +1880,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
         if (offset >= 0)
         {
             if (IsWindow(hwnd))
-                FIXME( "(%d) not supported on other process window %x\n", offset, hwnd );
+                FIXME( "(%d) not supported on other process window %p\n", offset, hwnd );
             SetLastError( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
@@ -1981,7 +1981,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     LONG retval = 0;
     WND *wndPtr;
 
-    TRACE( "%x %d %lx %x\n", hwnd, offset, newval, type );
+    TRACE( "%p %d %lx %x\n", hwnd, offset, newval, type );
 
     if (!WIN_IsCurrentProcess( hwnd ))
     {
@@ -2326,7 +2326,7 @@ BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
 {
     if (!WIN_IsCurrentProcess( hwnd ))
     {
-        FIXME( "cannot set text %s of other process window %x\n", debugstr_a(lpString), hwnd );
+        FIXME( "cannot set text %s of other process window %p\n", debugstr_a(lpString), hwnd );
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
     }
@@ -2341,7 +2341,7 @@ BOOL WINAPI SetWindowTextW( HWND hwnd, LPCWSTR lpString )
 {
     if (!WIN_IsCurrentProcess( hwnd ))
     {
-        FIXME( "cannot set text %s of other process window %x\n", debugstr_w(lpString), hwnd );
+        FIXME( "cannot set text %s of other process window %p\n", debugstr_w(lpString), hwnd );
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
     }
@@ -3068,7 +3068,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    TRACE("%04x\n", hWnd);
+    TRACE("%p\n", hWnd);
 
     if (!wndPtr) return FALSE;
     hWnd = wndPtr->hwndSelf;  /* make it a full handle */
@@ -3180,7 +3180,7 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
  */
 UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR lpszFileName, UINT cchFileNameMax)
 {
-    FIXME("GetWindowModuleFileNameA(hwnd 0x%x, lpszFileName %p, cchFileNameMax %u) stub!\n",
+    FIXME("GetWindowModuleFileNameA(hwnd %p, lpszFileName %p, cchFileNameMax %u) stub!\n",
           hwnd, lpszFileName, cchFileNameMax);
     return 0;
 }
@@ -3190,7 +3190,7 @@ UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR lpszFileName, UINT cchFil
  */
 UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPSTR lpszFileName, UINT cchFileNameMax)
 {
-    FIXME("GetWindowModuleFileNameW(hwnd 0x%x, lpszFileName %p, cchFileNameMax %u) stub!\n",
+    FIXME("GetWindowModuleFileNameW(hwnd %p, lpszFileName %p, cchFileNameMax %u) stub!\n",
           hwnd, lpszFileName, cchFileNameMax);
     return 0;
 }

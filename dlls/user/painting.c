@@ -118,7 +118,7 @@ static HRGN begin_ncpaint( HWND hwnd )
 
     if (!wnd || wnd == WND_OTHER_PROCESS) return 0;
 
-    TRACE("hwnd %04x [%04x] ncf %i\n",
+    TRACE("hwnd %p [%p] ncf %i\n",
           hwnd, wnd->hrgnUpdate, wnd->flags & WIN_NEEDS_NCPAINT);
 
     get_update_regions( wnd, &whole_rgn, &client_rgn );
@@ -162,7 +162,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
     {
         if (IsWindow(hwnd))
-            FIXME( "window %x belongs to other thread\n", hwnd );
+            FIXME( "window %p belongs to other thread\n", hwnd );
         return 0;
     }
     hwnd = full_handle;
@@ -202,7 +202,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 
     if (!lps->hdc)
     {
-        WARN("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
+        WARN("GetDCEx() failed in BeginPaint(), hwnd=%p\n", hwnd);
         DeleteObject( hrgnUpdate );
         return 0;
     }
@@ -219,7 +219,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     IntersectRect(&lps->rcPaint, &clientRect, &clipRect);
     DPtoLP(lps->hdc, (LPPOINT)&lps->rcPaint, 2);  /* we must return LP */
 
-    TRACE("hdc = %x box = (%i,%i - %i,%i)\n",
+    TRACE("hdc = %p box = (%i,%i - %i,%i)\n",
           lps->hdc, lps->rcPaint.left, lps->rcPaint.top, lps->rcPaint.right, lps->rcPaint.bottom );
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;

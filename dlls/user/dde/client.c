@@ -60,7 +60,7 @@ const WCHAR WDML_szClientConvClassW[] = {'D','d','e','C','l','i','e','n','t','U'
 HCONVLIST WINAPI DdeConnectList(DWORD idInst, HSZ hszService, HSZ hszTopic,
 				HCONVLIST hConvList, LPCONVCONTEXT pCC)
 {
-    FIXME("(%ld,%d,%d,%d,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
+    FIXME("(%ld,%p,%p,%p,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
     return (HCONVLIST)1;
 }
 
@@ -69,7 +69,7 @@ HCONVLIST WINAPI DdeConnectList(DWORD idInst, HSZ hszService, HSZ hszTopic,
  */
 HCONV WINAPI DdeQueryNextServer(HCONVLIST hConvList, HCONV hConvPrev)
 {
-    FIXME("(%d,%d): stub\n", hConvList, hConvPrev);
+    FIXME("(%p,%p): stub\n", hConvList, hConvPrev);
     return 0;
 }
 
@@ -86,7 +86,7 @@ HCONV WINAPI DdeQueryNextServer(HCONVLIST hConvList, HCONV hConvPrev)
  */
 BOOL WINAPI DdeDisconnectList(HCONVLIST hConvList)
 {
-    FIXME("(%d): stub\n", hConvList);
+    FIXME("(%p): stub\n", hConvList);
     return TRUE;
 }
 
@@ -101,7 +101,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     WDML_CONV*		pConv = NULL;
     ATOM		aSrv = 0, aTpc = 0;
 
-    TRACE("(0x%lx,0x%x,0x%x,%p)\n", idInst, hszService, hszTopic, pCC);
+    TRACE("(0x%lx,%p,%p,%p)\n", idInst, hszService, hszTopic, pCC);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -201,7 +201,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 	pConv = NULL;
 	goto theEnd;
     }
-    TRACE("Connected to Server window (%x)\n", pConv->hwndServer);
+    TRACE("Connected to Server window (%p)\n", pConv->hwndServer);
     pConv->wConvst = XST_CONNECTED;
 
     /* finish init of pConv */
@@ -1087,8 +1087,8 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
     WDML_XACT*		pXAct;
     HDDEDATA		hDdeData = 0;
 
-    TRACE("(%p,%ld,0x%lx,0x%x,%d,%d,%ld,%p)\n",
-	  pData, cbData, (DWORD)hConv, hszItem, wFmt, wType, dwTimeout, pdwResult);
+    TRACE("(%p,%ld,%p,%p,%d,%d,%ld,%p)\n",
+	  pData, cbData, hConv, hszItem, wFmt, wType, dwTimeout, pdwResult);
 
     if (hConv == 0)
     {
@@ -1162,7 +1162,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 
     if (!PostMessageA(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
     {
-	TRACE("Failed posting message %d to 0x%04x (error=0x%lx)\n",
+	TRACE("Failed posting message %d to %p (error=0x%lx)\n",
 	      pXAct->ddeMsg, pConv->hwndServer, GetLastError());
 	pConv->wStatus &= ~ST_CONNECTED;
 	WDML_UnQueueTransaction(pConv, pXAct);

@@ -181,9 +181,8 @@ static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
     pTimer->timeout = timeout;
     pTimer->proc    = winproc;
 
-    TRACE("Timer added: %p, %04x, %04x, %04x, %08lx\n",
-		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
-                   (DWORD)pTimer->proc );
+    TRACE("Timer added: %p, %p, %04x, %04x, %p\n",
+          pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, pTimer->proc );
 
     LeaveCriticalSection( &csTimer );
 
@@ -255,8 +254,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
                           TIMERPROC proc )
 {
-    TRACE("%04x %d %d %08lx\n",
-                   hwnd, id, timeout, (LONG)proc );
+    TRACE("%p %d %d %p\n", hwnd, id, timeout, proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc, WIN_PROC_32A, FALSE );
 }
 
@@ -305,8 +303,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout,
                                 TIMERPROC proc )
 {
-    TRACE("%04x %d %d %08lx\n",
-                   hwnd, id, timeout, (LONG)proc );
+    TRACE("%p %d %d %p\n", hwnd, id, timeout, proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc, WIN_PROC_32A, TRUE );
 }
 
@@ -316,7 +313,7 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout,
  */
 BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
 {
-    TRACE("%04x %d\n", hwnd, id );
+    TRACE("%p %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
@@ -326,6 +323,6 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
  */
 BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 {
-    TRACE("%04x %d\n", hwnd, id );
+    TRACE("%p %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }

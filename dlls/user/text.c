@@ -1286,7 +1286,7 @@ LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
 LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
 {
-    TRACE("%x %d,%d %s %d\n", hdc, x, y, debugstr_wn(str,count), count );
+    TRACE("%p %d,%d %s %d\n", hdc, x, y, debugstr_wn(str,count), count );
     return TEXT_TabbedTextOut( hdc, x, y, str, count, cTabStops, lpTabPos, nTabOrg, TRUE );
 }
 
@@ -1314,6 +1314,6 @@ DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
 DWORD WINAPI GetTabbedTextExtentW( HDC hdc, LPCWSTR lpstr, INT count,
                                    INT cTabStops, const INT *lpTabPos )
 {
-    TRACE("%x %s %d\n", hdc, debugstr_wn(lpstr,count), count );
+    TRACE("%p %s %d\n", hdc, debugstr_wn(lpstr,count), count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops, lpTabPos, 0, FALSE );
 }

@@ -1445,7 +1445,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 
         if (res) return FALSE;
 
-        TRACE( "got type %d msg %x hwnd %x wp %x lp %lx\n",
+        TRACE( "got type %d msg %x hwnd %p wp %x lp %lx\n",
                info.type, info.msg.message, info.msg.hwnd, info.msg.wParam, info.msg.lParam );
 
         switch(info.type)
@@ -1465,7 +1465,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
                                  &info.msg.lParam, &buffer, size ))
             {
-                ERR( "invalid packed message %x (%s) hwnd %x wp %x lp %lx size %d\n",
+                ERR( "invalid packed message %x (%s) hwnd %p wp %x lp %lx size %d\n",
                      info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd), info.msg.hwnd,
                      info.msg.wParam, info.msg.lParam, size );
                 /* ignore it */
@@ -1494,7 +1494,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 		if (!unpack_dde_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
                                          &info.msg.lParam, &buffer, size ))
 		{
-		    ERR( "invalid packed dde-message %x (%s) hwnd %x wp %x lp %lx size %d\n",
+		    ERR( "invalid packed dde-message %x (%s) hwnd %p wp %x lp %lx size %d\n",
 			 info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd),
 			 info.msg.hwnd, info.msg.wParam, info.msg.lParam, size );
 		    /* ignore it */
@@ -1662,7 +1662,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
 
     if (reply_data) HeapFree( GetProcessHeap(), 0, reply_data );
 
-    TRACE( "hwnd %x msg %x (%s) wp %x lp %lx got reply %lx (err=%ld)\n",
+    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx got reply %lx (err=%ld)\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam,
            info->lparam, *result, status );
 
@@ -1683,7 +1683,7 @@ static LRESULT send_inter_thread_message( DWORD dest_tid, const struct send_mess
     int locks;
     size_t reply_size = 0;
 
-    TRACE( "hwnd %x msg %x (%s) wp %x lp %lx\n",
+    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam, info->lparam );
 
     if (!put_message_in_queue( dest_tid, info, &reply_size )) return 0;

@@ -793,7 +793,7 @@ DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
     start_time = GetTickCount();
     elapsed = 0;
 
-    TRACE("waiting for %x\n", idle_event );
+    TRACE("waiting for %p\n", idle_event );
     do
     {
         ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut - elapsed, QS_SENDMESSAGE );
@@ -1077,7 +1077,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow( msg->hwnd ))
-            ERR( "cannot dispatch msg to other process window %x\n", msg->hwnd );
+            ERR( "cannot dispatch msg to other process window %p\n", msg->hwnd );
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
@@ -1105,7 +1105,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
         WIN_ReleasePtr( wndPtr );
         if (validate)
         {
-            ERR( "BeginPaint not called on WM_PAINT for hwnd %04x!\n", msg->hwnd );
+            ERR( "BeginPaint not called on WM_PAINT for hwnd %p!\n", msg->hwnd );
             /* Validate the update region to avoid infinite WM_PAINT loop */
             RedrawWindow( msg->hwnd, NULL, 0,
                           RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
@@ -1169,7 +1169,7 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
     if (wndPtr == WND_OTHER_PROCESS)
     {
         if (IsWindow( msg->hwnd ))
-            ERR( "cannot dispatch msg to other process window %x\n", msg->hwnd );
+            ERR( "cannot dispatch msg to other process window %p\n", msg->hwnd );
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
@@ -1197,7 +1197,7 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
         WIN_ReleasePtr( wndPtr );
         if (validate)
         {
-            ERR( "BeginPaint not called on WM_PAINT for hwnd %04x!\n", msg->hwnd );
+            ERR( "BeginPaint not called on WM_PAINT for hwnd %p!\n", msg->hwnd );
             /* Validate the update region to avoid infinite WM_PAINT loop */
             RedrawWindow( msg->hwnd, NULL, 0,
                           RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );

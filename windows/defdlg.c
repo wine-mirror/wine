@@ -41,7 +41,7 @@ static WNDPROC DEFDLG_GetDlgProc( HWND hwnd )
     if (!wndPtr) return 0;
     if (wndPtr == WND_OTHER_PROCESS)
     {
-        ERR( "cannot get dlg proc %x from other process\n", hwnd );
+        ERR( "cannot get dlg proc %p from other process\n", hwnd );
         return 0;
     }
     ret = *(WNDPROC *)((char *)wndPtr->wExtra + DWL_DLGPROC);

@@ -861,8 +861,8 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
 {
     HICON hNew=0;
 
-    TRACE_(icon)("hIcon %u, nType %u, iDesiredCX %i, iDesiredCY %i, nFlags %u\n",
-        hIcon, nType, iDesiredCX, iDesiredCY, nFlags);
+    TRACE_(icon)("hIcon %p, nType %u, iDesiredCX %i, iDesiredCY %i, nFlags %u\n",
+                 hIcon, nType, iDesiredCX, iDesiredCY, nFlags);
 
     if(hIcon == 0)
     {
@@ -1167,7 +1167,7 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
  */
 HICON WINAPI CopyIcon( HICON hIcon )
 {
-    TRACE_(icon)("%04x\n", hIcon );
+    TRACE_(icon)("%p\n", hIcon );
     return CURSORICON_Copy( 0, hIcon );
 }
 
@@ -1306,7 +1306,7 @@ HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
     HCURSOR hOldCursor;
 
     if (hCursor == queue->cursor) return hCursor;  /* No change */
-    TRACE_(cursor)("%04x\n", hCursor );
+    TRACE_(cursor)("%p\n", hCursor );
     hOldCursor = queue->cursor;
     queue->cursor = hCursor;
     /* Change the cursor shape only if it is visible */
@@ -1728,9 +1728,8 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     HBITMAP hB_off = 0, hOld = 0;
 
     if (!ptr) return FALSE;
-    TRACE_(icon)("(hdc=%x,pos=%d.%d,hicon=%x,extend=%d.%d,istep=%d,br=%x,flags=0x%08x)\n",
-	    hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags
-    );
+    TRACE_(icon)("(hdc=%p,pos=%d.%d,hicon=%p,extend=%d.%d,istep=%d,br=%p,flags=0x%08x)\n",
+                 hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags );
 
     hMemDC = CreateCompatibleDC (hdc);
     if (istep)
@@ -2029,10 +2028,10 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
                 INT desiredx, INT desiredy, UINT loadflags )
 {
     if (HIWORD(name)) {
-        TRACE_(resource)("(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+        TRACE_(resource)("(%p,%p,%d,%d,%d,0x%08x)\n",
 	      hinst,name,type,desiredx,desiredy,loadflags);
     } else {
-        TRACE_(resource)("(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+        TRACE_(resource)("(%p,%p,%d,%d,%d,0x%08x)\n",
 	      hinst,name,type,desiredx,desiredy,loadflags);
     }
     if (loadflags & LR_DEFAULTSIZE) {

@@ -65,7 +65,7 @@ static void DCE_DumpCache(void)
     DPRINTF("DCE:\n");
     while( dce )
     {
-	DPRINTF("\t[0x%08x] hWnd 0x%04x, dcx %08x, %s %s\n",
+	DPRINTF("\t[0x%08x] hWnd %p, dcx %08x, %s %s\n",
 	     (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags,
 	     (dce->DCXflags & DCX_CACHE) ? "Cache" : "Owned",
 	     (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
@@ -190,7 +190,7 @@ void DCE_FreeWindowDCE( HWND hwnd )
                      * We should change this to WARN when Wine is more stable
                      * (for 1.0?).
                      */
-		    ERR("[%08x] GetDC() without ReleaseDC()!\n",hwnd);
+		    ERR("[%p] GetDC() without ReleaseDC()!\n",hwnd);
 		    DCE_ReleaseDC( pDCE );
 		}
 
@@ -280,9 +280,9 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
     {
 	DCE *dce;
 
-	TRACE("scope hwnd = %04x, (%i,%i - %i,%i)\n",
-		     hwndScope, pRectUpdate->left,pRectUpdate->top,
-		     pRectUpdate->right,pRectUpdate->bottom);
+        TRACE("scope hwnd = %p, (%i,%i - %i,%i)\n",
+              hwndScope, pRectUpdate->left,pRectUpdate->top,
+              pRectUpdate->right,pRectUpdate->bottom);
 	if(TRACE_ON(dc))
 	  DCE_DumpCache();
 
@@ -311,7 +311,7 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
                 {
                     /* Don't bother with visible regions of unused DCEs */
 
-                    TRACE("\tpurged %p dce [%04x]\n", dce, dce->hwndCurrent);
+                    TRACE("\tpurged %p dce [%p]\n", dce, dce->hwndCurrent);
                     if (dce->hwndCurrent && USER_Driver.pReleaseDC)
                         USER_Driver.pReleaseDC( dce->hwndCurrent, dce->hDC );
                     dce->hwndCurrent = 0;
@@ -322,7 +322,7 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
                 {
                     /* Set dirty bits in the hDC and DCE structs */
 
-                    TRACE("\tfixed up %p dce [%04x]\n", dce, dce->hwndCurrent);
+                    TRACE("\tfixed up %p dce [%p]\n", dce, dce->hwndCurrent);
                     dce->DCXflags |= DCX_DCEDIRTY;
                     SetHookFlags16( HDC_16(dce->hDC), DCHF_INVALIDATEVISRGN );
                     bRet = TRUE;
@@ -379,13 +379,12 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     BOOL	bUpdateClipOrigin = FALSE;
     HWND parent, full;
 
-    TRACE("hwnd %04x, hrgnClip %04x, flags %08x\n",
-          hwnd, hrgnClip, (unsigned)flags);
+    TRACE("hwnd %p, hrgnClip %p, flags %08lx\n", hwnd, hrgnClip, flags);
 
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(full = WIN_IsCurrentProcess( hwnd )))
     {
-        FIXME( "not supported yet on other process window %x\n", hwnd );
+        FIXME( "not supported yet on other process window %p\n", hwnd );
         return 0;
     }
     hwnd = full;
@@ -461,8 +460,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 		   ((dce->DCXflags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
 				      DCX_CACHE | DCX_WINDOW | DCX_PARENTCLIP)) == dcxFlags))
 		{
-		    TRACE("\tfound valid %08x dce [%04x], flags %08x\n",
-					(unsigned)dce, hwnd, (unsigned)dcxFlags );
+		    TRACE("\tfound valid %p dce [%p], flags %08lx\n",
+                          dce, hwnd, dcxFlags );
 		    bUpdateVisRgn = FALSE;
 		    bUpdateClipOrigin = TRUE;
 		    break;
@@ -515,7 +514,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (!USER_Driver.pGetDC( hwnd, hdc, hrgnClip, flags )) hdc = 0;
 
-    TRACE("(%04x,%04x,0x%lx): returning %04x\n", hwnd, hrgnClip, flags, hdc);
+    TRACE("(%p,%p,0x%lx): returning %p\n", hwnd, hrgnClip, flags, hdc);
 END:
     WIN_ReleasePtr(wndPtr);
     return hdc;
@@ -563,7 +562,7 @@ INT WINAPI ReleaseDC(
     USER_Lock();
     dce = firstDCE;
 
-    TRACE("%04x %04x\n", hwnd, hdc );
+    TRACE("%p %p\n", hwnd, hdc );
 
     while (dce && (dce->hDC != hdc)) dce = dce->next;
 
@@ -662,7 +661,7 @@ BOOL WINAPI LockWindowUpdate( HWND hwnd )
 {
     static HWND lockedWnd;
 
-    FIXME("(%x), partial stub!\n",hwnd);
+    FIXME("(%p), partial stub!\n",hwnd);
 
     USER_Lock();
     if (lockedWnd)

@@ -196,7 +196,7 @@ static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     BOOL bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
-    TRACE("%04x %i\n", hwnd, (wParam!=0) );
+    TRACE("%p %i\n", hwnd, (wParam!=0) );
 
     if( wParam )
     {
@@ -684,7 +684,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam,
     if (!WIN_IsCurrentProcess( hwnd ))
     {
         if (!IsWindow( hwnd )) return 0;
-        ERR( "called for other process window %x\n", hwnd );
+        ERR( "called for other process window %p\n", hwnd );
         return 0;
     }
     SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );
@@ -749,7 +749,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     if (!(full_handle = WIN_IsCurrentProcess( hwnd )))
     {
         if (!IsWindow( hwnd )) return 0;
-        ERR( "called for other process window %x\n", hwnd );
+        ERR( "called for other process window %p\n", hwnd );
         return 0;
     }
     hwnd = full_handle;
@@ -890,7 +890,7 @@ LRESULT WINAPI DefWindowProcW(
     if (!(full_handle = WIN_IsCurrentProcess( hwnd )))
     {
         if (!IsWindow( hwnd )) return 0;
-        ERR( "called for other process window %x\n", hwnd );
+        ERR( "called for other process window %p\n", hwnd );
         return 0;
     }
     hwnd = full_handle;

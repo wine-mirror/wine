@@ -310,7 +310,7 @@ LONG WINAPI ChangeDisplaySettingsExA(
 	LPCSTR devname, LPDEVMODEA devmode, HWND hwnd, DWORD flags,
 	LPARAM lparam
 ) {
-  FIXME_(system)("(%s,%p,0x%04x,0x%08lx,0x%08lx), stub\n",devname,devmode,hwnd,flags,lparam);
+  FIXME_(system)("(%s,%p,%p,0x%08lx,0x%08lx), stub\n",devname,devmode,hwnd,flags,lparam);
   MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
   if (devmode==NULL)
     FIXME_(system)("   devmode=NULL (return to default mode)\n");
@@ -518,7 +518,7 @@ WORD WINAPI GetSystemDebugState16(void)
  *		RegisterLogonProcess (USER32.@)
  */
 DWORD WINAPI RegisterLogonProcess(HANDLE hprocess,BOOL x) {
-	FIXME_(win32)("(%d,%d),stub!\n",hprocess,x);
+	FIXME_(win32)("(%p,%d),stub!\n",hprocess,x);
 	return 1;
 }
 
@@ -539,7 +539,7 @@ HWINSTA WINAPI CreateWindowStationW(
  *		SetProcessWindowStation (USER32.@)
  */
 BOOL WINAPI SetProcessWindowStation(HWINSTA hWinSta) {
-	FIXME_(win32)("(%d),stub!\n",hWinSta);
+	FIXME_(win32)("(%p),stub!\n",hWinSta);
 	return TRUE;
 }
 
@@ -551,7 +551,7 @@ BOOL WINAPI SetUserObjectSecurity(
 	PSECURITY_INFORMATION pSIRequested,
 	PSECURITY_DESCRIPTOR pSID
 ) {
-	FIXME_(win32)("(0x%08x,%p,%p),stub!\n",hObj,pSIRequested,pSID);
+	FIXME_(win32)("(%p,%p,%p),stub!\n",hObj,pSIRequested,pSID);
 	return TRUE;
 }
 
@@ -587,7 +587,7 @@ HDESK WINAPI CreateDesktopW(
  *		EnumDesktopWindows (USER32.@)
  */
 BOOL WINAPI EnumDesktopWindows( HDESK hDesktop, WNDENUMPROC lpfn, LPARAM lParam ) {
-  FIXME_(win32)("(0x%08x, %p, 0x%08lx), stub!\n", hDesktop, lpfn, lParam );
+  FIXME_(win32)("(%p, %p, 0x%08lx), stub!\n", hDesktop, lpfn, lParam );
   return TRUE;
 }
 
@@ -597,7 +597,7 @@ BOOL WINAPI EnumDesktopWindows( HDESK hDesktop, WNDENUMPROC lpfn, LPARAM lParam 
  */
 BOOL WINAPI CloseWindowStation(HWINSTA hWinSta)
 {
-    FIXME_(win32)("(0x%08x)\n", hWinSta);
+    FIXME_(win32)("(%p)\n", hWinSta);
     return TRUE;
 }
 
@@ -606,7 +606,7 @@ BOOL WINAPI CloseWindowStation(HWINSTA hWinSta)
  */
 BOOL WINAPI CloseDesktop(HDESK hDesk)
 {
-    FIXME_(win32)("(0x%08x)\n", hDesk);
+    FIXME_(win32)("(%p)\n", hDesk);
     return TRUE;
 }
 
@@ -622,7 +622,7 @@ DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
  *		SetLogonNotifyWindow (USER32.@)
  */
 DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd) {
-	FIXME_(win32)("(0x%x,%04x),stub!\n",hwinsta,hwnd);
+	FIXME_(win32)("(%p,%p),stub!\n",hwinsta,hwnd);
 	return 1;
 }
 
@@ -637,14 +637,14 @@ VOID WINAPI LoadLocalFonts(VOID) {
  *		GetUserObjectInformationA (USER32.@)
  */
 BOOL WINAPI GetUserObjectInformationA( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
-{	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+{	FIXME_(win32)("(%p %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
  *		GetUserObjectInformationW (USER32.@)
  */
 BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
-{	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+{	FIXME_(win32)("(%p %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
@@ -652,7 +652,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, INT nIndex, LPVOID pvInfo, D
  */
 BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, PSECURITY_INFORMATION pSIRequested,
 	PSECURITY_DESCRIPTOR pSID, DWORD nLength, LPDWORD lpnLengthNeeded)
-{	FIXME_(win32)("(0x%x %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
+{	FIXME_(win32)("(%p %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
 	return TRUE;
 }
 
@@ -660,7 +660,7 @@ BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, PSECURITY_INFORMATION pSIRequeste
  *		SetSystemCursor (USER32.@)
  */
 BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
-{	FIXME_(win32)("(%08x,%08lx),stub!\n",  hcur, id);
+{	FIXME_(win32)("(%p,%08lx),stub!\n",  hcur, id);
 	return TRUE;
 }
 
@@ -678,8 +678,6 @@ void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 HDEVNOTIFY WINAPI RegisterDeviceNotificationA(
 	HANDLE hnd, LPVOID notifyfilter, DWORD flags
 ) {
-	FIXME_(win32)("(hwnd=%08x, filter=%p,flags=0x%08lx), STUB!\n",
-		hnd,notifyfilter,flags
-	);
-	return 0;
+    FIXME_(win32)("(hwnd=%p, filter=%p,flags=0x%08lx), STUB!\n", hnd,notifyfilter,flags );
+    return 0;
 }

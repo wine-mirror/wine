@@ -1226,8 +1226,8 @@ INT_PTR WINAPI DialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCVOID template,
                                        LPARAM param, DWORD x )
 {
     HWND hwnd;
-    FIXME("0x%08x %p 0x%08x %p 0x%08lx 0x%08lx\n",
-      hInstance, template, owner, dlgProc, param, x);
+    FIXME("%p %p %p %p 0x%08lx 0x%08lx\n",
+          hInstance, template, owner, dlgProc, param, x);
     hwnd = DIALOG_CreateIndirect( hInstance, template, owner, dlgProc, param, WIN_PROC_32W, TRUE );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
@@ -1242,11 +1242,11 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     DIALOGINFO * dlgInfo;
     HWND owner;
 
-    TRACE("%04x %d\n", hwnd, retval );
+    TRACE("%p %d\n", hwnd, retval );
 
     if (!(dlgInfo = DIALOG_get_info( hwnd )))
     {
-        ERR("got invalid window handle (%04x); buggy app !?\n", hwnd);
+        ERR("got invalid window handle (%p); buggy app !?\n", hwnd);
         return FALSE;
     }
     dlgInfo->idResult = retval;
@@ -1858,7 +1858,7 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
     BOOL ret;
     HWND listbox = GetDlgItem( hwnd, id );
 
-    TRACE("%04x '%s' %d\n", hwnd, str, id );
+    TRACE("%p '%s' %d\n", hwnd, str, id );
     if (!listbox) return FALSE;
 
     item = SendMessageA(listbox, combo ? CB_GETCURSEL : LB_GETCURSEL, 0, 0 );
@@ -1913,8 +1913,8 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
     ((attrib & DDL_POSTMSGS) ? PostMessageA( hwnd, msg, wparam, lparam ) \
                              : SendMessageA( hwnd, msg, wparam, lparam ))
 
-    TRACE("%04x '%s' %d %d %04x\n",
-                    hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
+    TRACE("%p '%s' %d %d %04x\n",
+          hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
 
     /* If the path exists and is a directory, chdir to it */
     if (!spec || !spec[0] || SetCurrentDirectoryA( spec )) spec = "*.*";

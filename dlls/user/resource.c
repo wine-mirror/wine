@@ -105,7 +105,7 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
 	accel16[i-1].fVirt |= 0x80;
       }
     }
-    TRACE_(accel)("returning HACCEL 0x%x\n", hRsrc);
+    TRACE_(accel)("returning HACCEL %p\n", hRsrc);
     return HACCEL_32(hRetval);
 }
 
@@ -218,7 +218,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   /* Allocate memory and copy the table. */
   hAccel = HACCEL_32(GlobalAlloc16(0,cEntries*sizeof(ACCEL16)));
 
-  TRACE_(accel)("handle %x\n", hAccel);
+  TRACE_(accel)("handle %p\n", hAccel);
   if(!hAccel) {
     ERR_(accel)("Out of memory.\n");
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -233,7 +233,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   /* Set the end-of-table terminator. */
   accel[cEntries-1].fVirt |= 0x80;
 
-  TRACE_(accel)("Allocated accelerator handle %x\n", hAccel);
+  TRACE_(accel)("Allocated accelerator handle %p\n", hAccel);
   return hAccel;
 }
 
@@ -264,7 +264,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
   /* Allocate memory and copy the table. */
   hAccel = HACCEL_32(GlobalAlloc16(0,cEntries*sizeof(ACCEL16)));
 
-  TRACE_(accel)("handle %x\n", hAccel);
+  TRACE_(accel)("handle %p\n", hAccel);
   if(!hAccel) {
     ERR_(accel)("Out of memory.\n");
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -288,7 +288,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
   /* Set the end-of-table terminator. */
   accel[cEntries-1].fVirt |= 0x80;
 
-  TRACE_(accel)("Allocated accelerator handle %x\n", hAccel);
+  TRACE_(accel)("Allocated accelerator handle %p\n", hAccel);
   return hAccel;
 }
 
@@ -368,7 +368,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 
     if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
 	resource_id = (UINT)(-((INT)resource_id));
-    TRACE("instance = %04x, id = %04x, buffer = %08x, length = %d\n",
+    TRACE("instance = %p, id = %04x, buffer = %08x, length = %d\n",
           instance, (int)resource_id, (int) buffer, buflen);
 
     /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out
@@ -414,7 +414,7 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
     INT    retval;
     LPWSTR wbuf;
 
-    TRACE("instance = %04x, id = %04x, buffer = %08x, length = %d\n",
+    TRACE("instance = %p, id = %04x, buffer = %08x, length = %d\n",
           instance, (int)resource_id, (int) buffer, buflen);
 
     if(buffer == NULL) /* asked size of string */

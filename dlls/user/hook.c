@@ -145,7 +145,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
     }
     SERVER_END_REQ;
 
-    TRACE( "%s %p %lx -> %x\n", hook_names[id-WH_MINHOOK], proc, tid, handle );
+    TRACE( "%s %p %lx -> %p\n", hook_names[id-WH_MINHOOK], proc, tid, handle );
     return handle;
 }
 
@@ -380,7 +380,7 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 {
     BOOL ret;
 
-    TRACE( "%x\n", hhook );
+    TRACE( "%p\n", hhook );
 
     SERVER_START_REQ( remove_hook )
     {
@@ -481,7 +481,7 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD dwMin, DWORD dwMax, HMODULE hModule,
                                      WINEVENTPROC pfnProc, DWORD dwProcess,
                                      DWORD dwThread, DWORD dwFlags)
 {
-    FIXME("(%ld,%ld,0x%08x,%p,%ld,%ld,0x%08lx)-stub!\n", dwMin, dwMax, hModule,
+    FIXME("(%ld,%ld,%p,%p,%ld,%ld,0x%08lx)-stub!\n", dwMin, dwMax, hModule,
           pfnProc, dwProcess, dwThread, dwFlags);
     return 0;
 }
@@ -504,7 +504,7 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD dwMin, DWORD dwMax, HMODULE hModule,
  */
 BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
 {
-    FIXME("(%x)-stub!\n", hEventHook);
+    FIXME("(%p)-stub!\n", hEventHook);
 
     return (hEventHook != 0);
 }
@@ -529,7 +529,7 @@ BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
  */
 void WINAPI NotifyWinEvent(DWORD dwEvent, HWND hWnd, LONG nId, LONG nChildId)
 {
-    FIXME("(%ld,0x%08x,%ld,%ld)-stub!\n", dwEvent, hWnd, nId, nChildId);
+    FIXME("(%ld,%p,%ld,%ld)-stub!\n", dwEvent, hWnd, nId, nChildId);
 }
 
 

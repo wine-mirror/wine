@@ -317,7 +317,7 @@ static VOID WINAPI COMM16_ReadComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
 
 	/* send notifications, if any */
 	if (ptr->wnd && mask) {
-		TRACE("notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
+		TRACE("notifying %p: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
 		PostMessageA(ptr->wnd, WM_COMMNOTIFY, cid, mask);
 	}
 
@@ -395,7 +395,7 @@ static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov
 
 	/* send notifications, if any */
 	if (ptr->wnd && mask) {
-		TRACE("notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
+		TRACE("notifying %p: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
 		PostMessageA(ptr->wnd, WM_COMMNOTIFY, cid, mask);
 	}
 

@@ -973,7 +973,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
           return;  /* Should never happen */
     }
 
-    TRACE("Event: hwnd=%04x bar=%d msg=%s pt=%ld,%ld hit=%d\n",
+    TRACE("Event: hwnd=%p bar=%d msg=%s pt=%ld,%ld hit=%d\n",
           hwnd, nBar, SPY_GetMsgName(msg,hwnd), pt.x, pt.y, hittest );
 
     switch(SCROLL_trackHitTest)
@@ -1236,7 +1236,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
             }
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
-        TRACE("ScrollBar creation, hwnd=%04x\n", hwnd );
+        TRACE("ScrollBar creation, hwnd=%p\n", hwnd );
         return 0;
 
     case WM_ENABLE:
@@ -1464,7 +1464,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     if (TRACE_ON(scroll))
     {
-        TRACE("hwnd=%04x bar=%d", hwnd, nBar);
+        TRACE("hwnd=%p bar=%d", hwnd, nBar);
         if (info->fMask & SIF_PAGE) DPRINTF( " page=%d", info->nPage );
         if (info->fMask & SIF_POS) DPRINTF( " pos=%d", info->nPos );
         if (info->fMask & SIF_RANGE) DPRINTF( " min=%d max=%d", info->nMin, info->nMax );
@@ -1761,8 +1761,7 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
 {
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    TRACE("hwnd=%04x bar=%d horz=%d, vert=%d\n",
-                    hwnd, nBar, fShowH, fShowV );
+    TRACE("hwnd=%p bar=%d horz=%d, vert=%d\n", hwnd, nBar, fShowH, fShowV );
 
     switch(nBar)
     {
@@ -1842,7 +1841,7 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
     BOOL bFineWithMe;
     SCROLLBAR_INFO *infoPtr;
 
-    TRACE("%04x %d %d\n", hwnd, nBar, flags );
+    TRACE("%p %d %d\n", hwnd, nBar, flags );
 
     flags &= ESB_DISABLE_BOTH;
 

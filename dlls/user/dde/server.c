@@ -67,7 +67,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
     ATOM		atom = 0;
     UINT		count;
 
-    TRACE("(%ld,0x%x,0x%x)\n", idInst, hszTopic, hszItem);
+    TRACE("(%ld,%p,%p)\n", idInst, hszTopic, hszItem);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -176,7 +176,7 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
 
     hDdeData = (HDDEDATA)NULL;
 
-    TRACE("(%ld,0x%x,0x%x,%d)\n", idInst, hsz1, hsz2, afCmd);
+    TRACE("(%ld,%p,%p,%d)\n", idInst, hsz1, hsz2, afCmd);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -251,7 +251,7 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
 
 	SetWindowLongA(hwndServer, GWL_WDML_INSTANCE, (DWORD)pInstance);
 	SetWindowLongA(hwndServer, GWL_WDML_SERVER, (DWORD)pServer);
-	TRACE("Created nameServer=%04x for instance=%08lx\n", hwndServer, idInst);
+	TRACE("Created nameServer=%p for instance=%08lx\n", hwndServer, idInst);
 
 	pServer->hwndServer = hwndServer;
 	break;
@@ -356,7 +356,7 @@ static WDML_CONV* WDML_CreateServerConv(WDML_INSTANCE* pInstance, HWND hwndClien
 				       hwndServerName, 0, 0, 0);
     }
 
-    TRACE("Created convServer=%04x (nameServer=%04x) for instance=%08lx\n",
+    TRACE("Created convServer=%p (nameServer=%p) for instance=%08lx\n",
 	  hwndServerConv, hwndServerName, pInstance->instanceID);
 
     pConv = WDML_AddConv(pInstance, WDML_SERVER_SIDE, hszApp, hszTopic,

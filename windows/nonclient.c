@@ -296,7 +296,7 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 {
     RECT   rc = *rect;
 
-    TRACE("(%08x,%08x,%p,%08x,%08x,%s,%08x)\n",
+    TRACE("(%p,%p,%p,%p,%p,%s,%08x)\n",
           hwnd, hdc, rect, hFont, hIcon, debugstr_w(str), uFlags);
 
     /* drawing background */
@@ -469,10 +469,8 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 
         if (!(style & WS_CHILD) && GetMenu(hwnd))
         {
-	    TRACE("Calling GetMenuBarHeight with HWND 0x%x, width %d, "
-                  "at (%d, %d).\n", hwnd,
-                  winRect->right - winRect->left,
-                  -tmpRect.left, -tmpRect.top );
+            TRACE("Calling GetMenuBarHeight with hwnd %p, width %d, at (%d, %d).\n",
+                  hwnd, winRect->right - winRect->left, -tmpRect.left, -tmpRect.top );
 
 	    winRect->top +=
 		MENU_GetMenuBarHeight( hwnd,
@@ -563,7 +561,7 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 {
     RECT rect;
 
-    TRACE("hwnd=%04x pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
+    TRACE("hwnd=%p pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
 
     GetWindowRect(wndPtr->hwndSelf, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -695,7 +693,7 @@ static LONG NC_DoNCHitTest95 (WND *wndPtr, POINT pt )
 {
     RECT rect;
 
-    TRACE("hwnd=%04x pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
+    TRACE("hwnd=%p pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
 
     GetWindowRect(wndPtr->hwndSelf, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -1408,7 +1406,7 @@ static void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 
     active  = flags & WIN_NCACTIVATED;
 
-    TRACE("%04x %d\n", hwnd, active );
+    TRACE("%p %d\n", hwnd, active );
 
     if (!(hdc = GetDCEx( hwnd, (clip > (HRGN)1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
 			      ((clip > (HRGN)1) ? (DCX_INTERSECTRGN | DCX_KEEPCLIPRGN): 0) ))) return;
@@ -1533,7 +1531,7 @@ static void  NC_DoNCPaint95(
 
     active  = flags & WIN_NCACTIVATED;
 
-    TRACE("%04x %d\n", hwnd, active );
+    TRACE("%p %d\n", hwnd, active );
 
     /* MSDN docs are pretty idiotic here, they say app CAN use clipRgn in
        the call to GetDCEx implying that it is allowed not to use it either.

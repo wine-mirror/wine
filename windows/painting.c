@@ -205,7 +205,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
     HRGN  hClip = 0;
     HRGN  hrgnRet = 0;
 
-    TRACE_(nonclient)("hwnd %04x [%04x] hrgn %04x, unc %04x, ncf %i\n",
+    TRACE_(nonclient)("hwnd %p [%p] hrgn %p, unc %04x, ncf %i\n",
                       wnd->hwndSelf, wnd->hrgnUpdate, hRgn, uncFlags, wnd->flags & WIN_NEEDS_NCPAINT);
 
     /* desktop window doesn't have a nonclient area */
@@ -243,7 +243,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 	    wnd->flags &= ~WIN_NEEDS_NCPAINT;
 	    GETCLIENTRECTW( wnd, r );
 
-	    TRACE_(nonclient)( "\tclient box (%i,%i-%i,%i), hrgnUpdate %04x\n",
+	    TRACE_(nonclient)( "\tclient box (%i,%i-%i,%i), hrgnUpdate %p\n",
 				r.left, r.top, r.right, r.bottom, wnd->hrgnUpdate );
 	    if( wnd->hrgnUpdate > (HRGN)1 )
 	    {
@@ -337,7 +337,7 @@ copyrgn:
         }
     }
 
-    TRACE_(nonclient)("returning %04x (hClip = %04x, hrgnUpdate = %04x)\n", hrgnRet, hClip, wnd->hrgnUpdate );
+    TRACE_(nonclient)("returning %p (hClip = %p, hrgnUpdate = %p)\n", hrgnRet, hClip, wnd->hrgnUpdate );
 
     return hrgnRet;
 }
@@ -427,7 +427,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
     r.right = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     r.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    TRACE("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", wndPtr->hwndSelf, wndPtr->hrgnUpdate, hRgn, flags );
+    TRACE("\thwnd %p [%p] -> hrgn [%p], flags [%04x]\n", wndPtr->hwndSelf, wndPtr->hrgnUpdate, hRgn, flags );
 
     if( flags & RDW_INVALIDATE )
     {
@@ -630,7 +630,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
       /* Erase/update the window itself ... */
 
-    TRACE("\thwnd %04x [%04x] -> hrgn [%04x], flags [%04x]\n", hWnd, wndPtr->hrgnUpdate, hrgn, flags );
+    TRACE("\thwnd %p [%p] -> hrgn [%p], flags [%04x]\n", hWnd, wndPtr->hrgnUpdate, hrgn, flags );
 
     /*
      * Check if this window should delay it's processing of WM_NCPAINT.
@@ -731,7 +731,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	if( hrgnUpdate )
 	{
 	    GetRgnBox( hrgnUpdate, &r );
-            TRACE( "%04x (%04x) NULL %04x box (%i,%i-%i,%i) flags=%04x\n",
+            TRACE( "%p (%p) NULL %p box (%i,%i-%i,%i) flags=%04x\n",
 	          hwnd, wndPtr->hrgnUpdate, hrgnUpdate, r.left, r.top, r.right, r.bottom, flags );
 	}
 	else
@@ -740,9 +740,9 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 		r = *rectUpdate;
 	    else
 		SetRectEmpty( &r );
-	    TRACE( "%04x (%04x) %s %d,%d-%d,%d %04x flags=%04x\n",
-			hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left,
-			r.top, r.right, r.bottom, hrgnUpdate, flags );
+	    TRACE( "%p (%p) %s %d,%d-%d,%d %p flags=%04x\n",
+                   hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left,
+                   r.top, r.right, r.bottom, hrgnUpdate, flags );
 	}
     }
 
@@ -1157,7 +1157,7 @@ BOOL WINAPI DrawAnimatedRects( HWND hwnd, INT idAni,
                                    const RECT* lprcFrom,
                                    const RECT* lprcTo )
 {
-    FIXME_(win)("(0x%x,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
+    FIXME_(win)("(%p,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
     return TRUE;
 }
 

@@ -169,7 +169,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
 
    if( lphc )
    {
-       TRACE("[%04x]: freeing storage\n", lphc->self);
+       TRACE("[%p]: freeing storage\n", lphc->self);
 
        if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox )
    	   DestroyWindow( lphc->hWndLBox );
@@ -1000,7 +1000,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
   hDC = (hParamDC) ? hParamDC
 		   : BeginPaint( lphc->self, &ps);
 
-  TRACE("hdc=%04x\n", hDC);
+  TRACE("hdc=%p\n", hDC);
 
   if( hDC && !(lphc->wState & CBF_NOREDRAW) )
   {
@@ -1150,7 +1150,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
    int nItems = 0;
    int nDroppedHeight;
 
-   TRACE("[%04x]: drop down\n", lphc->self);
+   TRACE("[%p]: drop down\n", lphc->self);
 
    CB_NOTIFY( lphc, CBN_DROPDOWN );
 
@@ -1244,7 +1244,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 {
    HWND	hWnd = lphc->self;
 
-   TRACE("[%04x]: sel ok? [%i] dropped? [%i]\n",
+   TRACE("[%p]: sel ok? [%i] dropped? [%i]\n",
 	 lphc->self, (INT)ok, (INT)(lphc->wState & CBF_DROPPED));
 
    CB_NOTIFY( lphc, (ok) ? CBN_SELENDOK : CBN_SELENDCANCEL );
@@ -1377,16 +1377,14 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
        {
 	   case (EN_SETFOCUS >> 8):
 
-		TRACE("[%04x]: edit [%04x] got focus\n",
-			     lphc->self, lphc->hWndEdit );
+               TRACE("[%p]: edit [%p] got focus\n", lphc->self, lphc->hWndEdit );
 
 		COMBO_SetFocus( lphc );
 	        break;
 
 	   case (EN_KILLFOCUS >> 8):
 
-		TRACE("[%04x]: edit [%04x] lost focus\n",
-			     lphc->self, lphc->hWndEdit );
+               TRACE("[%p]: edit [%p] lost focus\n", lphc->self, lphc->hWndEdit );
 
 		/* NOTE: it seems that Windows' edit control sends an
 		 * undocumented message WM_USER + 0x1B instead of this
@@ -1443,8 +1441,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 	   case LBN_SELCHANGE:
 	   case LBN_SELCANCEL:
 
-		TRACE("[%04x]: lbox selection change [%04x]\n",
-			     lphc->self, lphc->wState );
+               TRACE("[%p]: lbox selection change [%x]\n", lphc->self, lphc->wState );
 
 		if( HIWORD(wParam) == LBN_SELCHANGE)
 		{
@@ -1492,7 +1489,7 @@ static LRESULT COMBO_ItemOp( LPHEADCOMBO lphc, UINT msg, LPARAM lParam )
    HWND hWnd = lphc->self;
    UINT id = GetWindowLongA( hWnd, GWL_ID );
 
-   TRACE("[%04x]: ownerdraw op %04x\n", lphc->self, msg );
+   TRACE("[%p]: ownerdraw op %04x\n", lphc->self, msg );
 
    switch( msg )
    {
@@ -1911,7 +1908,7 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 {
       LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongA( hwnd, 0 );
 
-      TRACE("[%04x]: msg %s wp %08x lp %08lx\n",
+      TRACE("[%p]: msg %s wp %08x lp %08lx\n",
             hwnd, SPY_GetMsgName(message, hwnd), wParam, lParam );
 
       if( lphc || message == WM_NCCREATE )

@@ -175,7 +175,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
-        DPRINTF( "%08lx:Call window proc %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%08lx:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
     /* To avoid any deadlocks, all the locks on the windows structures
        must be suspended before the control is passed to the application */
@@ -184,7 +184,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     WIN_RestoreWndsLock(iWndsLocks);
 
     if (TRACE_ON(relay))
-        DPRINTF( "%08lx:Ret  window proc %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
+        DPRINTF( "%08lx:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam, retvalue );
     return retvalue;
 }
@@ -2573,7 +2573,7 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
     LRESULT result;
     int unmap;
 
-    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
 	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
@@ -2599,7 +2599,7 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
     LRESULT result;
     int unmap;
 
-    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
 	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
@@ -2661,7 +2661,7 @@ static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
     UINT16 msg16;
     MSGPARAM16 mp16;
 
-    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
 	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     mp16.lParam = lParam;
@@ -2686,7 +2686,7 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
     UINT16 msg16;
     MSGPARAM16 mp16;
 
-    TRACE_(msg)("func %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
 	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     mp16.lParam = lParam;

@@ -753,7 +753,7 @@ HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
  */
 INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
 {
-        sprintf(pwszKLID, "%08x",GetKeyboardLayout(0));
+        sprintf(pwszKLID, "%p",GetKeyboardLayout(0));
         return 1;
 }
 
@@ -844,7 +844,7 @@ INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
  */
 HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 {
-    TRACE_(keyboard)("(%d, %d)\n", hLayout, flags);
+    TRACE_(keyboard)("(%p, %d)\n", hLayout, flags);
     ERR_(keyboard)("Only default system keyboard layout supported. Call ignored.\n");
     return 0;
 }
@@ -875,7 +875,7 @@ INT WINAPI GetKeyboardLayoutList(INT nBuff,HKL *layouts)
  *		RegisterHotKey (USER32.@)
  */
 BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk) {
-	FIXME_(keyboard)("(0x%08x,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
+	FIXME_(keyboard)("(%p,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
 	return TRUE;
 }
 
@@ -883,7 +883,7 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk) {
  *		UnregisterHotKey (USER32.@)
  */
 BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
-	FIXME_(keyboard)("(0x%08x,%d): stub\n",hwnd,id);
+	FIXME_(keyboard)("(%p,%d): stub\n",hwnd,id);
 	return TRUE;
 }
 
@@ -1030,7 +1030,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     pos.x = 0;
     pos.y = 0;
 
-    TRACE("%lx, %lx, %x, %lx\n", ptme->cbSize, ptme->dwFlags, ptme->hwndTrack, ptme->dwHoverTime);
+    TRACE("%lx, %lx, %p, %lx\n", ptme->cbSize, ptme->dwFlags, ptme->hwndTrack, ptme->dwHoverTime);
 
     if (ptme->cbSize != sizeof(TRACKMOUSEEVENT)) {
         WARN("wrong TRACKMOUSEEVENT size from app\n");

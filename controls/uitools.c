@@ -580,8 +580,8 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
  */
 BOOL WINAPI DrawEdge( HDC hdc, LPRECT rc, UINT edge, UINT flags )
 {
-    TRACE("%04x %d,%d-%d,%d %04x %04x\n",
-	  hdc, rc->left, rc->top, rc->right, rc->bottom, edge, flags );
+    TRACE("%p %d,%d-%d,%d %04x %04x\n",
+          hdc, rc->left, rc->top, rc->right, rc->bottom, edge, flags );
 
     if(flags & BF_DIAGONAL)
       return UITOOLS95_DrawDiagEdge(hdc, rc, edge, flags);
@@ -1392,8 +1392,7 @@ BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
     case DFC_SCROLL:
       return UITOOLS95_DrawFrameScroll(hdc, rc, uState);
     default:
-      WARN("(%x,%p,%d,%x), bad type!\n",
-	   hdc,rc,uType,uState );
+      WARN("(%p,%p,%d,%x), bad type!\n", hdc,rc,uType,uState );
     }
     return FALSE;
 }

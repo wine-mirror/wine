@@ -178,7 +178,7 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
 BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex,
 				       LPVOID pvInfo, DWORD nLength )
 {
-    FIXME("(%x,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
+    FIXME("(%p,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
     return TRUE;
 }
 
@@ -187,7 +187,7 @@ BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex,
  */
 BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
 {
-    FIXME("(%x): stub\n",hDesktop);
+    FIXME("(%p): stub\n",hDesktop);
     return TRUE;
 }
 

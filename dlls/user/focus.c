@@ -218,7 +218,7 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
 {
     HWND prev;
 
-    TRACE( "%x\n", hwnd );
+    TRACE( "%p\n", hwnd );
 
     if (hwnd)
     {
@@ -243,7 +243,7 @@ HWND WINAPI SetFocus( HWND hwnd )
     HWND hwndTop = hwnd;
     HWND previous = GetFocus();
 
-    TRACE( "%x prev %x\n", hwnd, previous );
+    TRACE( "%p prev %p\n", hwnd, previous );
 
     if (hwnd)
     {
@@ -286,7 +286,7 @@ HWND WINAPI SetFocus( HWND hwnd )
  */
 BOOL WINAPI SetForegroundWindow( HWND hwnd )
 {
-    TRACE( "%x\n", hwnd );
+    TRACE( "%p\n", hwnd );
     if (hwnd) hwnd = WIN_GetFullHandle( hwnd );
     return set_foreground_window( hwnd, FALSE );
 }
