@@ -29,6 +29,8 @@ DEFAULT_DEBUG_CHANNEL(animate)
 
 #define ANIMATE_GetInfoPtr(hWnd) ((ANIMATE_INFO *)GetWindowLongA(hWnd, 0))
 
+HMODULE hModWinmm;
+
 static void ANIMATE_Notify(ANIMATE_INFO* infoPtr, UINT notif)
 {
     SendMessageA(GetParent(infoPtr->hWnd), WM_COMMAND, 
@@ -577,6 +579,8 @@ static LRESULT ANIMATE_Create(HWND hWnd, WPARAM wParam, LPARAM lParam)
     SetWindowLongA(hWnd, 0, (DWORD)infoPtr);
     infoPtr->hWnd = hWnd;
 
+    hModWinmm = LoadLibraryA("WINMM");
+
     InitializeCriticalSection(&infoPtr->cs);
     
     return 0;
@@ -594,6 +598,7 @@ static LRESULT ANIMATE_Destroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
     /* free animate info data */
     COMCTL32_Free(infoPtr);
 
+    FreeLibrary(hModWinmm);
     return 0;
 }
 
