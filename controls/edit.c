@@ -1736,7 +1736,7 @@ static void EDIT_SL_InvalidateText(HWND hwnd, EDITSTATE *es, INT start, INT end)
 
 	EDIT_GetLineRect(hwnd, es, 0, start, end, &line_rect);
 	if (IntersectRect(&rc, &line_rect, &es->format_rect))
-		EDIT_UpdateText(hwnd, es, &rc, FALSE);
+		EDIT_UpdateText(hwnd, es, &rc, TRUE);
 }
 
 
@@ -1779,25 +1779,25 @@ static void EDIT_ML_InvalidateText(HWND hwnd, EDITSTATE *es, INT start, INT end)
 	if (sl == el) {
 		EDIT_GetLineRect(hwnd, es, sl, sc, ec, &rcLine);
 		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			EDIT_UpdateText(hwnd, es, &rcUpdate, FALSE);
+			EDIT_UpdateText(hwnd, es, &rcUpdate, TRUE);
 	} else {
 		EDIT_GetLineRect(hwnd, es, sl, sc,
 				EDIT_EM_LineLength(es,
 					EDIT_EM_LineIndex(es, sl)),
 				&rcLine);
 		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			EDIT_UpdateText(hwnd, es, &rcUpdate, FALSE);
+			EDIT_UpdateText(hwnd, es, &rcUpdate, TRUE);
 		for (l = sl + 1 ; l < el ; l++) {
 			EDIT_GetLineRect(hwnd, es, l, 0,
 				EDIT_EM_LineLength(es,
 					EDIT_EM_LineIndex(es, l)),
 				&rcLine);
 			if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-				EDIT_UpdateText(hwnd, es, &rcUpdate, FALSE);
+				EDIT_UpdateText(hwnd, es, &rcUpdate, TRUE);
 		}
 		EDIT_GetLineRect(hwnd, es, el, 0, ec, &rcLine);
 		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			EDIT_UpdateText(hwnd, es, &rcUpdate, FALSE);
+			EDIT_UpdateText(hwnd, es, &rcUpdate, TRUE);
 	}
 }
 
