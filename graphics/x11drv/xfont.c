@@ -175,7 +175,6 @@ static const SuffixCharset sufch_koi8[] = {
     { "u", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
     { NULL, RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS }};
 
-/* FIXME: DBCS charsets need 2 or more fonts */
 static const SuffixCharset sufch_jisx0201[] = {
     { "0", X11FONT_JISX0201_CHARSET, 932, X11DRV_CPTABLE_SBCS },
     { NULL, X11FONT_JISX0201_CHARSET, 932, X11DRV_CPTABLE_SBCS }};
@@ -183,6 +182,10 @@ static const SuffixCharset sufch_jisx0201[] = {
 static const SuffixCharset sufch_jisx0208[] = {
     { "0", SHIFTJIS_CHARSET, 932, X11DRV_CPTABLE_CP932 },
     { NULL, SHIFTJIS_CHARSET, 932, X11DRV_CPTABLE_CP932 }};
+
+static const SuffixCharset sufch_jisx0212[] = {
+    { "0", X11FONT_JISX0212_CHARSET, 932, X11DRV_CPTABLE_CP932 },
+    { NULL, X11FONT_JISX0212_CHARSET, 932, X11DRV_CPTABLE_CP932 }};
 
 static const SuffixCharset sufch_ksc5601[] = {
     { "0", HANGEUL_CHARSET, 949, X11DRV_CPTABLE_CP949 },
@@ -235,12 +238,13 @@ static fontEncodingTemplate __fETTable[] = {
 			{ "jisc6226.1978",sufch_jisx0208,     &__fETTable[12]},
 			{ "jisx0208.1983",sufch_jisx0208,     &__fETTable[13]},
 			{ "jisx0208.1990",sufch_jisx0208,     &__fETTable[14]},
-			{ "ksc5601.1987", sufch_ksc5601,      &__fETTable[15]},
-			{ "gb2312.1980",  sufch_gb2312,       &__fETTable[16]},
-			{ "big5.et",      sufch_big5,         &__fETTable[17]},
-			{ "unicode",      sufch_unicode,      &__fETTable[18]},
-			{ "iso10646",     sufch_iso10646,     &__fETTable[19]},
-			{ "cp",           sufch_windows,      &__fETTable[20]},
+			{ "jisx0212.1990",sufch_jisx0212,     &__fETTable[15]},
+			{ "ksc5601.1987", sufch_ksc5601,      &__fETTable[16]},
+			{ "gb2312.1980",  sufch_gb2312,       &__fETTable[17]},
+			{ "big5.et",      sufch_big5,         &__fETTable[18]},
+			{ "unicode",      sufch_unicode,      &__fETTable[19]},
+			{ "iso10646",     sufch_iso10646,     &__fETTable[20]},
+			{ "cp",           sufch_windows,      &__fETTable[21]},
 			/* NULL prefix matches anything so put it last */
 			{   NULL,         sufch_any,          NULL },
 };
@@ -643,9 +647,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 
 /* charset registry, charset encoding - */
    lpstr = lfd->charset_registry;
-   if( strstr(lpstr, "jisx") ||
-       strstr(lpstr, "jisc") || 
-       strstr(lpstr, "ksc") || 
+   if( strstr(lpstr, "ksc") || 
        strstr(lpstr, "gb2312") ||
        strstr(lpstr, "big5") )
    {
