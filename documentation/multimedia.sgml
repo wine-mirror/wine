@@ -13,11 +13,6 @@
       video compression/decompression manager).
     </para>
 
-    <para>
-      Written by &name-eric-pouech; <email>&email-eric-pouech;</email>
-      (Last updated: 02/16/2001)
-    </para>
-
     <sect1 id="mm-overview">
       <title>Overview</title>
 
