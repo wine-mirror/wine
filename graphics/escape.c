@@ -14,7 +14,9 @@
 
 DEFAULT_DEBUG_CHANNEL(driver)
 
-
+/***********************************************************************
+ *            Escape16  [GDI.38]
+ */
 INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
                        SEGPTR lpszInData, SEGPTR lpvOutData )
 {
@@ -23,14 +25,15 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
     return dc->funcs->pEscape( dc, nEscape, cbInput, lpszInData, lpvOutData );
 }
 
+/************************************************************************
+ *             Escape  [GDI32.200]
+ */
 INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
-                       LPCSTR lpszInData, LPVOID lpvOutData )
+		   LPCSTR lpszInData, LPVOID lpvOutData )
 {
-    DC		*dc = DC_GetDCPtr( hdc );
     SEGPTR	segin,segout;
     INT	ret;
 
-    if (!dc || !dc->funcs->pEscape) return 0;
     segin	= (SEGPTR)lpszInData;
     segout	= (SEGPTR)lpvOutData;
     switch (nEscape) {
@@ -102,7 +105,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 
     }
 
-    ret = dc->funcs->pEscape( dc, nEscape, cbInput, segin, segout );
+    ret = Escape16( hdc, nEscape, cbInput, segin, segout );
 
     switch(nEscape) {
     case QUERYESCSUPPORT:
@@ -170,11 +173,22 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
  *    Failure: <0
  */
 INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, 
-                        LPCSTR lpszInData, INT cbOutput, LPSTR lpszOutData )
+		      LPCSTR lpszInData, INT cbOutput, LPSTR lpszOutData )
 {
-    FIXME("(0x%04x,0x%x,%d,%s,%d,%p):stub\n",
-          hdc,nEscape,cbInput,debugstr_a(lpszInData),cbOutput,lpszOutData);
-    return 0;
+    char *inBuf, *outBuf;
+    INT ret;
+
+    inBuf = SEGPTR_ALLOC(cbInput);
+    memcpy(inBuf, lpszInData, cbInput);
+    outBuf = cbOutput ? SEGPTR_ALLOC(cbOutput) : NULL;
+    ret = Escape16( hdc, nEscape, cbInput, SEGPTR_GET(inBuf),
+		    SEGPTR_GET(outBuf) );
+    SEGPTR_FREE(inBuf);
+    if(outBuf) {
+	memcpy(lpszOutData, outBuf, cbOutput);
+	SEGPTR_FREE(outBuf);
+    }
+    return ret;
 }
 
 /*******************************************************************
