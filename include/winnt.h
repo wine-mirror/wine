@@ -1356,6 +1356,10 @@ static DWORD __builtin_return_address(int p_iDepth)
 #define LOCALE_USER_DEFAULT	(MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT))
 #define LOCALE_NEUTRAL		(MAKELCID(MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),SORT_DEFAULT))
 
+#define UNREFERENCED_PARAMETER(u)	(u)
+#define DBG_UNREFERENCED_PARAMETER(u)	(u)
+#define DBG_UNREFERENCED_LOCAL_VARIABLE(u) (u)
+
 /* FIXME: are the symbolic names correct for LIDs:  0x17, 0x28,
  *	  0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x3a, 0x3b, 0x3c
  */
