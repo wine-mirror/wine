@@ -1873,6 +1873,7 @@ BOOL WINPOS_ActivateOtherWindow(WND* pWnd)
   {
       WND* pWndPtr = WIN_GetTopParentPtr(pWnd);
 
+      WIN_ReleaseWndPtr(pWndTo);
       pWndTo = WIN_FindWndPtr(hwndPrevActive);
 
       while( !WINPOS_CanActivate(pWndTo) ) 
