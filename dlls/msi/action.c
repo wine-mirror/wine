@@ -150,7 +150,8 @@ static UINT ACTION_FileCost(MSIPACKAGE *package);
 static UINT ACTION_InstallFiles(MSIPACKAGE *package);
 static UINT ACTION_DuplicateFiles(MSIPACKAGE *package);
 static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package);
-static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action);
+static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, 
+                                BOOL execute);
 static UINT ACTION_InstallInitialize(MSIPACKAGE *package);
 static UINT ACTION_InstallValidate(MSIPACKAGE *package);
 static UINT ACTION_ProcessComponents(MSIPACKAGE *package);
@@ -162,6 +163,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package);
 static UINT ACTION_WriteIniValues(MSIPACKAGE *package);
 static UINT ACTION_SelfRegModules(MSIPACKAGE *package);
 static UINT ACTION_PublishFeatures(MSIPACKAGE *package);
+static UINT ACTION_RegisterProduct(MSIPACKAGE *package);
+static UINT ACTION_InstallExecute(MSIPACKAGE *package);
+static UINT ACTION_InstallFinalize(MSIPACKAGE *package);
+static UINT ACTION_ForceReboot(MSIPACKAGE *package);
 
 static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
@@ -233,6 +238,16 @@ const static WCHAR szSelfRegModules[] =
 {'S','e','l','f','R','e','g','M','o','d','u','l','e','s',0};
 const static WCHAR szPublishFeatures[] = 
 {'P','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
+const static WCHAR szRegisterProduct[] = 
+{'R','e','g','i','s','t','e','r','P','r','o','d','u','c','t',0};
+const static WCHAR szInstallExecute[] = 
+{'I','n','s','t','a','l','l','E','x','e','c','u','t','e',0};
+const static WCHAR szInstallExecuteAgain[] = 
+{'I','n','s','t','a','l','l','E','x','e','c','u','t','e','A','g','a','i','n',0};
+const static WCHAR szInstallFinalize[] = 
+{'I','n','s','t','a','l','l','F','i','n','a','l','i','z','e',0};
+const static WCHAR szForceReboot[] = 
+{'F','o','r','c','e','R','e','b','o','o','t',0};
 
 /******************************************************** 
  * helper functions to get around current HACKS and such
@@ -474,6 +489,16 @@ extern void ACTION_free_package_structures( MSIPACKAGE* package)
 
     if (package->files && package->loaded_files > 0)
         HeapFree(GetProcessHeap(),0,package->files);
+
+    for (i = 0; i < package->DeferredActionCount; i++)
+        HeapFree(GetProcessHeap(),0,package->DeferredAction[i]);
+    HeapFree(GetProcessHeap(),0,package->DeferredAction);
+
+    for (i = 0; i < package->CommitActionCount; i++)
+        HeapFree(GetProcessHeap(),0,package->CommitAction[i]);
+    HeapFree(GetProcessHeap(),0,package->CommitAction);
+
+    HeapFree(GetProcessHeap(),0,package->PackagePath);
 }
 
 static UINT ACTION_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
@@ -783,6 +808,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     {
         LPWSTR p, check, path;
  
+        package->PackagePath = dupstrW(szPackagePath);
         path = dupstrW(szPackagePath);
         p = strrchrW(path,'\\');    
         if (p)
@@ -1240,15 +1266,23 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
         rc = ACTION_SelfRegModules(package);
     else if (strcmpW(action,szPublishFeatures)==0)
         rc = ACTION_PublishFeatures(package);
+    else if (strcmpW(action,szRegisterProduct)==0)
+        rc = ACTION_RegisterProduct(package);
+    else if (strcmpW(action,szInstallExecute)==0)
+        rc = ACTION_InstallExecute(package);
+    else if (strcmpW(action,szInstallExecuteAgain)==0)
+        rc = ACTION_InstallExecute(package);
+    else if (strcmpW(action,szInstallFinalize)==0)
+        rc = ACTION_InstallFinalize(package);
+    else if (strcmpW(action,szForceReboot)==0)
+        rc = ACTION_ForceReboot(package);
 
     /*
      Called during iTunes but unimplemented and seem important
 
      ResolveSource  (sets SourceDir)
-     RegisterProduct
-     InstallFinalize
      */
-     else if ((rc = ACTION_CustomAction(package,action)) != ERROR_SUCCESS)
+     else if ((rc = ACTION_CustomAction(package,action,FALSE)) != ERROR_SUCCESS)
      {
         FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
         rc = ERROR_FUNCTION_NOT_CALLED;
@@ -1259,7 +1293,8 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
 }
 
 
-static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action)
+static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, 
+                                BOOL execute)
 {
     UINT rc = ERROR_SUCCESS;
     MSIQUERY * view;
@@ -1300,6 +1335,73 @@ static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action)
 
     TRACE("Handling custom action %s (%x %s %s)\n",debugstr_w(action),type,
           debugstr_w(source), debugstr_w(target));
+
+    /* handle some of the deferred actions */
+    if (type & 0x400)
+    {
+        if (type & 0x100)
+        {
+            FIXME("Rollback only action... rollbacks not supported yet\n");
+            HeapFree(GetProcessHeap(),0,source);
+            HeapFree(GetProcessHeap(),0,target);
+            msiobj_release(&row->hdr);
+            MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
+            return ERROR_SUCCESS;
+        }
+        if (!execute)
+        {
+            LPWSTR *newbuf = NULL;
+            INT count;
+            if (type & 0x200)
+            {
+                TRACE("Deferring Commit Action!\n");
+                count = package->CommitActionCount;
+                package->CommitActionCount++;
+                if (count != 0)
+                    newbuf = HeapReAlloc(GetProcessHeap(),0,
+                        package->CommitAction,
+                        package->CommitActionCount * sizeof(LPWSTR));
+                else
+                    newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
+
+                newbuf[count] = dupstrW(action);
+                package->CommitAction = newbuf;
+            }
+            else
+            {
+                TRACE("Deferring Action!\n");
+                count = package->DeferredActionCount;
+                package->DeferredActionCount++;
+                if (count != 0)
+                    newbuf = HeapReAlloc(GetProcessHeap(),0,
+                        package->DeferredAction,
+                        package->DeferredActionCount * sizeof(LPWSTR));
+                else
+                    newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
+
+                newbuf[count] = dupstrW(action);
+                package->DeferredAction = newbuf;
+            }
+
+            HeapFree(GetProcessHeap(),0,source);
+            HeapFree(GetProcessHeap(),0,target);
+            msiobj_release(&row->hdr);
+            MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
+            return ERROR_SUCCESS;
+        }
+        else
+        {
+            /*Set ActionData*/
+
+            static const WCHAR szActionData[] = {
+            'C','u','s','t','o','m','A','c','t','i','o','n','D','a','t','a',0};
+            LPWSTR actiondata = load_dynamic_property(package,action,NULL);
+            if (actiondata)
+                MSI_SetPropertyW(package,szActionData,actiondata);
+        }
+    }
 
     /* we are ignoring ALOT of flags and important synchronization stuff */
     switch (type & CUSTOM_ACTION_TYPE_MASK)
@@ -1426,7 +1528,6 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, const LPWSTR source,
 }
 
 typedef UINT __stdcall CustomEntry(MSIHANDLE);
-typedef UINT __stdcall DllRegisterServer();
 
 typedef struct 
 {
@@ -3295,7 +3396,7 @@ inline static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key,
     {
         if (strcmpW(file_key,package->files[index].File)==0)
         {
-            if (package->files[index].State >= 3)
+            if (package->files[index].State >= 2)
             {
                 *file_source = dupstrW(package->files[index].TargetPath);
                 return ERROR_SUCCESS;
@@ -3385,7 +3486,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
             msiobj_release(&row->hdr);
             if (file_source)
                 HeapFree(GetProcessHeap(),0,file_source);
-            break;
+            continue;
         }
 
         if (MSI_RecordIsNull(row,4))
@@ -4970,7 +5071,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     LPWSTR productcode;
     WCHAR squished_pc[0x100];
     HKEY hkey=0,hkey2=0,hkey3=0;
-    HKEY hukey=0,hukey2=0,hukey3=0;
+    HKEY hukey=0,hukey2=0,hukey3=0,hukey4=0;
     static const WCHAR szProductCode[]=
          {'P','r','o','d','u','c','t','C','o','d','e',0};
     static const WCHAR szInstaller[] = {
@@ -4987,6 +5088,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
          'P','r','o','d','u','c','t','s',0};
     static const WCHAR szProductName[] = {
          'P','r','o','d','u','c','t','N','a','m','e',0};
+    static const WCHAR szSourceList[] = {
+         'S','o','u','r','c','e','L','i','s','t',0};
+    static const WCHAR szLUS[] = {
+         'L','a','s','t','U','s','e','d','S','o','u','r','c','e',0};
     LPWSTR buffer;
     DWORD size;
 
@@ -4995,14 +5100,14 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
+        goto next;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
     {
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
-        return rc;
+        goto next;
     }
 
     while (1)
@@ -5067,6 +5172,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
 
+next:
     /* ok there is alot more done here but i need to figure out what */
     productcode = load_dynamic_property(package,szProductCode,&rc);
     if (!productcode)
@@ -5102,7 +5208,16 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     size = strlenW(buffer)*sizeof(WCHAR);
     RegSetValueExW(hukey3,szProductName,0,REG_SZ, (LPSTR)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
- 
+    FIXME("Need to write more keys to the user registry\n");
+
+    FIXME("This may not be in the right place. I dont know when todo this\n");
+    RegCreateKeyW(hukey3, szSourceList, &hukey4);
+    buffer = load_dynamic_property(package,cszSourceDir,NULL);
+    size = strlenW(buffer)*sizeof(WCHAR);
+    RegSetValueExW(hukey4,szLUS,0,REG_SZ,(LPSTR)buffer,size);
+    HeapFree(GetProcessHeap(),0,buffer); 
+
+    RegCloseKey(hukey4);
 end:
 
     HeapFree(GetProcessHeap(),0,productcode);    
@@ -5114,7 +5229,6 @@ end:
     RegCloseKey(hukey);
 
     return rc;
-
 }
 
 static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
@@ -5269,6 +5383,14 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
     static const WCHAR ExecSeqQuery[] = {'S','e','l','e','c','t',' ','*',' ',
 'f','r','o','m',' ','S','e','l','f','R','e','g',0};
 
+    static const WCHAR ExeStr[] = {
+'r','e','g','s','v','r','3','2','.','e','x','e',' ','/','s',' ',0};
+    STARTUPINFOW si;
+    PROCESS_INFORMATION info;
+    BOOL brc;
+
+    memset(&si,0,sizeof(STARTUPINFOW));
+
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
     {
@@ -5288,8 +5410,7 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
     {
         LPWSTR filename;
         INT index;
-        HMODULE dll;
-        DllRegisterServer* regfunc;
+        DWORD len;
 
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -5310,20 +5431,22 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
         }
         HeapFree(GetProcessHeap(),0,filename);
 
-        dll = LoadLibraryW(package->files[index].TargetPath);
-        if (!dll)
-        {
-            ERR("Unable to load dll %s\n",
-                    debugstr_w(package->files[index].TargetPath));
-            msiobj_release(&row->hdr);
-            continue;
-        }
+        len = strlenW(ExeStr);
+        len += strlenW(package->files[index].TargetPath);
+        len +=2;
 
-        regfunc = (DllRegisterServer*)GetProcAddress(dll,"DllRegisterServer");
+        filename = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        strcpyW(filename,ExeStr);
+        strcatW(filename,package->files[index].TargetPath);
 
-        if (regfunc)
-            regfunc();
+        TRACE("Registering %s\n",debugstr_w(filename));
+        brc = CreateProcessW(NULL, filename, NULL, NULL, FALSE, 0, NULL,
+                  c_collen, &si, &info);
 
+        if (brc)
+            WaitForSingleObject(info.hProcess,INFINITE);
+ 
+        HeapFree(GetProcessHeap(),0,filename);
         msiobj_release(&row->hdr);
     }
     MSI_ViewClose(view);
@@ -5422,7 +5545,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             strcatW(data,package->features[i].Feature_Parent);
         }
 
-        size = (strlenW(data)+2)*sizeof(WCHAR);
+        size = (strlenW(data)+1)*sizeof(WCHAR);
         RegSetValueExW(hkey3,package->features[i].Feature,0,REG_SZ,
                        (LPSTR)data,size);
         HeapFree(GetProcessHeap(),0,data);
@@ -5441,6 +5564,250 @@ end:
     RegCloseKey(hkey);
     RegCloseKey(hukey);
     return rc;
+}
+
+static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
+{
+    static const WCHAR szKey[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'U','n','i','n','s','t','a','l','l',0 };
+    static const WCHAR szProductCode[]=
+         {'P','r','o','d','u','c','t','C','o','d','e',0};
+    HKEY hkey=0,hkey2=0;
+    LPWSTR buffer;
+    LPWSTR productcode;
+    UINT rc,i;
+    DWORD size;
+    static WCHAR szNONE[] = {0};
+    static const WCHAR szWindowsInstaler[] = 
+    {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
+    static const WCHAR szPropKeys[][80] = 
+    {
+{'A','R','P','A','U','T','H','O','R','I','Z','E','D','C','D','F','P','R','E','F','I','X',0},
+{'A','R','P','C','O','N','T','A','C','T'},
+{'A','R','P','C','O','M','M','E','N','T','S',0},
+{'P','r','o','d','u','c','t','N','a','m','e',0},
+{'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0},
+{'A','R','P','H','E','L','P','L','I','N','K',0},
+{'A','R','P','H','E','L','P','T','E','L','E','P','H','O','N','E',0},
+{'A','R','P','I','N','S','T','A','L','L','L','O','C','A','T','I','O','N',0},
+{'S','O','U','R','C','E','D','I','R',0},
+{'M','a','n','u','f','a','c','t','u','r','e','r',0},
+{'A','R','P','R','E','A','D','M','E',0},
+{'A','R','P','S','I','Z','E',0},
+{'A','R','P','U','R','L','I','N','F','O','A','B','O','U','T',0},
+{'A','R','P','U','R','L','U','P','D','A','T','E','I','N','F','O',0},
+{0},
+    };
+
+    static const WCHAR szRegKeys[][80] = 
+    {
+{'A','u','t','h','o','r','i','z','e','d','C','D','F','P','r','e','f','i','x',0},
+{'C','o','n','t','a','c','t',0},
+{'C','o','m','m','e','n','t','s',0},
+{'D','i','s','p','l','a','y','N','a','m','e',0},
+{'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0},
+{'H','e','l','p','L','i','n','k',0},
+{'H','e','l','p','T','e','l','e','p','h','o','n','e',0},
+{'I','n','s','t','a','l','l','L','o','c','a','t','i','o','n',0},
+{'I','n','s','t','a','l','l','S','o','u','r','c','e',0},
+{'P','u','b','l','i','s','h','e','r',0},
+{'R','e','a','d','m','e',0},
+{'S','i','z','e',0},
+{'U','R','L','I','n','f','o','A','b','o','u','t',0},
+{'U','R','L','U','p','d','a','t','e','I','n','f','o',0},
+{0},
+    };
+
+    static const WCHAR path[] = {
+    'C',':','\\','W','i','n','d','o','w','s','\\',
+    'I','n','s','t','a','l','l','e','r','\\'};
+    static const WCHAR fmt[] = {
+    'C',':','\\','W','i','n','d','o','w','s','\\',
+    'I','n','s','t','a','l','l','e','r','\\',
+    '%','x','.','m','s','i',0};
+    static const WCHAR szLocalPackage[]=
+         {'L','o','c','a','l','P','a','c','k','a','g','e',0};
+    WCHAR packagefile[MAX_PATH];
+    INT num,start;
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    productcode = load_dynamic_property(package,szProductCode,&rc);
+    if (!productcode)
+        return rc;
+
+    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szKey,&hkey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hkey,productcode,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    /* dump all the info i can grab */
+    FIXME("Flesh out more information \n");
+
+    i = 0;
+    while (szPropKeys[i][0]!=0)
+    {
+        buffer = load_dynamic_property(package,szPropKeys[i],&rc);
+        if (rc != ERROR_SUCCESS)
+            buffer = szNONE;
+        size = strlenW(buffer)*sizeof(WCHAR);
+        RegSetValueExW(hkey2,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
+        i++;
+    }
+
+    rc = 0x1;
+    size = sizeof(rc);
+    RegSetValueExW(hkey2,szWindowsInstaler,0,REG_DWORD,(LPSTR)&rc,size);
+    
+    /* copy the package locally */
+    num = GetTickCount() & 0xffff;
+    if (!num) 
+        num = 1;
+    start = num;
+    sprintfW(packagefile,fmt,num);
+    do 
+    {
+        HANDLE handle = CreateFileW(packagefile,GENERIC_WRITE, 0, NULL,
+                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(handle);
+            break;
+        }
+        if (GetLastError() != ERROR_FILE_EXISTS &&
+            GetLastError() != ERROR_SHARING_VIOLATION)
+            break;
+        if (!(++num & 0xffff)) num = 1;
+        sprintfW(packagefile,fmt,num);
+    } while (num != start);
+
+    create_full_pathW(path);
+    CopyFileW(package->PackagePath,packagefile,FALSE);
+    size = strlenW(packagefile)/sizeof(WCHAR);
+    RegSetValueExW(hkey2,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);
+    
+end:
+    HeapFree(GetProcessHeap(),0,productcode);
+    RegCloseKey(hkey);
+    RegCloseKey(hkey2);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_InstallExecute(MSIPACKAGE *package)
+{
+    int i;
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    for (i = 0; i < package->DeferredActionCount; i++)
+    {
+        LPWSTR action;
+        action = package->DeferredAction[i];
+        ui_actionstart(package, action);
+        TRACE("Executing Action (%s)\n",debugstr_w(action));
+        ACTION_CustomAction(package,action,TRUE);
+        HeapFree(GetProcessHeap(),0,package->DeferredAction[i]);
+    }
+    HeapFree(GetProcessHeap(),0,package->DeferredAction);
+
+    package->DeferredActionCount = 0;
+    package->DeferredAction = NULL;
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
+{
+    int i;
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    for (i = 0; i < package->CommitActionCount; i++)
+    {
+        LPWSTR action;
+        action = package->CommitAction[i];
+        ui_actionstart(package, action);
+        TRACE("Executing Commit Action (%s)\n",debugstr_w(action));
+        ACTION_CustomAction(package,action,TRUE);
+        HeapFree(GetProcessHeap(),0,package->CommitAction[i]);
+    }
+    HeapFree(GetProcessHeap(),0,package->CommitAction);
+
+    package->CommitActionCount = 0;
+    package->CommitAction = NULL;
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_ForceReboot(MSIPACKAGE *package)
+{
+    static const WCHAR RunOnce[] = {
+    'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'R','u','n','O','n','c','e'};
+    static const WCHAR InstallRunOnce[] = {
+    'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\',
+    'R','u','n','O','n','c','e','E','n','t','r','i','e','s'};
+
+    static const WCHAR msiexec_fmt[] = {
+    'C',':','\\','W','i','n','d','o','w','s','\\','S','y','s','t','e','m',
+    '\\','M','s','i','E','x','e','c','.','e','x','e',' ','/','@',' ',
+    '\"','%','s','\"',0};
+    static const WCHAR install_fmt[] = {
+    '/','I',' ','\"','%','s','\"',' ',
+    'A','F','T','E','R','R','E','B','O','O','T','=','1',' ',
+    'R','U','N','O','N','C','E','E','N','T','R','Y','=','\"','%','s','\"',0};
+    WCHAR buffer[256];
+    HKEY hkey;
+    LPWSTR productcode;
+    WCHAR  squished_pc[100];
+    INT rc;
+    DWORD size;
+    static const WCHAR szProductCode[]=
+         {'P','r','o','d','u','c','t','C','o','d','e',0};
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    productcode = load_dynamic_property(package,szProductCode,&rc);
+    if (!productcode)
+        return rc;
+
+    squash_guid(productcode,squished_pc);
+
+    RegCreateKeyW(HKEY_LOCAL_MACHINE,RunOnce,&hkey);
+    sprintfW(buffer,msiexec_fmt,squished_pc);
+
+    size = strlenW(buffer)*sizeof(WCHAR);
+    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPSTR)buffer,size);
+    RegCloseKey(hkey);
+
+    TRACE("Reboot command %s\n",debugstr_w(buffer));
+
+    RegCreateKeyW(HKEY_LOCAL_MACHINE,InstallRunOnce,&hkey);
+    sprintfW(buffer,install_fmt,productcode,squished_pc);
+    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPSTR)buffer,size);
+    RegCloseKey(hkey);
+
+    HeapFree(GetProcessHeap(),0,productcode);
+
+    ExitWindowsEx(EWX_REBOOT,0);
+    return -1;
 }
 
 /* Msi functions that seem appropriate here */

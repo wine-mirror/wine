@@ -196,6 +196,14 @@ typedef struct tagMSIPACKAGE
     UINT loaded_files;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
+
+    LPWSTR *DeferredAction;
+    UINT DeferredActionCount;
+
+    LPWSTR *CommitAction;
+    UINT CommitActionCount;
+
+    LPWSTR PackagePath;
 } MSIPACKAGE;
 
 #define MSIHANDLETYPE_ANY 0
