@@ -67,6 +67,7 @@ enum attr_type
     ATTR_IDEMPOTENT,
     ATTR_IIDIS,
     ATTR_IN,
+    ATTR_INPUTSYNC,
     ATTR_LENGTHIS,
     ATTR_LOCAL,
     ATTR_OBJECT,

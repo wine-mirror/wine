@@ -140,6 +140,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tIIDIS
 %token tIMPORT tIMPORTLIB
 %token tIN tINCLUDE tINLINE
+%token tINPUTSYNC
 %token tINT tINT64
 %token tINTERFACE
 %token tLENGTHIS tLIBRARY
@@ -331,6 +332,7 @@ attribute:
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
 	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
+	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }

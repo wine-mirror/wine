@@ -236,6 +236,7 @@ static struct keyword {
 	{"in",				tIN},
 	{"include",			tINCLUDE},
 	{"in_line",			tINLINE},
+	{"input_sync",			tINPUTSYNC},
 	{"int",				tINT},
 /* ... */
 	{"interface",			tINTERFACE},
