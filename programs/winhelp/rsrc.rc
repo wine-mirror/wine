@@ -23,6 +23,7 @@
 #include "winhelp.h"
 #include "winhelp_res.h"
 
+#include "Cs.rc"
 #include "Da.rc"
 #include "De.rc"
 #include "En.rc"

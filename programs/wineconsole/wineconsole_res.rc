@@ -24,6 +24,7 @@
 #include "commctrl.h"
 #include "wineconsole_res.h"
 
+#include "wineconsole_Cs.rc"
 #include "wineconsole_En.rc"
 #include "wineconsole_Fr.rc"
 #include "wineconsole_De.rc"

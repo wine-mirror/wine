@@ -19,6 +19,7 @@
 #include <windows.h>
 #include "resource.h"
 
+#include "Cs.rc"
 #include "De.rc"
 #include "En.rc"
 #include "Es.rc"
