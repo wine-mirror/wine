@@ -504,7 +504,7 @@ VOID DIALOG_FilePrint(VOID)
                 /* I don't know what's up with this TextOut command. This comes out
                 kind of mangled.
                 */
-                TextOut(hContext, border*2, border+szMetric.cy*0.5, szDocumentName, count);
+                TextOut(hContext, border*2, border+szMetric.cy/2, szDocumentName, count);
             }
             
             /* The starting point for the main text */
@@ -667,6 +667,29 @@ VOID DIALOG_EditWrap(VOID)
     Globals.bWrapLongLines = !Globals.bWrapLongLines;
     CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_WRAP,
         MF_BYCOMMAND | (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
+}
+
+VOID DIALOG_SelectFont(VOID)
+{
+    CHOOSEFONT cf;
+    LOGFONT lf=Globals.lfFont;
+
+    ZeroMemory( &cf, sizeof(cf) );
+    cf.lStructSize=sizeof(cf);
+    cf.hwndOwner=Globals.hMainWnd;
+    cf.lpLogFont=&lf;
+    cf.Flags=CF_SCREENFONTS;
+
+    if( ChooseFont(&cf) )
+    {
+        HFONT currfont=Globals.hFont;
+
+        Globals.hFont=CreateFontIndirect( &lf );
+        Globals.lfFont=lf;
+        SendMessage( Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)TRUE );
+        if( currfont!=NULL )
+            DeleteObject( currfont );
+    }
 }
 
 VOID DIALOG_Search(VOID)

@@ -24,14 +24,15 @@ MAIN_MENU MENU LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 {
  POPUP "&File" {
   MENUITEM "&New...",           CMD_NEW
-  MENUITEM "&Open",             CMD_OPEN
-  MENUITEM "&Save",             CMD_SAVE
+  MENUITEM "&Open\tCtrl+O",     CMD_OPEN
+  MENUITEM "&Save\tCtrl+S",     CMD_SAVE
   MENUITEM "Save &as...",       CMD_SAVE_AS
+  MENUITEM SEPARATOR
   MENUITEM "&Print",            CMD_PRINT
   MENUITEM "Page Se&tup...",    CMD_PAGE_SETUP
   MENUITEM "P&rinter Setup...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Exit",             CMD_EXIT
+  MENUITEM "E&xit",             CMD_EXIT
  }
 POPUP "&Edit" {
   MENUITEM "&Undo\tCtrl+Z",     CMD_UNDO
@@ -41,14 +42,16 @@ POPUP "&Edit" {
   MENUITEM "&Paste\tCtrl+V",    CMD_PASTE
   MENUITEM "&Delete\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Select &all",       CMD_SELECT_ALL
+  MENUITEM "Select &all\tCtrl+A",       CMD_SELECT_ALL
   MENUITEM "&Time/Date\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Wrap long lines",  CMD_WRAP
  }
 POPUP "&Search" {
-  MENUITEM "&Search",           CMD_SEARCH
+  MENUITEM "&Search\tCtrl+F",   CMD_SEARCH
   MENUITEM "&Search next\tF3",  CMD_SEARCH_NEXT
+ }
+POPUP "F&ormat" {
+  MENUITEM "&Wrap long lines",  CMD_WRAP
+  MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "&Help" {
   MENUITEM "&Contents",         CMD_HELP_CONTENTS
@@ -89,6 +92,16 @@ EDITTEXT /*STRING_PAGESETUP_BOTTOMVALUE,*/ 0x150,    130, 73, 35, 11, WS_CHILD |
 DEFPUSHBUTTON "OK",         0x151,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Cancel",     0x152,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Help",       0x153,                180, 39, 40, 15, WS_TABSTOP
+}
+
+ID_ACCEL ACCELERATORS LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+{
+    "^A",       CMD_SELECT_ALL
+    "^F",       CMD_SEARCH
+    "^O",       CMD_OPEN
+    "^S",       CMD_SAVE
+    VK_F3,      CMD_SEARCH_NEXT,  VIRTKEY
+    VK_F5,      CMD_TIME_DATE,  VIRTKEY
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT

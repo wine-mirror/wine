@@ -46,6 +46,8 @@ typedef struct
   HWND    hMainWnd;
   HWND    hFindReplaceDlg;
   HWND    hEdit;
+  HFONT   hFont; /* Font used by the edit control */
+  LOGFONT lfFont;
   HICON   hMainIcon;
   HICON   hDefaultIcon;
   LPCSTR  lpszIcoFile;

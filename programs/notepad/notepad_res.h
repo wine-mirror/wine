@@ -21,6 +21,7 @@
 
 #define MAIN_MENU               0x201
 #define DIALOG_PAGESETUP        0x202
+#define ID_ACCEL                0x203
 
 /* Commands */
 #define CMD_NEW                 0x100
@@ -39,10 +40,12 @@
 #define CMD_DELETE              0x114
 #define CMD_SELECT_ALL          0x116
 #define CMD_TIME_DATE           0x117
-#define CMD_WRAP                0x119
 
 #define CMD_SEARCH              0x120
 #define CMD_SEARCH_NEXT         0x121
+
+#define CMD_WRAP                0x119
+#define CMD_FONT                0x140
 
 #define CMD_HELP_CONTENTS       0x130
 #define CMD_HELP_SEARCH         0x131

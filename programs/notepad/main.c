@@ -72,10 +72,12 @@ int NOTEPAD_MenuCommand(WPARAM wParam)
     case CMD_DELETE:           DIALOG_EditDelete(); break;
     case CMD_SELECT_ALL:       DIALOG_EditSelectAll(); break;
     case CMD_TIME_DATE:        DIALOG_EditTimeDate();break;
-    case CMD_WRAP:             DIALOG_EditWrap(); break;
 
     case CMD_SEARCH:           DIALOG_Search(); break;
     case CMD_SEARCH_NEXT:      DIALOG_SearchNext(); break;
+                               
+    case CMD_WRAP:             DIALOG_EditWrap(); break;
+    case CMD_FONT:             DIALOG_SelectFont(); break;
 
     case CMD_HELP_CONTENTS:    DIALOG_HelpContents(); break;
     case CMD_HELP_SEARCH:      DIALOG_HelpSearch(); break;
@@ -118,23 +120,16 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
     {
         RECT rc;
         GetClientRect(hWnd, &rc);
-        if (LoadLibrary("RichEd32.dll"))
-        {
-            Globals.hEdit =
-                CreateWindow("RICHEDIT", "",
+        Globals.hEdit = CreateWindow("EDIT", "",
                              WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
                              ES_AUTOVSCROLL | ES_MULTILINE,
                              0, 0, rc.right, rc.bottom, hWnd,
                              NULL, Globals.hInstance, NULL);
-        } else {
-            ShowLastError();
-            return -1;
-        }
         break;
     }
 
     case WM_COMMAND:
-        NOTEPAD_MenuCommand(wParam);
+        NOTEPAD_MenuCommand(LOWORD(wParam));
         break;
 
     case WM_DESTROYCLIPBOARD:
@@ -273,6 +268,7 @@ void HandleCommandLine(LPSTR cmdline)
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG        msg;
+    HACCEL      hAccel;
     WNDCLASSEX class;
     char className[] = "NPClass";
     char winName[]   = "Notepad";
@@ -313,9 +309,22 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     HandleCommandLine(cmdline);
 
-    while (GetMessage(&msg, 0, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+    hAccel=LoadAccelerators( hInstance, MAKEINTRESOURCE(ID_ACCEL) );
+
+    if( hAccel!=NULL )
+    {
+        while( GetMessage(&msg, 0, 0, 0)) {
+            if( !TranslateAccelerator( Globals.hMainWnd, hAccel, &msg ) ) {
+                TranslateMessage( &msg );
+                DispatchMessage( &msg );
+            }
+        }
+    } else
+    {
+        while (GetMessage(&msg, 0, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
     return msg.wParam;
 }
