@@ -262,21 +262,6 @@ static DWORD WINAPI CALLBACK_CallUTProc( FARPROC16 proc, DWORD w1, DWORD w2 )
 }
 
 /**********************************************************************
- *	     CALLBACK_CallTaskRescheduleProc
- */
-static BOOL WINAPI CALLBACK_CallTaskRescheduleProc( void )
-{
-    BOOL pending;
-
-    SYSLEVEL_EnterWin16Lock();
-    pending = TASK_Reschedule();
-    SYSLEVEL_LeaveWin16Lock();
-
-    return pending;
-}
-
-
-/**********************************************************************
  *	     CALLBACK_WinelibTable
  *
  * The callbacks function table for Winelib
@@ -285,7 +270,6 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
 {
     CALLBACK_CallRegisterProc,        /* CallRegisterShortProc */
     CALLBACK_CallRegisterProc,        /* CallRegisterLongProc */
-    CALLBACK_CallTaskRescheduleProc,  /* CallTaskRescheduleProc */
     NULL,                             /* CallFrom16WndProc */
     CALLBACK_CallWndProc,             /* CallWndProc */
     CALLBACK_CallDriverProc,          /* CallDriverProc */

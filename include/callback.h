@@ -22,7 +22,6 @@ typedef struct
 {
     LONG (CALLBACK *CallRegisterShortProc)( CONTEXT *, INT );
     LONG (CALLBACK *CallRegisterLongProc)( CONTEXT *, INT );
-    BOOL (CALLBACK *CallTaskRescheduleProc)(void);
     VOID (CALLBACK *CallFrom16WndProc)(void);
     LRESULT (CALLBACK *CallWndProc)( WNDPROC16, HWND16, UINT16,
                                      WPARAM16, LPARAM );

@@ -140,13 +140,8 @@ static THUNK *firstThunk = NULL;
 static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
                                            UINT16 msg, WPARAM16 wParam,
                                            LPARAM lParam );
-static BOOL WINAPI THUNK_CallTaskReschedule(void);
 static BOOL WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
                                             LPVOID,LPDWORD );
-
-/* TASK_Reschedule() 16-bit entry point */
-static FARPROC16 TASK_RescheduleProc;
-
 static BOOL THUNK_ThunkletInit( void );
 
 extern void CallFrom16_p_long_wwwll(void);
@@ -156,7 +151,6 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
 {
     (void *)CallTo16_sreg_,                /* CallRegisterShortProc */
     (void *)CallTo16_lreg_,                /* CallRegisterLongProc */
-    THUNK_CallTaskReschedule,              /* CallTaskRescheduleProc */
     (void*)CallFrom16_p_long_wwwll,        /* CallFrom16WndProc */
     THUNK_CallWndProc16,                   /* CallWndProc */
     (void *)CallTo16_long_lwwll,           /* CallDriverProc */
@@ -192,8 +186,6 @@ BOOL THUNK_Init(void)
 {
     /* Set the window proc calling functions */
     Callbacks = &CALLBACK_EmulatorTable;
-    /* Get the 16-bit reschedule function pointer */
-    TASK_RescheduleProc = MODULE_GetWndProcEntry16( "TASK_Reschedule" );
     /* Initialize Thunklets */
     return THUNK_ThunkletInit();
 }
@@ -321,15 +313,6 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     WIN_RestoreWndsLock(iWndsLocks);
 
     return ret;
-}
-
-
-/***********************************************************************
- *           THUNK_CallTaskReschedule
- */
-static BOOL WINAPI THUNK_CallTaskReschedule(void)
-{
-    return CallTo16_word_(TASK_RescheduleProc);
 }
 
 
