@@ -2487,7 +2487,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         goto error;
     }
 
-    iovec = WS_ALLOC ( dwBufferCount * sizeof (struct iovec) );
+    iovec = HeapAlloc (GetProcessHeap(), 0, dwBufferCount * sizeof (struct iovec) );
 
     if ( !iovec )
     {

@@ -389,6 +389,8 @@ static void file_queue_async(struct object *obj, void *ptr, unsigned int status,
 
     if ( status == STATUS_PENDING )
     {
+        struct pollfd pfd;
+
         if ( !async )
             async = create_async ( obj, current, ptr );
         if ( !async )
@@ -397,6 +399,15 @@ static void file_queue_async(struct object *obj, void *ptr, unsigned int status,
         async->status = STATUS_PENDING;
         if ( !async->q )
             async_insert( q, async );
+
+        /* Check if the new pending request can be served immediately */
+        pfd.fd = obj->fd;
+        pfd.events = file_get_poll_events ( obj );
+        pfd.revents = 0;
+        poll ( &pfd, 1, 0 );
+
+        if ( pfd.revents )
+            file_poll_event ( obj, pfd.revents );
     }
     else if ( async ) destroy_async ( async );
     else set_error ( STATUS_INVALID_PARAMETER );

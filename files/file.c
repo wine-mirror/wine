@@ -1562,11 +1562,6 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         WARN ( "Couldn't get FD\n" );
         return FALSE;
     }
-    if ( ! (flags & FD_FLAG_OVERLAPPED) ) {
-        WARN ( "fd is not overlapped\n" );
-        SetLastError ( ERROR_INVALID_PARAMETER );
-        goto error;
-    }
 
     ovp = (async_fileio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_fileio));
     if(!ovp)
@@ -1789,11 +1784,6 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     {
         TRACE( "Couldn't get FD\n" );
         return FALSE;
-    }
-    if ( ! (flags & FD_FLAG_OVERLAPPED) ) {
-        WARN ( "fd is not overlapped\n" );
-        SetLastError ( ERROR_INVALID_PARAMETER );
-        goto error;
     }
 
     ovp = (async_fileio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_fileio));

@@ -21,6 +21,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -282,6 +283,8 @@ static void serial_queue_async(struct object *obj, void *ptr, unsigned int statu
 
     if ( status == STATUS_PENDING )
     {
+        struct pollfd pfd;
+
         if ( !async )
             async = create_async ( obj, current, ptr );
         if ( !async )
@@ -293,6 +296,19 @@ static void serial_queue_async(struct object *obj, void *ptr, unsigned int statu
             async_add_timeout(async,timeout);
             async_insert(q, async);
         }
+
+        /* Check if the new pending request can be served immediately */
+        pfd.fd = obj->fd;
+        pfd.events = serial_get_poll_events ( obj );
+        pfd.revents = 0;
+        poll ( &pfd, 1, 0 );
+
+        if ( pfd.revents )
+            /* serial_poll_event() calls set_select_events() */
+            serial_poll_event ( obj, pfd.revents );
+        else
+            set_select_events ( obj, pfd.events );
+        return;
     }
     else if ( async ) destroy_async ( async );
     else set_error ( STATUS_INVALID_PARAMETER );

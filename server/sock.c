@@ -250,7 +250,6 @@ static void sock_poll_event( struct object *obj, int event )
             sock->errors[FD_CONNECT_BIT] = sock_error( sock->obj.fd );
             if (debug_level)
                 fprintf(stderr, "socket %d connection failure\n", sock->obj.fd);
-            set_select_events( &sock->obj, -1 );
         }
     } else
     if (sock->state & FD_WINE_LISTENING)
@@ -269,7 +268,6 @@ static void sock_poll_event( struct object *obj, int event )
             sock->pmask |= FD_ACCEPT;
             sock->errors[FD_ACCEPT_BIT] = sock_error( sock->obj.fd );
             sock->hmask |= FD_ACCEPT;
-            set_select_events( &sock->obj, -1 );
         }
     } else
     {
@@ -335,11 +333,17 @@ static void sock_poll_event( struct object *obj, int event )
             if (debug_level)
                 fprintf(stderr, "socket %d aborted by error %d, event: %x - removing from select loop\n",
                         sock->obj.fd, sock->errors[FD_CLOSE_BIT], event);
-            set_select_events( &sock->obj, -1 );
         }
     }
 
-    sock_reselect( sock );
+    if ( sock->pmask & FD_CLOSE || event & (POLLERR|POLLHUP) )
+    {
+        if ( debug_level )
+            fprintf ( stderr, "removing socket %d from select loop\n", sock->obj.fd );
+        set_select_events( &sock->obj, -1 );
+    }
+    else
+        sock_reselect( sock );
 
     /* wake up anyone waiting for whatever just happened */
     if ( sock->pmask & sock->mask || sock->flags & FD_FLAG_OVERLAPPED ) sock_wake_up( sock, event );
