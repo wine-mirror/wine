@@ -1058,28 +1058,24 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     char *p;
     DWORD ret;
     
-    /* last possible position for a char != 0 */
-    char *endchar = buffer + sizeof(buffer) - 2;
-    *endchar = '\0';
+    /* Address of the last byte in the buffer */
+    char *endbuf = buffer + sizeof(buffer) - 1;
     
     TRACE("converting '%s'\n", name );
 
     if (!name || ((drive = DOSFS_GetPathDrive( &name )) == -1) )
-    {   SetLastError( ERROR_INVALID_PARAMETER );
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
     p = buffer;
     *p++ = 'A' + drive;
     *p++ = ':';
-    if (IS_END_OF_NAME(*name) && (*name))  /* Absolute path */
+    *p++ = '\\';
+    if ((*name!='/') && (*name!='\\'))
     {
-        while (((*name == '\\') || (*name == '/')) && (!*endchar) )
-	    *p++ = *name++;
-    }
-    else  /* Relative path or empty path */
-    {
-        *p++ = '\\';
+        /* Relative path or empty path */
         lstrcpynA( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 4 );
         if ( *p )
         {
@@ -1087,41 +1083,47 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	    *p++ = '\\';
         }
     }
-    *p = '\0';
 
     while (*name)
     {
+        while ((*name == '\\') || (*name == '/'))
+	    name++;
         if (*name == '.')
         {
             if (IS_END_OF_NAME(name[1]))
             {
                 name++;
-                while ((*name == '\\') || (*name == '/')) name++;
                 continue;
             }
             else if ((name[1] == '.') && IS_END_OF_NAME(name[2]))
             {
-                name += 2;
-                while ((*name == '\\') || (*name == '/')) name++;
-
-		if (p < buffer + 3) /* no previous dir component */
-		    continue;
-		p--; /* skip previously added '\\' */
-		while ((*p == '\\') || (*p == '/')) p--;
+		if (p == buffer + 3) {
+                    /* no previous dir component */
+                    SetLastError( ERROR_PATH_NOT_FOUND );
+                    return 0;
+                }
+                /* skip previously added '\\' */
+		p-=2;
 		/* skip previous dir component */
-                while ((*p != '\\') && (*p != '/')) p--;
+                while (*p != '\\')
+                    p--;
                 p++;
+
+                name += 2;
                 continue;
             }
         }
-        if ( *endchar )
-        {   SetLastError( ERROR_PATH_NOT_FOUND );
+        while (!IS_END_OF_NAME(*name) && (p<endbuf) )
+            *p++ = *name++;
+        if ((p<endbuf) && ((*name == '\\') || (*name == '/'))) {
+            *p++='\\';
+            name++;
+        }
+        if ( p==endbuf && *name )
+        {
+            SetLastError( ERROR_PATH_NOT_FOUND );
             return 0;
         }
-        while (!IS_END_OF_NAME(*name) && (!*endchar) )
-            *p++ = *name++;
-        while (((*name == '\\') || (*name == '/')) && (!*endchar) )
-	    *p++ = *name++;
     }
     *p = '\0';
 
