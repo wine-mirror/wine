@@ -711,11 +711,11 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
                mesg=WM_COMMAND;  
             }
           }
-          if ( mesg==WM_COMMAND || mesg==WM_SYSCOMMAND )
-          {
-              TRACE_(accel)(", sending %s, wParam=%0x\n",
-                  mesg==WM_COMMAND ? "WM_COMMAND" : "WM_SYSCOMMAND",
-                  cmd);
+          if( mesg==WM_COMMAND ) {
+              TRACE_(accel)(", sending WM_COMMAND, wParam=%0x\n", 0x10000 | cmd);
+	      SendMessageA(hWnd, mesg, 0x10000 | cmd, 0L);
+	  } else if( mesg==WM_SYSCOMMAND ) {
+              TRACE_(accel)(", sending WM_SYSCOMMAND, wParam=%0x\n", cmd);
 	      SendMessageA(hWnd, mesg, cmd, 0x00010000L);
 	  }
 	  else
