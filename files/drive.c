@@ -1114,7 +1114,7 @@ UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
 
     for (drive = count = 0; drive < MAX_DOS_DRIVES; drive++)
         if (DRIVE_IsValid(drive)) count++;
-    if (count * 4 * sizeof(char) <= len)
+    if ((count * 4) + 1 <= len)
     {
         LPSTR p = buffer;
         for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
@@ -1126,8 +1126,11 @@ UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
                 *p++ = '\0';
             }
         *p = '\0';
+       return count * 4;
     }
-    return count * 4 * sizeof(char);
+    else
+      return (count * 4) + 1;/* account for terminating null */
+    /* The API tells about these different return values */
 }
 
 
