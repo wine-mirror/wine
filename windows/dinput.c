@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <assert.h>
 #ifdef HAVE_SYS_SIGNAL_H
@@ -76,19 +77,24 @@ struct SysMouseAImpl
         ICOM_VTABLE(IDirectInputDevice2A)* lpvtbl;
         DWORD                           ref;
         GUID                            guid;
+
+	LPDIDATAFORMAT			df;
         /* SysMouseAImpl */
         BYTE                            absolute;
         /* Previous position for relative moves */
-        LONG prevX, prevY;
-        LPMOUSE_EVENT_PROC prev_handler;
-        HWND win;
-        DWORD win_centerX, win_centerY;
-        LPDIDEVICEOBJECTDATA data_queue;
-        int queue_pos, queue_len;
-        int need_warp;
-        int acquired;
-        HANDLE hEvent;
+        LONG				prevX, prevY;
+        LPMOUSE_EVENT_PROC		prev_handler;
+        HWND				win;
+        DWORD				win_centerX, win_centerY;
+        LPDIDEVICEOBJECTDATA 		data_queue;
+        int				queue_pos, queue_len;
+        int				need_warp;
+        int				acquired;
+        HANDLE				hEvent;
+	CRITICAL_SECTION		crit;
 };
+
+static int evsequence=0;
 
 
 /* UIDs for Wine "drivers".
@@ -161,43 +167,39 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	LPVOID pvRef, DWORD dwFlags
 )
 {
-  ICOM_THIS(IDirectInputAImpl,iface);
-  DIDEVICEINSTANCEA devInstance;
-  int ret;
+	ICOM_THIS(IDirectInputAImpl,iface);
+	DIDEVICEINSTANCEA devInstance;
+	int ret;
 
-  TRACE("(this=%p,0x%04lx,%p,%p,%04lx)\n", This, dwDevType, lpCallback, pvRef, dwFlags);
+	TRACE("(this=%p,0x%04lx,%p,%p,%04lx)\n", This, dwDevType, lpCallback, pvRef, dwFlags);
 
-  devInstance.dwSize = sizeof(DIDEVICEINSTANCEA);
-  
-  if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
-  /* Return keyboard */
-    devInstance.guidInstance = GUID_SysKeyboard;         /* DInput's GUID */
-    devInstance.guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
-    devInstance.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
-  strcpy(devInstance.tszInstanceName, "Keyboard");
-  strcpy(devInstance.tszProductName, "Wine Keyboard");
-  
-  ret = lpCallback(&devInstance, pvRef);
-    TRACE("Keyboard registered\n");
-  
-    if (ret == DIENUM_STOP)
-    return 0;
-  }
-  
-  if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
-  /* Return mouse */
-    devInstance.guidInstance = GUID_SysMouse;         /* DInput's GUID */
-    devInstance.guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
-    devInstance.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_UNKNOWN << 8);
-  strcpy(devInstance.tszInstanceName, "Mouse");
-  strcpy(devInstance.tszProductName, "Wine Mouse");
-  
-  ret = lpCallback(&devInstance, pvRef);
-    TRACE("Mouse registered\n");
-  }
+	devInstance.dwSize = sizeof(DIDEVICEINSTANCEA);
+	if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
+		/* Return keyboard */
+		devInstance.guidInstance = GUID_SysKeyboard;/* DInput's GUID */
+		devInstance.guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
+		devInstance.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
+		strcpy(devInstance.tszInstanceName, "Keyboard");
+		strcpy(devInstance.tszProductName, "Wine Keyboard");
 
-  /* Should also do joystick enumerations.... */
+		ret = lpCallback(&devInstance, pvRef);
+		TRACE("Keyboard registered\n");
+		if (ret == DIENUM_STOP)
+			return 0;
+	}
   
+	if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_MOUSE)) {
+		/* Return mouse */
+		devInstance.guidInstance = GUID_SysMouse;/* DInput's GUID */
+		devInstance.guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
+		devInstance.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_UNKNOWN << 8);
+		strcpy(devInstance.tszInstanceName, "Mouse");
+		strcpy(devInstance.tszProductName, "Wine Mouse");
+
+		ret = lpCallback(&devInstance, pvRef);
+		TRACE("Mouse registered\n");
+	}
+	/* Should also do joystick enumerations.... */
 	return 0;
 }
 
@@ -239,10 +241,12 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	}
 	if ((!memcmp(&GUID_SysMouse,rguid,sizeof(GUID_SysMouse))) ||             /* Generic Mouse */
 	    (!memcmp(&DInput_Wine_Mouse_GUID,rguid,sizeof(GUID_SysMouse)))) { /* Wine Mouse */
-                SysKeyboardAImpl* newDevice;
+                SysMouseAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseAImpl));
 		newDevice->ref = 1;
 		newDevice->lpvtbl = &SysMouseAvt;
+		InitializeCriticalSection(&(newDevice->crit));
+		MakeCriticalSectionGlobal(&(newDevice->crit));
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
                 *pdev=(IDirectInputDeviceA*)newDevice;
 		return DI_OK;
@@ -414,12 +418,19 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 )
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
+	HRESULT	ret;
+	int	i;
 
 	TRACE("(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
 	      This,dodsize,dod,entries,entries?*entries:0,flags);
 
-	return KEYBOARD_Driver->pGetDIData(
+	ret=KEYBOARD_Driver->pGetDIData(
 		This->keystate, dodsize, dod, entries, flags)?DI_OK:E_FAIL;
+	for (i=0;i<*entries;i++) {
+		dod[i].dwTimeStamp = time(NULL);
+		dod[i].dwSequence = evsequence++;
+	}
+	return ret;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
@@ -652,6 +663,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE2A iface)
 	   mouse device) */
 	if (This->prev_handler != NULL)
 	  MOUSE_Enable(This->prev_handler);
+	DeleteCriticalSection(&(This->crit));
 	
 	HeapFree(GetProcessHeap(),0,This);
 	return 0;
@@ -733,29 +745,31 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
   else
     ERR("Neither absolute nor relative flag set.");
   
+  This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize+(df->dwNumObjs*df->dwObjSize));
+  memcpy(This->df,df,df->dwSize+(df->dwNumObjs*df->dwObjSize));
   return 0;
 }
 
+#define GEN_EVENT(offset,data,xtime,seq)			\
+{								\
+  if (This->queue_pos < This->queue_len) {			\
+    This->data_queue[This->queue_pos].dwOfs = offset;		\
+    This->data_queue[This->queue_pos].dwData = data;		\
+    This->data_queue[This->queue_pos].dwTimeStamp = xtime;	\
+    This->data_queue[This->queue_pos].dwSequence = seq;		\
+    This->queue_pos++;						\
+  }								\
+}
 
-
-#define GEN_EVENT(offset,data,time,seq)						\
-{										\
-  if (This->queue_pos < This->queue_len) {					\
-    This->data_queue[This->queue_pos].dwOfs = offset;				\
-    This->data_queue[This->queue_pos].dwData = data;				\
-    This->data_queue[This->queue_pos].dwTimeStamp = time;			\
-    This->data_queue[This->queue_pos].dwSequence = seq;			\
-    This->queue_pos++;								\
-  }										\
-  }
   
 /* Our private mouse event handler */
 static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 				      DWORD cButtons, DWORD dwExtraInfo )
 {
-  DWORD posX, posY, keyState, time, extra;
+  DWORD posX, posY, keyState, xtime, extra;
   SysMouseAImpl* This = (SysMouseAImpl*) current_lock;
   
+  EnterCriticalSection(&(This->crit));
   /* Mouse moved -> send event if asked */
   if (This->hEvent)
     SetEvent(This->hEvent);
@@ -764,7 +778,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
       && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC ) {
     WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
     keyState = wme->keyState;
-    time = wme->time;
+    xtime = wme->time;
     extra = (DWORD)wme->hWnd;
     
     assert( dwFlags & MOUSEEVENTF_ABSOLUTE );
@@ -772,6 +786,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
   } else {
     ERR("Mouse event not supported...\n");
+    LeaveCriticalSection(&(This->crit));
     return ;
   }
 
@@ -780,26 +795,26 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
   if ( dwFlags & MOUSEEVENTF_MOVE ) {
     if (This->absolute) {
       if (posX != This->prevX)
-	GEN_EVENT(DIMOFS_X, posX, time, 0);
+	GEN_EVENT(DIMOFS_X, posX, xtime, 0);
       if (posY != This->prevY)
-	GEN_EVENT(DIMOFS_Y, posY, time, 0);
+	GEN_EVENT(DIMOFS_Y, posY, xtime, 0);
     } else {
       /* Relative mouse input : the real fun starts here... */
       if (This->need_warp) {
 	if (posX != This->prevX)
-	  GEN_EVENT(DIMOFS_X, posX - This->prevX, time, 0);
+	  GEN_EVENT(DIMOFS_X, posX - This->prevX, xtime, evsequence++);
 	if (posY != This->prevY)
-	  GEN_EVENT(DIMOFS_Y, posY - This->prevY, time, 0);
+	  GEN_EVENT(DIMOFS_Y, posY - This->prevY, xtime, evsequence++);
       } else {
 	/* This is the first time the event handler has been called after a
 	   GetData of GetState. */
 	if (posX != This->win_centerX) {
-	  GEN_EVENT(DIMOFS_X, posX - This->win_centerX, time, 0);
+	  GEN_EVENT(DIMOFS_X, posX - This->win_centerX, xtime, evsequence++);
 	  This->need_warp = 1;
 	}
 	  
 	if (posY != This->win_centerY) {
-	  GEN_EVENT(DIMOFS_Y, posY - This->win_centerY, time, 0);
+	  GEN_EVENT(DIMOFS_Y, posY - This->win_centerY, xtime, evsequence++);
 	  This->need_warp = 1;
 	}
       }
@@ -809,43 +824,44 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     if (TRACE_ON(dinput))
       DPRINTF(" LD ");
 
-    GEN_EVENT(DIMOFS_BUTTON0, 0xFF, time, 0);
+    GEN_EVENT(DIMOFS_BUTTON0, 0xFF, xtime, evsequence++);
   }
   if ( dwFlags & MOUSEEVENTF_LEFTUP ) {
     if (TRACE_ON(dinput))
       DPRINTF(" LU ");
 
-    GEN_EVENT(DIMOFS_BUTTON0, 0x00, time, 0);
+    GEN_EVENT(DIMOFS_BUTTON0, 0x00, xtime, evsequence++);
   }
   if ( dwFlags & MOUSEEVENTF_RIGHTDOWN ) {
     if (TRACE_ON(dinput))
       DPRINTF(" RD ");
 
-    GEN_EVENT(DIMOFS_BUTTON1, 0xFF, time, 0);
+    GEN_EVENT(DIMOFS_BUTTON1, 0xFF, xtime, evsequence++);
   }
   if ( dwFlags & MOUSEEVENTF_RIGHTUP ) {
     if (TRACE_ON(dinput))
       DPRINTF(" RU ");
 
-    GEN_EVENT(DIMOFS_BUTTON1, 0x00, time, 0);
+    GEN_EVENT(DIMOFS_BUTTON1, 0x00, xtime, evsequence++);
   }
   if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN ) {
     if (TRACE_ON(dinput))
       DPRINTF(" MD ");
 
-    GEN_EVENT(DIMOFS_BUTTON2, 0xFF, time, 0);
+    GEN_EVENT(DIMOFS_BUTTON2, 0xFF, xtime, evsequence++);
   }
   if ( dwFlags & MOUSEEVENTF_MIDDLEUP ) {
     if (TRACE_ON(dinput))
       DPRINTF(" MU ");
 
-    GEN_EVENT(DIMOFS_BUTTON2, 0x00, time, 0);
+    GEN_EVENT(DIMOFS_BUTTON2, 0x00, xtime, evsequence++);
   }
   if (TRACE_ON(dinput))
     DPRINTF("\n");
 
   This->prevX = posX;
   This->prevY = posY;
+  LeaveCriticalSection(&(This->crit));
 }
 
 
@@ -983,11 +999,11 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
 ) {
   ICOM_THIS(SysMouseAImpl,iface);
   
-  TRACE("(%p)->(%ld,%p,%p(0x%08lx),0x%08lx)\n",
-	This,dodsize,dod,entries,*entries,flags);
+  EnterCriticalSection(&(This->crit));
+  TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
 
   if (flags & DIGDD_PEEK)
-    TRACE("DIGDD_PEEK\n");
+    FIXME("DIGDD_PEEK\n");
 
   if (dod == NULL) {
     *entries = This->queue_pos;
@@ -1000,18 +1016,23 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     }
     if (dodsize != sizeof(DIDEVICEOBJECTDATA)) {
       ERR("Wrong structure size !\n");
+      LeaveCriticalSection(&(This->crit));
       return DIERR_INVALIDPARAM;
     }
 
-    TRACE("Application retrieving %d event(s).\n", This->queue_pos); 
+    if (This->queue_pos)
+    	TRACE("Application retrieving %d event(s).\n", This->queue_pos); 
     
     /* Copy the buffered data into the application queue */
     memcpy(dod, This->data_queue, This->queue_pos * dodsize);
-    
+    *entries = This->queue_pos;
+
     /* Reset the event queue */
     This->queue_pos = 0;
   }
+  LeaveCriticalSection(&(This->crit));
   
+#if 0 /* FIXME: seems to create motion events, which fire back at us. */
   /* Check if we need to do a mouse warping */
   if (This->need_warp) {
     POINT point;
@@ -1020,11 +1041,12 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     point.x = This->win_centerX;
     point.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
+
     DISPLAY_MoveCursor(point.x, point.y);
 
     This->need_warp = 0;
   }
-  
+#endif
   return 0;
 }
 
@@ -1059,7 +1081,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
       break;
     }
     default:
-      WARN("Unknown type %ld\n",(DWORD)rguid);
+      FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,xbuf);
       break;
     }
   }
