@@ -1808,6 +1808,8 @@ static const WCHAR WC_PAGESCROLLERW[] = { 'S','y','s','P','a','g','e','r',0 };
 #define PGN_SCROLL              (PGN_FIRST-1)
 #define PGN_CALCSIZE            (PGN_FIRST-2)
 
+#include "pshpack1.h"
+
 typedef struct
 {
     NMHDR hdr;
@@ -1818,6 +1820,8 @@ typedef struct
     INT  iYpos;
     INT  iScroll;
 } NMPGSCROLL, *LPNMPGSCROLL;
+
+#include "poppack.h"
 
 typedef struct
 {
