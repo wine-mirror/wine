@@ -599,7 +599,7 @@
 @ stdcall UnregisterHotKey(long long)
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long)
-@ stdcall UserClientDllInitialize(long long ptr)
+@ stdcall UserClientDllInitialize(long long ptr) DllMain
 # @ stub UserIsSystemResumeAutomatic
 # @ stub UserSetDeviceHoldState
 @ stub UserHandleGrantAccess
