@@ -792,6 +792,16 @@ HRESULT WINAPI SHFreeUnusedLibraries (void)
 	return TRUE;
 }
 /*************************************************************************
+ * DAD_SetDragImage				[SHELL32.136]
+ *
+ * NOTES
+ *  exported by name
+ */
+HRESULT WINAPI DAD_SetDragImage (DWORD u, DWORD v)
+{ FIXME("0x%08lx 0x%08lx stub\n",u, v);
+  return 0;
+}
+/*************************************************************************
  * DAD_ShowDragImage				[SHELL32.137]
  *
  * NOTES
@@ -1286,4 +1296,13 @@ HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
 	if (VERSION_OsIsUnicode())
 	  return DoEnvironmentSubstW(x, y);
 	return DoEnvironmentSubstA(x, y);
+}
+
+/*************************************************************************
+ * PathCleanupSpec				[SHELL32.171]
+ *
+ */
+BOOL WINAPI PathCleanupSpec(LPSTR x, LPSTR y)
+{	FIXME("%p(%s) %p(%s) stub\n",x,debugstr_w(x),y,debugstr_w(y));
+	return TRUE;
 }

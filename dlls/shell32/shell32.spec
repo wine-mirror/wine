@@ -141,7 +141,7 @@ init	Shell32LibMain
  133 stdcall DragQueryFileW(long long ptr long) DragQueryFileW
  134 stub DAD_DragMove
  135 stdcall DragQueryPoint(long ptr) DragQueryPoint
- 136 stub DAD_SetDragImage
+ 136 stdcall DAD_SetDragImage(long long) DAD_SetDragImage
  137 stdcall DAD_ShowDragImage (long) DAD_ShowDragImage
  138 stub DuplicateIcon   # exported by name
  139 stub Desktop_UpdateBriefcaseOnEvent
@@ -176,7 +176,7 @@ init	Shell32LibMain
  168 stub SHCreatePropSheetExtArray
  169 stub SHDestroyPropSheetExtArray
  170 stub SHReplaceFromPropSheetExtArray
- 171 stub PathCleanupSpec
+ 171 stdcall PathCleanupSpec(ptr ptr) PathCleanupSpec
  172 stub SHCreateLinks
  173 stdcall SHValidateUNC(long long long)SHValidateUNC
  174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx
