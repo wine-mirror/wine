@@ -18,18 +18,22 @@
 #define RPC_FC_FLOAT			0x0a
 #define RPC_FC_HYPER			0x0b
 #define RPC_FC_DOUBLE			0x0c
-
+#define RPC_FC_ENUM16			0x0d
 #define RPC_FC_ENUM32			0x0e
 
+#define RPC_FC_ERROR_STATUS_T		0x10
+
 /* other stuff */
-#define RPC_FC_RP			0x11 /* ? */
+#define RPC_FC_RP			0x11 /* reference pointer */
 #define RPC_FC_UP			0x12 /* unique pointer */
-#define RPC_FC_OP			0x13 /* ? */
+#define RPC_FC_OP			0x13 /* unique pointer in object ? */
 #define RPC_FC_FP			0x14 /* full pointer */
-/* FC_RP/UP/OP/FP: flags, NdrFcShort(typeofs) */
- #define RPC_FC_P_ONSTACK		0x4 /* [alloced_on_stack] */
- #define RPC_FC_P_SIMPLEPOINTER		0x8 /* [simple_pointer] */
- /* flag 10 is not tagged */
+/* FC_RP/UP/OP/FP: flags, NdrFcShort(typeofs)/basetype */
+ #define RPC_FC_P_ALLOCALLNODES		0x01
+ #define RPC_FC_P_DONTFREE		0x02
+ #define RPC_FC_P_ONSTACK		0x04 /* [alloced_on_stack] */
+ #define RPC_FC_P_SIMPLEPOINTER		0x08 /* [simple_pointer] */
+ #define RPC_FC_P_DEREF			0x10
 
 #define RPC_FC_STRUCT			0x15
 /* FC_STRUCT: fieldcount-1, NdrFcShort(size), fields */
@@ -53,23 +57,44 @@
 #define RPC_FC_NON_ENCAPSULATED_UNION	0x2b
 
 #define RPC_FC_IP			0x2f /* interface pointer */
+/* FC_IP: FC_CONSTANT_IID iid */
+/* FC_IP: FC_PAD correlation_descriptor? */
 
+#define RPC_FC_BIND_CONTEXT		0x30
+
+#define RPC_FC_BIND_GENERIC		0x31
+#define RPC_FC_BIND_PRIMITIVE		0x32
 #define RPC_FC_AUTO_HANDLE		0x33
-/* FC_AUTO_HANDLE: oldflags, NdrFcLong(?), NdrFcShort(vtbl_idx), NdrFcShort(stacksiz),
- *                 NdrFcShort(?), NdrFcShort(?), oi2flags, parmcount
- * parameters: NdrFcShort(flags), NdrFcShort(stackofs), NdrFcShort(typeofs)/basetype */
- /* oldflags: 6c = object + oi2 */
- #define RPC_FC_AH_OI2F_SRVMUSTSIZE	0x01
- #define RPC_FC_AH_OI2F_CLTMUSTSIZE	0x02
- #define RPC_FC_AH_OI2F_HASRETURN	0x04
- #define RPC_FC_AH_PF_IN		0x0008
- #define RPC_FC_AH_PF_OUT		0x0010
- #define RPC_FC_AH_PF_RETURN		0x0020
- #define RPC_FC_AH_PF_BASETYPE		0x0040
- #define RPC_FC_AH_PF_BYVAL		0x0080
- #define RPC_FC_AH_PF_SIMPLEREF		0x0100
- /* PF: 03 = mustsize + mustfree */
- /* 2000 = srv alloc size=8, 4000 = srv alloc size=16 */
+#define RPC_FC_CALLBACK_HANDLE		0x34
+/* proc header: oiflags, NdrFcLong(rpcflags), NdrFcShort(procnum), NdrFcShort(stacksiz),
+ *  oi2 header: NdrFcShort(clientbuf), NdrFcShort(servbuf), oi2flags, parmcount
+ * oi2 parameters: NdrFcShort(flags), NdrFcShort(stackofs), NdrFcShort(typeofs)/basetype */
+ #define RPC_FC_PROC_OIF_FULLPTR	0x01
+ #define RPC_FC_PROC_OIF_RPCSSALLOC	0x02
+ #define RPC_FC_PROC_OIF_OBJECT		0x04
+ #define RPC_FC_PROC_OIF_RPCFLAGS	0x08
+ #define RPC_FC_PROC_OIF_OBJ_V2		0x20
+ #define RPC_FC_PROC_OIF_NEWINIT	0x40
+
+ #define RPC_FC_PROC_OI2F_SRVMUSTSIZE	0x01
+ #define RPC_FC_PROC_OI2F_CLTMUSTSIZE	0x02
+ #define RPC_FC_PROC_OI2F_HASRETURN	0x04
+ #define RPC_FC_PROC_OI2F_HASPIPES	0x08
+ #define RPC_FC_PROC_OI2F_HASASYNCUUID	0x20
+ #define RPC_FC_PROC_OI2F_HASEXTS	0x40
+ #define RPC_FC_PROC_OI2F_HASASYNCHND	0x80
+ #define RPC_FC_PROC_PF_MUSTSIZE	0x0001
+ #define RPC_FC_PROC_PF_MUSTFREE	0x0002
+ #define RPC_FC_PROC_PF_PIPE		0x0004
+ #define RPC_FC_PROC_PF_IN		0x0008
+ #define RPC_FC_PROC_PF_OUT		0x0010
+ #define RPC_FC_PROC_PF_RETURN		0x0020
+ #define RPC_FC_PROC_PF_BASETYPE	0x0040
+ #define RPC_FC_PROC_PF_BYVAL		0x0080
+ #define RPC_FC_PROC_PF_SIMPLEREF	0x0100
+ #define RPC_FC_PROC_PF_DONTFREEINST	0x0200
+ #define RPC_FC_PROC_PF_SAVEASYNC	0x0400
+ #define RPC_FC_PROC_PF_SRVALLOCSIZE	0xe000 /* in 8 byte units */
 
 #define RPC_FC_POINTER			0x36
 
@@ -92,8 +117,13 @@
 /* FC_IN_PARAM: stacksiz, NdrFcShort(typeofs) */
 #define RPC_FC_IN_PARAM_BASETYPE	0x4e
 /* FC_IN_PARAM_BASETYPE: basetype */
+#define RPC_FC_IN_PARAM_NO_FREE_INST	0x4f
+#define RPC_FC_IN_OUT_PARAM		0x50
+/* FC_IN_OUT_PARAM: stacksiz, NdrFcShort(typeofs) */
 #define RPC_FC_OUT_PARAM		0x51
 /* FC_OUT_PARAM: stacksiz, NdrFcShort(typeofs) */
+#define RPC_FC_RETURN_PARAM		0x52
+/* FC_RETURN_PARAM: stacksiz, NdrFcShort(typeofs) */
 #define RPC_FC_RETURN_PARAM_BASETYPE	0x53
 /* FC_RETURN_PARAM_BASETYPE: basetype */
 
@@ -106,5 +136,8 @@
 #define RPC_FC_PAD			0x5c
 
 #define RPC_FC_USER_MARSHAL		0xb4
+
+#define RPC_FC_INT3264			0xb8
+#define RPC_FC_UINT3264			0xb9
 
 #endif /* __WINE_RPCFC_H */
