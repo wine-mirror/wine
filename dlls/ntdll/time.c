@@ -545,23 +545,27 @@ void WINAPI RtlSecondsSince1980ToTime( DWORD time, LARGE_INTEGER *res )
 /******************************************************************************
  *       RtlTimeToElapsedTimeFields [NTDLL.@]
  *
- * ??
- *
- * PARAMS:
- *   liTime [?]: ??
- *   TimeFields [?]: ??
- *
  * RETURNS:
  *   Nothing.
- *
- * FIXME:
- *   Prototype guessed.
  */
-VOID WINAPI RtlTimeToElapsedTimeFields(
-	PLARGE_INTEGER liTime,
-	PTIME_FIELDS TimeFields)
+void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS TimeFields )
 {
-	FIXME("(%p,%p): stub\n",liTime,TimeFields);
+    LONGLONG time;
+    UINT rem;
+
+    time = RtlExtendedLargeIntegerDivide( Time->QuadPart, TICKSPERSEC, &rem );
+    TimeFields->Milliseconds = rem / TICKSPERMSEC;
+
+    /* time is now in seconds */
+    TimeFields->Year  = 0;
+    TimeFields->Month = 0;
+    TimeFields->Day   = RtlExtendedLargeIntegerDivide( time, SECSPERDAY, &rem );
+
+    /* rem is now the remaining seconds in the last day */
+    TimeFields->Second = rem % 60;
+    rem /= 60;
+    TimeFields->Minute = rem % 60;
+    TimeFields->Hour = rem / 60;
 }
 
 /***********************************************************************
