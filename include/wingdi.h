@@ -3199,6 +3199,12 @@ typedef struct _BLENDFUNCTION
 #define FR_PRIVATE  0x10
 #define FR_NOT_ENUM 0x20
 
+/* Mirroring flags */
+#define LAYOUT_LTR                         0x00000000
+#define LAYOUT_RTL                         0x00000001
+#define LAYOUT_BITMAPORIENTATIONPRESERVED  0x00000008
+#define NOMIRRORBITMAP                     0x80000000
+
 
 INT         WINAPI AbortDoc(HDC);
 BOOL        WINAPI AbortPath(HDC);
