@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = loader
 
 C_SRCS = \
+	elf.c \
 	libres.c \
 	main.c \
 	module.c \

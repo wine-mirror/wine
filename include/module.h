@@ -114,7 +114,7 @@ typedef struct _wine_modref
 	MODULE32_TYPE		type;
 	union {
 		PE_MODREF	pe;
-		/* ELF_MODREF 	elf; */
+		ELF_MODREF	elf;
 	} binfmt;
 
 	HMODULE32		module;
@@ -145,6 +145,7 @@ extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler( SEGPTR address );
+HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,struct _PDB32*process,HFILE32 hfile,DWORD flags);
 
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );

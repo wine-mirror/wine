@@ -253,7 +253,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
  	char			*name = (char *) RVA(pe_imp->Name);
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
-	hImpModule = PE_LoadLibraryEx32A( name, process, 0, 0 );
+	hImpModule = MODULE_LoadLibraryEx32A( name, process, 0, 0 );
 	if (!hImpModule) {
 	    char *p,buffer[2000];
 	    
@@ -262,7 +262,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    hImpModule = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
+	    hImpModule = MODULE_LoadLibraryEx32A( buffer, process, 0, 0 );
 	}
 	if (!hImpModule) {
 	    ERR (module, "Module %s not found\n", name);

@@ -81,6 +81,8 @@ dnl Check for -lw for Solaris
 AC_CHECK_LIB(w,iswalnum)
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,setrunelocale)
+dnl Check for -ldl
+AC_CHECK_LIB(dl,dlopen)
 dnl Check for XFree86 DGA extension
 AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
 
@@ -260,7 +262,7 @@ fi
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
-AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()

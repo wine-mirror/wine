@@ -52,4 +52,27 @@ extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY,LPC
 
 typedef DWORD (CALLBACK*DLLENTRYPROC32)(HMODULE32,DWORD,LPVOID);
 
+typedef struct {
+	WORD	popl	WINE_PACKED;	/* 0x8f 0x05 */
+	DWORD	addr_popped WINE_PACKED;/* ...  */
+	BYTE	pushl1	WINE_PACKED;	/* 0x68 */
+	DWORD	newret WINE_PACKED;	/* ...  */
+	BYTE	pushl2 	WINE_PACKED;	/* 0x68 */
+	DWORD	origfun WINE_PACKED;	/* original function */
+	BYTE	ret1	WINE_PACKED;	/* 0xc3 */
+	WORD	addesp 	WINE_PACKED;	/* 0x83 0xc4 */
+	BYTE	nrofargs WINE_PACKED;	/* nr of arguments to add esp, */
+	BYTE	pushl3	WINE_PACKED;	/* 0x68 */
+	DWORD	oldret	WINE_PACKED;	/* Filled out from popl above  */
+	BYTE	ret2	WINE_PACKED;	/* 0xc3 */
+} ELF_STDCALL_STUB;
+
+typedef struct {
+	void*			dlhandle;
+	ELF_STDCALL_STUB	*stubs;
+} ELF_MODREF;
+
+extern HMODULE32 ELF_LoadLibraryEx32A(LPCSTR,struct _PDB32*,HFILE32,DWORD);
+extern FARPROC32 ELF_FindExportedFunction(struct _PDB32 *process,struct _wine_modref *wm, LPCSTR funcName);
+
 #endif /* __WINE_PE_IMAGE_H */

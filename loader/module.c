@@ -687,19 +687,28 @@ HMODULE32 WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
  */
 HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 {
+	return MODULE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
+}
+
+HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,PDB32*process,HFILE32 hfile,DWORD flags)
+{
     HMODULE32 hmod;
     
-    hmod = PE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
+    hmod = ELF_LoadLibraryEx32A(libname,process,hfile,flags);
+    if (hmod)
+    	return hmod; /* already initialized for ELF */
+
+    hmod = PE_LoadLibraryEx32A(libname,process,hfile,flags);
     if (hmod < 32) {
 	char buffer[256];
 
 	strcpy( buffer, libname );
 	strcat( buffer, ".dll" );
-	hmod = PE_LoadLibraryEx32A(buffer,PROCESS_Current(),hfile,flags);
+	hmod = PE_LoadLibraryEx32A(buffer,process,hfile,flags);
     }
     /* initialize all DLLs, which haven't been initialized yet. */
     if (hmod >= 32)
-        PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, NULL);
+        PE_InitializeDLLs( process, DLL_PROCESS_ATTACH, NULL);
     return hmod;
 }
 
@@ -1018,6 +1027,8 @@ FARPROC32 MODULE_GetProcAddress32(
     {
     case MODULE32_PE:
     	return PE_FindExportedFunction( process, wm, function);
+    case MODULE32_ELF:
+    	return ELF_FindExportedFunction( process, wm, function);
     default:
     	ERR(module,"wine_modref type %d not handled.\n",wm->type);
     	return (FARPROC32)0;

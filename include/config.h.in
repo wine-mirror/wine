@@ -105,6 +105,9 @@
 /* Define if you have the waitpid function.  */
 #undef HAVE_WAITPID
 
+/* Define if you have the <dlfcn.h> header file.  */
+#undef HAVE_DLFCN_H
+
 /* Define if you have the <float.h> header file.  */
 #undef HAVE_FLOAT_H
 
@@ -155,6 +158,9 @@
 
 /* Define if you have the <wctype.h> header file.  */
 #undef HAVE_WCTYPE_H
+
+/* Define if you have the dl library (-ldl).  */
+#undef HAVE_LIBDL
 
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386
