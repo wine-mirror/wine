@@ -1810,6 +1810,27 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 			glTexEnvi(GL_TEXTURE_ENV, parm, GL_ADD_SIGNED_EXT);
 			break;
 
+			/* For the four blending modes, use the Arg2 parameter */
+		    case D3DTOP_BLENDDIFFUSEALPHA:
+		    case D3DTOP_BLENDTEXTUREALPHA:
+		    case D3DTOP_BLENDFACTORALPHA:
+		    case D3DTOP_BLENDCURRENTALPHA: {
+		        GLenum src = GL_PRIMARY_COLOR_EXT; /* Just to prevent a compiler warning.. */
+
+			switch (dwState) {
+			    case D3DTOP_BLENDDIFFUSEALPHA: src = GL_PRIMARY_COLOR_EXT;
+			    case D3DTOP_BLENDTEXTUREALPHA: src = GL_TEXTURE;
+			    case D3DTOP_BLENDFACTORALPHA:  src = GL_CONSTANT_EXT;
+			    case D3DTOP_BLENDCURRENTALPHA: src = GL_PREVIOUS_EXT;
+			}
+			
+			glTexEnvi(GL_TEXTURE_ENV, parm, GL_INTERPOLATE_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_EXT, src);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_EXT, GL_SRC_ALPHA);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA_EXT, src);
+			glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA_EXT, GL_SRC_ALPHA);
+		    } break;
+			
 		    default:
 			handled = FALSE;
 			break;
@@ -1969,7 +1990,9 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	    }
 
 	    if ((dwState & 0xFF) != D3DTTFF_DISABLE) {
+	        LEAVE_GL();
 	        This->matrices_updated(This, TEXMAT0_CHANGED << dwStage);
+		ENTER_GL();
 	    }
 
 	    if (handled == TRUE) {
@@ -2707,19 +2730,25 @@ d3ddevice_matrices_updated(IDirect3DDeviceImpl *This, DWORD matrices)
 	    glThis->transform_state = GL_TRANSFORM_NONE;
 	}
     }
-    for (tex_mat = TEXMAT0_CHANGED, tex_stage = 0; tex_mat <= TEXMAT7_CHANGED; tex_mat <<= 1, tex_stage++) {
-        if (matrices & tex_mat) {
-	    if (This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXTURETRANSFORMFLAGS - 1] != D3DTTFF_DISABLE) {
-	        if (tex_stage == 0) {
-		    /* No multi-texturing support for now ... */
+    if (matrices & (TEXMAT0_CHANGED|TEXMAT1_CHANGED|TEXMAT2_CHANGED|TEXMAT3_CHANGED|
+		    TEXMAT4_CHANGED|TEXMAT5_CHANGED|TEXMAT6_CHANGED|TEXMAT7_CHANGED))
+    {
+        ENTER_GL();
+	for (tex_mat = TEXMAT0_CHANGED, tex_stage = 0; tex_mat <= TEXMAT7_CHANGED; tex_mat <<= 1, tex_stage++) {
+	    if (matrices & tex_mat) {
+	        if (This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXTURETRANSFORMFLAGS - 1] != D3DTTFF_DISABLE) {
+		    if (tex_stage == 0) {
+		        /* No multi-texturing support for now ... */
+		        glMatrixMode(GL_TEXTURE);
+			glLoadMatrixf((float *) This->tex_mat[tex_stage]);
+		    }
+		} else {
 		    glMatrixMode(GL_TEXTURE);
-		    glLoadMatrixf((float *) This->tex_mat[tex_stage]);
+		    glLoadIdentity();
 		}
-	    } else {
-	        glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
 	    }
 	}
+	LEAVE_GL();
     }
 }
 

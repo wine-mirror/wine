@@ -585,7 +585,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 	    }
 	}
 
-	surf_ptr = get_sub_mimaplevel(surf_ptr);
+	if (surf_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) {
+	    surf_ptr = get_sub_mimaplevel(surf_ptr);
+	} else {
+	    surf_ptr = NULL;
+	}
       }
 
     return DD_OK;
@@ -817,8 +821,16 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	    }
 	}
 
-	src_ptr = get_sub_mimaplevel(src_ptr);
-	dst_ptr = get_sub_mimaplevel(dst_ptr);
+	if (src_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) {
+	    src_ptr = get_sub_mimaplevel(src_ptr);
+	} else {
+	    src_ptr = NULL;
+	}
+	if (dst_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) {
+	    dst_ptr = get_sub_mimaplevel(dst_ptr);
+	} else {
+	    dst_ptr = NULL;
+	}
 
 	if ((src_ptr == NULL) || (dst_ptr == NULL)) {
 	    if (src_ptr != dst_ptr) {
