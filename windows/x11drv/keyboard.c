@@ -118,6 +118,15 @@ static const char main_key_DA[MAIN_LEN][4] =
  "<>\\"
 };
 
+/*** Canadian French keyboard layout */
+static const char main_key_CF[MAIN_LEN][4] =
+{
+ "#|\\","1!±","2\"@","3/£","4$¢","5%§","6?¨","7&¶","8*≤","9(≥","0)≥","-_Ω","=+æ",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oOß","pP∂","^^[","®]",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:~","``{","<>}",
+ "zZ","xX","cC","vV","bB","nN","mM",",'_",".","È…'"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -129,6 +138,7 @@ static struct {
  {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),     1252, 850, &main_key_DE},
  {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),  1252, 865, &main_key_NO},
  {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),     1252, 865, &main_key_DA},
+ {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN),1252,863,&main_key_CF},
 
  {0} /* sentinel */
 };
