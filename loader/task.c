@@ -251,12 +251,13 @@ void TASK_CallToStart(void)
 
     memset( &context, 0, sizeof(context) );
     CS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
-    DS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->dgroup - 1].hSeg);
+    DS_reg(&context)  = GlobalHandleToSel16(pTask->hInstance);
     ES_reg(&context)  = pTask->hPDB;
     EIP_reg(&context) = pModule->ip;
     EBX_reg(&context) = pModule->stack_size;
     ECX_reg(&context) = pModule->heap_size;
-    EDI_reg(&context) = context.SegDs;
+    EDI_reg(&context) = pTask->hInstance;
+    ESI_reg(&context) = pTask->hPrevInstance;
 
     TRACE_(task)("Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
                   CS_reg(&context), IP_reg(&context), DS_reg(&context),
