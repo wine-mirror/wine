@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "Feb 13, 2001" "Version 20010112" "Windows On Unix"
+.TH WINE 1 "Apr 19, 2001" "Version 20010418" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -233,6 +233,11 @@ to different values for different
 processes, it is possible to run a number of truly independent 
 .B wine
 processes. 
+.TP
+.I WINEPRELOAD
+If set, specifies the full name of a shared library that
+.B wine
+loads and runs as a Winelib application.
 .TP
 .I WINESERVER
 Specifies the path and name of the
