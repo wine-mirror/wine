@@ -2,6 +2,7 @@
  * Unit test suite for winsock functions
  *
  * Copyright 2002 Martin Wilck
+ * Copyright 2005 Thomas Kho
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +30,7 @@
 #include <winerror.h>
 
 #define MAX_CLIENTS 4      /* Max number of clients */
-#define NUM_TESTS   2      /* Number of tests performed */
+#define NUM_TESTS   3      /* Number of tests performed */
 #define FIRST_CHAR 'A'     /* First character in transferred pattern */
 #define BIND_SLEEP 10      /* seconds to wait between attempts to bind() */
 #define BIND_TRIES 6       /* Number of bind() attempts */
@@ -60,7 +61,8 @@ typedef struct sock_info
     struct sockaddr_in     addr;
     struct sockaddr_in     peer;
     char                  *buf;
-    int                    nread;
+    int                    n_recvd;
+    int                    n_sent;
 } sock_info;
 
 /* Test parameters for both server & client */
@@ -252,7 +254,8 @@ static void server_start ( server_params *par )
     {
         mem->sock[i].s = INVALID_SOCKET;
         mem->sock[i].buf = (LPVOID) LocalAlloc ( LPTR, gen->n_chunks * gen->chunk_size );
-        mem->sock[i].nread = 0;
+        mem->sock[i].n_recvd = 0;
+        mem->sock[i].n_sent = 0;
     }
 
     if ( gen->sock_type == SOCK_STREAM )
@@ -369,6 +372,137 @@ static VOID WINAPI simple_server ( server_params *par )
     }
 
     trace ( "simple_server (%x) exiting\n", id );
+    server_stop ();
+}
+
+/*
+ * select_server: A non-blocking server.
+ */
+static VOID WINAPI select_server ( server_params *par )
+{
+    test_params *gen = par->general;
+    server_memory *mem;
+    int n_expected = gen->n_chunks * gen->chunk_size, tmp, i,
+        id = GetCurrentThreadId(), n_connections = 0, n_sent, n_recvd,
+        n_set, delta, n_ready;
+    char *p;
+    struct timeval timeout = {0,10}; /* wait for 10 milliseconds */
+    fd_set fds_recv, fds_send, fds_openrecv, fds_opensend;
+
+    trace ( "select_server (%x) starting\n", id );
+
+    set_so_opentype ( FALSE ); /* non-overlapped */
+    server_start ( par );
+    mem = TlsGetValue ( tls );
+
+    wsa_ok ( set_blocking ( mem->s, FALSE ), 0 ==, "select_server (%lx): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "select_server (%lx): listen failed: %d\n");
+
+    trace ( "select_server (%x) ready\n", id );
+    SetEvent ( server_ready ); /* notify clients */
+
+    FD_ZERO ( &fds_openrecv );
+    FD_ZERO ( &fds_recv );
+    FD_ZERO ( &fds_send );
+    FD_ZERO ( &fds_opensend );
+
+    FD_SET ( mem->s, &fds_openrecv );
+
+    while(1)
+    {
+        fds_recv = fds_openrecv;
+        fds_send = fds_opensend;
+
+        n_set = 0;
+
+        wsa_ok ( ( n_ready = select ( 0, &fds_recv, &fds_send, NULL, &timeout ) ), SOCKET_ERROR !=, 
+            "select_server (%lx): select() failed: %d\n" );
+
+        /* check for incoming requests */
+        if ( FD_ISSET ( mem->s, &fds_recv ) ) {
+            n_set += 1;
+
+            trace ( "select_server (%x): accepting client connection\n", id );
+
+            /* accept a single connection */
+            tmp = sizeof ( mem->sock[n_connections].peer );
+            mem->sock[n_connections].s = accept ( mem->s, (struct sockaddr*) &mem->sock[n_connections].peer, &tmp );
+            wsa_ok ( mem->sock[n_connections].s, INVALID_SOCKET !=, "select_server (%lx): accept() failed: %d\n" );
+
+            ok ( mem->sock[n_connections].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
+                "select_server (%x): strange peer address\n", id );
+
+            /* add to list of open connections */
+            FD_SET ( mem->sock[n_connections].s, &fds_openrecv );
+            FD_SET ( mem->sock[n_connections].s, &fds_opensend );
+
+            n_connections++;
+        }
+
+        /* handle open requests */
+
+        for ( i = 0; i < n_connections; i++ )
+        {
+            if ( FD_ISSET( mem->sock[i].s, &fds_recv ) ) {
+                n_set += 1;
+
+                if ( mem->sock[i].n_recvd < n_expected ) {
+                    /* Receive data & check it */
+                    n_recvd = recv ( mem->sock[i].s, mem->sock[i].buf + mem->sock[i].n_recvd, min ( n_expected - mem->sock[i].n_recvd, par->buflen ), 0 );
+                    ok ( n_recvd != SOCKET_ERROR, "select_server (%x): error in recv(): %d\n", id, WSAGetLastError() );
+                    mem->sock[i].n_recvd += n_recvd;
+
+                    if ( mem->sock[i].n_recvd == n_expected ) {
+                        p = test_buffer ( mem->sock[i].buf, gen->chunk_size, gen->n_chunks );
+                        ok ( p == NULL, "select_server (%x): test pattern error: %d\n", id, p - mem->sock[i].buf );
+                        FD_CLR ( mem->sock[i].s, &fds_openrecv );
+                    }
+
+                    ok ( mem->sock[i].n_recvd <= n_expected, "select_server (%x): received too many bytes: %d\n", id, mem->sock[i].n_recvd );
+                }
+            }
+
+            /* only echo back what we've received */
+            delta = mem->sock[i].n_recvd - mem->sock[i].n_sent;
+
+            if ( FD_ISSET ( mem->sock[i].s, &fds_send ) ) {
+                n_set += 1;
+
+                if ( ( delta > 0 ) && ( mem->sock[i].n_sent < n_expected ) ) {
+                    /* Echo data back */
+                    n_sent = send ( mem->sock[i].s, mem->sock[i].buf + mem->sock[i].n_sent, min ( delta, par->buflen ), 0 );
+                    ok ( n_sent != SOCKET_ERROR, "select_server (%x): error in send(): %d\n", id, WSAGetLastError() );
+                    mem->sock[i].n_sent += n_sent;
+
+                    if ( mem->sock[i].n_sent == n_expected ) {
+                        FD_CLR ( mem->sock[i].s, &fds_opensend );
+                    }
+
+                    ok ( mem->sock[i].n_sent <= n_expected, "select_server (%x): sent too many bytes: %d\n", id, mem->sock[i].n_sent );
+                }
+            }
+        }
+
+        /* check that select returned the correct number of ready sockets */
+        ok ( ( n_set == n_ready ), "select_server (%x): select() returns wrong number of ready sockets\n", id );
+
+        /* check if all clients are done */
+        if ( ( fds_opensend.fd_count == 0 ) 
+            && ( fds_openrecv.fd_count == 1 ) /* initial socket that accepts clients */
+            && ( n_connections  == min ( gen->n_clients, MAX_CLIENTS ) ) ) {
+            break;
+        }
+    }
+
+    for ( i = 0; i < min ( gen->n_clients, MAX_CLIENTS ); i++ )
+    {
+        /* cleanup */
+        read_zero_bytes ( mem->sock[i].s );
+        wsa_ok ( closesocket ( mem->sock[i].s ),  0 ==, "select_server (%lx): closesocket error: %d\n" );
+        mem->sock[i].s = INVALID_SOCKET;
+    }
+
+    trace ( "select_server (%x) exiting\n", id );
     server_stop ();
 }
 
@@ -772,6 +906,27 @@ static test_setup tests [NUM_TESTS] =
         {
             NULL,
             WSA_FLAG_OVERLAPPED,
+            128
+        }
+    },
+    /* Test 2: synchronous client, non-blocking server via select() */
+    {
+        {
+            STD_STREAM_SOCKET,
+            2048,
+            16,
+            2
+        },
+        select_server,
+        {
+            NULL,
+            0,
+            64
+        },
+        simple_client,
+        {
+            NULL,
+            0,
             128
         }
     }
