@@ -1465,7 +1465,7 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
 
   if (ret)
       lpChCol->rgbResult = lpcc->rgbResult;
-  if (lpcc->lpTemplateName) HeapFree(GetProcessHeap(), 0, lpcc->lpTemplateName);
+  if (lpcc->lpTemplateName) HeapFree(GetProcessHeap(), 0, (LPSTR)lpcc->lpTemplateName);
   HeapFree(GetProcessHeap(), 0, lpcc);
   return ret;
 }

@@ -277,7 +277,6 @@ int WINAPIV ShellMessageBoxW(
 	va_list args;
 	va_start(args, uType);
 	/* wvsprintfA(buf,fmt, args); */
-	va_end(args);
 
 	TRACE("(%08lx,%08lx,%p,%p,%08x)\n",
 	(DWORD)hInstance,(DWORD)hWnd,lpText,lpCaption,uType);
@@ -292,7 +291,11 @@ int WINAPIV ShellMessageBoxW(
 	else
 	  pszText = lpText;
 
-	FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,szText,0,0,szTemp,256,args);
+	FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+		       szText, 0, 0, szTemp, 256, (LPDWORD) args);
+
+	va_end(args);
+
 	return MessageBoxW(hWnd,szTemp,szTitle,uType);
 }
 
@@ -312,7 +315,6 @@ int WINAPIV ShellMessageBoxA(
 	va_list args;
 	va_start(args, uType);
 	/* wvsprintfA(buf,fmt, args); */
-	va_end(args);
 
 	TRACE("(%08lx,%08lx,%p,%p,%08x)\n",
 	(DWORD)hInstance,(DWORD)hWnd,lpText,lpCaption,uType);
@@ -327,7 +329,11 @@ int WINAPIV ShellMessageBoxA(
 	else
 	  pszText = lpText;
 
-	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,szText,0,0,szTemp,256,args);
+	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+		       szText, 0, 0, szTemp, 256, (LPDWORD) args);
+
+	va_end(args);
+
 	return MessageBoxA(hWnd,szTemp,szTitle,uType);
 }
 
