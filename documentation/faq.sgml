@@ -36,32 +36,36 @@
       <answer>
         <para>
           Wine is a program which allows the operation of DOS and MS
-          Windows programs (Windows 3.x and Win32 executables) on UNIX. 
+          Windows programs (Windows 3.x and Win32 executables) on UNIX operating systems such as Linux. 
           It consists of a program loader, which loads and executes a Windows
           binary, and a set of libraries that implements Windows API calls
           using their UNIX or X11 equivalents. The libraries may also be used
           for porting Win32 code into native UNIX executables, often
           without many changes in the source. Wine is free software, 
           and its license (contained in the file LICENSE
-          in each distribution) is LGPL.
+          in each distribution) is the LGPL.
         </para>
       </answer>
       </qandaentry>
 
      <qandaentry>
       <question id="Is-Wine-an-emulator">
-        <para>Is Wine an emulator?</para>
+        <para>Does Wine emulate a full computer?</para>
       </question>
       <answer>
         <para>
           No, as the name says, Wine Is Not a (CPU) Emulator. Wine just
           provides the Windows API. This means that you will need an
-          x86-compatible processor to run an x86 Windows application. The
-          advantage is that, unlike solutions that rely on emulation, Wine
-          runs applications run at full speed.
+          x86-compatible processor to run an x86 Windows application, for instance from Intel or AMD. The
+          advantage is that, unlike solutions that rely on CPU emulation, Wine
+          runs applications at full speed. Sometimes a program run under
+	  Wine will be slower than when run on a copy of Microsoft Windows, but
+	  this is more due to the fact that Microsoft have heavily optimized parts of their
+	  code, whereas mostly Wine is not well optimized (yet). Occasionally, an app
+	  may run faster under Wine than on Windows. Most apps run at roughly the same speed.
        </para>
       </answer>
-      </qandaentry
+      </qandaentry>
 
       <qandaentry>
       <question id="Are-here-any-alternatives-to-Wine">
@@ -116,7 +120,10 @@
        <para>
           The drawback of all emulators is that you need a version
           of Windows in order to run Windows, and that they all have an
-          impact on performance.
+          impact on performance. Wine also gives much better desktop integration - for
+	  instance, programs use your standard window manager, system tray icons will
+	  appear in your tray area (if you have one), and you can run programs direct from the
+	  command line and the menus. The clipboard also works seamlessly.
        </para>
 
       </answer>
@@ -208,16 +215,17 @@
               people continue to maintain an X11 licensed Wine version. Its 
               license is X11, it can be downloaded for free. 
             </para>
-         </listitem>
+          </listitem>
           </varlistentry>
  
 	  <varlistentry>
           <term><ulink url="http://www.transgaming.com">Transgaming's WineX</ulink></term>
           <listitem>
             <para>
-              This is TransGaming's Wine version specially suited for games. 
-              It includes Direct3D support (thus its DirectX support is much
-              more complete than Wine's). Most of the code is under the AFPL
+              This is TransGaming's Wine version specially suited for
+              games.  It includes more mature Direct3D support than
+              WineHQ, although these days WineHQ has quite advanced
+              D3D support as well. Most of the code is under the AFPL
               and can be downloaded for free.
             </para>
             <para>
@@ -236,7 +244,7 @@
             <para>
               This is a special packaged version of the standard Wine tree
               which has a nice setup for easy installation. License LGPL, free
-              download. 
+              download. It's pretty old now, and not recommended for general use.
             </para>
          </listitem>
           </varlistentry>
@@ -261,7 +269,7 @@
               important Office type programs work pretty well. Costs $54.95. 
               Seems to be well worth it so far according to some comments. 
               (note: you're supporting a company actively contributing to Wine
-              if you decide to buy either Plugin or Office.
+              if you decide to buy either Plugin or Office.)
             </para>
           </listitem>
           </varlistentry>
@@ -333,8 +341,8 @@
       </question>
       <answer>
         <para>
-          As of mid 2002, Wine consists of over 1 million lines of C code,
-          written by more than 300 developers from dozens of countries around
+          As of mid 2003, Wine consists of about 1.4 million lines of code,
+          written by more than 550 developers from dozens of countries around
           the world. Wine is in active use by an estimated 100K people. Wine
           implements more than 90% of the calls in popular Windows 
           specifications such as ECMA-234 and Open32.
@@ -440,7 +448,12 @@
           taken place. That said, the documentation is often bad, nonexistent,
           and even misleading where it exists, so a fair amount of reverse
           engineering has been necessary, particularly in the shell (Explorer)
-          interface.
+          interface. The biggest problem facing Wine though is simply lack of
+	  manpower. At one point, over 5000 people were working on Windows 2000.
+	  While Wine doesn't need to replicate all of Windows (we only cover the
+	  parts needed to make Windows programs work), that's still nearly 10 times
+	  more people working simply on one release than have <emphasis>ever</emphasis>
+	  worked on Wine, in the history of the project.
         </para>
       </answer>
       </qandaentry>
@@ -720,7 +733,7 @@
       </question>
       <answer>
         <para>
-          Many folks have successfully installed and run some small programs
+          Many folks have successfully installed and run programs
           in their UNIX filesystem without having a DOS partition or MS 
           Windows. However, in many cases you need a directory and file 
           infrastructure that is similar to an existing Windows installation.
@@ -728,7 +741,8 @@
           the package's files into the /windows and /windows/system 
           directories in order to run, and unless these exist on your UNIX 
           file system, those programs will not install correctly and probably
-          will not run well, if at all.
+          will not run well, if at all. Most packages will set that up for you
+	  as part of the install process.
         </para>
         <para>
           If you have a DOS partition with MS Windows installed in it, make
@@ -800,7 +814,7 @@
       </qandaentry>
 
       <qandaentry>
-      <question id="Will-I-install-on-ony-UNIX-file-system">
+      <question id="Will-I-install-on-any-UNIX-file-system">
         <para> 
           Will I be able to install MS Windows applications in any flavor of a
           UNIX file system?
@@ -1111,6 +1125,11 @@ wine
           the time) or use a Win9x install (Win95, 98, 98SE, ME). DON'T 
           configure Wine to use an NT-based Windows install (NT, Win2K, WinXP).
         </para>
+	<para>
+	  In general, most Windows installations contain vast quantities of garbage
+	  that can confuse Wine and make it less reliable. If you can, it's best to
+	  install the programs you want into Wines fake windows drive.
+	</para>
       </answer>
       </qandaentry>
 
@@ -1142,7 +1161,7 @@ wine
       <answer>
         <para>
           Make sure you have all the VB runtime libraries installed. You may
-          need to use the native DLL vbrun60.dll
+          need to use the native DLL vbrun60.dll. You can get some from dll-files.com.
         </para>
       </answer>
       </qandaentry>
@@ -1352,6 +1371,32 @@ rm -fR \[/path/\]Wine*
       </answer>
       </qandaentry>
 
+      <qandaentry>
+	<question id="My-app-doesnt-work-what-can-i-do">
+	  <para>
+	    My program doesn't work, what can I do?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    If you are a programmer and know C, then start debugging
+	    Wine and help us make it better! If you can't, then you will
+	    have to either convince a Wine developer to try and make your
+	    program work (there must be a downloadable version or demo for
+	    that), or hire somebody to do it for you. If this application
+	    is an internal corporate application, you may be able to hire a
+	    Wine developer to do consulting work for you on the matter.
+	  </para>
+	  <para>
+	    Alternatively, you may be able to get the app working by
+	    taking native DLLs from a Microsoft Windows install, and using
+	    them (set the dlls to native in the config file). Not all DLLs
+	    can be replaced that way - in particular DirectX cannot be, nor
+	    can some core system DLLs like user, ntdll, kernel32 etc
+	  </para>
+	</answer>
+      </qandaentry>
+      
       <qandaentry>
       <question id="Can-I-use-Wine-with-other-Linux-Distros">
         <para>Can I use Wine with SuSe, Peanut or other Linux Distro's?</para>
