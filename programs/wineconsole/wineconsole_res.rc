@@ -26,3 +26,4 @@
 #include "wineconsole_Fr.rc"
 #include "wineconsole_De.rc"
 #include "wineconsole_Hu.rc"
+#include "wineconsole_Zh.rc"
