@@ -2331,8 +2331,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST
 
     glDepthRange(pViewport->MinZ, pViewport->MaxZ);
     checkGLcall("glDepthRange");
-    /* Fixme? Note GL requires lower left, DirectX supplies upper left */
-    glViewport(pViewport->X, pViewport->Y, pViewport->Width, pViewport->Height);
+    /* Note: GL requires lower left, DirectX supplies upper left */
+    glViewport(pViewport->X, (This->PresentParms.BackBufferHeight - (pViewport->Y + pViewport->Height)), 
+               pViewport->Width, pViewport->Height);
     checkGLcall("glViewport");
 
 
