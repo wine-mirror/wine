@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h> /* atoi */
 #include <ctype.h>
+#include <limits.h>
 
 #include "commctrl.h"
 #include "objbase.h"
@@ -108,6 +109,9 @@ DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lPar
 	streamData.dwData2 < 1) {
 	errCode = E_FAIL;
     }
+
+    if (streamData.dwItems > (UINT_MAX / 2 / sizeof(VOID*))) /* 536870911 */
+        return E_OUTOFMEMORY;
 
     /* create the dpa */
     hDpa = DPA_Create (streamData.dwItems);
