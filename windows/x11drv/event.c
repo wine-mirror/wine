@@ -399,7 +399,7 @@ static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
         wine_tsx11_unlock();
     }
 
-    if (event->detail != NotifyPointer && event->detail != NotifyNonlinear && hWnd != GetForegroundWindow())
+    if (event->detail != NotifyPointer && hWnd != GetForegroundWindow())
         SetForegroundWindow( hWnd );
 }
 
