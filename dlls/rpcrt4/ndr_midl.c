@@ -193,6 +193,16 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
 }
 
 /***********************************************************************
+ *             NdrServerInitializeNew [RPCRT4.@]
+ */
+unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_MESSAGE pStubMsg,
+                                              PMIDL_STUB_DESC pStubDesc )
+{
+  FIXME("(pRpcMsg == ^%p, pStubMsg == ^%p, pStubDesc == ^%p): stub.\n", pRpcMsg, pStubMsg, pStubDesc);
+  return NULL;
+}
+
+/***********************************************************************
  *           NdrGetBuffer [RPCRT4.@]
  */
 unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle)

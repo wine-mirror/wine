@@ -231,7 +231,7 @@ RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding)
 
 RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding)
 {
-  TRACE("  (Binding == ^%p)\n", Binding);
+  TRACE("(Binding == ^%p)\n", Binding);
   if (!Binding->conn) {
     if (Binding->server) { /* server */
       /* protseq=ncalrpc: supposed to use NT LPC ports,

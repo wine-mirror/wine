@@ -209,8 +209,8 @@ init	RPCRT4_LibMain
 @ stdcall NdrClientInitializeNew(ptr ptr ptr long) NdrClientInitializeNew
 @ stub NdrContextHandleInitialize
 @ stub NdrContextHandleSize
-@ stub NdrConvert
-@ stub NdrConvert2
+@ stdcall NdrConvert(ptr ptr) NdrConvert
+@ stdcall NdrConvert2(ptr ptr long) NdrConvert2
 @ stub NdrCorrelationFree
 @ stub NdrCorrelationInitialize
 @ stub NdrCorrelationPass
@@ -349,7 +349,7 @@ init	RPCRT4_LibMain
 @ stub NdrServerContextUnmarshall
 @ stub NdrServerInitialize
 @ stub NdrServerInitializeMarshall
-@ stub NdrServerInitializeNew
+@ stdcall NdrServerInitializeNew(ptr ptr ptr) NdrServerInitializeNew
 @ stub NdrServerInitializeUnmarshall
 @ stub NdrServerMarshall
 @ stub NdrServerUnmarshall

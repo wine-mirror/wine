@@ -127,8 +127,26 @@ unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
 unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char** ppMemory,
   PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
-  FIXME("stub\n");
+  FIXME("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u): stub.\n",
+    pStubMsg, *ppMemory, pFormat, fMustAlloc);
   return NULL;
 }
+
+/***********************************************************************
+ *           NdrConvert [RPCRT4.@]
+ */
+void WINAPI NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
+{
+  FIXME("(pStubMsg == ^%p, pFormat == ^%p): stub.\n", pStubMsg, pFormat);
+}
+
+/***********************************************************************
+ *           NdrConvert2 [RPCRT4.@]
+ */
+void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, long NumberParams )
+{
+  FIXME("(pStubMsg == ^%p, pFormat == ^%p, NumberParams == %ld): stub.\n", pStubMsg, pFormat, NumberParams);
+}
+
 
 #undef BUFFER_PARANOIA

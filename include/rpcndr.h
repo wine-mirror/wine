@@ -309,6 +309,8 @@ RPCRTAPI void RPC_ENTRY
   NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg, 
                           PMIDL_STUB_DESC pStubDesc, unsigned int ProcNum );
 RPCRTAPI unsigned char* RPC_ENTRY
+  NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_MESSAGE pStubMsg, PMIDL_STUB_DESC pStubDesc );  
+RPCRTAPI unsigned char* RPC_ENTRY
   NdrGetBuffer( MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle );
 RPCRTAPI void RPC_ENTRY
   NdrFreeBuffer( MIDL_STUB_MESSAGE *pStubMsg );
