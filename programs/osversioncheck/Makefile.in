@@ -5,6 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = osversioncheck
+IMPORTS   = kernel32
 
 C_SRCS = osversioncheck.c
 

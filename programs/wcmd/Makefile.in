@@ -5,6 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = wcmd
+IMPORTS   = kernel32
 WRCEXTRA  = -s -p wcmd
 
 C_SRCS = \

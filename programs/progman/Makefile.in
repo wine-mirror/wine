@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = progman
-IMPORTS   = shell32 comdlg32 ole32 rpcrt4 winspool.drv
+IMPORTS   = kernel32 shlwapi shell32 comdlg32 ole32 rpcrt4 winspool.drv
 WRCEXTRA  = -s -p progman
 
 LICENSELANG = En
