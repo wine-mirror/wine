@@ -2786,6 +2786,9 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       psInfo->hwnd = hwnd;
       SetWindowLongW(hwnd,DWL_USER,(LONG)psInfo);
 
+      /* set up the Next and Back buttons by default */
+      PROPSHEET_SetWizButtons(hwnd, PSWIZB_BACK|PSWIZB_NEXT);
+
       /*
        * Small icon in the title bar.
        */
