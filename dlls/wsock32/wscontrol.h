@@ -103,6 +103,11 @@ typedef struct IPAddrEntry
    ushort         iae_pad;
 } IPAddrEntry;
 
+#ifdef __NetBSD__
+#undef if_type
+#undef if_mtu
+#undef if_lastchange
+#endif
 
 #define	MAX_PHYSADDR_SIZE    8
 #define	MAX_IFDESCR_LEN      256
