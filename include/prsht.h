@@ -321,6 +321,21 @@ typedef struct _PSHNOTIFY
 #define PSM_GETTABCONTROL       (WM_USER + 116)
 #define PSM_ISDIALOGMESSAGE     (WM_USER + 117)
 #define PSM_GETCURRENTPAGEHWND  (WM_USER + 118)
+#define PSM_INSERTPAGE          (WM_USER + 119)
+#define PSM_SETHEADERTITLEA     (WM_USER + 125)
+#define PSM_SETHEADERTITLEW     (WM_USER + 126)
+#define PSM_SETHEADERTITLE      WINELIB_NAME_AW(PSM_SETHEADERTITLE)
+#define PSM_SETHEADERSUBTITLEA  (WM_USER + 127)
+#define PSM_SETHEADERSUBTITLEW  (WM_USER + 128)
+#define PSM_SETHEADERSUBTITLE   WINELIB_NAME_AW(PSM_SETHEADERSUBTITLE)
+#define PSM_HWNDTOINDEX         (WM_USER + 129)
+#define PSM_INDEXTOHWND         (WM_USER + 130)
+#define PSM_PAGETOINDEX         (WM_USER + 131)
+#define PSM_INDEXTOPAGE         (WM_USER + 132)
+#define PSM_IDTOINDEX           (WM_USER + 133)
+#define PSM_INDEXTOID           (WM_USER + 134)
+#define PSM_GETRESULT           (WM_USER + 135)
+#define PSM_RECALCPAGESIZES     (WM_USER + 136)
 
 #define PSWIZB_BACK             0x00000001
 #define PSWIZB_NEXT             0x00000002
@@ -415,6 +430,38 @@ typedef struct _PSHNOTIFY
 #define PropSheet_GetCurrentPageHwnd(hDlg) \
 	(HWND)SNDMSG(hDlg, PSM_GETCURRENTPAGEHWND, 0, 0L)
 
+#define PropSheet_InsertPage(hDlg, index, hpage) \
+        SNDMSG(hDlg, PSM_INSERTPAGE, (WPARAM)(index), (LPARAM)(hpage))
+
+#define PropSheet_SetHeaderTitle(hDlg, index, lpszText) \
+        SNDMSG(hDlg, PSM_SETHEADERTITLE, (WPARAM)(index), (LPARAM)(lpszText))
+
+#define PropSheet_SetHeaderSubTitle(hDlg, index, lpszText) \
+        SNDMSG(hDlg, PSM_SETHEADERSUBTITLE, (WPARAM)(index), (LPARAM)(lpszText))
+
+#define PropSheet_HwndToIndex(hDlg, hwnd) \
+        (int)SNDMSG(hDlg, PSM_HWNDTOINDEX, (WPARAM)(hwnd), 0)
+
+#define PropSheet_IndexToHwnd(hDlg, i) \
+        (HWND)SNDMSG(hDlg, PSM_INDEXTOHWND, (WPARAM)(i), 0)
+
+#define PropSheet_PageToIndex(hDlg, hpage) \
+        (int)SNDMSG(hDlg, PSM_PAGETOINDEX, 0, (LPARAM)(hpage))
+
+#define PropSheet_IndexToPage(hDlg, i) \
+        (HPROPSHEETPAGE)SNDMSG(hDlg, PSM_INDEXTOPAGE, (WPARAM)(i), 0)
+
+#define PropSheet_IdToIndex(hDlg, id) \
+        (int)SNDMSG(hDlg, PSM_IDTOINDEX, 0, (LPARAM)(id))
+
+#define PropSheet_IndexToId(hDlg, i) \
+        SNDMSG(hDlg, PSM_INDEXTOID, (WPARAM)(i), 0)
+
+#define PropSheet_GetResult(hDlg) \
+        SNDMSG(hDlg, PSM_GETRESULT, 0, 0)
+
+#define PropSheet_RecalcPageSizes(hDlg) \
+        SNDMSG(hDlg, PSM_RECALCPAGESIZES, 0, 0)
 
 #ifdef __cplusplus
 }
