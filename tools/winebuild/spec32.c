@@ -574,19 +574,21 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "extern char **__wine_main_environ;\n" );
     fprintf( outfile, "extern unsigned short **__wine_main_wargv;\n" );
 #ifdef __APPLE__
-    fprintf( outfile, "extern _dyld_func_lookup(char *, void *);");
-    fprintf( outfile, "void _init(int argc, char** argv, char** chr)\n" );
-    fprintf( outfile, "{\n");
-    fprintf( outfile, "    void (*init)(void);\n");
-    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_make_delayed_module_initializer_calls\", (unsigned long *)&init);\n");
-    fprintf( outfile, "    init();\n");
-    fprintf( outfile, "}\n");
-    fprintf( outfile, "void _fini()\n" );
-    fprintf( outfile, "{\n");
-    fprintf( outfile, "    void (*fini)(void);\n");
-    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_mod_term_funcs\", (unsigned long *)&fini);\n");
-    fprintf( outfile, "    fini();\n");
-    fprintf( outfile, "}\n");
+    fprintf( outfile, "extern _dyld_func_lookup(char *, void *);" );
+    fprintf( outfile, "static void __wine_spec_hidden_init(int argc, char** argv, char** envp)\n" );
+    fprintf( outfile, "{\n" );
+    fprintf( outfile, "    void (*init)(void);\n" );
+    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_make_delayed_module_initializer_calls\", (unsigned long *)&init);\n" );
+    fprintf( outfile, "    init();\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "static void __wine_spec_hidden_fini()\n" );
+    fprintf( outfile, "{\n" );
+    fprintf( outfile, "    void (*fini)(void);\n" );
+    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_mod_term_funcs\", (unsigned long *)&fini);\n" );
+    fprintf( outfile, "    fini();\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#define _init __wine_spec_hidden_init\n" );
+    fprintf( outfile, "#define _fini __wine_spec_hidden_fini\n" );
 #else
     fprintf( outfile, "extern void _init(int, char**, char**);\n" );
     fprintf( outfile, "extern void _fini();\n" );
@@ -947,11 +949,22 @@ void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
     fprintf( outfile, "    \"\\t.section\t\\\".text\\\"\\n\");\n" );
 #elif defined(__powerpc__)
+# ifdef __APPLE__
+	fprintf( outfile, "asm(\"\\t.mod_init_func\\n\"\n" );
+	fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+	fprintf( outfile, "    \"\\t.long " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
+	fprintf( outfile, "    \"\\t.text\\n\");\n" );
+	fprintf( outfile, "asm(\"\\t.mod_term_func\\n\"\n" );
+	fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+	fprintf( outfile, "    \"\\t.long " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
+	fprintf( outfile, "    \"\\t.text\\n\");\n" );
+# else
     fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\t.text\\n\");\n" );
+# endif
 #else
 #error You need to define the DLL constructor for your architecture
 #endif
