@@ -1100,7 +1100,7 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
  */
 static BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild )
 {
-    MENUITEMINFOA menuInfo;
+    MENUITEMINFOW menuInfo;
     INT nItems = GetMenuItemCount(frameWnd->wIDmenu) - 1;
     UINT iId = GetMenuItemID(frameWnd->wIDmenu,nItems) ;
 
@@ -1114,10 +1114,11 @@ static BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild )
      * Remove the system menu, If that menu is the icon of the window
      * as it is in win95, we have to delete the bitmap.
      */
-    menuInfo.cbSize = sizeof(MENUITEMINFOA);
+    memset(&menuInfo, 0, sizeof(menuInfo));
+    menuInfo.cbSize = sizeof(menuInfo);
     menuInfo.fMask  = MIIM_DATA | MIIM_TYPE;
 
-    GetMenuItemInfoA(frameWnd->wIDmenu, 
+    GetMenuItemInfoW(frameWnd->wIDmenu, 
 		     0, 
 		     TRUE,
 		     &menuInfo);
