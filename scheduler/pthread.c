@@ -46,7 +46,7 @@ struct _pthread_cleanup_buffer;
  * If they are not available, the libc defaults to
  * non-threadsafe operation (not good). */
 
-#if defined(__GLIBC__) || defined(__FreeBSD__)
+#if (defined(__GLIBC__) || defined(__FreeBSD__)) && !defined(HAVE_NPTL)
 
 #ifndef __USE_UNIX98
 #define __USE_UNIX98

@@ -341,6 +341,9 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
+/* Define to use glibc NPTL threading support. */
+#undef HAVE_NPTL
+
 /* Define to 1 if the system has the type `off_t'. */
 #undef HAVE_OFF_T
 

@@ -45,6 +45,10 @@
 #include <sched.h>
 #endif
 
+#ifdef HAVE_NPTL
+#include <pthread.h>
+#endif
+
 #include "thread.h"
 #include "wine/server.h"
 #include "winbase.h"
@@ -175,9 +179,18 @@ static void SYSDEPS_StartThread( TEB *teb )
  */
 int SYSDEPS_SpawnThread( TEB *teb )
 {
-#ifdef HAVE_CLONE
+#ifdef HAVE_NPTL
+    pthread_t id;
+    pthread_attr_t attr;
+
+    pthread_attr_init( &attr );
+    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
+    pthread_attr_setstack( &attr, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
+    if (pthread_create( &id, &attr, (void * (*)(void *))SYSDEPS_StartThread, teb )) return -1;
+    return 0;
+#elif defined(HAVE_CLONE)
     if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
-               CLONE_VM | CLONE_FS | CLONE_FILES, teb ) < 0)
+               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
         return -1;
     return 0;
 #elif defined(HAVE_RFORK)
@@ -284,8 +297,11 @@ void SYSDEPS_ExitThread( int status )
     info.status     = status;
 
     SIGNAL_Block();
-    SIGNAL_Reset();
 
+#ifdef HAVE_NPTL
+    SYSDEPS_AbortThread( status );
+#else
+    SIGNAL_Reset();
     VirtualFree( teb->stack_base, 0, MEM_RELEASE | MEM_SYSTEM );
     close( teb->wait_fd[0] );
     close( teb->wait_fd[1] );
@@ -294,6 +310,7 @@ void SYSDEPS_ExitThread( int status )
     teb->stack_low = get_temp_stack();
     teb->stack_top = (char *) teb->stack_low + TEMP_STACK_SIZE;
     SYSDEPS_CallOnStack( cleanup_thread, &info );
+#endif
 }
 
 
@@ -305,11 +322,14 @@ void SYSDEPS_ExitThread( int status )
 void SYSDEPS_AbortThread( int status )
 {
     SIGNAL_Block();
-    SIGNAL_Reset();
     close( NtCurrentTeb()->wait_fd[0] );
     close( NtCurrentTeb()->wait_fd[1] );
     close( NtCurrentTeb()->reply_fd );
     close( NtCurrentTeb()->request_fd );
+#ifdef HAVE_NPTL
+    pthread_exit( (void *)status );
+#endif
+    SIGNAL_Reset();
 #ifdef HAVE__LWP_CREATE
     _lwp_exit();
 #endif
@@ -336,6 +356,8 @@ int SYSDEPS_GetUnixTid(void)
 #endif
 }
 
+
+#ifndef HAVE_NPTL
 
 /* default errno before threading is initialized */
 static int *default_errno_location(void)
@@ -387,6 +409,7 @@ int *__h_errno_location(void)
     return h_errno_location_ptr();
 }
 
+#endif  /* HAVE_NPTL */
 
 /***********************************************************************
  *           SYSDEPS_InitErrno
@@ -395,8 +418,10 @@ int *__h_errno_location(void)
  */
 void SYSDEPS_InitErrno(void)
 {
+#ifndef HAVE_NPTL
     errno_location_ptr = thread_errno_location;
     h_errno_location_ptr = thread_h_errno_location;
+#endif
 }
 
 

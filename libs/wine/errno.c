@@ -22,8 +22,12 @@
 
 #include <assert.h>
 
+#ifndef HAVE_NPTL
+
 /***********************************************************************
  *		pthread functions
+ *
+ * FIXME: should find a better place for these
  */
 #ifndef HAVE_PTHREAD_GETSPECIFIC
 void pthread_getspecific() { assert(0); }
@@ -44,3 +48,5 @@ void pthread_mutex_unlock() { assert(0); }
 #ifndef HAVE_PTHREAD_SETSPECIFIC
 void pthread_setspecific() { assert(0); }
 #endif
+
+#endif  /* HAVE_NPTL */

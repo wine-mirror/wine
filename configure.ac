@@ -18,6 +18,7 @@ AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE message
 
 AC_ARG_WITH(opengl,    AC_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
+AC_ARG_WITH(nptl,      AC_HELP_STRING([--with-nptl],[use glibc NPTL threading support]))
 AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
 AC_SUBST(OPTIONS)
@@ -35,6 +36,11 @@ fi
 if test "x$enable_trace" = "xno" -o "x$enable_debug" = "xno"
 then
     AC_DEFINE(NO_TRACE_MSGS,1,[Define to disable trace messages.])
+fi
+if test "x$with_nptl" = "xyes"
+then
+    AC_DEFINE(HAVE_NPTL,1,[Define to use glibc NPTL threading support.])
+    AC_SUBST(LIBPTHREAD,"-lpthread")
 fi
 
 dnl **** Check for some programs ****
