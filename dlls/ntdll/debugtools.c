@@ -104,7 +104,7 @@ inline static char *put_string_a( const char *src, int n )
 
     if (n == -1) n = strlen(src);
     if (n < 0) n = 0;
-    else if (n > 200) n = 200;
+    else if (n > 80) n = 80;
     dst = res = gimme1 (n * 4 + 6);
     *dst++ = '"';
     while (n-- > 0)
@@ -148,7 +148,7 @@ inline static char *put_string_w( const WCHAR *src, int n )
 
     if (n == -1) n = strlenW(src);
     if (n < 0) n = 0;
-    else if (n > 200) n = 200;
+    else if (n > 80) n = 80;
     dst = res = gimme1 (n * 5 + 7);
     *dst++ = 'L';
     *dst++ = '"';
