@@ -55,6 +55,7 @@ extern Atom wmProtocols;
 extern Atom wmDeleteWindow;
 extern Atom dndProtocol;
 extern Atom dndSelection;
+extern Atom netwmPing;
 
 #define DndNotDnd       -1    /* OffiX drag&drop */
 #define DndUnknown      0
@@ -460,6 +461,15 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
             if (!hwnd) hwnd = last_focus;
             if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, event_time );
         }
+    } else if (protocol == netwmPing) {
+      XClientMessageEvent xev;
+      xev = *event;
+      
+      TRACE("NET_WM Ping\n");
+      xev.window = DefaultRootWindow(xev.display);
+      XSendEvent(xev.display, xev.window, False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*)&xev);
+      /* this line is semi-stolen from gtk2 */
+      TRACE("NET_WM Pong\n");
     }
 }
 

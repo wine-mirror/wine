@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "ts_xlib.h"
 #include <X11/Xresource.h>
@@ -59,6 +60,8 @@ Atom dndSelection = None;
 Atom wmChangeState = None;
 Atom mwmHints = None;
 Atom kwmDockWindow = None;
+Atom netwmPid = None;
+Atom netwmPing = None;
 Atom _kde_net_wm_system_tray_window_for = None; /* KDE 2 Final */
 
 static LPCSTR whole_window_atom;
@@ -338,6 +341,7 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
     i = 0;
     protocols[i++] = wmDeleteWindow;
     if (wmTakeFocus) protocols[i++] = wmTakeFocus;
+    if (netwmPing) protocols[i++] = netwmPing;
     XSetWMProtocols( display, data->whole_window, protocols, i );
 
     /* class hints */
@@ -373,6 +377,12 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
                              XA_WINDOW, 32, PropModeReplace, (char*)&data->whole_window, 1 );
     }
 
+    /* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties */
+    XSetWMProperties(display, data->whole_window, NULL, NULL, NULL, 0, NULL, NULL, NULL);
+    /* set the pid. together, these properties are needed so the window manager can kill us if we freeze */
+    i = getpid();
+    XChangeProperty(display, data->whole_window, netwmPid, XA_CARDINAL, 32, PropModeReplace, (char *)&i, 1);
+    
     if (mwmHints != None)
     {
         MwmHints mwm_hints;
@@ -627,6 +637,8 @@ static void create_desktop( Display *display, WND *wndPtr )
     mwmHints = XInternAtom( display, _XA_MWM_HINTS, False );
     kwmDockWindow = XInternAtom( display, "KWM_DOCKWINDOW", False );
     _kde_net_wm_system_tray_window_for = XInternAtom( display, "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR", False );
+    netwmPid = XInternAtom( display, "_NET_WM_PID", False );
+    netwmPing = XInternAtom( display, "_NET_WM_PING", False );
     wine_tsx11_unlock();
 
     whole_window_atom  = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_whole_window" ));
