@@ -396,6 +396,15 @@ static const char main_key_CS[MAIN_LEN][4] =
  "<>\\|"
 };
 
+/*** Latin American keyboard layout (contributed by Gabriel Orlando Garcia) */
+static const char main_key_LA[MAIN_LEN][4] =
+{
+ "|∞¨","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?\\","°ø",
+ "qQ@","wW","eE","rR","tT","yY","uU","iI","oO","pP","¥®","+*~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","Ò—","{[^","}]`",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>"
+};
 
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
@@ -435,6 +444,7 @@ static const struct {
  {"Slovak keyboard layout", 28592, &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Slovak and Czech keyboard layout without dead keys", 28592, &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Czech keyboard layout", 28592, &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };
