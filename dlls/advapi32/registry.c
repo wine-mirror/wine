@@ -345,12 +345,11 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
 
     if (!status)
     {
-        DWORD len = WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
-                                         NULL, 0, NULL, NULL );
-        DWORD cls_len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->ClassOffset),
-                                             info->ClassLength / sizeof(WCHAR),
-                                             NULL, 0, NULL, NULL );
+        DWORD len, cls_len;
 
+        RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
+        RtlUnicodeToMultiByteSize( &cls_len, (WCHAR *)(buf_ptr + info->ClassOffset),
+                                   info->ClassLength );
         if (ft) *ft = *(FILETIME *)&info->LastWriteTime;
 
         if (len >= *name_len || (class_len && (cls_len >= *class_len)))
@@ -358,17 +357,16 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
         else
         {
             *name_len = len;
-            WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
-                                 name, len, NULL, NULL );
+            RtlUnicodeToMultiByteN( name, len, NULL, info->Name, info->NameLength );
             name[len] = 0;
             if (class_len)
             {
                 *class_len = cls_len;
                 if (class)
                 {
-                    WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->ClassOffset),
-                                         info->ClassLength / sizeof(WCHAR),
-                                         class, cls_len, NULL, NULL );
+                    RtlUnicodeToMultiByteN( class, cls_len, NULL,
+                                            (WCHAR *)(buf_ptr + info->ClassOffset),
+                                            info->ClassLength );
                     class[cls_len] = 0;
                 }
             }
@@ -516,10 +514,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
 
         if (status) goto done;
 
-        len = WideCharToMultiByte( CP_ACP, 0,
-                                   (WCHAR *)(buf_ptr + info->ClassOffset),
-                                   info->ClassLength/sizeof(WCHAR),
-                                   NULL, 0, NULL, NULL );
+        RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength);
         if (class_len)
         {
             if (len + 1 > *class_len) status = STATUS_BUFFER_OVERFLOW;
@@ -527,10 +522,8 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
         }
         if (class && !status)
         {
-            WideCharToMultiByte( CP_ACP, 0,
-                                 (WCHAR *)(buf_ptr + info->ClassOffset),
-                                 info->ClassLength/sizeof(WCHAR),
-                                 class, len, NULL, NULL );
+            RtlUnicodeToMultiByteN( class, len, NULL, (WCHAR *)(buf_ptr + info->ClassOffset),
+                                    info->ClassLength );
             class[len] = 0;
         }
     }
@@ -679,11 +672,11 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
 
     if (is_string( type )) /* need to convert to Unicode */
     {
-        DWORD lenW = MultiByteToWideChar( CP_ACP, 0, data, count, NULL, 0 );
-        if (!(dataW = HeapAlloc( GetProcessHeap(), 0, lenW*sizeof(WCHAR) )))
-            return ERROR_OUTOFMEMORY;
-        MultiByteToWideChar( CP_ACP, 0, data, count, dataW, lenW );
-        count = lenW * sizeof(WCHAR);
+        DWORD lenW;
+        RtlMultiByteToUnicodeSize( &lenW, data, count );
+        if (!(dataW = HeapAlloc( GetProcessHeap(), 0, lenW ))) return ERROR_OUTOFMEMORY;
+        RtlMultiByteToUnicodeN( dataW, lenW, NULL, data, count );
+        count = lenW;
         data = (BYTE *)dataW;
     }
 
@@ -878,17 +871,17 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 
         if (is_string(info->Type))
         {
-            DWORD len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info_size),
-                                             (total_size - info_size) /sizeof(WCHAR),
-                                             NULL, 0, NULL, NULL );
+            DWORD len;
+
+            RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info_size),
+                                       total_size - info_size );
             if (data && len)
             {
                 if (len > *count) status = STATUS_BUFFER_OVERFLOW;
                 else
                 {
-                    WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info_size),
-                                         (total_size - info_size) /sizeof(WCHAR),
-                                         data, len, NULL, NULL );
+                    RtlUnicodeToMultiByteN( data, len, NULL, (WCHAR *)(buf_ptr + info_size),
+                                            total_size - info_size );
                     /* if the type is REG_SZ and data is not 0-terminated
                      * and there is enough space in the buffer NT appends a \0 */
                     if (len < *count && data[len-1]) data[len] = 0;
@@ -1104,24 +1097,24 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
 
         if (value)
         {
-            DWORD len = WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
-                                             NULL, 0, NULL, NULL );
+            DWORD len;
+
+            RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
             if (len >= *val_count)
             {
                 status = STATUS_BUFFER_OVERFLOW;
                 goto done;
             }
-            WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
-                                 value, len, NULL, NULL );
+            RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
             value[len] = 0;
             *val_count = len;
         }
 
         if (is_string(info->Type))
         {
-            DWORD len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->DataOffset),
-                                             (total_size - info->DataOffset) / sizeof(WCHAR),
-                                             NULL, 0, NULL, NULL );
+            DWORD len;
+            RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info->DataOffset),
+                                       total_size - info->DataOffset );
             if (data && len)
             {
                 if (len > *count)
@@ -1129,9 +1122,8 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
                     status = STATUS_BUFFER_OVERFLOW;
                     goto done;
                 }
-                WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->DataOffset),
-                                     (total_size - info->DataOffset) / sizeof(WCHAR),
-                                     data, len, NULL, NULL );
+                RtlUnicodeToMultiByteN( data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
+                                        total_size - info->DataOffset );
                 /* if the type is REG_SZ and data is not 0-terminated
                  * and there is enough space in the buffer NT appends a \0 */
                 if (len < *count && data[len-1]) data[len] = 0;
