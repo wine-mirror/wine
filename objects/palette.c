@@ -421,6 +421,7 @@ UINT32 WINAPI GetSystemPaletteEntries32(
     TRACE(palette, "hdc=%04x,start=%i,count=%i\n", hdc,start,count);
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    if (!entries) return COLOR_GetSystemPaletteSize();
     if (start >= dc->w.devCaps->sizePalette)
       {
 	GDI_HEAP_UNLOCK( hdc );

@@ -14,7 +14,6 @@
 #include "global.h"
 #include "sysmetrics.h"
 #include "cursoricon.h"
-#include "color.h"
 #include "debug.h"
 #include "x11drv.h"
 
@@ -462,35 +461,40 @@ HANDLE32 WINAPI LoadImage32A( HINSTANCE32 hinst, LPCSTR name, UINT32 type,
 HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
                 INT32 desiredx, INT32 desiredy, UINT32 loadflags )
 {
-	if (HIWORD(name)) {
-		TRACE(resource,"(0x%04x,%p,%d,%d,%d,0x%08x)\n",
-			hinst,name,type,desiredx,desiredy,loadflags
-		);
-	} else {
-		TRACE(resource,"(0x%04x,%p,%d,%d,%d,0x%08x)\n",
-			hinst,name,type,desiredx,desiredy,loadflags
-		);
+    if (HIWORD(name)) {
+        TRACE(resource,"(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+	      hinst,name,type,desiredx,desiredy,loadflags);
+    } else {
+        TRACE(resource,"(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+	      hinst,name,type,desiredx,desiredy,loadflags);
+    }
+    if (loadflags & LR_DEFAULTSIZE) {
+        if (type == IMAGE_ICON) {
+	    if (!desiredx) desiredx = SYSMETRICS_CXICON;
+	    if (!desiredy) desiredy = SYSMETRICS_CYICON;
+	} else if (type == IMAGE_CURSOR) {
+            if (!desiredx) desiredx = SYSMETRICS_CXCURSOR;
+	    if (!desiredy) desiredy = SYSMETRICS_CYCURSOR;
 	}
-    if (loadflags & LR_DEFAULTSIZE)
-    {
-      if (type == IMAGE_ICON) {
-        if (!desiredx) desiredx = SYSMETRICS_CXICON;
-	if (!desiredy) desiredy = SYSMETRICS_CYICON;
-      } else if (type == IMAGE_CURSOR) {
-        if (!desiredx) desiredx = SYSMETRICS_CXCURSOR;
-	if (!desiredy) desiredy = SYSMETRICS_CYCURSOR;
-      }
     }
     if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
     switch (type) {
-        case IMAGE_BITMAP:
-            return BITMAP_LoadBitmap32W(hinst, name, loadflags);
-        case IMAGE_ICON:
-	    return CURSORICON_Load32(hinst, name, desiredx, desiredy,
-	      MIN(16, COLOR_GetSystemPaletteSize()), FALSE, loadflags);
-        case IMAGE_CURSOR:
-	    return CURSORICON_Load32(hinst, name, desiredx, desiredy, 1, TRUE,
-	      loadflags);
+    case IMAGE_BITMAP:
+        return BITMAP_LoadBitmap32W(hinst, name, loadflags);
+
+    case IMAGE_ICON:
+        {
+	HDC32 hdc = GetDC32(0);
+	UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
+	ReleaseDC32(0, hdc);
+
+	return CURSORICON_Load32(hinst, name, desiredx, desiredy,
+				 MIN(16, palEnts), FALSE, loadflags);
+	}
+
+    case IMAGE_CURSOR:
+        return CURSORICON_Load32(hinst, name, desiredx, desiredy,
+				 1, TRUE, loadflags);
     }
     return 0;
 }

@@ -11,7 +11,6 @@
 #include "bitmap.h"
 #include "callback.h"
 #include "palette.h"
-#include "color.h"
 #include "global.h"
 #include "debug.h"
 #include "x11drv.h"

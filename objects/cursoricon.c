@@ -833,6 +833,10 @@ HCURSOR16 WINAPI LoadCursor16( HINSTANCE16 hInstance, SEGPTR name )
  */
 HICON16 WINAPI LoadIcon16( HINSTANCE16 hInstance, SEGPTR name )
 {
+    HDC32 hdc = GetDC32(0);
+    UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
+    ReleaseDC32(0, hdc);
+
     if (HIWORD(name))
         TRACE(icon, "%04x '%s'\n",
                       hInstance, (char *)PTR_SEG_TO_LIN( name ) );
@@ -842,7 +846,7 @@ HICON16 WINAPI LoadIcon16( HINSTANCE16 hInstance, SEGPTR name )
 
     return CURSORICON_Load16( hInstance, name,
                               SYSMETRICS_CXICON, SYSMETRICS_CYICON,
-                              MIN( 16, COLOR_GetSystemPaletteSize() ), FALSE, 0);
+                              MIN(16, palEnts), FALSE, 0);
 }
 
 
@@ -1294,7 +1298,11 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
     UINT16 retVal = 0;
     if( dir && !dir->idReserved && (dir->idType & 3) )
     {
-	int colors = (cFlag & LR_MONOCHROME) ? 2 : COLOR_GetSystemPaletteSize();
+        HDC32 hdc = GetDC32(0);
+	UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
+	int colors = (cFlag & LR_MONOCHROME) ? 2 : palEnts;
+	ReleaseDC32(0, hdc);
+
 	if( bIcon )
 	{
 	    ICONDIRENTRY* entry;
@@ -1484,9 +1492,13 @@ HCURSOR32 WINAPI LoadCursorFromFile32A (LPCSTR name)
  */
 HICON32 WINAPI LoadIcon32W(HINSTANCE32 hInstance, LPCWSTR name)
 {
+    HDC32 hdc = GetDC32(0);
+    UINT32 palEnts = GetSystemPaletteEntries32(hdc, 0, 0, NULL);
+    ReleaseDC32(0, hdc);
+
     return CURSORICON_Load32( hInstance, name,
                               SYSMETRICS_CXICON, SYSMETRICS_CYICON,
-                              MIN( 16, COLOR_GetSystemPaletteSize() ), FALSE, 0);
+                              MIN( 16, palEnts ), FALSE, 0);
 }
 
 /***********************************************************************
