@@ -762,9 +762,8 @@ UINT32 WINAPI GetTextCharsetInfo(
     HGDIOBJ32 hFont;
     UINT32 charSet = DEFAULT_CHARSET;
     LOGFONT32W lf;
+    CHARSETINFO csinfo;
 
-    if (fs != NULL)
-        FIXME(text,"(0x%x,%p,%08lx): stub\n",hdc,fs,flags);
     hFont = GetCurrentObject(hdc, OBJ_FONT);
     if (hFont == 0)
         return(DEFAULT_CHARSET);
@@ -772,7 +771,9 @@ UINT32 WINAPI GetTextCharsetInfo(
         charSet = lf.lfCharSet;
 
     if (fs != NULL) {
-        /* ... fill fontstruct too ... still to do*/
+      if (!TranslateCharsetInfo(charSet, &csinfo, TCI_SRCCHARSET))
+           return  (DEFAULT_CHARSET);
+      memcpy(fs, &csinfo.fs, sizeof(FONTSIGNATURE));
     }
     return charSet;
 }
