@@ -3223,6 +3223,7 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
   BOOL FullSelected;
   DWORD cditemmode = CDRF_DODEFAULT;
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  INT scrollOffset;
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
@@ -3261,6 +3262,10 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
   if(GETITEMCOUNT(infoPtr) == 0)
     return;
 
+  /* Get scroll bar info once before loop */
+  GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
+  scrollOffset = scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE;
+
   for (; nItem < nLast; nItem++)
   {
     RECT SuggestedFocusRect;
@@ -3288,8 +3293,8 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
 
         Header_GetItemRect(infoPtr->hwndHeader, nColumnCount-1, &br);
 
-        dis.rcItem.left =0; 
-        dis.rcItem.right = max(dis.rcItem.left, br.right);
+        dis.rcItem.left = -scrollOffset; 
+        dis.rcItem.right = max(dis.rcItem.left, br.right - scrollOffset);
         dis.rcItem.top = nDrawPosY;
         dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
        
@@ -3338,11 +3343,8 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
       rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
 
       /* Offset the Scroll Bar Pos */
-      if (GetScrollInfo(hwnd, SB_HORZ, &scrollInfo) != FALSE) 
-      {
-        rcItem.left -= (scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE);
-        rcItem.right -= (scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE);
-      }
+      rcItem.left -= scrollOffset;
+      rcItem.right -= scrollOffset;
 
       if (j == 0)
       {
@@ -5357,6 +5359,8 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
   INT nIndent;
   TEXTMETRICA tm;
   LVITEMA lvItem;
+  INT scrollOffset;
+  SCROLLINFO scrollInfo;
 
   TRACE("(hwnd=%x, nItem=%d, lprc=%p)\n", hwnd, nItem, lprc);
 
@@ -5725,6 +5729,16 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
         }
         break;
       }
+	  /* Adjust rectangle by scrollbar offset*/
+	  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
+	  scrollInfo.cbSize = sizeof(SCROLLINFO);
+	  scrollInfo.fMask = SIF_POS;
+
+	  GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
+
+	  scrollOffset = scrollInfo.nPos * LISTVIEW_SCROLL_DIV_SIZE;
+	  lprc->left -= scrollOffset;
+	  lprc->right -= scrollOffset;
     }
   }
   return bResult;
