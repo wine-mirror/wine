@@ -643,8 +643,7 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     BOOL ret;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
 
-    nSize = sizeof(*pemr) + (count+1)/2 * 2 * sizeof(WCHAR) +
-      (lpDx ? count * sizeof(INT) : 0);
+    nSize = sizeof(*pemr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
 
     TRACE("%s count %d nSize = %ld\n", debugstr_wn(str, count), count, nSize);
     pemr = HeapAlloc(GetProcessHeap(), 0, nSize);
@@ -675,13 +674,18 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         pemr->emrtext.rcl.bottom = lprect->bottom;
     }
 
-    if(lpDx) {
-        pemr->emrtext.offDx = sizeof(*pemr) + (count+1)/2 * 2 * sizeof(WCHAR);
+    pemr->emrtext.offDx = pemr->emrtext.offString + count * sizeof(WCHAR);
+    if(lpDx)
 	memcpy((char*)pemr + pemr->emrtext.offDx, lpDx, count * sizeof(INT));
-    } else
-        pemr->emrtext.offDx = 0; /* FIXME: actually Windows fills out the array
-				     using GetCharWidth in this case */
-
+    else
+    {
+        UINT i;
+        INT *dx = (INT *)((char*)pemr + pemr->emrtext.offDx);
+        for (i = 0; i < count; i++)
+        {
+            GetCharWidth32W(physDev->hdc, str[i], str[i], &dx[i]);
+        }
+    }
 
     ret = EMFDRV_WriteRecord( dev, &pemr->emr );
     if(ret)
