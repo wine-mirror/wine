@@ -2662,7 +2662,7 @@ PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         pda = (PageSetupDataA*)lParam;
 	SetPropA(hDlg,"__WINE_PAGESETUPDLGDATA",pda);
 	if (pda->dlga->Flags & PSD_ENABLEPAGESETUPHOOK) {
-	    res = pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,lParam);
+	    res = pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,(LPARAM)pda->dlga);
 	    if (!res) {
 		FIXME("Setup page hook failed?\n");
 		res = TRUE;
@@ -2744,7 +2744,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         pda = (PageSetupDataW*)lParam;
 	SetPropA(hDlg,"__WINE_PAGESETUPDLGDATA",pda);
 	if (pda->dlga->Flags & PSD_ENABLEPAGESETUPHOOK) {
-	    res = pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,lParam);
+	    res = pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,(LPARAM)pda->dlga);
 	    if (!res) {
 		FIXME("Setup page hook failed?\n");
 		res = TRUE;
