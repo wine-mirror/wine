@@ -260,6 +260,7 @@ static void	EDIT_WM_SetFocus(WND *wnd, EDITSTATE *es);
 static void	EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw);
 static void	EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPARAM lParam, BOOL unicode);
 static void	EDIT_WM_Size(WND *wnd, EDITSTATE *es, UINT action, INT width, INT height);
+static LRESULT  EDIT_WM_StyleChanged (WND *wnd, EDITSTATE *es, WPARAM which, const STYLESTRUCT *style);
 static LRESULT	EDIT_WM_SysKeyDown(WND *wnd, EDITSTATE *es, INT key, DWORD key_data);
 static void	EDIT_WM_Timer(WND *wnd, EDITSTATE *es);
 static LRESULT	EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos);
@@ -378,7 +379,7 @@ static DWORD get_app_version(void)
  *
  *	The messages are in the order of the actual integer values
  *	(which can be found in include/windows.h)
- *	Whereever possible the 16 bit versions are converted to
+ *	Wherever possible the 16 bit versions are converted to
  *	the 32 bit ones, so that we can 'fall through' to the
  *	helper functions.  These are mostly 32 bit (with a few
  *	exceptions, clearly indicated by a '16' extension to their
@@ -848,6 +849,10 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 		result = EDIT_EM_CharFromPos(wnd, es, SLOWORD(lParam), SHIWORD(lParam));
 		break;
 
+        /* End of the EM_ messages which were in numerical order; what order
+         * are these in?  vaguely alphabetical?
+         */
+
 	case WM_GETDLGCODE:
 		DPRINTF_EDIT_MSG32("WM_GETDLGCODE");
 		result = DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
@@ -1050,6 +1055,16 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 		DPRINTF_EDIT_MSG32("WM_SIZE");
 		EDIT_WM_Size(wnd, es, (UINT)wParam, LOWORD(lParam), HIWORD(lParam));
 		break;
+
+        case WM_STYLECHANGED:
+		DPRINTF_EDIT_MSG32("WM_STYLECHANGED");
+                result = EDIT_WM_StyleChanged (wnd, es, wParam, (const STYLESTRUCT *)lParam);
+                break;
+               
+        case WM_STYLECHANGING:
+		DPRINTF_EDIT_MSG32("WM_STYLECHANGING");
+                result = 0; /* See EDIT_WM_StyleChanged */
+                break;
 
 	case WM_SYSKEYDOWN:
 		DPRINTF_EDIT_MSG32("WM_SYSKEYDOWN");
@@ -4386,6 +4401,7 @@ static LRESULT EDIT_WM_MouseMove(WND *wnd, EDITSTATE *es, INT x, INT y)
  *
  *	WM_NCCREATE
  *
+ * See also EDIT_WM_StyleChanged
  */
 static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL unicode)
 {
@@ -4436,6 +4452,15 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 	if (es->style & ES_COMBO)
 	   es->hwndListBox = GetDlgItem(hwndParent, ID_CB_LISTBOX);
 
+        /* Number overrides lowercase overrides uppercase (at least it
+         * does in Win95).  However I'll bet that ES_NUMBER would be
+         * invalid under Win 3.1.
+         */
+        if (es->style & ES_NUMBER) {
+                ; /* do not override the ES_NUMBER */
+        }  else if (es->style & ES_LOWERCASE) {
+                es->style &= ~ES_UPPERCASE;
+        }
 	if (es->style & ES_MULTILINE) {
 		es->buffer_limit = BUFLIMIT_MULTI;
 		if (es->style & WS_VSCROLL)
@@ -4444,6 +4469,7 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 			es->style |= ES_AUTOHSCROLL;
 		es->style &= ~ES_PASSWORD;
 		if ((es->style & ES_CENTER) || (es->style & ES_RIGHT)) {
+                        /* Confirmed - RIGHT overrides CENTER */
 			if (es->style & ES_RIGHT)
 				es->style &= ~ES_CENTER;
 			es->style &= ~WS_HSCROLL;
@@ -4454,17 +4480,18 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 		es->style |= ES_AUTOVSCROLL;
 	} else {
 		es->buffer_limit = BUFLIMIT_SINGLE;
-		es->style &= ~ES_CENTER;
-		es->style &= ~ES_RIGHT;
+                if (WIN31_LOOK == TWEAK_WineLook ||
+                    WIN95_LOOK == TWEAK_WineLook) {
+		        es->style &= ~ES_CENTER;
+		        es->style &= ~ES_RIGHT;
+                } else {
+			if (es->style & ES_RIGHT)
+				es->style &= ~ES_CENTER;
+                }
 		es->style &= ~WS_HSCROLL;
 		es->style &= ~WS_VSCROLL;
 		es->style &= ~ES_AUTOVSCROLL;
 		es->style &= ~ES_WANTRETURN;
-		if (es->style & ES_UPPERCASE) {
-			es->style &= ~ES_LOWERCASE;
-			es->style &= ~ES_NUMBER;
-		} else if (es->style & ES_LOWERCASE)
-			es->style &= ~ES_NUMBER;
 		if (es->style & ES_PASSWORD)
 			es->password_char = '*';
 
@@ -4716,6 +4743,66 @@ static void EDIT_WM_Size(WND *wnd, EDITSTATE *es, UINT action, INT width, INT he
 	}
 }
 
+
+/*********************************************************************
+ *
+ *	WM_STYLECHANGED
+ *
+ * This message is sent by SetWindowLong on having changed either the Style
+ * or the extended style.
+ *
+ * We ensure that the window's version of the styles and the EDITSTATE's agree.
+ *
+ * See also EDIT_WM_NCCreate
+ *
+ * It appears that the Windows version of the edit control allows the style
+ * (as retrieved by GetWindowLong) to be any value and maintains an internal
+ * style variable which will generally be different.  In this function we 
+ * update the internal style based on what changed in the externally visible
+ * style.
+ *
+ * Much of this content as based upon the MSDN, especially:
+ *  Platform SDK Documentation -> User Interface Services ->
+ *      Windows User Interface -> Edit Controls -> Edit Control Reference ->
+ *      Edit Control Styles
+ */
+static LRESULT  EDIT_WM_StyleChanged (WND *wnd,
+                                      EDITSTATE *es,
+                                      WPARAM which,
+                                      const STYLESTRUCT *style)
+{
+        if (GWL_STYLE == which) {
+                DWORD style_change_mask;
+                DWORD new_style;
+                /* Only a subset of changes can be applied after the control
+                 * has been created.
+                 */
+                style_change_mask = ES_UPPERCASE | ES_LOWERCASE |
+                                    ES_NUMBER;
+                if (es->style & ES_MULTILINE) 
+                        style_change_mask |= ES_WANTRETURN;
+
+                new_style = style->styleNew & style_change_mask;
+
+                /* Number overrides lowercase overrides uppercase (at least it
+                 * does in Win95).  However I'll bet that ES_NUMBER would be
+                 * invalid under Win 3.1.
+                 */
+                if (new_style & ES_NUMBER) {
+                        ; /* do not override the ES_NUMBER */
+                }  else if (new_style & ES_LOWERCASE) {
+                        new_style &= ~ES_UPPERCASE;
+                }
+        
+                es->style = (es->style & ~style_change_mask) | new_style;
+        } else if (GWL_EXSTYLE == which) {
+                ; /* FIXME - what is needed here */
+        } else {
+                WARN ("Invalid style change %d\n",which);
+        }
+
+        return 0;
+}
 
 /*********************************************************************
  *
