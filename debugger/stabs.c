@@ -1280,9 +1280,11 @@ leave:
 static int DEBUG_ProcessElfFileFromPath(const char * filename, 
 					unsigned int load_offset, const char* path)
 {
-   int 		rtn = FALSE;
+   int		rtn = -1;
    char 	*s, *t, *fn;
    char*	paths = NULL;
+
+   if (!path) return -1;
 
    for (s = paths = DBG_strdup(path); s && *s; s = (t) ? (t+1) : NULL) {
       t = strchr(s, ':');
