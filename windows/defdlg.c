@@ -266,12 +266,6 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         /* 16 bit dlg procs only return BOOL16 */
         if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
             result = LOWORD(result);
-
-        /* Check if window was destroyed by dialog procedure */
-        if (dlgInfo->flags & DF_END && !(dlgInfo->flags & DF_ENDING)) {
-            dlgInfo->flags |= DF_ENDING;
-            DestroyWindow32( hwnd );
-        }
     }
 
     if (!result && IsWindow32(hwnd))
@@ -329,12 +323,6 @@ LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
         /* 16 bit dlg procs only return BOOL16 */
         if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
             result = LOWORD(result);
-
-        /* Check if window was destroyed by dialog procedure */
-        if (dlgInfo->flags & DF_END && !(dlgInfo->flags & DF_ENDING)) {
-            dlgInfo->flags |= DF_ENDING;
-            DestroyWindow32( hwnd );
-        }
     }
 
     if (!result && IsWindow32(hwnd))
@@ -392,12 +380,6 @@ LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
         /* 16 bit dlg procs only return BOOL16 */
         if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
             result = LOWORD(result);
-
-        /* Check if window was destroyed by dialog procedure */
-        if (dlgInfo->flags & DF_END && !(dlgInfo->flags & DF_ENDING)) {
-            dlgInfo->flags |= DF_ENDING;
-            DestroyWindow32( hwnd );
-        }
     }
 
     if (!result && IsWindow32(hwnd))

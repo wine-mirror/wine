@@ -38,7 +38,6 @@ typedef struct
 #pragma pack(4)
 
 #define DF_END  0x0001
-#define DF_ENDING 0x0002
 
 extern BOOL32 DIALOG_Init(void);
 extern HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,

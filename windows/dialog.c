@@ -869,7 +869,6 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
     }
     retval = dlgInfo->idResult;
     EnableWindow32( owner, TRUE );
-    dlgInfo->flags |= DF_ENDING;   /* try to stop it being destroyed twice */
     DestroyWindow32( hwnd );
     return retval;
 }
