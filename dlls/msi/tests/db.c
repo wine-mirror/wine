@@ -17,12 +17,89 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#include <stdio.h>
 
 #include <windows.h>
 #include <msi.h>
 #include <msiquery.h>
 
 #include "wine/test.h"
+
+MSIHANDLE helper_createpackage()
+{
+    MSIHANDLE hdb = 0;
+    CHAR szName[] = "C:\\mytest.msi";
+    UINT res;
+    CHAR szPackage[10];
+    MSIHANDLE hPackage;
+    MSIHANDLE suminfo;
+
+    DeleteFile(szName);
+
+    /* create an empty database */
+    res = MsiOpenDatabase(szName, MSIDBOPEN_CREATE, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to create database" );
+
+    res = MsiDatabaseCommit( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to commit database" );
+
+    /* build summmary info */
+    res = MsiGetSummaryInformation(hdb, NULL, 7, &suminfo);
+    ok( res == ERROR_SUCCESS , "Failed to open summaryinfo\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,2, VT_LPSTR, 0,NULL,
+                        "Installation Database");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,3, VT_LPSTR, 0,NULL,
+                        "Installation Database");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,4, VT_LPSTR, 0,NULL,
+                        "Wine Hackers");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,7, VT_LPSTR, 0,NULL,
+                    ";1033");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,9, VT_LPSTR, 0,NULL,
+                    "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo, 14, VT_I4, 100, NULL, NULL);
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo, 15, VT_I4, 0, NULL, NULL);
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoPersist(suminfo);
+    ok( res == ERROR_SUCCESS , "Failed to make summary info persist\n" );
+
+    res = MsiCloseHandle( suminfo);
+    ok( res == ERROR_SUCCESS , "Failed to close suminfo" );
+
+    sprintf(szPackage,"#%li",(DWORD)hdb);
+    res = MsiOpenPackage(szPackage,&hPackage);
+    ok( res == ERROR_SUCCESS , "Failed to open package\n" );
+
+    res = MsiCloseHandle( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to close database" );
+
+    return hPackage;
+}
+
+static void test_createpackage(void)
+{
+    MSIHANDLE hPackage = 0;
+    UINT res;
+
+    hPackage = helper_createpackage();
+    ok ( hPackage != 0, " Failed to create package\n");
+
+    res = MsiCloseHandle( hPackage);
+    ok( res == ERROR_SUCCESS , "Failed to close package" );
+}
 
 static void test_msidatabase(void)
 {
@@ -358,4 +435,5 @@ START_TEST(db)
     test_msiinsert();
     test_msidecomposedesc();
     test_msibadqueries();
+    test_createpackage();
 }
