@@ -811,7 +811,8 @@ HWND WINAPI GetActiveWindow(void)
  */
 static BOOL WINPOS_CanActivate(WND* pWnd)
 {
-    if( pWnd && !(pWnd->dwStyle & (WS_DISABLED | WS_CHILD)) ) return TRUE;
+    if( pWnd && ( (pWnd->dwStyle & (WS_DISABLED | WS_VISIBLE | WS_CHILD))
+       == WS_VISIBLE ) ) return TRUE;
     return FALSE;
 }
 
@@ -834,7 +835,7 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
 
-    if ( !WINPOS_CanActivate(wndPtr) )
+    if (!wndPtr || (wndPtr->dwStyle & (WS_DISABLED | WS_CHILD)))
     {
         prev = 0;
         goto end;
