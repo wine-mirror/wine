@@ -40,8 +40,9 @@ typedef int XvImage;
 #include "wine_gl.h"
 
 extern ICOM_VTABLE(IDirectDraw)		xlib_ddvt;
-extern ICOM_VTABLE(IDirectDraw2)         xlib_dd2vt;
+extern ICOM_VTABLE(IDirectDraw2)        xlib_dd2vt;
 extern ICOM_VTABLE(IDirectDraw4)        xlib_dd4vt;
+extern ICOM_VTABLE(IDirectDraw7)        xlib_dd7vt;
 extern ICOM_VTABLE(IDirectDrawPalette)	xlib_ddpalvt;
 extern ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt;
 

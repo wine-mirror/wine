@@ -528,6 +528,24 @@ HRESULT WINAPI IDirectDraw4Impl_GetDeviceIdentifier(
     return DD_OK;
 }
 
+HRESULT WINAPI IDirectDraw7Impl_StartModeTest(
+    LPDIRECTDRAW7 iface,LPSIZE lpModesToTest,DWORD dwNumEntries,DWORD dwFlags
+) {
+    FIXME("(%p)->(%p,%ld,0x%08lx),empty stub!\n",iface,
+	lpModesToTest,dwNumEntries,dwFlags
+    );
+    return DD_OK;
+}
+
+HRESULT WINAPI IDirectDraw7Impl_EvaluateMode(
+    LPDIRECTDRAW7 iface,DWORD dwFlags, DWORD *pSecondsUntilTimeout
+) {
+    FIXME("(%p)->(0x%08lx,%p),empty stub!\n",iface,
+	dwFlags,pSecondsUntilTimeout
+    );
+    return DD_OK;
+}
+
 HRESULT common_off_screen_CreateSurface(
     IDirectDraw2Impl* This,IDirectDrawSurfaceImpl* lpdsf
 ) {

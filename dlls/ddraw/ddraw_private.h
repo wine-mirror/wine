@@ -189,6 +189,13 @@ extern HRESULT WINAPI IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 iface,
 						    DWORD dwFlags
 );
 
+extern HRESULT WINAPI IDirectDraw7Impl_StartModeTest(
+	LPDIRECTDRAW7 iface,LPSIZE modetotest,DWORD num,DWORD flags
+);
+extern HRESULT WINAPI IDirectDraw7Impl_EvaluateMode(
+	LPDIRECTDRAW7 iface,DWORD flags,DWORD *seconduntiltimeout
+);
+
 /*****************************************************************************
  * IDirectDrawPalette implementation structure
  */

@@ -906,8 +906,17 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 	dd->ref = 1;ICOM_VTBL(dd) = &xlib_dd4vt;dd->d = This->d;This->d->ref++;
 	*obj = dd;
 
-	IDirectDraw2_AddRef(iface);
+	IDirectDraw4_AddRef(iface);
 	TRACE("  Creating IDirectDraw4 interface (%p)\n", *obj);
+	return S_OK;
+    }
+    if ( IsEqualGUID( &IID_IDirectDraw7, refiid ) ) {
+	IDirectDraw4Impl *dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
+	dd->ref = 1;ICOM_VTBL(dd) = &xlib_dd7vt;dd->d = This->d;This->d->ref++;
+	*obj = dd;
+
+	IDirectDraw7_AddRef(iface);
+	FIXME("  Creating IDirectDraw7 interface by reusing DirectDraw4!(%p)\n", *obj);
 	return S_OK;
     }
 #ifdef HAVE_OPENGL
@@ -1266,12 +1275,53 @@ ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = {
     XCAST(Initialize)IDirectDraw2Impl_Initialize,
     XCAST(RestoreDisplayMode)IDirectDraw2Impl_RestoreDisplayMode,
     XCAST(SetCooperativeLevel)Xlib_IDirectDraw2Impl_SetCooperativeLevel,
-    XCAST(SetDisplayMode)Xlib_IDirectDrawImpl_SetDisplayMode,
+    XCAST(SetDisplayMode)Xlib_IDirectDraw2Impl_SetDisplayMode,
     XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
     XCAST(GetAvailableVidMem)Xlib_IDirectDraw2Impl_GetAvailableVidMem,
     IDirectDraw4Impl_GetSurfaceFromDC,
     IDirectDraw4Impl_RestoreAllSurfaces,
     IDirectDraw4Impl_TestCooperativeLevel,
     IDirectDraw4Impl_GetDeviceIdentifier
+};
+#undef XCAST
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)	(typeof(xlib_dd7vt.fn##fun))
+#else
+# define XCAST(fun)	(void*)
+#endif
+
+ICOM_VTABLE(IDirectDraw7) xlib_dd7vt = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    XCAST(QueryInterface)Xlib_IDirectDraw2Impl_QueryInterface,
+    XCAST(AddRef)IDirectDraw2Impl_AddRef,
+    XCAST(Release)Xlib_IDirectDraw2Impl_Release,
+    XCAST(Compact)IDirectDraw2Impl_Compact,
+    XCAST(CreateClipper)IDirectDraw2Impl_CreateClipper,
+    XCAST(CreatePalette)Xlib_IDirectDraw2Impl_CreatePalette,
+    XCAST(CreateSurface)Xlib_IDirectDraw2Impl_CreateSurface,
+    XCAST(DuplicateSurface)IDirectDraw2Impl_DuplicateSurface,
+    XCAST(EnumDisplayModes)Xlib_IDirectDraw2Impl_EnumDisplayModes,
+    XCAST(EnumSurfaces)IDirectDraw2Impl_EnumSurfaces,
+    XCAST(FlipToGDISurface)IDirectDraw2Impl_FlipToGDISurface,
+    XCAST(GetCaps)Xlib_IDirectDraw2Impl_GetCaps,
+    XCAST(GetDisplayMode)IDirectDraw2Impl_GetDisplayMode,
+    XCAST(GetFourCCCodes)Xlib_IDirectDraw2Impl_GetFourCCCodes,
+    XCAST(GetGDISurface)IDirectDraw2Impl_GetGDISurface,
+    XCAST(GetMonitorFrequency)IDirectDraw2Impl_GetMonitorFrequency,
+    XCAST(GetScanLine)IDirectDraw2Impl_GetScanLine,
+    XCAST(GetVerticalBlankStatus)IDirectDraw2Impl_GetVerticalBlankStatus,
+    XCAST(Initialize)IDirectDraw2Impl_Initialize,
+    XCAST(RestoreDisplayMode)IDirectDraw2Impl_RestoreDisplayMode,
+    XCAST(SetCooperativeLevel)Xlib_IDirectDraw2Impl_SetCooperativeLevel,
+    XCAST(SetDisplayMode)Xlib_IDirectDraw2Impl_SetDisplayMode,
+    XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
+    XCAST(GetAvailableVidMem)Xlib_IDirectDraw2Impl_GetAvailableVidMem,
+    XCAST(GetSurfaceFromDC)IDirectDraw4Impl_GetSurfaceFromDC,
+    XCAST(RestoreAllSurfaces)IDirectDraw4Impl_RestoreAllSurfaces,
+    XCAST(TestCooperativeLevel)IDirectDraw4Impl_TestCooperativeLevel,
+    XCAST(GetDeviceIdentifier)IDirectDraw4Impl_GetDeviceIdentifier,
+    IDirectDraw7Impl_StartModeTest,
+    IDirectDraw7Impl_EvaluateMode,
 };
 #undef XCAST
