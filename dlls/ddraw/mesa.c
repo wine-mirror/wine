@@ -227,8 +227,8 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        switch ((D3DTEXTUREBLEND) dwRenderState) {
 		    case D3DTBLEND_MODULATE:
 		    case D3DTBLEND_MODULATEALPHA:
-		          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			  break;
+		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			break;
 		    default:
 			  ERR("Unhandled texture environment %ld !\n",dwRenderState);
 		}
@@ -239,13 +239,16 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		    case D3DCULL_NONE:
 		         glDisable(GL_CULL_FACE);
 			 break;
+			 /* Not sure about these... The DirectX doc is, well, pretty unclear :-) */
 		    case D3DCULL_CW:
 			 glEnable(GL_CULL_FACE);
 			 glFrontFace(GL_CW);
+			 glCullFace(GL_BACK);
 			 break;
 		    case D3DCULL_CCW:
 			 glEnable(GL_CULL_FACE);
 			 glFrontFace(GL_CCW);
+			 glCullFace(GL_BACK);
 			 break;
 		    default:
 			 ERR("Unhandled cull mode %ld !\n",dwRenderState);
@@ -274,17 +277,23 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        break;
 
 	    case D3DRENDERSTATE_ALPHABLENDENABLE:   /* 27 */
-	        if (dwRenderState)
+	        if (dwRenderState) {
 		    glEnable(GL_BLEND);
-		else
+		    rs->alpha_blend_enable = TRUE;
+		} else {
 		    glDisable(GL_BLEND);
+		    rs->alpha_blend_enable = FALSE;
+		}
 	        break;
 	      
 	    case D3DRENDERSTATE_FOGENABLE: /* 28 */
-	        if (dwRenderState)
+	        if (dwRenderState) {
 		    glEnable(GL_FOG);
-		else
+		    rs->fog_on = TRUE;
+		} else {
 		    glDisable(GL_FOG);
+		    rs->fog_on = FALSE;
+		}
 	        break;
 
 	    case D3DRENDERSTATE_SPECULARENABLE: /* 29 */

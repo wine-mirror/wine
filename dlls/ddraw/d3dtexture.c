@@ -137,7 +137,7 @@ HRESULT WINAPI gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *texture, DWORD dwFla
     return DD_OK;
 }
 
-static void
+static HRESULT
 gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
     GLuint current_texture;
@@ -148,7 +148,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			       GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
     BOOL upload_done = FALSE;
     BOOL error = FALSE;
-    GLenum format, pixel_format;
+    GLenum format = GL_RGBA, pixel_format = GL_UNSIGNED_BYTE; /* This is only to prevent warnings.. */
     VOID *surface = NULL;
 
     DDSURFACEDESC *src_d = (DDSURFACEDESC *)&(This->surface_desc);
@@ -179,7 +179,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	if (pal == NULL) {
 	    ERR("Palettized texture Loading with a NULL palette !\n");
 	    glBindTexture(GL_TEXTURE_2D, current_texture);
-	    return;
+	    return D3DERR_INVALIDPALETTE;
 	}
 	/* Get the surface's palette */
 	for (i = 0; i < 256; i++) {
@@ -323,6 +323,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
     }
 
     glBindTexture(GL_TEXTURE_2D, current_texture);
+    return DD_OK;
 }
 
 HRESULT WINAPI
@@ -462,6 +463,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     IDirectDrawSurfaceImpl *lpD3DTextureImpl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, lpD3DTexture2);
     DWORD mem_used;
     DDSURFACEDESC *src_d, *dst_d;
+    HRESULT ret_value = D3D_OK;
     
     TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DTexture2);
 
@@ -521,14 +523,14 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	    /* Now, load the texture */
 	    /* d3dd->set_context(d3dd); We need to set the context somehow.... */
 	    
-	    gltex_upload_texture(This, glThis->first_unlock);
+	    ret_value = gltex_upload_texture(This, glThis->first_unlock);
 	    glThis->first_unlock = FALSE;
 	    
 	    LEAVE_GL();
 	}
     }
 
-    return D3D_OK;
+    return ret_value;
 }
 
 HRESULT WINAPI
@@ -553,7 +555,7 @@ ULONG WINAPI
 Thunk_IDirect3DTextureImpl_2_Release(LPDIRECT3DTEXTURE2 iface)
 {
     TRACE("(%p)->() thunking to IDirectDrawSurface7 interface.\n", iface);
-    return IDirectDrawSurface7_AddRef(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture2, IDirectDrawSurface7, iface));
+    return IDirectDrawSurface7_Release(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture2, IDirectDrawSurface7, iface));
 }
 
 HRESULT WINAPI
@@ -578,7 +580,7 @@ ULONG WINAPI
 Thunk_IDirect3DTextureImpl_1_Release(LPDIRECT3DTEXTURE iface)
 {
     TRACE("(%p)->() thunking to IDirectDrawSurface7 interface.\n", iface);
-    return IDirectDrawSurface7_AddRef(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirectDrawSurface7, iface));
+    return IDirectDrawSurface7_Release(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirectDrawSurface7, iface));
 }
 
 HRESULT WINAPI

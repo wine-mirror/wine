@@ -67,6 +67,10 @@ typedef struct render_state {
     /* This is needed for the Alpha stuff */
     GLenum alpha_func;
     GLclampf alpha_ref;
+    BOOLEAN alpha_blend_enable;
+
+    /* This is needed to re-enable fogging when XYZRHW and XYZ primitives are mixed */
+    BOOLEAN fog_on;
 } RenderState;
 
 /* Common functions defined in d3dcommon.c */

@@ -577,7 +577,10 @@ void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f)
 {
     int i;
 
-    DDRAW_dump_surface_desc(&(surface->surface_desc));
+    if (TRACE_ON(ddraw)) {
+        DPRINTF("Dumping surface : \n");
+        DDRAW_dump_surface_desc(&(surface->surface_desc));
+    }
     
     fprintf(f, "P6\n%ld %ld\n255\n", surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
 

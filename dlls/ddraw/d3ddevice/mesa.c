@@ -710,6 +710,8 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
 	glMultMatrixf((float *) glThis->world_mat);
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf((float *) glThis->proj_mat);
+
+	if (glThis->render_state.fog_on == TRUE) glEnable(GL_FOG);
     } else if ((vertex_transformed == TRUE) &&
 	       ((glThis->last_vertices_transformed == FALSE) ||
 		(glThis->matrices_changed == TRUE))) {
@@ -732,6 +734,9 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(trans_mat);
+
+	/* Remove also fogging... */
+	glDisable(GL_FOG);
     }
     glThis->matrices_changed = FALSE;
     
@@ -936,10 +941,15 @@ inline static void handle_diffuse(DWORD *color) {
 	       (*color >> 24) & 0xFF);
 }
 inline static void handle_diffuse_and_specular(DWORD *color_d, DWORD *color_s) {
-    glColor4ub((*color_d >> 16) & 0xFF,
-	       (*color_d >>  8) & 0xFF,
-	       (*color_d >>  0) & 0xFF,
-	       (*color_d >> 24) & 0xFF);
+    handle_diffuse(color_d);
+}
+inline static void handle_diffuse_no_alpha(DWORD *color) {
+    glColor3ub((*color >> 16) & 0xFF,
+	       (*color >>  8) & 0xFF,
+	       (*color >>  0) & 0xFF);
+}
+inline static void handle_diffuse_and_specular_no_alpha(DWORD *color_d, DWORD *color_s) {
+    handle_diffuse_no_alpha(color_d);
 }
 inline static void handle_texture(D3DVALUE *coords) {
     glTexCoord2fv(coords);
@@ -1005,7 +1015,10 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 	    D3DVALUE *position =
 	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 
-	    handle_diffuse_and_specular(color_d, color_s);
+	    if (glThis->render_state.alpha_blend_enable == TRUE)
+	        handle_diffuse_and_specular(color_d, color_s);
+	    else
+	        handle_diffuse_and_specular_no_alpha(color_d, color_s);
 	    handle_texture(tex_coord);
 	    handle_xyzrhw(position);
 
@@ -1040,7 +1053,10 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
 		DWORD *color_s = 
 		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
-		handle_diffuse_and_specular(color_d, color_s);
+		if (glThis->render_state.alpha_blend_enable == TRUE)
+		    handle_diffuse_and_specular(color_d, color_s);
+		else
+		    handle_diffuse_and_specular_no_alpha(color_d, color_s);
 	    } else {
 	        if (d3dvtVertexType & D3DFVF_SPECULAR) { 
 		    DWORD *color_s = 
@@ -1049,7 +1065,10 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 		} else if (d3dvtVertexType & D3DFVF_DIFFUSE) {
 		    DWORD *color_d = 
 		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
-		    handle_diffuse(color_d);
+		    if (glThis->render_state.alpha_blend_enable == TRUE)
+		        handle_diffuse(color_d);
+		    else
+		        handle_diffuse_no_alpha(color_d);
 		}
 	    }
 		
@@ -1866,6 +1885,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     gl_object->render_state.min = GL_NEAREST;
     gl_object->render_state.alpha_ref = 0.0; /* No actual idea about the real default value... */
     gl_object->render_state.alpha_func = GL_ALWAYS; /* Here either but it seems logical */
+    gl_object->render_state.alpha_blend_enable = FALSE;
+    gl_object->render_state.fog_on = FALSE;
     
     /* Allocate memory for the matrices */
     gl_object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
@@ -1884,7 +1905,6 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     ENTER_GL();
     TRACE(" current context set\n");
     glClearColor(0.0, 0.0, 0.0, 0.0);
-    glColor3f(1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);
     glReadBuffer(buffer);
