@@ -960,8 +960,6 @@ static BOOL WINAPI DEBUG_CtrlCHandler(DWORD dwCtrlType)
 
 static void DEBUG_InitConsole(void)
 {
-    DWORD	mode;
-
     /* keep it as a cuiexe for now, so that Wine won't touch the Unix stdin,
      * stdout and stderr streams
      */
@@ -970,10 +968,6 @@ static void DEBUG_InitConsole(void)
 	FreeConsole();
 	AllocConsole();
     }
-
-    /* put the line editing mode with the nice emacs features (FIXME: could be triggered by a IVAR) */
-    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
-        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode | WINE_ENABLE_LINE_INPUT_EMACS);
 
     /* set our control-C handler */
     SetConsoleCtrlHandler(DEBUG_CtrlCHandler, TRUE);
