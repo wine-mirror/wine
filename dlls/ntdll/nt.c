@@ -692,12 +692,15 @@ NTSTATUS WINAPI NtPowerInformation(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
  */
 NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
 {
-	static LUID luid;
+    static LUID luid;
 
-	FIXME("%p (0x%08lx%08lx)\n", Luid, luid.DUMMYSTRUCTNAME.HighPart, luid.DUMMYSTRUCTNAME.LowPart);
+    FIXME("%p (0x%08lx%08lx)\n", Luid, luid.HighPart, luid.LowPart);
 
-	luid.QuadPart++;
-	
-	Luid->QuadPart = luid.QuadPart;
-	return STATUS_SUCCESS;
+    luid.LowPart++;
+    if (luid.LowPart==0)
+        luid.HighPart++;
+    Luid->HighPart = luid.HighPart;
+    Luid->LowPart = luid.LowPart;
+
+    return STATUS_SUCCESS;
 }

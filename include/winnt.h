@@ -3591,12 +3591,15 @@ typedef union _ULARGE_INTEGER {
  * Locally Unique Identifier
  */
 
-typedef LARGE_INTEGER LUID,*PLUID;
+typedef struct _LUID {
+    DWORD LowPart;
+    LONG HighPart;
+} LUID, *PLUID;
 
 typedef struct _LUID_AND_ATTRIBUTES {
-  LUID   Luid; 
-  DWORD  Attributes; 
-} LUID_AND_ATTRIBUTES; 
+  LUID   Luid;
+  DWORD  Attributes;
+} LUID_AND_ATTRIBUTES;
 
 /*
  * PRIVILEGE_SET
