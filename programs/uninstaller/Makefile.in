@@ -10,6 +10,8 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = rsrc.rc
+RC_BINSRC = rsrc.rc
+RC_BINARIES = uninstaller.ico
 
 @MAKE_PROG_RULES@
 
