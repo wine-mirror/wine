@@ -717,8 +717,8 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     widthDst  = abs(widthDst);
     heightDst = abs(heightDst);
 
-    if (!(rowSrc = (int *)HeapAlloc( GetProcessHeap(), 0,
-                                    (widthSrc+widthDst)*sizeof(int) ))) return;
+    if (!(rowSrc = HeapAlloc( GetProcessHeap(), 0,
+                              (widthSrc+widthDst)*sizeof(int) ))) return;
     rowDst = rowSrc + widthSrc;
 
       /* When stretching, all modes are the same, and DELETESCANS is faster */

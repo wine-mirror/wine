@@ -123,7 +123,7 @@ DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
 
     ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
     if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppIfTable = (PMIB_IFTABLE)HeapAlloc(heap, flags, dwSize);
+      *ppIfTable = HeapAlloc(heap, flags, dwSize);
       ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
     }
   }
@@ -164,7 +164,7 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
 
     ret = GetIpAddrTable(*ppIpAddrTable, &dwSize, bOrder);
     if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppIpAddrTable = (PMIB_IPADDRTABLE)HeapAlloc(heap, flags, dwSize);
+      *ppIpAddrTable = HeapAlloc(heap, flags, dwSize);
       ret = GetIpAddrTable(*ppIpAddrTable, &dwSize, bOrder);
     }
   }
@@ -205,7 +205,7 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *
 
     ret = GetIpForwardTable(*ppIpForwardTable, &dwSize, bOrder);
     if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppIpForwardTable = (PMIB_IPFORWARDTABLE)HeapAlloc(heap, flags, dwSize);
+      *ppIpForwardTable = HeapAlloc(heap, flags, dwSize);
       ret = GetIpForwardTable(*ppIpForwardTable, &dwSize, bOrder);
     }
   }
@@ -246,7 +246,7 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable,
 
     ret = GetIpNetTable(*ppIpNetTable, &dwSize, bOrder);
     if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppIpNetTable = (PMIB_IPNETTABLE)HeapAlloc(heap, flags, dwSize);
+      *ppIpNetTable = HeapAlloc(heap, flags, dwSize);
       ret = GetIpNetTable(*ppIpNetTable, &dwSize, bOrder);
     }
   }
@@ -287,7 +287,7 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
 
     ret = GetTcpTable(*ppTcpTable, &dwSize, bOrder);
     if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppTcpTable = (PMIB_TCPTABLE)HeapAlloc(heap, flags, dwSize);
+      *ppTcpTable = HeapAlloc(heap, flags, dwSize);
       ret = GetTcpTable(*ppTcpTable, &dwSize, bOrder);
     }
   }
@@ -328,7 +328,7 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
 
     ret = GetUdpTable(*ppUdpTable, &dwSize, bOrder);
     if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppUdpTable = (PMIB_UDPTABLE)HeapAlloc(heap, flags, dwSize);
+      *ppUdpTable = HeapAlloc(heap, flags, dwSize);
       ret = GetUdpTable(*ppUdpTable, &dwSize, bOrder);
     }
   }

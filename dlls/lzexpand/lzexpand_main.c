@@ -508,8 +508,7 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 {
     char *p;
-    char *mfn = (char *)HeapAlloc( GetProcessHeap(), 0,
-                                   strlen(fn) + 3 ); /* "._" and \0 */
+    char *mfn = HeapAlloc( GetProcessHeap(), 0, strlen(fn) + 3 ); /* "._" and \0 */
     if(mfn == NULL) return NULL;
     strcpy( mfn, fn );
     if (!(p = strrchr( mfn, '\\' ))) p = mfn;

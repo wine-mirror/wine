@@ -151,8 +151,7 @@ static BOOL DPL_CreateIUnknown( LPVOID lpDPL )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)lpDPL;
 
-  This->unk = (DirectPlayLobbyIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                       sizeof( *(This->unk) ) );
+  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
   if ( This->unk == NULL )
   {
     return FALSE;
@@ -177,8 +176,7 @@ static BOOL DPL_CreateLobby1( LPVOID lpDPL )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)lpDPL;
 
-  This->dpl = (DirectPlayLobbyData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                               sizeof( *(This->dpl) ) );
+  This->dpl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dpl) ) );
   if ( This->dpl == NULL )
   {
     return FALSE;
@@ -210,8 +208,7 @@ static BOOL DPL_CreateLobby2( LPVOID lpDPL )
 {
   IDirectPlayLobby2AImpl *This = (IDirectPlayLobby2AImpl *)lpDPL;
 
-  This->dpl2 = (DirectPlayLobby2Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                 sizeof( *(This->dpl2) ) );
+  This->dpl2 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dpl2) ) );
   if ( This->dpl2 == NULL )
   {
     return FALSE;
@@ -233,8 +230,7 @@ static BOOL DPL_CreateLobby3( LPVOID lpDPL )
 {
   IDirectPlayLobby3AImpl *This = (IDirectPlayLobby3AImpl *)lpDPL;
 
-  This->dpl3 = (DirectPlayLobby3Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                 sizeof( *(This->dpl3) ) );
+  This->dpl3 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dpl3) ) );
   if ( This->dpl3 == NULL )
   {
     return FALSE;

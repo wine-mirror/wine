@@ -4377,7 +4377,7 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         HeapFree(GetProcessHeap(),0,argument);
         size += (strlenW(package->files[index].TargetPath))*sizeof(WCHAR);
 
-        argument = (LPWSTR)HeapAlloc(GetProcessHeap(),0,size+sizeof(WCHAR));
+        argument = HeapAlloc(GetProcessHeap(),0,size+sizeof(WCHAR));
         strcpyW(argument,package->files[index].TargetPath);
         if (deformated)
         {

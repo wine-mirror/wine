@@ -565,7 +565,7 @@ MSVCRT_FILE* MSVCRT__popen(const char* command, const char* mode)
   comSpecLen = GetEnvironmentVariableA(comSpec, NULL, 0);
   if (!comSpecLen)
     comSpecLen = strlen(wcmd) + 1;
-  cmdcopy = (char *)HeapAlloc(GetProcessHeap(), 0, comSpecLen + strlen(cmdFlag)
+  cmdcopy = HeapAlloc(GetProcessHeap(), 0, comSpecLen + strlen(cmdFlag)
    + strlen(command));
   if (!GetEnvironmentVariableA(comSpec, cmdcopy, comSpecLen))
     strcpy(cmdcopy, wcmd);

@@ -235,8 +235,8 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 			 char *invocation)
 {
 
-    char *buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psbeginfeature) +
-				   strlen(feature) + strlen(value));
+    char *buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psbeginfeature) +
+                           strlen(feature) + strlen(value));
 
 
     sprintf(buf, psbeginfeature, feature, value);
@@ -263,8 +263,8 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 
     TRACE("'%s'\n", debugstr_a(title));
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +
-			     (title ? strlen(title) : 0) + 30 );
+    buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +
+                     (title ? strlen(title) : 0) + 30 );
     if(!buf) {
         WARN("HeapAlloc failed\n");
         return 0;
@@ -343,7 +343,7 @@ INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev )
 {
     char *buf;
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psfooter) + 100 );
+    buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psfooter) + 100 );
     if(!buf) {
         WARN("HeapAlloc failed\n");
         return 0;
@@ -384,7 +384,7 @@ INT PSDRV_WriteNewPage( PSDRV_PDEVICE *physDev )
 
     sprintf(name, "%d", physDev->job.PageNo);
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psnewpage) + 200 );
+    buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psnewpage) + 200 );
     if(!buf) {
         WARN("HeapAlloc failed\n");
         return 0;
@@ -481,7 +481,7 @@ BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, INT size, INT 
 {
     char *buf;
 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(pssetfont) +
+    buf = HeapAlloc( PSDRV_Heap, 0, sizeof(pssetfont) +
 			     strlen(name) + 40);
 
     if(!buf) {

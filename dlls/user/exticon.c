@@ -215,7 +215,7 @@ static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG
 
 	/* allocate the phony ICONDIR structure */
 	*uSize = lpcid->idCount * sizeof(CURSORICONDIRENTRY) + HEADER_SIZE;
-	if( (lpID = (CURSORICONDIR*)HeapAlloc(GetProcessHeap(),0, *uSize) ))
+	if( (lpID = HeapAlloc(GetProcessHeap(),0, *uSize) ))
 	{
 	  /* copy the header */
 	  lpID->idReserved = lpcid->idReserved;

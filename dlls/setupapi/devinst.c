@@ -859,8 +859,7 @@ static HDEVINFO SETUP_CreateSerialDeviceList(void)
                 size *= 2;
                 if (devices != buf)
                     HeapFree(GetProcessHeap(), 0, devices);
-                devices = (LPWSTR)HeapAlloc(GetProcessHeap(), 0,
-                 size * sizeof(WCHAR));
+                devices = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
                 if (!devices)
                     failed = TRUE;
                 else

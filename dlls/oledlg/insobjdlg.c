@@ -375,7 +375,7 @@ static BOOL UIINSERTOBJECTDLG_PopulateObjectTypes(InsertObjectDlgInfo* pdlgInfo)
     len = MAX_PATH;
     if (ERROR_SUCCESS == RegQueryValueA(hkey, NULL, keydesc, &len))
     {
-       CLSID* lpclsid = (CLSID*) HeapAlloc(GetProcessHeap(), 0, sizeof(CLSID));
+       CLSID* lpclsid = HeapAlloc(GetProcessHeap(), 0, sizeof(CLSID));
        memcpy(lpclsid, &clsid, sizeof(CLSID));
 
        len = SendMessageA(pdlgInfo->hwndObjTypeLB, LB_ADDSTRING, 0, (LPARAM)keydesc);

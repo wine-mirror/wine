@@ -2316,7 +2316,7 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
     BOOL rc;
 
     len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
-    if (!(szUrl = (CHAR *)HeapAlloc(GetProcessHeap(), 0, len*sizeof(CHAR))))
+    if (!(szUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(CHAR))))
         return FALSE;
     WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, szUrl, len, NULL, NULL);
     rc = InternetCheckConnectionA((LPCSTR)szUrl, dwFlags, dwReserved);

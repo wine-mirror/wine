@@ -154,7 +154,7 @@ MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
     LPPOINT16	pt16;
     BOOL16	ret;
 
-    pt16 = (LPPOINT16)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
+    pt16 = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
     if(!pt16) return FALSE;
     for (i=count;i--;)
     {
@@ -178,7 +178,7 @@ MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
     LPPOINT16	pt16;
     BOOL16	ret;
 
-    pt16 = (LPPOINT16) HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
+    pt16 = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
     if(!pt16) return FALSE;
     for (i=count;i--;)
     {
@@ -211,10 +211,8 @@ MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygon
     }
 
     /* allocate space for all points */
-    pt16=(LPPOINT16)HeapAlloc( GetProcessHeap(), 0,
-                                     sizeof(POINT16) * totalpoint16 );
-    pointcounts = (INT16*)HeapAlloc( GetProcessHeap(), 0,
-                                     sizeof(INT16) * totalpoint16 );
+    pt16=HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16) * totalpoint16 );
+    pointcounts = HeapAlloc( GetProcessHeap(), 0, sizeof(INT16) * totalpoint16 );
 
     /* copy point counts */
     for (i=0;i<polygons;i++) {

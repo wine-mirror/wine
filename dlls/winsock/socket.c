@@ -1936,7 +1936,7 @@ INT WINAPI WSAIoctl(SOCKET s,
            }
            else if (apiReturn == ERROR_BUFFER_OVERFLOW)
            {
-               PIP_ADAPTER_INFO table = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(),0,size);
+               PIP_ADAPTER_INFO table = HeapAlloc(GetProcessHeap(),0,size);
 
                if (table)
                {

@@ -184,7 +184,7 @@ static SecurePackageTable *_resizePackageTable(SecurePackageTable *table,
     {
         if (table->numAllocated < howBig)
         {
-            ret = (SecurePackageTable *)HeapReAlloc(GetProcessHeap(), 0, table,
+            ret = HeapReAlloc(GetProcessHeap(), 0, table,
              sizeof(SecurePackageTable) + (howBig - 1) * sizeof(SecurePackage));
             if (ret)
             {
@@ -199,7 +199,7 @@ static SecurePackageTable *_resizePackageTable(SecurePackageTable *table,
     {
         DWORD numAllocated = (howBig > 1 ? howBig : 1);
 
-        ret = (SecurePackageTable *)HeapAlloc(GetProcessHeap(), 0,
+        ret = HeapAlloc(GetProcessHeap(), 0,
          sizeof(SecurePackageTable) +
          (numAllocated - 1) * sizeof(SecurePackage));
         if (ret)
@@ -225,7 +225,7 @@ static SecureProviderTable *_resizeProviderTable(SecureProviderTable *table,
     {
         if (table->numAllocated < howBig)
         {
-            ret = (SecureProviderTable *)HeapReAlloc(GetProcessHeap(), 0, table,
+            ret = HeapReAlloc(GetProcessHeap(), 0, table,
              sizeof(SecureProviderTable) +
              (howBig - 1) * sizeof(SecureProvider));
             if (ret)
@@ -241,7 +241,7 @@ static SecureProviderTable *_resizeProviderTable(SecureProviderTable *table,
     {
         DWORD numAllocated = (howBig > 1 ? howBig : 1);
 
-        ret = (SecureProviderTable *)HeapAlloc(GetProcessHeap(), 0,
+        ret = HeapAlloc(GetProcessHeap(), 0,
          sizeof(SecureProviderTable) +
          (numAllocated - 1) * sizeof(SecureProvider));
         if (ret)

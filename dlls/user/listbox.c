@@ -746,7 +746,7 @@ static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL sh
         return TRUE;
     }
     /* FIXME: count = 1 */
-    if (!(descr->tabs = (INT *)HeapAlloc( GetProcessHeap(), 0,
+    if (!(descr->tabs = HeapAlloc( GetProcessHeap(), 0,
                                             descr->nb_tabs * sizeof(INT) )))
         return FALSE;
     if (short_ints)

@@ -594,7 +594,7 @@ HGLOBAL WINAPI GlobalReAlloc(
       if(ISPOINTER(hmem))
       {
          /* reallocate fixed memory */
-         hnew=(HGLOBAL)HeapReAlloc(GetProcessHeap(), heap_flags, (LPVOID) hmem, size);
+         hnew=HeapReAlloc(GetProcessHeap(), heap_flags, hmem, size);
       }
       else
       {

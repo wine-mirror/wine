@@ -1664,7 +1664,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
     if (lpDx) {
         unsigned int i = 0, j = 0;
 
-        lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
+        lpDxW = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
         while(i < count) {
             if(IsDBCSLeadByteEx(codepage, str[i])) {
                 lpDxW[j++] = lpDx[i] + lpDx[i+1];

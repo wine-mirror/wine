@@ -351,9 +351,8 @@ int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD dept
     /* just so CopyDIBSection doesn't have to create an identity palette */
     if (coloruse == (WORD)-1) colorPtr = NULL;
 
-    if (!(colorMapping = (int *)HeapAlloc(GetProcessHeap(), 0,
-                                          colors * sizeof(int) )))
-	return NULL;
+    if (!(colorMapping = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(int) )))
+        return NULL;
 
     *nColors = colors;
     return X11DRV_DIB_GenColorMap( physDev, colorMapping, coloruse, depth,

@@ -330,11 +330,11 @@ static RPC_STATUS RPC_UuidGetNodeAddress(BYTE *address)
     DWORD status = RPC_S_OK;
 
     ULONG buflen = sizeof(IP_ADAPTER_INFO);
-    PIP_ADAPTER_INFO adapter = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(), 0, buflen);
+    PIP_ADAPTER_INFO adapter = HeapAlloc(GetProcessHeap(), 0, buflen);
 
     if (GetAdaptersInfo(adapter, &buflen) == ERROR_BUFFER_OVERFLOW) {
         HeapFree(GetProcessHeap(), 0, adapter);
-        adapter = (IP_ADAPTER_INFO *)HeapAlloc(GetProcessHeap(), 0, buflen);
+        adapter = HeapAlloc(GetProcessHeap(), 0, buflen);
     }
 
     if (GetAdaptersInfo(adapter, &buflen) == NO_ERROR) {

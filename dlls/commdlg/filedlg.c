@@ -2958,7 +2958,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 
     /* allocate the buffer */
     if (nFiles <= 1) nLength = MAX_PATH;
-    lpstrAllFile = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nLength);
+    lpstrAllFile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nLength);
     lpstrAllFile[0] = '\0';
 
     /* Generate the string for the edit control */

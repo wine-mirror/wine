@@ -1064,8 +1064,7 @@ DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpConn )
 LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateSessionDesc2A( LPCDPSESSIONDESC2 lpSessionSrc )
 {
    LPDPSESSIONDESC2 lpSessionDest =
-     (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
-                                  HEAP_ZERO_MEMORY, sizeof( *lpSessionSrc ) );
+     HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpSessionSrc ) );
    DPLAYX_CopyIntoSessionDesc2A( lpSessionDest, lpSessionSrc );
 
    return lpSessionDest;

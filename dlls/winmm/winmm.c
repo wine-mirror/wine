@@ -437,7 +437,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 	    if (lpmcdA->u.cMultipleItems != 0) {
 		size *= lpmcdA->u.cMultipleItems;
 	    }
-	    pDetailsW = (MIXERCONTROLDETAILS_LISTTEXTW *)HeapAlloc(GetProcessHeap(), 0, size);
+	    pDetailsW = HeapAlloc(GetProcessHeap(), 0, size);
             lpmcdA->paDetails = pDetailsW;
             lpmcdA->cbDetails = sizeof(MIXERCONTROLDETAILS_LISTTEXTW);
 	    /* set up lpmcd->paDetails */

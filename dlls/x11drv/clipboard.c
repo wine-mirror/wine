@@ -551,8 +551,7 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatNam
     LPWINE_CLIPFORMAT lpNewFormat;
    
     /* allocate storage for new format entry */
-    lpNewFormat = (LPWINE_CLIPFORMAT) HeapAlloc(GetProcessHeap(), 
-        0, sizeof(WINE_CLIPFORMAT));
+    lpNewFormat = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CLIPFORMAT));
 
     if(lpNewFormat == NULL) 
     {
@@ -673,8 +672,7 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormat, HANDLE16 hData16,
     }
     else
     {
-        lpData = (LPWINE_CLIPDATA) HeapAlloc(GetProcessHeap(), 
-            0, sizeof(WINE_CLIPDATA));
+        lpData = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CLIPDATA));
 
         lpData->wFormatID = wFormat;
         lpData->hData16 = hData16;  /* 0 is legal, see WM_RENDERFORMAT */
@@ -1346,7 +1344,7 @@ HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 
     /* remove carriage returns */
 
-    lpstr = (char*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size-- );
+    lpstr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size-- );
     if(lpstr == NULL) goto done;
 
     for(i = 0,j = 0; i < size && text[i]; i++ )
@@ -1867,7 +1865,7 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, A
 
     TRACE("Retrieving %ld bytes\n", reqlen);
 
-    val = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, reqlen);
+    val = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, reqlen);
 
     /* Read property in 4K blocks */
     for (total = 0, val_cnt = 0; remain;)
@@ -2664,7 +2662,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
     TRACE(" found %ld formats\n", cTargets);
 
     /* Allocate temp buffer */
-    targets = (Atom*)HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
+    targets = HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
     if(targets == NULL)
         return None;
 

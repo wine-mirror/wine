@@ -45,7 +45,7 @@ BOOL TTYDRV_PALETTE_Initialize(void)
 
   TRACE("(void)\n");
 
-  COLOR_sysPal = (PALETTEENTRY *) HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * palette_size);
+  COLOR_sysPal = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * palette_size);
   if(COLOR_sysPal == NULL) {
     WARN("No memory to create system palette!\n");
     return FALSE;

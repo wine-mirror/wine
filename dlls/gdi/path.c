@@ -1160,8 +1160,7 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
          numStrokes++;
 
    /* Allocate memory for number-of-points-in-stroke array */
-   pNumPointsInStroke=(int *)HeapAlloc( GetProcessHeap(), 0,
-					sizeof(int) * numStrokes );
+   pNumPointsInStroke=HeapAlloc( GetProcessHeap(), 0, sizeof(int) * numStrokes );
    if(!pNumPointsInStroke)
    {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -1281,12 +1280,10 @@ static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
          numEntriesToAllocate=numEntries;
 
       /* Allocate new arrays */
-      pPointsNew=(POINT *)HeapAlloc( GetProcessHeap(), 0,
-				     numEntriesToAllocate * sizeof(POINT) );
+      pPointsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(POINT) );
       if(!pPointsNew)
          return FALSE;
-      pFlagsNew=(BYTE *)HeapAlloc( GetProcessHeap(), 0,
-				   numEntriesToAllocate * sizeof(BYTE) );
+      pFlagsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(BYTE) );
       if(!pFlagsNew)
       {
          HeapFree( GetProcessHeap(), 0, pPointsNew );

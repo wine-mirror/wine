@@ -321,7 +321,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
     XColor color;
     int i;
 
-    if((COLOR_sysPal = (PALETTEENTRY*)HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY)*palette_size)) == NULL) {
+    if((COLOR_sysPal = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY)*palette_size)) == NULL) {
         WARN("Can not allocate system palette\n");
         return FALSE;
     }
@@ -507,7 +507,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	 * X guidelines and does binary search...
 	 */
 
-	if((pixDynMapping = (unsigned long*)HeapAlloc(GetProcessHeap(), 0, sizeof(long)*palette_size)) == NULL) {
+	if((pixDynMapping = HeapAlloc(GetProcessHeap(), 0, sizeof(long)*palette_size)) == NULL) {
 	    WARN("Out of memory while building system palette.\n");
 	    return FALSE;
         }
@@ -576,7 +576,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 		      (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL || !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED)) )
 		     ? NB_RESERVED_COLORS/2 : -1;
 
-   COLOR_sysPal = (PALETTEENTRY*)HeapAlloc(GetProcessHeap(),0,sizeof(PALETTEENTRY)*256);
+   COLOR_sysPal = HeapAlloc(GetProcessHeap(),0,sizeof(PALETTEENTRY)*256);
    if(COLOR_sysPal == NULL) {
        ERR("Can not allocate system palette!\n");
        HeapFree(GetProcessHeap(), 0, pixDynMapping);
@@ -601,7 +601,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
     * RGB->pixel calculation in X11DRV_PALETTE_ToPhysical().
     */
 
-   X11DRV_PALETTE_PaletteToXPixel = (int*)HeapAlloc(GetProcessHeap(),0,sizeof(int)*256);
+   X11DRV_PALETTE_PaletteToXPixel = HeapAlloc(GetProcessHeap(),0,sizeof(int)*256);
    if(X11DRV_PALETTE_PaletteToXPixel == NULL) {
        ERR("Out of memory: PaletteToXPixel!\n");
        HeapFree(GetProcessHeap(), 0, pixDynMapping);

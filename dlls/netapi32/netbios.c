@@ -84,11 +84,11 @@ static UCHAR nbResizeAdapterTable(UCHAR newSize)
     UCHAR ret;
 
     if (gNBTable.table)
-        gNBTable.table = (NetBIOSAdapter *)HeapReAlloc(GetProcessHeap(),
+        gNBTable.table = HeapReAlloc(GetProcessHeap(),
          HEAP_ZERO_MEMORY, gNBTable.table,
          newSize * sizeof(NetBIOSAdapter));
     else
-        gNBTable.table = (NetBIOSAdapter *)HeapAlloc(GetProcessHeap(),
+        gNBTable.table = HeapAlloc(GetProcessHeap(),
          HEAP_ZERO_MEMORY, newSize * sizeof(NetBIOSAdapter));
     if (gNBTable.table)
     {
@@ -430,11 +430,11 @@ static UCHAR nbResizeAdapter(NetBIOSAdapter *adapter, UCHAR sessionsLen)
         NetBIOSSession *newSessions;
 
         if (adapter->sessions)
-            newSessions = (NetBIOSSession *)HeapReAlloc(GetProcessHeap(),
+            newSessions = HeapReAlloc(GetProcessHeap(),
              HEAP_ZERO_MEMORY, adapter->sessions, sessionsLen *
              sizeof(NetBIOSSession));
         else
-            newSessions = (NetBIOSSession *)HeapAlloc(GetProcessHeap(),
+            newSessions = HeapAlloc(GetProcessHeap(),
              HEAP_ZERO_MEMORY, sessionsLen * sizeof(NetBIOSSession));
         if (newSessions)
         {

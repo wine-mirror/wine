@@ -193,9 +193,7 @@ BOOL WINAPI MapAndLoad(
   CloseHandle(hFileMapping);
   hFileMapping=NULL;
 
-  pLoadedImage = (PLOADED_IMAGE) HeapAlloc(
-    IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE)
-  );
+  pLoadedImage = HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE));
 
   pNtHeader = RtlImageNtHeader(hModule);
 

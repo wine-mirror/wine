@@ -91,7 +91,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	if (IsEqualGUID(&IID_IDirectInputA,riid) ||
 	    IsEqualGUID(&IID_IDirectInput2A,riid) ||
 	    IsEqualGUID(&IID_IDirectInput7A,riid)) {
-	  This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
+	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	  This->lpVtbl = &ddi7avt;
 	  This->ref = 1;
 	  This->version = 1;
@@ -103,7 +103,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	if (IsEqualGUID(&IID_IDirectInputW,riid) ||
 	    IsEqualGUID(&IID_IDirectInput2W,riid) ||
 	    IsEqualGUID(&IID_IDirectInput7W,riid)) {
-	  This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
+	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	  This->lpVtbl = &ddi7wvt;
 	  This->ref = 1;
 	  This->version = 1;
@@ -113,7 +113,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	}
 
 	if (IsEqualGUID(&IID_IDirectInput8A,riid)) {
-	  This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
+	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	  This->lpVtbl = &ddi8avt;
 	  This->ref = 1;
 	  This->version = 8;
@@ -123,7 +123,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	}
 
 	if (IsEqualGUID(&IID_IDirectInput8W,riid)) {
-	  This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
+	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	  This->lpVtbl = &ddi8wvt;
 	  This->ref = 1;
 	  This->version = 8;
@@ -142,7 +142,7 @@ HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 {
 	IDirectInputImpl* This;
 	TRACE("(0x%08lx,%04lx,%p,%p)\n", (DWORD)hinst,dwVersion,ppDI,punkOuter);
-	This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
+	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7avt;
 	This->ref = 1;
 	if (dwVersion >= 0x0800) {
@@ -163,7 +163,7 @@ HRESULT WINAPI DirectInputCreateW(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 {
 	IDirectInputImpl* This;
 	TRACE("(0x%08lx,%04lx,%p,%p)\n", (DWORD)hinst,dwVersion,ppDI,punkOuter);
-	This = (IDirectInputImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
+	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7wvt;
 	This->ref = 1;
 	if (dwVersion >= 0x0800) {

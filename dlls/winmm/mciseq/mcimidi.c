@@ -1219,7 +1219,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	end = lpParms->dwTo;
 	TRACE("MCI_TO=%d \n", end);
     }
-    midiHdr.lpData = (LPSTR) HeapAlloc(GetProcessHeap(), 0, 1200);
+    midiHdr.lpData = HeapAlloc(GetProcessHeap(), 0, 1200);
     if (!midiHdr.lpData)
 	return MCIERR_OUT_OF_MEMORY;
     midiHdr.dwBufferLength = 1024;

@@ -1239,7 +1239,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Create(
     IDsCaptureDriverPropertySetImpl * dscdps;
     TRACE("(%p,%p)\n",dscdb,pdscdps);
 
-    dscdps = (IDsCaptureDriverPropertySetImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdps));
+    dscdps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdps));
     if (dscdps == NULL) {
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
@@ -1262,7 +1262,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_Create(
     IDsCaptureDriverNotifyImpl * dscdn;
     TRACE("(%p,%p)\n",dscdb,pdscdn);
 
-    dscdn = (IDsCaptureDriverNotifyImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdn));
+    dscdn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdn));
     if (dscdn == NULL) {
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
@@ -1291,7 +1291,7 @@ DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
         return MMSYSERR_NOTSUPPORTED;
     }
 
-    *idrv = (IDsCaptureDriverImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverImpl));
+    *idrv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverImpl));
     if (!*idrv)
         return MMSYSERR_NOMEM;
     (*idrv)->lpVtbl	= &dscdvt;

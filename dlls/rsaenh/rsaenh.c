@@ -426,7 +426,7 @@ static inline const PROV_ENUMALGS_EX* get_algid_info(HCRYPTPROV hProv, ALG_ID al
  *  Use free_data_blob to release resources occupied by copy_data_blob.
  */
 static inline BOOL copy_data_blob(PCRYPT_DATA_BLOB dst, CONST PCRYPT_DATA_BLOB src) {
-    dst->pbData = (BYTE*)HeapAlloc(GetProcessHeap(), 0, src->cbData);
+    dst->pbData = HeapAlloc(GetProcessHeap(), 0, src->cbData);
     if (!dst->pbData) {
         SetLastError(NTE_NO_MEMORY);
         return FALSE;
@@ -457,7 +457,7 @@ static inline BOOL concat_data_blobs(PCRYPT_DATA_BLOB dst, CONST PCRYPT_DATA_BLO
                                      CONST PCRYPT_DATA_BLOB src2) 
 {
     dst->cbData = src1->cbData + src2->cbData;
-    dst->pbData = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dst->cbData);
+    dst->pbData = HeapAlloc(GetProcessHeap(), 0, dst->cbData);
     if (!dst->pbData) {
         SetLastError(NTE_NO_MEMORY);
         return FALSE;
@@ -523,13 +523,13 @@ static inline void free_hmac_info(PHMAC_INFO hmac_info) {
  */
 static BOOL copy_hmac_info(PHMAC_INFO *dst, PHMAC_INFO src) {
     if (!src) return FALSE;
-    *dst = (PHMAC_INFO)HeapAlloc(GetProcessHeap(), 0, sizeof(HMAC_INFO));
+    *dst = HeapAlloc(GetProcessHeap(), 0, sizeof(HMAC_INFO));
     if (!*dst) return FALSE;
     memcpy(*dst, src, sizeof(HMAC_INFO));
     (*dst)->pbInnerString = NULL;
     (*dst)->pbOuterString = NULL;
     if ((*dst)->cbInnerString == 0) (*dst)->cbInnerString = RSAENH_HMAC_DEF_PAD_LEN;
-    (*dst)->pbInnerString = (BYTE*)HeapAlloc(GetProcessHeap(), 0, (*dst)->cbInnerString);
+    (*dst)->pbInnerString = HeapAlloc(GetProcessHeap(), 0, (*dst)->cbInnerString);
     if (!(*dst)->pbInnerString) {
         free_hmac_info(*dst);
         return FALSE;
@@ -539,7 +539,7 @@ static BOOL copy_hmac_info(PHMAC_INFO *dst, PHMAC_INFO src) {
     else 
         memset((*dst)->pbInnerString, RSAENH_HMAC_DEF_IPAD_CHAR, RSAENH_HMAC_DEF_PAD_LEN);
     if ((*dst)->cbOuterString == 0) (*dst)->cbOuterString = RSAENH_HMAC_DEF_PAD_LEN;
-    (*dst)->pbOuterString = (BYTE*)HeapAlloc(GetProcessHeap(), 0, (*dst)->cbOuterString);
+    (*dst)->pbOuterString = HeapAlloc(GetProcessHeap(), 0, (*dst)->cbOuterString);
     if (!(*dst)->pbOuterString) {
         free_hmac_info(*dst);
         return FALSE;
@@ -631,7 +631,7 @@ static inline void update_hash(CRYPTHASH *pCryptHash, CONST BYTE *pbData, DWORD 
             break;
 
         case CALG_MAC:
-            pbTemp = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dwDataLen);
+            pbTemp = HeapAlloc(GetProcessHeap(), 0, dwDataLen);
             if (!pbTemp) return;
             memcpy(pbTemp, pbData, dwDataLen);
             RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, (HCRYPTHASH)NULL, FALSE, 0, 
@@ -893,7 +893,7 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
                 if (RSAENH_CPExportKey(pKey->hProv, pKeyContainer->hKeyExchangeKeyPair, 0, 
                                        PRIVATEKEYBLOB, 0, 0, &dwLen)) 
                 {
-                    pbKey = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dwLen);
+                    pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
                     if (pbKey) 
                     {
                         if (RSAENH_CPExportKey(pKey->hProv, pKeyContainer->hKeyExchangeKeyPair, 0,
@@ -914,7 +914,7 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
                 if (RSAENH_CPExportKey(pKey->hProv, pKeyContainer->hSignatureKeyPair, 0, 
                                        PRIVATEKEYBLOB, 0, 0, &dwLen)) 
                 {
-                    pbKey = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dwLen);
+                    pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
                     if (pbKey) 
                     {
                         if (RSAENH_CPExportKey(pKey->hProv, pKeyContainer->hSignatureKeyPair, 0, 
@@ -1048,7 +1048,7 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTa
         if (RegQueryValueExA(hKey, "KeyExchangeKeyPair", 0, &dwValueType, NULL, &dwLen) == 
             ERROR_SUCCESS) 
         {
-            pbKey = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dwLen);
+            pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
             if (pbKey) 
             {
                 if (RegQueryValueExA(hKey, "KeyExchangeKeyPair", 0, &dwValueType, pbKey, &dwLen) ==
@@ -1064,7 +1064,7 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTa
         if (RegQueryValueExA(hKey, "SignatureKeyPair", 0, &dwValueType, NULL, &dwLen) == 
             ERROR_SUCCESS) 
         {
-            pbKey = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dwLen);
+            pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
             if (pbKey) 
             {
                 if (RegQueryValueExA(hKey, "SignatureKeyPair", 0, &dwValueType, pbKey, &dwLen) == 
@@ -2271,7 +2271,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 return FALSE;
             }
 
-            pbDecrypted = (BYTE*)HeapAlloc(GetProcessHeap(), 0, pPubKey->dwBlockLen);
+            pbDecrypted = HeapAlloc(GetProcessHeap(), 0, pPubKey->dwBlockLen);
             if (!pbDecrypted) return FALSE;
             encrypt_block_impl(pPubKey->aiAlgid, &pPubKey->context, pbKeyStream, pbDecrypted, 
                                RSAENH_DECRYPT);

@@ -102,8 +102,7 @@ struct NBNameCache *NBNameCacheCreate(HANDLE heap, DWORD entryExpireTimeMS)
     
     if (!heap)
         heap = GetProcessHeap();
-    cache = (struct NBNameCache *)HeapAlloc(heap, 0,
-     sizeof(struct NBNameCache));
+    cache = HeapAlloc(heap, 0, sizeof(struct NBNameCache));
     if (cache)
     {
         cache->heap = heap;
@@ -134,8 +133,7 @@ BOOL NBNameCacheAddEntry(struct NBNameCache *cache, NBNameCacheEntry *entry)
         }
         else
         {
-            NBNameCacheNode *newNode = (NBNameCacheNode *)HeapAlloc(
-             cache->heap, 0, sizeof(NBNameCacheNode));
+            NBNameCacheNode *newNode = HeapAlloc(cache->heap, 0, sizeof(NBNameCacheNode));
             if (newNode)
             {
                 newNode->expireTime = GetTickCount() +

@@ -542,7 +542,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
     if (deformated)
         len += strlenW(deformated);
    
-    cmd = (WCHAR*)HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*len);
+    cmd = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*len);
 
     strcpyW(cmd,tmp_file);
     if (deformated)
@@ -595,7 +595,7 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
         len += strlenW(deformated);
     len += 2;
 
-    cmd = (WCHAR*)HeapAlloc(GetProcessHeap(),0,len * sizeof(WCHAR));
+    cmd = HeapAlloc(GetProcessHeap(),0,len * sizeof(WCHAR));
 
     strcpyW(cmd, package->files[index].TargetPath);
     if (deformated)
@@ -692,7 +692,7 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
     if (deformated)
          len += strlenW(deformated);
 
-    cmd = (WCHAR*)HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*len);
+    cmd = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*len);
 
     strcpyW(cmd,prop);
     if (deformated)

@@ -2054,7 +2054,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	    pfr = fr;
 	}
 
-	if( !fi ) fi = (fontInfo*) HeapAlloc(GetProcessHeap(), 0, sizeof(fontInfo));
+	if( !fi ) fi = HeapAlloc(GetProcessHeap(), 0, sizeof(fontInfo));
 
 	if( !LFD_InitFontInfo( fi, &lfd, x_pattern[i]) )
 	    goto nextfont;
@@ -2062,12 +2062,12 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	if( !fr ) /* add new family */
 	{
 	    n_ff++;
-	    fr = (fontResource*) HeapAlloc(GetProcessHeap(), 0, sizeof(fontResource));
+	    fr = HeapAlloc(GetProcessHeap(), 0, sizeof(fontResource));
 	    if (fr)
 	    {
 		memset(fr, 0, sizeof(fontResource));
 
-		fr->resource = (LFD*) HeapAlloc(GetProcessHeap(), 0, sizeof(LFD));
+		fr->resource = HeapAlloc(GetProcessHeap(), 0, sizeof(LFD));
 		memset(fr->resource, 0, sizeof(LFD));
 
 		TRACE("family: -%s-%s-\n", lfd.foundry, lfd.family );
@@ -2213,7 +2213,7 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 	    if( length == (i + offset) )
 	    {
 		lseek( fd, offset, SEEK_SET );
-		fontList = (fontResource*)HeapAlloc( GetProcessHeap(), 0, i);
+		fontList = HeapAlloc( GetProcessHeap(), 0, i);
 		if( fontList )
 		{
 		    fontResource* 	pfr = fontList;
@@ -2838,8 +2838,7 @@ static fontObject* XFONT_GetCacheEntry(void)
 
 	    TRACE("\tgrowing font cache from %i to %i\n", fontCacheSize, prev_i );
 
-	    if( (newCache = (fontObject*)HeapReAlloc(GetProcessHeap(), 0,
-						     fontCache, prev_i * sizeof(fontObject))) )
+	    if( (newCache = HeapReAlloc(GetProcessHeap(), 0, fontCache, prev_i * sizeof(fontObject))) )
 	    {
 		i = fontCacheSize;
 		fontCacheSize  = prev_i;
@@ -2982,7 +2981,7 @@ void X11DRV_FONT_InitX11Metrics( void )
 
   /* fontList initialization is over, allocate X font cache */
 
-  fontCache = (fontObject*) HeapAlloc(GetProcessHeap(), 0, fontCacheSize * sizeof(fontObject));
+  fontCache = HeapAlloc(GetProcessHeap(), 0, fontCacheSize * sizeof(fontObject));
   XFONT_GrowFreeList(0, fontCacheSize - 1);
 
   TRACE("done!\n");

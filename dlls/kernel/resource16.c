@@ -97,10 +97,10 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HRSRC hRsrc32, WORD type )
     {
 
 	if (map->elem)
-    	    newElem = (HRSRC_ELEM *)HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+    	    newElem = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                     map->elem, (map->nAlloc + HRSRC_MAP_BLOCKSIZE) * sizeof(HRSRC_ELEM) );
 	else
-    	    newElem = (HRSRC_ELEM *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+    	    newElem = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                     (map->nAlloc + HRSRC_MAP_BLOCKSIZE) * sizeof(HRSRC_ELEM) );
 
         if ( !newElem )

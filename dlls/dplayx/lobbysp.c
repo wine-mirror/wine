@@ -112,9 +112,7 @@ static BOOL DPLSP_CreateIUnknown( LPVOID lpSP )
 {
   IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
 
-  This->unk = (DPLobbySPIUnknownData*)HeapAlloc( GetProcessHeap(),
-                                                    HEAP_ZERO_MEMORY,
-                                                    sizeof( *(This->unk) ) );
+  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
 
   if ( This->unk == NULL )
   {
@@ -140,9 +138,7 @@ static BOOL DPLSP_CreateDPLobbySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 {
   IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
 
-  This->sp = (DPLobbySPData*)HeapAlloc( GetProcessHeap(),
-                                        HEAP_ZERO_MEMORY,
-                                        sizeof( *(This->sp) ) );
+  This->sp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->sp) ) );
 
   if ( This->sp == NULL )
   {

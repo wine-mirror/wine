@@ -1286,8 +1286,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_COMPAREITEM:
         {
             COMPAREITEMSTRUCT16* cis16 = MapSL(*plparam);
-            COMPAREITEMSTRUCT *cis = (COMPAREITEMSTRUCT *)
-                                        HeapAlloc(GetProcessHeap(), 0, sizeof(*cis));
+            COMPAREITEMSTRUCT *cis = HeapAlloc(GetProcessHeap(), 0, sizeof(*cis));
             if (!cis) return -1;
             cis->CtlType    = cis16->CtlType;
             cis->CtlID      = cis16->CtlID;
@@ -1303,8 +1302,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_DELETEITEM:
         {
             DELETEITEMSTRUCT16* dis16 = MapSL(*plparam);
-            DELETEITEMSTRUCT *dis = (DELETEITEMSTRUCT *)
-                                        HeapAlloc(GetProcessHeap(), 0, sizeof(*dis));
+            DELETEITEMSTRUCT *dis = HeapAlloc(GetProcessHeap(), 0, sizeof(*dis));
             if (!dis) return -1;
             dis->CtlType  = dis16->CtlType;
             dis->CtlID    = dis16->CtlID;
@@ -1316,8 +1314,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_MEASUREITEM:
         {
             MEASUREITEMSTRUCT16* mis16 = MapSL(*plparam);
-            MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)
-                                        HeapAlloc(GetProcessHeap(), 0,
+            MEASUREITEMSTRUCT *mis = HeapAlloc(GetProcessHeap(), 0,
                                                 sizeof(*mis) + sizeof(LPARAM));
             if (!mis) return -1;
             mis->CtlType    = mis16->CtlType;

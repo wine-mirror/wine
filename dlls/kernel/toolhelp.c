@@ -72,10 +72,10 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
             break;
     if (i==nrofnotifys) {
         if (notifys==NULL)
-            notifys=(struct notify*)HeapAlloc( GetProcessHeap(), 0,
+            notifys=HeapAlloc( GetProcessHeap(), 0,
                                                sizeof(struct notify) );
         else
-            notifys=(struct notify*)HeapReAlloc( GetProcessHeap(), 0, notifys,
+            notifys=HeapReAlloc( GetProcessHeap(), 0, notifys,
                                         sizeof(struct notify)*(nrofnotifys+1));
         if (!notifys) return FALSE;
         nrofnotifys++;
@@ -101,7 +101,7 @@ BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
     if (i==-1)
         return FALSE;
     memcpy(notifys+i,notifys+(i+1),sizeof(struct notify)*(nrofnotifys-i-1));
-    notifys=(struct notify*)HeapReAlloc( GetProcessHeap(), 0, notifys,
+    notifys=HeapReAlloc( GetProcessHeap(), 0, notifys,
                                         (nrofnotifys-1)*sizeof(struct notify));
     nrofnotifys--;
     return TRUE;

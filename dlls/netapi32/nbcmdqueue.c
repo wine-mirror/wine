@@ -57,7 +57,7 @@ struct NBCmdQueue *NBCmdQueueCreate(HANDLE heap)
 
     if (heap == NULL)
         heap = GetProcessHeap();
-    queue = (struct NBCmdQueue *)HeapAlloc(heap, 0, sizeof(struct NBCmdQueue));
+    queue = HeapAlloc(heap, 0, sizeof(struct NBCmdQueue));
     if (queue)
     {
         queue->heap = heap;

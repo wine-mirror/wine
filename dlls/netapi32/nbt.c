@@ -409,7 +409,7 @@ static BOOL NetBTFindNameAnswerCallback(void *pVoid, WORD answerCount,
     {
         if (queryData->cacheEntry == NULL)
         {
-            queryData->cacheEntry = (NBNameCacheEntry *)HeapAlloc(
+            queryData->cacheEntry = HeapAlloc(
              GetProcessHeap(), 0, sizeof(NBNameCacheEntry) +
              (answerCount - 1) * sizeof(DWORD));
             if (queryData->cacheEntry)
@@ -546,7 +546,7 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
 
             if (addr != INADDR_NONE)
             {
-                *cacheEntry = (NBNameCacheEntry *)HeapAlloc(GetProcessHeap(),
+                *cacheEntry = HeapAlloc(GetProcessHeap(),
                  0, sizeof(NBNameCacheEntry));
                 if (*cacheEntry)
                 {
@@ -571,7 +571,7 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
                     ;
                 if (host->h_addr_list && host->h_addr_list[0])
                 {
-                    *cacheEntry = (NBNameCacheEntry *)HeapAlloc(
+                    *cacheEntry = HeapAlloc(
                      GetProcessHeap(), 0, sizeof(NBNameCacheEntry) +
                      (i - 1) * sizeof(DWORD));
                     if (*cacheEntry)
@@ -1043,7 +1043,7 @@ static UCHAR NetBTCall(void *adapt, PNCB ncb, void **sess)
                     closesocket(fd);
                 else
                 {
-                    NetBTSession *session = (NetBTSession *)HeapAlloc(
+                    NetBTSession *session = HeapAlloc(
                      GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(NetBTSession));
 
                     if (session)
@@ -1279,8 +1279,7 @@ static UCHAR NetBTRegisterAdapter(PMIB_IPADDRROW ipRow)
     
     if (!ipRow) return NRC_BADDR;
 
-    adapter = (NetBTAdapter *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-     sizeof(NetBTAdapter));
+    adapter = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(NetBTAdapter));
     if (adapter)
     {
         memcpy(&adapter->ipr, ipRow, sizeof(MIB_IPADDRROW));
@@ -1357,10 +1356,9 @@ static UCHAR NetBTEnum(void)
         DWORD numIPAddrs = (size - sizeof(MIB_IPADDRTABLE)) /
          sizeof(MIB_IPADDRROW) + 1;
 
-        ipAddrs = (PMIB_IPADDRTABLE)HeapAlloc(GetProcessHeap(),
-         HEAP_ZERO_MEMORY, size);
+        ipAddrs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
         if (ipAddrs)
-            coalesceTable = (PMIB_IPADDRTABLE)HeapAlloc(GetProcessHeap(),
+            coalesceTable = HeapAlloc(GetProcessHeap(),
              HEAP_ZERO_MEMORY, sizeof(MIB_IPADDRTABLE) +
              (min(numIPAddrs, MAX_LANA + 1) - 1) * sizeof(MIB_IPADDRROW));
         if (ipAddrs && coalesceTable)

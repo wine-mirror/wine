@@ -165,7 +165,7 @@ static InterfaceNameMap *sizeMap(InterfaceNameMap *map, DWORD numInterfaces)
 {
   if (!map) {
     numInterfaces = max(numInterfaces, INITIAL_INTERFACES_ASSUMED);
-    map = (InterfaceNameMap *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+    map = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
      sizeof(InterfaceNameMap) +
      (numInterfaces - 1) * sizeof(InterfaceNameMapEntry));
     if (map)
@@ -173,7 +173,7 @@ static InterfaceNameMap *sizeMap(InterfaceNameMap *map, DWORD numInterfaces)
   }
   else {
     if (map->numAllocated < numInterfaces) {
-      map = (InterfaceNameMap *)HeapReAlloc(GetProcessHeap(), 0, map,
+      map = HeapReAlloc(GetProcessHeap(), 0, map,
        sizeof(InterfaceNameMap) +
        (numInterfaces - 1) * sizeof(InterfaceNameMapEntry));
       if (map)
@@ -321,7 +321,7 @@ static void enumerateInterfaces(void)
         guessedNumInterfaces *= 2;
       HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
       ifc.ifc_len = sizeof(struct ifreq) * guessedNumInterfaces;
-      ifc.ifc_buf = (char *)HeapAlloc(GetProcessHeap(), 0, ifc.ifc_len);
+      ifc.ifc_buf = HeapAlloc(GetProcessHeap(), 0, ifc.ifc_len);
       ret = ioctl(fd, SIOCGIFCONF, &ifc);
     } while (ret == 0 &&
      ifc.ifc_len == (sizeof(struct ifreq) * guessedNumInterfaces));
@@ -429,7 +429,7 @@ InterfaceIndexTable *getInterfaceIndexTable(void)
  
   EnterCriticalSection(&mapCS);
   numInterfaces = getNumInterfaces();
-  ret = (InterfaceIndexTable *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
    sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
   if (ret) {
     ret->numAllocated = numInterfaces;
@@ -447,7 +447,7 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void)
 
   EnterCriticalSection(&mapCS);
   numInterfaces = getNumNonLoopbackInterfaces();
-  ret = (InterfaceIndexTable *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
    sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
   if (ret) {
     ret->numAllocated = numInterfaces;
@@ -716,7 +716,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
   if (sysctl(mib, 6, NULL, &mibLen, NULL, 0) < 0)
     return ERROR_NO_MORE_FILES;
 
-  buf = (u_char *)HeapAlloc(GetProcessHeap(), 0, mibLen);
+  buf = HeapAlloc(GetProcessHeap(), 0, mibLen);
   if (!buf)
     return ERROR_NOT_ENOUGH_MEMORY;
 

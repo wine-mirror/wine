@@ -197,8 +197,7 @@ static int grow_handle_table(HANDLETABLE *lpTable)
 
     newIEntries = lpTable->iEntries + TABLE_SIZE_INCREMENT;
 
-    newEntries = (HANDLETABLEENTRY*)HeapAlloc(GetProcessHeap(), 0, 
-                                              sizeof(HANDLETABLEENTRY)*newIEntries);
+    newEntries = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLETABLEENTRY)*newIEntries);
     if (!newEntries) 
         return 0;
 
@@ -435,7 +434,7 @@ unsigned int new_object(HANDLETABLE *lpTable, size_t cbSize, DWORD dwType, DESTR
     if (ppObject)
         *ppObject = NULL;
 
-    pObject = (OBJECTHDR*)HeapAlloc(GetProcessHeap(), 0, cbSize);
+    pObject = HeapAlloc(GetProcessHeap(), 0, cbSize);
     if (!pObject)
         return (unsigned int)INVALID_HANDLE_VALUE;
 

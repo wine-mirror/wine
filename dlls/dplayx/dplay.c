@@ -236,8 +236,7 @@ static BOOL DP_CreateIUnknown( LPVOID lpDP )
 {
   IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)lpDP;
 
-  This->unk = (DirectPlayIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                  sizeof( *(This->unk) ) );
+  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
   if ( This->unk == NULL )
   {
     return FALSE;
@@ -262,8 +261,7 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
 {
   IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)lpDP;
 
-  This->dp2 = (DirectPlay2Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                           sizeof( *(This->dp2) ) );
+  This->dp2 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp2) ) );
   if ( This->dp2 == NULL )
   {
     return FALSE;
@@ -286,9 +284,9 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
   }
 
   /* Provide an initial session desc with nothing in it */
-  This->dp2->lpSessionDesc = (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
-                               HEAP_ZERO_MEMORY,
-                               sizeof( *This->dp2->lpSessionDesc ) );
+  This->dp2->lpSessionDesc = HeapAlloc( GetProcessHeap(),
+                                        HEAP_ZERO_MEMORY,
+                                        sizeof( *This->dp2->lpSessionDesc ) );
   if( This->dp2->lpSessionDesc == NULL )
   {
     /* FIXME: Memory leak */
@@ -426,8 +424,7 @@ static BOOL DP_CreateDirectPlay3( LPVOID lpDP )
 {
   IDirectPlay3AImpl *This = (IDirectPlay3AImpl *)lpDP;
 
-  This->dp3 = (DirectPlay3Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                           sizeof( *(This->dp3) ) );
+  This->dp3 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp3) ) );
   if ( This->dp3 == NULL )
   {
     return FALSE;
@@ -450,8 +447,7 @@ static BOOL DP_CreateDirectPlay4( LPVOID lpDP )
 {
   IDirectPlay4AImpl *This = (IDirectPlay4AImpl *)lpDP;
 
-  This->dp4 = (DirectPlay4Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                           sizeof( *(This->dp4) ) );
+  This->dp4 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp4) ) );
   if ( This->dp4 == NULL )
   {
     return FALSE;
@@ -709,9 +705,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 
       *lpdwMsgSize = This->dp2->spData.dwSPHeaderSize + sizeof( *lpReply );
 
-      *lplpReply = (LPDPMSG_NEWPLAYERIDREPLY)HeapAlloc( GetProcessHeap(),
-                                                        HEAP_ZERO_MEMORY,
-                                                        *lpdwMsgSize );
+      *lplpReply = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, *lpdwMsgSize );
 
       FIXME( "Ignoring dwFlags 0x%08lx in request msg\n",
              lpcMsg->dwFlags );
@@ -810,8 +804,7 @@ static HRESULT WINAPI DP_IF_AddPlayerToGroup
   }
 
   /* Create a player list (ie "shortcut" ) */
-  lpNewPList = (lpPlayerList)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        sizeof( *lpNewPList ) );
+  lpNewPList = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpNewPList ) );
   if( lpNewPList == NULL )
   {
     return DPERR_CANTADDPLAYER;
@@ -930,8 +923,7 @@ lpGroupData DP_CreateGroup( IDirectPlay2AImpl* This, LPDPID lpid,
   lpGroupData lpGData;
 
   /* Allocate the new space and add to end of high level group list */
-  lpGData = (lpGroupData) HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                     sizeof( *lpGData ) );
+  lpGData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpGData ) );
 
   if( lpGData == NULL )
   {
@@ -1054,9 +1046,7 @@ static HRESULT WINAPI DP_IF_CreateGroup
   else
   {
     /* Insert into the system group */
-    lpGroupList lpGroup = (lpGroupList) HeapAlloc( GetProcessHeap(),
-                                                   HEAP_ZERO_MEMORY,
-                                                   sizeof( *lpGroup ) );
+    lpGroupList lpGroup = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpGroup ) );
     lpGroup->lpGData = lpGData;
 
     DPQ_INSERT( This->dp2->lpSysGroup->groups, lpGroup, groups );
@@ -1203,9 +1193,7 @@ lpPlayerData DP_CreatePlayer( IDirectPlay2Impl* This, LPDPID lpid,
   TRACE( "(%p)->(%p,%p,%u)\n", This, lpid, lpName, bAnsi );
 
   /* Allocate the storage for the player and associate it with list element */
-  lpPData = (lpPlayerData) HeapAlloc( GetProcessHeap(),
-                                      HEAP_ZERO_MEMORY,
-                                      sizeof( *lpPData ) );
+  lpPData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpPData ) );
   if( lpPData == NULL )
   {
     return NULL;
@@ -1496,8 +1484,7 @@ static HRESULT WINAPI DP_IF_CreatePlayer
   }
 
   /* Create the list object and link it in */
-  lpPList = (lpPlayerList)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                     sizeof( *lpPList ) );
+  lpPList = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpPList ) );
   if( lpPList == NULL )
   {
     FIXME( "Memory leak\n" );
@@ -2298,9 +2285,7 @@ static HRESULT WINAPI DP_IF_EnumSessions
       if( !FAILED(hr) )
       {
         EnumSessionAsyncCallbackData* lpData
-          = (EnumSessionAsyncCallbackData*)HeapAlloc( GetProcessHeap(),
-                                                      HEAP_ZERO_MEMORY,
-                                                       sizeof( *lpData ) );
+          = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpData ) );
         /* FIXME: need to kill the thread on object deletion */
         lpData->lpSpData  = &This->dp2->spData;
 
@@ -3258,9 +3243,7 @@ static HRESULT WINAPI DP_SetSessionDesc
 
   /* FIXME: Copy into This->dp2->lpSessionDesc */
   dwRequiredSize = DP_CalcSessionDescSize( lpSessDesc, bAnsi );
-  lpTempSessDesc = (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
-                                                HEAP_ZERO_MEMORY,
-                                                dwRequiredSize );
+  lpTempSessDesc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwRequiredSize );
 
   if( lpTempSessDesc == NULL )
   {
@@ -3424,8 +3407,7 @@ static HRESULT WINAPI DP_IF_AddGroupToGroup
   }
 
   /* Create a player list (ie "shortcut" ) */
-  lpNewGList = (lpGroupList)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                       sizeof( *lpNewGList ) );
+  lpNewGList = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpNewGList ) );
   if( lpNewGList == NULL )
   {
     return DPERR_CANTADDPLAYER;
@@ -3494,8 +3476,7 @@ static HRESULT WINAPI DP_IF_CreateGroupInGroup
 
   /* The list has now been inserted into the interface group list. We now
      need to put a "shortcut" to this group in the parent group */
-  lpGList = (lpGroupList)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                    sizeof( *lpGList ) );
+  lpGList = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpGList ) );
   if( lpGList == NULL )
   {
     FIXME( "Memory leak\n" );
@@ -4636,10 +4617,8 @@ static HRESULT WINAPI DP_SP_SendEx
 
   /* FIXME: This queuing should only be for async messages */
 
-  lpMElem = (LPDPMSG)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                               sizeof( *lpMElem ) );
-  lpMElem->msg = (DPMSG_GENERIC*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                            dwDataSize );
+  lpMElem = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpMElem ) );
+  lpMElem->msg = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
 
   CopyMemory( lpMElem->msg, lpData, dwDataSize );
 

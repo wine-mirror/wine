@@ -323,7 +323,7 @@ static void PROPSHEET_AtoW(LPCWSTR *tostr, LPCSTR frstr)
 
     TRACE("<%s>\n", frstr);
     len = MultiByteToWideChar(CP_ACP, 0, frstr, -1, 0, 0);
-    *tostr = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    *tostr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, frstr, -1, (LPWSTR)*tostr, len);
 }
 

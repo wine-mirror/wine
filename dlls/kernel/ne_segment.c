@@ -242,7 +242,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                    (char *)pModule + pModule->name_table + 1,
                    segnum, pSeg->hSeg );
 
-    reloc_entries = (struct relocation_entry_s *)HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct relocation_entry_s));
+    reloc_entries = HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct relocation_entry_s));
     if(reloc_entries == NULL) {
         WARN("Not enough memory for relocation entries!\n");
         goto fail;

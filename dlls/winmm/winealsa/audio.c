@@ -2818,7 +2818,7 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     if (dwFlags & (DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN))
 	return DSERR_CONTROLUNAVAIL;
 
-    *ippdsdb = (IDsDriverBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverBufferImpl));
+    *ippdsdb = HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverBufferImpl));
     if (*ippdsdb == NULL)
 	return DSERR_OUTOFMEMORY;
     (*ippdsdb)->lpVtbl  = &dsdbvt;
@@ -2878,7 +2878,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 	return MMSYSERR_NOTSUPPORTED;
     }
 
-    *idrv = (IDsDriverImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
+    *idrv = HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
     if (!*idrv)
 	return MMSYSERR_NOMEM;
     (*idrv)->lpVtbl	= &dsdvt;

@@ -181,7 +181,7 @@ DWORD WINAPI FormatMessageA(
 #define ADD_TO_T(c) do { \
         *t++=c;\
         if (t-target == talloced) {\
-            target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
+            target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
             t = target+talloced;\
             talloced*=2;\
       }\
@@ -320,7 +320,7 @@ DWORD WINAPI FormatMessageA(
     }
     talloced = strlen(target)+1;
     if (nSize && talloced<nSize) {
-        target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
+        target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
     }
     TRACE("-- %s\n",debugstr_a(target));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
@@ -398,7 +398,7 @@ DWORD WINAPI FormatMessageW(
 #define ADD_TO_T(c)  do {\
     *t++=c;\
     if (t-target == talloced) {\
-        target = (WCHAR*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2*sizeof(WCHAR));\
+        target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2*sizeof(WCHAR));\
         t = target+talloced;\
         talloced*=2;\
     } \
@@ -533,7 +533,7 @@ DWORD WINAPI FormatMessageW(
     }
     talloced = strlenW(target)+1;
     if (nSize && talloced<nSize)
-        target = (WCHAR*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize*sizeof(WCHAR));
+        target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize*sizeof(WCHAR));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
         /* nSize is the MINIMUM size */
         DWORD len = strlenW(target) + 1;

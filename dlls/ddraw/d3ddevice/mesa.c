@@ -3992,14 +3992,14 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     }
     
     /* Allocate memory for the matrices */
-    object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
-    object->view_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
-    object->proj_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    object->world_mat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    object->view_mat  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    object->proj_mat  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
     memcpy(object->world_mat, id_mat, 16 * sizeof(float));
     memcpy(object->view_mat , id_mat, 16 * sizeof(float));
     memcpy(object->proj_mat , id_mat, 16 * sizeof(float));
     for (tex_num = 0; tex_num < MAX_TEXTURES; tex_num++) {
-        object->tex_mat[tex_num] = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+        object->tex_mat[tex_num] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
 	memcpy(object->tex_mat[tex_num], id_mat, 16 * sizeof(float));
 	object->tex_mat_is_identity[tex_num] = TRUE;
     }
@@ -4011,7 +4011,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
 
     /* allocate the clipping planes */
     object->max_clipping_planes = opengl_device_caps.wMaxUserClipPlanes;
-    object->clipping_planes = (d3d7clippingplane*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->max_clipping_planes * sizeof(d3d7clippingplane));
+    object->clipping_planes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->max_clipping_planes * sizeof(d3d7clippingplane));
 
     glHint(GL_FOG_HINT,GL_NICEST);
 

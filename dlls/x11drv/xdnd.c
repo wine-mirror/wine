@@ -301,7 +301,7 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
  */
 static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len)
 {
-    LPXDNDDATA current = (LPXDNDDATA) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(XDNDDATA));
+    LPXDNDDATA current = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(XDNDDATA));
 
     if (current)
     {
@@ -520,8 +520,7 @@ static DROPFILES* X11DRV_XDND_BuildDropFiles(char* filename, unsigned int len, P
     pathlen = GetLongPathNameA(filename, path, MAX_PATH);
     if (pathlen)
     {
-        lpDrop = (DROPFILES*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(DROPFILES) + pathlen + 1);
+        lpDrop = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DROPFILES) + pathlen + 1);
 
         lpDrop->pFiles = sizeof(DROPFILES);
         lpDrop->pt.x = pt.x;

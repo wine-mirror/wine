@@ -398,8 +398,7 @@ BOOL WINAPI ResizePalette(
 
     if( mapping )
     {
-        int *newMap = (int*) HeapReAlloc(GetProcessHeap(), 0,
-                                    mapping, cEntries * sizeof(int) );
+        int *newMap = HeapReAlloc(GetProcessHeap(), 0, mapping, cEntries * sizeof(int) );
 	if(newMap == NULL)
         {
             ERR("Can not resize mapping -- out of memory!\n");

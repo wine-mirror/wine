@@ -20,8 +20,8 @@
 
 #include "editstr.h"
 
-#define ALLOC_OBJ(type) (type *)HeapAlloc(me_heap, 0, sizeof(type))
-#define ALLOC_N_OBJ(type, count) (type *)HeapAlloc(me_heap, 0, (count)*sizeof(type))
+#define ALLOC_OBJ(type) HeapAlloc(me_heap, 0, sizeof(type))
+#define ALLOC_N_OBJ(type, count) HeapAlloc(me_heap, 0, (count)*sizeof(type))
 #define FREE_OBJ(ptr) HeapFree(me_heap, 0, ptr)
 
 /* style.c */

@@ -522,8 +522,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, UINT 
      */
     UINT i;
     PALETTEENTRY* pal = This->Device->palettes[This->Device->currentPalette];
-    VOID* surface = (VOID*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->myDesc.Width * This->myDesc.Height * sizeof(DWORD));
-    BYTE* dst = (BYTE*) surface;
+    VOID* surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->myDesc.Width * This->myDesc.Height * sizeof(DWORD));
+    BYTE* dst = surface;
     BYTE* src = (BYTE*) This->allocatedMemory;
           
     for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {

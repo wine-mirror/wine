@@ -84,7 +84,7 @@ BOOL WINAPI VNBT_DeviceIoControl(DWORD dwIoControlCode,
             error = GetNetworkParams(NULL, &size);
             if (ERROR_BUFFER_OVERFLOW == error)
             {
-                PFIXED_INFO fixedInfo = (PFIXED_INFO)HeapAlloc( GetProcessHeap(), 0, size);
+                PFIXED_INFO fixedInfo = HeapAlloc( GetProcessHeap(), 0, size);
 
                 error = GetNetworkParams(fixedInfo, &size);
                 if (NO_ERROR == error)

@@ -322,16 +322,14 @@ BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devi
 	return FALSE;
     }
 
-    physDev = (PSDRV_PDEVICE *)HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
-					             sizeof(*physDev) );
+    physDev = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return FALSE;
     *pdev = physDev;
     physDev->hdc = hdc;
 
     physDev->pi = pi;
 
-    physDev->Devmode = (PSDRV_DEVMODEA *)HeapAlloc( PSDRV_Heap, 0,
-						     sizeof(PSDRV_DEVMODEA) );
+    physDev->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DEVMODEA) );
     if(!physDev->Devmode) {
         HeapFree( PSDRV_Heap, 0, physDev );
 	return FALSE;

@@ -78,22 +78,21 @@ static HRESULT create_dib(IDirectDrawSurfaceImpl* This)
     case 16:
     case 32:
 	/* Allocate extra space to store the RGB bit masks. */
-	b_info = (BITMAPINFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					sizeof(BITMAPINFOHEADER)
-					+ 3 * sizeof(DWORD));
+	b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                           sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD));
 	break;
 
     case 24:
-	b_info = (BITMAPINFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					sizeof(BITMAPINFOHEADER));
+	b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                           sizeof(BITMAPINFOHEADER));
 	break;
 
     default:
 	/* Allocate extra space for a palette. */
-	b_info = (BITMAPINFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-					sizeof(BITMAPINFOHEADER)
-					+ sizeof(RGBQUAD)
-					* (1 << This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount));
+	b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                           sizeof(BITMAPINFOHEADER)
+                           + sizeof(RGBQUAD)
+                           * (1 << This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount));
 	break;
     }
 

@@ -459,7 +459,7 @@ static BOOL PRINTDLG_PaperSizeA(
 	goto out;
     }
 
-    Names = (char*)HeapAlloc(GetProcessHeap(),0,NrOfEntries*64);
+    Names = HeapAlloc(GetProcessHeap(),0,NrOfEntries*64);
     if (NrOfEntries != (ret=DeviceCapabilitiesA(devname,portname,DC_PAPERNAMES,Names,dm))) {
 	FIXME("Number of returned vals %d is not %d\n",NrOfEntries,ret);
 	goto out;
@@ -517,7 +517,7 @@ static BOOL PRINTDLG_PaperSizeW(
 	goto out;
     }
 
-    Names = (WCHAR*)HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*NrOfEntries*64);
+    Names = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*NrOfEntries*64);
     if (NrOfEntries != (ret=DeviceCapabilitiesW(devname,portname,DC_PAPERNAMES,Names,dm))) {
 	FIXME("Number of returned vals %d is not %d\n",NrOfEntries,ret);
 	goto out;

@@ -811,7 +811,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
             return NULL;
         }
 
-        iccprofile = (icProfile *)HeapAlloc( GetProcessHeap(), 0, size );
+        iccprofile = HeapAlloc( GetProcessHeap(), 0, size );
         if (!iccprofile)
         {
             ERR( "Unable to allocate memory for color profile\n" );

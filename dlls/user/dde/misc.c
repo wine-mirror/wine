@@ -362,7 +362,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
     /* grab enough heap for one control struct - not really necessary for re-initialise
      *	but allows us to use same validation routines */
-    pInstance = (WDML_INSTANCE*)HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_INSTANCE));
+    pInstance = HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_INSTANCE));
     if (pInstance == NULL)
     {
 	/* catastrophe !! warn user & abort */
@@ -958,7 +958,7 @@ static void WDML_InsertHSZNode(WDML_INSTANCE* pInstance, HSZ hsz)
 	HSZNode* pNew = NULL;
 	/* Create a new node for this HSZ.
 	 */
-	pNew = (HSZNode*)HeapAlloc(GetProcessHeap(), 0, sizeof(HSZNode));
+	pNew = HeapAlloc(GetProcessHeap(), 0, sizeof(HSZNode));
 	if (pNew != NULL)
 	{
 	    pNew->hsz      = hsz;
@@ -1622,7 +1622,7 @@ WDML_SERVER*	WDML_AddServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTop
     WCHAR		buf1[256];
     WCHAR		buf2[256];
 
-    pServer = (WDML_SERVER*)HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_SERVER));
+    pServer = HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_SERVER));
     if (pServer == NULL) return NULL;
 
     pServer->hszService = hszService;

@@ -290,7 +290,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
     while(!end_thread) {
 	TRACE("Thread loop\n");
 	npfd = snd_seq_poll_descriptors_count(midiSeq, POLLIN);
-	pfd = (struct pollfd *)HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
+	pfd = HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
 	snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
 
 	/* Check if an event is present */

@@ -1268,14 +1268,14 @@ BOOL WINAPI ImmSetCompositionStringA(
     comp_len = MultiByteToWideChar(CP_ACP, 0, lpComp, dwCompLen, NULL, 0);
     if (comp_len)
     {
-        CompBuffer = (WCHAR*)HeapAlloc(GetProcessHeap(),0,comp_len * sizeof(WCHAR));
+        CompBuffer = HeapAlloc(GetProcessHeap(),0,comp_len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpComp, dwCompLen, CompBuffer, comp_len);
     }
 
     read_len = MultiByteToWideChar(CP_ACP, 0, lpRead, dwReadLen, NULL, 0);
     if (read_len)
     {
-        ReadBuffer = (WCHAR*)HeapAlloc(GetProcessHeap(),0,read_len * sizeof(WCHAR));
+        ReadBuffer = HeapAlloc(GetProcessHeap(),0,read_len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpRead, dwReadLen, ReadBuffer, read_len);
     }
 

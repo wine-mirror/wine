@@ -1601,7 +1601,7 @@ static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWOR
 	hr = SHELL_GetPathFromIDListW(This->pPidl, buffer, MAX_PATH);
 
 	if (SUCCEEDED(hr) && *buffer) {
-	    This->sPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(buffer)+1)*sizeof(WCHAR));
+	    This->sPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(buffer)+1)*sizeof(WCHAR));
 	    if (!This->sPath)
 		return E_OUTOFMEMORY;
 
@@ -1613,7 +1613,7 @@ static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWOR
     }
 
     if (!This->sIcoPath && This->sPath) {
-	This->sIcoPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(This->sPath)+1)*sizeof(WCHAR));
+	This->sIcoPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(This->sPath)+1)*sizeof(WCHAR));
 	if (!This->sIcoPath)
 	    return E_OUTOFMEMORY;
 
@@ -2021,7 +2021,7 @@ static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWOR
 	hr = SHELL_GetPathFromIDListW(This->pPidl, buffer, MAX_PATH);
 
 	if (SUCCEEDED(hr) && *buffer) {
-	    This->sPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(buffer)+1)*sizeof(WCHAR));
+	    This->sPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(buffer)+1)*sizeof(WCHAR));
 	    if (!This->sPath)
 		return E_OUTOFMEMORY;
 
@@ -2033,7 +2033,7 @@ static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWOR
     }
 
     if (!This->sIcoPath && This->sPath) {
-	This->sIcoPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(This->sPath)+1)*sizeof(WCHAR));
+	This->sIcoPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(This->sPath)+1)*sizeof(WCHAR));
 	if (!This->sIcoPath)
 	    return E_OUTOFMEMORY;
 

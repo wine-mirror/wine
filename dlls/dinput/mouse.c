@@ -259,7 +259,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, LPVOID mvt, IDirectInputImpl *d
     /* Per default, Wine uses its internal data format */
     newDevice->df = (DIDATAFORMAT *) &Wine_InternalMouseFormat;
     memcpy(newDevice->offset_array, offset_array, WINE_INTERNALMOUSE_NUM_OBJS * sizeof(int));
-    newDevice->wine_df = (DataFormat *) HeapAlloc(GetProcessHeap(), 0, sizeof(DataFormat));
+    newDevice->wine_df = HeapAlloc(GetProcessHeap(), 0, sizeof(DataFormat));
     newDevice->wine_df->size = 0;
     newDevice->wine_df->internal_format_size = Wine_InternalMouseFormat.dwDataSize;
     newDevice->wine_df->dt = NULL;
@@ -815,8 +815,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 		
 		TRACE("buffersize = %ld\n",pd->dwData);
 		
-		This->data_queue = (LPDIDEVICEOBJECTDATA)HeapAlloc(GetProcessHeap(),0,
-								   pd->dwData * sizeof(DIDEVICEOBJECTDATA));
+		This->data_queue = HeapAlloc(GetProcessHeap(),0, pd->dwData * sizeof(DIDEVICEOBJECTDATA));
 		This->queue_head = 0;
 		This->queue_tail = 0;
 		This->queue_len  = pd->dwData;

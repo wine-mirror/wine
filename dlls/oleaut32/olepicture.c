@@ -1501,7 +1501,7 @@ static int serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLengt
     BITMAPFILEHEADER * pFileHeader;
     BITMAPINFO * pInfoHeader;
 
-    pInfoBitmap = (BITMAPINFO *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+    pInfoBitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
         sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
 
     /* Find out bitmap size and padded length */
@@ -1511,8 +1511,7 @@ static int serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLengt
 
     /* Fetch bitmap palette & pixel data */
 
-    pPixelData = (unsigned char *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-        pInfoBitmap->bmiHeader.biSizeImage);
+    pPixelData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pInfoBitmap->bmiHeader.biSizeImage);
     GetDIBits(hDC, hBitmap, 0, pInfoBitmap->bmiHeader.biHeight, pPixelData, pInfoBitmap, DIB_RGB_COLORS);
 
     /* Calculate the total length required for the BMP data */
@@ -1530,7 +1529,7 @@ static int serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLengt
         sizeof(BITMAPINFOHEADER) +
         iNumPaletteEntries * sizeof(RGBQUAD) +
         pInfoBitmap->bmiHeader.biSizeImage;
-    *ppBuffer = (void *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pLength);
+    *ppBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pLength);
 
     /* Fill the BITMAPFILEHEADER */
     pFileHeader = (BITMAPFILEHEADER *)(*ppBuffer);
@@ -1569,7 +1568,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 		unsigned char * pIconData = NULL;
 		unsigned int iDataSize = 0;
 
-        pInfoBitmap = (BITMAPINFO *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+        pInfoBitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
 
 		/* Find out icon size */
 		hDC = GetDC(0);
@@ -1603,7 +1602,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 */
 			/* Let's start with one CURSORICONFILEDIR and one CURSORICONFILEDIRENTRY */
 			iDataSize += 3 * sizeof(WORD) + sizeof(CURSORICONFILEDIRENTRY) + sizeof(BITMAPINFOHEADER);
-			pIconData = (unsigned char *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, iDataSize);
+			pIconData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, iDataSize);
 
 			/* Fill out the CURSORICONFILEDIR */
 			pIconDir = (CURSORICONFILEDIR *)pIconData;
@@ -1651,7 +1650,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 			iDataSize += pIconBitmapHeader->biHeight * iLengthScanLineMask;
 			pIconBitmapHeader->biSizeImage += pIconBitmapHeader->biHeight * iLengthScanLineMask;
 			pIconBitmapHeader->biHeight *= 2;
-			pIconData = (unsigned char *)HeapReAlloc(GetProcessHeap(), 0, pIconData, iDataSize);
+			pIconData = HeapReAlloc(GetProcessHeap(), 0, pIconData, iDataSize);
 			pIconEntry = (CURSORICONFILEDIRENTRY *)(pIconData + 3 * sizeof(WORD));
 			pIconBitmapHeader = (BITMAPINFOHEADER *)(pIconData + 3 * sizeof(WORD) + sizeof(CURSORICONFILEDIRENTRY));
 			pIconEntry->dwDIBSize = iDataSize - (3 * sizeof(WORD) + sizeof(CURSORICONFILEDIRENTRY));

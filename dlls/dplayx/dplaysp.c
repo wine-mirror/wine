@@ -136,9 +136,7 @@ static BOOL DPSP_CreateIUnknown( LPVOID lpSP )
 {
   IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
 
-  This->unk = (DirectPlaySPIUnknownData*)HeapAlloc( GetProcessHeap(),
-                                                    HEAP_ZERO_MEMORY,
-                                                    sizeof( *(This->unk) ) );
+  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
 
   if ( This->unk == NULL )
   {
@@ -165,9 +163,7 @@ static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 {
   IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
 
-  This->sp = (DirectPlaySPData*)HeapAlloc( GetProcessHeap(),
-                                           HEAP_ZERO_MEMORY,
-                                           sizeof( *(This->sp) ) );
+  This->sp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->sp) ) );
 
   if ( This->sp == NULL )
   {

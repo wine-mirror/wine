@@ -156,7 +156,7 @@ INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
 				      info->bmiHeader.biBitCount );
 
     len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + imagesize;
-    mr = (METARECORD *)HeapAlloc( GetProcessHeap(), 0, len );
+    mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
     mr->rdSize = len / 2;
@@ -198,7 +198,7 @@ INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
 				      info->bmiHeader.biBitCount );
 
     len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + imagesize;
-    mr = (METARECORD *)HeapAlloc( GetProcessHeap(), 0, len );
+    mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
     mr->rdSize = len / 2;

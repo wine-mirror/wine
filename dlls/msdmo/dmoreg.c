@@ -318,8 +318,7 @@ IEnumDMO * IEnumDMO_Constructor(
     IEnumDMOImpl* lpedmo;
     BOOL ret = FALSE;
 
-    lpedmo = (IEnumDMOImpl*)HeapAlloc(GetProcessHeap(), 
-        HEAP_ZERO_MEMORY, sizeof(IEnumDMOImpl));
+    lpedmo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumDMOImpl));
 
     if (lpedmo)
     {

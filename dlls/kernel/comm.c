@@ -1961,7 +1961,7 @@ static BOOL COMM_WaitCommEvent(
     fd = get_comm_fd( hFile, GENERIC_WRITE );
     if (fd < 0) return FALSE;
 
-    commio = (async_commio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_commio));
+    commio = HeapAlloc(GetProcessHeap(), 0, sizeof (async_commio));
     if (!commio)
     {
         release_comm_fd( hFile, fd );

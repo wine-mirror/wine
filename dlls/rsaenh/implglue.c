@@ -379,7 +379,7 @@ BOOL import_public_key_impl(CONST BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD d
         return FALSE;
     }
 
-    pbTemp = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dwKeyLen);
+    pbTemp = HeapAlloc(GetProcessHeap(), 0, dwKeyLen);
     if (!pbTemp) return FALSE;
     memcpy(pbTemp, pbSrc, dwKeyLen);
     

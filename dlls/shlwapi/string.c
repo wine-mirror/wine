@@ -2546,7 +2546,7 @@ INT WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
 
       if (nWideCharCount < len - 1)
       {
-        mem = (LPSTR)HeapAlloc(GetProcessHeap(), 0, *lpiLen);
+        mem = HeapAlloc(GetProcessHeap(), 0, *lpiLen);
         if (!mem)
           return 0;
 
@@ -2577,7 +2577,7 @@ INT WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
     reqLen = WideCharToMultiByte(CodePage, 0, lpSrcStr, len, NULL, 0, NULL, NULL);
     if (reqLen)
     {
-      mem = (LPSTR)HeapAlloc(GetProcessHeap(), 0, reqLen);
+      mem = HeapAlloc(GetProcessHeap(), 0, reqLen);
       if (mem)
       {
         reqLen = WideCharToMultiByte(CodePage, 0, lpSrcStr, len, mem,

@@ -284,7 +284,7 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
     pContainer->hMapping = NULL;
     pContainer->file_size = 0;
 
-    pContainer->path = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, (path_len + 1) * sizeof(WCHAR));
+    pContainer->path = HeapAlloc(GetProcessHeap(), 0, (path_len + 1) * sizeof(WCHAR));
     if (!pContainer->path)
     {
         HeapFree(GetProcessHeap(), 0, pContainer);
@@ -2194,7 +2194,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
         return FALSE;
     
     /* allocate handle storage space */
-    pStream = (STREAM_HANDLE *)HeapAlloc(GetProcessHeap(), 0, sizeof(STREAM_HANDLE) + strlen(lpszUrlName) * sizeof(CHAR));
+    pStream = HeapAlloc(GetProcessHeap(), 0, sizeof(STREAM_HANDLE) + strlen(lpszUrlName) * sizeof(CHAR));
     if (!pStream)
     {
         CloseHandle(hFile);

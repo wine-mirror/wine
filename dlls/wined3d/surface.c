@@ -590,7 +590,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
          */
         UINT i;
         PALETTEENTRY* pal = This->resource.wineD3DDevice->palettes[This->resource.wineD3DDevice->currentPalette];
-        VOID* surface = (VOID*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->currentDesc.Width * This->currentDesc.Height * sizeof(DWORD));
+        VOID* surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->currentDesc.Width * This->currentDesc.Height * sizeof(DWORD));
         BYTE* dst = (BYTE*) surface;
         BYTE* src = (BYTE*) This->allocatedMemory;
 

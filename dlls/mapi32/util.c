@@ -121,7 +121,7 @@ SCODE WINAPI MAPIAllocateBuffer(ULONG cbSize, LPVOID *lppBuffer)
     if (!lppBuffer)
         return E_INVALIDARG;
 
-    lpBuff = (LPMAPIALLOCBUFFER)HeapAlloc(GetProcessHeap(), 0, cbSize + sizeof(*lpBuff));
+    lpBuff = HeapAlloc(GetProcessHeap(), 0, cbSize + sizeof(*lpBuff));
     if (!lpBuff)
         return MAPI_E_NOT_ENOUGH_MEMORY;
 

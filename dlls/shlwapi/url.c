@@ -238,7 +238,7 @@ HRESULT WINAPI ParseURLW(LPCWSTR x, PARSEDURLW *y)
 
     /* see if known scheme and return indicator number */
     len = WideCharToMultiByte(0, 0, y->pszProtocol, y->cchProtocol, 0, 0, 0, 0);
-    cmpstr = (LPSTR)HeapAlloc(GetProcessHeap(), 0, len);
+    cmpstr = HeapAlloc(GetProcessHeap(), 0, len);
     WideCharToMultiByte(0, 0, y->pszProtocol, y->cchProtocol, cmpstr, len, 0, 0);
     y->nScheme = URL_SCHEME_UNKNOWN;
     inet_pro = shlwapi_schemes;
@@ -517,7 +517,7 @@ HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
     if(!pszBase || !pszRelative || !pcchCombined)
 	return E_INVALIDARG;
 
-    base = (LPWSTR) HeapAlloc(GetProcessHeap(), 0,
+    base = HeapAlloc(GetProcessHeap(), 0,
 			      (3*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
     relative = base + INTERNET_MAX_URL_LENGTH;
     combined = relative + INTERNET_MAX_URL_LENGTH;

@@ -4687,7 +4687,7 @@ DispCallFunc(
 	dump_Variant(prgpvarg[i]);
 	argsize += _argsize(prgvt[i]);
     }
-    args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
+    args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
     args[0] = (DWORD)pvInstance;      /* this is the fake IDispatch interface pointer */
     argspos = 1;
     for (i=0;i<cActuals;i++) {
@@ -4760,8 +4760,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		}
 	    }
 
-	    args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs);
-	    args2 = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs2);
+	    args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs);
+	    args2 = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs2);
 
 	    args[0] = (DWORD)pIUnk;
 	    argspos = 1; args2pos = 0;

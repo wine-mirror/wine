@@ -299,7 +299,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     if (!(dc = DC_AllocDC( &EMFDRV_Funcs, ENHMETAFILE_DC_MAGIC ))) return 0;
 
-    physDev = (EMFDRV_PDEVICE *)HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
+    physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev) {
         GDI_FreeObject( dc->hSelf, dc );
         return 0;

@@ -120,8 +120,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
   }
 
   /* Add this to the list */
-  lpCacheNode = (lpNSCacheData)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          sizeof( *lpCacheNode ) );
+  lpCacheNode = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpCacheNode ) );
 
   if( lpCacheNode == NULL )
   {
@@ -133,10 +132,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
                                         dwHdrSize );
   CopyMemory( lpCacheNode->lpNSAddrHdr, lpcNSAddrHdr, dwHdrSize );
 
-
-  lpCacheNode->data = (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
-                                                   HEAP_ZERO_MEMORY,
-                                                   sizeof( *(lpCacheNode->data) ) );
+  lpCacheNode->data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(lpCacheNode->data) ) );
 
   if( lpCacheNode->data == NULL )
   {
@@ -283,9 +279,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo )
 /* Create and initialize a session cache */
 BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
 {
-  lpNSCache lpCache = (lpNSCache)HeapAlloc( GetProcessHeap(),
-                                            HEAP_ZERO_MEMORY,
-                                            sizeof( *lpCache ) );
+  lpNSCache lpCache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpCache ) );
 
   *lplpNSInfo = lpCache;
 

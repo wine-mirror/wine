@@ -167,7 +167,7 @@ static DC *MFDRV_AllocMetaFile(void)
 
     if (!(dc = DC_AllocDC( &MFDRV_Funcs, METAFILE_DC_MAGIC ))) return NULL;
 
-    physDev = (METAFILEDRV_PDEVICE *)HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
+    physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
     {
         GDI_FreeObject( dc->hSelf, dc );

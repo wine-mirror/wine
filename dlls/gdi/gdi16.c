@@ -482,8 +482,7 @@ BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
 {
     register int i;
     BOOL ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
-                                           count*sizeof(POINT) );
+    LPPOINT pt32 = HeapAlloc( GetProcessHeap(), 0, count*sizeof(POINT) );
 
     if (!pt32) return FALSE;
     for (i=count;i--;)
@@ -504,8 +503,7 @@ BOOL16 WINAPI Polyline16( HDC16 hdc, const POINT16* pt, INT16 count )
 {
     register int i;
     BOOL16 ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
-                                           count*sizeof(POINT) );
+    LPPOINT pt32 = HeapAlloc( GetProcessHeap(), 0, count*sizeof(POINT) );
 
     if (!pt32) return FALSE;
     for (i=count;i--;)
@@ -1879,7 +1877,7 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
     LPINT       lpdx32 = NULL;
 
     if (lpDx) {
-        lpdx32 = (LPINT)HeapAlloc( GetProcessHeap(),0, sizeof(INT)*count );
+        lpdx32 = HeapAlloc( GetProcessHeap(),0, sizeof(INT)*count );
         if(lpdx32 == NULL) return FALSE;
         for (i=count;i--;) lpdx32[i]=lpDx[i];
     }
@@ -2246,14 +2244,14 @@ BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
     nrpts=0;
     for (i=polygons;i--;)
         nrpts+=counts[i];
-    pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT)*nrpts);
+    pt32 = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT)*nrpts);
     if(pt32 == NULL) return FALSE;
     for (i=nrpts;i--;)
     {
         pt32[i].x = pt[i].x;
         pt32[i].y = pt[i].y;
     }
-    counts32 = (LPINT)HeapAlloc( GetProcessHeap(), 0, polygons*sizeof(INT) );
+    counts32 = HeapAlloc( GetProcessHeap(), 0, polygons*sizeof(INT) );
     if(counts32 == NULL) {
         HeapFree( GetProcessHeap(), 0, pt32 );
         return FALSE;
@@ -2609,8 +2607,7 @@ BOOL16 WINAPI PolyBezier16( HDC16 hdc, const POINT16* lppt, INT16 cPoints )
 {
     int i;
     BOOL16 ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
-                                           cPoints*sizeof(POINT) );
+    LPPOINT pt32 = HeapAlloc( GetProcessHeap(), 0, cPoints*sizeof(POINT) );
     if(!pt32) return FALSE;
     for (i=cPoints;i--;)
     {
@@ -2630,7 +2627,7 @@ BOOL16 WINAPI PolyBezierTo16( HDC16 hdc, const POINT16* lppt, INT16 cPoints )
 {
     int i;
     BOOL16 ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
+    LPPOINT pt32 = HeapAlloc( GetProcessHeap(), 0,
                                            cPoints*sizeof(POINT) );
     if(!pt32) return FALSE;
     for (i=cPoints;i--;)
