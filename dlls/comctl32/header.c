@@ -1203,10 +1203,8 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
       {
 	lpItem->iOrder = phdi->iOrder;
       }
-    else
-      lpItem->iOrder = nItem;
 
-	HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA, nItem, phdi->mask);
+    HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA, nItem, phdi->mask);
 
     HEADER_SetItemBounds (hwnd);
 
@@ -1270,10 +1268,8 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
       {
 	lpItem->iOrder = phdi->iOrder;
       }
-    else
-      lpItem->iOrder = nItem;
 
-	HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGEDW, nItem, phdi->mask);
+    HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGEDW, nItem, phdi->mask);
 
     HEADER_SetItemBounds (hwnd);
 
