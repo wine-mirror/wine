@@ -4,8 +4,6 @@
  * Copyright 1997 Dimitrie O. Paun
  *
  * TODO:
- *   - I am not sure about the default values for the Min, Max, Pos
- *     (in the UPDOWN_INFO the fields: MinVal, MaxVal, CurVal)
  *   - I think I do not handle correctly the WS_BORDER style.
  *     (Should be fixed. <ekohl@abo.rhein-zeitung.de>)
  *
@@ -42,7 +40,7 @@ DEFAULT_DEBUG_CHANNEL(updown);
 typedef struct
 {
   UINT      AccelCount;   /* Number of elements in AccelVect */
-  UDACCEL*    AccelVect;    /* Vector containing AccelCount elements */
+  UDACCEL*  AccelVect;    /* Vector containing AccelCount elements */
   INT       Base;         /* Base to display nr in the buddy window */
   INT       CurVal;       /* Current up-down value */
   INT       MinVal;       /* Minimum up-down value */
@@ -722,7 +720,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 
       /* initialize the info struct */
       infoPtr->AccelCount=0; infoPtr->AccelVect=0; 
-      infoPtr->CurVal=0; infoPtr->MinVal=0; infoPtr->MaxVal=100; /*FIXME*/
+      infoPtr->CurVal=0; infoPtr->MinVal=0; infoPtr->MaxVal=9999;
       infoPtr->Base  = 10; /* Default to base 10  */
       infoPtr->Buddy = 0;  /* No buddy window yet */
       infoPtr->Flags = 0;  /* And no flags        */
