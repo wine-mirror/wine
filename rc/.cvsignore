@@ -1,1 +1,5 @@
 Makefile
+lex.yy.c
+winerc
+y.tab.c
+y.tab.h
