@@ -149,12 +149,11 @@ BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen)
     {
         case CALG_RSA_KEYX:
         case CALG_RSA_SIGN:
-            if (rsa_make_key((int)dwKeyLen, 65537, &pKeyContext->rsa) == CRYPT_OK) {
-                return TRUE;
-            } else {
-                printf("Error generating rsakey of len %ld!\n", dwKeyLen);
+            if (rsa_make_key((int)dwKeyLen, 65537, &pKeyContext->rsa) != CRYPT_OK) {
+                SetLastError(NTE_FAIL);
                 return FALSE;
             }
+            return TRUE;
     }
 
     return TRUE;
@@ -286,11 +285,17 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, CONST BYTE *in
         case CALG_RSA_KEYX:
             outlen = inlen = (mp_count_bits(&pKeyContext->rsa.N)+7)/8;
             if (enc) {
-                rsa_exptmod(in, inlen, out, &outlen, PK_PUBLIC, &pKeyContext->rsa);
+                if (rsa_exptmod(in, inlen, out, &outlen, PK_PUBLIC, &pKeyContext->rsa) != CRYPT_OK) {
+                    SetLastError(NTE_FAIL);
+                    return FALSE;
+                }
                 reverse_bytes((BYTE*)in, inlen);
             } else {
                 reverse_bytes((BYTE*)in, inlen);
-                rsa_exptmod(in, inlen, out, &outlen, PK_PRIVATE, &pKeyContext->rsa);
+                if (rsa_exptmod(in, inlen, out, &outlen, PK_PRIVATE, &pKeyContext->rsa) != CRYPT_OK) {
+                    SetLastError(NTE_FAIL);
+                    return FALSE;
+                }
             }
             break;
 
@@ -363,6 +368,14 @@ BOOL import_public_key_impl(CONST BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD d
 {
     BYTE *pbTemp;
 
+    if (mp_init_multi(&pKeyContext->rsa.e, &pKeyContext->rsa.d, &pKeyContext->rsa.N, 
+                      &pKeyContext->rsa.dQ,&pKeyContext->rsa.dP,&pKeyContext->rsa.qP, 
+                      &pKeyContext->rsa.p, &pKeyContext->rsa.q, NULL) != MP_OKAY)
+    {
+        SetLastError(NTE_FAIL);
+        return FALSE;
+    }
+
     pbTemp = (BYTE*)HeapAlloc(GetProcessHeap(), 0, dwKeyLen);
     if (!pbTemp) return FALSE;
     memcpy(pbTemp, pbSrc, dwKeyLen);
@@ -408,6 +421,14 @@ BOOL import_private_key_impl(CONST BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD 
                              DWORD dwPubExp)
 {
     BYTE *pbTemp, *pbBigNum;
+
+    if (mp_init_multi(&pKeyContext->rsa.e, &pKeyContext->rsa.d, &pKeyContext->rsa.N, 
+                      &pKeyContext->rsa.dQ,&pKeyContext->rsa.dP,&pKeyContext->rsa.qP, 
+                      &pKeyContext->rsa.p, &pKeyContext->rsa.q, NULL) != MP_OKAY)
+    {
+        SetLastError(NTE_FAIL);
+        return FALSE;
+    }
 
     pbTemp = HeapAlloc(GetProcessHeap(), 0, 2*dwKeyLen+5*((dwKeyLen+1)>>1));
     if (!pbTemp) return FALSE;

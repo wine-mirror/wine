@@ -535,31 +535,27 @@ static inline void setup_key(CRYPTKEY *pCryptKey) {
 /******************************************************************************
  * new_key [Internal]
  *
- * Creates a new key object. If neither pbKey nor hHash is given a random key
- * will be generated.
+ * Creates a new key object without assigning the actual binary key value. 
+ * This is done by CPDeriveKey, CPGenKey or CPImportKey, which call this function.
  *
  * PARAMS
- *  hProv   [I] Handle to the provider to which the created key will belong.
- *  aiAlgid [I] The new key shall use the crypto algorithm idenfied by aiAlgid.
- *  dwFlags [I] Upper 16 bits give the key length.
- *              Lower 16 bits: CRYPT_CREATE_SALT, CRYPT_NO_SALT
- *  pbKey   [I] Byte stream to be used as key material. May be NULL.
- *  hHash   [I] Handle to a hash object whose value will be used as key material. May be zero.
+ *  hProv      [I] Handle to the provider to which the created key will belong.
+ *  aiAlgid    [I] The new key shall use the crypto algorithm idenfied by aiAlgid.
+ *  dwFlags    [I] Upper 16 bits give the key length.
+ *                 Lower 16 bits: CRYPT_CREATE_SALT, CRYPT_NO_SALT
+ *  ppCryptKey [O] Pointer to the created key
  *
  * RETURNS
  *  Success: Handle to the created key.
  *  Failure: INVALID_HANDLE_VALUE
  */
-static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, BYTE *pbKey, 
-                         HCRYPTHASH hHash)
+static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTKEY **ppCryptKey)
 {
     KEYCONTAINER *pKeyContainer;
     HCRYPTKEY hCryptKey;
     CRYPTKEY *pCryptKey;
-    CRYPTHASH *pCryptHash;
-    DWORD dwKeyLen = HIWORD(dwFlags), i;
+    DWORD dwKeyLen = HIWORD(dwFlags);
     const PROV_ENUMALGS_EX *peaAlgidInfo;
-    BYTE abHashValue[RSAENH_MAX_HASH_SIZE*2];
 
     if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER, (OBJECTHDR**)&pKeyContainer))
     {
@@ -626,43 +622,6 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, BYTE *
             }
     }
 
-    /* 
-     * If a valid hash handle is supplied, we derive the key material from the hash.
-     * If the hash value is not large enough for the claimed key, we have to construct
-     * a larger binary value based on the hash. This is documented in MSDN: CryptDeriveKey.
-     */
-    if (lookup_handle(&handle_table, hHash, RSAENH_MAGIC_HASH, (OBJECTHDR**)&pCryptHash)) {
-        DWORD dwLen = RSAENH_MAX_HASH_SIZE;
-
-        RSAENH_CPGetHashParam(pCryptHash->hProv, hHash, HP_HASHVAL, abHashValue, &dwLen, 0);
-    
-        if (dwLen < (dwKeyLen >> 3)) {
-            BYTE pad1[RSAENH_HMAC_DEF_PAD_LEN], pad2[RSAENH_HMAC_DEF_PAD_LEN], old_hashval[RSAENH_MAX_HASH_SIZE];
-
-            memcpy(old_hashval, pCryptHash->abHashValue, RSAENH_MAX_HASH_SIZE);
-            
-            for (i=0; i<RSAENH_HMAC_DEF_PAD_LEN; i++) {
-                pad1[i] = RSAENH_HMAC_DEF_IPAD_CHAR ^ (i<dwLen ? abHashValue[i] : 0);
-                pad2[i] = RSAENH_HMAC_DEF_OPAD_CHAR ^ (i<dwLen ? abHashValue[i] : 0);
-            }
-                
-            init_hash(pKeyContainer, pCryptHash);
-            update_hash(pCryptHash, pad1, RSAENH_HMAC_DEF_PAD_LEN);
-            finalize_hash(pCryptHash);
-            memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
-
-            init_hash(pKeyContainer, pCryptHash);
-            update_hash(pCryptHash, pad2, RSAENH_HMAC_DEF_PAD_LEN);
-            finalize_hash(pCryptHash);
-            memcpy(abHashValue+pCryptHash->dwHashSize, pCryptHash->abHashValue, 
-                   pCryptHash->dwHashSize);
-
-            memcpy(pCryptHash->abHashValue, old_hashval, RSAENH_MAX_HASH_SIZE);
-        }
-
-        pbKey = abHashValue;
-    }
-    
     hCryptKey = (HCRYPTKEY)new_object(&handle_table, sizeof(CRYPTKEY), RSAENH_MAGIC_KEY, 
                                       destroy_key, (OBJECTHDR**)&pCryptKey);
     if (hCryptKey != (HCRYPTKEY)INVALID_HANDLE_VALUE)
@@ -674,12 +633,10 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, BYTE *
                                    CRYPT_MAC;
         pCryptKey->dwKeyLen = dwKeyLen >> 3;
         if ((dwFlags & CRYPT_CREATE_SALT) || (dwKeyLen == 40 && !(dwFlags & CRYPT_NO_SALT))) 
-            pCryptKey->dwSaltLen = 16 - pCryptKey->dwKeyLen;
+            pCryptKey->dwSaltLen = 16 /*FIXME*/ - pCryptKey->dwKeyLen;
         else
             pCryptKey->dwSaltLen = 0;
         memset(pCryptKey->abKeyValue, 0, sizeof(pCryptKey->abKeyValue));
-        if (pbKey) memcpy(pCryptKey->abKeyValue, pbKey, RSAENH_MIN(pCryptKey->dwKeyLen, 
-                          sizeof(pCryptKey->abKeyValue)));
         memset(pCryptKey->abInitVector, 0, sizeof(pCryptKey->abInitVector));
             
         switch(aiAlgid)
@@ -704,8 +661,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, BYTE *
                 break;
         }
 
-        new_key_impl(pCryptKey->aiAlgid, &pCryptKey->context, pCryptKey->dwKeyLen);
-        setup_key(pCryptKey);
+        *ppCryptKey = pCryptKey;
     }
 
     return hCryptKey;
@@ -1640,7 +1596,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
     CONST ALG_ID *pAlgid = (CONST ALG_ID*)(pBlobHeader+1);
     CONST BYTE *pbKeyStream = (CONST BYTE*)(pAlgid + 1);
-    BYTE *pbDecrypted, abKeyValue[RSAENH_MAX_KEY_SIZE];
+    BYTE *pbDecrypted;
     DWORD dwKeyLen, i;
 
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%ld, hPubKey=%08lx, dwFlags=%08lx, phKey=%p)\n", 
@@ -1672,13 +1628,8 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 return FALSE;
             }
     
-            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), NULL, 
-                             (HCRYPTHASH)0);
-            if (!lookup_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pCryptKey)) {
-                SetLastError(NTE_FAIL);
-                return FALSE;
-            }
-    
+            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey);
+            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
             return import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
                                            pRSAPubKey->bitlen/8, pRSAPubKey->pubexp);
                 
@@ -1691,13 +1642,8 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 return FALSE;
             }
     
-            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), NULL, 
-                             (HCRYPTHASH)0);
-            if (!lookup_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pCryptKey)) {
-                SetLastError(NTE_FAIL);
-                return FALSE;
-            }
-                
+            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey); 
+            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE; 
             return import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
                                           pRSAPubKey->bitlen >> 3, pRSAPubKey->pubexp);
                 
@@ -1731,11 +1677,12 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
             }
 
             dwKeyLen = pPubKey->dwBlockLen-i-1;
-            memcpy(abKeyValue, pbDecrypted+i+1, dwKeyLen);
+            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
+            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
+            memcpy(pCryptKey->abKeyValue, pbDecrypted+i+1, dwKeyLen);
             HeapFree(GetProcessHeap(), 0, pbDecrypted);
-    
-            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, abKeyValue, 0);
-            return *phKey != (HCRYPTKEY)INVALID_HANDLE_VALUE;
+            setup_key(pCryptKey);
+            return TRUE;
 
         default:
             SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
@@ -1768,7 +1715,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
 BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
-    BYTE abKeyValue[2048];
+    CRYPTKEY *pCryptKey;
 
     TRACE("(hProv=%08lx, aiAlgid=%d, dwFlags=%08lx, phKey=%p)\n", hProv, Algid, dwFlags, phKey);
 
@@ -1783,30 +1730,43 @@ BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYP
     switch (Algid)
     {
         case AT_SIGNATURE:
-            RSAENH_CPDestroyKey(hProv, pKeyContainer->hSignatureKeyPair);
-            pKeyContainer->hSignatureKeyPair = 
-                new_key(hProv, CALG_RSA_SIGN, dwFlags, NULL, 0);
-            copy_handle(&handle_table, pKeyContainer->hSignatureKeyPair, RSAENH_MAGIC_KEY, 
-                        (unsigned int*)phKey);
+        case CALG_RSA_SIGN:
+            *phKey = new_key(hProv, CALG_RSA_SIGN, dwFlags, &pCryptKey);
+            if (pCryptKey) { 
+                new_key_impl(pCryptKey->aiAlgid, &pCryptKey->context, pCryptKey->dwKeyLen);
+                setup_key(pCryptKey);
+                if (Algid == AT_SIGNATURE) {
+                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hSignatureKeyPair);
+                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
+                                (unsigned int*)&pKeyContainer->hSignatureKeyPair);
+                }
+            }
             break;
 
         case AT_KEYEXCHANGE:
-            RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
-            pKeyContainer->hKeyExchangeKeyPair = new_key(hProv, CALG_RSA_KEYX, dwFlags, NULL, 0);
-            copy_handle(&handle_table, pKeyContainer->hKeyExchangeKeyPair, RSAENH_MAGIC_KEY, 
-                        (unsigned int*)phKey);
-            break;
-     
-        case CALG_RSA_SIGN:
         case CALG_RSA_KEYX:
-            *phKey = new_key(hProv, Algid, dwFlags, NULL, 0);
+             *phKey = new_key(hProv, CALG_RSA_KEYX, dwFlags, &pCryptKey);
+            if (pCryptKey) { 
+                new_key_impl(pCryptKey->aiAlgid, &pCryptKey->context, pCryptKey->dwKeyLen);
+                setup_key(pCryptKey);
+                if (Algid == AT_KEYEXCHANGE) {
+                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
+                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
+                                (unsigned int*)&pKeyContainer->hKeyExchangeKeyPair);
+                }
+            }
             break;
             
         case CALG_RC2:
         case CALG_RC4:
         case CALG_DES:
-            gen_rand_impl(abKeyValue, 2048);
-            *phKey = new_key(hProv, Algid, dwFlags, abKeyValue, 0);
+        case CALG_3DES_112:
+        case CALG_3DES:
+            *phKey = new_key(hProv, Algid, dwFlags, &pCryptKey);
+            if (pCryptKey) {
+                gen_rand_impl(pCryptKey->abKeyValue, RSAENH_MAX_KEY_SIZE);
+                setup_key(pCryptKey);
+            }
             break;
             
         default:
@@ -2237,6 +2197,10 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
                                DWORD dwFlags, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
+    CRYPTKEY *pCryptKey;
+    CRYPTHASH *pCryptHash;
+    BYTE abHashValue[RSAENH_MAX_HASH_SIZE*2];
+    DWORD dwLen;
     
     TRACE("(hProv=%08lx, Algid=%d, hBaseData=%08lx, dwFlags=%08lx phKey=%p)\n", hProv, Algid, 
            hBaseData, dwFlags, phKey);
@@ -2248,7 +2212,8 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
         return FALSE;
     }
 
-    if (!is_valid_handle(&handle_table, (unsigned int)hBaseData, RSAENH_MAGIC_HASH))
+    if (!lookup_handle(&handle_table, (unsigned int)hBaseData, RSAENH_MAGIC_HASH, 
+                       (OBJECTHDR**)&pCryptHash))
     {
         SetLastError(NTE_BAD_HASH);
         return FALSE;
@@ -2260,8 +2225,47 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
         return FALSE;
     }
 
-    *phKey = new_key(hProv, Algid, dwFlags, NULL, hBaseData);
-    return *phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE ? FALSE : TRUE;
+    *phKey = new_key(hProv, Algid, dwFlags, &pCryptKey);
+    if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
+
+    /* 
+     * We derive the key material from the hash.
+     * If the hash value is not large enough for the claimed key, we have to construct
+     * a larger binary value based on the hash. This is documented in MSDN: CryptDeriveKey.
+     */
+    dwLen = RSAENH_MAX_HASH_SIZE;
+    RSAENH_CPGetHashParam(pCryptHash->hProv, hBaseData, HP_HASHVAL, abHashValue, &dwLen, 0);
+    
+    if (dwLen < pCryptKey->dwKeyLen) {
+        BYTE pad1[RSAENH_HMAC_DEF_PAD_LEN], pad2[RSAENH_HMAC_DEF_PAD_LEN], old_hashval[RSAENH_MAX_HASH_SIZE];
+        DWORD i;
+
+        memcpy(old_hashval, pCryptHash->abHashValue, RSAENH_MAX_HASH_SIZE);
+            
+        for (i=0; i<RSAENH_HMAC_DEF_PAD_LEN; i++) {
+            pad1[i] = RSAENH_HMAC_DEF_IPAD_CHAR ^ (i<dwLen ? abHashValue[i] : 0);
+            pad2[i] = RSAENH_HMAC_DEF_OPAD_CHAR ^ (i<dwLen ? abHashValue[i] : 0);
+        }
+                
+        init_hash(pKeyContainer, pCryptHash);
+        update_hash(pCryptHash, pad1, RSAENH_HMAC_DEF_PAD_LEN);
+        finalize_hash(pCryptHash);
+        memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
+
+        init_hash(pKeyContainer, pCryptHash);
+        update_hash(pCryptHash, pad2, RSAENH_HMAC_DEF_PAD_LEN);
+        finalize_hash(pCryptHash);
+        memcpy(abHashValue+pCryptHash->dwHashSize, pCryptHash->abHashValue, 
+               pCryptHash->dwHashSize);
+
+        memcpy(pCryptHash->abHashValue, old_hashval, RSAENH_MAX_HASH_SIZE);
+    }
+    
+    memcpy(pCryptKey->abKeyValue, abHashValue, 
+        RSAENH_MIN(pCryptKey->dwKeyLen, sizeof(pCryptKey->abKeyValue)));
+ 
+    setup_key(pCryptKey);
+    return TRUE;    
 }
 
 /******************************************************************************
