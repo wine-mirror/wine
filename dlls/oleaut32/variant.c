@@ -62,7 +62,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-#define SYSDUPSTRING(str) SysAllocStringLen((str), SysStringLen(str))
+#define SYSDUPSTRING(str) SysAllocStringByteLen((LPCSTR)(str), SysStringByteLen(str))
 
 #ifndef FLT_MAX
 # ifdef MAXFLOAT
