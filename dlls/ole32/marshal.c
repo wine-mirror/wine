@@ -316,12 +316,14 @@ StdMarshalImpl_UnmarshalInterface(
     return hres;
   }
   hres = PIPE_GetNewPipeBuf(&mid,&chanbuf);
-  if (hres)
-    FIXME("Failed to get an rpc channel buffer for %s\n",debugstr_guid(riid));
-  IRpcProxyBuffer_Connect(rpcproxy,chanbuf);
-  IRpcProxyBuffer_Release(rpcproxy); /* no need */
+  if (hres) {
+    ERR("Failed to get an rpc channel buffer for %s\n",debugstr_guid(riid));
+  } else {
+    IRpcProxyBuffer_Connect(rpcproxy,chanbuf);
+    IRpcProxyBuffer_Release(rpcproxy); /* no need */
+  }
   IPSFactoryBuffer_Release(psfacbuf);
-  return S_OK;
+  return hres;
 }
 
 HRESULT WINAPI
@@ -477,7 +479,11 @@ CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
 	MESSAGE("\nERROR: You need to merge the 'winedefault.reg' file into your\n");
 	MESSAGE("       Wine registry by running: `regedit winedefault.reg'\n\n");
     } else {
-	FIXME("Failed to Marshal the interface, %lx?\n",hres);
+    	if (IsEqualGUID(riid,&IID_IOleObject)) {
+	    ERR("WINE currently cannot marshal IOleObject interfaces. This means you cannot embed/link OLE objects between applications.\n");
+	} else {
+	    FIXME("Failed to marshal the interface %s, %lx?\n",debugstr_guid(riid),hres);
+	}
     }
     goto release_marshal;
   }
