@@ -430,6 +430,10 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 	BOOL fIgnoreHKCU,
 	BOOL fDefault)
 {
+	static const WCHAR wYES[]=  {'Y','E','S','\0'};
+	static const WCHAR wTRUE[]= {'T','R','U','E','\0'};
+	static const WCHAR wNO[]=   {'N','O','\0'};
+	static const WCHAR wFALSE[]={'F','A','L','S','E','\0'};
 	LONG retvalue;
 	DWORD type, datalen, work;
 	BOOL ret = fDefault;
@@ -447,10 +451,10 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 	    switch (type) {
 	    case REG_SZ:
 		data[9] = L'\0';     /* set end of string */
-		if (lstrcmpiW(data, L"YES") == 0) ret = TRUE;
-		if (lstrcmpiW(data, L"TRUE") == 0) ret = TRUE;
-		if (lstrcmpiW(data, L"NO") == 0) ret = FALSE;
-		if (lstrcmpiW(data, L"FALSE") == 0) ret = FALSE;
+		if (lstrcmpiW(data, wYES)==0 || lstrcmpiW(data, wTRUE)==0)
+		    ret = TRUE;
+		else if (lstrcmpiW(data, wNO)==0 || lstrcmpiW(data, wFALSE)==0)
+		    ret = FALSE;
 		break;
 	    case REG_DWORD:
 		work = *(LPDWORD)data;
