@@ -66,6 +66,9 @@ typedef struct tagARENA_FREE
 #define ARENA_INUSE_FILLER     0x55
 #define ARENA_FREE_FILLER      0xaa
 
+#define ALIGNMENT              8   /* everything is aligned on 8 byte boundaries */
+#define ROUND_SIZE(size)       (((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1))
+
 #define QUIET                  1           /* Suppress messages  */
 #define NOISY                  0           /* Report all errors  */
 
@@ -495,7 +498,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     {
         /* If this is a secondary subheap, insert it into list */
 
-        subheap->headerSize = sizeof(SUBHEAP);
+        subheap->headerSize = ROUND_SIZE( sizeof(SUBHEAP) );
         subheap->next       = heap->subheap.next;
         heap->subheap.next  = subheap;
     }
@@ -503,7 +506,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     {
         /* If this is a primary subheap, initialize main heap */
 
-        subheap->headerSize = sizeof(HEAP);
+        subheap->headerSize = ROUND_SIZE( sizeof(HEAP) );
         subheap->next       = NULL;
         heap->next          = NULL;
         heap->flags         = flags;
@@ -548,14 +551,14 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
 {
     LPVOID address = base;
 
+    /* round-up sizes on a 64K boundary */
+    totalSize  = (totalSize + 0xffff) & 0xffff0000;
+    commitSize = (commitSize + 0xffff) & 0xffff0000;
+    if (!commitSize) commitSize = 0x10000;
+    if (totalSize < commitSize) totalSize = commitSize;
+
     if (!address)
     {
-        /* round-up sizes on a 64K boundary */
-        totalSize  = (totalSize + 0xffff) & 0xffff0000;
-        commitSize = (commitSize + 0xffff) & 0xffff0000;
-        if (!commitSize) commitSize = 0x10000;
-        if (totalSize < commitSize) totalSize = commitSize;
-
         /* allocate the memory block */
         if (!(address = VirtualAlloc( NULL, totalSize, MEM_RESERVE, PAGE_EXECUTE_READWRITE )))
         {
@@ -624,7 +627,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
      * So just one heap struct, one first free arena which will eventually
      * get inuse, and HEAP_MIN_BLOCK_SIZE for the second free arena that
      * might get assigned all remaining free space in HEAP_ShrinkBlock() */
-    size += sizeof(SUBHEAP) + sizeof(ARENA_INUSE) + HEAP_MIN_BLOCK_SIZE;
+    size += ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + HEAP_MIN_BLOCK_SIZE;
     if (!(subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, size,
                                         max( HEAP_DEF_SIZE, size ) )))
         return NULL;
@@ -663,7 +666,7 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     char *heapEnd = (char *)subheap + subheap->size;
 
     /* Check for unaligned pointers */
-    if ( (long)pArena % sizeof(void *) != 0 )
+    if ( (long)pArena % ALIGNMENT != 0 )
     {
         ERR( "Heap %08lx: unaligned arena pointer %08lx\n",
              (DWORD)subheap->heap, (DWORD)pArena );
@@ -755,7 +758,7 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
     char *heapEnd = (char *)subheap + subheap->size;
 
     /* Check for unaligned pointers */
-    if ( (long)pArena % sizeof(void *) != 0 )
+    if ( (long)pArena % ALIGNMENT != 0 )
     {
         if ( quiet == NOISY )
         {
@@ -938,11 +941,6 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, ULONG totalSize, ULONG com
         totalSize = HEAP_DEF_SIZE;
         flags |= HEAP_GROWABLE;
     }
-    /* round up sizes */
-    totalSize  = (totalSize + 0xffff) & 0xffff0000;
-    commitSize = (commitSize + 0xffff) & 0xffff0000;
-    if (!commitSize) commitSize = 0x10000;
-    if (totalSize < commitSize) totalSize = commitSize;
 
     if (!(subheap = HEAP_CreateSubHeap( NULL, addr, flags, commitSize, totalSize ))) return 0;
 
@@ -1014,7 +1012,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, ULONG size )
     if (!heapPtr) return NULL;
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
     flags |= heapPtr->flags;
-    size = (size + 3) & ~3;
+    size = ROUND_SIZE(size);
     if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
@@ -1126,7 +1124,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY |
              HEAP_REALLOC_IN_PLACE_ONLY;
     flags |= heapPtr->flags;
-    size = (size + 3) & ~3;
+    size = ROUND_SIZE(size);
     if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
