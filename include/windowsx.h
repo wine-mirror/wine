@@ -1,14 +1,12 @@
 /* Copyright (C) 1999 Corel Corporation (Paul Quinn) */
 
-#ifndef __WINE_WINDOWSX_H
-#define __WINE_WINDOWSX_H
-
+#ifndef _INC_WINDOWSX
+#define _INC_WINDOWSX
+	
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define _INC_WINDOWSX
-	
 #define GET_WM_VSCROLL_CODE(wp, lp)         LOWORD(wp)
 #define GET_WM_VSCROLL_POS(wp, lp)          HIWORD(wp)
 #define GET_WM_VSCROLL_HWND(wp, lp)         (HWND)(lp)
@@ -32,6 +30,17 @@ extern "C" {
 #define GET_WM_VKEYTOITEM_ITEM(wp, lp)          HIWORD(wp)
 #define GET_WM_VKEYTOITEM_HWND(wp, lp)          (HWND)(lp)
 #define GET_WM_VKEYTOITEM_MPS(code, item, hwnd) (WPARAM)MAKELONG(item, code), (LONG)(hwnd)
+
+/****** KERNEL Macro APIs ******************************************************/
+
+#define     GetInstanceModule(hInst) (GetModuleHandle((LPCSTR)MAKELP(0, hInst)))
+#define     GlobalPtrHandle(lp)      ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+#define     GlobalLockPtr(lp)        ((BOOL)SELECTOROF(GlobalLock(GlobalPtrHandle(lp))))
+#define     GlobalUnlockPtr(lp)      (GlobalUnlock(GlobalPtrHandle(lp)))
+#define     GlobalAllocPtr(flags,cb) (GlobalLock(GlobalAlloc((flags), (cb))))
+#define     GlobalReAllocPtr(lp, cbNew, flags) (GlobalUnlockPtr(lp), \
+                               GlobalLock(GlobalReAlloc(GlobalPtrHandle(lp) , (cbNew), (flags))))
+#define     GlobalFreePtr(lp)        (GlobalUnlockPtr(lp), (BOOL)GlobalFree(GlobalPtrHandle(lp)))
 
 /****** USER Macro APIs ******************************************************/
 
