@@ -708,7 +708,7 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet, LPWINE_M
 	    switch (dwRet & 0xFFFF0000ul) {
 	    case 0:
 	    case MCI_INTEGER_RETURNED:
-		snprintf(lpstrRet, uRetLen, "%d", data[1]);
+		wsnprintfA(lpstrRet, uRetLen, "%d", data[1]);
 		break;
 	    case MCI_RESOURCE_RETURNED:
 		/* return string which ID is HIWORD(data[1]), 
@@ -722,12 +722,12 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet, LPWINE_M
 		LoadStringA(wmd->hDrv, HIWORD(data[1]), lpstrRet, uRetLen);
 		break;
 	    case MCI_COLONIZED3_RETURN:
-		snprintf(lpstrRet, uRetLen, "%d:%d:%d", 
+		wsnprintfA(lpstrRet, uRetLen, "%d:%d:%d", 
 			 LOBYTE(LOWORD(data[1])), HIBYTE(LOWORD(data[1])), 
 			 LOBYTE(HIWORD(data[1])));
 		break;
 	    case MCI_COLONIZED4_RETURN:
-		snprintf(lpstrRet, uRetLen, "%d:%d:%d:%d", 
+		wsnprintfA(lpstrRet, uRetLen, "%d:%d:%d:%d", 
 			 LOBYTE(LOWORD(data[1])), HIBYTE(LOWORD(data[1])), 
 			 LOBYTE(HIWORD(data[1])), HIBYTE(HIWORD(data[1])));
 		break;
@@ -741,7 +741,7 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet, LPWINE_M
 		break;
 	    case MCI_INTEGER_RETURNED:
 		data[1] = *(LPDWORD)lpstrRet;
-		snprintf(lpstrRet, uRetLen, "%d", data[1]);
+		wsnprintfA(lpstrRet, uRetLen, "%d", data[1]);
 		break;
 	    default:
 		WARN("Oooch. MCI_STRING and HIWORD(dwRet)=%04x\n", HIWORD(dwRet));
@@ -751,7 +751,7 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet, LPWINE_M
 	case MCI_RECT:	
 	    if (dwRet & 0xFFFF0000ul)	
 		WARN("Oooch. MCI_STRING and HIWORD(dwRet)=%04x\n", HIWORD(dwRet));
-	    snprintf(lpstrRet, uRetLen, "%d %d %d %d", 
+	    wsnprintfA(lpstrRet, uRetLen, "%d %d %d %d", 
 		     data[1], data[2], data[3], data[4]);	
 	    break;
 	default:		ERR("oops\n");
