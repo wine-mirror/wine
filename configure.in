@@ -585,7 +585,7 @@ then
       LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,\$(libdir)/%)"
       LDDLLFLAGS="-Wl,-B,symbolic"
     else
-      AC_CACHE_CHECK("whether we can build a NetBSD dll",
+      AC_CACHE_CHECK("whether we can build a NetBSD a.out dll",
                    ac_cv_c_dll_netbsd,
       [saved_cflags=$CFLAGS
       CFLAGS="$CFLAGS -fPIC -Wl,-Bshareable,-Bforcearchive"
@@ -695,6 +695,8 @@ dnl Solaris style errno location
 WINE_CHECK_ERRNO(___errno)
 dnl UnixWare style errno location
 WINE_CHECK_ERRNO(__thr_errno)
+dnl NetBSD style errno location
+WINE_CHECK_ERRNO(__errno)
 
 if test "$wine_cv_libc_reentrant" != "no" 
 then
