@@ -10,6 +10,7 @@ C_SRCS = \
 	dosmem.c \
 	dpmi.c \
 	xms.c \
+	int09.c \
 	int10.c \
 	int11.c \
 	int12.c \
@@ -26,6 +27,7 @@ C_SRCS = \
 	int29.c \
 	int2a.c \
 	int2f.c \
+	int33.c \
 	int3d.c \
 	int41.c \
 	int4b.c \

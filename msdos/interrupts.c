@@ -101,6 +101,9 @@ int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
     /* we should really map to if1632/wprocs.spec, but not all
      * interrupt handlers are adapted to support real mode yet */
     switch (intnum) {
+        case 0x09:
+            INT_Int09Handler(context);
+            break;
         case 0x10:
             INT_Int10Handler(context);
             break;
@@ -134,14 +137,17 @@ int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
         case 0x25:
             INT_Int25Handler(context);
             break;
+        case 0x29:
+            INT_Int29Handler(context);
+            break;
         case 0x2f:
             INT_Int2fHandler(context);
             break;
         case 0x31:
             INT_Int31Handler(context);
             break;
-        case 0x29:
-            INT_Int29Handler(context);
+        case 0x33:
+            INT_Int33Handler(context);
             break;
         default:
             FIXME(int, "Unknown Interrupt in DOS mode: 0x%x\n", intnum);

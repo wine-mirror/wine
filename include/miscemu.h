@@ -112,6 +112,11 @@ extern void IO_port_init (void);
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
 
+/* msdos/int09.c */
+extern void WINAPI INT_Int09Handler(CONTEXT*);
+extern void WINAPI INT_Int09SendScan(BYTE);
+extern BYTE WINAPI INT_Int09ReadScan(void);
+
 /* msdos/int10.c */
 extern void WINAPI INT_Int10Handler(CONTEXT*);
 
@@ -155,11 +160,16 @@ extern void WINAPI INT_Int29Handler(CONTEXT*);
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT*);
 
+/* msdos/int33.c */
+extern void WINAPI INT_Int33Handler(CONTEXT*);
+extern void WINAPI INT_Int33Message(UINT,WPARAM,LPARAM);
+
 /* msdos/dpmi.c */
 typedef void WINAPI (*RMCBPROC)(CONTEXT*);
 extern void WINAPI INT_Int31Handler(CONTEXT*);
 extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
 extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
+extern int DPMI_CallRMProc(CONTEXT*,LPWORD,int,int);
 
 /* msdos/xms.c */
 extern void WINAPI XMS_Handler(CONTEXT*);
