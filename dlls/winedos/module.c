@@ -232,6 +232,9 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
   /* calculate load size */
   image_start=mz_header.e_cparhdr<<4;
   image_size=mz_header.e_cp<<9; /* pages are 512 bytes */
+  /* From Ralf Brown Interrupt List: If the word at offset 02h is 4, it should
+   * be treated as 00h, since pre-1.10 versions of the MS linker set it that
+   * way. */
   if ((mz_header.e_cblp!=0)&&(mz_header.e_cblp!=4)) image_size-=512-mz_header.e_cblp;
   image_size-=image_start;
   min_size=image_size+((DWORD)mz_header.e_minalloc<<4)+(PSP_SIZE<<4);
@@ -274,8 +277,12 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
  TRACE("loading DOS %s image, %08lx bytes\n",old_com?"COM":"EXE",image_size);
  SetFilePointer(hFile,image_start,NULL,FILE_BEGIN);
  if (!ReadFile(hFile,load_start,image_size,&len,NULL) || len != image_size) {
-  SetLastError(ERROR_BAD_FORMAT);
-  goto load_error;
+  /* check if this is due to the workaround for the pre-1.10 MS linker and we
+     realy had only 4 bytes on the last page */
+  if (mz_header.e_cblp != 4 || image_size - len != 512 - 4) {
+    SetLastError(ERROR_BAD_FORMAT);
+    goto load_error;
+  }
  }
 
  if (mz_header.e_crlc) {
