@@ -111,8 +111,10 @@
 @ stub DoFileDownloadEx
 @ stub DoOrganizeFavDlg
 @ stub DoOrganizeFavDlgW
+@ stub DoPrivacyDlg
 @ stub HlinkFrameNavigate
 @ stub HlinkFrameNavigateNHL
+@ stub ImportPrivacySettings
 @ stub InstallReg_RunDLL
 @ stub IEWriteErrorLog
 @ stub OpenURL
