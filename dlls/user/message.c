@@ -254,8 +254,14 @@ inline static BOOL check_string( LPCWSTR str, size_t size )
 inline static void *get_buffer_space( void **buffer, size_t size )
 {
     void *ret;
-    if (!(ret = HeapReAlloc( GetProcessHeap(), 0, *buffer, size )))
-        HeapFree( GetProcessHeap(), 0, *buffer );
+
+    if (*buffer)
+    {
+        if (!(ret = HeapReAlloc( GetProcessHeap(), 0, *buffer, size )))
+            HeapFree( GetProcessHeap(), 0, *buffer );
+    }
+    else ret = HeapAlloc( GetProcessHeap(), 0, size );
+
     *buffer = ret;
     return ret;
 }
