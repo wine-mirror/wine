@@ -2094,6 +2094,7 @@ GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
 				  LPD3DLIGHT7 lpLight)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, lpLight);
     
     if (TRACE_ON(ddraw)) {
@@ -2101,77 +2102,31 @@ GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
 	dump_D3DLIGHT7(lpLight);
     }
     
-    if (dwLightIndex > MAX_LIGHTS) return DDERR_INVALIDPARAMS;
+    if (dwLightIndex >= MAX_LIGHTS) return DDERR_INVALIDPARAMS;
     This->set_lights |= 0x00000001 << dwLightIndex;
     This->light_parameters[dwLightIndex] = *lpLight;
 
+    /* Some checks to print out nice warnings :-) */
     switch (lpLight->dltType) {
-	case D3DLIGHT_DIRECTIONAL: {
-	    float direction[4];
-	    float cut_off = 180.0;
+        case D3DLIGHT_DIRECTIONAL:
+        case D3DLIGHT_POINT:
+            /* These are handled properly... */
+            break;
 	    
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_AMBIENT,  (float *) &(lpLight->dcvAmbient));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_DIFFUSE,  (float *) &(lpLight->dcvDiffuse));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPECULAR, (float *) &(lpLight->dcvSpecular));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_CUTOFF, &cut_off);
-
-	    direction[0] = lpLight->dvDirection.u1.x;
-	    direction[1] = lpLight->dvDirection.u2.y;
-	    direction[2] = lpLight->dvDirection.u3.z;
-	    direction[3] = 0.0;
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) direction);
-	} break;
-
-        case D3DLIGHT_POINT: {
-	    float position[4];
-	    float cut_off = 180.0;
-
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_AMBIENT,  (float *) &(lpLight->dcvAmbient));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_DIFFUSE,  (float *) &(lpLight->dcvDiffuse));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPECULAR, (float *) &(lpLight->dcvSpecular));
-	    position[0] = lpLight->dvPosition.u1.x;
-	    position[1] = lpLight->dvPosition.u2.y;
-	    position[2] = lpLight->dvPosition.u3.z;
-	    position[3] = 1.0;
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) position);
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_CONSTANT_ATTENUATION, &(lpLight->dvAttenuation0));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_LINEAR_ATTENUATION, &(lpLight->dvAttenuation1));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_QUADRATIC_ATTENUATION, &(lpLight->dvAttenuation2));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_CUTOFF, &cut_off);
-	} break;
-
-        case D3DLIGHT_SPOT: {
-	    float direction[4];
-	    float position[4];
-	    float cut_off = 90.0 * (lpLight->dvPhi / M_PI);
-
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_AMBIENT,  (float *) &(lpLight->dcvAmbient));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_DIFFUSE,  (float *) &(lpLight->dcvDiffuse));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPECULAR, (float *) &(lpLight->dcvSpecular));
-
-	    direction[0] = lpLight->dvDirection.u1.x;
-	    direction[1] = lpLight->dvDirection.u2.y;
-	    direction[2] = lpLight->dvDirection.u3.z;
-	    direction[3] = 0.0;
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_DIRECTION, (float *) direction);
-	    position[0] = lpLight->dvPosition.u1.x;
-	    position[1] = lpLight->dvPosition.u2.y;
-	    position[2] = lpLight->dvPosition.u3.z;
-	    position[3] = 1.0;
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) position);
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_CONSTANT_ATTENUATION, &(lpLight->dvAttenuation0));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_LINEAR_ATTENUATION, &(lpLight->dvAttenuation1));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_QUADRATIC_ATTENUATION, &(lpLight->dvAttenuation2));
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_CUTOFF, &cut_off);
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_EXPONENT, &(lpLight->dvFalloff));
-	    if ((lpLight->dvTheta != 0.0) || (lpLight->dvTheta != lpLight->dvPhi)) {
-	        WARN("dvTheta not fully supported yet !\n");
+        case D3DLIGHT_SPOT:
+            if ((lpLight->dvTheta != 0.0) ||
+		(lpLight->dvTheta != lpLight->dvPhi)) {
+	        ERR("dvTheta not fully supported yet !\n");
 	    }
-	} break;
+	    break;
 
-        default: WARN(" light type not handled yet...\n");
+	default:
+	    ERR("Light type not handled yet : %08x !\n", lpLight->dltType);
     }
-
+    
+    /* This will force the Light setting on next drawing of primitives */
+    glThis->transform_state = GL_TRANSFORM_NONE;
+    
     return DD_OK;
 }
 
@@ -2183,7 +2138,7 @@ GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08lx,%d)\n", This, iface, dwLightIndex, bEnable);
     
-    if (dwLightIndex > MAX_LIGHTS) return DDERR_INVALIDPARAMS;
+    if (dwLightIndex >= MAX_LIGHTS) return DDERR_INVALIDPARAMS;
 
     if (bEnable) {
         if (((0x00000001 << dwLightIndex) & This->set_lights) == 0) {
@@ -2192,8 +2147,16 @@ GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
 	    GL_IDirect3DDeviceImpl_7_SetLight(iface, dwLightIndex, &(This->light_parameters[dwLightIndex]));
 	}
 	glEnable(GL_LIGHT0 + dwLightIndex);
+	if ((This->active_lights & (0x00000001 << dwLightIndex)) == 0) {
+	    /* This light gets active... Need to update its parameters to GL before the next drawing */
+	    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+	    
+	    This->active_lights |= 0x00000001 << dwLightIndex;
+	    glThis->transform_state = GL_TRANSFORM_NONE;
+	}
     } else {
         glDisable(GL_LIGHT0 + dwLightIndex);
+	This->active_lights &= ~(0x00000001 << dwLightIndex);
     }
 
     return DD_OK;
@@ -2203,7 +2166,7 @@ HRESULT  WINAPI
 GL_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, CONST D3DVALUE* pPlaneEquation) 
 {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    GLdouble plane[4];
+    IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
 
     TRACE("(%p)->(%ld,%p)\n", This, dwIndex, pPlaneEquation);
 
@@ -2214,14 +2177,12 @@ GL_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, CO
     TRACE(" clip plane %ld : %f %f %f %f\n", dwIndex, pPlaneEquation[0], pPlaneEquation[1], pPlaneEquation[2], pPlaneEquation[3] );
 
     memcpy(This->clipping_planes[dwIndex].plane, pPlaneEquation, sizeof(D3DVALUE[4]));
-    plane[0] = pPlaneEquation[0];
-    plane[1] = pPlaneEquation[1];
-    plane[2] = pPlaneEquation[2];
-    plane[3] = pPlaneEquation[3];
-
-    /* XXX: is here also code needed to handle the transformation of the world? */
-    glClipPlane( GL_CLIP_PLANE0 + dwIndex, (const GLdouble*) (&plane) );
-
+    
+    /* This is to force the reset of the transformation matrices on the next drawing.
+     * This is needed to use the correct matrices for the various clipping planes.
+     */
+    glThis->transform_state = GL_TRANSFORM_NONE;
+    
     return D3D_OK;
 }
 
@@ -2621,6 +2582,99 @@ d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
     if ((matrices & (VIEWMAT_CHANGED|WORLDMAT_CHANGED)) != 0) {
         glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf((float *) view_mat);
+
+	/* Now also re-loads all the Lights and Clipping Planes using the new matrices */
+	if (This->state_block.render_state[D3DRENDERSTATE_CLIPPING - 1] != FALSE) {
+	    GLint i;
+	    DWORD runner;
+	    for (i = 0, runner = 0x00000001; i < This->max_clipping_planes; i++, runner <<= 1) {
+	        if (runner & This->state_block.render_state[D3DRENDERSTATE_CLIPPLANEENABLE - 1]) {
+		    GLdouble plane[4];
+
+		    plane[0] = This->clipping_planes[i].plane[0];
+		    plane[1] = This->clipping_planes[i].plane[1];
+		    plane[2] = This->clipping_planes[i].plane[2];
+		    plane[3] = This->clipping_planes[i].plane[3];
+		    
+		    glClipPlane( GL_CLIP_PLANE0 + i, (const GLdouble*) (&plane) );
+		}
+	    }
+	}
+	if (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] != FALSE) {
+	    GLint i;
+	    DWORD runner;
+
+	    for (i = 0, runner = 0x00000001; i < MAX_LIGHTS; i++, runner <<= 1) {
+	        if (runner & This->active_lights) {
+		    switch (This->light_parameters[i].dltType) {
+		        case D3DLIGHT_DIRECTIONAL: {
+			    float direction[4];
+			    float cut_off = 180.0;
+			    
+			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &(This->light_parameters[i].dcvAmbient));
+			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &(This->light_parameters[i].dcvDiffuse));
+			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &(This->light_parameters[i].dcvSpecular));
+			    glLightfv(GL_LIGHT0 + i, GL_SPOT_CUTOFF, &cut_off);
+			    
+			    direction[0] = This->light_parameters[i].dvDirection.u1.x;
+			    direction[1] = This->light_parameters[i].dvDirection.u2.y;
+			    direction[2] = This->light_parameters[i].dvDirection.u3.z;
+			    direction[3] = 0.0;
+			    glLightfv(GL_LIGHT0 + i, GL_POSITION, (float *) direction);
+			} break;
+
+			case D3DLIGHT_POINT: {
+			    float position[4];
+			    float cut_off = 180.0;
+			    
+			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &(This->light_parameters[i].dcvAmbient));
+			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &(This->light_parameters[i].dcvDiffuse));
+			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &(This->light_parameters[i].dcvSpecular));
+			    position[0] = This->light_parameters[i].dvPosition.u1.x;
+			    position[1] = This->light_parameters[i].dvPosition.u2.y;
+			    position[2] = This->light_parameters[i].dvPosition.u3.z;
+			    position[3] = 1.0;
+			    glLightfv(GL_LIGHT0 + i, GL_POSITION, (float *) position);
+			    glLightfv(GL_LIGHT0 + i, GL_CONSTANT_ATTENUATION, &(This->light_parameters[i].dvAttenuation0));
+			    glLightfv(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, &(This->light_parameters[i].dvAttenuation1));
+			    glLightfv(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, &(This->light_parameters[i].dvAttenuation2));
+			    glLightfv(GL_LIGHT0 + i, GL_SPOT_CUTOFF, &cut_off);
+			} break;
+
+			case D3DLIGHT_SPOT: {
+			    float direction[4];
+			    float position[4];
+			    float cut_off = 90.0 * (This->light_parameters[i].dvPhi / M_PI);
+			    
+			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &(This->light_parameters[i].dcvAmbient));
+			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &(This->light_parameters[i].dcvDiffuse));
+			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &(This->light_parameters[i].dcvSpecular));
+			    
+			    direction[0] = This->light_parameters[i].dvDirection.u1.x;
+			    direction[1] = This->light_parameters[i].dvDirection.u2.y;
+			    direction[2] = This->light_parameters[i].dvDirection.u3.z;
+			    direction[3] = 0.0;
+			    glLightfv(GL_LIGHT0 + i, GL_SPOT_DIRECTION, (float *) direction);
+			    position[0] = This->light_parameters[i].dvPosition.u1.x;
+			    position[1] = This->light_parameters[i].dvPosition.u2.y;
+			    position[2] = This->light_parameters[i].dvPosition.u3.z;
+			    position[3] = 1.0;
+			    glLightfv(GL_LIGHT0 + i, GL_POSITION, (float *) position);
+			    glLightfv(GL_LIGHT0 + i, GL_CONSTANT_ATTENUATION, &(This->light_parameters[i].dvAttenuation0));
+			    glLightfv(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, &(This->light_parameters[i].dvAttenuation1));
+			    glLightfv(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, &(This->light_parameters[i].dvAttenuation2));
+			    glLightfv(GL_LIGHT0 + i, GL_SPOT_CUTOFF, &cut_off);
+			    glLightfv(GL_LIGHT0 + i, GL_SPOT_EXPONENT, &(This->light_parameters[i].dvFalloff));
+			} break;
+
+			default:
+			    /* No warning here as it's already done at light setting */
+			    break;
+		    }
+		}
+	    }
+	}
+	
 	glMultMatrixf((float *) world_mat);
     }
     if ((matrices & PROJMAT_CHANGED) != 0) {

@@ -84,7 +84,8 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		      D3DRENDERSTATETYPE dwRenderStateType, STATEBLOCK *lpStateBlock)
 {
     DWORD dwRenderState = lpStateBlock->render_state[dwRenderStateType - 1];
-
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+    
     if (TRACE_ON(ddraw))
         TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
 
@@ -409,13 +410,21 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		    
 		    if (dwRenderStateType == D3DRENDERSTATE_CLIPPING) {
 			mask = ((dwRenderState) ?
-				(This->state_block.render_state[D3DRENDERSTATE_CLIPPLANEENABLE - 1]) : (0x0000));
+				(This->state_block.render_state[D3DRENDERSTATE_CLIPPLANEENABLE - 1]) : (0x00000000));
 		    } else {
 			mask = dwRenderState;
 		    }
 		    for (i = 0, runner = 0x00000001; i < This->max_clipping_planes; i++, runner = (runner << 1)) {
 			if (mask & runner) {
-			    glEnable(GL_CLIP_PLANE0 + i);
+			    GLint enabled;
+			    glGetIntegerv(GL_CLIP_PLANE0 + i, &enabled);
+			    if (enabled == GL_FALSE) {
+			        glEnable(GL_CLIP_PLANE0 + i);
+				/* Need to force a transform change so that this clipping plane parameters are sent
+				 * properly to GL.
+				 */
+				glThis->transform_state = GL_TRANSFORM_NONE;
+			    }
 			} else {
 			    glDisable(GL_CLIP_PLANE0 + i);
 			}
