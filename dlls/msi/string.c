@@ -226,7 +226,7 @@ static const char *string_lookup_id( string_table *st, UINT id )
  *  msi_id2stringW
  *
  *  [in] st         - pointer to the string table
- *  [in] id  - id of the string to retreive
+ *  [in] id  - id of the string to retrieve
  *  [out] buffer    - destination of the string
  *  [in/out] sz     - number of bytes available in the buffer on input
  *                    number of bytes used on output
@@ -262,7 +262,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
  *  msi_id2stringA
  *
  *  [in] st         - pointer to the string table
- *  [in] id         - id of the string to retreive
+ *  [in] id         - id of the string to retrieve
  *  [out] buffer    - destination of the UTF8 string
  *  [in/out] sz     - number of bytes available in the buffer on input
  *                    number of bytes used on output

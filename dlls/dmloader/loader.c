@@ -308,7 +308,7 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIRECTMUSI
 	
 	result = IDirectMusicObject_QueryInterface (pObject, riid, ppv);
 	if (!bCache) IDirectMusicObject_Release (pObject); /* since loader's reference is not needed */
-	/* if there was trouble with loading, and if no other error occured, 
+	/* if there was trouble with loading, and if no other error occurred,
 	   we should return DMUS_S_PARTIALLOAD; else, error is returned */
 	if (result == S_OK)
 		return ret;

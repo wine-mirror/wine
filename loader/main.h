@@ -1,7 +1,7 @@
 /*
  * Definitions for Wine main program
  *
- * Copyright 2004 Mike McCormack for Codeweavers
+ * Copyright 2004 Mike McCormack for CodeWeavers
  * Copyright 2004 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or

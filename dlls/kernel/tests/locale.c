@@ -1468,7 +1468,7 @@ static void test_FoldStringA(void)
   /* MAP_EXPAND_LIGATURES */
   SetLastError(0);
   ret = pFoldStringA(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  /* NT 4.0 doesnt support MAP_EXPAND_LIGATURES */
+  /* NT 4.0 doesn't support MAP_EXPAND_LIGATURES */
   if (!(ret == 0 && GetLastError() == ERROR_INVALID_FLAGS)) {
     EXPECT_LEN(sizeof(ligatures_dst)); EXPECT_VALID;
     ok(strcmp(dst, ligatures_dst) == 0,
@@ -1855,7 +1855,7 @@ static void test_FoldStringW(void)
   /* MAP_EXPAND_LIGATURES */
   SetLastError(0);
   ret = pFoldStringW(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  /* NT 4.0 doesnt support MAP_EXPAND_LIGATURES */
+  /* NT 4.0 doesn't support MAP_EXPAND_LIGATURES */
   if (!(ret == 0 && GetLastError() == ERROR_INVALID_FLAGS)) {
     EXPECT_LEN(sizeof(ligatures_dst)/sizeof(ligatures_dst[0])); EXPECT_VALID;
     ok(!memcmp(dst, ligatures_dst, sizeof(ligatures_dst)),
