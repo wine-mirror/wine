@@ -35,8 +35,6 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "pascal16",     /* TYPE_PASCAL_16 */
     "pascal",       /* TYPE_PASCAL */
     "equate",       /* TYPE_ABS */
-    "register",     /* TYPE_REGISTER */
-    "interrupt",    /* TYPE_INTERRUPT */
     "stub",         /* TYPE_STUB */
     "stdcall",      /* TYPE_STDCALL */
     "cdecl",        /* TYPE_CDECL */
@@ -51,6 +49,8 @@ static const char * const FlagNames[] =
     "norelay",     /* FLAG_NORELAY */
     "ret64",       /* FLAG_RET64 */
     "i386",        /* FLAG_I386 */
+    "register",    /* FLAG_REGISTER */
+    "interrupt",   /* FLAG_INTERRUPT */
     NULL
 };
 
@@ -214,6 +214,8 @@ static void ParseExportFunction( ORDDEF *odp )
     case SPEC_WIN32:
         if ((odp->type == TYPE_PASCAL) || (odp->type == TYPE_PASCAL_16))
             fatal_error( "'pascal' not supported for Win32\n" );
+        if (odp->flags & FLAG_INTERRUPT)
+            fatal_error( "'interrupt' not supported for Win32\n" );
         break;
     default:
         break;
@@ -299,29 +301,6 @@ static void ParseStub( ORDDEF *odp )
 {
     odp->u.func.arg_types[0] = '\0';
     odp->link_name = xstrdup("");
-}
-
-
-/*******************************************************************
- *         ParseInterrupt
- *
- * Parse an 'interrupt' definition.
- */
-static void ParseInterrupt( ORDDEF *odp )
-{
-    const char *token;
-
-    if (SpecType == SPEC_WIN32)
-        fatal_error( "'interrupt' not supported for Win32\n" );
-
-    token = GetToken(0);
-    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
-
-    token = GetToken(0);
-    if (*token != ')') fatal_error( "Expected ')' got '%s'\n", token );
-
-    odp->u.func.arg_types[0] = '\0';
-    odp->link_name = xstrdup( GetToken(0) );
 }
 
 
@@ -423,16 +402,12 @@ static void ParseOrdinal(int ordinal)
     case TYPE_VARIABLE:
         ParseVariable( odp );
         break;
-    case TYPE_REGISTER:
     case TYPE_PASCAL_16:
     case TYPE_PASCAL:
     case TYPE_STDCALL:
     case TYPE_VARARGS:
     case TYPE_CDECL:
         ParseExportFunction( odp );
-        break;
-    case TYPE_INTERRUPT:
-        ParseInterrupt( odp );
         break;
     case TYPE_ABS:
         ParseEquate( odp );

@@ -28,6 +28,28 @@ __ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" );
 
 
 /*******************************************************************
+ *         output_file_header
+ *
+ * Output a file header with the common declarations we need.
+ */
+static void output_file_header( FILE *outfile )
+{
+    fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
+             input_file_name );
+    fprintf( outfile, "extern struct\n{\n" );
+    fprintf( outfile, "  void *base[8192];\n" );
+    fprintf( outfile, "  unsigned long limit[8192];\n" );
+    fprintf( outfile, "  unsigned char flags[8192];\n" );
+    fprintf( outfile, "} wine_ldt_copy;\n\n" );
+#ifdef __i386__
+    fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
+#else
+    fprintf( outfile, "#define __stdcall\n\n" );
+#endif
+}
+
+
+/*******************************************************************
  *         StoreVariableCode
  *
  * Store a list of ints into a byte array.
@@ -200,8 +222,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
         case TYPE_CDECL:
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
-        case TYPE_REGISTER:
-        case TYPE_INTERRUPT:
         case TYPE_STUB:
             selector = 1;  /* Code selector */
             break;
@@ -323,7 +343,6 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
         case 's':  /* s_word */
             argsize += 2;
             break;
-        
         case 'l':  /* long or segmented pointer */
         case 'T':  /* segmented pointer to null-terminated string */
         case 'p':  /* linear pointer */
@@ -332,34 +351,32 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
             break;
         }
 
-    ret_type = reg_func? "void" : short_ret? "WORD" : "LONG";
+    ret_type = reg_func? "void" : short_ret ? "unsigned short" : "unsigned int";
 
-    fprintf( outfile, "typedef %s WINAPI (*proc_%s_t)( ", 
-                      ret_type, profile );
+    fprintf( outfile, "typedef %s __stdcall (*proc_%s_t)( ", ret_type, profile );
     args = profile + 7;
     for ( i = 0; args[i]; i++ )
     {
         if ( i ) fprintf( outfile, ", " );
         switch (args[i])
         {
-        case 'w':           fprintf( outfile, "WORD" ); break;
-        case 's':           fprintf( outfile, "INT16" ); break;
-        case 'l': case 'T': fprintf( outfile, "LONG" ); break;
-        case 'p': case 't': fprintf( outfile, "LPVOID" ); break;
+        case 'w':           fprintf( outfile, "unsigned short" ); break;
+        case 's':           fprintf( outfile, "short" ); break;
+        case 'l': case 'T': fprintf( outfile, "unsigned int" ); break;
+        case 'p': case 't': fprintf( outfile, "void *" ); break;
         }
     }
     if ( reg_func )
-        fprintf( outfile, "%sstruct _CONTEXT86 *", i? ", " : "" );
+        fprintf( outfile, "%svoid *", i? ", " : "" );
     else if ( !i )
         fprintf( outfile, "void" );
     fprintf( outfile, " );\n" );
-    
-    fprintf( outfile, "%s%s WINAPI %s_CallFrom16_%s( FARPROC proc, LPBYTE args%s )\n{\n",
-             local? "static " : "", ret_type, prefix, profile,
-             reg_func? ", struct _CONTEXT86 *context" : "" );
 
-    fprintf( outfile, "    %s((proc_%s_t) proc) (\n",
-             reg_func? "" : "return ", profile );
+    fprintf( outfile, "%s%s __stdcall %s_CallFrom16_%s( proc_%s_t proc, unsigned char *args%s )\n",
+             local? "static " : "", ret_type, prefix, profile, profile,
+             reg_func? ", void *context" : "" );
+
+    fprintf( outfile, "{\n    %sproc(\n", reg_func ? "" : "return " );
     args = profile + 7;
     pos = !usecdecl? argsize : 0;
     for ( i = 0; args[i]; i++ )
@@ -370,27 +387,27 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
         {
         case 'w':  /* word */
             if ( !usecdecl ) pos -= 2;
-            fprintf( outfile, "*(WORD *)(args+%d)", pos );
+            fprintf( outfile, "*(unsigned short *)(args+%d)", pos );
             if (  usecdecl ) pos += 2;
             break;
 
         case 's':  /* s_word */
             if ( !usecdecl ) pos -= 2;
-            fprintf( outfile, "*(INT16 *)(args+%d)", pos );
+            fprintf( outfile, "*(short *)(args+%d)", pos );
             if (  usecdecl ) pos += 2;
             break;
 
         case 'l':  /* long or segmented pointer */
         case 'T':  /* segmented pointer to null-terminated string */
             if ( !usecdecl ) pos -= 4;
-            fprintf( outfile, "*(LONG *)(args+%d)", pos );
+            fprintf( outfile, "*(unsigned int *)(args+%d)", pos );
             if (  usecdecl ) pos += 4;
             break;
 
         case 'p':  /* linear pointer */
         case 't':  /* linear pointer to null-terminated string */
             if ( !usecdecl ) pos -= 4;
-            fprintf( outfile, "((char*)wine_ldt_copy.base[*(WORD*)(args+%d) >> 3] + *(WORD*)(args+%d))",
+            fprintf( outfile, "((char*)wine_ldt_copy.base[*(unsigned short*)(args+%d) >> 3] + *(unsigned short*)(args+%d))",
                      pos + 2, pos );
             if (  usecdecl ) pos += 4;
             break;
@@ -435,31 +452,44 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
         exit(1);
     }
 
-    fprintf( outfile, "%s CALLBACK %s_CallTo16_%s( FARPROC16 proc",
-             short_ret? "WORD" : "LONG", prefix, profile );
+    fprintf( outfile, "unsigned %s __stdcall %s_CallTo16_%s( void (*proc)()",
+             short_ret? "short" : "int", prefix, profile );
     args = profile + 5;
     for ( i = 0; args[i]; i++ )
     {
         fprintf( outfile, ", " );
         switch (args[i])
         {
-        case 'w': fprintf( outfile, "WORD" ); argsize += 2; break;
-        case 'l': fprintf( outfile, "LONG" ); argsize += 4; break;
+        case 'w': fprintf( outfile, "unsigned short" ); argsize += 2; break;
+        case 'l': fprintf( outfile, "unsigned int" ); argsize += 4; break;
         }
         fprintf( outfile, " arg%d", i+1 );
     }
     fprintf( outfile, " )\n{\n" );
 
+#ifdef __i386__
     if ( argsize > 0 )
-        fprintf( outfile, "    LPBYTE args = (LPBYTE)CURRENT_STACK16;\n" );
+    {
+        fprintf( outfile, "    char *args;\n" );
+        fprintf( outfile, "    unsigned int cur_stack;\n\n" );
+        fprintf( outfile, "#ifdef __GNUC__\n" );
+        fprintf( outfile, "    __asm__(\".byte 0x64\\n\\tmovl (0x%x),%%0\" : \"=r\" (cur_stack));\n",
+                 STACKOFFSET );
+        fprintf( outfile, "#else\n" );
+        fprintf( outfile, "    extern char *NtCurrentTeb(void);\n" );
+        fprintf( outfile, "    cur_stack = *(unsigned int *)(NtCurrentTeb() + 0x%x);\n",
+                 STACKOFFSET );
+        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "    args = (char *)wine_ldt_copy.base[cur_stack >> 19] + (cur_stack & 0xffff);\n" );
+    }
 
     args = profile + 5;
     for ( i = 0; args[i]; i++ )
     {
         switch (args[i])
         {
-        case 'w': fprintf( outfile, "    args -= sizeof(WORD); *(WORD" ); break;
-        case 'l': fprintf( outfile, "    args -= sizeof(LONG); *(LONG" ); break;
+        case 'w': fprintf( outfile, "    args -= sizeof(unsigned short); *(unsigned short" ); break;
+        case 'l': fprintf( outfile, "    args -= sizeof(unsigned int); *(unsigned int" ); break;
         default:  fprintf( stderr, "Unexpected case '%c' in BuildCallTo16Func\n",
                                    args[i] );
         }
@@ -468,6 +498,26 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
 
     fprintf( outfile, "    return wine_call_to_16_%s( proc, %d );\n}\n\n",
              short_ret? "word" : "long", argsize );
+#else  /* __i386__ */
+    fprintf( outfile, "    assert(0);\n}\n\n" );
+#endif  /* __i386__ */
+}
+
+
+/*******************************************************************
+ *         get_function_name
+ */
+static const char *get_function_name( const ORDDEF *odp )
+{
+    static char buffer[80];
+
+    sprintf( buffer, "%s_%s_%s",
+             (odp->type == TYPE_CDECL) ? "c" : "p",
+             (odp->flags & FLAG_REGISTER) ? "regs" :
+             (odp->flags & FLAG_INTERRUPT) ? "intr" :
+             (odp->type == TYPE_PASCAL_16) ? "word" : "long",
+             odp->u.func.arg_types );
+    return buffer;
 }
 
 
@@ -478,18 +528,20 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
 {
     const ORDDEF *odp1 = *(const ORDDEF **)e1;
     const ORDDEF *odp2 = *(const ORDDEF **)e2;
+    int retval;
 
     int type1 = (odp1->type == TYPE_CDECL) ? 0
-              : (odp1->type == TYPE_REGISTER) ? 3
-              : (odp1->type == TYPE_INTERRUPT) ? 4
               : (odp1->type == TYPE_PASCAL_16) ? 1 : 2;
 
     int type2 = (odp2->type == TYPE_CDECL) ? 0
-              : (odp2->type == TYPE_REGISTER) ? 3
-              : (odp2->type == TYPE_INTERRUPT) ? 4
               : (odp2->type == TYPE_PASCAL_16) ? 1 : 2;
 
-    int retval = type1 - type2;
+    if (odp1->flags & FLAG_REGISTER) type1 += 4;
+    if (odp1->flags & FLAG_INTERRUPT) type1 += 8;
+    if (odp2->flags & FLAG_REGISTER) type2 += 4;
+    if (odp2->flags & FLAG_INTERRUPT) type2 += 8;
+
+    retval = type1 - type2;
     if ( !retval )
         retval = strcmp( odp1->u.func.arg_types, odp2->u.func.arg_types );
 
@@ -567,15 +619,11 @@ void BuildSpec16File( FILE *outfile )
 
     /* File header */
 
-    fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
-             input_file_name );
-    fprintf( outfile, "#include \"builtin16.h\"\n\n" );
-
-    fprintf( outfile, "extern struct\n{\n" );
-    fprintf( outfile, "  void *base[8192];\n" );
-    fprintf( outfile, "  unsigned long limit[8192];\n" );
-    fprintf( outfile, "  unsigned char flags[8192];\n" );
-    fprintf( outfile, "} wine_ldt_copy;\n\n" );
+    output_file_header( outfile );
+    fprintf( outfile, "extern unsigned short __wine_call_from_16_word();\n" );
+    fprintf( outfile, "extern unsigned int __wine_call_from_16_long();\n" );
+    fprintf( outfile, "extern void __wine_call_from_16_regs();\n" );
+    fprintf( outfile, "extern void __wine_call_from_16_thunk();\n" );
 
     data = (unsigned char *)xmalloc( 0x10000 );
     memset( data, 0, 16 );
@@ -583,12 +631,6 @@ void BuildSpec16File( FILE *outfile )
     strupper( DLLName );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
-
-#ifdef __i386__
-    fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
-#else
-    fprintf( outfile, "#define __stdcall\n\n" );
-#endif
 
     output_stub_funcs( outfile );
 
@@ -602,8 +644,6 @@ void BuildSpec16File( FILE *outfile )
         if (!odp) continue;
         switch (odp->type)
         {
-          case TYPE_REGISTER:
-          case TYPE_INTERRUPT:
           case TYPE_CDECL:
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
@@ -631,13 +671,7 @@ void BuildSpec16File( FILE *outfile )
     {
         char profile[101];
 
-        sprintf( profile, "%s_%s_%s",
-                 (typelist[i]->type == TYPE_CDECL) ? "c" : "p",
-                 (typelist[i]->type == TYPE_REGISTER) ? "regs" :
-                 (typelist[i]->type == TYPE_INTERRUPT) ? "intr" :
-                 (typelist[i]->type == TYPE_PASCAL_16) ? "word" : "long",
-                 typelist[i]->u.func.arg_types );
-
+        strcpy( profile, get_function_name( typelist[i] ));
         BuildCallFrom16Func( outfile, profile, DLLName, TRUE );
     }
 #endif
@@ -650,8 +684,6 @@ void BuildSpec16File( FILE *outfile )
         if (!odp) continue;
         switch(odp->type)
         {
-        case TYPE_REGISTER:
-        case TYPE_INTERRUPT:
         case TYPE_CDECL:
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
@@ -664,23 +696,40 @@ void BuildSpec16File( FILE *outfile )
 
     /* Output code segment */
 
-    fprintf( outfile, "\nstatic struct\n{\n    CALLFROM16   call[%d];\n"
-                      "    ENTRYPOINT16 entry[%d];\n} Code_Segment = \n{\n  {\n",
-                      nTypes, nFuncs );
+    fprintf( outfile, "\n#include \"pshpack1.h\"\n" );
+    fprintf( outfile, "\nstatic struct code_segment\n{\n" );
+    fprintf( outfile, "  struct {\n" );
+#ifdef __i386__
+    fprintf( outfile, "    unsigned char pushl;\n" );      /* pushl $relay */
+    fprintf( outfile, "    void *relay;\n" );
+    fprintf( outfile, "    unsigned char lcall;\n" );      /* lcall __FLATCS__:glue */
+    fprintf( outfile, "    void *glue;\n" );
+    fprintf( outfile, "    unsigned short flatcs;\n" );
+#endif
+    fprintf( outfile, "    unsigned short lret;\n" );      /* lret $args */
+    fprintf( outfile, "    unsigned short args;\n" );
+    fprintf( outfile, "    unsigned int arg_types[2];\n" );
+    fprintf( outfile, "  } call[%d];\n", nTypes );
+    fprintf( outfile, "  struct {\n" );
+#ifdef __i386__
+    fprintf( outfile, "    unsigned short pushw_bp;\n" );  /* pushw %bp */
+    fprintf( outfile, "    unsigned char pushl;\n" );      /* pushl $target */
+#endif
+    fprintf( outfile, "    void (*target)();\n" );
+    fprintf( outfile, "    unsigned short call;\n" );      /* call CALLFROM16 */
+    fprintf( outfile, "    short callfrom16;\n" );
+    fprintf( outfile, "  } entry[%d];\n", nFuncs );
+    fprintf( outfile, "} code_segment =\n{\n  {\n" );
+
     code_offset = 0;
 
     for ( i = 0; i < nTypes; i++ )
     {
         char profile[101], *arg;
-        int argsize = 0;
+        unsigned int arg_types[2];
+        int j, argsize = 0;
 
-        sprintf( profile, "%s_%s_%s", 
-                          (typelist[i]->type == TYPE_CDECL) ? "c" : "p",
-                          (typelist[i]->type == TYPE_REGISTER) ? "regs" :
-                          (typelist[i]->type == TYPE_INTERRUPT) ? "intr" :
-                          (typelist[i]->type == TYPE_PASCAL_16) ? "word" : "long",
-                          typelist[i]->u.func.arg_types );
-
+        strcpy( profile, get_function_name( typelist[i] ));
         if ( typelist[i]->type != TYPE_CDECL )
             for ( arg = typelist[i]->u.func.arg_types; *arg; arg++ )
                 switch ( *arg )
@@ -697,25 +746,46 @@ void BuildSpec16File( FILE *outfile )
                     break;
                 }
 
-        if ( typelist[i]->type == TYPE_INTERRUPT )
-            argsize += 2;
+        if (typelist[i]->flags & FLAG_INTERRUPT) argsize += 2;
+
+        /* build the arg types bit fields */
+        arg_types[0] = arg_types[1] = 0;
+        for (j = 0; typelist[i]->u.func.arg_types[j]; j++)
+        {
+            int type = 0;
+            switch(typelist[i]->u.func.arg_types[j])
+            {
+            case 'w': type = ARG_WORD; break;
+            case 's': type = ARG_SWORD; break;
+            case 'l': type = ARG_LONG; break;
+            case 'p': type = ARG_PTR; break;
+            case 't': type = ARG_STR; break;
+            case 'T': type = ARG_SEGSTR; break;
+            }
+            arg_types[j / 10] |= type << (3 * (j % 10));
+        }
+        if (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) arg_types[0] |= ARG_REGISTER;
+        if (typelist[i]->type == TYPE_PASCAL_16) arg_types[0] |= ARG_RET16;
 
 #ifdef __i386__
         fprintf( outfile, "    { 0x68, %s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
                  DLLName, profile, 
-                 (typelist[i]->type == TYPE_REGISTER 
-                  || typelist[i]->type == TYPE_INTERRUPT)? "regs":
+                 (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) ? "regs":
                  typelist[i]->type == TYPE_PASCAL_16? "word" : "long" );
         if (argsize)
-            fprintf( outfile, "        0x%04x, 0x66, 0xca, %d, \"%s\" },\n",
-                     code_selector, argsize, profile );
+            fprintf( outfile, "      0x%04x, 0xca66, %d, { 0x%08x, 0x%08x } },\n",
+                     code_selector, argsize, arg_types[0], arg_types[1] );
         else
-            fprintf( outfile, "        0x%04x, 0x66, 0xcb, 0x9090, \"%s\" },\n",
-                     code_selector, profile );
+            fprintf( outfile, "      0x%04x, 0xcb66, 0x9090, { 0x%08x, 0x%08x } },\n",
+                     code_selector, arg_types[0], arg_types[1] );
 #else
-        fprintf( outfile, "    { \"%s\" },\n", profile );
+        if (argsize)
+            fprintf( outfile, "    { 0xca66, %d, { 0x%08x, 0x%08x } },\n",
+                     argsize, arg_types[0], arg_types[1] );
+        else
+            fprintf( outfile, "     { 0xcb66, 0x9090, { 0x%08x, 0x%08x } },\n",
+                     arg_types[0], arg_types[1] );
 #endif
-
         code_offset += sizeof(CALLFROM16);
     }
     fprintf( outfile, "  },\n  {\n" );
@@ -735,8 +805,6 @@ void BuildSpec16File( FILE *outfile )
             data_offset += StoreVariableCode( data + data_offset, 4, odp);
             break;
 
-          case TYPE_REGISTER:
-          case TYPE_INTERRUPT:
           case TYPE_CDECL:
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
@@ -746,18 +814,14 @@ void BuildSpec16File( FILE *outfile )
 
             fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
 #ifdef __i386__
-            fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s_%s_%s */ },\n",
+            fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s */ },\n",
 #else
-            fprintf( outfile, "{ %s, %d, /* %s_%s_%s */ },\n",
+            fprintf( outfile, "{ %s, 0xe866, %d, /* %s */ },\n",
 #endif
                      odp->link_name,
                      (type-typelist)*sizeof(CALLFROM16) -
                      (code_offset + sizeof(ENTRYPOINT16)),
-                     (odp->type == TYPE_CDECL) ? "c" : "p",
-                     (odp->type == TYPE_REGISTER) ? "regs" :
-                     (odp->type == TYPE_INTERRUPT) ? "intr" :
-                     (odp->type == TYPE_PASCAL_16) ? "word" : "long",
-                     odp->u.func.arg_types );
+                     get_function_name( odp ) );
 
             odp->offset = code_offset;
             code_offset += sizeof(ENTRYPOINT16);
@@ -783,10 +847,19 @@ void BuildSpec16File( FILE *outfile )
 
     /* Output the DLL descriptor */
 
-    fprintf( outfile, "\nstatic const BUILTIN16_DESCRIPTOR descriptor = \n{\n" );
+    fprintf( outfile, "#include \"poppack.h\"\n\n" );
+
+    fprintf( outfile, "static const struct dll_descriptor\n{\n" );
+    fprintf( outfile, "    unsigned char *module_start;\n" );
+    fprintf( outfile, "    int module_size;\n" );
+    fprintf( outfile, "    struct code_segment *code_start;\n" );
+    fprintf( outfile, "    unsigned char *data_start;\n" );
+    fprintf( outfile, "    const char *owner;\n" );
+    fprintf( outfile, "    const unsigned char *rsrc;\n" );
+    fprintf( outfile, "} descriptor =\n{\n" );
     fprintf( outfile, "    Module,\n" );
     fprintf( outfile, "    sizeof(Module),\n" );
-    fprintf( outfile, "    &Code_Segment,\n" );
+    fprintf( outfile, "    &code_segment,\n" );
     fprintf( outfile, "    Data_Segment,\n" );
     fprintf( outfile, "    \"%s\",\n", owner_name );
     fprintf( outfile, "    %s\n", res_size ? "resource_data" : "0" );
@@ -822,6 +895,7 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile,
              "void __wine_spec_%s_init(void)\n"
              "{\n"
+             "    extern void __wine_register_dll_16( const struct dll_descriptor *descr );\n"
              "    __wine_register_dll_16( &descriptor );\n"
              "}\n", DLLName );
 }
@@ -838,12 +912,14 @@ void BuildGlue( FILE *outfile, FILE *infile )
 
     /* File header */
 
-    fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
-             input_file_name );
-    fprintf( outfile, "#include \"stackframe.h\"\n\n" );
+    output_file_header( outfile );
 
-    fprintf( outfile, "extern WORD WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs );\n" );
-    fprintf( outfile, "extern LONG WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs );\n" );
+#ifdef __i386__
+    fprintf( outfile, "extern unsigned short __stdcall wine_call_to_16_word( void (*target)(), int args );\n" );
+    fprintf( outfile, "extern unsigned int __stdcall wine_call_to_16_long( void (*target)(), int args );\n\n" );
+#else
+    fprintf( outfile, "#include <assert.h>\n\n" );
+#endif
 
     /* Build the callback glue functions */
 
@@ -853,18 +929,7 @@ void BuildGlue( FILE *outfile, FILE *infile )
     }
     while (fgets( buffer, sizeof(buffer), infile ))
     {
-        char *p; 
-        if ( (p = strstr( buffer, "CallFrom16_" )) != NULL )
-        {
-            char *q, *profile = p + strlen( "CallFrom16_" );
-            for (q = profile; (*q == '_') || isalpha(*q); q++ )
-                ;
-            *q = '\0';
-            for (q = p-1; q > buffer && ((*q == '_') || isalnum(*q)); q-- )
-                ;
-            if ( ++q < p ) p[-1] = '\0'; else q = "";
-            BuildCallFrom16Func( outfile, profile, q, FALSE );
-        }
+        char *p;
         if ( (p = strstr( buffer, "CallTo16_" )) != NULL )
         {
             char *q, *profile = p + strlen( "CallTo16_" );

@@ -21,6 +21,16 @@
 
 DEFAULT_DEBUG_CHANNEL(module);
 
+typedef struct
+{
+    void       *module_start;      /* 32-bit address of the module data */
+    int         module_size;       /* Size of the module data */
+    void       *code_start;        /* 32-bit address of DLL code */
+    void       *data_start;        /* 32-bit address of DLL data */
+    const char *owner;             /* 32-bit dll that contains this dll */
+    const void *rsrc;              /* resources data */
+} BUILTIN16_DESCRIPTOR;
+
 /* Table of all built-in DLLs */
 
 #define MAX_DLLS 50
@@ -164,63 +174,6 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
     }
 
     return (HMODULE16)2;
-}
-
-
-/***********************************************************************
- *           BUILTIN_GetEntryPoint16
- *
- * Return the ordinal, name, and type info corresponding to a CS:IP address.
- * This is used only by relay debugging.
- */
-LPCSTR BUILTIN_GetEntryPoint16( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
-{
-    WORD i, max_offset;
-    register BYTE *p;
-    NE_MODULE *pModule;
-    ET_BUNDLE *bundle;
-    ET_ENTRY *entry;
-
-    if (!(pModule = NE_GetPtr( FarGetOwner16( GlobalHandle16( frame->module_cs ) ))))
-        return NULL;
-
-    max_offset = 0;
-    *pOrd = 0;
-    bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
-    do 
-    {
-        entry = (ET_ENTRY *)((BYTE *)bundle+6);
-	for (i = bundle->first + 1; i <= bundle->last; i++)
-        {
-	    if ((entry->offs < frame->entry_ip)
-	    && (entry->segnum == 1) /* code segment ? */
-	    && (entry->offs >= max_offset))
-            {
-		max_offset = entry->offs;
-		*pOrd = i;
-            }
-	    entry++;
-        }
-    } while ( (bundle->next)
-	   && (bundle = (ET_BUNDLE *)((BYTE *)pModule+bundle->next)));
-
-    /* Search for the name in the resident names table */
-    /* (built-in modules have no non-resident table)   */
-    
-    p = (BYTE *)pModule + pModule->name_table;
-    while (*p)
-    {
-        p += *p + 1 + sizeof(WORD);
-        if (*(WORD *)(p + *p + 1) == *pOrd) break;
-    }
-
-    sprintf( name, "%.*s.%d: %.*s",
-             *((BYTE *)pModule + pModule->name_table),
-             (char *)pModule + pModule->name_table + 1,
-             *pOrd, *p, (char *)(p + 1) );
-
-    /* Retrieve type info string */
-    return *(LPCSTR *)((LPBYTE)MapSL( MAKESEGPTR( frame->module_cs, frame->callfrom_ip )) + 4);
 }
 
 

@@ -228,9 +228,9 @@ $(SUBDIRS:%=%/__uninstall__): dummy
 
 # Misc. rules
 
-$(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD) $(TOPSRCDIR)/include/builtin16.h
+$(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD)
 
-$(GLUE:.c=.glue.c): $(WINEBUILD) $(TOPSRCDIR)/include/builtin16.h
+$(GLUE:.c=.glue.c): $(WINEBUILD)
 
 $(RC_SRCS:.rc=.res): $(WRC)
 

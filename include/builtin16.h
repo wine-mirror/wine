@@ -13,8 +13,9 @@
 struct _CONTEXT86;
 struct _STACK16FRAME;
 
-#ifdef __i386__
 #include "pshpack1.h"
+
+#ifdef __i386__
 
 typedef struct
 {
@@ -32,45 +33,51 @@ typedef struct
     BYTE   lcall;                  /* lcall __FLATCS__:glue */
     void  *glue;
     WORD   flatcs;
-    BYTE   prefix;                 /* lret $nArgs */
-    BYTE   lret;
+    WORD   lret;                   /* lret $nArgs */
     WORD   nArgs;
-    LPCSTR profile;                /* profile string */
+    DWORD  arg_types[2];           /* type of each argument */
 } CALLFROM16;
 
-#include "poppack.h"
 #else
 
 typedef struct
 {
     void (*target)();
-    int    callfrom16;
+    WORD   call;                   /* call CALLFROM16 */
+    short  callfrom16;
 } ENTRYPOINT16;
 
 typedef struct
 {
-    LPCSTR profile;
+    WORD   lret;                   /* lret $nArgs */
+    WORD   nArgs;
+    DWORD  arg_types[2];           /* type of each argument */
 } CALLFROM16;
 
 #endif
 
-typedef struct
+#include "poppack.h"
+
+/* argument type flags for relay debugging */
+enum arg_types
 {
-    void       *module_start;      /* 32-bit address of the module data */
-    int         module_size;       /* Size of the module data */
-    void       *code_start;        /* 32-bit address of DLL code */
-    void       *data_start;        /* 32-bit address of DLL data */
-    const char *owner;             /* 32-bit dll that contains this dll */
-    const void *rsrc;              /* resources data */
-} BUILTIN16_DESCRIPTOR;
+    ARG_NONE = 0, /* indicates end of arg list */
+    ARG_WORD,     /* unsigned word */
+    ARG_SWORD,    /* signed word */
+    ARG_LONG,     /* long or segmented pointer */
+    ARG_PTR,      /* linear pointer */
+    ARG_STR,      /* linear pointer to null-terminated string */
+    ARG_SEGSTR    /* segmented pointer to null-terminated string */
+};
+
+/* flags added to arg_types[0] */
+#define ARG_RET16    0x80000000  /* function returns 16-bit value */
+#define ARG_REGISTER 0x40000000  /* function is register */
 
 extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );
-extern LPCSTR BUILTIN_GetEntryPoint16( struct _STACK16FRAME *frame, LPSTR name, WORD *pOrd );
 
-extern void __wine_register_dll_16( const BUILTIN16_DESCRIPTOR *descr );
 extern WORD __wine_call_from_16_word();
 extern LONG __wine_call_from_16_long();
 extern void __wine_call_from_16_regs();
-extern void __wine_call_from_16_thunk();
 
 #endif /* __WINE_BUILTIN16_H */

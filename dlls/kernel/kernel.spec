@@ -61,8 +61,8 @@ rsrc	version16.res
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
 54  pascal16 GetInstanceData(word word word) GetInstanceData16
-55  register Catch(ptr) Catch16 
-56  register Throw(ptr word) Throw16
+55  pascal -register Catch(ptr) Catch16 
+56  pascal -register Throw(ptr word) Throw16
 57  pascal16 GetProfileInt(str str s_word) GetProfileInt16
 58  pascal16 GetProfileString(str str str ptr word) GetProfileString16
 59  pascal16 WriteProfileString(str str str) WriteProfileString16
@@ -98,7 +98,7 @@ rsrc	version16.res
 88  pascal   lstrcpy(segptr str) lstrcpy16
 89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16
-91  register InitTask() InitTask16
+91  pascal -register InitTask() InitTask16
 92  pascal   GetTempDrive(word) GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle16
 94  pascal16 DefineHandleTable(word) DefineHandleTable16
@@ -109,14 +109,14 @@ rsrc	version16.res
 99  stub GetLPErrMode
 100 pascal16 ValidateCodeSegments() KERNEL_nop
 101 stub NoHookDosCall
-102 register DOS3Call() DOS3Call
-103 register NetBIOSCall() NetBIOSCall16
+102 pascal -register DOS3Call() DOS3Call
+103 pascal -register NetBIOSCall() NetBIOSCall16
 104 pascal16 GetCodeInfo(segptr ptr) GetCodeInfo16
 105 pascal16 GetExeVersion() GetExeVersion16
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize16
 107 pascal16 SetErrorMode(word) SetErrorMode16
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo16 # STO in W2.0
-109 register SwitchStackBack() SwitchStackBack16 # SBACK in W2.0
+109 pascal -register SwitchStackBack() SwitchStackBack16 # SBACK in W2.0
 110 pascal   PatchCodeHandle(word) PatchCodeHandle16
 111 pascal   GlobalWire(word) GlobalWire16
 112 pascal16 GlobalUnWire(word) GlobalUnWire16
@@ -211,7 +211,7 @@ rsrc	version16.res
 200 pascal16 ValidateFreeSpaces() KERNEL_nop
 201 stub ReplaceInst
 202 stub RegisterPtrace
-203 register DebugBreak() DebugBreak16
+203 pascal -register DebugBreak() DebugBreak16
 204 stub SwapRecording
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray16
@@ -274,7 +274,7 @@ rsrc	version16.res
 324 pascal16 LogError(word ptr) LogError16
 325 pascal16 LogParamError(word ptr ptr) LogParamError16
 326 pascal16 IsRomFile(word) IsRomFile16
-327 register K327() HandleParamError
+327 pascal -register K327() HandleParamError
 328 pascal16 _DebugOutput() _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
 332 variable THHOOK(0 0 0 0 0 0 0 0)
@@ -313,7 +313,7 @@ rsrc	version16.res
 360 pascal16 OpenFileEx(str ptr word) OpenFile16
 361 pascal16 PIGLET_361() KERNEL_nop
 362 stub ThunkTerminateProcess
-365 register GlobalChangeLockCount(word word) GlobalChangeLockCount16
+365 pascal -register GlobalChangeLockCount(word word) GlobalChangeLockCount16
 
 
 # 403-404 are common to all versions
@@ -382,8 +382,8 @@ rsrc	version16.res
 469 stub WOAGimmeTitle
 470 stub WOADestroyConsole
 471 pascal GetCurrentProcessId() GetCurrentProcessId
-472 register MapHInstLS() MapHInstLS
-473 register MapHInstSL() MapHInstSL
+472 pascal -register MapHInstLS() MapHInstLS
+473 pascal -register MapHInstSL() MapHInstSL
 474 pascal CloseW32Handle(long) CloseHandle
 475 pascal16 GetTEBSelectorFS() GetTEBSelectorFS16
 476 pascal ConvertToGlobalHandle(long) ConvertToGlobalHandle
@@ -482,7 +482,7 @@ rsrc	version16.res
 601 stub FreeCodeAlias
 602 pascal16 GetDummyModuleHandleDS() GetDummyModuleHandleDS16
 603 stub KERNEL_603  # OutputDebugString (?)
-604 register CBClientGlueSL() CBClientGlueSL
+604 pascal -register CBClientGlueSL() CBClientGlueSL
 # FIXME: 605 is duplicate of 562
 605 pascal AllocSLThunkletCallback_dup(long long) AllocSLThunkletCallback16
 # FIXME: 606 is duplicate of 561
@@ -502,16 +502,16 @@ rsrc	version16.res
 617 pascal16 GetMenu32Size(ptr) GetMenu32Size16
 618 pascal16 GetDialog32Size(ptr) GetDialog32Size16
 619 pascal16 RegisterCBClient(word segptr long) RegisterCBClient16
-620 register CBClientThunkSL() CBClientThunkSL
-621 register CBClientThunkSLEx() CBClientThunkSLEx
+620 pascal -register CBClientThunkSL() CBClientThunkSL
+621 pascal -register CBClientThunkSLEx() CBClientThunkSLEx
 622 pascal16 UnRegisterCBClient(word segptr long) UnRegisterCBClient16
 623 pascal16 InitCBClient(long) InitCBClient16
 624 pascal SetFastQueue(long long) SetFastQueue16
 625 pascal GetFastQueue() GetFastQueue16
 626 stub SmashEnvironment
 627 pascal16 IsBadFlatReadWritePtr(segptr long word) IsBadFlatReadWritePtr16
-630 register C16ThkSL() C16ThkSL
-631 register C16ThkSL01() C16ThkSL01
+630 pascal -register C16ThkSL() C16ThkSL
+631 pascal -register C16ThkSL01() C16ThkSL01
 651 pascal ThunkConnect16(str str word long ptr str word) ThunkConnect16
 652 stub IsThreadId
 653 stub OkWithKernelToChangeUsers
@@ -529,7 +529,7 @@ rsrc	version16.res
 701 stub SSOnBigStack
 702 stub SSCall
 703 stub CallProc32WFix
-704 register SSConfirmSmallStack() SSConfirmSmallStack
+704 pascal -register SSConfirmSmallStack() SSConfirmSmallStack
 
 
 # Win95 krnl386.exe also exports ordinals 802-864,

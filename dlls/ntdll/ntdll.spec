@@ -878,11 +878,11 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub __eGetStatusWord
 @ stdcall -ret64 _alldiv(long long long long) _alldiv
 @ stdcall -ret64 _allmul(long long long long) _allmul
-@ register -i386 _alloca_probe() NTDLL_alloca_probe
+@ stdcall -register -i386 _alloca_probe() NTDLL_alloca_probe
 @ stdcall -ret64 _allrem(long long long long) _allrem
 @ stdcall -ret64 _aulldiv(long long long long) _aulldiv
 @ stdcall -ret64 _aullrem(long long long long) _aullrem
-@ register -i386 _chkstk() NTDLL_chkstk
+@ stdcall -register -i386 _chkstk() NTDLL_chkstk
 @ stub _fltused
 @ cdecl _ftol() NTDLL__ftol
 @ cdecl _itoa(long ptr long) _itoa

@@ -250,8 +250,11 @@ static void add_extra_undef_symbols(void)
     for (i = 0; i < nb_entry_points; i++)
     {
         ORDDEF *odp = EntryPoints[i];
-        if (odp->type != TYPE_REGISTER) continue;
-        ADD_SYM( "__wine_call_from_32_regs" );
+        if (odp->flags & FLAG_REGISTER)
+        {
+            ADD_SYM( "__wine_call_from_32_regs" );
+            break;
+        }
     }
 
     if (count)

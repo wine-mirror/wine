@@ -16,7 +16,6 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 
-#include "builtin16.h"
 #include "callback.h"
 #include "debugtools.h"
 #include "flatthunk.h"
@@ -28,6 +27,11 @@
 
 DEFAULT_DEBUG_CHANNEL(thunk);
 
+#ifdef __i386__
+extern void __wine_call_from_16_thunk();
+#else
+static void __wine_call_from_16_thunk() { }
+#endif
 
 /***********************************************************************
  *                                                                     *

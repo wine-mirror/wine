@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
 #include "wine/winbase16.h"
 #include "winnt.h"
 #include "module.h"
@@ -116,14 +118,6 @@ void __wine_call_from_16_regs()
     assert( FALSE );
 }
 
-/***********************************************************************
- *		__wine_call_from_16_thunk (KERNEL32.@)
- */
-void __wine_call_from_16_thunk()
-{
-    assert( FALSE );
-}
-
 DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi )
 { assert( FALSE ); }
 
@@ -136,6 +130,65 @@ DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArg
 extern char **debug_relay_excludelist,**debug_relay_includelist;
 extern int RELAY_ShowDebugmsgRelay(const char *func);
 
+
+/***********************************************************************
+ *           get_entry_point
+ *
+ * Return the ordinal, name, and type info corresponding to a CS:IP address.
+ */
+static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
+{
+    WORD i, max_offset;
+    register BYTE *p;
+    NE_MODULE *pModule;
+    ET_BUNDLE *bundle;
+    ET_ENTRY *entry;
+
+    if (!(pModule = NE_GetPtr( FarGetOwner16( GlobalHandle16( frame->module_cs ) ))))
+        return NULL;
+
+    max_offset = 0;
+    *pOrd = 0;
+    bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
+    do 
+    {
+        entry = (ET_ENTRY *)((BYTE *)bundle+6);
+	for (i = bundle->first + 1; i <= bundle->last; i++)
+        {
+	    if ((entry->offs < frame->entry_ip)
+	    && (entry->segnum == 1) /* code segment ? */
+	    && (entry->offs >= max_offset))
+            {
+		max_offset = entry->offs;
+		*pOrd = i;
+            }
+	    entry++;
+        }
+    } while ( (bundle->next)
+	   && (bundle = (ET_BUNDLE *)((BYTE *)pModule+bundle->next)));
+
+    /* Search for the name in the resident names table */
+    /* (built-in modules have no non-resident table)   */
+    
+    p = (BYTE *)pModule + pModule->name_table;
+    while (*p)
+    {
+        p += *p + 1 + sizeof(WORD);
+        if (*(WORD *)(p + *p + 1) == *pOrd) break;
+    }
+
+    sprintf( name, "%.*s.%d: %.*s",
+             *((BYTE *)pModule + pModule->name_table),
+             (char *)pModule + pModule->name_table + 1,
+             *pOrd, *p, (char *)(p + 1) );
+
+    /* Retrieve entry point call structure */
+    p = MapSL( MAKESEGPTR( frame->module_cs, frame->callfrom_ip ) );
+    /* p now points to lret, get the start of CALLFROM16 structure */
+    return (CALLFROM16 *)(p - (BYTE *)&((CALLFROM16 *)0)->lret);
+}
+
+
 /***********************************************************************
  *           RELAY_DebugCallFrom16
  */
@@ -144,111 +197,101 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
     STACK16FRAME *frame;
     WORD ordinal;
     char *args16, funstr[80];
-    const char *args;
-    int i, usecdecl, reg_func;
+    const CALLFROM16 *call;
+    int i;
 
     if (!TRACE_ON(relay)) return;
 
     frame = CURRENT_STACK16;
-    args = BUILTIN_GetEntryPoint16( frame, funstr, &ordinal );
-    if (!args) return; /* happens for the two snoop register relays */
+    call = get_entry_point( frame, funstr, &ordinal );
+    if (!call) return; /* happens for the two snoop register relays */
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
     DPRINTF( "%08lx:Call %s(",GetCurrentThreadId(),funstr);
     VA_START16( args16 );
 
-    usecdecl = ( *args == 'c' );
-    args += 2;
-    reg_func = (    memcmp( args, "regs_", 5 ) == 0
-                 || memcmp( args, "intr_", 5 ) == 0 );
-    args += 5;
-
-    if (usecdecl)
+    if (call->lret == 0xcb66)  /* cdecl */
     {
-        while (*args)
+        for (i = 0; i < 20; i++)
         {
-            switch(*args)
+            int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
+
+            if (type == ARG_NONE) break;
+            if (i) DPRINTF( "," );
+            switch(type)
             {
-            case 'w':
-            case 's':
-                DPRINTF( "0x%04x", *(WORD *)args16 );
-                args16 += 2;
+            case ARG_WORD:
+            case ARG_SWORD:
+                DPRINTF( "%04x", *(WORD *)args16 );
+                args16 += sizeof(WORD);
                 break;
-            case 'l':
-                DPRINTF( "0x%08x", *(int *)args16 );
-                args16 += 4;
+            case ARG_LONG:
+                DPRINTF( "%08x", *(int *)args16 );
+                args16 += sizeof(int);
                 break;
-            case 'p':
+            case ARG_PTR:
                 DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-                args16 += 4;
+                args16 += sizeof(SEGPTR);
                 break;
-            case 't':
-            case 'T':
+            case ARG_STR:
+                DPRINTF( "%08x %s", *(int *)args16,
+                         debugres_a( MapSL(*(SEGPTR *)args16 )));
+                args16 += sizeof(int);
+                break;
+            case ARG_SEGSTR:
                 DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
                          debugres_a( MapSL(*(SEGPTR *)args16 )) );
-                args16 += 4;
+                args16 += sizeof(SEGPTR);
+                break;
+            default:
                 break;
             }
-            args++;
-            if (*args) DPRINTF( "," );
         }
     }
     else  /* not cdecl */
     {
         /* Start with the last arg */
-        for (i = 0; args[i]; i++)
+        args16 += call->nArgs;
+        for (i = 0; i < 20; i++)
         {
-            switch(args[i])
-            {
-            case 'w':
-            case 's':
-                args16 += 2;
-                break;
-            case 'l':
-            case 'p':
-            case 't':
-            case 'T':
-                args16 += 4;
-                break;
-            }
-        }
+            int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
 
-        while (*args)
-        {
-            switch(*args)
+            if (type == ARG_NONE) break;
+            if (i) DPRINTF( "," );
+            switch(type)
             {
-            case 'w':
-            case 's':
-                args16 -= 2;
-                DPRINTF( "0x%04x", *(WORD *)args16 );
+            case ARG_WORD:
+            case ARG_SWORD:
+                args16 -= sizeof(WORD);
+                DPRINTF( "%04x", *(WORD *)args16 );
                 break;
-            case 'l':
-                args16 -= 4;
-                DPRINTF( "0x%08x", *(int *)args16 );
+            case ARG_LONG:
+                args16 -= sizeof(int);
+                DPRINTF( "%08x", *(int *)args16 );
                 break;
-            case 't':
-                args16 -= 4;
-                DPRINTF( "0x%08x %s", *(int *)args16,
-                         debugres_a( MapSL(*(SEGPTR *)args16 )));
-                break;
-            case 'p':
-                args16 -= 4;
+            case ARG_PTR:
+                args16 -= sizeof(SEGPTR);
                 DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 break;
-            case 'T':
-                args16 -= 4;
-                DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
+            case ARG_STR:
+                args16 -= sizeof(int);
+                DPRINTF( "%08x %s", *(int *)args16,
                          debugres_a( MapSL(*(SEGPTR *)args16 )));
                 break;
+            case ARG_SEGSTR:
+                args16 -= sizeof(SEGPTR);
+                DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
+                         debugres_a( MapSL(*(SEGPTR *)args16 )) );
+                break;
+            default:
+                break;
             }
-            args++;
-            if (*args) DPRINTF( "," );
         }
     }
 
     DPRINTF( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
     VA_END16( args16 );
 
-    if (reg_func)
+    if (call->arg_types[0] & ARG_REGISTER)
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -266,27 +309,16 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
     STACK16FRAME *frame;
     WORD ordinal;
     char funstr[80];
-    const char *args;
+    const CALLFROM16 *call;
 
     if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;
-    args = BUILTIN_GetEntryPoint16( frame, funstr, &ordinal );
-    if (!args) return;
+    call = get_entry_point( frame, funstr, &ordinal );
+    if (!call) return;
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
     DPRINTF( "%08lx:Ret  %s() ",GetCurrentThreadId(),funstr);
 
-    if ( memcmp( args+2, "long_", 5 ) == 0 )
-    {
-        DPRINTF( "retval=0x%08x ret=%04x:%04x ds=%04x\n",
-                 ret_val, frame->cs, frame->ip, frame->ds );
-    }
-    else if ( memcmp( args+2, "word_", 5 ) == 0 )
-    {
-        DPRINTF( "retval=0x%04x ret=%04x:%04x ds=%04x\n",
-                 ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
-    }
-    else if (    memcmp( args+2, "regs_", 5 ) == 0 
-              || memcmp( args+2, "intr_", 5 ) == 0 )
+    if (call->arg_types[0] & ARG_REGISTER)
     {
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
                 (WORD)context->SegCs, LOWORD(context->Eip), (WORD)context->SegDs);
@@ -295,7 +327,16 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
                 DX_reg(context), SI_reg(context), DI_reg(context),
                 (WORD)context->SegEs, context->EFlags );
     }
-
+    else if (call->arg_types[0] & ARG_RET16)
+    {
+        DPRINTF( "retval=%04x ret=%04x:%04x ds=%04x\n",
+                 ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
+    }
+    else
+    {
+        DPRINTF( "retval=%08x ret=%04x:%04x ds=%04x\n",
+                 ret_val, frame->cs, frame->ip, frame->ds );
+    }
     SYSLEVEL_CheckNotLevel( 2 );
 }
 
@@ -326,10 +367,10 @@ void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
         DPRINTF("%08lx:CallTo16(func=%04lx:%04x,ds=%04lx",
                 GetCurrentThreadId(),
                 context->SegCs, LOWORD(context->Eip), context->SegDs );
-        while (nb_args--) DPRINTF( ",0x%04x", *--stack16 );
-        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
+        while (nb_args--) DPRINTF( ",%04x", *--stack16 );
+        DPRINTF(") ss:sp=%04x:%04x", SELECTOROF(teb->cur_stack),
                 OFFSETOF(teb->cur_stack) );
-        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x FS=%04x\n",
+        DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x es=%04x fs=%04x\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
                 BP_reg(context), (WORD)context->SegEs, (WORD)context->SegFs );
@@ -339,7 +380,7 @@ void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
         DPRINTF("%08lx:CallTo16(func=%04x:%04x,ds=%04x",
                 GetCurrentThreadId(),
                 HIWORD(target), LOWORD(target), SELECTOROF(teb->cur_stack) );
-        while (nb_args--) DPRINTF( ",0x%04x", *--stack16 );
+        while (nb_args--) DPRINTF( ",%04x", *--stack16 );
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
                 OFFSETOF(teb->cur_stack) );
     }
@@ -357,7 +398,7 @@ void RELAY_DebugCallTo16Ret( BOOL reg_func, int ret_val )
 
     if (!reg_func)
     {
-        DPRINTF("%08lx:RetFrom16() ss:sp=%04x:%04x retval=0x%08x\n",
+        DPRINTF("%08lx:RetFrom16() ss:sp=%04x:%04x retval=%08x\n",
                 GetCurrentThreadId(),
                 SELECTOROF(NtCurrentTeb()->cur_stack),
                 OFFSETOF(NtCurrentTeb()->cur_stack), ret_val);
@@ -366,11 +407,11 @@ void RELAY_DebugCallTo16Ret( BOOL reg_func, int ret_val )
     {
         CONTEXT86 *context = (CONTEXT86 *)ret_val;
 
-        DPRINTF("%08lx:RetFrom16() ss:sp=%04x:%04x\n",
+        DPRINTF("%08lx:RetFrom16() ss:sp=%04x:%04x ",
                 GetCurrentThreadId(),
                 SELECTOROF(NtCurrentTeb()->cur_stack),
                 OFFSETOF(NtCurrentTeb()->cur_stack));
-        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x BP=%04x SP=%04x\n",
+        DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x bp=%04x sp=%04x\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), BP_reg(context), LOWORD(context->Esp));
     }

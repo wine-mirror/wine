@@ -40,8 +40,6 @@ typedef enum
     TYPE_PASCAL_16,    /* pascal function with 16-bit return (Win16) */
     TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
     TYPE_ABS,          /* absolute value (Win16) */
-    TYPE_REGISTER,     /* register function */
-    TYPE_INTERRUPT,    /* interrupt handler function (Win16) */
     TYPE_STUB,         /* unimplemented stub */
     TYPE_STDCALL,      /* stdcall function (Win32) */
     TYPE_CDECL,        /* cdecl function (Win32) */
@@ -106,6 +104,8 @@ typedef struct
 #define FLAG_NORELAY   0x02  /* don't use relay debugging for this function */
 #define FLAG_RET64     0x04  /* function returns a 64-bit value */
 #define FLAG_I386      0x08  /* function is i386 only */
+#define FLAG_REGISTER  0x10  /* use register calling convention */
+#define FLAG_INTERRUPT 0x20  /* function is an interrupt handler */
 
   /* Offset of a structure field relative to the start of the struct */
 #define STRUCTOFFSET(type,field) ((int)&((type *)0)->field)

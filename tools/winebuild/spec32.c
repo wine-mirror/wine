@@ -159,13 +159,11 @@ static int output_exports( FILE *outfile, int nr_exports )
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", odp->link_name);
+            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n",
+                     (odp->flags & FLAG_REGISTER) ? make_internal_name(odp,"regs") : odp->link_name );
             break;
         case TYPE_STUB:
             fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", make_internal_name( odp, "stub" ) );
-            break;
-        case TYPE_REGISTER:
-            fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", make_internal_name( odp, "regs" ) );
             break;
         case TYPE_VARIABLE:
             fprintf( outfile, "    \"\\t.long " PREFIX "%s\\n\"\n", make_internal_name( odp, "var" ) );
@@ -239,14 +237,13 @@ static int output_exports( FILE *outfile, int nr_exports )
         for (i = Base; i <= Limit; i++)
         {
             ORDDEF *odp = Ordinals[i];
-            unsigned int j, mask = 0;
+            unsigned int j, args, mask = 0;
+            const char *name;
 
             /* skip non-existent entry points */
             if (!odp) goto ignore;
             /* skip non-functions */
-            if ((odp->type != TYPE_STDCALL) &&
-                (odp->type != TYPE_CDECL) &&
-                (odp->type != TYPE_REGISTER)) goto ignore;
+            if ((odp->type != TYPE_STDCALL) && (odp->type != TYPE_CDECL)) goto ignore;
             /* skip norelay entry points */
             if (odp->flags & FLAG_NORELAY) goto ignore;
 
@@ -257,31 +254,26 @@ static int output_exports( FILE *outfile, int nr_exports )
             }
             if ((odp->flags & FLAG_RET64) && (j < 16)) mask |= 0x80000000;
 
+            name = odp->link_name;
+            args = strlen(odp->u.func.arg_types) * sizeof(int);
+            if (odp->flags & FLAG_REGISTER)
+            {
+                name = make_internal_name( odp, "regs" );
+                args |= 0x8000;
+            }
+
             switch(odp->type)
             {
             case TYPE_STDCALL:
-                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", odp->link_name );
-                fprintf( outfile, "    \"\\tret $%d\\n\"\n",
-                         strlen(odp->u.func.arg_types) * sizeof(int) );
-                fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n",
-                         odp->link_name, mask );
+                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", name );
+                fprintf( outfile, "    \"\\tret $0x%04x\\n\"\n", args );
+                fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n", name, mask );
                 break;
             case TYPE_CDECL:
-                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", odp->link_name );
+                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n", name );
                 fprintf( outfile, "    \"\\tret\\n\"\n" );
-                fprintf( outfile, "    \"\\t.short %d\\n\"\n",
-                         strlen(odp->u.func.arg_types) * sizeof(int) );
-                fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n",
-                         odp->link_name, mask );
-                break;
-            case TYPE_REGISTER:
-                fprintf( outfile, "    \"\\tjmp " PREFIX "%s\\n\"\n",
-                         make_internal_name( odp, "regs" ) );
-                fprintf( outfile, "    \"\\tret\\n\"\n" );
-                fprintf( outfile, "    \"\\t.short 0x%04x\\n\"\n",
-                         0x8000 | strlen(odp->u.func.arg_types) * sizeof(int) );
-                fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n",
-                         make_internal_name( odp, "regs" ), mask );
+                fprintf( outfile, "    \"\\t.short 0x%04x\\n\"\n", args );
+                fprintf( outfile, "    \"\\t.long " PREFIX "%s,0x%08x\\n\"\n", name, mask );
                 break;
             default:
                 assert(0);
@@ -401,7 +393,8 @@ static void output_register_funcs( FILE *outfile )
     for (i = 0; i < nb_entry_points; i++)
     {
         ORDDEF *odp = EntryPoints[i];
-        if (odp->type != TYPE_REGISTER) continue;
+        if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL) continue;
+        if (!(odp->flags & FLAG_REGISTER)) continue;
         name = make_internal_name( odp, "regs" );
         fprintf( outfile,
                  "asm(\".align %d\\n\\t\"\n"
@@ -412,7 +405,8 @@ static void output_register_funcs( FILE *outfile )
                  "    \".byte %d,%d\");\n",
                  get_alignment(4),
                  name, name, odp->link_name,
-                 4 * strlen(odp->u.func.arg_types), 4 * strlen(odp->u.func.arg_types) );
+                 strlen(odp->u.func.arg_types) * sizeof(int),
+                 (odp->type == TYPE_CDECL) ? 0 : (strlen(odp->u.func.arg_types) * sizeof(int)) );
     }
 }
 
