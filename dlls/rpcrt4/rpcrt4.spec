@@ -419,6 +419,7 @@ debug_channels (ole)
 @ stub I_RpcAbortAsyncCall
 @ stub I_RpcAllocate
 @ stub I_RpcAsyncAbortCall
+@ stub I_RpcAsyncSendReceive # NT4
 @ stub I_RpcAsyncSetHandle
 @ stub I_RpcBCacheAllocate
 @ stub I_RpcBCacheFree
@@ -483,6 +484,7 @@ debug_channels (ole)
 @ stub I_RpcSetAssociationContext # win9x
 @ stub I_RpcSetServerContextList
 @ stub I_RpcSetThreadParams # win9x
+@ stub I_RpcSetWMsgEndpoint # NT4
 @ stub I_RpcSsDontSerializeContext
 @ stub I_RpcStopMonitorAssociation
 @ stub I_RpcTransCancelMigration # win9x
