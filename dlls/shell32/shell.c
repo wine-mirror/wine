@@ -322,7 +322,7 @@ HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWO
  *
  * Returns a pointer into the DOS environment... Ugh.
  */
-LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
+static LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 { UINT16 l;
 
   TRACE("\n");

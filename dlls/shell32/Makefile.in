@@ -27,7 +27,6 @@ C_SRCS = \
 	iconcache.c \
 	memorystream.c \
 	pidl.c \
-	shell.c \
 	shell32_main.c \
 	shelllink.c \
 	shellole.c \
@@ -48,7 +47,9 @@ C_SRCS = \
 	shv_item_cmenu.c \
 	systray.c
 
-RC_SRCS= shres.rc
+RC_SRCS = shres.rc
+
+C_SRCS16  = shell.c
 RC_SRCS16 = version16.rc
 
 SUBDIRS = tests
