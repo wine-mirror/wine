@@ -1727,6 +1727,16 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         case 0xe0:  /* Sun PC-NFS API */
             /* not installed */
             break;
+	
+	case 0x52:  /* DR-DOS version */
+            /* This is not DR-DOS */
+
+            TRACE("GET DR-DOS VERSION requested");
+
+            AX_reg(context) = 0x0001; /* Invalid function */
+            SET_CFLAG(context);       /* Error */
+            SetLastError( ERROR_INVALID_FUNCTION );
+            break;
                 
         default:
             INT_BARF( context, 0x21 );
