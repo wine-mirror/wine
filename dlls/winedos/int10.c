@@ -27,6 +27,7 @@
 #include "vga.h"
 #include "wine/debug.h"
 #include "console.h"
+#include "dosexe.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
@@ -548,7 +549,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
               
     case 0x0e: /* TELETYPE OUTPUT */
         TRACE("Teletype Output\n");
-        CONSOLE_Write(AL_reg(context), 0, 0, 0);
+        DOSVM_PutChar(AL_reg(context));
         break;
 
     case 0x0f: /* GET CURRENT VIDEO MODE */
@@ -826,3 +827,22 @@ static void scroll_window(int direction, char lines, char row1,
    }
 }
    
+
+/**********************************************************************
+ *         DOSVM_PutChar
+ *
+ */
+
+void WINAPI DOSVM_PutChar(BYTE ascii)
+{
+  BIOSDATA *data = DOSMEM_BiosData();
+  unsigned  xpos, ypos;
+
+  TRACE("char: 0x%02x\n", ascii);
+
+  // FIXME: Update VGA text buffers here...
+  WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), &ascii, 1, NULL, NULL);
+
+  VGA_GetCursorPos(&xpos, &ypos);
+  BIOS_SetCursorPos(data, 0, xpos, ypos);
+}

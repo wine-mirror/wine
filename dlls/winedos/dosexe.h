@@ -79,6 +79,7 @@ extern BYTE WINAPI DOSVM_Int09ReadScan(BYTE*ascii);
 
 /* int10.c */
 extern void WINAPI DOSVM_Int10Handler(CONTEXT86*);
+extern void WINAPI DOSVM_PutChar(BYTE ascii);
 
 /* int16.c */
 extern void WINAPI DOSVM_Int16Handler(CONTEXT86*);

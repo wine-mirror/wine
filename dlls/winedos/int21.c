@@ -92,7 +92,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
         TRACE("Write Character to Standard Output\n");
-    	CONSOLE_Write(DL_reg(context), 0, 0, 0);
+        DOSVM_PutChar(DL_reg(context));
         break;
 
     case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
@@ -123,7 +123,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             }
         } else {
             TRACE("Direct Console Output\n");
-            CONSOLE_Write(DL_reg(context), 0, 0, 0);
+            DOSVM_PutChar(DL_reg(context));
         }
         break;
 
@@ -161,6 +161,20 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             context->SegEs = SELECTOROF(addr);
             BX_reg(context) = OFFSETOF(addr);
         }
+        break;
+
+    case 0x40: /* WRITE TO FILE OR DEVICE */
+        /* Writes to stdout are handled here. */
+        if (BX_reg(context) == 1) {
+          BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
+                                         context->SegDs,
+                                         context->Edx);
+          int i;
+
+          for(i=0; i<CX_reg(context); i++)
+            DOSVM_PutChar(ptr[i]);
+        } else
+          DOS3Call( context );
         break;
 
     case 0x44: /* IOCTL */

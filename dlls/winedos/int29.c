@@ -24,6 +24,7 @@
 
 #include "console.h"
 #include "miscemu.h"
+#include "dosexe.h"
 
 /**********************************************************************
  *	    DOSVM_Int29Handler
@@ -33,6 +34,5 @@
 void WINAPI DOSVM_Int29Handler( CONTEXT86 *context )
 {
    /* Yes, it seems that this is really all this interrupt does. */
-   CONSOLE_Write(AL_reg(context), 0, 0, 0);
+   DOSVM_PutChar(AL_reg(context));
 }
-
