@@ -824,6 +824,13 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
                     cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
                 }
             }
+            /* Handle case where only the cy values is set to default */
+            else if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16)
+            {
+                RECT r;
+                SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
+                cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
+            }
         }
     }
     else
