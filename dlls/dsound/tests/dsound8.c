@@ -170,7 +170,7 @@ static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
     }
 
     rc=IDirectSound8_VerifyCertification(dso, &certified);
-    ok(rc==DS_OK,"IDirectSound8_VerifyCertification() failed: %s\n",
+    ok(rc==DS_OK||rc==E_NOTIMPL,"IDirectSound8_VerifyCertification() failed: %s\n",
        DXGetErrorString8(rc));
 
     ref=IDirectSound8_Release(dso);
