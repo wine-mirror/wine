@@ -65,7 +65,7 @@ owner	kernel32
 57  pascal16 GetProfileInt(str str s_word) GetProfileInt16
 58  pascal16 GetProfileString(str str str ptr word) GetProfileString16
 59  pascal16 WriteProfileString(str str str) WriteProfileString16
-60  pascal16 FindResource(word segstr segstr) FindResource16
+60  pascal16 FindResource(word str str) FindResource16
 61  pascal16 LoadResource(word word) LoadResource16
 62  pascal LockResource(word) WIN16_LockResource16
 63  pascal16 FreeResource(word) FreeResource16
