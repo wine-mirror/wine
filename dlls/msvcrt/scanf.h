@@ -219,7 +219,7 @@ int _FUNCTION_ {
 			seendigit=1;
 		    }
                     /* read until no more digits */
-                    while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
+                    while (width!=0 && (nch!=_EOF_) && _CHAR2DIGIT_(nch, base)!=-1) {
                         cur = cur*base + _CHAR2DIGIT_(nch, base);
                         nch = _GETC_(file);
 			if (width>0) width--;
