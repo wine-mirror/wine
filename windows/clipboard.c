@@ -557,15 +557,10 @@ HANDLE16 WINAPI SetClipboardData16(UINT16 wFormat, HANDLE16 hData)
 
     TRACE("(%04X, %04x) !\n", wFormat, hData);
 
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) || !(cbinfo.flags & CB_OPEN))
-    {
-        WARN("Clipboard not opened by calling task. Operation failed.\n");
-        return 0;
-    }
-
     /* If it's not owned, data can only be set if the format doesn't exists
        and its rendering is not delayed */
-    if (!(cbinfo.flags & CB_OWNER) && !hData)
+    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
+        (!(cbinfo.flags & CB_OWNER) && !hData))
     {
         WARN("Clipboard not owned by calling task. Operation failed.\n");
         return 0;
@@ -592,15 +587,10 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
 
     TRACE("(%04X, %p) !\n", wFormat, hData);
 
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) || !(cbinfo.flags & CB_OPEN))
-    {
-        WARN("Clipboard not opened by calling task. Operation failed.\n");
-        return 0;
-    }
-
     /* If it's not owned, data can only be set if the format isn't
        available and its rendering is not delayed */
-    if (!(cbinfo.flags & CB_OWNER) && !hData)
+    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
+       (!(cbinfo.flags & CB_OWNER) && !hData))
     {
         WARN("Clipboard not owned by calling task. Operation failed.\n");
         return 0;
