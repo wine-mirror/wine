@@ -52,7 +52,7 @@ struct process
     struct object        obj;             /* object header */
     struct list          entry;           /* entry in system-wide process list */
     struct process      *parent;          /* parent process */
-    struct thread       *thread_list;     /* head of the thread list */
+    struct list          thread_list;     /* thread list */
     struct thread       *debugger;        /* thread debugging this process */
     struct handle_table *handles;         /* handle entries */
     struct fd           *msg_fd;          /* fd for sendmsg/recvmsg */
@@ -103,6 +103,7 @@ extern unsigned int alloc_ptid( void *ptr );
 extern void free_ptid( unsigned int id );
 extern void *get_ptid_entry( unsigned int id );
 extern struct thread *create_process( int fd );
+extern struct thread *get_process_first_thread( struct process *process );
 extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );

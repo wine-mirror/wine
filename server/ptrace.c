@@ -228,12 +228,13 @@ int attach_process( struct process *process )
     struct thread *thread;
     int ret = 1;
 
-    if (!process->thread_list)  /* need at least one running thread */
+    if (list_empty( &process->thread_list ))  /* need at least one running thread */
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    for (thread = process->thread_list; thread; thread = thread->proc_next)
+
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
         if (thread->attached) continue;
         if (suspend_for_ptrace( thread )) resume_after_ptrace( thread );
@@ -247,7 +248,7 @@ void detach_process( struct process *process )
 {
     struct thread *thread;
 
-    for (thread = process->thread_list; thread; thread = thread->proc_next)
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
         if (thread->attached) detach_thread( thread, 0 );
     }

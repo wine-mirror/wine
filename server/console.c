@@ -78,7 +78,6 @@ struct screen_buffer
 {
     struct object         obj;           /* object header */
     struct list           entry;         /* entry in list of all screen buffers */
-    struct screen_buffer *prev;
     struct console_input *input;         /* associated console input */
     int                   mode;          /* output mode */
     int                   cursor_size;   /* size of cursor (percentage filled) */
@@ -400,7 +399,7 @@ static int propagate_console_signal_cb(struct process *process, void *user)
     {
         /* find a suitable thread to signal */
         struct thread *thread;
-        for (thread = process->thread_list; thread; thread = thread->proc_next)
+        LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
         {
             if (send_thread_signal( thread, csi->signal )) break;
         }

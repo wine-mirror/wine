@@ -406,7 +406,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
 
     if (process->debugger) goto error;  /* already being debugged */
     if (!is_process_init_done( process )) goto error;  /* still starting up */
-    if (!process->thread_list) goto error;  /* no thread running in the process */
+    if (list_empty( &process->thread_list )) goto error;  /* no thread running in the process */
 
     /* make sure we don't create a debugging loop */
     for (thread = debugger; thread; thread = thread->process->debugger)
@@ -489,19 +489,23 @@ int debugger_detach( struct process *process, struct thread *debugger )
 void generate_startup_debug_events( struct process *process, void *entry )
 {
     struct process_dll *dll;
-    struct thread *thread = process->thread_list;
+    struct thread *thread, *first_thread = get_process_first_thread( process );
 
     /* generate creation events */
-    generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, entry );
-    while ((thread = thread->proc_next))
-        generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        if (thread == first_thread)
+            generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, entry );
+        else
+            generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
+    }
 
     /* generate dll events (in loading order, i.e. reverse list order) */
     dll = &process->exe;
     while (dll->next) dll = dll->next;
     while (dll != &process->exe)
     {
-        generate_debug_event( process->thread_list, LOAD_DLL_DEBUG_EVENT, dll );
+        generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
         dll = dll->prev;
     }
 }
@@ -603,6 +607,7 @@ DECL_HANDLER(debug_process)
     else if (debugger_attach( process, current ))
     {
         struct debug_event_exception data;
+        struct thread *thread = get_process_first_thread( process );
 
         generate_startup_debug_events( process, NULL );
         resume_process( process );
@@ -610,10 +615,10 @@ DECL_HANDLER(debug_process)
         data.record.ExceptionCode    = EXCEPTION_BREAKPOINT;
         data.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
         data.record.ExceptionRecord  = NULL;
-        data.record.ExceptionAddress = get_thread_ip( process->thread_list );
+        data.record.ExceptionAddress = get_thread_ip( thread );
         data.record.NumberParameters = 0;
         data.first = 1;
-        generate_debug_event( process->thread_list, EXCEPTION_DEBUG_EVENT, &data );
+        generate_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data );
     }
     release_object( process );
 }
@@ -695,13 +700,15 @@ DECL_HANDLER(debug_break)
     {
         /* find a suitable thread to signal */
         struct thread *thread;
-        for (thread = process->thread_list; thread; thread = thread->proc_next)
+        LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
         {
-            if (send_thread_signal( thread, SIGTRAP )) break;
+            if (send_thread_signal( thread, SIGTRAP )) goto done;
         }
-        if (!thread) set_error( STATUS_ACCESS_DENIED );
+        set_error( STATUS_ACCESS_DENIED );
     }
     else reply->self = 1;
+
+done:
     release_object( process );
 }
 

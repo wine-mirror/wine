@@ -192,6 +192,14 @@ void *get_ptid_entry( unsigned int id )
     return ptid_entries[id - PTID_OFFSET].ptr;
 }
 
+/* return the main thread of the process */
+struct thread *get_process_first_thread( struct process *process )
+{
+    struct list *ptr = list_head( &process->thread_list );
+    if (!ptr) return NULL;
+    return LIST_ENTRY( ptr, struct thread, proc_entry );
+}
+
 /* set the state of the process startup info */
 static void set_process_startup_state( struct process *process, enum startup_state state )
 {
@@ -250,7 +258,6 @@ struct thread *create_process( int fd )
 
     if (!(process = alloc_object( &process_ops ))) goto error;
     process->parent          = NULL;
-    process->thread_list     = NULL;
     process->debugger        = NULL;
     process->handles         = NULL;
     process->msg_fd          = NULL;
@@ -277,6 +284,7 @@ struct thread *create_process( int fd )
     process->exe.filename    = NULL;
     process->group_id        = 0;
     process->token           = create_admin_token();
+    list_init( &process->thread_list );
     list_init( &process->locks );
     list_init( &process->classes );
 
@@ -400,7 +408,7 @@ static void process_destroy( struct object *obj )
     assert( obj->ops == &process_ops );
 
     /* we can't have a thread remaining */
-    assert( !process->thread_list );
+    assert( list_empty( &process->thread_list ));
 
     set_process_startup_state( process, STARTUP_ABORTED );
     if (process->console) release_object( process->console );
@@ -576,7 +584,7 @@ void kill_console_processes( struct thread *renderer, int exit_code )
 /* a process has been killed (i.e. its last thread died) */
 static void process_killed( struct process *process )
 {
-    assert( !process->thread_list );
+    assert( list_empty( &process->thread_list ));
     gettimeofday( &process->end_time, NULL );
     if (process->handles) release_object( process->handles );
     process->handles = NULL;
@@ -603,10 +611,7 @@ static void process_killed( struct process *process )
 /* add a thread to a process running threads list */
 void add_process_thread( struct process *process, struct thread *thread )
 {
-    thread->proc_next = process->thread_list;
-    thread->proc_prev = NULL;
-    if (thread->proc_next) thread->proc_next->proc_prev = thread;
-    process->thread_list = thread;
+    list_add_head( &process->thread_list, &thread->proc_entry );
     if (!process->running_threads++) running_processes++;
     grab_object( thread );
 }
@@ -615,11 +620,9 @@ void add_process_thread( struct process *process, struct thread *thread )
 void remove_process_thread( struct process *process, struct thread *thread )
 {
     assert( process->running_threads > 0 );
-    assert( process->thread_list );
+    assert( !list_empty( &process->thread_list ));
 
-    if (thread->proc_next) thread->proc_next->proc_prev = thread->proc_prev;
-    if (thread->proc_prev) thread->proc_prev->proc_next = thread->proc_next;
-    else process->thread_list = thread->proc_next;
+    list_remove( &thread->proc_entry );
 
     if (!--process->running_threads)
     {
@@ -637,12 +640,12 @@ void suspend_process( struct process *process )
 {
     if (!process->suspend++)
     {
-        struct thread *thread = process->thread_list;
-        while (thread)
+        struct list *ptr, *next;
+
+        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
         {
-            struct thread *next = thread->proc_next;
+            struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
             if (!thread->suspend) stop_thread( thread );
-            thread = next;
         }
     }
 }
@@ -653,12 +656,12 @@ void resume_process( struct process *process )
     assert (process->suspend > 0);
     if (!--process->suspend)
     {
-        struct thread *thread = process->thread_list;
-        while (thread)
+        struct list *ptr, *next;
+
+        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
         {
-            struct thread *next = thread->proc_next;
+            struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
             if (!thread->suspend) wake_thread( thread );
-            thread = next;
         }
     }
 }
@@ -666,14 +669,14 @@ void resume_process( struct process *process )
 /* kill a process on the spot */
 void kill_process( struct process *process, struct thread *skip, int exit_code )
 {
-    struct thread *thread = process->thread_list;
+    struct list *ptr, *next;
 
-    while (thread)
+    LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
     {
-        struct thread *next = thread->proc_next;
+        struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+
         thread->exit_code = exit_code;
         if (thread != skip) kill_thread( thread, 1 );
-        thread = next;
     }
 }
 
@@ -728,7 +731,7 @@ void enum_processes( int (*cb)(struct process*, void*), void *user )
 /* len is the total size (in ints) */
 static int read_process_memory( struct process *process, const int *addr, size_t len, int *dest )
 {
-    struct thread *thread = process->thread_list;
+    struct thread *thread = get_process_first_thread( process );
 
     assert( !((unsigned int)addr % sizeof(int)) );  /* address must be aligned */
 
@@ -771,7 +774,7 @@ static int check_process_write_access( struct thread *thread, int *addr, size_t 
 static int write_process_memory( struct process *process, int *addr, size_t len,
                                  unsigned int first_mask, unsigned int last_mask, const int *src )
 {
-    struct thread *thread = process->thread_list;
+    struct thread *thread = get_process_first_thread( process );
     int ret = 0;
 
     assert( !((unsigned int)addr % sizeof(int) ));  /* address must be aligned */
