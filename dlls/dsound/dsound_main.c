@@ -593,12 +593,6 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 
 	pdsb = ((SecondaryBufferImpl *)psb)->dsb;
 
-	if (pdsb->hwbuf) {
-		FIXME("need to duplicate hardware buffer\n");
-		*ppdsb = NULL;
-		return DSERR_INVALIDCALL;
-	}
-
 	dsb = (IDirectSoundBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
 
 	if (dsb == NULL) {
@@ -608,13 +602,47 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	}
 
 	memcpy(dsb, pdsb, sizeof(IDirectSoundBufferImpl));
+
+	if (pdsb->hwbuf) {
+		TRACE("duplicating hardware buffer\n");
+
+		hres = IDsDriver_DuplicateSoundBuffer(This->driver, pdsb->hwbuf, (LPVOID *)&dsb->hwbuf);
+		if (hres != DS_OK) {
+			TRACE("IDsDriver_DuplicateSoundBuffer failed, falling back to software buffer\n");
+			dsb->hwbuf = NULL;
+			/* allocate buffer */
+			if (This->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
+				dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
+				if (dsb->buffer == NULL) {
+					WARN("out of memory\n");
+					HeapFree(GetProcessHeap(),0,dsb);
+					*ppdsb = NULL;
+					return DSERR_OUTOFMEMORY;
+				}
+
+				dsb->buffer->memory = (LPBYTE)HeapAlloc(GetProcessHeap(),0,dsb->buflen);
+				if (dsb->buffer->memory == NULL) {
+					WARN("out of memory\n");
+					HeapFree(GetProcessHeap(),0,dsb->buffer);
+					HeapFree(GetProcessHeap(),0,dsb);
+					*ppdsb = NULL;
+					return DSERR_OUTOFMEMORY;
+				}
+				dsb->buffer->ref = 1;
+
+				/* FIXME: copy buffer ? */
+			}
+		}
+	} else {
+		dsb->hwbuf = NULL;
+		dsb->buffer->ref++;
+	}
+
 	dsb->ref = 0;
 	dsb->state = STATE_STOPPED;
 	dsb->playpos = 0;
 	dsb->buf_mixpos = 0;
 	dsb->dsound = This;
-	dsb->buffer->ref++;
-	dsb->hwbuf = NULL;
 	dsb->ds3db = NULL;
 	dsb->iks = NULL; /* FIXME? */
 	dsb->dsb = NULL;
