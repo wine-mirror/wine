@@ -768,7 +768,7 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
     UINT comboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
 
     /* load Collate ICONs */
-    /* We load these with LoadImage becasue they are not a standard
+    /* We load these with LoadImage because they are not a standard
        size and we don't want them rescaled */
     PrintStructures->hCollateIcon =
       LoadImageA(COMDLG32_hInstance, "PD32_COLLATE", IMAGE_ICON, 0, 0, 0);

@@ -332,7 +332,7 @@ Default = -adobe-times-
         <title>How To Manage Cached Font Metrics</title>
         <para>
           WINE stores detailed information about available fonts in
-          the <filename>~/.wine/.cachedmetrics</filename> file. You
+          the <filename>~/.wine/cachedmetrics.[display]</filename> file. You
           can copy it elsewhere and add this entry to the [fonts]
           section  in your <filename>~/.wine/config</filename>:
         </para>
@@ -342,7 +342,7 @@ FontMetrics = &lt;file with metrics&gt;
         <para>
           If WINE detects changes in the X font configuration it will
           rebuild font metrics from scratch and then it will overwrite
-          <filename>~/.wine/.cachedmetrics</filename> with  the new
+          <filename>~/.wine/cachedmetrics.[display]</filename> with  the new
           information. This process can take a while.
         </para>
       </sect3>

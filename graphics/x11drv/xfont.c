@@ -2098,7 +2098,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
     }
     if( fi ) HeapFree(GetProcessHeap(), 0, fi);
 
-    /* Scan through the font list and remove FontResorce(s) (fr) 
+    /* Scan through the font list and remove FontResource(s) (fr) 
      * that have no associated Fontinfo(s) (fi). 
      * This code is necessary because XFONT_ReadCachedMetrics
      * assumes that there is at least one fi associated with a fr.  

@@ -62,7 +62,7 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 	case ISO4_CHARSET:
 	case ISO10_CHARSET:
 	case CELTIC_CHARSET:
-	  /* FIXME: These have no place here, but becasue x11drv
+	  /* FIXME: These have no place here, but because x11drv
 	     enumerates fonts with these (made up) charsets some apps
 	     might use them and then the FIXME below would become
 	     annoying.  Now we could pick the intended codepage for
