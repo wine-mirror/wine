@@ -86,6 +86,9 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
     PCWSTR  cmd;
     LPVOID  pv;
 
+    TRACE("%p, %d, %s, %s, %p, %p\n", out, len, debugstr_w(fmt),
+          debugstr_w(lpFile), pidl, args);
+
     while (*fmt)
     {
         if (*fmt == '%')
@@ -136,8 +139,8 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                     else
                         cmd = lpFile;
 
-                    /* Add double quotation marks unless we already have them (e.g.: "%1" %* for exefile) */
-                    if (res==out || res[-1]!='"')
+                    /* Add double quotation marks unless we already have them (e.g.: "file://%1" %* for exefile) */
+                    if (res == out || *(fmt + 1) != '"')
                     {
                         *res++ = '"';
                         strcpyW(res, cmd);
