@@ -113,11 +113,13 @@ AC_CHECK_FUNCS(openpty,,
 		LIBS="$LIBS -lutil"]
 	)])
 
+DLLIBS=""
+AC_SUBST(DLLIBS)
 AC_CHECK_HEADERS(dlfcn.h,
     [AC_CHECK_FUNCS(dlopen,,
         [AC_CHECK_LIB(dl,dlopen,
                      [AC_DEFINE(HAVE_DLOPEN,1,[Define if you have dlopen])
-                     LIBS="$LIBS -ldl"],
+                     DLLIBS="-ldl"],
                      LIBEXT="a")]
  	)],
  	LIBEXT="a"
