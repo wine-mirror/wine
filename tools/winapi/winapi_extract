@@ -37,11 +37,13 @@ if($options->progress) {
     $output->disable_progress;
 }
 
+use c_parser;
 use function;
 use type;
-use winapi_function;
-use winapi_parser;
+
 use winapi qw($win16api $win32api @winapis);
+use winapi_c_parser;
+use winapi_function;
 
 my %module2entries;
 my %module2spec_file;
@@ -174,8 +176,15 @@ sub statements_stub {
     }
 }
 
+my @h_files = ();
+if($options->headers) {
+    @h_files = $options->h_files;
+    @h_files = files_skip(@h_files);
+    @h_files = files_filter("winelib", @h_files);
+}
+
 my @c_files = ();
-if($options->spec_files  || $options->pseudo_stub_statistics) {
+if(1 || $options->spec_files || $options->pseudo_stub_statistics) {
     @c_files = $options->c_files;
     @c_files = files_skip(@c_files);
     @c_files = files_filter("winelib", @c_files);
@@ -183,77 +192,148 @@ if($options->spec_files  || $options->pseudo_stub_statistics) {
 
 my $progress_output;
 my $progress_current = 0;
-my $progress_max = scalar(@c_files);
+my $progress_max = scalar(@h_files) + scalar(@c_files);
 
-foreach my $file (@c_files) {
+foreach my $file (@h_files, @c_files) {
     my %functions;
 
     $progress_current++;
-    $output->progress("$file (file $progress_current of $progress_max)");
 
-    my $create_function = sub {
-	if($options->stub_statistics) {
-	    return 'winapi_function'->new;
+    {
+	open(IN, "< $file");
+	local $/ = undef;
+	$_ = <IN>;
+	close(IN);
+    }
+
+    my $max_line = 0;
+    {
+      local $_ = $_;
+      while(s/^.*?\n//) { $max_line++; }
+      if($_) { $max_line++; }
+    }
+
+    my $parser;
+    if (!$options->old) {
+	$parser = new c_parser($file);
+    } else {
+	$parser = new winapi_c_parser($file);
+    }
+
+    my $function;
+    my $line;
+
+    my $update_output = sub {
+	my $progress = "";
+	my $prefix = "";
+
+	$progress .= "$file (file $progress_current of $progress_max)";
+	$prefix .= "$file:";
+
+	if(defined($function)) {
+	    my $name = $function->name;
+	    my $begin_line = $function->begin_line;
+	    my $begin_column = $function->begin_column;
+
+	    $progress .= ": function $name";
+	    $prefix .= "$begin_line.$begin_column: function $name: ";
 	} else {
-	    return 'function'->new;
+	    $prefix .= " "; 
 	}
+
+	if(defined($line)) {
+	    $progress .= ": line $line of $max_line";
+	}
+
+	$output->progress($progress);
+	$output->prefix($prefix);
     };
+
+    &$update_output();
 
     my $found_function = sub {
-	my $function = shift;
+	$function = shift;
 
-	my $internal_name = $function->internal_name;
-	$functions{$internal_name} = $function;
+	my $name = $function->name;
+	$functions{$name} = $function;
 
-	$output->progress("$file (file $progress_current of $progress_max): $internal_name");
-	$output->prefix_callback(sub { return $function->prefix; });
+	&$update_output();
 
-	my $documentation_line = $function->documentation_line;
-	my $documentation = $function->documentation;
-	my $function_line = $function->function_line;
-	my $linkage = $function->linkage;
-	my $return_type = $function->return_type;
-	my $calling_convention = $function->calling_convention;
-	my $statements = $function->statements;
+	my $old_function;
+	if($options->stub_statistics) {
+	    $old_function = 'winapi_function'->new;
+	} else {
+	    $old_function = 'function'->new;
+	}
+
+	$function->file($file);
+	$old_function->debug_channels([]); # FIXME: Not complete
+
+	$old_function->documentation_line(0); # FIXME: Not complete
+	$old_function->documentation(""); # FIXME: Not complete
+
+	$old_function->function_line($function->begin_line());
+	$old_function->linkage($function->linkage);
+	$old_function->return_type($function->return_type);
+	$old_function->calling_convention($function->calling_convention);
+	$old_function->internal_name($function->name);
+	if (defined($function->argument_types)) {
+	    $old_function->argument_types([@{$function->argument_types}]);
+	}
+	if (defined($function->argument_names)) {
+	    $old_function->argument_names([@{$function->argument_names}]);
+	}
+	$old_function->argument_documentations([]); # FIXME: Not complete
+	$old_function->statements_line($function->statements_line);
+	$old_function->statements($function->statements);
 
 	if($options->spec_files || $options->winetest) {
-	    documentation_specifications($function);
+	    documentation_specifications($old_function);
 	}
 
 	if($options->stub_statistics) {
-	    statements_stub($function);
+	    statements_stub($old_function);
 	}
 
-	$output->prefix("");
+	$function = undef;
+	&$update_output();
     };
-
-    my $create_type = sub {
-	return 'type'->new;
-    };
+    $parser->set_found_function_callback($found_function);
 
     my $found_type = sub {
 	my $type = shift;
+
+	&$update_output();
+	
+	my $kind = $type->kind;
+	my $_name = $type->_name;
+	my $name = $type->name;
+	
+	foreach my $field ($type->fields) {
+	    (my $field_type, my $field_name) = @$field;
+
+	    if ($options->struct) {
+		if ($name) {
+		    $output->write("$name:$field_type:$field_name\n");
+		} else {
+		    $output->write("$kind $_name:$field_type:$field_name\n");
+		}
+	    }
+	}
+
+	return 1;
     };
+    $parser->set_found_type_callback($found_type);
 
-    my $found_preprocessor = sub {
-	my $directive = shift;
-	my $argument = shift;
-    };
-
-    &winapi_parser::parse_c_file($file, {
-	# c_comment_found => $found_c_comment,
-	# cplusplus_comment_found => $found_cplusplus_comment,
-	function_create => $create_function,
-	function_found => $found_function,
-	type_create => $create_type,
-	type_found => $found_type,
-	preprocessor_found => $found_preprocessor
-    });
-
-    my @internal_names = keys(%functions);
-    if($#internal_names < 0) {
-	$output->write("$file: doesn't contain any functions\n");
+    {
+	my $line = 1;
+	my $column = 0;
+	if(!$parser->parse_c_file(\$_, \$line, \$column)) {
+	    $output->write("can't parse file\n");
+	}
     }
+
+    $output->prefix("");
 }
 
 sub output_function {

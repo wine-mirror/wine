@@ -40,6 +40,7 @@ if($options->progress) {
     $output->disable_progress;
 }
 
+use winapi_c_parser;
 use c_parser;
 use type;
 
@@ -76,7 +77,12 @@ foreach my $file (@c_files) {
       if($_) { $max_line++; }
     }
 
-    my $parser = new c_parser($file);
+    my $parser;
+    if (1) {
+	$parser = new c_parser($file);
+    } else {
+	$parser = new winapi_c_parser($file);
+    }
 
     my $function;
     my $line;

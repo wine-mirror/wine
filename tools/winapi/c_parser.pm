@@ -31,6 +31,7 @@ use options qw($options);
 use output qw($output);
 
 use c_function;
+use c_type;
 
 ########################################################################
 # new
@@ -42,26 +43,30 @@ sub new {
     bless ($self, $class);
 
     my $file = \${$self->{FILE}};
+    my $create_function = \${$self->{CREATE_FUNCTION}};
+    my $create_type = \${$self->{CREATE_TYPE}};
     my $found_comment = \${$self->{FOUND_COMMENT}};
     my $found_declaration = \${$self->{FOUND_DECLARATION}};
-    my $create_function = \${$self->{CREATE_FUNCTION}};
     my $found_function = \${$self->{FOUND_FUNCTION}};
     my $found_function_call = \${$self->{FOUND_FUNCTION_CALL}};
     my $found_line = \${$self->{FOUND_LINE}};
     my $found_preprocessor = \${$self->{FOUND_PREPROCESSOR}};
     my $found_statement = \${$self->{FOUND_STATEMENT}};
+    my $found_type = \${$self->{FOUND_TYPE}};
     my $found_variable = \${$self->{FOUND_VARIABLE}};
 
     $$file = shift;
 
+    $$create_function = sub { return new c_function; };
+    $$create_type = sub { return new c_type; };
     $$found_comment = sub { return 1; };
     $$found_declaration = sub { return 1; };
-    $$create_function = sub { return new c_function; };
     $$found_function = sub { return 1; };
     $$found_function_call = sub { return 1; };
     $$found_line = sub { return 1; };
     $$found_preprocessor = sub { return 1; };
     $$found_statement = sub { return 1; };
+    $$found_type = sub { return 1; };
     $$found_variable = sub { return 1; };
 
     return $self;
@@ -145,6 +150,17 @@ sub set_found_statement_callback {
 }
 
 ########################################################################
+# set_found_type_callback
+#
+sub set_found_type_callback {
+    my $self = shift;
+
+    my $found_type = \${$self->{FOUND_TYPE}};
+
+    $$found_type = shift;
+}
+
+########################################################################
 # set_found_variable_callback
 #
 sub set_found_variable_callback {
@@ -154,6 +170,34 @@ sub set_found_variable_callback {
 
     $$found_variable = shift;
 }
+
+
+########################################################################
+# _format_c_type
+
+sub _format_c_type {
+    my $self = shift;
+
+    local $_ = shift;
+    s/^\s*(.*?)\s*$/$1/;
+
+    if (/^(\w+(?:\s*\*)*)\s*\(\s*\*\s*\)\s*\(\s*(.*?)\s*\)$/s) {
+	my $return_type = $1;
+	my @arguments = split(/\s*,\s*/, $2);
+	foreach my $argument (@arguments) {
+	    if ($argument =~ s/^(\w+(?:\s*\*)*)\s*\w+$/$1/) { 
+		$argument =~ s/\s+/ /g;
+		$argument =~ s/\s*\*\s*/*/g;
+		$argument =~ s/(\*+)$/ $1/;
+	    }
+	}
+
+	$_ = "$return_type (*)(" . join(", ", @arguments) . ")";
+    }
+    
+    return $_;
+}
+
 
 ########################################################################
 # _parse_c
@@ -193,13 +237,9 @@ sub _parse_c {
 
 ########################################################################
 # _parse_c_error
-#
-# FIXME: Use caller (See man perlfunc)
 
 sub _parse_c_error {
     my $self = shift;
-
-    my $file = \${$self->{FILE}};
 
     local $_ = shift;
     my $line = shift;
@@ -209,6 +249,35 @@ sub _parse_c_error {
 
     $message = "parse error" if !$message;
 
+    # Why did I do this?
+    if($output->prefix) {
+	# $output->write("\n");
+	$output->prefix("");
+    }
+
+    $self->_parse_c_warning($_, $line, $column, $context, $message);
+
+    exit 1;
+}
+
+########################################################################
+# _parse_c_warning
+#
+# FIXME: Use caller (See man perlfunc)
+
+sub _parse_c_warning {
+    my $self = shift;
+
+    local $_ = shift;
+    my $line = shift;
+    my $column = shift;
+    my $context = shift;
+    my $message = shift;
+
+    my $file = \${$self->{FILE}};
+
+    $message = "warning" if !$message;
+
     my $current = "";
     if($_) {
 	my @lines = split(/\n/, $_);
@@ -217,9 +286,9 @@ sub _parse_c_error {
         $current .= $lines[1] . "\n" if $lines[1];
     }
 
-    if($output->prefix) {
-	$output->write("\n");
-	$output->prefix("");
+    if (0) {
+	(my $package, my $filename, my $line) = caller(0);
+	$output->write("*** caller ***: $filename:$line\n");
     }
 
     if($current) {
@@ -227,30 +296,16 @@ sub _parse_c_error {
     } else {
 	$output->write("$$file:$line." . ($column + 1) . ": $context: $message\n");
     }
-
-    exit 1;
 }
 
 ########################################################################
-# _parse_c_warning
+# __parse_c_until_one_of
 
-sub _parse_c_warning {
-    my $self = shift;
-
-    my $line = shift;
-    my $column = shift;
-    my $message = shift;
-
-    $output->write("$line." . ($column + 1) . ": $message\n");
-}
-
-########################################################################
-# _parse_c_until_one_of
-
-sub _parse_c_until_one_of {
+sub __parse_c_until_one_of {
     my $self = shift;
 
     my $characters = shift;
+    my $on_same_level = shift;
     my $refcurrent = shift;
     my $refline = shift;
     my $refcolumn = shift;
@@ -260,17 +315,29 @@ sub _parse_c_until_one_of {
     my $line = $$refline;
     my $column = $$refcolumn;
 
+
     if(!defined($match)) {
 	my $blackhole;
 	$match = \$blackhole;
     }
 
+    my $level = 0;
     $$match = "";
-    while(/^[^$characters]/s) {
+    while(/^[^$characters]/s || $level > 0) {
 	my $submatch = "";
 
-	if(s/^[^$characters\n\t\'\"]*//s) {
-	    $submatch .= $&;
+	if ($level > 0) {
+	    if(s/^[^\(\)\[\]\{\}\n\t\'\"]*//s) {
+		$submatch .= $&;
+	    }
+	} elsif ($on_same_level) {
+	    if(s/^[^$characters\(\)\[\]\{\}\n\t\'\"]*//s) {
+		$submatch .= $&;
+	    }
+	} else {
+	    if(s/^[^$characters\n\t\'\"]*//s) {
+		$submatch .= $&;
+	    }
 	}
 
 	if(s/^\'//) {
@@ -313,6 +380,24 @@ sub _parse_c_until_one_of {
 
 	    $$match .= $submatch;
 	    $column += length($submatch);
+	} elsif($on_same_level && s/^[\(\[\{]//) {
+	    $level++;
+
+	    $submatch .= $&;
+	    $$match .= $submatch;
+	    $column++;
+	} elsif($on_same_level && s/^[\)\]\}]//) {
+	    if ($level > 0) {
+		$level--;
+		
+		$submatch .= $&;
+		$$match .= $submatch;
+		$column++;
+	    } else {
+		$_ = "$&$_";
+		$$match .= $submatch;
+		last;
+	    }
 	} elsif(s/^\n//) {
 	    $submatch .= "\n";
 
@@ -334,6 +419,36 @@ sub _parse_c_until_one_of {
     $$refline = $line;
     $$refcolumn = $column;
     return 1;
+}
+
+########################################################################
+# _parse_c_until_one_of
+
+sub _parse_c_until_one_of {
+    my $self = shift;
+
+    my $characters = shift;
+    my $refcurrent = shift;
+    my $refline = shift;
+    my $refcolumn = shift;
+    my $match = shift;
+
+    return $self->__parse_c_until_one_of($characters, 0, $refcurrent, $refline, $refcolumn, $match);
+}
+
+########################################################################
+# _parse_c_on_same_level_until_one_of
+
+sub _parse_c_on_same_level_until_one_of {
+    my $self = shift;
+
+    my $characters = shift;
+    my $refcurrent = shift;
+    my $refline = shift;
+    my $refcolumn = shift;
+    my $match = shift;
+
+    return $self->__parse_c_until_one_of($characters, 1, $refcurrent, $refline, $refcolumn, $match);
 }
 
 ########################################################################
@@ -510,7 +625,7 @@ sub parse_c_declaration {
 
     if(0) {
 	# Nothing
-    } elsif(s/^(?:DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\(\s*(\w+)\s*\)\s*//s) { # FIXME: Wine specific kludge
+    } elsif(s/^WINE_(?:DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\(\s*(\w+)\s*\)\s*//s) { # FIXME: Wine specific kludge
 	$self->_update_c_position($&, \$line, \$column);
     } elsif(s/^__ASM_GLOBAL_FUNC\(\s*(\w+)\s*,\s*//s) { # FIXME: Wine specific kludge
 	$self->_update_c_position($&, \$line, \$column);
@@ -518,8 +633,25 @@ sub parse_c_declaration {
 	if(s/\)//) {
 	    $column++;
 	}
+    } elsif(s/^(?:DECLARE_OLD_HANDLE|DEFINE_AVIGUID|DEFINE_OLEGUID)\s*(?=\()//s) { # FIXME: Wine specific kludge
+	$self->_update_c_position($&, \$line, \$column);
+
+	my @arguments;
+	my @argument_lines;
+	my @argument_columns;
+
+	if(!$self->parse_c_tuple(\$_, \$line, \$column, \@arguments, \@argument_lines, \@argument_columns)) {
+	    return 0;
+	}
+    } elsif(s/^DEFINE_COMMON_NOTIFICATIONS\(\s*(\w+)\s*,\s*(\w+)\s*\)//s) { # FIXME: Wine specific kludge
+	$self->_update_c_position($&, \$line, \$column);
+    } elsif(s/^MAKE_FUNCPTR\(\s*(\w+)\s*\)//s) { # FIXME: Wine specific kludge
+	$self->_update_c_position($&, \$line, \$column);
+    } elsif(s/^START_TEST\(\s*(\w+)\s*\)\s*{//s) { # FIXME: Wine specific kludge
+	$self->_update_c_position($&, \$line, \$column);
+    } elsif(s/^int\s*_FUNCTION_\s*{//s) { # FIXME: Wine specific kludge
+	$self->_update_c_position($&, \$line, \$column);
     } elsif(s/^(?:jump|strong)_alias//s) { # FIXME: GNU C library specific kludge
-    } elsif(s/^extern\s*\"C\"\s*{//s) {
 	$self->_update_c_position($&, \$line, \$column);
     } elsif(s/^(?:__asm__|asm)\s*\(//) {
 	$self->_update_c_position($&, \$line, \$column);
@@ -646,6 +778,7 @@ sub parse_c_file {
 
     my $if = 0;
     my $if0 = 0;
+    my $extern_c = 0;
 
     my $blevel = 1;
     my $plevel = 1;
@@ -655,7 +788,7 @@ sub parse_c_file {
 
 	if($line != $previous_line) {
 	    &$$found_line($line);
-	} elsif($column == $previous_column) {
+	} elsif(0 && $column == $previous_column) {
 	    $self->_parse_c_error($_, $line, $column, "file", "no progress");
 	} else {
 	    # &$$found_line("$line.$column");
@@ -663,13 +796,70 @@ sub parse_c_file {
 	$previous_line = $line;
 	$previous_column = $column;
 
-	# $output->write("file: $plevel $blevel: '$match'\n");
+	if($match !~ /^\s+$/s && $options->debug) {
+	    $self->_parse_c_warning($_, $line, $column, "file", "$plevel $blevel: '$declaration' '$match'");
+	}
 
 	if(!$declaration && $match =~ s/^\s+//s) {
 	    $self->_update_c_position($&, \$declaration_line, \$declaration_column);
 	}
+
 	if(!$if0) {
 	    $declaration .= $match;
+
+	    # FIXME: Kludge
+	    if ($declaration =~ s/^extern\s*\"C\"//s) {
+		if (s/^\{//) {
+		    $self->_update_c_position($&, \$line, \$column);
+		    $declaration = "";
+		    $declaration_line = $line;
+		    $declaration_column = $column;
+
+		    $extern_c = 1;
+		    next;
+		}
+	    } elsif ($extern_c && $blevel == 1 && $plevel == 1 && !$declaration) {
+		if (s/^\}//) {
+		    $self->_update_c_position($&, \$line, \$column);
+		    $declaration = "";
+		    $declaration_line = $line;
+		    $declaration_column = $column;
+		    
+		    $extern_c = 0;
+		    next;
+		}
+	    } elsif($declaration =~ s/^(?:__DEFINE_(?:GET|SET)_SEG|OUR_GUID_ENTRY)\s*(?=\()//sx) { # FIXME: Wine specific kludge
+		my $prefix = $&;
+		if ($plevel > 2 || !s/^\)//) {
+		    $declaration = "$prefix$declaration";
+		} else {
+		    $plevel--;
+		    $self->_update_c_position($&, \$line, \$column);
+		    $declaration .= $&;
+
+		    my @arguments;
+		    my @argument_lines;
+		    my @argument_columns;
+
+		    if(!$self->parse_c_tuple(\$declaration, \$declaration_line, \$declaration_column,
+					     \@arguments, \@argument_lines, \@argument_columns)) 
+		    {
+			$self->_parse_c_error($declaration, $declaration_line, $declaration_column, "file", "tuple expected");
+		    }
+
+		    $declaration = "";
+		    $declaration_line = $line;
+		    $declaration_column = $column;
+		    
+		    next;
+		}
+	    } elsif ($declaration =~ s/^(?:DEFINE_SHLGUID)\s*\(.*?\)//s) {
+		$self->_update_c_position($&, \$declaration_line, \$declaration_column);
+	    } elsif ($declaration =~ s/^(?:DECL_WINELIB_TYPE_AW|DECLARE_HANDLE(?:16)?|TYPE_MARSHAL)\(\s*(\w+)\s*\)\s*//s) {
+		$self->_update_c_position($&, \$declaration_line, \$declaration_column);
+	    } elsif ($declaration =~ s/^ICOM_DEFINE\(\s*(\w+)\s*,\s*(\w+)\s*\)\s*//s) {
+		$self->_update_c_position($&, \$declaration_line, \$declaration_column);
+	    }
 	} else {
 	    my $blank_lines = 0;
 
@@ -782,6 +972,9 @@ sub parse_c_file {
 	    $declaration .= $&;
 	} elsif(s/^\)//) {
 	    $plevel--;
+	    if($blevel <= 0) {
+		$self->_parse_c_error($_, $line, $column, "file", ") without (");
+	    }
 	    $declaration .= $&;
 	    if($plevel == 1 && $declaration =~ /^__ASM_GLOBAL_FUNC/) {
 		if(!$self->parse_c_declaration(\$declaration, \$declaration_line, \$declaration_column)) {
@@ -797,7 +990,12 @@ sub parse_c_file {
 	    $declaration .= $&;
 	} elsif(s/^\}//) {
 	    $blevel--;
+	    if($blevel <= 0) {
+		$self->_parse_c_error($_, $line, $column, "file", "} without {");
+	    }
+
 	    $declaration .= $&;
+
 	    if($declaration =~ /^typedef/s ||
 	       $declaration =~ /^(?:const\s+|extern\s+|static\s+)*(?:struct|union)(?:\s+\w+)?\s*\{/s)
 	    {
@@ -810,18 +1008,18 @@ sub parse_c_file {
 		$declaration = "";
 		$declaration_line = $line;
 		$declaration_column = $column;
-	    } elsif($column == 1) {
+	    } elsif($column == 1 && !$extern_c) {
 		$self->_parse_c_error("", $line, $column, "file", "inner } ends on column 1");
 	    }
 	} elsif(s/^;//) {
 	    $declaration .= $&;
-	    if($blevel == 1 &&
+	    if(0 && $blevel == 1 &&
 	       $declaration !~ /^typedef/ &&
-	       $declaration !~ /^(?:const\s+|extern\s+|static\s+)(?:struct|union)(?:\s+\w+)?\s*\{/s &&
-	       $declaration =~ /^(?:\w+\s*)*(?:(?:\*\s*)+|\s+)(\w+)\s*\(\s*(?:(?:\w+\s*,\s*)*\w+\s*)?\)(.*?);/s &&
-	       $1 ne "ICOM_VTABLE" && $2) # K&R
+	       $declaration !~ /^(?:const\s+|extern\s+|static\s+)?(?:struct|union)(?:\s+\w+)?\s*\{/s &&
+	       $declaration =~ /^(?:\w+(?:\s*\*)*\s+)*(\w+)\s*\(\s*(?:(?:\w+\s*,\s*)*(\w+))?\s*\)\s*(.*?);$/s &&
+	       $1 ne "ICOM_VTABLE" && defined($2) && $2 ne "void" && $3) # K&R
 	    {
-		$self->_parse_c_warning($line, $column, "function $1: warning: function has K&R format");
+		$self->_parse_c_warning("", $line, $column, "file", "function $1: warning: function has K&R format");
 	    } elsif($plevel == 1 && $blevel == 1) {
 		$declaration =~ s/\s*;$//;
 		if($declaration && !$self->parse_c_declaration(\$declaration, \$declaration_line, \$declaration_column)) {
@@ -836,7 +1034,7 @@ sub parse_c_file {
 	    $plevel = 0;
 	    $blevel = 0;
 	} else {
-	    $self->_parse_c_error($_, $line, $column, "file", "'$declaration' '$match'");
+	    $self->_parse_c_error($_, $line, $column, "file", "parse error: '$declaration' '$match'");
 	}
     }
 
@@ -882,10 +1080,19 @@ sub parse_c_function {
     my $begin_line = $line;
     my $begin_column = $column + 1;
 
+    if(0) {
+	# Nothing
+    } elsif($self->_parse_c('__declspec\((?:dllexport|dllimport|naked)\)|INTERNETAPI|RPCRTAPI', \$_, \$line, \$column)) {
+	# Nothing
+    }
+
+    # $self->_parse_c_warning($_, $line, $column, "function", "");
+
     my $match;
-    while($self->_parse_c('const|inline|extern|static|volatile|' .
-			  'signed(?=\\s+char|s+int|\s+long(?:\s+long)?|\s+short)|' .
-			  'unsigned(?=\s+char|\s+int|\s+long(?:\s+long)?|\s+short)',
+    while($self->_parse_c('(?:const|inline|extern(?:\s+\"C\")?|EXTERN_C|static|volatile|' .
+			  'signed(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'unsigned(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
 	if($match =~ /^extern|static$/) {
@@ -894,7 +1101,6 @@ sub parse_c_function {
 	    }
 	}
     }
-
 
     if(0) {
 	# Nothing
@@ -907,16 +1113,47 @@ sub parse_c_function {
 	    return 0;
 	}
 
-	$self->_parse_c("__cdecl|__stdcall|inline|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK|WINE_UNUSED|PASCAL",
+	$self->_parse_c('inline|FAR', \$_, \$line, \$column);
+
+	$self->_parse_c("__cdecl|__stdcall|__RPC_STUB|" .
+			"CALLBACK|CDECL|PASCAL|" .
+			"RPC_ENTRY|RPC_VAR_ENTRY|" .
+			"VFWAPIV|VFWAPI|WINAPIV|WINAPI|" .
+			"WINE_UNUSED",
 			\$_, \$line, \$column, \$calling_convention);
 
-	if(!$self->_parse_c('\w+', \$_, \$line, \$column, \$name)) {
+
+	# FIXME: ???: Old variant of __attribute((const))
+	$self->_parse_c('const', \$_, \$line, \$column);
+
+	if(!$self->_parse_c('(?:operator\s*!=|(?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)', \$_, \$line, \$column, \$name)) {
 	    return 0;
+	}
+
+	my $p = 0;
+	if(s/^__P\s*\(//) {
+	    $self->_update_c_position($&, \$line, \$column);
+	    $p = 1;
 	}
 
 	if(!$self->parse_c_tuple(\$_, \$line, \$column, \@arguments, \@argument_lines, \@argument_columns)) {
 	    return 0;
 	}
+
+	if($p) {
+	    if (s/^\)//) {
+		$self->_update_c_position($&, \$line, \$column);
+	    } else {
+		$self->_parse_c_error($_, $line, $column, "function");
+	    }
+	}
+    }
+
+
+    if (0) {
+	# Nothing
+    } elsif($self->_parse_c('__attribute__\s*\(\s*\(\s*(?:constructor|destructor)\s*\)\s*\)', \$_, \$line, \$column)) {
+	# Nothing
     }
 
     my $kar;
@@ -1343,7 +1580,9 @@ sub parse_c_type {
 	# Nothing
     } elsif($self->_parse_c('ICOM_VTABLE\(.*?\)', \$_, \$line, \$column, \$type)) {
 	# Nothing
-    } elsif($self->_parse_c('(?:enum\s+|struct\s+|union\s+)?\w+\s*(\*\s*)*', \$_, \$line, \$column, \$type)) {
+    } elsif($self->_parse_c('(?:enum\s+|struct\s+|union\s+)?(?:(?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)\s*(\*\s*)*',
+			    \$_, \$line, \$column, \$type))
+    {
 	# Nothing
     } else {
 	return 0;
@@ -1365,6 +1604,9 @@ sub parse_c_type {
 sub parse_c_typedef {
     my $self = shift;
 
+    my $create_type = \${$self->{CREATE_TYPE}};
+    my $found_type = \${$self->{FOUND_TYPE}};
+
     my $refcurrent = shift;
     my $refline = shift;
     my $refcolumn = shift;
@@ -1377,9 +1619,123 @@ sub parse_c_typedef {
 
     my $type;
 
-    if($self->_parse_c("typedef", \$_, \$line, \$column)) {
+    if (0) {
 	# Nothing
-    } elsif($self->_parse_c('enum(?:\s+\w+)?\s*\{', \$_, \$line, \$column)) {
+    } elsif (s/^(?:typedef\s+)?(enum\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
+	$self->_update_c_position($&, \$line, \$column);
+
+	my $kind = $1;
+	my $_name = $2 || "";
+
+	$kind =~ s/\s+//g;
+
+	if ($kind =~ /^struct|union$/) {
+	    my $name = "";
+	    my @field_types = ();
+	    my @field_names = ();
+
+	    my $match;
+	    while ($self->_parse_c_on_same_level_until_one_of(';', \$_, \$line, \$column, \$match))
+	    {
+		my $field_linkage;
+		my $field_type;
+		my $field_name;		
+
+		if ($self->parse_c_variable(\$match, \$line, \$column, \$field_linkage, \$field_type, \$field_name)) {
+		    $field_type =~ s/\s+/ /g;
+
+		    push @field_types, $field_type;
+		    push @field_names, $field_name;
+		    # $output->write("$kind:$_name:$field_type:$field_name\n");
+		}
+
+		if ($self->_parse_c(';', \$_, \$line, \$column)) {
+		    next;
+		} elsif ($self->_parse_c('}', \$_, \$line, \$column)) {
+		    # FIXME: Kludge
+		    my $tuple = "($_)";
+		    my $tuple_line = $line;
+		    my $tuple_column = $column - 1;
+
+		    my @arguments;
+		    my @argument_lines;
+		    my @argument_columns;
+
+		    if(!$self->parse_c_tuple(\$tuple, \$tuple_line, \$tuple_column,
+					     \@arguments, \@argument_lines, \@argument_columns)) 
+		    {
+			$self->_parse_c_error($_, $line, $column, "typedef $kind");
+		    }
+
+		    # FIXME: Kludge
+		    if ($#arguments >= 0) {
+			$name = $arguments[0];
+		    }
+
+		    last;
+		} else {
+		    $self->_parse_c_error($_, $line, $column, "typedef $kind");
+		}
+	    }
+
+	    my $type = &$$create_type();
+
+	    $type->kind($kind);
+	    $type->_name($_name);
+	    $type->name($name);
+	    $type->field_types([@field_types]);
+	    $type->field_names([@field_names]);
+
+	    &$$found_type($type);
+	} else {
+	    my $name = "";
+
+	    my $match;
+	    while ($self->_parse_c_on_same_level_until_one_of(',', \$_, \$line, \$column, \$match)) {
+		if ($match) {
+		    if ($match !~ /^(\w+)\s*(?:=\s*(.*?)\s*)?$/) {
+			$self->_parse_c_error($_, $line, $column, "typedef $kind");
+		    }
+		    my $enum_name = $1;
+		    my $enum_value = $2 || "";
+
+		    # $output->write("$kind:$_name:$enum_name:$enum_value\n");
+		}
+
+		if ($self->_parse_c(',', \$_, \$line, \$column)) {
+		    next;
+		} elsif ($self->_parse_c('}', \$_, \$line, \$column)) {
+		    # FIXME: Kludge
+		    my $tuple = "($_)";
+		    my $tuple_line = $line;
+		    my $tuple_column = $column - 1;
+
+		    my @arguments;
+		    my @argument_lines;
+		    my @argument_columns;
+
+		    if(!$self->parse_c_tuple(\$tuple, \$tuple_line, \$tuple_column,
+					     \@arguments, \@argument_lines, \@argument_columns)) 
+		    {
+			$self->_parse_c_error($_, $line, $column, "typedef $kind");
+		    }
+
+		    # FIXME: Kludge
+		    if ($#arguments >= 0) {
+			$name = $arguments[0];
+		    }
+
+		    last;
+		} else {
+		    $self->_parse_c_error($_, $line, $column, "typedef $kind");
+		}
+	    }
+
+	    # FIXME: Not correct
+	    # $output->write("typedef:$name:$_name\n");
+	}
+
+    } elsif ($self->_parse_c("typedef", \$_, \$line, \$column)) {
 	# Nothing
     } else {
 	return 0;
@@ -1423,10 +1779,13 @@ sub parse_c_variable {
     my $type = "";
     my $name = "";
 
+    # $self->_parse_c_warning($_, $line, $column, "variable");
+
     my $match;
-    while($self->_parse_c('const|inline|extern|static|volatile|' .
-			  'signed(?=\\s+char|s+int|\s+long(?:\s+long)?|\s+short)|' .
-			  'unsigned(?=\s+char|\s+int|\s+long(?:\s+long)?|\s+short)',
+    while($self->_parse_c('(?:const|inline|extern(?:\s+\"C\")?|EXTERN_C|static|volatile|' .
+			  'signed(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'unsigned(?=\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
 	if($match =~ /^extern|static$/) {
@@ -1437,6 +1796,20 @@ sub parse_c_variable {
     }
 
     my $finished = 0;
+
+    if($finished) {
+	# Nothing
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\s*(?:\*\s*)*)(\w+)$//s) {
+	$type = $self->_format_c_type($1);
+	$name = $2;
+
+	$finished = 1;
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\s*(?:\*\s*)*\(\s*(?:\*\s*)*)(\w+)\s*(\)\(.*?\))$//s) {
+	$type = $self->_format_c_type("$1$3");
+	$name = $2;
+
+	$finished = 1;
+    }
 
     if($finished) {
 	# Nothing
@@ -1476,17 +1849,21 @@ sub parse_c_variable {
 	return 0;
     }
 
-    # $output->write("$type: '$_'\n");
+    # $output->write("*** $type: '$_'\n");
+
+    # $self->_parse_c_warning($_, $line, $column, "variable2", "");
 
     if($finished) {
 	# Nothing
     } elsif(s/^WINAPI\s*//) {
 	$self->_update_c_position($&, \$line, \$column);
+    } elsif(s/^WINE_UNUSED\s*//) {
+	$self->_update_c_position($&, \$line, \$column);
     }
 
     if($finished) {
 	# Nothing
-    } elsif(s/^(\((?:__cdecl)?\s*\*?\s*(?:__cdecl)?\w+\s*(?:\[[^\]]*\]\s*)*\))\s*\(//) {
+    } elsif(s/^(\((?:__cdecl|PASCAL|WINAPI)?\s*\*?\s*(?:__cdecl|PASCAL|WINAPI)?\w+\s*(?:\[[^\]]*\]\s*)*\))\s*\(//) {
 	$self->_update_c_position($&, \$line, \$column);
 
 	$name = $1;

@@ -40,13 +40,14 @@ my %options_long = (
     "win16" => { default => 1, description => "Win16 extraction" },
     "win32" => { default => 1, description => "Win32 extraction" },
 
-    "local" =>  { default => 1, description => "local extraction" },
-    "global" => { default => 1, description => "global extraction" },
+    "old" => { default => 0, description => "use the old parser" },
+    "headers" => { default => 0, description => "parse the .h files as well" },
 
-    "spec-files" => { default => 0, parent => "global", description => "spec files extraction" },
-    "stub-statistics" => { default => 1, parent => "global", description => "stub statistics" },
-    "pseudo-stub-statistics" => { default => 1, parent => "global", description => "pseudo stub statistics" },
-    "winetest" => { default => 1, parent => "global", description => "winetest extraction" },
+    "struct" => { default => 0, parent => "headers", description => "struct extraction" },
+    "spec-files" => { default => 0, parent => "old", description => "spec files extraction" },
+    "stub-statistics" => { default => 0, parent => "old", description => "stub statistics" },
+    "pseudo-stub-statistics" => { default => 0, parent => "stub-statistics", description => "pseudo stub statistics" },
+    "winetest" => { default => 0, parent => "old", description => "winetest extraction" },
 );
 
 my %options_short = (
