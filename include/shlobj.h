@@ -5,6 +5,7 @@
 #include "ole.h"
 #include "ole2.h"
 #include "compobj.h"
+#include "oleobj.h"
 #include "storage.h"
 #include "commctrl.h"
 #include "interfaces.h"
@@ -41,8 +42,6 @@ typedef struct tagSERVICEPROVIDER	*LPSERVICEPROVIDER,	IServiceProvider;
 typedef struct tagCOMMDLGBROWSER	*LPCOMMDLGBROWSER,	ICommDlgBrowser;
 typedef struct tagENUMFORMATETC	*LPENUMFORMATETC,	IEnumFORMATETC;
  
-typedef struct IAdviseSink		IAdviseSink,	*LPIADVISESINK;
-typedef struct IEnumSTATDATA		IEnumSTATDATA,	*LPENUMSTATDATA;
 /****************************************************************************
 *  SHELL ID
 */

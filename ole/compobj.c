@@ -41,6 +41,7 @@
 #include "ldt.h"
 #include "interfaces.h"
 #include "shlobj.h"
+#include "oleobj.h"
 #include "ddraw.h"
 #include "dsound.h"
 #include "dinput.h"
