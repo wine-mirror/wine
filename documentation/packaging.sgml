@@ -330,16 +330,20 @@
                     </listitem>
                   </varlistentry>
 
-                  <varlistentry><term><filename>winebootup</filename></term>
+                  <varlistentry><term><filename>wineboot</filename></term>
                     <listitem>
                     <para>
 		    Winelib app to be found in programs/.
-		    It'll be called by the winelauncher wine wrapper startup
-		    script for every first-time wine invocation.
 		    Its purpose is to process all Windows startup autorun
 		    mechanisms, such as wininit.ini, win.ini Load=/Run=,
 		    registry keys: RenameFiles/Run/RunOnce*/RunServices*,
 		    Startup folders.
+		    It'll be called by Wine automatically when an application
+                    requests a restart of the system (presumeably - after
+                    installation).
+                    It should also be called once when a session starts to
+                    run the various session start utilities (will not happen
+                    automatically). To start a session, invoke "wineboot start".
                     </para>
                     </listitem>
                   </varlistentry>

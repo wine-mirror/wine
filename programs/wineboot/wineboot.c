@@ -522,8 +522,22 @@ end:
     return res==ERROR_SUCCESS?TRUE:FALSE;
 }
 
+struct op_mask {
+    BOOL w9xonly; /* Perform only operations done on Windows 9x */
+    BOOL ntonly; /* Perform only operations done on Windows NT */
+    BOOL startup; /* Perform the operations that are performed every boot */
+    BOOL preboot; /* Perform file renames typically done before the system starts */
+    BOOL prelogin; /* Perform the operations typically done before the user logs in */
+    BOOL postlogin; /* Operations done after login */
+};
+
+static const struct op_mask SESSION_START={FALSE, FALSE, TRUE, TRUE, TRUE, TRUE},
+    SETUP={FALSE, FALSE, FALSE, TRUE, TRUE, TRUE};
+#define DEFAULT SESSION_START
+
 int main( int argc, char *argv[] )
 {
+    struct op_mask ops; /* Which of the ops do we want to perform? */
     /* First, set the current directory to SystemRoot */
     TCHAR gen_path[MAX_PATH];
     DWORD res;
@@ -552,19 +566,42 @@ int main( int argc, char *argv[] )
         return 100;
     }
 
-    /* Perform the operations by order, stopping if one fails */
-    res=wininit()&&
-        pendingRename() &&
-        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE],
-                TRUE, FALSE ) &&
-        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES],
-                FALSE, FALSE ) &&
-        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE],
-                TRUE, TRUE ) &&
-        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUN],
-                FALSE, FALSE ) &&
-        ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN],
-                FALSE, FALSE );
+    if( argc>1 )
+    {
+        switch( argv[1][0] )
+        {
+        case 'r': /* Restart */
+            ops=SETUP;
+            break;
+        case 's': /* Full start */
+            ops=SESSION_START;
+            break;
+        default:
+            ops=DEFAULT;
+            break;
+        }
+    } else
+        ops=DEFAULT;
+
+    /* Perform the ops by order, stopping if one fails, skipping if necessary */
+    /* Shachar: Sorry for the perl syntax */
+    res=(ops.ntonly || !ops.preboot || wininit())&&
+        (ops.w9xonly || !ops.preboot || pendingRename()) &&
+        (ops.ntonly || !ops.prelogin ||
+         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE],
+                TRUE, FALSE )) &&
+        (ops.ntonly || !ops.prelogin || !ops.startup ||
+         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES],
+                FALSE, FALSE )) &&
+        (!ops.postlogin ||
+         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE],
+                TRUE, TRUE )) &&
+        (!ops.postlogin || !ops.startup ||
+         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUN],
+                FALSE, FALSE )) &&
+        (!ops.postlogin || !ops.startup ||
+         ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN],
+                FALSE, FALSE ));
 
     WINE_TRACE("Operation done\n");
 
