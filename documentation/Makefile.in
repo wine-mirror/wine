@@ -24,6 +24,7 @@ WINE_USER_SRCS = \
 	running.sgml
 
 WINE_DEVEL_SRCS = \
+	address-space.sgml \
 	architecture.sgml \
 	consoles.sgml \
 	cvs-regression.sgml \

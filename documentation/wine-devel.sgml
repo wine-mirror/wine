@@ -13,6 +13,7 @@
 <!entity ddraw SYSTEM "ddraw.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
 <!entity threading SYSTEM "threading.sgml">
+<!entity address-space SYSTEM "address-space.sgml">
 
 <!entity implementation SYSTEM "implementation.sgml">
 <!entity porting SYSTEM "porting.sgml">
@@ -138,6 +139,7 @@
     &implementation;
     &porting;
     &consoles;
+    &address-space;    
     &cvs-regression;
   </part>
 
