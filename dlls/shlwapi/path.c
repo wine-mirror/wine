@@ -1157,7 +1157,7 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
     UNKNOWN_SHLWAPI_1 base;
     DWORD res1;
 
-    if(!lpstrPath) return FALSE;
+    if (!lpstrPath || !*lpstrPath) return FALSE;
 
     /* get protocol        */
     base.size = 24;
@@ -1173,7 +1173,7 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
     UNKNOWN_SHLWAPI_2 base;
     DWORD res1;
 
-    if(!lpstrPath) return FALSE;
+    if (!lpstrPath || !*lpstrPath) return FALSE;
 
     /* get protocol        */
     base.size = 24;
