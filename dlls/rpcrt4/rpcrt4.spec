@@ -41,7 +41,7 @@ init	RPCRT4_LibMain
 @ stub RpcBindingInqAuthInfoW
 @ stub RpcBindingInqAuthInfoExA
 @ stub RpcBindingInqAuthInfoExW
-@ stub RpcBindingInqObject
+@ stdcall RpcBindingInqObject(ptr ptr) RpcBindingInqObject
 @ stub RpcBindingInqOption
 @ stub RpcBindingReset
 @ stub RpcBindingServerFromClient
@@ -49,11 +49,11 @@ init	RPCRT4_LibMain
 @ stub RpcBindingSetAuthInfoW
 @ stub RpcBindingSetAuthInfoExA
 @ stub RpcBindingSetAuthInfoExW
-@ stub RpcBindingSetObject
+@ stdcall RpcBindingSetObject(ptr ptr) RpcBindingSetObject
 @ stub RpcBindingSetOption
-@ stub RpcBindingToStringBindingA
-@ stub RpcBindingToStringBindingW
-@ stub RpcBindingVectorFree
+@ stdcall RpcBindingToStringBindingA(ptr ptr) RpcBindingToStringBindingA
+@ stdcall RpcBindingToStringBindingW(ptr ptr) RpcBindingToStringBindingW
+@ stdcall RpcBindingVectorFree(ptr) RpcBindingVectorFree
 @ stub RpcCancelAsyncCall
 @ stub RpcCancelThread
 @ stub RpcCancelThreadEx
@@ -162,10 +162,10 @@ init	RPCRT4_LibMain
 @ stub RpcSsSwapClientAllocFree
 @ stdcall RpcStringBindingComposeA(str  str  str  str  str  ptr) RpcStringBindingComposeA
 @ stdcall RpcStringBindingComposeW(wstr wstr wstr wstr wstr ptr) RpcStringBindingComposeW
-@ stub RpcStringBindingParseA
-@ stub RpcStringBindingParseW
+@ stdcall RpcStringBindingParseA(str  ptr ptr ptr ptr ptr) RpcStringBindingParseA
+@ stdcall RpcStringBindingParseW(wstr ptr ptr ptr ptr ptr) RpcStringBindingParseW
 @ stdcall RpcStringFreeA(ptr) RpcStringFreeA
-@ stub RpcStringFreeW
+@ stdcall RpcStringFreeW(ptr) RpcStringFreeW
 @ stub RpcTestCancel
 
 @ stub TowerConstruct
@@ -181,7 +181,7 @@ init	RPCRT4_LibMain
 @ stdcall UuidHash(ptr ptr) UuidHash
 @ stdcall UuidIsNil(ptr ptr) UuidIsNil
 @ stdcall UuidToStringA(ptr ptr) UuidToStringA
-@ stub UuidToStringW
+@ stdcall UuidToStringW(ptr ptr) UuidToStringW
 
 @ stub CStdStubBuffer_QueryInterface
 @ stub CStdStubBuffer_AddRef
@@ -427,7 +427,8 @@ init	RPCRT4_LibMain
 @ stub I_RpcBindingInqWireIdForSnego
 @ stub I_RpcBindingIsClientLocal
 @ stub I_RpcBindingToStaticStringBindingW
-@ stub I_RpcBindingSetAsync # win9x
+@ stdcall I_RpcBindingSetAsync(ptr ptr long) I_RpcBindingSetAsync # win9x
+# NT version of I_RpcBindingSetAsync has 2 arguments, not 3
 @ stub I_RpcClearMutex
 @ stub I_RpcConnectionInqSockBuffSize
 @ stub I_RpcConnectionInqSockBuffSize2

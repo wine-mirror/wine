@@ -10,6 +10,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	rpc_binding.c \
 	rpcrt4_main.c
 
 @MAKE_DLL_RULES@

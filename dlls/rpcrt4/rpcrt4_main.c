@@ -32,7 +32,6 @@
 #endif
 
 #include "windef.h"
-#include "wine/windef16.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "wine/unicode.h"
@@ -60,6 +59,8 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
+
+#include "rpc_binding.h"
 
 #include "wine/debug.h"
 
@@ -92,6 +93,38 @@ RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+/*************************************************************************
+ *           RpcStringFreeA   [RPCRT4.@]
+ *
+ * Frees a character string allocated by the RPC run-time library.
+ *
+ * RETURNS
+ *
+ *  S_OK if successful.
+ */
+RPC_STATUS WINAPI RpcStringFreeA(LPSTR* String)
+{
+  HeapFree( GetProcessHeap(), 0, *String);
+
+  return RPC_S_OK;
+}
+
+/*************************************************************************
+ *           RpcStringFreeW   [RPCRT4.@]
+ *
+ * Frees a character string allocated by the RPC run-time library.
+ *
+ * RETURNS
+ *
+ *  S_OK if successful.
+ */
+RPC_STATUS WINAPI RpcStringFreeW(LPWSTR* String)
+{
+  HeapFree( GetProcessHeap(), 0, *String);
+
+  return RPC_S_OK;
 }
 
 /*************************************************************************
@@ -353,27 +386,9 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
  * Creates a 128bit UUID by calling UuidCreate.
  * New API in Win 2000
  */
-
 RPC_STATUS WINAPI UuidCreateSequential(UUID *Uuid)
 {
    return UuidCreate (Uuid);
-}
-
-
-/*************************************************************************
- *           RpcStringFreeA   [RPCRT4.@]
- *
- * Frees a character string allocated by the RPC run-time library.
- *
- * RETURNS
- *
- *  S_OK if successful.
- */
-RPC_STATUS WINAPI RpcStringFreeA(LPSTR* String)
-{
-  HeapFree( GetProcessHeap(), 0, *String);
-
-  return RPC_S_OK;
 }
 
 
@@ -382,12 +397,30 @@ RPC_STATUS WINAPI RpcStringFreeA(LPSTR* String)
  *
  * Generates a hash value for a given UUID
  *
+ * Code based on FreeDCE implementation
+ *
  */
 unsigned short WINAPI UuidHash(UUID *uuid, RPC_STATUS *Status)
 {
-  FIXME("stub:\n");
+  BYTE *data = (BYTE*)uuid;
+  short c0 = 0, c1 = 0, x, y;
+  int i;
+
+  TRACE("(%s)\n", debugstr_guid(uuid));
+
+  for (i=0; i<sizeof(UUID); i++) {
+    c0 += data[i];
+    c1 += c0;
+  }
+
+  x = -c1 % 255;
+  if (x < 0) x += 255;
+
+  y = (c1 - c0) % 255;
+  if (y < 0) y += 255;
+
   *Status = RPC_S_OK;
-  return 0xabcd;
+  return y*256 + x;
 }
 
 /*************************************************************************
@@ -419,6 +452,31 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, LPSTR* StringUuid)
   return RPC_S_OK;
 }
 
+/*************************************************************************
+ *           UuidToStringW   [RPCRT4.@]
+ *
+ * Converts a UUID to a string.
+ *
+ *  S_OK if successful.
+ *  S_OUT_OF_MEMORY if unsucessful.
+ */
+RPC_STATUS WINAPI UuidToStringW(UUID *Uuid, LPWSTR* StringUuid)
+{
+  char buf[37];
+
+  sprintf(buf, "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+               Uuid->Data1, Uuid->Data2, Uuid->Data3,
+               Uuid->Data4[0], Uuid->Data4[1], Uuid->Data4[2],
+               Uuid->Data4[3], Uuid->Data4[4], Uuid->Data4[5],
+               Uuid->Data4[6], Uuid->Data4[7] );
+
+  *StringUuid = RPCRT4_strdupAtoW(buf);
+
+  if(!(*StringUuid))
+    return RPC_S_OUT_OF_MEMORY;
+
+  return RPC_S_OK;
+}
 
 static const BYTE hex2bin[] =
 {
@@ -650,59 +708,6 @@ RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT 
   FIXME( "(%u,%u,%u): stub\n", MinimumCallThreads, MaxCalls, DontWait );
 
   return RPC_S_NO_PROTSEQS_REGISTERED; /* Since we don't allow registration this seems reasonable */
-}
-
-/***********************************************************************
- *		RpcStringBindingComposeA (RPCRT4.@)
- */
-RPC_STATUS WINAPI RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint,
-                          LPSTR Options, LPSTR* StringBinding )
-{
-  FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", ObjUuid, Protseq, NetworkAddr, Endpoint, Options, StringBinding );
-  *StringBinding = NULL;
-
-  return RPC_S_INVALID_STRING_UUID; /* Failure */
-}
-
-/***********************************************************************
- *		RpcStringBindingComposeW (RPCRT4.@)
- */
-RPC_STATUS WINAPI RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LPWSTR Endpoint,
-                          LPWSTR Options, LPWSTR* StringBinding )
-{
-  FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", debugstr_w( ObjUuid ), debugstr_w( Protseq ), debugstr_w( NetworkAddr ),
-                                        debugstr_w( Endpoint ), debugstr_w( Options ), StringBinding );
-  *StringBinding = NULL;
-
-  return RPC_S_INVALID_STRING_UUID; /* Failure */
-}
-
-/***********************************************************************
- *		RpcBindingFree (RPCRT4.@)
- */
-RPC_STATUS WINAPI RpcBindingFree(RPC_BINDING_HANDLE* Binding)
-{
-  FIXME("(%p): stub\n", Binding);
-  return RPC_S_OK;
-}
-/***********************************************************************
- *		RpcBindingFromStringBindingA (RPCRT4.@)
- */
-RPC_STATUS WINAPI RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
-{
-  FIXME( "(%s,%p): stub\n", StringBinding, Binding );
-
-  return RPC_S_INVALID_STRING_BINDING; /* As good as any failure code */
-}
-
-/***********************************************************************
- *		RpcBindingFromStringBindingW (RPCRT4.@)
- */
-RPC_STATUS WINAPI RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding )
-{
-  FIXME( "(%s,%p): stub\n", debugstr_w( StringBinding ), Binding );
-
-  return RPC_S_INVALID_STRING_BINDING; /* As good as any failure code */
 }
 
 /***********************************************************************
