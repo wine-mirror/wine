@@ -1959,7 +1959,11 @@ void SPY_DumpMem (LPSTR header, UINT *q, INT len)
 	      header, i, *q, *(q+1), *(q+2), *(q+3));
 	q += 4;
     }
-    switch (len - i) {
+    switch ((len - i + 3) & (~3)) {
+    case 16:
+	TRACE("%s [%04x] %08x %08x %08x %08x\n",
+	      header, i, *q, *(q+1), *(q+2), *(q+3));
+	break;
     case 12:
 	TRACE("%s [%04x] %08x %08x %08x\n",
 	      header, i, *q, *(q+1), *(q+2));
