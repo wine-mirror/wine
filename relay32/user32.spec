@@ -38,10 +38,10 @@ init	MAIN_UserInit
  34 stdcall CharPrevExA(long str str long) CharPrevEx32A
  35 stdcall CharPrevExW(long wstr wstr long) CharPrevEx32W
  36 stdcall CharPrevW(wstr wstr) CharPrev32W
- 37 stdcall CharToOemA(str str) CharToOem32A
- 38 stdcall CharToOemBuffA(str str long) CharToOemBuff32A
- 39 stdcall CharToOemBuffW(wstr wstr long) CharToOemBuff32W
- 40 stdcall CharToOemW(wstr wstr) CharToOem32W
+ 37 stdcall CharToOemA(str ptr) CharToOem32A
+ 38 stdcall CharToOemBuffA(str ptr long) CharToOemBuff32A
+ 39 stdcall CharToOemBuffW(wstr ptr long) CharToOemBuff32W
+ 40 stdcall CharToOemW(wstr ptr) CharToOem32W
  41 stdcall CharUpperA(str) CharUpper32A
  42 stdcall CharUpperBuffA(str long) CharUpperBuff32A
  43 stdcall CharUpperBuffW(wstr long) CharUpperBuff32W
