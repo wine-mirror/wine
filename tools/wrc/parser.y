@@ -1621,7 +1621,7 @@ raw_elements
 e_expr	: /* Empty */	{ $$ = 0; }
 	| expr		{ $$ = new_int($1); }
 	;
-expr	: xpr	{ $$ = ($1) }
+expr	: xpr	{ $$ = ($1); }
 	;
 
 xpr	: xpr '+' xpr	{ $$ = ($1) + ($3); }
