@@ -510,6 +510,9 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 	} else {
 	    /* file system folder */
 	    _ILSimpleGetText (pidl, szPath, MAX_PATH);
+
+	    if (!_ILIsFolder(pidl))
+		SHELL_FS_ProcessDisplayFilename(szPath, dwFlags);
 	}
     } else {
 	/* a complex pidl, let the subfolder do the work */

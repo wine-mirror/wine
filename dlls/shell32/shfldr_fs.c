@@ -587,6 +587,48 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
     return hr;
 }
 
+void SHELL_FS_ProcessDisplayFilename(LPSTR szPath, DWORD dwFlags)
+{
+    /*FIXME: MSDN also mentions SHGDN_FOREDITING which is not yet handled. */
+    if (!(dwFlags & SHGDN_FORPARSING) &&
+	((dwFlags & SHGDN_INFOLDER) || (dwFlags == SHGDN_NORMAL))) {
+	HKEY hKey;
+	DWORD dwData;
+	DWORD dwDataSize = sizeof (DWORD);
+	BOOL doHide = FALSE;	/* The default value is FALSE (win98 at least) */
+
+	if (!RegCreateKeyExA (HKEY_CURRENT_USER,
+			      "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+			      0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0)) {
+	    if (!RegQueryValueExA (hKey, "HideFileExt", 0, 0, (LPBYTE) & dwData, &dwDataSize))
+		doHide = dwData;
+
+	    RegCloseKey (hKey);
+	}
+
+	if (!doHide) {
+	    LPSTR ext = PathFindExtensionA(szPath);
+
+	    if (ext) {
+		HKEY hkey;
+		char classname[MAX_PATH];
+		LONG classlen = MAX_PATH;
+
+		if (!RegQueryValueA(HKEY_CLASSES_ROOT, ext, classname, &classlen))
+		    if (!RegOpenKeyA(HKEY_CLASSES_ROOT, classname, &hkey)) {
+			if (!RegQueryValueExA(hkey, "NeverShowExt", 0, NULL, NULL, NULL))
+			    doHide = TRUE;
+
+			RegCloseKey(hkey);
+		    }
+	    }
+	}
+
+	if (doHide && szPath[0] != '.')
+	    PathRemoveExtensionA (szPath);
+    }
+}
+
 /**************************************************************************
 *  IShellFolder_fnGetDisplayNameOf
 *  Retrieves the display name for the specified file object or subfolder
@@ -632,26 +674,8 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl, DWOR
 	}
 	_ILSimpleGetText (pidl, szPath + len, MAX_PATH - len);	/* append my own path */
 
-	/* MSDN also mentions SHGDN_FOREDITING, which isn't defined in wine */
-	if (!_ILIsFolder (pidl) && !(dwFlags & SHGDN_FORPARSING) &&
-	    ((dwFlags & SHGDN_INFOLDER) || (dwFlags == SHGDN_NORMAL))) {
-	    HKEY hKey;
-	    DWORD dwData;
-	    DWORD dwDataSize = sizeof (DWORD);
-	    BOOL doHide = 0;	/* The default value is FALSE (win98 at least) */
-
-	    /* XXX should it do this only for known file types? -- that would make it even slower! */
-	    /* XXX That's what the prompt says!! */
-	    if (!RegCreateKeyExA (HKEY_CURRENT_USER,
-				  "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
-				  0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0)) {
-		if (!RegQueryValueExA (hKey, "HideFileExt", 0, 0, (LPBYTE) & dwData, &dwDataSize))
-		    doHide = dwData;
-		RegCloseKey (hKey);
-	    }
-	    if (doHide && szPath[0] != '.')
-		PathRemoveExtensionA (szPath);
-	}
+	if (!_ILIsFolder(pidl))
+	    SHELL_FS_ProcessDisplayFilename(szPath, dwFlags);
     }
 
     if ((dwFlags & SHGDN_FORPARSING) && !bSimplePidl) {	/* go deeper if needed */
