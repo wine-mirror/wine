@@ -2056,7 +2056,7 @@ INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-        PrintStructures = (PRINT_PTRW*) GetWindowLongA(hDlg, DWL_USER);
+        PrintStructures = (PRINT_PTRW*) GetWindowLongW(hDlg, DWL_USER);
 	if (!PrintStructures)
 	    return FALSE;
     } else {
