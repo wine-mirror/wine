@@ -1341,6 +1341,82 @@ static BOOL WINSPOOL_GetStringFromReg(HKEY hkey, LPCWSTR ValueName, LPBYTE ptr,
 }
 
 /*****************************************************************************
+ *    WINSPOOL_GetDefaultDevMode
+ *
+ * Get a default DevMode values for wineps.
+ * FIXME - use ppd.
+ */
+
+static void WINSPOOL_GetDefaultDevMode(
+	LPBYTE ptr,
+	DWORD buflen, DWORD *needed,
+	BOOL unicode)
+{
+    DEVMODEA	dm;
+
+	/* fill default DEVMODE - should be read from ppd... */
+	ZeroMemory( &dm, sizeof(dm) );
+	strcpy(dm.dmDeviceName,"wineps");
+	dm.dmSpecVersion = DM_SPECVERSION;
+	dm.dmDriverVersion = 1;
+	dm.dmSize = sizeof(DEVMODEA);
+	dm.dmDriverExtra = 0;
+	dm.dmFields =
+		DM_ORIENTATION | DM_PAPERSIZE |
+		DM_PAPERLENGTH | DM_PAPERWIDTH |
+		DM_SCALE |
+		DM_COPIES |
+		DM_DEFAULTSOURCE | DM_PRINTQUALITY |
+		DM_YRESOLUTION | DM_TTOPTION;
+
+	dm.u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+	dm.u1.s1.dmPaperSize = DMPAPER_A4;
+	dm.u1.s1.dmPaperLength = 2970;
+	dm.u1.s1.dmPaperWidth = 2100;
+
+	dm.dmScale = 100;
+	dm.dmCopies = 1;
+	dm.dmDefaultSource = DMBIN_AUTO;
+	dm.dmPrintQuality = DMRES_MEDIUM;
+	/* dm.dmColor */
+	/* dm.dmDuplex */
+	dm.dmYResolution = 300; /* 300dpi */
+	dm.dmTTOption = DMTT_BITMAP;
+	/* dm.dmCollate */
+	/* dm.dmFormName */
+	/* dm.dmLogPixels */
+	/* dm.dmBitsPerPel */
+	/* dm.dmPelsWidth */
+	/* dm.dmPelsHeight */
+	/* dm.dmDisplayFlags */
+	/* dm.dmDisplayFrequency */
+	/* dm.dmICMMethod */
+	/* dm.dmICMIntent */
+	/* dm.dmMediaType */
+	/* dm.dmDitherType */
+	/* dm.dmReserved1 */
+	/* dm.dmReserved2 */
+	/* dm.dmPanningWidth */
+	/* dm.dmPanningHeight */
+
+    if(unicode) {
+	if(buflen >= sizeof(DEVMODEW)) {
+	    DEVMODEW *pdmW = DEVMODEdupAtoW(GetProcessHeap(), &dm );
+	    memcpy(ptr, pdmW, sizeof(DEVMODEW));
+	    HeapFree(GetProcessHeap(),0,pdmW);
+	}
+	*needed = sizeof(DEVMODEW);
+    }
+    else
+    {
+	if(buflen >= sizeof(DEVMODEA)) {
+	    memcpy(ptr, &dm, sizeof(DEVMODEA));
+	}
+	*needed = sizeof(DEVMODEA);
+    }
+}
+
+/*****************************************************************************
  *    WINSPOOL_GetDevModeFromReg
  *
  * Get ValueName from hkey storing result in ptr.  buflen is space left in ptr
@@ -1354,7 +1430,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     DWORD sz = buflen, type;
     LONG ret;
 
-    if (ptr) memset(ptr, 0, sizeof(DEVMODEA));
+    if (ptr && buflen>=sizeof(DEVMODEA)) memset(ptr, 0, sizeof(DEVMODEA));
     ret = RegQueryValueExW(hkey, ValueName, 0, &type, ptr, &sz);
     if ((ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)) sz = 0;
     if (sz < sizeof(DEVMODEA))
@@ -1455,6 +1531,19 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
     }
     if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, ptr, left,
 				  &size, unicode)) {
+        if(space && size <= left) {
+	    pi2->pDevMode = (LPDEVMODEW)ptr;
+	    ptr += size;
+	    left -= size;
+	} else
+	    space = FALSE;
+	*pcbNeeded += size;
+    }
+    else
+    {
+	MESSAGE( "no DevMode in registry. please setup your printer again.\n"
+		 "use the default hard-coded DevMode(wineps/A4/300dpi).\n" );
+	WINSPOOL_GetDefaultDevMode(ptr, left, &size, unicode);
         if(space && size <= left) {
 	    pi2->pDevMode = (LPDEVMODEW)ptr;
 	    ptr += size;
