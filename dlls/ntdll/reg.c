@@ -170,7 +170,7 @@ static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWO
     case KeyBasicInformation:
         {
             KEY_BASIC_INFORMATION keyinfo;
-            fixed_size = sizeof(keyinfo) - sizeof(keyinfo.Name);
+            fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
             keyinfo.LastWriteTime = modif;
             keyinfo.TitleIndex = 0;
             keyinfo.NameLength = name_size;
@@ -181,7 +181,7 @@ static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWO
     case KeyFullInformation:
         {
             KEY_FULL_INFORMATION keyinfo;
-            fixed_size = sizeof(keyinfo) - sizeof(keyinfo.Class);
+            fixed_size = (char *)keyinfo.Class - (char *)&keyinfo;
             keyinfo.LastWriteTime = modif;
             keyinfo.TitleIndex = 0;
             keyinfo.ClassLength = class_size;
@@ -199,7 +199,7 @@ static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWO
     case KeyNodeInformation:
         {
             KEY_NODE_INFORMATION keyinfo;
-            fixed_size = sizeof(keyinfo) - sizeof(keyinfo.Name);
+            fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
             keyinfo.LastWriteTime = modif;
             keyinfo.TitleIndex = 0;
             keyinfo.ClassLength = class_size;
@@ -303,7 +303,7 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
             keyinfo.TitleIndex = 0;
             keyinfo.Type       = type;
             keyinfo.NameLength = name_len;
-            length = min( length, sizeof(keyinfo) - sizeof(keyinfo.Name) );
+            length = min( length, (char *)keyinfo.Name - (char *)&keyinfo );
             memcpy( info, &keyinfo, length );
             break;
         }
@@ -312,10 +312,10 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
             KEY_VALUE_FULL_INFORMATION keyinfo;
             keyinfo.TitleIndex = 0;
             keyinfo.Type       = type;
-            keyinfo.DataOffset = sizeof(keyinfo) - sizeof(keyinfo.Name) + name_len;
+            keyinfo.DataOffset = (char *)keyinfo.Name - (char *)&keyinfo + name_len;
             keyinfo.DataLength = data_len;
             keyinfo.NameLength = name_len;
-            length = min( length, sizeof(keyinfo) - sizeof(keyinfo.Name) );
+            length = min( length, (char *)keyinfo.Name - (char *)&keyinfo );
             memcpy( info, &keyinfo, length );
             break;
         }
@@ -325,7 +325,7 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
             keyinfo.TitleIndex = 0;
             keyinfo.Type       = type;
             keyinfo.DataLength = data_len;
-            length = min( length, sizeof(keyinfo) - sizeof(keyinfo.Data) );
+            length = min( length, (char *)keyinfo.Data - (char *)&keyinfo );
             memcpy( info, &keyinfo, length );
             break;
         }
@@ -344,7 +344,8 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
                                      void *info, DWORD length, DWORD *result_len )
 {
     NTSTATUS ret;
-    char *data_ptr, *name_ptr;
+    UCHAR *data_ptr;
+    WCHAR *name_ptr;
     int fixed_size = 0, name_len = 0, data_len = 0, offset = 0, type = 0, total_len = 0;
 
     TRACE( "(0x%x,%lu,%d,%p,%ld)\n", handle, index, info_class, info, length );
@@ -353,18 +354,19 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
     switch(info_class)
     {
     case KeyValueBasicInformation:
-        fixed_size = sizeof(KEY_VALUE_BASIC_INFORMATION) - sizeof(WCHAR);
-        name_ptr = (char *)info + fixed_size;
+        name_ptr = ((KEY_VALUE_BASIC_INFORMATION *)info)->Name;
         data_ptr = NULL;
+        fixed_size = (char *)name_ptr - (char *)info;
         break;
     case KeyValueFullInformation:
-        fixed_size = sizeof(KEY_VALUE_FULL_INFORMATION) - sizeof(WCHAR);
-        name_ptr = data_ptr = (char *)info + fixed_size;
+        name_ptr = ((KEY_VALUE_FULL_INFORMATION *)info)->Name;
+        data_ptr = (UCHAR *)name_ptr;
+        fixed_size = (char *)name_ptr - (char *)info;
         break;
     case KeyValuePartialInformation:
-        fixed_size = sizeof(KEY_VALUE_PARTIAL_INFORMATION) - sizeof(UCHAR);
         name_ptr = NULL;
-        data_ptr = (char *)info + fixed_size;
+        data_ptr = ((KEY_VALUE_PARTIAL_INFORMATION *)info)->Data;
+        fixed_size = (char *)data_ptr - (char *)info;
         break;
     default:
         FIXME( "Information class %d not implemented\n", info_class );
@@ -449,7 +451,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
                                  void *info, DWORD length, DWORD *result_len )
 {
     NTSTATUS ret;
-    char *data_ptr;
+    UCHAR *data_ptr;
     int fixed_size = 0, data_len = 0, offset = 0, type = 0, total_len = 0;
 
     TRACE( "(0x%x,%s,%d,%p,%ld)\n", handle, debugstr_us(name), info_class, info, length );
@@ -460,16 +462,16 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     switch(info_class)
     {
     case KeyValueBasicInformation:
-        fixed_size = sizeof(KEY_VALUE_BASIC_INFORMATION) - sizeof(WCHAR);
+        fixed_size = (char *)((KEY_VALUE_BASIC_INFORMATION *)info)->Name - (char *)info;
         data_ptr = NULL;
         break;
     case KeyValueFullInformation:
-        fixed_size = sizeof(KEY_VALUE_FULL_INFORMATION) - sizeof(WCHAR);
-        data_ptr = (char *)info + fixed_size;
+        data_ptr = (UCHAR *)((KEY_VALUE_FULL_INFORMATION *)info)->Name;
+        fixed_size = (char *)data_ptr - (char *)info;
         break;
     case KeyValuePartialInformation:
-        fixed_size = sizeof(KEY_VALUE_PARTIAL_INFORMATION) - sizeof(UCHAR);
-        data_ptr = (char *)info + fixed_size;
+        data_ptr = ((KEY_VALUE_PARTIAL_INFORMATION *)info)->Data;
+        fixed_size = (char *)data_ptr - (char *)info;
         break;
     default:
         FIXME( "Information class %d not implemented\n", info_class );

@@ -773,7 +773,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    static const int info_size = sizeof(*info) - sizeof(info->Data);
+    static const int info_size = info->Data - (UCHAR *)info;
 
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_w(name), reserved, type, data, count, count ? *count : 0 );
@@ -840,7 +840,7 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    static const int info_size = sizeof(*info) - sizeof(info->Data);
+    static const int info_size = info->Data - (UCHAR *)info;
 
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_a(name), reserved, type, data, count, count ? *count : 0 );
@@ -988,7 +988,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
-    static const int info_size = sizeof(*info) - sizeof(info->Name);
+    static const int info_size = (char *)info->Name - (char *)info;
 
     TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
@@ -1069,7 +1069,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
-    static const int info_size = sizeof(*info) - sizeof(info->Name);
+    static const int info_size = (char *)info->Name - (char *)info;
 
     TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
