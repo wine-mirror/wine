@@ -145,6 +145,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     {
         if (msg.hwnd == NULL && msg.message == RELEASEMARSHALDATA)
         {
+            trace("releasing marshal data\n");
             CoReleaseMarshalData(data->stream);
             SetEvent((HANDLE)msg.lParam);
         }
@@ -224,7 +225,7 @@ static void test_normal_marshal_and_release()
     ok_ole_success(hr, CoReleaseMarshalData);
     IStream_Release(pStream);
 
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 }
 
 /* tests success case of a same-thread marshal and unmarshal */
@@ -385,7 +386,7 @@ static void test_tableweak_marshal_and_unmarshal_twice()
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
-    todo_wine { ok_ole_success(hr, CoUnmarshalInterface); }
+    ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
 
@@ -395,7 +396,7 @@ static void test_tableweak_marshal_and_unmarshal_twice()
     /* this line is shows the difference between weak and strong table marshaling:
      *  weak has cLocks == 0
      *  strong has cLocks > 0 */
-    ok_no_locks();
+    todo_wine { ok_no_locks(); }
 
     end_host_object(tid, thread);
 }
@@ -426,7 +427,7 @@ static void test_tablestrong_marshal_and_unmarshal_twice()
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
-    todo_wine { ok_ole_success(hr, CoUnmarshalInterface); }
+    ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
 
@@ -436,7 +437,7 @@ static void test_tablestrong_marshal_and_unmarshal_twice()
     /* this line is shows the difference between weak and strong table marshaling:
      *  weak has cLocks == 0
      *  strong has cLocks > 0 */
-    todo_wine { ok_more_than_one_lock(); }
+    ok_more_than_one_lock();
 
     /* release the remaining reference on the object by calling
      * CoReleaseMarshalData in the hosting thread */
@@ -444,7 +445,7 @@ static void test_tablestrong_marshal_and_unmarshal_twice()
     release_host_object(tid);
     IStream_Release(pStream);
 
-    ok_no_locks();
+    todo_wine { ok_no_locks(); }
 
     end_host_object(tid, thread);
 }
@@ -475,7 +476,7 @@ static void test_lock_object_external()
 
     CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, TRUE);
 
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 }
 
 /* tests disconnecting stubs */

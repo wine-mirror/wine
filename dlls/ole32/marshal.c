@@ -1,7 +1,9 @@
 /*
  *	Marshalling library
  *
- *  Copyright 2002  Marcus Meissner
+ * Copyright 2002 Marcus Meissner
+ * Copyright 2004 Mike Hearn, for CodeWeavers
+ * Copyright 2004 Rob Shearman, for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,6 +57,13 @@ extern const CLSID CLSID_DfMarshal;
  * 	Process Identifier, Object IUnknown ptr, IID
  *
  * Note that the IUnknown_QI(ob,xiid,&ppv) always returns the SAME ppv value!
+ *
+ * In Windows, a different triple is used: OXID (apt id), OID (stub
+ * manager id), IPID (interface ptr/stub id).
+ *
+ * OXIDs identify an apartment and are network scoped
+ * OIDs identify a stub manager and are apartment scoped
+ * IPIDs identify an interface stub and are apartment scoped
  */
 
 inline static HRESULT
@@ -77,85 +86,50 @@ typedef struct _mid2unknown {
     LPUNKNOWN		pUnk;
 } mid2unknown;
 
-typedef struct _mid2stub {
-    wine_marshal_id	mid;
-    IRpcStubBuffer	*stub;
-    LPUNKNOWN		pUnkServer;
-    BOOL               valid;
-} mid2stub;
-
-static mid2stub *stubs = NULL;
-static int nrofstubs = 0;
-
 static mid2unknown *proxies = NULL;
 static int nrofproxies = 0;
 
-void MARSHAL_Invalidate_Stub_From_MID(wine_marshal_id *mid) {
-    int i;
+IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
+{
+    struct stub_manager *m;
 
-    for (i=0;i<nrofstubs;i++) {
-        if (!stubs[i].valid) continue;
-        
-	if (MARSHAL_Compare_Mids(mid,&(stubs[i].mid))) {
-            stubs[i].valid = FALSE;
-            IUnknown_Release(stubs[i].pUnkServer);
-	    return;
-	}
+    if (!(m = get_stub_manager(mid->oxid, mid->oid)))
+    {
+        WARN("unknown OID %s\n", wine_dbgstr_longlong(mid->oid));
+        return NULL;
     }
+
+    return stub_manager_iid_to_stubbuffer(m, &mid->iid);
+}
+
+/* fixme: this should return an IPID */
+/* creates a new stub manager and sets mid->oid when mid->oid == 0 */
+static HRESULT register_ifstub(wine_marshal_id *mid, IUnknown *obj, IRpcStubBuffer *stub, BOOL tablemarshal)
+{
+    struct stub_manager *manager = NULL;
+    struct ifstub       *ifstub;
+
+    /* mid->oid of zero means create a new stub manager */
     
-    return;
-}
-
-HRESULT
-MARSHAL_Find_Stub_Buffer(wine_marshal_id *mid,IRpcStubBuffer **stub) {
-    int i;
-
-    for (i=0;i<nrofstubs;i++) {
-       if (!stubs[i].valid) continue;
-
-	if (MARSHAL_Compare_Mids(mid,&(stubs[i].mid))) {
-	    *stub = stubs[i].stub;
-	    IUnknown_AddRef((*stub));
-	    return S_OK;
-	}
+    if (mid->oid && (manager = get_stub_manager(mid->oxid, mid->oid)))
+    {
+        TRACE("registering new ifstub on pre-existing manager\n");
     }
-    return E_FAIL;
-}
-
-static HRESULT
-MARSHAL_Find_Stub(wine_marshal_id *mid,LPUNKNOWN *pUnk) {
-    int i;
-
-    for (i=0;i<nrofstubs;i++) {
-       if (!stubs[i].valid) continue;
-
-	if (MARSHAL_Compare_Mids(mid,&(stubs[i].mid))) {
-	    *pUnk = stubs[i].pUnkServer;
-	    IUnknown_AddRef((*pUnk));
-	    return S_OK;
-	}
-    }
-    return E_FAIL;
-}
-
-static HRESULT
-MARSHAL_Register_Stub(wine_marshal_id *mid,LPUNKNOWN pUnk,IRpcStubBuffer *stub) {
-    LPUNKNOWN	xPunk;
-    if (!MARSHAL_Find_Stub(mid,&xPunk)) {
-	FIXME("Already have entry for (%s/%s)!\n",wine_dbgstr_longlong(mid->oid),debugstr_guid(&(mid->iid)));
-	return S_OK;
-    }
-    if (nrofstubs)
-	stubs=HeapReAlloc(GetProcessHeap(),0,stubs,sizeof(stubs[0])*(nrofstubs+1));
     else
-	stubs=HeapAlloc(GetProcessHeap(),0,sizeof(stubs[0]));
-    if (!stubs) return E_OUTOFMEMORY;
-    stubs[nrofstubs].stub = stub;
-    stubs[nrofstubs].pUnkServer = pUnk;
-    memcpy(&(stubs[nrofstubs].mid),mid,sizeof(*mid));
-    stubs[nrofstubs].valid = TRUE; /* set to false when released by ReleaseMarshalData */
-    nrofstubs++;
-    return S_OK;
+    {
+        TRACE("constructing new stub manager\n");
+        
+        manager = new_stub_manager(COM_ApartmentFromOXID(mid->oxid), obj);
+        if (!manager) return E_OUTOFMEMORY;
+
+        if (!tablemarshal) stub_manager_ref(manager, 1);
+
+        mid->oid = manager->oid;
+    }
+
+    ifstub = stub_manager_new_ifstub(manager, stub, obj, &mid->iid, tablemarshal);
+
+    return ifstub ? S_OK : E_OUTOFMEMORY;
 }
 
 HRESULT
@@ -256,54 +230,74 @@ StdMarshalImpl_MarshalInterface(
   LPMARSHAL iface, IStream *pStm,REFIID riid, void* pv, DWORD dwDestContext,
   void* pvDestContext, DWORD mshlflags
 ) {
-  wine_marshal_id	mid;
-  wine_marshal_data 	md;
-  IUnknown		*pUnk;
-  ULONG			res;
-  HRESULT		hres;
-  IRpcStubBuffer	*stub;
-  IPSFactoryBuffer	*psfacbuf;
-
+  wine_marshal_id       mid;
+  wine_marshal_data     md;
+  IUnknown             *pUnk;  
+  ULONG                 res;
+  HRESULT               hres;
+  IRpcStubBuffer       *stubbuffer;
+  IPSFactoryBuffer     *psfacbuf;
+  BOOL                  tablemarshal;
+  struct stub_manager  *manager;
+    
   TRACE("(...,%s,...)\n",debugstr_guid(riid));
 
   start_apartment_listener_thread(); /* just to be sure we have one running. */
 
-  IUnknown_QueryInterface((LPUNKNOWN)pv,&IID_IUnknown,(LPVOID*)&pUnk);
-  mid.oxid = COM_CurrentApt()->oxid;
-  mid.oid = (DWORD)pUnk; /* FIXME */
-  IUnknown_Release(pUnk);
-  memcpy(&mid.iid,riid,sizeof(mid.iid));
-  md.dwDestContext	= dwDestContext;
-  md.mshlflags		= mshlflags;
-  hres = IStream_Write(pStm,&mid,sizeof(mid),&res);
-  if (hres) return hres;
-  hres = IStream_Write(pStm,&md,sizeof(md),&res);
-  if (hres) return hres;
-
-  if (SUCCEEDED(MARSHAL_Find_Stub_Buffer(&mid,&stub))) {
-      /* Find_Stub_Buffer gives us a ref but we want to keep it, as if we'd created a new one */
-      TRACE("Found RpcStubBuffer %p\n", stub);
-      return S_OK;
-  }
   hres = get_facbuf_for_iid(riid,&psfacbuf);
   if (hres) return hres;
 
-  hres = IPSFactoryBuffer_CreateStub(psfacbuf,riid,pv,&stub);
+  hres = IPSFactoryBuffer_CreateStub(psfacbuf,riid,pv,&stubbuffer);
   IPSFactoryBuffer_Release(psfacbuf);
   if (hres) {
-    FIXME("Failed to create a stub for %s\n",debugstr_guid(riid));
+    FIXME("Failed to create an RpcStubBuffer from PSFactory for %s\n",debugstr_guid(riid));
     return hres;
   }
-  IUnknown_QueryInterface((LPUNKNOWN)pv,riid,(LPVOID*)&pUnk);
-  MARSHAL_Register_Stub(&mid,pUnk,stub);
+
+  tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
+  if (tablemarshal) FIXME("table marshalling unimplemented\n");
+
+  /* now fill out the MID */
+  mid.oxid = COM_CurrentApt()->oxid;
+  memcpy(&mid.iid,riid,sizeof(mid.iid));
+ 
+  IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
+ 
+  if ((manager = get_stub_manager_from_object(mid.oxid, pUnk)))
+  {
+      mid.oid = manager->oid;
+  }
+  else
+  {
+      mid.oid = 0;              /* will be set by register_ifstub */
+  }
+ 
+  hres = register_ifstub(&mid, pUnk, stubbuffer, tablemarshal);
+  
   IUnknown_Release(pUnk);
+  
+  if (hres)
+  {
+    FIXME("Failed to create ifstub, hres=0x%lx\n", hres);
+    return hres;
+  }
+
+  hres = IStream_Write(pStm,&mid,sizeof(mid),&res);
+  if (hres) return hres;
+
+  /* and then the marshal data */
+  md.dwDestContext      = dwDestContext;
+  md.mshlflags          = mshlflags;
+  hres = IStream_Write(pStm,&md,sizeof(md),&res);
+  if (hres) return hres;
+   
   return S_OK;
 }
 
 static HRESULT WINAPI
-StdMarshalImpl_UnmarshalInterface(
-  LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv
-) {
+StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv)
+{
+  struct stub_manager  *stubmgr;
   wine_marshal_id       mid;
   wine_marshal_data     md;
   ULONG			res;
@@ -311,31 +305,28 @@ StdMarshalImpl_UnmarshalInterface(
   IPSFactoryBuffer	*psfacbuf;
   IRpcProxyBuffer	*rpcproxy;
   IRpcChannelBuffer	*chanbuf;
-  int i;
 
   TRACE("(...,%s,....)\n",debugstr_guid(riid));
   hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
   if (hres) return hres;
   hres = IStream_Read(pStm,&md,sizeof(md),&res);
   if (hres) return hres;
-  for (i=0; i < nrofstubs; i++)
+  
+  /* check if we're marshalling back to ourselves */
+  if ((stubmgr = get_stub_manager(mid.oxid, mid.oid)))
   {
-       if (!stubs[i].valid) continue;
-
-       if (MARSHAL_Compare_Mids(&mid, &(stubs[i].mid)))
-       {
-          IRpcStubBuffer       *stub = NULL;
-          stub = stubs[i].stub;
-          res = IRpcStubBuffer_Release(stub);
-          TRACE("Same apartment marshal for %s, returning original object\n",
-            debugstr_guid(riid));
-
-          stubs[i].valid = FALSE;
-          IUnknown_QueryInterface(stubs[i].pUnkServer, riid, ppv);
-          IUnknown_Release(stubs[i].pUnkServer); /* no longer need our reference */
-          return S_OK;
-       }
+      TRACE("Unmarshalling object marshalled in same apartment for iid %s, returning original object %p\n", debugstr_guid(riid), stubmgr->object);
+    
+      hres = IUnknown_QueryInterface(stubmgr->object, riid, ppv);
+      if ((md.mshlflags & MSHLFLAGS_TABLESTRONG) || (md.mshlflags & MSHLFLAGS_TABLEWEAK))
+          FIXME("table marshalling unimplemented\n");
+      
+      /* clean up the stubs */
+      stub_manager_delete_ifstub(stubmgr, &mid.iid);
+      stub_manager_unref(stubmgr, 1);
+      return hres;
   }
+  
   if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_NULL)) {
     /* should return proxy manager IUnknown object */
     FIXME("Special treatment required for IID of %s\n", debugstr_guid(riid));
@@ -370,32 +361,31 @@ StdMarshalImpl_UnmarshalInterface(
 
 static HRESULT WINAPI
 StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
-  wine_marshal_id       mid;
-  ULONG                 res;
-  HRESULT               hres;
-  int                   i;
+    wine_marshal_id      mid;
+    ULONG                res;
+    HRESULT              hres;
+    struct stub_manager *stubmgr;
 
-  hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
-  if (hres) return hres;
+    TRACE("iface=%p, pStm=%p\n", iface, pStm);
+    
+    hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
+    if (hres) return hres;
 
-  for (i=0; i < nrofstubs; i++)
-  {
-       if (!stubs[i].valid) continue;
+    if (!(stubmgr = get_stub_manager(mid.oxid, mid.oid)))
+    {
+        ERR("could not map MID to stub manager, oxid=%s, oid=%s\n",
+            wine_dbgstr_longlong(mid.oxid), wine_dbgstr_longlong(mid.oid));
+        return RPC_E_INVALID_OBJREF;
+    }
+    
+    /* currently, each marshal has its own interface stub.  this might
+     * not be correct. but, it means we don't need to refcount anything
+     * here. */
+    stub_manager_delete_ifstub(stubmgr, &mid.iid);
+    
+    stub_manager_unref(stubmgr, 1);
 
-       if (MARSHAL_Compare_Mids(&mid, &(stubs[i].mid)))
-       {
-          IRpcStubBuffer       *stub = NULL;
-          stub = stubs[i].stub;
-          res = IRpcStubBuffer_Release(stub);
-          stubs[i].valid = FALSE;
-          TRACE("stub refcount of %p is %ld\n", stub, res);
-
-          return S_OK;
-       }
-  }
-
-  FIXME("Could not map MID to stub??\n");
-  return E_FAIL;
+    return S_OK;
 }
 
 static HRESULT WINAPI

@@ -102,6 +102,7 @@ typedef struct tagRegisteredClass
   DWORD     connectFlags;
   DWORD     dwCookie;
   HANDLE    hThread; /* only for localserver */
+  APARTMENT *apt;    /* owning apartment */
   struct tagRegisteredClass* nextClass;
 } RegisteredClass;
 
@@ -226,6 +227,9 @@ APARTMENT* COM_CreateApartment(DWORD model)
     else
         apt = NtCurrentTeb()->ReservedForOle;
 
+    list_init(&apt->stubmgrs);
+    apt->oidc = 1;
+    
     apt->model = model;
     if (model & COINIT_APARTMENTTHREADED) {
       /* FIXME: how does windoze create OXIDs? */
@@ -269,17 +273,24 @@ static void COM_DestroyApartment(APARTMENT *apt)
 
 /* The given OXID must be local to this process: you cannot use apartment
    windows to send RPCs to other processes. This all needs to move to rpcrt4 */
-HWND COM_GetApartmentWin(OXID oxid)
+
+APARTMENT *COM_ApartmentFromOXID(OXID oxid)
 {
-    APARTMENT *apt;
-    HWND win = 0;
+    APARTMENT *apt = NULL;
 
     EnterCriticalSection(&csApartment);
     apt = apts;
     while (apt && apt->oxid != oxid) apt = apt->next;
-    if (apt) win = apt->win;
     LeaveCriticalSection(&csApartment);
-    return win;
+
+    return apt;
+}
+
+HWND COM_GetApartmentWin(OXID oxid)
+{
+    APARTMENT *apt = COM_ApartmentFromOXID(oxid);
+
+    return apt ? apt->win : NULL;
 }
 
 /* Currently inter-thread marshalling is not fully implemented, so this does nothing */
@@ -1107,6 +1118,13 @@ _LocalServerThread(LPVOID param) {
 
     TRACE("Starting classfactory server thread for %s.\n",debugstr_guid(&newClass->classIdentifier));
 
+    /* we need to enter the apartment of the thread which registered
+     * the class object to perform the next stage
+     */
+
+    assert( newClass->apt );
+    NtCurrentTeb()->ReservedForOle = newClass->apt;
+
     strcpy(pipefn,PIPEPREF);
     WINE_StringFromCLSID(&newClass->classIdentifier,pipefn+strlen(PIPEPREF));
 
@@ -1219,6 +1237,12 @@ HRESULT WINAPI CoRegisterClassObject(
   if ( (lpdwRegister==0) || (pUnk==0) )
     return E_INVALIDARG;
 
+  if (!COM_CurrentApt())
+  {
+      ERR("COM was not initialized\n");
+      return CO_E_NOTINITIALIZED;
+  }
+
   *lpdwRegister = 0;
 
   /*
@@ -1240,6 +1264,7 @@ HRESULT WINAPI CoRegisterClassObject(
   newClass->classIdentifier = *rclsid;
   newClass->runContext      = dwClsContext;
   newClass->connectFlags    = flags;
+  newClass->apt             = COM_CurrentApt();
   /*
    * Use the address of the chain node as the cookie since we are sure it's
    * unique.
@@ -1981,6 +2006,8 @@ HRESULT WINAPI CoLockObjectExternal(
     BOOL fLock,		/* [in] do lock */
     BOOL fLastUnlockReleases) /* [in] unlock all */
 {
+    TRACE("pUnk=%p, fLock=%s, fLastUnlockReleases=%s\n",
+          pUnk, fLock ? "TRUE" : "FALSE", fLastUnlockReleases ? "TRUE" : "FALSE");
 
 	if (fLock) {
             /*

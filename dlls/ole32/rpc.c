@@ -334,16 +334,18 @@ PipeBuf_GetBuffer(
 
 static HRESULT
 COM_InvokeAndRpcSend(wine_rpc_request *req) {
-    IRpcStubBuffer	*stub;
+    IRpcStubBuffer     *stub;
     RPCOLEMESSAGE	msg;
     HRESULT		hres;
     DWORD		reqtype;
 
-    hres = MARSHAL_Find_Stub_Buffer(&(req->reqh.mid),&stub);
-    if (hres) {
+    if (!(stub = mid_to_stubbuffer(&(req->reqh.mid))))
+    {
 	ERR("Stub not found?\n");
-	return hres;
+	return E_FAIL;
     }
+
+    IUnknown_AddRef(stub);
     msg.Buffer		= req->Buffer;
     msg.iMethod		= req->reqh.iMethod;
     msg.cbBuffer	= req->reqh.cbBuffer;
@@ -661,8 +663,7 @@ COM_RpcReceive(wine_pipe *xpipe) {
 
     if (reqtype == REQTYPE_DISCONNECT) { /* only received by servers */
         wine_rpc_disconnect_header header;
-        IRpcStubBuffer *stub;
-        ULONG ret;
+        struct stub_manager *stubmgr;
 
         hres = read_pipe(xhPipe, &header, sizeof(header));
         if (hres) {
@@ -672,21 +673,15 @@ COM_RpcReceive(wine_pipe *xpipe) {
 
         TRACE("read disconnect header\n");
 
-        hres = MARSHAL_Find_Stub_Buffer(&header.mid, &stub);
-        if (hres) {
-            ERR("could not locate stub to disconnect, mid.oid=%s\n",
-                wine_dbgstr_longlong(header.mid.oid));
+        if (!(stubmgr = get_stub_manager(header.mid.oxid, header.mid.oid)))
+        {
+            ERR("could not locate stub to disconnect, mid.oid=%s\n", wine_dbgstr_longlong(header.mid.oid));
             goto end;
         }
 
-
-        /* release reference added by MARSHAL_Find_Stub_Buffer call */
-        IRpcStubBuffer_Release(stub);
-        /* release it for real */
-        ret = IRpcStubBuffer_Release(stub);
-        /* FIXME: race */
-        if (ret == 0)
-            MARSHAL_Invalidate_Stub_From_MID(&header.mid);
+        /* this should destroy the stub manager in the case of only one connection to it */
+        stub_manager_unref(stubmgr, 1);
+        
         goto end;
     } else if (reqtype == REQTYPE_REQUEST) {
 	wine_rpc_request	*xreq;
