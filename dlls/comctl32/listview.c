@@ -187,7 +187,7 @@ HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y,
  * forward declarations 
  */
 static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal);
-static INT LISTVIEW_HitTestItem(HWND, LPLVHITTESTINFO);
+static INT LISTVIEW_HitTestItem(HWND, LPLVHITTESTINFO, BOOL);
 static INT LISTVIEW_GetCountPerRow(HWND);
 static INT LISTVIEW_GetCountPerColumn(HWND);
 static VOID LISTVIEW_AlignLeft(HWND);
@@ -4519,7 +4519,7 @@ static INT LISTVIEW_GetNearestItem(HWND hwnd, POINT pt, UINT vkDirection)
       }
       else
       {
-        nItem = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo);
+        nItem = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE);
       }
 
     }
@@ -6171,13 +6171,15 @@ static LRESULT LISTVIEW_GetTextColor(HWND hwnd)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [IO] LPLVHITTESTINFO : hit test information
+ * [I] subitem : fill out iSubItem.
  *
  * RETURN:
  *   SUCCESS : item index
  *   FAILURE : -1
  */
-static INT LISTVIEW_HitTestItem(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
-{
+static INT LISTVIEW_HitTestItem(
+  HWND hwnd, LPLVHITTESTINFO lpHitTestInfo, BOOL subitem
+) {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   RECT rcItem;
   INT i,topindex,bottomindex;
@@ -6213,7 +6215,7 @@ static INT LISTVIEW_HitTestItem(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
           {
             lpHitTestInfo->flags = LVHT_ONITEMICON;
             lpHitTestInfo->iItem = i;
-            lpHitTestInfo->iSubItem = 0;
+            if (subitem) lpHitTestInfo->iSubItem = 0;
             return i;
           }
         }
@@ -6225,14 +6227,14 @@ static INT LISTVIEW_HitTestItem(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
           {
             lpHitTestInfo->flags = LVHT_ONITEMLABEL;
             lpHitTestInfo->iItem = i;
-            lpHitTestInfo->iSubItem = 0;
+            if (subitem) lpHitTestInfo->iSubItem = 0;
             return i;
           }
         }
         
         lpHitTestInfo->flags = LVHT_ONITEMSTATEICON;
         lpHitTestInfo->iItem = i;
-        lpHitTestInfo->iSubItem = 0;
+        if (subitem) lpHitTestInfo->iSubItem = 0;
         return i;
       }
     }
@@ -6281,7 +6283,11 @@ static LRESULT LISTVIEW_HitTest(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
 
   if (lpHitTestInfo->flags == 0)
   {
-    nItem = LISTVIEW_HitTestItem(hwnd, lpHitTestInfo);
+    /* NOTE (mm 20001022): We must not allow iSubItem to be touched, for 
+     * an app might pass only a structure with space up to iItem!
+     * (MS Office 97 does that for instance in the file open dialog)
+     */
+    nItem = LISTVIEW_HitTestItem(hwnd, lpHitTestInfo, FALSE);
   }
   
   return nItem;
@@ -8104,7 +8110,7 @@ static LRESULT LISTVIEW_LButtonDblClk(HWND hwnd, WORD wKey, WORD wPosX,
   nmlv.hdr.hwndFrom = hwnd;
   nmlv.hdr.idFrom = nCtrlId;
   nmlv.hdr.code = NM_DBLCLK;
-  ret = LISTVIEW_HitTestItem(hwnd, &htInfo);
+  ret = LISTVIEW_HitTestItem(hwnd, &htInfo, TRUE);
   if (ret != -1)
   {
     nmlv.iItem = htInfo.iItem;
@@ -8274,7 +8280,7 @@ static LRESULT LISTVIEW_LButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
     nmlv.hdr.hwndFrom = hwnd;
     nmlv.hdr.idFrom = nCtrlId;
     nmlv.hdr.code = NM_CLICK;
-    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo);
+    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE);
     if (ret != -1)
     {
         nmlv.iItem = lvHitTestInfo.iItem;
@@ -8627,7 +8633,7 @@ static LRESULT LISTVIEW_RButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
     nmlv.hdr.hwndFrom = hwnd;
     nmlv.hdr.idFrom = nCtrlId;
     nmlv.hdr.code = NM_RCLICK;
-    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo);
+    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo, TRUE);
     if (ret != -1)
     {
         nmlv.iItem = lvHitTestInfo.iItem;
