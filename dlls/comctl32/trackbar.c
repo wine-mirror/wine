@@ -7,7 +7,6 @@
  *
  * TODO:
  *   - Some messages.
- *   - more display code.
  *   - handle dragging slider better
  *   - better tic handling.
  *   - more notifications.
@@ -19,7 +18,6 @@
    -TBM_SETRANGEMAX & TBM_SETRANGEMIN should only change the view of the
    trackbar, not the actual amount of tics in the list.
    -TBM_GETTIC & TBM_GETTICPOS shouldn't rely on infoPtr->tics being sorted.
-   - Make drawing code exact match of w95 drawing.
 */
 
 
@@ -115,47 +113,43 @@ static VOID
 TRACKBAR_CalcChannel (HWND hwnd, TRACKBAR_INFO *infoPtr)
 {
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-    INT cyChannel;
+    INT cyChannel,offsettop,offsetedge;
     RECT lpRect,*channel = & infoPtr->rcChannel;
 
     GetClientRect (hwnd, &lpRect);
 
     if (dwStyle & TBS_ENABLESELRANGE)
-        cyChannel = max(infoPtr->uThumbLen - 8, 4);
+        cyChannel = ((int)(infoPtr->uThumbLen/4.5)+1)*3;
     else
         cyChannel = 4;
 
-    if (dwStyle & TBS_VERT) {
-        channel->top    = lpRect.top + 8;
-        channel->bottom = lpRect.bottom - 8;
+    offsettop  = (int)(infoPtr->uThumbLen/4.5); 
+    offsetedge = (int)(infoPtr->uThumbLen/4.5) + 3;
 
-	if (dwStyle & TBS_BOTH) {
-            channel->left  = (lpRect.right - cyChannel) / 2;
-            channel->right = (lpRect.right + cyChannel) / 2;
-        }
-        else if (dwStyle & TBS_LEFT) {
-            channel->left  = lpRect.left + 10;
+    if (dwStyle & TBS_VERT) {
+        channel->top    = lpRect.top + offsetedge;
+        channel->bottom = lpRect.bottom - offsetedge;
+
+	if (dwStyle & (TBS_BOTH | TBS_LEFT)) {
+            channel->left  = lpRect.left + offsettop + 8 ;
             channel->right = channel->left + cyChannel;
         }
         else { /* TBS_RIGHT */
-            channel->right = lpRect.right - 10;
-            channel->left  = channel->right - cyChannel;
+            channel->left = lpRect.left + offsettop;
+            channel->right = channel->left + cyChannel;
         }
     }
     else {
-        channel->left = lpRect.left + 8;
-        channel->right = lpRect.right - 8;
-        if (dwStyle & TBS_BOTH) {
-            channel->top		= (lpRect.bottom - cyChannel) / 2;
-            channel->bottom 	= (lpRect.bottom + cyChannel) / 2;
-        }
-        else if (dwStyle & TBS_TOP) {
-            channel->top    = lpRect.top + 10;
-            channel->bottom = channel->top + cyChannel;
+        channel->left = lpRect.left + offsetedge;
+        channel->right = lpRect.right - offsetedge;
+
+        if (dwStyle & (TBS_BOTH|TBS_TOP)) {
+            channel->top	= lpRect.top + offsettop + 8 ;
+            channel->bottom 	= channel->top + cyChannel;
         }
         else { /* TBS_BOTTOM */
-            channel->bottom = lpRect.bottom - 10;
-            channel->top    = channel->bottom - cyChannel;
+            channel->top = lpRect.top + offsettop;
+            channel->bottom   = channel->top + cyChannel;
         }
     }
 }
@@ -164,26 +158,40 @@ static VOID
 TRACKBAR_CalcThumb (HWND hwnd, TRACKBAR_INFO *infoPtr)
 {
     RECT *thumb;
-    int range, width;
+    int range, width, thumbdepth;
+    DWORD dwStyle = GetWindowLongA(hwnd,GWL_STYLE);
 	
     thumb=&infoPtr->rcThumb;
     range=infoPtr->nRangeMax - infoPtr->nRangeMin;
-    if (!range) return; /* FIXME: may this happen? */
-    if (GetWindowLongA (hwnd, GWL_STYLE) & TBS_VERT) {
-    	width=infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
-        thumb->left  = infoPtr->rcChannel.left - 1;
-        thumb->right  = infoPtr->rcChannel.left + infoPtr->uThumbLen - 8;
-        thumb->top	 = infoPtr->rcChannel.top +
-            (width*infoPtr->nPos)/range - 5;
-        thumb->bottom = thumb->top + infoPtr->uThumbLen/3;
+    thumbdepth = ((INT)((FLOAT)infoPtr->uThumbLen / 4.5) * 2) + 2;
 
-    } else {
+    if (!range) return; /* FIXME: may this happen? */
+
+    if (dwStyle & TBS_VERT) 
+    {
+    	width=infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
+
+        if (dwStyle & (TBS_BOTH | TBS_LEFT))
+          thumb->left = 10;
+        else
+          thumb-> left =2; 
+        thumb->right = thumb -> left + infoPtr->uThumbLen;
+        thumb->top = infoPtr->rcChannel.top +
+                     (width*infoPtr->nPos)/range - thumbdepth/2;
+        thumb->bottom = thumb->top + thumbdepth;
+    } 
+    else 
+    {
     	width=infoPtr->rcChannel.right - infoPtr->rcChannel.left;
-        thumb->left   = infoPtr->rcChannel.left +
-            (width*infoPtr->nPos)/range - 5;
-        thumb->right  = thumb->left + infoPtr->uThumbLen/3;
-        thumb->top	  = infoPtr->rcChannel.top - 1;
-        thumb->bottom = infoPtr->rcChannel.top + infoPtr->uThumbLen - 8;
+
+        thumb->left = infoPtr->rcChannel.left +
+                      (width*infoPtr->nPos)/range - thumbdepth/2;
+        thumb->right = thumb->left + thumbdepth;
+        if (dwStyle & (TBS_BOTH | TBS_TOP))
+          thumb->top = 10;
+        else
+          thumb->top = 2;
+        thumb->bottom =  thumb -> top + infoPtr->uThumbLen;
     }
 }
 
@@ -282,10 +290,10 @@ TRACKBAR_DrawVertTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
     width=rcChannel.bottom - rcChannel.top;
 
     if (flags & TBS_TOP) {
-	x=rcChannel.right-2;
+	x=rcChannel.left-2;
 	side=-1;
     } else {
-  	x=rcChannel.left+2;
+  	x=rcChannel.right+2;
 	side=1;
     }
 
@@ -345,6 +353,141 @@ TRACKBAR_DrawTics (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos,
 
 }
 
+static VOID
+TRACKBAR_DrawThumb(TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
+{
+    HBRUSH oldbr,hbr = GetSysColorBrush(COLOR_BTNFACE);
+    HPEN  oldpen=(HPEN)NULL,hpn;
+    RECT thumb = infoPtr->rcThumb;
+    int BlackUntil=3;
+    int PointCount=6;
+    POINT points[6];
+
+    static INT PointDepth = 4;
+
+    oldbr = SelectObject (hdc, hbr);
+    SetPolyFillMode (hdc,WINDING);
+		
+    if (dwStyle & TBS_BOTH) 
+    {
+       points[0].x=thumb.right;
+       points[0].y=thumb.top;
+       points[1].x=thumb.right;
+       points[1].y=thumb.bottom;
+       points[2].x=thumb.left;
+       points[2].y=thumb.bottom;
+       points[3].x=thumb.left;
+       points[3].y=thumb.top;
+       points[4].x=points[0].x;
+       points[4].y=points[0].y;
+       PointCount = 5;
+       BlackUntil = 3;
+    } 
+    else 
+    {
+        if (dwStyle & TBS_VERT)
+        {
+          if (dwStyle & TBS_LEFT)
+          {
+            points[0].x=thumb.right;
+            points[0].y=thumb.top;
+            points[1].x=thumb.right;
+            points[1].y=thumb.bottom;
+            points[2].x=thumb.left + PointDepth;
+            points[2].y=thumb.bottom;
+            points[3].x=thumb.left;
+            points[3].y=(thumb.bottom - thumb.top) / 2 + thumb.top;
+            points[4].x=thumb.left + PointDepth;
+            points[4].y=thumb.top;
+            points[5].x=points[0].x;
+            points[5].y=points[0].y;
+            BlackUntil = 4;
+          }
+          else
+          {
+            points[0].x=thumb.right;
+            points[0].y=(thumb.bottom - thumb.top) / 2 + thumb.top;
+            points[1].x=thumb.right - PointDepth;
+            points[1].y=thumb.bottom;
+            points[2].x=thumb.left;
+            points[2].y=thumb.bottom;
+            points[3].x=thumb.left;
+            points[3].y=thumb.top;
+            points[4].x=thumb.right - PointDepth;
+            points[4].y=thumb.top;
+            points[5].x=points[0].x;
+            points[5].y=points[0].y;
+          }
+        }
+        else
+        {
+          if (dwStyle & TBS_TOP)
+          {
+            points[0].x=(thumb.right - thumb.left) / 2 + thumb.left ;
+            points[0].y=thumb.top;
+            points[1].x=thumb.right;
+            points[1].y=thumb.top + PointDepth;
+            points[2].x=thumb.right;
+            points[2].y=thumb.bottom; 
+            points[3].x=thumb.left;
+            points[3].y=thumb.bottom;
+            points[4].x=thumb.left;
+            points[4].y=thumb.top + PointDepth;
+            points[5].x=points[0].x;
+            points[5].y=points[0].y;
+            BlackUntil = 4;
+          }
+          else
+          {
+            points[0].x=thumb.right;
+            points[0].y=thumb.top;
+            points[1].x=thumb.right;
+            points[1].y=thumb.bottom - PointDepth;
+            points[2].x=(thumb.right - thumb.left) / 2 + thumb.left ;
+            points[2].y=thumb.bottom;
+            points[3].x=thumb.left;
+            points[3].y=thumb.bottom - PointDepth;
+            points[4].x=thumb.left;
+            points[4].y=thumb.top;
+            points[5].x=points[0].x;
+            points[5].y=points[0].y;
+          }
+        }
+        
+    }
+
+    /*
+     * Fill the shape
+     */
+    Polygon (hdc, points, PointCount);
+
+    /*
+     * Draw the edge
+     */
+    hpn = GetStockObject(BLACK_PEN);
+    oldpen = SelectObject(hdc,hpn);
+
+    /*
+     * Black part
+     */	
+    Polyline(hdc,points,BlackUntil);
+
+    SelectObject(hdc,oldpen);
+    hpn = GetStockObject(WHITE_PEN);
+    SelectObject(hdc,hpn);
+     
+    /*
+     * White Part
+     */
+    Polyline(hdc,&points[BlackUntil-1],PointCount+1-BlackUntil);
+
+    /*
+     * restore the brush and pen
+     */
+    SelectObject(hdc,oldbr);
+    if (oldpen)
+      SelectObject(hdc,oldpen);
+}
 
 static VOID
 TRACKBAR_Refresh (HWND hwnd, HDC hdc)
@@ -419,42 +562,9 @@ TRACKBAR_Refresh (HWND hwnd, HDC hdc)
 
     /* draw thumb */
 
-    if (!(dwStyle & TBS_NOTHUMB)) {
-		
-        HBRUSH hbr = CreateSolidBrush (COLOR_BTNFACE);
-        RECT thumb = infoPtr->rcThumb;
-
-        SelectObject (hdc, hbr);
-		
-        if (dwStyle & TBS_BOTH) {
-            FillRect (hdc, &thumb, hbr);
-            DrawEdge (hdc, &thumb, EDGE_RAISED, BF_TOPLEFT);
-        } else {
-            POINT points[5];
-
-            /* first, fill the thumb */
-            /* FIXME: revamp. check for TBS_VERT */
-
-            SetPolyFillMode (hdc,WINDING);
-            points[0].x=thumb.left;
-            points[0].y=thumb.top;
-            points[1].x=thumb.right - 1;
-            points[1].y=thumb.top;
-            points[2].x=thumb.right - 1;
-            points[2].y=thumb.bottom -2;
-            points[3].x=thumb.left;
-            points[3].y=thumb.bottom -2;
-            points[4].x=points[0].x;
-            points[4].y=points[0].y;
-            Polygon (hdc, points, 5);
-
-            if (dwStyle & TBS_VERT) {
-                /*   draw edge  */
-            } else {
-                DrawEdge (hdc, &thumb, EDGE_RAISED, BF_TOPLEFT);
-            }
-        }
-        DeleteObject (hbr);
+    if (!(dwStyle & TBS_NOTHUMB)) 
+    {
+      TRACKBAR_DrawThumb(infoPtr,hdc,dwStyle);		
     }
 
     if (infoPtr->bFocus)
@@ -1144,23 +1254,15 @@ TRACKBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TRACKBAR_INFO *infoPtr = TRACKBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-    int clickPlace,prevPos,vertical;
-    DOUBLE clickPos;
+    POINT clickPoint;
 
     SetFocus (hwnd);
 
-    vertical = (dwStyle & TBS_VERT) ? 1 : 0;
-    if (vertical)
-        clickPlace=(INT)HIWORD(lParam);
-    else
-        clickPlace=(INT)LOWORD(lParam);
+    clickPoint.y = HIWORD(lParam);
+    clickPoint.x = LOWORD(lParam);
 
-    if ((vertical && 
-         (clickPlace>infoPtr->rcThumb.top) && 
-         (clickPlace<infoPtr->rcThumb.bottom))   ||
-        (!vertical && 
-         (clickPlace>infoPtr->rcThumb.left) && 
-         (clickPlace<infoPtr->rcThumb.right))) {
+    if (PtInRect(&(infoPtr->rcThumb),clickPoint))
+    {
         infoPtr->flags |= TB_DRAG_MODE;
         if (dwStyle & TBS_TOOLTIPS) {  /* enable tooltip */
             TTTOOLINFOA ti;
@@ -1181,25 +1283,39 @@ TRACKBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         return 0;
     }
+    else if (PtInRect(&(infoPtr->rcChannel),clickPoint))
+    {
+        int clickPlace,prevPos,vertical;
+        DOUBLE clickPos;
 
-    clickPos = TRACKBAR_ConvertPlaceToPosition (infoPtr, clickPlace, vertical);
-    prevPos = infoPtr->nPos;
+        vertical = (dwStyle & TBS_VERT) ? 1 : 0;
+        if (vertical)
+            clickPlace=(INT)HIWORD(lParam);
+        else
+            clickPlace=(INT)LOWORD(lParam);
 
-    if (vertical ^ (clickPos < (int)prevPos)) {  /* similar to VK_NEXT */
-        infoPtr->nPos += infoPtr->nPageSize;
-        if (infoPtr->nPos > infoPtr->nRangeMax)
-            infoPtr->nPos = infoPtr->nRangeMax;
-        TRACKBAR_SendNotify (hwnd, TB_PAGEUP);  
-    } else {
-        infoPtr->nPos -= infoPtr->nPageSize;  /* similar to VK_PRIOR */
-        if (infoPtr->nPos < infoPtr->nRangeMin)
-            infoPtr->nPos = infoPtr->nRangeMin;
-        TRACKBAR_SendNotify (hwnd, TB_PAGEDOWN);
-    }
+       clickPos = TRACKBAR_ConvertPlaceToPosition(infoPtr, clickPlace, 
+                                                   vertical);
+        prevPos = infoPtr->nPos;
+        if (clickPos > (int)prevPos)
+        {  /* similar to VK_NEXT */
+            infoPtr->nPos += infoPtr->nPageSize;
+            if (infoPtr->nPos > infoPtr->nRangeMax)
+                infoPtr->nPos = infoPtr->nRangeMax;
+            TRACKBAR_SendNotify (hwnd, TB_PAGEUP);  
+        } 
+        else 
+        {
+            infoPtr->nPos -= infoPtr->nPageSize;  /* similar to VK_PRIOR */
+            if (infoPtr->nPos < infoPtr->nRangeMin)
+                infoPtr->nPos = infoPtr->nRangeMin;
+            TRACKBAR_SendNotify (hwnd, TB_PAGEDOWN);
+        }
 	
-    if (prevPos!=infoPtr->nPos) {
-        infoPtr->flags |= TB_THUMBPOSCHANGED;
-        InvalidateRect (hwnd, NULL, FALSE);
+        if (prevPos!=infoPtr->nPos) {
+            infoPtr->flags |= TB_THUMBPOSCHANGED;
+            InvalidateRect (hwnd, NULL, FALSE);
+        }
     }
 	
     return 0;
