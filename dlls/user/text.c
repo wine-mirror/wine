@@ -356,13 +356,15 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     /* If there was one or the first character didn't fit then */
     if (word_fits)
     {
+        int next_is_space;
         /* break the line before/after that character */
         if (!(format & (DT_RIGHT | DT_CENTER)) || *p != SPACE)
             p++;
+        next_is_space = (p - str) < *len_str && *p == SPACE;
         *len_str = p - str;
         /* and if the next character is a space then discard it. */
         *chars_used = *len_str;
-        if (*p == SPACE)
+        if (next_is_space)
             (*chars_used)++;
     }
     /* Suppose there was none. */
