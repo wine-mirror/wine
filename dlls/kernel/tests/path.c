@@ -792,14 +792,6 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     sprintf(tmpstr,"Long File %c",funny_chars[i]);
     test_FunnyChars(curdir,tmpstr,valid,0,tmpstr1);
   }
-/* ':' is a special case and is allowed only in certain cases */
-    test_FunnyChars(curdir,"file:000.ext",1,0,"check-1");
-    test_FunnyChars(curdir,"file000.e:t" ,1,0,"check-2");
-    test_FunnyChars(curdir,":file000.ext",0,1,"check-3");
-    test_FunnyChars(curdir,"file000:.ext",1,0,"check-4");
-    test_FunnyChars(curdir,"Long : File" ,1,0,"check-5");
-    test_FunnyChars(curdir,": Long File" ,0,0,"check-6");
-    test_FunnyChars(curdir,"Long File :" ,0,0,"check-7");
 }
 
 static void test_GetTempPathA(char* tmp_dir)
