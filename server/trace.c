@@ -835,6 +835,7 @@ static void dump_create_file_request( const struct create_file_request *req )
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " create=%d,", req->create );
+    fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " attrs=%08x,", req->attrs );
     fprintf( stderr, " removable=%d,", req->removable );
     fprintf( stderr, " filename=" );

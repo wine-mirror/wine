@@ -575,6 +575,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          inherit;       /* inherit flag */
     unsigned int sharing;       /* sharing flags */
     int          create;        /* file create action */
+    unsigned int options;       /* file options */
     unsigned int attrs;         /* file attributes for creation */
     int          removable;     /* is file on removable media? */
     VARARG(filename,string);    /* file name */

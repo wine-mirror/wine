@@ -43,6 +43,8 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -57,9 +59,9 @@ struct file
     struct file        *next;       /* next file in hashing list */
     char               *name;       /* file name */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
-    unsigned int        flags;      /* flags (FILE_FLAG_*) */
+    unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
     unsigned int        sharing;    /* file sharing mode */
-    int                 removable;     /* is file on removable media? */
+    int                 removable;  /* is file on removable media? */
     struct async_queue  read_q;
     struct async_queue  write_q;
 };
@@ -99,6 +101,11 @@ static const struct fd_ops file_fd_ops =
     file_queue_async              /* queue_async */
 };
 
+static inline int is_overlapped( const struct file *file )
+{
+    return !(file->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
+}
+
 static int get_name_hash( const char *name )
 {
     int hash = 0;
@@ -133,8 +140,7 @@ static int check_sharing( const char *name, int hash, unsigned int access,
 
 /* create a file from a file descriptor */
 /* if the function fails the fd is closed */
-static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing,
-                                        unsigned int attrs, int removable )
+static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing )
 {
     struct file *file;
 
@@ -143,14 +149,9 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
         file->name       = NULL;
         file->next       = NULL;
         file->access     = access;
-        file->flags      = attrs;
+        file->options    = FILE_SYNCHRONOUS_IO_NONALERT;
         file->sharing    = sharing;
-        file->removable  = removable;
-        if (file->flags & FILE_FLAG_OVERLAPPED)
-        {
-            init_async_queue (&file->read_q);
-            init_async_queue (&file->write_q);
-        }
+        file->removable  = 0;
         if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj )))
         {
             release_object( file );
@@ -162,8 +163,8 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
 
 
 static struct file *create_file( const char *nameptr, size_t len, unsigned int access,
-                                 unsigned int sharing, int create, unsigned int attrs,
-                                 int removable )
+                                 unsigned int sharing, int create, unsigned int options,
+                                 unsigned int attrs, int removable )
 {
     struct file *file;
     int hash, flags;
@@ -180,11 +181,12 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
 
     switch(create)
     {
-    case CREATE_NEW:        flags = O_CREAT | O_EXCL; break;
-    case CREATE_ALWAYS:     flags = O_CREAT | O_TRUNC; break;
-    case OPEN_ALWAYS:       flags = O_CREAT; break;
-    case TRUNCATE_EXISTING: flags = O_TRUNC; break;
-    case OPEN_EXISTING:     flags = 0; break;
+    case FILE_CREATE:       flags = O_CREAT | O_EXCL; break;
+    case FILE_OVERWRITE_IF: /* FIXME: the difference is whether we trash existing attr or not */
+    case FILE_SUPERSEDE:    flags = O_CREAT | O_TRUNC; break;
+    case FILE_OPEN:         flags = 0; break;
+    case FILE_OPEN_IF:      flags = O_CREAT; break;
+    case FILE_OVERWRITE:    flags = O_TRUNC; break;
     default:                set_error( STATUS_INVALID_PARAMETER ); goto error;
     }
     switch(access & (GENERIC_READ | GENERIC_WRITE))
@@ -203,13 +205,13 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     if (!(file = alloc_object( &file_ops ))) goto error;
 
     file->access     = access;
-    file->flags      = attrs;
+    file->options    = options;
     file->sharing    = sharing;
     file->removable  = removable;
     file->name       = name;
     file->next       = file_hash[hash];
     file_hash[hash]  = file;
-    if (file->flags & FILE_FLAG_OVERLAPPED)
+    if (is_overlapped( file ))
     {
         init_async_queue (&file->read_q);
         init_async_queue (&file->write_q);
@@ -223,7 +225,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
         return NULL;
     }
     /* refuse to open a directory */
-    if (S_ISDIR(mode) && !(file->flags & FILE_FLAG_BACKUP_SEMANTICS))
+    if (S_ISDIR(mode) && !(options & FILE_OPEN_FOR_BACKUP_INTENT))
     {
         set_error( STATUS_ACCESS_DENIED );
         release_object( file );
@@ -262,14 +264,14 @@ struct file *create_temp_file( int access )
         return NULL;
     }
     unlink( tmpfn );
-    return create_file_for_fd( fd, access, 0, 0, FALSE );
+    return create_file_for_fd( fd, access, 0 );
 }
 
 static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    fprintf( stderr, "File fd=%p flags=%08x name='%s'\n", file->fd, file->flags, file->name );
+    fprintf( stderr, "File fd=%p options=%08x name='%s'\n", file->fd, file->options, file->name );
 }
 
 static int file_get_poll_events( struct fd *fd )
@@ -286,7 +288,7 @@ static void file_poll_event( struct fd *fd, int event )
 {
     struct file *file = get_fd_user( fd );
     assert( file->obj.ops == &file_ops );
-    if ( file->flags & FILE_FLAG_OVERLAPPED )
+    if (is_overlapped( file ))
     {
         if( IS_READY(file->read_q) && (POLLIN & event) )
         {
@@ -354,7 +356,7 @@ static int file_get_info( struct fd *fd, struct get_file_info_reply *reply, int 
         reply->serial      = 0; /* FIXME */
     }
     *flags = 0;
-    if (file->flags & FILE_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
+    if (is_overlapped( file )) *flags |= FD_FLAG_OVERLAPPED;
     return FD_TYPE_DEFAULT;
 }
 
@@ -366,7 +368,7 @@ static void file_queue_async(struct fd *fd, void *ptr, unsigned int status, int 
 
     assert( file->obj.ops == &file_ops );
 
-    if ( !(file->flags & FILE_FLAG_OVERLAPPED) )
+    if (!is_overlapped( file ))
     {
         set_error ( STATUS_INVALID_HANDLE );
         return;
@@ -429,10 +431,10 @@ static void file_destroy( struct object *obj )
         while (*pptr && *pptr != file) pptr = &(*pptr)->next;
         assert( *pptr );
         *pptr = (*pptr)->next;
-        if (file->flags & FILE_FLAG_DELETE_ON_CLOSE) unlink( file->name );
+        if (file->options & FILE_DELETE_ON_CLOSE) unlink( file->name );
         free( file->name );
     }
-    if (file->flags & FILE_FLAG_OVERLAPPED)
+    if (is_overlapped( file ))
     {
         destroy_async_queue (&file->read_q);
         destroy_async_queue (&file->write_q);
@@ -462,6 +464,7 @@ void file_set_error(void)
     case ESPIPE:    set_win32_error( ERROR_SEEK ); break;
     case ENOTEMPTY: set_error( STATUS_DIRECTORY_NOT_EMPTY ); break;
     case EIO:       set_error( STATUS_ACCESS_VIOLATION ); break;
+    case ENOTDIR:   set_error( STATUS_NOT_A_DIRECTORY ); break;
 #ifdef EOVERFLOW
     case EOVERFLOW: set_error( STATUS_INVALID_PARAMETER ); break;
 #endif
@@ -600,7 +603,7 @@ DECL_HANDLER(create_file)
 
     reply->handle = 0;
     if ((file = create_file( get_req_data(), get_req_data_size(), req->access,
-                             req->sharing, req->create, req->attrs, req->removable )))
+                             req->sharing, req->create, req->options, req->attrs, req->removable )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
@@ -619,8 +622,7 @@ DECL_HANDLER(alloc_file_handle)
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                    0, FALSE )))
+    if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
@@ -665,7 +667,7 @@ DECL_HANDLER(lock_file)
     if ((file = get_file_obj( current->process, req->handle, 0 )))
     {
         reply->handle = lock_fd( file->fd, offset, count, req->shared, req->wait );
-        reply->overlapped = (file->flags & FILE_FLAG_OVERLAPPED) != 0;
+        reply->overlapped = is_overlapped( file );
         release_object( file );
     }
 }

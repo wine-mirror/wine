@@ -184,7 +184,31 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                         UINT drive_type )
 {
     unsigned int err;
+    UINT disp, options;
     HANDLE ret;
+
+    switch (creation)
+    {
+    case CREATE_ALWAYS:     disp = FILE_OVERWRITE_IF; break;
+    case CREATE_NEW:        disp = FILE_CREATE; break;
+    case OPEN_ALWAYS:       disp = FILE_OPEN_IF; break;
+    case OPEN_EXISTING:     disp = FILE_OPEN; break;
+    case TRUNCATE_EXISTING: disp = FILE_OVERWRITE; break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    options = 0;
+    if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
+        options |= FILE_OPEN_FOR_BACKUP_INTENT;
+    if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
+        options |= FILE_DELETE_ON_CLOSE;
+    if (!(attributes & FILE_FLAG_OVERLAPPED))
+        options |= FILE_SYNCHRONOUS_IO_ALERT;
+    if (attributes & FILE_FLAG_RANDOM_ACCESS)
+        options |= FILE_RANDOM_ACCESS;
+    attributes &= FILE_ATTRIBUTE_VALID_FLAGS;
 
     for (;;)
     {
@@ -193,7 +217,8 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
             req->access     = access;
             req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
             req->sharing    = sharing;
-            req->create     = creation;
+            req->create     = disp;
+            req->options    = options;
             req->attrs      = attributes;
             req->removable  = (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM);
             wine_server_add_data( req, filename, strlen(filename) );

@@ -821,7 +821,8 @@ static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
         req->access     = GENERIC_READ|GENERIC_WRITE;
         req->inherit    = 0;
         req->sharing    = FILE_SHARE_READ|FILE_SHARE_WRITE;
-        req->create     = OPEN_ALWAYS;
+        req->create     = FILE_OPEN_IF;
+        req->options    = FILE_SYNCHRONOUS_IO_ALERT;
         req->attrs      = 0;
         req->removable  = 0;
         wine_server_add_data( req, unix_name, strlen(unix_name) );

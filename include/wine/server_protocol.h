@@ -751,6 +751,7 @@ struct create_file_request
     int          inherit;
     unsigned int sharing;
     int          create;
+    unsigned int options;
     unsigned int attrs;
     int          removable;
     /* VARARG(filename,string); */
@@ -3729,6 +3730,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 133
+#define SERVER_PROTOCOL_VERSION 134
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
