@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "dlgs.h"
 #include "shellapi.h"
 #include "winuser.h"
@@ -39,9 +40,6 @@
 #include "shlwapi.h"
 
 #include "undocshell.h"
-#include "wine/winuser16.h"
-#include "authors.h"
-#include "heap.h"
 #include "pidl.h"
 #include "shell32_main.h"
 
@@ -49,6 +47,8 @@
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
+
+extern const char * const SHELL_Authors[];
 
 #define MORE_DEBUG 1
 /*************************************************************************
@@ -609,8 +609,9 @@ HICON WINAPI ExtractIconW(HINSTANCE hInstance, LPCWSTR lpszFile, UINT nIconIndex
 }
 
 typedef struct
-{ LPCSTR  szApp;
-    LPCSTR  szOtherStuff;
+{
+    LPCWSTR  szApp;
+    LPCWSTR  szOtherStuff;
     HICON hIcon;
 } ABOUT_INFO;
 
@@ -720,36 +721,44 @@ DWORD WINAPI SHLoadInProc (REFCLSID rclsid)
  */
 INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )
-{   HWND hWndCtl;
-    char Template[512], AppTitle[512];
+{
+    HWND hWndCtl;
 
     TRACE("\n");
 
     switch(msg)
-    { case WM_INITDIALOG:
-      { ABOUT_INFO *info = (ABOUT_INFO *)lParam;
+    {
+    case WM_INITDIALOG:
+        {
+            ABOUT_INFO *info = (ABOUT_INFO *)lParam;
+            WCHAR Template[512], AppTitle[512];
+
             if (info)
-        { const char* const *pstr = SHELL_People;
-                SendDlgItemMessageA(hWnd, stc1, STM_SETICON,(WPARAM)info->hIcon, 0);
-                GetWindowTextA( hWnd, Template, sizeof(Template) );
-                sprintf( AppTitle, Template, info->szApp );
-                SetWindowTextA( hWnd, AppTitle );
-                SetWindowTextA( GetDlgItem(hWnd, IDC_STATIC_TEXT),
-                                  info->szOtherStuff );
+            {
+                const char* const *pstr = SHELL_Authors;
+                SendDlgItemMessageW(hWnd, stc1, STM_SETICON,(WPARAM)info->hIcon, 0);
+                GetWindowTextW( hWnd, Template, sizeof(Template)/sizeof(WCHAR) );
+                sprintfW( AppTitle, Template, info->szApp );
+                SetWindowTextW( hWnd, AppTitle );
+                SetWindowTextW( GetDlgItem(hWnd, IDC_STATIC_TEXT), info->szOtherStuff );
                 hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
-                SendMessageA( hWndCtl, WM_SETREDRAW, 0, 0 );
+                SendMessageW( hWndCtl, WM_SETREDRAW, 0, 0 );
                 if (!hIconTitleFont)
                 {
-                    LOGFONTA logFont;
-                    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
-                    hIconTitleFont = CreateFontIndirectA( &logFont );
+                    LOGFONTW logFont;
+                    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
+                    hIconTitleFont = CreateFontIndirectW( &logFont );
                 }
-                SendMessageA( hWndCtl, WM_SETFONT, HICON_16(hIconTitleFont), 0 );
+                SendMessageW( hWndCtl, WM_SETFONT, (WPARAM)hIconTitleFont, 0 );
                 while (*pstr)
-          { SendMessageA( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)*pstr );
+                {
+                    WCHAR name[64];
+                    /* authors list is in iso-8859-1 format */
+                    MultiByteToWideChar( 28591, 0, *pstr, -1, name, sizeof(name)/sizeof(WCHAR) );
+                    SendMessageW( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)name );
                     pstr++;
                 }
-                SendMessageA( hWndCtl, WM_SETREDRAW, 1, 0 );
+                SendMessageW( hWndCtl, WM_SETREDRAW, 1, 0 );
             }
         }
         return 1;
@@ -765,81 +774,6 @@ INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 		LineTo( hDC, rect.right, rect.bottom );
 	    }
 	    EndPaint( hWnd, &ps );
-	}
-	break;
-
-#if 0  /* FIXME: should use DoDragDrop */
-    case WM_LBTRACKPOINT:
-	hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
-	if( (INT16)GetKeyState( VK_CONTROL ) < 0 )
-      { if( DragDetect( hWndCtl, *((LPPOINT)&lParam) ) )
-        { INT idx = SendMessageA( hWndCtl, LB_GETCURSEL, 0, 0 );
-		if( idx != -1 )
-          { INT length = SendMessageA( hWndCtl, LB_GETTEXTLEN, (WPARAM)idx, 0 );
-		    HGLOBAL16 hMemObj = GlobalAlloc16( GMEM_MOVEABLE, length + 1 );
-		    char* pstr = (char*)GlobalLock16( hMemObj );
-
-		    if( pstr )
-            { HCURSOR hCursor = LoadCursorA( 0, MAKEINTRESOURCEA(OCR_DRAGOBJECT) );
-			SendMessageA( hWndCtl, LB_GETTEXT, (WPARAM)idx, (LPARAM)pstr );
-			SendMessageA( hWndCtl, LB_DELETESTRING, (WPARAM)idx, 0 );
-			UpdateWindow( hWndCtl );
-			if( !DragObject16((HWND16)hWnd, (HWND16)hWnd, DRAGOBJ_DATA, 0, (WORD)hMemObj, hCursor) )
-			    SendMessageA( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)pstr );
-		    }
-            if( hMemObj )
-              GlobalFree16( hMemObj );
-		}
-	    }
-	}
-	break;
-#endif
-
-    case WM_QUERYDROPOBJECT:
-	if( wParam == 0 )
-      { LPDRAGINFO16 lpDragInfo = MapSL((SEGPTR)lParam);
-	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA )
-        { RECT rect;
-		if( __get_dropline( hWnd, &rect ) )
-          { POINT pt;
-	    pt.x=lpDragInfo->pt.x;
-	    pt.x=lpDragInfo->pt.y;
-		    rect.bottom += DROP_FIELD_HEIGHT;
-		    if( PtInRect( &rect, pt ) )
-            { SetWindowLongA( hWnd, DWL_MSGRESULT, 1 );
-			return TRUE;
-		    }
-		}
-	    }
-	}
-	break;
-
-    case WM_DROPOBJECT:
-	if( wParam == (WPARAM)hWnd )
-      { LPDRAGINFO16 lpDragInfo = MapSL((SEGPTR)lParam);
-	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA && lpDragInfo->hList )
-        { char* pstr = (char*)GlobalLock16( (HGLOBAL16)(lpDragInfo->hList) );
-		if( pstr )
-          { static char __appendix_str[] = " with";
-
-		    hWndCtl = GetDlgItem( hWnd, IDC_WINE_TEXT );
-		    SendMessageA( hWndCtl, WM_GETTEXT, 512, (LPARAM)Template );
-		    if( !strncmp( Template, "WINE", 4 ) )
-			SetWindowTextA( GetDlgItem(hWnd, IDC_STATIC_TEXT), Template );
-		    else
-          { char* pch = Template + strlen(Template) - strlen(__appendix_str);
-			*pch = '\0';
-			SendMessageA( GetDlgItem(hWnd, IDC_LISTBOX), LB_ADDSTRING,
-					(WPARAM)-1, (LPARAM)Template );
-		    }
-
-		    strcpy( Template, pstr );
-		    strcat( Template, __appendix_str );
-		    SetWindowTextA( hWndCtl, Template );
-		    SetWindowLongA( hWnd, DWL_MSGRESULT, 1 );
-		    return TRUE;
-		}
-	    }
 	}
 	break;
 
@@ -862,24 +796,17 @@ INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 /*************************************************************************
  * ShellAboutA				[SHELL32.288]
  */
-BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
-                             HICON hIcon )
-{   ABOUT_INFO info;
-    HRSRC hRes;
-    LPVOID template;
-    TRACE("\n");
+BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon )
+{
+    UNICODE_STRING appW, otherW;
+    BOOL ret;
 
-    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", (LPSTR)RT_DIALOG)))
-        return FALSE;
-    if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
-        return FALSE;
-
-    info.szApp        = szApp;
-    info.szOtherStuff = szOtherStuff;
-    info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIconA( 0, (LPSTR)IDI_WINLOGO );
-    return DialogBoxIndirectParamA( (HINSTANCE)GetWindowLongA( hWnd, GWL_HINSTANCE ),
-                                      template, hWnd, AboutDlgProc, (LPARAM)&info );
+    RtlCreateUnicodeStringFromAsciiz( &appW, szApp );
+    RtlCreateUnicodeStringFromAsciiz( &otherW, szOtherStuff );
+    ret = ShellAboutW( hWnd, appW.Buffer, otherW.Buffer, hIcon );
+    RtlFreeUnicodeString( &appW );
+    RtlFreeUnicodeString( &otherW );
+    return ret;
 }
 
 
@@ -888,7 +815,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
  */
 BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
                              HICON hIcon )
-{   BOOL ret;
+{
     ABOUT_INFO info;
     HRSRC hRes;
     LPVOID template;
@@ -899,16 +826,11 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
         return FALSE;
     if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
         return FALSE;
-
-    info.szApp        = HEAP_strdupWtoA( GetProcessHeap(), 0, szApp );
-    info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
-    info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIconA( 0, (LPSTR)IDI_WINLOGO );
-    ret = DialogBoxIndirectParamA((HINSTANCE)GetWindowLongA( hWnd, GWL_HINSTANCE ),
+    info.szApp        = szApp;
+    info.szOtherStuff = szOtherStuff;
+    info.hIcon        = hIcon ? hIcon : LoadIconW( 0, (LPWSTR)IDI_WINLOGO );
+    return DialogBoxIndirectParamW((HINSTANCE)GetWindowLongW( hWnd, GWL_HINSTANCE ),
                                    template, hWnd, AboutDlgProc, (LPARAM)&info );
-    HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );
-    HeapFree( GetProcessHeap(), 0, (LPSTR)info.szOtherStuff );
-    return ret;
 }
 
 /*************************************************************************

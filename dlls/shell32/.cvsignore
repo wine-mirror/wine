@@ -1,4 +1,5 @@
 Makefile
+authors.c
 desktop.ico
 document.ico
 drive.ico

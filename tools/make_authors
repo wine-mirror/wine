@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 #
-# Generate AUTHORS and dlls/shell32/authors.h
+# Generate AUTHORS
 #
 # Copyright 1998 Alexandre Julliard
 #
@@ -24,13 +24,11 @@ open(NEWAUTHORS,">AUTHORS.new");
 while(<AUTHORS>)
   {
     print NEWAUTHORS;
-    last if /^Wine is/;
+    last if /^$/;
   }
 while(<AUTHORS>)
   {
     chop;
-    s/^and //;
-    s/[,.]$//;
     push @authors, $_;
   }
 
@@ -46,30 +44,5 @@ sub cmpnames
 @authors = sort cmpnames @authors;
 
 # Print authors
-for ($i = 0; $i < $#authors; $i++)
-  {
-    print NEWAUTHORS "$authors[$i],\n";
-  }
-print NEWAUTHORS "and $authors[$#authors].\n";
+print NEWAUTHORS (join "\n", @authors) . "\n";
 print "Created AUTHORS.new\n";
-
-# Build authors.h file
-open(NEWAUTHORS_H,">dlls/shell32/authors.h");
-
-print NEWAUTHORS_H <<EOF;
-#ifndef __WINE_AUTHORS_H
-#define __WINE_AUTHORS_H
-
-static const char * const SHELL_People[] =
-{
-EOF
-
-# Print authors
-for ($i = 0; $i <= $#authors; $i++)
-  {
-    print NEWAUTHORS_H "    \"$authors[$i]\",\n";
-  }
-print NEWAUTHORS_H "    0\n};\n";
-print NEWAUTHORS_H "\n#endif  /* __WINE_AUTHORS_H */\n";
-
-print "Created dlls/shell32/authors.h\n";

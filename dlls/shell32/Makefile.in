@@ -12,6 +12,7 @@ EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
+	authors.c \
 	brsfolder.c \
 	changenotify.c \
 	classes.c \
@@ -72,5 +73,13 @@ version16.res: version16.rc
 
 shell.spec.c: shell.spec version16.res
 	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --main-module $(MODULE) --res version16.res --spec $(SRCDIR)/shell.spec
+
+authors.c: $(TOPSRCDIR)/AUTHORS
+	sed -e '1,2c const char * const SHELL_Authors[] = {' -e 's/\(.*\)/    \"\1\",/' -e '$$a\    0 };' $(TOPSRCDIR)/AUTHORS >$@ || ($(RM) $@ && false)
+
+depend: authors.c
+
+clean::
+	$(RM) authors.c
 
 ### Dependencies:
