@@ -2720,7 +2720,7 @@ BOOL WINAPI CommConfigDialogW(
  *  If successful, lpCommConfig contains the comm port configuration.
  */
 BOOL WINAPI GetCommConfig(
-	HFILE hFile,
+	HANDLE hFile,
 	LPCOMMCONFIG lpCommConfig
 ) {
     BOOL r;
@@ -2746,7 +2746,7 @@ BOOL WINAPI GetCommConfig(
  *
  */
 BOOL WINAPI SetCommConfig(
-	HFILE hFile,
+	HANDLE hFile,
 	LPCOMMCONFIG lpCommConfig
 ) {
     BOOL r;
