@@ -75,6 +75,7 @@ static HANDLE	     	handle_mutex = 0;
        DDE_HANDLE_ENTRY *this_instance;
        SECURITY_ATTRIBUTES *s_att= NULL;
        DWORD 	     	err_no = 0;
+       DWORD		prev_err = 0;
        DDE_HANDLE_ENTRY *reference_inst;
 
 #define TRUE	1
@@ -834,6 +835,8 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
 }
 
         ret = GlobalGetAtomNameA( hsz, (LPSTR)psz, cchMax );
+  } else {
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
     }
    TRACE(ddeml,"returning pointer\n"); 
     return ret;
@@ -1103,6 +1106,8 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 	}
       TRACE(ddeml,"Returning pointer\n");
       return hsz;
+  } else {
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
   }
     TRACE(ddeml,"Returning error\n");
     return 0;  
@@ -1182,6 +1187,8 @@ HSZ WINAPI DdeCreateStringHandleW(
 	}
       TRACE(ddeml,"Returning pointer\n");
       return hsz;
+   } else {
+  	Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
 }
     TRACE(ddeml,"Returning error\n");
   return 0;
@@ -1221,13 +1228,13 @@ BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
           /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
           return TRUE;
   }
-  if ( ( err_no = GetLastError()) != 0 )
+  if ( ( prev_err = GetLastError()) != 0 )
   {
 	/*	something earlier failed !! */
-	ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",err_no);
+	ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",prev_err);
   }
   WaitForSingleObject(handle_mutex,1000);
-  if ( (err_no=GetLastError()) != 0 )
+  if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
   {
           /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
@@ -1252,6 +1259,7 @@ BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
     RemoveHSZNode( hsz );
     /* Free the string associated with this HSZ.
      */
+  Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
     return GlobalDeleteAtom (hsz) ? 0 : hsz;
 }
 
@@ -1573,11 +1581,28 @@ HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
  * RETURNS
  *    Success: Non-zero
  *    Failure: 0
+ *
+ *****************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0      ?	 	  ?		   Stub
+ *  1.1      Apr 1999  Keith Matthews      Added trap for non-existent instance (uninitialised instance 0
+ *						used by some MS programs for unfathomable reasons)
+ *
  */
 HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
                 UINT afCmd )
 {
     FIXME(ddeml, "(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
+  if ( DDE_Max_Assigned_Instance == 0 )
+  {
+          /*  Nothing has been initialised - exit now ! 
+	   *	needs something for DdeGetLastError */
+          return 0L;
+  }
     return 1;
 }
 
@@ -1599,10 +1624,54 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
  *
  * RETURNS
  *    Last error code
+ *
+ *****************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0      ?            ?                Stub
+ *  1.1      Apr 1999  Keith Matthews      Added response for non-existent instance (uninitialised instance 0
+ *                                              used by some MS programs for unfathomable reasons)
+ *
  */
 UINT WINAPI DdeGetLastError( DWORD idInst )
 {
     FIXME(ddeml, "(%ld): stub\n",idInst);
+    if ( DDE_Max_Assigned_Instance == 0 )
+    {
+          /*  Nothing has been initialised - exit now ! */
+          return DMLERR_DLL_NOT_INITIALIZED;
+    }
+   if ( ( prev_err = GetLastError()) != 0 )
+   {
+        /*      something earlier failed !! */
+        ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",prev_err);
+   }
+   WaitForSingleObject(handle_mutex,1000);
+   if ( ((err_no=GetLastError()) != 0 ) && (err_no != prev_err ))
+   {
+          /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          return DMLERR_SYS_ERROR;
+   }
+   TRACE(ddeml,"Handle Mutex created/reserved\n");
+
+   /*  First check instance
+   */
+   reference_inst = Find_Instance_Entry(idInst);
+   if  (reference_inst == NULL) 
+   {
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
+          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+          return DMLERR_DLL_NOT_INITIALIZED;
+
+   }
+
+
+    Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE);
     return 0;
 }
 
