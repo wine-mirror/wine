@@ -104,19 +104,6 @@ static const commandAPI commandAPIs[COMMAND_COUNT] = {
 };
 
 /*
- * This array controls the registry saving needs at the end of the process
- */
-static const BOOL commandSaveRegistry[COMMAND_COUNT] = {
-  TRUE,
-  TRUE,
-  TRUE,
-  TRUE,
-  FALSE,
-  TRUE,
-  TRUE
-};
-
-/*
  * Generic prototypes
  */
 static DWORD   getDataType(LPSTR *lpValue, DWORD* parse_type);
