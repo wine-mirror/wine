@@ -658,6 +658,9 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
     CloseHandle(startup.hStdOutput);
     CloseHandle(startup.hStdError);
 
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+
     return done;
 }
 
@@ -742,14 +745,9 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
         break;
     case from_process_name:
         {
-            const char*     src;
-            LPWSTR          dst;
             WCHAR           buffer[256];
 
-            src = wci.ptr; dst = buffer;
-            while (*src && *src != ' ' && (dst - buffer < sizeof(buffer) / sizeof(WCHAR) - 1))
-                *dst++ = *src++;
-            *dst = 0;
+            MultiByteToWideChar(CP_ACP, 0, wci.ptr, -1, buffer, sizeof(buffer) / sizeof(buffer[0]));
 
             if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, wci.backend)))
                 return 0;
