@@ -343,6 +343,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     pdb->priority        = 8;  /* Normal */
     pdb->heap            = pdb->system_heap;  /* will be changed later on */
     pdb->next            = PROCESS_First;
+    pdb->winver          = 0xffff; /* to be determined */
     PROCESS_First = pdb;
     return pdb;
 }
@@ -367,6 +368,7 @@ BOOL PROCESS_Init(void)
     initial_pdb.group           = &initial_pdb;
     initial_pdb.priority        = 8;  /* Normal */
     initial_pdb.flags           = PDB32_WIN16_PROC;
+    initial_pdb.winver          = 0xffff; /* to be determined */
 
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;

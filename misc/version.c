@@ -122,6 +122,106 @@ void VERSION_ParseDosVersion( const char *arg )
 }
 
 
+WINDOWS_VERSION VERSION_GetImageVersion(PDB *pdb)
+{
+    PIMAGE_NT_HEADERS peheader;
+
+	if (!pdb->exe_modref)
+	{
+		/* HACK: if we have loaded a PE image into this address space,
+		 * we are probably using thunks, so Win95 is our best bet
+		 */
+		if (pdb->modref_list)
+			return WIN95;
+		/* FIXME: hmm, do anything else ?
+		   TDB.version doesn't help here
+		   as it always holds version 3.10 */
+			return WIN31;
+	}
+	else
+	{
+		peheader = PE_HEADER(pdb->exe_modref->module);
+#define OPTHD peheader->OptionalHeader
+
+		TRACE(ver, "%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
+			  OPTHD.MajorLinkerVersion,
+			  OPTHD.MinorLinkerVersion,
+			  OPTHD.MajorOperatingSystemVersion,
+			  OPTHD.MinorOperatingSystemVersion,
+			  OPTHD.MajorImageVersion,
+			  OPTHD.MinorImageVersion,
+			  OPTHD.MajorSubsystemVersion,
+			  OPTHD.MinorSubsystemVersion);
+
+        switch (OPTHD.MajorSubsystemVersion)
+		{
+			case 4:
+				switch (OPTHD.MajorOperatingSystemVersion)
+				{
+					case 5:
+						return NT40; /* FIXME: this is NT 5, isn't it ? */
+					case 4:
+						if ((OPTHD.MajorImageVersion == 0) &&
+							(OPTHD.SectionAlignment == 4096))
+							return WIN95;
+						else
+							return NT40;
+					case 1:
+						return WIN95;
+					default:
+						return WIN95; /* FIXME ? */
+				}
+			case 3:
+				/* 3.1x versions */
+				if (OPTHD.MinorSubsystemVersion <= 11)
+				{
+					if (OPTHD.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+						return NT351; /* FIXME: NT 3.1 */
+					else
+						return WIN31;
+				}
+				else
+				{
+					/* NT 3.51 */
+					if (OPTHD.MinorSubsystemVersion == 50)
+						return NT351;
+					else
+					if (OPTHD.MinorSubsystemVersion == 51)
+						return NT351;
+				}
+			default:
+				ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
+					OPTHD.MajorSubsystemVersion,
+					OPTHD.MinorSubsystemVersion );
+				return defaultWinVersion;
+		}
+#undef OPTHD
+	}
+}
+
+
+/**********************************************************************
+ *
+ * Check the version of COMDLG32, SHELL32, COMCTL32 and CTL3D32.
+ * Not functional yet.
+ */
+DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
+{
+	WINE_MODREF *wm;
+    WORD VersionCounter[NB_WINDOWS_VERSIONS];
+
+    memset(VersionCounter, 0, sizeof(VersionCounter));
+
+	VersionCounter[WIN95] = 1;
+	for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next ) {
+	    if (!(lstrncmpiA(wm->modname, "CTL3D32", 7)))
+			VersionCounter[WIN95]++;
+	}
+
+	return MAKELONG(WIN95, VersionCounter[WIN95]);
+}
+
+
 /**********************************************************************
  *         VERSION_GetVersion
  *
@@ -136,6 +236,7 @@ void VERSION_ParseDosVersion( const char *arg )
  * 5.12/4.00/1.07/4.00      clikfixi.exe    NT 4 (service pack files)
  * 3.10/4.00/4.00/4.00		PLUMBING.EXE	NT
  * ?.??/4.00/97.01/4.00		sse.exe			huh ?? (damn crackerz ;)
+ * 5.12/5.00/5.00/4.00		comctl32.dll	NT4 / IE 5.0
  * 6.00/5.00/5.00/4.00						NT 4 driver update (strange numbers)
  * 
  * Common versions:
@@ -147,67 +248,22 @@ void VERSION_ParseDosVersion( const char *arg )
  */
 WINDOWS_VERSION VERSION_GetVersion(void)
 {
-    PIMAGE_NT_HEADERS peheader;	
     PDB *pdb = PROCESS_Current();
+    DWORD DllVer;
 
     if (versionForced) /* user has overridden any sensible checks */
         return defaultWinVersion;
-    if (!pdb->exe_modref)
-    {
-        /* HACK: if we have loaded a PE image into this address space,
-         * we are probably using thunks, so Win95 is our best bet
-         */
-        if (pdb->modref_list) return WIN95;
 
-        /* FIXME: hmm, do anything else ?
-           TDB.version doesn't help here
-           as it always holds version 3.10 */
-        return WIN31;
-    }
-    peheader = PE_HEADER(pdb->exe_modref->module);
-
-    TRACE(ver, "%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
-          peheader->OptionalHeader.MajorLinkerVersion,
-          peheader->OptionalHeader.MinorLinkerVersion,
-          peheader->OptionalHeader.MajorOperatingSystemVersion,
-          peheader->OptionalHeader.MinorOperatingSystemVersion,
-          peheader->OptionalHeader.MajorImageVersion,
-          peheader->OptionalHeader.MinorImageVersion,
-          peheader->OptionalHeader.MajorSubsystemVersion,
-          peheader->OptionalHeader.MinorSubsystemVersion);
-
-    if (peheader->OptionalHeader.MajorSubsystemVersion == 4)
-    {
-	if (peheader->OptionalHeader.MajorOperatingSystemVersion == 4)
+    if (pdb->winver == 0xffff) /* to be determined */
         {
-            if ((peheader->OptionalHeader.MajorImageVersion == 0) &&
-                (peheader->OptionalHeader.SectionAlignment == 4096))
-                return WIN95;
-	    return NT40;
-        }
-        if (peheader->OptionalHeader.MajorOperatingSystemVersion == 1) return WIN95;
-        if (peheader->OptionalHeader.MajorOperatingSystemVersion == 5)
-            return NT40; /* FIXME: this is NT 5, isn't it ? */
-    }
-    if (peheader->OptionalHeader.MajorSubsystemVersion == 3)
-    {
-        /* 3.1x versions */
-        if (peheader->OptionalHeader.MinorSubsystemVersion <= 11)
-        {
-            if (peheader->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-                return NT351; /* FIXME: NT 3.1 */
+		DllVer = 0/*VERSION_GetLinkedDllVersion(pdb)*/;
+		if (HIWORD(DllVer) > 1)
+			pdb->winver = LOWORD(DllVer);
             else
-		  return WIN31;
+			pdb->winver = VERSION_GetImageVersion(pdb);
         }
-        /* NT 3.51 */
-        if (peheader->OptionalHeader.MinorSubsystemVersion == 50) return NT351;
-        if (peheader->OptionalHeader.MinorSubsystemVersion == 51) return NT351;
-    }
-    if (peheader->OptionalHeader.MajorSubsystemVersion)
-	ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
-	    peheader->OptionalHeader.MajorSubsystemVersion,
-	    peheader->OptionalHeader.MinorSubsystemVersion );
-    return defaultWinVersion;
+
+	return pdb->winver;
 }
 
 
