@@ -114,6 +114,9 @@ WINDOWS_INCLUDES = \
 	ipifcons.h \
 	iprtrmib.h \
 	iptypes.h \
+	ks.h \
+	ksguid.h \
+	ksmedia.h \
 	lm.h \
 	lmaccess.h \
 	lmapibuf.h \
