@@ -55,6 +55,8 @@ BEGIN
 	IDS_SHV_COLUMN5		"属性"
 	IDS_SHV_COLUMN6		"使用空间"
 	IDS_SHV_COLUMN7		"剩余空间"
+	IDS_SHV_COLUMN8		"Name" /*FIXME*/
+	IDS_SHV_COLUMN9		"Comments" /*FIXME*/
 END
 
 #pragma code_page(default)
