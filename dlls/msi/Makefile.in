@@ -16,6 +16,7 @@ C_SRCS = \
 	msiquery.c \
 	order.c \
 	package.c \
+	preview.c \
 	record.c \
 	regsvr.c \
 	select.c \

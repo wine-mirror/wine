@@ -32,7 +32,7 @@
 32 stdcall MsiDatabaseOpenViewW(long wstr ptr)
 33 stdcall MsiDoActionA(long str)
 34 stdcall MsiDoActionW(long wstr)
-35 stub MsiEnableUIPreview
+35 stdcall MsiEnableUIPreview(long ptr)
 36 stdcall MsiEnumClientsA(str long ptr)
 37 stdcall MsiEnumClientsW(wstr long ptr)
 38 stdcall MsiEnumComponentQualifiersA(str long str ptr str ptr)
@@ -94,10 +94,10 @@
 94 stdcall MsiOpenPackageW(wstr ptr)
 95 stdcall MsiOpenProductA(str ptr)
 96 stdcall MsiOpenProductW(wstr ptr)
-97 stub MsiPreviewBillboardA
-98 stub MsiPreviewBillboardW
-99 stub MsiPreviewDialogA
-100 stub MsiPreviewDialogW
+97 stdcall MsiPreviewBillboardA(long str str)
+98 stdcall MsiPreviewBillboardW(long wstr wstr)
+99 stdcall MsiPreviewDialogA(long str)
+100 stdcall MsiPreviewDialogW(long wstr)
 101 stub MsiProcessAdvertiseScriptA
 102 stub MsiProcessAdvertiseScriptW
 103 stdcall MsiProcessMessage(long long long)
