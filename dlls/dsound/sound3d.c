@@ -1042,7 +1042,8 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 	InitializeCriticalSection(&dsl->lock);
 
 	dsl->dsb = This;
-	IDirectSoundBuffer8_AddRef((LPDIRECTSOUNDBUFFER8)This);
+	/* NOTE: don't add a reference because it would cause a circular reference */
+	/* IDirectSoundBuffer8_AddRef((LPDIRECTSOUNDBUFFER8)This); */
 
 	*pdsl = dsl;
 	return S_OK;

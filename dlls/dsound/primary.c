@@ -571,20 +571,13 @@ static DWORD WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 
 	ref = InterlockedDecrement(&(This->ref));
 
-	/* the listener has a reference to us which must be removed */
-	if ((ref == 0) || ((ref == 1) && (This->dsound->listener))) {
+	if (ref == 0) {
 		IDirectSound_Release((LPDIRECTSOUND)This->dsound);
 
 		if (This->dsound->listener) {
 			IDirectSound3DListener_Release((LPDIRECTSOUND3DLISTENER)This->dsound->listener);
 			This->dsound->listener = NULL;
-			ref--;
 		}
-#if 0
-		if (This->iks) {
-			HeapFree(GetProcessHeap(), 0, This->iks);
-		}
-#endif
 		HeapFree(GetProcessHeap(),0,This);
 	}
 
