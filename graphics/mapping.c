@@ -130,8 +130,6 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     switch(mode)
     {
       case MM_TEXT:
-	  dc->wndOrgX   = dc->wndOrgY   = 0;
-	  dc->vportOrgX = dc->vportOrgY = 0;
 	  dc->wndExtX   = 1;
 	  dc->wndExtY   = 1;
 	  dc->vportExtX = 1;
@@ -140,8 +138,6 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 	  
       case MM_LOMETRIC:
       case MM_ISOTROPIC:
-	  dc->wndOrgX   = dc->wndOrgY   = 0;
-	  dc->vportOrgX = dc->vportOrgY = 0;
 	  dc->wndExtX   = dc->w.devCaps->horzSize;
 	  dc->wndExtY   = dc->w.devCaps->vertSize;
 	  dc->vportExtX = dc->w.devCaps->horzRes / 10;
@@ -149,8 +145,6 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 	  break;
 	  
       case MM_HIMETRIC:
-	  dc->wndOrgX   = dc->wndOrgY   = 0;
-	  dc->vportOrgX = dc->vportOrgY = 0;
 	  dc->wndExtX   = dc->w.devCaps->horzSize * 10;
 	  dc->wndExtY   = dc->w.devCaps->vertSize * 10;
 	  dc->vportExtX = dc->w.devCaps->horzRes / 10;
@@ -158,8 +152,6 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 	  break;
 	  
       case MM_LOENGLISH:
-	  dc->wndOrgX   = dc->wndOrgY   = 0;
-	  dc->vportOrgX = dc->vportOrgY = 0;
 	  dc->wndExtX   = dc->w.devCaps->horzSize;
 	  dc->wndExtY   = dc->w.devCaps->vertSize;
 	  dc->vportExtX = 254L * dc->w.devCaps->horzRes / 1000;
@@ -167,8 +159,6 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 	  break;	  
 	  
       case MM_HIENGLISH:
-	  dc->wndOrgX   = dc->wndOrgY   = 0;
-	  dc->vportOrgX = dc->vportOrgY = 0;
 	  dc->wndExtX   = dc->w.devCaps->horzSize * 10;
 	  dc->wndExtY   = dc->w.devCaps->vertSize * 10;
 	  dc->vportExtX = 254L * dc->w.devCaps->horzRes / 1000;
@@ -176,8 +166,6 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 	  break;
 	  
       case MM_TWIPS:
-	  dc->wndOrgX   = dc->wndOrgY   = 0;
-	  dc->vportOrgX = dc->vportOrgY = 0;
 	  dc->wndExtX   = 144L * dc->w.devCaps->horzSize / 10;
 	  dc->wndExtY   = 144L * dc->w.devCaps->vertSize / 10;
 	  dc->vportExtX = 254L * dc->w.devCaps->horzRes / 1000;
