@@ -2006,6 +2006,11 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 
     TRACE("(%s,%s,%04lx)\n", fn1, fn2, flag);
 
+    if (!fn1) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
 
     if (fn2)  /* !fn2 means delete fn1 */
