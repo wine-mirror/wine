@@ -732,7 +732,7 @@ HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister) {
  *           CoGetClassObject [COMPOBJ.7]
  */
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
-                        LPVOID pvReserved, REFIID iid, LPVOID *ppv)
+                        LPVOID pvReserved, const REFIID iid, LPVOID *ppv)
 {
     char xclsid[50],xiid[50];
     HRESULT hres = E_UNEXPECTED;
@@ -832,7 +832,7 @@ HRESULT WINAPI CoCreateInstance(
 	HRESULT hres;
 	LPCLASSFACTORY lpclf = 0;
 
-        hres = CoGetClassObject(rclsid, dwClsContext, NULL, &IID_IClassFactory, (LPVOID)&lpclf);
+        hres = CoGetClassObject(rclsid, dwClsContext, NULL, (const REFIID) &IID_IClassFactory, (LPVOID)&lpclf);
         if (!SUCCEEDED(hres)) return hres;
 	hres = lpclf->lpvtbl->fnCreateInstance(lpclf, pUnkOuter, iid, ppv);
 	lpclf->lpvtbl->fnRelease(lpclf);
