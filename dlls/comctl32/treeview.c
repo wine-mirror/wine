@@ -2619,7 +2619,18 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, WPARAM wParam)
     if (wParam)
     {
         hdc = (HDC)wParam;
-        GetUpdateRect(infoPtr->hwnd, &rc, TRUE);
+        if (!GetUpdateRect(infoPtr->hwnd, &rc, TRUE))
+        {
+            HBITMAP hbitmap;
+            BITMAP bitmap;
+            hbitmap = GetCurrentObject(hdc, OBJ_BITMAP);
+            if (!hbitmap) return 0;
+            GetObjectA(hbitmap, sizeof(BITMAP), &bitmap);
+            rc.left = 0; rc.top = 0;
+            rc.right = bitmap.bmWidth;
+            rc.bottom = bitmap.bmHeight;  
+            TREEVIEW_EraseBackground(infoPtr, wParam);
+        }
     }
     else
     {
