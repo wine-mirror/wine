@@ -985,6 +985,7 @@ DEFINE_AVIGUID(IID_IAVIStreaming,       0x00020022, 0, 0);
 DEFINE_AVIGUID(IID_IGetFrame,           0x00020023, 0, 0);
 DEFINE_AVIGUID(IID_IAVIEditStream,      0x00020024, 0, 0);
 
+DEFINE_AVIGUID(CLSID_AVISimpleUnMarshal,0x00020009, 0, 0);
 DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
 
 /*****************************************************************************

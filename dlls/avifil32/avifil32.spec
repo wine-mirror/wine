@@ -57,7 +57,7 @@
 @ stdcall AVIStreamTimeToSample(ptr long)
 @ stdcall AVIStreamWrite(ptr long long ptr long long ptr ptr)
 @ stdcall AVIStreamWriteData(ptr long ptr long)
-@ stub    CLSID_AVISimpleUnMarshal
+@ extern  CLSID_AVISimpleUnMarshal
 @ stdcall CreateEditableStream(ptr ptr)
 @ stdcall -private DllCanUnloadNow() AVIFILE_DllCanUnloadNow
 @ stdcall -private DllGetClassObject(ptr ptr ptr) AVIFILE_DllGetClassObject
