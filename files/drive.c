@@ -374,53 +374,60 @@ int DRIVE_SetCurrentDrive( int drive )
  */
 int DRIVE_FindDriveRoot( const char **path )
 {
-    /* idea: check at all '/' positions.
-     * If the device and inode of that path is identical with the
-     * device and inode of the current drive then we found a solution.
-     * If there is another drive pointing to a deeper position in
-     * the file tree, we want to find that one, not the earlier solution.
+    /* Starting with the full path, check if the device and inode match any of
+     * the wine 'drives'. If not then remove the last path component and try
+     * again. If the last component was a '..' then skip a normal component
+     * since it's a directory that's ascended back out of.
      */
-    int drive, rootdrive = -1;
+    int drive, level, len;
     char buffer[MAX_PATHNAME_LEN];
-    char *next = buffer;
-    const char *p = *path;
+    char *p;
     struct stat st;
 
-    strcpy( buffer, "/" );
-    for (;;)
+    strcpy( buffer, *path );
+    while ((p = strchr( buffer, '\\' )) != NULL)
+        *p = '/';
+    len = strlen(buffer);
+
+    while (len > 0)
     {
-        if (stat( buffer, &st ) || !S_ISDIR( st.st_mode )) break;
-
         /* Find the drive */
-
-        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+        if (stat( buffer, &st ) == 0 && S_ISDIR( st.st_mode ))
         {
-           if (!DOSDrives[drive].root ||
-               (DOSDrives[drive].flags & DRIVE_DISABLED)) continue;
+            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            {
+               if (!DOSDrives[drive].root ||
+                   (DOSDrives[drive].flags & DRIVE_DISABLED))
+                   continue;
 
-           if ((DOSDrives[drive].dev == st.st_dev) &&
-               (DOSDrives[drive].ino == st.st_ino))
-           {
-               rootdrive = drive;
-               *path = p;
-	       break;
-           }
+               if ((DOSDrives[drive].dev == st.st_dev) &&
+                   (DOSDrives[drive].ino == st.st_ino))
+               {
+                   TRACE( "%s -> drive %c:, root='%s', name='%s'\n",
+                       *path, 'A' + drive, buffer, *path + len);
+                   *path += len;
+                   return drive;
+               }
+            }
         }
 
-        /* Get the next path component */
-
-        *next++ = '/';
-        while ((*p == '/') || (*p == '\\')) p++;
-        if (!*p) break;
-        while (!IS_END_OF_NAME(*p)) *next++ = *p++;
-        *next = 0;
+        level = 0;
+        while (len > 0 && level < 1)
+        {
+            /* strip off a trailing slash */
+            while (len > 0 && buffer[len - 1] == '/')
+                buffer[--len] = 0;
+            /* find start of the last path component */
+            while (len > 0 && buffer[len - 1] != '/')
+                --len;
+            /* does removing it take us up a level? */
+            if (strcmp( buffer + len, "." ) != 0)
+                level += strcmp( buffer + len, ".." ) ? 1 : -1;
+            buffer[len] = 0;
+        }
     }
-    *next = 0;
 
-    if (rootdrive != -1)
-        TRACE("%s -> drive %c:, root='%s', name='%s'\n",
-              buffer, 'A' + rootdrive, DOSDrives[rootdrive].root, *path );
-    return rootdrive;
+    return -1;
 }
 
 
