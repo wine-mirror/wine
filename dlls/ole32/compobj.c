@@ -1211,12 +1211,14 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 {
     IStorage *pstg=0;
     HRESULT res;
-    int nbElm=0,length=0,i=0;
-    LONG sizeProgId=20;
+    int nbElm, length, i;
+    LONG sizeProgId;
     LPOLESTR *pathDec=0,absFile=0,progId=0;
-    WCHAR extention[100]={0};
+    LPWSTR extension;
+    static const WCHAR bkslashW[] = {'\\',0};
+    static const WCHAR dotW[] = {'.',0};
 
-    TRACE("()\n");
+    TRACE("%s, %p\n", debugstr_w(filePathName), pclsid);
 
     /* if the file contain a storage object the return the CLSID writen by IStorage_SetClass method*/
     if((StgIsStorageFile(filePathName))==S_OK){
@@ -1260,23 +1262,24 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
     absFile=pathDec[nbElm-1];
 
     /* failed if the path represente a directory and not an absolute file name*/
-    if (lstrcmpW(absFile,(LPOLESTR)"\\"))
+    if (!lstrcmpW(absFile, bkslashW))
         return MK_E_INVALIDEXTENSION;
 
     /* get the extension of the file */
+    extension = NULL;
     length=lstrlenW(absFile);
-    for(i=length-1; ( (i>=0) && (extention[i]=absFile[i]) );i--);
+    for(i = length-1; (i >= 0) && *(extension = &absFile[i]) != '.'; i--)
+        /* nothing */;
+
+    if (!extension || !lstrcmpW(extension, dotW))
+        return MK_E_INVALIDEXTENSION;
+
+    res=RegQueryValueW(HKEY_CLASSES_ROOT, extension, NULL, &sizeProgId);
 
     /* get the progId associated to the extension */
-    progId=CoTaskMemAlloc(sizeProgId);
+    progId = CoTaskMemAlloc(sizeProgId);
+    res = RegQueryValueW(HKEY_CLASSES_ROOT, extension, progId, &sizeProgId);
 
-    res=RegQueryValueW(HKEY_CLASSES_ROOT,extention,progId,&sizeProgId);
-
-    if (res==ERROR_MORE_DATA){
-
-        progId = CoTaskMemRealloc(progId,sizeProgId);
-        res=RegQueryValueW(HKEY_CLASSES_ROOT,extention,progId,&sizeProgId);
-    }
     if (res==ERROR_SUCCESS)
         /* return the clsid associated to the progId */
         res= CLSIDFromProgID(progId,pclsid);

@@ -66,7 +66,7 @@ init	OLE32_DllEntryPoint
  64 stub DllGetClassObjectWOW
  65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop
  66 stub EnableHookObject
- 67 stdcall GetClassFile(ptr ptr) GetClassFile
+ 67 stdcall GetClassFile(wstr ptr) GetClassFile
  68 stdcall GetConvertStg(ptr) GetConvertStg
  69 stub GetDocumentBitStg
  70 stdcall GetHGlobalFromILockBytes(ptr ptr) GetHGlobalFromILockBytes

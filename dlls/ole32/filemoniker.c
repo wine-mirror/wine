@@ -1096,6 +1096,8 @@ int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable)
 
     int len=lstrlenW(str);
 
+    TRACE("%s, %p\n", debugstr_w(str), *stringTable);
+
     strgtable =CoTaskMemAlloc(len*sizeof(LPOLESTR));
 
     if (strgtable==NULL)
