@@ -634,41 +634,6 @@ BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 }
 
 /***********************************************************************
- *  WideCharToLocal (Not a Windows API)
- *  similar lstrcpyWtoA, should handle codepages properly
- *
- *  RETURNS
- *    strlen of the destination string
- */
- 
-INT WINAPI WideCharToLocal(
-    LPSTR pLocal, 
-		LPCWSTR pWide, 
-		INT dwChars)
-{ *pLocal = 0;
-  TRACE("(%p, %s, %i)\n", pLocal, debugstr_wn(pWide,dwChars), dwChars);
-  WideCharToMultiByte(CP_ACP,0,pWide,-1,pLocal,dwChars,NULL,NULL);
-  return strlen(pLocal);
-}
-/***********************************************************************
- *  LocalToWideChar (Not a Windows API)
- *  similar lstrcpyAtoW, should handle codepages properly
- *
- *  RETURNS
- *    strlen of the destination string
- */
-INT WINAPI LocalToWideChar(
-    LPWSTR pWide, 
-		LPCSTR pLocal, 
-		INT dwChars)
-{ *pWide = 0;
-  TRACE("(%p, %s, %i)\n", pWide, debugstr_an(pLocal,dwChars), dwChars);
-	MultiByteToWideChar(CP_ACP,0,pLocal,-1,pWide,dwChars); 
-  return lstrlenW(pWide);
-}
-
-
-/***********************************************************************
  *           lstrrchr   (Not a Windows API)
  *
  * This is the implementation meant to be invoked from within

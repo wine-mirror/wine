@@ -287,7 +287,7 @@ HRESULT WINAPI SHILCreateFromPathA (LPCSTR path, LPITEMIDLIST * ppidl, DWORD * a
 	
 	TRACE_(shell)("%s %p 0x%08lx\n",path,ppidl,attributes?*attributes:0);
 
-	LocalToWideChar(lpszDisplayName, path, MAX_PATH);
+	lstrcpynAtoW(lpszDisplayName, path, MAX_PATH);
 
 	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
 	{
@@ -763,7 +763,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPWSTR lpszPath)
 	char	lpszTemp[MAX_PATH];
 	TRACE("path=%s\n",debugstr_w(lpszPath));
 
-	WideCharToLocal(lpszTemp, lpszPath, MAX_PATH);
+	lstrcpynWtoA(lpszTemp, lpszPath, MAX_PATH);	
 
 	return SHSimpleIDListFromPathA (lpszTemp);
 }

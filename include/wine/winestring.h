@@ -3,8 +3,6 @@
 
 #include "windef.h"
 
-INT         WINAPI WideCharToLocal(LPSTR,LPCWSTR,INT);
-INT         WINAPI LocalToWideChar(LPWSTR,LPCSTR,INT);
 LPWSTR      WINAPI lstrcpyAtoW(LPWSTR,LPCSTR);
 LPSTR       WINAPI lstrcpyWtoA(LPSTR,LPCWSTR);
 LPWSTR      WINAPI lstrcpynAtoW(LPWSTR,LPCSTR,INT);

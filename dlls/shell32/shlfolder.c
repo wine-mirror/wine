@@ -569,7 +569,7 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	  szNext = GetNextElementW(lpszDisplayName, szElement, MAX_PATH);
 
 	  /* build the full pathname to the element */
-	  WideCharToLocal(szTempA, szElement, lstrlenW(szElement) + 1);
+	  lstrcpynWtoA(szTempA, szElement, lstrlenW(szElement) + 1);
 	  strcpy(szPath, This->sMyPath);
 	  PathAddBackslashA(szPath);
 	  strcat(szPath, szTempA);
@@ -1807,7 +1807,7 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName(
 	if (PathIsRootW(lpszDisplayName))
 	{
 	  szNext = GetNextElementW(lpszDisplayName, szElement, MAX_PATH);
-	  WideCharToLocal(szTempA, szElement, lstrlenW(szElement) + 1);
+	  lstrcpynWtoA(szTempA, szElement, lstrlenW(szElement) + 1);
 	  pidlTemp = _ILCreateDrive(szTempA);
 
 	  if (szNext && *szNext)
