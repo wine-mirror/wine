@@ -12,10 +12,10 @@
 #include "peexe.h"
 #include "neexe.h"
 #include "heap.h"
-#include "debug.h"
 #include "main.h"
 #include "snoop.h"
 #include "winerror.h"
+#include "debug.h"
 
 DECLARE_DEBUG_CHANNEL(relay)
 DECLARE_DEBUG_CHANNEL(win32)
