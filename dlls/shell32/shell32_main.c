@@ -476,9 +476,14 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	DWORD ret;
 	SHFILEINFOA temppsfi;
 
-	len = WideCharToMultiByte(CP_ACP, 0, path, -1, NULL, 0, NULL, NULL);
-	temppath = HeapAlloc(GetProcessHeap(), 0, len);
-	WideCharToMultiByte(CP_ACP, 0, path, -1, temppath, len, NULL, NULL);
+	if (flags & SHGFI_PIDL) {
+	  /* path contains a pidl */
+	  temppath = (LPSTR) path;
+	} else {
+	  len = WideCharToMultiByte(CP_ACP, 0, path, -1, NULL, 0, NULL, NULL);
+	  temppath = HeapAlloc(GetProcessHeap(), 0, len);
+	  WideCharToMultiByte(CP_ACP, 0, path, -1, temppath, len, NULL, NULL);
+	}
 
        if(flags & SHGFI_ATTR_SPECIFIED)
                temppsfi.dwAttributes=psfi->dwAttributes;
@@ -496,8 +501,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
        if(flags & SHGFI_TYPENAME)
                MultiByteToWideChar(CP_ACP, 0, temppsfi.szTypeName, -1, psfi->szTypeName, sizeof(psfi->szTypeName));
 
-	HeapFree(GetProcessHeap(), 0, temppath);
-
+        if(!(flags & SHGFI_PIDL)) HeapFree(GetProcessHeap(), 0, temppath);
 	return ret;
 }
 
