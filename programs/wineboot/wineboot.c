@@ -379,7 +379,8 @@ static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
         return INVALID_RUNCMD_RETURN;
     }
 
-    WINE_TRACE("Successfully ran command - Created process handle %p\n", info.hProcess );
+    WINE_TRACE("Successfully ran command %s - Created process handle %p\n",
+               wine_dbgstr_w(cmdline), info.hProcess );
 
     if(wait)
     {   /* wait for the process to exit */
@@ -413,7 +414,10 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
     WCHAR *szCmdLine=NULL;
     WCHAR *szValue=NULL;
 
-    WINE_TRACE("entered\n");
+    if (hkRoot==HKEY_LOCAL_MACHINE)
+        WINE_TRACE("processing %s entries under HKLM\n",wine_dbgstr_w(szKeyName) );
+    else
+        WINE_TRACE("processing %s entries under HKCU\n",wine_dbgstr_w(szKeyName) );
 
     if( (res=RegOpenKeyExW( hkRoot, WINKEY_NAME, 0, KEY_READ, &hkWin ))!=ERROR_SUCCESS )
     {
