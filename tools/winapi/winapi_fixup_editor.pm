@@ -26,7 +26,7 @@ use winapi qw($win16api $win32api @winapis);
 
 use util;
 
-sub new {
+sub new($$) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -39,7 +39,7 @@ sub new {
     return $self;
 }
 
-sub add_trigger {
+sub add_trigger($$$) {
     my $self = shift;
 
     my $triggers = \%{$self->{TRIGGERS}};
@@ -54,7 +54,7 @@ sub add_trigger {
     push @{$$triggers{$line}}, $action;
 }
 
-sub replace {
+sub replace($$$$$$) {
     my $self = shift;
 
     my $begin_line = shift;
@@ -78,7 +78,7 @@ sub replace {
     });
 }
 
-sub flush {
+sub flush($) {
     my $self = shift;
 
     my $file = \${$self->{FILE}};
@@ -189,7 +189,7 @@ my %delete_line;
 
 my %spec_file;
 
-sub flush_old {
+sub flush_old($) {
     my $self = shift;
 
     my $file = ${$self->{FILE}};
@@ -357,7 +357,7 @@ sub flush_old {
     %spec_file = ();
 }
 
-sub delete_line {
+sub delete_line($$$) {
     my $self = shift;
 
     my $line = shift;
@@ -366,7 +366,7 @@ sub delete_line {
     $delete_line{$line} = $pattern;
 }
 
-sub insert_line {
+sub insert_line($$$) {
     my $self = shift;
 
     my $line = shift;
@@ -375,7 +375,7 @@ sub insert_line {
     $insert_line{$line} = $insert;
 }
 
-sub substitute_line {
+sub substitute_line($$$$) {
     my $self = shift;
 
     my $line = shift;
@@ -386,7 +386,7 @@ sub substitute_line {
     $substitute_line{$line}{replace} = $replace;
 }
 
-sub replace_spec_file {
+sub replace_spec_file($$$$) {
     my $self = shift;
 
     my $module = shift;

@@ -22,7 +22,9 @@ use strict;
 
 use output qw($output);
 
-sub new {
+sub _refresh($);
+
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -34,7 +36,7 @@ sub new {
 ########################################################################
 # set_find_align_callback
 #
-sub set_find_align_callback {
+sub set_find_align_callback($$) {
     my $self = shift;
 
     my $find_align = \${$self->{FIND_ALIGN}};
@@ -45,7 +47,7 @@ sub set_find_align_callback {
 ########################################################################
 # set_find_kind_callback
 #
-sub set_find_kind_callback {
+sub set_find_kind_callback($$) {
     my $self = shift;
 
     my $find_kind = \${$self->{FIND_KIND}};
@@ -56,7 +58,7 @@ sub set_find_kind_callback {
 ########################################################################
 # set_find_size_callback
 #
-sub set_find_size_callback {
+sub set_find_size_callback($$) {
     my $self = shift;
 
     my $find_size = \${$self->{FIND_SIZE}};
@@ -67,7 +69,7 @@ sub set_find_size_callback {
 ########################################################################
 # set_find_count_callback
 #
-sub set_find_count_callback {
+sub set_find_count_callback($$) {
     my $self = shift;
 
     my $find_count = \${$self->{FIND_COUNT}};
@@ -75,7 +77,7 @@ sub set_find_count_callback {
     $$find_count = shift;
 }
 
-sub kind {
+sub kind($$) {
     my $self = shift;
     my $kind = \${$self->{KIND}};
     my $dirty = \${$self->{DIRTY}};
@@ -91,7 +93,7 @@ sub kind {
     return $$kind;
 }
 
-sub _name {
+sub _name($$) {
     my $self = shift;
     my $_name = \${$self->{_NAME}};
     my $dirty = \${$self->{DIRTY}};
@@ -103,7 +105,7 @@ sub _name {
     return $$_name;
 }
 
-sub name {
+sub name($$) {
     my $self = shift;
     my $name = \${$self->{NAME}};
     my $dirty = \${$self->{DIRTY}};
@@ -122,7 +124,7 @@ sub name {
     }
 }
 
-sub pack {
+sub pack($$) {
     my $self = shift;
     my $pack = \${$self->{PACK}};
     my $dirty = \${$self->{DIRTY}};
@@ -134,7 +136,7 @@ sub pack {
     return $$pack;
 }
 
-sub align {
+sub align($) {
     my $self = shift;
 
     my $align = \${$self->{ALIGN}};
@@ -144,7 +146,7 @@ sub align {
     return $$align;
 }
 
-sub fields {
+sub fields($) {
     my $self = shift;
 
     my $count = $self->field_count;
@@ -157,7 +159,7 @@ sub fields {
     return @fields;
 }
 
-sub field_base_sizes {
+sub field_base_sizes($) {
     my $self = shift;
     my $field_base_sizes = \${$self->{FIELD_BASE_SIZES}};
 
@@ -166,7 +168,7 @@ sub field_base_sizes {
     return $$field_base_sizes;
 }
 
-sub field_aligns {
+sub field_aligns($) {
     my $self = shift;
     my $field_aligns = \${$self->{FIELD_ALIGNS}};
 
@@ -175,7 +177,7 @@ sub field_aligns {
     return $$field_aligns;
 }
 
-sub field_count {
+sub field_count($) {
     my $self = shift;
     my $field_type_names = \${$self->{FIELD_TYPE_NAMES}};
 
@@ -185,7 +187,7 @@ sub field_count {
     return $count;
 }
 
-sub field_names {
+sub field_names($$) {
     my $self = shift;
     my $field_names = \${$self->{FIELD_NAMES}};
     my $dirty = \${$self->{DIRTY}};
@@ -197,7 +199,7 @@ sub field_names {
     return $$field_names;
 }
 
-sub field_offsets {
+sub field_offsets($) {
     my $self = shift;
     my $field_offsets = \${$self->{FIELD_OFFSETS}};
 
@@ -206,7 +208,7 @@ sub field_offsets {
     return $$field_offsets;
 }
 
-sub field_sizes {
+sub field_sizes($) {
     my $self = shift;
     my $field_sizes = \${$self->{FIELD_SIZES}};
 
@@ -215,7 +217,7 @@ sub field_sizes {
     return $$field_sizes;
 }
 
-sub field_type_names {
+sub field_type_names($$) {
     my $self = shift;
     my $field_type_names = \${$self->{FIELD_TYPE_NAMES}};
     my $dirty = \${$self->{DIRTY}};
@@ -227,7 +229,7 @@ sub field_type_names {
     return $$field_type_names;
 }
 
-sub size {
+sub size($) {
     my $self = shift;
 
     my $size = \${$self->{SIZE}};
@@ -237,7 +239,7 @@ sub size {
     return $$size;
 }
 
-sub _refresh {
+sub _refresh($) {
     my $self = shift;
 
     my $dirty = \${$self->{DIRTY}};
@@ -369,7 +371,7 @@ sub _refresh {
 
 package c_type_field;
 
-sub new {
+sub new($$$) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -384,7 +386,7 @@ sub new {
     return $self;
 }
 
-sub align {
+sub align($) {
     my $self = shift;
     my $type = \${$self->{TYPE}};
     my $number = \${$self->{NUMBER}};
@@ -394,7 +396,7 @@ sub align {
     return $$field_aligns[$$number];
 }
 
-sub base_size {
+sub base_size($) {
     my $self = shift;
     my $type = \${$self->{TYPE}};
     my $number = \${$self->{NUMBER}};
@@ -404,7 +406,7 @@ sub base_size {
     return $$field_base_sizes[$$number];
 }
 
-sub name {
+sub name($) {
     my $self = shift;
     my $type = \${$self->{TYPE}};
     my $number = \${$self->{NUMBER}};
@@ -414,7 +416,7 @@ sub name {
     return $$field_names[$$number];
 }
 
-sub offset {
+sub offset($) {
     my $self = shift;
     my $type = \${$self->{TYPE}};
     my $number = \${$self->{NUMBER}};
@@ -424,7 +426,7 @@ sub offset {
     return $$field_offsets[$$number];
 }
 
-sub size {
+sub size($) {
     my $self = shift;
     my $type = \${$self->{TYPE}};
     my $number = \${$self->{NUMBER}};
@@ -434,7 +436,7 @@ sub size {
     return $$field_sizes[$$number];
 }
 
-sub type_name {
+sub type_name($) {
     my $self = shift;
     my $type = \${$self->{TYPE}};
     my $number = \${$self->{NUMBER}};

@@ -25,7 +25,7 @@ BEGIN {
 }
 
 use config qw(
-    &file_type &files_skip &files_filter
+    file_type files_skip files_filter
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use output qw($output);
@@ -172,7 +172,7 @@ my %align_kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
 my %size_kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
 my %size_parse_reported;
 
-sub _find_align_kind_size {
+sub _find_align_kind_size($) {
     my $type_name = shift;
 
     local $_ = $type_name;
@@ -309,26 +309,26 @@ sub _find_align_kind_size {
     return ($align, $kind, $size);
 }
 
-sub find_align {
+sub find_align($) {
     my $type_name = shift;
     (my $align, my $kind, my $size) = _find_align_kind_size($type_name);
     return $align;
 }
 
-sub find_kind {
+sub find_kind($) {
     my $type_name = shift;
     (my $align, my $kind, my $size) = _find_align_kind_size($type_name);
 
     return $kind;
 }
 
-sub find_size {
+sub find_size($) {
     my $type_name = shift;
     (my $align, my $kind, my $size) = _find_align_kind_size($type_name);
     return $size;
 }
 
-sub find_count {
+sub find_count($) {
     my $count = shift;
     return $defines{$count};
 }
@@ -454,7 +454,7 @@ foreach my $file (@files) {
 ########################################################################
 # output_header
 
-sub output_header {
+sub output_header($$$) {
     local *OUT = shift; 
 
     my $test_dir = shift;
@@ -595,7 +595,7 @@ sub output_header {
 ########################################################################
 # output_footer
 
-sub output_footer {
+sub output_footer($$$) {
     local *OUT = shift; 
 
     my $test_dir = shift;
@@ -612,7 +612,7 @@ sub output_footer {
 ########################################################################
 # output_test_pack_type
 
-sub output_test_pack_type {
+sub output_test_pack_type($$$$$$) {
     local *OUT = shift;
 
     my $type_name2type = shift;
@@ -696,7 +696,8 @@ sub output_test_pack_type {
     }
 }
 
-sub output_test_pack_fields {
+sub output_test_pack_fields($$$$$$$);
+sub output_test_pack_fields($$$$$$$) {
     local *OUT = shift;
 
     my $type_name2type = shift;
@@ -745,7 +746,7 @@ sub output_test_pack_fields {
 ########################################################################
 # output_test_pack
 
-sub output_test_pack {
+sub output_test_pack($$$$) {
     local *OUT = shift;
 
     my $test_dir = shift;
@@ -812,7 +813,7 @@ sub output_test_pack {
 ########################################################################
 # output_file
 
-sub output_file {
+sub output_file($$$$) {
     local *OUT = shift;
 
     my $test_dir = shift;

@@ -25,7 +25,7 @@ BEGIN {
 }
 
 use config qw(
-    &file_absolutize &file_normalize
+    file_absolutize file_normalize
     $current_dir $wine_dir
 );
 use output qw($output);
@@ -49,20 +49,20 @@ open(IN, "($command) 2>&1 |");
 while(<IN>) {
     chomp;
 
-    if(!&make_parser::line($_)) {
+    if(!make_parser::line($_)) {
 	next;
     }
 
     if($message) {
 	if($file && $line) {
 	    if($directory && $directory ne "." && $file !~ m%^/%) {
-		$output->write(&file_normalize("$directory/$file") . ":$line: $message\n");
+		$output->write(file_normalize("$directory/$file") . ":$line: $message\n");
 	    } else {
 		$output->write("$file:$line: $message\n");
 	    }
 	} elsif($file) {
 	    if($directory && $directory ne "." && $file !~ m%^/%) {
-		$output->write(&file_normalize("$directory/$file") . ": $message\n");
+		$output->write(file_normalize("$directory/$file") . ": $message\n");
 	    } else {
 		$output->write("$file: $message\n");
 	    }

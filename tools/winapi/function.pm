@@ -20,7 +20,7 @@ package function;
 
 use strict;
 
-sub new {
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -29,7 +29,7 @@ sub new {
     return $self;
 }
 
-sub file {
+sub file($$) {
     my $self = shift;
     my $file = \${$self->{FILE}};
 
@@ -40,7 +40,7 @@ sub file {
     return $$file;
 }
 
-sub debug_channels {
+sub debug_channels($$) {
     my $self = shift;
     my $debug_channels = \${$self->{DEBUG_CHANNELS}};
 
@@ -51,7 +51,7 @@ sub debug_channels {
     return $$debug_channels;
 }
 
-sub documentation_line {
+sub documentation_line($$) {
     my $self = shift;
     my $documentation_line = \${$self->{DOCUMENTATION_LINE}};
 
@@ -62,7 +62,7 @@ sub documentation_line {
     return $$documentation_line;
 }
 
-sub documentation {
+sub documentation($$) {
     my $self = shift;
     my $documentation = \${$self->{DOCUMENTATION}};
 
@@ -73,7 +73,7 @@ sub documentation {
     return $$documentation;
 }
 
-sub function_line {
+sub function_line($$) {
     my $self = shift;
     my $function_line = \${$self->{FUNCTION_LINE}};
 
@@ -84,7 +84,7 @@ sub function_line {
     return $$function_line;
 }
 
-sub linkage {
+sub linkage($$) {
     my $self = shift;
     my $linkage = \${$self->{LINKAGE}};
 
@@ -95,7 +95,7 @@ sub linkage {
     return $$linkage;
 }
 
-sub return_type {
+sub return_type($$) {
     my $self = shift;
     my $return_type = \${$self->{RETURN_TYPE}};
 
@@ -106,7 +106,7 @@ sub return_type {
     return $$return_type;
 }
 
-sub calling_convention {
+sub calling_convention($$) {
     my $self = shift;
     my $calling_convention = \${$self->{CALLING_CONVENTION}};
 
@@ -117,7 +117,7 @@ sub calling_convention {
     return $$calling_convention;
 }
 
-sub internal_name {
+sub internal_name($$) {
     my $self = shift;
     my $internal_name = \${$self->{INTERNAL_NAME}};
 
@@ -128,7 +128,7 @@ sub internal_name {
     return $$internal_name;
 }
 
-sub argument_types {
+sub argument_types($$) {
     my $self = shift;
     my $argument_types = \${$self->{ARGUMENT_TYPES}};
 
@@ -139,7 +139,7 @@ sub argument_types {
     return $$argument_types;
 }
 
-sub argument_names {
+sub argument_names($$) {
     my $self = shift;
     my $argument_names = \${$self->{ARGUMENT_NAMES}};
 
@@ -150,7 +150,7 @@ sub argument_names {
     return $$argument_names;
 }
 
-sub argument_documentations {
+sub argument_documentations($$) {
     my $self = shift;
     my $argument_documentations = \${$self->{ARGUMENT_DOCUMENTATIONS}};
 
@@ -161,7 +161,7 @@ sub argument_documentations {
     return $$argument_documentations;
 }
 
-sub statements_line {
+sub statements_line($$) {
     my $self = shift;
     my $statements_line = \${$self->{STATEMENTS_LINE}};
 
@@ -172,7 +172,7 @@ sub statements_line {
     return $$statements_line;
 }
 
-sub statements {
+sub statements($$) {
     my $self = shift;
     my $statements = \${$self->{STATEMENTS}};
 

@@ -26,13 +26,13 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 @EXPORT_OK = qw(
-    &is_user_function
-    &get_message_result_type
-    &get_message_result_kind
-    &get_message_wparam_type
-    &get_message_wparam_kind
-    &get_message_lparam_type
-    &get_message_lparam_kind
+    is_user_function
+    get_message_result_type
+    get_message_result_kind
+    get_message_wparam_type
+    get_message_wparam_kind
+    get_message_lparam_type
+    get_message_lparam_kind
 );
 
 use config qw($wine_dir);
@@ -48,7 +48,7 @@ my $message;
 ########################################################################
 # is_user_function
 
-sub is_user_function {
+sub is_user_function($) {
     my $name = shift;
     if($name =~ /^(?:DefWindowProc|SendMessage)[AW]?$/) {
     }
@@ -558,7 +558,7 @@ $message = {
 ########################################################################
 # _get_kind
 
-sub _get_kind {
+sub _get_kind($) {
     local $_ = shift;
 
     if(!$_) {
@@ -575,7 +575,7 @@ sub _get_kind {
 ########################################################################
 # get_message_result_type
 
-sub get_message_result_type {
+sub get_message_result_type($) {
     my $name = shift;
     return $$message{$name}{result};
 }
@@ -583,14 +583,14 @@ sub get_message_result_type {
 ########################################################################
 # get_message_result_kind
 
-sub get_message_result_kind {
+sub get_message_result_kind(@) {
     return _get_kind(get_message_result_type(@_));
 }
 
 ########################################################################
 # get_message_wparam_type
 
-sub get_message_wparam_type {
+sub get_message_wparam_type($) {
     my $name = shift;
     return $$message{$name}{wparam};
 }
@@ -598,14 +598,14 @@ sub get_message_wparam_type {
 ########################################################################
 # get_message_wparam_kind
 
-sub get_message_wparam_kind {
+sub get_message_wparam_kind(@) {
     return _get_kind(get_message_wparam_type(@_));
 }
 
 ########################################################################
 # get_message_lparam_type
 
-sub get_message_lparam_type {
+sub get_message_lparam_type($) {
     my $name = shift;
     return $$message{$name}{lparam};
 }
@@ -613,14 +613,14 @@ sub get_message_lparam_type {
 ########################################################################
 # get_message_lparam_kind
 
-sub get_message_lparam_kind {
+sub get_message_lparam_kind(@) {
     return _get_kind(get_message_lparam_type(@_));
 }
 
 ########################################################################
 # _parse_file
 
-sub _parse_file {
+sub _parse_file($$$) {
     my $file = shift;
     my $found_preprocessor = shift;
     my $found_comment = shift;
@@ -666,7 +666,7 @@ sub _parse_file {
 ########################################################################
 # _get_tuple_arguments
 
-sub _get_tuple_arguments {
+sub _get_tuple_arguments($) {
     local $_ = shift;
 
     my $parser = new c_parser;
@@ -688,7 +688,7 @@ sub _get_tuple_arguments {
 # _parse_windowsx_h
 
 
-sub _parse_windowsx_h {
+sub _parse_windowsx_h($$$) {
     my $last_comment;
 
     my $found_preprocessor = sub {
@@ -867,7 +867,7 @@ sub _parse_windowsx_h {
 ########################################################################
 # _parse_winuser_h
 
-sub _parse_winuser_h {
+sub _parse_winuser_h($$$) {
     my %not_found = ();
 
     my $found_preprocessor = sub {

@@ -25,7 +25,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw(&fixup_statements);
+@EXPORT_OK = qw(fixup_statements);
 
 use config qw($wine_dir);
 use options qw($options);
@@ -33,15 +33,15 @@ use output qw($output);
 
 use c_parser;
 use winapi_module_user qw(
-    &get_message_result_kind
-    &get_message_wparam_kind
-    &get_message_lparam_kind
+    get_message_result_kind
+    get_message_wparam_kind
+    get_message_lparam_kind
 );
 
 ########################################################################
 # fixup_function_call
 
-sub fixup_function_call {
+sub fixup_function_call($$) {
     my $name = shift;
     my @arguments = @{(shift)};;
 
@@ -51,7 +51,7 @@ sub fixup_function_call {
 ########################################################################
 # _parse_makelong
 
-sub _parse_makelong {
+sub _parse_makelong($) {
     local $_ = shift;
 
     my $low;
@@ -88,7 +88,7 @@ sub _parse_makelong {
 ########################################################################
 # fixup_function_call_2_windowsx
 
-sub fixup_user_message_2_windowsx {
+sub fixup_user_message_2_windowsx($$) {
     my $name = shift;
     (my $hwnd, my $msg, my $wparam, my $lparam) = @{(shift)};
 
@@ -182,7 +182,7 @@ sub fixup_user_message_2_windowsx {
 ########################################################################
 # _get_messages
 
-sub _get_messages {
+sub _get_messages($) {
     local $_ = shift;
 
     if(/^(?:BM|CB|EM|LB|STM|WM)_\w+(.*?)$/) {
@@ -206,7 +206,7 @@ sub _get_messages {
 ########################################################################
 # _fixup_user_message
 
-sub _fixup_user_message {
+sub _fixup_user_message($$) {
     my $name = shift;
     (my $hwnd, my $msg, my $wparam, my $lparam) = @{(shift)};
 
@@ -215,14 +215,14 @@ sub _fixup_user_message {
     my $wkind;
     my $lkind;
     foreach my $msg (_get_messages($msg)) {
-	my $new_wkind = &get_message_wparam_kind($msg);
+	my $new_wkind = get_message_wparam_kind($msg);
 	if(defined($wkind) && $new_wkind ne $wkind) {
 	    $output->write("messsages used together do not have the same type\n");
 	} else {
 	    $wkind = $new_wkind;
 	}
 
-	my $new_lkind = &get_message_lparam_kind($msg);
+	my $new_lkind = get_message_lparam_kind($msg);
 	if(defined($lkind) && $new_lkind ne $lkind) {
 	    $output->write("messsages used together do not have the same type\n");
 	} else {
@@ -274,7 +274,7 @@ sub _fixup_user_message {
 ########################################################################
 # fixup_statements
 
-sub fixup_statements {
+sub fixup_statements($$) {
     my $function = shift;
     my $editor = shift;
 

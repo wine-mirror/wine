@@ -27,14 +27,14 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(
-    &file_absolutize &file_normalize
-    &file_directory
-    &file_type &files_filter
-    &file_skip &files_skip
-    &get_c_files
-    &get_h_files
-    &get_makefile_in_files
-    &get_spec_files
+    file_absolutize file_normalize
+    file_directory
+    file_type files_filter
+    file_skip files_skip
+    get_c_files
+    get_h_files
+    get_makefile_in_files
+    get_spec_files
 );
 @EXPORT_OK = qw(
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
@@ -46,71 +46,7 @@ use output qw($output);
 
 use File::Find;
 
-sub file_type {
-    local $_ = shift;
-
-    $_ = file_absolutize($_);
-
-    m%^(?:libtest|rc|server|tests|tools)/% && return "";
-    m%^(?:programs|debugger|miscemu)/% && return "wineapp";
-    m%^(?:libs)/% && return "library";
-    m%^windows/x11drv/wineclipsrv\.c$% && return "application";
-
-    return "winelib";
-}
-
-sub files_filter {
-    my $type = shift;
-
-    my @files;
-    foreach my $file (@_) {
-	if(file_type($file) eq $type) {
-	    push @files, $file;
-	}
-    }
-
-    return @files;
-}
-
-sub file_skip {
-    local $_ = shift;
-
-    $_ = file_absolutize($_);
-
-    m%^(?:libtest|programs|rc|server|tests|tools)/% && return 1;
-    m%^(?:debugger|miscemu|libs|server)/% && return 1;
-    m%^dlls/wineps/data/% && return 1;
-    m%^windows/x11drv/wineclipsrv\.c$% && return 1;
-    m%^dlls/winmm/wineoss/midipatch\.c$% && return 1;
-    m%(?:glue|spec)\.c$% && return 1;
-
-    return 0;
-}
-
-sub files_skip {
-    my @files;
-    foreach my $file (@_) {
-	if(!file_skip($file)) {
-	    push @files, $file;
-	}
-    }
-
-    return @files;
-}
-
-sub file_absolutize {
-    local $_ = shift;
-
-    $_ = file_normalize($_);
-    if(!s%^$wine_dir/%%) {
-	$_ = "$current_dir/$_";
-    }
-    s%^\./%%;
-
-    return $_;
-}
-
-sub file_normalize {
+sub file_normalize($) {
     local $_ = shift;
 
     foreach my $dir (split(m%/%, $current_dir)) {
@@ -130,7 +66,71 @@ sub file_normalize {
     return $_;
 }
 
-sub file_directory {
+sub file_absolutize($) {
+    local $_ = shift;
+
+    $_ = file_normalize($_);
+    if(!s%^$wine_dir/%%) {
+	$_ = "$current_dir/$_";
+    }
+    s%^\./%%;
+
+    return $_;
+}
+
+sub file_type($) {
+    local $_ = shift;
+
+    $_ = file_absolutize($_);
+
+    m%^(?:libtest|rc|server|tests|tools)/% && return "";
+    m%^(?:programs|debugger|miscemu)/% && return "wineapp";
+    m%^(?:libs)/% && return "library";
+    m%^windows/x11drv/wineclipsrv\.c$% && return "application";
+
+    return "winelib";
+}
+
+sub files_filter($@) {
+    my $type = shift;
+
+    my @files;
+    foreach my $file (@_) {
+	if(file_type($file) eq $type) {
+	    push @files, $file;
+	}
+    }
+
+    return @files;
+}
+
+sub file_skip($) {
+    local $_ = shift;
+
+    $_ = file_absolutize($_);
+
+    m%^(?:libtest|programs|rc|server|tests|tools)/% && return 1;
+    m%^(?:debugger|miscemu|libs|server)/% && return 1;
+    m%^dlls/wineps/data/% && return 1;
+    m%^windows/x11drv/wineclipsrv\.c$% && return 1;
+    m%^dlls/winmm/wineoss/midipatch\.c$% && return 1;
+    m%(?:glue|spec)\.c$% && return 1;
+
+    return 0;
+}
+
+sub files_skip(@) {
+    my @files;
+    foreach my $file (@_) {
+	if(!file_skip($file)) {
+	    push @files, $file;
+	}
+    }
+
+    return @files;
+}
+
+sub file_directory($) {
     local $_ = shift;
 
     s%/?[^/]*$%%;
@@ -143,7 +143,7 @@ sub file_directory {
     return $_;
 }
 
-sub _get_files {
+sub _get_files($$;$) {
     my $pattern = shift;
     my $type = shift;
     my $dir = shift;
@@ -178,9 +178,9 @@ sub _get_files {
     return @files;
 }
 
-sub get_c_files { return _get_files('\.c$', @_); }
-sub get_h_files { return _get_files('\.h$', @_); }
-sub get_spec_files { return _get_files('\.spec$', @_); }
-sub get_makefile_in_files { return _get_files('^Makefile.in$', @_); }
+sub get_c_files($;$) { return _get_files('\.c$', $_[0], $_[1]); }
+sub get_h_files($;$) { return _get_files('\.h$', $_[0], $_[1]); }
+sub get_spec_files($;$) { return _get_files('\.spec$', $_[0], $_[1]); }
+sub get_makefile_in_files($;$) { return _get_files('^Makefile.in$', $_[0], $_[1]); }
 
 1;

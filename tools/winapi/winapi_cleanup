@@ -40,7 +40,7 @@ if($options->progress) {
 ########################################################################
 # cleanup_file
 
-sub cleanup_file {
+sub cleanup_file($$$) {
     local *IN = shift;
     local *OUT = shift;
 
@@ -57,8 +57,8 @@ sub cleanup_file {
 	local $_ = "";
 	if ($#comments == 0) {
 	    my $comment = $comments[0];
-	    
-	    $_ = "$indent/*$comment */";	   
+
+	    $_ = "$indent/*$comment */";
 	} elsif ($#comments > 0) {
 	    $_ = "$indent/*\n";
 	    foreach my $comment (@comments) {

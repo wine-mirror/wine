@@ -25,7 +25,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw(&fixup_documentation);
+@EXPORT_OK = qw(fixup_documentation);
 
 use config qw($current_dir $wine_dir);
 use modules qw($modules);
@@ -35,7 +35,7 @@ use winapi qw($win16api $win32api @winapis);
 
 my %documentation_line_used;
 
-sub fixup_documentation {
+sub fixup_documentation($$) {
     my $function = shift;
     my $editor = shift;
 

@@ -25,8 +25,8 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(
-    &append_file &edit_file &read_file &replace_file
-    &normalize_set &is_subset
+    append_file edit_file read_file replace_file
+    normalize_set is_subset
 );
 @EXPORT_OK = qw();
 %EXPORT_TAGS = ();
@@ -34,7 +34,7 @@ require Exporter;
 ########################################################################
 # _compare_files
 
-sub _compare_files {
+sub _compare_files($$) {
     my $file1 = shift;
     my $file2 = shift;
 
@@ -54,7 +54,7 @@ sub _compare_files {
 ########################################################################
 # append_file
 
-sub append_file {
+sub append_file($$@) {
     my $filename = shift;
     my $function = shift;
 
@@ -68,7 +68,7 @@ sub append_file {
 ########################################################################
 # edit_file
 
-sub edit_file {
+sub edit_file($$@) {
     my $filename = shift;
     my $function = shift;
 
@@ -93,7 +93,7 @@ sub edit_file {
 ########################################################################
 # read_file
 
-sub read_file {
+sub read_file($$@) {
     my $filename = shift;
     my $function = shift;
 
@@ -107,7 +107,7 @@ sub read_file {
 ########################################################################
 # replace_file
 
-sub replace_file {
+sub replace_file($$@) {
     my $filename = shift;
     my $function = shift;
 
@@ -130,7 +130,7 @@ sub replace_file {
 ########################################################################
 # normalize_set
 
-sub normalize_set {
+sub normalize_set($) {
     local $_ = shift;
 
     if(!defined($_)) {
@@ -148,7 +148,7 @@ sub normalize_set {
 ########################################################################
 # is_subset
 
-sub is_subset {
+sub is_subset($$) {
     my $subset = shift;
     my $set = shift;
 

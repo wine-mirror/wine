@@ -25,10 +25,10 @@ BEGIN {
 }
 
 use config qw(
-    &file_type &files_filter
-    &file_skip &files_skip
-    &file_normalize
-    &get_spec_files
+    file_type files_filter
+    file_skip files_skip
+    file_normalize
+    get_spec_files
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use output qw($output);
@@ -44,9 +44,9 @@ use winapi_c_parser;
 use c_parser;
 use type;
 
-use winapi_fixup_documentation qw(&fixup_documentation);
+use winapi_fixup_documentation qw(fixup_documentation);
 use winapi_fixup_editor;
-use winapi_fixup_statements qw(&fixup_statements);
+use winapi_fixup_statements qw(fixup_statements);
 
 my @c_files = $options->c_files;
 @c_files = files_skip(@c_files);

@@ -20,8 +20,6 @@ package make_parser;
 
 use strict;
 
-use strict;
-
 use setup qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
@@ -36,6 +34,16 @@ use vars qw($directory $tool $file $line $message);
 use output qw($output);
 use options qw($options);
 
+
+#sub command($);
+#sub gcc_output($$);
+#sub ld_output($$);
+#sub make_output($$);
+#sub winebuild_output($$);
+#sub wmc_output($$);
+#sub wrc_output($$);
+
+
 ########################################################################
 # global
 ########################################################################
@@ -47,7 +55,7 @@ my $function;
 # error
 ########################################################################
 
-sub error {
+sub error($) {
     my $where = shift;
 
     if(!defined($where)) {
@@ -77,126 +85,10 @@ sub error {
 }
 
 ########################################################################
-# line
-########################################################################
-
-sub line {
-    local $_ = shift;
-
-    $file = "";
-    $line = "";
-    $message = "";
-
-    $current = $_;
-
-    my ($new_tool, $read_files, $write_files, $remove_files) = command($_);
-    if(defined($new_tool)) {
-	$tool = $new_tool;
-
-	$function = "";
-
-	my $progress = "";
-	if($directory && $directory ne ".") {
-	    $progress .= "$directory: ";
-	}
-	if($tool) {
-	    $progress .= "$tool: ";
-	}
-
-	if($tool =~ /^(?:cd|make)$/) {
-	    # Nothing
-	} elsif($tool eq "ld"/) {
-	    foreach my $file (@{$read_files}) {
-		$output->lazy_progress("${progress}reading '$file'");
-	    }
-	    my $file = $$write_files[0];
-	    $output->progress("$progress: writing '$file'");
-	} elsif($tool eq "rm") {
-	    foreach my $file (@{$remove_files}) {
-		$output->lazy_progress("${progress}removing '$file'");
-	    }
-	} else {
-	    if($#$read_files >= 0) {
-		$progress .= "read[" . join(" ", @{$read_files}) . "]";
-	    }
-	    if($#$write_files >= 0) {
-		if($#$read_files >= 0) {
-		    $progress .= ", ";
-		}
-		$progress .= "write[" . join(" ", @{$write_files}) . "]";
-	    }
-	    if($#$remove_files >= 0) {
-		if($#$read_files >= 0 || $#$write_files >= 0) {
-		    $progress .= ", ";
-		}
-		$progress .= "remove[" . join(" ", @{$remove_files}) . "]";
-	    }
-
-	    $output->progress($progress);
-	}
-
-	return 0;
-    }
-
-    my $make = $options->make;
-
-    if(/^Wine build complete\.$/) {
-	# Nothing
-    } elsif(/^(.*?) is newer than (.*?), please rerun (.*?)\!$/) {
-	$message = "$_";
-    } elsif(/^(.*?) is older than (.*?), please rerun (.*?)$/) {
-	$message = "$_";
-    } elsif(/^\`(.*?)\' is up to date.$/) {
-	$tool = "make";
-	make_output($1, $_);
-    } elsif(s/^$make(?:\[(\d+)\])?:\s*//) {
-	$tool = "make";
-	make_output($1, $_);
-    } elsif(!defined($tool)) {
-	error("line");
-    } elsif($tool eq "make") {
-	make_output($1, $_);
-    } elsif($tool eq "bison" && /^conflicts:\s+\d+\s+shift\/reduce$/) {
-	# Nothing
-    } elsif($tool eq "gcc" && /^(?:In file included |\s*)from (.+?):(\d+)[,:]$/) {
-	# Nothing
-    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^(.+?\.s?o)(?:\(.*?\))?:\s*//) {
-	$tool = "ld";
-	ld_output($1, $_)
-    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^(.*?)ld:\s*//) {
-	$tool = "ld";
-	ld_output("", $_)
-    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^collect2:\s*//) {
-	$tool = "ld";
-	ld_output("collect2", $_);
-    } elsif($tool eq "gcc" && s/^(.+?\.[chly]):\s*//) {
-	gcc_output($1, $_);
-    } elsif($tool eq "ld" && s/^(.+?\.c):(?:\d+:)?\s*//) {
-	ld_output($1, $_);
-    } elsif($tool eq "winebuild" && s/^(.+?\.spec):\s*//) {
-	winebuild_output($1, $_);
-    } elsif($tool eq "wmc" && s/^(.+?\.mc):\s*//) {
-        wmc_output($1, $_);
-    } elsif($tool eq "wrc" && s/^(.+?\.rc):\s*//) {
-	wrc_output($1, $_);
-    } elsif($tool eq "cd" && s/^\/bin\/sh:\s*cd:\s*//) {
-	parse_cd_output($_);
-    } elsif(/^\s*$/) {
-	# Nothing
-    } else {
-	error("line");
-    }
-
-    $file =~ s/^\.\///;
-
-    return 1;
-}
-
-########################################################################
 # make_output
 ########################################################################
 
-sub make_output {
+sub make_output($$) {
     my $level = shift;
     local $_ = shift;
 
@@ -258,91 +150,10 @@ sub make_output {
 }
 
 ########################################################################
-# command
-########################################################################
-
-sub command {
-    local $_ = shift;
-
-    my $tool;
-    my $file;
-    my $read_files = ["<???>"];
-    my $write_files = ["<???>"];
-    my $remove_files = [];
-
-    s/^\s*(.*?)\s*$/$1/;
-
-    if(s/^\[\s+-d\s+(.*?)\s+\]\s+\|\|\s+//) {
-	# Nothing
-    }
-
-    if(s/^ar\s+//) {
-	$tool = "ar";
-	($read_files, $write_files) = ar_command($_);
-    } elsif(s/^as\s+//) {
-	$tool = "as";
-	($read_files, $write_files) = as_command($_);
-    } elsif(s/^bison\s+//) {
-	$tool = "bison";
-	($read_files, $write_files) = bison_command($_);
-    } elsif(s/^cd\s+//) {
-	$tool = "cd";
-	($read_files, $write_files) = cd_command($_);
-    } elsif(s/^flex\s+//) {
-	$tool = "flex";
-	($read_files, $write_files) = flex_command($_);
-    } elsif(s/^for\s+//) {
-	$tool = "for";
-	($read_files, $write_files) = for_command($_);
-    } elsif(s/^\/usr\/bin\/install\s+//) {
-	$tool = "install";
-	($read_files, $write_files) = install_command($_);
-    } elsif(s/^ld\s+//) {
-	$tool = "ld";
-	($read_files, $write_files) = ld_command($_);
-    } elsif(s/^\/sbin\/ldconfig\s+//) {
-	$tool = "ldconfig";
-	($read_files, $write_files) = ldconfig_command();
-    } elsif(s/^gcc\s+//) {
-	$tool = "gcc";
-	($read_files, $write_files) = gcc_command($_);
-    } elsif(s/^(?:(?:\.\.\/)+|\.\/)tools\/makedep\s+//) {
-	$tool = "makedep";
-	($read_files, $write_files) = makedep_command($_);
-    } elsif(s/^mkdir\s+//) {
-	$tool = "mkdir";
-	($read_files, $write_files) = mkdir_command($_);
-    } elsif(s/^ranlib\s+//) {
-	$tool = "ranlib";
-	($read_files, $write_files) = ranlib_command($_);
-    } elsif(s/^rm\s+//) {
-	$tool = "rm";
-	($read_files, $write_files, $remove_files) = rm_command($_);
-    } elsif(s/^sed\s+//) {
-	$tool = "sed";
-	($read_files, $write_files) = sed_command($_);
-    } elsif(s/^strip\s+//) {
-	$tool = "sed";
-	($read_files, $write_files) = strip_command($_);
-    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/winebuild\/winebuild\s+//) {
-	$tool = "winebuild";
-	($read_files, $write_files) = winebuild_command($_);
-    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wmc\/wmc\s+//) {
-	$tool = "wmc";
-	($read_files, $write_files) = wmc_command($_);
-    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wrc\/wrc\s+//) {
-	$tool = "wrc";
-	($read_files, $write_files) = wrc_command($_);
-    }
-
-    return ($tool, $read_files, $write_files, $remove_files);
-}
-
-########################################################################
 # ar_command
 ########################################################################
 
-sub ar_command {
+sub ar_command($) {
     local $_ = shift;
 
     my $read_files;
@@ -364,7 +175,7 @@ sub ar_command {
 # as_command
 ########################################################################
 
-sub as_command {
+sub as_command($) {
     local $_ = shift;
 
     my $read_files;
@@ -384,7 +195,7 @@ sub as_command {
 # bision_command
 ########################################################################
 
-sub bison_command {
+sub bison_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -394,7 +205,7 @@ sub bison_command {
 # cd_command
 ########################################################################
 
-sub cd_command {
+sub cd_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -404,7 +215,7 @@ sub cd_command {
 # cd_output
 ########################################################################
 
-sub cd_output {
+sub cd_output($) {
     local $_ = shift;
 
     if(/^(.*?): No such file or directory/) {
@@ -416,7 +227,7 @@ sub cd_output {
 # flex_command
 ########################################################################
 
-sub flex_command {
+sub flex_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -426,7 +237,7 @@ sub flex_command {
 # for_command
 ########################################################################
 
-sub for_command {
+sub for_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -436,7 +247,7 @@ sub for_command {
 # gcc_command
 ########################################################################
 
-sub gcc_command {
+sub gcc_command($) {
     my $read_files;
     my $write_files;
 
@@ -474,7 +285,7 @@ sub gcc_command {
 # gcc_output
 ########################################################################
 
-sub gcc_output {
+sub gcc_output($$) {
     $file = shift;
     local $_ = shift;
 
@@ -606,7 +417,7 @@ sub gcc_output {
 # install_command
 ########################################################################
 
-sub install_command {
+sub install_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -616,7 +427,7 @@ sub install_command {
 # ld_command
 ########################################################################
 
-sub ld_command {
+sub ld_command($) {
     local $_ = shift;
 
     my $read_files;
@@ -636,7 +447,7 @@ sub ld_command {
 # ld_output
 ########################################################################
 
-sub ld_output {
+sub ld_output($$) {
     $file = shift;
     local $_ = shift;
 
@@ -663,7 +474,7 @@ sub ld_output {
 # ldconfig_command
 ########################################################################
 
-sub ldconfig_command {
+sub ldconfig_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -673,7 +484,7 @@ sub ldconfig_command {
 # makedep_command
 ########################################################################
 
-sub makedep_command {
+sub makedep_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -683,7 +494,7 @@ sub makedep_command {
 # mkdir_command
 ########################################################################
 
-sub mkdir_command {
+sub mkdir_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -693,7 +504,7 @@ sub mkdir_command {
 # ranlib_command
 ########################################################################
 
-sub ranlib_command {
+sub ranlib_command($) {
     local $_ = shift;
 
     my $read_files;
@@ -709,7 +520,7 @@ sub ranlib_command {
 # rm_command
 ########################################################################
 
-sub rm_command {
+sub rm_command($) {
     local $_ = shift;
     s/^-f\s*//;
     return ([], [], [split(/\s+/, $_)]);
@@ -719,7 +530,7 @@ sub rm_command {
 # sed_command
 ########################################################################
 
-sub sed_command {
+sub sed_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -729,7 +540,7 @@ sub sed_command {
 # strip_command
 ########################################################################
 
-sub strip_command {
+sub strip_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -739,7 +550,7 @@ sub strip_command {
 # winebuild_command
 ########################################################################
 
-sub winebuild_command {
+sub winebuild_command($) {
     local $_ = shift;
 
     return ([], []);
@@ -749,7 +560,7 @@ sub winebuild_command {
 # winebuild_output
 ########################################################################
 
-sub winebuild_output {
+sub winebuild_output($$) {
     $file = shift;
     local $_ = shift;
 
@@ -760,7 +571,7 @@ sub winebuild_output {
 # wmc_command
 ########################################################################
 
-sub wmc_command {
+sub wmc_command($) {
     local $_ = shift;
 
     my $read_files;
@@ -785,7 +596,7 @@ sub wmc_command {
 # wmc_output
 ########################################################################
 
-sub wmc_output {
+sub wmc_output($$) {
     $file = shift;
     local $_ = shift;
 }
@@ -794,7 +605,7 @@ sub wmc_output {
 # wrc_command
 ########################################################################
 
-sub wrc_command {
+sub wrc_command($) {
     local $_ = shift;
 
     my $read_files;
@@ -819,9 +630,206 @@ sub wrc_command {
 # wrc_output
 ########################################################################
 
-sub wrc_output {
+sub wrc_output($$) {
     $file = shift;
     local $_ = shift;
+}
+
+########################################################################
+# command
+########################################################################
+
+sub command($) {
+    local $_ = shift;
+
+    my $tool;
+    my $file;
+    my $read_files = ["<???>"];
+    my $write_files = ["<???>"];
+    my $remove_files = [];
+
+    s/^\s*(.*?)\s*$/$1/;
+
+    if(s/^\[\s+-d\s+(.*?)\s+\]\s+\|\|\s+//) {
+	# Nothing
+    }
+
+    if(s/^ar\s+//) {
+	$tool = "ar";
+	($read_files, $write_files) = ar_command($_);
+    } elsif(s/^as\s+//) {
+	$tool = "as";
+	($read_files, $write_files) = as_command($_);
+    } elsif(s/^bison\s+//) {
+	$tool = "bison";
+	($read_files, $write_files) = bison_command($_);
+    } elsif(s/^cd\s+//) {
+	$tool = "cd";
+	($read_files, $write_files) = cd_command($_);
+    } elsif(s/^flex\s+//) {
+	$tool = "flex";
+	($read_files, $write_files) = flex_command($_);
+    } elsif(s/^for\s+//) {
+	$tool = "for";
+	($read_files, $write_files) = for_command($_);
+    } elsif(s/^\/usr\/bin\/install\s+//) {
+	$tool = "install";
+	($read_files, $write_files) = install_command($_);
+    } elsif(s/^ld\s+//) {
+	$tool = "ld";
+	($read_files, $write_files) = ld_command($_);
+    } elsif(s/^\/sbin\/ldconfig\s+//) {
+	$tool = "ldconfig";
+	($read_files, $write_files) = ldconfig_command();
+    } elsif(s/^gcc\s+//) {
+	$tool = "gcc";
+	($read_files, $write_files) = gcc_command($_);
+    } elsif(s/^(?:(?:\.\.\/)+|\.\/)tools\/makedep\s+//) {
+	$tool = "makedep";
+	($read_files, $write_files) = makedep_command($_);
+    } elsif(s/^mkdir\s+//) {
+	$tool = "mkdir";
+	($read_files, $write_files) = mkdir_command($_);
+    } elsif(s/^ranlib\s+//) {
+	$tool = "ranlib";
+	($read_files, $write_files) = ranlib_command($_);
+    } elsif(s/^rm\s+//) {
+	$tool = "rm";
+	($read_files, $write_files, $remove_files) = rm_command($_);
+    } elsif(s/^sed\s+//) {
+	$tool = "sed";
+	($read_files, $write_files) = sed_command($_);
+    } elsif(s/^strip\s+//) {
+	$tool = "sed";
+	($read_files, $write_files) = strip_command($_);
+    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/winebuild\/winebuild\s+//) {
+	$tool = "winebuild";
+	($read_files, $write_files) = winebuild_command($_);
+    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wmc\/wmc\s+//) {
+	$tool = "wmc";
+	($read_files, $write_files) = wmc_command($_);
+    } elsif(s/^LD_LIBRARY_PATH="(?:(?:\.\.\/)*unicode)?:\$LD_LIBRARY_PATH"\s+(?:\.\.\/)*tools\/wrc\/wrc\s+//) {
+	$tool = "wrc";
+	($read_files, $write_files) = wrc_command($_);
+    }
+
+    return ($tool, $read_files, $write_files, $remove_files);
+}
+
+########################################################################
+# line
+########################################################################
+
+sub line($) {
+    local $_ = shift;
+
+    $file = "";
+    $line = "";
+    $message = "";
+
+    $current = $_;
+
+    my ($new_tool, $read_files, $write_files, $remove_files) = command($_);
+    if(defined($new_tool)) {
+	$tool = $new_tool;
+
+	$function = "";
+
+	my $progress = "";
+	if($directory && $directory ne ".") {
+	    $progress .= "$directory: ";
+	}
+	if($tool) {
+	    $progress .= "$tool: ";
+	}
+
+	if($tool =~ /^(?:cd|make)$/) {
+	    # Nothing
+	} elsif($tool eq "ld"/) {
+	    foreach my $file (@{$read_files}) {
+		$output->lazy_progress("${progress}reading '$file'");
+	    }
+	    my $file = $$write_files[0];
+	    $output->progress("$progress: writing '$file'");
+	} elsif($tool eq "rm") {
+	    foreach my $file (@{$remove_files}) {
+		$output->lazy_progress("${progress}removing '$file'");
+	    }
+	} else {
+	    if($#$read_files >= 0) {
+		$progress .= "read[" . join(" ", @{$read_files}) . "]";
+	    }
+	    if($#$write_files >= 0) {
+		if($#$read_files >= 0) {
+		    $progress .= ", ";
+		}
+		$progress .= "write[" . join(" ", @{$write_files}) . "]";
+	    }
+	    if($#$remove_files >= 0) {
+		if($#$read_files >= 0 || $#$write_files >= 0) {
+		    $progress .= ", ";
+		}
+		$progress .= "remove[" . join(" ", @{$remove_files}) . "]";
+	    }
+
+	    $output->progress($progress);
+	}
+
+	return 0;
+    }
+
+    my $make = $options->make;
+
+    if(/^Wine build complete\.$/) {
+	# Nothing
+    } elsif(/^(.*?) is newer than (.*?), please rerun (.*?)\!$/) {
+	$message = "$_";
+    } elsif(/^(.*?) is older than (.*?), please rerun (.*?)$/) {
+	$message = "$_";
+    } elsif(/^\`(.*?)\' is up to date.$/) {
+	$tool = "make";
+	make_output($1, $_);
+    } elsif(s/^$make(?:\[(\d+)\])?:\s*//) {
+	$tool = "make";
+	make_output($1, $_);
+    } elsif(!defined($tool)) {
+	error("line");
+    } elsif($tool eq "make") {
+	make_output($1, $_);
+    } elsif($tool eq "bison" && /^conflicts:\s+\d+\s+shift\/reduce$/) {
+	# Nothing
+    } elsif($tool eq "gcc" && /^(?:In file included |\s*)from (.+?):(\d+)[,:]$/) {
+	# Nothing
+    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^(.+?\.s?o)(?:\(.*?\))?:\s*//) {
+	$tool = "ld";
+	ld_output($1, $_)
+    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^(.*?)ld:\s*//) {
+	$tool = "ld";
+	ld_output("", $_)
+    } elsif($tool =~ /^(?:gcc|ld)$/ && s/^collect2:\s*//) {
+	$tool = "ld";
+	ld_output("collect2", $_);
+    } elsif($tool eq "gcc" && s/^(.+?\.[chly]):\s*//) {
+	gcc_output($1, $_);
+    } elsif($tool eq "ld" && s/^(.+?\.c):(?:\d+:)?\s*//) {
+	ld_output($1, $_);
+    } elsif($tool eq "winebuild" && s/^(.+?\.spec):\s*//) {
+	winebuild_output($1, $_);
+    } elsif($tool eq "wmc" && s/^(.+?\.mc):\s*//) {
+        wmc_output($1, $_);
+    } elsif($tool eq "wrc" && s/^(.+?\.rc):\s*//) {
+	wrc_output($1, $_);
+    } elsif($tool eq "cd" && s/^\/bin\/sh:\s*cd:\s*//) {
+	parse_cd_output($_);
+    } elsif(/^\s*$/) {
+	# Nothing
+    } else {
+	error("line");
+    }
+
+    $file =~ s/^\.\///;
+
+    return 1;
 }
 
 1;

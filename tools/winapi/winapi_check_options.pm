@@ -165,7 +165,7 @@ use base qw(_options);
 
 use strict;
 
-sub report_module {
+sub report_module($$) {
     my $self = shift;
     my $refvalue = $self->{MODULE};
 
@@ -178,7 +178,7 @@ sub report_module {
     }
 }
 
-sub report_argument_forbidden {
+sub report_argument_forbidden($$) {
     my $self = shift;
     my $refargument_forbidden = $self->{ARGUMENT_FORBIDDEN};
 
@@ -187,7 +187,7 @@ sub report_argument_forbidden {
     return $$refargument_forbidden->{active} && (!$$refargument_forbidden->{filter} || $$refargument_forbidden->{hash}->{$type});
 }
 
-sub report_argument_kind {
+sub report_argument_kind($$) {
     my $self = shift;
     my $refargument_kind = $self->{ARGUMENT_KIND};
 

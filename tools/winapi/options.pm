@@ -25,13 +25,13 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw($options &parse_comma_list &parse_value);
+@EXPORT_OK = qw($options parse_comma_list parse_value);
 
 use vars qw($options);
 
 use output qw($output);
 
-sub parse_comma_list {
+sub parse_comma_list($$) {
     my $prefix = shift;
     my $value = shift;
 
@@ -48,7 +48,7 @@ sub parse_comma_list {
     }
 }
 
-sub parse_value {
+sub parse_value($$) {
     my $prefix = shift;
     my $value = shift;
 
@@ -61,7 +61,9 @@ use strict;
 
 use output qw($output);
 
-sub new {
+sub options_set($$);
+
+sub new($$$$) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -199,7 +201,7 @@ sub new {
 sub DESTROY {
 }
 
-sub parse_files {
+sub parse_files($) {
     my $self = shift;
 
     my $arguments = \@{$self->{_ARGUMENTS}};
@@ -279,7 +281,7 @@ sub parse_files {
     @$directories = sort(keys(%dirs));
 }
 
-sub options_set {
+sub options_set($$) {
     my $self = shift;
 
     my $options_long = \%{$self->{_OPTIONS_LONG}};
@@ -315,7 +317,7 @@ sub options_set {
     }
 }
 
-sub show_help {
+sub show_help($) {
     my $self = shift;
 
     my $options_long = \%{$self->{_OPTIONS_LONG}};
@@ -391,7 +393,7 @@ sub AUTOLOAD {
     }
 }
 
-sub arguments {
+sub arguments($) {
     my $self = shift;
 
     my $arguments = \@{$self->{_ARGUMENTS}};
@@ -399,7 +401,7 @@ sub arguments {
     return @$arguments;
 }
 
-sub c_files {
+sub c_files($) {
     my $self = shift;
 
     my $c_files = \@{$self->{_C_FILES}};
@@ -411,7 +413,7 @@ sub c_files {
     return @$c_files;
 }
 
-sub h_files {
+sub h_files($) {
     my $self = shift;
 
     my $h_files = \@{$self->{_H_FILES}};
@@ -423,7 +425,7 @@ sub h_files {
     return @$h_files;
 }
 
-sub directories {
+sub directories($) {
     my $self = shift;
 
     my $directories = \@{$self->{_DIRECTORIES}};

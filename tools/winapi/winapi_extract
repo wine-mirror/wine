@@ -25,7 +25,7 @@ BEGIN {
 }
 
 use config qw(
-    &file_type &files_skip &files_filter &get_spec_files
+    file_type files_skip files_filter get_spec_files
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use output qw($output);
@@ -99,7 +99,7 @@ if($options->spec_files || $options->winetest) {
 
 my %specifications;
 
-sub documentation_specifications {
+sub documentation_specifications($) {
     my $function = shift;
 
     my @debug_channels = @{$function->debug_channels};
@@ -161,7 +161,7 @@ sub documentation_specifications {
 
 my %module_pseudo_stub;
 
-sub statements_pseudo_stub {
+sub statements_pseudo_stub($) {
     my $function = shift;
 
     my $pseudo_stub = 0;
@@ -415,7 +415,7 @@ if($options->implemented && !$options->pseudo_implemented) {
     }
 }
 
-sub output_function {
+sub output_function($$$$$) {
     local *OUT = shift;
     my $type = shift;
     my $ordinal = shift;

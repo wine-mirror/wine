@@ -33,15 +33,17 @@ use config qw($current_dir $wine_dir $winapi_dir);
 use options qw($options);
 use output qw($output);
 
-sub import {
+sub import(@) {
     $Exporter::ExportLevel++;
-    &Exporter::import(@_);
+    Exporter::import(@_);
     $Exporter::ExportLevel--;
 
     $tests = 'tests'->new;
 }
 
-sub new {
+sub parse_tests_file($);
+
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -52,7 +54,7 @@ sub new {
     return $self;
 }
 
-sub parse_tests_file {
+sub parse_tests_file($) {
     my $self = shift;
 
     my $file = "tests.dat";
@@ -90,7 +92,7 @@ sub parse_tests_file {
     close(IN);
 }
 
-sub get_tests {
+sub get_tests($$) {
     my $self = shift;
 
     my $tests = \%{$self->{TESTS}};
@@ -112,7 +114,7 @@ sub get_tests {
     return sort(keys(%tests));
 }
 
-sub get_test_dirs {
+sub get_test_dirs($$) {
     my $self = shift;
 
     my $tests = \%{$self->{TESTS}};
@@ -135,7 +137,7 @@ sub get_test_dirs {
     return sort(keys(%test_dirs));
 }
 
-sub get_sections {
+sub get_sections($$$) {
     my $self = shift;
 
     my $tests = \%{$self->{TESTS}};
@@ -175,7 +177,7 @@ sub get_sections {
     return sort(keys(%sections));
 }
 
-sub get_section {
+sub get_section($$$$) {
     my $self = shift;
 
     my $tests = \%{$self->{TESTS}};

@@ -20,7 +20,7 @@ package type;
 
 use strict;
 
-sub new {
+sub new($) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};

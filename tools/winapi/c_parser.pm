@@ -41,10 +41,20 @@ my $CALL_CONVENTION="__cdecl|__stdcall|" .
 		    "WINE_UNUSED";
 
 
+sub parse_c_function($$$$$);
+sub parse_c_function_call($$$$$$$$);
+sub parse_c_preprocessor($$$$);
+sub parse_c_statements($$$$);
+sub parse_c_tuple($$$$$$$);
+sub parse_c_type($$$$$);
+sub parse_c_typedef($$$$);
+sub parse_c_variable($$$$$$$);
+
+
 ########################################################################
 # new
 #
-sub new {
+sub new($$) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -83,7 +93,7 @@ sub new {
 ########################################################################
 # set_found_comment_callback
 #
-sub set_found_comment_callback {
+sub set_found_comment_callback($$) {
     my $self = shift;
 
     my $found_comment = \${$self->{FOUND_COMMENT}};
@@ -94,7 +104,7 @@ sub set_found_comment_callback {
 ########################################################################
 # set_found_declaration_callback
 #
-sub set_found_declaration_callback {
+sub set_found_declaration_callback($$) {
     my $self = shift;
 
     my $found_declaration = \${$self->{FOUND_DECLARATION}};
@@ -105,7 +115,7 @@ sub set_found_declaration_callback {
 ########################################################################
 # set_found_function_callback
 #
-sub set_found_function_callback {
+sub set_found_function_callback($$) {
     my $self = shift;
 
     my $found_function = \${$self->{FOUND_FUNCTION}};
@@ -116,7 +126,7 @@ sub set_found_function_callback {
 ########################################################################
 # set_found_function_call_callback
 #
-sub set_found_function_call_callback {
+sub set_found_function_call_callback($$) {
     my $self = shift;
 
     my $found_function_call = \${$self->{FOUND_FUNCTION_CALL}};
@@ -127,7 +137,7 @@ sub set_found_function_call_callback {
 ########################################################################
 # set_found_line_callback
 #
-sub set_found_line_callback {
+sub set_found_line_callback($$) {
     my $self = shift;
 
     my $found_line = \${$self->{FOUND_LINE}};
@@ -138,7 +148,7 @@ sub set_found_line_callback {
 ########################################################################
 # set_found_preprocessor_callback
 #
-sub set_found_preprocessor_callback {
+sub set_found_preprocessor_callback($$) {
     my $self = shift;
 
     my $found_preprocessor = \${$self->{FOUND_PREPROCESSOR}};
@@ -149,7 +159,7 @@ sub set_found_preprocessor_callback {
 ########################################################################
 # set_found_statement_callback
 #
-sub set_found_statement_callback {
+sub set_found_statement_callback($$) {
     my $self = shift;
 
     my $found_statement = \${$self->{FOUND_STATEMENT}};
@@ -160,7 +170,7 @@ sub set_found_statement_callback {
 ########################################################################
 # set_found_type_callback
 #
-sub set_found_type_callback {
+sub set_found_type_callback($$) {
     my $self = shift;
 
     my $found_type = \${$self->{FOUND_TYPE}};
@@ -171,7 +181,7 @@ sub set_found_type_callback {
 ########################################################################
 # set_found_variable_callback
 #
-sub set_found_variable_callback {
+sub set_found_variable_callback($$) {
     my $self = shift;
 
     my $found_variable = \${$self->{FOUND_VARIABLE}};
@@ -183,7 +193,7 @@ sub set_found_variable_callback {
 ########################################################################
 # _format_c_type
 
-sub _format_c_type {
+sub _format_c_type($$) {
     my $self = shift;
 
     local $_ = shift;
@@ -208,72 +218,11 @@ sub _format_c_type {
 
 
 ########################################################################
-# _parse_c
-
-sub _parse_c {
-    my $self = shift;
-
-    my $pattern = shift;
-    my $refcurrent = shift;
-    my $refline = shift;
-    my $refcolumn = shift;
-
-    my $refmatch = shift;
-
-    local $_ = $$refcurrent;
-    my $line = $$refline;
-    my $column = $$refcolumn;
-
-    my $match;
-    if(s/^(?:$pattern)//s) {
-	$self->_update_c_position($&, \$line, \$column);
-	$match = $&;
-    } else {
-	return 0;
-    }
-
-    $self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
-
-    $$refcurrent = $_;
-    $$refline = $line;
-    $$refcolumn = $column;
-
-    $$refmatch = $match;
-
-    return 1;
-}
-
-########################################################################
-# _parse_c_error
-
-sub _parse_c_error {
-    my $self = shift;
-
-    local $_ = shift;
-    my $line = shift;
-    my $column = shift;
-    my $context = shift;
-    my $message = shift;
-
-    $message = "parse error" if !$message;
-
-    # Why did I do this?
-    if($output->prefix) {
-	# $output->write("\n");
-	$output->prefix("");
-    }
-
-    $self->_parse_c_warning($_, $line, $column, $context, $message);
-
-    exit 1;
-}
-
-########################################################################
 # _parse_c_warning
 #
 # FIXME: Use caller (See man perlfunc)
 
-sub _parse_c_warning {
+sub _parse_c_warning($$$$$$) {
     my $self = shift;
 
     local $_ = shift;
@@ -307,9 +256,98 @@ sub _parse_c_warning {
 }
 
 ########################################################################
+# _parse_c_error
+
+sub _parse_c_error($$$$$$) {
+    my $self = shift;
+
+    local $_ = shift;
+    my $line = shift;
+    my $column = shift;
+    my $context = shift;
+    my $message = shift;
+
+    $message = "parse error" if !$message;
+
+    # Why did I do this?
+    if($output->prefix) {
+	# $output->write("\n");
+	$output->prefix("");
+    }
+
+    $self->_parse_c_warning($_, $line, $column, $context, $message);
+
+    exit 1;
+}
+
+########################################################################
+# _update_c_position
+
+sub _update_c_position($$$$) {
+    my $self = shift;
+
+    local $_ = shift;
+    my $refline = shift;
+    my $refcolumn = shift;
+
+    my $line = $$refline;
+    my $column = $$refcolumn;
+
+    while($_) {
+	if(s/^[^\n\t\'\"]*//s) {
+	    $column += length($&);
+	}
+
+	if(s/^\'//) {
+	    $column++;
+	    while(/^./ && !s/^\'//) {
+		s/^([^\'\\]*)//s;
+		$column += length($1);
+		if(s/^\\//) {
+		    $column++;
+		    if(s/^(.)//s) {
+			$column += length($1);
+			if($1 eq "0") {
+			    s/^(\d{0,3})//s;
+			    $column += length($1);
+			}
+		    }
+		}
+	    }
+	    $column++;
+	} elsif(s/^\"//) {
+	    $column++;
+	    while(/^./ && !s/^\"//) {
+		s/^([^\"\\]*)//s;
+		$column += length($1);
+		if(s/^\\//) {
+		    $column++;
+		    if(s/^(.)//s) {
+			$column += length($1);
+			if($1 eq "0") {
+			    s/^(\d{0,3})//s;
+			    $column += length($1);
+			}
+		    }
+		}
+	    }
+	    $column++;
+	} elsif(s/^\n//) {
+	    $line++;
+	    $column = 0;
+	} elsif(s/^\t//) {
+	    $column = $column + 8 - $column % 8;
+	}
+    }
+
+    $$refline = $line;
+    $$refcolumn = $column;
+}
+
+########################################################################
 # __parse_c_until_one_of
 
-sub __parse_c_until_one_of {
+sub __parse_c_until_one_of($$$$$$$) {
     my $self = shift;
 
     my $characters = shift;
@@ -432,7 +470,7 @@ sub __parse_c_until_one_of {
 ########################################################################
 # _parse_c_until_one_of
 
-sub _parse_c_until_one_of {
+sub _parse_c_until_one_of($$$$$$) {
     my $self = shift;
 
     my $characters = shift;
@@ -447,7 +485,7 @@ sub _parse_c_until_one_of {
 ########################################################################
 # _parse_c_on_same_level_until_one_of
 
-sub _parse_c_on_same_level_until_one_of {
+sub _parse_c_on_same_level_until_one_of($$$$$$) {
     my $self = shift;
 
     my $characters = shift;
@@ -460,73 +498,9 @@ sub _parse_c_on_same_level_until_one_of {
 }
 
 ########################################################################
-# _update_c_position
-
-sub _update_c_position {
-    my $self = shift;
-
-    local $_ = shift;
-    my $refline = shift;
-    my $refcolumn = shift;
-
-    my $line = $$refline;
-    my $column = $$refcolumn;
-
-    while($_) {
-	if(s/^[^\n\t\'\"]*//s) {
-	    $column += length($&);
-	}
-
-	if(s/^\'//) {
-	    $column++;
-	    while(/^./ && !s/^\'//) {
-		s/^([^\'\\]*)//s;
-		$column += length($1);
-		if(s/^\\//) {
-		    $column++;
-		    if(s/^(.)//s) {
-			$column += length($1);
-			if($1 eq "0") {
-			    s/^(\d{0,3})//s;
-			    $column += length($1);
-			}
-		    }
-		}
-	    }
-	    $column++;
-	} elsif(s/^\"//) {
-	    $column++;
-	    while(/^./ && !s/^\"//) {
-		s/^([^\"\\]*)//s;
-		$column += length($1);
-		if(s/^\\//) {
-		    $column++;
-		    if(s/^(.)//s) {
-			$column += length($1);
-			if($1 eq "0") {
-			    s/^(\d{0,3})//s;
-			    $column += length($1);
-			}
-		    }
-		}
-	    }
-	    $column++;
-	} elsif(s/^\n//) {
-	    $line++;
-	    $column = 0;
-	} elsif(s/^\t//) {
-	    $column = $column + 8 - $column % 8;
-	}
-    }
-
-    $$refline = $line;
-    $$refcolumn = $column;
-}
-
-########################################################################
 # parse_c_block
 
-sub parse_c_block {
+sub parse_c_block($$$$$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -590,7 +564,7 @@ sub parse_c_block {
 ########################################################################
 # parse_c_declaration
 
-sub parse_c_declaration {
+sub parse_c_declaration($$$$$$$$$$$$) {
     my $self = shift;
 
     my $found_declaration = \${$self->{FOUND_DECLARATION}};
@@ -694,7 +668,7 @@ sub parse_c_declaration {
 ########################################################################
 # parse_c_declarations
 
-sub parse_c_declarations {
+sub parse_c_declarations($$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -705,9 +679,45 @@ sub parse_c_declarations {
 }
 
 ########################################################################
+# _parse_c
+
+sub _parse_c($$$$$$) {
+    my $self = shift;
+
+    my $pattern = shift;
+    my $refcurrent = shift;
+    my $refline = shift;
+    my $refcolumn = shift;
+
+    my $refmatch = shift;
+
+    local $_ = $$refcurrent;
+    my $line = $$refline;
+    my $column = $$refcolumn;
+
+    my $match;
+    if(s/^(?:$pattern)//s) {
+	$self->_update_c_position($&, \$line, \$column);
+	$match = $&;
+    } else {
+	return 0;
+    }
+
+    $self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
+
+    $$refcurrent = $_;
+    $$refline = $line;
+    $$refcolumn = $column;
+
+    $$refmatch = $match;
+
+    return 1;
+}
+
+########################################################################
 # parse_c_enum
 
-sub parse_c_enum {
+sub parse_c_enum($$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -781,7 +791,7 @@ sub parse_c_enum {
 ########################################################################
 # parse_c_expression
 
-sub parse_c_expression {
+sub parse_c_expression($$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -837,7 +847,7 @@ sub parse_c_expression {
 ########################################################################
 # parse_c_file
 
-sub parse_c_file {
+sub parse_c_file($$$$) {
     my $self = shift;
 
     my $found_comment = \${$self->{FOUND_COMMENT}};
@@ -1152,7 +1162,7 @@ sub parse_c_file {
 ########################################################################
 # parse_c_function
 
-sub parse_c_function {
+sub parse_c_function($$$$$) {
     my $self = shift;
 
     my $file = \${$self->{FILE}};
@@ -1304,7 +1314,7 @@ sub parse_c_function {
 ########################################################################
 # parse_c_function_call
 
-sub parse_c_function_call {
+sub parse_c_function_call($$$$$$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -1352,7 +1362,7 @@ sub parse_c_function_call {
 ########################################################################
 # parse_c_preprocessor
 
-sub parse_c_preprocessor {
+sub parse_c_preprocessor($$$$) {
     my $self = shift;
 
     my $found_preprocessor = \${$self->{FOUND_PREPROCESSOR}};
@@ -1402,7 +1412,7 @@ sub parse_c_preprocessor {
 ########################################################################
 # parse_c_statement
 
-sub parse_c_statement {
+sub parse_c_statement($$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -1486,7 +1496,7 @@ sub parse_c_statement {
 ########################################################################
 # parse_c_statements
 
-sub parse_c_statements {
+sub parse_c_statements($$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -1583,7 +1593,7 @@ sub parse_c_statements {
 ########################################################################
 # parse_c_struct_union
 
-sub parse_c_struct_union {
+sub parse_c_struct_union($$$$$$$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -1681,7 +1691,7 @@ sub parse_c_struct_union {
 ########################################################################
 # parse_c_tuple
 
-sub parse_c_tuple {
+sub parse_c_tuple($$$$$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -1757,7 +1767,7 @@ sub parse_c_tuple {
 ########################################################################
 # parse_c_type
 
-sub parse_c_type {
+sub parse_c_type($$$$$) {
     my $self = shift;
 
     my $refcurrent = shift;
@@ -1799,7 +1809,7 @@ sub parse_c_type {
 ########################################################################
 # parse_c_typedef
 
-sub parse_c_typedef {
+sub parse_c_typedef($$$$) {
     my $self = shift;
 
     my $create_type = \${$self->{CREATE_TYPE}};
@@ -1920,7 +1930,7 @@ sub parse_c_typedef {
 ########################################################################
 # parse_c_variable
 
-sub parse_c_variable {
+sub parse_c_variable($$$$$$$) {
     my $self = shift;
 
     my $found_variable = \${$self->{FOUND_VARIABLE}};

@@ -35,9 +35,17 @@ use output qw($output);
 
 use vars qw($modules);
 
-sub import {
+sub found_shared_internal_function($$);
+sub function_external_calling_convention_in_module($$$);
+sub function_internal_module($$);
+sub is_function_stub_in_module($$$);
+sub new($$$);
+sub parse_api_file($$);
+sub parse_spec_file($$);
+
+sub import(@) {
     $Exporter::ExportLevel++;
-    &Exporter::import(@_);
+    Exporter::import(@_);
     $Exporter::ExportLevel--;
 
     if (defined($modules) && defined($win16api) && defined($win32api)) {
@@ -69,7 +77,7 @@ sub import {
 }
 
 
-sub new {
+sub new($$$) {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -102,15 +110,15 @@ sub new {
     return $self;
 }
 
-sub win16api {
+sub win16api() {
     return $win16api;
 }
 
-sub win32api {
+sub win32api() {
     return $win32api;
 }
 
-sub parse_api_file {
+sub parse_api_file($$) {
     my $self = shift;
 
     my $allowed_kind = \%{$self->{ALLOWED_KIND}};
@@ -217,7 +225,7 @@ sub parse_api_file {
     close(IN);
 }
 
-sub parse_spec_file {
+sub parse_spec_file($$) {
     my $self = shift;
 
     my $function_internal_arguments = \%{$self->{FUNCTION_INTERNAL_ARGUMENTS}};
@@ -468,14 +476,14 @@ sub parse_spec_file {
     $$module_files{$module} = $file;
 }
 
-sub name {
+sub name($) {
     my $self = shift;
     my $name = \${$self->{NAME}};
 
     return $$name;
 }
 
-sub is_allowed_kind {
+sub is_allowed_kind($$) {
     my $self = shift;
     my $allowed_kind = \%{$self->{ALLOWED_KIND}};
 
@@ -488,7 +496,7 @@ sub is_allowed_kind {
 
 }
 
-sub allow_kind {
+sub allow_kind($$) {
     my $self = shift;
     my $allowed_kind = \%{$self->{ALLOWED_KIND}};
 
@@ -497,7 +505,7 @@ sub allow_kind {
     $$allowed_kind{$kind}++;
 }
 
-sub is_limited_type {
+sub is_limited_type($$) {
     my $self = shift;
     my $allowed_modules_limited = \%{$self->{ALLOWED_MODULES_LIMITED}};
 
@@ -506,7 +514,7 @@ sub is_limited_type {
     return $$allowed_modules_limited{$type};
 }
 
-sub is_allowed_type_in_module {
+sub is_allowed_type_in_module($$) {
     my $self = shift;
     my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
     my $allowed_modules_limited = \%{$self->{ALLOWED_MODULES_LIMITED}};
@@ -523,7 +531,7 @@ sub is_allowed_type_in_module {
     return 0;
 }
 
-sub allow_type_in_module {
+sub allow_type_in_module($$) {
     my $self = shift;
     my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
 
@@ -535,7 +543,7 @@ sub allow_type_in_module {
     }
 }
 
-sub type_used_in_module {
+sub type_used_in_module($$) {
     my $self = shift;
     my $used_modules = \%{$self->{USED_MODULES}};
 
@@ -549,7 +557,7 @@ sub type_used_in_module {
     return ();
 }
 
-sub types_not_used {
+sub types_not_used($) {
     my $self = shift;
     my $used_modules = \%{$self->{USED_MODULES}};
     my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
@@ -565,7 +573,7 @@ sub types_not_used {
     return $not_used;
 }
 
-sub types_unlimited_used_in_modules {
+sub types_unlimited_used_in_modules($) {
     my $self = shift;
 
     my $used_modules = \%{$self->{USED_MODULES}};
@@ -589,7 +597,7 @@ sub types_unlimited_used_in_modules {
     return $used_types;
 }
 
-sub translate_argument {
+sub translate_argument($$) {
     my $self = shift;
     my $translate_argument = \%{$self->{TRANSLATE_ARGUMENT}};
 
@@ -598,7 +606,7 @@ sub translate_argument {
     return $$translate_argument{$type};
 }
 
-sub declare_argument {
+sub declare_argument($$$) {
     my $self = shift;
     my $translate_argument = \%{$self->{TRANSLATE_ARGUMENT}};
 
@@ -608,14 +616,14 @@ sub declare_argument {
     $$translate_argument{$type} = $kind;
 }
 
-sub all_declared_types {
+sub all_declared_types($) {
     my $self = shift;
     my $translate_argument = \%{$self->{TRANSLATE_ARGUMENT}};
 
     return sort(keys(%$translate_argument));
 }
 
-sub is_allowed_type_format {
+sub is_allowed_type_format($$$$) {
     my $self = shift;
     my $type_format = \%{$self->{TYPE_FORMAT}};
 
@@ -651,14 +659,14 @@ sub is_allowed_type_format {
     return 0;
 }
 
-sub all_modules {
+sub all_modules($) {
     my $self = shift;
     my $modules = \%{$self->{MODULES}};
 
     return sort(keys(%$modules));
 }
 
-sub is_module {
+sub is_module($$) {
     my $self = shift;
     my $modules = \%{$self->{MODULES}};
 
@@ -667,7 +675,7 @@ sub is_module {
     return $$modules{$name};
 }
 
-sub module_file {
+sub module_file($$) {
     my $self = shift;
 
     my $module = shift;
@@ -677,14 +685,14 @@ sub module_file {
     return $$module_files{$module};
 }
 
-sub all_internal_functions {
+sub all_internal_functions($) {
     my $self = shift;
     my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
 
     return sort(keys(%$function_internal_calling_convention));
 }
 
-sub all_internal_functions_in_module {
+sub all_internal_functions_in_module($$) {
     my $self = shift;
     my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
     my $function_internal_module = \%{$self->{FUNCTION_INTERNAL_MODULE}};
@@ -701,14 +709,14 @@ sub all_internal_functions_in_module {
     return sort(@names);
 }
 
-sub all_external_functions {
+sub all_external_functions($) {
     my $self = shift;
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
 
     return sort(keys(%$function_external_name));
 }
 
-sub all_external_functions_in_module {
+sub all_external_functions_in_module($$) {
     my $self = shift;
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
     my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
@@ -725,7 +733,7 @@ sub all_external_functions_in_module {
     return sort(@names);
 }
 
-sub all_functions_in_module {
+sub all_functions_in_module($$) {
     my $self = shift;
     my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
 
@@ -734,7 +742,7 @@ sub all_functions_in_module {
     return sort(keys(%{$$module_external_calling_convention{$module}}));
 }
 
-sub all_broken_forwards {
+sub all_broken_forwards($) {
     my $self = shift;
     my $function_forward = \%{$self->{FUNCTION_FORWARD}};
 
@@ -755,7 +763,7 @@ sub all_broken_forwards {
 }
 
 
-sub function_internal_ordinal {
+sub function_internal_ordinal($$) {
     my $self = shift;
     my $function_internal_ordinal = \%{$self->{FUNCTION_INTERNAL_ORDINAL}};
 
@@ -764,7 +772,7 @@ sub function_internal_ordinal {
     return $$function_internal_ordinal{$name};
 }
 
-sub function_external_ordinal {
+sub function_external_ordinal($$) {
     my $self = shift;
     my $function_external_ordinal = \%{$self->{FUNCTION_EXTERNAL_ORDINAL}};
 
@@ -773,7 +781,7 @@ sub function_external_ordinal {
     return $$function_external_ordinal{$name};
 }
 
-sub function_internal_calling_convention {
+sub function_internal_calling_convention($$) {
     my $self = shift;
     my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
 
@@ -782,7 +790,7 @@ sub function_internal_calling_convention {
     return $$function_internal_calling_convention{$name};
 }
 
-sub function_external_calling_convention {
+sub function_external_calling_convention($$) {
     my $self = shift;
     my $function_external_calling_convention = \%{$self->{FUNCTION_EXTERNAL_CALLING_CONVENTION}};
 
@@ -791,7 +799,7 @@ sub function_external_calling_convention {
     return $$function_external_calling_convention{$name};
 }
 
-sub function_external_calling_convention_in_module {
+sub function_external_calling_convention_in_module($$$) {
     my $self = shift;
     my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
 
@@ -801,7 +809,7 @@ sub function_external_calling_convention_in_module {
     return $$module_external_calling_convention{$module}{$name};
 }
 
-sub function_internal_name {
+sub function_internal_name($$) {
     my $self = shift;
     my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
 
@@ -810,7 +818,7 @@ sub function_internal_name {
     return $$function_internal_name{$name};
 }
 
-sub function_external_name {
+sub function_external_name($$) {
     my $self = shift;
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
 
@@ -819,7 +827,7 @@ sub function_external_name {
     return $$function_external_name{$name};
 }
 
-sub function_forward_final_destination {
+sub function_forward_final_destination($$$) {
     my $self = shift;
 
     my $function_forward = \%{$self->{FUNCTION_FORWARD}};
@@ -836,7 +844,7 @@ sub function_forward_final_destination {
     return ($forward_module, $forward_name);
 }
 
-sub is_function {
+sub is_function($$) {
     my $self = shift;
     my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
 
@@ -845,14 +853,14 @@ sub is_function {
     return $$function_internal_calling_convention{$name};
 }
 
-sub all_shared_internal_functions {
+sub all_shared_internal_functions($$) {
     my $self = shift;
     my $function_shared = \%{$self->{FUNCTION_SHARED}};
 
     return sort(keys(%$function_shared));
 }
 
-sub is_shared_internal_function {
+sub is_shared_internal_function($$) {
     my $self = shift;
     my $function_shared = \%{$self->{FUNCTION_SHARED}};
 
@@ -861,7 +869,7 @@ sub is_shared_internal_function {
     return $$function_shared{$name};
 }
 
-sub found_shared_internal_function {
+sub found_shared_internal_function($$) {
     my $self = shift;
     my $function_shared = \%{$self->{FUNCTION_SHARED}};
 
@@ -870,7 +878,7 @@ sub found_shared_internal_function {
     $$function_shared{$name} = 1;
 }
 
-sub function_internal_arguments {
+sub function_internal_arguments($$) {
     my $self = shift;
     my $function_internal_arguments = \%{$self->{FUNCTION_INTERNAL_ARGUMENTS}};
 
@@ -879,7 +887,7 @@ sub function_internal_arguments {
     return $$function_internal_arguments{$name};
 }
 
-sub function_external_arguments {
+sub function_external_arguments($$) {
     my $self = shift;
     my $function_external_arguments = \%{$self->{FUNCTION_EXTERNAL_ARGUMENTS}};
 
@@ -888,7 +896,7 @@ sub function_external_arguments {
     return $$function_external_arguments{$name};
 }
 
-sub function_internal_module {
+sub function_internal_module($$) {
     my $self = shift;
     my $function_internal_module = \%{$self->{FUNCTION_INTERNAL_MODULE}};
 
@@ -897,7 +905,7 @@ sub function_internal_module {
     return $$function_internal_module{$name};
 }
 
-sub function_external_module {
+sub function_external_module($$) {
     my $self = shift;
     my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
 
@@ -906,7 +914,7 @@ sub function_external_module {
     return $$function_external_module{$name};
 }
 
-sub function_wine_extension {
+sub function_wine_extension($$$) {
     my $self = shift;
     my $function_wine_extension = \%{$self->{FUNCTION_WINE_EXTENSION}};
 
@@ -916,7 +924,7 @@ sub function_wine_extension {
     return $$function_wine_extension{$module}{$name};
 }
 
-sub is_function_stub {
+sub is_function_stub($$$) {
     my $self = shift;
     my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
 
@@ -929,7 +937,7 @@ sub is_function_stub {
     return 0;
 }
 
-sub is_function_stub_in_module {
+sub is_function_stub_in_module($$$) {
     my $self = shift;
     my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
 
@@ -946,7 +954,7 @@ sub is_function_stub_in_module {
 # class methods
 #
 
-sub _get_all_module_internal_ordinal {
+sub _get_all_module_internal_ordinal($$) {
     my $winapi = shift;
     my $internal_name = shift;
 
@@ -986,24 +994,24 @@ sub _get_all_module_internal_ordinal {
     return @entries;
 }
 
-sub get_all_module_internal_ordinal16 {
-    return _get_all_module_internal_ordinal($win16api, @_);
+sub get_all_module_internal_ordinal16($) {
+    return _get_all_module_internal_ordinal($win16api, $_[0]);
 }
 
-sub get_all_module_internal_ordinal32 {
-    return _get_all_module_internal_ordinal($win32api, @_);
+sub get_all_module_internal_ordinal32($) {
+    return _get_all_module_internal_ordinal($win32api, $_[0]);
 }
 
-sub get_all_module_internal_ordinal {
+sub get_all_module_internal_ordinal($) {
     my @entries = ();
     foreach my $winapi (@winapis) {
-	push @entries, _get_all_module_internal_ordinal($winapi, @_);
+	push @entries, _get_all_module_internal_ordinal($winapi, $_[0]);
     }
 
     return @entries;
 }
 
-sub _get_all_module_external_ordinal {
+sub _get_all_module_external_ordinal($$) {
     my $winapi = shift;
     my $external_name = shift;
 
@@ -1043,18 +1051,18 @@ sub _get_all_module_external_ordinal {
     return @entries;
 }
 
-sub get_all_module_external_ordinal16 {
-    return _get_all_module_external_ordinal($win16api, @_);
+sub get_all_module_external_ordinal16($) {
+    return _get_all_module_external_ordinal($win16api, $_[0]);
 }
 
-sub get_all_module_external_ordinal32 {
-    return _get_all_module_external_ordinal($win32api, @_);
+sub get_all_module_external_ordinal32($) {
+    return _get_all_module_external_ordinal($win32api, $_[0]);
 }
 
-sub get_all_module_external_ordinal {
+sub get_all_module_external_ordinal($) {
     my @entries = ();
     foreach my $winapi (@winapis) {
-	push @entries, _get_all_module_external_ordinal($winapi, @_);
+	push @entries, _get_all_module_external_ordinal($winapi, $_[0]);
     }
 
     return @entries;
