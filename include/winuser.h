@@ -8,6 +8,10 @@
 #include "wingdi.h"
 #include "wine/winestring.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #pragma pack(1)
 
 /* flags for HIGHCONTRAST dwFlags field */
@@ -26,7 +30,7 @@ typedef struct tagHIGHCONTRASTA
     LPSTR   lpszDefaultScheme;
 } HIGHCONTRASTA, *LPHIGHCONTRASTA;
 
-typedef struct tagHIGHCONTRAST32W
+typedef struct tagHIGHCONTRASTW
 {
     UINT  cbSize;
     DWORD   dwFlags;
@@ -54,7 +58,7 @@ typedef struct
     HWND  hwnd;
     UINT  wHitTestCode;
     DWORD   dwExtraInfo;
-} MOUSEHOOKSTRUCT, *PMOUSEHOOKSTRUCT32, *LPMOUSEHOOKSTRUCT;
+} MOUSEHOOKSTRUCT, *PMOUSEHOOKSTRUCT, *LPMOUSEHOOKSTRUCT;
 
 
     /* Hardware hook structure */
@@ -128,6 +132,49 @@ typedef struct
 
 #define WM_USER             0x0400
 
+#define DT_EDITCONTROL      0x00002000
+#define DT_PATH_ELLIPSIS    0x00004000
+#define DT_END_ELLIPSIS     0x00008000
+#define DT_MODIFYSTRING     0x00010000
+#define DT_RTLREADING       0x00020000
+#define DT_WORD_ELLIPSIS    0x00040000
+
+typedef struct
+{
+   LPARAM   lParam;
+   WPARAM16 wParam;
+   UINT16   message;
+   HWND16   hwnd;
+} CWPSTRUCT16, *LPCWPSTRUCT16;
+
+typedef struct
+{
+  LPARAM        lParam;
+  WPARAM      wParam;
+  UINT        message;
+  HWND        hwnd;
+} CWPSTRUCT, *LPCWPSTRUCT;
+
+
+
+typedef struct
+{
+  LRESULT       lResult;
+  LPARAM        lParam;
+  WPARAM16      wParam;
+  DWORD         message;
+  HWND16        hwnd;
+} CWPRETSTRUCT16, *LPCWPRETSTRUCT16;
+
+typedef struct
+{
+  LRESULT       lResult;
+  LPARAM        lParam;
+  WPARAM      wParam;
+  DWORD         message;
+  HWND        hwnd;
+} CWPRETSTRUCT, *LPCWPRETSTRUCT;
+
 typedef struct
 {
     UINT   length;
@@ -161,6 +208,20 @@ typedef struct
 #define BS_AUTORADIOBUTTON     0x00000009L
 #define BS_OWNERDRAW           0x0000000BL
 #define BS_LEFTTEXT            0x00000020L
+
+#define BS_LEFT                0x00000100L
+#define BS_PUSHLIKE            0x00001000L
+#define BS_MULTILINE           0x00002000L
+#define BS_NOTIFY              0x00004000L
+#define BS_FLAT                0x00008000L
+
+/* Button control messages */
+
+#define BST_UNCHECKED      0x0000
+#define BST_CHECKED        0x0001
+#define BST_INDETERMINATE  0x0002
+#define BST_PUSHED         0x0004
+#define BST_FOCUS          0x0008
 
   /* Dialog styles */
 #define DS_ABSALIGN		0x0001
@@ -587,7 +648,7 @@ typedef struct
 #define WM_PRINTCLIENT       0x0318
 
   /* FIXME: This does not belong to any libwine interface header */
-  /* MFC messages [370-37f] */
+  /* MFC messages [360-38f] */
 
 #define WM_QUERYAFXWNDPROC  0x0360
 #define WM_SIZEPARENT       0x0361
@@ -614,6 +675,9 @@ typedef struct
 #define WM_OCC_LOADFROMSTREAM_EX        0x037A
 #define WM_OCC_LOADFROMSTORAGE_EX       0x037B
 #define WM_QUEUE_SENTINEL   0x0379
+
+#define WM_PENWINFIRST      0x0380
+#define WM_PENWINLAST       0x038F
 
 /* end of MFC messages */
 
@@ -761,7 +825,7 @@ typedef struct
     POINT   ptMaxPosition;
     POINT   ptMinTrackSize;
     POINT   ptMaxTrackSize;
-} MINMAXINFO, *PMINMAXINFO32, *LPMINMAXINFO32;
+} MINMAXINFO, *PMINMAXINFO, *LPMINMAXINFO;
 
 
   /* RedrawWindow() flags */
@@ -794,7 +858,7 @@ typedef struct tagWINDOWPOS
     INT   cx;
     INT   cy;
     UINT  flags;
-} WINDOWPOS, *PWINDOWPOS32, *LPWINDOWPOS;
+} WINDOWPOS, *PWINDOWPOS, *LPWINDOWPOS;
 
 
   /* WM_MOUSEACTIVATE return values */
@@ -892,6 +956,13 @@ typedef struct
 #define CS_BYTEALIGNWINDOW  0x2000
 #define CS_GLOBALCLASS      0x4000
 
+#define PRF_CHECKVISIBLE    0x00000001L
+#define PRF_NONCLIENT       0x00000002L
+#define PRF_CLIENT          0x00000004L
+#define PRF_ERASEBKGND      0x00000008L
+#define PRF_CHILDREN        0x00000010L
+#define PRF_OWNED           0x00000020L
+ 
   /* Offsets for GetClassLong() and GetClassWord() */
 #define GCL_MENUNAME        (-8)
 #define GCW_HBRBACKGROUND   (-10)
@@ -1202,6 +1273,22 @@ typedef struct {
 
 DECL_WINELIB_TYPE_AW(MENUITEMINFO)
 DECL_WINELIB_TYPE_AW(LPMENUITEMINFO)
+
+typedef struct {
+  WORD versionNumber;
+  WORD offset;
+} MENUITEMTEMPLATEHEADER, *PMENUITEMTEMPLATEHEADER;
+
+
+typedef struct {
+  WORD mtOption;
+  WORD mtID;
+  WCHAR mtString[1];
+} MENUITEMTEMPLATE, *PMENUITEMTEMPLATE;
+
+
+typedef VOID   MENUTEMPLATE;
+typedef PVOID *LPMENUTEMPLATE;
 
 /* Field specifiers for MENUITEMINFO[AW] type.  */
 #define MIIM_STATE       0x00000001
@@ -2327,7 +2414,7 @@ typedef struct
     UINT      itemID2;
     DWORD       itemData2;
     DWORD       dwLocaleId;
-} COMPAREITEMSTRUCT, *LPCOMPAREITEMSTRUCT;
+} COMPAREITEMSTRUCT, *PCOMPAREITEMSTRUCT, *LPCOMPAREITEMSTRUCT;
 
 
 /* WM_KEYUP/DOWN/CHAR HIWORD(lParam) flags */
@@ -2613,7 +2700,7 @@ typedef struct
 #define IMAGE_BITMAP	0
 #define IMAGE_ICON	1
 #define IMAGE_CURSOR	2
-#define IMAGE_ENHMETA	3
+#define IMAGE_ENHMETAFILE	3
 
 /* loadflags to LoadImage */
 #define LR_DEFAULTCOLOR		0x0000
@@ -3358,5 +3445,9 @@ INT       WINAPI LoadMessageA(HMODULE,UINT,WORD,LPSTR,INT);
 INT       WINAPI LoadMessageW(HMODULE,UINT,WORD,LPWSTR,INT);
 
 VOID        WINAPI ScreenSwitchEnable16(WORD);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __INCLUDE_WINUSER_H */

@@ -14,22 +14,6 @@
 #define HOOK_WIN32W	0x02
 #define HOOK_INUSE	0x80
 
-typedef struct
-{
-   LPARAM   lParam;
-   WPARAM16 wParam;
-   UINT16   message;
-   HWND16   hwnd;
-} CWPSTRUCT16, *LPCWPSTRUCT16;
-
-typedef struct
-{
-  LPARAM        lParam;
-  WPARAM      wParam;
-  UINT        message;
-  HWND        hwnd;
-} CWPSTRUCT, *LPCWPSTRUCT;
-
 
 /* hook type mask */
 #define HOOK_MAPTYPE (HOOK_WIN16 | HOOK_WIN32A | HOOK_WIN32W)
