@@ -393,6 +393,8 @@ STATUSBAR_GetTextA (STATUSWINDOWINFO *infoPtr, INT nPart, LPSTR buf)
     LRESULT result;
 
     TRACE("part %d\n", nPart);
+    if (nPart < 0 || nPart >= infoPtr->numParts) return 0;
+
     if (infoPtr->simple)
 	part = &infoPtr->part0;
     else
@@ -418,6 +420,8 @@ STATUSBAR_GetTextW (STATUSWINDOWINFO *infoPtr, INT nPart, LPWSTR buf)
     LRESULT result;
 
     TRACE("part %d\n", nPart);
+    if (nPart < 0 || nPart >= infoPtr->numParts) return 0;
+
     if (infoPtr->simple)
 	part = &infoPtr->part0;
     else
@@ -573,9 +577,6 @@ STATUSBAR_SetParts (STATUSWINDOWINFO *infoPtr, INT count, LPINT parts)
 
     TRACE("(%d,%p)\n", count, parts);
 
-    if (infoPtr->simple)
-	infoPtr->simple = FALSE;
-
     oldNumParts = infoPtr->numParts;
     infoPtr->numParts = count;
     if (oldNumParts > infoPtr->numParts) {
@@ -646,6 +647,7 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
     BOOL changed = FALSE;
 
     TRACE("part %d, text %s\n", nPart, debugstr_t(text, isW));
+    if (nPart < 0 || nPart >= infoPtr->numParts) return FALSE;
 
     if (nPart == 0x00ff)
 	part = &infoPtr->part0;
