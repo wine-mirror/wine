@@ -21,6 +21,7 @@
 
 struct FakeZBuffer_DirectDrawSurfaceImpl_Part
 {
+  int dummy;
 };
 
 typedef struct

@@ -334,7 +334,7 @@ typedef struct {
         DWORD dwPrivateBytes;
         DWORD dwPageFileBytes;
         DWORD dwUnknown7[4];
-        THREADINFO ti[0];
+        THREADINFO ti[1];
 } SYSTEM_PROCESS_INFORMATION;
 
 typedef struct {

@@ -25,6 +25,7 @@
 
 typedef struct
 {
+    int empty;
     /* empty */
 } User_DirectDrawImpl_Part;
 

@@ -154,7 +154,7 @@ typedef struct OMFSegMap
 {
     unsigned short  cSeg;
     unsigned short  cSegLog;
-    OMFSegMapDesc   rgDesc[0];
+/*    OMFSegMapDesc   rgDesc[0];*/
 } OMFSegMap;
 
 
@@ -185,4 +185,3 @@ typedef struct OMFSourceModule
     unsigned short  cSeg;
     unsigned long   baseSrcFile[1];
 } OMFSourceModule;
-
