@@ -1808,13 +1808,13 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	break;
     case TIME_SMPTE:
 	time = val / (wwo->format.wf.nAvgBytesPerSec / 1000);
-	lpTime->u.smpte.hour = time / 108000;
-	time -= lpTime->u.smpte.hour * 108000;
-	lpTime->u.smpte.min = time / 1800;
-	time -= lpTime->u.smpte.min * 1800;
-	lpTime->u.smpte.sec = time / 30;
-	time -= lpTime->u.smpte.sec * 30;
-	lpTime->u.smpte.frame = time;
+	lpTime->u.smpte.hour = time / (60 * 60 * 1000);
+	time -= lpTime->u.smpte.hour * (60 * 60 * 1000);
+	lpTime->u.smpte.min = time / (60 * 1000);
+	time -= lpTime->u.smpte.min * (60 * 1000);
+	lpTime->u.smpte.sec = time / 1000;
+	time -= lpTime->u.smpte.sec * 1000;
+	lpTime->u.smpte.frame = time * 30 / 1000;
 	lpTime->u.smpte.fps = 30;
 	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
@@ -2754,6 +2754,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    case WINE_WM_STOPPING:
 	    case WINE_WM_RESETTING:
 		wwi->state = WINE_WS_STOPPED;
+    		wwi->dwTotalRecorded = 0;
 		/* return all buffers to the app */
 		for (lpWaveHdr = wwi->lpQueuePtr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext) {
 		    TRACE("reset %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
@@ -3072,6 +3073,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     TRACE("nSamplesPerSec=%lu\n", wwi->format.wf.nSamplesPerSec);
     TRACE("nChannels=%u\n", wwi->format.wf.nChannels);
     TRACE("nAvgBytesPerSec=%lu\n", wwi->format.wf.nAvgBytesPerSec);
+    TRACE("dwTotalRecorded=%lu\n",wwi->dwTotalRecorded);
     switch (lpTime->wType) {
     case TIME_BYTES:
 	lpTime->u.cb = wwi->dwTotalRecorded;
@@ -3085,26 +3087,26 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     case TIME_SMPTE:
 	time = wwi->dwTotalRecorded /
 	    (wwi->format.wf.nAvgBytesPerSec / 1000);
-	lpTime->u.smpte.hour = time / 108000;
-	time -= lpTime->u.smpte.hour * 108000;
-	lpTime->u.smpte.min = time / 1800;
-	time -= lpTime->u.smpte.min * 1800;
-	lpTime->u.smpte.sec = time / 30;
-	time -= lpTime->u.smpte.sec * 30;
-	lpTime->u.smpte.frame = time;
+	lpTime->u.smpte.hour = time / (60 * 60 * 1000);
+	time -= lpTime->u.smpte.hour * (60 * 60 * 1000);
+	lpTime->u.smpte.min = time / (60 * 1000);
+	time -= lpTime->u.smpte.min * (60 * 1000);
+	lpTime->u.smpte.sec = time / 1000;
+	time -= lpTime->u.smpte.sec * 1000;
+	lpTime->u.smpte.frame = time * 30 / 1000;
 	lpTime->u.smpte.fps = 30;
 	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
 	      lpTime->u.smpte.sec, lpTime->u.smpte.frame);
 	break;
+    default:
+	FIXME("format not supported (%u) ! use TIME_MS !\n", lpTime->wType);
+	lpTime->wType = TIME_MS;
     case TIME_MS:
 	lpTime->u.ms = wwi->dwTotalRecorded /
 	    (wwi->format.wf.nAvgBytesPerSec / 1000);
 	TRACE("TIME_MS=%lu\n", lpTime->u.ms);
 	break;
-    default:
-	FIXME("format not supported (%u) ! use TIME_MS !\n", lpTime->wType);
-	lpTime->wType = TIME_MS;
     }
     return MMSYSERR_NOERROR;
 }
