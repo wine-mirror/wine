@@ -5739,6 +5739,75 @@ static ITypeInfo2Vtbl tinfvt =
     ITypeInfo2_fnGetAllImplTypeCustData,
 };
 
+/******************************************************************************
+ * CreateDispTypeInfo [OLEAUT32.31]
+ *
+ * Build type information for an object so it can be called through an
+ * IDispatch interface.
+ *
+ * RETURNS
+ *  Success: S_OK. pptinfo contains the created ITypeInfo object.
+ *  Failure: E_INVALIDARG, if one or more arguments is invalid.
+ *
+ * NOTES
+ *  This call allows an objects methods to be accessed through IDispatch, by
+ *  building an ITypeInfo object that IDispatch can use to call through.
+ */
+HRESULT WINAPI CreateDispTypeInfo(
+	INTERFACEDATA *pidata, /* [I] Description of the interface to build type info for */
+	LCID lcid, /* [I] Locale Id */
+	ITypeInfo **pptinfo) /* [O] Destination for created ITypeInfo object */
+{
+    ITypeInfoImpl *pTIImpl;
+    int param, func;
+    TLBFuncDesc **ppFuncDesc;
+
+    pTIImpl = (ITypeInfoImpl*)ITypeInfo_Constructor();
+    pTIImpl->pTypeLib = NULL;
+    pTIImpl->index = 0;
+    pTIImpl->Name = NULL;
+    pTIImpl->dwHelpContext = -1;
+    memset(&pTIImpl->TypeAttr.guid, 0, sizeof(GUID));
+    pTIImpl->TypeAttr.lcid = lcid;
+    pTIImpl->TypeAttr.typekind = TKIND_COCLASS;
+    pTIImpl->TypeAttr.wMajorVerNum = 0;
+    pTIImpl->TypeAttr.wMinorVerNum = 0;
+    pTIImpl->TypeAttr.cbAlignment = 2;
+    pTIImpl->TypeAttr.cbSizeInstance = -1;
+    pTIImpl->TypeAttr.cbSizeVft = -1;
+    pTIImpl->TypeAttr.cFuncs = 0;
+    pTIImpl->TypeAttr.cImplTypes = 1;
+    pTIImpl->TypeAttr.cVars = 0;
+    pTIImpl->TypeAttr.wTypeFlags = 0;
+
+    ppFuncDesc = &pTIImpl->funclist;
+    for(func = 0; func < pidata->cMembers; func++) {
+        METHODDATA *md = pidata->pmethdata + func;
+        *ppFuncDesc = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppFuncDesc));
+        (*ppFuncDesc)->Name = SysAllocString(md->szName);
+        (*ppFuncDesc)->funcdesc.memid = md->dispid;
+        (*ppFuncDesc)->funcdesc.invkind = md->wFlags;
+        (*ppFuncDesc)->funcdesc.callconv = md->cc;
+        (*ppFuncDesc)->funcdesc.cParams = md->cArgs;
+        (*ppFuncDesc)->funcdesc.cParamsOpt = 0;
+        (*ppFuncDesc)->funcdesc.oVft = md->iMeth;
+        (*ppFuncDesc)->funcdesc.wFuncFlags = 0; /*??*/
+        (*ppFuncDesc)->funcdesc.elemdescFunc.tdesc.vt = md->vtReturn;
+        (*ppFuncDesc)->funcdesc.lprgelemdescParam = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                              md->cArgs * sizeof(ELEMDESC));
+        (*ppFuncDesc)->pParamDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                              md->cArgs * sizeof(TLBParDesc));
+        for(param = 0; param < md->cArgs; param++) {
+            (*ppFuncDesc)->funcdesc.lprgelemdescParam[param].tdesc.vt = md->ppdata[param].vt;
+            (*ppFuncDesc)->pParamDesc[param].Name = SysAllocString(md->ppdata[param].szName);
+        }
+        ppFuncDesc = &(*ppFuncDesc)->next;
+    }        
+    *pptinfo = (ITypeInfo*)pTIImpl;
+    return S_OK;
+
+}
+
 static HRESULT WINAPI ITypeComp_fnQueryInterface(ITypeComp * iface, REFIID riid, LPVOID * ppv)
 {
     ICOM_THIS_From_ITypeComp(ITypeInfoImpl, iface);

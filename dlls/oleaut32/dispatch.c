@@ -180,28 +180,6 @@ HRESULT WINAPI CreateStdDispatch(
     return S_OK;
 }
 
-/******************************************************************************
- * CreateDispTypeInfo [OLEAUT32.31]
- *
- * Build type information for an object so it can be called through an
- * IDispatch interface.
- *
- * RETURNS
- *  Success: S_OK. pptinfo contains the created ITypeInfo object.
- *  Failure: E_INVALIDARG, if one or more arguments is invalid.
- *
- * NOTES
- *  This call allows an objects methods to be accessed through IDispatch, by
- *  building an ITypeInfo object that IDispatch can use to call through.
- */
-HRESULT WINAPI CreateDispTypeInfo(
-	INTERFACEDATA *pidata, /* [I] Description of the interface to build type info for */
-	LCID lcid, /* [I] Locale Id */
-	ITypeInfo **pptinfo) /* [O] Destination for created ITypeInfo object */
-{
-	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
-	return 0;
-}
 
 /******************************************************************************
  * IDispatch {OLEAUT32}
