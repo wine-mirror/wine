@@ -1429,6 +1429,7 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
   SCROLLINFO scrollInfo;
 
   if (infoPtr->dwStyle & LVS_NOSCROLL) return;
+  /*if (!is_redrawing(infoPtr)) return;*/
 
   scrollInfo.cbSize = sizeof(SCROLLINFO);
 
@@ -1470,11 +1471,8 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
     /* update horizontal scrollbar */
     scrollInfo.fMask = SIF_POS;
-    if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo)
-       || infoPtr->nItemCount == 0)
-    {
+    if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
       scrollInfo.nPos = 0;
-    }
     scrollInfo.nMin = 0;
     scrollInfo.nMax = max(infoPtr->nItemWidth, 0)-1;
     scrollInfo.nPage = nListWidth;
@@ -4041,7 +4039,7 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     POINT Origin;
 
     /* if we don't refresh, what's the point of scrolling? */
-    /*if (!is_redrawing(infoPtr)) return; */
+    /*if (!is_redrawing(infoPtr)) return;*/
     
     assert (abs(dir) == 1);
 
@@ -6889,7 +6887,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->nFocusedItem = -1;
   infoPtr->nSelectionMark = -1;
   infoPtr->nHotItem = -1;
-  infoPtr->bRedraw = FALSE;
+  infoPtr->bRedraw = TRUE;
   infoPtr->bFirstPaint = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
