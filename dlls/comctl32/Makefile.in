@@ -25,6 +25,7 @@ C_SRCS = \
 	progress.c \
 	propsheet.c \
 	rebar.c \
+	smoothscroll.c \
 	status.c \
 	tab.c \
 	toolbar.c \

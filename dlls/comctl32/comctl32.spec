@@ -170,7 +170,7 @@ rsrc	comctl32
 376 stub IntlStrEqWorkerA@16
 377 stub IntlStrEqWorkerW@16
 
-382 stub SmoothScrollWindow@4
+382 stdcall SmoothScrollWindow(ptr) SmoothScrollWindow
 383 stub DoReaderMode@4
 384 stub SetPathWordBreakProc@8
 385 stdcall DPA_EnumCallback(long long long) DPA_EnumCallback
