@@ -450,6 +450,7 @@ then {
 
   if [ ! -d ~/.wine/dosdevices ]
   then
+    [ -d ~/.wine ] || mkdir ~/.wine
     mkdir ~/.wine/dosdevices
     ln -s /mnt/fd0 ~/.wine/dosdevices/a:
     ln -s $CROOT ~/.wine/dosdevices/c:
