@@ -9,14 +9,14 @@ use wine;
 
 wine::declare( "kernel32",
                SetLastError       => "void",
-               GetLastError       => "int",
-               GlobalAddAtomA     => "word",
-               GlobalGetAtomNameA => "int",
-               GetCurrentThread   => "int",
-               GetExitCodeThread  => "int",
-               GetModuleHandleA   => "int",
-               GetProcAddress     => "int",
-               lstrcatA           => "ptr"
+               GetLastError       => ["int", []],
+               GlobalAddAtomA     => ["word",["str"]],
+               GlobalGetAtomNameA => ["int", ["int","ptr","int"]],
+               GetCurrentThread   => ["int", []],
+               GetExitCodeThread  => ["int", ["int","ptr"]],
+               GetModuleHandleA   => ["int", ["str"]],
+               GetProcAddress     => ["int", ["long","str"]],
+               lstrcatA           => ["str", ["str","str"]],
 );
 
 ################################################################
