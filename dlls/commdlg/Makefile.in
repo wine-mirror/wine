@@ -28,7 +28,8 @@ C_SRCS16  = \
 	colordlg16.c \
 	filedlg16.c \
 	finddlg.c \
-	fontdlg16.c
+	fontdlg16.c \
+	printdlg16.c
 
 RC_SRCS= rsrc.rc
 
