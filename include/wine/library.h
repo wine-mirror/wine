@@ -50,9 +50,9 @@ extern WCHAR **__wine_main_wargv;
 
 extern const char * (*__wine_dbgstr_an)( const char * s, int n );
 extern const char * (*__wine_dbgstr_wn)( const WCHAR *s, int n );
-extern const char * (*__wine_dbgstr_guid)( const struct _GUID *id );
+extern const char * (*__wine_dbg_vsprintf)( const char *format, va_list args );
 extern int (*__wine_dbg_vprintf)( const char *format, va_list args );
-extern int (*__wine_dbg_vlog)( int cls, const char *channel,
+extern int (*__wine_dbg_vlog)( unsigned int cls, const char *channel,
                                const char *function, const char *format, va_list args );
 
 extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear );

@@ -23,6 +23,9 @@
 
 #include <stdarg.h>
 #include "windef.h"
+#ifndef GUID_DEFINED
+#include "guiddef.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,15 +111,43 @@ enum __WINE_DEBUG_CLASS {
 /* These function return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-extern const char *wine_dbgstr_guid( const struct _GUID *id );
 extern const char *wine_dbgstr_an( const char * s, int n );
 extern const char *wine_dbgstr_wn( const WCHAR *s, int n );
 extern const char *wine_dbgstr_a( const char *s );
 extern const char *wine_dbgstr_w( const WCHAR *s );
+extern const char *wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 
 extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
-extern int wine_dbg_log( int cls, const char *ch, const char *func,
+extern int wine_dbg_log( unsigned int cls, const char *ch, const char *func,
                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+
+static inline const char *wine_dbgstr_guid( const GUID *id )
+{
+    if (!id) return "(null)";
+    if (!((int)id >> 16)) return wine_dbg_sprintf( "<guid-0x%04x>", (int)id & 0xffff );
+    return wine_dbg_sprintf( "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                             id->Data1, id->Data2, id->Data3,
+                             id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+                             id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+}
+
+static inline const char *wine_dbgstr_point( const POINT *pt )
+{
+    if (!pt) return "(null)";
+    return wine_dbg_sprintf( "(%ld,%ld)", pt->x, pt->y );
+}
+
+static inline const char *wine_dbgstr_size( const SIZE *size )
+{
+    if (!size) return "(null)";
+    return wine_dbg_sprintf( "(%ld,%ld)", size->cx, size->cy );
+}
+
+static inline const char *wine_dbgstr_rect( const RECT *rect )
+{
+    if (!rect) return "(null)";
+    return wine_dbg_sprintf( "(%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
+}
 
 #define WINE_TRACE                 __WINE_DPRINTF(_TRACE,__wine_dbch___default)
 #define WINE_TRACE_(ch)            __WINE_DPRINTF(_TRACE,__wine_dbch_##ch)

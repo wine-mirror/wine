@@ -205,8 +205,21 @@ int wine_dbg_printf( const char *format, ... )
 }
 
 
+/* varargs wrapper for __wine_dbg_vsprintf */
+const char *wine_dbg_sprintf( const char *format, ... )
+{
+    const char *ret;
+    va_list valist;
+
+    va_start(valist, format);
+    ret = __wine_dbg_vsprintf( format, valist );
+    va_end(valist);
+    return ret;
+}
+
+
 /* varargs wrapper for __wine_dbg_vlog */
-int wine_dbg_log( int cls, const char *channel, const char *func, const char *format, ... )
+int wine_dbg_log( unsigned int cls, const char *channel, const char *func, const char *format, ... )
 {
     int ret;
     va_list valist;
@@ -335,28 +348,16 @@ static const char *default_dbgstr_wn( const WCHAR *str, int n )
 }
 
 
-/* default implementation of wine_dbgstr_guid */
-static const char *default_dbgstr_guid( const struct _GUID *id )
+/* default implementation of wine_dbg_vsprintf */
+static const char *default_dbg_vsprintf( const char *format, va_list args )
 {
-    char *str;
+    static const int max_size = 200;
 
-    if (!id) return "(null)";
-    if (!((int)id >> 16))
-    {
-        str = get_tmp_space( 12 );
-        sprintf( str, "<guid-0x%04x>", (int)id & 0xffff );
-    }
-    else
-    {
-        str = get_tmp_space( 40 );
-        sprintf( str, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-                 id->Data1, id->Data2, id->Data3,
-                 id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-                 id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-    }
-    return str;
+    char *res = get_tmp_space( max_size );
+    int len = vsnprintf( res, max_size, format, args );
+    if (len == -1 || len >= max_size) res[max_size-1] = 0;
+    return res;
 }
-
 
 /* default implementation of wine_dbg_vprintf */
 static int default_dbg_vprintf( const char *format, va_list args )
@@ -366,7 +367,7 @@ static int default_dbg_vprintf( const char *format, va_list args )
 
 
 /* default implementation of wine_dbg_vlog */
-static int default_dbg_vlog( int cls, const char *channel, const char *func,
+static int default_dbg_vlog( unsigned int cls, const char *channel, const char *func,
                              const char *format, va_list args )
 {
     int ret = 0;
@@ -383,17 +384,12 @@ static int default_dbg_vlog( int cls, const char *channel, const char *func,
 
 const char * (*__wine_dbgstr_an)( const char * s, int n ) = default_dbgstr_an;
 const char * (*__wine_dbgstr_wn)( const WCHAR *s, int n ) = default_dbgstr_wn;
-const char * (*__wine_dbgstr_guid)( const struct _GUID *id ) = default_dbgstr_guid;
+const char * (*__wine_dbg_vsprintf)( const char *format, va_list args ) = default_dbg_vsprintf;
 int (*__wine_dbg_vprintf)( const char *format, va_list args ) = default_dbg_vprintf;
-int (*__wine_dbg_vlog)( int cls, const char *channel, const char *function,
+int (*__wine_dbg_vlog)( unsigned int cls, const char *channel, const char *function,
                         const char *format, va_list args ) = default_dbg_vlog;
 
 /* wrappers to use the function pointers */
-
-const char *wine_dbgstr_guid( const struct _GUID *id )
-{
-    return __wine_dbgstr_guid(id);
-}
 
 const char *wine_dbgstr_an( const char * s, int n )
 {

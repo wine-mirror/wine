@@ -247,27 +247,17 @@ static const char *NTDLL_dbgstr_wn( const WCHAR *src, int n )
 }
 
 /***********************************************************************
- *		NTDLL_dbgstr_guid
+ *		NTDLL_dbg_vsprintf
  */
-static const char *NTDLL_dbgstr_guid( const GUID *id )
+static const char *NTDLL_dbg_vsprintf( const char *format, va_list args )
 {
-    char *str;
+    static const int max_size = 200;
 
-    if (!id) return "(null)";
-    if (!HIWORD(id))
-    {
-        str = gimme1(12);
-        sprintf( str, "<guid-0x%04x>", LOWORD(id) );
-    }
-    else
-    {
-        str = gimme1(40);
-        sprintf( str, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-                 id->Data1, id->Data2, id->Data3,
-                 id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-                 id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-    }
-    return str;
+    char *res = gimme1( max_size );
+    int len = vsnprintf( res, max_size, format, args );
+    if (len == -1 || len >= max_size) res[max_size-1] = 0;
+    else release( res + len + 1 );
+    return res;
 }
 
 /***********************************************************************
@@ -310,14 +300,14 @@ static int NTDLL_dbg_vprintf( const char *format, va_list args )
 /***********************************************************************
  *		NTDLL_dbg_vlog
  */
-static int NTDLL_dbg_vlog( int cls, const char *channel,
+static int NTDLL_dbg_vlog( unsigned int cls, const char *channel,
                            const char *function, const char *format, va_list args )
 {
     static const char *classes[] = { "fixme", "err", "warn", "trace" };
     int ret = 0;
 
     if (TRACE_ON(tid))
-        ret = wine_dbg_printf( "%08lx:", (DWORD)NtCurrentTeb()->tid );
+        ret = wine_dbg_printf( "%08lx:", NtCurrentTeb()->tid );
     if (cls < sizeof(classes)/sizeof(classes[0]))
         ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
     if (format)
@@ -330,9 +320,9 @@ static int NTDLL_dbg_vlog( int cls, const char *channel,
  */
 DECL_GLOBAL_CONSTRUCTOR(debug_init)
 {
-    __wine_dbgstr_an   = NTDLL_dbgstr_an;
-    __wine_dbgstr_wn   = NTDLL_dbgstr_wn;
-    __wine_dbgstr_guid = NTDLL_dbgstr_guid;
-    __wine_dbg_vprintf = NTDLL_dbg_vprintf;
-    __wine_dbg_vlog    = NTDLL_dbg_vlog;
+    __wine_dbgstr_an    = NTDLL_dbgstr_an;
+    __wine_dbgstr_wn    = NTDLL_dbgstr_wn;
+    __wine_dbg_vsprintf = NTDLL_dbg_vsprintf;
+    __wine_dbg_vprintf  = NTDLL_dbg_vprintf;
+    __wine_dbg_vlog     = NTDLL_dbg_vlog;
 }
