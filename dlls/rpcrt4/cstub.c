@@ -60,6 +60,7 @@ HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
   This->pPSFactory = pPSFactory;
   *ppStub = (LPRPCSTUBBUFFER)This;
 
+  IUnknown_AddRef(This->pvServerObject);
   IPSFactoryBuffer_AddRef(pPSFactory);
   return S_OK;
 }
