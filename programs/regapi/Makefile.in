@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = regapi
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 
 C_SRCS = \
 	regapi.c
@@ -18,7 +17,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 regapi: $(OBJS)
-	$(CC) -o regapi $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o regapi $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) regapi $(bindir)/regapi

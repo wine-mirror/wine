@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = regtest
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 
 C_SRCS = regtest.c
 
@@ -16,7 +15,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 regtest: $(OBJS)
-	$(CC) -o regtest $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o regtest $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) regtest $(bindir)/regtest

@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 WRCEXTRA  = -s -p $*
 
 SPEC_SRCS = \
@@ -27,33 +26,33 @@ all: check_wrc $(PROGRAMS)
 @MAKE_RULES@
 
 expand: expand.o expand.spec.o
-	$(CC) -o expand $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o expand $+ -L$(DLLDIR) -llz32 $(DLL_LINK) $(LIBS)
 
 hello: hello.o hello.spec.o
-	$(CC) -o hello $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o hello $+ $(DLL_LINK) $(LIBS)
 
 hello2: hello2.o hello2.spec.o
-	$(CC) -o hello2 $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o hello2 $+ $(DLL_LINK) $(LIBS)
 
 hello3: hello3.o hello3.spec.o hello3res.o
-	$(CC) -o hello3 $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o hello3 $+  -L$(DLLDIR) -lcomdlg32 -lwinspool $(DLL_LINK) $(LIBS)
 
 hello4: hello4.o hello4.spec.o
-	$(CC) -o hello4 $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o hello4 $+ $(DLL_LINK) $(LIBS)
 
 hello5: hello5.o hello5.spec.o
-	$(CC) -o hello5 $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o hello5 $+ $(DLL_LINK) $(LIBS)
 
 new: new.o new.spec.o
-	$(CC) -o new $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o new $+ $(DLL_LINK) $(LIBS)
 
 rolex: rolex.o rolex.spec.o
-	$(CC) -o rolex $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o rolex $+ $(DLL_LINK) $(LIBS)
 
 vartest: vartest.o vartest.spec.o
-	$(CC) -o vartest $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o vartest $+ -L$(DLLDIR) -loleaut32 -lole32 $(DLL_LINK) $(LIBS)
 
 volinfo: volinfo.o volinfo.spec.o
-	$(CC) -o volinfo $+ $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o volinfo $+ $(DLL_LINK) $(LIBS)
 
 ### Dependencies:

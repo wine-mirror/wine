@@ -110,9 +110,11 @@ AC_CHECK_HEADERS(dlfcn.h,
 		AC_DEFINE(HAVE_DL_API),
     		AC_CHECK_LIB(dl,dlopen,
 			AC_DEFINE(HAVE_DL_API)
-			LIBS="$LIBS -ldl"
+			LIBS="$LIBS -ldl",
+			LIBEXT="a"
 		)
-	)
+	),
+	LIBEXT="a"
 )
 AC_SUBST(XLIB)
 AC_SUBST(X_SRCS)
@@ -467,12 +469,13 @@ fi
 
 DLLFLAGS=""
 BUILDFLAGS=""
-DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) -L\$(TOPOBJDIR) -lwine"
 
 if test "$LIBEXT" = "so"; then
     BUILDFLAGS="-pic"
     DLLFLAGS="-fPIC"
+    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) -L\$(TOPOBJDIR) -lwine"
 else
+    DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) -L\$(TOPOBJDIR) -lwine \$(X_LIBS) \$(XLIB)"
     AC_CACHE_CHECK([whether the linker supports --[[no]]-whole-archive (Linux)],
  	           ac_cv_c_whole_archive,
             [saved_cflags=$CFLAGS

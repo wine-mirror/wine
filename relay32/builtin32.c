@@ -4,14 +4,21 @@
  * Copyright 1997 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#ifdef HAVE_DL_API
+#include <dlfcn.h>
+#endif
+
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "builtin32.h"
+#include "elfdll.h"
 #include "neexe.h"
 #include "heap.h"
 #include "main.h"
@@ -72,6 +79,39 @@ static void BUILTIN32_WarnSecondInstance( const char *name )
         }
         ptr++;
     }
+}
+
+/***********************************************************************
+ *           BUILTIN32_dlopen
+ */
+void *BUILTIN32_dlopen( const char *name )
+{
+#ifdef HAVE_DL_API
+    void *handle;
+    char buffer[128], *p;
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    sprintf( buffer, "lib%s", name );
+    for (p = buffer; *p; p++) *p = tolower(*p);
+    if ((p = strrchr( buffer, '.' )) && (!strcmp( p, ".dll" ) || !strcmp( p, ".exe" ))) *p = 0;
+    strcat( buffer, ".so" );
+
+    if (!(handle = ELFDLL_dlopen( buffer, RTLD_NOW )))
+        ERR( "failed to load %s: %s\n", buffer, dlerror() );
+    return handle;
+#else
+    return NULL;
+#endif
+}
+
+/***********************************************************************
+ *           BUILTIN32_dlclose
+ */
+int BUILTIN32_dlclose( void *handle )
+{
+#ifdef HAVE_DL_API
+    return dlclose( handle );
+#endif
 }
 
 /***********************************************************************
@@ -357,6 +397,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     NE_MODULE     *pModule;
     WINE_MODREF   *wm;
     char           dllname[MAX_PATH], *p;
+    void *handle;
     int i;
 
     /* Fix the name in case we have a full path and extension */
@@ -368,14 +409,20 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 
     /* Search built-in descriptor */
     for (i = 0; i < nb_dlls; i++)
-        if (!lstrcmpiA( builtin_dlls[i]->filename, dllname )) break;
+        if (!strcasecmp( builtin_dlls[i]->filename, dllname )) goto found;
 
-    if (i == nb_dlls)
+    if ((handle = BUILTIN32_dlopen( dllname )))
     {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return NULL;
+        for (i = 0; i < nb_dlls; i++)
+            if (!strcasecmp( builtin_dlls[i]->filename, dllname )) goto found;
+        ERR( "loaded .so but dll %s still not found\n", dllname );
+        BUILTIN32_dlclose( handle );
     }
 
+    SetLastError( ERROR_FILE_NOT_FOUND );
+    return NULL;
+
+ found:
     /* Load built-in module */
     if (!dll_modules[i])
     {
@@ -418,8 +465,6 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
  */
 HMODULE BUILTIN32_LoadExeModule( LPCSTR *filename )
 {
-    HMODULE16 hModule16;
-    NE_MODULE *pModule;
     int i, exe = -1;
 
     /* Search built-in EXE descriptor */

@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = view
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = comdlg32 winspool
 WRCEXTRA  = -s -p view
 
 C_SRCS = \
@@ -24,7 +24,7 @@ all: check_wrc $(PROGRAMS)
 @MAKE_RULES@
 
 view: $(OBJS)
-	$(CC) -o view $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o view $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) view $(bindir)/view

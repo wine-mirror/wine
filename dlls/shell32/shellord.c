@@ -461,7 +461,8 @@ LPVOID WINAPI SHAlloc(DWORD len)
 DWORD WINAPI SHRegisterDragDrop(HWND hWnd,IDropTarget * pDropTarget) 
 {
 	FIXME("(0x%08x,%p):stub.\n", hWnd, pDropTarget);
-	return     RegisterDragDrop(hWnd, pDropTarget);
+	if (GetShellOle()) return pRegisterDragDrop(hWnd, pDropTarget);
+        return 0;
 }
 
 /*************************************************************************

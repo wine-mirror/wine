@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = wcmd
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 WRCEXTRA  = -s -p wcmd
 
 C_SRCS = \
@@ -25,7 +24,7 @@ all: check_wrc $(PROGRAMS)
 @MAKE_RULES@
 
 wcmd: $(OBJS)
-	$(CC) -o wcmd $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o wcmd $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) wcmd $(bindir)/wcmd

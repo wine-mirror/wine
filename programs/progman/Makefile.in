@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = progman
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = shell32 comdlg32 ole32 winspool
 WRCEXTRA  = -s -p progman
 
 LICENSELANG = En
@@ -33,7 +33,7 @@ all: check_wrc $(PROGRAMS)
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
 progman: $(OBJS)
-	$(CC) -o progman $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o progman $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) progman $(bindir)/progman

@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = shell32 ole32 comdlg32 winspool
 WRCEXTRA  = -s -p winhelp
 
 C_SRCS = \
@@ -32,7 +32,7 @@ depend: y.tab.h
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
 winhelp: $(OBJS)
-	$(CC) -o winhelp $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o winhelp $(OBJS) $(DLL_LINK) $(LIBS)
 
 hlp2sgml: hlp2sgml.o hlpfile.o
 	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o

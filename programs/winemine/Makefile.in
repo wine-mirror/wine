@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winemine
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 WRCEXTRA  = -s -p winemine
 
 LICENSELANG = En
@@ -28,7 +27,7 @@ all: check_wrc $(PROGRAMS)
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
 winemine: $(OBJS)
-	$(CC) -o winemine $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o winemine $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) winemine $(bindir)/winemine

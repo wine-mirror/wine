@@ -131,7 +131,7 @@ EXTRA_OBJS = $(LIBOBJS)
 
 EMU_TARGET = @EMU_TARGET@
 
-all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) $(EMU_TARGET)
+all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) lib$(MODULE).$(LIBEXT) $(DLLDIR) $(EMU_TARGET)
 	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 
@@ -144,15 +144,12 @@ WINAPI_CHECK_EXTRA_FLAGS = --global
 
 @MAKE_RULES@
 
-all: lib$(MODULE).$(LIBEXT) $(DLLOBJS)
-
 Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-wine wine.sym: lib$(MODULE).$(LIBEXT) $(DLLOBJS) $(EMUOBJS)
-	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
-	nm -n wine | grep -v _compiled >wine.sym
+wine: lib$(MODULE).$(LIBEXT) $(DLLDIR) $(EMUOBJS)
+	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LIBS)
 
 llib-lwine.ln : $(LIBLINTS)
 	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS)
@@ -168,8 +165,6 @@ install_a: lib$(MODULE).a
 
 install_wine: wine
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	[ -f wine.sym ] && $(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
 install:: $(PROGRAMS) $(LIBPROGRAMS) $(EMU_TARGET:%=install_%) $(LIBEXT:%=install_%)
@@ -179,7 +174,7 @@ install:: $(PROGRAMS) $(LIBPROGRAMS) $(EMU_TARGET:%=install_%) $(LIBEXT:%=instal
 	$(INSTALL_PROGRAM) debugger/winedbg $(bindir)/winedbg
 
 uninstall::
-	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION) wine.sym
+	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION)
 	cd $(bindir) && $(RM) wine wineserver dosmod winedbg
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
@@ -194,12 +189,14 @@ lib$(MODULE).a: $(OBJS) Makefile.in Make.rules.in
 	$(RANLIB) $@
 
 checklink::
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LIBS) && $(RM) checklink
 
 $(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
-$(LIBPROGRAMS): lib$(MODULE).$(LIBEXT) $(DLLOBJS)
+$(DLLDIR): $(TOOLSUBDIRS) dummy
+
+$(LIBPROGRAMS): lib$(MODULE).$(LIBEXT) $(DLLDIR)
 
 $(LIBLINTS) $(EMULINTS): dummy
 	@cd `dirname $@` && $(MAKE) lint
@@ -232,7 +229,7 @@ htmlpages:
 	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::
-	$(RM) wine wine.sym libwine.so.1.0 TAGS
+	$(RM) wine libwine.so.1.0 TAGS
 
 distclean: clean
 	$(RM) config.* Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man

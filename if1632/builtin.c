@@ -183,6 +183,7 @@ BOOL BUILTIN_Init(void)
 HMODULE16 BUILTIN_LoadModule( LPCSTR name )
 {
     char dllname[16], *p;
+    void *handle;
     int i;
 
     /* Fix the name in case we have a full path and extension */
@@ -198,9 +199,24 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
         const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
         NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
         OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-        if (!lstrcmpiA( pOfs->szPathName, dllname ))
+        if (!strcasecmp( pOfs->szPathName, dllname ))
             return BUILTIN_DoLoadModule16( descr );
     }
+
+    if ((handle = BUILTIN32_dlopen( dllname )))
+    {
+        for (i = 0; i < nb_dlls; i++)
+        {
+            const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
+            NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
+            OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
+            if (!strcasecmp( pOfs->szPathName, dllname ))
+                return BUILTIN_DoLoadModule16( descr );
+        }
+        ERR( "loaded .so but dll %s still not found\n", dllname );
+        BUILTIN32_dlclose( handle );
+    }
+
     return (HMODULE16)2;
 }
 

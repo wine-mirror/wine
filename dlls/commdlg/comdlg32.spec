@@ -5,7 +5,7 @@ rsrc	comdlg32
 
 import	shell32.dll
 import	comctl32.dll
-import	winspool.dll
+import	winspool.drv
 
  0 stub ArrowBtnWndProc
  1 stdcall ChooseColorA(ptr) ChooseColorA

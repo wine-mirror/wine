@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winver
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = shell32 ole32
 
 C_SRCS = winver.c
 
@@ -16,7 +16,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 winver: $(OBJS)
-	$(CC) -o winver $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o winver $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) winver $(bindir)/winver

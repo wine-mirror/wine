@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = control
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = shell32 ole32
 
 C_SRCS = control.c
 
@@ -16,7 +16,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 control: $(OBJS)
-	$(CC) -o control $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o control $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) control $(bindir)/control

@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = icinfo aviinfo aviplay
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = msvfw32 winmm ddraw x11drv
 WRCEXTRA  = -s -p $*
 
 SPEC_SRCS = \
@@ -18,13 +18,13 @@ all: check_wrc $(PROGRAMS)
 @MAKE_RULES@
 
 icinfo: icinfo.o icinfo.spec.o
-	$(CC) -o icinfo icinfo.o icinfo.spec.o $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o icinfo icinfo.o icinfo.spec.o $(DLL_LINK) $(LIBS)
 
 aviinfo: aviinfo.o aviinfo.spec.o
-	$(CC) -o aviinfo aviinfo.o aviinfo.spec.o $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o aviinfo aviinfo.o aviinfo.spec.o $(DLL_LINK) $(LIBS)
 
 aviplay: aviplay.o aviplay.spec.o
-	$(CC) -o aviplay aviplay.o aviplay.spec.o $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o aviplay aviplay.o aviplay.spec.o $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) icinfo $(bindir)/icinfo

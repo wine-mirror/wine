@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = cmdlgtst
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = comdlg32 winspool
 WRCEXTRA  = -s -p cmdlgtst
 
 C_SRCS = \
@@ -22,7 +22,7 @@ all: check_wrc $(PROGRAMS)
 @MAKE_RULES@
 
 cmdlgtst: $(OBJS)
-	$(CC) -o cmdlgtst $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o cmdlgtst $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) cmdlgtst $(bindir)/cmdlgtst

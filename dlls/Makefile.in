@@ -305,6 +305,30 @@ libwsock32.@LIBEXT@ libwinsock.@LIBEXT@: winsock/libwsock32.@LIBEXT@
 libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) x11drv/libx11drv.@LIBEXT@ $@
 
+# Inter-dll dependencies (only necessary for .so)
+
+avifil32/libavifil32.so: libmsvfw32.so libwinmm.so
+commdlg/libcomdlg32.so: libwinspool.so
+ddraw/libddraw.so: libx11drv.so
+dplayx/libdplayx.so: libole32.so
+msvideo/libmsvfw32.so: libwinmm.so
+oleaut32/liboleaut32.so: libole32.so libcomctl32.so
+olecli/libolecli32.so: libolesvr32.so libole32.so
+olepro32/libolepro32.so: liboleaut32.so libole32.so
+shell32/libshell32.so: libole32.so
+urlmon/liburlmon.so: libole32.so
+version/libversion.so: liblz32.so
+winmm/joystick/libjoystick.drv.so: libwinmm.so
+winmm/mcianim/libmcianim.drv.so: libwinmm.so
+winmm/mciavi/libmciavi.drv.so: libwinmm.so
+winmm/mcicda/libmcicda.drv.so: libwinmm.so
+winmm/mciseq/libmciseq.drv.so: libwinmm.so
+winmm/mciwave/libmciwave.drv.so: libwinmm.so
+winmm/midimap/libmidimap.drv.so: libwinmm.so
+winmm/wavemap/libmsacm.drv.so: libwinmm.so
+winmm/wineoss/libwineoss.drv.so: libwinmm.so
+
+
 $(DLLFILES): dummy
 	@cd `dirname $@` && $(MAKE)
 

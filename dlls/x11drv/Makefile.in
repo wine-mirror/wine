@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = x11drv
 SOVERSION = 1.0
+EXTRALIBS = $(X_LIBS) $(XLIB)
 
 SPEC_SRCS = x11drv.spec
 

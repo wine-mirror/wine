@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = notepad
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+IMPORTS   = shell32 ole32 comdlg32 winspool
 WRCEXTRA  = -s -p notepad
 
 LICENSELANG = En
@@ -31,7 +31,7 @@ all: check_wrc $(PROGRAMS)
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
 notepad: $(OBJS)
-	$(CC) -o notepad $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o notepad $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) notepad $(bindir)/notepad

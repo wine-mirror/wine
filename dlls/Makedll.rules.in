@@ -5,6 +5,7 @@
 # SOVERSION    : version of the .so file
 # ALTNAMES     : alternate names for this dll (optional)
 # IMPORTS      : dlls to import (optional)
+# EXTRALIBS    : extra libraries to link in (optional)
 #
 # plus all variables required by the global Make.rules.in
 #
@@ -23,7 +24,7 @@ all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
 # Rules for .so files
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDSHARED) $(OBJS) -o $@
+	$(LDSHARED) $(OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(EXTRALIBS)
 
 $(ALLNAMES): lib$(MODULE).so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@
@@ -43,7 +44,7 @@ $(ALTNAMES:%=lib%.a): lib$(MODULE).a
 IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
 
 checklink:: lib$(MODULE).$(LIBEXT) $(IMPORTLIBS)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(TOPOBJDIR) -lwine $(EXTRALIBS) $(LIBS) && $(RM) checklink
 
 $(IMPORTLIBS): dummy
 	@cd $(DLLDIR) && $(MAKE) `basename $@`

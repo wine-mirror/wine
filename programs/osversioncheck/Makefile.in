@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = osversioncheck
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 
 C_SRCS = osversioncheck.c
 
@@ -16,7 +15,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 osversioncheck: $(OBJS)
-	$(CC) -o osversioncheck $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+	$(CC) -o osversioncheck $(OBJS) $(DLL_LINK) $(LIBS)
 
 install::
 	$(INSTALL_PROGRAM) osversioncheck $(bindir)/osversioncheck
