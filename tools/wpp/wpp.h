@@ -30,6 +30,6 @@ extern void wpp_set_pedantic( int on );
 extern void wpp_add_include_path( const char *path );
 extern char *wpp_find_include( const char *name, int search );
 extern int wpp_parse( const char *input, FILE *output );
-extern int wpp_parse_temp( const char *input, char **output_name );
+extern int wpp_parse_temp( const char *input, const char *output_base, char **output_name );
 
 #endif  /* __WINE_WPP_H */

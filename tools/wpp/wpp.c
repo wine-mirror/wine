@@ -110,20 +110,23 @@ int wpp_parse( const char *input, FILE *output )
 
 
 /* parse into a temporary file */
-int wpp_parse_temp( const char *input, char **output_name )
+int wpp_parse_temp( const char *input, const char *output_base, char **output_name )
 {
     FILE *output;
     int ret, fd;
-    char tmpfn[20], *temp_name;
+    char *temp_name;
 
-    strcpy(tmpfn,"/tmp/wpp.XXXXXX");
+    if (!output_base || !output_base[0]) output_base = "wpptmp";
 
-    if((fd = mkstemp(tmpfn)) == -1)
+    temp_name = pp_xmalloc( strlen(output_base) + 8 );
+    strcpy( temp_name, output_base );
+    strcat( temp_name, ".XXXXXX" );
+
+    if((fd = mkstemp( temp_name )) == -1)
     {
-        fprintf(stderr, "Could not generate a temp-name\n");
+        fprintf(stderr, "Could not generate a temp name from %s\n", temp_name);
         exit(2);
     }
-    temp_name = pp_xstrdup(tmpfn);
 
     if (!(output = fdopen(fd, "wt")))
     {

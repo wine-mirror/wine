@@ -296,7 +296,7 @@ void do_import(char *fname)
 	import_stack[ptr].temp_name = temp_name;
 	import_stack_ptr++;
 
-        ret = wpp_parse_temp( path, &temp_name );
+        ret = wpp_parse_temp( path, NULL, &temp_name );
         free( path );
         if (ret) exit(1);
 

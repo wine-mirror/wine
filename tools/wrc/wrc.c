@@ -627,7 +627,7 @@ int main(int argc,char *argv[])
                 if (!preprocess_only)
                 {
                     atexit(rm_tempfile);
-                    ret = wpp_parse_temp( input_name, &temp_name );
+                    ret = wpp_parse_temp( input_name, output_name, &temp_name );
                 }
                 else if (output_name)
                 {

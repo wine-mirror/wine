@@ -47,7 +47,6 @@ struct import
     int          nb_exports;  /* number of exported functions */
     struct func *imports;     /* functions we want to import from this dll */
     int          nb_imports;  /* number of imported functions */
-    int          lineno;      /* line in .spec file where import is defined */
 };
 
 static char **undef_symbols;  /* list of undefined symbols */
@@ -58,7 +57,7 @@ static char **ignore_symbols; /* list of symbols to ignore */
 static int nb_ignore_symbols;
 static int ignore_size;
 
-static const char *ld_tmp_file;  /* ld temp file name */
+static char *ld_tmp_file;  /* ld temp file name */
 
 static struct import **dll_imports = NULL;
 static int nb_imports = 0;      /* number of imported dlls (delayed or not) */
@@ -232,8 +231,6 @@ void add_import_dll( const char *name, int delay )
     imp->delay      = delay;
     imp->imports    = NULL;
     imp->nb_imports = 0;
-    /* GetToken for the file name has swallowed the '\n', hence pointing to next line */
-    imp->lineno = current_line - 1;
 
     if (delay) nb_delayed++;
     read_exported_symbols( fullname, imp );
@@ -376,7 +373,7 @@ static void add_extra_undef_symbols(void)
 /* warn if a given dll is not used, but check forwards first */
 static void warn_unused( const struct import* imp )
 {
-    int i, curline;
+    int i;
     size_t len = strlen(imp->dll);
     const char *p = strchr( imp->dll, '.' );
     if (p && !strcasecmp( p, ".dll" )) len = p - imp->dll;
@@ -389,11 +386,7 @@ static void warn_unused( const struct import* imp )
             odp->link_name[len] == '.')
             return;  /* found an import, do not warn */
     }
-    /* switch current_line temporarily to the line of the import declaration */
-    curline = current_line;
-    current_line = imp->lineno;
     warning( "%s imported but no symbols used\n", imp->dll );
-    current_line = curline;
 }
 
 /* combine a list of object files with ld into a single object file */
@@ -403,11 +396,17 @@ static const char *ldcombine_files( char **argv )
     int i, len = 0;
     char *cmd;
     int fd, err;
-    char buffer[] = "/tmp/winebuild.tmp.XXXXXX";
 
-    if ((fd = mkstemp( buffer ) == -1)) fatal_error( "could not generate a temp file\n" );
+    if (output_file_name && output_file_name[0])
+    {
+        ld_tmp_file = xmalloc( strlen(output_file_name) + 8 );
+        strcpy( ld_tmp_file, output_file_name );
+        strcat( ld_tmp_file, ".XXXXXX" );
+    }
+    else ld_tmp_file = xstrdup( "/tmp/winebuild.tmp.XXXXXX" );
+
+    if ((fd = mkstemp( ld_tmp_file ) == -1)) fatal_error( "could not generate a temp file\n" );
     close( fd );
-    ld_tmp_file = xstrdup( buffer );
     atexit( remove_ld_tmp_file );
 
     for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;

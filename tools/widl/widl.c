@@ -166,7 +166,7 @@ int main(int argc,char *argv[])
 
     if (!preprocess_only)
     {
-        ret = wpp_parse_temp( input_name, &temp_name );
+        ret = wpp_parse_temp( input_name, header_name, &temp_name );
     }
     else
     {
