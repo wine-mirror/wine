@@ -119,7 +119,7 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSA lpCaps, DWORD dwSize)
 /**************************************************************************
  * 				MIX_GetLineInfoFromIndex	[internal]
  */
-static	void	MIX_GetLineInfoFromIndex(LPMIXERLINEA lpMl, int devmask, DWORD idx)
+static	DWORD	MIX_GetLineInfoFromIndex(LPMIXERLINEA lpMl, int devmask, DWORD idx)
 {
     strcpy(lpMl->szShortName, MIX_Labels[idx]);
     strcpy(lpMl->szName, MIX_Names[idx]);
@@ -149,9 +149,10 @@ static	void	MIX_GetLineInfoFromIndex(LPMIXERLINEA lpMl, int devmask, DWORD idx)
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
 	break;
     default:
-	ERR("Index %ld not handled.\n", idx);
-	break;
+	WARN("Index %ld not handled.\n", idx);
+	return MIXERR_INVALLINE;
     }
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -206,7 +207,8 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 	    return MIXERR_INVALLINE;
 	if (WINE_CHN_SUPPORTS(MIX_StereoMask, j))
 	    lpMl->cChannels++;
-	MIX_GetLineInfoFromIndex(lpMl, MIX_DevMask, j);
+	if ((ret = MIX_GetLineInfoFromIndex(lpMl, MIX_DevMask, j)) != MMSYSERR_NOERROR)
+	    return ret;
 	break;
     case MIXER_GETLINEINFOF_LINEID:
 	TRACE("LINEID (%08lx)\n", lpMl->dwLineID);
@@ -214,7 +216,8 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 	    return MIXERR_INVALLINE;
 	if (WINE_CHN_SUPPORTS(MIX_StereoMask, lpMl->dwLineID))
 	    lpMl->cChannels++;
-	MIX_GetLineInfoFromIndex(lpMl, MIX_DevMask, lpMl->dwLineID);
+	if ((ret = MIX_GetLineInfoFromIndex(lpMl, MIX_DevMask, lpMl->dwLineID)) != MMSYSERR_NOERROR)
+	    return ret;
 	break;
     case MIXER_GETLINEINFOF_COMPONENTTYPE:
 	TRACE("COMPONENT TYPE (%08lx)\n", lpMl->dwComponentType);
