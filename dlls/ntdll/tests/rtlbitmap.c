@@ -20,15 +20,8 @@
  * We use function pointers here as some of the bitmap functions exist only
  * in later versions of ntdll.
  */
-#include <stdarg.h>
 
-#include "wine/test.h"
-#include "ntstatus.h"
-#include "windef.h"
-#include "winbase.h"
-#include "winnt.h"
-#include "winreg.h"
-#include "winternl.h"
+#include "ntdll_test.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hntdll = 0;

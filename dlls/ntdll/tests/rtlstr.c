@@ -22,18 +22,12 @@
  * windows.
  */
 
-#include <stdarg.h>
 #include <stdlib.h>
 
 #define INITGUID
-#include "ntstatus.h"
-#include "windef.h"
-#include "winbase.h"
-#include "wine/test.h"
-#include "winnt.h"
+
+#include "ntdll_test.h"
 #include "winnls.h"
-#include "winreg.h"
-#include "winternl.h"
 #include "guiddef.h"
 
 /* Function ptrs for ntdll calls */

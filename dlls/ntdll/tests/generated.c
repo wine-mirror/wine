@@ -11,8 +11,7 @@
 
 #define WINE_NOWINSOCK
 
-#include "ntstatus.h"
-#include "windows.h"
+#include "ntdll_test.h"
 
 #include "wine/test.h"
 

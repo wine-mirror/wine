@@ -18,15 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdarg.h>
 #include <stdio.h>
-#include "wine/test.h"
-#include "ntstatus.h"
-#include "windef.h"
-#include "winbase.h"
-#include "winnt.h"
-#include "winreg.h"
-#include "winternl.h"
+
+#include "ntdll_test.h"
 #include "wine/unicode.h"
 
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
