@@ -35,6 +35,12 @@
 /* Define to use .string instead of .ascii */
 #undef HAVE_ASM_STRING
 
+/* Define to 1 if you have the <audio/audiolib.h> header file. */
+#undef HAVE_AUDIO_AUDIOLIB_H
+
+/* Define to 1 if you have the <audio/soundlib.h> header file. */
+#undef HAVE_AUDIO_SOUNDLIB_H
+
 /* Define to 1 if you have the `chsize' function. */
 #undef HAVE_CHSIZE
 
@@ -301,6 +307,9 @@
 
 /* Define if struct msghdr contains msg_accrights */
 #undef HAVE_MSGHDR_ACCRIGHTS
+
+/* Define if you have NAS including devel headers */
+#undef HAVE_NAS
 
 /* Define to 1 if you have the <ncurses.h> header file. */
 #undef HAVE_NCURSES_H

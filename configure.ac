@@ -568,6 +568,15 @@ then
 	ALSALIBS="-lasound")
 fi
 
+dnl **** Check for NAS ****
+AC_SUBST(NASLIBS,"")
+AC_CHECK_HEADERS(audio/audiolib.h,
+     [AC_CHECK_HEADERS(audio/soundlib.h,,,[#include <audio/audiolib.h>])
+      AC_CHECK_LIB(audio,AuCreateFlow,
+    	           [AC_DEFINE(HAVE_NAS,1,[Define if you have NAS including devel headers])
+                    NASLIBS="-laudio -lXt \$(X_LIBS) \$(XLIB)"],,
+                   [-lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
+
 dnl **** Check for broken glibc mmap64 ****
 
 AC_CACHE_CHECK( [whether mmap64 works defined as mmap], ac_cv_mmap64_works,
@@ -1403,6 +1412,7 @@ dlls/winmm/mciwave/Makefile
 dlls/winmm/midimap/Makefile
 dlls/winmm/wavemap/Makefile
 dlls/winmm/winealsa/Makefile
+dlls/winmm/winenas/Makefile
 dlls/winmm/winearts/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winnls/Makefile
