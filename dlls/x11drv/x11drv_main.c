@@ -273,10 +273,10 @@ static void process_attach(void)
 
     /* setup TSX11 locking */
 #ifdef NO_REENTRANT_X11
-    old_errno_location = (void *)InterlockedExchange( (PLONG)&wine_errno_location,
-                                                      (LONG)x11_errno_location );
-    old_h_errno_location = (void *)InterlockedExchange( (PLONG)&wine_h_errno_location,
-                                                        (LONG)x11_h_errno_location );
+    old_errno_location = InterlockedExchangePointer( &wine_errno_location,
+                                                     x11_errno_location );
+    old_h_errno_location = InterlockedExchangePointer( &wine_h_errno_location,
+                                                       x11_h_errno_location );
 #endif /* NO_REENTRANT_X11 */
     old_tsx11_lock    = wine_tsx11_lock;
     old_tsx11_unlock  = wine_tsx11_unlock;

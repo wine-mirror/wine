@@ -104,7 +104,7 @@ int __pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
   static pthread_once_t the_once = PTHREAD_ONCE_INIT;
   LONG once_now = *(LONG *)&the_once;
 
-  if (InterlockedCompareExchange((PVOID*)once_control, (PVOID)(once_now+1), (PVOID)once_now) == (PVOID)once_now)
+  if (InterlockedCompareExchange((LONG*)once_control, once_now+1, once_now) == once_now)
     (*init_routine)();
   return 0;
 }
@@ -188,7 +188,7 @@ static void mutex_real_init( pthread_mutex_t *mutex )
   CRITICAL_SECTION *critsect = HeapAlloc(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
   InitializeCriticalSection(critsect);
 
-  if (InterlockedCompareExchange((PVOID*)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
+  if (InterlockedCompareExchangePointer((void**)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
     /* too late, some other thread already did it */
     DeleteCriticalSection(critsect);
     HeapFree(GetProcessHeap(), 0, critsect);

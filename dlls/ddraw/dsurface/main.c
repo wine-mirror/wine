@@ -315,10 +315,10 @@ Main_DirectDrawSurface_ChangeUniquenessValue(LPDIRECTDRAWSURFACE7 iface)
 	if (old_uniqueness_value == 0) break;
 	if (new_uniqueness_value == 0) new_uniqueness_value = 1;
 
-	if (InterlockedCompareExchange((PVOID*)&vThis->uniqueness_value,
-				       (PVOID)old_uniqueness_value,
-				       (PVOID)new_uniqueness_value)
-	    == (PVOID)old_uniqueness_value)
+	if (InterlockedCompareExchange((LONG*)&vThis->uniqueness_value,
+                                       old_uniqueness_value,
+                                       new_uniqueness_value)
+	    == old_uniqueness_value)
 	    break;
     }
 

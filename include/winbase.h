@@ -1933,10 +1933,10 @@ BOOL        WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len 
 
 #if defined(__i386__) && defined(__GNUC__)
 
-extern inline PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare );
-extern inline PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare )
+extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare );
+extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
 {
-    PVOID ret;
+    LONG ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
     return ret;
@@ -1946,6 +1946,24 @@ extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val );
 extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
 {
     LONG ret;
+    __asm__ __volatile__( "lock; xchgl %0,(%1)"
+                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+    return ret;
+}
+
+extern inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare );
+extern inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare )
+{
+    PVOID ret;
+    __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+}
+
+extern inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val );
+extern inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
+{
+    PVOID ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
                           : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
     return ret;
@@ -2015,12 +2033,17 @@ DWORD       WINAPI GetCurrentProcessId(void);
 DWORD       WINAPI GetCurrentThreadId(void);
 DWORD       WINAPI GetLastError(void);
 HANDLE      WINAPI GetProcessHeap(void);
-PVOID       WINAPI InterlockedCompareExchange(PVOID*,PVOID,PVOID);
+LONG        WINAPI InterlockedCompareExchange(LONG*,LONG,LONG);
 LONG        WINAPI InterlockedDecrement(PLONG);
 LONG        WINAPI InterlockedExchange(PLONG,LONG);
 LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
 LONG        WINAPI InterlockedIncrement(PLONG);
 VOID        WINAPI SetLastError(DWORD);
+/* FIXME: should handle platforms where sizeof(void*) != sizeof(long) */
+#define InterlockedCompareExchangePointer(a,b,c) \
+    ((PVOID)InterlockedCompareExchange((PLONG)(a),(LONG)(b),(LONG)(c)))
+#define InterlockedExchangePointer(a,b) \
+    ((PVOID)InterlockedExchange((PLONG)(a),(LONG)(b)))
 #endif  /* __i386__ && __GNUC__ */
 
 #ifdef __WINE__

@@ -153,7 +153,7 @@ static lwp_mutex_t interlocked_mutex = DEFAULTMUTEX;
 /***********************************************************************
  *		InterlockedCompareExchange (KERNEL32.@)
  */
-PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare )
+LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
 {
     _lwp_mutex_lock( &interlocked_mutex );
 

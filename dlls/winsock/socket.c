@@ -736,7 +736,7 @@ static void WSOCK32_async_accept(SOCKET s, SOCKET as)
     int q;
     /* queue socket for WSAAsyncSelect */
     for (q=0; q<WS_ACCEPT_QUEUE; q++)
-	if (InterlockedCompareExchange((PVOID*)&accept_old[q], (PVOID)s, (PVOID)0) == (PVOID)0)
+	if (InterlockedCompareExchange((LONG *)&accept_old[q], s, 0) == 0)
 	    break;
     if (q<WS_ACCEPT_QUEUE)
 	accept_new[q] = as;
