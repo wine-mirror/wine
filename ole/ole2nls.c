@@ -2362,7 +2362,7 @@ UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle,
  *		OLE_GetFormatA	[Internal]
  *
  * FIXME
- *    Why is it WINAPI if internal?
+ *    If datelen == 0, it should return the reguired string length.
  *
  This function implements stuff for GetDateFormat() and 
  GetTimeFormat().
@@ -2394,7 +2394,7 @@ UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle,
 
  These functions REQUIRE valid locale, date,  and format. 
  */
-INT32 WINAPI OLE_GetFormatA(LCID locale,
+static INT32 OLE_GetFormatA(LCID locale,
 			    DWORD flags,
 			    DWORD tflags,
 			    LPSYSTEMTIME xtime,
@@ -2418,6 +2418,11 @@ INT32 WINAPI OLE_GetFormatA(LCID locale,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 _format, _format, date, datelen);
   
+   if(datelen == 0) {
+     FIXME(ole, "datelen = 0, returning 255\n");
+     return 255;
+   }
+
    /* initalize state variables and output buffer */
    inpos = outpos = 0;
    count = 0; inquote = 0; Overflow = 0;
@@ -2601,7 +2606,7 @@ INT32 WINAPI OLE_GetFormatA(LCID locale,
 /******************************************************************************
  * OLE_GetFormatW [INTERNAL]
  */
-INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
+static INT32 OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			    LPSYSTEMTIME xtime,
 			    LPCWSTR format,
 			    LPWSTR output, INT32 outlen)
@@ -2623,6 +2628,10 @@ INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 debugstr_w(format), format, output, outlen);
    
+   if(outlen == 0) {
+     FIXME(ole, "outlen = 0, returning 255\n");
+     return 255;
+   }
 
    /* initialize state variables */
    inpos = outpos = 0;
