@@ -867,57 +867,6 @@ then
   AC_DEFINE(STATFS_HAS_BAVAIL)
 fi
 
-dnl *** check for working sigaltstack
-dnl glibc 2.0x defines it, but it always fails... so it is useless for us.
-
-AC_CACHE_CHECK("for working sigaltstack",
-	ac_cv_c_working_sigaltstack,
-	AC_TRY_RUN([
-	#include <stdio.h>
-	#include <time.h> /* <sys/time.h> ? bad magic without end */
-	#include <sys/types.h>
-	#include <sys/signal.h>
-	#ifdef HAVE_SYS_PARAM_H
-	# include <sys/param.h>
-	#endif
-	#ifdef HAVE_SYSCALL_H
-	# include <syscall.h>
-	#else
-	# ifdef HAVE_SYS_SYSCALL_H
-	#  include <sys/syscall.h>
-	# endif
-	#endif
-	
-	unsigned char *xaltstack;
-
-	int
-	main(int argc,char **argv) {
-	    struct sigaltstack	ss;
-
-	    xaltstack = malloc(16384);
-	    ss.ss_sp    = xaltstack;
-	    ss.ss_size  = 16384;
-	    ss.ss_flags = 0;
-	    if (sigaltstack(&ss, NULL) < 0) {
-	    	/* this catches the glibc case */
-		perror("sigaltstack");
-	    	return (1); /* aka exit(1) aka fail */
-	    }
-	    /* assume it works. */
-	    return 0; /* OK */
-	}
-	],
-	ac_cv_c_working_sigaltstack="yes",
-	ac_cv_c_working_sigaltstack="no",
-	ac_cv_c_working_sigaltstack="no"
-))
-
-if test "$ac_cv_c_working_sigaltstack" = "yes"
-then
-    AC_DEFINE(HAVE_WORKING_SIGALTSTACK)
-fi
-
-
 dnl *** check for file descriptor passing with msg_accrights
 
 AC_CACHE_CHECK("for msg_accrights in struct msghdr", ac_cv_c_msg_accrights,

@@ -5930,87 +5930,13 @@ EOF
 fi
 
 
-echo $ac_n "checking "for working sigaltstack"""... $ac_c" 1>&6
-echo "configure:5935: checking "for working sigaltstack"" >&5
-if eval "test \"`echo '$''{'ac_cv_c_working_sigaltstack'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  if test "$cross_compiling" = yes; then
-  ac_cv_c_working_sigaltstack="no"
-
-else
-  cat > conftest.$ac_ext <<EOF
-#line 5944 "configure"
-#include "confdefs.h"
-
-	#include <stdio.h>
-	#include <time.h> /* <sys/time.h> ? bad magic without end */
-	#include <sys/types.h>
-	#include <sys/signal.h>
-	#ifdef HAVE_SYS_PARAM_H
-	# include <sys/param.h>
-	#endif
-	#ifdef HAVE_SYSCALL_H
-	# include <syscall.h>
-	#else
-	# ifdef HAVE_SYS_SYSCALL_H
-	#  include <sys/syscall.h>
-	# endif
-	#endif
-	
-	unsigned char *xaltstack;
-
-	int
-	main(int argc,char **argv) {
-	    struct sigaltstack	ss;
-
-	    xaltstack = malloc(16384);
-	    ss.ss_sp    = xaltstack;
-	    ss.ss_size  = 16384;
-	    ss.ss_flags = 0;
-	    if (sigaltstack(&ss, NULL) < 0) {
-	    	/* this catches the glibc case */
-		perror("sigaltstack");
-	    	return (1); /* aka exit(1) aka fail */
-	    }
-	    /* assume it works. */
-	    return 0; /* OK */
-	}
-	
-EOF
-if { (eval echo configure:5982: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
-then
-  ac_cv_c_working_sigaltstack="yes"
-else
-  echo "configure: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-  rm -fr conftest*
-  ac_cv_c_working_sigaltstack="no"
-fi
-rm -fr conftest*
-fi
-
-fi
-
-echo "$ac_t""$ac_cv_c_working_sigaltstack" 1>&6
-
-if test "$ac_cv_c_working_sigaltstack" = "yes"
-then
-    cat >> confdefs.h <<\EOF
-#define HAVE_WORKING_SIGALTSTACK 1
-EOF
-
-fi
-
-
-
 echo $ac_n "checking "for msg_accrights in struct msghdr"""... $ac_c" 1>&6
-echo "configure:6009: checking "for msg_accrights in struct msghdr"" >&5
+echo "configure:5935: checking "for msg_accrights in struct msghdr"" >&5
 if eval "test \"`echo '$''{'ac_cv_c_msg_accrights'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 6014 "configure"
+#line 5940 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -6018,7 +5944,7 @@ int main() {
 struct msghdr hdr; hdr.msg_accrights=0
 ; return 0; }
 EOF
-if { (eval echo configure:6022: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:5948: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   ac_cv_c_msg_accrights="yes"
 else
@@ -6041,12 +5967,12 @@ fi
 
 
 echo $ac_n "checking "for sun_len in struct sockaddr_un"""... $ac_c" 1>&6
-echo "configure:6045: checking "for sun_len in struct sockaddr_un"" >&5
+echo "configure:5971: checking "for sun_len in struct sockaddr_un"" >&5
 if eval "test \"`echo '$''{'ac_cv_c_sun_len'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 6050 "configure"
+#line 5976 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -6055,7 +5981,7 @@ int main() {
 static struct sockaddr_un addr; addr.sun_len = 1
 ; return 0; }
 EOF
-if { (eval echo configure:6059: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:5985: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   ac_cv_c_sun_len="yes"
 else
@@ -6078,12 +6004,12 @@ fi
 
 
 echo $ac_n "checking "whether we need to define __i386__"""... $ac_c" 1>&6
-echo "configure:6082: checking "whether we need to define __i386__"" >&5
+echo "configure:6008: checking "whether we need to define __i386__"" >&5
 if eval "test \"`echo '$''{'ac_cv_cpp_def_i386'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 6087 "configure"
+#line 6013 "configure"
 #include "confdefs.h"
 #if (defined(i386) || defined(__i386)) && !defined(__i386__)
 yes

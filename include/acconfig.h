@@ -66,9 +66,6 @@
 /* Define if the struct statfs has the member bfree */
 #undef STATFS_HAS_BFREE
 
-/* Define if we have a working sigaltstack */
-#undef HAVE_WORKING_SIGALTSTACK
-
 /* Define if the struct statfs is defined by <sys/vfs.h> */
 #undef STATFS_DEFINED_BY_SYS_VFS
 

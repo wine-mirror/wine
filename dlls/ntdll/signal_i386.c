@@ -62,13 +62,12 @@ typedef struct
 #define HANDLER_CONTEXT (&__context)
 
 /* this is the sigaction structure from the Linux 2.1.20 kernel.  */
-#undef sa_handler
 struct kernel_sigaction
 {
-    void (*sa_handler)();
-    unsigned long sa_mask;
-    unsigned long sa_flags;
-    void *sa_restorer;
+    void (*ksa_handler)();
+    unsigned long ksa_mask;
+    unsigned long ksa_flags;
+    void *ksa_restorer;
 };
 
 /* Similar to the sigaction function in libc, except it leaves alone the
@@ -86,6 +85,24 @@ static inline int wine_sigaction( int sig, struct kernel_sigaction *new,
     errno = -sig;
     return -1;
 }
+
+#ifdef HAVE_SIGALTSTACK
+/* direct syscall for sigaltstack to work around glibc 2.0 brain-damage */
+static inline int wine_sigaltstack( const struct sigaltstack *new,
+                                    struct sigaltstack *old )
+{
+    int ret;
+    __asm__ __volatile__( "pushl %%ebx\n\t"
+                          "movl %2,%%ebx\n\t"
+                          "int $0x80\n\t"
+                          "popl %%ebx"
+                          : "=a" (ret)
+                          : "0" (SYS_sigaltstack), "r" (new), "c" (old) );
+    if (ret >= 0) return 0;
+    errno = -ret;
+    return -1;
+}
+#endif
 
 #endif  /* linux */
 
@@ -660,32 +677,37 @@ static HANDLER_DEF(int_handler)
  *
  * Set a signal handler
  */
-static int set_handler( int sig, void (*func)() )
+static int set_handler( int sig, int have_sigaltstack, void (*func)() )
 {
-#ifdef linux
-    struct kernel_sigaction sig_act;
-    sig_act.sa_handler = func;
-    sig_act.sa_flags   = SA_RESTART | SA_NOMASK;
-    sig_act.sa_mask    = 0;
-    /* point to the top of the stack */
-    sig_act.sa_restorer = (char *)NtCurrentTeb()->signal_stack + SIGNAL_STACK_SIZE;
-    return wine_sigaction( sig, &sig_act, NULL );
-#else  /* linux */
     struct sigaction sig_act;
+
+#ifdef linux
+    if (!have_sigaltstack && NtCurrentTeb()->signal_stack)
+    {
+        struct kernel_sigaction sig_act;
+        sig_act.ksa_handler = func;
+        sig_act.ksa_flags   = SA_RESTART | SA_NOMASK;
+        sig_act.ksa_mask    = 0;
+        /* point to the top of the stack */
+        sig_act.ksa_restorer = (char *)NtCurrentTeb()->signal_stack + SIGNAL_STACK_SIZE;
+        return wine_sigaction( sig, &sig_act, NULL );
+    }
+#endif  /* linux */
     sig_act.sa_handler = func;
     sigemptyset( &sig_act.sa_mask );
 
-# if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-    sig_act.sa_flags = SA_ONSTACK;
-# elif defined (__svr4__) || defined(_SCO_DS)
-    sig_act.sa_flags = SA_SIGINFO | SA_ONSTACK | SA_RESTART;
-# elif defined(__EMX__)
-    sig_act.sa_flags = 0; /* FIXME: EMX has only SA_ACK and SA_SYSV */
-# else
+#ifdef linux
+    sig_act.sa_flags = SA_RESTART | SA_NOMASK;
+#elif defined (__svr4__) || defined(_SCO_DS)
+    sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
+#else
     sig_act.sa_flags = 0;
-# endif
+#endif
+
+#ifdef SA_ONSTACK
+    if (have_sigaltstack) sig_act.sa_flags |= SA_ONSTACK;
+#endif
     return sigaction( sig, &sig_act, NULL );
-#endif  /* linux */
 }
 
 
@@ -694,17 +716,21 @@ static int set_handler( int sig, void (*func)() )
  */
 BOOL SIGNAL_Init(void)
 {
-#ifdef HAVE_WORKING_SIGALTSTACK
+    int have_sigaltstack = 0;
+
+#ifdef HAVE_SIGALTSTACK
     struct sigaltstack ss;
     if ((ss.ss_sp = NtCurrentTeb()->signal_stack))
     {
         ss.ss_size  = SIGNAL_STACK_SIZE;
         ss.ss_flags = 0;
-        if (sigaltstack(&ss, NULL) < 0)
-        {
-            perror("sigaltstack");
-            /* fall through on error and try it differently */
-        }
+        if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
+#ifdef linux
+        /* sigaltstack may fail because the kernel is too old, or
+           because glibc is brain-dead. In the latter case a
+           direct system call should succeed. */
+        else if (!wine_sigaltstack(&ss, NULL)) have_sigaltstack = 1;
+#endif  /* linux */
     }
 #endif  /* HAVE_SIGALTSTACK */
     
@@ -713,15 +739,15 @@ BOOL SIGNAL_Init(void)
     /* automatic child reaping to avoid zombies */
     signal( SIGCHLD, SIG_IGN );
 
-    if (set_handler( SIGINT,  (void (*)())int_handler ) == -1) goto error;
-    if (set_handler( SIGFPE,  (void (*)())fpe_handler ) == -1) goto error;
-    if (set_handler( SIGSEGV, (void (*)())segv_handler ) == -1) goto error;
-    if (set_handler( SIGILL,  (void (*)())segv_handler ) == -1) goto error;
+    if (set_handler( SIGINT,  have_sigaltstack, (void (*)())int_handler ) == -1) goto error;
+    if (set_handler( SIGFPE,  have_sigaltstack, (void (*)())fpe_handler ) == -1) goto error;
+    if (set_handler( SIGSEGV, have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
+    if (set_handler( SIGILL,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
 #ifdef SIGBUS
-    if (set_handler( SIGBUS,  (void (*)())segv_handler ) == -1) goto error;
+    if (set_handler( SIGBUS,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
 #endif
 #ifdef SIGTRAP
-    if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
+    if (set_handler( SIGTRAP, have_sigaltstack, (void (*)())trap_handler ) == -1) goto error;
 #endif
     return TRUE;
 
