@@ -1873,6 +1873,24 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     {
         if (offset > wndPtr->cbWndExtra - sizeof(LONG))
         {
+          /*
+            * Some programs try to access last element from 16 bit
+            * code using illegal offset value. Hopefully this is
+            * what those programs really expect.
+            */
+           if (type == WIN_PROC_16 && 
+               wndPtr->cbWndExtra >= 4 &&
+               offset == wndPtr->cbWndExtra - sizeof(WORD))
+           {
+               INT offset2 = wndPtr->cbWndExtra - sizeof(LONG);
+             
+               ERR( "- replaced invalid offset %d with %d\n",
+                    offset, offset2 );
+           
+                retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset2);
+                WIN_ReleasePtr( wndPtr );
+                return retvalue;
+            }
             WARN("Invalid offset %d\n", offset );
             WIN_ReleasePtr( wndPtr );
             SetLastError( ERROR_INVALID_INDEX );
