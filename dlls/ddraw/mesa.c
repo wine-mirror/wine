@@ -109,6 +109,16 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 	        break;
 
+	    case D3DRENDERSTATE_WRAPU: /* 5 */
+	        if (dwRenderState)
+		    ERR("WRAPU mode unsupported by OpenGL.. Expect graphical glitches !\n");
+	        break;
+	      
+	    case D3DRENDERSTATE_WRAPV: /* 6 */
+	        if (dwRenderState)
+		    ERR("WRAPV mode unsupported by OpenGL.. Expect graphical glitches !\n");
+	        break;
+
 	    case D3DRENDERSTATE_ZENABLE:          /*  7 */
 	        if (dwRenderState)
 		    glEnable(GL_DEPTH_TEST);

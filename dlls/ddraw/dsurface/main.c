@@ -991,8 +991,9 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 	TRACE(" - locking flags : "); DDRAW_dump_lockflag(flags);
     }
     if (WARN_ON(ddraw)) {
-	if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
+	if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY)) {
 	    WARN(" - unsupported locking flag : "); DDRAW_dump_lockflag(flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY));
+	}
     }
 
     /* First, copy the Surface description */
