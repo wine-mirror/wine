@@ -169,7 +169,7 @@ static inline LRESULT WINAPI DesktopWndProc_locked( WND *wndPtr, UINT message,
 	ExitWindows16( 0, 0 ); 
 
     case WM_SETCURSOR:
-        return  (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
+        return  (LRESULT)SetCursor( LoadCursorA( 0, IDC_ARROWA ) );
     }
     
     return 0;

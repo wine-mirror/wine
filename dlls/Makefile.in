@@ -444,7 +444,7 @@ winmm/midimap/libmidimap.drv.so: libwinmm.so libuser32.so libkernel32.so libntdl
 winmm/wavemap/libmsacm.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
 winmm/wineoss/libwineoss.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
 winsock/libws2_32.so: libuser32.so libkernel32.so libntdll.so
-winspool/libwinspool.drv.so: libgdi32.so libadvapi32.so libkernel32.so libntdll.so
+winspool/libwinspool.drv.so: libuser32.so libgdi32.so libadvapi32.so libkernel32.so libntdll.so
 wow32/libwow32.so: libkernel32.so
 wsock32/libwsock32.so: libws2_32.so libkernel32.so libntdll.so
 x11drv/libx11drv.so: libuser32.so libgdi32.so libkernel32.so

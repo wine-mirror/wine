@@ -505,9 +505,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 
             if( (hIcon=wndPtr->class->hCursor) ) return (LRESULT)hIcon;
             for(len=1; len<64; len++)
-                if((hIcon=LoadIcon16(wndPtr->hInstance,MAKEINTRESOURCE16(len))))
+                if((hIcon=LoadIconA(wndPtr->hInstance,MAKEINTRESOURCEA(len))))
                     return (LRESULT)hIcon;
-            return (LRESULT)LoadIcon16(0,IDI_APPLICATION16);
+            return (LRESULT)LoadIconA(0,IDI_APPLICATIONA);
         }
         break;
 

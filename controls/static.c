@@ -113,28 +113,10 @@ static HBITMAP16 STATIC_SetBitmap( WND *wndPtr, HBITMAP16 hBitmap )
  *
  * Load the icon for an SS_ICON control.
  */
-static HICON16 STATIC_LoadIcon( WND *wndPtr, LPCSTR name )
+static HICON STATIC_LoadIcon( WND *wndPtr, LPCSTR name )
 {
-    HICON16 hicon;
-
-    if (wndPtr->flags & WIN_ISWIN32)
-    {
-	if (!HIWORD(wndPtr->hInstance)) {
-	    LPSTR segname = SEGPTR_STRDUP(name);
-	    hicon = LoadIcon16( wndPtr->hInstance, SEGPTR_GET(segname) );
-	    SEGPTR_FREE(segname);
-	} else
-	    hicon = LoadIconA( wndPtr->hInstance, name );
-    } else {
-        LPSTR segname = SEGPTR_STRDUP(name);
-
-	if (HIWORD(wndPtr->hInstance))
-		FIXME("win16 window class, but win32 hinstance??\n");
-        hicon = LoadIcon16( wndPtr->hInstance, SEGPTR_GET(segname) );
-        SEGPTR_FREE(segname);
-    }
-    if (!hicon)
-	hicon = LoadIconA( 0, name );
+    HICON hicon = LoadIconA( wndPtr->hInstance, name );
+    if (!hicon) hicon = LoadIconA( 0, name );
     return hicon;
 }
 
@@ -143,24 +125,11 @@ static HICON16 STATIC_LoadIcon( WND *wndPtr, LPCSTR name )
  *
  * Load the bitmap for an SS_BITMAP control.
  */
-static HBITMAP16 STATIC_LoadBitmap( WND *wndPtr, LPCSTR name )
+static HBITMAP STATIC_LoadBitmap( WND *wndPtr, LPCSTR name )
 {
-    HBITMAP16 hbitmap;
-
-    if (wndPtr->flags & WIN_ISWIN32)
-    {
-        hbitmap = LoadBitmapA( wndPtr->hInstance, name );
-        if (!hbitmap)  /* Try OEM icon (FIXME: is this right?) */
-            hbitmap = LoadBitmapA( 0, name );
-    }
-    else
-    {
-        LPSTR segname = SEGPTR_STRDUP(name);
-        hbitmap = LoadBitmap16( wndPtr->hInstance, SEGPTR_GET(segname) );
-        if (!hbitmap)  /* Try OEM icon (FIXME: is this right?) */
-            hbitmap = LoadBitmapA( 0, segname );
-        SEGPTR_FREE(segname);
-    }
+    HBITMAP hbitmap = LoadBitmapA( wndPtr->hInstance, name );
+    if (!hbitmap)  /* Try OEM icon (FIXME: is this right?) */
+        hbitmap = LoadBitmapA( 0, name );
     return hbitmap;
 }
 

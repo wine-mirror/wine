@@ -15,8 +15,8 @@
 #include "win.h"
 #include "heap.h"
 
-	BOOL	bMultiLineTitle;
-	HFONT	hIconTitleFont;
+static BOOL bMultiLineTitle;
+static HFONT hIconTitleFont;
 
 /***********************************************************************
  *           ICONTITLE_Init

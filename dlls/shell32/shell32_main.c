@@ -358,7 +358,7 @@ DWORD WINAPI SHGetFileInfoAW(
 HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
 {
     ICONINFO IconInfo;
-    HICON hDupIcon = NULL;
+    HICON hDupIcon = 0;
 
     TRACE("(%04x, %04x)\n", hInstance, hIcon);
 
@@ -471,7 +471,7 @@ typedef struct
 #define		DROP_FIELD_TOP		(-15)
 #define		DROP_FIELD_HEIGHT	15
 
-extern HICON hIconTitleFont;
+static HICON hIconTitleFont;
 
 static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
 { HWND hWndCtl = GetDlgItem(hWnd, IDC_WINE_TEXT);
@@ -616,6 +616,12 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                                   info->szOtherStuff );
                 hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
                 SendMessageA( hWndCtl, WM_SETREDRAW, 0, 0 );
+                if (!hIconTitleFont)
+                {
+                    LOGFONTA logFont;
+                    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
+                    hIconTitleFont = CreateFontIndirectA( &logFont );
+                }
                 SendMessageA( hWndCtl, WM_SETFONT, hIconTitleFont, 0 );
                 while (*pstr)
           { SendMessageA( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)*pstr );
@@ -642,7 +648,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
     case WM_LBTRACKPOINT:
 	hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
-	if( (INT16)GetKeyState16( VK_CONTROL ) < 0 )
+	if( (INT16)GetKeyState( VK_CONTROL ) < 0 )
       { if( DragDetect( hWndCtl, *((LPPOINT)&lParam) ) )
         { INT idx = SendMessageA( hWndCtl, LB_GETCURSEL, 0, 0 );
 		if( idx != -1 )
@@ -651,7 +657,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 		    char* pstr = (char*)GlobalLock16( hMemObj );
 
 		    if( pstr )
-            { HCURSOR16 hCursor = LoadCursor16( 0, MAKEINTRESOURCE16(OCR_DRAGOBJECT) );
+            { HCURSOR hCursor = LoadCursorA( 0, MAKEINTRESOURCEA(OCR_DRAGOBJECT) );
 			SendMessageA( hWndCtl, LB_GETTEXT, (WPARAM)idx, (LPARAM)pstr );
 			SendMessageA( hWndCtl, LB_DELETESTRING, (WPARAM)idx, 0 );
 			UpdateWindow( hWndCtl );
@@ -746,7 +752,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
     info.szApp        = szApp;
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
+    if (!hIcon) info.hIcon = LoadIconA( 0, MAKEINTRESOURCEA(OIC_WINEICON) );
     return DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                       template, hWnd, AboutDlgProc, (LPARAM)&info );
 }
@@ -772,7 +778,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     info.szApp        = HEAP_strdupWtoA( GetProcessHeap(), 0, szApp );
     info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
     info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
+    if (!hIcon) info.hIcon = LoadIconA( 0, MAKEINTRESOURCEA(OIC_WINEICON) );
     ret = DialogBoxIndirectParamA( GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                    template, hWnd, AboutDlgProc, (LPARAM)&info );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );

@@ -5,8 +5,11 @@
  * Copyright (c) 1996 Anand Kumria
  */
 
+#include <unistd.h>
+
 #include "windef.h"
 #include "wine/windef16.h"
+#include "wine/winbase16.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dll);
@@ -61,4 +64,35 @@ WORD WINAPI GetPEResourceTable16(
 DWORD WINAPI LoadPeResource16(WORD x,SEGPTR y) {
 	FIXME("(0x%04x,0x%08lx),stub!\n",x,y);
 	return 0;
+}
+
+
+/**********************************************************************
+ *		IsPeFormat16		(W32SYS.2)
+ * Checks the passed filename if it is a PE format executeable
+ * RETURNS
+ *  TRUE, if it is.
+ *  FALSE if not.
+ */
+BOOL16 WINAPI IsPeFormat16( LPSTR fn,      /* [in] filename to executeable */
+                            HFILE16 hf16 ) /* [in] open file, if filename is NULL */
+{
+    BOOL16 ret = FALSE;
+    IMAGE_DOS_HEADER mzh;
+    OFSTRUCT ofs;
+    DWORD xmagic;
+    HFILE hf;
+
+    if (fn) hf = OpenFile(fn,&ofs,OF_READ);
+    else hf = DosFileHandleToWin32Handle( hf16 );
+    if (hf == HFILE_ERROR) return FALSE;
+    _llseek(hf,0,SEEK_SET);
+    if (sizeof(mzh)!=_lread(hf,&mzh,sizeof(mzh))) goto done;
+    if (mzh.e_magic!=IMAGE_DOS_SIGNATURE) goto done;
+    _llseek(hf,mzh.e_lfanew,SEEK_SET);
+    if (sizeof(DWORD)!=_lread(hf,&xmagic,sizeof(DWORD))) goto done;
+    ret = (xmagic == IMAGE_NT_SIGNATURE);
+ done:
+    if (fn) _lclose(hf);
+    return ret;
 }

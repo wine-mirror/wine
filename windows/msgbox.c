@@ -98,20 +98,16 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     /* Set the icon */
     switch(lpmb->dwStyle & MB_ICONMASK) {
     case MB_ICONEXCLAMATION:
-	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-			     (WPARAM16)LoadIcon16(0, IDI_EXCLAMATION16), 0);
+	SendDlgItemMessageA(hwnd, stc1, STM_SETICON, LoadIconA(0, IDI_EXCLAMATIONA), 0);
 	break;
     case MB_ICONQUESTION:
-	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-			     (WPARAM16)LoadIcon16(0, IDI_QUESTION16), 0);
+	SendDlgItemMessageA(hwnd, stc1, STM_SETICON, LoadIconA(0, IDI_QUESTIONA), 0);
 	break;
     case MB_ICONASTERISK:
-	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-			     (WPARAM16)LoadIcon16(0, IDI_ASTERISK16), 0);
+	SendDlgItemMessageA(hwnd, stc1, STM_SETICON, LoadIconA(0, IDI_ASTERISKA), 0);
 	break;
     case MB_ICONHAND:
-      SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-			     (WPARAM16)LoadIcon16(0, IDI_HAND16), 0);
+      SendDlgItemMessageA(hwnd, stc1, STM_SETICON, LoadIconA(0, IDI_HANDA), 0);
       break;
     default:
 	/* By default, Windows 95/98/NT do not associate an icon to message boxes.

@@ -805,7 +805,7 @@ static HBITMAP16 CreateMDIMenuBitmap(void)
 {
  HDC 		hDCSrc  = CreateCompatibleDC(0);
  HDC		hDCDest	= CreateCompatibleDC(hDCSrc);
- HBITMAP16	hbClose = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_CLOSE) );
+ HBITMAP16	hbClose = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_CLOSE) );
  HBITMAP16	hbCopy;
  HANDLE16	hobjSrc, hobjDest;
 
@@ -1250,7 +1250,7 @@ LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
 	if (!hBmpClose)
         {
             hBmpClose = CreateMDIMenuBitmap();
-            hBmpRestore = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORE) );
+            hBmpRestore = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORE) );
         }
 	MDI_UpdateFrameText(frameWnd, hwnd, MDI_NOFRAMEREPAINT,frameWnd->text);
 

@@ -173,11 +173,9 @@ WORD WINAPI WNetGetConnection16( LPSTR lpLocalName,
     if (lpLocalName[1] == ':')
     {
         int drive = toupper(lpLocalName[0]) - 'A';
-        switch(DRIVE_GetType(drive))
+        switch(GetDriveTypeA(lpLocalName))
         {
-        case TYPE_INVALID:
-            return WN16_BAD_LOCALNAME;
-        case TYPE_NETWORK:
+        case DRIVE_REMOTE:
             path = DRIVE_GetLabel(drive);
             if (strlen(path) + 1 > *cbRemoteName)
             {
@@ -187,9 +185,9 @@ WORD WINAPI WNetGetConnection16( LPSTR lpLocalName,
             strcpy( lpRemoteName, path );
             *cbRemoteName = strlen(lpRemoteName) + 1;
             return WN16_SUCCESS;
-	case TYPE_FLOPPY:
-	case TYPE_HD:
-	case TYPE_CDROM:
+	case DRIVE_REMOVABLE:
+	case DRIVE_FIXED:
+	case DRIVE_CDROM:
 	  TRACE("file is local\n");
 	  return WN16_NOT_CONNECTED;
 	default:

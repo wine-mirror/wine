@@ -1290,7 +1290,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   if (!COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathAndFile))
   {
     /* we are in a special folder, default to desktop */
-    if(FAILED(COMDLG32_SHGetFolderPathA(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, 0, lpstrPathAndFile)))
+    if(FAILED(COMDLG32_SHGetFolderPathA(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, 0, 0, lpstrPathAndFile)))
     {
       /* last fallback */
       GetCurrentDirectoryA(MAX_PATH, lpstrPathAndFile);

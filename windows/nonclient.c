@@ -1468,18 +1468,18 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 
     if (!hbitmapClose)
     {
-	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
+	if (!(hbitmapClose = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSE) )))
         {
             WIN_ReleaseWndPtr(wndPtr);
 	    return;
         }
-	hbitmapCloseD    = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSED) );
-	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORED) );
+	hbitmapCloseD    = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSED) );
+	hbitmapMinimize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCE) );
+	hbitmapMinimizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCED) );
+	hbitmapMaximize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOM) );
+	hbitmapMaximizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOMD) );
+	hbitmapRestore   = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORE) );
+	hbitmapRestoreD  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORED) );
     }
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
@@ -1583,15 +1583,15 @@ static void  NC_DrawCaption95(
 					    COLOR_INACTIVECAPTION) );
 
     if (!hbitmapClose) {
-	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
+	if (!(hbitmapClose = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSE) )))
 	    return;
-        hbitmapCloseD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSED));
-	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORED) );
+        hbitmapCloseD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_CLOSED));
+	hbitmapMinimize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCE) );
+	hbitmapMinimizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_REDUCED) );
+	hbitmapMaximize  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOM) );
+	hbitmapMaximizeD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_ZOOMD) );
+	hbitmapRestore   = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORE) );
+	hbitmapRestoreD  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RESTORED) );
     }
     
     if ((style & WS_SYSMENU) && !(exStyle & WS_EX_TOOLWINDOW)) {
@@ -1971,23 +1971,23 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZEWE16 ) );
+	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZEWEA ) );
 
     case HTTOP:
     case HTBOTTOM:
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENS16 ) );
+	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENSA ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:	
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENWSE16 ) );
+	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENWSEA ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENESW16 ) );
+	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENESWA ) );
     }
 
     /* Default cursor: arrow */
-    return (LONG)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
+    return (LONG)SetCursor( LoadCursorA( 0, IDC_ARROWA ) );
 }
 
 /***********************************************************************

@@ -9,6 +9,7 @@
 
 #include "winbase.h"
 #include "wine/windef16.h"
+#include "thread.h"
 
 /***********************************************************************
  *		GetWin32sDirectory
@@ -34,3 +35,13 @@ SEGPTR WINAPI _GetThunkBuff(void)
 {
 	return (SEGPTR)NULL;
 }
+
+
+/***********************************************************************
+ *           GetCurrentTask32   (W32SKRNL.3)
+ */
+HTASK16 WINAPI GetCurrentTask32(void)
+{
+    return NtCurrentTeb()->htask16;
+}
+

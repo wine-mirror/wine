@@ -299,15 +299,6 @@ HBRUSH WINAPI GetSysColorBrush( INT index )
 
 
 /***********************************************************************
- *           GetSysColorPen16    (Not a Windows API)
- */
-HPEN16 WINAPI GetSysColorPen16( INT16 index )
-{
-    return (HPEN16)GetSysColorPen(index);
-}
-
-
-/***********************************************************************
  *           GetSysColorPen    (Not a Windows API)
  *
  * This function is new to the Wine lib -- it does not exist in 

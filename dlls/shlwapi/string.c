@@ -439,7 +439,7 @@ LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 {	char buf[64];
 	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
 	if ( dw<1024L )
-	{ sprintf (buf,"%3.1f bytes", (FLOAT)dw);
+	{ sprintf (buf,"%ld bytes", dw);
 	}
 	else if ( dw<1048576L)
 	{ sprintf (buf,"%3.1f KB", (FLOAT)dw/1024);
@@ -458,23 +458,12 @@ LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
  * StrFormatByteSizeW				[SHLWAPI]
  */
 LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
-{	char buf[64];
-	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
-	if ( dw<1024L )
-	{ sprintf (buf,"%3.1f bytes", (FLOAT)dw);
-	}
-	else if ( dw<1048576L)
-	{ sprintf (buf,"%3.1f KB", (FLOAT)dw/1024);
-	}
-	else if ( dw < 1073741824L)
-	{ sprintf (buf,"%3.1f MB", (FLOAT)dw/1048576L);
-	}
-	else
-	{ sprintf (buf,"%3.1f GB", (FLOAT)dw/1073741824L);
-	}
+{
+        char buf[64];
+        StrFormatByteSizeA( dw, buf, sizeof(buf) );
         if (!MultiByteToWideChar( CP_ACP, 0, buf, -1, pszBuf, cchBuf ) && cchBuf)
             pszBuf[cchBuf-1] = 0;
-	return pszBuf;	
+        return pszBuf;
 }
 
 /*************************************************************************
