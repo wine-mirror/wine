@@ -304,11 +304,11 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub RtlCompressBuffer
 @ stub RtlConsoleMultiByteToUnicodeN
 @ stub RtlConvertExclusiveToShared
-@ stdcall64 RtlConvertLongToLargeInteger(long) RtlConvertLongToLargeInteger
+@ stdcall -ret64 RtlConvertLongToLargeInteger(long) RtlConvertLongToLargeInteger
 @ stub RtlConvertSharedToExclusive
 @ stdcall RtlConvertSidToUnicodeString(ptr ptr)RtlConvertSidToUnicodeString
 @ stub RtlConvertUiListToApiList
-@ stdcall64 RtlConvertUlongToLargeInteger(long) RtlConvertUlongToLargeInteger
+@ stdcall -ret64 RtlConvertUlongToLargeInteger(long) RtlConvertUlongToLargeInteger
 @ stub RtlCopyLuid
 @ stub RtlCopyLuidAndAttributesArray
 @ stub RtlCopySecurityDescriptor
@@ -351,9 +351,9 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long) RtlDosPathNameToNtPathName_U
 @ stub RtlDosSearchPath_U
 @ stdcall RtlDumpResource(ptr) RtlDumpResource
-@ stdcall64 RtlEnlargedIntegerMultiply(long long) RtlEnlargedIntegerMultiply
+@ stdcall -ret64 RtlEnlargedIntegerMultiply(long long) RtlEnlargedIntegerMultiply
 @ stdcall RtlEnlargedUnsignedDivide(long long long ptr) RtlEnlargedUnsignedDivide
-@ stdcall64 RtlEnlargedUnsignedMultiply(long long) RtlEnlargedUnsignedMultiply
+@ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long) RtlEnlargedUnsignedMultiply
 @ stdcall RtlEnterCriticalSection(ptr) RtlEnterCriticalSection
 @ stub RtlEnumProcessHeaps
 @ stub RtlEnumerateGenericTable
@@ -368,8 +368,8 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall RtlEraseUnicodeString(ptr) RtlEraseUnicodeString
 @ stub RtlExpandEnvironmentStrings_U
 @ stub RtlExtendHeap
-@ stdcall64 RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
-@ stdcall64 RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
+@ stdcall -ret64 RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
+@ stdcall -ret64 RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
 @ stub RtlExtendedMagicDivide
 @ stdcall RtlFillMemory(ptr long long) RtlFillMemory
 @ stub RtlFillMemoryUlong
@@ -429,13 +429,13 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub RtlIsGenericTableEmpty
 @ stub RtlIsNameLegalDOS8Dot3
 @ stdcall RtlIsTextUnicode(ptr long ptr) RtlIsTextUnicode
-@ stdcall64 RtlLargeIntegerAdd(long long long long) RtlLargeIntegerAdd
-@ stdcall64 RtlLargeIntegerArithmeticShift(long long long) RtlLargeIntegerArithmeticShift
-@ stdcall64 RtlLargeIntegerDivide(long long long long ptr) RtlLargeIntegerDivide
-@ stdcall64 RtlLargeIntegerNegate(long long) RtlLargeIntegerNegate
-@ stdcall64 RtlLargeIntegerShiftLeft(long long long) RtlLargeIntegerShiftLeft
-@ stdcall64 RtlLargeIntegerShiftRight(long long long) RtlLargeIntegerShiftRight
-@ stdcall64 RtlLargeIntegerSubtract(long long long long) RtlLargeIntegerSubtract
+@ stdcall -ret64 RtlLargeIntegerAdd(long long long long) RtlLargeIntegerAdd
+@ stdcall -ret64 RtlLargeIntegerArithmeticShift(long long long) RtlLargeIntegerArithmeticShift
+@ stdcall -ret64 RtlLargeIntegerDivide(long long long long ptr) RtlLargeIntegerDivide
+@ stdcall -ret64 RtlLargeIntegerNegate(long long) RtlLargeIntegerNegate
+@ stdcall -ret64 RtlLargeIntegerShiftLeft(long long long) RtlLargeIntegerShiftLeft
+@ stdcall -ret64 RtlLargeIntegerShiftRight(long long long) RtlLargeIntegerShiftRight
+@ stdcall -ret64 RtlLargeIntegerSubtract(long long long long) RtlLargeIntegerSubtract
 @ stub RtlLargeIntegerToChar
 @ stdcall RtlLeaveCriticalSection(ptr) RtlLeaveCriticalSection
 @ stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
@@ -872,13 +872,13 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub __eFYL2X
 @ stub __eFYL2XP1
 @ stub __eGetStatusWord
-@ stdcall64 _alldiv(long long long long) _alldiv
-@ stdcall64 _allmul(long long long long) _allmul
-@ register _alloca_probe() NTDLL_alloca_probe
-@ stdcall64 _allrem(long long long long) _allrem
-@ stdcall64 _aulldiv(long long long long) _aulldiv
-@ stdcall64 _aullrem(long long long long) _aullrem
-@ register _chkstk() NTDLL_chkstk
+@ stdcall -ret64 _alldiv(long long long long) _alldiv
+@ stdcall -ret64 _allmul(long long long long) _allmul
+@ register -i386 _alloca_probe() NTDLL_alloca_probe
+@ stdcall -ret64 _allrem(long long long long) _allrem
+@ stdcall -ret64 _aulldiv(long long long long) _aulldiv
+@ stdcall -ret64 _aullrem(long long long long) _aullrem
+@ register -i386 _chkstk() NTDLL_chkstk
 @ stub _fltused
 @ cdecl _ftol() NTDLL__ftol
 @ cdecl _itoa(long ptr long) _itoa
@@ -902,8 +902,8 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl _wcsupr(wstr) NTDLL__wcsupr
 @ stub abs
 @ stub atan
-@ cdecl atoi(str) atoi
-@ cdecl atol(str) atol
+@ cdecl -noimport atoi(str) atoi
+@ cdecl -noimport atol(str) atol
 @ stub ceil
 @ stub cos
 @ stub fabs
@@ -920,31 +920,31 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub labs
 @ stub log
 @ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
-@ cdecl memchr(ptr long long) memchr
-@ cdecl memcmp(ptr ptr long) memcmp
-@ cdecl memcpy(ptr ptr long) memcpy
-@ cdecl memmove(ptr ptr long) memmove
-@ cdecl memset(ptr long long) memset
+@ cdecl -noimport memchr(ptr long long) memchr
+@ cdecl -noimport memcmp(ptr ptr long) memcmp
+@ cdecl -noimport memcpy(ptr ptr long) memcpy
+@ cdecl -noimport memmove(ptr ptr long) memmove
+@ cdecl -noimport memset(ptr long long) memset
 @ cdecl pow(double double) pow
 @ stub qsort
 @ stub sin
 @ varargs sprintf(str str) sprintf
 @ stub sqrt
 @ varargs sscanf() sscanf
-@ cdecl strcat(str str) strcat
-@ cdecl strchr(str long) strchr
-@ cdecl strcmp(str str) strcmp
-@ cdecl strcpy(ptr str) strcpy
-@ cdecl strcspn(str str) strcspn
-@ cdecl strlen(str) strlen
-@ cdecl strncat(str str long) strncat
-@ cdecl strncmp(str str long) strncmp
-@ cdecl strncpy(ptr str long) strncpy
-@ cdecl strpbrk(str str long) strpbrk
-@ cdecl strrchr(str long) strrchr
-@ cdecl strspn(str str) strspn
-@ cdecl strstr(str str) strstr
-@ cdecl strtol(str ptr long) strtol
+@ cdecl -noimport strcat(str str) strcat
+@ cdecl -noimport strchr(str long) strchr
+@ cdecl -noimport strcmp(str str) strcmp
+@ cdecl -noimport strcpy(ptr str) strcpy
+@ cdecl -noimport strcspn(str str) strcspn
+@ cdecl -noimport strlen(str) strlen
+@ cdecl -noimport strncat(str str long) strncat
+@ cdecl -noimport strncmp(str str long) strncmp
+@ cdecl -noimport strncpy(ptr str long) strncpy
+@ cdecl -noimport strpbrk(str str long) strpbrk
+@ cdecl -noimport strrchr(str long) strrchr
+@ cdecl -noimport strspn(str str) strspn
+@ cdecl -noimport strstr(str str) strstr
+@ cdecl -noimport strtol(str ptr long) strtol
 @ varargs swprintf(wstr wstr) wsprintfW
 @ stub tan
 @ cdecl tolower(long) tolower
@@ -1013,14 +1013,14 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # Exception handling
-@ cdecl __wine_exception_handler(ptr ptr ptr ptr) __wine_exception_handler
-@ cdecl __wine_finally_handler(ptr ptr ptr ptr) __wine_finally_handler
+@ cdecl -norelay __wine_exception_handler(ptr ptr ptr ptr) __wine_exception_handler
+@ cdecl -norelay __wine_finally_handler(ptr ptr ptr ptr) __wine_finally_handler
 
 # Debugging interface
-@ cdecl wine_dbgstr_an(str long) wine_dbgstr_an
-@ cdecl wine_dbgstr_wn(str long) wine_dbgstr_wn
-@ cdecl wine_dbgstr_guid(ptr) wine_dbgstr_guid
-@ cdecl wine_dbg_vprintf(str ptr) wine_dbg_vprintf
+@ cdecl -norelay wine_dbgstr_an(str long) wine_dbgstr_an
+@ cdecl -norelay wine_dbgstr_wn(str long) wine_dbgstr_wn
+@ cdecl -norelay wine_dbgstr_guid(ptr) wine_dbgstr_guid
+@ cdecl -norelay wine_dbg_vprintf(str ptr) wine_dbg_vprintf
 @ varargs wine_dbg_printf(str) wine_dbg_printf
 @ varargs wine_dbg_log(long str str str) wine_dbg_log
 

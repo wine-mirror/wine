@@ -33,9 +33,7 @@
 
 typedef enum
 {
-    TYPE_BYTE,         /* byte variable (Win16) */
-    TYPE_WORD,         /* word variable (Win16) */
-    TYPE_LONG,         /* long variable (Win16) */
+    TYPE_VARIABLE,     /* variable */
     TYPE_PASCAL_16,    /* pascal function with 16-bit return (Win16) */
     TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
     TYPE_ABS,          /* absolute value (Win16) */
@@ -43,7 +41,6 @@ typedef enum
     TYPE_INTERRUPT,    /* interrupt handler function (Win16) */
     TYPE_STUB,         /* unimplemented stub */
     TYPE_STDCALL,      /* stdcall function (Win32) */
-    TYPE_STDCALL64,    /* stdcall function with 64-bit return (Win32) */
     TYPE_CDECL,        /* cdecl function (Win32) */
     TYPE_VARARGS,      /* varargs function (Win32) */
     TYPE_EXTERN,       /* external symbol (Win32) */
@@ -100,7 +97,8 @@ typedef struct
     ORD_TYPE    type;
     int         ordinal;
     int         offset;
-    int		lineno;
+    int         lineno;
+    int         flags;
     char        name[80];
     union
     {
@@ -111,6 +109,12 @@ typedef struct
         ORD_FORWARD    fwd;
     } u;
 } ORDDEF;
+
+/* entry point flags */
+#define FLAG_NOIMPORT  0x01  /* don't make function available for importing */
+#define FLAG_NORELAY   0x02  /* don't use relay debugging for this function */
+#define FLAG_RET64     0x04  /* function returns a 64-bit value */
+#define FLAG_I386      0x08  /* function is i386 only */
 
   /* Offset of a structure field relative to the start of the struct */
 #define STRUCTOFFSET(type,field) ((int)&((type *)0)->field)

@@ -365,7 +365,7 @@ debug_channels (crtdll)
 @ cdecl cosh(double) cosh
 @ cdecl ctime(ptr) ctime
 @ cdecl difftime(long long) CRTDLL_difftime
-@ cdecl div(long long) CRTDLL_div
+@ cdecl -noimport div(long long) CRTDLL_div
 @ cdecl exit(long) CRTDLL_exit
 @ cdecl exp(double) exp
 @ cdecl fabs(double) fabs
@@ -428,7 +428,7 @@ debug_channels (crtdll)
 @ cdecl isxdigit(long) CRTDLL_isxdigit
 @ cdecl labs(long) labs
 @ cdecl ldexp(double long) CRTDLL_ldexp
-@ cdecl ldiv(long long) CRTDLL_ldiv
+@ cdecl -noimport ldiv(long long) CRTDLL_ldiv
 @ stub localeconv
 @ cdecl localtime(ptr) localtime
 @ cdecl log(double) log

@@ -276,7 +276,7 @@ owner	kernel32
 327 register K327() HandleParamError
 328 pascal16 _DebugOutput() _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
-332 long THHOOK(0 0 0 0 0 0 0 0)
+332 variable THHOOK(0 0 0 0 0 0 0 0)
 334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr16
 335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr16
 336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr16
@@ -285,7 +285,7 @@ owner	kernel32
 339 pascal16 DiagQuery() DiagQuery16
 340 pascal16 DiagOutput(str) DiagOutput16
 341 pascal ToolHelpHook(ptr) ToolHelpHook16
-342 word __GP(0 0 0 0)
+342 variable __GP(0 0)
 343 stub RegisterWinOldApHook
 344 stub GetWinOldApHooks
 345 pascal16 IsSharedSelector(word) IsSharedSelector16

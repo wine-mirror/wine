@@ -204,9 +204,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
             selector = 1;  /* Code selector */
             break;
 
-        case TYPE_BYTE:
-        case TYPE_WORD:
-        case TYPE_LONG:
+        case TYPE_VARIABLE:
             selector = 2;  /* Data selector */
             break;
 
@@ -714,17 +712,7 @@ void BuildSpec16File( FILE *outfile )
             odp->offset = LOWORD(odp->u.abs.value);
             break;
 
-          case TYPE_BYTE:
-            odp->offset = data_offset;
-            data_offset += StoreVariableCode( data + data_offset, 1, odp);
-            break;
-
-          case TYPE_WORD:
-            odp->offset = data_offset;
-            data_offset += StoreVariableCode( data + data_offset, 2, odp);
-            break;
-
-          case TYPE_LONG:
+          case TYPE_VARIABLE:
             odp->offset = data_offset;
             data_offset += StoreVariableCode( data + data_offset, 4, odp);
             break;

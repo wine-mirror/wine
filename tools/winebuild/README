@@ -8,19 +8,19 @@ type    win16|win32
 [heap   SIZE]
 [init	FUNCTION]
 [import DLL]
-[rsrc	PREFIX]
+[rsrc	RESFILE]
 
-ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
+ORDINAL FUNCTYPE [FLAGS] EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
 
-ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
+ORDINAL variable [FLAGS] EXPORTNAME (DATA [DATA [DATA [...]]])
 
-ORDINAL stub EXPORTNAME
+ORDINAL stub [FLAGS] EXPORTNAME
 
-ORDINAL equate EXPORTNAME DATA
+ORDINAL equate [FLAGS] EXPORTNAME DATA
 
-ORDINAL extern EXPORTNAME SYMBOLNAME
+ORDINAL extern [FLAGS] EXPORTNAME SYMBOLNAME
 
-ORDINAL forward EXPORTNAME SYMBOLNAME
+ORDINAL forward [FLAGS] EXPORTNAME SYMBOLNAME
 
 # COMMENT_TEXT
 
@@ -49,7 +49,19 @@ is loaded. This is only valid for Win32 modules.
 modules at the present). The import declaration can be present several
 times.
 
-"rsrc" specifies the prefix for the resource directory name.
+"rsrc" specifies the path of the compiled resource file.
+
+"ORDINAL" specified the ordinal number corresponding to the entry
+point, or "@" for automatic ordinal allocation (Win32 only).
+
+"FLAGS" is a series of optional flags, preceded by a '-' character.
+The supported flags are:
+  "-noimport": the entry point is not made available for importing
+               from winelib applications (Win32 only).
+  "-norelay":  the entry point is not displayed in relay debugging
+               traces (Win32 only).
+  "-ret64":    the function returns a 64-bit value (Win32 only).
+  "-i386":     the entry point is only available on i386 platforms.
 
 Lines whose first character is a '#' will be ignored as comments.
 
@@ -57,25 +69,21 @@ Lines whose first character is a '#' will be ignored as comments.
 Variable ordinals:
 ==================
 
-    This type defines data storage at the ordinal specified.  You may
-store items as bytes, 16-bit words, or 32-bit words.
-    "ORDINAL" is replaced by the ordinal number corresponding to the
-variable.  "VARTYPE" should be "byte", "word" or "long" for 8, 16, or
-32 bits respectively.  "EXPORTNAME" will be the name available for
-dynamic linking.  "DATA" can be a decimal number or a hex number preceeded
-by "0x".  The following example defines the variable "VariableA" at
-ordinal 2 and containing 4 bytes:
+    This type defines data storage as 32-bit words at the ordinal specified.
+"EXPORTNAME" will be the name available for dynamic linking.  "DATA"
+can be a decimal number or a hex number preceeded by "0x".  The
+following example defines the variable "VariableA" at ordinal 2 and
+containing 4 ints:
 
-	2 byte VariableA(-1 0xff 0 0)
+	2 variable VariableA(-1 0xff 0 0)
 
 Function ordinals:
 ==================
 
     This type defines a function entry point.  The prototype defined by
 "EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])" specifies the name available for
-dynamic linking and the format of the arguments. "ORDINAL" is replaced
-by the ordinal number corresponding to the function, or "@" for
-automatic ordinal allocation (Win32 only).
+dynamic linking and the format of the arguments. "@" can be used
+instead of "EXPORTNAME" for ordinal-only exports.
 
 "FUNCTYPE" should be one of:
 - "pascal16" for a Win16 function returning a 16-bit value
@@ -87,15 +95,17 @@ automatic ordinal allocation (Win32 only).
 - "varargs" for a Win32 function taking a variable number of arguments
 
 "ARGTYPE" should be one of:
-- "word"
-- "long"
-- "ptr" (linear pointer)
-- "str" (linear pointer to a null-terminated string)
-- "s_word" (signed word)
-- "segptr" (segmented pointer).
-- "segstr" (segmented pointer to a null-terminated string)
+- "word"   (16-bit unsigned value)
+- "s_word" (16-bit signed word)
+- "long"   (32-bit value)
+- "double" (64-bit value)
+- "ptr"    (linear pointer)
+- "str"    (linear pointer to a null-terminated ASCII string)
+- "wstr"   (linear pointer to a null-terminated Unicode string)
+- "segptr" (segmented pointer)
+- "segstr" (segmented pointer to a null-terminated ASCII string)
 
-Only "ptr", "str" and "long" are valid for Win32 functions.
+Only "ptr", "str", "wstr", "long" and "double" are valid for Win32 functions.
 
 "HANDLERNAME" is the name of the actual Wine function that will
 process the request in 32-bit mode.
@@ -129,8 +139,7 @@ Equate ordinals:
 ================
 
     This type defines an ordinal as an absolute value.
-"ORDINAL" is replaced by the ordinal number corresponding to the
-variable.  "EXPORTNAME" will be the name available for dynamic linking.  
+"EXPORTNAME" will be the name available for dynamic linking.  
 "DATA" can be a decimal number or a hex number preceeded by "0x".
 
 Extern ordinals:

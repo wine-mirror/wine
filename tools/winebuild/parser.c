@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "winbase.h"
 #include "build.h"
 
@@ -29,9 +30,7 @@ static FILE *input_file;
 
 static const char * const TypeNames[TYPE_NBTYPES] =
 {
-    "byte",         /* TYPE_BYTE */
-    "word",         /* TYPE_WORD */
-    "long",         /* TYPE_LONG */
+    "variable",     /* TYPE_VARIABLE */
     "pascal16",     /* TYPE_PASCAL_16 */
     "pascal",       /* TYPE_PASCAL */
     "equate",       /* TYPE_ABS */
@@ -39,18 +38,30 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "interrupt",    /* TYPE_INTERRUPT */
     "stub",         /* TYPE_STUB */
     "stdcall",      /* TYPE_STDCALL */
-    "stdcall64",    /* TYPE_STDCALL64 */
     "cdecl",        /* TYPE_CDECL */
     "varargs",      /* TYPE_VARARGS */
     "extern",       /* TYPE_EXTERN */
     "forward"       /* TYPE_FORWARD */
 };
 
+static const char * const FlagNames[] =
+{
+    "noimport",    /* FLAG_NOIMPORT */
+    "norelay",     /* FLAG_NORELAY */
+    "ret64",       /* FLAG_RET64 */
+    "i386",        /* FLAG_I386 */
+    NULL
+};
 
 static int IsNumberString(char *s)
 {
     while (*s) if (!isdigit(*s++)) return 0;
     return 1;
+}
+
+inline static int is_token_separator( char ch )
+{
+    return (ch == '(' || ch == ')' || ch == '-');
 }
 
 static char * GetTokenInLine(void)
@@ -78,8 +89,8 @@ static char * GetTokenInLine(void)
      * Find end of token.
      */
     token = p++;
-    if (*token != '(' && *token != ')')
-	while (*p != '\0' && *p != '(' && *p != ')' && !isspace(*p))
+    if (!is_token_separator(*token))
+        while (*p != '\0' && !is_token_separator(*p) && !isspace(*p))
 	    p++;
     
     ParseSaveChar = *p;
@@ -89,7 +100,7 @@ static char * GetTokenInLine(void)
     return token;
 }
 
-static char * GetToken(void)
+static char * GetToken( int allow_eof )
 {
     char *token;
 
@@ -100,7 +111,10 @@ static char * GetToken(void)
 	{
             current_line++;
 	    if (fgets(ParseBuffer, sizeof(ParseBuffer), input_file) == NULL)
-		return NULL;
+            {
+                if (!allow_eof) fatal_error( "Unexpected end of file\n" );
+                return NULL;
+            }
 	    if (ParseBuffer[0] != '#')
 		break;
 	}
@@ -116,16 +130,16 @@ static char * GetToken(void)
  */
 static void ParseDebug(void)
 {
-    char *token = GetToken();
+    char *token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
-    while ((token = GetToken()))
+    for (;;)
     {
+        token = GetToken(0);
         if (*token == ')') break;
         debug_channels = xrealloc( debug_channels,
                                    (nb_debug_channels + 1) * sizeof(*debug_channels));
         debug_channels[nb_debug_channels++] = xstrdup(token);
     }
-    if (!token) fatal_error( "End of file in dbch declaration\n" );
 }
 
 
@@ -141,15 +155,16 @@ static void ParseVariable( ORDDEF *odp )
     int n_values;
     int value_array_size;
     
-    char *token = GetToken();
+    char *token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
     n_values = 0;
     value_array_size = 25;
     value_array = xmalloc(sizeof(*value_array) * value_array_size);
     
-    while ((token = GetToken()) != NULL)
+    for (;;)
     {
+        token = GetToken(0);
 	if (*token == ')')
 	    break;
 
@@ -164,9 +179,6 @@ static void ParseVariable( ORDDEF *odp )
 	if (endptr == NULL || *endptr != '\0')
 	    fatal_error( "Expected number value, got '%s'\n", token );
     }
-    
-    if (token == NULL)
-	fatal_error( "End of file in variable declaration\n" );
 
     odp->u.var.n_values = n_values;
     odp->u.var.values = xrealloc(value_array, sizeof(*value_array) * n_values);
@@ -186,7 +198,7 @@ static void ParseExportFunction( ORDDEF *odp )
     switch(SpecType)
     {
     case SPEC_WIN16:
-        if (odp->type == TYPE_STDCALL || odp->type == TYPE_STDCALL64)
+        if (odp->type == TYPE_STDCALL)
             fatal_error( "'stdcall' not supported for Win16\n" );
         if (odp->type == TYPE_VARARGS)
 	    fatal_error( "'varargs' not supported for Win16\n" );
@@ -199,12 +211,12 @@ static void ParseExportFunction( ORDDEF *odp )
         break;
     }
 
-    token = GetToken();
+    token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
     for (i = 0; i < sizeof(odp->u.func.arg_types); i++)
     {
-	token = GetToken();
+	token = GetToken(0);
 	if (*token == ')')
 	    break;
 
@@ -247,7 +259,9 @@ static void ParseExportFunction( ORDDEF *odp )
     odp->u.func.arg_types[i] = '\0';
     if ((odp->type == TYPE_STDCALL) && !i)
         odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
-    strcpy(odp->u.func.link_name, GetToken());
+    if (odp->type == TYPE_VARARGS)
+        odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
+    strcpy(odp->u.func.link_name, GetToken(0));
 }
 
 
@@ -260,7 +274,7 @@ static void ParseEquate( ORDDEF *odp )
 {
     char *endptr;
     
-    char *token = GetToken();
+    char *token = GetToken(0);
     int value = strtol(token, &endptr, 0);
     if (endptr == NULL || *endptr != '\0')
 	fatal_error( "Expected number value, got '%s'\n", token );
@@ -294,14 +308,14 @@ static void ParseInterrupt( ORDDEF *odp )
     if (SpecType == SPEC_WIN32)
         fatal_error( "'interrupt' not supported for Win32\n" );
 
-    token = GetToken();
+    token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
-    token = GetToken();
+    token = GetToken(0);
     if (*token != ')') fatal_error( "Expected ')' got '%s'\n", token );
 
     odp->u.func.arg_types[0] = '\0';
-    strcpy( odp->u.func.link_name, GetToken() );
+    strcpy( odp->u.func.link_name, GetToken(0) );
 }
 
 
@@ -313,7 +327,9 @@ static void ParseInterrupt( ORDDEF *odp )
 static void ParseExtern( ORDDEF *odp )
 {
     if (SpecType == SPEC_WIN16) fatal_error( "'extern' not supported for Win16\n" );
-    strcpy( odp->u.ext.link_name, GetToken() );
+    strcpy( odp->u.ext.link_name, GetToken(0) );
+    /* 'extern' definitions are not available for implicit import */
+    odp->flags |= FLAG_NOIMPORT;
 }
 
 
@@ -325,9 +341,32 @@ static void ParseExtern( ORDDEF *odp )
 static void ParseForward( ORDDEF *odp )
 {
     if (SpecType == SPEC_WIN16) fatal_error( "'forward' not supported for Win16\n" );
-    strcpy( odp->u.fwd.link_name, GetToken() );
+    strcpy( odp->u.fwd.link_name, GetToken(0) );
 }
 
+
+/*******************************************************************
+ *         ParseFlags
+ *
+ * Parse the optional flags for an entry point
+ */
+static char *ParseFlags( ORDDEF *odp )
+{
+    unsigned int i;
+    char *token;
+
+    do
+    {
+        token = GetToken(0);
+        for (i = 0; FlagNames[i]; i++)
+            if (!strcmp( FlagNames[i], token )) break;
+        if (!FlagNames[i]) fatal_error( "Unknown flag '%s'\n", token );
+        odp->flags |= 1 << i;
+        token = GetToken(0);
+    } while (*token == '-');
+
+    return token;
+}
 
 /*******************************************************************
  *         fix_export_name
@@ -354,7 +393,7 @@ static void ParseOrdinal(int ordinal)
 
     ORDDEF *odp = &EntryPoints[nb_entry_points++];
 
-    if (!(token = GetToken())) fatal_error( "Expected type after ordinal\n" );
+    token = GetToken(0);
 
     for (odp->type = 0; odp->type < TYPE_NBTYPES; odp->type++)
         if (TypeNames[odp->type] && !strcmp( token, TypeNames[odp->type] ))
@@ -363,7 +402,8 @@ static void ParseOrdinal(int ordinal)
     if (odp->type >= TYPE_NBTYPES)
         fatal_error( "Expected type after ordinal, found '%s' instead\n", token );
 
-    if (!(token = GetToken())) fatal_error( "Expected name after type\n" );
+    token = GetToken(0);
+    if (*token == '-') token = ParseFlags( odp );
 
     strcpy( odp->name, token );
     fix_export_name( odp->name );
@@ -372,26 +412,13 @@ static void ParseOrdinal(int ordinal)
 
     switch(odp->type)
     {
-    case TYPE_BYTE:
-    case TYPE_WORD:
-    case TYPE_LONG:
+    case TYPE_VARIABLE:
         ParseVariable( odp );
         break;
     case TYPE_REGISTER:
-	ParseExportFunction( odp );
-#ifndef __i386__
-        /* ignore Win32 'register' routines on non-Intel archs */
-        if (SpecType == SPEC_WIN32)
-        {
-            nb_entry_points--;
-            return;
-        }
-#endif
-        break;
     case TYPE_PASCAL_16:
     case TYPE_PASCAL:
     case TYPE_STDCALL:
-    case TYPE_STDCALL64:
     case TYPE_VARARGS:
     case TYPE_CDECL:
         ParseExportFunction( odp );
@@ -414,6 +441,16 @@ static void ParseOrdinal(int ordinal)
     default:
         assert( 0 );
     }
+
+#ifndef __i386__
+    if (odp->flags & FLAG_I386)
+    {
+        /* ignore this entry point on non-Intel archs */
+        nb_entry_points--;
+        memset( odp, 0, sizeof(*odp) );
+        return;
+    }
+#endif
 
     if (ordinal != -1)
     {
@@ -481,27 +518,27 @@ SPEC_TYPE ParseTopLevel( FILE *file )
 
     input_file = file;
     current_line = 1;
-    while ((token = GetToken()) != NULL)
+    while ((token = GetToken(1)) != NULL)
     {
 	if (strcmp(token, "name") == 0)
 	{
-	    strcpy(DLLName, GetToken());
+	    strcpy(DLLName, GetToken(0));
 	}
 	else if (strcmp(token, "file") == 0)
 	{
-	    strcpy(DLLFileName, GetToken());
+	    strcpy(DLLFileName, GetToken(0));
 	    strupper(DLLFileName);
 	}
         else if (strcmp(token, "type") == 0)
         {
-            token = GetToken();
+            token = GetToken(0);
             if (!strcmp(token, "win16" )) SpecType = SPEC_WIN16;
             else if (!strcmp(token, "win32" )) SpecType = SPEC_WIN32;
             else fatal_error( "Type must be 'win16' or 'win32'\n" );
         }
         else if (strcmp(token, "mode") == 0)
         {
-            token = GetToken();
+            token = GetToken(0);
             if (!strcmp(token, "dll" )) SpecMode = SPEC_MODE_DLL;
             else if (!strcmp(token, "guiexe" )) SpecMode = SPEC_MODE_GUIEXE;
             else if (!strcmp(token, "cuiexe" )) SpecMode = SPEC_MODE_CUIEXE;
@@ -511,13 +548,13 @@ SPEC_TYPE ParseTopLevel( FILE *file )
         }
 	else if (strcmp(token, "heap") == 0)
 	{
-            token = GetToken();
+            token = GetToken(0);
             if (!IsNumberString(token)) fatal_error( "Expected number after heap\n" );
             DLLHeapSize = atoi(token);
 	}
         else if (strcmp(token, "init") == 0)
         {
-            strcpy(DLLInitFunc, GetToken());
+            strcpy(DLLInitFunc, GetToken(0));
 	    if (SpecType == SPEC_WIN16)
                 fatal_error( "init cannot be used for Win16 spec files\n" );
             if (!DLLInitFunc[0])
@@ -529,18 +566,18 @@ SPEC_TYPE ParseTopLevel( FILE *file )
         {
             if (SpecType != SPEC_WIN32)
                 fatal_error( "Imports not supported for Win16\n" );
-            add_import_dll( GetToken() );
+            add_import_dll( GetToken(0) );
         }
         else if (strcmp(token, "rsrc") == 0)
         {
-            if (SpecType != SPEC_WIN16) load_res32_file( GetToken() );
-            else load_res16_file( GetToken() );
+            if (SpecType != SPEC_WIN16) load_res32_file( GetToken(0) );
+            else load_res16_file( GetToken(0) );
         }
         else if (strcmp(token, "owner") == 0)
         {
             if (SpecType != SPEC_WIN16)
                 fatal_error( "Owner only supported for Win16 spec files\n" );
-            strcpy( owner_name, GetToken() );
+            strcpy( owner_name, GetToken(0) );
         }
         else if (strcmp(token, "debug_channels") == 0)
         {

@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "winbase.h"
 #include "wine/exception.h"
 #include "build.h"
@@ -22,6 +23,20 @@ static int string_compare( const void *ptr1, const void *ptr2 )
     const char * const *str1 = ptr1;
     const char * const *str2 = ptr2;
     return strcmp( *str1, *str2 );
+}
+
+
+/*******************************************************************
+ *         make_internal_name
+ *
+ * Generate an internal name for an entry point. Used for stubs etc.
+ */
+static const char *make_internal_name( const ORDDEF *odp, const char *prefix )
+{
+    static char buffer[256];
+    if (odp->name[0]) sprintf( buffer, "__wine_%s_%s", prefix, odp->name );
+    else sprintf( buffer, "__wine_%s_%d", prefix, odp->ordinal );
+    return buffer;
 }
 
 /*******************************************************************
@@ -166,17 +181,18 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
             fprintf( outfile, "%s", odp->u.ext.link_name );
             break;
         case TYPE_STDCALL:
-        case TYPE_STDCALL64:
         case TYPE_VARARGS:
         case TYPE_CDECL:
             fprintf( outfile, "%s", odp->u.func.link_name);
             break;
         case TYPE_STUB:
-            if (odp->name[0]) fprintf( outfile, "__stub_%s", odp->name );
-            else fprintf( outfile, "__stub_%d", i );
+            fprintf( outfile, "%s", make_internal_name( odp, "stub" ) );
             break;
         case TYPE_REGISTER:
-            fprintf( outfile, "__regs_%d", i );
+            fprintf( outfile, "%s", make_internal_name( odp, "regs" ) );
+            break;
+        case TYPE_VARIABLE:
+            fprintf( outfile, "(func_ptr)%s", make_internal_name( odp, "var" ) );
             break;
         case TYPE_FORWARD:
             fprintf( outfile, "(func_ptr)&exports.exp.forwards[%d] /* %s */",
@@ -242,22 +258,21 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
         /* skip non-existent entry points */
         if (!odp) goto ignore;
         /* skip non-functions */
-        if ((odp->type != TYPE_STDCALL) && (odp->type != TYPE_STDCALL64) &&
-            (odp->type != TYPE_CDECL) && (odp->type != TYPE_REGISTER)) goto ignore;
-        /* skip wine internal functions */
-        if (!strncmp( odp->name, "wine_", 5 ) || !strncmp( odp->name, "__wine_", 7 )) goto ignore;
+        if ((odp->type != TYPE_STDCALL) &&
+            (odp->type != TYPE_CDECL) &&
+            (odp->type != TYPE_REGISTER)) goto ignore;
+        /* skip norelay entry points */
+        if (odp->flags & FLAG_NORELAY) goto ignore;
 
         for (j = 0; odp->u.func.arg_types[j]; j++)
         {
             if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
             if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
         }
+        if ((odp->flags & FLAG_RET64) && (j < 16)) mask |= 0x80000000;
 
         switch(odp->type)
         {
-        case TYPE_STDCALL64:
-            if (j < 16) mask |= 0x80000000;
-            /* fall through */
         case TYPE_STDCALL:
             fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc2, 0x%04x, %s, 0x%08x }",
                      strlen(odp->u.func.arg_types) * sizeof(int),
@@ -269,8 +284,9 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
                      odp->u.func.link_name, mask );
             break;
         case TYPE_REGISTER:
-            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, __regs_%d, 0x%08x }",
-                     0x8000 | (strlen(odp->u.func.arg_types) * sizeof(int)), i, mask );
+            fprintf( outfile, "    { 0xe9, { 0,0,0,0 }, 0xc3, 0x%04x, %s, 0x%08x }",
+                     0x8000 | (strlen(odp->u.func.arg_types) * sizeof(int)),
+                     make_internal_name( odp, "regs" ), mask );
             break;
         default:
             assert(0);
@@ -291,8 +307,7 @@ static void output_exports( FILE *outfile, int nr_exports, int fwd_size )
     for (i = 0; i < nb_names; i++)
     {
         char *p;
-        /* 'extern' definitions are not available for implicit import */
-        if (Names[i]->type == TYPE_EXTERN) continue;
+        if (Names[i]->flags & FLAG_NOIMPORT) continue;
         /* check for invalid characters in the name */
         for (p = Names[i]->name; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) fprintf( outfile, "const char __wine_dllexport_%s_%s = 0;\n",
@@ -343,13 +358,46 @@ static void output_stub_funcs( FILE *outfile )
     for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
     {
         if (odp->type != TYPE_STUB) continue;
+        fprintf( outfile, "static void %s(void) ", make_internal_name( odp, "stub" ) );
         if (odp->name[0])
-            fprintf( outfile, "static void __stub_%s(void) { __wine_unimplemented(\"%s\"); }\n",
-                     odp->name, odp->name );
+            fprintf( outfile, "{ __wine_unimplemented(\"%s\"); }\n", odp->name );
         else
-            fprintf( outfile, "static void __stub_%d(void) { __wine_unimplemented(\"%d\"); }\n",
-                     odp->ordinal, odp->ordinal );
+            fprintf( outfile, "{ __wine_unimplemented(\"%d\"); }\n", odp->ordinal );
     }
+}
+
+
+/*******************************************************************
+ *         output_register_funcs
+ *
+ * Output the functions for register entry points
+ */
+static void output_register_funcs( FILE *outfile )
+{
+    ORDDEF *odp;
+    const char *name;
+    int i;
+
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy(void) {\n" );
+    fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
+    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    {
+        if (odp->type != TYPE_REGISTER) continue;
+        name = make_internal_name( odp, "regs" );
+        fprintf( outfile,
+                 "asm(\".align 4\\n\\t\"\n"
+                 "    \".type " PREFIX "%s,@function\\n\\t\"\n"
+                 "    \"" PREFIX "%s:\\n\\t\"\n"
+                 "    \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
+                 "    \".long " PREFIX "%s\\n\\t\"\n"
+                 "    \".byte %d,%d\");\n",
+                 name, name, odp->u.func.link_name,
+                 4 * strlen(odp->u.func.arg_types), 4 * strlen(odp->u.func.arg_types) );
+    }
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
 }
 
 
@@ -361,7 +409,7 @@ static void output_stub_funcs( FILE *outfile )
 void BuildSpec32File( FILE *outfile )
 {
     ORDDEF *odp;
-    int i, fwd_size = 0, have_regs = FALSE;
+    int i, j, fwd_size = 0, have_regs = FALSE;
     int nr_exports, nr_imports, nr_resources, nr_debug;
     int characteristics, subsystem, has_imports;
     const char *init_func;
@@ -408,7 +456,6 @@ void BuildSpec32File( FILE *outfile )
             fprintf( outfile, "extern void %s();\n", odp->u.ext.link_name );
             break;
         case TYPE_STDCALL:
-        case TYPE_STDCALL64:
         case TYPE_VARARGS:
         case TYPE_CDECL:
             fprintf( outfile, "extern void %s();\n", odp->u.func.link_name );
@@ -417,43 +464,29 @@ void BuildSpec32File( FILE *outfile )
             fwd_size += strlen(odp->u.fwd.link_name) + 1;
             break;
         case TYPE_REGISTER:
-            fprintf( outfile, "extern void __regs_%d();\n", odp->ordinal );
+            fprintf( outfile, "extern void %s();\n", make_internal_name( odp, "regs" ) );
             have_regs = TRUE;
             break;
         case TYPE_STUB:
             break;
+        case TYPE_VARIABLE:
+            fprintf( outfile, "unsigned int %s[%d] = {",
+                     make_internal_name( odp, "var" ), odp->u.var.n_values );
+            for (j = 0; j < odp->u.var.n_values; j++)
+            {
+                fprintf( outfile, " 0x%08x", odp->u.var.values[j] );
+                if (j < odp->u.var.n_values-1) fputc( ',', outfile );
+            }
+            fprintf( outfile, " };\n" );
+            break;
         default:
-            fprintf(stderr,"build: function type %d not available for Win32\n",
-                    odp->type);
-            exit(1);
+            fatal_error("function type %d not available for Win32\n", odp->type);
         }
     }
 
     /* Output code for all register functions */
 
-    if ( have_regs )
-    { 
-        fprintf( outfile, "#ifndef __GNUC__\n" );
-        fprintf( outfile, "static void __asm__dummy(void) {\n" );
-        fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
-        for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
-        {
-            if (odp->type != TYPE_REGISTER) continue;
-            fprintf( outfile,
-                     "asm(\".align 4\\n\\t\"\n"
-                     "    \".type " PREFIX "__regs_%d,@function\\n\\t\"\n"
-                     "    \"" PREFIX "__regs_%d:\\n\\t\"\n"
-                     "    \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
-                     "    \".long " PREFIX "%s\\n\\t\"\n"
-                     "    \".byte %d,%d\");\n",
-                     odp->ordinal, odp->ordinal, odp->u.func.link_name,
-                     4 * strlen(odp->u.func.arg_types),
-                     4 * strlen(odp->u.func.arg_types) );
-        }
-        fprintf( outfile, "#ifndef __GNUC__\n" );
-        fprintf( outfile, "}\n" );
-        fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
-    }
+    if (have_regs) output_register_funcs( outfile );
 
     /* Output the exports and relay entry points */
 
