@@ -6,6 +6,7 @@
 
 #include "config.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
@@ -23,7 +24,38 @@
 
 DEFAULT_DEBUG_CHANNEL(system);
 
+/* System parameter indexes */
+#define SPI_SETBEEP_IDX                         0
+#define SPI_SETBORDER_IDX                       1
+#define SPI_SETSHOWSOUNDS_IDX                   2
+#define SPI_WINE_IDX                            SPI_SETSHOWSOUNDS_IDX
+
+/**
+ * Names of the registry subkeys of HKEY_CURRENT_USER key and value names
+ * for the system parameters.
+ * Names of the keys are created by adding string "_REGKEY" to
+ * "SET" action names, value names are created by adding "_REG_NAME"
+ * to the "SET" action name.
+ */
+#define SPI_SETBEEP_REGKEY           "Control Panel\\Sound"
+#define SPI_SETBEEP_VALNAME          "Beep"
+#define SPI_SETSHOWSOUNDS_REGKEY     "Control Panel\\Accessibility\\ShowSounds"
+#define SPI_SETSHOWSOUNDS_VALNAME    "On"
+#define SPI_SETBORDER_REGKEY         "Control Panel\\Desktop"
+#define SPI_SETBORDER_VALNAME        "BorderWidth"
+
+/* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
+#define WINE_CURRENT_USER_REGKEY     "Wine"
+
+/* Indicators whether system parameter value is loaded */
+static char spi_loaded[SPI_WINE_IDX + 1];
+
+static BOOL notify_change = TRUE;
+
+/* System parameters storage */
 static BOOL beep_active = TRUE;
+static int border = 1;
+
 
 /***********************************************************************
  *		GetTimerResolution (USER.14)
@@ -116,7 +148,199 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
 }
 
 /***********************************************************************
+ *           SYSPARAMS_Reset
+ *
+ * Sets the system parameter which should be always loaded to
+ * current value stored in registry.
+ * Invalidates lazy loaded parameter, so it will be loaded the next time
+ * it is requested.
+ *
+ * Parameters:
+ * uiAction - system parameter to reload value for.
+ *      Note, only "SET" values can be used for this parameter.
+ *      If uiAction is 0 all system parameters are reset.
+ */
+void SYSPARAMS_Reset( UINT uiAction )
+{
+#define WINE_RELOAD_SPI(x) \
+    case x: \
+        spi_loaded[x##_IDX] = FALSE; \
+        SystemParametersInfoA( x, 0, dummy_buf, 0 );\
+        if (uiAction) \
+            break
+
+#define WINE_INVALIDATE_SPI(x) \
+    case x: \
+        spi_loaded[x##_IDX] = FALSE; \
+        break
+
+    BOOL not_all_processed = TRUE;
+    char dummy_buf[10];
+
+    /* Execution falls through all the branches for uiAction == 0 */
+    switch (uiAction)
+    {
+    case 0:
+        memset( spi_loaded, 0, sizeof(spi_loaded) );
+
+    WINE_RELOAD_SPI(SPI_SETBORDER);
+    WINE_RELOAD_SPI(SPI_SETSHOWSOUNDS);
+
+    default:
+        if (uiAction)
+        {
+            /* lazy loaded parameters */
+            switch (uiAction)
+            {
+            WINE_INVALIDATE_SPI(SPI_SETBEEP);
+            default:
+                FIXME( "Unknown action reset: %u\n", uiAction );
+                break;
+            }
+        }
+        else
+            not_all_processed = FALSE;
+	break;
+    }
+
+    if (!uiAction && not_all_processed)
+        ERR( "Incorrect implementation of SYSPARAMS_Reset. "
+             "Not all params are reloaded.\n" );
+#undef WINE_INVALIDATE_SPI
+#undef WINE_RELOAD_SPI
+}
+
+/***********************************************************************
+ *           get_volatile_regkey
+ *
+ * Return a handle to the volatile registry key used to store
+ * non-permanently modified parameters.
+ */
+static HKEY get_volatile_regkey(void)
+{
+    static HKEY volatile_key;
+
+    if (!volatile_key)
+    {
+        /* FIXME - check whether the key exists
+          notify_change = FALSE;
+          if (WINE_CURRENT_USER_REGKEY does not exist)
+          {
+            initialize system parameters info which take values from X settings,
+            if(current settings differ from X)
+              change current setting and save it;
+          }
+          notify_change = TRUE;
+        */
+
+        if (RegCreateKeyExA( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY,
+                             0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0,
+                             &volatile_key, 0 ) != ERROR_SUCCESS)
+            ERR("Can't create wine configuration registry branch");
+    }
+    return volatile_key;
+}
+
+/***********************************************************************
+ *           SYSPARAMS_NotifyChange
+ *
+ * Sends notification about system parameter update.
+ */
+void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
+{
+    if (notify_change)
+    {
+        if (fWinIni & SPIF_UPDATEINIFILE)
+        {
+            if (fWinIni & (SPIF_SENDWININICHANGE | SPIF_SENDCHANGE))
+                SendMessageA(HWND_BROADCAST, WM_SETTINGCHANGE,
+                             uiAction, (LPARAM) "");
+        }
+        else 
+        {
+            /* FIXME notify other wine processes with internal message */
+        }
+    }
+}
+
+
+/***********************************************************************
+ * Loads system parameter from user profile.
+ */
+BOOL SYSPARAMS_Load( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpBuf )
+{
+    BOOL ret = FALSE;
+    DWORD type;
+    HKEY hKey;
+    DWORD count;
+
+    if ((RegOpenKeyA( get_volatile_regkey(), lpRegKey,
+                     &hKey ) == ERROR_SUCCESS) ||
+        (RegOpenKeyA( HKEY_CURRENT_USER, lpRegKey,
+                      &hKey ) == ERROR_SUCCESS))
+    {
+        ret = !RegQueryValueExA( hKey, lpValName, NULL, &type, lpBuf, &count );
+        RegCloseKey( hKey );
+    }
+    return ret;
+}
+
+/***********************************************************************
+ * Saves system parameter to user profile.
+ */
+BOOL SYSPARAMS_Save( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpValue,
+                     UINT fWinIni )
+{
+    HKEY hKey;
+    HKEY hBaseKey;
+    DWORD dwOptions;
+    BOOL ret = FALSE;
+
+    if (fWinIni & SPIF_UPDATEINIFILE)
+    {
+        hBaseKey = HKEY_CURRENT_USER;
+        dwOptions = 0;
+    }
+    else
+    {
+        hBaseKey = get_volatile_regkey();
+        dwOptions = REG_OPTION_VOLATILE;
+    }
+
+    if (RegCreateKeyExA( hBaseKey, lpRegKey,
+                         0, 0, dwOptions, KEY_ALL_ACCESS,
+                         0, &hKey, 0 ) == ERROR_SUCCESS)
+    {
+        if (RegSetValueExA( hKey, lpValName, 0, REG_SZ,
+                            lpValue, strlen(lpValue) + 1 ) == ERROR_SUCCESS)
+        {
+            ret = TRUE;
+            if (hBaseKey == HKEY_CURRENT_USER)
+                RegDeleteKeyA( get_volatile_regkey(), lpRegKey );
+        }
+        RegCloseKey( hKey );
+    }
+    return ret;
+}
+
+/***********************************************************************
  *		SystemParametersInfoA (USER32.@)
+ *
+ * Each system parameter has flag which shows whether the parameter
+ * is loaded or not. Parameters, stored directly in SysParametersInfo are
+ * loaded from registry only when they are requested and the flag is
+ * "false", after the loading the flag is set to "true". On interprocess
+ * notification of the parameter change the corresponding parameter flag is
+ * set to "false". The parameter value will be reloaded when it is requested
+ * the next time.
+ * Parameters, backed by or depend on GetSystemMetrics are processed
+ * differently. These parameters are always loaded. They are reloaded right
+ * away on interprocess change notification. We can't do lazy loading because
+ * we don't want to complicate GetSystemMetrics.
+ * When parameter value is updated the changed value is stored in permanent
+ * registry branch if saving is requested. Otherwise it is stored
+ * in temporary branch
+ *
  */
 BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 				   PVOID pvParam, UINT fWinIni )
@@ -133,25 +357,87 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break
 
     BOOL ret = TRUE;
+    unsigned spi_idx = 0;
     
     TRACE("(%u, %u, %p, %u)\n", uiAction, uiParam, pvParam, fWinIni);
     
     switch (uiAction)
     {
     case SPI_GETBEEP:				/*      1 */
+        spi_idx = SPI_SETBEEP_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+            
+            if (SYSPARAMS_Load( SPI_SETBEEP_REGKEY, SPI_SETBEEP_VALNAME, buf ))
+                beep_active  = !strcasecmp( "Yes", buf );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
 	*(BOOL *)pvParam = beep_active;
         break;
     case SPI_SETBEEP:				/*      2 */
-	beep_active = uiParam;
-	break;
+        spi_idx = SPI_SETBEEP_IDX;
+        if (SYSPARAMS_Save( SPI_SETBEEP_REGKEY, SPI_SETBEEP_VALNAME,
+                            (uiParam ? "Yes" : "No"), fWinIni ))
+        {
+            beep_active = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
 
     WINE_SPI_FIXME(SPI_GETMOUSE);		/*      3 */
     WINE_SPI_FIXME(SPI_SETMOUSE);		/*      4 */
 
     case SPI_GETBORDER:				/*      5 */
-	*(INT *)pvParam = GetSystemMetrics( SM_CXFRAME );
+        spi_idx = SPI_SETBORDER_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME,
+                                buf ))
+            {
+                int i = atoi( buf );
+                if (i > 0) border = i;
+            }
+            spi_loaded[spi_idx] = TRUE;
+            if (TWEAK_WineLook > WIN31_LOOK)
+            {
+                SYSMETRICS_Set( SM_CXFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
+                SYSMETRICS_Set( SM_CYFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
+            }
+        }
+	*(INT *)pvParam = border;
 	break;
-    WINE_SPI_WARN(SPI_SETBORDER);		/*      6 */
+
+    case SPI_SETBORDER:                         /*      6 */
+    {
+        char buf[10];
+
+        spi_idx = SPI_SETBORDER_IDX;
+        sprintf(buf, "%u", uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME,
+                            buf, fWinIni ))
+        {
+            if (uiParam > 0) 
+            {
+                border = uiParam;
+                spi_loaded[spi_idx] = TRUE;
+                if (TWEAK_WineLook > WIN31_LOOK)
+                {
+                    SYSMETRICS_Set( SM_CXFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
+                    SYSMETRICS_Set( SM_CYFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
+                }
+            }
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     case SPI_GETKEYBOARDSPEED:			/*     10 */
 	*(DWORD *)pvParam = GetProfileIntA( "keyboard", "KeyboardSpeed", 30 );
@@ -404,11 +690,41 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_GETMOUSEKEYS);		/*     54 */
     WINE_SPI_FIXME(SPI_SETMOUSEKEYS);		/*     55 */
     case SPI_GETSHOWSOUNDS:			/*     56 */
+        spi_idx = SPI_SETSHOWSOUNDS_IDX;
+
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[10];
+            
+            if (SYSPARAMS_Load( SPI_SETSHOWSOUNDS_REGKEY,
+                                SPI_SETSHOWSOUNDS_VALNAME, buf ))
+            {
+                SYSMETRICS_Set( SM_SHOWSOUNDS, atoi( buf ) );
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+
         *(INT *)pvParam = GetSystemMetrics( SM_SHOWSOUNDS );
         break;
+
     case SPI_SETSHOWSOUNDS:			/*     57 */
-        SYSMETRICS_Set(SM_SHOWSOUNDS, uiParam);
+    {
+        char buf[10];
+        spi_idx = SPI_SETSHOWSOUNDS_IDX;
+
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETSHOWSOUNDS_REGKEY,
+                            SPI_SETSHOWSOUNDS_VALNAME,
+                            buf, fWinIni ))
+        {
+            SYSMETRICS_Set( SM_SHOWSOUNDS, uiParam );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
         break;
+    }
     WINE_SPI_FIXME(SPI_GETSTICKYKEYS);		/*     58 */
     WINE_SPI_FIXME(SPI_SETSTICKYKEYS);		/*     59 */
     WINE_SPI_FIXME(SPI_GETACCESSTIMEOUT);	/*     60 */
@@ -534,6 +850,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	break;
     }
 
+    if (ret)
+        SYSPARAMS_NotifyChange( uiAction, fWinIni );
     return ret;
     
 #undef WINE_SPI_FIXME
@@ -732,8 +1050,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     }
     
     default:
-	ret = SystemParametersInfoA( uiAction, uiParam, pvParam, fuWinIni );
+        ret = SystemParametersInfoA( uiAction, uiParam, pvParam, fuWinIni );
+        break;
     }
-
     return ret;
 }

@@ -105,6 +105,8 @@ void SYSMETRICS_Init(void)
 {
     HDC hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
     HKEY hkey; /* key to the window metrics area of the registry */
+    INT dummy;
+
     assert(hdc);
 
     if (RegOpenKeyExA (HKEY_CURRENT_USER, "Control Panel\\desktop\\WindowMetrics",
@@ -126,14 +128,8 @@ void SYSMETRICS_Init(void)
         sysMetrics[SM_CXDLGFRAME] = 3;
         sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
 
-        sysMetrics[SM_CXFRAME] = SYSMETRICS_GetRegistryMetric(hkey, "BorderWidth", 1)
-                                    + sysMetrics[SM_CXDLGFRAME];
-        sysMetrics[SM_CYFRAME] = sysMetrics[SM_CXFRAME];
-        /* Since I am unable to get SM_CXDLGFRAME to be anything other than 3 on
-         * my Win95 computer I cannot proved the above assumption that the frame
-         * size is dependent on it.  However the above relationship is assumed in
-         * the painting of the Windows 95 frames (currently in nonclient.c)
-         */
+        /* force setting of SM_CXFRAME/SM_CYFRAME */
+        SystemParametersInfoA( SPI_GETBORDER, 0, &dummy, 0 );
     }
     else
     {
@@ -234,7 +230,6 @@ void SYSMETRICS_Init(void)
 
     sysMetrics[SM_CXDRAG] = 2;
     sysMetrics[SM_CYDRAG] = 2;
-    sysMetrics[SM_SHOWSOUNDS] = 0;
     sysMetrics[SM_CXMENUCHECK] = 14;
     sysMetrics[SM_CYMENUCHECK] = 14;
 
@@ -253,6 +248,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CMONITORS] = 1;
     sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
+
+    SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], FALSE );
 
     if (hkey) RegCloseKey (hkey);
     DeleteDC( hdc );
