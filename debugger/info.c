@@ -466,23 +466,39 @@ void DEBUG_WalkThreads(void)
     HANDLE snap = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
     if (snap != INVALID_HANDLE_VALUE)
     {
-        THREADENTRY32 entry;
-        DWORD current = DEBUG_CurrThread ? DEBUG_CurrThread->tid : 0;
-        BOOL ok;
+        THREADENTRY32	entry;
+        DWORD 		current = DEBUG_CurrThread ? DEBUG_CurrThread->tid : 0;
+        BOOL 		ok;
+	DWORD		lastProcessId = 0;
 
-		  entry.dwSize = sizeof(entry);
-		  ok = Thread32First( snap, &entry );
+	entry.dwSize = sizeof(entry);
+	ok = Thread32First( snap, &entry );
 
-        DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %s\n",
-                     "tid", "process", "prio" );
+        DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %s\n", "process", "tid", "prio" );
         while (ok)
         {
             if (entry.th32OwnerProcessID != GetCurrentProcessId())
-                DEBUG_Printf(DBG_CHN_MESG, "%08lx %08lx %4ld%s\n",
-                             entry.th32ThreadID, entry.th32OwnerProcessID,
-                             entry.tpBasePri, (entry.th32ThreadID == current) ? " <==" : "" );
+	    {
+		/* FIXME: this assumes that, in the snapshot, all threads of a same process are
+		 * listed sequentially, which is not specified in the doc (Wine's implementation
+		 * does it)
+		 */
+		if (entry.th32OwnerProcessID != lastProcessId)
+		{
+		    DBG_PROCESS*	p = DEBUG_GetProcess(entry.th32OwnerProcessID);
+
+		    DEBUG_Printf(DBG_CHN_MESG, "%08lx%s %s\n", 
+				 entry.th32OwnerProcessID,  p ? " (D)" : "", p ? p->imageName : "");
+		    lastProcessId = entry.th32OwnerProcessID;
+		}
+                DEBUG_Printf(DBG_CHN_MESG, "\t%08lx %4ld%s\n",
+                             entry.th32ThreadID, entry.tpBasePri, 
+			     (entry.th32ThreadID == current) ? " <==" : "");
+
+	    }
             ok = Thread32Next( snap, &entry );
         }
+
         CloseHandle( snap );
     }
 }

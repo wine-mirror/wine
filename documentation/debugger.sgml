@@ -1349,11 +1349,14 @@ info break	lists all (break|watch)points (with state)
 
         <screen>
 bt		print calling stack of current thread
+bt N		print calling stack of thread of ID N (note: this
+                doesn't change the position of the current frame as
+		manipulated by the up & dn commands)
 up		goes up one frame in current thread's stack
 up N		goes up N frames in current thread's stack
 dn		goes down one frame in current thread's stack
 dn N		goes down N frames in current thread's stack
-frame N		set N as the current frame
+frame N		set N as the current frame for current thread's stack
 info local	prints information on local variables for current
 		function 
         </screen>

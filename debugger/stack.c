@@ -106,7 +106,7 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, enum 
     }
 }
 
-static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noisy)
+static BOOL DEBUG_Frame16(DBG_THREAD* thread, DBG_ADDR *addr, unsigned int *cs, int frameno, int noisy)
 {
     unsigned int	possible_cs = 0;
     FRAME16 		frame;
@@ -128,7 +128,7 @@ static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
         if (((frame.cs&7)==7) && (frame.cs != *cs)) {
 	    LDT_ENTRY	le;
 	 
-	    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, frame.cs, &le) &&
+	    if (GetThreadSelectorEntry( thread->handle, frame.cs, &le) &&
 		(le.HighWord.Bits.Type & 0x08)) { /* code segment */
 	        /* it is very uncommon to push a code segment cs as
 		 * a parameter, so this should work in most cases */
@@ -174,24 +174,63 @@ static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
  *
  * Display a stack back-trace.
  */
-void DEBUG_BackTrace(BOOL noisy)
+void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 {
 #ifdef __i386
     DBG_ADDR 		addr, sw_addr, code, tmp;
-    unsigned int 	ss = DEBUG_context.SegSs;
-    unsigned int	cs = DEBUG_context.SegCs;
+    unsigned int 	ss, cs;
     int 		frameno = 0, is16, ok;
     DWORD 		next_switch, cur_switch, p;
     STACK16FRAME       	frame16;
     STACK32FRAME       	frame32;
     char		ch;
+    CONTEXT		ctx;
+    DBG_THREAD*		thread;
 
+    int 		copy_nframe = 0;
+    int			copy_curr_frame = 0;
+    struct bt_info* 	copy_frames = NULL;
+    
     if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Backtrace:\n" );
 
+    if (tid == DEBUG_CurrTid)
+    {
+	 ctx = DEBUG_context;
+	 thread = DEBUG_CurrThread;
+
+	 if (frames) DBG_free( frames );
+	 /* frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) ); */
+    }
+    else
+    {
+	 thread = DEBUG_GetThread(DEBUG_CurrProcess, tid);
+
+	 if (!thread)
+	 {
+	      DEBUG_Printf( DBG_CHN_MESG, "Unknown thread id (0x%08lx) in current process\n", tid);
+	      return;
+	 }
+	 memset(&ctx, 0, sizeof(ctx));
+	 ctx.ContextFlags = CONTEXT_CONTROL | CONTEXT_SEGMENTS;
+
+	 if ( SuspendThread( thread->handle ) == -1 ||
+	      !GetThreadContext( thread->handle, &ctx ))
+	 {
+	      DEBUG_Printf( DBG_CHN_MESG, "Can't get context for thread id (0x%08lx) in current process\n", tid);
+	      return;
+	 }
+	 /* need to avoid trashing stack frame for current thread */
+	 copy_nframe = nframe;
+	 copy_frames = frames;
+	 copy_curr_frame = curr_frame;
+	 curr_frame = 0;
+    }
+
     nframe = 0;
-    if (frames) DBG_free( frames );
-    /* frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) ); */
     frames = NULL;
+
+    cs = ctx.SegCs;
+    ss = ctx.SegSs;
 
     if (DEBUG_IsSelectorSystem(ss)) ss = 0;
     if (DEBUG_IsSelectorSystem(cs)) cs = 0;
@@ -201,16 +240,16 @@ void DEBUG_BackTrace(BOOL noisy)
     {
     case MODE_32:
         code.seg = cs;
-        code.off = DEBUG_context.Eip;
+        code.off = ctx.Eip;
         addr.seg = ss;
-	addr.off = DEBUG_context.Ebp;
+	addr.off = ctx.Ebp;
         DEBUG_ForceFrame( &addr, &code, frameno, MODE_32, noisy, NULL );
         if (!(code.seg || code.off)) {
             /* trying to execute a null pointer... yuck...
              * if it was a call to null, the return EIP should be
              * available at SS:ESP, so let's try to retrieve it */
             tmp.seg = ss;
-            tmp.off = DEBUG_context.Esp;
+            tmp.off = ctx.Esp;
             if (DEBUG_READ_MEM((void *)DEBUG_ToLinear(&tmp), &code.off, sizeof(code.off))) {
                 DEBUG_ForceFrame( &addr, &code, ++frameno, MODE_32, noisy, ", null call assumed" );
             }
@@ -220,9 +259,9 @@ void DEBUG_BackTrace(BOOL noisy)
     case MODE_16:
     case MODE_VM86:
         code.seg = cs;
-        code.off = LOWORD(DEBUG_context.Eip);
+        code.off = LOWORD(ctx.Eip);
         addr.seg = ss;
-	addr.off = LOWORD(DEBUG_context.Ebp);
+	addr.off = LOWORD(ctx.Ebp);
         DEBUG_ForceFrame( &addr, &code, frameno, MODE_16, noisy, NULL );
         is16 = TRUE;
 	break;
@@ -234,7 +273,7 @@ void DEBUG_BackTrace(BOOL noisy)
     /* cur_switch holds address of curr_stack's field in TEB in debuggee 
      * address space 
      */
-    cur_switch = (DWORD)DEBUG_CurrThread->teb + OFFSET_OF(TEB, cur_stack);
+    cur_switch = (DWORD)thread->teb + OFFSET_OF(TEB, cur_stack);
     if (!DEBUG_READ_MEM((void*)cur_switch, &next_switch, sizeof(next_switch))) {
         if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Can't read TEB:cur_stack\n");
 	return;
@@ -342,11 +381,21 @@ void DEBUG_BackTrace(BOOL noisy)
 	   }
 	} else {
 	    /* ordinary stack frame */
-	   ok = is16 ? DEBUG_Frame16( &addr, &cs, ++frameno, noisy)
+	   ok = is16 ? DEBUG_Frame16( thread, &addr, &cs, ++frameno, noisy)
 	      : DEBUG_Frame32( &addr, &cs, ++frameno, noisy);
 	}
     }
     if (noisy) DEBUG_Printf( DBG_CHN_MESG, "\n" );
+
+    if (tid != DEBUG_CurrTid)
+    {
+	 ResumeThread( thread->handle );
+	 /* restore stack frame for current thread */
+	 if (frames) DBG_free( frames );
+	 frames = copy_frames;
+	 nframe = copy_nframe;
+	 curr_frame = copy_curr_frame;
+    }
 #endif
 }
 

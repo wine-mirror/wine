@@ -126,7 +126,7 @@ static WINE_EXCEPTION_FILTER(wine_dbg)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-static	DBG_PROCESS*	DEBUG_GetProcess(DWORD pid)
+DBG_PROCESS*	DEBUG_GetProcess(DWORD pid)
 {
     DBG_PROCESS*	p;
     
@@ -135,13 +135,14 @@ static	DBG_PROCESS*	DEBUG_GetProcess(DWORD pid)
     return p;
 }
 
-static	DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
+static	DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h, const char* imageName)
 {
     DBG_PROCESS*	p = DBG_alloc(sizeof(DBG_PROCESS));
     if (!p)
 	return NULL;
     p->handle = h;
     p->pid = pid;
+    p->imageName = imageName ? DBG_strdup(imageName) : NULL;
     p->threads = NULL;
     p->num_threads = 0;
     p->continue_on_first_exception = FALSE;
@@ -177,6 +178,7 @@ static	void			DEBUG_DelProcess(DBG_PROCESS* p)
     if (p->next) p->next->prev = p->prev;
     if (p == DEBUG_ProcessList) DEBUG_ProcessList = p->next;
     if (p == DEBUG_CurrProcess) DEBUG_CurrProcess = NULL;
+    DBG_free((char*)p->imageName);
     DBG_free(p);
 }
 
@@ -206,7 +208,7 @@ static BOOL DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LP
     return FALSE;
 }
 
-static	DBG_THREAD*	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid)
+DBG_THREAD*	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid)
 {
     DBG_THREAD*	t;
     
@@ -273,7 +275,7 @@ static	void			DEBUG_DelThread(DBG_THREAD* t)
 
 BOOL				DEBUG_Attach(DWORD pid, BOOL cofe)
 {
-    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0))) return FALSE;
+    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0, NULL))) return FALSE;
 
     if (!DebugActiveProcess(pid)) {
         DEBUG_Printf(DBG_CHN_MESG, "Can't attach process %lx: error %ld\n", pid, GetLastError());
@@ -338,7 +340,7 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 	 * Do a quiet backtrace so that we have an idea of what the situation
 	 * is WRT the source files.
 	 */
-	DEBUG_BackTrace(FALSE);
+	DEBUG_BackTrace(DEBUG_CurrTid, FALSE);
     } else {
 	/* This is a real crash, dump some info */
 	DEBUG_InfoRegisters();
@@ -351,7 +353,7 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 	}
 	DEBUG_InfoSegments(DEBUG_context.SegFs >> 3, 1);
 #endif
-	DEBUG_BackTrace(TRUE);
+	DEBUG_BackTrace(DEBUG_CurrTid, TRUE);
     }
 
     if (!is_debug ||
@@ -624,11 +626,11 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer), 
                                            de->u.CreateProcessInfo.hProcess, 
                                            de->u.CreateProcessInfo.lpImageName);
-	    
+
 	    /* FIXME unicode ? de->u.CreateProcessInfo.fUnicode */
-	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create process %s @%08lx (%ld<%ld>)\n", 
+	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n", 
 			 de->dwProcessId, de->dwThreadId, 
-			 buffer,
+			 buffer, de->u.CreateProcessInfo.lpImageName,
 			 (unsigned long)(LPVOID)de->u.CreateProcessInfo.lpStartAddress,
 			 de->u.CreateProcessInfo.dwDebugInfoFileOffset,
 			 de->u.CreateProcessInfo.nDebugInfoSize);
@@ -639,9 +641,13 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 		    break;
 		}
 		DEBUG_CurrProcess->handle = de->u.CreateProcessInfo.hProcess;
+		if (DEBUG_CurrProcess->imageName == NULL)
+		    DEBUG_CurrProcess->imageName = DBG_strdup(buffer[0] ? buffer : "<Debugged Process>");
+
 	    } else {
 		DEBUG_CurrProcess = DEBUG_AddProcess(de->dwProcessId,
-						     de->u.CreateProcessInfo.hProcess);
+						     de->u.CreateProcessInfo.hProcess,
+						     buffer[0] ? buffer : "<Debugged Process>");
 		if (DEBUG_CurrProcess == NULL) {
 		    DEBUG_Printf(DBG_CHN_ERR, "Unknown process\n");
 		    break;
@@ -665,11 +671,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    DEBUG_InitCurrProcess();
 	    DEBUG_InitCurrThread();
 
-            DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer), 
-                                           DEBUG_CurrThread->process->handle, 
-                                           de->u.CreateProcessInfo.lpImageName);
-	    DEBUG_LoadModule32(buffer[0] ? buffer : "<Debugged process>",
-                               de->u.CreateProcessInfo.hFile, 
+	    DEBUG_LoadModule32(DEBUG_CurrProcess->imageName, de->u.CreateProcessInfo.hFile, 
 			       (DWORD)de->u.CreateProcessInfo.lpBaseOfImage);
 
             if (buffer[0])  /* we got a process name */
@@ -825,7 +827,7 @@ static	BOOL	DEBUG_Start(LPSTR cmdLine)
 	return FALSE;
     }
     DEBUG_CurrPid = info.dwProcessId;
-    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(DEBUG_CurrPid, 0))) return FALSE;
+    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(DEBUG_CurrPid, 0, NULL))) return FALSE;
 
     return TRUE;
 }
@@ -859,7 +861,7 @@ int DEBUG_main(int argc, char** argv)
     DEBUG_InitTypes();
     DEBUG_InitCVDataTypes();    
 
-    /* Initialize internal vars (types must be initialized before) */
+    /* Initialize internal vars (types must have been initialized before) */
     if (!DEBUG_IntVarsRW(TRUE)) return -1;
 
     /* keep it as a guiexe for now, so that Wine won't touch the Unix stdin, 
@@ -881,8 +883,6 @@ int DEBUG_main(int argc, char** argv)
 
 	if ((pid = atoi(argv[1])) != 0 && (hEvent = (HANDLE)atoi(argv[2])) != 0) {
 	    if (!DEBUG_Attach(pid, TRUE)) {
-		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
-			     DEBUG_CurrPid, GetLastError());
 		/* don't care about result */
 		SetEvent(hEvent);
 		goto leave;
@@ -920,10 +920,11 @@ int DEBUG_main(int argc, char** argv)
     }
 
     retv = DEBUG_MainLoop();
- leave:
+
     /* saves modified variables */
     DEBUG_IntVarsRW(FALSE);
 
+ leave:
     return retv;
 
  oom_leave:

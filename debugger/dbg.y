@@ -120,7 +120,8 @@ command:
     | tENABLE tNUM tEOL        	{ DEBUG_EnableBreakpoint( $2, TRUE ); }
     | tDISABLE tNUM tEOL       	{ DEBUG_EnableBreakpoint( $2, FALSE ); }
     | tDELETE tBREAK tNUM tEOL 	{ DEBUG_DelBreakpoint( $3 ); }
-    | tBACKTRACE tEOL	       	{ DEBUG_BackTrace(TRUE); }
+    | tBACKTRACE tEOL	       	{ DEBUG_BackTrace(DEBUG_CurrTid, TRUE); }
+    | tBACKTRACE tNUM tEOL     	{ DEBUG_BackTrace($2, TRUE); }
     | tUP tEOL		       	{ DEBUG_SetFrame( curr_frame + 1 );  }
     | tUP tNUM tEOL	       	{ DEBUG_SetFrame( curr_frame + $2 ); }
     | tDOWN tEOL	       	{ DEBUG_SetFrame( curr_frame - 1 );  }

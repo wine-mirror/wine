@@ -191,6 +191,7 @@ typedef struct tagDBG_DELAYED_BP {
 typedef struct tagDBG_PROCESS {
     HANDLE			handle;
     DWORD			pid;
+    const char*			imageName;
     DBG_THREAD*			threads;
     int				num_threads;
     unsigned			continue_on_first_exception;
@@ -434,7 +435,7 @@ extern BOOL DEBUG_DisassembleInstruction(DBG_ADDR *addr);
 
   /* debugger/stack.c */
 extern void DEBUG_InfoStack(void);
-extern void DEBUG_BackTrace(BOOL noisy);
+extern void DEBUG_BackTrace(DWORD threadID, BOOL noisy);
 extern int  DEBUG_InfoLocals(void);
 extern int  DEBUG_SetFrame(int newframe);
 extern int  DEBUG_GetCurrentFrame(struct name_hash ** name, 
@@ -493,6 +494,8 @@ extern int	DEBUG_Printf(int chn, const char* format, ...);
 extern DBG_INTVAR*	DEBUG_GetIntVar(const char*);
 extern BOOL DEBUG_Attach(DWORD pid, BOOL cofe);
 extern void DEBUG_Run(const char* args);
+extern DBG_PROCESS* 	DEBUG_GetProcess(DWORD pid);
+extern DBG_THREAD* 	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid);
 extern int curr_frame;
 
 /* Choose your allocator! */
