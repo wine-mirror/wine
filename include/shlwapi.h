@@ -8,6 +8,48 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+BOOL WINAPI PathAppendA(LPSTR lpszPath1,LPCSTR lpszPath2);
+BOOL WINAPI PathAppendW(LPWSTR lpszPath1,LPCWSTR lpszPath2);
+
+LPSTR WINAPI PathBuildRootA(LPSTR lpszPath, int drive);
+LPWSTR WINAPI PathBuildRootW(LPWSTR lpszPath, int drive);
+
+LPSTR WINAPI PathGetArgsA(LPCSTR lpszPath);
+LPWSTR WINAPI PathGetArgsW(LPCWSTR lpszPath);
+
+BOOL WINAPI PathRemoveFileSpecA(LPSTR lpszPath);
+BOOL WINAPI PathRemoveFileSpecW(LPWSTR lpszPath);
+
+void WINAPI PathStripPathA(LPSTR lpszPath);
+void WINAPI PathStripPathW(LPWSTR lpszPath);
+
+void WINAPI PathRemoveArgsA(LPSTR lpszPath);
+void WINAPI PathRemoveArgsW(LPWSTR lpszPath);
+
+void WINAPI PathRemoveExtensionA(LPSTR lpszPath);
+void WINAPI PathRemoveExtensionW(LPWSTR lpszPath);
+
+void WINAPI PathUnquoteSpacesA(LPSTR str);
+void WINAPI PathUnquoteSpacesW(LPWSTR str);
+
+int WINAPI PathParseIconLocationA(LPSTR lpszPath);
+int WINAPI PathParseIconLocationW(LPWSTR lpszPath);
+
+BOOL WINAPI PathIsExeA(LPCSTR lpszPath);
+BOOL WINAPI PathIsExeW(LPCWSTR lpszPath);
+
+BOOL WINAPI PathIsDirectoryA(LPCSTR lpszPath);
+BOOL WINAPI PathIsDirectoryW(LPCWSTR lpszPath);
+
+BOOL WINAPI PathFileExistsA(LPCSTR lpszPath);
+BOOL WINAPI PathFileExistsW(LPCWSTR lpszPath);
+
+BOOL WINAPI PathIsSameRootA(LPCSTR lpszPath1, LPCSTR lpszPath2);
+BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2);
+
+BOOL WINAPI PathSetDlgItemPathA(HWND hDlg, int id, LPCSTR pszPath);
+BOOL WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR pszPath);
+
 LPSTR WINAPI PathFindFileNameA(LPCSTR pPath);
 LPWSTR WINAPI PathFindFileNameW(LPCWSTR pPath);
 #define PathFindFileName WINELIB_NAME_AW(PathFindFileName)
