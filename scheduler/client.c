@@ -270,45 +270,6 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
     struct new_thread_request request;
     struct new_thread_reply reply;
     int fd[2];
-    extern BOOL32 THREAD_InitDone;
-    extern void server_init( int fd );
-    extern void select_loop(void);
-
-    if (!THREAD_InitDone)  /* first thread -> start the server */
-    {
-        int tmpfd[2];
-        char buffer[16];
-
-        if (socketpair( AF_UNIX, SOCK_STREAM, 0, tmpfd ) == -1)
-        {
-            perror("socketpair");
-            exit(1);
-        }
-        switch(fork())
-        {
-        case -1:  /* error */
-            perror("fork");
-            exit(1);
-        case 0:  /* child */
-            close( tmpfd[0] );
-            sprintf( buffer, "%d", tmpfd[1] );
-/*#define EXEC_SERVER*/
-#ifdef EXEC_SERVER
-            execlp( "wineserver", "wineserver", buffer, NULL );
-            execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
-            execl( "./server/wineserver", "wineserver", buffer, NULL );
-#endif
-            server_init( tmpfd[1] );
-            select_loop();
-            exit(0);
-        default:  /* parent */
-            close( tmpfd[1] );
-            SET_CUR_THREAD( thdb );
-            THREAD_InitDone = TRUE;
-            thdb->socket = tmpfd[0];
-            break;
-        }
-    }
 
     if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
     {

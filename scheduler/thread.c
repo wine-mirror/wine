@@ -5,6 +5,8 @@
  */
 
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
 #include "thread.h"
@@ -35,6 +37,9 @@ const K32OBJ_OPS THREAD_Ops =
 
 /* Is threading code initialized? */
 BOOL32 THREAD_InitDone = FALSE;
+
+/* THDB of the initial thread */
+static THDB initial_thdb;
 
 
 /***********************************************************************
@@ -90,83 +95,14 @@ THDB *THREAD_IdToTHDB( DWORD id )
 
 
 /***********************************************************************
- *           THREAD_AddQueue
+ *           THREAD_InitTHDB
  *
- * Add a thread to a queue.
+ * Initialization of a newly created THDB.
  */
-void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread )
-{
-    THREAD_ENTRY *entry = HeapAlloc( SystemHeap, HEAP_NO_SERIALIZE,
-                                     sizeof(*entry) );
-    assert(entry);
-    SYSTEM_LOCK();
-    entry->thread = thread;
-    if (*queue)
-    {
-        entry->next = (*queue)->next;
-        (*queue)->next = entry;
-    }
-    else entry->next = entry;
-    *queue = entry;
-    SYSTEM_UNLOCK();
-}
-
-/***********************************************************************
- *           THREAD_RemoveQueue
- *
- * Remove a thread from a queue.
- */
-void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread )
-{
-    THREAD_ENTRY *entry = *queue;
-    SYSTEM_LOCK();
-    if (entry->next == entry)  /* Only one element in the queue */
-    {
-        assert( entry->thread == thread );
-        *queue = NULL;
-    }
-    else
-    {
-        THREAD_ENTRY *next;
-        while (entry->next->thread != thread)
-        {
-            entry = entry->next;
-            assert( entry != *queue );  /* Have we come all the way around? */
-        }
-        if ((next = entry->next) == *queue) *queue = entry;
-        entry->next = entry->next->next;
-        entry = next;  /* This is the one we want to free */
-    }
-    HeapFree( SystemHeap, 0, entry );
-    SYSTEM_UNLOCK();
-}
-
-
-/***********************************************************************
- *           THREAD_Create
- */
-THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
-                     int *server_thandle, int *server_phandle,
-                     LPTHREAD_START_ROUTINE start_addr, LPVOID param )
+static BOOL32 THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL32 alloc_stack16,
+                               int *server_thandle, int *server_phandle )
 {
     DWORD old_prot;
-
-    THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
-    if (!thdb) return NULL;
-    thdb->header.type     = K32OBJ_THREAD;
-    thdb->header.refcount = 1;
-    thdb->process         = pdb;
-    thdb->teb.except      = (void *)-1;
-    thdb->teb.htask16     = 0; /* FIXME */
-    thdb->teb.self        = &thdb->teb;
-    thdb->teb.flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
-    thdb->teb.tls_ptr     = thdb->tls_array;
-    thdb->teb.process     = pdb;
-    thdb->wait_list       = &thdb->wait_struct;
-    thdb->exit_code       = 0x103; /* STILL_ACTIVE */
-    thdb->entry_point     = start_addr;
-    thdb->entry_arg       = param;
-    thdb->socket          = -1;
 
     /* Allocate the stack */
 
@@ -193,12 +129,6 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
     thdb->teb.stack_low   = thdb->stack_base;
     thdb->exit_stack      = thdb->teb.stack_top;
 
-    /* Allocate the TEB selector (%fs register) */
-
-    thdb->teb_sel = SELECTOR_AllocBlock( &thdb->teb, 0x1000, SEGMENT_DATA,
-                                         TRUE, FALSE );
-    if (!thdb->teb_sel) goto error;
-
     /* Allocate the 16-bit stack selector */
 
     if (alloc_stack16)
@@ -215,24 +145,130 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
 
     if (CLIENT_NewThread( thdb, server_thandle, server_phandle )) goto error;
 
-    /* Add thread to process's list of threads */
-
-    THREAD_AddQueue( &pdb->thread_list, thdb );
-
     /* Create the thread event */
 
     if (!(thdb->event = CreateEvent32A( NULL, FALSE, FALSE, NULL ))) goto error;
     thdb->event = ConvertToGlobalHandle( thdb->event );
-
-    PE_InitTls( thdb );
-    return thdb;
+    return TRUE;
 
 error:
     if (thdb->socket != -1) close( thdb->socket );
     if (thdb->event) CloseHandle( thdb->event );
     if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
-    if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     if (thdb->stack_base) VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           THREAD_CreateInitialThread
+ *
+ * Create the initial thread.
+ */
+THDB *THREAD_CreateInitialThread( PDB32 *pdb )
+{
+    int fd[2];
+    char buffer[16];
+    extern void server_init( int fd );
+    extern void select_loop(void);
+
+    initial_thdb.header.type     = K32OBJ_THREAD;
+    initial_thdb.header.refcount = 1;
+    initial_thdb.process         = pdb;
+    initial_thdb.teb.except      = (void *)-1;
+    initial_thdb.teb.self        = &initial_thdb.teb;
+    initial_thdb.teb.flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
+    initial_thdb.teb.tls_ptr     = initial_thdb.tls_array;
+    initial_thdb.teb.process     = pdb;
+    initial_thdb.exit_code       = 0x103; /* STILL_ACTIVE */
+    initial_thdb.socket          = -1;
+
+    /* Start the server */
+
+    if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
+    {
+        perror("socketpair");
+        exit(1);
+    }
+    switch(fork())
+    {
+    case -1:  /* error */
+        perror("fork");
+        exit(1);
+    case 0:  /* child */
+        close( fd[0] );
+        sprintf( buffer, "%d", fd[1] );
+/*#define EXEC_SERVER*/
+#ifdef EXEC_SERVER
+        execlp( "wineserver", "wineserver", buffer, NULL );
+        execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
+        execl( "./server/wineserver", "wineserver", buffer, NULL );
+#endif
+        server_init( fd[1] );
+        select_loop();
+        exit(0);
+    default:  /* parent */
+        initial_thdb.socket = fd[0];
+        close( fd[1] );
+        break;
+    }
+
+    /* Allocate the TEB selector (%fs register) */
+
+    if (!(initial_thdb.teb_sel = SELECTOR_AllocBlock( &initial_thdb.teb, 0x1000,
+                                                      SEGMENT_DATA, TRUE, FALSE )))
+    {
+        MSG("Could not allocate fs register for initial thread\n" );
+        return NULL;
+    }
+    SET_CUR_THREAD( &initial_thdb );
+    THREAD_InitDone = TRUE;
+
+    /* Now proceed with normal initialization */
+
+    if (!THREAD_InitTHDB( &initial_thdb, 0, FALSE, NULL, NULL )) return NULL;
+    return &initial_thdb;
+}
+
+
+/***********************************************************************
+ *           THREAD_Create
+ */
+THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
+                     int *server_thandle, int *server_phandle,
+                     LPTHREAD_START_ROUTINE start_addr, LPVOID param )
+{
+    THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
+    if (!thdb) return NULL;
+    thdb->header.type     = K32OBJ_THREAD;
+    thdb->header.refcount = 1;
+    thdb->process         = pdb;
+    thdb->teb.except      = (void *)-1;
+    thdb->teb.htask16     = 0; /* FIXME */
+    thdb->teb.self        = &thdb->teb;
+    thdb->teb.flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
+    thdb->teb.tls_ptr     = thdb->tls_array;
+    thdb->teb.process     = pdb;
+    thdb->exit_code       = 0x103; /* STILL_ACTIVE */
+    thdb->entry_point     = start_addr;
+    thdb->entry_arg       = param;
+    thdb->socket          = -1;
+
+    /* Allocate the TEB selector (%fs register) */
+
+    thdb->teb_sel = SELECTOR_AllocBlock( &thdb->teb, 0x1000, SEGMENT_DATA,
+                                         TRUE, FALSE );
+    if (!thdb->teb_sel) goto error;
+
+    /* Do the rest of the initialization */
+
+    if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, server_thandle, server_phandle ))
+        goto error;
+    PE_InitTls( thdb );
+    return thdb;
+
+error:
+    if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     HeapFree( SystemHeap, 0, thdb );
     return NULL;
 }
@@ -325,9 +361,6 @@ void WINAPI ExitThread(
 {
     THDB *thdb = THREAD_Current();
     LONG count;
-
-    /* Remove thread from process's list */
-    THREAD_RemoveQueue( &thdb->process->thread_list, thdb );
 
     MODULE_InitializeDLLs( thdb->process, 0, DLL_THREAD_DETACH, NULL );
 
