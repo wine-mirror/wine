@@ -14,6 +14,7 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "task.h"
+#include "thread.h"
 #include "toolhelp.h"
 #include "selectors.h"
 #include "process.h"
