@@ -181,7 +181,7 @@ PIPE_RegisterPipe(wine_marshal_id *mid, HANDLE hPipe, BOOL startreader) {
   wine_pipe *new_pipes;
 
   for (i=0;i<nrofpipes;i++)
-    if (pipes[i].mid.processid==mid->processid)
+    if (pipes[i].mid.oxid==mid->oxid)
       return S_OK;
   if (pipes)
     new_pipes=(wine_pipe*)HeapReAlloc(GetProcessHeap(),0,pipes,sizeof(pipes[0])*(nrofpipes+1));
@@ -189,7 +189,7 @@ PIPE_RegisterPipe(wine_marshal_id *mid, HANDLE hPipe, BOOL startreader) {
     new_pipes=(wine_pipe*)HeapAlloc(GetProcessHeap(),0,sizeof(pipes[0]));
   if (!new_pipes) return E_OUTOFMEMORY;
   pipes = new_pipes;
-  sprintf(pipefn,OLESTUBMGR"_%08lx",mid->processid);
+  sprintf(pipefn,OLESTUBMGR"_%08lx%08lx",(DWORD)(mid->oxid >> 32),(DWORD)mid->oxid);
   memcpy(&(pipes[nrofpipes].mid),mid,sizeof(*mid));
   pipes[nrofpipes].hPipe	= hPipe;
   InitializeCriticalSection(&(pipes[nrofpipes].crit));
@@ -206,7 +206,7 @@ static HANDLE
 PIPE_FindByMID(wine_marshal_id *mid) {
   int i;
   for (i=0;i<nrofpipes;i++)
-    if ((pipes[i].mid.processid==mid->processid) &&
+    if ((pipes[i].mid.oxid==mid->oxid) &&
 	(GetCurrentThreadId()==pipes[i].tid)
     )
       return pipes[i].hPipe;
@@ -217,7 +217,7 @@ static wine_pipe*
 PIPE_GetFromMID(wine_marshal_id *mid) {
   int i;
   for (i=0;i<nrofpipes;i++) {
-    if ((pipes[i].mid.processid==mid->processid) &&
+    if ((pipes[i].mid.oxid==mid->oxid) &&
 	(GetCurrentThreadId()==pipes[i].tid)
     )
       return pipes+i;
@@ -378,10 +378,6 @@ RPC_QueueRequestAndWait(wine_rpc_request *req) {
 	FIXME("no pipe found.\n");
 	return E_POINTER;
     }
-    if (GetCurrentProcessId() == req->reqh.mid.processid) {
-	ERR("In current process?\n");
-	return E_FAIL;
-    }
     req->hPipe = xpipe->hPipe;
     req->state = REQSTATE_REQ_WAITING_FOR_REPLY;
     reqtype = REQTYPE_REQUEST;
@@ -423,7 +419,7 @@ PipeBuf_SendReceive(
 
     TRACE("()\n");
 
-    if (This->mid.processid == GetCurrentProcessId()) {
+    if (This->mid.oxid == COM_CurrentApt()->oxid) {
 	ERR("Need to call directly!\n");
 	return E_FAIL;
     }
@@ -489,7 +485,7 @@ PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf) {
   hPipe = PIPE_FindByMID(mid);
   if (hPipe == INVALID_HANDLE_VALUE) {
       char			pipefn[200];
-      sprintf(pipefn,OLESTUBMGR"_%08lx",mid->processid);
+      sprintf(pipefn,OLESTUBMGR"_%08lx%08lx",(DWORD)(mid->oxid >> 32),(DWORD)mid->oxid);
       hPipe = CreateFileA(
 	      pipefn,
 	      GENERIC_READ|GENERIC_WRITE,
@@ -506,7 +502,7 @@ PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf) {
       hres = PIPE_RegisterPipe(mid, hPipe, FALSE);
       if (hres) return hres;
       memset(&ourid,0,sizeof(ourid));
-      ourid.processid = GetCurrentProcessId();
+      ourid.oxid = COM_CurrentApt()->oxid;
       if (!WriteFile(hPipe,&ourid,sizeof(ourid),&res,NULL)||(res!=sizeof(ourid))) {
 	  ERR("Failed writing startup mid!\n");
 	  return E_FAIL;
@@ -673,7 +669,8 @@ COM_RpcReceive(wine_pipe *xpipe) {
 
         hres = MARSHAL_Find_Stub_Buffer(&header.mid, &stub);
         if (hres) {
-            ERR("could not locate stub to disconnect, mid.objectid=%p\n", (void*)header.mid.objectid);
+            ERR("could not locate stub to disconnect, mid.oid=%s\n",
+                wine_dbgstr_longlong(header.mid.oid));
             goto end;
         }
 

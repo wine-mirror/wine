@@ -123,16 +123,16 @@ extern void* StdGlobalInterfaceTableInstance;
 
 /* Standard Marshalling definitions */
 typedef struct _wine_marshal_id {
-    DWORD	processid;
-    DWORD	objectid;	/* unique value corresp. IUnknown of object */
-    IID		iid;
+    OXID   oxid;
+    OID    oid;  /* unique value corresp. IUnknown of object */
+    IID    iid;
 } wine_marshal_id;
 
 inline static BOOL
 MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
     return
-	(mid1->processid == mid2->processid)	&&
-	(mid1->objectid == mid2->objectid)	&&
+	(mid1->oxid == mid2->oxid)	&&
+	(mid1->oid == mid2->oid)	&&
 	IsEqualIID(&(mid1->iid),&(mid2->iid))
     ;
 }
@@ -141,8 +141,8 @@ MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
 inline static BOOL
 MARSHAL_Compare_Mids_NoInterface(wine_marshal_id *mid1, wine_marshal_id *mid2) {
     return
-	(mid1->processid == mid2->processid)	&&
-	(mid1->objectid == mid2->objectid)
+	(mid1->oxid == mid2->oxid)	&&
+	(mid1->oid == mid2->oid)
     ;
 }
 

@@ -101,6 +101,7 @@ void MARSHAL_Invalidate_Stub_From_MID(wine_marshal_id *mid) {
         
 	if (MARSHAL_Compare_Mids(mid,&(stubs[i].mid))) {
             stubs[i].valid = FALSE;
+            IUnknown_Release(stubs[i].pUnkServer);
 	    return;
 	}
     }
@@ -144,7 +145,7 @@ static HRESULT
 MARSHAL_Register_Stub(wine_marshal_id *mid,LPUNKNOWN pUnk,IRpcStubBuffer *stub) {
     LPUNKNOWN	xPunk;
     if (!MARSHAL_Find_Stub(mid,&xPunk)) {
-	FIXME("Already have entry for (%lx/%s)!\n",mid->objectid,debugstr_guid(&(mid->iid)));
+	FIXME("Already have entry for (%s/%s)!\n",wine_dbgstr_longlong(mid->oid),debugstr_guid(&(mid->iid)));
 	return S_OK;
     }
     if (nrofstubs)
@@ -265,8 +266,8 @@ StdMarshalImpl_MarshalInterface(
   TRACE("(...,%s,...)\n",debugstr_guid(riid));
 
   IUnknown_QueryInterface((LPUNKNOWN)pv,&IID_IUnknown,(LPVOID*)&pUnk);
-  mid.processid = GetCurrentProcessId();
-  mid.objectid = (DWORD)pUnk; /* FIXME */
+  mid.oxid = COM_CurrentApt()->oxid;
+  mid.oid = (DWORD)pUnk; /* FIXME */
   IUnknown_Release(pUnk);
   memcpy(&mid.iid,riid,sizeof(mid.iid));
   md.dwDestContext	= dwDestContext;
@@ -307,15 +308,30 @@ StdMarshalImpl_UnmarshalInterface(
   IPSFactoryBuffer	*psfacbuf;
   IRpcProxyBuffer	*rpcproxy;
   IRpcChannelBuffer	*chanbuf;
+  int i;
 
   TRACE("(...,%s,....)\n",debugstr_guid(riid));
   hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
   if (hres) return hres;
   hres = IStream_Read(pStm,&md,sizeof(md),&res);
   if (hres) return hres;
-  if (SUCCEEDED(MARSHAL_Find_Stub(&mid,(LPUNKNOWN*)ppv))) {
-      FIXME("Calling back to ourselves for %s!\n",debugstr_guid(riid));
-      return S_OK;
+  for (i=0; i < nrofstubs; i++)
+  {
+       if (!stubs[i].valid) continue;
+
+       if (MARSHAL_Compare_Mids(&mid, &(stubs[i].mid)))
+       {
+          IRpcStubBuffer       *stub = NULL;
+          stub = stubs[i].stub;
+          res = IRpcStubBuffer_Release(stub);
+          TRACE("Same apartment marshal for %s, returning original object\n",
+            debugstr_guid(riid));
+
+          stubs[i].valid = FALSE;
+          IUnknown_QueryInterface(stubs[i].pUnkServer, riid, ppv);
+          IUnknown_Release(stubs[i].pUnkServer); /* no longer need our reference */
+          return S_OK;
+       }
   }
   if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_NULL)) {
     /* should return proxy manager IUnknown object */
@@ -354,7 +370,6 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
   wine_marshal_id       mid;
   ULONG                 res;
   HRESULT               hres;
-  IRpcStubBuffer       *stub = NULL;
   int                   i;
 
   hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
@@ -366,22 +381,18 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
 
        if (MARSHAL_Compare_Mids(&mid, &(stubs[i].mid)))
        {
-           stub = stubs[i].stub;
-           break;
+          IRpcStubBuffer       *stub = NULL;
+          stub = stubs[i].stub;
+          res = IRpcStubBuffer_Release(stub);
+          stubs[i].valid = FALSE;
+          TRACE("stub refcount of %p is %ld\n", stub, res);
+
+          return S_OK;
        }
   }
 
-  if (!stub)
-  {
-      FIXME("Could not map MID to stub??\n");
-      return E_FAIL;
-  }
-
-  res = IRpcStubBuffer_Release(stub);
-  stubs[i].valid = FALSE;
-  TRACE("stub refcount of %p is %ld\n", stub, res);
-
-  return S_OK;
+  FIXME("Could not map MID to stub??\n");
+  return E_FAIL;
 }
 
 static HRESULT WINAPI
@@ -504,9 +515,9 @@ CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
 
   start_listener_thread(); /* Just to be sure we have one running. */
   
-  mid.processid = GetCurrentProcessId();
+  mid.oxid = COM_CurrentApt()->oxid;
   IUnknown_QueryInterface(pUnk,&IID_IUnknown,(LPVOID*)&pUnknown);
-  mid.objectid = (DWORD)pUnknown;
+  mid.oid = (DWORD)pUnknown;
   IUnknown_Release(pUnknown);
   memcpy(&mid.iid,riid,sizeof(mid.iid));
   md.dwDestContext	= dwDestContext;
