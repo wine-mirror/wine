@@ -146,7 +146,7 @@ struct __res_state *__res_state(void)
 static inline void writejump( const char *symbol, void *dest )
 {
 #if defined(__GLIBC__) && defined(__i386__)
-    unsigned char *addr = dlsym( RTLD_NEXT, symbol );
+    unsigned char *addr = wine_dlsym( RTLD_NEXT, symbol, NULL, 0 );
 
     if (!addr) return;
 
@@ -562,7 +562,7 @@ pid_t __fork(void)
 
     if (!libc_fork)
     {
-        libc_fork = dlsym( RTLD_NEXT, "fork" );
+        libc_fork = wine_dlsym( RTLD_NEXT, "fork", NULL, 0 );
         assert( libc_fork );
     }
     pthread_mutex_lock( &atfork_mutex );
@@ -926,7 +926,7 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 {
     if (!libc_sigaction)
     {
-        libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
+        libc_sigaction = wine_dlsym( RTLD_NEXT, "sigaction", NULL, 0 );
         assert( libc_sigaction );
     }
     return libc_sigaction(signum, act, oldact);
@@ -939,10 +939,10 @@ void __pthread_initialize(void)
     if (!done)
     {
         done = 1;
-        libc_fork = dlsym( RTLD_NEXT, "fork" );
-        libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
-        libc_uselocale = dlsym( RTLD_NEXT, "uselocale" );
-        libc_pthread_init = dlsym( RTLD_NEXT, "__libc_pthread_init" );
+        libc_fork = wine_dlsym( RTLD_NEXT, "fork", NULL, 0 );
+        libc_sigaction = wine_dlsym( RTLD_NEXT, "sigaction", NULL, 0 );
+        libc_uselocale = wine_dlsym( RTLD_DEFAULT, "uselocale", NULL, 0 );
+        libc_pthread_init = wine_dlsym( RTLD_NEXT, "__libc_pthread_init", NULL, 0 );
         if (libc_pthread_init) libc_multiple_threads = libc_pthread_init( &libc_pthread_functions );
     }
 }
