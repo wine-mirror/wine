@@ -160,14 +160,6 @@ HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID
   return S_OK;
 }
 
-/******************************************************************************
- *              OleLockRunning        [OLE32.114]
- */
-HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses) 
-{
-  FIXME("(%p,%x,%x), stub!\n", pUnknown, fLock, fLastUnlockCloses);
-  return S_OK;
-}
 
 /******************************************************************************
  *              OleGetIconOfClass        [OLE32.106]

@@ -828,6 +828,33 @@ HRESULT WINAPI OleSave(
 }
 
 
+/******************************************************************************
+ *              OleLockRunning        [OLE32.114]
+ */
+HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses) 
+{
+  IRunnableObject* runnable = NULL;
+  HRESULT          hres;
+
+  TRACE("(%p,%x,%x)\n", pUnknown, fLock, fLastUnlockCloses);
+
+  hres = IUnknown_QueryInterface(pUnknown,
+				 &IID_IRunnableObject,
+				 (void**)&runnable);
+
+  if (SUCCEEDED(hres))
+  {
+    hres = IRunnableObject_LockRunning(runnable, fLock, fLastUnlockCloses);
+
+    IRunnableObject_Release(runnable);
+
+    return hres;
+  }
+  else
+    return E_INVALIDARG;
+}
+
+
 /**************************************************************************
  * Internal methods to manage the shared OLE menu in response to the
  * OLE***MenuDescriptor API
