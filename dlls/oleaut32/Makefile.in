@@ -18,6 +18,7 @@ C_SRCS = \
 	olefont.c \
 	olepicture.c \
 	parsedt.c \
+	propertyframe.c \
 	safearray.c \
 	stubs.c \
 	typelib.c \

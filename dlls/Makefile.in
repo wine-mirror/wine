@@ -541,8 +541,9 @@ ole32/libole32.$(LIBEXT): dummy libadvapi32.$(LIBEXT) libuser32.$(LIBEXT) \
   libgdi32.$(LIBEXT) librpcrt4.$(LIBEXT) libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd ole32 && $(MAKE) libole32.$(LIBEXT)
 
-oleaut32/liboleaut32.$(LIBEXT): dummy libole32.$(LIBEXT) libuser32.$(LIBEXT) \
-  libgdi32.$(LIBEXT) libadvapi32.$(LIBEXT) libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
+oleaut32/liboleaut32.$(LIBEXT): dummy libcomctl32.$(LIBEXT) libole32.$(LIBEXT) \
+  libuser32.$(LIBEXT) libgdi32.$(LIBEXT) libadvapi32.$(LIBEXT) libkernel32.$(LIBEXT) \
+  libntdll.$(LIBEXT)
 	@cd oleaut32 && $(MAKE) liboleaut32.$(LIBEXT)
 
 olecli/libolecli32.$(LIBEXT): dummy libole32.$(LIBEXT) libgdi32.$(LIBEXT) \

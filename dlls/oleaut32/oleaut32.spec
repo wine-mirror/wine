@@ -2,6 +2,7 @@ name oleaut32
 type win32
 rsrc version.res
 
+import -delay comctl32.dll
 import ole32.dll
 import user32.dll
 import gdi32.dll
