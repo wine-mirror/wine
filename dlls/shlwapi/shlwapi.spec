@@ -700,6 +700,8 @@ debug_channels (shell)
 #@ stdcall StrRetToStrW (ptr ptr ptr) StrRetToStrW
 @ stdcall SHRegGetPathA(long str str ptr long)SHRegGetPathA
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)SHRegGetPathW
+@ stub    MLLoadLibraryA
+@ stub    MLLoadLibraryW
 @ stub    PathIsDirectoryEmptyA
 @ stub    PathIsDirectoryEmptyW
 @ stub    PathIsNetworkPathA
