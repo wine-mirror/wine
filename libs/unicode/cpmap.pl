@@ -205,6 +205,8 @@ sub READ_DEFAULTS
     @unicode_aliases = ();
     @tolower_table = ();
     @toupper_table = ();
+    @digitmap_table = ();
+    @compatmap_table = ();
     @category_table = ();
     @direction_table = ();
     @decomp_table = ();
@@ -270,6 +272,10 @@ sub READ_DEFAULTS
         {
             $category_table[$src] |= $ctype{"digit"};
         }
+        if ($dig ne "")
+        {
+            $digitmap_table[$src] = ord $dig;
+        }
 
         # copy the category and direction for everything between First/Last pairs
         if ($name =~ /, First>/) { $start = $src; }
@@ -288,6 +294,11 @@ sub READ_DEFAULTS
         if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
         {
             # decomposition of the form "<foo> 1234" -> use char if type is known
+            if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
+            {
+                # Single char decomposition in the compatability range
+                $compatmap_table[$src] = hex $2;
+            }
             next unless ($1 eq "font" ||
                          $1 eq "noBreak" ||
                          $1 eq "circle" ||
@@ -314,6 +325,12 @@ sub READ_DEFAULTS
             {
                 $decomp_table[$src] = [ hex $1, hex $2 ];
                 push @compose_table, [ hex $1, hex $2, $src ];
+            }
+            elsif ($decomp =~ /^(<[a-z]+>\s)*([0-9a-fA-F]+)$/ &&
+                   (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd)))
+            {
+                # Single char decomposition in the compatability range
+                $compatmap_table[$src] = hex $2;
             }
         }
         else
@@ -885,6 +902,8 @@ sub DUMP_CASE_MAPPINGS
 
     DUMP_CASE_TABLE( "wine_casemap_lower", @tolower_table );
     DUMP_CASE_TABLE( "wine_casemap_upper", @toupper_table );
+    DUMP_CASE_TABLE( "wine_digitmap",  @digitmap_table );
+    DUMP_CASE_TABLE( "wine_compatmap", @compatmap_table );
     close OUTPUT;
 }
 
@@ -896,34 +915,63 @@ sub DUMP_CASE_TABLE
     my ($name,@table) = @_;
 
     # count the number of sub tables that contain something
+    # also compute the low and upper populated bounds
 
+    my @lowerbounds = ( 0, 0 );
+    my @upperbounds = ( 0, 255 );
+    my $index = 0;
     my @filled = ();
-    my $pos = 512;
     for ($i = 0; $i < 65536; $i++)
     {
         next unless defined $table[$i];
-        $filled[$i >> 8] = $pos;
-        $pos += 256;
-        $i |= 255;
-    }
-    for ($i = 0; $i < 65536; $i++)
-    {
-        next unless defined $table[$i];
+        if (!defined $filled[$i >> 8])
+        {
+          $lowerbounds[$index] = $i & 0xff;
+          $upperbounds[$index] = 0xff - $lowerbounds[$index];
+          $filled[$i >> 8] = $index * 256 + 512;
+          $index++;
+        }
+        else
+        {
+          $upperbounds[$index-1] = 0xff - ($i & 0xff);
+        }
         $table[$i] = ($table[$i] - $i) & 0xffff;
+    }
+
+    # Collapse blocks upwards if possible
+    my $removed = 0;
+    $index = 0;
+    for ($i = 0; $i < 256; $i++)
+    {
+        next unless defined $filled[$i];
+        if ($upperbounds[$index - 1] > $lowerbounds[$index])
+        {
+           $removed = $removed + $lowerbounds[$index];
+        }
+        else
+        {
+           $removed = $removed + $upperbounds[$index - 1];
+           $lowerbounds[$index] = $upperbounds[$index - 1];
+        }
+        $filled[$i] = $filled[$i] - $removed;
+        $index++;
     }
 
     # dump the table
 
-    printf OUTPUT "const WCHAR %s[%d] =\n", $name, $pos;
+    printf OUTPUT "const WCHAR %s[%d] =\n", $name, $index * 256 + 512 - $removed;
     printf OUTPUT "{\n    /* index */\n";
     printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 256, @filled );
     printf OUTPUT "    /* defaults */\n";
     printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 256 );
+    $index = 0;
     for ($i = 0; $i < 256; $i++)
     {
         next unless $filled[$i];
-        printf OUTPUT ",\n    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table[($i<<8) .. ($i<<8)+255] );
+        printf OUTPUT ",\n    /* 0x%02x%02x .. 0x%02xff */\n", $i, $lowerbounds[$index], $i;
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0,
+                      @table[($i<<8) + $lowerbounds[$index] .. ($i<<8)+255] );
+        $index++;
     }
     printf OUTPUT "\n};\n";
 }
@@ -933,7 +981,7 @@ sub DUMP_CASE_TABLE
 # dump the ctype tables
 sub DUMP_CTYPE_TABLES
 {
-    open OUTPUT,">wctype.c" or die "Cannot create casemap.c";
+    open OUTPUT,">wctype.c" or die "Cannot create wctype.c";
     printf "Building wctype.c\n";
     printf OUTPUT "/* Unicode ctype tables */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
