@@ -33,7 +33,7 @@ DWORD gdwDPlaySPRefCount = 0; /* FIXME: Should it be initialized here? */
 BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
 
-  TRACE( "(%u,0x%08lx,%p)\n", hinstDLL, fdwReason, lpvReserved );
+  TRACE( "(%p,0x%08lx,%p)\n", hinstDLL, fdwReason, lpvReserved );
 
   switch ( fdwReason )
   {
@@ -71,4 +71,3 @@ HRESULT WINAPI DPLAYX_DllCanUnloadNow(void)
 
   return hr;
 }
-

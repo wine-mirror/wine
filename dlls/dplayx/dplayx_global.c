@@ -223,14 +223,14 @@ BOOL DPLAYX_ConstructData(void)
   /* First instance creates the semaphore. Others just use it */
   if( GetLastError() == ERROR_SUCCESS )
   {
-    TRACE( "Semaphore %u created\n", hDplayxSema );
+    TRACE( "Semaphore %p created\n", hDplayxSema );
 
     /* The semaphore creator will also build the shared memory */
     bInitializeSharedMemory = TRUE;
   }
   else if ( GetLastError() == ERROR_ALREADY_EXISTS )
   {
-    TRACE( "Found semaphore handle %u\n", hDplayxSema );
+    TRACE( "Found semaphore handle %p\n", hDplayxSema );
   }
   else
   {
@@ -251,11 +251,11 @@ BOOL DPLAYX_ConstructData(void)
 
   if( GetLastError() == ERROR_SUCCESS )
   {
-    TRACE( "File mapped %u created\n", hDplayxSharedMem );
+    TRACE( "File mapped %p created\n", hDplayxSharedMem );
   }
   else if ( GetLastError() == ERROR_ALREADY_EXISTS )
   {
-    TRACE( "Found FileMapping handle %u\n", hDplayxSharedMem );
+    TRACE( "Found FileMapping handle %p\n", hDplayxSharedMem );
   }
   else
   {
@@ -337,7 +337,7 @@ BOOL DPLAYX_ConstructData(void)
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnStart );
-    TRACE( "Signalling lobby app start event %u %s\n",
+    TRACE( "Signalling lobby app start event %p %s\n",
              hInformOnStart, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
@@ -364,7 +364,7 @@ BOOL DPLAYX_DestructData(void)
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnDeath );
-    TRACE( "Signalling lobby app death event %u %s\n",
+    TRACE( "Signalling lobby app death event %p %s\n",
              hInformOnDeath, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
@@ -633,7 +633,7 @@ HRESULT DPLAYX_GetConnectionSettingsA
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnSettingRead );
-    TRACE( "Signalling setting read event %u %s\n",
+    TRACE( "Signalling setting read event %p %s\n",
              hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
@@ -755,7 +755,7 @@ HRESULT DPLAYX_GetConnectionSettingsW
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnSettingRead );
-    TRACE( "Signalling setting read event %u %s\n",
+    TRACE( "Signalling setting read event %p %s\n",
              hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */

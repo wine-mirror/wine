@@ -1218,7 +1218,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
   DWORD dwSuspendCount;
   HANDLE hStart, hDeath, hSettingRead;
 
-  TRACE( "(%p)->(0x%08lx,%p,%p,%x)\n",
+  TRACE( "(%p)->(0x%08lx,%p,%p,%p)\n",
          This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
 
   if( dwFlags != 0 )

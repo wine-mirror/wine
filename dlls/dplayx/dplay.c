@@ -1218,7 +1218,7 @@ lpPlayerData DP_CreatePlayer( IDirectPlay2Impl* This, LPDPID lpid,
       )
     {
       /* FIXME: Memory leak */
-      ERR( "Can't duplicate player msg handle %x\n", hEvent );
+      ERR( "Can't duplicate player msg handle %p\n", hEvent );
     }
   }
 
@@ -1400,12 +1400,12 @@ static HRESULT WINAPI DP_IF_CreatePlayer
   DWORD dwFlags,
   BOOL bAnsi )
 {
-  HANDLE hr = DP_OK;
+  HRESULT hr = DP_OK;
   lpPlayerData lpPData;
   lpPlayerList lpPList;
   DWORD dwCreateFlags = 0;
 
-  TRACE( "(%p)->(%p,%p,%d,%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(%p,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
          This, lpidPlayer, lpPlayerName, hEvent, lpData,
          dwDataSize, dwFlags, bAnsi );
 
@@ -2168,7 +2168,7 @@ static void DP_KillEnumSessionThread( IDirectPlay2Impl* This )
   /* Does a thread exist? If so we were doing an async enum session */
   if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
   {
-    TRACE( "Killing EnumSession thread %u\n",
+    TRACE( "Killing EnumSession thread %p\n",
            This->dp2->hEnumSessionThread );
 
     /* Request that the thread kill itself nicely */
