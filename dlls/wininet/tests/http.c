@@ -8,6 +8,9 @@
 
 #include "wine/test.h"
 
+#define TEST_URL "http://www.winehq.org/site/about"
+#define TEST_URL_PATH "/site/about"
+
 int goon = 0;
 
 VOID WINAPI callback(
@@ -217,7 +220,7 @@ void InternetOpenUrlA_test(void)
   myhinternet = InternetOpen("Winetest",0,NULL,NULL,INTERNET_FLAG_NO_CACHE_WRITE);
   ok((myhinternet != 0), "InternetOpen failed, error %lx\n",GetLastError());
   size = 0x400;
-  ok (InternetCanonicalizeUrl("http://LTspice.linear-tech.com/fieldsync2/release.log.gz",buffer, &size,ICU_BROWSER_MODE),
+  ok (InternetCanonicalizeUrl(TEST_URL, buffer, &size,ICU_BROWSER_MODE),
       "InternetCanonicalizeUrl failed, error %lx\n",GetLastError());
   
   urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
@@ -233,10 +236,10 @@ void InternetOpenUrlA_test(void)
   urlComponents.dwUrlPathLength = 2048;
   urlComponents.lpszExtraInfo = extra;
   urlComponents.dwExtraInfoLength = 1024;
-  ok((InternetCrackUrl("http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0,0,&urlComponents)),
+  ok((InternetCrackUrl(TEST_URL, 0,0,&urlComponents)),
      "InternetCrackUrl failed, error %lx\n",GetLastError());
   SetLastError(0);
-  myhttp = InternetOpenUrl(myhinternet, "http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0, 0,
+  myhttp = InternetOpenUrl(myhinternet, TEST_URL, 0, 0,
 			   INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_TRANSFER_BINARY,0);
   if (GetLastError() == 12007)
     return; /* WinXP returns this when not connected to the net */
@@ -267,9 +270,9 @@ void InternetCrackUrl_test(void)
   urlComponents.dwUrlPathLength = 2048;
   urlComponents.lpszExtraInfo = extra;
   urlComponents.dwExtraInfoLength = 1024;
-  ok((InternetCrackUrl("http://LTspice.linear-tech.com/fieldsync2/release.log.gz", 0,0,&urlComponents)),
+  ok((InternetCrackUrl(TEST_URL, 0,0,&urlComponents)),
      "InternetCrackUrl failed, error %lx\n",GetLastError());
-  ok((strcmp("/fieldsync2/release.log.gz",path) == 0),"path cracked wrong");
+  ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong");
 }
 
 START_TEST(http)
