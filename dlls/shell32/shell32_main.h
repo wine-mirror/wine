@@ -84,10 +84,4 @@ extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
 extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
 #endif
 
-
-/* FIXME should be moved to a header file. IsEqualGUID 
-is declared but not exported in compobj.c !!!*/
-#define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
-#define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
-
 #endif
