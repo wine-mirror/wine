@@ -3838,7 +3838,7 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
     HWAVEOUT		hWaveOut;
     UINT		ret;
 
-    /* since layout of WAVEOFORMATEX is the same for 16/32 bits, we directly
+    /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
      */
     ret = MMSYSTEM_waveOpen(&hWaveOut, uDeviceID, MMDRV_WAVEOUT, lpFormat, 
@@ -4479,7 +4479,7 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
     HWAVEIN		hWaveIn;
     UINT		ret;
 
-    /* since layout of WAVEOFORMATEX is the same for 16/32 bits, we directly
+    /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
      */
     ret = MMSYSTEM_waveOpen(&hWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat, 

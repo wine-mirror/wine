@@ -2588,15 +2588,19 @@ WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
  */
 INT WINAPI WSOCK32_gethostname(char *name, INT namelen)
 {
-    LPWSINFO              pwsi = WINSOCK_GetIData();
+    LPWSINFO pwsi = WINSOCK_GetIData();
 
-    TRACE("(%08x): name %s, len %d\n",
-                          (unsigned)pwsi, (name)?name:NULL_STRING, namelen);
+    TRACE("(%08x): name %p, len %d\n", (unsigned)pwsi, name, namelen);
     if( pwsi )
     {
-	if (gethostname(name, namelen) == 0) return 0;
+	if (gethostname(name, namelen) == 0)
+	{
+	    TRACE("<- '%s'\n", name);
+	    return 0;
+	}
 	SetLastError((errno == EINVAL) ? WSAEFAULT : wsaErrno());
     }
+    TRACE("<- ERROR !\n");
     return SOCKET_ERROR;
 }
 

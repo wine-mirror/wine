@@ -522,7 +522,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			COM[port].xmit = -1;
 			/* allocate buffers */
 			COM[port].ibuf_size = cbInQueue;
-			COM[port].ibuf_head = COM[port].ibuf_tail= 0;
+			COM[port].ibuf_head = COM[port].ibuf_tail = 0;
 			COM[port].obuf_size = cbOutQueue;
 			COM[port].obuf_head = COM[port].obuf_tail = 0;
 
@@ -807,7 +807,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 		lpStat->cbOutQue = comm_outbuf(ptr);
 		lpStat->cbInQue = comm_inbuf(ptr);
 
-    		TRACE("cid %d, error %d, lpStat %d %d %d stol %x\n",
+    		TRACE("cid %d, error %d, stat %d in %d out %d, stol %x\n",
 			     cid, ptr->commerror, lpStat->status, lpStat->cbInQue, 
 			     lpStat->cbOutQue, *stol);
 	}
