@@ -66,6 +66,24 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		}
 	    } break;
 
+	    case D3DRENDERSTATE_TEXTUREADDRESSU:
+	    case D3DRENDERSTATE_TEXTUREADDRESSV:
+	    case D3DRENDERSTATE_TEXTUREADDRESS: { /* 3 */
+	        GLenum arg = GL_REPEAT; /* Default value */
+	        switch ((D3DTEXTUREADDRESS) dwRenderState) {
+		    case D3DTADDRESS_WRAP:   arg = GL_REPEAT; break;
+		    case D3DTADDRESS_CLAMP:  arg = GL_CLAMP; break;
+		    case D3DTADDRESS_BORDER: arg = GL_CLAMP_TO_EDGE; break;
+		    default: ERR("Unhandled TEXTUREADDRESS mode !\n");
+		}
+		if ((dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESSU) ||
+		    (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS))
+		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, arg);
+		if ((dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESSV) ||
+		    (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS))
+		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, arg);
+	    } break;
+	      
 	    case D3DRENDERSTATE_TEXTUREPERSPECTIVE: /* 4 */
 	        if (dwRenderState)
 		    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
