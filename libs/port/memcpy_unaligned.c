@@ -21,7 +21,9 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifndef __i386__
 void *memcpy_unaligned( void *dst, const void *src, size_t size )
 {
     return memcpy( dst, src, size );
 }
+#endif
