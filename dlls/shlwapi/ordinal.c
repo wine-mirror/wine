@@ -187,10 +187,12 @@ INT WINAPI SHLWAPI_74(HWND hWnd, INT nItem, LPWSTR lpsDest,INT nDestLen)
 
 /*************************************************************************
  *      SHLWAPI_151	[SHLWAPI.151]
+ *
+ *      pStr "HTTP/1.1", dw1 0x5
  */
-DWORD WINAPI SHLWAPI_151(void)
+DWORD WINAPI SHLWAPI_151(LPSTR pStr, LPVOID ptr, DWORD dw1)
 {
-  FIXME(": stub\n");
+  FIXME("('%s', %p, %08lx): stub\n", pStr, ptr, dw1);
   return 0;
 }
 
@@ -213,9 +215,9 @@ DWORD WINAPI SHLWAPI_152(LPWSTR str1, LPWSTR str2, INT len)
 /*************************************************************************
  *      SHLWAPI_153	[SHLWAPI.153]
  */
-DWORD WINAPI SHLWAPI_153(DWORD dw1, DWORD dw2, DWORD dw3)
+DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD dw3)
 {
-    FIXME("%08lx %08lx %08lx - stub\n", dw1, dw2, dw3);
+    FIXME("'%s' '%s' %08lx - stub\n", str1, str2, dw3);
     return 0;
 }
 
@@ -456,10 +458,10 @@ INT WINAPI SHLWAPI_217(LPCWSTR lpSrcStr, LPSTR lpDstStr, LPINT lpnMultiCharCount
 HRESULT WINAPI SHLWAPI_219 (
 	LPVOID w, /* [???] NOTE: returned by LocalAlloc, 0x450 bytes, iface */
 	LPVOID x,
-	REFIID riid,
+	REFIID riid, /* e.g. IWebBrowser2 */
 	LPWSTR z) /* [???] NOTE: OUT: path */
 {
-	FIXME("(%p %p %s %p)stub\n",w,x,debugstr_guid(riid),z);
+	FIXME("(%p %s %s %p)stub\n",w,debugstr_a(x),debugstr_guid(riid),z);
 	return 0xabba1252;
 }
 
@@ -636,6 +638,30 @@ BOOL WINAPI SHLWAPI_289(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 
   GET_FUNC(winmm, "PlaySoundW", FALSE);
   return pfnFunc(pszSound, hmod, fdwSound);
+}
+
+/*************************************************************************
+ *      SHLWAPI_294	[SHLWAPI.294]
+ */
+BOOL WINAPI SHLWAPI_294(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len,  LPCSTR lpStr2)
+{
+    /*
+     * str1:		"I"	"I"	pushl esp+0x20
+     * str2:		"U"	"I"	pushl 0x77c93810
+     * (is "I" and "U" "integer" and "unsigned" ??)
+     *
+     * pStr:		""	""	pushl eax
+     * some_len:	0x824	0x104	pushl 0x824
+     * lpStr2:		"%l"	"%l"	pushl esp+0xc
+     *
+     * shlwapi. StrCpyNW(lpStr2, irrelevant_var, 0x104);
+     * LocalAlloc(0x00, some_len) -> irrelevant_var
+     * LocalAlloc(0x40, irrelevant_len) -> pStr
+     * shlwapi.294(str1, str2, pStr, some_len, lpStr2);
+     * shlwapi.PathRemoveBlanksW(pStr);
+     */
+    ERR("('%s', '%s', '%s', %08lx, '%s'): stub!\n", str1, str2, pStr, some_len, lpStr2);
+    return TRUE;
 }
 
 /*************************************************************************
@@ -991,7 +1017,7 @@ DWORD WINAPI SHLWAPI_431 (DWORD x)
  *      SHLWAPI_437	[SHLWAPI.437]
  *
  * NOTES
- *  In the real shlwapi, One time initilisation calls GetVersionEx and reads
+ *  In the real shlwapi, One time initialisation calls GetVersionEx and reads
  *  the registry to determine what O/S & Service Pack level is running, and
  *  therefore which functions are available. Currently we always run as NT,
  *  since this means that we don't need extra code to emulate Unicode calls,

@@ -160,7 +160,7 @@ debug_channels (shell)
 148 forward @ user32.VkKeyScanW
 149 forward @ user32.WinHelpW
 150 forward @ user32.wvsprintfW
-151 stdcall @() SHLWAPI_151
+151 stdcall @(str ptr long) SHLWAPI_151
 152 stdcall @(wstr wstr long) SHLWAPI_152
 153 stdcall @(long long long) SHLWAPI_153
 154 stub @
@@ -303,7 +303,7 @@ debug_channels (shell)
 291 stub @
 292 stub @
 293 stub @
-294 stub @
+294 stdcall @(long long long long long) SHLWAPI_294
 295 stub @
 296 stub @
 297 stub @
@@ -659,10 +659,10 @@ debug_channels (shell)
 @ stdcall StrToIntExA(str long ptr) StrToIntExA
 @ stdcall StrToIntExW(wstr long ptr) StrToIntExW
 @ stdcall StrToIntW(wstr)StrToIntW
-@ stub    StrTrimA
+@ stdcall StrTrimA(str str) StrTrimA
 @ stub    StrTrimW
 @ stub    UrlApplySchemeA
-@ stub    UrlApplySchemeW
+@ stdcall UrlApplySchemeW(str ptr ptr long) UrlApplySchemeW
 @ stdcall UrlCanonicalizeA(str ptr ptr long) UrlCanonicalizeA
 @ stdcall UrlCanonicalizeW(wstr ptr ptr long) UrlCanonicalizeW
 @ stub    UrlCombineA

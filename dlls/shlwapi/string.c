@@ -504,6 +504,31 @@ LPWSTR WINAPI StrNCatW(LPWSTR front, LPCWSTR back, INT cchMax)
 }
 
 /*************************************************************************
+ *      StrTrimA	[SHLWAPI]
+ */
+BOOL WINAPI StrTrimA(LPSTR pszSource, LPCSTR pszTrimChars)
+{
+    BOOL trimmed = FALSE;
+    LPSTR pSrc;
+    LPCSTR pTrim;
+
+    TRACE("('%s', '%s');\n", pszSource, pszTrimChars);
+    for (pTrim = pszTrimChars; *pTrim; pTrim++)
+    {
+	 for (pSrc = pszSource; *pSrc; pSrc++)
+	     if (*pSrc == *pTrim)
+	     {
+		 /* match -> remove this char.
+		  * strlen(pSrc) equiv. to the correct strlen(pSrc+1)+1 */
+		 memmove(pSrc, pSrc+1, strlen(pSrc));
+		 trimmed = TRUE;
+	     }
+    }
+    TRACE("<- '%s'\n", pszSource);
+    return trimmed;
+}
+
+/*************************************************************************
  *      wnsprintfA	[SHLWAPI]
  */
 int WINAPIV wnsprintfA(LPSTR lpOut, int cchLimitIn, LPCSTR lpFmt, ...)

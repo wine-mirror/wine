@@ -59,7 +59,7 @@ LONG WINAPI SHRegGetUSValueW(
 /*************************************************************************
  * SHRegOpenUSKeyA	[SHLWAPI.@]
  *
- * Openss a user-specific registry key
+ * Opens a user-specific registry key
  */
 LONG WINAPI SHRegOpenUSKeyA(
         LPCSTR Path,

@@ -8,6 +8,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "shlwapi.h"
 #include "debugtools.h"
 
@@ -358,5 +359,17 @@ HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
 
   HashData(pszUrl, strlen(pszUrl), lpDest, nDestLen);
   return NOERROR;
+}
+
+/*************************************************************************
+ *      UrlApplySchemeW	[SHLWAPI]
+ */
+HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
+{
+    HRESULT err = NOERROR;
+    FIXME("(%s %p %p %08lx): stub !\n", debugstr_w(pszIn), pszOut, pcchOut, dwFlags);
+    strcpyW(pszOut, pszIn);
+    *pcchOut = (err != E_POINTER) ? strlenW(pszOut) : 0;
+    return err;
 }
 
