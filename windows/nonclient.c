@@ -56,6 +56,12 @@ static HBITMAP16 hbitmapRestoreD = 0;
       ((style) & WS_DLGFRAME)) && ((style) & WS_BORDER)) && \
      !((style) & WS_THICKFRAME))
 
+/* win31 style (simple border) in win95 look */
+#define HAS_CLASSICBORDER(style,exStyle) \
+    (!((exStyle) & WS_EX_STATICEDGE) && !((exStyle) & WS_EX_CLIENTEDGE) && \
+    !((style) & WS_THICKFRAME) && !((style) & WS_DLGFRAME) && \
+    ((style) & WS_BORDER))
+
 #define HAS_SIZEFRAME(style) \
     (((style) & WS_THICKFRAME) && \
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
@@ -218,6 +224,9 @@ NC_AdjustRectInner95 (LPRECT16 rect, DWORD style, DWORD exStyle)
     if (exStyle & WS_EX_STATICEDGE)
 	InflateRect16 (rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
 
+    if (HAS_CLASSICBORDER(style, exStyle))
+        InflateRect16( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER ));
+
     if (style & WS_VSCROLL) rect->right  += GetSystemMetrics(SM_CXVSCROLL);
     if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
 }
@@ -343,17 +352,11 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 			  GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
 	}
 	else {
-	    WND *wndPtr = WIN_FindWndPtr(hwnd);
-	    HICON hAppIcon = 0;
-
-	    if (wndPtr->class->hIconSm)
-		hAppIcon = wndPtr->class->hIconSm;
-	    else if (wndPtr->class->hIcon)
-		hAppIcon = wndPtr->class->hIcon;
-
+	    HICON hAppIcon = (HICON) GetClassLongA(hwnd, GCL_HICONSM);
+	    if(!hAppIcon) hAppIcon = (HICON) GetClassLongA(hwnd, GCL_HICON);
+	    
 	    DrawIconEx (hdc, pt.x, pt.y, hAppIcon, GetSystemMetrics(SM_CXSMICON),
 			  GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
-            WIN_ReleaseWndPtr(wndPtr);
 	}
 
 	rc.left += (rc.bottom - rc.top);
@@ -503,9 +506,10 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT *winRect )
 {
     RECT16 tmpRect = { 0, 0, 0, 0 };
     LONG result = 0;
+    UINT style = (UINT) GetClassLongA(pWnd->hwndSelf, GCL_STYLE);
 
-    if (pWnd->class->style & CS_VREDRAW) result |= WVR_VREDRAW;
-    if (pWnd->class->style & CS_HREDRAW) result |= WVR_HREDRAW;
+    if (style & CS_VREDRAW) result |= WVR_VREDRAW;
+    if (style & CS_HREDRAW) result |= WVR_HREDRAW;
 
     if( !( pWnd->dwStyle & WS_MINIMIZE ) ) {
 	if (TWEAK_WineLook == WIN31_LOOK)
@@ -841,7 +845,8 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
             {
                 /* Check system menu */
                 if ((wndPtr->dwStyle & WS_SYSMENU) &&
-		    ((wndPtr->class->hIconSm) || (wndPtr->class->hIcon)))
+		    (((HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM)) ||
+		     ((HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON))))
                     rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
                 if (pt.x < rect.left) return HTSYSMENU;
 
@@ -1028,15 +1033,13 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
-	HICON  hIcon = 0;
+	HICON  hIcon;
 	RECT rect;
 
 	NC_GetInsideRect95( hwnd, &rect );
 
-	if (wndPtr->class->hIconSm)
-	    hIcon = wndPtr->class->hIconSm;
-	else if (wndPtr->class->hIcon)
-	    hIcon = wndPtr->class->hIcon;
+	hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM);
+	if(!hIcon) hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON);
 
 	if (hIcon)
 	    DrawIconEx (hdc, rect.left + 2, rect.top + 2, hIcon,
@@ -1720,7 +1723,11 @@ void  NC_DoNCPaint95(
 	    (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) || (wndPtr->dwStyle & WS_THICKFRAME))) {
             DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
         }
-
+        else if (HAS_CLASSICBORDER(wndPtr->dwStyle, wndPtr->dwExStyle))
+        {
+            SelectObject( hdc, GetStockObject(NULL_BRUSH) );
+            Rectangle( hdc, 0, 0, rect.right, rect.bottom );
+        }
         if (HAS_FIXEDFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
             NC_DrawFrame95( hdc, &rect, TRUE, active );
         else if (wndPtr->dwStyle & WS_THICKFRAME)
@@ -1859,18 +1866,12 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 
     case HTCLIENT:
 	{
-	    WND *wndPtr;
-            BOOL retvalue;
-            
-	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
-	    if (wndPtr->class->hCursor)
-	    {
-		SetCursor16( wndPtr->class->hCursor );
-		retvalue = TRUE;
+	    HICON16 hCursor = (HICON16) GetClassWord(hwnd, GCW_HCURSOR);
+	    if(hCursor) {
+		SetCursor16(hCursor);
+		return TRUE;
 	    }
-            else retvalue = FALSE;
-            WIN_ReleaseWndPtr(wndPtr);
-            return retvalue;
+            return FALSE;
 	}
 
     case HTLEFT:
@@ -2111,8 +2112,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 
     if( iconic ) /* create a cursor for dragging */
     {
-	HICON16 hIcon = (wndPtr->class->hIcon) ? wndPtr->class->hIcon
-                      : (HICON16)SendMessage16( hwnd, WM_QUERYDRAGICON, 0, 0L);
+	HICON16 hIcon = GetClassWord(wndPtr->hwndSelf, GCW_HICON);
+	if(!hIcon) hIcon = (HICON16) SendMessage16( hwnd, WM_QUERYDRAGICON, 0, 0L);
 	if( hIcon ) hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
 	if( !hDragCursor ) iconic = FALSE;
     }
@@ -2500,7 +2501,7 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
 	break;
 
     case HTSYSMENU:
-        if (!(pWnd->class->style & CS_NOCLOSE))
+        if (!(GetClassWord(pWnd->hwndSelf, GCW_STYLE) & CS_NOCLOSE))
             SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
 	break;
 
