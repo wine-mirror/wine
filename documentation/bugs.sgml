@@ -20,7 +20,8 @@
         way -- advanced developers will probably prefer this.
       </para>
       <para>
-        With using either approach report the found issues with relevant
+        When using either approach please report the problem you found 
+        along with any relevant information to
 	<ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
       </para>
 
@@ -195,9 +196,10 @@
           </listitem>
           <listitem>
             <para>
-              Post the bug to
-	      <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
-	      Please, search Bugzilla database to check whether your problem is 
+              Post the bug to <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+              Please, search the Bugzilla database to check whether your problem 
+              is already reported. If it is already reported attach the bug report 
+              and add any other relevant information to the original bug report.
             </para>
             <para>
               In your post, include all of the information from part
