@@ -53,6 +53,8 @@ void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
     MSIPACKAGE *package= (MSIPACKAGE*) arg;
 
+    if( package->dialog )
+        msi_dialog_destroy( package->dialog );
     ACTION_free_package_structures(package);
 
     msiobj_release( &package->db->hdr );
@@ -378,6 +380,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         package->loaded_files = 0;
         package->ActionFormat = NULL;
         package->LastAction = NULL;
+        package->dialog = NULL;
+        package->next_dialog = NULL;
 
         /* OK, here is where we do a slew of things to the database to 
          * prep for all that is to come as a package */

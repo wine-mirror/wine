@@ -182,6 +182,40 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
     return rc;
 }
 
+UINT MSI_IterateRecords( MSIQUERY *view, DWORD *count,
+                         record_func func, LPVOID param )
+{
+    MSIRECORD *rec = NULL;
+    UINT r, n = 0, max = 0;
+
+    r = MSI_ViewExecute( view, NULL );
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    if( count )
+        max = *count;
+
+    /* iterate a query */
+    for( n = 0; (max == 0) || (n < max); n++ )
+    {
+        r = MSI_ViewFetch( view, &rec );
+        if( r != ERROR_SUCCESS )
+            break;
+        r = func( rec, param );
+        msiobj_release( &rec->hdr );
+        if( r != ERROR_SUCCESS )
+            break;
+        n++;
+    }
+
+    MSI_ViewClose( view );
+
+    if( count )
+        *count = n;
+
+    return r;
+}
+
 UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
               LPCWSTR szQuery, MSIHANDLE *phView)
 {

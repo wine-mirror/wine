@@ -82,7 +82,7 @@ UINT WINAPI MsiEnableUIPreview( MSIHANDLE hdb, MSIHANDLE* phPreview )
 }
 
 static VOID preview_event_handler( MSIPACKAGE *package, LPCWSTR event,
-                                   LPCWSTR argument, HWND dialog )
+                                   LPCWSTR argument, msi_dialog *dialog )
 {
     MESSAGE("Preview dialog event '%s' (arg='%s')\n",
             debugstr_w( event ), debugstr_w( argument ));
@@ -90,7 +90,7 @@ static VOID preview_event_handler( MSIPACKAGE *package, LPCWSTR event,
 
 UINT MSI_PreviewDialogW( MSIPREVIEW *preview, LPCWSTR szDialogName )
 {
-    dialog_info *dialog = NULL;
+    msi_dialog *dialog = NULL;
     UINT r = ERROR_SUCCESS;
 
     if( preview->dialog )
@@ -101,7 +101,9 @@ UINT MSI_PreviewDialogW( MSIPREVIEW *preview, LPCWSTR szDialogName )
     {
         dialog = msi_dialog_create( preview->package, szDialogName,
                                     preview_event_handler );
-        if( !dialog )
+        if( dialog )
+            msi_dialog_do_preview( dialog );
+        else
             r = ERROR_FUNCTION_FAILED;
     }
     preview->dialog = dialog;

@@ -182,6 +182,9 @@ struct tagMSIVIEW
     MSIVIEWOPS   *ops;
 };
 
+struct msi_dialog_tag;
+typedef struct msi_dialog_tag msi_dialog;
+
 typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
@@ -209,16 +212,15 @@ typedef struct tagMSIPACKAGE
     LPWSTR PackagePath;
 
     UINT CurrentInstallState;
+    msi_dialog *dialog;
+    LPWSTR next_dialog;
 } MSIPACKAGE;
-
-struct tag_dialog_info;
-typedef struct tag_dialog_info dialog_info;
 
 typedef struct tagMSIPREVIEW
 {
     MSIOBJECTHDR hdr;
     MSIPACKAGE *package;
-    dialog_info *dialog;
+    msi_dialog *dialog;
 } MSIPREVIEW;
 
 #define MSIHANDLETYPE_ANY 0
@@ -299,6 +301,7 @@ extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
 /* action internals */
 extern UINT ACTION_DoTopLevelINSTALL( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern void ACTION_free_package_structures( MSIPACKAGE* );
+extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR);
 
 /* record internals */
 extern UINT MSI_RecordSetIStream( MSIRECORD *, unsigned int, IStream *);
@@ -322,6 +325,8 @@ extern void enum_stream_names( IStorage *stg );
 extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
 extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
 extern UINT MSI_OpenQuery( MSIDATABASE *, MSIQUERY **, LPCWSTR, ... );
+typedef UINT (*record_func)( MSIRECORD *rec, LPVOID param );
+extern UINT MSI_IterateRecords( MSIQUERY *, DWORD *, record_func, LPVOID );
 
 /* view internals */
 extern UINT MSI_ViewExecute( MSIQUERY*, MSIRECORD * );
@@ -359,9 +364,13 @@ extern UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 
 /* msi dialog interface */
-typedef VOID (*msi_dialog_event_handler)( MSIPACKAGE*, LPCWSTR, LPCWSTR, HWND );
-extern dialog_info *msi_dialog_create( MSIPACKAGE*, LPCWSTR, msi_dialog_event_handler );
-extern void msi_dialog_destroy( dialog_info* );
+typedef VOID (*msi_dialog_event_handler)( MSIPACKAGE*, LPCWSTR, LPCWSTR, msi_dialog* );
+extern msi_dialog *msi_dialog_create( MSIPACKAGE*, LPCWSTR, msi_dialog_event_handler );
+extern UINT msi_dialog_run_message_loop( msi_dialog* );
+extern void msi_dialog_end_dialog( msi_dialog* );
+extern void msi_dialog_check_messages( msi_dialog* );
+extern void msi_dialog_do_preview( msi_dialog* );
+extern void msi_dialog_destroy( msi_dialog* );
 extern void msi_dialog_register_class( void );
 extern void msi_dialog_unregister_class( void );
 
