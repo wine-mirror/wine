@@ -673,6 +673,29 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 	} else {
 	    ossdev->ds_caps.dwFlags |= DSCAPS_EMULDRIVER;
 	}
+#ifdef DSP_CAP_MULTI    /* not every oss has this */
+        /* check for hardware secondary buffer support (multi open) */
+        if ((arg & DSP_CAP_MULTI) &&
+            (ossdev->out_caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
+            TRACE("hardware secondary buffer support available\n");
+            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARY8BIT)
+                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARY8BIT;
+            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARY16BIT)
+                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARY16BIT;
+            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARYMONO)
+                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARYMONO;
+            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARYSTEREO)
+                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARYSTEREO;
+
+            ossdev->ds_caps.dwMaxHwMixingAllBuffers = 16;
+            ossdev->ds_caps.dwMaxHwMixingStaticBuffers = 0;
+            ossdev->ds_caps.dwMaxHwMixingStreamingBuffers = 16;
+
+            ossdev->ds_caps.dwFreeHwMixingAllBuffers = 16;
+            ossdev->ds_caps.dwFreeHwMixingStaticBuffers = 0;
+            ossdev->ds_caps.dwFreeHwMixingStreamingBuffers = 16;
+        }
+#endif
     }
     OSS_CloseDevice(ossdev);
     TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
