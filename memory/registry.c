@@ -46,11 +46,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
-static inline int is_string( DWORD type )
+inline static int is_string( DWORD type )
 {
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
 
+/* check if current version is NT or Win95 */
+inline static int is_version_nt(void)
+{
+    return !(GetVersion() & 0x80000000);
+}
 
 /******************************************************************************
  *           RegCreateKeyExA   [ADVAPI32.@]
@@ -91,6 +96,27 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
 
 
 /******************************************************************************
+ *           RegOpenKeyW   [ADVAPI32.@]
+ *
+ * PARAMS
+ *    hkey    [I] Handle of open key
+ *    name    [I] Address of name of subkey to open
+ *    retkey  [O] Handle to open key
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ *
+ * NOTES
+ *  in case of failing is retkey = 0
+ */
+DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, LPHKEY retkey )
+{
+    return RegOpenKeyExW( hkey, name, 0, KEY_ALL_ACCESS, retkey );
+}
+
+
+/******************************************************************************
  *           RegCreateKeyA   [ADVAPI32.@]
  */
 DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
@@ -99,6 +125,43 @@ DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
                             KEY_ALL_ACCESS, NULL, retkey, NULL );
 }
 
+
+
+/******************************************************************************
+ *           RegOpenKeyExW   [ADVAPI32.@]
+ *
+ * Opens the specified key
+ *
+ * Unlike RegCreateKeyEx, this does not create the key if it does not exist.
+ *
+ * PARAMS
+ *    hkey       [I] Handle of open key
+ *    name       [I] Name of subkey to open
+ *    reserved   [I] Reserved - must be zero
+ *    access     [I] Security access mask
+ *    retkey     [O] Handle to open key
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ *
+ * NOTES
+ *  in case of failing is retkey = 0
+ */
+DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, name );
+    return RtlNtStatusToDosError( NtOpenKey( retkey, access, &attr ) );
+}
 
 
 /******************************************************************************
@@ -228,8 +291,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
     TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
 
-    if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
-        return ERROR_INVALID_PARAMETER;
+    if (class && !class_len && is_version_nt()) return ERROR_INVALID_PARAMETER;
 
     status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
@@ -314,6 +376,48 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 }
 
 
+/******************************************************************************
+ *           RegSetValueExW   [ADVAPI32.@]
+ *
+ * Sets the data and type of a value under a register key
+ *
+ * PARAMS
+ *    hkey       [I] Handle of key to set value for
+ *    name       [I] Name of value to set
+ *    reserved   [I] Reserved - must be zero
+ *    type       [I] Flag for value type
+ *    data       [I] Address of value data
+ *    count      [I] Size of value data
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ *
+ * NOTES
+ *   win95 does not care about count for REG_SZ and finds out the len by itself (js)
+ *   NT does definitely care (aj)
+ */
+DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
+                             DWORD type, CONST BYTE *data, DWORD count )
+{
+    UNICODE_STRING nameW;
+
+    if (!is_version_nt())  /* win95 */
+    {
+        if (type == REG_SZ) count = (strlenW( (WCHAR *)data ) + 1) * sizeof(WCHAR);
+    }
+    else if (count && is_string(type))
+    {
+        LPCWSTR str = (LPCWSTR)data;
+        /* if user forgot to count terminating null, add it (yes NT does this) */
+        if (str[count / sizeof(WCHAR) - 1] && !str[count / sizeof(WCHAR)])
+            count += sizeof(WCHAR);
+    }
+
+    RtlInitUnicodeString( &nameW, name );
+    return RtlNtStatusToDosError( NtSetValueKey( hkey, &nameW, 0, type, data, count ) );
+}
+
 
 /******************************************************************************
  *           RegSetValueExA   [ADVAPI32.@]
@@ -375,6 +479,86 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
     return ret;
 }
 
+
+/******************************************************************************
+ *           RegQueryValueExW   [ADVAPI32.@]
+ *
+ * Retrieves type and data for a specified name associated with an open key
+ *
+ * PARAMS
+ *    hkey      [I]   Handle of key to query
+ *    name      [I]   Name of value to query
+ *    reserved  [I]   Reserved - must be NULL
+ *    type      [O]   Address of buffer for value type.  If NULL, the type
+ *                        is not required.
+ *    data      [O]   Address of data buffer.  If NULL, the actual data is
+ *                        not required.
+ *    count     [I/O] Address of data buffer size
+ *
+ * RETURNS
+ *    ERROR_SUCCESS:   Success
+ *    ERROR_MORE_DATA: !!! if the specified buffer is not big enough to hold the data
+ * 		       buffer is left untouched. The MS-documentation is wrong (js) !!!
+ */
+DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWORD type,
+                               LPBYTE data, LPDWORD count )
+{
+    NTSTATUS status;
+    UNICODE_STRING name_str;
+    DWORD total_size;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    static const int info_size = info->Data - (UCHAR *)info;
+
+    TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
+          hkey, debugstr_w(name), reserved, type, data, count, count ? *count : 0 );
+
+    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
+
+    RtlInitUnicodeString( &name_str, name );
+
+    if (data) total_size = min( sizeof(buffer), *count + info_size );
+    else total_size = info_size;
+
+    status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
+                              buffer, total_size, &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
+
+    if (data)
+    {
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW && total_size - info_size <= *count)
+        {
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_VALUE_PARTIAL_INFORMATION *)buf_ptr;
+            status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
+                                      buf_ptr, total_size, &total_size );
+        }
+
+        if (!status)
+        {
+            memcpy( data, buf_ptr + info_size, total_size - info_size );
+            /* if the type is REG_SZ and data is not 0-terminated
+             * and there is enough space in the buffer NT appends a \0 */
+            if (total_size - info_size <= *count-sizeof(WCHAR) && is_string(info->Type))
+            {
+                WCHAR *ptr = (WCHAR *)(data + total_size - info_size);
+                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
+            }
+        }
+        else if (status != STATUS_BUFFER_OVERFLOW) goto done;
+    }
+    else status = STATUS_SUCCESS;
+
+    if (type) *type = info->Type;
+    if (count) *count = total_size - info_size;
+
+ done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError(status);
+}
 
 
 /******************************************************************************
@@ -714,4 +898,57 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 done:
     SetLastError( err );  /* restore last error code */
     return ret;
+}
+
+
+/******************************************************************************
+ * RegUnLoadKeyA [ADVAPI32.@]
+ *
+ * PARAMS
+ *    hkey     [I] Handle of open key
+ *    lpSubKey [I] Address of name of subkey to unload
+ */
+LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
+{
+    FIXME("(%x,%s): stub\n",hkey, debugstr_a(lpSubKey));
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegReplaceKeyA [ADVAPI32.@]
+ *
+ * PARAMS
+ *    hkey      [I] Handle of open key
+ *    lpSubKey  [I] Address of name of subkey
+ *    lpNewFile [I] Address of filename for file with new data
+ *    lpOldFile [I] Address of filename for backup file
+ */
+LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
+                              LPCSTR lpOldFile )
+{
+    FIXME("(%x,%s,%s,%s): stub\n", hkey, debugstr_a(lpSubKey),
+          debugstr_a(lpNewFile),debugstr_a(lpOldFile));
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegFlushKey [ADVAPI32.@]
+ * Immediately writes key to registry.
+ * Only returns after data has been written to disk.
+ *
+ * FIXME: does it really wait until data is written ?
+ *
+ * PARAMS
+ *    hkey [I] Handle of key to write
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+DWORD WINAPI RegFlushKey( HKEY hkey )
+{
+    FIXME( "(%x): stub\n", hkey );
+    return ERROR_SUCCESS;
 }

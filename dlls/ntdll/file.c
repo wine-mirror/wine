@@ -29,6 +29,7 @@
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
+#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 #include "ntdll_misc.h"
@@ -60,9 +61,8 @@ NTSTATUS WINAPI NtOpenFile(
 	ULONG ShareAccess,
 	ULONG OpenOptions)
 {
-	ULONG len = 0;
-	PSTR filename;
-	CHAR szDosDevices[] = "\\DosDevices\\";
+	LPWSTR filename;
+	static const WCHAR szDosDevices[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
 	DOS_FULL_NAME full_name;
 	NTSTATUS r;
 
@@ -79,20 +79,14 @@ NTSTATUS WINAPI NtOpenFile(
 		return STATUS_OBJECT_NAME_NOT_FOUND;
 	}
 
-	/* create an ascii string from the unicode filename */
-	RtlUnicodeToMultiByteSize( &len, ObjectAttributes->ObjectName->Buffer,
-				ObjectAttributes->ObjectName->Length );
-	filename = RtlAllocateHeap( GetProcessHeap(), 0, len + 1);
-	RtlUnicodeToMultiByteN(filename, len, NULL, ObjectAttributes->ObjectName->Buffer,
-				ObjectAttributes->ObjectName->Length );
-	filename[len]=0;
+	filename = ObjectAttributes->ObjectName->Buffer;
 
 	/* FIXME: DOSFS stuff should call here, not vice-versa */
-	if(strncmp(filename, szDosDevices, strlen(szDosDevices)))
+	if(strncmpW(filename, szDosDevices, strlenW(szDosDevices)))
 		return STATUS_OBJECT_NAME_NOT_FOUND;
 
 	/* FIXME: this calls SetLastError() -> bad */
-	if(!DOSFS_GetFullName(&filename[strlen(szDosDevices)], TRUE,
+	if(!DOSFS_GetFullName(&filename[strlenW(szDosDevices)], TRUE,
 				&full_name))
 		return STATUS_OBJECT_NAME_NOT_FOUND;
 
@@ -105,7 +99,7 @@ NTSTATUS WINAPI NtOpenFile(
             req->sharing    = ShareAccess;
             req->create     = OPEN_EXISTING;
             req->attrs      = 0;
-            req->drive_type = GetDriveTypeA( full_name.short_name );
+            req->drive_type = GetDriveTypeW( full_name.short_name );
             wine_server_add_data( req, full_name.long_name, strlen(full_name.long_name) );
             SetLastError(0);
             r = wine_server_call( req );

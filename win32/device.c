@@ -344,9 +344,16 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
 
 
 
-HANDLE DEVICE_Open( LPCSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa )
+HANDLE DEVICE_Open( LPCWSTR filenameW, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     const struct VxDInfo *info;
+    char filename[MAX_PATH];
+
+    if (!WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, MAX_PATH, NULL, NULL))
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return 0;
+    }
 
     for (info = VxDList; info->name; info++)
         if (!strncasecmp( info->name, filename, strlen(info->name) ))
@@ -1563,4 +1570,3 @@ static BOOL DeviceIo_HASP(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInB
 
     return retv;
 }
-

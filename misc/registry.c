@@ -1050,16 +1050,21 @@ static void _init_registry_saving( HKEY hkey_users_default )
 {
     int all;
     int period = 0;
-    char buffer[20];
+    WCHAR buffer[20];
+    static const WCHAR registryW[] = {'r','e','g','i','s','t','r','y',0};
+    static const WCHAR SaveOnlyUpdatedKeysW[] = {'S','a','v','e','O','n','l','y','U','p','d','a','t','e','d','K','e','y','s',0};
+    static const WCHAR PeriodicSaveW[] = {'P','e','r','i','o','d','i','c','S','a','v','e',0};
+    static const WCHAR WritetoHomeRegistryFilesW[] = {'W','r','i','t','e','t','o','H','o','m','e','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
+    static const WCHAR empty_strW[] = { 0 };
 
-    all = !PROFILE_GetWineIniBool("registry","SaveOnlyUpdatedKeys",1);
-    PROFILE_GetWineIniString( "registry", "PeriodicSave", "", buffer, sizeof(buffer) );
-    if (buffer[0]) period = atoi(buffer);
+    all  = !PROFILE_GetWineIniBool(registryW, SaveOnlyUpdatedKeysW, 1);
+    PROFILE_GetWineIniString( registryW, PeriodicSaveW, empty_strW, buffer, 20 );
+    if (buffer[0]) period = (int)strtolW(buffer, NULL, 10);
 
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
     _set_registry_levels(1,!all,period*1000);
 
-    if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistryFiles",1))
+    if (PROFILE_GetWineIniBool(registryW, WritetoHomeRegistryFilesW, 1))
     {
         _save_at_exit(HKEY_CURRENT_USER,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER );
         _save_at_exit(HKEY_LOCAL_MACHINE,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
@@ -1118,29 +1123,33 @@ static void _allocate_default_keys(void) {
 /* return the type of native registry [Internal] */
 static int _get_reg_type(void)
 {
-    char windir[MAX_PATHNAME_LEN];
-    char tmp[MAX_PATHNAME_LEN];
+    WCHAR windir[MAX_PATHNAME_LEN];
+    WCHAR tmp[MAX_PATHNAME_LEN];
     int ret = REG_WIN31;
+    static const WCHAR nt_reg_pathW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','s','y','s','t','e','m',0};
+    static const WCHAR win9x_reg_pathW[] = {'\\','s','y','s','t','e','m','.','d','a','t',0};
+    static const WCHAR WineW[] = {'W','i','n','e',0};
+    static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
+    static const WCHAR empty_strW[] = { 0 };
 
-    GetWindowsDirectoryA(windir,MAX_PATHNAME_LEN);
+    GetWindowsDirectoryW(windir, MAX_PATHNAME_LEN);
 
     /* test %windir%/system32/config/system --> winnt */
-    strcpy(tmp, windir);
-    strncat(tmp, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(tmp) - 1);
-    if(GetFileAttributesA(tmp) != (DWORD)-1) {
+    strcpyW(tmp, windir);
+    strcatW(tmp, nt_reg_pathW);
+    if(GetFileAttributesW(tmp) != (DWORD)-1)
       ret = REG_WINNT;
-    }
     else
     {
        /* test %windir%/system.dat --> win95 */
-      strcpy(tmp, windir);
-      strncat(tmp, "\\system.dat", MAX_PATHNAME_LEN - strlen(tmp) - 1);
-      if(GetFileAttributesA(tmp) != (DWORD)-1) {
+      strcpyW(tmp, windir);
+      strcatW(tmp, win9x_reg_pathW);
+      if(GetFileAttributesW(tmp) != (DWORD)-1)
         ret = REG_WIN95;
-      }
     }
 
-    if ((ret == REG_WINNT) && (!PROFILE_GetWineIniString( "Wine", "Profile", "", tmp, MAX_PATHNAME_LEN))) {
+    if ((ret == REG_WINNT) && (!PROFILE_GetWineIniString( WineW, ProfileW, empty_strW, tmp, MAX_PATHNAME_LEN )))
+    {
        MESSAGE("When you are running with a native NT directory specify\n");
        MESSAGE("'Profile=<profiledirectory>' or disable loading of Windows\n");
        MESSAGE("registry (LoadWindowsRegistryFiles=N)\n");
@@ -1255,7 +1264,7 @@ static LPSTR _get_tmp_fn(FILE **f)
 }
 
 /* convert win95 native registry file to wine format [Internal] */
-static LPSTR _convert_win95_registry_to_wine_format(LPCSTR fn,int level)
+static LPSTR _convert_win95_registry_to_wine_format(LPCWSTR fn, int level)
 {
     int fd;
     FILE *f;
@@ -1278,7 +1287,8 @@ static LPSTR _convert_win95_registry_to_wine_format(LPCSTR fn,int level)
 
     /* control signature */
     if (*(LPDWORD)base != W95_REG_CREG_ID) {
-        ERR("unable to load native win95 registry file %s: unknown signature.\n",fn);
+        ERR("unable to load native win95 registry file %s: unknown signature.\n",
+            debugstr_w(fn));
         goto error;
     }
 
@@ -1324,7 +1334,7 @@ static LPSTR _convert_win95_registry_to_wine_format(LPCSTR fn,int level)
 
 error:
     if(ret == NULL) {
-        ERR("Unable to load native win95 registry file %s.\n",fn);
+        ERR("Unable to load native win95 registry file %s.\n", debugstr_w(fn));
         ERR("Please report this.\n");
         ERR("Make a backup of the file, run a good reg cleaner program and try again!\n");
     }
@@ -1336,7 +1346,7 @@ error1:
 }
 
 /* convert winnt native registry file to wine format [Internal] */
-static LPSTR _convert_winnt_registry_to_wine_format(LPCSTR fn,int level)
+static LPSTR _convert_winnt_registry_to_wine_format(LPCWSTR fn, int level)
 {
     FILE *f;
     void *base;
@@ -1349,11 +1359,11 @@ static LPSTR _convert_winnt_registry_to_wine_format(LPCSTR fn,int level)
     nt_hbin_sub *hbin_sub;
     nt_nk *nk;
 
-    TRACE("%s\n", fn);
+    TRACE("%s\n", debugstr_w(fn));
 
-    hFile = CreateFileA( fn, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    hFile = CreateFileW( fn, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
     if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
-    hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY|SEC_COMMIT, 0, 0, NULL );
+    hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY|SEC_COMMIT, 0, 0, NULL );
     if (!hMapping) goto error1;
     base = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
     CloseHandle( hMapping );
@@ -1361,7 +1371,8 @@ static LPSTR _convert_winnt_registry_to_wine_format(LPCSTR fn,int level)
 
     /* control signature */
     if (*(LPDWORD)base != NT_REG_HEADER_BLOCK_ID) {
-        ERR("unable to load native winnt registry file %s: unknown signature.\n",fn);
+        ERR("unable to load native winnt registry file %s: unknown signature.\n",
+            debugstr_w(fn));
         goto error;
     }
 
@@ -1402,7 +1413,7 @@ error1:
 }
 
 /* convert native registry to wine format and load it via server call [Internal] */
-static void _convert_and_load_native_registry(LPCSTR fn,HKEY hkey,int reg_type,int level)
+static void _convert_and_load_native_registry(LPCWSTR fn, HKEY hkey, int reg_type, int level)
 {
     LPSTR tmp = NULL;
 
@@ -1424,10 +1435,11 @@ static void _convert_and_load_native_registry(LPCSTR fn,HKEY hkey,int reg_type,i
 
     if (tmp != NULL) {
         load_wine_registry(hkey,tmp);
-        TRACE("File %s successfully converted to %s and loaded to registry.\n",fn,tmp);
+        TRACE("File %s successfully converted to %s and loaded to registry.\n",
+              debugstr_w(fn), tmp);
         unlink(tmp);
     }
-    else WARN("Unable to convert %s (doesn't exist?)\n",fn);
+    else WARN("Unable to convert %s (doesn't exist?)\n", debugstr_w(fn));
     free(tmp);
 }
 
@@ -1435,26 +1447,35 @@ static void _convert_and_load_native_registry(LPCSTR fn,HKEY hkey,int reg_type,i
 static void _load_windows_registry( HKEY hkey_users_default )
 {
     int reg_type;
-    char windir[MAX_PATHNAME_LEN];
-    char path[MAX_PATHNAME_LEN];
+    WCHAR windir[MAX_PATHNAME_LEN];
+    WCHAR path[MAX_PATHNAME_LEN];
+    static const WCHAR WineW[] = {'W','i','n','e',0};
+    static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
+    static const WCHAR empty_strW[] = { 0 };
 
-    GetWindowsDirectoryA(windir,MAX_PATHNAME_LEN);
+    GetWindowsDirectoryW(windir, MAX_PATHNAME_LEN);
 
     reg_type = _get_reg_type();
     switch (reg_type) {
         case REG_WINNT: {
             HKEY hkey;
+            static const WCHAR ntuser_datW[] = {'\\','n','t','u','s','e','r','.','d','a','t',0};
+            static const WCHAR defaultW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','d','e','f','a','u','l','t',0};
+            static const WCHAR systemW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','s','y','s','t','e','m',0};
+            static const WCHAR softwareW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','s','o','f','t','w','a','r','e',0};
+            static const WCHAR samW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','s','a','m',0};
+            static const WCHAR securityW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','s','e','c','u','r','i','t','y',0};
 
             /* user specific ntuser.dat */
-            if (PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN)) {
-                strcat(path,"\\ntuser.dat");
+            if (PROFILE_GetWineIniString( WineW, ProfileW, empty_strW, path, MAX_PATHNAME_LEN )) {
+                strcatW(path, ntuser_datW);
                 _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WINNT,1);
             }
 
             /* default user.dat */
             if (hkey_users_default) {
-                strcpy(path,windir);
-                strcat(path,"\\system32\\config\\default");
+                strcpyW(path, windir);
+                strcatW(path, defaultW);
                 _convert_and_load_native_registry(path,hkey_users_default,REG_WINNT,1);
             }
 
@@ -1464,25 +1485,25 @@ static void _load_windows_registry( HKEY hkey_users_default )
             */
 
             if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM", &hkey)) {
-	      strcpy(path,windir);
-	      strcat(path,"\\system32\\config\\system");
+	      strcpyW(path, windir);
+	      strcatW(path, systemW);
               _convert_and_load_native_registry(path,hkey,REG_WINNT,1);
               RegCloseKey(hkey);
             }
 
             if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE", &hkey)) {
-                strcpy(path,windir);
-                strcat(path,"\\system32\\config\\software");
+                strcpyW(path, windir);
+                strcatW(path, softwareW);
                 _convert_and_load_native_registry(path,hkey,REG_WINNT,1);
                 RegCloseKey(hkey);
             }
 
-            strcpy(path,windir);
-            strcat(path,"\\system32\\config\\sam");
+            strcpyW(path, windir);
+            strcatW(path, samW);
             _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WINNT,0);
 
-            strcpy(path,windir);
-            strcat(path,"\\system32\\config\\security");
+            strcpyW(path,windir);
+            strcatW(path, securityW);
             _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WINNT,0);
 
             /* this key is generated when the nt-core booted successfully */
@@ -1491,33 +1512,40 @@ static void _load_windows_registry( HKEY hkey_users_default )
         }
 
         case REG_WIN95:
-            _convert_and_load_native_registry("c:\\system.1st",HKEY_LOCAL_MACHINE,REG_WIN95,0);
+        {
+            static const WCHAR system_1stW[] = {'c',':','\\','s','y','s','t','e','m','.','1','s','t',0};
+            static const WCHAR system_datW[] = {'\\','s','y','s','t','e','m','.','d','a','t',0};
+            static const WCHAR classes_datW[] = {'\\','c','l','a','s','s','e','s','.','d','a','t',0};
+            static const WCHAR user_datW[] = {'\\','u','s','e','r','.','d','a','t',0};
 
-            strcpy(path,windir);
-            strcat(path,"\\system.dat");
+            _convert_and_load_native_registry(system_1stW,HKEY_LOCAL_MACHINE,REG_WIN95,0);
+
+            strcpyW(path, windir);
+            strcatW(path, system_datW);
             _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WIN95,0);
 
-            strcpy(path,windir);
-            strcat(path,"\\classes.dat");
+            strcpyW(path, windir);
+            strcatW(path, classes_datW);
             _convert_and_load_native_registry(path,HKEY_CLASSES_ROOT,REG_WIN95,0);
 
-            if (PROFILE_GetWineIniString("Wine","Profile","",path,MAX_PATHNAME_LEN)) {
+            if (PROFILE_GetWineIniString(WineW, ProfileW, empty_strW, path, MAX_PATHNAME_LEN)) {
 	        /* user specific user.dat */
-	        strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+	        strcatW(path, user_datW);
                 _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WIN95,1);
 
 	        /* default user.dat */
 	        if (hkey_users_default) {
-                    strcpy(path,windir);
-                    strcat(path,"\\user.dat");
+                    strcpyW(path, windir);
+                    strcatW(path, user_datW);
                     _convert_and_load_native_registry(path,hkey_users_default,REG_WIN95,1);
                 }
             } else {
-                strcpy(path,windir);
-                strcat(path,"\\user.dat");
+                strcpyW(path, windir);
+                strcatW(path, user_datW);
                 _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WIN95,1);
             }
             break;
+        }
 
         case REG_WIN31:
             /* FIXME: here we should convert to *.reg file supported by server and call REQ_LOAD_REGISTRY, see REG_WIN95 case */
@@ -1572,6 +1600,10 @@ static void _load_home_registry( HKEY hkey_users_default )
 void SHELL_LoadRegistry( void )
 {
     HKEY hkey_users_default;
+    static const WCHAR RegistryW[] = {'R','e','g','i','s','t','r','y',0};
+    static const WCHAR load_win_reg_filesW[] = {'L','o','a','d','W','i','n','d','o','w','s','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
+    static const WCHAR load_global_reg_filesW[] = {'L','o','a','d','G','l','o','b','a','l','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
+    static const WCHAR load_home_reg_filesW[] = {'L','o','a','d','H','o','m','e','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
 
     TRACE("(void)\n");
 
@@ -1585,69 +1617,20 @@ void SHELL_LoadRegistry( void )
 
     _allocate_default_keys();
     _set_registry_levels(0,0,0);
-    if (PROFILE_GetWineIniBool("Registry","LoadWindowsRegistryFiles",1))
+    if (PROFILE_GetWineIniBool(RegistryW, load_win_reg_filesW, 1))
         _load_windows_registry( hkey_users_default );
-    if (PROFILE_GetWineIniBool("Registry","LoadGlobalRegistryFiles",1))
+    if (PROFILE_GetWineIniBool(RegistryW, load_global_reg_filesW, 1))
         _load_global_registry();
     _set_registry_levels(1,0,0);
-    if (PROFILE_GetWineIniBool("Registry","LoadHomeRegistryFiles",1))
+    if (PROFILE_GetWineIniBool(RegistryW, load_home_reg_filesW, 1))
         _load_home_registry( hkey_users_default );
     _init_registry_saving( hkey_users_default );
     RegCloseKey(hkey_users_default);
 }
 
 /***************************************************************************/
-/*                          API FUNCTIONS                                  */
+/*                        16-BIT API FUNCTIONS                             */
 /***************************************************************************/
-
-/******************************************************************************
- * RegFlushKey [ADVAPI32.@]
- * Immediately writes key to registry.
- * Only returns after data has been written to disk.
- *
- * FIXME: does it really wait until data is written ?
- *
- * PARAMS
- *    hkey [I] Handle of key to write
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
- */
-DWORD WINAPI RegFlushKey( HKEY hkey )
-{
-    FIXME( "(%x): stub\n", hkey );
-    return ERROR_SUCCESS;
-}
-
-
-/******************************************************************************
- * RegUnLoadKeyA [ADVAPI32.@]
- */
-LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
-{
-    FIXME("(%x,%s): stub\n",hkey, debugstr_a(lpSubKey));
-    return ERROR_SUCCESS;
-}
-
-
-/******************************************************************************
- * RegReplaceKeyA [ADVAPI32.@]
- */
-LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
-                              LPCSTR lpOldFile )
-{
-    FIXME("(%x,%s,%s,%s): stub\n", hkey, debugstr_a(lpSubKey),
-          debugstr_a(lpNewFile),debugstr_a(lpOldFile));
-    return ERROR_SUCCESS;
-}
-
-
-
-
-
-
-/* 16-bit functions */
 
 /* 0 and 1 are valid rootkeys in win16 shell.dll and are used by
  * some programs. Do not remove those cases. -MM

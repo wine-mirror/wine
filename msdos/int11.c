@@ -28,6 +28,7 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "file.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 /**********************************************************************
@@ -74,16 +75,21 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
 
     for (x=0; x < 9; x++)
     {
-        char temp[16],name[16];
+        WCHAR temp[16];
+        WCHAR comW[] = {'C','O','M','?',0};
+        WCHAR lptW[] = {'L','P','T','?',0};
+        static const WCHAR serialportsW[] = {'s','e','r','i','a','l','p','o','r','t','s',0};
+        static const WCHAR parallelportsW[] = {'p','a','r','a','l','l','e','l','p','o','r','t','s',0};
+        static const WCHAR asteriskW[] = {'*',0};
 
-        sprintf(name,"COM%d",x+1);
-        PROFILE_GetWineIniString("serialports",name,"*",temp,sizeof temp);
-        if(strcmp(temp,"*"))
+        comW[3] = '0' + x;
+        PROFILE_GetWineIniString(serialportsW, comW, asteriskW, temp, 16);
+        if(strcmpW(temp, asteriskW))
 	    serialports++;
 
-        sprintf(name,"LPT%d",x+1);
-        PROFILE_GetWineIniString("parallelports",name,"*",temp,sizeof temp);
-        if(strcmp(temp,"*"))
+        lptW[3] = '0' + x;
+        PROFILE_GetWineIniString(parallelportsW, lptW, asteriskW, temp, 16);
+        if(strcmpW(temp, asteriskW))
 	    parallelports++;
     }
     if (serialports > 7)		/* 3 bits -- maximum value = 7 */

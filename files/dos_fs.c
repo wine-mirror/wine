@@ -85,43 +85,40 @@ typedef struct
 static const DOS_DEVICE DOSFS_Devices[] =
 /* name, device flags (see Int 21/AX=0x4400) */
 {
-    { "CON",		0xc0d3 },
-    { "PRN",		0xa0c0 },
-    { "NUL",		0x80c4 },
-    { "AUX",		0x80c0 },
-    { "LPT1",		0xa0c0 },
-    { "LPT2",		0xa0c0 },
-    { "LPT3",		0xa0c0 },
-    { "LPT4",		0xc0d3 },
-    { "COM1",		0x80c0 },
-    { "COM2",		0x80c0 },
-    { "COM3",		0x80c0 },
-    { "COM4",		0x80c0 },
-    { "SCSIMGR$",	0xc0c0 },
-    { "HPSCAN",         0xc0c0 },
-    { "EMMXXXX0",       0x0000 }
+    { {'C','O','N',0}, 0xc0d3 },
+    { {'P','R','N',0}, 0xa0c0 },
+    { {'N','U','L',0}, 0x80c4 },
+    { {'A','U','X',0}, 0x80c0 },
+    { {'L','P','T','1',0}, 0xa0c0 },
+    { {'L','P','T','2',0}, 0xa0c0 },
+    { {'L','P','T','3',0}, 0xa0c0 },
+    { {'L','P','T','4',0}, 0xc0d3 },
+    { {'C','O','M','1',0}, 0x80c0 },
+    { {'C','O','M','2',0}, 0x80c0 },
+    { {'C','O','M','3',0}, 0x80c0 },
+    { {'C','O','M','4',0}, 0x80c0 },
+    { {'S','C','S','I','M','G','R','$',0}, 0xc0c0 },
+    { {'H','P','S','C','A','N',0}, 0xc0c0 },
+    { {'E','M','M','X','X','X','X','0',0}, 0x0000 }
 };
 
-#define GET_DRIVE(path) \
-    (((path)[1] == ':') ? FILE_toupper((path)[0]) - 'A' : DOSFS_CurDrive)
-
-/* Directory info for DOSFS_ReadDir */
+/*
+ * Directory info for DOSFS_ReadDir
+ * contains the names of *all* the files in the directory
+ */
 typedef struct
 {
-    DIR           *dir;
-#ifdef VFAT_IOCTL_READDIR_BOTH
-    int            fd;
-    char           short_name[12];
-    KERNEL_DIRENT  dirent[2];
-#endif
+    int used;
+    int size;
+    char names[1];
 } DOS_DIR;
 
 /* Info structure for FindFirstFile handle */
 typedef struct
 {
-    LPSTR path;
-    LPSTR long_mask;
-    LPSTR short_mask;
+    char *path; /* unix path */
+    LPWSTR long_mask;
+    LPWSTR short_mask;
     BYTE  attr;
     int   drive;
     int   cur_pos;
@@ -148,10 +145,10 @@ static WINE_EXCEPTION_FILTER(page_fault)
  * (i.e. contains only valid DOS chars, lower-case only, fits in 8.3 format).
  * File name can be terminated by '\0', '\\' or '/'.
  */
-static int DOSFS_ValidDOSName( const char *name, int ignore_case )
+static int DOSFS_ValidDOSName( LPCWSTR name, int ignore_case )
 {
     static const char invalid_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" INVALID_DOS_CHARS;
-    const char *p = name;
+    const WCHAR *p = name;
     const char *invalid = ignore_case ? (invalid_chars + 26) : invalid_chars;
     int len = 0;
 
@@ -165,7 +162,7 @@ static int DOSFS_ValidDOSName( const char *name, int ignore_case )
     }
     while (!IS_END_OF_NAME(*p))
     {
-        if (strchr( invalid, *p )) return 0;  /* Invalid char */
+        if (*p < 256 && strchr( invalid, (char)*p )) return 0;  /* Invalid char */
         if (*p == '.') break;  /* Start of the extension */
         if (++len > 8) return 0;  /* Name too long */
         p++;
@@ -176,7 +173,7 @@ static int DOSFS_ValidDOSName( const char *name, int ignore_case )
     len = 0;
     while (!IS_END_OF_NAME(*p))
     {
-        if (strchr( invalid, *p )) return 0;  /* Invalid char */
+        if (*p < 256 && strchr( invalid, (char)*p )) return 0;  /* Invalid char */
         if (*p == '.') return 0;  /* Second extension not allowed */
         if (++len > 3) return 0;  /* Extension too long */
         p++;
@@ -194,17 +191,19 @@ static int DOSFS_ValidDOSName( const char *name, int ignore_case )
  * Return FALSE if the name is not a valid DOS name.
  * 'buffer' must be at least 12 characters long.
  */
-BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
+BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS;
-    const char *p = name;
+    LPCWSTR p = name;
     int i;
 
     /* Check for "." and ".." */
     if (*p == '.')
     {
         p++;
-        strcpy( buffer, ".          " );
+        buffer[0] = '.';
+        for(i = 1; i < 11; i++) buffer[i] = ' ';
+        buffer[11] = 0;
         if (*p == '.')
         {
             buffer[1] = '.';
@@ -230,8 +229,8 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (strchr( invalid_chars, *p )) return FALSE;
-            buffer[i] = FILE_toupper(*p);
+            if (*p < 256 && strchr( invalid_chars, (char)*p )) return FALSE;
+            buffer[i] = toupperW(*p);
             p++;
             break;
         }
@@ -267,8 +266,8 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (strchr( invalid_chars, *p )) return FALSE;
-            buffer[i] = FILE_toupper(*p);
+            if (*p < 256 && strchr( invalid_chars, (char)*p )) return FALSE;
+            buffer[i] = toupperW(*p);
             p++;
             break;
         }
@@ -291,15 +290,15 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
  * File name can be terminated by '\0', '\\' or '/'.
  * 'buffer' must be at least 13 characters long.
  */
-static void DOSFS_ToDosDTAFormat( LPCSTR name, LPSTR buffer )
+static void DOSFS_ToDosDTAFormat( LPCWSTR name, LPWSTR buffer )
 {
-    char *p;
+    LPWSTR p;
 
-    memcpy( buffer, name, 8 );
+    memcpy( buffer, name, 8 * sizeof(WCHAR) );
     p = buffer + 8;
     while ((p > buffer) && (p[-1] == ' ')) p--;
     *p++ = '.';
-    memcpy( p, name + 8, 3 );
+    memcpy( p, name + 8, 3 * sizeof(WCHAR) );
     p += 3;
     while (p[-1] == ' ') p--;
     if (p[-1] == '.') p--;
@@ -312,7 +311,7 @@ static void DOSFS_ToDosDTAFormat( LPCSTR name, LPSTR buffer )
  *
  * Check a DOS file name against a mask (both in FCB format).
  */
-static int DOSFS_MatchShort( const char *mask, const char *name )
+static int DOSFS_MatchShort( LPCWSTR mask, LPCWSTR name )
 {
     int i;
     for (i = 11; i > 0; i--, mask++, name++)
@@ -337,13 +336,13 @@ static int DOSFS_MatchShort( const char *mask, const char *name )
  * *test1.txt*			test1.txt				*
  * h?l?o*t.dat			hellothisisatest.dat			*
  */
-static int DOSFS_MatchLong( const char *mask, const char *name,
-                            int case_sensitive )
+static int DOSFS_MatchLong( LPCWSTR mask, LPCWSTR name, int case_sensitive )
 {
-    const char *lastjoker = NULL;
-    const char *next_to_retry = NULL;
+    LPCWSTR lastjoker = NULL;
+    LPCWSTR next_to_retry = NULL;
+    static const WCHAR asterisk_dot_asterisk[] = {'*','.','*',0};
 
-    if (!strcmp( mask, "*.*" )) return 1;
+    if (!strcmpW( mask, asterisk_dot_asterisk )) return 1;
     while (*name && *mask)
     {
         if (*mask == '*')
@@ -355,7 +354,7 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
 
             /* skip to the next match after the joker(s) */
             if (case_sensitive) while (*name && (*name != *mask)) name++;
-            else while (*name && (FILE_toupper(*name) != FILE_toupper(*mask))) name++;
+            else while (*name && (toupperW(*name) != toupperW(*mask))) name++;
 
             if (!*name) break;
             next_to_retry = name;
@@ -369,7 +368,7 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
             }
             else
             {
-                if (FILE_toupper(*mask) != FILE_toupper(*name)) mismatch = 1;
+                if (toupperW(*mask) != toupperW(*name)) mismatch = 1;
             }
             if (!mismatch)
             {
@@ -411,49 +410,161 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
 
 
 /***********************************************************************
+ *           DOSFS_AddDirEntry
+ *
+ *  Used to construct an array of filenames in DOSFS_OpenDir
+ */
+static BOOL DOSFS_AddDirEntry(DOS_DIR **dir, LPCWSTR name, LPCWSTR dosname)
+{
+    int extra1 = (strlenW(name) + 1) * sizeof(WCHAR);
+    int extra2 = (strlenW(dosname) + 1) * sizeof(WCHAR);
+
+    /* if we need more, at minimum double the size */
+    if( (extra1 + extra2 + (*dir)->used) > (*dir)->size)
+    {
+        int more = (*dir)->size;
+        DOS_DIR *t;
+
+        if(more<(extra1+extra2))
+            more = extra1+extra2;
+
+        t = HeapReAlloc(GetProcessHeap(), 0, *dir, sizeof(**dir) + (*dir)->size + more );
+        if(!t)
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            ERR("Out of memory caching directory structure %d %d %d\n",
+                 (*dir)->size, more, (*dir)->used);
+            return FALSE;
+        }
+        (*dir) = t;
+        (*dir)->size += more;
+    }
+
+    /* at this point, the dir structure is big enough to hold these names */
+    strcpyW((LPWSTR)&(*dir)->names[(*dir)->used], name);
+    (*dir)->used += extra1;
+    strcpyW((LPWSTR)&(*dir)->names[(*dir)->used], dosname);
+    (*dir)->used += extra2;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DOSFS_OpenDir_VFAT
+ */
+static BOOL DOSFS_OpenDir_VFAT(UINT codepage, DOS_DIR **dir, const char *unix_path)
+{
+#ifdef VFAT_IOCTL_READDIR_BOTH
+    KERNEL_DIRENT de[2];
+    int fd = open( unix_path, O_RDONLY );
+    BOOL r = TRUE;
+
+    /* Check if the VFAT ioctl is supported on this directory */
+
+    if ( fd<0 )
+        return FALSE;
+
+    while (1)
+    {
+        WCHAR long_name[MAX_PATH];
+        WCHAR short_name[12];
+
+        r = (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) != -1);
+        if(!r)
+            break;
+        if (!de[0].d_reclen)
+            break;
+        MultiByteToWideChar(codepage, 0, de[0].d_name, -1, long_name, MAX_PATH);
+        if (!DOSFS_ToDosFCBFormat( long_name, short_name ))
+            short_name[0] = '\0';
+        if (de[1].d_name[0])
+            MultiByteToWideChar(codepage, 0, de[1].d_name, -1, long_name, MAX_PATH);
+        else
+            MultiByteToWideChar(codepage, 0, de[0].d_name, -1, long_name, MAX_PATH);
+        r = DOSFS_AddDirEntry(dir, long_name, short_name );
+        if(!r)
+            break;
+    }
+    if(r)
+    {
+        static const WCHAR empty_strW[] = { 0 };
+        DOSFS_AddDirEntry(dir, empty_strW, empty_strW);
+    }
+    close(fd);
+    return r;
+#else
+    return FALSE;
+#endif  /* VFAT_IOCTL_READDIR_BOTH */
+}
+
+
+/***********************************************************************
+ *           DOSFS_OpenDir_Normal
+ *
+ * Now use the standard opendir/readdir interface
+ */
+static BOOL DOSFS_OpenDir_Normal( UINT codepage, DOS_DIR **dir, const char *unix_path )
+{
+    DIR *unixdir = opendir( unix_path );
+    BOOL r = TRUE;
+    static const WCHAR empty_strW[] = { 0 };
+
+    if(!unixdir)
+        return FALSE;
+    while(1)
+    {
+        WCHAR long_name[MAX_PATH];
+        struct dirent *de = readdir(unixdir);
+
+        if(!de)
+            break;
+        MultiByteToWideChar(codepage, 0, de->d_name, -1, long_name, MAX_PATH);
+        r = DOSFS_AddDirEntry(dir, long_name, empty_strW);
+        if(!r)
+            break;
+    }
+    if(r)
+        DOSFS_AddDirEntry(dir, empty_strW, empty_strW);
+    closedir(unixdir);
+    return r;
+}
+
+/***********************************************************************
  *           DOSFS_OpenDir
  */
-static DOS_DIR *DOSFS_OpenDir( LPCSTR path )
+static DOS_DIR *DOSFS_OpenDir( UINT codepage, const char *unix_path )
 {
-    DOS_DIR *dir = HeapAlloc( GetProcessHeap(), 0, sizeof(*dir) );
+    const int init_size = 0x100;
+    DOS_DIR *dir = HeapAlloc( GetProcessHeap(), 0, sizeof(*dir) + init_size);
+    BOOL r;
+
+    TRACE("%s\n",debugstr_a(unix_path));
+
     if (!dir)
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
+    dir->used = 0;
+    dir->size = init_size;
 
     /* Treat empty path as root directory. This simplifies path split into
        directory and mask in several other places */
-    if (!*path) path = "/";
+    if (!*unix_path) unix_path = "/";
 
-#ifdef VFAT_IOCTL_READDIR_BOTH
+    r = DOSFS_OpenDir_VFAT( codepage, &dir, unix_path);
 
-    /* Check if the VFAT ioctl is supported on this directory */
+    if(!r)
+        r = DOSFS_OpenDir_Normal( codepage, &dir, unix_path);
 
-    if ((dir->fd = open( path, O_RDONLY )) != -1)
+    if(!r)
     {
-        if (ioctl( dir->fd, VFAT_IOCTL_READDIR_BOTH, (long)dir->dirent ) == -1)
-        {
-            close( dir->fd );
-            dir->fd = -1;
-        }
-        else
-        {
-            /* Set the file pointer back at the start of the directory */
-            lseek( dir->fd, 0, SEEK_SET );
-            dir->dir = NULL;
-            return dir;
-        }
-    }
-#endif  /* VFAT_IOCTL_READDIR_BOTH */
-
-    /* Now use the standard opendir/readdir interface */
-
-    if (!(dir->dir = opendir( path )))
-    {
-        HeapFree( GetProcessHeap(), 0, dir );
+        HeapFree(GetProcessHeap(), 0, dir);
         return NULL;
     }
+    dir->used = 0;
+
     return dir;
 }
 
@@ -463,10 +574,6 @@ static DOS_DIR *DOSFS_OpenDir( LPCSTR path )
  */
 static void DOSFS_CloseDir( DOS_DIR *dir )
 {
-#ifdef VFAT_IOCTL_READDIR_BOTH
-    if (dir->fd != -1) close( dir->fd );
-#endif  /* VFAT_IOCTL_READDIR_BOTH */
-    if (dir->dir) closedir( dir->dir );
     HeapFree( GetProcessHeap(), 0, dir );
 }
 
@@ -474,29 +581,30 @@ static void DOSFS_CloseDir( DOS_DIR *dir )
 /***********************************************************************
  *           DOSFS_ReadDir
  */
-static BOOL DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
-                             LPCSTR *short_name )
+static BOOL DOSFS_ReadDir( DOS_DIR *dir, LPCWSTR *long_name,
+                             LPCWSTR *short_name )
 {
-    struct dirent *dirent;
+    LPCWSTR sn, ln;
 
-#ifdef VFAT_IOCTL_READDIR_BOTH
-    if (dir->fd != -1)
-    {
-        if (ioctl( dir->fd, VFAT_IOCTL_READDIR_BOTH, (long)dir->dirent ) != -1) {
-	    if (!dir->dirent[0].d_reclen) return FALSE;
-	    if (!DOSFS_ToDosFCBFormat( dir->dirent[0].d_name, dir->short_name ))
-		dir->short_name[0] = '\0';
-	    *short_name = dir->short_name;
-	    if (dir->dirent[1].d_name[0]) *long_name = dir->dirent[1].d_name;
-	    else *long_name = dir->dirent[0].d_name;
-	    return TRUE;
-	}
-    }
-#endif  /* VFAT_IOCTL_READDIR_BOTH */
+    if (!dir)
+       return FALSE;
 
-    if (!(dirent = readdir( dir->dir ))) return FALSE;
-    *long_name  = dirent->d_name;
-    *short_name = NULL;
+    /* the long pathname is first */
+    ln = (LPCWSTR)&dir->names[dir->used];
+    if(ln[0])
+        *long_name  = ln;
+    else
+        return FALSE;
+    dir->used += (strlenW(ln) + 1) * sizeof(WCHAR);
+
+    /* followed by the short path name */
+    sn = (LPCWSTR)&dir->names[dir->used];
+    if(sn[0])
+        *short_name = sn;
+    else
+        *short_name = NULL;
+    dir->used += (strlenW(sn) + 1) * sizeof(WCHAR);
+
     return TRUE;
 }
 
@@ -510,18 +618,22 @@ static BOOL DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
  * File name can be terminated by '\0', '\\' or '/'.
  * 'buffer' must be at least 13 characters long.
  */
-static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
+static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format,
                         BOOL ignore_case )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS "~.";
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
-    const char *p, *ext;
-    char *dst;
+    LPCWSTR p, ext;
+    LPWSTR dst;
     unsigned short hash;
     int i;
 
-    if (dir_format) strcpy( buffer, "           " );
+    if (dir_format)
+    {
+        for(i = 0; i < 11; i++) buffer[i] = ' ';
+        buffer[11] = 0;
+    }
 
     if (DOSFS_ValidDOSName( name, ignore_case ))
     {
@@ -537,13 +649,13 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
         /* Simply copy the name, converting to uppercase */
 
         for (dst = buffer; !IS_END_OF_NAME(*name) && (*name != '.'); name++)
-            *dst++ = FILE_toupper(*name);
+            *dst++ = toupperW(*name);
         if (*name == '.')
         {
             if (dir_format) dst = buffer + 8;
             else *dst++ = '.';
             for (name++; !IS_END_OF_NAME(*name); name++)
-                *dst++ = FILE_toupper(*name);
+                *dst++ = toupperW(*name);
         }
         if (!dir_format) *dst = '\0';
         return;
@@ -555,8 +667,8 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
     if (ignore_case)
     {
         for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
-            hash = (hash<<3) ^ (hash>>5) ^ FILE_tolower(*p) ^ (FILE_tolower(p[1]) << 8);
-        hash = (hash<<3) ^ (hash>>5) ^ FILE_tolower(*p); /* Last character*/
+            hash = (hash<<3) ^ (hash>>5) ^ tolowerW(*p) ^ (tolowerW(p[1]) << 8);
+        hash = (hash<<3) ^ (hash>>5) ^ tolowerW(*p); /* Last character */
     }
     else
     {
@@ -575,7 +687,7 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
     for (i = 4, p = name, dst = buffer; i > 0; i--, p++)
     {
         if (IS_END_OF_NAME(*p) || (p == ext)) break;
-        *dst++ = strchr( invalid_chars, *p ) ? '_' : FILE_toupper(*p);
+        *dst++ = (*p < 256 && strchr( invalid_chars, (char)*p )) ? '_' : toupperW(*p);
     }
     /* Pad to 5 chars with '~' */
     while (i-- >= 0) *dst++ = '~';
@@ -590,7 +702,7 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
     {
         if (!dir_format) *dst++ = '.';
         for (i = 3, ext++; (i > 0) && !IS_END_OF_NAME(*ext); i--, ext++)
-            *dst++ = strchr( invalid_chars, *ext ) ? '_' : FILE_toupper(*ext);
+            *dst++ = (*ext < 256 && strchr( invalid_chars, (char)*ext )) ? '_' : toupperW(*ext);
     }
     if (!dir_format) *dst = '\0';
 }
@@ -608,44 +720,44 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
  * turns out to be larger than that, the function returns FALSE.
  * 'short_buf' must be at least 13 characters long.
  */
-BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
-                           INT long_len, LPSTR short_buf, BOOL ignore_case)
+BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
+                         INT long_len, LPWSTR short_buf, BOOL ignore_case)
 {
     DOS_DIR *dir;
-    LPCSTR long_name, short_name;
-    char dos_name[12], tmp_buf[13];
+    LPCWSTR long_name, short_name;
+    WCHAR dos_name[12], tmp_buf[13];
     BOOL ret;
 
-    const char *p = strchr( name, '/' );
-    int len = p ? (int)(p - name) : strlen(name);
-    if ((p = strchr( name, '\\' ))) len = min( (int)(p - name), len );
+    LPCWSTR p = strchrW( name, '/' );
+    int len = p ? (int)(p - name) : strlenW(name);
+    if ((p = strchrW( name, '\\' ))) len = min( (int)(p - name), len );
     /* Ignore trailing dots and spaces */
     while (len > 1 && (name[len-1] == '.' || name[len-1] == ' ')) len--;
     if (long_len < len + 1) return FALSE;
 
-    TRACE("%s,%s\n", path, name );
+    TRACE("%s,%s\n", path->long_name, debugstr_w(name) );
 
     if (!DOSFS_ToDosFCBFormat( name, dos_name )) dos_name[0] = '\0';
 
-    if (!(dir = DOSFS_OpenDir( path )))
+    if (!(dir = DOSFS_OpenDir( DRIVE_GetCodepage(path->drive), path->long_name )))
     {
         WARN("(%s,%s): can't open dir: %s\n",
-                       path, name, strerror(errno) );
+             path->long_name, debugstr_w(name), strerror(errno) );
         return FALSE;
     }
 
     while ((ret = DOSFS_ReadDir( dir, &long_name, &short_name )))
     {
         /* Check against Unix name */
-        if (len == strlen(long_name))
+        if (len == strlenW(long_name))
         {
             if (!ignore_case)
             {
-                if (!strncmp( long_name, name, len )) break;
+                if (!strncmpW( long_name, name, len )) break;
             }
             else
             {
-                if (!FILE_strncasecmp( long_name, name, len )) break;
+                if (!strncmpiW( long_name, name, len )) break;
             }
         }
         if (dos_name[0])
@@ -656,12 +768,13 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
                 DOSFS_Hash( long_name, tmp_buf, TRUE, ignore_case );
                 short_name = tmp_buf;
             }
-            if (!strcmp( dos_name, short_name )) break;
+            if (!strcmpW( dos_name, short_name )) break;
         }
     }
     if (ret)
     {
-        if (long_buf) strcpy( long_buf, long_name );
+        if (long_buf) WideCharToMultiByte(DRIVE_GetCodepage(path->drive), 0,
+                                          long_name, -1, long_buf, long_len, NULL, NULL);
         if (short_buf)
         {
             if (short_name)
@@ -669,11 +782,11 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
             else
                 DOSFS_Hash( long_name, short_buf, FALSE, ignore_case );
         }
-        TRACE("(%s,%s) -> %s (%s)\n",
-              path, name, long_name, short_buf ? short_buf : "***");
+        TRACE("(%s,%s) -> %s (%s)\n", path->long_name, debugstr_w(name),
+              debugstr_w(long_name), short_buf ? debugstr_w(short_buf) : "***");
     }
     else
-        WARN("'%s' not found in '%s'\n", name, path);
+        WARN("%s not found in '%s'\n", debugstr_w(name), path->long_name);
     DOSFS_CloseDir( dir );
     return ret;
 }
@@ -684,21 +797,21 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
  *
  * Check if a DOS file name represents a DOS device and return the device.
  */
-const DOS_DEVICE *DOSFS_GetDevice( const char *name )
+const DOS_DEVICE *DOSFS_GetDevice( LPCWSTR name )
 {
     unsigned int i;
-    const char *p;
+    const WCHAR *p;
 
     if (!name) return NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    if ((p = strrchrW( name, '/' ))) name = p + 1;
+    if ((p = strrchrW( name, '\\' ))) name = p + 1;
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
-        const char *dev = DOSFS_Devices[i].name;
-        if (!FILE_strncasecmp( dev, name, strlen(dev) ))
+        const WCHAR *dev = DOSFS_Devices[i].name;
+        if (!strncmpiW( dev, name, strlenW(dev) ))
         {
-            p = name + strlen( dev );
+            p = name + strlenW( dev );
             if (!*p || (*p == '.') || (*p == ':')) return &DOSFS_Devices[i];
         }
     }
@@ -730,18 +843,23 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile )
 /**************************************************************************
  *         DOSFS_CreateCommPort
  */
-static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa)
+static HANDLE DOSFS_CreateCommPort(LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa)
 {
     HANDLE ret;
     char devname[40];
+    WCHAR devnameW[40];
+    static const WCHAR serialportsW[] = {'s','e','r','i','a','l','p','o','r','t','s',0};
+    static const WCHAR empty_strW[] = { 0 };
 
-    TRACE_(file)("%s %lx %lx\n", name, access, attributes);
+    TRACE_(file)("%s %lx %lx\n", debugstr_w(name), access, attributes);
 
-    PROFILE_GetWineIniString("serialports",name,"",devname,sizeof devname);
-    if(!devname[0])
+    PROFILE_GetWineIniString(serialportsW, name, empty_strW, devnameW, 40);
+    if(!devnameW[0])
         return 0;
 
-    TRACE("opening %s as %s\n", devname, name);
+    WideCharToMultiByte(CP_ACP, 0, devnameW, -1, devname, sizeof(devname), NULL, NULL);
+
+    TRACE("opening %s as %s\n", devname, debugstr_w(name));
 
     SERVER_START_REQ( create_serial )
     {
@@ -769,28 +887,33 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes, 
  * Open a DOS device. This might not map 1:1 into the UNIX device concept.
  * Returns 0 on failure.
  */
-HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa )
+HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa )
 {
     unsigned int i;
-    const char *p;
+    const WCHAR *p;
     HANDLE handle;
 
     if (name[0] && (name[1] == ':')) name += 2;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    if ((p = strrchrW( name, '/' ))) name = p + 1;
+    if ((p = strrchrW( name, '\\' ))) name = p + 1;
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
-        const char *dev = DOSFS_Devices[i].name;
-        if (!FILE_strncasecmp( dev, name, strlen(dev) ))
+        const WCHAR *dev = DOSFS_Devices[i].name;
+        if (!strncmpiW( dev, name, strlenW(dev) ))
         {
-            p = name + strlen( dev );
+            p = name + strlenW( dev );
             if (!*p || (*p == '.') || (*p == ':')) {
+		static const WCHAR nulW[] = {'N','U','L',0};
+		static const WCHAR conW[] = {'C','O','N',0};
+		static const WCHAR scsimgrW[] = {'S','C','S','I','M','G','R','$',0};
+		static const WCHAR hpscanW[] = {'H','P','S','C','A','N',0};
+		static const WCHAR emmxxxx0W[] = {'E','M','M','X','X','X','X','0',0};
 	    	/* got it */
-		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
+		if (!strcmpiW(DOSFS_Devices[i].name, nulW))
                     return FILE_CreateFile( "/dev/null", access,
                                             FILE_SHARE_READ|FILE_SHARE_WRITE, sa,
                                             OPEN_EXISTING, 0, 0, TRUE, DRIVE_UNKNOWN );
-		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
+		if (!strcmpiW(DOSFS_Devices[i].name, conW)) {
 			HANDLE to_dup;
 			switch (access & (GENERIC_READ|GENERIC_WRITE)) {
 			case GENERIC_READ:
@@ -810,16 +933,16 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSEC
 			    handle = 0;
 			return handle;
 		}
-		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
-                    !strcmp(DOSFS_Devices[i].name,"HPSCAN") ||
-                    !strcmp(DOSFS_Devices[i].name,"EMMXXXX0"))
+		if (!strcmpiW(DOSFS_Devices[i].name, scsimgrW) ||
+                    !strcmpiW(DOSFS_Devices[i].name, hpscanW) ||
+                    !strcmpiW(DOSFS_Devices[i].name, emmxxxx0W))
                 {
                     return FILE_CreateDevice( i, access, sa );
 		}
 
                 if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access,attributes,sa)) )
                     return handle;
-                FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
+                FIXME("device open %s not supported (yet)\n", debugstr_w(DOSFS_Devices[i].name));
     		return 0;
 	    }
         }
@@ -833,21 +956,21 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSEC
  *
  * Get the drive specified by a given path name (DOS or Unix format).
  */
-static int DOSFS_GetPathDrive( const char **name )
+static int DOSFS_GetPathDrive( LPCWSTR *name )
 {
     int drive;
-    const char *p = *name;
+    LPCWSTR p = *name;
 
     if (*p && (p[1] == ':'))
     {
-        drive = FILE_toupper(*p) - 'A';
+        drive = toupperW(*p) - 'A';
         *name += 2;
     }
     else if (*p == '/') /* Absolute Unix path? */
     {
-        if ((drive = DRIVE_FindDriveRoot( name )) == -1)
+        if ((drive = DRIVE_FindDriveRootW( name )) == -1)
         {
-            MESSAGE("Warning: %s not accessible from a configured DOS drive\n", *name );
+            MESSAGE("Warning: %s not accessible from a configured DOS drive\n", debugstr_w(*name) );
             /* Assume it really was a DOS name */
             drive = DRIVE_GetCurrentDrive();
         }
@@ -873,13 +996,16 @@ static int DOSFS_GetPathDrive( const char **name )
  * The buffers pointed to by 'long_buf' and 'short_buf' must be
  * at least MAX_PATHNAME_LEN long.
  */
-BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
+BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
 {
     BOOL found;
-    UINT flags;
-    char *p_l, *p_s, *root;
+    UINT flags, codepage;
+    char *p_l, *root;
+    LPWSTR p_s;
+    static const WCHAR driveA_rootW[] = {'A',':','\\',0};
+    static const WCHAR dos_rootW[] = {'\\',0};
 
-    TRACE("%s (last=%d)\n", name, check_last );
+    TRACE("%s (last=%d)\n", debugstr_w(name), check_last );
 
     if ((!*name) || (*name=='\n'))
     { /* error code for Win98 */
@@ -889,13 +1015,14 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
     flags = DRIVE_GetFlags( full->drive );
+    codepage = DRIVE_GetCodepage(full->drive);
 
     lstrcpynA( full->long_name, DRIVE_GetRoot( full->drive ),
                  sizeof(full->long_name) );
     if (full->long_name[1]) root = full->long_name + strlen(full->long_name);
     else root = full->long_name;  /* root directory */
 
-    strcpy( full->short_name, "A:\\" );
+    strcpyW( full->short_name, driveA_rootW );
     full->short_name[0] += full->drive;
 
     if ((*name == '\\') || (*name == '/'))  /* Absolute path */
@@ -907,13 +1034,13 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
         lstrcpynA( root + 1, DRIVE_GetUnixCwd( full->drive ),
                      sizeof(full->long_name) - (root - full->long_name) - 1 );
         if (root[1]) *root = '/';
-        lstrcpynA( full->short_name + 3, DRIVE_GetDosCwd( full->drive ),
-                     sizeof(full->short_name) - 3 );
+        lstrcpynW( full->short_name + 3, DRIVE_GetDosCwd( full->drive ),
+                   sizeof(full->short_name)/sizeof(full->short_name[0]) - 3 );
     }
 
     p_l = full->long_name[1] ? full->long_name + strlen(full->long_name)
                              : full->long_name;
-    p_s = full->short_name[3] ? full->short_name + strlen(full->short_name)
+    p_s = full->short_name[3] ? full->short_name + strlenW(full->short_name)
                               : full->short_name + 2;
     found = TRUE;
 
@@ -942,7 +1069,7 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
         /* Make sure buffers are large enough */
 
-        if ((p_s >= full->short_name + sizeof(full->short_name) - 14) ||
+        if ((p_s >= full->short_name + sizeof(full->short_name)/sizeof(full->short_name[0]) - 14) ||
             (p_l >= full->long_name + sizeof(full->long_name) - 1))
         {
             SetLastError( ERROR_PATH_NOT_FOUND );
@@ -951,14 +1078,14 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
         /* Get the long and short name matching the file name */
 
-        if ((found = DOSFS_FindUnixName( full->long_name, name, p_l + 1,
+        if ((found = DOSFS_FindUnixName( full, name, p_l + 1,
                          sizeof(full->long_name) - (p_l - full->long_name) - 1,
                          p_s + 1, !(flags & DRIVE_CASE_SENSITIVE) )))
         {
             *p_l++ = '/';
             p_l   += strlen(p_l);
             *p_s++ = '\\';
-            p_s   += strlen(p_s);
+            p_s   += strlenW(p_s);
             while (!IS_END_OF_NAME(*name)) name++;
         }
         else if (!check_last)
@@ -966,15 +1093,17 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
             *p_l++ = '/';
             *p_s++ = '\\';
             while (!IS_END_OF_NAME(*name) &&
-                   (p_s < full->short_name + sizeof(full->short_name) - 1) &&
+                   (p_s < full->short_name + sizeof(full->short_name)/sizeof(full->short_name[0]) - 1) &&
                    (p_l < full->long_name + sizeof(full->long_name) - 1))
             {
-                *p_s++ = FILE_tolower(*name);
+                WCHAR wch;
+                *p_s++ = tolowerW(*name);
                 /* If the drive is case-sensitive we want to create new */
                 /* files in lower-case otherwise we can't reopen them   */
                 /* under the same short name. */
-	    	if (flags & DRIVE_CASE_SENSITIVE) *p_l++ = FILE_tolower(*name);
-		else *p_l++ = *name;
+                if (flags & DRIVE_CASE_SENSITIVE) wch = tolowerW(*name);
+                else wch = *name;
+                p_l += WideCharToMultiByte(codepage, 0, &wch, 1, p_l, 2, NULL, NULL);
                 name++;
             }
 	    /* Ignore trailing dots and spaces */
@@ -982,7 +1111,8 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 		--p_l;
 		--p_s;
 	    }
-            *p_l = *p_s = '\0';
+            *p_l = '\0';
+            *p_s = '\0';
         }
         while ((*name == '\\') || (*name == '/')) name++;
     }
@@ -1001,14 +1131,14 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
         }
     }
     if (!full->long_name[0]) strcpy( full->long_name, "/" );
-    if (!full->short_name[2]) strcpy( full->short_name + 2, "\\" );
-    TRACE("returning %s = %s\n", full->long_name, full->short_name );
+    if (!full->short_name[2]) strcpyW( full->short_name + 2, dos_rootW );
+    TRACE("returning %s = %s\n", full->long_name, debugstr_w(full->short_name) );
     return TRUE;
 }
 
 
 /***********************************************************************
- *           GetShortPathNameA   (KERNEL32.@)
+ *           GetShortPathNameW   (KERNEL32.@)
  *
  * NOTES
  *  observed:
@@ -1027,17 +1157,18 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
  * - longpath and shortpath may have the same address
  * Peter Ganten, 1999
  */
-DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
-                                  DWORD shortlen )
+DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
-    LPSTR tmpshortpath;
+    WCHAR tmpshortpath[MAX_PATHNAME_LEN];
+    const WCHAR *p;
     DWORD sp = 0, lp = 0;
-    int tmplen, drive;
+    int drive;
+    DWORD tmplen;
     UINT flags;
     BOOL unixabsolute = *longpath == '/';
 
-    TRACE("%s\n", debugstr_a(longpath));
+    TRACE("%s\n", debugstr_w(longpath));
 
     if (!longpath) {
       SetLastError(ERROR_INVALID_PARAMETER);
@@ -1045,11 +1176,6 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
     }
     if (!longpath[0]) {
       SetLastError(ERROR_BAD_PATHNAME);
-      return 0;
-    }
-
-    if ( ( tmpshortpath = HeapAlloc ( GetProcessHeap(), 0, MAX_PATHNAME_LEN ) ) == NULL ) {
-      SetLastError ( ERROR_NOT_ENOUGH_MEMORY );
       return 0;
     }
 
@@ -1084,8 +1210,10 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 	continue;
       }
 
-      tmplen = strcspn ( longpath + lp, "\\/" );
-      lstrcpynA ( tmpshortpath+sp, longpath + lp, tmplen+1 );
+      tmplen = 0;
+      for(p = longpath + lp; *p && *p != '/' && *p != '\\'; p++)
+          tmplen++;
+      lstrcpynW(tmpshortpath + sp, longpath + lp, tmplen + 1);
 
       /* Check, if the current element is a valid dos name */
       if ( DOSFS_ValidDOSName ( longpath + lp, !(flags & DRIVE_CASE_SENSITIVE) ) ) {
@@ -1096,8 +1224,8 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 
       /* Check if the file exists and use the existing file name */
       if ( DOSFS_GetFullName ( tmpshortpath, TRUE, &full_name ) ) {
-	strcpy( tmpshortpath+sp, strrchr ( full_name.short_name, '\\' ) + 1 );
-	sp += strlen ( tmpshortpath+sp );
+	strcpyW(tmpshortpath + sp, strrchrW(full_name.short_name, '\\') + 1);
+	sp += strlenW(tmpshortpath + sp);
 	lp += tmplen;
 	continue;
       }
@@ -1108,50 +1236,81 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
     }
     tmpshortpath[sp] = 0;
 
-    lstrcpynA ( shortpath, tmpshortpath, shortlen );
-    TRACE("returning %s\n", debugstr_a(shortpath) );
-    tmplen = strlen ( tmpshortpath );
-    HeapFree ( GetProcessHeap(), 0, tmpshortpath );
+    tmplen = strlenW(tmpshortpath) + 1;
+    if (tmplen <= shortlen)
+    {
+        strcpyW(shortpath, tmpshortpath);
+        TRACE("returning %s\n", debugstr_w(shortpath));
+        tmplen--; /* length without 0 */
+    }
 
     return tmplen;
 }
 
 
 /***********************************************************************
- *           GetShortPathNameW   (KERNEL32.@)
+ *           GetShortPathNameA   (KERNEL32.@)
  */
-DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
-                                  DWORD shortlen )
+DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
 {
-    LPSTR longpathA, shortpathA;
-    DWORD ret = 0;
+    UNICODE_STRING longpathW;
+    WCHAR shortpathW[MAX_PATH];
+    DWORD ret, retW;
 
-    longpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
-    shortpathA = HeapAlloc ( GetProcessHeap(), 0, shortlen );
+    if (!longpath)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
-    ret = GetShortPathNameA ( longpathA, shortpathA, shortlen );
-    if (shortlen > 0 && !MultiByteToWideChar( CP_ACP, 0, shortpathA, -1, shortpath, shortlen ))
-        shortpath[shortlen-1] = 0;
-    HeapFree( GetProcessHeap(), 0, longpathA );
-    HeapFree( GetProcessHeap(), 0, shortpathA );
+    TRACE("%s\n", debugstr_a(longpath));
 
+    if (!RtlCreateUnicodeStringFromAsciiz(&longpathW, longpath))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+
+    retW = GetShortPathNameW(longpathW.Buffer, shortpathW, MAX_PATH);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, shortpathW, -1, NULL, 0, NULL, NULL);
+        if (ret <= shortlen)
+        {
+            WideCharToMultiByte(CP_ACP, 0, shortpathW, -1, shortpath, shortlen, NULL, NULL);
+            ret--; /* length without 0 */
+        }
+    }
+
+    RtlFreeUnicodeString(&longpathW);
     return ret;
 }
 
 
 /***********************************************************************
- *           GetLongPathNameA   (KERNEL32.@)
+ *           GetLongPathNameW   (KERNEL32.@)
  *
  * NOTES
  *  observed (Win2000):
  *  shortpath=NULL: LastError=ERROR_INVALID_PARAMETER, ret=0
  *  shortpath="":   LastError=ERROR_PATH_NOT_FOUND, ret=0
  */
-DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
-                                  DWORD longlen )
+DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen )
 {
     DOS_FULL_NAME full_name;
-    char *p, *r, *ll, *ss;
+    const char *root;
+    LPWSTR p;
+    int drive;
+    UINT codepage;
+    DWORD ret, len = 0;
 
     if (!shortpath) {
       SetLastError(ERROR_INVALID_PARAMETER);
@@ -1162,79 +1321,92 @@ DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
       return 0;
     }
 
+    TRACE("%s,%p,%ld\n", debugstr_w(shortpath), longpath, longlen);
+
     if(shortpath[0]=='\\' && shortpath[1]=='\\')
     {
-        ERR("UNC pathname %s\n",debugstr_a(shortpath));
-        lstrcpynA( longpath, full_name.short_name, longlen );
-        return lstrlenA(longpath);
+        ERR("UNC pathname %s\n",debugstr_w(shortpath));
+        lstrcpynW( longpath, full_name.short_name, longlen );
+        return strlenW(longpath);
     }
 
     if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
-    lstrcpynA( longpath, full_name.short_name, longlen );
 
-    /* Do some hackery to get the long filename. */
+    root = full_name.long_name;
+    drive = DRIVE_FindDriveRoot(&root);
+    codepage = DRIVE_GetCodepage(drive);
 
-    if (longpath) {
-     ss=longpath+strlen(longpath);
-     ll=full_name.long_name+strlen(full_name.long_name);
-     p=NULL;
-     while (ss>=longpath)
-     {
-       /* FIXME: aren't we more paranoid, than needed? */
-       while ((ss[0]=='\\') && (ss>=longpath)) ss--;
-       p=ss;
-       while ((ss[0]!='\\') && (ss>=longpath)) ss--;
-       if (ss>=longpath)
-         {
-         /* FIXME: aren't we more paranoid, than needed? */
-         while ((ll[0]=='/') && (ll>=full_name.long_name)) ll--;
-         while ((ll[0]!='/') && (ll>=full_name.long_name)) ll--;
-         if (ll<full_name.long_name)
-              {
-              ERR("Bad longname! (ss=%s ll=%s)\n This should never happen !\n"
-		  ,ss ,ll );
-              return 0;
-              }
-         }
-     }
-
-   /* FIXME: fix for names like "C:\\" (ie. with more '\'s) */
-      if (p && p[2])
-        {
-	p+=1;
-	if ((p-longpath)>0) longlen -= (p-longpath);
-	lstrcpynA( p, ll , longlen);
-
-        /* Now, change all '/' to '\' */
-        for (r=p; r<(p+longlen); r++ )
-          if (r[0]=='/') r[0]='\\';
-        return strlen(longpath) - strlen(p) + longlen;
-        }
+    ret = MultiByteToWideChar(codepage, 0, root, -1, NULL, 0);
+    ret += 3; /* A:\ */
+    /* reproduce terminating slash */
+    if (ret > 4) /* if not drive root */
+    {
+        len = strlenW(shortpath);
+        if (shortpath[len - 1] == '\\' || shortpath[len - 1] == '/')
+            len = 1;
     }
-
-    return strlen(longpath);
+    ret += len;
+    if (ret <= longlen)
+    {
+        longpath[0] = 'A' + drive;
+        longpath[1] = ':';
+        MultiByteToWideChar(codepage, 0, root, -1, longpath + 2, longlen - 2);
+        for (p = longpath; *p; p++) if (*p == '/') *p = '\\';
+        if (len)
+        {
+            longpath[ret - 2] = '\\';
+            longpath[ret - 1] = 0;
+        }
+        TRACE("returning %s\n", debugstr_w(longpath));
+        ret--; /* length without 0 */
+    }
+    return ret;
 }
 
 
 /***********************************************************************
- *           GetLongPathNameW   (KERNEL32.@)
+ *           GetLongPathNameA   (KERNEL32.@)
  */
-DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
-                                  DWORD longlen )
+DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath, DWORD longlen )
 {
-    DOS_FULL_NAME full_name;
-    DWORD ret = 0;
-    LPSTR shortpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, shortpath );
+    UNICODE_STRING shortpathW;
+    WCHAR longpathW[MAX_PATH];
+    DWORD ret, retW;
 
-    /* FIXME: is it correct to always return a fully qualified short path? */
-    if (DOSFS_GetFullName( shortpathA, TRUE, &full_name ))
+    if (!shortpath)
     {
-        ret = strlen( full_name.short_name );
-        if (longlen > 0 && !MultiByteToWideChar( CP_ACP, 0, full_name.long_name, -1,
-                                                 longpath, longlen ))
-            longpath[longlen-1] = 0;
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
     }
-    HeapFree( GetProcessHeap(), 0, shortpathA );
+
+    TRACE("%s\n", debugstr_a(shortpath));
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&shortpathW, shortpath))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+
+    retW = GetLongPathNameW(shortpathW.Buffer, longpathW, MAX_PATH);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, longpathW, -1, NULL, 0, NULL, NULL);
+        if (ret <= longlen)
+        {
+            WideCharToMultiByte(CP_ACP, 0, longpathW, -1, longpath, longlen, NULL, NULL);
+            ret--; /* length without 0 */
+        }
+    }
+
+    RtlFreeUnicodeString(&shortpathW);
     return ret;
 }
 
@@ -1248,20 +1420,29 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
  * A test for GetFullPathName with many pathological cases
  * now gives identical output for Wine and OSR2
  */
-static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
-                                      BOOL unicode )
+static DWORD DOSFS_DoGetFullPathName( LPCWSTR name, DWORD len, LPWSTR result )
 {
     DWORD ret;
     DOS_FULL_NAME full_name;
-    char *p,*q;
+    LPWSTR p, q;
+    char *p_l;
     const char * root;
-    char drivecur[]="c:.";
-    char driveletter=0;
+    WCHAR drivecur[] = {'C',':','.',0};
+    WCHAR driveletter=0;
     int namelen,drive=0;
+    static const WCHAR bkslashW[] = {'\\',0};
+    static const WCHAR dotW[] = {'.',0};
+    static const WCHAR updir_slashW[] = {'\\','.','.','\\',0};
+    static const WCHAR curdirW[] = {'\\','.','\\',0};
+    static const WCHAR updirW[] = {'\\','.','.',0};
 
-    if (!name[0]) return 0;
+    if (!name[0])
+    {
+        SetLastError(ERROR_BAD_PATHNAME);
+        return 0;
+    }
 
-    TRACE("passed '%s'\n", name);
+    TRACE("passed %s\n", debugstr_w(name));
 
     if (name[1]==':')
       /*drive letter given */
@@ -1271,17 +1452,18 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     if ((name[1]==':') && ((name[2]=='\\') || (name[2]=='/')))
       /*absolute path given */
       {
-	lstrcpynA(full_name.short_name,name,MAX_PATHNAME_LEN);
-	drive = (int)FILE_toupper(name[0]) - 'A';
+        strncpyW(full_name.short_name, name, MAX_PATHNAME_LEN);
+        full_name.short_name[MAX_PATHNAME_LEN - 1] = 0; /* ensure 0 termination */
+        drive = toupperW(name[0]) - 'A';
       }
     else
       {
 	if (driveletter)
 	  drivecur[0]=driveletter;
         else if ((name[0]=='\\') || (name[0]=='/'))
-          strcpy(drivecur,"\\");
+          strcpyW(drivecur, bkslashW);
         else
-	  strcpy(drivecur,".");
+	  strcpyW(drivecur, dotW);
 
 	if (!DOSFS_GetFullName( drivecur, FALSE, &full_name ))
 	  {
@@ -1289,7 +1471,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	    return 0;
 	  }
 	/* find path that drive letter substitutes*/
-	drive = (int)FILE_toupper(full_name.short_name[0]) -0x41;
+	drive = toupperW(full_name.short_name[0]) - 'A';
 	root= DRIVE_GetRoot(drive);
 	if (!root)
 	  {
@@ -1299,31 +1481,33 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	if (!strcmp(root,"/"))
 	  {
 	    /* we have just the last / and we need it. */
-	    p= full_name.long_name;
+	    p_l = full_name.long_name;
 	  }
 	else
 	  {
-	    p= full_name.long_name +strlen(root);
+	    p_l = full_name.long_name + strlen(root);
 	  }
 	/* append long name (= unix name) to drive */
-	lstrcpynA(full_name.short_name+2,p,MAX_PATHNAME_LEN-3);
+	MultiByteToWideChar(DRIVE_GetCodepage(drive), 0, p_l, -1,
+                            full_name.short_name + 2, MAX_PATHNAME_LEN - 3);
 	/* append name to treat */
-	namelen= strlen(full_name.short_name);
-	p = (char*)name;
+	namelen= strlenW(full_name.short_name);
+	p = (LPWSTR)name;
 	if (driveletter)
-	  p += +2; /* skip drive name when appending */
-	if (namelen +2  + strlen(p) > MAX_PATHNAME_LEN)
+	  p += 2; /* skip drive name when appending */
+	if (namelen + 2 + strlenW(p) > MAX_PATHNAME_LEN)
 	  {
 	    FIXME("internal error: buffer too small\n");
 	     return 0;
 	  }
 	full_name.short_name[namelen++] ='\\';
 	full_name.short_name[namelen] = 0;
-	lstrcpynA(full_name.short_name +namelen,p,MAX_PATHNAME_LEN-namelen);
+	strncpyW(full_name.short_name + namelen, p, MAX_PATHNAME_LEN - namelen);
+	full_name.short_name[MAX_PATHNAME_LEN - 1] = 0; /* ensure 0 termination */
       }
     /* reverse all slashes */
     for (p=full_name.short_name;
-	 p < full_name.short_name+strlen(full_name.short_name);
+	 p < full_name.short_name + strlenW(full_name.short_name);
 	 p++)
       {
 	if ( *p == '/' )
@@ -1331,40 +1515,40 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
       }
      /* Use memmove, as areas overlap */
      /* Delete .. */
-    while ((p = strstr(full_name.short_name,"\\..\\")))
+    while ((p = strstrW(full_name.short_name, updir_slashW)))
       {
 	if (p > full_name.short_name+2)
 	  {
 	    *p = 0;
-	    q = strrchr(full_name.short_name,'\\');
-	    memmove(q+1,p+4,strlen(p+4)+1);
+            q = strrchrW(full_name.short_name, '\\');
+            memmove(q+1, p+4, (strlenW(p+4)+1) * sizeof(WCHAR));
 	  }
 	else
 	  {
-	    memmove(full_name.short_name+3,p+4,strlen(p+4)+1);
+            memmove(full_name.short_name+3, p+4, (strlenW(p+4)+1) * sizeof(WCHAR));
 	  }
       }
     if ((full_name.short_name[2]=='.')&&(full_name.short_name[3]=='.'))
 	{
 	  /* This case istn't treated yet : c:..\test */
 	  memmove(full_name.short_name+2,full_name.short_name+4,
-		  strlen(full_name.short_name+4)+1);
+                  (strlenW(full_name.short_name+4)+1) * sizeof(WCHAR));
 	}
      /* Delete . */
-    while ((p = strstr(full_name.short_name,"\\.\\")))
+    while ((p = strstrW(full_name.short_name, curdirW)))
       {
 	*(p+1) = 0;
-	memmove(p+1,p+3,strlen(p+3)+1);
+        memmove(p+1, p+3, (strlenW(p+3)+1) * sizeof(WCHAR));
       }
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
-        for (p = full_name.short_name; *p; p++) *p = FILE_toupper(*p);
-    namelen=strlen(full_name.short_name);
-    if (!strcmp(full_name.short_name+namelen-3,"\\.."))
+        for (p = full_name.short_name; *p; p++) *p = toupperW(*p);
+    namelen = strlenW(full_name.short_name);
+    if (!strcmpW(full_name.short_name+namelen-3, updirW))
 	{
 	  /* one more strange case: "c:\test\test1\.."
 	   return "c:\test" */
 	  *(full_name.short_name+namelen-3)=0;
-	  q = strrchr(full_name.short_name,'\\');
+          q = strrchrW(full_name.short_name, '\\');
 	  *q =0;
 	}
     if (full_name.short_name[namelen-1]=='.')
@@ -1372,13 +1556,13 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     if (!driveletter)
       if (full_name.short_name[namelen-1]=='\\')
 	full_name.short_name[(namelen--)-1] =0;
-    TRACE("got %s\n",full_name.short_name);
+    TRACE("got %s\n", debugstr_w(full_name.short_name));
 
     /* If the lpBuffer buffer is too small, the return value is the
     size of the buffer, in characters, required to hold the path
     plus the terminating \0 (tested against win95osr2, bon 001118)
     . */
-    ret = strlen(full_name.short_name);
+    ret = strlenW(full_name.short_name);
     if (ret >= len )
       {
 	/* don't touch anything when the buffer is not large enough */
@@ -1387,13 +1571,11 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
       }
     if (result)
     {
-	if (unicode)
-            MultiByteToWideChar( CP_ACP, 0, full_name.short_name, -1, (LPWSTR)result, len );
-	else
-	    lstrcpynA( result, full_name.short_name, len );
+        strncpyW( result, full_name.short_name, len );
+        result[len - 1] = 0; /* ensure 0 termination */
     }
 
-    TRACE("returning '%s'\n", full_name.short_name );
+    TRACE("returning %s\n", debugstr_w(full_name.short_name) );
     return ret;
 }
 
@@ -1406,18 +1588,54 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
                                  LPSTR *lastpart )
 {
-    DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer, FALSE );
-    if (ret && (ret<=len) && buffer && lastpart)
-    {
-        LPSTR p = buffer + strlen(buffer);
+    UNICODE_STRING nameW;
+    WCHAR bufferW[MAX_PATH];
+    DWORD ret, retW;
 
-	if (*p != '\\')
-        {
-	  while ((p > buffer + 2) && (*p != '\\')) p--;
-          *lastpart = p + 1;
-	}
-	else *lastpart = NULL;
+    if (!name)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
     }
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&nameW, name))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+
+    retW = GetFullPathNameW( nameW.Buffer, MAX_PATH, bufferW, NULL);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        if (ret <= len)
+        {
+            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, len, NULL, NULL);
+            ret--; /* length without 0 */
+
+            if (lastpart)
+            {
+                LPSTR p = buffer + strlen(buffer);
+
+                if (*p != '\\')
+                {
+                    while ((p > buffer + 2) && (*p != '\\')) p--;
+                    *lastpart = p + 1;
+                }
+                else *lastpart = NULL;
+            }
+        }
+    }
+
+    RtlFreeUnicodeString(&nameW);
     return ret;
 }
 
@@ -1428,9 +1646,7 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
 DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
                                  LPWSTR *lastpart )
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    DWORD ret = DOSFS_DoGetFullPathName( nameA, len, (LPSTR)buffer, TRUE );
-    HeapFree( GetProcessHeap(), 0, nameA );
+    DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer );
     if (ret && (ret<=len) && buffer && lastpart)
     {
         LPWSTR p = buffer + strlenW(buffer);
@@ -1449,12 +1665,21 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
  *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.
+ * FIXME: convert dos file name to unicode
  */
 BOOL WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len )
 {
     BOOL ret;
     DOS_FULL_NAME path;
-    if ((ret = DOSFS_GetFullName( dos, FALSE, &path ))) lstrcpynA( buffer, path.long_name, len );
+    WCHAR dosW[MAX_PATHNAME_LEN];
+
+    MultiByteToWideChar(CP_ACP, 0, dos, -1, dosW, MAX_PATHNAME_LEN);
+    ret = DOSFS_GetFullName( dosW, FALSE, &path );
+    if (ret && len)
+    {
+        strncpy( buffer, path.long_name, len );
+        buffer[len - 1] = 0; /* ensure 0 termination */
+    }
     return ret;
 }
 
@@ -1462,16 +1687,16 @@ BOOL WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len )
 /***********************************************************************
  *           DOSFS_FindNextEx
  */
-static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
+static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
 {
     DWORD attr = info->attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY | FILE_ATTRIBUTE_SYMLINK;
     UINT flags = DRIVE_GetFlags( info->drive );
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *drive_path;
     int drive_root;
-    LPCSTR long_name, short_name;
+    LPCWSTR long_name, short_name;
     BY_HANDLE_FILE_INFORMATION fileinfo;
-    char dos_name[13];
+    WCHAR dos_name[13];
 
     if ((info->attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
     {
@@ -1485,10 +1710,10 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
         entry->dwReserved0       = 0;
         entry->dwReserved1       = 0;
         DOSFS_ToDosDTAFormat( DRIVE_GetLabel( info->drive ), entry->cFileName );
-        strcpy( entry->cAlternateFileName, entry->cFileName );
+        strcpyW( entry->cAlternateFileName, entry->cFileName );
         info->cur_pos++;
         TRACE("returning %s (%s) as label\n",
-               entry->cFileName, entry->cAlternateFileName);
+               debugstr_w(entry->cFileName), debugstr_w(entry->cAlternateFileName));
         return 1;
     }
 
@@ -1531,8 +1756,8 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
         }
 
         /* Check the file attributes */
-
-        lstrcpynA( p, long_name, sizeof(buffer) - (int)(p - buffer) );
+        WideCharToMultiByte(DRIVE_GetCodepage(info->drive), 0, long_name, -1,
+                            p, sizeof(buffer) - (int)(p - buffer), NULL, NULL);
         if (!FILE_Stat( buffer, &fileinfo ))
         {
             WARN("can't stat %s\n", buffer);
@@ -1541,9 +1766,11 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
         if ((fileinfo.dwFileAttributes & FILE_ATTRIBUTE_SYMLINK) &&
             (fileinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
+            static const WCHAR wineW[] = {'w','i','n','e',0};
+            static const WCHAR ShowDirSymlinksW[] = {'S','h','o','w','D','i','r','S','y','m','l','i','n','k','s',0};
             static int show_dir_symlinks = -1;
             if (show_dir_symlinks == -1)
-                show_dir_symlinks = PROFILE_GetWineIniBool("wine", "ShowDirSymlinks", 0);
+                show_dir_symlinks = PROFILE_GetWineIniBool(wineW, ShowDirSymlinksW, 0);
             if (!show_dir_symlinks) continue;
         }
 
@@ -1564,10 +1791,10 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
             DOSFS_Hash( long_name, entry->cAlternateFileName, FALSE,
                         !(flags & DRIVE_CASE_SENSITIVE) );
 
-        lstrcpynA( entry->cFileName, long_name, sizeof(entry->cFileName) );
-        if (!(flags & DRIVE_CASE_PRESERVING)) _strlwr( entry->cFileName );
+        lstrcpynW( entry->cFileName, long_name, sizeof(entry->cFileName)/sizeof(entry->cFileName[0]) );
+        if (!(flags & DRIVE_CASE_PRESERVING)) strlwrW( entry->cFileName );
         TRACE("returning %s (%s) %02lx %ld\n",
-              entry->cFileName, entry->cAlternateFileName,
+              debugstr_w(entry->cFileName), debugstr_w(entry->cAlternateFileName),
               entry->dwFileAttributes, entry->nFileSizeLow );
         return 1;
     }
@@ -1592,26 +1819,38 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
                     int skip, WIN32_FIND_DATAA *entry )
 {
     static FIND_FIRST_INFO info;
-    LPCSTR short_name, long_name;
+    LPCWSTR short_name, long_name;
     int count;
+    UNICODE_STRING short_maskW, long_maskW;
+    WIN32_FIND_DATAW entryW;
 
     _EnterWin16Lock();
 
+    RtlCreateUnicodeStringFromAsciiz(&short_maskW, short_mask);
+    RtlCreateUnicodeStringFromAsciiz(&long_maskW, long_mask);
+
     /* Check the cached directory */
-    if (!(info.u.dos_dir && info.path == path && info.short_mask == short_mask
-                   && info.long_mask == long_mask && info.drive == drive
+    if (!(info.u.dos_dir && info.path == path && !strcmpW(info.short_mask, short_maskW.Buffer)
+                   && !strcmpW(info.long_mask, long_maskW.Buffer) && info.drive == drive
                    && info.attr == attr && info.cur_pos <= skip))
     {
         /* Not in the cache, open it anew */
         if (info.u.dos_dir) DOSFS_CloseDir( info.u.dos_dir );
 
         info.path = (LPSTR)path;
-        info.long_mask = (LPSTR)long_mask;
-        info.short_mask = (LPSTR)short_mask;
+        RtlFreeHeap(GetProcessHeap(), 0, info.long_mask);
+        RtlFreeHeap(GetProcessHeap(), 0, info.short_mask);
+        info.long_mask = long_maskW.Buffer;
+        info.short_mask = short_maskW.Buffer;
         info.attr = attr;
         info.drive = drive;
         info.cur_pos = 0;
-        info.u.dos_dir = DOSFS_OpenDir( info.path );
+        info.u.dos_dir = DOSFS_OpenDir( DRIVE_GetCodepage(drive), info.path );
+    }
+    else
+    {
+        RtlFreeUnicodeString(&short_maskW);
+        RtlFreeUnicodeString(&long_maskW);
     }
 
     /* Skip to desired position */
@@ -1621,8 +1860,14 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         else
             break;
 
-    if (info.u.dos_dir && info.cur_pos == skip && DOSFS_FindNextEx( &info, entry ))
+    if (info.u.dos_dir && info.cur_pos == skip && DOSFS_FindNextEx( &info, &entryW ))
+    {
+        WideCharToMultiByte(CP_ACP, 0, entryW.cFileName, -1,
+                            entry->cFileName, sizeof(entry->cFileName), NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, entryW.cAlternateFileName, -1,
+                            entry->cAlternateFileName, sizeof(entry->cAlternateFileName), NULL, NULL);
         count = info.cur_pos - skip;
+    }
     else
         count = 0;
 
@@ -1638,10 +1883,10 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 }
 
 /*************************************************************************
- *           FindFirstFileExA  (KERNEL32.@)
+ *           FindFirstFileExW  (KERNEL32.@)
  */
-HANDLE WINAPI FindFirstFileExA(
-	LPCSTR lpFileName,
+HANDLE WINAPI FindFirstFileExW(
+	LPCWSTR lpFileName,
 	FINDEX_INFO_LEVELS fInfoLevelId,
 	LPVOID lpFindFileData,
 	FINDEX_SEARCH_OPS fSearchOp,
@@ -1650,6 +1895,12 @@ HANDLE WINAPI FindFirstFileExA(
 {
     HGLOBAL handle;
     FIND_FIRST_INFO *info;
+
+    if (!lpFileName)
+    {
+        SetLastError(ERROR_PATH_NOT_FOUND);
+        return INVALID_HANDLE_VALUE;
+    }
 
     if ((fSearchOp != FindExSearchNameMatch) || (dwAdditionalFlags != 0))
     {
@@ -1661,7 +1912,11 @@ HANDLE WINAPI FindFirstFileExA(
     {
       case FindExInfoStandard:
         {
-          WIN32_FIND_DATAA * data = (WIN32_FIND_DATAA *) lpFindFileData;
+          WIN32_FIND_DATAW * data = (WIN32_FIND_DATAW *) lpFindFileData;
+          char *p;
+          INT long_mask_len;
+          UINT codepage;
+
           data->dwReserved0 = data->dwReserved1 = 0x0;
           if (!lpFileName) return 0;
           if (lpFileName[0] == '\\' && lpFileName[1] == '\\')
@@ -1686,25 +1941,28 @@ HANDLE WINAPI FindFirstFileExA(
           {
             DOS_FULL_NAME full_name;
 
-          if (!DOSFS_GetFullName( lpFileName, FALSE, &full_name )) break;
-          if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
-          info = (FIND_FIRST_INFO *)GlobalLock( handle );
-          info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
-          strcpy( info->path, full_name.long_name );
-          info->long_mask = strrchr( info->path, '/' );
-          *(info->long_mask++) = '\0';
-          info->short_mask = NULL;
-          info->attr = 0xff;
-          if (lpFileName[0] && (lpFileName[1] == ':'))
-              info->drive = FILE_toupper(*lpFileName) - 'A';
-          else info->drive = DRIVE_GetCurrentDrive();
-          info->cur_pos = 0;
+            if (!DOSFS_GetFullName( lpFileName, FALSE, &full_name )) break;
+            if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
+            info = (FIND_FIRST_INFO *)GlobalLock( handle );
+            info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
+            strcpy( info->path, full_name.long_name );
 
-            info->u.dos_dir = DOSFS_OpenDir( info->path );
-          GlobalUnlock( handle );
+            codepage = DRIVE_GetCodepage(full_name.drive);
+            p = strrchr( info->path, '/' );
+            *p++ = '\0';
+            long_mask_len = MultiByteToWideChar(codepage, 0, p, -1, NULL, 0);
+            info->long_mask = HeapAlloc( GetProcessHeap(), 0, long_mask_len * sizeof(WCHAR) );
+            MultiByteToWideChar(codepage, 0, p, -1, info->long_mask, long_mask_len);
+
+            info->short_mask = NULL;
+            info->attr = 0xff;
+            info->drive = full_name.drive;
+            info->cur_pos = 0;
+
+            info->u.dos_dir = DOSFS_OpenDir( codepage, info->path );
+            GlobalUnlock( handle );
           }
-
-          if (!FindNextFileA( handle, data ))
+          if (!FindNextFileW( handle, data ))
           {
               FindClose( handle );
               SetLastError( ERROR_NO_MORE_FILES );
@@ -1731,10 +1989,10 @@ HANDLE WINAPI FindFirstFileA(
 }
 
 /*************************************************************************
- *           FindFirstFileExW   (KERNEL32.@)
+ *           FindFirstFileExA   (KERNEL32.@)
  */
-HANDLE WINAPI FindFirstFileExW(
-	LPCWSTR lpFileName,
+HANDLE WINAPI FindFirstFileExA(
+	LPCSTR lpFileName,
 	FINDEX_INFO_LEVELS fInfoLevelId,
 	LPVOID lpFindFileData,
 	FINDEX_SEARCH_OPS fSearchOp,
@@ -1742,49 +2000,37 @@ HANDLE WINAPI FindFirstFileExW(
 	DWORD dwAdditionalFlags)
 {
     HANDLE handle;
-    WIN32_FIND_DATAA dataA;
-    LPVOID _lpFindFileData;
-    LPSTR pathA;
+    WIN32_FIND_DATAA *dataA;
+    WIN32_FIND_DATAW dataW;
+    UNICODE_STRING pathW;
 
-    switch(fInfoLevelId)
+    if (!lpFileName)
     {
-      case FindExInfoStandard:
-        {
-          _lpFindFileData = &dataA;
-        }
-        break;
-      default:
-        FIXME("fInfoLevelId 0x%08x not implemented\n", fInfoLevelId );
-	return INVALID_HANDLE_VALUE;
-    }
-
-    pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
-    handle = FindFirstFileExA(pathA, fInfoLevelId, _lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
-    HeapFree( GetProcessHeap(), 0, pathA );
-    if (handle == INVALID_HANDLE_VALUE) return handle;
-
-    switch(fInfoLevelId)
-    {
-      case FindExInfoStandard:
-        {
-          WIN32_FIND_DATAW *dataW = (WIN32_FIND_DATAW*) lpFindFileData;
-          dataW->dwFileAttributes = dataA.dwFileAttributes;
-          dataW->ftCreationTime   = dataA.ftCreationTime;
-          dataW->ftLastAccessTime = dataA.ftLastAccessTime;
-          dataW->ftLastWriteTime  = dataA.ftLastWriteTime;
-          dataW->nFileSizeHigh    = dataA.nFileSizeHigh;
-          dataW->nFileSizeLow     = dataA.nFileSizeLow;
-          MultiByteToWideChar( CP_ACP, 0, dataA.cFileName, -1,
-                               dataW->cFileName, sizeof(dataW->cFileName)/sizeof(WCHAR) );
-          MultiByteToWideChar( CP_ACP, 0, dataA.cAlternateFileName, -1,
-                               dataW->cAlternateFileName,
-                               sizeof(dataW->cAlternateFileName)/sizeof(WCHAR) );
-        }
-        break;
-      default:
-        FIXME("fInfoLevelId 0x%08x not implemented\n", fInfoLevelId );
+        SetLastError(ERROR_PATH_NOT_FOUND);
         return INVALID_HANDLE_VALUE;
     }
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&pathW, lpFileName))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    handle = FindFirstFileExW(pathW.Buffer, fInfoLevelId, &dataW, fSearchOp, lpSearchFilter, dwAdditionalFlags);
+    RtlFreeUnicodeString(&pathW);
+    if (handle == INVALID_HANDLE_VALUE) return handle;
+
+    dataA = (WIN32_FIND_DATAA *) lpFindFileData;
+    dataA->dwFileAttributes = dataW.dwFileAttributes;
+    dataA->ftCreationTime   = dataW.ftCreationTime;
+    dataA->ftLastAccessTime = dataW.ftLastAccessTime;
+    dataA->ftLastWriteTime  = dataW.ftLastWriteTime;
+    dataA->nFileSizeHigh    = dataW.nFileSizeHigh;
+    dataA->nFileSizeLow     = dataW.nFileSizeLow;
+    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
+                         dataA->cFileName, sizeof(dataA->cFileName), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
+                         dataA->cAlternateFileName, sizeof(dataA->cAlternateFileName), NULL, NULL );
     return handle;
 }
 
@@ -1798,9 +2044,9 @@ HANDLE WINAPI FindFirstFileW( LPCWSTR lpFileName, WIN32_FIND_DATAW *lpFindData )
 }
 
 /*************************************************************************
- *           FindNextFileA   (KERNEL32.@)
+ *           FindNextFileW   (KERNEL32.@)
  */
-BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
+BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 {
     FIND_FIRST_INFO *info;
     BOOL ret = FALSE;
@@ -1830,10 +2076,12 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
     {
         DOSFS_CloseDir( info->u.dos_dir ); info->u.dos_dir = NULL;
         HeapFree( GetProcessHeap(), 0, info->path );
-        info->path = info->long_mask = NULL;
+        info->path = NULL;
+        HeapFree( GetProcessHeap(), 0, info->long_mask );
+        info->long_mask = NULL;
+        goto done;
     }
-    else
-        ret = TRUE;
+    ret = TRUE;
 done:
     GlobalUnlock( handle );
     if( !ret ) SetLastError( gle );
@@ -1842,23 +2090,23 @@ done:
 
 
 /*************************************************************************
- *           FindNextFileW   (KERNEL32.@)
+ *           FindNextFileA   (KERNEL32.@)
  */
-BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
+BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
-    WIN32_FIND_DATAA dataA;
-    if (!FindNextFileA( handle, &dataA )) return FALSE;
-    data->dwFileAttributes = dataA.dwFileAttributes;
-    data->ftCreationTime   = dataA.ftCreationTime;
-    data->ftLastAccessTime = dataA.ftLastAccessTime;
-    data->ftLastWriteTime  = dataA.ftLastWriteTime;
-    data->nFileSizeHigh    = dataA.nFileSizeHigh;
-    data->nFileSizeLow     = dataA.nFileSizeLow;
-    MultiByteToWideChar( CP_ACP, 0, dataA.cFileName, -1,
-                         data->cFileName, sizeof(data->cFileName)/sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, dataA.cAlternateFileName, -1,
+    WIN32_FIND_DATAW dataW;
+    if (!FindNextFileW( handle, &dataW )) return FALSE;
+    data->dwFileAttributes = dataW.dwFileAttributes;
+    data->ftCreationTime   = dataW.ftCreationTime;
+    data->ftLastAccessTime = dataW.ftLastAccessTime;
+    data->ftLastWriteTime  = dataW.ftLastWriteTime;
+    data->nFileSizeHigh    = dataW.nFileSizeHigh;
+    data->nFileSizeLow     = dataW.nFileSizeLow;
+    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
+                         data->cFileName, sizeof(data->cFileName), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
                          data->cAlternateFileName,
-                         sizeof(data->cAlternateFileName)/sizeof(WCHAR) );
+                         sizeof(data->cAlternateFileName), NULL, NULL );
     return TRUE;
 }
 
@@ -1877,6 +2125,7 @@ BOOL WINAPI FindClose( HANDLE handle )
         {
             if (info->u.dos_dir) DOSFS_CloseDir( info->u.dos_dir );
             if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
+            if (info->long_mask) HeapFree( GetProcessHeap(), 0, info->long_mask );
         }
     }
     __EXCEPT(page_fault)
@@ -2399,26 +2648,35 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
     DOS_FULL_NAME full_name;
     HGLOBAL16 handle;
     FIND_FIRST_INFO *info;
+    WCHAR pathW[MAX_PATH];
+    char *p;
+    INT long_mask_len;
+    UINT codepage;
 
     data->dwReserved0 = data->dwReserved1 = 0x0;
-    if (!path) return 0;
-    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
+    if (!path) return INVALID_HANDLE_VALUE16;
+    MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, MAX_PATH);
+    if (!DOSFS_GetFullName( pathW, FALSE, &full_name ))
         return INVALID_HANDLE_VALUE16;
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
         return INVALID_HANDLE_VALUE16;
     info = (FIND_FIRST_INFO *)GlobalLock16( handle );
     info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
     strcpy( info->path, full_name.long_name );
-    info->long_mask = strrchr( info->path, '/' );
-    if (info->long_mask )
-        *(info->long_mask++) = '\0';
+
+    codepage = DRIVE_GetCodepage(full_name.drive);
+    p = strrchr( info->path, '/' );
+    *p++ = '\0';
+    long_mask_len = MultiByteToWideChar(codepage, 0, p, -1, NULL, 0);
+    info->long_mask = HeapAlloc( GetProcessHeap(), 0, long_mask_len * sizeof(WCHAR) );
+    MultiByteToWideChar(codepage, 0, p, -1, info->long_mask, long_mask_len);
+
     info->short_mask = NULL;
     info->attr = 0xff;
-    if (path[0] && (path[1] == ':')) info->drive = FILE_toupper(*path) - 'A';
-    else info->drive = DRIVE_GetCurrentDrive();
+    info->drive = full_name.drive;
     info->cur_pos = 0;
 
-    info->u.dos_dir = DOSFS_OpenDir( info->path );
+    info->u.dos_dir = DOSFS_OpenDir( codepage, info->path );
 
     GlobalUnlock16( handle );
     if (!FindNextFile16( handle, data ))
@@ -2436,28 +2694,48 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
 BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
 {
     FIND_FIRST_INFO *info;
+    WIN32_FIND_DATAW dataW;
+    BOOL ret = FALSE;
+    DWORD gle = ERROR_NO_MORE_FILES;
 
     if ((handle == INVALID_HANDLE_VALUE16) ||
        !(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
+        return ret;
     }
-    GlobalUnlock16( handle );
     if (!info->path || !info->u.dos_dir)
     {
-        SetLastError( ERROR_NO_MORE_FILES );
-        return FALSE;
+        goto done;
     }
-    if (!DOSFS_FindNextEx( info, data ))
+    if (!DOSFS_FindNextEx( info, &dataW ))
     {
         DOSFS_CloseDir( info->u.dos_dir ); info->u.dos_dir = NULL;
         HeapFree( GetProcessHeap(), 0, info->path );
-        info->path = info->long_mask = NULL;
-        SetLastError( ERROR_NO_MORE_FILES );
-        return FALSE;
+        info->path = NULL;
+        HeapFree( GetProcessHeap(), 0, info->long_mask );
+        info->long_mask = NULL;
+        goto done;
     }
-    return TRUE;
+
+    ret = TRUE;
+
+    data->dwFileAttributes = dataW.dwFileAttributes;
+    data->ftCreationTime   = dataW.ftCreationTime;
+    data->ftLastAccessTime = dataW.ftLastAccessTime;
+    data->ftLastWriteTime  = dataW.ftLastWriteTime;
+    data->nFileSizeHigh    = dataW.nFileSizeHigh;
+    data->nFileSizeLow     = dataW.nFileSizeLow;
+    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
+                         data->cFileName, sizeof(data->cFileName), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
+                         data->cAlternateFileName,
+                         sizeof(data->cAlternateFileName), NULL, NULL );
+done:
+    if( !ret ) SetLastError( gle );
+    GlobalUnlock16( handle );
+
+    return ret;
 }
 
 /*************************************************************************
@@ -2475,6 +2753,7 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
     }
     if (info->u.dos_dir) DOSFS_CloseDir( info->u.dos_dir );
     if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
+    if (info->long_mask) HeapFree( GetProcessHeap(), 0, info->long_mask );
     GlobalUnlock16( handle );
     GlobalFree16( handle );
     return TRUE;

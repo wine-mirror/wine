@@ -36,6 +36,7 @@
 # include <unistd.h>
 #endif
 #include "windef.h"
+#include "winnls.h"
 #include "callback.h"
 #include "file.h"
 #include "miscemu.h"
@@ -249,17 +250,22 @@ static inline void outl( DWORD value, WORD port )
 static void IO_port_init(void)
 {
 	char temp[1024];
+	WCHAR tempW[1024];
+        static const WCHAR portsW[] = {'p','o','r','t','s',0};
+        static const WCHAR readW[] = {'r','e','a','d',0};
+        static const WCHAR writeW[] = {'w','r','i','t','e',0};
+        static const WCHAR asteriskW[] = {'*',0};
 
         do_direct_port_access = 0;
 	/* Can we do that? */
 	if (!iopl(3)) {
 		iopl(0);
 
-		PROFILE_GetWineIniString( "ports", "read", "*",
-					 temp, sizeof(temp) );
+		PROFILE_GetWineIniString( portsW, readW, asteriskW, tempW, 1024 );
+		WideCharToMultiByte(CP_ACP, 0, tempW, -1, temp, 1024, NULL, NULL);
 		do_IO_port_init_read_or_write(temp, IO_READ);
-		PROFILE_GetWineIniString( "ports", "write", "*",
-					 temp, sizeof(temp) );
+		PROFILE_GetWineIniString( portsW, writeW, asteriskW, tempW, 1024 );
+		WideCharToMultiByte(CP_ACP, 0, tempW, -1, temp, 1024, NULL, NULL);
 		do_IO_port_init_read_or_write(temp, IO_WRITE);
 	}
     IO_FixCMOSCheckSum();

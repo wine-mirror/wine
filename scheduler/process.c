@@ -650,9 +650,12 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
         {
             DOS_FULL_NAME full_name;
             const char *name = main_exe_name;
+            UNICODE_STRING nameW;
 
             TRACE( "starting Winelib app %s\n", debugstr_a(main_exe_name) );
-            if (DOSFS_GetFullName( name, TRUE, &full_name )) name = full_name.long_name;
+            RtlCreateUnicodeStringFromAsciiz(&nameW, name);
+            if (DOSFS_GetFullName( nameW.Buffer, TRUE, &full_name )) name = full_name.long_name;
+            RtlFreeUnicodeString(&nameW);
             CloseHandle( main_exe_file );
             main_exe_file = 0;
             if (wine_dlopen( name, RTLD_NOW, error, sizeof(error) ))
@@ -1194,13 +1197,16 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
 
     if (cur_dir)
     {
-        if (DOSFS_GetFullName( cur_dir, TRUE, &full_dir ))
+        UNICODE_STRING cur_dirW;
+        RtlCreateUnicodeStringFromAsciiz(&cur_dirW, cur_dir);
+        if (DOSFS_GetFullName( cur_dirW.Buffer, TRUE, &full_dir ))
             unixdir = full_dir.long_name;
+        RtlFreeUnicodeString(&cur_dirW);
     }
     else
     {
-        char buf[MAX_PATH];
-        if (GetCurrentDirectoryA(sizeof(buf),buf))
+        WCHAR buf[MAX_PATH];
+        if (GetCurrentDirectoryW(MAX_PATH, buf))
         {
             if (DOSFS_GetFullName( buf, TRUE, &full_dir )) unixdir = full_dir.long_name;
         }
@@ -1253,11 +1259,16 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
         /* fall through */
     case BINARY_UNIX_EXE:
         {
+            /* unknown file, try as unix executable */
+            UNICODE_STRING nameW;
             DOS_FULL_NAME full_name;
             const char *unixfilename = name;
 
             TRACE( "starting %s as Unix binary\n", debugstr_a(name) );
-            if (DOSFS_GetFullName( name, TRUE, &full_name )) unixfilename = full_name.long_name;
+
+            RtlCreateUnicodeStringFromAsciiz(&nameW, name);
+            if (DOSFS_GetFullName( nameW.Buffer, TRUE, &full_name )) unixfilename = full_name.long_name;
+            RtlFreeUnicodeString(&nameW);
             retv = (fork_and_exec( unixfilename, tidy_cmdline, env, unixdir ) != -1);
         }
         break;

@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include "winbase.h"
 #include "wine/windef16.h"  /* HFILE16 */
+#include "wine/unicode.h"
 
 #define MAX_PATHNAME_LEN   1024
 
@@ -33,7 +34,7 @@
 typedef struct
 {
     char  long_name[MAX_PATHNAME_LEN];  /* Long pathname in Unix format */
-    char  short_name[MAX_PATHNAME_LEN]; /* Short pathname in DOS 8.3 format */
+    WCHAR short_name[MAX_PATHNAME_LEN]; /* Short pathname in DOS 8.3 format */
     int   drive;
 } DOS_FULL_NAME;
 
@@ -42,8 +43,9 @@ typedef struct
 /* DOS device descriptor */
 typedef struct
 {
-    char *name;
+    const WCHAR name[9];
     int flags;
+    UINT codepage;
 } DOS_DEVICE;
 
 /* locale-independent case conversion */
@@ -62,6 +64,12 @@ inline static int FILE_contains_path (LPCSTR name)
 {
     return ((*name && (name[1] == ':')) ||
             strchr (name, '/') || strchr (name, '\\'));
+}
+
+inline static int FILE_contains_pathW (LPCWSTR name)
+{
+    return ((*name && (name[1] == ':')) ||
+            strchrW (name, '/') || strchrW (name, '\\'));
 }
 
 /* files/file.c */
@@ -86,21 +94,20 @@ extern UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count );
 extern UINT DIR_GetSystemUnixDir( LPSTR path, UINT count );
 extern DWORD DIR_SearchAlternatePath( LPCSTR dll_path, LPCSTR name, LPCSTR ext,
                                       DWORD buflen, LPSTR buffer, LPSTR *lastpart);
-extern DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
+extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                              DOS_FULL_NAME *full_name, BOOL win32 );
 
 /* files/dos_fs.c */
 extern void DOSFS_UnixTimeToFileTime( time_t unixtime, LPFILETIME ft,
                                       DWORD remainder );
 extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
-extern BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
-extern const DOS_DEVICE *DOSFS_GetDevice( const char *name );
+extern BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer );
+extern const DOS_DEVICE *DOSFS_GetDevice( LPCWSTR name );
 extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile );
-extern HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa);
-extern BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
-                                  INT long_len, LPSTR short_buf,
-                                  BOOL ignore_case );
-extern BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last,
+extern HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa);
+extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
+                                INT long_len, LPWSTR short_buf, BOOL ignore_case );
+extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last,
                                  DOS_FULL_NAME *full );
 extern int DOSFS_FindNext( const char *path, const char *short_mask,
                            const char *long_mask, int drive, BYTE attr,
@@ -109,12 +116,12 @@ extern int DOSFS_FindNext( const char *path, const char *short_mask,
 /* profile.c */
 extern int PROFILE_LoadWineIni(void);
 extern void PROFILE_UsageWineIni(void);
-extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
-                                     const char *def, char *buffer, int len );
-extern int PROFILE_GetWineIniBool( char const *section, char const *key_name, int def );
+extern int PROFILE_GetWineIniString( LPCWSTR section, LPCWSTR key_name,
+                                     LPCWSTR def, LPWSTR buffer, int len );
+extern int PROFILE_GetWineIniBool( LPCWSTR section, LPCWSTR key_name, int def );
 
 /* win32/device.c */
-extern HANDLE DEVICE_Open( LPCSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
+extern HANDLE DEVICE_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 /* ntdll/cdrom.c.c */
 extern BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,

@@ -435,17 +435,19 @@ static void DOSCONF_Parse(char *menuname)
 
 int DOSCONF_ReadConfig(void)
 {
-    char buffer[256];
+    WCHAR filename[MAX_PATH];
     DOS_FULL_NAME fullname;
-    char *filename, *menuname;
+    WCHAR *p;
     int ret = 1;
+    static const WCHAR wineW[] = {'w','i','n','e',0};
+    static const WCHAR config_sysW[] = {'c','o','n','f','i','g','.','s','y','s',0};
+    static const WCHAR empty_strW[] = { 0 };
 
-    PROFILE_GetWineIniString( "wine", "config.sys", "", buffer, sizeof(buffer) );
-    if (!(filename = strtok(buffer, ","))) return ret;
-    menuname = strtok(NULL,   ",");
+    PROFILE_GetWineIniString( wineW, config_sysW, empty_strW, filename, MAX_PATH );
+    if ((p = strchrW(filename, ','))) *p = 0;
+    if (!filename[0]) return ret;
 
     DOSFS_GetFullName(filename, FALSE, &fullname);
-    if (menuname) menu_default = strdup(menuname);
     if ((cfg_fd = fopen(fullname.long_name, "r")))
     {
         DOSCONF_Parse(NULL);
@@ -453,10 +455,9 @@ int DOSCONF_ReadConfig(void)
     }
     else
     {
-        MESSAGE("Couldn't open config.sys file given as \"%s\" in" \
-            " wine.conf or .winerc, section [wine] !\n", filename);
+        MESSAGE("Couldn't open config.sys file given as %s in" \
+            " wine.conf or .winerc, section [wine] !\n", debugstr_w(filename));
         ret = 0;
     }
-    if (menu_default) free(menu_default);
     return ret;
 }

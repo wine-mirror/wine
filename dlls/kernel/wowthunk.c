@@ -20,7 +20,9 @@
 
 #include "wine/winbase16.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "wownt32.h"
+#include "ntddk.h"
 #include "file.h"
 #include "miscemu.h"
 #include "stackframe.h"
@@ -319,17 +321,35 @@ DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags 
     HMODULE hModule;
     DOS_FULL_NAME full_name;
     DWORD mutex_count;
+    UNICODE_STRING libfileW;
+    LPCWSTR filenameW;
+    static const WCHAR dllW[] = {'.','D','L','L',0};
+
+    if (!lpszLibFile)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&libfileW, lpszLibFile))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
 
     /* if the file can not be found, call LoadLibraryExA anyway, since it might be
        a buildin module. This case is handled in MODULE_LoadLibraryExA */
 
-    if ( ! DIR_SearchPath ( NULL, lpszLibFile, ".DLL", &full_name, FALSE ) ) {
-      strcpy ( full_name.short_name, lpszLibFile );
-    }
+    filenameW = libfileW.Buffer;
+    if ( DIR_SearchPath( NULL, filenameW, dllW, &full_name, FALSE ) )
+        filenameW = full_name.short_name;
 
     ReleaseThunkLock( &mutex_count );
-    hModule = LoadLibraryExA( full_name.short_name, (HANDLE)hFile, dwFlags );
+    hModule = LoadLibraryExW( filenameW, (HANDLE)hFile, dwFlags );
     RestoreThunkLock( mutex_count );
+
+    RtlFreeUnicodeString(&libfileW);
+
     return (DWORD)hModule;
 }
 

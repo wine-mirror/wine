@@ -32,16 +32,18 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "file.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int21);
 
 void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
 {
+  static const WCHAR emmxxxx0W[] = {'E','M','M','X','X','X','X','0',0};
   const DOS_DEVICE *dev = DOSFS_GetDeviceByHandle(
       DosFileHandleToWin32Handle(BX_reg(context)) );
 
-  if (dev && !strcasecmp( dev->name, "EMMXXXX0" )) {
+  if (dev && !strcmpiW( dev->name, emmxxxx0W )) {
     EMS_Ioctl_Handler(context);
     return;
   }

@@ -66,6 +66,7 @@
 #include "heap.h"
 #include "msdos.h"
 #include "task.h"
+#include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -76,28 +77,29 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
 typedef struct
 {
     char     *root;      /* root dir in Unix format without trailing / */
-    char     *dos_cwd;   /* cwd in DOS format without leading or trailing \ */
+    LPWSTR    dos_cwd;   /* cwd in DOS format without leading or trailing \ */
     char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
     char     *device;    /* raw device path */
-    char      label_conf[12]; /* drive label as cfg'd in wine config */
-    char      label_read[12]; /* drive label as read from device */
+    WCHAR     label_conf[12]; /* drive label as cfg'd in wine config */
+    WCHAR     label_read[12]; /* drive label as read from device */
     DWORD     serial_conf;    /* drive serial number as cfg'd in wine config */
     UINT      type;      /* drive type */
     UINT      flags;     /* drive flags */
+    UINT      codepage;  /* drive code page */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
 } DOSDRIVE;
 
 
-static const char * const DRIVE_Types[] =
+static const WCHAR DRIVE_Types[][8] =
 {
-    "",         /* DRIVE_UNKNOWN */
-    "",         /* DRIVE_NO_ROOT_DIR */
-    "floppy",   /* DRIVE_REMOVABLE */
-    "hd",       /* DRIVE_FIXED */
-    "network",  /* DRIVE_REMOTE */
-    "cdrom",    /* DRIVE_CDROM */
-    "ramdisk"   /* DRIVE_RAMDISK */
+    { 0 }, /* DRIVE_UNKNOWN */
+    { 0 }, /* DRIVE_NO_ROOT_DIR */
+    {'f','l','o','p','p','y',0}, /* DRIVE_REMOVABLE */
+    {'h','d',0}, /* DRIVE_FIXED */
+    {'n','e','t','w','o','r','k',0}, /* DRIVE_REMOTE */
+    {'c','d','r','o','m',0}, /* DRIVE_CDROM */
+    {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
 };
 
 
@@ -105,19 +107,19 @@ static const char * const DRIVE_Types[] =
 
 typedef struct
 {
-    const char *name;
+    const WCHAR name[6];
     UINT      flags;
 } FS_DESCR;
 
 static const FS_DESCR DRIVE_Filesystems[] =
 {
-    { "unix",   DRIVE_CASE_SENSITIVE | DRIVE_CASE_PRESERVING },
-    { "msdos",  DRIVE_SHORT_NAMES },
-    { "dos",    DRIVE_SHORT_NAMES },
-    { "fat",    DRIVE_SHORT_NAMES },
-    { "vfat",   DRIVE_CASE_PRESERVING },
-    { "win95",  DRIVE_CASE_PRESERVING },
-    { NULL, 0 }
+    { {'u','n','i','x',0}, DRIVE_CASE_SENSITIVE | DRIVE_CASE_PRESERVING },
+    { {'m','s','d','o','s',0}, DRIVE_SHORT_NAMES },
+    { {'d','o','s',0}, DRIVE_SHORT_NAMES },
+    { {'f','a','t',0}, DRIVE_SHORT_NAMES },
+    { {'v','f','a','t',0}, DRIVE_CASE_PRESERVING },
+    { {'w','i','n','9','5',0}, DRIVE_CASE_PRESERVING },
+    { { 0 }, 0 }
 };
 
 
@@ -140,18 +142,22 @@ extern void CDROM_InitRegistry(int dev);
 /***********************************************************************
  *           DRIVE_GetDriveType
  */
-static UINT DRIVE_GetDriveType( const char *name )
+static UINT DRIVE_GetDriveType( LPCWSTR name )
 {
-    char buffer[20];
+    WCHAR buffer[20];
     int i;
+    static const WCHAR TypeW[] = {'T','y','p','e',0};
+    static const WCHAR hdW[] = {'h','d',0};
 
-    PROFILE_GetWineIniString( name, "Type", "hd", buffer, sizeof(buffer) );
+    PROFILE_GetWineIniString( name, TypeW, hdW, buffer, 20 );
+    if(!buffer[0])
+        strcpyW(buffer,hdW);
     for (i = 0; i < sizeof(DRIVE_Types)/sizeof(DRIVE_Types[0]); i++)
     {
-        if (!strcasecmp( buffer, DRIVE_Types[i] )) return i;
+        if (!strcmpiW( buffer, DRIVE_Types[i] )) return i;
     }
-    MESSAGE("%s: unknown drive type '%s', defaulting to 'hd'.\n",
-	name, buffer );
+    MESSAGE("%s: unknown drive type %s, defaulting to 'hd'.\n",
+            debugstr_w(name), debugstr_w(buffer) );
     return DRIVE_FIXED;
 }
 
@@ -159,14 +165,14 @@ static UINT DRIVE_GetDriveType( const char *name )
 /***********************************************************************
  *           DRIVE_GetFSFlags
  */
-static UINT DRIVE_GetFSFlags( const char *name, const char *value )
+static UINT DRIVE_GetFSFlags( LPCWSTR name, LPCWSTR value )
 {
     const FS_DESCR *descr;
 
-    for (descr = DRIVE_Filesystems; descr->name; descr++)
-        if (!strcasecmp( value, descr->name )) return descr->flags;
-    MESSAGE("%s: unknown filesystem type '%s', defaulting to 'win95'.\n",
-	name, value );
+    for (descr = DRIVE_Filesystems; *descr->name; descr++)
+        if (!strcmpiW( value, descr->name )) return descr->flags;
+    MESSAGE("%s: unknown filesystem type %s, defaulting to 'win95'.\n",
+            debugstr_w(name), debugstr_w(value) );
     return DRIVE_CASE_PRESERVING;
 }
 
@@ -177,32 +183,55 @@ static UINT DRIVE_GetFSFlags( const char *name, const char *value )
 int DRIVE_Init(void)
 {
     int i, len, count = 0;
-    char name[] = "Drive A";
-    char drive_env[] = "=A:";
-    char path[MAX_PATHNAME_LEN];
-    char buffer[80];
+    WCHAR name[] = {'D','r','i','v','e',' ','A',0};
+    WCHAR drive_env[] = {'=','A',':',0};
+    WCHAR path[MAX_PATHNAME_LEN];
+    WCHAR buffer[80];
     struct stat drive_stat_buffer;
-    char *p;
+    WCHAR *p;
     DOSDRIVE *drive;
+    static const WCHAR PathW[] = {'P','a','t','h',0};
+    static const WCHAR empty_strW[] = { 0 };
+    static const WCHAR CodepageW[] = {'C','o','d','e','p','a','g','e',0};
+    static const WCHAR LabelW[] = {'L','a','b','e','l',0};
+    static const WCHAR SerialW[] = {'S','e','r','i','a','l',0};
+    static const WCHAR zeroW[] = {'0',0};
+    static const WCHAR def_serialW[] = {'1','2','3','4','5','6','7','8',0};
+    static const WCHAR FilesystemW[] = {'F','i','l','e','s','y','s','t','e','m',0};
+    static const WCHAR win95W[] = {'w','i','n','9','5',0};
+    static const WCHAR DeviceW[] = {'D','e','v','i','c','e',0};
+    static const WCHAR ReadVolInfoW[] = {'R','e','a','d','V','o','l','I','n','f','o',0};
+    static const WCHAR FailReadOnlyW[] = {'F','a','i','l','R','e','a','d','O','n','l','y',0};
+    static const WCHAR driveC_labelW[] = {'D','r','i','v','e',' ','C',' ',' ',' ',' ',0};
 
     for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, name[6]++, drive++)
     {
-        PROFILE_GetWineIniString( name, "Path", "", path, sizeof(path)-1 );
+        PROFILE_GetWineIniString( name, PathW, empty_strW, path, MAX_PATHNAME_LEN );
         if (path[0])
         {
-            p = path + strlen(path) - 1;
+            /* Get the code page number */
+            PROFILE_GetWineIniString( name, CodepageW, zeroW, /* 0 == CP_ACP */
+                                      buffer, 80 );
+            drive->codepage = strtolW( buffer, NULL, 10 );
+
+            p = path + strlenW(path) - 1;
             while ((p > path) && (*p == '/')) *p-- = '\0';
 
             if (path[0] == '/')
             {
-                drive->root = heap_strdup( path );
+                len = WideCharToMultiByte(drive->codepage, 0, path, -1, NULL, 0, NULL, NULL);
+                drive->root = HeapAlloc(GetProcessHeap(), 0, len);
+                WideCharToMultiByte(drive->codepage, 0, path, -1, drive->root, len, NULL, NULL);
             }
             else
             {
                 /* relative paths are relative to config dir */
                 const char *config = wine_get_config_dir();
-                drive->root = HeapAlloc( GetProcessHeap(), 0, strlen(config) + strlen(path) + 2 );
-                sprintf( drive->root, "%s/%s", config, path );
+                len = strlen(config);
+                len += WideCharToMultiByte(drive->codepage, 0, path, -1, NULL, 0, NULL, NULL) + 2;
+                drive->root = HeapAlloc( GetProcessHeap(), 0, len );
+                len -= sprintf( drive->root, "%s/", config );
+                WideCharToMultiByte(drive->codepage, 0, path, -1, drive->root + strlen(drive->root), len, NULL, NULL);
             }
 
             if (stat( drive->root, &drive_stat_buffer ))
@@ -222,7 +251,7 @@ int DRIVE_Init(void)
                 continue;
             }
 
-            drive->dos_cwd  = heap_strdup( "" );
+            drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
             drive->unix_cwd = heap_strdup( "" );
             drive->type     = DRIVE_GetDriveType( name );
             drive->device   = NULL;
@@ -231,36 +260,38 @@ int DRIVE_Init(void)
             drive->ino      = drive_stat_buffer.st_ino;
 
             /* Get the drive label */
-            PROFILE_GetWineIniString( name, "Label", "", drive->label_conf, 12 );
-            if ((len = strlen(drive->label_conf)) < 11)
+            PROFILE_GetWineIniString( name, LabelW, empty_strW, drive->label_conf, 12 );
+            if ((len = strlenW(drive->label_conf)) < 11)
             {
                 /* Pad label with spaces */
-                memset( drive->label_conf + len, ' ', 11 - len );
+                while(len < 11) drive->label_conf[len++] = ' ';
                 drive->label_conf[11] = '\0';
             }
 
             /* Get the serial number */
-            PROFILE_GetWineIniString( name, "Serial", "12345678",
-                                      buffer, sizeof(buffer) );
-            drive->serial_conf = strtoul( buffer, NULL, 16 );
+            PROFILE_GetWineIniString( name, SerialW, def_serialW, buffer, 80 );
+            drive->serial_conf = strtolW( buffer, NULL, 16 );
 
             /* Get the filesystem type */
-            PROFILE_GetWineIniString( name, "Filesystem", "win95",
-                                      buffer, sizeof(buffer) );
+            PROFILE_GetWineIniString( name, FilesystemW, win95W, buffer, 80 );
             drive->flags = DRIVE_GetFSFlags( name, buffer );
 
             /* Get the device */
-            PROFILE_GetWineIniString( name, "Device", "",
-                                      buffer, sizeof(buffer) );
+            PROFILE_GetWineIniString( name, DeviceW, empty_strW, buffer, 80 );
             if (buffer[0])
 	    {
 		int cd_fd;
-                drive->device = heap_strdup( buffer );
-		if (PROFILE_GetWineIniBool( name, "ReadVolInfo", 1))
+                len = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
+                drive->device = HeapAlloc(GetProcessHeap(), 0, len);
+                WideCharToMultiByte(drive->codepage, 0, buffer, -1, drive->device, len, NULL, NULL);
+
+ 		if (PROFILE_GetWineIniBool( name, ReadVolInfoW, 1))
                     drive->flags |= DRIVE_READ_VOL_INFO;
+
                 if (drive->type == DRIVE_CDROM)
                 {
-                    if ((cd_fd = open(buffer,O_RDONLY|O_NONBLOCK)) != -1) {
+                    if ((cd_fd = open(drive->device, O_RDONLY|O_NONBLOCK)) != -1)
+                    {
                         CDROM_InitRegistry(cd_fd);
                         close(cd_fd);
                     }
@@ -268,7 +299,7 @@ int DRIVE_Init(void)
 	    }
 
             /* Get the FailReadOnly flag */
-            if (PROFILE_GetWineIniBool( name, "FailReadOnly", 0 ))
+            if (PROFILE_GetWineIniBool( name, FailReadOnlyW, 0 ))
                 drive->flags |= DRIVE_FAIL_READ_ONLY;
 
             /* Make the first hard disk the current drive */
@@ -276,13 +307,13 @@ int DRIVE_Init(void)
                 DRIVE_CurDrive = i;
 
             count++;
-            TRACE("%s: path=%s type=%s label='%s' serial=%08lx "
-                  "flags=%08x dev=%x ino=%x\n",
-                  name, drive->root, DRIVE_Types[drive->type],
-                  drive->label_conf, drive->serial_conf, drive->flags,
-                  (int)drive->dev, (int)drive->ino );
+            TRACE("%s: path=%s type=%s label=%s serial=%08lx "
+                  "flags=%08x codepage=%u dev=%x ino=%x\n",
+                  debugstr_w(name), drive->root, debugstr_w(DRIVE_Types[drive->type]),
+                  debugstr_w(drive->label_conf), drive->serial_conf, drive->flags,
+                  drive->codepage, (int)drive->dev, (int)drive->ino );
         }
-        else WARN("%s: not defined\n", name );
+        else WARN("%s: not defined\n", debugstr_w(name) );
     }
 
     if (!count)
@@ -290,9 +321,9 @@ int DRIVE_Init(void)
         MESSAGE("Warning: no valid DOS drive found, check your configuration file.\n" );
         /* Create a C drive pointing to Unix root dir */
         DOSDrives[2].root     = heap_strdup( "/" );
-        DOSDrives[2].dos_cwd  = heap_strdup( "" );
+        DOSDrives[2].dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSDrives[2].dos_cwd[0]));
         DOSDrives[2].unix_cwd = heap_strdup( "" );
-        strcpy( DOSDrives[2].label_conf, "Drive C    " );
+        strcpyW( DOSDrives[2].label_conf, driveC_labelW );
         DOSDrives[2].serial_conf   = 12345678;
         DOSDrives[2].type     = DRIVE_FIXED;
         DOSDrives[2].device   = NULL;
@@ -316,9 +347,9 @@ int DRIVE_Init(void)
     /* get current working directory info for all drives */
     for (i = 0; i < MAX_DOS_DRIVES; i++, drive_env[1]++)
     {
-        if (!GetEnvironmentVariableA(drive_env, path, sizeof(path))) continue;
+        if (!GetEnvironmentVariableW(drive_env, path, MAX_PATHNAME_LEN)) continue;
         /* sanity check */
-        if (toupper(path[0]) != drive_env[1] || path[1] != ':') continue;
+        if (toupperW(path[0]) != drive_env[1] || path[1] != ':') continue;
         DRIVE_Chdir( i, path + 2 );
     }
     return 1;
@@ -361,7 +392,6 @@ int DRIVE_SetCurrentDrive( int drive )
     TRACE("%c:\n", 'A' + drive );
     DRIVE_CurDrive = drive;
     if (pTask) pTask->curdrive = drive | 0x80;
-    chdir(DRIVE_GetUnixCwd(drive));
     return 1;
 }
 
@@ -373,6 +403,8 @@ int DRIVE_SetCurrentDrive( int drive )
  * This can be used to translate a Unix path into a drive + DOS path.
  * Return value is the drive, or -1 on error. On success, path is modified
  * to point to the beginning of the DOS path.
+ *
+ * Note: path must be in the encoding of the underlying Unix file system.
  */
 int DRIVE_FindDriveRoot( const char **path )
 {
@@ -437,6 +469,45 @@ int DRIVE_FindDriveRoot( const char **path )
 
 
 /***********************************************************************
+ *           DRIVE_FindDriveRootW
+ *
+ * Unicode version of DRIVE_FindDriveRoot.
+ */
+int DRIVE_FindDriveRootW( LPCWSTR *path )
+{
+    int drive, rootdrive = -1;
+    char buffer[MAX_PATHNAME_LEN];
+    LPCWSTR p = *path;
+    int len, match_len = -1;
+
+    for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+    {
+        if (!DOSDrives[drive].root ||
+            (DOSDrives[drive].flags & DRIVE_DISABLED)) continue;
+
+        WideCharToMultiByte(DOSDrives[drive].codepage, 0, *path, -1,
+                            buffer, MAX_PATHNAME_LEN, NULL, NULL);
+
+        len = strlen(DOSDrives[drive].root);
+        if(strncmp(DOSDrives[drive].root, buffer, len))
+            continue;
+        if(len <= match_len) continue;
+        match_len = len;
+        rootdrive = drive;
+        p = *path + len;
+    }
+
+    if (rootdrive != -1)
+    {
+        *path = p;
+        TRACE("%s -> drive %c:, root='%s', name=%s\n",
+              buffer, 'A' + rootdrive, DOSDrives[rootdrive].root, debugstr_w(*path) );
+    }
+    return rootdrive;
+}
+
+
+/***********************************************************************
  *           DRIVE_GetRoot
  */
 const char * DRIVE_GetRoot( int drive )
@@ -449,7 +520,7 @@ const char * DRIVE_GetRoot( int drive )
 /***********************************************************************
  *           DRIVE_GetDosCwd
  */
-const char * DRIVE_GetDosCwd( int drive )
+LPCWSTR DRIVE_GetDosCwd( int drive )
 {
     TDB *pTask = TASK_GetCurrent();
     if (!DRIVE_IsValid( drive )) return NULL;
@@ -459,8 +530,11 @@ const char * DRIVE_GetDosCwd( int drive )
         ((pTask->curdrive & ~0x80) == drive) && /* and it's the one we want */
         (DRIVE_LastTask != GetCurrentTask()))   /* and the task changed */
     {
+        static const WCHAR rootW[] = {'\\',0};
+        WCHAR curdirW[MAX_PATH];
+        MultiByteToWideChar(CP_ACP, 0, pTask->curdir, -1, curdirW, MAX_PATH);
         /* Perform the task-switch */
-        if (!DRIVE_Chdir( drive, pTask->curdir )) DRIVE_Chdir( drive, "\\" );
+        if (!DRIVE_Chdir( drive, curdirW )) DRIVE_Chdir( drive, rootW );
         DRIVE_LastTask = GetCurrentTask();
     }
     return DOSDrives[drive].dos_cwd;
@@ -480,8 +554,11 @@ const char * DRIVE_GetUnixCwd( int drive )
         ((pTask->curdrive & ~0x80) == drive) && /* and it's the one we want */
         (DRIVE_LastTask != GetCurrentTask()))   /* and the task changed */
     {
+        static const WCHAR rootW[] = {'\\',0};
+        WCHAR curdirW[MAX_PATH];
+        MultiByteToWideChar(CP_ACP, 0, pTask->curdir, -1, curdirW, MAX_PATH);
         /* Perform the task-switch */
-        if (!DRIVE_Chdir( drive, pTask->curdir )) DRIVE_Chdir( drive, "\\" );
+        if (!DRIVE_Chdir( drive, curdirW )) DRIVE_Chdir( drive, rootW );
         DRIVE_LastTask = GetCurrentTask();
     }
     return DOSDrives[drive].unix_cwd;
@@ -661,18 +738,15 @@ int DRIVE_WriteSuperblockEntry (int drive, off_t ofs, size_t len, char * buff)
  */
 static HANDLE   CDROM_Open(int drive)
 {
-    char       root[6];
-
-    strcpy(root, "\\\\.\\A:");
+    WCHAR root[] = {'\\','\\','.','\\','A',':',0};
     root[4] += drive;
-
-    return CreateFileA(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    return CreateFileW(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
 }
 
 /**************************************************************************
  *                              CDROM_Data_GetLabel             [internal]
  */
-DWORD CDROM_Data_GetLabel(int drive, char *label)
+DWORD CDROM_Data_GetLabel(int drive, WCHAR *label)
 {
 #define LABEL_LEN       32+1
     int dev = open(DOSDrives[drive].device, O_RDONLY|O_NONBLOCK);
@@ -702,12 +776,12 @@ DWORD CDROM_Data_GetLabel(int drive, char *label)
                      ch = label_read[i];
                      label_read[i] = (ch << 8) | (ch >> 8);
                 }
-                WideCharToMultiByte( CP_ACP, 0, label_read, -1, label, 12, NULL, NULL );
+                strncpyW(label, label_read, 11);
                 label[11] = 0;
             }
             else
             {
-                strncpy(label, (LPSTR)label_read, 11);
+                MultiByteToWideChar(DOSDrives[drive].codepage, 0, (LPSTR)label_read, -1, label, 11);
                 label[11] = '\0';
             }
             return 1;
@@ -722,7 +796,7 @@ failure:
 /**************************************************************************
  *				CDROM_GetLabel			[internal]
  */
-static DWORD CDROM_GetLabel(int drive, char *label)
+static DWORD CDROM_GetLabel(int drive, WCHAR *label)
 {
     HANDLE              h = CDROM_Open(drive);
     CDROM_DISK_DATA     cdd;
@@ -739,8 +813,11 @@ static DWORD CDROM_GetLabel(int drive, char *label)
             ret = 0;
         break;
     case CDROM_DISK_AUDIO_TRACK:
-        strcpy(label, "Audio CD   ");
+    {
+        static const WCHAR audioCD[] = {'A','u','d','i','o',' ','C','D',' ',' ',' ',0};
+        strcpyW(label, audioCD);
         break;
+    }
     case CDROM_DISK_DATA_TRACK|CDROM_DISK_AUDIO_TRACK:
         FIXME("Need to get the label of a mixed mode CD: not implemented yet !\n");
         /* fall through */
@@ -748,14 +825,14 @@ static DWORD CDROM_GetLabel(int drive, char *label)
         ret = 0;
         break;
     }
-    TRACE("CD: label is '%s'.\n", label);
+    TRACE("CD: label is %s\n", debugstr_w(label));
 
     return ret;
 }
 /***********************************************************************
  *           DRIVE_GetLabel
  */
-const char * DRIVE_GetLabel( int drive )
+LPCWSTR DRIVE_GetLabel( int drive )
 {
     int read = 0;
     char buff[DRIVE_SUPER];
@@ -778,7 +855,9 @@ const char * DRIVE_GetLabel( int drive )
 		offs = 0x2b;
 
 	    /* FIXME: ISO9660 uses a 32 bytes long label. Should we do also? */
-	    if (offs != -1) memcpy(DOSDrives[drive].label_read,buff+offs,11);
+	    if (offs != -1)
+                MultiByteToWideChar(DOSDrives[drive].codepage, 0, buff+offs, 11,
+                                    DOSDrives[drive].label_read, 11);
 	    DOSDrives[drive].label_read[11]='\0';
 	    read = 1;
 	}
@@ -923,6 +1002,8 @@ DWORD DRIVE_GetSerialNumber( int drive )
     DWORD serial = 0;
     char buff[DRIVE_SUPER];
 
+    TRACE("drive %d, type = %d\n", drive, DOSDrives[drive].type);
+
     if (!DRIVE_IsValid( drive )) return 0;
 
     if (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO)
@@ -980,7 +1061,7 @@ int DRIVE_SetSerialNumber( int drive, DWORD serial )
  */
 static UINT DRIVE_GetType( int drive )
 {
-    if (!DRIVE_IsValid( drive )) return DRIVE_UNKNOWN;
+    if (!DRIVE_IsValid( drive )) return DRIVE_NO_ROOT_DIR;
     return DOSDrives[drive].type;
 }
 
@@ -994,22 +1075,33 @@ UINT DRIVE_GetFlags( int drive )
     return DOSDrives[drive].flags;
 }
 
+/***********************************************************************
+ *           DRIVE_GetCodepage
+ */
+UINT DRIVE_GetCodepage( int drive )
+{
+    if ((drive < 0) || (drive >= MAX_DOS_DRIVES)) return 0;
+    return DOSDrives[drive].codepage;
+}
+
 
 /***********************************************************************
  *           DRIVE_Chdir
  */
-int DRIVE_Chdir( int drive, const char *path )
+int DRIVE_Chdir( int drive, LPCWSTR path )
 {
     DOS_FULL_NAME full_name;
-    char buffer[MAX_PATHNAME_LEN];
+    WCHAR buffer[MAX_PATHNAME_LEN];
     LPSTR unix_cwd;
     BY_HANDLE_FILE_INFORMATION info;
     TDB *pTask = TASK_GetCurrent();
 
-    strcpy( buffer, "A:" );
-    buffer[0] += drive;
-    TRACE("(%s,%s)\n", buffer, path );
-    lstrcpynA( buffer + 2, path, sizeof(buffer) - 2 );
+    buffer[0] = 'A' + drive;
+    buffer[1] = ':';
+    buffer[2] = 0;
+    TRACE("(%s,%s)\n", debugstr_w(buffer), debugstr_w(path) );
+    strncpyW( buffer + 2, path, MAX_PATHNAME_LEN - 2 );
+    buffer[MAX_PATHNAME_LEN - 1] = 0; /* ensure 0 termination */
 
     if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
     if (!FILE_Stat( full_name.long_name, &info )) return 0;
@@ -1022,20 +1114,20 @@ int DRIVE_Chdir( int drive, const char *path )
     while (*unix_cwd == '/') unix_cwd++;
 
     TRACE("(%c:): unix_cwd=%s dos_cwd=%s\n",
-                   'A' + drive, unix_cwd, full_name.short_name + 3 );
+            'A' + drive, unix_cwd, debugstr_w(full_name.short_name + 3) );
 
     HeapFree( GetProcessHeap(), 0, DOSDrives[drive].dos_cwd );
     HeapFree( GetProcessHeap(), 0, DOSDrives[drive].unix_cwd );
-    DOSDrives[drive].dos_cwd  = heap_strdup( full_name.short_name + 3 );
+    DOSDrives[drive].dos_cwd  = HeapAlloc(GetProcessHeap(), 0, (strlenW(full_name.short_name) - 2) * sizeof(WCHAR));
+    strcpyW(DOSDrives[drive].dos_cwd, full_name.short_name + 3);
     DOSDrives[drive].unix_cwd = heap_strdup( unix_cwd );
 
     if (pTask && (pTask->curdrive & 0x80) &&
         ((pTask->curdrive & ~0x80) == drive))
     {
-        lstrcpynA( pTask->curdir, full_name.short_name + 2,
-                     sizeof(pTask->curdir) );
+        WideCharToMultiByte(CP_ACP, 0, full_name.short_name + 2, -1,
+                            pTask->curdir, sizeof(pTask->curdir), NULL, NULL);
         DRIVE_LastTask = GetCurrentTask();
-        chdir(unix_cwd); /* Only change if on current drive */
     }
     return 1;
 }
@@ -1103,7 +1195,8 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     }
 
     new->root     = heap_strdup( old->root );
-    new->dos_cwd  = heap_strdup( old->dos_cwd );
+    new->dos_cwd  = HeapAlloc(GetProcessHeap(), 0, (strlenW(old->dos_cwd) + 1) * sizeof(WCHAR));
+    strcpyW(new->dos_cwd, old->dos_cwd);
     new->unix_cwd = heap_strdup( old->unix_cwd );
     new->device   = heap_strdup( old->device );
     memcpy ( new->label_conf, old->label_conf, 12 );
@@ -1198,7 +1291,7 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 
     if (!DRIVE_IsValid(drive))
     {
-        SetLastError( ERROR_INVALID_DRIVE );
+        SetLastError( ERROR_PATH_NOT_FOUND );
         return 0;
     }
 
@@ -1238,18 +1331,18 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
  * Despite the API description, return required length including the
  * terminating null when buffer too small. This is the real behaviour.
 */
-
-static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPSTR buf )
+static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPWSTR buf )
 {
     UINT ret;
-    const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
+    LPCWSTR dos_cwd = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
+    static const WCHAR driveA_rootW[] = {'A',':','\\',0};
 
-    assert(s);
-    ret = strlen(s) + 3; /* length of WHOLE current directory */
+    ret = strlenW(dos_cwd) + 3; /* length of WHOLE current directory */
     if (ret >= buflen) return ret + 1;
-    lstrcpynA( buf, "A:\\", min( 4u, buflen ) );
-    if (buflen) buf[0] += DRIVE_GetCurrentDrive();
-    if (buflen > 3) lstrcpynA( buf + 3, s, buflen - 3 );
+
+    strcpyW( buf, driveA_rootW );
+    buf[0] += DRIVE_GetCurrentDrive();
+    strcatW( buf, dos_cwd );
     return ret;
 }
 
@@ -1263,18 +1356,25 @@ static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPSTR buf )
 char *DRIVE_BuildEnv(void)
 {
     int i, length = 0;
-    const char *cwd[MAX_DOS_DRIVES];
+    LPCWSTR cwd[MAX_DOS_DRIVES];
     char *env, *p;
 
     for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
-        if ((cwd[i] = DRIVE_GetDosCwd(i)) && cwd[i][0]) length += strlen(cwd[i]) + 8;
+        if ((cwd[i] = DRIVE_GetDosCwd(i)) && cwd[i][0])
+            length += WideCharToMultiByte(DRIVE_GetCodepage(i), 0,
+                                          cwd[i], -1, NULL, 0, NULL, NULL) + 7;
     }
     if (!(env = HeapAlloc( GetProcessHeap(), 0, length+1 ))) return NULL;
     for (i = 0, p = env; i < MAX_DOS_DRIVES; i++)
     {
         if (cwd[i] && cwd[i][0])
-            p += sprintf( p, "=%c:=%c:\\%s", 'A'+i, 'A'+i, cwd[i] ) + 1;
+        {
+            *p++ = '='; *p++ = 'A' + i; *p++ = ':';
+            *p++ = '='; *p++ = 'A' + i; *p++ = ':'; *p++ = '\\';
+            WideCharToMultiByte(DRIVE_GetCodepage(i), 0, cwd[i], -1, p, 0x7fffffff, NULL, NULL);
+            p += strlen(p) + 1;
+        }
     }
     *p = 0;
     return env;
@@ -1294,7 +1394,7 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpaceA   (KERNEL32.@)
+ *           GetDiskFreeSpaceW   (KERNEL32.@)
  *
  * Fails if expression resulting from current drive's dir and "root"
  * is not a root dir of the target drive.
@@ -1320,27 +1420,38 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
  * "E:\\TEST"  "C:"   TRUE  (when CurrDir of "C:" set to "\\")
  * "E:\\TEST"  "C:"   FALSE (when CurrDir of "C:" set to "\\TEST")
  */
-BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
+BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
                                    LPDWORD sector_bytes, LPDWORD free_clusters,
                                    LPDWORD total_clusters )
 {
     int	drive, sec_size;
     ULARGE_INTEGER size,available;
-    LPCSTR path;
+    LPCWSTR path;
     DWORD cluster_sec;
 
-    if ((!root) || (strcmp(root,"\\") == 0))
+    TRACE("%s,%p,%p,%p,%p\n", debugstr_w(root), cluster_sectors, sector_bytes,
+          free_clusters, total_clusters);
+
+    if (!root || root[0] == '\\' || root[0] == '/')
 	drive = DRIVE_GetCurrentDrive();
     else
-    if ( (strlen(root) >= 2) && (root[1] == ':')) /* root contains drive tag */
+    if (root[0] && root[1] == ':') /* root contains drive tag */
     {
-        drive = toupper(root[0]) - 'A';
+        drive = toupperW(root[0]) - 'A';
 	path = &root[2];
 	if (path[0] == '\0')
+        {
 	    path = DRIVE_GetDosCwd(drive);
+            if (!path)
+            {
+                SetLastError(ERROR_PATH_NOT_FOUND);
+                return FALSE;
+            }
+        }
 	else
 	if (path[0] == '\\')
 	    path++;
+
         if (path[0]) /* oops, we are in a subdir */
         {
             SetLastError(ERROR_INVALID_NAME);
@@ -1349,7 +1460,10 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
     }
     else
     {
-        SetLastError(ERROR_INVALID_NAME);
+        if (!root[0])
+            SetLastError(ERROR_PATH_NOT_FOUND);
+        else
+            SetLastError(ERROR_INVALID_NAME);
         return FALSE;
     }
 
@@ -1386,19 +1500,30 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpaceW   (KERNEL32.@)
+ *           GetDiskFreeSpaceA   (KERNEL32.@)
  */
-BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
+BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
                                    LPDWORD sector_bytes, LPDWORD free_clusters,
                                    LPDWORD total_clusters )
 {
-    LPSTR xroot;
-    BOOL ret;
+    UNICODE_STRING rootW;
+    BOOL ret = FALSE;
 
-    xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, root);
-    ret = GetDiskFreeSpaceA( xroot,cluster_sectors, sector_bytes,
-                               free_clusters, total_clusters );
-    HeapFree( GetProcessHeap(), 0, xroot );
+    if (root)
+    {
+        if(!RtlCreateUnicodeStringFromAsciiz(&rootW, root))
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+    }
+    else
+        rootW.Buffer = NULL;
+
+    ret = GetDiskFreeSpaceW(rootW.Buffer, cluster_sectors, sector_bytes,
+                            free_clusters, total_clusters );
+    RtlFreeUnicodeString(&rootW);
+
     return ret;
 }
 
@@ -1516,7 +1641,7 @@ UINT16 WINAPI GetDriveType16( UINT16 drive ) /* [in] number (NOT letter) of driv
 
 
 /***********************************************************************
- *           GetDriveTypeA   (KERNEL32.@)
+ *           GetDriveTypeW   (KERNEL32.@)
  *
  * Returns the type of the disk drive specified. If root is NULL the
  * root of the current directory is used.
@@ -1533,34 +1658,49 @@ UINT16 WINAPI GetDriveType16( UINT16 drive ) /* [in] number (NOT letter) of driv
  *   DRIVE_CDROM       CDROM drive
  *   DRIVE_RAMDISK     virtual disk in RAM
  */
-UINT WINAPI GetDriveTypeA(LPCSTR root) /* [in] String describing drive */
+UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
 {
     int drive;
-    TRACE("(%s)\n", debugstr_a(root));
+    TRACE("(%s)\n", debugstr_w(root));
 
     if (NULL == root) drive = DRIVE_GetCurrentDrive();
     else
     {
         if ((root[1]) && (root[1] != ':'))
 	{
-	    WARN("invalid root %s\n", debugstr_a(root));
+	    WARN("invalid root %s\n", debugstr_w(root));
 	    return DRIVE_NO_ROOT_DIR;
 	}
-	drive = toupper(root[0]) - 'A';
+	drive = toupperW(root[0]) - 'A';
     }
     return DRIVE_GetType(drive);
 }
 
 
 /***********************************************************************
- *           GetDriveTypeW   (KERNEL32.@)
+ *           GetDriveTypeA   (KERNEL32.@)
  */
-UINT WINAPI GetDriveTypeW( LPCWSTR root )
+UINT WINAPI GetDriveTypeA( LPCSTR root )
 {
-    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
-    UINT ret = GetDriveTypeA( xpath );
-    HeapFree( GetProcessHeap(), 0, xpath );
+    UNICODE_STRING rootW;
+    UINT ret = 0;
+
+    if (root)
+    {
+        if( !RtlCreateUnicodeStringFromAsciiz(&rootW, root))
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return 0;
+        }
+    }
+    else
+        rootW.Buffer = NULL;
+
+    ret = GetDriveTypeW(rootW.Buffer);
+
+    RtlFreeUnicodeString(&rootW);
     return ret;
+
 }
 
 
@@ -1569,39 +1709,60 @@ UINT WINAPI GetDriveTypeW( LPCWSTR root )
  */
 UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
 {
-    return (UINT16)DRIVE_GetCurrentDirectory(buflen, buf);
+    WCHAR cur_dirW[MAX_PATH];
+
+    DRIVE_GetCurrentDirectory(MAX_PATH, cur_dirW);
+    return (UINT16)WideCharToMultiByte(CP_ACP, 0, cur_dirW, -1, buf, buflen, NULL, NULL);
 }
 
-
-/***********************************************************************
- *           GetCurrentDirectoryA   (KERNEL32.@)
- */
-UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
-{
-    UINT ret;
-    char longname[MAX_PATHNAME_LEN];
-    char shortname[MAX_PATHNAME_LEN];
-    ret = DRIVE_GetCurrentDirectory(MAX_PATHNAME_LEN, shortname);
-    if ( ret > MAX_PATHNAME_LEN ) {
-      ERR_(file)("pathnamelength (%d) > MAX_PATHNAME_LEN!\n", ret );
-      return ret;
-    }
-    GetLongPathNameA(shortname, longname, MAX_PATHNAME_LEN);
-    ret = strlen( longname ) + 1;
-    if (ret > buflen) return ret;
-    strcpy(buf, longname);
-    return ret - 1;
-}
 
 /***********************************************************************
  *           GetCurrentDirectoryW   (KERNEL32.@)
  */
 UINT WINAPI GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
 {
-    LPSTR xpath = HeapAlloc( GetProcessHeap(), 0, buflen+1 );
-    UINT ret = GetCurrentDirectoryA( buflen, xpath );
-    if (ret < buflen) ret = MultiByteToWideChar( CP_ACP, 0, xpath, -1, buf, buflen ) - 1;
-    HeapFree( GetProcessHeap(), 0, xpath );
+    UINT ret;
+    WCHAR longname[MAX_PATHNAME_LEN];
+    WCHAR shortname[MAX_PATHNAME_LEN];
+
+    ret = DRIVE_GetCurrentDirectory(MAX_PATHNAME_LEN, shortname);
+    if ( ret > MAX_PATHNAME_LEN ) {
+      ERR_(file)("pathnamelength (%d) > MAX_PATHNAME_LEN!\n", ret );
+      return ret;
+    }
+    GetLongPathNameW(shortname, longname, MAX_PATHNAME_LEN);
+    ret = strlenW( longname ) + 1;
+    if (ret > buflen) return ret;
+    strcpyW(buf, longname);
+    return ret - 1;
+}
+
+/***********************************************************************
+ *           GetCurrentDirectoryA   (KERNEL32.@)
+ */
+UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
+{
+    WCHAR bufferW[MAX_PATH];
+    DWORD ret, retW;
+
+    retW = GetCurrentDirectoryW(MAX_PATH, bufferW);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        if (buflen >= ret)
+        {
+            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buf, buflen, NULL, NULL);
+            ret--; /* length without 0 */
+        }
+    }
     return ret;
 }
 
@@ -1616,19 +1777,20 @@ BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
 
 
 /***********************************************************************
- *           SetCurrentDirectoryA   (KERNEL32.@)
+ *           SetCurrentDirectoryW   (KERNEL32.@)
  */
-BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
+BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dir )
 {
     int drive, olddrive = DRIVE_GetCurrentDrive();
 
-    if (!dir) {
-    	ERR_(file)("(NULL)!\n");
+    if (!dir)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
     if (dir[0] && (dir[1]==':'))
     {
-        drive = toupper( *dir ) - 'A';
+        drive = toupperW( *dir ) - 'A';
         dir += 2;
     }
     else
@@ -1638,6 +1800,7 @@ BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
        sets pTask->curdir only if pTask->curdrive is drive */
     if (!(DRIVE_SetCurrentDrive( drive )))
 	return FALSE;
+
     /* FIXME: what about empty strings? Add a \\ ? */
     if (!DRIVE_Chdir( drive, dir )) {
 	DRIVE_SetCurrentDrive(olddrive);
@@ -1648,14 +1811,27 @@ BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 
 
 /***********************************************************************
- *           SetCurrentDirectoryW   (KERNEL32.@)
+ *           SetCurrentDirectoryA   (KERNEL32.@)
  */
-BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dirW )
+BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 {
-    LPSTR dir = HEAP_strdupWtoA( GetProcessHeap(), 0, dirW );
-    BOOL res = SetCurrentDirectoryA( dir );
-    HeapFree( GetProcessHeap(), 0, dir );
-    return res;
+    UNICODE_STRING dirW;
+    BOOL ret = FALSE;
+
+    if (!dir)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&dirW, dir))
+    {
+        ret = SetCurrentDirectoryW(dirW.Buffer);
+        RtlFreeUnicodeString(&dirW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
 }
 
 
@@ -1733,33 +1909,34 @@ DWORD WINAPI GetLogicalDrives(void)
 
 
 /***********************************************************************
- *           GetVolumeInformationA   (KERNEL32.@)
+ *           GetVolumeInformationW   (KERNEL32.@)
  */
-BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
+BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
                                        DWORD label_len, DWORD *serial,
                                        DWORD *filename_len, DWORD *flags,
-                                       LPSTR fsname, DWORD fsname_len )
+                                       LPWSTR fsname, DWORD fsname_len )
 {
     int drive;
-    char *cp;
+    LPWSTR cp;
 
     /* FIXME, SetLastError()s missing */
 
     if (!root) drive = DRIVE_GetCurrentDrive();
     else
     {
-        if ((root[1]) && (root[1] != ':'))
+        if (root[0] && root[1] != ':')
         {
-            WARN("invalid root '%s'\n",root);
+            WARN("invalid root %s\n", debugstr_w(root));
             return FALSE;
         }
-        drive = toupper(root[0]) - 'A';
+        drive = toupperW(root[0]) - 'A';
     }
     if (!DRIVE_IsValid( drive )) return FALSE;
-    if (label)
+    if (label && label_len)
     {
-       lstrcpynA( label, DRIVE_GetLabel(drive), label_len );
-       cp = label + strlen(label);
+       strncpyW( label, DRIVE_GetLabel(drive), label_len );
+       label[label_len - 1] = 0; /* ensure 0 termination */
+       cp = label + strlenW(label);
        while (cp != label && *(cp-1) == ' ') cp--;
        *cp = '\0';
     }
@@ -1782,46 +1959,59 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
        if (DOSDrives[drive].flags & DRIVE_CASE_PRESERVING)
          *flags|=FS_CASE_IS_PRESERVED;
       }
-    if (fsname) {
+    if (fsname && fsname_len)
+    {
     	/* Diablo checks that return code ... */
         if (DOSDrives[drive].type == DRIVE_CDROM)
-	    lstrcpynA( fsname, "CDFS", fsname_len );
+        {
+            static const WCHAR cdfsW[] = {'C','D','F','S',0};
+            strncpyW( fsname, cdfsW, fsname_len );
+        }
 	else
-	    lstrcpynA( fsname, "FAT", fsname_len );
+        {
+            static const WCHAR fatW[] = {'F','A','T',0};
+            strncpyW( fsname, fatW, fsname_len );
+        }
+        fsname[fsname_len - 1] = 0; /* ensure 0 termination */
     }
     return TRUE;
 }
 
 
 /***********************************************************************
- *           GetVolumeInformationW   (KERNEL32.@)
+ *           GetVolumeInformationA   (KERNEL32.@)
  */
-BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
+BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
                                        DWORD label_len, DWORD *serial,
                                        DWORD *filename_len, DWORD *flags,
-                                       LPWSTR fsname, DWORD fsname_len )
+                                       LPSTR fsname, DWORD fsname_len )
 {
-    LPSTR xroot    = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
-    LPSTR xvolname = label ? HeapAlloc(GetProcessHeap(),0,label_len) : NULL;
-    LPSTR xfsname  = fsname ? HeapAlloc(GetProcessHeap(),0,fsname_len) : NULL;
-    BOOL ret = GetVolumeInformationA( xroot, xvolname, label_len, serial,
-                                          filename_len, flags, xfsname,
-                                          fsname_len );
-    if (ret)
+    UNICODE_STRING rootW;
+    LPWSTR labelW, fsnameW;
+    BOOL ret;
+
+    if (root) RtlCreateUnicodeStringFromAsciiz(&rootW, root);
+    else rootW.Buffer = NULL;
+    labelW = label ? HeapAlloc(GetProcessHeap(), 0, label_len * sizeof(WCHAR)) : NULL;
+    fsnameW = fsname ? HeapAlloc(GetProcessHeap(), 0, fsname_len * sizeof(WCHAR)) : NULL;
+
+    if ((ret = GetVolumeInformationW(rootW.Buffer, labelW, label_len, serial,
+                                    filename_len, flags, fsnameW, fsname_len)))
     {
-        if (label) MultiByteToWideChar( CP_ACP, 0, xvolname, -1, label, label_len );
-        if (fsname) MultiByteToWideChar( CP_ACP, 0, xfsname, -1, fsname, fsname_len );
+        if (label) WideCharToMultiByte(CP_ACP, 0, labelW, -1, label, label_len, NULL, NULL);
+        if (fsname) WideCharToMultiByte(CP_ACP, 0, fsnameW, -1, fsname, fsname_len, NULL, NULL);
     }
-    HeapFree( GetProcessHeap(), 0, xroot );
-    HeapFree( GetProcessHeap(), 0, xvolname );
-    HeapFree( GetProcessHeap(), 0, xfsname );
+
+    RtlFreeUnicodeString(&rootW);
+    if (labelW) HeapFree( GetProcessHeap(), 0, labelW );
+    if (fsnameW) HeapFree( GetProcessHeap(), 0, fsnameW );
     return ret;
 }
 
 /***********************************************************************
- *           SetVolumeLabelA   (KERNEL32.@)
+ *           SetVolumeLabelW   (KERNEL32.@)
  */
-BOOL WINAPI SetVolumeLabelA( LPCSTR root, LPCSTR volname )
+BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR volname )
 {
     int drive;
 
@@ -1832,32 +2022,37 @@ BOOL WINAPI SetVolumeLabelA( LPCSTR root, LPCSTR volname )
     {
         if ((root[1]) && (root[1] != ':'))
         {
-            WARN("invalid root '%s'\n",root);
+            WARN("invalid root %s\n", debugstr_w(root));
             return FALSE;
         }
-        drive = toupper(root[0]) - 'A';
+        drive = toupperW(root[0]) - 'A';
     }
     if (!DRIVE_IsValid( drive )) return FALSE;
 
     /* some copy protection stuff check this */
     if (DOSDrives[drive].type == DRIVE_CDROM) return FALSE;
 
-    FIXME("(%s,%s),stub!\n", root, volname);
+    strncpyW(DOSDrives[drive].label_conf, volname, 12);
+    DOSDrives[drive].label_conf[12 - 1] = 0; /* ensure 0 termination */
     return TRUE;
 }
 
 /***********************************************************************
- *           SetVolumeLabelW   (KERNEL32.@)
+ *           SetVolumeLabelA   (KERNEL32.@)
  */
-BOOL WINAPI SetVolumeLabelW(LPCWSTR rootpath,LPCWSTR volname)
+BOOL WINAPI SetVolumeLabelA(LPCSTR root, LPCSTR volname)
 {
-    LPSTR xroot, xvol;
+    UNICODE_STRING rootW, volnameW;
     BOOL ret;
 
-    xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, rootpath);
-    xvol = HEAP_strdupWtoA( GetProcessHeap(), 0, volname);
-    ret = SetVolumeLabelA( xroot, xvol );
-    HeapFree( GetProcessHeap(), 0, xroot );
-    HeapFree( GetProcessHeap(), 0, xvol );
+    if (root) RtlCreateUnicodeStringFromAsciiz(&rootW, root);
+    else rootW.Buffer = NULL;
+    if (volname) RtlCreateUnicodeStringFromAsciiz(&volnameW, volname);
+    else volnameW.Buffer = NULL;
+
+    ret = SetVolumeLabelW( rootW.Buffer, volnameW.Buffer );
+
+    RtlFreeUnicodeString(&rootW);
+    RtlFreeUnicodeString(&volnameW);
     return ret;
 }

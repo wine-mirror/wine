@@ -1392,7 +1392,7 @@ static HANDLE SMB_RegisterFile( int fd, USHORT tree_id, USHORT user_id, USHORT d
     return ret;
 }
 
-HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
+HANDLE WINAPI SMB_CreateFileW( LPCWSTR uncname, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template )
 {
@@ -1400,12 +1400,14 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
     USHORT tree_id=0, user_id=0, dialect=0, file_id=0;
     LPSTR name,host,share,file;
     HANDLE handle = INVALID_HANDLE_VALUE;
+    INT len;
 
-    name = HeapAlloc(GetProcessHeap(),0,lstrlenA(uncname));
+    len = WideCharToMultiByte(CP_ACP, 0, uncname, -1, NULL, 0, NULL, NULL);
+    name = HeapAlloc(GetProcessHeap(), 0, len);
     if(!name)
         return handle;
 
-    lstrcpyA(name,uncname);
+    WideCharToMultiByte(CP_ACP, 0, uncname, -1, name, len, NULL, NULL);
 
     if( !UNC_SplitName(name, &host, &share, &file) )
     {
@@ -1545,21 +1547,22 @@ BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD
     return r;
 }
 
-SMB_DIR* WINAPI SMB_FindFirst(LPCSTR name)
+SMB_DIR* WINAPI SMB_FindFirst(LPCWSTR name)
 {
     int fd = -1;
     LPSTR host,share,file;
     USHORT tree_id=0, user_id=0, dialect=0;
     SMB_DIR *ret = NULL;
     LPSTR filename;
+    DWORD len;
 
-    TRACE("Find %s\n",debugstr_a(name));
+    TRACE("Find %s\n",debugstr_w(name));
 
-    filename = HeapAlloc(GetProcessHeap(),0,lstrlenA(name)+1);
+    len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
+    filename = HeapAlloc(GetProcessHeap(),0,len);
     if(!filename)
         return ret;
-
-    lstrcpyA(filename,name);
+    WideCharToMultiByte( CP_ACP, 0, name, -1, filename, len, NULL, NULL );
 
     if( !UNC_SplitName(filename, &host, &share, &file) )
         goto done;
@@ -1587,7 +1590,7 @@ done:
 }
 
 
-BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAA *data )
+BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAW *data )
 {
     unsigned char *ent;
     int len, fnlen;
@@ -1613,14 +1616,16 @@ BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAA *data )
 
     /* copy the long filename */
     fnlen = SMB_GETDWORD(&ent[0x3c]);
-    if ( fnlen > (sizeof data->cFileName/sizeof(CHAR)) )
+    if ( fnlen > (sizeof data->cFileName/sizeof(WCHAR)) )
         return FALSE;
-    memcpy(data->cFileName, &ent[0x5e], fnlen);
+    MultiByteToWideChar( CP_ACP, 0, &ent[0x5e], fnlen, data->cFileName,
+                         sizeof(data->cFileName)/sizeof(WCHAR) );
 
     /* copy the short filename */
-    if ( ent[0x44] > (sizeof data->cAlternateFileName/sizeof(CHAR)) )
+    if ( ent[0x44] > (sizeof data->cAlternateFileName/sizeof(WCHAR)) )
         return FALSE;
-    memcpy(data->cAlternateFileName, &ent[0x5e + len], ent[0x44]);
+    MultiByteToWideChar( CP_ACP, 0, &ent[0x5e + len], ent[0x44], data->cAlternateFileName,
+                         sizeof(data->cAlternateFileName)/sizeof(WCHAR) );
 
     dir->current++;
 

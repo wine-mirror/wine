@@ -41,6 +41,8 @@
 #include "wine/winuser16.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "ntddk.h"
+#include "wine/unicode.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -53,27 +55,30 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
 static DOS_FULL_NAME DIR_Windows;
 static DOS_FULL_NAME DIR_System;
 
+static const WCHAR wineW[] = {'w','i','n','e',0};
 
 /***********************************************************************
  *           DIR_GetPath
  *
  * Get a path name from the wine.ini file and make sure it is valid.
  */
-static int DIR_GetPath( const char *keyname, const char *defval,
-                        DOS_FULL_NAME *full_name, char * longname, BOOL warn )
+static int DIR_GetPath( LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAME *full_name,
+                        LPWSTR longname, INT longname_len, BOOL warn )
 {
-    char path[MAX_PATHNAME_LEN];
+    WCHAR path[MAX_PATHNAME_LEN];
     BY_HANDLE_FILE_INFORMATION info;
     const char *mess = "does not exist";
 
-    PROFILE_GetWineIniString( "wine", keyname, defval, path, sizeof(path) );
+    PROFILE_GetWineIniString( wineW, keyname, defval, path, MAX_PATHNAME_LEN );
+
     if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
         (!FILE_Stat( full_name->long_name, &info ) && (mess=strerror(errno)))||
         (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")) ||
-        (!(GetLongPathNameA(full_name->short_name, longname, MAX_PATHNAME_LEN))) )
+        (!(GetLongPathNameW(full_name->short_name, longname, longname_len))) )
     {
         if (warn)
-           MESSAGE("Invalid path '%s' for %s directory: %s\n", path, keyname, mess);
+            MESSAGE("Invalid path %s for %s directory: %s\n",
+                    debugstr_w(path), debugstr_w(keyname), mess);
         return 0;
     }
     return 1;
@@ -86,10 +91,27 @@ static int DIR_GetPath( const char *keyname, const char *defval,
 int DIR_Init(void)
 {
     char path[MAX_PATHNAME_LEN];
-    char longpath[MAX_PATHNAME_LEN];
+    WCHAR longpath[MAX_PATHNAME_LEN];
     DOS_FULL_NAME tmp_dir, profile_dir;
     int drive;
     const char *cwd;
+    static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
+    static const WCHAR systemW[] = {'s','y','s','t','e','m',0};
+    static const WCHAR tempW[] = {'t','e','m','p',0};
+    static const WCHAR profileW[] = {'p','r','o','f','i','l','e',0};
+    static const WCHAR windows_dirW[] = {'c',':','\\','w','i','n','d','o','w','s',0};
+    static const WCHAR system_dirW[] = {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m',0};
+    static const WCHAR pathW[] = {'p','a','t','h',0};
+    static const WCHAR path_dirW[] = {'c',':','\\','w','i','n','d','o','w','s',';',
+                                      'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m',0};
+    static const WCHAR path_capsW[] = {'P','A','T','H',0};
+    static const WCHAR temp_capsW[] = {'T','E','M','P',0};
+    static const WCHAR tmp_capsW[] = {'T','M','P',0};
+    static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
+    static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
+    static const WCHAR userprofileW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
+    static const WCHAR systemrootW[] = {'S','Y','S','T','E','M','R','O','O','T',0};
+    static const WCHAR empty_strW[] = { 0 };
 
     if (!getcwd( path, MAX_PATHNAME_LEN ))
     {
@@ -105,13 +127,17 @@ int DIR_Init(void)
     }
     else
     {
+        WCHAR szdrive[3]={drive+'A',':',0};
+        MultiByteToWideChar(DRIVE_GetCodepage(drive), 0, cwd, -1, longpath, MAX_PATHNAME_LEN);
         DRIVE_SetCurrentDrive( drive );
-        DRIVE_Chdir( drive, cwd );
+        DRIVE_Chdir( drive, longpath );
+	if(GetDriveTypeW(szdrive)==DRIVE_CDROM)
+            chdir("/"); /* change to root directory so as not to lock cdroms */
     }
 
-    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows, longpath, TRUE )) ||
-	!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System, longpath, TRUE )) ||
-	!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir, longpath, TRUE )))
+    if (!(DIR_GetPath( windowsW, windows_dirW, &DIR_Windows, longpath, MAX_PATHNAME_LEN, TRUE )) ||
+ 	!(DIR_GetPath( systemW, system_dirW, &DIR_System, longpath, MAX_PATHNAME_LEN, TRUE )) ||
+ 	!(DIR_GetPath( tempW, windows_dirW, &tmp_dir, longpath, MAX_PATHNAME_LEN, TRUE )))
     {
 	PROFILE_UsageWineIni();
         return 0;
@@ -135,9 +161,8 @@ int DIR_Init(void)
         DRIVE_Chdir( drive, DIR_Windows.short_name + 2 );
     }
 
-    PROFILE_GetWineIniString("wine", "path", "c:\\windows;c:\\windows\\system",
-                             path, sizeof(path) );
-    if (strchr(path, '/'))
+    PROFILE_GetWineIniString(wineW, pathW, path_dirW, longpath, MAX_PATHNAME_LEN);
+    if (strchrW(longpath, '/'))
     {
 	MESSAGE("Fix your wine config to use DOS drive syntax in [wine] 'Path=' statement! (no '/' allowed)\n");
 	PROFILE_UsageWineIni();
@@ -146,34 +171,34 @@ int DIR_Init(void)
 
     /* Set the environment variables */
 
-    SetEnvironmentVariableA( "PATH", path );
-    SetEnvironmentVariableA( "TEMP", tmp_dir.short_name );
-    SetEnvironmentVariableA( "TMP", tmp_dir.short_name );
-    SetEnvironmentVariableA( "windir", DIR_Windows.short_name );
-    SetEnvironmentVariableA( "winsysdir", DIR_System.short_name );
+    SetEnvironmentVariableW( path_capsW, longpath );
+    SetEnvironmentVariableW( temp_capsW, tmp_dir.short_name );
+    SetEnvironmentVariableW( tmp_capsW, tmp_dir.short_name );
+    SetEnvironmentVariableW( windirW, DIR_Windows.short_name );
+    SetEnvironmentVariableW( winsysdirW, DIR_System.short_name );
 
     /* set COMSPEC only if it doesn't exist already */
     if (!GetEnvironmentVariableA( "COMSPEC", NULL, 0 ))
         SetEnvironmentVariableA( "COMSPEC", "c:\\command.com" );
 
     TRACE("WindowsDir = %s (%s)\n",
-          DIR_Windows.short_name, DIR_Windows.long_name );
+          debugstr_w(DIR_Windows.short_name), DIR_Windows.long_name );
     TRACE("SystemDir  = %s (%s)\n",
-          DIR_System.short_name, DIR_System.long_name );
+          debugstr_w(DIR_System.short_name), DIR_System.long_name );
     TRACE("TempDir    = %s (%s)\n",
-          tmp_dir.short_name, tmp_dir.long_name );
-    TRACE("Path       = %s\n", path );
+          debugstr_w(tmp_dir.short_name), tmp_dir.long_name );
+    TRACE("Path       = %s\n", debugstr_w(longpath) );
     TRACE("Cwd        = %c:\\%s\n",
-          'A' + drive, DRIVE_GetDosCwd( drive ) );
+          'A' + drive, debugstr_w(DRIVE_GetDosCwd(drive)) );
 
-    if (DIR_GetPath( "profile", "", &profile_dir, longpath, FALSE ))
+    if (DIR_GetPath( profileW, empty_strW, &profile_dir, longpath, MAX_PATHNAME_LEN, FALSE ))
     {
-        TRACE("USERPROFILE= %s\n", longpath );
-        SetEnvironmentVariableA( "USERPROFILE", longpath );
+        TRACE("USERPROFILE= %s\n", debugstr_w(longpath) );
+        SetEnvironmentVariableW( userprofileW, longpath );
     }
 
-    TRACE("SYSTEMROOT = %s\n", DIR_Windows.short_name );
-    SetEnvironmentVariableA( "SYSTEMROOT", DIR_Windows.short_name );
+    TRACE("SYSTEMROOT = %s\n", debugstr_w(DIR_Windows.short_name) );
+    SetEnvironmentVariableW( systemrootW, DIR_Windows.short_name );
 
     return 1;
 }
@@ -184,15 +209,25 @@ int DIR_Init(void)
  */
 UINT WINAPI GetTempPathA( UINT count, LPSTR path )
 {
+    WCHAR pathW[MAX_PATH];
     UINT ret;
-    if (!(ret = GetEnvironmentVariableA( "TMP", path, count )))
-        if (!(ret = GetEnvironmentVariableA( "TEMP", path, count )))
-            if (!(ret = GetCurrentDirectoryA( count, path )))
-                return 0;
-    if (count && (ret < count - 1) && (path[ret-1] != '\\'))
+
+    ret = GetTempPathW(MAX_PATH, pathW);
+
+    if (!ret)
+        return 0;
+
+    if (ret > MAX_PATH)
     {
-        path[ret++] = '\\';
-        path[ret]   = '\0';
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        return 0;
+    }
+
+    ret = WideCharToMultiByte(CP_ACP, 0, pathW, -1, NULL, 0, NULL, NULL);
+    if (ret <= count)
+    {
+        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, count, NULL, NULL);
+        ret--; /* length without 0 */
     }
     return ret;
 }
@@ -205,16 +240,49 @@ UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
 {
     static const WCHAR tmp[]  = { 'T', 'M', 'P', 0 };
     static const WCHAR temp[] = { 'T', 'E', 'M', 'P', 0 };
+    WCHAR tmp_path[MAX_PATH];
     UINT ret;
-    if (!(ret = GetEnvironmentVariableW( tmp, path, count )))
-        if (!(ret = GetEnvironmentVariableW( temp, path, count )))
-            if (!(ret = GetCurrentDirectoryW( count, path )))
+
+    TRACE("%u,%p\n", count, path);
+
+    if (!(ret = GetEnvironmentVariableW( tmp, tmp_path, MAX_PATH )))
+        if (!(ret = GetEnvironmentVariableW( temp, tmp_path, MAX_PATH )))
+            if (!(ret = GetCurrentDirectoryW( MAX_PATH, tmp_path )))
                 return 0;
-    if (count && (ret < count - 1) && (path[ret-1] != '\\'))
+
+    if (ret > MAX_PATH)
     {
-        path[ret++] = '\\';
-        path[ret]   = '\0';
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        return 0;
     }
+
+    ret = GetFullPathNameW(tmp_path, MAX_PATH, tmp_path, NULL);
+    if (!ret) return 0;
+
+    if (ret > MAX_PATH - 2)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        return 0;
+    }
+
+    if (tmp_path[ret-1] != '\\')
+    {
+        tmp_path[ret++] = '\\';
+        tmp_path[ret]   = '\0';
+    }
+
+    ret++; /* add space for terminating 0 */
+
+    if (count)
+    {
+        lstrcpynW(path, tmp_path, count);
+        if (count >= ret)
+            ret--; /* return length without 0 */
+        else if (count < 4)
+            path[0] = 0; /* avoid returning ambiguous "X:" */
+    }
+
+    TRACE("returning %u, %s\n", ret, debugstr_w(path));
     return ret;
 }
 
@@ -278,16 +346,16 @@ UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
 
 
 /***********************************************************************
- *           GetWindowsDirectoryA   (KERNEL32.@)
+ *           GetWindowsDirectoryW   (KERNEL32.@)
  *
- * See comment for GetWindowsDirectoryW.
+ * See comment for GetWindowsDirectoryA.
  */
-UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
+UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = strlen( DIR_Windows.short_name ) + 1;
+    UINT len = strlenW( DIR_Windows.short_name ) + 1;
     if (path && count >= len)
     {
-        strcpy( path, DIR_Windows.short_name );
+        strcpyW( path, DIR_Windows.short_name );
         len--;
     }
     return len;
@@ -295,7 +363,7 @@ UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetWindowsDirectoryW   (KERNEL32.@)
+ *           GetWindowsDirectoryA   (KERNEL32.@)
  *
  * Return value:
  * If buffer is large enough to hold full path and terminating '\0' character
@@ -303,12 +371,12 @@ UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
  * Otherwise function returns required size including '\0' character and
  * does not touch the buffer.
  */
-UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
+UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
 {
-    UINT len = MultiByteToWideChar( CP_ACP, 0, DIR_Windows.short_name, -1, NULL, 0 );
+    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_Windows.short_name, -1, NULL, 0, NULL, NULL );
     if (path && count >= len)
     {
-        MultiByteToWideChar( CP_ACP, 0, DIR_Windows.short_name, -1, path, count );
+        WideCharToMultiByte( CP_ACP, 0, DIR_Windows.short_name, -1, path, count, NULL, NULL );
         len--;
     }
     return len;
@@ -343,16 +411,16 @@ UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 
 
 /***********************************************************************
- *           GetSystemDirectoryA   (KERNEL32.@)
+ *           GetSystemDirectoryW   (KERNEL32.@)
  *
- * See comment for GetWindowsDirectoryW.
+ * See comment for GetWindowsDirectoryA.
  */
-UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
+UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = strlen( DIR_System.short_name ) + 1;
+    UINT len = strlenW( DIR_System.short_name ) + 1;
     if (path && count >= len)
     {
-        strcpy( path, DIR_System.short_name );
+        strcpyW( path, DIR_System.short_name );
         len--;
     }
     return len;
@@ -360,16 +428,16 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetSystemDirectoryW   (KERNEL32.@)
+ *           GetSystemDirectoryA   (KERNEL32.@)
  *
- * See comment for GetWindowsDirectoryW.
+ * See comment for GetWindowsDirectoryA.
  */
-UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
+UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 {
-    UINT len = MultiByteToWideChar( CP_ACP, 0, DIR_System.short_name, -1, NULL, 0 );
+    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_System.short_name, -1, NULL, 0, NULL, NULL );
     if (path && count >= len)
     {
-        MultiByteToWideChar( CP_ACP, 0, DIR_System.short_name, -1, path, count );
+        WideCharToMultiByte( CP_ACP, 0, DIR_System.short_name, -1, path, count, NULL, NULL );
         len--;
     }
     return len;
@@ -387,7 +455,7 @@ BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 
 
 /***********************************************************************
- *           CreateDirectoryA   (KERNEL32.@)
+ *           CreateDirectoryW   (KERNEL32.@)
  * RETURNS:
  *	TRUE : success
  *	FALSE : failure
@@ -396,15 +464,22 @@ BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
  *		ERROR_ACCESS_DENIED:	on permission problems
  *		ERROR_FILENAME_EXCED_RANGE: too long filename(s)
  */
-BOOL WINAPI CreateDirectoryA( LPCSTR path,
+BOOL WINAPI CreateDirectoryW( LPCWSTR path,
                                   LPSECURITY_ATTRIBUTES lpsecattribs )
 {
     DOS_FULL_NAME full_name;
 
-    TRACE_(file)("(%s,%p)\n", path, lpsecattribs );
+    if (!path || !*path)
+    {
+        SetLastError(ERROR_PATH_NOT_FOUND);
+        return FALSE;
+    }
+
+    TRACE_(file)("(%s,%p)\n", debugstr_w(path), lpsecattribs );
+
     if (DOSFS_GetDevice( path ))
     {
-        TRACE_(file)("cannot use device '%s'!\n",path);
+        TRACE_(file)("cannot use device %s!\n", debugstr_w(path));
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
     }
@@ -414,7 +489,14 @@ BOOL WINAPI CreateDirectoryA( LPCSTR path,
 	/* the FILE_SetDosError() generated error codes don't match the
 	 * CreateDirectory ones for some errnos */
 	switch (errno) {
-	case EEXIST: SetLastError(ERROR_ALREADY_EXISTS); break;
+	case EEXIST:
+        {
+            if (!strcmp(DRIVE_GetRoot(full_name.drive), full_name.long_name))
+                SetLastError(ERROR_ACCESS_DENIED);
+            else
+                SetLastError(ERROR_ALREADY_EXISTS);
+            break;
+        }
 	case ENOSPC: SetLastError(ERROR_DISK_FULL); break;
 	default: FILE_SetDosError();break;
 	}
@@ -425,14 +507,27 @@ BOOL WINAPI CreateDirectoryA( LPCSTR path,
 
 
 /***********************************************************************
- *           CreateDirectoryW   (KERNEL32.@)
+ *           CreateDirectoryA   (KERNEL32.@)
  */
-BOOL WINAPI CreateDirectoryW( LPCWSTR path,
+BOOL WINAPI CreateDirectoryA( LPCSTR path,
                                   LPSECURITY_ATTRIBUTES lpsecattribs )
 {
-    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    BOOL ret = CreateDirectoryA( xpath, lpsecattribs );
-    HeapFree( GetProcessHeap(), 0, xpath );
+    UNICODE_STRING pathW;
+    BOOL ret = FALSE;
+
+    if (!path || !*path)
+    {
+        SetLastError(ERROR_PATH_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
+    {
+        ret = CreateDirectoryW(pathW.Buffer, lpsecattribs);
+        RtlFreeUnicodeString(&pathW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return ret;
 }
 
@@ -467,17 +562,23 @@ BOOL16 WINAPI RemoveDirectory16( LPCSTR path )
 
 
 /***********************************************************************
- *           RemoveDirectoryA   (KERNEL32.@)
+ *           RemoveDirectoryW   (KERNEL32.@)
  */
-BOOL WINAPI RemoveDirectoryA( LPCSTR path )
+BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
 {
     DOS_FULL_NAME full_name;
 
-    TRACE_(file)("'%s'\n", path );
+    if (!path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    TRACE_(file)("%s\n", debugstr_w(path));
 
     if (DOSFS_GetDevice( path ))
     {
-        TRACE_(file)("cannot remove device '%s'!\n", path);
+        TRACE_(file)("cannot remove device %s!\n", debugstr_w(path));
         SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
@@ -492,13 +593,26 @@ BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 
 
 /***********************************************************************
- *           RemoveDirectoryW   (KERNEL32.@)
+ *           RemoveDirectoryA   (KERNEL32.@)
  */
-BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
+BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 {
-    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    BOOL ret = RemoveDirectoryA( xpath );
-    HeapFree( GetProcessHeap(), 0, xpath );
+    UNICODE_STRING pathW;
+    BOOL ret = FALSE;
+
+    if (!path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
+    {
+        ret = RemoveDirectoryW(pathW.Buffer);
+        RtlFreeUnicodeString(&pathW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return ret;
 }
 
@@ -508,53 +622,58 @@ BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
+static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCWSTR name,
                            DOS_FULL_NAME *full_name )
 {
     LPSTR p_l = full_name->long_name + strlen(dir->long_name) + 1;
-    LPSTR p_s = full_name->short_name + strlen(dir->short_name) + 1;
+    LPWSTR p_s = full_name->short_name + strlenW(dir->short_name) + 1;
 
-    if ((p_s >= full_name->short_name + sizeof(full_name->short_name) - 14) ||
+    if ((p_s >= full_name->short_name + sizeof(full_name->short_name)/sizeof(full_name->short_name[0]) - 14) ||
         (p_l >= full_name->long_name + sizeof(full_name->long_name) - 1))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
-    if (!DOSFS_FindUnixName( dir->long_name, name, p_l,
+    if (!DOSFS_FindUnixName( dir, name, p_l,
                    sizeof(full_name->long_name) - (p_l - full_name->long_name),
                    p_s, !(DRIVE_GetFlags(dir->drive) & DRIVE_CASE_SENSITIVE) ))
         return FALSE;
+
+    full_name->drive = dir->drive;
     strcpy( full_name->long_name, dir->long_name );
     p_l[-1] = '/';
-    strcpy( full_name->short_name, dir->short_name );
+    strcpyW( full_name->short_name, dir->short_name );
     p_s[-1] = '\\';
     return TRUE;
 }
 
-static BOOL DIR_SearchSemicolonedPaths(LPCSTR name, DOS_FULL_NAME *full_name, LPSTR pathlist)
+static BOOL DIR_SearchSemicolonedPaths(LPCWSTR name, DOS_FULL_NAME *full_name, LPWSTR pathlist)
 {
-    LPSTR next, buffer = NULL;
-    INT len = strlen(name), newlen, currlen = 0;
+    LPWSTR next, buffer = NULL;
+    INT len = strlenW(name), newlen, currlen = 0;
     BOOL ret = FALSE;
 
     next = pathlist;
     while (!ret && next)
     {
-        LPSTR cur = next;
+        static const WCHAR bkslashW[] = {'\\',0};
+        LPWSTR cur = next;
         while (*cur == ';') cur++;
         if (!*cur) break;
-        next = strchr( cur, ';' );
+        next = strchrW( cur, ';' );
         if (next) *next++ = '\0';
-	newlen = strlen(cur) + len + 2;
+        newlen = strlenW(cur) + len + 2;
+
 	if (newlen > currlen)
 	{
-            if (!(buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, newlen)))
+            if (!(buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, newlen * sizeof(WCHAR))))
                 goto done;
 	    currlen = newlen;
 	}
-        strcpy( buffer, cur );
-        strcat( buffer, "\\" );
-        strcat( buffer, name );
+
+        strcpyW( buffer, cur );
+        strcatW( buffer, bkslashW );
+        strcatW( buffer, name );
         ret = DOSFS_GetFullName( buffer, TRUE, full_name );
     }
 done:
@@ -569,17 +688,18 @@ done:
  * Helper function for DIR_SearchPath.
  * Search in the specified path, or in $PATH if NULL.
  */
-static BOOL DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name, LPCSTR envpath )
+static BOOL DIR_TryEnvironmentPath( LPCWSTR name, DOS_FULL_NAME *full_name, LPCWSTR envpath )
 {
-    LPSTR path;
+    LPWSTR path;
     BOOL ret = FALSE;
     DWORD size;
+    static const WCHAR pathW[] = {'P','A','T','H',0};
 
-    size = envpath ? strlen(envpath)+1 : GetEnvironmentVariableA( "PATH", NULL, 0 );
+    size = envpath ? strlenW(envpath)+1 : GetEnvironmentVariableW( pathW, NULL, 0 );
     if (!size) return FALSE;
-    if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    if (envpath) strcpy( path, envpath );
-    else if (!GetEnvironmentVariableA( "PATH", path, size )) goto done;
+    if (!(path = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return FALSE;
+    if (envpath) strcpyW( path, envpath );
+    else if (!GetEnvironmentVariableW( pathW, path, size )) goto done;
 
     ret = DIR_SearchSemicolonedPaths(name, full_name, path);
 
@@ -594,27 +714,28 @@ done:
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name, BOOL win32 )
+static BOOL DIR_TryModulePath( LPCWSTR name, DOS_FULL_NAME *full_name, BOOL win32 )
 {
-    /* FIXME: for now, GetModuleFileNameA can't return more */
+    /* FIXME: for now, GetModuleFileNameW can't return more */
     /* than OFS_MAXPATHNAME. This may change with Win32. */
-
-    char buffer[OFS_MAXPATHNAME];
-    LPSTR p;
+    WCHAR bufferW[OFS_MAXPATHNAME];
+    LPWSTR p;
 
     if (!win32)
     {
+        char buffer[OFS_MAXPATHNAME];
 	if (!GetCurrentTask()) return FALSE;
 	if (!GetModuleFileName16( GetCurrentTask(), buffer, sizeof(buffer) ))
-		buffer[0]='\0';
+            return FALSE;
+        MultiByteToWideChar(CP_ACP, 0, buffer, -1, bufferW, OFS_MAXPATHNAME);
     } else {
-	if (!GetModuleFileNameA( 0, buffer, sizeof(buffer) ))
-		buffer[0]='\0';
+	if (!GetModuleFileNameW( 0, bufferW, OFS_MAXPATHNAME ) )
+            return FALSE;
     }
-    if (!(p = strrchr( buffer, '\\' ))) return FALSE;
-    if (sizeof(buffer) - (++p - buffer) <= strlen(name)) return FALSE;
-    strcpy( p, name );
-    return DOSFS_GetFullName( buffer, TRUE, full_name );
+    if (!(p = strrchrW( bufferW, '\\' ))) return FALSE;
+    if (OFS_MAXPATHNAME - (++p - bufferW) <= strlenW(name)) return FALSE;
+    strcpyW( p, name );
+    return DOSFS_GetFullName( bufferW, TRUE, full_name );
 }
 
 
@@ -623,32 +744,33 @@ static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name, BOOL win32
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL DIR_TryAppPath( LPCSTR name, DOS_FULL_NAME *full_name )
+static BOOL DIR_TryAppPath( LPCWSTR name, DOS_FULL_NAME *full_name )
 {
     HKEY hkAppPaths = 0, hkApp = 0;
-    char lpAppName[MAX_PATHNAME_LEN], lpAppPaths[MAX_PATHNAME_LEN];
-    LPSTR lpFileName;
+    WCHAR lpAppName[MAX_PATHNAME_LEN], lpAppPaths[MAX_PATHNAME_LEN];
+    LPWSTR lpFileName;
     BOOL res = FALSE;
     DWORD type, count;
+    static const WCHAR PathW[] = {'P','a','t','h',0};
 
     if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths", &hkAppPaths) != ERROR_SUCCESS)
 	return FALSE;
 
-    if (GetModuleFileNameA(0, lpAppName, sizeof(lpAppName)) == 0)
+    if (!GetModuleFileNameW(0, lpAppName, MAX_PATHNAME_LEN))
     {
 	WARN("huh, module not found ??\n");
 	goto end;
     }
-    lpFileName = strrchr(lpAppName, '\\');
+    lpFileName = strrchrW(lpAppName, '\\');
     if (!lpFileName)
 	goto end;
     else lpFileName++; /* skip '\\' */
-    if (RegOpenKeyA(hkAppPaths, lpFileName, &hkApp) != ERROR_SUCCESS)
+    if (RegOpenKeyW(hkAppPaths, lpFileName, &hkApp) != ERROR_SUCCESS)
 	goto end;
     count = sizeof(lpAppPaths);
-    if (RegQueryValueExA(hkApp, "Path", 0, &type, (LPBYTE)lpAppPaths, &count) != ERROR_SUCCESS)
+    if (RegQueryValueExW(hkApp, PathW, 0, &type, (LPBYTE)lpAppPaths, &count) != ERROR_SUCCESS)
         goto end;
-    TRACE("successfully opened App Paths for '%s'\n", lpFileName);
+    TRACE("successfully opened App Paths for %s\n", debugstr_w(lpFileName));
 
     res = DIR_SearchSemicolonedPaths(name, full_name, lpAppPaths);
 end:
@@ -667,19 +789,19 @@ end:
  *
  * FIXME: should return long path names.
  */
-DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
+DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                       DOS_FULL_NAME *full_name, BOOL win32 )
 {
-    LPCSTR p;
-    LPSTR tmp = NULL;
+    LPCWSTR p;
+    LPWSTR tmp = NULL;
     BOOL ret = TRUE;
 
     /* First check the supplied parameters */
 
-    p = strrchr( name, '.' );
-    if (p && !strchr( p, '/' ) && !strchr( p, '\\' ))
+    p = strrchrW( name, '.' );
+    if (p && !strchrW( p, '/' ) && !strchrW( p, '\\' ))
         ext = NULL;  /* Ignore the specified extension */
-    if (FILE_contains_path (name))
+    if (FILE_contains_pathW (name))
         path = NULL;  /* Ignore path if name already contains a path */
     if (path && !*path) path = NULL;  /* Ignore empty path */
 
@@ -687,20 +809,20 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     if (ext)
     {
-        DWORD len = strlen(name) + strlen(ext);
-        if (!(tmp = HeapAlloc( GetProcessHeap(), 0, len + 1 )))
+        DWORD len = strlenW(name) + strlenW(ext);
+        if (!(tmp = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_OUTOFMEMORY );
             return 0;
         }
-        strcpy( tmp, name );
-        strcat( tmp, ext );
+        strcpyW( tmp, name );
+        strcatW( tmp, ext );
         name = tmp;
     }
 
     /* If the name contains an explicit path, everything's easy */
 
-    if (FILE_contains_path(name))
+    if (FILE_contains_pathW(name))
     {
         ret = DOSFS_GetFullName( name, TRUE, full_name );
         goto done;
@@ -751,7 +873,7 @@ done:
 
 
 /***********************************************************************
- * SearchPathA [KERNEL32.@]
+ * SearchPathW [KERNEL32.@]
  *
  * Searches for a specified file in the search path.
  *
@@ -778,10 +900,10 @@ done:
  *    If the file is not found, calls SetLastError(ERROR_FILE_NOT_FOUND)
  *    (tested on NT 4.0)
  */
-DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
-                            LPSTR buffer, LPSTR *lastpart )
+DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
+                          LPWSTR buffer, LPWSTR *lastpart )
 {
-    LPSTR p, res;
+    LPSTR res;
     DOS_FULL_NAME full_name;
 
     if (!DIR_SearchPath( path, name, ext, &full_name, TRUE ))
@@ -789,60 +911,72 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
 	SetLastError(ERROR_FILE_NOT_FOUND);
 	return 0;
     }
-    lstrcpynA( buffer, full_name.short_name, buflen );
+
+TRACE("found %s %s\n", full_name.long_name, debugstr_w(full_name.short_name));
+TRACE("drive %c: root %s\n", 'A' + full_name.drive, DRIVE_GetRoot(full_name.drive));
+
+    lstrcpynW( buffer, full_name.short_name, buflen );
     res = full_name.long_name +
-              strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
+              strlen(DRIVE_GetRoot( full_name.drive ));
     while (*res == '/') res++;
     if (buflen)
     {
-        if (buflen > 3) lstrcpynA( buffer + 3, res, buflen - 3 );
+        LPWSTR p;
+        if (buflen > 3)
+        {
+            MultiByteToWideChar(DRIVE_GetCodepage(full_name.drive), 0,
+                                res, -1, buffer + 3, buflen - 3);
+            buffer[buflen - 1] = 0;
+        }
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
-        if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
+        if (lastpart) *lastpart = strrchrW( buffer, '\\' ) + 1;
     }
-    TRACE("Returning %d\n", strlen(res) + 3 );
-    return strlen(res) + 3;
+    TRACE("Returning %s\n", debugstr_w(buffer) );
+    return strlenW(buffer);
 }
 
 
 /***********************************************************************
- *           SearchPathW   (KERNEL32.@)
+ *           SearchPathA   (KERNEL32.@)
  */
-DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
-                            DWORD buflen, LPWSTR buffer, LPWSTR *lastpart )
+DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
+                          DWORD buflen, LPSTR buffer, LPSTR *lastpart )
 {
-    LPWSTR p;
-    LPSTR res;
-    DOS_FULL_NAME full_name;
+    UNICODE_STRING pathW, nameW, extW;
+    WCHAR bufferW[MAX_PATH];
+    DWORD ret, retW;
 
-    LPSTR pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    LPSTR extA  = HEAP_strdupWtoA( GetProcessHeap(), 0, ext );
-    DWORD ret = DIR_SearchPath( pathA, nameA, extA, &full_name, TRUE );
-    HeapFree( GetProcessHeap(), 0, extA );
-    HeapFree( GetProcessHeap(), 0, nameA );
-    HeapFree( GetProcessHeap(), 0, pathA );
-    if (!ret) return 0;
+    if (path) RtlCreateUnicodeStringFromAsciiz(&pathW, path);
+    else pathW.Buffer = NULL;
+    if (name) RtlCreateUnicodeStringFromAsciiz(&nameW, name);
+    else nameW.Buffer = NULL;
+    if (ext) RtlCreateUnicodeStringFromAsciiz(&extW, ext);
+    else extW.Buffer = NULL;
 
-    if (buflen > 0 && !MultiByteToWideChar( CP_ACP, 0, full_name.short_name, -1, buffer, buflen ))
-        buffer[buflen-1] = 0;
-    res = full_name.long_name +
-              strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
-    while (*res == '/') res++;
-    if (buflen)
+    retW = SearchPathW(pathW.Buffer, nameW.Buffer, extW.Buffer, MAX_PATH, bufferW, NULL);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
     {
-        if (buflen > 3)
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        if (buflen >= ret)
         {
-            if (!MultiByteToWideChar( CP_ACP, 0, res, -1, buffer+3, buflen-3 ))
-                buffer[buflen-1] = 0;
-        }
-        for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
-        if (lastpart)
-        {
-            for (p = *lastpart = buffer; *p; p++)
-                if (*p == '\\') *lastpart = p + 1;
+            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, buflen, NULL, NULL);
+            ret--; /* length without 0 */
+            if (lastpart) *lastpart = strrchr(buffer, '\\') + 1;
         }
     }
-    return strlen(res) + 3;
+
+    RtlFreeUnicodeString(&pathW);
+    RtlFreeUnicodeString(&nameW);
+    RtlFreeUnicodeString(&extW);
+    return ret;
 }
 
 
@@ -852,31 +986,31 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
  *
  * FIXME: should return long path names.?
  */
-static BOOL search_alternate_path(LPCSTR dll_path, LPCSTR name, LPCSTR ext,
+static BOOL search_alternate_path(LPCWSTR dll_path, LPCWSTR name, LPCWSTR ext,
                                   DOS_FULL_NAME *full_name)
 {
-    LPCSTR p;
-    LPSTR tmp = NULL;
+    LPCWSTR p;
+    LPWSTR tmp = NULL;
     BOOL ret = TRUE;
 
     /* First check the supplied parameters */
 
-    p = strrchr( name, '.' );
-    if (p && !strchr( p, '/' ) && !strchr( p, '\\' ))
+    p = strrchrW( name, '.' );
+    if (p && !strchrW( p, '/' ) && !strchrW( p, '\\' ))
         ext = NULL;  /* Ignore the specified extension */
 
     /* Allocate a buffer for the file name and extension */
 
     if (ext)
     {
-        DWORD len = strlen(name) + strlen(ext);
-        if (!(tmp = HeapAlloc( GetProcessHeap(), 0, len + 1 )))
+        DWORD len = strlenW(name) + strlenW(ext);
+        if (!(tmp = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_OUTOFMEMORY );
             return 0;
         }
-        strcpy( tmp, name );
-        strcat( tmp, ext );
+        strcpyW( tmp, name );
+        strcatW( tmp, ext );
         name = tmp;
     }
 
@@ -922,28 +1056,42 @@ static BOOL search_alternate_path(LPCSTR dll_path, LPCSTR name, LPCSTR ext,
  *
  * NOTES
  *    If the file is not found, calls SetLastError(ERROR_FILE_NOT_FOUND)
+ *
+ * FIXME: convert to unicode
  */
 DWORD DIR_SearchAlternatePath( LPCSTR dll_path, LPCSTR name, LPCSTR ext,
                                DWORD buflen, LPSTR buffer, LPSTR *lastpart )
 {
-    LPSTR p, res;
+    LPSTR p;
     DOS_FULL_NAME full_name;
+    DWORD ret = 0;
+    UNICODE_STRING dll_pathW, nameW, extW;
 
-    if (!search_alternate_path( dll_path, name, ext, &full_name))
+    if (dll_path) RtlCreateUnicodeStringFromAsciiz(&dll_pathW, dll_path);
+    else dll_pathW.Buffer = NULL;
+    if (name) RtlCreateUnicodeStringFromAsciiz(&nameW, name);
+    else nameW.Buffer = NULL;
+    if (ext) RtlCreateUnicodeStringFromAsciiz(&extW, ext);
+    else extW.Buffer = NULL;
+
+    if (search_alternate_path( dll_pathW.Buffer, nameW.Buffer, extW.Buffer, &full_name))
     {
-	SetLastError(ERROR_FILE_NOT_FOUND);
-	return 0;
+        ret = WideCharToMultiByte(CP_ACP, 0, full_name.short_name, -1, NULL, 0, NULL, NULL);
+        if (buflen >= ret)
+        {
+            WideCharToMultiByte(CP_ACP, 0, full_name.short_name, -1, buffer, buflen, NULL, NULL);
+            for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
+            if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
+            ret--; /* length without 0 */
+        }
     }
-    lstrcpynA( buffer, full_name.short_name, buflen );
-    res = full_name.long_name +
-              strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
-    while (*res == '/') res++;
-    if (buflen)
-    {
-        if (buflen > 3) lstrcpynA( buffer + 3, res, buflen - 3 );
-        for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
-        if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
-    }
-    TRACE("Returning %d\n", strlen(res) + 3 );
-    return strlen(res) + 3;
+    else
+        SetLastError(ERROR_FILE_NOT_FOUND);
+
+    RtlFreeUnicodeString(&dll_pathW);
+    RtlFreeUnicodeString(&nameW);
+    RtlFreeUnicodeString(&extW);
+
+    TRACE("Returning %ld\n", ret );
+    return ret;
 }

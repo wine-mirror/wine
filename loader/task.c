@@ -290,8 +290,9 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
     pTask->teb           = teb;
     pTask->curdrive      = DRIVE_GetCurrentDrive() | 0x80;
     strcpy( pTask->curdir, "\\" );
-    lstrcpynA( pTask->curdir + 1, DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() ),
-                 sizeof(pTask->curdir) - 1 );
+    WideCharToMultiByte(CP_ACP, 0, DRIVE_GetDosCwd(DRIVE_GetCurrentDrive()), -1,
+                        pTask->curdir + 1, sizeof(pTask->curdir) - 1, NULL, NULL);
+    pTask->curdir[sizeof(pTask->curdir) - 1] = 0; /* ensure 0 termination */
 
       /* Create the thunks block */
 

@@ -57,6 +57,7 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "task.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int21);
@@ -428,30 +429,37 @@ static void INT21_ParseFileNameIntoFCB( CONTEXT86 *context )
         CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi );
     char *fcb =
         CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi );
-    char *buffer, *s, *d;
+    char *s;
+    WCHAR *buffer;
+    WCHAR fcbW[12];
+    INT buffer_len, len;
 
     AL_reg(context) = 0xff; /* failed */
 
     TRACE("filename: '%s'\n", filename);
 
-    buffer = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + 1);
-
     s = filename;
-    d = buffer;
+    len = 0;
     while (*s)
     {
         if ((*s != ' ') && (*s != '\r') && (*s != '\n'))
-            *d++ = *s++;
+        {
+            s++;
+            len++;
+        }
         else
             break;
     }
 
-    *d = '\0';
-    DOSFS_ToDosFCBFormat(buffer, fcb + 1);
+    buffer_len = MultiByteToWideChar(CP_OEMCP, 0, filename, len, NULL, 0);
+    buffer = HeapAlloc( GetProcessHeap(), 0, (buffer_len + 1) * sizeof(WCHAR));
+    len = MultiByteToWideChar(CP_OEMCP, 0, filename, len, buffer, buffer_len);
+    buffer[len] = 0;
+    DOSFS_ToDosFCBFormat(buffer, fcbW);
+    HeapFree(GetProcessHeap(), 0, buffer);
+    WideCharToMultiByte(CP_OEMCP, 0, fcbW, 12, fcb + 1, 12, NULL, NULL);
     *fcb = 0;
-    TRACE("FCB: '%s'\n", ((CHAR *)fcb + 1));
-
-    HeapFree( GetProcessHeap(), 0, buffer);
+    TRACE("FCB: '%s'\n", fcb + 1);
 
     AL_reg(context) =
         ((strchr(filename, '*')) || (strchr(filename, '$'))) != 0;
@@ -618,6 +626,7 @@ static BOOL INT21_ChangeDir( CONTEXT86 *context )
 {
     int drive;
     char *dirname = CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx);
+    WCHAR dirnameW[MAX_PATH];
 
     TRACE("changedir %s\n", dirname);
     if (dirname[0] && (dirname[1] == ':'))
@@ -626,7 +635,8 @@ static BOOL INT21_ChangeDir( CONTEXT86 *context )
         dirname += 2;
     }
     else drive = DRIVE_GetCurrentDrive();
-    return DRIVE_Chdir( drive, dirname );
+    MultiByteToWideChar(CP_OEMCP, 0, dirname, -1, dirnameW, MAX_PATH);
+    return DRIVE_Chdir( drive, dirnameW );
 }
 
 
@@ -636,10 +646,14 @@ static int INT21_FindFirst( CONTEXT86 *context )
     const char *path;
     DOS_FULL_NAME full_name;
     FINDFILE_DTA *dta = (FINDFILE_DTA *)GetCurrentDTA(context);
+    WCHAR pathW[MAX_PATH];
+    WCHAR maskW[12];
 
     path = (const char *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    MultiByteToWideChar(CP_OEMCP, 0, path, -1, pathW, MAX_PATH);
+
     dta->unixPath = NULL;
-    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
+    if (!DOSFS_GetFullName( pathW, FALSE, &full_name ))
     {
         AX_reg(context) = GetLastError();
         SET_CFLAG(context);
@@ -650,10 +664,12 @@ static int INT21_FindFirst( CONTEXT86 *context )
     p = strrchr( dta->unixPath, '/' );
     *p = '\0';
 
+    MultiByteToWideChar(CP_OEMCP, 0, p + 1, -1, pathW, MAX_PATH);
+
     /* Note: terminating NULL in dta->mask overwrites dta->search_attr
      *       (doesn't matter as it is set below anyway)
      */
-    if (!DOSFS_ToDosFCBFormat( p + 1, dta->mask ))
+    if (!DOSFS_ToDosFCBFormat( pathW, maskW ))
     {
         HeapFree( GetProcessHeap(), 0, dta->unixPath );
         dta->unixPath = NULL;
@@ -662,6 +678,7 @@ static int INT21_FindFirst( CONTEXT86 *context )
         SET_CFLAG(context);
         return 0;
     }
+    WideCharToMultiByte(CP_OEMCP, 0, maskW, 12, dta->mask, sizeof(dta->mask), NULL, NULL);
     dta->drive = (path[0] && (path[1] == ':')) ? toupper(path[0]) - 'A'
                                                : DRIVE_GetCurrentDrive();
     dta->count = 0;
@@ -743,7 +760,8 @@ static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context )
         SetLastError( ERROR_INVALID_DRIVE );
         return FALSE;
     }
-    lstrcpynA( ptr, DRIVE_GetDosCwd(drive), 64 );
+    WideCharToMultiByte(CP_OEMCP, 0, DRIVE_GetDosCwd(drive), -1, ptr, 64, NULL, NULL);
+    ptr[63] = 0; /* ensure 0 termination */
     AX_reg(context) = 0x0100;			     /* success return code */
     return TRUE;
 }
@@ -1586,8 +1604,9 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             break;
         case 0x02:{
             const DOS_DEVICE *dev;
+            static const WCHAR scsimgrW[] = {'S','C','S','I','M','G','R','$',0};
             if ((dev = DOSFS_GetDeviceByHandle( DosFileHandleToWin32Handle(BX_reg(context)) )) &&
-                !strcasecmp( dev->name, "SCSIMGR$" ))
+                !strcmpiW( dev->name, scsimgrW ))
             {
                 ASPI_DOS_HandleInt(context);
             }

@@ -58,6 +58,8 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"
 
@@ -69,6 +71,7 @@
 #include "wincon.h"
 
 #include "smb.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
@@ -193,13 +196,10 @@ static void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing )
  */
 int FILE_strcasecmp( const char *str1, const char *str2 )
 {
-    for (;;)
-    {
-        int ret = FILE_toupper(*str1) - FILE_toupper(*str2);
-        if (ret || !*str1) return ret;
-        str1++;
-        str2++;
-    }
+    int ret = 0;
+    for ( ; ; str1++, str2++)
+        if ((ret = FILE_toupper(*str1) - FILE_toupper(*str2)) || !*str1) break;
+    return ret;
 }
 
 
@@ -453,7 +453,18 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
             }
         }
 
-        if (err) SetLastError( RtlNtStatusToDosError(err) );
+        if (err)
+        {
+            /* In the case file creation was rejected due to CREATE_NEW flag
+             * was specified and file with that name already exists, correct
+             * last error is ERROR_FILE_EXISTS and not ERROR_ALREADY_EXISTS.
+             * Note: RtlNtStatusToDosError is not the subject to blame here.
+             */
+            if (err == STATUS_OBJECT_NAME_COLLISION)
+                SetLastError( ERROR_FILE_EXISTS );
+            else
+                SetLastError( RtlNtStatusToDosError(err) );
+        }
 
         if (!ret) WARN("Unable to create file '%s' (GLE %ld)\n", filename, GetLastError());
         return ret;
@@ -483,13 +494,12 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
     return ret;
 }
 
-static HANDLE FILE_OpenPipe(LPCSTR name, DWORD access)
+static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access)
 {
-    WCHAR buffer[MAX_PATH];
     HANDLE ret;
     DWORD len = 0;
 
-    if (name && !(len = MultiByteToWideChar( CP_ACP, 0, name, strlen(name), buffer, MAX_PATH )))
+    if (name && (len = strlenW(name)) > MAX_PATH)
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
@@ -498,7 +508,7 @@ static HANDLE FILE_OpenPipe(LPCSTR name, DWORD access)
     {
         req->access = access;
         SetLastError(0);
-        wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
+        wine_server_add_data( req, name, len * sizeof(WCHAR) );
         wine_server_call_err( req );
         ret = reply->handle;
     }
@@ -508,7 +518,7 @@ static HANDLE FILE_OpenPipe(LPCSTR name, DWORD access)
 }
 
 /*************************************************************************
- * CreateFileA [KERNEL32.@]  Creates or opens a file or other object
+ * CreateFileW [KERNEL32.@]  Creates or opens a file or other object
  *
  * Creates or opens an object, and returns a handle that can be used to
  * access that object.
@@ -535,19 +545,24 @@ static HANDLE FILE_OpenPipe(LPCSTR name, DWORD access)
  * Doesn't support character devices, template files, or a
  * lot of the 'attributes' flags yet.
  */
-HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
+HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template )
 {
     DOS_FULL_NAME full_name;
     HANDLE ret;
+    static const WCHAR bkslashes_with_question_markW[] = {'\\','\\','?','\\',0};
+    static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
+    static const WCHAR bkslashesW[] = {'\\','\\',0};
+    static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
+    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 
     if (!filename)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return INVALID_HANDLE_VALUE;
     }
-    TRACE("%s %s%s%s%s%s%s%s\n",filename,
+    TRACE("%s %s%s%s%s%s%s%s attributes 0x%lx\n", debugstr_w(filename),
 	  ((access & GENERIC_READ)==GENERIC_READ)?"GENERIC_READ ":"",
 	  ((access & GENERIC_WRITE)==GENERIC_WRITE)?"GENERIC_WRITE ":"",
 	  (!access)?"QUERY_ACCESS ":"",
@@ -558,30 +573,33 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 	  (creation ==CREATE_ALWAYS)?"CREATE_ALWAYS ":
 	  (creation ==OPEN_EXISTING)?"OPEN_EXISTING ":
 	  (creation ==OPEN_ALWAYS)?"OPEN_ALWAYS ":
-	  (creation ==TRUNCATE_EXISTING)?"TRUNCATE_EXISTING ":"");
+	  (creation ==TRUNCATE_EXISTING)?"TRUNCATE_EXISTING ":"", attributes);
 
     /* If the name starts with '\\?\', ignore the first 4 chars. */
-    if (!strncmp(filename, "\\\\?\\", 4))
+    if (!strncmpW(filename, bkslashes_with_question_markW, 4))
     {
+        static const WCHAR uncW[] = {'U','N','C','\\',0};
         filename += 4;
-	if (!strncmp(filename, "UNC\\", 4))
+	if (!strncmpiW(filename, uncW, 4))
 	{
-            FIXME("UNC name (%s) not supported.\n", filename );
+            FIXME("UNC name (%s) not supported.\n", debugstr_w(filename) );
             SetLastError( ERROR_PATH_NOT_FOUND );
             return INVALID_HANDLE_VALUE;
 	}
     }
 
-    if (!strncmp(filename, "\\\\.\\", 4)) {
-        if(!strncasecmp(&filename[4],"pipe\\",5))
+    if (!strncmpW(filename, bkslashes_with_dotW, 4))
+    {
+        static const WCHAR pipeW[] = {'P','I','P','E','\\',0};
+        if(!strncmpiW(filename + 4, pipeW, 5))
         {
-            TRACE("Opening a pipe: %s\n",filename);
+            TRACE("Opening a pipe: %s\n", debugstr_w(filename));
             ret = FILE_OpenPipe(filename,access);
             goto done;
         }
-        else if (isalpha(filename[4]) && filename[5] == ':' && filename[6] == '\0')
+        else if (isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0')
         {
-            ret = FILE_CreateDevice( (toupper(filename[4]) - 'A') | 0x20000, access, sa );
+            ret = FILE_CreateDevice( (toupperW(filename[4]) - 'A') | 0x20000, access, sa );
             goto done;
         }
         else if (!DOSFS_GetDevice( filename ))
@@ -594,23 +612,23 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     }
 
     /* If the name still starts with '\\', it's a UNC name. */
-    if (!strncmp(filename, "\\\\", 2))
+    if (!strncmpW(filename, bkslashesW, 2))
     {
-        ret = SMB_CreateFileA(filename, access, sharing, sa, creation, attributes, template );
+        ret = SMB_CreateFileW(filename, access, sharing, sa, creation, attributes, template );
         goto done;
     }
 
     /* If the name contains a DOS wild card (* or ?), do no create a file */
-    if(strchr(filename,'*') || strchr(filename,'?'))
+    if(strchrW(filename, '*') || strchrW(filename, '?'))
         return INVALID_HANDLE_VALUE;
 
     /* Open a console for CONIN$ or CONOUT$ */
-    if (!strcasecmp(filename, "CONIN$"))
+    if (!strcmpiW(filename, coninW))
     {
         ret = FILE_OpenConsole( FALSE, access, sharing, sa );
         goto done;
     }
-    if (!strcasecmp(filename, "CONOUT$"))
+    if (!strcmpiW(filename, conoutW))
     {
         ret = FILE_OpenConsole( TRUE, access, sharing, sa );
         goto done;
@@ -618,12 +636,12 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 
     if (DOSFS_GetDevice( filename ))
     {
-        TRACE("opening device '%s'\n", filename );
+        TRACE("opening device %s\n", debugstr_w(filename) );
 
         if (!(ret = DOSFS_OpenDevice( filename, access, attributes, sa )))
         {
             /* Do not silence this please. It is a critical error. -MM */
-            ERR("Couldn't open device '%s'!\n",filename);
+            ERR("Couldn't open device %s!\n", debugstr_w(filename));
             SetLastError( ERROR_FILE_NOT_FOUND );
         }
         goto done;
@@ -634,33 +652,48 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 			    (creation == OPEN_EXISTING) ||
 			    (creation == TRUNCATE_EXISTING),
 			    &full_name )) {
-	WARN("Unable to get full filename from '%s' (GLE %ld)\n",
-	     filename, GetLastError());
+	WARN("Unable to get full filename from %s (GLE %ld)\n",
+	     debugstr_w(filename), GetLastError());
         return INVALID_HANDLE_VALUE;
     }
 
     ret = FILE_CreateFile( full_name.long_name, access, sharing,
                            sa, creation, attributes, template,
                            DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY,
-                           GetDriveTypeA( full_name.short_name ) );
+                           GetDriveTypeW( full_name.short_name ) );
  done:
     if (!ret) ret = INVALID_HANDLE_VALUE;
+    TRACE("returning %08x\n", ret);
     return ret;
 }
 
 
 
 /*************************************************************************
- *              CreateFileW              (KERNEL32.@)
+ *              CreateFileA              (KERNEL32.@)
  */
-HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
+HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template)
 {
-    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    HANDLE res = CreateFileA( afn, access, sharing, sa, creation, attributes, template );
-    HeapFree( GetProcessHeap(), 0, afn );
-    return res;
+    UNICODE_STRING filenameW;
+    HANDLE ret = INVALID_HANDLE_VALUE;
+
+    if (!filename)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, filename))
+    {
+        ret = CreateFileW(filenameW.Buffer, access, sharing, sa, creation,
+                          attributes, template);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
 }
 
 
@@ -735,6 +768,8 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
     DWORD ret;
     if (!info) return 0;
 
+    TRACE("%08x\n", hFile);
+
     SERVER_START_REQ( get_file_info )
     {
         req->handle = hFile;
@@ -780,9 +815,9 @@ DWORD WINAPI GetFileAttributes16( LPCSTR name )
 
 
 /**************************************************************************
- *           GetFileAttributesA   (KERNEL32.@)
+ *           GetFileAttributesW   (KERNEL32.@)
  */
-DWORD WINAPI GetFileAttributesA( LPCSTR name )
+DWORD WINAPI GetFileAttributesW( LPCWSTR name )
 {
     DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
@@ -800,14 +835,27 @@ DWORD WINAPI GetFileAttributesA( LPCSTR name )
 
 
 /**************************************************************************
- *           GetFileAttributesW   (KERNEL32.@)
+ *           GetFileAttributesA   (KERNEL32.@)
  */
-DWORD WINAPI GetFileAttributesW( LPCWSTR name )
+DWORD WINAPI GetFileAttributesA( LPCSTR name )
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    DWORD res = GetFileAttributesA( nameA );
-    HeapFree( GetProcessHeap(), 0, nameA );
-    return res;
+    UNICODE_STRING nameW;
+    DWORD ret = (DWORD)-1;
+
+    if (!name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return (DWORD)-1;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&nameW, name))
+    {
+        ret = GetFileAttributesW(nameW.Buffer);
+        RtlFreeUnicodeString(&nameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
 }
 
 
@@ -821,17 +869,24 @@ BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 
 
 /**************************************************************************
- *              SetFileAttributesA	(KERNEL32.@)
+ *              SetFileAttributesW	(KERNEL32.@)
  */
-BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
+BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
 {
     struct stat buf;
     DOS_FULL_NAME full_name;
 
+    if (!lpFileName)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    TRACE("(%s,%lx)\n", debugstr_w(lpFileName), attributes);
+
     if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name ))
         return FALSE;
 
-    TRACE("(%s,%lx)\n",lpFileName,attributes);
     if(stat(full_name.long_name,&buf)==-1)
     {
         FILE_SetDosError();
@@ -854,16 +909,17 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     if (attributes & FILE_ATTRIBUTE_DIRECTORY)
     {
         if (!S_ISDIR(buf.st_mode))
-            FIXME("SetFileAttributes expected the file '%s' to be a directory\n",
-                  lpFileName);
+            FIXME("SetFileAttributes expected the file %s to be a directory\n",
+                  debugstr_w(lpFileName));
         attributes &= ~FILE_ATTRIBUTE_DIRECTORY;
     }
     attributes &= ~(FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (attributes)
-        FIXME("(%s):%lx attribute(s) not implemented.\n", lpFileName,attributes);
+        FIXME("(%s):%lx attribute(s) not implemented.\n", debugstr_w(lpFileName), attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
     {
-        if(GetDriveTypeA(lpFileName) == DRIVE_CDROM) {
+        if (GetDriveTypeW(lpFileName) == DRIVE_CDROM)
+        {
            SetLastError( ERROR_ACCESS_DENIED );
            return FALSE;
         }
@@ -886,18 +942,27 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 
 
 /**************************************************************************
- *              SetFileAttributesW	(KERNEL32.@)
+ *              SetFileAttributesA	(KERNEL32.@)
  */
-BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
+BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 {
-    BOOL res;
-    DWORD len = WideCharToMultiByte( CP_ACP, 0, lpFileName, -1, NULL, 0, NULL, NULL );
-    LPSTR afn = HeapAlloc( GetProcessHeap(), 0, len );
+    UNICODE_STRING filenameW;
+    HANDLE ret = FALSE;
 
-    WideCharToMultiByte( CP_ACP, 0, lpFileName, -1, afn, len, NULL, NULL );
-    res = SetFileAttributesA( afn, attributes );
-    HeapFree( GetProcessHeap(), 0, afn );
-    return res;
+    if (!lpFileName)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, lpFileName))
+    {
+        ret = SetFileAttributesW(filenameW.Buffer, attributes);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
 }
 
 
@@ -949,30 +1014,36 @@ INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
 /***********************************************************************
  *           FILE_GetTempFileName : utility for GetTempFileName
  */
-static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
-                                  LPSTR buffer, BOOL isWin16 )
+static UINT FILE_GetTempFileName( LPCWSTR path, LPCWSTR prefix, UINT unique,
+                                  LPWSTR buffer )
 {
     static UINT unique_temp;
     DOS_FULL_NAME full_name;
     int i;
-    LPSTR p;
+    LPWSTR p;
     UINT num;
+    char buf[20];
 
-    if ( !path || !prefix || !buffer ) return 0;
+    if ( !path || !prefix || !buffer )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     if (!unique_temp) unique_temp = time(NULL) & 0xffff;
     num = unique ? (unique & 0xffff) : (unique_temp++ & 0xffff);
 
-    strcpy( buffer, path );
-    p = buffer + strlen(buffer);
+    strcpyW( buffer, path );
+    p = buffer + strlenW(buffer);
 
     /* add a \, if there isn't one and path is more than just the drive letter ... */
-    if ( !((strlen(buffer) == 2) && (buffer[1] == ':'))
+    if ( !((strlenW(buffer) == 2) && (buffer[1] == ':'))
 	&& ((p == buffer) || (p[-1] != '\\'))) *p++ = '\\';
 
-    if (isWin16) *p++ = '~';
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
-    sprintf( p, "%04x.tmp", num );
+
+    sprintf( buf, "%04x.tmp", num );
+    MultiByteToWideChar(CP_ACP, 0, buf, -1, p, 20);
 
     /* Now try to create it */
 
@@ -980,19 +1051,19 @@ static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
     {
         do
         {
-            HANDLE handle = CreateFileA( buffer, GENERIC_WRITE, 0, NULL,
+            HANDLE handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL,
                                          CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
             if (handle != INVALID_HANDLE_VALUE)
             {  /* We created it */
-                TRACE("created %s\n",
-			      buffer);
+                TRACE("created %s\n", debugstr_w(buffer) );
                 CloseHandle( handle );
                 break;
             }
             if (GetLastError() != ERROR_FILE_EXISTS)
                 break;  /* No need to go on */
             num++;
-            sprintf( p, "%04x.tmp", num );
+            sprintf( buf, "%04x.tmp", num );
+            MultiByteToWideChar(CP_ACP, 0, buf, -1, p, 20);
         } while (num != (unique & 0xffff));
     }
 
@@ -1000,13 +1071,14 @@ static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
 
     if (DOSFS_GetFullName( buffer, FALSE, &full_name ))
     {
+        char *slash;
         /* Check if we have write access in the directory */
-        if ((p = strrchr( full_name.long_name, '/' ))) *p = '\0';
+        if ((slash = strrchr( full_name.long_name, '/' ))) *slash = '\0';
         if (access( full_name.long_name, W_OK ) == -1)
-            WARN("returns '%s', which doesn't seem to be writeable.\n",
-		 buffer);
+            WARN("returns %s, which doesn't seem to be writeable.\n",
+                  debugstr_w(buffer) );
     }
-    TRACE("returning %s\n", buffer );
+    TRACE("returning %s\n", debugstr_w(buffer) );
     return unique ? unique : num;
 }
 
@@ -1017,7 +1089,26 @@ static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
 UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
                                   LPSTR buffer)
 {
-    return FILE_GetTempFileName(path, prefix, unique, buffer, FALSE);
+    UNICODE_STRING pathW, prefixW;
+    WCHAR bufferW[MAX_PATH];
+    UINT ret;
+
+    if ( !path || !prefix || !buffer )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&pathW, path);
+    RtlCreateUnicodeStringFromAsciiz(&prefixW, prefix);
+
+    ret = GetTempFileNameW(pathW.Buffer, prefixW.Buffer, unique, bufferW);
+    if (ret)
+        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, NULL, NULL);
+
+    RtlFreeUnicodeString(&pathW);
+    RtlFreeUnicodeString(&prefixW);
+    return ret;
 }
 
 /***********************************************************************
@@ -1026,18 +1117,7 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
 UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
                                   LPWSTR buffer )
 {
-    LPSTR   patha,prefixa;
-    char    buffera[144];
-    UINT  ret;
-
-    if (!path) return 0;
-    patha   = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    prefixa = HEAP_strdupWtoA( GetProcessHeap(), 0, prefix );
-    ret     = FILE_GetTempFileName( patha, prefixa, unique, buffera, FALSE );
-    MultiByteToWideChar( CP_ACP, 0, buffera, -1, buffer, MAX_PATH );
-    HeapFree( GetProcessHeap(), 0, patha );
-    HeapFree( GetProcessHeap(), 0, prefixa );
-    return ret;
+    return FILE_GetTempFileName( path, prefix, unique, buffer );
 }
 
 
@@ -1047,7 +1127,9 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
 UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
                                  LPSTR buffer )
 {
-    char temppath[144];
+    char temppath[MAX_PATH];
+    char *prefix16 = NULL;
+    UINT16 ret;
 
     if (!(drive & ~TF_FORCEDRIVE)) /* drive 0 means current default drive */
         drive |= DRIVE_GetCurrentDrive() + 'A';
@@ -1062,8 +1144,19 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
     if (drive & TF_FORCEDRIVE)
         sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
     else
-        GetTempPathA( 132, temppath );
-    return (UINT16)FILE_GetTempFileName( temppath, prefix, unique, buffer, TRUE );
+        GetTempPathA( MAX_PATH, temppath );
+
+    if (prefix)
+    {
+        prefix16 = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + 2);
+        *prefix16 = '~';
+        strcpy(prefix16 + 1, prefix);
+    }
+
+    ret = GetTempFileNameA( temppath, prefix16, unique, buffer );
+
+    if (prefix16) HeapFree(GetProcessHeap(), 0, prefix16);
+    return ret;
 }
 
 /***********************************************************************
@@ -1080,7 +1173,9 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     WORD filedatetime[2];
     DOS_FULL_NAME full_name;
     DWORD access, sharing;
-    char *p;
+    WCHAR *p;
+    WCHAR buffer[MAX_PATH];
+    LPWSTR nameW;
 
     if (!ofs) return HFILE_ERROR;
 
@@ -1146,28 +1241,31 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
         goto success;
     }
 
+    MultiByteToWideChar(CP_ACP, 0, name, -1, buffer, MAX_PATH);
+    nameW = buffer;
+
     /* If OF_SEARCH is set, ignore the given path */
 
     if ((mode & OF_SEARCH) && !(mode & OF_REOPEN))
     {
         /* First try the file name as is */
-        if (DOSFS_GetFullName( name, TRUE, &full_name )) goto found;
+        if (DOSFS_GetFullName( nameW, TRUE, &full_name )) goto found;
         /* Now remove the path */
-        if (name[0] && (name[1] == ':')) name += 2;
-        if ((p = strrchr( name, '\\' ))) name = p + 1;
-        if ((p = strrchr( name, '/' ))) name = p + 1;
-        if (!name[0]) goto not_found;
+        if (nameW[0] && (nameW[1] == ':')) nameW += 2;
+        if ((p = strrchrW( nameW, '\\' ))) nameW = p + 1;
+        if ((p = strrchrW( nameW, '/' ))) nameW = p + 1;
+        if (!nameW[0]) goto not_found;
     }
 
     /* Now look for the file */
 
-    if (!DIR_SearchPath( NULL, name, NULL, &full_name, win32 )) goto not_found;
+    if (!DIR_SearchPath( NULL, nameW, NULL, &full_name, win32 )) goto not_found;
 
 found:
     TRACE("found %s = %s\n",
-                  full_name.long_name, full_name.short_name );
-    lstrcpynA( ofs->szPathName, full_name.short_name,
-                 sizeof(ofs->szPathName) );
+          full_name.long_name, debugstr_w(full_name.short_name) );
+    WideCharToMultiByte(CP_ACP, 0, full_name.short_name, -1,
+                        ofs->szPathName, sizeof(ofs->szPathName), NULL, NULL);
 
     if (mode & OF_SHARE_EXCLUSIVE)
       /* Some InstallShield version uses OF_SHARE_EXCLUSIVE
@@ -1199,9 +1297,9 @@ found:
     }
 
     handle = FILE_CreateFile( full_name.long_name, access, sharing,
-                              NULL, OPEN_EXISTING, 0, 0,
-                              DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY,
-                              GetDriveTypeA( full_name.short_name ) );
+                                NULL, OPEN_EXISTING, 0, 0,
+                                DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY,
+                                GetDriveTypeW( full_name.short_name ) );
     if (!handle) goto not_found;
 
     GetFileTime( handle, NULL, NULL, &filetime );
@@ -1706,13 +1804,17 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     default:
 	if (unix_handle == -1)
 	    return FALSE;
-	if (overlapped)
+    }
+
+    if(overlapped)
+    {
+	off_t offset = OVERLAPPED_OFFSET(overlapped);
+	if(lseek(unix_handle, offset, SEEK_SET) == -1)
 	{
 	    close(unix_handle);
 	    SetLastError(ERROR_INVALID_PARAMETER);
 	    return FALSE;
 	}
-	break;
     }
 
     /* code for synchronous reads */
@@ -1928,6 +2030,17 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
             return FALSE;
         }
         break;
+    }
+
+    if(overlapped)
+    {
+	off_t offset = OVERLAPPED_OFFSET(overlapped);
+	if(lseek(unix_handle, offset, SEEK_SET) == -1)
+	{
+	    close(unix_handle);
+	    SetLastError(ERROR_INVALID_PARAMETER);
+	    return FALSE;
+	}
     }
 
     /* synchronous file write */
@@ -2224,9 +2337,9 @@ BOOL16 WINAPI DeleteFile16( LPCSTR path )
 
 
 /***********************************************************************
- *           DeleteFileA   (KERNEL32.@)
+ *           DeleteFileW   (KERNEL32.@)
  */
-BOOL WINAPI DeleteFileA( LPCSTR path )
+BOOL WINAPI DeleteFileW( LPCWSTR path )
 {
     DOS_FULL_NAME full_name;
     HANDLE hFile;
@@ -2236,7 +2349,7 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    TRACE("'%s'\n", path );
+    TRACE("%s\n", debugstr_w(path) );
 
     if (!*path)
     {
@@ -2245,7 +2358,7 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
     }
     if (DOSFS_GetDevice( path ))
     {
-        WARN("cannot remove DOS device '%s'!\n", path);
+        WARN("cannot remove DOS device %s!\n", debugstr_w(path));
         SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
@@ -2255,7 +2368,7 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
     /* check if we are allowed to delete the source */
     hFile = FILE_CreateFile( full_name.long_name, GENERIC_READ|GENERIC_WRITE, 0,
                              NULL, OPEN_EXISTING, 0, 0, TRUE,
-                             GetDriveTypeA( full_name.short_name ) );
+                             GetDriveTypeW( full_name.short_name ) );
     if (!hFile) return FALSE;
 
     if (unlink( full_name.long_name ) == -1)
@@ -2270,13 +2383,26 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
 
 
 /***********************************************************************
- *           DeleteFileW   (KERNEL32.@)
+ *           DeleteFileA   (KERNEL32.@)
  */
-BOOL WINAPI DeleteFileW( LPCWSTR path )
+BOOL WINAPI DeleteFileA( LPCSTR path )
 {
-    LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    BOOL ret = DeleteFileA( xpath );
-    HeapFree( GetProcessHeap(), 0, xpath );
+    UNICODE_STRING pathW;
+    BOOL ret = FALSE;
+
+    if (!path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
+    {
+        ret = DeleteFileW(pathW.Buffer);
+        RtlFreeUnicodeString(&pathW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return ret;
 }
 
@@ -2339,16 +2465,18 @@ inline static BOOL is_executable( const char *name )
  * [0]                        <- indicates end of strings
  *
  */
-static BOOL FILE_AddBootRenameEntry( const char *fn1, const char *fn2, DWORD flags )
+static BOOL FILE_AddBootRenameEntry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
 {
-    static const char PreString[] = "\\??\\";
-    static const char ValueName[] = "PendingFileRenameOperations";
-
+    static const WCHAR PreString[] = {'\\','?','?','\\',0};
+    static const WCHAR ValueName[] = {'P','e','n','d','i','n','g',
+                                      'F','i','l','e','R','e','n','a','m','e',
+                                      'O','p','e','r','a','t','i','o','n','s',0};
     BOOL rc = FALSE;
     HKEY Reboot = 0;
-    DWORD Type, len1, len2, l;
+    DWORD Type, len0, len1, len2;
     DWORD DataSize = 0;
     BYTE *Buffer = NULL;
+    WCHAR *p;
 
     if(RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
                      &Reboot) != ERROR_SUCCESS)
@@ -2358,41 +2486,60 @@ static BOOL FILE_AddBootRenameEntry( const char *fn1, const char *fn2, DWORD fla
         return FALSE;
     }
 
-    l = strlen(PreString);
-    len1 = strlen(fn1) + l + 1;
+    len0 = strlenW(PreString);
+    len1 = strlenW(fn1) + len0 + 1;
     if (fn2)
     {
-        len2 = strlen(fn2) + l + 1;
+        len2 = strlenW(fn2) + len0 + 1;
         if (flags & MOVEFILE_REPLACE_EXISTING) len2++; /* Plus 1 because of the leading '!' */
     }
-    else len2 = 1; /* minimum is the 0 byte for the empty second string */
+    else len2 = 1; /* minimum is the 0 characters for the empty second string */
+
+    /* convert characters to bytes */
+    len0 *= sizeof(WCHAR);
+    len1 *= sizeof(WCHAR);
+    len2 *= sizeof(WCHAR);
 
     /* First we check if the key exists and if so how many bytes it already contains. */
-    if (RegQueryValueExA(Reboot, ValueName, NULL, &Type, NULL, &DataSize) == ERROR_SUCCESS)
+    if (RegQueryValueExW(Reboot, ValueName, NULL, &Type, NULL, &DataSize) == ERROR_SUCCESS)
     {
         if (Type != REG_MULTI_SZ) goto Quit;
-        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + 1 ))) goto Quit;
-        if (RegQueryValueExA(Reboot, ValueName, NULL, &Type, Buffer, &DataSize) != ERROR_SUCCESS)
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + sizeof(WCHAR) ))) goto Quit;
+        if (RegQueryValueExW(Reboot, ValueName, NULL, &Type, Buffer, &DataSize) != ERROR_SUCCESS)
             goto Quit;
-        if (DataSize) DataSize--;  /* remove terminating null (will be added back later) */
+        if (DataSize) DataSize -= sizeof(WCHAR);  /* remove terminating null (will be added back later) */
     }
     else
     {
-        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, len1 + len2 + 1 ))) goto Quit;
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, len1 + len2 + sizeof(WCHAR) ))) goto Quit;
         DataSize = 0;
     }
-    sprintf( Buffer + DataSize, "%s%s", PreString, fn1 );
+
+    p = (WCHAR *)(Buffer + DataSize);
+    strcpyW( p, PreString );
+    strcatW( p, fn1 );
     DataSize += len1;
     if (fn2)
     {
-        sprintf( Buffer + DataSize, "%s%s%s",
-                 (flags & MOVEFILE_REPLACE_EXISTING) ? "!" : "", PreString, fn2 );
+        p = (WCHAR *)(Buffer + DataSize);
+        if (flags & MOVEFILE_REPLACE_EXISTING)
+            *p++ = '!';
+        strcpyW( p, PreString );
+        strcatW( p, fn2 );
         DataSize += len2;
     }
-    else Buffer[DataSize++] = 0;
+    else
+    {
+        p = (WCHAR *)(Buffer + DataSize);
+        *p = 0;
+        DataSize += sizeof(WCHAR);
+    }
 
-    Buffer[DataSize++] = 0;  /* add final null */
-    rc = !RegSetValueExA( Reboot, ValueName, 0, REG_MULTI_SZ, Buffer, DataSize );
+    /* add final null */
+    p = (WCHAR *)(Buffer + DataSize);
+    *p = 0;
+    DataSize += sizeof(WCHAR);
+    rc = !RegSetValueExW( Reboot, ValueName, 0, REG_MULTI_SZ, Buffer, DataSize );
 
  Quit:
     if (Reboot) RegCloseKey(Reboot);
@@ -2402,14 +2549,14 @@ static BOOL FILE_AddBootRenameEntry( const char *fn1, const char *fn2, DWORD fla
 
 
 /**************************************************************************
- *           MoveFileExA   (KERNEL32.@)
+ *           MoveFileExW   (KERNEL32.@)
  */
-BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
+BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 {
     DOS_FULL_NAME full_name1, full_name2;
     HANDLE hFile;
 
-    TRACE("(%s,%s,%04lx)\n", fn1, fn2, flag);
+    TRACE("(%s,%s,%04lx)\n", debugstr_w(fn1), debugstr_w(fn2), flag);
 
     /* FIXME: <Gerhard W. Gruber>sparhawk@gmx.at
        In case of W9x and lesser this function should return 120 (ERROR_CALL_NOT_IMPLEMENTED)
@@ -2471,15 +2618,15 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
                Perhaps we should queue these command and execute it
                when exiting... What about using on_exit(2)
             */
-            FIXME("Please move existing file '%s' to file '%s' when Wine has finished\n",
-                  fn1, fn2);
+            FIXME("Please move existing file %s to file %s when Wine has finished\n",
+                  debugstr_w(fn1), debugstr_w(fn2));
             return FILE_AddBootRenameEntry( fn1, fn2, flag );
         }
 
-        /* check if we are allowed to delete the source */
-        hFile = FILE_CreateFile( full_name1.long_name, GENERIC_READ|GENERIC_WRITE, 0,
+        /* check if we are allowed to rename the source */
+        hFile = FILE_CreateFile( full_name1.long_name, 0, 0,
                                  NULL, OPEN_EXISTING, 0, 0, TRUE,
-                                 GetDriveTypeA( full_name1.short_name ) );
+                                 GetDriveTypeW( full_name1.short_name ) );
         if (!hFile) return FALSE;
         CloseHandle(hFile);
 
@@ -2487,7 +2634,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
         **     (but the file not being there is fine) */
         hFile = FILE_CreateFile( full_name2.long_name, GENERIC_READ|GENERIC_WRITE, 0,
                                  NULL, OPEN_EXISTING, 0, 0, TRUE,
-                                 GetDriveTypeA( full_name2.short_name ) );
+                                 GetDriveTypeW( full_name2.short_name ) );
         if(!hFile && GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
         CloseHandle(hFile);
 
@@ -2500,7 +2647,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
                 SetLastError( ERROR_FILE_EXISTS );
                 return FALSE;
             }
-            return CopyFileA( fn1, fn2, !(flag & MOVEFILE_REPLACE_EXISTING) );
+            return CopyFileW( fn1, fn2, !(flag & MOVEFILE_REPLACE_EXISTING) );
         }
         if (rename( full_name1.long_name, full_name2.long_name ) == -1)
 	{
@@ -2535,7 +2682,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
                Perhaps we should queue these command and execute it
                when exiting... What about using on_exit(2)
             */
-            FIXME("Please delete file '%s' when Wine has finished\n", fn1);
+            FIXME("Please delete file %s when Wine has finished\n", debugstr_w(fn1));
             return FILE_AddBootRenameEntry( fn1, NULL, flag );
         }
 
@@ -2549,30 +2696,48 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 }
 
 /**************************************************************************
- *           MoveFileExW   (KERNEL32.@)
+ *           MoveFileExA   (KERNEL32.@)
  */
-BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
+BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 {
-    LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
-    LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
-    BOOL res = MoveFileExA( afn1, afn2, flag );
-    HeapFree( GetProcessHeap(), 0, afn1 );
-    HeapFree( GetProcessHeap(), 0, afn2 );
-    return res;
+    UNICODE_STRING fn1W, fn2W;
+    BOOL ret;
+
+    if (!fn1)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&fn1W, fn1);
+    if (fn2) RtlCreateUnicodeStringFromAsciiz(&fn2W, fn2);
+    else fn2W.Buffer = NULL;
+
+    ret = MoveFileExW( fn1W.Buffer, fn2W.Buffer, flag );
+
+    RtlFreeUnicodeString(&fn1W);
+    RtlFreeUnicodeString(&fn2W);
+    return ret;
 }
 
 
 /**************************************************************************
- *           MoveFileA   (KERNEL32.@)
+ *           MoveFileW   (KERNEL32.@)
  *
  *  Move file or directory
  */
-BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
+BOOL WINAPI MoveFileW( LPCWSTR fn1, LPCWSTR fn2 )
 {
     DOS_FULL_NAME full_name1, full_name2;
     struct stat fstat;
 
-    TRACE("(%s,%s)\n", fn1, fn2 );
+    if (!fn1 || !fn2)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    TRACE("(%s,%s)\n", debugstr_w(fn1), debugstr_w(fn2) );
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
     if (DOSFS_GetFullName( fn2, TRUE, &full_name2 ))  {
@@ -2583,7 +2748,7 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
     if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
 
     if (full_name1.drive == full_name2.drive) /* move */
-        return MoveFileExA( fn1, fn2, MOVEFILE_COPY_ALLOWED );
+        return MoveFileExW( fn1, fn2, MOVEFILE_COPY_ALLOWED );
 
     /* copy */
     if (stat( full_name1.long_name, &fstat ))
@@ -2599,57 +2764,81 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
         SetLastError( ERROR_GEN_FAILURE );
         return FALSE;
     }
-    return CopyFileA(fn1, fn2, TRUE); /*fail, if exist */
+    return CopyFileW(fn1, fn2, TRUE); /*fail, if exist */
 }
 
 
 /**************************************************************************
- *           MoveFileW   (KERNEL32.@)
+ *           MoveFileA   (KERNEL32.@)
  */
-BOOL WINAPI MoveFileW( LPCWSTR fn1, LPCWSTR fn2 )
+BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
 {
-    LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
-    LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
-    BOOL res = MoveFileA( afn1, afn2 );
-    HeapFree( GetProcessHeap(), 0, afn1 );
-    HeapFree( GetProcessHeap(), 0, afn2 );
-    return res;
+    UNICODE_STRING fn1W, fn2W;
+    BOOL ret;
+
+    if (!fn1 || !fn2)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&fn1W, fn1);
+    RtlCreateUnicodeStringFromAsciiz(&fn2W, fn2);
+
+    ret = MoveFileW( fn1W.Buffer, fn2W.Buffer );
+
+    RtlFreeUnicodeString(&fn1W);
+    RtlFreeUnicodeString(&fn2W);
+    return ret;
 }
 
 
 /**************************************************************************
- *           CopyFileA   (KERNEL32.@)
+ *           CopyFileW   (KERNEL32.@)
  */
-BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists )
+BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
 {
     HANDLE h1, h2;
     BY_HANDLE_FILE_INFORMATION info;
     DWORD count;
     BOOL ret = FALSE;
-    int mode;
     char buffer[2048];
 
-    if ((h1 = CreateFileA( source, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                           OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
+    if (!source || !dest)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
+    }
+
+    TRACE("%s -> %s\n", debugstr_w(source), debugstr_w(dest));
+
+    if ((h1 = CreateFileW(source, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                     NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
+    {
+        WARN("Unable to open source %s\n", debugstr_w(source));
+        return FALSE;
+    }
+
     if (!GetFileInformationByHandle( h1, &info ))
     {
+        WARN("GetFileInformationByHandle returned error for %s\n", debugstr_w(source));
         CloseHandle( h1 );
         return FALSE;
     }
-    mode = (info.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
-    if ((h2 = CreateFileA( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+
+    if ((h2 = CreateFileW( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              fail_if_exists ? CREATE_NEW : CREATE_ALWAYS,
                              info.dwFileAttributes, h1 )) == INVALID_HANDLE_VALUE)
     {
+        WARN("Unable to open dest %s\n", debugstr_w(dest));
         CloseHandle( h1 );
         return FALSE;
     }
 
-    while (ReadFile( h1, buffer, sizeof(buffer), &count, NULL ) && count > 0)
+    while (ReadFile( h1, buffer, sizeof(buffer), &count, NULL ) && count)
     {
         char *p = buffer;
-        while (count > 0)
+        while (count != 0)
         {
             DWORD res;
             if (!WriteFile( h2, p, count, &res, NULL ) || !res) goto done;
@@ -2666,69 +2855,71 @@ done:
 
 
 /**************************************************************************
- *           CopyFileW   (KERNEL32.@)
+ *           CopyFileA   (KERNEL32.@)
  */
-BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists)
+BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists)
 {
-    LPSTR sourceA = HEAP_strdupWtoA( GetProcessHeap(), 0, source );
-    LPSTR destA   = HEAP_strdupWtoA( GetProcessHeap(), 0, dest );
-    BOOL ret = CopyFileA( sourceA, destA, fail_if_exists );
-    HeapFree( GetProcessHeap(), 0, sourceA );
-    HeapFree( GetProcessHeap(), 0, destA );
+    UNICODE_STRING sourceW, destW;
+    BOOL ret;
+
+    if (!source || !dest)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&sourceW, source);
+    RtlCreateUnicodeStringFromAsciiz(&destW, dest);
+
+    ret = CopyFileW(sourceW.Buffer, destW.Buffer, fail_if_exists);
+
+    RtlFreeUnicodeString(&sourceW);
+    RtlFreeUnicodeString(&destW);
     return ret;
 }
 
 
 /**************************************************************************
- *           CopyFileExA   (KERNEL32.@)
+ *           CopyFileExW   (KERNEL32.@)
  *
  * This implementation ignores most of the extra parameters passed-in into
  * the "ex" version of the method and calls the CopyFile method.
  * It will have to be fixed eventually.
  */
-BOOL WINAPI CopyFileExA(LPCSTR             sourceFilename,
-                           LPCSTR             destFilename,
-                           LPPROGRESS_ROUTINE progressRoutine,
-                           LPVOID             appData,
-                           LPBOOL           cancelFlagPointer,
-                           DWORD              copyFlags)
+BOOL WINAPI CopyFileExW(LPCWSTR sourceFilename, LPCWSTR destFilename,
+                        LPPROGRESS_ROUTINE progressRoutine, LPVOID appData,
+                        LPBOOL cancelFlagPointer, DWORD copyFlags)
 {
-  BOOL failIfExists = FALSE;
-
-  /*
-   * Interpret the only flag that CopyFile can interpret.
-   */
-  if ( (copyFlags & COPY_FILE_FAIL_IF_EXISTS) != 0)
-  {
-    failIfExists = TRUE;
-  }
-
-  return CopyFileA(sourceFilename, destFilename, failIfExists);
+    /*
+     * Interpret the only flag that CopyFile can interpret.
+     */
+    return CopyFileW(sourceFilename, destFilename, (copyFlags & COPY_FILE_FAIL_IF_EXISTS) != 0);
 }
 
 /**************************************************************************
- *           CopyFileExW   (KERNEL32.@)
+ *           CopyFileExA   (KERNEL32.@)
  */
-BOOL WINAPI CopyFileExW(LPCWSTR            sourceFilename,
-                           LPCWSTR            destFilename,
-                           LPPROGRESS_ROUTINE progressRoutine,
-                           LPVOID             appData,
-                           LPBOOL           cancelFlagPointer,
-                           DWORD              copyFlags)
+BOOL WINAPI CopyFileExA(LPCSTR sourceFilename, LPCSTR destFilename,
+                        LPPROGRESS_ROUTINE progressRoutine, LPVOID appData,
+                        LPBOOL cancelFlagPointer, DWORD copyFlags)
 {
-    LPSTR sourceA = HEAP_strdupWtoA( GetProcessHeap(), 0, sourceFilename );
-    LPSTR destA   = HEAP_strdupWtoA( GetProcessHeap(), 0, destFilename );
+    UNICODE_STRING sourceW, destW;
+    BOOL ret;
 
-    BOOL ret = CopyFileExA(sourceA,
-                              destA,
-                              progressRoutine,
-                              appData,
-                              cancelFlagPointer,
-                              copyFlags);
+    if (!sourceFilename || !destFilename)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
-    HeapFree( GetProcessHeap(), 0, sourceA );
-    HeapFree( GetProcessHeap(), 0, destA );
+    RtlCreateUnicodeStringFromAsciiz(&sourceW, sourceFilename);
+    RtlCreateUnicodeStringFromAsciiz(&destW, destFilename);
 
+    ret = CopyFileExW(sourceW.Buffer, destW.Buffer, progressRoutine, appData,
+                      cancelFlagPointer, copyFlags);
+
+    RtlFreeUnicodeString(&sourceW);
+    RtlFreeUnicodeString(&destW);
     return ret;
 }
 
@@ -3058,17 +3249,20 @@ BOOL WINAPI UnlockFile(
 #endif
 
 /**************************************************************************
- * GetFileAttributesExA [KERNEL32.@]
+ *           GetFileAttributesExW   (KERNEL32.@)
  */
-BOOL WINAPI GetFileAttributesExA(
-	LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+BOOL WINAPI GetFileAttributesExW(
+	LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
 	LPVOID lpFileInformation)
 {
     DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
 
-    if (lpFileName == NULL) return FALSE;
-    if (lpFileInformation == NULL) return FALSE;
+    if (!lpFileName || !lpFileInformation)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     if (fInfoLevelId == GetFileExInfoStandard) {
 	LPWIN32_FILE_ATTRIBUTE_DATA lpFad =
@@ -3093,15 +3287,27 @@ BOOL WINAPI GetFileAttributesExA(
 
 
 /**************************************************************************
- * GetFileAttributesExW [KERNEL32.@]
+ *           GetFileAttributesExA   (KERNEL32.@)
  */
-BOOL WINAPI GetFileAttributesExW(
-	LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+BOOL WINAPI GetFileAttributesExA(
+	LPCSTR filename, GET_FILEEX_INFO_LEVELS fInfoLevelId,
 	LPVOID lpFileInformation)
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
-    BOOL res =
-	GetFileAttributesExA( nameA, fInfoLevelId, lpFileInformation);
-    HeapFree( GetProcessHeap(), 0, nameA );
-    return res;
+    UNICODE_STRING filenameW;
+    BOOL ret = FALSE;
+
+    if (!filename || !lpFileInformation)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, filename))
+    {
+        ret = GetFileAttributesExW(filenameW.Buffer, fInfoLevelId, lpFileInformation);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
 }

@@ -96,7 +96,7 @@
 #define TRANS2_FIND_NEXT2              0x02
 
 extern BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped);
-extern HANDLE WINAPI SMB_CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
+extern HANDLE WINAPI SMB_CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template );
 
@@ -108,8 +108,8 @@ typedef struct tagSMB_DIR
     unsigned char *buffer;
 } SMB_DIR;
 
-extern SMB_DIR* WINAPI SMB_FindFirst(LPCSTR filename);
-extern BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAA *data );
+extern SMB_DIR* WINAPI SMB_FindFirst(LPCWSTR filename);
+extern BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAW *data );
 extern BOOL WINAPI SMB_CloseDir(SMB_DIR *dir);
 
 #endif /* __INC_SMB__ */
