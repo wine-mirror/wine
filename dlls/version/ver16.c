@@ -132,7 +132,7 @@ DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
         return FALSE;
     }
 
-    *lpcb = buflen;
+    if (lpcb) *lpcb = buflen;
     *lpspBuffer = (SEGPTR) ((char *) spvBlock + ((char *) buffer - (char *) lpvBlock));
 
     return retv;
