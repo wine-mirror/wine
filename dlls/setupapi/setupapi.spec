@@ -90,10 +90,11 @@ name setupapi
 @ stub SetupDiDeleteDevRegKey
 @ stub SetupDiDeleteDeviceInfo
 @ stub SetupDiDestroyClassImageList
-@ stub SetupDiDestroyDeviceInfoList
+@ stdcall SetupDiDestroyDeviceInfoList(long) SetupDiDestroyDeviceInfoList
 @ stub SetupDiDestroyDriverInfoList
 @ stub SetupDiDrawMiniIcon
-@ stub SetupDiEnumDeviceInfo
+@ stdcall SetupDiEnumDeviceInfo(long long ptr) SetupDiEnumDeviceInfo
+@ stdcall SetupDiEnumDeviceInterfaces(long ptr ptr long ptr) SetupDiEnumDeviceInterfaces
 @ stub SetupDiEnumDriverInfoA
 @ stub SetupDiEnumDriverInfoW
 @ stub SetupDiGetActualSectionToInstallA
@@ -103,7 +104,7 @@ name setupapi
 @ stub SetupDiGetClassDescriptionW
 @ stub SetupDiGetClassDevPropertySheetsA
 @ stub SetupDiGetClassDevPropertySheetsW
-@ stub SetupDiGetClassDevsA
+@ stdcall SetupDiGetClassDevsA(ptr ptr long long) SetupDiGetClassDevsA
 @ stub SetupDiGetClassDevsW
 @ stub SetupDiGetClassImageIndex
 @ stub SetupDiGetClassImageList
@@ -114,12 +115,15 @@ name setupapi
 @ stub SetupDiGetDeviceInstallParamsW
 @ stub SetupDiGetDeviceInstanceIdA
 @ stub SetupDiGetDeviceInstanceIdW
-@ stub SetupDiGetDeviceRegistryPropertyA
+@ stdcall SetupDiGetDeviceRegistryPropertyA(long ptr long ptr ptr long ptr) SetupDiGetDeviceRegistryPropertyA
 @ stub SetupDiGetDeviceRegistryPropertyW
 @ stub SetupDiGetDriverInfoDetailA
 @ stub SetupDiGetDriverInfoDetailW
 @ stub SetupDiGetDriverInstallParamsA
 @ stub SetupDiGetDriverInstallParamsW
+@ stub SetupDiGetDeviceInterfaceAlias
+@ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr) SetupDiGetDeviceInterfaceDetailA
+@ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr) SetupDiGetDeviceInterfaceDetailW
 @ stub SetupDiGetHwProfileFriendlyNameA
 @ stub SetupDiGetHwProfileFriendlyNameW
 @ stub SetupDiGetHwProfileList
