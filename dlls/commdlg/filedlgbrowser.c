@@ -9,7 +9,6 @@
 #include "filedlgbrowser.h"
 #include "winuser.h"
 #include "heap.h"
-#include "commctrl.h"
 #include "wine/obj_dataobject.h"
 #include "debugtools.h"
 #include "cdlg.h"
@@ -112,7 +111,7 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
     sb->lpVtbl = &IShellBrowserImpl_Vtbl;
     sb->lpVtbl2 = &IShellBrowserImpl_ICommDlgBrowser_Vtbl;
 
-    SHGetSpecialFolderLocation(hwndOwner,
+    COMDLG32_SHGetSpecialFolderLocation(hwndOwner,
                                CSIDL_DESKTOP,
                                &fodInfos->ShellInfos.pidlAbsCurrent);
 
@@ -190,7 +189,7 @@ ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
 
     if (!--(This->ref)) 
     { 
-      SHFree(This);
+      COMDLG32_SHFree(This);
       return 0;
     }
     return This->ref;
@@ -283,7 +282,7 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
             return hRes;
         }
         /* create an absolute pidl */
-        pidlTmp = ILCombine(fodInfos->ShellInfos.pidlAbsCurrent,
+        pidlTmp = COMDLG32_PIDL_ILCombine(fodInfos->ShellInfos.pidlAbsCurrent,
                                                         (LPITEMIDLIST)pidl);
         
     }
@@ -298,10 +297,11 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     else
     {
         /* An absolute pidl (relative from the desktop) */
-        pidlTmp = ILClone((LPITEMIDLIST)pidl);
+        pidlTmp =  COMDLG32_PIDL_ILClone((LPITEMIDLIST)pidl);
         psfTmp = GetShellFolderFromPidl(pidlTmp);
     }
 
+    
     /* Retrieve the IShellFolder interface of the pidl specified folder */
     if(!psfTmp)
         return E_FAIL;
@@ -345,7 +345,7 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
             FILEDLG95_LOOKIN_SelectItem(fodInfos->DlgInfos.hwndLookInCB,pidlTmp);
 
             /* Release old pidlAbsCurrent memory and update its value */
-            SHFree((LPVOID)fodInfos->ShellInfos.pidlAbsCurrent);
+            COMDLG32_SHFree((LPVOID)fodInfos->ShellInfos.pidlAbsCurrent);
             fodInfos->ShellInfos.pidlAbsCurrent = pidlTmp;
 
             /* Release the current fodInfos->Shell.FOIShellView and update its value */
@@ -622,18 +622,18 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDlgBrowse
     {
         HRESULT hRes;
 
-        /* Selected item is a directory so browse to it */
-
         ULONG  ulAttr = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
         IShellFolder_GetAttributesOf(fodInfos->Shell.FOIShellFolder, 1, &pidl, &ulAttr);
 	if (ulAttr)
             hRes = IShellBrowser_BrowseObject((IShellBrowser *)This,pidl,SBSP_RELATIVE);
         /* Tell the dialog that the user selected a file */
         else
+	{
             hRes = FILEDLG95_OnOpen(This->hwndOwner);
+	}
 
         /* Free memory used by pidl */
-        SHFree((LPVOID)pidl);
+        COMDLG32_SHFree((LPVOID)pidl);
 
         return hRes;
     }
@@ -701,9 +701,9 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
         return S_OK;
 
     if (SUCCEEDED(IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_FORPARSING, &str)))
-    { if (SUCCEEDED(StrRetToStrNW(szPathW, MAX_PATH, &str, pidl)))
+    { if (SUCCEEDED(COMDLG32_StrRetToBufW(&str, pidl,szPathW, MAX_PATH)))
       {
-        if (PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
+	  if (COMDLG32_PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
           return S_OK;
       }
     }
@@ -737,7 +737,7 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
                 SetWindowTextA(fodInfos->DlgInfos.hwndFileName,lpstrFileName);
         }
 
-        SHFree((LPVOID)pidl);
+        COMDLG32_SHFree((LPVOID)pidl);
         return hRes;
     }
 
@@ -776,7 +776,7 @@ LPITEMIDLIST GetSelectedPidl(IShellView *ppshv)
         {
             LPIDA cida = GlobalLock(medium.u.hGlobal);
 	    TRACE("cida=%p\n", cida);
-            pidlSelected = ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[1]]));
+            pidlSelected =  COMDLG32_PIDL_ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[1]]));
 
             if(medium.pUnkForRelease)
                 IUnknown_Release(medium.pUnkForRelease);

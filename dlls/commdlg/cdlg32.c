@@ -23,7 +23,9 @@ static int	COMDLG32_Attach = 0;
 
 HINSTANCE	COMCTL32_hInstance = 0;
 HINSTANCE	SHELL32_hInstance = 0;
+HINSTANCE       SHLWAPI_hInstance = 0;
 
+/* DPA */
 HDPA	(WINAPI* COMDLG32_DPA_Create) (INT);  
 LPVOID	(WINAPI* COMDLG32_DPA_GetPtr) (const HDPA, INT);   
 LPVOID	(WINAPI* COMDLG32_DPA_DeletePtr) (const HDPA hdpa, INT i);
@@ -31,10 +33,34 @@ LPVOID	(WINAPI* COMDLG32_DPA_DeleteAllPtrs) (const HDPA hdpa);
 INT	(WINAPI* COMDLG32_DPA_InsertPtr) (const HDPA, INT, LPVOID); 
 BOOL	(WINAPI* COMDLG32_DPA_Destroy) (const HDPA); 
 
+/* IMAGELIST */
 HICON	(WINAPI* COMDLG32_ImageList_GetIcon) (HIMAGELIST, INT, UINT);
 HIMAGELIST (WINAPI *COMDLG32_ImageList_LoadImageA) (HINSTANCE, LPCSTR, INT, INT, COLORREF, UINT, UINT);
 BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
 BOOL	(WINAPI* COMDLG32_ImageList_Destroy) (HIMAGELIST himl);
+
+/* ITEMIDLIST */
+LPITEMIDLIST (WINAPI *COMDLG32_PIDL_ILClone) (LPCITEMIDLIST);
+LPITEMIDLIST (WINAPI *COMDLG32_PIDL_ILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
+LPITEMIDLIST (WINAPI *COMDLG32_PIDL_ILGetNext)(LPITEMIDLIST);
+BOOL (WINAPI *COMDLG32_PIDL_ILRemoveLastID)(LPCITEMIDLIST);
+BOOL (WINAPI *COMDLG32_PIDL_ILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
+
+/* SHELL */
+BOOL (WINAPI *COMDLG32_SHGetPathFromIDListA) (LPCITEMIDLIST,LPSTR);
+HRESULT (WINAPI *COMDLG32_SHGetSpecialFolderLocation)(HWND,INT,LPITEMIDLIST *);
+DWORD (WINAPI *COMDLG32_SHGetDesktopFolder)(IShellFolder **);
+DWORD	(WINAPI *COMDLG32_SHGetFileInfoA)(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
+DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
+HRESULT (WINAPI *COMDLG32_StrRetToBufW)(LPSTRRET,LPITEMIDLIST,LPVOID,DWORD);
+HRESULT (WINAPI *COMDLG32_StrRetToBufA)(LPSTRRET,LPITEMIDLIST,LPVOID,DWORD);
+
+/* PATH */
+BOOL (WINAPI *COMDLG32_PathIsRootA)(LPCSTR x);
+LPCSTR (WINAPI *COMDLG32_PathFindFilenameA)(LPCSTR path);
+DWORD (WINAPI *COMDLG32_PathRemoveFileSpecA)(LPSTR fn);
+BOOL (WINAPI *COMDLG32_PathMatchSpecW)(LPCWSTR x, LPCWSTR y);
+LPSTR (WINAPI *COMDLG32_PathAddBackslashA)(LPSTR path);
 
 /***********************************************************************
  *	COMDLG32_DllEntryPoint			(COMDLG32.entry)
@@ -84,13 +110,14 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 
 		COMCTL32_hInstance = LoadLibraryA("COMCTL32.DLL");	
 		SHELL32_hInstance = LoadLibraryA("SHELL32.DLL");
+		SHLWAPI_hInstance = LoadLibraryA("SHLWAPI.DLL");
 		
-		if (!COMCTL32_hInstance || !SHELL32_hInstance)
+		if (!COMCTL32_hInstance || !SHELL32_hInstance || !SHLWAPI_hInstance)
 		{
-			ERR("loading of comctl32 or shell32 failed\n");
+			ERR("loading of comctl32 or shell32 or shlwapi failed\n");
 			return FALSE;
 		}
-
+		/* DPA */
 		COMDLG32_DPA_Create=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)328L);
 		COMDLG32_DPA_Destroy=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)329L);
 		COMDLG32_DPA_GetPtr=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)332L);
@@ -98,10 +125,38 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_DPA_DeletePtr=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)336L);
 		COMDLG32_DPA_DeleteAllPtrs=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)337L);
 
+		/* IMAGELIST */
 		COMDLG32_ImageList_GetIcon=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_GetIcon");
 		COMDLG32_ImageList_LoadImageA=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_LoadImageA");
 		COMDLG32_ImageList_Draw=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_Draw");
 		COMDLG32_ImageList_Destroy=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_Destroy");
+		
+		/* ITEMISLIST */
+		
+		COMDLG32_PIDL_ILIsEqual =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)21L);
+		COMDLG32_PIDL_ILCombine =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)25L);
+		COMDLG32_PIDL_ILGetNext =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)153L);
+		COMDLG32_PIDL_ILClone =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)18L);
+		COMDLG32_PIDL_ILRemoveLastID =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)17L);
+		
+		/* SHELL */
+		
+		COMDLG32_SHFree = (void*)GetProcAddress(SHELL32_hInstance,"SHFree");
+		COMDLG32_SHGetSpecialFolderLocation = (void*)GetProcAddress(SHELL32_hInstance,"SHGetSpecialFolderLocation");
+		COMDLG32_SHGetPathFromIDListA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetPathFromIDListA");
+		COMDLG32_SHGetDesktopFolder = (void*)GetProcAddress(SHELL32_hInstance,"SHGetDesktopFolder");
+		COMDLG32_SHGetFileInfoA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetFileInfoA");
+
+		/* FIXME - change the followings to call GetProcAddress
+		   when shlwapi.dll will work */
+		COMDLG32_StrRetToBufW = (void*)GetProcAddress(SHLWAPI_hInstance,"StrRetToBufW"); 
+		COMDLG32_StrRetToBufA = (void*)GetProcAddress(SHLWAPI_hInstance,"StrRetToBufA");
+		/* PATH */
+		COMDLG32_PathMatchSpecW = (void*)GetProcAddress(SHLWAPI_hInstance,"PathMatchSpecW");
+		COMDLG32_PathIsRootA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathIsRootA");
+		COMDLG32_PathRemoveFileSpecA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathRemoveFileSpecA");
+		COMDLG32_PathFindFilenameA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindFileNameA");
+		COMDLG32_PathAddBackslashA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathAddBackslashA");
 		break;
 
 	case DLL_PROCESS_DETACH:
@@ -115,6 +170,7 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		}
 		FreeLibrary(COMCTL32_hInstance);
 		FreeLibrary(SHELL32_hInstance);
+		FreeLibrary(SHLWAPI_hInstance);
 		break;
 	}
 	return TRUE;
