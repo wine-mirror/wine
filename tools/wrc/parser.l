@@ -757,7 +757,7 @@ L\"			{
 <yystr>\"\"		addcchar('\"');		/* "bla""bla"   -> "bla\"bla" */
 <yystr>\\\"\"		addcchar('\"');		/* "bla\""bla"  -> "bla\"bla" */
 <yystr>\"{ws}+\"	;			/* "bla" "bla"  -> "blabla" */
-<yystr>.		yywarning("Matched %c");
+<yystr>.		yywarning("Matched %c", *yytext);
 
 
 \'			{
