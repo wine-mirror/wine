@@ -72,7 +72,56 @@
 #include "file.h"
 #include "wine/debug.h"
 
+
+static const struct iocodexs
+{
+  DWORD code;
+  const char *codex;
+} iocodextable[] = {
+{IOCTL_CDROM_UNLOAD_DRIVER, "IOCTL_CDROM_UNLOAD_DRIVER"},
+{IOCTL_CDROM_READ_TOC, "IOCTL_CDROM_READ_TOC"},
+{IOCTL_CDROM_GET_CONTROL, "IOCTL_CDROM_GET_CONTROL"},
+{IOCTL_CDROM_PLAY_AUDIO_MSF, "IOCTL_CDROM_PLAY_AUDIO_MSF"},
+{IOCTL_CDROM_SEEK_AUDIO_MSF, "IOCTL_CDROM_SEEK_AUDIO_MSF"},
+{IOCTL_CDROM_STOP_AUDIO, "IOCTL_CDROM_STOP_AUDIO"},
+{IOCTL_CDROM_PAUSE_AUDIO, "IOCTL_CDROM_PAUSE_AUDIO"},
+{IOCTL_CDROM_RESUME_AUDIO, "IOCTL_CDROM_RESUME_AUDIO"},
+{IOCTL_CDROM_GET_VOLUME, "IOCTL_CDROM_GET_VOLUME"},
+{IOCTL_CDROM_SET_VOLUME, "IOCTL_CDROM_SET_VOLUME"},
+{IOCTL_CDROM_READ_Q_CHANNEL, "IOCTL_CDROM_READ_Q_CHANNEL"},
+{IOCTL_CDROM_GET_LAST_SESSION, "IOCTL_CDROM_GET_LAST_SESSION"},
+{IOCTL_CDROM_RAW_READ, "IOCTL_CDROM_RAW_READ"},
+{IOCTL_CDROM_DISK_TYPE, "IOCTL_CDROM_DISK_TYPE"},
+{IOCTL_CDROM_GET_DRIVE_GEOMETRY, "IOCTL_CDROM_GET_DRIVE_GEOMETRY"},
+{IOCTL_CDROM_CHECK_VERIFY, "IOCTL_CDROM_CHECK_VERIFY"},
+{IOCTL_CDROM_MEDIA_REMOVAL, "IOCTL_CDROM_MEDIA_REMOVAL"},
+{IOCTL_CDROM_EJECT_MEDIA, "IOCTL_CDROM_EJECT_MEDIA"},
+{IOCTL_CDROM_LOAD_MEDIA, "IOCTL_CDROM_LOAD_MEDIA"},
+{IOCTL_CDROM_RESERVE, "IOCTL_CDROM_RESERVE"},
+{IOCTL_CDROM_RELEASE, "IOCTL_CDROM_RELEASE"},
+{IOCTL_CDROM_FIND_NEW_DEVICES, "IOCTL_CDROM_FIND_NEW_DEVICES"}
+};
+static const char *iocodex(DWORD code)
+{
+   int i;
+   static char buffer[25];
+   for(i=0; i<sizeof(iocodextable)/sizeof(struct iocodexs); i++)
+      if (code==iocodextable[i].code)
+	 return iocodextable[i].codex;
+   sprintf(buffer, "IOCTL_CODE_%x", (int)code);
+   return buffer;
+}
+
 WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
+
+#define FRAME_OF_ADDR(a) (((int)(a)[1] * CD_SECS + (a)[2]) * CD_FRAMES + (a)[3])
+#define FRAME_OF_MSF(a) (((int)(a).M * CD_SECS + (a).S) * CD_FRAMES + (a).F)
+#define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
+#define MSF_OF_FRAME(m,fr) {int f=(fr); ((UCHAR *)&(m))[2]=f%CD_FRAMES;f/=CD_FRAMES;((UCHAR *)&(m))[1]=f%CD_SECS;((UCHAR *)&(m))[0]=f/CD_SECS;}
+
+static DWORD CDROM_ReadTOC(int, CDROM_TOC*);
+static DWORD CDROM_GetStatusCode(int);
+
 
 #ifdef linux
 
@@ -105,12 +154,182 @@ struct linux_cdrom_generic_command
 
 /* FIXME: this is needed because we can't open simultaneously several times /dev/cdrom
  * this should be removed when a proper device interface is implemented
+ * 
+ * (WS) We need this to keep track of current position and to safely
+ * detect media changes. Besides this should provide a great speed up
+ * for toc inquiries.
  */
 struct cdrom_cache {
     int fd;
     int count;
+    char toc_good; /* if false, will reread TOC from disk */
+    CDROM_TOC toc;
+    SUB_Q_CURRENT_POSITION CurrentPosition;
 };
 static struct cdrom_cache cdrom_cache[26];
+
+/* Proposed media change function: not really needed at this time */
+/* This is a 1 or 0 type of function */
+#if 0
+static int CDROM_MediaChanged(int dev)
+{
+   int i;
+
+   struct cdrom_tochdr	hdr;
+   struct cdrom_tocentry entry;
+
+   if (dev < 0 || dev >= 26)
+      return 0;
+   if ( ioctl(cdrom_cache[dev].fd, CDROMREADTOCHDR, &hdr) == -1 )
+      return 0;
+
+   if ( memcmp(&hdr, &cdrom_cache[dev].hdr, sizeof(struct cdrom_tochdr)) )
+      return 1;
+
+   for (i=hdr.cdth_trk0; i<=hdr.cdth_trk1+1; i++)
+   {
+      if (i == hdr.cdth_trk1 + 1)
+      {
+	 entry.cdte_track = CDROM_LEADOUT;
+      } else {
+         entry.cdte_track = i;
+      }
+      entry.cdte_format = CDROM_MSF;
+      if ( ioctl(cdrom_cache[dev].fd, CDROMREADTOCENTRY, &entry) == -1)
+	 return 0;
+      if ( memcmp(&entry, cdrom_cache[dev].entry+i-hdr.cdth_trk0,
+			      sizeof(struct cdrom_tocentry)) )
+	 return 1;
+   }
+   return 0;
+}
+#endif
+
+/******************************************************************
+ *		CDROM_SyncCache                          [internal]
+ *
+ * Read the TOC in and store it in the cdrom_cache structure.
+ * Further requests for the TOC will be copied from the cache
+ * unless certain events like disk ejection is detected, in which
+ * case the cache will be cleared, causing it to be resynced.
+ *
+ */
+static int CDROM_SyncCache(int dev)
+{
+   int i, io = 0, tsz;
+#ifdef linux
+   struct cdrom_tochdr		hdr;
+   struct cdrom_tocentry	entry;
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+   struct ioc_toc_header	hdr;
+   struct ioc_read_toc_entry	entry;
+   struct cd_toc_entry         toc_buffer;
+#endif
+   CDROM_TOC *toc = &cdrom_cache[dev].toc;
+   cdrom_cache[dev].toc_good = 0;
+
+#ifdef linux
+
+   io = ioctl(cdrom_cache[dev].fd, CDROMREADTOCHDR, &hdr);
+   if (io == -1)
+   {
+      WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
+      goto end;
+   }
+   
+   TRACE("caching toc from=%d to=%d\n", hdr.cdth_trk0, hdr.cdth_trk1);
+
+   toc->FirstTrack = hdr.cdth_trk0;
+   toc->LastTrack  = hdr.cdth_trk1;
+   tsz = sizeof(toc->FirstTrack) + sizeof(toc->LastTrack)
+       + sizeof(TRACK_DATA) * (toc->LastTrack-toc->FirstTrack+2);
+   toc->Length[0] = tsz >> 8;
+   toc->Length[1] = tsz;
+
+   TRACE("from=%d to=%d\n", toc->FirstTrack, toc->LastTrack);
+
+   for (i = toc->FirstTrack; i <= toc->LastTrack + 1; i++)
+   {
+     if (i == toc->LastTrack + 1)
+       entry.cdte_track = CDROM_LEADOUT;
+     else 
+       entry.cdte_track = i;
+     entry.cdte_format = CDROM_MSF;
+     io = ioctl(cdrom_cache[dev].fd, CDROMREADTOCENTRY, &entry);
+     if (io == -1) {
+       WARN("error read entry (%s)\n", strerror(errno));
+       goto end;
+     }
+     toc->TrackData[i - toc->FirstTrack].Control = entry.cdte_ctrl;
+     toc->TrackData[i - toc->FirstTrack].Adr = entry.cdte_adr;
+     /* marking last track with leadout value as index */
+     toc->TrackData[i - toc->FirstTrack].TrackNumber = entry.cdte_track;
+     toc->TrackData[i - toc->FirstTrack].Address[0] = 0;
+     toc->TrackData[i - toc->FirstTrack].Address[1] = entry.cdte_addr.msf.minute;
+     toc->TrackData[i - toc->FirstTrack].Address[2] = entry.cdte_addr.msf.second;
+     toc->TrackData[i - toc->FirstTrack].Address[3] = entry.cdte_addr.msf.frame;
+    }
+    cdrom_cache[dev].toc_good = 1;
+    io = 0;
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+
+    io = ioctl(cdrom_cache[dev].fd, CDIOREADTOCHEADER, &hdr);
+    if (io == -1)
+    {
+        WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
+        goto end;
+    }
+    toc->FirstTrack = hdr.starting_track;
+    toc->LastTrack  = hdr.ending_track;
+    tsz = sizeof(toc->FirstTrack) + sizeof(toc->LastTrack)
+        + sizeof(TRACK_DATA) * (toc->LastTrack-toc->FirstTrack+2);
+    toc->Length[0] = tsz >> 8;
+    toc->Length[1] = tsz;
+   
+    TRACE("caching toc from=%d to=%d\n", hdr.cdth_trk0, hdr.cdth_trk1);
+
+    for (i = toc->FirstTrack; i <= toc->LastTrack + 1; i++)
+    {
+	if (i == toc->LastTrack + 1)
+        {
+#define LEADOUT 0xaa
+	    entry.starting_track = LEADOUT;
+        } else {
+            entry.starting_track = i;
+        }
+	memset((char *)&toc_buffer, 0, sizeof(toc_buffer));
+	entry.address_format = CD_MSF_FORMAT;
+	entry.data_len = sizeof(toc_buffer);
+	entry.data = &toc_buffer;
+	io = ioctl(cdrom_cache[dev].fd, CDIOREADTOCENTRYS, &entry);
+	if (io == -1) {
+	    WARN("error read entry (%s)\n", strerror(errno));
+	    goto end;
+	}
+        toc->TrackData[i - toc->FirstTrack].Control = toc_buffer.control;
+        toc->TrackData[i - toc->FirstTrack].Adr = toc_buffer.addr_type;
+        /* marking last track with leadout value as index */
+        toc->TrackData[i - toc->FirstTrack].TrackNumber = entry.starting_track;
+        toc->TrackData[i - toc->FirstTrack].Address[0] = 0;
+        toc->TrackData[i - toc->FirstTrack].Address[1] = toc_buffer.addr.msf.minute;
+        toc->TrackData[i - toc->FirstTrack].Address[2] = toc_buffer.addr.msf.second;
+        toc->TrackData[i - toc->FirstTrack].Address[3] = toc_buffer.addr.msf.frame;
+    }
+    cdrom_cache[dev].toc_good = 1;
+    io = 0;
+#else
+    io = STATUS_NOT_SUPPORTED;
+#endif
+end:
+   return CDROM_GetStatusCode(io);
+}
+
+static void CDROM_ClearCacheEntry(int dev)
+{
+  cdrom_cache[dev].toc_good = 0;
+}
+
+
 
 /******************************************************************
  *		CDROM_GetIdeInterface
@@ -121,18 +340,18 @@ static struct cdrom_cache cdrom_cache[26];
  *
  * NOTE: this function is used in CDROM_InitRegistry and CDROM_GetAddress
  */
-static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
+static int CDROM_GetIdeInterface(int fd, int* iface, int* device)
 {
 #if defined(linux)
     {
         struct stat st;
 #ifdef SG_EMULATED_HOST
-        if (ioctl(dev, SG_EMULATED_HOST) != -1) {
+        if (ioctl(fd, SG_EMULATED_HOST) != -1) {
             FIXME("not implemented for true scsi drives\n");
             return 0;
         }
 #endif
-        if ( fstat(dev, &st) == -1 || ! S_ISBLK(st.st_mode)) {
+        if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode)) {
             FIXME("cdrom not a block device!!!\n");
             return 0;
         }
@@ -172,7 +391,7 @@ static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
  * NOTE: programs usually read these registry entries after sending the
  *       IOCTL_SCSI_GET_ADDRESS ioctl to the cdrom
  */
-void CDROM_InitRegistry(int dev)
+void CDROM_InitRegistry(int fd)
 {
     int portnum, targetid;
     OBJECT_ATTRIBUTES attr;
@@ -195,7 +414,7 @@ void CDROM_InitRegistry(int dev)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if ( ! CDROM_GetIdeInterface(dev, &portnum, &targetid))
+    if ( ! CDROM_GetIdeInterface(fd, &portnum, &targetid))
         return;
 
     /* Ensure there is Scsi key */
@@ -232,7 +451,7 @@ void CDROM_InitRegistry(int dev)
 #ifdef HDIO_GET_DMA
     {
         int dma;
-        if (ioctl(dev,HDIO_GET_DMA, &dma) != -1) {
+        if (ioctl(fd,HDIO_GET_DMA, &dma) != -1) {
             value = dma;
             TRACE("setting dma to %lx\n", value);
         }
@@ -327,7 +546,9 @@ static int CDROM_Open(HANDLE hDevice, DWORD clientID)
         }
     }
     cdrom_cache[dev].count++;
-    return cdrom_cache[dev].fd;
+    TRACE("%d, %d, %d\n", dev, cdrom_cache[dev].fd, cdrom_cache[dev].count);
+    /* return cdrom_cache[dev].fd; */
+    return dev; /* can still find fd by using dev */
 }
 
 /******************************************************************
@@ -335,13 +556,15 @@ static int CDROM_Open(HANDLE hDevice, DWORD clientID)
  *
  *
  */
-static void CDROM_Close(DWORD clientID, int fd)
+static void CDROM_Close(DWORD clientID)
 {
     int dev = LOWORD(clientID);
 
-    if (dev >= 26 || fd != cdrom_cache[dev].fd) FIXME("how come\n");
-    if (--cdrom_cache[dev].count == 0)
-        close(cdrom_cache[dev].fd);
+    if (dev >= 26 /*|| fd != cdrom_cache[dev].fd*/) FIXME("how come\n");
+    if (--cdrom_cache[dev].count == 0) {
+      close(cdrom_cache[dev].fd);
+      cdrom_cache[dev].fd = -1;
+    }
 }
 
 /******************************************************************
@@ -361,6 +584,9 @@ static DWORD CDROM_GetStatusCode(int io)
 	    return STATUS_NO_MEDIA_IN_DEVICE;
     case EPERM:
 	    return STATUS_ACCESS_DENIED;
+    case EINVAL:
+	    return STATUS_INVALID_PARAMETER;
+    /* case EBADF: Bad file descriptor */
     }
     FIXME("Unmapped error code %d: %s\n", errno, strerror(errno));
     return STATUS_IO_DEVICE_ERROR;
@@ -380,15 +606,22 @@ static DWORD CDROM_GetDeviceNumber(int dev, STORAGE_DEVICE_NUMBER* devnum)
 
 static DWORD CDROM_GetDriveGeometry(int dev, DISK_GEOMETRY* dg)
 {
-#if 0
-    dg->Cylinders.s.LowPart = 1; /* FIXME */
-    dg->Cylinders.s.HighPart = 0; /* FIXME */
-    dg->MediaType = 1; /* FIXME */
-    dg->TracksPerCylinder = 1; /* FIXME */
-    dg->SectorsPerTrack = 1; /* FIXME */
-    dg->BytesPerSector= 1; /* FIXME */
-#endif
-    return STATUS_NOT_SUPPORTED;
+  CDROM_TOC   toc;
+  DWORD ret = 0;
+  int fsize=0;
+
+  if ((ret = CDROM_ReadTOC(dev, &toc)) != 0) return ret;
+
+  fsize = FRAME_OF_TOC(toc, toc.LastTrack+1)
+        - FRAME_OF_TOC(toc, 1); /* Total size in frames */
+  
+  dg->Cylinders.s.LowPart = fsize / (64 * 32); 
+  dg->Cylinders.s.HighPart = 0; 
+  dg->MediaType = RemovableMedia;  
+  dg->TracksPerCylinder = 64; 
+  dg->SectorsPerTrack = 32;  
+  dg->BytesPerSector= 2048; 
+  return ret;
 }
 
 /**************************************************************************
@@ -397,9 +630,9 @@ static DWORD CDROM_GetDriveGeometry(int dev, DISK_GEOMETRY* dg)
 static DWORD CDROM_ResetAudio(int dev)
 {
 #if defined(linux)
-    return CDROM_GetStatusCode(ioctl(dev, CDROMRESET));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMRESET));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(dev, CDIOCRESET, NULL));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDIOCRESET, NULL));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -413,11 +646,11 @@ static DWORD CDROM_ResetAudio(int dev)
 static DWORD CDROM_SetTray(int dev, BOOL doEject)
 {
 #if defined(linux)
-    return CDROM_GetStatusCode(ioctl(dev, doEject ? CDROMEJECT : CDROMCLOSETRAY));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, doEject ? CDROMEJECT : CDROMCLOSETRAY));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode((ioctl(dev, CDIOCALLOW, NULL)) ||
-                               (ioctl(dev, doEject ? CDIOCEJECT : CDIOCCLOSE, NULL)) ||
-                               (ioctl(dev, CDIOCPREVENT, NULL)));
+    return CDROM_GetStatusCode((ioctl(cdrom_cache[dev].fd, CDIOCALLOW, NULL)) ||
+                               (ioctl(cdrom_cache[dev].fd, doEject ? CDIOCEJECT : CDIOCCLOSE, NULL)) ||
+                               (ioctl(cdrom_cache[dev].fd, CDIOCPREVENT, NULL)));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -431,9 +664,9 @@ static DWORD CDROM_SetTray(int dev, BOOL doEject)
 static DWORD CDROM_ControlEjection(int dev, const PREVENT_MEDIA_REMOVAL* rmv)
 {
 #if defined(linux)
-    return CDROM_GetStatusCode(ioctl(dev, CDROM_LOCKDOOR, rmv->PreventMediaRemoval));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROM_LOCKDOOR, rmv->PreventMediaRemoval));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(dev, (rmv->PreventMediaRemoval) ? CDIOCPREVENT : CDIOCALLOW, NULL));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, (rmv->PreventMediaRemoval) ? CDIOCPREVENT : CDIOCALLOW, NULL));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -448,97 +681,15 @@ static DWORD CDROM_ReadTOC(int dev, CDROM_TOC* toc)
 {
     DWORD       ret = STATUS_NOT_SUPPORTED;
 
-#if defined(linux)
-    int                         i, io = -1;
-    struct cdrom_tochdr		hdr;
-    struct cdrom_tocentry	entry;
-
-    io = ioctl(dev, CDROMREADTOCHDR, &hdr);
-    if (io == -1)
-    {
-        WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
-        goto end;
+    if (dev < 0 || dev >= 26)
+       return STATUS_INVALID_PARAMETER;
+    if ( !cdrom_cache[dev].toc_good ) {
+       ret = CDROM_SyncCache(dev);
+       if ( ret )
+	  return ret;
     }
-    toc->FirstTrack = hdr.cdth_trk0;
-    toc->LastTrack  = hdr.cdth_trk1;
-
-    TRACE("from=%d to=%d\n", toc->FirstTrack, toc->LastTrack);
-
-    for (i = toc->FirstTrack; i <= toc->LastTrack + 1; i++)
-    {
-	if (i == toc->LastTrack + 1)
-        {
-	    entry.cdte_track = CDROM_LEADOUT;
-        } else {
-            entry.cdte_track = i;
-        }
-	entry.cdte_format = CDROM_MSF;
-	io = ioctl(dev, CDROMREADTOCENTRY, &entry);
-	if (io == -1) {
-	    WARN("error read entry (%s)\n", strerror(errno));
-	    goto end;
-	}
-        toc->TrackData[i - toc->FirstTrack].Control = entry.cdte_ctrl;
-        toc->TrackData[i - toc->FirstTrack].Adr = entry.cdte_adr;
-        /* marking last track with leadout value as index */
-        toc->TrackData[i - toc->FirstTrack].TrackNumber = entry.cdte_track;
-        toc->TrackData[i - toc->FirstTrack].Address[0] = 0;
-        toc->TrackData[i - toc->FirstTrack].Address[1] = entry.cdte_addr.msf.minute;
-        toc->TrackData[i - toc->FirstTrack].Address[2] = entry.cdte_addr.msf.second;
-        toc->TrackData[i - toc->FirstTrack].Address[3] = entry.cdte_addr.msf.frame;
-    }
-end:
-    ret = CDROM_GetStatusCode(io);
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-    int                         i, io = -1;
-    struct ioc_toc_header	hdr;
-    struct ioc_read_toc_entry	entry;
-    struct cd_toc_entry         toc_buffer;
-
-    io = ioctl(dev, CDIOREADTOCHEADER, &hdr);
-    if (io == -1)
-    {
-        WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
-        goto end;
-    }
-    toc->FirstTrack = hdr.starting_track;
-    toc->LastTrack  = hdr.ending_track;
-
-    TRACE("from=%d to=%d\n", toc->FirstTrack, toc->LastTrack);
-
-    for (i = toc->FirstTrack; i <= toc->LastTrack + 1; i++)
-    {
-	if (i == toc->LastTrack + 1)
-        {
-#define LEADOUT 0xaa
-	    entry.starting_track = LEADOUT;
-        } else {
-            entry.starting_track = i;
-        }
-	memset((char *)&toc_buffer, 0, sizeof(toc_buffer));
-	entry.address_format = CD_MSF_FORMAT;
-	entry.data_len = sizeof(toc_buffer);
-	entry.data = &toc_buffer;
-	io = ioctl(dev, CDIOREADTOCENTRYS, &entry);
-	if (io == -1) {
-	    WARN("error read entry (%s)\n", strerror(errno));
-	    goto end;
-	}
-        toc->TrackData[i - toc->FirstTrack].Control = toc_buffer.control;
-        toc->TrackData[i - toc->FirstTrack].Adr = toc_buffer.addr_type;
-        /* marking last track with leadout value as index */
-        toc->TrackData[i - toc->FirstTrack].TrackNumber = entry.starting_track;
-        toc->TrackData[i - toc->FirstTrack].Address[0] = 0;
-        toc->TrackData[i - toc->FirstTrack].Address[1] = toc_buffer.addr.msf.minute;
-        toc->TrackData[i - toc->FirstTrack].Address[2] = toc_buffer.addr.msf.second;
-        toc->TrackData[i - toc->FirstTrack].Address[3] = toc_buffer.addr.msf.frame;
-    }
-end:
-    ret = CDROM_GetStatusCode(io);
-#else
-    ret = STATUS_NOT_SUPPORTED;
-#endif
-    return ret;
+    *toc = cdrom_cache[dev].toc;
+    return 0;
 }
 
 /******************************************************************
@@ -555,7 +706,7 @@ static DWORD CDROM_GetDiskData(int dev, CDROM_DISK_DATA* data)
     if ((ret = CDROM_ReadTOC(dev, &toc)) != 0) return ret;
     data->DiskData = 0;
     for (i = toc.FirstTrack; i <= toc.LastTrack; i++) {
-        if (toc.TrackData[i].Control & 0x04)
+        if (toc.TrackData[i-toc.FirstTrack].Control & 0x04)
             data->DiskData |= CDROM_DISK_DATA_TRACK;
         else
             data->DiskData |= CDROM_DISK_AUDIO_TRACK;
@@ -579,11 +730,12 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     struct cdrom_subchnl	sc;
     sc.cdsc_format = CDROM_MSF;
 
-    io = ioctl(dev, CDROMSUBCHNL, &sc);
+    io = ioctl(cdrom_cache[dev].fd, CDROMSUBCHNL, &sc);
     if (io == -1)
     {
 	TRACE("opened or no_media (%s)!\n", strerror(errno));
 	hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+	CDROM_ClearCacheEntry(dev);
 	goto end;
     }
 
@@ -591,9 +743,11 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
 
     switch (sc.cdsc_audiostatus) {
     case CDROM_AUDIO_INVALID:
+	CDROM_ClearCacheEntry(dev);
 	hdr->AudioStatus = AUDIO_STATUS_NOT_SUPPORTED;
 	break;
     case CDROM_AUDIO_NO_STATUS:
+	CDROM_ClearCacheEntry(dev);
 	hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
 	break;
     case CDROM_AUDIO_PLAY:
@@ -616,28 +770,37 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     {
     case IOCTL_CDROM_CURRENT_POSITION:
         size = sizeof(SUB_Q_CURRENT_POSITION);
-        data->CurrentPosition.FormatCode = sc.cdsc_format;
-        data->CurrentPosition.Control = sc.cdsc_ctrl;
-        data->CurrentPosition.ADR = sc.cdsc_adr;
-        data->CurrentPosition.TrackNumber = sc.cdsc_trk;
-        data->CurrentPosition.IndexNumber = sc.cdsc_ind;
+	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
+          data->CurrentPosition.FormatCode = sc.cdsc_format; 
+          data->CurrentPosition.Control = sc.cdsc_ctrl; 
+          data->CurrentPosition.ADR = sc.cdsc_adr; 
+          data->CurrentPosition.TrackNumber = sc.cdsc_trk; 
+          data->CurrentPosition.IndexNumber = sc.cdsc_ind; 
 
-        data->CurrentPosition.AbsoluteAddress[0] = 0;
-        data->CurrentPosition.AbsoluteAddress[1] = sc.cdsc_absaddr.msf.minute;
-        data->CurrentPosition.AbsoluteAddress[2] = sc.cdsc_absaddr.msf.second;
-        data->CurrentPosition.AbsoluteAddress[3] = sc.cdsc_absaddr.msf.frame;
+          data->CurrentPosition.AbsoluteAddress[0] = 0; 
+          data->CurrentPosition.AbsoluteAddress[1] = sc.cdsc_absaddr.msf.minute; 
+          data->CurrentPosition.AbsoluteAddress[2] = sc.cdsc_absaddr.msf.second;
+          data->CurrentPosition.AbsoluteAddress[3] = sc.cdsc_absaddr.msf.frame;
+ 
+          data->CurrentPosition.TrackRelativeAddress[0] = 0; 
+          data->CurrentPosition.TrackRelativeAddress[1] = sc.cdsc_reladdr.msf.minute; 
+          data->CurrentPosition.TrackRelativeAddress[2] = sc.cdsc_reladdr.msf.second;
+          data->CurrentPosition.TrackRelativeAddress[3] = sc.cdsc_reladdr.msf.frame;
 
-        data->CurrentPosition.TrackRelativeAddress[0] = 0;
-        data->CurrentPosition.TrackRelativeAddress[1] = sc.cdsc_reladdr.msf.minute;
-        data->CurrentPosition.TrackRelativeAddress[2] = sc.cdsc_reladdr.msf.second;
-        data->CurrentPosition.TrackRelativeAddress[3] = sc.cdsc_reladdr.msf.frame;
+	  cdrom_cache[dev].CurrentPosition = data->CurrentPosition;
+	}
+	else /* not playing */
+	{
+	  cdrom_cache[dev].CurrentPosition.Header = *hdr; /* Preserve header info */
+	  data->CurrentPosition = cdrom_cache[dev].CurrentPosition;
+	}
         break;
     case IOCTL_CDROM_MEDIA_CATALOG:
         size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
         data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
         {
             struct cdrom_mcn mcn;
-            if ((io = ioctl(dev, CDROM_GET_MCN, &mcn)) == -1) goto end;
+            if ((io = ioctl(cdrom_cache[dev].fd, CDROM_GET_MCN, &mcn)) == -1) goto end;
 
             data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
             data->MediaCatalog.Mcval = 0; /* FIXME */
@@ -680,10 +843,11 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
         sc.what.track_info.track_number = data->TrackIsrc.Track;
         break;
     }
-    io = ioctl(dev, CDIOCREADSUBCHANNEL, &read_sc);
+    io = ioctl(cdrom_cache[dev].fd, CDIOCREADSUBCHANNEL, &read_sc);
     if (io == -1)
     {
 	TRACE("opened or no_media (%s)!\n", strerror(errno));
+	CDROM_ClearCacheEntry(dev);
 	hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
 	goto end;
     }
@@ -692,9 +856,11 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
 
     switch (sc.header.audio_status) {
     case CD_AS_AUDIO_INVALID:
+	CDROM_ClearCacheEntry(dev);
 	hdr->AudioStatus = AUDIO_STATUS_NOT_SUPPORTED;
 	break;
     case CD_AS_NO_STATUS:
+	CDROM_ClearCacheEntry(dev);
 	hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
         break;
     case CD_AS_PLAY_IN_PROGRESS:
@@ -716,20 +882,27 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     {
     case IOCTL_CDROM_CURRENT_POSITION:
         size = sizeof(SUB_Q_CURRENT_POSITION);
-        data->CurrentPosition.FormatCode = sc.what.position.data_format;
-        data->CurrentPosition.Control = sc.what.position.control;
-        data->CurrentPosition.ADR = sc.what.position.addr_type;
-        data->CurrentPosition.TrackNumber = sc.what.position.track_number;
-        data->CurrentPosition.IndexNumber = sc.what.position.index_number;
+	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
+          data->CurrentPosition.FormatCode = sc.what.position.data_format;
+          data->CurrentPosition.Control = sc.what.position.control;
+          data->CurrentPosition.ADR = sc.what.position.addr_type;
+          data->CurrentPosition.TrackNumber = sc.what.position.track_number;
+          data->CurrentPosition.IndexNumber = sc.what.position.index_number;
 
-        data->CurrentPosition.AbsoluteAddress[0] = 0;
-        data->CurrentPosition.AbsoluteAddress[1] = sc.what.position.absaddr.msf.minute;
-        data->CurrentPosition.AbsoluteAddress[2] = sc.what.position.absaddr.msf.second;
-        data->CurrentPosition.AbsoluteAddress[3] = sc.what.position.absaddr.msf.frame;
-        data->CurrentPosition.TrackRelativeAddress[0] = 0;
-        data->CurrentPosition.TrackRelativeAddress[1] = sc.what.position.reladdr.msf.minute;
-        data->CurrentPosition.TrackRelativeAddress[2] = sc.what.position.reladdr.msf.second;
-        data->CurrentPosition.TrackRelativeAddress[3] = sc.what.position.reladdr.msf.frame;
+          data->CurrentPosition.AbsoluteAddress[0] = 0;
+          data->CurrentPosition.AbsoluteAddress[1] = sc.what.position.absaddr.msf.minute;
+          data->CurrentPosition.AbsoluteAddress[2] = sc.what.position.absaddr.msf.second;
+          data->CurrentPosition.AbsoluteAddress[3] = sc.what.position.absaddr.msf.frame;
+          data->CurrentPosition.TrackRelativeAddress[0] = 0;
+          data->CurrentPosition.TrackRelativeAddress[1] = sc.what.position.reladdr.msf.minute;
+          data->CurrentPosition.TrackRelativeAddress[2] = sc.what.position.reladdr.msf.second;
+          data->CurrentPosition.TrackRelativeAddress[3] = sc.what.position.reladdr.msf.frame;
+	  cdrom_cache[dev].CurrentPosition = data->CurrentPosition;
+	}
+	else { /* not playing */
+	  cdrom_cache[dev].CurrentPosition.Header = *hdr; /* Preserve header info */
+	  data->CurrentPosition = cdrom_cache[dev].CurrentPosition;
+	}
         break;
     case IOCTL_CDROM_MEDIA_CATALOG:
         size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
@@ -785,13 +958,13 @@ static DWORD CDROM_PlayAudioMSF(int dev, const CDROM_PLAY_AUDIO_MSF* audio_msf)
     msf.cdmsf_sec1   = audio_msf->EndingS;
     msf.cdmsf_frame1 = audio_msf->EndingF;
 
-    io = ioctl(dev, CDROMSTART);
+    io = ioctl(cdrom_cache[dev].fd, CDROMSTART);
     if (io == -1)
     {
 	WARN("motor doesn't start !\n");
 	goto end;
     }
-    io = ioctl(dev, CDROMPLAYMSF, &msf);
+    io = ioctl(cdrom_cache[dev].fd, CDROMPLAYMSF, &msf);
     if (io == -1)
     {
 	WARN("device doesn't play !\n");
@@ -813,13 +986,13 @@ static DWORD CDROM_PlayAudioMSF(int dev, const CDROM_PLAY_AUDIO_MSF* audio_msf)
     msf.end_s        = audio_msf->EndingS;
     msf.end_f        = audio_msf->EndingF;
 
-    io = ioctl(dev, CDIOCSTART, NULL);
+    io = ioctl(cdrom_cache[dev].fd, CDIOCSTART, NULL);
     if (io == -1)
     {
 	WARN("motor doesn't start !\n");
 	goto end;
     }
-    io = ioctl(dev, CDIOCPLAYMSF, &msf);
+    io = ioctl(cdrom_cache[dev].fd, CDIOCPLAYMSF, &msf);
     if (io == -1)
     {
 	WARN("device doesn't play !\n");
@@ -841,16 +1014,88 @@ end:
  */
 static DWORD CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
 {
+    CDROM_TOC toc;
+    int i, io, frame;
+    SUB_Q_CURRENT_POSITION *cp;
 #if defined(linux)
     struct cdrom_msf0	msf;
-    msf.minute = audio_msf->M;
-    msf.second = audio_msf->S;
-    msf.frame  = audio_msf->F;
-
-    return CDROM_GetStatusCode(ioctl(dev, CDROMSEEK, &msf));
+    struct cdrom_subchnl sc;
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    FIXME("Could a BSD expert implement the seek function ?\n");
-    return STATUS_NOT_SUPPORTED;
+    struct ioc_play_msf	msf;
+    struct ioc_read_subchannel	read_sc;
+    struct cd_sub_channel_info	sc;
+    int final_frame;
+#endif
+
+    /* Use the information on the TOC to compute the new current
+     * position, which is shadowed on the cache. [Portable]. */
+    frame = FRAME_OF_MSF(*audio_msf);
+    cp = &cdrom_cache[dev].CurrentPosition;
+    if ((io = CDROM_ReadTOC(dev, &toc)) != 0) return io;
+     
+    for(i=toc.FirstTrack;i<=toc.LastTrack+1;i++)
+      if (FRAME_OF_TOC(toc,i)>frame) break;
+    if (i <= toc.FirstTrack || i > toc.LastTrack+1)
+      return STATUS_INVALID_PARAMETER;
+    i--;
+    cp->FormatCode = CDROM_MSF; 
+    cp->Control = toc.TrackData[i-toc.FirstTrack].Control; 
+    cp->ADR = toc.TrackData[i-toc.FirstTrack].Adr; 
+    cp->TrackNumber = toc.TrackData[i-toc.FirstTrack].TrackNumber;
+    cp->IndexNumber = 0; /* FIXME: where do they keep these? */
+    cp->AbsoluteAddress[0] = 0; 
+    cp->AbsoluteAddress[1] = toc.TrackData[i-toc.FirstTrack].Address[1];
+    cp->AbsoluteAddress[2] = toc.TrackData[i-toc.FirstTrack].Address[2];
+    cp->AbsoluteAddress[3] = toc.TrackData[i-toc.FirstTrack].Address[3];
+    frame -= FRAME_OF_TOC(toc,i);
+    cp->TrackRelativeAddress[0] = 0;
+    MSF_OF_FRAME(cp->TrackRelativeAddress[1], frame); 
+
+    /* If playing, then issue a seek command, otherwise do nothing */
+#ifdef linux
+    sc.cdsc_format = CDROM_MSF;
+
+    io = ioctl(cdrom_cache[dev].fd, CDROMSUBCHNL, &sc);
+    if (io == -1)
+    {
+	TRACE("opened or no_media (%s)!\n", strerror(errno));
+	CDROM_ClearCacheEntry(dev);
+        return CDROM_GetStatusCode(io);
+    }
+    if (sc.cdsc_audiostatus==CDROM_AUDIO_PLAY)
+    {
+      msf.minute = audio_msf->M;
+      msf.second = audio_msf->S;
+      msf.frame  = audio_msf->F;
+      return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMSEEK, &msf));
+    }
+    return 0;
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    read_sc.address_format = CD_MSF_FORMAT;
+    read_sc.track          = 0;
+    read_sc.data_len       = sizeof(sc);
+    read_sc.data           = &sc;
+    read_sc.data_format    = CD_CURRENT_POSITION;
+
+    io = ioctl(cdrom_cache[dev].fd, CDIOCREADSUBCHANNEL, &read_sc);
+    if (io == -1)
+    {
+	TRACE("opened or no_media (%s)!\n", strerror(errno));
+	CDROM_ClearCacheEntry(dev);
+        return CDROM_GetStatusCode(io);
+    }
+    if (sc.header.audio_status==CD_AS_PLAY_IN_PROGRESS) 
+    {
+
+      msf.start_m      = audio_msf->M;
+      msf.start_s      = audio_msf->S;
+      msf.start_f      = audio_msf->F;
+      final_frame = FRAME_OF_TOC(toc,toc.LastTrack+1)-1;
+      MSF_OF_FRAME(msf.end_m, final_frame);
+
+      return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDIOCPLAYMSF, &msf));
+    }
+    return 0;
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -864,9 +1109,9 @@ static DWORD CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
 static DWORD CDROM_PauseAudio(int dev)
 {
 #if defined(linux)
-    return CDROM_GetStatusCode(ioctl(dev, CDROMPAUSE));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMPAUSE));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(dev, CDIOCPAUSE, NULL));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDIOCPAUSE, NULL));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -880,9 +1125,9 @@ static DWORD CDROM_PauseAudio(int dev)
 static DWORD CDROM_ResumeAudio(int dev)
 {
 #if defined(linux)
-    return CDROM_GetStatusCode(ioctl(dev, CDROMRESUME));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMRESUME));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(dev, CDIOCRESUME, NULL));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDIOCRESUME, NULL));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -896,9 +1141,9 @@ static DWORD CDROM_ResumeAudio(int dev)
 static DWORD CDROM_StopAudio(int dev)
 {
 #if defined(linux)
-    return CDROM_GetStatusCode(ioctl(dev, CDROMSTOP));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMSTOP));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(dev, CDIOCSTOP, NULL));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDIOCSTOP, NULL));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -915,7 +1160,7 @@ static DWORD CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
     struct cdrom_volctrl volc;
     int io;
 
-    io = ioctl(dev, CDROMVOLREAD, &volc);
+    io = ioctl(cdrom_cache[dev].fd, CDROMVOLREAD, &volc);
     if (io != -1)
     {
         vc->PortVolume[0] = volc.channel0;
@@ -928,7 +1173,7 @@ static DWORD CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
     struct  ioc_vol     volc;
     int io;
 
-    io = ioctl(dev, CDIOCGETVOL, &volc);
+    io = ioctl(cdrom_cache[dev].fd, CDIOCGETVOL, &volc);
     if (io != -1)
     {
         vc->PortVolume[0] = volc.vol[0];
@@ -957,7 +1202,7 @@ static DWORD CDROM_SetVolume(int dev, const VOLUME_CONTROL* vc)
     volc.channel2 = vc->PortVolume[2];
     volc.channel3 = vc->PortVolume[3];
 
-    return CDROM_GetStatusCode(ioctl(dev, CDROMVOLCTRL, &volc));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMVOLCTRL, &volc));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     struct  ioc_vol     volc;
 
@@ -966,7 +1211,7 @@ static DWORD CDROM_SetVolume(int dev, const VOLUME_CONTROL* vc)
     volc.vol[2] = vc->PortVolume[2];
     volc.vol[3] = vc->PortVolume[3];
 
-    return CDROM_GetStatusCode(ioctl(dev, CDIOCSETVOL, &volc));
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDIOCSETVOL, &volc));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -1006,7 +1251,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
             cdr.cdread_lba = raw->DiskOffset.s.LowPart; /* FIXME ? */
             cdr.cdread_bufaddr = buffer;
             cdr.cdread_buflen = raw->SectorCount * sectSize;
-            io = ioctl(dev, CDROMREADMODE2, &cdr);
+            io = ioctl(cdrom_cache[dev].fd, CDROMREADMODE2, &cdr);
             break;
         case XAForm2:
             FIXME("XAForm2: NIY\n");
@@ -1027,7 +1272,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
             cdra.addr_format = CDROM_LBA;
             cdra.nframes = raw->SectorCount;
             cdra.buf = buffer;
-            io = ioctl(dev, CDROMREADAUDIO, &cdra);
+            io = ioctl(cdrom_cache[dev].fd, CDROMREADAUDIO, &cdra);
             break;
         }
     }
@@ -1051,7 +1296,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
             ira.address_format = CD_LBA_FORMAT;
             ira.nframes = raw->SectorCount;
             ira.buffer = buffer;
-            io = ioctl(dev, CDIOCREADAUDIO, &ira);
+            io = ioctl(cdrom_cache[dev].fd, CDIOCREADAUDIO, &ira);
             break;
         }
     }
@@ -1124,7 +1369,7 @@ static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPac
        return STATUS_INVALID_PARAMETER;
     }
 
-    io = ioctl(dev, CDROM_SEND_PACKET, &cmd);
+    io = ioctl(cdrom_cache[dev].fd, CDROM_SEND_PACKET, &cmd);
 
     if (pPacket->SenseInfoLength != 0)
     {
@@ -1194,7 +1439,7 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
        return STATUS_INVALID_PARAMETER;
     }
 
-    io = ioctl(dev, CDROM_SEND_PACKET, &cmd);
+    io = ioctl(cdrom_cache[dev].fd, CDROM_SEND_PACKET, &cmd);
 
     if (pPacket->SenseInfoLength != 0)
     {
@@ -1221,7 +1466,7 @@ static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
     address->Length = sizeof(SCSI_ADDRESS);
     address->PathId = 0; /* bus number */
     address->Lun = 0;
-    if ( ! CDROM_GetIdeInterface(dev, &portnum, &targetid))
+    if ( ! CDROM_GetIdeInterface(cdrom_cache[dev].fd, &portnum, &targetid))
         return STATUS_NOT_SUPPORTED;
 
     address->PortNumber = portnum;
@@ -1243,8 +1488,8 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     DWORD       error = 0;
     int         dev;
 
-    TRACE("%lx[%c] %lx %lx %ld %lx %ld %lx %lx\n",
-          (DWORD)hDevice, 'A' + LOWORD(clientID), dwIoControlCode, (DWORD)lpInBuffer, nInBufferSize,
+    TRACE("%lx[%c] %s %lx %ld %lx %ld %lx %lx\n",
+          (DWORD)hDevice, 'A' + LOWORD(clientID), iocodex(dwIoControlCode), (DWORD)lpInBuffer, nInBufferSize,
           (DWORD)lpOutBuffer, nOutBufferSize, (DWORD)lpBytesReturned, (DWORD)lpOverlapped);
 
     if (lpBytesReturned) *lpBytesReturned = 0;
@@ -1268,6 +1513,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     case IOCTL_STORAGE_CHECK_VERIFY:
     case IOCTL_CDROM_CHECK_VERIFY:
         sz = 0;
+	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
             error = STATUS_INVALID_PARAMETER;
         else error = CDROM_Verify(dev);
@@ -1281,12 +1527,14 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     case IOCTL_STORAGE_LOAD_MEDIA:
     case IOCTL_CDROM_LOAD_MEDIA:
         sz = 0;
+	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
             error = STATUS_INVALID_PARAMETER;
         else error = CDROM_SetTray(dev, FALSE);
         break;
      case IOCTL_STORAGE_EJECT_MEDIA:
         sz = 0;
+	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
             error = STATUS_INVALID_PARAMETER;
         else error = CDROM_SetTray(dev, TRUE);
@@ -1299,6 +1547,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         /* FIXME the last ioctl:s is not the same as the two others...
          * lockcount/owner should be handled */
         sz = 0;
+	CDROM_ClearCacheEntry(dev);
         if (lpOutBuffer != NULL || nOutBufferSize != 0) error = STATUS_INVALID_PARAMETER;
         else if (nInBufferSize < sizeof(PREVENT_MEDIA_REMOVAL)) error = STATUS_BUFFER_TOO_SMALL;
         else error = CDROM_ControlEjection(dev, (const PREVENT_MEDIA_REMOVAL*)lpInBuffer);
@@ -1315,6 +1564,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
 
     case IOCTL_STORAGE_RESET_DEVICE:
         sz = 0;
+	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
             error = STATUS_INVALID_PARAMETER;
         else error = CDROM_ResetAudio(dev);
@@ -1336,6 +1586,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
 
     case IOCTL_CDROM_DISK_TYPE:
         sz = sizeof(CDROM_DISK_DATA);
+	/* CDROM_ClearCacheEntry(dev); */
         if (lpInBuffer != NULL || nInBufferSize != 0) error = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
         else error = CDROM_GetDiskData(dev, (CDROM_DISK_DATA*)lpOutBuffer);
@@ -1387,6 +1638,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         break;
     case IOCTL_CDROM_STOP_AUDIO:
         sz = 0;
+	CDROM_ClearCacheEntry(dev); /* Maybe intention is to change media */
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
             error = STATUS_INVALID_PARAMETER;
         else error = CDROM_StopAudio(dev);
@@ -1399,6 +1651,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         break;
     case IOCTL_CDROM_SET_VOLUME:
         sz = 0;
+	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer == NULL || nInBufferSize < sizeof(VOLUME_CONTROL) || lpOutBuffer != NULL)
             error = STATUS_INVALID_PARAMETER;
         else error = CDROM_SetVolume(dev, (const VOLUME_CONTROL*)lpInBuffer);
@@ -1442,6 +1695,6 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         SetLastError(error);
         return FALSE;
     }
-    CDROM_Close(clientID, dev);
+    CDROM_Close(clientID);
     return TRUE;
 }
