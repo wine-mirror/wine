@@ -197,8 +197,6 @@ DWORD	WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);
 DWORD	WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp);
 #define  SHFileOperation WINELIB_NAME_AW(SHFileOperation)
 
-DWORD WINAPI SHFileOperationAW(DWORD x);
-
 /******************************************
  * ShellExecute
  */

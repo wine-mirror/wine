@@ -77,19 +77,6 @@ BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
 BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define  SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
-
-
-/****************************************************************************
-* SHChangeNotifyRegister API
-*/
-typedef struct
-{ LPITEMIDLIST pidl;
-  DWORD unknown;
-} IDSTRUCT;
-
-DWORD WINAPI SHChangeNotifyRegister(HWND hwnd,LONG events1,LONG events2,DWORD msg,int count,IDSTRUCT *idlist);
-DWORD WINAPI SHChangeNotifyDeregister(LONG x1);
-
 /****************************************************************************
 * SHAddToRecentDocs API
 */

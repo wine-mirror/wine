@@ -245,7 +245,7 @@ rsrc	shell32
  236 stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA   # exported by name
  237 stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA   # exported by name
  238 stub SHBrowseForFolderW@4   # exported by name
- 239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotify  # exported by name
+ 239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW  # exported by name
  240 stub SHEmptyRecycleBinA@12   # exported by name
  241 stub SHEmptyRecycleBinW@12   # exported by name
  242 stdcall SHFileOperation (ptr) SHFileOperationAW   # exported by name

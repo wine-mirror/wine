@@ -200,7 +200,7 @@ typedef struct tagBROWSEINFOA {
     UINT        ulFlags;
     BFFCALLBACK   lpfn;
     LPARAM        lParam;
-	INT         iImage;
+    INT         iImage;
 } BROWSEINFOA, *PBROWSEINFOA, *LPBROWSEINFOA;
 
 typedef struct tagBROWSEINFOW {
@@ -211,7 +211,7 @@ typedef struct tagBROWSEINFOW {
     UINT        ulFlags;
     BFFCALLBACK   lpfn;
     LPARAM        lParam;
-	INT         iImage;
+    INT         iImage;
 } BROWSEINFOW, *PBROWSEINFOW, *LPBROWSEINFOW; 
 
 #define BROWSEINFO   WINELIB_NAME_AW(BROWSEINFO)
@@ -260,7 +260,7 @@ typedef struct tagBROWSEINFOW {
 */
 
 LPITEMIDLIST WINAPI SHBrowseForFolderA(LPBROWSEINFOA lpbi);
-/*LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFO32W lpbi);*/
+LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFOW lpbi);
 #define  SHBrowseForFolder WINELIB_NAME_AW(SHBrowseForFolder)
 
 /****************************************************************************
@@ -403,7 +403,53 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx);
 #define SSF_NOCONFIRMRECYCLE		0x8000
 #define SSF_HIDEICONS			0x4000
 
-/**********************************************************************/
+/**********************************************************************
+ * SHChangeNotify
+ */
+#define SHCNE_RENAMEITEM	0x00000001
+#define SHCNE_CREATE		0x00000002
+#define SHCNE_DELETE		0x00000004
+#define SHCNE_MKDIR		0x00000008
+#define SHCNE_RMDIR		0x00000010
+#define SHCNE_MEDIAINSERTED	0x00000020
+#define SHCNE_MEDIAREMOVED	0x00000040
+#define SHCNE_DRIVEREMOVED	0x00000080
+#define SHCNE_DRIVEADD		0x00000100
+#define SHCNE_NETSHARE		0x00000200
+#define SHCNE_NETUNSHARE	0x00000400
+#define SHCNE_ATTRIBUTES	0x00000800
+#define SHCNE_UPDATEDIR		0x00001000
+#define SHCNE_UPDATEITEM	0x00002000
+#define SHCNE_SERVERDISCONNECT	0x00004000
+#define SHCNE_UPDATEIMAGE	0x00008000
+#define SHCNE_DRIVEADDGUI	0x00010000
+#define SHCNE_RENAMEFOLDER	0x00020000
+#define SHCNE_FREESPACE		0x00040000
+
+#define SHCNE_EXTENDED_EVENT	0x04000000
+#define SHCNE_ASSOCCHANGED	0x08000000
+#define SHCNE_DISKEVENTS	0x0002381F
+#define SHCNE_GLOBALEVENTS	0x0C0581E0
+#define SHCNE_ALLEVENTS		0x7FFFFFFF
+#define SHCNE_INTERRUPT		0x80000000
+
+#define SHCNEE_ORDERCHANGED	0x00000002
+
+#define SHCNF_IDLIST		0x0000
+#define SHCNF_PATHA		0x0001
+#define SHCNF_PRINTERA		0x0002
+#define SHCNF_DWORD		0x0003
+#define SHCNF_PATHW		0x0005
+#define SHCNF_PRINTERW		0x0006
+#define SHCNF_TYPE		0x00FF
+#define SHCNF_FLUSH		0x1000
+#define SHCNF_FLUSHNOWAIT	0x2000
+
+void WINAPI SHChangeNotifyA(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2);
+void WINAPI SHChangeNotifyW(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2);
+#define  SHChangeNotify WINELIB_NAME_AW(SHChangeNotify)
+
+ /**********************************************************************/
 
 #ifdef __cplusplus
 } /* extern "C" */

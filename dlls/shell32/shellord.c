@@ -23,58 +23,6 @@
 DEFAULT_DEBUG_CHANNEL(shell);
 
 /*************************************************************************
- * SHChangeNotifyRegister			[SHELL32.2]
- *
- * NOTES
- *   Idlist is an array of structures and Count specifies how many items in the array
- *   (usually just one I think).
- */
-DWORD WINAPI
-SHChangeNotifyRegister(
-    HWND hwnd,
-    LONG events1,
-    LONG events2,
-    DWORD msg,
-    int count,
-    IDSTRUCT *idlist)
-{	FIXME("(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
-		hwnd,events1,events2,msg,count,idlist);
-	return 0;
-}
-/*************************************************************************
- * SHChangeNotifyDeregister			[SHELL32.4]
- */
-DWORD WINAPI
-SHChangeNotifyDeregister(LONG x1)
-{	FIXME("(0x%08lx):stub.\n",x1);
-	return 0;
-}
-/*************************************************************************
- * NTSHChangeNotifyRegister			[SHELL32.640]
- * NOTES
- *   Idlist is an array of structures and Count specifies how many items in the array
- *   (usually just one I think).
- */
-DWORD WINAPI NTSHChangeNotifyRegister(
-    HWND hwnd,
-    LONG events1,
-    LONG events2,
-    DWORD msg,
-    int count,
-    IDSTRUCT *idlist)
-{	FIXME("(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):stub.\n",
-		hwnd,events1,events2,msg,count,idlist);
-	return 0;
-}
-/*************************************************************************
- * NTSHChangeNotifyDeregister			[SHELL32.641]
- */
-DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
-{	FIXME("(0x%08lx):stub.\n",x1);
-	return 0;
-}
-
-/*************************************************************************
  * ParseField					[SHELL32.58]
  *
  */
@@ -470,7 +418,7 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
  *     free_ptr() - frees memory using IMalloc
  *     exported by ordinal
  */
-#define MEM_DEBUG 0
+#define MEM_DEBUG 1
 DWORD WINAPI SHFree(LPVOID x) 
 {
 #if MEM_DEBUG
@@ -628,51 +576,6 @@ DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	else
 	{ FIXME("(0x%08x,%s):stub.\n", uFlags,(char*)pv);
 	}
-  return 0;
-}
-/*************************************************************************
- * SHFileOperation				[SHELL32.242]
- *
- */
-DWORD WINAPI SHFileOperationAW(DWORD x)
-{	FIXME("0x%08lx stub\n",x);
-	return 0;
-
-}
-
-/*************************************************************************
- * SHFileOperationA				[SHELL32.243]
- *
- * NOTES
- *     exported by name
- */
-DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)   
-{ FIXME("(%p):stub.\n", lpFileOp);
-  return 1;
-}
-/*************************************************************************
- * SHFileOperationW				[SHELL32.244]
- *
- * NOTES
- *     exported by name
- */
-DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)   
-{ FIXME("(%p):stub.\n", lpFileOp);
-  return 1;
-}
-
-/*************************************************************************
- * SHChangeNotify				[SHELL32.239]
- *
- * NOTES
- *     exported by name
- */
-DWORD WINAPI SHChangeNotify (
-    INT   wEventId,  /* [IN] flags that specifies the event*/
-    UINT  uFlags,   /* [IN] the meaning of dwItem[1|2]*/
-		LPCVOID dwItem1,
-		LPCVOID dwItem2)
-{ FIXME("(0x%08x,0x%08ux,%p,%p):stub.\n", wEventId,uFlags,dwItem1,dwItem2);
   return 0;
 }
 /*************************************************************************
