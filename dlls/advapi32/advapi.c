@@ -11,10 +11,11 @@
 
 #include <unistd.h>
 
-/***********************************************************************
- *           GetUserNameA   [ADVAPI32.67]
+/******************************************************************************
+ * GetUserName32A [ADVAPI32.67]
  */
-BOOL32 WINAPI GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
+BOOL32 WINAPI
+GetUserName32A( LPSTR lpszName, LPDWORD lpSize )
 {
   size_t len;
   char *name;
@@ -34,10 +35,15 @@ BOOL32 WINAPI GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
   return 1;
 }
 
-/***********************************************************************
- *           GetUserNameW   [ADVAPI32.68]
+/******************************************************************************
+ * GetUserName32W [ADVAPI32.68]
+ *
+ * PARAMS
+ *   lpszName []
+ *   lpSize   []
  */
-BOOL32 WINAPI GetUserName32W(LPWSTR lpszName, LPDWORD lpSize)
+BOOL32 WINAPI
+GetUserName32W( LPWSTR lpszName, LPDWORD lpSize )
 {
 	LPSTR name = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *lpSize );
 	DWORD	size = *lpSize;
