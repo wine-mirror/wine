@@ -63,7 +63,7 @@ TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
 
 static void
 TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
-		    HDC hdc, INT nState)
+		    HDC hdc, INT nState, DWORD dwStyle)
 {
     RECT   rcText = btnPtr->rect;
     HFONT  hOldFont;
@@ -73,7 +73,12 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
     /* draw text */
     if ((btnPtr->iString > -1) && (btnPtr->iString < infoPtr->nNumStrings)) {
 	InflateRect (&rcText, -3, -3);
+	if (dwStyle & TBSTYLE_LIST) {
+	    rcText.left += infoPtr->nBitmapWidth;
+	}
+	else {
 	rcText.top += infoPtr->nBitmapHeight;
+	}
 	if (nState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
 	    OffsetRect (&rcText, 1, 1);
 
@@ -203,16 +208,19 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	else
 	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
 
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
     /* pressed TBSTYLE_BUTTON */
     if (btnPtr->fsState & TBSTATE_PRESSED) {
+	if (dwStyle & TBSTYLE_FLAT)
+	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE | BF_ADJUST);
+	else
 	DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
 	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
@@ -231,7 +239,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
@@ -242,7 +250,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
 	TOOLBAR_DrawPattern (hdc, &rc);
 	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
-	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
+	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
 
@@ -250,8 +258,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (dwStyle & TBSTYLE_FLAT)
     {
 	if (btnPtr->bHot)
-	    DrawEdge (hdc, &rc, BDR_RAISEDINNER,
-		       BF_RECT | BF_MIDDLE | BF_SOFT);
+	    DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
 	if (btnPtr->bHot && infoPtr->himlHot)
 	    ImageList_Draw (infoPtr->himlHot, btnPtr->iBitmap, hdc,
 			    rc.left +2, rc.top +2, ILD_NORMAL);
@@ -268,7 +275,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 			rc.left+1, rc.top+1, ILD_NORMAL);
     }
 
-    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
+    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 }
 
 
@@ -334,11 +341,10 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
 */ 
 
 static void
-TOOLBAR_WrapToolbar( HWND hwnd )
+TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
-    DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     INT x, cx, i, j;
     RECT rc;
     BOOL bWrap, bButtonWrap;
@@ -483,6 +489,7 @@ static void
 TOOLBAR_CalcToolbar (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
+    DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     TBUTTON_INFO *btnPtr;
     INT i, nRows, nSepRows;
     INT x, y, cx, cy;
@@ -492,6 +499,11 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
     TOOLBAR_CalcStrings (hwnd, &sizeString);
 
+    if (dwStyle & TBSTYLE_LIST) {
+	infoPtr->nButtonHeight = max(infoPtr->nBitmapHeight, sizeString.cy) + 6;
+	infoPtr->nButtonWidth = infoPtr->nBitmapWidth + sizeString.cx + 6;
+    }
+    else {
     if (sizeString.cy > 0)
 	infoPtr->nButtonHeight = sizeString.cy + infoPtr->nBitmapHeight + 6;
     else if (infoPtr->nButtonHeight < infoPtr->nBitmapHeight + 6)
@@ -501,11 +513,12 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	infoPtr->nButtonWidth = sizeString.cx + 6;
     else if (infoPtr->nButtonWidth < infoPtr->nBitmapWidth + 6)
 	infoPtr->nButtonWidth = infoPtr->nBitmapWidth + 6;
+    }
 
-    TOOLBAR_WrapToolbar( hwnd );
+    TOOLBAR_WrapToolbar( hwnd, dwStyle );
 
     x  = infoPtr->nIndent;
-    y  = TOP_BORDER;
+    y  = (dwStyle & TBSTYLE_FLAT) ? 0 : TOP_BORDER;
     cx = infoPtr->nButtonWidth;
     cy = infoPtr->nButtonHeight;
     nRows = nSepRows = 0;
@@ -1292,7 +1305,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_AutoSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_AutoSize (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
@@ -2864,7 +2877,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
     infoPtr->hwndNotify = GetParent (hwnd);
     infoPtr->bTransparent = (dwStyle & TBSTYLE_FLAT);
-    infoPtr->dwDTFlags = DT_CENTER;
+    infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE : DT_CENTER;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
     infoPtr->iVersion = 0;
 
@@ -3373,9 +3386,20 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_StyleChanged (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 {
-    TOOLBAR_AutoSize (hwnd, wParam, lParam);
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
+    if (nType == GWL_STYLE) {
+	if (lpStyle->styleNew & TBSTYLE_LIST) {
+	    infoPtr->dwDTFlags = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
+	}
+	else {
+	    infoPtr->dwDTFlags = DT_CENTER;
+	}
+    }
+
+    TOOLBAR_AutoSize (hwnd);
 
     InvalidateRect(hwnd, NULL, FALSE);
 
@@ -3405,7 +3429,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_AddStringW (hwnd, wParam, lParam);
 
 	case TB_AUTOSIZE:
-	    return TOOLBAR_AutoSize (hwnd, wParam, lParam);
+	    return TOOLBAR_AutoSize (hwnd);
 
 	case TB_BUTTONCOUNT:
 	    return TOOLBAR_ButtonCount (hwnd, wParam, lParam);
@@ -3695,7 +3719,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_Size (hwnd, wParam, lParam);
 
 	case WM_STYLECHANGED:
-	    return TOOLBAR_StyleChanged (hwnd, wParam, lParam);
+	    return TOOLBAR_StyleChanged (hwnd, (INT)wParam, (LPSTYLESTRUCT)lParam);
 
 /*	case WM_SYSCOLORCHANGE: */
 
