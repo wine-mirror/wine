@@ -3751,7 +3751,7 @@ typedef struct NMLVSCROLL
     (DWORD)SNDMSGA((hwndLV), LVM_GETITEMSPACING, (WPARAM)fSmall, 0L)
 #define ListView_GetSubItemRect(hwndLV, iItem, iSubItem, code, prc) \
     (BOOL)SNDMSGA((hwndLV), LVM_GETSUBITEMRECT, (WPARAM)(int)(iItem), \
-                       ((prc) ? (((LPRECT)(prc))->top = iSubItem), (((LPRECT)(prc))->left = code):0), (LPARAM)prc)
+                       ((prc) ? ((((LPRECT)(prc))->top = iSubItem), (((LPRECT)(prc))->left = code), (LPARAM)(prc)) : 0))
 #define ListView_GetToolTips(hwndLV) \
     (HWND)SNDMSGA((hwndLV), LVM_GETTOOLTIPS, 0, 0L)
 #define ListView_SetColumnOrderArray(hwndLV, iCount, pi) \
