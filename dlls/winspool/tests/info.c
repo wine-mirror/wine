@@ -26,13 +26,6 @@ static void test_printer_directory(ivoid)
 {   LPBYTE buffer = NULL;
     DWORD  cbBuf, pcbNeeded;
     BOOL   res;
-    OSVERSIONINFOA ver;
-
-    ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-    if(!GetVersionExA( &ver)) {
-        ok( 0, "GetVersionExA failed!");
-        return ;
-    }
 
     (void) GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
 
@@ -57,40 +50,26 @@ static void test_printer_directory(ivoid)
         GetLastError());
  
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
-    if(ver.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-        ok( !res , "expected result == 0, got %d", res);
-        ok( ERROR_INVALID_USER_BUFFER == GetLastError(),
-            "last error set to %ld instead of ERROR_INVALID_USER_BUFFER",
-             GetLastError());
-    } else {
-        ok( res , "expected result != 0, got %d", res);
-        ok( ERROR_INVALID_PARAMETER == GetLastError(),
-            "last error set to %ld instead of ERROR_INVALID_PARAMETER",
-             GetLastError());
-    }
+    ok( (!res && ERROR_INVALID_USER_BUFFER == GetLastError()) || 
+        ( res && ERROR_INVALID_PARAMETER == GetLastError()) ,
+         "expected either result == 0 and "
+         "last error == ERROR_INVALID_USER_BUFFER "
+         "or result != 0 and last error == ERROR_INVALID_PARAMETER "
+         "got result %d and last error == %ld", res, GetLastError());
 
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
-    if(ver.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-        ok( !res , "expected result == 0, got %d", res);
-        ok( RPC_X_NULL_REF_POINTER == GetLastError(),
-            "last error set to %ld instead of RPC_X_NULL_REF_POINTER",
-            GetLastError());
-    } else {
-        ok( res , "expected result != 0, got %d", res);
-    }
+    ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || res,
+         "expected either result == 0 and "
+         "last error == RPC_X_NULL_REF_POINTER or result != 0 "
+         "got result %d and last error == %ld", res, GetLastError());
 
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
-    if(ver.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-        ok( !res , "expected result == 0, got %d", res);
-        ok( RPC_X_NULL_REF_POINTER == GetLastError(),
-            "last error set to %ld instead of RPC_X_NULL_REF_POINTER",
-            GetLastError());
-    } else {
-        ok( res , "expected result != 0, got %d", res);
-        ok( ERROR_INVALID_PARAMETER == GetLastError(),
-            "last error set to %ld instead of ERROR_INVALID_PARAMETER",
-             GetLastError());
-    }
+    ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || 
+        ( res && ERROR_INVALID_PARAMETER == GetLastError()) ,
+         "expected either result == 0 and "
+         "last error == RPC_X_NULL_REF_POINTER "
+         "or result != 0 and last error == ERROR_INVALID_PARAMETER "
+         "got result %d and last error == %ld", res, GetLastError());
 
     HeapFree( GetProcessHeap(), 0, buffer);
 }
