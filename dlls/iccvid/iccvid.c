@@ -70,7 +70,7 @@ typedef struct
 typedef struct {
     cvid_codebook *v4_codebook[MAX_STRIPS];
     cvid_codebook *v1_codebook[MAX_STRIPS];
-    int strip_num;
+    unsigned int strip_num;
 } cinepak_info;
 
 typedef struct _ICCVID_Info
@@ -353,7 +353,7 @@ cinepak_info *decode_cinepak_init(void)
 
 void free_cvinfo( cinepak_info *cvinfo )
 {
-    int i;
+    unsigned int i;
 
     for( i=0; i<cvinfo->strip_num; i++ )
     {
@@ -382,14 +382,15 @@ typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit, int stride,
  *   frame (only 24 or 32 bpp are supported)
  */
 void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
-           unsigned char *frame, int width, int height, int bit_per_pixel)
+           unsigned char *frame, unsigned int width, unsigned int height, int bit_per_pixel)
 {
     cvid_codebook *v4_codebook, *v1_codebook, *codebook = NULL;
     unsigned long x, y, y_bottom, frame_flags, strips, cv_width, cv_height,
                   cnum, strip_id, chunk_id, x0, y0, x1, y1, ci, flag, mask;
     long len, top_size, chunk_size;
     unsigned char *frm_ptr, *frm_end;
-    int i, cur_strip, d0, d1, d2, d3, frm_stride, bpp = 3;
+    unsigned int i, cur_strip;
+    int d0, d1, d2, d3, frm_stride, bpp = 3;
     fn_cvid_v1 cvid_v1 = cvid_v1_24;
     fn_cvid_v4 cvid_v4 = cvid_v4_24;
 
