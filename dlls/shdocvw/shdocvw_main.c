@@ -79,25 +79,6 @@ HRESULT WINAPI SHDOCVW_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 }
 
 /***********************************************************************
- *		DllRegisterServer (SHDOCVW.@)
- */
-HRESULT WINAPI SHDOCVW_DllRegisterServer()
-{
-    FIXME("(), stub!\n");
-    return S_OK;
-}
-
-/***********************************************************************
- *		DllUnregisterServer (SHDOCVW.@)
- */
-HRESULT WINAPI SHDOCVW_DllUnregisterServer()
-{
-    FIXME("(), stub!\n");
-    return S_OK;
-}
-
-
-/***********************************************************************
  *		SHDOCVW_110 (SHDOCVW.110)
  *
  * Called by Win98 explorer.exe main binary, definitely has 0
