@@ -98,8 +98,8 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
  *
  * Find header struct for a particular resource type.
  */
-static NE_TYPEINFO* NE_FindTypeSection( NE_MODULE *pModule, 
-					NE_TYPEINFO *pTypeInfo, LPCSTR typeId )
+NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, 
+			 	 NE_TYPEINFO *pTypeInfo, LPCSTR typeId )
 {
     /* start from pTypeInfo */
 
@@ -111,7 +111,7 @@ static NE_TYPEINFO* NE_FindTypeSection( NE_MODULE *pModule,
 	{
 	    if (!(pTypeInfo->type_id & 0x8000))
 	    {
-		BYTE *p = (BYTE*)pModule + pModule->res_table + pTypeInfo->type_id;
+		BYTE *p = pResTab + pTypeInfo->type_id;
 		if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
 		{
 		    TRACE(resource, "  Found type '%s'\n", str );
@@ -144,8 +144,8 @@ static NE_TYPEINFO* NE_FindTypeSection( NE_MODULE *pModule,
  *
  * Find a resource once the type info structure has been found.
  */
-static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
-                                        NE_TYPEINFO *pTypeInfo, LPCSTR resId )
+NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab,
+                                      NE_TYPEINFO *pTypeInfo, LPCSTR resId )
 {
     BYTE *p;
     int count;
@@ -158,9 +158,9 @@ static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
         for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
         {
             if (pNameInfo->id & 0x8000) continue;
-            p = (BYTE *)pModule + pModule->res_table + pNameInfo->id;
+            p = pResTab + pNameInfo->id;
             if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
-                return (HRSRC16)((int)pNameInfo - (int)pModule);
+                return pNameInfo;
         }
     }
     else  /* Numeric resource id */
@@ -168,9 +168,9 @@ static HRSRC16 NE_FindResourceFromType( NE_MODULE *pModule,
         WORD id = LOWORD(resId) | 0x8000;
         for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
             if (pNameInfo->id == id) 
-	      return (HRSRC16)((int)pNameInfo - (int)pModule);
+	        return pNameInfo;
     }
-    return 0;
+    return NULL;
 }
 
 
@@ -241,7 +241,8 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR typeId,
 {
     FARPROC16 prevHandler = NULL;
     NE_MODULE *pModule = NE_GetPtr( hModule );
-    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+    LPBYTE pResTab = (LPBYTE)pModule + pModule->res_table;
+    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)(pResTab + 2);
 
     if (!pModule || !pModule->res_table) return NULL;
 
@@ -250,7 +251,7 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR typeId,
 
     for (;;)
     {
-	if (!(pTypeInfo = NE_FindTypeSection( pModule, pTypeInfo, PTR_SEG_TO_LIN(typeId) )))
+	if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, PTR_SEG_TO_LIN(typeId) )))
             break;
         prevHandler = pTypeInfo->resloader;
         pTypeInfo->resloader = resourceHandler;
@@ -266,7 +267,8 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR typeId,
 HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 {
     NE_TYPEINFO *pTypeInfo;
-    HRSRC16 hRsrc;
+    NE_NAMEINFO *pNameInfo;
+    LPBYTE pResTab;
 
     if (!pModule || !pModule->res_table) return 0;
 
@@ -306,16 +308,17 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
         }
     }
 
-    pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+    pResTab = (LPBYTE)pModule + pModule->res_table;
+    pTypeInfo = (NE_TYPEINFO *)( pResTab + 2 );
 
     for (;;)
     {
-	if (!(pTypeInfo = NE_FindTypeSection( pModule, pTypeInfo, type )))
+	if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, type )))
             break;
-        if ((hRsrc = NE_FindResourceFromType(pModule, pTypeInfo, name)))
+        if ((pNameInfo = NE_FindResourceFromType( pResTab, pTypeInfo, name )))
         {
             TRACE(resource, "    Found id %08lx\n", (DWORD)name );
-            return hRsrc;
+            return (HRSRC16)( (int)pNameInfo - (int)pModule );
         }
         TRACE(resource, "    Not found, going on\n" );
         pTypeInfo = NEXT_TYPEINFO(pTypeInfo);

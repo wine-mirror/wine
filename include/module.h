@@ -174,6 +174,9 @@ extern INT16 NE_AccessResource( NE_MODULE *pModule, HRSRC16 hRsrc );
 extern DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC16 hRsrc );
 extern HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc );
 extern BOOL16 NE_FreeResource( NE_MODULE *pModule, HGLOBAL16 handle );
+extern NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR typeId );
+extern NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR resId );
+
 
 /* loader/ne/segment.c */
 extern BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
