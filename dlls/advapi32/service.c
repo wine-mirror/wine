@@ -240,10 +240,20 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 
 /******************************************************************************
  * OpenSCManagerA [ADVAPI32.@]
+ *
+ * Establish a connection to the service control manager and open its database.
+ *
+ * PARAMS
+ *   lpMachineName   [I] Pointer to machine name string
+ *   lpDatabaseName  [I] Pointer to database name string
+ *   dwDesiredAccess [I] Type of access
+ *
+ * RETURNS
+ *   Success: A Handle to the service control manager database
+ *   Failure: NULL
  */
-SC_HANDLE WINAPI
-OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
-                  DWORD dwDesiredAccess )
+SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
+                                 DWORD dwDesiredAccess )
 {
     UNICODE_STRING lpMachineNameW;
     UNICODE_STRING lpDatabaseNameW;
@@ -259,23 +269,11 @@ OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
 
 /******************************************************************************
  * OpenSCManagerW [ADVAPI32.@]
- * Establishes a connection to the service control manager and opens database
  *
- * NOTES
- *   This should return a SC_HANDLE
- *
- * PARAMS
- *   lpMachineName   [I] Pointer to machine name string
- *   lpDatabaseName  [I] Pointer to database name string
- *   dwDesiredAccess [I] Type of access
- *
- * RETURNS
- *   Success: Handle to service control manager database
- *   Failure: NULL
+ * See OpenSCManagerA.
  */
-SC_HANDLE WINAPI
-OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
-                  DWORD dwDesiredAccess )
+SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
+                                 DWORD dwDesiredAccess )
 {
     HKEY hReg, hKey = NULL;
     LONG r;
@@ -319,18 +317,20 @@ AllocateLocallyUniqueId( PLUID lpluid )
 
 /******************************************************************************
  * ControlService [ADVAPI32.@]
- * Sends a control code to a Win32-based service.
+ *
+ * Send a control code to a service.
  *
  * PARAMS
- *   hService        []
- *   dwControl       []
- *   lpServiceStatus []
+ *   hService        [I] Handle of the service control manager database
+ *   dwControl       [I] Control code to send (SERVICE_CONTROL_* flags from "winsvc.h")
+ *   lpServiceStatus [O] Destination for the status of the service, if available
  *
- * RETURNS STD
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE.
  */
-BOOL WINAPI
-ControlService( SC_HANDLE hService, DWORD dwControl,
-                LPSERVICE_STATUS lpServiceStatus )
+BOOL WINAPI ControlService( SC_HANDLE hService, DWORD dwControl,
+                            LPSERVICE_STATUS lpServiceStatus )
 {
     FIXME("(%p,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
     return TRUE;
@@ -339,12 +339,15 @@ ControlService( SC_HANDLE hService, DWORD dwControl,
 
 /******************************************************************************
  * CloseServiceHandle [ADVAPI32.@]
- * Close handle to service or service control manager
+ * 
+ * Close a handle to a service or the service control manager database.
  *
  * PARAMS
  *   hSCObject [I] Handle to service or service control manager database
  *
- * RETURNS STD
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI
 CloseServiceHandle( SC_HANDLE hSCObject )
@@ -359,10 +362,20 @@ CloseServiceHandle( SC_HANDLE hSCObject )
 
 /******************************************************************************
  * OpenServiceA [ADVAPI32.@]
+ *
+ * Open a handle to a service.
+ *
+ * PARAMS
+ *   hSCManager      [I] Handle of the service control manager database
+ *   lpServiceName   [I] Name of the service to open
+ *   dwDesiredAccess [I] Access required to the service
+ *
+ * RETURNS
+ *    Success: Handle to the service
+ *    Failure: NULL
  */
-SC_HANDLE WINAPI
-OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
-                DWORD dwDesiredAccess )
+SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
+                               DWORD dwDesiredAccess )
 {
     UNICODE_STRING lpServiceNameW;
     SC_HANDLE ret;
@@ -379,20 +392,11 @@ OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
 /******************************************************************************
  * OpenServiceW [ADVAPI32.@]
- * Opens a handle to an existing service
  *
- * PARAMS
- *   hSCManager      []
- *   lpServiceName   []
- *   dwDesiredAccess []
- *
- * RETURNS
- *    Success: Handle to the service
- *    Failure: NULL
+ * See OpenServiceA.
  */
-SC_HANDLE WINAPI
-OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
-               DWORD dwDesiredAccess)
+SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
+                               DWORD dwDesiredAccess)
 {
     HKEY hKey;
     long r;
@@ -593,14 +597,16 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 /******************************************************************************
  * DeleteService [ADVAPI32.@]
  *
+ * Delete a service from the service control manager database.
+ *
  * PARAMS
- *    hService [I] Handle to service
+ *    hService [I] Handle of the service to delete
  *
- * RETURNS STD
- *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
-BOOL WINAPI
-DeleteService( SC_HANDLE hService )
+BOOL WINAPI DeleteService( SC_HANDLE hService )
 {
     WCHAR valname[MAX_PATH+1];
     INT index = 0;
@@ -667,6 +673,25 @@ DeleteService( SC_HANDLE hService )
 /******************************************************************************
  * StartServiceA [ADVAPI32.@]
  *
+ * Start a service
+ *
+ * PARAMS
+ *   hService            [I] Handle of service
+ *   dwNumServiceArgs    [I] Number of arguments
+ *   lpServiceArgVectors [I] Address of array of argument strings
+ *
+ * NOTES
+ *  - NT implements this function using an obscure RPC call.
+ *  - You might need to do a "setenv SystemRoot \\WINNT" in your .cshrc
+ *    to get things like "%SystemRoot%\\System32\\service.exe" to load.
+ *  - This will only work for shared address space. How should the service
+ *    args be transferred when address spaces are separated?
+ *  - Can only start one service at a time.
+ *  - Has no concept of privilege.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE
  */
 BOOL WINAPI
 StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
@@ -705,29 +730,8 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
 
 /******************************************************************************
  * StartServiceW [ADVAPI32.@]
- * Starts a service
- *
- * PARAMS
- *   hService            [I] Handle of service
- *   dwNumServiceArgs    [I] Number of arguments
- *   lpServiceArgVectors [I] Address of array of argument string pointers
- *
- * NOTES
- *
- * NT implements this function using an obscure RPC call...
- *
- * Might need to do a "setenv SystemRoot \\WINNT" in your .cshrc
- *   to get things like %SystemRoot%\\System32\\service.exe to load.
- *
- * Will only work for shared address space. How should the service
- *  args be transferred when address spaces are separated?
- *
- * Can only start one service at a time.
- *
- * Has no concept of privilege.
- *
- * RETURNS STD
- *
+ * 
+ * See StartServiceA.
  */
 BOOL WINAPI
 StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
@@ -857,13 +861,19 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
 /******************************************************************************
  * QueryServiceStatusEx [ADVAPI32.@]
  *
+ * Get information about a service.
+ *
  * PARAMS
- *   hService       [handle to service]
- *   InfoLevel      [information level]
- *   lpBuffer       [buffer]
- *   cbBufSize      [size of buffer]
- *   pcbBytesNeeded [bytes needed]
-*/
+ *   hService       [I] Handle to service to get information about
+ *   InfoLevel      [I] Level of information to get
+ *   lpBuffer       [O] Destination for requested information
+ *   cbBufSize      [I] Size of lpBuffer in bytes
+ *   pcbBytesNeeded [O] Destination for number of bytes needed, if cbBufSize is too small
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  FAILURE: FALSE
+ */
 BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
                         LPBYTE lpBuffer, DWORD cbBufSize,
                         LPDWORD pcbBytesNeeded)

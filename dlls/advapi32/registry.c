@@ -145,21 +145,7 @@ inline static HKEY get_special_root_hkey( HKEY hkey )
 /******************************************************************************
  *           RegCreateKeyExW   [ADVAPI32.@]
  *
- * PARAMS
- *    hkey       [I] Handle of an open key
- *    name       [I] Address of subkey name
- *    reserved   [I] Reserved - must be 0
- *    class      [I] Address of class string
- *    options    [I] Special options flag
- *    access     [I] Desired security access
- *    sa         [I] Address of key security structure
- *    retkey     [O] Address of buffer for opened handle
- *    dispos     [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
- *
- * NOTES
- *  in case of failing retkey remains untouched
- *
- * FIXME MAXIMUM_ALLOWED in access mask not supported by server
+ * See RegCreateKeyExA.
  */
 DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPCWSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
@@ -189,7 +175,25 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPCWSTR c
 /******************************************************************************
  *           RegCreateKeyExA   [ADVAPI32.@]
  *
- * FIXME MAXIMUM_ALLOWED in access mask not supported by server
+ * Open a registry key, creating it if it doesn't exist.
+ *
+ * PARAMS
+ *    hkey       [I] Handle of the parent registry key
+ *    name       [I] Name of the new key to open or create
+ *    reserved   [I] Reserved, pass 0
+ *    class      [I] The object type of the new key
+ *    options    [I] Flags controlling the key creation (REG_OPTION_* flags from "winnt.h")
+ *    access     [I] Access level desired
+ *    sa         [I] Security attributes for the key
+ *    retkey     [O] Destination for the resulting handle
+ *    dispos     [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS.
+ *    Failure: A standard Win32 error code. retkey remains untouched.
+ *
+ * FIXME
+ *   MAXIMUM_ALLOWED in access mask not supported by server
  */
 DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPCSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
@@ -253,23 +257,7 @@ DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 /******************************************************************************
  *           RegOpenKeyExW   [ADVAPI32.@]
  *
- * Opens the specified key
- *
- * Unlike RegCreateKeyEx, this does not create the key if it does not exist.
- *
- * PARAMS
- *    hkey       [I] Handle of open key
- *    name       [I] Name of subkey to open
- *    reserved   [I] Reserved - must be zero
- *    access     [I] Security access mask
- *    retkey     [O] Handle to open key
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
- *
- * NOTES
- *  in case of failing is retkey = 0
+ * See RegOpenKeyExA.
  */
 DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
 {
@@ -291,6 +279,23 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
 
 /******************************************************************************
  *           RegOpenKeyExA   [ADVAPI32.@]
+ *
+ * Open a registry key.
+ *
+ * PARAMS
+ *    hkey       [I] Handle of open key
+ *    name       [I] Name of subkey to open
+ *    reserved   [I] Reserved - must be zero
+ *    access     [I] Security access mask
+ *    retkey     [O] Handle to open key
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: A standard Win32 error code. retkey is set to 0.
+ *
+ * NOTES
+ *  - Unlike RegCreateKeyExA(), this function will not create the key if it
+ *    does not exist.
  */
 DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
 {
@@ -322,17 +327,7 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
 /******************************************************************************
  *           RegOpenKeyW   [ADVAPI32.@]
  *
- * PARAMS
- *    hkey    [I] Handle of open key
- *    name    [I] Address of name of subkey to open
- *    retkey  [O] Handle to open key
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
- *
- * NOTES
- *  in case of failing is retkey = 0
+ * See RegOpenKeyA.
  */
 DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
 {
@@ -342,6 +337,17 @@ DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
 
 /******************************************************************************
  *           RegOpenKeyA   [ADVAPI32.@]
+ *           
+ * Open a registry key.
+ *
+ * PARAMS
+ *    hkey    [I] Handle of parent key to open the new key under
+ *    name    [I] Name of the key under hkey to open
+ *    retkey  [O] Destination for the resulting Handle
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: A standard Win32 error code. retkey is set to 0.
  */
 DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
@@ -755,7 +761,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
 /******************************************************************************
  *           RegCloseKey   [ADVAPI32.@]
  *
- * Releases the handle of the specified key
+ * Close an open registry key.
  *
  * PARAMS
  *    hkey [I] Handle of key to close
@@ -774,13 +780,7 @@ DWORD WINAPI RegCloseKey( HKEY hkey )
 /******************************************************************************
  *           RegDeleteKeyW   [ADVAPI32.@]
  *
- * PARAMS
- *    hkey   [I] Handle to open key
- *    name   [I] Name of subkey to delete
- *
- * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
+ * See RegDeleteKeyA.
  */
 DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
 {
@@ -815,6 +815,16 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
 
 /******************************************************************************
  *           RegDeleteKeyA   [ADVAPI32.@]
+ *
+ * Delete a registry key.
+ *
+ * PARAMS
+ *    hkey   [I] Handle to parent key containing the key to delete
+ *    name   [I] Name of the key user hkey to delete
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
  */
 DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 {
@@ -851,15 +861,15 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 /******************************************************************************
  *           RegSetValueExW   [ADVAPI32.@]
  *
- * Sets the data and type of a value under a register key
+ * Set the data and contents of a registry value.
  *
  * PARAMS
  *    hkey       [I] Handle of key to set value for
  *    name       [I] Name of value to set
- *    reserved   [I] Reserved - must be zero
- *    type       [I] Flag for value type
- *    data       [I] Address of value data
- *    count      [I] Size of value data
+ *    reserved   [I] Reserved, must be zero
+ *    type       [I] Type of the value being set
+ *    data       [I] The new contents of the value to set
+ *    count      [I] Size of data
  *
  * RETURNS
  *    Success: ERROR_SUCCESS
@@ -985,22 +995,7 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
 /******************************************************************************
  *           RegQueryValueExW   [ADVAPI32.@]
  *
- * Retrieves type and data for a specified name associated with an open key
- *
- * PARAMS
- *    hkey      [I]   Handle of key to query
- *    name      [I]   Name of value to query
- *    reserved  [I]   Reserved - must be NULL
- *    type      [O]   Address of buffer for value type.  If NULL, the type
- *                        is not required.
- *    data      [O]   Address of data buffer.  If NULL, the actual data is
- *                        not required.
- *    count     [I/O] Address of data buffer size
- *
- * RETURNS
- *    ERROR_SUCCESS:   Success
- *    ERROR_MORE_DATA: !!! if the specified buffer is not big enough to hold the data
- * 		       buffer is left untouched. The MS-documentation is wrong (js) !!!
+ * See RegQueryValueExA.
  */
 DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWORD type,
                                LPBYTE data, LPDWORD count )
@@ -1068,8 +1063,25 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
 /******************************************************************************
  *           RegQueryValueExA   [ADVAPI32.@]
  *
- * NOTES:
- * the documentation is wrong: if the buffer is too small it remains untouched
+ * Get the type and contents of a specified value under with a key.
+ *
+ * PARAMS
+ *    hkey      [I]   Handle of the key to query
+ *    name      [I]   Name of value under hkey to query
+ *    reserved  [I]   Reserved - must be NULL
+ *    type      [O]   Destination for the value type, or NULL if not required
+ *    data      [O]   Destination for the values contents, or NULL if not required
+ *    count     [I/O] Size of data, updated with the number of bytes returned
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS. *count is updated with the number of bytes copied to data.
+ *  Failure: ERROR_INVALID_HANDLE, if hkey is invalid.
+ *           ERROR_INVALID_PARAMETER, if any other parameter is invalid.
+ *           ERROR_MORE_DATA, if on input *count is too small to hold the contents.
+ *                     
+ * NOTES
+ *   MSDN states that if data is too small it is partially filled. In reality 
+ *   it remains untouched.
  */
 DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
                                LPBYTE data, LPDWORD count )
@@ -1781,7 +1793,8 @@ LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
 
 /******************************************************************************
  * RegGetKeySecurity [ADVAPI32.@]
- * Retrieves a copy of security descriptor protecting the registry key
+ *
+ * Get a copy of the security descriptor for a given registry key.
  *
  * PARAMS
  *    hkey                   [I]   Open handle of key to set
@@ -1817,17 +1830,15 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformati
 
 /******************************************************************************
  * RegFlushKey [ADVAPI32.@]
- * Immediately writes key to registry.
- * Only returns after data has been written to disk.
- *
- * FIXME: does it really wait until data is written ?
+ * 
+ * Immediately write a registry key to registry.
  *
  * PARAMS
- *    hkey [I] Handle of key to write
+ * hkey [I] Handle of key to write
  *
  * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
+ *   Success: ERROR_SUCCESS
+ *   Failure: Error code
  */
 DWORD WINAPI RegFlushKey( HKEY hkey )
 {
@@ -1940,18 +1951,19 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
 
 /******************************************************************************
  * RegOpenUserClassesRoot [ADVAPI32.@]
- * Opens the HKEY_CLASSES_ROOT key for the user represented by the token
+ *
+ * Open the HKEY_CLASSES_ROOT key for a user.
  *
  * PARAMS
- *    hToken     [I] Handle of token representing user
- *    dwOptions  [I] Reserved
+ *    hToken     [I] Handle of token representing the user
+ *    dwOptions  [I] Reserved, nust be 0
  *    samDesired [I] Desired access rights
- *    phkResult  [O] Address of buffer for opened handle
+ *    phkResult  [O] Destination for the resulting key handle
  *
- * NOTES:
+ * NOTES
  * On Windows 2000 and upwards the HKEY_CLASSES_ROOT key is a view of the
- * HKEY_LOCAL_MACHINE\Software\Classes and the
- * HKEY_CURRENT_USER\Software\Classes keys merged together.
+ * "HKEY_LOCAL_MACHINE\Software\Classes" and the
+ * "HKEY_CURRENT_USER\Software\Classes" keys merged together.
  */
 LONG WINAPI RegOpenUserClassesRoot(
     HANDLE hToken,
