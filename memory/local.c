@@ -123,7 +123,7 @@ static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE16 ds )
 {
     LOCALHEAPINFO *pInfo;
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( ds, 0 );
-    TRACE(local, "Heap at %p, %04x\n", ptr, ptr->heap );
+    TRACE(local, "Heap at %p, %04x\n", ptr, (ptr != NULL ? ptr->heap : 0xFFFF));
     if (!ptr || !ptr->heap) return NULL;
     if (IsBadReadPtr16( (SEGPTR)MAKELONG(ptr->heap,ds), sizeof(LOCALHEAPINFO)))
         return NULL;
