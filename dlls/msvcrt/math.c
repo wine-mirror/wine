@@ -330,6 +330,7 @@ int _fpclass(double num)
   case FP_NZERO: return _FPCLASS_NZ;
   case FP_PZERO: return _FPCLASS_PZ;
   case FP_NNORM: return _FPCLASS_NN;
+  case FP_PNORM: return _FPCLASS_PN;
   }
   return _FPCLASS_PN;
 #elif defined (fpclassify)
