@@ -397,18 +397,6 @@ typedef void (CALLBACK * LPFNFMCALLBACK)(LPCITEMIDLIST pidlFolder, LPCITEMIDLIST
 #define	FM_BLANK_ICON		-1
 #define	FM_DEFAULT_HEIGHT	0
 
-/* fixme: move to ShellApi.h */
-#define ABM_NEW			0x00000000
-#define ABM_REMOVE		0x00000001
-#define ABM_QUERYPOS		0x00000002
-#define ABM_SETPOS		0x00000003
-#define ABM_GETSTATE		0x00000004
-#define ABM_GETTASKBARPOS	0x00000005
-#define ABM_ACTIVATE		0x00000006
-#define ABM_GETAUTOHIDEBAR	0x00000007
-#define ABM_SETAUTOHIDEBAR	0x00000008
-#define ABM_WINDOWPOSCHANGED	0x00000009
-
 /**********************************************************************
  * SHGetSettings ()
  */
@@ -447,8 +435,6 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx);
 #define SSF_MAPNETDRVBUTTON		0x1000
 #define SSF_NOCONFIRMRECYCLE		0x8000
 #define SSF_HIDEICONS			0x4000
-#define ABS_AUTOHIDE			0x00000001
-#define ABS_ALWAYSONTOP			0x00000002
 
 /**********************************************************************/
 

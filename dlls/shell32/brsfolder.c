@@ -19,9 +19,9 @@
 #include "wine/obj_enumidlist.h"
 #include "wine/obj_shellfolder.h"
 
-#include "shell.h"
 #include "pidl.h"
 #include "shell32_main.h"
+#include "shellapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 

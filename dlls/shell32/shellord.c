@@ -13,6 +13,7 @@
 #include "winversion.h"
 #include "heap.h"
 
+#include "shellapi.h"
 #include "shlobj.h"
 #include "shell32_main.h"
 

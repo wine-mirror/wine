@@ -12,7 +12,9 @@
 #include "debug.h"
 #include "sysmetrics.h"
 #include "winversion.h"
-#include "shell.h"
+
+
+#include "shellapi.h"
 #include "shlobj.h"
 #include "pidl.h"
 #include "shell32_main.h"

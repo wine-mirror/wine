@@ -37,31 +37,6 @@ extern HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16,LPCSTR,UINT16,WORD);
 /****************************************************************************
 * common shell file structures 
 */
-#define FO_MOVE           0x0001
-#define FO_COPY           0x0002
-#define FO_DELETE         0x0003
-#define FO_RENAME         0x0004
-
-#define FOF_MULTIDESTFILES         0x0001
-#define FOF_CONFIRMMOUSE           0x0002
-#define FOF_SILENT                 0x0004  
-#define FOF_RENAMEONCOLLISION      0x0008
-#define FOF_NOCONFIRMATION         0x0010  
-#define FOF_WANTMAPPINGHANDLE      0x0020  
-#define FOF_ALLOWUNDO              0x0040
-#define FOF_FILESONLY              0x0080  
-#define FOF_SIMPLEPROGRESS         0x0100  
-#define FOF_NOCONFIRMMKDIR         0x0200  
-#define FOF_NOERRORUI              0x0400  
-
-typedef WORD FILEOP_FLAGS;
-
-#define PO_DELETE       0x0013  
-#define PO_RENAME       0x0014  
-#define PO_PORTCHANGE   0x0020  
-
-typedef WORD PRINTEROP_FLAGS;
-
 /******************************
 * DRAG&DROP API
 */
@@ -81,31 +56,6 @@ typedef struct { 	   /* structure for dropped files */
 } DROPFILESTRUCT, *LPDROPFILESTRUCT; 
 
 
-void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);
-void        WINAPI DragAcceptFiles(HWND hWnd, BOOL b);
-UINT16      WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength);
-UINT      WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile, UINT lLength);
-UINT      WINAPI DragQueryFileW(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLength);
-#define     DragQueryFile WINELIB_NAME_AW(DragQueryFile)
-void        WINAPI DragFinish(HDROP h);
-void        WINAPI DragFinish16(HDROP16 h);
-BOOL      WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
-BOOL16      WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p);
-
-
-/****************************************************************************
-* NOTIFYICONDATA 
-*/
-typedef struct _NOTIFYICONDATA {
-	DWORD cbSize;
-	HWND hWnd;
-	UINT uID;
-	UINT uFlags;
-	UINT uCallbackMessage;
-	HICON hIcon;
-	CHAR szTip[64];
-} NOTIFYICONDATA, *PNOTIFYICONDATA;
-
 /****************************************************************************
 * SHITEMID, ITEMIDLIST, PIDL API 
 */
@@ -124,96 +74,7 @@ DWORD WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
 DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define  SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
-/****************************************************************************
-* SHFILEINFO API 
-*/
-typedef struct tagSHFILEINFOA {
-	HICON	hIcon;			/* icon */
-	int	iIcon;			/* icon index */
-	DWORD	dwAttributes;		/* SFGAO_ flags */
-	CHAR	szDisplayName[MAX_PATH];/* display name (or path) */
-	CHAR	szTypeName[80];		/* type name */
-} SHFILEINFOA;
 
-typedef struct tagSHFILEINFOW {
-	HICON	hIcon;			/* icon */
-	int	iIcon;			/* icon index */
-	DWORD	dwAttributes;		/* SFGAO_ flags */
-	WCHAR	szDisplayName[MAX_PATH];/* display name (or path) */
-	WCHAR	szTypeName[80];		/* type name */
-} SHFILEINFOW;
-
-DECL_WINELIB_TYPE_AW(SHFILEINFO)
-
-DWORD    WINAPI SHGetFileInfoA(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
-DWORD    WINAPI SHGetFileInfoW(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT);
-#define  SHGetFileInfo WINELIB_NAME_AW(SHGetFileInfo)
-
-/****************************************************************************
-* SHFILEOPSTRUCT API 
-*/
-typedef struct _SHFILEOPSTRUCTA
-{ HWND          hwnd;
-  UINT          wFunc;
-  LPCSTR          pFrom;
-  LPCSTR          pTo;
-  FILEOP_FLAGS    fFlags;
-  BOOL          fAnyOperationsAborted;
-  LPVOID          hNameMappings;
-  LPCSTR          lpszProgressTitle;
-} SHFILEOPSTRUCTA, *LPSHFILEOPSTRUCTA;
-
-typedef struct _SHFILEOPSTRUCTW
-{ HWND          hwnd;
-  UINT          wFunc;
-  LPCWSTR         pFrom;
-  LPCWSTR         pTo;
-  FILEOP_FLAGS    fFlags;
-  BOOL          fAnyOperationsAborted;
-  LPVOID          hNameMappings;
-  LPCWSTR         lpszProgressTitle;
-} SHFILEOPSTRUCTW, *LPSHFILEOPSTRUCTW;
-
-#define  SHFILEOPSTRUCT WINELIB_NAME_AW(SHFILEOPSTRUCT)
-#define  LPSHFILEOPSTRUCT WINELIB_NAME_AW(LPSHFILEOPSTRUCT)
-
-DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);  
-DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp);
-#define  SHFileOperation WINELIB_NAME_AW(SHFileOperation)
-
-DWORD WINAPI SHFileOperationAW(DWORD x);
-
-/****************************************************************************
-* APPBARDATA 
-*/
-typedef struct _AppBarData {
-	DWORD	cbSize;
-	HWND	hWnd;
-	UINT	uCallbackMessage;
-	UINT	uEdge;
-	RECT	rc;
-	LPARAM	lParam;
-} APPBARDATA, *PAPPBARDATA;
-
-#define SHGFI_LARGEICON         0x000000000     /* get large icon */
-#define SHGFI_SMALLICON         0x000000001     /* get small icon */
-#define SHGFI_OPENICON          0x000000002     /* get open icon */
-#define SHGFI_SHELLICONSIZE     0x000000004     /* get shell size icon */
-#define SHGFI_PIDL              0x000000008     /* pszPath is a pidl */
-#define SHGFI_USEFILEATTRIBUTES 0x000000010     /* use passed dwFileAttribute */
-#define SHGFI_UNKNOWN1          0x000000020
-#define SHGFI_UNKNOWN2          0x000000040
-#define SHGFI_UNKNOWN3          0x000000080
-#define SHGFI_ICON              0x000000100     /* get icon */
-#define SHGFI_DISPLAYNAME       0x000000200     /* get display name */
-#define SHGFI_TYPENAME          0x000000400     /* get type name */
-#define SHGFI_ATTRIBUTES        0x000000800     /* get attributes */
-#define SHGFI_ICONLOCATION      0x000001000     /* get icon location */
-#define SHGFI_EXETYPE           0x000002000     /* return exe type */
-#define SHGFI_SYSICONINDEX      0x000004000     /* get system icon index */
-#define SHGFI_LINKOVERLAY       0x000008000     /* put a link overlay on icon */
-#define SHGFI_SELECTED          0x000010000     /* show icon in selected state */
-#define SHGFI_ATTR_SPECIFIED    0x000020000     /* get only specified attributes */
 
 /****************************************************************************
 * SHChangeNotifyRegister API
@@ -313,21 +174,9 @@ LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf );
 /****************************************************************************
 *  other functions
 */
-HICON16 WINAPI ExtractIconEx16 ( LPCSTR, INT16, HICON16 *, HICON16 *, UINT16 );
-HICON WINAPI ExtractIconExA( LPCSTR, INT, HICON *, HICON *, UINT );
-HICON WINAPI ExtractIconExW( LPCWSTR, INT, HICON *, HICON *, UINT );
-#define  ExtractIconEx WINELIB_NAME_AW(ExtractIconEx)
-HICON WINAPI ExtractIconExAW(LPCVOID, INT, HICON *, HICON *, UINT );
 
 LPVOID WINAPI SHAlloc(DWORD len);
 DWORD WINAPI SHFree(LPVOID x);
-
-#define SE_ERR_SHARE            26
-#define SE_ERR_ASSOCINCOMPLETE  27
-#define SE_ERR_DDETIMEOUT       28
-#define SE_ERR_DDEFAIL          29
-#define SE_ERR_DDEBUSY          30
-#define SE_ERR_NOASSOC          31
 
 #define	CSIDL_DESKTOP		0x0000
 #define	CSIDL_PROGRAMS		0x0002

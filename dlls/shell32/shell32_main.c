@@ -19,7 +19,6 @@
 #include "authors.h"
 #include "winversion.h"
 
-#include "shell.h"
 #include "shellapi.h"
 #include "pidl.h"
 #include "shlobj.h"
@@ -34,44 +33,45 @@ DECLARE_DEBUG_CHANNEL(shell)
  * CommandLineToArgvW			[SHELL32.7]
  */
 LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
-{ LPWSTR  *argv,s,t;
+{	LPWSTR  *argv,s,t;
 	int	i;
-  TRACE(shell,"\n");
+	TRACE(shell,"\n");
 
-        /* to get writeable copy */
+	/* to get writeable copy */
 	cmdline = HEAP_strdupW( GetProcessHeap(), 0, cmdline);
 	s=cmdline;i=0;
-  while (*s)
-  { /* space */
-    if (*s==0x0020) 
-    { i++;
-			s++;
-			while (*s && *s==0x0020)
-				s++;
-			continue;
-		}
-		s++;
+	while (*s)
+	{ /* space */
+	  if (*s==0x0020) 
+	  { i++;
+	    s++;
+	    while (*s && *s==0x0020)
+	      s++;
+	    continue;
+	  }
+	  s++;
 	}
 	argv=(LPWSTR*)HeapAlloc( GetProcessHeap(), 0, sizeof(LPWSTR)*(i+1) );
 	s=t=cmdline;
 	i=0;
-  while (*s)
-  { if (*s==0x0020)
-    { *s=0;
-			argv[i++]=HEAP_strdupW( GetProcessHeap(), 0, t );
-			*s=0x0020;
-			while (*s && *s==0x0020)
-				s++;
-			if (*s)
-				t=s+1;
-			else
-				t=s;
-			continue;
-		}
-		s++;
+	while (*s)
+	{ if (*s==0x0020)
+	  { *s=0;
+	    argv[i++]=HEAP_strdupW( GetProcessHeap(), 0, t );
+	    *s=0x0020;
+	    while (*s && *s==0x0020)
+	      s++;
+	    if (*s)
+	      t=s+1;
+	    else
+	      t=s;
+	    continue;
+	  }
+	  s++;
 	}
 	if (*t)
-		argv[i++]=(LPWSTR)HEAP_strdupW( GetProcessHeap(), 0, t );
+	  argv[i++]=(LPWSTR)HEAP_strdupW( GetProcessHeap(), 0, t );
+
 	HeapFree( GetProcessHeap(), 0, cmdline );
 	argv[i]=NULL;
 	*numargs=i;
@@ -670,8 +670,8 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDL
 	LocalToWideChar(lpszDisplayName, tpath, 256);
   
 	if (SHGetDesktopFolder(&shellfolder)==S_OK)
-	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,hwndOwner, NULL,lpszDisplayName,&pchEaten,ppidl,NULL);
-	  shellfolder->lpvtbl->fnRelease(shellfolder);
+	{ IShellFolder_ParseDisplayName(shellfolder,hwndOwner, NULL,lpszDisplayName,&pchEaten,ppidl,NULL);
+	  IShellFolder_Release(shellfolder);
 	}
 
 	TRACE(shell, "-- (new pidl %p)\n",*ppidl);
@@ -904,7 +904,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
  *	This function is supposed to deal with the systray.
  *	Any ideas on how this is to be implimented?
  */
-BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATA pnid )
+BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATAA pnid )
 {   TRACE(shell,"\n");
     return FALSE;
 }
@@ -915,7 +915,7 @@ BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATA pnid )
  *	This function is supposed to deal with the systray.
  *	Any ideas on how this is to be implimented?
  */
-BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATA pnid )
+BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
 {   TRACE(shell,"\n");
     return FALSE;
 }
@@ -972,8 +972,8 @@ DWORD WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
 	}
 	else
 	{ if (SHGetDesktopFolder(&shellfolder)==S_OK)
-	  { shellfolder->lpvtbl->fnGetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&lpName);
-	    shellfolder->lpvtbl->fnRelease(shellfolder);
+	  { IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&lpName);
+	    IShellFolder_Release(shellfolder);
 	  }
 	  strcpy(pszPath,lpName.u.cStr);
 	}
@@ -1144,7 +1144,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      bShell32IsInitialized = FALSE;
 
 	      if (pdesktopfolder) 
-	      { pdesktopfolder->lpvtbl->fnRelease(pdesktopfolder);
+	      { IShellFolder_Release(pdesktopfolder);
 	      }
 
 	      SIC_Destroy();
