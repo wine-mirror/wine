@@ -607,7 +607,7 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 
     /* Open the file indicated by lpApplicationName for reading.
      */
-    hfile = CreateFileA( lpApplicationName, GENERIC_READ, 0,
+    hfile = CreateFileA( lpApplicationName, GENERIC_READ, FILE_SHARE_READ,
                          NULL, OPEN_EXISTING, 0, -1 );
     if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
