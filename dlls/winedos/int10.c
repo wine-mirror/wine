@@ -31,6 +31,161 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 
+/*
+ * Wine internal information about video modes.
+ * If depth is zero, the mode is considered to
+ * be a text mode.
+ */
+typedef struct {
+    WORD Mode;
+    WORD Width;
+    WORD Height;
+    WORD Depth;
+} INT10_MODE;
+
+
+/*
+ * List of supported video modes.
+ */
+static const INT10_MODE INT10_modelist[] =
+{
+    {0x0000,   40,   25,  0},
+    {0x0001,   40,   25,  0},
+    {0x0002,   80,   25,  0},
+    {0x0003,   80,   25,  0},
+    {0x0007,   80,   25,  0},
+    {0x000d,  320,  200,  4},
+    {0x000e,  640,  200,  4},
+    {0x0010,  640,  350,  4},
+    {0x0012,  640,  480,  4},
+    {0x0013,  320,  200,  8},
+    {0x0100,  640,  400,  8},
+    {0x0101,  640,  480,  8},
+    {0x0102,  800,  600,  4},
+    {0x0103,  800,  600,  8},
+    {0x0104, 1024,  768,  4},
+    {0x0105, 1024,  768,  8},
+    {0x0106, 1280, 1024,  4},
+    {0x0107, 1280, 1024,  8},
+    {0x0108,   80,   60,  0},
+    {0x0109,  132,   25,  0},
+    {0x010a,  132,   43,  0},
+    {0x010b,  132,   50,  0},
+    {0x010c,  132,   60,  0},
+    {0x010d,  320,  200, 15},
+    {0x010e,  320,  200, 16},
+    {0x010f,  320,  200, 24},
+    {0x0110,  640,  480, 15},
+    {0x0111,  640,  480, 16},
+    {0x0112,  640,  480, 24},
+    {0x0113,  800,  600, 15},
+    {0x0114,  800,  600, 16},
+    {0x0115,  800,  600, 24},
+    {0x0116, 1024,  768, 15},
+    {0x0117, 1024,  768, 16},
+    {0x0118, 1024,  768, 24},
+    {0x0119, 1280, 1024, 15},
+    {0x011a, 1280, 1024, 16},
+    {0x011b, 1280, 1024, 24},
+    {0xffff,    0,    0,  0}
+};
+
+
+/**********************************************************************
+ *         INT10_FindMode
+ */
+static const INT10_MODE *INT10_FindMode( WORD mode )
+{
+    const INT10_MODE *ptr = INT10_modelist;
+    
+    /*
+     * Filter out flags.
+     */
+    mode &= 0x17f;
+
+    while (ptr->Mode != 0xffff)
+    {
+        if (ptr->Mode == mode)
+            return ptr;
+        ptr++;
+    }
+
+    return NULL;
+}
+
+
+/**********************************************************************
+ *         INT10_SetVideoMode
+ *
+ * Change current video mode to any VGA or VESA mode.
+ * Returns TRUE if mode is supported.
+ *
+ * Mode bitfields:
+ * 0-6: .. Mode number (combined with bit 8).
+ *   7: =0 Clear screen.
+ *      =1 Preserve display memory on mode change (VGA modes).
+ *   8: =0 VGA mode.
+ *      =1 VESA mode.
+ *   9: .. Reserved, must be zero.
+ *  10: .. Reserved, must be zero.
+ *  11: =0 Use default refresh rate.
+ *      =1 Use user specified refresh rate.
+ *  12: .. Reserved, must be zero.
+ *  13: .. Reserved, must be zero.
+ *  14: =0 Use windowed frame buffer model.
+ *      =1 Use linear frame buffer model.
+ *  15: =0 Clear screen.
+ *      =1 Preserve display memory on mode change (VESA modes).
+ */
+static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
+{
+    const INT10_MODE *ptr = INT10_FindMode( mode );
+
+    if (!ptr)
+        return FALSE;
+
+    /*
+     * Linear framebuffer is not supported.
+     */
+    if (mode & 0x4000)
+        return FALSE;
+
+    /*
+     * Note that we do not mask out flags here on purpose.
+     *
+     * FIXME: Store VESA mode somewhere.
+     */
+    if (mode <= 0xff)
+        data->VideoMode = mode;
+    else
+        data->VideoMode = 0;
+
+    if (ptr->Depth == 0)
+    {
+        /* Text mode. */
+        TRACE( "Setting %s %dx%d text mode\n", 
+               mode <= 0xff ? "VGA" : "VESA", 
+               ptr->Width, ptr->Height );
+        /*
+         * FIXME: We should check here if alpha mode could be set.
+         */
+        VGA_SetAlphaMode( ptr->Width, ptr->Height );
+        data->VideoColumns = ptr->Width;
+    }
+    else
+    {
+        /* Graphics mode. */
+        TRACE( "Setting %s %dx%dx%d graphics mode\n", 
+               mode <= 0xff ? "VGA" : "VESA", 
+               ptr->Width, ptr->Height, ptr->Depth );
+        if (VGA_SetMode( ptr->Width, ptr->Height, ptr->Depth ))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 /**********************************************************************
  *         INT10_GetCursorPos
  */
@@ -73,15 +228,10 @@ static void INT10_InitializeVideoMode( BIOSDATA *data )
    * FIXME: Add more mappings between initial size and
    *        text modes.
    */
-  if (width >= 80 && height >= 25) {
-    VGA_SetAlphaMode(80, 25);
-    data->VideoColumns = 80;
-    data->VideoMode = 0x03;
-  } else {
-    VGA_SetAlphaMode(40, 25);
-    data->VideoColumns = 40;
-    data->VideoMode = 0x01;
-  }
+  if (width >= 80 && height >= 25)
+      INT10_SetVideoMode( data, 0x03 );
+  else
+      INT10_SetVideoMode( data, 0x01 );
 }
 
 
@@ -111,147 +261,18 @@ static void INT10_HandleVESA( CONTEXT86 *context )
         break;
 
     case 0x02: /* SET SuperVGA VIDEO MODE */
-        switch(BX_reg(context)) {
-            /* OEM Video Modes */
-        case 0x00: /* 40x25 */
-        case 0x01:
-            TRACE("Set VESA Text Mode - 0x0%x\n",
-                  BX_reg(context));
-            VGA_SetAlphaMode(40, 25);
-            data->VideoColumns = 40;
-            break;
-        case 0x02:
-        case 0x03:
-        case 0x07:
-            TRACE("Set VESA Text Mode - 0x0%x\n",
-                  BX_reg(context));
-            VGA_SetAlphaMode(80, 25);
-            data->VideoColumns = 80;
-            break;
-        case 0x0D:
-            TRACE("Setting VESA 320x200 16-color mode\n");
-            VGA_SetMode(320,200,4);
-            break;
-        case 0x0E:
-            TRACE("Setting VESA 640x200 16-color mode\n");
-            VGA_SetMode(640,200,4);
-            break;
-        case 0x10:
-            TRACE("Setting VESA 640x350 16-color mode\n");
-            VGA_SetMode(640,350,4);
-            break;
-        case 0x12:
-            TRACE("Setting VESA 640x480 16-color mode\n");
-            VGA_SetMode(640,480,4);
-            break;
-        case 0x13:
-            TRACE("Setting VESA 320x200 256-color mode\n");
-            VGA_SetMode(320,200,8);
-            break;
-            /* VBE Modes */
-        case 0x100:
-            TRACE("Setting VESA 640x400 256-color mode\n");
-            VGA_SetMode(640,400,8);
-            break;
-        case 0x101:
-            TRACE("Setting VESA 640x480 256-color mode\n");
-            VGA_SetMode(640,480,8);
-            break;
-        case 0x102:
-            TRACE("Setting VESA 800x600 16-color mode\n");
-            VGA_SetMode(800,600,4);
-            break;
-        case 0x103:
-            TRACE("Setting VESA 800x600 256-color mode\n");
-            VGA_SetMode(800,600,8);
-            break;
-        case 0x104:
-            TRACE("Setting VESA 1024x768 16-color mode\n");
-            VGA_SetMode(1024,768,4);
-            break;
-        case 0x105:
-            TRACE("Setting VESA 1024x768 256-color mode\n");
-            VGA_SetMode(1024,768,8);
-            break;
-        case 0x106:
-            TRACE("Setting VESA 1280x1024 16-color mode\n");
-            VGA_SetMode(1280,1024,4);
-            break;
-        case 0x107:
-            TRACE("Setting VESA 1280x1024 256-color mode\n");
-            VGA_SetMode(1280,1024,8);
-            break;
-            /* 108h - 10Ch are text modes and im lazy so :p */
-            /* VBE v1.2+ */
-        case 0x10D:
-            TRACE("Setting VESA 320x200 15bpp\n");
-            VGA_SetMode(320,200,15);
-            break;
-        case 0x10E:
-            TRACE("Setting VESA 320x200 16bpp\n");
-            VGA_SetMode(320,200,16);
-            break;
-        case 0x10F:
-            TRACE("Setting VESA 320x200 24bpp\n");
-            VGA_SetMode(320,200,24);
-            break;
-        case 0x110:
-            TRACE("Setting VESA 640x480 15bpp\n");
-            VGA_SetMode(640,480,15);
-            break;
-        case 0x111:
-            TRACE("Setting VESA 640x480 16bpp\n");
-            VGA_SetMode(640,480,16);
-            break;
-        case 0x112:
-            TRACE("Setting VESA 640x480 24bpp\n");
-            VGA_SetMode(640,480,24);
-            break;
-        case 0x113:
-            TRACE("Setting VESA 800x600 15bpp\n");
-            VGA_SetMode(800,600,15);
-            break;
-        case 0x114:
-            TRACE("Setting VESA 800x600 16bpp\n");
-            VGA_SetMode(800,600,16);
-            break;
-        case 0x115:
-            TRACE("Setting VESA 800x600 24bpp\n");
-            VGA_SetMode(800,600,24);
-            break;
-        case 0x116:
-            TRACE("Setting VESA 1024x768 15bpp\n");
-            VGA_SetMode(1024,768,15);
-            break;
-        case 0x117:
-            TRACE("Setting VESA 1024x768 16bpp\n");
-            VGA_SetMode(1024,768,16);
-            break;
-        case 0x118:
-            TRACE("Setting VESA 1024x768 24bpp\n");
-            VGA_SetMode(1024,768,24);
-            break;
-        case 0x119:
-            TRACE("Setting VESA 1280x1024 15bpp\n");
-            VGA_SetMode(1280,1024,15);
-            break;
-        case 0x11A:
-            TRACE("Setting VESA 1280x1024 16bpp\n");
-            VGA_SetMode(1280,1024,16);
-            break;
-        case 0x11B:
-            TRACE("Setting VESA 1280x1024 24bpp\n");
-            VGA_SetMode(1280,1024,24);
-            break;
-        default:
-            FIXME("VESA Set Video Mode (0x%x) - Not Supported\n", BX_reg(context));
-        }
-        data->VideoMode = BX_reg(context);
-        SET_AL( context, 0x4f );
-        SET_AH( context, 0x00 );
+        TRACE( "Set VESA video mode %04x\n", BX_reg(context) );
+        SET_AL( context, 0x4f ); /* function supported */
+        if (INT10_SetVideoMode( data, BX_reg(context) ))
+            SET_AH( context, 0x00 ); /* success */
+        else
+            SET_AH( context, 0x01 ); /* failed */
         break;
 
     case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
+        /*
+         * FIXME: This returns wrong value if current mode is VESA mode.
+         */
         SET_AL( context, 0x4f );
         SET_AH( context, 0x00 ); /* should probly check if a vesa mode has ben set */
         SET_BX( context, data->VideoMode );
@@ -384,66 +405,10 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     switch(AH_reg(context)) {
 
     case 0x00: /* SET VIDEO MODE */
-        /* Text Modes: */
-        /* (mode) (text rows/cols)
-            0x00 - 40x25
-            0x01 - 40x25
-            0x02 - 80x25
-            0x03 - 80x25 or 80x43 or 80x50 (assume 80x25)
-            0x07 - 80x25
-        */
-
-        /* Bit 7 of AH = 0 -> Clean the video memory
-                         1 -> Don't clean it
-        */
-        if (!(AL_reg(context)&0x80)) {
-	    /* FIXME: Do something which cleans the video memory */
-        }
-
-        /* FIXME: Should we keep the bit 7 in the Bios Data memory? */
-        context->Eax &= ~0x80;
-
-        switch (AL_reg(context)) {
-            case 0x00: /* 40x25 */
-            case 0x01:
-                TRACE("Set Video Mode - Set to Text - 0x0%x\n",
-                   AL_reg(context));
-                VGA_SetAlphaMode(40, 25);
-                data->VideoColumns = 40;
-                break;
-            case 0x02:
-            case 0x03:
-            case 0x07:
-                TRACE("Set Video Mode - Set to Text - 0x0%x\n",
-                   AL_reg(context));
-                VGA_SetAlphaMode(80, 25);
-                data->VideoColumns = 80;
-                break;
-	    case 0x0D:
-                TRACE("Setting VGA 320x200 16-color mode\n");
-                VGA_SetMode(320,200,4);
-                break;
-	    case 0x0E:
-                TRACE("Setting VGA 640x200 16-color mode\n");
-                VGA_SetMode(640,200,4);
-                break;
-	    case 0x10:
-                TRACE("Setting VGA 640x350 16-color mode\n");
-                VGA_SetMode(640,350,4);
-                break;
-	    case 0x12:
-                TRACE("Setting VGA 640x480 16-color mode\n");
-                VGA_SetMode(640,480,4);
-                break;
-            case 0x13:
-                TRACE("Setting VGA 320x200 256-color mode\n");
-                VGA_SetMode(320,200,8);
-                break;
-            default:
-                FIXME("Set Video Mode (0x%x) - Not Supported\n",
-                   AL_reg(context));
-        }
-        data->VideoMode = AL_reg(context);
+        TRACE( "Set VGA video mode %02x\n", AL_reg(context) );
+        if (!INT10_SetVideoMode( data, AL_reg(context) ))
+            FIXME( "Unsupported VGA video mode requested: %d\n", 
+                   AL_reg(context) );
         break;
 
     case 0x01: /* SET CURSOR SHAPE */
