@@ -35,9 +35,6 @@
 <!entity cvs-regression SYSTEM "cvs-regression.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
 
-<!-- *** Entities for Wine Developer Guide *** -->
-<!entity winelib-user SYSTEM "winelib-user.sgml">
-
 <!-- *** Entities for Winelib User Guide *** -->
 <!entity winelib-intro SYSTEM "winelib-intro.sgml">
 <!entity winelib-porting SYSTEM "winelib-porting.sgml">
@@ -120,19 +117,19 @@
 
 
   <!-- *** Winelib User Guide *** -->
-<book id="index-winelib">
-  <bookinfo>
-    <title>Winelib User's Guide</title>
-  </bookinfo>
+  <book id="index-winelib">
+    <bookinfo>
+      <title>Winelib User's Guide</title>
+    </bookinfo>
 
-  &winelib-intro;
-  &winelib-porting;
-  &winelib-toolkit;
-  &winelib-mfc;
-  &winelib-bindlls;
-  &winelib-packaging;
+    &winelib-intro;
+    &winelib-porting;
+    &winelib-toolkit;
+    &winelib-mfc;
+    &winelib-bindlls;
+    &winelib-packaging;
 
-</book>
+  </book>
 
   <!-- *** Wine Packager Guide *** -->
   <book id="index-pkg">
