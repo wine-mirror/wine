@@ -1,0 +1,552 @@
+/*
+ * 				Shell Library Functions
+ *
+ *  1998 Marcus Meissner
+ *  2002 Eric Pouech
+ */
+
+#include "config.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <assert.h>
+
+#include "windef.h"
+#include "winerror.h"
+#include "winreg.h"
+#include "shellapi.h"
+#include "shlobj.h"
+#include "shlwapi.h"
+#include "ddeml.h"
+
+#include "wine/winbase16.h"
+#include "shell32_main.h"
+
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(exec);
+
+/* this function is supposed to expand the escape sequences found in the registry
+ * some diving reported that the following were used:
+ * + %1, %2...  seem to report to parameter of index N in ShellExecute pmts 
+ + + %*         seem to report to all parameter (or all remaining, ie after removing
+ *              the already used %1 %2...) 
+ * + %L         seems to be %1 as long filename followed by the 8+3 variation 
+ * + %l         unknown
+ * + %S         unknown
+ * + %I         unknown
+ */
+static void argify(char* res, int len, const char* fmt, const char* lpFile)
+{
+    char        xlpFile[1024];
+
+    while (*fmt)
+    {
+        if (*fmt == '%')
+        {
+            switch (*++fmt)
+            {
+            case '\0':
+            case '%': 
+                *res++ = '%'; 
+                break;
+            case '1': 
+                if (SearchPathA(NULL, lpFile, ".exe", sizeof(xlpFile), xlpFile, NULL))
+                {
+                    strcpy(res, xlpFile); 
+                    res += strlen(xlpFile); 
+                }
+                else
+                {
+                    strcpy(res, lpFile); 
+                    res += strlen(lpFile); 
+                }
+                break;
+            default: FIXME("Unknown escape sequence %%%c\n", *fmt);
+            }
+            fmt++;
+        }
+        else
+            *res++ = *fmt++;
+    }
+    *res = '\0';
+}
+
+/*************************************************************************
+ *	SHELL_FindExecutable [Internal]
+ *
+ * Utility for code sharing between FindExecutable and ShellExecute
+ * in: 
+ *      lpFile the name of a file
+ *      lpOperation the operation on it (open)
+ * out:
+ *      lpResult a buffer, big enough :-(, to store the command to do the
+ *              operation on the file
+ *      key a buffer, big enough, to get the key name to do actually the
+ *              command (it'll be used afterwards for more information
+ *              on the operation)
+ */
+static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
+                                      LPSTR lpResult, LPSTR key)
+{
+    char *extension = NULL; /* pointer to file extension */
+    char tmpext[5];         /* local copy to mung as we please */
+    char filetype[256];     /* registry name for this filetype */
+    LONG filetypelen = 256; /* length of above */
+    char command[256];      /* command from registry */
+    LONG commandlen = 256;  /* This is the most DOS can handle :) */
+    char buffer[256];       /* Used to GetProfileString */
+    HINSTANCE retval = 31;  /* default - 'No association was found' */
+    char *tok;              /* token pointer */
+    int i;                  /* random counter */
+    char xlpFile[256] = ""; /* result of SearchPath */
+    
+    TRACE("%s\n", (lpFile != NULL) ? lpFile : "-");
+    
+    lpResult[0] = '\0'; /* Start off with an empty return string */
+    
+    /* trap NULL parameters on entry */
+    if ((lpFile == NULL) || (lpResult == NULL) || (lpOperation == NULL))
+    {
+        WARN("(lpFile=%s,lpResult=%s,lpOperation=%s): NULL parameter\n",
+             lpFile, lpOperation, lpResult);
+        return 2; /* File not found. Close enough, I guess. */
+    }
+    
+    if (SearchPathA(NULL, lpFile, ".exe", sizeof(xlpFile), xlpFile, NULL))
+    {
+        TRACE("SearchPathA returned non-zero\n");
+        lpFile = xlpFile;
+    }
+    
+    /* First thing we need is the file's extension */
+    extension = strrchr(xlpFile, '.'); /* Assume last "." is the one; */
+                                       /* File->Run in progman uses */
+                                       /* .\FILE.EXE :( */
+    TRACE("xlpFile=%s,extension=%s\n", xlpFile, extension);
+    
+    if ((extension == NULL) || (extension == &xlpFile[strlen(xlpFile)]))
+    {
+        WARN("Returning 31 - No association\n");
+        return 31; /* no association */
+    }
+    
+    /* Make local copy & lowercase it for reg & 'programs=' lookup */
+    lstrcpynA(tmpext, extension, 5);
+    CharLowerA(tmpext);
+    TRACE("%s file\n", tmpext);
+    
+    /* Three places to check: */
+    /* 1. win.ini, [windows], programs (NB no leading '.') */
+    /* 2. Registry, HKEY_CLASS_ROOT\<filetype>\shell\open\command */
+    /* 3. win.ini, [extensions], extension (NB no leading '.' */
+    /* All I know of the order is that registry is checked before */
+    /* extensions; however, it'd make sense to check the programs */
+    /* section first, so that's what happens here. */
+    
+    if (key) *key = '\0';
+
+    /* See if it's a program - if GetProfileString fails, we skip this
+     * section. Actually, if GetProfileString fails, we've probably
+     * got a lot more to worry about than running a program... */
+    if (GetProfileStringA("windows", "programs", "exe pif bat com",
+                          buffer, sizeof(buffer)) > 0)
+    {
+        for (i = 0;i<strlen(buffer); i++) buffer[i] = tolower(buffer[i]);
+        
+        tok = strtok(buffer, " \t"); /* ? */
+        while (tok!= NULL)
+        {
+            if (strcmp(tok, &tmpext[1]) == 0) /* have to skip the leading "." */
+            {
+                strcpy(lpResult, xlpFile);
+                /* Need to perhaps check that the file has a path
+                 * attached */
+                TRACE("found %s\n", lpResult);
+                return 33;
+                
+		/* Greater than 32 to indicate success FIXME According to the
+		 * docs, I should be returning a handle for the
+		 * executable. Does this mean I'm supposed to open the
+		 * executable file or something? More RTFM, I guess... */
+            }
+            tok = strtok(NULL, " \t");
+        }
+    }
+    
+    /* Check registry */
+    if (RegQueryValueA(HKEY_CLASSES_ROOT, tmpext, filetype,
+                       &filetypelen) == ERROR_SUCCESS)
+    {
+	filetype[filetypelen] = '\0';
+	TRACE("File type: %s\n", filetype);
+        
+	/* Looking for ...buffer\shell\lpOperation\command */
+	strcat(filetype, "\\shell\\");
+	strcat(filetype, lpOperation);
+	strcat(filetype, "\\command");
+	
+	if (RegQueryValueA(HKEY_CLASSES_ROOT, filetype, command,
+                           &commandlen) == ERROR_SUCCESS)
+	{
+            if (key) strcpy(key, filetype);
+#if 0
+            LPSTR tmp;
+            char param[256];
+	    LONG paramlen = 256;
+
+            /* FIXME: it seems all Windows version don't behave the same here.
+             * the doc states that this ddeexec information can be found after
+             * the exec names.
+             * on Win98, it doesn't appear, but I think it does on Win2k
+             */
+	    /* Get the parameters needed by the application 
+	       from the associated ddeexec key */ 
+	    tmp = strstr(filetype, "command");
+	    tmp[0] = '\0';
+	    strcat(filetype, "ddeexec");
+            
+	    if (RegQueryValueA(HKEY_CLASSES_ROOT, filetype, param, &paramlen) == ERROR_SUCCESS)
+	    {
+                strcat(command, " ");
+                strcat(command, param);
+                commandlen += paramlen;
+	    }
+#endif
+	    command[commandlen] = '\0';
+            argify(lpResult, sizeof(lpResult), command, xlpFile);
+	    retval = 33; /* FIXME see above */
+	}
+    }
+    else /* Check win.ini */
+    {
+	/* Toss the leading dot */
+	extension++;
+	if (GetProfileStringA("extensions", extension, "", command,
+                              sizeof(command)) > 0)
+        {
+            if (strlen(command) != 0)
+            {
+                strcpy(lpResult, command);
+                tok = strstr(lpResult, "^"); /* should be ^.extension? */
+                if (tok != NULL)
+                {
+                    tok[0] = '\0';
+                    strcat(lpResult, xlpFile); /* what if no dir in xlpFile? */
+                    tok = strstr(command, "^"); /* see above */
+                    if ((tok != NULL) && (strlen(tok)>5))
+                    {
+                        strcat(lpResult, &tok[5]);
+                    }
+                }
+                retval = 33; /* FIXME - see above */
+            }
+        }
+    }
+    
+    TRACE("returning %s\n", lpResult);
+    return retval;
+}
+
+/******************************************************************
+ *		dde_cb
+ *
+ * callback for the DDE connection. not really usefull
+ */
+static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv, 
+                                HSZ hsz1, HSZ hsz2,
+                                HDDEDATA hData, DWORD dwData1, DWORD dwData2)
+{
+    return (HDDEDATA)0;
+}
+
+/******************************************************************
+ *		dde_connect
+ *
+ * ShellExecute helper. Used to do an operation with a DDE connection
+ *
+ * Handles both the direct connection (try #1), and if it fails, 
+ * launching an application and trying (#2) to connect to it
+ *
+ */
+static unsigned dde_connect(char* key, char* start, char* ddeexec, 
+                            const char* lpFile, 
+                            int iCmdShow, BOOL is32)
+{
+    char*       endkey = key + strlen(key);
+    char        app[256], topic[256], ifexec[256], res[256];
+    LONG        applen, topiclen, ifexeclen;
+    char*       exec;
+    DWORD       ddeInst = 0;
+    DWORD       tid;
+    HSZ         hszApp, hszTopic;
+    HCONV       hConv;
+    unsigned    ret = 31;
+
+    strcpy(endkey, "\\application");
+    applen = sizeof(app);
+    if (RegQueryValueA(HKEY_CLASSES_ROOT, key, app, &applen) != ERROR_SUCCESS)
+    {
+        FIXME("default app name NIY %s\n", key);
+        return 2;
+    }
+    
+    strcpy(endkey, "\\topic");
+    topiclen = sizeof(topic);
+    if (RegQueryValueA(HKEY_CLASSES_ROOT, key, topic, &topiclen) != ERROR_SUCCESS)
+    {
+        strcpy(topic, "System");
+    }
+    
+    if (DdeInitializeA(&ddeInst, dde_cb, APPCMD_CLIENTONLY, 0L) != DMLERR_NO_ERROR)
+    {
+        return 2;
+    }
+    
+    hszApp = DdeCreateStringHandleA(ddeInst, app, CP_WINANSI);
+    hszTopic = DdeCreateStringHandleA(ddeInst, topic, CP_WINANSI);
+    
+    hConv = DdeConnect(ddeInst, hszApp, hszTopic, NULL);
+    exec = ddeexec;
+    if (!hConv)
+    {
+        TRACE("Launching '%s'\n", start);
+        ret = (is32) ? WinExec(start, iCmdShow) : WinExec16(start, iCmdShow);
+        if (ret < 32)
+        {
+            TRACE("Couldn't launch\n");
+            goto error;
+        }
+        hConv = DdeConnect(ddeInst, hszApp, hszTopic, NULL);
+        if (!hConv)
+        {
+            ret = 30; /* whatever */
+            goto error;
+        }
+        strcpy(endkey, "\\ifexec");
+        ifexeclen = sizeof(ifexec);
+        if (RegQueryValueA(HKEY_CLASSES_ROOT, key, ifexec, &ifexeclen) == ERROR_SUCCESS)
+        {
+            exec = ifexec;
+        }
+    }
+    
+    argify(res, sizeof(res), exec, lpFile);
+    TRACE("%s %s => %s\n", exec, lpFile, res);
+    
+    ret = (DdeClientTransaction(res, strlen(res) + 1, hConv, 0L, 0, 
+                                XTYP_EXECUTE, 10000, &tid) != DMLERR_NO_ERROR) ? 31 : 32;
+    DdeDisconnect(hConv);
+ error:
+    DdeUninitialize(ddeInst);
+    return ret;
+}
+
+static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, INT iShowCmd, BOOL is32)
+{
+    char cmd[1024] = "";
+    LONG cmdlen = sizeof(cmd);
+    HINSTANCE retval = 31;
+
+    /* Get the application for the registry */
+    if (RegQueryValueA(HKEY_CLASSES_ROOT, key, cmd, &cmdlen) == ERROR_SUCCESS)
+    {
+        LPSTR tmp;
+        char param[256] = "";
+        LONG paramlen = 256;
+                
+        /* Get the parameters needed by the application 
+           from the associated ddeexec key */ 
+        tmp = strstr(key, "command");
+        assert(tmp);
+        strcpy(tmp, "ddeexec");
+                
+        if (RegQueryValueA(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
+        {
+            TRACE("Got ddeexec %s => %s\n", key, param);
+            retval = dde_connect(key, cmd, param, lpFile, iShowCmd, is32);
+        }
+        else
+        {
+            /* Is there a replace() function anywhere? */
+            cmd[cmdlen] = '\0';
+            argify(param, sizeof(param), cmd, lpFile);
+
+            retval = (is32) ? WinExec(param, iShowCmd) : WinExec16(param, iShowCmd);
+        }
+    }
+    else TRACE("ooch\n");
+
+    return retval;
+}
+
+static HINSTANCE SHELL_Execute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, 
+                               LPCSTR lpParameters, LPCSTR lpDirectory, 
+                               INT iShowCmd, BOOL is32)
+{
+    HINSTANCE retval = 31;
+    char old_dir[1024];
+    char cmd[1024];
+    
+    TRACE("(%04x,'%s','%s','%s','%s',%x)\n",
+          hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
+          lpParameters ? lpParameters : "<null>", 
+          lpDirectory ? lpDirectory : "<null>", iShowCmd);
+    
+    if (lpFile == NULL) return 0; /* should not happen */
+    if (lpOperation == NULL) /* default is open */
+        lpOperation = "open";
+    
+    if (lpDirectory)
+    {
+        GetCurrentDirectoryA(sizeof(old_dir), old_dir);
+        SetCurrentDirectoryA(lpDirectory);
+    }
+    
+    /* First try to execute lpFile with lpParameters directly */ 
+    strcpy(cmd, lpFile);
+    if (lpParameters) 
+    {
+        strcat(cmd, " ");
+        strcat(cmd, lpParameters);
+    }
+    
+    retval = (is32) ? WinExec(cmd, iShowCmd) : WinExec16(cmd, iShowCmd);
+    
+    /* Unable to execute lpFile directly
+       Check if we can match an application to lpFile */
+    if (retval < 32)
+    { 
+        char lpstrProtocol[256];
+
+        cmd[0] = '\0';
+        retval = SHELL_FindExecutable(lpFile, lpOperation, cmd, lpstrProtocol);
+        
+        if (retval > 32)  /* Found */
+        {
+            TRACE("%s/%s => %s/%s\n", lpFile, lpOperation, cmd, lpstrProtocol);
+            if (*lpstrProtocol)
+                retval = execute_from_key(lpstrProtocol, lpFile, iShowCmd, is32);
+            else
+                retval = (is32) ? WinExec(cmd, iShowCmd) : WinExec16(cmd, iShowCmd);
+        }
+        else if (PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
+        {
+            LPSTR lpstrRes;
+            INT iSize;
+            
+            lpstrRes = strchr(lpFile, ':');
+            iSize = lpstrRes - lpFile;
+            
+            TRACE("Got URL: %s\n", lpFile);
+            /* Looking for ...protocol\shell\lpOperation\command */
+            strncpy(lpstrProtocol, lpFile, iSize);
+            lpstrProtocol[iSize] = '\0';
+            strcat(lpstrProtocol, "\\shell\\");
+            strcat(lpstrProtocol, lpOperation);
+            strcat(lpstrProtocol, "\\command");
+            
+            /* Remove File Protocol from lpFile */
+            /* In the case file://path/file     */
+            if (!strncasecmp(lpFile, "file", iSize))
+            {
+                lpFile += iSize;
+                while (*lpFile == ':') lpFile++;
+            }
+            
+            retval = execute_from_key(lpstrProtocol, lpFile, iShowCmd, is32);
+        }       
+        /* Check if file specified is in the form www.??????.*** */
+        else if (!strncasecmp(lpFile, "www", 3))
+        {
+            /* if so, append lpFile http:// and call ShellExecute */ 
+            char lpstrTmpFile[256] = "http://" ;
+            strcat(lpstrTmpFile, lpFile);
+            retval = ShellExecuteA(hWnd, lpOperation, lpstrTmpFile, NULL, NULL, 0);
+        }
+    }
+    if (lpDirectory)
+        SetCurrentDirectoryA(old_dir);
+    return retval;
+}
+
+/*************************************************************************
+ * FindExecutableA			[SHELL32.@]
+ */
+HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
+{ 
+    HINSTANCE retval = 31;    /* default - 'No association was found' */
+    char old_dir[1024];
+    
+    TRACE("File %s, Dir %s\n", 
+          (lpFile != NULL ? lpFile : "-"), (lpDirectory != NULL ? lpDirectory : "-"));
+
+    lpResult[0] = '\0'; /* Start off with an empty return string */
+
+    /* trap NULL parameters on entry */
+    if ((lpFile == NULL) || (lpResult == NULL))
+    {
+        /* FIXME - should throw a warning, perhaps! */
+	return 2; /* File not found. Close enough, I guess. */
+    }
+
+    if (lpDirectory)
+    {
+        GetCurrentDirectoryA(sizeof(old_dir), old_dir);
+        SetCurrentDirectoryA(lpDirectory);
+    }
+    
+    retval = SHELL_FindExecutable(lpFile, "open", lpResult, NULL);
+    
+    TRACE("returning %s\n", lpResult);
+    if (lpDirectory)
+        SetCurrentDirectoryA(old_dir);
+    return retval;
+}
+
+/*************************************************************************
+ * FindExecutableW			[SHELL32.@]
+ */
+HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpResult)
+{
+    FIXME("(%p,%p,%p): stub\n", lpFile, lpDirectory, lpResult);
+    return 31;    /* default - 'No association was found' */
+}
+
+/*************************************************************************
+ *				ShellExecute		[SHELL.20]
+ */
+HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
+                                   LPCSTR lpFile, LPCSTR lpParameters,
+                                   LPCSTR lpDirectory, INT16 iShowCmd )
+{   
+    return (HINSTANCE16)SHELL_Execute(hWnd, lpOperation, lpFile, 
+                                      lpParameters, lpDirectory, iShowCmd, FALSE );
+}
+
+/*************************************************************************
+ * ShellExecuteA			[SHELL32.290]
+ */
+HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile, 
+                               LPCSTR lpParameters,LPCSTR lpDirectory, INT iShowCmd)
+{
+    TRACE("\n");
+    return SHELL_Execute( hWnd, lpOperation, lpFile, lpParameters,
+                          lpDirectory, iShowCmd, TRUE );
+}
+
+/*************************************************************************
+ * ShellExecuteW			[SHELL32.294]
+ * from shellapi.h
+ * WINSHELLAPI HINSTANCE APIENTRY ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, 
+ * LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);   
+ */
+HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, 
+                               LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
+{
+       FIXME(": stub\n");
+       return 0;
+}
+

@@ -32,6 +32,7 @@ C_SRCS = \
 	shellpath.c \
 	shellstring.c \
 	shellreg.c \
+	shlexec.c \
 	shlfileop.c \
 	shlfolder.c \
 	shlview.c \

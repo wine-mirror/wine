@@ -163,8 +163,6 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
 BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI);
 BOOL SHELL_WarnItemDelete(int nKindOfDialog, LPCSTR szDir);
 
-extern HINSTANCE SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);
-
 /* 16-bit functions */
 void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);
 UINT16      WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength);

@@ -545,50 +545,6 @@ HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 	return ret;
 }
 
-/*************************************************************************
- * FindExecutableA			[SHELL32.@]
- */
-HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
-                                      LPSTR lpResult )
-{ 
-  HINSTANCE retval=31;    /* default - 'No association was found' */
-    char old_dir[1024];
-
-  TRACE("File %s, Dir %s\n", 
-		 (lpFile != NULL?lpFile:"-"), 
-		 (lpDirectory != NULL?lpDirectory:"-"));
-
-    lpResult[0]='\0'; /* Start off with an empty return string */
-
-    /* trap NULL parameters on entry */
-    if (( lpFile == NULL ) || ( lpResult == NULL ))
-  { /* FIXME - should throw a warning, perhaps! */
-	return 2; /* File not found. Close enough, I guess. */
-    }
-
-    if (lpDirectory)
-  { GetCurrentDirectoryA( sizeof(old_dir), old_dir );
-        SetCurrentDirectoryA( lpDirectory );
-    }
-
-    retval = SHELL_FindExecutable( lpFile, "open", lpResult );
-
-  TRACE("returning %s\n", lpResult);
-  if (lpDirectory)
-    SetCurrentDirectoryA( old_dir );
-    return retval;
-}
-
-/*************************************************************************
- * FindExecutableW			[SHELL32.@]
- */
-HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory,
-                                     LPWSTR lpResult)
-{
-  FIXME("(%p,%p,%p): stub\n", lpFile, lpDirectory, lpResult);
-  return 31;    /* default - 'No association was found' */
-}
-
 typedef struct
 { LPCSTR  szApp;
     LPCSTR  szOtherStuff;
@@ -694,36 +650,6 @@ DWORD WINAPI SHLoadInProc (REFCLSID rclsid)
           return NOERROR;
 	}
 	return DISP_E_MEMBERNOTFOUND;
-}
-
-/*************************************************************************
- * ShellExecuteA			[SHELL32.290]
- */
-HINSTANCE WINAPI ShellExecuteA( HWND hWnd, LPCSTR lpOperation,
-                                    LPCSTR lpFile, LPCSTR lpParameters,
-                                    LPCSTR lpDirectory, INT iShowCmd )
-{   TRACE("\n");
-    return ShellExecute16( hWnd, lpOperation, lpFile, lpParameters,
-                           lpDirectory, iShowCmd );
-}
-
-/*************************************************************************
- * ShellExecuteW			[SHELL32.294]
- * from shellapi.h
- * WINSHELLAPI HINSTANCE APIENTRY ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, 
- * LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);   
- */
-HINSTANCE WINAPI 
-ShellExecuteW(
-       HWND hwnd, 
-       LPCWSTR lpOperation, 
-       LPCWSTR lpFile, 
-       LPCWSTR lpParameters, 
-       LPCWSTR lpDirectory, 
-       INT nShowCmd) {
-
-       FIXME(": stub\n");
-       return 0;
 }
 
 /*************************************************************************
