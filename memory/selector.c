@@ -820,12 +820,12 @@ SEGPTR WINAPI UTLinearToSelectorOffset16(LPVOID lptr)
 }
 
 #ifdef __i386__
-__ASM_GLOBAL_FUNC( __get_cs, "movl %cs,%eax\n\tret" );
-__ASM_GLOBAL_FUNC( __get_ds, "movl %ds,%eax\n\tret" );
-__ASM_GLOBAL_FUNC( __get_es, "movl %es,%eax\n\tret" );
-__ASM_GLOBAL_FUNC( __get_fs, "movl %fs,%eax\n\tret" );
-__ASM_GLOBAL_FUNC( __get_gs, "movl %gs,%eax\n\tret" );
-__ASM_GLOBAL_FUNC( __get_ss, "movl %ss,%eax\n\tret" );
-__ASM_GLOBAL_FUNC( __set_fs, "movl 4(%esp),%eax\n\tmovl %eax,%fs\n\tret" );
-__ASM_GLOBAL_FUNC( __set_gs, "movl 4(%esp),%eax\n\tmovl %eax,%gs\n\tret" );
+__ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( __get_ds, "movw %ds,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( __get_es, "movw %es,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( __get_fs, "movw %fs,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( __get_gs, "movw %gs,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( __get_ss, "movw %ss,%ax\n\tret" )
+__ASM_GLOBAL_FUNC( __set_fs, "movl 4(%esp),%eax\n\tmovw %ax,%fs\n\tret" )
+__ASM_GLOBAL_FUNC( __set_gs, "movl 4(%esp),%eax\n\tmovw %ax,%gs\n\tret" )
 #endif

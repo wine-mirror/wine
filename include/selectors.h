@@ -23,7 +23,7 @@ extern void SELECTOR_FreeBlock( WORD sel, WORD count );
     extern inline unsigned short __get_##seg(void) \
     { unsigned short res; __asm__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
 #  define __DEFINE_SET_SEG(seg) \
-    extern inline void __set_##seg(int val) { __asm__("movl %0,%%" #seg : : "r" (val)); }
+    extern inline void __set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
 # else  /* __GNUC__ */
 #  define __DEFINE_GET_SEG(seg) extern unsigned short __get_##seg(void);
 #  define __DEFINE_SET_SEG(seg) extern void __set_##seg(unsigned int);
