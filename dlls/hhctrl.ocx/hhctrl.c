@@ -47,7 +47,7 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
     DWORD len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
     HWND result;
 
-    wfile = HeapAlloc( GetProcessHeap(), 0, len );
+    wfile = HeapAlloc( GetProcessHeap(), 0, len  * sizeof(WCHAR));
     MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
 
     result = HtmlHelpW( caller, wfile, command, data );
