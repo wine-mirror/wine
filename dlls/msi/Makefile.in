@@ -3,10 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msi.dll
-IMPORTS   = ole32 user32 advapi32 kernel32
+IMPORTS   = shell32 cabinet ole32 user32 advapi32 kernel32
 EXTRALIBS = -luuid $(LIBUNICODE)
 
 C_SRCS = \
+	action.c \
 	create.c \
 	distinct.c \
 	handle.c \

@@ -52,15 +52,46 @@ typedef struct tag_yyinput
 
 static LPWSTR COND_GetString( COND_input *info );
 static int COND_lex( void *COND_lval, COND_input *info);
+UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value);
 
 typedef INT (*comp_int)(INT a, INT b);
+typedef INT (*comp_str)(LPWSTR a, LPWSTR b, BOOL caseless);
+typedef INT (*comp_m1)(LPWSTR a,int b);
+typedef INT (*comp_m2)(int a,LPWSTR b);
 
-static INT comp_lt(INT a, INT b);
-static INT comp_gt(INT a, INT b);
-static INT comp_le(INT a, INT b);
-static INT comp_ge(INT a, INT b);
-static INT comp_eq(INT a, INT b);
-static INT comp_ne(INT a, INT b);
+static INT comp_lt_i(INT a, INT b);
+static INT comp_gt_i(INT a, INT b);
+static INT comp_le_i(INT a, INT b);
+static INT comp_ge_i(INT a, INT b);
+static INT comp_eq_i(INT a, INT b);
+static INT comp_ne_i(INT a, INT b);
+static INT comp_bitand(INT a, INT b);
+static INT comp_highcomp(INT a, INT b);
+static INT comp_lowcomp(INT a, INT b);
+
+static INT comp_eq_s(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_ne_s(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_lt_s(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_gt_s(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_le_s(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_ge_s(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_substring(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_start(LPWSTR a, LPWSTR b, BOOL casless);
+static INT comp_end(LPWSTR a, LPWSTR b, BOOL casless);
+
+static INT comp_eq_m1(LPWSTR a, INT b);
+static INT comp_ne_m1(LPWSTR a, INT b);
+static INT comp_lt_m1(LPWSTR a, INT b);
+static INT comp_gt_m1(LPWSTR a, INT b);
+static INT comp_le_m1(LPWSTR a, INT b);
+static INT comp_ge_m1(LPWSTR a, INT b);
+
+static INT comp_eq_m2(INT a, LPWSTR b);
+static INT comp_ne_m2(INT a, LPWSTR b);
+static INT comp_lt_m2(INT a, LPWSTR b);
+static INT comp_gt_m2(INT a, LPWSTR b);
+static INT comp_le_m2(INT a, LPWSTR b);
+static INT comp_ge_m2(INT a, LPWSTR b);
 
 %}
 
@@ -71,20 +102,27 @@ static INT comp_ne(INT a, INT b);
     LPWSTR    string;
     INT       value;
     comp_int  fn_comp_int;
+    comp_str  fn_comp_str;
+    comp_m1   fn_comp_m1;
+    comp_m2   fn_comp_m2;
 }
 
 %token COND_SPACE COND_EOF COND_SPACE
 %token COND_OR COND_AND COND_NOT
-%token COND_LT COND_GT COND_LE COND_GE COND_EQ COND_NE
-%token COND_LPAR COND_RPAR
+%token COND_LT COND_GT COND_EQ 
+%token COND_LPAR COND_RPAR COND_DBLQ COND_TILDA
 %token COND_PERCENT COND_DOLLARS COND_QUESTION COND_AMPER COND_EXCLAM
 %token COND_IDENT COND_NUMBER
 
 %nonassoc COND_EOF COND_ERROR
 
-%type <value> expression boolean_term boolean_factor term value symbol integer
-%type <string> identifier
-%type <fn_comp_int> comparison_op
+%type <value> expression boolean_term boolean_factor 
+%type <value> term value_i symbol_i integer
+%type <string> identifier value_s symbol_s literal
+%type <fn_comp_int> comp_op_i
+%type <fn_comp_str> comp_op_s 
+%type <fn_comp_m1>  comp_op_m1 
+%type <fn_comp_m2>  comp_op_m2
 
 %%
 
@@ -112,7 +150,7 @@ boolean_term:
         {
             $$ = $1;
         }
-  | boolean_factor COND_AND term
+    | boolean_term COND_AND boolean_factor
         {
             $$ = $1 && $3;
         }
@@ -129,12 +167,33 @@ boolean_factor:
         }
     ;
 
+
 term:
-    value
+    value_i
         {
             $$ = $1;
         }
-  | value comparison_op value
+  | value_s
+        {
+            $$ = atoiW($1);
+        }
+  | value_i comp_op_i value_i
+        {
+            $$ = $2( $1, $3 );
+        }
+  | value_s comp_op_s value_s
+        {
+            $$ = $2( $1, $3, FALSE );
+        }
+  | value_s COND_TILDA comp_op_s value_s
+        {
+            $$ = $3( $1, $4, TRUE );
+        }
+  | value_s comp_op_m1 value_i
+        {
+            $$ = $2( $1, $3 );
+        }
+  | value_i comp_op_m2 value_s
         {
             $$ = $2( $1, $3 );
         }
@@ -144,35 +203,172 @@ term:
         }
     ;
 
-comparison_op:
-    COND_LT
+comp_op_i:
+    /* common functions */
+   COND_EQ
         {
-            $$ = comp_lt;
+            $$ = comp_eq_i;
+        }
+  | COND_LT COND_GT
+        {
+            $$ = comp_ne_i;
+        }
+  | COND_LT
+        {
+            $$ = comp_lt_i;
         }
   | COND_GT
         {
-            $$ = comp_gt;
+            $$ = comp_gt_i;
         }
-  | COND_LE
+  | COND_LT COND_EQ
         {
-            $$ = comp_le;
+            $$ = comp_le_i;
         }
-  | COND_GE
+  | COND_GT COND_EQ
         {
-            $$ = comp_ge;
+            $$ = comp_ge_i;
         }
-  | COND_EQ
+  /*Int only*/
+  | COND_GT COND_LT
         {
-            $$ = comp_eq;
+            $$ = comp_bitand;
         }
-  | COND_NE
+  | COND_LT COND_LT
         {
-            $$ = comp_ne;
+            $$ = comp_highcomp;
+        }
+  | COND_GT COND_GT
+        {
+            $$ = comp_lowcomp;
         }
     ;
 
-value:
-    symbol
+comp_op_s:
+    /* common functions */
+   COND_EQ
+        {
+            $$ = comp_eq_s;
+        }
+  | COND_LT COND_GT
+        {
+            $$ = comp_ne_s;
+        }
+  | COND_LT
+        {
+            $$ = comp_lt_s;
+        }
+  | COND_GT
+        {
+            $$ = comp_gt_s;
+        }
+  | COND_LT COND_EQ
+        {
+            $$ = comp_le_s;
+        }
+  | COND_GT COND_EQ
+        {
+            $$ = comp_ge_s;
+        }
+  /*string only*/
+  | COND_GT COND_LT
+        {
+            $$ = comp_substring;
+        }
+  | COND_LT COND_LT
+        {
+            $$ = comp_start;
+        }
+  | COND_GT COND_GT
+        {
+            $$ = comp_end;
+        }
+    ;
+
+comp_op_m1:
+    /* common functions */
+   COND_EQ
+        {
+            $$ = comp_eq_m1;
+        }
+  | COND_LT COND_GT
+        {
+            $$ = comp_ne_m1;
+        }
+  | COND_LT
+        {
+            $$ = comp_lt_m1;
+        }
+  | COND_GT
+        {
+            $$ = comp_gt_m1;
+        }
+  | COND_LT COND_EQ
+        {
+            $$ = comp_le_m1;
+        }
+  | COND_GT COND_EQ
+        {
+            $$ = comp_ge_m1;
+        }
+  /*Not valid for mixed compares*/
+  | COND_GT COND_LT
+        {
+            $$ = 0;
+        }
+  | COND_LT COND_LT
+        {
+            $$ = 0;
+        }
+  | COND_GT COND_GT
+        {
+            $$ = 0;
+        }
+    ;
+
+comp_op_m2:
+    /* common functions */
+   COND_EQ
+        {
+            $$ = comp_eq_m2;
+        }
+  | COND_LT COND_GT
+        {
+            $$ = comp_ne_m2;
+        }
+  | COND_LT
+        {
+            $$ = comp_lt_m2;
+        }
+  | COND_GT
+        {
+            $$ = comp_gt_m2;
+        }
+  | COND_LT COND_EQ
+        {
+            $$ = comp_le_m2;
+        }
+  | COND_GT COND_EQ
+        {
+            $$ = comp_ge_m2;
+        }
+  /*Not valid for mixed compares*/
+  | COND_GT COND_LT
+        {
+            $$ = 0;
+        }
+  | COND_LT COND_LT
+        {
+            $$ = 0;
+        }
+  | COND_GT COND_GT
+        {
+            $$ = 0;
+        }
+    ;
+
+value_i:
+    symbol_i
         {
             $$ = $1;
         }
@@ -182,7 +378,25 @@ value:
         }
     ;
 
-symbol:
+value_s:
+  symbol_s
+    {
+        $$ = $1;
+    } 
+  | literal
+    {
+        $$ = $1;
+    }
+    ;
+
+literal:
+    COND_DBLQ identifier COND_DBLQ
+    {
+        $$ = $2;
+    }
+    ;
+
+symbol_i:
     COND_DOLLARS identifier
         {
             COND_input* cond = (COND_input*) info;
@@ -217,15 +431,22 @@ symbol:
         }
     ;
 
-identifier:
-    COND_IDENT
+symbol_s:
+    identifier
         {
             COND_input* cond = (COND_input*) info;
-            $$ = COND_GetString(cond);
-            if( !$$ )
-                YYABORT;
+            $$ = HeapAlloc( GetProcessHeap(), 0, 0x100*sizeof (WCHAR) );
+
+            /* Lookup the identifier */
+            /* This will not really work until we have write access to the table*/
+            /* HACK ALERT HACK ALERT... */
+
+            if (get_property(cond->hInstall,$1,$$) != ERROR_SUCCESS)
+            {
+                $$[0]=0;
+            }
         }
-  | COND_PERCENT identifier
+    | COND_PERCENT identifier
         {
             UINT len = GetEnvironmentVariableW( $2, NULL, 0 );
             if( len++ )
@@ -235,6 +456,16 @@ identifier:
                     GetEnvironmentVariableW( $2, $$, len );
             }
             HeapFree( GetProcessHeap(), 0, $2 );
+        }
+    ;
+
+identifier:
+    COND_IDENT
+        {
+            COND_input* cond = (COND_input*) info;
+            $$ = COND_GetString(cond);
+            if( !$$ )
+                YYABORT;
         }
     ;
 
@@ -252,35 +483,82 @@ integer:
 
 %%
 
-static INT comp_lt(INT a, INT b)
-{
-    return (a < b);
+
+/* the mess of comparison functions */
+
+static INT comp_lt_i(INT a, INT b)
+{ return (a < b); }
+static INT comp_gt_i(INT a, INT b)
+{ return (a > b); }
+static INT comp_le_i(INT a, INT b)
+{ return (a <= b); }
+static INT comp_ge_i(INT a, INT b)
+{ return (a >= b); }
+static INT comp_eq_i(INT a, INT b)
+{ return (a == b); }
+static INT comp_ne_i(INT a, INT b)
+{ return (a != b); }
+static INT comp_bitand(INT a, INT b)
+{ return a & b;}
+static INT comp_highcomp(INT a, INT b)
+{ return HIWORD(a)==b; }
+static INT comp_lowcomp(INT a, INT b)
+{ return LOWORD(a)==b; }
+
+static INT comp_eq_s(LPWSTR a, LPWSTR b, BOOL casless)
+{ if (casless) return !strcmpiW(a,b); else return !strcmpW(a,b);}
+static INT comp_ne_s(LPWSTR a, LPWSTR b, BOOL casless)
+{ if (casless) return strcmpiW(a,b); else  return strcmpW(a,b);}
+static INT comp_lt_s(LPWSTR a, LPWSTR b, BOOL casless)
+{ if (casless) return strcmpiW(a,b)<0; else return strcmpW(a,b)<0;}
+static INT comp_gt_s(LPWSTR a, LPWSTR b, BOOL casless)
+{ if (casless) return strcmpiW(a,b)>0; else return strcmpW(a,b)>0;}
+static INT comp_le_s(LPWSTR a, LPWSTR b, BOOL casless)
+{ if (casless) return strcmpiW(a,b)<=0; else return strcmpW(a,b)<=0;}
+static INT comp_ge_s(LPWSTR a, LPWSTR b, BOOL casless)
+{ if (casless) return strcmpiW(a,b)>=0; else return  strcmpW(a,b)>=0;}
+static INT comp_substring(LPWSTR a, LPWSTR b, BOOL casless)
+/* ERROR NOT WORKING REWRITE */
+{ if (casless) return strstrW(a,b)!=NULL; else return strstrW(a,b)!=NULL;}
+static INT comp_start(LPWSTR a, LPWSTR b, BOOL casless)
+{ if (casless) return strncmpiW(a,b,strlenW(b))==0; 
+  else return strncmpW(a,b,strlenW(b))==0;}
+static INT comp_end(LPWSTR a, LPWSTR b, BOOL casless)
+{ 
+    int i = strlenW(a); 
+    int j = strlenW(b); 
+    if (j>i)
+        return 0;
+    if (casless) return (!strcmpiW(&a[i-j-1],b));
+    else  return (!strcmpW(&a[i-j-1],b));
 }
 
-static INT comp_gt(INT a, INT b)
-{
-    return (a > b);
-}
 
-static INT comp_le(INT a, INT b)
-{
-    return (a <= b);
-}
+static INT comp_eq_m1(LPWSTR a, INT b)
+{ return atoiW(a)==b; }
+static INT comp_ne_m1(LPWSTR a, INT b)
+{ return atoiW(a)!=b; }
+static INT comp_lt_m1(LPWSTR a, INT b)
+{ return atoiW(a)<b; }
+static INT comp_gt_m1(LPWSTR a, INT b)
+{ return atoiW(a)>b; }
+static INT comp_le_m1(LPWSTR a, INT b)
+{ return atoiW(a)<=b; }
+static INT comp_ge_m1(LPWSTR a, INT b)
+{ return atoiW(a)>=b; }
 
-static INT comp_ge(INT a, INT b)
-{
-    return (a >= b);
-}
-
-static INT comp_eq(INT a, INT b)
-{
-    return (a == b);
-}
-
-static INT comp_ne(INT a, INT b)
-{
-    return (a != b);
-}
+static INT comp_eq_m2(INT a, LPWSTR b)
+{ return a == atoiW(b); }
+static INT comp_ne_m2(INT a, LPWSTR b)
+{ return a != atoiW(b); }
+static INT comp_lt_m2(INT a, LPWSTR b)
+{ return a < atoiW(b); }
+static INT comp_gt_m2(INT a, LPWSTR b)
+{ return a > atoiW(b); }
+static INT comp_le_m2(INT a, LPWSTR b)
+{ return a <= atoiW(b); }
+static INT comp_ge_m2(INT a, LPWSTR b)
+{ return a >= atoiW(b); }
 
 
 static int COND_IsAlpha( WCHAR x )
@@ -296,48 +574,95 @@ static int COND_IsNumber( WCHAR x )
 
 static int COND_IsIdent( WCHAR x )
 {
-    return( COND_IsAlpha( x ) || COND_IsNumber( x ) || ( x == '_' ) );
+    return( COND_IsAlpha( x ) || COND_IsNumber( x ) || ( x == '_' ) 
+            || ( x == '#' ) || (x == '.') );
 }
 
 static int COND_lex( void *COND_lval, COND_input *cond )
 {
     WCHAR ch;
+    /* grammer */
+    static const WCHAR NOT[] = {'O','T',' ',0};
+    static const WCHAR AND[] = {'N','D',' ',0};
+    static const WCHAR OR[] = {'R',' ',0};
+
+    int rc = COND_SPACE;
+
+    while (rc == COND_SPACE)
+    {
 
     cond->start = cond->n;
     ch = cond->str[cond->n];
-    if( !ch )
-        return COND_EOF;
+    if( ch == 0 )
+        return 0;
     cond->n++;
 
     switch( ch )
     {
-    case '(': return COND_LPAR;
-    case ')': return COND_RPAR;
-    case '&': return COND_AMPER;
-    case '!': return COND_EXCLAM;
-    case '$': return COND_DOLLARS;
-    case '?': return COND_QUESTION;
-    case '%': return COND_PERCENT;
-    case ' ': return COND_SPACE;
-    }
+    case '(': rc = COND_LPAR; break;
+    case ')': rc = COND_RPAR; break;
+    case '&': rc = COND_AMPER; break;
+    case '!': rc = COND_EXCLAM; break;
+    case '$': rc = COND_DOLLARS; break;
+    case '?': rc = COND_QUESTION; break;
+    case '%': rc = COND_PERCENT; break;
+    case ' ': rc = COND_SPACE; break;
+    case '=': rc = COND_EQ; break;
+    case '"': rc = COND_DBLQ; break;
+    case '~': rc = COND_TILDA; break;
+    case '<': rc = COND_LT; break;
+    case '>': rc = COND_GT; break;
+    case 'N': 
+    case 'n': 
+        if (strncmpiW(&cond->str[cond->n],NOT,3)==0)
+        {
+            cond->n+=3;
+            rc = COND_NOT;
+        }
+        break;
+    case 'A': 
+    case 'a': 
+        if (strncmpiW(&cond->str[cond->n],AND,3)==0)
+        {
+            cond->n+=3;
+            rc = COND_AND;
+        }
+        break;
+    case 'O':
+    case 'o':
+        if (strncmpiW(&cond->str[cond->n],OR,2)==0)
+        {
+            cond->n+=2;
+            rc = COND_OR;
+        }
+        break;
+    default: 
+        if( COND_IsAlpha( ch ) )
+        {
+            ch = cond->str[cond->n];
+            while( COND_IsIdent( ch ) )
+                ch = cond->str[cond->n++];
+            cond->n--;
+            rc = COND_IDENT;
+            break;
+        }
 
-    if( COND_IsAlpha( ch ) )
-    {
-        ch = cond->str[cond->n];
-        while( COND_IsIdent( ch ) )
-            ch = cond->str[cond->n++];
-        return COND_IDENT;
-    }
+        if( COND_IsNumber( ch ) )
+        {
+            ch = cond->str[cond->n];
+            while( COND_IsNumber( ch ) )
+                ch = cond->str[cond->n++];
+            rc = COND_NUMBER;
+            break;
+        }
 
-    if( COND_IsNumber( ch ) )
-    {
-        ch = cond->str[cond->n];
-        while( COND_IsNumber( ch ) )
-            ch = cond->str[cond->n++];
-        return COND_NUMBER;
+        ERR("Got unknown character %c(%x)\n",ch,ch);
+        rc = COND_ERROR;
+        break;
     }
-
-    return COND_ERROR;
+    }
+    
+    return rc;
 }
 
 static LPWSTR COND_GetString( COND_input *cond )
@@ -348,7 +673,11 @@ static LPWSTR COND_GetString( COND_input *cond )
     len = cond->n - cond->start;
     str = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof (WCHAR) );
     if( str )
+    {
         strncpyW( str, &cond->str[cond->start], len );
+        str[len]=0;
+    }
+    TRACE("Got identifier %s\n",debugstr_w(str));
     return str;
 }
 
@@ -366,13 +695,16 @@ MSICONDITION WINAPI MsiEvaluateConditionW( MSIHANDLE hInstall, LPCWSTR szConditi
     cond.str   = szCondition;
     cond.n     = 0;
     cond.start = 0;
-    cond.result = MSICONDITION_ERROR;
+    cond.result = -1;
     
+    TRACE("Evaluating %s\n",debugstr_w(szCondition));    
+
     if( !COND_parse( &cond ) )
         r = cond.result;
     else
         r = MSICONDITION_ERROR;
 
+    TRACE("Evaluates to %i\n",r);
     return r;
 }
 

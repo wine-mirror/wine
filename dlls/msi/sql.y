@@ -571,7 +571,8 @@ LPWSTR SQL_getstring( struct sql_str *strdata)
     LPWSTR str;
 
     /* if there's quotes, remove them */
-    if( (p[0]=='`') && (p[len-1]=='`') )
+    if( ( (p[0]=='`') && (p[len-1]=='`') ) || 
+        ( (p[0]=='\'') && (p[len-1]=='\'') ) )
     {
         p++;
         len -= 2;

@@ -33,6 +33,7 @@
 #include "msipriv.h"
 #include "objidl.h"
 #include "wincrypt.h"
+#include "wine/unicode.h"
 #include "objbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -302,18 +303,24 @@ UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
 
     r = RegOpenKeyW( HKEY_LOCAL_MACHINE, szKey, &hKeyUninstall );
     if( r != ERROR_SUCCESS )
-        return r;
+        return ERROR_UNKNOWN_PRODUCT;
 
     r = RegOpenKeyW( hKeyUninstall, szProduct, &hKeyProduct );
     if( r != ERROR_SUCCESS )
+    {
+        r = ERROR_UNKNOWN_PRODUCT;
         goto end;
+    }
 
     /* find the size of the path */
     type = count = 0;
     r = RegQueryValueExW( hKeyProduct, szLocalPackage,
                           NULL, &type, NULL, &count );
     if( r != ERROR_SUCCESS )
+    {
+        r = ERROR_UNKNOWN_PRODUCT;
         goto end;
+    }
 
     /* now alloc and fetch the path of the database to open */
     path = HeapAlloc( GetProcessHeap(), 0, count );
@@ -323,7 +330,10 @@ UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
     r = RegQueryValueExW( hKeyProduct, szLocalPackage,
                           NULL, &type, (LPBYTE) path, &count );
     if( r != ERROR_SUCCESS )
+    {
+        r = ERROR_UNKNOWN_PRODUCT;
         goto end;
+    }
 
     r = MsiOpenPackageW( path, phProduct );
 
@@ -345,8 +355,10 @@ UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
 
 UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
 {
+    UINT rc;
     FIXME("%s %p\n",debugstr_w(szPackage), phPackage);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    rc = MsiOpenDatabaseW(szPackage,MSIDBOPEN_READONLY,phPackage);
+    return rc;
 }
 
 UINT WINAPI MsiOpenPackageExA(LPCSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
@@ -426,9 +438,23 @@ end:
 
 UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
 {
+   MSIHANDLE dbhandle;
+    UINT rc = ERROR_SUCCESS; 
+
     FIXME("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    rc = MsiVerifyPackageW(szPackagePath);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiOpenDatabaseW(szPackagePath,MSIDBOPEN_READONLY,&dbhandle);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    ACTION_DoTopLevelINSTALL(dbhandle, szPackagePath, szCommandLine);
+
+    MsiCloseHandle(dbhandle);
+    return rc;
 }
 
 UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState)
@@ -511,66 +537,8 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf, DWORD* pchValueBuf) 
-{
-    LPWSTR szwName = NULL, szwValueBuf = NULL;
-    UINT hr = ERROR_INSTALL_FAILURE;
 
-    if (0 == hInstall) {
-      return ERROR_INVALID_HANDLE;
-    }
-    if (NULL == szName) {
-      return ERROR_INVALID_PARAMETER;
-    }
 
-    FIXME("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
-
-    if (NULL != szValueBuf && NULL == pchValueBuf) {
-      return ERROR_INVALID_PARAMETER;
-    }
-    if( szName )
-    {
-        UINT len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
-        szwName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        if( !szwName )
-            goto end;
-        MultiByteToWideChar( CP_ACP, 0, szName, -1, szwName, len );
-    } else {
-      return ERROR_INVALID_PARAMETER;
-    }
-    if( szValueBuf )
-    {
-        szwValueBuf = HeapAlloc( GetProcessHeap(), 0, (*pchValueBuf) * sizeof(WCHAR) );
-        if( !szwValueBuf )	 
-            goto end;
-    }
-
-    hr = MsiGetPropertyW( hInstall, szwName, szwValueBuf, pchValueBuf );
-
-    if( ERROR_SUCCESS == hr )
-    {
-        WideCharToMultiByte(CP_ACP, 0, szwValueBuf, -1, szValueBuf, *pchValueBuf, NULL, NULL);
-    }
-
-end:
-    if( szwName )
-        HeapFree( GetProcessHeap(), 0, szwName );
-    if( szwValueBuf )
-        HeapFree( GetProcessHeap(), 0, szwValueBuf );
-
-    return hr;
-}
-UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName, LPWSTR szValueBuf, DWORD* pchValueBuf) 
-{
-    FIXME("%lu %s %lu\n", hInstall, debugstr_w(szName), *pchValueBuf);
-    if (0 == hInstall) {
-      return ERROR_INVALID_HANDLE;
-    }
-    if (NULL == szName) {
-      return ERROR_INVALID_PARAMETER;
-    }
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
 
 UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute, LPSTR szBuffer, DWORD *pcchValueBuf)
 {
@@ -713,6 +681,13 @@ INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
 {
     FIXME("%08x %p\n", dwUILevel, phWnd);
     return dwUILevel;
+}
+
+INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA puiHandler, 
+                                  DWORD dwMessageFilter, LPVOID pvContext)
+{
+    FIXME("STUB\n");
+    return NULL;
 }
 
 UINT WINAPI MsiLoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int nBufferMax, DWORD e)
@@ -1219,4 +1194,149 @@ HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 BOOL WINAPI MSI_DllCanUnloadNow(void)
 {
   return S_FALSE;
+}
+
+/* property code */
+UINT WINAPI MsiSetPropertyA( MSIHANDLE hInstall, LPCSTR szName, LPCSTR szValue)
+{
+    FIXME("STUB until write access is done: (%s %s)\n", szName,
+          szValue);
+
+    if (!hInstall)
+        return ERROR_INVALID_HANDLE;
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue)
+{
+    FIXME("STUB until write access is done: (%s %s)\n",debugstr_w(szName),
+          debugstr_w(szValue));
+
+    if (!hInstall)
+        return ERROR_INVALID_HANDLE;
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf, DWORD* pchValueBuf) 
+{
+    LPWSTR szwName = NULL, szwValueBuf = NULL;
+    UINT hr = ERROR_INSTALL_FAILURE;
+
+    if (0 == hInstall) {
+      return ERROR_INVALID_HANDLE;
+    }
+    if (NULL == szName) {
+      return ERROR_INVALID_PARAMETER;
+    }
+
+    FIXME("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
+
+    if (NULL != szValueBuf && NULL == pchValueBuf) {
+      return ERROR_INVALID_PARAMETER;
+    }
+    if( szName )
+    {
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
+        szwName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwName )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szName, -1, szwName, len );
+    } else {
+      return ERROR_INVALID_PARAMETER;
+    }
+    if( szValueBuf )
+    {
+        szwValueBuf = HeapAlloc( GetProcessHeap(), 0, (*pchValueBuf) * sizeof(WCHAR) );
+        if( !szwValueBuf )	 
+            goto end;
+    }
+
+    hr = MsiGetPropertyW( hInstall, szwName, szwValueBuf, pchValueBuf );
+
+    if( ERROR_SUCCESS == hr )
+    {
+        WideCharToMultiByte(CP_ACP, 0, szwValueBuf, -1, szValueBuf, *pchValueBuf, NULL, NULL);
+    }
+
+end:
+    if( szwName )
+        HeapFree( GetProcessHeap(), 0, szwName );
+    if( szwValueBuf )
+        HeapFree( GetProcessHeap(), 0, szwValueBuf );
+
+    return hr;
+}
+
+UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName, 
+                           LPWSTR szValueBuf, DWORD* pchValueBuf)
+{
+    MSIHANDLE view,row;
+    UINT rc;
+    WCHAR Query[1024]=
+        {'s','e','l','e','c','t',' ','*',' ','f','r','o','m',' '
+         ,'P','r','o','p','e','r','t','y',' ','w','h','e','r','e',' ','`'
+         ,'P','r','o','p','e','r','t','y','`','=','`',0};
+
+    static const WCHAR szEnd[]={'`',0};
+
+    if (0 == hInstall) {
+      return ERROR_INVALID_HANDLE;
+    }
+    if (NULL == szName) {
+      return ERROR_INVALID_PARAMETER;
+    }
+
+    strcatW(Query,szName);
+    strcatW(Query,szEnd);
+    
+    rc = MsiDatabaseOpenViewW(hInstall, Query, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        DWORD sz;
+        WCHAR value[0x100];
+
+        rc = MsiViewExecute(view, 0);
+        if (rc != ERROR_SUCCESS)
+        {
+            MsiViewClose(view);
+            MsiCloseHandle(view);
+            return rc;
+        }
+
+        rc = MsiViewFetch(view,&row);
+        if (rc == ERROR_SUCCESS)
+        {
+            sz=0x100;
+            rc = MsiRecordGetStringW(row,2,value,&sz);
+            strncpyW(szValueBuf,value,min(sz+1,*pchValueBuf));
+            *pchValueBuf = sz+1;
+            MsiCloseHandle(row);
+        }
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+    }
+
+    if (rc == ERROR_SUCCESS)
+        TRACE("returning %s for property %s\n", debugstr_w(szValueBuf),
+            debugstr_w(szName));
+
+    return rc;
+}
+
+
+INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
+                              MSIHANDLE hRecord)
+{
+    FIXME("STUB: \n");
+    return ERROR_SUCCESS;
+}
+
+
+MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
+{
+    FIXME("Is this correct?\n");
+    msihandle_addref(hInstall);
+    return hInstall;
 }

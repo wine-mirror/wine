@@ -1254,3 +1254,76 @@ UINT MSI_CommitTables( MSIDATABASE *db )
 
     return ERROR_SUCCESS;
 }
+
+
+UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
+                              USHORT **pdata, UINT *psz )
+{
+    HRESULT r;
+    UINT ret = ERROR_FUNCTION_FAILED;
+    VOID *data;
+    ULONG sz, count;
+    IStream *stm = NULL;
+    IStorage *stg = NULL;
+    STATSTG stat;
+    WCHAR encname[0x20];
+    MSIDATABASE *db;
+
+    db = msihandle2msiinfo(hdb, MSIHANDLETYPE_DATABASE );
+
+    if ( !db )
+        return ERROR_INVALID_HANDLE;
+
+    stg = db->storage;
+
+    encode_streamname(FALSE, stname, encname);
+
+    TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
+
+    r = IStorage_OpenStream(stg, encname, NULL, 
+            STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    if( FAILED( r ) )
+    {
+        WARN("open stream failed r = %08lx - empty table?\n",r);
+        return ret;
+    }
+
+    r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
+    if( FAILED( r ) )
+    {
+        ERR("open stream failed r = %08lx!\n",r);
+        goto end;
+    }
+
+    if( stat.cbSize.QuadPart >> 32 )
+    {
+        ERR("Too big!\n");
+        goto end;
+    }
+        
+    sz = stat.cbSize.QuadPart;
+    data = HeapAlloc( GetProcessHeap(), 0, sz );
+    if( !data )
+    {
+        ERR("couldn't allocate memory r=%08lx!\n",r);
+        ret = ERROR_NOT_ENOUGH_MEMORY;
+        goto end;
+    }
+        
+    r = IStream_Read(stm, data, sz, &count );
+    if( FAILED( r ) || ( count != sz ) )
+    {
+        HeapFree( GetProcessHeap(), 0, data );
+        ERR("read stream failed r = %08lx!\n",r);
+        goto end;
+    }
+
+    *pdata = data;
+    *psz = sz;
+    ret = ERROR_SUCCESS;
+
+end:
+    IStream_Release( stm );
+
+    return ret;
+}

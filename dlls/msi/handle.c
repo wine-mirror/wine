@@ -54,6 +54,7 @@ MSIHANDLE alloc_msihandle(UINT type, UINT size, msihandledestructor destroy, voi
 
     info->magic = MSIHANDLE_MAGIC;
     info->type = type;
+    info->refcount = 1;
     info->destructor = destroy;
 
     msihandletable[i] = info;
@@ -79,6 +80,26 @@ void *msihandle2msiinfo(MSIHANDLE handle, UINT type)
     return &msihandletable[handle][1];
 }
 
+void msihandle_addref(MSIHANDLE handle)
+{
+    MSIHANDLEINFO *info = msihandle2msiinfo(handle, 0);
+
+    TRACE("%lx\n",handle);
+
+    if( !info )
+        return;
+
+    info--;
+
+    if( info->magic != MSIHANDLE_MAGIC )
+    {
+        ERR("Invalid handle!\n");
+        return;
+    }
+
+    info->refcount++;
+}
+
 UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
 {
     MSIHANDLEINFO *info = msihandle2msiinfo(handle, 0);
@@ -95,6 +116,10 @@ UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
         ERR("Invalid handle!\n");
         return ERROR_INVALID_HANDLE;
     }
+
+    info->refcount--;
+    if (info->refcount > 0)
+        return ERROR_SUCCESS;
 
     if( info->destructor )
         info->destructor( &info[1] );

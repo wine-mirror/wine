@@ -132,6 +132,7 @@ typedef struct tagMSIHANDLEINFO
 {
     UINT magic;
     UINT type;
+    UINT refcount;
     msihandledestructor destructor;
     struct tagMSIHANDLEINFO *next;
     struct tagMSIHANDLEINFO *prev;
@@ -164,6 +165,7 @@ DEFINE_GUID(CLSID_IMsiServerMessage, 0x000C101D,0x0000,0x0000,0xC0,0x00,0x00,0x0
 extern void *msihandle2msiinfo(MSIHANDLE handle, UINT type);
 
 MSIHANDLE alloc_msihandle(UINT type, UINT extra, msihandledestructor destroy, void **out);
+void msihandle_addref(MSIHANDLE handle);
 
 /* add this table to the list of cached tables in the database */
 extern void add_table(MSIDATABASE *db, MSITABLE *table);
@@ -198,5 +200,10 @@ extern const char *msi_string_lookup_id( string_table *st, UINT id );
 UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
 
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name );
+
+UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
+                              USHORT **pdata, UINT *psz );
+UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
+                              LPCWSTR szCommandLine);
 
 #endif /* __WINE_MSI_PRIVATE__ */

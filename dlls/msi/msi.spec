@@ -46,7 +46,7 @@
 46 stdcall MsiEvaluateConditionA(long str)
 47 stdcall MsiEvaluateConditionW(long wstr)
 48 stub MsiGetLastErrorRecord
-49 stub MsiGetActiveDatabase
+49 stdcall MsiGetActiveDatabase(long)
 50 stdcall MsiGetComponentStateA(long str ptr ptr)
 51 stdcall MsiGetComponentStateW(long wstr ptr ptr)
 52 stub MsiGetDatabaseState
@@ -100,7 +100,7 @@
 100 stub MsiPreviewDialogW
 101 stub MsiProcessAdvertiseScriptA
 102 stub MsiProcessAdvertiseScriptW
-103 stub MsiProcessMessage
+103 stdcall MsiProcessMessage(long long long)
 104 stub MsiProvideComponentA
 105 stdcall MsiProvideComponentFromDescriptorA(str ptr ptr ptr)
 106 stdcall MsiProvideComponentFromDescriptorW(wstr ptr ptr ptr)
@@ -133,7 +133,7 @@
 133 stub MsiSequenceW
 134 stub MsiSetComponentStateA
 135 stub MsiSetComponentStateW
-136 stub MsiSetExternalUIA
+136 stdcall MsiSetExternalUIA(ptr long ptr)
 137 stub MsiSetExternalUIW
 138 stub MsiSetFeatureStateA
 139 stub MsiSetFeatureStateW
@@ -141,8 +141,8 @@
 141 stdcall MsiSetInternalUI(long ptr)
 142 stub MsiVerifyDiskSpace
 143 stub MsiSetMode
-144 stub MsiSetPropertyA
-145 stub MsiSetPropertyW
+144 stdcall MsiSetPropertyA(long str str)
+145 stdcall MsiSetPropertyW(long wstr wstr)
 146 stub MsiSetTargetPathA
 147 stub MsiSetTargetPathW
 148 stdcall MsiSummaryInfoGetPropertyA(long long ptr ptr ptr ptr ptr)
