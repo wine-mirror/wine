@@ -162,7 +162,7 @@
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr)
 165 stdcall LHashValOfNameSys(long long wstr)
 166 stdcall LHashValOfNameSysA(long long str)
-167 stub VarXor # stdcall (ptr ptr ptr)
+167 stdcall VarXor(ptr ptr ptr)
 168 stdcall VarAbs(ptr ptr)
 169 stdcall VarFix(ptr ptr)
 170 stdcall OaBuildVersion()
