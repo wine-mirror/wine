@@ -82,9 +82,9 @@ BEGIN
     END
     POPUP "&Oblíbené"
     BEGIN
-        MENUITEM "Pøid&at k oblíbeným",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "Pøid&at k oblíbeným",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "Odeb&rat oblíbené",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "Odeb&rat oblíbené",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Nápovìda"
@@ -194,7 +194,7 @@ BEGIN
     ID_REGISTRY_MENU        "Obsahuje pøíkazy pro práci se syrovým registrem"
     ID_EDIT_MENU            "Obsahuje pøíkazy pro editaci klíèù a polo¾ek"
     ID_VIEW_MENU            "Obsahuje pøíkazy pro úpravu vzhledu okna regeditu"
-    ID_FAVOURITES_MENU      "Obsahuje pøíkazy pro pøístup k èasto u¾ívaným klíèùm"
+    ID_FAVORITES_MENU       "Obsahuje pøíkazy pro pøístup k èasto u¾ívaným klíèùm"
     ID_HELP_MENU            "Obsahuje pøíkazy pro zobrazení nápovìdy a informacío editoru registru"
     ID_EDIT_NEW_MENU        "Obsahuje pøíkazy pro vytváøení nových klíèù a polo¾ek"
 END
@@ -221,8 +221,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Ukonèí regedit"
-    ID_FAVOURITES_ADDTOFAVOURITES "Pøidá klíè k oblíbeným"
-    ID_FAVOURITES_REMOVEFAVOURITE "Odebere klíè z oblíbených"
+    ID_FAVORITES_ADDTOFAVORITES "Pøidá klíè k oblíbeným"
+    ID_FAVORITES_REMOVEFAVORITE "Odebere klíè z oblíbených"
     ID_VIEW_STATUSBAR       "Uká¾e nebo skryje status bar"
     ID_VIEW_SPLIT           "Change position of split between two panes"
     ID_VIEW_REFRESH         "Pøekreslí okno"

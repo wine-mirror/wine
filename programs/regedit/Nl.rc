@@ -81,9 +81,9 @@ BEGIN
     END
     POPUP "&Favorieten"
     BEGIN
-        MENUITEM "&Toevoegen aan favorieten",         ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Toevoegen aan favorieten",         ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Verwijderen uit favorieten",       ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Verwijderen uit favorieten",       ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Help"
@@ -134,7 +134,7 @@ BEGIN
     ID_REGISTRY_MENU        "Opdrachten voor het werken met het gehele register"
     ID_EDIT_MENU            "Opdrachten voor het bewerken van waarden of sleutels"
     ID_VIEW_MENU            "Opdrachten voor het aanpassen van het registervenster"
-    ID_FAVOURITES_MENU      "Opdrachten voor toegang tot vaak gebruikte sleutels"
+    ID_FAVORITES_MENU       "Opdrachten voor toegang tot vaak gebruikte sleutels"
     ID_HELP_MENU            "Opdrachten voor het weergeven van Help en informatie over de Register-editor"
     ID_EDIT_NEW_MENU        "Opdrachten voor het maken van nieuwe sleutels of waarden"
 END
@@ -161,8 +161,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "De Register-editor afsluiten"
-    ID_FAVOURITES_ADDTOFAVOURITES "Sleutels toevoegen aan de lijst met favorieten"
-    ID_FAVOURITES_REMOVEFAVOURITE "Sleutels verwijderen uit de lijst met favorieten"
+    ID_FAVORITES_ADDTOFAVORITES "Sleutels toevoegen aan de lijst met favorieten"
+    ID_FAVORITES_REMOVEFAVORITE "Sleutels verwijderen uit de lijst met favorieten"
     ID_VIEW_STATUSBAR       "De statusbalk weergeven of verbergen"
     ID_VIEW_SPLIT           "De positie van de splitsing tussen twee deelvensters wijzigen"
     ID_VIEW_REFRESH         "Het venster vernieuwen"

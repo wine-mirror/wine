@@ -81,9 +81,9 @@ BEGIN
     END
     POPUP "お気に入り(&F)"
     BEGIN
-        MENUITEM "お気に入りに追加(&A)",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "お気に入りに追加(&A)",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "お気に入りから削除(&R)",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "お気に入りから削除(&R)",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "ヘルプ(&H)"
@@ -193,7 +193,7 @@ BEGIN
     ID_REGISTRY_MENU        "レジストリ全体を操作するコマンド"
     ID_EDIT_MENU            "値とキーを編集するコマンド"
     ID_VIEW_MENU            "レジストリウィンドウをカスタマイズするコマンド"
-    ID_FAVOURITES_MENU      "よく使うキーにアクセスするコマンド"
+    ID_FAVORITES_MENU       "よく使うキーにアクセスするコマンド"
     ID_HELP_MENU            "レジストリエディタについてのヘルプや情報を表示するコマンド"
     ID_EDIT_NEW_MENU        "新しいキーや値を作成するコマンド"
 END
@@ -220,8 +220,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "レジストリエディタを終了"
-    ID_FAVOURITES_ADDTOFAVOURITES "キーをお気に入りに追加"
-    ID_FAVOURITES_REMOVEFAVOURITE "キーをお気に入りから削除"
+    ID_FAVORITES_ADDTOFAVORITES "キーをお気に入りに追加"
+    ID_FAVORITES_REMOVEFAVORITE "キーをお気に入りから削除"
     ID_VIEW_STATUSBAR       "ステータスバーを表示・隠す"
     ID_VIEW_SPLIT           "ペイン間のしきりの位置を変更"
     ID_VIEW_REFRESH         "ウィンドウをリフレッシュ"

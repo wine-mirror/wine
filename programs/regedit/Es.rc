@@ -81,9 +81,9 @@ BEGIN
     END
     POPUP "&Favoritos"
     BEGIN
-        MENUITEM "&Añadir a Favoritos",         ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Añadir a Favoritos",         ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Eliminar Favorito",          ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Eliminar Favorito",          ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "A&yuda"
@@ -192,7 +192,7 @@ BEGIN
     ID_REGISTRY_MENU        "Contiene comandos para trabajar con el registro completo"
     ID_EDIT_MENU            "Contiene comandos para editar valores o claves"
     ID_VIEW_MENU            "Contiene comandos para personalizar la ventana de registro"
-    ID_FAVOURITES_MENU      "Contiene comandos para acceder a claves usadas frecuentemente"
+    ID_FAVORITES_MENU       "Contiene comandos para acceder a claves usadas frecuentemente"
     ID_HELP_MENU            "Contiene comandos para mostrar ayuda e información sobre el editor de registro"
     ID_EDIT_NEW_MENU        "Contiene comandos para crear nuevas claves o valores"
 END
@@ -219,8 +219,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Sale del editor de registro"
-    ID_FAVOURITES_ADDTOFAVOURITES "Añade claves a la lista de favoritos"
-    ID_FAVOURITES_REMOVEFAVOURITE "Elimina claves de la lista de favoritos"
+    ID_FAVORITES_ADDTOFAVORITES "Añade claves a la lista de favoritos"
+    ID_FAVORITES_REMOVEFAVORITE "Elimina claves de la lista de favoritos"
     ID_VIEW_STATUSBAR       "Muestra u oculta la barra de estado"
     ID_VIEW_SPLIT           "Cambia la posición del separador entre dos paneles"
     ID_VIEW_REFRESH         "Actualiza la ventana"

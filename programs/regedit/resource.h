@@ -21,7 +21,7 @@
 #define ID_REGISTRY_MENU                0
 #define ID_EDIT_MENU                    1
 #define ID_VIEW_MENU                    2
-#define ID_FAVOURITES_MENU              3
+#define ID_FAVORITES_MENU               3
 #define ID_HELP_MENU                    4
 #define ID_EDIT_NEW_MENU                5
 #define IDS_LIST_COLUMN_FIRST           91
@@ -46,8 +46,8 @@
 #define IDR_POPUP_MENUS                 137
 #define IDC_LICENSE_EDIT                1029
 #define ID_REGISTRY_EXIT                32770
-#define ID_FAVOURITES_ADDTOFAVOURITES   32772
-#define ID_FAVOURITES_REMOVEFAVOURITE   32773
+#define ID_FAVORITES_ADDTOFAVORITES     32772
+#define ID_FAVORITES_REMOVEFAVORITE     32773
 #define ID_VIEW_STATUSBAR               32774
 #define ID_VIEW_SPLIT                   32775
 #define ID_VIEW_REFRESH                 32776

@@ -81,9 +81,9 @@ BEGIN
     END
     POPUP "&Избранное"
     BEGIN
-        MENUITEM "&Добавить в избранное",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Добавить в избранное",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Удалить из избранного",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Удалить из избранного",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Справка"
@@ -134,7 +134,7 @@ BEGIN
     ID_REGISTRY_MENU        "Содержит команды для работы с регистром в целом"
     ID_EDIT_MENU            "Содержит команды для редактирования значений или ключей"
     ID_VIEW_MENU            "Содержит команды для настройки окна реестра"
-    ID_FAVOURITES_MENU      "Содержит команды для доступа к часто используемым ключам"
+    ID_FAVORITES_MENU       "Содержит команды для доступа к часто используемым ключам"
     ID_HELP_MENU            "Содержит команды для отображения справки и информации о редакторе реестра"
     ID_EDIT_NEW_MENU        "Содержит команды для создания новых ключей или значений"
 END
@@ -161,8 +161,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Выход из редактора реестра"
-    ID_FAVOURITES_ADDTOFAVOURITES "Добавить ключ в избранное"
-    ID_FAVOURITES_REMOVEFAVOURITE "Удалить ключ из избранного"
+    ID_FAVORITES_ADDTOFAVORITES "Добавить ключ в избранное"
+    ID_FAVORITES_REMOVEFAVORITE "Удалить ключ из избранного"
     ID_VIEW_STATUSBAR       "Показать или скрыть строку состояния"
     ID_VIEW_SPLIT           "Изменить позицию разделителя между двумя панелями"
     ID_VIEW_REFRESH         "Обновляет окно"

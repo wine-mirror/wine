@@ -79,11 +79,11 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Refresh\tF5",                ID_VIEW_REFRESH
     END
-    POPUP "&Favourites"
+    POPUP "&Favorites"
     BEGIN
-        MENUITEM "&Add to Favourites",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Add to Favorites",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Remove Favourite",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Remove Favorite",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Help"
@@ -193,7 +193,7 @@ BEGIN
     ID_REGISTRY_MENU        "Contains commands for working with the whole registry"
     ID_EDIT_MENU            "Contains commands for editing values or keys"
     ID_VIEW_MENU            "Contains commands for customising the registry window"
-    ID_FAVOURITES_MENU      "Contains commands for accessing frequently used keys"
+    ID_FAVORITES_MENU       "Contains commands for accessing frequently used keys"
     ID_HELP_MENU            "Contains commands for displaying help and information about registry editor"
     ID_EDIT_NEW_MENU        "Contains commands for creating new keys or values"
 END
@@ -220,8 +220,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Quits the registry editor"
-    ID_FAVOURITES_ADDTOFAVOURITES "Adds keys to the favourites list"
-    ID_FAVOURITES_REMOVEFAVOURITE "Removes keys from the favourites list"
+    ID_FAVORITES_ADDTOFAVORITES "Adds keys to the favorites list"
+    ID_FAVORITES_REMOVEFAVORITE "Removes keys from the favorites list"
     ID_VIEW_STATUSBAR       "Shows or hides the status bar"
     ID_VIEW_SPLIT           "Change position of split between two panes"
     ID_VIEW_REFRESH         "Refreshes the window"

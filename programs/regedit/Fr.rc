@@ -82,9 +82,9 @@ BEGIN
     END
     POPUP "&Favoris"
     BEGIN
-        MENUITEM "&Ajouter aux Favoris",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Ajouter aux Favoris",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Retirer des Favoris",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Retirer des Favoris",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Aide"
@@ -193,7 +193,7 @@ BEGIN
     ID_REGISTRY_MENU        "Contient des commandes pour travailler sur les registres de manière globale"
     ID_EDIT_MENU            "Contient des commandes pour éditer des valeurs ou des clés"
     ID_VIEW_MENU            "Contient des commandes pour personnaliser la fenêtre des registres"
-    ID_FAVOURITES_MENU      "Contient des commandes pour accéder aux clés fréquemment utilisées"
+    ID_FAVORITES_MENU       "Contient des commandes pour accéder aux clés fréquemment utilisées"
     ID_HELP_MENU            "Contient des commandes pour afficher de l'aide et de l'information à propos de l'éditeur de registres"
     ID_EDIT_NEW_MENU        "Contient des commandes pour créer de nouvelles clés ou valeurs"
 END
@@ -220,8 +220,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Quitte l'éditeur de registres"
-    ID_FAVOURITES_ADDTOFAVOURITES "Ajoute des clés à la liste des Favoris"
-    ID_FAVOURITES_REMOVEFAVOURITE "Retire des clés de la liste des Favoris"
+    ID_FAVORITES_ADDTOFAVORITES "Ajoute des clés à la liste des Favoris"
+    ID_FAVORITES_REMOVEFAVORITE "Retire des clés de la liste des Favoris"
     ID_VIEW_STATUSBAR       "Montre ou cache la barre d'état"
     ID_VIEW_SPLIT           "Change la position de la séparation entre les deux panneaux"
     ID_VIEW_REFRESH         "Rafraîchit la fenêtre"

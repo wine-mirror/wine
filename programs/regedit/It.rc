@@ -82,9 +82,9 @@ BEGIN
     END
     POPUP "&Preferiti"
     BEGIN
-        MENUITEM "&Aggiungi ai Preferiti",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Aggiungi ai Preferiti",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Rimuovi dai Preferiti",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Rimuovi dai Preferiti",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Aiuto"
@@ -193,7 +193,7 @@ BEGIN
     ID_REGISTRY_MENU        "Contiene i comandi per lavorare su tutto il Registro"
     ID_EDIT_MENU            "Contiene i comandi per editare valori o chiavi"
     ID_VIEW_MENU            "Contiene i comandi per personalizzare la finestra del Registro"
-    ID_FAVOURITES_MENU      "Contiene i comandi per accedere alle chiavi usate frequentemente"
+    ID_FAVORITES_MENU       "Contiene i comandi per accedere alle chiavi usate frequentemente"
     ID_HELP_MENU            "Contiene i comandi per visualizzare la Guida e informazioni sull'editor del Registro"
     ID_EDIT_NEW_MENU        "Contiene i comandi per creare nuove chiavi o valori"
 END
@@ -220,8 +220,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Esce dall'editor del Registro"
-    ID_FAVOURITES_ADDTOFAVOURITES "Aggiunge una chiave alla lista dei Preferiti"
-    ID_FAVOURITES_REMOVEFAVOURITE "Rimuove una o più chiavi dalla lista dei preferiti"
+    ID_FAVORITES_ADDTOFAVORITES "Aggiunge una chiave alla lista dei Preferiti"
+    ID_FAVORITES_REMOVEFAVORITE "Rimuove una o più chiavi dalla lista dei preferiti"
     ID_VIEW_STATUSBAR       "Mostra o nasconde la barra di stato"
     ID_VIEW_SPLIT           "Cambia la posizione del separatore tra due pannelli"
     ID_VIEW_REFRESH         "Aggiorna la finestra"

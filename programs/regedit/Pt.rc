@@ -99,9 +99,9 @@ BEGIN
     END
     POPUP "&Favoritos"
     BEGIN
-        MENUITEM "&Adicionar aos Favoritos",     ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Adicionar aos Favoritos",     ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Remover Favorito",            ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Remover Favorito",            ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "Aj&uda"
@@ -159,9 +159,9 @@ BEGIN
     END
     POPUP "&Favoritos"
     BEGIN
-        MENUITEM "&Adicionar aos Favoritos",     ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Adicionar aos Favoritos",     ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Remover Favorito",            ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Remover Favorito",            ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "Aj&uda"
@@ -300,7 +300,7 @@ BEGIN
     ID_REGISTRY_MENU        "Contém comandos para trabalhar com o Registro inteiro."
     ID_EDIT_MENU            "Contém comandos para edição de valores ou chaves."
     ID_VIEW_MENU            "Contém comandos para personalização da janela do Registro."
-    ID_FAVOURITES_MENU      "Contém comandos para acessar chaves frequentemente usadas."
+    ID_FAVORITES_MENU       "Contém comandos para acessar chaves frequentemente usadas."
     ID_HELP_MENU            "Contém comandos para exibição da ajuda e informações sobre o Editor do Registro."
     ID_EDIT_NEW_MENU        "Contém comandos para criação de novas chaves ou valores"
 END
@@ -312,7 +312,7 @@ BEGIN
     ID_REGISTRY_MENU        "Contém comandos para trabalhar com o Registo inteiro."
     ID_EDIT_MENU            "Contém comandos para edição de valores ou chaves."
     ID_VIEW_MENU            "Contém comandos para personalização da janela do Registo."
-    ID_FAVOURITES_MENU      "Contém comandos para aceder chaves frequentemente usadas."
+    ID_FAVORITES_MENU       "Contém comandos para aceder chaves frequentemente usadas."
     ID_HELP_MENU            "Contém comandos para exibição da ajuda e informações sobre o Editor do Registo."
     ID_EDIT_NEW_MENU        "Contém comandos para criação de novas chaves ou valores"
 END
@@ -366,8 +366,8 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Encerra o Editor do Registro."
-    ID_FAVOURITES_ADDTOFAVOURITES "Adiciona chaves a lista de favoritos."
-    ID_FAVOURITES_REMOVEFAVOURITE "Remove chaves da lista de favoritos."
+    ID_FAVORITES_ADDTOFAVORITES "Adiciona chaves a lista de favoritos."
+    ID_FAVORITES_REMOVEFAVORITE "Remove chaves da lista de favoritos."
     ID_VIEW_STATUSBAR       "Mostra ou oculta a barra de status."
     ID_VIEW_SPLIT           "Altera a posição da divisão entre os painéis."
     ID_VIEW_REFRESH         "Atualiza a janela."
@@ -383,8 +383,8 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Encerra o Editor de Registo."
-    ID_FAVOURITES_ADDTOFAVOURITES "Adiciona chaves a lista de favoritos."
-    ID_FAVOURITES_REMOVEFAVOURITE "Remove chaves da lista de favoritos."
+    ID_FAVORITES_ADDTOFAVORITES "Adiciona chaves a lista de favoritos."
+    ID_FAVORITES_REMOVEFAVORITE "Remove chaves da lista de favoritos."
     ID_VIEW_STATUSBAR       "Mostra ou oculta a barra de status."
     ID_VIEW_SPLIT           "Altera a posição da divisão entre os painéis."
     ID_VIEW_REFRESH         "Actualiza a janela."

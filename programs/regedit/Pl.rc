@@ -81,9 +81,9 @@ BEGIN
     END
     POPUP "&Ulubione"
     BEGIN
-        MENUITEM "&Dodaj do ulubionych",        ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Dodaj do ulubionych",        ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Usuñ ulubiony",              ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Usuñ ulubiony",              ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "Pomo&c"
@@ -193,7 +193,7 @@ BEGIN
     ID_REGISTRY_MENU        "Zawiera polecenia operuj¹ce na ca³ym rejestrze"
     ID_EDIT_MENU            "Zawiera polecenia dotycz¹ce edycji kluczy i danych"
     ID_VIEW_MENU            "Zawiera polecenia dotycz¹ce wygl¹du programu"
-    ID_FAVOURITES_MENU      "Zawiera polecenia dotycz¹ce skrótów do kluczy rejestru"
+    ID_FAVORITES_MENU       "Zawiera polecenia dotycz¹ce skrótów do kluczy rejestru"
     ID_HELP_MENU            "Zawiera polecenia wyœwietlaj¹ce informacje o programie"
     ID_EDIT_NEW_MENU        "Zawiera polecenia tworz¹ce nowe klucze i dane"
 END
@@ -220,8 +220,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Koñczy dzia³anie edytora rejestru"
-    ID_FAVOURITES_ADDTOFAVOURITES "Dodaje klucze do listy ulubionych"
-    ID_FAVOURITES_REMOVEFAVOURITE "Usuwa klucze z listy ulubionych"
+    ID_FAVORITES_ADDTOFAVORITES "Dodaje klucze do listy ulubionych"
+    ID_FAVORITES_REMOVEFAVORITE "Usuwa klucze z listy ulubionych"
     ID_VIEW_STATUSBAR       "Wyœwietla lub ukrywa pasek stanu"
     ID_VIEW_SPLIT           "Zmienia proporcje szerokoœci paneli"
     ID_VIEW_REFRESH         "Odœwie¿a zawartoœæ okien"

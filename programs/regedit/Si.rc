@@ -81,9 +81,9 @@ BEGIN
     END
     POPUP "&Priljubljene"
     BEGIN
-        MENUITEM "&Dodaj med Priljubljene",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "&Dodaj med Priljubljene",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "&Odstrani iz Priljubljenih",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "&Odstrani iz Priljubljenih",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Pomoè"
@@ -134,7 +134,7 @@ BEGIN
     ID_REGISTRY_MENU        "Ukazi za delo s celotnim registrom"
     ID_EDIT_MENU            "Ukazi za urejanje vrednosti in kljuèev"
     ID_VIEW_MENU            "Ukazi za prilagajanje registrskega okna"
-    ID_FAVOURITES_MENU      "Ukazi za dostop do nedavno odprtih kljuèev"
+    ID_FAVORITES_MENU       "Ukazi za dostop do nedavno odprtih kljuèev"
     ID_HELP_MENU            "Ukazi za prikazovanje pomoèi in informacij o programu"
     ID_EDIT_NEW_MENU        "Ukazi za ustvarjanje novih kljuèev in vrednosti"
 END
@@ -161,8 +161,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Konèa program"
-    ID_FAVOURITES_ADDTOFAVOURITES "Doda kljuè med Priljubljene"
-    ID_FAVOURITES_REMOVEFAVOURITE "Odstrani kljuè iz Priljubljenih"
+    ID_FAVORITES_ADDTOFAVORITES "Doda kljuè med Priljubljene"
+    ID_FAVORITES_REMOVEFAVORITE "Odstrani kljuè iz Priljubljenih"
     ID_VIEW_STATUSBAR       "Prikaže ali skrije vrstico stanja"
     ID_VIEW_SPLIT           "Spremeni položaj med delilne èrte med podokni"
     ID_VIEW_REFRESH         "Osveži okno"

@@ -87,9 +87,9 @@ BEGIN
     END
     POPUP "&Favoriten"
     BEGIN
-        MENUITEM "Zu den Favoriten &hinzugügen",          ID_FAVOURITES_ADDTOFAVOURITES
+        MENUITEM "Zu den Favoriten &hinzugügen",          ID_FAVORITES_ADDTOFAVORITES
         , GRAYED
-        MENUITEM "Von den Favoriten &löschen",           ID_FAVOURITES_REMOVEFAVOURITE
+        MENUITEM "Von den Favoriten &löschen",           ID_FAVORITES_REMOVEFAVORITE
         , GRAYED
     END
     POPUP "&Hilfe"
@@ -200,7 +200,7 @@ BEGIN
     ID_REGISTRY_MENU        "Befehle für für das Bearbeiten der ganzen Registry"
     ID_EDIT_MENU            "Befehle für um Schlüssel oder Werte zu ändern"
     ID_VIEW_MENU            "Befehle um das Fenster anzupassen"
-    ID_FAVOURITES_MENU      "Befehle für die Favoriten"
+    ID_FAVORITES_MENU       "Befehle für die Favoriten"
     ID_HELP_MENU            "Befehle um die Hilfe oder Informationen über das Programm anzuzeigen"
     ID_EDIT_NEW_MENU        "Befehle für das Erstellen von neuen Schlüsseln oder Daten"
 END
@@ -227,8 +227,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Beendet den Registry Editor"
-    ID_FAVOURITES_ADDTOFAVOURITES "Fügt Schlüssel to den Favoriten hinzu"
-    ID_FAVOURITES_REMOVEFAVOURITE "Löscht Schlüssel von den Favoriten"
+    ID_FAVORITES_ADDTOFAVORITES "Fügt Schlüssel to den Favoriten hinzu"
+    ID_FAVORITES_REMOVEFAVORITE "Löscht Schlüssel von den Favoriten"
     ID_VIEW_STATUSBAR       "Zeigt oder versteckt die Statusleiste"
     ID_VIEW_SPLIT           "Ändert die Position das Fensterteilers"
     ID_VIEW_REFRESH         "Aktualisiert das Fenster"
