@@ -599,31 +599,48 @@ int WINAPI DOSVM_Enter( CONTEXT86 *context )
  */
 void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 {
-    LPDOSEVENT event;
+    if (port != 0x20)
+    {
+        FIXME( "Unsupported PIC port %04x\n", port );
+    }
+    else if (val == 0x20 || (val >= 0x60 && val <= 0x67)) 
+    {
+        EnterCriticalSection(&qcrit);
 
-    if ((port==0x20) && (val==0x20)) {
-      EnterCriticalSection(&qcrit);
-      if (current_event) {
-	/* EOI (End Of Interrupt) */
-	TRACE("received EOI for current IRQ, clearing\n");
-	event = current_event;
-	current_event = event->next;
-	if (event->relay)
-	(*event->relay)(NULL,event->data);
-	free(event);
+        if (!current_event)
+        {
+            WARN( "%s without active IRQ\n",
+                  val == 0x20 ? "EOI" : "Specific EOI" );
+        }
+        else if (val != 0x20 && val - 0x60 != current_event->irq)
+        {
+            WARN( "Specific EOI but current IRQ %d is not %d\n", 
+                  current_event->irq, val - 0x60 );
+        }
+        else
+        {
+            LPDOSEVENT event = current_event;
 
-	if (DOSVM_HasPendingEvents()) {
-	  /* another event is pending, which we should probably
-	   * be able to process now */
-	  TRACE("another event pending, setting flag\n");
-	  NtCurrentTeb()->vm86_pending |= VIP_MASK;
-	}
-      } else {
-	WARN("EOI without active IRQ\n");
-      }
-      LeaveCriticalSection(&qcrit);
-    } else {
-      FIXME("unrecognized PIC command %02x\n",val);
+            TRACE( "Received %s for current IRQ %d, clearing event\n",
+                   val == 0x20 ? "EOI" : "Specific EOI", event->irq );
+
+            current_event = event->next;
+            if (event->relay)
+                (*event->relay)(NULL,event->data);
+            free(event);
+
+            if (DOSVM_HasPendingEvents()) 
+            {
+                TRACE( "Another event pending, setting pending flag\n" );
+                NtCurrentTeb()->vm86_pending |= VIP_MASK;
+            }
+        }
+
+        LeaveCriticalSection(&qcrit);
+    } 
+    else 
+    {
+        FIXME( "Unrecognized PIC command %02x\n", val );
     }
 }
 
