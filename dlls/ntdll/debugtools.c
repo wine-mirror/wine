@@ -84,6 +84,7 @@ const char *wine_dbgstr_an( const char *src, int n )
         return res;
     }
     if (n < 0) n = 0;
+    else if (n > 200) n = 200;
     dst = res = gimme1 (n * 4 + 6);
     *dst++ = '"';
     while (n-- > 0 && *src)
@@ -135,6 +136,7 @@ const char *wine_dbgstr_wn( const WCHAR *src, int n )
         return res;
     }
     if (n < 0) n = 0;
+    else if (n > 200) n = 200;
     dst = res = gimme1 (n * 5 + 7);
     *dst++ = 'L';
     *dst++ = '"';

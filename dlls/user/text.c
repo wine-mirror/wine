@@ -457,7 +457,7 @@ INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
 INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
                      LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
 {
-    TRACE("(%d,'%s',%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
+    TRACE("(%d,%s,%d,%p,0x%08x,%p)\n",hdc,debugstr_an(str,count),count,rect,flags,dtp);
     if(dtp) {
         FIXME("Ignores params:%d,%d,%d,%d\n",dtp->cbSize,
                    dtp->iTabLength,dtp->iLeftMargin,dtp->iRightMargin);
@@ -690,7 +690,7 @@ LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
                              INT16 count, INT16 cTabStops,
                              const INT16 *lpTabPos, INT16 nTabOrg )
 {
-    TRACE("%04x %d,%d '%.*s' %d\n", hdc, x, y, count, lpstr, count );
+    TRACE("%04x %d,%d %s %d\n", hdc, x, y, debugstr_an(lpstr,count), count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                lpTabPos, NULL, nTabOrg, TRUE );
 }
@@ -702,7 +702,7 @@ LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
 LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
 {
-    TRACE("%04x %d,%d '%.*s' %d\n", hdc, x, y, count, lpstr, count );
+    TRACE("%04x %d,%d %s %d\n", hdc, x, y, debugstr_an(lpstr,count), count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                NULL, lpTabPos, nTabOrg, TRUE );
 }
@@ -735,7 +735,7 @@ LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str, INT count,
 DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
                                     INT16 cTabStops, const INT16 *lpTabPos )
 {
-    TRACE("%04x '%.*s' %d\n", hdc, count, lpstr, count );
+    TRACE("%04x %s %d\n", hdc, debugstr_an(lpstr,count), count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                lpTabPos, NULL, 0, FALSE );
 }
