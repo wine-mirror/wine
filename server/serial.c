@@ -55,6 +55,7 @@ static int serial_get_poll_events( struct object *obj );
 static void serial_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count);
 static void destroy_serial(struct object *obj);
 static void serial_poll_event( struct object *obj, int event );
+static int serial_flush( struct object *obj );
 
 struct serial
 {
@@ -92,7 +93,7 @@ static const struct object_ops serial_ops =
     serial_get_poll_events,       /* get_poll_events */
     serial_poll_event,            /* poll_event */
     serial_get_fd,                /* get_fd */
-    no_flush,                     /* flush */
+    serial_flush,                 /* flush */
     serial_get_info,              /* get_file_info */
     serial_queue_async,           /* queue_async */
     destroy_serial                /* destroy */
@@ -316,6 +317,21 @@ static void serial_queue_async(struct object *obj, void *ptr, unsigned int statu
     set_select_events ( obj, serial_get_poll_events ( obj ));
 }
 
+static int serial_flush( struct object *obj )
+{
+    int ret;
+    struct serial *serial = (struct serial *)grab_object(obj);
+    assert( obj->ops == &serial_ops );
+
+    /* MSDN says: If hFile is a handle to a communications device,
+     * the function only flushes the transmit buffer.
+     */
+    ret = (tcflush( serial->obj.fd, TCOFLUSH ) != -1);
+    if (!ret) file_set_error();
+    release_object( serial );
+    return ret;
+}
+
 /* create a serial */
 DECL_HANDLER(create_serial)
 {
@@ -391,4 +407,3 @@ DECL_HANDLER(set_serial_info)
         release_object( serial );
     }
 }
-
