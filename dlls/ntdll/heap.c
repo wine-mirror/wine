@@ -1319,7 +1319,7 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
 
     if (!heapPtr || !entry) return STATUS_INVALID_PARAMETER;
 
-    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
+    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
 
     /* set ptr to the next arena to be examined */
 
@@ -1407,7 +1407,7 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
     ret = STATUS_SUCCESS;
 
 HW_end:
-    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
+    if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
     return ret;
 }
 
