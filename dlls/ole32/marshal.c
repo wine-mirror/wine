@@ -171,47 +171,30 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
 static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnknown **remunk);
 static void proxy_manager_destroy(struct proxy_manager * This);
 static HRESULT proxy_manager_find_ifproxy(struct proxy_manager * This, REFIID riid, struct ifproxy ** ifproxy_found);
+static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, REFIID riid, void ** ppv);
 
-static HRESULT WINAPI ClientIdentity_QueryInterface(IInternalUnknown * iface, REFIID riid, void ** ppv)
+static HRESULT WINAPI ClientIdentity_QueryInterface(IMultiQI * iface, REFIID riid, void ** ppv)
 {
-    struct proxy_manager * This = (struct proxy_manager *)iface;
     HRESULT hr;
-    struct ifproxy * ifproxy;
+    MULTI_QI mqi;
 
     TRACE("%s\n", debugstr_guid(riid));
 
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IInternalUnknown))
-    {
-        *ppv = (void *)iface;
-        IInternalUnknown_AddRef(iface);
-        return S_OK;
-    }
+    mqi.pIID = riid;
+    hr = IMultiQI_QueryMultipleInterfaces(iface, 1, &mqi);
+    *ppv = (void *)mqi.pItf;
 
-    hr = proxy_manager_find_ifproxy(This, riid, &ifproxy);
-    if (hr == S_OK)
-    {
-        *ppv = ifproxy->iface;
-        IUnknown_AddRef((IUnknown *)*ppv);
-        return S_OK;
-    }
-
-    FIXME("interface not found %s\n", debugstr_guid(riid));
-
-    /* FIXME: call IRemUnknown::RemQueryInterface */
-
-    *ppv = NULL;
-    return E_NOINTERFACE;
+    return hr;
 }
 
-static ULONG WINAPI ClientIdentity_AddRef(IInternalUnknown * iface)
+static ULONG WINAPI ClientIdentity_AddRef(IMultiQI * iface)
 {
     struct proxy_manager * This = (struct proxy_manager *)iface;
     TRACE("%p - before %ld\n", iface, This->refs);
     return InterlockedIncrement(&This->refs);
 }
 
-static ULONG WINAPI ClientIdentity_Release(IInternalUnknown * iface)
+static ULONG WINAPI ClientIdentity_Release(IMultiQI * iface)
 {
     struct proxy_manager * This = (struct proxy_manager *)iface;
     ULONG refs = InterlockedDecrement(&This->refs);
@@ -221,54 +204,139 @@ static ULONG WINAPI ClientIdentity_Release(IInternalUnknown * iface)
     return refs;
 }
 
-static HRESULT WINAPI ClientIdentity_QueryInternalInterface(IInternalUnknown * iface, REFIID riid, void ** ppv)
+static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, ULONG cMQIs, MULTI_QI *pMQIs)
 {
-    FIXME("(%s, %p): stub!\n", debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    struct proxy_manager * This = (struct proxy_manager *)iface;
+    REMQIRESULT *qiresults = NULL;
+    ULONG nonlocal_mqis = 0;
+    ULONG i;
+    ULONG successful_mqis = 0;
+    IID *iids = HeapAlloc(GetProcessHeap(), 0, cMQIs * sizeof(*iids));
+    /* mapping of RemQueryInterface index to QueryMultipleInterfaces index */
+    ULONG *mapping = HeapAlloc(GetProcessHeap(), 0, cMQIs * sizeof(*mapping));
+
+    TRACE("cMQIs: %ld\n", cMQIs);
+
+    /* try to get a local interface - this includes already active proxy
+     * interfaces and also interfaces exposed by the proxy manager */
+    for (i = 0; i < cMQIs; i++)
+    {
+        TRACE("iid[%ld] = %s\n", i, debugstr_guid(pMQIs[i].pIID));
+        pMQIs[i].hr = proxy_manager_query_local_interface(This, pMQIs[i].pIID, (void **)&pMQIs[i].pItf);
+        if (pMQIs[i].hr == S_OK)
+            successful_mqis++;
+        else
+        {
+            iids[nonlocal_mqis] = *pMQIs[i].pIID;
+            mapping[nonlocal_mqis] = i;
+            nonlocal_mqis++;
+        }
+    }
+
+    TRACE("%ld interfaces not found locally\n", nonlocal_mqis);
+
+    /* if we have more than one interface not found locally then we must try
+     * to query the remote object for it */
+    if (nonlocal_mqis != 0)
+    {
+        IRemUnknown *remunk;
+        HRESULT hr;
+        IPID *ipid;
+
+        /* get the ipid of the first entry */
+        /* FIXME: should we implement ClientIdentity on the ifproxies instead
+         * of the proxy_manager so we use the correct ipid here? */
+        ipid = &LIST_ENTRY(list_head(&This->interfaces), struct ifproxy, entry)->ipid;
+
+        /* get IRemUnknown proxy so we can communicate with the remote object */
+        hr = proxy_manager_get_remunknown(This, &remunk);
+
+        if (hr == S_OK)
+        {
+            hr = IRemUnknown_RemQueryInterface(remunk, ipid, NORMALEXTREFS,
+                                               nonlocal_mqis, iids, &qiresults);
+            if (FAILED(hr))
+                ERR("IRemUnknown_RemQueryInterface failed with error 0x%08lx\n", hr);
+        }
+
+        /* IRemUnknown_RemQueryInterface can return S_FALSE if only some of
+         * the interfaces were returned */
+        if (SUCCEEDED(hr))
+        {
+            /* try to unmarshal each object returned to us */
+            for (i = 0; i < nonlocal_mqis; i++)
+            {
+                ULONG index = mapping[i];
+                HRESULT hrobj = qiresults[i].hResult;
+                if (hrobj == S_OK)
+                    hrobj = unmarshal_object(&qiresults[i].std, This->parent,
+                                             pMQIs[index].pIID,
+                                             (void **)&pMQIs[index].pItf);
+
+                if (hrobj == S_OK)
+                    successful_mqis++;
+                else
+                    ERR("Failed to get pointer to interface %s\n", debugstr_guid(pMQIs[index].pIID));
+                pMQIs[index].hr = hrobj;
+            }
+        }
+
+        /* free the memory allocated by the proxy */
+        CoTaskMemFree(qiresults);
+    }
+
+    TRACE("%ld/%ld successfully queried\n", successful_mqis, cMQIs);
+
+    HeapFree(GetProcessHeap(), 0, iids);
+    HeapFree(GetProcessHeap(), 0, mapping);
+
+    if (successful_mqis == cMQIs)
+        return S_OK; /* we got all requested interfaces */
+    else if (successful_mqis == 0)
+        return E_NOINTERFACE; /* we didn't get any interfaces */
+    else
+        return S_FALSE; /* we got some interfaces */
 }
 
-static const IInternalUnknownVtbl ClientIdentity_Vtbl =
+static const IMultiQIVtbl ClientIdentity_Vtbl =
 {
     ClientIdentity_QueryInterface,
     ClientIdentity_AddRef,
     ClientIdentity_Release,
-    ClientIdentity_QueryInternalInterface
+    ClientIdentity_QueryMultipleInterfaces
 };
 
 static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
 {
+    HRESULT hr = S_OK;
     /* FIXME: as this call could possibly be going over the network, we
      * are going to spend a long time in this CS. We might want to replace
      * this with a mutex */
     EnterCriticalSection(&This->parent->cs);
     if (This->refs == 0)
     {
-        APARTMENT * apt;
+        IRemUnknown *remunk = NULL;
 
         TRACE("getting public ref for ifproxy %p\n", This);
 
-        /* FIXME: call IRemUnknown::RemAddRef if necessary */
-
-        /* FIXME: this is a hack around not yet implemented IRemUnknown */
-        if ((apt = COM_ApartmentFromOXID(This->parent->oxid, TRUE)))
+        hr = proxy_manager_get_remunknown(This->parent, &remunk);
+        if (hr == S_OK)
         {
-            struct stub_manager * stubmgr;
-            if ((stubmgr = get_stub_manager(apt, This->parent->oid)))
-            {
-                stub_manager_ext_addref(stubmgr, 1);
-                This->refs += 1;
-
-                stub_manager_int_release(stubmgr);
-            }
-
-            COM_ApartmentRelease(apt);
+            HRESULT hrref;
+            REMINTERFACEREF rif;
+            rif.ipid = This->ipid;
+            rif.cPublicRefs = NORMALEXTREFS;
+            rif.cPrivateRefs = 0;
+            hr = IRemUnknown_RemAddRef(remunk, 1, &rif, &hrref);
+            if (hr == S_OK && hrref == S_OK)
+                This->refs += NORMALEXTREFS;
+            else
+                ERR("IRemUnknown_RemAddRef returned with 0x%08lx, hrref = 0x%08lx\n", hr, hrref);
         }
-        else
-            FIXME("Need to implement IRemUnknown for inter-process table marshaling\n");
     }
     LeaveCriticalSection(&This->parent->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
@@ -369,6 +437,33 @@ static HRESULT proxy_manager_construct(
 
     *proxy_manager = This;
     return S_OK;
+}
+
+static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, REFIID riid, void ** ppv)
+{
+    HRESULT hr;
+    struct ifproxy * ifproxy;
+
+    TRACE("%s\n", debugstr_guid(riid));
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IMultiQI))
+    {
+        *ppv = (void *)&This->lpVtbl;
+        IMultiQI_AddRef((IMultiQI *)&This->lpVtbl);
+        return S_OK;
+    }
+
+    hr = proxy_manager_find_ifproxy(This, riid, &ifproxy);
+    if (hr == S_OK)
+    {
+        *ppv = ifproxy->iface;
+        IUnknown_AddRef((IUnknown *)*ppv);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
 }
 
 static HRESULT proxy_manager_create_ifproxy(
@@ -582,7 +677,7 @@ static BOOL find_proxy_manager(APARTMENT * apt, OXID oxid, OID oid, struct proxy
         if ((oxid == proxy->oxid) && (oid == proxy->oid))
         {
             *proxy_found = proxy;
-            ClientIdentity_AddRef((IInternalUnknown *)&proxy->lpVtbl);
+            ClientIdentity_AddRef((IMultiQI *)&proxy->lpVtbl);
             found = TRUE;
             break;
         }
@@ -754,7 +849,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
          * IUnknown of the proxy manager. */
         if (IsEqualIID(riid, &IID_IUnknown))
         {
-            ClientIdentity_AddRef((IInternalUnknown*)&proxy_manager->lpVtbl);
+            ClientIdentity_AddRef((IMultiQI*)&proxy_manager->lpVtbl);
             *object = (LPVOID)(&proxy_manager->lpVtbl);
         }
         else
@@ -769,7 +864,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
             if (hr == S_OK)
             {
                 /* FIXME: push this AddRef inside proxy_manager_find_ifproxy/create_ifproxy? */
-                ClientIdentity_AddRef((IInternalUnknown*)&proxy_manager->lpVtbl);
+                ClientIdentity_AddRef((IMultiQI*)&proxy_manager->lpVtbl);
                 *object = ifproxy->iface;
             }
         }
@@ -777,7 +872,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
 
     /* release our reference to the proxy manager - the client/apartment
      * will hold on to the remaining reference for us */
-    if (proxy_manager) ClientIdentity_Release((IInternalUnknown*)&proxy_manager->lpVtbl);
+    if (proxy_manager) ClientIdentity_Release((IMultiQI*)&proxy_manager->lpVtbl);
 
     return hr;
 }

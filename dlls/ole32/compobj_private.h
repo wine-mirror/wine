@@ -100,7 +100,7 @@ struct ifproxy
 /* imported object / proxy manager */
 struct proxy_manager
 {
-  const IInternalUnknownVtbl *lpVtbl;
+  const IMultiQIVtbl *lpVtbl;
   struct apartment *parent; /* owning apartment (RO) */
   struct list entry;        /* entry in apartment (CS parent->cs) */
   LPRPCCHANNELBUFFER chan;  /* channel to object (CS cs) */

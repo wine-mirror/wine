@@ -129,6 +129,11 @@ read_pipe(HANDLE hf, LPVOID ptr, DWORD size) {
 	return E_FAIL;
     }
     if (res!=size) {
+	if (!res)
+	{
+	   WARN("%p disconnected\n", hf);
+	   return RPC_E_DISCONNECTED;
+	}
 	FIXME("Read only %ld of %ld bytes from %p.\n",res,size,hf);
 	return E_FAIL;
     }
@@ -310,10 +315,8 @@ COM_InvokeAndRpcSend(struct rpc *req) {
     DWORD		reqtype;
 
     if (!(stub = ipid_to_stubbuffer(&(req->reqh.ipid))))
-    {
-	ERR("Stub not found?\n");
-	return E_FAIL;
-    }
+        /* ipid_to_stubbuffer will already have logged the error */
+        return RPC_E_DISCONNECTED;
 
     IUnknown_AddRef(stub);
     msg.Buffer		= req->Buffer;
@@ -417,8 +420,9 @@ PipeBuf_SendReceive(LPRPCCHANNELBUFFER iface,RPCOLEMESSAGE* msg,ULONG *status)
 static HRESULT WINAPI
 PipeBuf_FreeBuffer(LPRPCCHANNELBUFFER iface,RPCOLEMESSAGE* msg)
 {
-    FIXME("(%p), stub!\n",msg);
-    return E_FAIL;
+    TRACE("(%p)\n",msg);
+    HeapFree(GetProcessHeap(), 0, msg->Buffer);
+    return S_OK;
 }
 
 static HRESULT WINAPI

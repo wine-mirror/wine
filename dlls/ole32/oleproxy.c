@@ -319,7 +319,7 @@ static void WINAPI IRpcProxyBufferImpl_Disconnect(LPRPCPROXYBUFFER iface) {
 
 static HRESULT WINAPI
 CFProxy_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv) {
-    ICOM_THIS_MULTI(CFProxy,lpvtbl_proxy,iface);
+    ICOM_THIS_MULTI(CFProxy,lpvtbl_cf,iface);
     if (This->outer_unknown) return IUnknown_QueryInterface(This->outer_unknown, riid, ppv);
     *ppv = NULL;
     if (IsEqualIID(&IID_IClassFactory,riid) || IsEqualIID(&IID_IUnknown,riid)) {

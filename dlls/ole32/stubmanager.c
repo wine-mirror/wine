@@ -539,6 +539,7 @@ static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
 {
     HRESULT hr;
     USHORT i;
+    USHORT successful_qis = 0;
     APARTMENT *apt;
     struct stub_manager *stubmgr;
 
@@ -551,15 +552,22 @@ static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
 
     for (i = 0; i < cIids; i++)
     {
-        (*ppQIResults)[i].hResult = register_ifstub(apt, &(*ppQIResults)[i].std,
-                                                 &iids[i], stubmgr->object,
-                                                 MSHLFLAGS_NORMAL);
+        HRESULT hrobj = register_ifstub(apt, &(*ppQIResults)[i].std, &iids[i],
+                                        stubmgr->object, MSHLFLAGS_NORMAL);
+        if (hrobj == S_OK)
+            successful_qis++;
+        (*ppQIResults)[i].hResult = hrobj;
     }
 
     stub_manager_int_release(stubmgr);
     COM_ApartmentRelease(apt);
 
-    return hr;
+    if (successful_qis == cIids)
+        return S_OK; /* we got all requested interfaces */
+    else if (successful_qis == 0)
+        return E_NOINTERFACE; /* we didn't get any interfaces */
+    else
+        return S_FALSE; /* we got some interfaces */
 }
 
 static HRESULT WINAPI RemUnknown_RemAddRef(IRemUnknown *iface,
