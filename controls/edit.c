@@ -2202,15 +2202,18 @@ static INT EDIT_PaintText(EDITSTATE *es, HDC dc, INT x, INT y, INT line, INT col
 	COLORREF TextColor;
 	INT ret;
 	INT li;
+	INT BkMode;
 	SIZE size;
 
 	if (!count)
 		return 0;
+	BkMode = GetBkMode(dc);
 	BkColor = GetBkColor(dc);
 	TextColor = GetTextColor(dc);
 	if (rev) {
 		SetBkColor(dc, GetSysColor(COLOR_HIGHLIGHT));
 		SetTextColor(dc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+		SetBkMode( dc, OPAQUE);
 	}
 	li = EDIT_EM_LineIndex(es, line);
 	if (es->style & ES_MULTILINE) {
@@ -2227,6 +2230,7 @@ static INT EDIT_PaintText(EDITSTATE *es, HDC dc, INT x, INT y, INT line, INT col
 	if (rev) {
 		SetBkColor(dc, BkColor);
 		SetTextColor(dc, TextColor);
+		SetBkMode( dc, BkMode);
 	}
 	return ret;
 }
