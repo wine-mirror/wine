@@ -277,6 +277,20 @@ WINE REGISTRY Version 2
 ;"UseDnsComputerName" = "N"
 
 ;; sample AppDefaults entries
+
+; 3 InstallShield versions who like to put their full screen window in front,
+; without any chance to switch to another X11 application.
+; So just catch them in a desktop window.
+
+[AppDefaults\\_INS5576._MP\\x11drv]
+"Desktop" = "640x480"
+
+[AppDefaults\\_INS5176._MP\\x11drv]
+"Desktop" = "640x480"
+
+[AppDefaults\\_INS0466._MP\\x11drv]
+"Desktop" = "640x480"
+
 ;[AppDefaults\\iexplore.exe\\DllOverrides]
 ;"shlwapi" = "native"
 ;"rpcrt4" = "native"
