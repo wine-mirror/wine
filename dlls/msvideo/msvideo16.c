@@ -26,11 +26,14 @@
 #include "msvideo_private.h"
 #include "winver.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "vfw16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 
+/* Drivers32 settings */
+#define HKLM_DRIVERS32 "Software\\Microsoft\\Windows NT\\CurrentVersion\\Drivers32"
 
 /***********************************************************************
  *		DrawDibOpen		[MSVIDEO.102]
@@ -760,35 +763,55 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
                                         LPSTR buf2, WORD buf2len)
 {
     DWORD	verhandle;
-    WORD	xnr = nr;
     DWORD	infosize;
     UINT	subblocklen;
-    char	*s,  buf[2000],  fn[260];
+    char	*s, buf[2048], fn[260];
     LPBYTE	infobuf;
     LPVOID	subblock;
+    DWORD	i, cnt = 0, lRet;
+    DWORD	bufLen, fnLen;
+    FILETIME	lastWrite;
+    HKEY	hKey;
+    BOOL        found = FALSE;
 
     TRACE("(%d,%p,%d,%p,%d)\n", nr, buf1, buf1len, buf2, buf2len);
-    if (GetPrivateProfileStringA("drivers32", NULL, NULL, buf, sizeof(buf), "system.ini")) 
+    lRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_QUERY_VALUE, &hKey);
+    if (lRet == ERROR_SUCCESS) 
     {
-        s = buf;
-        while (*s) 
-        {
-            if (!strncasecmp(s, "vid", 3)) 
-            {
-                if (!xnr) break;
-                xnr--;
-            }
-            s = s + strlen(s) + 1; /* either next char or \0 */
-        }
+	RegQueryInfoKeyA( hKey, 0, 0, 0, &cnt, 0, 0, 0, 0, 0, 0, 0);
+	for (i = 0; i < cnt; i++) 
+	{
+	    bufLen = sizeof(buf) / sizeof(buf[0]);
+	    lRet = RegEnumKeyExA(hKey, i, buf, &bufLen, 0, 0, 0, &lastWrite);
+	    if (lRet != ERROR_SUCCESS) continue;
+	    if (strncasecmp(buf, "vid", 3)) continue;
+	    if (nr--) continue;
+	    fnLen = sizeof(fn);
+	    lRet = RegQueryValueExA(hKey, buf, 0, 0, fn, &fnLen);
+	    if (lRet == ERROR_SUCCESS) found = TRUE;
+	    break;
+	}
+    	RegCloseKey( hKey );
+    } 
+
+    /* search system.ini if not found in the registry */
+    if (!found && GetPrivateProfileStringA("drivers32", NULL, NULL, buf, sizeof(buf), "system.ini"))
+    {
+	for (s = buf; *s; s += strlen(s) + 1)
+	{
+	    if (strncasecmp(s, "vid", 3)) continue;
+	    if (nr--) continue;
+	    if (GetPrivateProfileStringA("drivers32", s, NULL, fn, sizeof(fn), "system.ini"))
+		found = TRUE;
+	    break;
+	}
     }
-    else
-        return 20; /* hmm, out of entries even if we don't have any */
-    if (xnr) 
+
+    if (nr || !found) 
     {
-        FIXME("No more VID* entries found\n");
+        TRACE("No more VID* entries found nr=%d\n", nr);
         return 20;
     }
-    GetPrivateProfileStringA("drivers32", s, NULL, fn, sizeof(fn), "system.ini");
     infosize = GetFileVersionInfoSizeA(fn, &verhandle);
     if (!infosize) 
     {
