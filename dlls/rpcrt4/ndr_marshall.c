@@ -24,17 +24,23 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
 
+#include "ndr_misc.h"
+
+#include "wine/rpcfc.h"
 #include "wine/obj_base.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+#define BUFFER_PARANOIA 40
 
 /***********************************************************************
  *            NdrConformantStringMarshall [RPCRT4.@]
@@ -42,8 +48,32 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pszMessage,
   PFORMAT_STRING pFormat)
 { 
-  FIXME("stub\n");
-  return NULL;
+  UINT32 len, i;
+  unsigned char *c;
+
+  TRACE("(pStubMsg == ^%p, pszMessage == ^%p, pFormat == ^%p)\n", pStubMsg, pszMessage, pFormat);
+  
+  if (*pFormat == RPC_FC_C_CSTRING) {
+    len = strlen(pszMessage);
+    assert( (pStubMsg->BufferLength > (len + 13)) && (pStubMsg->Buffer != NULL) );
+    /* in DCE terminology this is a Conformant Varying String */
+    c = pStubMsg->Buffer;
+    ZeroMemory(c, 12);
+    *((UINT32 *)c) = len + 1;   /* max length: strlen + 1 (for '\0') */
+    c += 8;                     /* offset: 0 */
+    *((UINT32 *)c) = len + 1;   /* actual length: (same) */
+    c += 4;
+    for (i = 0; i <= len; i++)
+      *(c++) = *(pszMessage++); /* copy the string itself into the remaining space */
+  } else {
+    ERR("Unhandled string type: %#x\n", *pFormat); 
+    /* FIXME what to do here? */
+    return NULL;
+  }
+  
+  /* success */
+  pStubMsg->fBufferValid = 1;
+  return NULL; /* is this always right? */
 }
 
 /***********************************************************************
@@ -51,7 +81,14 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
  */
 void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-  FIXME("stub\n");
+  TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
+
+  if (*pFormat == RPC_FC_C_CSTRING) {
+    pStubMsg->BufferLength = strlen(pMemory) + BUFFER_PARANOIA;
+  } else {
+    ERR("Unhandled string type: %#x\n", *pFormat); 
+    /* FIXME what to do here? */
+  }
 }
 
 /************************************************************************
@@ -59,7 +96,7 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
  */
 unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
 {
-  FIXME("stub\n");
+  FIXME("(pStubMsg == ^%p, pFormat == ^%p): stub.\n", pStubMsg, pFormat);
   return 0;
 }
 
@@ -70,5 +107,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
   FIXME("stub\n");
-  return 0;
+  return NULL;
 }
+
+#undef BUFFER_PARANOIA

@@ -24,6 +24,8 @@
 #ifndef __WINE_RPCNDR_H
 #define __WINE_RPCNDR_H
 
+#include "rpc.h"
+
 #define TARGET_IS_NT40_OR_LATER 1
 #define TARGET_IS_NT351_OR_WIN95_OR_LATER 1
 
@@ -93,7 +95,7 @@ typedef struct _MIDL_STUB_MESSAGE
   int IgnoreEmbeddedPointers;
   unsigned char *PointerBufferMark;
   unsigned char fBufferValid;
-  unsigned char uFlags;
+  unsigned char Unused;
   ULONG_PTR MaxCount;
   unsigned long Offset;
   unsigned long ActualCount;

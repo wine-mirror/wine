@@ -16,6 +16,81 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * 
+ * WINE RPC TODO's (and a few TODONT's)
+ *
+ * - widl is like MIDL for wine.  For wine to be a useful RPC platform, quite
+ *   a bit of work needs to be done here.  widl currently doesn't generate stubs
+ *   for RPC invocation -- it will need to; this is tricky because the MIDL compiler
+ *   does some really wierd stuff.  Then again, we don't neccesarily have to
+ *   make widl work like MIDL, so it could be worse.
+ *
+ * - RPC has a quite featureful error handling mechanism; none of it is implemented
+ *   right now.
+ *
+ * - The server portions of the patch don't seem to be getting accepted by
+ *   Alexandre.  My guess is that once I have a working test he'll conceed to
+ *   let this in.  To implement this properly is tricky and possibly beyond my
+ *   abilities; Ove seems to think the right way to do this is to use LPC
+ *   (Local Procedure Call, another undocumented monster).  LPC has no implementation
+ *   in wine and is not going to be trivial to create.
+ *
+ * - There are several different memory allocation schemes for MSRPC.
+ *   I don't even understand what they all are yet, much less have them
+ *   properly implemented.  Surely we are supposed to be doing something with
+ *   the user-provided allocation/deallocation functions, but so far,
+ *   I don't think we are doing this...
+ *
+ * - MSRPC provides impersonation capabilities which currently are not possible
+ *   to implement in wine.  At the very least we should implement the authorization
+ *   API's & gracefully ignore the irrelevant stuff (to a small extent we already do).
+ *
+ * - Some transports are not yet implemented.  The existing transport implementations
+ *   are incomplete; the various transports probably ought to be supported in a more
+ *   object-oriented manner, like in DCE's RPC implementation, instead of cluttering
+ *   up the code with conditionals like we do now.
+ * 
+ * - Data marshalling: So far, only the very beginnings of an implementation
+ *   exist in wine.  NDR protocol is mostly documented, but the MS API's to
+ *   convert data-types in memory into NDR are not.
+ *
+ * - ORPC is RPC for OLE; once we have a working RPC framework, we can
+ *   use it to implement out-of-process OLE client/server communications.
+ *   ATM there is a 100% disconnect between the marshalling in the OLE DLL's
+ *   and the marshalling going on here.  This is a good thing, since marshalling
+ *   doesn't work yet.  But once it does, obviously there will be the opportunity
+ *   to implement out-of-process OLE using wine's rpcrt4 or some derivative.
+ * 
+ * - In-source API Documentation, at least for those functions which we have
+ *   implemented, but preferably for everything we can document, would be nice.
+ *   I started out being quite good about this, and ended up getting lazy.
+ *   Some stuff is undocumented by Microsoft and we are guessing how to implement
+ *   (in these cases we should document the behavior we implemented, or, if there
+ *   is no implementation, at least hazard some kind of guess, and put a few
+ *   question marks after it ;) ).
+ *
+ * - Stubs.  Lots of stuff is defined in Microsoft's headers, including undocumented
+ *   stuff.  So let's make a stub-farm and populate it with as many rpcrt4 api's as
+ *   we can stand, so people don't get unimplemented function exceptions.
+ *
+ * - Name services: this part hasn't even been started.
+ *
+ * - Concurrency: right now I don't think (?) we handle more than one request at a time;
+ *   we are supposed to be able to do this, and to queue requests which exceed the
+ *   concurrency limit.
+ *
+ * - Protocol Towers: Totally unimplemented.  I don't even know what these are.
+ *
+ * - Context Handle Rundown: whatever that is.
+ *
+ * - Nested RPC's: Totally unimplemented.
+ *
+ * - Statistics: we are supposed to be keeping various counters.  we aren't.
+ *
+ * - Connectionless RPC: unimplemented.
+ * 
+ * - ...?  More stuff I haven't thought of.  If you think of more RPC todo's drop me
+ *   an e-mail <gmturner007@ameritech.net> or send a patch to wine-patches.
  */
 
 #include "config.h"

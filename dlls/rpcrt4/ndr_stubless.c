@@ -45,9 +45,11 @@ LONG_PTR /* CLIENT_CALL_RETURN */ RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDes
 
   RPC_CLIENT_INTERFACE *rpc_cli_if = (RPC_CLIENT_INTERFACE *)(pStubDesc->RpcInterfaceInformation);
   LONG_PTR ret = 0;
+/*
   RPC_BINDING_HANDLE handle = 0;
   RPC_MESSAGE rpcmsg;
   MIDL_STUB_MESSAGE stubmsg;
+*/
 
   FIXME("(pStubDec == ^%p,pFormat = ^%p,...): semi-stub\n", pStubDesc, pFormat);
   if (rpc_cli_if) /* NULL for objects */ {
@@ -63,16 +65,18 @@ LONG_PTR /* CLIENT_CALL_RETURN */ RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDes
     TRACE("    Flags == ^%d\n", rpc_cli_if->Flags);
   }
 
+  /* for now, while these functons are under development, this is too sketchy.  commented out. */
+  /*
   NdrClientInitializeNew( &rpcmsg, &stubmsg, pStubDesc, 0 );
         
-  handle = (RPC_BINDING_HANDLE)0xdeadbeef; /* FIXME: dce uses interop_binding_handle; */
+  handle = (RPC_BINDING_HANDLE)0xdeadbeef; */ /* FIXME */
 
-  stubmsg.BufferLength = 0; /* FIXME */
-
+  /* stubmsg.BufferLength = 0;*/ /* FIXME */
+  /*
   NdrGetBuffer( &stubmsg, stubmsg.BufferLength, handle );
   NdrSendReceive( &stubmsg, stubmsg.Buffer  );
   NdrFreeBuffer( &stubmsg );
- 
+  */
   return ret;
 }
 

@@ -196,15 +196,27 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
  */
 unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle)
 {
-  FIXME("stub\n");
-  return NULL;
+  TRACE("(stubmsg == ^%p, buflen == %lu, handle == %p): wild guess.\n", stubmsg, buflen, handle);
+  
+  /* FIXME: What are we supposed to do with the handle? */
+  
+  stubmsg->RpcMsg->BufferLength = buflen;
+  if (I_RpcGetBuffer(stubmsg->RpcMsg) != S_OK)
+    return NULL;
+
+  stubmsg->BufferLength = stubmsg->RpcMsg->BufferLength;
+  stubmsg->BufferEnd = stubmsg->BufferStart = 0;
+  return (stubmsg->Buffer = (unsigned char *)stubmsg->RpcMsg->Buffer);
 }
 /***********************************************************************
  *           NdrFreeBuffer [RPCRT4.@]
  */
 void WINAPI NdrFreeBuffer(MIDL_STUB_MESSAGE *pStubMsg)
 {
-  FIXME("stub\n");
+  TRACE("(pStubMsg == ^%p): wild guess.\n", pStubMsg);
+  I_RpcFreeBuffer(pStubMsg->RpcMsg);
+  pStubMsg->BufferLength = 0;
+  pStubMsg->Buffer = (unsigned char *)(pStubMsg->RpcMsg->Buffer = NULL);
 }
 
 /************************************************************************

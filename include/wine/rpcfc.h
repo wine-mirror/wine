@@ -46,6 +46,7 @@
 
 #define RPC_FC_BOGUS_ARRAY		0x21
 
+#define RPC_FC_C_CSTRING		0x22
 #define RPC_FC_C_WSTRING		0x25
 
 #define RPC_FC_ENCAPSULATED_UNION	0x2a
