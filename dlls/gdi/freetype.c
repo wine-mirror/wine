@@ -139,16 +139,16 @@ MAKE_FUNCPTR(FcPatternGet);
 
 #undef MAKE_FUNCPTR
 
-#ifndef FT_ENCODING_NONE
+#ifndef ft_encoding_none
 #define FT_ENCODING_NONE ft_encoding_none
 #endif
-#ifndef FT_ENCODING_MS_SYMBOL
+#ifndef ft_encoding_ms_symbol
 #define FT_ENCODING_MS_SYMBOL ft_encoding_symbol
 #endif
-#ifndef FT_ENCODING_UNICODE
+#ifndef ft_encoding_unicode
 #define FT_ENCODING_UNICODE ft_encoding_unicode
 #endif
-#ifndef FT_ENCODING_APPLE_ROMAN
+#ifndef ft_encoding_apple_roman
 #define FT_ENCODING_APPLE_ROMAN ft_encoding_apple_roman
 #endif
 
