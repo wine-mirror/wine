@@ -196,7 +196,7 @@ static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
                 SendMessageA( hwndDefButton, BM_SETSTYLE,
                                 BS_PUSHBUTTON,FALSE );
             hwndDefButton = hwndCtrl;
-            dlgInfo->idResult = GetWindowLongA( hwndCtrl, GWL_ID );
+            dlgInfo->idResult = GetWindowLongPtrA( hwndCtrl, GWLP_ID );
         }
     }
     TRACE(" END\n" );

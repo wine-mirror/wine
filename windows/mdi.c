@@ -152,7 +152,7 @@ static HWND MDI_GetChildByID(HWND hwnd, UINT id, MDICLIENTINFO *ci)
 
     for (i = 0; ci->nActiveChildren; i++)
     {
-        if (GetWindowLongW( ci->child[i], GWL_ID ) == id)
+        if (GetWindowLongPtrW( ci->child[i], GWLP_ID ) == id)
             return ci->child[i];
     }
     return 0;
@@ -430,7 +430,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
 
             visible++;
 
-            SetWindowLongW(ci->child[i], GWL_ID, id);
+            SetWindowLongPtrW(ci->child[i], GWLP_ID, id);
 
             buf[0] = '&';
             buf[1] = '0' + visible;

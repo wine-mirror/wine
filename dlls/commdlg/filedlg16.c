@@ -459,7 +459,7 @@ BOOL16 WINAPI GetOpenFileName16(
     if (lfs)
     {
         priv = (PFD16_PRIVATE) lfs->private1632;
-        hInst = GetWindowWord( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
+        hInst = GetWindowLongPtrA( HWND_32(lpofn->hwndOwner), GWLP_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 6);
         bRet = DialogBoxIndirectParam16( hInst, priv->hDlgTmpl16, lpofn->hwndOwner,
                                          (DLGPROC16) ptr, (LPARAM) lfs);
@@ -501,7 +501,7 @@ BOOL16 WINAPI GetSaveFileName16(
     if (lfs)
     {
         priv = (PFD16_PRIVATE) lfs->private1632;
-        hInst = GetWindowWord( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
+        hInst = GetWindowLongPtrA( HWND_32(lpofn->hwndOwner), GWLP_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 7);
         bRet = DialogBoxIndirectParam16( hInst, priv->hDlgTmpl16, lpofn->hwndOwner,
                                          (DLGPROC16) ptr, (LPARAM) lfs);

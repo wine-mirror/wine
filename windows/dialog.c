@@ -360,7 +360,7 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
             if (hwndDefButton)
                 SendMessageA( hwndDefButton, BM_SETSTYLE, BS_PUSHBUTTON, FALSE );
             hwndDefButton = hwndCtrl;
-            dlgInfo->idResult = GetWindowLongA( hwndCtrl, GWL_ID );
+            dlgInfo->idResult = GetWindowLongPtrA( hwndCtrl, GWLP_ID );
         }
     }
     TRACE(" END\n" );
@@ -1219,7 +1219,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
  */
 INT WINAPI GetDlgCtrlID( HWND hwnd )
 {
-    return GetWindowLongW( hwnd, GWL_ID );
+    return GetWindowLongPtrW( hwnd, GWLP_ID );
 }
 
 
@@ -1234,7 +1234,7 @@ HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 
     if (!list) return 0;
 
-    for (i = 0; list[i]; i++) if (GetWindowLongW( list[i], GWL_ID ) == id) break;
+    for (i = 0; list[i]; i++) if (GetWindowLongPtrW( list[i], GWLP_ID ) == id) break;
     ret = list[i];
     HeapFree( GetProcessHeap(), 0, list );
     return ret;
@@ -1378,7 +1378,7 @@ UINT WINAPI IsDlgButtonChecked( HWND hwnd, UINT id )
  */
 static BOOL CALLBACK CheckRB(HWND hwndChild, LPARAM lParam)
 {
-    LONG lChildID = GetWindowLongA(hwndChild, GWL_ID);
+    LONG lChildID = GetWindowLongPtrW(hwndChild, GWLP_ID);
     RADIOGROUP *lpRadioGroup = (RADIOGROUP *) lParam;
 
     if ((lChildID >= lpRadioGroup->firstID) &&
@@ -1386,11 +1386,11 @@ static BOOL CALLBACK CheckRB(HWND hwndChild, LPARAM lParam)
     {
         if (lChildID == lpRadioGroup->checkID)
         {
-            SendMessageA(hwndChild, BM_SETCHECK, BST_CHECKED, 0);
+            SendMessageW(hwndChild, BM_SETCHECK, BST_CHECKED, 0);
         }
         else
         {
-            SendMessageA(hwndChild, BM_SETCHECK, BST_UNCHECKED, 0);
+            SendMessageW(hwndChild, BM_SETCHECK, BST_UNCHECKED, 0);
         }
     }
 

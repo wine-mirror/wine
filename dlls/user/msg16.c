@@ -64,7 +64,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
             }
         }
 
-        if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWL_WNDPROC ))) return 0;
+        if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWLP_WNDPROC ))) return 0;
 
         SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wparam, lparam );
         result = CallWindowProc16( (WNDPROC16)winproc, hwnd16, msg, wparam, lparam );

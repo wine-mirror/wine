@@ -1282,7 +1282,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
         {
             if (!(wndPtr->dwStyle & WS_CHILD))
             {
-                HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
+                HMENU menu = (HMENU)SetWindowLongPtrW( hwnd, GWLP_ID, 0 );
                 if (menu) DestroyMenu( menu );
             }
         }

@@ -108,15 +108,13 @@ static void GrabPointer(BOOL grab)
   if(!X11DRV_DD_GrabMessage)
     X11DRV_DD_GrabMessage = RegisterWindowMessageA("WINE_X11DRV_GRABPOINTER");
 
-  /* FIXME: Replace with SetWindowLongPtrA when available */
-  X11DRV_DD_GrabOldProcedure = (WNDPROC)SetWindowLongA(X11DRV_DD_PrimaryWnd,
-                                                       GWL_WNDPROC, (LONG)GrabWndProc);
+  X11DRV_DD_GrabOldProcedure = (WNDPROC)SetWindowLongPtrA(X11DRV_DD_PrimaryWnd,
+                                                       GWLP_WNDPROC, (LONG_PTR)GrabWndProc);
 
   SendMessageA(X11DRV_DD_PrimaryWnd, X11DRV_DD_GrabMessage, grab ? 1 : 0, 0);
 
-  /* FIXME: Replace with SetWindowLongPtrA when available */
-  if(SetWindowLongA(X11DRV_DD_PrimaryWnd, GWL_WNDPROC,
-                    (LONG)X11DRV_DD_GrabOldProcedure) != (LONG)GrabWndProc)
+  if(SetWindowLongPtrA(X11DRV_DD_PrimaryWnd, GWLP_WNDPROC,
+                    (LONG_PTR)X11DRV_DD_GrabOldProcedure) != (LONG_PTR)GrabWndProc)
     ERR("Window procedure has been changed!\n");
 }
 

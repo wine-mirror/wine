@@ -80,7 +80,7 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     X11DRV_register_window( display, hwnd, win->pDriverData );
     WIN_ReleasePtr( win );
 
-    SetWindowLongW( hwnd, GWL_WNDPROC, (LONG)desktop_winproc );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_winproc );
     wine_tsx11_lock();
     XChangeProperty ( display, root_window, x11drv_atom(WM_PROTOCOLS),
                       XA_ATOM, 32, PropModeReplace, (char *)&atom, 1 );

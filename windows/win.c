@@ -201,7 +201,7 @@ static void send_parent_notify( HWND hwnd, UINT msg )
     if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD &&
         !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY))
         SendMessageW( GetParent(hwnd), WM_PARENTNOTIFY,
-                      MAKEWPARAM( msg, GetWindowLongW( hwnd, GWL_ID )), (LPARAM)hwnd );
+                      MAKEWPARAM( msg, GetWindowLongPtrW( hwnd, GWLP_ID )), (LPARAM)hwnd );
 }
 
 
@@ -640,7 +640,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 
     if (!(wndPtr->dwStyle & WS_CHILD))
     {
-        HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
+        HMENU menu = (HMENU)SetWindowLongPtrW( hwnd, GWLP_ID, 0 );
         if (menu) DestroyMenu( menu );
     }
     if (wndPtr->hSysMenu)
@@ -1165,7 +1165,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             }
         }
     }
-    else SetWindowLongW( hwnd, GWL_ID, (UINT)cs->hMenu );
+    else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
     WIN_ReleaseWndPtr( wndPtr );
 
     if (!USER_Driver.pCreateWindow( hwnd, cs, unicode))
@@ -1797,12 +1797,12 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
 
     switch(offset)
     {
-    case GWL_HWNDPARENT:
-        return GetWindowLongW( hwnd, offset );
-    case GWL_ID:
-    case GWL_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        return GetWindowLongPtrW( hwnd, offset );
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
         {
-            LONG ret = GetWindowLongW( hwnd, offset );
+            LONG_PTR ret = GetWindowLongPtrW( hwnd, offset );
             if (HIWORD(ret))
                 WARN("%d: discards high bits of 0x%08lx!\n", offset, ret );
             return LOWORD(ret);
@@ -1824,10 +1824,10 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
 
     switch(offset)
     {
-    case GWL_ID:
-    case GWL_HINSTANCE:
-    case GWL_HWNDPARENT:
-        return SetWindowLongW( hwnd, offset, (UINT)newval );
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        return SetWindowLongPtrW( hwnd, offset, (ULONG_PTR)newval );
     default:
         if (offset < 0)
         {
@@ -1884,16 +1884,16 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
  *
  * Helper function for GetWindowLong().
  */
-static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
+static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
 {
-    LONG retvalue = 0;
+    LONG_PTR retvalue = 0;
     WND *wndPtr;
 
-    if (offset == GWL_HWNDPARENT)
+    if (offset == GWLP_HWNDPARENT)
     {
         HWND parent = GetAncestor( hwnd, GA_PARENT );
         if (parent == GetDesktopWindow()) parent = GetWindow( hwnd, GW_OWNER );
-        return (LONG)parent;
+        return (ULONG_PTR)parent;
     }
 
     if (!(wndPtr = WIN_GetPtr( hwnd )))
@@ -1904,7 +1904,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
 
     if (wndPtr == WND_OTHER_PROCESS)
     {
-        if (offset == GWL_WNDPROC)
+        if (offset == GWLP_WNDPROC)
         {
             SetLastError( ERROR_ACCESS_DENIED );
             return 0;
@@ -1919,11 +1919,11 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
             {
                 switch(offset)
                 {
-                case GWL_STYLE:     retvalue = reply->old_style; break;
-                case GWL_EXSTYLE:   retvalue = reply->old_ex_style; break;
-                case GWL_ID:        retvalue = reply->old_id; break;
-                case GWL_HINSTANCE: retvalue = (ULONG_PTR)reply->old_instance; break;
-                case GWL_USERDATA:  retvalue = (ULONG_PTR)reply->old_user_data; break;
+                case GWL_STYLE:      retvalue = reply->old_style; break;
+                case GWL_EXSTYLE:    retvalue = reply->old_ex_style; break;
+                case GWLP_ID:        retvalue = reply->old_id; break;
+                case GWLP_HINSTANCE: retvalue = (ULONG_PTR)reply->old_instance; break;
+                case GWLP_USERDATA:  retvalue = (ULONG_PTR)reply->old_user_data; break;
                 default:
                     if (offset >= 0) retvalue = reply->old_extra_value;
                     else SetLastError( ERROR_INVALID_INDEX );
@@ -1974,12 +1974,12 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
 
     switch(offset)
     {
-    case GWL_USERDATA:   retvalue = wndPtr->userdata; break;
+    case GWLP_USERDATA:  retvalue = wndPtr->userdata; break;
     case GWL_STYLE:      retvalue = wndPtr->dwStyle; break;
     case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle; break;
-    case GWL_ID:         retvalue = (LONG)wndPtr->wIDmenu; break;
-    case GWL_WNDPROC:    retvalue = (LONG)WINPROC_GetProc( wndPtr->winproc, type ); break;
-    case GWL_HINSTANCE:  retvalue = (LONG)wndPtr->hInstance; break;
+    case GWLP_ID:        retvalue = (ULONG_PTR)wndPtr->wIDmenu; break;
+    case GWLP_WNDPROC:   retvalue = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, type ); break;
+    case GWLP_HINSTANCE: retvalue = (ULONG_PTR)wndPtr->hInstance; break;
     default:
         WARN("Unknown offset %d\n", offset );
         SetLastError( ERROR_INVALID_INDEX );
@@ -1998,8 +1998,8 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
  * 0 is the failure code. However, in the case of failure SetLastError
  * must be set to distinguish between a 0 return value and a failure.
  */
-static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
-                               WINDOWPROCTYPE type )
+static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
+                                   WINDOWPROCTYPE type )
 {
     STYLESTRUCT style;
     BOOL ok;
@@ -2015,7 +2015,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     }
     if (!WIN_IsCurrentProcess( hwnd ))
     {
-        if (offset == GWL_WNDPROC)
+        if (offset == GWLP_WNDPROC)
         {
             SetLastError( ERROR_ACCESS_DENIED );
             return 0;
@@ -2045,31 +2045,31 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
         if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
         newval = style.styleNew;
         break;
-    case GWL_HWNDPARENT:
+    case GWLP_HWNDPARENT:
         if (wndPtr->parent == GetDesktopWindow())
         {
             WIN_ReleasePtr( wndPtr );
-            return (LONG)WIN_SetOwner( hwnd, (HWND)newval );
+            return (ULONG_PTR)WIN_SetOwner( hwnd, (HWND)newval );
         }
         else
         {
             WIN_ReleasePtr( wndPtr );
-            return (LONG)SetParent( hwnd, (HWND)newval );
+            return (ULONG_PTR)SetParent( hwnd, (HWND)newval );
         }
-    case GWL_WNDPROC:
-        retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
+    case GWLP_WNDPROC:
+        retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, type );
         WINPROC_SetProc( &wndPtr->winproc, (WNDPROC)newval, type, WIN_PROC_WINDOW );
         WIN_ReleasePtr( wndPtr );
         return retval;
-    case GWL_ID:
-    case GWL_HINSTANCE:
-    case GWL_USERDATA:
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_USERDATA:
         break;
-    case DWL_DLGPROC:
-        if ((wndPtr->cbWndExtra + sizeof(LONG) >= DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+    case DWLP_DLGPROC:
+        if ((wndPtr->cbWndExtra + sizeof(LONG) >= DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
-            WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWL_DLGPROC);
-            retval = (LONG)WINPROC_GetProc( *ptr, type );
+            WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
+            retval = (ULONG_PTR)WINPROC_GetProc( *ptr, type );
             WINPROC_SetProc( ptr, (WNDPROC)newval, type, WIN_PROC_WINDOW );
             WIN_ReleasePtr( wndPtr );
             return retval;
@@ -2085,7 +2085,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
         }
         else
         {
-            LONG *ptr = (LONG *)((char *)wndPtr->wExtra + offset);
+            LONG_PTR *ptr = (LONG_PTR *)((char *)wndPtr->wExtra + offset);
             if (*ptr == newval)  /* already set to the same value */
             {
                 WIN_ReleasePtr( wndPtr );
@@ -2109,15 +2109,15 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
             req->flags = SET_WIN_EXSTYLE;
             req->ex_style = newval;
             break;
-        case GWL_ID:
+        case GWLP_ID:
             req->flags = SET_WIN_ID;
             req->id = newval;
             break;
-        case GWL_HINSTANCE:
+        case GWLP_HINSTANCE:
             req->flags = SET_WIN_INSTANCE;
             req->instance = (void *)newval;
             break;
-        case GWL_USERDATA:
+        case GWLP_USERDATA:
             req->flags = SET_WIN_USERDATA;
             req->user_data = (void *)newval;
             break;
@@ -2139,15 +2139,15 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                 wndPtr->dwExStyle = newval;
                 retval = reply->old_ex_style;
                 break;
-            case GWL_ID:
+            case GWLP_ID:
                 wndPtr->wIDmenu = newval;
                 retval = reply->old_id;
                 break;
-            case GWL_HINSTANCE:
+            case GWLP_HINSTANCE:
                 wndPtr->hInstance = (HINSTANCE)newval;
                 retval = (ULONG_PTR)reply->old_instance;
                 break;
-            case GWL_USERDATA:
+            case GWLP_USERDATA:
                 wndPtr->userdata = newval;
                 retval = (ULONG_PTR)reply->old_user_data;
                 break;
@@ -2238,23 +2238,23 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  *
  * GWL_STYLE        The window's window style.
  *
- * GWL_WNDPROC      Pointer to the window's window procedure.
+ * GWLP_WNDPROC     Pointer to the window's window procedure.
  *
- * GWL_HINSTANCE    The window's pplication instance handle.
+ * GWLP_HINSTANCE   The window's pplication instance handle.
  *
- * GWL_ID           The window's identifier.
+ * GWLP_ID          The window's identifier.
  *
- * GWL_USERDATA     The window's user-specified data.
+ * GWLP_USERDATA    The window's user-specified data.
  *
  * If the window is a dialog box, the _offset_ parameter can be one of
  * the following values:
  *
- * DWL_DLGPROC      The address of the window's dialog box procedure.
+ * DWLP_DLGPROC     The address of the window's dialog box procedure.
  *
- * DWL_MSGRESULT    The return value of a message
+ * DWLP_MSGRESULT   The return value of a message
  *                  that the dialog box procedure processed.
  *
- * DWL_USER         Application specific information.
+ * DWLP_USER        Application specific information.
  *
  * RETURNS
  *
@@ -2625,7 +2625,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
         {
             if (!(wndPtr->dwStyle & WS_CHILD))
             {
-                HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
+                HMENU menu = (HMENU)SetWindowLongPtrW( hwnd, GWLP_ID, 0 );
                 if (menu) DestroyMenu( menu );
             }
         }

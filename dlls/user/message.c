@@ -1452,12 +1452,12 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     /* now call the window procedure */
     if (unicode)
     {
-        if (!(winproc = (WNDPROC)GetWindowLongW( hwnd, GWL_WNDPROC ))) goto done;
+        if (!(winproc = (WNDPROC)GetWindowLongPtrW( hwnd, GWLP_WNDPROC ))) goto done;
         result = CallWindowProcW( winproc, hwnd, msg, wparam, lparam );
     }
     else
     {
-        if (!(winproc = (WNDPROC)GetWindowLongA( hwnd, GWL_WNDPROC ))) goto done;
+        if (!(winproc = (WNDPROC)GetWindowLongPtrA( hwnd, GWLP_WNDPROC ))) goto done;
         result = CallWindowProcA( winproc, hwnd, msg, wparam, lparam );
     }
 

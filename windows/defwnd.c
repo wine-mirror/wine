@@ -621,7 +621,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             UINT len;
 
             HICON hIcon = (HICON)GetClassLongW( hwnd, GCL_HICON );
-            HINSTANCE instance = (HINSTANCE)GetWindowLongW( hwnd, GWL_HINSTANCE );
+            HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
             if (hIcon) return (LRESULT)hIcon;
             for(len=1; len<64; len++)
                 if((hIcon = LoadIconW(instance, MAKEINTRESOURCEW(len))))

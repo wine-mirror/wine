@@ -288,7 +288,7 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
             HELPINFO hi;
             hi.cbSize = sizeof(HELPINFO);
             hi.iContextType = HELPINFO_WINDOW;
-            hi.iCtrlId = GetWindowLongA( msg->hwnd, GWL_ID );
+            hi.iCtrlId = GetWindowLongPtrA( msg->hwnd, GWLP_ID );
             hi.hItemHandle = msg->hwnd;
             hi.dwContextId = GetWindowContextHelpId( msg->hwnd );
             hi.MousePos = msg->pt;
@@ -499,7 +499,7 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
 
 /***********************************************************************
- *          process_hardware_message
+ *          MSG_process_raw_hardware_message
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */

@@ -1979,7 +1979,7 @@ BOOL WINAPI PrintDlgA(
 {
     BOOL      bRet = FALSE;
     LPVOID   ptr;
-    HINSTANCE hInst = (HINSTANCE)GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
+    HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrA( lppd->hwndOwner, GWLP_HINSTANCE );
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
@@ -2135,7 +2135,7 @@ BOOL WINAPI PrintDlgW(
 {
     BOOL      bRet = FALSE;
     LPVOID   ptr;
-    HINSTANCE hInst = (HINSTANCE)GetWindowLongW( lppd->hwndOwner, GWL_HINSTANCE );
+    HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW( lppd->hwndOwner, GWLP_HINSTANCE );
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
