@@ -550,7 +550,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 
     total = n;
 
-    for (i = 0; i < n; i++)
+    for (i = 0; pGetCPInfoExA && i < n; i++)
     {
 	CPINFOEXA cpinfoex;
 #ifdef DUMP_SCRIPT_INFO
@@ -567,7 +567,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 	      wine_dbgstr_w(sinfo[i].wszFixedWidthFont),
 	      wine_dbgstr_w(sinfo[i].wszProportionalFont));
 #endif
-	if (GetCPInfoExA(sinfo[i].uiCodePage, 0, &cpinfoex))
+	if (pGetCPInfoExA(sinfo[i].uiCodePage, 0, &cpinfoex))
 	    trace("CodePage %u name: %s\n", sinfo[i].uiCodePage, cpinfoex.CodePageName);
 	else
 	    trace("GetCPInfoExA failed for cp %u\n", sinfo[i].uiCodePage);
