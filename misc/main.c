@@ -1012,11 +1012,11 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 
         case SPI_GETHIGHCONTRAST:
         {
-                LPHIGHCONTRASTA lpHighContrastA = (LPHIGHCONTRASTA)lpvParam;
+                LPHIGHCONTRAST32A lpHighContrastA = (LPHIGHCONTRAST32A)lpvParam;
 
                 FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
 
-                if ( lpHighContrastA->cbSize == sizeof( HIGHCONTRASTA ) )
+                if ( lpHighContrastA->cbSize == sizeof( HIGHCONTRAST32A ) )
                 {
                         /* Indicate that there is no high contrast available */
                         lpHighContrastA->dwFlags = 0;
@@ -1295,11 +1295,11 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 
     case SPI_GETHIGHCONTRAST:
     {
-       LPHIGHCONTRASTW lpHighContrastW = (LPHIGHCONTRASTW)lpvParam;
+       LPHIGHCONTRAST32W lpHighContrastW = (LPHIGHCONTRAST32W)lpvParam;
 
        FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
 
-       if ( lpHighContrastW->cbSize == sizeof( HIGHCONTRASTW ) )
+       if ( lpHighContrastW->cbSize == sizeof( HIGHCONTRAST32W ) )
        {
           /* Indicate that there is no high contrast available */
           lpHighContrastW->dwFlags = 0;
