@@ -200,6 +200,9 @@
 /* Define if you have the getprotobynumber function.  */
 #undef HAVE_GETPROTOBYNUMBER
 
+/* Define if you have the getrlimit function.  */
+#undef HAVE_GETRLIMIT
+
 /* Define if you have the getservbyport function.  */
 #undef HAVE_GETSERVBYPORT
 

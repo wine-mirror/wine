@@ -736,6 +736,7 @@ AC_CHECK_FUNCS(\
 	getpagesize \
 	getprotobyname \
 	getprotobynumber \
+	getrlimit \
 	getservbyport \
 	getsockopt \
 	inet_network \

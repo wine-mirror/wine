@@ -13,6 +13,17 @@
 
 /* Types */
 
+#ifndef HAVE_GETRLIMIT
+#define RLIMIT_STACK 3
+typedef int rlim_t;
+struct rlimit
+{
+    rlim_t rlim_cur;
+    rlim_t rlim_max;
+};
+int getrlimit (int resource, struct rlimit *rlim);
+#endif /* HAVE_GETRLIMIT */
+
 #if !defined(HAVE_GETNETBYADDR) && !defined(HAVE_GETNETBYNAME)
 struct netent {
   char         *n_name;

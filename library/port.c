@@ -372,6 +372,16 @@ int lstat(const char *file_name, struct stat *buf)
 
 
 /***********************************************************************
+ *		getrlimit
+ */
+#ifndef HAVE_GETRLIMIT
+int getrlimit (int resource, struct rlimit *rlim)
+{
+    return -1; /* FAIL */
+}
+#endif /* HAVE_GETRLIMIT */
+
+/***********************************************************************
  *		wine_anon_mmap
  *
  * Portable wrapper for anonymous mmaps
