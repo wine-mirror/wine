@@ -89,6 +89,14 @@ EOF
     [ -z "$xpmicon" ] || echo "Icon=$xpmicon"
 }
 
+mdk_entry()
+{
+    base=`basename "$link"`
+    section=`dirname "$link"`
+    [ -z "$icon" ] || xicon="icon=\"$xpmicon\""
+    echo "?package(local.Wine):needs=x11 section=\"Wine/$section\" title=\"$base\" longtitle=\"$descr\" command=\"wine \\\"$path\\\" $args\" $xicon"
+}
+
 # copy the icon file to a specified dir and set xpmicon to the resulting path
 copy_icon()
 {
@@ -103,6 +111,25 @@ copy_icon()
     xpmicon=""
   fi
 }
+
+# Debian/Mandrake
+
+type update-menus > /dev/null 2>&1
+if [ $? = 0 -a $mode = "menu" ]
+then
+  iconname="`basename "$link"`.xpm"
+  dir="$HOME/.menu/icons"
+  if [ -f "$icon" ]
+  then
+    mkdir -p $dir
+    cp "$icon" "$dir/$iconname"
+    xpmicon="$dir/$iconname"
+  else
+    xpmicon=""
+  fi
+  mdk_entry >> "$HOME/.menu/wine"
+  update-menus > /dev/null 2>&1
+fi
 
 # KDE
 
