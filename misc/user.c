@@ -21,8 +21,9 @@ WORD USER_HeapSel = 0;
 
 #ifndef WINELIB
 
-extern void 	TIMER_NukeTimers(HWND, HQUEUE );
+extern void 	TIMER_NukeTimers(HWND, HQUEUE);
 extern HTASK	TASK_GetNextTask(HTASK);
+extern void	QUEUE_SetDoomedQueue(HQUEUE);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -130,9 +131,13 @@ void USER_AppExit(HTASK hTask, HINSTANCE hInstance, HQUEUE hQueue)
 
     HOOK_FreeQueueHooks( hQueue );
 
+    QUEUE_SetDoomedQueue( hQueue );
+
     /* Nuke orphaned windows */
 
     WIN_DestroyQueueWindows( desktop->child, hQueue );
+
+    QUEUE_SetDoomedQueue( 0 );
 
     /* Free the message queue */
 

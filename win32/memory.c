@@ -4,6 +4,7 @@
  * Copyright 1995 Martin von Loewis and Cameron Heide
  */
 
+#include <fcntl.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,9 +23,6 @@
 
 #ifndef PROT_NONE  /* FreeBSD doesn't define PROT_NONE */
 #define PROT_NONE 0
-#endif
-#ifndef MAP_ANON
-#define MAP_ANON 0
 #endif
 
 typedef struct {
@@ -172,12 +170,22 @@ LPVOID VirtualAlloc(LPVOID lpvAddress, DWORD cbSize,
     int	i;
     virtual_mem_t *tmp_mem;
     int	prot;
+    static int fdzero = -1;
+
+    if (fdzero == -1)
+    {
+        if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
+        {
+            perror( "/dev/zero: open" );
+            return (LPVOID)NULL;
+        }
+    }
 
     dprintf_win32(stddeb, "VirtualAlloc: size = %ld, address=%p\n", cbSize, lpvAddress);
     if (fdwAllocationType & MEM_RESERVE || !lpvAddress) {
         ptr = mmap((void *)((((unsigned long)lpvAddress-1) & 0xFFFF0000L) 
 	                + 0x00010000L),
-		   cbSize, PROT_NONE, MAP_ANON|MAP_PRIVATE,-1,0);
+		   cbSize, PROT_NONE, MAP_PRIVATE, fdzero, 0 );
 	if (ptr == (caddr_t) -1) {
 	    dprintf_win32(stddeb, "VirtualAlloc: returning NULL");
 	    return (LPVOID) NULL;
@@ -186,7 +194,7 @@ LPVOID VirtualAlloc(LPVOID lpvAddress, DWORD cbSize,
 	    munmap(ptr, cbSize);
 	    cbSize += 65535;
 	    ptr =  mmap(lpvAddress, cbSize, 
-	                PROT_NONE, MAP_ANON|MAP_PRIVATE,-1,0);
+	                PROT_NONE, MAP_PRIVATE, fdzero, 0 );
 	    if (ptr == (caddr_t) -1) {
 		dprintf_win32(stddeb, "VirtualAlloc: returning NULL");
 		return (LPVOID) NULL;

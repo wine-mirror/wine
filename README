@@ -25,6 +25,11 @@ To build Wine, first do a "./configure" and then a "make depend; make".
 The executable "wine" will be built.  "wine" will load and run 16-bit
 Windows executables.
 
+To build Winelib, do a "./configure --with-library", and then a "make
+depend; make". The library "winelib.a" will be built, allowing to
+compile Windows source code under Unix. If you have an ELF compiler,
+you can use "./configure --with-dll" instead to build a shared library.
+
 To upgrade to a new release by using a patch file, first cd to the
 top-level directory of the release (the one containing this README
 file). Then do a "make clean", and patch the release with:

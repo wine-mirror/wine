@@ -273,7 +273,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
     HANDLE hAndBits, hXorBits, hRes;
     HDC hdc;
     int size, sizeAnd, sizeXor;
-    POINT hotspot = { 0 ,0 };
+    POINT16 hotspot = { 0 ,0 };
     BITMAPOBJ *bmpXor, *bmpAnd;
     BITMAPINFO *bmi, *pInfo;
     CURSORICONINFO *info;
@@ -282,7 +282,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
 	hRes=0;
     if (fCursor)  /* If cursor, get the hotspot */
     {
-        POINT *pt = (POINT *)LockResource32( handle );
+        POINT16 *pt = (POINT16 *)LockResource32( handle );
         hotspot = *pt;
         bmi = (BITMAPINFO *)(pt + 1);
     }

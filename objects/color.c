@@ -106,11 +106,11 @@ static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
  *
  * Create the system palette.
  */
-static HPALETTE COLOR_InitPalette(void)
+static HPALETTE16 COLOR_InitPalette(void)
 {
     int i, size, pixel;
     XColor color;
-    HPALETTE hpalette;
+    HPALETTE16 hpalette;
     LOGPALETTE * palPtr;
     WORD *colorTranslation, *revTranslation;
 
@@ -215,7 +215,7 @@ COLOR_Computeshifts(unsigned long maskbits, int *shift, int *max)
  *
  * Initialize color map and system palette.
  */
-HPALETTE COLOR_Init(void)
+HPALETTE16 COLOR_Init(void)
 {
     Visual * visual = DefaultVisual( display, DefaultScreen(display) );
 

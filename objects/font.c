@@ -17,6 +17,7 @@
 #include "metafile.h"
 #include "callback.h"
 #include "options.h"
+#include "string32.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -616,16 +617,29 @@ INT GetTextFace( HDC hdc, INT count, LPSTR name )
  */
 DWORD GetTextExtent( HDC hdc, LPCSTR str, short count )
 {
-    SIZE size;
-    if (!GetTextExtentPoint( hdc, str, count, &size )) return 0;
+    SIZE16 size;
+    if (!GetTextExtentPoint16( hdc, str, count, &size )) return 0;
     return MAKELONG( size.cx, size.cy );
 }
 
 
 /***********************************************************************
- *           GetTextExtentPoint    (GDI.471)
+ *           GetTextExtentPoint16    (GDI.471)
  */
-BOOL GetTextExtentPoint( HDC hdc, LPCSTR str, short count, LPSIZE size )
+BOOL16 GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count, LPSIZE16 size)
+{
+    SIZE32 size32;
+    BOOL32 ret = GetTextExtentPoint32A( hdc, str, count, &size32 );
+    CONV_SIZE32TO16( &size32, size );
+    return (BOOL16)ret;
+}
+
+
+/***********************************************************************
+ *           GetTextExtentPoint32A    (GDI32.232)
+ */
+BOOL32 GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
+                              LPSIZE32 size )
 {
     int dir, ascent, descent;
     XCharStruct info;
@@ -639,9 +653,22 @@ BOOL GetTextExtentPoint( HDC hdc, LPCSTR str, short count, LPSIZE size )
     size->cy = abs((dc->u.x.font.fstruct->ascent+dc->u.x.font.fstruct->descent)
 		    * dc->w.WndExtY / dc->w.VportExtY);
 
-    dprintf_font(stddeb,"GetTextExtentPoint(%04x '%*.*s' %d %p): returning %d,%d\n",
+    dprintf_font(stddeb,"GetTextExtentPoint(%08x '%*.*s' %d %p): returning %d,%d\n",
 		 hdc, count, count, str, count, size, size->cx, size->cy );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetTextExtentPoint32W    (GDI32.233)
+ */
+BOOL32 GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
+                              LPSIZE32 size )
+{
+    char *p = STRING32_DupUniToAnsi( str );
+    BOOL32 ret = GetTextExtentPoint32A( hdc, p, count, size );
+    free( p );
+    return ret;
 }
 
 
@@ -667,6 +694,49 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
 				      * dc->w.WndExtX / dc->w.VportExtX );
     metrics->tmAveCharWidth    = abs( metrics->tmAveCharWidth
 				      * dc->w.WndExtX / dc->w.VportExtX );
+
+    dprintf_font(stdnimp,"text metrics:\n
+	InternalLeading = %i
+	ExternalLeading = %i
+	MaxCharWidth = %i
+	Weight = %i
+	Italic = %i
+	Underlined = %i
+	StruckOut = %i
+	FirstChar = %i
+	LastChar = %i
+	DefaultChar = %i
+	BreakChar = %i
+	CharSet = %i
+	Overhang = %i
+	DigitizedAspectX = %i
+	DigitizedAspectY = %i
+	AveCharWidth = %i
+	MaxCharWidth = %i
+	Ascent = %i
+	Descent = %i
+	Height = %i\n",
+    metrics->tmInternalLeading,
+    metrics->tmExternalLeading,
+    metrics->tmMaxCharWidth,
+    metrics->tmWeight,
+    metrics->tmItalic,
+    metrics->tmUnderlined,
+    metrics->tmStruckOut,
+    metrics->tmFirstChar,
+    metrics->tmLastChar,
+    metrics->tmDefaultChar,
+    metrics->tmBreakChar,
+    metrics->tmCharSet,
+    metrics->tmOverhang,
+    metrics->tmDigitizedAspectX,
+    metrics->tmDigitizedAspectY,
+    metrics->tmAveCharWidth,
+    metrics->tmMaxCharWidth,
+    metrics->tmAscent,
+    metrics->tmDescent,
+    metrics->tmHeight);
+
     return TRUE;
 }
 

@@ -1,13 +1,13 @@
 name	shell
 type	win16
 
-  1 pascal   RegOpenKey(long ptr ptr) RegOpenKey
-  2 pascal   RegCreateKey(long ptr ptr) RegCreateKey
+  1 pascal   RegOpenKey(long ptr ptr) RegOpenKey16
+  2 pascal   RegCreateKey(long ptr ptr) RegCreateKey16
   3 pascal   RegCloseKey(long) RegCloseKey
-  4 pascal   RegDeleteKey(long ptr) RegDeleteKey
-  5 pascal   RegSetValue(long ptr long ptr long) RegSetValue
-  6 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue
-  7 pascal   RegEnumKey(long long ptr long) RegEnumKey
+  4 pascal   RegDeleteKey(long ptr) RegDeleteKey16
+  5 pascal   RegSetValue(long ptr long ptr long) RegSetValue16
+  6 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue16
+  7 pascal   RegEnumKey(long long ptr long) RegEnumKey16
   9 pascal16 DragAcceptFiles(word word) DragAcceptFiles
  11 pascal16 DragQueryFile(word s_word ptr s_word) DragQueryFile
  12 pascal16 DragFinish(word) DragFinish

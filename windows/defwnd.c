@@ -85,26 +85,22 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     {
     case WM_NCCREATE:
 	{
-	    CREATESTRUCT *createStruct = (CREATESTRUCT*)PTR_SEG_TO_LIN(lParam);
-	    if (createStruct->lpszName)
-		DEFWND_SetText( wndPtr,
-                               (LPSTR)PTR_SEG_TO_LIN(createStruct->lpszName) );
+	    CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+	    if (cs->lpszName)
+		DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(cs->lpszName) );
 	    return 1;
 	}
 
     case WM_NCCALCSIZE:
 	return NC_HandleNCCalcSize( hwnd,
-                                 (NCCALCSIZE_PARAMS *)PTR_SEG_TO_LIN(lParam) );
+                               (NCCALCSIZE_PARAMS16 *)PTR_SEG_TO_LIN(lParam) );
 
     case WM_PAINTICON: 
     case WM_NCPAINT:
 	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
 
     case WM_NCHITTEST:
-        {
-            POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-            return NC_HandleNCHitTest( hwnd, pt );
-        }
+        return NC_HandleNCHitTest( hwnd, MAKEPOINT16(lParam) );
 
     case WM_NCLBUTTONDOWN:
 	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
@@ -125,16 +121,16 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	
     case WM_PAINT:
 	{
-	    PAINTSTRUCT paintstruct;
-	    BeginPaint( hwnd, &paintstruct );
-	    EndPaint( hwnd, &paintstruct );
+	    PAINTSTRUCT16 paintstruct;
+	    BeginPaint16( hwnd, &paintstruct );
+	    EndPaint16( hwnd, &paintstruct );
 	    return 0;
 	}
 
     case WM_SETREDRAW:
         if (!wParam)
         {
-            ValidateRect( hwnd, NULL );
+            ValidateRect32( hwnd, NULL );
             wndPtr->flags |= WIN_NO_REDRAW;
         }
         else wndPtr->flags &= ~WIN_NO_REDRAW;
@@ -159,12 +155,12 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	break;
 
     case WM_WINDOWPOSCHANGING:
-	return WINPOS_HandleWindowPosChanging( (WINDOWPOS *)PTR_SEG_TO_LIN(lParam) );
+	return WINPOS_HandleWindowPosChanging( (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam) );
 
     case WM_WINDOWPOSCHANGED:
 	{
-	    WINDOWPOS * winPos = (WINDOWPOS *)PTR_SEG_TO_LIN(lParam);
-	    WPARAM	wp     = SIZE_RESTORED;
+	    WINDOWPOS16 * winPos = (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam);
+	    WPARAM16 wp = SIZE_RESTORED;
 
 	    if (!(winPos->flags & SWP_NOCLIENTMOVE))
 		SendMessage( hwnd, WM_MOVE, 0,
@@ -277,10 +273,8 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
     case WM_SYSCOMMAND:
-	{
-          POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-          return NC_HandleSysCommand( hwnd, wParam, pt );
-	}
+        return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT16(lParam) );
+
     case WM_KEYDOWN:
 
 	if(wParam == VK_F10) iF10Key = VK_F10;

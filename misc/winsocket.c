@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 #include "winsock.h"
-#include "toolhelp.h"
+#include "global.h"
 #include "stddebug.h"
 #include "debug.h"
 

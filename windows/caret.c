@@ -273,16 +273,26 @@ WORD GetCaretBlinkTime()
 
 
 /*****************************************************************
- *               GetCaretPos          (USER.183)
+ *               GetCaretPos16          (USER.183)
  */
-
-void GetCaretPos(LPPOINT pt)
+void GetCaretPos16( LPPOINT16 pt )
 {
     if (!Caret.hwnd || !pt) return;
 
     dprintf_caret(stddeb,"GetCaretPos: hwnd=%04x, pt=%p, x=%d, y=%d\n",
                   Caret.hwnd, pt, Caret.x, Caret.y);
 
+    pt->x = Caret.x;
+    pt->y = Caret.y;
+}
+
+
+/*****************************************************************
+ *               GetCaretPos32          (USER32.209)
+ */
+void GetCaretPos32( LPPOINT32 pt )
+{
+    if (!Caret.hwnd || !pt) return;
     pt->x = Caret.x;
     pt->y = Caret.y;
 }

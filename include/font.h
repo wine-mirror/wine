@@ -27,7 +27,7 @@ typedef struct
 {
 	UINT	gmBlackBoxX;
 	UINT	gmBlackBoxY;
-	POINT	gmptGlyphOrigin;
+	POINT16	gmptGlyphOrigin;
 	int	gmCellIncX;
 	int	gmCellIncY;
 } GLYPHMETRICS,*LPGLYPHMETRICS;

@@ -38,13 +38,13 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 30  pascal16 SaveDC(word) SaveDC
 31  pascal   SetPixel(word s_word s_word long) SetPixel
 32  pascal16 OffsetClipRgn(word s_word s_word) OffsetClipRgn
-33  pascal16 TextOut(word s_word s_word ptr word) TextOut
+33  pascal16 TextOut(word s_word s_word ptr word) TextOut16
 34  pascal16 BitBlt( word s_word s_word s_word s_word word s_word s_word long)
              BitBlt
 35  pascal16 StretchBlt(word s_word s_word s_word s_word word s_word s_word
                         s_word s_word long) StretchBlt
-36  pascal16 Polygon (word ptr word) Polygon 
-37  pascal16 Polyline (word ptr word) Polyline 
+36  pascal16 Polygon (word ptr word) Polygon16
+37  pascal16 Polyline (word ptr word) Polyline16
 38  pascal Escape(word word word ptr ptr) Escape
 39  pascal16 RestoreDC(word s_word) RestoreDC
 40  pascal16 FillRgn(word word word) FillRgn
@@ -54,7 +54,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 44  pascal16 SelectClipRgn(word word) SelectClipRgn
 45  pascal16 SelectObject(word word) SelectObject
 #46  pascal __GP?
-47  pascal16 CombineRgn(word word word word) CombineRgn
+47  pascal16 CombineRgn(word word word s_word) CombineRgn
 48  pascal16 CreateBitmap(word word word word ptr) CreateBitmap
 49  pascal16 CreateBitmapIndirect(ptr) CreateBitmapIndirect
 50  pascal16 CreateBrushIndirect(ptr) CreateBrushIndirect
@@ -62,7 +62,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 52  pascal16 CreateCompatibleDC(word) CreateCompatibleDC
 53  pascal16 CreateDC(ptr ptr ptr ptr) CreateDC
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn
-55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect
+55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
 56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word
                         word word word word word ptr) CreateFont
 57  pascal16 CreateFontIndirect(ptr) CreateFontIndirect
@@ -70,11 +70,11 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 60  pascal16 CreatePatternBrush(word) CreatePatternBrush
 61  pascal16 CreatePen(s_word s_word long) CreatePen
 62  pascal16 CreatePenIndirect(ptr) CreatePenIndirect
-63  pascal16 CreatePolygonRgn(ptr word word) CreatePolygonRgn
+63  pascal16 CreatePolygonRgn(ptr word word) CreatePolygonRgn16
 64  pascal16 CreateRectRgn(s_word s_word s_word s_word) CreateRectRgn
-65  pascal16 CreateRectRgnIndirect(ptr) CreateRectRgnIndirect
+65  pascal16 CreateRectRgnIndirect(ptr) CreateRectRgnIndirect16
 66  pascal16 CreateSolidBrush(long) CreateSolidBrush
-67  pascal16 DPtoLP(word ptr s_word) DPtoLP
+67  pascal16 DPtoLP(word ptr s_word) DPtoLP16
 68  pascal16 DeleteDC(word) DeleteDC
 69  pascal16 DeleteObject(word) DeleteObject
 70  pascal16 EnumFonts(word ptr segptr long) EnumFonts
@@ -84,7 +84,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 74  pascal GetBitmapBits(word long ptr) GetBitmapBits
 75  pascal GetBkColor(word) GetBkColor
 76  pascal16 GetBkMode(word) GetBkMode
-77  pascal16 GetClipBox(word ptr) GetClipBox
+77  pascal16 GetClipBox(word ptr) GetClipBox16
 78  pascal GetCurrentPosition(word) GetCurrentPosition
 79  pascal GetDCOrg(word) GetDCOrg
 80  pascal16 GetDeviceCaps(word s_word) GetDeviceCaps
@@ -107,12 +107,12 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 97  pascal GetWindowOrg(word) GetWindowOrg
 98  pascal16 IntersectVisRect(word s_word s_word s_word s_word)
              IntersectVisRect
-99  pascal16 LPtoDP(word ptr s_word) LPtoDP
+99  pascal16 LPtoDP(word ptr s_word) LPtoDP16
 100 pascal16 LineDDA(s_word s_word s_word s_word segptr long) LineDDA
 101 pascal16 OffsetRgn(word s_word s_word) OffsetRgn
 102 pascal16 OffsetVisRgn(word s_word s_word) OffsetVisRgn
 103 pascal16 PtVisible(word s_word s_word) PtVisible
-104 pascal16 RectVisibleOld(word ptr) RectVisible
+104 pascal16 RectVisibleOld(word ptr) RectVisible16
 105 pascal16 SelectVisRgn(word word) SelectVisRgn
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg
@@ -130,7 +130,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 131 pascal16 InquireVisRgn(word) InquireVisRgn
 132 pascal16 SetEnvironment(ptr ptr word) SetEnvironment
 133 pascal16 GetEnvironment(ptr ptr word) GetEnvironment
-134 pascal16 GetRgnBox(word ptr) GetRgnBox
+134 pascal16 GetRgnBox(word ptr) GetRgnBox16
 #135 pascal ScanLr
 136 pascal16 RemoveFontResource(ptr) RemoveFontResource
 148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg
@@ -144,8 +144,8 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 159 pascal16 GetMetaFileBits(word) GetMetaFileBits
 160 pascal16 SetMetaFileBits(word) SetMetaFileBits
 161 pascal16 PtInRegion(word s_word s_word) PtInRegion
-162 pascal GetBitmapDimension(word) GetBitmapDimension
-163 pascal SetBitmapDimension(word s_word s_word) SetBitmapDimension
+162 pascal   GetBitmapDimension(word) GetBitmapDimension
+163 pascal   SetBitmapDimension(word s_word s_word) SetBitmapDimension
 169 stub IsDCDirty
 170 stub SetDCStatus
 172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn
@@ -154,7 +154,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord
 179 pascal16 GetDCState(word) GetDCState
 180 pascal16 SetDCState(word word) SetDCState
-181 pascal16 RectInRegionOld(word ptr) RectInRegion
+181 pascal16 RectInRegionOld(word ptr) RectInRegion16
 188 stub GetTextExtentEx
 190 stub SetDCHook
 191 stub GetDCHook
@@ -235,7 +235,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
                    s_word s_word) Chord
 349 pascal SetMapperFlags(word long) SetMapperFlags
 350 pascal16 GetCharWidth(word word word ptr) GetCharWidth
-351 pascal16 ExtTextOut(word s_word s_word word ptr ptr s_word ptr) ExtTextOut
+351 pascal16 ExtTextOut(word s_word s_word word ptr ptr s_word ptr) ExtTextOut16
 352 stub GetPhysicalFontHandle
 353 stub GetAspectRatioFilter
 354 stub ShrinkGDIHeap
@@ -283,37 +283,37 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
              CreateRoundRectRgn
 445 pascal16 CreateDIBPatternBrush(word word) CreateDIBPatternBrush
 449 stub DEVICECOLORMATCH
-450 pascal16 PolyPolygon(word ptr ptr word) PolyPolygon
-451 pascal16 CreatePolyPolygonRgn(ptr ptr word word) CreatePolyPolygonRgn
+450 pascal16 PolyPolygon(word ptr ptr word) PolyPolygon16
+451 pascal16 CreatePolyPolygonRgn(ptr ptr word word) CreatePolyPolygonRgn16
 452 stub GDISEEGDIDO
 460 stub GDITASKTERMINATION
 461 return SetObjectOwner 4 0
 462 pascal16 IsGDIObject(word) IsGDIObject
 463 stub MAKEOBJECTPRIVATE
 464 stub FIXUPBOGUSPUBLISHERMETAFILE
-465 pascal16 RectVisible(word ptr) RectVisible
-466 pascal16 RectInRegion(word ptr) RectInRegion
+465 pascal16 RectVisible(word ptr) RectVisible16
+466 pascal16 RectInRegion(word ptr) RectInRegion16
 467 stub UNICODETOANSI
-468 pascal16 GetBitmapDimensionEx(word ptr) GetBitmapDimensionEx
-469 pascal16 GetBrushOrgEx(word ptr) GetBrushOrgEx
-470 pascal16 GetCurrentPositionEx(word ptr) GetCurrentPositionEx
-471 pascal16 GetTextExtentPoint(word ptr s_word ptr) GetTextExtentPoint
-472 pascal16 GetViewportExtEx(word ptr) GetViewportExtEx
-473 pascal16 GetViewportOrgEx(word ptr) GetViewportOrgEx
-474 pascal16 GetWindowExtEx(word ptr) GetWindowExtEx
-475 pascal16 GetWindowOrgEx(word ptr) GetWindowOrgEx
-476 pascal16 OffsetViewportOrgEx(word s_word s_word ptr) OffsetViewportOrgEx
-477 pascal16 OffsetWindowOrgEx(word s_word s_word ptr) OffsetWindowOrgEx
-478 pascal16 SetBitmapDimensionEx(word s_word s_word ptr) SetBitmapDimensionEx
-479 pascal16 SetViewportExtEx(word s_word s_word ptr) SetViewportExtEx
-480 pascal16 SetViewportOrgEx(word s_word s_word ptr) SetViewportOrgEx
-481 pascal16 SetWindowExtEx(word s_word s_word ptr) SetWindowExtEx
-482 pascal16 SetWindowOrgEx(word s_word s_word ptr) SetWindowOrgEx
-483 pascal16 MoveToEx(word s_word s_word ptr) MoveToEx
+468 pascal16 GetBitmapDimensionEx(word ptr) GetBitmapDimensionEx16
+469 pascal16 GetBrushOrgEx(word ptr) GetBrushOrgEx16
+470 pascal16 GetCurrentPositionEx(word ptr) GetCurrentPositionEx16
+471 pascal16 GetTextExtentPoint(word ptr s_word ptr) GetTextExtentPoint16
+472 pascal16 GetViewportExtEx(word ptr) GetViewportExtEx16
+473 pascal16 GetViewportOrgEx(word ptr) GetViewportOrgEx16
+474 pascal16 GetWindowExtEx(word ptr) GetWindowExtEx16
+475 pascal16 GetWindowOrgEx(word ptr) GetWindowOrgEx16
+476 pascal16 OffsetViewportOrgEx(word s_word s_word ptr) OffsetViewportOrgEx16
+477 pascal16 OffsetWindowOrgEx(word s_word s_word ptr) OffsetWindowOrgEx16
+478 pascal16 SetBitmapDimensionEx(word s_word s_word ptr) SetBitmapDimensionEx16
+479 pascal16 SetViewportExtEx(word s_word s_word ptr) SetViewportExtEx16
+480 pascal16 SetViewportOrgEx(word s_word s_word ptr) SetViewportOrgEx16
+481 pascal16 SetWindowExtEx(word s_word s_word ptr) SetWindowExtEx16
+482 pascal16 SetWindowOrgEx(word s_word s_word ptr) SetWindowOrgEx16
+483 pascal16 MoveToEx(word s_word s_word ptr) MoveToEx16
 484 pascal16 ScaleViewportExtEx(word s_word s_word s_word s_word ptr)
-             ScaleViewportExtEx
+             ScaleViewportExtEx16
 485 pascal16 ScaleWindowExtEx(word s_word s_word s_word s_word ptr)
-             ScaleWindowExtEx
+             ScaleWindowExtEx16
 486 stub GETASPECTRATIOFILTEREX
 489 stub CreateDIBSection
 490 stub CloseEnhMetafile

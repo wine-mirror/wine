@@ -314,20 +314,20 @@ base	1
 0308 stub GetVersionExW
 0309 stub GetVolumeInformationA
 0310 stub GetVolumeInformationW
-0311 stub GetWindowsDirectoryA
+0311 stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectory
 0312 stub GetWindowsDirectoryW
-0313 stdcall GlobalAddAtomA(long) WIN32_GlobalAddAtomA
-0314 stub GlobalAddAtomW
+0313 stdcall GlobalAddAtomA(ptr) GlobalAddAtom32A
+0314 stdcall GlobalAddAtomW(ptr) GlobalAddAtom32W
 0315 stdcall GlobalAlloc(long long) GlobalAlloc32
 0316 stdcall GlobalCompact(long) GlobalCompact32
-0317 stub GlobalDeleteAtom
-0318 stub GlobalFindAtomA
-0319 stub GlobalFindAtomW
+0317 stdcall GlobalDeleteAtom(long) GlobalDeleteAtom
+0318 stdcall GlobalFindAtomA(ptr) GlobalFindAtom32A
+0319 stdcall GlobalFindAtomW(ptr) GlobalFindAtom32W
 0320 stub GlobalFix
 0321 stdcall GlobalFlags(long) GlobalFlags32
 0322 stdcall GlobalFree(long) GlobalFree32
-0323 stub GlobalGetAtomNameA
-0324 stub GlobalGetAtomNameW
+0323 stdcall GlobalGetAtomNameA(long ptr long) GlobalGetAtomName32A
+0324 stdcall GlobalGetAtomNameW(long ptr long) GlobalGetAtomName32W
 0325 stdcall GlobalHandle(ptr) GlobalHandle32
 0326 stdcall GlobalLock(long) GlobalLock32
 0327 stub GlobalMemoryStatus

@@ -15,8 +15,8 @@ heap	65520
 13  pascal   GetTickCount() GetTickCount
 14  pascal   GetTimerResolution() GetTimerResolution
 15  pascal   GetCurrentTime() GetCurrentTime
-16  pascal16 ClipCursor(ptr) ClipCursor
-17  pascal16 GetCursorPos(ptr) GetCursorPos
+16  pascal16 ClipCursor(ptr) ClipCursor16
+17  pascal16 GetCursorPos(ptr) GetCursorPos16
 18  pascal16 SetCapture(word) SetCapture
 19  pascal16 ReleaseCapture() ReleaseCapture
 20  pascal16 SetDoubleClickTime(word) SetDoubleClickTime
@@ -27,19 +27,19 @@ heap	65520
 25  pascal16 GetProp(word segptr) GetProp
 26  pascal16 SetProp(word segptr word) SetProp
 27  pascal16 EnumProps(word segptr) EnumProps
-28  pascal16 ClientToScreen(word ptr) ClientToScreen
-29  pascal16 ScreenToClient(word ptr) ScreenToClient
-30  pascal16 WindowFromPoint(long) WindowFromPoint
+28  pascal16 ClientToScreen(word ptr) ClientToScreen16
+29  pascal16 ScreenToClient(word ptr) ScreenToClient16
+30  pascal16 WindowFromPoint(long) WindowFromPoint16
 31  pascal16 IsIconic(word) IsIconic
-32  pascal16 GetWindowRect(word ptr) GetWindowRect
-33  pascal16 GetClientRect(word ptr) GetClientRect
+32  pascal16 GetWindowRect(word ptr) GetWindowRect16
+33  pascal16 GetClientRect(word ptr) GetClientRect16
 34  pascal16 EnableWindow(word word) EnableWindow
 35  pascal16 IsWindowEnabled(word) IsWindowEnabled
 36  pascal16 GetWindowText(word segptr word) WIN16_GetWindowText
 37  pascal16 SetWindowText(word segptr) WIN16_SetWindowText
 38  pascal16 GetWindowTextLength(word) GetWindowTextLength
-39  pascal16 BeginPaint(word ptr) BeginPaint
-40  pascal16 EndPaint(word ptr) EndPaint
+39  pascal16 BeginPaint(word ptr) BeginPaint16
+40  pascal16 EndPaint(word ptr) EndPaint16
 41  pascal16 CreateWindow(segptr segptr long s_word s_word s_word s_word
 	                  word word word segptr) CreateWindow16
 42  pascal16 ShowWindow(word word) ShowWindow
@@ -50,7 +50,7 @@ heap	65520
 47  pascal16 IsWindow(word) IsWindow
 48  pascal16 IsChild(word word) IsChild
 49  pascal16 IsWindowVisible(word) IsWindowVisible
-50  pascal16 FindWindow(segptr ptr) FindWindow
+50  pascal16 FindWindow(segptr ptr) FindWindow16
 #51 BEAR51
 52  pascal16 AnyPopup() AnyPopup
 53  pascal16 DestroyWindow(word) DestroyWindow
@@ -58,7 +58,7 @@ heap	65520
 55  pascal16 EnumChildWindows(word segptr long) EnumChildWindows
 56  pascal16 MoveWindow(word word word word word word) MoveWindow
 57  pascal16 RegisterClass(ptr) RegisterClass16
-58  pascal16 GetClassName(word ptr word) GetClassName
+58  pascal16 GetClassName(word ptr word) GetClassName16
 59  pascal16 SetActiveWindow(word) SetActiveWindow
 60  pascal16 GetActiveWindow() GetActiveWindow
 61  pascal16 ScrollWindow(word s_word s_word ptr ptr) ScrollWindow
@@ -72,20 +72,20 @@ heap	65520
 69  pascal16 SetCursor(word) SetCursor
 70  pascal16 SetCursorPos(word word) SetCursorPos
 71  pascal16 ShowCursor(word) ShowCursor
-72  pascal16 SetRect(ptr s_word s_word s_word s_word) SetRect
-73  pascal16 SetRectEmpty(ptr) SetRectEmpty
-74  pascal16 CopyRect(ptr ptr) CopyRect
-75  pascal16 IsRectEmpty(ptr) IsRectEmpty
-76  pascal16 PtInRect(ptr long) PtInRect
-77  pascal16 OffsetRect(ptr s_word s_word) OffsetRect
-78  pascal16 InflateRect(ptr s_word s_word) InflateRect
-79  pascal16 IntersectRect(ptr ptr ptr) IntersectRect
-80  pascal16 UnionRect(ptr ptr ptr) UnionRect
-81  pascal16 FillRect(word ptr word) FillRect
-82  pascal16 InvertRect(word ptr) InvertRect
-83  pascal16 FrameRect(word ptr word) FrameRect
+72  pascal16 SetRect(ptr s_word s_word s_word s_word) SetRect16
+73  pascal16 SetRectEmpty(ptr) SetRectEmpty16
+74  pascal16 CopyRect(ptr ptr) CopyRect16
+75  pascal16 IsRectEmpty(ptr) IsRectEmpty16
+76  pascal16 PtInRect(ptr long) PtInRect16
+77  pascal16 OffsetRect(ptr s_word s_word) OffsetRect16
+78  pascal16 InflateRect(ptr s_word s_word) InflateRect16
+79  pascal16 IntersectRect(ptr ptr ptr) IntersectRect16
+80  pascal16 UnionRect(ptr ptr ptr) UnionRect16
+81  pascal16 FillRect(word ptr word) FillRect16
+82  pascal16 InvertRect(word ptr) InvertRect16
+83  pascal16 FrameRect(word ptr word) FrameRect16
 84  pascal16 DrawIcon(word s_word s_word word) DrawIcon
-85  pascal16 DrawText(word ptr s_word ptr word) DrawText
+85  pascal16 DrawText(word ptr s_word ptr word) DrawText16
 87  pascal16 DialogBox(word segptr word segptr) DialogBox
 88  pascal16 EndDialog(word s_word) EndDialog
 89  pascal16 CreateDialog(word segptr word segptr) CreateDialog
@@ -101,8 +101,8 @@ heap	65520
 99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect
 100 pascal16 DlgDirList(word segptr word word word) DlgDirList
 101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage
-102 pascal16 AdjustWindowRect(ptr long word) AdjustWindowRect
-103 pascal16 MapDialogRect(word ptr) MapDialogRect
+102 pascal16 AdjustWindowRect(ptr long word) AdjustWindowRect16
+103 pascal16 MapDialogRect(word ptr) MapDialogRect16
 104 pascal16 MessageBeep(word) MessageBeep
 105 pascal16 FlashWindow(word word) FlashWindow
 106 pascal16 GetKeyState(word) GetKeyState
@@ -116,22 +116,22 @@ heap	65520
 114 pascal   DispatchMessage(ptr) DispatchMessage
 115 stub ReplyMessage
 116 pascal16 PostAppMessage(word word word long) PostAppMessage
-118 pascal16 RegisterWindowMessage(long) RegisterWindowMessage
+118 pascal16 RegisterWindowMessage(segptr) RegisterWindowMessage16
 117 stub WindowFromDC
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook
-122 pascal   CallWindowProc(segptr word word word long) CallWindowProc
+122 pascal   CallWindowProc(segptr word word word long) CallWindowProc16
 123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter
 124 pascal16 UpdateWindow(word) UpdateWindow
-125 pascal16 InvalidateRect(word ptr word) InvalidateRect
+125 pascal16 InvalidateRect(word ptr word) InvalidateRect16
 126 pascal16 InvalidateRgn(word word word) InvalidateRgn
-127 pascal16 ValidateRect(word ptr) ValidateRect
+127 pascal16 ValidateRect(word ptr) ValidateRect16
 128 pascal16 ValidateRgn(word word) ValidateRgn
 129 pascal16 GetClassWord(word s_word) GetClassWord
 130 pascal16 SetClassWord(word s_word word) SetClassWord
-131 pascal   GetClassLong(word s_word) GetClassLong
-132 pascal   SetClassLong(word s_word long) SetClassLong
+131 pascal   GetClassLong(word s_word) GetClassLong16
+132 pascal   SetClassLong(word s_word long) SetClassLong16
 133 pascal16 GetWindowWord(word s_word) GetWindowWord
 134 pascal16 SetWindowWord(word s_word word) SetWindowWord
 135 pascal   GetWindowLong(word s_word) GetWindowLong
@@ -182,15 +182,15 @@ heap	65520
 180 pascal   GetSysColor(word) GetSysColor
 181 pascal16 SetSysColors(word ptr ptr) SetSysColors
 182 pascal16 KillSystemTimer(word word) KillSystemTimer
-183 pascal16 GetCaretPos(ptr) GetCaretPos
+183 pascal16 GetCaretPos(ptr) GetCaretPos16
 184 stub QuerySendMessage
 185 pascal16 GrayString(word word ptr ptr word word word word word) GrayString
 186 pascal16 SwapMouseButton(word) SwapMouseButton
 187 pascal16 EndMenu() EndMenu
 188 pascal16 SetSysModalWindow(word) SetSysModalWindow
 189 pascal16 GetSysModalWindow() GetSysModalWindow
-190 pascal16 GetUpdateRect(word ptr word) GetUpdateRect
-191 pascal16 ChildWindowFromPoint(word long) ChildWindowFromPoint
+190 pascal16 GetUpdateRect(word ptr word) GetUpdateRect16
+191 pascal16 ChildWindowFromPoint(word long) ChildWindowFromPoint16
 192 pascal16 InSendMessage() InSendMessage
 193 pascal16 IsClipboardFormatAvailable(word) IsClipboardFormatAvailable
 194 pascal16 DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox
@@ -246,7 +246,7 @@ heap	65520
 242 pascal16 CreateDialogIndirectParam(word segptr word segptr long)
              CreateDialogIndirectParam
 243 pascal   GetDialogBaseUnits() GetDialogBaseUnits
-244 pascal16 EqualRect(ptr ptr) EqualRect
+244 pascal16 EqualRect(ptr ptr) EqualRect16
 245 stub EnableCommNotification
 246 stub ExitWindowsExec
 247 pascal16 GetCursor() GetCursor
@@ -260,7 +260,7 @@ heap	65520
 255 pascal   DefDriverProc(long word word long long) DefDriverProc
 256 pascal16 GetDriverInfo(word ptr) GetDriverInfo
 257 pascal16 GetNextDriver(word long) GetNextDriver
-258 pascal16 MapWindowPoints(word word ptr word) MapWindowPoints
+258 pascal16 MapWindowPoints(word word ptr word) MapWindowPoints16
 259 pascal16 BeginDeferWindowPos(s_word) BeginDeferWindowPos
 260 pascal16 DeferWindowPos(word word word s_word s_word s_word s_word word)
              DeferWindowPos
@@ -271,10 +271,10 @@ heap	65520
 265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups
 266 pascal16 SetMessageQueue(word) SetMessageQueue
 267 pascal16 ShowScrollBar(word word word) ShowScrollBar
-268 pascal16 GlobalAddAtom(segptr) GlobalAddAtom
+268 pascal16 GlobalAddAtom(segptr) GlobalAddAtom16
 269 pascal16 GlobalDeleteAtom(word) GlobalDeleteAtom
-270 pascal16 GlobalFindAtom(segptr) GlobalFindAtom
-271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomName
+270 pascal16 GlobalFindAtom(segptr) GlobalFindAtom16
+271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomName16
 272 pascal16 IsZoomed(word) IsZoomed
 273 stub ControlPanelInfo
 274 stub GetNextQueueWindow
@@ -293,7 +293,7 @@ heap	65520
 287 pascal16 GetLastActivePopup(word) GetLastActivePopup
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
 #289 KEYB_EVENT
-290 pascal16 RedrawWindow(word ptr word word) RedrawWindow
+290 pascal16 RedrawWindow(word ptr word word) RedrawWindow16
 291 pascal   SetWindowsHookEx(s_word segptr word word) SetWindowsHookEx
 292 pascal16 UnhookWindowsHookEx(segptr) UnhookWindowsHookEx
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx
@@ -303,7 +303,7 @@ heap	65520
 #301 BOZOSLIVEHERE :-))	<- this is actually EditWndProc
 #306 BEAR306
 308 pascal   DefDlgProc(word word word long) DefDlgProc
-309 pascal16 GetClipCursor(ptr) GetClipCursor
+309 pascal16 GetClipCursor(ptr) GetClipCursor16
 314 stub SignalProc
 319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word)
              ScrollWindowEx
@@ -331,10 +331,10 @@ heap	65520
 364 stub LookupIconIDFromDirectoryEx
 368 pascal16 CopyIcon(word word) CopyIcon
 369 pascal16 CopyCursor(word word) CopyCursor
-370 pascal16 GetWindowPlacement(word ptr) GetWindowPlacement
-371 pascal16 SetWindowPlacement(word ptr) SetWindowPlacement
+370 pascal16 GetWindowPlacement(word ptr) GetWindowPlacement16
+371 pascal16 SetWindowPlacement(word ptr) SetWindowPlacement16
 372 stub GetInternalIconHeader
-373 pascal16 SubtractRect(ptr ptr ptr) SubtractRect
+373 pascal16 SubtractRect(ptr ptr ptr) SubtractRect16
 375 stub DrawTextEx
 376 stub SetMessageExtraInfo
 378 stub SetPropEx
@@ -350,14 +350,14 @@ heap	65520
 391 stub SignalProc32
 394 stub DrawIconEx
 395 stub GetIconInfo
-397 stub RegisterClassEx
-398 stub GetClassInfoEx
+397 pascal16 RegisterClassEx(ptr) RegisterClassEx16
+398 pascal16 GetClassInfoEx(word segptr ptr) GetClassInfoEx16
 399 stub ChildWindowFromPointEx
 400 stub FinalUserInit
 402 pascal16 GetPriorityClipboardFormat(word ptr s_word)
              GetPriorityClipboardFormat
 403 pascal16 UnregisterClass(segptr word) UnregisterClass16
-404 pascal16 GetClassInfo(word segptr ptr) GetClassInfo
+404 pascal16 GetClassInfo(word segptr ptr) GetClassInfo16
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor
 407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
@@ -369,14 +369,14 @@ heap	65520
 413 pascal16 DeleteMenu(word word word) DeleteMenu
 414 pascal16 ModifyMenu(word word word word segptr) ModifyMenu
 415 pascal16 CreatePopupMenu() CreatePopupMenu
-416 pascal16 TrackPopupMenu(word word word word word word ptr) TrackPopupMenu
+416 pascal16 TrackPopupMenu(word word s_word s_word s_word word ptr) TrackPopupMenu16
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps
 420 pascal16 wsprintf() wsprintf
 421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf
 422 stub DlgDirSelectEx
 423 stub DlgDirSelectComboBoxEx
-427 pascal16 FindWindowEx(word word segptr ptr) FindWindowEx
+427 pascal16 FindWindowEx(word word segptr ptr) FindWindowEx16
 428 stub TileWindows
 429 stub CascadeWindows
 430 pascal16 lstrcmp(ptr ptr) lstrcmp
@@ -399,19 +399,19 @@ heap	65520
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel
 452 pascal16 CreateWindowEx(long segptr segptr long s_word s_word s_word s_word
                             word word word segptr) CreateWindowEx16
-454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx
+454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx16
 455 pascal16 GetIconID(word long) GetIconID
 456 pascal16 LoadIconHandler(word word) LoadIconHandler
 457 pascal16 DestroyIcon(word) DestroyIcon
 458 pascal16 DestroyCursor(word) DestroyCursor
 459 pascal   DumpIcon(segptr ptr ptr ptr) DumpIcon
-460 pascal16 GetInternalWindowPos(word ptr ptr) GetInternalWindowPos
-461 pascal16 SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos
+460 pascal16 GetInternalWindowPos(word ptr ptr) GetInternalWindowPos16
+461 pascal16 SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos16
 462 pascal16 CalcChildScroll(word word) CalcChildScroll
 463 pascal16 ScrollChildren(word word word long) ScrollChildren
 464 pascal   DragObject(word word word word word word) DragObject
 465 pascal16 DragDetect(word long) DragDetect
-466 pascal16 DrawFocusRect(word ptr) DrawFocusRect
+466 pascal16 DrawFocusRect(word ptr) DrawFocusRect16
 470 stub StringFunc
 471 pascal16 lstrcmpi(ptr ptr) lstrcmpi
 472 pascal   AnsiNext(segptr) AnsiNext

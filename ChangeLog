@@ -1,4 +1,123 @@
 ----------------------------------------------------------------------
+Thu May 16 13:35:31 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [*/*.c]
+	Renamed RECT, POINT and SIZE structures to RECT16, POINT16 and
+	SIZE16. Implemented Win32 version of most functions that take
+	these types as parameters.
+
+	* [configure]
+	Patched autoconf to attempt to correctly detect -lnsl and
+	-lsocket. Please check this out.
+	
+	* [controls/button.c]
+	Added support for Win32 BM_* messages.
+
+	* [controls/menu.c]
+	Avoid sending extra WM_MENUSELECT messages. This avoids crashes
+	with Excel.
+
+	* [memory.heap.c] [include/heap.h]
+	Added support for SEGPTRs in Win32 heaps. Added a few macros to
+ 	make using SEGPTRs easier. They are a bit slower than MAKE_SEGPTR,
+ 	but they work with Win32.
+
+	* [memory/atom.c]
+	Implemented Win32 atom functions.
+
+	* [memory/local.c]
+	Fixed LocalReAlloc() changes to avoid copying the whole block twice.
+
+	* [win32/memory.c]
+	Use /dev/zero instead of MAP_ANON for VirtualAlloc().
+
+	* [windows/class.c]
+	Properly implemented the Win32 class functions.
+
+	* [windows/winproc.c] (New file)
+	New file handling the message translation between Win16 and Win32.
+
+Mon May 13 18:00:00 1996 Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/mdi.c] [windows/menu.c]
+	Improved WM_MDICREATE and WM_MDICASCADE handling.
+
+	* [windows/event.c] [objects/bitblt.c]
+	Handle GraphicsExpose event for BitBlt from screen to screen.
+
+	* [windows/event.c] [windows/win.c] [windows/nonclient.c]
+	Bunch of fixes for problems with -managed.
+
+	* [windows/win.c] [windows/winpos.c]
+	Changed conditions for WM_SIZE, WM_MOVE, and WM_GETMINMAXINFO
+	in CreateWindow.
+
+	* [windows/win.c] [windows/queue.c] [misc/user.c]
+	Do not send WM_PARENTNOTIFY when in AppExit and call WH_SHELL
+	on window creation/destruction.
+
+	* [objects/palette.c]
+	Crude RealizePalette(). At least something is visible in LviewPro.
+
+Sun May 12 02:05:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [if1632/gdi32.spec]
+	Added Rectangle (use win16 version).
+
+	* [if1632/kernel32.spec]
+	Added GetWindowsDirectoryA (use win16 GetWindowsDirectory).
+
+	* [if1632/user32.spec]
+	Added GetSubMenu, MoveWindow, SetScrollPos, SetScrollRange (use win16
+	versions).
+	Added SetWindowsHookExA (empty stub for now).
+
+	* [include/handle32.h]
+	Changed #include <malloc.h> to #include <stdlib.h> to prevent
+	hate message from FreeBSD compiler.
+
+	* [win32/newfns.c]
+	Added new function SetWindowsHookEx32A (empty stub for now).
+
+	* [win32/user32.c]
+	Removed redundant debugging printf statement.
+
+Sun May 12 01:24:57 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [memory/local.c]
+	Avoid creating adjacent free blocks.
+	Free the block in LocalReAlloc() before allocating a new one.
+	Fixed LocalReAlloc() for discarded blocks.
+	
+Fri May 10 23:05:12 1996  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [resources/sysres_Fi.rc]
+	ChooseFont and ChooseColor dialogs updated.
+
+Fri May 10 17:19:33 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/drive.c,if1632/kernel.spec]
+	GetCurrentDirectory(),SetCurrentDirectory() implemented.
+
+	* [if1632/advapi32.spec] [if1632/kernel.spec] [if1632/shell.spec]
+	  [include/windows.h] [include/winreg.h] [loader/main.c]
+	  [misc/main.c] [misc/shell.c] [misc/registry.c]
+	Registry fixes:
+	- loads win95 registry databases,
+	- save only updated keys on default,
+	- now adhers to the new function naming standard,
+	- minor cleanups.
+
+Tue May 7 22:36:13 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [combo.c]
+	Added WM_COMMAND-handling for interaction between EDIT and COMBOLBOX
+        and synchronized mine with Greg Kreider's works.
+
+	* [commdlg.c]
+	Bugfix in ChooseFont: font size handling.
+
+----------------------------------------------------------------------
 Mon May  6 12:56:26 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [DEVELOPERS-HINTS]

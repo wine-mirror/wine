@@ -78,8 +78,8 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
  */
 static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 {
-    RECT rect;
-    GetClientRect( hwnd, &rect );    
+    RECT16 rect;
+    GetClientRect16( hwnd, &rect );    
 
     /* Paint desktop pattern (only if wall paper does not cover everything) */
 
@@ -90,7 +90,7 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 	  /* Set colors in case pattern is a monochrome bitmap */
 	SetBkColor( hdc, RGB(0,0,0) );
 	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
-	FillRect( hdc, &rect, infoPtr->hbrushPattern );
+	FillRect16( hdc, &rect, infoPtr->hbrushPattern );
     }
 
       /* Paint wall paper */

@@ -79,19 +79,18 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (uMsg) {
 	case WM_ENABLE:
-	    InvalidateRect(hWnd, NULL, FALSE);
+	    InvalidateRect32( hWnd, NULL, FALSE );
 	    break;
 
         case WM_NCCREATE:
 	    if (style == SS_ICON)
             {
-		CREATESTRUCT * createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
-		if (createStruct->lpszName)
+		CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+		if (cs->lpszName)
                 {
-                    HICON hicon = LoadIcon( createStruct->hInstance,
-                                            createStruct->lpszName );
+                    HICON hicon = LoadIcon( cs->hInstance, cs->lpszName );
                     if (!hicon)  /* Try OEM icon (FIXME: is this right?) */
-                        hicon = LoadIcon( 0, createStruct->lpszName );
+                        hicon = LoadIcon( 0, cs->lpszName );
                     STATIC_SetIcon( wndPtr, hicon );
                 }
                 return 1;
@@ -120,11 +119,11 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_PAINT:
             {
-                PAINTSTRUCT ps;
-                BeginPaint( hWnd, &ps );
+                PAINTSTRUCT16 ps;
+                BeginPaint16( hWnd, &ps );
                 if (staticPaintFunc[style])
                     (staticPaintFunc[style])( wndPtr, ps.hdc );
-                EndPaint( hWnd, &ps );
+                EndPaint16( hWnd, &ps );
             }
 	    break;
 
@@ -132,7 +131,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
 	    color_background   = GetSysColor(COLOR_BACKGROUND);
 	    color_window       = GetSysColor(COLOR_WINDOW);
-	    InvalidateRect(hWnd, NULL, TRUE);
+	    InvalidateRect32( hWnd, NULL, TRUE );
 	    break;
 
 	case WM_SETTEXT:
@@ -142,7 +141,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                                   (SEGPTR)lParam ));
             else
                 DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
-	    InvalidateRect( hWnd, NULL, FALSE );
+	    InvalidateRect32( hWnd, NULL, FALSE );
 	    UpdateWindow( hWnd );
 	    break;
 
@@ -151,7 +150,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             infoPtr->hFont = (HFONT)wParam;
             if (LOWORD(lParam))
             {
-                InvalidateRect( hWnd, NULL, FALSE );
+                InvalidateRect32( hWnd, NULL, FALSE );
                 UpdateWindow( hWnd );
             }
             break;
@@ -170,7 +169,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case STM_SETICON:
             lResult = STATIC_SetIcon( wndPtr, (HICON)wParam );
-            InvalidateRect( hWnd, NULL, FALSE );
+            InvalidateRect32( hWnd, NULL, FALSE );
             UpdateWindow( hWnd );
 	    break;
 
@@ -185,7 +184,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 {
-    RECT rc;
+    RECT16 rc;
     HBRUSH hBrush;
     char *text;
     WORD wFormat;
@@ -193,7 +192,7 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
     LONG style = wndPtr->dwStyle;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
-    GetClientRect( wndPtr->hwndSelf, &rc);
+    GetClientRect16( wndPtr->hwndSelf, &rc);
     text = USER_HEAP_LIN_ADDR( wndPtr->hText );
 
     switch (style & 0x0000000F)
@@ -234,42 +233,42 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
                           MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
 #endif
     if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
-    FillRect(hdc, &rc, hBrush);
-    if (text) DrawText( hdc, text, -1, &rc, wFormat );
+    FillRect16(hdc, &rc, hBrush);
+    if (text) DrawText16( hdc, text, -1, &rc, wFormat );
 }
 
 static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
 {
-    RECT rc;
+    RECT16 rc;
     HBRUSH hBrush;
 
-    GetClientRect( wndPtr->hwndSelf, &rc);
+    GetClientRect16( wndPtr->hwndSelf, &rc);
     
     switch (wndPtr->dwStyle & 0x0f)
     {
     case SS_BLACKRECT:
 	hBrush = CreateSolidBrush(color_windowframe);
-        FillRect( hdc, &rc, hBrush );
+        FillRect16( hdc, &rc, hBrush );
 	break;
     case SS_GRAYRECT:
 	hBrush = CreateSolidBrush(color_background);
-        FillRect( hdc, &rc, hBrush );
+        FillRect16( hdc, &rc, hBrush );
 	break;
     case SS_WHITERECT:
 	hBrush = CreateSolidBrush(color_window);
-        FillRect( hdc, &rc, hBrush );
+        FillRect16( hdc, &rc, hBrush );
 	break;
     case SS_BLACKFRAME:
 	hBrush = CreateSolidBrush(color_windowframe);
-        FrameRect( hdc, &rc, hBrush );
+        FrameRect16( hdc, &rc, hBrush );
 	break;
     case SS_GRAYFRAME:
 	hBrush = CreateSolidBrush(color_background);
-        FrameRect( hdc, &rc, hBrush );
+        FrameRect16( hdc, &rc, hBrush );
 	break;
     case SS_WHITEFRAME:
 	hBrush = CreateSolidBrush(color_window);
-        FrameRect( hdc, &rc, hBrush );
+        FrameRect16( hdc, &rc, hBrush );
 	break;
     default:
         return;
@@ -280,11 +279,11 @@ static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
 
 static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
 {
-    RECT 	rc;
+    RECT16 rc;
     HBRUSH      hbrush;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
-    GetClientRect( wndPtr->hwndSelf, &rc);
+    GetClientRect16( wndPtr->hwndSelf, &rc);
 #ifdef WINELIB32
     hbrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                           hdc, wndPtr->hwndSelf );
@@ -292,6 +291,6 @@ static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
     hbrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, hdc,
                           MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
 #endif
-    FillRect( hdc, &rc, hbrush );
+    FillRect16( hdc, &rc, hbrush );
     if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );
 }

@@ -27,7 +27,8 @@ C_SRCS = \
 	sysmetrics.c \
 	timer.c \
 	win.c \
-	winpos.c
+	winpos.c \
+	winproc.c
 
 all: $(MODULE).o
 

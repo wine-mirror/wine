@@ -97,11 +97,11 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
     {
         HWND hwndOld = GetDlgItem( hwndDlg, dlgInfo->msgResult );
         if (SendMessage( hwndOld, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
-            SendMessage( hwndOld, BM_SETSTYLE, BS_PUSHBUTTON, TRUE );
+            SendMessage( hwndOld, BM_SETSTYLE16, BS_PUSHBUTTON, TRUE );
     }
     if (hwndNew)
     {
-        SendMessage( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
+        SendMessage( hwndNew, BM_SETSTYLE16, BS_DEFPUSHBUTTON, TRUE );
         dlgInfo->msgResult = GetDlgCtrlID( hwndNew );
     }
     else dlgInfo->msgResult = 0;
@@ -125,8 +125,8 @@ LRESULT DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     if (dlgInfo->dlgProc)
     {
 	  /* Call dialog procedure */
-	result = (BOOL)CallWindowProc( dlgInfo->dlgProc, hwnd, 
-				       msg, wParam, lParam );
+	result = (BOOL)CallWindowProc16( dlgInfo->dlgProc, hwnd, 
+                                         msg, wParam, lParam );
 
 	  /* Check if window destroyed by dialog procedure */
 	wndPtr = WIN_FindWndPtr( hwnd );

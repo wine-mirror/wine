@@ -26,9 +26,18 @@ func_type func_name( HDC hdc ) \
 }
 
 #define DC_GET_VAL_EX( func_name, ret_x, ret_y ) \
-BOOL func_name( HDC hdc, LPPOINT pt ) \
+BOOL16 func_name##16( HDC16 hdc, LPPOINT16 pt ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
+    if (!dc) return FALSE; \
+    pt->x = dc->w.ret_x; \
+    pt->y = dc->w.ret_y; \
+    return TRUE; \
+} \
+ \
+BOOL32 func_name##32( HDC32 hdc, LPPOINT32 pt ) \
+{ \
+    DC * dc = (DC *) GDI_GetObjPtr( (HDC16)hdc, DC_MAGIC ); \
     if (!dc) return FALSE; \
     pt->x = dc->w.ret_x; \
     pt->y = dc->w.ret_y; \

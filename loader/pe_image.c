@@ -23,7 +23,6 @@
 #include "neexe.h"
 #include "peexe.h"
 #include "pe_image.h"
-#include "relay32.h"
 #include "module.h"
 #include "alias.h"
 #include "global.h"

@@ -5,7 +5,7 @@ type	win16
 2      pascal  SNDPLAYSOUND(ptr word) sndPlaySound
 5      pascal  MMSYSTEMGETVERSION() mmsystemGetVersion
 6      pascal  DriverProc(long word word long long) DriverProc
-30     pascal  OUTPUTDEBUGSTR(ptr) OutputDebugStr
+30     pascal16 OutputDebugStr(ptr) OutputDebugString
 31     pascal  DriverCallback(long word word word long long long)
                DriverCallback
 #32    pascal  STACKENTER

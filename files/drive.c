@@ -474,3 +474,28 @@ WORD GetDriveType( INT drive )
     default:           return DRIVE_CANNOTDETERMINE;
     }
 }
+
+
+/***********************************************************************
+ *           GetCurrentDirectory   (KERNEL.411)
+ */
+UINT32 GetCurrentDirectory( UINT32 buflen, LPSTR buf )
+{
+    const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
+    if (!s)
+    {
+        *buf = '\0';
+        return 0;
+    }
+    lstrcpyn( buf, s, buflen );
+    return strlen(s); /* yes */
+}
+
+
+/***********************************************************************
+ *           SetCurrentDirectory   (KERNEL.412)
+ */
+BOOL32 SetCurrentDirectory( LPCSTR dir )
+{
+    return DRIVE_Chdir( DRIVE_GetCurrentDrive(), dir );
+}

@@ -14,20 +14,19 @@
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#include "gdi.h"
 #include "windows.h"
+#include "gdi.h"
+#include "heap.h"
 #include "win.h"
 #include "class.h"
 #include "clipboard.h"
 #include "debugger.h"
+#include "module.h"
 #include "options.h"
 #include "queue.h"
 #include "winpos.h"
 #include "registers.h"
-#include "stackframe.h"
 #include "stddebug.h"
-/* #define DEBUG_EVENT */
-/* #define DEBUG_KEY   */
 #include "debug.h"
 
 
@@ -149,6 +148,7 @@ static void EVENT_MotionNotify( XMotionEvent *event );
 static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
+static void EVENT_GraphicsExpose( HWND hwnd, XGraphicsExposeEvent *event );
 static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
 static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event);
 static void EVENT_SelectionNotify( HWND hwnd, XSelectionEvent *event);
@@ -233,6 +233,12 @@ void EVENT_ProcessEvent( XEvent *event )
 	EVENT_ClientMessage( hwnd, (XClientMessageEvent *) event );
 	break;
 
+    case GraphicsExpose:
+	EVENT_GraphicsExpose( hwnd, (XGraphicsExposeEvent *) event );
+
+    case NoExpose:
+	break;   
+
     default:    
 	dprintf_event(stddeb, "Unprocessed event %s for hwnd %04x\n",
 	        event_names[event->type], hwnd );
@@ -277,7 +283,7 @@ static WORD EVENT_XStateToKeyState( int state )
  */
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
 {
-    RECT rect;
+    RECT32 rect;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return;
 
@@ -287,9 +293,32 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    RedrawWindow( hwnd, &rect, 0,
-                  RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
-                  (event->count ? 0 : RDW_ERASENOW) );
+    RedrawWindow32( hwnd, &rect, 0,
+                    RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
+                    (event->count ? 0 : RDW_ERASENOW) );
+}
+
+
+/***********************************************************************
+ *           EVENT_GraphicsExpose
+ * This is needed when scrolling area is partially obscured
+ * by non-Wine X window.
+ */
+static void EVENT_GraphicsExpose( HWND hwnd, XGraphicsExposeEvent *event )
+{
+    RECT16 rect;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return;
+
+      /* Make position relative to client area instead of window */
+    rect.left = event->x - (wndPtr->rectClient.left - wndPtr->rectWindow.left);
+    rect.top  = event->y - (wndPtr->rectClient.top - wndPtr->rectWindow.top);
+    rect.right  = rect.left + event->width;
+    rect.bottom = rect.top + event->height;
+
+    RedrawWindow16( hwnd, &rect, 0,
+                    RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
+                    (event->count ? 0 : RDW_ERASENOW) );
 }
 
 
@@ -485,7 +514,7 @@ static void EVENT_FocusIn (HWND hwnd, XFocusChangeEvent *event )
 {
     if (event->detail == NotifyPointer) return;
     if (hwnd != GetActiveWindow()) WINPOS_ChangeActiveWindow( hwnd, FALSE );
-    if ((hwnd != GetFocus()) && ! IsChild( hwnd, GetFocus())) SetFocus( hwnd );
+    if ((hwnd != GetFocus()) && !IsChild( hwnd, GetFocus())) SetFocus( hwnd );
 }
 
 
@@ -518,12 +547,13 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     else
     {
       /* A managed window; most of this code is shamelessly
-       * stolen from SetWindowPos
+       * stolen from SetWindowPos - FIXME: outdated
        */
       
         WND *wndPtr;
-	WINDOWPOS winpos;
-	RECT newWindowRect, newClientRect;
+	WINDOWPOS16 *winpos;
+	RECT16 newWindowRect, newClientRect;
+        HRGN hrgnOldPos, hrgnNewPos;
 
 	if (!(wndPtr = WIN_FindWndPtr( hwnd )))
 	{
@@ -531,28 +561,30 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	    return;
 	}
 	
-	/* Artificial messages */
+        if (!(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
+
+        /* Artificial messages - what is this for? */
 	SendMessage(hwnd, WM_ENTERSIZEMOVE, 0, 0);
 	SendMessage(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
 	/* Fill WINDOWPOS struct */
-	winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
-	winpos.hwnd = hwnd;
-	winpos.x = event->x;
-	winpos.y = event->y;
-	winpos.cx = event->width;
-	winpos.cy = event->height;
+	winpos->flags = SWP_NOACTIVATE | SWP_NOZORDER;
+	winpos->hwnd = hwnd;
+	winpos->x = event->x;
+	winpos->y = event->y;
+	winpos->cx = event->width;
+	winpos->cy = event->height;
 
 	/* Check for unchanged attributes */
-	if(winpos.x == wndPtr->rectWindow.left &&
-	   winpos.y == wndPtr->rectWindow.top)
-	    winpos.flags |= SWP_NOMOVE;
-	if(winpos.cx == wndPtr->rectWindow.right - wndPtr->rectWindow.left &&
-	   winpos.cy == wndPtr->rectWindow.bottom - wndPtr->rectWindow.top)
-	    winpos.flags |= SWP_NOSIZE;
+	if(winpos->x == wndPtr->rectWindow.left &&
+	   winpos->y == wndPtr->rectWindow.top)
+	    winpos->flags |= SWP_NOMOVE;
+	if(winpos->cx == wndPtr->rectWindow.right - wndPtr->rectWindow.left &&
+	   winpos->cy == wndPtr->rectWindow.bottom - wndPtr->rectWindow.top)
+	    winpos->flags |= SWP_NOSIZE;
 
 	/* Send WM_WINDOWPOSCHANGING */
-	SendMessage(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)MAKE_SEGPTR(&winpos));
+	SendMessage(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)SEGPTR_GET(winpos));
 
 	/* Calculate new position and size */
 	newWindowRect.left = event->x;
@@ -560,14 +592,25 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	newWindowRect.top = event->y;
 	newWindowRect.bottom = event->y + event->height;
 
-	WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
+	WINPOS_SendNCCalcSize( winpos->hwnd, TRUE, &newWindowRect,
 			       &wndPtr->rectWindow, &wndPtr->rectClient,
-			       MAKE_SEGPTR(&winpos), &newClientRect );
+			       SEGPTR_GET(winpos), &newClientRect );
 
+        hrgnOldPos = CreateRectRgnIndirect16( &wndPtr->rectWindow );
+        hrgnNewPos = CreateRectRgnIndirect16( &newWindowRect );
+        CombineRgn( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
+ 
 	/* Set new size and position */
 	wndPtr->rectWindow = newWindowRect;
 	wndPtr->rectClient = newClientRect;
-	SendMessage(hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)MAKE_SEGPTR(&winpos));
+	SendMessage( hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)SEGPTR_GET(winpos));
+        SEGPTR_FREE(winpos);
+
+        /* full window drag leaves unrepainted garbage without this */
+        RedrawWindow32( 0, NULL, hrgnOldPos, RDW_INVALIDATE |
+                        RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW );
+        DeleteObject(hrgnOldPos);
+        DeleteObject(hrgnNewPos);
     }
 }
 
@@ -710,8 +753,9 @@ HWND GetCapture()
  */
 FARPROC GetMouseEventProc(void)
 {
-    char name[] = "Mouse_Event";
-    return GetProcAddress( GetModuleHandle("USER"), MAKE_SEGPTR(name) );
+    HMODULE hmodule = GetModuleHandle("USER");
+    return MODULE_GetEntryPoint( hmodule,
+                                 MODULE_GetOrdinal( hmodule, "Mouse_Event" ) );
 }
 
 

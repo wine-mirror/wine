@@ -21,7 +21,7 @@ typedef struct {
 LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 {
   LPMSGBOX lpmb;
-  RECT rect, textrect;
+  RECT16 rect, textrect;
   HWND hItem;
   HDC hdc;
   LONG lRet;
@@ -85,21 +85,21 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     }
     
     /* Position everything */
-    GetWindowRect(hwnd, &rect);
+    GetWindowRect16(hwnd, &rect);
     borheight = rect.bottom - rect.top;
     wwidth = rect.right - rect.left;
-    GetClientRect(hwnd, &rect);
+    GetClientRect16(hwnd, &rect);
     borheight -= rect.bottom - rect.top;
 
     /* Get the icon height */
-    GetWindowRect(GetDlgItem(hwnd, 1088), &rect);
+    GetWindowRect16(GetDlgItem(hwnd, 1088), &rect);
     iheight = rect.bottom - rect.top;
     
     /* Get the number of visible buttons and their width */
-    GetWindowRect(GetDlgItem(hwnd, 2), &rect);
+    GetWindowRect16(GetDlgItem(hwnd, 2), &rect);
     bheight = rect.bottom - rect.top;
     bwidth = rect.left;
-    GetWindowRect(GetDlgItem(hwnd, 1), &rect);
+    GetWindowRect16(GetDlgItem(hwnd, 1), &rect);
     bwidth -= rect.left;
     for (buttons = 0, i = 1; i < 8; i++) {
       hItem = GetDlgItem(hwnd, i);
@@ -110,13 +110,13 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     
     /* Get the text size */
     hItem = GetDlgItem(hwnd, 100);
-    GetWindowRect(hItem, &textrect);
-    MapWindowPoints(0, hwnd, (LPPOINT)&textrect, 2);
+    GetWindowRect16(hItem, &textrect);
+    MapWindowPoints16(0, hwnd, (LPPOINT16)&textrect, 2);
     
-    GetClientRect(hItem, &rect);
+    GetClientRect16(hItem, &rect);
     hdc = GetDC(hItem);
-    lRet = DrawText(hdc, lpmb->text, -1, &rect,
-		    DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
+    lRet = DrawText16( hdc, lpmb->text, -1, &rect,
+                       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     theight = rect.bottom  - rect.top;
     tiheight = 16 + MAX(iheight, theight);
     ReleaseDC(hItem, hdc);
@@ -128,8 +128,8 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     
     /* Position the icon */
     hItem = GetDlgItem(hwnd, 1088);
-    GetWindowRect(hItem, &rect);
-    MapWindowPoints(0, hwnd, (LPPOINT)&rect, 2);
+    GetWindowRect16(hItem, &rect);
+    MapWindowPoints16(0, hwnd, (LPPOINT16)&rect, 2);
     SetWindowPos(hItem, 0, rect.left, (tiheight - iheight) / 2, 0, 0,
 		 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
     
@@ -139,14 +139,14 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     
     /* Position the buttons */
     bpos = (wwidth - bwidth * buttons) / 2;
-    GetWindowRect(GetDlgItem(hwnd, 1), &rect);
+    GetWindowRect16(GetDlgItem(hwnd, 1), &rect);
     for (buttons = i = 0; i < 7; i++) {
       /* some arithmetic to get the right order for YesNoCancel windows */
       hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
       if (GetWindowLong(hItem, GWL_STYLE) & WS_VISIBLE) {
 	if (buttons++ == ((lpmb->type & MB_DEFMASK) >> 8)) {
 	  SetFocus(hItem);
-	  SendMessage(hItem, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE);
+	  SendMessage(hItem, BM_SETSTYLE16, BS_DEFPUSHBUTTON, TRUE);
 	}
 	SetWindowPos(hItem, 0, bpos, tiheight, 0, 0,
 		     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);

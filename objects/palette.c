@@ -20,7 +20,7 @@ static WORD SystemPaletteUse = SYSPAL_STATIC;	/* currently not considered */
 /***********************************************************************
  *           PALETTE_GetNearestIndexAndColor
  */
-static WORD PALETTE_GetNearestIndexAndColor(HPALETTE hpalette, COLORREF *color)
+static WORD PALETTE_GetNearestIndexAndColor(HPALETTE16 hpalette, COLORREF *color)
 {
     int i, minDist, dist;
     WORD index = 0;
@@ -69,10 +69,10 @@ static WORD PALETTE_GetNearestIndexAndColor(HPALETTE hpalette, COLORREF *color)
 /***********************************************************************
  *           CreatePalette    (GDI.360)
  */
-HPALETTE CreatePalette( const LOGPALETTE* palette )
+HPALETTE16 CreatePalette( const LOGPALETTE* palette )
 {
     PALETTEOBJ * palettePtr;
-    HPALETTE hpalette;
+    HPALETTE16 hpalette;
     int size;
 
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
@@ -87,7 +87,7 @@ HPALETTE CreatePalette( const LOGPALETTE* palette )
 /***********************************************************************
  *           GetPaletteEntries    (GDI.363)
  */
-WORD GetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
+WORD GetPaletteEntries( HPALETTE16 hpalette, WORD start, WORD count,
 		        LPPALETTEENTRY entries )
 {
     PALETTEOBJ * palPtr;
@@ -107,7 +107,7 @@ WORD GetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
 /***********************************************************************
  *           SetPaletteEntries    (GDI.364)
  */
-WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
+WORD SetPaletteEntries( HPALETTE16 hpalette, WORD start, WORD count,
 		        LPPALETTEENTRY entries )
 {
     PALETTEOBJ * palPtr;
@@ -126,7 +126,7 @@ WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
 /***********************************************************************
  *           ResizePalette          (GDI.368)
  */
-BOOL ResizePalette(HPALETTE hPal, UINT cEntries)
+BOOL ResizePalette(HPALETTE16 hPal, UINT cEntries)
 {
     fprintf(stdnimp,"ResizePalette: empty stub! \n");
     return FALSE;
@@ -135,7 +135,7 @@ BOOL ResizePalette(HPALETTE hPal, UINT cEntries)
 /***********************************************************************
  *           AnimatePalette          (GDI.367)
  */
-BOOL AnimatePalette(HPALETTE hPal, UINT StartIndex, UINT NumEntries,
+BOOL AnimatePalette(HPALETTE16 hPal, UINT StartIndex, UINT NumEntries,
 		    LPPALETTEENTRY PaletteColors)
 {
     fprintf(stdnimp,"AnimatePalette: empty stub! \n");
@@ -196,7 +196,7 @@ WORD GetSystemPaletteEntries( HDC hdc, WORD start, WORD count,
 /***********************************************************************
  *           GetNearestPaletteIndex    (GDI.370)
  */
-WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
+WORD GetNearestPaletteIndex( HPALETTE16 hpalette, COLORREF color )
 {
     WORD index = PALETTE_GetNearestIndexAndColor( hpalette, &color );
     dprintf_palette(stddeb,"GetNearestPaletteIndex(%04x,%06lx): returning %d\n", 
@@ -235,9 +235,9 @@ int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
 /***********************************************************************
  *           GDISelectPalette    (GDI.361)
  */
-HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
+HPALETTE16 GDISelectPalette( HDC hdc, HPALETTE16 hpal )
 {
-    HPALETTE prev;
+    HPALETTE16 prev;
     DC *dc;
 
     dprintf_palette(stddeb, "GDISelectPalette: %04x %04x\n", hdc, hpal );
@@ -255,15 +255,49 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
  */
 UINT GDIRealizePalette( HDC hdc )
 {
-    dprintf_palette(stdnimp, "GDIRealizePalette: %04x\n", hdc );
-    return 0;
+    UINT        realized = 0;
+    COLORREF    color;
+    DC*         dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ) ;
+    PALETTEOBJ* palPtr;
+
+    dprintf_palette(stdnimp, "GDIRealizePalette: %04x...", hdc );
+
+    if( dc )
+      {
+        palPtr = (PALETTEOBJ *) GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC );
+
+        if( palPtr )
+          {
+            WORD        index, i;
+            HANDLE      hMap;
+            WORD*       pMap;
+
+            hMap = GDI_HEAP_ALLOC(sizeof(WORD)*palPtr->logpalette.palNumEntries);
+            pMap = (WORD*)GDI_HEAP_LIN_ADDR( hMap );
+
+            if( pMap )
+            {
+              for (i = 0; i < palPtr->logpalette.palNumEntries ; i++)
+              {
+                color = *(COLORREF*)(palPtr->logpalette.palPalEntry + i);
+                index = PALETTE_GetNearestIndexAndColor( STOCK_DEFAULT_PALETTE, &color);
+                if( index != i ) realized++;
+                pMap[i] = index;
+              }
+              COLOR_SetMapping(dc, hMap, 0, i);
+              GDI_HEAP_FREE(hMap);
+            }
+          }
+      }
+    dprintf_palette(stdnimp, " realized %i colors\n", realized );
+    return realized;
 }
 
 
 /***********************************************************************
  *           SelectPalette    (USER.282)
  */
-HPALETTE SelectPalette(HDC hDC, HPALETTE hPal, BOOL bForceBackground)
+HPALETTE16 SelectPalette(HDC hDC, HPALETTE16 hPal, BOOL bForceBackground)
 {
     return GDISelectPalette( hDC, hPal );
 }

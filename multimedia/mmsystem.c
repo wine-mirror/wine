@@ -196,14 +196,6 @@ LRESULT DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 }
 
 /**************************************************************************
-* 				OutputDebugStr		[MMSYSTEM.30]
-*/
-void OutputDebugStr(LPCSTR str)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! OutputDebugStr('%s');\n", str);
-}
-
-/**************************************************************************
 * 				DriverCallback	[MMSYSTEM.31]
 */
 BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 

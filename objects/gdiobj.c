@@ -11,12 +11,12 @@
 #include "bitmap.h"
 #include "brush.h"
 #include "font.h"
+#include "heap.h"
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
 #include "callback.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI */
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -160,7 +160,7 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
  */
 BOOL GDI_Init(void)
 {
-    HPALETTE hpalette;
+    HPALETTE16 hpalette;
 
       /* Create default palette */
 
@@ -244,7 +244,7 @@ GDIOBJHDR * GDI_GetObjPtr( HANDLE handle, WORD magic )
 /***********************************************************************
  *           DeleteObject    (GDI.69)
  */
-BOOL DeleteObject( HGDIOBJ obj )
+BOOL DeleteObject( HGDIOBJ16 obj )
 {
       /* Check if object is valid */
 
@@ -380,6 +380,8 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
     };
     
     int i, retval = 0;
+    LOGPEN *pen;
+    LOGBRUSH *brush = NULL;
 
     dprintf_gdi( stddeb, "EnumObjects: %04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
@@ -387,40 +389,50 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
     {
     case OBJ_PEN:
         /* Enumerate solid pens */
+        if (!(pen = SEGPTR_NEW(LOGPEN))) break;
         for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
         {
-            LOGPEN pen = { PS_SOLID, { 1, 0 }, solid_colors[i] };
-            retval = CallEnumObjectsProc( lpEnumFunc, MAKE_SEGPTR(&pen),
+            pen->lopnStyle   = PS_SOLID;
+            pen->lopnWidth.x = 1;
+            pen->lopnWidth.y = 0;
+            pen->lopnColor   = solid_colors[i];
+            retval = CallEnumObjectsProc( lpEnumFunc, SEGPTR_GET(pen),
                                           lParam );
             dprintf_gdi( stddeb, "EnumObject: solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
+        SEGPTR_FREE(pen);
         break;
 
     case OBJ_BRUSH:
         /* Enumerate solid brushes */
+        if (!(brush = SEGPTR_NEW(LOGBRUSH))) break;
         for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
         {
-            LOGBRUSH brush = { BS_SOLID, solid_colors[i], 0 };
-            retval = CallEnumObjectsProc( lpEnumFunc, MAKE_SEGPTR(&brush),
+            brush->lbStyle = BS_SOLID;
+            brush->lbColor = solid_colors[i];
+            brush->lbHatch = 0;
+            retval = CallEnumObjectsProc( lpEnumFunc, SEGPTR_GET(brush),
                                           lParam );
             dprintf_gdi( stddeb, "EnumObject: solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
-        if (!retval) break;
 
         /* Now enumerate hatched brushes */
-        for (i = HS_HORIZONTAL; i <= HS_DIAGCROSS; i++)
+        if (retval) for (i = HS_HORIZONTAL; i <= HS_DIAGCROSS; i++)
         {
-            LOGBRUSH brush = { BS_HATCHED, RGB(0,0,0), i };
-            retval = CallEnumObjectsProc( lpEnumFunc, MAKE_SEGPTR(&brush),
+            brush->lbStyle = BS_HATCHED;
+            brush->lbColor = RGB(0,0,0);
+            brush->lbHatch = i;
+            retval = CallEnumObjectsProc( lpEnumFunc, SEGPTR_GET(brush),
                                           lParam );
             dprintf_gdi( stddeb, "EnumObject: hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;
         }
+        SEGPTR_FREE(brush);
         break;
 
     default:

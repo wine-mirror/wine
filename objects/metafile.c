@@ -307,7 +307,7 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
-    HANDLETABLE *ht;
+    SEGPTR ht;
     int offset = 0;
   
     dprintf_metafile(stddeb,"EnumMetaFile(%04x, %04x, %08lx, %08lx)\n",
@@ -317,7 +317,7 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
     
     hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT,
 		     sizeof(HANDLETABLE) * mh->mtNoObjects);
-    ht = (HANDLETABLE *)GlobalLock16(hHT);
+    ht = WIN16_GlobalLock16(hHT);
    
     offset = mh->mtHeaderSize * 2;
     
@@ -326,9 +326,8 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
-        if (!CallEnumMetafileProc(lpEnumFunc, hdc, MAKE_SEGPTR(ht),
-	                          MAKE_SEGPTR(mr), mh->mtNoObjects,
-				  (LONG)lpData))
+        if (!CallEnumMetafileProc(lpEnumFunc, hdc, ht, MAKE_SEGPTR(mr),  /* FIXME!! */
+                                  mh->mtNoObjects, (LONG)lpData))
 	    break;
 
 	offset += (mr->rdSize * 2);
@@ -504,22 +503,22 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 
     case META_TEXTOUT:
 	s1 = *(mr->rdParam);
-	TextOut(hdc, *(mr->rdParam + ((s1 + 1) >> 1) + 2),
-		*(mr->rdParam + ((s1 + 1) >> 1) + 1), 
-		(char *)(mr->rdParam + 1), s1);
+	TextOut16(hdc, *(mr->rdParam + ((s1 + 1) >> 1) + 2),
+                  *(mr->rdParam + ((s1 + 1) >> 1) + 1), 
+                  (char *)(mr->rdParam + 1), s1);
 	break;
 
     case META_POLYGON:
-	Polygon(hdc, (LPPOINT)(mr->rdParam + 1), *(mr->rdParam));
+	Polygon16(hdc, (LPPOINT16)(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_POLYPOLYGON:
-      PolyPolygon(hdc, (LPPOINT)(mr->rdParam + *(mr->rdParam) + 1),
-		  (LPINT16)(mr->rdParam + 1), *(mr->rdParam)); 
+      PolyPolygon16(hdc, (LPPOINT16)(mr->rdParam + *(mr->rdParam) + 1),
+                    (LPINT16)(mr->rdParam + 1), *(mr->rdParam)); 
       break;
 
     case META_POLYLINE:
-	Polyline(hdc, (LPPOINT)(mr->rdParam + 1), *(mr->rdParam));
+	Polyline16(hdc, (LPPOINT16)(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_RESTOREDC:
@@ -614,7 +613,8 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
         x6=mr->rdParam[(s1+1)/2+5]; /* unknown meaning */
         x7=mr->rdParam[(s1+1)/2+6]; /* unknown meaning */
         x8=mr->rdParam[(s1+1)/2+7]; /* unknown meaning */
-	ExtTextOut(hdc, x, y, options, (LPRECT) &mr->rdParam[(s1+1)/2+4], (char *)(mr->rdParam + 4), s1, NULL);
+	ExtTextOut16( hdc, x, y, options, (LPRECT16) &mr->rdParam[(s1+1)/2+4],
+                      (char *)(mr->rdParam + 4), s1, NULL );
 	/* fprintf(stderr,"EXTTEXTOUT (len: %d) %hd : %hd %hd %hd %hd [%s].\n",
             (mr->rdSize-s1),options,x5,x6,x7,x8,(char*) &(mr->rdParam[4]) );*/
         }
@@ -1058,7 +1058,7 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
  *         MF_CreatePenIndirect
  */
 
-BOOL MF_CreatePenIndirect(DC *dc, HPEN hPen, LOGPEN *logpen)
+BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN *logpen)
 {
     int index;
     HMETAFILE handle;
@@ -1131,7 +1131,7 @@ BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT *logfont)
 /******************************************************************
  *         MF_TextOut
  */
-BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
+BOOL MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
 {
     HMETAFILE handle;
     DWORD len;
@@ -1160,7 +1160,7 @@ BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
 /******************************************************************
  *         MF_MetaPoly - implements Polygon and Polyline
  */
-BOOL MF_MetaPoly(DC *dc, short func, LPPOINT pt, short count)
+BOOL MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
 {
     HMETAFILE handle;
     DWORD len;

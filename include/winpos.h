@@ -22,7 +22,7 @@ typedef struct
     WORD        valid;
     WORD        wMagic;
     HWND        hwndParent;
-    WINDOWPOS   winPos[1];
+    WINDOWPOS16 winPos[1];
 } DWP;
 
 typedef struct
@@ -36,10 +36,10 @@ extern void WINPOS_FindIconPos( HWND hwnd );
 extern BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus);
 extern BOOL WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
 extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
-				   RECT *newWindowRect, RECT *oldWindowRect,
-				   RECT *oldClientRect, SEGPTR winpos,
-				   RECT *newClientRect );
-extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos );
-extern INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd );
+                                  RECT16 *newWindowRect, RECT16 *oldWindowRect,
+				  RECT16 *oldClientRect, SEGPTR winpos,
+				  RECT16 *newClientRect );
+extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS16 *winpos );
+extern INT16 WINPOS_WindowFromPoint( POINT16 pt, WND **ppWnd );
 
 #endif  /* __WINE_WINPOS_H */

@@ -39,7 +39,7 @@
 Cursor CURSORICON_XCursor = None;  /* Current X cursor */
 static HCURSOR hActiveCursor = 0;  /* Active cursor */
 static int CURSOR_ShowCount = 0;   /* Cursor display count */
-static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
+static RECT32 CURSOR_ClipRect;       /* Cursor clipping rect */
 
 /**********************************************************************
  *	    CURSORICON_FindBestIcon
@@ -237,7 +237,7 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
     HANDLE hAndBits, hXorBits;
     HDC hdc;
     int size, sizeAnd, sizeXor;
-    POINT hotspot = { 0 ,0 };
+    POINT16 hotspot = { 0 ,0 };
     BITMAPOBJ *bmpXor, *bmpAnd;
     BITMAPINFO *bmi, *pInfo;
     CURSORICONINFO *info;
@@ -245,7 +245,7 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
 
     if (fCursor)  /* If cursor, get the hotspot */
     {
-        POINT *pt = (POINT *)LockResource( handle );
+        POINT16 *pt = (POINT16 *)LockResource( handle );
         hotspot = *pt;
         bmi = (BITMAPINFO *)(pt + 1);
     }
@@ -864,20 +864,31 @@ HCURSOR GetCursor(void)
 
 
 /***********************************************************************
- *           ClipCursor    (USER.16)
+ *           ClipCursor16    (USER.16)
  */
-BOOL ClipCursor( RECT *rect )
+BOOL16 ClipCursor16( const RECT16 *rect )
 {
-    if (!rect) SetRectEmpty( &CURSOR_ClipRect );
-    else CopyRect( &CURSOR_ClipRect, rect );
+    if (!rect) SetRectEmpty32( &CURSOR_ClipRect );
+    else CONV_RECT16TO32( rect, &CURSOR_ClipRect );
     return TRUE;
 }
 
 
 /***********************************************************************
- *           GetCursorPos    (USER.17)
+ *           ClipCursor32    (USER32.52)
  */
-void GetCursorPos( POINT *pt )
+BOOL32 ClipCursor32( const RECT32 *rect )
+{
+    if (!rect) SetRectEmpty32( &CURSOR_ClipRect );
+    else CopyRect32( &CURSOR_ClipRect, rect );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetCursorPos16    (USER.17)
+ */
+void GetCursorPos16( POINT16 *pt )
 {
     Window root, child;
     int rootX, rootY, childX, childY;
@@ -897,11 +908,31 @@ void GetCursorPos( POINT *pt )
 
 
 /***********************************************************************
- *           GetClipCursor    (USER.309)
+ *           GetCursorPos32    (USER32.228)
  */
-void GetClipCursor( RECT *rect )
+void GetCursorPos32( POINT32 *pt )
 {
-    if (rect) CopyRect( rect, &CURSOR_ClipRect );
+    POINT16 pt16;
+    GetCursorPos16( &pt16 );
+    if (pt) CONV_POINT16TO32( &pt16, pt );
+}
+
+
+/***********************************************************************
+ *           GetClipCursor16    (USER.309)
+ */
+void GetClipCursor16( RECT16 *rect )
+{
+    if (rect) CONV_RECT32TO16( &CURSOR_ClipRect, rect );
+}
+
+
+/***********************************************************************
+ *           GetClipCursor32    (USER32.220)
+ */
+void GetClipCursor32( RECT32 *rect )
+{
+    if (rect) CopyRect32( rect, &CURSOR_ClipRect );
 }
 
 

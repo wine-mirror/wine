@@ -12,7 +12,6 @@
 #include <stdarg.h>
 #include "windows.h"
 #include "winerror.h"
-#include "relay32.h"
 #include "alias.h"
 #include "stackframe.h"
 #include "xmalloc.h"
@@ -38,43 +37,6 @@ BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max)
 }
 
 /***********************************************************************
- *          BeginPaint           (USER32.9)
- */
-HDC USER32_BeginPaint(DWORD hwnd,PAINTSTRUCT32 *lpps)
-{
-	PAINTSTRUCT ps;
-	HDC ret;
-	ret=BeginPaint((HWND)hwnd,&ps);
-	lpps->hdc=(DWORD)ps.hdc;
-	lpps->fErase=ps.fErase;
-	lpps->rcPaint.top=ps.rcPaint.top;
-	lpps->rcPaint.left=ps.rcPaint.left;
-	lpps->rcPaint.right=ps.rcPaint.right;
-	lpps->rcPaint.bottom=ps.rcPaint.bottom;
-	lpps->fRestore=ps.fRestore;
-	lpps->fIncUpdate=ps.fIncUpdate;
-	return ret;
-}
-
-/***********************************************************************
- *          EndPaint             (USER32.175)
- */
-BOOL USER32_EndPaint(DWORD hwnd,PAINTSTRUCT32 *lpps)
-{
-	PAINTSTRUCT ps;
-	ps.hdc=(HDC)lpps->hdc;
-	ps.fErase=lpps->fErase;
-	ps.rcPaint.top=lpps->rcPaint.top;
-	ps.rcPaint.left=lpps->rcPaint.left;
-	ps.rcPaint.right=lpps->rcPaint.right;
-	ps.rcPaint.bottom=lpps->rcPaint.bottom;
-	ps.fRestore=lpps->fRestore;
-	ps.fIncUpdate=lpps->fIncUpdate;
-	EndPaint((HWND)hwnd,&ps);
-	return TRUE;
-}
-
-/***********************************************************************
  *         DispatchMessageA       (USER32.140)
  */
 LONG USER32_DispatchMessageA(MSG32* lpmsg)
@@ -97,6 +59,7 @@ BOOL USER32_TranslateMessage(MSG32* lpmsg)
 	return TranslateMessage(&msg);
 }
 
+#if 0
 /***********************************************************************
  *         CreateWindowEx32A        (USER32.82)
  */
@@ -144,6 +107,7 @@ HWND32 CreateWindowEx32A( DWORD flags, LPCSTR class, LPCSTR title,
     return retval;
 }
 
+#endif
 HWND32 CreateWindowEx32W( DWORD flags, LPCWSTR class, LPCWSTR title,
                           DWORD style, INT32 x, INT32 y, INT32 width,
                           INT32 height, HWND32 parent, HMENU32 menu,
@@ -161,45 +125,6 @@ HWND32 CreateWindowEx32W( DWORD flags, LPCWSTR class, LPCWSTR title,
 	if(usec)free(c);
 	if(uset)free(t);
 	return hwnd;
-}
-
-/***********************************************************************
- *         InvalidateRect           (USER32.327)
- */
-BOOL USER32_InvalidateRect(HWND hWnd,const RECT32 *lpRect,BOOL bErase)
-{
-	RECT r;
-
-	if (lpRect == NULL)
-		InvalidateRect(hWnd, (RECT *)NULL, bErase);
-	else {
-		STRUCT32_RECT32to16(lpRect,&r);
-		InvalidateRect(hWnd,&r,bErase);
-	}
-	/* FIXME: Return meaningful value */
-	return TRUE;
-}
-
-/***********************************************************************
- *          DrawTextA                (USER32.163)
- */
-int USER32_DrawTextA(HDC hdc,LPCSTR lpStr,int count,RECT32* r32,UINT uFormat)
-{
-	RECT r;
-	STRUCT32_RECT32to16(r32,&r);
-	return DrawText(hdc,lpStr,count,&r,uFormat);
-}
-
-/***********************************************************************
- *          GetClientRect            (USER32.219)
- */
-BOOL USER32_GetClientRect(HWND hwnd,RECT32 *r32)
-{
-	RECT r;
-	GetClientRect(hwnd,&r);
-	STRUCT32_RECT16to32(&r,r32);
-	/* FIXME: return value */
-	return 0;
 }
 
 UINT USER32_SetTimer(HWND hwnd, UINT id, UINT timeout, void *proc)
@@ -227,7 +152,7 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 	HMENU hMenu=0;
 	DWORD exStyle;
 	DWORD szCaption;
-	RECT rect;
+	RECT16 rect;
 	DIALOGINFO *dlgInfo;
 	WND *wndPtr;
 	WORD xUnit = xBaseUnit;
@@ -278,8 +203,8 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 	/* FIXME: proper modalframe handling ??*/
 	if (dlgTempl->style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
 
-        AdjustWindowRectEx( &rect, dlgTempl->style,
-                            hMenu ? TRUE : FALSE , exStyle );
+        AdjustWindowRectEx16( &rect, dlgTempl->style,
+                              hMenu ? TRUE : FALSE , exStyle );
 	rect.right -= rect.left;
 	rect.bottom -= rect.top;
 
@@ -289,7 +214,7 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 		rect.left += dlgTempl->x * xUnit / 4;
 		rect.top += dlgTempl->y * yUnit / 8;
 		if (!(dlgTempl->style & DS_ABSALIGN))
-			ClientToScreen(hWndParent, (POINT *)&rect );
+			ClientToScreen16(hWndParent, (POINT16 *)&rect );
 	}
 
 	/* FIXME: Here is the place to consider A */
@@ -319,10 +244,7 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 	for (i = 0; i < dlgTempl->noOfItems; i++)
 	{
 		if((int)ptr&3)
-		{
-			fprintf(stddeb,"DWORD aligning\n");
 			ptr++;
-		}
 		dlgitem = (DLGITEMTEMPLATE32*)ptr;
 		ptr = (WORD*)(dlgitem+1);
 		if(*ptr == 0xFFFF) {
@@ -380,7 +302,7 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 			/* If there's already a default push-button, set it back */
 			/* to normal and use this one instead. */
 			if (hwndDefButton)
-				SendMessage( hwndDefButton, BM_SETSTYLE, BS_PUSHBUTTON, FALSE);
+				SendMessage( hwndDefButton, BM_SETSTYLE32, BS_PUSHBUTTON, FALSE);
 			hwndDefButton = hwndCtrl;
 			dlgInfo->msgResult = GetWindowWord( hwndCtrl, GWW_ID );
 		}

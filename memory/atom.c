@@ -11,8 +11,6 @@
  * have to be changed.
  */
 
-#ifndef WINELIB
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +20,7 @@
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"
+#include "string32.h"
 #include "user.h"
 
 #ifdef CONFIG_IPC
@@ -31,6 +30,7 @@
 
 #define DEFAULT_ATOMTABLE_SIZE    37
 #define MIN_STR_ATOM              0xc000
+#define MAX_ATOM_LEN              255
 
 #define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
@@ -45,10 +45,10 @@
 /***********************************************************************
  *           ATOM_InitTable
  */
-static WORD ATOM_InitTable( WORD selector, WORD entries )
+static HANDLE16 ATOM_InitTable( WORD selector, WORD entries )
 {
     int i;
-    HANDLE handle;
+    HANDLE16 handle;
     ATOMTABLE *table;
 
       /* Allocate the table */
@@ -72,9 +72,9 @@ static WORD ATOM_InitTable( WORD selector, WORD entries )
  *
  * Global table initialisation.
  */
-WORD ATOM_Init()
+BOOL ATOM_Init(void)
 {
-    return ATOM_InitTable( USER_HeapSel, DEFAULT_ATOMTABLE_SIZE );
+    return ATOM_InitTable( USER_HeapSel, DEFAULT_ATOMTABLE_SIZE ) != 0;
 }
 
 
@@ -124,21 +124,15 @@ static WORD ATOM_Hash( WORD entries, LPCSTR str, WORD len )
 /***********************************************************************
  *           ATOM_AddAtom
  */
-static ATOM ATOM_AddAtom( WORD selector, SEGPTR name )
+static ATOM ATOM_AddAtom( WORD selector, LPCSTR str )
 {
     WORD hash;
     HANDLE entry;
     ATOMENTRY * entryPtr;
     ATOMTABLE * table;
     int len;
-    char *str;
 
-    /* Check for integer atom */
-
-    if (!HIWORD(name)) return (ATOM)LOWORD(name);
-    str = PTR_SEG_TO_LIN( name );
-    if (str[0] == '#') return atoi( &str[1] );
-
+    if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
     if ((len = strlen( str )) > 255) len = 255;
     if (!(table = ATOM_GetTable( selector, TRUE ))) return 0;
     hash = ATOM_Hash( table->size, str, len );
@@ -159,7 +153,6 @@ static ATOM ATOM_AddAtom( WORD selector, SEGPTR name )
     if (!entry) return 0;
     /* Reload the table ptr in case it moved in linear memory */
     table = ATOM_GetTable( selector, FALSE );
-    str = PTR_SEG_TO_LIN( name );
     entryPtr = ATOM_MakePtr( selector, entry );
     entryPtr->next = table->entries[hash];
     entryPtr->refCount = 1;
@@ -209,20 +202,14 @@ static ATOM ATOM_DeleteAtom( WORD selector, ATOM atom )
 /***********************************************************************
  *           ATOM_FindAtom
  */
-static ATOM ATOM_FindAtom( WORD selector, SEGPTR name )
+static ATOM ATOM_FindAtom( WORD selector, LPCSTR str )
 {
     ATOMTABLE * table;
     WORD hash;
     HANDLE entry;
     int len;
-    char *str;
 
-    /* Check for integer atom */
-
-    if (!HIWORD(name)) return (ATOM)LOWORD(name);
-    str = PTR_SEG_TO_LIN( name );
-    if (str[0] == '#') return atoi( &str[1] );
-
+    if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
     if ((len = strlen( str )) > 255) len = 255;
     if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
     hash = ATOM_Hash( table->size, str, len );
@@ -242,14 +229,14 @@ static ATOM ATOM_FindAtom( WORD selector, SEGPTR name )
 /***********************************************************************
  *           ATOM_GetAtomName
  */
-static WORD ATOM_GetAtomName( WORD selector, ATOM atom,
-                              LPSTR buffer, short count )
+static UINT32 ATOM_GetAtomName( WORD selector, ATOM atom,
+                                LPSTR buffer, INT32 count )
 {
     ATOMTABLE * table;
     ATOMENTRY * entryPtr;
     HANDLE entry;
     char * strPtr;
-    int len;
+    UINT32 len;
     char text[8];
     
     if (!count) return 0;
@@ -298,7 +285,20 @@ HANDLE GetAtomHandle( ATOM atom )
  */
 ATOM AddAtom( SEGPTR str )
 {
-    return ATOM_AddAtom( CURRENT_DS, str );
+    ATOM atom;
+    HANDLE16 ds = CURRENT_DS;
+
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
+    if (SELECTOR_TO_ENTRY(LOWORD(str)) == SELECTOR_TO_ENTRY(ds))
+    {
+        /* If the string is in the same data segment as the atom table, make */
+        /* a copy of the string to be sure it doesn't move in linear memory. */
+        char buffer[256];
+        lstrcpyn( buffer, (char *)PTR_SEG_TO_LIN(str), sizeof(buffer) );
+        atom = ATOM_AddAtom( ds, buffer );
+    }
+    else atom = ATOM_AddAtom( ds, (LPCSTR)PTR_SEG_TO_LIN(str) );
+    return atom;
 }
 
 
@@ -316,7 +316,8 @@ ATOM DeleteAtom( ATOM atom )
  */
 ATOM FindAtom( SEGPTR str )
 {
-    return ATOM_FindAtom( CURRENT_DS, str );
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
+    return ATOM_FindAtom( CURRENT_DS, (LPCSTR)PTR_SEG_TO_LIN(str) );
 }
 
 
@@ -325,24 +326,47 @@ ATOM FindAtom( SEGPTR str )
  */
 WORD GetAtomName( ATOM atom, LPSTR buffer, short count )
 {
-    return ATOM_GetAtomName( CURRENT_DS, atom, buffer, count );
+    return (WORD)ATOM_GetAtomName( CURRENT_DS, atom, buffer, count );
 }
 
 
 /***********************************************************************
- *           GlobalAddAtom   (USER.268)
+ *           GlobalAddAtom16   (USER.268)
  */
-ATOM GlobalAddAtom( SEGPTR str )
+ATOM GlobalAddAtom16( SEGPTR str )
 {
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
 #ifdef CONFIG_IPC
     if (Options.ipc) return DDE_GlobalAddAtom( str );
 #endif
+    return ATOM_AddAtom( USER_HeapSel, (LPCSTR)PTR_SEG_TO_LIN(str) );
+}
+
+
+/***********************************************************************
+ *           GlobalAddAtom32A   (KERNEL32.313)
+ */
+ATOM GlobalAddAtom32A( LPCSTR str )
+{
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_AddAtom( USER_HeapSel, str );
 }
 
 
 /***********************************************************************
- *           GlobalDeleteAtom   (USER.269)
+ *           GlobalAddAtom32W   (KERNEL32.314)
+ */
+ATOM GlobalAddAtom32W( LPCWSTR str )
+{
+    char buffer[MAX_ATOM_LEN+1];
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
+    STRING32_UniToAnsi( buffer, str );  /* FIXME: 'str' length? */
+    return ATOM_AddAtom( USER_HeapSel, buffer );
+}
+
+
+/***********************************************************************
+ *           GlobalDeleteAtom   (USER.269) (KERNEL32.317)
  */
 ATOM GlobalDeleteAtom( ATOM atom )
 {
@@ -354,26 +378,69 @@ ATOM GlobalDeleteAtom( ATOM atom )
 
 
 /***********************************************************************
- *           GlobalFindAtom   (USER.270)
+ *           GlobalFindAtom16   (USER.270)
  */
-ATOM GlobalFindAtom( SEGPTR str )
+ATOM GlobalFindAtom16( SEGPTR str )
 {
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
 #ifdef CONFIG_IPC
     if (Options.ipc) return DDE_GlobalFindAtom( str );
 #endif
+    return ATOM_FindAtom( USER_HeapSel, (LPCSTR)PTR_SEG_TO_LIN(str) );
+}
+
+
+/***********************************************************************
+ *           GlobalFindAtom32A   (KERNEL32.318)
+ */
+ATOM GlobalFindAtom32A( LPCSTR str )
+{
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_FindAtom( USER_HeapSel, str );
 }
 
 
 /***********************************************************************
- *           GlobalGetAtomName   (USER.271)
+ *           GlobalFindAtom32W   (KERNEL32.319)
  */
-WORD GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
+ATOM GlobalFindAtom32W( LPCWSTR str )
+{
+    char buffer[MAX_ATOM_LEN+1];
+    if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
+    STRING32_UniToAnsi( buffer, str );  /* FIXME: 'str' length? */
+    return ATOM_FindAtom( USER_HeapSel, buffer );
+}
+
+
+/***********************************************************************
+ *           GlobalGetAtomName16   (USER.271)
+ */
+UINT16 GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 {
 #ifdef CONFIG_IPC
     if (Options.ipc) return DDE_GlobalGetAtomName( atom, buffer, count );
 #endif
+    return (UINT16)ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
+}
+
+
+/***********************************************************************
+ *           GlobalGetAtomName32A   (KERNEL32.323)
+ */
+UINT32 GlobalGetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
+{
     return ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
 }
 
-#endif  /* WINELIB */
+/***********************************************************************
+ *           GlobalGetAtomName32W   (KERNEL32.324)
+ */
+UINT32 GlobalGetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
+{
+    UINT32 len;
+    char tmp[MAX_ATOM_LEN+1];
+    if (count > sizeof(tmp)) count = sizeof(tmp);
+    len = ATOM_GetAtomName( USER_HeapSel, atom, tmp, count );
+    STRING32_AnsiToUni( buffer, tmp );  /* FIXME: len? */
+    return len;
+}

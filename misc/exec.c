@@ -111,7 +111,6 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 {
 	static WORD WM_WINHELP=0;
 	HWND hDest;
-	char szBuf[20];
 	LPWINHELP lpwh;
 	HANDLE hwh;
 	void *data=0;
@@ -122,13 +121,11 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 	/* FIXME: Should be directed yield, to let winhelp open the window */
 	Yield();
 	if(!WM_WINHELP) {
-		strcpy(szBuf,"WM_WINHELP");
-		WM_WINHELP=RegisterWindowMessage(MAKE_SEGPTR(szBuf));
+		WM_WINHELP=RegisterWindowMessage32A("WM_WINHELP");
 		if(!WM_WINHELP)
 			return FALSE;
 	}
-	strcpy(szBuf,"MS_WINHELP");
-	hDest = FindWindow(MAKE_SEGPTR(szBuf),0);
+	hDest = FindWindow32A( "MS_WINHELP", NULL );
 	if(!hDest)
 		return FALSE;
 	switch(wCommand)

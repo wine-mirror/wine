@@ -317,10 +317,11 @@ HBITMAP CreateDiscardableBitmap(HDC hdc, INT width, INT height)
     return CreateCompatibleBitmap(hdc, width, height);
 }
 
+
 /***********************************************************************
- *           GetBitmapDimensionEx    (GDI.468)
+ *           GetBitmapDimensionEx16    (GDI.468)
  */
-BOOL GetBitmapDimensionEx( HBITMAP hbitmap, LPSIZE size )
+BOOL16 GetBitmapDimensionEx16( HBITMAP16 hbitmap, LPSIZE16 size )
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
@@ -330,19 +331,34 @@ BOOL GetBitmapDimensionEx( HBITMAP hbitmap, LPSIZE size )
 
 
 /***********************************************************************
- *           GetBitmapDimension    (GDI.162)
+ *           GetBitmapDimensionEx32    (GDI.468)
  */
-DWORD GetBitmapDimension( HBITMAP hbitmap )
+BOOL32 GetBitmapDimensionEx32( HBITMAP32 hbitmap, LPSIZE32 size )
 {
-    SIZE size;
-    if (!GetBitmapDimensionEx( hbitmap, &size )) return 0;
-    return size.cx | (size.cy << 16);
+    BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (!bmp) return FALSE;
+    size->cx = (INT32)bmp->size.cx;
+    size->cy = (INT32)bmp->size.cy;
+    return TRUE;
 }
 
+
 /***********************************************************************
- *           SetBitmapDimensionEx    (GDI.478)
+ *           GetBitmapDimension    (GDI.162)
  */
-BOOL SetBitmapDimensionEx( HBITMAP hbitmap, short x, short y, LPSIZE prevSize )
+DWORD GetBitmapDimension( HBITMAP16 hbitmap )
+{
+    SIZE16 size;
+    if (!GetBitmapDimensionEx16( hbitmap, &size )) return 0;
+    return MAKELONG( size.cx, size.cy );
+}
+
+
+/***********************************************************************
+ *           SetBitmapDimensionEx16    (GDI.478)
+ */
+BOOL16 SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
+                               LPSIZE16 prevSize )
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
@@ -354,11 +370,26 @@ BOOL SetBitmapDimensionEx( HBITMAP hbitmap, short x, short y, LPSIZE prevSize )
 
 
 /***********************************************************************
+ *           SetBitmapDimensionEx32    (GDI.478)
+ */
+BOOL32 SetBitmapDimensionEx32( HBITMAP32 hbitmap, INT32 x, INT32 y,
+                               LPSIZE32 prevSize )
+{
+    BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (!bmp) return FALSE;
+    if (prevSize) CONV_SIZE16TO32( &bmp->size, prevSize );
+    bmp->size.cx = (INT16)x;
+    bmp->size.cy = (INT16)y;
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           SetBitmapDimension    (GDI.163)
  */
-DWORD SetBitmapDimension( HBITMAP hbitmap, short x, short y )
+DWORD SetBitmapDimension( HBITMAP16 hbitmap, INT16 x, INT16 y )
 {
-    SIZE size;
-    if (!SetBitmapDimensionEx( hbitmap, x, y, &size )) return 0;
-    return size.cx | (size.cy << 16);    
+    SIZE16 size;
+    if (!SetBitmapDimensionEx16( hbitmap, x, y, &size )) return 0;
+    return MAKELONG( size.cx, size.cy );
 }

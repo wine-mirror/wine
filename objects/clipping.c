@@ -304,11 +304,11 @@ BOOL PtVisible( HDC hdc, short x, short y )
 
 
 /***********************************************************************
- *           RectVisible    (GDI.104)
+ *           RectVisible16    (GDI.104)
  */
-BOOL RectVisible( HDC hdc, LPRECT rect )
+BOOL16 RectVisible16( HDC16 hdc, LPRECT16 rect )
 {
-    RECT tmpRect;
+    RECT16 tmpRect;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
     dprintf_clipping(stddeb,"RectVisible: %04x %d,%dx%d,%d\n",
@@ -316,22 +316,46 @@ BOOL RectVisible( HDC hdc, LPRECT rect )
     if (!dc->w.hGCClipRgn) return FALSE;
     /* copy rectangle to avoid overwriting by LPtoDP */
     tmpRect = *rect;
-    LPtoDP( hdc, (LPPOINT)&tmpRect, 2 );
-    return RectInRegion( dc->w.hGCClipRgn, &tmpRect );
+    LPtoDP16( hdc, (LPPOINT16)&tmpRect, 2 );
+    return RectInRegion16( dc->w.hGCClipRgn, &tmpRect );
 }
 
 
 /***********************************************************************
- *           GetClipBox    (GDI.77)
+ *           RectVisible32    (GDI32.282)
  */
-int GetClipBox( HDC hdc, LPRECT rect )
+BOOL32 RectVisible32( HDC32 hdc, LPRECT32 rect )
+{
+    RECT16 rect16;
+    CONV_RECT32TO16( rect, &rect16 );
+    return RectVisible16( (HDC16)hdc, &rect16 );
+}
+
+
+/***********************************************************************
+ *           GetClipBox16    (GDI.77)
+ */
+INT16 GetClipBox16( HDC16 hdc, LPRECT16 rect )
 {
     int ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_clipping(stddeb, "GetClipBox: %04x %p\n", hdc, rect );
-    ret = GetRgnBox( dc->w.hGCClipRgn, rect );
-    DPtoLP( hdc, (LPPOINT)rect, 2 );
+    ret = GetRgnBox16( dc->w.hGCClipRgn, rect );
+    DPtoLP16( hdc, (LPPOINT16)rect, 2 );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetClipBox32    (GDI32.162)
+ */
+INT32 GetClipBox32( HDC32 hdc, LPRECT32 rect )
+{
+    INT32 ret;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return ERROR;    
+    ret = GetRgnBox32( dc->w.hGCClipRgn, rect );
+    DPtoLP32( hdc, (LPPOINT32)rect, 2 );
     return ret;
 }
 

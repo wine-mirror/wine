@@ -149,7 +149,14 @@ static const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00F0 - Win32 Buttons */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "BM_GETCHECK32",            /* 0x00f0 */
+    "BM_SETCHECK32",            /* 0x00f1 */
+    "BM_GETSTATE32",            /* 0x00f2 */
+    "BM_SETSTATE32",            /* 0x00f3 */
+    "BM_SETSTYLE32",            /* 0x00f4 */
+    "BM_CLICK32",               /* 0x00f5 */
+    "BM_GETIMAGE32",            /* 0x00f6 */
+    "BM_SETIMAGE32",            /* 0x00f7 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     "WM_KEYDOWN",		/* 0x0100 */

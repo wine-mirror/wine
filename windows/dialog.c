@@ -10,6 +10,7 @@
 #include <string.h>
 #include "windows.h"
 #include "dialog.h"
+#include "heap.h"
 #include "win.h"
 #include "ldt.h"
 #include "stackframe.h"
@@ -252,7 +253,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     HMENU hMenu = 0;
     HFONT hFont = 0;
     HWND hwnd, hwndCtrl;
-    RECT rect;
+    RECT16 rect;
     WND * wndPtr;
     int i;
     DLGTEMPLATE template;
@@ -306,8 +307,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     rect.right = template.cx * xUnit / 4;
     rect.bottom = template.cy * yUnit / 8;
     if (template.style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
-    AdjustWindowRectEx( &rect, template.style, 
-			hMenu ? TRUE : FALSE , exStyle );
+    AdjustWindowRectEx16( &rect, template.style, 
+                          hMenu ? TRUE : FALSE , exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
 
@@ -318,7 +319,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
         rect.left += template.x * xUnit / 4;
         rect.top += template.y * yUnit / 8;
         if (!(template.style & DS_ABSALIGN))
-            ClientToScreen( owner, (POINT *)&rect );
+            ClientToScreen16( owner, (POINT16 *)&rect );
     }
 
     hwnd = CreateWindowEx16( exStyle, template.className, template.caption, 
@@ -425,7 +426,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
               /* If there's already a default push-button, set it back */
               /* to normal and use this one instead. */
             if (hwndDefButton)
-                SendMessage( hwndDefButton, BM_SETSTYLE, BS_PUSHBUTTON, FALSE);
+                SendMessage(hwndDefButton, BM_SETSTYLE16, BS_PUSHBUTTON,FALSE);
             hwndDefButton = hwndCtrl;
             dlgInfo->msgResult = GetWindowWord( hwndCtrl, GWW_ID );
         }
@@ -731,11 +732,13 @@ int GetDlgItemText( HWND hwnd, WORD id, SEGPTR str, WORD max )
  */
 void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
 {
-    char str[20];
+    char *str = (char *)SEGPTR_ALLOC( 20 * sizeof(char) );
 
+    if (!str) return;
     if (fSigned) sprintf( str, "%d", (int)value );
     else sprintf( str, "%u", value );
-    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(str) );
+    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (LPARAM)SEGPTR_GET(str) );
+    SEGPTR_FREE(str);
 }
 
 
@@ -744,11 +747,12 @@ void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
  */
 WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 {
-    char str[30];
+    char *str;
     long result = 0;
     
     if (translated) *translated = FALSE;
-    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, 30, (LPARAM)MAKE_SEGPTR(str) ))
+    if (!(str = (char *)SEGPTR_ALLOC( 30 * sizeof(char) ))) return 0;
+    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, 30, (LPARAM)SEGPTR_GET(str)))
     {
 	char * endptr;
 	result = strtol( str, &endptr, 10 );
@@ -766,6 +770,7 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 	    }
 	}
     }
+    SEGPTR_FREE(str);
     return (WORD)result;
 }
 
@@ -775,7 +780,7 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
  */
 BOOL CheckDlgButton( HWND hwnd, INT id, UINT check )
 {
-    SendDlgItemMessage( hwnd, id, BM_SETCHECK, check, 0 );
+    SendDlgItemMessage( hwnd, id, BM_SETCHECK16, check, 0 );
     return TRUE;
 }
 
@@ -785,7 +790,7 @@ BOOL CheckDlgButton( HWND hwnd, INT id, UINT check )
  */
 WORD IsDlgButtonChecked( HWND hwnd, WORD id )
 {
-    return (WORD)SendDlgItemMessage( hwnd, id, BM_GETCHECK, 0, 0 );
+    return (WORD)SendDlgItemMessage( hwnd, id, BM_GETCHECK16, 0, 0 );
 }
 
 
@@ -805,7 +810,7 @@ BOOL CheckRadioButton( HWND hwndDlg, UINT firstID, UINT lastID, UINT checkID )
         lastID = firstID;  /* Buttons are in reverse order */
     while (pWnd)
     {
-	SendMessage(pWnd->hwndSelf, BM_SETCHECK, (pWnd->wIDmenu == checkID),0);
+	SendMessage(pWnd->hwndSelf,BM_SETCHECK16,(pWnd->wIDmenu == checkID),0);
         if (pWnd->wIDmenu == lastID) break;
 	pWnd = pWnd->next;
     }
@@ -823,9 +828,25 @@ DWORD GetDialogBaseUnits()
 
 
 /***********************************************************************
- *           MapDialogRect   (USER.103)
+ *           MapDialogRect16   (USER.103)
  */
-void MapDialogRect( HWND hwnd, LPRECT rect )
+void MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
+{
+    DIALOGINFO * dlgInfo;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return;
+    dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    rect->left   = (rect->left * dlgInfo->xBaseUnit) / 4;
+    rect->right  = (rect->right * dlgInfo->xBaseUnit) / 4;
+    rect->top    = (rect->top * dlgInfo->yBaseUnit) / 8;
+    rect->bottom = (rect->bottom * dlgInfo->yBaseUnit) / 8;
+}
+
+
+/***********************************************************************
+ *           MapDialogRect32   (USER32.381)
+ */
+void MapDialogRect32( HWND32 hwnd, LPRECT32 rect )
 {
     DIALOGINFO * dlgInfo;
     WND * wndPtr = WIN_FindWndPtr( hwnd );

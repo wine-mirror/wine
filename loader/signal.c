@@ -171,11 +171,7 @@ void init_wine_signals(void)
 #if defined(__NetBSD__) || defined(__FreeBSD__)
     struct sigaltstack ss;
         
-#if !defined (__FreeBSD__) 
-    if ((ss.ss_base = malloc(MINSIGSTKSZ)) == NULL) {
-#else
     if ((ss.ss_sp = malloc(MINSIGSTKSZ)) == NULL) {
-#endif
         fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
                 MINSIGSTKSZ);
         exit(1);

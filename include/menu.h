@@ -12,9 +12,9 @@ extern BOOL MENU_Init(void);
 extern HMENU MENU_GetDefSysMenu(void);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
 				   int orgX, int orgY );
-extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );
+extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT16 pt );
 extern void MENU_TrackKbdMenuBar( WND*, UINT wParam, INT vkey);
-extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
+extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT16 lprect,
 			      HWND hwnd, BOOL suppress_draw );
 extern LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam );
 
@@ -22,7 +22,7 @@ typedef struct tagMENUITEM
 {
     WORD	item_flags;    /* Item flags */
     UINT	item_id;       /* Item or popup id */
-    RECT	rect;          /* Item area (relative to menu window) */
+    RECT16      rect;          /* Item area (relative to menu window) */
     WORD        xTab;          /* X position of text after Tab */
     HBITMAP	hCheckBit;     /* Bitmap for checked item */
     HBITMAP	hUnCheckBit;   /* Bitmap for unchecked item */

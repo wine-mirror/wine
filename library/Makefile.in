@@ -2,9 +2,7 @@ TOPSRC = @top_srcdir@
 MODULE = library
 
 C_SRCS = \
-	atom.c \
 	arch.c \
-	heap.c \
 	libres.c \
 	miscstubs.c \
 	sup.c \

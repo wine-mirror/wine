@@ -18,6 +18,6 @@ typedef struct
 
 
 extern BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj );
-extern BOOL REGION_FrameRgn(HRGN dest,HRGN src,int x,int y);
+extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT32 x, INT32 y );
 
 #endif  /* __WINE_REGION_H */

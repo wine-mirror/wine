@@ -90,13 +90,13 @@ typedef struct
     HRGN          hClipRgn;     /* Clip region (may be 0) */
     HRGN          hVisRgn;      /* Visible region (must never be 0) */
     HRGN          hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
-    HPEN          hPen;
+    HPEN16        hPen;
     HBRUSH        hBrush;
     HFONT         hFont;
     HBITMAP       hBitmap;
     HBITMAP       hFirstBitmap; /* Bitmap selected at creation of the DC */
     HANDLE        hDevice;
-    HPALETTE      hPalette;
+    HPALETTE16    hPalette;
 
     WORD          ROPmode;
     WORD          polyFillMode;
@@ -214,15 +214,15 @@ typedef struct tagDC
 #define STOCK_BLACK_BRUSH         ((HBRUSH)(FIRST_STOCK_HANDLE+BLACK_BRUSH))
 #define STOCK_NULL_BRUSH          ((HBRUSH)(FIRST_STOCK_HANDLE+NULL_BRUSH))
 #define STOCK_HOLLOW_BRUSH        ((HBRUSH)(FIRST_STOCK_HANDLE+HOLLOW_BRUSH))
-#define STOCK_WHITE_PEN	          ((HPEN)(FIRST_STOCK_HANDLE+WHITE_PEN))
-#define STOCK_BLACK_PEN	          ((HPEN)(FIRST_STOCK_HANDLE+BLACK_PEN))
-#define STOCK_NULL_PEN	          ((HPEN)(FIRST_STOCK_HANDLE+NULL_PEN))
+#define STOCK_WHITE_PEN	          ((HPEN16)(FIRST_STOCK_HANDLE+WHITE_PEN))
+#define STOCK_BLACK_PEN	          ((HPEN16)(FIRST_STOCK_HANDLE+BLACK_PEN))
+#define STOCK_NULL_PEN	          ((HPEN16)(FIRST_STOCK_HANDLE+NULL_PEN))
 #define STOCK_OEM_FIXED_FONT      ((HFONT)(FIRST_STOCK_HANDLE+OEM_FIXED_FONT))
 #define STOCK_ANSI_FIXED_FONT     ((HFONT)(FIRST_STOCK_HANDLE+ANSI_FIXED_FONT))
 #define STOCK_ANSI_VAR_FONT       ((HFONT)(FIRST_STOCK_HANDLE+ANSI_VAR_FONT))
 #define STOCK_SYSTEM_FONT         ((HFONT)(FIRST_STOCK_HANDLE+SYSTEM_FONT))
 #define STOCK_DEVICE_DEFAULT_FONT ((HFONT)(FIRST_STOCK_HANDLE+DEVICE_DEFAULT_FONT))
-#define STOCK_DEFAULT_PALETTE     ((HPALETTE)(FIRST_STOCK_HANDLE+DEFAULT_PALETTE))
+#define STOCK_DEFAULT_PALETTE     ((HPALETTE16)(FIRST_STOCK_HANDLE+DEFAULT_PALETTE))
 #define STOCK_SYSTEM_FIXED_FONT   ((HFONT)(FIRST_STOCK_HANDLE+SYSTEM_FIXED_FONT))
 
 #define FIRST_STOCK_FONT          STOCK_OEM_FIXED_FONT

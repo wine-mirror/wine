@@ -15,7 +15,7 @@ typedef struct
     GDIOBJHDR   header;
     BITMAP      bitmap;
     Pixmap      pixmap;
-    SIZE        size;   /* For SetBitmapDimension() */
+    SIZE16      size;   /* For SetBitmapDimension() */
 } BITMAPOBJ;
 
   /* GCs used for B&W and color bitmap operations */

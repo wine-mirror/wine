@@ -146,7 +146,7 @@ static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
  * the thumb relative to the left or to the top.
  * Return TRUE if the scrollbar is vertical, FALSE if horizontal.
  */
-static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT *lprect,
+static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT16 *lprect,
                                      WORD *arrowSize, WORD *thumbPos )
 {
     int pixels;
@@ -172,7 +172,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT *lprect,
 	break;
 
       case SB_CTL:
-	GetClientRect( hwnd, lprect );
+	GetClientRect16( hwnd, lprect );
         vertical = ((wndPtr->dwStyle & SBS_VERT) != 0);
 	break;
 
@@ -215,7 +215,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT *lprect,
  * Compute the current scroll position based on the thumb position in pixels
  * from the top of the scroll-bar.
  */
-static UINT SCROLL_GetThumbVal( SCROLLINFO *infoPtr, RECT *rect,
+static UINT SCROLL_GetThumbVal( SCROLLINFO *infoPtr, RECT16 *rect,
                                 BOOL vertical, WORD pos )
 {
     int pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
@@ -237,14 +237,14 @@ static UINT SCROLL_GetThumbVal( SCROLLINFO *infoPtr, RECT *rect,
  *
  * Scroll-bar hit testing (don't confuse this with WM_NCHITTEST!).
  */
-static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT pt )
+static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT16 pt )
 {
     WORD arrowSize, thumbPos;
-    RECT rect;
+    RECT16 rect;
 
     BOOL vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                              &arrowSize, &thumbPos );
-    if (!PtInRect( &rect, pt )) return SCROLL_NOWHERE;
+    if (!PtInRect16( &rect, pt )) return SCROLL_NOWHERE;
 
     if (vertical)
     {
@@ -274,7 +274,7 @@ static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT pt )
  *
  * Draw the scroll bar arrows.
  */
-static void SCROLL_DrawArrows( HDC hdc, SCROLLINFO *infoPtr, RECT *rect,
+static void SCROLL_DrawArrows( HDC hdc, SCROLLINFO *infoPtr, RECT16 *rect,
                                WORD arrowSize, BOOL vertical,
                                BOOL top_pressed, BOOL bottom_pressed )
 {
@@ -315,10 +315,10 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLINFO *infoPtr, RECT *rect,
  *
  * Draw the moving thumb rectangle.
  */
-static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
+static void SCROLL_DrawMovingThumb( HDC hdc, RECT16 *rect, BOOL vertical,
                                     WORD arrowSize, WORD thumbPos )
 {
-    RECT r = *rect;
+    RECT16 r = *rect;
     if (vertical)
     {
         r.top += thumbPos;
@@ -335,8 +335,8 @@ static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
             r.left = rect->right - arrowSize - SYSMETRICS_CXVSCROLL - 1;
         r.right = r.left + SYSMETRICS_CXVSCROLL + 1;
     }
-    InflateRect( &r, -1, -1 );
-    DrawFocusRect( hdc, &r );
+    InflateRect16( &r, -1, -1 );
+    DrawFocusRect16( hdc, &r );
 }
 
 
@@ -345,12 +345,12 @@ static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
  *
  * Draw the scroll bar interior (everything except the arrows).
  */
-static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
+static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT16 *rect,
                                  WORD arrowSize, WORD thumbPos, WORD flags,
                                  BOOL vertical, BOOL top_selected,
                                  BOOL bottom_selected )
 {
-    RECT r;
+    RECT16 r;
 
       /* Select the correct brush and pen */
 
@@ -438,7 +438,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
 
     SelectObject( hdc, sysColorObjects.hbrushBtnFace );
     Rectangle( hdc, r.left, r.top, r.right, r.bottom );
-    InflateRect( &r, -1, -1 );
+    InflateRect16( &r, -1, -1 );
     GRAPH_DrawReliefRect( hdc, &r, 1, 2, FALSE );
     if ((hwndTracking == hwnd) && (nBarTracking == nBar))
         SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, uTrackingPos);
@@ -453,7 +453,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
 void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
 {
     WORD arrowSize, thumbPos;
-    RECT rect;
+    RECT16 rect;
     BOOL vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     SCROLLINFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
@@ -483,7 +483,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
 static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
 {
     WORD arrowSize, thumbPos;
-    RECT rect;
+    RECT16 rect;
     BOOL vertical;
     HDC hdc;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -543,10 +543,10 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WORD wParam )
  * 'pt' is the location of the mouse event in client (for SB_CTL) or
  * windows coordinates.
  */
-void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
+void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
 {
       /* Previous mouse position for timer events */
-    static POINT prevPt;
+    static POINT16 prevPt;
       /* Hit test code of the last button-down event */
     static enum SCROLL_HITTEST trackHitTest;
       /* Thumb position when tracking started. */
@@ -560,7 +560,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
     HWND hwndOwner, hwndCtl;
     BOOL vertical;
     WORD arrowSize, thumbPos;
-    RECT rect;
+    RECT16 rect;
     HDC hdc;
 
     SCROLLINFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
@@ -675,7 +675,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         {
             UINT pos, val;
 
-            if (!PtInRect( &rect, pt )) pos = lastClickPos;
+            if (!PtInRect16( &rect, pt )) pos = lastClickPos;
             else pos = vertical ? (pt.y - rect.top) : (pt.x - rect.left);
             if (pos != lastMousePos)
             {
@@ -779,15 +779,11 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
  */
 LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {
-    POINT Pt;
-    Pt.x = LOWORD(lParam); Pt.y = HIWORD(lParam);
-    /* ^ Can't use MAKEPOINT macro in WINELIB32 */
-
     switch(message)
     {
     case WM_CREATE:
         {
-	    CREATESTRUCT *lpCreat = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
+	    CREATESTRUCT16 *lpCreat = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
             if (lpCreat->style & SBS_SIZEBOX)
             {
                 fprintf( stdnimp, "Unimplemented style SBS_SIZEBOX.\n" );
@@ -825,7 +821,7 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     case WM_LBUTTONUP:
     case WM_MOUSEMOVE:
     case WM_SYSTIMER:
-        SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, Pt );
+        SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, MAKEPOINT16(lParam) );
         break;
 
     case WM_KEYDOWN:
@@ -840,10 +836,10 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 
     case WM_PAINT:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint( hwnd, &ps );
+            PAINTSTRUCT16 ps;
+            HDC16 hdc = BeginPaint16( hwnd, &ps );
             SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL );
-            EndPaint( hwnd, &ps );
+            EndPaint16( hwnd, &ps );
         }
         break;
 

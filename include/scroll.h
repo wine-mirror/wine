@@ -22,6 +22,6 @@ typedef struct
 extern LONG ScrollBarWndProc( HWND hwnd, WORD uMsg, WORD wParam, LONG lParam );
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar );
 extern void SCROLL_HandleScrollEvent( HWND hwnd, int nBar,
-                                      WORD msg, POINT pt);       /* scroll.c */
+                                      WORD msg, POINT16 pt );
 
 #endif  /* SCROLL_H */

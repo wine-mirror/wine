@@ -441,7 +441,7 @@ LPVOID GlobalLock16( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalUnlock16   (KERNEL.19)
  */
-BOOL GlobalUnlock16( HGLOBAL16 handle )
+BOOL16 GlobalUnlock16( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalUnlock16: %04x\n", handle );
     return 0;
@@ -911,7 +911,7 @@ DWORD GlobalSize32( HGLOBAL32 handle )
 /***********************************************************************
  *           GlobalUnlock32   (KERNEL32.332)
  */
-BOOL GlobalUnlock32( HGLOBAL32 handle )
+BOOL32 GlobalUnlock32( HGLOBAL32 handle )
 {
     return TRUE;
 }

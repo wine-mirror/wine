@@ -10,7 +10,7 @@
 #include "syscolor.h"
 #include "graphics.h"
 #include "button.h"
-#include "stackframe.h"
+#include "heap.h"
 
 extern void DEFWND_SetText( WND *wndPtr, LPSTR text );  /* windows/defwnd.c */
 
@@ -80,8 +80,7 @@ static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 
 LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-        RECT rect;
-        POINT pt;
+        RECT16 rect;
 	LONG lResult = 0;
 	WND *wndPtr = WIN_FindWndPtr(hWnd);
 	LONG style = wndPtr->dwStyle & 0x0000000F;
@@ -132,15 +131,15 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
                 if (btnPaintFunc[style])
                 {
-                    PAINTSTRUCT ps;
-                    HDC hdc = BeginPaint( hWnd, &ps );
+                    PAINTSTRUCT16 ps;
+                    HDC hdc = BeginPaint16( hWnd, &ps );
                     (btnPaintFunc[style])( wndPtr, hdc, ODA_DRAWENTIRE );
-                    ReleaseDC( hWnd, hdc );
+                    EndPaint16( hWnd, &ps );
                 }
 		break;
 
 	case WM_LBUTTONDOWN:
-                SendMessage( hWnd, BM_SETSTATE, TRUE, 0 );
+                SendMessage( hWnd, BM_SETSTATE16, TRUE, 0 );
                 SetFocus( hWnd );
                 SetCapture( hWnd );
 		break;
@@ -148,23 +147,21 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONUP:
 	        ReleaseCapture();
 	        if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) break;
-                SendMessage( hWnd, BM_SETSTATE, FALSE, 0 );
-                GetClientRect( hWnd, &rect );
-                pt.x = LOWORD(lParam);
-                pt.y = HIWORD(lParam);
-                if (PtInRect( &rect, pt ))
+                SendMessage( hWnd, BM_SETSTATE16, FALSE, 0 );
+                GetClientRect16( hWnd, &rect );
+                if (PtInRect16( &rect, MAKEPOINT16(lParam) ))
                 {
                     switch(style)
                     {
                     case BS_AUTOCHECKBOX:
-                        SendMessage( hWnd, BM_SETCHECK,
+                        SendMessage( hWnd, BM_SETCHECK16,
                                     !(infoPtr->state & BUTTON_CHECKED), 0 );
                         break;
                     case BS_AUTORADIOBUTTON:
-                        SendMessage( hWnd, BM_SETCHECK, TRUE, 0 );
+                        SendMessage( hWnd, BM_SETCHECK16, TRUE, 0 );
                         break;
                     case BS_AUTO3STATE:
-                        SendMessage( hWnd, BM_SETCHECK,
+                        SendMessage( hWnd, BM_SETCHECK16,
                                      (infoPtr->state & BUTTON_3STATE) ? 0 :
                                      ((infoPtr->state & 3) + 1), 0 );
                         break;
@@ -182,12 +179,9 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_MOUSEMOVE:
                 if (GetCapture() == hWnd)
                 {
-                    GetClientRect( hWnd, &rect );
-                    pt.x = LOWORD(lParam);
-                    pt.y = HIWORD(lParam);
-                    if (PtInRect( &rect, pt) )
-                       SendMessage( hWnd, BM_SETSTATE, TRUE, 0 );
-                    else SendMessage( hWnd, BM_SETSTATE, FALSE, 0 );
+                    GetClientRect16( hWnd, &rect );
+                    SendMessage(hWnd, BM_SETSTATE16,
+                                PtInRect16( &rect,MAKEPOINT16(lParam) ), 0 );
                 }
                 break;
 
@@ -221,10 +215,11 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SYSCOLORCHANGE:
-		InvalidateRect(hWnd, NULL, FALSE);
+		InvalidateRect32( hWnd, NULL, FALSE );
 		break;
 
-	case BM_SETSTYLE:
+	case BM_SETSTYLE16:
+	case BM_SETSTYLE32:
 		if ((wParam & 0x0f) >= MAX_BTN_TYPE) break;
 		wndPtr->dwStyle = (wndPtr->dwStyle & 0xfffffff0) 
 		                   | (wParam & 0x0000000f);
@@ -232,11 +227,13 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
 		break;
 
-	case BM_GETCHECK:
+	case BM_GETCHECK16:
+	case BM_GETCHECK32:
 		lResult = infoPtr->state & 3;
 		break;
 
-	case BM_SETCHECK:
+	case BM_SETCHECK16:
+	case BM_SETCHECK32:
                 if (wParam > maxCheckState[style])
                     wParam = maxCheckState[style];
 		if ((infoPtr->state & 3) != wParam)
@@ -248,11 +245,13 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			BUTTON_CheckAutoRadioButton( wndPtr );
                 break;
 
-	case BM_GETSTATE:
+	case BM_GETSTATE16:
+	case BM_GETSTATE32:
 		lResult = infoPtr->state;
 		break;
 
-	case BM_SETSTATE:
+	case BM_SETSTATE16:
+	case BM_SETSTATE32:
                 if (wParam)
                 {
                     if (infoPtr->state & BUTTON_HIGHLIGHTED) break;
@@ -281,20 +280,20 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
-    RECT rc;
-    HPEN hOldPen;
+    RECT16 rc;
+    HPEN16 hOldPen;
     HBRUSH hOldBrush;
     char *text;
     DWORD dwTextSize;
     TEXTMETRIC tm;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
-    GetClientRect(wndPtr->hwndSelf, &rc);
+    GetClientRect16(wndPtr->hwndSelf, &rc);
 
       /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    hOldPen = (HPEN)SelectObject(hDC, sysColorObjects.hpenWindowFrame);
+    hOldPen = (HPEN16)SelectObject(hDC, sysColorObjects.hpenWindowFrame);
     hOldBrush = (HBRUSH)SelectObject(hDC, sysColorObjects.hbrushBtnFace);
     SetBkMode(hDC, TRANSPARENT);
     Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
@@ -305,12 +304,12 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
         SetPixel( hDC, rc.right-1, rc.top, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.right-1, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
     }
-    InflateRect( &rc, -1, -1 );
+    InflateRect16( &rc, -1, -1 );
 
     if ((wndPtr->dwStyle & 0x000f) == BS_DEFPUSHBUTTON)
     {
         Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
-        InflateRect( &rc, -1, -1 );
+        InflateRect16( &rc, -1, -1 );
     }
 
     if (infoPtr->state & BUTTON_HIGHLIGHTED)
@@ -330,8 +329,8 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     {
         SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
                      GetSysColor(COLOR_GRAYTEXT) : GetSysColor(COLOR_BTNTEXT));
-        DrawText(hDC, text, -1, &rc,
-                 DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+        DrawText16( hDC, text, -1, &rc,
+                    DT_SINGLELINE | DT_CENTER | DT_VCENTER );
         /* do we have the focus? */
         if (infoPtr->state & BUTTON_HASFOCUS)
         {
@@ -342,8 +341,8 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
             ydelta = ((rc.bottom - rc.top) - tm.tmHeight - 1) / 2;
             if (xdelta < 0) xdelta = 0;
             if (ydelta < 0) ydelta = 0;
-            InflateRect( &rc, -xdelta, -ydelta );
-            DrawFocusRect( hDC, &rc );
+            InflateRect16( &rc, -xdelta, -ydelta );
+            DrawFocusRect16( hDC, &rc );
         }
     }
 
@@ -358,19 +357,19 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
-    RECT rc;
+    RECT16 rc;
     HBRUSH hBrush;
     int textlen, delta, x, y;
     char *text;
     TEXTMETRIC tm;
-    SIZE size;
+    SIZE16 size;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
-    GetClientRect(wndPtr->hwndSelf, &rc);
+    GetClientRect16(wndPtr->hwndSelf, &rc);
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
     hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    if (action == ODA_DRAWENTIRE) FillRect(hDC, &rc, hBrush);
+    if (action == ODA_DRAWENTIRE) FillRect16( hDC, &rc, hBrush );
 
     GetTextMetrics(hDC, &tm);
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
@@ -393,13 +392,13 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
     {
         if (wndPtr->dwStyle & WS_DISABLED)
             SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
-        DrawText(hDC, text, textlen, &rc, DT_SINGLELINE | DT_VCENTER);
+        DrawText16( hDC, text, textlen, &rc, DT_SINGLELINE | DT_VCENTER );
     }
     
     if ((action == ODA_FOCUS) ||
         ((action == ODA_DRAWENTIRE) && (infoPtr->state & BUTTON_HASFOCUS)))
     {
-        GetTextExtentPoint(hDC, text, textlen, &size);
+        GetTextExtentPoint16( hDC, text, textlen, &size );
         if (delta > 1)
         {
             rc.top += delta - 1;
@@ -407,7 +406,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
         }
         rc.left--;
         rc.right = MIN( rc.left + size.cx + 2, rc.right );
-        DrawFocusRect(hDC, &rc);
+        DrawFocusRect16( hDC, &rc );
     }
 }
 
@@ -425,7 +424,7 @@ static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
     for(sibling = GetNextDlgGroupItem(parent,wndPtr->hwndSelf,FALSE);
         sibling != wndPtr->hwndSelf;
         sibling = GetNextDlgGroupItem(parent,sibling,FALSE))
-	    SendMessage(sibling,BM_SETCHECK,BUTTON_UNCHECKED,0);
+	    SendMessage( sibling, BM_SETCHECK16, BUTTON_UNCHECKED, 0 );
 }
 
 
@@ -435,9 +434,9 @@ static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
 
 static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
-    RECT rc;
+    RECT16 rc;
     char *text;
-    SIZE size;
+    SIZE16 size;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
     if (action != ODA_DRAWENTIRE) return;
@@ -446,7 +445,7 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
     SelectObject( hDC, sysColorObjects.hpenWindowFrame );
 
-    GetClientRect( wndPtr->hwndSelf, &rc);
+    GetClientRect16( wndPtr->hwndSelf, &rc);
 
     MoveTo( hDC, rc.left, rc.top+2 );
     LineTo( hDC, rc.right-1, rc.top+2 );
@@ -455,13 +454,13 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
     LineTo( hDC, rc.left, rc.top+2 );
 
     if (!(text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText ))) return;
-    GetTextExtentPoint(hDC, text, strlen(text), &size);
+    GetTextExtentPoint16( hDC, text, strlen(text), &size );
     rc.left  += 10;
     rc.right  = rc.left + size.cx + 1;
     rc.bottom = size.cy;
     if (wndPtr->dwStyle & WS_DISABLED)
         SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
-    DrawText(hDC, text, -1, &rc, DT_SINGLELINE );
+    DrawText16( hDC, text, -1, &rc, DT_SINGLELINE );
 }
 
 
@@ -471,21 +470,21 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 static void UB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
-    RECT rc;
+    RECT16 rc;
     HBRUSH hBrush;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
     if (action == ODA_SELECT) return;
 
-    GetClientRect( wndPtr->hwndSelf, &rc);
+    GetClientRect16( wndPtr->hwndSelf, &rc);
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
     hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    FillRect(hDC, &rc, hBrush);
+    FillRect16( hDC, &rc, hBrush );
 
     if ((action == ODA_FOCUS) ||
         ((action == ODA_DRAWENTIRE) && (infoPtr->state & BUTTON_HASFOCUS)))
-        DrawFocusRect(hDC, &rc);
+        DrawFocusRect16( hDC, &rc );
 }
 
 
@@ -495,20 +494,22 @@ static void UB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
-    DRAWITEMSTRUCT dis;
+    DRAWITEMSTRUCT16 *dis;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
-    dis.CtlType    = ODT_BUTTON;
-    dis.CtlID      = wndPtr->wIDmenu;
-    dis.itemID     = 0;
-    dis.itemAction = action;
-    dis.itemState  = (infoPtr->state & BUTTON_HASFOCUS) ? ODS_FOCUS : 0 |
+    if (!(dis = SEGPTR_NEW(DRAWITEMSTRUCT16))) return;
+    dis->CtlType    = ODT_BUTTON;
+    dis->CtlID      = wndPtr->wIDmenu;
+    dis->itemID     = 0;
+    dis->itemAction = action;
+    dis->itemState  = (infoPtr->state & BUTTON_HASFOCUS) ? ODS_FOCUS : 0 |
                      (infoPtr->state & BUTTON_HIGHLIGHTED) ? ODS_SELECTED : 0 |
                      (wndPtr->dwStyle & WS_DISABLED) ? ODS_DISABLED : 0;
-    dis.hwndItem   = wndPtr->hwndSelf;
-    dis.hDC        = hDC;
-    GetClientRect( wndPtr->hwndSelf, &dis.rcItem );
-    dis.itemData   = 0;
+    dis->hwndItem   = wndPtr->hwndSelf;
+    dis->hDC        = hDC;
+    GetClientRect16( wndPtr->hwndSelf, &dis->rcItem );
+    dis->itemData   = 0;
     SendMessage( GetParent(wndPtr->hwndSelf), WM_DRAWITEM, 1,
-                 (LPARAM)MAKE_SEGPTR(&dis) );
+                 (LPARAM)SEGPTR_GET(dis) );
+    SEGPTR_FREE(dis);
 }

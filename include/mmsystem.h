@@ -1247,16 +1247,16 @@ typedef struct {
 typedef struct {
 	DWORD   dwCallback;
 #ifdef MCI_USE_OFFEXT
-	POINT   ptOffset;
-	POINT   ptExtent;
+	POINT16 ptOffset;
+	POINT16 ptExtent;
 #else   /* ifdef MCI_USE_OFFEXT */
-	RECT    rc;
+	RECT16  rc;
 #endif  /* ifdef MCI_USE_OFFEXT */
 } MCI_ANIM_RECT_PARMS, *LPMCI_ANIM_RECT_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
-	RECT    rc;
+	RECT16  rc;
 	HDC     hDC;
 } MCI_ANIM_UPDATE_PARMS, *LPMCI_ANIM_UPDATE_PARMS;
 
@@ -1315,23 +1315,23 @@ typedef struct {
 typedef struct {
 	DWORD   dwCallback;
 #ifdef MCI_USE_OFFEXT
-	POINT   ptOffset;
-	POINT   ptExtent;
+	POINT16 ptOffset;
+	POINT16 ptExtent;
 #else   /* ifdef MCI_USE_OFFEXT */
-	RECT    rc;
+	RECT16  rc;
 #endif  /* ifdef MCI_USE_OFFEXT */
 } MCI_OVLY_RECT_PARMS, *LPMCI_OVLY_RECT_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpfilename;
-	RECT    rc;
+	RECT16  rc;
 } MCI_OVLY_SAVE_PARMS, *LPMCI_OVLY_SAVE_PARMS;
 
 typedef struct {
 	DWORD   dwCallback;
 	LPCSTR  lpfilename;
-	RECT    rc;
+	RECT16  rc;
 } MCI_OVLY_LOAD_PARMS, *LPMCI_OVLY_LOAD_PARMS;
 
 

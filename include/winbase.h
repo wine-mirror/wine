@@ -119,7 +119,7 @@ int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE 	    0x0002
 
-HACCEL LoadAcceleratorsA(   HINSTANCE, const char *);
+HACCEL32 LoadAcceleratorsA(   HINSTANCE, const char *);
 #define FreeModule(hLibModule) FreeLibrary((hLibModule))
 #define MakeProcInstance(lpProc,hInstance) (lpProc)
 #define FreeProcInstance(lpProc) (lpProc)

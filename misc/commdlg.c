@@ -207,7 +207,7 @@ static LPSTR FILEDLG_GetFileType(LPSTR cfptr, LPSTR fptr, WORD index)
  */
 static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-    LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
+    LPDRAWITEMSTRUCT16 lpdis = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     char str[512];
     HBRUSH hBrush;
     HBITMAP hBitmap, hPrevBitmap;
@@ -218,13 +218,13 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1) {
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
-	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
+	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
 		    (LPARAM)MAKE_SEGPTR(str));
-	TextOut(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-		str, strlen(str));
+	TextOut16(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+                  str, strlen(str));
 	if (lpdis->itemState != 0) {
-	    InvertRect(lpdis->hDC, &lpdis->rcItem);
+	    InvertRect16(lpdis->hDC, &lpdis->rcItem);
 	}
 	return TRUE;
     }
@@ -232,14 +232,14 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst2) {
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
-	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
+	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
 		    (LPARAM)MAKE_SEGPTR(str));
 
 	hBitmap = hFolder;
 	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-	TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-		lpdis->rcItem.top, str, strlen(str));
+	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
+                  lpdis->rcItem.top, str, strlen(str));
 	hMemDC = CreateCompatibleDC(lpdis->hDC);
 	hPrevBitmap = SelectObject(hMemDC, hBitmap);
 	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
@@ -247,14 +247,14 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SelectObject(hMemDC, hPrevBitmap);
 	DeleteDC(hMemDC);
 	if (lpdis->itemState != 0) {
-	    InvertRect(lpdis->hDC, &lpdis->rcItem);
+	    InvertRect16(lpdis->hDC, &lpdis->rcItem);
 	}
 	return TRUE;
     }
     if (lpdis->CtlType == ODT_COMBOBOX && lpdis->CtlID == cmb2) {
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
-	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
+	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID, 
 		    (LPARAM)MAKE_SEGPTR(str));
         switch(DRIVE_GetType( str[2] - 'a' ))
@@ -266,8 +266,8 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
         default:           hBitmap = hHDisk; break;
         }
 	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-	TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-		lpdis->rcItem.top, str, strlen(str));
+	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
+                  lpdis->rcItem.top, str, strlen(str));
 	hMemDC = CreateCompatibleDC(lpdis->hDC);
 	hPrevBitmap = SelectObject(hMemDC, hBitmap);
 	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
@@ -275,7 +275,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SelectObject(hMemDC, hPrevBitmap);
 	DeleteDC(hMemDC);
 	if (lpdis->itemState != 0) {
-	    InvertRect(lpdis->hDC, &lpdis->rcItem);
+	    InvertRect16(lpdis->hDC, &lpdis->rcItem);
 	}
 	return TRUE;
     }
@@ -389,7 +389,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   if (lpofn->Flags & OFN_HIDEREADONLY)
     ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE); 
   if (FILEDLG_HookCallChk(lpofn))
-     return (BOOL)CallWindowProc(lpofn->lpfnHook, 
+     return (BOOL)CallWindowProc16(lpofn->lpfnHook, 
                hWnd,  WM_INITDIALOG, wParam,(LPARAM)MAKE_SEGPTR(lpofn));
   else  
      return TRUE;
@@ -430,8 +430,8 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
 
       if (FILEDLG_HookCallChk(lpofn))
-       CallWindowProc (lpofn->lpfnHook, hWnd,
-                  RegisterWindowMessage(MAKE_SEGPTR(LBSELCHSTRING)), 
+       CallWindowProc16(lpofn->lpfnHook, hWnd,
+                  RegisterWindowMessage32A( LBSELCHSTRING ),
                   control, MAKELONG(lRet,CD_LBSELCHANGE));       
       /* FIXME: for OFN_ALLOWMULTISELECT we need CD_LBSELSUB, CD_SELADD, CD_LBSELNOITEMS */                  
       return TRUE;
@@ -567,8 +567,8 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	}
       if (FILEDLG_HookCallChk(lpofn))
       {
-       lRet= (BOOL)CallWindowProc (lpofn->lpfnHook,
-               hWnd, RegisterWindowMessage(MAKE_SEGPTR(FILEOKSTRING)), 
+       lRet= (BOOL)CallWindowProc16(lpofn->lpfnHook,
+               hWnd, RegisterWindowMessage32A( FILEOKSTRING ),
                0, (LPARAM)MAKE_SEGPTR(lpofn));                        
        if (lRet)       
        {
@@ -599,7 +599,7 @@ LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
   {
-   LRESULT  lRet=(BOOL)CallWindowProc(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
+   LRESULT  lRet=(BOOL)CallWindowProc16(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
    if (lRet)   
     return lRet;         /* else continue message processing */
   }             
@@ -642,7 +642,7 @@ LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
   {
-   LRESULT  lRet=(BOOL)CallWindowProc(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
+   LRESULT  lRet=(BOOL)CallWindowProc16(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
    if (lRet)   
     return lRet;         /* else continue message processing */
   }             
@@ -806,8 +806,8 @@ static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
-    int uFindReplaceMessage = RegisterWindowMessage(MAKE_SEGPTR(FINDMSGSTRING));
-    int uHelpMessage = RegisterWindowMessage(MAKE_SEGPTR(HELPMSGSTRING));
+    int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
+    int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
 
     lpfr = (LPFINDREPLACE)GetWindowLong(hWnd, DWL_USER);
     switch (wParam) {
@@ -898,8 +898,8 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
-    int uFindReplaceMessage = RegisterWindowMessage(MAKE_SEGPTR(FINDMSGSTRING));
-    int uHelpMessage = RegisterWindowMessage(MAKE_SEGPTR(HELPMSGSTRING));
+    int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
+    int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
 
     lpfr = (LPFINDREPLACE)GetWindowLong(hWnd, DWL_USER);
     switch (wParam) {
@@ -1124,10 +1124,10 @@ struct CCPRIVATE
  int nextuserdef;     /* next free place in user defined color array */
  HDC hdcMem;          /* color graph used for BitBlt() */
  HBITMAP hbmMem;      /* color graph bitmap */    
- RECT fullsize;       /* original dialog window size */
+ RECT16 fullsize;     /* original dialog window size */
  UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
- RECT old3angle;      /* last position of l-marker */
- RECT oldcross;       /* last position of color/satuation marker */
+ RECT16 old3angle;    /* last position of l-marker */
+ RECT16 oldcross;     /* last position of color/satuation marker */
  BOOL updating;       /* to prevent recursive WM_COMMAND/EN_UPDATE procesing */
  int h;
  int s;
@@ -1255,21 +1255,18 @@ static int CC_MouseCheckPredefColorArray(HWND hDlg,int dlgitem,int rows,int cols
 	    LPARAM lParam,COLORREF *cr)
 {
  HWND hwnd;
- POINT point;
- RECT rect;
+ POINT16 point = MAKEPOINT16(lParam);
+ RECT16 rect;
  int dx,dy,x,y;
 
- point.x=LOWORD(lParam);
- point.y=HIWORD(lParam);
- ClientToScreen(hDlg,&point);
-
+ ClientToScreen16(hDlg,&point);
  hwnd=GetDlgItem(hDlg,dlgitem);
- GetWindowRect(hwnd,&rect);
- if (PtInRect(&rect,point))
+ GetWindowRect16(hwnd,&rect);
+ if (PtInRect16(&rect,point))
  {
   dx=(rect.right-rect.left)/cols;
   dy=(rect.bottom-rect.top)/rows;
-  ScreenToClient(hwnd,&point);
+  ScreenToClient16(hwnd,&point);
 
   if (point.x % dx < (dx-DISTANCE) && point.y % dy < (dy-DISTANCE))
   {
@@ -1290,21 +1287,18 @@ static int CC_MouseCheckUserColorArray(HWND hDlg,int dlgitem,int rows,int cols,
 	    LPARAM lParam,COLORREF *cr,COLORREF*crarr)
 {
  HWND hwnd;
- POINT point;
- RECT rect;
+ POINT16 point = MAKEPOINT16(lParam);
+ RECT16 rect;
  int dx,dy,x,y;
 
- point.x=LOWORD(lParam);
- point.y=HIWORD(lParam);
- ClientToScreen(hDlg,&point);
-
+ ClientToScreen16(hDlg,&point);
  hwnd=GetDlgItem(hDlg,dlgitem);
- GetWindowRect(hwnd,&rect);
- if (PtInRect(&rect,point))
+ GetWindowRect16(hwnd,&rect);
+ if (PtInRect16(&rect,point))
  {
   dx=(rect.right-rect.left)/cols;
   dy=(rect.bottom-rect.top)/rows;
-  ScreenToClient(hwnd,&point);
+  ScreenToClient16(hwnd,&point);
 
   if (point.x % dx < (dx-DISTANCE) && point.y % dy < (dy-DISTANCE))
   {
@@ -1334,19 +1328,17 @@ static int CC_MouseCheckUserColorArray(HWND hDlg,int dlgitem,int rows,int cols,
 static int CC_MouseCheckColorGraph(HWND hDlg,int dlgitem,int *hori,int *vert,LPARAM lParam)
 {
  HWND hwnd;
- POINT point;
- RECT rect;
+ POINT16 point = MAKEPOINT16(lParam);
+ RECT16 rect;
  long x,y;
 
- point.x=LOWORD(lParam);
- point.y=HIWORD(lParam);
- ClientToScreen(hDlg,&point);
+ ClientToScreen16(hDlg,&point);
  hwnd=GetDlgItem(hDlg,dlgitem);
- GetWindowRect(hwnd,&rect);
- if (PtInRect(&rect,point))
+ GetWindowRect16(hwnd,&rect);
+ if (PtInRect16(&rect,point))
  {
-  GetClientRect(hwnd,&rect);
-  ScreenToClient(hwnd,&point);
+  GetClientRect16(hwnd,&rect);
+  ScreenToClient16(hwnd,&point);
 
   x=(long)point.x*MAXHORI;
   x/=rect.right;
@@ -1368,14 +1360,13 @@ static int CC_MouseCheckColorGraph(HWND hDlg,int dlgitem,int *hori,int *vert,LPA
 static int CC_MouseCheckResultWindow(HWND hDlg,LPARAM lParam)
 {
  HWND hwnd;
- POINT point;
- RECT rect;
- point.x=LOWORD(lParam);
- point.y=HIWORD(lParam);
- ClientToScreen(hDlg,&point);
+ POINT16 point = MAKEPOINT16(lParam);
+ RECT16 rect;
+
+ ClientToScreen16(hDlg,&point);
  hwnd=GetDlgItem(hDlg,0x2c5);
- GetWindowRect(hwnd,&rect);
- if (PtInRect(&rect,point))
+ GetWindowRect16(hwnd,&rect);
+ if (PtInRect16(&rect,point))
  {
   PostMessage(hDlg,WM_COMMAND,0x2c9,0);
   return 1;
@@ -1429,14 +1420,14 @@ static int CC_CheckDigitsInEdit(HWND hwnd,int maxval)
  */
 static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
 {
- RECT rect;
+ RECT16 rect;
  HDC  hdc;
  HBRUSH hBrush;
  HWND hwnd=GetDlgItem(hDlg,0x2c5);
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
   hdc=GetDC(hwnd);
-  GetClientRect (hwnd, &rect) ;
+  GetClientRect16 (hwnd, &rect) ;
   hBrush = CreateSolidBrush(cr);
   if (hBrush)
   {
@@ -1463,25 +1454,25 @@ static void CC_PaintTriangle(HWND hDlg,int y)
  HDC hDC;
  long temp;
  int w=GetDialogBaseUnits();
- POINT points[3];
+ POINT16 points[3];
  int height;
  int oben;
- RECT rect;
+ RECT16 rect;
  HWND hwnd=GetDlgItem(hDlg,0x2be);
  struct CCPRIVATE *lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
 
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
-   GetClientRect(hwnd,&rect);
+   GetClientRect16(hwnd,&rect);
    height=rect.bottom;
    hDC=GetDC(hDlg);
 
    points[0].y=rect.top;
-   points[0].x=rect.right;         /*  |  /|  */
-   ClientToScreen(hwnd,points);    /*  | / |  */
-   ScreenToClient(hDlg,points);    /*  |<  |  */
-   oben=points[0].y;               /*  | \ |  */
-				   /*  |  \|  */
+   points[0].x=rect.right;           /*  |  /|  */
+   ClientToScreen16(hwnd,points);    /*  | / |  */
+   ScreenToClient16(hDlg,points);    /*  |<  |  */
+   oben=points[0].y;                 /*  | \ |  */
+				     /*  |  \|  */
    temp=(long)height*(long)y;
    points[0].y=oben+height -temp/(long)MAXVERT;
    points[1].y=points[0].y+w;
@@ -1489,12 +1480,12 @@ static void CC_PaintTriangle(HWND hDlg,int y)
    points[2].x=points[1].x=points[0].x + w;
 
    if (lpp->old3angle.left)
-    FillRect(hDC,&lpp->old3angle,GetStockObject(WHITE_BRUSH));
+    FillRect16(hDC,&lpp->old3angle,GetStockObject(WHITE_BRUSH));
    lpp->old3angle.left  =points[0].x;
    lpp->old3angle.right =points[1].x+1;
    lpp->old3angle.top   =points[2].y-1;
    lpp->old3angle.bottom=points[1].y+1;
-   Polygon(hDC,points,3);
+   Polygon16(hDC,points,3);
    ReleaseDC(hDlg,hDC);
  }
 }
@@ -1509,15 +1500,15 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
  int w=GetDialogBaseUnits();
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
- RECT rect;
- POINT point;
- HPEN hPen;
+ RECT16 rect;
+ POINT16 point;
+ HPEN16 hPen;
 
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
-   GetClientRect(hwnd,&rect);
+   GetClientRect16(hwnd,&rect);
    hDC=GetDC(hwnd);
-   SelectClipRgn(hDC,CreateRectRgnIndirect(&rect));   
+   SelectClipRgn(hDC,CreateRectRgnIndirect16(&rect));   
    hPen=CreatePen(PS_SOLID,2,0);
    hPen=SelectObject(hDC,hPen);
    point.x=((long)rect.right*(long)x)/(long)MAXHORI;
@@ -1556,10 +1547,10 @@ static void CC_PrepareColorGraph(HWND hDlg)
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER);  
  HBRUSH hbrush;
  HDC hdc ;
- RECT rect,client;
+ RECT16 rect,client;
  HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
 
- GetClientRect(hwnd,&client);
+ GetClientRect16(hwnd,&client);
  hdc=GetDC(hwnd);
  lpp->hdcMem = CreateCompatibleDC(hdc);
  lpp->hbmMem = CreateCompatibleBitmap(hdc,client.right,client.bottom);
@@ -1580,7 +1571,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
    g=CC_HSLtoRGB('G',hue,sat,120);
    b=CC_HSLtoRGB('B',hue,sat,120);
    hbrush=CreateSolidBrush(RGB(r,g,b));
-   FillRect(lpp->hdcMem,&rect,hbrush);
+   FillRect16(lpp->hdcMem,&rect,hbrush);
    DeleteObject(hbrush);
    rect.bottom=rect.top;
   }
@@ -1598,14 +1589,14 @@ static void CC_PaintColorGraph(HWND hDlg)
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
  HDC  hDC;
- RECT rect;
+ RECT16 rect;
  if (IsWindowVisible(hwnd))   /* if full size */
  {
   if (!lpp->hdcMem)
    CC_PrepareColorGraph(hDlg);   /* should not be necessary */
 
   hDC=GetDC(hwnd);
-  GetClientRect(hwnd,&rect);
+  GetClientRect16(hwnd,&rect);
   if (lpp->hdcMem)
     BitBlt(hDC,0,0,rect.right,rect.bottom,lpp->hdcMem,0,0,SRCCOPY);
   else
@@ -1619,7 +1610,7 @@ static void CC_PaintColorGraph(HWND hDlg)
 static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
 {
  HWND hwnd=GetDlgItem(hDlg,0x2be);
- RECT rect,client;
+ RECT16 rect,client;
  int lum,ldif,ydif,r,g,b;
  HBRUSH hbrush;
  HDC hDC;
@@ -1627,7 +1618,7 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
  if (IsWindowVisible(hwnd))
  {
   hDC=GetDC(hwnd);
-  GetClientRect(hwnd,&client);
+  GetClientRect16(hwnd,&client);
   rect=client;
 
   ldif=240/YSTEPS;
@@ -1639,12 +1630,12 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
    g=CC_HSLtoRGB('G',hue,sat,lum);
    b=CC_HSLtoRGB('B',hue,sat,lum);
    hbrush=CreateSolidBrush(RGB(r,g,b));
-   FillRect(hDC,&rect,hbrush);
+   FillRect16(hDC,&rect,hbrush);
    DeleteObject(hbrush);
    rect.bottom=rect.top;
   }
-  GetClientRect(hwnd,&rect);
-  FrameRect(hDC,&rect,GetStockObject(BLACK_BRUSH));
+  GetClientRect16(hwnd,&rect);
+  FrameRect16(hDC,&rect,GetStockObject(BLACK_BRUSH));
   ReleaseDC(hwnd,hDC);
  }
 }
@@ -1697,7 +1688,7 @@ static void CC_EditSetHSL(HWND hDlg,int h,int s,int l)
 /***********************************************************************
  *                       CC_SwitchToFullSize                  [internal]
  */
-static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT lprect)
+static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT16 lprect)
 {
  int i;
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong(hDlg, DWL_USER); 
@@ -1729,18 +1720,18 @@ static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT lprect)
 static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
 {
  HWND hwnd=GetDlgItem(hDlg,0x2d0);
- RECT rect;
+ RECT16 rect;
  HDC  hdc;
  HBRUSH hBrush;
  int dx,dy,i,j,k;
 
- GetClientRect(hwnd,&rect);
+ GetClientRect16(hwnd,&rect);
  dx=rect.right/cols;
  dy=rect.bottom/rows;
  k=rect.left;
 
  hdc=GetDC(hwnd);
- GetClientRect (hwnd, &rect) ;
+ GetClientRect16 (hwnd, &rect) ;
 
  for (j=0;j<rows;j++)
  {
@@ -1768,12 +1759,12 @@ static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
 static void CC_PaintUserColorArray(HWND hDlg,int rows,int cols,COLORREF* lpcr)
 {
  HWND hwnd=GetDlgItem(hDlg,0x2d1);
- RECT rect;
+ RECT16 rect;
  HDC  hdc;
  HBRUSH hBrush;
  int dx,dy,i,j,k;
 
- GetClientRect(hwnd,&rect);
+ GetClientRect16(hwnd,&rect);
 
  dx=rect.right/cols;
  dy=rect.bottom/rows;
@@ -1825,8 +1816,8 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
    int i,res;
    HWND hwnd;
-   RECT rect;
-   POINT point;
+   RECT16 rect;
+   POINT16 point;
    struct CCPRIVATE * lpp; 
    
    dprintf_commdlg(stddeb,"ColorDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
@@ -1841,7 +1832,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 
    if (!(lpp->lpcc->Flags & CC_SHOWHELP))
       ShowWindow(GetDlgItem(hDlg,0x40e),SW_HIDE);
-   lpp->msetrgb=RegisterWindowMessage(MAKE_SEGPTR(SETRGBSTRING));
+   lpp->msetrgb=RegisterWindowMessage32A( SETRGBSTRING );
 #if 0
    cpos=MAKELONG(5,7); /* init */
    if (lpp->lpcc->Flags & CC_RGBINIT)
@@ -1857,7 +1848,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
    found:
    /* FIXME: Draw_a_focus_rect & set_init_values */
 #endif
-   GetWindowRect(hDlg,&lpp->fullsize);
+   GetWindowRect16(hDlg,&lpp->fullsize);
    if (lpp->lpcc->Flags & CC_FULLOPEN || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
       hwnd=GetDlgItem(hDlg,0x2cf);
@@ -1869,9 +1860,9 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
       res=rect.bottom-rect.top;
       hwnd=GetDlgItem(hDlg,0x2c6); /* cut at left border */
       point.x=point.y=0;
-      ClientToScreen(hwnd,&point);
-      ScreenToClient(hDlg,&point);
-      GetClientRect(hDlg,&rect);
+      ClientToScreen16(hwnd,&point);
+      ScreenToClient16(hDlg,&point);
+      GetClientRect16(hDlg,&rect);
       point.x+=GetSystemMetrics(SM_CXDLGFRAME);
       SetWindowPos(hDlg,NULL,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
 
@@ -1884,7 +1875,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
    for (i=0x2bf;i<0x2c5;i++)
      SendMessage(GetDlgItem(hDlg,i),EM_LIMITTEXT,3,0);      /* max 3 digits:  xyz  */
    if (CC_HookCallChk(lpp->lpcc))
-      res=CallWindowProc((FARPROC)lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+      res=CallWindowProc16((FARPROC)lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
    return res;
 }
 
@@ -1960,7 +1951,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 	       
           case 0x2cf:
                CC_SwitchToFullSize(hDlg,lpp->lpcc->rgbResult,&lpp->fullsize);
-	       InvalidateRect(hDlg,NULL,NULL);
+	       InvalidateRect32( hDlg, NULL, TRUE );
 	       SetFocus(GetDlgItem(hDlg,0x2bf));
 	       break;
 
@@ -1990,16 +1981,16 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 	       break;
 
 	  case 0x40e:           /* Help! */ /* The Beatles, 1965  ;-) */
-	       i=RegisterWindowMessage(MAKE_SEGPTR(HELPMSGSTRING));
+	       i=RegisterWindowMessage32A( HELPMSGSTRING );
 	       if (lpp->lpcc->hwndOwner)
 		   SendMessage(lpp->lpcc->hwndOwner,i,0,(LPARAM)lpp->lpcc);
 	       if (CC_HookCallChk(lpp->lpcc))
-		   CallWindowProc((FARPROC)lpp->lpcc->lpfnHook,hDlg,
+		   CallWindowProc16((FARPROC)lpp->lpcc->lpfnHook,hDlg,
 		      WM_COMMAND,psh15,(LPARAM)lpp->lpcc);
 	       break;
 
           case IDOK :
-		cokmsg=RegisterWindowMessage(MAKE_SEGPTR(COLOROKSTRING));
+		cokmsg=RegisterWindowMessage32A( COLOROKSTRING );
 		if (lpp->lpcc->hwndOwner)
 			if (SendMessage(lpp->lpcc->hwndOwner,cokmsg,0,(LPARAM)lpp->lpcc))
 			   break;    /* do NOT close */
@@ -2032,11 +2023,11 @@ static LRESULT CC_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam)
     CC_PaintSelectedColor(hDlg,lpp->lpcc->rgbResult);
 
     /* special necessary for Wine */
-    ValidateRect(GetDlgItem(hDlg,0x2d0),NULL);
-    ValidateRect(GetDlgItem(hDlg,0x2d1),NULL);
-    ValidateRect(GetDlgItem(hDlg,0x2c6),NULL);
-    ValidateRect(GetDlgItem(hDlg,0x2be),NULL);
-    ValidateRect(GetDlgItem(hDlg,0x2c5),NULL);
+    ValidateRect32(GetDlgItem(hDlg,0x2d0),NULL);
+    ValidateRect32(GetDlgItem(hDlg,0x2d1),NULL);
+    ValidateRect32(GetDlgItem(hDlg,0x2c6),NULL);
+    ValidateRect32(GetDlgItem(hDlg,0x2be),NULL);
+    ValidateRect32(GetDlgItem(hDlg,0x2c5),NULL);
     /* hope we can remove it later -->FIXME */
  return 0;
 }
@@ -2104,7 +2095,7 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
      return FALSE;
   res=0;
   if (CC_HookCallChk(lpp->lpcc))
-     res=CallWindowProc((FARPROC)lpp->lpcc->lpfnHook,hDlg,message,wParam,lParam);
+     res=CallWindowProc16((FARPROC)lpp->lpcc->lpfnHook,hDlg,message,wParam,lParam);
   if (res)
      return res;
  }
@@ -2239,9 +2230,10 @@ int FontStyleEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM l
       i=0;
       while (sizes[i])
       {
-        sprintf(buffer,"%3d",sizes[i++]);
-        j=SendMessage(hcmb3,CB_ADDSTRING,0,(LPARAM)MAKE_SEGPTR(buffer));
+        sprintf(buffer,"%d",sizes[i]);
+        j=SendMessage(hcmb3,CB_INSERTSTRING,-1,(LPARAM)MAKE_SEGPTR(buffer));
         SendMessage(hcmb3, CB_SETITEMDATA, j, MAKELONG(sizes[i],0));
+        i++;
       }
     }
   }
@@ -2391,7 +2383,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
     ReleaseDC(hDlg,hdc);
   res=TRUE;
   if (CFn_HookCallChk(lpcf))
-    res=CallWindowProc(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+    res=CallWindowProc16(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
   SetCursor(hcursor);   
   return res;
 }
@@ -2422,23 +2414,23 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
   char buffer[40];
   BITMAP bm;
   COLORREF cr;
-  RECT rect;
+  RECT16 rect;
 #if 0  
   HDC hMemDC;
   int nFontType;
   HBITMAP hBitmap; /* for later TT usage */
 #endif  
-  LPDRAWITEMSTRUCT lpdi = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
+  LPDRAWITEMSTRUCT16 lpdi = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
 
   if (lpdi->itemID == 0xFFFF) 			/* got no items */
-    DrawFocusRect(lpdi->hDC, &lpdi->rcItem);
+    DrawFocusRect16(lpdi->hDC, &lpdi->rcItem);
   else
   {
    if (lpdi->CtlType == ODT_COMBOBOX)
    {
      hBrush = SelectObject(lpdi->hDC, GetStockObject(LTGRAY_BRUSH));
      SelectObject(lpdi->hDC, hBrush);
-     FillRect(lpdi->hDC, &lpdi->rcItem, hBrush);
+     FillRect16(lpdi->hDC, &lpdi->rcItem, hBrush);
    }
    else
      return TRUE;	/* this should never happen */
@@ -2450,8 +2442,8 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		SendMessage(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
 			(LPARAM)MAKE_SEGPTR(buffer));	          
 		GetObject(hBitmapTT, sizeof(BITMAP), (LPSTR)&bm);
-		TextOut(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
-			lpdi->rcItem.top, buffer, lstrlen(buffer));
+		TextOut16(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
+                          lpdi->rcItem.top, buffer, lstrlen(buffer));
 #if 0
 		nFontType = SendMessage(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
 		  /* FIXME: draw bitmap if truetype usage */
@@ -2470,15 +2462,15 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
     case cmb3:	/* dprintf_commdlg(stddeb,"WM_DRAWITEN cmb2,cmb3\n"); */
 		SendMessage(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
 			(LPARAM)MAKE_SEGPTR(buffer));
-		TextOut(lpdi->hDC, lpdi->rcItem.left,
-			lpdi->rcItem.top, buffer, lstrlen(buffer));
+		TextOut16(lpdi->hDC, lpdi->rcItem.left,
+                          lpdi->rcItem.top, buffer, lstrlen(buffer));
 		break;
 
     case cmb4:	/* dprintf_commdlg(stddeb,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
 		SendMessage(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
     		    (LPARAM)MAKE_SEGPTR(buffer));
-		TextOut(lpdi->hDC, lpdi->rcItem.left +  25+5,
-			lpdi->rcItem.top, buffer, lstrlen(buffer));
+		TextOut16(lpdi->hDC, lpdi->rcItem.left +  25+5,
+                          lpdi->rcItem.top, buffer, lstrlen(buffer));
 		cr = SendMessage(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
 		hBrush = CreateSolidBrush(cr);
 		if (hBrush)
@@ -2498,7 +2490,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
     default:	return TRUE;	/* this should never happen */
    }
    if (lpdi->itemState ==ODS_SELECTED)
-     InvertRect(lpdi->hDC, &rect);
+     InvertRect16(lpdi->hDC, &rect);
  }
  return TRUE;
 }
@@ -2622,15 +2614,15 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		  if (i!=CB_ERR)
 		  {
 		   lpcf->rgbColors=textcolors[i];
-		   InvalidateRect(GetDlgItem(hDlg,stc6),NULL,0);
+		   InvalidateRect32( GetDlgItem(hDlg,stc6), NULL, 0 );
 		  }
 		  break;
 	
-	case psh15:i=RegisterWindowMessage(MAKE_SEGPTR(HELPMSGSTRING));
+	case psh15:i=RegisterWindowMessage32A( HELPMSGSTRING );
 		  if (lpcf->hwndOwner)
 		    SendMessage(lpcf->hwndOwner,i,0,(LPARAM)lpcf);
 		  if (CFn_HookCallChk(lpcf))
-		    CallWindowProc(lpcf->lpfnHook,hDlg,WM_COMMAND,psh15,(LPARAM)lpcf);
+		    CallWindowProc16(lpcf->lpfnHook,hDlg,WM_COMMAND,psh15,(LPARAM)lpcf);
 		  break;
 
 	case IDOK:EndDialog(hDlg, TRUE);
@@ -2657,7 +2649,7 @@ LRESULT FormatCharDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
    if (!lpcf)
       return FALSE;
    if (CFn_HookCallChk(lpcf))
-     res=CallWindowProc(lpcf->lpfnHook,hDlg,message,wParam,lParam);
+     res=CallWindowProc16(lpcf->lpfnHook,hDlg,message,wParam,lParam);
    if (res)
     return res;
   }

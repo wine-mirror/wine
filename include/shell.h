@@ -26,7 +26,7 @@ extern void SHELL_Init();
 
 typedef struct { 	   /* structure for dropped files */ 
 	WORD		wSize;
-	POINT		ptMousePos;   
+	POINT16		ptMousePos;   
 	BOOL		fInNonClientArea;
 	/* memory block with filenames follows */     
 } DROPFILESTRUCT, *LPDROPFILESTRUCT; 

@@ -3,7 +3,7 @@
 
 #include "gdi.h"
 
-extern HPALETTE COLOR_Init(void);
+extern HPALETTE16 COLOR_Init(void);
 extern int COLOR_ToPhysical( DC *dc, COLORREF color );
 extern void COLOR_SetMapping( DC *dc, HANDLE map, HANDLE revMap, WORD size );
 extern BOOL COLOR_IsSolid( COLORREF color );

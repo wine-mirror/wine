@@ -1063,7 +1063,8 @@ static void BuildSpec16Files(void)
                     (odp->type == TYPE_REGISTER) ? "regs" :
                     (odp->type == TYPE_PASCAL) ? "long" : "word",
                     fdp->arg_types );
-            printf( "\t.word 0x%04x\n", WINE_CODE_SELECTOR );
+            printf( "\t.byte 0x%02x,0x%02x\n", /* Some asms don't have .word */
+                    LOBYTE(WINE_CODE_SELECTOR), HIBYTE(WINE_CODE_SELECTOR) );
             printf( "\tnop\n" );
             printf( "\tnop\n\n" );
             odp->offset = code_offset;

@@ -205,17 +205,17 @@ type	win16
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
 207 return IsDBCSLeadByte 2 0
-216 pascal   RegEnumKey(long long ptr long) RegEnumKey
-217 pascal   RegOpenKey(long ptr ptr) RegOpenKey
-218 pascal   RegCreateKey(long ptr ptr) RegCreateKey
-219 pascal   RegDeleteKey(long ptr) RegDeleteKey
+216 pascal   RegEnumKey(long long ptr long) RegEnumKey16
+217 pascal   RegOpenKey(long ptr ptr) RegOpenKey16
+218 pascal   RegCreateKey(long ptr ptr) RegCreateKey16
+219 pascal   RegDeleteKey(long ptr) RegDeleteKey16
 220 pascal   RegCloseKey(long) RegCloseKey
-221 pascal   RegSetValue(long ptr long ptr long) RegSetValue
-222 pascal   RegDeleteValue(long ptr) RegDeleteValue
-223 pascal   RegEnumValue(long long ptr ptr ptr ptr ptr ptr) RegEnumValue
-224 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue
-225 pascal   RegQueryValueEx(long ptr ptr ptr ptr ptr) RegQueryValueEx
-226 pascal   RegSetValueEx(long ptr long long ptr long) RegSetValueEx
+221 pascal   RegSetValue(long ptr long ptr long) RegSetValue16
+222 pascal   RegDeleteValue(long ptr) RegDeleteValue16
+223 pascal   RegEnumValue(long long ptr ptr ptr ptr ptr ptr) RegEnumValue16
+224 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue16
+225 pascal   RegQueryValueEx(long ptr ptr ptr ptr ptr) RegQueryValueEx16
+226 pascal   RegSetValueEx(long ptr long long ptr long) RegSetValueEx16
 227 pascal   RegFlushKey(long) RegFlushKey
 #228 K228
 #229 K229
@@ -270,8 +270,8 @@ type	win16
 404 pascal16 FarGetOwner(word) FarGetOwner
 406 stub WritePrivateProfileStruct
 407 stub GetPrivateProfileStruct
-411 stub GetCurrentDirectory
-412 stub SetCurrentDirectory
+411 pascal   GetCurrentDirectory(long ptr) GetCurrentDirectory
+412 pascal16 SetCurrentDirectory(ptr) SetCurrentDirectory
 413 stub FindFirstFile
 414 stub FindNextFile
 415 stub FindClose

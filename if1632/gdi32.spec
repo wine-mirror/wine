@@ -41,8 +41,8 @@ base	1
 0036 stub CreateDIBSection
 0037 stub CreateDIBitmap
 0038 stub CreateDiscardableBitmap
-0039 stub CreateEllipticRgn
-0040 stub CreateEllipticRgnIndirect
+0039 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn
+0040 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
 0041 stub CreateEnhMetaFileA
 0042 stub CreateEnhMetaFileW
 0043 stub CreateFontA
@@ -62,12 +62,12 @@ base	1
 0057 stub CreatePolyPolygonRgn
 0058 stub CreatePolygonRgn
 0059 stdcall CreateRectRgn(long long long long) CreateRectRgn
-0060 stub CreateRectRgnIndirect
-0061 stub CreateRoundRectRgn
+0060 stdcall CreateRectRgnIndirect(ptr) CreateRectRgnIndirect32
+0061 stdcall CreateRoundRectRgn(long long long long long long) CreateRoundRectRgn
 0062 stub CreateScalableFontResourceA
 0063 stub CreateScalableFontResourceW
 0064 stdcall CreateSolidBrush(long) CreateSolidBrush
-0065 stub DPtoLP
+0065 stdcall DPtoLP(long ptr long) DPtoLP32
 0066 stub DeleteColorSpace
 0067 stdcall DeleteDC(long) DeleteDC
 0068 stub DeleteEnhMetaFile
@@ -92,7 +92,7 @@ base	1
 0087 stub EnumICMProfilesW
 0088 stub EnumMetaFile
 0089 stub EnumObjects
-0090 stub EqualRgn
+0090 stdcall EqualRgn(long long) EqualRgn
 0091 stub Escape
 0092 stub ExcludeClipRect
 0093 stub ExtCreatePen
@@ -100,8 +100,8 @@ base	1
 0095 stub ExtEscape
 0096 stub ExtFloodFill
 0097 stub ExtSelectClipRgn
-0098 stub ExtTextOutA
-0099 stub ExtTextOutW
+0098 stdcall ExtTextOutA(long long long long ptr ptr long ptr) ExtTextOut32A
+0099 stdcall ExtTextOutW(long long long long ptr ptr long ptr) ExtTextOut32W
 0100 stub FillPath
 0101 stub FillRgn
 0102 stub FixBrushOrgEx
@@ -146,7 +146,7 @@ base	1
 0141 stub GetArcDirection
 0142 stub GetAspectRatioFilterEx
 0143 stub GetBitmapBits
-0144 stub GetBitmapDimensionEx
+0144 stdcall GetBitmapDimensionEx(long ptr) GetBitmapDimensionEx32
 0145 stub GetBkColor
 0146 stub GetBkMode
 0147 stub GetBoundsRect
@@ -164,7 +164,7 @@ base	1
 0159 stub GetCharWidthWOW
 0160 stub GetCharacterPlacementA
 0161 stub GetCharacterPlacementW
-0162 stub GetClipBox
+0162 stdcall GetClipBox(long ptr) GetClipBox32
 0163 stub GetClipRgn
 0164 stub GetColorAdjustment
 0165 stub GetColorSpace
@@ -221,8 +221,8 @@ base	1
 0216 stub GetRasterizerCaps
 0217 stub GetRegionData
 0218 stub GetRelAbs
-0219 stub GetRgnBox
-0220 stdcall GetStockObject(long)	GetStockObject
+0219 stdcall GetRgnBox(long ptr) GetRgnBox32
+0220 stdcall GetStockObject(long) GetStockObject
 0221 stub GetStretchBltMode
 0222 stub GetSystemPaletteEntries
 0223 stub GetSystemPaletteUse
@@ -234,8 +234,8 @@ base	1
 0229 stub GetTextExtentExPointW
 0230 stub GetTextExtentPoint32A
 0231 stub GetTextExtentPoint32W
-0232 stdcall GetTextExtentPointA(long ptr long ptr) WIN32_GetTextExtentPointA
-0233 stub GetTextExtentPointW
+0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32A
+0233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32W
 0234 stub GetTextFaceA
 0235 stub GetTextFaceW
 0236 stub GetTextMetricsA
@@ -249,18 +249,18 @@ base	1
 0244 stub GetWorldTransform
 0245 stub IntersectClipRect
 0246 stub InvertRgn
-0247 stub LPtoDP
+0247 stdcall LPtoDP(long ptr long) LPtoDP32
 0248 stub LineDDA
 0249 stdcall LineTo(long long long) LineTo
 0250 stub LoadImageColorMatcherA
 0251 stub LoadImageColorMatcherW
 0252 stub MaskBlt
 0253 stub ModifyWorldTransform
-0254 stdcall MoveToEx(long long long ptr) WIN32_MoveToEx
+0254 stdcall MoveToEx(long long long ptr) MoveToEx32
 0255 stub OffsetClipRgn
-0256 stub OffsetRgn
-0257 stub OffsetViewportOrgEx
-0258 stub OffsetWindowOrgEx
+0256 stdcall OffsetRgn(long long long) OffsetRgn
+0257 stdcall OffsetViewportOrgEx(long long long ptr) OffsetViewportOrgEx32
+0258 stdcall OffsetWindowOrgEx(long long long ptr) OffsetWindowOrgEx32
 0259 stub PaintRgn
 0260 stdcall PatBlt(long long long long long long) PatBlt
 0261 stub PathToRegion
@@ -280,12 +280,12 @@ base	1
 0275 stub Polygon
 0276 stub Polyline
 0277 stub PolylineTo
-0278 stub PtInRegion
+0278 stdcall PtInRegion(long long long) PtInRegion
 0279 stub PtVisible
 0280 stub RealizePalette
-0281 stub RectInRegion
-0282 stub RectVisible
-0283 stub Rectangle
+0281 stdcall RectInRegion(long ptr) RectInRegion32
+0282 stdcall RectVisible(long ptr) RectVisible32
+0283 stdcall Rectangle(long long long long long) Rectangle
 0284 stub RemoveFontResourceA
 0285 stub RemoveFontResourceTracking
 0286 stub RemoveFontResourceW
@@ -295,8 +295,8 @@ base	1
 0290 stub RestoreDC
 0291 stub RoundRect
 0292 stub SaveDC
-0293 stub ScaleViewportExtEx
-0294 stub ScaleWindowExtEx
+0293 stdcall ScaleViewportExtEx(long long long long long ptr) ScaleViewportExtEx32
+0294 stdcall ScaleWindowExtEx(long long long long long ptr) ScaleWindowExtEx32
 0295 stub SelectBrushLocal
 0296 stub SelectClipPath
 0297 stub SelectClipRgn
@@ -306,7 +306,7 @@ base	1
 0301 stub SetAbortProc
 0302 stub SetArcDirection
 0303 stub SetBitmapBits
-0304 stub SetBitmapDimensionEx
+0304 stdcall SetBitmapDimensionEx(long long long ptr) SetBitmapDimensionEx32
 0305 stdcall SetBkColor(long long) SetBkColor
 0306 stub SetBkMode
 0307 stub SetBoundsRect
@@ -342,12 +342,12 @@ base	1
 0337 stub SetTextCharacterExtra
 0338 stdcall SetTextColor(long long) SetTextColor
 0339 stub SetTextJustification
-0340 stub SetViewportExtEx
-0341 stub SetViewportOrgEx
+0340 stdcall SetViewportExtEx(long long long ptr) SetViewportExtEx32
+0341 stdcall SetViewportOrgEx(long long long ptr) SetViewportOrgEx32
 0342 stub SetVirtualResolution
 0343 stub SetWinMetaFileBits
-0344 stub SetWindowExtEx
-0345 stub SetWindowOrgEx
+0344 stdcall SetWindowExtEx(long long long ptr) SetWindowExtEx32
+0345 stdcall SetWindowOrgEx(long long long ptr) SetWindowOrgEx32
 0346 stub SetWorldTransform
 0347 stub StartDocA
 0348 stub StartDocW
@@ -357,8 +357,8 @@ base	1
 0352 stub StrokeAndFillPath
 0353 stub StrokePath
 0354 stub SwapBuffers
-0355 stdcall TextOutA(long long long ptr long) TextOut
-0356 stub TextOutW
+0355 stdcall TextOutA(long long long ptr long) TextOut32A
+0356 stdcall TextOutW(long long long ptr long) TextOut32W
 0357 stub UnloadNetworkFonts
 0358 stub UnrealizeObject
 0359 stub UpdateColors

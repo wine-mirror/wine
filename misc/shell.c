@@ -17,6 +17,7 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "winreg.h"
 
 extern HANDLE 	CURSORICON_LoadHandler( HANDLE, HINSTANCE, BOOL);
 extern WORD 	GetIconID( HANDLE hResource, DWORD resType );
@@ -37,7 +38,7 @@ void DragAcceptFiles(HWND hWnd, BOOL b)
 /*************************************************************************
  *				DragQueryFile		[SHELL.11]
  */
-UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
+UINT DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
 {
     /* hDrop is a global memory block allocated with GMEM_SHARE 
      * with DROPFILESTRUCT as a header and filenames following
@@ -81,7 +82,7 @@ UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
 /*************************************************************************
  *				DragFinish		[SHELL.12]
  */
-void DragFinish(HDROP h)
+void DragFinish(HDROP16 h)
 {
     GlobalFree16((HGLOBAL16)h);
 }
@@ -90,14 +91,14 @@ void DragFinish(HDROP h)
 /*************************************************************************
  *				DragQueryPoint		[SHELL.13]
  */
-BOOL DragQueryPoint(HDROP hDrop, POINT *p)
+BOOL DragQueryPoint(HDROP16 hDrop, POINT16 *p)
 {
     LPDROPFILESTRUCT lpDropFileStruct;  
     BOOL             bRet;
 
     lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop);
 
-    memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
+    memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT16));
     bRet = lpDropFileStruct->fInNonClientArea;
 
     GlobalUnlock16(hDrop);
@@ -145,7 +146,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpPar
       }
     } else {
       len=200;
-      if (RegQueryValue((HKEY)HKEY_CLASSES_ROOT,p,subclass,&len)==SHELL_ERROR_SUCCESS) {
+      if (RegQueryValue16((HKEY)HKEY_CLASSES_ROOT,p,subclass,&len)==SHELL_ERROR_SUCCESS) {
 	if (len>20)
 	  fprintf(stddeb,"ShellExecute:subclass with len %ld? (%s), please report.\n",len,subclass);
 	subclass[len]='\0';
@@ -154,7 +155,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpPar
 	strcat(subclass,"\\command");
 	dprintf_exec(stddeb,"ShellExecute:looking for %s.\n",subclass);
 	len=400;
-	if (RegQueryValue((HKEY)HKEY_CLASSES_ROOT,subclass,cmd,&len)==SHELL_ERROR_SUCCESS) {
+	if (RegQueryValue16((HKEY)HKEY_CLASSES_ROOT,subclass,cmd,&len)==SHELL_ERROR_SUCCESS) {
 	  char *t;
 	  dprintf_exec(stddeb,"ShellExecute:...got %s\n",cmd);
 	  cmd[len]='\0';
@@ -196,10 +197,131 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpPar
  */
 HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 {
-	fprintf(stdnimp, "FindExecutable: someone has to fix me and this is YOUR turn! :-)\n");
+    char *extension = NULL; /* pointer to file extension */
+    char tmpext[5];         /* local copy to mung as we please */
+    char filetype[256];     /* registry name for this filetype */
+    LONG filetypelen=256;   /* length of above */
+    char command[256];      /* command from registry */
+    LONG commandlen=256;    /* This is the most DOS can handle :) */
+    char buffer[256];       /* Used to GetProfileString */
+    HINSTANCE retval=31;    /* default - 'No association was found' */
+    char *tok;              /* token pointer */
+    int i;                  /* random counter */
 
-	lpResult[0]='\0';
-        return 31;		/* no association */
+    dprintf_exec(stddeb, "FindExecutable: File %s, Dir %s\n", 
+		 (lpFile != NULL?lpFile:"-"), 
+		 (lpDirectory != NULL?lpDirectory:"-"));
+
+    lpResult[0]='\0'; /* Start off with an empty return string */
+
+    /* trap NULL parameters on entry */
+    if (( lpFile == NULL ) || ( lpDirectory == NULL ) || 
+	( lpResult == NULL ))
+    {
+	/* FIXME - should throw a warning, perhaps! */
+	return 2; /* File not found. Close enough, I guess. */
+    }
+
+    /* First thing we need is the file's extension */
+    extension = strchr( lpFile, '.' ); /* Assumes first "." is the one... */
+    if ((extension == NULL) || (extension == &lpFile[strlen(lpFile)]))
+    {
+	return 31; /* no association */
+    }
+
+    /* Make local copy & lowercase it for reg & 'programs=' lookup */
+    strncpy( tmpext, extension, 5 );
+    if (strlen(extension)<=4)
+	tmpext[strlen(extension)]='\0';
+    else
+	tmpext[4]='\0';
+    for (i=0;i<strlen(tmpext);i++) tmpext[i]=tolower(tmpext[i]);
+    dprintf_exec(stddeb, "FindExecutable: %s file\n", tmpext);
+    
+    /* Three places to check: */
+    /* 1. win.ini, [windows], programs (NB no leading '.') */
+    /* 2. Registry, HKEY_CLASS_ROOT\<filetype>\shell\open\command */
+    /* 3. win.ini, [extensions], extension (NB no leading '.' */
+    /* All I know of the order is that registry is checked before */
+    /* extensions; however, it'd make sense to check the programs */
+    /* section first, so that's what happens here. */
+
+    /* See if it's a program */
+    GetProfileString("windows", "programs", "exe pif bat com",
+		      buffer, sizeof(buffer)); /* FIXME check return code! */
+
+    for (i=0;i<strlen(buffer); i++) buffer[i]=tolower(buffer[i]);
+
+    tok = strtok(buffer, " \t"); /* ? */
+    while( tok!= NULL)
+    {
+	if (strcmp(tok, &tmpext[1])==0) /* have to skip the leading "." */
+	{
+	    strcpy(lpResult, lpFile); /* Need to perhaps check that */
+				      /* the file has a path attached */
+	    dprintf_exec(stddeb, "FindExecutable: found %s\n", lpResult);
+	    return 33; /* Greater than 32 to indicate success FIXME */
+		       /* what are the correct values here? */
+	}
+	tok=strtok(NULL, " \t");
+    }
+
+    /* Check registry */
+    if (RegQueryValue16( (HKEY)HKEY_CLASSES_ROOT, tmpext, filetype,
+                         &filetypelen ) == SHELL_ERROR_SUCCESS )
+    {
+	filetype[filetypelen]='\0';
+	dprintf_exec(stddeb, "File type: %s\n", filetype);
+
+	/* Looking for ...buffer\shell\open\command */
+	strcat( filetype, "\\shell\\open\\command" );
+	
+	if (RegQueryValue16( (HKEY)HKEY_CLASSES_ROOT, filetype, command,
+                             &commandlen ) == SHELL_ERROR_SUCCESS )
+	{
+	    /* Is there a replace() function anywhere? */
+	    command[commandlen]='\0';
+	    strcpy( lpResult, command );
+	    tok=strstr( lpResult, "%1" );
+	    if (tok != NULL)
+	    {
+		tok[0]='\0'; /* truncate string at the percent */
+		strcat( lpResult, lpFile ); /* what if no dir in lpFile? */
+		tok=strstr( command, "%1" );
+		if ((tok!=NULL) && (strlen(tok)>2))
+		{
+		    strcat( lpResult, &tok[2] );
+		}
+	    }
+	    retval=33;
+	}
+    }
+    else /* Check win.ini */
+    {
+	/* Toss the leading dot */
+	extension++;
+	GetProfileString( "extensions", extension, "", command,
+			 sizeof(command));
+	if (strlen(command)!=0)
+	{
+	    strcpy( lpResult, command );
+	    tok=strstr( lpResult, "^" ); /* should be ^.extension? */
+	    if (tok != NULL)
+	    {
+		tok[0]='\0';
+		strcat( lpResult, lpFile ); /* what if no dir in lpFile? */
+		tok=strstr( command, "^" ); /* see above */
+		if ((tok != NULL) && (strlen(tok)>5))
+		{
+		    strcat( lpResult, &tok[5]);
+		}
+	    }
+	    retval=33;
+	}
+    }
+
+    dprintf_exec(stddeb, "FindExecutable: returning %s\n", lpResult);
+    return retval;
 }
 
 static char AppName[128], AppMisc[1536];
@@ -466,7 +588,7 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
   UINT 	l = strlen(entry); 
   for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
      {
-       if( strncasecmp(lpEnv, entry, l) ) continue;
+       if( lstrncmpi(lpEnv, entry, l) ) continue;
        
        if( !*(lpEnv+l) )
          return (lpEnv + l); 		/* empty entry */

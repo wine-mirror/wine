@@ -86,7 +86,21 @@ typedef struct
     HICON32     hIconSm;
 } WNDCLASSEX32W, *LPWNDCLASSEX32W;
 
-typedef void WNDCLASSEX16;  /* There's no WNDCLASSEX in Win16 */
+typedef struct
+{
+    UINT32      cbSize;
+    UINT32      style;
+    WNDPROC16   lpfnWndProc;
+    INT16       cbClsExtra;
+    INT16       cbWndExtra;
+    HANDLE16    hInstance;
+    HICON16     hIcon;
+    HCURSOR16   hCursor;
+    HBRUSH16    hbrBackground;
+    SEGPTR      lpszMenuName;
+    SEGPTR      lpszClassName;
+    HICON16     hIconSm;
+} WNDCLASSEX16, *LPWNDCLASSEX16;
 
 DECL_WINELIB_TYPE_AW(WNDCLASS);
 DECL_WINELIB_TYPE_AW(LPWNDCLASS);
@@ -125,23 +139,7 @@ DECL_WINELIB_TYPE_AW(LPWNDCLASSEX);
 #define GCW_STYLE           (-26)
 #define GCL_STYLE           GCW_STYLE
 #define GCW_ATOM            (-32)
-#define GCL_HICONSM         (-34)
-
-ATOM       RegisterClass16(const WNDCLASS16*);
-ATOM       RegisterClass32A(const WNDCLASS32A *);
-ATOM       RegisterClass32W(const WNDCLASS32W *);
-#define RegisterClass WINELIB_NAME_AW(RegisterClass)
-ATOM       RegisterClassEx32A(const WNDCLASSEX32A *);
-ATOM       RegisterClassEx32W(const WNDCLASSEX32W *);
-#define RegisterClassEx WINELIB_NAME_AW(RegisterClassEx)
-BOOL       UnregisterClass16(SEGPTR,HINSTANCE16);
-BOOL       UnregisterClass32A(LPCSTR,HINSTANCE32);
-BOOL       UnregisterClass32W(LPCWSTR,HINSTANCE32);
-#define UnregisterClass WINELIB_NAME_AW(UnregisterClass)
-
-BOOL       GetClassInfo(HANDLE,SEGPTR,WNDCLASS16 *);
-LONG       GetClassLong(HWND,short);
-int        GetClassName(HWND,LPSTR,short);
-LONG       SetClassLong(HWND,short,LONG);
+#define GCW_HICONSM         (-34)
+#define GCL_HICONSM         GCW_HICONSM
 
 #endif  /* __WINE_WINUSER_H */

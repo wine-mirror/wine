@@ -23,7 +23,7 @@
  */
 void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
 {
-    POINT pt = {0, 0}; 
+    POINT16 pt = {0, 0}; 
     HRGN hClip = 1;
 
     dprintf_nonclient(stddeb,"NCUpdate: hwnd %04x, hrgnUpdate %04x\n", 
@@ -38,7 +38,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
 
     if( wnd->hrgnUpdate > 1 )
     {
-	ClientToScreen(wnd->hwndSelf, &pt);
+	ClientToScreen16(wnd->hwndSelf, &pt);
 
         hClip = CreateRectRgn( 0, 0, 0, 0 );
         if (!CombineRgn(hClip, wnd->hrgnUpdate, 0, RGN_COPY) )
@@ -83,9 +83,9 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
 
 
 /***********************************************************************
- *           BeginPaint    (USER.39)
+ *           BeginPaint16    (USER.39)
  */
-HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps ) 
+HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
 {
     HRGN hrgnUpdate;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -113,8 +113,8 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
         return 0;
     }
 
-    GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
-    DPtoLP( lps->hdc, (LPPOINT)&lps->rcPaint, 2 );
+    GetRgnBox16( InquireVisRgn(lps->hdc), &lps->rcPaint );
+    DPtoLP16( lps->hdc, (LPPOINT16)&lps->rcPaint, 2 );
 
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
     {
@@ -128,9 +128,29 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 
 
 /***********************************************************************
- *           EndPaint    (USER.40)
+ *           BeginPaint32    (USER32.9)
  */
-BOOL EndPaint( HWND hwnd, const PAINTSTRUCT* lps )
+HDC32 BeginPaint32( HWND32 hwnd, PAINTSTRUCT32 *lps )
+{
+    PAINTSTRUCT16 ps;
+
+    BeginPaint16( hwnd, &ps );
+    lps->hdc            = (HDC32)ps.hdc;
+    lps->fErase         = ps.fErase;
+    lps->rcPaint.top    = ps.rcPaint.top;
+    lps->rcPaint.left   = ps.rcPaint.left;
+    lps->rcPaint.right  = ps.rcPaint.right;
+    lps->rcPaint.bottom = ps.rcPaint.bottom;
+    lps->fRestore       = ps.fRestore;
+    lps->fIncUpdate     = ps.fIncUpdate;
+    return lps->hdc;
+}
+
+
+/***********************************************************************
+ *           EndPaint16    (USER.40)
+ */
+BOOL16 EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 {
     ReleaseDC( hwnd, lps->hdc );
     ShowCaret( hwnd );
@@ -139,13 +159,24 @@ BOOL EndPaint( HWND hwnd, const PAINTSTRUCT* lps )
 
 
 /***********************************************************************
+ *           EndPaint32    (USER32.175)
+ */
+BOOL32 EndPaint32( HWND32 hwnd, const PAINTSTRUCT32 *lps )
+{
+    ReleaseDC( hwnd, (HDC16)lps->hdc );
+    ShowCaret( hwnd );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           FillWindow    (USER.324)
  */
-void FillWindow( HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush )
+void FillWindow( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbrush )
 {
-    RECT rect;
-    GetClientRect( hwnd, &rect );
-    DPtoLP( hdc, (LPPOINT)&rect, 2 );
+    RECT16 rect;
+    GetClientRect16( hwnd, &rect );
+    DPtoLP16( hdc, (LPPOINT16)&rect, 2 );
     PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
 }
 
@@ -153,7 +184,8 @@ void FillWindow( HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush )
 /***********************************************************************
  *           PaintRect    (USER.325)
  */
-void PaintRect(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush, LPRECT rect)
+void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
+                HBRUSH16 hbrush, const RECT16 *rect)
 {
       /* Send WM_CTLCOLOR message if needed */
 
@@ -169,7 +201,7 @@ void PaintRect(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush, LPRECT rect)
 				      hdc, MAKELONG( hwnd, hbrush ) );
 #endif
     }
-    if (hbrush) FillRect( hdc, rect, hbrush );
+    if (hbrush) FillRect16( hdc, rect, hbrush );
 }
 
 
@@ -189,12 +221,13 @@ HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
 
 
 /***********************************************************************
- *           RedrawWindow    (USER.290)
+ *           RedrawWindow32    (USER32.425)
  */
-BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
+BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
+                       HRGN32 hrgnUpdate, UINT32 flags )
 {
     HRGN hrgn;
-    RECT rectClient;
+    RECT32 rectClient;
     WND * wndPtr;
 
     if (!hwnd) hwnd = GetDesktopWindow();
@@ -213,7 +246,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
         dprintf_win(stddeb, "RedrawWindow: %04x NULL %04x flags=%04x\n",
                      hwnd, hrgnUpdate, flags);
     }
-    GetClientRect( hwnd, &rectClient );
+    GetClientRect32( hwnd, &rectClient );
 
     if (flags & RDW_INVALIDATE)  /* Invalidate */
     {
@@ -222,8 +255,8 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
         if (wndPtr->hrgnUpdate > 1)  /* Is there already an update region? */
         {
             if ((hrgn = hrgnUpdate) == 0)
-                hrgn = CreateRectRgnIndirect( rectUpdate ? rectUpdate :
-                                              &rectClient );
+                hrgn = CreateRectRgnIndirect32( rectUpdate ? rectUpdate :
+                                                &rectClient );
             rgnNotEmpty = CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hrgn, RGN_OR );
             if (!hrgnUpdate) DeleteObject( hrgn );
         }
@@ -236,7 +269,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
                 wndPtr->hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
                 rgnNotEmpty = CombineRgn( wndPtr->hrgnUpdate, hrgnUpdate, 0, RGN_COPY );
             }
-            else wndPtr->hrgnUpdate = CreateRectRgnIndirect( rectUpdate ?
+            else wndPtr->hrgnUpdate = CreateRectRgnIndirect32( rectUpdate ?
                                                     rectUpdate : &rectClient );
         }
 	
@@ -269,7 +302,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
             else
             {
                 if ((hrgn = hrgnUpdate) == 0)
-                    hrgn = CreateRectRgnIndirect( rectUpdate );
+                    hrgn = CreateRectRgnIndirect32( rectUpdate );
                 if (CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate,
                                 hrgn, RGN_DIFF ) == NULLREGION)
                 {
@@ -345,23 +378,23 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 		CombineRgn( hrgn, hrgnUpdate, 0, RGN_COPY );
 		OffsetRgn( hrgn, -wndPtr->rectClient.left,
 			         -wndPtr->rectClient.top );
-		RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags );
+		RedrawWindow32( wndPtr->hwndSelf, NULL, hrgn, flags );
 	    }
 	    DeleteObject( hrgn );
 	}
 	else
 	{
-	    RECT rect;		
+	    RECT32 rect;
 	    for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
 	    {
 		if (rectUpdate)
 		{
 		    rect = *rectUpdate;
-		    OffsetRect( &rect, -wndPtr->rectClient.left,
-			               -wndPtr->rectClient.top );
-		    RedrawWindow( wndPtr->hwndSelf, &rect, 0, flags );
+		    OffsetRect32( &rect, -wndPtr->rectClient.left,
+                                         -wndPtr->rectClient.top );
+		    RedrawWindow32( wndPtr->hwndSelf, &rect, 0, flags );
 		}
-		else RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags );
+		else RedrawWindow32( wndPtr->hwndSelf, NULL, 0, flags );
 	    }
 	}
     }
@@ -370,54 +403,103 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
 
 /***********************************************************************
- *           UpdateWindow   (USER.124)
+ *           RedrawWindow16    (USER.290)
  */
-void UpdateWindow( HWND hwnd )
+BOOL16 RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
+                       HRGN16 hrgnUpdate, UINT16 flags )
 {
-    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN );
+    if (rectUpdate)
+    {
+        RECT32 r;
+        CONV_RECT16TO32( rectUpdate, &r );
+        return (BOOL16)RedrawWindow32( (HWND32)hwnd, &r, hrgnUpdate, flags );
+    }
+    return (BOOL16)RedrawWindow32( (HWND32)hwnd, NULL, hrgnUpdate, flags );
 }
 
 
 /***********************************************************************
- *           InvalidateRgn   (USER.126)
+ *           UpdateWindow   (USER.124) (USER32.566)
  */
-void InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
+void UpdateWindow( HWND32 hwnd )
 {
-    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+    RedrawWindow32( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN );
 }
 
 
 /***********************************************************************
- *           InvalidateRect   (USER.125)
+ *           InvalidateRgn   (USER.126) (USER32.328)
  */
-void InvalidateRect( HWND hwnd, LPRECT rect, BOOL erase )
+void InvalidateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
-    RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+    RedrawWindow32(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0));
 }
 
 
 /***********************************************************************
- *           ValidateRgn   (USER.128)
+ *           InvalidateRect16   (USER.125)
  */
-void ValidateRgn( HWND hwnd, HRGN hrgn )
+void InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
 {
-    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+    RedrawWindow16( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
 /***********************************************************************
- *           ValidateRect   (USER.127)
+ *           InvalidateRect32   (USER32.327)
  */
-void ValidateRect( HWND hwnd, LPRECT rect )
+void InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
 {
-    RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
+    RedrawWindow32( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
 /***********************************************************************
- *           GetUpdateRect   (USER.190)
+ *           ValidateRgn   (USER.128) (USER32.571)
  */
-BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
+void ValidateRgn( HWND32 hwnd, HRGN32 hrgn )
+{
+    RedrawWindow32( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+}
+
+
+/***********************************************************************
+ *           ValidateRect16   (USER.127)
+ */
+void ValidateRect16( HWND16 hwnd, const RECT16 *rect )
+{
+    RedrawWindow16( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
+}
+
+
+/***********************************************************************
+ *           ValidateRect32   (USER32.570)
+ */
+void ValidateRect32( HWND32 hwnd, const RECT32 *rect )
+{
+    RedrawWindow32( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
+}
+
+
+/***********************************************************************
+ *           GetUpdateRect16   (USER.190)
+ */
+BOOL16 GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
+{
+    RECT32 r;
+    BOOL16 ret;
+
+    if (!rect) return GetUpdateRect32( hwnd, NULL, erase );
+    ret = GetUpdateRect32( hwnd, &r, erase );
+    CONV_RECT32TO16( &r, rect );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetUpdateRect32   (USER32.296)
+ */
+BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return FALSE;
@@ -428,21 +510,21 @@ BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 	{
 	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
 	    if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR) return FALSE;
-	    GetRgnBox( hrgn, rect );
+	    GetRgnBox32( hrgn, rect );
 	    DeleteObject( hrgn );
 	}
-	else SetRectEmpty( rect );
+	else SetRectEmpty32( rect );
     }
     return (wndPtr->hrgnUpdate > 1);
 }
 
 
 /***********************************************************************
- *           GetUpdateRgn   (USER.237)
+ *           GetUpdateRgn   (USER.237) (USER32.297)
  */
-int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
+INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
-    int retval;
+    INT16 retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return ERROR;
 
@@ -452,17 +534,17 @@ int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
         return NULLREGION;
     }
     retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
-    if (erase) RedrawWindow( hwnd, NULL, 0, RDW_ERASENOW | RDW_NOCHILDREN );
+    if (erase) RedrawWindow32( hwnd, NULL, 0, RDW_ERASENOW | RDW_NOCHILDREN );
     return retval;
 }
 
 
 /***********************************************************************
- *           ExcludeUpdateRgn   (USER.238)
+ *           ExcludeUpdateRgn   (USER.238) (USER32.194)
  */
-int ExcludeUpdateRgn( HDC hdc, HWND hwnd )
+INT16 ExcludeUpdateRgn( HDC32 hdc, HWND32 hwnd )
 {
-    int retval = ERROR;
+    INT16 retval = ERROR;
     HRGN hrgn;
     WND * wndPtr;
 

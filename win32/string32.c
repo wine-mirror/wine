@@ -67,6 +67,14 @@ LPWSTR STRING32_DupAnsiToUni(LPCSTR src)
 	return dest;
 }
 
+LPWSTR STRING32_lstrcpyW(LPWSTR dst, LPCWSTR src)
+{
+    register LPWSTR p = dst;
+    while ((*p++ = *src++));
+    return dst;
+}
+
+
 DWORD STRING32_lstrlenW(LPCWSTR str)
 {
 	int len;

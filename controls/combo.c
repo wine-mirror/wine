@@ -3,6 +3,7 @@
  * 
  * Copyright 1993 Martin Ayotte
  * Copyright 1995 Bernd Schmidt
+ * Copyright 1996 Albrecht Kleine  [some fixes]
  * 
  */
 
@@ -19,6 +20,7 @@
 #include "user.h"
 #include "win.h"
 #include "graphics.h"
+#include "heap.h"
 #include "listbox.h"
 #include "dos_fs.h"
 #include "drive.h"
@@ -33,18 +35,8 @@
   * I hope no programs rely on the implementation of combos.
   */
 
- /*
-  * May 2nd:  I added 3 "work arounds"  (#1,#2,#3)   to make combos 
-  *           with EDIT work. (We need that for ChooseFont dialog.)
-  *           Perhaps we have to rewrite something more.
-  *           I have prepared some more stuff, but it doesn't 
-  *           contain here,  because it's not ready ;-)
-  *
-  *           If you're writing on combo.c, please mail to me.
-  *
-  *           Albrecht Kleine  <kleine@ak.sax.de>
-  */
-
+#define ID_EDIT  1
+#define ID_CLB   2
 #define CBLMM_EDGE   4    /* distance inside box which is same as moving mouse
 			     outside box, to trigger scrolling of CBL */
 
@@ -97,9 +89,7 @@ void ComboUpdateWindow(HWND hwnd, LPHEADLIST lphl, LPHEADCOMBO lphc, BOOL repain
 
   if (wndPtr->dwStyle & WS_VSCROLL) 
     SetScrollRange(lphc->hWndLBox,SB_VERT,0,ListMaxFirstVisible(lphl),TRUE);
-  if (repaint && lphl->bRedrawFlag) {
-    InvalidateRect(hwnd, NULL, TRUE);
-  }
+  if (repaint && lphl->bRedrawFlag) InvalidateRect32( hwnd, NULL, TRUE );
 }
 
 /***********************************************************************
@@ -107,11 +97,11 @@ void ComboUpdateWindow(HWND hwnd, LPHEADLIST lphl, LPHEADCOMBO lphc, BOOL repain
  */
 static LRESULT CBNCCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  CREATESTRUCT *createStruct;
+  CREATESTRUCT16 *createStruct;
 
   if (!hComboBit) COMBO_Init();
 
-  createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
+  createStruct = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
   createStruct->style |= WS_BORDER;
   SetWindowLong(hwnd, GWL_STYLE, createStruct->style);
 
@@ -129,10 +119,11 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LPHEADCOMBO  lphc;
   LONG         style = 0;
   LONG         cstyle = GetWindowLong(hwnd,GWL_STYLE);
-  RECT         rect,lboxrect;
+  RECT16       rect,lboxrect;
   WND*         wndPtr = WIN_FindWndPtr(hwnd);
   char className[] = "COMBOLBOX";  /* Hack so that class names are > 0x10000 */
   char editName[] = "EDIT";
+  HWND hwndp=0;
 
   /* translate combo into listbox styles */
   cstyle |= WS_BORDER;
@@ -147,80 +138,61 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
   lphl = ComboGetListHeader(hwnd);
   lphc = ComboGetStorageHeader(hwnd);
 
-  GetClientRect(hwnd,&rect);
-  GetWindowRect(hwnd,&lboxrect);
+  GetClientRect16(hwnd,&rect);
+  lphc->LBoxTop = lphl->StdItemHeight;
 
-  /* FIXME: combos with edit controls are broken. */
-  switch(cstyle & 3) {
+  switch(cstyle & 3) 
+  {
    case CBS_SIMPLE:            /* edit control, list always visible  */
-    dprintf_combo(stddeb,"CBS_SIMPLE\n");
-    SetRectEmpty(&lphc->RectButton);
-    lboxrect=rect;                          /* work around #1 */   
-    lphc->LBoxTop = lphl->StdItemHeight;
-    lphc->hWndEdit = CreateWindow16(MAKE_SEGPTR(editName), (SEGPTR)0, 
-				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT | WS_BORDER,
-				  0, 0, rect.right, lphl->StdItemHeight,
-				  hwnd, (HMENU)1, WIN_GetWindowInstance(hwnd), 0L);
-    break;
+     lboxrect=rect;    
+     lboxrect.left +=8;
+     dprintf_combo(stddeb,"CBS_SIMPLE\n");
+     style= WS_BORDER |  WS_CHILD | WS_VISIBLE | WS_VSCROLL;
+     SetRectEmpty16(&lphc->RectButton);
+     hwndp=hwnd;
+     break;
+
+   case CBS_DROPDOWNLIST:      /* static control, dropdown listbox   */
    case CBS_DROPDOWN:          /* edit control, dropdown listbox     */
-    dprintf_combo(stddeb,"CBS_DROPDOWN\n");
-    lphc->RectButton = rect;
-    lphc->RectButton.left = lphc->RectButton.right - 6 - CBitWidth;
-    lphc->RectButton.bottom = lphc->RectButton.top + lphl->StdItemHeight;
-    lphc->LBoxTop = lphl->StdItemHeight;
-    SetWindowPos(hwnd, 0, 0, 0, rect.right - rect.left + 2*SYSMETRICS_CXBORDER,
+     GetWindowRect16(hwnd,&lboxrect);
+     style = WS_POPUP | WS_BORDER | WS_VSCROLL;
+     /* FIXME: WinSight says these should be CHILD windows with the TOPMOST flag
+      * set. Wine doesn't support TOPMOST, and simply setting the WS_CHILD
+      * flag doesn't work. */
+     lphc->RectButton = rect;
+     lphc->RectButton.left = lphc->RectButton.right - 6 - CBitWidth;
+     lphc->RectButton.bottom = lphc->RectButton.top + lphl->StdItemHeight;
+     SetWindowPos(hwnd, 0, 0, 0, rect.right - rect.left + 2*SYSMETRICS_CXBORDER,
 		 lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER,
 		 SWP_NOMOVE | SWP_NOZORDER);
-    lphc->hWndEdit = CreateWindow16(MAKE_SEGPTR(editName), (SEGPTR)0,
-				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
-				  0, 0, lphc->RectButton.left, lphl->StdItemHeight,
-				  hwnd, (HMENU)1, WIN_GetWindowInstance(hwnd), 0L);
-    break;
-   case CBS_DROPDOWNLIST:      /* static control, dropdown listbox   */
-    dprintf_combo(stddeb,"CBS_DROPDOWNLIST\n");
-    lphc->RectButton = rect;
-    lphc->RectButton.left = lphc->RectButton.right - 6 - CBitWidth;
-    lphc->RectButton.bottom = lphc->RectButton.top + lphl->StdItemHeight;
-    lphc->LBoxTop = lphl->StdItemHeight;
-
-    SetWindowPos(hwnd, 0, 0, 0, rect.right, 
-		 lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER, 
-		 SWP_NOMOVE | SWP_NOZORDER);
-    break;
+     rect.right=lphc->RectButton.left - 8;
+     dprintf_combo(stddeb,(cstyle & 3)==CBS_DROPDOWN ? "CBS_DROPDOWN\n": "CBS_DROPDOWNLIST\n");
+     break;
+     
+   default: fprintf(stderr,"COMBOBOX error: bad class style!\n");
+     return 0;
   }
-  lboxrect.top += lphc->LBoxTop;
-  /* FIXME: WinSight says these should be CHILD windows with the TOPMOST flag
-   * set. Wine doesn't support TOPMOST, and simply setting the WS_CHILD
-   * flag doesn't work. */
-   if ((cstyle & 3)==CBS_SIMPLE)                     /* work around #2 */
-   {
-    lphc->hWndLBox = CreateWindow16(MAKE_SEGPTR(className), (SEGPTR)0, 
-                                  WS_BORDER |  WS_CHILD | WS_VISIBLE |
- 				((cstyle & WS_HSCROLL)? WS_HSCROLL : 0) |
- 				((cstyle & WS_VSCROLL)? WS_VSCROLL : 0),
-				lboxrect.left +8 , lboxrect.top,
-				lboxrect.right - lboxrect.left - 8, 
-				lboxrect.bottom - lboxrect.top,
-				  hwnd,0, WIN_GetWindowInstance(hwnd),
-				(SEGPTR)hwnd );
-   }
-   else
-   {
-    lphc->hWndLBox = CreateWindow16(MAKE_SEGPTR(className), (SEGPTR)0, 
-				WS_POPUP | WS_BORDER |
+
+  if ((cstyle & 3) != CBS_DROPDOWNLIST)
+      lphc->hWndEdit = CreateWindow16(MAKE_SEGPTR(editName), (SEGPTR)0,
+				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | ES_LEFT | WS_BORDER,
+				  0, 0, rect.right, lphl->StdItemHeight,
+				  hwnd, (HMENU)ID_EDIT, WIN_GetWindowInstance(hwnd), 0L);
+				  
+  lboxrect.top+=lphc->LBoxTop;
+  lphc->hWndLBox = CreateWindow16(MAKE_SEGPTR(className), (SEGPTR)0, style |
  				((cstyle & WS_HSCROLL)? WS_HSCROLL : 0) |
  				((cstyle & WS_VSCROLL)? WS_VSCROLL : 0),
 				lboxrect.left, lboxrect.top,
 				lboxrect.right - lboxrect.left, 
 				lboxrect.bottom - lboxrect.top,
-				0, 0, WIN_GetWindowInstance(hwnd),
+				hwndp,(HMENU)ID_CLB, WIN_GetWindowInstance(hwnd),
 				(SEGPTR)hwnd );
-    ShowWindow(lphc->hWndLBox, SW_HIDE);
-   }  
+
    wndPtr->dwStyle &= ~(WS_VSCROLL | WS_HSCROLL);
-   
-   dprintf_combo( stddeb, "Combo Creation hwnd=%04x  LBox=%04x\n",
-                  hwnd, lphc->hWndLBox);
+
+   dprintf_combo( stddeb, "Combo Creation hwnd=%04x  LBox=%04x  Edit=%04x\n",
+                  hwnd, lphc->hWndLBox, lphc->hWndEdit);
    dprintf_combo( stddeb, "  lbox %d,%d-%d,%d     button %d,%d-%d,%d\n",
                   lboxrect.left, lboxrect.top, lboxrect.right, lboxrect.bottom,
                   lphc->RectButton.left, lphc->RectButton.top,
@@ -254,14 +226,15 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
-  PAINTSTRUCT  ps;
+  PAINTSTRUCT16  ps;
   HBRUSH hBrush;
   HFONT  hOldFont;
-  HDC  hdc;
-  RECT rect;
+  HDC16 hdc;
+  RECT16 rect;
   
-  hdc = BeginPaint(hwnd, &ps);
-  if (hComboBit != 0 && !IsRectEmpty(&lphc->RectButton)) {           /* work around #3 */
+  hdc = BeginPaint16(hwnd, &ps);
+  if (hComboBit != 0 && !IsRectEmpty16(&lphc->RectButton))
+  {
     GRAPH_DrawReliefRect(hdc, &lphc->RectButton, 2, 2, FALSE);
     GRAPH_DrawBitmap(hdc, hComboBit,
 		     lphc->RectButton.left + 2,lphc->RectButton.top + 2,
@@ -271,7 +244,7 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
       || (lphc->dwStyle & 3) != CBS_DROPDOWNLIST) 
   {
     /* we don't want to draw an entry when there is an edit control */
-    EndPaint(hwnd, &ps);
+    EndPaint16(hwnd, &ps);
     return 0;
   }
 
@@ -285,21 +258,21 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
 #endif
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
-  GetClientRect(hwnd, &rect);
+  GetClientRect16(hwnd, &rect);
 
   CBCheckSize(hwnd);
   rect.right -= (lphc->RectButton.right - lphc->RectButton.left);
 
   lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
   if (lpls != NULL) {  
-    FillRect(hdc, &rect, hBrush);
+    FillRect16(hdc, &rect, hBrush);
     ListBoxDrawItem (hwnd, lphl, hdc, lpls, &rect, ODA_DRAWENTIRE, 0);
     if (GetFocus() == hwnd)
     ListBoxDrawItem (hwnd,lphl, hdc, lpls, &rect, ODA_FOCUS, ODS_FOCUS);
   }
-  else FillRect(hdc, &rect, hBrush);
+  else FillRect16(hdc, &rect, hBrush);
   SelectObject(hdc,hOldFont);
-  EndPaint(hwnd, &ps);
+  EndPaint16(hwnd, &ps);
   return 0;
 }
 
@@ -350,12 +323,13 @@ static LRESULT CBKeyDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
     newFocused = lphl->ItemsCount - 1;
   
   ListBoxSetCurSel(lphl, newFocused);
+  SendMessage(hwnd, WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   ListBoxSendNotification(lphl, CBN_SELCHANGE);
 
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
 /*  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);*/
-  InvalidateRect(hwnd, NULL, TRUE);
+  InvalidateRect32( hwnd, NULL, TRUE );
 
   return 0;
 }
@@ -375,12 +349,13 @@ static LRESULT CBChar(HWND hwnd, WPARAM wParam, LPARAM lParam)
     newFocused = lphl->ItemsCount - 1;
   
   ListBoxSetCurSel(lphl, newFocused);
+  SendMessage(hwnd, WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   ListBoxSendNotification(lphl, CBN_SELCHANGE);
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
   
 /*  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);*/
-  InvalidateRect(hwnd, NULL, TRUE);
+  InvalidateRect32( hwnd, NULL, TRUE );
 
   return 0;
 }
@@ -522,7 +497,7 @@ static LRESULT CBSetCurSel(HWND hwnd, WPARAM wParam, LPARAM lParam)
   dprintf_combo(stddeb,"CBSetCurSel: hwnd %04x wp %x lp %lx wRet %d\n",
 		hwnd,wParam,lParam,wRet);
 /*  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);*/
-  InvalidateRect(hwnd, NULL, TRUE);
+  InvalidateRect32( hwnd, NULL, TRUE );
 
   return wRet;
 }
@@ -573,12 +548,14 @@ static LRESULT CBSetRedraw(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT CBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADLIST  lphl = ComboGetListHeader(hwnd);
-
+  LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
+  
   if (wParam == 0)
     lphl->hFont = GetStockObject(SYSTEM_FONT);
   else
     lphl->hFont = (HFONT)wParam;
-
+  if (lphc->hWndEdit)
+     SendMessage(lphc->hWndEdit,WM_SETFONT,lphl->hFont,0); 
   return 0;
 }
 
@@ -627,14 +604,14 @@ static LRESULT CBSetItemData(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT CBShowDropDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
-  RECT rect;
+  RECT32 rect;
   
   if ((lphc->dwStyle & 3) == CBS_SIMPLE) return LB_ERR;
   
   wParam = !!wParam;
   if (wParam != lphc->DropDownVisible) {
     lphc->DropDownVisible = wParam;
-    GetWindowRect(hwnd,&rect);
+    GetWindowRect32(hwnd,&rect);
     SetWindowPos(lphc->hWndLBox, 0, rect.left, rect.top+lphc->LBoxTop, 0, 0,
 		 SWP_NOSIZE | (wParam ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
     if (!wParam) SetFocus(hwnd);
@@ -651,27 +628,27 @@ static BOOL CBCheckSize(HWND hwnd)
   LPHEADCOMBO  lphc = ComboGetStorageHeader(hwnd);
   LPHEADLIST   lphl = ComboGetListHeader(hwnd);
   LONG         cstyle = GetWindowLong(hwnd,GWL_STYLE);
-  RECT         cRect,wRect;
+  RECT16       cRect,wRect;
 
   /* TODO - The size of combo's and their listboxes is still broken */
 
   if (lphc->hWndLBox == 0) return FALSE;
 
-  GetClientRect(hwnd,&cRect);
-  GetWindowRect(hwnd,&wRect);
+  GetClientRect16(hwnd,&cRect);
+  GetWindowRect16(hwnd,&wRect);
 
-  dprintf_vxd(stddeb,"CBCheckSize: cRect %d,%d-%d,%d  wRect %d,%d-%d,%d\n",
+  dprintf_combo(stddeb,"CBCheckSize: cRect %d,%d-%d,%d  wRect %d,%d-%d,%d\n",
 		cRect.left,cRect.top,cRect.right,cRect.bottom,
 		wRect.left,wRect.top,wRect.right,wRect.bottom);
-
+  if ((cstyle & 3) == CBS_SIMPLE  ) return TRUE ;
   if ((cRect.bottom - cRect.top) > 
       (lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER)) {
     SetWindowPos(hwnd, 0, 0, 0, 
 		 cRect.right-cRect.left,
 		 lphl->StdItemHeight+2*SYSMETRICS_CYBORDER, 
 		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE );
-    GetClientRect(hwnd,&cRect);
-    GetWindowRect(hwnd,&wRect);
+    GetClientRect16(hwnd,&cRect);
+    GetWindowRect16(hwnd,&wRect);
   }
 
   switch (cstyle & 3) {
@@ -691,8 +668,63 @@ static BOOL CBCheckSize(HWND hwnd)
     }
 
   CBLCheckSize(hwnd);
-
   return TRUE;
+}
+
+/***********************************************************************
+ *           CBCommand        
+ */
+static LRESULT CBCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
+  LPHEADLIST lphl = ComboGetListHeader(hwnd);
+  char       buffer[256];
+  WORD       newFocused;
+  WORD       id;
+  if (lphc->hWndEdit)  /* interdependence only used for CBS_SIMPLE and CBS_DROPDOWN styles */
+  {
+   switch (wParam)
+   {
+    case ID_CLB:                                        /* update EDIT window */
+                if (HIWORD(lParam)==CBN_SELCHANGE)
+                 if (lphl->HasStrings)
+                 { 
+                  ListBoxGetText(lphl,lphl->ItemFocused, buffer);
+                  dprintf_combo(stddeb,"CBCommand: update Edit: %s\n",buffer);
+                  SendMessage( lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(buffer));
+                 }
+                break;
+    case ID_EDIT:                                      /* update LISTBOX window */
+                 id=GetWindowWord(hwnd,GWW_ID);
+                 switch (HIWORD(lParam))
+                 {
+                  case EN_UPDATE:GetWindowText(lphc->hWndEdit,buffer,255);
+                                 if (*buffer)
+                                 {
+                                  newFocused=ListBoxFindString(lphl, -1, MAKE_SEGPTR(buffer));
+                                  dprintf_combo(stddeb,"CBCommand: new selection #%d is= %s\n",
+                                                newFocused,buffer);
+                                  if (newFocused != (WORD)LB_ERR)
+                                  {                             /* if found something */
+                                   ListBoxSetCurSel(lphl, newFocused);
+                                   ListBoxSendNotification(lphl, CBN_SELCHANGE);
+                                   InvalidateRect32(hwnd, NULL, TRUE); 
+                                  }
+                                 }
+                                 SendMessage(GetParent(hwnd),WM_COMMAND,id,
+                                         MAKELONG(hwnd, CBN_EDITUPDATE));
+                                 break;
+                  case EN_CHANGE:SendMessage(GetParent(hwnd),WM_COMMAND,id,
+                                         MAKELONG(hwnd, CBN_EDITCHANGE));
+                                 break;
+                  case EN_ERRSPACE:SendMessage(GetParent(hwnd),WM_COMMAND,id,
+                                         MAKELONG(hwnd, CBN_ERRSPACE));
+                                 break;
+                }
+                break;        
+   }
+  } 
+  return 0;
 }
 
 
@@ -715,6 +747,7 @@ LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case WM_SETFOCUS: return CBSetFocus(hwnd, wParam, lParam);
      case WM_KILLFOCUS: return CBKillFocus(hwnd, wParam, lParam);
      case WM_SIZE: return CBCheckSize(hwnd);
+     case WM_COMMAND: return CBCommand(hwnd, wParam, lParam);
      case CB_RESETCONTENT: return CBResetContent(hwnd, wParam, lParam);
      case CB_DIR: return CBDir(hwnd, wParam, lParam);
      case CB_ADDSTRING: return CBAddString(hwnd, wParam, lParam);
@@ -758,7 +791,7 @@ LPHEADLIST CLBoxGetListHeader(HWND hwnd)
  */
 static LRESULT CBLCreate( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-  CREATESTRUCT *createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
+  CREATESTRUCT16 *createStruct = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
 #ifdef WINELIB32
   SetWindowLong(hwnd,0,(LONG)createStruct->lpCreateParams);
 #else
@@ -815,11 +848,11 @@ static LRESULT CBLKeyDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   
   ListBoxSetCurSel(lphl, newFocused);
   ListBoxSendNotification(lphl, CBN_SELCHANGE);
-
+  SendMessage(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
   SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-  InvalidateRect(hwnd, NULL, TRUE);  
+  InvalidateRect32( hwnd, NULL, TRUE );
   return 0;
 }
 
@@ -838,20 +871,20 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
   LPHEADLIST   lphl = CLBoxGetListHeader(hwnd);
   LPLISTSTRUCT lpls;
-  PAINTSTRUCT  ps;
+  PAINTSTRUCT16  ps;
   HBRUSH       hBrush;
   HFONT        hOldFont;
   WND * wndPtr = WIN_FindWndPtr(hwnd);
   HWND  combohwnd = CLBoxGetCombo(hwnd);
-  HDC 	hdc;
-  RECT 	rect;
+  HDC16 hdc;
+  RECT16 rect;
   int   i, top, height;
 
   top = 0;
-  hdc = BeginPaint( hwnd, &ps );
+  hdc = BeginPaint16( hwnd, &ps );
 
   if (!IsWindowVisible(hwnd) || !lphl->bRedrawFlag) {
-    EndPaint(hwnd, &ps);
+    EndPaint16(hwnd, &ps);
     return 0;
   }
 
@@ -859,8 +892,8 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
   /* listboxes should be white */
   hBrush = GetStockObject(WHITE_BRUSH);
 
-  GetClientRect(hwnd, &rect);
-  FillRect(hdc, &rect, hBrush);
+  GetClientRect16(hwnd, &rect);
+  FillRect16(hdc, &rect, hBrush);
   CBLCheckSize(hwnd);
 
   lpls = lphl->lpFirst;
@@ -903,7 +936,7 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
       SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
 
   SelectObject(hdc,hOldFont);
-  EndPaint( hwnd, &ps );
+  EndPaint16( hwnd, &ps );
   return 0;
 
 }
@@ -934,7 +967,7 @@ static LRESULT CBLLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
   int        y;
-  RECT       rectsel;
+  RECT16     rectsel;
 
   SetFocus(hwnd);
   SetCapture(hwnd);
@@ -948,7 +981,7 @@ static LRESULT CBLLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   ListBoxSetCurSel(lphl, y);
   ListBoxGetItemRect(lphl, y, &rectsel);
 
-  InvalidateRect(hwnd, NULL, TRUE);
+  InvalidateRect32( hwnd, NULL, TRUE );
   return 0;
 }
 
@@ -968,6 +1001,7 @@ static LRESULT CBLLButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam )
   else if (lphl->PrevFocused != lphl->ItemFocused) 
           {
       		SendMessage(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
+      		SendMessage(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
       		ListBoxSendNotification(lphl, CBN_SELCHANGE);
      	  }
 
@@ -984,12 +1018,12 @@ static LRESULT CBLMouseMove( HWND hwnd, WPARAM wParam, LPARAM lParam )
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
   short y;
   WORD wRet;
-  RECT rect, rectsel;
+  RECT16 rect, rectsel;
 
   y = SHIWORD(lParam);
   wRet = ListBoxFindMouse(lphl, LOWORD(lParam), HIWORD(lParam));
   ListBoxGetItemRect(lphl, wRet, &rectsel);
-  GetClientRect(hwnd, &rect);
+  GetClientRect16(hwnd, &rect);
 
   dprintf_combo(stddeb,"CBLMouseMove: hwnd %04x wp %x lp %lx  y %d  if %d wret %d %d,%d-%d,%d\n",
 hwnd,wParam,lParam,y,lphl->ItemFocused,wRet,rectsel.left,rectsel.top,rectsel.right,rectsel.bottom);
@@ -1000,7 +1034,7 @@ hwnd,wParam,lParam,y,lphl->ItemFocused,wRet,rectsel.left,rectsel.top,rectsel.rig
 	lphl->FirstVisible--;
 	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	ListBoxSetCurSel(lphl, wRet);
-	InvalidateRect(hwnd, NULL, TRUE);
+	InvalidateRect32( hwnd, NULL, TRUE );
 	return 0;
       }
     }
@@ -1009,14 +1043,14 @@ hwnd,wParam,lParam,y,lphl->ItemFocused,wRet,rectsel.left,rectsel.top,rectsel.rig
 	lphl->FirstVisible++;
 	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	ListBoxSetCurSel(lphl, wRet);
-	InvalidateRect(hwnd, NULL, TRUE);
+	InvalidateRect32( hwnd, NULL, TRUE );
 	return 0;
       }
     }
     else {
       if ((short) wRet == lphl->ItemFocused) return 0;
       ListBoxSetCurSel(lphl, wRet);
-      InvalidateRect(hwnd, NULL, TRUE);
+      InvalidateRect32( hwnd, NULL, TRUE );
     }
   }
 
@@ -1065,7 +1099,7 @@ static LRESULT CBLVScroll( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
   if (y != lphl->FirstVisible) {
     SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-    InvalidateRect(hwnd, NULL, TRUE);
+    InvalidateRect32( hwnd, NULL, TRUE );
   }
 
   return 0;
@@ -1081,26 +1115,26 @@ static BOOL CBLCheckSize(HWND hwnd)
   LPHEADLIST   lphl = ComboGetListHeader(hwnd);
   LPLISTSTRUCT lpls;
   HWND         hWndLBox;
-  RECT cRect,wRect,lRect,lwRect;
+  RECT16 cRect,wRect,lRect,lwRect;
   int totheight;
   char className[80];
 
-  GetClassName(hwnd,className,80);
+  GetClassName32A(hwnd,className,80);
   fflush(stddeb);
   if (strncmp(className,"COMBOBOX",8)) return FALSE;
   if ((hWndLBox = lphc->hWndLBox) == 0) return FALSE;
-  dprintf_vxd(stddeb,"CBLCheckSize headers hw %04x  lb %04x  name %s\n",
+  dprintf_combo(stddeb,"CBLCheckSize headers hw %04x  lb %04x  name %s\n",
 		hwnd,hWndLBox,className);
 
-  GetClientRect(hwnd,&cRect);
-  GetWindowRect(hwnd,&wRect);
-  GetClientRect(hWndLBox,&lRect);
-  GetWindowRect(hWndLBox,&lwRect);
+  GetClientRect16(hwnd,&cRect);
+  GetWindowRect16(hwnd,&wRect);
+  GetClientRect16(hWndLBox,&lRect);
+  GetWindowRect16(hWndLBox,&lwRect);
 
-  dprintf_vxd(stddeb,"CBLCheckSize: init cRect %d,%d-%d,%d  wRect %d,%d-%d,%d\n",
+  dprintf_combo(stddeb,"CBLCheckSize: init cRect %d,%d-%d,%d  wRect %d,%d-%d,%d\n",
 		cRect.left,cRect.top,cRect.right,cRect.bottom,
 		wRect.left,wRect.top,wRect.right,wRect.bottom);
-  dprintf_vxd(stddeb,"                   lRect %d,%d-%d,%d  lwRect %d,%d-%d,%d\n",
+  dprintf_combo(stddeb,"                   lRect %d,%d-%d,%d  lwRect %d,%d-%d,%d\n",
 	      lRect.left,lRect.top,lRect.right,lRect.bottom,
 	      lwRect.left,lwRect.top,lwRect.right,lwRect.bottom);
   fflush(stddeb);
@@ -1111,13 +1145,12 @@ static BOOL CBLCheckSize(HWND hwnd)
 
   /* TODO: This isn't really what windows does */
   if (lRect.bottom-lRect.top < 3*lphl->StdItemHeight) {
-    dprintf_vxd(stddeb,"    Changing; totHeight %d  StdItemHght %d\n",
+    dprintf_combo(stddeb,"    Changing; totHeight %d  StdItemHght %d\n",
 		totheight,lphl->StdItemHeight);
     SetWindowPos(hWndLBox, 0, lRect.left, lRect.top, 
 		 lwRect.right-lwRect.left, totheight+2*SYSMETRICS_CYBORDER, 
 		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE );
   }
-
   return TRUE;
 }
 
@@ -1174,13 +1207,17 @@ INT DlgDirListComboBox( HWND hDlg, SEGPTR path, INT idCBox,
     }
     if (idStatic)
     {
-        char temp[256];
         int drive = DRIVE_GetCurrentDrive();
+        const char *cwd = DRIVE_GetDosCwd(drive);
+        char *temp = SEGPTR_ALLOC( strlen(cwd) + 4 );
+        if (!temp) return FALSE;
         strcpy( temp, "A:\\" );
         temp[0] += drive;
-        lstrcpyn( temp+3, DRIVE_GetDosCwd(drive), 253 );
+        strcpy( temp + 3, cwd );
+        AnsiLower( temp );
         SendDlgItemMessage( hDlg, idStatic, WM_SETTEXT,
-                            0, (LPARAM)MAKE_SEGPTR(temp) );
+                            0, (LPARAM)SEGPTR_GET(temp) );
+        SEGPTR_FREE(temp);
     } 
     return ret;
 }

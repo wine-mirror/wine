@@ -759,7 +759,7 @@ BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset )
  * Return an entry point from the WPROCS dll.
  */
 #ifndef WINELIB
-WNDPROC MODULE_GetWndProcEntry16( const char *name )
+FARPROC16 MODULE_GetWndProcEntry16( const char *name )
 {
     WORD ordinal;
     static HMODULE hModule = 0;
@@ -777,7 +777,7 @@ WNDPROC MODULE_GetWndProcEntry16( const char *name )
  * Return an entry point from the WPROCS32 dll.
  */
 #ifndef WINELIB
-WNDPROC MODULE_GetWndProcEntry32( const char *name )
+FARPROC32 MODULE_GetWndProcEntry32( const char *name )
 {
     static HMODULE hModule = 0;
 

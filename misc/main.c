@@ -564,9 +564,6 @@ int main( int argc, char *argv[] )
     
     MAIN_ParseOptions( &argc, argv );
 
-    SHELL_Init();
-    SHELL_LoadRegistry();
-
     screen       = DefaultScreenOfDisplay( display );
     screenWidth  = WidthOfScreen( screen );
     screenHeight = HeightOfScreen( screen );
@@ -892,38 +889,45 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			break;
 		
 		case SPI_GETBORDER:
-			*(INT *) lpvParam = 1;
+			*(INT *)lpvParam = GetSystemMetrics( SM_CXFRAME );
 			break;
 
 		case SPI_GETFASTTASKSWITCH:
 			*(BOOL *) lpvParam = FALSE;
+			/* FIXME GetProfileInt( "windows", "CoolSwitch", 1 ) */
 			break;
 
 		case SPI_GETGRIDGRANULARITY:
 			*(INT *) lpvParam = 1;
+		/* FIXME GetProfileInt( "desktop", "GridGranularity", 1 ) */
 			break;
 
 		case SPI_GETICONTITLEWRAP:
 			*(BOOL *) lpvParam = FALSE;
+			/* FIXME GetProfileInt( "desktop", "?", True ) */
 			break;
 
 		case SPI_GETKEYBOARDDELAY:
 			*(INT *) lpvParam = 1;
+			/* FIXME */
 			break;
 
 		case SPI_GETKEYBOARDSPEED:
 			*(WORD *) lpvParam = 30;
+			/* FIXME */
 			break;
 
 		case SPI_GETMENUDROPALIGNMENT:
-			*(BOOL *) lpvParam = FALSE;
+			*(BOOL *) lpvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT ); /* XXX check this */
 			break;
 
 		case SPI_GETSCREENSAVEACTIVE:
+			/* FIXME GetProfileInt( "windows", "ScreenSaveActive", 1 ); */
 			*(BOOL *) lpvParam = FALSE;
 			break;
 
 		case SPI_GETSCREENSAVETIMEOUT:
+			/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
 			XGetScreenSaver(display, &timeout, &temp,&temp,&temp);
 			*(INT *) lpvParam = timeout * 1000;
 			break;
@@ -932,14 +936,14 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			if (lpvParam == NULL)
 				fprintf(stderr, "SystemParametersInfo: Horizontal icon spacing set to %d\n.", uParam);
 			else
-				*(INT *) lpvParam = 50;
+				*(INT *) lpvParam = GetSystemMetrics( SM_CXICONSPACING );
 			break;
 
 		case SPI_ICONVERTICALSPACING:
 			if (lpvParam == NULL)
 				fprintf(stderr, "SystemParametersInfo: Vertical icon spacing set to %d\n.", uParam);
 			else
-				*(INT *) lpvParam = 50;
+				*(INT *) lpvParam = GetSystemMetrics( SM_CYICONSPACING );
 			break;
 
 		case SPI_SETBEEP:
@@ -979,6 +983,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 
 	        case SPI_GETICONTITLELOGFONT: 
 	        {
+		    /* FIXME GetProfileString( "?", "?", "?" ) */
 		  LPLOGFONT lpLogFont = (LPLOGFONT)lpvParam;
 		  lpLogFont->lfHeight = 10;
 		  lpLogFont->lfWidth = 0;

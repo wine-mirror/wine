@@ -1,7 +1,7 @@
 #ifndef __WINE_HANDLE32_H
 #define __WINE_HANDLE32_H
 
-#include <malloc.h>
+#include <stdlib.h>
 #include "wintypes.h"
 
 /* The _*_OBJECT structures contain information needed about each

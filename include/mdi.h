@@ -31,17 +31,18 @@ typedef struct tagMDIWCL
 
 typedef struct 
 {
-    WORD   nActiveChildren;
-    HWND   flagChildMaximized;
-    HWND   hwndActiveChild;
-    HMENU  hWindowMenu;
-    WORD   idFirstChild;
-    HANDLE hFrameTitle;
-    WORD   sbNeedUpdate;
-    WORD   sbRecalc;
-    HBITMAP obmClose;
-    HBITMAP obmRestore;
-    HWND   self;
+    WORD   	nActiveChildren;
+    HWND   	hwndChildMaximized;
+    HWND   	hwndActiveChild;
+    HMENU  	hWindowMenu;
+    WORD   	idFirstChild;
+    WORD	nTotalCreated;
+    HANDLE 	hFrameTitle;
+    WORD   	sbNeedUpdate;
+    WORD   	sbRecalc;
+    HBITMAP 	obmClose;
+    HBITMAP 	obmRestore;
+    HWND   	self;
 } MDICLIENTINFO;
 
 #endif /* MDI_H */

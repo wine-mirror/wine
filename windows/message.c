@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -55,11 +56,11 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 {
     WND *pWnd;
     BOOL eatMsg = FALSE;
-    INT hittest;
+    INT16 hittest;
     static DWORD lastClickTime = 0;
     static WORD  lastClickMsg = 0;
-    static POINT lastClickPos = { 0, 0 };
-    POINT pt = msg->pt;
+    static POINT16 lastClickPos = { 0, 0 };
+    POINT16 pt = msg->pt;
     MOUSEHOOKSTRUCT hook = { msg->pt, 0, HTCLIENT, 0 };
 
     BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
@@ -71,7 +72,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     if (GetCapture())
     {
 	msg->hwnd = GetCapture();
-	ScreenToClient( msg->hwnd, &pt );
+	ScreenToClient16( msg->hwnd, &pt );
 	msg->lParam = MAKELONG( pt.x, pt.y );
         /* No need to further process the message */
         hook.hwnd = msg->hwnd;
@@ -102,7 +103,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 
             if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)) 
                 && hwndTop != GetActiveWindow() )
-                WINPOS_ChangeActiveWindow( hwndTop, TRUE );
+                WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE );
         }
     }
 
@@ -148,7 +149,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
       /* Build the translated message */
 
     if (hittest == HTCLIENT)
-        ScreenToClient( msg->hwnd, &pt );
+        ScreenToClient16( msg->hwnd, &pt );
     else
     {
 	msg->wParam = hittest;
@@ -686,8 +687,8 @@ LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         SPY_ExitMessage( SPY_RESULT_INVALIDHWND, hwnd, msg, 0 );
         return 0;
     }
-    ret = CallWindowProc( wndPtr->lpfnWndProc, msgstruct.hWnd, msgstruct.wMsg,
-                          msgstruct.wParam, msgstruct.lParam );
+    ret = CallWindowProc16(wndPtr->lpfnWndProc, msgstruct.hWnd, msgstruct.wMsg,
+                           msgstruct.wParam, msgstruct.lParam );
     SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, ret );
     return ret;
 }
@@ -772,13 +773,9 @@ LONG DispatchMessage( const MSG* msg )
     {
 	if (msg->lParam)
         {
-#ifndef WINELIB
-            HINSTANCE ds = msg->hwnd ? WIN_GetWindowInstance( msg->hwnd )
-                                     : (HINSTANCE)CURRENT_DS;
-#endif
 /*            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
-	    return CallWndProc( (WNDPROC)msg->lParam, ds, msg->hwnd,
-                                msg->message, msg->wParam, GetTickCount() );
+	    return CallWindowProc16( (WNDPROC)msg->lParam, msg->hwnd,
+                                   msg->message, msg->wParam, GetTickCount() );
         }
     }
 
@@ -788,8 +785,8 @@ LONG DispatchMessage( const MSG* msg )
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
 /*    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
-    retval = CallWindowProc( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
-			     msg->wParam, msg->lParam );
+    retval = CallWindowProc16( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
+                               msg->wParam, msg->lParam );
     if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
@@ -797,27 +794,41 @@ LONG DispatchMessage( const MSG* msg )
 		msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
-        ValidateRect( msg->hwnd, NULL );
+        ValidateRect32( msg->hwnd, NULL );
     }
     return retval;
 }
 
 
 /***********************************************************************
- *           RegisterWindowMessage   (USER.118)
+ *           RegisterWindowMessage16   (USER.118)
  */
-WORD RegisterWindowMessage( SEGPTR str )
+WORD RegisterWindowMessage16( SEGPTR str )
 {
-    dprintf_msg(stddeb, "RegisterWindowMessage: %08lx\n", (DWORD)str );
-    return GlobalAddAtom( str );
+    dprintf_msg(stddeb, "RegisterWindowMessage16: %08lx\n", (DWORD)str );
+    return GlobalAddAtom16( str );
 }
 
-WORD RegisterWindowMessageA( LPSTR str )
+
+/***********************************************************************
+ *           RegisterWindowMessage32A   (USER32.436)
+ */
+WORD RegisterWindowMessage32A( LPCSTR str )
 {
-    char buffer[256];
-    lstrcpyn( buffer, str, sizeof(buffer) );
-    return RegisterWindowMessage(MAKE_SEGPTR(buffer));
+    dprintf_msg(stddeb, "RegisterWindowMessage32A: %s\n", str );
+    return GlobalAddAtom32A( str );
 }
+
+
+/***********************************************************************
+ *           RegisterWindowMessage32W   (USER32.437)
+ */
+WORD RegisterWindowMessage32W( LPCWSTR str )
+{
+    dprintf_msg(stddeb, "RegisterWindowMessage32W: %p\n", str );
+    return GlobalAddAtom32W( str );
+}
+
 
 /***********************************************************************
  *           GetTickCount    (USER.13) (KERNEL32.299)

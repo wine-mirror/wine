@@ -12,6 +12,7 @@
 #include "gdi.h"
 #include "callback.h"
 #include "metafile.h"
+#include "string32.h"
 #include "stddebug.h"
 /* #define DEBUG_TEXT */
 #include "debug.h"
@@ -51,7 +52,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
     int i = 0, j = 0, k;
     int plen = 0;
     int numspaces;
-    SIZE size;
+    SIZE16 size;
     int lasttab = 0;
     int wb_i = 0, wb_j = 0, wb_count = 0;
 
@@ -74,7 +75,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
 		(format & DT_WORDBREAK))
 	    {
-		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		if (!GetTextExtentPoint16(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
@@ -91,7 +92,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 		dest[j++] = str[i++];
 		if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
 		{
-		    if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		    if (!GetTextExtentPoint16(hdc, &dest[j-1], 1, &size))
 			return NULL;
 		    plen += size.cx;
 		}
@@ -105,7 +106,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 		wb_j = j;
 		wb_count = *count;
 
-		if (!GetTextExtentPoint(hdc, &dest[lasttab], j - lasttab,
+		if (!GetTextExtentPoint16(hdc, &dest[lasttab], j - lasttab,
 					                         &size))
 		    return NULL;
 
@@ -121,7 +122,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 		if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
 		    (format & DT_WORDBREAK))
 		{
-		    if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		    if (!GetTextExtentPoint16(hdc, &dest[j-1], 1, &size))
 			return NULL;
 		    plen += size.cx;
 		}
@@ -136,7 +137,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 		wb_i = i;
 		wb_j = j - 1;
 		wb_count = *count;
-		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		if (!GetTextExtentPoint16(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
@@ -147,7 +148,7 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
 		(format & DT_WORDBREAK))
 	    {
-		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		if (!GetTextExtentPoint16(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
@@ -182,11 +183,12 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 
 
 /***********************************************************************
- *           DrawText    (USER.85)
+ *           DrawText16    (USER.85)
  */
-INT DrawText( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags )
+INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
+                  LPRECT16 rect, UINT16 flags )
 {
-    SIZE size;
+    SIZE16 size;
     const char *strPtr;
     static char line[1024];
     int len, lh, count=i_count;
@@ -214,9 +216,9 @@ INT DrawText( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags )
 
     if (flags & DT_EXPANDTABS)
     {
-	GetTextExtentPoint(hdc, " ", 1, &size);
+	GetTextExtentPoint16(hdc, " ", 1, &size);
 	spacewidth = size.cx;
-	GetTextExtentPoint(hdc, "o", 1, &size);
+	GetTextExtentPoint16(hdc, "o", 1, &size);
 	tabwidth = size.cx * tabstop;
     }
 
@@ -227,13 +229,13 @@ INT DrawText( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags )
 
 	if (prefix_offset != -1)
 	{
-	    GetTextExtentPoint(hdc, line, prefix_offset, &size);
+	    GetTextExtentPoint16(hdc, line, prefix_offset, &size);
 	    prefix_x = size.cx;
-	    GetTextExtentPoint(hdc, line, prefix_offset + 1, &size);
+	    GetTextExtentPoint16(hdc, line, prefix_offset + 1, &size);
 	    prefix_end = size.cx - 1;
 	}
 
-	if (!GetTextExtentPoint(hdc, line, len, &size)) return 0;
+	if (!GetTextExtentPoint16(hdc, line, len, &size)) return 0;
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
 	else if (flags & DT_RIGHT) x = rect->right - size.cx;
@@ -246,16 +248,16 @@ INT DrawText( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags )
 	}
 	if (!(flags & DT_CALCRECT))
 	{
-	    if (!ExtTextOut( hdc, x, y, (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED,
-                             rect, line, len, NULL )) return 0;
+	    if (!ExtTextOut16(hdc, x, y, (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED,
+                              rect, line, len, NULL )) return 0;
 	}
 	else if (size.cx > max_width)
 	    max_width = size.cx;
 
 	if (prefix_offset != -1)
 	{
-	    HPEN hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
-	    HPEN oldPen = SelectObject( hdc, hpen );
+	    HPEN16 hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
+	    HPEN16 oldPen = SelectObject( hdc, hpen );
 	    MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
 	    LineTo(hdc, x + prefix_end, y + tm.tmAscent + 1 );
 	    SelectObject( hdc, oldPen );
@@ -283,15 +285,47 @@ INT DrawText( HDC hdc, LPCSTR str, INT i_count, LPRECT rect, UINT flags )
 
 
 /***********************************************************************
- *           ExtTextOut    (GDI.351)
+ *           DrawText32A    (USER32.163)
  */
-BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
-                 LPSTR str, WORD count, LPINT16 lpDx )
+INT32 DrawText32A( HDC32 hdc, LPCSTR str, INT32 count,
+                   LPRECT32 rect, UINT32 flags )
+{
+    RECT16 rect16;
+    INT16 ret;
+
+    if (!rect)
+        return DrawText16( (HDC16)hdc, str, (INT16)count, NULL, (UINT16)flags);
+    CONV_RECT32TO16( rect, &rect16 );
+    ret = DrawText16( (HDC16)hdc, str, (INT16)count, &rect16, (UINT16)flags );
+    CONV_RECT16TO32( &rect16, rect );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           DrawText32W    (USER32.166)
+ */
+INT32 DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
+                   LPRECT32 rect, UINT32 flags )
+{
+    char *p = STRING32_DupUniToAnsi( str );
+    INT32 ret = DrawText32A( hdc, p, count, rect, flags );
+    free(p);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           ExtTextOut16    (GDI.351)
+ */
+BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
+                     const RECT16 *lprect, LPCSTR str, UINT16 count,
+                     const INT16 *lpDx )
 {
     int dir, ascent, descent, i;
     XCharStruct info;
     XFontStruct *font;
-    RECT rect;
+    RECT16 rect;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -421,7 +455,7 @@ BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
         items = xmalloc( count * sizeof(XTextItem) );
         for (i = 0, pitem = items; i < count; i++, pitem++)
         {
-            pitem->chars  = str + i;
+            pitem->chars  = (char *)str + i;
             pitem->nchars = 1;
             pitem->font   = None;
             if (i == 0)
@@ -434,7 +468,7 @@ BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
                 pitem->delta += dc->w.breakExtra;
             if (lpDx)
             {
-                INT width;
+                INT16 width;
                 GetCharWidth( hdc, str[i], str[i], &width );
                 pitem->delta += lpDx[i-1] - width;
             }
@@ -479,11 +513,62 @@ BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
 
 
 /***********************************************************************
- *           TextOut    (GDI.33)
+ *           ExtTextOut32A    (GDI32.98)
  */
-BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
+BOOL32 ExtTextOut32A( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
+                      const RECT32 *lprect, LPCSTR str, UINT32 count,
+                      const INT32 *lpDx )
 {
-    return ExtTextOut( hdc, x, y, 0, NULL, str, count, NULL );
+    RECT16 rect16;
+
+    if (lpDx) fprintf( stderr, "ExtTextOut32A: lpDx not implemented\n" );
+    if (!lprect)
+        return ExtTextOut16( (HDC16)hdc, (INT16)x, (INT16)y, (UINT16)flags,
+                             NULL, str, (UINT16)count, NULL );
+    CONV_RECT32TO16( lprect, &rect16 );
+    return ExtTextOut16( (HDC16)hdc, (INT16)x, (INT16)y, (UINT16)flags,
+                         &rect16, str, (UINT16)count, NULL );
+}
+
+
+/***********************************************************************
+ *           ExtTextOut32W    (GDI32.99)
+ */
+BOOL32 ExtTextOut32W( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
+                      const RECT32 *lprect, LPCWSTR str, UINT32 count,
+                      const INT32 *lpDx )
+{
+    char *p = STRING32_DupUniToAnsi( str );
+    INT32 ret = ExtTextOut32A( hdc, x, y, flags, lprect, p, count, lpDx );
+    free(p);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           TextOut16    (GDI.33)
+ */
+BOOL16 TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
+{
+    return ExtTextOut16( hdc, x, y, 0, NULL, str, count, NULL );
+}
+
+
+/***********************************************************************
+ *           TextOut32A    (GDI32.355)
+ */
+BOOL32 TextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR str, INT32 count )
+{
+    return ExtTextOut32A( hdc, x, y, 0, NULL, str, count, NULL );
+}
+
+
+/***********************************************************************
+ *           TextOut32W    (GDI32.356)
+ */
+BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
+{
+    return ExtTextOut32W( hdc, x, y, 0, NULL, str, count, NULL );
 }
 
 
@@ -501,8 +586,8 @@ BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam,
 	} else {
 		current_color = GetTextColor(hdc);
 		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT) );
-		s = TextOut(hdc, x, y, (LPSTR) lParam, 
-				cch ? cch : lstrlen((LPCSTR) lParam) );
+		s = TextOut16(hdc, x, y, (LPSTR) lParam, 
+                              cch ? cch : lstrlen((LPCSTR) lParam) );
 		SetTextColor(hdc, current_color);
 		
 		return s;
@@ -556,11 +641,11 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
             tabPos = nTabOrg + ((x + LOWORD(extent) - nTabOrg) / defWidth + 1) * defWidth;
         if (fDisplayText)
         {
-            RECT r;
-            SetRect( &r, x, y, tabPos, y+HIWORD(extent) );
-            ExtTextOut( hdc, x, y,
-                        GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
-                        &r, lpstr, i, NULL );
+            RECT16 r;
+            SetRect16( &r, x, y, tabPos, y+HIWORD(extent) );
+            ExtTextOut16( hdc, x, y,
+                          GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
+                          &r, lpstr, i, NULL );
         }
         x = tabPos;
         count -= i+1;

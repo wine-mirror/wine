@@ -11,19 +11,19 @@
 #include "stddebug.h"
 #include "debug.h"
 
-void STRUCT32_POINT32to16(const POINT32* p32,POINT* p16)
+void STRUCT32_POINT32to16(const POINT32* p32, POINT16* p16)
 {
 	p16->x = p32->x;
 	p16->y = p32->y;
 }
 
-void STRUCT32_POINT16to32(const POINT* p16,POINT32* p32)
+void STRUCT32_POINT16to32(const POINT16* p16, POINT32* p32)
 {
 	p32->x = p16->x;
 	p32->y = p16->y;
 }
 
-void STRUCT32_SIZE16to32(const SIZE* p16, SIZE32* p32) 
+void STRUCT32_SIZE16to32(const SIZE16* p16, SIZE32* p32) 
   
 {
         p32->cx = p16->cx;
@@ -52,7 +52,7 @@ void STRUCT32_MSG32to16(MSG32 *msg32,MSG *msg16)
 	msg16->pt.y=msg32->pt.y;
 }
 
-void STRUCT32_RECT32to16(const RECT32* r32,RECT *r16)
+void STRUCT32_RECT32to16(const RECT32* r32, RECT16 *r16)
 {
 	r16->left = r32->left;
 	r16->right = r32->right;
@@ -60,7 +60,7 @@ void STRUCT32_RECT32to16(const RECT32* r32,RECT *r16)
 	r16->bottom = r32->bottom;
 }
 
-void STRUCT32_RECT16to32(const RECT* r16,RECT32 *r32)
+void STRUCT32_RECT16to32(const RECT16* r16, RECT32 *r32)
 {
 	r32->left = r16->left;
 	r32->right = r16->right;
@@ -68,83 +68,95 @@ void STRUCT32_RECT16to32(const RECT* r16,RECT32 *r32)
 	r32->bottom = r16->bottom;
 }
 
-void STRUCT32_MINMAXINFO32to16(const MINMAXINFO32 *from,MINMAXINFO *to)
+void STRUCT32_MINMAXINFO32to16( const MINMAXINFO32 *from, MINMAXINFO16 *to )
 {
-	STRUCT32_POINT32to16(&from->ptReserved,&to->ptReserved);
-	STRUCT32_POINT32to16(&from->ptMaxSize,&to->ptMaxSize);
-	STRUCT32_POINT32to16(&from->ptMaxPosition,&to->ptMaxPosition);
-	STRUCT32_POINT32to16(&from->ptMinTrackSize,&to->ptMinTrackSize);
-	STRUCT32_POINT32to16(&from->ptMaxTrackSize,&to->ptMaxTrackSize);
+    CONV_POINT32TO16( &from->ptReserved,     &to->ptReserved );
+    CONV_POINT32TO16( &from->ptMaxSize,      &to->ptMaxSize );
+    CONV_POINT32TO16( &from->ptMaxPosition,  &to->ptMaxPosition );
+    CONV_POINT32TO16( &from->ptMinTrackSize, &to->ptMinTrackSize );
+    CONV_POINT32TO16( &from->ptMaxTrackSize, &to->ptMaxTrackSize );
 }
 
-void STRUCT32_MINMAXINFO16to32(const MINMAXINFO *from,MINMAXINFO32 *to)
+void STRUCT32_MINMAXINFO16to32( const MINMAXINFO16 *from, MINMAXINFO32 *to )
 {
-	STRUCT32_POINT16to32(&from->ptReserved,&to->ptReserved);
-	STRUCT32_POINT16to32(&from->ptMaxSize,&to->ptMaxSize);
-	STRUCT32_POINT16to32(&from->ptMaxPosition,&to->ptMaxPosition);
-	STRUCT32_POINT16to32(&from->ptMinTrackSize,&to->ptMinTrackSize);
-	STRUCT32_POINT16to32(&from->ptMaxTrackSize,&to->ptMaxTrackSize);
+    CONV_POINT16TO32( &from->ptReserved,     &to->ptReserved );
+    CONV_POINT16TO32( &from->ptMaxSize,      &to->ptMaxSize );
+    CONV_POINT16TO32( &from->ptMaxPosition,  &to->ptMaxPosition );
+    CONV_POINT16TO32( &from->ptMinTrackSize, &to->ptMinTrackSize );
+    CONV_POINT16TO32( &from->ptMaxTrackSize, &to->ptMaxTrackSize );
 }
 
-void STRUCT32_WINDOWPOS32to16(const WINDOWPOS32* from,WINDOWPOS* to)
+void STRUCT32_WINDOWPOS32to16( const WINDOWPOS32* from, WINDOWPOS16* to )
 {
-	to->hwnd=from->hwnd;
-	to->hwndInsertAfter=from->hwndInsertAfter;
-	to->x=from->x;
-	to->y=from->y;
-	to->cx=from->cx;
-	to->flags=from->flags;
+    to->hwnd            = (HWND16)from->hwnd;
+    to->hwndInsertAfter = (HWND16)from->hwndInsertAfter;
+    to->x               = (INT16)from->x;
+    to->y               = (INT16)from->y;
+    to->cx              = (INT16)from->cx;
+    to->cy              = (INT16)from->cy;
+    to->flags           = (UINT16)from->flags;
 }
 
-void STRUCT32_WINDOWPOS16to32(const WINDOWPOS* from,WINDOWPOS32* to)
+void STRUCT32_WINDOWPOS16to32( const WINDOWPOS16* from, WINDOWPOS32* to )
 {
-	to->hwnd=from->hwnd;
-	to->hwndInsertAfter=from->hwndInsertAfter;
-	to->x=from->x;
-	to->y=from->y;
-	to->cx=from->cx;
-	to->flags=from->flags;
+    to->hwnd            = (HWND32)from->hwnd;
+    to->hwndInsertAfter = (HWND32)from->hwndInsertAfter;
+    to->x               = (INT32)from->x;
+    to->y               = (INT32)from->y;
+    to->cx              = (INT32)from->cx;
+    to->cy              = (INT32)from->cy;
+    to->flags           = (UINT32)from->flags;
 }
 
-void STRUCT32_NCCALCSIZE32to16Flat(const NCCALCSIZE_PARAMS32* from,
-	NCCALCSIZE_PARAMS* to)
+void STRUCT32_NCCALCSIZE32to16Flat( const NCCALCSIZE_PARAMS32* from,
+                                    NCCALCSIZE_PARAMS16* to, int validRects )
 {
-	STRUCT32_RECT32to16(from->rgrc,to->rgrc);
-	STRUCT32_RECT32to16(from->rgrc+1,to->rgrc+1);
-	STRUCT32_RECT32to16(from->rgrc+2,to->rgrc+2);
+    CONV_RECT32TO16( &from->rgrc[0], &to->rgrc[0] );
+    if (validRects)
+    {
+        CONV_RECT32TO16( &from->rgrc[1], &to->rgrc[1] );
+        CONV_RECT32TO16( &from->rgrc[2], &to->rgrc[2] );
+    }
 }
 
-void STRUCT32_NCCALCSIZE16to32Flat(const NCCALCSIZE_PARAMS* from,
-	NCCALCSIZE_PARAMS32* to)
+void STRUCT32_NCCALCSIZE16to32Flat( const NCCALCSIZE_PARAMS16* from,
+                                    NCCALCSIZE_PARAMS32* to, int validRects )
 {
-	STRUCT32_RECT16to32(from->rgrc,to->rgrc);
-	STRUCT32_RECT16to32(from->rgrc+1,to->rgrc+1);
-	STRUCT32_RECT16to32(from->rgrc+2,to->rgrc+2);
+    CONV_RECT16TO32( &from->rgrc[0], &to->rgrc[0] );
+    if (validRects)
+    {
+        CONV_RECT32TO16( &from->rgrc[1], &to->rgrc[1] );
+        CONV_RECT32TO16( &from->rgrc[2], &to->rgrc[2] );
+    }
 }
 
 /* The strings are not copied */
-void STRUCT32_CREATESTRUCT32to16(const CREATESTRUCT32* from,CREATESTRUCT* to)
+void STRUCT32_CREATESTRUCT32Ato16( const CREATESTRUCT32A* from,
+                                   CREATESTRUCT16* to )
 {
-	to->lpCreateParams = (LPVOID)from->lpCreateParams;
-	to->hInstance = from->hInstance;
-	to->hMenu = from->hMenu;
-	to->hwndParent = from->hwndParent;
-	to->cy = from->cy;
-	to->cx = from->cx;
-	to->y = from->y;
-	to->style = from->style;
-	to->dwExStyle = from->dwExStyle;
+    to->lpCreateParams = from->lpCreateParams;
+    to->hInstance      = (HINSTANCE16)from->hInstance;
+    to->hMenu          = (HMENU16)from->hMenu;
+    to->hwndParent     = (HWND16)from->hwndParent;
+    to->cy             = (INT16)from->cy;
+    to->cx             = (INT16)from->cx;
+    to->y              = (INT16)from->y;
+    to->x              = (INT16)from->x;
+    to->style          = from->style;
+    to->dwExStyle      = from->dwExStyle;
 }
 
-void STRUCT32_CREATESTRUCT16to32(const CREATESTRUCT* from,CREATESTRUCT32 *to)
+void STRUCT32_CREATESTRUCT16to32A( const CREATESTRUCT16* from,
+                                   CREATESTRUCT32A *to )
 {
-	to->lpCreateParams = (DWORD)from->lpCreateParams;
-	to->hInstance = from->hInstance;
-	to->hMenu = from->hMenu;
-	to->hwndParent = from->hwndParent;
-	to->cy = from->cy;
-	to->cx = from->cx;
-	to->y = from->y;
-	to->style = from->style;
-	to->dwExStyle = from->dwExStyle;
+    to->lpCreateParams = from->lpCreateParams;
+    to->hInstance      = (HINSTANCE32)from->hInstance;
+    to->hMenu          = (HMENU32)from->hMenu;
+    to->hwndParent     = (HWND32)from->hwndParent;
+    to->cy             = (INT32)from->cy;
+    to->cx             = (INT32)from->cx;
+    to->y              = (INT32)from->y;
+    to->x              = (INT32)from->x;
+    to->style          = from->style;
+    to->dwExStyle      = from->dwExStyle;
 }

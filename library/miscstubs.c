@@ -10,7 +10,6 @@
 #include "dde_mem.h"
 #include "windows.h"
 #include "global.h"
-#include "relay32.h"
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -43,93 +42,6 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 }
 
 WORD CallTo16_word_ ( FARPROC func, WORD arg ) { return func(arg); }
-
-#if 0
-void GlobalFreeAll(HGLOBAL16 owner)
-{
-  WINELIB_UNIMP("GlobalFreeAll()");
-}
-
-SEGPTR WIN16_GlobalLock16(HGLOBAL16 h) 
-  { return (SEGPTR)h; }
-HLOCAL LOCAL_Free(WORD ds, HLOCAL handle) 
-  { return LocalFree(handle); }
-HLOCAL LOCAL_Alloc(WORD ds, WORD flags, WORD size)
-  { return LocalAlloc(flags,size); }
-HLOCAL LOCAL_ReAlloc(WORD ds, HLOCAL handle, WORD size, WORD flags)
-  { return LocalReAlloc(handle,size,flags); }
-LPSTR LOCAL_Lock( WORD ds, HLOCAL handle )
-  { return LocalLock(handle); }
-BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
-  { return LocalUnlock(handle); }
-WORD LOCAL_Size( WORD ds, HLOCAL handle )
-  { return LocalSize(handle); }
-
-void FarSetOwner(HANDLE a, HANDLE b)
-{
-  WINELIB_UNIMP("FarSetOwner()");
-}
-
-#define GLOBAL_MAX_ALLOC_SIZE 0x00ff0000  /* Largest allocation is 16M - 64K */
-
-HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
-                      BOOL isCode, BOOL is32Bit, BOOL isReadOnly )
-{
-    void *ptr;
-    HGLOBAL handle;
-    SHMDATA shmdata;
-
-    dprintf_global( stddeb, "GLOBAL_Alloc: %ld flags=%04x\n", size, flags );
-
-      /* Fixup the size */
-
-    if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x1f) return 0;
-    if (size == 0) size = 0x20;
-    else size = (size + 0x1f) & ~0x1f;
-
-      /* Allocate the linear memory */
-
-#ifdef CONFIG_IPC
-    if ((flags & GMEM_DDESHARE) && Options.ipc)
-        ptr = DDE_malloc(flags, size, &shmdata);
-    else 
-#endif  /* CONFIG_IPC */
-	ptr = malloc( size );
-    if (!ptr) return 0;
-
-      /* Allocate the selector(s) */
-
-    handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner,
-				isCode, is32Bit, isReadOnly, &shmdata);
-    if (!handle)
-    {
-        free( ptr );
-        return 0;
-    }
-
-    if (flags & GMEM_ZEROINIT) memset( ptr, 0, size );
-    return handle;
-}
-
-HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
-			    HGLOBAL hOwner, BOOL isCode,
-			    BOOL is32Bit, BOOL isReadOnly,
-			    SHMDATA *shmdata)
-{
-  return (HGLOBAL)ptr;
-}
-
-BOOL GLOBAL_FreeBlock( HGLOBAL handle )
-{
-  return 1;
-}
-
-HGLOBAL GlobalHandle(LPCVOID a)
-{
-  fprintf(stderr,"JBP: GlobalHandle() ignored.\n");
-  return 0;
-}
-#endif
 
 extern LRESULT ACTIVATEAPP_callback(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);

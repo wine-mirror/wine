@@ -10,6 +10,7 @@
 #include "windows.h"
 #include "debugger.h"
 #include "kernel32.h"  /* for CRITICAL_SECTION */
+#include "selectors.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnt.h"
@@ -72,6 +73,7 @@ typedef struct tagSUBHEAP
     struct tagSUBHEAP  *next;       /* Next sub-heap */
     struct tagHEAP     *heap;       /* Main heap structure */
     DWORD               magic;      /* Magic number */
+    WORD                selector;   /* Selector for HEAP_WINE_SEGPTR heaps */
 } SUBHEAP;
 
 #define SUBHEAP_MAGIC    ((DWORD)('S' | ('U'<<8) | ('B'<<16) | ('H'<<24)))
@@ -216,7 +218,7 @@ static void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena )
  *
  * Find the sub-heap containing a given address.
  */
-static SUBHEAP *HEAP_FindSubHeap( HEAP *heap, void *ptr )
+static SUBHEAP *HEAP_FindSubHeap( HEAP *heap, LPCVOID ptr )
 {
     SUBHEAP *sub = &heap->subheap;
     while (sub)
@@ -409,16 +411,25 @@ static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, DWORD size)
  *
  * Create a sub-heap of the given size.
  */
-static SUBHEAP *HEAP_CreateSubHeap( DWORD commitSize, DWORD totalSize )
+static SUBHEAP *HEAP_CreateSubHeap( DWORD flags, DWORD commitSize,
+                                    DWORD totalSize )
 {
     SUBHEAP *subheap;
+    WORD selector = 0;
 
     /* Round-up sizes on a 64K boundary */
 
-    totalSize  = (totalSize + 0xffff) & 0xffff0000;
-    commitSize = (commitSize + 0xffff) & 0xffff0000;
-    if (!commitSize) commitSize = 0x10000;
-    if (totalSize < commitSize) totalSize = commitSize;
+    if (flags & HEAP_WINE_SEGPTR)
+    {
+        totalSize = commitSize = 0x10000;  /* Only 64K at a time for SEGPTRs */
+    }
+    else
+    {
+        totalSize  = (totalSize + 0xffff) & 0xffff0000;
+        commitSize = (commitSize + 0xffff) & 0xffff0000;
+        if (!commitSize) commitSize = 0x10000;
+        if (totalSize < commitSize) totalSize = commitSize;
+    }
 
     /* Allocate the memory block */
 
@@ -437,6 +448,21 @@ static SUBHEAP *HEAP_CreateSubHeap( DWORD commitSize, DWORD totalSize )
         return NULL;
     }
 
+    /* Allocate a selector if needed */
+
+    if (flags & HEAP_WINE_SEGPTR)
+    {
+        selector = SELECTOR_AllocBlock( subheap, totalSize,
+                     (flags & HEAP_WINE_CODESEG) ? SEGMENT_CODE : SEGMENT_DATA,
+                     (flags & HEAP_WINE_CODESEG) != 0, FALSE );
+        if (!selector)
+        {
+            fprintf( stderr, "HEAP_CreateSubHeap: could not allocate selector\n" );
+            VirtualFree( subheap, 0, MEM_RELEASE );
+            return NULL;
+        }
+    }
+
     /* Fill the sub-heap structure */
 
     subheap->size       = totalSize;
@@ -445,6 +471,7 @@ static SUBHEAP *HEAP_CreateSubHeap( DWORD commitSize, DWORD totalSize )
     subheap->next       = NULL;
     subheap->heap       = NULL;
     subheap->magic      = SUBHEAP_MAGIC;
+    subheap->selector   = selector;
     return subheap;
 }
 
@@ -490,7 +517,8 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
         return NULL;
     }
     size += sizeof(SUBHEAP) + sizeof(ARENA_FREE);
-    if (!(subheap = HEAP_CreateSubHeap( size, MAX( HEAP_DEF_SIZE, size ) )))
+    if (!(subheap = HEAP_CreateSubHeap( heap->flags, size,
+                                        MAX( HEAP_DEF_SIZE, size ) )))
         return NULL;
 
     /* Insert the new sub-heap in the list */
@@ -675,6 +703,72 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
 
 
 /***********************************************************************
+ *           HEAP_IsInsideHeap
+ *
+ * Check whether the pointer is to a block inside a given heap.
+ */
+int HEAP_IsInsideHeap( HANDLE32 heap, DWORD flags, LPCVOID ptr )
+{
+    HEAP *heapPtr = HEAP_GetPtr( heap );
+    SUBHEAP *subheap;
+    int ret;
+
+    /* Validate the parameters */
+
+    if (!heapPtr) return 0;
+    flags |= heapPtr->flags;
+    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    ret = (((subheap = HEAP_FindSubHeap( heapPtr, ptr )) != NULL) &&
+           (((char *)ptr >= (char *)subheap + subheap->headerSize
+                              + sizeof(ARENA_INUSE))));
+    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           HEAP_GetSegptr
+ *
+ * Transform a linear pointer into a SEGPTR. The pointer must have been
+ * allocated from a HEAP_WINE_SEGPTR heap.
+ */
+SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr )
+{
+    HEAP *heapPtr = HEAP_GetPtr( heap );
+    SUBHEAP *subheap;
+    SEGPTR ret;
+
+    /* Validate the parameters */
+
+    if (!heapPtr) return 0;
+    flags |= heapPtr->flags;
+    if (!(flags & HEAP_WINE_SEGPTR))
+    {
+        fprintf( stderr, "HEAP_GetSegptr: heap %08x is not a SEGPTR heap\n",
+                 heap );
+        return 0;
+    }
+    if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+
+    /* Get the subheap */
+
+    if (!(subheap = HEAP_FindSubHeap( heapPtr, ptr )))
+    {
+        fprintf( stderr, "HEAP_GetSegptr: %p is not inside heap %08x\n",
+                 ptr, heap );
+        if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+        return 0;
+    }
+
+    /* Build the SEGPTR */
+
+    ret = PTR_SEG_OFF_TO_SEGPTR(subheap->selector, (DWORD)ptr-(DWORD)subheap);
+    if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    return ret;
+}
+
+
+/***********************************************************************
  *           HeapCreate   (KERNEL32.336)
  */
 HANDLE32 HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
@@ -691,7 +785,7 @@ HANDLE32 HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
         maxSize = HEAP_DEF_SIZE;
         flags |= HEAP_GROWABLE;
     }
-    if (!(subheap = HEAP_CreateSubHeap( initialSize, maxSize )))
+    if (!(subheap = HEAP_CreateSubHeap( flags, initialSize, maxSize )))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return 0;
@@ -1095,5 +1189,18 @@ BOOL HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
  */
 BOOL HeapWalk( HANDLE32 heap, void *entry )
 {
+    fprintf( stderr, "HeapWalk(%08x): not implemented\n", heap );
     return FALSE;
+}
+
+
+/***********************************************************************
+ *           HEAP_strdupA
+ */
+LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
+{
+    INT32 len = lstrlen(str) + 1;
+    LPSTR p = HeapAlloc( heap, flags, len );
+    if (p) strcpy( p, str );
+    return p;
 }

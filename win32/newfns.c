@@ -23,3 +23,13 @@ BOOL WIN32_WinHelpA(HWND hWnd,LPCSTR lpszHelp,UINT uCommand, DWORD dwData)
 	   anyways */
 	return WinHelp(hWnd,lpszHelp,uCommand,dwData);
 }
+
+HHOOK SetWindowsHookEx32A(int HookId, HOOKPROC hookfn, HINSTANCE hModule,
+				DWORD ThreadId)
+
+{
+	/* Stub for now */
+	fprintf(stdnimp, "WIN32_SetWindowsHookEx Stub called!\n");
+	
+	return (HHOOK) NULL;
+}

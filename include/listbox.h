@@ -5,7 +5,7 @@
 typedef struct tagLISTSTRUCT {
         MEASUREITEMSTRUCT mis;
         UINT            itemState;
-        RECT            itemRect;
+        RECT16          itemRect;
 	HANDLE		hData;
 	char            *itemText;
 	struct tagLISTSTRUCT *lpNext;
@@ -60,12 +60,12 @@ extern int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex);
 extern int ListBoxSetSel(LPHEADLIST lphl, WORD wIndex, WORD state);
 extern int ListBoxGetSel(LPHEADLIST lphl, WORD wIndex);
 extern LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec);
-extern int ListBoxGetItemRect(LPHEADLIST lphl, WORD wIndex, LPRECT rect);
+extern int ListBoxGetItemRect(LPHEADLIST lphl, WORD wIndex, LPRECT16 rect);
 extern int ListBoxSetItemHeight(LPHEADLIST lphl, WORD wIndex, long height);
 extern int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar);
 
 extern void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc,
-			     LPLISTSTRUCT lpls, RECT *rect, WORD itemAction,
+			     LPLISTSTRUCT lpls, RECT16 *rect, WORD itemAction,
 			     WORD itemState);
 extern int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y);
 extern void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls);

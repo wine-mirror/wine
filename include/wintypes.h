@@ -41,8 +41,8 @@
 #  define WINELIB_NAME_AW(func)  func##16
 # endif  /* WINELIB32 */
 #else   /* WINELIB */
-# define WINELIB_NAME(func)      /* nothing */
-# define WINELIB_NAME_AW(func)   /* nothing */
+# define WINELIB_NAME(func)      this is a syntax error
+# define WINELIB_NAME_AW(func)   this is a syntax error
 #endif  /* WINELIB */
 
 #ifdef WINELIB
@@ -62,12 +62,13 @@ typedef int             INT32;
 typedef unsigned int    UINT32;
 typedef unsigned short  WORD;
 typedef unsigned long   DWORD;
-typedef unsigned short  BOOL;
 typedef unsigned char   BYTE;
 typedef long            LONG;
 typedef char            CHAR;
 /* Some systems might have wchar_t, but we really need 16 bit characters */
 typedef unsigned short  WCHAR;
+typedef unsigned short  BOOL16;
+typedef int             BOOL32;
 
 /* Handles types. These are the same for emulator and library. */
 
@@ -186,6 +187,7 @@ DECL_WINELIB_TYPE(INT);
 DECL_WINELIB_TYPE(LPINT);
 DECL_WINELIB_TYPE(LPUINT);
 DECL_WINELIB_TYPE(UINT);
+DECL_WINELIB_TYPE(BOOL);
 DECL_WINELIB_TYPE(WPARAM);
 
 DECL_WINELIB_TYPE(HACCEL);
@@ -232,18 +234,15 @@ DECL_WINELIB_TYPE(WNDPROC);
 #ifndef WINELIB
 typedef INT16 INT;
 typedef UINT16 UINT;
+typedef BOOL16 BOOL;
 typedef WPARAM16 WPARAM;
-typedef HANDLE16 HACCEL;
 typedef HANDLE16 HANDLE;
 typedef HANDLE16 HBITMAP;
 typedef HANDLE16 HBRUSH;
 typedef HANDLE16 HCURSOR;
 typedef HANDLE16 HDC;
-typedef HANDLE16 HDROP;
 typedef HANDLE16 HDRVR;
-typedef HANDLE16 HDWP;
 typedef HANDLE16 HFONT;
-typedef HANDLE16 HGDIOBJ;
 typedef HANDLE16 HGLOBAL;
 typedef HANDLE16 HICON;
 typedef HANDLE16 HINSTANCE;
@@ -254,8 +253,6 @@ typedef HANDLE16 HMIDIIN;
 typedef HANDLE16 HMIDIOUT;
 typedef HANDLE16 HMMIO;
 typedef HANDLE16 HMODULE;
-typedef HANDLE16 HPALETTE;
-typedef HANDLE16 HPEN;
 typedef HANDLE16 HQUEUE;
 typedef HANDLE16 HRGN;
 typedef HANDLE16 HRSRC;
@@ -335,17 +332,19 @@ typedef FARPROC HOOKPROC;
 
 /* Macros to split words and longs. */
 
-#define LOBYTE(w)           ((BYTE)(WORD)(w))
-#define HIBYTE(w)           ((BYTE)((WORD)(w) >> 8))
+#define LOBYTE(w)              ((BYTE)(WORD)(w))
+#define HIBYTE(w)              ((BYTE)((WORD)(w) >> 8))
 
-#define LOWORD(l)           ((WORD)(DWORD)(l))
-#define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
+#define LOWORD(l)              ((WORD)(DWORD)(l))
+#define HIWORD(l)              ((WORD)((DWORD)(l) >> 16))
 
-#define SLOWORD(l)           ((INT16)(LONG)(l))
-#define SHIWORD(l)           ((INT16)((LONG)(l) >> 16))
+#define SLOWORD(l)             ((INT16)(LONG)(l))
+#define SHIWORD(l)             ((INT16)((LONG)(l) >> 16))
 
-#define MAKELONG(low, high) ((LONG)(((WORD)(low)) | \
-				    (((DWORD)((WORD)(high))) << 16)))
+#define MAKELONG(low,high)     ((LONG)(((WORD)(low)) | \
+                                       (((DWORD)((WORD)(high))) << 16)))
+#define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
+#define MAKEWPARAM(low,high)   ((WPARAM32)MAKELONG(low,high))
 
 #define SELECTOROF(ptr)     (HIWORD(ptr))
 #define OFFSETOF(ptr)       (LOWORD(ptr))

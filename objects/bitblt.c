@@ -629,7 +629,7 @@ static void BITBLT_GetRow( XImage *image, int *pdata, short row,
 static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                                  short widthSrc, short heightSrc,
                                  short widthDst, short heightDst,
-                                 RECT *visRectSrc, RECT *visRectDst,
+                                 RECT16 *visRectSrc, RECT16 *visRectDst,
                                  int foreground, int background, WORD mode )
 {
     int *rowSrc, *rowDst, *pixel;
@@ -775,14 +775,14 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
                                       short widthSrc, short heightSrc,
                                       short xDst, short yDst,
                                       short widthDst, short heightDst,
-                                      RECT *visRectSrc, RECT *visRectDst )
+                                      RECT16 *visRectSrc, RECT16 *visRectDst )
 {
     XImage *imageSrc, *imageDst;
 
-    RECT rectSrc = *visRectSrc;
-    RECT rectDst = *visRectDst;
-    OffsetRect( &rectSrc, -xSrc, -ySrc );
-    OffsetRect( &rectDst, -xDst, -yDst );
+    RECT16 rectSrc = *visRectSrc;
+    RECT16 rectDst = *visRectDst;
+    OffsetRect16( &rectSrc, -xSrc, -ySrc );
+    OffsetRect16( &rectDst, -xDst, -yDst );
     imageSrc = XGetImage( display, dcSrc->u.x.drawable,
                           visRectSrc->left, visRectSrc->top,
                           visRectSrc->right - visRectSrc->left,
@@ -810,7 +810,7 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
  */
 static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
                                short xSrc, short ySrc,
-                               RECT *visRectSrc )
+                               RECT16 *visRectSrc )
 {
     XImage *imageSrc, *imageDst;
     register short x, y;
@@ -884,7 +884,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
  * Retrieve an area from the destination DC, mapping all the
  * pixels to Windows colors.
  */
-static void BITBLT_GetDstArea( DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst )
+static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT16 *visRectDst)
 {
     short width  = visRectDst->right - visRectDst->left;
     short height = visRectDst->bottom - visRectDst->top;
@@ -915,7 +915,7 @@ static void BITBLT_GetDstArea( DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst )
  * Put an area back into the destination DC, mapping the pixel
  * colors to X pixels.
  */
-static void BITBLT_PutDstArea( DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst )
+static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT16 *visRectDst)
 {
     short width  = visRectDst->right - visRectDst->left;
     short height = visRectDst->bottom - visRectDst->top;
@@ -953,9 +953,9 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, short xDst, short yDst,
                                      short widthDst, short heightDst,
                                      DC *dcSrc, short xSrc, short ySrc,
                                      short widthSrc, short heightSrc,
-                                     RECT *visRectSrc, RECT *visRectDst )
+                                     RECT16 *visRectSrc, RECT16 *visRectDst )
 {
-    RECT tmpRect, clipRect;
+    RECT16 tmpRect, clipRect;
 
     if (widthSrc < 0)  { widthSrc = -widthSrc; xSrc -= widthSrc; }
     if (widthDst < 0)  { widthDst = -widthDst; xDst -= widthDst; }
@@ -964,28 +964,28 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, short xDst, short yDst,
 
       /* Get the destination visible rectangle */
 
-    SetRect( &tmpRect, xDst, yDst, xDst + widthDst, yDst + heightDst );
-    GetRgnBox( dcDst->w.hGCClipRgn, &clipRect );
-    OffsetRect( &clipRect, dcDst->w.DCOrgX, dcDst->w.DCOrgY );
-    if (!IntersectRect( visRectDst, &tmpRect, &clipRect )) return FALSE;
+    SetRect16( &tmpRect, xDst, yDst, xDst + widthDst, yDst + heightDst );
+    GetRgnBox16( dcDst->w.hGCClipRgn, &clipRect );
+    OffsetRect16( &clipRect, dcDst->w.DCOrgX, dcDst->w.DCOrgY );
+    if (!IntersectRect16( visRectDst, &tmpRect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */
 
     if (!dcSrc) return TRUE;
-    SetRect( &tmpRect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
+    SetRect16( &tmpRect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
     /* Apparently the clip region is only for output, so use hVisRgn here */
-    GetRgnBox( dcSrc->w.hVisRgn, &clipRect );
-    OffsetRect( &clipRect, dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
-    if (!IntersectRect( visRectSrc, &tmpRect, &clipRect )) return FALSE;
+    GetRgnBox16( dcSrc->w.hVisRgn, &clipRect );
+    OffsetRect16( &clipRect, dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
+    if (!IntersectRect16( visRectSrc, &tmpRect, &clipRect )) return FALSE;
 
       /* Intersect the rectangles */
 
     if ((widthSrc == widthDst) && (heightSrc == heightDst)) /* no stretching */
     {
-        OffsetRect( visRectSrc, xDst - xSrc, yDst - ySrc );
-        if (!IntersectRect( &tmpRect, visRectSrc, visRectDst )) return FALSE;
+        OffsetRect16( visRectSrc, xDst - xSrc, yDst - ySrc );
+        if (!IntersectRect16( &tmpRect, visRectSrc, visRectDst )) return FALSE;
         *visRectSrc = *visRectDst = tmpRect;
-        OffsetRect( visRectSrc, xSrc - xDst, ySrc - yDst );
+        OffsetRect16( visRectSrc, xSrc - xDst, ySrc - yDst );
     }
     else  /* stretching */
     {
@@ -995,7 +995,7 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, short xDst, short yDst,
                             ((visRectSrc->right-xSrc) * widthDst) / widthSrc;
         visRectSrc->bottom = yDst +
                          ((visRectSrc->bottom-ySrc) * heightDst) / heightSrc;
-        if (!IntersectRect( &tmpRect, visRectSrc, visRectDst )) return FALSE;
+        if (!IntersectRect16( &tmpRect, visRectSrc, visRectDst )) return FALSE;
         *visRectSrc = *visRectDst = tmpRect;
         visRectSrc->left = xSrc + (visRectSrc->left-xDst)*widthSrc/widthDst;
         visRectSrc->top = ySrc + (visRectSrc->top-yDst)*heightSrc/heightDst;
@@ -1003,7 +1003,7 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, short xDst, short yDst,
                             ((visRectSrc->right-xDst) * widthSrc) / widthDst;
         visRectSrc->bottom = ySrc +
                          ((visRectSrc->bottom-yDst) * heightSrc) / heightDst;
-        if (IsRectEmpty( visRectSrc )) return FALSE;
+        if (IsRectEmpty16( visRectSrc )) return FALSE;
     }
     return TRUE;
 }
@@ -1020,7 +1020,7 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
                                 short widthSrc, short heightSrc, DWORD rop )
 {
     BOOL usePat, useSrc, useDst, destUsed, fStretch, fNullBrush;
-    RECT visRectDst, visRectSrc;
+    RECT16 visRectDst, visRectSrc;
     short width, height;
     const BYTE *opcode;
     Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
@@ -1113,11 +1113,13 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
         {
+            XSetGraphicsExposures( display, dcDst->u.x.gc, True );
             XSetFunction( display, dcDst->u.x.gc, GXcopy );
 	    XCopyArea( display, dcSrc->u.x.drawable,
                        dcDst->u.x.drawable, dcDst->u.x.gc,
                        visRectSrc.left, visRectSrc.top,
                        width, height, visRectDst.left, visRectDst.top );
+            XSetGraphicsExposures( display, dcDst->u.x.gc, False );
             return TRUE;
         }
         if (dcSrc->w.bitsPerPixel == 1)
@@ -1125,10 +1127,12 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
             XSetBackground( display, dcDst->u.x.gc, dcDst->w.textPixel );
             XSetForeground( display, dcDst->u.x.gc, dcDst->w.backgroundPixel );
             XSetFunction( display, dcDst->u.x.gc, GXcopy );
+            XSetGraphicsExposures( display, dcDst->u.x.gc, True );
 	    XCopyPlane( display, dcSrc->u.x.drawable,
                         dcDst->u.x.drawable, dcDst->u.x.gc,
                         visRectSrc.left, visRectSrc.top,
                         width, height, visRectDst.left, visRectDst.top, 1 );
+            XSetGraphicsExposures( display, dcDst->u.x.gc, False );
             return TRUE;
         }
         break;

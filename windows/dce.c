@@ -94,7 +94,7 @@ void DCE_Init()
  * window area clipped by the client area of all ancestors.
  * Return FALSE if the visible region is empty.
  */
-static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
+static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT16 *lprect )
 {
     int xoffset, yoffset;
 
@@ -104,7 +104,7 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 
     if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
     {
-        SetRectEmpty( lprect );  /* Clip everything */
+        SetRectEmpty16( lprect );  /* Clip everything */
         return FALSE;
     }
 
@@ -115,20 +115,20 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
             (wndPtr->flags & WIN_NO_REDRAW) ||
             (wndPtr->dwStyle & WS_ICONIC))
         {
-            SetRectEmpty( lprect );  /* Clip everything */
+            SetRectEmpty16( lprect );  /* Clip everything */
             return FALSE;
         }
 	xoffset += wndPtr->rectClient.left;
 	yoffset += wndPtr->rectClient.top;
-	OffsetRect( lprect, wndPtr->rectClient.left,
-		    wndPtr->rectClient.top );
+	OffsetRect16( lprect, wndPtr->rectClient.left,
+                      wndPtr->rectClient.top );
 
 	  /* Warning!! we assume that IntersectRect() handles the case */
 	  /* where the destination is the same as one of the sources.  */
-	if (!IntersectRect( lprect, lprect, &wndPtr->rectClient ))
+	if (!IntersectRect16( lprect, lprect, &wndPtr->rectClient ))
             return FALSE;  /* Visible rectangle is empty */
     }
-    OffsetRect( lprect, -xoffset, -yoffset );
+    OffsetRect16( lprect, -xoffset, -yoffset );
     return TRUE;
 }
 
@@ -181,7 +181,7 @@ static HRGN DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
  */
 HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
 {
-    RECT rect;
+    RECT16 rect;
     HRGN hrgn;
     int xoffset, yoffset;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -192,7 +192,7 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     {
         return CreateRectRgn( 0, 0, 0, 0 );  /* Visible region is empty */
     }
-    if (!(hrgn = CreateRectRgnIndirect( &rect ))) return 0;
+    if (!(hrgn = CreateRectRgnIndirect16( &rect ))) return 0;
 
       /* Clip all children from the visible region */
 

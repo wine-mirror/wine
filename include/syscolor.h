@@ -17,9 +17,9 @@ struct SysColorObjects
     HBRUSH hbrushInactiveCaption;  /* COLOR_INACTIVECAPTION     */
     HBRUSH hbrushMenu;             /* COLOR_MENU                */
     HBRUSH hbrushWindow;           /* COLOR_WINDOW              */
-    HPEN hpenWindowFrame;          /* COLOR_WINDOWFRAME         */
+    HPEN16 hpenWindowFrame;        /* COLOR_WINDOWFRAME         */
                                    /* COLOR_MENUTEXT            */
-    HPEN hpenWindowText;           /* COLOR_WINDOWTEXT          */
+    HPEN16 hpenWindowText;         /* COLOR_WINDOWTEXT          */
                                    /* COLOR_CAPTIONTEXT         */
     HBRUSH hbrushActiveBorder;     /* COLOR_ACTIVEBORDER        */
     HBRUSH hbrushInactiveBorder;   /* COLOR_INACTIVEBORDER      */

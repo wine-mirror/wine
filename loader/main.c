@@ -13,7 +13,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "windows.h"
 #include "alias.h"
 #include "module.h"
-#include "task.h"
 #include "selectors.h"
 #include "comm.h"
 #include "win.h"
@@ -37,12 +36,14 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "user.h"
 #include "dce.h"
 #include "pe_image.h"
+#include "shell.h"
 #include "stddebug.h"
 #include "debug.h"
 
 void init_wine_signals(void);
 
 HANDLE32 SystemHeap = 0;
+HANDLE32 SegptrHeap = 0;
 
 /***********************************************************************
  *           Main initialisation routine
@@ -53,8 +54,9 @@ int MAIN_Init(void)
 
     int queueSize;
 
-    /* Create the system heap */
+    /* Create the system and SEGPTR heaps */
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return 0;
+    if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return 0;
 
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return 0;
@@ -101,6 +103,8 @@ int MAIN_Init(void)
       /* Initialize the DOS memory */
     if (!INT21_Init()) return 0;
 #endif
+      /* registry initialisation */
+    SHELL_LoadRegistry();
     
       /* Global atom table initialisation */
     if (!ATOM_Init()) return 0;

@@ -6,12 +6,6 @@
 #include "arch.h"
 #include "neexe.h"
 
-LRESULT CallWindowProc (WNDPROC func, HWND hwnd, UINT message,
-			WPARAM wParam, LPARAM lParam)
-{
-    return (*func)(hwnd, message, wParam, lParam);
-}
-
 /*
  * Header loading routines for WineLib.
  */

@@ -40,14 +40,14 @@ BOOL UsesLParamPtr(DWORD message)
 BOOL WIN32_CallWindowProcTo16(LRESULT(*func)(HWND,UINT,WPARAM,LPARAM),
 	HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
-	WINDOWPOS wp;
+	WINDOWPOS16 wp;
 	union{
-		MINMAXINFO mmi;
-		NCCALCSIZE_PARAMS nccs;
-		CREATESTRUCT cs;
+		MINMAXINFO16 mmi;
+		NCCALCSIZE_PARAMS16 nccs;
+		CREATESTRUCT16 cs;
 	} st;
 	WINDOWPOS32 *pwp;
-	CREATESTRUCT32 *pcs;
+	CREATESTRUCT32A *pcs;
 	LONG result;
 	if(!lParam || !UsesLParamPtr(msg))
 		return func(hwnd,msg,wParam,lParam);
@@ -66,26 +66,26 @@ BOOL WIN32_CallWindowProcTo16(LRESULT(*func)(HWND,UINT,WPARAM,LPARAM),
 			return result;
 		 case WM_NCCALCSIZE:
 		 	pwp=((NCCALCSIZE_PARAMS32*)lParam)->lppos;
-		 	STRUCT32_NCCALCSIZE32to16Flat((void*)lParam,&st.nccs);
-			if(pwp) {
+		 	STRUCT32_NCCALCSIZE32to16Flat((void*)lParam,&st.nccs,wParam);
+			if (wParam && pwp) {
 				STRUCT32_WINDOWPOS32to16(pwp,&wp);
 				st.nccs.lppos = &wp;
 			}else
 				st.nccs.lppos = 0;
 			result=func(hwnd,msg,wParam,MAKE_SEGPTR(&st.nccs));
-			STRUCT32_NCCALCSIZE16to32Flat(&st.nccs,(void*)lParam);
-			if(pwp)
+			STRUCT32_NCCALCSIZE16to32Flat(&st.nccs,(void*)lParam,wParam);
+			if (wParam && pwp)
 				STRUCT32_WINDOWPOS16to32(&wp,pwp);
 			return result;
 		case WM_NCCREATE:
-			pcs = (CREATESTRUCT32*)lParam;
-			STRUCT32_CREATESTRUCT32to16((void*)lParam,&st.cs);
+			pcs = (CREATESTRUCT32A*)lParam;
+			STRUCT32_CREATESTRUCT32Ato16((void*)lParam,&st.cs);
 			st.cs.lpszName = HIWORD(pcs->lpszName) ? 
 				MAKE_SEGPTR(pcs->lpszName) : pcs->lpszName;
 			st.cs.lpszClass = HIWORD(pcs->lpszClass) ? 
 				MAKE_SEGPTR(pcs->lpszClass) : pcs->lpszClass;
 			result=func(hwnd,msg,wParam,MAKE_SEGPTR(&st.cs));
-			STRUCT32_CREATESTRUCT16to32(&st.cs,(void*)lParam);
+			STRUCT32_CREATESTRUCT16to32A(&st.cs,(void*)lParam);
 			pcs->lpszName = HIWORD(pcs->lpszName) ? 
 				PTR_SEG_TO_LIN(st.cs.lpszName) : pcs->lpszName;
 			pcs->lpszClass = HIWORD(pcs-> lpszClass) ? 

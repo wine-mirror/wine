@@ -17,22 +17,29 @@ typedef struct tagCLASS
     UINT32           magic;         /* Magic number */
     UINT32           cWindows;      /* Count of existing windows */
     UINT32           style;         /* Class style */
+    UINT32           flags;         /* Class flags (see below) */
     WNDPROC16        lpfnWndProc;   /* 16-bit window procedure */ 
     INT32            cbClsExtra;    /* Class extra bytes */
     INT32            cbWndExtra;    /* Window extra bytes */
-    SEGPTR           lpszMenuName;  /* Default menu name */
-    HANDLE16         hInstance;     /* Module that created the task */
+    LPSTR            menuNameA;     /* Default menu name (ASCII string) */
+    LPWSTR           menuNameW;     /* Default menu name (Unicode) */
+    HINSTANCE32      hInstance;     /* Module that created the task */
     HICON16          hIcon;         /* Default icon */
+    HICON16          hIconSm;       /* Default small icon */
     HCURSOR16        hCursor;       /* Default cursor */
     HBRUSH16         hbrBackground; /* Default background */
     ATOM             atomName;      /* Name of the class */
     HANDLE16         hdce;          /* Class DCE (if CS_CLASSDC) */
-    WORD             wExtra[1];     /* Class extra bytes */
+    LONG             wExtra[1];     /* Class extra bytes */
 } CLASS;
+
+/* Class flags */
+#define CLASS_FLAG_UNICODE  0x0001  /* Window procedure expects Unicode */
 
 extern void CLASS_DumpClass( CLASS *class );
 extern void CLASS_WalkClasses(void);
 extern void CLASS_FreeModuleClasses( HMODULE hModule );
+extern CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE16 hinstance );
 extern CLASS * CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance );
 
 #endif  /* CLASS_H */

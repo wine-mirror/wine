@@ -15,8 +15,20 @@
 
 static HQUEUE hFirstQueue = 0;
 static HQUEUE hmemSysMsgQueue = 0;
+static HQUEUE hDoomedQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
 
+/***********************************************************************
+ *	     QUEUE_GetDoomedQueue/QUEUE_SetDoomedQueue
+ */
+HQUEUE QUEUE_GetDoomedQueue()
+{
+  return hDoomedQueue;
+}
+void QUEUE_SetDoomedQueue(HQUEUE hQueue)
+{
+  hDoomedQueue = hQueue;
+}
 
 /***********************************************************************
  *	     QUEUE_DumpQueue
@@ -202,7 +214,7 @@ int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last )
 {
     int i, pos = msgQueue->nextMessage;
 
-    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=%04x\n\n", hwnd );
+    dprintf_msg(stddeb,"QUEUE_FindMsg: hwnd=%04x pos=%d\n", hwnd, pos );
 
     if (!msgQueue->msgCount) return -1;
     if (!hwnd && !first && !last) return pos;

@@ -505,6 +505,62 @@ static HLOCAL16 LOCAL_FreeArena( WORD ds, WORD arena )
     return 0;
 }
 
+
+/***********************************************************************
+ *           LOCAL_ShrinkArena
+ *
+ * Shrink an arena by creating a free block at its end if possible.
+ * 'size' includes the arena header, and must be aligned.
+ */
+static void LOCAL_ShrinkArena( WORD ds, WORD arena, WORD size )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALARENA *pArena = ARENA_PTR( ptr, arena );
+
+    if (arena + size + LALIGN(sizeof(LOCALARENA)) < pArena->next)
+    {
+        LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
+        if (!pInfo) return;
+        LOCAL_AddBlock( ptr, arena, arena + size );
+        pInfo->items++;
+        LOCAL_FreeArena( ds, arena + size );
+    }
+}
+
+
+/***********************************************************************
+ *           LOCAL_GrowArenaDownward
+ *
+ * Grow an arena downward by using the previous arena (must be free).
+ */
+static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHEAPINFO *pInfo;
+    LOCALARENA *pArena = ARENA_PTR( ptr, arena );
+    WORD prevArena = pArena->prev & ~3;
+    LOCALARENA *pPrevArena = ARENA_PTR( ptr, prevArena );
+    WORD offset, size;
+    char *p;
+
+    if (!(pInfo = LOCAL_GetHeap( ds ))) return;
+    offset = pPrevArena->size;
+    size = pArena->next - arena - ARENA_HEADER_SIZE;
+    LOCAL_RemoveFreeBlock( ptr, prevArena );
+    LOCAL_RemoveBlock( ptr, arena );
+    pInfo->items--;
+    p = (char *)pPrevArena + ARENA_HEADER_SIZE;
+    while (offset < size)
+    {
+        memcpy( p, p + offset, offset );
+        p += offset;
+        size -= offset;
+    }
+    if (size) memcpy( p, p + offset, size );
+    LOCAL_ShrinkArena( ds, prevArena, newsize );
+}
+
+
 /***********************************************************************
  *           LOCAL_GetFreeSpace
  */
@@ -543,11 +599,11 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
  */
 static WORD LOCAL_Compact( HANDLE16 ds, WORD minfree, WORD flags )
 {
-    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 ), *fcp, *mcp;
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
     LOCALARENA *pArena, *pMoveArena, *pFinalArena;
     WORD arena, movearena, finalarena, table;
-    WORD count, movesize, size, i;
+    WORD count, movesize, size;
     WORD freespace;
     LOCALHANDLEENTRY *pEntry;
 
@@ -607,16 +663,10 @@ static WORD LOCAL_Compact( HANDLE16 ds, WORD minfree, WORD flags )
                 {
                     dprintf_local(stddeb, "Moving it to %04x.\n", finalarena);
                     pFinalArena = ARENA_PTR(ptr, finalarena);
-
-	 /* Check to see if it's worth creating a free arena at the end */
-                    if(pFinalArena->size > movesize+LALIGN(sizeof(LOCALARENA)))
-                    {
-                        LOCAL_AddBlock(ptr, finalarena, finalarena + movesize);
-                        LOCAL_MakeBlockFree(ptr, finalarena + movesize);
-                        pInfo->items++;
-                    }
-                    /* Copy the arena to it's new location */
+                    size = pFinalArena->size;
                     LOCAL_RemoveFreeBlock(ptr, finalarena);
+                    LOCAL_ShrinkArena( ds, finalarena, movesize );
+                    /* Copy the arena to it's new location */
                     memcpy((char *)pFinalArena + ARENA_HEADER_SIZE,
                            (char *)pMoveArena + ARENA_HEADER_SIZE,
                            movesize - ARENA_HEADER_SIZE );
@@ -631,17 +681,7 @@ static WORD LOCAL_Compact( HANDLE16 ds, WORD minfree, WORD flags )
                     /* Previous arena is free (but < movesize)  */
                     /* so we can 'slide' movearena down into it */
                     finalarena = pMoveArena->prev & ~3;
-                    pFinalArena = ARENA_PTR(ptr, finalarena);
-                    dprintf_local(stddeb, "Sliding arena %04x to %04x.\n",
-                                  movearena, finalarena);
-                    LOCAL_RemoveFreeBlock(ptr, finalarena);
-                    LOCAL_RemoveBlock(ptr, movearena);
-                    mcp = (char *)pMoveArena + ARENA_HEADER_SIZE;
-                    fcp = (char *)pFinalArena + ARENA_HEADER_SIZE;
-                    for(i = 0; i < movesize - ARENA_HEADER_SIZE; i++)
-                        *(fcp++) = *(mcp++);
-                    LOCAL_AddBlock(ptr, finalarena, finalarena + movesize);
-                    LOCAL_MakeBlockFree(ptr, finalarena + movesize);
+                    LOCAL_GrowArenaDownward( ds, movearena, movesize );
                     /* Update handle table entry */
                     pEntry->addr = finalarena + ARENA_HEADER_SIZE;
                 }
@@ -753,21 +793,13 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
 
       /* Make a block out of the free arena */
     pArena = ARENA_PTR( ptr, arena );
-    dprintf_local( stddeb, "LOCAL_GetBlock size = %04x, arena at %04x size %04x\n", size,
-		   arena, pArena->size );
-    if (pArena->size > size + LALIGN(sizeof(LOCALARENA)))
-    {
-        LOCAL_AddBlock( ptr, arena, arena+size );
-        LOCAL_MakeBlockFree( ptr, arena+size );
-        pInfo->items++;
-    }
+    dprintf_local(stddeb, "LOCAL_GetBlock size = %04x, arena %04x size %04x\n",
+                  size, arena, pArena->size );
     LOCAL_RemoveFreeBlock( ptr, arena );
+    LOCAL_ShrinkArena( ds, arena, size );
 
-    if (flags & LMEM_ZEROINIT) {
-	memset( (char *)pArena + ARENA_HEADER_SIZE, 0, size - ARENA_HEADER_SIZE );
-    }
-
-    dprintf_local( stddeb, "Local_GetBlock: arena at %04x\n", arena );
+    if (flags & LMEM_ZEROINIT) memset( (char *)pArena + ARENA_HEADER_SIZE, 0,
+                                       size - ARENA_HEADER_SIZE );
     return arena + ARENA_HEADER_SIZE;
 }
 
@@ -1000,7 +1032,26 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
     
     if (HANDLE_FIXED( handle )) blockhandle = handle;
-    else blockhandle = *(WORD *)(ptr + handle);
+    else
+    {
+	pEntry = (LOCALHANDLEENTRY *) (ptr + handle);
+	if(pEntry->flags & (LMEM_DISCARDED >> 8))
+        {
+	    dprintf_local(stddeb, "ReAllocating discarded block\n");
+	    if (!(pEntry->addr = LOCAL_GetBlock( ds, size, flags))) return 0;
+            ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
+            pEntry = (LOCALHANDLEENTRY *) (ptr + handle);
+            pEntry->flags = (BYTE) (flags >> 8);
+            pEntry->lock = 0;
+            return handle;
+	}    
+	if (!(blockhandle = pEntry->addr))
+	{
+	    fprintf( stderr, "Local_ReAlloc(%04x,%04x): invalid handle\n",
+                     ds, handle );
+	    return 0;
+        }
+    }
 
     arena = ARENA_HEADER( blockhandle );
     dprintf_local( stddeb, "LocalReAlloc: arena is %04x\n", arena );
@@ -1057,15 +1108,15 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
 
       /* Check for size reduction */
 
-    if (nextarena < pArena->next)
+    if (nextarena <= pArena->next)
     {
         if (nextarena < pArena->next - LALIGN(sizeof(LOCALARENA)))
         {
 	    dprintf_local( stddeb, "size reduction, making new free block\n");
               /* It is worth making a new free block */
             LOCAL_AddBlock( ptr, arena, nextarena );
-            LOCAL_MakeBlockFree( ptr, nextarena );
             pInfo->items++;
+            LOCAL_FreeArena( ds, nextarena );
         }
         dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
         return handle;
@@ -1083,8 +1134,8 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
 	    dprintf_local( stddeb, "size increase, making new free block\n");
               /* It is worth making a new free block */
             LOCAL_AddBlock( ptr, arena, nextarena );
-            LOCAL_MakeBlockFree( ptr, nextarena );
             pInfo->items++;
+            LOCAL_FreeArena( ds, nextarena );
         }
         dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
         return handle;
@@ -1099,16 +1150,30 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
         return 0;  /* FIXME: should we free it here? */
     }
 
-    if (!(newhandle = LOCAL_GetBlock( ds, size, flags ))) return 0;
-    ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-    memcpy( ptr + newhandle, ptr + (arena + ARENA_HEADER_SIZE), size );
-    LOCAL_FreeArena( ds, arena );
+    newhandle = LOCAL_GetBlock( ds, size, flags );
+    ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
+    if (!newhandle)
+    {
+        /* Check if previous block is free and large enough */
+        LOCALARENA *pPrev = ARENA_PTR( ptr, pArena->prev & 3 );
+        if (((pPrev->prev & 3) == LOCAL_ARENA_FREE) &&
+            (pPrev->size + pArena->next >= nextarena))
+        {
+            newhandle = (pArena->prev & ~3) + ARENA_HEADER_SIZE;
+            LOCAL_GrowArenaDownward( ds, arena, size + ARENA_HEADER_SIZE );
+        }
+        else return 0;  /* Nothing to do, no space left for the block */
+    }
+    else
+    {
+        memcpy( ptr + newhandle, ptr + (arena + ARENA_HEADER_SIZE), size );
+        LOCAL_FreeArena( ds, arena );
+    }
     if (HANDLE_MOVEABLE( handle ))
     {
 	dprintf_local( stddeb, "LocalReAlloc: fixing handle\n");
         pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
         pEntry->addr = newhandle;
-        pEntry->flags |= ~(LMEM_DISCARDED >> 8); /* clear discarded flag */
         pEntry->lock = 0;
 	newhandle = handle;
     }
@@ -1331,7 +1396,7 @@ SEGPTR LocalLock16( HLOCAL16 handle )
 /***********************************************************************
  *           LocalUnlock16   (KERNEL.9)
  */
-BOOL LocalUnlock16( HLOCAL16 handle )
+BOOL16 LocalUnlock16( HLOCAL16 handle )
 {
     return LOCAL_Unlock( CURRENT_DS, handle );
 }
@@ -1608,7 +1673,7 @@ UINT32 LocalSize32( HLOCAL32 handle )
 /***********************************************************************
  *           LocalUnlock32   (KERNEL32.381)
  */
-BOOL LocalUnlock32( HLOCAL32 handle )
+BOOL32 LocalUnlock32( HLOCAL32 handle )
 {
     return GlobalUnlock32( (HGLOBAL32)handle );
 }

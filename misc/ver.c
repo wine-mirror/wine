@@ -59,8 +59,8 @@ find_ne_resource(
 	dprintf_resource(stderr,"shiftcount is %d\n",shiftcount);
 	dprintf_resource(stderr,"reading resource typeinfo dir.\n");
 
-	if (!HIWORD(typeid)) typeid = (SEGPTR)((WORD)typeid | 0x8000);
-	if (!HIWORD(resid))  resid  = (SEGPTR)((WORD)resid | 0x8000);
+	if (!HIWORD(typeid)) typeid = (SEGPTR)(LOWORD(typeid) | 0x8000);
+	if (!HIWORD(resid))  resid  = (SEGPTR)(LOWORD(resid) | 0x8000);
 	while (1) {
 		int	skipflag;
 

@@ -64,7 +64,7 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
     CallTo16_long_wwl( func, CURRENT_DS, code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     CallTo16_word_wwlll( func, CURRENT_DS, id, msg, dwUser, dw1, dw2 )
-#define CallWndProc( func, ds, hwnd, msg, wParam, lParam ) \
+#define CallWndProc16( func, ds, hwnd, msg, wParam, lParam ) \
     CallTo16_long_wwwl( func, ds, hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     CallTo16_word_lwww( func, CURRENT_DS, lpch, ichCurrent, cch, code )
@@ -73,9 +73,9 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
 /* List of the 32-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto32.S */
 
-extern LONG CallTo32_0( FARPROC );
-extern LONG CallTo32_3( FARPROC, DWORD, DWORD, DWORD );
-extern LONG CallTo32_4( FARPROC, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_0( FARPROC32 );
+extern LONG CallTo32_3( FARPROC32, DWORD, DWORD, DWORD );
+extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
 
 #define CallTaskStart32( func ) \
     CallTo32_0( func )
@@ -111,10 +111,13 @@ extern LONG CallTo32_4( FARPROC, DWORD, DWORD, DWORD, DWORD );
     (*func)( code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     (*func)( id, msg, dwUser, dw1, dw2 )
-#define CallWndProc( func, ds, hwnd, msg, wParam, lParam ) \
+#define CallWndProc16( func, ds, hwnd, msg, wParam, lParam ) \
+    (*func)( hwnd, msg, wParam, lParam )
+#define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
     (*func)( hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     (*func)( lpch, ichCurrent, cch, code )
+
 
 #endif  /* WINELIB */
 

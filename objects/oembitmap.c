@@ -331,7 +331,7 @@ static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
  * Create the 2 bitmaps from XPM data.
  */
 static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP *hBitmap,
-                               HBITMAP *hBitmapMask, POINT *hotspot )
+                               HBITMAP *hBitmapMask, POINT16 *hotspot )
 {
     Pixmap pixmap, pixmask;
     XpmAttributes *attrs;
@@ -407,7 +407,7 @@ HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor )
     CURSORICONINFO *pInfo;
     BITMAPOBJ *bmpXor, *bmpAnd;
     HBITMAP hXorBits, hAndBits;
-    POINT hotspot;
+    POINT16 hotspot;
     int sizeXor, sizeAnd;
 
     if (fCursor)

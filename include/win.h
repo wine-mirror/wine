@@ -22,7 +22,7 @@
 #define ICONTITLE_CLASS_NAME "#32772"  /* IconTitle */
 
 #define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
-#define DESKTOP_CLASS_ATOM   MAKEINTATOM(32769)  /* Desktop */
+#define DESKTOP_CLASS_ATOM   ((ATOM)32769)       /* Desktop */
 #define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
@@ -35,13 +35,13 @@ typedef struct tagWND
     struct tagWND *owner;         /* Window owner */
     CLASS         *class;         /* Window class */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
-    HWND           hwndSelf;      /* Handle of this window */
-    HANDLE         hInstance;     /* Window hInstance (from CreateWindow) */
-    RECT           rectClient;    /* Client area rel. to parent client area */
-    RECT           rectWindow;    /* Whole window rel. to parent client area */
-    RECT           rectNormal;    /* Window rect. when in normal state */
-    POINT          ptIconPos;     /* Icon position */
-    POINT          ptMaxPos;      /* Maximized window position */
+    HWND16         hwndSelf;      /* Handle of this window */
+    HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
+    RECT16         rectClient;    /* Client area rel. to parent client area */
+    RECT16         rectWindow;    /* Whole window rel. to parent client area */
+    RECT16         rectNormal;    /* Window rect. when in normal state */
+    POINT16        ptIconPos;     /* Icon position */
+    POINT16        ptMaxPos;      /* Maximized window position */
     HGLOBAL        hmemTaskQ;     /* Task queue global memory handle */
     HRGN           hrgnUpdate;    /* Update region */
     HWND           hwndLastActive;/* Last active popup hwnd */
@@ -57,7 +57,7 @@ typedef struct tagWND
     Window         window;        /* X window (only for top-level windows) */
     HMENU          hSysMenu;      /* window's copy of System Menu */
     HANDLE         hProp;         /* Handle of Properties List */
-    WORD           wExtra[1];     /* Window extra bytes */
+    DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 
   /* WND flags values */
@@ -67,9 +67,10 @@ typedef struct tagWND
 #define WIN_RESTORE_MAX        0x0008 /* Maximize when restoring */
 #define WIN_INTERNAL_PAINT     0x0010 /* Internal WM_PAINT message pending */
 #define WIN_NO_REDRAW          0x0020 /* WM_SETREDRAW called for this window */
-#define WIN_GOT_SIZEMSG        0x0040 /* WM_SIZE has been sent to the window */
+#define WIN_NEED_SIZE          0x0040 /* Internal WM_SIZE is needed */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
 #define WIN_MANAGED            0x0100 /* Window managed by the X wm */
+#define WIN_UNICODE            0x0200 /* Window procedure expects Unicode */
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND hwnd );

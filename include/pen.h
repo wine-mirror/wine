@@ -25,6 +25,6 @@ typedef struct
 #endif
 
 extern int PEN_GetObject( PENOBJ * pen, int count, LPSTR buffer );
-extern HPEN PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen );
+extern HPEN16 PEN_SelectObject( DC * dc, HPEN16 hpen, PENOBJ * pen );
 
 #endif  /* __WINE_PEN_H */

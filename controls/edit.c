@@ -125,7 +125,7 @@ static void    EDIT_DelLeft(WND *wndPtr);
 static void    EDIT_DelRight(WND *wndPtr);
 static UINT    EDIT_GetAveCharWidth(WND *wndPtr);
 static UINT    EDIT_GetLineHeight(WND *wndPtr);
-static void    EDIT_GetLineRect(WND *wndPtr, UINT line, UINT scol, UINT ecol, LPRECT rc);
+static void    EDIT_GetLineRect(WND *wndPtr, UINT line, UINT scol, UINT ecol, LPRECT16 rc);
 static char *  EDIT_GetPointer(WND *wndPtr);
 static LRESULT EDIT_GetRect(WND *wndPtr, WPARAM wParam, LPARAM lParam);
 static BOOL    EDIT_GetRedraw(WND *wndPtr);
@@ -725,7 +725,7 @@ static UINT EDIT_GetLineHeight(WND *wndPtr)
  *	column to an ending column.
  *
  */
-static void EDIT_GetLineRect(WND *wndPtr, UINT line, UINT scol, UINT ecol, LPRECT rc)
+static void EDIT_GetLineRect(WND *wndPtr, UINT line, UINT scol, UINT ecol, LPRECT16 rc)
 {
 	rc->top = EDIT_WndYFromLine(wndPtr, line);
 	rc->bottom = rc->top + EDIT_GetLineHeight(wndPtr);
@@ -764,7 +764,7 @@ static char *EDIT_GetPointer(WND *wndPtr)
  */
 static LRESULT EDIT_GetRect(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	GetClientRect(wndPtr->hwndSelf, (LPRECT)lParam);
+	GetClientRect16( wndPtr->hwndSelf, (LPRECT16)lParam );
 	return 0L;
 }
 
@@ -802,7 +802,7 @@ static UINT EDIT_GetTextWidth(WND *wndPtr)
  */
 static UINT EDIT_GetVisibleLineCount(WND *wndPtr)
 {
-	RECT rc;
+	RECT16 rc;
 	
 	EDIT_GetRect(wndPtr, 0, (LPARAM)&rc);
 	return MAX(1, MAX(rc.bottom - rc.top, 0) / EDIT_GetLineHeight(wndPtr));
@@ -816,7 +816,7 @@ static UINT EDIT_GetVisibleLineCount(WND *wndPtr)
  */
 static UINT EDIT_GetWndWidth(WND *wndPtr)
 {
-	RECT rc;
+	RECT16 rc;
 	
 	EDIT_GetRect(wndPtr, 0, (LPARAM)&rc);
 	return rc.right - rc.left;
@@ -855,9 +855,9 @@ static void EDIT_InvalidateText(WND *wndPtr, UINT start, UINT end)
 	UINT el;
 	UINT sc;
 	UINT ec;
-	RECT rcWnd;
-	RECT rcLine;
-	RECT rcUpdate;
+	RECT16 rcWnd;
+	RECT16 rcLine;
+	RECT16 rcUpdate;
 	UINT l;
 
 	if (end == start )
@@ -885,26 +885,26 @@ static void EDIT_InvalidateText(WND *wndPtr, UINT start, UINT end)
 	EDIT_GetRect(wndPtr, 0, (LPARAM)&rcWnd);
 	if (sl == el) {
 		EDIT_GetLineRect(wndPtr, sl, sc, ec, &rcLine);
-		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			InvalidateRect(wndPtr->hwndSelf, &rcUpdate, FALSE);
+		if (IntersectRect16(&rcUpdate, &rcWnd, &rcLine))
+			InvalidateRect16( wndPtr->hwndSelf, &rcUpdate, FALSE );
 	} else {
 		EDIT_GetLineRect(wndPtr, sl, sc,
 				(UINT)EDIT_EM_LineLength(wndPtr,
 					(UINT)EDIT_EM_LineIndex(wndPtr, sl, 0L), 0L),
 				&rcLine);
-		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			InvalidateRect(wndPtr->hwndSelf, &rcUpdate, FALSE);
+		if (IntersectRect16(&rcUpdate, &rcWnd, &rcLine))
+			InvalidateRect16( wndPtr->hwndSelf, &rcUpdate, FALSE );
 		for (l = sl + 1 ; l < el ; l++) {
 			EDIT_GetLineRect(wndPtr, l, 0,
 				(UINT)EDIT_EM_LineLength(wndPtr,
 					(UINT)EDIT_EM_LineIndex(wndPtr, l, 0L), 0L),
 				&rcLine);
-			if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-				InvalidateRect(wndPtr->hwndSelf, &rcUpdate, FALSE);
+			if (IntersectRect16(&rcUpdate, &rcWnd, &rcLine))
+				InvalidateRect16(wndPtr->hwndSelf, &rcUpdate, FALSE);
 		}
 		EDIT_GetLineRect(wndPtr, el, 0, ec, &rcLine);
-		if (IntersectRect(&rcUpdate, &rcWnd, &rcLine))
-			InvalidateRect(wndPtr->hwndSelf, &rcUpdate, FALSE);
+		if (IntersectRect16(&rcUpdate, &rcWnd, &rcLine))
+			InvalidateRect16( wndPtr->hwndSelf, &rcUpdate, FALSE );
 	}
 }
 
@@ -1348,7 +1348,7 @@ static LRESULT EDIT_ReplaceSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	EDIT_NOTIFY_PARENT(wndPtr, EN_UPDATE);
 	EDIT_WM_SetRedraw(wndPtr, redraw, 0L);
 	if (redraw) {
-		InvalidateRect(wndPtr->hwndSelf, NULL, TRUE);
+		InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
 		EDIT_NOTIFY_PARENT(wndPtr, EN_CHANGE);
 	}
 	return 0L;
@@ -1805,7 +1805,7 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	UINT tw = EDIT_GetTextWidth(wndPtr);
 	INT dx;
 	INT dy;
-	POINT pos;
+	POINT16 pos;
 	HRGN hRgn;
 
 	if (nfv >= lc)
@@ -1823,7 +1823,7 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 			GetUpdateRgn(wndPtr->hwndSelf, hRgn, FALSE);
 			ValidateRgn(wndPtr->hwndSelf, 0);
 			OffsetRgn(hRgn, dx, dy);
-			InvalidateRgn(wndPtr->hwndSelf, hRgn, TRUE);
+			InvalidateRgn( wndPtr->hwndSelf, hRgn, TRUE );
 			DeleteObject(hRgn);
 			ScrollWindow(wndPtr->hwndSelf, dx, dy, NULL, NULL);
 		}
@@ -1836,7 +1836,7 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 			SetScrollPos(wndPtr->hwndSelf, SB_HORZ,
 				EDIT_WM_HScroll(wndPtr, EM_GETTHUMB, 0L), TRUE);
 		if (wndPtr->hwndSelf == GetFocus()) {
-			GetCaretPos(&pos);
+			GetCaretPos16(&pos);
 			SetCaretPos(pos.x + dx, pos.y + dy);
 			ShowCaret(wndPtr->hwndSelf);
 		}
@@ -1894,7 +1894,7 @@ static LRESULT EDIT_EM_SetHandle(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		EDIT_EM_SetModify(wndPtr, FALSE, 0L);
 		EDIT_BuildLineDefs(wndPtr);
 		if (EDIT_GetRedraw(wndPtr))
-			InvalidateRect(wndPtr->hwndSelf, NULL, TRUE);
+			InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
 		EDIT_ScrollIntoView(wndPtr);
 	}
 	return 0L;
@@ -2130,7 +2130,7 @@ static LRESULT EDIT_WM_Clear(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		EDIT_NOTIFY_PARENT(wndPtr, EN_UPDATE);
 		EDIT_WM_SetRedraw(wndPtr, redraw, 0L);
 		if (redraw) {
-			InvalidateRect(wndPtr->hwndSelf, NULL, TRUE);
+			InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
 			EDIT_NOTIFY_PARENT(wndPtr, EN_CHANGE);
 		}
 	}
@@ -2179,7 +2179,7 @@ static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_Create(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	CREATESTRUCT *cs = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
+	CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
 	EDITSTATE *es;
 	char *text;
 
@@ -2207,7 +2207,8 @@ static LRESULT EDIT_WM_Create(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		es->PasswordChar = (cs->style & ES_PASSWORD) ? '*' : '\0';
 	}
 	if (!LOCAL_HeapSize(wndPtr->hInstance)) {
-		if (!LocalInit(wndPtr->hInstance, 0, GlobalSize(wndPtr->hInstance))) {
+		if (!LocalInit(wndPtr->hInstance, 0,
+                               GlobalSize16(wndPtr->hInstance))) {
 			fprintf(stderr, "edit: WM_CREATE: could not initialize local heap\n");
 			return -1L;
 		}
@@ -2282,22 +2283,22 @@ static LRESULT EDIT_WM_Enable(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT EDIT_WM_EraseBkGnd(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	HBRUSH hBrush;
-	RECT rc;
+	RECT16 rc;
 
 	hBrush = (HBRUSH)EDIT_SEND_CTLCOLOR(wndPtr, wParam);
 	if (!hBrush)
 		hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 
-	GetClientRect(wndPtr->hwndSelf, &rc);
+	GetClientRect16(wndPtr->hwndSelf, &rc);
 	IntersectClipRect((HDC)wParam, rc.left, rc.top, rc.right, rc.bottom);
-	GetClipBox((HDC)wParam, &rc);
+	GetClipBox16((HDC)wParam, &rc);
 	/*
 	 *	FIXME:	specs say that we should UnrealizeObject() the brush,
 	 *		but the specs of UnrealizeObject() say that we shouldn't
 	 *		unrealize a stock object.  The default brush that
 	 *		DefWndProc() returns is ... a stock object.
 	 */
-	FillRect((HDC)wParam, &rc, hBrush);
+	FillRect16((HDC)wParam, &rc, hBrush);
 	return -1L;
 }
 
@@ -2642,23 +2643,23 @@ static LRESULT EDIT_WM_MouseMove(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	PAINTSTRUCT ps;
+	PAINTSTRUCT16 ps;
 	UINT i;
 	UINT fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
 	UINT vlc = EDIT_GetVisibleLineCount(wndPtr);
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
-	HDC hdc;
+	HDC16 hdc;
 	HFONT hFont;
 	HFONT oldFont = 0;
-	RECT rc;
-	RECT rcLine;
-	RECT rcRgn;
+	RECT16 rc;
+	RECT16 rcLine;
+	RECT16 rcRgn;
 	BOOL rev = IsWindowEnabled(wndPtr->hwndSelf) &&
 				((GetFocus() == wndPtr->hwndSelf) ||
 					(wndPtr->dwStyle & ES_NOHIDESEL));
 
-	hdc = BeginPaint(wndPtr->hwndSelf, &ps);
-	GetClientRect(wndPtr->hwndSelf, &rc);
+	hdc = BeginPaint16(wndPtr->hwndSelf, &ps);
+	GetClientRect16(wndPtr->hwndSelf, &rc);
 	IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
 	hFont = EDIT_WM_GetFont(wndPtr, 0, 0L);
 	if (hFont)
@@ -2666,15 +2667,15 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	EDIT_SEND_CTLCOLOR(wndPtr, hdc);
 	if (!IsWindowEnabled(wndPtr->hwndSelf))
 		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
-	GetClipBox(hdc, &rcRgn);
+	GetClipBox16(hdc, &rcRgn);
 	for (i = fv ; i <= MIN(fv + vlc, fv + lc - 1) ; i++ ) {
 		EDIT_GetLineRect(wndPtr, i, 0, -1, &rcLine);
-		if (IntersectRect(&rc, &rcRgn, &rcLine))
+		if (IntersectRect16(&rc, &rcRgn, &rcLine))
 			EDIT_PaintLine(wndPtr, hdc, i, rev);
 	}
 	if (hFont)
 		SelectObject(hdc, oldFont);
-	EndPaint(wndPtr->hwndSelf, &ps);
+	EndPaint16(wndPtr->hwndSelf, &ps);
 	return 0L;
 }
 
@@ -2760,7 +2761,7 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	ReleaseDC(wndPtr->hwndSelf, hdc);
 	EDIT_BuildLineDefs(wndPtr);
 	if ((BOOL)lParam && EDIT_GetRedraw(wndPtr))
-		InvalidateRect(wndPtr->hwndSelf, NULL, TRUE);
+		InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
 	if (wndPtr->hwndSelf == GetFocus()) {
 		DestroyCaret();
 		CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
@@ -2815,7 +2816,7 @@ static LRESULT EDIT_WM_Size(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 				(wParam == SIZE_RESTORED))) {
 		if (IsMultiLine(wndPtr) && IsWordWrap(wndPtr))
 			EDIT_BuildLineDefs(wndPtr);
-		InvalidateRect(wndPtr->hwndSelf, NULL, TRUE);
+		InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
 	}
 	return 0L;
 }

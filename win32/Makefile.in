@@ -15,7 +15,6 @@ C_SRCS = \
 	memory.c \
 	newfns.c \
 	object_mgt.c \
-	param32.c \
 	process.c \
 	resource.c \
 	string32.c \

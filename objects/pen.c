@@ -13,7 +13,7 @@
 /***********************************************************************
  *           CreatePen    (GDI.61)
  */
-HPEN CreatePen( INT style, INT width, COLORREF color )
+HPEN16 CreatePen( INT style, INT width, COLORREF color )
 {
     LOGPEN logpen = { style, { width, 0 }, color };
     dprintf_gdi(stddeb, "CreatePen: %d %d %06lx\n", style, width, color );
@@ -24,10 +24,10 @@ HPEN CreatePen( INT style, INT width, COLORREF color )
 /***********************************************************************
  *           CreatePenIndirect    (GDI.62)
  */
-HPEN CreatePenIndirect( const LOGPEN * pen )
+HPEN16 CreatePenIndirect( const LOGPEN * pen )
 {
     PENOBJ * penPtr;
-    HPEN hpen;
+    HPEN16 hpen;
 
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
     hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
@@ -52,13 +52,13 @@ int PEN_GetObject( PENOBJ * pen, int count, LPSTR buffer )
 /***********************************************************************
  *           PEN_SelectObject
  */
-HPEN PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
+HPEN16 PEN_SelectObject( DC * dc, HPEN16 hpen, PENOBJ * pen )
 {
     static char dash_dash[]       = { 5, 3 };      /* -----   -----   -----  */
     static char dash_dot[]        = { 2, 2 };      /* --  --  --  --  --  -- */
     static char dash_dashdot[]    = { 4,3,2,3 };   /* ----   --   ----   --  */
     static char dash_dashdotdot[] = { 4,2,2,2,2,2 };  /* ----  --  --  ----  */
-    HPEN prevHandle = dc->w.hPen;
+    HPEN16 prevHandle = dc->w.hPen;
 
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
       if (MF_CreatePenIndirect(dc, hpen, &(pen->logpen)))
