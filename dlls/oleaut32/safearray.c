@@ -1036,3 +1036,45 @@ static HRESULT duplicateData(
   return S_OK;
 }
 
+
+/************************************************************************ 
+ *		SafeArrayGetVarType
+ * Returns the VARTYPE stored in the given safearray
+ */
+HRESULT WINAPI SafeArrayGetVarType(
+  SAFEARRAY* psa,
+  VARTYPE*   pvt)
+{
+  HRESULT hr = E_INVALIDARG;
+  VARTYPE vt = VT_EMPTY;
+
+  /* const short VARTYPE_OFFSET = -4; */
+
+  if (psa->fFeatures & FADF_HAVEVARTYPE)
+  {
+    /* VT tag @ negative offset 4 in the array descriptor */
+    FIXME("Returning VT_BSTR instead of VT_...");
+    vt = VT_BSTR;
+  }
+  else if (psa->fFeatures & FADF_RECORD)
+  {
+    vt = VT_RECORD;
+  }
+  else if (psa->fFeatures & FADF_DISPATCH)
+  {
+    vt = VT_DISPATCH;
+  }
+  else if (psa->fFeatures & FADF_UNKNOWN)
+  {
+    vt = VT_UNKNOWN;
+  }
+
+  if (vt != VT_EMPTY)
+  {
+    *pvt = vt;
+    hr = S_OK;
+  }
+  
+  TRACE("HRESULT = %08lx", hr);
+  return hr;
+}

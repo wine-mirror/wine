@@ -73,6 +73,7 @@ import ole32.dll
 74 stdcall VarR4FromStr(wstr long long ptr) VarR4FromStr
 75 stub VarR4FromDisp
 76 stdcall VarR4FromBool(long ptr) VarR4FromBool
+77 stdcall SafeArrayGetVarType(ptr ptr) SafeArrayGetVarType
 78 stdcall VarR8FromUI1(long ptr) VarR8FromUI1
 79 stdcall VarR8FromI2(long ptr) VarR8FromI2
 80 stdcall VarR8FromI4(long ptr) VarR8FromI4
