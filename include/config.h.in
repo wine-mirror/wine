@@ -395,6 +395,12 @@
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
 
+/* Define to 1 if the system has the type `pthread_rwlockattr_t'. */
+#undef HAVE_PTHREAD_RWLOCKATTR_T
+
+/* Define to 1 if the system has the type `pthread_rwlock_t'. */
+#undef HAVE_PTHREAD_RWLOCK_T
+
 /* Define to 1 if you have the <pty.h> header file. */
 #undef HAVE_PTY_H
 

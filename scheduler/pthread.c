@@ -5,6 +5,7 @@
  * that want pthreads use Wine's own threading instead...
  *
  * Copyright 1999 Ove Kåven
+ * Copyright 2003 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,11 +29,10 @@
 
 struct _pthread_cleanup_buffer;
 
-#define _GNU_SOURCE /* we may need to override some GNU extensions */
-
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <setjmp.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -55,49 +55,62 @@ struct _pthread_cleanup_buffer;
 #include <valgrind/memcheck.h>
 #endif
 
-#include "winbase.h"
-#include "thread.h"
-#include "winternl.h"
+#include "wine/pthread.h"
 
-/* default errno before threading is initialized */
-static int *default_errno_location(void)
+#define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
+
+#define PSTR(str) __ASM_NAME(#str)
+
+static struct wine_pthread_functions funcs;
+
+/* thread descriptor */
+
+#define FIRST_KEY 0
+#define MAX_KEYS 16 /* libc6 doesn't use that many, but... */
+#define MAX_TSD  16
+
+struct pthread_descr_struct
 {
-    static int static_errno;
-    return &static_errno;
+    char               dummy[2048];
+    int                thread_errno;
+    int                thread_h_errno;
+    int                cancel_state;
+    int                cancel_type;
+    struct __res_state res_state;
+    const void        *key_data[MAX_KEYS];  /* for normal pthread keys */
+    const void        *tsd_data[MAX_TSD];   /* for libc internal tsd variables */
+};
+
+typedef struct pthread_descr_struct *pthread_descr;
+
+static struct pthread_descr_struct initial_descr;
+
+pthread_descr __pthread_thread_self(void)
+{
+    struct pthread_descr_struct *descr;
+    if (!funcs.ptr_get_thread_data) return &initial_descr;
+    descr = funcs.ptr_get_thread_data();
+    if (!descr) return &initial_descr;
+    return descr;
 }
 
-/* default h_errno before threading is initialized */
-static int *default_h_errno_location(void)
-{
-    static int static_h_errno;
-    return &static_h_errno;
-}
-
-/* errno once threading is working */
-static int *thread_errno_location(void)
-{
-    return &NtCurrentTeb()->thread_errno;
-}
-
-/* h_errno once threading is working */
-static int *thread_h_errno_location(void)
-{
-    return &NtCurrentTeb()->thread_h_errno;
-}
-
-static int* (*errno_location_ptr)(void) = default_errno_location;
-static int* (*h_errno_location_ptr)(void) = default_h_errno_location;
+static int (*libc_uselocale)(int set);
+static int *libc_multiple_threads;
 
 /***********************************************************************
  *           __errno_location/__error/__errno/___errno/__thr_errno
  *
  * Get the per-thread errno location.
  */
-int *__errno_location(void) { return errno_location_ptr(); }  /* Linux */
-int *__error(void)          { return errno_location_ptr(); }  /* FreeBSD */
-int *__errno(void)          { return errno_location_ptr(); }  /* NetBSD */
-int *___errno(void)         { return errno_location_ptr(); }  /* Solaris */
-int *__thr_errno(void)      { return errno_location_ptr(); }  /* UnixWare */
+int *__errno_location(void)                            /* Linux */
+{
+    pthread_descr descr = __pthread_thread_self();
+    return &descr->thread_errno;
+}
+int *__error(void)     { return __errno_location(); }  /* FreeBSD */
+int *__errno(void)     { return __errno_location(); }  /* NetBSD */
+int *___errno(void)    { return __errno_location(); }  /* Solaris */
+int *__thr_errno(void) { return __errno_location(); }  /* UnixWare */
 
 /***********************************************************************
  *           __h_errno_location
@@ -106,7 +119,66 @@ int *__thr_errno(void)      { return errno_location_ptr(); }  /* UnixWare */
  */
 int *__h_errno_location(void)
 {
-    return h_errno_location_ptr();
+    pthread_descr descr = __pthread_thread_self();
+    return &descr->thread_h_errno;
+}
+
+
+static inline void writejump( const char *symbol, void *dest )
+{
+#if defined(__GLIBC__) && defined(__i386__)
+    unsigned char *addr = dlsym( RTLD_NEXT, symbol );
+
+    if (!addr) return;
+
+    /* write a relative jump at the function address */
+    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC|PROT_WRITE);
+    addr[0] = 0xe9;
+    *(int *)(addr+1) = (unsigned char *)dest - (addr + 5);
+    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC);
+
+# ifdef HAVE_VALGRIND_MEMCHECK_H
+    VALGRIND_DISCARD_TRANSLATIONS( addr, 5 );
+# endif
+#endif  /* __GLIBC__ && __i386__ */
+}
+
+/***********************************************************************
+ *           wine_pthread_init_process
+ *
+ * Initialization for a newly created process.
+ */
+void wine_pthread_init_process( const struct wine_pthread_functions *functions )
+{
+    memcpy( &funcs, functions, sizeof(funcs) );
+    funcs.ptr_set_thread_data( &initial_descr );
+    initial_descr.cancel_state = PTHREAD_CANCEL_ENABLE;
+    initial_descr.cancel_type  = PTHREAD_CANCEL_ASYNCHRONOUS;
+    writejump( "__errno_location", __errno_location );
+    writejump( "__h_errno_location", __h_errno_location );
+    writejump( "__res_state", __res_state );
+    if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
+}
+
+
+/***********************************************************************
+ *           wine_pthread_init_thread
+ *
+ * Initialization for a newly created thread.
+ */
+void wine_pthread_init_thread(void)
+{
+    if (funcs.ptr_set_thread_data)
+    {
+        struct pthread_descr_struct *descr = calloc( 1, sizeof(*descr) );
+
+        funcs.ptr_set_thread_data( descr );
+        descr->cancel_state = PTHREAD_CANCEL_ENABLE;
+        descr->cancel_type  = PTHREAD_CANCEL_ASYNCHRONOUS;
+        if (libc_multiple_threads) *libc_multiple_threads = 1;
+        if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
+    }
+    /* else it's the first thread, init will be done in wine_pthread_init_process */
 }
 
 
@@ -123,44 +195,13 @@ int *__h_errno_location(void)
 #endif
 
 #include <pthread.h>
-#include <signal.h>
-
-#define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
-
-#define PSTR(str) __ASM_NAME(#str)
 
 /* adapt as necessary (a construct like this is used in glibc sources) */
 #define strong_alias(orig, alias) \
  asm(".globl " PSTR(alias) "\n" \
      "\t.set " PSTR(alias) "," PSTR(orig))
 
-/* thread descriptor */
-
-#define FIRST_KEY 0
-#define MAX_KEYS 16 /* libc6 doesn't use that many, but... */
-#define MAX_TSD  16
-
 struct fork_block;
-
-struct pthread_descr_struct
-{
-    char               dummy[2048];
-    struct __res_state res_state;
-    const void        *key_data[MAX_KEYS];  /* for normal pthread keys */
-    const void        *tsd_data[MAX_TSD];   /* for libc internal tsd variables */
-};
-
-typedef struct pthread_descr_struct *pthread_descr;
-
-static struct pthread_descr_struct initial_descr;
-
-pthread_descr __pthread_thread_self(void)
-{
-    struct pthread_descr_struct *descr = NtCurrentTeb()->pthread_data;
-    if (!descr) return &initial_descr;
-    return descr;
-}
-strong_alias(__pthread_thread_self, pthread_thread_self);
 
 /* pthread functions redirection */
 
@@ -210,76 +251,18 @@ struct pthread_functions
   int (*ptr_pthread_raise) (int sig);
 };
 
-static struct pthread_functions wine_pthread_functions;
-static int init_done;
-
 static pid_t (*libc_fork)(void);
 static int (*libc_sigaction)(int signum, const struct sigaction *act, struct sigaction *oldact);
-static int (*libc_uselocale)(int set);
 static int *(*libc_pthread_init)( const struct pthread_functions *funcs );
-static int *libc_multiple_threads;
 
-void PTHREAD_init_done(void)
-{
-    init_done = 1;
-}
+static struct pthread_functions libc_pthread_functions;
+
+strong_alias(__pthread_thread_self, pthread_thread_self);
 
 struct __res_state *__res_state(void)
 {
     pthread_descr descr = __pthread_thread_self();
     return &descr->res_state;
-}
-
-static inline void writejump( const char *symbol, void *dest )
-{
-#if defined(__GLIBC__) && defined(__i386__)
-    unsigned char *addr = dlsym( RTLD_NEXT, symbol );
-
-    if (!addr) return;
-
-    /* write a relative jump at the function address */
-    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC|PROT_WRITE);
-    addr[0] = 0xe9;
-    *(int *)(addr+1) = (unsigned char *)dest - (addr + 5);
-    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC);
-
-# ifdef HAVE_VALGRIND_MEMCHECK_H
-    VALGRIND_DISCARD_TRANSLATIONS( addr, 5 );
-# endif
-#endif  /* __GLIBC__ && __i386__ */
-}
-
-/***********************************************************************
- *           PTHREAD_init_thread
- *
- * Initialization for a newly created thread.
- */
-void PTHREAD_init_thread(void)
-{
-    static int first = 1;
-
-    if (first)
-    {
-        first = 0;
-        NtCurrentTeb()->pthread_data = &initial_descr;
-        errno_location_ptr = thread_errno_location;
-        h_errno_location_ptr = thread_h_errno_location;
-        libc_fork = dlsym( RTLD_NEXT, "fork" );
-        libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
-        libc_uselocale = dlsym( RTLD_NEXT, "uselocale" );
-        libc_pthread_init = dlsym( RTLD_NEXT, "__libc_pthread_init" );
-        if (libc_pthread_init) libc_multiple_threads = libc_pthread_init( &wine_pthread_functions );
-        writejump( "__errno_location", thread_errno_location );
-        writejump( "__h_errno_location", thread_h_errno_location );
-        writejump( "__res_state", __res_state );
-    }
-    else
-    {
-        struct pthread_descr_struct *descr = calloc( 1, sizeof(*descr) );
-        NtCurrentTeb()->pthread_data = descr;
-        if (libc_multiple_threads) *libc_multiple_threads = 1;
-    }
-    if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
 }
 
 /* redefine this to prevent libpthread from overriding our function pointers */
@@ -288,106 +271,34 @@ int *__libc_pthread_init( const struct pthread_functions *funcs )
     return libc_multiple_threads;
 }
 
-/* NOTE: This is a truly extremely incredibly ugly hack!
- * But it does seem to work... */
-
-/* assume that pthread_mutex_t has room for at least one pointer,
- * and hope that the users of pthread_mutex_t considers it opaque
- * (never checks what's in it)
- * also: assume that static initializer sets pointer to NULL
- */
-typedef struct
-{
-#ifdef __GLIBC__
-  int reserved;
-#endif
-  CRITICAL_SECTION *critsect;
-} *wine_mutex;
-
-/* see wine_mutex above for comments */
-typedef struct {
-  RTL_RWLOCK *lock;
-} *wine_rwlock;
-
 typedef struct _wine_cleanup {
   void (*routine)(void *);
   void *arg;
 } *wine_cleanup;
 
-void __pthread_initialize(void)
-{
-}
-
-struct pthread_thread_init {
-	 void* (*start_routine)(void*);
-	 void* arg;
-};
-
-static DWORD CALLBACK pthread_thread_start(LPVOID data)
-{
-  struct pthread_thread_init init = *(struct pthread_thread_init*)data;
-  HeapFree(GetProcessHeap(),0,data);
-  return (DWORD)init.start_routine(init.arg);
-}
-
 int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
         (*start_routine)(void *), void* arg)
 {
-  HANDLE hThread;
-  struct pthread_thread_init* idata = HeapAlloc(GetProcessHeap(), 0,
-		sizeof(struct pthread_thread_init));
-
-  idata->start_routine = start_routine;
-  idata->arg = arg;
-  hThread = CreateThread( NULL, 0, pthread_thread_start, idata, 0,
-                          (LPDWORD)thread);
-
-  if(hThread)
-    CloseHandle(hThread);
-  else
-  {
-    HeapFree(GetProcessHeap(),0,idata); /* free idata struct on failure */
-    return EAGAIN;
-  }
-
-  return 0;
+    assert( funcs.ptr_pthread_create );
+    return funcs.ptr_pthread_create( thread, attr, start_routine, arg );
 }
 
 int pthread_cancel(pthread_t thread)
 {
-  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD)thread);
-
-  if(!TerminateThread(hThread, 0))
-  {
-    CloseHandle(hThread);
-    return EINVAL;      /* return error */
-  }
-
-  CloseHandle(hThread);
-
-  return 0;             /* return success */
+    assert( funcs.ptr_pthread_cancel );
+    return funcs.ptr_pthread_cancel( thread );
 }
 
 int pthread_join(pthread_t thread, void **value_ptr)
 {
-  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD)thread);
-
-  WaitForSingleObject(hThread, INFINITE);
-  if(!GetExitCodeThread(hThread, (LPDWORD)value_ptr))
-  {
-    CloseHandle(hThread);
-    return EINVAL; /* FIXME: make this more correctly match */
-  }                /* windows errors */
-
-  CloseHandle(hThread);
-  return 0;
+    assert( funcs.ptr_pthread_join );
+    return funcs.ptr_pthread_join( thread, value_ptr );
 }
 
-/*FIXME: not sure what to do with this one... */
 int pthread_detach(pthread_t thread)
 {
-  P_OUTPUT("FIXME:pthread_detach\n");
-  return 0;
+    assert( funcs.ptr_pthread_detach );
+    return funcs.ptr_pthread_detach( thread );
 }
 
 /* FIXME: we have no equivalents in win32 for the policys */
@@ -413,15 +324,21 @@ int pthread_attr_setschedparam(pthread_attr_t *attr,
   return 0; /* return success */
 }
 
+/* FIXME */
+int pthread_attr_setstack(pthread_attr_t *attr, void *addr, size_t size)
+{
+  return 0; /* return success */
+}
+
 int __pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {
-  static pthread_once_t the_once = PTHREAD_ONCE_INIT;
-  LONG once_now;
+    static pthread_once_t the_once = PTHREAD_ONCE_INIT;
+    long once_now;
 
-  memcpy(&once_now,&the_once,sizeof(once_now));
-  if (InterlockedCompareExchange((LONG*)once_control, once_now+1, once_now) == once_now)
-    (*init_routine)();
-  return 0;
+    memcpy(&once_now,&the_once,sizeof(once_now));
+    if (interlocked_cmpxchg((long*)once_control, once_now+1, once_now) == once_now)
+        (*init_routine)();
+    return 0;
 }
 strong_alias(__pthread_once, pthread_once);
 
@@ -435,14 +352,7 @@ strong_alias(__pthread_kill_other_threads_np, pthread_kill_other_threads_np);
 
 #define MAX_ATFORK 8  /* libc doesn't need that many anyway */
 
-static CRITICAL_SECTION atfork_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &atfork_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { 0, (DWORD)(__FILE__ ": atfork_section") }
-};
-static CRITICAL_SECTION atfork_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t atfork_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef void (*atfork_handler)();
 static atfork_handler atfork_prepare[MAX_ATFORK];
@@ -450,17 +360,15 @@ static atfork_handler atfork_parent[MAX_ATFORK];
 static atfork_handler atfork_child[MAX_ATFORK];
 static int atfork_count;
 
-int __pthread_atfork(void (*prepare)(void),
-		     void (*parent)(void),
-		     void (*child)(void))
+int __pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(void))
 {
-    if (init_done) RtlEnterCriticalSection( &atfork_section );
+    pthread_mutex_lock( &atfork_mutex );
     assert( atfork_count < MAX_ATFORK );
     atfork_prepare[atfork_count] = prepare;
     atfork_parent[atfork_count] = parent;
     atfork_child[atfork_count] = child;
     atfork_count++;
-    if (init_done) RtlLeaveCriticalSection( &atfork_section );
+    pthread_mutex_unlock( &atfork_mutex );
     return 0;
 }
 strong_alias(__pthread_atfork, pthread_atfork);
@@ -475,18 +383,18 @@ pid_t __fork(void)
         libc_fork = dlsym( RTLD_NEXT, "fork" );
         assert( libc_fork );
     }
-    RtlEnterCriticalSection( &atfork_section );
+    pthread_mutex_lock( &atfork_mutex );
     /* prepare handlers are called in reverse insertion order */
     for (i = atfork_count - 1; i >= 0; i--) if (atfork_prepare[i]) atfork_prepare[i]();
     if (!(pid = libc_fork()))
     {
-        RtlInitializeCriticalSection( &atfork_section );
+        pthread_mutex_init( &atfork_mutex, NULL );
         for (i = 0; i < atfork_count; i++) if (atfork_child[i]) atfork_child[i]();
     }
     else
     {
         for (i = 0; i < atfork_count; i++) if (atfork_parent[i]) atfork_parent[i]();
-        RtlLeaveCriticalSection( &atfork_section );
+        pthread_mutex_unlock( &atfork_mutex );
     }
     return pid;
 }
@@ -494,80 +402,38 @@ strong_alias(__fork, fork);
 
 /***** MUTEXES *****/
 
-int __pthread_mutex_init(pthread_mutex_t *mutex,
-                        const pthread_mutexattr_t *mutexattr)
+int __pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr)
 {
-  /* glibc has a tendency to initialize mutexes very often, even
-     in situations where they are not really used later on.
-
-     As for us, initializing a mutex is very expensive, we postpone
-     the real initialization until the time the mutex is first used. */
-
-  ((wine_mutex)mutex)->critsect = NULL;
-  return 0;
+    if (!funcs.ptr_pthread_mutex_init) return 0;
+    return funcs.ptr_pthread_mutex_init( mutex, mutexattr );
 }
 strong_alias(__pthread_mutex_init, pthread_mutex_init);
 
-static void mutex_real_init( pthread_mutex_t *mutex )
-{
-  CRITICAL_SECTION *critsect = HeapAlloc(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
-  RtlInitializeCriticalSection(critsect);
-
-  if (InterlockedCompareExchangePointer((void**)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
-    /* too late, some other thread already did it */
-    RtlDeleteCriticalSection(critsect);
-    HeapFree(GetProcessHeap(), 0, critsect);
-  }
-}
-
 int __pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-  if (!init_done) return 0;
-  if (!((wine_mutex)mutex)->critsect)
-    mutex_real_init( mutex );
-
-  RtlEnterCriticalSection(((wine_mutex)mutex)->critsect);
-  return 0;
+    if (!funcs.ptr_pthread_mutex_lock) return 0;
+    return funcs.ptr_pthread_mutex_lock( mutex );
 }
 strong_alias(__pthread_mutex_lock, pthread_mutex_lock);
 
 int __pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-  if (!init_done) return 0;
-  if (!((wine_mutex)mutex)->critsect)
-    mutex_real_init( mutex );
-
-  if (!RtlTryEnterCriticalSection(((wine_mutex)mutex)->critsect)) {
-    errno = EBUSY;
-    return -1;
-  }
-  return 0;
+    if (!funcs.ptr_pthread_mutex_trylock) return 0;
+    return funcs.ptr_pthread_mutex_trylock( mutex );
 }
 strong_alias(__pthread_mutex_trylock, pthread_mutex_trylock);
 
 int __pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-  if (!((wine_mutex)mutex)->critsect) return 0;
-  RtlLeaveCriticalSection(((wine_mutex)mutex)->critsect);
-  return 0;
+    if (!funcs.ptr_pthread_mutex_unlock) return 0;
+    return funcs.ptr_pthread_mutex_unlock( mutex );
 }
 strong_alias(__pthread_mutex_unlock, pthread_mutex_unlock);
 
 int __pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
-  if (!((wine_mutex)mutex)->critsect) return 0;
-  if (((wine_mutex)mutex)->critsect->RecursionCount) {
-#if 0 /* there seems to be a bug in libc6 that makes this a bad idea */
-    return EBUSY;
-#else
-    while (((wine_mutex)mutex)->critsect->RecursionCount)
-      RtlLeaveCriticalSection(((wine_mutex)mutex)->critsect);
-#endif
-  }
-  RtlDeleteCriticalSection(((wine_mutex)mutex)->critsect);
-  HeapFree(GetProcessHeap(), 0, ((wine_mutex)mutex)->critsect);
-  ((wine_mutex)mutex)->critsect = NULL;
-  return 0;
+    if (!funcs.ptr_pthread_mutex_destroy) return 0;
+    return funcs.ptr_pthread_mutex_destroy( mutex );
 }
 strong_alias(__pthread_mutex_destroy, pthread_mutex_destroy);
 
@@ -618,9 +484,9 @@ strong_alias(__pthread_mutexattr_gettype, pthread_mutexattr_gettype);
 
 int __pthread_key_create(pthread_key_t *key, void (*destr_function)(void *))
 {
-  static LONG keycnt = FIRST_KEY;
-  *key = InterlockedExchangeAdd(&keycnt, 1);
-  return 0;
+    static long keycnt = FIRST_KEY;
+    *key = interlocked_xchg_add(&keycnt, 1);
+    return 0;
 }
 strong_alias(__pthread_key_create, pthread_key_create);
 
@@ -645,26 +511,27 @@ void *__pthread_getspecific(pthread_key_t key)
 }
 strong_alias(__pthread_getspecific, pthread_getspecific);
 
-/* these are not exported, they are only used in the pthread_functions structure */
-
 static int pthread_internal_tsd_set( int key, const void *pointer )
 {
     pthread_descr descr = __pthread_thread_self();
     descr->tsd_data[key] = pointer;
     return 0;
 }
+int (*__libc_internal_tsd_set)(int, const void *) = pthread_internal_tsd_set;
 
 static void *pthread_internal_tsd_get( int key )
 {
     pthread_descr descr = __pthread_thread_self();
     return (void *)descr->tsd_data[key];
 }
+void* (*__libc_internal_tsd_get)(int) = pthread_internal_tsd_get;
 
 static void ** __attribute__((const)) pthread_internal_tsd_address( int key )
 {
     pthread_descr descr = __pthread_thread_self();
     return (void **)&descr->tsd_data[key];
 }
+void** (*__libc_internal_tsd_address)(int) = pthread_internal_tsd_address;
 
 /***** "EXCEPTION" FRAMES *****/
 /* not implemented right now */
@@ -753,94 +620,54 @@ int pthread_condattr_destroy(pthread_condattr_t *attr)
   return 0;
 }
 
-#if (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 2)
 /***** READ-WRITE LOCKS *****/
-
-static void rwlock_real_init(pthread_rwlock_t *rwlock)
-{
-  RTL_RWLOCK *lock = HeapAlloc(GetProcessHeap(), 0, sizeof(RTL_RWLOCK));
-  RtlInitializeResource(lock);
-
-  if (InterlockedCompareExchangePointer((void**)&(((wine_rwlock)rwlock)->lock),lock,NULL) != NULL) {
-    /* too late, some other thread already did it */
-    RtlDeleteResource(lock);
-    HeapFree(GetProcessHeap(), 0, lock);
-  }
-}
 
 int __pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *rwlock_attr)
 {
-  ((wine_rwlock)rwlock)->lock = NULL;
-  return 0;
+    assert( funcs.ptr_pthread_rwlock_init );
+    return funcs.ptr_pthread_rwlock_init( rwlock, rwlock_attr );
 }
 strong_alias(__pthread_rwlock_init, pthread_rwlock_init);
 
 int __pthread_rwlock_destroy(pthread_rwlock_t *rwlock)
 {
-  if (!((wine_rwlock)rwlock)->lock) return 0;
-  RtlDeleteResource(((wine_rwlock)rwlock)->lock);
-  HeapFree(GetProcessHeap(), 0, ((wine_rwlock)rwlock)->lock);
-  return 0;
+    assert( funcs.ptr_pthread_rwlock_destroy );
+    return funcs.ptr_pthread_rwlock_destroy( rwlock );
 }
 strong_alias(__pthread_rwlock_destroy, pthread_rwlock_destroy);
 
 int __pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done) return 0;
-  if (!((wine_rwlock)rwlock)->lock)
-    rwlock_real_init( rwlock );
-
-  while(TRUE)
-    if (RtlAcquireResourceShared(((wine_rwlock)rwlock)->lock, TRUE))
-      return 0;
+    if (!funcs.ptr_pthread_rwlock_rdlock) return 0;
+    return funcs.ptr_pthread_rwlock_rdlock( rwlock );
 }
 strong_alias(__pthread_rwlock_rdlock, pthread_rwlock_rdlock);
 
 int __pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done) return 0;
-  if (!((wine_rwlock)rwlock)->lock)
-    rwlock_real_init( rwlock );
-
-  if (!RtlAcquireResourceShared(((wine_rwlock)rwlock)->lock, FALSE)) {
-    errno = EBUSY;
-    return -1;
-  }
-  return 0;
+    assert( funcs.ptr_pthread_rwlock_tryrdlock );
+    return funcs.ptr_pthread_rwlock_tryrdlock( rwlock );
 }
 strong_alias(__pthread_rwlock_tryrdlock, pthread_rwlock_tryrdlock);
 
 int __pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done) return 0;
-  if (!((wine_rwlock)rwlock)->lock)
-    rwlock_real_init( rwlock );
-
-  while(TRUE)
-    if (RtlAcquireResourceExclusive(((wine_rwlock)rwlock)->lock, TRUE))
-      return 0;
+    assert( funcs.ptr_pthread_rwlock_wrlock );
+    return funcs.ptr_pthread_rwlock_wrlock( rwlock );
 }
 strong_alias(__pthread_rwlock_wrlock, pthread_rwlock_wrlock);
 
 int __pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done) return 0;
-  if (!((wine_rwlock)rwlock)->lock)
-    rwlock_real_init( rwlock );
-
-  if (!RtlAcquireResourceExclusive(((wine_rwlock)rwlock)->lock, FALSE)) {
-    errno = EBUSY;
-    return -1;
-  }
-  return 0;
+    assert( funcs.ptr_pthread_rwlock_trywrlock );
+    return funcs.ptr_pthread_rwlock_trywrlock( rwlock );
 }
 strong_alias(__pthread_rwlock_trywrlock, pthread_rwlock_trywrlock);
 
 int __pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 {
-  if (!((wine_rwlock)rwlock)->lock) return 0;
-  RtlReleaseResource( ((wine_rwlock)rwlock)->lock );
-  return 0;
+    assert( funcs.ptr_pthread_rwlock_unlock );
+    return funcs.ptr_pthread_rwlock_unlock( rwlock );
 }
 strong_alias(__pthread_rwlock_unlock, pthread_rwlock_unlock);
 
@@ -868,24 +695,25 @@ int pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *attr, int pref)
 {
   return 0;
 }
-#endif /* glibc 2.2 */
 
 /***** MISC *****/
 
 pthread_t pthread_self(void)
 {
-  return (pthread_t)GetCurrentThreadId();
+    assert( funcs.ptr_pthread_self );
+    return funcs.ptr_pthread_self();
 }
 
 int pthread_equal(pthread_t thread1, pthread_t thread2)
 {
-  return (DWORD)thread1 == (DWORD)thread2;
+    assert( funcs.ptr_pthread_equal );
+    return funcs.ptr_pthread_equal( thread1, thread2 );
 }
 
 void __pthread_do_exit(void *retval, char *currentframe)
 {
-  /* FIXME: pthread cleanup */
-  ExitThread((DWORD)retval);
+    assert( funcs.ptr_pthread_exit );
+    return funcs.ptr_pthread_exit( retval, currentframe );
 }
 
 void __pthread_exit(void *retval)
@@ -894,10 +722,20 @@ void __pthread_exit(void *retval)
 }
 strong_alias(__pthread_exit, pthread_exit);
 
+int pthread_setcancelstate(int state, int *oldstate)
+{
+    pthread_descr descr = __pthread_thread_self();
+    if (oldstate) *oldstate = descr->cancel_state;
+    descr->cancel_state = state;
+    return 0;
+}
+
 int pthread_setcanceltype(int type, int *oldtype)
 {
-  if (oldtype) *oldtype = PTHREAD_CANCEL_ASYNCHRONOUS;
-  return 0;
+    pthread_descr descr = __pthread_thread_self();
+    if (oldtype) *oldtype = descr->cancel_type;
+    descr->cancel_type = type;
+    return 0;
 }
 
 /***** ANTI-OVERRIDES *****/
@@ -913,7 +751,23 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
     return libc_sigaction(signum, act, oldact);
 }
 
-static struct pthread_functions wine_pthread_functions =
+void __pthread_initialize(void)
+{
+    static int done;
+
+    if (!done)
+    {
+        done = 1;
+        libc_fork = dlsym( RTLD_NEXT, "fork" );
+        libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
+        libc_uselocale = dlsym( RTLD_NEXT, "uselocale" );
+        libc_pthread_init = dlsym( RTLD_NEXT, "__libc_pthread_init" );
+        if (libc_pthread_init) libc_multiple_threads = libc_pthread_init( &libc_pthread_functions );
+    }
+}
+DECL_GLOBAL_CONSTRUCTOR(init) { __pthread_initialize(); }
+
+static struct pthread_functions libc_pthread_functions =
 {
     NULL,                          /* ptr_pthread_fork */
     NULL, /* FIXME */              /* ptr_pthread_attr_destroy */
@@ -946,7 +800,7 @@ static struct pthread_functions wine_pthread_functions =
     __pthread_mutex_trylock,       /* ptr_pthread_mutex_trylock */
     __pthread_mutex_unlock,        /* ptr_pthread_mutex_unlock */
     pthread_self,                  /* ptr_pthread_self */
-    NULL, /* FIXME */              /* ptr_pthread_setcancelstate */
+    pthread_setcancelstate,        /* ptr_pthread_setcancelstate */
     pthread_setcanceltype,         /* ptr_pthread_setcanceltype */
     __pthread_do_exit,             /* ptr_pthread_do_exit */
     __pthread_cleanup_upto,        /* ptr_pthread_cleanup_upto */
@@ -959,16 +813,15 @@ static struct pthread_functions wine_pthread_functions =
     NULL                           /* ptr_pthread_raise */
 };
 
-#else /* __GLIBC__ || __FREEBSD__ */
-
-void PTHREAD_init_thread(void) { }
-void PTHREAD_init_done(void) { }
-
 #endif /* __GLIBC__ || __FREEBSD__ */
 
 #else  /* HAVE_NPTL */
 
-void PTHREAD_init_done(void)
+void wine_pthread_init_process( const struct wine_pthread_functions *functions )
+{
+}
+
+void wine_pthread_init_thread(void)
 {
 }
 

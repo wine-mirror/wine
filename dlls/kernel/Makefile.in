@@ -39,6 +39,7 @@ C_SRCS = \
 	powermgnt.c \
 	process.c \
 	profile.c \
+	pthread.c \
 	relay16.c \
 	resource.c \
 	resource16.c \

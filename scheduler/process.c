@@ -117,9 +117,6 @@ static unsigned int server_startticks;
 
 int main_create_flags = 0;
 
-/* scheduler/pthread.c */
-extern void PTHREAD_init_done(void);
-
 /* dlls/ntdll/env.c */
 extern BOOL init_user_process_pmts( size_t, char*, size_t );
 extern BOOL build_command_line( char **argv );
@@ -358,9 +355,6 @@ static BOOL process_init( char *argv[] )
         else if (VerifyConsoleIoHandle(console_handle_map(process_pmts.hStdError)))
             process_pmts.hStdError = console_handle_map(process_pmts.hStdError);
     }
-
-    /* Now we can use the pthreads routines */
-    PTHREAD_init_done();
 
     /* Copy the parent environment */
     if (!init_user_process_pmts( info_size, main_exe_name, sizeof(main_exe_name) ))

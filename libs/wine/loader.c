@@ -420,6 +420,8 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     void (*init_func)(int, char **);
 
     if (!(ntdll = dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists ))) return;
+    /* make sure kernel32 is loaded too */
+    if (!dlopen_dll( "kernel32.dll", error, error_size, 0, &file_exists )) return;
     if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;
     init_func( argc, argv );
 }
