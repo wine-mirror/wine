@@ -377,10 +377,21 @@ HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWOR
 
 /*************************************************************************
  * RunDLL_CallEntry16				[SHELL32.122]
- * the name is propably wrong
+ * the name is probably wrong
  */
 HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
 {
     FIXME("0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",v,w,x,y,z);
     return 0;
+}
+
+/*
+ * called by desk.cpl on "Advanced" with:
+ * hMod("DeskCp16.Dll"), pFunc("CplApplet"), 0, 1, 0xc, 0
+ *
+ */
+DWORD WINAPI CallCPLEntry16(HMODULE hMod, FARPROC pFunc, DWORD dw3, DWORD dw4, DWORD dw5, DWORD dw6)
+{
+    FIXME("(%04x, %p, %08lx, %08lx, %08lx, %08lx): stub.\n", hMod, pFunc, dw3, dw4, dw5, dw6);
+    return 0x0deadbee;
 }

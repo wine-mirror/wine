@@ -520,7 +520,7 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 @ stdcall SetScrollRange(long long long long long) SetScrollRange
 @ stdcall SetShellWindow(long) SetShellWindow
 @ stdcall SetSysColors(long ptr ptr) SetSysColors
-@ stdcall SetSysColorsTemp(long ptr ptr) SetSysColorsTemp
+@ stdcall SetSysColorsTemp(ptr ptr long) SetSysColorsTemp
 @ stdcall SetSystemCursor(long long) SetSystemCursor
 @ stdcall SetSystemMenu(long long) SetSystemMenu
 @ stdcall SetSystemTimer(long long long ptr) SetSystemTimer
@@ -650,13 +650,14 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 @ stdcall SetProcessDefaultLayout(long) SetProcessDefaultLayout
 @ stdcall RegisterDeviceNotificationA(long ptr long) RegisterDeviceNotificationA
 @ stub    RegisterDeviceNotificationW
+@ stub    TrackMouseEvent
 @ stub    UnregisterDeviceNotification
 
 # win98/win2k
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
 @ stdcall AnimateWindow(long long long) AnimateWindow
 @ stdcall GetAncestor(long long) GetAncestor
-@ stdcall DrawMenuBarTemp(long long) DrawMenuBarTemp
+@ stdcall DrawMenuBarTemp(long long long long long) DrawMenuBarTemp
 @ stdcall EnumDisplaySettingsExA(str long ptr long) EnumDisplaySettingsExA
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long) EnumDisplaySettingsExW
 @ stdcall GetClipboardSequenceNumber () GetClipboardSequenceNumber

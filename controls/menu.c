@@ -3978,10 +3978,16 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
 
 /***********************************************************************
  *           DrawMenuBarTemp   (USER32.@)
+ *
+ * UNDOCUMENTED !!
+ * 
+ * called by W98SE desk.cpl Control Panel Applet
+ *
+ * Not 100% sure about the param names, but close.
  */
-DWORD WINAPI DrawMenuBarTemp(DWORD p1, DWORD p2)
+DWORD WINAPI DrawMenuBarTemp(HWND someHWND, HDC someHDC, LPRECT someRECT, HMENU someHMENU, HFONT someFONT)
 {
-    FIXME("(%08lx %08lx): stub\n", p1, p2);
+    FIXME("(0x%08x, 0x%08x, %p, 0x%08x, 0x%08x): stub\n", someHWND, someHDC, someRECT, someHMENU, someFONT);
     return 0;
 }
 

@@ -148,11 +148,11 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 
     if (SysColorPens[index])
     {
-	SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], FALSE);
+        SYSCOLOR_MakeObjectSystem(SysColorPens[index], FALSE);
 	DeleteObject( SysColorPens[index] ); 
     }
     SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
-    SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], TRUE);
+    SYSCOLOR_MakeObjectSystem(SysColorPens[index], TRUE);
 }
 
 
@@ -275,11 +275,80 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
 
 /*************************************************************************
  *		SetSysColorsTemp (USER32.@)
+ *
+ * UNDOCUMENTED !!
+ * 
+ * Called by W98SE desk.cpl Control Panel Applet:
+ * handle = SetSysColorsTemp(ptr, ptr, nCount);     ("set" call)
+ * result = SetSysColorsTemp(NULL, NULL, handle);   ("restore" call)
+ *
+ * pPens is an array of COLORREF values, which seems to be used
+ * to indicate the color values to create new pens with.
+ *
+ * pBrushes is an array of solid brush handles (returned by a previous
+ * CreateSolidBrush), which seems to contain the brush handles to set
+ * for the system colors.
+ *
+ * n seems to be used for
+ *   a) indicating the number of entries to operate on (length of pPens,
+ *      pBrushes)
+ *   b) passing the handle that points to the previously used color settings.
+ *      I couldn't figure out in hell what kind of handle this is on
+ *      Windows. I just use a heap handle instead. Shouldn't matter anyway.
+ *
+ * RETURNS
+ *     heap handle of our own copy of the current syscolors in case of
+ *                 "set" call, i.e. pPens, pBrushes != NULL.
+ *     TRUE (unconditionally !) in case of "restore" call,
+ *          i.e. pPens, pBrushes == NULL.
+ *     FALSE in case of either pPens != NULL and pBrushes == NULL
+ *          or pPens == NULL and pBrushes != NULL.
+ *
+ * I'm not sure whether this implementation is 100% correct. [AM]
  */
-BOOL	WINAPI	SetSysColorsTemp( int n, const int* p, const COLORREF* ptr)
+DWORD WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DWORD n)
 {
-	FIXME("(%d,%p,%p): stub!\n", n, p, ptr);
-	return 0;
+	int i;
+
+	if (pPens && pBrushes) /* "set" call */
+	{
+	    /* allocate our structure to remember old colors */
+	    LPVOID pOldCol = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD)+n*sizeof(HPEN)+n*sizeof(HBRUSH));
+	    LPVOID p = pOldCol;
+	    *(DWORD *)p = n; p += sizeof(DWORD);
+	    memcpy(p, SysColorPens, n*sizeof(HPEN)); p += n*sizeof(HPEN);
+	    memcpy(p, SysColorBrushes, n*sizeof(HBRUSH)); p += n*sizeof(HBRUSH);
+
+	    for (i=0; i < n; i++)
+	    {
+		SysColorPens[i] = CreatePen( PS_SOLID, 1, pPens[i] );
+		SysColorBrushes[i] = pBrushes[i];
+	    }
+
+	    return (DWORD)pOldCol;
+	}
+	if ((!pPens) && (!pBrushes)) /* "restore" call */
+	{
+	    LPVOID pOldCol = (LPVOID)n;
+	    LPVOID p = pOldCol;
+	    DWORD nCount = *(DWORD *)p;
+	    p += sizeof(DWORD);
+
+	    for (i=0; i < nCount; i++)
+	    {
+		DeleteObject(SysColorPens[i]);
+		SysColorPens[i] = *(HPEN *)p; p += sizeof(HPEN);
+	    }
+	    for (i=0; i < nCount; i++)
+	    {
+		SysColorBrushes[i] = *(HBRUSH *)p; p += sizeof(HBRUSH);
+	    }
+	    /* get rid of storage structure */
+	    HeapFree(GetProcessHeap(), 0, pOldCol);
+
+	    return TRUE;
+	}
+	return FALSE;
 }
 
 /***********************************************************************

@@ -171,7 +171,7 @@ debug_channels (exec pidl shell shlctrl)
  163 stdcall StrToOleStr (wstr str) StrToOleStrAW
  164 stdcall Win32DeleteFile(str) Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory
- 166 stub CallCPLEntry16
+ 166 stdcall CallCPLEntry16(long long long long long long) CallCPLEntry16
  167 stdcall SHAddFromPropSheetExtArray(long long long) SHAddFromPropSheetExtArray
  168 stdcall SHCreatePropSheetExtArray(long str long) SHCreatePropSheetExtArray
  169 stdcall SHDestroyPropSheetExtArray(long) SHDestroyPropSheetExtArray
