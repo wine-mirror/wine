@@ -81,7 +81,7 @@ type	win32
  78 stdcall IsValidInterface(ptr) IsValidInterface
  79 stub IsValidPtrIn
  80 stub IsValidPtrOut
- 81 stub MkParseDisplayName
+ 81 stdcall MkParseDisplayName(ptr ptr ptr ptr) MkParseDisplayName
  82 stdcall MonikerCommonPrefixWith(ptr ptr ptr) MonikerCommonPrefixWith
  83 stub MonikerRelativePathTo
  84 stdcall OleBuildVersion() OleBuildVersion

@@ -25,22 +25,22 @@ typedef struct RunObject{
     DWORD      regTypeObj; /* registration type : strong or weak */
 }RunObject;
 
-/* define de RunningObjectTableImpl structure */
+/* define the RunningObjectTableImpl structure */
 typedef struct RunningObjectTableImpl{
 
     ICOM_VFIELD(IRunningObjectTable);
     ULONG      ref;
 
-    RunObject* runObjTab;            /* pointe to the first object in the table       */
+    RunObject* runObjTab;            /* pointer to the first object in the table       */
     DWORD      runObjTabSize;       /* current table size                            */
     DWORD      runObjTabLastIndx;  /* first free index element in the table.        */
-    DWORD      runObjTabRegister; /* registration key of the next registred object */
+    DWORD      runObjTabRegister; /* registration key of the next registered object */
     
 } RunningObjectTableImpl;
 
 RunningObjectTableImpl* runningObjectTableInstance=0;
 
-/* IRunningObjectTable prototipe functions : */
+/* IRunningObjectTable prototype functions : */
 /* IUnknown functions*/
 static HRESULT WINAPI RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,REFIID riid,void** ppvObject);
 static ULONG   WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable* iface);
@@ -84,7 +84,7 @@ HRESULT WINAPI RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
 
     TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
 
-    /* validate arguments*/
+    /* validate arguments */
     if (This==0)
         return CO_E_NOTINITIALIZED;
 
@@ -153,7 +153,7 @@ ULONG   WINAPI RunningObjectTableImpl_Release(IRunningObjectTable* iface)
     /* unitialize ROT structure if there's no more reference to it*/
     if (This->ref==0){
 
-        /* release all registred objects */
+        /* release all registered objects */
         for(i=0;i<This->runObjTabLastIndx;i++)
         {
             if (( This->runObjTab[i].regTypeObj &  ROTFLAGS_REGISTRATIONKEEPSALIVE) != 0)
@@ -249,18 +249,18 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
     if (punkObject==NULL || pmkObjectName==NULL || pdwRegister==NULL)
         return E_INVALIDARG;
 
-    /* verify if the object to be registred was registred befor */
+    /* verify if the object to be registered was registered before */
     if (RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,NULL)==S_OK)
         res = MK_S_MONIKERALREADYREGISTERED;
 
-    /* put the new registred object in the first free element in the table */
+    /* put the new registered object in the first free element in the table */
     This->runObjTab[This->runObjTabLastIndx].pObj = punkObject;
     This->runObjTab[This->runObjTabLastIndx].pmkObj = pmkObjectName;
     This->runObjTab[This->runObjTabLastIndx].regTypeObj = grfFlags;
     This->runObjTab[This->runObjTabLastIndx].identRegObj = This->runObjTabRegister;
     CoFileTimeNow(&(This->runObjTab[This->runObjTabLastIndx].lastModifObj));
     
-    /* gives a registration identifier to the registred object*/
+    /* gives a registration identifier to the registered object*/
     (*pdwRegister)= This->runObjTabRegister;
 
     if (This->runObjTabRegister == 0xFFFFFFFF){
@@ -300,12 +300,12 @@ HRESULT WINAPI RunningObjectTableImpl_Revoke(  IRunningObjectTable* iface,
 
     TRACE("(%p,%ld)\n",This,dwRegister);
 
-    /* verify if the object to be revoked was registred befor or not */
+    /* verify if the object to be revoked was registered before or not */
     if (RunningObjectTableImpl_GetObjectIndex(This,dwRegister,NULL,&index)==S_FALSE)
 
         return E_INVALIDARG;
 
-    /* release the object if it was registred with a strong registrantion option */
+    /* release the object if it was registered with a strong registrantion option */
     if ((This->runObjTab[index].regTypeObj & ROTFLAGS_REGISTRATIONKEEPSALIVE)!=0)
         IUnknown_Release(This->runObjTab[index].pObj);
 
@@ -350,7 +350,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObject(  IRunningObjectTable* iface,
     
     *ppunkObject=0;
 
-    /* verify if the object was registred befor or not */
+    /* verify if the object was registered before or not */
     if (RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,&index)==S_FALSE)
         return MK_E_UNAVAILABLE;
 
@@ -373,7 +373,7 @@ HRESULT WINAPI RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
 
     TRACE("(%p,%ld,%p)\n",This,dwRegister,pfiletime);
 
-    /* verify if the object to be changed was registred befor or not */
+    /* verify if the object to be changed was registered before or not */
     if (RunningObjectTableImpl_GetObjectIndex(This,dwRegister,NULL,&index)==S_FALSE)
         return E_INVALIDARG;
 
@@ -398,7 +398,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* i
     if (pmkObjectName==NULL || pfiletime==NULL)
         return E_INVALIDARG;
 
-    /* verify if the object was registred befor or not */
+    /* verify if the object was registered before or not */
     if (RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,&index)==S_FALSE)
         return MK_E_UNAVAILABLE;;
 
@@ -431,10 +431,10 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
     TRACE("(%p,%ld,%p,%p)\n",This,identReg,pmk,indx);
 
     if (pmk!=NULL)
-        /* search object identified by a moniker*/
+        /* search object identified by a moniker */
         for(i=0 ; (i < This->runObjTabLastIndx) &&(!IMoniker_IsEqual(This->runObjTab[i].pmkObj,pmk)==S_OK);i++);
     else
-        /* search object identified by a register identifier*/
+        /* search object identified by a register identifier */
         for(i=0;((i<This->runObjTabLastIndx)&&(This->runObjTab[i].identRegObj!=identReg));i++);
     
     if (i==This->runObjTabLastIndx)  return S_FALSE;
@@ -489,4 +489,17 @@ HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
   ret  = IRunnableObject_Run(runable,NULL);
   IRunnableObject_Release(runable);
   return ret;
+}
+
+/******************************************************************************
+ *              MkParseDisplayName        [OLE32.81]
+ */
+HRESULT MkParseDisplayName(	LPBC pbc, LPCOLESTR szUserName,
+				LPDWORD pchEaten, LPMONIKER *ppmk)
+{
+    FIXME("(%p, %s, %p, %p): stub.\n", pbc, debugstr_w(szUserName), pchEaten, *ppmk);
+    if (!(IsValidInterface(pbc)))
+	return E_INVALIDARG;
+
+    return MK_E_SYNTAX;
 }
