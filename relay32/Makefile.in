@@ -18,11 +18,6 @@ SPEC_SRCS = \
 	mcicda.spec \
 	mciseq.spec \
 	mciwave.spec \
-	ole32.spec \
-	oleaut32.spec \
-	olecli32.spec \
-	oledlg.spec \
-	olesvr32.spec \
 	user32.spec \
 	winmm.spec \
 	wow32.spec \

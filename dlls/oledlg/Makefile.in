@@ -1,16 +1,18 @@
 DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = ole
+MODULE    = oledlg
+
+SPEC_SRCS = oledlg.spec
 
 C_SRCS = \
-	guid.c \
-	ole2nls.c 
+	oledlg_main.c
 
 all: $(MODULE).o
 
 @MAKE_RULES@
 
 ### Dependencies:
+

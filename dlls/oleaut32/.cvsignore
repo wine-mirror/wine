@@ -1,0 +1,4 @@
+Makefile
+oleaut32.spec.c
+ole2disp.spec.c
+typelib.spec.c

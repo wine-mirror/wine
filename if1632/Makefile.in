@@ -7,7 +7,6 @@ MODULE    = if1632
 
 SPEC_SRCS = \
 	comm.spec \
-	compobj.spec \
 	ddeml.spec \
 	dispdib.spec \
 	display.spec \
@@ -16,18 +15,12 @@ SPEC_SRCS = \
 	keyboard.spec \
 	mmsystem.spec \
 	mouse.spec \
-	ole2.spec \
 	ole2conv.spec \
-	ole2disp.spec \
 	ole2nls.spec \
 	ole2prox.spec \
 	ole2thk.spec \
-	olecli.spec \
-	olesvr.spec \
-	storage.spec \
 	system.spec \
 	toolhelp.spec \
-	typelib.spec \
 	user.spec \
 	wineps.spec \
 	winsock.spec \

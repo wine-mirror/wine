@@ -1,0 +1,5 @@
+Makefile
+ole32.spec.c
+ole2.spec.c
+storage.spec.c
+compobj.spec.c

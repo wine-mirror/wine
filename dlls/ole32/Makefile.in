@@ -1,0 +1,37 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ole32
+
+SPEC_SRCS = ole32.spec ole2.spec storage.spec compobj.spec
+
+C_SRCS = \
+	antimoniker.c \
+	bindctx.c \
+	clipboard.c \
+	compobj.c \
+	compositemoniker.c \
+	datacache.c \
+	defaulthandler.c \
+	filemoniker.c \
+	hglobalstream.c \
+	ifs.c \
+	itemmoniker.c \
+	memlockbytes.c \
+	moniker.c \
+	ole2.c \
+	ole2stubs.c \
+	oleobj.c \
+	stg_bigblockfile.c \
+	stg_stream.c \
+	storage.c \
+	storage32.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

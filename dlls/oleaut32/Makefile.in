@@ -1,0 +1,24 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = oleaut32
+
+SPEC_SRCS = oleaut32.spec ole2disp.spec typelib.spec
+
+C_SRCS = \
+	ole2disp.c \
+	oleaut.c \
+	olefont.c \
+	parsedt.c \
+	safearray.c \
+	typelib.c \
+	variant.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

@@ -12,11 +12,6 @@ mciavi.spec.c
 mcicda.spec.c
 mciseq.spec.c
 mciwave.spec.c
-ole32.spec.c
-oleaut32.spec.c
-olecli32.spec.c
-oledlg.spec.c
-olesvr32.spec.c
 user32.spec.c
 winmm.spec.c
 wow32.spec.c
