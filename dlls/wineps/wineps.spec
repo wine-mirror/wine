@@ -2,7 +2,7 @@
 
 @ cdecl Arc(ptr long long long long long long long long) PSDRV_Arc
 @ cdecl Chord(ptr long long long long long long long long) PSDRV_Chord
-@ cdecl CreateDC(ptr ptr str str str ptr) PSDRV_CreateDC
+@ cdecl CreateDC(ptr ptr wstr wstr wstr ptr) PSDRV_CreateDC
 @ cdecl DeleteDC(ptr) PSDRV_DeleteDC
 @ cdecl DeviceCapabilities(ptr ptr ptr long ptr ptr) PSDRV_DeviceCapabilities
 @ cdecl Ellipse(ptr long long long long) PSDRV_Ellipse
