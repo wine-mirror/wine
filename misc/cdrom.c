@@ -39,8 +39,8 @@ int	CDAUDIO_Open(WINE_CDAUDIO* wcda)
     wcda->cdaMode = WINE_CDA_OPEN;	/* to force reading tracks info */
     wcda->nCurTrack = 0;
     wcda->nTracks = 0;
-    wcda->dwTotalLen = 0;
-    wcda->dwFirstOffset = 0;
+    wcda->dwFirstFrame = 0;
+    wcda->dwLastFrame = 0;
     wcda->lpdwTrackLen = NULL;
     wcda->lpdwTrackPos = NULL;
     wcda->lpbTrackFlags = NULL;
@@ -152,7 +152,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 #endif
 	else
 #ifdef linux
-	    entry.cdte_track = i + 1;
+	entry.cdte_track = i + 1;
 #else
 	entry.starting_track = i + 1;
 #endif
@@ -187,7 +187,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 #endif
 	if (i == 0) {
 	    last_start = start;
-	    wcda->dwFirstOffset = start;
+	    wcda->dwFirstFrame = start;
 	    TRACE("dwFirstOffset=%u\n", start);
 	} else {
 	    length = start - last_start;
@@ -207,7 +207,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 #endif 
 	TRACE("track #%u flags=%02x\n", i + 1, wcda->lpbTrackFlags[i]);
     }
-    wcda->dwTotalLen = total_length;
+    wcda->dwLastFrame = last_start;
     TRACE("total_len=%u\n", total_length);
     return TRUE;
 #else
@@ -425,6 +425,9 @@ int	CDAUDIO_Pause(WINE_CDAUDIO* wcda, int pauseOn)
 #endif
 }
 
+/**************************************************************************
+ * 				CDAUDIO_Seek			[internal]
+ */
 int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
@@ -435,7 +438,7 @@ int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at)
     msf.second = (at % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
     msf.frame  = at % CDFRAMES_PERSEC;
 
-   ret = ioctl(wcda->unixdev, CDROMSEEK, &msf);
+    ret = ioctl(wcda->unixdev, CDROMSEEK, &msf);
 #else
    /* FIXME: the current end for play is lost 
     * use end of CD ROM instead

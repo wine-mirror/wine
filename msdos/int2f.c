@@ -620,7 +620,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    break;
 		    
 		case 8: /* Volume size */
-		    PTR_AT(io_stru, 1, DWORD) = wcda.dwTotalLen;
+		    PTR_AT(io_stru, 1, DWORD) = wcda.dwLastFrame;
 		    TRACE(" ----> VOLUME SIZE <%ld>\n", PTR_AT(io_stru, 1, DWORD));
 		    break;
 		    
@@ -633,7 +633,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		case 10: /* audio disk info */
 		    io_stru[1] = wcda.nFirstTrack; /* starting track of the disc */
 		    io_stru[2] = wcda.nLastTrack;  /* ending track */
-		    MSCDEX_StoreMSF(wcda.dwTotalLen, io_stru + 3);
+		    MSCDEX_StoreMSF(wcda.dwLastFrame, io_stru + 3);
 		    
 		    TRACE(" ----> AUDIO DISK INFO <%d-%d/%08lx>\n",
 			  io_stru[1], io_stru[2], PTR_AT(io_stru, 3, DWORD));

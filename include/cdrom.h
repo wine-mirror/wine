@@ -30,17 +30,21 @@ typedef struct {
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     struct cd_sub_channel_info	sc;
 #endif
-    int				cdaMode;
-    UINT16			nCurTrack;
-    DWORD			dwCurFrame;
+    /* those data reflect the cdaudio structure and
+     * don't change while playing
+     */
     UINT16			nTracks;
     UINT16			nFirstTrack;
     UINT16			nLastTrack;
-    DWORD			dwTotalLen;
     LPDWORD			lpdwTrackLen;
     LPDWORD			lpdwTrackPos;
     LPBYTE			lpbTrackFlags;
-    DWORD			dwFirstOffset;
+    DWORD			dwFirstFrame;
+    DWORD			dwLastFrame;
+    /* those data change while playing */
+    int				cdaMode;
+    UINT16			nCurTrack;
+    DWORD			dwCurFrame;
 } WINE_CDAUDIO;
 
 #define	WINE_CDA_DONTKNOW		0x00
