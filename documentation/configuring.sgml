@@ -31,11 +31,6 @@
     <sect1 id="config-requirements-windows" xreflabel="--Installing Section--">
       <title>What are the requirements of a fully working Windows environment?</title>
 
-      <para>
-        Formerly a part of: "WWN #52 Feature: Replacing Windows".
-        Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
-      </para>
-
         <para>
           A Windows installation is a very complex structure. It consists of
 	  many different parts with very different functionality.
@@ -206,10 +201,6 @@
 	to the Wine configuration file (for new Wine users)
 	and a complete reference to all Wine configuration file settings (for
 	advanced users).
-      </para>
-      <para>
-        Parts taken from the former file <filename>wine/documentation/config</filename>,
-        Copyright 1999 &name-adam-sacarny; <email>&email-adam-sacarny;</email>
       </para>
 
       <sect2>
@@ -1378,12 +1369,6 @@ And here is a setup for Drive A, a generic floppy drive:
 
       <sect2 id="config-no-windows">
         <title>Installing Wine Without Windows</title>
-        <para>
-          Written by &name-james-juran; <email>&email-james-juran;</email>
-        </para>
-        <para>
-          (Extracted from <filename>wine/documentation/no-windows</filename>)
-        </para>
 
         <para>
           A major goal of Wine is to allow users to run Windows programs
@@ -1547,12 +1532,6 @@ And here is a setup for Drive A, a generic floppy drive:
 
       <sect2 id="config-drive-vfat">
         <title>Dealing With FAT/VFAT Partitions</title>
-        <para>
-          Written by &name-steven-elliott; <email>&email-steven-elliott;</email>
-        </para>
-        <para>
-          (Extracted from <filename>wine/documentation/linux-fat-permissions</filename>)
-        </para>
         <para>
           This document describes how FAT and
           VFAT file system permissions work in Linux
@@ -1766,39 +1745,8 @@ And here is a setup for Drive A, a generic floppy drive:
       </sect2>
 
       <sect2 id="config-drive-cdrom-labels">
-      <sect2info>
-        <authorgroup>
-          <author>
-            <firstname>Petr</firstname>
-            <surname>Tomasek</surname>
-            <affiliation>
-      	<address><email>&email-petr-tomasek;</email></address>
-            </affiliation>
-            <contrib>Nov 14 1999</contrib>
-          </author>
-          <author>
-            <firstname>Andreas</firstname>
-            <surname>Mohr</surname>
-            <affiliation>
-      	<address><email>&email-andreas-mohr;</email></address>
-            </affiliation>
-            <contrib>Jan 25 2000</contrib>
-          </author>
-        </authorgroup>
-      </sect2info>
 
       <title>Drive labels and serial numbers</title>
-      <para>
-        Written by &name-petr-tomasek; <email>&email-petr-tomasek;</email>
-        Nov 14 1999
-      </para>
-      <para>
-        Changes by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-        Jan 25 2000
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/cdrom-labels</filename>)
-      </para>
       <para>
         Until now, your only possibility of specifying drive volume
         labels and serial numbers was to set them manually in the wine
@@ -2063,13 +2011,6 @@ And here is a setup for Drive A, a generic floppy drive:
 
 <sect2 id="config-dll-overrides">
 <title>DLL Overrides</title>
-
-<para>
-  Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
-</para>
-<para>
-  (Extracted from <filename>wine/documentation/dll-overrides</filename>)
-</para>
 
 <para>
   The wine configuration file directives [DllDefaults]
@@ -2458,10 +2399,6 @@ And here is a setup for Drive A, a generic floppy drive:
 <title>Missing DLLs</title>
 
 <para>
-  Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-</para>
-
-<para>
   In case Wine complains about a missing DLL, you should check whether
   this file is a publicly available DLL or a custom DLL belonging
   to your program (by searching for its name on the internet).
@@ -2516,10 +2453,6 @@ And here is a setup for Drive A, a generic floppy drive:
 <title>Fetching native DLLs from a Windows CD</title>
 
 <para>
-  Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-</para>
-
-<para>
 The Linux <command>cabextract</command> utility can be used to
 extract native Windows .dll files from .cab files that are to be
 found on many Windows installation CDs.
@@ -2554,13 +2487,6 @@ with the <literal>GraphicsDriver</literal> option in the
 
 <sect2>
 <title>Configuring the x11drv graphics driver</title>
-
-<para>
-  Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
-</para>
-<para>
-  (Extracted from <filename>wine/documentation/x11drv</filename>)
-</para>
 
 <sect3>
   <title>x11drv modes of operation</title>
@@ -2806,11 +2732,6 @@ with the <literal>GraphicsDriver</literal> option in the
 <title>Setting the Windows and DOS version value</title>
 
 <para>
-Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-Oct 18 2002
-</para>
-
-<para>
 The windows and DOS version value a program gets e.g. by calling the
 Windows function GetVersion() plays a very important role:
 If your Wine installation for whatever reason fails to provide
@@ -2876,15 +2797,6 @@ the [Version] section.
 <sect1 id="config-win95look">
 <title>Win95/98 Look And Feel</title>
 <para>
-Written by &name-david-cuthbert; <email>&email-david-cuthbert;</email>
-</para>
-<para>
-(Extracted from <filename>wine/documentation/win95look</filename>)
-</para>
-<para>
-Win95/Win98 interface code is being introduced.
-</para>
-<para>
 Instead of compiling Wine for Win3.1 vs. Win95 using
 <constant>#define</constant> switches, the code now looks in a
 special [Tweak.Layout] section of
@@ -2917,13 +2829,6 @@ release!  These entries/sections are:
 
 <sect1 id="config-keyboard">
 <title>Keyboard</title>
-
-<para>
-Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
-</para>
-<para>
-(Extracted from <filename>wine/documentation/keyboard</filename>)
-</para>
 
 <para>
 Wine now needs to know about your keyboard layout. This
@@ -3097,14 +3002,6 @@ diff -u the_backup_file_you_made dlls/x11drv/keyboard.c > layout.diff
 
     <sect1 id="config-scsi-support">
       <title>SCSI Support</title>
-      <para>
-        Written by &name-bruce-milner; <email>&email-bruce-milner;</email>;
-        Additions by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/aspi</filename>)
-      </para>
-
       <para>
         This file describes setting up the Windows ASPI interface.
       </para>

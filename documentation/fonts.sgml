@@ -5,13 +5,6 @@
       <title>Fonts</title>
 
       <para>
-        Written by &name-alex-korobka; <email>&email-alex-korobka;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/fonts</filename>)
-      </para>
-
-      <para>
         <note>
           <para>
             The <command>fnt2bdf</command> utility is included with
@@ -387,13 +380,6 @@ Resolution = &lt;integer value&gt;
 
     <sect2 id="ttfont-server">
     <title>Setting up a TrueType Font Server</title>
-      <para>
-        written by ???
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/ttfserver</filename>)
-      </para>
-
       <para>
         Follow these instructions to set up a TrueType font server on your system.
       </para>

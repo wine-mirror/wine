@@ -2,15 +2,6 @@
     <title>Running Wine</title>
 
     <para>
-      Written by &name-john-sheets; <email>&email-john-sheets;</email>
-      Modified by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-    </para>
-    <para>
-      Extended by &name-mike-hearn; <email>&email-mike-hearn;</email>, &name-eric-pouech; <email>&email-eric-pouech;</email>
-      Modified by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-    </para>
-
-    <para>
       This chapter will describe all aspects of running Wine, like e.g.
       basic Wine invocation, command line parameters of various Wine
       support programs etc.

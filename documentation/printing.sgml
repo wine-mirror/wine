@@ -6,13 +6,6 @@
       <title>Printing</title>
 
       <para>
-        Written by &name-huw-davies; <email>&email-huw-davies;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/printing</filename>)
-      </para>
-
-      <para>
         Printing in Wine can be done in one of two ways:
       </para>
       <orderedlist>
@@ -51,31 +44,6 @@
 	</para>
       </sect3>
 
-<!--
-      <sect3>
-        <title>External printer drivers (non-working as of Jul 8, 01)</title>
-        <para>
-          At present only 16 bit drivers will work (note that these include
-	  win9x drivers).  To use them, add
-        </para>
-        <screen>
-printer=on
-        </screen>
-        <para>
-          to the [wine] section of the wine config file. This lets
-          <function>CreateDC</function> proceed if its driver argument is a 16
-          bit driver. You will probably also need to add
-        </para>
-        <screen>
-"TTEnable" = "0" "TTOnly" = "0"
-        </screen>
-        <para>
-          to the [TrueType] section of <filename>~/.wine/config</filename>. The code for
-          the driver interface is in <filename>graphics/win16drv</filename>.
-        </para>
-      </sect3>
--->
-
       <sect3>
         <title>Spooling</title>
         <para>
@@ -107,13 +75,6 @@ printer=on
 
     <sect2 id="config-printing-psdriver">
       <title>The Wine PostScript Driver</title>
-
-      <para>
-        Written by &name-huw-davies; <email>&email-huw-davies;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/psdriver</filename>)
-      </para>
 
       <para>
         This allows Wine to generate PostScript files without
@@ -314,12 +275,6 @@ printer=on
           </listitem>
         </itemizedlist>
 
-        <para>
-          Please contact me if you want to help so that we can avoid duplication.
-        </para>
-        <para>
-          &name-huw-davies; <email>&email-huw-davies;</email>
-        </para>
       </sect3>
     </sect2>
   </sect1>

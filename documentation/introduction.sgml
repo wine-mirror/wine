@@ -14,16 +14,9 @@
 	of the Wine environment as a whole.
       </para>
       <para>
-        It tries to target both the new Wine user (aka "bloody newbie"),
-	by offering a step by step approach, and the experienced Wine
-	user or expert, by offering the reference material mentioned
-	above.
-      </para>
-      <para>
-        The whole document has been extensively rewritten (in other
-	words: the document then deserved to be called a document :-) by
-	&name-andreas-mohr; <email>&email-andreas-mohr;</email> in
-	March 2003.
+        It tries to target both the new Wine user, by offering a step by 
+	step approach, and the experienced Wine	user, by offering the reference 
+	material mentioned above.
       </para>
       </sect2>
 
@@ -32,9 +25,8 @@
         <para>
           If during reading this document there is something you
           can't figure out, or think could be explained better, or
-          that should have been included, please immediately mail to
-          either the &name-web-admin; <email>&email-web-admin;</email> or
-          the &name-wine-devel; <email>&email-wine-devel;</email>, or
+          that should have been included, please immediately mail to the 
+	  <ulink url="mailto:wine-devel@winehq.org">wine-devel</ulink>, or
           post a bug report to
           <ulink url="http://bugs.winehq.com/">Wine's Bugzilla</ulink> to
           let us know how this document can be improved.  Remember, Open
@@ -118,13 +110,6 @@
 
     <sect1 id="what-is-wine">
       <title>What is Wine?</title>
-
-      <para>
-        <literallayout>
-          Written by &name-john-sheets; <email>&email-john-sheets;</email>
-          Modified by &name-dustin-navea; <email>&email-dustin-navea;</email>
-        </literallayout>
-      </para>
 
       <sect2>
         <title>Windows and Linux</title>
@@ -285,31 +270,6 @@
         </para>
       </sect2>
     </sect1>
-
-<!-- *** Not really useful as is, but may be able to recycle this elsewhere...
-    <sect1 id="getting-started">
-      <title>Getting started</title>
-
-      <para>
-        Written by &name-john-sheets; <email>&email-john-sheets;</email>
-      </para>
-
-      <para>
-        Wine can be pretty intimidating at first.  The Wine
-        distribution consists of over four thousand files and almost a
-        million lines of source code
-        <footnote>
-          <para>Crudely calculated from running <command>find . | wc
-              -l</command> and <command>cat `find . -name "*.c"` | wc
-              -l</command>, respectively, from a fresh CVS checkout.</para>
-        </footnote>,
-        and is probably one of the steepest learning curves in the
-        open source world.  This chapter will give you a crash course
-        in the important topics you need to know to get started with
-        running Wine applications.
-      </para>
-    </sect1>
--->
 
     <sect1 id="other-wines">
       <title>Other, often "Enhanced" Wine offerings</title>
@@ -485,13 +445,6 @@
     </sect1>
     <sect1 id="wine-stats">
       <title>Basic Wine Requirements</title>
-
-      <para>
-        <literallayout>
-          Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-          Modified by &name-dustin-navea; <email>&email-dustin-navea;</email>
-        </literallayout>
-      </para>
 
       <para>
         This section only mentions the most basic system requirements of

@@ -1,9 +1,5 @@
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
-<!-- *** Include list of authors *** -->
-<!entity % authors SYSTEM "authors.ent">
-%authors;
-
 <!entity introduction SYSTEM "introduction.sgml">
 <!entity getting SYSTEM "getting.sgml">
 <!entity compiling SYSTEM "compiling.sgml">
@@ -20,6 +16,62 @@
 <book id="index">
   <bookinfo>
     <title>Wine User Guide</title>
+    <!-- Until we learn how to format this thing nicely, 
+	 we can't really incude it -->
+    <!--authorgroup>
+      <author>
+	<firstname>Huw</firstname>
+	<surname>Davies</surname>
+      </author>
+      <author>
+	<firstname>Steven</firstname>
+	<surname>Elliott</surname>
+      </author>
+      <author>
+	<firstname>Mike</firstname>
+	<surname>Hearn</surname>
+      </author>
+      <author>
+	<firstname>James</firstname>
+	<surname>Juran</surname>
+      </author>
+      <author>
+	<firstname>Ove</firstname>
+	<surname>Kaaven</surname>
+      </author>
+      <author>
+	<firstname>Alex</firstname>
+	<surname>Korobka</surname>
+      </author>
+      <author>
+	<firstname>Bruce</firstname>
+	<surname>Milner</surname>
+      </author>
+      <author>
+	<firstname>Andreas</firstname>
+	<surname>Mohr</surname>
+      </author>
+      <author>
+	<firstname>Dustin</firstname>
+	<surname>Navea</surname>
+      </author>
+      <author>
+	<firstname>Eric</firstname>
+	<surname>Pouech</surname>
+      </author>
+      <author>
+	<firstname>Adam</firstname>
+	<surname>Sacarny</surname>
+      </author>
+      <author>
+	<firstname>John</firstname>
+	<surname>Sheets</surname>
+      </author>
+      <author>
+	<firstname>Petr</firstname>
+	<surname>Tomasek</surname>
+      </author>
+    </authorgroup-->
   </bookinfo>
 
   &introduction;
@@ -28,6 +80,8 @@
   &installing;
   &configuring;
   &running;
+  <!--&fonts;-->
+  <!--&printing;-->
   &bugs;
   &glossary;
 
