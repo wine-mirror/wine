@@ -3101,6 +3101,7 @@ typedef struct _SECURITY_QUALITY_OF_SERVICE {
  * TOKEN_STATISTICS
  */
 
+#include <pshpack4.h>
 typedef struct _TOKEN_STATISTICS {
   LUID  TokenId;
   LUID  AuthenticationId;
@@ -3113,6 +3114,7 @@ typedef struct _TOKEN_STATISTICS {
   DWORD PrivilegeCount;
   LUID  ModifiedId;
 } TOKEN_STATISTICS;
+#include <poppack.h>
 
 /*
  *	ACLs of NT
