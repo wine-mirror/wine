@@ -9329,7 +9329,9 @@ fi
 
 
 
-for ac_header in freetype/freetype.h \
+
+for ac_header in ft2build.h \
+                         freetype/freetype.h \
                          freetype/ftglyph.h \
                          freetype/tttables.h \
                          freetype/ftnames.h \

@@ -45,6 +45,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 #ifdef HAVE_FREETYPE
 
+#ifdef HAVE_FT2BUILD_H
+#include <ft2build.h>
+#endif
 #ifdef HAVE_FREETYPE_FREETYPE_H
 #include <freetype/freetype.h>
 #endif

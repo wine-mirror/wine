@@ -35,6 +35,9 @@
  *  is anybody's guess.
  */
 
+#ifdef HAVE_FT2BUILD_H
+#include <ft2build.h>
+#endif
 #ifdef HAVE_FREETYPE_FREETYPE_H
 #include <freetype/freetype.h>
 #endif

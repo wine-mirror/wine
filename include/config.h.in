@@ -116,6 +116,9 @@
 /* Define to 1 if you have the <freetype/tttables.h> header file. */
 #undef HAVE_FREETYPE_TTTABLES_H
 
+/* Define to 1 if you have the <ft2build.h> header file. */
+#undef HAVE_FT2BUILD_H
+
 /* Define to 1 if you have the `ftruncate' function. */
 #undef HAVE_FTRUNCATE
 

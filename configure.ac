@@ -447,7 +447,8 @@ else
 	FREETYPEINCL=`$ft_devel --cflags`
 	ac_save_CPPFLAGS="$CPPFLAGS"
 	CPPFLAGS="$FREETYPEINCL $CPPFLAGS"
-	AC_CHECK_HEADERS(freetype/freetype.h \
+	AC_CHECK_HEADERS(ft2build.h \
+                         freetype/freetype.h \
                          freetype/ftglyph.h \
                          freetype/tttables.h \
                          freetype/ftnames.h \
