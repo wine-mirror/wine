@@ -1370,7 +1370,7 @@ static LPSTR _convert_winnt_registry_to_wine_format(LPCWSTR fn, int level)
     base = NULL; len = 0;
     nts = NtMapViewOfSection( hMapping, GetCurrentProcess(),
                               &base, 0, 0, &lg_int, &len, ViewShare, 0, 
-                              FILE_MAP_READ );
+			      PAGE_READONLY);
     NtClose( hMapping );
     if (nts != STATUS_SUCCESS) goto error1;
 
