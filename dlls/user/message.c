@@ -395,14 +395,8 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_WININICHANGE:
     case WM_DEVMODECHANGE:
     case CB_DIR:
-    case CB_FINDSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_SELECTSTRING:
     case LB_DIR:
     case LB_ADDFILE:
-    case LB_FINDSTRING:
-    case LB_FINDSTRINGEXACT:
-    case LB_SELECTSTRING:
     case EM_REPLACESEL:
         push_string( data, (LPWSTR)lparam );
         return 0;
@@ -494,6 +488,9 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         return 0;
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
         if (combobox_has_strings( hwnd )) push_string( data, (LPWSTR)lparam );
         return 0;
     case CB_GETLBTEXT:
@@ -501,6 +498,9 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         return (SendMessageW( hwnd, CB_GETLBTEXTLEN, wparam, 0 ) + 1) * sizeof(WCHAR);
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_SELECTSTRING:
         if (listbox_has_strings( hwnd )) push_string( data, (LPWSTR)lparam );
         return 0;
     case LB_GETTEXT:
@@ -606,14 +606,8 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_WININICHANGE:
     case WM_DEVMODECHANGE:
     case CB_DIR:
-    case CB_FINDSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_SELECTSTRING:
     case LB_DIR:
     case LB_ADDFILE:
-    case LB_FINDSTRING:
-    case LB_FINDSTRINGEXACT:
-    case LB_SELECTSTRING:
     case EM_REPLACESEL:
         if (!check_string( *buffer, size )) return FALSE;
         break;
@@ -712,8 +706,14 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         break;
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_SELECTSTRING:
         if (!*buffer) return TRUE;
         if (!check_string( *buffer, size )) return FALSE;
         break;
