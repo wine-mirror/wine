@@ -1175,6 +1175,8 @@ typedef struct _DDBLTBATCH
 
 #define MAX_DDDEVICEID_STRING          512
 
+#define DDGDI_GETHOSTIDENTIFIER 1
+
 typedef struct tagDDDEVICEIDENTIFIER {
   char    szDriver[MAX_DDDEVICEID_STRING];
   char    szDescription[MAX_DDDEVICEID_STRING];
