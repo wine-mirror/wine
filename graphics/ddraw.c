@@ -915,7 +915,9 @@ static HRESULT WINAPI IDirectDrawSurface4_BltFast(
 	    FIXME(ddraw,"(%p)->(%ld,%ld,%p,%p,%08lx)\n",
 		    this,dstx,dsty,src,rsrc,trans
 	    );
-	    FIXME(ddraw,"	trans:");_dump_DDBLTFAST(trans);fprintf(stderr,"\n");
+	    FIXME(ddraw,"	trans:");
+	    if (FIXME_ON(ddraw))
+	      _dump_DDBLTFAST(trans);
 	    FIXME(ddraw,"	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	}
 	/* We need to lock the surfaces, or we won't get refreshes when done. */
