@@ -108,15 +108,15 @@ struct DosDeviceStruct {
     /* notifications */
     int wnd, n_read, n_write;
     HANDLE s_read, s_write;
+    /* save terminal states */
+    DCB16 dcb;
+    /* pointer to unknown(==undocumented) comm structure */ 
+    LPCVOID *unknown;
 };
 
 
 static struct DosDeviceStruct COM[MAX_PORTS];
 static struct DosDeviceStruct LPT[MAX_PORTS];
-/* pointers to unknown(==undocumented) comm structure */ 
-static LPCVOID *unknown[MAX_PORTS];
-/* save terminal states */
-static struct termios m_stat[MAX_PORTS];
 
 /* update window's semi documented modem status register */
 /* see knowledge base Q101417 */
@@ -289,11 +289,11 @@ static void CALLBACK comm_notification( ULONG_PTR private )
 	/* check for events */
 	if ((ptr->eventmask & EV_RXFLAG) &&
 	    memchr(ptr->inbuf + ptr->ibuf_head, ptr->evtchar, len)) {
-	  *(WORD*)(unknown[cid]) |= EV_RXFLAG;
+	  *(WORD*)(COM[cid].unknown) |= EV_RXFLAG;
 	  mask |= CN_EVENT;
 	}
 	if (ptr->eventmask & EV_RXCHAR) {
-	  *(WORD*)(unknown[cid]) |= EV_RXCHAR;
+	  *(WORD*)(COM[cid].unknown) |= EV_RXCHAR;
 	  mask |= CN_EVENT;
 	}
 	/* advance buffer position */
@@ -337,7 +337,7 @@ static void CALLBACK comm_notification( ULONG_PTR private )
 	  ptr->s_write = INVALID_HANDLE_VALUE;
 	}
         if (ptr->eventmask & EV_TXEMPTY) {
-	  *(WORD*)(unknown[cid]) |= EV_TXEMPTY;
+	  *(WORD*)(COM[cid].unknown) |= EV_TXEMPTY;
 	  mask |= CN_EVENT;
 	}
       }
@@ -546,20 +546,18 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			ERR("Couldn't open %s ! (%s)\n", COM[port].devicename, strerror(errno));
 			return IE_HARDWARE;
 		} else {
-                        unknown[port] = SEGPTR_ALLOC(40);
-			memset(unknown[port], 0, 40);
+                        COM[port].unknown = SEGPTR_ALLOC(40);
+			memset(COM[port].unknown, 0, 40);
 			COM[port].handle = handle;
 			COM[port].commerror = 0;
 			COM[port].eventmask = 0;
 			COM[port].evtchar = 0; /* FIXME: default? */
                         /* save terminal state */
-			{int fd = FILE_GetUnixHandle(handle,GENERIC_READ);
-                        tcgetattr(fd,&m_stat[port]);
-			close(fd);}
+			GetCommState16(port,&COM[port].dcb);
                         /* set default parameters */
                         if(COM[port].baudrate>-1){
                             DCB16 dcb;
-                            GetCommState16(port, &dcb);
+			    memcpy(&dcb,&COM[port].dcb,sizeof dcb);
                             dcb.BaudRate=COM[port].baudrate;
                             /* more defaults:
                              * databits, parity, stopbits
@@ -583,9 +581,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			} else COM[port].outbuf = NULL;
 			if (!COM[port].outbuf) {
 			  /* not enough memory */
-			  {int fd = FILE_GetUnixHandle(handle,GENERIC_READ);
-			  tcsetattr(fd,TCSANOW,&m_stat[port]);
-			  close(fd);}
+			  SetCommState16(&COM[port].dcb);
 			  CloseHandle(COM[port].handle);
 			  ERR("out of memory\n");
 			  return IE_MEMORY;
@@ -634,7 +630,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 	}
 	if (!(cid&FLAG_LPT)) {
 		/* COM port */
-		SEGPTR_FREE(unknown[cid]); /* [LW] */
+		SEGPTR_FREE(COM[cid].unknown); /* [LW] */
 
 		SERVICE_Delete( COM[cid].s_write );
 		SERVICE_Delete( COM[cid].s_read );
@@ -643,9 +639,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 		free(ptr->inbuf);
 
 		/* reset modem lines */
-		{int fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ);
-		tcsetattr(fd,TCSANOW,&m_stat[cid]);
-		close(fd);}
+		SetCommState16(&COM[cid].dcb);
 	}
 
 	if (!CloseHandle(ptr->handle)) {
@@ -814,7 +808,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
             WARN(" cid %d not comm port\n",cid);
             return CE_MODE;
         }
-        stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
+        stol = (unsigned char *)COM[cid].unknown + COMM_MSR_OFFSET;
 	COMM_MSRUpdate( ptr->handle, stol );
 
 	if (lpStat) {
@@ -858,11 +852,11 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
             return (SEGPTR)NULL;
         }
         /* it's a COM port ? -> modify flags */
-        stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
+        stol = (unsigned char *)COM[cid].unknown + COMM_MSR_OFFSET;
 	COMM_MSRUpdate( ptr->handle, stol );
 
 	TRACE(" modem dcd construct %x\n",*stol);
-	return SEGPTR_GET(unknown[cid]);
+	return SEGPTR_GET(COM[cid].unknown);
 }
 
 /*****************************************************************************
@@ -884,8 +878,8 @@ UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
             return 0;
         }
 
-	events = *(WORD*)(unknown[cid]) & fnEvtClear;
-	*(WORD*)(unknown[cid]) &= ~fnEvtClear;
+	events = *(WORD*)(COM[cid].unknown) & fnEvtClear;
+	*(WORD*)(COM[cid].unknown) &= ~fnEvtClear;
 	return events;
 }
 
