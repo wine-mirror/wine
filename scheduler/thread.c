@@ -38,14 +38,6 @@ static TEB initial_teb;
 extern struct _PDB current_process;
 
 /***********************************************************************
- *           THREAD_IsWin16
- */
-BOOL THREAD_IsWin16( TEB *teb )
-{
-    return !teb || !(teb->tibflags & TEBF_WIN32);
-}
-
-/***********************************************************************
  *           THREAD_IdToTEB
  *
  * Convert a thread id to a TEB, making sure it is valid.

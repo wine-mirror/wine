@@ -579,7 +579,7 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
     if (!hTask) hTask = GetCurrentTask();
     pTask = TASK_GetPtr( hTask );
 
-    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
+    if (pTask->flags & TDBF_WIN32)
     {
         FIXME("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
         return TRUE;
@@ -618,7 +618,7 @@ void WINAPI PostEvent16( HTASK16 hTask )
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = TASK_GetPtr( hTask ))) return;
 
-    if ( !THREAD_IsWin16( pTask->teb ) )
+    if (pTask->flags & TDBF_WIN32)
     {
         FIXME("called for Win32 thread (%04x)!\n", pTask->teb->teb_sel );
         return;
@@ -700,7 +700,7 @@ void WINAPI DirectedYield16( HTASK16 hTask )
 {
     TDB *pCurTask = TASK_GetCurrent();
 
-    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
+    if (pCurTask->flags & TDBF_WIN32)
     {
         FIXME("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
         return;
@@ -1043,7 +1043,7 @@ HANDLE WINAPI GetFastQueue16( void )
                 return 0;
             }
         }
-        Callout.InitThreadInput16( 0, THREAD_IsWin16(teb)? 4 : 5 );
+        Callout.InitThreadInput16( 0, (teb->tibflags & TEBF_WIN32) ? 5 : 4 );
 
         if (!teb->queue)
             FIXME("(): should initialize thread-local queue, expect failure!\n" );
