@@ -385,7 +385,22 @@ void X11DRV_EVENT_Synchronize()
 static void EVENT_ProcessEvent( XEvent *event )
 {
   WND *pWnd;
-    
+
+  switch (event->type)
+    {
+      /* We get all these because of StructureNotifyMask.
+         This check is placed here to avoid getting error messages below,
+         as X might send some of these even for windows that have already
+         been deleted ... */
+    case UnmapNotify:
+    case CirculateNotify:
+    case CreateNotify:
+    case DestroyNotify:
+    case GravityNotify:
+    case ReparentNotify:
+      return;
+    }
+      
   if ( TSXFindContext( display, event->xany.window, winContext,
 		       (char **)&pWnd ) != 0) {
     if ( event->type == ClientMessage) {
@@ -488,15 +503,6 @@ static void EVENT_ProcessEvent( XEvent *event )
 #endif
 
     case NoExpose:
-      break;
-      
-      /* We get all these because of StructureNotifyMask. */
-    case UnmapNotify:
-    case CirculateNotify:
-    case CreateNotify:
-    case DestroyNotify:
-    case GravityNotify:
-    case ReparentNotify:
       break;
       
     case MapNotify:
