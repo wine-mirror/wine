@@ -13,6 +13,7 @@ C_SRCS = \
 	format_msg.c \
 	kernel_main.c \
 	stress.c \
+	string.c \
 	sync.c \
 	thunk.c \
 	time.c \

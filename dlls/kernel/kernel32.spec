@@ -26,13 +26,13 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
   7 register -i386 VxDCall6(long) VxDCall
   8 register -i386 VxDCall7(long) VxDCall
   9 register -i386 VxDCall8(long) VxDCall
- 10 forward k32CharToOemA user32.CharToOemA
- 11 forward k32CharToOemBuffA user32.CharToOemBuffA
- 12 forward k32OemToCharA user32.OemToCharA
- 13 forward k32OemToCharBuffA user32.OemToCharBuffA
- 14 forward k32LoadStringA user32.LoadStringA
- 15 forward k32wsprintfA user32.wsprintfA
- 16 forward k32wvsprintfA user32.wvsprintfA
+ 10 stdcall k32CharToOemA(str ptr) k32CharToOemA
+ 11 stdcall k32CharToOemBuffA(str ptr long) k32CharToOemBuffA
+ 12 stdcall k32OemToCharA(ptr ptr) k32OemToCharA
+ 13 stdcall k32OemToCharBuffA(ptr ptr long) k32OemToCharBuffA
+ 14 stdcall k32LoadStringA(long long ptr long) k32LoadStringA
+ 15 varargs k32wsprintfA(str str) k32wsprintfA
+ 16 stdcall k32wvsprintfA(ptr str ptr) k32wvsprintfA
  17 register -i386 CommonUnimpStub() CommonUnimpStub
  18 stdcall GetProcessDword(long long) GetProcessDword
  19 stub ThunkTheTemplateHandle
