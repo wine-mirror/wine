@@ -72,32 +72,37 @@ ULONG WINAPI IDirectMusicLoader8Impl_Release (LPDIRECTMUSICLOADER8 iface)
 HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID* ppv)
 {
 	IDirectMusicObject* pObject;
-	DMUS_OBJECTDESC desc;
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-	int i;
 	HRESULT result;
+	struct list *listEntry;
+	DMUS_PRIVATE_CACHE_ENTRY *cacheEntry;
+	LPDMUS_PRIVATE_CACHE_ENTRY newEntry;
 
 	TRACE("(%p, %p, %s, %p)\n", This, pDesc, debugstr_guid(riid), ppv);
-	TRACE(": looking up cache");
-	/* first, check if requested object is already in cache (check by name and GUID) */
-	for (i = 0; i < This->dwCacheSize; i++) {
-		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) {
-			if (IsEqualGUID (&pDesc->guidObject, &This->pCache[i].guidObject)) {
-				TRACE(": object already exist in cache (found by GUID)\n");
-				if (This->pCache[i].pObject) {
-					return IDirectMusicObject_QueryInterface (This->pCache[i].pObject, riid, ppv);
+
+	TRACE("looking up cache...\n");
+
+	LIST_FOR_EACH (listEntry, &This->CacheList) {
+		cacheEntry = LIST_ENTRY( listEntry, DMUS_PRIVATE_CACHE_ENTRY, entry );
+		
+		if ((pDesc->dwValidData & DMUS_OBJ_OBJECT) || (pDesc->dwValidData & DMUS_OBJ_FILENAME)) {
+			if (pDesc->dwValidData & DMUS_OBJ_OBJECT) {
+				if (IsEqualGUID (&cacheEntry->guidObject, &pDesc->guidObject)) {
+					TRACE(": found it by GUID\n");
+					if (cacheEntry->pObject)
+						return IDirectMusicObject_QueryInterface ((LPDIRECTMUSICOBJECT)cacheEntry->pObject, riid, ppv);
 				}
 			}
-		} else if (pDesc->dwValidData & DMUS_OBJ_FILENAME) {
-			if (This->pCache[i].pwzFileName && !strncmpW(pDesc->wszFileName, This->pCache[i].pwzFileName, MAX_PATH)) {
-				TRACE(": object already exist in cache (found by file name)\n");
-				if (This->pCache[i].pObject) {
-					return IDirectMusicObject_QueryInterface (This->pCache[i].pObject, riid, ppv);
+			if (pDesc->dwValidData & DMUS_OBJ_FILENAME) {
+				if (cacheEntry->wzFileName && !strncmpW (pDesc->wszFileName, cacheEntry->wzFileName, MAX_PATH)) {
+					TRACE(": found it by FileName\n");
+					if (cacheEntry->pObject)
+						return IDirectMusicObject_QueryInterface ((LPDIRECTMUSICOBJECT)cacheEntry->pObject, riid, ppv);
 				}
 			}
 		}
 	}
-
+	
 	/* object doesn't exist in cache... guess we'll have to load it */
 	TRACE(": object does not exist in cache\n");
 	result = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
@@ -106,16 +111,16 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 		/* load object from file */
 		WCHAR wzFileName[MAX_PATH];
 		ILoaderStream* pStream;
-        IPersistStream *pPersistStream = NULL;  
+                IPersistStream *pPersistStream = NULL;
 		/* if it's full path, don't add search directory path, otherwise do */
 		if (pDesc->dwValidData & DMUS_OBJ_FULLPATH) {
-                    lstrcpyW( wzFileName, pDesc->wszFileName );
+			lstrcpyW( wzFileName, pDesc->wszFileName );
 		} else {
-                    WCHAR *p;
-                    lstrcpyW( wzFileName, This->wzSearchPath );
-                    p = wzFileName + lstrlenW(wzFileName);
-                    if (p > wzFileName && p[-1] != '\\') *p++ = '\\';
-                    lstrcpyW( p, pDesc->wszFileName );
+			WCHAR *p;
+			lstrcpyW( wzFileName, This->wzSearchPath );
+			p = wzFileName + lstrlenW(wzFileName);
+			if (p > wzFileName && p[-1] != '\\') *p++ = '\\';
+			strcpyW( p, pDesc->wszFileName );
 		}
 		TRACE(": loading from file (%s)\n", debugstr_w(wzFileName));
          
@@ -126,13 +131,13 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 		if (FAILED(result)) return result;
 			
 		result = IDirectMusicObject_QueryInterface (pObject, &IID_IPersistStream, (LPVOID*)&pPersistStream);
-        if (FAILED(result)) return result;
+                if (FAILED(result)) return result;
 			
 		result = IPersistStream_Load (pPersistStream, (LPSTREAM)pStream);
-        if (FAILED(result)) return result;
+                if (FAILED(result)) return result;
 			
-        ILoaderStream_IStream_Release ((LPSTREAM)pStream);
-        IPersistStream_Release (pPersistStream);
+                ILoaderStream_IStream_Release ((LPSTREAM)pStream);
+                IPersistStream_Release (pPersistStream);
 	} else if (pDesc->dwValidData & DMUS_OBJ_STREAM) {
 		/* load object from stream */
 		IStream* pClonedStream = NULL;
@@ -140,22 +145,13 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 
 		TRACE(": loading from stream\n");
 		result = IDirectMusicObject_QueryInterface (pObject, &IID_IPersistStream, (LPVOID*)&pPersistStream);
-        if (FAILED(result)) {
-			TRACE("couln\'t get IPersistStream\n");
-			return result;
-		}
+                if (FAILED(result)) return result;
 			
-        result = IStream_Clone (pDesc->pStream, &pClonedStream);
-        if (FAILED(result)) {
-			TRACE("failed to clone\n");
-			return result;
-		}
+                result = IStream_Clone (pDesc->pStream, &pClonedStream);
+                if (FAILED(result)) return result;
 
-        result = IPersistStream_Load (pPersistStream, pClonedStream);
-        if (FAILED(result)) {
-			TRACE("failed to load\n");
-			return result;
-		}
+                result = IPersistStream_Load (pPersistStream, pClonedStream);
+                if (FAILED(result))	return result;
 
 		IPersistStream_Release (pPersistStream);
 		IStream_Release (pClonedStream);
@@ -163,11 +159,26 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 		/* load object by GUID */
 		TRACE(": loading by GUID (only default DLS supported)\n");
 		if (IsEqualGUID (&pDesc->guidObject, &GUID_DefaultGMCollection)) {
-			/* great idea: let's just change dwValid and wszFileName fields and then call ourselves again :D */
-			pDesc->dwValidData = DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH;
-			if (FAILED(DMUSIC_GetDefaultGMPath (pDesc->wszFileName)))
+			WCHAR wzFileName[MAX_PATH];
+                        IPersistStream *pPersistStream = NULL;
+			ILoaderStream* pStream;
+			if (FAILED(DMUSIC_GetDefaultGMPath (wzFileName)))
 				return E_FAIL;
-			return IDirectMusicLoader8Impl_GetObject (iface, pDesc, riid, ppv);
+			/* load object from file */
+			result = DMUSIC_CreateLoaderStream ((LPSTREAM*)&pStream);
+			if (FAILED(result)) return result;
+
+			result = ILoaderStream_Attach (pStream, wzFileName, (LPDIRECTMUSICLOADER)iface);
+			if (FAILED(result)) return result;
+
+			result = IDirectMusicObject_QueryInterface (pObject, &IID_IPersistStream, (LPVOID*)&pPersistStream);
+                        if (FAILED(result)) return result;
+
+			result = IPersistStream_Load (pPersistStream, (LPSTREAM)pStream);
+                        if (FAILED(result)) return result;
+
+                        ILoaderStream_IStream_Release ((LPSTREAM)pStream);
+			IPersistStream_Release (pPersistStream);
 		} else {
 			return E_FAIL;
 		}
@@ -176,32 +187,27 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 		FIXME(": unknown/unsupported way of loading\n");
 		return E_FAIL;
 	}
-
-	memset((LPVOID)&desc, 0, sizeof(desc));
-	desc.dwSize = sizeof (DMUS_OBJECTDESC); 
-	IDirectMusicObject_GetDescriptor (pObject, &desc);
+	/* add object to cache */
+	newEntry = (LPDMUS_PRIVATE_CACHE_ENTRY) HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_CACHE_ENTRY));
+	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
+		memcpy (&newEntry->guidObject, &pDesc->guidObject, sizeof (pDesc->guidObject));
+	if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
+		strncpyW (newEntry->wzFileName, pDesc->wszFileName, MAX_PATH);
+	if (pObject)
+		newEntry->pObject = pObject;
+	list_add_tail (&This->CacheList, &newEntry->entry);
+	TRACE(": filled in cache entry\n");
 	
-	/* tests with native dlls show that descriptor, which is received by GetDescriptor doesn't contain filepath
-	   therefore we must copy it from input description	*/	
-	if (pDesc->dwValidData & DMUS_OBJ_FILENAME || desc.dwValidData & DMUS_OBJ_OBJECT) {
-		DMUS_PRIVATE_CACHE_ENTRY CacheEntry;
-		This->dwCacheSize++; /* increase size of cache for one entry */
-		This->pCache = HeapReAlloc (GetProcessHeap (), 0, This->pCache, sizeof(DMUS_PRIVATE_CACHE_ENTRY) * This->dwCacheSize);
-		if (desc.dwValidData & DMUS_OBJ_OBJECT)
-			CacheEntry.guidObject = desc.guidObject;
-		if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-			strncpyW (CacheEntry.pwzFileName, pDesc->wszFileName, MAX_PATH);
-		CacheEntry.pObject = pObject;
-		IDirectMusicObject_AddRef (pObject); /* MSDN says that we should */
-		This->pCache[This->dwCacheSize - 1] = CacheEntry; /* fill in one backward, as list is zero based */
-		TRACE(": filled in cache entry\n");
+	/* for debug purposes (e.g. to check if all files are cached) */
+#if 0
+	int i = 0;
+	LIST_FOR_EACH (listEntry, &This->CacheList) {
+		i++;
+		cacheEntry = LIST_ENTRY( listEntry, DMUS_PRIVATE_CACHE_ENTRY, entry );
+		TRACE("Entry nr. %i: GUID = %s, FileName = %s\n", i, debugstr_guid (&cacheEntry->guidObject), debugstr_w (cacheEntry->wzFileName));
 	}
+#endif
 	
-	TRACE(": nr. of entries = %ld\n", This->dwCacheSize);	
-	for (i = 0; i < This->dwCacheSize; i++) {
-		TRACE(": cache entry [%i]: GUID = %s, file name = %s, object = %p\n", i, debugstr_guid(&This->pCache[i].guidObject), debugstr_w(This->pCache[i].pwzFileName), This->pCache[i].pObject);
-	}
-
 	return IDirectMusicObject_QueryInterface (pObject, riid, ppv);
 }
 
@@ -352,6 +358,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoader (LPCGUID lpcGUID, LPDIRECTMUSICLOA
 		}
 		dmloader->lpVtbl = &DirectMusicLoader8_Vtbl;
 		dmloader->ref = 1;
+		list_init (&dmloader->CacheList);
 		*ppDMLoad = (LPDIRECTMUSICLOADER8)dmloader;
 		return S_OK;
 	}

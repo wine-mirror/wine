@@ -46,7 +46,6 @@ HRESULT WINAPI ILoaderStream_Attach (ILoaderStream* This, LPCWSTR wzFile, IDirec
     }
 	/* create IDirectMusicGetLoader */
     (LPDIRECTMUSICLOADER)This->pLoader = pLoader;
-    IDirectMusicLoader8_AddRef ((LPDIRECTMUSICLOADER8)This->pLoader);
     strncpyW (This->wzFileName, wzFile, MAX_PATH);
 	TRACE(": succeeded\n");
 	
@@ -165,41 +164,49 @@ HRESULT WINAPI ILoaderStream_IStream_Clone (LPSTREAM iface, IStream** ppstm)
 /* not needed*/
 HRESULT WINAPI ILoaderStream_IStream_Write (LPSTREAM iface, const void* pv, ULONG cb, ULONG* pcbWritten)
 {
+	ERR(": should not be needed\n");
 	return E_NOTIMPL;
 }
 
 HRESULT WINAPI ILoaderStream_IStream_SetSize (LPSTREAM iface, ULARGE_INTEGER libNewSize)
 {
+	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI ILoaderStream_IStream_CopyTo (LPSTREAM iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten)
 {
+	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI ILoaderStream_IStream_Commit (LPSTREAM iface, DWORD grfCommitFlags)
 {
+	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI ILoaderStream_IStream_Revert (LPSTREAM iface)
 {
+	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI ILoaderStream_IStream_LockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
+	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI ILoaderStream_IStream_UnlockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
+	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI ILoaderStream_IStream_Stat (LPSTREAM iface, STATSTG* pstatstg, DWORD grfStatFlag)
 {
+	ERR(": should not be needed\n");
     return E_NOTIMPL;
 }
 
@@ -249,7 +256,8 @@ HRESULT WINAPI ILoaderStream_IDirectMusicGetLoader_GetLoader (LPDIRECTMUSICGETLO
 
 	TRACE("(%p, %p)\n", This, ppLoader);
 	*ppLoader = (LPDIRECTMUSICLOADER)This->pLoader;
-
+	IDirectMusicLoader8_AddRef ((LPDIRECTMUSICLOADER8)*ppLoader);
+	
 	return S_OK;
 }
 

@@ -33,23 +33,19 @@
 #include "dmplugin.h"
 #include "dmusicf.h"
 #include "dsound.h"
+#include "wine/list.h"
 
 
-typedef struct _DMUS_PRIVATE_CACHE_ENTRY
-{
+/*****************************************************************************
+ * Auxiliary definitions
+ */
+typedef struct _DMUS_PRIVATE_CACHE_ENTRY {
+	struct list entry; /* for listing elements */
 	GUID guidObject;
-	WCHAR pwzFileName[MAX_PATH];
+	WCHAR wzFileName[MAX_PATH];
     IDirectMusicObject* pObject;
 } DMUS_PRIVATE_CACHE_ENTRY, *LPDMUS_PRIVATE_CACHE_ENTRY;
 
-typedef struct _DMUS_PRIVATE_OBJECT_REFERENCE DMUS_PRIVATE_OBJECT_REFERENCE;
-
-struct _DMUS_PRIVATE_OBJECT_REFERENCE {
-    DMUS_PRIVATE_OBJECT_REFERENCE* pNext;
-	WCHAR pwsFileName[MAX_PATH];
-    GUID guidObject;
-    IDirectMusicObject* pObject;
-};
 
 /*****************************************************************************
  * Interfaces
@@ -103,9 +99,8 @@ struct IDirectMusicLoader8Impl
   /* IDirectMusicLoaderImpl fields */
   WCHAR wzSearchPath[MAX_PATH];
 	
-  /* simple cache */
-  LPDMUS_PRIVATE_CACHE_ENTRY pCache; /* cache entries */
-  DWORD dwCacheSize; /* nr. of entries */
+  /* simple cache (linked list) */
+  struct list CacheList;
 };
 
 /* IUnknown: */
