@@ -661,7 +661,7 @@ static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
 	    while (ppWnd != heapPtr)
 	    {
                 ppWnd--;
-		TRACE(mdi, "move %04x to (%d,%d) size [%d,%d]\n", 
+		TRACE(mdi, "move %04x to (%ld,%ld) size [%ld,%ld]\n", 
                             (*ppWnd)->hwndSelf, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
 
 		MDI_CalcDefaultChildPos(clientWnd, n++, pos, delta);
@@ -1392,6 +1392,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 	    TRACE(mdi,"maximizing child %04x\n", hwnd );
 
 	    ci->hwndChildMaximized = hwnd; /* !!! */
+	    ci->hwndActiveChild = hwnd;
 
 	    MDI_AugmentFrameMenu( ci, clientWnd->parent, hwnd);
 	    MDI_UpdateFrameText( clientWnd->parent, ci->self,
