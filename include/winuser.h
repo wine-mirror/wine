@@ -1263,15 +1263,6 @@ typedef struct {
 #define	CDS_SETRECT		0x20000000
 #define	CDS_NORESET		0x10000000
 
-/* flags to FormatMessage */
-#define	FORMAT_MESSAGE_ALLOCATE_BUFFER	0x00000100
-#define	FORMAT_MESSAGE_IGNORE_INSERTS	0x00000200
-#define	FORMAT_MESSAGE_FROM_STRING	0x00000400
-#define	FORMAT_MESSAGE_FROM_HMODULE	0x00000800
-#define	FORMAT_MESSAGE_FROM_SYSTEM	0x00001000
-#define	FORMAT_MESSAGE_ARGUMENT_ARRAY	0x00002000
-#define	FORMAT_MESSAGE_MAX_WIDTH_MASK	0x000000FF
-
 typedef struct
 {
     UINT      cbSize;
@@ -3723,15 +3714,9 @@ HWND      WINAPI WindowFromPoint(POINT);
 BOOL      WINAPI WinHelpA(HWND,LPCSTR,UINT,DWORD);
 BOOL      WINAPI WinHelpW(HWND,LPCWSTR,UINT,DWORD);
 #define     WinHelp WINELIB_NAME_AW(WinHelp)
-INT       WINAPIV wsnprintfA(LPSTR,UINT,LPCSTR,...);
-INT       WINAPIV wsnprintfW(LPWSTR,UINT,LPCWSTR,...);
-#define     wsnprintf WINELIB_NAME_AW(wsnprintf)
 INT       WINAPIV wsprintfA(LPSTR,LPCSTR,...);
 INT       WINAPIV wsprintfW(LPWSTR,LPCWSTR,...);
 #define     wsprintf WINELIB_NAME_AW(wsprintf)
-INT       WINAPI wvsnprintfA(LPSTR,UINT,LPCSTR,va_list);
-INT       WINAPI wvsnprintfW(LPWSTR,UINT,LPCWSTR,va_list);
-#define     wvsnprintf WINELIB_NAME_AW(wvsnprintf)
 INT       WINAPI wvsprintfA(LPSTR,LPCSTR,va_list);
 INT       WINAPI wvsprintfW(LPWSTR,LPCWSTR,va_list);
 #define     wvsprintf WINELIB_NAME_AW(wvsprintf)
@@ -3742,11 +3727,14 @@ WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 
 /* Extra functions that don't exist in the Windows API */
 
-HPEN      WINAPI GetSysColorPen(INT);
-INT       WINAPI LoadMessageA(HMODULE,UINT,WORD,LPSTR,INT);
-INT       WINAPI LoadMessageW(HMODULE,UINT,WORD,LPWSTR,INT);
-
+HPEN        WINAPI GetSysColorPen(INT);
 VOID        WINAPI ScreenSwitchEnable16(WORD);
+INT         WINAPIV wsnprintfA(LPSTR,UINT,LPCSTR,...);
+INT         WINAPIV wsnprintfW(LPWSTR,UINT,LPCWSTR,...);
+#define     wsnprintf WINELIB_NAME_AW(wsnprintf)
+INT         WINAPI wvsnprintfA(LPSTR,UINT,LPCSTR,va_list);
+INT         WINAPI wvsnprintfW(LPWSTR,UINT,LPCWSTR,va_list);
+#define     wvsnprintf WINELIB_NAME_AW(wvsnprintf)
 
 #define WC_DIALOG    (LPSTR)((DWORD)((WORD)( 0x8002)))
 
