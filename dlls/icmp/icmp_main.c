@@ -51,10 +51,6 @@
 #include "wine/icmpapi.h"
 #include "debugtools.h"
 
-#undef BIG_ENDIAN
-#undef LITTLE_ENDIAN
-#undef BYTE_ORDER
-
 /* Set up endiannes macros for the ip and ip_icmp BSD headers */
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN       4321
