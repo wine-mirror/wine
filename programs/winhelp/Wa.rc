@@ -1,0 +1,49 @@
+/*
+ * Help Viewer
+ *
+ * Si vos voloz aider avou li ratoûrnaedje des libes programes è walon,
+ * vos poloz scrîre a l' adresse emile <linux-wa@chanae.alphanet.ch>
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  Wa
+#define LANGUAGE_NUMBER              0x90
+
+/* Menu */
+
+#define MENU_FILE                    "&Fitchî"
+#define MENU_FILE_OPEN               "&Drovî..."
+#define MENU_FILE_PRINT              "&Rexhe"
+#define MENU_FILE_PRINTER_SETUP      "&Apontiaedje del scrirece..."
+#define MENU_FILE_EXIT               "Moussî &Foû"
+
+#define MENU_EDIT                    "&Candjî"
+#define MENU_EDIT_COPY_DIALOG        "&Copyî..."
+#define MENU_EDIT_ANNOTATE           "&Sicrîre..."
+
+#define MENU_BOOKMARK                "&Rimårkes"
+#define MENU_BOOKMARK_DEFINE         "&Defini..."
+
+#define MENU_HELP                    "&Aide"
+#define MENU_HELP_ON_HELP            "&Aide so l' Aide"
+#define MENU_HELP_ON_TOP             "Todi &Visibe"
+#define MENU_HELP_INFO               "&Informåcion..."
+#define MENU_HELP_ABOUT_WINE         "Å &dfait di WINE"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "Aidance di WINE"
+#define STRING_ERROR                 "AROKE"
+#define STRING_WARNING               "ADVERTIXHMINT"
+#define STRING_INFO                  "Informåcion"
+#define STRING_NOT_IMPLEMENTED       "Nén co possibe"
+#define STRING_HLPFILE_ERROR_s       "Yåk n' a nén stî å moumint di lere li fitchî d' aide `%s'"
+#define STRING_CONTENTS              "Å&dvins"
+#define STRING_SEARCH                "C&werî"
+#define STRING_BACK                  "Èn &Erî"
+#define STRING_HISTORY               "&Istwere"
+#define STRING_ALL_FILES             "Tos les fitchîs (*.*)"
+#define STRING_HELP_FILES_HLP        "Fitchîs d' aide (*.hlp)"
+
+#include "Xx.rc"

@@ -1,12 +1,11 @@
 LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 
 /* 
- * Si vos voloz aider avou li retoûrnaedje des libes programes è walon,
- * vos poloz sicrire a l' adresse emile <linux-wa@chanae.alphanet.ch>
+ * Si vos voloz aider avou li ratoûrnaedje des libes programes è walon,
+ * vos poloz scrîre a l' adresse emile <linux-wa@chanae.alphanet.ch>
  */
 
 #include <windows.h>
-
 
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
@@ -16,20 +15,20 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
  MENUITEM "Å pu gran&d", 61472
  MENUITEM "Å pu &ptit", 61488
  MENUITEM SEPARATOR
- MENUITEM "Moussî &Foû\tAlt-F4", 61536
+ MENUITEM "&Cloyu\tAlt-F4", 61536
  MENUITEM SEPARATOR
- MENUITEM "&Baguer a ...\tCtrl-Echap", 61744
+ MENUITEM "Baguer &A ...\tCtrl-Echap", 61744
  MENUITEM SEPARATOR
  MENUITEM "Å dfait di &Wine ...", 61761
  MENUITEM SEPARATOR
- MENUITEM "Sititchî ene marke dins li canål di debogådje", 61762
+ MENUITEM "Sititchî ene marke dins l' canå di disbugaedje", 61762
 }
 
 EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
 	POPUP ""
 	BEGIN
-		MENUITEM "&Renoncî", EM_UNDO
+		MENUITEM "&Disfé", EM_UNDO
 		MENUITEM SEPARATOR
 		MENUITEM "Cô&per", WM_CUT
 		MENUITEM "&Copyî", WM_COPY
@@ -48,7 +47,7 @@ BEGIN
         PUSHBUTTON "&I Va", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Rinoncî", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Rinoncî", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Ripeter", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "Ri&peter", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Passer hute", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Oyi", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Neni", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP

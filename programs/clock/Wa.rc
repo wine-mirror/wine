@@ -1,0 +1,40 @@
+/*
+ * Clock (Walloon resources)
+ *
+ * Si vos voloz aider avou li ratoûrnaedje des libes programes è walon,
+ * vos poloz scrîre a l' adresse emile <linux-wa@chanae.alphanet.ch>
+ *
+ */
+
+#define LANGUAGE_ID                  Wa
+#define LANGUAGE_NUMBER              0x90
+
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "Todi &Visibe"
+
+/* Window Menu */
+
+#define MENU_PROPERTIES              "&Propietés"
+#define MENU_ANALOG                  "&Analodjike"
+#define MENU_DIGITAL                 "&Limerike"
+#define MENU_FONT                    "&Fonte..."
+#define MENU_WITHOUT_TITLE           "Sin bår di &Tite"
+
+#define MENU_SECONDS                 "&Segondes"
+#define MENU_DATE                    "&Date"
+
+#define MENU_LANGUAGE                "&Lingaedje"
+#define LANGUAGE_MENU_ITEM           "&Walon"
+
+#define MENU_INFO                    "&Informåcion..."
+#define MENU_INFO_LICENSE            "&Licinse"
+#define MENU_INFO_NO_WARRANTY        "&NOLE WARANTEYE"
+#define MENU_INFO_ABOUT_WINE         "Å &dfait di l' ôrlodje..."
+
+/* Window Caption */
+#define STRING_CLOCK                 "Ôrlodje"
+
+
+#include "clock.rc"
