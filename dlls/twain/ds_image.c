@@ -276,7 +276,7 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 
         sane_cancel (pSource->deviceHandle);
         ReleaseDC (pSource->hwndOwner, dc);
-        *pHandle = hDIB;
+        *pHandle = (TW_UINT32)hDIB;
         twRC = TWRC_XFERDONE;
         pSource->twCC = TWCC_SUCCESS;
         pSource->currentState = 7;

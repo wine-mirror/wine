@@ -102,7 +102,7 @@ static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
 /* copied from shell32 to avoid linking to it */
 static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
 {
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=%p len=0x%lx strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
 	switch (src->uType)
 	{

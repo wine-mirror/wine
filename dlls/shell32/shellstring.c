@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-	TRACE("dest=0x%p len=0x%lx strret=%p(%s) pidl=%p\n",
+	TRACE("dest=%p len=0x%lx strret=%p(%s) pidl=%p\n",
 	    dest,len,src,
 	    (src->uType == STRRET_WSTR) ? "STRRET_WSTR" :
 	    (src->uType == STRRET_CSTR) ? "STRRET_CSTR" :
@@ -82,7 +82,7 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMID
 
 HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-	TRACE("dest=0x%p len=0x%lx strret=%p(%s) pidl=%p\n",
+	TRACE("dest=%p len=0x%lx strret=%p(%s) pidl=%p\n",
 	    dest,len,src,
 	    (src->uType == STRRET_WSTR) ? "STRRET_WSTR" :
 	    (src->uType == STRRET_CSTR) ? "STRRET_CSTR" :
