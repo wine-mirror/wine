@@ -41,6 +41,7 @@ NOTEPAD_GLOBALS Globals;
 VOID SetFileName(LPSTR szFileName)
 {
     lstrcpy(Globals.szFileName, szFileName);
+    Globals.szFileTitle[0] = 0;
     GetFileTitle(szFileName, Globals.szFileTitle, sizeof(Globals.szFileTitle));
 }
 
@@ -125,8 +126,6 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                              ES_AUTOVSCROLL | ES_MULTILINE,
                              0, 0, rc.right, rc.bottom, hWnd,
                              NULL, Globals.hInstance, NULL);
-            NOTEPAD_InitData();
-            DIALOG_FileNew();
         } else {
             ShowLastError();
             return -1;
@@ -304,6 +303,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         ShowLastError();
         ExitProcess(1);
     }
+
+    NOTEPAD_InitData();
+    DIALOG_FileNew();
 
     ShowWindow(Globals.hMainWnd, show);
     UpdateWindow(Globals.hMainWnd);
