@@ -3,8 +3,11 @@ type	win32
 init	Shell32LibMain
 rsrc	shell32
 
-import	ole32.dll
+import	user32.dll
 import	comctl32.dll
+
+# fixme: avoid this import
+import	ole32.dll
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 
@@ -39,35 +42,35 @@ import	comctl32.dll
   27 stub ILSaveToStream@8
   28 stdcall SHILCreateFromPath (long long long) SHILCreateFromPathAW
   29 stdcall PathIsRoot(ptr) PathIsRootAW
-  30 stdcall PathBuildRoot(ptr long) PathBuildRootA
+  30 stdcall PathBuildRoot(ptr long) PathBuildRootAW
   31 stdcall PathFindExtension(ptr) PathFindExtensionAW
   32 stdcall PathAddBackslash(ptr) PathAddBackslashAW
-  33 stdcall PathRemoveBlanks(str) PathRemoveBlanksAW
-  34 stdcall PathFindFilename(ptr) PathFindFilenameAW
-  35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpecA
-  36 stdcall PathAppend(str str) PathAppendA
+  33 stdcall PathRemoveBlanks(ptr) PathRemoveBlanksAW
+  34 stdcall PathFindFileName(ptr) PathFindFileNameAW
+  35 stdcall PathRemoveFileSpec(ptr) PathRemoveFileSpecAW
+  36 stdcall PathAppend(ptr ptr) PathAppendAW
   37 stdcall PathCombine(ptr ptr ptr) PathCombineAW
-  38 stub PathStripPath
+  38 stdcall PathStripPath(ptr)PathStripPathAW
   39 stdcall PathIsUNC (ptr) PathIsUNCAW
   40 stdcall PathIsRelative (ptr) PathIsRelativeAW
   41 stub Control_RunDLLA@16
   42 stub Control_RunDLLW@16
   43 stdcall PathIsExe (ptr) PathIsExeAW
   44 stub DoEnvironmentSubstA@8
-  45 stdcall PathFileExists(str) PathFileExistsA
-  46 stdcall PathMatchSpec (str str) PathMatchSpecAW
-  47 stub PathMakeUniqueName@20
+  45 stdcall PathFileExists(ptr) PathFileExistsAW
+  46 stdcall PathMatchSpec (ptr ptr) PathMatchSpecAW
+  47 stdcall PathMakeUniqueName (ptr long ptr ptr ptr)PathMakeUniqueNameAW
   48 stdcall PathSetDlgItemPath (long long ptr) PathSetDlgItemPathAW
   49 stdcall PathQualify (ptr) PathQualifyAW
-  50 stub PathStripToRoot@4
-  51 stdcall PathResolve(str long long) PathResolve
+  50 stdcall PathStripToRoot (ptr) PathStripToRootAW
+  51 stdcall PathResolve(str long long) PathResolveAW
   52 stdcall PathGetArgs(str) PathGetArgsAW
   53 stdcall DoEnvironmentSubst (long long) DoEnvironmentSubstAW
   54 stdcall DragAcceptFiles(long long) DragAcceptFiles
   55 stdcall PathQuoteSpaces (ptr) PathQuoteSpacesAW
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpacesAW
-  57 stdcall PathGetDriveNumber(str) PathGetDriveNumberAW
-  58 stdcall ParseField(str long ptr long) ParseFieldA
+  57 stdcall PathGetDriveNumber (str) PathGetDriveNumberAW
+  58 stdcall ParseField(str long ptr long) ParseFieldAW
   59 stub RestartDialog@12
   60 stdcall ExitWindowsDialog(long) ExitWindowsDialog
   61 stdcall RunFileDlg(long long long str str long) RunFileDlg
@@ -84,7 +87,7 @@ import	comctl32.dll
   72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
   73 stdcall SHShellFolderView_Message(long long long) SHShellFolderView_Message 
   74 stub SHCreateStdEnumFmtEtc
-  75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueNameA
+  75 stdcall PathYetAnotherMakeUniqueName(ptr ptr ptr ptr) PathYetAnotherMakeUniqueNameA
   76 stub DragQueryInfo
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
   78 stdcall OleStrToStrN(str long wstr long) OleStrToStrNAW
@@ -97,11 +100,11 @@ import	comctl32.dll
   85 stdcall OpenRegStream(long long long long) OpenRegStream
   86 stdcall SHRegisterDragDrop(long ptr) SHRegisterDragDrop
   87 stdcall SHRevokeDragDrop(long) SHRevokeDragDrop
-  88 stdcall SHDoDragDrop(long long long long long long) SHDoDragDrop
+  88 stdcall SHDoDragDrop(long long long long long) SHDoDragDrop
   89 stdcall SHCloneSpecialIDList(long long long) SHCloneSpecialIDList
   90 stub SHFindFiles
   91 stub SHFindComputer
-  92 stub PathGetShortPath
+  92 stdcall PathGetShortPath (ptr) PathGetShortPathAW
   93 stub Win32CreateDirectory
   94 stub Win32RemoveDirectory
   95 stdcall SHLogILFromFSIL (ptr) SHLogILFromFSIL
@@ -167,7 +170,7 @@ import	comctl32.dll
  155 stdcall ILFree (ptr) ILFree
  156 stdcall ILGlobalFree (ptr) ILGlobalFree
  157 stdcall ILCreateFromPath (ptr) ILCreateFromPathAW
- 158 stdcall PathGetExtension(str long long) PathGetExtensionAW
+ 158 stdcall PathGetExtension(str) PathGetExtensionAW
  159 stdcall PathIsDirectory(ptr)PathIsDirectoryAW
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
@@ -251,28 +254,29 @@ import	comctl32.dll
  239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW  # exported by name
  240 stub SHEmptyRecycleBinA@12   # exported by name
  241 stub SHEmptyRecycleBinW@12   # exported by name
- 242 stdcall SHFileOperation (ptr) SHFileOperationAW   # exported by name
+ @ stdcall SHFileOperation (ptr) SHFileOperationAW
+ @ stdcall SHFileOperationA (ptr) SHFileOperationA
+ @ stdcall SHFileOperationW (ptr) SHFileOperationW
  243 stdcall shell32_243(long long) shell32_243
  244 stdcall SHInitRestricted(ptr ptr) SHInitRestricted # win98+ only, by ordinal
  245 stub SHFormatDrive@16   # exported by name
  246 stub SHFreeNameMappings@4   # exported by name
  247 stdcall SHGetDataFromIDListA (ptr ptr long ptr long) SHGetDataFromIDListA
  248 stdcall SHGetDataFromIDListW (ptr ptr long ptr long) SHGetDataFromIDListW
- 249 stub PathParseIconLocation@4
- 250 stub PathRemoveExtension@4
- 251 stub PathRemoveArgs@4
- 252 stdcall SHGetDesktopFolder(ptr) SHGetDesktopFolder   # exported by name
- 253 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfoA   # exported by name
- 254 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfoA   # exported by name
- 255 stdcall SHGetFileInfoW(ptr long ptr long long) SHGetFileInfoW # exported by name
- 256 stdcall SHGetInstanceExplorer (long) SHGetInstanceExplorer
- 257 stdcall SHGetMalloc(ptr) SHGetMalloc   # exported by name
- 258 stub SHGetNewLinkInfo@20   # exported by name
- 259 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListAW   # exported by name
- 260 stub SHGetPathFromIDList@8 # exported by name
- 261 stdcall SHGetPathFromIDListA (long long) SHGetPathFromIDListA # exported by name
- 262 stdcall SHGetPathFromIDListW (long long) SHGetPathFromIDListW # exported by name
- 263 stdcall SHGetSpecialFolderLocation(long long ptr) SHGetSpecialFolderLocation   # exported by name
+ 249 stdcall PathParseIconLocation (ptr) PathParseIconLocationAW
+ 250 stdcall PathRemoveExtension (ptr) PathRemoveExtensionAW
+ 251 stdcall PathRemoveArgs (ptr) PathRemoveArgsAW
+ @ stdcall SHGetDesktopFolder(ptr) SHGetDesktopFolder
+ @ stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfoAW
+ @ stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfoA
+ @ stdcall SHGetFileInfoW(ptr long ptr long long) SHGetFileInfoW
+ @ stdcall SHGetInstanceExplorer (long) SHGetInstanceExplorer
+ @ stdcall SHGetMalloc(ptr) SHGetMalloc
+ @ stub SHGetNewLinkInfo@20
+ @ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListAW
+ @ stdcall SHGetPathFromIDListA (long long) SHGetPathFromIDListA
+ @ stdcall SHGetPathFromIDListW (long long) SHGetPathFromIDListW
+ @ stdcall SHGetSpecialFolderLocation(long long ptr) SHGetSpecialFolderLocation   # exported by name
  264 stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL   # exported by name
  265 stub SHHelpShortcuts_RunDLLA@16   # exported by name
  266 stub SHHelpShortcuts_RunDLLW@16   # exported by name
@@ -367,7 +371,7 @@ import	comctl32.dll
  647 stub ReceiveAddToRecentDocs@8
  648 stub SHWaitOp_Operate@8
 
- 650 stub PathIsSameRoot@8
+ 650 stdcall PathIsSameRoot(ptr ptr)PathIsSameRootAW
 
 # nt40/win98
  651 stdcall ReadCabinetState (long long) ReadCabinetState 
@@ -394,6 +398,4 @@ import	comctl32.dll
 
 # by-name routines relocated in win98
 
-1224 stdcall SHFileOperationA (ptr) SHFileOperationA # exported by name
-1225 stdcall SHFileOperationW (ptr) SHFileOperationW # exported by name
-1226 stdcall DllInstall (long wstr) SHELL32_DllInstall # win98:202
+@ stdcall DllInstall (long wstr) SHELL32_DllInstall
