@@ -631,7 +631,7 @@ static void test_GetTempFileNameA() {
 
     result = GetTempFileNameA("c:\\windows\\", "abc", 2, out);
     ok( result != 0, "GetTempFileNameA: error %ld\n", GetLastError() );
-    ok( strcasecmp( out, expected ) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n", out, expected );
+    ok( lstrcmpiA( out, expected ) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n", out, expected );
 }
 
 
