@@ -254,6 +254,58 @@ static void ctl2_init_segdir(
 }
 
 /****************************************************************************
+ *	ctl2_hash_guid
+ *
+ *  Generates a hash key from a GUID.
+ *
+ * RETURNS
+ *
+ *  The hash key for the GUID.
+ */
+static int ctl2_hash_guid(
+	REFGUID guid)                /* [I] The guid to find. */
+{
+    int hash;
+    int i;
+
+    hash = 0;
+    for (i = 0; i < 8; i ++) {
+	hash ^= ((short *)guid)[i];
+    }
+
+    return (hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)));
+}
+
+/****************************************************************************
+ *	ctl2_find_guid
+ *
+ *  Locates a guid in a type library.
+ *
+ * RETURNS
+ *
+ *  The offset into the GUID segment of the guid, or -1 if not found.
+ */
+static int ctl2_find_guid(
+	ICreateTypeLib2Impl *This, /* [I] The typelib to operate against. */
+	int hash_key,              /* [I] The hash key for the guid. */
+	REFGUID guid)                /* [I] The guid to find. */
+{
+    int offset;
+    MSFT_GuidEntry *guidentry;
+
+    offset = This->typelib_guidhash_segment[hash_key];
+    while (offset != -1) {
+	guidentry = (MSFT_GuidEntry *)&This->typelib_segment_data[MSFT_SEG_GUID][offset];
+
+	if (!memcmp(guidentry, guid, sizeof(GUID))) return offset;
+
+	offset = guidentry->next_hash;
+    }
+
+    return offset;
+}
+
+/****************************************************************************
  *	ctl2_find_name
  *
  *  Locates a name in a type library.
@@ -497,17 +549,12 @@ static int ctl2_alloc_guid(
 {
     int offset;
     MSFT_GuidEntry *guid_space;
-    int hash;
     int hash_key;
-    int i;
 
-    for (offset = 0; offset < This->typelib_segdir[MSFT_SEG_GUID].length;
-	 offset += sizeof(MSFT_GuidEntry)) {
-	if (!memcmp(&(This->typelib_segment_data[MSFT_SEG_GUID][offset]),
-		    guid, sizeof(GUID))) {
-	    return offset;
-	}
-    }
+    hash_key = ctl2_hash_guid(&guid->guid);
+
+    offset = ctl2_find_guid(This, hash_key, &guid->guid);
+    if (offset != -1) return offset;
 
     offset = ctl2_alloc_segment(This, MSFT_SEG_GUID, sizeof(MSFT_GuidEntry), 0);
     if (offset == -1) return -1;
@@ -515,16 +562,8 @@ static int ctl2_alloc_guid(
     guid_space = (void *)(This->typelib_segment_data[MSFT_SEG_GUID] + offset);
     *guid_space = *guid;
 
-    hash = 0;
-    for (i = 0; i < 16; i += 2) {
-	hash ^= *((short *)&This->typelib_segment_data[MSFT_SEG_GUID][offset + i]);
-    }
-
-    hash_key = (hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)));
     guid_space->next_hash = This->typelib_guidhash_segment[hash_key];
     This->typelib_guidhash_segment[hash_key] = offset;
-
-    TRACE("Updating GUID hash table (%s,0x%x).\n", debugstr_guid(&guid->guid), hash);
 
     return offset;
 }
@@ -1114,14 +1153,18 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface, REFGUI
     TRACE("(%p,%s)\n", iface, debugstr_guid(guid));
 
     guidentry.guid = *guid;
-    guidentry.hreftype = 0;
-    guidentry.next_hash = 0x18;
+    guidentry.hreftype = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
+    guidentry.next_hash = -1;
 
     offset = ctl2_alloc_guid(This->typelib, &guidentry);
     
     if (offset == -1) return E_OUTOFMEMORY;
 
     This->typeinfo->posguid = offset;
+
+    if (IsEqualIID(guid, &IID_IDispatch)) {
+	This->typelib->typelib_header.dispatchpos = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
+    }
 
     return S_OK;
 }
