@@ -408,62 +408,6 @@ INT WINAPI StrCmpNW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
   return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
-/*************************************************************************
- * COMCTL32_StrRChrHelperA
- *
- * Internal implementation of StrRChrA/StrRChrIA.
- */
-static LPSTR COMCTL32_StrRChrHelperA(LPCSTR lpszStr,
-                                     LPCSTR lpszEnd, WORD ch,
-                                     BOOL (WINAPI *pChrCmpFn)(WORD,WORD))
-{
-  LPCSTR lpszRet = NULL;
-
-  if (lpszStr)
-  {
-    WORD ch2;
-
-    if (!lpszEnd)
-      lpszEnd = lpszStr + lstrlenA(lpszStr);
-
-    while (*lpszStr && lpszStr <= lpszEnd)
-    {
-      ch2 = IsDBCSLeadByte(*lpszStr)? *lpszStr << 8 | lpszStr[1] : *lpszStr;
-
-      if (!pChrCmpFn(ch, ch2))
-        lpszRet = lpszStr;
-      lpszStr = CharNextA(lpszStr);
-    }
-  }
-  return (LPSTR)lpszRet;
-}
-
-/*************************************************************************
- * COMCTL32_StrRChrHelperW
- *
- * Internal implementation of StrRChrW/StrRChrIW.
- */
-static LPWSTR COMCTL32_StrRChrHelperW(LPCWSTR lpszStr,
-                                      LPCWSTR lpszEnd, WCHAR ch,
-                                      BOOL (WINAPI *pChrCmpFn)(WCHAR,WCHAR))
-{
-  LPCWSTR lpszRet = NULL;
-
-  if (lpszStr)
-  {
-    if (!lpszEnd)
-      lpszEnd = lpszStr + strlenW(lpszStr);
-
-    while (*lpszStr && lpszStr <= lpszEnd)
-    {
-      if (!pChrCmpFn(ch, *lpszStr))
-        lpszRet = lpszStr;
-      lpszStr = CharNextW(lpszStr);
-    }
-  }
-  return (LPWSTR)lpszRet;
-}
-
 /**************************************************************************
  * StrRChrA [COMCTL32.351]
  *
@@ -481,9 +425,27 @@ static LPWSTR COMCTL32_StrRChrHelperW(LPCWSTR lpszStr,
  */
 LPSTR WINAPI StrRChrA(LPCSTR lpszStr, LPCSTR lpszEnd, WORD ch)
 {
+  LPCSTR lpszRet = NULL;
+
   TRACE("(%s,%s,%x)\n", debugstr_a(lpszStr), debugstr_a(lpszEnd), ch);
 
-  return COMCTL32_StrRChrHelperA(lpszStr, lpszEnd, ch, COMCTL32_ChrCmpA);
+  if (lpszStr)
+  {
+    WORD ch2;
+
+    if (!lpszEnd)
+      lpszEnd = lpszStr + lstrlenA(lpszStr);
+
+    while (*lpszStr && lpszStr <= lpszEnd)
+    {
+      ch2 = IsDBCSLeadByte(*lpszStr)? *lpszStr << 8 | lpszStr[1] : *lpszStr;
+
+      if (!COMCTL32_ChrCmpA(ch, ch2))
+        lpszRet = lpszStr;
+      lpszStr = CharNextA(lpszStr);
+    }
+  }
+  return (LPSTR)lpszRet;
 }
 
 
@@ -494,9 +456,23 @@ LPSTR WINAPI StrRChrA(LPCSTR lpszStr, LPCSTR lpszEnd, WORD ch)
  */
 LPWSTR WINAPI StrRChrW(LPCWSTR lpszStr, LPCWSTR lpszEnd, WORD ch)
 {
+  LPCWSTR lpszRet = NULL;
+
   TRACE("(%s,%s,%x)\n", debugstr_w(lpszStr), debugstr_w(lpszEnd), ch);
 
-  return COMCTL32_StrRChrHelperW(lpszStr, lpszEnd, ch, COMCTL32_ChrCmpW);
+  if (lpszStr)
+  {
+    if (!lpszEnd)
+      lpszEnd = lpszStr + strlenW(lpszStr);
+
+    while (*lpszStr && lpszStr <= lpszEnd)
+    {
+      if (!COMCTL32_ChrCmpW(ch, *lpszStr))
+        lpszRet = lpszStr;
+      lpszStr = CharNextW(lpszStr);
+    }
+  }
+  return (LPWSTR)lpszRet;
 }
 
 /**************************************************************************
