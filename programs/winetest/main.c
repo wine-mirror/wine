@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
@@ -68,23 +69,21 @@ static int running_under_wine ()
 
 static int running_on_visible_desktop ()
 {
-    BOOL visible;
-    HWND desktop;
-    HDC hdc;
-    HRGN hrgn;
-    RECT rc;
+    FARPROC pGetProcessWindowStation = GetProcAddress(GetModuleHandle("user32.dll"), "GetProcessWindowStation");
 
-    desktop = GetDesktopWindow();
-    hdc = GetDC(desktop);
-    hrgn = CreateRectRgn(0, 0, 0, 0);
-    GetRandomRgn(hdc, hrgn, SYSRGN);
+    if (pGetProcessWindowStation)
+    {
+        DWORD len;
+        HWINSTA wstation;
+        USEROBJECTFLAGS uoflags;
+        FARPROC pGetUserObjectInformationA = GetProcAddress(GetModuleHandle("user32.dll"), "GetUserObjectInformationA");
 
-    visible = GetRgnBox(hrgn, &rc) != NULLREGION;
-
-    DeleteObject(hrgn);
-    ReleaseDC(desktop, hdc);
-
-    return visible;
+        wstation = (HWINSTA)pGetProcessWindowStation();
+        assert(pGetUserObjectInformationA(wstation, UOI_FLAGS, &uoflags, sizeof(uoflags), &len));
+        return (uoflags.dwFlags & WSF_VISIBLE) != 0;
+    }
+    else
+        return IsWindowVisible(GetDesktopWindow());
 }
 
 void print_version ()
