@@ -312,7 +312,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 
 static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 {
-    RECT rc;
+    RECT rc, focus_rect;
     HPEN hOldPen;
     HBRUSH hOldBrush;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
@@ -327,43 +327,77 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     hOldPen = (HPEN)SelectObject(hDC, GetSysColorPen(COLOR_WINDOWFRAME));
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     SetBkMode(hDC, TRANSPARENT);
-    Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
-    if (TWEAK_WineLook == WIN31_LOOK)
+
+    if ( TWEAK_WineLook == WIN31_LOOK)
     {
+        Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
+
         SetPixel( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.right-1, rc.top, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.right-1, rc.bottom-1, GetSysColor(COLOR_WINDOW));
+	InflateRect( &rc, -1, -1 );
     }
-    InflateRect( &rc, -1, -1 );
-
+    
     if ((wndPtr->dwStyle & 0x000f) == BS_DEFPUSHBUTTON)
     {
         Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
-        InflateRect( &rc, -1, -1 );
+	InflateRect( &rc, -1, -1 );
     }
 
-    if (infoPtr->state & BUTTON_HIGHLIGHTED)
+    if (TWEAK_WineLook == WIN31_LOOK)
     {
-        /* draw button shadow: */
-        SelectObject(hDC, GetSysColorBrush(COLOR_BTNSHADOW));
-        PatBlt(hDC, rc.left, rc.top, 1, rc.bottom-rc.top, PATCOPY );
-        PatBlt(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
-        rc.left += 2;  /* To position the text down and right */
-        rc.top  += 2;
-    } else {
-        rc.right++, rc.bottom++;
-	DrawEdge( hDC, &rc, EDGE_RAISED, BF_RECT );
+        if (infoPtr->state & BUTTON_HIGHLIGHTED)
+	{
+	    /* draw button shadow: */
+	    SelectObject(hDC, GetSysColorBrush(COLOR_BTNSHADOW));
+	    PatBlt(hDC, rc.left, rc.top, 1, rc.bottom-rc.top, PATCOPY );
+	    PatBlt(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
+	    rc.left += 2;  /* To position the text down and right */
+	    rc.top  += 2;
+	} else {
+	   rc.right++, rc.bottom++;
+	   DrawEdge( hDC, &rc, EDGE_RAISED, BF_RECT );
 
-	/* To place de bitmap correctly */
-	xBorderOffset += GetSystemMetrics(SM_CXEDGE);
-	yBorderOffset += GetSystemMetrics(SM_CYEDGE);
+	   /* To place de bitmap correctly */
+	   xBorderOffset += GetSystemMetrics(SM_CXEDGE);
+	   yBorderOffset += GetSystemMetrics(SM_CYEDGE);
 
-        rc.right--, rc.bottom--;
+	   rc.right--, rc.bottom--;
+	}
     }
-	
-    /* draw button label, if any: */
-    if (wndPtr->text && wndPtr->text[0])
+    else
+    {
+        UINT uState = DFCS_BUTTONPUSH;
+
+        if (infoPtr->state & BUTTON_HIGHLIGHTED)
+	{
+	    if ( (wndPtr->dwStyle & 0x000f) == BS_DEFPUSHBUTTON )
+	        uState |= DFCS_FLAT;
+	    else
+	        uState |= DFCS_PUSHED;
+	}
+
+	DrawFrameControl( hDC, &rc, DFC_BUTTON, uState );
+	InflateRect( &rc, -2, -2 );
+
+	focus_rect = rc;
+
+        if (infoPtr->state & BUTTON_HIGHLIGHTED)
+	{
+	    rc.left += 2;  /* To position the text down and right */
+	    rc.top  += 2;
+	}
+    }
+
+    /* draw button label, if any:
+     *
+     * In win9x we don't show text if there is a bitmap or icon.
+     * I don't know about win31 so I leave it as it was for win31.
+     * Dennis Björklund 12 Jul, 99
+     */
+    if ( wndPtr->text && wndPtr->text[0]
+	 && (TWEAK_WineLook == WIN31_LOOK || !(wndPtr->dwStyle & (BS_ICON|BS_BITMAP))) )
     {
         LOGBRUSH lb;
         GetObjectA( GetSysColorBrush(COLOR_BTNFACE), sizeof(lb), &lb );
@@ -379,8 +413,11 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
                                  GetSysColor(COLOR_BTNTEXT) );
             DrawTextA( hDC, wndPtr->text, -1, &rc,
                          DT_SINGLELINE | DT_CENTER | DT_VCENTER );
-            /* do we have the focus? */
-            if (infoPtr->state & BUTTON_HASFOCUS)
+            /* do we have the focus?
+	     * Win9x draws focus last with a size prop. to the button
+	     */
+            if (TWEAK_WineLook == WIN31_LOOK
+		&& infoPtr->state & BUTTON_HASFOCUS)
             {
                 RECT r = { 0, 0, 0, 0 };
                 INT xdelta, ydelta;
@@ -437,6 +474,14 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 	DeleteDC (hdcMem);
     }
+
+    if (TWEAK_WineLook != WIN31_LOOK
+	&& infoPtr->state & BUTTON_HASFOCUS)
+    {
+        InflateRect( &focus_rect, -1, -1 );
+        DrawFocusRect( hDC, &focus_rect );
+    }
+
     
     SelectObject( hDC, hOldPen );
     SelectObject( hDC, hOldBrush );
@@ -711,6 +756,10 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     dis.hDC        = hDC;
     dis.itemData   = 0;
     GetClientRect( wndPtr->hwndSelf, &dis.rcItem );
+
+    SetBkColor( hDC, GetSysColor( COLOR_BTNFACE ) );
+    FillRect( hDC,  &dis.rcItem, GetSysColorBrush( COLOR_BTNFACE ) );
+
     SendMessageA( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
                     wndPtr->wIDmenu, (LPARAM)&dis );
 }
