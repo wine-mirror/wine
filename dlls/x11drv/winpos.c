@@ -1482,6 +1482,7 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
     }
     else  /* SC_SIZE */
     {
+        pt.x = pt.y = 0;
         while(!hittest)
         {
             GetMessageW( &msg, 0, WM_KEYFIRST, WM_MOUSELAST );

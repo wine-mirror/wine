@@ -82,7 +82,7 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     wine_tsx11_lock();
     XSaveContext( display, root_window, winContext, (char *)hwnd );
     XChangeProperty ( display, root_window, x11drv_atom(WM_PROTOCOLS),
-                      XA_ATOM, 32, PropModeReplace, (char *)&atom, 1 );
+                      XA_ATOM, 32, PropModeReplace, (unsigned char *)&atom, 1 );
     XMapWindow( display, root_window );
     wine_tsx11_unlock();
 

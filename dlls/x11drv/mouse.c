@@ -513,7 +513,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
                 bg.blue  = bbg * bscale / bgBits;
             }
             else bg.red = bg.green = bg.blue = 0;
-            pixmapBits = XCreateBitmapFromData( display, root_window, pXorBits, xmax, ymax );
+            pixmapBits = XCreateBitmapFromData( display, root_window, (char *)pXorBits, xmax, ymax );
             if (!pixmapBits)
             {
                 XFreePixmap( display, pixmapAll );

@@ -410,7 +410,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     protocols[i++] = x11drv_atom(_NET_WM_PING);
     if (use_take_focus) protocols[i++] = x11drv_atom(WM_TAKE_FOCUS);
     XChangeProperty( display, data->whole_window, x11drv_atom(WM_PROTOCOLS),
-                     XA_ATOM, 32, PropModeReplace, (char *)protocols, i );
+                     XA_ATOM, 32, PropModeReplace, (unsigned char *)protocols, i );
 
     /* class hints */
     if ((class_hints = XAllocClassHint()))
@@ -429,9 +429,9 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     {
         int val = 1;
         XChangeProperty( display, data->whole_window, x11drv_atom(KWM_DOCKWINDOW),
-                         x11drv_atom(KWM_DOCKWINDOW), 32, PropModeReplace, (char*)&val, 1 );
+                         x11drv_atom(KWM_DOCKWINDOW), 32, PropModeReplace, (unsigned char*)&val, 1 );
         XChangeProperty( display, data->whole_window, x11drv_atom(_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR),
-                         XA_WINDOW, 32, PropModeReplace, (char*)&data->whole_window, 1 );
+                         XA_WINDOW, 32, PropModeReplace, (unsigned char*)&data->whole_window, 1 );
     }
 
     /* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties */
@@ -439,14 +439,14 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     /* set the pid. together, these properties are needed so the window manager can kill us if we freeze */
     i = getpid();
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_PID),
-                    XA_CARDINAL, 32, PropModeReplace, (char *)&i, 1);
+                    XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&i, 1);
 
    /* map WS_EX_TOOLWINDOW to _NET_WM_WINDOW_TYPE_UTILITY */
    if (ex_style & WS_EX_TOOLWINDOW)
    {
       Atom a = x11drv_atom(_NET_WM_WINDOW_TYPE_UTILITY);
       XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
-                      XA_ATOM, 32, PropModeReplace, (char*)&a, 1);
+                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&a, 1);
    }
 
     mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
@@ -473,7 +473,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 
     XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
-                     (char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
+                     (unsigned char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
 
     XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
