@@ -185,6 +185,65 @@ typedef struct _BandTrack
 	
 } BandTrack;
 
+typedef struct _Part
+{
+	DMUS_IO_STYLEPART header;
+	UNFO_List UNFO;
+	DWORD nrofnotes;
+	DMUS_IO_STYLENOTE* notes;
+	DWORD nrofcurves;
+	DMUS_IO_STYLECURVE* curves;
+	DWORD nrofmarkers;
+	DMUS_IO_STYLEMARKER* markers;
+	DWORD nrofresolutions;
+	DMUS_IO_STYLERESOLUTION* resolutions;
+	DWORD nrofanticipations;
+	DMUS_IO_STYLE_ANTICIPATION* anticipations;
+} Part;
+
+typedef struct _Pattern
+{
+	DMUS_IO_PATTERN header;
+	DWORD nrofrhytms;
+	DWORD* rhytms;
+	UNFO_List UNFO;
+	DMUS_IO_MOTIFSETTINGS motsettings;
+	/* IDirectMusicBandImpl band */
+	DWORD nrofpartrefs;
+	/* FIXME: only in singular form for now */
+	UNFO_List partrefUNFO;
+	DMUS_IO_PARTREF partref;
+} Pattern;
+
+typedef struct _WaveTrack
+{
+	DMUS_IO_WAVE_TRACK_HEADER header;
+	/* FIXME: only in singular form now */
+	DMUS_IO_WAVE_PART_HEADER partHeader;
+	DMUS_IO_WAVE_ITEM_HEADER itemHeader;
+	Reference reference;
+} WaveTrack;
+
+typedef struct _SegTriggerTrack
+{
+	DMUS_IO_SEGMENT_TRACK_HEADER header;
+	/* FIXME: only in singular form now */
+	DMUS_IO_SEGMENT_ITEM_HEADER itemHeader;
+	Reference reference;
+	WCHAR* motifName;
+} SegTriggerTrack;
+
+typedef struct _TimeSigTrack {
+	DWORD nrofitems;
+	DMUS_IO_TIMESIGNATURE_ITEM* items;
+} TimeSigTrack;
+
+typedef struct _ScriptEvent {
+	DMUS_IO_SCRIPTTRACK_EVENTHEADER header;
+	Reference reference;
+	WCHAR* name;
+} ScriptEvent;
+
 /*****************************************************************************
  * ClassFactory
  *
@@ -1099,10 +1158,13 @@ extern HRESULT WINAPI IDirectMusicSongImpl_EnumSegment (LPDIRECTMUSICSONG iface,
  */
 void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVOID lpContext);
 /* Loader Helper Functions */
-HRESULT WINAPI DMUSIC_FillSegmentFromFileHandle (IDirectMusicSegment8Impl *segment, HANDLE fd);
-HRESULT WINAPI DMUSIC_FillTrackFromFileHandle (IDirectMusicTrack8Impl *segment, HANDLE fd);
-HRESULT WINAPI DMUSIC_FillReferenceFromFileHandle (Reference reference, HANDLE fd);
-HRESULT WINAPI DMUSIC_FillUNFOFromFileHandle (UNFO_List UNFO, HANDLE fd);
 HRESULT WINAPI DMUSIC_FillBandFromFileHandle (IDirectMusicBandImpl *band, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillContainerFromFileHandle (IDirectMusicContainerImpl *container, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillReferenceFromFileHandle (Reference reference, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillScriptFromFileHandle (IDirectMusicScriptImpl *script, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillSegmentFromFileHandle (IDirectMusicSegment8Impl *segment, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillStyleFromFileHandle (IDirectMusicStyle8Impl *style, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillTrackFromFileHandle (IDirectMusicTrack8Impl *segment, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillUNFOFromFileHandle (UNFO_List UNFO, HANDLE fd);
 
 #endif	/* __WINE_DMUSIC_PRIVATE_H */

@@ -76,8 +76,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 ifac
 {
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 
-	FIXME("(iface = %p, dmusic = %p, dsound = %p, hwnd = %p): forward to IDirectMusicPerformanceImpl::Init\n", This, ppDirectMusic, pDirectSound, hWnd);
-
+	FIXME("(iface = %p, dmusic = %p, dsound = %p, hwnd = %p)\n", This, ppDirectMusic, pDirectSound, hWnd);
         if (This->dmusic || This->dsound)
 	  return DMUS_E_ALREADY_INITED;
 	
@@ -317,7 +316,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_RemovePort (LPDIRECTMUSICPERFORMANCE
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannelBlock (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwBlockNum, IDirectMusicPort* pPort, DWORD dwGroup)
 {
-        int i, j, range /* min value in range */;
+	int i, j, range /* min value in range */;
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 
 	FIXME("(%p, %ld, %p, %ld): semi-stub\n", This, dwBlockNum, pPort, dwGroup-1);

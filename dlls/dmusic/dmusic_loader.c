@@ -202,6 +202,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 		DMUSIC_FillBandFromFileHandle (NULL, fd);
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicContainer)) {
 		FIXME("wanted 'con'\n");
+		DMUSIC_FillContainerFromFileHandle (NULL, fd);		
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicCollection)) {
 		FIXME("wanted 'dls'\n");
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicChordMap)) {
@@ -211,6 +212,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 		DMUSIC_FillSegmentFromFileHandle (NULL, fd);
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicScript)) {
 		FIXME("wanted 'spt'\n");
+		DMUSIC_FillScriptFromFileHandle (NULL, fd);
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicSong)) {
 		FIXME("wanted 'sng'\n");
 	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicStyle)) {
@@ -240,6 +242,13 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 	  container->ref = 1;
 	  *ppObject = container;
 	  return S_OK;
+	} else if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicScript)) {
+	  IDirectMusicScriptImpl* script;
+	  script = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicScriptImpl));
+	  script->lpVtbl = &DirectMusicScript_Vtbl;
+	  script->ref = 1;
+	  *ppObject = script;
+	  return S_OK;		
 	} else {
 	  FIXME("bad iid\n");
 	}
