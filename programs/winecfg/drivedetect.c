@@ -25,7 +25,9 @@
 #include "winecfg.h"
 
 #include <stdio.h>
+#ifdef HAVE_MNTENT_H
 #include <mntent.h>
+#endif
 #include <stdlib.h>
 #include <errno.h>
 
@@ -38,6 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 BOOL gui_mode = TRUE;
 static long working_mask = 0;
 
+#ifdef HAVE_MNTENT_H
 static char *ignored_fstypes[] = {
     "devpts",
     "tmpfs",
@@ -79,6 +82,7 @@ static char allocate_letter()
 
     return letter;
 }
+#endif
 
 #define FSTAB_OPEN 1
 #define NO_MORE_LETTERS 2
@@ -182,8 +186,10 @@ static void ensure_drive_c_is_mapped()
 
 int autodetect_drives()
 {
+#ifdef HAVE_MNTENT_H
     struct mntent *ent;
     FILE *fstab;
+#endif
 
     /* we want to build a list of autodetected drives, then ensure each entry
        exists in the users setup. so, we superimpose the autodetected drives
@@ -196,6 +202,7 @@ int autodetect_drives()
 
     working_mask = drive_available_mask('\0');
 
+#ifdef HAVE_MNTENT_H
     fstab = fopen("/etc/fstab", "r");
     if (!fstab)
     {
@@ -243,6 +250,7 @@ int autodetect_drives()
     }
 
     fclose(fstab);
+#endif
 
     ensure_root_is_mapped();
 
