@@ -94,6 +94,12 @@ static const struct loadorder_list default_list =
     default_order_list
 };
 
+/* default if nothing else specified */
+static const enum loadorder_type default_loadorder[LOADORDER_NTYPES] =
+{
+    LOADORDER_DLL, LOADORDER_BI, 0, 0
+};
+
 static struct loadorder_list cmdline_list;
 
 
@@ -147,6 +153,49 @@ static char *get_tok(const char *str, const char *delim)
 		buf = NULL;
 	}
 	return cptr;
+}
+
+
+/***************************************************************************
+ *	get_basename
+ *
+ * Return the base name of a file name (i.e. remove the path components).
+ */
+static const char *get_basename( const char *name )
+{
+    const char *ptr;
+
+    if (name[0] && name[1] == ':') name += 2;  /* strip drive specification */
+    if ((ptr = strrchr( name, '\\' ))) name = ptr + 1;
+    if ((ptr = strrchr( name, '/' ))) name = ptr + 1;
+    return name;
+}
+
+
+/***************************************************************************
+ *	debugstr_loadorder
+ *
+ * Return a loadorder in printable form.
+ */
+static const char *debugstr_loadorder( enum loadorder_type lo[] )
+{
+    int i;
+    char buffer[LOADORDER_NTYPES*3+1];
+
+    buffer[0] = 0;
+    for(i = 0; i < LOADORDER_NTYPES; i++)
+    {
+        if (lo[i] == LOADORDER_INVALID) break;
+        switch(lo[i])
+        {
+        case LOADORDER_DLL: strcat( buffer, "n," ); break;
+        case LOADORDER_SO:  strcat( buffer, "s," ); break;
+        case LOADORDER_BI:  strcat( buffer, "b," ); break;
+        default:            strcat( buffer, "?," ); break;
+        }
+    }
+    if (buffer[0]) buffer[strlen(buffer)-1] = 0;
+    return debugstr_a(buffer);
 }
 
 
@@ -304,74 +353,6 @@ void MODULE_AddLoadOrderOption( const char *option )
 
 
 /***************************************************************************
- *	set_registry_keys
- *
- * Set individual registry keys for a multiple dll specification
- * Helper for MODULE_InitLoadOrder().
- */
-inline static void set_registry_keys( HKEY hkey, char *module, const char *buffer )
-{
-    static int warn;
-    char *p = get_tok( module, ", \t" );
-
-    TRACE( "converting \"%s\" = \"%s\"\n", module, buffer );
-
-    if (!warn)
-        MESSAGE( "Warning: setting multiple modules in a single DllOverrides entry is no longer\n"
-                 "recommended. It is suggested that you rewrite the configuration file entry:\n\n"
-                 "\"%s\" = \"%s\"\n\n"
-                 "into something like:\n\n", module, buffer );
-    while (p)
-    {
-        if (!warn) MESSAGE( "\"%s\" = \"%s\"\n", p, buffer );
-        /* only set it if not existing already */
-        if (RegQueryValueExA( hkey, p, 0, NULL, NULL, NULL ) == ERROR_FILE_NOT_FOUND)
-            RegSetValueExA( hkey, p, 0, REG_SZ, buffer, strlen(buffer)+1 );
-        p = get_tok( NULL, ", \t" );
-    }
-    if (!warn) MESSAGE( "\n" );
-    warn = 1;
-}
-
-
-/***************************************************************************
- *	MODULE_InitLoadOrder
- *
- * Convert entries containing multiple dll names (old syntax) to the
- * new one dll module per entry syntax
- */
-void MODULE_InitLoadOrder(void)
-{
-    char module[80];
-    char buffer[1024];
-    char *p;
-    HKEY hkey;
-    DWORD index = 0;
-
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\DllOverrides", &hkey ))
-        return;
-
-    for (;;)
-    {
-        DWORD type, count = sizeof(buffer), name_len = sizeof(module);
-
-        if (RegEnumValueA( hkey, index, module, &name_len, NULL, &type, buffer, &count )) break;
-        p = module;
-        while (isspace(*p)) p++;
-        p += strcspn( p, ", \t" );
-        while (isspace(*p)) p++;
-        if (*p)
-        {
-            RegDeleteValueA( hkey, module );
-            set_registry_keys( hkey, module, buffer );
-        }
-        else index++;
-    }
-    RegCloseKey( hkey );
-}
-
-
-/***************************************************************************
  *	get_list_load_order
  *
  * Get the load order for a given module from the command-line or
@@ -391,110 +372,49 @@ static BOOL get_list_load_order( const char *module, const struct loadorder_list
 
 
 /***************************************************************************
- *	get_app_load_order
+ *	open_app_key
  *
- * Get the load order for a given module from the app-specific DllOverrides list.
- * Also look for default '*' key if no module key found.
+ * Open the registry key to the app-specific DllOverrides list.
  */
-static BOOL get_app_load_order( const char *module, enum loadorder_type lo[], BOOL *got_default )
+static HKEY open_app_key( const char *module )
 {
     HKEY hkey, appkey;
-    DWORD count, type, res;
-    char buffer[MAX_PATH+16], *appname, *p;
+    char buffer[MAX_PATH+16], *appname;
 
     if (!GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) &&
         !GetModuleFileNameA( 0, buffer, MAX_PATH ))
     {
         WARN( "could not get module file name loading %s\n", module );
-        return FALSE;
+        return 0;
     }
-    appname = buffer;
-    if ((p = strrchr( appname, '/' ))) appname = p + 1;
-    if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+    appname = (char *)get_basename( buffer );
 
     TRACE( "searching '%s' in AppDefaults\\%s\\DllOverrides\n", module, appname );
 
     if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &hkey ))
-        return FALSE;
+        return 0;
 
     /* open AppDefaults\\appname\\DllOverrides key */
     strcat( appname, "\\DllOverrides" );
-    res = RegOpenKeyA( hkey, appname, &appkey );
+    if (RegOpenKeyA( hkey, appname, &appkey )) appkey = 0;
     RegCloseKey( hkey );
-    if (res) return FALSE;
-
-    count = sizeof(buffer);
-    if ((res = RegQueryValueExA( appkey, module, NULL, &type, buffer, &count )))
-    {
-        if (!(res = RegQueryValueExA( appkey, "*", NULL, &type, buffer, &count )))
-            *got_default = TRUE;
-    }
-    else TRACE( "got app loadorder '%s' for '%s'\n", buffer, module );
-    RegCloseKey( appkey );
-    if (res) return FALSE;
-    return ParseLoadOrder( buffer, lo );
+    return appkey;
 }
 
 
 /***************************************************************************
- *	get_standard_load_order
+ *	get_registry_value
  *
- * Get the load order for a given module from the main DllOverrides list
- * Also look for default '*' key if no module key found.
+ * Load the registry loadorder value for a given module.
  */
-static BOOL get_standard_load_order( const char *module, enum loadorder_type lo[],
-                                     BOOL *got_default )
+static BOOL get_registry_value( HKEY hkey, const char *module, enum loadorder_type lo[] )
 {
-    HKEY hkey;
-    DWORD count, type, res;
     char buffer[80];
-
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\DllOverrides", &hkey ))
-        return FALSE;
+    DWORD count, type;
 
     count = sizeof(buffer);
-    if ((res = RegQueryValueExA( hkey, module, NULL, &type, buffer, &count )))
-    {
-        if (!(res = RegQueryValueExA( hkey, "*", NULL, &type, buffer, &count )))
-            *got_default = TRUE;
-    }
-    else TRACE( "got standard loadorder '%s' for '%s'\n", buffer, module );
-    RegCloseKey( hkey );
-    if (res) return FALSE;
+    if (RegQueryValueExA( hkey, module, NULL, &type, buffer, &count )) return FALSE;
     return ParseLoadOrder( buffer, lo );
-}
-
-
-/***************************************************************************
- *	get_default_load_order
- *
- * Get the default load order if nothing specified for a given dll.
- */
-static void get_default_load_order( enum loadorder_type lo[] )
-{
-    DWORD res;
-    static enum loadorder_type default_loadorder[LOADORDER_NTYPES];
-    static int loaded;
-
-    if (!loaded)
-    {
-        char buffer[80];
-        HKEY hkey;
-
-        if (!(res = RegOpenKeyA( HKEY_LOCAL_MACHINE,
-                                 "Software\\Wine\\Wine\\Config\\DllDefaults", &hkey )))
-        {
-            DWORD type, count = sizeof(buffer);
-
-            res = RegQueryValueExA( hkey, "DefaultLoadOrder", NULL, &type, buffer, &count );
-            RegCloseKey( hkey );
-        }
-        if (res) strcpy( buffer, "n,b,s" );
-        ParseLoadOrder( buffer, default_loadorder );
-        loaded = 1;
-        TRACE( "got default loadorder '%s'\n", buffer );
-    }
-    memcpy( lo, default_loadorder, sizeof(default_loadorder) );
 }
 
 
@@ -508,76 +428,119 @@ static void get_default_load_order( enum loadorder_type lo[] )
  */
 void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOOL win32 )
 {
-	char fname[256];
-	char sysdir[MAX_PATH+1];
-	char *cptr;
-	char *name;
-	int len;
-        BOOL got_app_default = FALSE, got_std_default = FALSE;
-        enum loadorder_type lo_default[LOADORDER_NTYPES];
+    static HKEY std_key = (HKEY)-1;  /* key to standard section, cached */
+    HKEY app_key = 0;
+    char *module, *basename;
+    int len;
 
-	TRACE("looking for %s\n", path);
+    TRACE("looking for %s\n", path);
 
-        if ( ! GetSystemDirectoryA ( sysdir, MAX_PATH ) ) goto done;
+    loadorder[0] = LOADORDER_INVALID;  /* in case something bad happens below */
 
-	/* Strip path information for 16 bit modules or if the module
-	   resides in the system directory */
-	if ( !win32 || !FILE_strncasecmp ( sysdir, path, strlen (sysdir) ) )
-	{
+    /* Strip path information for 16 bit modules or if the module
+     * resides in the system directory */
+    if (!win32) path = get_basename( path );
+    else
+    {
+        char sysdir[MAX_PATH+1];
+        if (!GetSystemDirectoryA( sysdir, MAX_PATH )) return;
+        if (!FILE_strncasecmp( sysdir, path, strlen (sysdir) ))
+        {
+            path += strlen(sysdir);
+            while (*path == '\\' || *path == '/') path++;
+        }
+    }
 
-	    cptr = strrchr(path, '\\');
-	    if(!cptr)
-	        name = strrchr(path, '/');
-	    else
-	        name = strrchr(cptr, '/');
+    if (!(len = strlen(path))) return;
+    if (!(module = HeapAlloc( GetProcessHeap(), 0, len + 2 ))) return;
+    strcpy( module+1, path );  /* reserve module[0] for the wildcard char */
 
-	    if(!name)
-	        name = cptr ? cptr+1 : (char *)path;
-	    else
-	        name++;
+    if (len >= 4)
+    {
+        char *ext = module + 1 + len - 4;
+        if (!FILE_strcasecmp( ext, ".dll" )) *ext = 0;
+    }
 
-	    if((cptr = strchr(name, ':')) != NULL)	/* Also strip drive if in format 'C:MODULE.DLL' */
-	        name = cptr+1;
-	}
-	else
-	  name = (char *)path;
+    /* check command-line first */
+    if (get_list_load_order( module+1, &cmdline_list, loadorder ))
+    {
+        TRACE( "got cmdline %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
+        goto done;
+    }
 
-	len = strlen(name);
-	if(len >= sizeof(fname) || len <= 0)
-	{
-            WARN("Path '%s' -> '%s' reduces to zilch or just too large...\n", path, name);
+    /* then explicit module name in AppDefaults */
+    app_key = open_app_key( module+1 );
+    if (app_key && get_registry_value( app_key, module+1, loadorder ))
+    {
+        TRACE( "got app defaults %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
+        goto done;
+    }
+
+    /* then explicit module name in standard section */
+    if (std_key == (HKEY)-1)
+        RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\DllOverrides", &std_key );
+
+    if (std_key && get_registry_value( std_key, module+1, loadorder ))
+    {
+        TRACE( "got standard entry %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
+        goto done;
+    }
+
+    /* then module basename preceded by '*' in AppDefaults */
+    basename = (char *)get_basename( module+1 );
+    basename[-1] = '*';
+    if (app_key && get_registry_value( app_key, basename-1, loadorder ))
+    {
+        TRACE( "got app defaults basename %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
+        goto done;
+    }
+
+    /* then module name preceded by '*' in standard section */
+    if (std_key && get_registry_value( std_key, basename-1, loadorder ))
+    {
+        TRACE( "got standard base name %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
+        goto done;
+    }
+
+    /* then base name matching compiled-in defaults */
+    if (get_list_load_order( basename, &default_list, loadorder ))
+    {
+        TRACE( "got compiled-in default %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_a(path) );
+        goto done;
+    }
+
+    if (basename == module+1)
+    {
+        /* then wildcard entry in AppDefaults (only if no explicit path) */
+        if (app_key && get_registry_value( app_key, "*", loadorder ))
+        {
+            TRACE( "got app defaults wildcard %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_a(path) );
             goto done;
-	}
-
-	strcpy(fname, name);
-	if(len >= 4 && !FILE_strcasecmp(fname+len-4, ".dll")) fname[len-4] = '\0';
-
-        /* check command-line first */
-        if (get_list_load_order( fname, &cmdline_list, loadorder )) return;
-
-        /* then app-specific config */
-        if (get_app_load_order( fname, loadorder, &got_app_default ))
-        {
-            if (!got_app_default) return;
-            /* save the default value for later on */
-            memcpy( lo_default, loadorder, sizeof(lo_default) );
         }
 
-        /* then standard config */
-        if (get_standard_load_order( fname, loadorder, &got_std_default ))
+        /* then wildcard entry in standard section (only if no explicit path) */
+        if (std_key && get_registry_value( std_key, "*", loadorder ))
         {
-            if (!got_std_default) return;
-            /* save the default value for later on */
-            if (!got_app_default) memcpy( lo_default, loadorder, sizeof(lo_default) );
+            TRACE( "got standard wildcard %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_a(path) );
+            goto done;
         }
+    }
 
-        /* then compiled-in defaults */
-        if (get_list_load_order( fname, &default_list, loadorder )) return;
+    /* and last the hard-coded default */
+    memcpy( loadorder, default_loadorder, sizeof(default_loadorder) );
+    TRACE( "got hardcoded default %s for %s\n",
+           debugstr_loadorder(loadorder), debugstr_a(path) );
+
 
  done:
-        /* last, return the default */
-        if (got_app_default || got_std_default)
-            memcpy( loadorder, lo_default, sizeof(lo_default) );
-        else
-            get_default_load_order( loadorder );
+    if (app_key) RegCloseKey( app_key );
+    HeapFree( GetProcessHeap(), 0, module );
 }

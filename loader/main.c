@@ -34,7 +34,6 @@
 #include "drive.h"
 #include "file.h"
 #include "options.h"
-#include "module.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 
@@ -74,9 +73,6 @@ BOOL MAIN_MainInit(void)
 
     /* Registry initialisation */
     SHELL_LoadRegistry();
-
-    /* Initialize module loadorder */
-    if (CLIENT_IsBootThread()) MODULE_InitLoadOrder();
 
     /* Global boot finished, the rest is process-local */
     CLIENT_BootDone( TRACE_ON(server) );

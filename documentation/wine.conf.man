@@ -7,7 +7,7 @@ wine.conf \- Wine configuration file
 expects a configuration file (
 .I $WINEPREFIX/config
 (~/.wine/config)
-), which should conform to the following rules. 
+), which should conform to the following rules.
 A sample configuration file is available as
 .I documentation/samples/config
 in the Wine source distribution.
@@ -33,7 +33,7 @@ are listed below.
 .br
 This section is used to specify the root directory and type of each emulated
 .B DOS
-drive, since most Windows applications require a DOS/MS-Windows based 
+drive, since most Windows applications require a DOS/MS-Windows based
 disk drive & directory scheme, which is either provided by a real
 DOS partition mounted somewhere or by some carefully crafted directory layout
 on a Unix file system ("no-windows fake installation").
@@ -43,10 +43,10 @@ There is one such section for every drive you want to configure.
 .br
 default: none
 .br
-If you mounted your dos partition as 
+If you mounted your dos partition as
 .I /dos
-and installed Microsoft Windows in 
-C:\\WINDOWS (thus it shows up as /dos/WINDOWS), then you should specify 
+and installed Microsoft Windows in
+C:\\WINDOWS (thus it shows up as /dos/WINDOWS), then you should specify
 .I """Path""=""/dos"""
 in the
 .I [Drive C]
@@ -125,7 +125,7 @@ directory would be used for this.
 .br
 default: "C:\\\\TEMP"
 .br
-Used to specify a directory where Windows applications can store 
+Used to specify a directory where Windows applications can store
 temporary files. E.g. with a C: drive at /home/user/wine_c, this would be
 the /home/user/wine_c/TEMP directory.
 .PP
@@ -178,11 +178,12 @@ Also valid as an AppDefaults setting (recommended/preferred use).
 .I format: """modulename""=""native,so,builtin"""
 .br
 .I modulename
-can be any valid DLL module name, without extension. The specified value
-is a comma separated list of module-types to try to load in that
-specific order. Case is not important and only the first letter of
-each type is enough to identify the type n[ative], s[o],
-b[uiltin]. Also whitespace is ignored. See also commandline option
+can be any valid DLL module name. If no extension is specified .dll is
+assumed. The specified value is a comma separated list of module-types
+to try to load in that specific order. Case is not important and only
+the first letter of each type is enough to identify the type n[ative],
+s[o], b[uiltin]. Also whitespace is ignored. See also commandline
+option
 .I --dll
 for details about the allowable types.
 .br
@@ -202,9 +203,24 @@ Examples:
 .br
 .I """*""=""builtin,native"""
 .br
-Changing the load order of kernel/kernel32 and gdi/gdi32 to
-anything other than builtin will cause wine to fail because wine cannot
-use native versions for these libraries.
+When the specified module name does not contain a path, it matches
+only dlls loaded from the Windows system directory. If the application
+explicitly loads a dll from a different directory, it has to be
+configured separately. This can be done either by specifying the full
+path in the module name, or by using a path wildcard of the form
+.I """*modulename""".
+.br
+For instance, the following will load the native shell32 when loaded
+from C:\\Program Files, and the builtin when loaded from any other
+directory:
+.br
+.I """C:\\\\\\\\Program Files\\\\\\\\shell32"" = ""native"""
+.br
+.I """*shell32"" = ""builtin"""
+.br
+Changing the load order of low-level dlls like kernel32, gdi32 or
+user32 to anything other than builtin will cause wine to fail because
+wine cannot use native versions for these libraries.
 .br
 Always make sure that you have some kind of strategy in mind when you start
 fiddling with the current defaults and needless to say that you must know
@@ -245,7 +261,7 @@ default: none
 .I format: """WineLook""=""<Win31|Win95|Win98>"""
 .br
 default: "Win31"
-.br 
+.br
 Use Win95-like window displays or Win3.1-like window displays.
 .PP
 .B [Registry]
@@ -264,7 +280,7 @@ TRY to write all changes to the home registry files
 .PP
 .I format: """LoadWindowsRegistryFiles""=""<boolean>"""
 .br
-Load Windows registry from the current Windows directory. 
+Load Windows registry from the current Windows directory.
 .PP
 booleans: Y/y/T/t/1 are true, N/n/F/f/0 are false.
 .br
@@ -293,8 +309,8 @@ section.
 .br
 The only sections that support application-specific information at the
 moment are
-.I DllOverrides 
-and 
+.I DllOverrides
+and
 .I x11drv.
 .br
 Make sure to use double backslashes in the section name.
@@ -308,7 +324,7 @@ in the Wine source distribution.
 .I ~/.wine/config
 User-specific configuration file
 .SH ENVIRONMENT VARIABLES
-.TP 
+.TP
 .I WINEPREFIX
 Specifies the directory that contains the per-user
 .I config

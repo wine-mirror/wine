@@ -1425,6 +1425,10 @@ static void MODULE_FlushModrefs(void)
 			MODULE_modref_list = wm->next;
 
                 TRACE(" unloading %s\n", wm->filename);
+                if (!TRACE_ON(module))
+                    TRACE_(loaddll)("Unloaded module '%s' : %s\n", wm->filename,
+                                    wm->dlhandle ? "builtin" : "native" );
+
                 if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
                 else UnmapViewOfFile( (LPVOID)wm->module );
                 FreeLibrary16(wm->hDummyMod);
