@@ -799,7 +799,6 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
                      LPPROCESS_INFORMATION info, LPCSTR lpCurrentDirectory )
 {
     BOOL ret;
-    int pid;
     const char *unixfilename = NULL;
     const char *unixdir = NULL;
     DOS_FULL_NAME full_dir, full_name;
@@ -807,6 +806,7 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     HANDLE process_info;
 
     info->hThread = info->hProcess = 0;
+    info->dwProcessId = info->dwThreadId = 0;
 
     if (lpCurrentDirectory)
     {
@@ -865,12 +865,16 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
 
     /* fork and execute */
 
-    pid = fork_and_exec( unixfilename, cmd_line, env, unixdir );
+    if (fork_and_exec( unixfilename, cmd_line, env, unixdir ) == -1)
+    {
+        CloseHandle( process_info );
+        return FALSE;
+    }
 
     /* wait for the new process info to be ready */
 
-    ret = FALSE;
-    if ((pid != -1) && (WaitForSingleObject( process_info, 2000 ) == STATUS_WAIT_0))
+    ret = TRUE;  /* pretend success even if we don't get the new process info */
+    if (WaitForSingleObject( process_info, 2000 ) == STATUS_WAIT_0)
     {
         SERVER_START_REQ( get_new_process_info )
         {
@@ -889,7 +893,7 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
         SERVER_END_REQ;
     }
     CloseHandle( process_info );
-    if (!ret) goto error;
+    if (!ret) return FALSE;
 
     /* Wait until process is initialized (or initialization failed) */
     if (load_done_evt)
@@ -911,12 +915,6 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
         }
     }
     return TRUE;
-
-error:
-    if (load_done_evt) CloseHandle( load_done_evt );
-    if (info->hThread) CloseHandle( info->hThread );
-    if (info->hProcess) CloseHandle( info->hProcess );
-    return FALSE;
 }
 
 
