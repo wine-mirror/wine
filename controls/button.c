@@ -47,6 +47,7 @@
 #define BUTTON_UNKNOWN2        0x20
 #define BUTTON_UNKNOWN3        0x10
 
+static UINT BUTTON_CalcLabelRect( HWND hwnd, HDC hdc, RECT *rc );
 static void PB_Paint( HWND hwnd, HDC hDC, UINT action );
 static void CB_Paint( HWND hwnd, HDC hDC, UINT action );
 static void GB_Paint( HWND hwnd, HDC hDC, UINT action );
@@ -301,10 +302,33 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         break;
 
     case WM_SETTEXT:
+    {
+        /* Clear an old text here as Windows does */
+        HDC hdc = GetDC(hWnd);
+        HBRUSH hbrush;
+        RECT client, rc;
+
+        hbrush = SendMessageW(GetParent(hWnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hWnd);
+        if (!hbrush) /* did the app forget to call DefWindowProc ? */
+            hbrush = DefWindowProcW(GetParent(hWnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hWnd);
+
+        GetClientRect(hWnd, &client);
+        rc = client;
+        BUTTON_CalcLabelRect(hWnd, hdc, &rc);
+        /* Clip by client rect bounds */
+        if (rc.right > client.right) rc.right = client.right;
+        if (rc.bottom > client.bottom) rc.bottom = client.bottom;
+        FillRect(hdc, &rc, hbrush);
+        ReleaseDC(hWnd, hdc);
+
         if (unicode) DefWindowProcW( hWnd, WM_SETTEXT, wParam, lParam );
         else DefWindowProcA( hWnd, WM_SETTEXT, wParam, lParam );
-        paint_button( hWnd, btn_type, ODA_DRAWENTIRE );
+        if (btn_type == BS_GROUPBOX) /* Yes, only for BS_GROUPBOX */
+            InvalidateRect( hWnd, NULL, TRUE );
+        else
+            paint_button( hWnd, btn_type, ODA_DRAWENTIRE );
         return 1; /* success. FIXME: check text length */
+    }
 
     case WM_SETFONT:
         set_button_font( hWnd, wParam );
