@@ -13,7 +13,6 @@ C_SRCS = \
 	display.c \
 	editline.c \
 	expr.c \
-	external.c \
 	hash.c \
 	info.c \
 	memory.c \

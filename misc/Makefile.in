@@ -13,6 +13,7 @@ C_SRCS = \
 	cpu.c \
 	debugstr.c \
 	error.c \
+	ext_debugger.c \
 	lstr.c \
 	main.c \
 	network.c \
