@@ -51,9 +51,9 @@ typedef struct _CrtMemState
 
 #ifndef _DEBUG
 
-#define _ASSERT(expr)                   (0)
-#define _ASSERTE(expr)                  (0)
-#define _CrtDbgBreak()                  (0)
+#define _ASSERT(expr)                   ((void)0)
+#define _ASSERTE(expr)                  ((void)0)
+#define _CrtDbgBreak()                  ((void)0)
 
 #else /* _DEBUG */
 
@@ -63,27 +63,27 @@ typedef struct _CrtMemState
 #if defined(__GNUC__) && defined(__i386__)
 #define _CrtDbgBreak()                  __asm__ ("\tint $0x3\n")
 #else
-#define _CrtDbgBreak()                  (0)
+#define _CrtDbgBreak()                  ((void)0)
 #endif
 
 #endif /* _DEBUG */
 
-#define _CrtCheckMemory()               (1)
-#define _CrtDbgReport(...)              (0)
-#define _CrtDoForAllClientObjects(f,c)  (0)
-#define _CrtDumpMemoryLeaks()           (0)
-#define _CrtIsMemoryBlock(p,s,r,f,l)    (1)
-#define _CrtIsValidHeapPointer(p)       (1)
-#define _CrtIsValidPointer(p,s,a)       (1)
-#define _CrtMemCheckpoint(s)            (0)
-#define _CrtMemDifference(s1,s2,s3)     (0)
-#define _CrtMemDumpAllObjectsSince(s)   (0)
-#define _CrtMemDumpStatistics(s)        (0)
-#define _CrtSetAllocHook(f)             (0)
-#define _CrtSetBreakAlloc(a)            (0)
-#define _CrtSetDbgFlag(f)               (0)
-#define _CrtSetDumpClient(f)            (0)
-#define _CrtSetReportMode(t,m)          (0)
+#define _CrtCheckMemory()               ((int)1)
+#define _CrtDbgReport(...)              ((int)0)
+#define _CrtDoForAllClientObjects(f,c)  ((void)0)
+#define _CrtDumpMemoryLeaks()           ((int)0)
+#define _CrtIsMemoryBlock(p,s,r,f,l)    ((int)1)
+#define _CrtIsValidHeapPointer(p)       ((int)1)
+#define _CrtIsValidPointer(p,s,a)       ((int)1)
+#define _CrtMemCheckpoint(s)            ((void)0)
+#define _CrtMemDifference(s1,s2,s3)     ((int)0)
+#define _CrtMemDumpAllObjectsSince(s)   ((void)0)
+#define _CrtMemDumpStatistics(s)        ((void)0)
+#define _CrtSetAllocHook(f)             ((void)0)
+#define _CrtSetBreakAlloc(a)            ((long)0)
+#define _CrtSetDbgFlag(f)               ((int)0)
+#define _CrtSetDumpClient(f)            ((void)0)
+#define _CrtSetReportMode(t,m)          ((int)0)
 
 #define _RPT0(t,m)
 #define _RPT1(t,m,p1)
