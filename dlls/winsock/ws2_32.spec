@@ -79,14 +79,14 @@ debug_channels (winsock)
 64  stub     WSANtohl
 65  stub     WSANtohs
 66  stub     WSAProviderConfigChange
-67  stub     WSARecv
+67  stdcall  WSARecv(long ptr long ptr ptr ptr ptr) WSARecv
 68  stub     WSARecvDisconnect
 69  stdcall  WSARecvFrom(long ptr long ptr ptr ptr ptr ptr ptr ) WSARecvFrom
 70  stub     WSARemoveServiceClass
 71  forward  WSAResetEvent KERNEL32.ResetEvent
 72  stdcall  WSASend(long ptr long ptr long ptr ptr) WSASend
 73  stub     WSASendDisconnect
-74  stub     WSASendTo
+74  stdcall  WSASendTo(long ptr long ptr long ptr long ptr ptr) WSASendTo
 75  stub     WSASetEvent
 76  stub     WSASetServiceA
 77  stub     WSASetServiceW

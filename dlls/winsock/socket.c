@@ -1797,34 +1797,13 @@ INT16 WINAPI WINSOCK_listen16(SOCKET16 s, INT16 backlog)
  */
 int WINAPI WS_recv(SOCKET s, char *buf, int len, int flags)
 {
-    int fd = _get_sock_fd(s);
+    DWORD n, dwFlags = flags;
+    WSABUF wsabuf = { len, buf };
 
-    TRACE("socket %04x, buf %8x, len %d, flags %d\n", s, (unsigned)buf, len, flags);
-
-    if (fd != -1)
-    {
-	INT length;
-
-	if (_is_blocking(s))
-	{
-	    /* block here */
-	    /* FIXME: OOB and exceptfds? */
-	    do_block(fd, 1);
-	}
-	if ((length = recv(fd, buf, len, flags)) >= 0) 
-	{ 
-	    TRACE(" -> %i bytes\n", length);
-
-	    close(fd);
-	    _enable_event(s, FD_READ, 0, 0);
-	    return length;
-	}
-	SetLastError(wsaErrno());
-	close(fd);
-    }
-    else SetLastError(WSAENOTSOCK);
-    WARN(" -> ERROR\n");
-    return SOCKET_ERROR;
+    if ( WSARecvFrom (s, &wsabuf, 1, &n, &dwFlags, NULL, NULL, NULL, NULL) == SOCKET_ERROR )
+        return SOCKET_ERROR;
+    else
+        return n;
 }
 
 /***********************************************************************
@@ -1842,60 +1821,13 @@ INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
                                 struct WS_sockaddr *from, int *fromlen)
 {
-    int fd = _get_sock_fd(s);
-    int res;
+    DWORD n, dwFlags = flags;
+    WSABUF wsabuf = { len, buf };
 
-    TRACE("socket %04x, ptr %08x, len %d, flags %d\n", s, (unsigned)buf, len, flags);
-#if DEBUG_SOCKADDR
-    if (from)
-        dump_sockaddr(from);
+    if ( WSARecvFrom (s, &wsabuf, 1, &n, &dwFlags, from, fromlen, NULL, NULL) == SOCKET_ERROR )
+        return SOCKET_ERROR;
     else
-        DPRINTF("from = NULL\n");
-#endif
-
-    res=SOCKET_ERROR;
-    if (fd != -1)
-    {
-        struct sockaddr* uaddr;
-        int uaddrlen;
-        int length;
-
-        if (_is_blocking(s))
-        {
-            /* block here */
-            /* FIXME: OOB and exceptfds */
-            do_block(fd, 1);
-        }
-
-        uaddr=ws_sockaddr_alloc(from,fromlen,&uaddrlen);
-        length=recvfrom(fd, buf, len, flags, uaddr, &uaddrlen);
-        if (length < 0)
-        {
-            SetLastError(wsaErrno());
-            WARN(" -> ERROR\n");
-        }
-        else if (ws_sockaddr_u2ws(uaddr,uaddrlen,from,fromlen) != 0)
-        {
-            /* The from buffer was too small, but we read the data 
-             * anyway. Is that really bad?
-             */
-            SetLastError(WSAEFAULT);
-            WARN(" -> WSAEFAULT\n");
-        }
-        else
-        {
-            TRACE(" -> %i bytes\n", length);
-            _enable_event(s, FD_READ, 0, 0);
-            res=length;
-        }
-        close(fd);
-    }
-    else
-    {
-        SetLastError(WSAENOTSOCK);
-        WARN(" -> WSAENOTSOCK\n");
-    }
-    return res;
+        return n;
 }
 
 /***********************************************************************
@@ -2012,34 +1944,13 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
  */
 int WINAPI WS_send(SOCKET s, const char *buf, int len, int flags)
 {
-    int fd = _get_sock_fd(s);
+    DWORD n;
+    WSABUF wsabuf = { len, (char*) buf };
 
-    TRACE("socket %04x, ptr %p, length %d, flags %d\n", s, buf, len, flags);
-    if (fd != -1)
-    {
-	int	length;
-
-	if (_is_blocking(s))
-	{
-	    /* block here */
-	    /* FIXME: exceptfds */
-	    do_block(fd, 2);
-	}
-	if ((length = send(fd, buf, len, flags)) < 0 ) 
-	{
-	    SetLastError(wsaErrno());
-	    if( GetLastError() == WSAEWOULDBLOCK )
-		_enable_event(s, FD_WRITE, 0, 0);
-	}
-	else
-	{
-	    close(fd);
-	    return length;
-	}
-	close(fd);
-    }
-    else SetLastError(WSAENOTSOCK);
-    return SOCKET_ERROR;
+    if ( WSASendTo ( s, &wsabuf, 1, &n, flags, NULL, 0, NULL, NULL) == SOCKET_ERROR )
+        return SOCKET_ERROR;
+    else
+        return n;
 }
 
 /***********************************************************************
@@ -2050,43 +1961,106 @@ INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                     LPWSAOVERLAPPED lpOverlapped,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
-  INT iFlags = 0;
-  INT rc = 0;
-  DWORD dwCount;
+    return WSASendTo ( s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags,
+                       NULL, 0, lpOverlapped, lpCompletionRoutine );
+}
 
-  /* Overlapped is not supported or checked for */
-  FIXME( "(%u,%p,0x%lx,%p,0x%lx,%p,%p): semi stub\n", 
-           s, lpBuffers, dwBufferCount, lpNumberOfBytesSent,
-           dwFlags, lpOverlapped, lpCompletionRoutine );
+/***********************************************************************
+ *		WSASendTo		(WS2_32.74)
+ */
+INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                      LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
+                      const struct WS_sockaddr *to, int tolen,
+                      LPWSAOVERLAPPED lpOverlapped,
+                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+{
+    int i, n, fd, err = WSAENOTSOCK;
+    struct iovec* iovec;
+    struct msghdr msghdr;
 
-  /* Convert setup flags */
-  if( dwFlags & MSG_DONTROUTE )
-  {
-    iFlags |= MSG_DONTROUTE;
-  }
+    TRACE ("socket %04x, wsabuf %p, nbufs %ld, flags %ld, to %p, tolen %d, ovl %p, func %p\n",
+           s, lpBuffers, dwBufferCount, dwFlags,
+           to, tolen, lpOverlapped, lpCompletionRoutine);
 
-  if( dwFlags & MSG_OOB )
-  {
-    iFlags |= MSG_OOB;
-  }
+    fd = _get_sock_fd(s);
 
-  /* Indicate nothing yet sent */
-  *lpNumberOfBytesSent = 0;
+    if ( fd == -1 )
+        goto error;
 
-  /* Send all buffers with the same flags */
-  for(dwCount = 0; dwCount < dwBufferCount; dwCount++ )
-  {
-    if( ( rc = WS_send( s, lpBuffers[ dwCount ].buf, 
-                             lpBuffers[ dwCount ].len, iFlags ) ) != 0 )
+    iovec = WS_ALLOC ( dwBufferCount * sizeof (struct iovec) );
+
+    if ( !iovec )
     {
-      break;
+        err = WSAENOBUFS;
+        goto err_close;
     }
 
-    /* Indicate that we've sent something */
-    *lpNumberOfBytesSent += lpBuffers[ dwCount ].len;
-  }
+    for ( i = 0; i < dwBufferCount; i++ )
+    {
+        iovec[i].iov_base = lpBuffers[i].buf;
+        iovec[i].iov_len  = lpBuffers[i].len;
+    }
 
-  return rc;
+    msghdr.msg_name = NULL;
+
+    if (to)
+    {
+#if DEBUG_SOCKADDR
+        dump_sockaddr (to);
+#endif
+        msghdr.msg_name = (void*) ws_sockaddr_ws2u (to, tolen, &msghdr.msg_namelen);
+        if ( !msghdr.msg_name )
+        {
+            err = WSAEFAULT;
+            goto err_free;
+        }
+    }
+    else
+        msghdr.msg_namelen = 0;
+
+    msghdr.msg_iov = iovec;
+    msghdr.msg_iovlen = dwBufferCount;
+    msghdr.msg_control = NULL;
+    msghdr.msg_controllen = 0;
+    msghdr.msg_flags = 0;
+
+    /* FIXME: Treat overlapped IO here */
+
+    if (_is_blocking(s))
+    {
+        /* FIXME: exceptfds? */
+        do_block(fd, 2);
+    }
+
+    /* FIXME: can we support MSG_PARTIAL ? How does it relate to sendmsg()'s msg_flags ? */
+
+    if ((n = sendmsg (fd, &msghdr, dwFlags)) == -1)
+    {
+        err = wsaErrno();
+        if ( err == WSAEWOULDBLOCK )
+            _enable_event (s, FD_WRITE, 0, 0);
+        goto err_free;
+    }
+
+    *lpNumberOfBytesSent = n;
+
+    ws_sockaddr_free ( msghdr.msg_name, to );
+    WS_FREE ( iovec );
+    close ( fd );
+
+    return 0;
+
+err_free:
+    ws_sockaddr_free ( msghdr.msg_name, to );
+    WS_FREE ( iovec );
+
+err_close:
+    close ( fd );
+
+error:
+    WARN (" -> ERROR %d\n", err);
+    SetLastError (err);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************
@@ -2103,46 +2077,13 @@ INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
                               const struct WS_sockaddr *to, int tolen)
 {
-    int fd = _get_sock_fd(s);
-    int res;
+    DWORD n;
+    WSABUF wsabuf = { len, (char*) buf };
 
-    TRACE("socket %04x, ptr %p, length %d, flags %d\n", s, buf, len, flags);
-
-    res=SOCKET_ERROR;
-    if (fd != -1)
-    {
-        const struct sockaddr* uaddr;
-        int uaddrlen;
-
-        uaddr=ws_sockaddr_ws2u(to,tolen,&uaddrlen);
-        if (uaddr == NULL)
-        {
-            SetLastError(WSAEFAULT);
-        }
-        else
-        {
-            if (_is_blocking(s))
-            {
-                /* block here */
-                /* FIXME: exceptfds */
-                do_block(fd, 2);
-            }
-            res=sendto(fd, buf, len, flags, uaddr, uaddrlen);
-            if (res < 0 )
-            {
-                SetLastError(wsaErrno());
-                if( GetLastError() == WSAEWOULDBLOCK )
-                    _enable_event(s, FD_WRITE, 0, 0);
-            }
-            ws_sockaddr_free(uaddr,to);
-        }
-        close(fd);
-    }
+    if ( WSASendTo (s, &wsabuf, 1, &n, flags, to, tolen, NULL, NULL) == SOCKET_ERROR )
+        return SOCKET_ERROR;
     else
-    {
-        SetLastError(WSAENOTSOCK);
-    }
-    return res;
+        return n;
 }
 
 /***********************************************************************
@@ -3302,34 +3243,129 @@ UINT16 wsaHerrno(int loc_errno)
 
 
 /***********************************************************************
+ *		WSARecv			(WS2_32.67)
+ */
+int WINAPI WSARecv (SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+		    LPDWORD NumberOfBytesReceived, LPDWORD lpFlags,
+		    LPWSAOVERLAPPED lpOverlapped,
+		    LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    return WSARecvFrom (s, lpBuffers, dwBufferCount, NumberOfBytesReceived, lpFlags,
+                        NULL, NULL, lpOverlapped, lpCompletionRoutine);
+}
+
+/***********************************************************************
  *              WSARecvFrom             (WS2_32.69)
  */
 INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct WS_sockaddr *lpFrom,
                         LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+
 {
-  DWORD dwCount;
-  INT   rc;
+    /* Uses recvmsg() in order to provide scatter-gather I/O */
 
-  FIXME( "(%i,%p,%lu,%p,%p,%p,%p,%p,%p: stub\n",
-         s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags,
-         lpFrom, lpFromlen, lpOverlapped, lpCompletionRoutine );
+    struct iovec* iovec;
+    struct msghdr msghdr;
+    int fd, i, length, err = WSAENOTSOCK;
 
-  for( dwCount = 0, rc = 0; dwCount < dwBufferCount; dwCount++ )
-  {
+    TRACE("socket %04x, wsabuf %p, nbufs %ld, flags %ld, from %p, fromlen %ld, ovl %p, func %p\n",
+          s, lpBuffers, dwBufferCount, *lpFlags, lpFrom,
+          (lpFromlen ? *lpFromlen : -1L),
+          lpOverlapped, lpCompletionRoutine);
 
-    if( ( rc = WS_recvfrom(s, lpBuffers[ dwCount ].buf, (INT)lpBuffers[ dwCount ].len,
-                                (INT)*lpFlags, lpFrom, lpFromlen ) ) != 0 )
+    fd = _get_sock_fd(s);
+
+    if (fd == -1)
     {
-       break;
+        err = WSAENOTSOCK;
+        goto error;
     }
 
-  }
+    /* FIXME: should this be HeapAlloc() or WS_ALLOC ? */
+    iovec = WS_ALLOC ( dwBufferCount * sizeof (struct iovec) );
+    if ( !iovec )
+    {
+        err = WSAENOBUFS;
+        goto err_close;
+    }
 
-  return rc;
+    for (i = 0; i < dwBufferCount; i++)
+    {
+        iovec[i].iov_base = lpBuffers[i].buf;
+        iovec[i].iov_len  = lpBuffers[i].len;
+    }
+
+    msghdr.msg_name = NULL;
+
+    if ( lpFrom )
+    {
+#if DEBUG_SOCKADDR
+        dump_sockaddr (lpFrom);
+#endif
+
+        msghdr.msg_namelen = *lpFromlen;
+        msghdr.msg_name = ws_sockaddr_alloc (lpFrom, lpFromlen, &msghdr.msg_namelen);
+    }
+    else
+        msghdr.msg_namelen = 0;
+
+    msghdr.msg_iov = iovec;
+    msghdr.msg_iovlen = dwBufferCount;
+    msghdr.msg_control = NULL;
+    msghdr.msg_controllen = 0;
+    msghdr.msg_flags = 0;
+
+    /* FIXME: Treat overlapped IO here */
+
+    if (_is_blocking(s))
+    {
+        /* block here */
+        /* FIXME: OOB and exceptfds? */
+        do_block(fd, 1);
+    }
+
+    /* FIXME: can we support MSG_PARTIAL ?
+       How does it relate to recvmsg()'s msg_flags ? */
+
+    if ((length = recvmsg (fd, &msghdr, *lpFlags)) == -1)
+    {
+        err = wsaErrno();
+        goto err_free;
+    }
+
+    TRACE(" -> %i bytes\n", length);
+
+    if ( lpFrom && ws_sockaddr_u2ws (msghdr.msg_name, msghdr.msg_namelen, lpFrom, lpFromlen) != 0 )
+    {
+        /* The from buffer was too small, but we read the data
+         * anyway. Is that really bad?
+         */
+        SetLastError ( WSAEFAULT );
+        WARN ( " -> Address buffer too small\n" );
+    }
+
+    *lpNumberOfBytesRecvd = length;
+
+    WS_FREE (iovec);
+    ws_sockaddr_free ( msghdr.msg_name, lpFrom );
+    close(fd);
+    _enable_event(s, FD_READ, 0, 0);
+
+    return 0;
+
+err_free:
+    WS_FREE (iovec);
+    ws_sockaddr_free ( msghdr.msg_name, lpFrom );
+
+err_close:
+    close (fd);
+
+error:
+    WARN(" -> ERROR %d\n", err);
+    SetLastError ( err );
+    return SOCKET_ERROR;
 }
-
 
 /***********************************************************************
  *              WSCInstallProvider             (WS2_32.88)
