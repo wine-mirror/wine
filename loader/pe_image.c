@@ -688,9 +688,11 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         {
             req->handle     = hFile;
             req->base       = (void *)hModule;
+            req->size       = nt->OptionalHeader.SizeOfImage;
             req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
             req->dbg_size   = nt->FileHeader.NumberOfSymbols;
             req->name       = &wm->filename;
+            wine_server_add_data( req, wm->filename, strlen(wm->filename) );
             wine_server_call( req );
         }
         SERVER_END_REQ;

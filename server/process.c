@@ -203,6 +203,8 @@ struct thread *create_process( int fd )
     process->exe.file        = NULL;
     process->exe.dbg_offset  = 0;
     process->exe.dbg_size    = 0;
+    process->exe.namelen     = 0;
+    process->exe.filename    = NULL;
 
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
@@ -328,6 +330,7 @@ static void process_destroy( struct object *obj )
     if (process->queue) release_object( process->queue );
     if (process->atom_table) release_object( process->atom_table );
     if (process->exe.file) release_object( process->exe.file );
+    if (process->exe.filename) free( process->exe.filename );
 }
 
 /* dump a process on stdout for debugging purposes */
@@ -406,7 +409,7 @@ struct process *get_process_from_handle( handle_t handle, unsigned int access )
 
 /* add a dll to a process list */
 static struct process_dll *process_load_dll( struct process *process, struct file *file,
-                                             void *base )
+                                             void *base, const char *filename, size_t name_len )
 {
     struct process_dll *dll;
 
@@ -422,6 +425,13 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
         dll->prev = &process->exe;
         dll->file = NULL;
         dll->base = base;
+        dll->filename = NULL;
+        dll->namelen  = name_len;
+        if (name_len && !(dll->filename = memdup( filename, name_len )))
+        {
+            free( dll );
+            return NULL;
+        }
         if (file) dll->file = (struct file *)grab_object( file );
         if ((dll->next = process->exe.next)) dll->next->prev = dll;
         process->exe.next = dll;
@@ -441,6 +451,7 @@ static void process_unload_dll( struct process *process, void *base )
             if (dll->file) release_object( dll->file );
             if (dll->next) dll->next->prev = dll->prev;
             if (dll->prev) dll->prev->next = dll->next;
+            if (dll->filename) free( dll->filename );
             free( dll );
             generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, base );
             return;
@@ -484,6 +495,7 @@ static void process_killed( struct process *process )
         struct process_dll *dll = process->exe.next;
         process->exe.next = dll->next;
         if (dll->file) release_object( dll->file );
+        if (dll->filename) free( dll->filename );
         free( dll );
     }
     if (process->exe.file) release_object( process->exe.file );
@@ -745,7 +757,10 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 
     for (ptr = snapshot, dll = &process->exe; dll; dll = dll->next, ptr++)
     {
-        ptr->base = dll->base;
+        ptr->base     = dll->base;
+        ptr->size     = dll->size;
+        ptr->namelen  = dll->namelen;
+        ptr->filename = memdup( dll->filename, dll->namelen );
     }
     *count = total;
     return snapshot;
@@ -848,11 +863,15 @@ DECL_HANDLER(init_process_done)
         return;
     }
     process->exe.base = req->module;
+    process->exe.size = req->module_size;
     process->exe.name = req->name;
 
     if (req->exe_file) file = get_file_obj( current->process, req->exe_file, GENERIC_READ );
     if (process->exe.file) release_object( process->exe.file );
     process->exe.file = file;
+
+    if ((process->exe.namelen = get_req_data_size()))
+        process->exe.filename = memdup( get_req_data(), process->exe.namelen );
 
     generate_startup_debug_events( current->process, req->entry );
     set_event( process->init_event );
@@ -968,8 +987,10 @@ DECL_HANDLER(load_dll)
     if (req->handle &&
         !(file = get_file_obj( current->process, req->handle, GENERIC_READ ))) return;
 
-    if ((dll = process_load_dll( current->process, file, req->base )))
+    if ((dll = process_load_dll( current->process, file, req->base,
+                                 get_req_data(), get_req_data_size() )))
     {
+        dll->size       = req->size;
         dll->dbg_offset = req->dbg_offset;
         dll->dbg_size   = req->dbg_size;
         dll->name       = req->name;

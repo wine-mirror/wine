@@ -239,10 +239,12 @@ typedef struct
 /* Signal the end of the process initialization */
 @REQ(init_process_done)
     void*        module;       /* main module base address */
+    size_t       module_size;  /* main module size */
     void*        entry;        /* process entry point */
     void*        name;         /* ptr to ptr to name (in process addr space) */
     handle_t     exe_file;     /* file handle for main exe */
     int          gui;          /* is it a GUI process? */
+    VARARG(filename,string);   /* file name of main exe */
 @REPLY
     int          debugged;     /* being debugged? */
 @END
@@ -349,9 +351,11 @@ typedef struct
 @REQ(load_dll)
     handle_t     handle;       /* file handle */
     void*        base;         /* base address */
+    size_t       size;         /* dll size */
     int          dbg_offset;   /* debug info offset */
     int          dbg_size;     /* debug info size */
     void*        name;         /* ptr to ptr to name (in process addr space) */
+    VARARG(filename,string);   /* file name of dll */
 @END
 
 
@@ -1059,8 +1063,12 @@ enum char_info_mode
 @REPLY
     int          count;         /* process usage count */
     void*        pid;           /* process id */
+    void*        ppid;          /* parent process id */
+    void*        heap;          /* heap base */
+    void*        module;        /* main module */
     int          threads;       /* number of threads */
     int          priority;      /* process priority */
+    VARARG(filename,string);    /* file name of main exe */
 @END
 
 
@@ -1084,6 +1092,8 @@ enum char_info_mode
 @REPLY
     void*        pid;           /* process id */
     void*        base;          /* module base address */
+    size_t       size;          /* module size */
+    VARARG(filename,string);    /* file name of module */
 @END
 
 

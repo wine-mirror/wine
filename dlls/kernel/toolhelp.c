@@ -301,17 +301,18 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
     {
         req->handle = handle;
         req->reset = first;
+        wine_server_set_reply( req, lppe->szExeFile, sizeof(lppe->szExeFile)-1 );
         if ((ret = !wine_server_call_err( req )))
         {
             lppe->cntUsage            = reply->count;
             lppe->th32ProcessID       = (DWORD)reply->pid;
-            lppe->th32DefaultHeapID   = 0;  /* FIXME */
-            lppe->th32ModuleID        = 0;  /* FIXME */
+            lppe->th32DefaultHeapID   = (DWORD)reply->heap;
+            lppe->th32ModuleID        = (DWORD)reply->module;
             lppe->cntThreads          = reply->threads;
-            lppe->th32ParentProcessID = 0;  /* FIXME */
+            lppe->th32ParentProcessID = (DWORD)reply->ppid;
             lppe->pcPriClassBase      = reply->priority;
             lppe->dwFlags             = -1; /* FIXME */
-            lppe->szExeFile[0]        = 0;  /* FIXME */
+            lppe->szExeFile[wine_server_reply_size(reply)] = 0;
         }
     }
     SERVER_END_REQ;
@@ -359,6 +360,7 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
     {
         req->handle = handle;
         req->reset = first;
+        wine_server_set_reply( req, lpme->szExePath, sizeof(lpme->szExePath)-1 );
         if ((ret = !wine_server_call_err( req )))
         {
             lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
@@ -366,10 +368,10 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
             lpme->GlblcntUsage   = 0; /* FIXME */
             lpme->ProccntUsage   = 0; /* FIXME */
             lpme->modBaseAddr    = reply->base;
-            lpme->modBaseSize    = 0; /* FIXME */
+            lpme->modBaseSize    = reply->size;
             lpme->hModule        = (DWORD)reply->base;
             lpme->szModule[0]    = 0;  /* FIXME */
-            lpme->szExePath[0]   = 0;  /* FIXME */
+            lpme->szExePath[wine_server_reply_size(reply)] = 0;
         }
     }
     SERVER_END_REQ;

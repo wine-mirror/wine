@@ -126,8 +126,16 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     ptr = &snapshot->processes[snapshot->process_pos++];
     reply->count    = ptr->count;
     reply->pid      = get_process_id( ptr->process );
+    reply->ppid     = get_process_id( ptr->process->parent );
+    reply->heap     = 0;  /* FIXME */
+    reply->module   = 0;  /* FIXME */
     reply->threads  = ptr->threads;
     reply->priority = ptr->priority;
+    if (ptr->process->exe.filename)
+    {
+        size_t len = min( ptr->process->exe.namelen, get_reply_max_size() );
+        set_reply_data( ptr->process->exe.filename, len );
+    }
     return 1;
 }
 
@@ -173,6 +181,12 @@ static int snapshot_next_module( struct snapshot *snapshot, struct next_module_r
     ptr = &snapshot->modules[snapshot->module_pos++];
     reply->pid  = get_process_id( snapshot->process );
     reply->base = ptr->base;
+    reply->size = ptr->size;
+    if (ptr->filename)
+    {
+        size_t len = min( ptr->namelen, get_reply_max_size() );
+        set_reply_data( ptr->filename, len );
+    }
     return 1;
 }
 
@@ -201,7 +215,12 @@ static void snapshot_destroy( struct object *obj )
             release_object( snapshot->threads[i].thread );
         free( snapshot->threads );
     }
-    if (snapshot->module_count) free( snapshot->modules );
+    if (snapshot->module_count)
+    {
+        for (i = 0; i < snapshot->module_count; i++)
+            free( snapshot->modules[i].filename );
+        free( snapshot->modules );
+    }
     if (snapshot->process) release_object( snapshot->process );
 }
 

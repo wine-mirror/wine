@@ -34,9 +34,12 @@ struct process_dll
     struct process_dll  *prev;
     struct file         *file;            /* dll file */
     void                *base;            /* dll base address (in process addr space) */
+    size_t               size;            /* dll size */
     void                *name;            /* ptr to ptr to name (in process addr space) */
     int                  dbg_offset;      /* debug info offset */
     int                  dbg_size;        /* debug info size */
+    size_t               namelen;         /* length of dll file name */
+    char                *filename;        /* dll file name */
 };
 
 struct process
@@ -77,6 +80,9 @@ struct process_snapshot
 struct module_snapshot
 {
     void           *base;     /* module base addr */
+    size_t          size;     /* module size */
+    size_t          namelen;  /* length of file name */
+    char           *filename; /* module file name */
 };
 
 /* process functions */

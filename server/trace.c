@@ -383,10 +383,13 @@ static void dump_init_process_reply( const struct init_process_reply *req )
 static void dump_init_process_done_request( const struct init_process_done_request *req )
 {
     fprintf( stderr, " module=%p,", req->module );
+    fprintf( stderr, " module_size=%d,", req->module_size );
     fprintf( stderr, " entry=%p,", req->entry );
     fprintf( stderr, " name=%p,", req->name );
     fprintf( stderr, " exe_file=%d,", req->exe_file );
-    fprintf( stderr, " gui=%d", req->gui );
+    fprintf( stderr, " gui=%d,", req->gui );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( cur_size );
 }
 
 static void dump_init_process_done_reply( const struct init_process_done_reply *req )
@@ -503,9 +506,12 @@ static void dump_load_dll_request( const struct load_dll_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " base=%p,", req->base );
+    fprintf( stderr, " size=%d,", req->size );
     fprintf( stderr, " dbg_offset=%d,", req->dbg_offset );
     fprintf( stderr, " dbg_size=%d,", req->dbg_size );
-    fprintf( stderr, " name=%p", req->name );
+    fprintf( stderr, " name=%p,", req->name );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( cur_size );
 }
 
 static void dump_unload_dll_request( const struct unload_dll_request *req )
@@ -1213,8 +1219,13 @@ static void dump_next_process_reply( const struct next_process_reply *req )
 {
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " ppid=%p,", req->ppid );
+    fprintf( stderr, " heap=%p,", req->heap );
+    fprintf( stderr, " module=%p,", req->module );
     fprintf( stderr, " threads=%d,", req->threads );
-    fprintf( stderr, " priority=%d", req->priority );
+    fprintf( stderr, " priority=%d,", req->priority );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( cur_size );
 }
 
 static void dump_next_thread_request( const struct next_thread_request *req )
@@ -1241,7 +1252,10 @@ static void dump_next_module_request( const struct next_module_request *req )
 static void dump_next_module_reply( const struct next_module_reply *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " base=%p", req->base );
+    fprintf( stderr, " base=%p,", req->base );
+    fprintf( stderr, " size=%d,", req->size );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( cur_size );
 }
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )

@@ -358,12 +358,14 @@ static void start_process(void)
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
     {
-        req->module   = (void *)current_process.module;
+        req->module      = (void *)current_process.module;
+        req->module_size = PE_HEADER(current_process.module)->OptionalHeader.SizeOfImage;
         req->entry    = entry;
         /* API requires a double indirection */
         req->name     = &main_exe_name_ptr;
         req->exe_file = main_file;
         req->gui      = !console_app;
+        wine_server_add_data( req, main_exe_name, strlen(main_exe_name) );
         wine_server_call( req );
         debugged = reply->debugged;
     }

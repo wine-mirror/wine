@@ -251,10 +251,12 @@ struct init_process_done_request
 {
     struct request_header __header;
     void*        module;
+    size_t       module_size;
     void*        entry;
     void*        name;
     handle_t     exe_file;
     int          gui;
+    /* VARARG(filename,string); */
 };
 struct init_process_done_reply
 {
@@ -413,9 +415,11 @@ struct load_dll_request
     struct request_header __header;
     handle_t     handle;
     void*        base;
+    size_t       size;
     int          dbg_offset;
     int          dbg_size;
     void*        name;
+    /* VARARG(filename,string); */
 };
 struct load_dll_reply
 {
@@ -1440,8 +1444,12 @@ struct next_process_reply
     struct reply_header __header;
     int          count;
     void*        pid;
+    void*        ppid;
+    void*        heap;
+    void*        module;
     int          threads;
     int          priority;
+    /* VARARG(filename,string); */
 };
 
 
@@ -1475,6 +1483,8 @@ struct next_module_reply
     struct reply_header __header;
     void*        pid;
     void*        base;
+    size_t       size;
+    /* VARARG(filename,string); */
 };
 
 
@@ -3117,6 +3127,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 73
+#define SERVER_PROTOCOL_VERSION 74
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
