@@ -10,6 +10,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/unicode.h"
 #include "options.h"
 #include "class.h"
 #include "win.h"
@@ -1556,7 +1557,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
             retvalue = pWnd->hwndSelf;
             goto end;
         }
-        if (pWnd->text && !lstrcmpW( pWnd->text, title ))
+        if (pWnd->text && !strcmpW( pWnd->text, title ))
         {
             retvalue = pWnd->hwndSelf;
             goto end;

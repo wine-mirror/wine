@@ -209,11 +209,11 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
      first = lstrlenW( (WCHAR *) ((char *) emh + emh->offDescription));
  
      lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription), size);
-     first_A = lstrlenA( buf );
+     first_A = strlen( buf );
      buf += first_A + 1;
      lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription+2*(first+1)),
  		 size - first_A - 1); /* i18n ready */
-     first_A += lstrlenA(buf) + 1;
+     first_A += strlen(buf) + 1;
  
      EMF_ReleaseEnhMetaHeader(hmf);
      return min(size, first_A);

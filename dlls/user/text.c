@@ -382,9 +382,9 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
         if(unicode)
     	    slen = lstrlenW((LPCWSTR)lp);
     	else if(_32bit)
-    	    slen = lstrlenA((LPCSTR)lp);
+    	    slen = strlen((LPCSTR)lp);
     	else
-    	    slen = lstrlenA((LPCSTR)PTR_SEG_TO_LIN(lp));
+    	    slen = strlen((LPCSTR)PTR_SEG_TO_LIN(lp));
     }
 
     if((cx == 0 || cy == 0) && slen != -1)

@@ -1504,7 +1504,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!lstrcmpiA(loadedfn, s))
+	if (!strcasecmp(loadedfn, s))
 	    return hModule;
     }
 
@@ -1579,7 +1579,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!lstrcmpiA(loadedfn, s))
+	if (!strcasecmp(loadedfn, s))
 	    return hModule;
     }
 

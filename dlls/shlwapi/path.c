@@ -484,7 +484,7 @@ void WINAPI PathStripPathW(LPWSTR lpszPath)
 
 	TRACE("%s\n", debugstr_w(lpszPath));
 	if(lpszFileName)
-	  RtlMoveMemory(lpszPath, lpszFileName, (lstrlenW(lpszFileName)+1)*sizeof(WCHAR)); 
+	  RtlMoveMemory(lpszPath, lpszFileName, (strlenW(lpszFileName)+1)*sizeof(WCHAR)); 
 }
 
 /*************************************************************************
@@ -612,7 +612,7 @@ LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpszPath )
 	
 	if(lpszPath)
 	{
-	  len = lstrlenW(lpszPath);
+	  len = strlenW(lpszPath);
 	  szTemp = CharPrevW(lpszPath, lpszPath+len);
 	  if (! PathIsRootW(lpszPath))
 	  {
@@ -662,7 +662,7 @@ void WINAPI PathRemoveBlanksW(LPWSTR str)
 	{
 	  while (*x==' ') x = CharNextW(x);
 	  if (x!=str) lstrcpyW(str,x);
-	  x=str+lstrlenW(str)-1;
+	  x=str+strlenW(str)-1;
 	  while (*x==' ') x = CharPrevW(str, x);
 	  if (*x==' ') *x='\0';
 	}
@@ -698,7 +698,7 @@ LPWSTR WINAPI PathQuoteSpacesW(LPWSTR lpszPath)
 
 	if(StrChrW(lpszPath,' '))
 	{
-	  int len = lstrlenW(lpszPath);
+	  int len = strlenW(lpszPath);
 	  RtlMoveMemory(lpszPath+1, lpszPath, len*sizeof(WCHAR));
 	  *(lpszPath++) = '"';
 	  lpszPath += len;
@@ -717,7 +717,7 @@ LPWSTR WINAPI PathQuoteSpacesW(LPWSTR lpszPath)
  */
 VOID WINAPI PathUnquoteSpacesA(LPSTR str) 
 {
-	DWORD len = lstrlenA(str);
+	DWORD len = strlen(str);
 
 	TRACE("%s\n",str);
 
@@ -1471,7 +1471,7 @@ BOOL WINAPI PathCanonicalizeA(LPSTR pszBuf, LPCSTR pszPath)
  */
 BOOL WINAPI PathCanonicalizeW(LPWSTR pszBuf, LPCWSTR pszPath)
 {
-	int OffsetMin = 0, OffsetSrc = 0, OffsetDst = 0, LenSrc = lstrlenW(pszPath);
+	int OffsetMin = 0, OffsetSrc = 0, OffsetDst = 0, LenSrc = strlenW(pszPath);
 	BOOL bModifyed = FALSE;
 
 	TRACE("%p %s\n", pszBuf, debugstr_w(pszPath));
@@ -1574,7 +1574,7 @@ LPWSTR WINAPI PathFindNextComponentW(LPCWSTR pszPath)
 	
 	if(!pszPath || !*pszPath) return NULL;
 	if (!(pos = StrChrW(pszPath, '\\')))
-	  return (LPWSTR) pszPath + lstrlenW(pszPath);
+	  return (LPWSTR) pszPath + strlenW(pszPath);
 	pos++;
 	if(pos[0] == '\\') pos++;
 	return pos;

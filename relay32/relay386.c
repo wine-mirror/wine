@@ -52,7 +52,7 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
       itemlen = strlen(*listitem);
       if((itemlen == len && !lstrncmpiA(*listitem, func, len)) ||
          (itemlen == len2 && !lstrncmpiA(*listitem, func, len2)) ||
-         !lstrcmpiA(*listitem, term)) {
+         !strcasecmp(*listitem, term)) {
         show = !show;
        break;
       }
@@ -115,7 +115,6 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     for (wm = PROCESS_Current()->modref_list; wm; wm = wm->next)
     {
-        if (wm->type != MODULE32_PE) continue;
         if (!(wm->flags & WINE_MODREF_INTERNAL)) continue;
         base = (char *)wm->module;
         dir = &PE_HEADER(base)->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];

@@ -463,8 +463,8 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
         return HFILE_ERROR;
 
     /* Open a console for CONIN$ or CONOUT$ */
-    if (!lstrcmpiA(filename, "CONIN$")) return CONSOLE_OpenHandle( FALSE, access, sa );
-    if (!lstrcmpiA(filename, "CONOUT$")) return CONSOLE_OpenHandle( TRUE, access, sa );
+    if (!strcasecmp(filename, "CONIN$")) return CONSOLE_OpenHandle( FALSE, access, sa );
+    if (!strcasecmp(filename, "CONOUT$")) return CONSOLE_OpenHandle( TRUE, access, sa );
 
     if (DOSFS_GetDevice( filename ))
     {

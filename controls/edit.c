@@ -261,7 +261,7 @@ static void EDIT_UpdateText(WND *wnd, LPRECT rc, BOOL bErase);
  */
 static inline BOOL EDIT_EM_CanUndo(WND *wnd, EDITSTATE *es)
 {
-	return (es->undo_insert_count || lstrlenA(es->undo_text));
+	return (es->undo_insert_count || strlen(es->undo_text));
 }
 
 
@@ -803,7 +803,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 
 	case WM_GETTEXTLENGTH:
 		DPRINTF_EDIT_MSG32("WM_GETTEXTLENGTH");
-		result = lstrlenA(es->text);
+		result = strlen(es->text);
 		break;
 
 	case WM_HSCROLL:
@@ -982,7 +982,7 @@ static void EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es)
 		}
 		if (!(*cp)) {
 			current_def->ending = END_0;
-			current_def->net_length = lstrlenA(start);
+			current_def->net_length = strlen(start);
 		} else if ((cp > start) && (*(cp - 1) == '\r')) {
 			current_def->ending = END_SOFT;
 			current_def->net_length = cp - start - 1;
@@ -1162,7 +1162,7 @@ static INT EDIT_CharFromPos(WND *wnd, EDITSTATE *es, INT x, INT y, LPBOOL after_
                 else
                 {
                     INT low = es->x_offset;
-                    INT high = lstrlenA(es->text) + 1;
+                    INT high = strlen(es->text) + 1;
                     while (low < high - 1)
                     {
                         INT mid = (low + high) / 2;
@@ -1230,7 +1230,7 @@ static void EDIT_GetLineRect(WND *wnd, EDITSTATE *es, INT line, INT scol, INT ec
 static LPSTR EDIT_GetPasswordPointer_SL(WND *wnd, EDITSTATE *es)
 {
 	if (es->style & ES_PASSWORD) {
-		INT len = lstrlenA(es->text);
+		INT len = strlen(es->text);
 		LPSTR text = HeapAlloc(es->heap, 0, len + 1);
 		RtlFillMemory(text, len, es->password_char);
 		text[len] = '\0';
@@ -1368,7 +1368,7 @@ static void EDIT_InvalidateText(WND *wnd, EDITSTATE *es, INT start, INT end)
 		return;
 
 	if (end == -1)
-		end = lstrlenA(es->text);
+		end = strlen(es->text);
 
 	ORDER_INT(start, end);
 
@@ -1526,7 +1526,7 @@ static void EDIT_MoveEnd(WND *wnd, EDITSTATE *es, BOOL extend)
 		e = EDIT_CharFromPos(wnd, es, 0x3fffffff,
 			HIWORD(EDIT_EM_PosFromChar(wnd, es, es->selection_end, es->flags & EF_AFTER_WRAP)), &after_wrap);
 	else
-		e = lstrlenA(es->text);
+		e = strlen(es->text);
 	EDIT_EM_SetSel(wnd, es, extend ? es->selection_start : e, e, after_wrap);
 	EDIT_EM_ScrollCaret(wnd, es);
 }
@@ -2039,7 +2039,7 @@ static HLOCAL EDIT_EM_GetHandle(WND *wnd, EDITSTATE *es)
 	else if (es->hloc16)
 		return (HLOCAL)es->hloc16;
 
-	if (!(newBuf = LocalAlloc(LMEM_MOVEABLE, lstrlenA(es->text) + 1))) {
+	if (!(newBuf = LocalAlloc(LMEM_MOVEABLE, strlen(es->text) + 1))) {
 		ERR("could not allocate new 32 bit buffer\n");
 		return 0;
 	}
@@ -2099,7 +2099,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 		}
 		TRACE("local heap initialized\n");
 	}
-	if (!(newBuf = LOCAL_Alloc(wnd->hInstance, LMEM_MOVEABLE, lstrlenA(es->text) + 1))) {
+	if (!(newBuf = LOCAL_Alloc(wnd->hInstance, LMEM_MOVEABLE, strlen(es->text) + 1))) {
 		ERR("could not allocate new 16 bit buffer\n");
 		return 0;
 	}
@@ -2207,7 +2207,7 @@ static INT EDIT_EM_LineFromChar(WND *wnd, EDITSTATE *es, INT index)
 
 	if (!(es->style & ES_MULTILINE))
 		return 0;
-	if (index > lstrlenA(es->text))
+	if (index > strlen(es->text))
 		return es->line_count - 1;
 	if (index == -1)
 		index = min(es->selection_start, es->selection_end);
@@ -2269,7 +2269,7 @@ static INT EDIT_EM_LineLength(WND *wnd, EDITSTATE *es, INT index)
 	LINEDEF *line_def;
 
 	if (!(es->style & ES_MULTILINE))
-		return lstrlenA(es->text);
+		return strlen(es->text);
 
 	if (index == -1) {
 		/* get the number of remaining non-selected chars of selected lines */
@@ -2343,7 +2343,7 @@ static BOOL EDIT_EM_LineScroll(WND *wnd, EDITSTATE *es, INT dx, INT dy)
  */
 static LRESULT EDIT_EM_PosFromChar(WND *wnd, EDITSTATE *es, INT index, BOOL after_wrap)
 {
-	INT len = lstrlenA(es->text);
+	INT len = strlen(es->text);
 	INT l;
 	INT li;
 	INT x;
@@ -2408,8 +2408,8 @@ static LRESULT EDIT_EM_PosFromChar(WND *wnd, EDITSTATE *es, INT index, BOOL afte
  */
 static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lpsz_replace)
 {
-	INT strl = lstrlenA(lpsz_replace);
-	INT tl = lstrlenA(es->text);
+	INT strl = strlen(lpsz_replace);
+	INT tl = strlen(es->text);
 	INT utl;
 	UINT s;
 	UINT e;
@@ -2430,7 +2430,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lp
 	if (e != s) {
 		/* there is something to be deleted */
 		if (can_undo) {
-			utl = lstrlenA(es->undo_text);
+			utl = strlen(es->undo_text);
 			if (!es->undo_insert_count && (*es->undo_text && (s == es->undo_position))) {
 				/* undo-buffer is extended to the right */
 				EDIT_MakeUndoFit(wnd, es, utl + e - s);
@@ -2479,7 +2479,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lp
 			EDIT_EM_EmptyUndoBuffer(wnd, es);
 
 		/* now insert */
-		tl = lstrlenA(es->text);
+		tl = strlen(es->text);
 		for (p = es->text + tl ; p >= es->text + s ; p--)
 			p[strl] = p[0];
 		for (i = 0 , p = es->text + s ; i < strl ; i++)
@@ -2598,7 +2598,7 @@ static void EDIT_EM_ScrollCaret(WND *wnd, EDITSTATE *es)
 			EDIT_UpdateText(wnd, NULL, TRUE);
 		} else if (x > es->format_rect.right) {
 			INT x_last;
-			INT len = lstrlenA(es->text);
+			INT len = strlen(es->text);
 			goal = es->format_rect.right - format_width / HSCROLL_FRACTION;
 			do {
 				es->x_offset++;
@@ -2789,7 +2789,7 @@ static void EDIT_EM_SetSel(WND *wnd, EDITSTATE *es, UINT start, UINT end, BOOL a
 {
 	UINT old_start = es->selection_start;
 	UINT old_end = es->selection_end;
-	UINT len = lstrlenA(es->text);
+	UINT len = strlen(es->text);
 
 	if (start == -1) {
 		start = es->selection_end;
@@ -2926,7 +2926,7 @@ static void EDIT_EM_SetWordBreakProc16(WND *wnd, EDITSTATE *es, EDITWORDBREAKPRO
  */
 static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 {
-	INT ulength = lstrlenA(es->undo_text);
+	INT ulength = strlen(es->undo_text);
 	LPSTR utext = HeapAlloc(es->heap, 0, ulength + 1);
 
 	lstrcpyA(utext, es->undo_text);
@@ -3100,7 +3100,7 @@ static void EDIT_WM_ContextMenu(WND *wnd, EDITSTATE *es, HWND hwnd, INT x, INT y
 	/* delete */
 	EnableMenuItem(popup, 5, MF_BYPOSITION | ((end - start) ? MF_ENABLED : MF_GRAYED));
 	/* select all */
-	EnableMenuItem(popup, 7, MF_BYPOSITION | (start || (end != lstrlenA(es->text)) ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(popup, 7, MF_BYPOSITION | (start || (end != strlen(es->text)) ? MF_ENABLED : MF_GRAYED));
 
 	TrackPopupMenu(popup, TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, wnd->hwndSelf, NULL);
 	DestroyMenu(menu);

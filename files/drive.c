@@ -1244,9 +1244,9 @@ UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
       return ret;
     }
     GetLongPathNameA(shortname, longname, MAX_PATHNAME_LEN);
-    ret = lstrlenA( longname ) + 1;
+    ret = strlen( longname ) + 1;
     if (ret > buflen) return ret;
-    lstrcpyA(buf, longname);
+    strcpy(buf, longname);
     return ret - 1;
 }
 

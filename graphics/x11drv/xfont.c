@@ -429,7 +429,7 @@ static void LFD_UnParse(LPSTR dp, UINT buf_size, LFD* lfd)
 
 static void LFD_GetWeight( fontInfo* fi, LPCSTR lpStr)
 {
-    int j = lstrlenA(lpStr);
+    int j = strlen(lpStr);
     if( j == 1 && *lpStr == '0') 
 	fi->fi_flags |= FI_POLYWEIGHT;
     else if( j == 4 )
@@ -465,7 +465,7 @@ static void LFD_GetWeight( fontInfo* fi, LPCSTR lpStr)
 
 static BOOL LFD_GetSlant( fontInfo* fi, LPCSTR lpStr)
 {
-    int l = lstrlenA(lpStr);
+    int l = strlen(lpStr);
     if( l == 1 )
     {
 	switch( tolower( *lpStr ) )
@@ -486,7 +486,7 @@ static BOOL LFD_GetSlant( fontInfo* fi, LPCSTR lpStr)
 
 static void LFD_GetStyle( fontInfo* fi, LPCSTR lpstr, int dec_style_check)
 {
-    int j = lstrlenA(lpstr);
+    int j = strlen(lpstr);
     if( j > 3 )	/* find out is there "sans" or "script" */
     {
 	j = 0;
@@ -1411,9 +1411,9 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
 	prev = pfa;
     }
 
-    j = lstrlenA(lpTypeFace) + 1;
+    j = strlen(lpTypeFace) + 1;
     pfa = HeapAlloc( GetProcessHeap(), 0, sizeof(fontAlias) +
-			       j + lstrlenA(lpAlias) + 1 );
+			       j + strlen(lpAlias) + 1 );
     if (pfa)
     {
         if (!prev)

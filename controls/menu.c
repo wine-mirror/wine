@@ -4370,7 +4370,7 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 	switch (MENU_ITEM_TYPE(menu->fType)) {
 	case MF_STRING:
  	    if (menu->text) {
-	        int len = lstrlenA(menu->text);
+	        int len = strlen(menu->text);
 	        if(lpmii->dwTypeData && lpmii->cch) {
 		    if (unicode)
 		        lstrcpynAtoW((LPWSTR) lpmii->dwTypeData, menu->text,
@@ -4401,7 +4401,7 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 	    else
 	        lstrcpynA(lpmii->dwTypeData, menu->text, lpmii->cch);
 	}
-	lpmii->cch = lstrlenA(menu->text);
+	lpmii->cch = strlen(menu->text);
     }
 
     if (lpmii->fMask & MIIM_FTYPE)

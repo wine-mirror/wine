@@ -514,7 +514,7 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path)
 	}
 
 	strcpy(fname, name);
-	if(len >= 4 && (!lstrcmpiA(fname+len-4, ".dll") || !lstrcmpiA(fname+len-4, ".exe")))
+	if(len >= 4 && (!strcasecmp(fname+len-4, ".dll") || !strcasecmp(fname+len-4, ".exe")))
 		fname[len-4] = '\0';
 
 	lo.modulename = fname;

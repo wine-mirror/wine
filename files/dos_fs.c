@@ -968,7 +968,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
       /* Check if the file exists and use the existing file name */
       if ( DOSFS_GetFullName ( tmpshortpath, TRUE, &full_name ) ) {
 	lstrcpyA ( tmpshortpath+sp, strrchr ( full_name.short_name, '\\' ) + 1 );
-	sp += lstrlenA ( tmpshortpath+sp );
+	sp += strlen ( tmpshortpath+sp );
 	lp += tmplen;
 	continue;
       }
@@ -981,7 +981,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 
     lstrcpynA ( shortpath, tmpshortpath, shortlen );
     TRACE("returning %s\n", debugstr_a(shortpath) );
-    tmplen = lstrlenA ( tmpshortpath );
+    tmplen = strlen ( tmpshortpath );
     HeapFree ( GetProcessHeap(), 0, tmpshortpath );
     
     return tmplen;

@@ -46,7 +46,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
     case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
                   *((WORD *)dialog16)++ = *((WORD *)p)++; break;
     default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
-                  ((LPSTR)dialog16) += lstrlenA( (LPSTR)dialog16 ) + 1;
+                  ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                   ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
                   break;
     }
@@ -58,14 +58,14 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
     case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
                   *((WORD *)dialog16)++ = *((WORD *)p)++; break;
     default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
-                  ((LPSTR)dialog16) += lstrlenA( (LPSTR)dialog16 ) + 1;
+                  ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                   ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
                   break;
     }
 
     /* Transfer window caption */
     lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
-    ((LPSTR)dialog16) += lstrlenA( (LPSTR)dialog16 ) + 1;
+    ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
     ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
 
     /* Transfer font info */
@@ -78,7 +78,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
             *((WORD *)dialog16)++ = *((WORD *)p)++; /* italic */
         }
         lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );  /* faceName */
-        ((LPSTR)dialog16) += lstrlenA( (LPSTR)dialog16 ) + 1;
+        ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
         ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
     }
 
@@ -120,7 +120,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
         case 0xffff:  ((WORD *)p)++; 
                       *((BYTE *)dialog16)++ = (BYTE)*((WORD *)p)++; break;
         default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
-                      ((LPSTR)dialog16) += lstrlenA( (LPSTR)dialog16 ) + 1;
+                      ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                       ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
                       break;
         }
@@ -132,7 +132,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
         case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
                       *((WORD *)dialog16)++ = *((WORD *)p)++; break;
         default:      lstrcpyWtoA( (LPSTR)dialog16, (LPWSTR)p );
-                      ((LPSTR)dialog16) += lstrlenA( (LPSTR)dialog16 ) + 1;
+                      ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                       ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
                       break;
         }
@@ -295,7 +295,7 @@ VOID WINAPI ConvertMenu32To16( LPVOID menu32, DWORD size, LPVOID menu16 )
                 level++;
        
             lstrcpyWtoA( (LPSTR)menu16, (LPWSTR)p );
-            ((LPSTR)menu16) += lstrlenA( (LPSTR)menu16 ) + 1;
+            ((LPSTR)menu16) += strlen( (LPSTR)menu16 ) + 1;
             ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
 
             if ( flags & MF_END )
@@ -309,7 +309,7 @@ VOID WINAPI ConvertMenu32To16( LPVOID menu32, DWORD size, LPVOID menu16 )
             flags = *((BYTE *)menu16)++ = (BYTE)*((WORD *)p)++;  
        
             lstrcpyWtoA( (LPSTR)menu16, (LPWSTR)p );
-            ((LPSTR)menu16) += lstrlenA( (LPSTR)menu16 ) + 1;
+            ((LPSTR)menu16) += strlen( (LPSTR)menu16 ) + 1;
             ((LPWSTR)p) += lstrlenW( (LPWSTR)p ) + 1;
 
             /* align on DWORD boundary (32-bit only) */

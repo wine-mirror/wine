@@ -1485,9 +1485,9 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
         if(unicode)
             len = lstrlenW((LPWSTR)lp);
         else if(_32bit)
-            len = lstrlenA((LPSTR)lp);
+            len = strlen((LPSTR)lp);
         else
-            len = lstrlenA((LPSTR)PTR_SEG_TO_LIN(lp));
+            len = strlen((LPSTR)PTR_SEG_TO_LIN(lp));
     }
 
     /* Find out what size the image has if not given by caller */

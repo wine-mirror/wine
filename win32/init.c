@@ -91,7 +91,7 @@ BOOL WINAPI GetComputerNameA(LPSTR name,LPDWORD size)
     {
       ret = (-1!=gethostname(name,*size));
       if (ret)
-	*size = lstrlenA(name);
+	*size = strlen(name);
     }
     __EXCEPT(page_fault)
     {

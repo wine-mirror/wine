@@ -1182,7 +1182,7 @@ BOOL WINAPI GetStringTypeExA(LCID locale,DWORD dwInfoType,LPCSTR src,
 	}
 
 	if (cchSrc==-1)
-	  cchSrc=lstrlenA(src)+1;
+	  cchSrc=strlen(src)+1;
 	  
 	switch (dwInfoType) {
 	case CT_CTYPE1:
@@ -1778,7 +1778,7 @@ INT WINAPI LCMapStringA(
     return 0;
   }
   if (srclen == -1) 
-    srclen = lstrlenA(srcstr) + 1 ;    /* (include final '\0') */
+    srclen = strlen(srcstr) + 1 ;    /* (include final '\0') */
 
 #define LCMAPSTRINGA_SUPPORTED_FLAGS (LCMAP_UPPERCASE     | \
                                         LCMAP_LOWERCASE     | \
@@ -2359,8 +2359,8 @@ UINT WINAPI CompareStringA(
   if(fdwStyle & NORM_IGNORESYMBOLS)
     FIXME("IGNORESYMBOLS not supported\n");
 
-  if (l1 == -1) l1 = lstrlenA(s1);
-  if (l2 == -1) l2 = lstrlenA(s2);
+  if (l1 == -1) l1 = strlen(s1);
+  if (l2 == -1) l2 = strlen(s2);
   	
   mapstring_flags = LCMAP_SORTKEY | fdwStyle ;
   len1 = OLE2NLS_EstimateMappingLength(lcid, mapstring_flags, s1, l1);

@@ -82,7 +82,7 @@ static void WINE_UNUSED DRIVER_LoadStartupDrivers(void)
 	HDRVR16	hDrv;
 	LPSTR	ptr;
 
-	for (ptr = str; lstrlenA(ptr) != 0; ptr += lstrlenA(ptr) + 1) {
+	for (ptr = str; *ptr; ptr += strlen(ptr) + 1) {
 	    TRACE("str='%s'\n", ptr);
 	    hDrv = OpenDriver16(ptr, "drivers", 0L);
 	    TRACE("hDrv=%04x\n", hDrv);
@@ -732,7 +732,7 @@ static	HDRVR16	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam, BOOL bCa
     
     TRACE("('%s', %08lX, %d);\n", lpFileName, lParam, bCallFrom32);
     
-    if (lstrlenA(lpFileName) < 1) 
+    if (strlen(lpFileName) < 1) 
 	return 0;
     
     lpSFN = strrchr(lpFileName, '\\');
@@ -766,7 +766,7 @@ static	HDRVR	DRIVER_TryOpenDriver32(LPCSTR lpFileName, LPARAM lParam, BOOL bCall
     
     TRACE("('%s', %08lX, %d);\n", lpFileName, lParam, bCallFrom32);
     
-    if (lstrlenA(lpFileName) < 1) 
+    if (strlen(lpFileName) < 1) 
 	return 0;
     
     lpSFN = strrchr(lpFileName, '\\');

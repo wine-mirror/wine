@@ -1220,7 +1220,7 @@ __w31_dumptree(	unsigned short idx,
 			/* all toplevel entries AND the entries in the 
 			 * toplevel subdirectory belong to \SOFTWARE\Classes
 			 */
-			if (!level && !lstrcmpA(tail,".classes")) {
+			if (!level && !strcmp(tail,".classes")) {
 				__w31_dumptree(dir->child_idx,txt,tab,head,hkey,lastmodified,level+1);
 				idx=dir->sibling_idx;
 				continue;
