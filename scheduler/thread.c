@@ -115,8 +115,8 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
     /* Free the associated memory */
 
     if (teb->socket != -1) close( teb->socket );
-    close( NtCurrentTeb()->request_fd );
-    close( NtCurrentTeb()->reply_fd );
+    close( teb->request_fd );
+    close( teb->reply_fd );
     if (teb->stack_sel) FreeSelector16( teb->stack_sel );
     FreeSelector16( teb->teb_sel );
     if (teb->buffer) munmap( (void *)teb->buffer,
