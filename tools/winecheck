@@ -346,7 +346,7 @@ sub Do_Config_Drive {
     $level = $serious ? $is_failed : $is_bad;
     $reason = "wrong Path format ".$path;
   }
-  elsif ($path =~ /\$\{(.*)\}$/)
+  elsif ($path =~ /\%(.*)\%$/)
   {
     # get path assigned to environment variable
     my $envpath = $ENV{$1};
