@@ -427,8 +427,8 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     WORD	     wIDmenu = ci->idFirstChild + ci->nActiveChildren;
     char	     lpstrDef[]="junk!";
 
-    TRACE("origin %i,%i - dim %i,%i, style %08x\n", 
-                cs->x, cs->y, cs->cx, cs->cy, (unsigned)cs->style);    
+    TRACE("origin %i,%i - dim %i,%i, style %08lx\n", 
+                cs->x, cs->y, cs->cx, cs->cy, cs->style);
     /* calculate placement */
     MDI_CalcDefaultChildPos(w, ci->nTotalCreated++, pos, 0);
 
@@ -442,8 +442,9 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     }
 
     /* restore current maximized child */
-    if( style & WS_VISIBLE && ci->hwndChildMaximized )
+    if( (style & WS_VISIBLE) && ci->hwndChildMaximized )
     {
+	TRACE("Restoring current maximized child %04x\n", ci->hwndChildMaximized);
 	if( style & WS_MAXIMIZE )
 	    SendMessageA(w->hwndSelf, WM_SETREDRAW, FALSE, 0L );
 	hwndMax = ci->hwndChildMaximized;
@@ -462,6 +463,7 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     /* fix window style */
     if( !(w->dwStyle & MDIS_ALLCHILDSTYLES) )
     {
+	TRACE("MDIS_ALLCHILDSTYLES is missing, fixing window style\n");
         style &= (WS_CHILD | WS_CLIPSIBLINGS | WS_MINIMIZE | WS_MAXIMIZE |
                   WS_CLIPCHILDREN | WS_DISABLED | WS_VSCROLL | WS_HSCROLL );
         style |= (WS_VISIBLE | WS_OVERLAPPEDWINDOW);
@@ -471,7 +473,7 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     {
 	hwnd = CreateWindowA( cs->szClass, cs->szTitle, style, 
                                 cs->x, cs->y, cs->cx, cs->cy, parent, 
-                                (HMENU16)wIDmenu, cs->hOwner, cs );
+                                (HMENU)wIDmenu, cs->hOwner, cs );
     }
     else
     {
@@ -526,8 +528,11 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
                         szTmp);
         }
         
-	if( wnd->dwStyle & WS_MINIMIZE && ci->hwndActiveChild )
+	if( (wnd->dwStyle & WS_MINIMIZE) && ci->hwndActiveChild )
+	{
+	    TRACE("Minimizing created MDI child %04x\n", hwnd);
 	    ShowWindow( hwnd, SW_SHOWMINNOACTIVE );
+	}
 	else
 	{
             /* WS_VISIBLE is clear if a) the MDI client has
@@ -535,28 +540,8 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
              * MDICreateStruct. If so the created window is not shown nor 
              * activated.
              */
-            int showflag=wnd->dwStyle & WS_VISIBLE;
-            /* clear visible flag, otherwise SetWindoPos32 ignores
-             * the SWP_SHOWWINDOW command.
-             */
-            wnd->dwStyle &= ~WS_VISIBLE;
-            if(showflag){
-                SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE );
-
-                /* Set maximized state here in case hwnd didn't receive WM_SIZE
-                 * during CreateWindow - bad!
-                 */
-
-                if((wnd->dwStyle & WS_MAXIMIZE) && !ci->hwndChildMaximized )
-                {
-                    ci->hwndChildMaximized = wnd->hwndSelf;
-                    MDI_AugmentFrameMenu( ci, w->parent, hwnd );
-                    MDI_UpdateFrameText( w->parent, ci->self, MDI_REPAINTFRAME, NULL ); 
-                }
-            }else
-                /* needed, harmless ? */
-                SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOMOVE );
-
+            if(wnd->dwStyle & WS_VISIBLE)
+		ShowWindow(hwnd, SW_SHOW);
 	}
         WIN_ReleaseWndPtr(wnd);
         TRACE("created child - %04x\n",hwnd);
