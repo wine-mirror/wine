@@ -5,8 +5,8 @@ import ntdll.dll
 
 debug_channels (msimg32)
 
-@ stub AlphaBlend
+@ stdcall AlphaBlend(long long long long long long long long long long long) AlphaBlend
 @ stub DllInitialize
-@ stdcall GradientFill (long ptr long ptr long long ) GradientFill
-@ stub TransparentBlt
-@ stub vSetDdrawflag
+@ stdcall GradientFill(long ptr long ptr long long) GradientFill
+@ stdcall TransparentBlt(long long long long long long long long long long long) TransparentBlt
+@ stdcall vSetDdrawflag() vSetDdrawflag
