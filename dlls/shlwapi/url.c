@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,6 +33,10 @@
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "wine/debug.h"
+
+HMODULE WINAPI MLLoadLibraryW(LPCWSTR,HMODULE,DWORD);
+BOOL    WINAPI MLFreeLibrary(HMODULE);
+HRESULT WINAPI MLBuildResURLW(LPCWSTR,HMODULE,DWORD,LPCWSTR,LPWSTR,DWORD);
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -154,7 +160,7 @@ static const unsigned char HashDataLookup[256] = {
  0x25, 0x45, 0x27, 0x75, 0x92, 0xB8, 0xA3, 0xC8, 0xDE, 0xEB, 0xF8, 0xF3, 0xDB,
  0x0A, 0x98, 0x83, 0x7B, 0xE5, 0xCB, 0x4C, 0x78, 0xD1 };
 
-static BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
+static inline BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
 {
 
     if (isalnum(ch))
@@ -199,7 +205,7 @@ static BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
     }
 }
 
-static BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags)
+static inline BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags)
 {
 
     if (isalnumW(ch))
@@ -394,8 +400,7 @@ DWORD WINAPI ParseURLW(LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
  *  Success: S_OK. The pszCanonicalized contains the converted Url.
  *  Failure: E_POINTER, if *pcchCanonicalized is too small.
  *
- * MSDN is wrong (at 10/30/01 - go figure). This should support the
- * following flags:                                      GLA
+ * MSDN incorrectly describes the flags for this function. They should be:
  *|    URL_DONT_ESCAPE_EXTRA_INFO    0x02000000
  *|    URL_ESCAPE_SPACES_ONLY        0x04000000
  *|    URL_ESCAPE_PERCENT            0x00001000
@@ -601,7 +606,19 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 /*************************************************************************
  *        UrlCombineA     [SHLWAPI.@]
  *
- * Uses the W version to do job.
+ * Combine two Urls.
+ *
+ * PARAMS
+ *  pszBase      [I] Base Url
+ *  pszRelative  [I] Url to combine with pszBase
+ *  pszCombined  [O] Destination for combined Url
+ *  pcchCombined [O] Destination for length of pszCombined
+ *  dwFlags      [I] URL_ flags from "shlwapi.h"
+ *
+ * RETURNS
+ *  Success: S_OK. pszCombined contains the combined Url, pcchCombined
+ *           contains its length.
+ *  Failure: An HRESULT error code indicating the error.
  */
 HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
 			   LPSTR pszCombined, LPDWORD pcchCombined,
@@ -644,6 +661,8 @@ HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
 
 /*************************************************************************
  *        UrlCombineW     [SHLWAPI.@]
+ *
+ * See UrlCombineA.
  */
 HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 			   LPWSTR pszCombined, LPDWORD pcchCombined,
@@ -698,7 +717,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 		 * it ends at next '/' or end of string.
 		 */
 		while(*work && (*work != L'/')) work++;
-		sizeloc = work - base.ap2;
+		sizeloc = (DWORD)(work - base.ap2);
 	    }
 	}
 
@@ -707,7 +726,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	 */
 	work = strrchrW((base.ap2+sizeloc), L'/');
 	if (work) {
-	    len = work - base.ap2 + 1;
+	    len = (DWORD)(work - base.ap2 + 1);
 	    base.sizep2 = len;
 	}
 	/*
@@ -902,31 +921,35 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 /*************************************************************************
  *      UrlEscapeA	[SHLWAPI.@]
  *
+ * Converts unsafe characters in a Url into escape sequences.
+ *
+ * PARAMS
+ *  pszUrl      [I]   Url to modify
+ *  pszEscaped  [O]   Destination for modified Url
+ *  pcchEscaped [I/O] Length of pszUrl, destination for length of pszEscaped
+ *  dwFlags     [I]   URL_ flags from "shlwapi.h"
+ *
+ * RETURNS
+ *  Success: S_OK. pszEscaped contains the escaped Url, pcchEscaped
+ *           contains its length.
+ *  Failure: E_POINTER, if pszEscaped is not large enough. In this case
+ *           pcchEscaped is set to the required length.
+
  * Converts unsafe characters into their escape sequences.
  *
  * NOTES
- * The converted string is returned in pszEscaped if the buffer size
- * (which should be supplied in pcchEscaped) is large enough, in this
- * case the function returns S_OK and pcchEscaped contains the length
- * of the escaped string.  If the buffer is not large enough the
- * function returns E_POINTER and pcchEscaped contains the required
- * buffer size (including room for the '\0').
+ * - By default this function stops converting at the first '?' or
+ *  '#' character (MSDN does not document this).
+ * - If dwFlags contains URL_ESCAPE_SPACES_ONLY then only spaces are
+ *   converted, but the conversion continues past a '?' or '#'.
+ * - Note that this function did not work well (or at all) in shlwapi version 4.
  *
- * By default the function stops converting at the first '?' or
- * '#'. [MSDN says differently].  If URL_ESCAPE_SPACES_ONLY flag is set
- * then only spaces are converted, but the conversion continues past a
- * '?' or '#'.
- *
- * BUGS:
- *  Have now implemented the following flags:
+ * BUGS
+ *  Only the following flags are implemented:
  *|     URL_ESCAPE_SPACES_ONLY
  *|     URL_DONT_ESCAPE_EXTRA_INFO
  *|     URL_ESCAPE_SEGMENT_ONLY
  *|     URL_ESCAPE_PERCENT
- *  Initial testing seems to indicate that this is now working like
- *  native shlwapi version 5. Note that these functions did not work
- *  well (or at all) in shlwapi version 4.
- *
  */
 HRESULT WINAPI UrlEscapeA(
 	LPCSTR pszUrl,
@@ -1089,7 +1112,7 @@ HRESULT WINAPI UrlEscapeW(
 /*************************************************************************
  *      UrlUnescapeA	[SHLWAPI.@]
  *
- * Converts escape sequences back to ordinary characters.
+ * Converts Url escape sequences back to ordinary characters.
  *
  * PARAMS
  *  pszUrl        [I/O]  Url to convert
@@ -1104,7 +1127,7 @@ HRESULT WINAPI UrlEscapeW(
  *           this case pcchUnescaped is set to the size required.
  * NOTES
  *  If dwFlags includes URL_DONT_ESCAPE_EXTRA_INFO, the conversion stops at
- *  the first occurrence of either '?' or '#'.
+ *  the first occurrence of either a '?' or '#' character.
  */
 HRESULT WINAPI UrlUnescapeA(
 	LPCSTR pszUrl,
@@ -1242,17 +1265,14 @@ HRESULT WINAPI UrlUnescapeW(
  *  no location.
  *
  * NOTES
- *  MSDN (as of 2001-11-01) says that:
- *         "The location is the segment of the URL starting with a ?
- *          or # character."
- *     Neither V4 nor V5 of shlwapi.dll implement the '?' and always return
- *     a NULL.
- *
- *  MSDN further states that:
- *         "If a file URL has a query string, the returned string is
- *          the query string."
- *     In all test cases if the scheme starts with "fi" then a NULL is
- *     returned. V5 gives the following results:
+ *  - MSDN erroneously states that "The location is the segment of the Url
+ *    starting with a '?' or '#' character". Neither V4 nor V5 of shlwapi.dll
+ *    stop at '?' and always return a NULL in this case.
+ *  - MSDN also erroneously states that "If a file URL has a query string,
+ *    the returned string is the query string". In all tested cases, if the
+ *    Url starts with "fi" then a NULL is returned. V5 gives the following results:
+ *|       Result   Url
+ *|       ------   ---
  *|       NULL     file://aa/b/cd#hohoh
  *|       #hohoh   http://aa/b/cd#hohoh
  *|       NULL     fi://aa/b/cd#hohoh
@@ -1299,6 +1319,17 @@ LPCWSTR WINAPI UrlGetLocationW(
 
 /*************************************************************************
  *      UrlCompareA	[SHLWAPI.@]
+ *
+ * Compare two Urls.
+ *
+ * PARAMS
+ *  pszUrl1      [I] First Url to compare
+ *  pszUrl2      [I] Url to compare to pszUrl1
+ *  fIgnoreSlash [I] TRUE = compare only up to a final slash
+ *
+ * RETURNS
+ *  less than zero, zero, or greater than zero indicating pszUrl2 is greater
+ *  than, equal to, or less than pszUrl1 respectively.
  */
 INT WINAPI UrlCompareA(
 	LPCSTR pszUrl1,
@@ -1310,9 +1341,9 @@ INT WINAPI UrlCompareA(
     if (!fIgnoreSlash)
 	return strcmp(pszUrl1, pszUrl2);
     len1 = strlen(pszUrl1);
-    if (pszUrl1[len1-1] == L'/') len1--;
+    if (pszUrl1[len1-1] == '/') len1--;
     len2 = strlen(pszUrl2);
-    if (pszUrl2[len2-1] == L'/') len2--;
+    if (pszUrl2[len2-1] == '/') len2--;
     if (len1 == len2)
 	return strncmp(pszUrl1, pszUrl2, len1);
     len = min(len1, len2);
@@ -1324,20 +1355,23 @@ INT WINAPI UrlCompareA(
 
 /*************************************************************************
  *      UrlCompareW	[SHLWAPI.@]
+ *
+ * See UrlCompareA.
  */
 INT WINAPI UrlCompareW(
 	LPCWSTR pszUrl1,
 	LPCWSTR pszUrl2,
 	BOOL fIgnoreSlash)
 {
-    INT ret, len, len1, len2;
+    INT ret;
+    size_t len, len1, len2;
 
     if (!fIgnoreSlash)
 	return strcmpW(pszUrl1, pszUrl2);
     len1 = strlenW(pszUrl1);
-    if (pszUrl1[len1-1] == L'/') len1--;
+    if (pszUrl1[len1-1] == '/') len1--;
     len2 = strlenW(pszUrl2);
-    if (pszUrl2[len2-1] == L'/') len2--;
+    if (pszUrl2[len2-1] == '/') len2--;
     if (len1 == len2)
 	return strncmpW(pszUrl1, pszUrl2, len1);
     len = min(len1, len2);
@@ -1351,7 +1385,7 @@ INT WINAPI UrlCompareW(
  *      HashData	[SHLWAPI.@]
  *
  * Hash an input block into a variable sized digest.
- * 
+ *
  * PARAMS
  *  lpSrc    [I] Input block
  *  nSrcLen  [I] Length of lpSrc
@@ -1409,7 +1443,7 @@ HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
   if (IsBadStringPtrA(pszUrl, -1) || IsBadWritePtr(lpDest, nDestLen))
     return E_INVALIDARG;
 
-  HashData(pszUrl, strlen(pszUrl), lpDest, nDestLen);
+  HashData((PBYTE)pszUrl, (int)strlen(pszUrl), lpDest, nDestLen);
   return S_OK;
 }
 
@@ -1431,12 +1465,24 @@ HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, INT nDestLen)
    * return the same digests for the same URL.
    */
   WideCharToMultiByte(0, 0, pszUrl, -1, szUrl, MAX_PATH, 0, 0);
-  HashData(szUrl, strlen(szUrl), lpDest, nDestLen);
+  HashData((PBYTE)szUrl, (int)strlen(szUrl), lpDest, nDestLen);
   return S_OK;
 }
 
 /*************************************************************************
  *      UrlApplySchemeA	[SHLWAPI.@]
+ *
+ * Apply a scheme to a Url.
+ *
+ * PARAMS
+ *  pszIn   [I]   Url to apply scheme to
+ *  pszOut  [O]   Destination for modified Url
+ *  pcchOut [I/O] Length of pszOut/destination for length of pszOut
+ *  dwFlags [I]   URL_ flags from "shlwapi.h"
+ *
+ * RETURNS
+ *  Success: S_OK: pszOut contains the modified Url, pcchOut contains its length.
+ *  Failure: An HRESULT error code describing the error.
  */
 HRESULT WINAPI UrlApplySchemeA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
 {
@@ -1475,8 +1521,8 @@ static HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 {
     HKEY newkey;
     BOOL j;
-    INT index, i;
-    DWORD value_len, data_len, dwType;
+    INT index;
+    DWORD value_len, data_len, dwType, i;
     WCHAR reg_path[MAX_PATH];
     WCHAR value[MAX_PATH], data[MAX_PATH];
     WCHAR Wxx, Wyy;
@@ -1519,7 +1565,7 @@ static HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
     return -1;
 }
 
-HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
+static HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 {
     HKEY newkey;
     DWORD data_len, dwType;
@@ -1549,6 +1595,8 @@ HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 
 /*************************************************************************
  *      UrlApplySchemeW	[SHLWAPI.@]
+ *
+ * See UrlApplySchemeA.
  */
 HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
 {
@@ -1689,6 +1737,15 @@ BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
 
 /*************************************************************************
  *      UrlIsNoHistoryA  	[SHLWAPI.@]
+ *
+ * Determine if a Url should not be stored in the users history list.
+ *
+ * PARAMS
+ *  pszUrl [I] Url to check
+ *
+ * RETURNS
+ *  TRUE, if pszUrl should be excluded from the history list,
+ *  FALSE otherwise.
  */
 BOOL WINAPI UrlIsNoHistoryA(LPCSTR pszUrl)
 {
@@ -1697,6 +1754,8 @@ BOOL WINAPI UrlIsNoHistoryA(LPCSTR pszUrl)
 
 /*************************************************************************
  *      UrlIsNoHistoryW  	[SHLWAPI.@]
+ *
+ * See UrlIsNoHistoryA.
  */
 BOOL WINAPI UrlIsNoHistoryW(LPCWSTR pszUrl)
 {
@@ -1899,6 +1958,19 @@ static LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
 
 /*************************************************************************
  *      UrlGetPartA  	[SHLWAPI.@]
+ *
+ * Retrieve part of a Url.
+ *
+ * PARAMS
+ *  pszIn   [I]   Url to parse
+ *  pszOut  [O]   Destination for part of pszIn requested
+ *  pcchOut [I/O] Length of pszOut/destination for length of pszOut
+ *  dwPart  [I]   URL_PART_ enum from "shlwapi.h"
+ *  dwFlags [I]   URL_ flags from "shlwapi.h"
+ *
+ * RETURNS
+ *  Success: S_OK. pszOut contains the part requested, pcchOut contains its length.
+ *  Failure: An HRESULT error code describing the error.
  */
 HRESULT WINAPI UrlGetPartA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut,
 			   DWORD dwPart, DWORD dwFlags)
@@ -1934,6 +2006,8 @@ HRESULT WINAPI UrlGetPartA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut,
 
 /*************************************************************************
  *      UrlGetPartW  	[SHLWAPI.@]
+ *
+ * See UrlGetPartA.
  */
 HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 			   DWORD dwPart, DWORD dwFlags)
@@ -2021,14 +2095,14 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 /*************************************************************************
  * PathIsURLA	[SHLWAPI.@]
  *
- * Check if the given path is a URL.
+ * Check if the given path is a Url.
  *
  * PARAMS
  *  lpszPath [I] Path to check.
  *
  * RETURNS
- *  TRUE  if lpszPath is a URL.
- *  FALSE if lpszPath is NULL or not a URL.
+ *  TRUE  if lpszPath is a Url.
+ *  FALSE if lpszPath is NULL or not a Url.
  */
 BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 {
@@ -2277,9 +2351,116 @@ HRESULT WINAPI UrlCreateFromPathW(LPCWSTR pszPath, LPWSTR pszUrl, LPDWORD pcchUr
 
 /*************************************************************************
  *      SHAutoComplete  	[SHLWAPI.@]
+ *
+ * Enable auto-completion for an edit control.
+ *
+ * PARAMS
+ *  hwndEdit [I] Handle of control to enable auto-completion for
+ *  dwFlags  [I] SHACF_ flags from "shlwapi.h"
+ *
+ * RETURNS
+ *  Success: S_OK. Auto-completion is enabled for the control.
+ *  Failure: An HRESULT error code indicating the error.
  */
 HRESULT WINAPI SHAutoComplete(HWND hwndEdit, DWORD dwFlags)
 {
   FIXME("SHAutoComplete stub\n");
   return S_FALSE;
+}
+
+/*************************************************************************
+ *  MLBuildResURLA	[SHLWAPI.405]
+ *
+ * Create a Url pointing to a resource in a module.
+ *
+ * PARAMS
+ *  lpszLibName [I] Name of the module containing the resource
+ *  hMod        [I] Callers module handle
+ *  dwFlags     [I] Undocumented flags for loading the module
+ *  lpszRes     [I] Resource name
+ *  lpszDest    [O] Destination for resulting Url
+ *  dwDestLen   [I] Length of lpszDest
+ *
+ * RETURNS
+ *  Success: S_OK. lpszDest constains the resource Url.
+ *  Failure: E_INVALIDARG, if any argument is invalid, or
+ *           E_FAIL if dwDestLen is too small.
+ */
+HRESULT WINAPI MLBuildResURLA(LPCSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
+                              LPCSTR lpszRes, LPSTR lpszDest, DWORD dwDestLen)
+{
+  WCHAR szLibName[MAX_PATH], szRes[MAX_PATH], szDest[MAX_PATH];
+  HRESULT hRet;
+
+  if (lpszLibName)
+    MultiByteToWideChar(CP_ACP, 0, lpszLibName, -1, szLibName, sizeof(szLibName)/sizeof(WCHAR));
+
+  if (lpszRes)
+    MultiByteToWideChar(CP_ACP, 0, lpszRes, -1, szRes, sizeof(szRes)/sizeof(WCHAR));
+
+  if (dwDestLen > sizeof(szLibName)/sizeof(WCHAR))
+    dwDestLen = sizeof(szLibName)/sizeof(WCHAR);
+
+  hRet = MLBuildResURLW(lpszLibName ? szLibName : NULL, hMod, dwFlags,
+                        lpszRes ? szRes : NULL, lpszDest ? szDest : NULL, dwDestLen);
+  if (SUCCEEDED(hRet) && lpszDest)
+    WideCharToMultiByte(CP_ACP, 0, szDest, -1, lpszDest, dwDestLen, 0, 0);
+
+  return hRet;
+}
+
+/*************************************************************************
+ *  MLBuildResURLA	[SHLWAPI.406]
+ *
+ * See MLBuildResURLA.
+ */
+HRESULT WINAPI MLBuildResURLW(LPCWSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
+                              LPCWSTR lpszRes, LPWSTR lpszDest, DWORD dwDestLen)
+{
+  static const WCHAR szRes[] = { 'r','e','s',':','/','/','\0' };
+#define szResLen ((sizeof(szRes) - sizeof(WCHAR))/sizeof(WCHAR))
+  HRESULT hRet = E_FAIL;
+
+  TRACE("(%s,%p,0x%08lx,%s,%p,%ld)\n", debugstr_w(lpszLibName), hMod, dwFlags,
+        debugstr_w(lpszRes), lpszDest, dwDestLen);
+
+  if (!lpszLibName || !hMod || hMod == INVALID_HANDLE_VALUE || !lpszRes ||
+      !lpszDest || (dwFlags && dwFlags != 2))
+    return E_INVALIDARG;
+
+  if (dwDestLen >= szResLen + 1)
+  {
+    dwDestLen -= (szResLen + 1);
+    memcpy(lpszDest, szRes, sizeof(szRes));
+
+    hMod = MLLoadLibraryW(lpszLibName, hMod, dwFlags);
+
+    if (hMod)
+    {
+      WCHAR szBuff[MAX_PATH];
+
+      if (GetModuleFileNameW(hMod, szBuff, sizeof(szBuff)/sizeof(WCHAR)))
+      {
+        DWORD dwPathLen = strlenW(szBuff) + 1;
+
+        if (dwDestLen >= dwPathLen)
+        {
+          DWORD dwResLen;
+
+          dwDestLen -= dwPathLen;
+          memcpy(lpszDest + szResLen, szBuff, dwPathLen * sizeof(WCHAR));
+
+          dwResLen = strlenW(lpszRes) + 1;
+          if (dwDestLen >= dwResLen + 1)
+          {
+            lpszDest[szResLen + dwPathLen + dwResLen] = '/';
+            memcpy(lpszDest + szResLen + dwPathLen, lpszRes, dwResLen * sizeof(WCHAR));
+            hRet = S_OK;
+          }
+        }
+      }
+      MLFreeLibrary(hMod);
+    }
+  }
+  return hRet;
 }

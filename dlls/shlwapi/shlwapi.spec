@@ -402,8 +402,8 @@
 402 stdcall -noname PrintDlgWrapW(ptr)
 403 stdcall -noname GetOpenFileNameWrapW(ptr)
 404 stub -noname IShellFolder_EnumObjects
-405 stub -noname MLBuildResURLA
-406 stdcall -noname MLBuildResURLW(ptr ptr ptr ptr ptr ptr)
+405 stdcall -noname MLBuildResURLA(str ptr long str ptr long)
+406 stdcall -noname MLBuildResURLW(wstr ptr long wstr ptr long)
 407 stub -noname AssocMakeProgid
 408 stub -noname AssocMakeShell
 409 stub -noname AssocMakeApplicationByKeyW

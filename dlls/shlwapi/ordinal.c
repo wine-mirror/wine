@@ -3453,7 +3453,7 @@ HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
  *
  * Unicode version of MLLoadLibraryA.
  */
-DWORD WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
+HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
 {
     WCHAR mod_path[2*MAX_PATH];
     LPWSTR ptr;
@@ -3464,9 +3464,9 @@ DWORD WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
     if (ptr) {
 	strcpyW(ptr+1, new_mod);
 	TRACE("loading %s\n", debugstr_w(mod_path));
-	return (DWORD)LoadLibraryW(mod_path);
+	return LoadLibraryW(mod_path);
     }
-    return 0;
+    return NULL;
 }
 
 /*************************************************************************
@@ -3626,15 +3626,6 @@ COLORREF WINAPI ColorHLSToRGB(WORD wHue, WORD wLuminosity, WORD wSaturation)
 
   wRed = wLuminosity * 255 / 240;
   return RGB(wRed, wRed, wRed);
-}
-
-/*************************************************************************
- *      @       [SHLWAPI.406]
- */
-DWORD WINAPI MLBuildResURLW(LPVOID u, LPVOID v, LPVOID w, LPVOID x, LPVOID y, LPVOID z)
-{
-  FIXME("%p %p %p %p %p %p\n", u, v, w, x, y, z);
-  return 0;
 }
 
 /*************************************************************************
@@ -3970,6 +3961,16 @@ BOOL WINAPI SHIsLowMemoryMachine (DWORD x)
 
 /*************************************************************************
  *      GetMenuPosFromID	[SHLWAPI.@]
+ *
+ * Return the position of a menu item from its Id.
+ *
+ * PARAMS
+ *   hMenu [I] Menu containing the item
+ *   wID   [I] Id of the menu item
+ *
+ * RETURNS
+ *  Success: The index of the menu item in hMenu.
+ *  Failure: -1, If the item is not found.
  */
 INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
 {
