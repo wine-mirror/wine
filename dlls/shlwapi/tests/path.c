@@ -235,7 +235,8 @@ struct {
     {"http://foo/bar", TRUE},
     {"c:\\foo\\bar", FALSE},
     {"foo://foo/bar", TRUE},
-    {"foo\\bar", FALSE}
+    {"foo\\bar", FALSE},
+    {"foo.bar", FALSE}
 };
 
 static LPWSTR GetWideString(const char* szString)
@@ -472,6 +473,19 @@ static void test_UrlCreateFromPath(void)
     }
 }
 
+static void test_UrlIs(void)
+{
+    BOOL ret;
+    INT i;
+
+    for(i = 0; i < sizeof(TEST_PATH_IS_URL) / sizeof(TEST_PATH_IS_URL[0]); i++) {
+        ret = UrlIsA( TEST_PATH_IS_URL[i].path, URLIS_URL );
+        ok( ret == TEST_PATH_IS_URL[i].expect,
+            "returned %d from path %s, expected %d\n", ret, TEST_PATH_IS_URL[i].path,
+            TEST_PATH_IS_URL[i].expect );
+    }
+}
+
 static void test_UrlUnescape(void)
 {
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
@@ -600,6 +614,7 @@ START_TEST(path)
   test_UrlEscape();
   test_UrlCombine();
   test_UrlCreateFromPath();
+  test_UrlIs();
   test_UrlUnescape();
 
   test_PathSearchAndQualify();
