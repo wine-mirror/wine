@@ -810,7 +810,7 @@ typedef struct tagPANOSE
 
 #define PANOSE_COUNT                   10
 
-#define PANOSE_FAMILYTYPE_INDEX        0
+#define PAN_FAMILYTYPE_INDEX           0
 #define PAN_SERIFSTYLE_INDEX           1
 #define PAN_WEIGTH_INDEX               2
 #define PAN_PROPORTION_INDEX           3
