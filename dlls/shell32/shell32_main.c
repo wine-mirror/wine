@@ -317,9 +317,26 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                               SHFILEINFOW *psfi, UINT sizeofpsfi,
                               UINT flags )
-{	FIXME("(%s,0x%lx,%p,0x%x,0x%x)\n",
-	      debugstr_w(path),dwFileAttributes,psfi,sizeofpsfi,flags);
-	return 0;
+{
+	INT len;
+	LPSTR temppath;
+	DWORD ret;
+	SHFILEINFOA temppsfi;
+
+	len = WideCharToMultiByte(CP_ACP, 0, path, -1, NULL, 0, NULL, NULL);
+	temppath = HeapAlloc(GetProcessHeap(), 0, len);
+	WideCharToMultiByte(CP_ACP, 0, path, -1, temppath, len, NULL, NULL);
+
+        WideCharToMultiByte(CP_ACP, 0, psfi->szDisplayName, -1, temppsfi.szDisplayName,
+                            sizeof(temppsfi.szDisplayName), NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, psfi->szTypeName, -1, temppsfi.szTypeName,
+                            sizeof(temppsfi.szTypeName), NULL, NULL);
+
+	ret = SHGetFileInfoA(temppath, dwFileAttributes, &temppsfi, sizeof(temppsfi), flags);
+
+	HeapFree(GetProcessHeap(), 0, temppath);
+	
+	return ret;
 }
 
 /*************************************************************************
