@@ -167,6 +167,26 @@ static const WCHAR cszlsb[]={'[',0};
 static const WCHAR cszrsb[]={']',0};
 static const WCHAR cszbs[]={'\\',0};
 
+const static WCHAR szCreateFolders[] =
+    {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
+const static WCHAR szCostFinalize[] =
+    {'C','o','s','t','F','i','n','a','l','i','z','e',0};
+const static WCHAR szInstallFiles[] =
+    {'I','n','s','t','a','l','l','F','i','l','e','s',0};
+const static WCHAR szDuplicateFiles[] =
+    {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
+const static WCHAR szWriteRegistryValues[] =
+{'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
+const static WCHAR szCostInitialize[] =
+    {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
+const static WCHAR szFileCost[] = {'F','i','l','e','C','o','s','t',0};
+const static WCHAR szInstallInitialize[] = 
+    {'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
+const static WCHAR szInstallValidate[] = 
+    {'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
+const static WCHAR szLaunchConditions[] = 
+    {'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
+
 
 /******************************************************** 
  * helper functions to get around current HACKS and such
@@ -275,7 +295,7 @@ void ACTION_remove_tracked_tempfiles(MSIPACKAGE* package)
     }
 }
 
-static void progress_message(MSIHANDLE hPackage, int a, int b, int c, int d )
+static void ui_progress(MSIHANDLE hPackage, int a, int b, int c, int d )
 {
     MSIHANDLE row;
 
@@ -285,6 +305,176 @@ static void progress_message(MSIHANDLE hPackage, int a, int b, int c, int d )
     MsiRecordSetInteger(row,3,c);
     MsiRecordSetInteger(row,4,d);
     MsiProcessMessage(hPackage, INSTALLMESSAGE_PROGRESS, row);
+    MsiCloseHandle(row);
+}
+
+static void ui_actiondata(MSIHANDLE hPackage, LPCWSTR action, MSIHANDLE record)
+{
+    static const WCHAR Query_t[] = 
+{'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','c','t','i','o',
+'n','T','e','x','t',' ','w','h','e','r','e',' ','A','c','t','i','o','n',' ','=',
+' ','\'','%','s','\'',0};
+    WCHAR message[1024];
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    WCHAR *ActionFormat=NULL;
+    DWORD sz;
+    WCHAR Query[1024];
+    MSIHANDLE db;
+    LPWSTR ptr;
+
+    sprintfW(Query,Query_t,action);
+    db = MsiGetActiveDatabase(hPackage);
+    rc = MsiDatabaseOpenViewW(db, Query, &view);
+    MsiCloseHandle(db);
+    MsiViewExecute(view, 0);
+    rc = MsiViewFetch(view,&row);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return;
+    }
+
+    if (MsiRecordIsNull(row,3))
+    {
+        MsiCloseHandle(row);
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return;
+    }
+    sz = 0;
+    MsiRecordGetStringW(row,3,NULL,&sz);
+    sz++;
+    ActionFormat = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
+    MsiRecordGetStringW(row,3,ActionFormat,&sz);
+    MsiCloseHandle(row);
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+    message[0]=0;
+    ptr = ActionFormat;
+    while (*ptr)
+    {
+        LPWSTR ptr2;
+        LPWSTR data=NULL;
+        WCHAR tmp[1023];
+        INT field;
+
+        ptr2 = strchrW(ptr,'[');
+        if (ptr2)
+        {
+            strncpyW(tmp,ptr,ptr2-ptr);
+            tmp[ptr2-ptr]=0;
+            strcatW(message,tmp);
+            ptr2++;
+            field = atoiW(ptr2);
+            sz = 0;
+            MsiRecordGetStringW(record,field,NULL,&sz);
+            sz++;
+            data = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
+            MsiRecordGetStringW(record,field,data,&sz);
+            strcatW(message,data);
+            HeapFree(GetProcessHeap(),0,data);
+            ptr=strchrW(ptr2,']');
+            ptr++;
+        }
+        else
+        {
+            strcatW(message,ptr);
+            break;
+        }
+    }
+
+    row = MsiCreateRecord(1);
+    MsiRecordSetStringW(row,1,message);
+ 
+    MsiProcessMessage(hPackage, INSTALLMESSAGE_ACTIONDATA, row);
+    MsiCloseHandle(row);
+    HeapFree(GetProcessHeap(),0,ActionFormat);
+}
+
+
+static void ui_actionstart(MSIHANDLE hPackage, LPCWSTR action)
+{
+    static const WCHAR template_s[]=
+{'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ','%','s','.',0};
+    static const WCHAR format[] = 
+{'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+    static const WCHAR Query_t[] = 
+{'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','c','t','i','o',
+'n','T','e','x','t',' ','w','h','e','r','e',' ','A','c','t','i','o','n',' ','=',
+' ','\'','%','s','\'',0};
+    WCHAR message[1024];
+    WCHAR timet[0x100];
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    WCHAR *ActionText=NULL;
+    DWORD sz;
+    WCHAR Query[1024];
+    MSIHANDLE db;
+
+    GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
+
+    sprintfW(Query,Query_t,action);
+    db = MsiGetActiveDatabase(hPackage);
+    rc = MsiDatabaseOpenViewW(db, Query, &view);
+    MsiCloseHandle(db);
+    MsiViewExecute(view, 0);
+    rc = MsiViewFetch(view,&row);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return;
+    }
+
+    sz = 0;
+    MsiRecordGetStringW(row,2,NULL,&sz);
+    sz++;
+    ActionText = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
+    MsiRecordGetStringW(row,2,ActionText,&sz);
+    MsiCloseHandle(row);
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+    sprintfW(message,template_s,timet,action,ActionText);
+
+    row = MsiCreateRecord(1);
+    MsiRecordSetStringW(row,1,message);
+ 
+    MsiProcessMessage(hPackage, INSTALLMESSAGE_ACTIONSTART, row);
+    MsiCloseHandle(row);
+    HeapFree(GetProcessHeap(),0,ActionText);
+}
+
+static void ui_actioninfo(MSIHANDLE hPackage, LPCWSTR action, BOOL start, 
+                          UINT rc)
+{
+    MSIHANDLE row;
+    static const WCHAR template_s[]=
+{'A','c','t','i','o','n',' ','s','t','a','r','t',' ','%','s',':',' ','%','s',
+'.',0};
+    static const WCHAR template_e[]=
+{'A','c','t','i','o','n',' ','e','n','d','e','d',' ','%','s',':',' ','%','s',
+'.',' ','R','e','t','u','r','n',' ','v','a','l','u','e',' ','%','i','.',0};
+    static const WCHAR format[] = 
+{'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+    WCHAR message[1024];
+    WCHAR timet[0x100];
+
+    GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
+    if (start)
+        sprintfW(message,template_s,timet,action);
+    else
+        sprintfW(message,template_e,timet,action,rc);
+    
+    row = MsiCreateRecord(1);
+    MsiRecordSetStringW(row,1,message);
+ 
+    MsiProcessMessage(hPackage, INSTALLMESSAGE_INFO, row);
     MsiCloseHandle(row);
 }
 
@@ -596,53 +786,36 @@ end:
  */
 UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
 {
-    const static WCHAR szCreateFolders[] = 
-        {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
-    const static WCHAR szCostFinalize[] = 
-        {'C','o','s','t','F','i','n','a','l','i','z','e',0};
-    const static WCHAR szInstallFiles[] = 
-        {'I','n','s','t','a','l','l','F','i','l','e','s',0};
-    const static WCHAR szDuplicateFiles[] = 
-        {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
-    const static WCHAR szWriteRegistryValues[] = 
-{'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
-    const static WCHAR szCostInitialize[] = 
-        {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
-    const static WCHAR szFileCost[] = 
-        {'F','i','l','e','C','o','s','t',0};
-    const static WCHAR szInstallInitialize[] = 
-{'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
-    const static WCHAR szInstallValidate[] = 
-{'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
-    const static WCHAR szLaunchConditions[] = 
-{'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
+    UINT rc = ERROR_SUCCESS; 
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
-    progress_message(hPackage,2,25,0,0);
+    ui_actioninfo(hPackage, action, TRUE, 0);
+    ui_actionstart(hPackage, action);
+    ui_progress(hPackage,2,1,0,0);
 
     /* pre install, setup and configureation block */
     if (strcmpW(action,szLaunchConditions)==0)
-        return ACTION_LaunchConditions(hPackage);
-    if (strcmpW(action,szCostInitialize)==0)
-        return ACTION_CostInitialize(hPackage);
-    if (strcmpW(action,szFileCost)==0)
-        return ACTION_FileCost(hPackage);
-    if (strcmpW(action,szCostFinalize)==0)
-        return ACTION_CostFinalize(hPackage);
-    if (strcmpW(action,szInstallValidate)==0)
-        return ACTION_InstallValidate(hPackage);
+        rc = ACTION_LaunchConditions(hPackage);
+    else if (strcmpW(action,szCostInitialize)==0)
+        rc = ACTION_CostInitialize(hPackage);
+    else if (strcmpW(action,szFileCost)==0)
+        rc = ACTION_FileCost(hPackage);
+    else if (strcmpW(action,szCostFinalize)==0)
+        rc = ACTION_CostFinalize(hPackage);
+    else if (strcmpW(action,szInstallValidate)==0)
+        rc = ACTION_InstallValidate(hPackage);
 
     /* install block */
-    if (strcmpW(action,szInstallInitialize)==0)
-        return ACTION_InstallInitialize(hPackage);
-    if (strcmpW(action,szCreateFolders)==0)
-        return ACTION_CreateFolders(hPackage);
-    if (strcmpW(action,szInstallFiles)==0)
-        return ACTION_InstallFiles(hPackage);
-    if (strcmpW(action,szDuplicateFiles)==0)
-        return ACTION_DuplicateFiles(hPackage);
-    if (strcmpW(action,szWriteRegistryValues)==0)
-        return ACTION_WriteRegistryValues(hPackage);
+    else if (strcmpW(action,szInstallInitialize)==0)
+        rc = ACTION_InstallInitialize(hPackage);
+    else if (strcmpW(action,szCreateFolders)==0)
+        rc = ACTION_CreateFolders(hPackage);
+    else if (strcmpW(action,szInstallFiles)==0)
+        rc = ACTION_InstallFiles(hPackage);
+    else if (strcmpW(action,szDuplicateFiles)==0)
+        rc = ACTION_DuplicateFiles(hPackage);
+    else if (strcmpW(action,szWriteRegistryValues)==0)
+        rc = ACTION_WriteRegistryValues(hPackage);
 
     /*
      Current called during itunes but unimplemented
@@ -704,16 +877,20 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
      InstallFinalize
      .
      */
-     if (ACTION_CustomAction(hPackage,action) != ERROR_SUCCESS)
+     else if ((rc = ACTION_CustomAction(hPackage,action)) != ERROR_SUCCESS)
+     {
         FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
+        rc = ERROR_SUCCESS;
+     }
 
-    return ERROR_SUCCESS;
+    ui_actioninfo(hPackage, action, FALSE, rc);
+    return rc;
 }
 
 
 static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
 {
-    UINT rc;
+    UINT rc = ERROR_SUCCESS;
     MSIHANDLE view;
     MSIHANDLE row = 0;
     WCHAR ExecSeqQuery[1024] = 
@@ -776,7 +953,7 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
         case 35: /* Directory set with formatted text. */
         case 51: /* Property set with formatted text. */
             deformat_string(hPackage,target,&deformated);
-            MsiSetPropertyW(hPackage,source,deformated);
+            rc = MsiSetPropertyW(hPackage,source,deformated);
             HeapFree(GetProcessHeap(),0,deformated);
             break;
         default:
@@ -1055,6 +1232,7 @@ static UINT ACTION_CreateFolders(MSIHANDLE hPackage)
         WCHAR full_path[MAX_PATH];
         DWORD sz;
         MSIHANDLE row = 0;
+        MSIHANDLE uirow;
 
         rc = MsiViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -1084,6 +1262,12 @@ static UINT ACTION_CreateFolders(MSIHANDLE hPackage)
         }
 
         TRACE("Folder is %s\n",debugstr_w(full_path));
+
+        /* UI stuff */
+        uirow = MsiCreateRecord(1);
+        MsiRecordSetStringW(uirow,1,full_path);
+        ui_actiondata(hPackage,szCreateFolders,uirow);
+        MsiCloseHandle(uirow);
 
         if (folder->State == 0)
             create_full_pathW(full_path);
@@ -2129,11 +2313,16 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
     UINT rc = ERROR_SUCCESS;
     INT index;
     MSIPACKAGE *package;
+    MSIHANDLE uirow;
+    WCHAR uipath[MAX_PATH];
 
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
 
     if (!package)
         return ERROR_INVALID_HANDLE;
+
+    /* increment progress bar each time action data is sent */
+    ui_progress(hPackage,1,1,1,0);
 
     for (index = 0; index < package->loaded_files; index++)
     {
@@ -2178,8 +2367,19 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
             TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
                   debugstr_w(file->TargetPath));
 
-            progress_message(hPackage,2,1,0,0);
+            /* the UI chunk */
+            uirow=MsiCreateRecord(9);
+            MsiRecordSetStringW(uirow,1,file->File);
+            strcpyW(uipath,file->TargetPath);
+            *(strrchrW(uipath,'\\')+1)=0;
+            MsiRecordSetStringW(uirow,9,uipath);
+            MsiRecordSetInteger(uirow,6,file->FileSize);
+            ui_actiondata(hPackage,szInstallFiles,uirow);
+            MsiCloseHandle(uirow);
+
             rc = !MoveFileW(file->SourcePath,file->TargetPath);
+            ui_progress(hPackage,2,0,0,0);
+
             if (rc)
                 ERR("Unable to move file\n");
             else
@@ -2453,8 +2653,21 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         return rc;
     }
 
+    /* increment progress bar each time action data is sent */
+    ui_progress(hPackage,1,1,1,0);
+
     while (1)
     {
+        static const WCHAR szHCR[] = 
+{'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T','\\',0};
+        static const WCHAR szHCU[] =
+{'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\',0};
+        static const WCHAR szHLM[] =
+{'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',
+'\\',0};
+        static const WCHAR szHU[] =
+{'H','K','E','Y','_','U','S','E','R','S','\\',0};
+
         WCHAR key[0x100];
         WCHAR name[0x100];
         LPWSTR value;
@@ -2463,6 +2676,8 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         DWORD type,size;
         WCHAR component[0x100];
         INT component_index;
+        MSIHANDLE uirow;
+        WCHAR uikey[0x110];
 
         INT   root;
         DWORD sz=0x100;
@@ -2504,14 +2719,17 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         else
             MsiRecordGetStringW(row,4,name,&sz);
    
-
         /* get the root key */
         switch (root)
         {
-            case 0:  root_key = HKEY_CLASSES_ROOT; break;
-            case 1:  root_key = HKEY_CURRENT_USER; break;
-            case 2:  root_key = HKEY_LOCAL_MACHINE; break;
-            case 3:  root_key = HKEY_USERS; break;
+            case 0:  root_key = HKEY_CLASSES_ROOT; 
+                     strcpyW(uikey,szHCR); break;
+            case 1:  root_key = HKEY_CURRENT_USER;
+                     strcpyW(uikey,szHCU); break;
+            case 2:  root_key = HKEY_LOCAL_MACHINE;
+                     strcpyW(uikey,szHLM); break;
+            case 3:  root_key = HKEY_USERS; 
+                     strcpyW(uikey,szHU); break;
             default:
                  ERR("Unknown root %i\n",root);
                  root_key=NULL;
@@ -2523,6 +2741,7 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
             continue;
         }
 
+        strcatW(uikey,key);
         if (RegCreateKeyW( root_key, key, &hkey))
         {
             ERR("Could not create key %s\n",debugstr_w(key));
@@ -2536,15 +2755,28 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
         MsiRecordGetStringW(row,5,value,&sz);
         value_data = parse_value(hPackage, value, &type, &size); 
-        HeapFree(GetProcessHeap(),0,value);
 
         if (value_data)
         {
             TRACE("Setting value %s\n",debugstr_w(name));
             RegSetValueExW(hkey, name, 0, type, value_data, size);
+
+            uirow = MsiCreateRecord(3);
+            MsiRecordSetStringW(uirow,2,name);
+            MsiRecordSetStringW(uirow,1,uikey);
+
+            if (type == REG_SZ)
+                MsiRecordSetStringW(uirow,3,(LPWSTR)value_data);
+            else
+                MsiRecordSetStringW(uirow,3,value);
+
+            ui_actiondata(hPackage,szWriteRegistryValues,uirow);
+            ui_progress(hPackage,2,0,0,0);
+            MsiCloseHandle(uirow);
+
             HeapFree(GetProcessHeap(),0,value_data);
         }
-        progress_message(hPackage,2,1,0,0);
+        HeapFree(GetProcessHeap(),0,value);
 
         MsiCloseHandle(row);
     }
@@ -2705,45 +2937,15 @@ static UINT ACTION_InstallValidate(MSIHANDLE hPackage)
 {
     DWORD progress = 0;
     static const CHAR q1[]="SELECT * FROM Registry";
-    static const CHAR q2[]=
-"select Action from InstallExecuteSequence where Sequence > 0 order by Sequence";
     UINT rc;
     MSIHANDLE view;
     MSIHANDLE row = 0;
     MSIHANDLE db;
-    BOOL flipit= FALSE;
     MSIPACKAGE* package;
 
     TRACE(" InstallValidate \n");
 
     db = MsiGetActiveDatabase(hPackage);
-    rc = MsiDatabaseOpenViewA(db, q2, &view);
-    rc = MsiViewExecute(view, 0);
-
-    while (1)
-    {
-        rc = MsiViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-        if (!flipit)
-        {
-            CHAR buf[0x100];
-            DWORD sz=0x100;
-            MsiRecordGetStringA(row,1,buf,&sz);
-            if (strcmp(buf,"InstallValidate")==0)
-                flipit=TRUE;
-        }
-        else
-            progress +=25;
-
-        MsiCloseHandle(row);
-    }
-    MsiViewClose(view);
-    MsiCloseHandle(view);
-
     rc = MsiDatabaseOpenViewA(db, q1, &view);
     rc = MsiViewExecute(view, 0);
     while (1)
@@ -2763,7 +2965,7 @@ static UINT ACTION_InstallValidate(MSIHANDLE hPackage)
     MsiCloseHandle(db);
 
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
-    progress_message(hPackage,0,progress+package->loaded_files,0,0);
+    ui_progress(hPackage,0,progress+package->loaded_files,0,0);
 
     return ERROR_SUCCESS;
 }

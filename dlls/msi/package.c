@@ -419,10 +419,13 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
 
         if (msg_field > 1)
         {
-            sprintf(number," %i: ",i);
+            sprintf(number,"%i: ",i);
             strcat(message,number);
         }
         strcat(message,tmp);
+        if (msg_field > 1)
+            strcat(message," ");
+
         HeapFree(GetProcessHeap(),0,tmp);
     }
 
