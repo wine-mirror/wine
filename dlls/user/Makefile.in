@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32.dll
 IMPORTS   = gdi32 advapi32 kernel32 ntdll
-ALTNAMES  = user.exe keyboard.dll ddeml.dll display.dll mouse.dll
+ALTNAMES  = user.exe ddeml.dll display.drv keyboard.drv mouse.drv
 EXTRALIBS = $(LIBUNICODE)
 DLLMAIN   = UserClientDllInitialize@12
 
@@ -14,9 +14,9 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 SPEC_SRCS16 = \
 	ddeml.spec \
-	display.spec \
-	keyboard.spec \
-	mouse.spec \
+	display.drv.spec \
+	keyboard.drv.spec \
+	mouse.drv.spec \
 	user.exe.spec
 
 C_SRCS = \
@@ -113,11 +113,11 @@ EXTRASUBDIRS = \
 user.exe.spec.c: user.exe.spec resources/version16.res
 	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --heap 65520 --main-module $(MODULE) --res resources/version16.res --spec $(SRCDIR)/user.exe.spec
 
-display.spec.c: display.spec resources/display.res
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --main-module $(MODULE) --res resources/display.res --spec $(SRCDIR)/display.spec
+display.drv.spec.c: display.drv.spec resources/display.res
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --main-module $(MODULE) --res resources/display.res --spec $(SRCDIR)/display.drv.spec
 
-mouse.spec.c: mouse.spec resources/mouse.res
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --main-module $(MODULE) --res resources/mouse.res --spec $(SRCDIR)/mouse.spec
+mouse.drv.spec.c: mouse.drv.spec resources/mouse.res
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --main-module $(MODULE) --res resources/mouse.res --spec $(SRCDIR)/mouse.drv.spec
 
 resources/display.res: resources/display.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/resources/display.rc

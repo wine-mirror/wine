@@ -5,13 +5,13 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32.dll
 IMPORTS   = ntdll
-ALTNAMES  = krnl386.exe comm.dll stress.dll system.drv toolhelp.dll windebug.dll win87em.dll
+ALTNAMES  = krnl386.exe comm.drv stress.dll system.drv toolhelp.dll windebug.dll win87em.dll
 LDIMPORTS = ntdll.dll
 EXTRALIBS = $(LIBUNICODE)
 DLLMAIN   = MAIN_KernelInit
 
 SPEC_SRCS16 = \
-	comm.spec \
+	comm.drv.spec \
 	krnl386.exe.spec \
 	stress.spec \
 	system.drv.spec \

@@ -148,21 +148,21 @@ INSTALLSUBDIRS = $(BUILDSUBDIRS)
 
 WIN16_FILES = \
 	avifile.dll$(DLLEXT) \
-	comm.dll$(DLLEXT) \
+	comm.drv$(DLLEXT) \
 	commdlg.dll$(DLLEXT) \
 	compobj.dll$(DLLEXT) \
 	ctl3d.dll$(DLLEXT) \
 	ctl3dv2.dll$(DLLEXT) \
 	ddeml.dll$(DLLEXT) \
 	dispdib.dll$(DLLEXT) \
-	display.dll$(DLLEXT) \
+	display.drv$(DLLEXT) \
 	gdi.exe$(DLLEXT) \
 	imm.dll$(DLLEXT) \
-	keyboard.dll$(DLLEXT) \
+	keyboard.drv$(DLLEXT) \
 	krnl386.exe$(DLLEXT) \
 	lzexpand.dll$(DLLEXT) \
 	mmsystem.dll$(DLLEXT) \
-	mouse.dll$(DLLEXT) \
+	mouse.drv$(DLLEXT) \
 	msacm.dll$(DLLEXT) \
 	msvideo.dll$(DLLEXT) \
 	ole2.dll$(DLLEXT) \
@@ -439,7 +439,7 @@ iphlpapi.dll$(DLLEXT): iphlpapi/iphlpapi.dll$(DLLEXT)
 joystick.drv$(DLLEXT): winmm/joystick/joystick.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv$(DLLEXT) $@
 
-kernel32.dll$(DLLEXT) comm.dll$(DLLEXT) krnl386.exe$(DLLEXT) \
+kernel32.dll$(DLLEXT) comm.drv$(DLLEXT) krnl386.exe$(DLLEXT) \
   stress.dll$(DLLEXT) system.drv$(DLLEXT) toolhelp.dll$(DLLEXT) \
   win87em.dll$(DLLEXT) windebug.dll$(DLLEXT): kernel/kernel32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
@@ -611,8 +611,8 @@ url.dll$(DLLEXT): url/url.dll$(DLLEXT)
 urlmon.dll$(DLLEXT): urlmon/urlmon.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) urlmon/urlmon.dll$(DLLEXT) $@
 
-user32.dll$(DLLEXT) ddeml.dll$(DLLEXT) display.dll$(DLLEXT) \
-  keyboard.dll$(DLLEXT) mouse.dll$(DLLEXT) user.exe$(DLLEXT): user/user32.dll$(DLLEXT)
+user32.dll$(DLLEXT) ddeml.dll$(DLLEXT) display.drv$(DLLEXT) \
+  keyboard.drv$(DLLEXT) mouse.drv$(DLLEXT) user.exe$(DLLEXT): user/user32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) user/user32.dll$(DLLEXT) $@
 
 version.dll$(DLLEXT) ver.dll$(DLLEXT): version/version.dll$(DLLEXT)
