@@ -344,6 +344,29 @@ static void test_reg_close_key()
     ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
 }
 
+static void test_reg_save_key()
+{
+    DWORD ret;
+
+    ret = RegSaveKey(hkey_main, "saved_key", NULL);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+}
+
+static void test_reg_load_key()
+{
+    DWORD ret;
+    HKEY hkHandle;
+
+    ret = RegLoadKey(HKEY_LOCAL_MACHINE, "Test", "saved_key");
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    ret = RegOpenKey(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    delete_key(hkHandle);
+    DeleteFile("saved_key");
+}
+
 START_TEST(registry)
 {
     setup_main_key();
@@ -352,6 +375,8 @@ START_TEST(registry)
     test_query_value_ex();
     test_reg_open_key();
     test_reg_close_key();
+    test_reg_save_key();
+    test_reg_load_key();
 
     /* cleanup */
     delete_key( hkey_main );
