@@ -73,6 +73,12 @@ typedef void *HANDLE;
 #define DECLARE_HANDLE(name) typedef void *name
 #define DECLARE_WIREM_HANDLE(name) typedef [wire_marshal(wire##name)] void*name
 
+DECLARE_HANDLE(HMODULE);
+DECLARE_HANDLE(HINSTANCE);
+DECLARE_HANDLE(HRGN);
+DECLARE_HANDLE(HTASK);
+DECLARE_HANDLE(HKEY);
+
 typedef double DATE;
 typedef LONG HRESULT;
 typedef DWORD LCID;
@@ -80,6 +86,14 @@ typedef DWORD LCID;
 typedef unsigned __int64 DWORDLONG;
 typedef __int64 LONGLONG;
 typedef unsigned __int64 ULONGLONG;
+
+typedef struct _LARGE_INTEGER {
+  LONGLONG QuadPart;
+} LARGE_INTEGER;
+
+typedef struct _ULARGE_INTEGER {
+  ULONGLONG QuadPart;
+} ULARGE_INTEGER;
 
 typedef struct _SID_IDENTIFIER_AUTHORITY {
   UCHAR Value[6];
@@ -114,6 +128,26 @@ typedef struct _SECURITY_DESCRIPTOR {
 } SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
 
 cpp_quote("#endif /* winnt.h */")
+
+cpp_quote("#ifndef _PALETTEENTRY_DEFINED")
+cpp_quote("#define _PALETTEENTRY_DEFINED")
+typedef struct tagPALETTEENTRY {
+  BYTE peRed;
+  BYTE peGreen;
+  BYTE peBlue;
+  BYTE peFlags;
+} PALETTEENTRY, *PPALETTEENTRY, *LPPALETTEENTRY;
+cpp_quote("#endif")
+
+cpp_quote("#ifndef _LOGPALETTE_DEFINED")
+cpp_quote("#define _LOGPALETTE_DEFINED")
+typedef struct tagLOGPALETTE
+{
+  WORD palVersion;
+  WORD palNumEntries;
+  [size_is(palNumEntries)] PALETTEENTRY palPalEntry[*];
+} LOGPALETTE, *PLOGPALETTE, *LPLOGPALETTE;
+cpp_quote("#endif")
 
 cpp_quote("#ifndef _FILETIME_")
 cpp_quote("#define _FILETIME_")
@@ -168,8 +202,7 @@ cpp_quote("#define ROTFLAGS_REGISTRATIONKEEPSALIVE 0x1")
 cpp_quote("#define ROTFLAGS_ALLOWANYCLIENT 0x2")
 cpp_quote("#endif")
 
-typedef enum tagCLSCTX
-{
+typedef enum tagCLSCTX {
   CLSCTX_INPROC_SERVER        = 0x1,
   CLSCTX_INPROC_HANDLER       = 0x2,
   CLSCTX_LOCAL_SERVER         = 0x4,
@@ -192,16 +225,14 @@ cpp_quote("#define CLSCTX_INPROC (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER)"
 cpp_quote("#define CLSCTX_ALL (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)")
 cpp_quote("#define CLSCTX_SERVER (CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)")
 
-typedef enum tagMSHLFLAGS
-{
+typedef enum tagMSHLFLAGS {
   MSHLFLAGS_NORMAL      = 0,
   MSHLFLAGS_TABLESTRONG = 1,
   MSHLFLAGS_TABLEWEAK   = 2,
   MSHLFLAGS_NOPING      = 4
 } MSHLFLAGS;
 
-typedef enum tagMSHCTX
-{
+typedef enum tagMSHCTX {
   MSHCTX_LOCAL            = 0,
   MSHCTX_NOSHAREDMEM      = 1,
   MSHCTX_DIFFERENTMACHINE = 2,
@@ -217,12 +248,39 @@ typedef struct _BYTE_BLOB {
 } BYTE_BLOB;
 typedef [unique] BYTE_BLOB *UP_BYTE_BLOB;
 
+typedef struct _FLAGGED_BYTE_BLOB {
+  unsigned long fFlags;
+  unsigned long clSize;
+  [size_is(clSize)] byte abData[];
+} FLAGGED_BYTE_BLOB;
+typedef [unique] FLAGGED_BYTE_BLOB *UP_FLAGGED_BYTE_BLOB;
+
 typedef struct _FLAGGED_WORD_BLOB {
   unsigned long fFlags;
   unsigned long clSize;
   [size_is(clSize)] unsigned short asData[];
 } FLAGGED_WORD_BLOB;
 typedef [unique] FLAGGED_WORD_BLOB *UP_FLAGGED_WORD_BLOB;
+
+typedef struct _BYTE_SIZEDARR {
+  unsigned long clSize;
+  [size_is(clSize)] byte *pData;
+} BYTE_SIZEDARR;
+
+typedef struct _SHORT_SIZEDARR {
+  unsigned long clSize;
+  [size_is(clSize)] unsigned short *pData;
+} WORD_SIZEDARR;
+
+typedef struct _LONG_SIZEDARR {
+  unsigned long clSize;
+  [size_is(clSize)] unsigned long *pData;
+} DWORD_SIZEDARR;
+
+typedef struct _HYPER_SIZEDARR {
+  unsigned long clSize;
+  [size_is(clSize)] hyper *pData;
+} HYPER_SIZEDARR;
 
 /******************** GDI TYPES ********************/
 
@@ -231,11 +289,25 @@ const unsigned long WDT_REMOTE_CALL = 0x52746457;
 
 typedef union _userCLIPFORMAT switch(long fContext) u {
   case WDT_INPROC_CALL: DWORD dwValue;
-  case WDT_REMOTE_CALL: [string] WCHAR *pwszName;
+  case WDT_REMOTE_CALL: LPWSTR pwszName;
 } userCLIPFORMAT;
 
 typedef [unique] userCLIPFORMAT *wireCLIPFORMAT;
 typedef [wire_marshal(wireCLIPFORMAT)] WORD CLIPFORMAT;
+
+typedef struct tagRemHGLOBAL {
+  long fNullHGlobal;
+  unsigned long cbData;
+  [size_is(cbData)] byte data[];
+} RemHGLOBAL;
+
+typedef union _userHGLOBAL switch(long fContext) u {
+  case WDT_INPROC_CALL: long               hInproc;
+  case WDT_REMOTE_CALL: FLAGGED_BYTE_BLOB *hRemote;
+  default:              long               hGlobal;
+} userHGLOBAL;
+
+typedef [unique] userHGLOBAL *wireHGLOBAL;
 
 typedef struct tagRemHMETAFILEPICT {
   long mm;
@@ -268,7 +340,69 @@ typedef union _userHMETAFILEPICT switch(long fContext) u {
 
 typedef [unique] userHMETAFILEPICT *wireHMETAFILEPICT;
 
+typedef struct tagRemHENHMETAFILE {
+  unsigned long cbData;
+  [size_is(cbData)] byte data[];
+} RemHENHMETAFILE;
+
+typedef union _userHENHMETAFILE switch(long fContext) u {
+  case WDT_INPROC_CALL: long       hInproc;
+  case WDT_REMOTE_CALL: BYTE_BLOB *hRemote;
+  default:              long       hGlobal;
+} userHENHMETAFILE;
+
+typedef [unique] userHENHMETAFILE *wireHENHMETAFILE;
+
+typedef struct tagRemHBITMAP
+{
+  unsigned long cbData;
+  [size_is(cbData)] byte data[];
+} RemHBITMAP;
+
+typedef struct _userBITMAP {
+  LONG bmType;
+  LONG bmWidth;
+  LONG bmHeight;
+  LONG bmWidthBytes;
+  WORD bmPlanes;
+  WORD bmBitsPixel;
+  ULONG cbSize;
+  [size_is(cbSize)] byte pBuffer[];
+} userBITMAP;
+
+typedef union _userHBITMAP switch(long fContext) u {
+  case WDT_INPROC_CALL: long        hInproc;
+  case WDT_REMOTE_CALL: userBITMAP *hRemote;
+  default:              long        hGlobal;
+} userHBITMAP;
+
+typedef [unique] userHBITMAP *wireHBITMAP;
+
+typedef struct tagRemHPALETTE {
+  unsigned long cbData;
+  [size_is(cbData)] byte data[];
+} RemHPALETTE;
+
+typedef struct tagrpcLOGPALETTE {
+  WORD palVersion;
+  WORD palNumEntries;
+  [size_is(palNumEntries)] PALETTEENTRY palPalEntry[];
+} rpcLOGPALETTE;
+
+typedef union _userHPALETTE switch(long fContext) u {
+  case WDT_INPROC_CALL: long           hInproc;
+  case WDT_REMOTE_CALL: rpcLOGPALETTE *hRemote;
+  default:              long           hGlobal;
+} userHPALETTE;
+
+typedef [unique] userHPALETTE *wireHPALETTE;
+
 cpp_quote("#if 0")
+DECLARE_WIREM_HANDLE(HGLOBAL);
+typedef HGLOBAL HLOCAL;
+DECLARE_WIREM_HANDLE(HBITMAP);
+DECLARE_WIREM_HANDLE(HPALETTE);
+DECLARE_WIREM_HANDLE(HENHMETAFILE);
 DECLARE_WIREM_HANDLE(HMETAFILE);
 cpp_quote("#endif")
 DECLARE_WIREM_HANDLE(HMETAFILEPICT);
@@ -287,39 +421,45 @@ cpp_quote("#endif")
 
 cpp_quote("#if 0 /* guiddef.h */")
 typedef GUID *LPGUID;
+
 typedef GUID IID;
 typedef IID *LPIID;
+
+typedef GUID CLSID;
+typedef CLSID *LPCLSID;
+
+typedef GUID FMTID;
+typedef FMTID *LPFMTID;
 
 cpp_quote("#if 0") /* for IDL only (C/C++ defs are in guiddef.h) */
 typedef GUID *REFGUID;
 typedef IID *REFIID;
+typedef CLSID *REFCLSID;
+typedef FMTID *REFFMTID;
 cpp_quote("#endif")
 
 cpp_quote("#endif /* guiddef.h */")
 
 /******************** MISC TYPES ********************/
 
-typedef enum tagDVASPECT
-{
+typedef enum tagDVASPECT {
   DVASPECT_CONTENT   = 1,
   DVASPECT_THUMBNAIL = 2,
   DVASPECT_ICON      = 4,
   DVASPECT_DOCPRINT  = 8
 } DVASPECT;
 
-typedef enum tagSTGC
-{
-  STGC_DEFAULT = 0,
-  STGC_OVERWRITE = 1,
+typedef enum tagSTGC {
+  STGC_DEFAULT       = 0,
+  STGC_OVERWRITE     = 1,
   STGC_ONLYIFCURRENT = 2,
   STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE = 4,
-  STGC_CONSOLIDATE = 8
+  STGC_CONSOLIDATE   = 8
 } STGC;
 
-typedef enum tagSTGMOVE
-{
-  STGMOVE_MOVE = 0,
-  STGMOVE_COPY = 1,
+typedef enum tagSTGMOVE {
+  STGMOVE_MOVE        = 0,
+  STGMOVE_COPY        = 1,
   STGMOVE_SHALLOWCOPY = 2
 } STGMOVE;
 
@@ -364,6 +504,11 @@ typedef VARIANT_BOOL _VARIANT_BOOL;
 cpp_quote("#define VARIANT_TRUE  ((VARIANT_BOOL)0xFFFF)")
 cpp_quote("#define VARIANT_FALSE ((VARIANT_BOOL)0x0000)")
 
+typedef struct tagBSTRBLOB {
+  ULONG cbSize;
+  [size_is(cbSize)] BYTE *pData;
+} BSTRBLOB, *LPBSTRBLOB;
+
 typedef struct tagBLOB {
   ULONG cbSize;
   [size_is(cbSize)] BYTE *pBlobData;
@@ -372,7 +517,7 @@ typedef struct tagBLOB {
 typedef struct tagCLIPDATA {
   ULONG cbSize;
   long ulClipFmt;
-  [size_is(cbSize-4)] BYTE *pClipData;
+  [size_is(cbSize-sizeof(long))] BYTE *pClipData;
 } CLIPDATA;
 cpp_quote("#define CBPCLIPDATA(cb) ((cb).cbSize - sizeof((cb).ulClipFmt))")
 
@@ -381,6 +526,56 @@ typedef ULONG PROPID;
 /******************** VARTYPE ********************/
 
 typedef unsigned short VARTYPE;
-/* FIXME: enum VARENUM */
+enum VARENUM {
+  VT_EMPTY           = 0,
+  VT_NULL            = 1,
+  VT_I2              = 2,
+  VT_I4              = 3,
+  VT_R4              = 4,
+  VT_R8              = 5,
+  VT_CY              = 6,
+  VT_DATE            = 7,
+  VT_BSTR            = 8,
+  VT_DISPATCH        = 9,
+  VT_ERROR           = 10,
+  VT_BOOL            = 11,
+  VT_VARIANT         = 12,
+  VT_UNKNOWN         = 13,
+  VT_DECIMAL         = 14,
+  VT_I1              = 16,
+  VT_UI1             = 17,
+  VT_UI2             = 18,
+  VT_UI4             = 19,
+  VT_I8              = 20,
+  VT_UI8             = 21,
+  VT_INT             = 22,
+  VT_UINT            = 23,
+  VT_VOID            = 24,
+  VT_HRESULT         = 25,
+  VT_PTR             = 26,
+  VT_SAFEARRAY       = 27,
+  VT_CARRAY          = 28,
+  VT_USERDEFINED     = 29,
+  VT_LPSTR           = 30,
+  VT_LPWSTR          = 31,
+  VT_RECORD          = 36,
+  VT_FILETIME        = 64,
+  VT_BLOB            = 65,
+  VT_STREAM          = 66,
+  VT_STORAGE         = 67,
+  VT_STREAMED_OBJECT = 68,
+  VT_STORED_OBJECT   = 69,
+  VT_BLOB_OBJECT     = 70,
+  VT_CF              = 71,
+  VT_CLSID           = 72,
+  VT_BSTR_BLOB       = 0x0fff,
+  VT_VECTOR          = 0x1000,
+  VT_ARRAY           = 0x2000,
+  VT_BYREF           = 0x4000,
+  VT_RESERVED        = 0x8000,
+  VT_ILLEGAL         = 0xffff,
+  VT_ILLEGALMASKED   = 0x0fff,
+  VT_TYPEMASK        = 0x0fff
+};
 
 } /* interface IWinTypes */

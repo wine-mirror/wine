@@ -83,6 +83,9 @@ static const long I4_MIN = -(2147483648U);
 static const DATE DATE_MIN = -657434;
 static const DATE DATE_MAX = 2958465;
 
+/* the largest valid type
+ */
+#define VT_MAXVALIDTYPE VT_CLSID
 
 /* This mask is used to set a flag in wReserved1 of
  * the VARIANTARG structure. The flag indicates if

@@ -4,6 +4,9 @@
 
 #ifndef __WIDL_WTYPES_H
 #define __WIDL_WTYPES_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "basetsd.h"
 #include "guiddef.h"
 typedef CHAR OLECHAR16;
@@ -57,6 +60,16 @@ typedef boolean BOOLEAN;
 
 typedef void *HANDLE;
 
+typedef void *HMODULE;
+
+typedef void *HINSTANCE;
+
+typedef void *HRGN;
+
+typedef void *HTASK;
+
+typedef void *HKEY;
+
 typedef double DATE;
 
 typedef LONG HRESULT;
@@ -68,6 +81,14 @@ typedef unsigned __int64 DWORDLONG;
 typedef __int64 LONGLONG;
 
 typedef unsigned __int64 ULONGLONG;
+
+typedef struct _LARGE_INTEGER {
+    LONGLONG QuadPart;
+} LARGE_INTEGER;
+
+typedef struct _ULARGE_INTEGER {
+    ULONGLONG QuadPart;
+} ULARGE_INTEGER;
 
 typedef struct _SID_IDENTIFIER_AUTHORITY {
     UCHAR Value[6];
@@ -103,6 +124,25 @@ typedef struct _SECURITY_DESCRIPTOR {
 } SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
 
 #endif /* winnt.h */
+#ifndef _PALETTEENTRY_DEFINED
+#define _PALETTEENTRY_DEFINED
+typedef struct tagPALETTEENTRY {
+    BYTE peRed;
+    BYTE peGreen;
+    BYTE peBlue;
+    BYTE peFlags;
+} PALETTEENTRY, *PPALETTEENTRY, *LPPALETTEENTRY;
+
+#endif
+#ifndef _LOGPALETTE_DEFINED
+#define _LOGPALETTE_DEFINED
+typedef struct tagLOGPALETTE {
+    WORD palVersion;
+    WORD palNumEntries;
+    PALETTEENTRY palPalEntry[1];
+} LOGPALETTE, *PLOGPALETTE, *LPLOGPALETTE;
+
+#endif
 #ifndef _FILETIME_
 #define _FILETIME_
 typedef struct _FILETIME {
@@ -155,22 +195,22 @@ typedef struct _COSERVERINFO {
 #define ROTFLAGS_ALLOWANYCLIENT 0x2
 #endif
 typedef enum tagCLSCTX {
-    CLSCTX_INPROC_SERVER = 1,
-    CLSCTX_INPROC_HANDLER = 2,
-    CLSCTX_LOCAL_SERVER = 4,
-    CLSCTX_INPROC_SERVER16 = 8,
-    CLSCTX_REMOTE_SERVER = 16,
-    CLSCTX_INPROC_HANDLER16 = 32,
-    CLSCTX_INPROC_SERVERX86 = 64,
-    CLSCTX_INPROC_HANDLERX86 = 128,
-    CLSCTX_ESERVER_HANDLER = 256,
-    CLSCTX_NO_CODE_DOWNLOAD = 1024,
-    CLSCTX_NO_CUSTOM_MARSHAL = 4096,
-    CLSCTX_ENABLE_CODE_DOWNLOAD = 8192,
-    CLSCTX_NO_FAILURE_LOG = 16384,
-    CLSCTX_DISABLE_AAA = 32768,
-    CLSCTX_ENABLE_AAA = 65536,
-    CLSCTX_FROM_DEFAULT_CONTEXT = 131072
+    CLSCTX_INPROC_SERVER = 0x1,
+    CLSCTX_INPROC_HANDLER = 0x2,
+    CLSCTX_LOCAL_SERVER = 0x4,
+    CLSCTX_INPROC_SERVER16 = 0x8,
+    CLSCTX_REMOTE_SERVER = 0x10,
+    CLSCTX_INPROC_HANDLER16 = 0x20,
+    CLSCTX_INPROC_SERVERX86 = 0x40,
+    CLSCTX_INPROC_HANDLERX86 = 0x80,
+    CLSCTX_ESERVER_HANDLER = 0x100,
+    CLSCTX_NO_CODE_DOWNLOAD = 0x400,
+    CLSCTX_NO_CUSTOM_MARSHAL = 0x1000,
+    CLSCTX_ENABLE_CODE_DOWNLOAD = 0x2000,
+    CLSCTX_NO_FAILURE_LOG = 0x4000,
+    CLSCTX_DISABLE_AAA = 0x8000,
+    CLSCTX_ENABLE_AAA = 0x10000,
+    CLSCTX_FROM_DEFAULT_CONTEXT = 0x20000
 } CLSCTX;
 
 #define CLSCTX_INPROC (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER)
@@ -198,6 +238,14 @@ typedef struct _BYTE_BLOB {
 
 typedef BYTE_BLOB *UP_BYTE_BLOB;
 
+typedef struct _FLAGGED_BYTE_BLOB {
+    unsigned long fFlags;
+    unsigned long clSize;
+    byte abData[1];
+} FLAGGED_BYTE_BLOB;
+
+typedef FLAGGED_BYTE_BLOB *UP_FLAGGED_BYTE_BLOB;
+
 typedef struct _FLAGGED_WORD_BLOB {
     unsigned long fFlags;
     unsigned long clSize;
@@ -206,17 +254,58 @@ typedef struct _FLAGGED_WORD_BLOB {
 
 typedef FLAGGED_WORD_BLOB *UP_FLAGGED_WORD_BLOB;
 
+typedef struct _BYTE_SIZEDARR {
+    unsigned long clSize;
+    byte *pData;
+} BYTE_SIZEDARR;
+
+typedef struct _SHORT_SIZEDARR {
+    unsigned long clSize;
+    unsigned short *pData;
+} WORD_SIZEDARR;
+
+typedef struct _LONG_SIZEDARR {
+    unsigned long clSize;
+    unsigned long *pData;
+} DWORD_SIZEDARR;
+
+typedef struct _HYPER_SIZEDARR {
+    unsigned long clSize;
+    hyper *pData;
+} HYPER_SIZEDARR;
+
+#define WDT_INPROC_CALL (0x48746457)
+
+#define WDT_REMOTE_CALL (0x52746457)
+
 typedef struct _userCLIPFORMAT {
     long fContext;
     union {
         DWORD dwValue;
-        WCHAR *pwszName;
+        LPWSTR pwszName;
     } u;
 } userCLIPFORMAT;
 
 typedef userCLIPFORMAT *wireCLIPFORMAT;
 
 typedef WORD CLIPFORMAT;
+
+typedef struct tagRemHGLOBAL {
+    long fNullHGlobal;
+    unsigned long cbData;
+    byte data[1];
+} RemHGLOBAL;
+
+typedef struct _userHGLOBAL {
+    long fContext;
+    union {
+        long hInproc;
+        FLAGGED_BYTE_BLOB *hRemote;
+        long hGlobal;
+    } u;
+} userHGLOBAL;
+
+typedef userHGLOBAL *wireHGLOBAL;
 
 typedef struct tagRemHMETAFILEPICT {
     long mm;
@@ -255,7 +344,82 @@ typedef struct _userHMETAFILEPICT {
 
 typedef userHMETAFILEPICT *wireHMETAFILEPICT;
 
+typedef struct tagRemHENHMETAFILE {
+    unsigned long cbData;
+    byte data[1];
+} RemHENHMETAFILE;
+
+typedef struct _userHENHMETAFILE {
+    long fContext;
+    union {
+        long hInproc;
+        BYTE_BLOB *hRemote;
+        long hGlobal;
+    } u;
+} userHENHMETAFILE;
+
+typedef userHENHMETAFILE *wireHENHMETAFILE;
+
+typedef struct tagRemHBITMAP {
+    unsigned long cbData;
+    byte data[1];
+} RemHBITMAP;
+
+typedef struct _userBITMAP {
+    LONG bmType;
+    LONG bmWidth;
+    LONG bmHeight;
+    LONG bmWidthBytes;
+    WORD bmPlanes;
+    WORD bmBitsPixel;
+    ULONG cbSize;
+    byte pBuffer[1];
+} userBITMAP;
+
+typedef struct _userHBITMAP {
+    long fContext;
+    union {
+        long hInproc;
+        userBITMAP *hRemote;
+        long hGlobal;
+    } u;
+} userHBITMAP;
+
+typedef userHBITMAP *wireHBITMAP;
+
+typedef struct tagRemHPALETTE {
+    unsigned long cbData;
+    byte data[1];
+} RemHPALETTE;
+
+typedef struct tagrpcLOGPALETTE {
+    WORD palVersion;
+    WORD palNumEntries;
+    PALETTEENTRY palPalEntry[1];
+} rpcLOGPALETTE;
+
+typedef struct _userHPALETTE {
+    long fContext;
+    union {
+        long hInproc;
+        rpcLOGPALETTE *hRemote;
+        long hGlobal;
+    } u;
+} userHPALETTE;
+
+typedef userHPALETTE *wireHPALETTE;
+
 #if 0
+typedef void *HGLOBAL;
+
+typedef HGLOBAL HLOCAL;
+
+typedef void *HBITMAP;
+
+typedef void *HPALETTE;
+
+typedef void *HENHMETAFILE;
+
 typedef void *HMETAFILE;
 
 #endif
@@ -278,10 +442,22 @@ typedef GUID IID;
 
 typedef IID *LPIID;
 
+typedef GUID CLSID;
+
+typedef CLSID *LPCLSID;
+
+typedef GUID FMTID;
+
+typedef FMTID *LPFMTID;
+
 #if 0
 typedef GUID *REFGUID;
 
 typedef IID *REFIID;
+
+typedef CLSID *REFCLSID;
+
+typedef FMTID *REFFMTID;
 
 #endif
 #endif /* guiddef.h */
@@ -349,6 +525,11 @@ typedef VARIANT_BOOL _VARIANT_BOOL;
 
 #define VARIANT_TRUE  ((VARIANT_BOOL)0xFFFF)
 #define VARIANT_FALSE ((VARIANT_BOOL)0x0000)
+typedef struct tagBSTRBLOB {
+    ULONG cbSize;
+    BYTE *pData;
+} BSTRBLOB, *LPBSTRBLOB;
+
 typedef struct tagBLOB {
     ULONG cbSize;
     BYTE *pBlobData;
@@ -365,4 +546,59 @@ typedef ULONG PROPID;
 
 typedef unsigned short VARTYPE;
 
+enum VARENUM {
+    VT_EMPTY = 0,
+    VT_NULL = 1,
+    VT_I2 = 2,
+    VT_I4 = 3,
+    VT_R4 = 4,
+    VT_R8 = 5,
+    VT_CY = 6,
+    VT_DATE = 7,
+    VT_BSTR = 8,
+    VT_DISPATCH = 9,
+    VT_ERROR = 10,
+    VT_BOOL = 11,
+    VT_VARIANT = 12,
+    VT_UNKNOWN = 13,
+    VT_DECIMAL = 14,
+    VT_I1 = 16,
+    VT_UI1 = 17,
+    VT_UI2 = 18,
+    VT_UI4 = 19,
+    VT_I8 = 20,
+    VT_UI8 = 21,
+    VT_INT = 22,
+    VT_UINT = 23,
+    VT_VOID = 24,
+    VT_HRESULT = 25,
+    VT_PTR = 26,
+    VT_SAFEARRAY = 27,
+    VT_CARRAY = 28,
+    VT_USERDEFINED = 29,
+    VT_LPSTR = 30,
+    VT_LPWSTR = 31,
+    VT_RECORD = 36,
+    VT_FILETIME = 64,
+    VT_BLOB = 65,
+    VT_STREAM = 66,
+    VT_STORAGE = 67,
+    VT_STREAMED_OBJECT = 68,
+    VT_STORED_OBJECT = 69,
+    VT_BLOB_OBJECT = 70,
+    VT_CF = 71,
+    VT_CLSID = 72,
+    VT_BSTR_BLOB = 0xfff,
+    VT_VECTOR = 0x1000,
+    VT_ARRAY = 0x2000,
+    VT_BYREF = 0x4000,
+    VT_RESERVED = 0x8000,
+    VT_ILLEGAL = 0xffff,
+    VT_ILLEGALMASKED = 0xfff,
+    VT_TYPEMASK = 0xfff
+};
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* __WIDL_WTYPES_H */
