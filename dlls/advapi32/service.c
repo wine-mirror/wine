@@ -1655,15 +1655,15 @@ QueryServiceConfigA( SC_HANDLE hService,
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
         total += sz;
 
+    *pcbBytesNeeded = total;
+
     /* if there's not enough memory, return an error */
-    if( total > *pcbBytesNeeded )
+    if( total > cbBufSize )
     {
-        *pcbBytesNeeded = total;
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         return FALSE;
     }
 
-    *pcbBytesNeeded = total;
     ZeroMemory( lpServiceConfig, total );
 
     sz = sizeof val;
