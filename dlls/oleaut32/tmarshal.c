@@ -287,6 +287,8 @@ static int _nroffuncs(ITypeInfo *tinfo) {
     /*NOTREACHED*/
 }
 
+#ifdef __i386__
+
 #include "pshpack1.h"
 
 typedef struct _TMAsmProxy {
@@ -302,70 +304,95 @@ typedef struct _TMAsmProxy {
 
 #include "poppack.h"
 
+#else /* __i386__ */
+# error You need to implement stubless proxies for your architecture
+#endif
+
 typedef struct _TMProxyImpl {
-    DWORD				*lpvtbl;
+    LPVOID				*lpvtbl;
     IRpcProxyBufferVtbl	*lpvtbl2;
-    DWORD				ref;
+    ULONG				ref;
 
     TMAsmProxy				*asmstubs;
     ITypeInfo*				tinfo;
     IRpcChannelBuffer*			chanbuf;
     IID					iid;
+    CRITICAL_SECTION	crit;
 } TMProxyImpl;
 
 static HRESULT WINAPI
-TMProxyImpl_QueryInterface(LPRPCPROXYBUFFER iface, REFIID riid, LPVOID *ppv) {
+TMProxyImpl_QueryInterface(LPRPCPROXYBUFFER iface, REFIID riid, LPVOID *ppv)
+{
     TRACE("()\n");
     if (IsEqualIID(riid,&IID_IUnknown)||IsEqualIID(riid,&IID_IRpcProxyBuffer)) {
-	*ppv = (LPVOID)iface;
-	IRpcProxyBuffer_AddRef(iface);
-	return S_OK;
+        *ppv = (LPVOID)iface;
+        IRpcProxyBuffer_AddRef(iface);
+        return S_OK;
     }
     FIXME("no interface for %s\n",debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI
-TMProxyImpl_AddRef(LPRPCPROXYBUFFER iface) {
+TMProxyImpl_AddRef(LPRPCPROXYBUFFER iface)
+{
     ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
 
     TRACE("()\n");
-    This->ref++;
-    return This->ref;
+
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI
-TMProxyImpl_Release(LPRPCPROXYBUFFER iface) {
+TMProxyImpl_Release(LPRPCPROXYBUFFER iface)
+{
+    ULONG refs;
     ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
 
     TRACE("()\n");
-    This->ref--;
-    if (This->ref) return This->ref;
-    if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
-    VirtualFree(This->asmstubs, 0, MEM_RELEASE);
-    HeapFree(GetProcessHeap(),0,This);
-    return 0;
+
+    refs = InterlockedDecrement(&This->ref);
+    if (!refs)
+    {
+        DeleteCriticalSection(&This->crit);
+        if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
+        VirtualFree(This->asmstubs, 0, MEM_RELEASE);
+        CoTaskMemFree(This);
+    }
+    return refs;
 }
 
 static HRESULT WINAPI
 TMProxyImpl_Connect(
-    LPRPCPROXYBUFFER iface,IRpcChannelBuffer* pRpcChannelBuffer
-) {
-    ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
+    LPRPCPROXYBUFFER iface,IRpcChannelBuffer* pRpcChannelBuffer)
+{
+    ICOM_THIS_MULTI(TMProxyImpl, lpvtbl2, iface);
 
-    TRACE("(%p)\n",pRpcChannelBuffer);
+    TRACE("(%p)\n", pRpcChannelBuffer);
+
+    EnterCriticalSection(&This->crit);
+
+    IRpcChannelBuffer_AddRef(pRpcChannelBuffer);
     This->chanbuf = pRpcChannelBuffer;
-    IRpcChannelBuffer_AddRef(This->chanbuf);
+
+    LeaveCriticalSection(&This->crit);
+
     return S_OK;
 }
 
 static void WINAPI
-TMProxyImpl_Disconnect(LPRPCPROXYBUFFER iface) {
-    ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
+TMProxyImpl_Disconnect(LPRPCPROXYBUFFER iface)
+{
+    ICOM_THIS_MULTI(TMProxyImpl, lpvtbl2, iface);
 
-    FIXME("()\n");
+    TRACE("()\n");
+
+    EnterCriticalSection(&This->crit);
+
     IRpcChannelBuffer_Release(This->chanbuf);
     This->chanbuf = NULL;
+
+    LeaveCriticalSection(&This->crit);
 }
 
 
@@ -424,8 +451,8 @@ serialize_param(
     BOOL		dealloc,
     TYPEDESC		*tdesc,
     DWORD		*arg,
-    marshal_state	*buf
-) {
+    marshal_state	*buf)
+{
     HRESULT hres = S_OK;
 
     TRACE("(tdesc.vt %d)\n",tdesc->vt);
@@ -620,8 +647,8 @@ serialize_LPVOID_ptr(
     BOOL		dealloc,
     TYPEDESC		*tdesc,
     DWORD		*arg,
-    marshal_state	*buf
-) {
+    marshal_state	*buf)
+{
     HRESULT	hres;
     DWORD	cookie;
 
@@ -662,8 +689,8 @@ serialize_DISPPARAM_ptr(
     BOOL		dealloc,
     TYPEDESC		*tdesc,
     DWORD		*arg,
-    marshal_state	*buf
-) {
+    marshal_state	*buf)
+{
     DWORD	cookie;
     HRESULT	hres;
     DISPPARAMS	*disp;
@@ -747,8 +774,8 @@ deserialize_param(
     BOOL		alloc,
     TYPEDESC		*tdesc,
     DWORD		*arg,
-    marshal_state	*buf
-) {
+    marshal_state	*buf)
+{
     HRESULT hres = S_OK;
 
     TRACE("vt %d at %p\n",tdesc->vt,arg);
@@ -1007,8 +1034,8 @@ deserialize_DISPPARAM_ptr(
     BOOL		alloc,
     TYPEDESC		*tdesc,
     DWORD		*arg,
-    marshal_state	*buf
-) {
+    marshal_state	*buf)
+{
     DWORD	cookie;
     DISPPARAMS	*disps;
     HRESULT	hres;
@@ -1083,8 +1110,8 @@ deserialize_DISPPARAM_ptr(
 /* Searches function, also in inherited interfaces */
 static HRESULT
 _get_funcdesc(
-    ITypeInfo *tinfo, int iMethod, FUNCDESC **fdesc, BSTR *iname, BSTR *fname
-) {
+    ITypeInfo *tinfo, int iMethod, FUNCDESC **fdesc, BSTR *iname, BSTR *fname)
+{
     int i = 0, j = 0;
     HRESULT hres;
 
@@ -1134,7 +1161,8 @@ _get_funcdesc(
 }
 
 static DWORD
-xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
+xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
+{
     DWORD		*args = ((DWORD*)&tpinfo)+1, *xargs;
     FUNCDESC		*fdesc;
     HRESULT		hres;
@@ -1146,10 +1174,13 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
     BSTR		names[10];
     int			nrofnames;
 
+    EnterCriticalSection(&tpinfo->crit);
+
     hres = _get_funcdesc(tpinfo->tinfo,method,&fdesc,&iname,&fname);
     if (hres) {
 	ERR("Did not find typeinfo/funcdesc entry for method %d!\n",method);
-	return 0;
+        LeaveCriticalSection(&tpinfo->crit);
+	return E_FAIL;
     }
 
     if (relaydeb) {
@@ -1250,6 +1281,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
     hres = IRpcChannelBuffer_GetBuffer(tpinfo->chanbuf,&msg,&(tpinfo->iid));
     if (hres) {
 	FIXME("RpcChannelBuffer GetBuffer failed, %lx\n",hres);
+        LeaveCriticalSection(&tpinfo->crit);
 	return hres;
     }
     memcpy(msg.Buffer,buf.base,buf.curoff);
@@ -1257,6 +1289,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
     hres = IRpcChannelBuffer_SendReceive(tpinfo->chanbuf,&msg,&status);
     if (hres) {
 	FIXME("RpcChannelBuffer SendReceive failed, %lx\n",hres);
+        LeaveCriticalSection(&tpinfo->crit);
 	return hres;
     }
 
@@ -1343,14 +1376,17 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
     }
     if (relaydeb) TRACE_(olerelay)(")\n");
     HeapFree(GetProcessHeap(),0,buf.base);
+
+    LeaveCriticalSection(&tpinfo->crit);
+
     return status;
 }
 
 static HRESULT WINAPI
 PSFacBuf_CreateProxy(
     LPPSFACTORYBUFFER iface, IUnknown* pUnkOuter, REFIID riid,
-    IRpcProxyBuffer **ppProxy, LPVOID *ppv
-) {
+    IRpcProxyBuffer **ppProxy, LPVOID *ppv)
+{
     HRESULT	hres;
     ITypeInfo	*tinfo;
     int		i, nroffuncs;
@@ -1364,7 +1400,7 @@ PSFacBuf_CreateProxy(
 	return hres;
     }
     nroffuncs = _nroffuncs(tinfo);
-    proxy = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TMProxyImpl));
+    proxy = CoTaskMemAlloc(sizeof(TMProxyImpl));
     if (!proxy) return E_OUTOFMEMORY;
 
     assert(sizeof(TMAsmProxy) == 12);
@@ -1372,9 +1408,11 @@ PSFacBuf_CreateProxy(
     proxy->asmstubs = VirtualAlloc(NULL, sizeof(TMAsmProxy) * nroffuncs, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if (!proxy->asmstubs) {
         ERR("Could not commit pages for proxy thunks\n");
-        HeapFree(GetProcessHeap(), 0, proxy);
+        CoTaskMemFree(proxy);
         return E_OUTOFMEMORY;
     }
+
+    InitializeCriticalSection(&proxy->crit);
 
     proxy->lpvtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPBYTE)*nroffuncs);
     for (i=0;i<nroffuncs;i++) {
@@ -1424,7 +1462,7 @@ PSFacBuf_CreateProxy(
 	xasm->xcall     -= (DWORD)&(xasm->lret);
 	xasm->lret	= 0xc2;
 	xasm->bytestopop= (nrofargs+2)*4; /* pop args, This, iMethod */
-	proxy->lpvtbl[i] = (DWORD)xasm;
+	proxy->lpvtbl[i] = xasm;
     }
     proxy->lpvtbl2	= &tmproxyvtable;
     /* 1 reference for the proxy and 1 for the object */
@@ -1438,7 +1476,7 @@ PSFacBuf_CreateProxy(
 
 typedef struct _TMStubImpl {
     IRpcStubBufferVtbl	*lpvtbl;
-    DWORD			ref;
+    ULONG			ref;
 
     LPUNKNOWN			pUnk;
     ITypeInfo			*tinfo;
@@ -1446,7 +1484,8 @@ typedef struct _TMStubImpl {
 } TMStubImpl;
 
 static HRESULT WINAPI
-TMStubImpl_QueryInterface(LPRPCSTUBBUFFER iface, REFIID riid, LPVOID *ppv) {
+TMStubImpl_QueryInterface(LPRPCSTUBBUFFER iface, REFIID riid, LPVOID *ppv)
+{
     if (IsEqualIID(riid,&IID_IRpcStubBuffer)||IsEqualIID(riid,&IID_IUnknown)){
 	*ppv = (LPVOID)iface;
 	IRpcStubBuffer_AddRef(iface);
@@ -1457,33 +1496,35 @@ TMStubImpl_QueryInterface(LPRPCSTUBBUFFER iface, REFIID riid, LPVOID *ppv) {
 }
 
 static ULONG WINAPI
-TMStubImpl_AddRef(LPRPCSTUBBUFFER iface) {
+TMStubImpl_AddRef(LPRPCSTUBBUFFER iface)
+{
     ICOM_THIS(TMStubImpl,iface);
         
     TRACE("(%p) before %lu\n", This, This->ref);
 
-    This->ref++;
-    return This->ref;
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI
-TMStubImpl_Release(LPRPCSTUBBUFFER iface) {
+TMStubImpl_Release(LPRPCSTUBBUFFER iface)
+{
+    ULONG refs;
     ICOM_THIS(TMStubImpl,iface);
 
     TRACE("(%p) after %lu\n", This, This->ref-1);
 
-    This->ref--;
-    if (This->ref)
-	return This->ref;
-
-    IRpcStubBuffer_Disconnect(iface);
-
-    HeapFree(GetProcessHeap(),0,This);
-    return 0;
+    refs = InterlockedDecrement(&This->ref);
+    if (!refs)
+    {
+        IRpcStubBuffer_Disconnect(iface);
+        CoTaskMemFree(This);
+    }
+    return refs;
 }
 
 static HRESULT WINAPI
-TMStubImpl_Connect(LPRPCSTUBBUFFER iface, LPUNKNOWN pUnkServer) {
+TMStubImpl_Connect(LPRPCSTUBBUFFER iface, LPUNKNOWN pUnkServer)
+{
     ICOM_THIS(TMStubImpl,iface);
 
     TRACE("(%p)->(%p)\n", This, pUnkServer);
@@ -1494,7 +1535,8 @@ TMStubImpl_Connect(LPRPCSTUBBUFFER iface, LPUNKNOWN pUnkServer) {
 }
 
 static void WINAPI
-TMStubImpl_Disconnect(LPRPCSTUBBUFFER iface) {
+TMStubImpl_Disconnect(LPRPCSTUBBUFFER iface)
+{
     ICOM_THIS(TMStubImpl,iface);
 
     TRACE("(%p)->()\n", This);
@@ -1506,8 +1548,8 @@ TMStubImpl_Disconnect(LPRPCSTUBBUFFER iface) {
 
 static HRESULT WINAPI
 TMStubImpl_Invoke(
-    LPRPCSTUBBUFFER iface, RPCOLEMESSAGE* xmsg,IRpcChannelBuffer*rpcchanbuf
-) {
+    LPRPCSTUBBUFFER iface, RPCOLEMESSAGE* xmsg,IRpcChannelBuffer*rpcchanbuf)
+{
     int		i;
     FUNCDESC	*fdesc;
     ICOM_THIS(TMStubImpl,iface);
@@ -1738,7 +1780,7 @@ PSFacBuf_CreateStub(
 	FIXME("No typeinfo for %s?\n",debugstr_guid(riid));
 	return hres;
     }
-    stub = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TMStubImpl));
+    stub = CoTaskMemAlloc(sizeof(TMStubImpl));
     if (!stub)
 	return E_OUTOFMEMORY;
     stub->lpvtbl	= &tmstubvtbl;
