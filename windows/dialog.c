@@ -89,9 +89,6 @@ typedef struct
     UINT checkID;
 } RADIOGROUP;
 
-  /* Dialog base units */
-static WORD xBaseUnit = 0, yBaseUnit = 0;
-
 
 /*********************************************************************
  * dialog class descriptor
@@ -146,7 +143,7 @@ BOOL DIALOG_DisableOwner( HWND hOwner )
 }
 
 /***********************************************************************
- *           DIALOG_GetCharSizeFromDC
+ *           DIALOG_GetCharSize
  *
  * Despite most of MSDN insisting that the horizontal base unit is
  * tmAveCharWidth it isn't.  Knowledge base article Q145994
@@ -154,15 +151,12 @@ BOOL DIALOG_DisableOwner( HWND hOwner )
  * says that we should take the average of the 52 English upper and lower
  * case characters.
  */
-static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
+BOOL DIALOG_GetCharSize( HDC hDC, HFONT hFont, SIZE * pSize )
 {
     HFONT hFontPrev = 0;
     char *alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     SIZE sz;
     TEXTMETRICA tm;
-
-    pSize->cx = xBaseUnit;
-    pSize->cy = yBaseUnit;
 
     if(!hDC) return FALSE;
 
@@ -176,52 +170,6 @@ static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
     if (hFontPrev) SelectObject(hDC, hFontPrev);
 
     TRACE("dlg base units: %ld x %ld\n", pSize->cx, pSize->cy);
-    return TRUE;
-}
-
-/***********************************************************************
- *           DIALOG_GetCharSize
- *
- *  A convenient variant of DIALOG_GetCharSizeFromDC.
- */
-BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize )
-{
-    HDC  hDC = GetDC(0);
-    BOOL Success = DIALOG_GetCharSizeFromDC( hDC, hFont, pSize );
-    ReleaseDC(0, hDC);
-    return Success;
-}
-
-/***********************************************************************
- *           DIALOG_Init
- *
- * Initialisation of the dialog manager.
- */
-BOOL DIALOG_Init(void)
-{
-    HDC hdc;
-    SIZE size;
-
-      /* Calculate the dialog base units */
-
-    if (!(hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
-    {
-	ERR("Could not create Display DC\n");
-	return FALSE;
-    }
-
-    if (!DIALOG_GetCharSizeFromDC( hdc, 0, &size ))
-    {
-	DeleteDC( hdc );
-	ERR("Could not initialize base dialog units\n");
-	return FALSE;
-    }
-
-    DeleteDC( hdc );
-    xBaseUnit = size.cx;
-    yBaseUnit = size.cy;
-
-    TRACE("base units = %d,%d\n", xBaseUnit, yBaseUnit );
     return TRUE;
 }
 
@@ -545,6 +493,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     WND * wndPtr;
     DLG_TEMPLATE template;
     DIALOGINFO * dlgInfo;
+    DWORD units = GetDialogBaseUnits();
     BOOL ownerEnabled = TRUE;
 
       /* Parse dialog template */
@@ -558,8 +507,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     dlgInfo->hwndFocus   = 0;
     dlgInfo->hUserFont   = 0;
     dlgInfo->hMenu       = 0;
-    dlgInfo->xBaseUnit   = xBaseUnit;
-    dlgInfo->yBaseUnit   = yBaseUnit;
+    dlgInfo->xBaseUnit   = LOWORD(units);
+    dlgInfo->yBaseUnit   = HIWORD(units);
     dlgInfo->idResult    = 0;
     dlgInfo->flags       = 0;
     dlgInfo->hDialogHeap = 0;
@@ -578,7 +527,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         int pixels;
 	dc = GetDC(0);
 	pixels = MulDiv(template.pointSize, GetDeviceCaps(dc , LOGPIXELSY), 72);
-	ReleaseDC(0, dc);
         dlgInfo->hUserFont = CreateFontW( -pixels, 0, 0, 0, template.weight,
                                           template.italic, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
                                           PROOF_QUALITY, FF_DONTCARE,
@@ -586,12 +534,13 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         if (dlgInfo->hUserFont)
         {
             SIZE charSize;
-            if (DIALOG_GetCharSize( dlgInfo->hUserFont, &charSize ))
+            if (DIALOG_GetCharSize( dc, dlgInfo->hUserFont, &charSize ))
             {
                 dlgInfo->xBaseUnit = charSize.cx;
                 dlgInfo->yBaseUnit = charSize.cy;
             }
         }
+        ReleaseDC(0, dc);
         TRACE("units = %d,%d\n", dlgInfo->xBaseUnit, dlgInfo->yBaseUnit );
     }
 
@@ -1358,7 +1307,21 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
  */
 DWORD WINAPI GetDialogBaseUnits(void)
 {
-    return MAKELONG( xBaseUnit, yBaseUnit );
+    static DWORD units;
+
+    if (!units)
+    {
+        HDC hdc;
+        SIZE size;
+
+        if ((hdc = GetDC(0)))
+        {
+            if (DIALOG_GetCharSize( hdc, 0, &size )) units = MAKELONG( size.cx, size.cy );
+            ReleaseDC( 0, hdc );
+        }
+        TRACE("base units = %d,%d\n", LOWORD(units), HIWORD(units) );
+    }
+    return units;
 }
 
 

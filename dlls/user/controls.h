@@ -138,8 +138,7 @@ inline static DIALOGINFO *DIALOG_get_info( HWND hwnd )
     return (DIALOGINFO *)GetWindowLongW( hwnd, DWL_WINE_DIALOGINFO );
 }
 
-extern BOOL DIALOG_Init(void);
-extern BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize );
+extern BOOL DIALOG_GetCharSize( HDC hdc, HFONT hFont, SIZE * pSize );
 extern void DIALOG_EnableOwner( HWND hOwner );
 extern BOOL DIALOG_DisableOwner( HWND hOwner );
 extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner );

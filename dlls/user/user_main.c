@@ -243,9 +243,6 @@ static BOOL process_attach(void)
     /* Initialize built-in window classes */
     controls_init();
 
-    /* Initialize dialog manager */
-    if (!DIALOG_Init()) return FALSE;
-
     /* Initialize menus */
     if (!MENU_Init()) return FALSE;
 

@@ -324,19 +324,19 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
         int pixels;
         dc = GetDC(0);
         pixels = MulDiv(template.pointSize, GetDeviceCaps(dc , LOGPIXELSY), 72);
-        ReleaseDC(0, dc);
         dlgInfo->hUserFont = CreateFontA( -pixels, 0, 0, 0, FW_DONTCARE,
                                           FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
                                           PROOF_QUALITY, FF_DONTCARE, template.faceName );
         if (dlgInfo->hUserFont)
         {
             SIZE charSize;
-            if (DIALOG_GetCharSize( dlgInfo->hUserFont, &charSize ))
+            if (DIALOG_GetCharSize( dc, dlgInfo->hUserFont, &charSize ))
             {
                 dlgInfo->xBaseUnit = charSize.cx;
                 dlgInfo->yBaseUnit = charSize.cy;
             }
         }
+        ReleaseDC(0, dc);
         TRACE("units = %d,%d\n", dlgInfo->xBaseUnit, dlgInfo->yBaseUnit );
     }
 
