@@ -32,6 +32,7 @@
 #include "win.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 
 Cursor CURSORICON_XCursor = None;  /* Current X cursor */
@@ -278,8 +279,8 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
 
     size = DIB_BitmapInfoSize( bmi, DIB_RGB_COLORS );
     /* Make sure we have room for the monochrome bitmap later on */
-    size = max( size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD) );
-    pInfo = (BITMAPINFO *)malloc( size );
+    size = MAX( size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD) );
+    pInfo = (BITMAPINFO *)xmalloc( size );
     memcpy( pInfo, bmi, size );
 
     if (pInfo->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
@@ -442,7 +443,7 @@ HICON LoadIcon( HANDLE hInstance, SEGPTR name )
 
     return CURSORICON_Load( hInstance, name,
                             SYSMETRICS_CXICON, SYSMETRICS_CYICON,
-                            min( 16, 1 << screenDepth ), FALSE );
+                            MIN( 16, 1 << screenDepth ), FALSE );
 }
 
 
@@ -506,7 +507,7 @@ HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
  */
 HICON CopyIcon( HANDLE hInstance, HICON hIcon )
 {
-    dprintf_icon( stddeb, "CopyIcon: %04x %04x\n", hInstance, hIcon );
+    dprintf_icon( stddeb, "CopyIcon: "NPFMT" "NPFMT"\n", hInstance, hIcon );
     return CURSORICON_Copy( hInstance, hIcon );
 }
 
@@ -516,7 +517,7 @@ HICON CopyIcon( HANDLE hInstance, HICON hIcon )
  */
 HCURSOR CopyCursor( HANDLE hInstance, HCURSOR hCursor )
 {
-    dprintf_cursor( stddeb, "CopyCursor: %04x %04x\n", hInstance, hCursor );
+    dprintf_cursor( stddeb, "CopyCursor: "NPFMT" "NPFMT"\n", hInstance, hCursor );
     return CURSORICON_Copy( hInstance, hCursor );
 }
 
@@ -526,8 +527,9 @@ HCURSOR CopyCursor( HANDLE hInstance, HCURSOR hCursor )
  */
 BOOL DestroyIcon( HICON hIcon )
 {
-    dprintf_icon( stddeb, "DestroyIcon: %04x\n", hIcon );
-    return GlobalFree( hIcon );
+    dprintf_icon( stddeb, "DestroyIcon: "NPFMT"\n", hIcon );
+    /* FIXME: should check for OEM icon here */
+    return (GlobalFree( hIcon ) != 0);
 }
 
 
@@ -536,8 +538,9 @@ BOOL DestroyIcon( HICON hIcon )
  */
 BOOL DestroyCursor( HCURSOR hCursor )
 {
-    dprintf_cursor( stddeb, "DestroyCursor: %04x\n", hCursor );
-    return GlobalFree( hCursor );
+    dprintf_cursor( stddeb, "DestroyCursor: "NPFMT"\n", hCursor );
+    /* FIXME: should check for OEM cursor here */
+    return (GlobalFree( hCursor ) != 0);
 }
 
 
@@ -628,7 +631,7 @@ static BOOL CURSORICON_SetCursor( HCURSOR hCursor )
         if (!(ptr = (CURSORICONINFO*)GlobalLock( hCursor ))) return FALSE;
         if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
         {
-            fprintf( stderr, "Cursor %04x has more than 1 bpp!\n", hCursor );
+            fprintf( stderr, "Cursor "NPFMT" has more than 1 bpp!\n", hCursor );
             return FALSE;
         }
 
@@ -672,22 +675,26 @@ static BOOL CURSORICON_SetCursor( HCURSOR hCursor )
              * bits on the screen) to black. This require some boolean
              * arithmetic:
              *
-             *   Windows                        X11
-             * Xor    And      Result      Bits     Mask
-             *  0      0     black          0        1
-             *  0      1     no change      X        0
-             *  1      0     white          1        1
-             *  1      1     inverted       0        1  (=black)
+             *         Windows          |          X11
+             * Xor    And      Result   |   Bits     Mask     Result
+             *  0      0     black      |    0        1     background
+             *  0      1     no change  |    X        0     no change
+             *  1      0     white      |    1        1     foreground
+             *  1      1     inverted   |    0        1     background
              *
              * which gives:
-             *  Bits = 'Xor' xor 'And'
+             *  Bits = 'Xor' and not 'And'
              *  Mask = 'Xor' or not 'And'
+             *
+             * FIXME: apparently some servers do support 'inverted' color.
+             * I don't know if it's correct per the X spec, but maybe
+             * we ought to take advantage of it.  -- AJ
              */
             XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
             XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXxor );
+            XSetFunction( display, BITMAP_monoGC, GXandReverse );
             XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
             XSetFunction( display, BITMAP_monoGC, GXorReverse );
@@ -740,7 +747,7 @@ HCURSOR SetCursor( HCURSOR hCursor )
     HCURSOR hOldCursor;
 
     if (hCursor == hActiveCursor) return hActiveCursor;  /* No change */
-    dprintf_cursor( stddeb, "SetCursor: %04x\n", hCursor );
+    dprintf_cursor( stddeb, "SetCursor: "NPFMT"\n", hCursor );
     hOldCursor = hActiveCursor;
     hActiveCursor = hCursor;
     /* Change the cursor shape only if it is visible */
@@ -755,7 +762,7 @@ HCURSOR SetCursor( HCURSOR hCursor )
 void SetCursorPos( short x, short y )
 {
     dprintf_cursor( stddeb, "SetCursorPos: x=%d y=%d\n", x, y );
-    XWarpPointer( display, None, rootWindow, 0, 0, 0, 0, x, y );
+    XWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, x, y );
 }
 
 
@@ -818,7 +825,8 @@ void GetCursorPos( POINT *pt )
 	pt->x = rootX + desktopX;
 	pt->y = rootY + desktopY;
     }
-    dprintf_cursor(stddeb, "GetCursorPos: ret=%d,%d\n", pt->x, pt->y );
+    dprintf_cursor(stddeb, "GetCursorPos: ret=%ld,%ld\n", (LONG)pt->x, 
+		   (LONG)pt->y );
 }
 
 
@@ -836,7 +844,7 @@ void GetClipCursor( RECT *rect )
  */
 WORD GetIconID( HANDLE hResource, DWORD resType )
 {
-    fprintf( stderr, "GetIconId(%04x,%ld): empty stub!\n",
+    fprintf( stderr, "GetIconId("NPFMT",%ld): empty stub!\n",
              hResource, resType );
     return 0;
 }
@@ -847,7 +855,7 @@ WORD GetIconID( HANDLE hResource, DWORD resType )
  */
 HICON LoadIconHandler( HANDLE hResource, BOOL bNew )
 {
-    fprintf( stderr, "LoadIconHandle(%04x,%d): empty stub!\n",
+    fprintf( stderr, "LoadIconHandle("NPFMT",%d): empty stub!\n",
              hResource, bNew );
     return 0;
 }

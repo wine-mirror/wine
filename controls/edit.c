@@ -18,6 +18,7 @@
 #include "user.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 
 #ifdef WINELIB32
@@ -46,7 +47,7 @@ typedef struct
     RECT fmtrc;              /* rectangle in which to format text */
     int txtht;               /* height of text line in pixels */
     HANDLE hText;            /* handle to text buffer */
-    short *CharWidths;       /* widths of chars in font */
+    INT *CharWidths;         /* widths of chars in font */
     unsigned int *textptrs;  /* list of line offsets */
     char *BlankLine;         /* to fill blank lines quickly */
     int CurrCol;             /* current column */
@@ -106,7 +107,12 @@ static HLOCAL EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
 {
     HLOCAL ret;
 
+#if defined(WINELIB)
+    /* temporary fix, until Local memory is correctly implemented in WINELIB */
+    ret = LocalAlloc( flags, bytes );
+#else
     ret = LOCAL_Alloc( WIN_GetWindowInstance(hwnd), flags, bytes );
+#endif
     if (!ret)
         printf("EDIT_HeapAlloc: Out of heap-memory\n");
     return ret;
@@ -122,9 +128,13 @@ static void *EDIT_HeapLock(HWND hwnd, HANDLE handle)
     HINSTANCE hinstance = WIN_GetWindowInstance( hwnd );
     HANDLE offs;
     
+#if defined(WINELIB)
+    return handle;
+#else
     if (handle == 0) return 0;
     offs = LOCAL_Lock( hinstance, handle );
     return PTR_SEG_OFF_TO_LIN( hinstance, offs );
+#endif
 }
 
 /*********************************************************************
@@ -132,8 +142,12 @@ static void *EDIT_HeapLock(HWND hwnd, HANDLE handle)
  */
 static void EDIT_HeapUnlock(HWND hwnd, HANDLE handle)
 {
+#if defined(WINELIB)
+    return 0;
+#else
     if (handle == 0) return;
     LOCAL_Unlock( WIN_GetWindowInstance( hwnd ), handle );
+#endif
 }
 
 /*********************************************************************
@@ -143,8 +157,12 @@ static void EDIT_HeapUnlock(HWND hwnd, HANDLE handle)
  */
 static HLOCAL EDIT_HeapReAlloc(HWND hwnd, HANDLE handle, int bytes)
 {
+#if defined(WINELIB)
+    return LocalReAlloc( handle, bytes, LMEM_FIXED );
+#else
     return LOCAL_ReAlloc( WIN_GetWindowInstance(hwnd), handle, bytes, 
 			  LMEM_FIXED );
+#endif
 }
 
 
@@ -155,7 +173,11 @@ static HLOCAL EDIT_HeapReAlloc(HWND hwnd, HANDLE handle, int bytes)
  */
 static void EDIT_HeapFree(HWND hwnd, HANDLE handle)
 {
+#if defined(WINELIB)
+    LocalFree( handle );
+#else
     LOCAL_Free( WIN_GetWindowInstance(hwnd), handle );
+#endif
 }
 
 
@@ -166,7 +188,11 @@ static void EDIT_HeapFree(HWND hwnd, HANDLE handle)
  */
 static unsigned int EDIT_HeapSize(HWND hwnd, HANDLE handle)
 {
+#if defined(WINELIB)
+    return LocalSize( handle );
+#else
     return LOCAL_Size( WIN_GetWindowInstance(hwnd), handle );
+#endif
 }
 
 /********************************************************************
@@ -239,7 +265,7 @@ static void EDIT_ClearTextPointers(HWND hwnd)
     EDITSTATE *es = EDIT_GetEditState(hwnd);
     
     dprintf_edit( stddeb, "EDIT_ClerTextPointers\n" );
-    es->textptrs = realloc(es->textptrs, sizeof(int));
+    es->textptrs = xrealloc(es->textptrs, sizeof(int));
     es->textptrs[0] = 0;
 }
 
@@ -267,7 +293,7 @@ static void EDIT_BuildTextPointers(HWND hwnd)
     } else es->wlines = 1;
     
     dprintf_edit( stddeb, "EDIT_BuildTextPointers: realloc\n" );
-    es->textptrs = realloc(es->textptrs, (es->wlines + 2) * sizeof(int));
+    es->textptrs = xrealloc(es->textptrs, (es->wlines + 2) * sizeof(int));
     
     cp = text;
     dprintf_edit(stddeb,"BuildTextPointers: %d lines, pointer %p\n", 
@@ -290,7 +316,7 @@ static void EDIT_BuildTextPointers(HWND hwnd)
 	                                     /* width of line in pixels */
 	    cp++;
 	}
-	es->textwidth = max(es->textwidth, len);
+	es->textwidth = MAX(es->textwidth, len);
 	if (*cp)
 	    cp++;                            /* skip '\n' */
     }
@@ -345,7 +371,7 @@ static char *EDIT_GetTextLine(HWND hwnd, int selection)
     else len = cp - cp1;
     
     /* store selected line and return handle */
-    cp = malloc( len + 1 );
+    cp = xmalloc( len + 1 );
     strncpy( cp, cp1, len);
     cp[len] = 0;
     return cp;
@@ -497,8 +523,8 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     if (strlen(es->BlankLine) < (es->ClientWidth / es->CharWidths[32]) + 2)
     {
 	dprintf_edit( stddeb, "EDIT_WriteText: realloc\n" );
-        es->BlankLine = realloc(es->BlankLine, 
-				(es->ClientWidth / es->CharWidths[32]) + 2);
+        es->BlankLine = xrealloc(es->BlankLine, 
+				 (es->ClientWidth / es->CharWidths[32]) + 2);
         memset(es->BlankLine, ' ', (es->ClientWidth / es->CharWidths[32]) + 2);
 	es->BlankLine[(es->ClientWidth / es->CharWidths[32]) + 1] = 0;
     }
@@ -585,14 +611,14 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
     /* make sure rectangle is within window */
     if (rc.left >= es->ClientWidth - 1)
     {
-	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.left (%d) is greater than right edge\n",
-	       rc.left);
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.left (%ld) is greater than right edge\n",
+	       (LONG)rc.left);
 	return;
     }
     if (rc.right <= 0)
     {
-	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.right (%d) is less than left edge\n",
-	       rc.right);
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.right (%ld) is less than left edge\n",
+	       (LONG)rc.right);
 	return;
     }
     if (y - es->wtop < (rc.top / es->txtht) || 
@@ -626,7 +652,7 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
 	off += rc.left;
 	lnlen = lnlen1 - off;
     }
-    len = min(lnlen, rc.right - rc.left);
+    len = MIN(lnlen, rc.right - rc.left);
 
     if (SelMarked(es))
     {
@@ -655,7 +681,7 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
 	    col = EDIT_StrWidth(hwnd, lp, sbc, 0);
 	    if (col > (es->wleft + rc.left))
 	    {
-		len = min(col - off, rc.right - off);
+		len = MIN(col - off, rc.right - off);
 		EDIT_WriteText(hwnd, lp, off, len, y - es->wtop, 
 			       rc.left, &rc, FALSE, FALSE);
 		off = col;
@@ -665,24 +691,24 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
 		col = EDIT_StrWidth(hwnd, lp, sec, 0);
 		if (col < (es->wleft + rc.right))
 		{
-		    len = min(col - off, rc.right - off);
+		    len = MIN(col - off, rc.right - off);
 		    EDIT_WriteText(hwnd, lp, off, len, y - es->wtop,
 				   off - es->wleft, &rc, FALSE, TRUE);
 		    off = col;
-		    len = min(lnlen - off, rc.right - off);
+		    len = MIN(lnlen - off, rc.right - off);
 		    EDIT_WriteText(hwnd, lp, off, len, y - es->wtop,
 				   off - es->wleft, &rc, TRUE, FALSE);
 		}
 		else
 		{
-		    len = min(lnlen - off, rc.right - off);
+		    len = MIN(lnlen - off, rc.right - off);
 		    EDIT_WriteText(hwnd, lp, off, len, y - es->wtop,
 				   off - es->wleft, &rc, TRUE, TRUE);
 		}
 	    }
 	    else
 	    {
-		len = min(lnlen - off, rc.right - off);
+		len = MIN(lnlen - off, rc.right - off);
 		if (col < (es->wleft + rc.right))
 		    EDIT_WriteText(hwnd, lp, off, len, y - es->wtop,
 				   off - es->wleft, &rc, TRUE, TRUE);
@@ -693,11 +719,11 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
 	    col = EDIT_StrWidth(hwnd, lp, sec, 0);
 	    if (col < (es->wleft + rc.right))
 	    {
-		len = min(col - off, rc.right - off);
+		len = MIN(col - off, rc.right - off);
 		EDIT_WriteText(hwnd, lp, off, len, y - es->wtop,
 			       off - es->wleft, &rc, FALSE, TRUE);
 		off = col;
-		len = min(lnlen - off, rc.right - off);
+		len = MIN(lnlen - off, rc.right - off);
 		EDIT_WriteText(hwnd, lp, off, len, y - es->wtop,
 			       off - es->wleft, &rc, TRUE, FALSE);
 	    }
@@ -719,7 +745,7 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
 static int EDIT_ComputeVScrollPos(HWND hwnd)
 {
     int vscrollpos;
-    short minpos, maxpos;
+    INT minpos, maxpos;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
     GetScrollRange(hwnd, SB_VERT, &minpos, &maxpos);
@@ -742,7 +768,7 @@ static int EDIT_ComputeVScrollPos(HWND hwnd)
 static int EDIT_ComputeHScrollPos(HWND hwnd)
 {
     int hscrollpos;
-    short minpos, maxpos;
+    INT minpos, maxpos;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
     GetScrollRange(hwnd, SB_HORZ, &minpos, &maxpos);
@@ -913,13 +939,13 @@ static void EDIT_StickEnd(HWND hwnd)
     char *cp = EDIT_TextLine(hwnd, es->CurrLine);
     int currpel;
 
-    es->CurrCol = min(len, es->CurrCol);
-    es->WndCol = min(EDIT_StrWidth(hwnd, cp, len, 0) - es->wleft, es->WndCol);
+    es->CurrCol = MIN(len, es->CurrCol);
+    es->WndCol = MIN(EDIT_StrWidth(hwnd, cp, len, 0) - es->wleft, es->WndCol);
     currpel = EDIT_StrWidth(hwnd, cp, es->CurrCol, 0);
 
     if (es->wleft > currpel)
     {
-	es->wleft = max(0, currpel - 20);
+	es->wleft = MAX(0, currpel - 20);
 	es->WndCol = currpel - es->wleft;
 	UpdateWindow(hwnd);
     }
@@ -1080,6 +1106,7 @@ static void EDIT_KeyVScrollPage(HWND hwnd, WORD opt)
     }
 }
 
+#ifdef SUPERFLUOUS_FUNCTIONS
 /*********************************************************************
  *  EDIT_KeyVScrollDoc
  *
@@ -1114,6 +1141,7 @@ static void EDIT_KeyVScrollDoc(HWND hwnd, WORD opt)
 	SetScrollPos(hwnd, SB_VERT, vscrollpos, TRUE);
     }
 }
+#endif
 
 /*********************************************************************
  *  EDIT_DelKey
@@ -1287,9 +1315,11 @@ static void EDIT_ClearText(HWND hwnd)
     char *text;
 
     dprintf_edit(stddeb,"EDIT_ClearText %d\n",blen);
+#ifndef WINELIB
     es->hText = EDIT_HeapReAlloc(hwnd, es->hText, blen);
     text = EDIT_HeapLock(hwnd, es->hText);
     memset(text, 0, blen);
+#endif
     es->textlen = 0;
     es->wlines = 0;
     es->CurrLine = es->CurrCol = 0;
@@ -1297,7 +1327,9 @@ static void EDIT_ClearText(HWND hwnd)
     es->wleft = es->wtop = 0;
     es->textwidth = 0;
     es->TextChanged = FALSE;
+#ifndef WINELIB
     EDIT_ClearTextPointers(hwnd);
+#endif
 }
 
 /*********************************************************************
@@ -1421,6 +1453,7 @@ static void EDIT_DeleteSel(HWND hwnd)
     }
 }
 
+#ifdef SUPERFLUOUS_FUNCTIONS
 /*********************************************************************
  *  EDIT_TextLineNumber
  *
@@ -1444,6 +1477,7 @@ static int EDIT_TextLineNumber(HWND hwnd, char *lp)
     }
     return lineno - 1;
 }
+#endif
 
 /*********************************************************************
  *  EDIT_SetAnchor
@@ -1529,7 +1563,7 @@ static void EDIT_ExtendSel(HWND hwnd, INT x, INT y)
 
     bbl = es->SelEndLine;
     bbc = es->SelEndCol;
-    y = max(y,0);
+    y = MAX(y,0);
     if (IsMultiLine(hwnd))
     {
         if ((line = es->wtop + y / es->txtht) >= es->wlines)
@@ -1549,7 +1583,7 @@ static void EDIT_ExtendSel(HWND hwnd, INT x, INT y)
     es->CurrLine = es->wtop + es->WndRow;
     es->SelEndLine = es->CurrLine;
 
-    es->WndCol = es->wleft + max(x,0);
+    es->WndCol = es->wleft + MAX(x,0);
     if (es->WndCol > EDIT_StrWidth(hwnd, cp, len, 0))
 	es->WndCol = EDIT_StrWidth(hwnd, cp, len, 0);
     es->CurrCol = EDIT_PixelToChar(hwnd, es->CurrLine, &(es->WndCol));
@@ -1764,12 +1798,12 @@ static void EDIT_KeyTyped(HWND hwnd, short ch)
     HideCaret(hwnd);
     if (IsMultiLine(hwnd) && es->wlines > 1)
     {
-	es->textwidth = max(es->textwidth,
+	es->textwidth = MAX(es->textwidth,
 		    EDIT_StrWidth(hwnd, EDIT_TextLine(hwnd, es->CurrLine),
 		    (int)(EDIT_TextLine(hwnd, es->CurrLine + 1) -
 			  EDIT_TextLine(hwnd, es->CurrLine)), 0));
     } else {
-      es->textwidth = max(es->textwidth,
+      es->textwidth = MAX(es->textwidth,
 			  EDIT_StrWidth(hwnd, text, strlen(text), 0));
     }
 
@@ -1887,15 +1921,15 @@ static LONG EDIT_SetTabStopsMsg(HWND hwnd, WORD wParam, LONG lParam)
     dprintf_edit( stddeb, "EDIT_SetTabStops\n" );
     es->NumTabStops = wParam;
     if (wParam == 0)
-	es->TabStops = realloc(es->TabStops, 2);
+	es->TabStops = xrealloc(es->TabStops, 2);
     else if (wParam == 1)
     {
-	es->TabStops = realloc(es->TabStops, 2);
+	es->TabStops = xrealloc(es->TabStops, 2);
 	es->TabStops[0] = LOWORD(lParam);
     }
     else
     {
-	es->TabStops = realloc(es->TabStops, wParam * sizeof(*es->TabStops));
+	es->TabStops = xrealloc(es->TabStops, wParam * sizeof(*es->TabStops));
 	memcpy(es->TabStops, (unsigned short *)PTR_SEG_TO_LIN(lParam), wParam);
     }
     return 0;
@@ -1912,7 +1946,7 @@ static LONG EDIT_GetLineMsg(HWND hwnd, WORD wParam, LONG lParam)
 
     cp = EDIT_TextLine(hwnd, wParam);
     cp1 = EDIT_TextLine(hwnd, wParam + 1);
-    len = min((int)(cp1 - cp), (WORD)(*buffer));
+    len = MIN((int)(cp1 - cp), (WORD)(*buffer));
     dprintf_edit( stddeb, "EDIT_GetLineMsg: %d %d, len %d\n", (int)(WORD)(*buffer), (int)(WORD)(*(char *)buffer), len);
     strncpy(buffer, cp, len);
 
@@ -2181,8 +2215,8 @@ static void EDIT_WM_Paint(HWND hwnd)
     hdc = BeginPaint(hwnd, &ps);
     rc = ps.rcPaint;
 
-    dprintf_edit(stddeb,"WM_PAINT: rc=(%d,%d), (%d,%d)\n", rc.left, rc.top, 
-	   rc.right, rc.bottom);
+    dprintf_edit(stddeb,"WM_PAINT: rc=(%ld,%ld), (%ld,%ld)\n", (LONG)rc.left, 
+           (LONG)rc.top, (LONG)rc.right, (LONG)rc.bottom);
 
     if (es->PaintBkgd)
 	FillWindow(GetParent(hwnd), hwnd, hdc, (HBRUSH)CTLCOLOR_EDIT);
@@ -2210,10 +2244,10 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
     /* EDITSTATE structure itself can be stored on local heap  */
 
     /* allocate space for state variable structure */
-    es = malloc( sizeof(EDITSTATE) );
+    es = xmalloc( sizeof(EDITSTATE) );
     SetWindowLong( hwnd, 0, (LONG)es );
-    es->textptrs = malloc(sizeof(int));
-    es->CharWidths = malloc(256 * sizeof(short));
+    es->textptrs = xmalloc(sizeof(int));
+    es->CharWidths = xmalloc(256 * sizeof(INT));
     es->ClientWidth = es->ClientHeight = 1;
     /* --- text buffer */
     es->MaxTextLen = MAXTEXTLEN + 1;
@@ -2289,7 +2323,7 @@ static long EDIT_WM_Create(HWND hwnd, LONG lParam)
     /* --- char width array                                        */
     /*     only initialise chars <= 32 as X returns strange widths */
     /*     for other chars                                         */
-    memset(es->CharWidths, 0, 256 * sizeof(short));
+    memset(es->CharWidths, 0, 256 * sizeof(INT));
     GetCharWidth(hdc, 32, 254, &es->CharWidths[32]);
 
     /* --- other structure variables */
@@ -2306,11 +2340,11 @@ static long EDIT_WM_Create(HWND hwnd, LONG lParam)
     es->hDeletedText = 0;
     es->DeletedLength = 0;
     es->NumTabStops = 0;
-    es->TabStops = malloc( sizeof(short) );
+    es->TabStops = xmalloc( sizeof(short) );
 
     /* allocate space for a line full of blanks to speed up */
     /* line filling */
-    es->BlankLine = malloc( (es->ClientWidth / es->CharWidths[32]) + 2);
+    es->BlankLine = xmalloc( (es->ClientWidth / es->CharWidths[32]) + 2);
     memset(es->BlankLine, ' ', (es->ClientWidth / es->CharWidths[32]) + 2);
     es->BlankLine[(es->ClientWidth / es->CharWidths[32]) + 1] = 0;
 

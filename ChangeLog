@@ -1,4 +1,180 @@
 ----------------------------------------------------------------------
+Fri Nov  3 20:08:17 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [configure.in]
+	Attempt to check for -li386 on NetBSD. Please test this.
+
+Mon Oct 30 12:40:32 EST 1995  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [*/*]
+	Eliminated various warnings with either explicit casts or more
+	accurate variable/parameter declarations (e.g. INT instead of short
+	or WORD).
+	Changed macros 'min' and 'max' to 'MIN' and 'MAX', since they're
+	macros.
+
+	* [controls/edit.c] [windows/defdlg.c]
+	Added '#ifdef SUPERFLUOUS_FUNCTIONS' wrappers around function
+	definition of EDIT_KeyVScrollDoc, EDIT_TextLineNumber, and
+	DEFDLG_FindDefButton to avoid warnings.
+
+	* [controls/button.c] [controls/scroll.c] [windows/defwnd.c]
+	  [windows/message.c] [windows/nonclient.c]
+	Converted MAKEPOINT macro call to manual conversion.
+
+	* [include/windows.h]
+	For WINELIB32, structures POINT, SIZE, and RECT have LONG members
+	instead of INT.  This also invalidates the macro MAKEPOINT(), which
+	is not supported in Win32.  Also defined the POINTS structure (SHORT
+	members) and the MAKEPOINTS macro.
+
+	* [misc/commdlg.c]
+	Changed a lot of 'strcpy' calls to 'strncpy' calls.  I'm desperate to
+	find this memory bug, and this should be done anyway.
+
+	* [controls/edit.c]
+	Well, the alteration mentioned above didn't do it, but #ifdef'ing out
+	a few lines in EDIT_ClearText did.  This leads to bugs, but for now,
+	it's better than bizzare memory troubles.
+
+	* [toolkit/miscstubs.c]
+	Removed warning messages in GLOBAL_CreateBlock(), GLOBAL_FreeBlock(),
+	and RELAY32_GetEntryPoint().  These are the most popular warnings, and
+	their current implementation seems fine.
+
+Sat Oct 28 09:39:18 1995  Jochen Karrer <cip307@wpax01.Physik.Uni-Wuerzburg.DE>
+
+	* [objects/cursoricon.c]
+	Fix for "broken" X servers that invert masked cursor colors.
+
+Fri Oct 27 19:27:21 1995  Alex Korobka  <alex@phm6.pharm.sunysb.edu>
+
+	* [windows/dialog.c] [windows/nonclient.c]
+	Remove unnecessary items from the system menu.
+
+Thu Oct 26 05:03:03 MET 1995  Philippe De Muyter <phdm@info.ucl.ac.be>
+
+	* [objects/color.c] [objects/palette.c]
+	Make GetNearestColor return a RGB value instead of a pixel value.
+
+Wed Oct 25 23:33:39 1995    Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [controls/desktop.c][controls/menu.c][include/menu.h]
+	Changed WORD parameters to UINT parameters.
+
+	* [include/wintypes.h]
+	Made UINT 32bit for WINELIB.
+
+	* [loader/main.c]
+	Disabled RELAY32_Init and MODULE_Init for WINELIB.
+
+	* [misc/main.c]
+	Assume CPU386 for WINELIB.
+
+	* [rc/winerc]
+	add_popup: set MF_POPUP flag on menu item.
+
+	* [toolkit/Makefile.in][toolkit/hello3.c][toolkit/hello3res.c]
+	Add resource demo hello3 for WINELIB.
+	New file README.resources.
+
+	* [toolkit/miscstubs.c]
+	Add a case for 17.
+
+Tue Oct 17 15:13:10 IST 1995  Itai Nahshon <nahshon@vnet.ibm.com>
+
+	* [loader/module.c]
+	Do not append .exe if the file name already has an extension.
+
+	* [misc/profile.c]
+	Avoid creating a file with a junk name if a .ini file does not
+	exist.
+
+	* [if1632/gdi.spec] [if1632/user.spec] [if1632/dummy.c]
+	Added a lot of dummy stubs for Windows Hebrew version.
+
+Tue Oct 17 01:03:24 1995 William Magro <wmagro@tc.cornell.edu>
+
+	* [controls/button.c]
+	Fix for buttons with no label.
+
+	* [controls/combo.c][controls/listbox.c]
+	Fixes for scrollbar positioning.  Now disappears correctly
+	for short lists.
+
+	* [controls/edit.c]
+	Handle memory allocation differently when building as library.
+
+	* [controls/static]
+	Don't destroy old icon before drawing new icon. (Fixes landscape/
+	portrait toggle icon in print dialog.)
+
+	* [if1632/gdi.spec]
+	New functions SetMetaFileBits and GetMetaFileBits
+
+	* [include/sysmetrics.h] [windows/sysmetrics.c]
+	Add support for GetSystemMetrics(SM_CMETRICS) == SM_CMETRICS
+
+	* [include/windows.h]
+	META_EXTTEXTOUT, not META_SETTEXTOUT
+	define GetCurrentTime as GetTickCount (for wine library)
+
+	* [loader/main.c]
+	Don't initialize built-in modules in wine library
+
+	* [memory/local.c]
+	LocalReAlloc was defined incorrectly. Swap flags and size arguments.
+
+	* [misc/main.c]
+	Always report CPUTYPE=4 to wine library.
+
+	* [objects/dib.c]
+	RLE8 images were missing top line when decompressed.
+
+	* [objects/metafile.c]
+	SetMetaFileBits and GetMetaFileBits implemented.  Works when called
+	from winhelp.  More testing needed.  Various memory leaks plugged.
+	Various other bug fixes.  New metafile operations added in
+	PlayMetaFileRecord: CreatePalette, SetTextAlign, SelectPalette,
+	SetMapperFlags, RealizePalette, ExtTextOut, Escape.  Testing needed.
+
+	* [toolkit/heap.c]
+	LocalUnLock changed to LocalUnlock
+
+Sun Oct 15 21:55:33 1995  Anand Kumria <akumria@ozemail.com.au>
+	
+	* [misc/winsock.c] 
+	Return the correct error number, for host lookup operations.
+	Also, correct the problem with send_message.
+
+Fri Oct 13 19:04:35 1995  Morten Welinder  <terra@diku.dk>
+
+	* [Makefile.in]
+	Using nm's built-in sorting.
+
+	* [*/*.c]
+	Use xmalloc for malloc and xrealloc for realloc in all ungarded
+	cases.
+
+	* [debugger/dbg.y]
+	Handle C-like expressions.  Clean-up.
+
+	* [debugger/debug.l]
+	Lots of new tokens for expressions.
+
+	* [debugger/info.c]
+	Implement "list" command for disassembling.
+
+	* [misc/ole2nls.c]
+	Implement more Danish stuff.
+
+Fri Oct  6 10:39:39 1995 Ram'on Garc'ia <ramon@ie3.clubs.etsit.upm.es>
+
+	* [loader/module.c]
+	Updated self-loading modules to support for new 32 bit 
+	stack frames.
+
+----------------------------------------------------------------------
 Sun Oct  1 15:48:34 1995  Alexandre Julliard  <julliard@sunsite.unc>
 
 	* [controls/menu.c]

@@ -28,7 +28,8 @@ C_SRCS = \
 	stress.c \
 	user.c \
 	user32.c \
-	winsocket.c
+	winsocket.c \
+	xmalloc.c
 
 all: checkrc $(MODULE).o
 

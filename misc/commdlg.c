@@ -171,9 +171,9 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPSTR newPath)
 {
   char str[512],str2[512];
 
-  strcpy(str,newPath);
+  strncpy(str,newPath,511); str[511]=0;
   SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, MAKE_SEGPTR(str2));
-  strcat(str, str2);
+  strncat(str,str2,511-strlen(str)); str[511]=0;
   if (!DlgDirList(hWnd, str, lst1, 0, 0x0000)) return FALSE;
   DlgDirList(hWnd, "*.*", lst2, stc1, 0x8010);
   
@@ -210,7 +210,7 @@ static LPSTR FILEDLG_GetFileType(LPSTR cfptr, LPSTR fptr, WORD index)
 /***********************************************************************
  *                              FILEDLG_WMDrawItem              [internal]
  */
-static LONG FILEDLG_WMDrawItem(HWND hWnd, WORD wParam, LONG lParam)
+static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
     char str[512];
@@ -219,7 +219,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WORD wParam, LONG lParam)
     BITMAP bm;
     HDC hMemDC;
 
-    strcpy(str, "");
+    str[0]=0;
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1) {
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
@@ -290,7 +290,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *                              FILEDLG_WMMeasureItem           [internal]
  */
-static LONG FILEDLG_WMMeasureItem(HWND hWnd, WORD wParam, LONG lParam) 
+static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam) 
 {
     BITMAP bm;
     LPMEASUREITEMSTRUCT lpmeasure;
@@ -305,7 +305,7 @@ static LONG FILEDLG_WMMeasureItem(HWND hWnd, WORD wParam, LONG lParam)
  *                              FILEDLG_WMInitDialog            [internal]
  */
 
-static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam) 
+static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam) 
 {
   int n;
   LPOPENFILENAME lpofn;
@@ -321,7 +321,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam)
       while(*pstr)
 	{
 	  n = strlen(pstr);
-	  strcpy(tmpstr, pstr);
+	  strncpy(tmpstr, pstr, 511); tmpstr[511]=0;
 	  printf("lpstrCustomFilter // add tmpstr='%s' ", tmpstr);
 	  SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, MAKE_SEGPTR(tmpstr));
 	  pstr += n + 1;
@@ -335,7 +335,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam)
   while(*pstr)
     {
       n = strlen(pstr);
-      strcpy(tmpstr, pstr);
+      strncpy(tmpstr, pstr, 511); tmpstr[511]=0;
       printf("lpstrFilter // add tmpstr='%s' ", tmpstr);
       SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, MAKE_SEGPTR(tmpstr));
       pstr += n + 1;
@@ -347,8 +347,9 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam)
   if (lpofn->nFilterIndex == 0 && lpofn->lpstrCustomFilter == (SEGPTR)NULL)
   	lpofn->nFilterIndex = 1;
   SendDlgItemMessage(hWnd, cmb1, CB_SETCURSEL, lpofn->nFilterIndex - 1, 0);    
-  strcpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
-	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1));
+  strncpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
+	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1),511);
+  tmpstr[511]=0;
   printf("nFilterIndex = %ld // SetText of edt1 to '%s'\n", 
   			lpofn->nFilterIndex, tmpstr);
   SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
@@ -358,7 +359,8 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam)
   /* read initial directory */
   if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) 
     {
-      strcpy(tmpstr, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir));
+      strncpy(tmpstr, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir), 510);
+      tmpstr[510]=0;
       if (strlen(tmpstr) > 0 && tmpstr[strlen(tmpstr)-1] != '\\' 
 	  && tmpstr[strlen(tmpstr)-1] != ':')
 	strcat(tmpstr,"\\");
@@ -380,7 +382,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *                              FILEDLG_WMCommand               [internal]
  */
-static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam) 
+static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam) 
 {
   LONG lRet;
   LPOPENFILENAME lpofn;
@@ -437,7 +439,7 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
       pstr = FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
 				 lRet);
-      strcpy(tmpstr2, pstr); 
+      strncpy(tmpstr2, pstr, 511); tmpstr2[511]=0;
       SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
       FILEDLG_ScanDir(hWnd, tmpstr);
       return TRUE;
@@ -456,13 +458,13 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
 	  /* edit control contains wildcards */
 	  if (pstr != NULL)
 	    {
-	      strcpy(tmpstr2, pstr+1);
+	      strncpy(tmpstr2, pstr+1, 511); tmpstr2[511]=0;
 	      *(pstr+1) = 0;
 	    }
 	  else
 	    {
 	      strcpy(tmpstr2, tmpstr);
-	      strcpy(tmpstr, "");
+	      *tmpstr=0;
 	    }
 	  printf("commdlg: %s, %s\n", tmpstr, tmpstr2);
 	  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
@@ -478,10 +480,11 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
       if (lRet == LB_ERR) return TRUE;
       lpofn->nFilterIndex = lRet + 1;
       printf("commdlg: lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
-      strcpy(tmpstr2, 
+      strncpy(tmpstr2, 
 	     FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
-				 lRet));
+				 lRet), 511);
+      tmpstr2[511]=0;
       SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
       /* if ScanDir succeeds, we have changed the directory */
       if (FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
@@ -491,7 +494,7 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
 	{
 	  /* strip off the pathname */
 	  *pstr = 0;
-	  strcpy(tmpstr2, pstr+1);
+	  strncpy(tmpstr2, pstr+1, 511); tmpstr2[511]=0;
 	  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
 	  /* Should we MessageBox() if this fails? */
 	  if (!FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
@@ -506,10 +509,11 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
 	tmpstr2[0] = 'A'+ drive;
 	tmpstr2[1] = ':';
 	tmpstr2[2] = '\\';
-	strcpy(tmpstr2 + 3, DOS_GetCurrentDir(drive));
+	strncpy(tmpstr2 + 3, DOS_GetCurrentDir(drive), 510); tmpstr2[510]=0;
 	if (strlen(tmpstr2) > 3)
 	  strcat(tmpstr2, "\\");
-	strcat(tmpstr2, tmpstr);
+	strncat(tmpstr2, tmpstr, 511-strlen(tmpstr2)); tmpstr2[511]=0;
+	printf("strcpy'ing '%s'\n",tmpstr2); fflush(stdout);
 	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2);
       }
       lpofn->nFileOffset = 0;
@@ -525,6 +529,7 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
 	  lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
 	  SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet,
 			     MAKE_SEGPTR(tmpstr));
+          printf("strcpy'ing '%s'\n",tmpstr); fflush(stdout);
 	  strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), tmpstr);
 	}
       EndDialog(hWnd, TRUE);
@@ -873,7 +878,7 @@ int GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 	break;
       }
   printf("\n---> '%s' ", &lpFile[i]);
-  len = min(cbBuf, strlen(&lpFile[i]) + 1);
+  len = MIN(cbBuf, strlen(&lpFile[i]) + 1);
   strncpy(lpTitle, &lpFile[i], len + 1);
   if (len != cbBuf)
     return len;

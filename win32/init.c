@@ -33,9 +33,9 @@ VOID GetStartupInfoA(LPSTARTUPINFO lpStartupInfo)
     lpStartupInfo->lpTitle = "Title";
 
     lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
-    lpStartupInfo->hStdInput = 0;
-    lpStartupInfo->hStdOutput = 1;
-    lpStartupInfo->hStdError = 2;
+    lpStartupInfo->hStdInput  = (HANDLE)0;
+    lpStartupInfo->hStdOutput = (HANDLE)1;
+    lpStartupInfo->hStdError  = (HANDLE)2;
 }
 
 int KERN32_Init(void)

@@ -29,9 +29,9 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include "stddebug.h"
 /* #define DEBUG_PROFILE */
 #include "debug.h"
+#include "xmalloc.h"
 
 #define STRSIZE 255
-#define xmalloc(x) malloc(x)
 #define overflow (next == &CharBuffer [STRSIZE-1])
 
 enum { FirstBrace, OnSecHeader, IgnoreToEOL, KeyDef, KeyValue };
@@ -101,6 +101,8 @@ static TSecHeader *load (char *filename, char **pfullname)
     char c;
     char path[MAX_PATH+1];
 
+    *pfullname = NULL;
+
     /* Try the Windows directory */
 
     GetWindowsDirectory(path, sizeof(path));
@@ -126,6 +128,7 @@ static TSecHeader *load (char *filename, char **pfullname)
     }
     if (f == NULL) {
 	fprintf(stderr, "profile.c: load() can't find file %s\n", filename);
+        /* FIXME: we ought to create it now (in which directory?) */
 	return NULL;
     }
     
@@ -276,7 +279,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 			dprintf_profile(stddeb,"GetSetProfile // No more storage for enum !\n");
 			return (Size - 2);
 		}
-		slen = min(strlen(key->KeyName) + 1, left);
+		slen = MIN(strlen(key->KeyName) + 1, left);
 		dprintf_profile(stddeb,"GetSetProfile // strncpy(%p, %p, %d);\n", 
 				ReturnedString, key->Value, slen);
 		strncpy (p, key->KeyName, slen);
@@ -298,7 +301,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 		Current->changed=TRUE;
 		return 1;
 	    }
-	    slen = min(strlen(key->Value), Size - 1);
+	    slen = MIN(strlen(key->Value), Size - 1);
 	    ReturnedString[slen] = 0;
 	    strncpy (ReturnedString, key->Value, slen);
 	    dprintf_profile(stddeb,"GetSetProfile // Return ``%s''\n", ReturnedString);
@@ -310,7 +313,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	if (set) {
 	    new_key (section, KeyName, Default);
         } else {
-	    int slen = min(strlen(Default), Size - 1);
+	    int slen = MIN(strlen(Default), Size - 1);
             ReturnedString[slen] = 0;
             strncpy(ReturnedString, Default, slen);
 	    dprintf_profile(stddeb,"GetSetProfile // Key not found\n");
@@ -327,7 +330,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	Current->Section = section;
 	Current->changed = TRUE;
     } else {
-	int slen = min(strlen(Default), Size - 1);
+	int slen = MIN(strlen(Default), Size - 1);
 	ReturnedString[slen] = 0;
 	strncpy(ReturnedString, Default, slen);
 	dprintf_profile(stddeb,"GetSetProfile // Section not found\n");
@@ -418,7 +421,7 @@ static void dump_profile (TProfile *p)
     dump_profile (p->link);
     if(!p->changed)
 	return;
-    if ((profile = fopen (p->FullName, "w")) != NULL){
+    if (p->FullName && (profile = fopen (p->FullName, "w")) != NULL){
 	dump_sections (profile, p->Section);
 	fclose (profile);
     }

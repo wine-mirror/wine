@@ -5,6 +5,8 @@
  *
  */
 
+#include "windows.h"
+
 typedef struct {
 	WORD		wEvent;
 	WORD		wIDval;

@@ -8,9 +8,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "windows.h"
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-
 
 /***********************************************************************
  *           SetRect    (USER.72)

@@ -12,6 +12,7 @@
 #include "gdi.h"
 #include "color.h"
 #include "palette.h"
+#include "xmalloc.h"
 
 Colormap COLOR_WinColormap = 0;
 int COLOR_FixedMap = 0;
@@ -126,8 +127,8 @@ static HPALETTE COLOR_InitPalette(void)
 
     if ((COLOR_WinColormap == DefaultColormapOfScreen(screen)) && (screenDepth <= 8))
     {
-        COLOR_PaletteToPixel = (int *)malloc( sizeof(int) * size );
-        COLOR_PixelToPalette = (int *)malloc( sizeof(int) * size );
+        COLOR_PaletteToPixel = (int *)xmalloc( sizeof(int) * size );
+        COLOR_PixelToPalette = (int *)xmalloc( sizeof(int) * size );
         for (i = 0; i < size; i++)  /* Set the default mapping */
             COLOR_PaletteToPixel[i] = COLOR_PixelToPalette[i] = i;
     }
@@ -334,6 +335,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
             idx = color & 0xffff;
             if (idx >= palPtr->logpalette.palNumEntries)
             {
+                fprintf(stderr, "COLOR_ToPhysical(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
                 /* out of bounds */
                 red = green = blue = 0;
             }
@@ -375,12 +377,20 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
     }
     if (dc&&dc->u.x.pal.mappingSize)
     {
-        if (index >= dc->u.x.pal.mappingSize) return 0;
+        if (index >= dc->u.x.pal.mappingSize)
+        {
+            fprintf(stderr, "COLOR_ToPhysical(%lx) : idx %d is >= dc->u.x.pal.mappingSize, assuming pixel 0\n", color, index);
+            return 0;
+        }
         mapping = (WORD *) GDI_HEAP_LIN_ADDR( dc->u.x.pal.hMapping );
     }
     else
     {
-        if (index >= NB_RESERVED_COLORS) return 0;
+        if (index >= NB_RESERVED_COLORS)
+        {
+            fprintf(stderr, "COLOR_ToPhysical(%lx) : idx %d is >= NB_RESERVED_COLORS, assuming pixel 0\n", color, index);
+	    return 0;
+        }
         mapping = (WORD *) GDI_HEAP_LIN_ADDR( hSysColorTranslation );
     }
     if (mapping) return mapping[index];
@@ -421,20 +431,6 @@ void COLOR_SetMapping( DC *dc, HANDLE map, HANDLE revMap, WORD size )
         dc->u.x.pal.hRevMapping = map ? hRevSysColorTranslation : 0;
     }
     dc->u.x.pal.mappingSize = size;
-}
-
-
-/***********************************************************************
- *           GetNearestColor    (GDI.154)
- */
-COLORREF GetNearestColor( HDC hdc, COLORREF color )
-{
-    WORD index;
-    DC *dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
-    if (screenDepth > 8) return color; /* FIXME */
-    index = (WORD)(COLOR_ToPhysical( dc, color & 0xffffff ) & 0xffff);
-    return PALETTEINDEX( index );
 }
 
 

@@ -91,7 +91,9 @@ struct WinSockHeap {
 };
 static struct WinSockHeap *Heap;
 static HANDLE HeapHandle;
+#ifndef WINELIB32
 static int ScratchPtr;
+#endif
 
 #ifndef WINELIB
 #define GET_SEG_PTR(x)	MAKELONG((int)((char*)(x)-(char*)Heap),	\
@@ -110,6 +112,7 @@ static int ScratchPtr;
 			inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
 			ntohs(((struct sockaddr_in *)a)->sin_port))
 
+#ifndef WINELIB32
 static void ResetScratch()
 {
 	ScratchPtr=0;
@@ -131,6 +134,7 @@ static SEGPTR scratch_strdup(char * s)
 	strcpy(ret,s);
 	return GET_SEG_PTR(ret);
 }
+#endif
 
 static WORD wsaerrno(void)
 {
@@ -141,7 +145,7 @@ static WORD wsaerrno(void)
                 			errno, sys_errlist[errno]);
 #else
                 fprintf(stderr, "winsock: errno %d, (%s).\n", 
-                			errno, strerror(errno));
+					errno, strerror(errno));
 #endif
 #else
                 fprintf(stderr, "winsock: errno %d\n", errno);
@@ -151,6 +155,7 @@ static WORD wsaerrno(void)
         switch(errno)
         {
 	case EINTR:		return WSAEINTR;
+	case EBADF:		return WSAEBADF;
 	case EACCES:		return WSAEACCES;
 	case EFAULT:		return WSAEFAULT;
 	case EINVAL:		return WSAEINVAL;
@@ -158,7 +163,6 @@ static WORD wsaerrno(void)
 	case EWOULDBLOCK:	return WSAEWOULDBLOCK;
 	case EINPROGRESS:	return WSAEINPROGRESS;
 	case EALREADY:		return WSAEALREADY;
-	case EBADF:
 	case ENOTSOCK:		return WSAENOTSOCK;
 	case EDESTADDRREQ:	return WSAEDESTADDRREQ;
 	case EMSGSIZE:		return WSAEMSGSIZE;
@@ -195,6 +199,8 @@ static WORD wsaerrno(void)
 	case EDQUOT:		return WSAEDQUOT;
 	case ESTALE:		return WSAESTALE;
 	case EREMOTE:		return WSAEREMOTE;
+/* just in case we ever get here and there are no problems */
+	case 0:			return 0;
 
 #ifdef EDQUOT
         default:
@@ -209,9 +215,50 @@ static void errno_to_wsaerrno(void)
 	wsa_errno = wsaerrno();
 }
 
+
+static WORD wsaherrno(void)
+{
+#if DEBUG_WINSOCK
+#ifndef sun
+#if defined(__FreeBSD__)
+                fprintf(stderr, "winsock: h_errno %d, (%s).\n", 
+                			h_errno, sys_errlist[h_errno]);
+#else
+                fprintf(stderr, "winsock: h_errno %d.\n", h_errno);
+		herror("wine: winsock: wsaherrno");
+#endif
+#else
+                fprintf(stderr, "winsock: h_errno %d\n", h_errno);
+#endif
+#endif
+
+        switch(h_errno)
+        {
+	case TRY_AGAIN:		return WSATRY_AGAIN;
+	case HOST_NOT_FOUND:	return WSAHOST_NOT_FOUND;
+	case NO_RECOVERY:	return WSANO_RECOVERY;
+	case NO_DATA:		return WSANO_DATA; 
+/* just in case we ever get here and there are no problems */
+	case 0:			return 0;
+
+#ifdef EDQUOT
+        default:
+#endif
+		fprintf(stderr, "winsock: unknown h_errorno %d!\n", h_errno);
+		return WSAEOPNOTSUPP;
+	}
+}
+
+
+static void herrno_to_wsaerrno(void)
+{
+	wsa_errno = wsaherrno();
+}
+
+
 static void convert_sockopt(INT *level, INT *optname)
 {
-/* $%#%!@! why couldn't they use the same values for both winsock and unix ? */
+/* $%#%!#! why couldn't they use the same values for both winsock and unix ? */
 
 	switch (*level) {
 		case -1: 
@@ -376,7 +423,11 @@ INT WINSOCK_getpeername(SOCKET s, struct sockaddr *name, INT *namelen)
 	dump_sockaddr(name);
 
 	if (getpeername(s, name, (int *) namelen) < 0) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -386,7 +437,11 @@ INT WINSOCK_getsockname(SOCKET s, struct sockaddr *name, INT *namelen)
 {
 	dprintf_winsock(stddeb, "WSA_getsockname: socket: %d, ptr %8x, ptr %8x\n", s, (int) name, (int) *namelen);
 	if (getsockname(s, name, (int *) namelen) < 0) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -596,6 +651,10 @@ SOCKET WINSOCK_socket(INT af, INT type, INT protocol)
     }
     
     if (sock > 0xffff) {
+	/* we set the value of wsa_errno directly, because 
+	 * only support socket numbers up to 0xffff. The
+	 * value return indicates there are no descriptors available
+	 */
 	wsa_errno = WSAEMFILE;
 	return INVALID_SOCKET;
     }
@@ -616,7 +675,11 @@ SEGPTR WINSOCK_gethostbyaddr(const char *addr, INT len, INT type)
 	dprintf_winsock(stddeb, "WSA_gethostbyaddr: ptr %8x, len %d, type %d\n", (int) addr, len, type);
 
 	if ((host = gethostbyaddr(addr, len, type)) == NULL) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return NULL;
 	}
 	CONVERT_HOSTENT(&Heap->hostent_addr, host);
@@ -634,7 +697,11 @@ SEGPTR WINSOCK_gethostbyname(const char *name)
 	dprintf_winsock(stddeb, "WSA_gethostbyname: %s\n", name);
 
 	if ((host = gethostbyname(name)) == NULL) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return NULL;
 	}
 	CONVERT_HOSTENT(&Heap->hostent_name, host);
@@ -647,7 +714,11 @@ INT WINSOCK_gethostname(char *name, INT namelen)
 	dprintf_winsock(stddeb, "WSA_gethostname: name %s, len %d\n", name, namelen);
 
 	if (gethostname(name, namelen) < 0) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return SOCKET_ERROR;
 	}
 	return 0;
@@ -663,7 +734,11 @@ SEGPTR WINSOCK_getprotobyname(char *name)
 	dprintf_winsock(stddeb, "WSA_getprotobyname: name %s\n", name);
 
 	if ((proto = getprotobyname(name)) == NULL) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return NULL;
 	}
 	CONVERT_PROTOENT(&Heap->protoent_name, proto);
@@ -681,7 +756,11 @@ SEGPTR WINSOCK_getprotobynumber(INT number)
 	dprintf_winsock(stddeb, "WSA_getprotobynumber: num %d\n", number);
 
 	if ((proto = getprotobynumber(number)) == NULL) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return NULL;
 	}
 	CONVERT_PROTOENT(&Heap->protoent_number, proto);
@@ -702,7 +781,11 @@ SEGPTR WINSOCK_getservbyname(const char *name, const char *proto)
 	dprintf_winsock(stddeb, "WSA_getservbyname: name %s, proto %s\n", name, proto);
 
 	if ((service = getservbyname(name, proto)) == NULL) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return NULL;
 	}
 	CONVERT_SERVENT(&Heap->servent_name, service);
@@ -720,7 +803,11 @@ SEGPTR WINSOCK_getservbyport(INT port, const char *proto)
 	dprintf_winsock(stddeb, "WSA_getservbyport: port %d, name %s\n", port, proto);
 
 	if ((service = getservbyport(port, proto)) == NULL) {
-        	errno_to_wsaerrno();
+		if (h_errno < 0) {
+        		errno_to_wsaerrno();
+		} else {
+			herrno_to_wsaerrno();
+		}
         	return NULL;
 	}
 	CONVERT_SERVENT(&Heap->servent_port, service);
@@ -742,7 +829,8 @@ static void recv_message(int sig)
 {
 	struct ipc_packet message;
 
-	if (msgrcv(wine_key, (struct msgbuf*)&message, 
+/* FIXME: something about no message of desired type */
+	if (msgrcv(wine_key, (struct msgbuf*)&(message), 
 		   IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1)
 		perror("wine: msgrcv");
 
@@ -759,7 +847,7 @@ static void recv_message(int sig)
 }
 
 
-static void send_message(HANDLE handle, HWND hWnd, u_int wMsg, long lParam)
+static void send_message( HWND hWnd, u_int wMsg, HANDLE handle, long lParam)
 {
 	struct ipc_packet message;
 	
@@ -773,7 +861,8 @@ static void send_message(HANDLE handle, HWND hWnd, u_int wMsg, long lParam)
 		"WSA: send (hwnd "NPFMT", wMsg %d, handle "NPFMT", lParam %ld)\n",
 		hWnd, wMsg, handle, lParam);
 	
-	if (msgsnd(wine_key, (struct msgbuf*)&message,  
+/* FIXME: something about invalid argument */
+	if (msgsnd(wine_key, (struct msgbuf*)&(message),  
 		   IPC_PACKET_SIZE, IPC_NOWAIT) == -1)
 		perror("wine: msgsnd");
 		
@@ -793,6 +882,11 @@ HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, const char *addr,
 		return handle;
 	} else {
 		if ((host = gethostbyaddr(addr, len, type)) == NULL) {
+			if (h_errno < 0) {
+        			errno_to_wsaerrno();
+			} else {
+				herrno_to_wsaerrno();
+			}
 			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
 			exit(0);
 		}
@@ -815,6 +909,11 @@ HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, const char *name,
 		return handle;
 	} else {
 		if ((host = gethostbyname(name)) == NULL) {
+			if (h_errno < 0) {
+        			errno_to_wsaerrno();
+			} else {
+				herrno_to_wsaerrno();
+			}
 			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
 			exit(0);
 		}
@@ -837,6 +936,11 @@ HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, const char *name,
 		return handle;
 	} else {
 		if ((proto = getprotobyname(name)) == NULL) {
+			if (h_errno < 0) {
+        			errno_to_wsaerrno();
+			} else {
+				herrno_to_wsaerrno();
+			}
 			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
 			exit(0);
 		}
@@ -859,6 +963,11 @@ HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number,
 		return handle;
 	} else {
 		if ((proto = getprotobynumber(number)) == NULL) {
+			if (h_errno < 0) {
+        			errno_to_wsaerrno();
+			} else {
+				herrno_to_wsaerrno();
+			}
 			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
 			exit(0);
 		}
@@ -881,6 +990,11 @@ HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, const char *name,
 		return handle;
 	} else {
 		if ((service = getservbyname(name, proto)) == NULL) {
+			if (h_errno < 0) {
+        			errno_to_wsaerrno();
+			} else {
+				herrno_to_wsaerrno();
+			}
 			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
 			exit(0);
 		}
@@ -903,6 +1017,11 @@ HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, const char
 		return handle;
 	} else {
 		if ((service = getservbyport(port, proto)) == NULL) {
+			if (h_errno < 0) {
+        			errno_to_wsaerrno();
+			} else {
+				herrno_to_wsaerrno();
+			}
 			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
 			exit(0);
 		}
@@ -946,8 +1065,8 @@ INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
 				event |= FD_READ;
 			if (FD_ISSET(s, &write_fds))
 				event |= FD_WRITE;
-
-			send_message(hWnd, wMsg, s, (wsaerrno() << 16) | event);
+	/* FIXME: the first time through we get a winsock error of 2, why? */
+			send_message(hWnd, wMsg, (HANDLE)s, (wsaerrno() << 16) | event);
 		}
 	}
 }
@@ -1049,7 +1168,7 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
     /* ipc stuff */
 
     if ((wine_key = msgget(IPC_PRIVATE, 0600)) == -1)
-	perror("wine: msgget");
+	perror("wine: msgget"); 
 
     signal(SIGUSR1, recv_message);
 

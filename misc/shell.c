@@ -18,6 +18,7 @@
 #include "win.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 LPKEYSTRUCT	lphRootKey = NULL,lphTopKey = NULL;
 
@@ -111,7 +112,7 @@ SHELL_SaveRegistry(void) {
 	 * (HKEY_LOCAL_MACHINE,HKEY_CURRENT_USER or whatever)
 	 * -choose better filename(s)
 	 */
-	_SaveKey(HKEY_CLASSES_ROOT,"/tmp/winereg");
+	_SaveKey((HKEY)HKEY_CLASSES_ROOT,"/tmp/winereg");
 }
 
 #define BUFSIZE	256
@@ -139,10 +140,10 @@ _LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf) {
 			lpNewKey=lpKey->lpSubLvl=(LPKEYSTRUCT)GlobalLock(hNewKey);
 			lpNewKey->hKey		= hNewKey;
 			lpNewKey->dwType	= 0;
-			lpNewKey->lpSubKey	=
-			lpNewKey->lpValue	=
-			lpNewKey->lpSubLvl	=
-			lpNewKey->lpNextKey	=
+			lpNewKey->lpSubKey	= NULL;
+			lpNewKey->lpValue	= NULL;
+			lpNewKey->lpSubLvl	= NULL;
+			lpNewKey->lpNextKey	= NULL;
 			lpNewKey->lpPrevKey	= NULL;
 			if (NULL!=(t=strchr(s,'='))) {
 				*t='\0';t++;
@@ -165,9 +166,9 @@ _LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf) {
 		lpNewKey->lpPrevKey	= lpKey;
 		lpNewKey->hKey		= hNewKey;
 		lpNewKey->dwType	= 0;
-		lpNewKey->lpSubKey	=
-		lpNewKey->lpValue	=
-		lpNewKey->lpSubLvl	=
+		lpNewKey->lpSubKey	= NULL;
+		lpNewKey->lpValue	= NULL;
+		lpNewKey->lpSubLvl	= NULL;
 		lpNewKey->lpNextKey	= NULL;
 		if (NULL!=(t=strchr(s,'='))) {
 			*t='\0';t++;
@@ -209,7 +210,7 @@ SHELL_LoadRegistry(void) {
 	dwRet=SHELL_RegCheckForRoot();
 	if (dwRet!=ERROR_SUCCESS) 
 		return;/*very bad magic, if we can't even allocate the rootkeys*/
-	_LoadKey(HKEY_CLASSES_ROOT,"/tmp/winereg");
+	_LoadKey((HKEY)HKEY_CLASSES_ROOT,"/tmp/winereg");
 }
 
 /*************************************************************************
@@ -386,7 +387,7 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
     lpKey = (LPKEYSTRUCT)GlobalLock(hRetKey);
     if (lpKey == NULL) return ERROR_BADKEY;
     if (lpKey->lpValue != NULL) free(lpKey->lpValue);
-    lpKey->lpValue = malloc(strlen(lpVal) + 1);
+    lpKey->lpValue = xmalloc(strlen(lpVal) + 1);
     strcpy(lpKey->lpValue, lpVal);
     dprintf_reg(stddeb,"RegSetValue // successful key='%s' val='%s' !\n", lpSubKey, lpKey->lpValue);
     return ERROR_SUCCESS;
@@ -458,7 +459,7 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
         lpKey = lpKey->lpSubLvl;
         while(lpKey != NULL){
           if (!dwSubKey){
-            len = min(dwSize-1,strlen(lpKey->lpSubKey));
+            len = MIN(dwSize-1,strlen(lpKey->lpSubKey));
 	    strncpy(lpBuf,lpKey->lpSubKey,len);
 	    lpBuf[len] = 0;
             dprintf_reg(stddeb, "RegEnumKey: found %s\n",lpBuf);
@@ -479,7 +480,7 @@ void DragAcceptFiles(HWND hWnd, BOOL b)
 {
  /* flips WS_EX_ACCEPTFILES bit according to the value of b (TRUE or FALSE) */
 
- dprintf_reg(stddeb,"DragAcceptFiles(%04x, %u) old exStyle %08lx\n",hWnd,b,GetWindowLong(hWnd,GWL_EXSTYLE));
+ dprintf_reg(stddeb,"DragAcceptFiles("NPFMT", %u) old exStyle %08lx\n",hWnd,b,GetWindowLong(hWnd,GWL_EXSTYLE));
 
  SetWindowLong(hWnd,GWL_EXSTYLE,GetWindowLong(hWnd,GWL_EXSTYLE) | b*(LONG)WS_EX_ACCEPTFILES); 
 }
@@ -498,7 +499,7 @@ UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
  LPSTR		  lpCurrent;
  WORD		  i;
 
- dprintf_reg(stddeb,"DragQueryFile(%04x, %i, %p, %u)\n",
+ dprintf_reg(stddeb,"DragQueryFile("NPFMT", %i, %p, %u)\n",
                            hDrop,wFile,lpszFile,wLength);
 
  lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
@@ -610,7 +611,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
 	    strcat(cmd,lpFile);
 	  } else {
 	    char *s;
-	    s=malloc(len+strlen(lpFile)+10);
+	    s=xmalloc(len+strlen(lpFile)+10);
 	    strncpy(s,cmd,t-cmd);
 	    s[t-cmd]='\0';
 	    strcat(s,lpFile);

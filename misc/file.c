@@ -350,7 +350,7 @@ INT _lcreat (LPSTR lpszFilename, INT fnAttribute)
 /***************************************************************************
  GetDriveType
  ***************************************************************************/
-UINT GetDriveType(INT drive)
+WORD GetDriveType(INT drive)
 {
 
     	dprintf_file(stddeb,"GetDriveType %c:\n",'A'+drive);

@@ -125,3 +125,27 @@ NULL
 
     while(helptext[i]) fprintf(stderr,"%s\n", helptext[i++]);
 }
+
+
+
+/***********************************************************************
+ *           DEBUG_List
+ *
+ * Implementation of the 'list' command.
+ */
+void DEBUG_List( DBG_ADDR *addr, int count )
+{
+    static DBG_ADDR lasttime = { 0xffffffff, 0 };
+
+    if (addr == NULL) addr = &lasttime;
+    DBG_FIX_ADDR_SEG( addr, CS_reg(DEBUG_context) );
+    while (count-- > 0)
+    {
+        DEBUG_PrintAddress( addr, dbg_mode );
+        fprintf( stderr, ":  " );
+        if (!DBG_CHECK_READ_PTR( addr, 1 )) break;
+        DEBUG_Disasm( addr );
+        fprintf (stderr, "\n");
+    }
+    lasttime = *addr;
+}

@@ -328,12 +328,29 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 	if (hMenu) DestroyMenu( hMenu );
 	return 0;
     }
+    wndPtr = WIN_FindWndPtr( hwnd );
+
+      /* Purge junk from system menu */
+      /* FIXME: this doesn't belong here */
+
+    DeleteMenu(wndPtr->hSysMenu,SC_SIZE,MF_BYCOMMAND);
+    if (!(wndPtr->dwStyle & WS_MAXIMIZEBOX) )
+    {
+        DeleteMenu(wndPtr->hSysMenu,SC_MAXIMIZE,MF_BYCOMMAND);
+        if( !(wndPtr->dwStyle & WS_MINIMIZEBOX) )
+        {
+            DeleteMenu(wndPtr->hSysMenu,SC_MINIMIZE,MF_BYCOMMAND);
+            DeleteMenu(wndPtr->hSysMenu,SC_RESTORE,MF_BYCOMMAND);
+        }
+    }
+    else
+        if (!(wndPtr->dwStyle & WS_MINIMIZEBOX) )
+            DeleteMenu(wndPtr->hSysMenu,SC_MINIMIZE,MF_BYCOMMAND);
 
       /* Create control windows */
 
     dprintf_dialog(stddeb, " BEGIN\n" );
 
-    wndPtr = WIN_FindWndPtr( hwnd );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     dlgInfo->msgResult = 0;  /* This is used to store the default button id */
     dlgInfo->hDialogHeap = 0;
@@ -469,7 +486,7 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     EnableWindow( owner, FALSE );
     ShowWindow( hwnd, SW_SHOW );
 
-    while (MSG_InternalGetMessage( USER_HEAP_SEG_ADDR(msgHandle), hwnd, owner,
+    while (MSG_InternalGetMessage( (SEGPTR)USER_HEAP_SEG_ADDR(msgHandle), hwnd, owner,
                                    MSGF_DIALOGBOX, PM_REMOVE,
                                    !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
     {

@@ -408,14 +408,14 @@ void EnterSpyMessage(int iFlag, HWND hWnd, WORD msg, WORD wParam, LONG lParam)
 		    if(msg <= WM_USER)
 		      {
 		       if(MessageTypeNames[msg])
-		          dprintf_message(stddeb,"(%04x) message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
+		          dprintf_message(stddeb,"("NPFMT") message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
 		                          hWnd, msg, MessageTypeNames[msg], wParam, lParam);
 		       else
-		          dprintf_message(stddeb,"(%04x) message [%04x] dispatched  wp=%04x lp=%08lx\n",
+		          dprintf_message(stddeb,"("NPFMT") message [%04x] dispatched  wp=%04x lp=%08lx\n",
 		                          hWnd, msg, wParam, lParam);
 		      }
 		    else
-		          dprintf_message(stddeb,"(%04x) message [%04x] WM_USER+%04d dispatched  wp=%04x lp=%08lx\n",
+		          dprintf_message(stddeb,"("NPFMT") message [%04x] WM_USER+%04d dispatched  wp=%04x lp=%08lx\n",
 		                          hWnd, msg, msg-WM_USER ,wParam ,lParam);
 		    break;
 	case SPY_SENDMESSAGE:
@@ -425,27 +425,27 @@ void EnterSpyMessage(int iFlag, HWND hWnd, WORD msg, WORD wParam, LONG lParam)
   		      	   lpstrSpyMessageFrom = lpstrSpyMessageFromWine;
   		    	 else
   				{
-  				   sprintf(lpstrSpyMessageFromTask, "task %04x", hTask);	
+  				   sprintf(lpstrSpyMessageFromTask, "task "NPFMT, hTask);	
   				   lpstrSpyMessageFrom = lpstrSpyMessageFromTask;
   				}
 		     
 	            if(msg <= WM_USER)
 	                {
 	                  if(MessageTypeNames[msg])
-			      dprintf_message(stddeb,"%s(%04x) message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
+			      dprintf_message(stddeb,"%s("NPFMT") message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
                                    	      lpstrSpyMessageIndent,
                                    	      hWnd, msg, MessageTypeNames[msg],
                                    	      lpstrSpyMessageFrom,
                                    	      wParam, lParam);
 	                  else
-	                      dprintf_message(stddeb,"%s(%04x) message [%04x] sent from %s wp=%04x lp=%08lx\n",
+	                      dprintf_message(stddeb,"%s("NPFMT") message [%04x] sent from %s wp=%04x lp=%08lx\n",
                                    	      lpstrSpyMessageIndent,
                                    	      hWnd, msg,
                                    	      lpstrSpyMessageFrom,
                                    	      wParam, lParam);
           		}
         	    else
-             		  dprintf_message(stddeb,"%s(%04x) message [%04x] WM_USER+%04x sent from %s wp=%04x lp=%08lx\n",
+             		  dprintf_message(stddeb,"%s("NPFMT") message [%04x] WM_USER+%04x sent from %s wp=%04x lp=%08lx\n",
                                		  lpstrSpyMessageIndent,
                                		  hWnd, msg, msg-WM_USER,
                                		  lpstrSpyMessageFrom,
@@ -461,15 +461,15 @@ void EnterSpyMessage(int iFlag, HWND hWnd, WORD msg, WORD wParam, LONG lParam)
 	case SPY_DEFWNDPROC:
 		    if(msg <= WM_USER)
 		        if(MessageTypeNames[msg])
-		           dprintf_message(stddeb, "%s(%04x) DefWindowProc: %s [%04x]  wp=%04x lp=%08lx\n",
+		           dprintf_message(stddeb, "%s("NPFMT") DefWindowProc: %s [%04x]  wp=%04x lp=%08lx\n",
 		                           lpstrSpyMessageIndent,
 		                           hWnd, MessageTypeNames[msg], msg, wParam, lParam );
 		        else
-		           dprintf_message(stddeb, "%s(%04x) DefWindowProc: [%04x]  wp=%04x lp=%08lx\n",
+		           dprintf_message(stddeb, "%s("NPFMT") DefWindowProc: [%04x]  wp=%04x lp=%08lx\n",
 		                           lpstrSpyMessageIndent,
 		                           hWnd, msg, wParam, lParam );
 		    else
-		        dprintf_message(stddeb, "%s(%04x) DefWindowProc: WM_USER+%d [%04x] wp=%04x lp=%08lx\n",
+		        dprintf_message(stddeb, "%s("NPFMT") DefWindowProc: WM_USER+%d [%04x] wp=%04x lp=%08lx\n",
 		                        lpstrSpyMessageIndent,
 		                        hWnd, msg - WM_USER, msg, wParam, lParam );
 		    break;
@@ -493,11 +493,11 @@ void ExitSpyMessage(int iFlag, HWND hWnd, WORD msg, LONG lReturn)
   switch(iFlag)
     {
 	case SPY_RESULT_INVALIDHWND: 
-		dprintf_message(stddeb,"%s(%04x) message [%04x] HAS INVALID HWND\n",
+		dprintf_message(stddeb,"%s("NPFMT") message [%04x] HAS INVALID HWND\n",
                                 lpstrSpyMessageIndent, hWnd, msg);
 	        break;
 	case SPY_RESULT_OK:
-		dprintf_message(stddeb,"%s(%04x) message [%04x] returned %08lx\n",
+		dprintf_message(stddeb,"%s("NPFMT") message [%04x] returned %08lx\n",
 	                        lpstrSpyMessageIndent, hWnd, msg, lReturn);
 		break;
 	default:

@@ -140,9 +140,9 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
     if (rectUpdate)
     {
-        dprintf_win( stddeb, "RedrawWindow: "NPFMT" %d,%d-%d,%d "NPFMT" flags=%04x\n",
-                     hwnd, rectUpdate->left, rectUpdate->top,
-                     rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags);
+        dprintf_win( stddeb, "RedrawWindow: "NPFMT" %ld,%ld-%ld,%ld "NPFMT" flags=%04x\n",
+                     hwnd, (LONG)rectUpdate->left, (LONG)rectUpdate->top,
+                     (LONG)rectUpdate->right, (LONG)rectUpdate->bottom, hrgnUpdate, flags);
     }
     else
     {

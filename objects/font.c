@@ -518,8 +518,9 @@ BOOL GetTextExtentPoint( HDC hdc, LPSTR str, short count, LPSIZE size )
     size->cy = abs((dc->u.x.font.fstruct->ascent+dc->u.x.font.fstruct->descent)
 		    * dc->w.WndExtY / dc->w.VportExtY);
 
-    dprintf_font(stddeb,"GetTextExtentPoint("NPFMT" '%*.*s' %d %p): returning %d,%d\n",
-	    hdc, count, count, str, count, size, size->cx, size->cy );
+    dprintf_font(stddeb,"GetTextExtentPoint("NPFMT" '%*.*s' %d %p): returning %ld,%ld\n",
+		 hdc, count, count, str, count, size, (LONG)size->cx, 
+		 (LONG)size->cy );
     return TRUE;
 }
 

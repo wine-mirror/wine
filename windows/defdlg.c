@@ -62,6 +62,7 @@ static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
 }
 
 
+#ifdef SUPERFLUOUS_FUNCTIONS
 /***********************************************************************
  *           DEFDLG_FindDefButton
  *
@@ -78,6 +79,7 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
     }
     return hwndChild;
 }
+#endif
 
 
 /***********************************************************************

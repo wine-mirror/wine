@@ -51,7 +51,7 @@ typedef struct tagWND
     HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HANDLE       hVScroll;       /* Vertical scroll-bar info */
     HANDLE       hHScroll;       /* Horizontal scroll-bar info */
-    WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
+    UINT         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags (see below) */
     Window       window;         /* X window (only for top-level windows) */

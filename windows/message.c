@@ -291,6 +291,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     static DWORD lastClickTime = 0;
     static WORD  lastClickMsg = 0;
     static POINT lastClickPos = { 0, 0 };
+    POINT pt = msg->pt;
 
     BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
 		       (msg->message == WM_RBUTTONDOWN) ||
@@ -301,8 +302,8 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     if (GetCapture())
     {
 	msg->hwnd = GetCapture();
-	msg->lParam = MAKELONG( msg->pt.x, msg->pt.y );
-	ScreenToClient( msg->hwnd, (LPPOINT)&msg->lParam );
+	ScreenToClient( msg->hwnd, &pt );
+	msg->lParam = MAKELONG( pt.x, pt.y );
 	return TRUE;  /* No need to further process the message */
     }
    
@@ -379,16 +380,14 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 
       /* Build the translated message */
 
-    msg->lParam = MAKELONG( msg->pt.x, msg->pt.y );
     if (hittest == HTCLIENT)
-    {
-	ScreenToClient( msg->hwnd, (LPPOINT)&msg->lParam );
-    }
+        ScreenToClient( msg->hwnd, &pt );
     else
     {
 	msg->wParam = hittest;
 	msg->message += WM_NCLBUTTONDOWN - WM_LBUTTONDOWN;
     }
+    msg->lParam = MAKELONG( pt.x, pt.y );
     
     return TRUE;
 }
@@ -952,7 +951,7 @@ BOOL PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last, WORD flags )
 /***********************************************************************
  *           GetMessage   (USER.108)
  */
-BOOL GetMessage( SEGPTR msg, HWND hwnd, WORD first, WORD last ) 
+BOOL GetMessage( SEGPTR msg, HWND hwnd, UINT first, UINT last ) 
 {
     MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                      hwnd, first, last, PM_REMOVE, FALSE );

@@ -1,0 +1,91 @@
+This is a short discussion of resources in WineLib.
+
+Introduction
+Resources are used to store dialogs, menus, bitmaps, icons, 
+version information, strings, fonts, and accelerators.
+In a Win3.1 programming environment, there are three file formats for 
+resources:
+- the RC script, which is human-readable and can be processed by a resource
+compiler
+- the .RES file, which is the output of the resource compiler
+- the .EXE and .DLL files, which store resources as a part of the NE
+file format
+For WineLib, only a part of this is supported. In particular, there is no
+.RES file, the executable is not a NE file (as it is a native Unix executable),
+and some resource types are not implemented: icons, version information,
+strings, and fonts.
+
+Building a WineLib application
+The build process assumes that the C source files and the resource script
+is available. At the moment, a single resource script is recommended.
+This script is processed by winerc:
+1) the preprocessor is used to resolve symbolic style name (LBS_STANDARD, ...)
+into numbers. This involves processing windows.h
+2) the unused parts of windows.h (type definitions) are removed. This would
+not be necessary if Wine's windows.h would use the RC_INVOKED macro.
+3) winerc is invoked to create a binary representation of the resources.
+This representation is stored as C source code (arrays).
+4) gcc is used to compile the generated C code.
+Now, each resource is available as a C array to the application. As the 
+executable is not in the NE format, it is not possible to retrieve resource
+locations in the executable via name. Instead, the resources have to be
+referenced with their generated C array names. The linker then resolves
+these names in the compiled resource file.
+5) The program sources are compiled and linked with the output of step 4.
+A sample build process is in toolkit/Makefile:hello3.
+
+Required changes to the program sources
+Because loading the resources from an instance handle is not possible,
+the *Indirect functions have to be used to load a resource. The C arrays
+can be directly passed to the *Indirect functions. So, instead of writing
+
+	hMenu=LoadMenu(hInstance,"MAIN");
+
+write
+
+	hMenu=LoadMenuIndirect(hello3_MENU_MAIN.bytes);
+
+Fortunately, the Windows API has the following functions available:
+DialogBoxIndirect
+CreateDialogIndirect
+DialogBoxIndirectParam
+CreateDialogIndirectParam
+
+LoadMenuIndirect
+SetDIBitsToDevice
+
+Sample code is available in hello3.c. hello3res.c contains the corresponding
+resources.
+
+Keeping a common source
+Clearly, changing the sources is not very desirable, and suggestions how
+to reduce the amount of work are welcome. In the meantime, two approaches
+allow at least to remain a common source between the Win3.1 code and the
+WineLib code:
+1) conditional compiles:
+When compiling a WineLib application, WINELIB is defined. This can be used
+to select Wine-specific code.
+2) usage of winerc for Windows: The *Indirect functions are available on
+plain Win3.1, and the resource format is fully compatible. Thus, recompiling
+sources modified for WineLib on Win3.1 is possible and known to work.
+
+Open problems
+1) Icons and cursors: For these resources, there is no *Indirect function
+documented. In addition, both are implemented by a set of two resources.
+This is the reason why they are not supported by winerc.
+2) Accelerators: Although winerc supports accelerators, there is no 
+LoadAcceleratorIndirect function. A work-around would be to define one.
+3) Fonts: Font resources are not supported by Wine at all.
+4) String tables: Although string tables are not supported by winerc, there
+is no reason not to add such support. Again, some indirect loading would
+be necessary.
+5) API requires loading by name: At some places, the name of a resource
+is passed instead of a handle. The WNDCLASS structure contains the name
+of a menu resource, and the icon in a dialog box is referenced by its name.
+(Are there some more places?)
+Clearly, loading the resource by name would be highly desirable. The
+resource compiler currently creates a structure containing all resources
+defined in an RC file. However, it is not clear how WINELIB could find the
+location of this structure, especially, when there is more than one RC file.
+
+

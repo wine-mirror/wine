@@ -9,11 +9,11 @@
 #define MENU_MAGIC   0x554d  /* 'MU' */
 
 extern BOOL MENU_Init(void);
-extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth,
+extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
 				   int orgX, int orgY );         /* menu.c */
 extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
-extern void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam );      /* menu.c */
-extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
+extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam );      /* menu.c */
+extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
 			      HWND hwnd, BOOL suppress_draw );   /* menu.c */
 extern HMENU CopySysMenu(); /* menu.c */
 
@@ -22,7 +22,7 @@ extern LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lPar
 typedef struct tagMENUITEM
 {
     WORD	item_flags;    /* Item flags */
-    WORD	item_id;       /* Item or popup id */
+    UINT	item_id;       /* Item or popup id */
     RECT	rect;          /* Item area (relative to menu window) */
     WORD        xTab;          /* X position of text after Tab */
     HBITMAP	hCheckBit;     /* Bitmap for checked item */
@@ -43,7 +43,7 @@ typedef struct tagPOPUPMENU
     WORD	nItems;       /* Number of items in the menu */
     HWND	hWnd;	      /* Window containing the menu */
     HANDLE      hItems;       /* Handle to the items array */
-    WORD	FocusedItem;  /* Currently focused item */
+    UINT	FocusedItem;  /* Currently focused item */
 } POPUPMENU, *LPPOPUPMENU;
 
 typedef struct

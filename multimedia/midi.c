@@ -19,6 +19,7 @@
 #include "ldt.h"
 #include "driver.h"
 #include "mmsystem.h"
+#include "xmalloc.h"
 
 #include "stddebug.h"
 #include "debug.h"
@@ -520,7 +521,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 		dprintf_midi(stddeb, "MIDI_mciRecord // MCI_TO=%d \n", end);
 		}
 	lpMidiHdr = &MCIMidiDev[wDevID].MidiHdr;
-	lpMidiHdr->lpData = (LPSTR) malloc(1200);
+	lpMidiHdr->lpData = (LPSTR) xmalloc(1200);
 	lpMidiHdr->dwBufferLength = 1024;
 	lpMidiHdr->dwUser = 0L;
 	lpMidiHdr->dwFlags = 0L;

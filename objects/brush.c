@@ -11,6 +11,7 @@
 #include "color.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 #define NB_HATCH_STYLES  6
 

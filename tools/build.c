@@ -84,6 +84,32 @@ static int debugging = 1;
    ((int)&(((struct sigcontext_struct *)1)->reg) - 1 \
     - sizeof(struct sigcontext_struct))
 
+static void *xmalloc (size_t size)
+{
+    void *res;
+
+    res = malloc (size ? size : 1);
+    if (res == NULL)
+    {
+        fprintf (stderr, "Virtual memory exhausted.\n");
+        exit (1);
+    }
+    return res;
+}
+
+
+static void *xrealloc (void *ptr, size_t size)
+{
+    void *res = realloc (ptr, size);
+    if (res == NULL)
+    {
+        fprintf (stderr, "Virtual memory exhausted.\n");
+        exit (1);
+    }
+    return res;
+}
+
+
 static int IsNumberString(char *s)
 {
     while (*s != '\0')
@@ -155,7 +181,7 @@ static char * GetToken(void)
 
     if (ParseBuffer == NULL)
     {
-	ParseBuffer = malloc(512);
+	ParseBuffer = xmalloc(512);
 	ParseNext = ParseBuffer;
 	Line++;
 	while (1)
@@ -205,7 +231,7 @@ static int ParseVariable(int ordinal, int type)
 
     n_values = 0;
     value_array_size = 25;
-    value_array = malloc(sizeof(*value_array) * value_array_size);
+    value_array = xmalloc(sizeof(*value_array) * value_array_size);
     
     while ((token = GetToken()) != NULL)
     {
@@ -216,8 +242,8 @@ static int ParseVariable(int ordinal, int type)
 	if (n_values == value_array_size)
 	{
 	    value_array_size += 25;
-	    value_array = realloc(value_array, 
-				  sizeof(*value_array) * value_array_size);
+	    value_array = xrealloc(value_array, 
+				   sizeof(*value_array) * value_array_size);
 	}
 	
 	if (endptr == NULL || *endptr != '\0')
@@ -244,11 +270,11 @@ static int ParseVariable(int ordinal, int type)
     odp->type = type;
     strcpy(odp->export_name, export_name);
 
-    vdp = malloc(sizeof(*vdp));
+    vdp = xmalloc(sizeof(*vdp));
     odp->additional_data = vdp;
     
     vdp->n_values = n_values;
-    vdp->values = realloc(value_array, sizeof(*value_array) * n_values);
+    vdp->values = xrealloc(value_array, sizeof(*value_array) * n_values);
 
     return 0;
 }
@@ -263,7 +289,7 @@ static int ParseExportFunction(int ordinal, int type)
     odp = &OrdinalDefinitions[ordinal];
     strcpy(odp->export_name, GetToken());
     odp->type = type;
-    fdp = malloc(sizeof(*fdp));
+    fdp = xmalloc(sizeof(*fdp));
     odp->additional_data = fdp;
 
     token = GetToken();
@@ -331,7 +357,7 @@ static int ParseReturn(int ordinal)
     char *token;
     char *endptr;
     
-    rdp = malloc(sizeof(*rdp));
+    rdp = xmalloc(sizeof(*rdp));
     
     odp = &OrdinalDefinitions[ordinal];
     strcpy(odp->export_name, GetToken());
@@ -368,7 +394,7 @@ static int ParseStub( int ordinal )
     odp = &OrdinalDefinitions[ordinal];
     strcpy( odp->export_name, GetToken() );
     odp->type = TYPE_STUB;
-    fdp = malloc(sizeof(*fdp));
+    fdp = xmalloc(sizeof(*fdp));
     odp->additional_data = fdp;
     fdp->arg_types[0] = '\0';
     strcpy( fdp->internal_name, STUB_CALLBACK );
@@ -533,7 +559,7 @@ static void BuildModule( int max_code_offset, int max_data_offset )
      * BYTE[n]         Entry table
      */
 
-    buffer = malloc( 0x10000 );
+    buffer = xmalloc( 0x10000 );
 
     pModule = (NE_MODULE *)buffer;
     pModule->magic = NE_SIGNATURE;
@@ -1625,7 +1651,7 @@ int main(int argc, char **argv)
     {
         /* File header */
 
-        printf( "/* File generated automatically. Do no edit! */\n\n" );
+        printf( "/* File generated automatically. Do not edit! */\n\n" );
         printf( "\t.text\n" );
 
         /* Build the 32-bit large stack callback */
@@ -1652,7 +1678,7 @@ int main(int argc, char **argv)
     {
         /* File header */
 
-        printf( "/* File generated automatically. Do no edit! */\n\n" );
+        printf( "/* File generated automatically. Do not edit! */\n\n" );
         printf( "\t.text\n" );
         printf( "\t.globl " PREFIX "CALL16_Start\n" );
         printf( PREFIX "CALL16_Start:\n" );

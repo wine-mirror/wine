@@ -265,7 +265,7 @@ int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
     if (lpFormat->Name == NULL) return 0;
     dprintf_clipboard(stddeb,
 		"GetClipboardFormat // Name='%s' !\n", lpFormat->Name);
-    maxlen = min(maxlen - 1, strlen(lpFormat->Name));
+    maxlen = MIN(maxlen - 1, strlen(lpFormat->Name));
     dprintf_clipboard(stddeb,"GetClipboardFormat // maxlen=%d !\n", maxlen);
     memcpy(retStr, lpFormat->Name, maxlen);
     retStr[maxlen] = 0;

@@ -34,9 +34,17 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 
 %%
 
-\n		{ syntax_error = 0; return '\n'; } /*Indicate end of command*/
+\n		{ syntax_error = 0; return '\n'; } /*Indicates end of command*/
 
-[-+=()*:]       { return *yytext; }
+"||"		{ return OP_LOR; }
+"&&"		{ return OP_LAND; }
+"=="		{ return OP_EQ; }
+"!="		{ return OP_NE; }
+"<="		{ return OP_LE; }
+">="		{ return OP_GE; }
+"<<"		{ return OP_SHL; }
+">>"		{ return OP_SHR; }
+[-+<=>|&^()*/%:!~]	{ return *yytext; }
 
 "0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval.integer); return NUM; }
 {DIGIT}+             { sscanf(yytext, "%d", &yylval.integer); return NUM; }
@@ -72,25 +80,26 @@ $ds     { yylval.reg = REG_DS;  return REG; }
 $cs     { yylval.reg = REG_CS;  return REG; }
 $ss     { yylval.reg = REG_SS;  return REG; }
 
-info|inf|in		      { return INFO; }
-segments|segment|segm|seg|se  { return SEGMENTS; }
-break|brea|bre|br|b           { return BREAK; }
-enable|enabl|enab|ena         { return ENABLE;}
-disable|disabl|disab|disa|dis { return DISABLE; }
-delete|delet|dele|del         { return DELETE; }
-quit|qui|qu|q                 { return QUIT; }
-x                             { return EXAM; }
+info|inf|in			{ return INFO; }
+show|sho|sh			{ return INFO; }
+list|l				{ return LIST; }
+segments|segment|segm|seg|se	{ return SEGMENTS; }
+break|brea|bre|br|b		{ return BREAK; }
+enable|enabl|enab|ena		{ return ENABLE;}
+disable|disabl|disab|disa|dis	{ return DISABLE; }
+delete|delet|dele|del		{ return DELETE; }
+quit|qui|qu|q			{ return QUIT; }
+x				{ return EXAM; }
 
-help|hel|he	{ return HELP; }
-"?"		{ return HELP; }
+help|hel|he|"?"			{ return HELP; }
 
-set|se		{ return SET; }
+set|se				{ return SET; }
 
-bt		{ return BACKTRACE; }
+bt				{ return BACKTRACE; }
 
-cont|con|co|c   { return CONT; }
-step|ste|st|s   { return STEP; }
-next|nex|ne|n   { return NEXT; }
+cont|con|co|c   		{ return CONT; }
+step|ste|st|s   		{ return STEP; }
+next|nex|ne|n   		{ return NEXT; }
 
 symbolfile|symbolfil|symbolfi|symbolf|symbol|symbo|symb { return SYMBOLFILE; }
 
@@ -100,9 +109,9 @@ print|prin|pri|pr|p		{ return PRINT; }
 
 mode				{ return MODE; }
 
-registers|regs|reg|re	{ return REGS; }
+registers|regs|reg|re		{ return REGS; }
 
-stack|stac|sta|st     	{ return STACK; }
+stack|stac|sta|st     		{ return STACK; }
 
 {IDENTIFIER}	{ yylval.string = make_symbol(yytext); return IDENTIFIER; }
 

@@ -23,6 +23,56 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 
 static WORD SystemPaletteUse = SYSPAL_STATIC;	/* currently not considered */
 
+
+/***********************************************************************
+ *           PALETTE_GetNearestIndexAndColor
+ */
+static WORD PALETTE_GetNearestIndexAndColor(HPALETTE hpalette, COLORREF *color)
+{
+    int i, minDist, dist;
+    WORD index = 0;
+    BYTE r, g, b;
+    PALETTEENTRY * entry;
+    PALETTEOBJ * palPtr;
+    
+    palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
+    if (!palPtr) return 0;
+
+    if ((COLOR_WinColormap != DefaultColormapOfScreen(screen)) &&
+	(hpalette == STOCK_DEFAULT_PALETTE))
+    {
+	if ((*color & 0xffffff) == 0) return 0;  /* Entry 0 is black */
+	if ((*color & 0xffffff) == 0xffffff)     /* Max entry is white */
+	    return palPtr->logpalette.palNumEntries - 1;
+    }
+    
+    r = GetRValue(*color);
+    g = GetGValue(*color);
+    b = GetBValue(*color);
+
+    entry = palPtr->logpalette.palPalEntry;
+    for (i = 0, minDist = MAXINT; minDist !=0 &&
+         i < palPtr->logpalette.palNumEntries ; i++)
+    {
+	if (entry->peFlags != 0xff)
+	{
+	    dist = (r - entry->peRed) * (r - entry->peRed) +
+		   (g - entry->peGreen) * (g - entry->peGreen) +
+		   (b - entry->peBlue) * (b - entry->peBlue);	
+	    if (dist < minDist)
+	    {
+		minDist = dist;
+		index = i;
+	    }
+	}
+	entry++;
+    }
+    entry = &palPtr->logpalette.palPalEntry[index];
+    *color = RGB( entry->peRed, entry->peGreen, entry->peBlue );
+    return index;
+}
+
+
 /***********************************************************************
  *           CreatePalette    (GDI.360)
  */
@@ -145,47 +195,26 @@ WORD GetSystemPaletteEntries( HDC hdc, WORD start, WORD count,
  */
 WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
 {
-    int i, minDist, dist;
-    WORD index = 0;
-    BYTE r, g, b;
-    PALETTEENTRY * entry;
-    PALETTEOBJ * palPtr;
-    
-    palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
-    if (!palPtr) return 0;
-
-    if ((COLOR_WinColormap != DefaultColormapOfScreen(screen)) &&
-	(hpalette == STOCK_DEFAULT_PALETTE))
-    {
-	if ((color & 0xffffff) == 0) return 0;  /* Entry 0 is black */
-	if ((color & 0xffffff) == 0xffffff)     /* Max entry is white */
-	    return palPtr->logpalette.palNumEntries - 1;
-    }
-    
-    r = GetRValue(color);
-    g = GetGValue(color);
-    b = GetBValue(color);
-
-    entry = palPtr->logpalette.palPalEntry;
-    for (i = 0, minDist = MAXINT; minDist !=0 &&
-         i < palPtr->logpalette.palNumEntries ; i++)
-    {
-	if (entry->peFlags != 0xff)
-	{
-	    dist = (r - entry->peRed) * (r - entry->peRed) +
-		   (g - entry->peGreen) * (g - entry->peGreen) +
-		   (b - entry->peBlue) * (b - entry->peBlue);	
-	    if (dist < minDist)
-	    {
-		minDist = dist;
-		index = i;
-	    }
-	}
-	entry++;
-    }
+    WORD index = PALETTE_GetNearestIndexAndColor( hpalette, &color );
     dprintf_palette(stddeb,"GetNearestPaletteIndex("NPFMT",%06lx): returning %d\n", 
-	     hpalette, color, index );
+                    hpalette, color, index );
     return index;
+}
+
+
+/***********************************************************************
+ *           GetNearestColor    (GDI.154)
+ */
+COLORREF GetNearestColor( HDC hdc, COLORREF color )
+{
+    COLORREF nearest = color;
+    DC *dc;
+
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    PALETTE_GetNearestIndexAndColor( dc->w.hPalette, &nearest );
+    dprintf_palette(stddeb,"GetNearestColor(%06lx): returning %06lx\n", 
+                    color, nearest );
+    return nearest;
 }
 
 

@@ -75,6 +75,6 @@
 #define SYSMETRICS_MENUDROPALIGNMENT   sysMetrics[SM_MENUDROPALIGNMENT]
 
 extern void SYSMETRICS_Init(void);
-extern short sysMetrics[SM_CMETRICS];
+extern short sysMetrics[SM_CMETRICS+1];
 
 #endif

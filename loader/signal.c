@@ -18,6 +18,7 @@
 #include "miscemu.h"
 #include "registers.h"
 #include "win.h"
+#include "xmalloc.h"
 
 #if !defined(BSD4_4) || defined(linux) || defined(__FreeBSD__)
 char * cstack[4096];
@@ -57,8 +58,8 @@ static void win_fault(int signal, int code, struct sigcontext *context)
     {
         if (CS_reg(context) == WINE_CODE_SELECTOR)
         {
-            fprintf(stderr, "Segmentation fault in Wine program (%x:%lx)."
-                            "  Please debug\n",
+            fprintf(stderr, "Segmentation fault in Wine program (%04x:%08lx)."
+                            "  Please debug.\n",
                             CS_reg(context), EIP_reg(context) );
         }
         else if (INSTR_EmulateInstruction( context )) return;
@@ -100,14 +101,10 @@ void init_wine_signals(void)
         struct sigaltstack ss;
         
 #if !defined (__FreeBSD__)
-        if ((ss.ss_base = malloc(MINSIGSTKSZ)) == NULL) {
+        ss.ss_base = xmalloc (MINSIGSTKSZ);
 #else
-        if ((ss.ss_sp = malloc(MINSIGSTKSZ)) == NULL) {
+        ss.ss_sp = xmalloc (MINSIGSTKSZ);
 #endif
-	        fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
-		        MINSIGSTKSZ);
-		exit(1);
-	}
 	ss.ss_size = MINSIGSTKSZ;
         ss.ss_flags = 0;
         if (sigaltstack(&ss, NULL) < 0) {

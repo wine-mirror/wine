@@ -135,7 +135,7 @@ WORD timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
     if (lpNewTimer == NULL)
 	return 0;
     while (lpTimer != NULL) {
-	wNewID = max(wNewID, lpTimer->wTimerID);
+	wNewID = MAX(wNewID, lpTimer->wTimerID);
 	if (lpTimer->Next == NULL)
 	    break;
 	lpTimer = lpTimer->Next;

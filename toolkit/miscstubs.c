@@ -11,6 +11,7 @@
 #include "windows.h"
 #include "global.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 {
@@ -32,6 +33,8 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
                 a[7],a[8],a[9],a[10]);
   case 14: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
                 a[7],a[8],a[9],a[10],a[11],a[12],a[13]);
+  case 17: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
+                a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15],a[16]);
   default: fprintf(stderr,"JBP: CallTo32_LargeStack called with unsupported "
                           "number of arguments (%d).  Ignored.\n",nbargs);
            return 0;
@@ -39,25 +42,6 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 }
 
 WORD CallTo16_word_ ( FARPROC func, WORD arg ) { return func(arg); }
-
-/* typedef void* ATOM; */
-/* ATOM GlobalAddAtom(char *n) */
-/* { */
-/*   return strdup(n); */
-/* } */
-/* GlobalDeleteAtom(ATOM n) */
-/* { */
-/*   free(n); */
-/* } */
-/* GlobalFindAtom(char*n) */
-/* { */
-/*   fprintf(stderr,"JBP: GlobalFindAtom() ignored.\n"); */
-/*   return 0; */
-/* } */
-/* char *GlobalGetAtomName(ATOM a) */
-/* { */
-/*   return a; */
-/* } */
 
 void GlobalFreeAll(HANDLE owner)
 {
@@ -70,123 +54,36 @@ SEGPTR WIN16_GlobalLock(HGLOBAL h)
 }
 
 
-
-#if 0
-typedef WORD* HLOCAL;
-
-int IsValidHLOCAL(HLOCAL handle)
-{
-  return *(handle-1) + *(handle-2) == 0; /* Valid HLOCAL's sum to 0 */
-}
-
-/***********************************************************************
- *           LOCAL_Free
- *
- */
 HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
 {
-  if (!IsValidHLOCAL(handle)) return handle; /* couldn't free it */
-  free(handle-2);
-  return 0;
-}
-
-
-/***********************************************************************
- *           LOCAL_Alloc
- *
- */
-HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
-{
-  HLOCAL handle;
-    
-  handle = malloc(size + 2*sizeof(WORD));
-  handle += 2;
-  *(handle-2) = size;
-  *(handle-1) = -size;
-  return handle;
-}
-
-
-/***********************************************************************
- *           LOCAL_ReAlloc
- *
- */
-HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
-{
-  HLOCAL newhandle;
-
-  if(!IsValidHLOCAL(handle))return 0;
-  newhandle = realloc(handle-2, size+2*sizeof(WORD));
-  newhandle += 2;
-  *(newhandle-2) = size;
-  *(newhandle-1) = -size;
-  return newhandle;
-}
-
-
-/***********************************************************************
- *           LOCAL_Lock
- */
-WORD LOCAL_Lock( WORD ds, HLOCAL handle )
-{
-  if(!IsValidHLOCAL(handle))return 0;
-  return handle;
-}
-
-
-/***********************************************************************
- *           LOCAL_Unlock
- */
-BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
-{
-  return TRUE;
-}
-
-
-/***********************************************************************
- *           LOCAL_Size
- *
- */
-WORD LOCAL_Size( WORD ds, HLOCAL handle )
-{
-  return *(handle-2);
-}
-#endif
-
-HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
-{
-  fprintf(stderr,"JBP: LOCAL_*() ignored.\n");
-  return 0;
+    return LocalFree(handle);
 }
 
 HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
 {
-  fprintf(stderr,"JBP: LOCAL_*() ignored.\n");
-  return 0;
+    return LocalAlloc(flags,size);
 }
 
 HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
 {
-  fprintf(stderr,"JBP: LOCAL_*() ignored.\n");
-  return 0;
+    return LocalReAlloc(handle,size,flags);
 }
 
-WORD LOCAL_Lock( WORD ds, HLOCAL handle )
+NPVOID LOCAL_Lock( WORD ds, HLOCAL handle )
 {
-  fprintf(stderr,"JBP: LOCAL_*() ignored.\n");
-  return 0;
+    return LocalLock(handle);
 }
 
 BOOL LOCAL_Unlock( WORD ds, HLOCAL handle )
 {
-  fprintf(stderr,"JBP: LOCAL_*() ignored.\n");
-  return 1;
+    fprintf(stderr,"JBP: LOCAL_Unlock() ignored.\n");
+    return 1;
 }
 
 WORD LOCAL_Size( WORD ds, HLOCAL handle )
 {
-  fprintf(stderr,"JBP: LOCAL_*() ignored.\n");
-  return 0;
+    fprintf(stderr,"JBP: LOCAL_Size() ignored.\n");
+    return 0;
 }
 
 void FarSetOwner(HANDLE a, WORD b)
@@ -240,17 +137,17 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
 			    BOOL is32Bit, BOOL isReadOnly,
 			    SHMDATA *shmdata)
 {
-  fprintf(stderr,"JBP: GLOBAL_CreateBlock() faked.\n");
+/*  fprintf(stderr,"JBP: GLOBAL_CreateBlock() faked.\n");*/
   return ptr;
 }
 
 BOOL GLOBAL_FreeBlock( HGLOBAL handle )
 {
-  fprintf(stderr,"JBP: GLOBAL_FreeBlock() ignored.\n");
+/*  fprintf(stderr,"JBP: GLOBAL_FreeBlock() ignored.\n");*/
   return 1;
 }
 
-DWORD GlobalHandle(WORD a)
+HGLOBAL GlobalHandle(LPCVOID a)
 {
   fprintf(stderr,"JBP: GlobalHandle() ignored.\n");
   return 0;
@@ -258,7 +155,7 @@ DWORD GlobalHandle(WORD a)
 
 void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 {
-  fprintf(stderr,"JBP: RELAY32_GetEntryPoint() ignored.\n");
+/*  fprintf(stderr,"JBP: RELAY32_GetEntryPoint() ignored.\n");*/
   return NULL;
 }
 

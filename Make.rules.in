@@ -32,7 +32,7 @@ depend:: $(C_SRCS)
 	mv tmp_make Makefile
 
 clean::
-	$(RM) *.o \#*\# *~ *.bak tmp_make
+	$(RM) *.o \#*\# *~ *.bak *.flc tmp_make
 
 distclean:: clean
 	$(RM) Makefile

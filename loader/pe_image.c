@@ -28,6 +28,7 @@
 #include "selectors.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 #define MAP_ANONYMOUS	0x20
 
@@ -184,17 +185,17 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 {
 	int i, result;
 
-	wpnt->pe = malloc(sizeof(struct pe_data));
+	wpnt->pe = xmalloc(sizeof(struct pe_data));
 	memset(wpnt->pe,0,sizeof(struct pe_data));
-	wpnt->pe->pe_header = malloc(sizeof(struct pe_header_s));
+	wpnt->pe->pe_header = xmalloc(sizeof(struct pe_header_s));
 
 	/* read PE header */
 	lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
 	read(wpnt->fd, wpnt->pe->pe_header, sizeof(struct pe_header_s));
 
 	/* read sections */
-	wpnt->pe->pe_seg = malloc(sizeof(struct pe_segment_table) * 
-				wpnt->pe->pe_header->coff.NumberOfSections);
+	wpnt->pe->pe_seg = xmalloc(sizeof(struct pe_segment_table) * 
+				   wpnt->pe->pe_header->coff.NumberOfSections);
 	read(wpnt->fd, wpnt->pe->pe_seg, sizeof(struct pe_segment_table) * 
 			wpnt->pe->pe_header->coff.NumberOfSections);
 
@@ -261,7 +262,7 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 
 	ALIAS_UseAliases=1;
 
-	wpnt=malloc(sizeof(struct w_files));
+	wpnt=xmalloc(sizeof(struct w_files));
 	wpnt->next=wine_files;
 	wine_files=wpnt;
 	wpnt->ofs=*ofs;
@@ -271,7 +272,7 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	wpnt->hModule=0;
 	wpnt->initialised=0;
 	lseek(fd,0,SEEK_SET);
-	wpnt->mz_header=malloc(sizeof(struct mz_header_s));
+	wpnt->mz_header=xmalloc(sizeof(struct mz_header_s));
 	read(fd,wpnt->mz_header,sizeof(struct mz_header_s));
 
 	size=sizeof(NE_MODULE) +

@@ -118,7 +118,7 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
  *
  * Window procedure for the desktop window.
  */
-LRESULT DesktopWndProc ( HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam )
+LRESULT DesktopWndProc ( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;

@@ -13,6 +13,7 @@
 #include "ldt.h"
 #include "miscemu.h"
 #include "module.h"
+#include "xmalloc.h"
 
 
 HANDLE DOSMEM_BiosSeg;  /* BIOS data segment at 0x40:0 */
@@ -90,7 +91,7 @@ BOOL DOSMEM_Init(void)
 
     /* Allocate 7 64k segments for 0000, A000, B000, C000, D000, E000, F000. */
 
-    dosmem = malloc( 0x70000 );
+    dosmem = xmalloc( 0x70000 );
 
     MODULE_SetEntryPoint( hModule, 183,  /* KERNEL.183: __0000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem,

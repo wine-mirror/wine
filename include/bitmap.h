@@ -28,7 +28,7 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 { \
     int width_bytes = DIB_GetImageWidthBytes( (width), (bpp) ); \
     (image) = XCreateImage(display, DefaultVisualOfScreen(screen), \
-                           (bpp), ZPixmap, 0, malloc( (height)*width_bytes ), \
+                           (bpp), ZPixmap, 0, xmalloc( (height)*width_bytes ),\
                            (width), (height), 32, width_bytes ); \
 }
 

@@ -115,7 +115,7 @@ HDC USER32_BeginPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
 BOOL USER32_EndPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
 {
 	PAINTSTRUCT ps;
-	ps.hdc=lpps->hdc;
+	ps.hdc=(HDC)lpps->hdc;
 	ps.fErase=lpps->fErase;
 	ps.rcPaint.top=lpps->rcPaint.top;
 	ps.rcPaint.left=lpps->rcPaint.left;

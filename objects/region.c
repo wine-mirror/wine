@@ -240,7 +240,7 @@ HRGN CreateEllipticRgnIndirect( LPRECT rect )
 /***********************************************************************
  *           CreatePolygonRgn    (GDI.63)
  */
-HRGN CreatePolygonRgn( POINT * points, short count, short mode )
+HRGN CreatePolygonRgn( POINT * points, INT count, INT mode )
 {
     return CreatePolyPolygonRgn( points, &count, 1, mode );
 }
@@ -249,8 +249,8 @@ HRGN CreatePolygonRgn( POINT * points, short count, short mode )
 /***********************************************************************
  *           CreatePolyPolygonRgn    (GDI.451)
  */
-HRGN CreatePolyPolygonRgn( POINT * points, short * count,
-			   short nbpolygons, short mode )
+HRGN CreatePolyPolygonRgn( POINT * points, INT * count,
+			   INT nbpolygons, INT mode )
 {
     RGNOBJ * obj;
     HRGN hrgn;

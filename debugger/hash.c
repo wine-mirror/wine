@@ -14,6 +14,7 @@
 #include "selectors.h"
 #include "debugger.h"
 #include "toolhelp.h"
+#include "xmalloc.h"
 
 struct name_hash
 {
@@ -48,7 +49,7 @@ void DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr )
     struct name_hash  * new;
     int hash;
 
-    new = (struct name_hash *) malloc(sizeof(struct name_hash));
+    new = (struct name_hash *) xmalloc(sizeof(struct name_hash));
     new->addr = *addr;
     new->name = strdup(name);
     new->next = NULL;

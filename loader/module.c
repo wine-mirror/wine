@@ -24,20 +24,22 @@
 #include "debug.h"
 
 #include "callback.h"
+#include "wine.h"
 
 static HMODULE hFirstModule = 0;
 static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 
 
+static HANDLE hInitialStack32 = 0;
 /***********************************************************************
  *           MODULE_LoadBuiltin
  *
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
+#ifndef WINELIB /* JBP: Not really allowed in libwine.a (FIXME:?) */
 static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
 {
-#ifndef WINELIB /* JBP: Not really allowed in libwine.a (FIXME:?) */
     HMODULE hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
@@ -91,7 +93,7 @@ static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
     hFirstModule = hModule;
     return hModule;
 }
-
+#endif
 
 /***********************************************************************
  *           MODULE_Init
@@ -102,6 +104,7 @@ BOOL MODULE_Init(void)
 {
     /* For these, built-in modules are always used */
 
+#ifndef WINELIB32
     if (!MODULE_LoadBuiltin( "KERNEL", TRUE ) ||
         !MODULE_LoadBuiltin( "GDI", TRUE ) ||
         !MODULE_LoadBuiltin( "USER", TRUE ) ||
@@ -317,6 +320,7 @@ DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
 /***********************************************************************
  *           MODULE_CreateSegments
  */
+#ifndef WINELIB32
 static BOOL MODULE_CreateSegments( HMODULE hModule )
 {
     SEGTABLEENTRY *pSegment;
@@ -343,11 +347,13 @@ static BOOL MODULE_CreateSegments( HMODULE hModule )
                             (pModule->dgroup - 1) * sizeof(SEGTABLEENTRY) : 0;
     return TRUE;
 }
+#endif
 
 
 /***********************************************************************
  *           MODULE_GetInstance
  */
+#ifndef WINELIB32
 static HINSTANCE MODULE_GetInstance( HMODULE hModule )
 {
     SEGTABLEENTRY *pSegment;
@@ -360,6 +366,7 @@ static HINSTANCE MODULE_GetInstance( HMODULE hModule )
     
     return pSegment->selector;
 }
+#endif
 
 
 /***********************************************************************
@@ -795,7 +802,7 @@ LPSTR MODULE_GetModuleName( HMODULE hModule )
 
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return NULL;
     p = (BYTE *)pModule + pModule->name_table;
-    len = min( *p, 8 );
+    len = MIN( *p, 8 );
     memcpy( buffer, p + 1, len );
     buffer[len] = '\0';
     return buffer;
@@ -1023,6 +1030,33 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		oldsp = IF1632_Saved16_sp;
 		IF1632_Saved16_ss = pModule->self_loading_sel;
 		IF1632_Saved16_sp = 0xFF00;
+		if (!IF1632_Stack32_base) {
+		  STACK32FRAME* frame32;
+		  char *stack32Top;
+		  /* Setup an initial 32 bit stack frame */
+		  hInitialStack32 =  GLOBAL_Alloc( GMEM_FIXED, 0x10000,
+						  hModule, FALSE, FALSE, 
+						  FALSE );
+
+		  /* Create the 32-bit stack frame */
+		  
+		  *(DWORD *)GlobalLock(hInitialStack32) = 0xDEADBEEF;
+		  stack32Top = (char*)GlobalLock(hInitialStack32) + 
+		    0x10000;
+		  frame32 = (STACK32FRAME *)stack32Top - 1;
+		  frame32->saved_esp = (DWORD)stack32Top;
+		  frame32->edi = 0;
+		  frame32->esi = 0;
+		  frame32->edx = 0;
+		  frame32->ecx = 0;
+		  frame32->ebx = 0;
+		  frame32->ebp = 0;
+		  frame32->retaddr = 0;
+		  frame32->codeselector = WINE_CODE_SELECTOR;
+		  /* pTask->esp = (DWORD)frame32; */
+		  IF1632_Stack32_base = WIN16_GlobalLock(hInitialStack32);
+
+		}
 		CallTo16_word_ww (selfloadheader->BootApp,
 			pModule->self_loading_sel, hModule, fd);
 		/* some BootApp procs overwrite the selector of dgroup */
@@ -1030,6 +1064,11 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		IF1632_Saved16_ss = oldss;
 		IF1632_Saved16_sp = oldsp;
 		for (i = 2; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
+		if (hInitialStack32){
+		  GlobalUnlock (hInitialStack32);
+		  GlobalFree (hInitialStack32);
+		  IF1632_Stack32_base = hInitialStack32 = 0;
+		}
 	} 
 	else
         {
@@ -1229,13 +1268,28 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
     handle = LoadModule( filename, &params );
     if (handle == (HANDLE)2)  /* file not found */
     {
+	/* Check that the original file name did not have a suffix */
+	p = strrchr(filename, '.');
+        if (p && !(strchr(p, '/') || strchr(p, '\\')))
+            return handle;  /* filename already includes a suffix! */
         strcat( filename, ".exe" );
         handle = LoadModule( filename, &params );
     }
 
     GlobalFree( cmdShowHandle );
     GlobalFree( cmdLineHandle );
-    Yield();	/* program is executed immediatly ....needed for word */
+
+#if 0
+    if (handle < (HANDLE)32)	/* Error? */
+	return handle;
+    
+/* FIXME: Yield never returns! 
+   We may want to run more applications or start the debugger
+   before calling Yield. If we don't Yield will be called immdiately
+   after returning.  Why is it needed for Word anyway? */
+    Yield();	/* program is executed immediately ....needed for word */
+
+#endif
     return handle;
 }
 

@@ -14,6 +14,7 @@
 #include "color.h"
 #include "debug.h"
 #include "font.h"
+#include "xmalloc.h"
 
 static DeviceCaps * displayDevCaps = NULL;
 
@@ -463,7 +464,7 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
 
     if (!displayDevCaps)
     {
-	displayDevCaps = (DeviceCaps *) malloc( sizeof(DeviceCaps) );
+	displayDevCaps = (DeviceCaps *) xmalloc( sizeof(DeviceCaps) );
 	DC_FillDevCaps( displayDevCaps );
     }
 

@@ -297,7 +297,7 @@ id	2
 292 pascal16 UnhookWindowsHookEx(segptr) UnhookWindowsHookEx
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx
 294 stub LockWindowUpdate
-#299 MOUSE_EVENT
+299 register Mouse_Event() Mouse_Event
 300 stub UnloadInstalledDrivers
 #301 BOZOSLIVEHERE :-))
 #306 BEAR306
@@ -319,7 +319,7 @@ id	2
 334 pascal   GetQueueStatus(word) GetQueueStatus
 335 pascal16 GetInputState() GetInputState
 336 stub LoadCursorIconHandler
-337 stub GetMouseEventProc
+337 pascal   GetMouseEventProc() GetMouseEventProc
 #341 _FFFE_FARFRAME
 343 stub GetFilePortName
 356 stub LoadDIBCursorHandler
@@ -514,3 +514,25 @@ id	2
 855 stub Usr32ThkConnectionDataSL
 890 stub InstallIMT
 891 stub UninstallIMT
+# Stubs for Hebrew version
+489 pascal16 USER_489() stub_USER_489
+490 pascal16 USER_490() stub_USER_490
+492 pascal16 USER_492() stub_USER_492
+496 pascal16 USER_496() stub_USER_496
+902 pascal16 USER_902() stub_USER_902
+905 pascal16 USER_905() stub_USER_905
+906 pascal16 USER_906() stub_USER_906
+907 pascal16 USER_907() stub_USER_907
+909 pascal16 USER_909() stub_USER_909
+910 pascal16 USER_910() stub_USER_910
+911 pascal16 USER_911() stub_USER_911
+912 pascal16 USER_912() stub_USER_912
+913 pascal16 USER_913() stub_USER_913
+914 pascal16 USER_914() stub_USER_914
+915 pascal16 USER_915() stub_USER_915
+916 pascal16 USER_916() stub_USER_916
+918 pascal16 USER_918() stub_USER_918
+919 pascal16 USER_919() stub_USER_919
+920 pascal16 USER_920() stub_USER_920
+922 pascal16 USER_922() stub_USER_922
+923 pascal16 USER_923() stub_USER_923

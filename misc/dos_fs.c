@@ -8,6 +8,7 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +36,7 @@
 #include "task.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 #ifndef WINE_INI_GLOBAL
 /* Get the WINE_INI_GLOBAL definition from autoconf.h */
@@ -765,13 +767,13 @@ char *WinIniFileName(void)
 	if (name)
 		return name;
 		
-	name = malloc(1024);
+	name = xmalloc(1024);
 
 	strcpy(name, DOS_GetUnixFileName(WindowsDirectory));
 	strcat(name, "/");
 	strcat(name, "win.ini");
 
-	name = realloc(name, strlen(name) + 1);
+	name = xrealloc(name, strlen(name) + 1);
 	
 	return name;
 }
@@ -858,9 +860,9 @@ struct dosdirent *DOS_opendir(char *dosdirname)
     for (x=0; x <= max_open_dirs; x++) {
 	if (x == max_open_dirs) {
 	    if (DosDirs) {
-		DosDirs=(struct dosdirent*)realloc(DosDirs,(++max_open_dirs)*sizeof(DosDirs[0]));
+		DosDirs=(struct dosdirent*)xrealloc(DosDirs,(++max_open_dirs)*sizeof(DosDirs[0]));
 	    } else {
-		DosDirs=(struct dosdirent*)malloc(sizeof(DosDirs[0]));
+		DosDirs=(struct dosdirent*)xmalloc(sizeof(DosDirs[0]));
 		max_open_dirs=1;
 	    }
 	    break; /* this one is definitely not in use */

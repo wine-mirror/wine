@@ -71,7 +71,10 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	return NC_HandleNCPaint( hwnd );
 
     case WM_NCHITTEST:
-	return NC_HandleNCHitTest( hwnd, MAKEPOINT(lParam) );
+        {
+            POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+            return NC_HandleNCHitTest( hwnd, pt );
+        }
 
     case WM_NCLBUTTONDOWN:
 	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
@@ -236,7 +239,10 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
     case WM_SYSCOMMAND:
-	return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT(lParam) );
+        {
+            POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+            return NC_HandleSysCommand( hwnd, wParam, pt );
+        }
 
     case WM_SYSKEYDOWN:
 	if (wParam == VK_MENU)

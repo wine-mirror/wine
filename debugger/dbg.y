@@ -1,9 +1,9 @@
-
 %{
 /*
  * Parser for command lines in the Wine debugger
  *
  * Copyright 1993 Eric Youngdale
+ * Copyright 1995 Morten Welinder
  */
 
 #include <stdio.h>
@@ -33,7 +33,7 @@ int yyerror(char *);
     int              integer;
 }
 
-%token CONT STEP NEXT QUIT HELP BACKTRACE INFO STACK SEGMENTS REGS
+%token CONT STEP LIST NEXT QUIT HELP BACKTRACE INFO STACK SEGMENTS REGS
 %token ENABLE DISABLE BREAK DELETE SET MODE PRINT EXAM DEFINE ABORT
 %token NO_SYMBOL
 %token SYMBOLFILE
@@ -42,82 +42,144 @@ int yyerror(char *);
 %token <integer> NUM FORMAT
 %token <reg> REG
 
+/* %left ',' */
+/* %left '=' OP_OR_EQUAL OP_XOR_EQUAL OP_AND_EQUAL OP_SHL_EQUAL \
+         OP_SHR_EQUAL OP_PLUS_EQUAL OP_MINUS_EQUAL \
+         OP_TIMES_EQUAL OP_DIVIDE_EQUAL OP_MODULO_EQUAL */
+/* %left OP_COND */ /* ... ? ... : ... */
+%left OP_LOR
+%left OP_LAND
+%left '|'
+%left '^'
+%left '&'
+%left OP_EQ OP_NE
+%left '<' '>' OP_LE OP_GE
+%left OP_SHL OP_SHR
+%left '+' '-'
+%left '*' '/' '%'
+%left OP_SIGN '!' '~' OP_DEREF /* OP_INC OP_DEC OP_ADDR */
+%nonassoc ':'
+
 %type <integer> expr
-%type <address> addr symbol
+%type <address> addr segaddr symbol
 
 %%
 
- input:  /* empty */
-	| input line  { issue_prompt(); }
+ input:   line			{ issue_prompt(); }
+	| input line		{ issue_prompt(); }
 
- line:		'\n'
-	| error '\n'       { yyerrok; }
-	| QUIT  '\n'       { exit(0); }
-	| HELP  '\n'       { DEBUG_Help(); }
-	| CONT '\n'        { dbg_exec_mode = EXEC_CONT; return 0; }
-	| STEP '\n'        { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-	| NEXT '\n'        { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-	| ABORT '\n'       { kill(getpid(), SIGABRT); }
- 	| SYMBOLFILE IDENTIFIER '\n'  { DEBUG_ReadSymbolTable( $2 ); }
-	| DEFINE IDENTIFIER addr '\n' { DEBUG_AddSymbol( $2, &$3 ); }
-	| MODE NUM '\n'         { mode_command($2); }
-	| ENABLE NUM '\n'       { DEBUG_EnableBreakpoint( $2, TRUE ); }
-	| DISABLE NUM '\n'      { DEBUG_EnableBreakpoint( $2, FALSE ); }
-	| BREAK '*' addr '\n'   { DEBUG_AddBreakpoint( &$3 ); }
-        | BREAK symbol '\n'     { DEBUG_AddBreakpoint( &$2 ); }
-        | BREAK '\n'            { DBG_ADDR addr = { CS_reg(DEBUG_context),
-                                                    EIP_reg(DEBUG_context) };
-                                  DEBUG_AddBreakpoint( &addr );
-                                }
-        | DELETE BREAK NUM '\n' { DEBUG_DelBreakpoint( $3 ); }
-	| BACKTRACE '\n'        { DEBUG_BackTrace(); }
+ line:  command '\n'
+	| '\n'
+	| error	'\n'	       { yyerrok; }
+
+ command: QUIT	               { exit(0); }
+	| HELP	               { DEBUG_Help(); }
+	| CONT	               { dbg_exec_mode = EXEC_CONT; return 0; }
+	| STEP	               { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+	| NEXT	               { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
+	| LIST		       { DEBUG_List( NULL, 15 ); }
+	| LIST addr	       { DEBUG_List( &$2, 15 ); }
+	| ABORT	               { kill(getpid(), SIGABRT); }
+	| SYMBOLFILE IDENTIFIER { DEBUG_ReadSymbolTable( $2 ); }
+	| DEFINE IDENTIFIER addr { DEBUG_AddSymbol( $2, &$3 ); }
+	| MODE NUM	       { mode_command($2); }
+	| ENABLE NUM	       { DEBUG_EnableBreakpoint( $2, TRUE ); }
+	| DISABLE NUM	       { DEBUG_EnableBreakpoint( $2, FALSE ); }
+	| BREAK '*' addr       { DEBUG_AddBreakpoint( &$3 ); }
+	| BREAK symbol	       { DEBUG_AddBreakpoint( &$2 ); }
+	| BREAK		       { DBG_ADDR addr = { CS_reg(DEBUG_context),
+						     EIP_reg(DEBUG_context) };
+				 DEBUG_AddBreakpoint( &addr );
+			       }
+	| DELETE BREAK NUM     { DEBUG_DelBreakpoint( $3 ); }
+	| BACKTRACE	       { DEBUG_BackTrace(); }
 	| infocmd
 	| x_command
 	| print_command
 	| deposit_command
 
 deposit_command:
-	SET REG '=' expr '\n'          { DEBUG_SetRegister( $2, $4 ); }
-	| SET '*' addr '=' expr '\n'   { DEBUG_WriteMemory( &$3, $5 ); }
-	| SET IDENTIFIER '=' addr '\n' { if (!DEBUG_SetSymbolValue( $2, &$4 ))
-                                         {
-                                           fprintf( stderr, "Symbol %s not found\n", $2 );
-                                           YYERROR;
-                                         }
-                                       }
+	SET REG '=' expr	   { DEBUG_SetRegister( $2, $4 ); }
+	| SET '*' addr '=' expr	   { DEBUG_WriteMemory( &$3, $5 ); }
+	| SET IDENTIFIER '=' addr  { if (!DEBUG_SetSymbolValue( $2, &$4 ))
+				       {
+					 fprintf( stderr,
+						 "Symbol %s not found\n", $2 );
+					 YYERROR;
+				       }
+				   }
 
 
 x_command:
-	  EXAM addr '\n' { DEBUG_ExamineMemory( &$2, 1, 'x'); }
-	| EXAM FORMAT addr '\n' { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
+	  EXAM addr  { DEBUG_ExamineMemory( &$2, 1, 'x'); }
+	| EXAM FORMAT addr  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
 
  print_command:
-	  PRINT addr '\n'        { DEBUG_Print( &$2, 1, 'x' ); }
-	| PRINT FORMAT addr '\n' { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff ); }
+	  PRINT addr	     { DEBUG_Print( &$2, 1, 'x' ); }
+	| PRINT FORMAT addr  { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff ); }
 
  symbol: IDENTIFIER   { if (!DEBUG_GetSymbolValue( $1, &$$ ))
-                        {
-                           fprintf( stderr, "Symbol %s not found\n", $1 );
-                           YYERROR;
-                        }
-                      } 
+			{
+			   fprintf( stderr, "Symbol %s not found\n", $1 );
+			   YYERROR;
+			}
+		      } 
 
- addr: expr                     { $$.seg = 0xffffffff; $$.off = $1; }
-       | expr ':' expr          { $$.seg = $1; $$.off = $3; }
-       | symbol   		{ $$ = $1; }
+ addr: expr				{ $$.seg = 0xffffffff; $$.off = $1; }
+       | segaddr			{ $$ = $1; }
 
- expr:  NUM			{ $$ = $1;	}
-	| REG			{ $$ = DEBUG_GetRegister($1); }
-	| expr '+' NUM		{ $$ = $1 + $3; }
-	| expr '-' NUM		{ $$ = $1 - $3; }
-	| '(' expr ')'		{ $$ = $2; }
-	| '*' addr		{ $$ = DEBUG_ReadMemory( &$2 ); }
+ segaddr: expr ':' expr			{ $$.seg = $1; $$.off = $3; }
+       | symbol				{ $$ = $1; }
+
+ expr:	NUM				{ $$ = $1;	}
+	| REG				{ $$ = DEBUG_GetRegister($1); }
+	| expr OP_LOR expr		{ $$ = $1 || $3; }
+	| expr OP_LAND expr		{ $$ = $1 && $3; }
+	| expr '|' expr			{ $$ = $1 | $3; }
+	| expr '&' expr			{ $$ = $1 & $3; }
+	| expr '^' expr			{ $$ = $1 ^ $3; }
+	| expr OP_EQ expr		{ $$ = $1 == $3; }
+	| expr '>' expr			{ $$ = $1 > $3; }
+	| expr '<' expr			{ $$ = $1 < $3; }
+	| expr OP_GE expr		{ $$ = $1 >= $3; }
+	| expr OP_LE expr		{ $$ = $1 <= $3; }
+	| expr OP_NE expr		{ $$ = $1 != $3; }
+	| expr OP_SHL expr		{ $$ = (unsigned)$1 << $3; }
+	| expr OP_SHR expr		{ $$ = (unsigned)$1 >> $3; }
+	| expr '+' expr			{ $$ = $1 + $3; }
+	| expr '-' expr			{ $$ = $1 - $3; }
+	| expr '*' expr			{ $$ = $1 * $3; }
+	| expr '/' expr
+	  { if ($3) 
+	      if ($3 == -1 && $1 == 0x80000000l)
+		yyerror ("Division overflow");
+	      else
+		$$ = $1 / $3;
+	    else
+	      yyerror ("Division by zero"); }
+	| expr '%' expr
+	  { if ($3) 
+	      if ($3 == -1 && $1 == 0x80000000l)
+		$$ = 0; /* A sensible result in this case.  */
+	      else
+		$$ = $1 % $3;
+	    else
+	      yyerror ("Division by zero"); }
+	| '-' expr %prec OP_SIGN	{ $$ = -$2; }
+	| '+' expr %prec OP_SIGN	{ $$ = $2; }
+	| '!' expr			{ $$ = !$2; }
+	| '~' expr			{ $$ = ~$2; }
+	| '(' expr ')'			{ $$ = $2; }
+/* For parser technical reasons we can't use "addr" here.  */
+	| '*' expr %prec OP_DEREF	{ DBG_ADDR addr = { 0xffffffff, $2 };
+					  $$ = DEBUG_ReadMemory( &addr ); }
+	| '*' segaddr %prec OP_DEREF	{ $$ = DEBUG_ReadMemory( &$2 ); }
 	
- infocmd: INFO REGS '\n'          { DEBUG_InfoRegisters(); }
-	| INFO STACK '\n'         { DEBUG_InfoStack(); }
-	| INFO BREAK '\n'         { DEBUG_InfoBreakpoints(); }
-	| INFO SEGMENTS '\n'      { LDT_Print( 0, -1 ); }
-        | INFO SEGMENTS expr '\n' { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
+ infocmd: INFO REGS	      { DEBUG_InfoRegisters(); }
+	| INFO STACK	      { DEBUG_InfoStack(); }
+	| INFO BREAK	      { DEBUG_InfoBreakpoints(); }
+	| INFO SEGMENTS	      { LDT_Print( 0, -1 ); }
+	| INFO SEGMENTS expr  { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
 
 
 %%

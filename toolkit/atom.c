@@ -10,6 +10,7 @@
 #include <ctype.h>
 
 #include "windows.h"
+#include "xmalloc.h"
 
 #ifdef CONFIG_IPC
 #include "dde_atom.h"
@@ -90,7 +91,7 @@ static ATOM ATOM_AddAtom( ATOMtoHANDLEtable** tableptr, SEGPTR name )
     }
     if(!FirstUnused)
     {
-      *tableptr = malloc(sizeof(ATOMtoHANDLEtable));
+      *tableptr = xmalloc(sizeof(ATOMtoHANDLEtable));
       (*tableptr)->next = NULL;
       for(i=0; i<16; i++)
       {

@@ -10,7 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "gdi.h"
 #include "sysmetrics.h"
 
-short sysMetrics[SM_CMETRICS];
+short sysMetrics[SM_CMETRICS+1];
 
 /***********************************************************************
  *           SYSMETRICS_Init
@@ -62,6 +62,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_MENUDROPALIGNMENT] = GetProfileInt( "windows","MenuDropAlignment", 0 );
     sysMetrics[SM_PENWINDOWS] = 0;
     sysMetrics[SM_DBCSENABLED] = 0;
+    sysMetrics[SM_CMETRICS] = SM_CMETRICS;
 }
 
 
@@ -70,6 +71,6 @@ void SYSMETRICS_Init(void)
  */
 int GetSystemMetrics( WORD index )
 {
-    if (index >= SM_CMETRICS) return 0;
+    if (index > SM_CMETRICS) return 0;
     else return sysMetrics[index];    
 }

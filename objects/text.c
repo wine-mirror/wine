@@ -15,6 +15,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "stddebug.h"
 /* #define DEBUG_TEXT */
 #include "debug.h"
+#include "xmalloc.h"
 
 #define TAB     9
 #define LF     10
@@ -196,8 +197,9 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
     int width = rect->right - rect->left;
     int max_width = 0;
 
-    dprintf_text(stddeb,"DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str, count,
-	   rect->left, rect->top, rect->right, rect->bottom);
+    dprintf_text(stddeb,"DrawText: '%s', %d , [(%ld,%ld),(%ld,%ld)]\n", str,
+		 count, (LONG)rect->left, (LONG)rect->top, (LONG)rect->right, 
+		 (LONG)rect->bottom);
     
     if (count == -1) count = strlen(str);
     strPtr = str;
@@ -307,8 +309,9 @@ BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
     dprintf_text(stddeb,"ExtTextOut: %d,%d '%*.*s', %d  flags=%d\n",
             x, y, count, count, str, count, flags);
     if (lprect != NULL) {
-      dprintf_text(stddeb, "rect %d %d %d %d\n",
-		   lprect->left, lprect->top, lprect->right, lprect->bottom );
+      dprintf_text(stddeb, "rect %ld %ld %ld %ld\n", (LONG)lprect->left,
+		   (LONG)lprect->top, (LONG)lprect->right,
+		   (LONG)lprect->bottom );
     }
 
       /* Setup coordinates */
@@ -418,7 +421,7 @@ BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
     {
         XTextItem *items, *pitem;
 
-        items = malloc( count * sizeof(XTextItem) );
+        items = xmalloc( count * sizeof(XTextItem) );
         for (i = 0, pitem = items; i < count; i++, pitem++)
         {
             pitem->chars  = str + i;

@@ -619,8 +619,8 @@ LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos )
 	(wndPtr->dwStyle & (WS_POPUP | WS_CHILD) == 0))
     {
 	NC_GetMinMaxInfo( winpos->hwnd, &maxSize, NULL, NULL, NULL );
-	winpos->cx = min( winpos->cx, maxSize.x );
-	winpos->cy = min( winpos->cy, maxSize.y );
+	winpos->cx = MIN( winpos->cx, maxSize.x );
+	winpos->cy = MIN( winpos->cy, maxSize.y );
     }
     return 0;
 }
@@ -702,7 +702,7 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter )
 
 
 /***********************************************************************
- *           WINPOS_SetXWindosPos
+ *           WINPOS_SetXWindowPos
  *
  * SetWindowPos() for an X window. Used by the real SetWindowPos().
  */

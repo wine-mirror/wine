@@ -16,6 +16,7 @@
 #include <string.h>
 #include "shm_block.h"
 #include "shm_fragment.h"
+#include "xmalloc.h"
 
 #define DO_FREE(id) (-id)
 #define LIST_LENGTH 20
@@ -60,8 +61,7 @@ int main()
   
   static char *ptr[LIST_LENGTH];
   
-  block=malloc(SHM_MINBLOCK);
-  assert(block);
+  block=xmalloc(SHM_MINBLOCK);
 
   /* setup first item in the free list */
   shm_FragmentInit(block, sizeof(*block), SHM_MINBLOCK);

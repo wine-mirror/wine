@@ -24,6 +24,7 @@
 #include "shm_block.h"
 #include "shm_semaph.h"
 #include "dde_proc.h"
+#include "xmalloc.h"
 
 /* How each shmid is maped to local pointer */
 /* Only attached shm blocks are in this construct */
@@ -79,7 +80,7 @@ struct shm_block *shm_attach_block(int shm_id, int proc_idx,
   block=(struct shm_block*)shmat(shm_id, NULL, 0);
   if (block==NULL || block == (struct shm_block*) -1) return NULL;
 
-  this=(struct local_shm_map *)malloc(sizeof(*this));
+  this=(struct local_shm_map *)xmalloc(sizeof(*this));
   this->next= shm_map;
   shm_map   = this;
   this->shm_id= shm_id;

@@ -58,10 +58,10 @@ int MAIN_Init(void)
 
       /* Initialize Win32 relay code */
     if (!RELAY32_Init()) return 0;
-#endif
 
       /* Create built-in modules */
     if (!MODULE_Init()) return 0;
+#endif
 
       /* Initialize the DOS file system */
     DOS_InitFS();

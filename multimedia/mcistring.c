@@ -22,6 +22,7 @@
 #include "mmsystem.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 extern MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
 
@@ -1393,7 +1394,7 @@ MCISTR_Load(_MCISTR_PROTO_) {
 		len+=strlen(keywords[i])+1;
 		i++;
 	}
-	s=(char*)malloc(len);
+	s=(char*)xmalloc(len);
 	*s='\0';
 	while (i<nrofkeywords) {
 		strcat(s,keywords[i]);
@@ -1445,7 +1446,7 @@ MCISTR_Save(_MCISTR_PROTO_) {
 		len+=strlen(keywords[i])+1;
 		i++;
 	}
-	s=(char*)malloc(len);
+	s=(char*)xmalloc(len);
 	*s='\0';
 	while (i<nrofkeywords) {
 		strcat(s,keywords[i]);
@@ -1569,7 +1570,7 @@ MCISTR_Escape(_MCISTR_PROTO_) {
 		len+=strlen(keywords[i])+1;
 		i++;
 	}
-	s=(char*)malloc(len);
+	s=(char*)xmalloc(len);
 	*s='\0';
 	while (i<nrofkeywords) {
 		strcat(s,keywords[i]);
@@ -1941,7 +1942,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 						break;
 					j++;
 				}
-				s=(char*)malloc(len);
+				s=(char*)xmalloc(len);
 				strcpy(s,keywords[i+1]+1);
 				k=j;j=i+2;
 				while (j<=k) {
@@ -2010,7 +2011,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 						break;
 					j++;
 				}
-				s=(char*)malloc(len);
+				s=(char*)xmalloc(len);
 				strcpy(s,keywords[i+1]+1);
 				k=j;j=i+2;
 				while (j<=k) {
@@ -2105,7 +2106,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 		i=1;/* nrofkeywords = nrofspaces+1 */
 		s=args;
 		while ((s=strchr(s,' '))!=NULL) i++,s++;
-		keywords=(char**)malloc(sizeof(char*)*(i+2));
+		keywords=(char**)xmalloc(sizeof(char*)*(i+2));
 		nrofkeywords=i;
 		s=args;i=0;
 		while (s && i<nrofkeywords) {
@@ -2116,7 +2117,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 		keywords[i]=NULL;
 	} else {
 		nrofkeywords=0;
-		keywords=(char**)malloc(sizeof(char*));
+		keywords=(char**)xmalloc(sizeof(char*));
 	}
 	dwFlags = 0; /* default flags */
 	for (i=0;i<nrofkeywords;) {

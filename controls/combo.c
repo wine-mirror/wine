@@ -22,6 +22,7 @@
 #include "dos_fs.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
  /*
   * Note: Combos are probably implemented in a different way by Windows.
@@ -59,7 +60,7 @@ int CreateComboStruct(HWND hwnd, LONG style)
 {
   LPHEADCOMBO lphc;
 
-  lphc = (LPHEADCOMBO)malloc(sizeof(HEADCOMBO));
+  lphc = (LPHEADCOMBO)xmalloc(sizeof(HEADCOMBO));
   SetWindowLong(hwnd,4,(LONG)lphc);
   lphc->hWndEdit = 0;
   lphc->hWndLBox = 0;
@@ -652,7 +653,11 @@ LPHEADLIST CLBoxGetListHeader(HWND hwnd)
 static LONG CBLCreate( HWND hwnd, WORD wParam, LONG lParam )
 {
   CREATESTRUCT *createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
+#ifdef WINELIB32
+  SetWindowLong(hwnd,0,(LONG)createStruct->lpCreateParams);
+#else
   SetWindowWord(hwnd,0,LOWORD(createStruct->lpCreateParams));
+#endif
   return 0;
 }
 
@@ -772,7 +777,7 @@ static LONG CBLPaint( HWND hwnd, WORD wParam, LONG lParam )
       lpls->itemRect.left   = rect.left;
       lpls->itemRect.right  = rect.right;
 
-      dprintf_listbox(stddeb,"drawing item: %d %d %d %d %d\n",rect.left,top,rect.right,top+height,lpls->itemState);
+      dprintf_listbox(stddeb,"drawing item: %ld %d %ld %d %d\n",(LONG)rect.left,top,(LONG)rect.right,top+height,lpls->itemState);
       if (lphl->OwnerDrawn) {
 	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 0);
 	if (lpls->itemState)
@@ -790,6 +795,7 @@ static LONG CBLPaint( HWND hwnd, WORD wParam, LONG lParam )
 
     lpls = lpls->lpNext;
   }
+  SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
   SelectObject(hdc,hOldFont);
   EndPaint( hwnd, &ps );
   return 0;

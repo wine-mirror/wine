@@ -16,6 +16,7 @@
 #include "stddebug.h"
 #include "color.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 
 /***********************************************************************
@@ -280,7 +281,7 @@ static void DIB_SetImageBits_RLE4( WORD lines, BYTE *bits, WORD width,
 	BYTE *begin = bits;
 
         lines--;
-	while ((INT)lines >= 0)
+	while ((short)lines >= 0)
         {
 		length = *bits++;
 		if (length) {	/* encoded */
@@ -451,7 +452,7 @@ static void DIB_SetImageBits_RLE8(WORD lines,
 			   * what caused the previous implementation to 
 			   * fail.			[JAY]
 			   */
-			  line=0; /* Cause exit from do loop. */
+			  line=-1; /* Cause exit from do loop. */
 			  break;
 		      }
 		      
@@ -511,7 +512,7 @@ static void DIB_SetImageBits_RLE8(WORD lines,
 	    }  /* process either an encoded sequence or an escape sequence */
 	  
 	  /* We expect to come here more than once per line. */
-      } while (line > 0);  /* Do this until the bitmap is filled */
+      } while (line >= 0);  /* Do this until the bitmap is filled */
     
     /*
      * Everybody comes here at the end.

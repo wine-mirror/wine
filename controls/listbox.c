@@ -24,6 +24,7 @@
 #include "dos_fs.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 #if 0
 #define LIST_HEAP_ALLOC(lphl,f,size) ((int)HEAP_Alloc(&lphl->Heap,f,size) & 0xffff)
@@ -56,13 +57,8 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
 {
   LPHEADLIST lphl;
 
-  lphl = (LPHEADLIST)malloc(sizeof(HEADLIST));
+  lphl = (LPHEADLIST)xmalloc(sizeof(HEADLIST));
   SetWindowLong(hwnd, 0, (LONG)lphl);
-  if (lphl == NULL) {
-    fprintf(stderr,"malloc failed in CreateListBoxStruct()\n");
-    exit(1); /* Things won't get better */
-  }
-
   ListBoxInitialize(lphl);
   lphl->DrawCtlType    = CtlType;
   lphl->CtlID          = GetWindowWord(hwnd,GWW_ID);
@@ -1147,7 +1143,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
       if (top > rect.bottom) {
 	if (lphl->dwStyle & LBS_MULTICOLUMN) {
-	  lphl->ItemsPerColumn = max(lphl->ItemsPerColumn, ipc);
+	  lphl->ItemsPerColumn = MAX(lphl->ItemsPerColumn, ipc);
 	  ipc = 0;
 	  top = 0;
 	  rect.left += lphl->ColumnsWidth;
@@ -1182,6 +1178,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
     lpls = lpls->lpNext;
   }
+  ListBoxUpdateWindow(hwnd,lphl,FALSE);
   SelectObject(hdc,hOldFont);
   EndPaint( hwnd, &ps );
   return 0;

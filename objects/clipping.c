@@ -311,8 +311,9 @@ BOOL RectVisible( HDC hdc, LPRECT rect )
     RECT tmpRect;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
-    dprintf_clipping(stddeb,"RectVisible: "NPFMT" %d,%dx%d,%d\n",
-                     hdc, rect->left, rect->top, rect->right, rect->bottom );
+    dprintf_clipping(stddeb,"RectVisible: "NPFMT" %ld,%ldx%ld,%ld\n",
+                     hdc, (LONG)rect->left, (LONG)rect->top, (LONG)rect->right,
+		     (LONG)rect->bottom );
     if (!dc->w.hGCClipRgn) return FALSE;
     /* copy rectangle to avoid overwriting by LPtoDP */
     tmpRect = *rect;

@@ -799,8 +799,10 @@ static void CreateTempFile(struct sigcontext_struct *context)
 {
 	char temp[256];
 	int handle;
-	
-	sprintf(temp,"%s\\win%d.tmp",TempDirectory,(int) getpid());
+	static int counter = 0;
+
+	sprintf(temp,"%s\\win%d.%03d",TempDirectory,(int) getpid(), counter);
+        counter = (counter + 1) % 1000;
 
 	dprintf_int(stddeb,"CreateTempFile %s\n",temp);
 

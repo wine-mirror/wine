@@ -414,8 +414,9 @@ LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
     xsize   = rect.right  - 8 * spacing;
     
     dprintf_mdi(stddeb, 
-	    "MDICascade: Client wnd at (%d,%d) - (%d,%d), spacing %d\n", 
-	    rect.left, rect.top, rect.right, rect.bottom, spacing);
+      "MDICascade: Client wnd at (%ld,%ld) - (%ld,%ld), spacing %d\n", 
+      (LONG)rect.left, (LONG)rect.top, (LONG)rect.right, (LONG)rect.bottom,
+      spacing);
     dprintf_mdi(stddeb, "MDICascade: searching for last child\n");
     hinfo = ci->infoActiveChildren;
     while(1) {

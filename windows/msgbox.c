@@ -121,7 +121,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     lRet = DrawText(hdc, lpmb->text, -1, &rect,
 		    DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     theight = rect.bottom  - rect.top;
-    tiheight = 16 + max(iheight, theight);
+    tiheight = 16 + MAX(iheight, theight);
     ReleaseDC(hItem, hdc);
     
     /* Position the text */

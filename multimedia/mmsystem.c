@@ -23,6 +23,7 @@
 #include "mmsystem.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 static int	InstalledCount;
 static int	InstalledListLen;
@@ -533,7 +534,7 @@ msg# 543 : tmsf
 			msgptr = "Unknown MCI Error !\n";
 			break;
 		}
-	maxbuf = min(uLength - 1, strlen(msgptr));
+	maxbuf = MIN(uLength - 1, strlen(msgptr));
 	if (maxbuf > 0) strncpy(lpstrBuffer, msgptr, maxbuf);
 	lpstrBuffer[maxbuf + 1] = '\0';
 	return(TRUE);
@@ -699,7 +700,7 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS lpParms)
 			if (lpInstallNames == NULL) {
 				InstalledCount = 0;
 				InstalledListLen = 0;
-				ptr = lpInstallNames = malloc(2048);
+				ptr = lpInstallNames = xmalloc(2048);
 				GetPrivateProfileString("mci", NULL, "", lpInstallNames, 2000, SysFile);
 				while(strlen(ptr) > 0) {
 					dprintf_mci(stddeb, "---> '%s' \n", ptr);
@@ -900,7 +901,7 @@ msg# 343 : There are no MIDI devices installed on the system. Use the Drivers op
 			msgptr = "Unknown MIDI Error !\n";
 			break;
 		}
-	maxbuf = min(uSize - 1, strlen(msgptr));
+	maxbuf = MIN(uSize - 1, strlen(msgptr));
 	if (maxbuf > 0) strncpy(lpText, msgptr, maxbuf);
 	lpText[maxbuf + 1] = '\0';
 	return(TRUE);
@@ -1356,7 +1357,7 @@ UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 			msgptr = "Unknown MMSYSTEM Error !\n";
 			break;
 		}
-	maxbuf = min(uSize - 1, strlen(msgptr));
+	maxbuf = MIN(uSize - 1, strlen(msgptr));
 	if (maxbuf > 0) strncpy(lpText, msgptr, maxbuf);
 	lpText[maxbuf + 1] = '\0';
 	return(TRUE);

@@ -18,6 +18,7 @@
 #include "stddebug.h"
 /* #define DEBUG_GDI */
 #include "debug.h"
+#include "xmalloc.h"
 
 LPSTR GDI_Heap = NULL;
 WORD GDI_HeapSel = 0;
@@ -200,7 +201,7 @@ BOOL GDI_AppendToPenBrushList(HANDLE hNewObj)
 	int	       	i = 1;
 	if (hNewObj == 0) return FALSE;
 	if (lpPenBrushList == NULL) {
-		lpPenBrushList = malloc(MAX_OBJ * sizeof(HANDLE));
+		lpPenBrushList = xmalloc(MAX_OBJ * sizeof(HANDLE));
 		lpPenBrushList[0] = 0;
 		dprintf_gdi(stddeb,"GDI_AppendToPenBrushList() lpPenBrushList allocated !\n");
 	}
@@ -495,7 +496,7 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
       if (header->wMagic == PEN_MAGIC) {
 	PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), lpLog);
 	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
-	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
+	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnWidth=%ld\n", (LONG)((LPLOGPEN)lpLog)->lopnWidth.x);
 	dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
       }
       nRet = CallEnumObjectsProc(lpEnumFunc, GDI_HEAP_SEG_ADDR(hLog),

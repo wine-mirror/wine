@@ -71,6 +71,7 @@ static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
         RECT rect;
+        POINT pt;
 	LONG lResult = 0;
 	WND *wndPtr = WIN_FindWndPtr(hWnd);
 	LONG style = wndPtr->dwStyle & 0x0000000F;
@@ -139,7 +140,9 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	        if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) break;
                 SendMessage( hWnd, BM_SETSTATE, FALSE, 0 );
                 GetClientRect( hWnd, &rect );
-                if (PtInRect( &rect, MAKEPOINT(lParam) ))
+                pt.x = LOWORD(lParam);
+                pt.y = HIWORD(lParam);
+                if (PtInRect( &rect, pt ))
                 {
                     switch(style)
                     {
@@ -171,7 +174,9 @@ LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 if (GetCapture() == hWnd)
                 {
                     GetClientRect( hWnd, &rect );
-                    if (PtInRect( &rect, MAKEPOINT(lParam)) )
+                    pt.x = LOWORD(lParam);
+                    pt.y = HIWORD(lParam);
+                    if (PtInRect( &rect, pt) )
                        SendMessage( hWnd, BM_SETSTATE, TRUE, 0 );
                     else SendMessage( hWnd, BM_SETSTATE, FALSE, 0 );
                 }
@@ -314,7 +319,7 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
     
     /* draw button label, if any: */
     text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText );
-    if (text[0])
+    if (text && text[0])
     {
         SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
                      GetSysColor(COLOR_GRAYTEXT) : GetSysColor(COLOR_BTNTEXT));
@@ -369,8 +374,6 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
 
     GetTextMetrics(hDC, &tm);
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
-    text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText );
-    textlen = strlen( text );
 
       /* Draw the check-box bitmap */
     x = y = 0;
@@ -382,6 +385,9 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
     GRAPH_DrawBitmap( hDC, hbitmapCheckBoxes, rc.left, rc.top + delta,
                       x, y, checkBoxWidth, checkBoxHeight );
     rc.left += checkBoxWidth + tm.tmAveCharWidth / 2;
+
+    if (!(text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText ))) return;
+    textlen = strlen( text );
 
     if (action == ODA_DRAWENTIRE)
     {
@@ -400,7 +406,7 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
             rc.bottom -= delta + 1;
         }
         rc.left--;
-        rc.right = min( rc.left + size.cx + 2, rc.right );
+        rc.right = MIN( rc.left + size.cx + 2, rc.right );
         DrawFocusRect(hDC, &rc);
     }
 }
@@ -453,7 +459,7 @@ static void GB_Paint( HWND hWnd, HDC hDC, WORD action )
     LineTo( hDC, rc.left, rc.bottom-1 );
     LineTo( hDC, rc.left, rc.top+2 );
 
-    text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText );
+    if (!(text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText ))) return;
     GetTextExtentPoint(hDC, text, strlen(text), &size);
     rc.left  += 10;
     rc.right  = rc.left + size.cx + 1;

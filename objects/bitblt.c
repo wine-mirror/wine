@@ -17,6 +17,7 @@
 #include "stddebug.h"
 /* #define DEBUG_BITBLT */
 #include "debug.h"
+#include "xmalloc.h"
 
 
 #define DST 0   /* Destination drawable */
@@ -1063,11 +1064,11 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
-        dprintf_bitblt( stddeb, "    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
-                        visRectSrc.left, visRectSrc.top,
-                        visRectSrc.right, visRectSrc.bottom,
-                        visRectDst.left, visRectDst.top,
-                        visRectDst.right, visRectDst.bottom );
+        dprintf_bitblt( stddeb, "    vissrc=%ld,%ld-%ld,%ld visdst=%ld,%ld-%ld,%ld\n",
+                        (LONG)visRectSrc.left, (LONG)visRectSrc.top,
+                        (LONG)visRectSrc.right, (LONG)visRectSrc.bottom,
+                        (LONG)visRectDst.left, (LONG)visRectDst.top,
+                        (LONG)visRectDst.right, (LONG)visRectDst.bottom );
     }
     else
     {
@@ -1075,9 +1076,9 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
-        dprintf_bitblt( stddeb, "    vissrc=none visdst=%d,%d-%d,%d\n",
-                        visRectDst.left, visRectDst.top,
-                        visRectDst.right, visRectDst.bottom );
+        dprintf_bitblt( stddeb, "    vissrc=none visdst=%ld,%ld-%ld,%ld\n",
+                        (LONG)visRectDst.left, (LONG)visRectDst.top,
+                        (LONG)visRectDst.right, (LONG)visRectDst.bottom );
     }
 
     width  = visRectDst.right - visRectDst.left;

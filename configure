@@ -413,6 +413,7 @@ fi
 # We want these before the checks, so the checks can modify their values.
 test -z "$CFLAGS" && CFLAGS="-g -O2 -Wall" 
 test -z "$LDFLAGS" && LDFLAGS=-g 
+test -z "$LDLIBS" && LDLIBS=-lm 
 
 
 # Check whether --with-library or --without-library was given.
@@ -573,7 +574,7 @@ else
   # On the NeXT, cc -E runs the code through the compiler's parser,
   # not just through cpp.
   cat > conftest.$ac_ext <<EOF
-#line 577 "configure"
+#line 578 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -587,7 +588,7 @@ else
   rm -rf conftest*
   CPP="${CC-cc} -E -traditional-cpp"
   cat > conftest.$ac_ext <<EOF
-#line 591 "configure"
+#line 592 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -693,7 +694,7 @@ test -z "$x_direct_test_library" && x_direct_test_library=Xt
 test -z "$x_direct_test_function" && x_direct_test_function=XtMalloc
 test -z "$x_direct_test_include" && x_direct_test_include=X11/Intrinsic.h
 cat > conftest.$ac_ext <<EOF
-#line 697 "configure"
+#line 698 "configure"
 #include "confdefs.h"
 #include <$x_direct_test_include>
 EOF
@@ -756,7 +757,7 @@ rm -f conftest*
 ac_save_LIBS="$LIBS"
 LIBS="-l$x_direct_test_library $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 760 "configure"
+#line 761 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -874,7 +875,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lICE  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 878 "configure"
+#line 879 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -917,7 +918,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ldnet  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 921 "configure"
+#line 922 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -951,7 +952,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ldnet_stub  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 955 "configure"
+#line 956 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -990,7 +991,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lnsl  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 994 "configure"
+#line 995 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1028,7 +1029,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lsocket  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1032 "configure"
+#line 1033 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1132,7 +1133,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-l$ac_lib  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1136 "configure"
+#line 1137 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1188,6 +1189,40 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
+echo $ac_n "checking for -li386""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_lib_i386'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-li386  $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 1200 "configure"
+#include "confdefs.h"
+
+int main() { return 0; }
+int t() {
+i386_set_ldt()
+; return 0; }
+EOF
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_lib_i386=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_lib_i386=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'i386`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  LDLIBS="$LDLIBS -li386"
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+
 
 for ac_func in tcgetattr
 do
@@ -1196,7 +1231,7 @@ if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1200 "configure"
+#line 1235 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -1248,7 +1283,7 @@ if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1252 "configure"
+#line 1287 "configure"
 #include "confdefs.h"
 #include <$ac_hdr>
 EOF
@@ -1281,7 +1316,7 @@ if eval "test \"`echo '$''{'ac_cv_header_stat_broken'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1285 "configure"
+#line 1320 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1335,7 +1370,7 @@ if eval "test \"`echo '$''{'ac_cv_c_const'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1339 "configure"
+#line 1374 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1412,7 +1447,7 @@ else
   ac_cv_c_cross=yes
 else
 cat > conftest.$ac_ext <<EOF
-#line 1416 "configure"
+#line 1451 "configure"
 #include "confdefs.h"
 main(){return(0);}
 EOF
@@ -1433,7 +1468,7 @@ if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1437 "configure"
+#line 1472 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1455,7 +1490,7 @@ rm -f conftest*
 if test $ac_cv_header_stdc = yes; then
   # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 1459 "configure"
+#line 1494 "configure"
 #include "confdefs.h"
 #include <string.h>
 EOF
@@ -1473,7 +1508,7 @@ fi
 if test $ac_cv_header_stdc = yes; then
   # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 1477 "configure"
+#line 1512 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 EOF
@@ -1494,7 +1529,7 @@ if test "$cross_compiling" = yes; then
   ac_cv_header_stdc=no
 else
 cat > conftest.$ac_ext <<EOF
-#line 1498 "configure"
+#line 1533 "configure"
 #include "confdefs.h"
 #include <ctype.h>
 #define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
@@ -1528,7 +1563,7 @@ if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1532 "configure"
+#line 1567 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #if STDC_HEADERS
@@ -1705,6 +1740,7 @@ s%@LIBS@%$LIBS%g
 s%@exec_prefix@%$exec_prefix%g
 s%@prefix@%$prefix%g
 s%@program_transform_name@%$program_transform_name%g
+s%@LDLIBS@%$LDLIBS%g
 s%@MAIN_TARGET@%$MAIN_TARGET%g
 s%@LANG@%$LANG%g
 s%@SET_MAKE@%$SET_MAKE%g

@@ -55,7 +55,8 @@ static void STATIC_SetIcon( HWND hwnd, HICON hicon )
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return;
-    if (infoPtr->hIcon) DestroyIcon( infoPtr->hIcon );
+/*  FIXME: is this OK?
+    if (infoPtr->hIcon) DestroyIcon( infoPtr->hIcon ); */
     infoPtr->hIcon = hicon;
     if (hicon)
     {

@@ -24,6 +24,7 @@
 #include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 
 /***********************************************************************
@@ -107,7 +108,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	 but may be missing something. If you have any doco please either send
 	 it to me or fix the code yourself. gfm@werple.mira.net.au
       */
-      char* buff = malloc(size);
+      char* buff = xmalloc(size);
       char* curr = buff;
       read(fd, buff, size);
       while(curr < buff + size) {
@@ -137,7 +138,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
                    (char *)pModule + pModule->name_table + 1,
                    segnum, pSeg->selector );
 
-    reloc_entries = (struct relocation_entry_s *)malloc(count * sizeof(struct relocation_entry_s));
+    reloc_entries = (struct relocation_entry_s *)xmalloc(count * sizeof(struct relocation_entry_s));
     if (read( fd, reloc_entries, count * sizeof(struct relocation_entry_s)) !=
             count * sizeof(struct relocation_entry_s))
     {

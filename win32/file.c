@@ -21,7 +21,7 @@ DWORD GetFileType(HANDLE hFile)
 {
     DWORD file_type;
 
-    if(hFile < 3)
+    if((DWORD)hFile < 3)
     {
         file_type = 2;        /* FILE_TYPE_CHAR */
     }
@@ -67,7 +67,7 @@ DWORD SetFilePointer(HANDLE hFile, LONG distance, LONG *highword,
         }
     }
 
-    rc = lseek(hFile, distance, method);
+    rc = lseek((DWORD)hFile, distance, method);
     if(rc == -1)
         SetLastError(ErrnoToLastError(errno));
     return rc;
@@ -84,9 +84,9 @@ BOOL WriteFile(HANDLE hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
 {
     int written;
 
-    if(hFile < 3)
+    if((DWORD)hFile < 3)
     {
-        written = write(hFile, lpBuffer, numberOfBytesToWrite);
+        written = write((DWORD)hFile, lpBuffer, numberOfBytesToWrite);
         if(numberOfBytesWritten)
             *numberOfBytesWritten = written;
     }

@@ -9,32 +9,41 @@
 #   define WINELIB32
 #  endif
 # endif
+#else
+# ifdef WINELIB32
+#  undef WINELIB16
+#  define WINELIB
+# endif
+# ifdef WINELIB16
+#  define WINELIB
+# endif
 #endif
 
-typedef short	INT;
-typedef unsigned short UINT;
-#define UIFMT "%hu"
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef unsigned short BOOL;
 typedef unsigned char BYTE;
 typedef long LONG;
 #ifdef WINELIB32
+typedef int INT;
+typedef unsigned int UINT;
+typedef short SHORT;
 typedef LONG WPARAM;
+typedef void* HANDLE;
+typedef void* NPVOID;
+#define UIFMT "%u"
+#define NPFMT "%p"
 #else
+typedef short INT;
+typedef unsigned short UINT;
 typedef UINT WPARAM;
+typedef WORD HANDLE;
+typedef WORD NPVOID;
+#define UIFMT "%hu"
+#define NPFMT "%04X"
 #endif
 typedef LONG LPARAM;
 typedef LONG LRESULT;
-#ifdef WINELIB32
-typedef void* HANDLE;
-typedef void* NPVOID;
-#define NPFMT "%p"
-#else
-typedef WORD HANDLE;
-typedef WORD NPVOID;
-#define NPFMT "%04X"
-#endif
 typedef DWORD HHOOK;
 typedef DWORD SEGPTR;
 typedef char *LPSTR;
@@ -46,6 +55,7 @@ typedef WORD *LPWORD;
 typedef DWORD *LPDWORD;
 typedef LONG *LPLONG;
 typedef void *LPVOID;
+typedef const void *LPCVOID;
 typedef WORD CATCHBUF[9];
 typedef WORD *LPCATCHBUF;
 
@@ -119,12 +129,12 @@ typedef FARPROC HOOKPROC;
 #define SELECTOROF(ptr)     (HIWORD(ptr))
 #define OFFSETOF(ptr)       (LOWORD(ptr))
 
-#ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+#ifndef MAX
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#ifndef min
-#define min(a,b) (((a) < (b)) ? (a) : (b))
+#ifndef MIN
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
 #endif /* __WINE_WINTYPES_H */

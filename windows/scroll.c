@@ -27,8 +27,8 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
     HRGN hrgnUpdate;
     RECT rc, cliprc;
 
-    dprintf_scroll(stddeb,"ScrollWindow: dx=%d, dy=%d, rect=%d,%d,%d,%d\n", 
-	   dx, dy, rect->left, rect->top, rect->right, rect->bottom);
+    dprintf_scroll(stddeb,"ScrollWindow: dx=%d, dy=%d, rect=%ld,%ld,%ld,%ld\n", 
+	   dx, dy, (LONG)rect->left, (LONG)rect->top, (LONG)rect->right, (LONG)rect->bottom);
 
     hdc = GetDC(hwnd);
 
@@ -60,8 +60,8 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
     short width, height;
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
-    dprintf_scroll(stddeb, "ScrollDC: dx=%d, dy=%d, rc=%d,%d,%d,%d\n", dx, dy,
-	   rc->left, rc->top, rc->right, rc->bottom);
+    dprintf_scroll(stddeb, "ScrollDC: dx=%d, dy=%d, rc=%ld,%ld,%ld,%ld\n", dx, dy,
+	   (LONG)rc->left, (LONG)rc->top, (LONG)rc->right, (LONG)rc->bottom);
 
     if (rc == NULL)
 	return FALSE;
@@ -136,8 +136,9 @@ int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect,
     HDC hdc;
     RECT rc, cliprc;
 
-    dprintf_scroll(stddeb,"ScrollWindowEx: dx=%d, dy=%d, rect=%d,%d,%d,%d\n", 
-	   dx, dy, rect->left, rect->top, rect->right, rect->bottom);
+    dprintf_scroll(stddeb,"ScrollWindowEx: dx=%d, dy=%d, rect=%ld,%ld,%ld,%ld\n", 
+	   dx, dy, (LONG)rect->left, (LONG)rect->top, (LONG)rect->right,
+           (LONG)rect->bottom);
 
     hdc = GetDC(hwnd);
 

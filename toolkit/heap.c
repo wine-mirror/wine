@@ -8,9 +8,11 @@
 
 /* #ifndef __STDC__ */
 #include <malloc.h>
+#include <stdio.h>
 #include <string.h>
 /* #endif */
 #include "windows.h"
+#include "xmalloc.h"
 
 #ifdef WINELIB16
 
@@ -39,7 +41,7 @@ static void **HEAP_GetFreeSlot (HANDLE *hNum)
     }
 
     /* No free slots */
-    last->next = malloc (sizeof (handle_table_t));
+    last->next = xmalloc (sizeof (handle_table_t));
     table = last->next;
     memset (table, 0, sizeof (handle_table_t));
     i = 0;
@@ -131,7 +133,7 @@ HANDLE LocalReAlloc (HANDLE hMem, WORD flags, WORD bytes)
 {
     void **m = HEAP_FindSlot (hMem);
 
-    realloc (*m, bytes);
+    xrealloc (*m, bytes);
 }
 
 WORD LocalSize (HANDLE hMem)
@@ -140,7 +142,7 @@ WORD LocalSize (HANDLE hMem)
 }
 
 
-BOOL LocalUnLock (HANDLE hMem)
+BOOL LocalUnlock (HANDLE hMem)
 {
     return 0;
 }
@@ -162,7 +164,7 @@ char *GlobalLock (HANDLE hMem)
 
 BOOL GlobalUnlock (HANDLE hMem)
 {
-    return LocalUnLock (hMem);
+    return LocalUnlock (hMem);
 }
 
 WORD GlobalFlags (HANDLE hMem)
@@ -208,9 +210,47 @@ DWORD int GlobalHandle(WORD selector)
 #endif
 
 #else /* WINELIB16 */
+
+#ifdef DEBUG_HEAP
+static void* LastTwenty[20]={ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0  };
+
+void CheckMem(void* f)
+{
+  int i;
+
+  for(i=0; i<20; i++)
+  {
+    if(LastTwenty[i]==f)
+      LastTwenty[i]=NULL;
+    else if(LastTwenty[i])
+      if( *((int*)LastTwenty[i]) != 0x12345678  ||
+	  *(((int*)LastTwenty[i])+1) != 0x0fedcba9 )
+	fprintf(stderr,"memory corrupted at %p\n",LastTwenty[i]);
+  }
+  fflush(stderr);
+}
+
+void NewMem(void* n)
+{
+  int i;
+  for(i=0; i<20; i++)
+    if(!LastTwenty[i])
+    {
+      LastTwenty[i]=n;
+      return;
+    }
+  for(i=0; i<20; i++)
+    LastTwenty[i]=LastTwenty[i+1];
+  LastTwenty[4]=n;
+}
+#endif
+
 HANDLE LocalAlloc (WORD flags, WORD bytes)
 {
     HANDLE m;
+#ifdef DEBUG_HEAP
+    bytes+=2*sizeof(int);
+#endif
 
     if (flags & LMEM_WINE_ALIGN)
 	m = memalign (4, bytes);
@@ -220,6 +260,14 @@ HANDLE LocalAlloc (WORD flags, WORD bytes)
 	if (flags & LMEM_ZEROINIT)
 	    bzero (m, bytes);
     }
+#ifdef DEBUG_HEAP
+    CheckMem(NULL);
+    *((int*) m)=0x12345678;
+    *(((int*) m)+1)=0x0fedcba9;
+    fprintf(stderr,"%p malloc'd\n",m); fflush(stderr);
+    NewMem(m);
+    return (HANDLE) (((int*)m)+2);
+#endif
     return m;
 }
 
@@ -235,7 +283,24 @@ WORD LocalFlags (HANDLE hMem)
 
 HANDLE LocalFree (HANDLE hMem)
 {
+#ifdef DEBUG_HEAP
+    hMem=(HANDLE) (((int*)hMem)-2);
+    CheckMem(hMem);
+    fprintf(stderr,"%p free-ing...",hMem);
+    if( *((int*)hMem) != 0x12345678  ||
+        *(((int*)hMem)+1) != 0x0fedcba9 )
+      fprintf(stderr,"memory corrupted...");
+    else
+    { 
+      *((int*)hMem) = 0x9abcdef0;
+      *(((int*)hMem)+1) = 0x87654321;
+    }
+    fflush(stderr);
+#endif
     free(hMem);
+#ifdef DEBUG_HEAP
+    fprintf(stderr,"free'd\n"); fflush(stderr);
+#endif
     return 0;
 }
 
@@ -251,8 +316,11 @@ LPVOID LocalLock (HANDLE hMem)
 
 HANDLE LocalReAlloc (HANDLE hMem, WORD flags, WORD bytes)
 {
-    realloc(hMem, bytes);
-    return hMem;
+#ifdef DEBUG_HEAP
+    LocalFree(hMem);
+    return LocalAlloc(flags,bytes); 
+#endif
+    return realloc(hMem, bytes);
 }
 
 WORD LocalSize (HANDLE hMem)
@@ -262,7 +330,7 @@ WORD LocalSize (HANDLE hMem)
 }
 
 
-BOOL LocalUnLock (HANDLE hMem)
+BOOL LocalUnlock (HANDLE hMem)
 {
     return 0;
 }
@@ -284,7 +352,7 @@ LPVOID GlobalLock (HGLOBAL hMem)
 
 BOOL GlobalUnlock (HANDLE hMem)
 {
-    return LocalUnLock (hMem);
+    return LocalUnlock (hMem);
 }
 
 WORD GlobalFlags (HANDLE hMem)

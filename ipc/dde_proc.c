@@ -28,6 +28,7 @@
 #include "dde.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 int curr_proc_idx= -1;
 
@@ -73,7 +74,7 @@ void dde_proc_add_fifo(int val)
 {
   fifo_element *created;
 
-  created= (fifo_element*) malloc( sizeof(fifo_element) );
+  created= (fifo_element*) xmalloc( sizeof(fifo_element) );
   created->value = val;
   created->next = NULL;
   

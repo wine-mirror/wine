@@ -209,7 +209,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     }
     if (!(wndPtr->dwStyle & WS_CHILD))
     {
-        if (wndPtr->wIDmenu) DestroyMenu( wndPtr->wIDmenu );
+        if (wndPtr->wIDmenu) DestroyMenu( (HMENU)wndPtr->wIDmenu );
     }
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
     if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
@@ -285,7 +285,7 @@ BOOL WIN_CreateDesktopWindow(void)
  *           CreateWindow   (USER.41)
  */
 HWND CreateWindow( SEGPTR className, SEGPTR windowName,
-		   DWORD style, short x, short y, short width, short height,
+		   DWORD style, INT x, INT y, INT width, INT height,
 		   HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
     return CreateWindowEx( 0, className, windowName, style,
@@ -297,7 +297,7 @@ HWND CreateWindow( SEGPTR className, SEGPTR windowName,
  *           CreateWindowEx   (USER.452)
  */
 HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
-		     DWORD style, short x, short y, short width, short height,
+		     DWORD style, INT x, INT y, INT width, INT height,
 		     HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
     HANDLE class, hwnd;
@@ -465,7 +465,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
         else if (classPtr->wc.lpszMenuName)
             SetMenu( hwnd, LoadMenu( instance, classPtr->wc.lpszMenuName ) );
     }
-    else wndPtr->wIDmenu = menu;
+    else wndPtr->wIDmenu = (UINT)menu;
 
       /* Send the WM_CREATE message */
 
@@ -744,12 +744,13 @@ WORD SetWindowWord( HWND hwnd, short offset, WORD newval )
     if (offset >= 0) ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
     else switch(offset)
     {
-	case GWW_ID:        ptr = &wndPtr->wIDmenu;   break;
 #ifdef WINELIB32
+	case GWW_ID:
 	case GWW_HINSTANCE:
             fprintf(stderr,"SetWindowWord called with offset %d.\n",offset);
             return 0;
 #else
+	case GWW_ID:        ptr = &wndPtr->wIDmenu;   break;
 	case GWW_HINSTANCE: ptr = (WORD*)&wndPtr->hInstance; break;
 #endif
 	default: return 0;

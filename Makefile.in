@@ -6,6 +6,7 @@
 # langclean:		remove all files which have to be remade if
 #			a different LANGuage is selected
 # depend:		create the dependencies
+# etags:		Create a TAGS file for Emacs.
 #
 # Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 #                         <patra@itp1.physik.tu-berlin.de>
@@ -20,7 +21,7 @@ TOPSRC    = @top_srcdir@
 DIVINCL   = -I$(TOPSRC)/include
 XPM_LIB	  = -lXpm
 XLIB	  = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
-LDLIBS	  = -lm
+LDLIBS	  = @LDLIBS@
 AR        = ar rc
 RANLIB    = @RANLIB@
 RM        = rm -f
@@ -59,9 +60,9 @@ LIBOBJS = toolkit/toolkit.o
 
 all: $(MAIN_TARGET)
 
-wine: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
+wine wine.sym: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
 	$(CC) -o wine $(COMMONOBJS) $(EMUOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
-	nm wine | grep -v _compiled | sort >wine.sym
+	nm -n wine | grep -v _compiled >wine.sym
 
 winelib.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
 	$(RM) $@
@@ -79,7 +80,7 @@ etags:
 
 clean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean); done
-	$(RM) *.o \#*\# *~ *.bak wine wine.sym winelib.a TAGS
+	$(RM) *.o \#*\# *~ *.bak *.flc wine wine.sym winelib.a TAGS
 
 distclean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) distclean); done

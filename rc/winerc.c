@@ -34,6 +34,20 @@ char hname[256],sname[256];
 int transform_binary_file(void);
 int yyparse(void);
 
+static void *xmalloc (size_t size)
+{
+    void *res;
+
+    res = malloc (size ? size : 1);
+    if (res == NULL)
+    {
+        fprintf (stderr, "Virtual memory exhausted.\n");
+        exit (1);
+    }
+    return res;
+}
+
+
 int main(int argc,char *argv[])
 {  
 	extern int yydebug;
@@ -130,10 +144,8 @@ DWORD get_DWORD(unsigned char* p)
 
 /*create a new gen_res, initial size 100*/
 gen_res *new_res()
-{	gen_res* ret=malloc(sizeof(gen_res)+100);
+{	gen_res* ret=xmalloc(sizeof(gen_res)+100);
 	int i;
-	if(!ret)
-		fprintf(stderr,"Out of memory\n"),exit(1);
 	for(i=0;i<sizeof(gen_res)+100;i++)*((char*)ret+i)='\0';
 	ret->g_next=g_start;
 	ret->g_prev=0;
@@ -188,7 +200,7 @@ gen_res* delete_bytes(gen_res* res,int start,int len)
 /*create a new style*/
 rc_style *new_style()
 {
-	rc_style *ret=malloc(sizeof(rc_style));
+	rc_style *ret=xmalloc(sizeof(rc_style));
 	/*initially, no bits have to be reset*/
 	ret->and=-1;
 	/*initially, no bits are set*/
@@ -464,6 +476,7 @@ gen_res *add_menuitem(char* name,int id,int flags,gen_res *res)
 gen_res *add_popup(char *name,short flags, gen_res* body, gen_res*res)
 {
 	char c_flags[2];
+	flags|=MF_POPUP;
 	if(res->num_entries==0)flags|=MF_END;
 	put_WORD(c_flags,flags);
 	res=insert_at_beginning(res,body->res,body->size);
@@ -617,7 +630,7 @@ gen_res* int_to_raw(int i,gen_res* res)
 /* translate "Hello,\\tworld!\\10" to "Hello,\tworld!\n" */
 char *parse_c_string(char *in)
 {
-	char *out=malloc(strlen(in)-1);
+	char *out=xmalloc(strlen(in)-1);
 	char *it;
 	char tmp[5],*tend;
 	for(it=out,in++;*in;in++)

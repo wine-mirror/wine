@@ -362,7 +362,7 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     
     dprintf_resource( stddeb, "strlen = %d\n", (int)*p );
     
-    i = min(buflen - 1, *p);
+    i = MIN(buflen - 1, *p);
     if (buffer == NULL)
 	return i;
     if (i > 0) {

@@ -283,6 +283,7 @@ id	1
 421 stub SetFileAttributes
 422 stub GetDiskFreeSpace
 432 stub FileTimeToLocalFileTime
+450 pascal16 KERNEL_450() stub_KERNEL_450
 491 stub RegisterServiceProcess
 513 stub LoadLibraryEx32W
 514 stub FreeLibrary32W

@@ -328,7 +328,7 @@ BOOL LocalInit( HANDLE selector, WORD start, WORD end )
     }
     ptr = PTR_SEG_OFF_TO_LIN( selector, 0 );
 
-    start = LALIGN( max( start, sizeof(INSTANCEDATA) ) );
+    start = LALIGN( MAX( start, sizeof(INSTANCEDATA) ) );
     heapInfoArena = LALIGN(start + sizeof(LOCALARENA) );
     freeArena = LALIGN( heapInfoArena + ARENA_HEADER_SIZE
                         + sizeof(LOCALHEAPINFO) );
@@ -521,7 +521,7 @@ static HLOCAL LOCAL_GetBlock( WORD ds, WORD size, WORD flags )
     }
     
     size += ARENA_HEADER_SIZE;
-    size = LALIGN( max( size, sizeof(LOCALARENA) ) );
+    size = LALIGN( MAX( size, sizeof(LOCALARENA) ) );
 
       /* Find a suitable free block */
     arena = LOCAL_FindFreeBlock( ds, size );
@@ -740,6 +740,8 @@ HLOCAL LOCAL_ReAlloc( HANDLE ds, HLOCAL handle, WORD size, WORD flags )
     WORD arena, newhandle, blockhandle;
     LONG nextarena;
 
+    if (!handle) return LOCAL_Alloc( ds, size, flags );
+
     dprintf_local( stddeb, "LocalReAlloc: %04x %d %04x ds=%04x\n",
                    handle, size, flags, ds );
     if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
@@ -904,9 +906,9 @@ HLOCAL LocalAlloc( WORD flags, WORD size )
 /***********************************************************************
  *           LocalReAlloc   (KERNEL.6)
  */
-HLOCAL LocalReAlloc( HLOCAL handle, WORD flags, WORD size )
+HLOCAL LocalReAlloc( HLOCAL handle, WORD size, WORD flags )
 {
-    return LOCAL_ReAlloc( CURRENT_DS, handle, flags, size );
+    return LOCAL_ReAlloc( CURRENT_DS, handle, size, flags );
 }
 
 

@@ -140,8 +140,8 @@ id	3
 154 pascal GetNearestColor(word long) GetNearestColor
 155 stub QueryAbort
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap
-159 stub GetMetaFileBits
-160 stub SetMetaFileBits
+159 pascal16 GetMetaFileBits(word) GetMetaFileBits
+160 pascal16 SetMetaFileBits(word) SetMetaFileBits
 161 pascal16 PtInRegion(word s_word s_word) PtInRegion
 162 pascal GetBitmapDimension(word) GetBitmapDimension
 163 pascal SetBitmapDimension(word s_word s_word) SetBitmapDimension
@@ -375,3 +375,23 @@ id	3
 822 stub ICMTranslateRGB
 823 stub ICMTranslateRGBs
 824 stub ICMCheckCOlorsInGamut
+# Stubs for Hebrew version
+530 pascal16 GDI_530() stub_GDI_530
+531 pascal16 GDI_531() stub_GDI_531
+532 pascal16 GDI_532() stub_GDI_532
+536 pascal16 GDI_536() stub_GDI_536
+538 pascal16 GDI_538() stub_GDI_538
+540 pascal16 GDI_540() stub_GDI_540
+543 pascal16 GDI_543() stub_GDI_543
+555 pascal16 GDI_555() stub_GDI_555
+560 pascal16 GDI_560() stub_GDI_560
+561 pascal16 GDI_561() stub_GDI_561
+564 pascal16 GDI_564() stub_GDI_564
+565 pascal16 GDI_565() stub_GDI_565
+566 pascal16 GDI_566() stub_GDI_566
+571 pascal16 GDI_571() stub_GDI_571
+572 pascal16 GDI_572() stub_GDI_572
+573 pascal16 GDI_573() stub_GDI_573
+556 pascal16 GDI_556() stub_GDI_556
+558 pascal16 GDI_558() stub_GDI_558
+569 pascal16 GDI_569() stub_GDI_569

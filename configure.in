@@ -7,6 +7,7 @@ AC_INIT(controls/edit.c)
 # We want these before the checks, so the checks can modify their values.
 test -z "$CFLAGS" && CFLAGS="-g -O2 -Wall" AC_SUBST(CFLAGS)
 test -z "$LDFLAGS" && LDFLAGS=-g AC_SUBST(LDFLAGS)
+test -z "$LDLIBS" && LDLIBS=-lm AC_SUBST(LDLIBS)
 
 dnl **** Command-line arguments ****
 
@@ -29,7 +30,7 @@ AC_ARG_WITH(malloc-debug,
 [  --with-malloc-debug     enable malloc() debugging],
 [AC_DEFINE(MALLOC_DEBUGGING)])
 
-dnl **** Check for some programs ****
+dnl **** Check for some programs and libraries ****
 
 AC_PROG_MAKE_SET
 AC_PROG_CC
@@ -37,6 +38,10 @@ AC_PATH_XTRA
 AC_PROG_YACC
 AC_PROG_LEX
 AC_PROG_RANLIB
+dnl Check for -li386 for NetBSD
+AC_CHECK_LIB(i386,i386_set_ldt,LDLIBS="$LDLIBS -li386")
+
+dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(tcgetattr)
 AC_CHECK_HEADERS(stdlib.h)

@@ -21,6 +21,7 @@
 #include "color.h"
 #include "region.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 static __inline__ void swap_int(int *a, int *b)
 {
@@ -786,7 +787,7 @@ BOOL Polygon (HDC hdc, LPPOINT pt, int count)
 {
     register int i;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    XPoint *points = (XPoint *) malloc (sizeof (XPoint) * (count+1));
+    XPoint *points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
 
     if (!dc) 
     {
@@ -847,7 +848,7 @@ BOOL PolyPolygon( HDC hdc, LPPOINT pt, LPINT counts, WORD polygons )
 	XPoint *points;
 
 	for (i = 0; i < polygons; i++) if (counts[i] > max) max = counts[i];
-	points = (XPoint *) malloc( sizeof(XPoint) * (max+1) );
+	points = (XPoint *) xmalloc( sizeof(XPoint) * (max+1) );
 
 	for (i = 0; i < polygons; i++)
 	{

@@ -19,6 +19,8 @@
 #include "message.h"
 #include "clipboard.h"
 #include "winpos.h"
+#include "registers.h"
+#include "stackframe.h"
 #include "stddebug.h"
 /* #define DEBUG_EVENT */
 /* #define DEBUG_KEY   */
@@ -584,6 +586,58 @@ HWND GetCapture()
 {
     return captureWnd;
 }
+
+
+/***********************************************************************
+ *           GetMouseEventProc   (USER.337)
+ */
+FARPROC GetMouseEventProc(void)
+{
+    char name[] = "Mouse_Event";
+    return GetProcAddress( GetModuleHandle("USER"), MAKE_SEGPTR(name) );
+}
+
+
+/***********************************************************************
+ *           Mouse_Event   (USER.299)
+ */
+#ifndef WINELIB
+void Mouse_Event( struct sigcontext_struct context )
+{
+    /* Register values:
+     * AX = mouse event
+     * BX = horizontal displacement if AX & ME_MOVE
+     * CX = vertical displacement if AX & ME_MOVE
+     * DX = button state (?)
+     * SI = mouse event flags (?)
+     */
+    Window root, child;
+    int rootX, rootY, childX, childY;
+    unsigned int state;
+
+    if (AX_reg(&context) & ME_MOVE)
+    {
+        /* We have to actually move the cursor */
+        XWarpPointer( display, rootWindow, None, 0, 0, 0, 0,
+                      (short)BX_reg(&context), (short)CX_reg(&context) );
+        return;
+    }
+    if (!XQueryPointer( display, rootWindow, &root, &child,
+                        &rootX, &rootY, &childX, &childY, &state )) return;
+    if (AX_reg(&context) & ME_LDOWN)
+        hardware_event( WM_LBUTTONDOWN, EVENT_XStateToKeyState( state ), 0L,
+                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+    if (AX_reg(&context) & ME_LUP)
+        hardware_event( WM_LBUTTONUP, EVENT_XStateToKeyState( state ), 0L,
+                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+    if (AX_reg(&context) & ME_RDOWN)
+        hardware_event( WM_RBUTTONDOWN, EVENT_XStateToKeyState( state ), 0L,
+                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+    if (AX_reg(&context) & ME_RUP)
+        hardware_event( WM_RBUTTONUP, EVENT_XStateToKeyState( state ), 0L,
+                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+}
+#endif
 
 
 /**********************************************************************

@@ -27,6 +27,7 @@
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 const char people[] = "Wine is available thanks to the work of "
 "Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Erik Bos, "
@@ -125,11 +126,13 @@ static XrmOptionDescRec optionsTable[] =
 /***********************************************************************
  *           MAIN_Usage
  */
+#ifndef WINELIB32
 static void MAIN_Usage( char *name )
 {
     fprintf( stderr, USAGE, name );
     exit(1);
 }
+#endif
 
 
 /***********************************************************************
@@ -165,8 +168,8 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
     char *dummy;
     int retval;
 
-    buff_instance = (char *)malloc(strlen(Options.programName)+strlen(name)+1);
-    buff_class    = (char *)malloc( strlen(WINE_CLASS) + strlen(name) + 1 );
+    buff_instance = (char *)xmalloc(strlen(Options.programName)+strlen(name)+1);
+    buff_class    = (char *)xmalloc( strlen(WINE_CLASS) + strlen(name) + 1 );
 
     strcpy( buff_instance, Options.programName );
     strcat( buff_instance, name );
@@ -299,7 +302,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     if (!(display = XOpenDisplay( display_name )))
     {
 	fprintf( stderr, "%s: Can't open display: %s\n",
-		 argv[0], display_name ? display_name : "" );
+		 argv[0], display_name ? display_name : "(none specified)" );
 	exit(1);
     }
 
@@ -588,7 +591,11 @@ LONG GetWinFlags(void)
     { WF_CPU086, WF_CPU186, WF_CPU286, WF_CPU386, WF_CPU486 };
 
   /* There doesn't seem to be any Pentium flag.  */
-  long cpuflag = cpuflags[min (runtime_cpu (), 4)];
+#ifndef WINELIB
+  long cpuflag = cpuflags[MIN (runtime_cpu (), 4)];
+#else
+  long cpuflag = cpuflags[4];
+#endif
 
   if (Options.enhanced)
     return (WF_ENHANCED | cpuflag | WF_PMODE | WF_80x87 | WF_PAGING);
@@ -685,7 +692,7 @@ int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
 					lpPortName, lpEnviron, nMaxSiz);
 	while (lpEnv != NULL) {
 		if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
-			nCount = min(nMaxSiz, lpEnv->wSize);
+			nCount = MIN(nMaxSiz, lpEnv->wSize);
 			memcpy(lpEnviron, lpEnv->Value, nCount);
 			printf("GetEnvironnement() // found '%s' !\n", lpEnviron);
 			return nCount;

@@ -429,10 +429,10 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
 
 	      if (outp)
 		/* FIXME: Check segment readable.  */
-		;
+		(void)0;
 	      else
 		/* FIXME: Check segment writeable.  */
-		;
+		(void)0;
 
 	      if (repX)
 		if (long_addr)

@@ -109,7 +109,7 @@ HHOOK SetWindowsHookEx( short id, HOOKPROC proc, HINSTANCE hinst, HTASK htask )
 
     if ((id < FIRST_HOOK) || (id > LAST_HOOK)) return 0;
     if (id != WH_GETMESSAGE && id != WH_CALLWNDPROC) {
-	fprintf( stdnimp, "Unimplemented hook set: (%d,%08lx,%04x,%04x)!\n",
+	fprintf( stdnimp, "Unimplemented hook set: (%d,%08lx,"NPFMT","NPFMT")!\n",
                  id, (DWORD)proc, hinst, htask );
     }
     if (htask)  /* Task-specific hook */

@@ -209,7 +209,7 @@ static UINT SCROLL_GetThumbVal( SCROLLINFO *infoPtr, RECT *rect,
 {
     int pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
     if ((pixels -= 3*SYSMETRICS_CXVSCROLL+1) <= 0) return infoPtr->MinVal;
-    pos = max( 0, pos - SYSMETRICS_CXVSCROLL );
+    pos = MAX( 0, pos - SYSMETRICS_CXVSCROLL );
     if (pos > pixels) pos = pixels;
     dprintf_scroll(stddeb,"GetThumbVal: pos=%d ret=%d\n", pos,
                    (infoPtr->MinVal
@@ -592,8 +592,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
           return;  /* Should never happen */
     }
 
-    dprintf_scroll( stddeb, "ScrollBar Event: hwnd="NPFMT" bar=%d msg=%x pt=%d,%d hit=%d\n",
-                    hwnd, nBar, msg, pt.x, pt.y, hittest );
+    dprintf_scroll( stddeb, "ScrollBar Event: hwnd="NPFMT" bar=%d msg=%x pt=%ld,%ld hit=%d\n",
+                    hwnd, nBar, msg, (LONG)pt.x, (LONG)pt.y, hittest );
 
     switch(trackHitTest)
     {
@@ -757,7 +757,11 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
  *           ScrollBarWndProc
  */
 LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
-{    
+{
+    POINT Pt;
+    Pt.x = LOWORD(lParam); Pt.y = HIWORD(lParam);
+    /* ^ Can't use MAKEPOINT macro in WINELIB32 */
+
     switch(message)
     {
     case WM_CREATE:
@@ -800,7 +804,7 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     case WM_LBUTTONUP:
     case WM_MOUSEMOVE:
     case WM_SYSTIMER:
-        SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, MAKEPOINT(lParam) );
+        SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, Pt );
         break;
 
     case WM_KEYDOWN:
