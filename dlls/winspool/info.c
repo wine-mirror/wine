@@ -1713,7 +1713,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
                             DWORD   cbBuf,          /* size of string buffer */
                             LPDWORD pcbNeeded,      /* space needed for str. */
                             BOOL    unicode)        /* type of strings */
-{   DWORD  dw, size, type;
+{   DWORD  dw, size, tmp, type;
     HKEY   hkeyDriver;
     LPBYTE strPtr = pDriverStrings;
 
@@ -1778,7 +1778,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
 			         unicode)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, DriverW, strPtr, cbBuf, &size,
+            WINSPOOL_GetStringFromReg(hkeyDriver, DriverW, strPtr, size, &tmp,
                                       unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pDriverPath = (LPWSTR)strPtr;
@@ -1789,19 +1789,19 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
 			         unicode)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, Data_FileW, strPtr, cbBuf,
-                                      &size, unicode);
+            WINSPOOL_GetStringFromReg(hkeyDriver, Data_FileW, strPtr, size,
+                                      &tmp, unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pDataFile = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
 
     if(WINSPOOL_GetStringFromReg(hkeyDriver, Configuration_FileW, strPtr,
-                                 cbBuf, &size, unicode)) {
+                                 0, &size, unicode)) {
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
             WINSPOOL_GetStringFromReg(hkeyDriver, Configuration_FileW, strPtr,
-                                      cbBuf, &size, unicode);
+                                      size, &tmp, unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pConfigFile = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
@@ -1809,6 +1809,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
 
     if(Level == 2 ) {
         RegCloseKey(hkeyDriver);
+        TRACE("buffer space %ld required %ld\n", cbBuf, *pcbNeeded);
         return TRUE;
     }
 
@@ -1817,7 +1818,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
             WINSPOOL_GetStringFromReg(hkeyDriver, Help_FileW, strPtr,
-                                      cbBuf, &size, unicode);
+                                      size, &tmp, unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pHelpFile = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
@@ -1828,7 +1829,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
             WINSPOOL_GetStringFromReg(hkeyDriver, Dependent_FilesW, strPtr,
-                                      cbBuf, &size, unicode);
+                                      size, &tmp, unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pDependentFiles = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
@@ -1839,7 +1840,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
             WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr,
-                                      cbBuf, &size, unicode);
+                                      size, &tmp, unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pMonitorName = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
@@ -1850,12 +1851,13 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         *pcbNeeded += size;
         if(*pcbNeeded <= cbBuf)
             WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr,
-                                      cbBuf, &size, unicode);
+                                      size, &tmp, unicode);
         if(ptr)
             ((PDRIVER_INFO_3W) ptr)->pDefaultDataType = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
 
+    TRACE("buffer space %ld required %ld\n", cbBuf, *pcbNeeded);
     RegCloseKey(hkeyDriver);
     return TRUE;
 }
@@ -1947,7 +1949,8 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 
     RegCloseKey(hkeyDrivers);
 
-    if(pcbNeeded) *pcbNeeded = needed;
+    if(pcbNeeded) *pcbNeeded = size + needed;
+    TRACE("buffer space %ld required %ld\n", cbBuf, *pcbNeeded);
     if(cbBuf >= needed) return TRUE;
     SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return FALSE;
