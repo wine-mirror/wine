@@ -254,6 +254,12 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName (IShellFolder2 *iface,
 /**************************************************************************
  *  CreateMyCompEnumList()
  */
+static const WCHAR MyComputer_NameSpaceW[] = { 'S','O','F','T','W','A','R','E',
+ '\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+ 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l',
+ 'o','r','e','r','\\','M','y','C','o','m','p','u','t','e','r','\\','N','a','m',
+ 'e','s','p','a','c','e','\0' };
+
 static BOOL CreateMyCompEnumList(IEnumIDList *list, DWORD dwFlags)
 {
     BOOL ret = TRUE;
@@ -266,8 +272,6 @@ static BOOL CreateMyCompEnumList(IEnumIDList *list, DWORD dwFlags)
         WCHAR wszDriveName[] = {'A', ':', '\\', '\0'};
         DWORD dwDrivemap = GetLogicalDrives();
         HKEY hkey;
-        char *szkey = "SOFTWARE\\Microsoft\\Windows\\"
-                      "CurrentVersion\\explorer\\mycomputer\\NameSpace";
 
         while (ret && wszDriveName[0]<='Z')
         {
@@ -278,9 +282,10 @@ static BOOL CreateMyCompEnumList(IEnumIDList *list, DWORD dwFlags)
         }
 
         TRACE("-- (%p)-> enumerate (mycomputer shell extensions)\n",list);
-        if (ret && !RegOpenKeyExA(HKEY_LOCAL_MACHINE, szkey, 0, KEY_READ, &hkey))
+        if (ret && !RegOpenKeyExW(HKEY_LOCAL_MACHINE, MyComputer_NameSpaceW,
+         0, KEY_READ, &hkey))
         {
-            char iid[50];
+            WCHAR iid[50];
             int i=0;
 
             while (ret)
@@ -288,13 +293,13 @@ static BOOL CreateMyCompEnumList(IEnumIDList *list, DWORD dwFlags)
                 DWORD size;
                 LONG r;
 
-                size = sizeof (iid);
-                r = RegEnumKeyExA(hkey, i, iid, &size, 0, NULL, NULL, NULL);
+                size = sizeof(iid) / sizeof(iid[0]);
+                r = RegEnumKeyExW(hkey, i, iid, &size, 0, NULL, NULL, NULL);
                 if (ERROR_SUCCESS == r)
                 {
                     /* FIXME: shell extensions, shouldn't the type be
                      * PT_SHELLEXT? */
-                    ret = AddToEnumList(list, _ILCreateGuidFromStrA(iid));
+                    ret = AddToEnumList(list, _ILCreateGuidFromStrW(iid));
                     i++;
                 }
                 else if (ERROR_NO_MORE_ITEMS == r)
