@@ -469,8 +469,7 @@ int main(int argc, char **argv)
 		add_lib_file(library);
 		break;
 	    case 'm':
-		if (strcmp("-mwindows", argv[i]) == 0) gui_mode = 1;
-		else if (strcmp("-mgui", argv[i]) == 0) gui_mode = 1;
+		if (strcmp("-mgui", argv[i]) == 0) gui_mode = 1;
 		else error("Unknown option %s\n", argv[i]);
 		break;
             case 'v':        /* verbose */
@@ -508,8 +507,8 @@ int main(int argc, char **argv)
     if (create_wrapper == -1) create_wrapper = cpp;
     
     /* link in by default the big three */
+    if (gui_mode) add_lib_file("gdi32");
     add_lib_file("user32");
-    add_lib_file("gdi32");
     add_lib_file("kernel32");
 
     app_temp_name = tempnam(0, "wapp");
