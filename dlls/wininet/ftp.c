@@ -1631,7 +1631,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	    hIC, debugstr_w(lpszServerName),
 	    nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword));
 
-    assert( hIC->hdr.htype != WH_HINIT );
+    assert( hIC->hdr.htype == WH_HINIT );
 
     if (NULL == lpszUserName && NULL != lpszPassword)
     {
@@ -2743,6 +2743,8 @@ BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileD
 	/* Convert 'Unix' time to Windows time */
 	RtlSecondsSince1970ToTime(mktime(&lpafp->tmLastModified),
 				  (LARGE_INTEGER *) &(lpFindFileData->ftLastAccessTime));
+	lpFindFileData->ftLastWriteTime = lpFindFileData->ftLastAccessTime;
+	lpFindFileData->ftCreationTime = lpFindFileData->ftLastAccessTime;
 	
         /* Not all fields are filled in */
         lpFindFileData->nFileSizeHigh = 0; /* We do not handle files bigger than 0xFFFFFFFF bytes yet :-) */
