@@ -1018,10 +1018,9 @@ struct create_key_request
     IN  time_t       modif;        /* last modification time */
     OUT int          hkey;         /* handle to the created key */
     OUT int          created;      /* has it been newly created? */
-    IN  path_t       name;         /* key name */
-    IN  WCHAR        class[1];     /* class name */
+    IN  VARARG(name,unicode_len_str);  /* key name */
+    IN  VARARG(class,unicode_str);     /* class name */
 };
-
 
 /* Open a registry key */
 struct open_key_request
@@ -1030,7 +1029,7 @@ struct open_key_request
     IN  int          parent;       /* handle to the parent key */
     IN  unsigned int access;       /* desired access rights */
     OUT int          hkey;         /* handle to the open key */
-    IN  path_t       name;         /* key name */
+    IN  VARARG(name,unicode_str);  /* key name */
 };
 
 
@@ -1038,16 +1037,7 @@ struct open_key_request
 struct delete_key_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to the parent key */
-    IN  path_t       name;         /* key name */
-};
-
-
-/* Close a registry key */
-struct close_key_request
-{
-    REQUEST_HEADER;                 /* request header */
-    IN  int          hkey;          /* key to close */
+    IN  int          hkey;         /* handle to the key */
 };
 
 
@@ -1088,9 +1078,8 @@ struct set_key_value_request
     IN  int          type;         /* value type */
     IN  unsigned int total;        /* total value len */
     IN  unsigned int offset;       /* offset for setting data */
-    IN  unsigned int len;          /* value data len */
-    IN  path_t       name;         /* value name */
-    IN  unsigned char data[1];     /* value data */
+    IN  VARARG(name,unicode_len_str);  /* value name */
+    IN  VARARG(data,bytes);        /* value data */
 };
 
 
@@ -1102,8 +1091,8 @@ struct get_key_value_request
     IN  unsigned int offset;       /* offset for getting data */
     OUT int          type;         /* value type */
     OUT int          len;          /* value data len */
-    IN  WCHAR        name[1];      /* value name */
-    OUT unsigned char data[1];     /* value data */
+    IN  VARARG(name,unicode_len_str);  /* value name */
+    OUT VARARG(data,bytes);        /* value data */
 };
 
 
@@ -1126,7 +1115,7 @@ struct delete_key_value_request
 {
     REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
-    IN  path_t       name;         /* value name */
+    IN  VARARG(name,unicode_str);  /* value name */
 };
 
 
@@ -1439,7 +1428,6 @@ enum request
     REQ_CREATE_KEY,
     REQ_OPEN_KEY,
     REQ_DELETE_KEY,
-    REQ_CLOSE_KEY,
     REQ_ENUM_KEY,
     REQ_QUERY_KEY_INFO,
     REQ_SET_KEY_VALUE,
@@ -1556,7 +1544,6 @@ union generic_request
     struct create_key_request create_key;
     struct open_key_request open_key;
     struct delete_key_request delete_key;
-    struct close_key_request close_key;
     struct enum_key_request enum_key;
     struct query_key_info_request query_key_info;
     struct set_key_value_request set_key_value;
@@ -1587,7 +1574,7 @@ union generic_request
     struct set_serial_info_request set_serial_info;
 };
 
-#define SERVER_PROTOCOL_VERSION 23
+#define SERVER_PROTOCOL_VERSION 24
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

@@ -29,14 +29,6 @@
 DEFAULT_DEBUG_CHANNEL(reg);
 
 
-/* Ansi->Unicode conversion without string delimiters */
-static LPWSTR memcpyAtoW( LPWSTR dst, LPCSTR src, INT n )
-{
-    LPWSTR p = dst;
-    while (n-- > 0) *p++ = (WCHAR)*src++;
-    return dst;
-}
-
 /* Unicode->Ansi conversion without string delimiters */
 static LPSTR memcpyWtoA( LPSTR dst, LPCWSTR src, INT n )
 {
@@ -104,29 +96,23 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR cl
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
                               LPHKEY retkey, LPDWORD dispos )
 {
-    DWORD ret;
-    struct create_key_request *req = get_req_buffer();
-
-    TRACE( "(0x%x,%s,%ld,%s,%lx,%lx,%p,%p,%p)\n", hkey, debugstr_w(name), reserved,
-           debugstr_w(class), options, access, sa, retkey, dispos );
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, classW;
 
     if (reserved) return ERROR_INVALID_PARAMETER;
     if (!(access & KEY_ALL_ACCESS) || (access & ~KEY_ALL_ACCESS)) return ERROR_ACCESS_DENIED;
 
-    req->parent  = hkey;
-    req->access  = access;
-    req->options = options;
-    req->modif   = time(NULL);
-    if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    lstrcpynW( req->class, class ? class : (LPWSTR)"\0\0",
-               server_remaining(req->class) / sizeof(WCHAR) );
-    if ((ret = reg_server_call( REQ_CREATE_KEY )) == ERROR_SUCCESS)
-    {
-        *retkey = req->hkey;
-        if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
-    }
-    return ret;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, name );
+    RtlInitUnicodeString( &classW, class );
+
+    return RtlNtStatusToDosError( NtCreateKey( retkey, access, &attr, 0,
+                                               &classW, options, dispos ) );
 }
 
 
@@ -137,29 +123,34 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
                               LPHKEY retkey, LPDWORD dispos )
 {
-    DWORD ret;
-    struct create_key_request *req = get_req_buffer();
-
-    TRACE( "(0x%x,%s,%ld,%s,%lx,%lx,%p,%p,%p)\n", hkey, debugstr_a(name), reserved,
-           debugstr_a(class), options, access, sa, retkey, dispos );
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, classW;
+    ANSI_STRING nameA, classA;
+    NTSTATUS status;
 
     if (reserved) return ERROR_INVALID_PARAMETER;
     if (!(access & KEY_ALL_ACCESS) || (access & ~KEY_ALL_ACCESS)) return ERROR_ACCESS_DENIED;
 
-    req->parent  = hkey;
-    req->access  = access;
-    req->options = options;
-    req->modif   = time(NULL);
-    if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    lstrcpynAtoW( req->class, class ? class : "",
-                  server_remaining(req->class) / sizeof(WCHAR) );
-    if ((ret = reg_server_call( REQ_CREATE_KEY )) == ERROR_SUCCESS)
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitAnsiString( &nameA, name );
+    RtlInitAnsiString( &classA, class );
+
+    /* FIXME: should use Unicode buffer in TEB */
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
     {
-        *retkey = req->hkey;
-        if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
+        if (!(status = RtlAnsiStringToUnicodeString( &classW, &classA, TRUE )))
+        {
+            status = NtCreateKey( retkey, access, &attr, 0, &classW, options, dispos );
+            RtlFreeUnicodeString( &classW );
+        }
+        RtlFreeUnicodeString( &nameW );
     }
-    return ret;
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -209,20 +200,17 @@ DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
  */
 DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
 {
-    DWORD ret;
-    struct open_key_request *req = get_req_buffer();
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
 
-    TRACE( "(0x%x,%s,%ld,%lx,%p)\n", hkey, debugstr_w(name), reserved, access, retkey );
-
-    if (!retkey) return ERROR_INVALID_PARAMETER;
-    *retkey = 0;
-
-    req->parent = hkey;
-    req->access = access;
-    if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    if ((ret = reg_server_call( REQ_OPEN_KEY )) == ERROR_SUCCESS) *retkey = req->hkey;
-    return ret;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, name );
+    return RtlNtStatusToDosError( NtOpenKey( retkey, access, &attr ) );
 }
 
 
@@ -231,20 +219,26 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
  */
 DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, LPHKEY retkey )
 {
-    DWORD ret;
-    struct open_key_request *req = get_req_buffer();
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    STRING nameA;
+    NTSTATUS status;
 
-    TRACE( "(0x%x,%s,%ld,%lx,%p)\n", hkey, debugstr_a(name), reserved, access, retkey );
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
 
-    if (!retkey) return ERROR_INVALID_PARAMETER;
-    *retkey = 0;
-
-    req->parent = hkey;
-    req->access = access;
-    if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    if ((ret = reg_server_call( REQ_OPEN_KEY )) == ERROR_SUCCESS) *retkey = req->hkey;
-    return ret;
+    RtlInitAnsiString( &nameA, name );
+    /* FIXME: should use Unicode buffer in TEB */
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtOpenKey( retkey, access, &attr );
+        RtlFreeUnicodeString( &nameW );
+    }
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -494,10 +488,8 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
  */
 DWORD WINAPI RegCloseKey( HKEY hkey )
 {
-    struct close_key_request *req = get_req_buffer();
-    TRACE( "(0x%x)\n", hkey );
-    req->hkey = hkey;
-    return reg_server_call( REQ_CLOSE_KEY );
+    if (!hkey || hkey >= 0x80000000) return ERROR_SUCCESS;
+    return RtlNtStatusToDosError( NtClose( hkey ) );
 }
 
 
@@ -515,14 +507,15 @@ DWORD WINAPI RegCloseKey( HKEY hkey )
 DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
 {
     DWORD ret;
-    struct delete_key_request *req = get_req_buffer();
+    HKEY tmp;
 
-    TRACE( "(0x%x,%s)\n", hkey, debugstr_w(name) );
-
-    req->hkey = hkey;
-    if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    return reg_server_call( REQ_DELETE_KEY );
+    if (!name || !*name) return NtDeleteKey( hkey );
+    if (!(ret = RegOpenKeyExW( hkey, name, 0, 0, &tmp )))
+    {
+        ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
+        RegCloseKey( tmp );
+    }
+    return ret;
 }
 
 
@@ -532,14 +525,15 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
 DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 {
     DWORD ret;
-    struct delete_key_request *req = get_req_buffer();
+    HKEY tmp;
 
-    TRACE( "(0x%x,%s)\n", hkey, debugstr_a(name) );
-
-    req->hkey = hkey;
-    if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if (req->name[0] == '\\') return ERROR_BAD_PATHNAME;
-    return reg_server_call( REQ_DELETE_KEY );
+    if (!name || !*name) return NtDeleteKey( hkey );
+    if (!(ret = RegOpenKeyExA( hkey, name, 0, 0, &tmp )))
+    {
+        ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
+        RegCloseKey( tmp );
+    }
+    return ret;
 }
 
 
@@ -568,15 +562,9 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
                              DWORD type, CONST BYTE *data, DWORD count )
 {
-    DWORD ret;
-    struct set_key_value_request *req = get_req_buffer();
-    unsigned int max, pos;
+    UNICODE_STRING nameW;
 
-    TRACE( "(0x%x,%s,%ld,%ld,%p,%ld)\n", hkey, debugstr_w(name), reserved, type, data, count );
-
-    if (reserved) return ERROR_INVALID_PARAMETER;
-
-    if (count && type == REG_SZ)
+    if (count && is_string(type))
     {
         LPCWSTR str = (LPCWSTR)data;
         /* if user forgot to count terminating null, add it (yes NT does this) */
@@ -584,24 +572,8 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
             count += sizeof(WCHAR);
     }
 
-    req->hkey = hkey;
-    req->type = type;
-    req->total = count;
-    if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-
-    max = server_remaining( req->data );
-    pos = 0;
-    while (pos < count)
-    {
-        unsigned int len = count - pos;
-        if (len > max) len = max;
-        req->offset = pos;
-        req->len    = len;
-        memcpy( req->data, data + pos, len );
-        if ((ret = reg_server_call( REQ_SET_KEY_VALUE )) != ERROR_SUCCESS) break;
-        pos += len;
-    }
-    return ret;
+    RtlInitUnicodeString( &nameW, name );
+    return RtlNtStatusToDosError( NtSetValueKey( hkey, &nameW, 0, type, data, count ) );
 }
 
 
@@ -609,46 +581,38 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
  *           RegSetValueExA   [ADVAPI32.169]
  */
 DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
-			     CONST BYTE *data, DWORD count )
+                             CONST BYTE *data, DWORD count )
 {
-    DWORD ret;
-    struct set_key_value_request *req = get_req_buffer();
-    unsigned int max, pos;
+    UNICODE_STRING nameW;
+    ANSI_STRING nameA;
+    WCHAR *dataW = NULL;
+    NTSTATUS status;
 
-    TRACE( "(0x%x,%s,%ld,%ld,%p,%ld)\n", hkey, debugstr_a(name), reserved, type, data, count );
-
-    if (reserved) return ERROR_INVALID_PARAMETER;
-
-    if (count && type == REG_SZ)
+    if (count && is_string(type))
     {
         /* if user forgot to count terminating null, add it (yes NT does this) */
         if (data[count-1] && !data[count]) count++;
     }
+
     if (is_string( type )) /* need to convert to Unicode */
-        count *= sizeof(WCHAR);
-
-    req->hkey = hkey;
-    req->type = type;
-    req->total = count;
-    if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-
-    max = server_remaining( req->data );
-    pos = 0;
-    while (pos < count)
     {
-        unsigned int len = count - pos;
-        if (len > max) len = max;
-        req->offset = pos;
-        req->len    = len;
-
-        if (is_string( type ))
-            memcpyAtoW( (LPWSTR)req->data, data + pos/sizeof(WCHAR), len/sizeof(WCHAR) );
-        else
-            memcpy( req->data, data + pos, len );
-        if ((ret = reg_server_call( REQ_SET_KEY_VALUE )) != ERROR_SUCCESS) break;
-        pos += len;
+        DWORD lenW = MultiByteToWideChar( CP_ACP, 0, data, count, NULL, 0 );
+        if (!(dataW = HeapAlloc( GetProcessHeap(), 0, lenW*sizeof(WCHAR) )))
+            return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, data, count, dataW, lenW );
+        count = lenW * sizeof(WCHAR);
+        data = (BYTE *)dataW;
     }
-    return ret;
+
+    RtlInitAnsiString( &nameA, name );
+    /* FIXME: should use Unicode buffer in TEB */
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtSetValueKey( hkey, &nameW, 0, type, data, count );
+        RtlFreeUnicodeString( &nameW );
+    }
+    if (dataW) HeapFree( GetProcessHeap(), 0, dataW );
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -720,47 +684,62 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
  * 		       buffer is left untouched. The MS-documentation is wrong (js) !!!
  */
 DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWORD type,
-			       LPBYTE data, LPDWORD count )
+                               LPBYTE data, LPDWORD count )
 {
-    DWORD ret;
-    struct get_key_value_request *req = get_req_buffer();
+    NTSTATUS status;
+    UNICODE_STRING name_str;
+    DWORD total_size;
+    char buffer[256];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    static const int info_size = sizeof(*info) - sizeof(info->Data);
 
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_w(name), reserved, type, data, count, count ? *count : 0 );
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    req->offset = 0;
-    if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+    RtlInitUnicodeString( &name_str, name );
+
+    if (data) total_size = min( sizeof(buffer), *count + info_size );
+    else total_size = info_size;
+
+    status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
+                              buffer, total_size, &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
     if (data)
     {
-        if (*count < req->len) ret = ERROR_MORE_DATA;
-        else
+        char *buf_ptr = buffer;
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW && total_size - info_size <= *count)
         {
-            /* copy the data */
-            unsigned int max = server_remaining( req->data );
-            unsigned int pos = 0;
-            while (pos < req->len)
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                status = STATUS_NO_MEMORY;
+            else
+                status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
+                                          buf_ptr, total_size, &total_size );
+        }
+
+        if (!status)
+        {
+            memcpy( data, buf_ptr + info_size, total_size - info_size );
+            /* if the type is REG_SZ and data is not 0-terminated
+             * and there is enough space in the buffer NT appends a \0 */
+            if (total_size - info_size <= *count-sizeof(WCHAR) && is_string(info->Type))
             {
-                unsigned int len = min( req->len - pos, max );
-                memcpy( data + pos, req->data, len );
-                if ((pos += len) >= req->len) break;
-                req->offset = pos;
-                if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-                if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+                WCHAR *ptr = (WCHAR *)(data + total_size - info_size);
+                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
             }
         }
-        /* if the type is REG_SZ and data is not 0-terminated
-         * and there is enough space in the buffer NT appends a \0 */
-        if (req->len && is_string(req->type) &&
-            (req->len < *count) && ((WCHAR *)data)[req->len-1]) ((WCHAR *)data)[req->len] = 0;
+        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
     }
-    if (type) *type = req->type;
-    if (count) *count = req->len;
-    return ret;
+
+    if (type) *type = info->Type;
+    if (count) *count = total_size - info_size;
+
+ done:
+    return RtlNtStatusToDosError(status);
 }
 
 
@@ -771,53 +750,86 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
  * the documentation is wrong: if the buffer is to small it remains untouched 
  */
 DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
-			       LPBYTE data, LPDWORD count )
+                               LPBYTE data, LPDWORD count )
 {
-    DWORD ret, total_len;
-    struct get_key_value_request *req = get_req_buffer();
+    NTSTATUS status;
+    ANSI_STRING nameA;
+    UNICODE_STRING nameW;
+    DWORD total_size;
+    char buffer[256];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    static const int info_size = sizeof(*info) - sizeof(info->Data);
 
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_a(name), reserved, type, data, count, count ? *count : 0 );
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    req->offset = 0;
-    if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+    RtlInitAnsiString( &nameA, name );
+    /* FIXME: should use Unicode buffer in TEB */
+    if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE ))) goto done;
 
-    total_len = is_string( req->type ) ? req->len/sizeof(WCHAR) : req->len;
+    status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                              buffer, sizeof(buffer), &total_size );
+    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
-    if (data)
+    /* we need to fetch the contents for a string type even if not requested,
+     * because we need to compute the length of the ASCII string. */
+    if (data || is_string(info->Type))
     {
-        if (*count < total_len) ret = ERROR_MORE_DATA;
-        else
+        char *buf_ptr = buffer;
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
         {
-            /* copy the data */
-            unsigned int max = server_remaining( req->data );
-            unsigned int pos = 0;
-            while (pos < req->len)
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                status = STATUS_NO_MEMORY;
+            else
+                status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                          buf_ptr, total_size, &total_size );
+        }
+
+        if (!status)
+        {
+            if (is_string(info->Type))
             {
-                unsigned int len = min( req->len - pos, max );
-                if (is_string( req->type ))
-                    memcpyWtoA( data + pos/sizeof(WCHAR), (WCHAR *)req->data, len/sizeof(WCHAR) );
-                else
-                    memcpy( data + pos, req->data, len );
-                if ((pos += len) >= req->len) break;
-                req->offset = pos;
-                if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-                if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+                DWORD len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info_size),
+                                                 (total_size - info_size) /sizeof(WCHAR),
+                                                 NULL, 0, NULL, NULL );
+                if (data && len)
+                {
+                    if (len > *count) status = STATUS_BUFFER_OVERFLOW;
+                    else
+                    {
+                        WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info_size),
+                                             (total_size - info_size) /sizeof(WCHAR),
+                                             data, len, NULL, NULL );
+                        /* if the type is REG_SZ and data is not 0-terminated
+                         * and there is enough space in the buffer NT appends a \0 */
+                        if (len < *count && data[len-1]) data[len] = 0;
+                    }
+                }
+                total_size = len + info_size;
+            }
+            else if (data) memcpy( data, buf_ptr + info_size, total_size - info_size );
+
+            /* if the type is REG_SZ and data is not 0-terminated
+             * and there is enough space in the buffer NT appends a \0 */
+            if (total_size - info_size <= *count-sizeof(WCHAR) && is_string(info->Type))
+            {
+                WCHAR *ptr = (WCHAR *)(data + total_size - info_size);
+                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
             }
         }
-        /* if the type is REG_SZ and data is not 0-terminated
-         * and there is enough space in the buffer NT appends a \0 */
-        if (total_len && is_string(req->type) && (total_len < *count) && data[total_len-1])
-            data[total_len] = 0;
+        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
     }
 
-    if (count) *count = total_len;
-    if (type) *type = req->type;
-    return ret;
+    if (type) *type = info->Type;
+    if (count) *count = total_size - info_size;
+    RtlFreeUnicodeString( &nameW );
+
+ done:
+    return RtlNtStatusToDosError(status);
 }
 
 
@@ -1011,14 +1023,9 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
  */
 DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
 {
-    DWORD ret;
-    struct delete_key_value_request *req = get_req_buffer();
-
-    TRACE( "(0x%x,%s)\n", hkey, debugstr_w(name) );
-
-    req->hkey = hkey;
-    if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    return reg_server_call( REQ_DELETE_KEY_VALUE );
+    UNICODE_STRING nameW;
+    RtlInitUnicodeString( &nameW, name );
+    return RtlNtStatusToDosError( NtDeleteValueKey( hkey, &nameW ) );
 }
 
 
@@ -1027,14 +1034,18 @@ DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
  */
 DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 {
-    DWORD ret;
-    struct delete_key_value_request *req = get_req_buffer();
+    UNICODE_STRING nameW;
+    STRING nameA;
+    NTSTATUS status;
 
-    TRACE( "(0x%x,%s)\n", hkey, debugstr_a(name) );
-
-    req->hkey = hkey;
-    if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    return reg_server_call( REQ_DELETE_KEY_VALUE );
+    RtlInitAnsiString( &nameA, name );
+    /* FIXME: should use Unicode buffer in TEB */
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtDeleteValueKey( hkey, &nameW );
+        RtlFreeUnicodeString( &nameW );
+    }
+    return RtlNtStatusToDosError( status );
 }
 
 

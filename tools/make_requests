@@ -179,7 +179,8 @@ sub DO_DUMP_FUNC
             {
                 my $func = $1;
                 push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-                push @trace_lines, "    $func( get_req_data(req), get_req_data_size(req) );\n";
+                push @trace_lines, "    cur_pos += $func( req );\n";
+                push @trace_lines, "    fputc( ',', stderr );\n" if ($#_ > 0);
             }
             else
             {

@@ -1,5 +1,8 @@
 /*
- *	registry functions
+ * Registry functions
+ *
+ * Copyright (C) 1999 Juergen Schmied
+ * Copyright (C) 2000 Alexandre Julliard
  *
  * NOTES:
  * 	HKEY_LOCAL_MACHINE	\\REGISTRY\\MACHINE
@@ -26,21 +29,8 @@ static const UNICODE_STRING root_path =
     (LPWSTR)root_name                 /* Buffer */
 };
 
-/* copy a key name into the request buffer */
-static NTSTATUS copy_key_name( LPWSTR dest, const UNICODE_STRING *name )
-{
-    int len = name->Length, pos = 0;
-
-    if (len >= MAX_PATH) return STATUS_BUFFER_OVERFLOW;
-    if (RtlPrefixUnicodeString( &root_path, name, TRUE ))
-    {
-        pos += root_path.Length / sizeof(WCHAR);
-        len -= root_path.Length;
-    }
-    if (len) memcpy( dest, name->Buffer + pos, len );
-    dest[len / sizeof(WCHAR)] = 0;
-    return STATUS_SUCCESS;
-}
+/* maximum length of a key/value name in bytes (without terminating null) */
+#define MAX_NAME_LENGTH ((MAX_PATH-1) * sizeof(WCHAR))
 
 
 /* copy a key name into the request buffer */
@@ -61,31 +51,41 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
                              ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
                              PULONG dispos )
 {
-    struct create_key_request *req = get_req_buffer();
     NTSTATUS ret;
+    DWORD len = attr->ObjectName->Length;
 
     TRACE( "(0x%x,%s,%s,%lx,%lx,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, retkey );
 
-    if (!retkey) return STATUS_INVALID_PARAMETER;
-
-    req->parent  = attr->RootDirectory;
-    req->access  = access;
-    req->options = options;
-    req->modif   = 0;
-
-    if ((ret = copy_key_name( req->name, attr->ObjectName ))) return ret;
-    req->class[0] = 0;
+    if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
+    len += sizeof(WCHAR);  /* for storing name length */
     if (class)
     {
-        if ((ret = copy_nameU( req->class, class, server_remaining(req->class) ))) return ret;
+        len += class->Length;
+        if (len > REQUEST_MAX_VAR_SIZE) return STATUS_BUFFER_OVERFLOW;
     }
+    if (!retkey) return STATUS_INVALID_PARAMETER;
 
-    if (!(ret = server_call_noerr( REQ_CREATE_KEY )))
+    SERVER_START_REQ
     {
-        *retkey = req->hkey;
-        if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
+        struct create_key_request *req = server_alloc_req( sizeof(*req), len );
+        WCHAR *data = server_data_ptr(req);
+
+        req->parent  = attr->RootDirectory;
+        req->access  = access;
+        req->options = options;
+        req->modif   = 0;
+
+        *data++ = attr->ObjectName->Length;
+        memcpy( data, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        if (class) memcpy( (char *)data + attr->ObjectName->Length, class->Buffer, class->Length );
+        if (!(ret = server_call_noerr( REQ_CREATE_KEY )))
+        {
+            *retkey = req->hkey;
+            if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
+        }
     }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -99,20 +99,25 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
  */
 NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    struct open_key_request *req = get_req_buffer();
     NTSTATUS ret;
+    DWORD len = attr->ObjectName->Length;
 
     TRACE( "(0x%x,%s,%lx,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
 
+    if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
     if (!retkey) return STATUS_INVALID_PARAMETER;
     *retkey = 0;
 
-    req->parent = attr->RootDirectory;
-    req->access = access;
-
-    if ((ret = copy_key_name( req->name, attr->ObjectName ))) return ret;
-    if (!(ret = server_call_noerr( REQ_OPEN_KEY ))) *retkey = req->hkey;
+    SERVER_START_REQ
+    {
+        struct open_key_request *req = server_alloc_req( sizeof(*req), len );
+        req->parent = attr->RootDirectory;
+        req->access = access;
+        memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
+        if (!(ret = server_call_noerr( REQ_OPEN_KEY ))) *retkey = req->hkey;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -123,12 +128,18 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
  */
 NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
 {
-    struct delete_key_request *req = get_req_buffer();
+    NTSTATUS ret;
 
     TRACE( "(%x)\n", hkey );
-    req->hkey = hkey;
-    req->name[0] = 0;
-    return server_call_noerr( REQ_DELETE_KEY );
+
+    SERVER_START_REQ
+    {
+        struct delete_key_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->hkey = hkey;
+        ret = server_call_noerr( REQ_DELETE_KEY );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -139,13 +150,19 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
 NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
 {
     NTSTATUS ret;
-    struct delete_key_value_request *req = get_req_buffer();
 
     TRACE( "(0x%x,%s)\n", hkey, debugstr_us(name) );
+    if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
-    req->hkey = hkey;
-    if (!(ret = copy_nameU( req->name, name, MAX_PATH )))
+    SERVER_START_REQ
+    {
+        struct delete_key_value_request *req = server_alloc_req( sizeof(*req), name->Length );
+
+        req->hkey = hkey;
+        memcpy( server_data_ptr(req), name->Buffer, name->Length );
         ret = server_call_noerr( REQ_DELETE_KEY_VALUE );
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -468,70 +485,113 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
  * NOTES
  *  the name in the KeyValueInformation is never set
  */
-NTSTATUS WINAPI NtQueryValueKey(
-	IN HANDLE KeyHandle,
-	IN PUNICODE_STRING ValueName,
-	IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-	OUT PVOID KeyValueInformation,
-	IN ULONG Length,
-	OUT PULONG ResultLength)
+NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
+                                 KEY_VALUE_INFORMATION_CLASS info_class,
+                                 void *info, DWORD length, DWORD *result_len )
 {
-	struct get_key_value_request *req = get_req_buffer();
-	NTSTATUS ret;
 
-	TRACE("(0x%08x,%s,0x%08x,%p,0x%08lx,%p)\n",
-	KeyHandle, debugstr_us(ValueName), KeyValueInformationClass, KeyValueInformation, Length, ResultLength);
 
-	req->hkey = KeyHandle;
-	if (copy_nameU(req->name, ValueName, MAX_PATH) != STATUS_SUCCESS) return STATUS_BUFFER_OVERFLOW;
-	if ((ret = server_call_noerr(REQ_GET_KEY_VALUE)) != STATUS_SUCCESS) return ret;
+    NTSTATUS ret;
+    char *data_ptr;
+    int fixed_size = 0, data_len = 0, offset = 0, type = 0, total_len = 0;
 
-	switch(KeyValueInformationClass)
-	{
-	  case KeyValueBasicInformation:
-	    {
-	      PKEY_VALUE_BASIC_INFORMATION kbi = (PKEY_VALUE_BASIC_INFORMATION) KeyValueInformation;
-	      kbi->Type = req->type;
+    TRACE( "(0x%x,%s,%d,%p,%ld)\n", handle, debugstr_us(name), info_class, info, length );
 
-	      *ResultLength = sizeof(KEY_VALUE_BASIC_INFORMATION)-sizeof(WCHAR);
-	      if (Length <= *ResultLength) return STATUS_BUFFER_OVERFLOW;
-	      kbi->NameLength = 0;
-	    }  
-	    break;
-	  case KeyValueFullInformation:
-	    {
-	      PKEY_VALUE_FULL_INFORMATION  kfi = (PKEY_VALUE_FULL_INFORMATION) KeyValueInformation;
-	      ULONG DataOffset;
-	      kfi->Type = req->type;
+    if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
-	      DataOffset = sizeof(KEY_VALUE_FULL_INFORMATION)-sizeof(WCHAR);
-	      *ResultLength = DataOffset + req->len;
-	      if (Length <= *ResultLength) return STATUS_BUFFER_OVERFLOW;
+    /* compute the length we want to retrieve */
+    switch(info_class)
+    {
+    case KeyValueBasicInformation:
+        fixed_size = sizeof(KEY_VALUE_BASIC_INFORMATION) - sizeof(WCHAR);
+        data_ptr = NULL;
+        break;
+    case KeyValueFullInformation:
+        fixed_size = sizeof(KEY_VALUE_FULL_INFORMATION) - sizeof(WCHAR);
+        data_ptr = (char *)info + fixed_size;
+        break;
+    case KeyValuePartialInformation:
+        fixed_size = sizeof(KEY_VALUE_PARTIAL_INFORMATION) - sizeof(UCHAR);
+        data_ptr = (char *)info + fixed_size;
+        break;
+    default:
+        FIXME( "Information class %d not implemented\n", info_class );
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (data_ptr && length > fixed_size) data_len = length - fixed_size;
 
-	      kfi->NameLength = 0;
-	      kfi->DataOffset = DataOffset;
-	      kfi->DataLength = req->len;
-	      memcpy((char *) KeyValueInformation + DataOffset, req->data, req->len);
-	    }  
-	    break;
-	  case KeyValuePartialInformation:
-	    {
-	      PKEY_VALUE_PARTIAL_INFORMATION kpi = (PKEY_VALUE_PARTIAL_INFORMATION) KeyValueInformation;
-	      kpi->Type = req->type;
+    do
+    {
+        size_t reqlen = min( data_len, REQUEST_MAX_VAR_SIZE );
+        reqlen = max( reqlen, name->Length );
 
-	      *ResultLength = sizeof(KEY_VALUE_FULL_INFORMATION)-sizeof(UCHAR)+req->len;
-	      if (Length <= *ResultLength) return STATUS_BUFFER_OVERFLOW;
+        SERVER_START_REQ
+        {
+            struct get_key_value_request *req = server_alloc_req( sizeof(*req), reqlen );
+            WCHAR *nameptr = server_data_ptr(req);
 
-	      kpi->DataLength = req->len;
-	      memcpy(kpi->Data, req->data, req->len);
-	    }  
-	    break;
-	  default:
-	    FIXME("KeyValueInformationClass not implemented\n");
-	    return STATUS_UNSUCCESSFUL;
-	  
-	}
-	return ret;
+            req->hkey = handle;
+            req->offset = offset;
+            *nameptr++ = name->Length;
+            memcpy( nameptr, name->Buffer, name->Length );
+
+            if (!(ret = server_call_noerr( REQ_GET_KEY_VALUE )))
+            {
+                size_t size = min( server_data_size(req), data_len );
+                type = req->type;
+                total_len = req->len;
+                if (size)
+                {
+                    memcpy( data_ptr + offset, server_data_ptr(req), size );
+                    offset += size;
+                    data_len -= size;
+                }
+            }
+        }
+        SERVER_END_REQ;
+        if (ret) return ret;
+    } while (data_len && offset < total_len);
+
+    *result_len = total_len + fixed_size;
+
+    if (!data_len) ret = STATUS_BUFFER_OVERFLOW;
+    if (length < fixed_size) ret = STATUS_BUFFER_OVERFLOW;
+
+    switch(info_class)
+    {
+    case KeyValueBasicInformation:
+        {
+            KEY_VALUE_BASIC_INFORMATION keyinfo;
+            keyinfo.TitleIndex = 0;
+            keyinfo.Type       = type;
+            keyinfo.NameLength = 0;
+            memcpy( info, &keyinfo, min(fixed_size,length) );
+            break;
+        }
+    case KeyValueFullInformation:
+        {
+            KEY_VALUE_FULL_INFORMATION keyinfo;
+            keyinfo.TitleIndex = 0;
+            keyinfo.Type       = type;
+            keyinfo.DataOffset = fixed_size;
+            keyinfo.DataLength = total_len;
+            keyinfo.NameLength = 0;
+            memcpy( info, &keyinfo, min(fixed_size,length) );
+            break;
+        }
+    case KeyValuePartialInformation:
+        {
+            KEY_VALUE_PARTIAL_INFORMATION keyinfo;
+            keyinfo.TitleIndex = 0;
+            keyinfo.Type       = type;
+            keyinfo.DataLength = total_len;
+            memcpy( info, &keyinfo, min(fixed_size,length) );
+            break;
+        }
+    default:
+        break;
+    }
+    return ret;
 }
 
 /******************************************************************************
@@ -587,22 +647,52 @@ NTSTATUS WINAPI NtSetInformationKey(
 	KeyHandle, KeyInformationClass, KeyInformation, KeyInformationLength);
 	return STATUS_SUCCESS;
 }
+
+
 /******************************************************************************
  * NtSetValueKey [NTDLL]
  * ZwSetValueKey
+ *
+ * NOTES
+ *   win95 does not care about count for REG_SZ and finds out the len by itself (js) 
+ *   NT does definitely care (aj)
  */
-NTSTATUS WINAPI NtSetValueKey(
-	HANDLE KeyHandle,
-	PUNICODE_STRING ValueName,
-	ULONG TitleIndex,
-	ULONG Type,
-	PVOID Data,
-	ULONG DataSize)
+NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG TitleIndex,
+                               ULONG type, const void *data, ULONG count )
 {
-	FIXME("(0x%08x,%p(%s), 0x%08lx, 0x%08lx, %p, 0x%08lx) stub!\n",
-	KeyHandle, ValueName,debugstr_us(ValueName), TitleIndex, Type, Data, DataSize);
-	return STATUS_SUCCESS;
+    NTSTATUS ret;
+    ULONG namelen, pos;
 
+    TRACE( "(0x%x,%s,%ld,%p,%ld)\n", hkey, debugstr_us(name), type, data, count );
+
+    if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
+
+    namelen = name->Length + sizeof(WCHAR);  /* for storing length */
+    pos = 0;
+
+    do
+    {
+        ULONG len = count - pos;
+        if (len > REQUEST_MAX_VAR_SIZE - namelen) len = REQUEST_MAX_VAR_SIZE - namelen;
+
+        SERVER_START_REQ
+        {
+            struct set_key_value_request *req = server_alloc_req( sizeof(*req), namelen + len );
+            WCHAR *name_ptr = server_data_ptr(req);
+
+            req->hkey   = hkey;
+            req->type   = type;
+            req->total  = count;
+            req->offset = pos;
+            *name_ptr++ = name->Length;
+            memcpy( name_ptr, name->Buffer, name->Length );
+            memcpy( (char *)name_ptr + name->Length, (char *)data + pos, len );
+            pos += len;
+            ret = server_call_noerr( REQ_SET_KEY_VALUE );
+        }
+        SERVER_END_REQ;
+    } while (!ret && pos < count);
+    return ret;
 }
 
 /******************************************************************************

@@ -286,51 +286,66 @@ static void key_destroy( struct object *obj )
 
 /* duplicate a key path from the request buffer */
 /* returns a pointer to a static buffer, so only useable once per request */
-static WCHAR *copy_path( const path_t path )
+static WCHAR *copy_path( const WCHAR *path, size_t len )
 {
     static WCHAR buffer[MAX_PATH+1];
-    WCHAR *p = buffer;
 
-    while (p < buffer + sizeof(buffer) - 1) if (!(*p++ = *path++)) break;
-    *p = 0;
+    if (len > sizeof(buffer)-sizeof(buffer[0]))
+    {
+        set_error( STATUS_BUFFER_OVERFLOW );
+        return NULL;
+    }
+    memcpy( buffer, path, len );
+    buffer[len / sizeof(WCHAR)] = 0;
     return buffer;
+}
+
+/* copy a path from the request buffer, in cases where the length is stored in front of the path */
+static WCHAR *copy_req_path( void *req, size_t *len )
+{
+    const WCHAR *name_ptr = get_req_data(req);
+    if ((*len = sizeof(WCHAR) + *name_ptr++) > get_req_data_size(req))
+    {
+        fatal_protocol_error( current, "copy_req_path: invalid length %d/%d\n",
+                              *len, get_req_data_size(req) );
+        return NULL;
+    }
+    return copy_path( name_ptr, *len - sizeof(WCHAR) );
 }
 
 /* return the next token in a given path */
 /* returns a pointer to a static buffer, so only useable once per request */
-static WCHAR *get_path_token( const WCHAR *initpath, size_t maxlen )
+static WCHAR *get_path_token( WCHAR *initpath )
 {
-    static const WCHAR *path;
-    static const WCHAR *end;
-    static WCHAR buffer[MAX_PATH+1];
-    WCHAR *p = buffer;
+    static WCHAR *path;
+    WCHAR *ret;
 
     if (initpath)
     {
+        /* path cannot start with a backslash */
+        if (*initpath == '\\')
+        {
+            set_error( STATUS_OBJECT_PATH_INVALID );
+            return NULL;
+        }
         path = initpath;
-        end  = path + maxlen / sizeof(WCHAR);
     }
-    while ((path < end) && (*path == '\\')) path++;
-    while ((path < end) && (p < buffer + sizeof(buffer) - 1))
-    {
-        WCHAR ch = *path;
-        if (!ch || (ch == '\\')) break;
-        *p++ = ch;
-        path++;
-    }
-    *p = 0;
-    return buffer;
+    else while (*path == '\\') path++;
+
+    ret = path;
+    while (*path && *path != '\\') path++;
+    if (*path) *path++ = 0;
+    return ret;
 }
 
 /* duplicate a Unicode string from the request buffer */
-static WCHAR *req_strdupW( const void *req, const WCHAR *str )
+static WCHAR *req_strdupW( const void *req, const WCHAR *str, size_t len )
 {
     WCHAR *name;
-    size_t len = get_req_strlenW( req, str );
-    if ((name = mem_alloc( (len + 1) * sizeof(WCHAR) )) != NULL)
+    if ((name = mem_alloc( len + sizeof(WCHAR) )) != NULL)
     {
-        memcpy( name, str, len * sizeof(WCHAR) );
-        name[len] = 0;
+        memcpy( name, str, len );
+        name[len / sizeof(WCHAR)] = 0;
     }
     return name;
 }
@@ -466,12 +481,13 @@ static struct key *find_subkey( struct key *key, const WCHAR *name, int *index )
 }
 
 /* open a subkey */
-static struct key *open_key( struct key *key, const WCHAR *name, size_t maxlen )
+/* warning: the key name must be writeable (use copy_path) */
+static struct key *open_key( struct key *key, WCHAR *name )
 {
     int index;
     WCHAR *path;
 
-    path = get_path_token( name, maxlen );
+    if (!(path = get_path_token( name ))) return NULL;
     while (*path)
     {
         if (!(key = find_subkey( key, path, &index )))
@@ -479,7 +495,7 @@ static struct key *open_key( struct key *key, const WCHAR *name, size_t maxlen )
             set_error( STATUS_OBJECT_NAME_NOT_FOUND );
             break;
         }
-        path = get_path_token( NULL, 0 );
+        path = get_path_token( NULL );
     }
 
     if (debug_level > 1) dump_operation( key, NULL, "Open" );
@@ -488,7 +504,8 @@ static struct key *open_key( struct key *key, const WCHAR *name, size_t maxlen )
 }
 
 /* create a subkey */
-static struct key *create_key( struct key *key, const WCHAR *name, size_t maxlen, WCHAR *class,
+/* warning: the key name must be writeable (use copy_path) */
+static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
                                unsigned int options, time_t modif, int *created )
 {
     struct key *base;
@@ -508,14 +525,14 @@ static struct key *create_key( struct key *key, const WCHAR *name, size_t maxlen
     }
     if (!modif) modif = time(NULL);
 
-    path = get_path_token( name, maxlen );
+    if (!(path = get_path_token( name ))) return NULL;
     *created = 0;
     while (*path)
     {
         struct key *subkey;
         if (!(subkey = find_subkey( key, path, &index ))) break;
         key = subkey;
-        path = get_path_token( NULL, 0 );
+        path = get_path_token( NULL );
     }
 
     /* create the remaining part */
@@ -528,7 +545,7 @@ static struct key *create_key( struct key *key, const WCHAR *name, size_t maxlen
     while (key)
     {
         key->flags |= flags;
-        path = get_path_token( NULL, 0 );
+        path = get_path_token( NULL );
         if (!*path) goto done;
         /* we know the index is always 0 in a new key */
         key = alloc_subkey( key, path, 0, modif );
@@ -597,40 +614,25 @@ static void query_key( struct key *key, struct query_key_info_request *req )
 }
 
 /* delete a key and its values */
-static void delete_key( struct key *key, const WCHAR *name, size_t maxlen )
+static void delete_key( struct key *key )
 {
     int index;
     struct key *parent;
-    WCHAR *path;
 
-    path = get_path_token( name, maxlen );
-    if (!*path)
+    /* must find parent and index */
+    if (key->flags & KEY_ROOT)
     {
-        /* deleting this key, must find parent and index */
-        if (key->flags & KEY_ROOT)
-        {
-            set_error( STATUS_ACCESS_DENIED );
-            return;
-        }
-        if (!(parent = key->parent) || (key->flags & KEY_DELETED))
-        {
-            set_error( STATUS_KEY_DELETED );
-            return;
-        }
-        for (index = 0; index <= parent->last_subkey; index++)
-            if (parent->subkeys[index] == key) break;
-        assert( index <= parent->last_subkey );
+        set_error( STATUS_ACCESS_DENIED );
+        return;
     }
-    else while (*path)
+    if (!(parent = key->parent) || (key->flags & KEY_DELETED))
     {
-        parent = key;
-        if (!(key = find_subkey( parent, path, &index )))
-        {
-            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-            return;
-        }
-        path = get_path_token( NULL, 0 );
+        set_error( STATUS_KEY_DELETED );
+        return;
     }
+    for (index = 0; index <= parent->last_subkey; index++)
+        if (parent->subkeys[index] == key) break;
+    assert( index <= parent->last_subkey );
 
     /* we can only delete a key that has no subkeys (FIXME) */
     if ((key->flags & KEY_ROOT) || (key->last_subkey >= 0))
@@ -716,7 +718,7 @@ static struct key_value *insert_value( struct key *key, const WCHAR *name )
 
 /* set a key value */
 static void set_value( struct key *key, WCHAR *name, int type, unsigned int total_len,
-                       unsigned int offset, unsigned int data_len, void *data )
+                       unsigned int offset, unsigned int data_len, const void *data )
 {
     struct key_value *value;
     void *ptr = NULL;
@@ -767,11 +769,12 @@ static void set_value( struct key *key, WCHAR *name, int type, unsigned int tota
 }
 
 /* get a key value */
-static void get_value( struct key *key, WCHAR *name, unsigned int offset,
-                       unsigned int maxlen, int *type, int *len, void *data )
+static size_t get_value( struct key *key, WCHAR *name, unsigned int offset,
+                         unsigned int maxlen, int *type, int *len, void *data )
 {
     struct key_value *value;
     int index;
+    size_t ret = 0;
 
     if ((value = find_value( key, name, &index )))
     {
@@ -781,6 +784,7 @@ static void get_value( struct key *key, WCHAR *name, unsigned int offset,
         {
             if (maxlen > value->len - offset) maxlen = value->len - offset;
             memcpy( data, (char *)value->data + offset, maxlen );
+            ret = maxlen;
         }
         if (debug_level > 1) dump_operation( key, value, "Get" );
     }
@@ -789,6 +793,7 @@ static void get_value( struct key *key, WCHAR *name, unsigned int offset,
         *type = -1;
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     }
+    return ret;
 }
 
 /* enumerate a key value */
@@ -871,7 +876,7 @@ static struct key *create_root_key( int hkey )
     }
     keyname[i++] = 0;
 
-    if ((key = create_key( root_key, keyname, i*sizeof(WCHAR), NULL, 0, time(NULL), &dummy )))
+    if ((key = create_key( root_key, keyname, NULL, 0, time(NULL), &dummy )))
     {
         special_root_keys[hkey - HKEY_SPECIAL_ROOT_FIRST] = key;
         key->flags |= KEY_ROOT;
@@ -1047,7 +1052,7 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 static struct key *load_key( struct key *base, const char *buffer, unsigned int options,
                              int prefix_len, struct file_load_info *info )
 {
-    WCHAR *p;
+    WCHAR *p, *name;
     int res, len, modif;
 
     len = strlen(buffer) * sizeof(WCHAR);
@@ -1073,7 +1078,12 @@ static struct key *load_key( struct key *base, const char *buffer, unsigned int 
         /* empty key name, return base key */
         return (struct key *)grab_object( base );
     }
-    return create_key( base, p, len - ((char *)p - info->tmp), NULL, options, modif, &res );
+    if (!(name = copy_path( p, len - ((char *)p - info->tmp) )))
+    {
+        file_read_error( "Key is too long", info );
+        return NULL;
+    }
+    return create_key( base, name, NULL, options, modif, &res );
 }
 
 /* parse a comma-separated list of hex digits */
@@ -1325,7 +1335,7 @@ void init_registry(void)
         int dummy;
 
         /* create the config key */
-        if (!(key = create_key( root_key, config_name, sizeof(config_name),
+        if (!(key = create_key( root_key, copy_path( config_name, sizeof(config_name) ),
                                 NULL, 0, time(NULL), &dummy )))
             fatal_error( "could not create config key\n" );
         key->flags |= KEY_VOLATILE;
@@ -1520,23 +1530,37 @@ void close_registry(void)
 /* create a registry key */
 DECL_HANDLER(create_key)
 {
-    struct key *key, *parent;
-    WCHAR *class;
+    struct key *key = NULL, *parent;
     unsigned int access = req->access;
+    WCHAR *name, *class;
+    size_t len;
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     req->hkey = -1;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
-        if ((class = req_strdupW( req, req->class )))
+        if ((name = copy_req_path( req, &len )))
         {
-            if ((key = create_key( parent, req->name, sizeof(req->name), class, req->options,
-                                   req->modif, &req->created )))
+            if (len == get_req_data_size(req))  /* no class specified */
+            {
+                key = create_key( parent, name, NULL, req->options, req->modif, &req->created );
+            }
+            else
+            {
+                const WCHAR *class_ptr = (WCHAR *)((char *)get_req_data(req) + len);
+
+                if ((class = req_strdupW( req, class_ptr, get_req_data_size(req) - len )))
+                {
+                    key = create_key( parent, name, class, req->options,
+                                      req->modif, &req->created );
+                    free( class );
+                }
+            }
+            if (key)
             {
                 req->hkey = alloc_handle( current->process, key, access, 0 );
                 release_object( key );
             }
-            free( class );
         }
         release_object( parent );
     }
@@ -1552,7 +1576,8 @@ DECL_HANDLER(open_key)
     req->hkey = -1;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
-        if ((key = open_key( parent, req->name, sizeof(req->name) )))
+        WCHAR *name = copy_path( get_req_data(req), get_req_data_size(req) );
+        if (name && (key = open_key( parent, name )))
         {
             req->hkey = alloc_handle( current->process, key, access, 0 );
             release_object( key );
@@ -1568,17 +1593,9 @@ DECL_HANDLER(delete_key)
 
     if ((key = get_hkey_obj( req->hkey, 0 /*FIXME*/ )))
     {
-        delete_key( key, req->name, sizeof(req->name) );
+        delete_key( key );
         release_object( key );
     }
-}
-
-/* close a registry key */
-DECL_HANDLER(close_key)
-{
-    int hkey = req->hkey;
-    /* ignore attempts to close a root key */
-    if (hkey && !IS_SPECIAL_ROOT_HKEY(hkey)) close_handle( current->process, hkey );
 }
 
 /* enumerate registry subkeys */
@@ -1611,14 +1628,18 @@ DECL_HANDLER(query_key_info)
 DECL_HANDLER(set_key_value)
 {
     struct key *key;
-    unsigned int max = get_req_size( req, req->data, sizeof(req->data[0]) );
-    unsigned int datalen = req->len;
+    WCHAR *name;
+    size_t len;
 
-    if (datalen > max) datalen = max;
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        set_value( key, copy_path( req->name ), req->type, req->total,
-                   req->offset, datalen, req->data );
+        if ((name = copy_req_path( req, &len )))
+        {
+            size_t datalen = get_req_data_size(req) - len;
+            const char *data = (char *)get_req_data(req) + len;
+
+            set_value( key, name, req->type, req->total, req->offset, datalen, data );
+        }
         release_object( key );
     }
 }
@@ -1627,13 +1648,18 @@ DECL_HANDLER(set_key_value)
 DECL_HANDLER(get_key_value)
 {
     struct key *key;
-    unsigned int max = get_req_size( req, req->data, sizeof(req->data[0]) );
+    WCHAR *name;
+    size_t len;
 
     req->len = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        get_value( key, copy_path( req->name ), req->offset, max,
-                   &req->type, &req->len, req->data );
+        if ((name = copy_req_path( req, &len )))
+        {
+            len = get_value( key, name, req->offset, get_req_data_size(req),
+                             &req->type, &req->len, get_req_data(req) );
+            set_req_data_size( req, len );
+        }
         release_object( key );
     }
 }
@@ -1662,7 +1688,7 @@ DECL_HANDLER(delete_key_value)
 
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        if ((name = req_strdupW( req, req->name )))
+        if ((name = req_strdupW( req, get_req_data(req), get_req_data_size(req) )))
         {
             delete_value( key, name );
             free( name );

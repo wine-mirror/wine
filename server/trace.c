@@ -15,8 +15,19 @@
 #include "request.h"
 #include "unicode.h"
 
+static int cur_pos;
 
 /* utility functions */
+
+static const void *get_data( const void *req )
+{
+    return (char *)get_req_data(req) + cur_pos;
+}
+
+static size_t get_size( const void *req )
+{
+    return get_req_data_size(req) - cur_pos;
+}
 
 static void dump_uints( const int *ptr, int len )
 {
@@ -59,63 +70,8 @@ static void dump_path_t( const void *req, const path_t *path )
     dump_unicode_string( req, *path );
 }
 
-static void dump_exc_record( const EXCEPTION_RECORD *rec )
+static void dump_context( const CONTEXT *context )
 {
-    int i;
-    fprintf( stderr, "{code=%lx,flags=%lx,rec=%p,addr=%p,params={",
-             rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionRecord,
-             rec->ExceptionAddress );
-    for (i = 0; i < rec->NumberParameters; i++)
-    {
-        if (i) fputc( ',', stderr );
-        fprintf( stderr, "%lx", rec->ExceptionInformation[i] );
-    }
-    fputc( '}', stderr );
-}
-
-static void dump_varargs_ints( const void *ptr, size_t len )
-{
-    const int *data = ptr;
-    len /= sizeof(*data);
-
-    fputc( '{', stderr );
-    while (len > 0)
-    {
-        fprintf( stderr, "%d", *data++ );
-        if (--len) fputc( ',', stderr );
-    }
-    fputc( '}', stderr );
-}
-
-static void dump_varargs_ptrs( const void *ptr, size_t len )
-{
-    void * const *data = ptr;
-    len /= sizeof(*data);
-
-    fputc( '{', stderr );
-    while (len > 0)
-    {
-        fprintf( stderr, "%p", *data++ );
-        if (--len) fputc( ',', stderr );
-    }
-    fputc( '}', stderr );
-}
-
-static void dump_varargs_string( const void *ptr, size_t len )
-{
-    fprintf( stderr, "\"%.*s\"", (int)len, (char *)ptr );
-}
-
-static void dump_varargs_unicode_str( const void *ptr, size_t len )
-{
-    fprintf( stderr, "L\"" );
-    dump_strW( ptr, len / sizeof(WCHAR), stderr, "\"\"" );
-    fputc( '\"', stderr );
-}
-
-static void dump_varargs_context( const void *ptr, size_t len )
-{
-    const CONTEXT *context = ptr;
 #ifdef __i386__
     fprintf( stderr, "{flags=%08lx,eax=%08lx,ebx=%08lx,ecx=%08lx,edx=%08lx,esi=%08lx,edi=%08lx,"
              "ebp=%08lx,eip=%08lx,esp=%08lx,eflags=%08lx,cs=%04lx,ds=%04lx,es=%04lx,"
@@ -132,23 +88,115 @@ static void dump_varargs_context( const void *ptr, size_t len )
 #endif
 }
 
-static void dump_varargs_exc_event( const void *ptr, size_t len )
+static void dump_exc_record( const EXCEPTION_RECORD *rec )
 {
-    fprintf( stderr, "{context=" );
-    dump_varargs_context( ptr, sizeof(CONTEXT) );
-    fprintf( stderr, ",rec=" );
-    dump_exc_record( (EXCEPTION_RECORD *)((CONTEXT *)ptr + 1) );
+    int i;
+    fprintf( stderr, "{code=%lx,flags=%lx,rec=%p,addr=%p,params={",
+             rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionRecord,
+             rec->ExceptionAddress );
+    for (i = 0; i < rec->NumberParameters; i++)
+    {
+        if (i) fputc( ',', stderr );
+        fprintf( stderr, "%lx", rec->ExceptionInformation[i] );
+    }
     fputc( '}', stderr );
 }
 
-static void dump_varargs_debug_event( const void *ptr, size_t len )
+static size_t dump_varargs_ints( const void *req )
 {
-    const debug_event_t *event = ptr;
+    const int *data = get_data(req);
+    size_t len = get_size(req) / sizeof(*data);
 
-    if (!len)
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "%d", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    return get_size(req);
+}
+
+static size_t dump_varargs_ptrs( const void *req )
+{
+    void * const *data = get_data(req);
+    size_t len = get_size(req) / sizeof(*data);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "%p", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    return get_size(req);
+}
+
+static size_t dump_varargs_bytes( const void *req )
+{
+    const unsigned char *data = get_data(req);
+    size_t len = get_size(req);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "%02x", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    return get_size(req);
+}
+
+static size_t dump_varargs_string( const void *req )
+{
+    fprintf( stderr, "\"%.*s\"", (int)get_size(req), (char *)get_data(req) );
+    return get_size(req);
+}
+
+static size_t dump_varargs_unicode_len_str( const void *req )
+{
+    const WCHAR *str = get_data(req);
+    WCHAR len = *str++;
+    len = min( len, get_size(req) );
+    fprintf( stderr, "L\"" );
+    dump_strW( str, len / sizeof(WCHAR), stderr, "\"\"" );
+    fputc( '\"', stderr );
+    return len + sizeof(WCHAR);
+}
+
+static size_t dump_varargs_unicode_str( const void *req )
+{
+    fprintf( stderr, "L\"" );
+    dump_strW( get_data(req), get_size(req) / sizeof(WCHAR), stderr, "\"\"" );
+    fputc( '\"', stderr );
+    return get_size(req);
+}
+
+static size_t dump_varargs_context( const void *req )
+{
+    dump_context( get_data(req) );
+    return get_size(req);
+}
+
+static size_t dump_varargs_exc_event( const void *req )
+{
+    const CONTEXT *ptr = get_data(req);
+    fprintf( stderr, "{context=" );
+    dump_context( ptr );
+    fprintf( stderr, ",rec=" );
+    dump_exc_record( (EXCEPTION_RECORD *)(ptr + 1) );
+    fputc( '}', stderr );
+    return get_size(req);
+}
+
+static size_t dump_varargs_debug_event( const void *req )
+{
+    const debug_event_t *event = get_data(req);
+
+    if (!get_size(req))
     {
         fprintf( stderr, "{}" );
-        return;
+        return 0;
     }
     switch(event->code)
     {
@@ -202,12 +250,13 @@ static void dump_varargs_debug_event( const void *ptr, size_t len )
         fprintf( stderr, "{code=??? (%d)}", event->code );
         break;
     }
+    return get_size(req);
 }
 
-static void dump_varargs_input_records( const void *ptr, size_t len )
+static size_t dump_varargs_input_records( const void *req )
 {
-    const INPUT_RECORD *rec = ptr;
-    len /= sizeof(*rec);
+    const INPUT_RECORD *rec = get_data(req);
+    size_t len = get_size(req) / sizeof(*rec);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -217,6 +266,7 @@ static void dump_varargs_input_records( const void *ptr, size_t len )
         if (--len) fputc( ',', stderr );
     }
     fputc( '}', stderr );
+    return get_size(req);
 }
 
 /* dumping for functions for requests that have a variable part */
@@ -231,18 +281,6 @@ static void dump_varargs_write_process_memory_request( const struct write_proces
 {
     int count = min( req->len, get_req_size( req, req->data, sizeof(int) ));
     dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
-}
-
-static void dump_varargs_set_key_value_request( const struct set_key_value_request *req )
-{
-    int count = min( req->len, get_req_size( req, req->data, 1 ));
-    dump_bytes( req->data, count );
-}
-
-static void dump_varargs_get_key_value_reply( const struct get_key_value_request *req )
-{
-    int count = min( req->len - req->offset, get_req_size( req, req->data, 1 ));
-    dump_bytes( req->data, count );
 }
 
 static void dump_varargs_enum_key_value_reply( const struct enum_key_value_request *req )
@@ -268,7 +306,7 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " alloc_fd=%d,", req->alloc_fd );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_string( req );
 }
 
 static void dump_wait_process_request( const struct wait_process_request *req )
@@ -322,7 +360,7 @@ static void dump_init_process_reply( const struct init_process_request *req )
     fprintf( stderr, " hstderr=%d,", req->hstderr );
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_string( req );
 }
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )
@@ -475,7 +513,7 @@ static void dump_get_apc_reply( const struct get_apc_request *req )
     fprintf( stderr, " func=%p,", req->func );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " args=" );
-    dump_varargs_ptrs( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_ptrs( req );
 }
 
 static void dump_close_handle_request( const struct close_handle_request *req )
@@ -532,7 +570,7 @@ static void dump_select_request( const struct select_request *req )
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " timeout=%d,", req->timeout );
     fprintf( stderr, " handles=" );
-    dump_varargs_ints( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_ints( req );
 }
 
 static void dump_select_reply( const struct select_request *req )
@@ -546,7 +584,7 @@ static void dump_create_event_request( const struct create_event_request *req )
     fprintf( stderr, " initial_state=%d,", req->initial_state );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_create_event_reply( const struct create_event_request *req )
@@ -565,7 +603,7 @@ static void dump_open_event_request( const struct open_event_request *req )
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_open_event_reply( const struct open_event_request *req )
@@ -578,7 +616,7 @@ static void dump_create_mutex_request( const struct create_mutex_request *req )
     fprintf( stderr, " owned=%d,", req->owned );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_create_mutex_reply( const struct create_mutex_request *req )
@@ -596,7 +634,7 @@ static void dump_open_mutex_request( const struct open_mutex_request *req )
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_open_mutex_reply( const struct open_mutex_request *req )
@@ -610,7 +648,7 @@ static void dump_create_semaphore_request( const struct create_semaphore_request
     fprintf( stderr, " max=%08x,", req->max );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_create_semaphore_reply( const struct create_semaphore_request *req )
@@ -634,7 +672,7 @@ static void dump_open_semaphore_request( const struct open_semaphore_request *re
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_open_semaphore_reply( const struct open_semaphore_request *req )
@@ -650,7 +688,7 @@ static void dump_create_file_request( const struct create_file_request *req )
     fprintf( stderr, " create=%d,", req->create );
     fprintf( stderr, " attrs=%08x,", req->attrs );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_string( req );
 }
 
 static void dump_create_file_reply( const struct create_file_request *req )
@@ -804,7 +842,7 @@ static void dump_get_socket_event_reply( const struct get_socket_event_request *
     fprintf( stderr, " pmask=%08x,", req->pmask );
     fprintf( stderr, " state=%08x,", req->state );
     fprintf( stderr, " errors=" );
-    dump_varargs_ints( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_ints( req );
 }
 
 static void dump_enable_socket_event_request( const struct enable_socket_event_request *req )
@@ -873,7 +911,7 @@ static void dump_set_console_info_request( const struct set_console_info_request
     fprintf( stderr, " cursor_size=%d,", req->cursor_size );
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
     fprintf( stderr, " title=" );
-    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_string( req );
 }
 
 static void dump_get_console_info_request( const struct get_console_info_request *req )
@@ -887,14 +925,14 @@ static void dump_get_console_info_reply( const struct get_console_info_request *
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
     fprintf( stderr, " pid=%d,", req->pid );
     fprintf( stderr, " title=" );
-    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_string( req );
 }
 
 static void dump_write_console_input_request( const struct write_console_input_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " rec=" );
-    dump_varargs_input_records( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_input_records( req );
 }
 
 static void dump_write_console_input_reply( const struct write_console_input_request *req )
@@ -912,7 +950,7 @@ static void dump_read_console_input_reply( const struct read_console_input_reque
 {
     fprintf( stderr, " read=%d,", req->read );
     fprintf( stderr, " rec=" );
-    dump_varargs_input_records( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_input_records( req );
 }
 
 static void dump_create_change_notification_request( const struct create_change_notification_request *req )
@@ -934,7 +972,7 @@ static void dump_create_mapping_request( const struct create_mapping_request *re
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " file_handle=%d,", req->file_handle );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_create_mapping_reply( const struct create_mapping_request *req )
@@ -947,7 +985,7 @@ static void dump_open_mapping_request( const struct open_mapping_request *req )
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_open_mapping_reply( const struct open_mapping_request *req )
@@ -1046,21 +1084,21 @@ static void dump_wait_debug_event_reply( const struct wait_debug_event_request *
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " tid=%p,", req->tid );
     fprintf( stderr, " event=" );
-    dump_varargs_debug_event( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_debug_event( req );
 }
 
 static void dump_exception_event_request( const struct exception_event_request *req )
 {
     fprintf( stderr, " first=%d,", req->first );
     fprintf( stderr, " record=" );
-    dump_varargs_exc_event( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_exc_event( req );
 }
 
 static void dump_exception_event_reply( const struct exception_event_request *req )
 {
     fprintf( stderr, " status=%d,", req->status );
     fprintf( stderr, " context=" );
-    dump_varargs_context( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_context( req );
 }
 
 static void dump_output_debug_string_request( const struct output_debug_string_request *req )
@@ -1113,10 +1151,10 @@ static void dump_create_key_request( const struct create_key_request *req )
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " modif=%ld,", req->modif );
     fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
-    fprintf( stderr, "," );
+    cur_pos += dump_varargs_unicode_len_str( req );
+    fputc( ',', stderr );
     fprintf( stderr, " class=" );
-    dump_unicode_string( req, req->class );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_create_key_reply( const struct create_key_request *req )
@@ -1130,7 +1168,7 @@ static void dump_open_key_request( const struct open_key_request *req )
     fprintf( stderr, " parent=%d,", req->parent );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_open_key_reply( const struct open_key_request *req )
@@ -1139,13 +1177,6 @@ static void dump_open_key_reply( const struct open_key_request *req )
 }
 
 static void dump_delete_key_request( const struct delete_key_request *req )
-{
-    fprintf( stderr, " hkey=%d,", req->hkey );
-    fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
-}
-
-static void dump_close_key_request( const struct close_key_request *req )
 {
     fprintf( stderr, " hkey=%d", req->hkey );
 }
@@ -1193,12 +1224,11 @@ static void dump_set_key_value_request( const struct set_key_value_request *req 
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " total=%08x,", req->total );
     fprintf( stderr, " offset=%08x,", req->offset );
-    fprintf( stderr, " len=%08x,", req->len );
     fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
-    fprintf( stderr, "," );
+    cur_pos += dump_varargs_unicode_len_str( req );
+    fputc( ',', stderr );
     fprintf( stderr, " data=" );
-    dump_varargs_set_key_value_request( req );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_get_key_value_request( const struct get_key_value_request *req )
@@ -1206,7 +1236,7 @@ static void dump_get_key_value_request( const struct get_key_value_request *req 
     fprintf( stderr, " hkey=%d,", req->hkey );
     fprintf( stderr, " offset=%08x,", req->offset );
     fprintf( stderr, " name=" );
-    dump_unicode_string( req, req->name );
+    cur_pos += dump_varargs_unicode_len_str( req );
 }
 
 static void dump_get_key_value_reply( const struct get_key_value_request *req )
@@ -1214,7 +1244,7 @@ static void dump_get_key_value_reply( const struct get_key_value_request *req )
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " len=%d,", req->len );
     fprintf( stderr, " data=" );
-    dump_varargs_get_key_value_reply( req );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_enum_key_value_request( const struct enum_key_value_request *req )
@@ -1239,7 +1269,7 @@ static void dump_delete_key_value_request( const struct delete_key_value_request
 {
     fprintf( stderr, " hkey=%d,", req->hkey );
     fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_load_registry_request( const struct load_registry_request *req )
@@ -1275,7 +1305,7 @@ static void dump_create_timer_request( const struct create_timer_request *req )
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " manual=%d,", req->manual );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_create_timer_reply( const struct create_timer_request *req )
@@ -1288,7 +1318,7 @@ static void dump_open_timer_request( const struct open_timer_request *req )
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_open_timer_reply( const struct open_timer_request *req )
@@ -1320,7 +1350,7 @@ static void dump_get_thread_context_request( const struct get_thread_context_req
 static void dump_get_thread_context_reply( const struct get_thread_context_request *req )
 {
     fprintf( stderr, " context=" );
-    dump_varargs_context( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_context( req );
 }
 
 static void dump_set_thread_context_request( const struct set_thread_context_request *req )
@@ -1328,7 +1358,7 @@ static void dump_set_thread_context_request( const struct set_thread_context_req
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " context=" );
-    dump_varargs_context( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_context( req );
 }
 
 static void dump_get_selector_entry_request( const struct get_selector_entry_request *req )
@@ -1348,7 +1378,7 @@ static void dump_add_atom_request( const struct add_atom_request *req )
 {
     fprintf( stderr, " local=%d,", req->local );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_add_atom_reply( const struct add_atom_request *req )
@@ -1366,7 +1396,7 @@ static void dump_find_atom_request( const struct find_atom_request *req )
 {
     fprintf( stderr, " local=%d,", req->local );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_find_atom_reply( const struct find_atom_request *req )
@@ -1384,7 +1414,7 @@ static void dump_get_atom_name_reply( const struct get_atom_name_request *req )
 {
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( get_req_data(req), get_req_data_size(req) );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_init_atom_table_request( const struct init_atom_table_request *req )
@@ -1543,7 +1573,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_key_request,
     (dump_func)dump_open_key_request,
     (dump_func)dump_delete_key_request,
-    (dump_func)dump_close_key_request,
     (dump_func)dump_enum_key_request,
     (dump_func)dump_query_key_info_request,
     (dump_func)dump_set_key_value_request,
@@ -1655,7 +1684,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_create_key_reply,
     (dump_func)dump_open_key_reply,
-    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_enum_key_reply,
     (dump_func)dump_query_key_info_reply,
@@ -1769,7 +1797,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_key",
     "open_key",
     "delete_key",
-    "close_key",
     "enum_key",
     "query_key_info",
     "set_key_value",
@@ -1805,10 +1832,12 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
 
 void trace_request( enum request req )
 {
+    cur_pos = 0;
     current->last_req = req;
     if (req < REQ_NB_REQUESTS)
     {
         fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
+        cur_pos = 0;
         req_dumpers[req]( current->buffer );
     }
     else
@@ -1824,8 +1853,9 @@ void trace_reply( struct thread *thread )
     if (reply_dumpers[thread->last_req])
     {
         fprintf( stderr, " {" );
+        cur_pos = 0;
         reply_dumpers[thread->last_req]( thread->buffer );
-	fprintf( stderr, " }" );
+        fprintf( stderr, " }" );
     }
     if (thread->pass_fd != -1) fprintf( stderr, " fd=%d\n", thread->pass_fd );
     else fprintf( stderr, "\n" );
