@@ -109,6 +109,16 @@ static const WORD main_key_vkey_azerty[MAIN_LEN] =
 /* If Wine fails to match your new table, use -debugmsg +key to find out why */
 /* Remember to also add your new table to the layout index table far below! */
 
+/*** German Logitech Desktop Pro keyboard layout */
+static const char main_key_DE_logitech[MAIN_LEN][4] =
+{
+ "^\xb0","1!","2\"","3\xa7","4$","5%","6&","7/{","8([","9)]","0=}","\xdf?\\","'`",
+ "qQ@","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xfc\xdc","+*~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","#'",
+ "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>|"
+};
+
 /*** United States keyboard layout (mostly contributed by Uwe Bonnes) */
 static const char main_key_US[MAIN_LEN][4] =
 {
@@ -500,6 +510,7 @@ static const struct {
  {"British keyboard layout", 28591, &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"German keyboard layout", 28591, &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"German keyboard layout without dead keys", 28591, &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout for logitech desktop pro", 28591, &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Swiss German keyboard layout", 28591, &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Swedish keyboard layout", 28591, &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Norwegian keyboard layout", 28591, &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
