@@ -1330,8 +1330,6 @@ static INT SCROLL_GetScrollPos(HWND hwnd, INT nBar)
 static BOOL SCROLL_GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
 {
     LPSCROLLBAR_INFO infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, FALSE);
-    if (!infoPtr)
-        return FALSE;
 
     if (lpMin) *lpMin = infoPtr ? infoPtr->minVal : 0;
     if (lpMax) *lpMax = infoPtr ? infoPtr->maxVal : 0;
@@ -1741,6 +1739,8 @@ done:
  *
  * RETURNS
  *  TRUE if SCROLLINFO is filled
+ *  ( if nBar is SB_CTL, GetScrollInfo returns TRUE even if nothing
+ *  is filled)
  */
 BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 {
@@ -1748,11 +1748,11 @@ BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 
     /* Refer SB_CTL requests to the window */
     if (nBar == SB_CTL)
+    {
         SendMessageW(hwnd, SBM_GETSCROLLINFO, (WPARAM)0, (LPARAM)info);
-    else
-        SCROLL_GetScrollInfo(hwnd, nBar, info);
-
-    return TRUE;
+        return TRUE;
+    }
+    return SCROLL_GetScrollInfo(hwnd, nBar, info);
 }
 
 

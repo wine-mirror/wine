@@ -2650,6 +2650,43 @@ void test_scrollvalidate( HWND parent)
     DestroyWindow( hwnd2);
 }
 
+/* couple of tests of return values of scrollbar functions
+ * called on a scrollbarless window */ 
+void test_scroll()
+{
+    BOOL ret;
+    INT min, max;
+    SCROLLINFO si;
+    HWND hwnd = CreateWindowExA(0, "Static", "Wine test window",
+        WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP,
+        100, 100, 200, 200, 0, 0, 0, NULL);
+    /* horizontal */
+    ret = GetScrollRange( hwnd, SB_HORZ, &min, &max);
+    ok( ret, "GetScrollRange returns FALSE\n");
+    ok( min == 0, "minimum scroll pos is %d (should be zero)\n", min);
+    ok( max == 0, "maximum scroll pos is %d (should be zero)\n", min);
+    si.cbSize = sizeof( si);
+    si.fMask = SIF_PAGE;
+    si.nPage = 0xdeadbeef;
+    ret = GetScrollInfo( hwnd, SB_HORZ, &si);
+    ok( !ret, "GetScrollInfo returns %d (should be zero)\n", ret);
+    ok( si.nPage == 0xdeadbeef, "unexpected value for nPage is %d\n", si.nPage);
+    /* vertical */
+    ret = GetScrollRange( hwnd, SB_VERT, &min, &max);
+    ok( ret, "GetScrollRange returns FALSE\n");
+    ok( min == 0, "minimum scroll pos is %d (should be zero)\n", min);
+    ok( max == 0, "maximum scroll pos is %d (should be zero)\n", min);
+    si.cbSize = sizeof( si);
+    si.fMask = SIF_PAGE;
+    si.nPage = 0xdeadbeef;
+    ret = GetScrollInfo( hwnd, SB_VERT, &si);
+    ok( !ret, "GetScrollInfo returns %d (should be zero)\n", ret);
+    ok( si.nPage == 0xdeadbeef, "unexpected value for nPage is %d\n", si.nPage);
+    /* clean up */
+    DestroyWindow( hwnd);
+}
+
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2709,6 +2746,7 @@ START_TEST(win)
     test_validatergn(hwndMain);
     test_nccalcscroll( hwndMain);
     test_scrollvalidate( hwndMain);
+    test_scroll();
 
     UnhookWindowsHookEx(hhook);
     
