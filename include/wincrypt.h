@@ -33,6 +33,25 @@ typedef void *HCRYPTMSG;
 
 /* CSP Structs */
 
+typedef struct _PROV_ENUMALGS {
+  ALG_ID aiAlgid;
+  DWORD  dwBitLen;
+  DWORD  dwNameLen;
+  CHAR   szName[20];
+} PROV_ENUMALGS;
+
+typedef struct _PROV_ENUMALGS_EX {
+  ALG_ID aiAlgid;
+  DWORD  dwDefaultLen;
+  DWORD  dwMinLen;
+  DWORD  dwMaxLen;
+  DWORD  dwProtocols;
+  DWORD  dwNameLen;
+  CHAR   szName[20];
+  DWORD  dwLongNameLen;
+  CHAR   szLongName[40];
+} PROV_ENUMALGS_EX;
+
 typedef struct _CRYPTOAPI_BLOB {
   DWORD    cbData;
   BYTE*    pbData;
@@ -350,12 +369,13 @@ typedef BOOL (WINAPI *PFN_CERT_ENUM_PHYSICAL_STORE)(const void *pvSystemStore,
 
 /* DES SIDs */
 #define ALG_SID_DES                     1
-#define ALG_SID_3DES			3
-#define ALG_SID_DESX			4
-#define ALG_SID_IDEA			5
-#define ALG_SID_CAST			6
-#define ALG_SID_SAFERSK64		7
-#define ALD_SID_SAFERSK128		8
+#define ALG_SID_3DES                    3
+#define ALG_SID_DESX                    4
+#define ALG_SID_IDEA                    5
+#define ALG_SID_CAST                    6
+#define ALG_SID_SAFERSK64               7
+#define ALG_SID_SAFERSK128              8
+#define ALG_SID_3DES_112                9
 /* RC2 SIDs */
 #define ALG_SID_RC4                     1
 #define ALG_SID_RC2                     2
@@ -366,23 +386,36 @@ typedef BOOL (WINAPI *PFN_CERT_ENUM_PHYSICAL_STORE)(const void *pvSystemStore,
 #define ALG_SID_MD5                     3
 #define ALG_SID_SHA                     4
 #define ALG_SID_MAC                     5
-#define ALG_SID_RIPEMD			6
-#define ALG_SID_RIPEMD160		7
-#define ALG_SID_SSL3SHAMD5		8
+#define ALG_SID_RIPEMD                  6
+#define ALG_SID_RIPEMD160               7
+#define ALG_SID_SSL3SHAMD5              8
+#define ALG_SID_HMAC                    9
 
 /* Algorithm Definitions */
-#define CALG_MD2        (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD2)
-#define CALG_MD4        (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD4)
-#define CALG_MD5        (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD5)
-#define CALG_SHA        (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_SHA)
-#define CALG_MAC        (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MAC)
-#define CALG_RSA_SIGN   (ALG_CLASS_SIGNATURE    | ALG_TYPE_RSA    | ALG_SID_RSA_ANY)
-#define CALG_DSS_SIGN   (ALG_CLASS_SIGNATURE    | ALG_TYPE_DSS    | ALG_SID_DSS_ANY)
-#define CALG_RSA_KEYX   (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_RSA    | ALG_SID_RSA_ANY)
-#define CALG_DES        (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_DES)
-#define CALG_RC2        (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_RC2)
-#define CALG_RC4        (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM | ALG_SID_RC4)
-#define CALG_SEAL       (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM | ALG_SID_SEAL)
+#define CALG_MD2         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD2)
+#define CALG_MD4         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD4)
+#define CALG_MD5         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD5)
+#define CALG_SHA         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_SHA)
+#define CALG_MAC         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MAC)
+#define CALG_SSL3_SHAMD5 (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_SSL3SHAMD5)
+#define CALG_HMAC        (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_HMAC)
+#define CALG_RSA_SIGN    (ALG_CLASS_SIGNATURE    | ALG_TYPE_RSA    | ALG_SID_RSA_ANY)
+#define CALG_DSS_SIGN    (ALG_CLASS_SIGNATURE    | ALG_TYPE_DSS    | ALG_SID_DSS_ANY)
+#define CALG_RSA_KEYX    (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_RSA    | ALG_SID_RSA_ANY)
+#define CALG_DES         (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_DES)
+#define CALG_RC2         (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_RC2)
+#define CALG_3DES        (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_3DES)
+#define CALG_3DES_112    (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_3DES_112)
+#define CALG_RC4         (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM | ALG_SID_RC4)
+#define CALG_SEAL        (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM | ALG_SID_SEAL)
+
+/* Protocol Flags */
+#define CRYPT_FLAG_PCT1    0x0001
+#define CRYPT_FLAG_SSL2    0x0002
+#define CRYPT_FLAG_SSL3    0x0004
+#define CRYPT_FLAG_TLS1    0x0008
+#define CRYPT_FLAG_IPSEC   0x0010
+#define CRYPT_FLAG_SIGNING 0x0020
 
 /* Provider names */
 #define MS_DEF_PROV_A                            "Microsoft Base Cryptographic Provider v1.0"
