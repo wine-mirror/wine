@@ -516,13 +516,13 @@ static const char main_key_PL[MAIN_LEN][4] =
  "<>|"
 };
 
-/*** Slovenian keyboard layout by Rok Mandeljc <rok.mandeljc@gimb.org> ***/
+/*** Slovenian keyboard layout (setxkbmap si) ***/
 static const char main_key_SI[MAIN_LEN][4] =
 {
- "¸¨","1!","2\"·","3#^","4$¢","5%°","6&²","7/`","8(ÿ","9)´","0=½","'?¨","+*¸",
- "qQ\\","wW|","eE","rR","tT","zZ","uU","iI","oO","pP","¹©÷","ðÐ×",
- "aA","sS","dD","fF[","gG]","hH","jJ","kK³","lL£","èÈ","æÆß","¾®¤",
- "yY","xX","cC","vV@","bB{","nN}","mM§",",;",".:","-_",
+ "¸¨","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","+*",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","¹©","ðÐ",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","èÈ","æÆ","¾®",
+ "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
 
