@@ -16194,6 +16194,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -16240,6 +16241,7 @@ for ac_func in \
 	sendmsg \
 	settimeofday \
 	sigaltstack \
+	sigprocmask \
 	snprintf \
 	spawnvp \
 	statfs \
@@ -17438,6 +17440,71 @@ _ACEOF
 
 fi
 
+echo "$as_me:$LINENO: checking for sigset_t" >&5
+echo $ECHO_N "checking for sigset_t... $ECHO_C" >&6
+if test "${ac_cv_type_sigset_t+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+if ((sigset_t *) 0)
+  return 0;
+if (sizeof (sigset_t))
+  return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_type_sigset_t=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_type_sigset_t=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_type_sigset_t" >&5
+echo "${ECHO_T}$ac_cv_type_sigset_t" >&6
+if test $ac_cv_type_sigset_t = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SIGSET_T 1
+_ACEOF
+
+
+fi
+
 
 echo "$as_me:$LINENO: checking whether linux/input.h is for real" >&5
 echo $ECHO_N "checking whether linux/input.h is for real... $ECHO_C" >&6
@@ -17506,6 +17573,68 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
     fi
+
+echo "$as_me:$LINENO: checking for sigaddset" >&5
+echo $ECHO_N "checking for sigaddset... $ECHO_C" >&6
+if test "${wine_cv_have_sigaddset+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+int
+main ()
+{
+sigset_t set; sigaddset(&set,SIGTERM);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  wine_cv_have_sigaddset=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+wine_cv_have_sigaddset=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $wine_cv_have_sigaddset" >&5
+echo "${ECHO_T}$wine_cv_have_sigaddset" >&6
+if test "$wine_cv_have_sigaddset" = "yes"
+then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGADDSET 1
+_ACEOF
+
+fi
 
 
 echo "$as_me:$LINENO: checking whether we can use re-entrant gethostbyname_r Linux style" >&5

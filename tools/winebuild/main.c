@@ -421,7 +421,9 @@ int main(int argc, char **argv)
 {
     DLLSPEC *spec = alloc_dll_spec();
 
+#ifdef SIGHUP
     signal( SIGHUP, exit_on_signal );
+#endif
     signal( SIGTERM, exit_on_signal );
     signal( SIGINT, exit_on_signal );
 

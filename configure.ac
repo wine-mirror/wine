@@ -1158,6 +1158,7 @@ AC_CHECK_FUNCS(\
 	sendmsg \
 	settimeofday \
 	sigaltstack \
+	sigprocmask \
 	snprintf \
 	spawnvp \
 	statfs \
@@ -1244,6 +1245,7 @@ dnl **** Check for types ****
 AC_C_CONST
 AC_C_INLINE
 AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t, long long, fsblkcnt_t, fsfilcnt_t])
+AC_CHECK_TYPES([sigset_t],,,[#include <signal.h>])
 
 AC_CACHE_CHECK([whether linux/input.h is for real],
 	wine_cv_linux_input_h,
@@ -1264,6 +1266,14 @@ AC_CACHE_CHECK([whether linux/input.h is for real],
         AC_DEFINE(HAVE_CORRECT_LINUXINPUT_H, 1,
                   [Define if we have linux/input.h AND it contains the INPUT event API])
     fi
+
+AC_CACHE_CHECK([for sigaddset],wine_cv_have_sigaddset,
+               AC_TRY_LINK([#include <signal.h>],[sigset_t set; sigaddset(&set,SIGTERM);],
+                           wine_cv_have_sigaddset=yes,wine_cv_have_sigaddset=no))
+if test "$wine_cv_have_sigaddset" = "yes"
+then
+  AC_DEFINE(HAVE_SIGADDSET, 1, [Define if sigaddset is supported])
+fi
 
 
 AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
