@@ -18,7 +18,6 @@
  * License along with this library; if not, write to the Free Software
  *
  */
-#include <windows.h>
 #include <unistd.h>
 #include <errno.h>
 
