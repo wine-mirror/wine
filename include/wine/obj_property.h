@@ -460,7 +460,7 @@ ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 #define ISpecifyPropertyPages_AddRef(p)             ICOM_CALL (AddRef,p)
 #define ISpecifyPropertyPages_Release(p)            ICOM_CALL (Release,p)
 /*** ISpecifyPropertyPages methods ***/
-#define ISpecifyPropertyPages_GetPages(p,a)         ICOM_CALL3(GetPages,p,a)
+#define ISpecifyPropertyPages_GetPages(p,a)         ICOM_CALL1(GetPages,p,a)
 				  
 
 /*****************************************************************************
