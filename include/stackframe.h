@@ -68,49 +68,26 @@ typedef struct _STACK16FRAME
 
 #include "poppack.h"
 
-#define THREAD_STACK16(teb)  ((STACK16FRAME*)MapSL((teb)->cur_stack))
-#define CURRENT_STACK16      (THREAD_STACK16(NtCurrentTeb()))
+#define CURRENT_STACK16      ((STACK16FRAME*)MapSL(NtCurrentTeb()->cur_stack))
 #define CURRENT_DS           (CURRENT_STACK16->ds)
-
-/* varargs lists on the 16-bit stack */
-#define VA_START16(list) ((list) = (VA_LIST16)(CURRENT_STACK16 + 1))
-#define VA_END16(list) ((void)0)
-
 
 /* Push bytes on the 16-bit stack of a thread;
  * return a segptr to the first pushed byte
  */
 static inline SEGPTR WINE_UNUSED stack16_push( int size )
 {
-    TEB *teb = NtCurrentTeb();
-    STACK16FRAME *frame = THREAD_STACK16(teb);
+    STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame - size, frame, sizeof(*frame) );
-    teb->cur_stack -= size;
-    return (SEGPTR)(teb->cur_stack + sizeof(*frame));
+    NtCurrentTeb()->cur_stack -= size;
+    return (SEGPTR)(NtCurrentTeb()->cur_stack + sizeof(*frame));
 }
 
 /* Pop bytes from the 16-bit stack of a thread */
 static inline void WINE_UNUSED stack16_pop( int size )
 {
-    TEB *teb = NtCurrentTeb();
-    STACK16FRAME *frame = THREAD_STACK16(teb);
+    STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame + size, frame, sizeof(*frame) );
-    teb->cur_stack += size;
-}
-
-/* Push a DWORD on the 32-bit stack */
-static inline void WINE_UNUSED stack32_push( CONTEXT86 *context, DWORD val )
-{
-    context->Esp -= sizeof(DWORD);
-    *(DWORD *)context->Esp = val;
-}
-
-/* Pop a DWORD from the 32-bit stack */
-static inline DWORD WINE_UNUSED stack32_pop( CONTEXT86 *context )
-{
-    DWORD ret = *(DWORD *)context->Esp;
-    context->Esp += sizeof(DWORD);
-    return ret;
+    NtCurrentTeb()->cur_stack += size;
 }
 
 #endif /* __WINE_STACKFRAME_H */

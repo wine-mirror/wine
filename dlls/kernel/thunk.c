@@ -53,6 +53,21 @@ extern void __wine_call_from_16_thunk();
 static void __wine_call_from_16_thunk() { }
 #endif
 
+/* Push a DWORD on the 32-bit stack */
+static inline void stack32_push( CONTEXT86 *context, DWORD val )
+{
+    context->Esp -= sizeof(DWORD);
+    *(DWORD *)context->Esp = val;
+}
+
+/* Pop a DWORD from the 32-bit stack */
+static inline DWORD stack32_pop( CONTEXT86 *context )
+{
+    DWORD ret = *(DWORD *)context->Esp;
+    context->Esp += sizeof(DWORD);
+    return ret;
+}
+
 /***********************************************************************
  *                                                                     *
  *                 Win95 internal thunks                               *
@@ -2079,16 +2094,15 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
 {
     STACK16FRAME *pFrame;
     STACK32FRAME *frame32;
-    TEB *teb = NtCurrentTeb();
 
     SET_AX( context, retval );
 
     /* Find the frame32 corresponding to the frame16 we are jumping to */
-    pFrame = THREAD_STACK16(teb);
+    pFrame = CURRENT_STACK16;
     frame32 = pFrame->frame32;
     while (frame32 && frame32->frame16)
     {
-        if (OFFSETOF(frame32->frame16) < OFFSETOF(teb->cur_stack))
+        if (OFFSETOF(frame32->frame16) < OFFSETOF(NtCurrentTeb()->cur_stack))
             break;  /* Something strange is going on */
         if (OFFSETOF(frame32->frame16) > lpbuf[2])
         {

@@ -564,7 +564,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
 
     /* Initialize the INSTANCEDATA structure */
     pinstance = MapSL( MAKESEGPTR(CURRENT_DS, 0) );
-    pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack ) + sizeof( STACK16FRAME );
+    pinstance->stackmin    = OFFSETOF( NtCurrentTeb()->cur_stack ) + sizeof( STACK16FRAME );
     pinstance->stackbottom = pinstance->stackmin; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = ( pinstance->stackmin > LOWORD(context->Ebx) ?
                                pinstance->stackmin - LOWORD(context->Ebx) : 0 ) + 150;
@@ -620,7 +620,7 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
 
     if (pTask->flags & TDBF_WIN32)
     {
-        FIXME("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
+        FIXME("called for Win32 thread (%04lx)!\n", NtCurrentTeb()->tid);
         return TRUE;
     }
 
@@ -659,7 +659,7 @@ void WINAPI PostEvent16( HTASK16 hTask )
 
     if (pTask->flags & TDBF_WIN32)
     {
-        FIXME("called for Win32 thread (%04x)!\n", pTask->teb->teb_sel );
+        FIXME("called for Win32 thread (%04lx)!\n", pTask->teb->tid );
         return;
     }
 
@@ -1057,22 +1057,20 @@ HQUEUE16 WINAPI GetFastQueue16( void )
  */
 void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
 {
-    TDB *pTask;
     STACK16FRAME *oldFrame, *newFrame;
     INSTANCEDATA *pData;
     UINT16 copySize;
 
-    if (!(pTask = TASK_GetCurrent())) return;
     if (!(pData = (INSTANCEDATA *)GlobalLock16( seg ))) return;
     TRACE("old=%04x:%04x new=%04x:%04x\n",
-          SELECTOROF( pTask->teb->cur_stack ),
-          OFFSETOF( pTask->teb->cur_stack ), seg, ptr );
+          SELECTOROF( NtCurrentTeb()->cur_stack ),
+          OFFSETOF( NtCurrentTeb()->cur_stack ), seg, ptr );
 
     /* Save the old stack */
 
-    oldFrame = THREAD_STACK16( pTask->teb );
+    oldFrame = CURRENT_STACK16;
     /* pop frame + args and push bp */
-    pData->old_ss_sp   = pTask->teb->cur_stack + sizeof(STACK16FRAME)
+    pData->old_ss_sp   = NtCurrentTeb()->cur_stack + sizeof(STACK16FRAME)
                            + 2 * sizeof(WORD);
     *(WORD *)MapSL(pData->old_ss_sp) = oldFrame->bp;
     pData->stacktop    = top;
@@ -1086,8 +1084,8 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
      */
     copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
     copySize += 3 * sizeof(WORD) + sizeof(STACK16FRAME);
-    pTask->teb->cur_stack = MAKESEGPTR( seg, ptr - copySize );
-    newFrame = THREAD_STACK16( pTask->teb );
+    NtCurrentTeb()->cur_stack = MAKESEGPTR( seg, ptr - copySize );
+    newFrame = CURRENT_STACK16;
 
     /* Copy the stack frame and the local variables to the new stack */
 
