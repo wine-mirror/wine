@@ -24,7 +24,7 @@ STRINGTABLE DISCARDABLE
 {
   IDS_TRUE  "Vero"
   IDS_FALSE "Falso"
-  IDS_YES   "Sý"
+  IDS_YES   "Si"
   IDS_NO    "No"
   IDS_ON    "On"
   IDS_OFF   "Off"
