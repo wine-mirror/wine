@@ -781,41 +781,62 @@ PMIB_TCPTABLE getTcpTable(void)
 #if HAVE_NETINET_TCP_H
             switch (state)
             {
+#ifdef TCP_ESTABLISHED
               case TCP_ESTABLISHED:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_ESTAB;
                 break;
+#endif
+#ifdef TCP_SYN_SEND
               case TCP_SYN_SENT:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_SYN_SENT;
                 break;
+#endif
+#ifdef TCP_SYN_RECV
               case TCP_SYN_RECV:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_SYN_RCVD;
                 break;
+#endif
+#ifdef TCP_FIN_WAIT1
               case TCP_FIN_WAIT1:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_FIN_WAIT1;
                 break;
+#endif
+#ifdef TCP_FIN_WAIT2
               case TCP_FIN_WAIT2:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_FIN_WAIT2;
                 break;
+#endif
+#ifdef TCP_TIME_WAIT
               case TCP_TIME_WAIT:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_TIME_WAIT;
                 break;
+#endif
+#ifdef TCP_CLOSE
               case TCP_CLOSE:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_CLOSED;
                 break;
+#endif
+#ifdef TCP_CLOSE_WAIT
               case TCP_CLOSE_WAIT:
                 ret->table[ret->dwNumEntries].dwState =
                  MIB_TCP_STATE_CLOSE_WAIT;
                 break;
+#endif
+#ifdef TCP_LAST_ACK
               case TCP_LAST_ACK:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_LAST_ACK;
                 break;
+#endif
+#ifdef TCP_LISTEN
               case TCP_LISTEN:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_LISTEN;
                 break;
+#endif
+#ifdef TCP_CLOSING
               case TCP_CLOSING:
                 ret->table[ret->dwNumEntries].dwState = MIB_TCP_STATE_CLOSING;
                 break;
-
+#endif
             }
 #endif
             ptr = endPtr;
