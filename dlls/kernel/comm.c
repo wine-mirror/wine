@@ -95,6 +95,7 @@
 #include "wine/server.h"
 #include "async.h"
 #include "heap.h"
+#include "wine/unicode.h"
 
 #include "wine/debug.h"
 
@@ -177,11 +178,13 @@ static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
  *  The following COMM_Parse* functions are used by the BuildCommDCB
  *  functions to help parse the various parts of the device control string.
  */
-static LPCSTR COMM_ParseStart(LPCSTR ptr)
+static LPCWSTR COMM_ParseStart(LPCWSTR ptr)
 {
+	const WCHAR comW[] = {'C','O','M',0};
+
 	/* The device control string may optionally start with "COMx" followed
 	   by an optional ':' and spaces. */
-	if(!strncasecmp(ptr, "COM", 3))
+	if(!strncmpiW(ptr, comW, 3))
 	{
 		ptr += 3;
 
@@ -212,21 +215,21 @@ static LPCSTR COMM_ParseStart(LPCSTR ptr)
 	return ptr;
 }
  
-static LPCSTR COMM_ParseNumber(LPCSTR ptr, LPDWORD lpnumber)
+static LPCWSTR COMM_ParseNumber(LPCWSTR ptr, LPDWORD lpnumber)
 {
 	if(*ptr < '0' || *ptr > '9') return NULL;
-	if(!sscanf(ptr, "%lu", lpnumber)) return NULL;
+	*lpnumber = strtoulW(ptr, NULL, 10);
 	while(*ptr >= '0' && *ptr <= '9') ptr++;
 	return ptr;
 }
 
-static LPCSTR COMM_ParseParity(LPCSTR ptr, LPBYTE lpparity)
+static LPCWSTR COMM_ParseParity(LPCWSTR ptr, LPBYTE lpparity)
 {
 	/* Contrary to what you might expect, Windows only sets the Parity
 	   member of DCB and not fParity even when parity is specified in the
 	   device control string */
 
-	switch(toupper(*ptr++))
+	switch(toupperW(*ptr++))
 	{
 	case 'E':
 		*lpparity = EVENPARITY;
@@ -250,7 +253,7 @@ static LPCSTR COMM_ParseParity(LPCSTR ptr, LPBYTE lpparity)
 	return ptr;
 }
 
-static LPCSTR COMM_ParseByteSize(LPCSTR ptr, LPBYTE lpbytesize)
+static LPCWSTR COMM_ParseByteSize(LPCWSTR ptr, LPBYTE lpbytesize)
 {
 	DWORD temp;
 
@@ -266,11 +269,12 @@ static LPCSTR COMM_ParseByteSize(LPCSTR ptr, LPBYTE lpbytesize)
 		return NULL;
 }
 
-static LPCSTR COMM_ParseStopBits(LPCSTR ptr, LPBYTE lpstopbits)
+static LPCWSTR COMM_ParseStopBits(LPCWSTR ptr, LPBYTE lpstopbits)
 {
 	DWORD temp;
+	const WCHAR stopbits15W[] = {'1','.','5',0};
 
-	if(!strncmp("1.5", ptr, 3))
+	if(!strncmpW(stopbits15W, ptr, 3))
 	{
 		ptr += 3;
 		*lpstopbits = ONE5STOPBITS;
@@ -291,14 +295,17 @@ static LPCSTR COMM_ParseStopBits(LPCSTR ptr, LPBYTE lpstopbits)
 	return ptr;
 }
 
-static LPCSTR COMM_ParseOnOff(LPCSTR ptr, LPDWORD lponoff)
+static LPCWSTR COMM_ParseOnOff(LPCWSTR ptr, LPDWORD lponoff)
 {
-	if(!strncasecmp("on", ptr, 2))
+	const WCHAR onW[] = {'o','n',0};
+	const WCHAR offW[] = {'o','f','f',0};
+
+	if(!strncmpiW(onW, ptr, 2))
 	{
 		ptr += 2;
 		*lponoff = 1;
 	}
-	else if(!strncasecmp("off", ptr, 3))
+	else if(!strncmpiW(offW, ptr, 3))
 	{
 		ptr += 3;
 		*lponoff = 0;
@@ -314,9 +321,9 @@ static LPCSTR COMM_ParseOnOff(LPCSTR ptr, LPDWORD lponoff)
  *
  *  Build a DCB using the old style settings string eg: "96,n,8,1"
  */
-static BOOL COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
+static BOOL COMM_BuildOldCommDCB(LPCWSTR device, LPDCB lpdcb)
 {
-	char last = 0;
+	WCHAR last = 0;
 
 	if(!(device = COMM_ParseNumber(device, &lpdcb->BaudRate)))
 		return FALSE;
@@ -366,7 +373,7 @@ static BOOL COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 	{
 		device++;
 		while(*device == ' ') device++;
-		if(*device) last = toupper(*device++);
+		if(*device) last = toupperW(*device++);
 		while(*device == ' ') device++;
 	}
 
@@ -414,40 +421,51 @@ static BOOL COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
  *  Build a DCB using the new style settings string.
  *   eg: "baud=9600 parity=n data=8 stop=1 xon=on to=on"
  */
-static BOOL COMM_BuildNewCommDCB(LPCSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lptimeouts)
+static BOOL COMM_BuildNewCommDCB(LPCWSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lptimeouts)
 {
 	DWORD temp;
 	BOOL baud = FALSE, stop = FALSE;
+	const WCHAR baudW[] = {'b','a','u','d','=',0};
+	const WCHAR parityW[] = {'p','a','r','i','t','y','=',0};
+	const WCHAR dataW[] = {'d','a','t','a','=',0};
+	const WCHAR stopW[] = {'s','t','o','p','=',0};
+	const WCHAR toW[] = {'t','o','=',0};
+	const WCHAR xonW[] = {'x','o','n','=',0};
+	const WCHAR odsrW[] = {'o','d','s','r','=',0};
+	const WCHAR octsW[] = {'o','c','t','s','=',0};
+	const WCHAR dtrW[] = {'d','t','r','=',0};
+	const WCHAR rtsW[] = {'r','t','s','=',0};
+	const WCHAR idsrW[] = {'i','d','s','r','=',0};
 
 	while(*device)
 	{
 		while(*device == ' ') device++;
 
-		if(!strncasecmp("baud=", device, 5))
+		if(!strncmpiW(baudW, device, 5))
 		{
 			baud = TRUE;
 			
 			if(!(device = COMM_ParseNumber(device + 5, &lpdcb->BaudRate)))
 				return FALSE;
 		}
-		else if(!strncasecmp("parity=", device, 7))
+		else if(!strncmpiW(parityW, device, 7))
 		{
 			if(!(device = COMM_ParseParity(device + 7, &lpdcb->Parity)))
 				return FALSE;
 		}
-		else if(!strncasecmp("data=", device, 5))
+		else if(!strncmpiW(dataW, device, 5))
 		{
 			if(!(device = COMM_ParseByteSize(device + 5, &lpdcb->ByteSize)))
 				return FALSE;
 		}
-		else if(!strncasecmp("stop=", device, 5))
+		else if(!strncmpiW(stopW, device, 5))
 		{
 			stop = TRUE;
 			
 			if(!(device = COMM_ParseStopBits(device + 5, &lpdcb->StopBits)))
 				return FALSE;
 		}
-		else if(!strncasecmp("to=", device, 3))
+		else if(!strncmpiW(toW, device, 3))
 		{
 			if(!(device = COMM_ParseOnOff(device + 3, &temp)))
 				return FALSE;
@@ -458,7 +476,7 @@ static BOOL COMM_BuildNewCommDCB(LPCSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpti
 			lptimeouts->WriteTotalTimeoutMultiplier = 0;
 			lptimeouts->WriteTotalTimeoutConstant = temp ? 60000 : 0;
 		}
-		else if(!strncasecmp("xon=", device, 4))
+		else if(!strncmpiW(xonW, device, 4))
 		{
 			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
 				return FALSE;
@@ -466,35 +484,35 @@ static BOOL COMM_BuildNewCommDCB(LPCSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpti
 			lpdcb->fOutX = temp;
 			lpdcb->fInX = temp;
 		}
-		else if(!strncasecmp("odsr=", device, 5))
+		else if(!strncmpiW(odsrW, device, 5))
 		{
 			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
 				return FALSE;
 
 			lpdcb->fOutxDsrFlow = temp;
 		}
-		else if(!strncasecmp("octs=", device, 5))
+		else if(!strncmpiW(octsW, device, 5))
 		{
 			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
 				return FALSE;
 
 			lpdcb->fOutxCtsFlow = temp;
 		}
-		else if(!strncasecmp("dtr=", device, 4))
+		else if(!strncmpiW(dtrW, device, 4))
 		{
 			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
 				return FALSE;
 
 			lpdcb->fDtrControl = temp;
 		}
-		else if(!strncasecmp("rts=", device, 4))
+		else if(!strncmpiW(rtsW, device, 4))
 		{
 			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
 				return FALSE;
 
 			lpdcb->fRtsControl = temp;
 		}
-		else if(!strncasecmp("idsr=", device, 5))
+		else if(!strncmpiW(idsrW, device, 5))
 		{
 			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
 				return FALSE;
@@ -543,7 +561,7 @@ BOOL WINAPI BuildCommDCBA(
 }
 
 /**************************************************************************
- *         BuildCommDCBAndTimeoutsA	(KERNEL32.@)
+ *         BuildCommDCBAndTimeoutsA		(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
  *  ascii device control string.  Taking timeout values from a timeouts
@@ -551,19 +569,48 @@ BOOL WINAPI BuildCommDCBA(
  *
  * RETURNS
  *
- *  True on success, false bad handles etc
+ *  True on success, false bad handles etc.
  */
 BOOL WINAPI BuildCommDCBAndTimeoutsA(
     LPCSTR         device,     /* [in] The ascii device control string. */
     LPDCB          lpdcb,      /* [out] The device control block to be updated. */
     LPCOMMTIMEOUTS lptimeouts) /* [in] The COMMTIMEOUTS structure to be updated. */
 {
+	BOOL ret = FALSE;
+	UNICODE_STRING deviceW;
+
+	TRACE("(%s,%p,%p)\n",device,lpdcb,lptimeouts);
+	if(device) RtlCreateUnicodeStringFromAsciiz(&deviceW,device);
+	else deviceW.Buffer = NULL;
+
+	if(deviceW.Buffer) ret = BuildCommDCBAndTimeoutsW(deviceW.Buffer,lpdcb,lptimeouts);
+
+	RtlFreeUnicodeString(&deviceW);
+	return ret;
+}
+
+/**************************************************************************
+ *         BuildCommDCBAndTimeoutsW	(KERNEL32.@)
+ *
+ *  Updates a device control block data structure with values from a
+ *  unicode device control string.  Taking timeout values from a timeouts
+ *  struct if desired by the control string.
+ *
+ * RETURNS
+ *
+ *  True on success, false bad handles etc
+ */
+BOOL WINAPI BuildCommDCBAndTimeoutsW(
+    LPCWSTR        devid,      /* [in] The unicode device control string. */
+    LPDCB          lpdcb,      /* [out] The device control block to be updated. */
+    LPCOMMTIMEOUTS lptimeouts) /* [in] The COMMTIMEOUTS structure to be updated. */
+{
 	DCB dcb;
 	COMMTIMEOUTS timeouts;
 	BOOL result;
-	LPCSTR ptr = device;
+	LPCWSTR ptr = devid;
 	
-	TRACE("(%s,%p,%p)\n",device,lpdcb,lptimeouts);
+	TRACE("(%s,%p,%p)\n",debugstr_w(devid),lpdcb,lptimeouts);
 
 	/* Set DCBlength. (Windows NT does not do this, but 9x does) */
 	lpdcb->DCBlength = sizeof(DCB);
@@ -578,7 +625,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 
 	if(ptr == NULL)
 		result = FALSE;
-	else if(strchr(ptr, ','))
+	else if(strchrW(ptr, ','))
 		result = COMM_BuildOldCommDCB(ptr, &dcb);
 	else
 		result = COMM_BuildNewCommDCB(ptr, &dcb, &timeouts);
@@ -591,39 +638,10 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 	}
 	else
 	{
-		WARN("Invalid device control string: %s\n", device);
+		WARN("Invalid device control string: %s\n", debugstr_w(devid));
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}	
-}
-
-/**************************************************************************
- *         BuildCommDCBAndTimeoutsW		(KERNEL32.@)
- *
- *  Updates a device control block data structure with values from an
- *  unicode device control string.  Taking timeout values from a timeouts
- *  struct if desired by the control string.
- *
- * RETURNS
- *
- *  True on success, false bad handles etc.
- */
-BOOL WINAPI BuildCommDCBAndTimeoutsW(
-    LPCWSTR        devid,      /* [in] The unicode device control string. */
-    LPDCB          lpdcb,      /* [out] The device control block to be updated. */
-    LPCOMMTIMEOUTS lptimeouts) /* [in] The COMMTIMEOUTS structure to be updated. */
-{
-	BOOL ret = FALSE;
-	LPSTR	devidA;
-
-	TRACE("(%p,%p,%p)\n",devid,lpdcb,lptimeouts);
-	devidA = HEAP_strdupWtoA( GetProcessHeap(), 0, devid );
-	if (devidA)
-	{
-	ret=BuildCommDCBAndTimeoutsA(devidA,lpdcb,lptimeouts);
-        HeapFree( GetProcessHeap(), 0, devidA );
-	}
-	return ret;
 }
 
 /**************************************************************************
