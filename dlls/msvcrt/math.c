@@ -110,7 +110,7 @@ static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 double __cdecl MSVCRT__CIacos(void)
 {
   FPU_DOUBLE(x);
-  if (!finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
+  if (x < -1.0 || x > 1.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
   return acos(x);
 }
 
@@ -121,7 +121,6 @@ double __cdecl MSVCRT__CIasin(void)
 {
   FPU_DOUBLE(x);
   if (x < -1.0 || x > 1.0 || !finite(x)) SET_THREAD_VAR(errno,MSVCRT_EDOM);
-
   return asin(x);
 }
 
@@ -466,7 +465,7 @@ double __cdecl MSVCRT_ldexp(double num, long exp)
  */
 double __cdecl MSVCRT__cabs(MSVCRT_complex num)
 {
-  return sqrt(num.real * num.imaginary + num.real * num.imaginary);
+  return sqrt(num.real * num.real + num.imaginary * num.imaginary);
 }
 
 /*********************************************************************

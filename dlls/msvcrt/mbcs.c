@@ -40,7 +40,7 @@ int *__cdecl MSVCRT___p___mb_cur_max(void)
 /*********************************************************************
  *		_mbsnextc(MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__mbsnextc(const char *str)
+unsigned int __cdecl MSVCRT__mbsnextc(const unsigned char *str)
 {
   if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*str))
     return *str << 8 | str[1];
@@ -127,13 +127,12 @@ int __cdecl MSVCRT__mbsnicmp(const char *str, const char *cmp, unsigned int len)
 /*********************************************************************
  *		_mbsinc(MSVCRT.@)
  */
-char *__cdecl MSVCRT__mbsinc(const char *str)
+char *__cdecl MSVCRT__mbsinc(const unsigned char *str)
 {
-  if(MSVCRT___mb_cur_max > 1 &&
-      MSVCRT_isleadbyte(*str))
-    return(char *)str + 2; /* MB char */
+  if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*str))
+    return (char *)str + 2; /* MB char */
 
-  return(char *)str + 1; /* ASCII CP or SB char */
+  return (char *)str + 1; /* ASCII CP or SB char */
 }
 
 /*********************************************************************
@@ -147,15 +146,15 @@ char *MSVCRT__mbsninc(const char *str, unsigned int num)
   {
     while(num--)
       str = MSVCRT__mbsinc(str);
-    return(char *)str;
+    return (char *)str;
   }
-  return(char *)str + num; /* ASCII CP */
+  return (char *)str + num; /* ASCII CP */
 }
 
 /*********************************************************************
  *		_mbslen(MSVCRT.206)
  */
-int __cdecl MSVCRT__mbslen(const char *str)
+int __cdecl MSVCRT__mbslen(const unsigned char *str)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -182,7 +181,7 @@ char *__cdecl MSVCRT__mbsrchr(const char *s,unsigned int x)
 /*********************************************************************
  *		mbtowc(MSVCRT.@)
  */
-int __cdecl MSVCRT_mbtowc(WCHAR *dst, const char *str, unsigned int n)
+int __cdecl MSVCRT_mbtowc(WCHAR *dst, const unsigned char *str, unsigned int n)
 {
   if(n <= 0 || !str)
     return 0;
@@ -199,7 +198,7 @@ int __cdecl MSVCRT_mbtowc(WCHAR *dst, const char *str, unsigned int n)
 /*********************************************************************
  *		_mbccpy(MSVCRT.@)
  */
-void __cdecl MSVCRT__mbccpy(char *dest, char *src)
+void __cdecl MSVCRT__mbccpy(char *dest, const unsigned char *src)
 {
   *dest++ = *src;
   if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*src))
@@ -224,7 +223,7 @@ unsigned int __cdecl MSVCRT__mbbtombc(unsigned int c)
 /*********************************************************************
  *		_mbclen(MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__mbclen(const char *str)
+unsigned int __cdecl MSVCRT__mbclen(const unsigned char *str)
 {
   return MSVCRT_isleadbyte(*str) ? 2 : 1;
 }
@@ -238,7 +237,7 @@ int __cdecl MSVCRT__ismbbkana(unsigned int c)
   if(MSVCRT_current_lc_all_cp == 932)
   {
     /* Japanese/Katakana, CP 932 */
-    return(c >= 0xa1 && c <= 0xdf);
+    return (c >= 0xa1 && c <= 0xdf);
   }
   return 0;
 }
@@ -252,7 +251,7 @@ int __cdecl MSVCRT__ismbchira(unsigned int c)
   if(MSVCRT_current_lc_all_cp == 932)
   {
     /* Japanese/Hiragana, CP 932 */
-    return(c >= 0x829f && c <= 0x82f1);
+    return (c >= 0x829f && c <= 0x82f1);
   }
   return 0;
 }
@@ -268,7 +267,7 @@ int __cdecl MSVCRT__ismbckata(unsigned int c)
     if(c < 256)
       return MSVCRT__ismbbkana(c);
     /* Japanese/Katakana, CP 932 */
-    return(c >= 0x8340 && c <= 0x8396 && c != 0x837f);
+    return (c >= 0x8340 && c <= 0x8396 && c != 0x837f);
   }
   return 0;
 }
@@ -295,7 +294,7 @@ int __cdecl MSVCRT__ismbbtrail(unsigned int c)
 /*********************************************************************
  *		_ismbslead(MSVCRT.@)
  */
-int __cdecl MSVCRT__ismbslead(const char *start, const char *str)
+int __cdecl MSVCRT__ismbslead(const unsigned char *start, const unsigned char *str)
 {
   /* Lead bytes can also be trail bytes if caller messed up
    * iterating through the string...
@@ -314,7 +313,7 @@ int __cdecl MSVCRT__ismbslead(const char *start, const char *str)
 /*********************************************************************
  *		_ismbstrail(MSVCRT.@)
  */
-int __cdecl MSVCRT__ismbstrail(const char *start, const char *str)
+int __cdecl MSVCRT__ismbstrail(const char *start, const unsigned char *str)
 {
   /* Must not be a lead, and must be preceeded by one */
   return !MSVCRT__ismbslead(start, str) && MSVCRT_isleadbyte(str[-1]);
@@ -326,9 +325,9 @@ int __cdecl MSVCRT__ismbstrail(const char *start, const char *str)
 char *__cdecl MSVCRT__mbsdec(const char *start, const char *cur)
 {
   if(MSVCRT___mb_cur_max > 1)
-    return(char *)(MSVCRT__ismbstrail(start,cur-1) ? cur - 2 : cur -1);
+    return (char *)(MSVCRT__ismbstrail(start,cur-1) ? cur - 2 : cur -1);
 
-  return(char *)cur - 1; /* ASCII CP or SB char */
+  return (char *)cur - 1; /* ASCII CP or SB char */
 }
 
 /*********************************************************************
@@ -383,7 +382,7 @@ char *__cdecl MSVCRT__mbsnset(char *str, unsigned int c, unsigned int len)
 /*********************************************************************
  *		_mbstrlen(MSVCRT.@)
  */
-int __cdecl MSVCRT__mbstrlen(const char *str)
+int __cdecl MSVCRT__mbstrlen(const unsigned char *str)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -437,7 +436,7 @@ char *__cdecl MSVCRT__mbschr(const char *str, unsigned int c)
     while((next = MSVCRT__mbsnextc(str)))
     {
       if(next == c)
-        return(char *)str;
+        return (char *)str;
       str += next > 255 ? 2 : 1;
     }
     return c ? NULL :(char *)str;
@@ -448,7 +447,7 @@ char *__cdecl MSVCRT__mbschr(const char *str, unsigned int c)
 /*********************************************************************
  *		_mbsnccnt(MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__mbsnccnt(const char *str, unsigned int len)
+unsigned int __cdecl MSVCRT__mbsnccnt(const unsigned char *str, unsigned int len)
 {
   int ret = 0;
 
@@ -473,7 +472,7 @@ unsigned int __cdecl MSVCRT__mbsnccnt(const char *str, unsigned int len)
 /*********************************************************************
  *		_mbsncat(MSVCRT.@)
  */
-char *__cdecl MSVCRT__mbsncat(char *dst, const char *src, unsigned int len)
+char *__cdecl MSVCRT__mbsncat(char *dst, const unsigned char *src, unsigned int len)
 {
   if(MSVCRT___mb_cur_max > 1)
   {

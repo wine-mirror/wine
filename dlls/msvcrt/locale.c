@@ -15,7 +15,7 @@ DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define MAX_LOCALE_LENGTH 256
 char MSVCRT_current_lc_all[MAX_LOCALE_LENGTH];
 LCID MSVCRT_current_lc_all_lcid;
-unsigned int MSVCRT_current_lc_all_cp;
+int MSVCRT_current_lc_all_cp;
 
 /* MT */
 extern CRITICAL_SECTION MSVCRT_locale_cs;
