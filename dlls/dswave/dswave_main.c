@@ -40,13 +40,13 @@ static HRESULT WINAPI WaveCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPV
 
 static ULONG WINAPI WaveCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI WaveCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI WaveCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {

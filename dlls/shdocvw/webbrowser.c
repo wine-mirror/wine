@@ -38,18 +38,22 @@ static HRESULT WINAPI WB_QueryInterface(IWebBrowser *iface, REFIID riid, LPVOID 
 static ULONG WINAPI WB_AddRef(IWebBrowser *iface)
 {
     IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WB_Release(IWebBrowser *iface)
 {
     IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 /* IDispatch methods */

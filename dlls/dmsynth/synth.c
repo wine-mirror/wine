@@ -39,18 +39,23 @@ HRESULT WINAPI IDirectMusicSynth8Impl_QueryInterface (LPDIRECTMUSICSYNTH8 iface,
 
 ULONG WINAPI IDirectMusicSynth8Impl_AddRef (LPDIRECTMUSICSYNTH8 iface) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+	ULONG refCount = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+	return refCount;
 }
 
 ULONG WINAPI IDirectMusicSynth8Impl_Release (LPDIRECTMUSICSYNTH8 iface) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0) {
+	ULONG refCount = InterlockedDecrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
-	return ref;
+	return refCount;
 }
 
 /* IDirectMusicSynth8Impl IDirectMusicSynth part: */

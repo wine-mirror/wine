@@ -336,29 +336,29 @@ static ULONG WINAPI
 TMProxyImpl_AddRef(LPRPCPROXYBUFFER iface)
 {
     ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("()\n");
+    TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
 
-    return InterlockedIncrement(&This->ref);
+    return refCount;
 }
 
 static ULONG WINAPI
 TMProxyImpl_Release(LPRPCPROXYBUFFER iface)
 {
-    ULONG refs;
     ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("()\n");
+    TRACE("(%p)->(ref before=%lu)\n",This, refCount + 1);
 
-    refs = InterlockedDecrement(&This->ref);
-    if (!refs)
+    if (!refCount)
     {
         DeleteCriticalSection(&This->crit);
         if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
         VirtualFree(This->asmstubs, 0, MEM_RELEASE);
         CoTaskMemFree(This);
     }
-    return refs;
+    return refCount;
 }
 
 static HRESULT WINAPI
@@ -1505,27 +1505,27 @@ static ULONG WINAPI
 TMStubImpl_AddRef(LPRPCSTUBBUFFER iface)
 {
     TMStubImpl *This = (TMStubImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
         
-    TRACE("(%p) before %lu\n", This, This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
 
-    return InterlockedIncrement(&This->ref);
+    return refCount;
 }
 
 static ULONG WINAPI
 TMStubImpl_Release(LPRPCSTUBBUFFER iface)
 {
-    ULONG refs;
     TMStubImpl *This = (TMStubImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) after %lu\n", This, This->ref-1);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
 
-    refs = InterlockedDecrement(&This->ref);
-    if (!refs)
+    if (!refCount)
     {
         IRpcStubBuffer_Disconnect(iface);
         CoTaskMemFree(This);
     }
-    return refs;
+    return refCount;
 }
 
 static HRESULT WINAPI

@@ -47,18 +47,22 @@ static HRESULT WINAPI WBCPC_QueryInterface(LPCONNECTIONPOINTCONTAINER iface,
 static ULONG WINAPI WBCPC_AddRef(LPCONNECTIONPOINTCONTAINER iface)
 {
     IConnectionPointContainerImpl *This = (IConnectionPointContainerImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBCPC_Release(LPCONNECTIONPOINTCONTAINER iface)
 {
     IConnectionPointContainerImpl *This = (IConnectionPointContainerImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 /* Get a list of connection points inside this container. */
@@ -131,18 +135,22 @@ static HRESULT WINAPI WBCP_QueryInterface(LPCONNECTIONPOINT iface,
 static ULONG WINAPI WBCP_AddRef(LPCONNECTIONPOINT iface)
 {
     IConnectionPointImpl *This = (IConnectionPointImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBCP_Release(LPCONNECTIONPOINT iface)
 {
     IConnectionPointImpl *This = (IConnectionPointImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 static HRESULT WINAPI WBCP_GetConnectionInterface(LPCONNECTIONPOINT iface, IID* pIId)

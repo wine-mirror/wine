@@ -55,9 +55,11 @@ static HRESULT WINAPI WBCF_QueryInterface(LPCLASSFACTORY iface,
 static ULONG WINAPI WBCF_AddRef(LPCLASSFACTORY iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 /************************************************************************
@@ -66,10 +68,12 @@ static ULONG WINAPI WBCF_AddRef(LPCLASSFACTORY iface)
 static ULONG WINAPI WBCF_Release(LPCLASSFACTORY iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 /************************************************************************

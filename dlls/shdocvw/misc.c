@@ -41,18 +41,22 @@ static HRESULT WINAPI WBQA_QueryInterface(LPQUICKACTIVATE iface,
 static ULONG WINAPI WBQA_AddRef(LPQUICKACTIVATE iface)
 {
     IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBQA_Release(LPQUICKACTIVATE iface)
 {
     IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 /* Alternative interface for quicker, easier activation of a control. */

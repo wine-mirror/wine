@@ -39,18 +39,22 @@ static HRESULT WINAPI WBPS_QueryInterface(LPPERSISTSTORAGE iface,
 static ULONG WINAPI WBPS_AddRef(LPPERSISTSTORAGE iface)
 {
     IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBPS_Release(LPPERSISTSTORAGE iface)
 {
     IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 static HRESULT WINAPI WBPS_GetClassID(LPPERSISTSTORAGE iface, CLSID *pClassID)
@@ -126,18 +130,22 @@ static HRESULT WINAPI WBPSI_QueryInterface(LPPERSISTSTREAMINIT iface,
 static ULONG WINAPI WBPSI_AddRef(LPPERSISTSTREAMINIT iface)
 {
     IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBPSI_Release(LPPERSISTSTREAMINIT iface)
 {
     IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 static HRESULT WINAPI WBPSI_GetClassID(LPPERSISTSTREAMINIT iface, CLSID *pClassID)

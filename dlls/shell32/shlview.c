@@ -1636,10 +1636,11 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid
 static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
+	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
 
-	return ++(This->ref);
+	return refCount;
 }
 /**********************************************************
 *  IShellView_Release
@@ -1647,10 +1648,11 @@ static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
+	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->()\n",This);
+	TRACE("(%p)->(count=%li)\n", This, refCount + 1);
 
-	if (!--(This->ref))
+	if (!refCount)
 	{
 	  TRACE(" destroying IShellView(%p)\n",This);
 
@@ -1666,9 +1668,8 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 	    SHFree(This->apidl);
 
 	  HeapFree(GetProcessHeap(),0,This);
-	  return 0;
 	}
-	return This->ref;
+	return refCount;
 }
 
 /**********************************************************

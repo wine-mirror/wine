@@ -44,18 +44,23 @@ HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFII
 
 ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface) {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface) {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
-    ULONG ref = --This->ref;
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-    if (ref == 0) {
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    if (!refCount) {
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return ref;
+    return refCount;
 }
 
 /* IDxDiagContainer Interface follow: */

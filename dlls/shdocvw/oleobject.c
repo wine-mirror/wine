@@ -144,9 +144,11 @@ static HRESULT WINAPI WBOOBJ_QueryInterface(LPOLEOBJECT iface,
 static ULONG WINAPI WBOOBJ_AddRef(LPOLEOBJECT iface)
 {
     IOleObjectImpl *This = (IOleObjectImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 /************************************************************************
@@ -155,10 +157,12 @@ static ULONG WINAPI WBOOBJ_AddRef(LPOLEOBJECT iface)
 static ULONG WINAPI WBOOBJ_Release(LPOLEOBJECT iface)
 {
     IOleObjectImpl *This = (IOleObjectImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 /************************************************************************
@@ -457,18 +461,22 @@ static HRESULT WINAPI WBOIPO_QueryInterface(LPOLEINPLACEOBJECT iface,
 static ULONG WINAPI WBOIPO_AddRef(LPOLEINPLACEOBJECT iface)
 {
     IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBOIPO_Release(LPOLEINPLACEOBJECT iface)
 {
     IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 static HRESULT WINAPI WBOIPO_GetWindow(LPOLEINPLACEOBJECT iface, HWND* phwnd)
@@ -559,18 +567,22 @@ static HRESULT WINAPI WBOC_QueryInterface(LPOLECONTROL iface,
 static ULONG WINAPI WBOC_AddRef(LPOLECONTROL iface)
 {
     IOleControlImpl *This = (IOleControlImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBOC_Release(LPOLECONTROL iface)
 {
     IOleControlImpl *This = (IOleControlImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 static HRESULT WINAPI WBOC_GetControlInfo(LPOLECONTROL iface, LPCONTROLINFO pCI)

@@ -54,18 +54,23 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKNOWN ifa
 
 ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+	ULONG refCount = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+	return refCount;
 }
 
 ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0) {
+	ULONG refCount = InterlockedDecrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
-	return ref;
+	return refCount;
 }
 
 IUnknownVtbl DirectMusicInstrument_Unknown_Vtbl = {

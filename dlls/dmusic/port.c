@@ -37,18 +37,23 @@ HRESULT WINAPI IDirectMusicPortImpl_QueryInterface (LPDIRECTMUSICPORT iface, REF
 
 ULONG WINAPI IDirectMusicPortImpl_AddRef (LPDIRECTMUSICPORT iface) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+	ULONG refCount = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+	return refCount;
 }
 
 ULONG WINAPI IDirectMusicPortImpl_Release (LPDIRECTMUSICPORT iface) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0) {
+	ULONG refCount = InterlockedDecrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
-	return ref;
+	return refCount;
 }
 
 /* IDirectMusicPortImpl IDirectMusicPort part: */

@@ -38,18 +38,23 @@ HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSI
 
 ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
 	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+	ULONG refCount = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+	return refCount;
 }
 
 ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
 	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0) {
+	ULONG refCount = InterlockedDecrement(&This->ref);
+
+	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
-	return ref;
+	return refCount;
 }
 
 /* IDirectMusicDownloadedInstrumentImpl IDirectMusicDownloadedInstrument part: */

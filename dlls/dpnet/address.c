@@ -54,18 +54,23 @@ HRESULT WINAPI IDirectPlay8AddressImpl_QueryInterface(PDIRECTPLAY8ADDRESS iface,
 
 ULONG WINAPI IDirectPlay8AddressImpl_AddRef(PDIRECTPLAY8ADDRESS iface) {
     IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 ULONG WINAPI IDirectPlay8AddressImpl_Release(PDIRECTPLAY8ADDRESS iface) {
     IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
-    ULONG ref = --This->ref;
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-    if (ref == 0) {
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    if (!refCount) {
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return ref;
+    return refCount;
 }
 
 /* IDirectPlay8Address Interface follow: */

@@ -47,18 +47,22 @@ static HRESULT WINAPI WBPCI_QueryInterface(LPPROVIDECLASSINFO iface,
 static ULONG WINAPI WBPCI_AddRef(LPPROVIDECLASSINFO iface)
 {
     IProvideClassInfoImpl *This = (IProvideClassInfoImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBPCI_Release(LPPROVIDECLASSINFO iface)
 {
     IProvideClassInfoImpl *This = (IProvideClassInfoImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 /* Return an ITypeInfo interface to retrieve type library info about
@@ -102,18 +106,22 @@ static HRESULT WINAPI WBPCI2_QueryInterface(LPPROVIDECLASSINFO2 iface,
 static ULONG WINAPI WBPCI2_AddRef(LPPROVIDECLASSINFO2 iface)
 {
     IProvideClassInfo2Impl *This = (IProvideClassInfo2Impl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
-    return ++(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI WBPCI2_Release(LPPROVIDECLASSINFO2 iface)
 {
     IProvideClassInfo2Impl *This = (IProvideClassInfo2Impl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
     /* static class, won't be freed */
-    TRACE("\n");
-    return --(This->ref);
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    return refCount;
 }
 
 /* Return an ITypeInfo interface to retrieve type library info about

@@ -383,7 +383,7 @@ lerr:
 static ULONG WINAPI IEnumDMO_fnAddRef(IEnumDMO * iface)
 {
     IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 
@@ -420,15 +420,14 @@ static HRESULT WINAPI IEnumDMO_fnQueryInterface(
 static ULONG WINAPI IEnumDMO_fnRelease(IEnumDMO * iface)
 {
     IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    if (!--(This->ref))
+    if (!refCount)
     {
         IEnumDMO_Destructor((IEnumDMO*)This);
         HeapFree(GetProcessHeap(),0,This);
-        return 0;
     }
-
-    return This->ref;
+    return refCount;
 }
 
 

@@ -54,18 +54,23 @@ HRESULT WINAPI IDirectPlay8ClientImpl_QueryInterface(PDIRECTPLAY8CLIENT iface, R
 
 ULONG WINAPI IDirectPlay8ClientImpl_AddRef(PDIRECTPLAY8CLIENT iface) {
     IDirectPlay8ClientImpl *This = (IDirectPlay8ClientImpl *)iface;
-    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+
+    return refCount;
 }
 
 ULONG WINAPI IDirectPlay8ClientImpl_Release(PDIRECTPLAY8CLIENT iface) {
     IDirectPlay8ClientImpl *This = (IDirectPlay8ClientImpl *)iface;
-    ULONG ref = --This->ref;
-    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-    if (ref == 0) {
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+
+    if (!refCount) {
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return ref;
+    return refCount;
 }
 
 /* IDirectPlay8Client Interface follow: */
