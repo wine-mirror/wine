@@ -338,7 +338,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
     if (lpszAcceptTypes)
     {
         while (lpszAcceptTypes[acceptTypesCount]) { acceptTypesCount++; } /* find out how many there are */
-        szAcceptTypes = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR *) * acceptTypesCount);
+        szAcceptTypes = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR*)*(acceptTypesCount+1));
         acceptTypesCount = 0;
         while (lpszAcceptTypes[acceptTypesCount])
         {
@@ -351,6 +351,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
                                 -1, szAcceptTypes[acceptTypesCount], len, NULL, NULL);
             acceptTypesCount++;
         }
+	szAcceptTypes[acceptTypesCount] = NULL;
     }
     else szAcceptTypes = 0;
 
@@ -2164,6 +2165,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
             lpsztmp = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  lphttpHdr->lpszValue, len+1);
             if (lpsztmp)
             {
+		lphttpHdr->lpszValue = lpsztmp;
 		/* FIXME: Increment lphttpHdr->wCount. Perhaps lpszValue should be an array */
                 if (ch > 0)
                 {
