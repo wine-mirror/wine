@@ -1238,29 +1238,31 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
 
     TRACE("Writing wavehdr %p.%lu[%lu]\n", lpWaveHdr, wwo->dwPartialOffset, lpWaveHdr->dwBufferLength);
 
-    written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
-    if ( written < 0)
-    {
-    	/* XRUN occurred. let's try to recover */
-        ALSA_XRUNRecovery(wwo, written);
+    if (toWrite > 0) {
 	written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
-    }
-    if (written <= 0)
-    {
-        /* still in error */
-        ERR("Error in writing wavehdr. Reason: %s\n", snd_strerror(written));
-        return written;
-    }
+	if ( written < 0) {
+	    /* XRUN occurred. let's try to recover */
+	    ALSA_XRUNRecovery(wwo, written);
+	    written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
+	}
+	if (written <= 0) {
+	    /* still in error */
+	    ERR("Error in writing wavehdr. Reason: %s\n", snd_strerror(written));
+	    return written;
+	}
+    } else
+	written = 0;
 
     wwo->dwPartialOffset += snd_pcm_frames_to_bytes(wwo->p_handle, written);
     if ( wwo->dwPartialOffset >= lpWaveHdr->dwBufferLength) {
 	/* this will be used to check if the given wave header has been fully played or not... */
-        wwo->dwPartialOffset = lpWaveHdr->dwBufferLength;
-        /* If we wrote all current wavehdr, skip to the next one */
-        wodPlayer_PlayPtrNext(wwo);
+	wwo->dwPartialOffset = lpWaveHdr->dwBufferLength;
+	/* If we wrote all current wavehdr, skip to the next one */
+	wodPlayer_PlayPtrNext(wwo);
     }
     *frames -= written;
     wwo->dwWrittenTotal += snd_pcm_frames_to_bytes(wwo->p_handle, written);
+    TRACE("dwWrittenTotal=%lu\n", wwo->dwWrittenTotal);
 
     return written;
 }
