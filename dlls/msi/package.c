@@ -708,111 +708,49 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     return ret;
 }
 
-UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf, DWORD* pchValueBuf) 
+static UINT MSI_GetPropertyRow(MSIPACKAGE *package, LPCWSTR szName, MSIRECORD **row)
 {
-    LPWSTR szwName = NULL, szwValueBuf = NULL;
-    UINT hr = ERROR_INSTALL_FAILURE;
+    MSIQUERY *view;
+    UINT rc, sz;
+    static const WCHAR select[]=
+    {'s','e','l','e','c','t',' ','V','a','l','u','e',' ','f','r','o','m',' '
+     ,'_','P','r','o','p','e','r','t','y',' ','w','h','e','r','e',' '
+     ,'_','P','r','o','p','e','r','t','y','=','`','%','s','`',0};
+    LPWSTR query;
 
-    if (0 == hInstall) {
-      return ERROR_INVALID_HANDLE;
-    }
-    if (NULL == szName) {
-      return ERROR_INVALID_PARAMETER;
-    }
-    if (NULL != szValueBuf && NULL == pchValueBuf) {
-      return ERROR_INVALID_PARAMETER;
-    }
+    if (!szName)
+        return ERROR_INVALID_PARAMETER;
 
-    TRACE("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
+    sz = sizeof select + strlenW(szName)*sizeof(WCHAR);
+    query = HeapAlloc(GetProcessHeap(), 0, sz);
+    sprintfW(query,select,szName);
 
-    if( szName )
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    HeapFree(GetProcessHeap(), 0, query);
+    if (rc == ERROR_SUCCESS)
     {
-        UINT len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
-        szwName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        if( !szwName )
-            goto end;
-        MultiByteToWideChar( CP_ACP, 0, szName, -1, szwName, len );
-    } else {
-      return ERROR_INVALID_PARAMETER;
-    }
-    if( szValueBuf )
-    {
-        szwValueBuf = HeapAlloc( GetProcessHeap(), 0, (*pchValueBuf) * sizeof(WCHAR) );
-        if( !szwValueBuf )	 
-            goto end;
+        rc = MSI_ViewExecute(view, 0);
+        if (rc == ERROR_SUCCESS)
+            rc = MSI_ViewFetch(view,row);
+
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
     }
 
-    if(  *pchValueBuf > 0 )
-    {
-        /* be sure to blank the string first */
-        szValueBuf[0]=0;      
-    }
-
-    hr = MsiGetPropertyW( hInstall, szwName, szwValueBuf, pchValueBuf );
-
-    if(  *pchValueBuf > 0 )
-    {
-        WideCharToMultiByte(CP_ACP, 0, szwValueBuf, -1, szValueBuf, *pchValueBuf, NULL, NULL);
-    }
-
-end:
-    if( szwName )
-        HeapFree( GetProcessHeap(), 0, szwName );
-    if( szwValueBuf )
-        HeapFree( GetProcessHeap(), 0, szwValueBuf );
-
-    return hr;
+    return rc;
 }
 
 UINT MSI_GetPropertyW(MSIPACKAGE *package, LPCWSTR szName, 
                            LPWSTR szValueBuf, DWORD* pchValueBuf)
 {
-    MSIQUERY *view;
     MSIRECORD *row;
     UINT rc;
-    WCHAR Query[1024]=
-    {'s','e','l','e','c','t',' ','V','a','l','u','e',' ','f','r','o','m',' '
-     ,'_','P','r','o','p','e','r','t','y',' ','w','h','e','r','e',' '
-     ,'_','P','r','o','p','e','r','t','y','=','`',0};
 
-    static const WCHAR szEnd[]={'`',0};
-
-    if (NULL == szName) {
-      return ERROR_INVALID_PARAMETER;
-    }
-
-    strcatW(Query,szName);
-    strcatW(Query,szEnd);
-    
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = MSI_GetPropertyRow(package, szName, &row);
     if (rc == ERROR_SUCCESS)
     {
-        DWORD sz;
-        WCHAR value[0x100];
-    
-        /* even on unsuccessful lookup native msi blanks this string */
-        if (*pchValueBuf > 0)
-            szValueBuf[0] = 0;
-            
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return rc;
-        }
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc == ERROR_SUCCESS)
-        {
-            sz=0x100;
-            rc = MSI_RecordGetStringW(row,1,value,&sz);
-            strncpyW(szValueBuf,value,min(sz+1,*pchValueBuf));
-            *pchValueBuf = sz+1;
-            msiobj_release(&row->hdr);
-        }
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
+        rc = MSI_RecordGetStringW(row,1,szValueBuf,pchValueBuf);
+        msiobj_release(&row->hdr);
     }
 
     if (rc == ERROR_SUCCESS)
@@ -827,6 +765,61 @@ UINT MSI_GetPropertyW(MSIPACKAGE *package, LPCWSTR szName,
     return rc;
 }
 
+UINT MSI_GetPropertyA(MSIPACKAGE *package, LPCSTR szName, 
+                           LPSTR szValueBuf, DWORD* pchValueBuf)
+{
+    MSIRECORD *row;
+    UINT rc, len;
+    LPWSTR szwName;
+
+    len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
+    szwName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (!szwName)
+        return ERROR_NOT_ENOUGH_MEMORY;
+    MultiByteToWideChar( CP_ACP, 0, szName, -1, szwName, len );
+
+    rc = MSI_GetPropertyRow(package, szwName, &row);
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_RecordGetStringA(row,1,szValueBuf,pchValueBuf);
+        msiobj_release(&row->hdr);
+    }
+
+    if (rc == ERROR_SUCCESS)
+        TRACE("returning %s for property %s\n", debugstr_a(szValueBuf),
+            debugstr_a(szName));
+    else
+    {
+        *pchValueBuf = 0;
+        TRACE("property not found\n");
+    }
+    HeapFree( GetProcessHeap(), 0, szwName );
+
+    return rc;
+}
+
+UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf, DWORD* pchValueBuf) 
+{
+    MSIPACKAGE *package;
+    UINT ret;
+
+    TRACE("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
+
+    if (0 == hInstall)
+        return ERROR_INVALID_HANDLE;
+    if (NULL == szName)
+        return ERROR_INVALID_PARAMETER;
+    if (NULL != szValueBuf && NULL == pchValueBuf)
+        return ERROR_INVALID_PARAMETER;
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+    ret = MSI_GetPropertyA(package, szName, szValueBuf, pchValueBuf );
+    msiobj_release( &package->hdr );
+    return ret;
+}
+
   
 UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName, 
                            LPWSTR szValueBuf, DWORD* pchValueBuf)
@@ -834,8 +827,15 @@ UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName,
     MSIPACKAGE *package;
     UINT ret;
 
+    if (0 == hInstall)
+        return ERROR_INVALID_HANDLE;
+    if (NULL == szName)
+        return ERROR_INVALID_PARAMETER;
+    if (NULL != szValueBuf && NULL == pchValueBuf)
+        return ERROR_INVALID_PARAMETER;
+
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
-    if( !package)
+    if (!package)
         return ERROR_INVALID_HANDLE;
     ret = MSI_GetPropertyW(package, szName, szValueBuf, pchValueBuf );
     msiobj_release( &package->hdr );

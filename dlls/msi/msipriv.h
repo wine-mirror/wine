@@ -278,6 +278,7 @@ extern UINT MSI_RecordSetInteger( MSIRECORD *, unsigned int, int );
 extern UINT MSI_RecordSetStringW( MSIRECORD *, unsigned int, LPCWSTR );
 extern BOOL MSI_RecordIsNull( MSIRECORD *, unsigned int );
 extern UINT MSI_RecordGetStringW( MSIRECORD * , unsigned int, LPWSTR, DWORD *);
+extern UINT MSI_RecordGetStringA( MSIRECORD *, unsigned int, LPSTR, DWORD *);
 extern int MSI_RecordGetInteger( MSIRECORD *, unsigned int );
 extern UINT MSI_RecordReadStream( MSIRECORD *, unsigned int, char *, DWORD *);
 extern unsigned int MSI_RecordGetFieldCount( MSIRECORD *rec );
