@@ -279,7 +279,8 @@ extern HPEN WIN16DRV_SelectPen( PHYSDEV dev, HPEN handle );
 extern BOOL WIN16DRV_PatBlt( PHYSDEV dev, INT left, INT top,
                                INT width, INT height, DWORD rop );
 extern BOOL WIN16DRV_Ellipse(PHYSDEV dev, INT left, INT top, INT right, INT bottom);
-extern BOOL WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, DEVICEFONTENUMPROC proc, LPARAM lp );
+extern BOOL WIN16DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
+                                      DEVICEFONTENUMPROC proc, LPARAM lp );
 
 extern INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd,
 				  LPDEVMODEA lpdmOutput,

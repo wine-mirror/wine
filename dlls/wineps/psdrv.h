@@ -401,7 +401,7 @@ extern BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			     INT bottom );
 extern INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev );
 extern INT PSDRV_EndPage( PSDRV_PDEVICE *physDev );
-extern BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
+extern BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
 				   DEVICEFONTENUMPROC proc, LPARAM lp );
 extern BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR str, UINT count,

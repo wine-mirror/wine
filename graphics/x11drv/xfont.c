@@ -3313,23 +3313,17 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
  *
  *           X11DRV_EnumDeviceFonts
  */
-BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
+BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 			     DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
     fontResource*	pfr = fontList;
-    BOOL	  	b, bRet = 0, using_gdi = 0;
+    BOOL	  	b, bRet = 0;
     LOGFONT16           lf16;
-    DC *dc;
-
-    dc = DC_GetDCPtr(hdc);
-    if(!dc) return FALSE;
-    if(dc->gdiFont) using_gdi = TRUE;
-    GDI_ReleaseObj(hdc);
 
     /* don't enumerate x11 fonts if we're using client side fonts */
-    if(using_gdi) return FALSE;
+    if (physDev->dc->gdiFont) return FALSE;
 
     FONT_LogFontWTo16(plf, &lf16);
 

@@ -108,7 +108,7 @@ extern unsigned int X11DRV_server_startticks;
 extern BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                              INT width, INT height, X11DRV_PDEVICE *physDevSrc,
                              INT xSrc, INT ySrc, DWORD rop );
-extern BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
+extern BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 				    DEVICEFONTENUMPROC dfeproc, LPARAM lp );
 extern BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
                                    UINT lastChar, LPINT buffer );

@@ -194,21 +194,15 @@ BOOL WIN16DRV_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar,
  *           WIN16DRV_EnumDeviceFonts
  */
 
-BOOL	WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
-				  DEVICEFONTENUMPROC proc, LPARAM lp )
+BOOL WIN16DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
+                               DEVICEFONTENUMPROC proc, LPARAM lp )
 {
-    WIN16DRV_PDEVICE *physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
     WORD wRet;
     WEPFC wepfc;
-    DC *dc;
     char *FaceNameA = NULL;
    /* EnumDFontCallback is GDI.158 */
     FARPROC16 pfnCallback = GetProcAddress16( GetModuleHandle16("GDI"), (LPCSTR)158 );
-
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    /* FIXME!! */
-    GDI_ReleaseObj( hdc );
 
     wepfc.proc = proc;
     wepfc.lp = lp;

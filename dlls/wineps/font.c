@@ -386,8 +386,8 @@ BOOL PSDRV_SetFont( PSDRV_PDEVICE *physDev )
 /***********************************************************************
  *           PSDRV_GetFontMetric
  */
-static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
-    	NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
+static UINT PSDRV_GetFontMetric( PSDRV_PDEVICE *physDev, const AFM *afm,
+                                 NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
 {
     /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
 
@@ -417,7 +417,7 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
 /***********************************************************************
  *           PSDRV_EnumDeviceFonts
  */
-BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
+BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
 			    DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     ENUMLOGFONTEXW	lf;
@@ -425,14 +425,7 @@ BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
     BOOL	  	b, bRet = 0;
     AFMLISTENTRY	*afmle;
     FONTFAMILY		*family;
-    PSDRV_PDEVICE	*physDev;
     char                FaceName[LF_FACESIZE];
-    DC *dc = DC_GetDCPtr( hdc );
-    if (!dc) return FALSE;
-
-    physDev = (PSDRV_PDEVICE *)dc->physDev;
-    /* FIXME!! should reevaluate dc->physDev after every callback */
-    GDI_ReleaseObj( hdc );
 
     if( plf->lfFaceName[0] ) {
         WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1,
@@ -446,9 +439,7 @@ BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
 	if(family) {
 	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
-		if( (b = (*proc)( &lf, &tm, 
-			PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf ),
-				  lp )) )
+		if( (b = proc( &lf, &tm, PSDRV_GetFontMetric(physDev, afmle->afm, &tm, &lf), lp )) )
 		     bRet = b;
 		else break;
 	    }
@@ -459,9 +450,7 @@ BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
         for(family = physDev->pi->Fonts; family; family = family->next) {
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
-	    if( (b = (*proc)( &lf, &tm, 
-		   PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf ), 
-			      lp )) )
+	    if( (b = proc( &lf, &tm, PSDRV_GetFontMetric(physDev, afmle->afm, &tm, &lf), lp )) )
 	        bRet = b;
 	    else break;
 	}

@@ -162,7 +162,7 @@ typedef struct tagDC_FUNCS
     INT      (*pEndDoc)(PHYSDEV);
     INT      (*pEndPage)(PHYSDEV);
     BOOL     (*pEndPath)(PHYSDEV);
-    BOOL     (*pEnumDeviceFonts)(HDC,LPLOGFONTW,DEVICEFONTENUMPROC,LPARAM);
+    BOOL     (*pEnumDeviceFonts)(PHYSDEV,LPLOGFONTW,DEVICEFONTENUMPROC,LPARAM);
     INT      (*pExcludeClipRect)(PHYSDEV,INT,INT,INT,INT);
     INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
     INT      (*pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);

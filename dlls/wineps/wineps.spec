@@ -22,7 +22,7 @@ debug_channels (psdrv)
 @ cdecl Ellipse(ptr long long long long) PSDRV_Ellipse
 @ cdecl EndDoc(ptr) PSDRV_EndDoc
 @ cdecl EndPage(ptr) PSDRV_EndPage
-@ cdecl EnumDeviceFonts(long ptr ptr long) PSDRV_EnumDeviceFonts
+@ cdecl EnumDeviceFonts(ptr ptr ptr long) PSDRV_EnumDeviceFonts
 @ cdecl ExtDeviceMode(ptr long ptr ptr ptr ptr ptr long) PSDRV_ExtDeviceMode
 @ cdecl ExtEscape(ptr long long ptr long ptr) PSDRV_ExtEscape
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) PSDRV_ExtTextOut
