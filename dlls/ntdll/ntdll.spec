@@ -915,7 +915,7 @@ type	win32
 @ stub pow
 @ stub qsort
 @ stub sin
-@ varargs sprintf() wsprintfA
+@ varargs sprintf(str str) wsprintfA
 @ stub sqrt
 @ varargs sscanf() sscanf
 @ cdecl strcat(str str) strcat
@@ -931,7 +931,7 @@ type	win32
 @ cdecl strrchr(str long) strrchr
 @ cdecl strspn(str str) strspn
 @ cdecl strstr(str str) strstr
-@ varargs swprintf() wsprintfW
+@ varargs swprintf(wstr wstr) wsprintfW
 @ stub tan
 @ cdecl tolower(long) tolower
 @ cdecl toupper(long) toupper

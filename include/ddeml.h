@@ -339,8 +339,8 @@ BOOL16    WINAPI DdeUnaccessData16(HDDEDATA);
 BOOL    WINAPI DdeUnaccessData(HDDEDATA);
 BOOL16    WINAPI DdeEnableCallback16(DWORD,HCONV,UINT16);
 BOOL    WINAPI DdeEnableCallback(DWORD,HCONV,UINT);
-int       WINAPI DdeCmpStringHandles16(HSZ,HSZ);
-int       WINAPI DdeCmpStringHandles(HSZ,HSZ);
+INT16     WINAPI DdeCmpStringHandles16(HSZ,HSZ);
+INT       WINAPI DdeCmpStringHandles(HSZ,HSZ);
 
 HDDEDATA  WINAPI DdeNameService16(DWORD,HSZ,HSZ,UINT16);
 HDDEDATA  WINAPI DdeNameService(DWORD,HSZ,HSZ,UINT);

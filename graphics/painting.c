@@ -402,7 +402,7 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
  *    Success: Pixel format index closest to given format
  *    Failure: 0
  */
-INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
+INT WINAPI ChoosePixelFormat( HDC hdc, const LPPIXELFORMATDESCRIPTOR ppfd )
 {
     FIXME("(%d,%p): stub\n",hdc,ppfd);
     return 1;
@@ -420,8 +420,8 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
  *
  * RETURNS STD
  */
-BOOL WINAPI SetPixelFormat( HDC hdc, int iPixelFormat, 
-                              const PIXELFORMATDESCRIPTOR* ppfd)
+BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
+                            const PIXELFORMATDESCRIPTOR *ppfd)
 {
     FIXME("(%d,%d,%p): stub\n",hdc,iPixelFormat,ppfd);
     return TRUE;
@@ -439,7 +439,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, int iPixelFormat,
  *    Success: Currently selected pixel format
  *    Failure: 0
  */
-int WINAPI GetPixelFormat( HDC hdc )
+INT WINAPI GetPixelFormat( HDC hdc )
 {
     FIXME("(%d): stub\n",hdc);
     return 1;
@@ -460,7 +460,7 @@ int WINAPI GetPixelFormat( HDC hdc )
  *    Success: Maximum pixel format index of the device context
  *    Failure: 0
  */
-int WINAPI DescribePixelFormat( HDC hdc, int iPixelFormat, UINT nBytes,
+INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
                                 LPPIXELFORMATDESCRIPTOR ppfd )
 {
     FIXME("(%d,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);

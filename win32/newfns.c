@@ -312,8 +312,8 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
 }
 
 
-BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, int nIndex, 
-                                           LPVOID pvInfo, DWORD nLength )
+BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex, 
+				       LPVOID pvInfo, DWORD nLength )
 {
     FIXME("(%x,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
     return TRUE;

@@ -1395,7 +1395,7 @@ BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
 /**********************************************************************
  *          DrawAnimatedRects  (USER32.153)
  */
-BOOL WINAPI DrawAnimatedRects( HWND hwnd, int idAni,
+BOOL WINAPI DrawAnimatedRects( HWND hwnd, INT idAni,
                                    const RECT* lprcFrom,
                                    const RECT* lprcTo )
 {

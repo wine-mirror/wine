@@ -485,7 +485,7 @@ init    CRTDLL_Init
 @ cdecl strtol(str ptr long) strtol
 @ cdecl strtoul(str ptr long) strtoul
 @ cdecl strxfrm(ptr str long) strxfrm
-@ varargs swprintf() wsprintfW
+@ varargs swprintf(wstr wstr) wsprintfW
 @ stub swscanf
 @ cdecl system(str) CRTDLL_system
 @ cdecl tan(double) tan

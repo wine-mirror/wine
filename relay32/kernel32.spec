@@ -29,7 +29,7 @@ import  ntdll.dll
  12 stdcall k32OemToCharA(ptr ptr) OemToCharA
  13 stdcall k32OemToCharBuffA(ptr ptr long) OemToCharBuffA
  14 stdcall k32LoadStringA(long long ptr long) LoadStringA
- 15 varargs k32wsprintfA() wsprintfA
+ 15 varargs k32wsprintfA(str str) wsprintfA
  16 stdcall k32wvsprintfA(ptr str ptr) wvsprintfA
  17 register CommonUnimpStub() CommonUnimpStub
  18 stdcall GetProcessDword(long long) GetProcessDword
