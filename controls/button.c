@@ -363,7 +363,11 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         break;
 
     case WM_KILLFOCUS:
-        set_button_state( hWnd, get_button_state(hWnd) & ~BUTTON_HASFOCUS );
+        state = get_button_state( hWnd );
+        if ((state & BUTTON_BTNPRESSED) && GetCapture() == hWnd)
+            ReleaseCapture();
+
+        set_button_state( hWnd, state & ~BUTTON_HASFOCUS );
 	paint_button( hWnd, btn_type, ODA_FOCUS );
         break;
 

@@ -1814,6 +1814,166 @@ static void test_SetActiveWindow(HWND hwnd)
     ok( GetActiveWindow() != hwnd2, "Window %p is still active\n", hwnd2 );
 }
 
+static void check_wnd_state(HWND active, HWND foreground, HWND focus, HWND capture)
+{
+    ok(active == GetActiveWindow(), "GetActiveWindow() = %p\n", GetActiveWindow());
+    if (foreground)
+	ok(foreground == GetForegroundWindow(), "GetForegroundWindow() = %p\n", GetForegroundWindow());
+    ok(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
+    ok(capture == GetCapture(), "GetCapture() = %p\n", GetCapture());
+}
+
+static WNDPROC old_button_proc;
+
+static LRESULT WINAPI button_hook_proc(HWND button, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    LRESULT ret;
+    USHORT key_state;
+
+    key_state = GetKeyState(VK_LBUTTON);
+    ok(!(key_state & 0x8000), "VK_LBUTTON should not be pressed, state %04x\n", key_state);
+
+    ret = CallWindowProcA(old_button_proc, button, msg, wparam, lparam);
+
+    if (msg == WM_LBUTTONDOWN)
+    {
+	HWND hwnd, capture;
+
+	check_wnd_state(button, button, button, button);
+
+	hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL);
+	assert(hwnd);
+	trace("hwnd %p\n", hwnd);
+
+	check_wnd_state(button, button, button, button);
+
+	ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+
+	check_wnd_state(button, button, button, button);
+
+	DestroyWindow(hwnd);
+
+	hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL);
+	assert(hwnd);
+	trace("hwnd %p\n", hwnd);
+
+	check_wnd_state(button, button, button, button);
+
+	/* button wnd proc should release capture on WM_KILLFOCUS if it does
+	 * match internal button state.
+	 */
+	SendMessage(button, WM_KILLFOCUS, 0, 0);
+	check_wnd_state(button, button, button, 0);
+
+	ShowWindow(hwnd, SW_SHOW);
+	check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+	capture = SetCapture(hwnd);
+	ok(capture == 0, "SetCapture() = %p\n", capture);
+
+	check_wnd_state(hwnd, hwnd, hwnd, hwnd);
+
+	DestroyWindow(hwnd);
+
+	check_wnd_state(button, 0, button, 0);
+    }
+
+    return ret;
+}
+
+static void test_capture_1(void)
+{
+    HWND button, capture;
+
+    capture = GetCapture();
+    ok(capture == 0, "GetCapture() = %p\n", capture);
+
+    button = CreateWindowExA(0, "button", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 10, 10, 0, 0, 0, NULL);
+    assert(button);
+    trace("button %p\n", button);
+
+    old_button_proc = (WNDPROC)SetWindowLongPtrA(button, GWLP_WNDPROC, (LONG_PTR)button_hook_proc);
+
+    SendMessageA(button, WM_LBUTTONDOWN, 0, 0);
+
+    DestroyWindow(button);
+}
+
+static void test_capture_2(void)
+{
+    HWND button, hwnd, capture;
+
+    check_wnd_state(0, 0, 0, 0);
+
+    button = CreateWindowExA(0, "button", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 10, 10, 0, 0, 0, NULL);
+    assert(button);
+    trace("button %p\n", button);
+
+    check_wnd_state(button, button, button, 0);
+
+    capture = SetCapture(button);
+    ok(capture == 0, "SetCapture() = %p\n", capture);
+
+    check_wnd_state(button, button, button, button);
+
+    /* button wnd proc should ignore WM_KILLFOCUS if it doesn't match
+     * internal button state.
+     */
+    SendMessage(button, WM_KILLFOCUS, 0, 0);
+    check_wnd_state(button, button, button, button);
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL);
+    assert(hwnd);
+    trace("hwnd %p\n", hwnd);
+
+    check_wnd_state(button, button, button, button);
+
+    ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+
+    check_wnd_state(button, button, button, button);
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL);
+    assert(hwnd);
+    trace("hwnd %p\n", hwnd);
+
+    check_wnd_state(button, button, button, button);
+
+    ShowWindow(hwnd, SW_SHOW);
+
+    check_wnd_state(hwnd, hwnd, hwnd, button);
+
+    capture = SetCapture(hwnd);
+    ok(capture == button, "SetCapture() = %p\n", capture);
+
+    check_wnd_state(hwnd, hwnd, hwnd, hwnd);
+
+    DestroyWindow(hwnd);
+    check_wnd_state(button, button, button, 0);
+
+    DestroyWindow(button);
+    check_wnd_state(0, 0, 0, 0);
+}
+
+static void test_capture_3(HWND hwnd1, HWND hwnd2)
+{
+    ShowWindow(hwnd1, SW_HIDE);
+    ShowWindow(hwnd2, SW_HIDE);
+
+    ok(!IsWindowVisible(hwnd1), "%p should be invisible\n", hwnd1);
+    ok(!IsWindowVisible(hwnd2), "%p should be invisible\n", hwnd2);
+
+    SetCapture(hwnd1);
+    check_wnd_state(0, 0, 0, hwnd1);
+
+    SetCapture(hwnd2);
+    check_wnd_state(0, 0, 0, hwnd2);
+
+    ShowWindow(hwnd1, SW_SHOW);
+    check_wnd_state(hwnd1, hwnd1, hwnd1, hwnd2);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -1851,6 +2011,10 @@ START_TEST(win)
                                 0, 0, 0, NULL);
     assert( hwndMain );
     assert( hwndMain2 );
+
+    test_capture_1();
+    test_capture_2();
+    test_capture_3(hwndMain, hwndMain2);
 
     test_parent_owner();
     test_shell_window();
