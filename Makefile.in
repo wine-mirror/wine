@@ -267,7 +267,7 @@ clean::
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 libwine.so TAGS .#*
 
 distclean: clean
-	$(RM) config.* Make.rules include/config.h documentation/wine.man
+	$(RM) config.* Make.rules include/config.h documentation/wine.man documentation/wine.conf.man
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 # We depend on configure above for checks, so we better don't use this rule.
