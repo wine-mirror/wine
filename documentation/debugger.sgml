@@ -5,7 +5,7 @@
       <title>I Introduction</title>
 
       <para>
-        written by Eric Pouech (???) (Last updated: 6/14/2000)
+        written by Eric Pouech (Last updated: 8/15/2000)
       </para>
       <para>
         (Extracted from <filename>wine/documentation/winedbg</filename>)
@@ -106,6 +106,12 @@
           <command>WineDbg</command> is a WineLib application making
           use of this API to allow debugging both any Wine or WineLib
           applications as well as Wine itself (kernel and all DLLs).
+        </para>
+        <para>
+          <command>WineDbg</command> understands symbolic information 
+          from both Unix world (mainly ELF stabs) and from Windows 
+          (most Microsoft debugging formats are supported - CodeView, 
+          .DBG files...)
         </para>
       </sect2>
     </sect1>
@@ -552,6 +558,18 @@ UseXTerm = 1
             conditional breakpoints on a given thread or process.
           </para>
         </sect3>
+      </sect2>
+      <sect2>
+        <title>III.3 Finding files</title>
+        
+        <para>
+          WineDbg uses some lookup algorithms to find the files containing 
+          the debugging information. For ELF files, the current directory, 
+          the list of directories pointed by PATH, LD_LIBRARY_PATH are 
+          searched (in that order). For Microsoft debugging files, 
+          current directory, and directories pointed by _NT_SYMBOL_PATH and
+	  _NT_ALT_SYMBOL_PATH (in that order) are searched.
+        </para>
       </sect2>
     </sect1>
 

@@ -405,7 +405,6 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 
   /* debugger/stabs.c */
 extern int DEBUG_ReadExecutableDbgInfo(const char* exe_name);
-extern int DEBUG_ProcessElfObject(const char* filename, unsigned int load_offset);
 extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, 
 			    int stablen, unsigned int strtaboff, int strtablen);
 

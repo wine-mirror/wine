@@ -1179,10 +1179,19 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
   return TRUE;
 }
 
-int
-DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
+/*
+ * Loads the symbolic information from ELF module stored in 'filename'
+ * the module has been loaded at 'load_offset' address, so symbols' address
+ * relocation is performed
+ * returns 
+ *	-1 if the file cannot be found/opened
+ *	0 if the file doesn't contain symbolic info (or this info cannot be 
+ *	read or parsed)
+ *	1 on success
+ */
+static int DEBUG_ProcessElfFile(const char * filename, unsigned int load_offset)
 {
-  int			rtn = FALSE;
+  int			rtn = -1;
   char		      * addr = (char*)0xffffffff;
   int			fd = -1;
   struct stat		statbuf;
@@ -1193,87 +1202,46 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
   int			i;
   int			stabsect;
   int			stabstrsect;
-
-  /*
-   * Make sure we can stat and open this file.
-   */
-  if( filename == NULL )
-      goto leave;
-
-  if (stat(filename, &statbuf) == -1)
-    {
-      char *s,*t,*fn,*paths;
-      if (strchr(filename,'/'))
-      	goto leave;
-      paths = DBG_strdup(getenv("PATH"));
-      s = paths;
-      while (s && *s) {
-      	t = strchr(s,':');
-	if (t) *t='\0';
-	fn = (char*)DBG_alloc(strlen(filename)+1+strlen(s)+1);
-	strcpy(fn,s);
-	strcat(fn,"/");
-	strcat(fn,filename);
-	if ((rtn = DEBUG_ProcessElfObject(fn,load_offset))) {
-		DBG_free(fn);
-      		DBG_free(paths);
-		goto leave;
-	}
-	DBG_free(fn);
-	if (t) s = t+1; else break;
-      }
-      if (!s || !*s) DEBUG_Printf(DBG_CHN_MESG," not found");
-      DBG_free(paths);
-      goto leave;
-    }
-
-  if (DEBUG_FindModuleByName(filename, DM_TYPE_ELF))
-    goto leave;
-
-  DEBUG_Printf(DBG_CHN_MESG, "Loading stabs debug symbols from %s (0x%08x)\n", 
-	       filename, load_offset);
-
+  
+  /* check that the file exists, and that the module hasn't been loaded yet */
+  if (stat(filename, &statbuf) == -1) goto leave;
+  
   /*
    * Now open the file, so that we can mmap() it.
    */
-  if ((fd = open(filename, O_RDONLY)) == -1)
-      goto leave;
-
+  if ((fd = open(filename, O_RDONLY)) == -1) goto leave;
+  
+  rtn = 0;
   /*
    * Now mmap() the file.
    */
   addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (addr == (char*)0xffffffff)
-      goto leave;
-
+  if (addr == (char*)0xffffffff) goto leave;
+  
   /*
    * Next, we need to find a few of the internal ELF headers within
    * this thing.  We need the main executable header, and the section
    * table.
    */
   ehptr = (Elf32_Ehdr *) addr;
-
-  if( load_offset == 0 )
-      DEBUG_RegisterELFModule(ehptr->e_entry, filename);
-  else
-      DEBUG_RegisterELFModule(load_offset, filename);
-
+  
+  DEBUG_RegisterELFModule((load_offset == 0) ? ehptr->e_entry : load_offset, filename);
+  
   spnt = (Elf32_Shdr *) (addr + ehptr->e_shoff);
   nsect = ehptr->e_shnum;
   shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
-
+  
   stabsect = stabstrsect = -1;
+  
+  for (i = 0; i < nsect; i++) {
+    if (strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0)
+      stabsect = i;
 
-  for(i=0; i < nsect; i++)
-    {
-      if( strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0 )
-	  stabsect = i;
+    if (strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0)
+      stabstrsect = i;
+  }
 
-      if( strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0 )
-	  stabstrsect = i;
-    }
-
-  if( stabsect == -1 || stabstrsect == -1 ) {
+  if (stabsect == -1 || stabstrsect == -1) {
     DEBUG_Printf(DBG_CHN_WARN, "no .stab section\n");
     goto leave;
   }
@@ -1290,29 +1258,81 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
     goto leave;
   }
 
-  for(i=0; i < nsect; i++)
-    {
-      if(    (strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0)
-	  && (spnt[i].sh_type == SHT_SYMTAB) )
-	  DEBUG_ProcessElfSymtab(addr, load_offset, 
-				 spnt + i, spnt + spnt[i].sh_link);
+  for (i = 0; i < nsect; i++) {
+    if (   (strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0)
+	&& (spnt[i].sh_type == SHT_SYMTAB))
+      DEBUG_ProcessElfSymtab(addr, load_offset, 
+			     spnt + i, spnt + spnt[i].sh_link);
 
-      if(    (strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0)
-	  && (spnt[i].sh_type == SHT_DYNSYM) )
-	  DEBUG_ProcessElfSymtab(addr, load_offset, 
-				 spnt + i, spnt + spnt[i].sh_link);
-    }
+    if (   (strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0)
+	&& (spnt[i].sh_type == SHT_DYNSYM))
+      DEBUG_ProcessElfSymtab(addr, load_offset, 
+			     spnt + i, spnt + spnt[i].sh_link);
+  }
 
 leave:
-
-  if (addr != (char*)0xffffffff)
-    munmap(addr, statbuf.st_size);
-
+  if (addr != (char*)0xffffffff) munmap(addr, statbuf.st_size);
   if (fd != -1) close(fd);
 
   return rtn;
 }
 
+static int DEBUG_ProcessElfFileFromPath(const char * filename, 
+					unsigned int load_offset, const char* path)
+{
+   int 		rtn = FALSE;
+   char 	*s, *t, *fn;
+   char*	paths = NULL;
+
+   for (s = paths = DBG_strdup(path); s && *s; s = (t) ? (t+1) : NULL) {
+      t = strchr(s, ':');
+      if (t) *t = '\0';
+      fn = (char*)DBG_alloc(strlen(filename) + 1 + strlen(s) + 1);
+      if (!fn) break;
+      strcpy(fn, s );
+      strcat(fn, "/");
+      strcat(fn, filename);
+      rtn = DEBUG_ProcessElfFile(fn, load_offset);
+      DBG_free(fn);
+      if (rtn >= 0) break;
+      s = (t) ? (t+1) : NULL;
+   }
+
+   DBG_free(paths);
+   return rtn;
+}
+
+static int DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
+{
+   int		rtn = -1;
+   const char*	fmt;
+
+   DEBUG_Printf(DBG_CHN_TRACE, "Processing elf file '%s'\n", filename);
+
+   if (filename == NULL) return FALSE;
+   if (DEBUG_FindModuleByName(filename, DM_TYPE_ELF)) return TRUE;
+
+   rtn = DEBUG_ProcessElfFile(filename, load_offset);
+
+   /* if relative pathname, try some absolute base dirs */
+   if (rtn < 0 && !strchr(filename, '/')) {
+      rtn = DEBUG_ProcessElfFileFromPath(filename, load_offset, getenv("PATH"));
+      if (rtn < 0)
+	rtn = DEBUG_ProcessElfFileFromPath(filename, load_offset, getenv("LD_LIBRARY_PATH"));
+   }
+
+   switch (rtn) {
+   case 1: fmt = "Loaded stabs debug symbols from ELF '%s' (0x%08x)\n"; break;
+   case 0: fmt = "No stabs debug symbols in ELF '%s' (0x%08x)\n";	break;
+   case -1:fmt = "Can't find file for ELF '%s' (0x%08x)\n";		break;
+   default: DEBUG_Printf(DBG_CHN_ERR, "Oooocch (%d)\n", rtn); return FALSE;
+   }
+   
+   DEBUG_Printf(DBG_CHN_MESG, fmt, filename, load_offset);
+
+   return rtn >= 0;
+}
+   
 static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 {
   u_long		lm_addr;
@@ -1423,12 +1443,6 @@ leave:
 }
 
 #else	/* !__ELF__ */
-
-int
-DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
-{
-  return FALSE;
-}
 
 int
 DEBUG_ReadExecutableDbgInfo(const char* exe_name)
