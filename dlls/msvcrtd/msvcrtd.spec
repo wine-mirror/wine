@@ -1,55 +1,55 @@
 # msvcrtd.dll - MS VC++ Run Time Library
 
 @ cdecl $I10_OUTPUT() msvcrt.$I10_OUTPUT
-@ cdecl ??0__non_rtti_object@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
-@ cdecl ??0__non_rtti_object@@QAE@PBD@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z
-@ cdecl ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABQBD@Z
-@ cdecl ??0bad_cast@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
-@ cdecl ??0bad_typeid@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0bad_typeid@@QAE@ABV0@@Z
-@ cdecl ??0bad_typeid@@QAE@PBD@Z(ptr ptr) msvcrt.??0bad_typeid@@QAE@PBD@Z
-@ cdecl ??0exception@@QAE@ABQBD@Z(ptr ptr) msvcrt.??0exception@@QAE@ABQBD@Z
-@ cdecl ??0exception@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0exception@@QAE@ABV0@@Z
-@ cdecl ??0exception@@QAE@XZ(ptr) msvcrt.??0exception@@QAE@XZ
-@ cdecl ??1__non_rtti_object@@UAE@XZ(ptr) msvcrt.??1__non_rtti_object@@UAE@XZ
-@ cdecl ??1bad_cast@@UAE@XZ(ptr) msvcrt.??1bad_cast@@UAE@XZ
-@ cdecl ??1bad_typeid@@UAE@XZ(ptr) msvcrt.??1bad_typeid@@UAE@XZ
-@ cdecl ??1exception@@UAE@XZ(ptr) msvcrt.??1exception@@UAE@XZ
-@ cdecl ??1type_info@@UAE@XZ(ptr) msvcrt.??1type_info@@UAE@XZ
+@ cdecl -i386 ??0__non_rtti_object@@QAE@ABV0@@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
+@ cdecl -i386 ??0__non_rtti_object@@QAE@PBD@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z
+@ cdecl -i386 ??0bad_cast@@QAE@ABQBD@Z(ptr) msvcrt.??0bad_cast@@QAE@ABQBD@Z
+@ cdecl -i386 ??0bad_cast@@QAE@ABV0@@Z(ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
+@ cdecl -i386 ??0bad_typeid@@QAE@ABV0@@Z(ptr) msvcrt.??0bad_typeid@@QAE@ABV0@@Z
+@ cdecl -i386 ??0bad_typeid@@QAE@PBD@Z(ptr) msvcrt.??0bad_typeid@@QAE@PBD@Z
+@ cdecl -i386 ??0exception@@QAE@ABQBD@Z(ptr) msvcrt.??0exception@@QAE@ABQBD@Z
+@ cdecl -i386 ??0exception@@QAE@ABV0@@Z(ptr) msvcrt.??0exception@@QAE@ABV0@@Z
+@ cdecl -i386 ??0exception@@QAE@XZ() msvcrt.??0exception@@QAE@XZ
+@ cdecl -i386 ??1__non_rtti_object@@UAE@XZ() msvcrt.??1__non_rtti_object@@UAE@XZ
+@ cdecl -i386 ??1bad_cast@@UAE@XZ() msvcrt.??1bad_cast@@UAE@XZ
+@ cdecl -i386 ??1bad_typeid@@UAE@XZ() msvcrt.??1bad_typeid@@UAE@XZ
+@ cdecl -i386 ??1exception@@UAE@XZ() msvcrt.??1exception@@UAE@XZ
+@ cdecl -i386 ??1type_info@@UAE@XZ() msvcrt.??1type_info@@UAE@XZ
 @ cdecl ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
 @ cdecl ??2@YAPAXIHPBDH@Z(long) msvcrt.??2@YAPAXIHPBDH@Z
 @ cdecl ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
-@ cdecl ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
-@ cdecl ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
-@ cdecl ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr ptr) msvcrt.??4bad_typeid@@QAEAAV0@ABV0@@Z
-@ cdecl ??4exception@@QAEAAV0@ABV0@@Z(ptr ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z
-@ stdcall ??8type_info@@QBEHABV0@@Z(ptr ptr) msvcrt.??8type_info@@QBEHABV0@@Z
-@ stdcall ??9type_info@@QBEHABV0@@Z(ptr ptr) msvcrt.??9type_info@@QBEHABV0@@Z
-@ stub ??_7__non_rtti_object@@6B@
-@ stub ??_7bad_cast@@6B@
-@ stub ??_7bad_typeid@@6B@
-@ stub ??_7exception@@6B@
-@ cdecl ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) msvcrt.??_E__non_rtti_object@@UAEPAXI@Z
-@ stub ??_Ebad_cast@@UAEPAXI@Z #(ptr long)
-@ stub ??_Ebad_typeid@@UAEPAXI@Z #(ptr long)
-@ cdecl ??_Eexception@@UAEPAXI@Z(ptr long) msvcrt.??_Eexception@@UAEPAXI@Z
-@ cdecl ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) msvcrt.??_G__non_rtti_object@@UAEPAXI@Z
-@ stub ??_Gbad_cast@@UAEPAXI@Z #(ptr long)
-@ stub ??_Gbad_typeid@@UAEPAXI@Z #(ptr long)
-@ cdecl ??_Gexception@@UAEPAXI@Z(ptr long) msvcrt.??_Gexception@@UAEPAXI@Z
+@ cdecl -i386 ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr) msvcrt.??4bad_typeid@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 ??4exception@@QAEAAV0@ABV0@@Z(ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 ??8type_info@@QBEHABV0@@Z(ptr) msvcrt.??8type_info@@QBEHABV0@@Z
+@ cdecl -i386 ??9type_info@@QBEHABV0@@Z(ptr) msvcrt.??9type_info@@QBEHABV0@@Z
+@ extern -i386 ??_7__non_rtti_object@@6B@ msvcrt.??_7__non_rtti_object@@6B@
+@ extern -i386 ??_7bad_cast@@6B@ msvcrt.??_7bad_cast@@6B@
+@ extern -i386 ??_7bad_typeid@@6B@ msvcrt.??_7bad_typeid@@6B@
+@ extern -i386 ??_7exception@@6B@ msvcrt.??_7exception@@6B@
+@ cdecl -i386 ??_E__non_rtti_object@@UAEPAXI@Z(long) msvcrt.??_E__non_rtti_object@@UAEPAXI@Z
+@ cdecl -i386 ??_Ebad_cast@@UAEPAXI@Z(long) msvcrt.??_Ebad_cast@@UAEPAXI@Z
+@ cdecl -i386 ??_Ebad_typeid@@UAEPAXI@Z(long) msvcrt.??_Ebad_typeid@@UAEPAXI@Z
+@ cdecl -i386 ??_Eexception@@UAEPAXI@Z(long) msvcrt.??_Eexception@@UAEPAXI@Z
+@ cdecl -i386 ??_G__non_rtti_object@@UAEPAXI@Z(long) msvcrt.??_G__non_rtti_object@@UAEPAXI@Z
+@ cdecl -i386 ??_Gbad_cast@@UAEPAXI@Z(long) msvcrt.??_Gbad_cast@@UAEPAXI@Z
+@ cdecl -i386 ??_Gbad_typeid@@UAEPAXI@Z(long) msvcrt.??_Gbad_typeid@@UAEPAXI@Z
+@ cdecl -i386 ??_Gexception@@UAEPAXI@Z(long) msvcrt.??_Gexception@@UAEPAXI@Z
 @ cdecl ?_query_new_handler@@YAP6AHI@ZXZ() msvcrt.?_query_new_handler@@YAP6AHI@ZXZ
 @ cdecl ?_query_new_mode@@YAHXZ() msvcrt.?_query_new_mode@@YAHXZ
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) msvcrt.?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
 @ cdecl ?_set_new_mode@@YAHH@Z(long) msvcrt.?_set_new_mode@@YAHH@Z
 @ cdecl ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) msvcrt.?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
-@ stub ?before@type_info@@QBEHABV1@@Z #(ptr ptr) stdcall
-@ stdcall ?name@type_info@@QBEPBDXZ(ptr) msvcrt.?name@type_info@@QBEPBDXZ
-@ stdcall ?raw_name@type_info@@QBEPBDXZ(ptr) msvcrt.?raw_name@type_info@@QBEPBDXZ
+@ cdecl -i386 ?before@type_info@@QBEHABV1@@Z(ptr) msvcrt.?before@type_info@@QBEHABV1@@Z
+@ cdecl -i386 ?name@type_info@@QBEPBDXZ() msvcrt.?name@type_info@@QBEPBDXZ
+@ cdecl -i386 ?raw_name@type_info@@QBEPBDXZ() msvcrt.?raw_name@type_info@@QBEPBDXZ
 @ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_new_handler@@YAP6AXXZP6AXXZ@Z
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_terminate@@YAP6AXXZP6AXXZ@Z
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_unexpected@@YAP6AXXZP6AXXZ@Z
 @ cdecl ?terminate@@YAXXZ() msvcrt.?terminate@@YAXXZ
 @ cdecl ?unexpected@@YAXXZ() msvcrt.?unexpected@@YAXXZ
-@ cdecl ?what@exception@@UBEPBDXZ(ptr) msvcrt.?what@exception@@UBEPBDXZ
+@ cdecl -i386 ?what@exception@@UBEPBDXZ() msvcrt.?what@exception@@UBEPBDXZ
 @ cdecl _CIacos() msvcrt._CIacos
 @ cdecl _CIasin() msvcrt._CIasin
 @ cdecl _CIatan() msvcrt._CIatan

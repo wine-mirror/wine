@@ -68,6 +68,7 @@ extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **);
  */
 int    MSVCRT__set_new_mode(int mode);
 
+void* MSVCRT_operator_new(unsigned long size);
 void MSVCRT_operator_delete(void*);
 
 typedef void* (*MSVCRT_malloc_func)(MSVCRT_size_t);
@@ -85,7 +86,6 @@ extern void msvcrt_init_console(void);
 extern void msvcrt_free_console(void);
 extern void msvcrt_init_args(void);
 extern void msvcrt_free_args(void);
-extern void msvcrt_init_vtables(void);
 
 /* run-time error codes */
 #define _RT_STACK       0

@@ -1,56 +1,56 @@
 # msvcrt.dll - MS VC++ Run Time Library
 
 @ cdecl $I10_OUTPUT() MSVCRT_I10_OUTPUT
-@ cdecl ??0__non_rtti_object@@QAE@ABV0@@Z(ptr ptr) MSVCRT___non_rtti_object_copy_ctor
-@ cdecl ??0__non_rtti_object@@QAE@PBD@Z(ptr ptr) MSVCRT___non_rtti_object_ctor
-@ cdecl ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) MSVCRT_bad_cast_ctor
-@ cdecl ??0bad_cast@@QAE@ABV0@@Z(ptr ptr) MSVCRT_bad_cast_copy_ctor
-@ cdecl ??0bad_typeid@@QAE@ABV0@@Z(ptr ptr) MSVCRT_bad_typeid_copy_ctor
-@ cdecl ??0bad_typeid@@QAE@PBD@Z(ptr ptr) MSVCRT_bad_typeid_ctor
-@ cdecl ??0exception@@QAE@ABQBD@Z(ptr ptr) MSVCRT_exception_ctor
-@ cdecl ??0exception@@QAE@ABV0@@Z(ptr ptr) MSVCRT_exception_copy_ctor
-@ cdecl ??0exception@@QAE@XZ(ptr) MSVCRT_exception_default_ctor
-@ cdecl ??1__non_rtti_object@@UAE@XZ(ptr) MSVCRT___non_rtti_object_dtor
-@ cdecl ??1bad_cast@@UAE@XZ(ptr) MSVCRT_bad_cast_dtor
-@ cdecl ??1bad_typeid@@UAE@XZ(ptr) MSVCRT_bad_typeid_dtor
-@ cdecl ??1exception@@UAE@XZ(ptr) MSVCRT_exception_dtor
-@ cdecl ??1type_info@@UAE@XZ(ptr) MSVCRT_type_info_dtor
+@ cdecl -i386 -norelay ??0__non_rtti_object@@QAE@ABV0@@Z(ptr) __thiscall_MSVCRT___non_rtti_object_copy_ctor
+@ cdecl -i386 -norelay ??0__non_rtti_object@@QAE@PBD@Z(ptr) __thiscall_MSVCRT___non_rtti_object_ctor
+@ cdecl -i386 -norelay ??0bad_cast@@QAE@ABQBD@Z(ptr) __thiscall_MSVCRT_bad_cast_ctor
+@ cdecl -i386 -norelay ??0bad_cast@@QAE@ABV0@@Z(ptr) __thiscall_MSVCRT_bad_cast_copy_ctor
+@ cdecl -i386 -norelay ??0bad_typeid@@QAE@ABV0@@Z(ptr) __thiscall_MSVCRT_bad_typeid_copy_ctor
+@ cdecl -i386 -norelay ??0bad_typeid@@QAE@PBD@Z(ptr) __thiscall_MSVCRT_bad_typeid_ctor
+@ cdecl -i386 -norelay ??0exception@@QAE@ABQBD@Z(ptr) __thiscall_MSVCRT_exception_ctor
+@ cdecl -i386 -norelay ??0exception@@QAE@ABV0@@Z(ptr) __thiscall_MSVCRT_exception_copy_ctor
+@ cdecl -i386 -norelay ??0exception@@QAE@XZ() __thiscall_MSVCRT_exception_default_ctor
+@ cdecl -i386 -norelay ??1__non_rtti_object@@UAE@XZ() __thiscall_MSVCRT___non_rtti_object_dtor
+@ cdecl -i386 -norelay ??1bad_cast@@UAE@XZ() __thiscall_MSVCRT_bad_cast_dtor
+@ cdecl -i386 -norelay ??1bad_typeid@@UAE@XZ() __thiscall_MSVCRT_bad_typeid_dtor
+@ cdecl -i386 -norelay ??1exception@@UAE@XZ() __thiscall_MSVCRT_exception_dtor
+@ cdecl -i386 -norelay ??1type_info@@UAE@XZ() __thiscall_MSVCRT_type_info_dtor
 @ cdecl ??2@YAPAXI@Z(long) MSVCRT_operator_new
 @ cdecl ??_U@YAPAXI@Z(long) MSVCRT_operator_new
 @ cdecl ??3@YAXPAX@Z(ptr) MSVCRT_operator_delete
 @ cdecl ??_V@YAXPAX@Z(ptr) MSVCRT_operator_delete
-@ cdecl ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT___non_rtti_object_opequals
-@ cdecl ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT_bad_cast_opequals
-@ cdecl ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr ptr)MSVCRT_bad_typeid_opequals
-@ cdecl ??4exception@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT_exception_opequals
-@ stdcall ??8type_info@@QBEHABV0@@Z(ptr ptr) MSVCRT_type_info_opequals_equals
-@ stdcall ??9type_info@@QBEHABV0@@Z(ptr ptr) MSVCRT_type_info_opnot_equals
-@ stub ??_7__non_rtti_object@@6B@
-@ stub ??_7bad_cast@@6B@
-@ stub ??_7bad_typeid@@6B@
-@ stub ??_7exception@@6B@
-@ cdecl ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) MSVCRT___non_rtti_object__unknown_E
-@ stub ??_Ebad_cast@@UAEPAXI@Z #(ptr long)
-@ stub ??_Ebad_typeid@@UAEPAXI@Z #(ptr long)
-@ cdecl ??_Eexception@@UAEPAXI@Z(ptr long) MSVCRT_exception__unknown_E
-@ cdecl ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) MSVCRT___non_rtti_object__unknown_G
-@ stub ??_Gbad_cast@@UAEPAXI@Z #(ptr long)
-@ stub ??_Gbad_typeid@@UAEPAXI@Z #(ptr long)
-@ cdecl ??_Gexception@@UAEPAXI@Z(ptr long) MSVCRT_exception__unknown_G
+@ cdecl -i386 -norelay ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr) __thiscall_MSVCRT___non_rtti_object_opequals
+@ cdecl -i386 -norelay ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr) __thiscall_MSVCRT_bad_cast_opequals
+@ cdecl -i386 -norelay ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr) __thiscall_MSVCRT_bad_typeid_opequals
+@ cdecl -i386 -norelay ??4exception@@QAEAAV0@ABV0@@Z(ptr) __thiscall_MSVCRT_exception_opequals
+@ cdecl -i386 -norelay ??8type_info@@QBEHABV0@@Z(ptr) __thiscall_MSVCRT_type_info_opequals_equals
+@ cdecl -i386 -norelay ??9type_info@@QBEHABV0@@Z(ptr) __thiscall_MSVCRT_type_info_opnot_equals
+@ extern -i386 ??_7__non_rtti_object@@6B@ MSVCRT___non_rtti_object_vtable
+@ extern -i386 ??_7bad_cast@@6B@ MSVCRT_bad_cast_vtable
+@ extern -i386 ??_7bad_typeid@@6B@ MSVCRT_bad_typeid_vtable
+@ extern -i386 ??_7exception@@6B@ MSVCRT_exception_vtable
+@ cdecl -i386 -norelay ??_E__non_rtti_object@@UAEPAXI@Z(long) __thiscall_MSVCRT___non_rtti_object_vector_dtor
+@ cdecl -i386 -norelay ??_Ebad_cast@@UAEPAXI@Z(long) __thiscall_MSVCRT_bad_cast_vector_dtor
+@ cdecl -i386 -norelay ??_Ebad_typeid@@UAEPAXI@Z(long) __thiscall_MSVCRT_bad_typeid_vector_dtor
+@ cdecl -i386 -norelay ??_Eexception@@UAEPAXI@Z(long) __thiscall_MSVCRT_exception_vector_dtor
+@ cdecl -i386 -norelay ??_G__non_rtti_object@@UAEPAXI@Z(long) __thiscall_MSVCRT___non_rtti_object_scalar_dtor
+@ cdecl -i386 -norelay ??_Gbad_cast@@UAEPAXI@Z(long) __thiscall_MSVCRT_bad_cast_scalar_dtor
+@ cdecl -i386 -norelay ??_Gbad_typeid@@UAEPAXI@Z(long) __thiscall_MSVCRT_bad_typeid_scalar_dtor
+@ cdecl -i386 -norelay ??_Gexception@@UAEPAXI@Z(long) __thiscall_MSVCRT_exception_scalar_dtor
 @ cdecl ?_query_new_handler@@YAP6AHI@ZXZ() MSVCRT__query_new_handler
 @ cdecl ?_query_new_mode@@YAHXZ() MSVCRT__query_new_mode
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) MSVCRT__set_new_handler
 @ cdecl ?_set_new_mode@@YAHH@Z(long) MSVCRT__set_new_mode
 @ cdecl ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) MSVCRT__set_se_translator
-@ stub ?before@type_info@@QBEHABV1@@Z #(ptr ptr) stdcall
-@ stdcall ?name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_name
-@ stdcall ?raw_name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_raw_name
+@ cdecl -i386 -norelay ?before@type_info@@QBEHABV1@@Z(ptr) __thiscall_MSVCRT_type_info_before
+@ cdecl -i386 -norelay ?name@type_info@@QBEPBDXZ() __thiscall_MSVCRT_type_info_name
+@ cdecl -i386 -norelay ?raw_name@type_info@@QBEPBDXZ() __thiscall_MSVCRT_type_info_raw_name
 @ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT__set_new_handler
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_terminate
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_unexpected
 @ cdecl ?terminate@@YAXXZ() MSVCRT_terminate
 @ cdecl ?unexpected@@YAXXZ() MSVCRT_unexpected
-@ cdecl ?what@exception@@UBEPBDXZ(ptr) MSVCRT_what_exception
+@ cdecl -i386 -norelay ?what@exception@@UBEPBDXZ() __thiscall_MSVCRT_what_exception
 @ cdecl _CIacos()
 @ cdecl _CIasin()
 @ cdecl _CIatan()
