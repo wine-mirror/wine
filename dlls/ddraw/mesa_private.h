@@ -100,6 +100,11 @@ typedef enum {
     GL_TRANSFORM_VERTEXBUFFER
 } GL_TRANSFORM_STATE;
 
+typedef enum {
+    WINE_GL_BUFFER_BACK = 0,
+    WINE_GL_BUFFER_FRONT
+} WINE_GL_BUFFER_TYPE;
+
 typedef struct IDirect3DDeviceGLImpl
 {
     struct IDirect3DDeviceImpl parent;
@@ -124,9 +129,13 @@ typedef struct IDirect3DDeviceGLImpl
     GLuint unlock_tex;
     void *surface_ptr;
     GLenum current_internal_format;
-    
-    SURFACE_STATE state, front_state;
-    IDirectDrawSurfaceImpl *lock_surf, *front_lock_surf;
+
+    /* 0 is back-buffer, 1 is front-buffer */
+    SURFACE_STATE state[2];
+    IDirectDrawSurfaceImpl *lock_surf[2];
+    RECT lock_rect[2];
+    /* This is just here to print-out a nice warning if we have two successive locks */
+    BOOLEAN lock_rect_valid[2];
 } IDirect3DDeviceGLImpl;
 
 /* This is for the OpenGL additions... */

@@ -107,11 +107,11 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 
     TRACE("(%p, %ld)\n", gl_d3d_dev->display,(Drawable)drawable);
     ENTER_GL();
-    if (gl_d3d_dev->state == SURFACE_MEMORY_DIRTY) {
-        d3d_dev->flush_to_framebuffer(d3d_dev, NULL, gl_d3d_dev->lock_surf);
+    if (gl_d3d_dev->state[WINE_GL_BUFFER_BACK] == SURFACE_MEMORY_DIRTY) {
+        d3d_dev->flush_to_framebuffer(d3d_dev, &(gl_d3d_dev->lock_rect[WINE_GL_BUFFER_BACK]), gl_d3d_dev->lock_surf[WINE_GL_BUFFER_BACK]);
     }
-    gl_d3d_dev->state = SURFACE_GL;
-    gl_d3d_dev->front_state = SURFACE_GL;
+    gl_d3d_dev->state[WINE_GL_BUFFER_BACK] = SURFACE_GL;
+    gl_d3d_dev->state[WINE_GL_BUFFER_FRONT] = SURFACE_GL;
     glXSwapBuffers(gl_d3d_dev->display, (Drawable)drawable);
     LEAVE_GL();
     
@@ -1103,11 +1103,11 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     EnterCriticalSection(&(This->crit));   
     
     ENTER_GL();
-    if (glThis->state == SURFACE_MEMORY_DIRTY) {
-        This->flush_to_framebuffer(This, NULL, glThis->lock_surf);
+    if (glThis->state[WINE_GL_BUFFER_BACK] == SURFACE_MEMORY_DIRTY) {
+        This->flush_to_framebuffer(This, &(glThis->lock_rect[WINE_GL_BUFFER_BACK]), glThis->lock_surf[WINE_GL_BUFFER_BACK]);
     }
 
-    glThis->state = SURFACE_GL;
+    glThis->state[WINE_GL_BUFFER_BACK] = SURFACE_GL;
     
     /* Just a hack for now.. Will have to find better algorithm :-/ */
     if ((d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
@@ -2413,11 +2413,11 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     /* Clears the screen */
     ENTER_GL();
 
-    if (glThis->state == SURFACE_MEMORY_DIRTY) {
+    if (glThis->state[WINE_GL_BUFFER_BACK] == SURFACE_MEMORY_DIRTY) {
         /* TODO: optimize here the case where Clear changes all the screen... */
-        This->flush_to_framebuffer(This, NULL, glThis->lock_surf);
+        This->flush_to_framebuffer(This, &(glThis->lock_rect[WINE_GL_BUFFER_BACK]), glThis->lock_surf[WINE_GL_BUFFER_BACK]);
     }
-    glThis->state = SURFACE_GL;
+    glThis->state[WINE_GL_BUFFER_BACK] = SURFACE_GL;
 
     if (dwFlags & D3DCLEAR_ZBUFFER) {
 	bitfield |= GL_DEPTH_BUFFER_BIT;
@@ -2700,40 +2700,78 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 {
     IDirect3DDeviceImpl *d3d_dev = This->d3ddevice;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
-    BOOLEAN is_front;
+    WINE_GL_BUFFER_TYPE buffer_type;
+    RECT loc_rect;
     
     if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
-        is_front = TRUE;
-	if ((gl_d3d_dev->front_state != SURFACE_GL) &&
-	    (gl_d3d_dev->front_lock_surf != This)) {
+        buffer_type = WINE_GL_BUFFER_FRONT;
+	if ((gl_d3d_dev->state[WINE_GL_BUFFER_FRONT] != SURFACE_GL) &&
+	    (gl_d3d_dev->lock_surf[WINE_GL_BUFFER_FRONT] != This)) {
 	    ERR("Change of front buffer.. Expect graphic corruptions !\n");
 	}
-	gl_d3d_dev->front_lock_surf = This;
+	gl_d3d_dev->lock_surf[WINE_GL_BUFFER_FRONT] = This;
     } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
-        is_front = FALSE;
-	if ((gl_d3d_dev->state != SURFACE_GL) &&
-	    (gl_d3d_dev->lock_surf != This)) {
+        buffer_type = WINE_GL_BUFFER_BACK;
+	if ((gl_d3d_dev->state[WINE_GL_BUFFER_BACK] != SURFACE_GL) &&
+	    (gl_d3d_dev->lock_surf[WINE_GL_BUFFER_BACK] != This)) {
 	    ERR("Change of back buffer.. Expect graphic corruptions !\n");
 	}
-	gl_d3d_dev->lock_surf = This;
+	gl_d3d_dev->lock_surf[WINE_GL_BUFFER_BACK] = This;
     } else {
         ERR("Wrong surface type for locking !\n");
 	return;
     }
 
+    if (pRect == NULL) {
+	loc_rect.top = 0;
+	loc_rect.left = 0;
+	loc_rect.bottom = This->surface_desc.dwHeight;
+	loc_rect.right = This->surface_desc.dwWidth;
+	pRect = &loc_rect;
+    }
+    
     /* Try to acquire the device critical section */
     EnterCriticalSection(&(d3d_dev->crit));
     
-    if (((is_front == TRUE)  && (gl_d3d_dev->front_state == SURFACE_GL)) ||
-	((is_front == FALSE) && (gl_d3d_dev->state       == SURFACE_GL))) {
+    if (gl_d3d_dev->lock_rect_valid[buffer_type] == TRUE) {
+	ERR("Two consecutive locks on %s buffer... Expect problems !\n",
+	    (buffer_type == WINE_GL_BUFFER_BACK ? "back" : "front"));
+    }
+    gl_d3d_dev->lock_rect_valid[buffer_type] = TRUE;
+    
+    if (gl_d3d_dev->state[buffer_type] != SURFACE_GL) {
+	/* Check if the new rectangle is in the previous one or not.
+	   If it is not, flush first the previous locks on screen.
+	*/
+	if ((pRect->top    < gl_d3d_dev->lock_rect[buffer_type].top) ||
+	    (pRect->left   < gl_d3d_dev->lock_rect[buffer_type].left) ||
+	    (pRect->right  > gl_d3d_dev->lock_rect[buffer_type].right) ||
+	    (pRect->bottom > gl_d3d_dev->lock_rect[buffer_type].bottom)) {
+	    if (gl_d3d_dev->state[buffer_type] == SURFACE_MEMORY_DIRTY) {
+		TRACE(" flushing back to %s buffer as new rect : (%ldx%ld) - (%ldx%ld) not included in old rect : (%ldx%ld) - (%ldx%ld)\n",
+		      (buffer_type == WINE_GL_BUFFER_BACK ? "back" : "front"),
+		      pRect->left, pRect->top, pRect->right, pRect->bottom,
+		      gl_d3d_dev->lock_rect[buffer_type].left, gl_d3d_dev->lock_rect[buffer_type].top,
+		      gl_d3d_dev->lock_rect[buffer_type].right, gl_d3d_dev->lock_rect[buffer_type].bottom);
+		d3d_dev->flush_to_framebuffer(d3d_dev, &(gl_d3d_dev->lock_rect[buffer_type]), gl_d3d_dev->lock_surf[buffer_type]);
+	    }
+	    gl_d3d_dev->state[buffer_type] = SURFACE_GL;
+	    gl_d3d_dev->lock_rect[buffer_type] = *pRect;
+	}
+	/* In the other case, do not upgrade the locking rectangle as it's no need... */
+    } else {
+	gl_d3d_dev->lock_rect[buffer_type] = *pRect;
+    }
+    
+    if (gl_d3d_dev->state[buffer_type] == SURFACE_GL) {
         /* If the surface is already in memory, no need to do anything here... */
-        GLenum buffer_type;
+        GLenum buffer_format;
 	GLenum buffer_color;
-	RECT loc_rect;
 	int y;
 	char *dst;
 
-	TRACE(" copying frame buffer to main memory.\n");
+	TRACE(" copying %s buffer to main memory with rectangle (%ldx%ld) - (%ldx%ld).\n", (buffer_type == WINE_GL_BUFFER_BACK ? "back" : "front"),
+	      pRect->left, pRect->top, pRect->right, pRect->bottom);
 	
 	/* Note that here we cannot do 'optmizations' about the WriteOnly flag... Indeed, a game
 	   may only write to the device... But when we will blit it back to the screen, we need
@@ -2746,19 +2784,19 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 		(This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0xF800) &&
 		(This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x07E0) &&
 		(This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x001F)) {
-		buffer_type = GL_UNSIGNED_SHORT_5_6_5;
+		buffer_format = GL_UNSIGNED_SHORT_5_6_5;
 		buffer_color = GL_RGB;
 	    } else if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 24) &&
 		       (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0xFF0000) &&
 		       (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x00FF00) &&
 		       (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x0000FF)) {
-		buffer_type = GL_UNSIGNED_BYTE;
+		buffer_format = GL_UNSIGNED_BYTE;
 		buffer_color = GL_RGB;
 	    } else if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) &&
 		       (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0x00FF0000) &&
 		       (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x0000FF00) &&
 		       (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x000000FF)) {
-		buffer_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+		buffer_format = GL_UNSIGNED_INT_8_8_8_8_REV;
 		buffer_color = GL_BGRA;
 	    } else {
 		ERR(" unsupported pixel format at device locking.\n");
@@ -2771,39 +2809,25 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 
 	ENTER_GL();
 	
-	if (is_front == TRUE)
+	if (buffer_type == WINE_GL_BUFFER_FRONT)
 	    /* Application wants to lock the front buffer */
 	    glReadBuffer(GL_FRONT);
 	else 
 	    /* Application wants to lock the back buffer */
 	    glReadBuffer(GL_BACK);
 
-	/* Just a hack while waiting for proper rectangle support */
-	pRect = NULL;
-	if (pRect == NULL) {
-	    loc_rect.top = 0;
-	    loc_rect.left = 0;
-	    loc_rect.bottom = This->surface_desc.dwHeight;
-	    loc_rect.right = This->surface_desc.dwWidth;
-	} else {
-	    loc_rect = *pRect;
-	}
-	
 	dst = ((char *)This->surface_desc.lpSurface) +
-	  (loc_rect.top * This->surface_desc.u1.lPitch) + (loc_rect.left * GET_BPP(This->surface_desc));
-	for (y = (This->surface_desc.dwHeight - loc_rect.top - 1);
-	     y >= ((int) This->surface_desc.dwHeight - (int) loc_rect.bottom);
+	  (pRect->top * This->surface_desc.u1.lPitch) + (pRect->left * GET_BPP(This->surface_desc));
+	for (y = (This->surface_desc.dwHeight - pRect->top - 1);
+	     y >= ((int) This->surface_desc.dwHeight - (int) pRect->bottom);
 	     y--) {
-	    glReadPixels(loc_rect.left, y,
-			 loc_rect.right - loc_rect.left, 1,
-			 buffer_color, buffer_type, dst);
+	    glReadPixels(pRect->left, y,
+			 pRect->right - pRect->left, 1,
+			 buffer_color, buffer_format, dst);
 	    dst += This->surface_desc.u1.lPitch;
 	}
 
-	if (is_front)
-	    gl_d3d_dev->front_state = SURFACE_MEMORY;
-	else
-	    gl_d3d_dev->state = SURFACE_MEMORY;
+	gl_d3d_dev->state[buffer_type] = SURFACE_MEMORY;
 	
 #if 0
 	/* I keep this code here as it's very useful to debug :-) */
@@ -2835,13 +2859,16 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 
     /* Note : no need here to lock the 'device critical section' as we are already protected by
        the GL critical section. */
-    
-    loc_rect.top = 0;
-    loc_rect.left = 0;
-    loc_rect.bottom = surf->surface_desc.dwHeight;
-    loc_rect.right = surf->surface_desc.dwWidth;
 
-    TRACE(" flushing memory back to the frame-buffer (%ld,%ld) x (%ld,%ld).\n", loc_rect.top, loc_rect.left, loc_rect.right, loc_rect.bottom);
+    if (pRect == NULL) {
+	loc_rect.top = 0;
+	loc_rect.left = 0;
+	loc_rect.bottom = surf->surface_desc.dwHeight;
+	loc_rect.right = surf->surface_desc.dwWidth;
+	pRect = &loc_rect;
+    }
+    
+    TRACE(" flushing memory back to screen memory (%ld,%ld) x (%ld,%ld).\n", pRect->top, pRect->left, pRect->right, pRect->bottom);
 
     /* This is a hack to prevent querying the current texture from GL */
     gl_d3d_dev->current_bound_texture[0] = (IDirectDrawSurfaceImpl *) 0x00000001;
@@ -2883,8 +2910,8 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glEnable(GL_SCISSOR_TEST); 
     glDepthRange(0.0, 1.0);
     glViewport(0, 0, d3d_dev->surface->surface_desc.dwWidth, d3d_dev->surface->surface_desc.dwHeight);
-    glScissor(loc_rect.left, surf->surface_desc.dwHeight - loc_rect.bottom,
-	      loc_rect.right - loc_rect.left, loc_rect.bottom - loc_rect.top);
+    glScissor(pRect->left, surf->surface_desc.dwHeight - pRect->bottom,
+	      pRect->right - pRect->left, pRect->bottom - pRect->top);
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
     glDisable(GL_ALPHA_TEST);
@@ -2893,15 +2920,15 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glDisable(GL_FOG);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     
-    for (x = loc_rect.left; x < loc_rect.right; x += UNLOCK_TEX_SIZE) {
-        for (y = loc_rect.top; y < loc_rect.bottom; y += UNLOCK_TEX_SIZE) {
+    for (x = pRect->left; x < pRect->right; x += UNLOCK_TEX_SIZE) {
+        for (y = pRect->top; y < pRect->bottom; y += UNLOCK_TEX_SIZE) {
 	    /* First, upload the texture... */
 	    RECT flush_rect;
 
 	    flush_rect.left = x;
 	    flush_rect.top = y;
-	    flush_rect.right  = (x + UNLOCK_TEX_SIZE > surf->surface_desc.dwWidth)  ? surf->surface_desc.dwWidth  : (x + UNLOCK_TEX_SIZE);
-	    flush_rect.bottom = (y + UNLOCK_TEX_SIZE > surf->surface_desc.dwHeight) ? surf->surface_desc.dwHeight : (y + UNLOCK_TEX_SIZE);
+	    flush_rect.right  = (x + UNLOCK_TEX_SIZE > pRect->right)  ? pRect->right  : (x + UNLOCK_TEX_SIZE);
+	    flush_rect.bottom = (y + UNLOCK_TEX_SIZE > pRect->bottom) ? pRect->bottom : (y + UNLOCK_TEX_SIZE);
 
 	    upload_surface_to_tex_memory(&flush_rect, 0, 0, &(gl_d3d_dev->surface_ptr));
 
@@ -2956,21 +2983,28 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 
 static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 {
-    BOOLEAN is_front;
+    WINE_GL_BUFFER_TYPE buffer_type;
     IDirect3DDeviceImpl *d3d_dev = This->d3ddevice;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
   
     if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
-        is_front = TRUE;
+        buffer_type = WINE_GL_BUFFER_FRONT;
     } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) == (DDSCAPS_BACKBUFFER)) {
-        is_front = FALSE;
+	buffer_type = WINE_GL_BUFFER_BACK;
     } else {
         ERR("Wrong surface type for locking !\n");
 	return;
     }
+
+    if (gl_d3d_dev->lock_rect_valid[buffer_type] == FALSE) {
+	ERR("Unlock without prior lock on %s buffer... Expect problems !\n",
+	    (buffer_type == WINE_GL_BUFFER_BACK ? "back" : "front"));
+    }
+    gl_d3d_dev->lock_rect_valid[buffer_type] = FALSE;
+    
     /* First, check if we need to do anything. For the backbuffer, flushing is done at the next 3D activity. */
     if ((This->lastlocktype & DDLOCK_READONLY) == 0) {
-        if (is_front == TRUE) {
+        if (buffer_type == WINE_GL_BUFFER_FRONT) {
 	    GLenum prev_draw;
 
 	    TRACE(" flushing front buffer immediatly on screen.\n");
@@ -2978,11 +3012,15 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 	    ENTER_GL();
 	    glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
 	    glDrawBuffer(GL_FRONT);
-	    d3d_dev->flush_to_framebuffer(d3d_dev, pRect, gl_d3d_dev->front_lock_surf);
+	    /* Note: we do not use the application provided lock rectangle but our own stored at
+	             lock time. This is because in old D3D versions, the 'lock' parameter did not
+		     exist.
+	    */
+	    d3d_dev->flush_to_framebuffer(d3d_dev, &(gl_d3d_dev->lock_rect[WINE_GL_BUFFER_FRONT]), gl_d3d_dev->lock_surf[WINE_GL_BUFFER_FRONT]);
 	    glDrawBuffer(prev_draw);
 	    LEAVE_GL();
 	} else {
-	    gl_d3d_dev->state = SURFACE_MEMORY_DIRTY;
+	    gl_d3d_dev->state[WINE_GL_BUFFER_BACK] = SURFACE_MEMORY_DIRTY;
 	}
     }
 
@@ -3156,7 +3194,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     /* glDisable(GL_DEPTH_TEST); Need here to check for the presence of a ZBuffer and to reenable it when the ZBuffer is attached */
     LEAVE_GL();
 
-    gl_object->state = SURFACE_GL;
+    gl_object->state[WINE_GL_BUFFER_BACK] = SURFACE_GL;
+    gl_object->state[WINE_GL_BUFFER_FRONT] = SURFACE_GL;
     
     /* fill_device_capabilities(d3d->ddraw); */    
     

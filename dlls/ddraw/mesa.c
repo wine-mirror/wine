@@ -596,7 +596,8 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     BOOL colorkey_active = need_alpha_ck && (surf_ptr->surface_desc.dwFlags & DDSD_CKSRCBLT);
     GLenum internal_format = GL_LUMINANCE; /* A bogus value to be sure to have a nice Mesa warning :-) */
     BYTE bpp = GET_BPP(surf_ptr->surface_desc);
-
+    BOOL sub_texture = TRUE;
+    
     current_surface = surf_ptr;
     current_level = level;
 
@@ -606,14 +607,9 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     }
 
     /* Note: we only check width here as you cannot have width non-zero while height is set to zero */
-    if (tex_width != 0) {
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
-    } else {
-	if (surf_ptr->surface_desc.u1.lPitch == (surf_ptr->surface_desc.dwWidth * bpp)) {
-	    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	} else {
-	    glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
-	}
+    if (tex_width == 0) {
+	sub_texture = FALSE;
+	
 	tex_width = surf_ptr->surface_desc.dwWidth;
 	tex_height = surf_ptr->surface_desc.dwHeight;
     }
@@ -841,6 +837,17 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 	}
     }
 
+    if ((sub_texture == TRUE) && (convert_type == NO_CONVERSION)) {
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
+    } else {
+	if (surf_ptr->surface_desc.u1.lPitch == (surf_ptr->surface_desc.dwWidth * bpp)) {
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	} else {
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
+	}
+	
+    }
+    
     return DD_OK;
 }
 
@@ -851,7 +858,8 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
     RECT lrect;
     DWORD width, height;
     BYTE bpp = GET_BPP(current_surface->surface_desc);
-
+    int line_increase;
+    
     if (rect == NULL) {
 	lrect.top = 0;
 	lrect.left = 0;
@@ -863,11 +871,15 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
     width = rect->right - rect->left;
     height = rect->bottom - rect->top;
 
+    /* Used when converting stuff */
+    line_increase = src_d->dwWidth - width;
+    
     switch (convert_type) {
         case CONVERT_PALETTED: {
 	    IDirectDrawPaletteImpl* pal = current_surface->palette;
 	    BYTE table[256][4];
 	    int i;
+	    int x, y;
 	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (pal == NULL) {
@@ -896,13 +908,16 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
 					 current_tex_width * current_tex_height * sizeof(DWORD));
 	    dst = (BYTE *) *temp_buffer;
-	    
-	    for (i = 0; i < height * width; i++) {
-		BYTE color = *src++;
-		*dst++ = table[color][0];
-		*dst++ = table[color][1];
-		*dst++ = table[color][2];
-		*dst++ = table[color][3];
+
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    BYTE color = *src++;
+		    *dst++ = table[color][0];
+		    *dst++ = table[color][1];
+		    *dst++ = table[color][2];
+		    *dst++ = table[color][3];
+		}
+		src += line_increase;
 	    }
 	} break;
 
@@ -917,7 +932,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	       Note2: when using color-keying + alpha, are the alpha bits part of the
 	              color-space or not ?
 	    */
-	    DWORD i;
+	    int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -925,19 +940,22 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < height * width; i++) {
-		WORD color = *src++;
-		*dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= 0x0001;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    WORD color = *src++;
+		    *dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= 0x0001;
+		    dst++;
+		}
+		src += line_increase;
 	    }
 	} break;
 	
         case CONVERT_CK_5551: {
 	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
-	    DWORD i;
+	    int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -945,19 +963,22 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < height * width; i++) {
-		WORD color = *src++;
-		*dst = color & 0xFFFE;
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= color & 0x0001;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    WORD color = *src++;
+		    *dst = color & 0xFFFE;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= color & 0x0001;
+		    dst++;
+		}
+		src += line_increase;
 	    }
 	} break;
 	
         case CONVERT_CK_4444: {
 	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
-	    DWORD i;
+	    int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -965,19 +986,22 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < height * width; i++) {
-		WORD color = *src++;
-		*dst = color & 0xFFF0;
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= color & 0x000F;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    WORD color = *src++;
+		    *dst = color & 0xFFF0;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= color & 0x000F;
+		    dst++;
+		}
+		src += line_increase;
 	    }
 	} break;
 	
         case CONVERT_CK_4444_ARGB: {
 	    /* Move the four Alpha bits... */
-	    DWORD i;
+	    int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -985,18 +1009,21 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < height * width; i++) {
-		WORD color = *src++;
-		*dst = (color & 0x0FFF) << 4;
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= (color & 0xF000) >> 12;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    WORD color = *src++;
+		    *dst = (color & 0x0FFF) << 4;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= (color & 0xF000) >> 12;
+		    dst++;
+		}
+		src += line_increase;
 	    }
 	} break;
 	
         case CONVERT_CK_1555: {
-	    DWORD i;
+	    int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1004,19 +1031,22 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
 	    
-	    for (i = 0; i < height * width; i++) {
-		WORD color = *src++;
-		*dst = (color & 0x7FFF) << 1;
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= (color & 0x8000) >> 15;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    WORD color = *src++;
+		    *dst = (color & 0x7FFF) << 1;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= (color & 0x8000) >> 15;
+		    dst++;
+		}
+		src += line_increase;
 	    }
 	} break;
 	
         case CONVERT_555: {
 	    /* Converting the 0555 format in 5551 packed */
-	    DWORD i;
+	    int x, y;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1025,18 +1055,24 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    dst = (WORD *) *temp_buffer;
 	    
 	    if (src_d->dwFlags & DDSD_CKSRCBLT) {
-		for (i = 0; i < height * width; i++) {
-		    WORD color = *src++;
-		    *dst = (color & 0x7FFF) << 1;
-		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-			*dst |= 0x0001;
-		    dst++;
+		for (y = 0; y < height; y++) {
+		    for (x = 0; x < width; x++) {
+			WORD color = *src++;
+			*dst = (color & 0x7FFF) << 1;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= 0x0001;
+			dst++;
+		    }
+		    src += line_increase;
 		}
 	    } else {
-		for (i = 0; i < height * width; i++) {
-		    WORD color = *src++;
-		    *dst++ = ((color & 0x7FFF) << 1) | 0x0001;
+		for (y = 0; y < height; y++) {
+		    for (x = 0; x < width; x++) {
+			WORD color = *src++;
+			*dst++ = ((color & 0x7FFF) << 1) | 0x0001;
+		    }
+		    src += line_increase;
 		}
 	    }
 	    
@@ -1044,7 +1080,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	
         case CONVERT_CK_RGB24: {
 	    /* This is a pain :-) */
-	    DWORD i;
+	    int x, y;
 	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top));
 	    DWORD *dst;
 	    
@@ -1053,20 +1089,23 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(DWORD));
 	    dst = (DWORD *) *temp_buffer;
 
-	    for (i = 0; i < height * width; i++) {
-		DWORD color = *((DWORD *) src) & 0x00FFFFFF;
-		src += 3;
-		*dst = *src++ << 8;
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= 0xFF;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    DWORD color = *((DWORD *) src) & 0x00FFFFFF;
+		    src += 3;
+		    *dst = *src++ << 8;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= 0xFF;
+		    dst++;
+		}
+		src += 3 * line_increase;
 	    }
 	} break;
 
         case CONVERT_CK_8888: {
 	    /* Just use the alpha component to handle color-keying... */
-	    DWORD i;
+	    int x, y;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1074,18 +1113,21 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;
 	    
-	    for (i = 0; i < height * width; i++) {
-		DWORD color = *src++;
-		*dst = color & 0xFFFFFF00;
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= color & 0x000000FF;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    DWORD color = *src++;
+		    *dst = color & 0xFFFFFF00;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= color & 0x000000FF;
+		    dst++;
+		}
+		src += line_increase;
 	    }
 	} break;
 	
         case CONVERT_CK_8888_ARGB: {
-	    DWORD i;
+	    int x, y;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1093,19 +1135,22 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;
 	    
-	    for (i = 0; i < height * width; i++) {
-		DWORD color = *src++;
-		*dst = (color & 0x00FFFFFF) << 8;
-		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-		    *dst |= (color & 0xFF000000) >> 24;
-		dst++;
+	    for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+		    DWORD color = *src++;
+		    *dst = (color & 0x00FFFFFF) << 8;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= (color & 0xFF000000) >> 24;
+		    dst++;
+		}
+		src += line_increase;
 	    }
 	} break;
 	
         case CONVERT_RGB32_888: {
 	    /* Just add an alpha component and handle color-keying... */
-	    DWORD i;
+	    int x, y;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
 	    if (*temp_buffer == NULL)
@@ -1114,29 +1159,39 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    dst = (DWORD *) *temp_buffer;
 	    
 	    if (src_d->dwFlags & DDSD_CKSRCBLT) {
-		for (i = 0; i < height * width; i++) {
-		    DWORD color = *src++;
-		    *dst = color << 8;
-		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
-			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
-			*dst |= 0xFF;
-		    dst++;
+		for (y = 0; y < height; y++) {
+		    for (x = 0; x < width; x++) {
+			DWORD color = *src++;
+			*dst = color << 8;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= 0xFF;
+			dst++;
+		    }
+		    src += line_increase;
 		}
 	    } else {
-		for (i = 0; i < height * width; i++) {
-		    *dst++ = (*src++ << 8) | 0xFF;
+		for (y = 0; y < height; y++) {
+		    for (x = 0; x < width; x++) {
+			*dst++ = (*src++ << 8) | 0xFF;
+		    }
+		    src += line_increase;
 		}
 	    }
 	} break;
 
         case NO_CONVERSION:
-	    /* Nothing to do here as the name suggests... This just prevents a compiler warning */
+	    /* Nothing to do here as the name suggests... Just set-up the buffer correctly */
 	    surf_buffer = (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top));
 	    break;
     }
 
     if (convert_type != NO_CONVERSION) {
 	surf_buffer = *temp_buffer;
+	if (width != current_tex_width) {
+	    /* Overide the default PixelStore parameter if only using part of the actual texture */
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+	}
     }
     
     glTexSubImage2D(GL_TEXTURE_2D,
