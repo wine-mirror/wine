@@ -4140,8 +4140,13 @@ BOOL      WINAPI GetClassInfoExW(HINSTANCE,LPCWSTR,WNDCLASSEXW *);
 LONG        WINAPI GetClassLongA(HWND,INT);
 LONG        WINAPI GetClassLongW(HWND,INT);
 #define     GetClassLong WINELIB_NAME_AW(GetClassLong)
+#ifdef _WIN64
+LONG_PTR    WINAPI GetClassLongPtrA(HWND,INT);
+LONG_PTR    WINAPI GetClassLongPtrW(HWND,INT);
+#else
 #define     GetClassLongPtrA GetClassLongA
 #define     GetClassLongPtrW GetClassLongW
+#endif
 #define     GetClassLongPtr WINELIB_NAME_AW(GetClassLongPtr)
 INT         WINAPI GetClassNameA(HWND,LPSTR,INT);
 INT         WINAPI GetClassNameW(HWND,LPWSTR,INT);
