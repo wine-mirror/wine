@@ -6,9 +6,12 @@
  *
  * The functionality of WsControl was created by observing its behaviour
  * in Windows 98, so there are likely to be bugs with the assumptions
- * that were made.
+ * that were made.  A significant amount of help came from
+ * http://tangentsoft.net/wskfaq/articles/wscontrol.html , especially the
+ * trace by Thomas Divine (www.pcausa.net).
  *
  * Copyright 2000 James Hatheway
+ * Copyright 2003 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,8 +30,6 @@
 
 #ifndef WSCONTROL_H_INCLUDED
 #define WSCONTROL_H_INCLUDED
-
-typedef unsigned char uchar; /* This doesn't seem to be in any standard headers */
 
 #define WSCTL_SUCCESS        0
 
@@ -57,44 +58,6 @@ typedef struct TDIObjectID
    unsigned long toi_id;
 } TDIObjectID;
 
-typedef struct IPSNMPInfo
-{
-   unsigned long  ipsi_forwarding;
-   unsigned long  ipsi_defaultttl;
-   unsigned long  ipsi_inreceives;
-   unsigned long  ipsi_inhdrerrors;
-   unsigned long  ipsi_inaddrerrors;
-   unsigned long  ipsi_forwdatagrams;
-   unsigned long  ipsi_inunknownprotos;
-   unsigned long  ipsi_indiscards;
-   unsigned long  ipsi_indelivers;
-   unsigned long  ipsi_outrequests;
-   unsigned long  ipsi_routingdiscards;
-   unsigned long  ipsi_outdiscards;
-   unsigned long  ipsi_outnoroutes;
-   unsigned long  ipsi_reasmtimeout;
-   unsigned long  ipsi_reasmreqds;
-   unsigned long  ipsi_reasmoks;
-   unsigned long  ipsi_reasmfails;
-   unsigned long  ipsi_fragoks;
-   unsigned long  ipsi_fragfails;
-   unsigned long  ipsi_fragcreates;
-   unsigned long  ipsi_numif;
-   unsigned long  ipsi_numaddr;
-   unsigned long  ipsi_numroutes;
-} IPSNMPInfo;
-
-typedef struct IPAddrEntry
-{
-   unsigned long  iae_addr;
-   unsigned long  iae_index;
-   unsigned long  iae_mask;
-   unsigned long  iae_bcastaddr;
-   unsigned long  iae_reasmsize;
-   ushort         iae_context;
-   ushort         iae_pad;
-} IPAddrEntry;
-
 #ifdef if_type
 #undef if_type
 #endif
@@ -114,7 +77,7 @@ typedef struct IFEntry
    unsigned long if_mtu;
    unsigned long if_speed;
    unsigned long if_physaddrlen;
-   uchar         if_physaddr[MAX_PHYSADDR_SIZE];
+   unsigned char if_physaddr[MAX_PHYSADDR_SIZE];
    unsigned long if_adminstatus;
    unsigned long if_operstatus;
    unsigned long if_lastchange;
@@ -131,7 +94,7 @@ typedef struct IFEntry
    unsigned long if_outerrors;
    unsigned long if_outqlen;
    unsigned long if_descrlen;
-   uchar         if_descr[1];
+   unsigned char if_descr[1];
 } IFEntry;
 
 
@@ -153,34 +116,58 @@ typedef struct IPRouteEntry {
 } IPRouteEntry;
 
 
-/* Not sure what EXACTLY most of this stuff does.
-   WsControl was implemented mainly by observing
-   its behaviour in Win98 ************************/
-#define	INFO_CLASS_GENERIC         0x100
-#define	INFO_CLASS_PROTOCOL        0x200
-#define	INFO_TYPE_PROVIDER         0x100
-#define	ENTITY_LIST_ID             0
-#define	CL_NL_ENTITY               0x301
-#define	IF_ENTITY                  0x200
-#define	ENTITY_TYPE_ID             1
-#define	IP_MIB_ADDRTABLE_ENTRY_ID  0x102
-#define	IP_MIB_ROUTETABLE_ENTRY_ID 0x101	/* FIXME: not real name */
-/************************************************/
+/* Constants for use in the toi_id field */
+#define ENTITY_LIST_ID 0 /* to get the list of entity IDs */
+#define ENTITY_TYPE_ID 1 /* it's an interface; what type of interface is it? */
+#define IP_MIB_ROUTETABLE_ENTRY_ID 0x101 /* not real name */
+#define IP_MIB_ADDRTABLE_ENTRY_ID  0x102
 
-/* Valid values to get back from entity type ID query */
-#define	CO_TL_NBF   0x400    /* Entity implements NBF prot. */
-#define	CO_TL_SPX   0x402    /* Entity implements SPX prot. */
-#define	CO_TL_TCP   0x404    /* Entity implements TCP prot. */
-#define	CO_TL_SPP   0x406    /* Entity implements SPP prot. */
-#define	CL_TL_NBF   0x401    /* CL NBF protocol */
-#define	CL_TL_UDP   0x403    /* Entity implements UDP */
-#define	ER_ICMP     0x380    /* The ICMP protocol */
-#define	CL_NL_IPX   0x301    /* Entity implements IPX */
-#define	CL_NL_IP    0x303    /* Entity implements IP */
-#define	AT_ARP      0x280    /* Entity implements ARP */
-#define	AT_NULL     0x282    /* Entity does no address */
-#define	IF_GENERIC  0x200    /* Generic interface */
-#define	IF_MIB      0x202    /* Supports MIB-2 interface */
+/* Constants for use in the toi_class field */
+#define INFO_CLASS_GENERIC  0x100
+#define INFO_CLASS_PROTOCOL 0x200
 
+/* Constants for use in the toi_type field */
+#define INFO_TYPE_PROVIDER 0x100
+
+/* Interface types.  The first one can be returned in the entity ID list--it's
+ * an interface, and it can be further queried for what type of interface it is.
+ */
+#define IF_GENERIC 0x200 /* generic interface */
+#define IF_MIB     0x202 /* supports MIB-2 interface */
+
+/* address translation types.  The first can be turned in the entity ID list--
+ * it supports address translation of some type, and it can be further queried
+ * for what type of address translation it supports (I think).
+ */
+#define AT_ENTITY 0x280
+#define AT_ARP    0x280
+#define AT_NULL   0x282 /* doesn't do address translation after all (liar) */
+
+/* network layer service providers.  The first one can be returned in the
+ * entity list ID--it supports a network layer (datagram) service, and it can
+ * be further queried for what type of network layer service it provides.
+ */
+#define CL_NL_ENTITY 0x301
+#define CL_NL_IPX    0x301 /* implements IPX--probably won't see this, since
+                            * we're querying the TCP protocol */
+#define CL_NL_IP     0x303 /* implements IP */
+
+/* echo request/response types.  The first can be returned in the entity ID
+ * list--it can be further queried for what type of echo it supports (I think).
+ */
+#define ER_ENTITY 0x380
+#define ER_ICMP   0x380
+
+/* connection-oriented transport layer protocols--you know the drill by now */
+#define CO_TL_ENTITY 0x400
+#define CO_TL_NBF    0x400
+#define CO_TL_SPX    0x402
+#define CO_TL_TCP    0x404
+#define CO_TL_SPP    0x406
+
+/* connectionless transport layer protocols--you know the drill by now */
+#define CL_TL_ENTITY 0x401
+#define CL_TL_NBF    0x401
+#define CL_TL_UDP    0x403
 
 #endif /* WSCONTROL_H_INCLUDED */

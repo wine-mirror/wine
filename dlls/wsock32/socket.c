@@ -2,6 +2,7 @@
  * WSOCK32 specific functions
  *
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
+ * Copyright (C) 2003 Juan Lang.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -81,22 +82,21 @@ INT WINAPI WS1_getsockopt(SOCKET s, INT level, INT optname, char *optval, INT *o
  * From:         "Peter Rindfuss" <rindfuss-s@medea.wz-berlin.de>
  * Date:         1997/08/17
  *
- * WSCNTL_TCPIP_QUERY_INFO option is partially implemeted based
+ * The WSCNTL_TCPIP_QUERY_INFO option is partially implemented based
  * on observing the behaviour of WsControl with an app in
  * Windows 98.  It is not fully implemented, and there could
  * be (are?) errors due to incorrect assumptions made.
  *
  *
  * WsControl returns WSCTL_SUCCESS on success.
- * STATUS_BUFFER_TOO_SMALL is returned if the output buffer length
- * (*pcbResponseInfoLen) is too small, otherwise errors return -1.
- *
- * It doesn't seem to generate errors that can be retrieved by
- * WSAGetLastError().
+ * ERROR_LOCK_VIOLATION is returned if the output buffer length
+ * (*pcbResponseInfoLen) is too small.  This is an unusual error code, but
+ * it matches Win98's behavior.  Other errors come from winerror.h, not from
+ * winsock.h.  Again, this is to match Win98 behavior.
  *
  */
 
-DWORD WINAPI WsControl(DWORD protocoll,
+DWORD WINAPI WsControl(DWORD protocol,
                        DWORD action,
                        LPVOID pRequestInfo,
                        LPDWORD pcbRequestInfoLen,
@@ -108,288 +108,400 @@ DWORD WINAPI WsControl(DWORD protocoll,
       rather than void */
    TDIObjectID *pcommand = (TDIObjectID *)pRequestInfo;
 
+   /* validate input parameters.  Error codes are from winerror.h, not from
+    * winsock.h.  pcbResponseInfoLen is apparently allowed to be NULL for some
+    * commands, since winipcfg.exe fails if we ensure it's non-NULL in every
+    * case.
+    */
+   if (protocol != IPPROTO_TCP) return ERROR_INVALID_PARAMETER;
+   if (!pcommand) return ERROR_INVALID_PARAMETER;
+   if (!pcbRequestInfoLen) return ERROR_INVALID_ACCESS;
+   if (*pcbRequestInfoLen < sizeof(TDIObjectID)) return ERROR_INVALID_ACCESS;
+   if (!pResponseInfo) return ERROR_INVALID_PARAMETER;
+   if (pcommand->toi_type != INFO_TYPE_PROVIDER) return ERROR_INVALID_PARAMETER;
+
    TRACE ("   WsControl TOI_ID=>0x%lx<, {TEI_ENTITY=0x%lx, TEI_INSTANCE=0x%lx}, TOI_CLASS=0x%lx, TOI_TYPE=0x%lx\n",
-          pcommand->toi_id, pcommand->toi_entity.tei_entity, pcommand->toi_entity.tei_instance,
-          pcommand->toi_class, pcommand->toi_type );
-
-
+      pcommand->toi_id, pcommand->toi_entity.tei_entity,
+      pcommand->toi_entity.tei_instance,
+      pcommand->toi_class, pcommand->toi_type );
 
    switch (action)
    {
-      case WSCNTL_TCPIP_QUERY_INFO:
+   case WSCNTL_TCPIP_QUERY_INFO:
+   {
+      if (pcommand->toi_class != INFO_CLASS_GENERIC &&
+       pcommand->toi_class != INFO_CLASS_PROTOCOL)
       {
-         switch (pcommand->toi_id)
+         ERR("Unexpected class %ld for WSCNTL_TCPIP_QUERY_INFO",
+          pcommand->toi_class);
+         return ERROR_BAD_ENVIRONMENT;
+      }
+
+      switch (pcommand->toi_id)
+      {
+         /* ENTITY_LIST_ID gets the list of "entity IDs", where an entity
+            may represent an interface, or a datagram service, or address
+            translation, or other fun things.  Typically an entity ID represents
+            a class of service, which is further queried for what type it is.
+            Different types will then have more specific queries defined.
+         */
+         case ENTITY_LIST_ID:
          {
-            /*
-               ENTITY_LIST_ID seems to get number of adapters in the system.
-               (almost like an index to be used when calling other WsControl options)
-            */
-            case ENTITY_LIST_ID:
+            TDIEntityID *baseptr = (TDIEntityID *)pResponseInfo;
+            DWORD numInt, i, ifTable, spaceNeeded;
+            PMIB_IFTABLE table;
+
+            if (!pcbResponseInfoLen)
+               return ERROR_BAD_ENVIRONMENT;
+            if (pcommand->toi_class != INFO_CLASS_GENERIC)
             {
-               TDIEntityID *baseptr = pResponseInfo;
-               DWORD numInt, i, ipAddrTableSize;
-               PMIB_IPADDRTABLE table;
+               FIXME ("Unexpected Option for ENTITY_LIST_ID request -> toi_class=0x%lx",
+                    pcommand->toi_class);
+               return (ERROR_BAD_ENVIRONMENT);
+            }
 
-               if (pcommand->toi_class != INFO_CLASS_GENERIC &&
-                   pcommand->toi_type != INFO_TYPE_PROVIDER)
-               {
-                  FIXME ("Unexpected Option for ENTITY_LIST_ID request -> toi_class=0x%lx, toi_type=0x%lx\n",
-                       pcommand->toi_class, pcommand->toi_type);
-                  return (WSAEOPNOTSUPP);
-               }
+            GetNumberOfInterfaces(&numInt);
+            spaceNeeded = sizeof(TDIEntityID) * (numInt + 4);
 
-               GetNumberOfInterfaces(&numInt);
+            if (*pcbResponseInfoLen < spaceNeeded)
+               return (ERROR_LOCK_VIOLATION);
 
-               if (*pcbResponseInfoLen < sizeof(TDIEntityID)*(numInt*2) )
-               {
-                  return (STATUS_BUFFER_TOO_SMALL);
-               }
+            ifTable = 0;
+            GetIfTable(NULL, &ifTable, FALSE);
+            table = (PMIB_IFTABLE)calloc(1, ifTable);
+            if (!table)
+               return ERROR_NOT_ENOUGH_MEMORY;
+            GetIfTable(table, &ifTable, FALSE);
 
-               /* expect a 1:1 correspondence between interfaces and IP
-                  addresses, so use the cheaper (less memory allocated)
-                  GetIpAddrTable rather than GetIfTable */
-               ipAddrTableSize = 0;
-               GetIpAddrTable(NULL, &ipAddrTableSize, FALSE);
-               table = (PMIB_IPADDRTABLE)calloc(1, ipAddrTableSize);
-               if (!table) return -1; /* FIXME: better error code */
-               GetIpAddrTable(table, &ipAddrTableSize, FALSE);
-
-               /* 0 it out first */
-               memset(baseptr, 0, sizeof(TDIEntityID)*(table->dwNumEntries*2));
-
-               for (i=0; i<table->dwNumEntries; i++)
-               {
-                  /* tei_instance is an network interface identifier.
-                     I'm not quite sure what the difference is between tei_entity values of
-                     CL_NL_ENTITY and IF_ENTITY */
-                  baseptr->tei_entity = CL_NL_ENTITY;  baseptr->tei_instance = table->table[i].dwIndex; baseptr++;
-                  baseptr->tei_entity = IF_ENTITY;     baseptr->tei_instance = table->table[i].dwIndex; baseptr++;
-               }
-
-               /* Calculate size of out buffer */
-               *pcbResponseInfoLen = sizeof(TDIEntityID)*(table->dwNumEntries*2);
+            spaceNeeded = sizeof(TDIEntityID) * (table->dwNumEntries + 4);
+            if (*pcbResponseInfoLen < spaceNeeded)
+            {
                free(table);
-
-               break;
+               return (ERROR_LOCK_VIOLATION);
             }
 
+            memset(baseptr, 0, spaceNeeded);
 
-            /* ENTITY_TYPE_ID is used to obtain simple information about a
-               network card, such as MAC Address, description, interface type,
-               number of network addresses, etc. */
-            case ENTITY_TYPE_ID:  /* ALSO: IP_MIB_STATS_ID */
+            for (i = 0; i < table->dwNumEntries; i++)
             {
-               if (pcommand->toi_class == INFO_CLASS_GENERIC && pcommand->toi_type == INFO_TYPE_PROVIDER)
+               /* Return IF_GENERIC on every interface, and AT_ENTITY,
+                * CL_NL_ENTITY, CL_TL_ENTITY, and CO_TL_ENTITY on the first
+                * interface.  MS returns them only on the loopback
+                * interface, but it doesn't seem to matter.
+                */
+               if (i == 0)
                {
-                  if (pcommand->toi_entity.tei_entity == IF_ENTITY)
-                  {
-                     * ((ULONG *)pResponseInfo) = IF_MIB;
-
-                     /* Calculate size of out buffer */
-                     *pcbResponseInfoLen = sizeof (ULONG);
-
-                  }
-                  else if (pcommand->toi_entity.tei_entity == CL_NL_ENTITY)
-                  {
-                     * ((ULONG *)pResponseInfo) = CL_NL_IP;
-
-                     /* Calculate size of out buffer */
-                     *pcbResponseInfoLen = sizeof (ULONG);
-                  }
+                  baseptr->tei_entity = CO_TL_ENTITY;
+                  baseptr->tei_instance = table->table[i].dwIndex;
+                  baseptr++;
+                  baseptr->tei_entity = CL_TL_ENTITY;
+                  baseptr->tei_instance = table->table[i].dwIndex;
+                  baseptr++;
+                  baseptr->tei_entity = CL_NL_ENTITY;
+                  baseptr->tei_instance = table->table[i].dwIndex;
+                  baseptr++;
+                  baseptr->tei_entity = AT_ENTITY;
+                  baseptr->tei_instance = table->table[i].dwIndex;
+                  baseptr++;
                }
-               else if (pcommand->toi_class == INFO_CLASS_PROTOCOL &&
-                        pcommand->toi_type == INFO_TYPE_PROVIDER)
-               {
-                  if (pcommand->toi_entity.tei_entity == IF_ENTITY)
-                  {
-                     MIB_IFROW row;
-                     DWORD index = pcommand->toi_entity.tei_instance, ret;
-                     DWORD size = sizeof(row) - sizeof(row.wszName) -
-                      sizeof(row.bDescr);
-
-                     if (*pcbResponseInfoLen < size)
-                     {
-                        return (STATUS_BUFFER_TOO_SMALL);
-                     }
-                     row.dwIndex = index;
-                     ret = GetIfEntry(&row);
-                     if (ret != NO_ERROR)
-                     {
-                       ERR ("Error retrieving data for interface index %lu\n", index);
-                       return -1; /* FIXME: better error code */
-                     }
-                     size = sizeof(row) - sizeof(row.wszName) -
-                      sizeof(row.bDescr) + row.dwDescrLen;
-                     if (*pcbResponseInfoLen < size)
-                     {
-                        return (STATUS_BUFFER_TOO_SMALL);
-                     }
-                     memcpy(pResponseInfo, &row.dwIndex, size);
-                     *pcbResponseInfoLen = size;
-                  }
-                  else if (pcommand->toi_entity.tei_entity == CL_NL_ENTITY)
-                  {
-                     /* This case is used to obtain general statistics about the
-                        network */
-
-                     if (*pcbResponseInfoLen < sizeof(MIB_IPSTATS))
-                     {
-                        return (STATUS_BUFFER_TOO_SMALL);
-                     }
-                     GetIpStatistics((PMIB_IPSTATS)pResponseInfo);
-
-                     /* Calculate size of out buffer */
-                     *pcbResponseInfoLen = sizeof(MIB_IPSTATS);
-                  }
-               }
-               else
-               {
-                  FIXME ("Unexpected Option for ENTITY_TYPE_ID request -> toi_class=0x%lx, toi_type=0x%lx\n",
-                       pcommand->toi_class, pcommand->toi_type);
-
-                  return (WSAEOPNOTSUPP);
-               }
-
-               break;
+               baseptr->tei_entity = IF_GENERIC;
+               baseptr->tei_instance = table->table[i].dwIndex;
+               baseptr++;
             }
 
+            *pcbResponseInfoLen = spaceNeeded;
+            free(table);
 
-            /* IP_MIB_ADDRTABLE_ENTRY_ID is used to obtain more detailed information about a
-               particular network adapter */
-            case IP_MIB_ADDRTABLE_ENTRY_ID:
-            {
-               DWORD index = pcommand->toi_entity.tei_instance;
-               PMIB_IPADDRROW baseIPInfo = (PMIB_IPADDRROW) pResponseInfo;
-               PMIB_IPADDRTABLE table;
-               DWORD tableSize, i;
-
-               if (*pcbResponseInfoLen < sizeof(MIB_IPADDRROW))
-               {
-                  return (STATUS_BUFFER_TOO_SMALL);
-               }
-
-               /* overkill, get entire table, because there isn't an
-                  exported function that gets just one entry, and don't
-                  necessarily want our own private export. */
-               tableSize = 0;
-               GetIpAddrTable(NULL, &tableSize, FALSE);
-               table = (PMIB_IPADDRTABLE)calloc(1, tableSize);
-               if (!table) return -1; /* FIXME: better error code */
-               GetIpAddrTable(table, &tableSize, FALSE);
-               for (i = 0; i < table->dwNumEntries; i++)
-               {
-                    if (table->table[i].dwIndex == index)
-                    {
-                       memcpy(baseIPInfo, &table->table[i],
-                        sizeof(MIB_IPADDRROW));
-                       break;
-                    }
-               }
-               free(table);
-
-               /************************************************************************/
-
-               /* Calculate size of out buffer */
-               *pcbResponseInfoLen = sizeof(MIB_IPADDRROW);
-               break;
-            }
-
-
-            /* This call returns the routing table.
-             * No official documentation found, even the name of the command is unknown.
-             * Work is based on
-             * http://www.cyberport.com/~tangent/programming/winsock/articles/wscontrol.html
-             * and testings done with winipcfg.exe, route.exe and ipconfig.exe.
-             * pcommand->toi_entity.tei_instance seems to be the interface number
-             * but route.exe outputs only the information for the last interface
-             * if only the routes for the pcommand->toi_entity.tei_instance
-             * interface are returned. */
-            case IP_MIB_ROUTETABLE_ENTRY_ID:  /* FIXME: not real name. Value is 0x101 */
-            {
-                DWORD routeTableSize, numRoutes, ndx;
-                PMIB_IPFORWARDTABLE table;
-                IPRouteEntry *winRouteTable  = (IPRouteEntry *) pResponseInfo;
-
-                GetIpForwardTable(NULL, &routeTableSize, FALSE);
-                numRoutes = min(routeTableSize - sizeof(MIB_IPFORWARDTABLE), 0)
-                 / sizeof(MIB_IPFORWARDROW) + 1;
-                if (*pcbResponseInfoLen < sizeof(IPRouteEntry) * numRoutes)
-                {
-                    return (STATUS_BUFFER_TOO_SMALL);
-                }
-                table = (PMIB_IPFORWARDTABLE)calloc(1, routeTableSize);
-                if (!table) return -1; /* FIXME: better return value */
-                GetIpForwardTable(table, &routeTableSize, FALSE);
-
-                memset(pResponseInfo, 0, sizeof(IPRouteEntry) * numRoutes);
-                for (ndx = 0; ndx < table->dwNumEntries; ndx++)
-                {
-                    winRouteTable->ire_addr =
-                     table->table[ndx].dwForwardDest;
-                    winRouteTable->ire_index =
-                     table->table[ndx].dwForwardIfIndex;
-                    winRouteTable->ire_metric =
-                     table->table[ndx].dwForwardMetric1;
-                    /* winRouteTable->ire_option4 =
-                    winRouteTable->ire_option5 =
-                    winRouteTable->ire_option6 = */
-                    winRouteTable->ire_gw = table->table[ndx].dwForwardNextHop;
-                    /* winRouteTable->ire_option8 =
-                    winRouteTable->ire_option9 =
-                    winRouteTable->ire_option10 = */
-                    winRouteTable->ire_mask = table->table[ndx].dwForwardMask;
-                    /* winRouteTable->ire_option12 = */
-                    winRouteTable++;
-                }
-
-                /* calculate the length of the data in the output buffer */
-                *pcbResponseInfoLen = sizeof(IPRouteEntry) *
-                 table->dwNumEntries;
-
-                free(table);
-                break;
-            }
-
-
-            default:
-            {
-               FIXME ("Command ID Not Supported -> toi_id=0x%lx, toi_entity={tei_entity=0x%lx, tei_instance=0x%lx}, toi_class=0x%lx, toi_type=0x%lx\n",
-                       pcommand->toi_id, pcommand->toi_entity.tei_entity, pcommand->toi_entity.tei_instance,
-                       pcommand->toi_class, pcommand->toi_type);
-
-               return (WSAEOPNOTSUPP);
-            }
+            break;
          }
 
+         /* Returns MIB-II statistics for an interface */
+         case ENTITY_TYPE_ID:
+            switch (pcommand->toi_entity.tei_entity)
+            {
+            case IF_GENERIC:
+               if (pcommand->toi_class == INFO_CLASS_GENERIC)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  *((ULONG *)pResponseInfo) = IF_MIB;
+                  *pcbResponseInfoLen = sizeof(ULONG);
+               }
+               else if (pcommand->toi_class == INFO_CLASS_PROTOCOL)
+               {
+                  MIB_IFROW row;
+                  DWORD index = pcommand->toi_entity.tei_instance, ret;
+                  DWORD size = sizeof(row) - sizeof(row.wszName) -
+                   sizeof(row.bDescr);
+
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  if (*pcbResponseInfoLen < size)
+                     return (ERROR_LOCK_VIOLATION);
+                  row.dwIndex = index;
+                  ret = GetIfEntry(&row);
+                  if (ret != NO_ERROR)
+                  {
+                    ERR ("Error retrieving data for interface index %lu\n",
+                     index);
+                    return ret;
+                  }
+                  size = sizeof(row) - sizeof(row.wszName) -
+                   sizeof(row.bDescr) + row.dwDescrLen;
+                  if (*pcbResponseInfoLen < size)
+                     return (ERROR_LOCK_VIOLATION);
+                  memcpy(pResponseInfo, &row.dwIndex, size);
+                  *pcbResponseInfoLen = size;
+               }
+               break;
+
+            /* Returns address-translation related data.  In our case, this is
+             * ARP.
+             * FIXME: Win98 seems to assume ARP will always be on interface
+             * index 1, so arp.exe fails when this isn't the case.
+             */
+            case AT_ENTITY:
+               if (pcommand->toi_class == INFO_CLASS_GENERIC)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  *((ULONG *)pResponseInfo) = AT_ARP;
+                  *pcbResponseInfoLen = sizeof(ULONG);
+               }
+               else if (pcommand->toi_class == INFO_CLASS_PROTOCOL)
+               {
+                  PMIB_IPNETTABLE table;
+                  DWORD size;
+                  PULONG output = (PULONG)pResponseInfo;
+
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  if (*pcbResponseInfoLen < sizeof(ULONG) * 2)
+                     return (ERROR_LOCK_VIOLATION);
+                  GetIpNetTable(NULL, &size, FALSE);
+                  table = (PMIB_IPNETTABLE)calloc(1, size);
+                  if (!table)
+                     return ERROR_NOT_ENOUGH_MEMORY;
+                  GetIpNetTable(table, &size, FALSE);
+                  /* FIXME: I don't understand the meaning of the ARP output
+                   * very well, but it seems to indicate how many ARP entries
+                   * exist.  I don't know whether this should reflect the
+                   * number per interface, as I'm only testing with a single
+                   * interface.  So, I lie and say all ARP entries exist on
+                   * a single interface--the first one that appears in the
+                   * ARP table.
+                   */
+                  *(output++) = table->dwNumEntries;
+                  *output = table->table[0].dwIndex;
+                  free(table);
+                  *pcbResponseInfoLen = sizeof(ULONG) * 2;
+               }
+               break;
+
+            /* Returns connectionless network layer statistics--in our case,
+             * this is IP.
+             */
+            case CL_NL_ENTITY:
+               if (pcommand->toi_class == INFO_CLASS_GENERIC)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  *((ULONG *)pResponseInfo) = CL_NL_IP;
+                  *pcbResponseInfoLen = sizeof(ULONG);
+               }
+               else if (pcommand->toi_class == INFO_CLASS_PROTOCOL)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  if (*pcbResponseInfoLen < sizeof(MIB_IPSTATS))
+                     return ERROR_LOCK_VIOLATION;
+                  GetIpStatistics((PMIB_IPSTATS)pResponseInfo);
+
+                  *pcbResponseInfoLen = sizeof(MIB_IPSTATS);
+               }
+               break;
+
+            /* Returns connectionless transport layer statistics--in our case,
+             * this is UDP.
+             */
+            case CL_TL_ENTITY:
+               if (pcommand->toi_class == INFO_CLASS_GENERIC)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  *((ULONG *)pResponseInfo) = CL_TL_UDP;
+                  *pcbResponseInfoLen = sizeof(ULONG);
+               }
+               else if (pcommand->toi_class == INFO_CLASS_PROTOCOL)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  if (*pcbResponseInfoLen < sizeof(MIB_UDPSTATS))
+                     return ERROR_LOCK_VIOLATION;
+                  GetUdpStatistics((PMIB_UDPSTATS)pResponseInfo);
+                  *pcbResponseInfoLen = sizeof(MIB_UDPSTATS);
+               }
+               break;
+
+            /* Returns connection-oriented transport layer statistics--in our
+             * case, this is TCP.
+             */
+            case CO_TL_ENTITY:
+               if (pcommand->toi_class == INFO_CLASS_GENERIC)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  *((ULONG *)pResponseInfo) = CO_TL_TCP;
+                  *pcbResponseInfoLen = sizeof(ULONG);
+               }
+               else if (pcommand->toi_class == INFO_CLASS_PROTOCOL)
+               {
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  if (*pcbResponseInfoLen < sizeof(MIB_TCPSTATS))
+                     return ERROR_LOCK_VIOLATION;
+                  GetTcpStatistics((PMIB_TCPSTATS)pResponseInfo);
+                  *pcbResponseInfoLen = sizeof(MIB_TCPSTATS);
+               }
+               break;
+
+            default:
+               ERR("Unknown entity %ld for ENTITY_TYPE_ID query",
+                pcommand->toi_entity.tei_entity);
+         }
          break;
+
+         /* This call returns the IP address, subnet mask, and broadcast
+          * address for an interface.  If there are multiple IP addresses for
+          * the interface with the given index, returns the "first" one.
+          */
+         case IP_MIB_ADDRTABLE_ENTRY_ID:
+         {
+            DWORD index = pcommand->toi_entity.tei_instance;
+            PMIB_IPADDRROW baseIPInfo = (PMIB_IPADDRROW) pResponseInfo;
+            PMIB_IPADDRTABLE table;
+            DWORD tableSize, i;
+
+            if (!pcbResponseInfoLen)
+               return ERROR_BAD_ENVIRONMENT;
+            if (*pcbResponseInfoLen < sizeof(MIB_IPADDRROW))
+               return (ERROR_LOCK_VIOLATION);
+
+            /* get entire table, because there isn't an exported function that
+               gets just one entry. */
+            tableSize = 0;
+            GetIpAddrTable(NULL, &tableSize, FALSE);
+            table = (PMIB_IPADDRTABLE)calloc(1, tableSize);
+            if (!table)
+               return ERROR_NOT_ENOUGH_MEMORY;
+            GetIpAddrTable(table, &tableSize, FALSE);
+            for (i = 0; i < table->dwNumEntries; i++)
+            {
+                 if (table->table[i].dwIndex == index)
+                 {
+                    memcpy(baseIPInfo, &table->table[i],
+                     sizeof(MIB_IPADDRROW));
+                    break;
+                 }
+            }
+            free(table);
+
+            *pcbResponseInfoLen = sizeof(MIB_IPADDRROW);
+            break;
+         }
+
+         /* This call returns the routing table.
+          * No official documentation found, even the name of the command is unknown.
+          * Work is based on
+          * http://www.cyberport.com/~tangent/programming/winsock/articles/wscontrol.html
+          * and testings done with winipcfg.exe, route.exe and ipconfig.exe.
+          * pcommand->toi_entity.tei_instance seems to be the interface number
+          * but route.exe outputs only the information for the last interface
+          * if only the routes for the pcommand->toi_entity.tei_instance
+          * interface are returned. */
+         case IP_MIB_ROUTETABLE_ENTRY_ID:  /* FIXME: not real name. Value is 0x101 */
+         {
+            DWORD routeTableSize, numRoutes, ndx;
+            PMIB_IPFORWARDTABLE table;
+            IPRouteEntry *winRouteTable  = (IPRouteEntry *) pResponseInfo;
+
+            if (!pcbResponseInfoLen)
+               return ERROR_BAD_ENVIRONMENT;
+            GetIpForwardTable(NULL, &routeTableSize, FALSE);
+            numRoutes = min(routeTableSize - sizeof(MIB_IPFORWARDTABLE), 0)
+             / sizeof(MIB_IPFORWARDROW) + 1;
+            if (*pcbResponseInfoLen < sizeof(IPRouteEntry) * numRoutes)
+               return (ERROR_LOCK_VIOLATION);
+            table = (PMIB_IPFORWARDTABLE)calloc(1, routeTableSize);
+            if (!table)
+               return ERROR_NOT_ENOUGH_MEMORY;
+            GetIpForwardTable(table, &routeTableSize, FALSE);
+
+            memset(pResponseInfo, 0, sizeof(IPRouteEntry) * numRoutes);
+            for (ndx = 0; ndx < table->dwNumEntries; ndx++)
+            {
+               winRouteTable->ire_addr = table->table[ndx].dwForwardDest;
+               winRouteTable->ire_index = table->table[ndx].dwForwardIfIndex;
+               winRouteTable->ire_metric =
+                table->table[ndx].dwForwardMetric1;
+               /* winRouteTable->ire_option4 =
+               winRouteTable->ire_option5 =
+               winRouteTable->ire_option6 = */
+               winRouteTable->ire_gw = table->table[ndx].dwForwardNextHop;
+               /* winRouteTable->ire_option8 =
+               winRouteTable->ire_option9 =
+               winRouteTable->ire_option10 = */
+               winRouteTable->ire_mask = table->table[ndx].dwForwardMask;
+               /* winRouteTable->ire_option12 = */
+               winRouteTable++;
+            }
+
+            /* calculate the length of the data in the output buffer */
+            *pcbResponseInfoLen = sizeof(IPRouteEntry) *
+             table->dwNumEntries;
+
+            free(table);
+            break;
+         }
+
+
+         default:
+         {
+            FIXME ("Command ID Not Supported -> toi_id=0x%lx, toi_entity={tei_entity=0x%lx, tei_instance=0x%lx}, toi_class=0x%lx\n",
+               pcommand->toi_id, pcommand->toi_entity.tei_entity,
+               pcommand->toi_entity.tei_instance, pcommand->toi_class);
+
+            return (ERROR_BAD_ENVIRONMENT);
+         }
       }
 
-      case WSCNTL_TCPIP_ICMP_ECHO:
-      {
-         unsigned int addr = *(unsigned int*)pRequestInfo;
-         #if 0
-            int timeout= *(unsigned int*)(inbuf+4);
-            short x1 = *(unsigned short*)(inbuf+8);
-            short sendbufsize = *(unsigned short*)(inbuf+10);
-            char x2 = *(unsigned char*)(inbuf+12);
-            char ttl = *(unsigned char*)(inbuf+13);
-            char service = *(unsigned char*)(inbuf+14);
-            char type= *(unsigned char*)(inbuf+15); /* 0x2: don't fragment*/
-         #endif
-
-         FIXME("(ICMP_ECHO) to 0x%08x stub \n", addr);
-         break;
-      }
-
-      default:
-      {
-         FIXME("Protocoll Not Supported -> protocoll=0x%lx, action=0x%lx, Request=%p, RequestLen=%p, Response=%p, ResponseLen=%p\n",
-	       protocoll, action, pRequestInfo, pcbRequestInfoLen, pResponseInfo, pcbResponseInfoLen);
-
-         return (WSAEOPNOTSUPP);
-      }
+      break;
    }
 
+   case WSCNTL_TCPIP_ICMP_ECHO:
+   {
+      unsigned int addr = *(unsigned int*)pRequestInfo;
+      #if 0
+         int timeout= *(unsigned int*)(inbuf+4);
+         short x1 = *(unsigned short*)(inbuf+8);
+         short sendbufsize = *(unsigned short*)(inbuf+10);
+         char x2 = *(unsigned char*)(inbuf+12);
+         char ttl = *(unsigned char*)(inbuf+13);
+         char service = *(unsigned char*)(inbuf+14);
+         char type= *(unsigned char*)(inbuf+15); /* 0x2: don't fragment*/
+      #endif
+
+      FIXME("(ICMP_ECHO) to 0x%08x stub \n", addr);
+      break;
+   }
+
+   default:
+      FIXME("Protocol Not Supported -> protocol=0x%lx, action=0x%lx, Request=%p, RequestLen=%p, Response=%p, ResponseLen=%p\n",
+       protocol, action, pRequestInfo, pcbRequestInfoLen, pResponseInfo, pcbResponseInfoLen);
+
+      return (WSAEOPNOTSUPP);
+
+   }
 
    return (WSCTL_SUCCESS);
 }
