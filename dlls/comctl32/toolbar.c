@@ -226,6 +226,9 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 		    rcText.top += infoPtr->nBitmapHeight;
 		}
 	}
+	else {
+	    rcText.top += infoPtr->nBitmapHeight;
+	}
 
 	if (nState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
 	    OffsetRect (&rcText, 1, 1);
