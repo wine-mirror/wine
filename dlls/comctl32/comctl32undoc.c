@@ -1923,8 +1923,11 @@ DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 		hdpa->nGrow * ((INT)(((i+1) - 1) / hdpa->nGrow) + 1);
 	    INT nSize = nNewItems * sizeof(LPVOID);
 
-	    lpTemp = (LPVOID*)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
-					   hdpa->ptrs, nSize);
+	    if (hdpa->ptrs)
+	        lpTemp = (LPVOID*)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY, hdpa->ptrs, nSize);
+	    else
+		lpTemp = (LPVOID*)HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY, nSize);
+	    
 	    if (!lpTemp)
 		return FALSE;
 
