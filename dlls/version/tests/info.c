@@ -157,6 +157,9 @@ static void test_info(void)
     if (pVersionInfo == 0)
         return;
 
+#if 0
+    /* this test crashes on WinNT4
+     */
     boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, 0);
     ok (!boolret, "GetFileVersionInfoA should have failed: GetLastError = 0x%08lx\n", GetLastError());
     ok ((GetLastError() == ERROR_INVALID_DATA) || (GetLastError() == ERROR_BAD_PATHNAME) ||
@@ -164,6 +167,7 @@ static void test_info(void)
         "Last error wrong! ERROR_INVALID_DATA/ERROR_BAD_PATHNAME (ME)/"
 	"NO_ERROR (95) expected, got 0x%08lx\n",
         GetLastError());
+#endif
 
     boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, pVersionInfo );
     ok (boolret, "GetFileVersionInfoA failed: GetLastError = 0x%08lx\n", GetLastError());
@@ -182,8 +186,12 @@ static void test_info(void)
 
     trace("kernel32.dll version: %s\n", VersionString);
 
+#if 0
+    /* this test crashes on WinNT4
+     */
     boolret = VerQueryValueA( pVersionInfo, "\\", (LPVOID *)&pFixedVersionInfo, 0);
     ok (boolret, "VerQueryValue failed: GetLastError = 0x%08lx\n", GetLastError());
+#endif
 }
 
 START_TEST(info)
