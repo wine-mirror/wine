@@ -20,6 +20,7 @@ extern HMODULE COMCTL32_hModule;
 #define IDC_FINISH_BUTTON 12325
 #define IDC_SUNKEN_LINE   12326
 
+#define IDS_CLOSE	  4160
 
 /* Toolbar customization dialog */
 #define IDD_TBCUSTOMIZE     200

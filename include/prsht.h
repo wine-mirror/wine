@@ -201,7 +201,11 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSP_HASHELP             0x0020
 #define PSP_USEREFPARENT        0x0040
 #define PSP_USECALLBACK         0x0080
+#define PSP_PREMATURE           0x0400
 
+#define PSP_HIDEHEADER          0x00000800
+#define PSP_USEHEADERTITLE      0x00001000
+#define PSP_USEHEADERSUBTITLE   0x00002000
 
 #define PSPCB_RELEASE           1
 #define PSPCB_CREATE            2
@@ -218,10 +222,26 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_HASHELP             0x0200
 #define PSH_MODELESS            0x0400
 #define PSH_RTLREADING          0x0800
+#define PSH_WIZARDCONTEXTHELP   0x00001000
 
+#define PSH_WIZARD97            0x00002000  
+#define PSH_WATERMARK           0x00008000
+#define PSH_USEHBMWATERMARK     0x00010000
+#define PSH_USEHPLWATERMARK     0x00020000
+#define PSH_STRETCHWATERMARK    0x00040000
+#define PSH_HEADER              0x00080000
+#define PSH_USEHBMHEADER        0x00100000
+#define PSH_USEPAGELANG         0x00200000
+ 
 #define PSCB_INITIALIZED  1
 #define PSCB_PRECREATE    2
 
+typedef struct _PSHNOTIFY
+{
+   NMHDR hdr;
+   LPARAM lParam;
+} PSHNOTIFY, *LPPSHNOTIFY;
+ 
 #define PSN_FIRST               (0U-200U)
 #define PSN_LAST                (0U-299U)
 
