@@ -800,7 +800,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 
     /* Check if we should create a monochrome or color bitmap. */
     /* We create a monochrome bitmap only if it has exactly 2  */
-    /* colors, which are either black or white, nothing else.  */
+    /* colors, which are black followed by white, nothing else.  */
     /* In all other cases, we create a color bitmap.           */
 
     if (bpp != 1) fColor = TRUE;
@@ -812,23 +812,29 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
         {
             RGBQUAD *rgb = data->bmiColors;
             DWORD col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
-            if ((col == RGB(0,0,0)) || (col == RGB(0xff,0xff,0xff)))
+
+	    /* Check if the first color of the colormap is black */ 
+	    if ((col == RGB(0,0,0)))
             {
                 rgb++;
                 col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
-                fColor = ((col != RGB(0,0,0)) && (col != RGB(0xff,0xff,0xff)));
+		/* If the second color is white, create a monochrome bitmap */
+                fColor =  (col != RGB(0xff,0xff,0xff));
             }
+	    /* Note : If the first color of the colormap is white 
+	       followed by black, we have to create a color bitmap. 
+	       If we don't the white will be displayed in black later on!*/ 
             else fColor = TRUE;
         }
         else if (data->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
         {
             RGBTRIPLE *rgb = ((BITMAPCOREINFO *)data)->bmciColors;
             DWORD col = RGB( rgb->rgbtRed, rgb->rgbtGreen, rgb->rgbtBlue );
-            if ((col == RGB(0,0,0)) || (col == RGB(0xff,0xff,0xff)))
+            if ((col == RGB(0,0,0)))
             {
                 rgb++;
                 col = RGB( rgb->rgbtRed, rgb->rgbtGreen, rgb->rgbtBlue );
-                fColor = ((col != RGB(0,0,0)) && (col != RGB(0xff,0xff,0xff)));
+                fColor = (col != RGB(0xff,0xff,0xff));
             }
             else fColor = TRUE;
         }
