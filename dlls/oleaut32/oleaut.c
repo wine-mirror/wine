@@ -8,29 +8,72 @@
 #include "winversion.h"
 #include "oleauto.h"
 #include "wine/obj_base.h"
+#include "wine/obj_moniker.h"
 #include "heap.h"
 #include "ldt.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
+
+static WCHAR	_delimiter[2] = {'!',0}; /* default delimiter apparently */
+static WCHAR	*pdelimiter = &_delimiter[0];
 
 HRESULT WINAPI RegisterActiveObject(
 	LPUNKNOWN punk,REFCLSID rcid,DWORD dwFlags,LPDWORD pdwRegister
 ) {
-	FIXME("(%p,%s,0x%08lx,%p), stub!\n",punk,debugstr_guid(rcid),dwFlags,pdwRegister);
-	return E_FAIL;
+	WCHAR 			guidbuf[80];
+	HRESULT			ret;
+	LPRUNNINGOBJECTTABLE	runobtable;
+	LPMONIKER		moniker;
+
+	StringFromGUID2(rcid,guidbuf,39);
+	ret = CreateItemMoniker(pdelimiter,guidbuf,&moniker);
+	if (FAILED(ret)) 
+		return ret;
+	ret = GetRunningObjectTable(0,&runobtable);
+	if (FAILED(ret)) {
+		IMoniker_Release(moniker);
+		return ret;
+	}
+	ret = IRunningObjectTable_Register(runobtable,dwFlags,punk,moniker,pdwRegister);
+	IRunningObjectTable_Release(runobtable);
+	IMoniker_Release(moniker);
+	return ret;
 }
 
 HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 {
-	FIXME("(0x%08lx,%p),stub!\n",xregister,reserved);
-	return E_FAIL;
+	LPRUNNINGOBJECTTABLE	runobtable;
+	HRESULT			ret;
+
+	ret = GetRunningObjectTable(0,&runobtable);
+	if (FAILED(ret)) return ret;
+	ret = IRunningObjectTable_Revoke(runobtable,xregister);
+	if (SUCCEEDED(ret)) ret = S_OK;
+	IRunningObjectTable_Release(runobtable);
+	return ret;
 }
 
 HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
 {
-	FIXME("(%s,%p,%p),stub!\n",debugstr_guid(rcid),preserved,ppunk);
-	return E_FAIL;
+	WCHAR 			guidbuf[80];
+	HRESULT			ret;
+	LPRUNNINGOBJECTTABLE	runobtable;
+	LPMONIKER		moniker;
+
+	StringFromGUID2(rcid,guidbuf,39);
+	ret = CreateItemMoniker(pdelimiter,guidbuf,&moniker);
+	if (FAILED(ret)) 
+		return ret;
+	ret = GetRunningObjectTable(0,&runobtable);
+	if (FAILED(ret)) {
+		IMoniker_Release(moniker);
+		return ret;
+	}
+	ret = IRunningObjectTable_GetObject(runobtable,moniker,ppunk);
+	IRunningObjectTable_Release(runobtable);
+	IMoniker_Release(moniker);
+	return ret;
 }
 
 /***********************************************************************
