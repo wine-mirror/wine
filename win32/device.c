@@ -57,6 +57,12 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
+static BOOL DeviceIo_VCD(DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
+
 static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context );
 
 static BOOL DeviceIo_VWin32(DWORD dwIoControlCode, 
@@ -105,7 +111,7 @@ static const struct VxDInfo VxDList[] =
     { "VSD",      0x000B, NULL, NULL },
     { "VMD",      0x000C, NULL, NULL },
     { "VKD",      0x000D, NULL, NULL },
-    { "VCD",      0x000E, NULL, NULL },
+    { "VCD",      0x000E, NULL, DeviceIo_VCD },
     { "VPD",      0x000F, NULL, NULL },
     { "BLOCKDEV", 0x0010, NULL, NULL },
     { "VMCPD",    0x0011, NULL, NULL },
@@ -295,7 +301,7 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
 
 /* PageCommit flags */
 #define PC_FIXED    0x00000008	/* pages are permanently locked */
-#define PC_LOCKED   0x00000080	/* pages are made present and locked*/
+#define PC_LOCKED   0x00000080	/* pages are made present and locked */
 #define PC_LOCKEDIFDP	0x00000100  /* pages are locked if swap via DOS */
 #define PC_WRITEABLE	0x00020000  /* make the pages writeable */
 #define PC_USER     0x00040000	/* make the pages ring 3 accessible */
@@ -352,7 +358,7 @@ static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
  * used for VxD communication.
  *
  * A return value of FALSE indicates that something has gone wrong which
- * GetLastError can decypher.
+ * GetLastError can decipher.
  */
 BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
@@ -384,9 +390,12 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 		}
 		else
 		{
-			/* FIXME: Set appropriate error */
 			FIXME( "Unimplemented control %ld for VxD device %s\n", 
                                dwIoControlCode, info->name ? info->name : "???" );
+			/* FIXME: this is for invalid calls on W98SE,
+			 * but maybe we should use ERROR_CALL_NOT_IMPLEMENTED
+			 * instead ? */
+			SetLastError( ERROR_INVALID_FUNCTION );
 		}
 	}
 	else
@@ -685,8 +694,8 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	  ERR("Can't reserve ring 1 memory\n");
 	  return -1;
 	}
-	/* FIXME: This has to be handled separately, when we have separate
-	   address-spaces */
+	/* FIXME: This has to be handled separately for the separate
+	   address-spaces we now have */
 	if ( page == PR_PRIVATE || page == PR_SHARED ) page = 0;
 	/* FIXME: Handle flags in some way */
 	address = (LPVOID )(page * psize); 
@@ -849,11 +858,11 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 /***********************************************************************
  *           DeviceIo_IFSMgr
  * NOTES
- *   The ioctls is used by 'MSNET32.DLL'.
+ *   These ioctls are used by 'MSNET32.DLL'.
  *
  *   I have been unable to uncover any documentation about the ioctls so 
  *   the implementation of the cases IFS_IOCTL_21 and IFS_IOCTL_2F are
- *   based on a resonable guesses on information found in the Windows 95 DDK.
+ *   based on reasonable guesses on information found in the Windows 95 DDK.
  *   
  */
 
@@ -983,7 +992,7 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
  *      VxDCall_VWin32
  *
  *  Service numbers taken from page 448 of Pietrek's "Windows 95 System
- *  Progrmaming Secrets".  Parameters from experimentation on real Win98.
+ *  Programming Secrets".  Parameters from experimentation on real Win98.
  *
  */
 
@@ -1043,6 +1052,35 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
   return 0xffffffff;
 }
                          
+
+/***********************************************************************
+ *           DeviceIo_VCD
+ */
+static BOOL DeviceIo_VCD(DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped)
+{
+    BOOL retv = TRUE;
+
+    switch (dwIoControlCode)
+    {
+    case IOCTL_SERIAL_LSRMST_INSERT:
+    {
+        FIXME( "IOCTL_SERIAL_LSRMST_INSERT NIY !\n");
+        retv = FALSE;
+    }
+    break;
+
+    default:
+        FIXME( "Unknown Control %ld\n", dwIoControlCode);
+        retv = FALSE;
+        break;
+    }
+
+    return retv;
+}
 
  
 /***********************************************************************
