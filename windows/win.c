@@ -294,7 +294,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     {
 	BOOL32	      bPostQuit = FALSE;
 	WPARAM32      wQuitParam = 0;
-        MESSAGEQUEUE* msgQ = (MESSAGEQUEUE*) GlobalLock16(wndPtr->hmemTaskQ);
+        MESSAGEQUEUE* msgQ = (MESSAGEQUEUE*) QUEUE_Lock(wndPtr->hmemTaskQ);
         QMSG *qmsg;
 
 	while( (qmsg = QUEUE_FindMsg(msgQ, hwnd, 0, 0)) != 0 )
@@ -306,6 +306,9 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 	    }
 	    QUEUE_RemoveMsg(msgQ, qmsg);
 	}
+
+        QUEUE_Unlock(msgQ);
+        
 	/* repost WM_QUIT to make sure this app exits its message loop */
 	if( bPostQuit ) PostQuitMessage32(wQuitParam);
 	wndPtr->hmemTaskQ = 0;

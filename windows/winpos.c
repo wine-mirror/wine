@@ -56,7 +56,7 @@ static HWND32 hGlobalShellWindow=0; /*the shell*/
 
 static LPCSTR atomInternalPos;
 
-extern MESSAGEQUEUE* pActiveQueue;
+extern HQUEUE16 hActiveQueue;
 
 /***********************************************************************
  *           WINPOS_CreateInternalPosAtom
@@ -1461,7 +1461,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
  *	return 0;
  */
     wndPtr = WIN_FindWndPtr(hWnd);
-    hOldActiveQueue = (pActiveQueue)?pActiveQueue->self : 0;
+    hOldActiveQueue = hActiveQueue;
 
     if( (wndTemp = WIN_FindWndPtr(hwndActive)) )
 	wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
@@ -1547,8 +1547,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
             HeapFree( SystemHeap, 0, list );
         }
 
-	pActiveQueue = (hNewActiveQueue)
-		       ? (MESSAGEQUEUE*) GlobalLock16(hNewActiveQueue) : NULL;
+	hActiveQueue = hNewActiveQueue;
 
         if ((list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
         {
@@ -1562,6 +1561,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
             }
             HeapFree( SystemHeap, 0, list );
         }
+        
 	if (!IsWindow32(hWnd)) return 0;
     }
 

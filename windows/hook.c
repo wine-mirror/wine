@@ -827,9 +827,11 @@ static HANDLE16 HOOK_GetHook( INT16 id, HQUEUE16 hQueue )
     MESSAGEQUEUE *queue;
     HANDLE16 hook = 0;
 
-    if ((queue = (MESSAGEQUEUE *)GlobalLock16( hQueue )) != NULL)
+    if ((queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue )) != NULL)
         hook = queue->hooks[id - WH_MINHOOK];
     if (!hook) hook = HOOK_systemHooks[id - WH_MINHOOK];
+
+    QUEUE_Unlock( queue );
     return hook;
 }
 
@@ -878,9 +880,10 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
 
     if (hQueue)
     {
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
         data->next = queue->hooks[id - WH_MINHOOK];
         queue->hooks[id - WH_MINHOOK] = handle;
+        QUEUE_Unlock( queue );
     }
     else
     {
@@ -921,9 +924,10 @@ static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
 
     if (data->ownerQueue)
     {
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( data->ownerQueue );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( data->ownerQueue );
         if (!queue) return FALSE;
         prevHook = &queue->hooks[data->id - WH_MINHOOK];
+        QUEUE_Unlock( queue );
     }
     else prevHook = &HOOK_systemHooks[data->id - WH_MINHOOK];
 
@@ -979,7 +983,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
 
     /* Now call it */
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
     data->flags |= HOOK_INUSE;
@@ -993,6 +997,8 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
 
     data->flags &= ~HOOK_INUSE;
     queue->hCurHook = prevHook;
+
+    QUEUE_Unlock( queue );
 
     if (UnMapFunc)
       UnMapFunc( data->id, code, wParamOrig, lParamOrig, wParam, lParam );
@@ -1089,7 +1095,7 @@ void HOOK_ResetQueueHooks( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if ((queue = (MESSAGEQUEUE *)GlobalLock16( hQueue )) != NULL)
+    if ((queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue )) != NULL)
     {
 	HOOKDATA*	data;
 	HHOOK		hook;
@@ -1106,6 +1112,8 @@ void HOOK_ResetQueueHooks( HQUEUE16 hQueue )
 		} else break;
 	    }
 	}
+
+        QUEUE_Unlock( queue );
     }
 }
 
@@ -1329,9 +1337,12 @@ LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
     /* Note: the *hhook parameter is never used, since we rely on the
      * current hook value from the task queue to find the next hook. */
     MESSAGEQUEUE *queue;
+    LRESULT ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
-    return CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    ret = CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
+    QUEUE_Unlock( queue );
+    return ret;
 }
 
 

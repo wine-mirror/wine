@@ -44,6 +44,9 @@ typedef struct tagMESSAGEQUEUE
   HANDLE32  hEvent;                 /* Event handle */
   CRITICAL_SECTION cSection;        /* Queue access critical section */
 
+  DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
+  DWORD     lockCount;              /* reference counter */
+  
   WORD      flags;                  /* Queue flags */
   WORD      wWinVersion;            /* Expected Windows version */
   
@@ -94,6 +97,10 @@ typedef struct tagMESSAGEQUEUE
 #define QUEUE_SM_WIN32     0x0002  /* Currently sent message is Win32 */
 #define QUEUE_SM_UNICODE   0x0004  /* Currently sent message is Unicode */
 
+#define QUEUE_MAGIC        0xD46E80AF
+
+extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
+extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );
 extern void QUEUE_WalkQueues(void);
 extern BOOL32 QUEUE_IsExitingQueue( HQUEUE16 hQueue );

@@ -28,8 +28,58 @@ static MESSAGEQUEUE *sysMsgQueue = NULL;
 static MESSAGEQUEUE *pMouseQueue = NULL;  /* Queue for last mouse message */
 static MESSAGEQUEUE *pKbdQueue = NULL;    /* Queue for last kbd message */
 
-MESSAGEQUEUE *pCursorQueue = NULL; 
-MESSAGEQUEUE *pActiveQueue = NULL;
+HQUEUE16 hCursorQueue = 0;
+HQUEUE16 hActiveQueue = 0;
+
+
+/***********************************************************************
+ *	     QUEUE_Lock
+ *
+ * Fonction for getting a 32 bit pointer on queue strcture. For thread
+ * safeness programmers should use this function instead of GlobalLock to
+ * retrieve a pointer on the structure. QUEUE_Unlock should also be called
+ * when access to the queue structure is not required anymore.
+ */
+MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue )
+{
+    MESSAGEQUEUE *queue;
+
+    SYSTEM_LOCK();
+    queue = GlobalLock16( hQueue );
+    if ( !queue || (queue->magic != QUEUE_MAGIC) )
+    {
+        SYSTEM_UNLOCK();
+        return NULL;
+    }
+
+    queue->lockCount++;
+    SYSTEM_UNLOCK();
+
+    return queue;
+}
+
+/***********************************************************************
+ *	     QUEUE_Unlock
+ *
+ * Use with QUEUE_Lock to get a thread safe acces to message queue
+ * structure
+ */
+void QUEUE_Unlock( MESSAGEQUEUE *queue )
+{
+    if (queue)
+    {
+        SYSTEM_LOCK();
+
+        if ( --queue->lockCount == 0 )
+        {
+            DeleteCriticalSection ( &queue->cSection );
+            GlobalFree16( queue->self );
+        }
+    
+        SYSTEM_UNLOCK();
+    }
+}
+
 
 /***********************************************************************
  *	     QUEUE_DumpQueue
@@ -38,8 +88,7 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *pq; 
 
-    if (!(pq = (MESSAGEQUEUE*) GlobalLock16( hQueue )) ||
-        GlobalSize16(hQueue) != sizeof(MESSAGEQUEUE))
+    if (!(pq = (MESSAGEQUEUE*) QUEUE_Lock( hQueue )) )
     {
         WARN(msg, "%04x is not a queue handle\n", hQueue );
         return;
@@ -48,21 +97,24 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
     DUMP(    "next: %12.4x  Intertask SendMessage:\n"
              "thread: %10p  ----------------------\n"
              "hWnd: %12.8x\n"
-             "firstMsg: %8p  lastMsg: %8p"
-             "msgCount: %8.4x msg: %11.8x\n"
-             "wParam: %10.8x   lParam: %8.8x\n"
-             "lRet: %12.8x\n"
+             "firstMsg: %8p   msg:     %11.8x\n"
+             "lastMsg:  %8p   wParam:   %10.8x\n"
+             "msgCount: %8.4x   lParam:   %10.8x\n"
+             "lockCount: %7.4x   lRet:   %12.8x\n"
              "wWinVer: %9.4x  ISMH: %10.4x\n"
              "paints: %10.4x  hSendTask: %5.4x\n"
              "timers: %10.4x  hPrevSend: %5.4x\n"
              "wakeBits: %8.4x\n"
              "wakeMask: %8.4x\n"
              "hCurHook: %8.4x\n",
-             pq->next, pq->thdb, pq->hWnd32, pq->firstMsg, pq->lastMsg,
-             pq->msgCount, pq->msg32, pq->wParam32,(unsigned)pq->lParam,
-             (unsigned)pq->SendMessageReturn, pq->wWinVersion, pq->InSendMessageHandle,
+             pq->next, pq->thdb, pq->hWnd32, pq->firstMsg, pq->msg32,
+             pq->lastMsg, pq->wParam32, pq->msgCount, (unsigned)pq->lParam,
+             (unsigned)pq->lockCount, (unsigned)pq->SendMessageReturn,
+             pq->wWinVersion, pq->InSendMessageHandle,
              pq->wPaintCount, pq->hSendingTask, pq->wTimerCount,
              pq->hPrevSendingTask, pq->wakeBits, pq->wakeMask, pq->hCurHook);
+
+    QUEUE_Unlock( pq );
 }
 
 
@@ -77,7 +129,7 @@ void QUEUE_WalkQueues(void)
     DUMP( "Queue Msgs Thread   Task Module\n" );
     while (hQueue)
     {
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
         if (!queue)
         {
             WARN( msg, "Bad queue handle %04x\n", hQueue );
@@ -88,6 +140,7 @@ void QUEUE_WalkQueues(void)
         DUMP( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
               queue->thdb, queue->thdb->process->task, module );
         hQueue = queue->next;
+        QUEUE_Unlock( queue );
     }
     DUMP( "\n" );
 }
@@ -126,15 +179,20 @@ static HQUEUE16 QUEUE_CreateMsgQueue( )
 
     if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT,
                                   sizeof(MESSAGEQUEUE) )))
-    {
         return 0;
-    }
 
     msgQueue = (MESSAGEQUEUE *) GlobalLock16( hQueue );
-    InitializeCriticalSection( &msgQueue->cSection );
+    if ( !msgQueue )
+        return 0;
+
     msgQueue->self        = hQueue;
     msgQueue->wakeBits    = msgQueue->changeBits = QS_SMPARAMSFREE;
     msgQueue->wWinVersion = pTask ? pTask->version : 0;
+    
+    InitializeCriticalSection( &msgQueue->cSection );
+    msgQueue->lockCount = 1;
+    msgQueue->magic = QUEUE_MAGIC;
+    
     return hQueue;
 }
 
@@ -149,7 +207,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( )
  */
 BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 {
-    MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock16(hQueue);
+    MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)QUEUE_Lock(hQueue);
     HQUEUE16  senderQ;
     HQUEUE16 *pPrev;
 
@@ -160,22 +218,27 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 	WARN(msg, "invalid argument.\n");
 	return 0;
     }
-    if( pCursorQueue == msgQueue ) pCursorQueue = NULL;
-    if( pActiveQueue == msgQueue ) pActiveQueue = NULL;
+
+    msgQueue->magic = 0;
+    
+    if( hCursorQueue == hQueue ) hCursorQueue = 0;
+    if( hActiveQueue == hQueue ) hActiveQueue = 0;
 
     /* flush sent messages */
     senderQ = msgQueue->hSendingTask;
     while( senderQ )
     {
-      MESSAGEQUEUE* sq = (MESSAGEQUEUE*)GlobalLock16(senderQ);
+      MESSAGEQUEUE* sq = (MESSAGEQUEUE*)QUEUE_Lock(senderQ);
       if( !sq ) break;
       sq->SendMessageReturn = 0L;
       QUEUE_SetWakeBit( sq, QS_SMRESULT );
       senderQ = sq->hPrevSendingTask;
+      QUEUE_Unlock(sq);
     }
 
-    SIGNAL_MaskAsyncEvents( TRUE );
+    SYSTEM_LOCK();
 
+    /* remove the message queue from the global link list */
     pPrev = &hFirstQueue;
     while (*pPrev && (*pPrev != hQueue))
     {
@@ -185,9 +248,12 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     if (*pPrev) *pPrev = msgQueue->next;
     msgQueue->self = 0;
 
-    SIGNAL_MaskAsyncEvents( FALSE );
+    SYSTEM_UNLOCK();
 
-    GlobalFree16( hQueue );
+    /* free up resource used by MESSAGEQUEUE strcture */
+    msgQueue->lockCount--;
+    QUEUE_Unlock( msgQueue );
+    
     return 1;
 }
 
@@ -285,12 +351,13 @@ void QUEUE_WaitBits( WORD bits )
 
     for (;;)
     {
-        if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return;
+        if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return;
 
         if (queue->changeBits & bits)
         {
             /* One of the bits is set; we can return */
             queue->wakeMask = 0;
+            QUEUE_Unlock( queue );
             return;
         }
         if (queue->wakeBits & QS_SENDMESSAGE)
@@ -299,15 +366,22 @@ void QUEUE_WaitBits( WORD bits )
 
 	    queue->wakeMask = 0;
             QUEUE_ReceiveMessage( queue );
+            QUEUE_Unlock( queue );
 	    continue;				/* nested sm crux */
         }
 
         queue->wakeMask = bits | QS_SENDMESSAGE;
-	if(queue->changeBits & bits) continue;
+        if(queue->changeBits & bits)
+        {
+            QUEUE_Unlock( queue );
+            continue;
+        }
 	
 	TRACE(msg,"%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
 
         QUEUE_Wait( queue->wakeMask );
+
+        QUEUE_Unlock( queue );
     }
 }
 
@@ -326,7 +400,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 
     TRACE(msg, "ReceiveMessage, queue %04x\n", queue->self );
     if (!(queue->wakeBits & QS_SENDMESSAGE) ||
-        !(senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask))) 
+        !(senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->hSendingTask)))
 	{ TRACE(msg,"\trcm: nothing to do\n"); return; }
 
     if( !senderQ->hPrevSendingTask )
@@ -379,6 +453,8 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     }
     else WARN(msg, "\trcm: bad hWnd\n");
 
+    QUEUE_Unlock( senderQ );
+    
     /* Return the result to the sender task */
     ReplyMessage16( result );
 
@@ -395,11 +471,11 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
  */
 void QUEUE_FlushMessages( HQUEUE16 hQueue )
 {
-  MESSAGEQUEUE *queue = (MESSAGEQUEUE*)GlobalLock16( hQueue );
+  MESSAGEQUEUE *queue = (MESSAGEQUEUE*)QUEUE_Lock( hQueue );
 
   if( queue )
   {
-    MESSAGEQUEUE *senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask);
+    MESSAGEQUEUE *senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->hSendingTask );
     QSMCTRL*      CtrlPtr = queue->smResultCurrent;
 
     TRACE(msg,"Flushing queue %04x:\n", hQueue );
@@ -423,11 +499,16 @@ void QUEUE_FlushMessages( HQUEUE16 hQueue )
       senderQ->smResult = queue->smResultCurrent;
       QUEUE_SetWakeBit( senderQ, QS_SMRESULT);
 
-      senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask);
+      QUEUE_Unlock( senderQ );
+
+      senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->hSendingTask );
       CtrlPtr = NULL;
     }
     queue->InSendMessageHandle = 0;
+    
+    QUEUE_Unlock( queue );
   }  
+
 }
 
 /***********************************************************************
@@ -441,11 +522,14 @@ BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG32 *msg, DWORD extraInfo )
     QMSG         *qmsg;
 
 
-    if (!(msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return FALSE;
+    if (!(msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue ))) return FALSE;
 
     /* allocate new message in global heap for now */
     if (!(qmsg = (QMSG *) HeapAlloc( SystemHeap, 0, sizeof(QMSG) ) ))
+    {
+        QUEUE_Unlock( msgQueue );
         return 0;
+    }
 
     EnterCriticalSection( &msgQueue->cSection );
 
@@ -470,6 +554,8 @@ BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG32 *msg, DWORD extraInfo )
     LeaveCriticalSection( &msgQueue->cSection );
 
     QUEUE_SetWakeBit( msgQueue, QS_POSTMESSAGE );
+    QUEUE_Unlock( msgQueue );
+    
     return TRUE;
 }
 
@@ -557,32 +643,46 @@ static void QUEUE_WakeSomeone( UINT32 message )
     WND*	  wndPtr = NULL;
     WORD          wakeBit;
     HWND32 hwnd;
-    MESSAGEQUEUE *queue = pCursorQueue;
+    HQUEUE16     hQueue = 0;
+    MESSAGEQUEUE *queue = NULL;
+
+    if (hCursorQueue)
+        hQueue = hCursorQueue;
 
     if( (message >= WM_KEYFIRST) && (message <= WM_KEYLAST) )
     {
        wakeBit = QS_KEY;
-       if( pActiveQueue ) queue = pActiveQueue;
+       if( hActiveQueue )
+           hQueue = hActiveQueue;
     }
     else 
     {
        wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
        if( (hwnd = GetCapture32()) )
 	 if( (wndPtr = WIN_FindWndPtr( hwnd )) ) 
-	   queue = (MESSAGEQUEUE *)GlobalLock16( wndPtr->hmemTaskQ );
+           {
+               hQueue = wndPtr->hmemTaskQ;
+           }
     }
 
     if( (hwnd = GetSysModalWindow16()) )
+    {
       if( (wndPtr = WIN_FindWndPtr( hwnd )) )
-        queue = (MESSAGEQUEUE *)GlobalLock16( wndPtr->hmemTaskQ );
+            hQueue = wndPtr->hmemTaskQ;
+    }
 
+    if (hQueue)
+        queue = QUEUE_Lock( hQueue );
+    
     if( !queue ) 
     {
-      queue = GlobalLock16( hFirstQueue );
+        queue = QUEUE_Lock( hFirstQueue );
       while( queue )
       {
         if (queue->wakeMask & wakeBit) break;
-        queue = GlobalLock16( queue->next );
+          
+            QUEUE_Unlock(queue);
+            queue = QUEUE_Lock( queue->next );
       }
       if( !queue )
       { 
@@ -592,6 +692,8 @@ static void QUEUE_WakeSomeone( UINT32 message )
     }
 
     QUEUE_SetWakeBit( queue, wakeBit );
+
+    QUEUE_Unlock( queue );
 }
 
 
@@ -669,9 +771,19 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
  */
 HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
 {
-    MESSAGEQUEUE *queue = GlobalLock16( hQueue );
-    return (queue) ? queue->thdb->process->task : 0 ;
+    HTASK16 hTask = 0;
+    
+    MESSAGEQUEUE *queue = QUEUE_Lock( hQueue );
+
+    if (queue)
+{
+        hTask = queue->thdb->process->task;
+        QUEUE_Unlock( queue );
 }
+
+    return hTask;
+}
+
 
 
 /***********************************************************************
@@ -681,9 +793,10 @@ void QUEUE_IncPaintCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue ))) return;
     queue->wPaintCount++;
     QUEUE_SetWakeBit( queue, QS_PAINT );
+    QUEUE_Unlock( queue );
 }
 
 
@@ -694,9 +807,10 @@ void QUEUE_DecPaintCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue ))) return;
     queue->wPaintCount--;
     if (!queue->wPaintCount) queue->wakeBits &= ~QS_PAINT;
+    QUEUE_Unlock( queue );
 }
 
 
@@ -707,9 +821,10 @@ void QUEUE_IncTimerCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue ))) return;
     queue->wTimerCount++;
     QUEUE_SetWakeBit( queue, QS_TIMER );
+    QUEUE_Unlock( queue );
 }
 
 
@@ -720,9 +835,10 @@ void QUEUE_DecTimerCount( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue ))) return;
     queue->wTimerCount--;
     if (!queue->wTimerCount) queue->wakeBits &= ~QS_TIMER;
+    QUEUE_Unlock( queue );
 }
 
 
@@ -753,9 +869,10 @@ void WINAPI PostQuitMessage32( INT32 exitCode )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return;
     queue->wPostQMsg = TRUE;
     queue->wExitCode = (WORD)exitCode;
+    QUEUE_Unlock( queue );
 }
 
 
@@ -837,16 +954,18 @@ HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags )
     }
         
         /* Link new queue into list */
-        queuePtr = (MESSAGEQUEUE *)GlobalLock16( hQueue );
+        queuePtr = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
         queuePtr->thdb = THREAD_Current();
 
-        SIGNAL_MaskAsyncEvents( TRUE );
+        SYSTEM_LOCK();
         SetThreadQueue( 0, hQueue );
         thdb->teb.queue = hQueue;
             
         queuePtr->next  = hFirstQueue;
         hFirstQueue = hQueue;
-        SIGNAL_MaskAsyncEvents( FALSE );
+        SYSTEM_UNLOCK();
+        
+        QUEUE_Unlock( queuePtr );
     }
 
     return hQueue;
@@ -860,9 +979,11 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
     ret = MAKELONG( queue->changeBits, queue->wakeBits );
     queue->changeBits = 0;
+    QUEUE_Unlock( queue );
+    
     return ret & MAKELONG( flags, flags );
 }
 
@@ -874,9 +995,11 @@ DWORD WINAPI GetQueueStatus32( UINT32 flags )
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
     ret = MAKELONG( queue->changeBits, queue->wakeBits );
     queue->changeBits = 0;
+    QUEUE_Unlock( queue );
+    
     return ret & MAKELONG( flags, flags );
 }
 
@@ -906,10 +1029,14 @@ DWORD WINAPI WaitForInputIdle (HANDLE32 hProcess, DWORD dwTimeOut)
 BOOL32 WINAPI GetInputState32(void)
 {
     MESSAGEQUEUE *queue;
+    BOOL32 ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() )))
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
         return FALSE;
-    return queue->wakeBits & (QS_KEY | QS_MOUSEBUTTON);
+    ret = queue->wakeBits & (QS_KEY | QS_MOUSEBUTTON);
+    QUEUE_Unlock( queue );
+
+    return ret;
 }
 
 /***********************************************************************
@@ -918,11 +1045,12 @@ BOOL32 WINAPI GetInputState32(void)
 void WINAPI UserYield(void)
 {
     TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
+    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( pCurTask->hQueue );
 
     if ( !THREAD_IsWin16( THREAD_Current() ) )
     {
         FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        QUEUE_Unlock( queue );
         return;
     }
 
@@ -930,11 +1058,15 @@ void WINAPI UserYield(void)
     while (queue && (queue->wakeBits & QS_SENDMESSAGE))
         QUEUE_ReceiveMessage( queue );
 
+    QUEUE_Unlock( queue );
+    
     OldYield();
 
-    queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
+    queue = (MESSAGEQUEUE *)QUEUE_Lock( pCurTask->hQueue );
     while (queue && (queue->wakeBits & QS_SENDMESSAGE))
         QUEUE_ReceiveMessage( queue );
+
+    QUEUE_Unlock( queue );
 }
 
 /***********************************************************************
@@ -961,9 +1093,13 @@ void WINAPI UserYield(void)
 DWORD WINAPI GetMessagePos(void)
 {
     MESSAGEQUEUE *queue;
+    DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
-    return queue->GetMessagePosVal;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    ret = queue->GetMessagePosVal;
+    QUEUE_Unlock( queue );
+
+    return ret;
 }
 
 
@@ -989,9 +1125,13 @@ DWORD WINAPI GetMessagePos(void)
 LONG WINAPI GetMessageTime(void)
 {
     MESSAGEQUEUE *queue;
+    LONG ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
-    return queue->GetMessageTimeVal;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    ret = queue->GetMessageTimeVal;
+    QUEUE_Unlock( queue );
+    
+    return ret;
 }
 
 
@@ -1001,7 +1141,11 @@ LONG WINAPI GetMessageTime(void)
 LONG WINAPI GetMessageExtraInfo(void)
 {
     MESSAGEQUEUE *queue;
+    LONG ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
-    return queue->GetMessageExtraInfoVal;
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() ))) return 0;
+    ret = queue->GetMessageExtraInfoVal;
+    QUEUE_Unlock( queue );
+
+    return ret;
 }

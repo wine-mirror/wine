@@ -36,8 +36,7 @@
 typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, 
                SYSQ_MSG_ACCEPT, SYSQ_MSG_CONTINUE } SYSQ_STATUS;
 
-extern MESSAGEQUEUE *pCursorQueue;			 /* queue.c */
-extern MESSAGEQUEUE *pActiveQueue;
+extern HQUEUE16 hCursorQueue;			 /* queue.c */
 
 DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
@@ -102,7 +101,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
     UINT16 message = msg->message;
     POINT16 screen_pt, pt;
     HANDLE16 hQ = GetFastQueue();
-    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16(hQ);
+    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock(hQ);
     BOOL32 eatMsg = FALSE;
     BOOL32 mouseClick = ((message == WM_LBUTTONDOWN) ||
 		         (message == WM_RBUTTONDOWN) ||
@@ -133,15 +132,22 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
         /* Not for the current task */
         if (queue) QUEUE_ClearWakeBit( queue, QS_MOUSE );
         /* Wake up the other task */
-        queue = (MESSAGEQUEUE *)GlobalLock16( pWnd->hmemTaskQ );
+        QUEUE_Unlock( queue );
+        queue = (MESSAGEQUEUE *)QUEUE_Lock( pWnd->hmemTaskQ );
         if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE );
+
+        QUEUE_Unlock( queue );
         return SYSQ_MSG_ABANDON;
     }
 
 	/* check if hWnd is within hWndScope */
 
     if( hTopWnd && hWnd != hTopWnd )
-	if( !IsChild16(hTopWnd, hWnd) ) return SYSQ_MSG_CONTINUE;
+        if( !IsChild16(hTopWnd, hWnd) )
+        {
+            QUEUE_Unlock( queue );
+            return SYSQ_MSG_CONTINUE;
+        }
 
     if( mouseClick )
     {
@@ -172,9 +178,14 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
 
 	/* check message filter */
 
-    if (!MSG_CheckFilter(message, filter)) return SYSQ_MSG_CONTINUE;
+    if (!MSG_CheckFilter(message, filter))
+    {
+        QUEUE_Unlock(queue);
+        return SYSQ_MSG_CONTINUE;
+    }
 
-    pCursorQueue = queue;
+    hCursorQueue = queue->self;
+    QUEUE_Unlock(queue);
 
 	/* call WH_MOUSE */
 
@@ -280,11 +291,14 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hTopWnd, DWORD filter,
     if (pWnd && (pWnd->hmemTaskQ != GetFastQueue()))
     {
         /* Not for the current task */
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() );
         if (queue) QUEUE_ClearWakeBit( queue, QS_KEY );
+        QUEUE_Unlock( queue );
+        
         /* Wake up the other task */
-        queue = (MESSAGEQUEUE *)GlobalLock16( pWnd->hmemTaskQ );
+        queue = (MESSAGEQUEUE *)QUEUE_Lock( pWnd->hmemTaskQ );
         if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
+        QUEUE_Unlock( queue );
         return SYSQ_MSG_ABANDON;
     }
 
@@ -603,10 +617,16 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     QSMCTRL 	  qCtrl = { 0, 1};
     MESSAGEQUEUE *queue, *destQ;
 
-    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetFastQueue() ))) return 0;
-    if (!(destQ = (MESSAGEQUEUE*)GlobalLock16( hDestQueue ))) return 0;
+    if (IsTaskLocked() || !IsWindow32(hwnd))
+        return 0;
 
-    if (IsTaskLocked() || !IsWindow32(hwnd)) return 0;
+    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue() ))) return 0;
+
+    if (!(destQ = (MESSAGEQUEUE*)QUEUE_Lock( hDestQueue )))
+    {
+        QUEUE_Unlock( queue );
+        return 0;
+    }
 
     debugSMRL+=4;
     TRACE(sendmsg,"%*sSM: %s [%04x] (%04x -> %04x)\n", 
@@ -664,6 +684,9 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     TRACE(sendmsg,"%*sSM: [%04x] returning %08lx\n", prevSMRL, "", msg, qCtrl.lResult);
     debugSMRL-=4;
 
+    QUEUE_Unlock( queue );
+    QUEUE_Unlock( destQ );
+    
     return qCtrl.lResult;
 }
 
@@ -676,11 +699,11 @@ void WINAPI ReplyMessage16( LRESULT result )
     MESSAGEQUEUE *senderQ;
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetFastQueue() ))) return;
+    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue() ))) return;
 
     TRACE(msg,"ReplyMessage, queue %04x\n", queue->self);
 
-    while( (senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->InSendMessageHandle)))
+    while( (senderQ = (MESSAGEQUEUE*)QUEUE_Lock( queue->InSendMessageHandle)))
     {
       TRACE(msg,"\trpm: replying to %08x (%04x -> %04x)\n",
             queue->msg32, queue->self, senderQ->self);
@@ -688,13 +711,21 @@ void WINAPI ReplyMessage16( LRESULT result )
       if( queue->wakeBits & QS_SENDMESSAGE )
       {
 	QUEUE_ReceiveMessage( queue );
+        QUEUE_Unlock( senderQ );
 	continue; /* ReceiveMessage() already called us */
       }
 
       if(!(senderQ->wakeBits & QS_SMRESULT) ) break;
       if (THREAD_IsWin16(THREAD_Current())) OldYield();
+      
+      QUEUE_Unlock( senderQ );
     } 
-    if( !senderQ ) { TRACE(msg,"\trpm: done\n"); return; }
+    if( !senderQ )
+    {
+      TRACE(msg,"\trpm: done\n");
+      QUEUE_Unlock( queue );
+      return;
+    }
 
     senderQ->SendMessageReturn = result;
     TRACE(msg,"\trpm: smResult = %08x, result = %08lx\n", 
@@ -706,6 +737,9 @@ void WINAPI ReplyMessage16( LRESULT result )
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
     if (THREAD_IsWin16( THREAD_Current() ))
         DirectedYield( senderQ->thdb->teb.htask16 );
+
+    QUEUE_Unlock( senderQ );
+    QUEUE_Unlock( queue );
 }
 
 
@@ -746,7 +780,7 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
         QMSG *qmsg;
         
 	hQueue   = GetFastQueue();
-        msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
+        msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
         if (!msgQueue) return FALSE;
         msgQueue->changeBits = 0;
 
@@ -852,12 +886,19 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
         if (peek)
         {
             if (!(flags & PM_NOYIELD)) UserYield();
+            
+            QUEUE_Unlock( msgQueue );
             return FALSE;
         }
         msgQueue->wakeMask = mask;
         QUEUE_WaitBits( mask );
+        QUEUE_Unlock( msgQueue );
     }
 
+    /* instead of unlocking queue for every break condition, all break
+       condition will fall here */
+    QUEUE_Unlock( msgQueue );
+    
       /* We got a message */
     if (flags & PM_REMOVE)
     {
@@ -1557,18 +1598,21 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE32 *pHandles,
 
     TDB *currTask = (TDB *)GlobalLock16( GetCurrentTask() );
     HQUEUE16 hQueue = currTask? currTask->hQueue : 0;
-    MESSAGEQUEUE *msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
+    MESSAGEQUEUE *msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
     if (!msgQueue) return WAIT_FAILED;
 
     if (nCount > MAXIMUM_WAIT_OBJECTS-1)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
+        QUEUE_Unlock( msgQueue );
         return WAIT_FAILED;
     }
 
     msgQueue->changeBits = 0;
     msgQueue->wakeMask = dwWakeMask;
 
+    QUEUE_Unlock( msgQueue );
+    
     /* Add the thread event to the handle list */
     for (i = 0; i < nCount; i++) handles[i] = pHandles[i];
     handles[nCount] = currTask->thdb->event;
@@ -2058,10 +2102,14 @@ BOOL16 WINAPI InSendMessage16(void)
 BOOL32 WINAPI InSendMessage32(void)
 {
     MESSAGEQUEUE *queue;
+    BOOL32 ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() )))
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
         return 0;
-    return (BOOL32)queue->InSendMessageHandle;
+    ret = (BOOL32)queue->InSendMessageHandle;
+
+    QUEUE_Unlock( queue );
+    return ret;
 }
 
 /***********************************************************************
