@@ -349,10 +349,20 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
         (access & GENERIC_WRITE)) 
     {
     	DWORD lasterror = GetLastError();
-	if ((lasterror == ERROR_ACCESS_DENIED) || (lasterror == ERROR_WRITE_PROTECT))
+
+	if ((lasterror == ERROR_ACCESS_DENIED) ||
+	    (lasterror == ERROR_WRITE_PROTECT)) {
+	    TRACE("Write access failed for file '%s', trying without "
+		  "write access", filename);
             return FILE_CreateFile( filename, access & ~GENERIC_WRITE, sharing,
                                     sa, creation, attributes, template );
     }
+    }
+
+    if (req->handle == -1)
+	WARN("Unable to create file '%s' (GLE %ld)", filename,
+	     GetLastError());
+
     return req->handle;
 }
 
@@ -479,8 +489,13 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 
     /* check for filename, don't check for last entry if creating */
     if (!DOSFS_GetFullName( filename,
-               (creation == OPEN_EXISTING) || (creation == TRUNCATE_EXISTING), &full_name ))
+			    (creation == OPEN_EXISTING) ||
+			    (creation == TRUNCATE_EXISTING),
+			    &full_name )) {
+	WARN("Unable to get full filename from '%s' (GLE %ld)\n",
+	     filename, GetLastError());
         return HFILE_ERROR;
+    }
 
     return FILE_CreateFile( full_name.long_name, access, sharing,
                             sa, creation, attributes, template );
