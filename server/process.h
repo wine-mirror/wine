@@ -22,6 +22,7 @@ struct process
     struct process      *prev;
     struct thread       *thread_list;     /* head of the thread list */
     struct thread       *debugger;        /* thread debugging this process */
+    struct file         *exe_file;        /* main exe file */
     struct object       *handles;         /* handle entries */
     int                  exit_code;       /* process exit code */
     int                  running_threads; /* number of threads running in this process */

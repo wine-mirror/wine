@@ -1003,7 +1003,7 @@ BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR en
     pModule->module32 = hModule32;
 
     /* Create new process */
-    if ( !PROCESS_Create( pModule, cmd_line, env,
+    if ( !PROCESS_Create( pModule, hFile, cmd_line, env,
                           psa, tsa, inherit, flags, startup, info ) )
         return FALSE;
 

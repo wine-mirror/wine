@@ -56,6 +56,7 @@ THHOOK *pThhook = &DefaultThhook;
 
 static UINT16 nTaskCount = 0;
 
+static HTASK initial_task;
 
 /***********************************************************************
  *	     TASK_InstallTHHook
@@ -385,6 +386,8 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow)
     /* Enter task handle into thread and process */
  
     pTask->teb->htask16 = pTask->teb->process->task = hTask;
+    if (!initial_task) initial_task = hTask;
+
     TRACE("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
 
     /* Add the task to the linked list */
@@ -481,7 +484,7 @@ void TASK_KillTask( HTASK16 hTask )
      * The initial task should probably install hooks or something
      * to get informed about task termination :-/
      */
-    Callout.PostAppMessage16( PROCESS_Initial()->task, WM_NULL, 0, 0 );
+    Callout.PostAppMessage16( initial_task, WM_NULL, 0, 0 );
 
     /* Remove the task from the list to be sure we never switch back to it */
     TASK_UnlinkTask( hTask );

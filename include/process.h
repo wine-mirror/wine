@@ -94,10 +94,11 @@ typedef struct _PDB
     void            *server_pid;       /*    Server id for this process */
     HANDLE          *dos_handles;      /*    Handles mapping DOS -> Win32 */
     struct _PDB     *next;             /*    List reference - list of PDB's */
-    WORD            winver;            /*    Windows version figured out by VERSION_GetVersion */
+    WORD             winver;           /*    Windows version figured out by VERSION_GetVersion */
     struct _SERVICETABLE *service_table; /*  Service table for service thread */
     HANDLE           idle_event;       /* event to signal, when the process is idle */
     HANDLE16         main_queue;       /* main message queue of the process */ 
+    HFILE            exe_file;         /* handle to main exe file */
 } PDB;
 
 /* Process flags */
@@ -157,10 +158,9 @@ extern void ENV_FreeEnvironment( PDB *pdb );
 /* scheduler/process.c */
 extern BOOL PROCESS_Init( BOOL win32 );
 extern BOOL PROCESS_IsCurrent( HANDLE handle );
-extern PDB *PROCESS_Initial(void);
 extern PDB *PROCESS_IdToPDB( DWORD id );
 extern void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule );
-extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, 
+extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, HFILE hFile,
                             LPCSTR cmd_line, LPCSTR env, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,

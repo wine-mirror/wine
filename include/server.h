@@ -114,6 +114,7 @@ struct new_process_request
     IN  int          inherit_all;  /* inherit all handles from parent */
     IN  int          create_flags; /* creation flags */
     IN  int          start_flags;  /* flags from startup info */
+    IN  int          exe_file;     /* file handle for main exe */
     IN  int          hstdin;       /* handle for stdin */
     IN  int          hstdout;      /* handle for stdout */
     IN  int          hstderr;      /* handle for stderr */
@@ -151,6 +152,7 @@ struct init_process_request
     IN  void*        ldt_copy;     /* addr of LDT copy */
     IN  void*        ldt_flags;    /* addr of LDT flags */
     OUT int          start_flags;  /* flags from startup info */
+    OUT int          exe_file;     /* file handle for main exe */
     OUT int          hstdin;       /* handle for stdin */
     OUT int          hstdout;      /* handle for stdout */
     OUT int          hstderr;      /* handle for stderr */

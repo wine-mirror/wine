@@ -203,6 +203,7 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
     fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " start_flags=%d,", req->start_flags );
+    fprintf( stderr, " exe_file=%d,", req->exe_file );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
@@ -246,6 +247,7 @@ static void dump_init_process_request( const struct init_process_request *req )
 static void dump_init_process_reply( const struct init_process_request *req )
 {
     fprintf( stderr, " start_flags=%d,", req->start_flags );
+    fprintf( stderr, " exe_file=%d,", req->exe_file );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );

@@ -1072,7 +1072,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     }
 
     SYSLEVEL_ReleaseWin16Lock();
-    pdb = PROCESS_Create( pModule, new_cmd_line, env,
+    pdb = PROCESS_Create( pModule, -1, new_cmd_line, env,
                           NULL, NULL, TRUE, 0, &startup, &info );
     SYSLEVEL_RestoreWin16Lock();
 
@@ -1136,7 +1136,7 @@ BOOL NE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR en
 
     SYSLEVEL_LeaveWin16Lock();
 
-    if ( !PROCESS_Create( pModule, cmd_line, env,
+    if ( !PROCESS_Create( pModule, hFile, cmd_line, env,
                           psa, tsa, inherit, flags, startup, info ) )
         return FALSE;
 

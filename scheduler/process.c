@@ -65,19 +65,6 @@ void PROCESS_WalkProcess(void)
 }
 
 /***********************************************************************
- *           PROCESS_Initial
- *
- * FIXME: This works only while running all processes in the same
- *        address space (or, at least, the initial process is mapped
- *        into all address spaces as is KERNEL32 in Windows 95)
- *
- */
-PDB *PROCESS_Initial(void)
-{
-    return &initial_pdb;
-}
-
-/***********************************************************************
  *           PROCESS_IsCurrent
  *
  * Check if a handle is to the current process
@@ -255,6 +242,7 @@ static BOOL PROCESS_CreateEnvDB(void)
     req->ldt_copy  = ldt_copy;
     req->ldt_flags = ldt_flags_copy;
     if (server_call( REQ_INIT_PROCESS )) return FALSE;
+    pdb->exe_file        = req->exe_file;
     startup->dwFlags     = req->start_flags;
     startup->wShowWindow = req->cmd_show;
     env_db->hStdin  = startup->hStdInput  = req->hstdin;
@@ -529,7 +517,7 @@ void PROCESS_Start(void)
  *
  * Create a new process database and associated info.
  */
-PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
+PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR env,
                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                      BOOL inherit, DWORD flags, STARTUPINFOA *startup,
                      PROCESS_INFORMATION *info )
@@ -553,6 +541,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     req->inherit_all  = inherit;
     req->create_flags = flags;
     req->start_flags  = startup->dwFlags;
+    req->exe_file     = hFile;
     req->event        = load_done_evt;
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {

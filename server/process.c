@@ -72,6 +72,7 @@ static int set_creation_info( struct process *process, struct new_process_reques
         req->inherit_all  = 0;
         req->create_flags = CREATE_NEW_CONSOLE;
         req->start_flags  = STARTF_USESTDHANDLES;
+        req->exe_file     = -1;
         req->hstdin       = -1;
         req->hstdout      = -1;
         req->hstderr      = -1;
@@ -142,6 +143,7 @@ struct thread *create_process( int fd, struct process *parent,
     process->prev            = NULL;
     process->thread_list     = NULL;
     process->debugger        = NULL;
+    process->exe_file        = NULL;
     process->handles         = NULL;
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
@@ -170,6 +172,14 @@ struct thread *create_process( int fd, struct process *parent,
 
     /* alloc a handle for the process itself */
     alloc_handle( process, process, PROCESS_ALL_ACCESS, 0 );
+
+    /* retrieve the main exe file */
+    if (process->info->exe_file != -1)
+    {
+        if (!(process->exe_file = get_file_obj( parent, process->info->exe_file,
+                                                GENERIC_READ ))) goto error;
+        process->info->exe_file = -1;
+    }
 
     /* get the init done event */
     if (process->info->event != -1)
@@ -215,6 +225,7 @@ static void process_destroy( struct object *obj )
     else first_process = process->next;
     if (process->info) free( process->info );
     if (process->init_event) release_object( process->init_event );
+    if (process->exe_file) release_object( process->exe_file );
 }
 
 /* dump a process on stdout for debugging purposes */
@@ -261,6 +272,8 @@ static void process_killed( struct process *process, int exit_code )
     release_object( process->handles );
     process->handles = NULL;
     free_console( process );
+    if (process->exe_file) release_object( process->exe_file );
+    process->exe_file = NULL;
     wake_up( &process->obj, 0 );
     if (!--running_processes)
     {
@@ -548,6 +561,7 @@ DECL_HANDLER(init_process)
     current->process->ldt_copy  = req->ldt_copy;
     current->process->ldt_flags = req->ldt_flags;
     current->process->info = NULL;
+    req->exe_file    = -1;
     req->start_flags = info->start_flags;
     req->hstdin      = info->hstdin;
     req->hstdout     = info->hstdout;
@@ -555,6 +569,9 @@ DECL_HANDLER(init_process)
     req->cmd_show    = info->cmd_show;
     req->env_ptr     = info->env_ptr;
     strcpy( req->cmdline, info->cmdline );
+    if (current->process->exe_file)
+        req->exe_file = alloc_handle( current->process, current->process->exe_file,
+                                      GENERIC_READ, 0 );
     free( info );
 }
 

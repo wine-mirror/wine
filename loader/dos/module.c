@@ -503,7 +503,7 @@ BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env
    return FALSE;
   }
   inherit = TRUE; /* bad hack for inheriting the CreatePipe... */
-  if (!PROCESS_Create( pModule, cmdline, env, 
+  if (!PROCESS_Create( pModule, hFile, cmdline, env, 
                        psa, tsa, inherit, flags, startup, info ))
    return FALSE;
  }
