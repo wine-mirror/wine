@@ -217,14 +217,25 @@ void EVENT_ProcessEvent( XEvent *event )
             if (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
                                           ConfigureNotify, &new_event)) {
                 EVENT_ProcessEvent( &new_event );
-                EVENT_Expose( pWnd, (XExposeEvent *)event );
-                break;
+                if (!EVENT_Expose( pWnd, (XExposeEvent *)event ))
+            	    break;
             }
 
 	    /* no luck at this time, defer Expose event for later */
-	    if (!pWnd->expose_event) pWnd->expose_event = malloc( sizeof(XExposeEvent) );
-	    else { FIXME(x11,"can't handle more than one deferred Expose events\n"); }
-	    *(pWnd->expose_event) = *(XExposeEvent *)event;
+	    /* use "type" for an event counter, it is never rechecked */
+	    if (!pWnd->expose_event) {
+		pWnd->expose_event = malloc( sizeof(XExposeEvent) );
+		pWnd->expose_event[0] = *(XExposeEvent *)event;
+		pWnd->expose_event[0].type = 1;
+	    } else {
+		int i;
+
+		i = ++pWnd->expose_event[0].type;
+		pWnd->expose_event = realloc( pWnd->expose_event,
+					      i * sizeof(XExposeEvent) );
+		pWnd->expose_event[i-1] = *(XExposeEvent *)event;
+		FIXME(x11, "Try and combine Expose events? %d queued.\n", i);
+	    }
 	}
 	break;
 
@@ -237,8 +248,13 @@ void EVENT_ProcessEvent( XEvent *event )
         if (!pWnd) return;
 	EVENT_ConfigureNotify( pWnd, (XConfigureEvent*)event );
 	if (pWnd->expose_event) {
-	    /* process deferred Expose event */
-	    EVENT_Expose( pWnd, pWnd->expose_event );
+	    /* process deferred Expose event(s) */
+	    int i;
+
+	    for (i=0; i<pWnd->expose_event[0].type; i++) {
+	        if(EVENT_Expose( pWnd, &pWnd->expose_event[i] ))
+		    ERR(x11, "Unprocessed expose event discarded\n");
+	    }
 	    free( pWnd->expose_event );
 	    pWnd->expose_event = NULL;
 	}
