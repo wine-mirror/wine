@@ -276,7 +276,8 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
     NULL,                             /* CallDrvRealizeProc */
     NULL,                             /* CallDrvStretchBltProc */
     NULL,                             /* CallDrvExtTextOutProc */
-    NULL                              /* CallDrvGetCharWidth */
+    NULL,                             /* CallDrvGetCharWidth */
+    NULL                              /* CallDrvAbortProc */
 };
 
 const CALLBACKS_TABLE *Callbacks = &CALLBACK_WinelibTable;

@@ -168,7 +168,8 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_long_lwlll,           /* CallDrvRealizeProc */
     (void *)CallTo16_word_lwwwwlwwwwllll,  /* CallDrvStretchBltProc */
     (void *)CallTo16_long_lwwllwlllllw,    /* CallDrvExtTextOutProc */
-    (void *)CallTo16_word_llwwlll          /* CallDrvGetCharWidth */ 
+    (void *)CallTo16_word_llwwlll,         /* CallDrvGetCharWidth */ 
+    (void *)CallTo16_word_ww               /* CallDrvAbortProc */
 };
 
 

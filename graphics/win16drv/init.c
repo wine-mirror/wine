@@ -288,15 +288,22 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	    FIXME(win16drv,"Escape: GETPAIRKERNTABLE ignored.\n");
             nRet = 0;
 	    break;
-          case SETABORTPROC:
+          case SETABORTPROC: {
 		/* FIXME: The AbortProc should be called:
 		- After every write to printer port or spool file
 		- Several times when no more disk space
 		- Before every metafile record when GDI does banding
 		*/ 
-/*	    dc->w.lpfnPrint = (FARPROC16)lpInData; FIXME! */
-            nRet = 1;
+
+       /* save the callback address and call Control with hdc as lpInData */
+	    HDC16 *seghdc = SEGPTR_NEW(HDC16);
+	    *seghdc = dc->hSelf;
+	    dc->w.lpfnPrint = (FARPROC16)lpInData;
+            nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
+				  SEGPTR_GET(seghdc), lpOutData);
+	    SEGPTR_FREE(seghdc);
 	    break;
+	  }
 
           case NEXTBAND:
             {
@@ -364,7 +371,7 @@ BOOL16 WINAPI QueryAbort(HDC16 hdc, INT16 reserved)
 
     if ((!dc) || (!dc->w.lpfnPrint))
 	return TRUE;
-    return dc->w.lpfnPrint(hdc, 0);
+    return Callbacks->CallDrvAbortProc(dc->w.lpfnPrint, hdc, 0);
 }
 
 /**********************************************************************
@@ -661,7 +668,7 @@ int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
 	else
 	  nRet = cch;
 	if (pPrintJob->hDC == 0) {
-	    ERR(print, "hDC == 0 !\n");
+	    TRACE(print, "hDC == 0 so no QueryAbort\n");
 	}
         else if (!(QueryAbort(pPrintJob->hDC, (nRet == SP_OUTOFDISK) ? nRet : 0 )))
 	{
