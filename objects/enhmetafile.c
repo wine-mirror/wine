@@ -425,9 +425,15 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SETWINDOWORGEX:
       {
+          /*
+           * FIXME: The call to SetWindowOrgEx prevents EMFs from being scrolled
+           *        by an application. This is very BAD!!!
+           */
+#if 0
 	PEMRSETWINDOWORGEX pSetWindowOrgEx = (PEMRSETWINDOWORGEX) mr;
 	SetWindowOrgEx(hdc, pSetWindowOrgEx->ptlOrigin.x,
 		       pSetWindowOrgEx->ptlOrigin.y, NULL);
+#endif
 	break;
       }
     case EMR_SETWINDOWEXTEX:
@@ -439,15 +445,9 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SETVIEWPORTORGEX:
       {
-          /*
-           * FIXME: The call to SetViewportOrgEx prevents EMFs from being scrolled
-           *        by an application. This is very bad manner!!!
-           */
-#if 0
 	PEMRSETVIEWPORTORGEX pSetViewportOrgEx = (PEMRSETVIEWPORTORGEX) mr;
 	SetViewportOrgEx(hdc, pSetViewportOrgEx->ptlOrigin.x,
 			 pSetViewportOrgEx->ptlOrigin.y, NULL);
-#endif
 	break;
       }
     case EMR_SETVIEWPORTEXTEX:
