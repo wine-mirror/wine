@@ -309,17 +309,15 @@ static void activate(IDirect3DMaterialImpl* This) {
 		 (float *) &(This->mat.u3.emissive));
     LEAVE_GL();
 
-  if (TRACE_ON(ddraw)) {
-      DPRINTF(" - size  : %ld\n", This->mat.dwSize);
-      DPRINTF(" - diffuse : "); dump_D3DCOLORVALUE(&(This->mat.u.diffuse)); DPRINTF("\n");
-      DPRINTF(" - ambient : "); dump_D3DCOLORVALUE(&(This->mat.u1.ambient)); DPRINTF("\n");
-      DPRINTF(" - specular: "); dump_D3DCOLORVALUE(&(This->mat.u2.specular)); DPRINTF("\n");
-      DPRINTF(" - emissive: "); dump_D3DCOLORVALUE(&(This->mat.u3.emissive)); DPRINTF("\n");
-      DPRINTF(" - power : %f\n", This->mat.u4.power);
-      DPRINTF(" - texture handle : %08lx\n", (DWORD)This->mat.hTexture);
-  }
-
-  return ;
+    if (TRACE_ON(ddraw)) {
+	DPRINTF(" - size  : %ld\n", This->mat.dwSize);
+	DPRINTF(" - diffuse : "); dump_D3DCOLORVALUE(&(This->mat.u.diffuse)); DPRINTF("\n");
+	DPRINTF(" - ambient : "); dump_D3DCOLORVALUE(&(This->mat.u1.ambient)); DPRINTF("\n");
+	DPRINTF(" - specular: "); dump_D3DCOLORVALUE(&(This->mat.u2.specular)); DPRINTF("\n");
+	DPRINTF(" - emissive: "); dump_D3DCOLORVALUE(&(This->mat.u3.emissive)); DPRINTF("\n");
+	DPRINTF(" - power : %f\n", This->mat.u4.power);
+	DPRINTF(" - texture handle : %08lx\n", (DWORD)This->mat.hTexture);
+    }
 }
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)

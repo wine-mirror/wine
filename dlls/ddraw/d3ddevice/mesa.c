@@ -765,17 +765,20 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
     
     TRACE("(%p/%p)->(%08x,%08lx)\n", This, iface, dwLightStateType, dwLightState);
 
-    if (!dwLightStateType && (dwLightStateType > D3DLIGHTSTATE_COLORVERTEX))
+    if (!dwLightStateType && (dwLightStateType > D3DLIGHTSTATE_COLORVERTEX)) {
 	TRACE("Unexpected Light State Type\n");
 	return DDERR_INVALIDPARAMS;
+    }
 	
     if (dwLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */) {
 	IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) dwLightState;
 
 	if (mat != NULL) {
+	    TRACE(" activating material %p.\n", mat);
 	    mat->activate(mat);
 	} else {
 	    ERR(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
+	    return DDERR_INVALIDPARAMS;
 	}
     } else if (dwLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
 	switch (dwLightState) {
@@ -784,15 +787,15 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 	       break;
 	    case D3DCOLOR_RGB:
 	       /* We are already in this mode */
+	       TRACE("Setting color model to RGB (no-op).\n");
 	       break;
 	    default:
 	       ERR("Unknown color model!\n");
-	       break;
+	       return DDERR_INVALIDPARAMS;
 	}
     } else {
         D3DRENDERSTATETYPE rs;
 	switch (dwLightStateType) {
-
 	    case D3DLIGHTSTATE_AMBIENT:       /* 2 */
 		rs = D3DRENDERSTATE_AMBIENT;
 		break;		
@@ -812,7 +815,8 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 		rs = D3DRENDERSTATE_COLORVERTEX;
 		break;
 	    default:
-		break;
+		ERR("Unknown D3DLIGHTSTATETYPE %d.\n", dwLightStateType);
+		return DDERR_INVALIDPARAMS;
 	}
 
 	IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
