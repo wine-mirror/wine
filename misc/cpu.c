@@ -9,7 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "winbase.h"
-#include "wine/winbase16.h"
 #include "wine/winestring.h"
 #include "winreg.h"
 #include "global.h"
@@ -59,8 +58,8 @@ VOID WINAPI GetSystemInfo(
 	cachedsi.u.s.wProcessorArchitecture     = PROCESSOR_ARCHITECTURE_INTEL;
 	cachedsi.dwPageSize 			= VIRTUAL_GetPageSize();
 
-	/* FIXME: better values for the two entries below... */
-	cachedsi.lpMinimumApplicationAddress	= (void *)0x40000000;
+	/* FIXME: the two entries below should be computed somehow... */
+	cachedsi.lpMinimumApplicationAddress	= (void *)0x00010000;
 	cachedsi.lpMaximumApplicationAddress	= (void *)0x7FFFFFFF;
 	cachedsi.dwActiveProcessorMask		= 1;
 	cachedsi.dwNumberOfProcessors		= 1;
@@ -75,7 +74,7 @@ VOID WINAPI GetSystemInfo(
 	/* Hmm, reasonable processor feature defaults? */
 
         /* Create this registry key for all systems */
-	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) {
+	if (RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) {
             WARN("Unable to register CPU information\n");
         }
 
@@ -181,7 +180,7 @@ VOID WINAPI GetSystemInfo(
 			sprintf(buf,"%d",x);
 			if (xhkey)
 				RegCloseKey(xhkey);
-			RegCreateKey16(hkey,buf,&xhkey);
+			RegCreateKeyA(hkey,buf,&xhkey);
 		}
 		if (!strncasecmp(line,"stepping",strlen("stepping"))) {
 			int	x;
@@ -203,7 +202,7 @@ VOID WINAPI GetSystemInfo(
 #else  /* linux */
 	/* FIXME: how do we do this on other systems? */
 
-	RegCreateKey16(hkey,"0",&xhkey);
+	RegCreateKeyA(hkey,"0",&xhkey);
 	RegSetValueExA(xhkey,"Identifier",0,REG_SZ,"CPU 386",strlen("CPU 386"));
 #endif  /* !linux */
 	if (xhkey)
