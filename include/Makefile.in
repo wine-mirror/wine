@@ -5,6 +5,7 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 IDL_SRCS = \
+	oaidl.idl \
 	objidl.idl \
 	unknwn.idl \
 	wtypes.idl
@@ -88,7 +89,6 @@ WINDOWS_INCLUDES = \
 	ntddstor.h \
 	ntsecapi.h \
 	ntstatus.h \
-	oaidl.h \
 	objbase.h \
 	ocidl.h \
 	ole2.h \
@@ -214,10 +214,8 @@ WINE_INCLUDES = \
 	obj_dragdrophelper.h \
 	obj_enumguid.h \
 	obj_enumidlist.h \
-	obj_errorinfo.h \
 	obj_extracticon.h \
 	obj_inplace.h \
-	obj_oleaut.h \
 	obj_olefont.h \
 	obj_oleobj.h \
 	obj_oleundo.h \
