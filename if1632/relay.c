@@ -21,12 +21,12 @@
 
 DEFAULT_DEBUG_CHANNEL(relay)
 
-
 /***********************************************************************
  *           RELAY_Init
  */
 BOOL RELAY_Init(void)
 {
+#ifdef __i386__
     WORD codesel;
 
       /* Allocate the code selector for CallTo16 routines */
@@ -53,6 +53,7 @@ BOOL RELAY_Init(void)
         MAKELONG( (int)CALL32_CBClient_Ret -(int)Call16_Ret_Start, codesel );
     CALL32_CBClientEx_RetAddr = 
         MAKELONG( (int)CALL32_CBClientEx_Ret -(int)Call16_Ret_Start, codesel );
+#endif
 
     /* Create built-in modules */
     if (!BUILTIN_Init()) return FALSE;
@@ -60,6 +61,42 @@ BOOL RELAY_Init(void)
     /* Initialize thunking */
     return THUNK_Init();
 }
+
+/*
+ * Stubs for the CallTo16/CallFrom16 routines on non-Intel architectures
+ * (these will never be called but need to be present to satisfy the linker ...)
+ */
+#ifndef __i386__
+WORD CALLBACK CallTo16Word( FARPROC16 target, INT nArgs )
+{ assert( FALSE ); }
+
+LONG CALLBACK CallTo16Long( FARPROC16 target, INT nArgs )
+{ assert( FALSE ); }
+
+LONG CALLBACK CallTo16RegisterShort( const CONTEXT86 *context, INT nArgs )
+{ assert( FALSE ); }
+
+LONG CALLBACK CallTo16RegisterLong ( const CONTEXT86 *context, INT nArgs )
+{ assert( FALSE ); }
+
+WORD CallFrom16Word( void )       
+{ assert( FALSE ); }
+
+LONG CallFrom16Long( void )       
+{ assert( FALSE ); }
+
+void CallFrom16Register( void )   
+{ assert( FALSE ); }
+
+void CallFrom16Thunk( void )      
+{ assert( FALSE ); }
+
+DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi )
+{ assert( FALSE ); }
+
+DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArgs )
+{ assert( FALSE ); }
+#endif
 
 
 /* from relay32/relay386.c */
