@@ -53,7 +53,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/msdos/int11.c \
 	$(TOPOBJDIR)/msdos/int13.c \
 	$(TOPOBJDIR)/msdos/int15.c \
-	$(TOPOBJDIR)/msdos/int1a.c \
 	$(TOPOBJDIR)/msdos/int20.c \
 	$(TOPOBJDIR)/msdos/int21.c \
 	$(TOPOBJDIR)/msdos/int25.c \
