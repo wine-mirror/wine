@@ -873,6 +873,7 @@ AC_CHECK_HEADERS(\
 	resolv.h \
 	sched.h \
 	socket.h \
+	stdint.h \
 	strings.h \
 	sys/cdio.h \
 	sys/errno.h \
