@@ -623,9 +623,9 @@ void WINPROC_UnmapMsg32ATo32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
 
 /* Multiline edit */
     case EM_GETLINE32:
-        { LPARAM *ptr = (LPARAM *)lParam - 1;  /* get the old lParam */
-	  WORD len = *(WORD *)ptr;
-          lstrcpynWtoA( ((LPSTR)*ptr)+2, ((LPWSTR)(lParam + 1))+1, len );
+        { LPARAM * ptr = (LPARAM *)lParam - 1;  /* get the old lParam */
+	  WORD len = *(WORD *) lParam;
+          lstrcpynWtoA( (LPSTR)*ptr , (LPWSTR)lParam, len );
           HeapFree( SystemHeap, 0, ptr );
         }
         break;
@@ -843,9 +843,9 @@ void WINPROC_UnmapMsg32WTo32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM 
 
 /* Multiline edit */
     case EM_GETLINE32:
-        { LPARAM *ptr = (LPARAM *)lParam - 1;  /* get the old lParam */
+        { LPARAM * ptr = (LPARAM *)lParam - 1;  /* get the old lparam */
 	  WORD len = *(WORD *)ptr;
-          lstrcpynAtoW( ((LPWSTR)*ptr)+1, ((LPSTR)(lParam + 1))+2, len );
+          lstrcpynAtoW( (LPWSTR) *ptr, (LPSTR)lParam, len );
           HeapFree( SystemHeap, 0, ptr );
         }
         break;
