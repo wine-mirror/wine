@@ -97,7 +97,7 @@ HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
 
 
 /***********************************************************************
- * CreatePalette32 [GDI32.53]  Creates a logical color palette
+ * CreatePalette [GDI32.53]  Creates a logical color palette
  *
  * RETURNS
  *    Success: Handle to logical palette
@@ -145,7 +145,7 @@ HPALETTE16 WINAPI CreateHalftonePalette16(
 
 	
 /***********************************************************************
- * CreateHalftonePalette32 [GDI32.47]  Creates a halftone palette
+ * CreateHalftonePalette [GDI32.47]  Creates a halftone palette
  *
  * RETURNS
  *    Success: Handle to logical halftone palette
@@ -201,7 +201,7 @@ UINT16 WINAPI GetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
 
 
 /***********************************************************************
- * GetPaletteEntries32 [GDI32.209]  Retrieves palette entries
+ * GetPaletteEntries [GDI32.209]  Retrieves palette entries
  *
  * RETURNS
  *    Success: Number of entries from logical palette
@@ -253,7 +253,7 @@ UINT16 WINAPI SetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
 
 
 /***********************************************************************
- * SetPaletteEntries32 [GDI32.326]  Sets color values for range in palette
+ * SetPaletteEntries [GDI32.326]  Sets color values for range in palette
  *
  * RETURNS
  *    Success: Number of entries that were set
@@ -284,7 +284,7 @@ UINT WINAPI SetPaletteEntries(
 	    count * sizeof(PALETTEENTRY) );
     PALETTE_ValidateFlags(palPtr->logpalette.palPalEntry, 
 			  palPtr->logpalette.palNumEntries);
-    free(palPtr->mapping);
+    HeapFree( GetProcessHeap(), 0, palPtr->mapping );
     palPtr->mapping = NULL;
     GDI_HEAP_UNLOCK( hpalette );
     return count;
@@ -301,7 +301,7 @@ BOOL16 WINAPI ResizePalette16( HPALETTE16 hPal, UINT16 cEntries )
 
 
 /***********************************************************************
- * ResizePalette32 [GDI32.289]  Resizes logical palette
+ * ResizePalette [GDI32.289]  Resizes logical palette
  *
  * RETURNS
  *    Success: TRUE
@@ -372,7 +372,7 @@ void WINAPI AnimatePalette16( HPALETTE16 hPal, UINT16 StartIndex,
 
 
 /***********************************************************************
- * AnimatePalette32 [GDI32.6]  Replaces entries in logical palette
+ * AnimatePalette [GDI32.6]  Replaces entries in logical palette
  *
  * RETURNS
  *    Success: TRUE
@@ -420,7 +420,7 @@ UINT16 WINAPI SetSystemPaletteUse16( HDC16 hdc, UINT16 use )
 
 
 /***********************************************************************
- * SetSystemPaletteUse32 [GDI32.335]
+ * SetSystemPaletteUse [GDI32.335]
  *
  * RETURNS
  *    Success: Previous system palette
@@ -447,7 +447,7 @@ UINT16 WINAPI GetSystemPaletteUse16( HDC16 hdc )
 
 
 /***********************************************************************
- * GetSystemPaletteUse32 [GDI32.223]  Gets state of system palette
+ * GetSystemPaletteUse [GDI32.223]  Gets state of system palette
  *
  * RETURNS
  *    Current state of system palette
@@ -470,7 +470,7 @@ UINT16 WINAPI GetSystemPaletteEntries16( HDC16 hdc, UINT16 start, UINT16 count,
 
 
 /***********************************************************************
- * GetSystemPaletteEntries32 [GDI32.222]  Gets range of palette entries
+ * GetSystemPaletteEntries [GDI32.222]  Gets range of palette entries
  *
  * RETURNS
  *    Success: Number of entries retrieved from palette
@@ -518,7 +518,7 @@ UINT16 WINAPI GetNearestPaletteIndex16( HPALETTE16 hpalette, COLORREF color )
 
 
 /***********************************************************************
- * GetNearestPaletteIndex32 [GDI32.203]  Gets palette index for color
+ * GetNearestPaletteIndex [GDI32.203]  Gets palette index for color
  *
  * NOTES
  *    Should index be initialized to CLR_INVALID instead of 0?
@@ -555,7 +555,7 @@ COLORREF WINAPI GetNearestColor16( HDC16 hdc, COLORREF color )
 
 
 /***********************************************************************
- * GetNearestColor32 [GDI32.202]  Gets a system color to match
+ * GetNearestColor [GDI32.202]  Gets a system color to match
  *
  * NOTES
  *    Should this return CLR_INVALID instead of FadeCafe?
@@ -608,7 +608,7 @@ BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 {
     if (palette->mapping)
     {
-        free( palette->mapping );
+        HeapFree( GetProcessHeap(), 0, palette->mapping );
         palette->mapping = NULL;
     }
     if (hLastRealizedPalette == hpalette) hLastRealizedPalette = 0;
@@ -621,7 +621,7 @@ BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
  */
 BOOL PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 {
-    free( palette->mapping );
+    HeapFree( GetProcessHeap(), 0, palette->mapping );
     if (hLastRealizedPalette == hpalette) hLastRealizedPalette = 0;
     return GDI_FreeObject( hpalette );
 }
@@ -755,7 +755,7 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
 
 
 /***********************************************************************
- * SelectPalette32 [GDI32.300]  Selects logical palette into DC
+ * SelectPalette [GDI32.300]  Selects logical palette into DC
  *
  * RETURNS
  *    Success: Previous logical palette
@@ -800,7 +800,7 @@ UINT16 WINAPI RealizePalette16( HDC16 hDC )
 
 
 /***********************************************************************
- * RealizePalette32 [GDI32.280]  Maps palette entries to system palette
+ * RealizePalette [GDI32.280]  Maps palette entries to system palette
  *
  * RETURNS
  *    Success: Number of entries in logical palette
@@ -858,7 +858,7 @@ INT16 WINAPI UpdateColors16( HDC16 hDC )
 
 
 /**********************************************************************
- * UpdateColors32 [GDI32.359]  Remaps current colors to logical palette
+ * UpdateColors [GDI32.359]  Remaps current colors to logical palette
  *
  * RETURNS
  *    Success: TRUE

@@ -462,7 +462,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 		      (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL || !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED)) ) 
 		     ? NB_RESERVED_COLORS/2 : -1;
 
-   COLOR_sysPal = (PALETTEENTRY*)malloc(sizeof(PALETTEENTRY)*256);
+   COLOR_sysPal = (PALETTEENTRY*)HeapAlloc(GetProcessHeap(),0,sizeof(PALETTEENTRY)*256);
    if(COLOR_sysPal == NULL) {
        ERR("Can not allocate system palette!\n");
        return FALSE;
@@ -483,7 +483,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
     * RGB->pixel calculation in X11DRV_PALETTE_ToPhysical(). 
     */
 
-   X11DRV_PALETTE_PaletteToXPixel = (int*)malloc(sizeof(int)*256);
+   X11DRV_PALETTE_PaletteToXPixel = (int*)HeapAlloc(GetProcessHeap(),0,sizeof(int)*256);
    if(X11DRV_PALETTE_PaletteToXPixel == NULL) {
        ERR("Out of memory: PaletteToXPixel!\n");
        return FALSE;
@@ -870,8 +870,8 @@ int X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNum, BOOL 
 
     /* initialize palette mapping table */
  
-    mapping = (int*)realloc(palPtr->mapping, sizeof(int)*
-                            palPtr->logpalette.palNumEntries);
+    mapping = HeapReAlloc( GetProcessHeap(), 0, palPtr->mapping,
+                           sizeof(int)*palPtr->logpalette.palNumEntries);
     if(mapping == NULL) {
         ERR("Can not allocate new mapping -- memory exausted!");
         return 0;
