@@ -6,6 +6,59 @@ import	ntdll.dll
 
 debug_channels (ras)
 
+ 1  stub RasAutodialAddressToNetwork
+ 2  stub RasAutodialEntryToNetwork
+ 3  stub RasConnectionNotificationA
+ 4  stub RasConnectionNotificationW
+ 7  stdcall RasDeleteEntryA(str str) RasDeleteEntryA
+ 8  stdcall RasDeleteEntryW(wstr wstr) RasDeleteEntryW
+14  stdcall RasEnumAutodialAddressesA(ptr ptr ptr) RasEnumAutodialAddressesA
+15  stdcall RasEnumAutodialAddressesW(ptr ptr ptr) RasEnumAutodialAddressesW
+19  stdcall RasEnumDevicesA(ptr ptr ptr) RasEnumDevicesA
+20  stdcall RasEnumDevicesW(ptr ptr ptr) RasEnumDevicesW
+24  stdcall RasGetAutodialAddressA(str ptr ptr ptr ptr) RasGetAutodialAddressA
+25  stdcall RasGetAutodialAddressW(wstr ptr ptr ptr ptr) RasGetAutodialAddressW
+26  stdcall RasGetAutodialEnableA(long ptr) RasGetAutodialEnableA
+27  stdcall RasGetAutodialEnableW(long ptr) RasGetAutodialEnableW
+28  stdcall RasGetAutodialParamA(long ptr ptr) RasGetAutodialParamA
+29  stdcall RasGetAutodialParamW(long ptr ptr) RasGetAutodialParamW
+30  stub RasGetConnectResponse
+34  stub RasGetCountryInfoA
+35  stub RasGetCountryInfoW
+36  stub RasGetCredentialsA
+37  stub RasGetCredentialsW
+40  stub RasGetEntryPropertiesA
+41  stub RasGetEntryPropertiesW
+45  stub RasGetHport
+48  stub RasGetSubEntryHandleA
+49  stub RasGetSubEntryHandleW
+50  stub RasGetSubEntryPropertiesA
+51  stub RasGetSubEntryPropertiesW
+55  stub RasRenameEntryA
+56  stub RasRenameEntryW
+57  stdcall RasSetAutodialAddressA(str long ptr long long) RasSetAutodialAddressA
+58  stdcall RasSetAutodialAddressW(wstr long ptr long long) RasSetAutodialAddressW
+59  stdcall RasSetAutodialEnableA(long long) RasSetAutodialEnableA
+60  stdcall RasSetAutodialEnableW(long long) RasSetAutodialEnableW
+61  stdcall RasSetAutodialParamA(long ptr long) RasSetAutodialParamA
+62  stdcall RasSetAutodialParamW(long ptr long) RasSetAutodialParamW
+63  stub RasSetCredentialsA
+64  stub RasSetCredentialsW
+67  stub RasSetEntryPropertiesA
+68  stub RasSetEntryPropertiesW
+69  stub RasSetOldPassword
+70  stub RasSetSubEntryPropertiesA
+71  stub RasSetSubEntryPropertiesW
+72  stub RasValidateEntryNameA
+73  stub RasValidateEntryNameW
+
+11  stub RasDialWow
+18  stub RasEnumConnectionsWow
+23  stub RasEnumEntriesWow
+33  stub RasGetConnectStatusWow
+44  stub RasGetErrorStringWow
+54  stub RasHangUpWow
+
 500 stub	RnaEngineRequest
 501 stub	DialEngineRequest
 502 stub	SuprvRequest
