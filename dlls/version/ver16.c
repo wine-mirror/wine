@@ -14,39 +14,6 @@ DEFAULT_DEBUG_CHANNEL(ver);
 
 
 /*************************************************************************
- * GetFileResourceSize16                     [VER.2]
- */
-DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, 
-                                    SEGPTR spszResType, SEGPTR spszResId,
-                                    LPDWORD lpdwFileOffset )
-{
-    LPCSTR lpszResType = HIWORD( spszResType )? PTR_SEG_TO_LIN( spszResType )
-                                              : (LPCSTR)spszResType;
-    LPCSTR lpszResId = HIWORD( spszResId )? PTR_SEG_TO_LIN( spszResId )
-                                          : (LPCSTR)spszResId;
-
-    return GetFileResourceSize( lpszFileName, 
-                                  lpszResType, lpszResId, lpdwFileOffset );
-}
-
-/*************************************************************************
- * GetFileResource16                         [VER.3]
- */
-DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, 
-                                SEGPTR spszResType, SEGPTR spszResId,
-                                DWORD dwFileOffset, 
-                                DWORD dwResLen, LPVOID lpvData )
-{
-    LPCSTR lpszResType = HIWORD( spszResType )? PTR_SEG_TO_LIN( spszResType )
-                                              : (LPCSTR)spszResType;
-    LPCSTR lpszResId = HIWORD( spszResId )? PTR_SEG_TO_LIN( spszResId )
-                                          : (LPCSTR)spszResId;
-
-    return GetFileResource( lpszFileName, lpszResType, lpszResId,
-                              dwFileOffset, dwResLen, lpvData );
-}
-
-/*************************************************************************
  * GetFileVersionInfoSize16                  [VER.6]
  */
 DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )

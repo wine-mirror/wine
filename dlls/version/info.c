@@ -12,6 +12,7 @@
 #include "winreg.h"
 #include "winver.h"
 #include "wine/winestring.h"
+#include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "winerror.h"
 #include "heap.h"
@@ -272,13 +273,13 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 
     TRACE("(%s,%p)\n", debugstr_a(filename), handle );
 
-    len = GetFileResourceSize( filename,
+    len = GetFileResourceSize16( filename,
                                  MAKEINTRESOURCEA(VS_FILE_INFO),
                                  MAKEINTRESOURCEA(VS_VERSION_INFO),
                                  &offset );
     if (!len) return 0;
 
-    ret = GetFileResource( filename,
+    ret = GetFileResource16( filename,
                              MAKEINTRESOURCEA(VS_FILE_INFO),
                              MAKEINTRESOURCEA(VS_VERSION_INFO),
                              offset, sizeof( buf ), buf );
@@ -327,7 +328,7 @@ DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
-    if ( !GetFileResource( filename, MAKEINTRESOURCEA(VS_FILE_INFO),
+    if ( !GetFileResource16( filename, MAKEINTRESOURCEA(VS_FILE_INFO),
                                        MAKEINTRESOURCEA(VS_VERSION_INFO),
                                        handle, datasize, data ) )
         return FALSE;
@@ -356,7 +357,7 @@ DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(fn), handle, datasize, data );
 
-    if ( !GetFileResource( fn, MAKEINTRESOURCEA(VS_FILE_INFO),
+    if ( !GetFileResource16( fn, MAKEINTRESOURCEA(VS_FILE_INFO),
                                  MAKEINTRESOURCEA(VS_VERSION_INFO),
                                  handle, datasize, data ) )
         retv = FALSE;

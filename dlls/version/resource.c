@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "wine/unicode.h"
+
+#include "heap.h"
 #include "neexe.h"
 #include "module.h"
 #include "winver.h"
@@ -18,6 +21,95 @@
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver);
+
+
+/**********************************************************************
+ *  find_entry_by_id
+ *
+ * Find an entry by id in a resource directory
+ * Copied from loader/pe_resource.c
+ */
+static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                         WORD id, const void *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    int min, max, pos;
+
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    min = dir->NumberOfNamedEntries;
+    max = min + dir->NumberOfIdEntries - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        if (entry[pos].u1.Id == id)
+            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s.OffsetToDirectory);
+        if (entry[pos].u1.Id > id) max = pos - 1;
+        else min = pos + 1;
+    }
+    return NULL;
+}
+
+
+/**********************************************************************
+ *  find_entry_default
+ *
+ * Find a default entry in a resource directory
+ * Copied from loader/pe_resource.c
+ */
+static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                           const void *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s.OffsetToDirectory);
+}
+
+
+/**********************************************************************
+ *  find_entry_by_name
+ *
+ * Find an entry by name in a resource directory
+ * Copied from loader/pe_resource.c
+ */
+static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                           LPCSTR name, const void *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY *ret = NULL;
+    LPWSTR nameW;
+
+    if (!HIWORD(name)) return find_entry_by_id( dir, LOWORD(name), root );
+    if (name[0] == '#')
+    {
+        return find_entry_by_id( dir, atoi(name+1), root );
+    }
+
+    if ((nameW = HEAP_strdupAtoW( GetProcessHeap(), 0, name )))
+    {
+        const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+        const IMAGE_RESOURCE_DIR_STRING_U *str;
+        int min, max, res, pos, namelen = strlenW(nameW);
+
+        entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+        min = 0;
+        max = dir->NumberOfNamedEntries - 1;
+        while (min <= max)
+        {
+            pos = (min + max) / 2;
+            str = (IMAGE_RESOURCE_DIR_STRING_U *)((char *)root + entry[pos].u1.s.NameOffset);
+            res = strncmpiW( nameW, str->NameString, str->Length );
+            if (!res && namelen == str->Length)
+            {
+                ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s.OffsetToDirectory);
+                break;
+            }
+            if (res < 0) max = pos - 1;
+            else min = pos + 1;
+        }
+        HeapFree( GetProcessHeap(), 0, nameW );
+    }
+    return ret;
+}
 
 
 /***********************************************************************
@@ -126,7 +218,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     const IMAGE_RESOURCE_DIRECTORY *resPtr;
     const IMAGE_RESOURCE_DATA_ENTRY *resData;
     int i, nSections;
-
+    BOOL ret = FALSE;
 
     /* Read in PE header */
     pehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
@@ -181,40 +273,29 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     LZSeek( lzfd, sections[i].PointerToRawData, SEEK_SET );
-    if ( resSectionSize != LZRead( lzfd, resSection, resSectionSize ) )
-    {
-        HeapFree( GetProcessHeap(), 0, resSection );
-        HeapFree( GetProcessHeap(), 0, sections );
-        return FALSE;
-    }
+    if ( resSectionSize != LZRead( lzfd, resSection, resSectionSize ) ) goto done;
 
     /* Find resource */
     resDir = resSection + (resDataDir->VirtualAddress - sections[i].VirtualAddress);
 
     resPtr = (PIMAGE_RESOURCE_DIRECTORY)resDir;
-    resPtr = GetResDirEntryA( resPtr, typeid, resDir, FALSE );
+    resPtr = find_entry_by_name( resPtr, typeid, resDir );
     if ( !resPtr )
     {
         TRACE("No typeid entry found for %p\n", typeid );
-        HeapFree( GetProcessHeap(), 0, resSection );
-        HeapFree( GetProcessHeap(), 0, sections );
-        return FALSE;
+        goto done;
     }
-    resPtr = GetResDirEntryA( resPtr, resid, resDir, FALSE );
+    resPtr = find_entry_by_name( resPtr, resid, resDir );
     if ( !resPtr )
     {
         TRACE("No resid entry found for %p\n", resid );
-        HeapFree( GetProcessHeap(), 0, resSection );
-        HeapFree( GetProcessHeap(), 0, sections );
-        return FALSE;
+        goto done;
     }
-    resPtr = GetResDirEntryA( resPtr, 0, resDir, TRUE );
+    resPtr = find_entry_default( resPtr, resDir );
     if ( !resPtr )
     {
         TRACE("No default language entry found for %p\n", resid );
-        HeapFree( GetProcessHeap(), 0, resSection );
-        HeapFree( GetProcessHeap(), 0, sections );
-        return FALSE;
+        goto done;
     }
 
     /* Find resource data section */
@@ -228,27 +309,27 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     if ( i == nSections )
     {
         TRACE("Couldn't find resource data section\n" );
-        HeapFree( GetProcessHeap(), 0, resSection );
-        HeapFree( GetProcessHeap(), 0, sections );
-        return FALSE;
+        goto done;
     }
 
     /* Return resource data */
     if ( resLen ) *resLen = resData->Size;
     if ( resOff ) *resOff = resData->OffsetToData - sections[i].VirtualAddress
                             + sections[i].PointerToRawData;
+    ret = TRUE;
 
+ done:
     HeapFree( GetProcessHeap(), 0, resSection );
     HeapFree( GetProcessHeap(), 0, sections );
-    return TRUE;
+    return ret;
 }
 
-/***********************************************************************
- *           GetFileResourceSize32         [internal]
+
+/*************************************************************************
+ * GetFileResourceSize16                     [VER.2]
  */
-DWORD WINAPI GetFileResourceSize( LPCSTR lpszFileName,
-                                    LPCSTR lpszResType, LPCSTR lpszResId,
-                                    LPDWORD lpdwFileOffset )
+DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
+                                    LPCSTR lpszResId, LPDWORD lpdwFileOffset )
 {
     BOOL retv = FALSE;
     HFILE lzfd;
@@ -279,12 +360,12 @@ DWORD WINAPI GetFileResourceSize( LPCSTR lpszFileName,
     return retv? reslen : 0;
 }
 
-/***********************************************************************
- *           GetFileResource32         [internal]
+
+/*************************************************************************
+ * GetFileResource16                         [VER.3]
  */
-DWORD WINAPI GetFileResource( LPCSTR lpszFileName,
-                                LPCSTR lpszResType, LPCSTR lpszResId,
-                                DWORD dwFileOffset,
+DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
+                                LPCSTR lpszResId, DWORD dwFileOffset,
                                 DWORD dwResLen, LPVOID lpvData )
 {
     BOOL retv = FALSE;
