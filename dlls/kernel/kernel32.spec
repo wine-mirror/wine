@@ -186,7 +186,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall CompareFileTime(ptr ptr) CompareFileTime
 @ stdcall CompareStringA(long long str long str long) CompareStringA
 @ stdcall CompareStringW(long long wstr long wstr long) CompareStringW
-@ stub ConnectNamedPipe
+@ stdcall ConnectNamedPipe(long ptr) ConnectNamedPipe
 @ stdcall ContinueDebugEvent(long long long) ContinueDebugEvent
 @ stdcall ConvertDefaultLocale (long) ConvertDefaultLocale
 @ stdcall ConvertToGlobalHandle(long) ConvertToGlobalHandle
@@ -231,7 +231,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall DeleteFileW(wstr) DeleteFileW
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) DeviceIoControl
 @ stdcall DisableThreadLibraryCalls(long) DisableThreadLibraryCalls
-@ stub DisconnectNamedPipe
+@ stdcall DisconnectNamedPipe(long) DisconnectNamedPipe
 @ stdcall DosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime
 @ stdcall DuplicateHandle(long long long ptr long long long) DuplicateHandle
 @ stub EndUpdateResourceA

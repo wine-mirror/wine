@@ -1593,6 +1593,41 @@ static void dump_create_async_reply( const struct create_async_request *req )
     fprintf( stderr, " timeout=%d", req->timeout );
 }
 
+static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
+{
+    fprintf( stderr, " openmode=%08x,", req->openmode );
+    fprintf( stderr, " pipemode=%08x,", req->pipemode );
+    fprintf( stderr, " maxinstances=%08x,", req->maxinstances );
+    fprintf( stderr, " outsize=%08x,", req->outsize );
+    fprintf( stderr, " insize=%08x,", req->insize );
+    fprintf( stderr, " timeout=%08x,", req->timeout );
+    fprintf( stderr, " filename=" );
+    cur_pos += dump_varargs_string( req );
+}
+
+static void dump_create_named_pipe_reply( const struct create_named_pipe_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_open_named_pipe_request( const struct open_named_pipe_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " filename=" );
+    cur_pos += dump_varargs_string( req );
+}
+
+static void dump_open_named_pipe_reply( const struct open_named_pipe_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_connect_named_pipe_request( const struct connect_named_pipe_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " event=%d", req->event );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -1712,6 +1747,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_serial_info_request,
     (dump_func)dump_set_serial_info_request,
     (dump_func)dump_create_async_request,
+    (dump_func)dump_create_named_pipe_request,
+    (dump_func)dump_open_named_pipe_request,
+    (dump_func)dump_connect_named_pipe_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1833,6 +1871,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_serial_info_reply,
     (dump_func)0,
     (dump_func)dump_create_async_reply,
+    (dump_func)dump_create_named_pipe_reply,
+    (dump_func)dump_open_named_pipe_reply,
+    (dump_func)0,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -1954,6 +1995,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_serial_info",
     "set_serial_info",
     "create_async",
+    "create_named_pipe",
+    "open_named_pipe",
+    "connect_named_pipe",
 };
 
 /* ### make_requests end ### */

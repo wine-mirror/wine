@@ -512,11 +512,35 @@ HANDLE WINAPI CreateNamedPipeA( LPCSTR name, DWORD dwOpenMode,
                                 DWORD nOutBufferSize, DWORD nInBufferSize,
                                 DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES attr )
 {
-    FIXME("(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+
+    TRACE("(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p): stub\n",
           debugstr_a(name), dwOpenMode, dwPipeMode, nMaxInstances,
           nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
-    SetLastError (ERROR_UNKNOWN);
-    return INVALID_HANDLE_VALUE;
+
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_VAR_REQ( create_named_pipe, len * sizeof(WCHAR) )
+    {
+        req->openmode = dwOpenMode;
+        req->pipemode = dwPipeMode;
+        req->maxinstances = nMaxInstances;
+        req->outsize = nOutBufferSize;
+        req->insize = nInBufferSize;
+        req->timeout = nDefaultTimeOut;
+
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        SetLastError(0);
+        SERVER_CALL_ERR();
+        ret = req->handle;
+    }
+    SERVER_END_VAR_REQ;
+    TRACE("Returned %d\n",ret);
+    return ret;
 }
 
 
@@ -528,12 +552,34 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
                                 DWORD nOutBufferSize, DWORD nInBufferSize,
                                 DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES attr )
 {
-    FIXME("(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
+    HANDLE ret;
+    DWORD len = name ? strlenW(name) : 0;
+
+    TRACE("(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p)\n",
           debugstr_w(name), dwOpenMode, dwPipeMode, nMaxInstances,
           nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
 
-    SetLastError (ERROR_UNKNOWN);
-    return INVALID_HANDLE_VALUE;
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_VAR_REQ( create_named_pipe, len * sizeof(WCHAR) )
+    {
+        req->openmode = dwOpenMode;
+        req->pipemode = dwPipeMode;
+        req->maxinstances = nMaxInstances;
+        req->outsize = nOutBufferSize;
+        req->insize = nInBufferSize;
+        req->timeout = nDefaultTimeOut;
+
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        SetLastError(0);
+        SERVER_CALL_ERR();
+        ret = req->handle;
+    }
+    SERVER_END_VAR_REQ;
+    return ret;
 }
 
 
@@ -570,3 +616,56 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
     SetLastError(ERROR_PIPE_NOT_CONNECTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *           ConnectNamedPipe   (KERNEL32.@)
+ */
+BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
+{
+    BOOL ret;
+    HANDLE event;
+
+    TRACE("(%d,%p):stub\n",hPipe, overlapped);
+
+    if(overlapped)
+    {
+        FIXME("overlapped operation not supported\n");
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    event = CreateEventA(NULL,0,0,NULL);
+    if(event==INVALID_HANDLE_VALUE)
+    {
+        ERR("create event failed!\n");
+        return FALSE;
+    }
+
+    SERVER_START_REQ( connect_named_pipe )
+    {
+        req->handle = hPipe;
+        req->event = event;
+        ret = SERVER_CALL_ERR();
+    }
+    SERVER_END_REQ;
+
+    if(ret) {
+        ERR("server returned status %08lx\n",GetLastError());
+        return FALSE;
+    }
+
+    WaitForSingleObject(event,INFINITE);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           DisconnectNamedPipe   (KERNEL32.@)
+ */
+BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
+{
+    FIXME("(%d):stub\n",hPipe);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+

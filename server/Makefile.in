@@ -20,6 +20,7 @@ C_SRCS = \
 	main.c \
 	mapping.c \
 	mutex.c \
+	named_pipe.c \
 	object.c \
 	pipe.c \
 	process.c \

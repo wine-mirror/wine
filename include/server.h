@@ -1489,6 +1489,33 @@ struct create_async_request
 #define ASYNC_TYPE_WRITE 0x02
 #define ASYNC_TYPE_WAIT  0x03
 
+struct create_named_pipe_request
+{
+    REQUEST_HEADER;                 /* request header */
+    IN unsigned int     openmode;
+    IN unsigned int     pipemode;
+    IN unsigned int     maxinstances;
+    IN unsigned int     outsize;
+    IN unsigned int     insize;
+    IN unsigned int     timeout;
+    OUT handle_t        handle;     /* handle to the pipe */
+    IN  VARARG(filename,string);    /* pipe name */
+};
+
+struct open_named_pipe_request
+{
+    REQUEST_HEADER;                 /* request header */
+    IN unsigned int     access;
+    OUT handle_t        handle;     /* handle to the pipe */
+    IN  VARARG(filename,string);    /* pipe name */
+};
+
+struct connect_named_pipe_request
+{
+    REQUEST_HEADER;
+    IN handle_t         handle;
+    IN handle_t         event;      /* set this event when it's ready */
+};
 
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
@@ -1613,6 +1640,9 @@ enum request
     REQ_get_serial_info,
     REQ_set_serial_info,
     REQ_create_async,
+    REQ_create_named_pipe,
+    REQ_open_named_pipe,
+    REQ_connect_named_pipe,
     REQ_NB_REQUESTS
 };
 
@@ -1738,9 +1768,12 @@ union generic_request
     struct get_serial_info_request get_serial_info;
     struct set_serial_info_request set_serial_info;
     struct create_async_request create_async;
+    struct create_named_pipe_request create_named_pipe;
+    struct open_named_pipe_request open_named_pipe;
+    struct connect_named_pipe_request connect_named_pipe;
 };
 
-#define SERVER_PROTOCOL_VERSION 47
+#define SERVER_PROTOCOL_VERSION 48
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

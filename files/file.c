@@ -339,6 +339,31 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
     return ret;
 }
 
+static HANDLE FILE_OpenPipe(LPCSTR name, DWORD access)
+{
+    HANDLE ret;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+
+    TRACE("name %s access %lx\n",name,access);
+
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_VAR_REQ( open_named_pipe, len * sizeof(WCHAR) )
+    {
+        req->access = access;
+
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        SetLastError(0);
+        SERVER_CALL_ERR();
+        ret = req->handle;
+    }
+    SERVER_END_VAR_REQ;
+    TRACE("Returned %d\n",ret);
+    return ret;
+}
 
 /*************************************************************************
  * CreateFileA [KERNEL32.@]  Creates or opens a file or other object
@@ -365,7 +390,7 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
  *
  * BUGS
  *
- * Doesn't support character devices, pipes, template files, or a
+ * Doesn't support character devices, template files, or a
  * lot of the 'attributes' flags yet.
  */
 HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
@@ -406,7 +431,12 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     }
 
     if (!strncmp(filename, "\\\\.\\", 4)) {
-        if (!DOSFS_GetDevice( filename ))
+        if(!strncasecmp(&filename[4],"pipe\\",5))
+        {
+            TRACE("Opening a pipe: %s\n",filename);
+            return FILE_OpenPipe(filename,access);
+        }
+        else if (!DOSFS_GetDevice( filename ))
         {
             ret = DEVICE_Open( filename+4, access, sa );
             goto done;
