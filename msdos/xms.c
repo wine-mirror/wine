@@ -10,12 +10,10 @@
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "global.h"
 #include "module.h"
 #include "miscemu.h"
 #include "toolhelp.h"
 #include "debugtools.h"
-#include "selectors.h"
 
 DEFAULT_DEBUG_CHANNEL(int31);
 
@@ -58,7 +56,7 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
 	mmi.dwSize = sizeof(mmi);
 	MemManInfo16(&mmi);
         AX_reg(context) = mmi.dwLargestFreeBlock >> 10;
-	    DX_reg(context) = (mmi.dwFreePages * VIRTUAL_GetPageSize()) >> 10;
+        DX_reg(context) = (mmi.dwFreePages * mmi.wPageSize) >> 10;
         TRACE("returning largest %dK, total %dK\n", AX_reg(context), DX_reg(context));
     }
     break;

@@ -8,9 +8,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include "config.h"
+#include "wine/port.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "global.h"
 #include "winnt.h"
 #include "winerror.h"
 #include "debugtools.h"
@@ -55,7 +56,7 @@ VOID WINAPI GetSystemInfo(
 	 * FIXME: perhaps overrideable with precompiler flags?
 	 */
 	cachedsi.u.s.wProcessorArchitecture     = PROCESSOR_ARCHITECTURE_INTEL;
-	cachedsi.dwPageSize 			= VIRTUAL_GetPageSize();
+	cachedsi.dwPageSize 			= getpagesize();
 
 	/* FIXME: the two entries below should be computed somehow... */
 	cachedsi.lpMinimumApplicationAddress	= (void *)0x00010000;

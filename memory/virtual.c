@@ -103,6 +103,7 @@ static UINT page_size;
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
 
+static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size, DWORD offset, int prot, int flags );
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -592,24 +593,6 @@ DECL_GLOBAL_CONSTRUCTOR(VIRTUAL_Init)
 
 
 /***********************************************************************
- *           VIRTUAL_GetPageSize
- */
-DWORD VIRTUAL_GetPageSize(void)
-{
-    return 1 << page_shift;
-}
-
-
-/***********************************************************************
- *           VIRTUAL_GetGranularity
- */
-DWORD VIRTUAL_GetGranularity(void)
-{
-    return granularity_mask + 1;
-}
-
-
-/***********************************************************************
  *           VIRTUAL_SetFaultHandler
  */
 BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
@@ -661,8 +644,8 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
  * Wrapper for mmap() that handles anonymous mappings portably,
  * and falls back to read if mmap of a file fails.
  */
-LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
-                     DWORD offset, int prot, int flags )
+static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
+                            DWORD offset, int prot, int flags )
 {
     int pos;
     LPVOID ret;
@@ -1645,31 +1628,4 @@ BOOL WINAPI UnmapViewOfFile(
     }
     VIRTUAL_DeleteView( view );
     return TRUE;
-}
-
-/***********************************************************************
- *             VIRTUAL_MapFileW
- *
- * Helper function to map a file to memory:
- *  name			-	file name 
- *  [RETURN] ptr		-	pointer to mapped file
- */
-LPVOID VIRTUAL_MapFileW( LPCWSTR name )
-{
-    HANDLE hFile, hMapping;
-    LPVOID ptr = NULL;
-
-    hFile = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ, NULL, 
-                           OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
-    if (hFile != INVALID_HANDLE_VALUE)
-    {
-        hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
-        CloseHandle( hFile );
-        if (hMapping)
-        {
-            ptr = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
-            CloseHandle( hMapping );
-        }
-    }
-    return ptr;
 }

@@ -9,6 +9,7 @@
 
 #include "windef.h"
 #include "wine/windef16.h"
+#include "wine/library.h"
 
 /* memory/global.c */
 extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, const void *ptr, DWORD size,
@@ -18,12 +19,6 @@ extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size );
 extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
 
 /* memory/virtual.c */
-extern DWORD VIRTUAL_GetPageSize(void);
-extern DWORD VIRTUAL_GetGranularity(void);
-extern LPVOID VIRTUAL_MapFileW( LPCWSTR name );
-extern LPVOID VIRTUAL_mmap( int unix_handle, LPVOID start, DWORD size,
-                            DWORD offset, int prot, int flags );
-
 typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
 extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
 extern DWORD VIRTUAL_HandleFault(LPCVOID addr);

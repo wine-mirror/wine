@@ -29,10 +29,8 @@ static int *ph_errno = &h_errno;
 #endif
 #include "wine/port.h"
 #include "thread.h"
-#include "selectors.h"
 #include "server.h"
 #include "winbase.h"
-#include "global.h"
 #include "wine/exception.h"
 #include "debugtools.h"
 
@@ -282,7 +280,7 @@ static LPVOID SYSDEPS_LargeStackLow = NULL;
 
 void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
 {
-    DWORD page_size = VIRTUAL_GetPageSize();
+    DWORD page_size = getpagesize();
     DWORD cur_stack = (((DWORD)&func) + (page_size-1)) & ~(page_size-1);
 
     TEB *teb = NtCurrentTeb();

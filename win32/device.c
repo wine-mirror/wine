@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include "wine/port.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -35,7 +36,6 @@
 #include "stackframe.h"
 #include "server.h"
 #include "debugtools.h"
-#include "global.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);
 
@@ -678,7 +678,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
       {
 	LPVOID address;
 	LPVOID ret;
-	DWORD psize = VIRTUAL_GetPageSize();
+	DWORD psize = getpagesize();
 	ULONG page   = (ULONG) stack32_pop( context );
 	ULONG npages = (ULONG) stack32_pop( context );
 	ULONG flags  = (ULONG) stack32_pop( context );
@@ -708,7 +708,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	LPVOID address;
 	LPVOID ret;
 	DWORD virt_perm;
-	DWORD psize = VIRTUAL_GetPageSize();
+	DWORD psize = getpagesize();
 	ULONG page   = (ULONG) stack32_pop( context );
 	ULONG npages = (ULONG) stack32_pop( context );
 	ULONG hpd  = (ULONG) stack32_pop( context );
@@ -737,7 +737,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
       {
 	LPVOID address;
 	BOOL ret;
-	DWORD psize = VIRTUAL_GetPageSize();
+	DWORD psize = getpagesize();
 	ULONG page = (ULONG) stack32_pop( context );
 	ULONG npages = (ULONG) stack32_pop( context );
 	ULONG flags = (ULONG) stack32_pop( context );
@@ -757,7 +757,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	DWORD virt_new_perm;
 	MEMORY_BASIC_INFORMATION mbi;
 	LPVOID address;
-	DWORD psize = VIRTUAL_GetPageSize();
+	DWORD psize = getpagesize();
 	ULONG page = stack32_pop ( context );
 	ULONG npages = stack32_pop ( context );
 	ULONG permand = stack32_pop ( context );
