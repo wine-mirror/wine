@@ -15,7 +15,7 @@ is a Wine tool which aims to help:
 .nf
 A: Reimplementing a Win32 DLL for use within Wine, or
 .nf
-B: Compiling a Win32 application with Winelib that uses x86 DLLs
+B: Compiling a Win32 application with Winelib that uses x86 DLL's
 .PP
 For both tasks in order to be able to link to the Win functions some
 glue code is needed.  This 'glue' comes in the form of a \fI.spec\fR file.
@@ -26,13 +26,17 @@ can then resolve calls made to DLL functions.
 Creating a \fI.spec\fR file is a labour intensive task during which it is
 easy to make a mistake. The idea of \fBwinedump\fR is to automate this task
 and create the majority of the support code needed for your DLL. In
-addition you can have \fBwinedump\fR create code to help you reimplement a
+addition you can have \fBwinedump\fR create code to help you re-implement a
 DLL, by providing tracing of calls to the DLL, and (in some cases)
 automatically determining the parameters, calling conventions, and
-return values of the DLLs functions.
+return values of the DLL's functions.
 .PP
-\fBwinedump\fR can be also used to dump other information from PE files
-or to demangle C++ symbols.
+Another use for this tool is to display (dump) information about a 32bit
+DLL or PE format image file. When used in this way \fBwinedump\fR functions
+similarly to tools such as pedump provided by many Win32 compiler
+vendors.
+.PP
+Finally \fBwinedump\fR can be also used to demangle C++ symbols.
 .SH MODES
 .B winedump
 can be used in several different modes.  The first argument to the
@@ -72,13 +76,16 @@ option. Currently only the import, export and debug
 directories are implemented.
 .IP \fB-x\fR
 Dumps everything.
+This command prints all available information about the
+file. You may wish to pipe the output through more/less or
+into a file, since a lot of output will be produced.
 .PP
 .B Spec mode:
 .IP \fI<dll>\fR
 Use dll for input file and generate implementation code.
 .IP "\fB-I \fIdir\fR"
 Look for prototypes in '\fIdir\fR' (implies \fB-c\fR). In the case of
-Windows DLLs, this could be either the standard include
+Windows DLL's, this could be either the standard include
 directory from your compiler, or a SDK include directory.
 If you have a text document with prototypes (such as
 documentation) that can be used also, however you may need
@@ -105,6 +112,8 @@ for the next step of the process, code generation.
 TRACE arguments (implies \fB-c\fR).
 This option produces the same code as \fB-c\fR, except that
 arguments are printed out when the function is called.
+Structs that are passed by value are printed as "struct",
+and functions that take variable argument lists print "...".
 .IP "\fB-f \fIdll\fR"
 Forward calls to '\fIdll\fR' (implies \fB-t\fR).
 This is the most complicated level of code generation. The
@@ -125,6 +134,7 @@ files 'foo.spec', 'foo_main.c' etc, and prefixes any
 functions generated with 'FOO_'.  If '-o bar' is given,
 these will become 'bar.spec', 'bar_main.c' and 'BAR_'
 respectively.
+This option is mostly useful when generating a forwarding DLL.
 .IP \fB-C\fR
 Assume __cdecl calls (default: __stdcall).
 If winebuild cannot determine the calling convention,
@@ -153,6 +163,13 @@ Don't show progress (quiet).
 No output is printed unless a fatal error is encountered.
 .IP \fB-v\fR
 Show lots of detail while working (verbose).
+There are 3 levels of output while winedump is running. The
+default level, when neither -q or -v are given, prints the
+number of exported functions found in the dll, followed by
+the name of each function as it is processed, and a status
+indication of whether it was processed OK.  With -v given, a
+lot of information is dumped while winedump works: this is
+intended to help debug any problems.
 .PP
 .B Sym mode:
 .IP \fI<sym>\fR
