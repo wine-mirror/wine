@@ -1933,16 +1933,7 @@ void __wine_process_init( int argc, char *argv[] )
     ANSI_STRING func_name;
     void (* DECLSPEC_NORETURN init_func)();
 
-    /* setup the server connection */
-    wine_server_init_process();
-    wine_server_init_thread();
-
-    /* create the process heap */
-    if (!(NtCurrentTeb()->Peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
-    {
-        MESSAGE( "wine: failed to create the process heap\n" );
-        exit(1);
-    }
+    thread_init();
 
     /* setup the load callback and create ntdll modref */
     wine_dll_set_callback( load_builtin_callback );

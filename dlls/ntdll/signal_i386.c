@@ -466,7 +466,7 @@ static inline int get_error_code( const SIGCONTEXT *sigcontext )
  */
 static inline void *get_signal_stack(void)
 {
-    return NtCurrentTeb()->DeallocationStack;
+    return (char *)NtCurrentTeb() + 4096;
 }
 
 
@@ -831,19 +831,20 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         SYSDEPS_AbortThread(1);
     }
 
-    if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit + SIGNAL_STACK_SIZE + 4096 ||
+    if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit + 4096 ||
         (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
     {
-        UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit + SIGNAL_STACK_SIZE + 4096 - (char *)stack;
+        UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit + 4096 - (char *)stack;
         if (diff < 4096)
+        {
             ERR( "stack overflow %u bytes in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
                  diff, GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        else
-            ERR( "exception outside of stack limits in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
-                 GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
-                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        SYSDEPS_AbortThread(1);
+            SYSDEPS_AbortThread(1);
+        }
+        else WARN( "exception outside of stack limits in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
+                   GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
+                   NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
     }
 
     stack--;  /* push the stack_layout structure */

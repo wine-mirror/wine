@@ -58,7 +58,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 struct thread_cleanup_info
 {
     void *stack_base;
-    int   stack_size;
+    ULONG stack_size;
+    void *teb_base;
+    ULONG teb_size;
     int   status;
 };
 
@@ -126,6 +128,7 @@ static void cleanup_thread( void *ptr )
     /* copy the info structure since it is on the stack we will free */
     struct thread_cleanup_info info = *(struct thread_cleanup_info *)ptr;
     munmap( info.stack_base, info.stack_size );
+    munmap( info.teb_base, info.teb_size );
     wine_ldt_free_fs( wine_get_fs() );
 #ifdef HAVE__LWP_CREATE
     _lwp_exit();
@@ -196,15 +199,13 @@ int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb )
  */
 void SYSDEPS_ExitThread( int status )
 {
-    TEB *teb = NtCurrentTeb();
-    DWORD size = 0;
-
 #ifdef HAVE_NPTL
     static TEB *teb_to_free;
     TEB *free_teb;
 
-    if ((free_teb = interlocked_xchg_ptr( (void **)&teb_to_free, teb )) != NULL)
+    if ((free_teb = interlocked_xchg_ptr( (void **)&teb_to_free, NtCurrentTeb() )) != NULL)
     {
+        DWORD size = 0;
         void *ptr;
 
         TRACE("freeing prev teb %p stack %p fs %04x\n",
@@ -214,26 +215,28 @@ void SYSDEPS_ExitThread( int status )
         wine_ldt_free_fs( free_teb->teb_sel );
         ptr = free_teb->DeallocationStack;
         NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
+        ptr = free_teb;
+        NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE | MEM_SYSTEM );
+        munmap( ptr, size );
     }
     SYSDEPS_AbortThread( status );
 #else
     struct thread_cleanup_info info;
-    MEMORY_BASIC_INFORMATION meminfo;
-
-    NtQueryVirtualMemory( GetCurrentProcess(), teb->Tib.StackBase, MemoryBasicInformation,
-                          &meminfo, sizeof(meminfo), NULL );
-    info.stack_base = meminfo.AllocationBase;
-    info.stack_size = meminfo.RegionSize + ((char *)teb->Tib.StackBase - (char *)meminfo.AllocationBase);
-    info.status     = status;
 
     SIGNAL_Block();
-    size = 0;
-    NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE | MEM_SYSTEM );
-    close( teb->wait_fd[0] );
-    close( teb->wait_fd[1] );
-    close( teb->reply_fd );
-    close( teb->request_fd );
-    SIGNAL_Reset();
+    info.status     = status;
+    info.stack_base = NtCurrentTeb()->DeallocationStack;
+    info.stack_size = 0;
+    NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base,
+                         &info.stack_size, MEM_RELEASE | MEM_SYSTEM );
+    info.teb_base = NtCurrentTeb();
+    info.teb_size = 0;
+    NtFreeVirtualMemory( GetCurrentProcess(), &info.teb_base,
+                         &info.teb_size, MEM_RELEASE | MEM_SYSTEM );
+    close( NtCurrentTeb()->wait_fd[0] );
+    close( NtCurrentTeb()->wait_fd[1] );
+    close( NtCurrentTeb()->reply_fd );
+    close( NtCurrentTeb()->request_fd );
     wine_switch_to_stack( cleanup_thread, &info, get_temp_stack() );
 #endif
 }

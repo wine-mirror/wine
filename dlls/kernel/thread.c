@@ -55,32 +55,22 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
  */
 TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
 {
-    DWORD old_prot, total_size;
+    DWORD old_prot;
     DWORD page_size = getpagesize();
     void *base;
 
-    /* Memory layout in allocated block:
-     *
-     *   size                 contents
-     * SIGNAL_STACK_SIZE   signal stack
-     * stack_size          normal stack (including a PAGE_GUARD page at the bottom)
-     * 1 page              TEB (except for initial thread)
-     */
-
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
-    total_size = stack_size + SIGNAL_STACK_SIZE;
 
-    if (!(base = VirtualAlloc( NULL, total_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
+    if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
         return NULL;
 
     teb->DeallocationStack = base;
-    teb->Tib.StackBase     = (char *)base + SIGNAL_STACK_SIZE + stack_size;
+    teb->Tib.StackBase     = (char *)base + stack_size;
     teb->Tib.StackLimit    = base;  /* note: limit is lower than base since the stack grows down */
 
     /* Setup guard pages */
 
-    VirtualProtect( (char *)base + SIGNAL_STACK_SIZE, 1,
-                    PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
+    VirtualProtect( base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
     return teb;
 }
 

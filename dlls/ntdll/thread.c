@@ -21,14 +21,67 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <sys/types.h>
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
 #include "ntstatus.h"
 #include "thread.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
+
+static PEB peb;
+static PEB_LDR_DATA ldr;
+static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
+static RTL_BITMAP tls_bitmap;
+static LIST_ENTRY tls_links;
+static struct debug_info info;  /* debug info for initial thread */
+
+
+/***********************************************************************
+ *           alloc_teb
+ */
+static TEB *alloc_teb( ULONG *size )
+{
+    TEB *teb;
+
+    *size = SIGNAL_STACK_SIZE + sizeof(TEB);
+    teb = wine_anon_mmap( NULL, *size, PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+    if (teb == (TEB *)-1) return NULL;
+    if (!(teb->teb_sel = wine_ldt_alloc_fs()))
+    {
+        munmap( teb, *size );
+        return NULL;
+    }
+    teb->Tib.ExceptionList = (void *)~0UL;
+    teb->Tib.Self          = &teb->Tib;
+    teb->Peb               = &peb;
+    teb->StaticUnicodeString.Buffer        = teb->StaticUnicodeBuffer;
+    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    return teb;
+}
+
+
+/***********************************************************************
+ *           free_teb
+ */
+static inline void free_teb( TEB *teb )
+{
+    ULONG size = 0;
+    void *addr = teb;
+
+    if (teb->DeallocationStack)
+        NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
+    NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
+    wine_ldt_free_fs( teb->teb_sel );
+    munmap( teb, SIGNAL_STACK_SIZE + sizeof(TEB) );
+}
 
 
 /***********************************************************************
@@ -38,34 +91,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-DECL_GLOBAL_CONSTRUCTOR(thread_init)
+void thread_init(void)
 {
-    static TEB teb;
-    static PEB peb;
-    static PEB_LDR_DATA ldr;
-    static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
-    static RTL_BITMAP tls_bitmap;
-    static struct debug_info info;  /* debug info for initial thread */
-
-    if (teb.Tib.Self) return;  /* do it only once */
+    TEB *teb;
+    void *addr;
+    ULONG size;
 
     info.str_pos = info.strings;
     info.out_pos = info.output;
-
-    teb.Tib.ExceptionList = (void *)~0UL;
-    teb.Tib.StackBase     = (void *)~0UL;
-    teb.Tib.Self          = &teb.Tib;
-    teb.Peb               = &peb;
-    teb.tibflags          = TEBF_WIN32;
-    teb.request_fd        = -1;
-    teb.reply_fd          = -1;
-    teb.wait_fd[0]        = -1;
-    teb.wait_fd[1]        = -1;
-    teb.teb_sel           = wine_ldt_alloc_fs();
-    teb.debug_info        = &info;
-    teb.StaticUnicodeString.MaximumLength = sizeof(teb.StaticUnicodeBuffer);
-    teb.StaticUnicodeString.Buffer        = teb.StaticUnicodeBuffer;
-    InitializeListHead( &teb.TlsLinks );
 
     peb.ProcessParameters = &params;
     peb.TlsBitmap         = &tls_bitmap;
@@ -74,12 +107,42 @@ DECL_GLOBAL_CONSTRUCTOR(thread_init)
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
+    InitializeListHead( &tls_links );
 
-    SYSDEPS_SetCurThread( &teb );
+    teb = alloc_teb( &size );
+    teb->Tib.StackBase = (void *)~0UL;
+    teb->tibflags      = TEBF_WIN32;
+    teb->request_fd    = -1;
+    teb->reply_fd      = -1;
+    teb->wait_fd[0]    = -1;
+    teb->wait_fd[1]    = -1;
+    teb->debug_info    = &info;
+    InsertHeadList( &tls_links, &teb->TlsLinks );
+
+    SYSDEPS_SetCurThread( teb );
+
+    /* setup the server connection */
+    wine_server_init_process();
+    wine_server_init_thread();
+
+    /* create a memory view for the TEB */
+    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, teb, &size,
+                             MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+
+    /* create the process heap */
+    if (!(peb.ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
+    {
+        MESSAGE( "wine: failed to create the process heap\n" );
+        exit(1);
+    }
 }
 
 
-/* startup routine for a newly created thread */
+/***********************************************************************
+ *           start_thread
+ *
+ * Startup routine for a newly created thread.
+ */
 static void start_thread( TEB *teb )
 {
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)teb->entry_point;
@@ -92,6 +155,10 @@ static void start_thread( TEB *teb )
     SYSDEPS_SetCurThread( teb );
     SIGNAL_Init();
     wine_server_init_thread();
+
+    RtlAcquirePebLock();
+    InsertHeadList( &tls_links, &teb->TlsLinks );
+    RtlReleasePebLock();
 
     NtTerminateThread( GetCurrentThread(), func( NtCurrentTeb()->entry_arg ) );
 }
@@ -107,11 +174,10 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
     HANDLE handle = 0;
-    TEB *teb;
+    TEB *teb = NULL;
     DWORD tid = 0;
-    SIZE_T total_size;
-    SIZE_T page_size = getpagesize();
-    void *ptr, *base = NULL;
+    ULONG size;
+    void *base;
     int request_pipe[2];
     NTSTATUS status;
 
@@ -135,49 +201,13 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
     if (status) goto error;
 
-    if (!stack_reserve || !stack_commit)
+    if (!(teb = alloc_teb( &size )))
     {
-        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
-        if (!stack_reserve) stack_reserve = nt->OptionalHeader.SizeOfStackReserve;
-        if (!stack_commit) stack_commit = nt->OptionalHeader.SizeOfStackCommit;
-    }
-    if (stack_reserve < stack_commit) stack_reserve = stack_commit;
-    stack_reserve = (stack_reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
-
-    /* Memory layout in allocated block:
-     *
-     *   size                 contents
-     * SIGNAL_STACK_SIZE   signal stack
-     * stack_size          normal stack (including a PAGE_GUARD page at the bottom)
-     * 1 page              TEB (except for initial thread)
-     */
-
-    total_size = stack_reserve + SIGNAL_STACK_SIZE + page_size;
-    if ((status = NtAllocateVirtualMemory( GetCurrentProcess(), &base, NULL, &total_size,
-                                           MEM_COMMIT, PAGE_EXECUTE_READWRITE )) != STATUS_SUCCESS)
-        goto error;
-
-    teb = (TEB *)((char *)base + total_size - page_size);
-
-    if (!(teb->teb_sel = wine_ldt_alloc_fs()))
-    {
-        status = STATUS_TOO_MANY_THREADS;
+        status = STATUS_NO_MEMORY;
         goto error;
     }
-
-    teb->Tib.ExceptionList          = (void *)~0UL;
-    teb->Tib.StackBase              = (char *)base + SIGNAL_STACK_SIZE + stack_reserve;
-    teb->Tib.StackLimit             = base;  /* limit is lower than base since the stack grows down */
-    teb->Tib.Self                   = &teb->Tib;
-    teb->ClientId.UniqueProcess     = (HANDLE)GetCurrentProcessId();
-    teb->ClientId.UniqueThread      = (HANDLE)tid;
-    teb->Peb                        = NtCurrentTeb()->Peb;
-    teb->DeallocationStack          = base;
-    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
-    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
-    RtlAcquirePebLock();
-    InsertHeadList( &NtCurrentTeb()->TlsLinks, &teb->TlsLinks );
-    RtlReleasePebLock();
+    teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();
+    teb->ClientId.UniqueThread  = (HANDLE)tid;
 
     teb->tibflags    = TEBF_WIN32;
     teb->exit_code   = STILL_ACTIVE;
@@ -189,17 +219,33 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->entry_arg   = param;
     teb->htask16     = NtCurrentTeb()->htask16;
 
+    NtAllocateVirtualMemory( GetCurrentProcess(), &base, teb, &size,
+                             MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+
+    if (!stack_reserve || !stack_commit)
+    {
+        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+        if (!stack_reserve) stack_reserve = nt->OptionalHeader.SizeOfStackReserve;
+        if (!stack_commit) stack_commit = nt->OptionalHeader.SizeOfStackCommit;
+    }
+    if (stack_reserve < stack_commit) stack_reserve = stack_commit;
+    stack_reserve = (stack_reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
+
+    status = NtAllocateVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, NULL,
+                                      &stack_reserve, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    if (status != STATUS_SUCCESS) goto error;
+
+    /* limit is lower than base since the stack grows down */
+    teb->Tib.StackBase  = (char *)teb->DeallocationStack + stack_reserve;
+    teb->Tib.StackLimit = teb->DeallocationStack;
+
     /* setup the guard page */
-    ptr = (char *)base + SIGNAL_STACK_SIZE;
-    NtProtectVirtualMemory( GetCurrentProcess(), &ptr, &page_size,
+    size = 1;
+    NtProtectVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size,
                             PAGE_EXECUTE_READWRITE | PAGE_GUARD, NULL );
 
     if (SYSDEPS_SpawnThread( start_thread, teb ) == -1)
     {
-        RtlAcquirePebLock();
-        RemoveEntryList( &teb->TlsLinks );
-        RtlReleasePebLock();
-        wine_ldt_free_fs( teb->teb_sel );
         status = STATUS_TOO_MANY_THREADS;
         goto error;
     }
@@ -211,11 +257,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     return STATUS_SUCCESS;
 
 error:
-    if (base)
-    {
-        total_size = 0;
-        NtFreeVirtualMemory( GetCurrentProcess(), &base, &total_size, MEM_RELEASE );
-    }
+    if (teb) free_teb( teb );
     if (handle) NtClose( handle );
     close( request_pipe[1] );
     return status;
@@ -444,19 +486,18 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadZeroTlsCell:
         if (handle == GetCurrentThread())
         {
-            LIST_ENTRY *entry = &NtCurrentTeb()->TlsLinks;
+            LIST_ENTRY *entry;
             DWORD index;
 
             if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
             index = *(DWORD *)data;
             if (index >= 64) return STATUS_INVALID_PARAMETER;
             RtlAcquirePebLock();
-            do
+            for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
             {
                 TEB *teb = CONTAINING_RECORD(entry, TEB, TlsLinks);
                 teb->TlsSlots[index] = 0;
-                entry = entry->Flink;
-            } while (entry != &NtCurrentTeb()->TlsLinks);
+            }
             RtlReleasePebLock();
             return STATUS_SUCCESS;
         }

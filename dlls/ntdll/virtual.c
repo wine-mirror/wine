@@ -834,7 +834,7 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
         {
             BYTE vprot = view->prot[((char *)addr - (char *)view->base) >> page_shift];
             void *page = (void *)((UINT_PTR)addr & ~page_mask);
-            char *stack = (char *)NtCurrentTeb()->DeallocationStack + SIGNAL_STACK_SIZE;
+            char *stack = NtCurrentTeb()->Tib.StackLimit;
             if (vprot & VPROT_GUARD)
             {
                 VIRTUAL_SetProt( view, page, page_mask + 1, vprot & ~VPROT_GUARD );
@@ -1101,8 +1101,12 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
 
     if (type & MEM_SYSTEM)
     {
+        /* return the values that the caller should use to unmap the area */
+        *addr_ptr = view->base;
+        *size_ptr = view->size;
         view->flags |= VFLAG_SYSTEM;
-        type &= ~MEM_SYSTEM;
+        VIRTUAL_DeleteView( view );
+        return STATUS_SUCCESS;
     }
 
     if ((type != MEM_DECOMMIT) && (type != MEM_RELEASE))

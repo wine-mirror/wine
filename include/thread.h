@@ -140,14 +140,6 @@ typedef struct _TEB
 #define TEBF_WIN32  0x0001
 #define TEBF_TRAP   0x0002
 
-/* The per-thread signal stack size */
-#ifdef __i386__
-#define SIGNAL_STACK_SIZE  0x100000  /* 1Mb  FIXME: should be much smaller than that */
-#else
-#define SIGNAL_STACK_SIZE  0  /* we don't need a signal stack on non-i386 */
-#endif
-
-
 /* scheduler/thread.c */
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 
