@@ -176,6 +176,8 @@ int main(int argc, char **argv)
 			use_msvcrt = 1;
 		    else if (strcmp("-mwindows", argv[i]) == 0)
 			gui_app = 1;
+		    else if (strcmp("-mconsole", argv[i]) == 0)
+			gui_app = 0;
 		    break;
                 case 'n':
                     if (strcmp("-nostdinc", argv[i]) == 0)
@@ -321,6 +323,8 @@ int main(int argc, char **argv)
 	    if (strcmp("-mno-cygwin", argv[j]) == 0)
 	    	; /* ignore this option */
 	    else if (strcmp("-mwindows", argv[j]) == 0)
+	    	; /* ignore this option */
+	    else if (strcmp("-mconsole", argv[j]) == 0)
 	    	; /* ignore this option */
 	    else if (strcmp("-mthreads", argv[j]) == 0)
 	    	; /* ignore this option */
