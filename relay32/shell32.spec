@@ -8,18 +8,18 @@ init	Shell32LibMain
 # This list was updated to dll version 4.72
 
    2 stdcall SHChangeNotifyRegister(long long long long long long) SHChangeNotifyRegister
-   3 stub CheckEscapesA   # exported by name
+   3 stub CheckEscapesA@8
    4 stdcall SHChangeNotifyDeregister (long long) SHChangeNotifyDeregister
    5 stub SHChangeNotifyUpdateEntryList@16
-   6 stub CheckEscapesW   # exported by name
-   7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW   # exported by name
-   8 stub Control_FillCache_RunDLL@16   # exported by name
+   6 stub CheckEscapesW@8
+   7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
+   8 stub Control_FillCache_RunDLL@16
    9 stub PifMgr_OpenProperties@16
   10 stub PifMgr_GetProperties@20
   11 stub PifMgr_SetProperties@20
-  12 stub Control_FillCache_RunDLLA   # exported by name
+  12 stub Control_FillCache_RunDLLA@16
   13 stub PifMgr_CloseProperties@8
-  14 stub Control_FillCache_RunDLLW@16   # exported by name
+  14 stub Control_FillCache_RunDLLW@16
   15 stdcall ILGetDisplayName(ptr ptr) ILGetDisplayName
   16 stdcall ILFindLastID(ptr) ILFindLastID
   17 stdcall ILRemoveLastID(ptr) ILRemoveLastID
@@ -28,7 +28,7 @@ init	Shell32LibMain
   20 stub ILGlobalClone@4
   21 stdcall ILIsEqual (ptr ptr) ILIsEqual
   22 stdcall Control_RunDLL(long long long long) Control_RunDLL # exported by name
-  23 stub ILIsParent@12
+  23 stdcall ILIsParent (long long long) ILIsParent
   24 stdcall ILFindChild (long long) ILFindChild
   25 stdcall ILCombine(ptr ptr) ILCombine
   26 stub ILLoadFromStream@8
@@ -45,26 +45,26 @@ init	Shell32LibMain
   37 stdcall PathCombine(ptr ptr ptr) PathCombine32AW
   38 stub PathStripPath
   39 stdcall PathIsUNC(str) PathIsUNC
-  40 stub PathIsRelative
-  41 stub Control_RunDLLA   # exported by name
-  42 stub Control_RunDLLW   # exported by name
+  40 stub PathIsRelative@4
+  41 stub Control_RunDLLA@16
+  42 stub Control_RunDLLW@16
   43 stdcall PathIsExe (ptr) PathIsExe
-  44 stub DoEnvironmentSubstA   # exported by name
+  44 stub DoEnvironmentSubstA@8
   45 stdcall PathFileExists(str) PathFileExists
   46 stdcall PathMatchSpec (str str) PathMatchSpec
   47 stub PathMakeUniqueName@20
   48 stub PathSetDlgItemPath@12
   49 stub PathQualify@4
-  50 stub PathStripToRoot
+  50 stub PathStripToRoot@4
   51 stdcall PathResolve(str long long) PathResolve
   52 stdcall PathGetArgs(str) PathGetArgs
-  53 stub DoEnvironmentSubstW@8  # exported by name
+  53 stub DoEnvironmentSubstW@8
   54 stdcall DragAcceptFiles(long long) DragAcceptFiles32
-  55 stub PathQuoteSpaces
+  55 stdcall PathQuoteSpaces (ptr) PathQuoteSpaces32AW
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces
   57 stdcall PathGetDriveNumber (str) PathGetDriveNumber32
   58 stdcall ParseField(str long str long) ParseField
-  59 stub RestartDialog
+  59 stub RestartDialog@12
   60 stdcall ExitWindowsDialog(long) ExitWindowsDialog
   61 stdcall RunFileDlg(long long long str str long) RunFileDlg
   62 stdcall PickIconDlg(long long long long) PickIconDlg
@@ -194,9 +194,9 @@ init	Shell32LibMain
  186 stub ExtractAssociatedIconExW   # exported by name
  187 stub ExtractAssociatedIconW   # exported by name
  188 stdcall ExtractIconA(long str long) ExtractIcon32A   # exported by name
- 189 stub ExtractIconEx   # exported by name
- 190 stub ExtractIconExA   # exported by name
- 191 stub ExtractIconExW   # exported by name
+ 189 stdcall ExtractIconEx(ptr long ptr ptr long) ExtractIconEx32AW
+ 190 stdcall ExtractIconExA(str long ptr ptr long) ExtractIconEx32A
+ 191 stdcall ExtractIconExW(wstr long ptr ptr long) ExtractIconEx32W
  192 stub ExtractIconResInfoA   # exported by name
  193 stub ExtractIconResInfoW   # exported by name
  194 stdcall ExtractIconW(long wstr long) ExtractIcon32W   # exported by name
@@ -297,9 +297,9 @@ init	Shell32LibMain
  288 stdcall ShellAboutA(long str str long) ShellAbout32A
  289 stdcall ShellAboutW(long wstr wstr long) ShellAbout32W
  290 stdcall ShellExecuteA(long str str str str long) ShellExecute32A
- 291 stdcall ShellExecuteEx (long) ShellExecuteEx32A
+ 291 stdcall ShellExecuteEx (long) ShellExecuteEx32
  292 stdcall ShellExecuteExA (long) ShellExecuteEx32A
- 293 stub ShellExecuteExW
+ 293 stdcall ShellExecuteExW (long) ShellExecuteEx32W
  294 stub ShellExecuteW
  295 stub ShellHookProc   # exported by name
  296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIcon
@@ -339,7 +339,7 @@ init	Shell32LibMain
 
  505 stdcall SHRegCloseKey (long) SHRegCloseKey32
  506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKey32A
- 507 stdcall SHRegOpenKeyW (long wstr long long) SHRegOpenKey32W
+ 507 stdcall SHRegOpenKeyW (long wstr long) SHRegOpenKey32W
  508 stub SHRegQueryValueA@16
  509 stdcall SHRegQueryValueExA(long str ptr ptr ptr ptr) SHRegQueryValueEx32A
  510 stdcall SHRegQueryValueW (long long long long) SHRegQueryValue32W
@@ -366,7 +366,7 @@ init	Shell32LibMain
  650 stub PathIsSameRoot@8
  651 stdcall ReadCabinetState (long long) ReadCabinetState 
  652 stdcall WriteCabinetState (long) WriteCabinetState
- 653 stub PathProcessCommand@16
+ 653 stdcall PathProcessCommand (long long long long) PathProcessCommand
 
  660 stdcall FileIconInit (long) FileIconInit
 

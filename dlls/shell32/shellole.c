@@ -211,8 +211,8 @@ DWORD WINAPI SHGetMalloc(LPMALLOC32 *lpmal)
 static HRESULT WINAPI IClassFactory_QueryInterface(LPCLASSFACTORY,REFIID,LPVOID*);
 static ULONG WINAPI IClassFactory_AddRef(LPCLASSFACTORY);
 static ULONG WINAPI IClassFactory_Release(LPCLASSFACTORY);
-static HRESULT WINAPI IClassFactory_CreateInstance();
-static HRESULT WINAPI IClassFactory_LockServer();
+static HRESULT WINAPI IClassFactory_CreateInstance(LPCLASSFACTORY, LPUNKNOWN, REFIID, LPVOID *);
+static HRESULT WINAPI IClassFactory_LockServer(LPCLASSFACTORY, BOOL32);
 /**************************************************************************
  *  IClassFactory_VTable
  */
@@ -228,7 +228,7 @@ static IClassFactory_VTable clfvt =
  *  IClassFactory_Constructor
  */
 
-LPCLASSFACTORY IClassFactory_Constructor()
+LPCLASSFACTORY IClassFactory_Constructor(void)
 {	LPCLASSFACTORY	lpclf;
 
 	lpclf= (LPCLASSFACTORY)HeapAlloc(GetProcessHeap(),0,sizeof(IClassFactory));
@@ -316,7 +316,7 @@ static HRESULT WINAPI IClassFactory_CreateInstance(
 	{ pObj = (IUnknown *)IContextMenu_Constructor(NULL, NULL, 0);
  	} 
 	else if (IsEqualIID(riid, &IID_IDataObject))
-	{ pObj = (IUnknown *)IDataObject_Constructor();
+	{ pObj = (IUnknown *)IDataObject_Constructor(0,NULL,NULL,0);
  	} 
 	else
 	{ ERR(shell,"unknown IID requested\n\tIID:\t%s\n",xriid);

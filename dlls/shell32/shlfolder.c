@@ -105,31 +105,32 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	sf=(LPSHELLFOLDER)HeapAlloc(GetProcessHeap(),0,sizeof(IShellFolder));
 	sf->ref=1;
 	sf->lpvtbl=&sfvt;
-	sf->mlpszFolder=NULL;	/* path of the folder */
+	sf->sMyPath=NULL;	/* path of the folder */
+	sf->pMyPidl=NULL;	/* my qualified pidl */
 	sf->mpSFParent=pParent;	/* parrent shellfolder */
 
 	TRACE(shell,"(%p)->(parent=%p, pidl=%p)\n",sf,pParent, pidl);
 	
 	/* keep a copy of the pidl in the instance*/
 	sf->mpidl = ILClone(pidl);
-	sf->mpidlNSRoot = NULL;
 	
 	if(sf->mpidl)        /* do we have a pidl? */
 	{ dwSize = 0;
-	  if(sf->mpSFParent->mlpszFolder)		/* get the size of the parents path */
-	  { dwSize += strlen(sf->mpSFParent->mlpszFolder) + 1;
-	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(sf->mpSFParent->mlpszFolder));
+	  if(sf->mpSFParent->sMyPath)		/* get the size of the parents path */
+	  { dwSize += strlen(sf->mpSFParent->sMyPath) + 1;
+	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(sf->mpSFParent->sMyPath));
 	  }   
 	  dwSize += _ILGetFolderText(sf->mpidl,NULL,0); /* add the size of the foldername*/
-	  sf->mlpszFolder = SHAlloc(dwSize);
-	  if(sf->mlpszFolder)
-	  { *(sf->mlpszFolder)=0x00;
-	    if(sf->mpSFParent->mlpszFolder)		/* if the parent has a path, get it*/
-	    {  strcpy(sf->mlpszFolder, sf->mpSFParent->mlpszFolder);
-	       PathAddBackslash32A (sf->mlpszFolder);
+	  sf->sMyPath = SHAlloc(dwSize);
+	  if(sf->sMyPath)
+	  { *(sf->sMyPath)=0x00;
+	    if(sf->mpSFParent->sMyPath)		/* if the parent has a path, get it*/
+	    {  strcpy(sf->sMyPath, sf->mpSFParent->sMyPath);
+	       PathAddBackslash32A (sf->sMyPath);
 	    }
-	    _ILGetFolderText(sf->mpidl, sf->mlpszFolder+strlen(sf->mlpszFolder), dwSize-strlen(sf->mlpszFolder));
-	    TRACE(shell,"-- (%p)->(my path=%s)\n",sf, debugstr_a(sf->mlpszFolder));
+	    sf->pMyPidl = ILCombine(sf->pMyPidl, pidl);
+	    _ILGetFolderText(sf->mpidl, sf->sMyPath+strlen(sf->sMyPath), dwSize-strlen(sf->sMyPath));
+	    TRACE(shell,"-- (%p)->(my path=%s)\n",sf, debugstr_a(sf->sMyPath));
 	  }
 	}
 	return sf;
@@ -185,14 +186,14 @@ static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER this)
 	  { pdesktopfolder=NULL;
 	    TRACE(shell,"-- destroyed IShellFolder(%p) was Desktopfolder\n",this);
 	  }
-	  if(this->mpidlNSRoot)
-	  { SHFree(this->mpidlNSRoot);
+	  if(this->pMyPidl)
+	  { SHFree(this->pMyPidl);
 	  }
 	  if(this->mpidl)
 	  { SHFree(this->mpidl);
 	  }
-	  if(this->mlpszFolder)
-	  { SHFree(this->mlpszFolder);
+	  if(this->sMyPath)
+	  { SHFree(this->sMyPath);
 	  }
 
 	  HeapFree(GetProcessHeap(),0,this);
@@ -296,7 +297,7 @@ static HRESULT WINAPI IShellFolder_EnumObjects(
 {	TRACE(shell,"(%p)->(HWND=0x%08x flags=0x%08lx pplist=%p)\n",this,hwndOwner,dwFlags,ppEnumIDList);
 
 	*ppEnumIDList = NULL;
-	*ppEnumIDList = IEnumIDList_Constructor (this->mlpszFolder, dwFlags);
+	*ppEnumIDList = IEnumIDList_Constructor (this->sMyPath, dwFlags);
 	TRACE(shell,"-- (%p)->(new ID List: %p)\n",this,*ppEnumIDList);
 	if(!*ppEnumIDList)
 	{ return E_OUTOFMEMORY;
@@ -307,16 +308,15 @@ static HRESULT WINAPI IShellFolder_EnumObjects(
  *  IShellFolder_Initialize()
  *  IPersistFolder Method
  */
-static HRESULT WINAPI IShellFolder_Initialize(
-	LPSHELLFOLDER this,
-	LPCITEMIDLIST pidl)
-{ TRACE(shell,"(%p)->(pidl=%p)\n",this,pidl);
-  if(this->mpidlNSRoot)
-  { SHFree(this->mpidlNSRoot);
-    this->mpidlNSRoot = NULL;
-  }
-  this->mpidlNSRoot=ILClone(pidl);
-  return S_OK;
+static HRESULT WINAPI IShellFolder_Initialize( LPSHELLFOLDER this,LPCITEMIDLIST pidl)
+{	TRACE(shell,"(%p)->(pidl=%p)\n",this,pidl);
+
+	if(this->pMyPidl)
+	{ SHFree(this->pMyPidl);
+	  this->pMyPidl = NULL;
+	}
+	this->pMyPidl = ILClone(pidl);
+	return S_OK;
 }
 
 /**************************************************************************
@@ -327,30 +327,29 @@ static HRESULT WINAPI IShellFolder_Initialize(
 *  REFIID        riid,       //[in ] Initial Interface
 *  LPVOID*       ppvObject   //[out] Interface*
 */
-static HRESULT WINAPI IShellFolder_BindToObject(
-	LPSHELLFOLDER this,
-	LPCITEMIDLIST pidl,
-	LPBC pbcReserved,
-	REFIID riid,
-	LPVOID * ppvOut)
+static HRESULT WINAPI IShellFolder_BindToObject( LPSHELLFOLDER this, LPCITEMIDLIST pidl,
+			LPBC pbcReserved, REFIID riid, LPVOID * ppvOut)
 {	char	        xriid[50];
-  HRESULT       hr;
+	HRESULT       hr;
 	LPSHELLFOLDER pShellFolder;
 	
 	WINE_StringFromCLSID(riid,xriid);
 
 	TRACE(shell,"(%p)->(pidl=%p,%p,\n\tIID:%s,%p)\n",this,pidl,pbcReserved,xriid,ppvOut);
 
-  *ppvOut = NULL;
-  pShellFolder = IShellFolder_Constructor(this, pidl);
-  if(!pShellFolder)
-    return E_OUTOFMEMORY;
-  /*  pShellFolder->lpvtbl->fnInitialize(pShellFolder, this->mpidlNSRoot);*/
-  IShellFolder_Initialize(pShellFolder, this->mpidlNSRoot);
-  hr = pShellFolder->lpvtbl->fnQueryInterface(pShellFolder, riid, ppvOut);
-  pShellFolder->lpvtbl->fnRelease(pShellFolder);
+	*ppvOut = NULL;
+
+	pShellFolder = IShellFolder_Constructor(this, pidl);
+
+	if(!pShellFolder)
+	  return E_OUTOFMEMORY;
+
+	IShellFolder_Initialize(pShellFolder, this->pMyPidl);
+
+	hr = pShellFolder->lpvtbl->fnQueryInterface(pShellFolder, riid, ppvOut);
+ 	pShellFolder->lpvtbl->fnRelease(pShellFolder);
 	TRACE(shell,"-- (%p)->(interface=%p)\n",this, ppvOut);
-  return hr;
+	return hr;
 }
 
 /**************************************************************************
@@ -578,8 +577,8 @@ static HRESULT WINAPI IShellFolder_GetUIObjectOf( LPSHELLFOLDER this,HWND32 hwnd
 	else if(IsEqualIID(riid, &IID_IExtractIcon))
 	{ if (cidl != 1)
 	    return(E_INVALIDARG);
-	  pidl = ILCombine(this->mpidl, apidl[0]);
-	  pObj = (LPUNKNOWN)IExtractIcon_Constructor(pidl);
+	  pidl = ILCombine(this->pMyPidl,apidl[0]);
+	  pObj = (LPUNKNOWN)IExtractIcon_Constructor( pidl );
 	  SHFree(pidl);
 	} 
 	else
@@ -672,9 +671,9 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	      { /* if the IShellFolder has parents, get the path from the
 	        parent and add the ItemName*/
 	        szText[0]=0x00;
-	        if (this->mlpszFolder && strlen (this->mlpszFolder))
-	        { if (strcmp(this->mlpszFolder,"My Computer"))
-	          { strcpy (szText,this->mlpszFolder);
+	        if (this->sMyPath && strlen (this->sMyPath))
+	        { if (strcmp(this->sMyPath,"My Computer"))
+	          { strcpy (szText,this->sMyPath);
 	            PathAddBackslash32A (szText);
 	          }
 	        }
@@ -748,13 +747,13 @@ static BOOL32 WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER this, LPSTR lpszOu
     
 	*lpszOut=0;
 
-	if (! this->mlpszFolder)
+	if (! this->sMyPath)
 	  return FALSE;
 	  
-	dwSize = strlen (this->mlpszFolder) +1;
+	dwSize = strlen (this->sMyPath) +1;
 	if ( dwSize > dwOutSize)
 	  return FALSE;
-	strcpy(lpszOut, this->mlpszFolder);
+	strcpy(lpszOut, this->sMyPath);
 
 	TRACE(shell,"-- (%p)->(return=%s)\n",this, lpszOut);
 	return TRUE;

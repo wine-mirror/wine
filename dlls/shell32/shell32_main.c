@@ -27,9 +27,9 @@
 #include "debug.h"
 #include "winreg.h"
 #include "imagelist.h"
+#include "sysmetrics.h"
 #include "commctrl.h"
 #include "authors.h"
-
 #include "pidl.h"
 #include "shell32_main.h"
 
@@ -94,32 +94,6 @@ void WINAPI Control_RunDLL( HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
     FIXME(shell, "(0x%08x, %p, %s, 0x%08lx): stub\n", hwnd, code,
           debugstr_a(cmd), arg4);
 }
-
-/*************************************************************************
- * Shell_GetImageList [SHELL32.71]
- *
- * PARAMETERS
- *  imglist[1|2] [OUT] pointer which recive imagelist handles
- *
- * NOTES
- *  undocumented
- *  I don't know, which pointer is which. They may have to be
- *  exchanged. (jsch)
- */
-BOOL32 WINAPI Shell_GetImageList(HIMAGELIST * imglist1,HIMAGELIST * imglist2)
-{	WARN(shell,"(%p,%p):semi-stub.\n",imglist1,imglist2);
-	if (imglist1)
-	{ *imglist1=ShellSmallIconList;
-	}
-	if (imglist2)
-	{ *imglist2=ShellBigIconList;
-	}
-
-	return TRUE;
-}
-
-HIMAGELIST ShellSmallIconList = 0;
-HIMAGELIST ShellBigIconList = 0;
 
 /*************************************************************************
  *  SHGetFileInfoA		[SHELL32.254]
@@ -552,7 +526,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	{ case FT_DIR:
 	    /* Directory: get the value from the registry, if its not there 
 			create it and the directory*/
-	    if (RegQueryValueEx32A(key,buffer,NULL,&type,tpath,&tpathlen))
+	    if (RegQueryValueEx32A(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
   	    { GetWindowsDirectory32A(npath,MAX_PATH);
 	      PathAddBackslash32A(npath);
 	      switch (nFolder)
@@ -610,7 +584,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
          	  RegCloseKey(key);
         	  return E_OUTOFMEMORY;
 	      }
-	      if (RegSetValueEx32A(key,buffer,0,REG_SZ,npath,sizeof(npath)+1))
+	      if (RegSetValueEx32A(key,buffer,0,REG_SZ,(LPBYTE)npath,sizeof(npath)+1))
 	      { ERR(shell,"could not create value %s\n",buffer);
 	        RegCloseKey(key);
 	        return E_OUTOFMEMORY;
@@ -753,7 +727,9 @@ LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA )
         { RECT32 rect;
 		if( __get_dropline( hWnd, &rect ) )
-          { POINT32 pt = { lpDragInfo->pt.x, lpDragInfo->pt.y };
+          { POINT32 pt;
+	    pt.x=lpDragInfo->pt.x;
+	    pt.x=lpDragInfo->pt.y;
 		    rect.bottom += DROP_FIELD_HEIGHT;
 		    if( PtInRect32( &rect, pt ) )
             { SetWindowLong32A( hWnd, DWL_MSGRESULT, 1 );
@@ -891,9 +867,9 @@ void WINAPI FreeIconList( DWORD dw )
 DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
 {	STRRET lpName;
 	LPSHELLFOLDER shellfolder;
-  CHAR  buffer[MAX_PATH],tpath[MAX_PATH];
-  DWORD type,tpathlen=MAX_PATH,dwdisp;
-  HKEY  key;
+	CHAR  buffer[MAX_PATH],tpath[MAX_PATH];
+	DWORD type,tpathlen=MAX_PATH,dwdisp;
+	HKEY  key;
 
 	TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
 
@@ -905,11 +881,11 @@ DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
      }
      type=REG_SZ;    
      strcpy (buffer,"Desktop");					/*registry name*/
-     if ( RegQueryValueEx32A(key,buffer,NULL,&type,tpath,&tpathlen))
+     if ( RegQueryValueEx32A(key,buffer,NULL,&type,(LPBYTE)tpath,&tpathlen))
      { GetWindowsDirectory32A(tpath,MAX_PATH);
        PathAddBackslash32A(tpath);
        strcat (tpath,"Desktop");				/*folder name*/
-       RegSetValueEx32A(key,buffer,0,REG_SZ,tpath,tpathlen);
+       RegSetValueEx32A(key,buffer,0,REG_SZ,(LPBYTE)tpath,tpathlen);
        CreateDirectory32A(tpath,NULL);
      }
      RegCloseKey(key);
@@ -942,16 +918,19 @@ DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath)
 }
 
 
-void (CALLBACK* pDLLInitComctl)();
-INT32 (CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
-INT32(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
+void	(CALLBACK* pDLLInitComctl)(void);
+INT32	(CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
+INT32	(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
 HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
-HICON32 (CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
-HDPA (CALLBACK* pDPA_Create) (INT32);  
-INT32 (CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
-BOOL32 (CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
-LPVOID (CALLBACK* pDPA_GetPtr) (const HDPA, INT32);   
-BOOL32 (CALLBACK* pDPA_Destroy) (const HDPA); 
+HICON32	(CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
+INT32	(CALLBACK* pImageList_GetImageCount)(HIMAGELIST);
+
+HDPA	(CALLBACK* pDPA_Create) (INT32);  
+INT32	(CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
+BOOL32	(CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
+LPVOID	(CALLBACK* pDPA_GetPtr) (const HDPA, INT32);   
+BOOL32	(CALLBACK* pDPA_Destroy) (const HDPA); 
+INT32	(CALLBACK *pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
 
 /*************************************************************************
  * SHELL32 LibMain
@@ -963,21 +942,12 @@ BOOL32 (CALLBACK* pDPA_Destroy) (const HDPA);
 HINSTANCE32 shell32_hInstance; 
 
 BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{ HICON32 htmpIcon;
-  UINT32 iiconindex;
-  UINT32 index;
-  CHAR   szShellPath[MAX_PATH];
-  HINSTANCE32 hComctl32;
-  
+{ HINSTANCE32 hComctl32;
 
   TRACE(shell,"0x%x 0x%lx %p\n", hinstDLL, fdwReason, lpvReserved);
 
   shell32_hInstance = hinstDLL;
   
-  GetWindowsDirectory32A(szShellPath,MAX_PATH);
-  PathAddBackslash32A(szShellPath);
-  strcat(szShellPath,"system\\shell32.dll");
-       
   if (fdwReason==DLL_PROCESS_ATTACH)
   { hComctl32 = LoadLibrary32A("COMCTL32.DLL");	
     if (hComctl32)
@@ -989,12 +959,15 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
       pImageList_AddIcon=GetProcAddress32(hComctl32,"ImageList_AddIcon");
       pImageList_ReplaceIcon=GetProcAddress32(hComctl32,"ImageList_ReplaceIcon");
       pImageList_GetIcon=GetProcAddress32(hComctl32,"ImageList_GetIcon");
+      pImageList_GetImageCount=GetProcAddress32(hComctl32,"ImageList_GetImageCount");
+
       /* imports by ordinal, pray that it works*/
       pDPA_Create=GetProcAddress32(hComctl32, (LPCSTR)328L);
       pDPA_Destroy=GetProcAddress32(hComctl32, (LPCSTR)329L);
       pDPA_GetPtr=GetProcAddress32(hComctl32, (LPCSTR)332L);
       pDPA_InsertPtr=GetProcAddress32(hComctl32, (LPCSTR)334L);
       pDPA_Sort=GetProcAddress32(hComctl32, (LPCSTR)338L);
+      pDPA_Search=GetProcAddress32(hComctl32, (LPCSTR)339L);
 
       FreeLibrary32(hComctl32);
     }
@@ -1003,29 +976,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
       ERR(shell,"P A N I C error getting functionpointers\n");
       exit (1);
     }
-    if ( ! ShellSmallIconList )
-    { if ( (ShellSmallIconList = pImageList_Create(sysMetrics[SM_CXSMICON],sysMetrics[SM_CYSMICON],ILC_COLORDDB | ILC_MASK,0,0x20)) )
-      { for (index=0;index < 40; index++)
-        { if ( ! ( htmpIcon = ExtractIcon32A(hinstDLL, szShellPath, index))
-          || ( -1 == (iiconindex = pImageList_AddIcon (ShellSmallIconList, htmpIcon))) )
-          { ERR(shell,"could not initialize iconlist (is shell32.dll in the system directory?)\n");
-            break;
-          }
-        }
-      }
-    }
-    if ( ! ShellBigIconList )
-    { if ( (ShellBigIconList = pImageList_Create(SYSMETRICS_CXSMICON, SYSMETRICS_CYSMICON,ILC_COLORDDB | ILC_MASK,0,0x20)) )
-      { for (index=0;index < 40; index++)
-        { if ( ! (htmpIcon = ExtractIcon32A( hinstDLL, szShellPath, index)) 
-           || (-1 == (iiconindex = pImageList_AddIcon (ShellBigIconList, htmpIcon))) )
-          { ERR(shell,"could not initialize iconlist (is shell32.dll in the system directory?)\n");
-            break;
-          }
-        }
-      }
-    }
-    TRACE(shell,"hIconSmall=%p hIconBig=%p\n",ShellSmallIconList, ShellBigIconList);
+    SIC_Initialize();
   }
   return TRUE;
 }

@@ -11,6 +11,7 @@ C_SRCS = \
 	dataobject.c \
 	enumidlist.c \
 	folders.c \
+	iconcache.c \
 	pidl.c \
 	shell32_main.c \
 	shellole.c \

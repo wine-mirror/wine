@@ -246,7 +246,7 @@ static ULONG WINAPI IDataObject_Release(LPDATAOBJECT this)
 * NOTES
 *  get or register the "Shell IDList Array" clipformat
 */
-static BOOL32 DATAOBJECT_InitShellIDList()
+static BOOL32 DATAOBJECT_InitShellIDList(void)
 {	if (cfShellIDList)
         { return(TRUE);
         }
@@ -261,7 +261,7 @@ static BOOL32 DATAOBJECT_InitShellIDList()
 * NOTES
 *  get or register the "FileGroupDescriptor" clipformat
 */
-static BOOL32 DATAOBJECT_InitFileGroupDesc()
+static BOOL32 DATAOBJECT_InitFileGroupDesc(void)
 {	if (cfFileGroupDesc)
         { return(TRUE);
         }
@@ -275,7 +275,7 @@ static BOOL32 DATAOBJECT_InitFileGroupDesc()
 * NOTES
  * get or register the "FileContents" clipformat
 */
-static BOOL32 DATAOBJECT_InitFileContents()
+static BOOL32 DATAOBJECT_InitFileContents(void)
 {	if (cfFileContents)
         { return(TRUE);
         }
@@ -334,10 +334,10 @@ static HRESULT WINAPI IDataObject_GetData (LPDATAOBJECT this, LPFORMATETC32 pfor
 
 	    TRACE(shell,"-- %lu %lu %lu\n",size, size1, size2 );
 	    TRACE(shell,"-- %p %p\n",this->pidl, pidl);
-	    TRACE(shell,"-- %p %p %p\n",pcida, (void*)pcida+size,(void*)pcida+size+size1);
+	    TRACE(shell,"-- %p %p %p\n",pcida, (LPBYTE)pcida+size,(LPBYTE)pcida+size+size1);
 	    
-	    memcpy ((void*)pcida+size, this->pidl, size1);
-	    memcpy ((void*)pcida+size+size1, pidl, size2);
+	    memcpy ((LPBYTE)pcida+size, this->pidl, size1);
+	    memcpy ((LPBYTE)pcida+size+size1, pidl, size2);
 	    TRACE(shell,"-- after copy\n");
 
 	    GlobalUnlock32(hmem);

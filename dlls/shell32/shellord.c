@@ -159,7 +159,7 @@ LPCVOID WINAPI PathFindExtension32AW(LPCVOID path)
  * NOTES
  *     append \ if there is none
  */
-LPSTR WINAPI PathAddBackslash32A(LPSTR path)
+LPSTR WINAPI PathAddBackslash32A(LPCSTR path)
 {	int len;
 	TRACE(shell,"%p->%s\n",path,path);
 
@@ -171,7 +171,7 @@ LPSTR WINAPI PathAddBackslash32A(LPSTR path)
 	}
 	return path+len;
 }
-LPWSTR WINAPI PathAddBackslash32W(LPWSTR path)
+LPWSTR WINAPI PathAddBackslash32W(LPCWSTR path)
 {	int len;
 	TRACE(shell,"%p->%s\n",path,debugstr_w(path));
 
@@ -183,7 +183,7 @@ LPWSTR WINAPI PathAddBackslash32W(LPWSTR path)
 	}
 	return path+len;
 }
-LPVOID WINAPI PathAddBackslash32AW(LPVOID path)
+LPVOID WINAPI PathAddBackslash32AW(LPCVOID path)
 {	if(VERSION_OsIsUnicode())
 	  return PathAddBackslash32W(path);
 	return PathAddBackslash32A(path);
@@ -195,20 +195,20 @@ LPVOID WINAPI PathAddBackslash32AW(LPVOID path)
  * NOTES
  *     remove spaces from beginning and end of passed string
  */
-LPSTR WINAPI PathRemoveBlanks(LPSTR str)
-{ LPSTR x = str;
-  TRACE(shell,"%s\n",str);
-  while (*x==' ') x++;
-  if (x!=str)
+LPSTR WINAPI PathRemoveBlanks(LPCSTR str)
+{	LPSTR x = str;
+	TRACE(shell,"%s\n",str);
+	while (*x==' ') x++;
+	if (x!=str)
 	  strcpy(str,x);
-  if (!*str)
+	if (!*str)
 	  return str;
-  x=str+strlen(str)-1;
-  while (*x==' ')
+	x=str+strlen(str)-1;
+	while (*x==' ')
 	  x--;
-  if (*x==' ')
+	if (*x==' ')
 	  *x='\0';
-  return x;
+	return x;
 }
 
 
@@ -450,6 +450,27 @@ LPVOID WINAPI PathGetArgs(LPVOID cmdline)
 	}
 	return (LPVOID) aptr;
 }
+/*************************************************************************
+ * PathQuoteSpaces [SHELL32.55]
+ * 
+ * NOTES
+ *     basename(char *fn);
+ */
+LPSTR WINAPI PathQuoteSpaces32A(LPCSTR aptr)
+{	FIXME(shell,"%s\n",aptr);
+	return 0;
+
+}
+LPWSTR WINAPI PathQuoteSpaces32W(LPCWSTR wptr)
+{	FIXME(shell,"L%s\n",debugstr_w(wptr));
+	return 0;	
+}
+LPVOID WINAPI PathQuoteSpaces32AW (LPCVOID fn)
+{	if(VERSION_OsIsUnicode())
+	  return PathQuoteSpaces32W(fn);
+	return PathQuoteSpaces32A(fn);
+}
+
 
 /*************************************************************************
  * PathUnquoteSpaces [SHELL32.56]
@@ -556,22 +577,6 @@ int WINAPI SHShellFolderView_Message(HWND32 hwndCabinet,UINT32 uMsg,LPARAM lPara
 BOOL32 WINAPI PathYetAnotherMakeUniqueName(LPDWORD x,LPDWORD y) {
     FIXME(shell,"(%p,%p):stub.\n",x,y);
     return TRUE;
-}
-
-/*************************************************************************
- * SHMapPIDLToSystemImageListIndex [SHELL32.77]
- *
- * PARAMETERS
- * x  pointer to an instance of IShellFolder 
- * 
- * NOTES
- *     exported by ordinal
- *
- */
-DWORD WINAPI
-SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,DWORD y,DWORD z)
-{ FIXME(shell,"(SF=%p,pidl=%08lx,%08lx):stub.\n",sh,y,z);
-  return 0;
 }
 
 /*************************************************************************
@@ -1051,6 +1056,15 @@ HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
  * ShellExecuteEx [SHELL32.291]
  *
  */
+BOOL32 WINAPI ShellExecuteEx32 (LPVOID sei)
+{	if (VERSION_OsIsUnicode())
+	  return ShellExecuteEx32W (sei);
+	return ShellExecuteEx32A (sei);
+}
+/*************************************************************************
+ * ShellExecuteEx32A [SHELL32.292]
+ *
+ */
 BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 { 	CHAR szTemp[MAX_PATH];
 
@@ -1067,6 +1081,30 @@ BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
     
 	if (sei->lpVerb)
 	{ TRACE (shell,"-- action=%s\n", sei->lpVerb);
+	}
+	
+	return 0;
+}
+/*************************************************************************
+ * ShellExecuteEx [SHELL32.293]
+ *
+ */
+BOOL32 WINAPI ShellExecuteEx32W (LPSHELLEXECUTEINFO32W sei)
+{ 	WCHAR szTemp[MAX_PATH];
+
+  	FIXME(shell,"(%p): stub\n",sei);
+
+	if (sei->fMask & SEE_MASK_IDLIST)
+	{ SHGetPathFromIDList32W (sei->lpIDList,szTemp);
+	  TRACE (shell,"-- idlist=%p (%s)\n", sei->lpIDList, debugstr_w(szTemp));
+	}
+
+	if (sei->fMask & SEE_MASK_CLASSNAME)
+	{ TRACE (shell,"-- classname= %s\n", debugstr_w(sei->lpClass));
+	}
+    
+	if (sei->lpVerb)
+	{ TRACE (shell,"-- action=%s\n", debugstr_w(sei->lpVerb));
 	}
 	
 	return 0;
@@ -1218,7 +1256,7 @@ BOOL32 WINAPI FileIconInit(BOOL32 bFullInit)
  * IsUserAdmin [NT 4.0:SHELL32.680]
  *
  */
-HRESULT WINAPI IsUserAdmin()
+HRESULT WINAPI IsUserAdmin(void)
 {	FIXME(shell,"stub\n");
 	return TRUE;
 }
@@ -1533,7 +1571,7 @@ HRESULT WINAPI DriveType32(DWORD u)
  * SHAbortInvokeCommand [SHELL32.198]
  *
  */
-HRESULT WINAPI SHAbortInvokeCommand()
+HRESULT WINAPI SHAbortInvokeCommand(void)
 {	FIXME(shell,"stub\n");
 	return 1;
 }
@@ -1549,7 +1587,7 @@ HRESULT WINAPI SHOutOfMemoryMessageBox(DWORD u, DWORD v, DWORD w)
  * SHFlushClipboard [SHELL32.121]
  *
  */
-HRESULT WINAPI SHFlushClipboard()
+HRESULT WINAPI SHFlushClipboard(void)
 {	FIXME(shell,"stub\n");
 	return 1;
 }
@@ -1591,4 +1629,11 @@ LPWSTR WINAPI StrRChrW(LPWSTR lpStart, LPWSTR lpEnd, DWORD wMatch)
 	  lpStart++;  
 	} while ( lpStart<=lpEnd ); 
 	return wptr;
+}
+/*************************************************************************
+*	PathProcessCommand	[SHELL32.653]
+*/
+HRESULT WINAPI PathProcessCommand (DWORD u, DWORD v, DWORD w, DWORD x)
+{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x);
+	return 0;
 }

@@ -253,10 +253,15 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32, INT32, LPITEMIDLIST *);
 /****************************************************************************
 *  string and path functions
 */
-LPSTR  WINAPI PathAddBackslash32A(LPSTR path);	
-LPWSTR WINAPI PathAddBackslash32W(LPWSTR path);	
+LPSTR  WINAPI PathAddBackslash32A(LPCSTR path);	
+LPWSTR WINAPI PathAddBackslash32W(LPCWSTR path);	
 #define  PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
-LPVOID  WINAPI PathAddBackslash32AW(LPVOID path);	
+LPVOID  WINAPI PathAddBackslash32AW(LPCVOID path);	
+
+LPSTR  WINAPI PathQuoteSpaces32A(LPCSTR path);	
+LPWSTR WINAPI PathQuoteSpaces32W(LPCWSTR path);	
+#define  PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)
+LPVOID  WINAPI PathQuoteSpaces32AW(LPCVOID path);	
 
 LPSTR  WINAPI PathCombine32A(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
 LPWSTR WINAPI PathCombine32W(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile);
@@ -278,10 +283,15 @@ LPCWSTR WINAPI PathFindFilename32W(LPCWSTR path);
 #define  PathFindFilename WINELIB_NAME_AW(PathFindFilename)
 LPCVOID WINAPI PathFindFilename32AW(LPCVOID path); 
 
-LPSTR WINAPI PathRemoveBlanks(LPSTR str);
+LPSTR WINAPI PathRemoveBlanks(LPCSTR str);
 /****************************************************************************
 *  other functions
 */
+HICON32 WINAPI ExtractIconEx32A ( LPSTR, INT32, HICON32 *, HICON32 *, UINT32 );
+HICON32 WINAPI ExtractIconEx32W ( LPWSTR, INT32, HICON32 *, HICON32 *, UINT32 );
+#define  ExtractIconEx WINELIB_NAME_AW(ExtractIconEx)
+HICON32 WINAPI ExtractIconEx32AW ( LPVOID, INT32, HICON32 *, HICON32 *, UINT32 );
+
 LPVOID WINAPI SHAlloc(DWORD len);
 DWORD WINAPI SHFree(LPVOID x);
 

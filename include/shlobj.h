@@ -534,7 +534,7 @@ typedef enum
 { FVM_ICON =              1,
   FVM_SMALLICON =         2,
   FVM_LIST =              3,
-  FVM_DETAILS =           4,
+  FVM_DETAILS =           4
 } FOLDERVIEWMODE;
 
 typedef struct
@@ -626,10 +626,10 @@ typedef struct IShellFolder_VTable {
 struct tagSHELLFOLDER {
 	LPSHELLFOLDER_VTABLE	lpvtbl;
 	DWORD			ref;
-	LPSTR			mlpszFolder;
-	LPITEMIDLIST	mpidl;
-	LPITEMIDLIST	mpidlNSRoot;
-	LPSHELLFOLDER	mpSFParent;
+	LPSTR			sMyPath;
+	LPITEMIDLIST		pMyPidl;
+	LPITEMIDLIST		mpidl;
+	LPSHELLFOLDER		mpSFParent;
 };
 
 extern LPSHELLFOLDER pdesktopfolder;
@@ -676,7 +676,15 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *);
 #define FCT_MERGE       0x0001
 #define FCT_CONFIGABLE  0x0002
 #define FCT_ADDTOEND    0x0004
- 
+
+/* undocumented, found in the web posted by Chris Becke */ 
+#define CWM_SETPATH	(WM_USER+2)
+#define CWM_WANTIDLE	(WM_USER+3)
+#define CWM_GETSETCURRENTINFO	(WM_USER+4)
+#define CWM_SELECTITEM	(WM_USER+5)
+#define CWM_STOPWAITING	(WM_USER+6)
+#define CWM_GETISHELLBROWSER (WM_USER+7)
+
 typedef struct IShellBrowser_VTable 
 {    // *** IUnknown methods ***
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
@@ -703,7 +711,7 @@ typedef struct IShellBrowser_VTable
     STDMETHOD(QueryActiveShellView)(THIS_ IShellView ** ppshv) PURE;
     STDMETHOD(OnViewWindowActive)(THIS_ IShellView * ppshv) PURE;
     STDMETHOD(SetToolbarItems)(THIS_ LPTBBUTTON lpButtons, UINT32 nButtons, UINT32 uFlags) PURE;
-} *LPSHELLBROWSER_VTABLE,IShellBrowser_VTable;;
+} *LPSHELLBROWSER_VTABLE,IShellBrowser_VTable;
 
 struct tagSHELLBROWSER 
 { LPSHELLBROWSER_VTABLE	lpvtbl;
@@ -741,12 +749,35 @@ struct tagSHELLBROWSER
   FCIDM_BROWSERFIRST/LAST     for the explorer frame (IShellBrowser)
   FCIDM_GLOBAL/LAST           for the explorer's submenu IDs
 */
-#define FCIDM_SHVIEWFIRST           0x0000
-#define FCIDM_SHVIEWLAST            0x7fff
-#define FCIDM_BROWSERFIRST          0xa000
-#define FCIDM_BROWSERLAST           0xbf00
-#define FCIDM_GLOBALFIRST           0x8000
-#define FCIDM_GLOBALLAST            0x9fff
+#define FCIDM_SHVIEWFIRST	0x0000
+/* undocumented */
+#define FCIDM_SHVIEW_ARRANGE	0x7001
+#define FCIDM_SHVIEW_DELETE	0x7011
+#define FCIDM_SHVIEW_PROPERTIES	0x7013
+#define FCIDM_SHVIEW_CUT	0x7018
+#define FCIDM_SHVIEW_COPY	0x7019
+#define FCIDM_SHVIEW_INSERT	0x701A
+#define FCIDM_SHVIEW_UNDO	0x701B
+#define FCIDM_SHVIEW_INSERTLINK	0x701C
+#define FCIDM_SHVIEW_SELECTALL	0x7021
+#define FCIDM_SHVIEW_INVERTSELECTION	0x7022
+#define FCIDM_SHVIEW_BIGICON	0x7029
+#define FCIDM_SHVIEW_SMALLICON	0x702A
+#define FCIDM_SHVIEW_LISTVIEW	0x702B	
+#define FCIDM_SHVIEW_REPORTVIEW	0x702C
+#define FCIDM_SHVIEW_AUTOARRANGE	0x7031  
+#define FCIDM_SHVIEW_SNAPTOGRID	0x7032
+#define FCIDM_SHVIEW_HELP	0x7041
+
+#define FCIDM_SHVIEWLAST	0x7fff
+#define FCIDM_BROWSERFIRST	0xA000
+/* undocumented toolbar items from stddlg's*/
+#define FCIDM_TB_SMALLICON	0xA003
+#define FCIDM_TB_REPORTVIEW	0xA004
+
+#define FCIDM_BROWSERLAST	0xbf00
+#define FCIDM_GLOBALFIRST	0x8000
+#define FCIDM_GLOBALLAST	0x9fff
 
 /*
 * Global submenu IDs and separator IDs
@@ -953,6 +984,9 @@ struct IExtractIcon
 };
 
 #undef THIS
+
+DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,DWORD z);
+
 /****************************************************************************
  * IShellIcon interface
  */
@@ -1026,14 +1060,14 @@ struct tagSERVICEPROVIDER
  * Class constructors
  */
 #ifdef __WINE__
-extern LPDATAOBJECT	IDataObject_Constructor();
+extern LPDATAOBJECT	IDataObject_Constructor(HWND32 hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT32 cidl);
 extern LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT32, const FORMATETC32 []);
 
-extern LPCLASSFACTORY	IClassFactory_Constructor();
+extern LPCLASSFACTORY	IClassFactory_Constructor(void);
 extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT32);
 extern LPSHELLFOLDER	IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
 extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
-extern LPSHELLLINK	IShellLink_Constructor();
+extern LPSHELLLINK	IShellLink_Constructor(void);
 extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
 extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
 #endif

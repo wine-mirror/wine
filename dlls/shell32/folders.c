@@ -78,11 +78,14 @@ static struct IExtractIcon_VTable eivt =
 */
 LPEXTRACTICON IExtractIcon_Constructor(LPCITEMIDLIST pidl)
 { LPEXTRACTICON ei;
+
   ei=(LPEXTRACTICON)HeapAlloc(GetProcessHeap(),0,sizeof(IExtractIcon));
   ei->ref=1;
   ei->lpvtbl=&eivt;
   ei->pidl=ILClone(pidl);
-  
+
+  pdump(pidl);
+
   TRACE(shell,"(%p)\n",ei);
   return ei;
 }
@@ -134,18 +137,14 @@ static ULONG WINAPI IExtractIcon_Release(LPEXTRACTICON this)
 }
 /**************************************************************************
 *  IExtractIcon_GetIconLocation
-* NOTE
-*  FIXME returns allways the icon no. 3 (closed Folder)
 */
 static HRESULT WINAPI IExtractIcon_GetIconLocation(LPEXTRACTICON this, UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax, int * piIndex, UINT32 * pwFlags)
-{ FIXME (shell,"(%p) (flags=%u file=%s max=%u %p %p) semi-stub\n", this, uFlags, szIconFile, cchMax, piIndex, pwFlags);
-	if (!szIconFile)
-	{ *piIndex = 20;
-	}
-	else
-	{ *piIndex = 3;
-	}
+{	FIXME (shell,"(%p) (flags=%u file=%s max=%u %p %p) semi-stub\n", this, uFlags, szIconFile, cchMax, piIndex, pwFlags);
+
+	*piIndex = (int) SHMapPIDLToSystemImageListIndex(0, this->pidl,0);
 	*pwFlags = GIL_NOTFILENAME;
+
+	FIXME (shell,"-- %x\n",*piIndex);
 
 	return NOERROR;
 }
