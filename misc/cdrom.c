@@ -427,8 +427,8 @@ int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int				ret = 0;    
-    struct cdrom_msf0		msf;
 #ifdef linux
+    struct cdrom_msf0		msf;
     msf.minute = at / CDFRAMES_PERMIN;
     msf.second = (at % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
     msf.frame  = at % CDFRAMES_PERSEC;
