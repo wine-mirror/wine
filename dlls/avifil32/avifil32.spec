@@ -2,11 +2,11 @@
 @ stub    AVIBuildFilterA
 @ stub    AVIBuildFilterW
 @ stub    AVIClearClipboard
-@ stub    AVIFileAddRef
+@ stdcall AVIFileAddRef(ptr) AVIFileAddRef
 @ stub    AVIFileCreateStream
 @ stdcall AVIFileCreateStreamA(ptr ptr ptr) AVIFileCreateStreamA
 @ stdcall AVIFileCreateStreamW(ptr ptr ptr) AVIFileCreateStreamW
-@ stub    AVIFileEndRecord
+@ stdcall AVIFileEndRecord(ptr) AVIFileEndRecord
 @ stdcall AVIFileExit() AVIFileExit
 @ stdcall AVIFileGetStream(ptr ptr long long) AVIFileGetStream
 @ stdcall AVIFileInfo (ptr ptr long) AVIFileInfoA # A in both Win95 and NT
@@ -15,10 +15,10 @@
 @ stdcall AVIFileInit() AVIFileInit
 @ stub    AVIFileOpen
 @ stdcall AVIFileOpenA(ptr str long ptr) AVIFileOpenA
-@ stub    AVIFileOpenW
-@ stub    AVIFileReadData
+@ stdcall AVIFileOpenW(ptr str long ptr) AVIFileOpenW
+@ stdcall AVIFileReadData(ptr long ptr ptr) AVIFileReadData
 @ stdcall AVIFileRelease(ptr) AVIFileRelease
-@ stub    AVIFileWriteData
+@ stdcall AVIFileWriteData(ptr long ptr long) AVIFileWriteData
 @ stub    AVIGetFromClipboard
 @ stdcall AVIMakeCompressedStream(ptr ptr ptr ptr) AVIMakeCompressedStream
 @ stub    AVIMakeFileFromStreams
@@ -32,11 +32,11 @@
 @ stub    AVISaveVA
 @ stub    AVISaveVW
 @ stub    AVISaveW
-@ stub    AVIStreamAddRef
+@ stdcall AVIStreamAddRef(ptr) AVIStreamAddRef
 @ stub    AVIStreamBeginStreaming
-@ stub    AVIStreamCreate
+@ stdcall AVIStreamCreate(ptr long long ptr) AVIStreamCreate
 @ stub    AVIStreamEndStreaming
-@ stub    AVIStreamFindSample
+@ stdcall AVIStreamFindSample(ptr long long) AVIStreamFindSample
 @ stdcall AVIStreamGetFrame(ptr long) AVIStreamGetFrame
 @ stdcall AVIStreamGetFrameClose(ptr) AVIStreamGetFrameClose
 @ stdcall AVIStreamGetFrameOpen(ptr ptr) AVIStreamGetFrameOpen
@@ -45,16 +45,16 @@
 @ stdcall AVIStreamInfoW(ptr ptr long) AVIStreamInfoW
 @ stdcall AVIStreamLength(ptr) AVIStreamLength
 @ stub    AVIStreamOpenFromFile
-@ stub    AVIStreamOpenFromFileA
-@ stub    AVIStreamOpenFromFileW
+@ stdcall AVIStreamOpenFromFileA(ptr str long long long ptr) AVIStreamOpenFromFileA
+@ stdcall AVIStreamOpenFromFileW(ptr wstr long long long ptr) AVIStreamOpenFromFileW
 @ stdcall AVIStreamRead(ptr long long ptr long ptr ptr) AVIStreamRead
 @ stdcall AVIStreamReadData(ptr long ptr ptr) AVIStreamReadData
 @ stdcall AVIStreamReadFormat(ptr long ptr long) AVIStreamReadFormat
 @ stdcall AVIStreamRelease(ptr) AVIStreamRelease
-@ stub    AVIStreamSampleToTime
+@ stdcall AVIStreamSampleToTime(ptr long) AVIStreamSampleToTime
 @ stdcall AVIStreamSetFormat(ptr long ptr long) AVIStreamSetFormat
 @ stdcall AVIStreamStart(ptr) AVIStreamStart
-@ stub    AVIStreamTimeToSample
+@ stdcall AVIStreamTimeToSample(ptr long) AVIStreamTimeToSample
 @ stdcall AVIStreamWrite(ptr long long ptr long long ptr ptr) AVIStreamWrite
 @ stdcall AVIStreamWriteData(ptr long ptr long) AVIStreamWriteData
 @ stub    CLSID_AVISimpleUnMarshal

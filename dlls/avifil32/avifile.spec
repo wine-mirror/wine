@@ -15,8 +15,8 @@
 100 pascal   AVIFileInit() AVIFileInit
 101 pascal   AVIFileExit() AVIFileExit
 102 pascal   AVIFileOpen(ptr str word ptr) AVIFileOpenA
-103 stub     AVISTREAMOPENFROMFILE
-104 stub     AVISTREAMCREATE
+103 pascal   AVIStreamOpenFromFile(ptr str long word ptr) AVIStreamOpenFromFileA
+104 pascal   AVIStreamCreate(ptr long long ptr) AVIStreamCreate
 105 stub     AVIMAKECOMPRESSEDSTREAM
 106 stub     AVIMAKEFILEFROMSTREAMS
 107 stub     AVIMAKESTREAMFROMCLIPBOARD
@@ -28,20 +28,20 @@
 122 stub     AVISAVEOPTIONS
 123 stub     AVIBUILDFILTER
 124 stub     AVISAVEOPTIONSFREE
-130 stub     AVISTREAMSTART
-131 stub     AVISTREAMLENGTH
-132 stub     AVISTREAMTIMETOSAMPLE
-133 stub     AVISTREAMSAMPLETOTIME
-140 stub     AVIFILEADDREF
+130 pascal   AVIStreamStart(long) AVIStreamStart
+131 pascal   AVIStreamLength(long) AVIStreamLength
+132 pascal   AVIStreamTimeToSample(long long) AVIStreamTimeToSample
+133 pascal   AVIStreamSampleToTime(long long) AVIStreamSampleToTime
+140 pascal   AVIFileAddRef(long) AVIFileAddRef
 141 pascal   AVIFileRelease(long) AVIFileRelease
-142 stub     AVIFILEINFO
+142 pascal   AVIFileInfo(long ptr long) AVIFileInfoA
 143 pascal   AVIFileGetStream(long ptr long long) AVIFileGetStream
 144 stub     AVIFILECREATESTREAM
 146 stub     AVIFILEWRITEDATA
 147 stub     AVIFILEREADDATA
-148 stub     AVIFILEENDRECORD
-160 stub     AVISTREAMADDREF
-161 stub     AVISTREAMRELEASE
+148 pascal   AVIFileEndRecord(long) AVIFileEndRecord
+160 pascal   AVIStreamAddRef(long) AVIStreamAddRef
+161 pascal   AVIStreamRelease(long) AVIStreamRelease
 162 stub     AVISTREAMINFO
 163 stub     AVISTREAMFINDSAMPLE
 164 stub     AVISTREAMREADFORMAT

@@ -1020,24 +1020,26 @@ ICOM_DEFINE(IAVIStream, IUnknown)
 #define IAVIStream_WriteData(p,a,b,c)     ICOM_CALL3(WriteData,p,a,b,c)
 #define IAVIStream_SetInfo(p,a,b)         ICOM_CALL2(SetInfo,p,a,b)
 
-HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler);
-
+ULONG WINAPI AVIStreamAddRef(PAVISTREAM iface);
+ULONG WINAPI AVIStreamRelease(PAVISTREAM iface);
 HRESULT WINAPI AVIStreamCreate(PAVISTREAM*,LONG,LONG,CLSID*);
 HRESULT WINAPI AVIStreamInfoA(PAVISTREAM iface,AVISTREAMINFOA *asi,LONG size);
 HRESULT WINAPI AVIStreamInfoW(PAVISTREAM iface,AVISTREAMINFOW *asi,LONG size);
 #define AVIStreamInfo WINELIB_NAME_AW(AVIStreamInfo)
-LPVOID WINAPI AVIStreamGetFrame(PGETFRAME pg,LONG pos);
-HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg);
-PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pavi,LPBITMAPINFOHEADER lpbiWanted);
-LONG WINAPI AVIStreamLength(PAVISTREAM iface);
-HRESULT WINAPI AVIStreamRead(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread);
-HRESULT WINAPI AVIStreamReadData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG *lpread);
+HRESULT WINAPI AVIStreamFindSample(PAVISTREAM pstream, LONG pos, DWORD flags);
 HRESULT WINAPI AVIStreamReadFormat(PAVISTREAM iface,LONG pos,LPVOID format,LONG *formatsize);
-ULONG WINAPI AVIStreamRelease(PAVISTREAM iface);
 HRESULT WINAPI AVIStreamSetFormat(PAVISTREAM iface,LONG pos,LPVOID format,LONG formatsize);
-LONG WINAPI AVIStreamStart(PAVISTREAM iface);
+HRESULT WINAPI AVIStreamRead(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread);
 HRESULT WINAPI AVIStreamWrite(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
+HRESULT WINAPI AVIStreamReadData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG *lpread);
 HRESULT WINAPI AVIStreamWriteData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG size);
+
+PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pavi,LPBITMAPINFOHEADER lpbiWanted);
+LPVOID  WINAPI AVIStreamGetFrame(PGETFRAME pg,LONG pos);
+HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg);
+
+HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler);
+
 HRESULT WINAPI AVIStreamOpenFromFileA(PAVISTREAM *ppavi, LPCSTR szFile,
 				      DWORD fccType, LONG lParam,
 				      UINT mode, CLSID *pclsidHandler);
@@ -1045,6 +1047,11 @@ HRESULT WINAPI AVIStreamOpenFromFileW(PAVISTREAM *ppavi, LPCWSTR szFile,
 				      DWORD fccType, LONG lParam,
 				      UINT mode, CLSID *pclsidHandler);
 #define AVIStreamOpenFromFile WINELIB_NAME_AW(AVIStreamOpenFromFile)
+
+LONG WINAPI AVIStreamStart(PAVISTREAM iface);
+LONG WINAPI AVIStreamLength(PAVISTREAM iface);
+LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample);
+LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
 
 #define AVIStreamFormatSize(pavi, lPos, plSize) \
     AVIStreamReadFormat(pavi, lPos, NULL, plSize)
@@ -1081,20 +1088,25 @@ ICOM_DEFINE(IAVIFile,IUnknown)
 #define IAVIFile_EndRecord(p)        ICOM_CALL (EndRecord,p)
 #define IAVIFile_DeleteStream(p,a,b) ICOM_CALL2(DeleteStream,p,a,b)
 
-HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE pfile,PAVISTREAM* ppavi,AVISTREAMINFOA* psi);
-HRESULT WINAPI AVIFileCreateStreamW(PAVIFILE pfile,PAVISTREAM* ppavi,AVISTREAMINFOW* psi);
-#define AVIFileCreateStream WINELIB_NAME_AW(AVIFileCreateStream)
-void WINAPI AVIFileExit(void);
-HRESULT WINAPI AVIFileGetStream(PAVIFILE pfile,PAVISTREAM* avis,DWORD fccType,LONG lParam);
-HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile,PAVIFILEINFOA pfi,LONG lSize);
-HRESULT WINAPI AVIFileInfoW(PAVIFILE pfile,PAVIFILEINFOW pfi,LONG lSize);
-#define AVIFileInfo WINELIB_NAME_AW(AVIFileInfo)
 void WINAPI AVIFileInit(void);
+void WINAPI AVIFileExit(void);
+
 HRESULT WINAPI AVIFileOpenA(PAVIFILE* ppfile,LPCSTR szFile,UINT uMode,LPCLSID lpHandler);
 HRESULT WINAPI AVIFileOpenW(PAVIFILE* ppfile,LPCWSTR szFile,UINT uMode,LPCLSID lpHandler);
 #define AVIFileOpen WINELIB_NAME_AW(AVIFileOpen)
-ULONG WINAPI AVIFileRelease(PAVIFILE iface);
 
+ULONG   WINAPI AVIFileAddRef(PAVIFILE pfile);
+ULONG   WINAPI AVIFileRelease(PAVIFILE pfile);
+HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile,PAVIFILEINFOA pfi,LONG lSize);
+HRESULT WINAPI AVIFileInfoW(PAVIFILE pfile,PAVIFILEINFOW pfi,LONG lSize);
+#define AVIFileInfo WINELIB_NAME_AW(AVIFileInfo)
+HRESULT WINAPI AVIFileGetStream(PAVIFILE pfile,PAVISTREAM* avis,DWORD fccType,LONG lParam);
+HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE pfile,PAVISTREAM* ppavi,AVISTREAMINFOA* psi);
+HRESULT WINAPI AVIFileCreateStreamW(PAVIFILE pfile,PAVISTREAM* ppavi,AVISTREAMINFOW* psi);
+#define AVIFileCreateStream WINELIB_NAME_AW(AVIFileCreateStream)
+HRESULT WINAPI AVIFileWriteData(PAVIFILE pfile,DWORD fcc,LPVOID lp,LONG size);
+HRESULT WINAPI AVIFileReadData(PAVIFILE pfile,DWORD fcc,LPVOID lp,LPLONG size);
+HRESULT WINAPI AVIFileEndRecord(PAVIFILE pfile);
 
 /*****************************************************************************
  * IGetFrame interface

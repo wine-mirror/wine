@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = avifil32.dll
-IMPORTS   = msvfw32 kernel32
+IMPORTS   = msvfw32 shell32 user32 advapi32 kernel32
 ALTNAMES  = avifile.dll
 EXTRALIBS = $(LIBUUID)
 
@@ -11,7 +11,9 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	avifile.c
+	api.c \
+	avifile.c \
+	factory.c
 
 @MAKE_DLL_RULES@
 
