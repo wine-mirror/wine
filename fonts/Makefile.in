@@ -42,6 +42,9 @@ wine_sans_serif-1252-96-13.fnt: wine_sans_serif.ttf $(SFNT2FNT)
 wine_sans_serif-1252-96-16.fnt: wine_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) wine_sans_serif.ttf 16 1252 96 129
 
+wine_sans_serif-1252-96-20.fnt: wine_sans_serif.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) wine_sans_serif.ttf 20 1252 96 129
+
 wine_sans_serif-1250-96-13.fnt: wine_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) wine_sans_serif.ttf 13 1250 96 129
 
@@ -63,8 +66,8 @@ wine_system-1250-96-16.fnt: wine_system.ttf $(SFNT2FNT)
 wine_system-1251-96-16.fnt: wine_system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) wine_system.ttf 16 1251 96 128
 
-wine_sserife.fon: wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt $(FNT2FON)
-	$(FNT2FON) wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt $@
+wine_sserife.fon: wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt wine_sans_serif-1252-96-20.fnt $(FNT2FON)
+	$(FNT2FON) wine_sans_serif-1252-96-13.fnt wine_sans_serif-1252-96-16.fnt wine_sans_serif-1252-96-20.fnt $@
 
 wine_sserifee.fon: wine_sans_serif-1250-96-13.fnt wine_sans_serif-1250-96-16.fnt $(FNT2FON)
 	$(FNT2FON) wine_sans_serif-1250-96-13.fnt wine_sans_serif-1250-96-16.fnt $@
