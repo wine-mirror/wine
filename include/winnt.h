@@ -287,6 +287,13 @@ typedef const WCHAR    *PCWSTR,     *LPCWSTR;
  */
 #ifndef __WINE__
 # ifdef WINE_UNICODE_REWRITE
+
+/* Use this if your compiler does not provide a 16bit wchar_t type. 
+ * Note that you will need to specify -fwritable-strings or an option
+ * to this effect.
+ * In C++ both WINE_UNICODE_TEXT('c') and WINE_UNICODE_TEXT("str") are 
+ * supported, but only the string form can be supported in C.
+ */
 EXTERN_C unsigned short* wine_rewrite_s4tos2(const wchar_t* str4);
 #  ifdef __cplusplus
 inline WCHAR* wine_unicode_text(const wchar_t* str4)
@@ -299,13 +306,22 @@ inline WCHAR wine_unicode_text(wchar_t chr4)
 }
 #   define WINE_UNICODE_TEXT(x)       wine_unicode_text(L##x)
 #  else  /* __cplusplus */
-#   define WINE_UNICODE_TEXT(x)       ((sizeof(x)==1) || (sizeof(L##x)>4) ? \
-                                      (WCHAR*)wine_rewrite_s4tos2(L##x) : \
-                                      ((WCHAR)L##x))
+#   define WINE_UNICODE_TEXT(x)       ((WCHAR*)wine_rewrite_s4tos2(L##x))
 #  endif  /* __cplusplus */
+
 # else  /* WINE_UNICODE_REWRITE */
-/* WINE_UNICODE_NATIVE or nothing at all */
+
+/* Define WINE_UNICODE_NATIVE if:
+ * - your compiler provides a 16bit wchar_t type, e.g. gcc >= 2.96 with 
+ *   -fshort-wchar option
+ * - or if you decide to use the native 32bit Unix wchar_t type. Be aware 
+ *   though that the Wine APIs only support 16bit WCHAR characters for 
+ *   binary compatibility reasons.
+ * - or define nothing at all if you don't use Unicode, and blissfully 
+ *   ignore the issue :-)
+ */
 #  define WINE_UNICODE_TEXT(string)   L##string
+
 # endif  /* WINE_UNICODE_REWRITE */
 
 # ifdef UNICODE
