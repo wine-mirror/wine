@@ -380,6 +380,165 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
+HRESULT WINAPI ConvertINetMultiByteToUnicode(
+    LPDWORD pdwMode,
+    DWORD dwEncoding,
+    LPCSTR pSrcStr,
+    LPINT pcSrcSize,
+    LPWSTR pDstStr,
+    LPINT pcDstSize)
+{
+    INT src_len = -1;
+
+    TRACE("%p %ld %s %p %p %p\n", pdwMode, dwEncoding,
+          debugstr_a(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
+
+    if (!pcDstSize)
+        return E_FAIL;
+
+    if (!pcSrcSize)
+        pcSrcSize = &src_len;
+
+    if (!*pcSrcSize)
+    {
+        *pcDstSize = 0;
+        return S_OK;
+    }
+
+    switch (dwEncoding)
+    {
+    case CP_UNICODE:
+        if (*pcSrcSize == -1)
+            *pcSrcSize = lstrlenW((LPCWSTR)pSrcStr);
+        *pcDstSize = min(*pcSrcSize, *pcDstSize);
+        *pcSrcSize *= sizeof(WCHAR);
+        memmove(pDstStr, pSrcStr, *pcDstSize * sizeof(WCHAR));
+        break;
+
+    default:
+        if (*pcSrcSize == -1)
+            *pcSrcSize = lstrlenA(pSrcStr);
+
+        *pcDstSize = MultiByteToWideChar(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize);
+        break;
+    }
+    
+    if (!*pcDstSize)
+        return E_FAIL;
+
+    return S_OK;
+}
+
+HRESULT WINAPI ConvertINetUnicodeToMultiByte(
+    LPDWORD pdwMode,
+    DWORD dwEncoding,
+    LPCWSTR pSrcStr,
+    LPINT pcSrcSize,
+    LPSTR pDstStr,
+    LPINT pcDstSize)
+{
+
+    INT src_len = -1;
+
+    TRACE("%p %ld %s %p %p %p\n", pdwMode, dwEncoding,
+          debugstr_w(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
+
+    if (!pcDstSize)
+        return E_FAIL;
+
+    if (!pcSrcSize)
+        pcSrcSize = &src_len;
+
+    if (!*pcSrcSize)
+    {
+        *pcDstSize = 0;
+        return S_OK;
+    }
+
+    switch (dwEncoding)
+    {
+    case CP_UNICODE:
+        if (*pcSrcSize == -1)
+            *pcSrcSize = lstrlenW(pSrcStr);
+        *pcDstSize = min(*pcSrcSize * sizeof(WCHAR), *pcDstSize);
+        memmove(pDstStr, pSrcStr, *pcDstSize);
+        break;
+
+    default:
+        if (*pcSrcSize == -1)
+            *pcSrcSize = lstrlenW(pSrcStr);
+
+        *pcDstSize = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize, NULL, NULL);
+        break;
+    }
+
+
+    if (!*pcDstSize)
+        return E_FAIL;
+
+    return S_OK;
+}
+
+HRESULT WINAPI ConvertINetString(
+    LPDWORD pdwMode,
+    DWORD dwSrcEncoding,
+    DWORD dwDstEncoding,
+    LPCSTR pSrcStr,
+    LPINT pcSrcSize,
+    LPSTR pDstStr,
+    LPINT pcDstSize
+)
+{
+    FIXME("%p %ld %ld %s %p %p %p: stub!\n", pdwMode, dwSrcEncoding, dwDstEncoding,
+          debugstr_a(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
+    return E_NOTIMPL;
+}
+
+static HRESULT GetFamilyCodePage(
+    UINT uiCodePage,
+    UINT* puiFamilyCodePage)
+{
+    UINT i, n;
+
+    TRACE("%u %p\n", uiCodePage, puiFamilyCodePage);
+
+    if (!puiFamilyCodePage) return S_FALSE;
+
+    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        for (n = 0; n < mlang_data[i].number_of_cp; n++)
+        {
+            if (mlang_data[i].mime_cp_info[n].cp == uiCodePage)
+            {
+                *puiFamilyCodePage = mlang_data[i].family_codepage;
+                return S_OK;
+            }
+        }
+    }
+
+    return S_FALSE;
+}
+
+HRESULT WINAPI IsConvertINetStringAvailable(
+    DWORD dwSrcEncoding,
+    DWORD dwDstEncoding)
+{
+    UINT src_family, dst_family;
+
+    TRACE("%ld %ld\n", dwSrcEncoding, dwDstEncoding);
+
+    if (GetFamilyCodePage(dwSrcEncoding, &src_family) != S_OK ||
+        GetFamilyCodePage(dwDstEncoding, &dst_family) != S_OK)
+        return S_FALSE;
+
+    if (src_family == dst_family) return S_OK;
+
+    /* we can convert any codepage to/from unicode */
+    if (src_family == CP_UNICODE || dst_family == CP_UNICODE) return S_OK;
+
+    return S_FALSE;
+}
+
 /******************************************************************************
  * MLANG ClassFactory
  */
@@ -921,8 +1080,7 @@ static HRESULT WINAPI fnIMultiLanguage_GetFamilyCodePage(
     UINT uiCodePage,
     UINT* puiFamilyCodePage)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    return GetFamilyCodePage(uiCodePage, puiFamilyCodePage);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_EnumCodePages(
@@ -950,8 +1108,7 @@ static HRESULT WINAPI fnIMultiLanguage_IsConvertible(
     DWORD dwSrcEncoding,
     DWORD dwDstEncoding)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    return IsConvertINetStringAvailable(dwSrcEncoding, dwDstEncoding);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertString(
@@ -964,8 +1121,8 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertString(
     BYTE* pDstStr,
     UINT* pcDstSize)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    return ConvertINetString(pdwMode, dwSrcEncoding, dwDstEncoding,
+                             pSrcStr, pcSrcSize, pDstStr, pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringToUnicode(
@@ -977,8 +1134,8 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertStringToUnicode(
     WCHAR* pDstStr,
     UINT* pcDstSize)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    return ConvertINetMultiByteToUnicode(pdwMode, dwEncoding,
+                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringFromUnicode(
@@ -990,8 +1147,8 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertStringFromUnicode(
     CHAR* pDstStr,
     UINT* pcDstSize)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    return ConvertINetUnicodeToMultiByte(pdwMode, dwEncoding,
+                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringReset(
@@ -1175,26 +1332,7 @@ static HRESULT WINAPI fnIMultiLanguage2_GetFamilyCodePage(
     UINT uiCodePage,
     UINT* puiFamilyCodePage)
 {
-    UINT i, n;
-
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
-    TRACE("%p %d %p\n", This, uiCodePage, puiFamilyCodePage);
-
-    if (!puiFamilyCodePage) return S_FALSE;
-
-    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
-    {
-        for (n = 0; n < mlang_data[i].number_of_cp; n++)
-        {
-            if (mlang_data[i].mime_cp_info[n].cp == uiCodePage)
-            {
-                *puiFamilyCodePage = mlang_data[i].family_codepage;
-                return S_OK;
-            }
-        }
-    }
-
-    return S_FALSE;
+    return GetFamilyCodePage(uiCodePage, puiFamilyCodePage);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_EnumCodePages(
@@ -1224,21 +1362,7 @@ static HRESULT WINAPI fnIMultiLanguage2_IsConvertible(
     DWORD dwSrcEncoding,
     DWORD dwDstEncoding)
 {
-    UINT src_family, dst_family;
-
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
-    TRACE("%p %ld %ld\n", This, dwSrcEncoding, dwDstEncoding);
-
-    if (fnIMultiLanguage2_GetFamilyCodePage(iface, dwSrcEncoding, &src_family) != S_OK ||
-        fnIMultiLanguage2_GetFamilyCodePage(iface, dwDstEncoding, &dst_family) != S_OK)
-        return S_FALSE;
-
-    if (src_family == dst_family) return S_OK;
-
-    /* we can convert any codepage to/from unicode */
-    if (src_family == CP_UNICODE || dst_family == CP_UNICODE) return S_OK;
-
-    return S_FALSE;
+    return IsConvertINetStringAvailable(dwSrcEncoding, dwDstEncoding);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertString(
@@ -1251,8 +1375,8 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertString(
     BYTE* pDstStr,
     UINT* pcDstSize)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    return ConvertINetString(pdwMode, dwSrcEncoding, dwDstEncoding,
+                             pSrcStr, pcSrcSize, pDstStr, pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicode(
@@ -1264,46 +1388,8 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicode(
     WCHAR* pDstStr,
     UINT* pcDstSize)
 {
-    INT src_len = -1;
-
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
-    TRACE("%p %p %ld %s %p %p %p\n", This, pdwMode, dwEncoding,
-          debugstr_a(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
-
-    if (!pcDstSize)
-        return E_FAIL;
-
-    if (!pcSrcSize)
-        pcSrcSize = &src_len;
-
-    if (!*pcSrcSize)
-    {
-        *pcDstSize = 0;
-        return S_OK;
-    }
-
-    switch (dwEncoding)
-    {
-    case CP_UNICODE:
-        if (*pcSrcSize == -1)
-            *pcSrcSize = lstrlenW((LPCWSTR)pSrcStr);
-        *pcDstSize = min(*pcSrcSize, *pcDstSize);
-        *pcSrcSize *= sizeof(WCHAR);
-        memmove(pDstStr, pSrcStr, *pcDstSize * sizeof(WCHAR));
-        break;
-
-    default:
-        if (*pcSrcSize == -1)
-            *pcSrcSize = lstrlenA(pSrcStr);
-
-        *pcDstSize = MultiByteToWideChar(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize);
-        break;
-    }
-    
-    if (!*pcDstSize)
-        return E_FAIL;
-
-    return S_OK;
+    return ConvertINetMultiByteToUnicode(pdwMode, dwEncoding,
+                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringFromUnicode(
@@ -1315,46 +1401,8 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringFromUnicode(
     CHAR* pDstStr,
     UINT* pcDstSize)
 {
-    INT src_len = -1;
-
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
-    TRACE("%p %p %ld %s %p %p %p\n", This, pdwMode, dwEncoding,
-          debugstr_w(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
-
-    if (!pcDstSize)
-        return E_FAIL;
-
-    if (!pcSrcSize)
-        pcSrcSize = &src_len;
-
-    if (!*pcSrcSize)
-    {
-        *pcDstSize = 0;
-        return S_OK;
-    }
-
-    switch (dwEncoding)
-    {
-    case CP_UNICODE:
-        if (*pcSrcSize == -1)
-            *pcSrcSize = lstrlenW(pSrcStr);
-        *pcDstSize = min(*pcSrcSize * sizeof(WCHAR), *pcDstSize);
-        memmove(pDstStr, pSrcStr, *pcDstSize);
-        break;
-
-    default:
-        if (*pcSrcSize == -1)
-            *pcSrcSize = lstrlenW(pSrcStr);
-
-        *pcDstSize = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize, NULL, NULL);
-        break;
-    }
-
-
-    if (!*pcDstSize)
-        return E_FAIL;
-
-    return S_OK;
+    return ConvertINetUnicodeToMultiByte(pdwMode, dwEncoding,
+                                         pSrcStr, pcSrcSize, pDstStr, pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringReset(
