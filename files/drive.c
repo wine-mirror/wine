@@ -877,8 +877,8 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 
         /* Quick hack, should eventually be fixed to work 100% with
            Windows2000 (see comment above). */
-        avail->HighPart = totalfree->HighPart;
-        avail->LowPart = totalfree->LowPart ;
+        avail->HighPart = available.HighPart;
+        avail->LowPart = available.LowPart ;
     }
 
     return TRUE;
