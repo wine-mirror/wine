@@ -3027,7 +3027,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 /***********************************************************************
  *           dump_INTERNET_FLAGS
  *
- * Helper function to DPRINTF the internet flags.
+ * Helper function to TRACE the internet flags.
  *
  * RETURNS
  *    None
@@ -3071,10 +3071,12 @@ void dump_INTERNET_FLAGS(DWORD dwFlags)
     
     for (i = 0; i < (sizeof(flag) / sizeof(flag[0])); i++) {
 	if (flag[i].val & dwFlags) {
-	    DPRINTF(" %s", flag[i].name);
+	    TRACE(" %s", flag[i].name);
 	    dwFlags &= ~flag[i].val;
 	}
     }	
-    if (dwFlags) DPRINTF(" Unknown flags (%08lx)", dwFlags);
-    DPRINTF("\n");   
+    if (dwFlags)
+        TRACE(" Unknown flags (%08lx)\n", dwFlags);
+    else
+        TRACE("\n");
 }

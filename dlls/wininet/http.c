@@ -1101,26 +1101,26 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	TRACE("  Attribute:");
 	for (i = 0; i < (sizeof(query_flags) / sizeof(query_flags[0])); i++) {
 	    if (query_flags[i].val == info) {
-		DPRINTF(" %s", query_flags[i].name);
+		TRACE(" %s", query_flags[i].name);
 		break;
 	    }
 	}
 	if (i == (sizeof(query_flags) / sizeof(query_flags[0]))) {
-	    DPRINTF(" Unknown (%08lx)", info);
+	    TRACE(" Unknown (%08lx)", info);
 	}
 
-	DPRINTF(" Modifier:");
+	TRACE(" Modifier:");
 	for (i = 0; i < (sizeof(modifier_flags) / sizeof(modifier_flags[0])); i++) {
 	    if (modifier_flags[i].val & info_mod) {
-		DPRINTF(" %s", modifier_flags[i].name);
+		TRACE(" %s", modifier_flags[i].name);
 		info_mod &= ~ modifier_flags[i].val;
 	    }
 	}
 	
 	if (info_mod) {
-	    DPRINTF(" Unknown (%08lx)", info_mod);
+	    TRACE(" Unknown (%08lx)", info_mod);
 	}
-	DPRINTF("\n");
+	TRACE("\n");
     }
     
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
