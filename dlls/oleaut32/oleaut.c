@@ -140,6 +140,9 @@ HRESULT WINAPI OLEAUT32_DllUnregisterServer() {
 
 extern void _get_STDFONT_CF(LPVOID);
 
+/***********************************************************************
+ *		DllGetClassObject (OLEAUT32.1)
+ */
 HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 {
     *ppv = NULL;
@@ -154,6 +157,9 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *pp
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+/***********************************************************************
+ *		DllCanUnloadNow (OLEAUT32.410)
+ */
 HRESULT WINAPI OLEAUT32_DllCanUnloadNow() {
     FIXME("(), stub!\n");
     return S_FALSE;
