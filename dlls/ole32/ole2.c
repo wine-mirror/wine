@@ -48,6 +48,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
+#define HACCEL_16(h32)		(LOWORD(h32))
+
 /******************************************************************************
  * These are static/global variables and internal data structures that the
  * OLE module uses to maintain it's state.
@@ -1431,7 +1433,7 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
     int i;
 
     if(!lpMsg) return FALSE;
-    if (!hAccel || !(lpAccelTbl = (LPACCEL16)LockResource16(hAccel)))
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16)LockResource16(HACCEL_16(hAccel))))
     {
 	WARN_(accel)("invalid accel handle=%04x\n", hAccel);
 	return FALSE;
@@ -2267,4 +2269,3 @@ BOOL WINAPI DllDebugObjectRPCHook(BOOL b, void *dummy)
   FIXME("stub\n");
   return TRUE;
 }
-

@@ -4995,7 +4995,7 @@ INT WINAPI TranslateAccelerator( HWND hWnd, HACCEL hAccel, LPMSG msg )
         WARN_(accel)("msg null; should hang here to be win compatible\n");
         return 0;
     }
-    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(hAccel)))
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(HACCEL_16(hAccel))))
     {
         WARN_(accel)("invalid accel handle=%x\n", hAccel);
         return 0;
