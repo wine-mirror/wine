@@ -455,7 +455,6 @@ INT WINAPI GetDIBits(
     PALETTEOBJ * palette;
     int i;
 
-    if (!lines) return 0;
     if (!info) return 0;
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -533,7 +532,7 @@ INT WINAPI GetDIBits(
 
     GDI_HEAP_UNLOCK( dc->w.hPalette );
 
-    if (bits)
+    if (bits && lines)
     {
         /* If the bitmap object already have a dib section that contains image data, get the bits from it*/
         if(bmp->dib->dsBm.bmBits && bmp->dib->dsBm.bmBitsPixel >= 16 && info->bmiHeader.biBitCount >= 16)
