@@ -1632,7 +1632,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     {
         case WH_HHTTPREQ:
             if (!NETCON_recv(&((LPWININETHTTPREQW)lpwh)->netConnection, lpBuffer,
-                             dwNumOfBytesToRead, 0, (int *)dwNumOfBytesRead))
+                             dwNumOfBytesToRead, MSG_WAITALL, (int *)dwNumOfBytesRead))
             {
                 *dwNumOfBytesRead = 0;
                 retval = TRUE; /* Under windows, it seems to return 0 even if nothing was read... */
