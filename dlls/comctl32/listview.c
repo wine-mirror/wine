@@ -1416,7 +1416,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     {
 	if (!(lpLVItem->mask & LVIF_STATE) || 
 	    !(lpLVItem->stateMask & LVIS_FOCUSED)) 
-	    return FALSE;
+	    goto fail;
 	if (lpLVItem->state & LVIS_FOCUSED)
 	    oversizedBox = doLabel = TRUE;
     }
@@ -1447,7 +1447,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	else
 	{
 	    /* we need the ident in report mode, if we don't have it, we fail */
-	    if (uView == LVS_REPORT && !(lpLVItem->mask & LVIF_INDENT)) return FALSE;
+	    if (uView == LVS_REPORT && !(lpLVItem->mask & LVIF_INDENT)) goto fail;
 	    State.left = Box.left;
 	    if (uView == LVS_REPORT) State.left += infoPtr->iconSize.cx * lpLVItem->iIndent;
 	    State.top  = Box.top;
@@ -1509,7 +1509,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	   goto calc_label;
 	}
 	/* we need the text in non owner draw mode */
-	if (!(lpLVItem->mask & LVIF_TEXT)) return FALSE;
+	if (!(lpLVItem->mask & LVIF_TEXT)) goto fail;
 	if (is_textT(lpLVItem->pszText, TRUE))
         {
     	    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
@@ -1594,6 +1594,11 @@ calc_label:
     TRACE("    - box=%s\n", debugrect(&Box));
 
     return TRUE;
+
+fail:
+    ERR("Incorrect item=%s; please report.\n", debuglvitem_t(lpLVItem, TRUE));
+    *((char *)0) = 0;   /* it's an internal function, should never happen */
+    return FALSE;
 }
 
 /***
