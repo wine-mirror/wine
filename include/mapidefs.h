@@ -796,7 +796,7 @@ typedef NOTIFCALLBACK *LPNOTIFCALLBACK;
                                 ULONG *lpStateLen, LPBYTE *lpState) PURE; \
     STDMETHOD(SetCollapseState)(THIS_ ULONG ulFlags, ULONG ulLen, \
                                 LPBYTE lpStart, BOOKMARK *lppWhere) PURE;
-ICOM_DEFINE(IMAPITable,IUnknown)
+DECLARE_INTERFACE_(IMAPITable,IUnknown) { IMAPITable_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -837,7 +837,7 @@ ICOM_DEFINE(IMAPITable,IUnknown)
 #define IMAPIAdviseSink_METHODS \
     IUnknown_METHODS \
     STDMETHOD(OnNotify)(THIS_ ULONG NumNotif, LPNOTIFICATION lpNotif) PURE;
-ICOM_DEFINE(IMAPIAdviseSink,IUnknown)
+DECLARE_INTERFACE_(IMAPIAdviseSink,IUnknown) { IMAPIAdviseSink_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -870,7 +870,7 @@ ICOM_DEFINE(IMAPIAdviseSink,IUnknown)
     STDMETHOD(GetNamesFromIDs)(THIS_ LPSPropTagArray *lppPropTags, LPGUID lpIid, ULONG ulFlags, ULONG *lpCount, \
                                LPMAPINAMEID **lpppNames) PURE; \
     STDMETHOD(GetIDsFromNames)(THIS_ ULONG cPropNames, LPMAPINAMEID *lppNames, ULONG ulFlags, LPSPropTagArray *lppPropTags) PURE;
-ICOM_DEFINE(IMAPIProp,IUnknown)
+DECLARE_INTERFACE_(IMAPIProp,IUnknown) { IMAPIProp_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

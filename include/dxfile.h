@@ -67,7 +67,7 @@ STDAPI DirectXFileCreate(LPDIRECTXFILE *lplpDirectXFile);
     STDMETHOD(CreateEnumObject) (THIS_ LPVOID, DXFILELOADOPTIONS, LPDIRECTXFILEENUMOBJECT *) PURE; \
     STDMETHOD(CreateSaveObject) (THIS_ LPCSTR, DXFILEFORMAT, LPDIRECTXFILESAVEOBJECT *) PURE; \
     STDMETHOD(RegisterTemplates) (THIS_ LPVOID, DWORD) PURE;
-ICOM_DEFINE(IDirectXFile,IUnknown)
+DECLARE_INTERFACE_(IDirectXFile,IUnknown) { IDirectXFile_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -87,7 +87,7 @@ ICOM_DEFINE(IDirectXFile,IUnknown)
     STDMETHOD(GetNextDataObject)    (THIS_ LPDIRECTXFILEDATA *) PURE; \
     STDMETHOD(GetDataObjectById)    (THIS_ REFGUID, LPDIRECTXFILEDATA *) PURE; \
     STDMETHOD(GetDataObjectByName)  (THIS_ LPCSTR, LPDIRECTXFILEDATA *) PURE;
-ICOM_DEFINE(IDirectXFileEnumObject,IUnknown)
+DECLARE_INTERFACE_(IDirectXFileEnumObject,IUnknown) { IDirectXFileEnumObject_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -107,7 +107,7 @@ ICOM_DEFINE(IDirectXFileEnumObject,IUnknown)
     STDMETHOD(SaveTemplates) (THIS_ DWORD, const GUID **) PURE; \
     STDMETHOD(CreateDataObject) (THIS_ REFGUID, LPCSTR, const GUID *, DWORD, LPVOID, LPDIRECTXFILEDATA *) PURE; \
     STDMETHOD(SaveData) (THIS_ LPDIRECTXFILEDATA) PURE;
-ICOM_DEFINE(IDirectXFileSaveObject,IUnknown)
+DECLARE_INTERFACE_(IDirectXFileSaveObject,IUnknown) { IDirectXFileSaveObject_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -129,7 +129,7 @@ ICOM_DEFINE(IDirectXFileSaveObject,IUnknown)
 #define IDirectXFileObject_METHODS \
     IUnknown_METHODS \
     IDIRECTXFILEOBJECT_METHODS
-ICOM_DEFINE(IDirectXFileObject,IUnknown)
+DECLARE_INTERFACE_(IDirectXFileObject,IUnknown) { IDirectXFileObject_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -152,7 +152,7 @@ ICOM_DEFINE(IDirectXFileObject,IUnknown)
     STDMETHOD(AddDataObject) (THIS_ LPDIRECTXFILEDATA) PURE; \
     STDMETHOD(AddDataReference) (THIS_ LPCSTR, const GUID *) PURE; \
     STDMETHOD(AddBinaryObject) (THIS_ LPCSTR, const GUID *, LPCSTR, LPVOID, DWORD) PURE;
-ICOM_DEFINE(IDirectXFileData,IDirectXFileObject)
+DECLARE_INTERFACE_(IDirectXFileData,IDirectXFileObject) { IDirectXFileData_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -177,7 +177,7 @@ ICOM_DEFINE(IDirectXFileData,IDirectXFileObject)
     IUnknown_METHODS \
     IDIRECTXFILEOBJECT_METHODS \
     STDMETHOD(Resolve) (THIS_ LPDIRECTXFILEDATA *) PURE;
-ICOM_DEFINE(IDirectXFileDataReference,IDirectXFileObject)
+DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject) { IDirectXFileDataReference_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -199,7 +199,7 @@ ICOM_DEFINE(IDirectXFileDataReference,IDirectXFileObject)
     STDMETHOD(GetSize)      (THIS_ DWORD *) PURE; \
     STDMETHOD(GetMimeType)  (THIS_ LPCSTR *) PURE; \
     STDMETHOD(Read)         (THIS_ LPVOID, DWORD, LPDWORD) PURE;
-ICOM_DEFINE(IDirectXFileBinary,IDirectXFileObject)
+DECLARE_INTERFACE_(IDirectXFileBinary,IDirectXFileObject) { IDirectXFileBinary_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -1004,7 +1004,7 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
     STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
     STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE; \
     STDMETHOD(SetInfo)(THIS_ AVISTREAMINFOW *plInfo, LONG cbInfo) PURE;
-ICOM_DEFINE(IAVIStream, IUnknown)
+DECLARE_INTERFACE_(IAVIStream, IUnknown) { IAVIStream_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1118,7 +1118,7 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
     IUnknown_METHODS \
     STDMETHOD(Begin)(IAVIStreaming*iface,LONG lStart,LONG lEnd,LONG lRate) PURE; \
     STDMETHOD(End)(IAVIStreaming*iface) PURE;
-ICOM_DEFINE(IAVIStreaming, IUnknown)
+DECLARE_INTERFACE_(IAVIStreaming, IUnknown) { IAVIStreaming_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1142,7 +1142,7 @@ ICOM_DEFINE(IAVIStreaming, IUnknown)
     STDMETHOD(Paste)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM pSource,LONG lStart,LONG lEnd) PURE; \
     STDMETHOD(Clone)(IAVIEditStream*iface,PAVISTREAM*ppResult) PURE; \
     STDMETHOD(SetInfo)(IAVIEditStream*iface,LPAVISTREAMINFOW asi, LONG size) PURE;
-ICOM_DEFINE(IAVIEditStream,IUnknown)
+DECLARE_INTERFACE_(IAVIEditStream,IUnknown) { IAVIEditStream_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1191,7 +1191,7 @@ HRESULT WINAPI EditStreamSetNameW(PAVISTREAM pstream, LPCWSTR szName);
     STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
     STDMETHOD(EndRecord)(THIS) PURE; \
     STDMETHOD(DeleteStream)(THIS_ DWORD fccType, LONG lParam) PURE;
-ICOM_DEFINE(IAVIFile,IUnknown)
+DECLARE_INTERFACE_(IAVIFile,IUnknown) { IAVIFile_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1239,7 +1239,7 @@ HRESULT WINAPI AVIFileEndRecord(PAVIFILE pfile);
     STDMETHOD(Begin)(THIS_ LONG lStart, LONG lEnd, LONG lRate) PURE; \
     STDMETHOD(End)(THIS) PURE; \
     STDMETHOD(SetFormat)(THIS_ LPBITMAPINFOHEADER lpbi, LPVOID lpBits, INT x, INT y, INT dx, INT dy) PURE;
-ICOM_DEFINE(IGetFrame,IUnknown)
+DECLARE_INTERFACE_(IGetFrame,IUnknown) { IGetFrame_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

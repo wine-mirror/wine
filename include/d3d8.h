@@ -132,7 +132,7 @@ typedef struct IDirect3DVolumeTexture8   IDirect3DVolumeTexture8, *LPDIRECT3DVOL
     STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DCAPS8 * pCaps) PURE; \
     STDMETHOD_(HMONITOR,GetAdapterMonitor)(THIS_ UINT  Adapter) PURE; \
     STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, D3DPRESENT_PARAMETERS * pPresentationParameters, IDirect3DDevice8 ** ppReturnedDeviceInterface) PURE;
-ICOM_DEFINE(IDirect3D8,IUnknown)
+DECLARE_INTERFACE_(IDirect3D8,IUnknown) { IDirect3D8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -256,7 +256,7 @@ ICOM_DEFINE(IDirect3D8,IUnknown)
     STDMETHOD(DrawRectPatch)(THIS_ UINT  Handle,CONST float * pNumSegs,CONST D3DRECTPATCH_INFO * pRectPatchInfo) PURE; \
     STDMETHOD(DrawTriPatch)(THIS_ UINT  Handle,CONST float * pNumSegs,CONST D3DTRIPATCH_INFO * pTriPatchInfo) PURE; \
     STDMETHOD(DeletePatch)(THIS_ UINT  Handle) PURE;
-ICOM_DEFINE(IDirect3DDevice8,IUnknown)
+DECLARE_INTERFACE_(IDirect3DDevice8,IUnknown) { IDirect3DDevice8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -375,7 +375,7 @@ ICOM_DEFINE(IDirect3DDevice8,IUnknown)
     STDMETHOD(GetDesc)(THIS_ D3DVOLUME_DESC * pDesc) PURE; \
     STDMETHOD(LockBox)(THIS_ D3DLOCKED_BOX * pLockedVolume,CONST D3DBOX * pBox, DWORD  Flags) PURE; \
     STDMETHOD(UnlockBox)(THIS) PURE;
-ICOM_DEFINE(IDirect3DVolume8,IUnknown)
+DECLARE_INTERFACE_(IDirect3DVolume8,IUnknown) { IDirect3DVolume8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -402,7 +402,7 @@ ICOM_DEFINE(IDirect3DVolume8,IUnknown)
     IUnknown_METHODS \
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect, CONST RECT * pDestRect, HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE; \
     STDMETHOD(GetBackBuffer)(THIS_ UINT  BackBuffer, D3DBACKBUFFER_TYPE  Type,IDirect3DSurface8 ** ppBackBuffer) PURE;
-ICOM_DEFINE(IDirect3DSwapChain8,IUnknown)
+DECLARE_INTERFACE_(IDirect3DSwapChain8,IUnknown) { IDirect3DSwapChain8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -429,7 +429,7 @@ ICOM_DEFINE(IDirect3DSwapChain8,IUnknown)
     STDMETHOD(GetDesc)(THIS_ D3DSURFACE_DESC * pDesc) PURE; \
     STDMETHOD(LockRect)(THIS_ D3DLOCKED_RECT * pLockedRect, CONST RECT * pRect,DWORD  Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS) PURE;
-ICOM_DEFINE(IDirect3DSurface8,IUnknown)
+DECLARE_INTERFACE_(IDirect3DSurface8,IUnknown) { IDirect3DSurface8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -462,7 +462,7 @@ ICOM_DEFINE(IDirect3DSurface8,IUnknown)
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE; \
     STDMETHOD_(void,PreLoad)(THIS) PURE; \
     STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
-ICOM_DEFINE(IDirect3DResource8,IUnknown)
+DECLARE_INTERFACE_(IDirect3DResource8,IUnknown) { IDirect3DResource8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -490,7 +490,7 @@ ICOM_DEFINE(IDirect3DResource8,IUnknown)
     STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DVERTEXBUFFER_DESC  * pDesc) PURE;
-ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
+DECLARE_INTERFACE_(IDirect3DVertexBuffer8,IDirect3DResource8) { IDirect3DVertexBuffer8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -522,7 +522,7 @@ ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
     STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DINDEXBUFFER_DESC * pDesc) PURE;
-ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
+DECLARE_INTERFACE_(IDirect3DIndexBuffer8,IDirect3DResource8) { IDirect3DIndexBuffer8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -554,7 +554,7 @@ ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
     STDMETHOD_(DWORD,SetLOD)(THIS_ DWORD  LODNew) PURE; \
     STDMETHOD_(DWORD,GetLOD)(THIS) PURE; \
     STDMETHOD_(DWORD,GetLevelCount)(THIS) PURE;
-ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
+DECLARE_INTERFACE_(IDirect3DBaseTexture8,IDirect3DResource8) { IDirect3DBaseTexture8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -588,7 +588,7 @@ ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
     STDMETHOD(LockRect)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level,D3DLOCKED_RECT * pLockedRect,CONST RECT * pRect,DWORD  Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level) PURE; \
     STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES  FaceType,CONST RECT * pDirtyRect) PURE;
-ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
+DECLARE_INTERFACE_(IDirect3DCubeTexture8,IDirect3DBaseTexture8) { IDirect3DCubeTexture8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -628,7 +628,7 @@ ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
     STDMETHOD(LockRect)(THIS_ UINT  Level,D3DLOCKED_RECT * pLockedRect,CONST RECT * pRect,DWORD  Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS_ UINT  Level) PURE; \
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT * pDirtyRect) PURE;
-ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
+DECLARE_INTERFACE_(IDirect3DTexture8,IDirect3DBaseTexture8) { IDirect3DTexture8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -668,7 +668,7 @@ ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
     STDMETHOD(LockBox)(THIS_ UINT  Level,D3DLOCKED_BOX * pLockedVolume,CONST D3DBOX * pBox,DWORD  Flags) PURE; \
     STDMETHOD(UnlockBox)(THIS_ UINT  Level) PURE; \
     STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX * pDirtyBox) PURE;
-ICOM_DEFINE(IDirect3DVolumeTexture8,IDirect3DBaseTexture8)
+DECLARE_INTERFACE_(IDirect3DVolumeTexture8,IDirect3DBaseTexture8) { IDirect3DVolumeTexture8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -133,7 +133,7 @@ enum enumDMUS_TRACKF_FLAGS {
     STDMETHOD(GetMediaTypes)(THIS_ DWORD **padwMediaTypes, DWORD dwNumElements) PURE; \
     STDMETHOD(ProcessPMsg)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG) PURE; \
     STDMETHOD(Flush)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG, REFERENCE_TIME rtTime) PURE;
-ICOM_DEFINE(IDirectMusicTool,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicTool,IUnknown) { IDirectMusicTool_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -159,7 +159,7 @@ ICOM_DEFINE(IDirectMusicTool,IUnknown)
 #define IDirectMusicTool8_METHODS \
     IDirectMusicTool_METHODS \
     STDMETHOD(Clone)(THIS_ IDirectMusicTool **ppTool) PURE;
-ICOM_DEFINE(IDirectMusicTool8,IDirectMusicTool)
+DECLARE_INTERFACE_(IDirectMusicTool8,IDirectMusicTool) { IDirectMusicTool8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -196,7 +196,7 @@ ICOM_DEFINE(IDirectMusicTool8,IDirectMusicTool)
     STDMETHOD(AddNotificationType)(THIS_ REFGUID rguidNotificationType) PURE; \
     STDMETHOD(RemoveNotificationType)(THIS_ REFGUID rguidNotificationType) PURE; \
     STDMETHOD(Clone)(THIS_ MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack) PURE;
-ICOM_DEFINE(IDirectMusicTrack,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicTrack,IUnknown) { IDirectMusicTrack_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -230,7 +230,7 @@ ICOM_DEFINE(IDirectMusicTrack,IUnknown)
     STDMETHOD(SetParamEx)(THIS_ REFGUID rguidType, REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags) PURE; \
     STDMETHOD(Compose)(THIS_ IUnknown *pContext, DWORD dwTrackGroup, IDirectMusicTrack **ppResultTrack) PURE; \
     STDMETHOD(Join)(THIS_ IDirectMusicTrack *pNewTrack, MUSIC_TIME mtJoin, IUnknown *pContext, DWORD dwTrackGroup, IDirectMusicTrack **ppResultTrack) PURE;
-ICOM_DEFINE(IDirectMusicTrack8,IDirectMusicTrack)
+DECLARE_INTERFACE_(IDirectMusicTrack8,IDirectMusicTrack) { IDirectMusicTrack8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

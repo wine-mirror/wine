@@ -502,7 +502,7 @@ typedef struct IDirectPlay8LobbiedApplication	*PIDirectPlay8LobbiedApplication, 
   STDMETHOD(GetSPCaps)(THIS_ CONST GUID * CONST pguidSP, DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags) PURE; \
   STDMETHOD(GetConnectionInfo)(THIS_ DPN_CONNECTION_INFO * CONST pdpConnectionInfo, CONST DWORD dwFlags) PURE; \
   STDMETHOD(RegisterLobby)(THIS_ CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication * CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectPlay8Client,IUnknown)
+DECLARE_INTERFACE_(IDirectPlay8Client,IUnknown) { IDirectPlay8Client_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -569,7 +569,7 @@ ICOM_DEFINE(IDirectPlay8Client,IUnknown)
   STDMETHOD(GetSPCaps)(THIS_ CONST GUID * CONST pguidSP, DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags) PURE; \
   STDMETHOD(GetConnectionInfo)(THIS_ CONST DPNID dpnid, DPN_CONNECTION_INFO * CONST pdpConnectionInfo, CONST DWORD dwFlags) PURE; \
   STDMETHOD(RegisterLobby)(THIS_ CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication * CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectPlay8Server,IUnknown)
+DECLARE_INTERFACE_(IDirectPlay8Server,IUnknown) { IDirectPlay8Server_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -651,7 +651,7 @@ ICOM_DEFINE(IDirectPlay8Server,IUnknown)
   STDMETHOD(GetConnectionInfo)(THIS_ CONST DPNID dpnid, DPN_CONNECTION_INFO* CONST pdpConnectionInfo, CONST DWORD dwFlags) PURE; \
   STDMETHOD(RegisterLobby)(THIS_ CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication* CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) PURE; \
   STDMETHOD(TerminateSession)(THIS_ void* CONST pvTerminateData, CONST DWORD dwTerminateDataSize, CONST DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectPlay8Peer, IUnknown)
+DECLARE_INTERFACE_(IDirectPlay8Peer, IUnknown) { IDirectPlay8Peer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

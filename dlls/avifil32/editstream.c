@@ -52,7 +52,7 @@ typedef struct _EditStreamTable {
 #define IEditStreamInternal_METHODS \
     IUnknown_METHODS \
     STDMETHOD(GetEditStreamImpl)(THIS_ LPVOID*) PURE;
-ICOM_DEFINE(IEditStreamInternal, IUnknown)
+DECLARE_INTERFACE_(IEditStreamInternal, IUnknown) { IEditStreamInternal_METHODS };
 #undef INTERFACE
 
 #define EditStreamEnd(This,streamNr) ((This)->pStreams[streamNr].dwStart + \

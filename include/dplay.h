@@ -444,7 +444,7 @@ typedef BOOL (CALLBACK *LPDPENUMSESSIONSCALLBACK2)(
     STDMETHOD(SaveSession)(THIS_ LPSTR) PURE; \
     STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE; \
     STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPSTR lpPlayerName, LPSTR) PURE;
-ICOM_DEFINE(IDirectPlay,IUnknown)
+DECLARE_INTERFACE_(IDirectPlay,IUnknown) { IDirectPlay_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -513,7 +513,7 @@ ICOM_DEFINE(IDirectPlay,IUnknown)
     STDMETHOD(SetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
     STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPDPNAME lpPlayerName, DWORD dwFlags) PURE; \
     STDMETHOD(SetSessionDesc)(THIS_ LPDPSESSIONDESC2 lpSessDesc, DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectPlay2,IUnknown)
+DECLARE_INTERFACE_(IDirectPlay2,IUnknown) { IDirectPlay2_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -575,7 +575,7 @@ ICOM_DEFINE(IDirectPlay2,IUnknown)
     STDMETHOD(GetGroupParent)(THIS_ DPID idGroup, LPDPID lpidParent) PURE; \
     STDMETHOD(GetPlayerAccount)(THIS_ DPID idPlayer, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
     STDMETHOD(GetPlayerFlags)(THIS_ DPID idPlayer, LPDWORD lpdwFlags) PURE;
-ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
+DECLARE_INTERFACE_(IDirectPlay3,IDirectPlay2) { IDirectPlay3_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -643,7 +643,7 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
     STDMETHOD(GetMessageQueue)(THIS_ DPID , DPID , DWORD , LPDWORD , LPDWORD  ) PURE; \
     STDMETHOD(CancelMessage)(THIS_ DWORD , DWORD  ) PURE; \
     STDMETHOD(CancelPriority)(THIS_ DWORD , DWORD , DWORD  ) PURE;
-ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
+DECLARE_INTERFACE_(IDirectPlay4,IDirectPlay3) { IDirectPlay4_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

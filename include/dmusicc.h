@@ -383,7 +383,7 @@ struct _DMUS_CLOCKINFO8 {
     STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE; \
     STDMETHOD(GetDefaultPort)(THIS_ LPGUID pguidPort) PURE; \
     STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, HWND hWnd) PURE;
-ICOM_DEFINE(IDirectMusic,IUnknown)
+DECLARE_INTERFACE_(IDirectMusic,IUnknown) { IDirectMusic_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -412,7 +412,7 @@ ICOM_DEFINE(IDirectMusic,IUnknown)
 #define IDirectMusic8_METHODS \
     IDirectMusic_METHODS \
     STDMETHOD(SetExternalMasterClock)(THIS_ IReferenceClock *pClock) PURE;
-ICOM_DEFINE(IDirectMusic8,IDirectMusic)
+DECLARE_INTERFACE_(IDirectMusic8,IDirectMusic) { IDirectMusic8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -455,7 +455,7 @@ ICOM_DEFINE(IDirectMusic8,IDirectMusic)
     STDMETHOD(GetBufferFormat)(THIS_ LPGUID pGuidFormat) PURE; \
     STDMETHOD(SetStartTime)(THIS_ REFERENCE_TIME rt) PURE; \
     STDMETHOD(SetUsedBytes)(THIS_ DWORD cb) PURE;
-ICOM_DEFINE(IDirectMusicBuffer,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicBuffer,IUnknown) { IDirectMusicBuffer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -489,7 +489,7 @@ ICOM_DEFINE(IDirectMusicBuffer,IUnknown)
     IUnknown_METHODS \
     STDMETHOD(GetPatch)(THIS_ DWORD *pdwPatch) PURE; \
     STDMETHOD(SetPatch)(THIS_ DWORD dwPatch) PURE;
-ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicInstrument,IUnknown) { IDirectMusicInstrument_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -511,7 +511,7 @@ ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
 #define IDirectMusicDownloadedInstrument_METHODS \
     IUnknown_METHODS \
     /* no IDirectMusicDownloadedInstrument methods at this time */
-ICOM_DEFINE(IDirectMusicDownloadedInstrument,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicDownloadedInstrument,IUnknown) { IDirectMusicDownloadedInstrument_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -533,7 +533,7 @@ ICOM_DEFINE(IDirectMusicDownloadedInstrument,IUnknown)
     IUnknown_METHODS \
     STDMETHOD(GetInstrument)(THIS_ DWORD dwPatch, IDirectMusicInstrument **ppInstrument) PURE; \
     STDMETHOD(EnumInstrument)(THIS_ DWORD dwIndex, DWORD *pdwPatch, LPWSTR pwszName, DWORD dwNameLen) PURE;
-ICOM_DEFINE(IDirectMusicCollection,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicCollection,IUnknown) { IDirectMusicCollection_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -555,7 +555,7 @@ ICOM_DEFINE(IDirectMusicCollection,IUnknown)
 #define IDirectMusicDownload_METHODS \
     IUnknown_METHODS \
     STDMETHOD(GetBuffer)(THIS_ void **ppvBuffer, DWORD *pdwSize) PURE;
-ICOM_DEFINE(IDirectMusicDownload,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicDownload,IUnknown) { IDirectMusicDownload_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -581,7 +581,7 @@ ICOM_DEFINE(IDirectMusicDownload,IUnknown)
     STDMETHOD(GetAppend)(THIS_ DWORD *pdwAppend) PURE; \
     STDMETHOD(Download)(THIS_ IDirectMusicDownload *pIDMDownload) PURE; \
     STDMETHOD(Unload)(THIS_ IDirectMusicDownload *pIDMDownload) PURE;
-ICOM_DEFINE(IDirectMusicPortDownload,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicPortDownload,IUnknown) { IDirectMusicPortDownload_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -623,7 +623,7 @@ ICOM_DEFINE(IDirectMusicPortDownload,IUnknown)
     STDMETHOD(GetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) PURE; \
     STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer) PURE; \
     STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSize, LPDWORD pdwBufferSize) PURE;
-ICOM_DEFINE(IDirectMusicPort,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicPort,IUnknown) { IDirectMusicPort_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -660,7 +660,7 @@ ICOM_DEFINE(IDirectMusicPort,IUnknown)
 #define IDirectMusicThru_METHODS \
     IUnknown_METHODS \
     STDMETHOD(ThruChannel)(THIS_ DWORD dwSourceChannelGroup, DWORD dwSourceChannel, DWORD dwDestinationChannelGroup, DWORD dwDestinationChannel, LPDIRECTMUSICPORT pDestinationPort) PURE;
-ICOM_DEFINE(IDirectMusicThru,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicThru,IUnknown) { IDirectMusicThru_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -688,7 +688,7 @@ ICOM_DEFINE(IDirectMusicThru,IUnknown)
 		STDMETHOD(AdviseTime)(THIS_ REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD *pdwAdviseCookie) PURE; \
 		STDMETHOD(AdvisePeriodic)(THIS_ REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD *pdwAdviseCookie) PURE; \
 		STDMETHOD(Unadvise)(THIS_ DWORD dwAdviseCookie) PURE;
-	ICOM_DEFINE(IReferenceClock,IUnknown)
+	DECLARE_INTERFACE_(IReferenceClock,IUnknown) { IReferenceClock_METHODS };
 	#undef INTERFACE
 	
 	#ifdef COBJMACROS

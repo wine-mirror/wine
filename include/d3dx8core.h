@@ -61,7 +61,7 @@ typedef struct ID3DXFont                ID3DXFont, *LPD3DXFONT;
     IUnknown_METHODS \
     STDMETHOD_(LPVOID,GetBufferPointer)(THIS) PURE; \
     STDMETHOD_(DWORD,GetBufferSize)(THIS) PURE;
-ICOM_DEFINE(ID3DXBuffer,IUnknown)
+DECLARE_INTERFACE_(ID3DXBuffer,IUnknown) { ID3DXBuffer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -84,7 +84,7 @@ ICOM_DEFINE(ID3DXBuffer,IUnknown)
     STDMETHOD(Begin)(THIS) PURE; \
     STDMETHOD(DrawTextA)(THIS) PURE; \
     STDMETHOD(End)(THIS) PURE;
-ICOM_DEFINE(ID3DXFont,IUnknown)
+DECLARE_INTERFACE_(ID3DXFont,IUnknown) { ID3DXFont_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

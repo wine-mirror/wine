@@ -42,7 +42,7 @@ typedef LONG_PTR OAEVENT;
     STDMETHOD(get_FilterCollection)(THIS_  IDispatch **  ppUnk) PURE; \
     STDMETHOD(get_RegFilterCollection)(THIS_  IDispatch **  ppUnk) PURE; \
     STDMETHOD(StopWhenReady)(THIS) PURE;
-ICOM_DEFINE(IMediaControl,IDispatch)
+DECLARE_INTERFACE_(IMediaControl,IDispatch) { IMediaControl_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -74,7 +74,7 @@ ICOM_DEFINE(IMediaControl,IDispatch)
     STDMETHOD(get_Volume)(THIS_  long *  plVolume) PURE; \
     STDMETHOD(put_Balance)(THIS_  long   lBalance) PURE; \
     STDMETHOD(get_Balance)(THIS_  long *  plBalance) PURE;
-ICOM_DEFINE(IBasicAudio,IDispatch)
+DECLARE_INTERFACE_(IBasicAudio,IDispatch) { IBasicAudio_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -129,7 +129,7 @@ ICOM_DEFINE(IBasicAudio,IDispatch)
     STDMETHOD(GetCurrentImage)(THIS_  long *  pBufferSize, long *  pDIBImage) PURE; \
     STDMETHOD(IsUsingDefaultSource)(THIS) PURE; \
     STDMETHOD(IsUsingDefaultDestination)(THIS) PURE;
-ICOM_DEFINE(IBasicVideo,IDispatch)
+DECLARE_INTERFACE_(IBasicVideo,IDispatch) { IBasicVideo_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -219,7 +219,7 @@ ICOM_DEFINE(IBasicVideo,IDispatch)
     STDMETHOD(GetRestorePosition)(THIS_  long *  pLeft, long *  pTop, long *  pWidth, long *  pHeight) PURE; \
     STDMETHOD(HideCursor)(THIS_  long   HideCursor) PURE; \
     STDMETHOD(IsCursorHidden)(THIS_  long *  CursorHidden) PURE;
-ICOM_DEFINE(IVideoWindow,IDispatch)
+DECLARE_INTERFACE_(IVideoWindow,IDispatch) { IVideoWindow_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -283,7 +283,7 @@ ICOM_DEFINE(IVideoWindow,IDispatch)
     STDMETHOD(CancelDefaultHandling)(THIS_  long   lEvCode) PURE; \
     STDMETHOD(RestoreDefaultHandling)(THIS_  long   lEvCode) PURE; \
     STDMETHOD(FreeEventParams)(THIS_  long   lEvCode, LONG_PTR   lParam1, LONG_PTR   lParam2) PURE;
-ICOM_DEFINE(IMediaEvent,IDispatch)
+DECLARE_INTERFACE_(IMediaEvent,IDispatch) { IMediaEvent_METHODS };
 #undef INTERFACE
      
 #ifdef COBJMACROS
@@ -311,7 +311,7 @@ ICOM_DEFINE(IMediaEvent,IDispatch)
     STDMETHOD(SetNotifyWindow)(THIS_  OAHWND   hwnd, long   lMsg, LONG_PTR   lInstanceData) PURE; \
     STDMETHOD(SetNotifyFlags)(THIS_  long   lNoNotifyFlags) PURE; \
     STDMETHOD(GetNotifyFlags)(THIS_  long *  lplNoNotifyFlags) PURE;
-ICOM_DEFINE(IMediaEventEx,IMediaEvent)
+DECLARE_INTERFACE_(IMediaEventEx,IMediaEvent) { IMediaEventEx_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

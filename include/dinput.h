@@ -1149,7 +1149,7 @@ DECL_WINELIB_TYPE_AW(LPCDIDEVICEIMAGEINFOHEADER)
     STDMETHOD(Download)(THIS) PURE; \
     STDMETHOD(Unload)(THIS) PURE; \
     STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE) PURE;
-ICOM_DEFINE(IDirectInputEffect,IUnknown)
+DECLARE_INTERFACE_(IDirectInputEffect,IUnknown) { IDirectInputEffect_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1192,7 +1192,7 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
     STDMETHOD(GetDeviceInfo)(THIS_ LPDIDEVICEINSTANCEA pdidi) PURE; \
     STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
     STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion, REFGUID rguid) PURE;
-ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
+DECLARE_INTERFACE_(IDirectInputDeviceA,IUnknown) { IDirectInputDeviceA_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1216,7 +1216,7 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
     STDMETHOD(GetDeviceInfo)(THIS_ LPDIDEVICEINSTANCEW pdidi) PURE; \
     STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
     STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion, REFGUID rguid) PURE;
-ICOM_DEFINE(IDirectInputDeviceW,IUnknown)
+DECLARE_INTERFACE_(IDirectInputDeviceW,IUnknown) { IDirectInputDeviceW_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1258,7 +1258,7 @@ ICOM_DEFINE(IDirectInputDeviceW,IUnknown)
     STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE pesc) PURE; \
     STDMETHOD(Poll)(THIS) PURE; \
     STDMETHOD(SendDeviceData)(THIS_ DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl) PURE;
-ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
+DECLARE_INTERFACE_(IDirectInputDevice2A,IDirectInputDeviceA) { IDirectInputDevice2A_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1276,7 +1276,7 @@ ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
     STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE pesc) PURE; \
     STDMETHOD(Poll)(THIS) PURE; \
     STDMETHOD(SendDeviceData)(THIS_ DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl) PURE;
-ICOM_DEFINE(IDirectInputDevice2W,IDirectInputDeviceW)
+DECLARE_INTERFACE_(IDirectInputDevice2W,IDirectInputDeviceW) { IDirectInputDevice2W_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1321,7 +1321,7 @@ ICOM_DEFINE(IDirectInputDevice2W,IDirectInputDeviceW)
     IDirectInputDevice2A_METHODS \
     STDMETHOD(EnumEffectsInFile)(THIS_ LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags) PURE; \
     STDMETHOD(WriteEffectToFile)(THIS_ LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
+DECLARE_INTERFACE_(IDirectInputDevice7A,IDirectInputDevice2A) { IDirectInputDevice7A_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1332,7 +1332,7 @@ ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
     IDirectInputDevice2W_METHODS \
     STDMETHOD(EnumEffectsInFile)(THIS_ LPCWSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags) PURE; \
     STDMETHOD(WriteEffectToFile)(THIS_ LPCWSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectInputDevice7W,IDirectInputDevice2W)
+DECLARE_INTERFACE_(IDirectInputDevice7W,IDirectInputDevice2W) { IDirectInputDevice7W_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1383,7 +1383,7 @@ ICOM_DEFINE(IDirectInputDevice7W,IDirectInputDevice2W)
     STDMETHOD(BuildActionMap)(THIS_ LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags) PURE; \
     STDMETHOD(SetActionMap)(THIS_ LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags) PURE; \
     STDMETHOD(GetImageInfo)(THIS_ LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader) PURE;
-ICOM_DEFINE(IDirectInputDevice8A,IDirectInputDevice7A)
+DECLARE_INTERFACE_(IDirectInputDevice8A,IDirectInputDevice7A) { IDirectInputDevice8A_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1395,7 +1395,7 @@ ICOM_DEFINE(IDirectInputDevice8A,IDirectInputDevice7A)
     STDMETHOD(BuildActionMap)(THIS_ LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags) PURE; \
     STDMETHOD(SetActionMap)(THIS_ LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags) PURE; \
     STDMETHOD(GetImageInfo)(THIS_ LPDIDEVICEIMAGEINFOHEADERW lpdiDevImageInfoHeader) PURE;
-ICOM_DEFINE(IDirectInputDevice8W,IDirectInputDevice7W)
+DECLARE_INTERFACE_(IDirectInputDevice8W,IDirectInputDevice7W) { IDirectInputDevice8W_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1487,7 +1487,7 @@ extern const DIDATAFORMAT c_dfDIJoystick2;
     STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
     STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
     STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion) PURE;
-ICOM_DEFINE(IDirectInputA,IUnknown)
+DECLARE_INTERFACE_(IDirectInputA,IUnknown) { IDirectInputA_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1501,7 +1501,7 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
     STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
     STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
     STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion) PURE;
-ICOM_DEFINE(IDirectInputW,IUnknown)
+DECLARE_INTERFACE_(IDirectInputW,IUnknown) { IDirectInputW_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1524,7 +1524,7 @@ ICOM_DEFINE(IDirectInputW,IUnknown)
 #define IDirectInput2A_METHODS \
     IDirectInputA_METHODS \
     STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance) PURE;
-ICOM_DEFINE(IDirectInput2A,IDirectInputA)
+DECLARE_INTERFACE_(IDirectInput2A,IDirectInputA) { IDirectInput2A_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1534,7 +1534,7 @@ ICOM_DEFINE(IDirectInput2A,IDirectInputA)
 #define IDirectInput2W_METHODS \
     IDirectInputW_METHODS \
     STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance) PURE;
-ICOM_DEFINE(IDirectInput2W,IDirectInputW)
+DECLARE_INTERFACE_(IDirectInput2W,IDirectInputW) { IDirectInput2W_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1560,7 +1560,7 @@ ICOM_DEFINE(IDirectInput2W,IDirectInputW)
 #define IDirectInput7A_METHODS \
     IDirectInput2A_METHODS \
     STDMETHOD(CreateDeviceEx)(THIS_ REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter) PURE;
-ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
+DECLARE_INTERFACE_(IDirectInput7A,IDirectInput2A) { IDirectInput7A_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1570,7 +1570,7 @@ ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 #define IDirectInput7W_METHODS \
     IDirectInput2W_METHODS \
     STDMETHOD(CreateDeviceEx)(THIS_ REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter) PURE;
-ICOM_DEFINE(IDirectInput7W,IDirectInput2W)
+DECLARE_INTERFACE_(IDirectInput7W,IDirectInput2W) { IDirectInput7W_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1607,7 +1607,7 @@ ICOM_DEFINE(IDirectInput7W,IDirectInput2W)
     STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance) PURE; \
     STDMETHOD(EnumDevicesBySemantics)(THIS_ LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
     STDMETHOD(ConfigureDevices)(THIS_ LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) PURE;
-ICOM_DEFINE(IDirectInput8A,IUnknown)
+DECLARE_INTERFACE_(IDirectInput8A,IUnknown) { IDirectInput8A_METHODS };
 #undef INTERFACE
 
 /*****************************************************************************
@@ -1624,7 +1624,7 @@ ICOM_DEFINE(IDirectInput8A,IUnknown)
     STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance) PURE; \
     STDMETHOD(EnumDevicesBySemantics)(THIS_ LPCWSTR ptszUserName, LPDIACTIONFORMATW lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBW lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
     STDMETHOD(ConfigureDevices)(THIS_ LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) PURE;
-ICOM_DEFINE(IDirectInput8W,IUnknown)
+DECLARE_INTERFACE_(IDirectInput8W,IUnknown) { IDirectInput8W_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

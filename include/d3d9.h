@@ -163,7 +163,7 @@ typedef struct IDirect3DQuery9                IDirect3DQuery9, *LPDIRECT3DQUERY9
     STDMETHOD(GetDeviceCaps)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) PURE; \
     STDMETHOD_(HMONITOR, GetAdapterMonitor)(THIS_ UINT Adapter) PURE; \
     STDMETHOD(CreateDevice)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice9** ppReturnedDeviceInterface) PURE;
-ICOM_DEFINE(IDirect3D9,IUnknown)
+DECLARE_INTERFACE_(IDirect3D9,IUnknown) { IDirect3D9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -310,7 +310,7 @@ ICOM_DEFINE(IDirect3D9,IUnknown)
     STDMETHOD(DrawTriPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST D3DTRIPATCH_INFO* pTriPatchInfo) PURE; \
     STDMETHOD(DeletePatch)(THIS_ UINT Handle) PURE; \
     STDMETHOD(CreateQuery)(THIS_ D3DQUERYTYPE Type, IDirect3DQuery9** ppQuery) PURE;
-ICOM_DEFINE(IDirect3DDevice9, IUnknown)
+DECLARE_INTERFACE_(IDirect3DDevice9, IUnknown) { IDirect3DDevice9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -451,7 +451,7 @@ ICOM_DEFINE(IDirect3DDevice9, IUnknown)
     STDMETHOD(GetDesc)(THIS_ D3DVOLUME_DESC* pDesc) PURE; \
     STDMETHOD(LockBox)(THIS_ D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) PURE; \
     STDMETHOD(UnlockBox)(THIS) PURE;
-ICOM_DEFINE(IDirect3DVolume9,IUnknown)
+DECLARE_INTERFACE_(IDirect3DVolume9,IUnknown) { IDirect3DVolume9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -483,7 +483,7 @@ ICOM_DEFINE(IDirect3DVolume9,IUnknown)
     STDMETHOD(GetDisplayMode)(THIS_ D3DDISPLAYMODE* pMode) PURE; \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice9** ppDevice) PURE; \
     STDMETHOD(GetPresentParameters)(THIS_ D3DPRESENT_PARAMETERS* pPresentationParameters) PURE;
-ICOM_DEFINE(IDirect3DSwapChain9,IUnknown)
+DECLARE_INTERFACE_(IDirect3DSwapChain9,IUnknown) { IDirect3DSwapChain9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -515,7 +515,7 @@ ICOM_DEFINE(IDirect3DSwapChain9,IUnknown)
     STDMETHOD_(DWORD, GetPriority)(THIS) PURE; \
     STDMETHOD_(void, PreLoad)(THIS) PURE; \
     STDMETHOD_(D3DRESOURCETYPE, GetType)(THIS) PURE;
-ICOM_DEFINE(IDirect3DResource9,IUnknown)
+DECLARE_INTERFACE_(IDirect3DResource9,IUnknown) { IDirect3DResource9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -546,7 +546,7 @@ ICOM_DEFINE(IDirect3DResource9,IUnknown)
     STDMETHOD(UnlockRect)(THIS) PURE; \
     STDMETHOD(GetDC)(THIS_ HDC* phdc) PURE; \
     STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
-ICOM_DEFINE(IDirect3DSurface9,IDirect3DResource9)
+DECLARE_INTERFACE_(IDirect3DSurface9,IDirect3DResource9) { IDirect3DSurface9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -581,7 +581,7 @@ ICOM_DEFINE(IDirect3DSurface9,IDirect3DResource9)
     STDMETHOD(Lock)(THIS_ UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DVERTEXBUFFER_DESC* pDesc) PURE;
-ICOM_DEFINE(IDirect3DVertexBuffer9,IDirect3DResource9)
+DECLARE_INTERFACE_(IDirect3DVertexBuffer9,IDirect3DResource9) { IDirect3DVertexBuffer9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -613,7 +613,7 @@ ICOM_DEFINE(IDirect3DVertexBuffer9,IDirect3DResource9)
     STDMETHOD(Lock)(THIS_ UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DINDEXBUFFER_DESC* pDesc) PURE;
-ICOM_DEFINE(IDirect3DIndexBuffer9,IDirect3DResource9)
+DECLARE_INTERFACE_(IDirect3DIndexBuffer9,IDirect3DResource9) { IDirect3DIndexBuffer9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -648,7 +648,7 @@ ICOM_DEFINE(IDirect3DIndexBuffer9,IDirect3DResource9)
     STDMETHOD(SetAutoGenFilterType)(THIS_ D3DTEXTUREFILTERTYPE FilterType) PURE; \
     STDMETHOD_(D3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE; \
     STDMETHOD_(void, GenerateMipSubLevels)(THIS) PURE;
-ICOM_DEFINE(IDirect3DBaseTexture9,IDirect3DResource9)
+DECLARE_INTERFACE_(IDirect3DBaseTexture9,IDirect3DResource9) { IDirect3DBaseTexture9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -685,7 +685,7 @@ ICOM_DEFINE(IDirect3DBaseTexture9,IDirect3DResource9)
     STDMETHOD(LockRect)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level) PURE; \
     STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) PURE;
-ICOM_DEFINE(IDirect3DCubeTexture9,IDirect3DBaseTexture9)
+DECLARE_INTERFACE_(IDirect3DCubeTexture9,IDirect3DBaseTexture9) { IDirect3DCubeTexture9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -728,7 +728,7 @@ ICOM_DEFINE(IDirect3DCubeTexture9,IDirect3DBaseTexture9)
     STDMETHOD(LockRect)(THIS_ UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS_ UINT Level) PURE; \
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pDirtyRect) PURE;
-ICOM_DEFINE(IDirect3DTexture9,IDirect3DBaseTexture9)
+DECLARE_INTERFACE_(IDirect3DTexture9,IDirect3DBaseTexture9) { IDirect3DTexture9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -771,7 +771,7 @@ ICOM_DEFINE(IDirect3DTexture9,IDirect3DBaseTexture9)
     STDMETHOD(LockBox)(THIS_ UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) PURE; \
     STDMETHOD(UnlockBox)(THIS_ UINT Level) PURE; \
     STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX* pDirtyBox) PURE;
-ICOM_DEFINE(IDirect3DVolumeTexture9,IDirect3DBaseTexture9)
+DECLARE_INTERFACE_(IDirect3DVolumeTexture9,IDirect3DBaseTexture9) { IDirect3DVolumeTexture9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -811,7 +811,7 @@ ICOM_DEFINE(IDirect3DVolumeTexture9,IDirect3DBaseTexture9)
     IUnknown_METHODS \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice9** ppDevice) PURE; \
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9*, UINT* pNumElements) PURE;
-ICOM_DEFINE(IDirect3DVertexDeclaration9, IUnknown)
+DECLARE_INTERFACE_(IDirect3DVertexDeclaration9, IUnknown) { IDirect3DVertexDeclaration9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -832,7 +832,7 @@ ICOM_DEFINE(IDirect3DVertexDeclaration9, IUnknown)
     IUnknown_METHODS \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice9** ppDevice) PURE; \
     STDMETHOD(GetFunction)(THIS_ void*, UINT* pSizeOfData) PURE;
-ICOM_DEFINE(IDirect3DVertexShader9,IUnknown)
+DECLARE_INTERFACE_(IDirect3DVertexShader9,IUnknown) { IDirect3DVertexShader9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -853,7 +853,7 @@ ICOM_DEFINE(IDirect3DVertexShader9,IUnknown)
     IUnknown_METHODS \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice9** ppDevice) PURE; \
     STDMETHOD(GetFunction)(THIS_ void*, UINT* pSizeOfData) PURE;
-ICOM_DEFINE(IDirect3DPixelShader9,IUnknown)
+DECLARE_INTERFACE_(IDirect3DPixelShader9,IUnknown) { IDirect3DPixelShader9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -875,7 +875,7 @@ ICOM_DEFINE(IDirect3DPixelShader9,IUnknown)
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice9** ppDevice) PURE; \
     STDMETHOD(Capture)(THIS) PURE; \
     STDMETHOD(Apply)(THIS) PURE;
-ICOM_DEFINE(IDirect3DStateBlock9,IUnknown)
+DECLARE_INTERFACE_(IDirect3DStateBlock9,IUnknown) { IDirect3DStateBlock9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -900,7 +900,7 @@ ICOM_DEFINE(IDirect3DStateBlock9,IUnknown)
     STDMETHOD_(DWORD, GetDataSize)(THIS) PURE; \
     STDMETHOD(Issue)(THIS_ DWORD dwIssueFlags) PURE; \
     STDMETHOD(GetData)(THIS_ void* pData, DWORD dwSize, DWORD dwGetDataFlags) PURE;
-ICOM_DEFINE(IDirect3DQuery9,IUnknown)
+DECLARE_INTERFACE_(IDirect3DQuery9,IUnknown) { IDirect3DQuery9_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

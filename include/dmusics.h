@@ -94,7 +94,7 @@ struct _DMUS_VOICE_STATE {
     STDMETHOD(GetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) PURE; \
     STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSiz) PURE; \
     STDMETHOD(GetAppend)(THIS_ DWORD *pdwAppend) PURE;
-ICOM_DEFINE(IDirectMusicSynth,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicSynth,IUnknown) { IDirectMusicSynth_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -135,7 +135,7 @@ ICOM_DEFINE(IDirectMusicSynth,IUnknown)
     STDMETHOD(GetVoiceState)(THIS_ DWORD dwVoice[], DWORD cbVoice, DMUS_VOICE_STATE dwVoiceState[]) PURE; \
     STDMETHOD(Refresh)(THIS_ DWORD dwDownloadID, DWORD dwFlags) PURE; \
     STDMETHOD(AssignChannelToBuses)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwBuses, DWORD cBuses) PURE;
-ICOM_DEFINE(IDirectMusicSynth8,IDirectMusicSynth)
+DECLARE_INTERFACE_(IDirectMusicSynth8,IDirectMusicSynth) { IDirectMusicSynth8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -185,7 +185,7 @@ ICOM_DEFINE(IDirectMusicSynth8,IDirectMusicSynth)
     STDMETHOD(RefTimeToSample)(THIS_ REFERENCE_TIME rfTime, LONGLONG *pllSampleTime) PURE; \
     STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer) PURE; \
     STDMETHOD(GetDesiredBufferSize)(THIS_ LPDWORD pdwBufferSizeInSamples) PURE;
-ICOM_DEFINE(IDirectMusicSynthSink,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicSynthSink,IUnknown) { IDirectMusicSynthSink_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -72,7 +72,7 @@ typedef struct IDxDiagContainer     IDxDiagContainer,  *LPDXDIAGCONTAINER,  *PDX
     IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ DXDIAG_INIT_PARAMS* pParams) PURE;  \
     STDMETHOD(GetRootContainer)(THIS_ IDxDiagContainer** ppInstance) PURE; 
-ICOM_DEFINE(IDxDiagProvider,IUnknown)
+DECLARE_INTERFACE_(IDxDiagProvider,IUnknown) { IDxDiagProvider_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -101,7 +101,7 @@ ICOM_DEFINE(IDxDiagProvider,IUnknown)
     STDMETHOD(GetNumberOfProps)(THIS_ DWORD* pdwCount) PURE; \
     STDMETHOD(EnumPropNames)(THIS_ DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) PURE; \
     STDMETHOD(GetProp)(THIS_ LPCWSTR pwszPropName, VARIANT* pvarProp) PURE; 
-ICOM_DEFINE(IDxDiagContainer,IUnknown)
+DECLARE_INTERFACE_(IDxDiagContainer,IUnknown) { IDxDiagContainer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -430,7 +430,7 @@ extern HRESULT WINAPI GetDeviceID(LPCGUID lpGuidSrc, LPGUID lpGuidDest);
     STDMETHOD(GetSpeakerConfig)(THIS_ LPDWORD lpdwSpeakerConfig) PURE; \
     STDMETHOD(SetSpeakerConfig)(THIS_ DWORD dwSpeakerConfig) PURE; \
     STDMETHOD(Initialize)(THIS_ LPCGUID lpcGuid) PURE;
-ICOM_DEFINE(IDirectSound,IUnknown)
+DECLARE_INTERFACE_(IDirectSound,IUnknown) { IDirectSound_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -465,7 +465,7 @@ ICOM_DEFINE(IDirectSound,IUnknown)
     STDMETHOD(SetSpeakerConfig)(THIS_ DWORD dwSpeakerConfig) PURE; \
     STDMETHOD(Initialize)(THIS_ LPCGUID lpcGuid) PURE; \
     STDMETHOD(VerifyCertification)(THIS_ LPDWORD pdwCertified) PURE;
-ICOM_DEFINE(IDirectSound8,IUnknown)
+DECLARE_INTERFACE_(IDirectSound8,IUnknown) { IDirectSound8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -511,7 +511,7 @@ ICOM_DEFINE(IDirectSound8,IUnknown)
     STDMETHOD(Stop)(THIS) PURE; \
     STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioPtr2) PURE; \
     STDMETHOD(Restore)(THIS) PURE;
-ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
+DECLARE_INTERFACE_(IDirectSoundBuffer,IUnknown) { IDirectSoundBuffer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -568,7 +568,7 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
     STDMETHOD(SetFX)(THIS_ DWORD dwEffectsCount, LPDSEFFECTDESC pDSFXDesc, LPDWORD pdwResultCodes) PURE; \
     STDMETHOD(AcquireResources)(THIS_ DWORD dwFlags, DWORD dwEffectsCount, LPDWORD pdwResultCodes) PURE; \
     STDMETHOD(GetObjectInPath)(THIS_ REFGUID rguidObject, DWORD dwIndex, REFGUID rguidInterface, LPVOID *ppObject) PURE;
-ICOM_DEFINE(IDirectSoundBuffer8,IUnknown)
+DECLARE_INTERFACE_(IDirectSoundBuffer8,IUnknown) { IDirectSoundBuffer8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -611,7 +611,7 @@ ICOM_DEFINE(IDirectSoundBuffer8,IUnknown)
     STDMETHOD(CreateCaptureBuffer)(THIS_ LPCDSCBUFFERDESC lpcDSCBufferDesc,LPDIRECTSOUNDCAPTUREBUFFER *lplpDSCaptureBuffer, LPUNKNOWN pUnk) PURE; \
     STDMETHOD(GetCaps)(THIS_ LPDSCCAPS lpDSCCaps) PURE; \
     STDMETHOD(Initialize)(THIS_ LPCGUID lpcGUID) PURE;
-ICOM_DEFINE(IDirectSoundCapture,IUnknown)
+DECLARE_INTERFACE_(IDirectSoundCapture,IUnknown) { IDirectSoundCapture_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -638,7 +638,7 @@ ICOM_DEFINE(IDirectSoundCapture,IUnknown)
     STDMETHOD(Start)(THIS_ DWORD dwFlags) PURE; \
     STDMETHOD(Stop)(THIS) PURE; \
     STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioBytes2) PURE;
-ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
+DECLARE_INTERFACE_(IDirectSoundCaptureBuffer,IUnknown) { IDirectSoundCaptureBuffer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -664,7 +664,7 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
     IDirectSoundCaptureBuffer_METHODS \
     STDMETHOD(GetObjectInPath)(THIS_ REFGUID rguidObject, DWORD dwIndex, REFGUID rguidInterface, LPVOID *ppObject) PURE; \
     STDMETHOD(GetFXStatus)(THIS_ DWORD dwFXCount, LPDWORD pdwFXStatus) PURE;
-ICOM_DEFINE(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer)
+DECLARE_INTERFACE_(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer) { IDirectSoundCaptureBuffer8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -695,7 +695,7 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer)
 #define IDirectSoundNotify_METHODS \
     IUnknown_METHODS \
     STDMETHOD(SetNotificationPositions)(THIS_ DWORD cPositionNotifies, LPCDSBPOSITIONNOTIFY lpcPositionNotifies) PURE;
-ICOM_DEFINE(IDirectSoundNotify,IUnknown)
+DECLARE_INTERFACE_(IDirectSoundNotify,IUnknown) { IDirectSoundNotify_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -770,7 +770,7 @@ typedef const DS3DLISTENER *LPCDS3DLISTENER;
     STDMETHOD(SetRolloffFactor)(THIS_ D3DVALUE flRolloffFactor, DWORD dwApply) PURE; \
     STDMETHOD(SetVelocity)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE; \
     STDMETHOD(CommitDeferredSettings)(THIS) PURE;
-ICOM_DEFINE(IDirectSound3DListener,IUnknown)
+DECLARE_INTERFACE_(IDirectSound3DListener,IUnknown) { IDirectSound3DListener_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -836,7 +836,7 @@ typedef const DS3DBUFFER *LPCDS3DBUFFER;
     STDMETHOD(SetMode)(THIS_ DWORD dwMode, DWORD dwApply) PURE; \
     STDMETHOD(SetPosition)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE; \
     STDMETHOD(SetVelocity)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE;
-ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
+DECLARE_INTERFACE_(IDirectSound3DBuffer,IUnknown) { IDirectSound3DBuffer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -884,7 +884,7 @@ DEFINE_GUID(IID_IKsPropertySet,0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00
     STDMETHOD(Get)(THIS_ REFGUID rgid,ULONG x1,LPVOID p1,ULONG x2,LPVOID p2,ULONG x3,ULONG *px4) PURE;\
     STDMETHOD(Set)(THIS_ REFGUID rgid,ULONG x1,LPVOID p1,ULONG x2,LPVOID p2,ULONG x3) PURE;\
     STDMETHOD(QuerySupport)(THIS_ REFGUID rgid,ULONG x1,ULONG *px2) PURE;
-ICOM_DEFINE(IKsPropertySet,IUnknown)
+DECLARE_INTERFACE_(IKsPropertySet,IUnknown) { IKsPropertySet_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -905,7 +905,7 @@ ICOM_DEFINE(IKsPropertySet,IUnknown)
 #define IDirectSoundFullDuplex_METHODS \
     IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ LPCGUID pCaptureGuid,LPCGUID pRendererGuid,LPCDSCBUFFERDESC lpDscBufferDesc,LPCDSBUFFERDESC lpDsBufferDesc,HWND hWnd,DWORD dwLevel,LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8) PURE;
-ICOM_DEFINE(IDirectSoundFullDuplex,IUnknown)
+DECLARE_INTERFACE_(IDirectSoundFullDuplex,IUnknown) { IDirectSoundFullDuplex_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -132,7 +132,7 @@ MAPIFREEBUFFER MAPIFreeBuffer;
                         LPMESSAGE lpSent, ULONG ulFlags, ULONG ulStatus, \
                         ULONG ulMsgFlags, ULONG ulAccess, LPSTR lpszClass) PURE; \
     STDMETHOD(PrepareForm)(THIS_ LPCIID lpIFace, LPMESSAGE lpMsg, ULONG *lpToken) PURE;
-ICOM_DEFINE(IMAPISession,IUnknown)
+DECLARE_INTERFACE_(IMAPISession,IUnknown) { IMAPISession_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -1208,7 +1208,7 @@ typedef struct tagDDDEVICEIDENTIFIER2 {
     STDMETHOD(GetEntries)(THIS_ DWORD dwFlags, DWORD dwBase, DWORD dwNumEntries, LPPALETTEENTRY lpEntries) PURE; \
     STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, DWORD dwFlags, LPPALETTEENTRY lpDDColorTable) PURE; \
     STDMETHOD(SetEntries)(THIS_ DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount, LPPALETTEENTRY lpEntries) PURE;
-ICOM_DEFINE(IDirectDrawPalette,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawPalette,IUnknown) { IDirectDrawPalette_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1236,7 +1236,7 @@ ICOM_DEFINE(IDirectDrawPalette,IUnknown)
     STDMETHOD(IsClipListChanged)(THIS_ BOOL *lpbChanged) PURE; \
     STDMETHOD(SetClipList)(THIS_ LPRGNDATA lpClipList, DWORD dwFlags) PURE; \
     STDMETHOD(SetHWnd)(THIS_ DWORD dwFlags, HWND hWnd) PURE;
-ICOM_DEFINE(IDirectDrawClipper,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawClipper,IUnknown) { IDirectDrawClipper_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1280,7 +1280,7 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
     STDMETHOD(SetCooperativeLevel)(THIS_ HWND hWnd, DWORD dwFlags) PURE; \
     STDMETHOD(SetDisplayMode)(THIS_ DWORD dwWidth, DWORD dwHeight, DWORD dwBPP) PURE; \
     STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD dwFlags, HANDLE hEvent) PURE;
-ICOM_DEFINE(IDirectDraw,IUnknown)
+DECLARE_INTERFACE_(IDirectDraw,IUnknown) { IDirectDraw_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1354,7 +1354,7 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
 /*58*/    STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD dwFlags, HANDLE hEvent) PURE; \
           /* added in v2 */ \
 /*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ LPDDSCAPS lpDDCaps, LPDWORD lpdwTotal, LPDWORD lpdwFree) PURE;
-ICOM_DEFINE(IDirectDraw2,IUnknown)
+DECLARE_INTERFACE_(IDirectDraw2,IUnknown) { IDirectDraw2_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1421,7 +1421,7 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
 /*64*/    STDMETHOD(RestoreAllSurfaces)(THIS) PURE; \
 /*68*/    STDMETHOD(TestCooperativeLevel)(THIS) PURE; \
 /*6c*/    STDMETHOD(GetDeviceIdentifier)(THIS_ LPDDDEVICEIDENTIFIER pDDDI, DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectDraw4,IUnknown)
+DECLARE_INTERFACE_(IDirectDraw4,IUnknown) { IDirectDraw4_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1499,7 +1499,7 @@ ICOM_DEFINE(IDirectDraw4,IUnknown)
           /* added in v7 */ \
 /*70*/    STDMETHOD(StartModeTest)(THIS_ LPSIZE pModes, DWORD dwNumModes, DWORD dwFlags) PURE; \
 /*74*/    STDMETHOD(EvaluateMode)(THIS_ DWORD dwFlags, DWORD  *pTimeout) PURE;
-ICOM_DEFINE(IDirectDraw7,IUnknown)
+DECLARE_INTERFACE_(IDirectDraw7,IUnknown) { IDirectDraw7_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1580,7 +1580,7 @@ ICOM_DEFINE(IDirectDraw7,IUnknown)
 /*84*/    STDMETHOD(UpdateOverlay)(THIS_ LPRECT lpSrcRect, LPDIRECTDRAWSURFACE lpDDDestSurface, LPRECT lpDestRect, DWORD dwFlags, LPDDOVERLAYFX lpDDOverlayFx) PURE; \
 /*88*/    STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE; \
 /*8c*/    STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD dwFlags, LPDIRECTDRAWSURFACE lpDDSReference) PURE;
-ICOM_DEFINE(IDirectDrawSurface,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown) { IDirectDrawSurface_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1671,7 +1671,7 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
     STDMETHOD(GetDDInterface)(THIS_ LPVOID *lplpDD) PURE; \
     STDMETHOD(PageLock)(THIS_ DWORD dwFlags) PURE; \
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown) { IDirectDrawSurface2_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1768,7 +1768,7 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE; \
     /* added in v3 */ \
     STDMETHOD(SetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSD, DWORD dwFlags) PURE;
-ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown) { IDirectDrawSurface3_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1872,7 +1872,7 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
     STDMETHOD(FreePrivateData)(THIS_ REFGUID tag) PURE; \
     STDMETHOD(GetUniquenessValue)(THIS_ LPDWORD pValue) PURE; \
     STDMETHOD(ChangeUniquenessValue)(THIS) PURE;
-ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown) { IDirectDrawSurface4_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1985,7 +1985,7 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
     STDMETHOD(GetPriority)(THIS_ LPDWORD prio) PURE; \
     STDMETHOD(SetLOD)(THIS_ DWORD lod) PURE; \
     STDMETHOD(GetLOD)(THIS_ LPDWORD lod) PURE;
-ICOM_DEFINE(IDirectDrawSurface7,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown) { IDirectDrawSurface7_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -2054,7 +2054,7 @@ ICOM_DEFINE(IDirectDrawSurface7,IUnknown)
     IUnknown_METHODS \
     STDMETHOD(GetColorControls)(THIS_ LPDDCOLORCONTROL lpColorControl) PURE; \
     STDMETHOD(SetColorControls)(THIS_ LPDDCOLORCONTROL lpColorControl) PURE;
-ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawColorControl,IUnknown) { IDirectDrawColorControl_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -2075,7 +2075,7 @@ ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
     IUnknown_METHODS \
     STDMETHOD(GetGammaRamp)(THIS_ DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp) PURE; \
     STDMETHOD(SetGammaRamp)(THIS_ DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp) PURE;
-ICOM_DEFINE(IDirectDrawGammaControl,IUnknown)
+DECLARE_INTERFACE_(IDirectDrawGammaControl,IUnknown) { IDirectDrawGammaControl_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -796,7 +796,7 @@ struct _DMUS_VARIATIONS_PARAM {
     STDMETHOD(CreateSegment)(THIS_ IDirectMusicSegment **ppSegment) PURE; \
     STDMETHOD(Download)(THIS_ IDirectMusicPerformance *pPerformance) PURE; \
     STDMETHOD(Unload)(THIS_ IDirectMusicPerformance *pPerformance) PURE;
-ICOM_DEFINE(IDirectMusicBand,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicBand,IUnknown) { IDirectMusicBand_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -821,7 +821,7 @@ ICOM_DEFINE(IDirectMusicBand,IUnknown)
     STDMETHOD(GetDescriptor)(THIS_ LPDMUS_OBJECTDESC pDesc) PURE; \
     STDMETHOD(SetDescriptor)(THIS_ LPDMUS_OBJECTDESC pDesc) PURE; \
     STDMETHOD(ParseDescriptor)(THIS_ LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) PURE;
-ICOM_DEFINE(IDirectMusicObject,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicObject,IUnknown) { IDirectMusicObject_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -852,7 +852,7 @@ ICOM_DEFINE(IDirectMusicObject,IUnknown)
     STDMETHOD(ClearCache)(THIS_ REFGUID rguidClass) PURE; \
     STDMETHOD(EnableCache)(THIS_ REFGUID rguidClass, BOOL fEnable) PURE; \
     STDMETHOD(EnumObject)(THIS_ REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc) PURE;
-ICOM_DEFINE(IDirectMusicLoader,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicLoader,IUnknown) { IDirectMusicLoader_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -883,7 +883,7 @@ ICOM_DEFINE(IDirectMusicLoader,IUnknown)
     STDMETHOD_(void,CollectGarbage)(THIS) PURE; \
     STDMETHOD(ReleaseObjectByUnknown)(THIS_ IUnknown *pObject) PURE; \
     STDMETHOD(LoadObjectFromFile)(THIS_ REFGUID rguidClassID, REFIID iidInterfaceID, WCHAR *pwzFilePath, void **ppObject) PURE;
-ICOM_DEFINE(IDirectMusicLoader8,IDirectMusicLoader)
+DECLARE_INTERFACE_(IDirectMusicLoader8,IDirectMusicLoader) { IDirectMusicLoader8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -916,7 +916,7 @@ ICOM_DEFINE(IDirectMusicLoader8,IDirectMusicLoader)
 #define IDirectMusicGetLoader_METHODS \
     IUnknown_METHODS \
     STDMETHOD(GetLoader)(THIS_ IDirectMusicLoader **ppLoader) PURE;
-ICOM_DEFINE(IDirectMusicGetLoader,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicGetLoader,IUnknown) { IDirectMusicGetLoader_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -959,7 +959,7 @@ ICOM_DEFINE(IDirectMusicGetLoader,IUnknown)
     STDMETHOD(SetLoopPoints)(THIS_ MUSIC_TIME mtStart, MUSIC_TIME mtEnd) PURE; \
     STDMETHOD(GetLoopPoints)(THIS_ MUSIC_TIME *pmtStart, MUSIC_TIME *pmtEnd) PURE; \
     STDMETHOD(SetPChannelsUsed)(THIS_ DWORD dwNumPChannels, DWORD *paPChannels) PURE;
-ICOM_DEFINE(IDirectMusicSegment,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicSegment,IUnknown) { IDirectMusicSegment_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1006,7 +1006,7 @@ ICOM_DEFINE(IDirectMusicSegment,IUnknown)
     STDMETHOD(Compose)(THIS_ MUSIC_TIME mtTime, IDirectMusicSegment *pFromSegment, IDirectMusicSegment *pToSegment, IDirectMusicSegment **ppComposedSegment) PURE; \
     STDMETHOD(Download)(THIS_ IUnknown *pAudioPath) PURE; \
     STDMETHOD(Unload)(THIS_ IUnknown *pAudioPath) PURE;
-ICOM_DEFINE(IDirectMusicSegment8,IDirectMusicSegment)
+DECLARE_INTERFACE_(IDirectMusicSegment8,IDirectMusicSegment) { IDirectMusicSegment8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1059,7 +1059,7 @@ ICOM_DEFINE(IDirectMusicSegment8,IDirectMusicSegment)
     STDMETHOD(GetStartTime)(THIS_ MUSIC_TIME *pmtStart) PURE; \
     STDMETHOD(GetSeek)(THIS_ MUSIC_TIME *pmtSeek) PURE; \
     STDMETHOD(GetStartPoint)(THIS_ MUSIC_TIME *pmtStart) PURE;
-ICOM_DEFINE(IDirectMusicSegmentState,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicSegmentState,IUnknown) { IDirectMusicSegmentState_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1085,7 +1085,7 @@ ICOM_DEFINE(IDirectMusicSegmentState,IUnknown)
     IDirectMusicSegmentState_METHODS \
     STDMETHOD(SetTrackConfig)(THIS_ REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff) PURE; \
     STDMETHOD(GetObjectInPath)(THIS_ DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void **ppObject) PURE;
-ICOM_DEFINE(IDirectMusicSegmentState8,IDirectMusicSegmentState)
+DECLARE_INTERFACE_(IDirectMusicSegmentState8,IDirectMusicSegmentState) { IDirectMusicSegmentState8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1116,7 +1116,7 @@ ICOM_DEFINE(IDirectMusicSegmentState8,IDirectMusicSegmentState)
     STDMETHOD(Activate)(THIS_ BOOL fActivate) PURE; \
     STDMETHOD(SetVolume)(THIS_ long lVolume, DWORD dwDuration) PURE; \
     STDMETHOD(ConvertPChannel)(THIS_ DWORD dwPChannelIn, DWORD *pdwPChannelOut) PURE;
-ICOM_DEFINE(IDirectMusicAudioPath,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicAudioPath,IUnknown) { IDirectMusicAudioPath_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1180,7 +1180,7 @@ ICOM_DEFINE(IDirectMusicAudioPath,IUnknown)
     STDMETHOD(MusicToMIDI)(THIS_ WORD wMusicValue, DMUS_CHORD_KEY *pChord, BYTE bPlayMode, BYTE bChordLevel, BYTE *pbMIDIValue) PURE; \
     STDMETHOD(TimeToRhythm)(THIS_ MUSIC_TIME mtTime, DMUS_TIMESIGNATURE *pTimeSig, WORD *pwMeasure, BYTE *pbBeat, BYTE *pbGrid, short *pnOffset) PURE; \
     STDMETHOD(RhythmToTime)(THIS_ WORD wMeasure, BYTE bBeat, BYTE bGrid, short nOffset, DMUS_TIMESIGNATURE *pTimeSig, MUSIC_TIME *pmtTime) PURE;
-ICOM_DEFINE(IDirectMusicPerformance,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicPerformance,IUnknown) { IDirectMusicPerformance_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1249,7 +1249,7 @@ ICOM_DEFINE(IDirectMusicPerformance,IUnknown)
     STDMETHOD(SetDefaultAudioPath)(THIS_ IDirectMusicAudioPath *pAudioPath) PURE; \
     STDMETHOD(GetDefaultAudioPath)(THIS_ IDirectMusicAudioPath **ppAudioPath) PURE; \
     STDMETHOD(GetParamEx)(THIS_ REFGUID rguidType, DWORD dwTrackID, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam) PURE;
-ICOM_DEFINE(IDirectMusicPerformance8,IDirectMusicPerformance)
+DECLARE_INTERFACE_(IDirectMusicPerformance8,IDirectMusicPerformance) { IDirectMusicPerformance8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1323,7 +1323,7 @@ ICOM_DEFINE(IDirectMusicPerformance8,IDirectMusicPerformance)
     STDMETHOD(InsertTool)(THIS_ IDirectMusicTool *pTool, DWORD *pdwPChannels, DWORD cPChannels, LONG lIndex) PURE; \
     STDMETHOD(GetTool)(THIS_ DWORD dwIndex, IDirectMusicTool **ppTool) PURE; \
     STDMETHOD(RemoveTool)(THIS_ IDirectMusicTool *pTool) PURE;
-ICOM_DEFINE(IDirectMusicGraph,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicGraph,IUnknown) { IDirectMusicGraph_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1357,7 +1357,7 @@ ICOM_DEFINE(IDirectMusicGraph,IUnknown)
     STDMETHOD(GetTimeSignature)(THIS_ DMUS_TIMESIGNATURE *pTimeSig) PURE; \
     STDMETHOD(GetEmbellishmentLength)(THIS_ DWORD dwType, DWORD dwLevel, DWORD *pdwMin, DWORD *pdwMax) PURE; \
     STDMETHOD(GetTempo)(THIS_ double *pTempo) PURE;
-ICOM_DEFINE(IDirectMusicStyle,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicStyle,IUnknown) { IDirectMusicStyle_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1388,7 +1388,7 @@ ICOM_DEFINE(IDirectMusicStyle,IUnknown)
 #define IDirectMusicStyle8_METHODS \
     IDirectMusicStyle_METHODS \
     STDMETHOD(EnumPattern)(THIS_ DWORD dwIndex, DWORD dwPatternType, WCHAR *pwszName) PURE;
-ICOM_DEFINE(IDirectMusicStyle8,IDirectMusicStyle)
+DECLARE_INTERFACE_(IDirectMusicStyle8,IDirectMusicStyle) { IDirectMusicStyle8_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1421,7 +1421,7 @@ ICOM_DEFINE(IDirectMusicStyle8,IDirectMusicStyle)
 #define IDirectMusicChordMap_METHODS \
     IUnknown_METHODS \
     STDMETHOD(GetScale)(THIS_ DWORD *pdwScale) PURE;
-ICOM_DEFINE(IDirectMusicChordMap,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicChordMap,IUnknown) { IDirectMusicChordMap_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1447,7 +1447,7 @@ ICOM_DEFINE(IDirectMusicChordMap,IUnknown)
     STDMETHOD(AutoTransition)(THIS_ IDirectMusicPerformance *pPerformance, IDirectMusicSegment *pToSeg, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap *pChordMap, IDirectMusicSegment **ppTransSeg, IDirectMusicSegmentState **ppToSegState, IDirectMusicSegmentState **ppTransSegState) PURE; \
     STDMETHOD(ComposeTemplateFromShape)(THIS_ WORD wNumMeasures, WORD wShape, BOOL fIntro, BOOL fEnd, WORD wEndLength, IDirectMusicSegment **ppTemplate) PURE; \
     STDMETHOD(ChangeChordMap)(THIS_ IDirectMusicSegment *pSegment, BOOL fTrackScale, IDirectMusicChordMap *pChordMap) PURE;
-ICOM_DEFINE(IDirectMusicComposer,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicComposer,IUnknown) { IDirectMusicComposer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1475,7 +1475,7 @@ ICOM_DEFINE(IDirectMusicComposer,IUnknown)
     STDMETHOD(CreateSegment)(THIS_ IDirectMusicStyle *pStyle, IDirectMusicSegment **ppSegment) PURE; \
     STDMETHOD(SetVariation)(THIS_ IDirectMusicSegmentState *pSegState, DWORD dwVariationFlags, DWORD dwPart) PURE; \
     STDMETHOD(SetPatternByName)(THIS_ IDirectMusicSegmentState *pSegState, WCHAR *wszName, IDirectMusicStyle *pStyle, DWORD dwPatternType, DWORD *pdwLength) PURE;
-ICOM_DEFINE(IDirectMusicPatternTrack,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicPatternTrack,IUnknown) { IDirectMusicPatternTrack_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1507,7 +1507,7 @@ ICOM_DEFINE(IDirectMusicPatternTrack,IUnknown)
     STDMETHOD(GetVariableObject)(THIS_ WCHAR *pwszVariableName, REFIID riid, LPVOID *ppv, DMUS_SCRIPT_ERRORINFO *pErrorInfo) PURE; \
     STDMETHOD(EnumRoutine)(THIS_ DWORD dwIndex, WCHAR *pwszName) PURE; \
     STDMETHOD(EnumVariable)(THIS_ DWORD dwIndex, WCHAR *pwszName) PURE;
-ICOM_DEFINE(IDirectMusicScript,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicScript,IUnknown) { IDirectMusicScript_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -1537,7 +1537,7 @@ ICOM_DEFINE(IDirectMusicScript,IUnknown)
 #define IDirectMusicContainer_METHODS \
     IUnknown_METHODS \
     STDMETHOD(EnumObject)(THIS_ REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc, WCHAR *pwszAlias) PURE;
-ICOM_DEFINE(IDirectMusicContainer,IUnknown)
+DECLARE_INTERFACE_(IDirectMusicContainer,IUnknown) { IDirectMusicContainer_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

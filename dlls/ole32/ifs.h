@@ -44,7 +44,7 @@ typedef struct IMalloc16 IMalloc16, *LPMALLOC16;
     STDMETHOD_(DWORD,GetSize)(THIS_ LPVOID  pv) PURE; \
     STDMETHOD_(INT16,DidAlloc)(THIS_ LPVOID  pv) PURE; \
     STDMETHOD_(LPVOID,HeapMinimize)(THIS) PURE;
-ICOM_DEFINE(IMalloc16,IUnknown)
+DECLARE_INTERFACE_(IMalloc16,IUnknown) { IMalloc16_METHODS };
 #undef INTERFACE
 
 /**********************************************************************/
@@ -65,7 +65,7 @@ typedef struct ILockBytes16 *LPLOCKBYTES16, ILockBytes16;
 	STDMETHOD(LockRegion)(THIS_ ULARGE_INTEGER libOffset, ULARGE_INTEGER  cb, DWORD dwLockType) PURE; \
 	STDMETHOD(UnlockRegion)(THIS_ ULARGE_INTEGER libOffset, ULARGE_INTEGER  cb, DWORD dwLockType) PURE; \
 	STDMETHOD(Stat)(THIS_ STATSTG *pstatstg, DWORD grfStatFlag) PURE;
-ICOM_DEFINE(ILockBytes16,IUnknown)
+DECLARE_INTERFACE_(ILockBytes16,IUnknown) { ILockBytes16_METHODS };
 #undef INTERFACE
 
 /**********************************************************************/
@@ -99,7 +99,7 @@ typedef struct IStream16 IStream16, *LPSTREAM16;
     STDMETHOD(UnlockRegion)(THIS_ ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) PURE; \
     STDMETHOD(Stat)(THIS_ STATSTG* pstatstg, DWORD grfStatFlag) PURE; \
     STDMETHOD(Clone)(THIS_ IStream16** ppstm) PURE;
-ICOM_DEFINE(IStream16,ISequentialStream)
+DECLARE_INTERFACE_(IStream16,ISequentialStream) { IStream16_METHODS };
 #undef INTERFACE
 
 /**********************************************************************/
@@ -126,7 +126,7 @@ typedef struct IStorage16 IStorage16, *LPSTORAGE16;
     STDMETHOD_(HRESULT,SetClass)(THIS_ REFCLSID clsid) PURE; \
     STDMETHOD_(HRESULT,SetStateBits)(THIS_ DWORD grfStateBits, DWORD grfMask) PURE; \
     STDMETHOD_(HRESULT,Stat)(THIS_ STATSTG* pstatstg, DWORD grfStatFlag) PURE;
-ICOM_DEFINE(IStorage16,IUnknown)
+DECLARE_INTERFACE_(IStorage16,IUnknown) { IStorage16_METHODS };
 #undef INTERFACE
 
 #endif /* __WINE_OLE_IFS_H */

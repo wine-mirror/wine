@@ -672,7 +672,7 @@ DECL_WINELIB_TYPE_AW(LPOLEUICHANGESOURCE)
     STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE; \
     STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE; \
     STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
-ICOM_DEFINE(IOleUILinkContainerA, IUnknown)
+DECLARE_INTERFACE_(IOleUILinkContainerA, IUnknown) { IOleUILinkContainerA_METHODS };
 #undef INTERFACE
 
 #define INTERFACE   IOleUILinkContainerW
@@ -689,7 +689,7 @@ ICOM_DEFINE(IOleUILinkContainerA, IUnknown)
     STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE; \
     STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE; \
     STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
-ICOM_DEFINE(IOleUILinkContainerW, IUnknown)
+DECLARE_INTERFACE_(IOleUILinkContainerW, IUnknown) { IOleUILinkContainerW_METHODS };
 #undef INTERFACE
 
 DECL_WINELIB_TYPE_AW(IOleUILinkContainer)
@@ -720,14 +720,14 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKCONTAINER)
 #define IOleUILinkInfoA_METHODS \
     IOleUILinkContainerA_METHODS \
     STDMETHOD(GetLastUpdate)(THIS_ DWORD dwLink,  FILETIME *lpLastUpdate) PURE;
-ICOM_DEFINE(IOleUILinkInfoA, IOleUILinkContainerA)
+DECLARE_INTERFACE_(IOleUILinkInfoA, IOleUILinkContainerA) { IOleUILinkInfoA_METHODS };
 #undef INTERFACE
 
 #define INTERFACE   IOleUILinkInfoW
 #define IOleUILinkInfoW_METHODS \
     IOleUILinkContainerW_METHODS \
     STDMETHOD(GetLastUpdate)(THIS_ DWORD dwLink,  FILETIME *lpLastUpdate) PURE;
-ICOM_DEFINE(IOleUILinkInfoW, IOleUILinkContainerW)
+DECLARE_INTERFACE_(IOleUILinkInfoW, IOleUILinkContainerW) { IOleUILinkInfoW_METHODS };
 #undef  INTERFACE
 
 DECL_WINELIB_TYPE_AW(IOleUILinkInfo)
@@ -767,7 +767,7 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
     STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE; \
     STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect, \
                 INT nCurrentScale, BOOL bRelativeToOrig) PURE;
-ICOM_DEFINE(IOleUIObjInfoA, IUnknown)
+DECLARE_INTERFACE_(IOleUIObjInfoA, IUnknown) { IOleUIObjInfoA_METHODS };
 #undef INTERFACE
 
 #define INTERFACE   IOleUIObjInfoW
@@ -781,7 +781,7 @@ ICOM_DEFINE(IOleUIObjInfoA, IUnknown)
     STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE; \
     STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect, \
                 INT nCurrentScale, BOOL bRelativeToOrig) PURE;
-ICOM_DEFINE(IOleUIObjInfoW, IUnknown)
+DECLARE_INTERFACE_(IOleUIObjInfoW, IUnknown) { IOleUIObjInfoW_METHODS };
 #undef INTERFACE
 
 DECL_WINELIB_TYPE_AW(IOleUIObjInfo)

@@ -57,7 +57,7 @@ typedef struct _DMOMediaType
     STDMETHOD(Skip)(THIS_ DWORD  cItemsToSkip) PURE; \
     STDMETHOD(Reset)(THIS) PURE; \
     STDMETHOD(Clone)(THIS_ IEnumDMO ** ppEnum) PURE;
-ICOM_DEFINE(IEnumDMO,IUnknown)
+DECLARE_INTERFACE_(IEnumDMO,IUnknown) { IEnumDMO_METHODS };
 #undef INTERFACE
 
 #endif /* __mediaobj_h__ */

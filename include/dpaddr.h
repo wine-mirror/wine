@@ -223,7 +223,7 @@ typedef struct IDirectPlay8AddressIP       IDirectPlay8AddressIP, *PDIRECTPLAY8A
   STDMETHOD(GetDevice)(THIS_ GUID* pDevGuid) PURE; \
   STDMETHOD(SetDevice)(THIS_ CONST GUID* CONST devGuid) PURE; \
   STDMETHOD(BuildFromDirectPlay4Address)(THIS_ LPVOID pvAddress, DWORD dwDataSize) PURE;
-ICOM_DEFINE(IDirectPlay8Address,IUnknown)
+DECLARE_INTERFACE_(IDirectPlay8Address,IUnknown) { IDirectPlay8Address_METHODS };
 #undef INTERFACE
 
 
@@ -266,7 +266,7 @@ ICOM_DEFINE(IDirectPlay8Address,IUnknown)
   STDMETHOD(GetSockAddress)(THIS_ SOCKADDR* pSockAddr, PDWORD) PURE; \
   STDMETHOD(GetLocalAddress)(THIS_ GUID* pguidAdapter, USHORT* pusPort) PURE; \
   STDMETHOD(GetAddress)(THIS_ WCHAR* wszAddress, PDWORD pdwAddressLength, USHORT* psPort) PURE;
-ICOM_DEFINE(IDirectPlay8AddressIP,IUnknown)
+DECLARE_INTERFACE_(IDirectPlay8AddressIP,IUnknown) { IDirectPlay8AddressIP_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

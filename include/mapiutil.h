@@ -136,7 +136,7 @@ typedef void (WINAPI CALLERRELEASE)(ULONG,LPTABLEDATA,LPMAPITABLE);
     STDMETHOD(HrInsertRow)(THIS_ ULONG ulRow, LPSRow lpRow) PURE; \
     STDMETHOD(HrModifyRows)(THIS_ ULONG ulFlags, LPSRowSet lpRows) PURE; \
     STDMETHOD(HrDeleteRows)(THIS_ ULONG ulFlags, LPSRowSet lpRows, ULONG *lpCount) PURE;
-ICOM_DEFINE(ITableData,IUnknown)
+DECLARE_INTERFACE_(ITableData,IUnknown) { ITableData_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -220,7 +220,7 @@ static inline FILETIME FtMulDwDw(DWORD dwLeft, DWORD dwRight)
     STDMETHOD(HrSetPropAccess)(THIS_ LPSPropTagArray lpPropTags, ULONG *lpAccess) PURE; \
     STDMETHOD(HrGetPropAccess)(THIS_ LPSPropTagArray *lppPropTags, ULONG **lppAccess) PURE; \
     STDMETHOD(HrAddObjProps)(THIS_ LPSPropTagArray lppPropTags, LPSPropProblemArray *lppProbs) PURE;
-ICOM_DEFINE(IPropData,IMAPIProp)
+DECLARE_INTERFACE_(IPropData,IMAPIProp) { IPropData_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -183,7 +183,7 @@ typedef GUID SHELLVIEWID;
 #define IShellIcon_METHODS \
     IUnknown_METHODS \
     STDMETHOD(GetIconOf)(THIS_ LPCITEMIDLIST pidl, UINT flags, LPINT lpIconIndex) PURE;
-ICOM_DEFINE(IShellIcon, IUnknown)
+DECLARE_INTERFACE_(IShellIcon, IUnknown) { IShellIcon_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -666,7 +666,7 @@ typedef struct IShellChangeNotify IShellChangeNotify, *LPSHELLCHANGENOTIFY;
     IUnknown_METHODS \
     STDMETHOD(OnChange)(THIS_ LONG lEvent, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) PURE;
 
-ICOM_DEFINE(IShellChangeNotify, IUnknown)
+DECLARE_INTERFACE_(IShellChangeNotify, IUnknown) { IShellChangeNotify_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS

@@ -71,7 +71,7 @@ typedef BOOL (CALLBACK *LPENUMMRUCALLBACK)( LPCVOID lpData,
    STDMETHOD(GetSPData)(THIS_ LPVOID *lplpData, LPDWORD dwDataSize, DWORD dwFlags ) PURE; \
    STDMETHOD(SetSPData)(THIS_ LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE; \
    STDMETHOD_(VOID,SendComplete)(THIS_ LPVOID , DWORD  ) PURE;
-ICOM_DEFINE(IDirectPlaySP,IUnknown)
+DECLARE_INTERFACE_(IDirectPlaySP,IUnknown) { IDirectPlaySP_METHODS };
 #undef INTERFACE
 
 

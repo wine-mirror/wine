@@ -46,7 +46,7 @@ typedef struct ISFHelper ISFHelper, *LPISFHELPER;
 	STDMETHOD(AddFolder)(THIS_ HWND  hwnd, LPCSTR  lpName, LPITEMIDLIST * ppidlOut) PURE; \
 	STDMETHOD(DeleteItems)(THIS_ UINT  cidl, LPCITEMIDLIST * apidl) PURE; \
 	STDMETHOD(CopyItems)(THIS_ IShellFolder * pSFFrom, UINT  cidl, LPCITEMIDLIST * apidl) PURE;
-ICOM_DEFINE(ISFHelper, IUnknown)
+DECLARE_INTERFACE_(ISFHelper, IUnknown) { ISFHelper_METHODS };
 #undef INTERFACE
 
 #ifdef COBJMACROS
