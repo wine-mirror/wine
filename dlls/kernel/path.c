@@ -1430,6 +1430,32 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 
 
 /***********************************************************************
+ *           GetSystemWow64DirectoryW   (KERNEL32.@)
+ *
+ * As seen on MSDN
+ * - On Win32 we should returns ERROR_CALL_NOT_IMPLEMENTED
+ * - On Win64 we should returns the SysWow64 (system64) directory
+ */
+UINT GetSystemWow64DirectoryW( LPWSTR lpBuffer, UINT uSize )
+{
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/***********************************************************************
+ *           GetSystemWow64DirectoryA   (KERNEL32.@)
+ *
+ * See comment for GetWindowsWow64DirectoryW.
+ */
+UINT GetSystemWow64DirectoryA( LPSTR lpBuffer, UINT uSize )
+{
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/***********************************************************************
  *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.

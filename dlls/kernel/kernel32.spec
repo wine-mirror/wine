@@ -497,6 +497,8 @@
 @ stdcall GetSystemTime(ptr)
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr)
 @ stdcall GetSystemTimeAsFileTime(ptr)
+@ stdcall GetSystemWow64DirectoryA(ptr long)
+@ stdcall GetSystemWow64DirectoryW(ptr long)
 @ stdcall GetTapeParameters(ptr long ptr ptr)
 @ stdcall GetTapePosition(ptr long ptr ptr ptr)
 @ stdcall GetTapeStatus(ptr)
