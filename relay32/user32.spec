@@ -611,7 +611,7 @@ init	MAIN_UserInit
 606 stdcall SetWindowText(long str) SetWindowText32A
 607 stdcall GetMonitorInfoA(long ptr) GetMonitorInfo32A
 608 stdcall GetMonitorInfoW(long ptr) GetMonitorInfo32W
-609 stdcall MonitorFromWindow(long long) MonitorFromPoint
+609 stdcall MonitorFromWindow(long long) MonitorFromWindow
 610 stdcall MonitorFromRect(ptr long) MonitorFromRect
 611 stdcall MonitorFromPoint(long long long) MonitorFromPoint
 612 stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
