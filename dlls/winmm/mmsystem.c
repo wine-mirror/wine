@@ -3371,7 +3371,7 @@ MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm)
 	if (SuspendThread(lpMidiStrm->hThread) == 0xFFFFFFFF) {
 	    WARN("bad Suspend (%ld)\n", GetLastError());
 	    ret = MMSYSERR_ERROR;
-	}  
+	}
     }
     return ret;
 }
@@ -3468,12 +3468,20 @@ MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm)
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
     } else {
-	if (ResumeThread(lpMidiStrm->hThread) == 0xFFFFFFFF) {
+	DWORD	ret;
+
+	/* since we increase the thread suspend count on each midiStreamPause
+	 * there may be a need for several midiStreamResume
+	 */
+	do {
+	    ret = ResumeThread(lpMidiStrm->hThread);
+	} while (ret != 0xFFFFFFFF && ret != 0);
+	if (ret == 0xFFFFFFFF) {
 	    WARN("bad Resume (%ld)\n", GetLastError());
 	    ret = MMSYSERR_ERROR;
 	} else {
 	    lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
-	}  
+	}
     }
     return ret;
 }
