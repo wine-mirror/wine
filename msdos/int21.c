@@ -1004,120 +1004,6 @@ static void ASPI_DOS_HandleInt( CONTEXT86 *context )
     Dosvm.ASPIHandler( context );
 }
 
-/***********************************************************************
- *           INT21_GetExtendedError
- */
-static void INT21_GetExtendedError( CONTEXT86 *context )
-{
-    BYTE class, action, locus;
-    WORD error = GetLastError();
-
-    switch(error)
-    {
-    case ERROR_SUCCESS:
-        class = action = locus = 0;
-        break;
-    case ERROR_DIR_NOT_EMPTY:
-        class  = EC_Exists;
-        action = SA_Ignore;
-        locus  = EL_Disk;
-        break;
-    case ERROR_ACCESS_DENIED:
-        class  = EC_AccessDenied;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ERROR_CANNOT_MAKE:
-        class  = EC_AccessDenied;
-        action = SA_Abort;
-        locus  = EL_Unknown;
-        break;
-    case ERROR_DISK_FULL:
-    case ERROR_HANDLE_DISK_FULL:
-        class  = EC_MediaError;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ERROR_FILE_EXISTS:
-    case ERROR_ALREADY_EXISTS:
-        class  = EC_Exists;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ERROR_FILE_NOT_FOUND:
-        class  = EC_NotFound;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ER_GeneralFailure:
-        class  = EC_SystemFailure;
-        action = SA_Abort;
-        locus  = EL_Unknown;
-        break;
-    case ERROR_INVALID_DRIVE:
-        class  = EC_MediaError;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ERROR_INVALID_HANDLE:
-        class  = EC_ProgramError;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ERROR_LOCK_VIOLATION:
-        class  = EC_AccessDenied;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ERROR_NO_MORE_FILES:
-        class  = EC_MediaError;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ER_NoNetwork:
-        class  = EC_NotFound;
-        action = SA_Abort;
-        locus  = EL_Network;
-        break;
-    case ERROR_NOT_ENOUGH_MEMORY:
-        class  = EC_OutOfResource;
-        action = SA_Abort;
-        locus  = EL_Memory;
-        break;
-    case ERROR_PATH_NOT_FOUND:
-        class  = EC_NotFound;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    case ERROR_SEEK:
-        class  = EC_NotFound;
-        action = SA_Ignore;
-        locus  = EL_Disk;
-        break;
-    case ERROR_SHARING_VIOLATION:
-        class  = EC_Temporary;
-        action = SA_Retry;
-        locus  = EL_Disk;
-        break;
-    case ERROR_TOO_MANY_OPEN_FILES:
-        class  = EC_ProgramError;
-        action = SA_Abort;
-        locus  = EL_Disk;
-        break;
-    default:
-        FIXME("Unknown error %d\n", error );
-        class  = EC_SystemFailure;
-        action = SA_Abort;
-        locus  = EL_Unknown;
-        break;
-    }
-    TRACE("GET EXTENDED ERROR code 0x%02x class 0x%02x action 0x%02x locus %02x\n",
-           error, class, action, locus );
-    SET_AX( context, error );
-    SET_BH( context, class );
-    SET_BL( context, action );
-    SET_CH( context, locus );
-}
 
 /***********************************************************************
  *           INT_Int21Handler
@@ -1126,67 +1012,8 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 {
     BOOL	bSetDOSExtendedError = FALSE;
 
-
-    TRACE("AX=%04x BX=%04x CX=%04x DX=%04x "
-	  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
-	  AX_reg(context), BX_reg(context), CX_reg(context), DX_reg(context),
-	  SI_reg(context), DI_reg(context),
-	  (WORD)context->SegDs, (WORD)context->SegEs,
-	  context->EFlags );
-
-
-    if (AH_reg(context) == 0x59)  /* Get extended error info */
-    {
-        INT21_GetExtendedError( context );
-        return;
-    }
-
-    if (AH_reg(context) == 0x0C)  /* Flush buffer and read standard input */
-    {
-	TRACE("FLUSH BUFFER AND READ STANDARD INPUT\n");
-	/* no flush here yet */
-	SET_AH( context, AL_reg(context) );
-    }
-
-    if (AH_reg(context)>=0x2f) {
-        /* extended error is used by (at least) functions 0x2f to 0x62 */
-        SetLastError(0);
-    }
-    RESET_CFLAG(context);  /* Not sure if this is a good idea */
-
     switch(AH_reg(context))
     {
-    case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
-    case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
-    case 0x03: /* READ CHARACTER FROM STDAUX  */
-    case 0x04: /* WRITE CHARACTER TO STDAUX */
-    case 0x05: /* WRITE CHARACTER TO PRINTER */
-    case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
-    case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
-    case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
-    case 0x0b: /* GET STDIN STATUS */
-    case 0x0f: /* OPEN FILE USING FCB */
-    case 0x10: /* CLOSE FILE USING FCB */
-    case 0x14: /* SEQUENTIAL READ FROM FCB FILE */
-    case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
-    case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
-    case 0x21: /* READ RANDOM RECORD FROM FCB FILE */
-    case 0x22: /* WRITE RANDOM RECORD TO FCB FILE */
-    case 0x23: /* GET FILE SIZE FOR FCB */
-    case 0x24: /* SET RANDOM RECORD NUMBER FOR FCB */
-    case 0x26: /* CREATE NEW PROGRAM SEGMENT PREFIX */
-    case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
-    case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
-    case 0x4d: /* GET RETURN CODE */
-    case 0x50: /* SET CURRENT PROCESS ID (SET PSP ADDRESS) */
-        INT_BARF( context, 0x21 );
-        break;
-
-    case 0x00: /* TERMINATE PROGRAM */
-        TRACE("TERMINATE PROGRAM\n");
-        ExitThread( 0 );
-        break;
-
     case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
         TRACE("WRITE '$'-terminated string from %04lX:%04X to stdout\n",
 	      context->SegDs,DX_reg(context) );
@@ -1218,26 +1045,8 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	break;
       }
 
-    case 0x2e: /* SET VERIFY FLAG */
-        TRACE("SET VERIFY FLAG ignored\n");
-    	/* we cannot change the behaviour anyway, so just ignore it */
-    	break;
-
-    case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY */
-    case 0x1d:
-    case 0x1e:
-    case 0x20:
-    case 0x6b: /* NULL FUNCTION */
-        SET_AL( context, 0 );
-        break;
-
     case 0x5c: /* "FLOCK" - RECORD LOCKING */
         fLock(context);
-        break;
-
-    case 0x0d: /* DISK BUFFER FLUSH */
-	TRACE("DISK BUFFER FLUSH ignored\n");
-        RESET_CFLAG(context); /* dos 6+ only */
         break;
 
     case 0x0e: /* SELECT DEFAULT DRIVE */
@@ -1293,10 +1102,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         GetDrivePB(context, DRIVE_GetCurrentDrive());
         break;
 
-    case 0x25: /* SET INTERRUPT VECTOR */
-        FIXME("set interrupt vector - move to winedos...");
-        break;
-
     case 0x29: /* PARSE FILENAME INTO FCB */
         INT21_ParseFileNameIntoFCB(context);
         break;
@@ -1305,21 +1110,8 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         INT21_GetSystemDate(context);
         break;
 
-    case 0x2b: /* SET SYSTEM DATE */
-        FIXME("SetSystemDate(%02d/%02d/%04d): not allowed\n",
-	      DL_reg(context), DH_reg(context), CX_reg(context) );
-        SET_AL( context, 0 );  /* Let's pretend we succeeded */
-        break;
-
     case 0x2c: /* GET SYSTEM TIME */
         INT21_GetSystemTime(context);
-        break;
-
-    case 0x2d: /* SET SYSTEM TIME */
-        FIXME("SetSystemTime(%02d:%02d:%02d.%02d): not allowed\n",
-	      CH_reg(context), CL_reg(context),
-	      DH_reg(context), DL_reg(context) );
-        SET_AL( context, 0 );  /* Let's pretend we succeeded */
         break;
 
     case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
@@ -1342,10 +1134,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 
         SET_BX( context, 0x00FF );     /* 0x123456 is Wine's serial # */
         SET_CX( context, 0x0000 );
-        break;
-
-    case 0x31: /* TERMINATE AND STAY RESIDENT */
-        FIXME("TERMINATE AND STAY RESIDENT stub\n");
         break;
 
     case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
@@ -1410,16 +1198,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         SET_BX( context, (int)&heap->InDosFlag - (int)heap );
         break;
 
-    case 0x35: /* GET INTERRUPT VECTOR */
-        TRACE("GET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
-        {
-            FARPROC16 addr = 0;
-            FIXME("get interrupt vector - move to winedos...\n");            
-            context->SegEs = SELECTOROF(addr);
-            SET_BX( context, OFFSETOF(addr) );
-        }
-        break;
-
     case 0x36: /* GET FREE DISK SPACE */
 	TRACE("GET FREE DISK SPACE FOR DRIVE %s\n",
 	      INT21_DriveName( DL_reg(context)));
@@ -1447,13 +1225,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	}
 	break;
       }
-
-    case 0x38: /* GET COUNTRY-SPECIFIC INFORMATION */
-	TRACE("GET COUNTRY-SPECIFIC INFORMATION for country 0x%02x\n",
-	      AL_reg(context));
-        SET_AX( context, 0x02 ); /* no country support available */
-        SET_CFLAG(context);
-        break;
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
         TRACE("MKDIR %s\n",
@@ -1808,11 +1579,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         if (AX_reg(context) < 32) SET_CFLAG(context);
         break;
 
-    case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
-        TRACE("EXIT with return code %d\n",AL_reg(context));
-        ExitThread( AL_reg(context) );
-        break;
-
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
         TRACE("FINDFIRST mask 0x%04x spec %s\n",CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
@@ -1840,24 +1606,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         /*        Windows startup ? */
         SET_BX( context, GetCurrentPDB16() );
         break;
-
-    case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-        TRACE("SYSVARS - GET LIST OF LISTS\n");
-#if 0
-        {
-            context->SegEs = LOWORD(DOS_LOLSeg);
-            SET_BX( context, FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB) );
-        }
-#endif
-        FIXME("LOLSeg broken for now\n");
-        context->SegEs = 0;
-        SET_BX( context, 0 );
-        break;
-
-    case 0x54: /* Get Verify Flag */
-	TRACE("Get Verify Flag - Not Supported\n");
-	SET_AL( context, 0x00 );  /* pretend we can tell. 00h = off 01h = on */
-	break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
         TRACE("RENAME %s to %s\n",
@@ -2381,7 +2129,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 
 		break;
 
-
     case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
     case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
         break;
@@ -2397,14 +2144,4 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	SET_AX( context, GetLastError() );
 	SET_CFLAG(context);
     }
-
-    if ((context->EFlags & 0x0001))
-        TRACE("failed, error %ld\n", GetLastError() );
-
-    TRACE("returning: AX=%04x BX=%04x CX=%04x DX=%04x "
-                 "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
-                 AX_reg(context), BX_reg(context), CX_reg(context),
-                 DX_reg(context), SI_reg(context), DI_reg(context),
-                 (WORD)context->SegDs, (WORD)context->SegEs,
-                 context->EFlags);
 }
