@@ -31,6 +31,8 @@ typedef BOOL (WINAPI *fnBuildTrusteeWithSidA)( TRUSTEE *trustee, PSID psid );
 typedef BOOL (WINAPI *fnBuildTrusteeWithNameA)( TRUSTEE *trustee, LPSTR str );
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
+typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
+                                          PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
 
 static HMODULE hmod;
 
@@ -38,6 +40,7 @@ fnBuildTrusteeWithSidA   pBuildTrusteeWithSidA;
 fnBuildTrusteeWithNameA  pBuildTrusteeWithNameA;
 fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
+fnGetFileSecurityA pGetFileSecurityA;
 
 struct sidRef
 {
@@ -400,6 +403,32 @@ static void test_luid(void)
     test_lookupPrivilegeValue();
 }
 
+static void test_FileSecurity(void)
+{
+    char directory[MAX_PATH];
+    DWORD retval, outSize;
+    BOOL result;
+    BYTE buffer[0x40];
+
+    pGetFileSecurityA = (fnGetFileSecurityA)
+                    GetProcAddress( hmod, "GetFileSecurityA" );
+    if( !pGetFileSecurityA )
+        return;
+
+    retval = GetTempPathA(sizeof(directory), directory);
+    if (!retval) {
+        trace("GetTempPathA failed\n");
+        return;
+    }
+
+    strcpy(directory, "\\Should not exist");
+
+    SetLastError(NO_ERROR);
+    result = pGetFileSecurityA( directory,OWNER_SECURITY_INFORMATION,buffer,0x40,&outSize);
+    todo_wine ok(!result, "GetFileSecurityA should fail for not existing directories\n"); 
+    todo_wine ok( GetLastError() == ERROR_FILE_NOT_FOUND, "ERROR_FILE_NOT_FOUND expected\n");
+}
+
 START_TEST(security)
 {
     init();
@@ -407,4 +436,5 @@ START_TEST(security)
     test_sid();
     test_trustee();
     test_luid();
+    test_FileSecurity();
 }
