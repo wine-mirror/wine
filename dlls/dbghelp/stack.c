@@ -76,6 +76,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
                       PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
                       PTRANSLATE_ADDRESS_ROUTINE f_xlat_adr)
 {
+#ifdef __i386__
     CONTEXT*            ctx = (CONTEXT*)_ctx;
     STACK32FRAME        frame32;
     STACK16FRAME        frame16;
@@ -392,4 +393,11 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 done_err:
     curr_mode = stm_done;
     return FALSE;
+#else /* __i386__ */
+    FIXME("(%ld, %p, %p, %p, %p, %p, %p, %p, %p): stub\n",
+          MachineType, hProcess, hThread, frame, _ctx,
+          f_read_mem, FunctionTableAccessRoutine,
+          GetModuleBaseRoutine, f_xlat_adr);
+    return FALSE;
+#endif
 }
