@@ -106,7 +106,7 @@ typedef struct OLEPictureImpl {
     IPersistStreamVtbl *lpvtbl3;
     IConnectionPointContainerVtbl *lpvtbl4;
 
-  /* Object referenece count */
+  /* Object reference count */
     DWORD ref;
 
   /* We own the object and must destroy it ourselves */
@@ -705,7 +705,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Attributes(IPicture *iface,
   TRACE("(%p)->(%p).\n", This, pdwAttr);
   *pdwAttr = 0;
   switch (This->desc.picType) {
-  case PICTYPE_BITMAP: 	break;	/* not 'truely' scalable, see MSDN. */
+  case PICTYPE_BITMAP: 	break;	/* not 'truly' scalable, see MSDN. */
   case PICTYPE_ICON: *pdwAttr     = PICTURE_TRANSPARENT;break;
   case PICTYPE_METAFILE: *pdwAttr = PICTURE_TRANSPARENT|PICTURE_SCALABLE;break;
   default:FIXME("Unknown pictype %d\n",This->desc.picType);break;

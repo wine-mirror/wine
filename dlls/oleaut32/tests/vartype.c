@@ -4498,7 +4498,7 @@ static void test_VarBoolFromStr(void)
     CONVERT_STR(VarBoolFromStr,"faux",0); EXPECT_MISMATCH;
     /* But accepted if this flag is given */
     CONVERT_STR(VarBoolFromStr,"faux",VARIANT_LOCALBOOL); EXPECT(VARIANT_FALSE);
-    /* Regardless of case - from this we assume locale text comparasons ignore case */
+    /* Regardless of case - from this we assume locale text comparisons ignore case */
     CONVERT_STR(VarBoolFromStr,"Faux",VARIANT_LOCALBOOL); EXPECT(VARIANT_FALSE);
 
     /* Changing the locale prevents the localised text from being compared -

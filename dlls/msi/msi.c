@@ -862,7 +862,7 @@ INSTALLUI_HANDLERW WINAPI MsiSetExternalUIW(INSTALLUI_HANDLERW puiHandler,
  *   id            [I]  id of the string to be loaded
  *   lpBuffer      [O]  buffer for the string to be written to
  *   nBufferMax    [I]  maximum size of the buffer in characters
- *   lang          [I]  the prefered language for the string
+ *   lang          [I]  the preferred language for the string
  *
  * RETURNS
  *

@@ -74,7 +74,7 @@ WORD WINAPI GetW32SysVersion16(void)
  *	dunno what.
  */
 WORD WINAPI GetPEResourceTable16(
-	HFILE16 hf		/* [in] filedescriptor to opened executeable */
+	HFILE16 hf		/* [in] Handle of executable file */
 ) {
 	return 0;
 }
@@ -90,12 +90,12 @@ DWORD WINAPI LoadPeResource16(WORD x,SEGPTR y) {
 
 /**********************************************************************
  *		IsPeFormat		(W32SYS.2)
- * Checks the passed filename if it is a PE format executeable
+ * Check if a file is a PE format executable.
  * RETURNS
  *  TRUE, if it is.
  *  FALSE if not.
  */
-BOOL16 WINAPI IsPeFormat16( LPSTR fn,      /* [in] filename to executeable */
+BOOL16 WINAPI IsPeFormat16( LPSTR fn,      /* [in] filename of executable */
                             HFILE16 hf16 ) /* [in] open file, if filename is NULL */
 {
     BOOL16 ret = FALSE;

@@ -1271,14 +1271,14 @@ static char **build_argv( const WCHAR *cmdlineW, int reserved )
         } else if (*s=='"') {
             /* '"' */
             if ((bcount & 1)==0) {
-                /* Preceeded by an even number of '\', this is half that
+                /* Preceded by an even number of '\', this is half that
                  * number of '\', plus a '"' which we discard.
                  */
                 d-=bcount/2;
                 s++;
                 in_quotes=!in_quotes;
             } else {
-                /* Preceeded by an odd number of '\', this is half that
+                /* Preceded by an odd number of '\', this is half that
                  * number of '\' followed by a '"'
                  */
                 d=d-bcount/2-1;

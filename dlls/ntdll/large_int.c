@@ -389,8 +389,8 @@ LONGLONG WINAPI RtlExtendedMagicDivide(
  * NOTES
  *  Instead of base 0 it uses 10 as base.
  *  Writes at most length characters to the string str.
- *  Str is '\0' terminated when length allowes it.
- *  When str fits exactly in length characters the '\0' is ommitted.
+ *  Str is '\0' terminated when length allows it.
+ *  When str fits exactly in length characters the '\0' is omitted.
  *  If value_ptr is NULL it crashes, as the native function does.
  *
  * DIFFERENCES

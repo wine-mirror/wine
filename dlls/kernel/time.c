@@ -239,7 +239,7 @@ static BOOL TIME_GetTimezoneBias(
                   *pTZinfo, /* [in] The time zone data. */
     FILETIME      *lpFileTime,         /* [in] The system or local time. */
     BOOL           islocal,            /* [in] it is local time */       
-    LONG          *pBias               /* [out] The calulated bias in minutes */
+    LONG          *pBias               /* [out] The calculated bias in minutes */
     )
 {
     LONG bias = pTZinfo->Bias;
@@ -299,9 +299,9 @@ BOOL WINAPI SetLocalTime(
  *  Only the special case of disabled time adjustments is supported.
  */
 BOOL WINAPI GetSystemTimeAdjustment(
-    PDWORD lpTimeAdjustment,         /* [out] The clock adjustment per interupt in 100's of nanoseconds. */
-    PDWORD lpTimeIncrement,          /* [out] The time between clock interupts in 100's of nanoseconds. */
-    PBOOL  lpTimeAdjustmentDisabled) /* [out] The clock synchonisation has been disabled. */
+    PDWORD lpTimeAdjustment,         /* [out] The clock adjustment per interrupt in 100's of nanoseconds. */
+    PDWORD lpTimeIncrement,          /* [out] The time between clock interrupts in 100's of nanoseconds. */
+    PBOOL  lpTimeAdjustmentDisabled) /* [out] The clock synchronisation has been disabled. */
 {
     *lpTimeAdjustment = 0;
     *lpTimeIncrement = 0;
@@ -536,7 +536,7 @@ BOOL WINAPI GetProcessTimes(
     HANDLE     hprocess,       /* [in] The process to be queried (obtained from PROCESS_QUERY_INFORMATION). */
     LPFILETIME lpCreationTime, /* [out] The creation time of the process. */
     LPFILETIME lpExitTime,     /* [out] The exit time of the process if exited. */
-    LPFILETIME lpKernelTime,   /* [out] The time spent in kernal routines in 100's of nanoseconds. */
+    LPFILETIME lpKernelTime,   /* [out] The time spent in kernel routines in 100's of nanoseconds. */
     LPFILETIME lpUserTime)     /* [out] The time spent in user routines in 100's of nanoseconds. */
 {
     struct tms tms;

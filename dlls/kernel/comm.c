@@ -692,7 +692,7 @@ static BOOL COMM_GetCommError(HANDLE handle, LPDWORD lperror)
  *  Only TIOCSBRK and TIOCCBRK are supported.
  */
 BOOL WINAPI SetCommBreak(
-    HANDLE handle) /* [in] The communictions device to suspend. */
+    HANDLE handle) /* [in] The communications device to suspend. */
 {
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
@@ -1395,7 +1395,7 @@ BOOL WINAPI SetCommState(
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
 				break;
-		case ONE5STOPBITS: /* wil be selected if bytesize is 5 */
+		case ONE5STOPBITS: /* will be selected if bytesize is 5 */
 		case TWOSTOPBITS:
 				port.c_cflag |= CSTOPB;
 				break;

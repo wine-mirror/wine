@@ -199,7 +199,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             /* '"' */
             if ((bcount & 1)==0)
             {
-                /* Preceeded by an even number of '\', this is half that
+                /* Preceded by an even number of '\', this is half that
                  * number of '\', plus a quote which we erase.
                  */
                 d-=bcount/2;
@@ -208,7 +208,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             }
             else
             {
-                /* Preceeded by an odd number of '\', this is half that
+                /* Preceded by an odd number of '\', this is half that
                  * number of '\' followed by a '"'
                  */
                 d=d-bcount/2-1;

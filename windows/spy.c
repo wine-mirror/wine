@@ -1325,7 +1325,7 @@ const USER_MSG   *lastmsg;    /* pointer to last USER_MSG for class   */
 
 /* To dump memory at the lParam for any of these messages,  */
 /* replace the "0" with a "SZOF(structure)", or with a      */
-/* number. (First method prefered.)                         */
+/* number. (First method preferred.)                         */
 
 #define RB_GETBANDINFO_OLD (WM_USER+5) /* obsoleted after IE3, but we have to support it anyway */
 

@@ -885,7 +885,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
         TRACE("h\n");
       }
       fmt_state &= ~FMT_STATE_OPEN_COPY;
-      /* Note that now we have seen an hours token, the next occurence of
+      /* Note that now we have seen an hours token, the next occurrence of
        * 'mm' indicates minutes, not months.
        */
       fmt_state |= FMT_STATE_SEEN_HOURS;

@@ -866,7 +866,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength);
 
 /*======================= ITypeInfo implementation =======================*/
 
-/* data for refernced types */
+/* data for referenced types */
 typedef struct tagTLBRefType
 {
     INT index;              /* Type index for internal ref or for external ref
@@ -1925,7 +1925,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
         recoffset += reclength;
     }
 }
-/* fill in data for a hreftype (offset). When the refernced type is contained
+/* fill in data for a hreftype (offset). When the referenced type is contained
  * in the typelib, it's just an (file) offset in the type info base dir.
  * If comes from import, it's an offset+1 in the ImpInfo table
  * */
@@ -3081,7 +3081,7 @@ static SLTG_TypeInfoTail *SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
   return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
 }
 
-/* Because SLTG_OtherTypeInfo is such a painfull struct, we make a more
+/* Because SLTG_OtherTypeInfo is such a painful struct, we make a more
    managable copy of it into this */
 typedef struct {
   WORD small_no;
@@ -4116,7 +4116,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
     TRACE("(%p)->(%lu)\n",This, ref);
 
     if (ref)   {
-      /* We don't release ITypeLib when ref=0 becouse
+      /* We don't release ITypeLib when ref=0 because
          it means that funtion is called by ITypeLi2_Release */
       ITypeLib2_Release((ITypeLib2*)This->pTypeLib);
     } else   {

@@ -124,7 +124,7 @@ BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT 
     rect.bottom = bottom;
     LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 
-    /* Windows does something truely hacky here.  If we're in passthrough mode
+    /* Windows does something truly hacky here.  If we're in passthrough mode
        and our rop is R2_NOP, then we output the string below.  This is used in
        Office 2k when inserting eps files */
     if(physDev->job.in_passthrough && !physDev->job.had_passthrough_rect && GetROP2(physDev->hdc) == R2_NOP) {

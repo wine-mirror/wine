@@ -586,7 +586,7 @@ static BOOL CURSORICON_SimulateLoadingFromResourceW( LPCWSTR filename, BOOL fCur
     *ptr = NULL;
     if (!(bits = map_fileW( filename, &filesize ))) return FALSE;
 
-    /* FIXME: test for inimated icons
+    /* FIXME: test for animated icons
      * hack to load the first icon from the *.ani file
      */
     if ( *(LPDWORD)bits==0x46464952 ) /* "RIFF" */

@@ -190,7 +190,7 @@ DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
  * Determine the amount of memory a SID is using
  *
  * PARAMS
- *  pSid [I] SID to ge the size of.
+ *  pSid [I] SID to get the size of.
  *
  * RETURNS
  *  The size, in bytes, of pSid.
@@ -213,7 +213,7 @@ DWORD WINAPI RtlLengthSid(PSID pSid)
  *  nSubAuthorityCount   [I] Number of Sub Authorities
  *
  * RETURNS
- *  Success: TRUE. pSid is initialised withe the details given.
+ *  Success: TRUE. pSid is initialised with the details given.
  *  Failure: FALSE, if nSubAuthorityCount is >= SID_MAX_SUB_AUTHORITIES.
  */
 BOOL WINAPI RtlInitializeSid(

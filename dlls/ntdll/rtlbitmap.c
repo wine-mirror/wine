@@ -742,7 +742,7 @@ static ULONG NTDLL_FindSetRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSize)
     lpOut++;
   }
 
-  /* Count remaining contigious bits, if any */
+  /* Count remaining contiguous bits, if any */
   if (*lpOut & 1)
   {
     ULONG ulOffset = 0;
@@ -833,7 +833,7 @@ static ULONG NTDLL_FindClearRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSiz
     lpOut++;
   }
 
-  /* Count remaining contigious bits, if any */
+  /* Count remaining contiguous bits, if any */
   if (!(*lpOut & 1))
   {
     ULONG ulOffset = 0;

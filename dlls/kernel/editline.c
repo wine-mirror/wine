@@ -192,7 +192,7 @@ static void WCEL_DeleteString(WCEL_Context* ctx, int beg, int end)
         /* completely erase all the others (full lines) */
         for (i = cbeg.Y + 1; i < cend.Y; i++)
             CONSOLE_FillLineUniform(ctx->hConOut, 0, i, ctx->csbi.dwSize.X, &ci);
-        /* erase from begining of line until last pos on last line */
+        /* erase from beginning of line until last pos on last line */
         CONSOLE_FillLineUniform(ctx->hConOut, 0, cend.Y, cend.X, &ci);
     }
     ctx->len -= str_len;

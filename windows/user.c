@@ -303,7 +303,7 @@ static HANDLE *USER_GetProcessHandleList(void)
         if (!r)
             break;
 
-        /* don't kill outselves */
+        /* don't kill ourselves */
         if (GetCurrentProcessId() == pe.th32ProcessID )
             continue;
 

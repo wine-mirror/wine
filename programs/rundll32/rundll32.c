@@ -179,14 +179,14 @@ static LPWSTR GetNextArg(LPWSTR *cmdline)
         } else if (*s=='"') {
             /* '"' */
             if ((bcount & 1)==0) {
-                /* Preceeded by an even number of '\', this is half that
+                /* Preceded by an even number of '\', this is half that
                  * number of '\', plus a quote which we erase.
                  */
                 d-=bcount/2;
                 in_quotes=!in_quotes;
                 s++;
             } else {
-                /* Preceeded by an odd number of '\', this is half that
+                /* Preceded by an odd number of '\', this is half that
                  * number of '\' followed by a '"'
                  */
                 d=d-bcount/2-1;

@@ -1216,7 +1216,7 @@ void WINAPI GetTEBSelectorFS16(void)
  *  If fn is given as NULL then the function expects hf16 to be valid.
  */
 BOOL16 WINAPI IsPeFormat16(
-	LPSTR	fn,	/* [in] Filename to the executeable */
+	LPSTR	fn,	/* [in] Filename to the executable */
 	HFILE16 hf16)	/* [in] An open file handle */
 {
     BOOL ret = FALSE;

@@ -1452,7 +1452,7 @@ ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 /***********************************************************************
  *           RtlValidateHeap   (NTDLL.@)
  *
- * Determine if a block is a valid alloction from a heap.
+ * Determine if a block is a valid allocation from a heap.
  *
  * PARAMS
  *  heap  [I] Heap that block was allocated from

@@ -1353,8 +1353,8 @@ NTSTATUS WINAPI RtlAppendStringToString(
  *
  * NOTES
  *  if src is NULL dest is unchanged.
- *  dest is '\0' terminated when the MaximumLength allowes it.
- *  When dest fits exactly in MaximumLength characters the '\0' is ommitted.
+ *  dest is '\0' terminated when the MaximumLength allows it.
+ *  When dest fits exactly in MaximumLength characters the '\0' is omitted.
  *
  * DIFFERENCES
  *  Does not write in the src->Buffer beyond MaximumLength when
@@ -1392,8 +1392,8 @@ NTSTATUS WINAPI RtlAppendUnicodeToString(
  *
  * NOTES
  *  if src->length is zero dest is unchanged.
- *  dest is '\0' terminated when the MaximumLength allowes it.
- *  When dest fits exactly in MaximumLength characters the '\0' is ommitted.
+ *  dest is '\0' terminated when the MaximumLength allows it.
+ *  When dest fits exactly in MaximumLength characters the '\0' is omitted.
  *
  * DIFFERENCES
  *  Does not write in the src->Buffer beyond MaximumLength when
@@ -1692,8 +1692,8 @@ NTSTATUS WINAPI RtlCharToInteger(
  * NOTES
  *  Instead of base 0 it uses 10 as base.
  *  Writes at most length characters to the string str.
- *  Str is '\0' terminated when length allowes it.
- *  When str fits exactly in length characters the '\0' is ommitted.
+ *  Str is '\0' terminated when length allows it.
+ *  When str fits exactly in length characters the '\0' is omitted.
  */
 NTSTATUS WINAPI RtlIntegerToChar(
     ULONG value,   /* [I] Value to be converted */

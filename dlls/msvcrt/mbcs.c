@@ -796,7 +796,7 @@ int _ismbslead(const unsigned char* start, const unsigned char* str)
  */
 int _ismbstrail(const unsigned char* start, const unsigned char* str)
 {
-  /* Must not be a lead, and must be preceeded by one */
+  /* Must not be a lead, and must be preceded by one */
   return !_ismbslead(start, str) && MSVCRT_isleadbyte(str[-1]);
 }
 

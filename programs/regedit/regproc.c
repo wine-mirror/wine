@@ -609,7 +609,7 @@ void doSetValue(LPSTR stdInput)
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the queryValue type of action.  It
+ * This function is the main entry point to the queryValue type of action.  It
  * receives the currently read line and dispatch the work depending on the
  * context.
  */
@@ -647,7 +647,7 @@ void doQueryValue(LPSTR stdInput)
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the deletetValue type of action.  It
+ * This function is the main entry point to the deleteValue type of action.  It
  * receives the currently read line and dispatch the work depending on the
  * context.
  */
@@ -657,7 +657,7 @@ void doDeleteValue(LPSTR line)
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the deleteKey type of action.  It
+ * This function is the main entry point to the deleteKey type of action.  It
  * receives the currently read line and dispatch the work depending on the
  * context.
  */
@@ -667,7 +667,7 @@ void doDeleteKey(LPSTR line)
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the createKey type of action.  It
+ * This function is the main entry point to the createKey type of action.  It
  * receives the currently read line and dispatch the work depending on the
  * context.
  */
@@ -975,7 +975,7 @@ void processRegLines(FILE *in, CommandAPI command)
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the registerDLL action.  It
+ * This function is the main entry point to the registerDLL action.  It
  * receives the currently read line, then loads and registers the requested DLLs
  */
 void doRegisterDLL(LPSTR stdInput)
@@ -1008,7 +1008,7 @@ void doRegisterDLL(LPSTR stdInput)
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the unregisterDLL action.  It
+ * This function is the main entry point to the unregisterDLL action.  It
  * receives the currently read line, then loads and unregisters the requested DLLs
  */
 void doUnregisterDLL(LPSTR stdInput)

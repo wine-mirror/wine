@@ -52,7 +52,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 /* FIXME!!!!!!
- *    This should use winsock - To use winsock the funtions will have to change a bit
+ *    This should use winsock - To use winsock the functions will have to change a bit
  *        as they are designed for unix sockets.
  *    SSL stuff should use crypt32.dll
  */
@@ -74,7 +74,7 @@ static SSL_CTX *ctx;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 
-/* OpenSSL funtions that we use */
+/* OpenSSL functions that we use */
 MAKE_FUNCPTR(SSL_library_init);
 MAKE_FUNCPTR(SSL_load_error_strings);
 MAKE_FUNCPTR(SSLv23_method);
