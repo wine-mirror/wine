@@ -232,17 +232,17 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
                                 LPWSTR tmp_file)
 {
     DWORD sz=MAX_PATH;
+    static const WCHAR f1[] = {'m','s','i',0};
+    WCHAR fmt[MAX_PATH];
 
-    if (MSI_GetPropertyW(package, cszTempFolder, tmp_file, &sz) 
+    if (MSI_GetPropertyW(package, cszTempFolder, fmt, &sz) 
         != ERROR_SUCCESS)
-        GetTempPathW(MAX_PATH,tmp_file);
+        GetTempPathW(MAX_PATH,fmt);
 
-    strcatW(tmp_file,source);
-
-    if (GetFileAttributesW(tmp_file) != INVALID_FILE_ATTRIBUTES)
+    if (GetTempFileNameW(fmt,f1,0,tmp_file) == 0)
     {
-        TRACE("File already exists\n");
-        return ERROR_SUCCESS;
+        TRACE("Unable to create file\n");
+        return ERROR_FUNCTION_FAILED;
     }
     else
     {
