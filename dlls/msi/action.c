@@ -111,161 +111,179 @@ static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 static const WCHAR cszDatabase[]={'D','A','T','A','B','A','S','E',0};
 static const WCHAR c_colon[] = {'C',':','\\',0};
 static const WCHAR szProductCode[]=
-{'P','r','o','d','u','c','t','C','o','d','e',0};
- 
+    {'P','r','o','d','u','c','t','C','o','d','e',0};
 static const WCHAR cszbs[]={'\\',0};
-
 const static WCHAR szCreateFolders[] =
-{'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
+    {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
 const static WCHAR szCostFinalize[] =
-{'C','o','s','t','F','i','n','a','l','i','z','e',0};
+    {'C','o','s','t','F','i','n','a','l','i','z','e',0};
 const static WCHAR szInstallFiles[] =
-{'I','n','s','t','a','l','l','F','i','l','e','s',0};
+    {'I','n','s','t','a','l','l','F','i','l','e','s',0};
 const static WCHAR szDuplicateFiles[] =
-{'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
+    {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 const static WCHAR szWriteRegistryValues[] =
-{'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
+    {'W','r','i','t','e','R','e','g','i','s','t','r','y',
+            'V','a','l','u','e','s',0};
 const static WCHAR szCostInitialize[] =
-{'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
+    {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
 const static WCHAR szFileCost[] = 
-{'F','i','l','e','C','o','s','t',0};
+    {'F','i','l','e','C','o','s','t',0};
 const static WCHAR szInstallInitialize[] = 
-{'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
+    {'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
 const static WCHAR szInstallValidate[] = 
-{'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
+    {'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
 const static WCHAR szLaunchConditions[] = 
-{'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
+    {'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
 const static WCHAR szProcessComponents[] = 
-{'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
+    {'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
 const static WCHAR szRegisterTypeLibraries[] = 
-{'R','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r',
-'i','e','s',0};
+    {'R','e','g','i','s','t','e','r','T','y','p','e',
+            'L','i','b','r','a','r','i','e','s',0};
 const static WCHAR szRegisterClassInfo[] = 
-{'R','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
+    {'R','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
 const static WCHAR szRegisterProgIdInfo[] = 
-{'R','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
+    {'R','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
 const static WCHAR szCreateShortcuts[] = 
-{'C','r','e','a','t','e','S','h','o','r','t','c','u','t','s',0};
+    {'C','r','e','a','t','e','S','h','o','r','t','c','u','t','s',0};
 const static WCHAR szPublishProduct[] = 
-{'P','u','b','l','i','s','h','P','r','o','d','u','c','t',0};
+    {'P','u','b','l','i','s','h','P','r','o','d','u','c','t',0};
 const static WCHAR szWriteIniValues[] = 
-{'W','r','i','t','e','I','n','i','V','a','l','u','e','s',0};
+    {'W','r','i','t','e','I','n','i','V','a','l','u','e','s',0};
 const static WCHAR szSelfRegModules[] = 
-{'S','e','l','f','R','e','g','M','o','d','u','l','e','s',0};
+    {'S','e','l','f','R','e','g','M','o','d','u','l','e','s',0};
 const static WCHAR szPublishFeatures[] = 
-{'P','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
+    {'P','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
 const static WCHAR szRegisterProduct[] = 
-{'R','e','g','i','s','t','e','r','P','r','o','d','u','c','t',0};
+    {'R','e','g','i','s','t','e','r','P','r','o','d','u','c','t',0};
 const static WCHAR szInstallExecute[] = 
-{'I','n','s','t','a','l','l','E','x','e','c','u','t','e',0};
+    {'I','n','s','t','a','l','l','E','x','e','c','u','t','e',0};
 const static WCHAR szInstallExecuteAgain[] = 
-{'I','n','s','t','a','l','l','E','x','e','c','u','t','e','A','g','a','i','n',0};
+    {'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+            'A','g','a','i','n',0};
 const static WCHAR szInstallFinalize[] = 
-{'I','n','s','t','a','l','l','F','i','n','a','l','i','z','e',0};
+    {'I','n','s','t','a','l','l','F','i','n','a','l','i','z','e',0};
 const static WCHAR szForceReboot[] = 
-{'F','o','r','c','e','R','e','b','o','o','t',0};
+    {'F','o','r','c','e','R','e','b','o','o','t',0};
 const static WCHAR szResolveSource[] =
-{'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
+    {'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
 const static WCHAR szAppSearch[] = 
-{'A','p','p','S','e','a','r','c','h',0};
+    {'A','p','p','S','e','a','r','c','h',0};
 const static WCHAR szAllocateRegistrySpace[] = 
-{'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y','S','p','a','c','e',0};
+    {'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y',
+            'S','p','a','c','e',0};
 const static WCHAR szBindImage[] = 
-{'B','i','n','d','I','m','a','g','e',0};
+    {'B','i','n','d','I','m','a','g','e',0};
 const static WCHAR szCCPSearch[] = 
-{'C','C','P','S','e','a','r','c','h',0};
+    {'C','C','P','S','e','a','r','c','h',0};
 const static WCHAR szDeleteServices[] = 
-{'D','e','l','e','t','e','S','e','r','v','i','c','e','s',0};
+    {'D','e','l','e','t','e','S','e','r','v','i','c','e','s',0};
 const static WCHAR szDisableRollback[] = 
-{'D','i','s','a','b','l','e','R','o','l','l','b','a','c','k',0};
+    {'D','i','s','a','b','l','e','R','o','l','l','b','a','c','k',0};
 const static WCHAR szExecuteAction[] = 
-{'E','x','e','c','u','t','e','A','c','t','i','o','n',0};
+    {'E','x','e','c','u','t','e','A','c','t','i','o','n',0};
 const static WCHAR szFindRelatedProducts[] = 
-{'F','i','n','d','R','e','l','a','t','e','d','P','r','o','d','u','c','t','s',0};
+    {'F','i','n','d','R','e','l','a','t','e','d',
+            'P','r','o','d','u','c','t','s',0};
 const static WCHAR szInstallAdminPackage[] = 
-{'I','n','s','t','a','l','l','A','d','m','i','n','P','a','c','k','a','g','e',0};
+    {'I','n','s','t','a','l','l','A','d','m','i','n',
+            'P','a','c','k','a','g','e',0};
 const static WCHAR szInstallSFPCatalogFile[] = 
-{'I','n','s','t','a','l','l','S','F','P','C','a','t','a','l','o','g','F','i','l','e',0};
+    {'I','n','s','t','a','l','l','S','F','P','C','a','t','a','l','o','g',
+            'F','i','l','e',0};
 const static WCHAR szIsolateComponents[] = 
-{'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t','s',0};
+    {'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t','s',0};
 const static WCHAR szMigrateFeatureStates[] = 
-{'M','i','g','r','a','t','e','F','e','a','t','u','r','e','S','t','a','t','e','s',0};
+    {'M','i','g','r','a','t','e','F','e','a','t','u','r','e',
+            'S','t','a','t','e','s',0};
 const static WCHAR szMoveFiles[] = 
-{'M','o','v','e','F','i','l','e','s',0};
+    {'M','o','v','e','F','i','l','e','s',0};
 const static WCHAR szMsiPublishAssemblies[] = 
-{'M','s','i','P','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
+    {'M','s','i','P','u','b','l','i','s','h',
+            'A','s','s','e','m','b','l','i','e','s',0};
 const static WCHAR szMsiUnpublishAssemblies[] = 
-{'M','s','i','U','n','p','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
+    {'M','s','i','U','n','p','u','b','l','i','s','h',
+            'A','s','s','e','m','b','l','i','e','s',0};
 const static WCHAR szInstallODBC[] = 
-{'I','n','s','t','a','l','l','O','D','B','C',0};
+    {'I','n','s','t','a','l','l','O','D','B','C',0};
 const static WCHAR szInstallServices[] = 
-{'I','n','s','t','a','l','l','S','e','r','v','i','c','e','s',0};
+    {'I','n','s','t','a','l','l','S','e','r','v','i','c','e','s',0};
 const static WCHAR szPatchFiles[] = 
-{'P','a','t','c','h','F','i','l','e','s',0};
+    {'P','a','t','c','h','F','i','l','e','s',0};
 const static WCHAR szPublishComponents[] = 
-{'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
+    {'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
 const static WCHAR szRegisterComPlus[] =
-{'R','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
+    {'R','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
 const static WCHAR szRegisterExtensionInfo[] =
-{'R','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n','I','n','f','o',0};
+    {'R','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n',
+            'I','n','f','o',0};
 const static WCHAR szRegisterFonts[] =
-{'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
+    {'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
 const static WCHAR szRegisterMIMEInfo[] =
-{'R','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
+    {'R','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
 const static WCHAR szRegisterUser[] =
-{'R','e','g','i','s','t','e','r','U','s','e','r',0};
+    {'R','e','g','i','s','t','e','r','U','s','e','r',0};
 const static WCHAR szRemoveDuplicateFiles[] =
-{'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
+    {'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e',
+            'F','i','l','e','s',0};
 const static WCHAR szRemoveEnvironmentStrings[] =
-{'R','e','m','o','v','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
+    {'R','e','m','o','v','e','E','n','v','i','r','o','n','m','e','n','t',
+            'S','t','r','i','n','g','s',0};
 const static WCHAR szRemoveExistingProducts[] =
-{'R','e','m','o','v','e','E','x','i','s','t','i','n','g','P','r','o','d','u','c','t','s',0};
+    {'R','e','m','o','v','e','E','x','i','s','t','i','n','g',
+            'P','r','o','d','u','c','t','s',0};
 const static WCHAR szRemoveFiles[] =
-{'R','e','m','o','v','e','F','i','l','e','s',0};
+    {'R','e','m','o','v','e','F','i','l','e','s',0};
 const static WCHAR szRemoveFolders[] =
-{'R','e','m','o','v','e','F','o','l','d','e','r','s',0};
+    {'R','e','m','o','v','e','F','o','l','d','e','r','s',0};
 const static WCHAR szRemoveIniValues[] =
-{'R','e','m','o','v','e','I','n','i','V','a','l','u','e','s',0};
+    {'R','e','m','o','v','e','I','n','i','V','a','l','u','e','s',0};
 const static WCHAR szRemoveODBC[] =
-{'R','e','m','o','v','e','O','D','B','C',0};
+    {'R','e','m','o','v','e','O','D','B','C',0};
 const static WCHAR szRemoveRegistryValues[] =
-{'R','e','m','o','v','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
+    {'R','e','m','o','v','e','R','e','g','i','s','t','r','y',
+            'V','a','l','u','e','s',0};
 const static WCHAR szRemoveShortcuts[] =
-{'R','e','m','o','v','e','S','h','o','r','t','c','u','t','s',0};
+    {'R','e','m','o','v','e','S','h','o','r','t','c','u','t','s',0};
 const static WCHAR szRMCCPSearch[] =
-{'R','M','C','C','P','S','e','a','r','c','h',0};
+    {'R','M','C','C','P','S','e','a','r','c','h',0};
 const static WCHAR szScheduleReboot[] =
-{'S','c','h','e','d','u','l','e','R','e','b','o','o','t',0};
+    {'S','c','h','e','d','u','l','e','R','e','b','o','o','t',0};
 const static WCHAR szSelfUnregModules[] =
-{'S','e','l','f','U','n','r','e','g','M','o','d','u','l','e','s',0};
+    {'S','e','l','f','U','n','r','e','g','M','o','d','u','l','e','s',0};
 const static WCHAR szSetODBCFolders[] =
-{'S','e','t','O','D','B','C','F','o','l','d','e','r','s',0};
+    {'S','e','t','O','D','B','C','F','o','l','d','e','r','s',0};
 const static WCHAR szStartServices[] =
-{'S','t','a','r','t','S','e','r','v','i','c','e','s',0};
+    {'S','t','a','r','t','S','e','r','v','i','c','e','s',0};
 const static WCHAR szStopServices[] =
-{'S','t','o','p','S','e','r','v','i','c','e','s',0};
+    {'S','t','o','p','S','e','r','v','i','c','e','s',0};
 const static WCHAR szUnpublishComponents[] =
-{'U','n','p','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
+    {'U','n','p','u','b','l','i','s','h',
+            'C','o','m','p','o','n','e','n','t','s',0};
 const static WCHAR szUnpublishFeatures[] =
-{'U','n','p','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
+    {'U','n','p','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
 const static WCHAR szUnregisterClassInfo[] =
-{'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
+    {'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s',
+            'I','n','f','o',0};
 const static WCHAR szUnregisterComPlus[] =
-{'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
+    {'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
 const static WCHAR szUnregisterExtensionInfo[] =
-{'U','n','r','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n','I','n','f','o',0};
+    {'U','n','r','e','g','i','s','t','e','r',
+            'E','x','t','e','n','s','i','o','n','I','n','f','o',0};
 const static WCHAR szUnregisterFonts[] =
-{'U','n','r','e','g','i','s','t','e','r','F','o','n','t','s',0};
+    {'U','n','r','e','g','i','s','t','e','r','F','o','n','t','s',0};
 const static WCHAR szUnregisterMIMEInfo[] =
-{'U','n','r','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
+    {'U','n','r','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
 const static WCHAR szUnregisterProgIdInfo[] =
-{'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
+    {'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d',
+            'I','n','f','o',0};
 const static WCHAR szUnregisterTypeLibraries[] =
-{'U','n','r','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r','i','e','s',0};
+    {'U','n','r','e','g','i','s','t','e','r','T','y','p','e',
+            'L','i','b','r','a','r','i','e','s',0};
 const static WCHAR szValidateProductID[] =
-{'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
+    {'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
 const static WCHAR szWriteEnvironmentStrings[] =
-{'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
+    {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t',
+            'S','t','r','i','n','g','s',0};
 
 struct _actions {
     LPCWSTR action;
@@ -618,9 +636,9 @@ static void ui_progress(MSIPACKAGE *package, int a, int b, int c, int d )
 static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
 {
     static const WCHAR Query_t[] = 
-{'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','c','t','i','o',
-'n','T','e','x','t',' ','w','h','e','r','e',' ','A','c','t','i','o','n',' ','=',
-' ','\'','%','s','\'',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'A','c','t','i','o', 'n','T','e','x','t',' ','W','H','E','R','E',' ',
+         'A','c','t','i','o','n',' ','=', ' ','\'','%','s','\'',0};
     WCHAR message[1024];
     UINT rc;
     MSIQUERY * view;
@@ -681,13 +699,14 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
 static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
 {
     static const WCHAR template_s[]=
-{'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ','%','s','.',0};
+        {'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ', '%','s',
+         '.',0};
     static const WCHAR format[] = 
-{'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+        {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
     static const WCHAR Query_t[] = 
-{'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','c','t','i','o',
-'n','T','e','x','t',' ','w','h','e','r','e',' ','A','c','t','i','o','n',' ','=',
-' ','\'','%','s','\'',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'A','c','t','i','o', 'n','T','e','x','t',' ','W','H','E','R','E', ' ',
+         'A','c','t','i','o','n',' ','=', ' ','\'','%','s','\'',0};
     WCHAR message[1024];
     WCHAR timet[0x100];
     UINT rc;
@@ -735,13 +754,14 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
 {
     MSIRECORD * row;
     static const WCHAR template_s[]=
-{'A','c','t','i','o','n',' ','s','t','a','r','t',' ','%','s',':',' ','%','s',
-'.',0};
+        {'A','c','t','i','o','n',' ','s','t','a','r','t',' ','%','s',':',' ',
+         '%','s', '.',0};
     static const WCHAR template_e[]=
-{'A','c','t','i','o','n',' ','e','n','d','e','d',' ','%','s',':',' ','%','s',
-'.',' ','R','e','t','u','r','n',' ','v','a','l','u','e',' ','%','i','.',0};
+        {'A','c','t','i','o','n',' ','e','n','d','e','d',' ','%','s',':',' ',
+         '%','s', '.',' ','R','e','t','u','r','n',' ','v','a','l','u','e',' ',
+         '%','i','.',0};
     static const WCHAR format[] = 
-{'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+        {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
     WCHAR message[1024];
     WCHAR timet[0x100];
 
@@ -981,13 +1001,11 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
     WCHAR buffer[0x100];
     DWORD sz = 0x100;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] =  {
-   's','e','l','e','c','t',' ','*',' ',
-   'f','r','o','m',' ',
-       'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
-       'S','e','q','u','e','n','c','e',' ',
-   'w','h','e','r','e',' ','S','e','q','u','e','n','c','e',' ',
-       '=',' ','%','i',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+         'S','e','q','u','e','n','c','e',' ', 'W','H','E','R','E',' ',
+         'S','e','q','u','e','n','c','e',' ', '=',' ','%','i',0};
 
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
 
@@ -1056,22 +1074,20 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
 {
     MSIQUERY * view;
     UINT rc;
-    static const WCHAR ExecSeqQuery[] =  {
-       's','e','l','e','c','t',' ','*',' ',
-       'f','r','o','m',' ',
-           'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
-           'S','e','q','u','e','n','c','e',' ',
-       'w','h','e','r','e',' ','S','e','q','u','e','n','c','e',' ',
-           '>',' ','%','i',' ','o','r','d','e','r',' ',
-       'b','y',' ','S','e','q','u','e','n','c','e',0 };
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+         'S','e','q','u','e','n','c','e',' ', 'W','H','E','R','E',' ',
+         'S','e','q','u','e','n','c','e',' ', '>',' ','%','i',' ',
+         'O','R','D','E','R',' ', 'B','Y',' ',
+         'S','e','q','u','e','n','c','e',0 };
     MSIRECORD * row = 0;
-    static const WCHAR IVQuery[] = {
-       's','e','l','e','c','t',' ','S','e','q','u','e','n','c','e',' ',
-       'f','r','o','m',' ','I','n','s','t','a','l','l',
-           'E','x','e','c','u','t','e','S','e','q','u','e','n','c','e',' ',
-       'w','h','e','r','e',' ','A','c','t','i','o','n',' ','=',' ',
-           '`','I','n','s','t','a','l','l','V','a','l','i','d','a','t','e','`',
-       0};
+    static const WCHAR IVQuery[] =
+        {'S','E','L','E','C','T',' ','S','e','q','u','e','n','c','e',' ',
+         'F','R','O','M',' ','I','n','s','t','a','l','l',
+         'E','x','e','c','u','t','e','S','e','q','u','e','n','c','e',' ',
+         'W','H','E','R','E',' ','A','c','t','i','o','n',' ','=',' ','`',
+         'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e','`', 0};
     INT seq = 0;
 
 
@@ -1193,12 +1209,12 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
 {
     MSIQUERY * view;
     UINT rc;
-    static const WCHAR ExecSeqQuery [] = {
-      's','e','l','e','c','t',' ','*',' ',
-      'f','r','o','m',' ','I','n','s','t','a','l','l',
-            'U','I','S','e','q','u','e','n','c','e',' ',
-      'w','h','e','r','e',' ','S','e','q','u','e','n','c','e',' ', '>',' ','0',' ',
-      'o','r','d','e','r',' ','b','y',' ','S','e','q','u','e','n','c','e',0};
+    static const WCHAR ExecSeqQuery [] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
+         ' ','W','H','E','R','E',' ', 'S','e','q','u','e','n','c','e',' ',
+         '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
+         'S','e','q','u','e','n','c','e',0};
     
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     
@@ -1462,9 +1478,10 @@ static BOOL create_full_pathW(const WCHAR *path)
  */
 static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 {
-    static const WCHAR ExecSeqQuery[] = {
-        's','e','l','e','c','t',' ','D','i','r','e','c','t','o','r','y','_',' ',
-        'f','r','o','m',' ','C','r','e','a','t','e','F','o','l','d','e','r',0 };
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','D','i','r','e','c','t','o','r','y','_',
+         ' ','F','R','O','M',' ',
+         'C','r','e','a','t','e','F','o','l','d','e','r',0 };
     UINT rc;
     MSIQUERY *view;
     MSIFOLDER *folder;
@@ -1588,13 +1605,15 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 {
     int index = package->loaded_features;
     DWORD sz;
-    static const WCHAR Query1[] = {'S','E','L','E','C','T',' ','C','o','m','p',
-        'o','n','e','n','t','_',' ','F','R','O','M',' ','F','e','a','t','u','r','e',
-        'C','o','m','p','o','n','e','n','t','s',' ','W','H','E','R','E',' ','F','e',
-        'a','t','u','r','e','_','=','\'','%','s','\'',0};
-    static const WCHAR Query2[] = {'S','E','L','E','C','T',' ','*',' ','F','R',
-        'O','M',' ','C','o','m','p','o','n','e','n','t',' ','W','H','E','R','E',' ','C',
-        'o','m','p','o','n','e','n','t','=','\'','%','s','\'',0};
+    static const WCHAR Query1[] = 
+        {'S','E','L','E','C','T',' ','C','o','m','p','o','n','e','n','t','_',
+         ' ','F','R','O','M',' ','F','e','a','t','u','r','e',
+         'C','o','m','p','o','n','e','n','t','s',' ','W','H','E','R','E',' ',
+         'F','e', 'a','t','u','r','e','_','=','\'','%','s','\'',0};
+    static const WCHAR Query2[] = 
+        {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
+         'C','o','m','p','o','n','e','n','t',' ','W','H','E','R','E',' ', 
+         'C','o','m','p','o','n','e','n','t','=','\'','%','s','\'',0};
     MSIQUERY * view;
     MSIQUERY * view2;
     MSIRECORD * row2;
@@ -1736,11 +1755,11 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     MSIQUERY * view;
     MSIRECORD * row;
     UINT rc;
-    static const WCHAR Query_all[] = {
-       'S','E','L','E','C','T',' ','*',' ',
-       'F','R','O','M',' ','F','e','a','t','u','r','e',0};
-    static const WCHAR szCosting[] = {
-       'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
+    static const WCHAR Query_all[] =
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         'F','e','a','t','u','r','e',0};
+    static const WCHAR szCosting[] =
+        {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szZero[] = { '0', 0 };
 
     MSI_SetPropertyW(package, szCosting, szZero);
@@ -1827,10 +1846,10 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
     MSIQUERY * view;
     MSIRECORD * row;
     UINT rc;
-    static const WCHAR Query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','F','i','l','e',' ',
-        'O','r','d','e','r',' ','b','y',' ','S','e','q','u','e','n','c','e', 0};
+    static const WCHAR Query[] =
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         'F','i','l','e',' ', 'O','R','D','E','R',' ','B','Y',' ',
+         'S','e','q','u','e','n','c','e', 0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -1865,12 +1884,12 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
 }
 
 static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
-
 {
     static const WCHAR Query[] =
-        {'s','e','l','e','c','t',' ','*',' ','f','r','o','m',' ','D','i','r','e','c',
-         't','o','r','y',' ','w','h','e','r','e',' ','`','D','i','r','e','c','t',
-         'o','r','y','`',' ','=',' ','`','%','s','`',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'D','i','r','e','c', 't','o','r','y',' ','W','H','E','R','E',' ','`',
+         'D','i','r','e','c','t', 'o','r','y','`',' ','=',' ','`','%','s','`',
+         0};
     UINT rc;
     MSIQUERY * view;
     LPWSTR targetdir, parent, srcdir;
@@ -2258,12 +2277,12 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
     INT install_level;
     DWORD i;
     INT j;
-    static const WCHAR szlevel[] = {
-        'I','N','S','T','A','L','L','L','E','V','E','L',0};
-    static const WCHAR szAddLocal[] = {
-        'A','D','D','L','O','C','A','L',0};
-    static const WCHAR szRemove[] = {
-        'R','E','M','O','V','E',0};
+    static const WCHAR szlevel[] =
+        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
+    static const WCHAR szAddLocal[] =
+        {'A','D','D','L','O','C','A','L',0};
+    static const WCHAR szRemove[] =
+        {'R','E','M','O','V','E',0};
     BOOL override = FALSE;
 
     /* I do not know if this is where it should happen.. but */
@@ -2380,16 +2399,16 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
  */
 static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
-    static const WCHAR ExecSeqQuery[] = {
-        's','e','l','e','c','t',' ','*',' ','f','r','o','m',' ',
-        'D','i','r','e','c','t','o','r','y',0};
-    static const WCHAR ConditionQuery[] = {
-        's','e','l','e','c','t',' ','*',' ','f','r','o','m',' ',
-        'C','o','n','d','i','t','i','o','n',0};
-    static const WCHAR szCosting[] = {
-       'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
-    static const WCHAR szlevel[] = {
-        'I','N','S','T','A','L','L','L','E','V','E','L',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'D','i','r','e','c','t','o','r','y',0};
+    static const WCHAR ConditionQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'C','o','n','d','i','t','i','o','n',0};
+    static const WCHAR szCosting[] =
+        {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
+    static const WCHAR szlevel[] =
+        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szOne[] = { '1', 0 };
     UINT rc;
     MSIQUERY * view;
@@ -2486,9 +2505,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                     UINT sz;
                     LPVOID version;
                     static const WCHAR name[] = 
-                    {'\\',0};
+                        {'\\',0};
                     static const WCHAR name_fmt[] = 
-                    {'%','u','.','%','u','.','%','u','.','%','u',0};
+                        {'%','u','.','%','u','.','%','u','.','%','u',0};
                     WCHAR filever[0x100];
                     VS_FIXEDFILEINFO *lpVer;
 
@@ -2691,7 +2710,8 @@ static INT_PTR cabinet_open(char *pszFile, int oflag, int pmode)
         dwCreateDisposition = CREATE_NEW;
     else if (oflag & _O_CREAT)
         dwCreateDisposition = CREATE_ALWAYS;
-    return (INT_PTR)CreateFileA(pszFile, dwAccess, dwShareMode, NULL, dwCreateDisposition, 0, NULL);
+    return (INT_PTR)CreateFileA(pszFile, dwAccess, dwShareMode, NULL, 
+                                dwCreateDisposition, 0, NULL);
 }
 
 static UINT cabinet_read(INT_PTR hf, void *pv, UINT cb)
@@ -2857,11 +2877,12 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
     MSIQUERY * view;
     MSIRECORD * row = 0;
     static WCHAR source[MAX_PATH];
-    static const WCHAR ExecSeqQuery[] = {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ','M','e','d','i','a',' ',
-        'w','h','e','r','e',' ','L','a','s','t','S','e','q','u','e','n','c','e',' ','>','=',' ','%','i',' ',
-        'o','r','d','e','r',' ','b','y',' ','L','a','s','t','S','e','q','u','e','n','c','e',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         'M','e','d','i','a',' ','W','H','E','R','E',' ',
+         'L','a','s','t','S','e','q','u','e','n','c','e',' ','>','=',' ','%',
+         'i',' ','O','R','D','E','R',' ','B','Y',' ',
+         'L','a','s','t','S','e','q','u','e','n','c','e',0};
     WCHAR Query[1024];
     WCHAR cab[0x100];
     DWORD sz=0x100;
@@ -3114,9 +3135,9 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {
-        's','e','l','e','c','t',' ','*',' ','f','r','o','m',' ',
-        'D','u','p','l','i','c','a','t','e','F','i','l','e',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'D','u','p','l','i','c','a','t','e','F','i','l','e',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3358,9 +3379,9 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ','R','e','g','i','s','t','r','y',0 };
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'R','e','g','i','s','t','r','y',0 };
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3383,14 +3404,16 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     while (1)
     {
         static const WCHAR szHCR[] = 
-{'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T','\\',0};
+            {'H','K','E','Y','_','C','L','A','S','S','E','S','_',
+             'R','O','O','T','\\',0};
         static const WCHAR szHCU[] =
-{'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\',0};
+            {'H','K','E','Y','_','C','U','R','R','E','N','T','_',
+             'U','S','E','R','\\',0};
         static const WCHAR szHLM[] =
-{'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',
-'\\',0};
+            {'H','K','E','Y','_','L','O','C','A','L','_',
+             'M','A','C','H','I','N','E','\\',0};
         static const WCHAR szHU[] =
-{'H','K','E','Y','_','U','S','E','R','S','\\',0};
+            {'H','K','E','Y','_','U','S','E','R','S','\\',0};
 
         LPSTR value_data = NULL;
         HKEY  root_key, hkey;
@@ -3549,9 +3572,9 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 {
     DWORD progress = 0;
     DWORD total = 0;
-    static const WCHAR q1[]={
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','R','e','g','i','s','t','r','y',0};
+    static const WCHAR q1[]=
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         'R','e','g','i','s','t','r','y',0};
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
@@ -3599,11 +3622,11 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view = NULL;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'f','r','o','m',' ','L','a','u','n','c','h','C','o','n','d','i','t','i','o','n',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n',0};
     static const WCHAR title[]=
-            {'I','n','s','t','a','l','l',' ','F','a', 'i','l','e','d',0};
+        {'I','n','s','t','a','l','l',' ','F','a', 'i','l','e','d',0};
 
     TRACE("Checking launch conditions\n");
 
@@ -3668,13 +3691,13 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         MSIRECORD * row = 0;
         UINT rc,root,len;
         LPWSTR key,deformated,buffer,name,deformated_name;
-        static const WCHAR ExecSeqQuery[] = {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ','R','e','g','i','s','t','r','y',' ',
-'w','h','e','r','e',' ','R','e','g','i','s','t','r','y',' ','=',' '
-,'`','%','s','`',0 };
+        static const WCHAR ExecSeqQuery[] =
+            {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+             'R','e','g','i','s','t','r','y',' ','W','H','E','R','E',' ',
+             'R','e','g','i','s','t','r','y',' ','=',' ' ,'`','%','s','`',0 };
         static const WCHAR fmt[]={'%','0','2','i',':','\\','%','s','\\',0};
-        static const WCHAR fmt2[]={'%','0','2','i',':','\\','%','s','\\','%','s',0};
+        static const WCHAR fmt2[]=
+            {'%','0','2','i',':','\\','%','s','\\','%','s',0};
 
         rc = MSI_OpenQuery(package->db,&view,ExecSeqQuery,cmp->KeyPath);
 
@@ -3746,12 +3769,12 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
 static HKEY openSharedDLLsKey()
 {
     HKEY hkey=0;
-    static const WCHAR path[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'S','h','a','r','e','d','D','L','L','s',0};
+    static const WCHAR path[] =
+        {'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'S','h','a','r','e','d','D','L','L','s',0};
 
     RegCreateKeyW(HKEY_LOCAL_MACHINE,path,&hkey);
     return hkey;
@@ -3932,9 +3955,10 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                     if (package->components[i].Attributes & 
                                 msidbComponentAttributesPermanent)
                     {
-                        static const WCHAR szPermKey[] = {
-'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
-'0','0','0','0','0','0','0','0','0','0','0','0','0',0};
+                        static const WCHAR szPermKey[] =
+                            { '0','0','0','0','0','0','0','0','0','0','0','0',
+                              '0','0','0','0','0','0','0', '0','0','0','0','0',
+                              '0','0','0','0','0','0','0','0',0};
 
                         RegSetValueExW(hkey2,szPermKey,0,REG_SZ,
                                         (LPVOID)keypath,
@@ -3992,9 +4016,9 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR Query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'f','r','o','m',' ','T','y','p','e','L','i','b',0};
+    static const WCHAR Query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'T','y','p','e','L','i','b',0};
     ITypeLib *ptLib;
     HRESULT res;
 
@@ -4107,8 +4131,9 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
     MSIQUERY * view;
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = 
-        {'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ','A','p','p','I'
-        ,'d',' ','w','h','e','r','e',' ','A','p','p','I','d','=','`','%','s','`',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'A','p','p','I' ,'d',' ','w','h','e','r','e',' ',
+         'A','p','p','I','d','=','`','%','s','`',0};
     HKEY hkey2,hkey3;
     LPWSTR buffer=0;
 
@@ -4145,7 +4170,8 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
         LPWSTR deformated=0;
         UINT size; 
         static const WCHAR szRemoteServerName[] =
-             {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',0};
+             {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',
+              0};
         buffer = load_dynamic_stringW(row,2);
         size = deformat_string(package,buffer,&deformated);
         RegSetValueExW(hkey3,szRemoteServerName,0,REG_SZ,(LPVOID)deformated,
@@ -4168,7 +4194,8 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
     if (!MSI_RecordIsNull(row,4)) 
     {
         static const WCHAR szService[] =
-             {'S','e','r','v','i','c','e','P','a','r','a','m','e','t','e','r','s',0};
+             {'S','e','r','v','i','c','e',
+              'P','a','r','a','m','e','t','e','r','s',0};
         UINT size;
         buffer = load_dynamic_stringW(row,4);
         size = (strlenW(buffer)+1) * sizeof(WCHAR);
@@ -4190,7 +4217,8 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
     if (!MSI_RecordIsNull(row,6)) 
     {
         static const WCHAR szActivate[] =
-             {'A','c','t','i','v','a','t','e','A','s','S','t','o','r','a','g','e',0};
+             {'A','c','t','i','v','a','t','e','A','s',
+              'S','t','o','r','a','g','e',0};
         static const WCHAR szY[] = {'Y',0};
 
         if (MSI_RecordGetInteger(row,6))
@@ -4201,7 +4229,8 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
     {
         static const WCHAR szRunAs[] = {'R','u','n','A','s',0};
         static const WCHAR szUser[] = 
-             {'I','n','t','e','r','a','c','t','i','v','e',' ','U','s','e','r',0};
+             {'I','n','t','e','r','a','c','t','i','v','e',' ',
+              'U','s','e','r',0};
 
         if (MSI_RecordGetInteger(row,7))
             RegSetValueExW(hkey3,szRunAs,0,REG_SZ,(LPVOID)szUser,34);
@@ -4231,9 +4260,9 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'f','r','o','m',' ','C','l','a','s','s',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'C','l','a','s','s',0};
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     static const WCHAR szProgID[] = { 'P','r','o','g','I','D',0 };
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
@@ -4380,7 +4409,7 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         if (!MSI_RecordIsNull(row,8))
         {
             static const WCHAR szDefaultIcon[] = 
-            {'D','e','f','a','u','l','t','I','c','o','n',0};
+                {'D','e','f','a','u','l','t','I','c','o','n',0};
 
             LPWSTR FileName = load_dynamic_stringW(row,8);
             LPWSTR FilePath;
@@ -4407,16 +4436,17 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
 
         if (!MSI_RecordIsNull(row,10))
         {
-            static const WCHAR szInproc32[] = {
-            'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
-            static const WCHAR szInproc[] = {
-            'I','n','p','r','o','c','H','a','n','d','l','e','r',0};
+            static const WCHAR szInproc32[] =
+                {'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',
+                 0};
+            static const WCHAR szInproc[] =
+                {'I','n','p','r','o','c','H','a','n','d','l','e','r',0};
             INT i = MSI_RecordGetInteger(row,10);
             if (i != MSI_NULL_INTEGER && i > 0 &&  i < 4)
             {
                 static const WCHAR ole2[] = {'o','l','e','2','.','d','l','l',0};
-                static const WCHAR ole32[] = {
-                        'o','l','e','3','2','.','d','l','l',0};
+                static const WCHAR ole32[] =
+                    {'o','l','e','3','2','.','d','l','l',0};
                 switch(i)
                 {
                     case 1:
@@ -4476,8 +4506,8 @@ static UINT register_progid_base(MSIPACKAGE* package, MSIRECORD * row,
                                 LPWSTR clsid)
 {
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
-    static const WCHAR szDefaultIcon[] = {
-        'D','e','f','a','u','l','t','I','c','o','n',0};
+    static const WCHAR szDefaultIcon[] =
+        {'D','e','f','a','u','l','t','I','c','o','n',0};
     HKEY hkey,hkey2;
     WCHAR buffer[0x100];
     DWORD sz;
@@ -4546,9 +4576,9 @@ static UINT register_parent_progid(MSIPACKAGE *package, LPCWSTR parent,
     MSIQUERY * view;
     MSIRECORD * row = 0;
     static const WCHAR Query_t[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','P','r','o','g'
-        ,'I','d',' ','w','h','e','r','e',' ','P','r','o','g','I','d',' ','=',' ','`'
-        ,'%','s','`',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'P','r','o','g' ,'I','d',' ','W','H','E','R','E',' ',
+         'P','r','o','g','I','d',' ','=',' ','`' ,'%','s','`',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4593,8 +4623,8 @@ static UINT register_progid(MSIPACKAGE *package, MSIRECORD * row, LPWSTR clsid)
         DWORD sz, disp;
         HKEY hkey,hkey2;
         static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
-        static const WCHAR szDefaultIcon[] = {
-                'D','e','f','a','u','l','t','I','c','o','n',0};
+        static const WCHAR szDefaultIcon[] =
+            {'D','e','f','a','u','l','t','I','c','o','n',0};
 
         /* check if already registered */
         sz = 0x100;
@@ -4659,9 +4689,9 @@ static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR Query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','P','r','o','g','I','d',0};
+    static const WCHAR Query[] =
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         'P','r','o','g','I','d',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4735,9 +4765,9 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR Query[] = {
-       'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ',
-       'S','h','o','r','t','c','u','t',0};
+    static const WCHAR Query[] =
+        {'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ',
+         'S','h','o','r','t','c','u','t',0};
     IShellLinkW *sl;
     IPersistFile *pf;
     HRESULT res;
@@ -4937,18 +4967,18 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR Query[]={
-        'S','E','L','E','C','T',' ','*',' ',
-        'f','r','o','m',' ','I','c','o','n',0};
+    static const WCHAR Query[]=
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'I','c','o','n',0};
     DWORD sz;
     /* for registry stuff */
     LPWSTR productcode;
     HKEY hkey=0;
     HKEY hukey=0;
-    static const WCHAR szProductName[] = {
-         'P','r','o','d','u','c','t','N','a','m','e',0};
-    static const WCHAR szPackageCode[] = {
-         'P','a','c','k','a','g','e','C','o','d','e',0};
+    static const WCHAR szProductName[] =
+        {'P','r','o','d','u','c','t','N','a','m','e',0};
+    static const WCHAR szPackageCode[] =
+        {'P','a','c','k','a','g','e','C','o','d','e',0};
     LPWSTR buffer;
     DWORD size;
     MSIHANDLE hDb, hSumInfo;
@@ -5098,8 +5128,9 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {'S','e','l','e','c','t',' ','*',
-        ' ','f','r','o','m',' ','I','n','i','F','i','l','e',0};
+    static const WCHAR ExecSeqQuery[] = 
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'I','n','i','F','i','l','e',0};
     static const WCHAR szWindowsFolder[] =
           {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
 
@@ -5239,11 +5270,12 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {'S','e','l','e','c','t',' ','*',' ',
-'f','r','o','m',' ','S','e','l','f','R','e','g',0};
+    static const WCHAR ExecSeqQuery[] = 
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'S','e','l','f','R','e','g',0};
 
-    static const WCHAR ExeStr[] = {
-'r','e','g','s','v','r','3','2','.','e','x','e',' ','/','s',' ',0};
+    static const WCHAR ExeStr[] =
+        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','/','s',' ',0};
     STARTUPINFOW si;
     PROCESS_INFORMATION info;
     BOOL brc;
@@ -5674,11 +5706,11 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'f','r','o','m',' ','E','x','t','e','n','s','i','o','n',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'E','x','t','e','n','s','i','o','n',0};
     static const WCHAR szContentType[] = 
-{ 'C','o','n','t','e','n','t',' ','T','y','p','e',0 };
+        {'C','o','n','t','e','n','t',' ','T','y','p','e',0 };
     HKEY hkey;
 
     if (!package)
@@ -5758,7 +5790,7 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
         if (!MSI_RecordIsNull(row,3))
         {
             static const WCHAR szSN[] = 
-            {'\\','S','h','e','l','l','N','e','w',0};
+                {'\\','S','h','e','l','l','N','e','w',0};
             HKEY hkey2;
             LPWSTR newkey;
             LPWSTR progid= load_dynamic_stringW(row,3);
@@ -5797,11 +5829,11 @@ static UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'f','r','o','m',' ','M','I','M','E',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'M','I','M','E',0};
     static const WCHAR szExten[] = 
-{ 'E','x','t','e','n','s','i','o','n',0 };
+        {'E','x','t','e','n','s','i','o','n',0 };
     HKEY hkey;
 
     if (!package)
@@ -5828,10 +5860,8 @@ static UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         LPWSTR exten;
         LPWSTR mime;
         static const WCHAR fmt[] = 
-{'M','I','M','E','\\',
-'D','a','t','a','b','a','s','e','\\',
-'C','o','n','t','e','n','t',' ','T','y','p','e','\\',
-'%','s',0};
+            {'M','I','M','E','\\','D','a','t','a','b','a','s','e','\\',
+             'C','o','n','t','e','n','t',' ','T','y','p','e','\\', '%','s',0};
         LPWSTR key;
      
         rc = MSI_ViewFetch(view,&row);
@@ -5889,18 +5919,18 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
 
     static const WCHAR szPropKeys[][80] = 
     {
-{'P','r','o','d','u','c','t','I','D',0},
-{'U','S','E','R','N','A','M','E',0},
-{'C','O','M','P','A','N','Y','N','A','M','E',0},
-{0},
+        {'P','r','o','d','u','c','t','I','D',0},
+        {'U','S','E','R','N','A','M','E',0},
+        {'C','O','M','P','A','N','Y','N','A','M','E',0},
+        {0},
     };
 
     static const WCHAR szRegKeys[][80] = 
     {
-{'P','r','o','d','u','c','t','I','D',0},
-{'R','e','g','O','w','n','e','r',0},
-{'R','e','g','C','o','m','p','a','n','y',0},
-{0},
+        {'P','r','o','d','u','c','t','I','D',0},
+        {'R','e','g','O','w','n','e','r',0},
+        {'R','e','g','C','o','m','p','a','n','y',0},
+        {0},
     };
 
     if (!package)
@@ -6082,21 +6112,21 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = {
-        'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ',
-        'F','o','n','t',0};
-    static const WCHAR regfont1[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s',' ','N','T','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'F','o','n','t','s',0};
-    static const WCHAR regfont2[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'F','o','n','t','s',0};
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'F','o','n','t',0};
+    static const WCHAR regfont1[] =
+        {'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s',' ','N','T','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'F','o','n','t','s',0};
+    static const WCHAR regfont2[] =
+        {'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'F','o','n','t','s',0};
     HKEY hkey1;
     HKEY hkey2;
 
