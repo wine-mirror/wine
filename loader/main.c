@@ -56,13 +56,13 @@ DEFAULT_DEBUG_CHANNEL(server)
 /***********************************************************************
  *           Main initialisation routine
  */
-BOOL MAIN_MainInit( int *argc, char *argv[] )
+BOOL MAIN_MainInit( int *argc, char *argv[], BOOL win32 )
 {
     /* store the program name */
     argv0 = argv[0];
 
     /* Create the initial process */
-    if (!PROCESS_Init()) return 0;
+    if (!PROCESS_Init( win32 )) return 0;
 
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
@@ -297,7 +297,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     HMODULE16 hModule;
 
     /* Main initialization */
-    if (!MAIN_MainInit( argc, argv )) return 0;
+    if (!MAIN_MainInit( argc, argv, TRUE )) return 0;
 
     /* Create and switch to initial task */
     if (!(wm = ELF_CreateDummyModule( argv[0], argv[0] )))

@@ -26,6 +26,7 @@
 #include "server.h"
 #include "options.h"
 #include "callback.h"
+#include "debugger.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(process)
@@ -37,9 +38,6 @@ DECLARE_DEBUG_CHANNEL(win32)
 static PDB initial_pdb;
 
 static PDB *PROCESS_First = &initial_pdb;
-
-  /* Pointer to debugger callback routine */
-void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask ) = NULL;
 
 
 /***********************************************************************
@@ -322,7 +320,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
 /***********************************************************************
  *           PROCESS_Init
  */
-BOOL PROCESS_Init(void)
+BOOL PROCESS_Init( BOOL win32 )
 {
     TEB *teb;
     int server_fd;
@@ -337,7 +335,7 @@ BOOL PROCESS_Init(void)
     initial_pdb.ring0_threads   = 1;
     initial_pdb.group           = &initial_pdb;
     initial_pdb.priority        = 8;  /* Normal */
-    initial_pdb.flags           = PDB32_WIN16_PROC;
+    initial_pdb.flags           = win32? 0 : PDB32_WIN16_PROC;
     initial_pdb.winver          = 0xffff; /* to be determined */
     initial_pdb.main_queue      = INVALID_HANDLE_VALUE16;
 
@@ -494,9 +492,8 @@ void PROCESS_Start(void)
     }
 
     /* If requested, add entry point breakpoint */
-    if ( (Options.debug && TASK_AddTaskEntryBreakpoint) ||
-         (pdb->flags & PDB32_DEBUGGED))
-        TASK_AddTaskEntryBreakpoint( pdb->task );
+    if ( Options.debug || (pdb->flags & PDB32_DEBUGGED) )
+        DEBUG_AddTaskEntryBreakpoint( pdb->task );
 
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
     if ( type != PROC_WIN16 && (pdb->flags & PDB32_CONSOLE_PROC))
@@ -760,7 +757,7 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return process->env_db->startup_info->dwFlags;
 
     case GPD_PARENT:
-        return (DWORD)process->parent->server_pid;
+        return process->parent? (DWORD)process->parent->server_pid : 0;
 
     case GPD_FLAGS:
         return process->flags;

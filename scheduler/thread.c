@@ -44,7 +44,7 @@ TEB *THREAD_First = &initial_teb;
  */
 BOOL THREAD_IsWin16( TEB *teb )
 {
-    return !teb || !(teb->flags & TEBF_WIN32);
+    return !teb || !(teb->tibflags & TEBF_WIN32);
 }
 
 /***********************************************************************
@@ -119,11 +119,6 @@ static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16,
         teb->signal_stack = (char *)teb->signal_stack + 0x10000;
     }
 
-    /* Create the thread event */
-
-    if (!(teb->event = CreateEventA( NULL, FALSE, FALSE, NULL ))) goto error;
-    teb->event = ConvertToGlobalHandle( teb->event );
-
     /* StaticUnicodeString */
 
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
@@ -132,7 +127,6 @@ static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16,
     return TRUE;
 
 error:
-    if (teb->event) CloseHandle( teb->event );
     if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
     if (teb->stack_base) VirtualFree( teb->stack_base, 0, MEM_RELEASE );
     return FALSE;
@@ -155,7 +149,6 @@ void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
 
     PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, (DWORD)teb->tid, 0 );
     
-    CloseHandle( teb->event );
     while (*pptr && (*pptr != teb)) pptr = &(*pptr)->next;
     if (*pptr) *pptr = teb->next;
 
@@ -180,7 +173,7 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
 {
     initial_teb.except      = (void *)-1;
     initial_teb.self        = &initial_teb;
-    initial_teb.flags       = /* TEBF_WIN32 */ 0;
+    initial_teb.tibflags    = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
     initial_teb.tls_ptr     = initial_teb.tls_array;
     initial_teb.process     = pdb;
     initial_teb.exit_code   = 0x103; /* STILL_ACTIVE */
@@ -224,7 +217,7 @@ TEB *THREAD_Create( PDB *pdb, int fd, DWORD flags, DWORD stack_size, BOOL alloc_
     teb->except      = (void *)-1;
     teb->htask16     = pdb->task;
     teb->self        = teb;
-    teb->flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
+    teb->tibflags    = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
     teb->tls_ptr     = teb->tls_array;
     teb->process     = pdb;
     teb->exit_code   = 0x103; /* STILL_ACTIVE */
@@ -300,7 +293,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     int handle = -1;
     TEB *teb = THREAD_Create( PROCESS_Current(), -1, flags, stack, TRUE, sa, &handle );
     if (!teb) return 0;
-    teb->flags      |= TEBF_WIN32;
+    teb->tibflags   |= TEBF_WIN32;
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;

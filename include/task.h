@@ -143,7 +143,6 @@ typedef struct _THHOOK
 #include "poppack.h"
 
 extern THHOOK *pThhook;
-extern void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask );
 
 extern BOOL TASK_Create( struct _NE_MODULE *pModule, UINT16 cmdShow );
 extern void TASK_KillTask( HTASK16 hTask );

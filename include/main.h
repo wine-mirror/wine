@@ -8,7 +8,7 @@
 #include "windef.h"
 
 extern void MAIN_Usage(char*);
-extern BOOL MAIN_MainInit( int *argc, char *argv[] );
+extern BOOL MAIN_MainInit( int *argc, char *argv[], BOOL win32 );
 extern BOOL MAIN_WineInit( int *argc, char *argv[] );
 extern HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] );
 extern int MAIN_GetLanguageID(char*lang, char*country, char*charset, char*dialect);
