@@ -196,9 +196,9 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 }
 
 /***********************************************************************
- *		MoveCursor (X11DRV.@)
+ *		SetCursorPos (X11DRV.@)
  */
-void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
+void X11DRV_SetCursorPos(INT wAbsX, INT wAbsY)
 {
   /* 
    * We do not want to create MotionNotify events here, 
@@ -218,7 +218,7 @@ void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
    * are supposed to move to; if so, we don't need to do anything.
    */
 
-    Display *display = thread_display();
+  Display *display = thread_display();
   Window root, child;
   int rootX, rootY, winX, winY;
   unsigned int xstate;
@@ -233,8 +233,30 @@ void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
     return;
   
   TRACE("(%d,%d): moving from (%d,%d)\n", wAbsX, wAbsY, winX, winY );
-  
-  TSXWarpPointer( display, root_window, root_window, 0, 0, 0, 0, wAbsX, wAbsY );
+
+  wine_tsx11_lock();
+  XWarpPointer( display, root_window, root_window, 0, 0, 0, 0, wAbsX, wAbsY );
+  XFlush( display ); /* just in case */
+  wine_tsx11_unlock();
+}
+
+/***********************************************************************
+ *		GetCursorPos (X11DRV.@)
+ */
+void X11DRV_GetCursorPos(LPPOINT pos)
+{
+  Display *display = thread_display();
+  Window root, child;
+  int rootX, rootY, winX, winY;
+  unsigned int xstate;
+
+  if (!TSXQueryPointer( display, root_window, &root, &child,
+                        &rootX, &rootY, &winX, &winY, &xstate ))
+    return;
+
+  TRACE("pointer at (%d,%d)\n", winX, winY );
+  pos->x = winX;
+  pos->y = winY;
 }
 
 /***********************************************************************

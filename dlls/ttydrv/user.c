@@ -95,13 +95,6 @@ void TTYDRV_SetCursor( struct tagCURSORICONINFO *lpCursor )
 }
 
 /***********************************************************************
- *		TTYDRV_MoveCursor (TTYDRV.@)
- */
-void TTYDRV_MoveCursor(WORD wAbsX, WORD wAbsY)
-{
-}
-
-/***********************************************************************
  *              TTYDRV_GetScreenSaveActive (TTYDRV.@)
  *
  * Returns the active status of the screen saver

@@ -50,7 +50,8 @@ typedef struct tagUSER_DRIVER {
     /* mouse functions */
     void   (*pInitMouse)(LPMOUSE_EVENT_PROC);
     void   (*pSetCursor)(struct tagCURSORICONINFO *);
-    void   (*pMoveCursor)(WORD, WORD);
+    void   (*pGetCursorPos)(LPPOINT);
+    void   (*pSetCursorPos)(INT,INT);
     /* screen saver functions */
     BOOL   (*pGetScreenSaveActive)(void);
     void   (*pSetScreenSaveActive)(BOOL);

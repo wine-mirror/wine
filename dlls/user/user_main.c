@@ -70,7 +70,8 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetDIData);
     GET_USER_FUNC(InitMouse);
     GET_USER_FUNC(SetCursor);
-    GET_USER_FUNC(MoveCursor);
+    GET_USER_FUNC(GetCursorPos);
+    GET_USER_FUNC(SetCursorPos);
     GET_USER_FUNC(GetScreenSaveActive);
     GET_USER_FUNC(SetScreenSaveActive);
     GET_USER_FUNC(GetScreenSaveTimeout);

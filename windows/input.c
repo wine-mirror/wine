@@ -368,9 +368,11 @@ BOOL WINAPI SwapMouseButton( BOOL fSwap )
  */
 BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
 {
+    POINT pos;
     if (!pt) return 0;
-    pt->x = PosX;
-    pt->y = PosY;
+    GetCursorPos(&pos);
+    pt->x = pos.x;
+    pt->y = pos.y;
     return 1;
 }
 
@@ -383,7 +385,29 @@ BOOL WINAPI GetCursorPos( POINT *pt )
     if (!pt) return 0;
     pt->x = PosX;
     pt->y = PosY;
+    if (USER_Driver.pGetCursorPos) USER_Driver.pGetCursorPos( pt );
     return 1;
+}
+
+
+/***********************************************************************
+ *		SetCursorPos (USER.70)
+ */
+void WINAPI SetCursorPos16( INT16 x, INT16 y )
+{
+    SetCursorPos( x, y );
+}
+
+
+/***********************************************************************
+ *		SetCursorPos (USER32.@)
+ */
+BOOL WINAPI SetCursorPos( INT x, INT y )
+{
+    if (USER_Driver.pSetCursorPos) USER_Driver.pSetCursorPos( x, y );
+    PosX = x;
+    PosY = y;
+    return TRUE;
 }
 
 

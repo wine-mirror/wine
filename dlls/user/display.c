@@ -44,7 +44,7 @@ VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
  */
 VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 {
-    USER_Driver.pMoveCursor(wAbsX, wAbsY);
+    USER_Driver.pSetCursorPos(wAbsX, wAbsY);
 }
 
 /***********************************************************************

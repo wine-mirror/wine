@@ -1468,25 +1468,6 @@ HCURSOR WINAPI SetCursor(
 
 
 /***********************************************************************
- *		SetCursorPos (USER.70)
- */
-void WINAPI SetCursorPos16( INT16 x, INT16 y )
-{
-    SetCursorPos( x, y );
-}
-
-
-/***********************************************************************
- *		SetCursorPos (USER32.@)
- */
-BOOL WINAPI SetCursorPos( INT x, INT y )
-{
-    USER_Driver.pMoveCursor( x, y );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		ShowCursor (USER.71)
  */
 INT16 WINAPI ShowCursor16( BOOL16 bShow )

@@ -21,7 +21,6 @@ debug_channels (ttydrv)
 @ cdecl GetDIData(ptr long ptr ptr long) TTYDRV_GetDIData
 @ cdecl InitMouse(ptr) TTYDRV_InitMouse
 @ cdecl SetCursor(ptr) TTYDRV_SetCursor
-@ cdecl MoveCursor(long long) TTYDRV_MoveCursor
 @ cdecl GetScreenSaveActive() TTYDRV_GetScreenSaveActive
 @ cdecl SetScreenSaveActive(long) TTYDRV_SetScreenSaveActive
 @ cdecl GetScreenSaveTimeout() TTYDRV_GetScreenSaveTimeout

@@ -21,7 +21,8 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl GetDIData(ptr long ptr ptr long) X11DRV_GetDIData
 @ cdecl InitMouse(ptr) X11DRV_InitMouse
 @ cdecl SetCursor(ptr) X11DRV_SetCursor
-@ cdecl MoveCursor(long long) X11DRV_MoveCursor
+@ cdecl GetCursorPos(ptr) X11DRV_GetCursorPos
+@ cdecl SetCursorPos(long long) X11DRV_SetCursorPos
 @ cdecl GetScreenSaveActive() X11DRV_GetScreenSaveActive
 @ cdecl SetScreenSaveActive(long) X11DRV_SetScreenSaveActive
 @ cdecl GetScreenSaveTimeout() X11DRV_GetScreenSaveTimeout
