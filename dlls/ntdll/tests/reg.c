@@ -99,36 +99,47 @@ static HMODULE hntdll = 0;
 static int CurrentTest = 0;
 static UNICODE_STRING winetestpath;
 
-static void InitFunctionPtrs(void)
-{
-    hntdll = LoadLibraryA("ntdll.dll");
-    ok(hntdll != 0, "LoadLibrary failed\n");
-    if (hntdll)
-    {
-        pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
-        pRtlCreateUnicodeString = (void*)GetProcAddress(hntdll, "RtlCreateUnicodeString");
-        pRtlFreeUnicodeString = (void*)GetProcAddress(hntdll, "RtlFreeUnicodeString");
-        pNtDeleteValueKey = (void*)GetProcAddress(hntdll, "NtDeleteValueKey");
-        pRtlQueryRegistryValues = (void*)GetProcAddress(hntdll, "RtlQueryRegistryValues");
-        pRtlCheckRegistryKey = (void*)GetProcAddress(hntdll, "RtlCheckRegistryKey");
-        pRtlOpenCurrentUser = (void*)GetProcAddress(hntdll, "RtlOpenCurrentUser");
-        pNtClose = (void*)GetProcAddress(hntdll, "NtClose");
-        pNtDeleteValueKey = (void*)GetProcAddress(hntdll, "NtDeleteValueKey");
-        pNtCreateKey = (void*)GetProcAddress(hntdll, "NtCreateKey");
-        pNtDeleteKey = (void*)GetProcAddress(hntdll, "NtDeleteKey");
-        pNtSetValueKey = (void*)GetProcAddress(hntdll, "NtSetValueKey");
-        pNtOpenKey = (void*)GetProcAddress(hntdll, "NtOpenKey");
-        pRtlFormatCurrentUserKeyPath = (void*)GetProcAddress(hntdll, "RtlFormatCurrentUserKeyPath");
-        pRtlReAllocateHeap = (void*)GetProcAddress(hntdll, "RtlReAllocateHeap");
-        pRtlAppendUnicodeToString = (void*)GetProcAddress(hntdll, "RtlAppendUnicodeToString");
-        pRtlUnicodeStringToAnsiString = (void*)GetProcAddress(hntdll, "RtlUnicodeStringToAnsiString");
-        pRtlFreeHeap = (void*)GetProcAddress(hntdll, "RtlFreeHeap");
-        pRtlAllocateHeap = (void*)GetProcAddress(hntdll, "RtlAllocateHeap");
-        pRtlZeroMemory = (void*)GetProcAddress(hntdll, "RtlZeroMemory");
+#define NTDLL_GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hntdll, #func); \
+    if(!p ## func) { \
+        trace("GetProcAddress(%s) failed\n", #func); \
+        FreeLibrary(hntdll); \
+        return FALSE; \
     }
 
-
+static BOOL InitFunctionPtrs(void)
+{
+    hntdll = LoadLibraryA("ntdll.dll");
+    if(!hntdll) {
+        trace("Could not load ntdll.dll\n");
+        return FALSE;
+    }
+    if (hntdll)
+    {
+        NTDLL_GET_PROC(RtlCreateUnicodeStringFromAsciiz)
+        NTDLL_GET_PROC(RtlCreateUnicodeString)
+        NTDLL_GET_PROC(RtlFreeUnicodeString)
+        NTDLL_GET_PROC(NtDeleteValueKey)
+        NTDLL_GET_PROC(RtlQueryRegistryValues)
+        NTDLL_GET_PROC(RtlCheckRegistryKey)
+        NTDLL_GET_PROC(RtlOpenCurrentUser)
+        NTDLL_GET_PROC(NtClose)
+        NTDLL_GET_PROC(NtDeleteValueKey)
+        NTDLL_GET_PROC(NtCreateKey)
+        NTDLL_GET_PROC(NtDeleteKey)
+        NTDLL_GET_PROC(NtSetValueKey)
+        NTDLL_GET_PROC(NtOpenKey)
+        NTDLL_GET_PROC(RtlFormatCurrentUserKeyPath)
+        NTDLL_GET_PROC(RtlReAllocateHeap)
+        NTDLL_GET_PROC(RtlAppendUnicodeToString)
+        NTDLL_GET_PROC(RtlUnicodeStringToAnsiString)
+        NTDLL_GET_PROC(RtlFreeHeap)
+        NTDLL_GET_PROC(RtlAllocateHeap)
+        NTDLL_GET_PROC(RtlZeroMemory)
+    }
+    return TRUE;
 }
+#undef NTDLL_GET_PROC
 
 static NTSTATUS WINAPI QueryRoutine (IN PCWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData,
                               IN ULONG ValueLength, IN PVOID Context, IN PVOID EntryContext)
@@ -347,7 +358,8 @@ static void test_NtDeleteKey()
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t','\\',0};
-    InitFunctionPtrs();
+    if(!InitFunctionPtrs())
+        return;
     pRtlFormatCurrentUserKeyPath(&winetestpath);
     winetestpath.Buffer = (PWSTR)pRtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, winetestpath.Buffer,
                            winetestpath.MaximumLength + sizeof(winetest)*sizeof(WCHAR));
