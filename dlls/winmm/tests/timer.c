@@ -86,13 +86,13 @@ void test_timer(UINT period, UINT resolution)
 
     rc = timeBeginPeriod(period);
     ok(rc == TIMERR_NOERROR, "timeBeginPeriod(%u) returned %s, "
-       "should have returned TIMERR_NOERROR", period, mmsys_error(rc));
+       "should have returned TIMERR_NOERROR\n", period, mmsys_error(rc));
     if (rc != TIMERR_NOERROR)
         return;
 
     id = timeSetEvent(period, resolution, testTimeProc, 0, TIME_PERIODIC);
     ok(id != 0, "timeSetEvent(%u, %u, %p, 0, TIME_PERIODIC) returned %d, "
-       "should have returned id > 0", period, resolution, testTimeProc, id);
+       "should have returned id > 0\n", period, resolution, testTimeProc, id);
     if (id == 0)
         return;
 
@@ -100,13 +100,13 @@ void test_timer(UINT period, UINT resolution)
 
     rc = timeEndPeriod(period);
     ok(rc == TIMERR_NOERROR, "timeEndPeriod(%u) returned %s, "
-       "should have returned TIMERR_NOERROR", period, mmsys_error(rc));
+       "should have returned TIMERR_NOERROR\n", period, mmsys_error(rc));
     if (rc != TIMERR_NOERROR)
         return;
 
     rc = timeKillEvent(id);
     ok(rc == TIMERR_NOERROR, "timeKillEvent(%u) returned %s, "
-       "should have returned TIMERR_NOERROR", id, mmsys_error(rc));
+       "should have returned TIMERR_NOERROR\n", id, mmsys_error(rc));
 
     trace("period = %u, resolution = %u\n", period, resolution);
 
@@ -125,7 +125,7 @@ void test_timer(UINT period, UINT resolution)
                 trace("time[%d] = %lu delta = %d\n", i, times[i], delta);
 
             sum += delta;
-            deviation = deviation + ((delta - period) * (delta - period));
+            deviation += ((delta - period) * (delta - period));
 
             if (delta < dwMin)
                 dwMin = delta;
