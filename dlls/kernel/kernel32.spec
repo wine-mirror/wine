@@ -1147,7 +1147,6 @@
 @ cdecl DOSMEM_GetBlock(long ptr)
 @ cdecl DOSMEM_Init(long)
 @ cdecl DOSMEM_ResizeBlock(ptr long long)
-@ cdecl FILE_Dup2(long long)
 @ cdecl LOCAL_Alloc(long long long)
 @ cdecl LOCAL_Compact(long long long)
 @ cdecl LOCAL_CountFree(long)

@@ -62,6 +62,21 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
     return _hwrite( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
 }
 
+/***********************************************************************
+ *           _lclose   (KERNEL.81)
+ */
+HFILE16 WINAPI _lclose16( HFILE16 hFile )
+{
+    if ((hFile >= DOS_TABLE_SIZE) || !dos_handles[hFile])
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return HFILE_ERROR16;
+    }
+    TRACE("%d (handle32=%p)\n", hFile, dos_handles[hFile] );
+    CloseHandle( dos_handles[hFile] );
+    dos_handles[hFile] = 0;
+    return 0;
+}
 
 /***********************************************************************
  *           _lcreat   (KERNEL.83)

@@ -3737,6 +3737,44 @@ static void INT21_ParseFileNameIntoFCB( CONTEXT86 *context )
     SET_SI( context, context->Esi + (int)s - (int)filename );
 }
 
+static BOOL     INT21_Dup2(HFILE16 hFile1, HFILE16 hFile2)
+{
+    HFILE16     res = HFILE_ERROR16;
+    HANDLE      handle, new_handle;
+#define DOS_TABLE_SIZE  256
+    DWORD       map[DOS_TABLE_SIZE / 32];
+    int         i;
+
+    handle = DosFileHandleToWin32Handle(hFile1);
+    if (handle == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    _lclose16(hFile2);
+    /* now loop to allocate the same one... */
+    memset(map, 0, sizeof(map));
+    for (i = 0; i < DOS_TABLE_SIZE; i++)
+    {
+        if (!DuplicateHandle(GetCurrentProcess(), handle,
+                             GetCurrentProcess(), &new_handle,
+                             0, FALSE, DUPLICATE_SAME_ACCESS))
+        {
+            res = HFILE_ERROR16;
+            break;
+        }
+        res = Win32HandleToDosFileHandle(new_handle);
+        if (res == HFILE_ERROR16 || res == hFile2) break;
+        map[res / 32] |= 1 << (res % 32);
+    }
+    /* clean up the allocated slots */
+    for (i = 0; i < DOS_TABLE_SIZE; i++)
+    {
+        if (map[i / 32] & (1 << (i % 32)))
+            _lclose16((HFILE16)i);
+    }
+    return res == hFile2;
+}
+
+
 /***********************************************************************
  *           DOSVM_Int21Handler
  *
@@ -4517,8 +4555,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
         TRACE( "FORCEDUP - FORCE DUPLICATE FILE HANDLE %d to %d\n",
                BX_reg(context), CX_reg(context) );
-
-        if (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR16)
+        if (!INT21_Dup2(BX_reg(context), CX_reg(context)))
             bSetDOSExtendedError = TRUE;
         else
             RESET_CFLAG(context);
