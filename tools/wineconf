@@ -78,10 +78,12 @@ sub ReadFSTAB {
 	my ($device, $mntpoint, $type, @rest) = split(' ', $_);
 	if ($device !~ m"^/dev/fd") {
 	    if ($type eq "msdos" || $type eq "vfat") {
-		push(@::FatDrives, [$device, $mntpoint]);
+		push(@::FatDrives, [$device, $mntpoint, $type]);
 	    }
-	    elsif ($type eq "iso9660" || ($device eq '/dev/cdrom' && $type eq 'auto') ) {
-		push(@::CdromDrives, [$device, $mntpoint]);
+	    elsif ($type eq "iso9660" ||
+		   $mntpoint eq "/cdrom" ||
+		   ($device eq '/dev/cdrom' && $type eq 'auto') ) {
+		push(@::CdromDrives, [$device, $mntpoint, 'win95']);
 	    }
 	}
     }
@@ -91,14 +93,18 @@ sub ReadFSTAB {
 	warn "cannot help you (yet)\n";
 	exit(1);
     }
+    push(@::UnixDrives, ['', '/tmp', 'hd']);
+    push(@::UnixDrives, ['', '${HOME}', 'network']);
     my $MagicDrive = 'C';
     @::FatDrives = sort byDriveOrder @::FatDrives;
     @::CdromDrives = sort byCdOrder @::CdromDrives;
     foreach my $FatDrive (@::FatDrives) {
 	print "[Drive $MagicDrive]\n";
 	my $MntPoint = $FatDrive->[1];
+	my $FileSys = $FatDrive->[2];
 	print "Path=$MntPoint\n";
 	print "Type=hd\n";
+	print "Filesystem=$FileSys\n";
 	print "\n";
 	&RegisterDrive($MagicDrive, $FatDrive);
 	if(!&IsMounted($FatDrive->[0])) {
@@ -109,11 +115,25 @@ sub ReadFSTAB {
     }
     foreach my $CdromDrive (@::CdromDrives) {
 	print "[Drive $MagicDrive]\n";
+	my $Device = $CdromDrive->[0];
 	my $MntPoint = $CdromDrive->[1];
+	my $FileSys = $CdromDrive->[2];
 	print "Path=$MntPoint\n";
 	print "Type=cdrom\n";
+	print "Device=$Device\n";
+	print "Filesystem=$FileSys\n";
 	print "\n";
 	&RegisterDrive($MagicDrive, $CdromDrive);
+	$MagicDrive++;
+    }
+    foreach my $UnixDrive (@::UnixDrives) {
+	print "[Drive $MagicDrive]\n";
+	my $MntPoint = $UnixDrive->[1];
+	my $Type = $UnixDrive->[2];
+	print "Path=$MntPoint\n";
+	print "Type=$Type\n";
+	print "Filesystem=win95\n";
+	print "\n";
 	$MagicDrive++;
     }
 }
@@ -199,7 +219,7 @@ sub IsMounted {
 }
 
 sub RegisterDrive {
-    my($DOSdrive, $Drive) = @_;
+    my($DOSdrive, $Drive, $Type) = @_;
     $::DOS2Unix{$DOSdrive} = $Drive;
     $::Device2DOS{$Drive->[0]} = $DOSdrive;
     $::MntPoint2DOS{$Drive->[1]} = $DOSdrive;
