@@ -61,13 +61,13 @@ static HRESULT WINAPI DMCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
 	ICOM_THIS(IClassFactoryImpl,iface);
 
 	TRACE ("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-	if (IsEqualGUID (&IID_IDirectMusic, riid)) {
-	  return DMUSIC_CreateDirectMusic (riid, (LPDIRECTMUSIC*) ppobj, pOuter);
+	if (IsEqualGUID (&IID_IDirectMusic, riid) ||
+	    IsEqualGUID (&IID_IDirectMusic2, riid) ||
+	    IsEqualGUID (&IID_IDirectMusic8, riid)) {
+	  return DMUSIC_CreateDirectMusic(riid, (LPDIRECTMUSIC*) ppobj, pOuter);
 	}
 	if (IsEqualGUID (&IID_IDirectMusicPerformance, riid) ||
-	    IsEqualGUID (&IID_IDirectMusicPerformance8, riid))
-	{
-	  /*return DMUSIC_CreateDirectMusicPerformance (riid, (LPDIRECTMUSICPERFORMANCE*) ppobj, pOuter);*/
+	    IsEqualGUID (&IID_IDirectMusicPerformance8, riid)) {
 	  return DMUSIC_CreateDirectMusicPerformance8(riid, (LPDIRECTMUSICPERFORMANCE8*) ppobj, pOuter);
 
 	}

@@ -41,13 +41,14 @@ HRESULT WINAPI IReferenceClockImpl_QueryInterface (LPREFERENCECLOCK iface, REFII
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IReferenceClock))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IReferenceClock))
 	{
 		IReferenceClockImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -125,13 +126,14 @@ HRESULT WINAPI IDirectMusicThruImpl_QueryInterface (LPDIRECTMUSICTHRU iface, REF
 {
 	ICOM_THIS(IDirectMusicThruImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicThru))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicThru))
 	{
 		IDirectMusicThruImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -179,13 +181,14 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_QueryInterface (LPDIRECTMUSICAUDIOPATH 
 {
 	ICOM_THIS(IDirectMusicAudioPathImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicAudioPath))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicAudioPath))
 	{
 		IDirectMusicAudioPathImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -268,8 +271,8 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 	case DMUS_PATH_PERFORMANCE:
 	  {
 	    /* TODO check wanted GUID */
-	    *ppObject = (LPDIRECTMUSICPERFORMANCE) This->perfo; 
-	    IDirectMusicPerformanceImpl_AddRef((LPDIRECTMUSICPERFORMANCE) *ppObject);
+	    *ppObject = (LPDIRECTMUSICPERFORMANCE8) This->perfo; 
+	    IDirectMusicPerformance8Impl_AddRef((LPDIRECTMUSICPERFORMANCE8) *ppObject);
 	    return S_OK;
 	  }
 	  break;
@@ -277,13 +280,13 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (LPDIRECTMUSICAUDIOPATH
 	case DMUS_PATH_PERFORMANCE_GRAPH:
 	  {
 	    IDirectMusicGraph* pPerfoGraph = NULL; 
-	    IDirectMusicPerformanceImpl_GetGraph((LPDIRECTMUSICPERFORMANCE) This->perfo, &pPerfoGraph);
+	    IDirectMusicPerformance8Impl_GetGraph((LPDIRECTMUSICPERFORMANCE8) This->perfo, &pPerfoGraph);
 	    if (NULL == pPerfoGraph) {
 	      IDirectMusicGraphImpl* pGraph = NULL; 
 	      pGraph = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));		
 	      pGraph->lpVtbl = &DirectMusicGraph_Vtbl;
 	      pGraph->ref = 1;
-	      IDirectMusicPerformanceImpl_SetGraph((LPDIRECTMUSICPERFORMANCE) This->perfo, (IDirectMusicGraph*) pGraph);
+	      IDirectMusicPerformance8Impl_SetGraph((LPDIRECTMUSICPERFORMANCE8) This->perfo, (IDirectMusicGraph*) pGraph);
 	      /* we need release as SetGraph do an AddRef */
 	      IDirectMusicGraphImpl_Release((LPDIRECTMUSICGRAPH) pGraph);
 	      pPerfoGraph = (LPDIRECTMUSICGRAPH) pGraph;
@@ -347,13 +350,14 @@ HRESULT WINAPI IDirectMusicBandImpl_QueryInterface (LPDIRECTMUSICBAND iface, REF
 {
 	ICOM_THIS(IDirectMusicBandImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicBand))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicBand))
 	{
 		IDirectMusicBandImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -421,13 +425,14 @@ HRESULT WINAPI IDirectMusicSongImpl_QueryInterface (LPDIRECTMUSICSONG iface, REF
 {
 	ICOM_THIS(IDirectMusicSongImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicSong))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicSong))
 	{
 		IDirectMusicSongImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -535,13 +540,14 @@ HRESULT WINAPI IDirectMusicChordMapImpl_QueryInterface (LPDIRECTMUSICCHORDMAP if
 {
 	ICOM_THIS(IDirectMusicChordMapImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicChordMap))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicChordMap))
 	{
 		IDirectMusicChordMapImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -589,13 +595,14 @@ HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER if
 {
 	ICOM_THIS(IDirectMusicComposerImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicComposer))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicComposer))
 	{
 		IDirectMusicComposerImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -693,13 +700,14 @@ HRESULT WINAPI IDirectMusicContainerImpl_QueryInterface (LPDIRECTMUSICCONTAINER 
 {
 	ICOM_THIS(IDirectMusicContainerImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicContainer))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicContainer))
 	{
 		IDirectMusicContainerImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -747,7 +755,8 @@ HRESULT WINAPI IDirectMusicGraphImpl_QueryInterface (LPDIRECTMUSICGRAPH iface, R
 {
 	ICOM_THIS(IDirectMusicGraphImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicGraph))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicGraph))
 	{
 		IDirectMusicGraphImpl_AddRef(iface);
 		*ppobj = This;
@@ -789,8 +798,8 @@ HRESULT WINAPI IDirectMusicGraphImpl_StampPMsg (LPDIRECTMUSICGRAPH iface, DMUS_P
 HRESULT WINAPI IDirectMusicGraphImpl_InsertTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool, DWORD* pdwPChannels, DWORD cPChannels, LONG lIndex)
 {
         int i;
-	IDirectMusicToolImpl* p;
-	IDirectMusicToolImpl* toAdd = (IDirectMusicToolImpl*) pTool;
+	IDirectMusicTool8Impl* p;
+	IDirectMusicTool8Impl* toAdd = (IDirectMusicTool8Impl*) pTool;
         ICOM_THIS(IDirectMusicGraphImpl,iface);
 
 	FIXME("(%p, %p, %p, %ld, %li): use of pdwPChannels\n", This, pTool, pdwPChannels, cPChannels, lIndex);
@@ -834,7 +843,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_InsertTool (LPDIRECTMUSICGRAPH iface, IDire
 HRESULT WINAPI IDirectMusicGraphImpl_GetTool (LPDIRECTMUSICGRAPH iface, DWORD dwIndex, IDirectMusicTool** ppTool)
 {
         int i;
-        IDirectMusicToolImpl* p = NULL;
+        IDirectMusicTool8Impl* p = NULL;
         ICOM_THIS(IDirectMusicGraphImpl,iface);
 	
 	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, ppTool);
@@ -845,7 +854,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_GetTool (LPDIRECTMUSICGRAPH iface, DWORD dw
 	}
 	*ppTool = (IDirectMusicTool*) p;
 	if (NULL != *ppTool) {
-	  IDirectMusicToolImpl_AddRef(*ppTool);
+	  IDirectMusicTool8Impl_AddRef((LPDIRECTMUSICTOOL8) *ppTool);
 	}
 	return DS_OK;
 }
@@ -877,13 +886,14 @@ HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface (LPDIRECTMUSICSCRIPT iface,
 {
 	ICOM_THIS(IDirectMusicScriptImpl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicScript))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicScript))
 	{
 		IDirectMusicScriptImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -920,7 +930,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine (LPDIRECTMUSICSCRIPT iface, WC
 {
 	ICOM_THIS(IDirectMusicScriptImpl,iface);
 
-	FIXME("(%p, %p, %p): stub\n", This, pwszRoutineName, pErrorInfo);
+	FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszRoutineName), pErrorInfo);
 
 	return S_OK;
 }

@@ -303,7 +303,7 @@ HRESULT WINAPI DMUSIC_FillBandFromFileHandle (IDirectMusicBandImpl *band, HANDLE
  *			implement loading for missing (empty) clauses
  *			fix a problem with tempo track loading (look at code)
  */
-HRESULT WINAPI DMUSIC_FillTrackFromFileHandle (IDirectMusicTrackImpl *segment, HANDLE fd)
+HRESULT WINAPI DMUSIC_FillTrackFromFileHandle (IDirectMusicTrack8Impl *segment, HANDLE fd)
 {
 	rawChunk chunk;
 	DWORD BytesRead, ListCount = 0, ListCount2 = 0, ListSize, ListSize2, FileCount = 0, FileSize, FileCount2 = 0, FileSize2 /* *2s are for various subchunks  */;
@@ -642,7 +642,7 @@ HRESULT WINAPI DMUSIC_FillTrackFromFileHandle (IDirectMusicTrackImpl *segment, H
 	return S_OK;
 }
 
-HRESULT WINAPI DMUSIC_FillSegmentFromFileHandle (IDirectMusicSegmentImpl *segment, HANDLE fd)
+HRESULT WINAPI DMUSIC_FillSegmentFromFileHandle (IDirectMusicSegment8Impl *segment, HANDLE fd)
 {
 	rawChunk chunk;
 	DWORD BytesRead, ListCount = 0, ListSize, FileCount = 0, FileSize;

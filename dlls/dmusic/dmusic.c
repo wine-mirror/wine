@@ -42,282 +42,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
-/* IDirectMusic IUnknown parts follow: */
-HRESULT WINAPI IDirectMusicImpl_QueryInterface (LPDIRECTMUSIC iface, REFIID riid, LPVOID *ppobj)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusic))
-	{
-		IDirectMusicImpl_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	
-	if (IsEqualGUID(riid, &IID_IDirectMusic8))
-	{
-		IDirectMusic8Impl *dmusic8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
-		if (NULL == dmusic8)
-		{
-			*ppobj = (LPDIRECTMUSIC8)NULL;
-			return E_OUTOFMEMORY;
-		}
-		dmusic8->lpVtbl = &DirectMusic8_Vtbl;
-		dmusic8->ref = 1;
-		*ppobj = (LPDIRECTMUSIC8)dmusic8;
-		return S_OK;
-	}
-	
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-ULONG WINAPI IDirectMusicImpl_AddRef (LPDIRECTMUSIC iface)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
-}
-
-ULONG WINAPI   IDirectMusicImpl_Release (LPDIRECTMUSIC iface)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
-}
-
-/* IDirectMusic Interface follow: */
-HRESULT WINAPI IDirectMusicImpl_EnumPort (LPDIRECTMUSIC iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	int numMIDI = midiOutGetNumDevs();
-	int numWAVE = waveOutGetNumDevs();
-	int i;
-	
-	TRACE("(%p, %ld, %p)\n", This, dwIndex, pPortCaps);
-	TRACE("1 software synth. + %i WAVE + %i MIDI available\n", numWAVE, numMIDI);
-	/* i guess the first port shown is always software synthesizer */
-	if (dwIndex == 0)
-	{
-		TRACE("enumerating 'Microsoft Software Synthesizer' port\n");
-		pPortCaps->dwSize = sizeof(DMUS_PORTCAPS);
-		pPortCaps->dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
-		pPortCaps->guidPort = CLSID_DirectMusicSynth;
-		pPortCaps->dwClass = DMUS_PC_OUTPUTCLASS;
-		pPortCaps->dwType = DMUS_PORT_WINMM_DRIVER;
-		pPortCaps->dwMemorySize = DMUS_PC_SYSTEMMEMORY;
-		pPortCaps->dwMaxChannelGroups = 1; /* FIXME: dxdiag on windows seems to return 1000, but that kills my allocating engine; guess we'll live with 1 group */
-		pPortCaps->dwMaxVoices = 1000;
-		pPortCaps->dwMaxAudioChannels = -1;
-		pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
-		MultiByteToWideChar (CP_ACP, 0, "Microsotf Synthesizer", -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
-		return S_OK;
-	}
-	/* then return digital sound ports */
-	for (i = 1; i <= numWAVE; i++)
-	{
-		TRACE("enumerating 'digital sound' ports\n");	
-		if (i == dwIndex)
-		{
-			DirectSoundEnumerateA((LPDSENUMCALLBACKA)register_waveport, (VOID*)pPortCaps);
-			return S_OK;	
-		}
-	}
-	/* finally, list all *real* MIDI ports*/
-	for (i = numWAVE+1; i <= numWAVE + numMIDI; i++) 
-	{
-		TRACE("enumerating 'real MIDI' ports\n");		
-		if (i == dwIndex)
-			FIXME("Found MIDI port, but *real* MIDI ports not supported yet\n");
-	}
-	
-	return S_FALSE;
-}
-
-HRESULT WINAPI IDirectMusicImpl_CreateMusicBuffer (LPDIRECTMUSIC iface, LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER** ppBuffer, LPUNKNOWN pUnkOuter)
-{	
-	ICOM_THIS(IDirectMusicImpl,iface);
-
-	FIXME("(%p, %p, %p, %p): stub\n", This, pBufferDesc, ppBuffer, pUnkOuter);
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicImpl_CreatePort (LPDIRECTMUSIC iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	int i, j;
-	DMUS_PORTCAPS PortCaps;
-	
-	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_guid(rclsidPort), pPortParams, ppPort, pUnkOuter);
-	for (i = 0; IDirectMusicImpl_EnumPort (iface, i, &PortCaps) != S_FALSE; i++)
-	{				
-		if (IsEqualGUID(rclsidPort, &PortCaps.guidPort))
-		{		
-			This->ports = HeapReAlloc(GetProcessHeap(),0,This->ports,sizeof(LPDIRECTMUSICPORT)*(This->nrofports+1));
-			if (NULL == This->ports[This->nrofports])
-			{
-				*ppPort = (LPDIRECTMUSICPORT)NULL;
-				return E_OUTOFMEMORY;
-			}
-			This->ports[This->nrofports]->lpVtbl = &DirectMusicPort_Vtbl;
-			This->ports[This->nrofports]->ref = 0;
-			This->ports[This->nrofports]->active = FALSE;
-			This->ports[This->nrofports]->caps = &PortCaps;
-			This->ports[This->nrofports]->params = pPortParams; /* this one is here just because there's a funct. which retrieves it back */
-			
-			if (pPortParams->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS)
-			{
-				This->ports[This->nrofports]->nrofgroups = pPortParams->dwChannelGroups;
-				/* setting default priorities */			
-				for (j = 0; j < This->ports[This->nrofports]->nrofgroups; j++)
-				{
-					TRACE ("Setting default channel priorities on channel group %i\n", j+1);
-					This->ports[This->nrofports]->group[j].channel[0].priority = DAUD_CHAN1_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[1].priority = DAUD_CHAN2_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[2].priority = DAUD_CHAN3_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[3].priority = DAUD_CHAN4_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[4].priority = DAUD_CHAN5_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[5].priority = DAUD_CHAN6_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[6].priority = DAUD_CHAN7_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[7].priority = DAUD_CHAN8_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[8].priority = DAUD_CHAN9_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[9].priority = DAUD_CHAN10_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[10].priority = DAUD_CHAN11_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[11].priority = DAUD_CHAN12_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[12].priority = DAUD_CHAN13_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[13].priority = DAUD_CHAN14_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[14].priority = DAUD_CHAN15_DEF_VOICE_PRIORITY;
-					This->ports[This->nrofports]->group[j].channel[15].priority = DAUD_CHAN16_DEF_VOICE_PRIORITY;
-				}
-			}
-		
-
-
-			*ppPort = (LPDIRECTMUSICPORT)This->ports[This->nrofports];
-			IDirectMusicPortImpl_AddRef ((LPDIRECTMUSICPORT)This->ports[This->nrofports]);
-			This->nrofports ++;
-			return S_OK;			
-		}
-	}
-	/* FIXME: place correct error here */
-	return E_NOINTERFACE;
-}
-
-HRESULT WINAPI IDirectMusicImpl_EnumMasterClock (LPDIRECTMUSIC iface, DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-
-	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, lpClockInfo);
-
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicImpl_GetMasterClock (LPDIRECTMUSIC iface, LPGUID pguidClock, IReferenceClock** ppReferenceClock)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	
-	FIXME("(%p, %p, %p): stub\n", This, pguidClock, ppReferenceClock);
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicImpl_SetMasterClock (LPDIRECTMUSIC iface, REFGUID rguidClock)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	
-	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidClock));
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicImpl_Activate (LPDIRECTMUSIC iface, BOOL fEnable)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	int i;
-	
-	TRACE("(%p, %i)", This,  fEnable);	
-	for (i = 0; i < This->nrofports; i++)	
-	{
-		This->ports[i]->active = fEnable;
-	}
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicImpl_GetDefaultPort (LPDIRECTMUSIC iface, LPGUID pguidPort)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-	HKEY hkGUID;
-	DWORD returnTypeGUID, sizeOfReturnBuffer = 50;
-	char returnBuffer[51];
-	GUID defaultPortGUID;
-	WCHAR    buff[51];
-
-	TRACE("(%p, %p)\n", This, pguidPort);
-	if ((RegOpenKeyExA (HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic\\Defaults" , 0, KEY_READ, &hkGUID) != ERROR_SUCCESS) || (RegQueryValueExA (hkGUID, "DefaultOutputPort", NULL, &returnTypeGUID, returnBuffer, &sizeOfReturnBuffer) != ERROR_SUCCESS))
-	{
-		WARN(": registry entry missing\n" );
-		*pguidPort = CLSID_DirectMusicSynth;
-		return S_OK;
-	}
-	/* FIXME: Check return types to ensure we're interpreting data right */
-	MultiByteToWideChar (CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR));
-	CLSIDFromString ((LPCOLESTR)buff, &defaultPortGUID);
-	*pguidPort = defaultPortGUID;
-	
-	return S_OK;
-}
-
-HRESULT WINAPI IDirectMusicImpl_SetDirectSound (LPDIRECTMUSIC iface, LPDIRECTSOUND pDirectSound, HWND hWnd)
-{
-	ICOM_THIS(IDirectMusicImpl,iface);
-
-	FIXME("(%p, %p, %p): stub\n", This, pDirectSound, hWnd);
-
-	return S_OK;
-}
-
-ICOM_VTABLE(IDirectMusic) DirectMusic_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicImpl_QueryInterface,
-	IDirectMusicImpl_AddRef,
-	IDirectMusicImpl_Release,
-	IDirectMusicImpl_EnumPort,
-	IDirectMusicImpl_CreateMusicBuffer,
-	IDirectMusicImpl_CreatePort,
-	IDirectMusicImpl_EnumMasterClock,
-	IDirectMusicImpl_GetMasterClock,
-	IDirectMusicImpl_SetMasterClock,
-	IDirectMusicImpl_Activate,
-	IDirectMusicImpl_GetDefaultPort,
-	IDirectMusicImpl_SetDirectSound
-};
-
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusic (LPCGUID lpcGUID, LPDIRECTMUSIC *ppDM, LPUNKNOWN pUnkOuter)
 {
-	IDirectMusicImpl *dmusic;
+	IDirectMusic8Impl *dmusic;
 
 	TRACE("(%p,%p,%p)\n",lpcGUID, ppDM, pUnkOuter);
-	if (IsEqualGUID(lpcGUID, &IID_IDirectMusic))
-	{
-		dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicImpl));
-		if (NULL == dmusic)
-		{
-			*ppDM = (LPDIRECTMUSIC)NULL;
-			return E_OUTOFMEMORY;
-		}
-		dmusic->lpVtbl = &DirectMusic_Vtbl;
-		dmusic->ref = 1;
-		*ppDM = (LPDIRECTMUSIC)dmusic;
-		return S_OK;
+	if (IsEqualGUID(lpcGUID, &IID_IDirectMusic) ||
+	    IsEqualGUID(lpcGUID, &IID_IDirectMusic2) ||
+	    IsEqualGUID(lpcGUID, &IID_IDirectMusic8)) {
+	  dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
+	  if (NULL == dmusic) {
+	    *ppDM = (LPDIRECTMUSIC) NULL;
+	    return E_OUTOFMEMORY;
+	  }
+	  dmusic->lpVtbl = &DirectMusic8_Vtbl;
+	  dmusic->ref = 1;
+	  *ppDM = (LPDIRECTMUSIC) dmusic;
+	  return S_OK;
 	}
 	WARN("No interface found\n");
 	
@@ -330,7 +72,9 @@ HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID ri
 {
 	ICOM_THIS(IDirectMusic8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusic8))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusic2) ||
+	    IsEqualGUID(riid, &IID_IDirectMusic8))
 	{
 		IDirectMusic8Impl_AddRef(iface);
 		*ppobj = This;
@@ -360,7 +104,7 @@ ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface)
 }
 
 /* IDirectMusic8 Interface follow: */
-HRESULT WINAPI IDirectMusic8Impl_EnumPort (LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps)
+HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps)
 {
 	ICOM_THIS(IDirectMusic8Impl,iface);
 	int numMIDI = midiOutGetNumDevs();
@@ -370,7 +114,7 @@ HRESULT WINAPI IDirectMusic8Impl_EnumPort (LPDIRECTMUSIC8 iface, DWORD dwIndex, 
 	TRACE("(%p, %ld, %p)\n", This, dwIndex, pPortCaps);
 	TRACE("1 software synth. + %i WAVE + %i MIDI available\n", numWAVE, numMIDI);
 	/* i guess the first port shown is always software synthesizer */
-	if (dwIndex == 0)
+	if (dwIndex == 0) 
 	{
 		TRACE("enumerating 'Microsoft Software Synthesizer' port\n");
 		pPortCaps->dwSize = sizeof(DMUS_PORTCAPS);
@@ -383,7 +127,7 @@ HRESULT WINAPI IDirectMusic8Impl_EnumPort (LPDIRECTMUSIC8 iface, DWORD dwIndex, 
 		pPortCaps->dwMaxVoices = 1000;
 		pPortCaps->dwMaxAudioChannels = -1;
 		pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
-		MultiByteToWideChar (CP_ACP, 0, "Microsotf Synthesizer", -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
+		MultiByteToWideChar(CP_ACP, 0, "Microsotf Synthesizer", -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
 		return S_OK;
 	}
 	/* then return digital sound ports */
@@ -392,12 +136,12 @@ HRESULT WINAPI IDirectMusic8Impl_EnumPort (LPDIRECTMUSIC8 iface, DWORD dwIndex, 
 		TRACE("enumerating 'digital sound' ports\n");	
 		if (i == dwIndex)
 		{
-			DirectSoundEnumerateA((LPDSENUMCALLBACKA)register_waveport, (VOID*)pPortCaps);
+			DirectSoundEnumerateA((LPDSENUMCALLBACKA) register_waveport, (VOID*) pPortCaps);
 			return S_OK;	
 		}
 	}
 	/* finally, list all *real* MIDI ports*/
-	for (i = numWAVE+1; i <= numWAVE + numMIDI; i++) 
+	for (i = numWAVE + 1; i <= numWAVE + numMIDI; i++) 
 	{
 		TRACE("enumerating 'real MIDI' ports\n");		
 		if (i == dwIndex)
@@ -419,17 +163,14 @@ HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface, LPDMUS
 HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter)
 {
 	ICOM_THIS(IDirectMusic8Impl,iface);
-	int i;
+	int i, j;
 	DMUS_PORTCAPS PortCaps;
 	
 	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_guid(rclsidPort), pPortParams, ppPort, pUnkOuter);
-	for (i = 0; IDirectMusic8Impl_EnumPort (iface, i, &PortCaps) != S_FALSE; i++)
-	{				
-		if (IsEqualGUID(rclsidPort, &PortCaps.guidPort))
-		{		
-			This->ports = HeapReAlloc(GetProcessHeap(),0,This->ports,sizeof(LPDIRECTMUSICPORT)*This->nrofports);
-			if (NULL == This->ports[This->nrofports])
-			{
+	for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &PortCaps); i++) {				
+		if (IsEqualGUID(rclsidPort, &PortCaps.guidPort)) {		
+			This->ports = HeapReAlloc(GetProcessHeap(), 0, This->ports, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
+			if (NULL == This->ports[This->nrofports]) {
 				*ppPort = (LPDIRECTMUSICPORT)NULL;
 				return E_OUTOFMEMORY;
 			}
@@ -437,10 +178,35 @@ HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rcls
 			This->ports[This->nrofports]->ref = 0;
 			This->ports[This->nrofports]->active = FALSE;
 			This->ports[This->nrofports]->caps = &PortCaps;
-			This->ports[This->nrofports]->params = pPortParams;
-			*ppPort = (LPDIRECTMUSICPORT)This->ports[This->nrofports];
-			IDirectMusicPortImpl_AddRef ((LPDIRECTMUSICPORT)This->ports[This->nrofports]);
-			This->nrofports ++;
+			This->ports[This->nrofports]->params = pPortParams; /* this one is here just because there's a funct. which retrieves it back */
+			
+			if (pPortParams->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) {
+				This->ports[This->nrofports]->nrofgroups = pPortParams->dwChannelGroups;
+				/* setting default priorities */			
+				for (j = 0; j < This->ports[This->nrofports]->nrofgroups; j++) {
+					TRACE ("Setting default channel priorities on channel group %i\n", j + 1);
+					This->ports[This->nrofports]->group[j].channel[0].priority = DAUD_CHAN1_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[1].priority = DAUD_CHAN2_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[2].priority = DAUD_CHAN3_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[3].priority = DAUD_CHAN4_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[4].priority = DAUD_CHAN5_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[5].priority = DAUD_CHAN6_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[6].priority = DAUD_CHAN7_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[7].priority = DAUD_CHAN8_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[8].priority = DAUD_CHAN9_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[9].priority = DAUD_CHAN10_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[10].priority = DAUD_CHAN11_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[11].priority = DAUD_CHAN12_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[12].priority = DAUD_CHAN13_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[13].priority = DAUD_CHAN14_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[14].priority = DAUD_CHAN15_DEF_VOICE_PRIORITY;
+					This->ports[This->nrofports]->group[j].channel[15].priority = DAUD_CHAN16_DEF_VOICE_PRIORITY;
+				}
+			}
+
+			*ppPort = (LPDIRECTMUSICPORT) This->ports[This->nrofports];
+			IDirectMusicPortImpl_AddRef((LPDIRECTMUSICPORT) This->ports[This->nrofports]);
+			This->nrofports++;
 			return S_OK;			
 		}
 	}
@@ -496,18 +262,19 @@ HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort (LPDIRECTMUSIC8 iface, LPGUID pg
 	DWORD returnTypeGUID, sizeOfReturnBuffer = 50;
 	char returnBuffer[51];
 	GUID defaultPortGUID;
-	WCHAR    buff[51];
+	WCHAR buff[51];
 
 	TRACE("(%p, %p)\n", This, pguidPort);
-	if ((RegOpenKeyExA (HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic\\Defaults" , 0, KEY_READ, &hkGUID) != ERROR_SUCCESS) || (RegQueryValueExA (hkGUID, "DefaultOutputPort", NULL, &returnTypeGUID, returnBuffer, &sizeOfReturnBuffer) != ERROR_SUCCESS))
+	if ((RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic\\Defaults" , 0, KEY_READ, &hkGUID) != ERROR_SUCCESS) || 
+	    (RegQueryValueExA(hkGUID, "DefaultOutputPort", NULL, &returnTypeGUID, returnBuffer, &sizeOfReturnBuffer) != ERROR_SUCCESS))
 	{
 		WARN(": registry entry missing\n" );
 		*pguidPort = CLSID_DirectMusicSynth;
 		return S_OK;
 	}
 	/* FIXME: Check return types to ensure we're interpreting data right */
-	MultiByteToWideChar (CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR));
-	CLSIDFromString ((LPCOLESTR)buff, &defaultPortGUID);
+	MultiByteToWideChar(CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff) / sizeof(WCHAR));
+	CLSIDFromString((LPCOLESTR) buff, &defaultPortGUID);
 	*pguidPort = defaultPortGUID;
 	
 	return S_OK;
