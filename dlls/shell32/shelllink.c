@@ -549,12 +549,21 @@ static BOOL create_default_icon( const char *filename )
 }
 
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
-static char *extract_icon( const char *path, int index )
+static char *extract_icon( const char *path, int index)
 {
+    int nodefault = 1;
     char *filename = heap_strdup( tmpnam(NULL) );
+
+    /* If icon path begins with a '*' then this is a deferred call */
+    if (path[0] == '*')
+    {
+        path++;
+        nodefault = 0;
+    }
     if (ExtractFromEXEDLL( path, index, filename )) return filename;
     if (ExtractFromICO( path, filename )) return filename;
-    if (create_default_icon( filename )) return filename;
+    if (!nodefault)
+        if (create_default_icon( filename )) return filename;
     HeapFree( GetProcessHeap(), 0, filename );
     return NULL;
 }
@@ -564,11 +573,10 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
 {
     HRESULT ret = NOERROR;
     int pid, status;
-    char buffer[MAX_PATH], buff2[MAX_PATH];
+    char buffer[MAX_PATH], buff2[MAX_PATH], ascii_filename[MAX_PATH];
     char *filename, *link_name, *p;
     char *shell_link_app = NULL;
     char *icon_name = NULL;
-    char *path_name = NULL;
     char *work_dir = NULL;
     BOOL bDesktop;
     HKEY hkey;
@@ -597,9 +605,9 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     if (!*buffer) return NOERROR;
     shell_link_app = heap_strdup( buffer );
 
-    if (!WideCharToMultiByte( CP_ACP, 0, pszFileName, -1, buffer, sizeof(buffer), NULL, NULL))
+    if (!WideCharToMultiByte( CP_ACP, 0, pszFileName, -1, ascii_filename, sizeof(ascii_filename), NULL, NULL))
         return ERROR_UNKNOWN;
-    GetFullPathNameA( buffer, sizeof(buff2), buff2, NULL );
+    GetFullPathNameA( ascii_filename, sizeof(buff2), buff2, NULL );
     filename = heap_strdup( buff2 );
 
     if (SHGetSpecialFolderPathA( 0, buffer, CSIDL_STARTUP, FALSE ))
@@ -635,20 +643,44 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     /* remove extension */
     if ((p = strrchr( link_name, '.' ))) *p = 0;
 
-    /* convert app path name */
-    path_name = get_unix_file_name( This->sPath );
-
     /* convert app working dir */
     if (This->sWorkDir) work_dir = get_unix_file_name( This->sWorkDir );
 
     /* extract the icon */
     if (!(icon_name = extract_icon( This->sIcoPath && strlen(This->sIcoPath) ? 
                                       This->sIcoPath : This->sPath,
-                                      This->iIcoNdx ))) goto done;
+                                      This->iIcoNdx )))
+    {
+	/* Couldn't extract icon --  defer this menu entry to runonce. */
+	HKEY hRunOnce;
+	char* buffer = NULL;
 
+	TRACE("Deferring icon creation to reboot.\n");
+	if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", 0,
+                NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hRunOnce, NULL) != ERROR_SUCCESS)
+	{
+	    ret = ERROR_UNKNOWN;
+	    goto done;
+	}
+	buffer = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * 3 + (This->sArgs ? strlen(This->sArgs) : 0) +
+                           (This->sDescription ? strlen(This->sDescription) : 0) + 200);
+	sprintf(buffer, "link:%s\xff*%s\xff%d\xff%s\xff%s\xff%s", This->sPath, This->sIcoPath, This->iIcoNdx,
+	    This->sArgs ? This->sArgs : "", This->sDescription ? This->sDescription : "",
+	    This->sWorkDir ? This->sWorkDir : "");
+	if (RegSetValueExA(hRunOnce, ascii_filename, 0, REG_SZ, buffer, strlen(buffer) + 1) != ERROR_SUCCESS)
+	{
+	    HeapFree(GetProcessHeap(), 0, buffer);
+	    RegCloseKey(hRunOnce);
+	    ret = ERROR_UNKNOWN;
+	    goto done;
+	}
+	HeapFree(GetProcessHeap(), 0, buffer);
+	RegCloseKey(hRunOnce);
+	goto done;
+    }
 
     TRACE("linker app='%s' link='%s' mode=%s path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",
-        shell_link_app, link_name, bDesktop ? "desktop" : "menu", path_name,
+        shell_link_app, link_name, bDesktop ? "desktop" : "menu", This->sPath,
         This->sArgs ? This->sArgs : "", icon_name, work_dir ? work_dir : "",
         This->sDescription ? This->sDescription : "" );
 
@@ -661,7 +693,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
         argv[pos++] = "--link";
         argv[pos++] = link_name;
         argv[pos++] = "--path";
-        argv[pos++] = path_name;
+        argv[pos++] = This->sPath;
         argv[pos++] = bDesktop ? "--desktop" : "--menu";
         if (This->sArgs && strlen(This->sArgs))
         {
@@ -703,7 +735,6 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     HeapFree( GetProcessHeap(), 0, shell_link_app );
     HeapFree( GetProcessHeap(), 0, filename );
     HeapFree( GetProcessHeap(), 0, icon_name );
-    HeapFree( GetProcessHeap(), 0, path_name );
     HeapFree( GetProcessHeap(), 0, work_dir );
     return ret;
 }
