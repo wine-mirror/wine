@@ -1,6 +1,7 @@
 name ddraw
 type win32
 init DDRAW_DllMain
+rsrc version.res
 
 import user32.dll
 import x11drv.dll

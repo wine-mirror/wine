@@ -1,3 +1,4 @@
 Makefile
 *.spec.c
 *.spec.s
+version.res

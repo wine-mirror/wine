@@ -41,6 +41,9 @@ C_SRCS = \
 	main.c \
 	struct_convert.c
 
+RC_SRCS = \
+	version.rc
+
 EXTRASUBDIRS = \
 	d3ddevice \
 	dclipper \
