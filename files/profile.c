@@ -757,6 +757,23 @@ static INT PROFILE_GetSectionNames( LPSTR buffer, UINT len )
  *           PROFILE_GetString
  *
  * Get a profile string.
+ *
+ * Tests with GetPrivateProfileString16, W95a,
+ * with filled buffer ("****...") and section "set1" and key_name "1" valid:
+ * section	key_name	def_val		res	buffer
+ * "set1"	"1"		"x"		43	[data]
+ * "set1"	"1   "		"x"		43	[data]		(!)
+ * "set1"	"  1  "'	"x"		43	[data]		(!)
+ * "set1"	""		"x"		1	"x"
+ * "set1"	""		"x   "		1	"x"		(!)
+ * "set1"	""		"  x   "	3	"  x"		(!)
+ * "set1"	NULL		"x"		6	"1\02\03\0\0"
+ * "set1"	""		"x"		1	"x"
+ * NULL		"1"		"x"		0	""		(!)
+ * ""		"1"		"x"		1	"x"
+ * NULL		NULL		""		0	""
+ * 
+ *	
  */
 static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
 			      LPCSTR def_val, LPSTR buffer, UINT len )
@@ -774,13 +791,13 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
         return strlen( buffer );
     }
     if (key_name && !(key_name[0]))
-      /* Win95 returns 0 on keyname "". Tested with Likse32 bon 000227*/
+      /* Win95 returns 0 on keyname "". Tested with Likse32 bon 000227 */
       return 0;
     if (section && section[0])
         return PROFILE_GetSection(CurProfile->section, section, buffer, len,
 				FALSE, FALSE);
-    /* undocumented; both section and key_name are NULL */
-    return PROFILE_GetSectionNames(buffer, len);
+    buffer[0] = '\0';
+    return 0;
 }
 
 
@@ -1115,14 +1132,117 @@ UINT WINAPI GetProfileIntW( LPCWSTR section, LPCWSTR entry, INT def_val )
     return GetPrivateProfileIntW( section, entry, def_val, wininiW );
 }
 
+/*
+ * undoc_feature means:
+ * return section names string list if both section and entry are NULL.
+ */
+static int PROFILE_GetPrivateProfileString( LPCSTR section, LPCSTR entry,
+					    LPCSTR def_val, LPSTR buffer,
+					    UINT16 len, LPCSTR filename,
+					    BOOL undoc_feature )
+{
+    int		ret;
+    LPSTR	pDefVal = NULL;
+
+    if (!filename) 
+	filename = "win.ini";
+
+    /* strip any trailing ' ' of def_val. */
+    if (def_val)
+    {
+        LPSTR p = (LPSTR)&def_val[strlen(def_val)]; /* even "" works ! */
+
+	while (p > def_val)
+	{
+	    p--;
+	    if ((*p) != ' ')
+		break;
+	}
+	if (*p == ' ') /* ouch, contained trailing ' ' */
+	{
+	    int len = (int)p - (int)def_val;
+	    pDefVal = HeapAlloc(GetProcessHeap(), 0, len + 1);
+	    strncpy(pDefVal, def_val, len);
+	    pDefVal[len] = '\0';
+	}
+    }
+    if (!pDefVal)
+	pDefVal = (LPSTR)def_val;
+
+    EnterCriticalSection( &PROFILE_CritSect );
+
+    if (PROFILE_Open( filename )) {
+	if ((undoc_feature) && (section == NULL) && (entry == NULL))
+            /* undocumented; both section and entry are NULL */
+            ret = PROFILE_GetSectionNames(buffer, len);
+	else
+            ret = PROFILE_GetString( section, entry, pDefVal, buffer, len );
+    } else {
+       lstrcpynA( buffer, pDefVal, len );
+       ret = strlen( buffer );
+    }
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    if (pDefVal != def_val) /* allocated */
+	HeapFree(GetProcessHeap(), 0, pDefVal);
+    
+    return ret;
+}
+
+/***********************************************************************
+ *           GetPrivateProfileString16   (KERNEL.128)
+ */
+INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
+                                        LPCSTR def_val, LPSTR buffer,
+                                        UINT16 len, LPCSTR filename )
+{
+    return PROFILE_GetPrivateProfileString( section, entry, def_val,
+					    buffer, len, filename, FALSE );
+}
+
+/***********************************************************************
+ *           GetPrivateProfileStringA   (KERNEL32.255)
+ */
+INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
+				     LPCSTR def_val, LPSTR buffer,
+				     UINT len, LPCSTR filename )
+{
+    return PROFILE_GetPrivateProfileString( section, entry, def_val,
+					    buffer, len, filename, TRUE );
+}
+
+/***********************************************************************
+ *           GetPrivateProfileStringW   (KERNEL32.256)
+ */
+INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
+				     LPCWSTR def_val, LPWSTR buffer,
+				     UINT len, LPCWSTR filename )
+{
+    LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
+    LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
+    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    LPSTR def_valA  = HEAP_strdupWtoA( GetProcessHeap(), 0, def_val );
+    LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, len );
+    INT ret = GetPrivateProfileStringA( sectionA, entryA, def_valA,
+                                            bufferA, len, filenameA );
+    lstrcpynAtoW( buffer, bufferA, len );
+    HeapFree( GetProcessHeap(), 0, sectionA );
+    HeapFree( GetProcessHeap(), 0, entryA );
+    HeapFree( GetProcessHeap(), 0, filenameA );
+    HeapFree( GetProcessHeap(), 0, def_valA );
+    HeapFree( GetProcessHeap(), 0, bufferA);
+    return ret;
+}
+
 /***********************************************************************
  *           GetProfileString16   (KERNEL.58)
  */
 INT16 WINAPI GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
                                  LPSTR buffer, UINT16 len )
 {
-    return GetPrivateProfileString16( section, entry, def_val,
-                                      buffer, len, "win.ini" );
+    return PROFILE_GetPrivateProfileString( section, entry, def_val,
+                                            buffer, len, "win.ini", FALSE );
 }
 
 /***********************************************************************
@@ -1131,8 +1251,8 @@ INT16 WINAPI GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 INT WINAPI GetProfileStringA( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 			      LPSTR buffer, UINT len )
 {
-    return GetPrivateProfileStringA( section, entry, def_val,
-				     buffer, len, "win.ini" );
+    return PROFILE_GetPrivateProfileString( section, entry, def_val,
+				            buffer, len, "win.ini", TRUE );
 }
 
 /***********************************************************************
@@ -1197,8 +1317,8 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
     char *p;
     long result;
 
-    GetPrivateProfileStringA( section, entry, "",
-                                buffer, sizeof(buffer), filename );
+    PROFILE_GetPrivateProfileString( section, entry, "",
+                                     buffer, sizeof(buffer), filename, FALSE );
     if (!buffer[0]) return (UINT)def_val;
     result = strtol( buffer, &p, 0 );
     if (p == buffer) return 0;  /* No digits at all */
@@ -1219,65 +1339,6 @@ UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
     HeapFree( GetProcessHeap(), 0, filenameA );
     HeapFree( GetProcessHeap(), 0, entryA );
     return res;
-}
-
-/***********************************************************************
- *           GetPrivateProfileString16   (KERNEL.128)
- */
-INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
-                                        LPCSTR def_val, LPSTR buffer,
-                                        UINT16 len, LPCSTR filename )
-{
-    return GetPrivateProfileStringA(section,entry,def_val,buffer,len,filename);
-}
-
-/***********************************************************************
- *           GetPrivateProfileStringA   (KERNEL32.255)
- */
-INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
-				     LPCSTR def_val, LPSTR buffer,
-				     UINT len, LPCSTR filename )
-{
-    int		ret;
-
-    if (!filename) 
-	filename = "win.ini";
-
-    EnterCriticalSection( &PROFILE_CritSect );
-
-    if (PROFILE_Open( filename )) {
-        ret = PROFILE_GetString( section, entry, def_val, buffer, len );
-    } else {
-       lstrcpynA( buffer, def_val, len );
-       ret = strlen( buffer );
-    }
-
-    LeaveCriticalSection( &PROFILE_CritSect );
-    
-    return ret;
-}
-
-/***********************************************************************
- *           GetPrivateProfileStringW   (KERNEL32.256)
- */
-INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
-				     LPCWSTR def_val, LPWSTR buffer,
-				     UINT len, LPCWSTR filename )
-{
-    LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
-    LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
-    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    LPSTR def_valA  = HEAP_strdupWtoA( GetProcessHeap(), 0, def_val );
-    LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, len );
-    INT ret = GetPrivateProfileStringA( sectionA, entryA, def_valA,
-                                            bufferA, len, filenameA );
-    lstrcpynAtoW( buffer, bufferA, len );
-    HeapFree( GetProcessHeap(), 0, sectionA );
-    HeapFree( GetProcessHeap(), 0, entryA );
-    HeapFree( GetProcessHeap(), 0, filenameA );
-    HeapFree( GetProcessHeap(), 0, def_valA );
-    HeapFree( GetProcessHeap(), 0, bufferA);
-    return ret;
 }
 
 /***********************************************************************
