@@ -71,12 +71,21 @@ typedef struct CCPRIVATE
 
 BOOL CC_HookCallChk( LPCHOOSECOLORW lpcc );
 int CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam );
-LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 );
 LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam );
 LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam );
 LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD 
 						notifyCode, HWND hwndCtl );
 LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam );
 LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam );
+void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPRECT lprect );
+void CC_PaintSelectedColor( HWND hDlg, COLORREF cr );
+int CC_RGBtoHSL(char c, int r, int g, int b);
+void CC_PaintCross( HWND hDlg, int x, int y);
+void CC_PaintTriangle( HWND hDlg, int y);
+int CC_CheckDigitsInEdit( HWND hwnd, int maxval );
+void CC_EditSetHSL( HWND hDlg, int h, int s, int l );
+int CC_HSLtoRGB(char c, int hue, int sat, int lum);
+void CC_EditSetRGB( HWND hDlg, COLORREF cr );
+void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, COLORREF* lpcr );
 
 #endif /* _WINE_COLORDLG_H */
