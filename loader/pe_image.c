@@ -378,90 +378,6 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
     return 0;
 }
 
-/***********************************************************************
- *           do_relocations
- *
- * Apply the relocations to a mapped PE image
- */
-static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *filename )
-{
-    const IMAGE_DATA_DIRECTORY *dir;
-    const IMAGE_BASE_RELOCATION *rel;
-    int delta = base - (char *)nt->OptionalHeader.ImageBase;
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-    rel = (IMAGE_BASE_RELOCATION *)(base + dir->VirtualAddress);
-
-    WARN("Info: base relocations needed for %s\n", filename);
-    if (!dir->VirtualAddress || !dir->Size)
-    {
-        if (nt->OptionalHeader.ImageBase == 0x400000)
-            ERR("Standard load address for a Win32 program (0x00400000) not available - security-patched kernel ?\n");
-        else
-            ERR( "FATAL: Need to relocate %s from addr %lx, but %s\n",
-                 filename, nt->OptionalHeader.ImageBase,
-                 (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
-                 "relocation records are stripped" : "no relocation records present" );
-        return 0;
-    }
-
-    /* FIXME: If we need to relocate a system DLL (base > 2GB) we should
-     *        really make sure that the *new* base address is also > 2GB.
-     *        Some DLLs really check the MSB of the module handle :-/
-     */
-    if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((DWORD)base & 0x80000000))
-        ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
-
-    for ( ; ((char *)rel < base + dir->VirtualAddress + dir->Size) && rel->SizeOfBlock;
-          rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock))
-    {
-        char *page = base + rel->VirtualAddress;
-        WORD *TypeOffset = (WORD *)(rel + 1);
-        int i, count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(*TypeOffset);
-
-        if (!count) continue;
-
-        /* sanity checks */
-        if ((char *)rel + rel->SizeOfBlock > base + dir->VirtualAddress + dir->Size ||
-            page > base + nt->OptionalHeader.SizeOfImage)
-        {
-            ERR_(module)("invalid relocation %p,%lx,%ld at %p,%lx,%lx\n",
-                         rel, rel->VirtualAddress, rel->SizeOfBlock,
-                         base, dir->VirtualAddress, dir->Size );
-            return 0;
-        }
-
-        TRACE_(module)("%ld relocations for page %lx\n", rel->SizeOfBlock, rel->VirtualAddress);
-
-        /* patching in reverse order */
-        for (i = 0 ; i < count; i++)
-        {
-            int offset = TypeOffset[i] & 0xFFF;
-            int type = TypeOffset[i] >> 12;
-            switch(type)
-            {
-            case IMAGE_REL_BASED_ABSOLUTE:
-                break;
-            case IMAGE_REL_BASED_HIGH:
-                *(short*)(page+offset) += HIWORD(delta);
-                break;
-            case IMAGE_REL_BASED_LOW:
-                *(short*)(page+offset) += LOWORD(delta);
-                break;
-            case IMAGE_REL_BASED_HIGHLOW:
-                *(int*)(page+offset) += delta;
-                /* FIXME: if this is an exported address, fire up enhanced logic */
-                break;
-            default:
-                FIXME_(module)("Unknown/unsupported fixup type %d.\n", type);
-                break;
-            }
-        }
-    }
-    return 1;
-}
-
-
 /**********************************************************************
  *			PE_LoadImage
  * Load one PE format DLL/EXE into memory
@@ -487,22 +403,10 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
     CloseHandle( mapping );
     if (!base) return 0;
 
-    hModule = (HMODULE)base;
-
-    /* perform base relocation, if necessary */
-
-    nt = PE_HEADER( hModule );
-    if (hModule != nt->OptionalHeader.ImageBase)
-    {
-        if (!do_relocations( base, nt, filename ))
-        {
-            UnmapViewOfFile( base );
-            SetLastError( ERROR_BAD_EXE_FORMAT );
-            return 0;
-        }
-    }
-
     /* virus check */
+
+    hModule = (HMODULE)base;
+    nt = PE_HEADER( hModule );
 
     if (nt->OptionalHeader.AddressOfEntryPoint)
     {

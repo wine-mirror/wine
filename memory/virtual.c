@@ -491,6 +491,67 @@ static void *anon_mmap_aligned( void *base, unsigned int size, int prot, int fla
 
 
 /***********************************************************************
+ *           do_relocations
+ *
+ * Apply the relocations to a mapped PE image
+ */
+static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
+                           int delta, DWORD total_size )
+{
+    IMAGE_BASE_RELOCATION *rel;
+
+    for (rel = (IMAGE_BASE_RELOCATION *)(base + dir->VirtualAddress);
+         ((char *)rel < base + dir->VirtualAddress + dir->Size) && rel->SizeOfBlock;
+         rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock) )
+    {
+        char *page = base + rel->VirtualAddress;
+        WORD *TypeOffset = (WORD *)(rel + 1);
+        int i, count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(*TypeOffset);
+
+        if (!count) continue;
+
+        /* sanity checks */
+        if ((char *)rel + rel->SizeOfBlock > base + dir->VirtualAddress + dir->Size ||
+            page > base + total_size)
+        {
+            ERR_(module)("invalid relocation %p,%lx,%ld at %p,%lx,%lx\n",
+                         rel, rel->VirtualAddress, rel->SizeOfBlock,
+                         base, dir->VirtualAddress, dir->Size );
+            return 0;
+        }
+
+        TRACE_(module)("%ld relocations for page %lx\n", rel->SizeOfBlock, rel->VirtualAddress);
+
+        /* patching in reverse order */
+        for (i = 0 ; i < count; i++)
+        {
+            int offset = TypeOffset[i] & 0xFFF;
+            int type = TypeOffset[i] >> 12;
+            switch(type)
+            {
+            case IMAGE_REL_BASED_ABSOLUTE:
+                break;
+            case IMAGE_REL_BASED_HIGH:
+                *(short*)(page+offset) += HIWORD(delta);
+                break;
+            case IMAGE_REL_BASED_LOW:
+                *(short*)(page+offset) += LOWORD(delta);
+                break;
+            case IMAGE_REL_BASED_HIGHLOW:
+                *(int*)(page+offset) += delta;
+                /* FIXME: if this is an exported address, fire up enhanced logic */
+                break;
+            default:
+                FIXME_(module)("Unknown/unsupported fixup type %d.\n", type);
+                break;
+            }
+        }
+    }
+    return 1;
+}
+
+
+/***********************************************************************
  *           map_image
  *
  * Map an executable (PE format) image into memory.
@@ -648,13 +709,63 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
         }
     }
 
+
+    /* perform base relocation, if necessary */
+
+    if (ptr != base)
+    {
+        const IMAGE_DATA_DIRECTORY *relocs;
+
+        relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+        if (!relocs->VirtualAddress || !relocs->Size)
+        {
+            if (nt->OptionalHeader.ImageBase == 0x400000)
+                ERR("Standard load address for a Win32 program (0x00400000) not available - security-patched kernel ?\n");
+            else
+                ERR( "FATAL: Need to relocate module from addr %lx, but there are no relocation records\n",
+                     nt->OptionalHeader.ImageBase );
+            SetLastError( ERROR_BAD_EXE_FORMAT );
+            goto error;
+        }
+
+        /* FIXME: If we need to relocate a system DLL (base > 2GB) we should
+         *        really make sure that the *new* base address is also > 2GB.
+         *        Some DLLs really check the MSB of the module handle :-/
+         */
+        if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((DWORD)base & 0x80000000))
+            ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
+
+        if (!do_relocations( ptr, relocs, ptr - base, total_size ))
+        {
+            SetLastError( ERROR_BAD_EXE_FORMAT );
+            goto error;
+        }
+    }
+
     if (removable) hmapping = 0;  /* don't keep handle open on removable media */
-    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0,
-                                     VPROT_COMMITTED|VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY,
-                                     hmapping )))
+    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0, VPROT_COMMITTED|VPROT_READ, hmapping )))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         goto error;
+    }
+
+    /* set the image protections */
+
+    sec = (IMAGE_SECTION_HEADER*)((char *)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
+    {
+        DWORD size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
+        BYTE vprot = VPROT_COMMITTED;
+        if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
+        if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_WRITE|VPROT_WRITECOPY;
+        if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
+
+        /* make sure the import directory is writable */
+        if (imports && imports->VirtualAddress >= sec->VirtualAddress &&
+            imports->VirtualAddress < sec->VirtualAddress + size)
+            vprot |= VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY;
+
+        VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
     }
 
     SetLastError( err );  /* restore last error */
