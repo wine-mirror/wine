@@ -3598,6 +3598,8 @@ typedef struct tagWINDOWINFO {
 #define WINEVENT_SKIPOWNPROCESS 0x2
 #define WINEVENT_INCONTEXT      0x4
 
+#define ENDSESSION_LOGOFF    0x80000000
+
 /* Object Id's */
 #define CHILDID_SELF      0
 #define INDEXID_OBJECT    0
