@@ -32,6 +32,8 @@ MAIN_MENU MENU
   MENUITEM SEPARATOR
   MENUITEM "&Seconden", IDM_SECONDS
   MENUITEM "Da&tum", IDM_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Altijd op de voorgrond", IDM_ONTOP
  }
  POPUP "Inf&o" {
   MENUITEM "&Licentie...", IDM_LICENSE
@@ -43,5 +45,4 @@ MAIN_MENU MENU
 STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "Klok"
-IDS_ONTOP, "&Altijd op de voorgrond"
 }

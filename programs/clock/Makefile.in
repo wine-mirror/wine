@@ -9,7 +9,6 @@ IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32
 LICENSELANG = En
 
 C_SRCS = \
-	language.c \
 	license.c \
 	main.c \
 	winclock.c \

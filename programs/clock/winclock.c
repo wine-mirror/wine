@@ -23,7 +23,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
 #include "config.h"
 #include "wine/port.h"
 
@@ -33,11 +32,18 @@
 #include "windows.h"
 #include "winclock.h"
 
-static COLORREF FaceColor = RGB(192,192,192);
-static COLORREF HandColor = RGB(0,0,0);
-static COLORREF EtchColor = RGB(0,0,0);
-static COLORREF GRAY = RGB(128,128,128);
-static const int ETCH_DEPTH = 2;
+#define Black  RGB(0,0,0)
+#define Gray   RGB(128,128,128)
+#define LtGray RGB(192,192,192)
+#define White  RGB(255,255,255)
+
+static const COLORREF FaceColor = LtGray;
+static const COLORREF HandColor = White;
+static const COLORREF TickColor = White;
+static const COLORREF ShadowColor = Black;
+static const COLORREF BackgroundColor = LtGray;
+
+static const int SHADOW_DEPTH = 2;
  
 typedef struct
 {
@@ -47,17 +53,25 @@ typedef struct
 
 HandData HourHand, MinuteHand, SecondHand;
 
-static void DrawFace(HDC dc, const POINT* centre, int radius)
+static void DrawTicks(HDC dc, const POINT* centre, int radius)
 {
     int t;
 
-    SelectObject(dc,CreateSolidBrush(FaceColor));
-    SelectObject(dc,CreatePen(PS_SOLID,1,EtchColor));
-    Ellipse(dc,
-            centre->x - radius, centre->y - radius,
-            centre->x + radius, centre->y + radius);
+    /* Minute divisions */
+    if (radius>64)
+        for(t=0; t<60; t++) {
+            MoveToEx(dc,
+                     centre->x + sin(t*M_PI/30)*0.9*radius,
+                     centre->y - cos(t*M_PI/30)*0.9*radius,
+                     NULL);
+	    LineTo(dc,
+		   centre->x + sin(t*M_PI/30)*0.89*radius,
+		   centre->y - cos(t*M_PI/30)*0.89*radius);
+	}
 
+    /* Hour divisions */
     for(t=0; t<12; t++) {
+
         MoveToEx(dc,
                  centre->x + sin(t*M_PI/6)*0.9*radius,
                  centre->y - cos(t*M_PI/6)*0.9*radius,
@@ -66,14 +80,20 @@ static void DrawFace(HDC dc, const POINT* centre, int radius)
                centre->x + sin(t*M_PI/6)*0.8*radius,
                centre->y - cos(t*M_PI/6)*0.8*radius);
     }
-    if (radius>64)
-        for(t=0; t<60; t++)
-            SetPixel(dc,
-                     centre->x + sin(t*M_PI/30)*0.9*radius,
-                     centre->y - cos(t*M_PI/30)*0.9*radius,
-                     EtchColor);
-    DeleteObject(SelectObject(dc,GetStockObject(NULL_BRUSH)));
-    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
+}
+
+static void DrawFace(HDC dc, const POINT* centre, int radius)
+{
+    /* Ticks */
+    SelectObject(dc, CreatePen(PS_SOLID, 2, ShadowColor));
+    OffsetWindowOrgEx(dc, -SHADOW_DEPTH, -SHADOW_DEPTH, NULL);
+    DrawTicks(dc, centre, radius);
+    DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 2, TickColor)));
+    OffsetWindowOrgEx(dc, SHADOW_DEPTH, SHADOW_DEPTH, NULL);
+    DrawTicks(dc, centre, radius);
+
+    DeleteObject(SelectObject(dc, GetStockObject(NULL_BRUSH)));
+    DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
 }
 
 static void DrawHand(HDC dc,HandData* hand)
@@ -84,12 +104,32 @@ static void DrawHand(HDC dc,HandData* hand)
 
 static void DrawHands(HDC dc, BOOL bSeconds)
 {
-    SelectObject(dc,CreatePen(PS_SOLID,1,HandColor));
-    if (bSeconds)
+    if (bSeconds) {
+#if 0
+      	SelectObject(dc, CreatePen(PS_SOLID, 1, ShadowColor));
+	OffsetWindowOrgEx(dc, -SHADOW_DEPTH, -SHADOW_DEPTH, NULL);
         DrawHand(dc, &SecondHand);
+	DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor)));
+	OffsetWindowOrgEx(dc, SHADOW_DEPTH, SHADOW_DEPTH, NULL);
+#else
+	SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
+#endif
+        DrawHand(dc, &SecondHand);
+	DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
+    }
+
+    SelectObject(dc, CreatePen(PS_SOLID, 4, ShadowColor));
+
+    OffsetWindowOrgEx(dc, -SHADOW_DEPTH, -SHADOW_DEPTH, NULL);
     DrawHand(dc, &MinuteHand);
     DrawHand(dc, &HourHand);
-    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
+
+    DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 4, HandColor)));
+    OffsetWindowOrgEx(dc, SHADOW_DEPTH, SHADOW_DEPTH, NULL);
+    DrawHand(dc, &MinuteHand);
+    DrawHand(dc, &HourHand);
+
+    DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
 }
 
 static void PositionHand(const POINT* centre, double length, double angle, HandData* hand)
@@ -108,6 +148,7 @@ static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
     /* Adding the millisecond count makes the second hand move more smoothly */
 
     GetLocalTime(&st);
+
     second = st.wSecond + st.wMilliseconds/1000.0;
     minute = st.wMinute + second/60.0;
     hour   = st.wHour % 12 + minute/60.0;
@@ -122,49 +163,79 @@ void AnalogClock(HDC dc, int x, int y, BOOL bSeconds)
 {
     POINT centre;
     int radius;
-    radius = min(x, y)/2;
+    
+    radius = min(x, y)/2 - SHADOW_DEPTH;
+    if (radius < 0)
+	return;
 
     centre.x = x/2;
     centre.y = y/2;
 
     DrawFace(dc, &centre, radius);
+
     PositionHands(&centre, radius, bSeconds);
     DrawHands(dc, bSeconds);
 }
 
-void DigitalClock(HDC dc, int x, int y, BOOL bSeconds)
+
+HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
 {
-    CHAR szTime[255];
     SIZE extent;
     LOGFONT lf;
     double xscale, yscale;
-    HFONT oldFont;
+    HFONT oldFont, newFont;
+    CHAR szTime[255];
+    int chars;
 
-    GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
-		  NULL, szTime, sizeof (szTime));
+    chars = GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
+			  NULL, szTime, sizeof (szTime));
+    if (!chars)
+	return 0;
 
-    memset(&lf, 0, sizeof (lf));
+    --chars;
+
+    lf = *font;
     lf.lfHeight = -20;
 
-    x -= 2 * ETCH_DEPTH;
-    y -= 2 * ETCH_DEPTH;
+    x -= 2 * SHADOW_DEPTH;
+    y -= 2 * SHADOW_DEPTH;
 
     oldFont = SelectObject(dc, CreateFontIndirect(&lf));
-    GetTextExtentPoint(dc, szTime, strlen(szTime), &extent);
+    GetTextExtentPoint(dc, szTime, chars, &extent);
+    DeleteObject(SelectObject(dc, oldFont));
+
     xscale = (double)x/extent.cx;
     yscale = (double)y/extent.cy;
-    lf.lfHeight *= min(xscale, yscale);
+    lf.lfHeight *= min(xscale, yscale);    
+    newFont = CreateFontIndirect(&lf);
 
-    DeleteObject(SelectObject(dc, CreateFontIndirect(&lf)));
-    GetTextExtentPoint(dc, szTime, strlen(szTime), &extent);
+    return newFont;
+}
 
-    SetBkColor(dc, GRAY); /* to match the background brush */
-    SetTextColor(dc, EtchColor);
-    TextOut(dc, (x - extent.cx)/2 + ETCH_DEPTH, (y - extent.cy)/2 + ETCH_DEPTH,
-	    szTime, strlen(szTime));
+void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
+{
+    SIZE extent;
+    HFONT oldFont;
+    CHAR szTime[255];
+    int chars;
+
+    chars = GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
+		  NULL, szTime, sizeof (szTime));
+    if (!chars)
+	return;
+    --chars;
+
+    oldFont = SelectObject(dc, font);
+    GetTextExtentPoint(dc, szTime, chars, &extent);
+
+    SetBkColor(dc, BackgroundColor);
+    SetTextColor(dc, ShadowColor);
+    TextOut(dc, (x - extent.cx)/2 + SHADOW_DEPTH, (y - extent.cy)/2 + SHADOW_DEPTH,
+	    szTime, chars);
     SetBkMode(dc, TRANSPARENT);
 
-    SetTextColor(dc, FaceColor);
-    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2, szTime, strlen(szTime));
-    DeleteObject(SelectObject(dc, oldFont));
+    SetTextColor(dc, HandColor);
+    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2, szTime, chars);
+
+    SelectObject(dc, oldFont);
 }

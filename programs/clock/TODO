@@ -1,17 +1,4 @@
+'L button move', 'No title bar' & 'Always on top' don't work unless Wine is in
+desktop mode
 
-Some ideas for improvements:
-============================
-
-- Make "Without Titlebar", Double-clicking the clock should reveal the caption
-  again.
-
-- Font Handling of Digital Clock.
-  (Does not work probably due to Winelib)
-
-- Complete translation for the following languages : Pt,Sk
-
-- Add new .rc resources for all languages you know. That's in fact very easy. 
-  Just clone the file En.rc, change the strings and submit it. You can find
-  my email address in the README file.
-
-Please don't forget a ChangeLog entry.
+This is a problem in Wine, not in Clock

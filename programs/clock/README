@@ -2,7 +2,4 @@
  Clock for Wine
  ==============
  
- This is a first attempt to realize a desktop clock for Wine as done in 
- Windows. It's an early release and some of the code is still broken.
-
  Originally contributed by <mbaur@g26.ethz.ch>

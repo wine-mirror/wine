@@ -23,8 +23,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "config.h"
-
 #include <stdio.h>
 
 #include "windows.h"
@@ -32,13 +30,60 @@
 
 #include "main.h"
 #include "license.h"
-#include "language.h"
 #include "winclock.h"
 
 #define INITIAL_WINDOW_SIZE 200
 #define TIMER_ID 1
 
 CLOCK_GLOBALS Globals;
+
+static VOID CLOCK_UpdateMenuCheckmarks(VOID)
+{
+    HMENU hPropertiesMenu;
+    hPropertiesMenu = GetSubMenu(Globals.hMainMenu, 0);
+    if (!hPropertiesMenu)
+	return;
+
+    if(Globals.bAnalog) {
+
+        /* analog clock */
+        CheckMenuRadioItem(hPropertiesMenu, IDM_ANALOG, IDM_DIGITAL, IDM_ANALOG, MF_CHECKED);
+        EnableMenuItem(hPropertiesMenu, IDM_FONT, MF_GRAYED);
+    }
+    else
+    {
+        /* digital clock */
+        CheckMenuRadioItem(hPropertiesMenu, IDM_ANALOG, IDM_DIGITAL, IDM_DIGITAL, MF_CHECKED);
+        EnableMenuItem(hPropertiesMenu, IDM_FONT, 0);
+    }
+
+    CheckMenuItem(hPropertiesMenu, IDM_NOTITLE, (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
+
+    CheckMenuItem(hPropertiesMenu, IDM_ONTOP, (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hPropertiesMenu, IDM_SECONDS, (Globals.bSeconds ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hPropertiesMenu, IDM_DATE, (Globals.bDate ? MF_CHECKED : MF_UNCHECKED));
+}
+
+static VOID CLOCK_UpdateWindowCaption(VOID)
+{
+    CHAR szCaption[MAX_STRING_LEN];
+    int chars = 0;
+
+    /* Set frame caption */
+    if (Globals.bDate) {
+	chars = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, NULL, NULL,
+			      szCaption, sizeof(szCaption));
+        if (chars) {
+	    --chars;
+	    szCaption[chars++] = ' ';
+	    szCaption[chars++] = '-';
+	    szCaption[chars++] = ' ';
+	    szCaption[chars] = '\0';
+	}
+    }
+    LoadString(0, IDS_CLOCK, szCaption + chars, sizeof(szCaption) - chars);
+    SetWindowText(Globals.hMainWnd, szCaption);
+}
 
 /***********************************************************************
  *
@@ -69,12 +114,90 @@ static BOOL CLOCK_ResetTimer(void)
 
 /***********************************************************************
  *
+ *           CLOCK_ResetFont
+ */
+static VOID CLOCK_ResetFont(VOID)
+{
+    HFONT newfont;
+    HDC dc = GetDC(Globals.hMainWnd);
+    newfont = SizeFont(dc, Globals.MaxX, Globals.MaxY, Globals.bSeconds, &Globals.logfont);
+    if (newfont) {
+	DeleteObject(Globals.hFont);
+	Globals.hFont = newfont;
+    }
+	
+    ReleaseDC(Globals.hMainWnd, dc);
+}
+
+
+/***********************************************************************
+ *
+ *           CLOCK_ChooseFont
+ */
+static VOID CLOCK_ChooseFont(VOID)
+{
+    LOGFONT lf;
+    CHOOSEFONT cf;
+    memset(&cf, 0, sizeof(cf));
+    lf = Globals.logfont;
+    cf.lStructSize = sizeof(cf);
+    cf.hwndOwner = Globals.hMainWnd;
+    cf.lpLogFont = &lf;
+    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT;
+    if (ChooseFont(&cf)) {
+	Globals.logfont = lf;
+	CLOCK_ResetFont();
+    }
+}
+
+/***********************************************************************
+ *
+ *           CLOCK_ToggleTitle
+ */
+static VOID CLOCK_ToggleTitle(VOID)
+{
+    /* Also shows/hides the menu */
+    LONG style = GetWindowLong(Globals.hMainWnd, GWL_STYLE);
+    if ((Globals.bWithoutTitle = !Globals.bWithoutTitle)) {
+	style = (style & ~WS_OVERLAPPEDWINDOW) | WS_POPUP|WS_THICKFRAME;
+	SetMenu(Globals.hMainWnd, 0);
+    }
+    else {
+	style = (style & ~(WS_POPUP|WS_THICKFRAME)) | WS_OVERLAPPEDWINDOW;
+        SetMenu(Globals.hMainWnd, Globals.hMainMenu);
+    }
+    SetWindowLong(Globals.hMainWnd, GWL_STYLE, style);
+    SetWindowPos(Globals.hMainWnd, 0,0,0,0,0, 
+		 SWP_DRAWFRAME|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER);
+    
+    CLOCK_UpdateMenuCheckmarks();
+    CLOCK_UpdateWindowCaption();
+}
+
+/***********************************************************************
+ *
+ *           CLOCK_ToggleOnTop
+ */
+static VOID CLOCK_ToggleOnTop(VOID)
+{
+    if ((Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop)) {
+	SetWindowPos(Globals.hMainWnd, HWND_TOPMOST, 0,0,0,0,
+		     SWP_NOMOVE|SWP_NOSIZE);
+    }
+    else {
+	SetWindowPos(Globals.hMainWnd, HWND_NOTOPMOST, 0,0,0,0,
+		     SWP_NOMOVE|SWP_NOSIZE);
+    }
+    CLOCK_UpdateMenuCheckmarks();
+}
+/***********************************************************************
+ *
  *           CLOCK_MenuCommand
  *
  *  All handling of main menu events
  */
 
-int CLOCK_MenuCommand (WPARAM wParam)
+static int CLOCK_MenuCommand (WPARAM wParam)
 {
     CHAR szApp[MAX_STRING_LEN];
     CHAR szAppRelease[MAX_STRING_LEN];
@@ -82,7 +205,7 @@ int CLOCK_MenuCommand (WPARAM wParam)
         /* switch to analog */
         case IDM_ANALOG: {
             Globals.bAnalog = TRUE;
-            LANGUAGE_UpdateMenuCheckmarks();
+            CLOCK_UpdateMenuCheckmarks();
 	    CLOCK_ResetTimer();
 	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
@@ -90,42 +213,42 @@ int CLOCK_MenuCommand (WPARAM wParam)
             /* switch to digital */
         case IDM_DIGITAL: {
             Globals.bAnalog = FALSE;
-            LANGUAGE_UpdateMenuCheckmarks();
+            CLOCK_UpdateMenuCheckmarks();
 	    CLOCK_ResetTimer();
+	    CLOCK_ResetFont();
 	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* change font */
         case IDM_FONT: {
-            MAIN_FileChooseFont();
+            CLOCK_ChooseFont();
             break;
         }
             /* hide title bar */
         case IDM_NOTITLE: {
-            Globals.bWithoutTitle = !Globals.bWithoutTitle;
-            LANGUAGE_UpdateWindowCaption();
-            LANGUAGE_UpdateMenuCheckmarks();
+	    CLOCK_ToggleTitle();
             break;
         }
             /* always on top */
         case IDM_ONTOP: {
-            Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop;
-            LANGUAGE_UpdateMenuCheckmarks();
+	    CLOCK_ToggleOnTop();
             break;
         }
             /* show or hide seconds */
         case IDM_SECONDS: {
             Globals.bSeconds = !Globals.bSeconds;
-            LANGUAGE_UpdateMenuCheckmarks();
+            CLOCK_UpdateMenuCheckmarks();
 	    CLOCK_ResetTimer();
+	    if (!Globals.bAnalog)
+		CLOCK_ResetFont();
 	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* show or hide date */
         case IDM_DATE: {
             Globals.bDate = !Globals.bDate;
-            LANGUAGE_UpdateMenuCheckmarks();
-            LANGUAGE_UpdateWindowCaption();
+            CLOCK_UpdateMenuCheckmarks();
+            CLOCK_UpdateWindowCaption();
             break;
         }
             /* show license */
@@ -142,7 +265,6 @@ int CLOCK_MenuCommand (WPARAM wParam)
         case IDM_ABOUT: {
             LoadString(Globals.hInstance, IDS_CLOCK, szApp, sizeof(szApp));
             lstrcpy(szAppRelease,szApp);
-            lstrcat(szAppRelease,"\n" PACKAGE_STRING);
             ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
             break;
         }
@@ -150,30 +272,47 @@ int CLOCK_MenuCommand (WPARAM wParam)
     return 0;
 }
 
-VOID MAIN_FileChooseFont(VOID)
+/***********************************************************************
+ *
+ *           CLOCK_Paint
+ */
+static VOID CLOCK_Paint(HWND hWnd)
 {
-    CHOOSEFONT font;
-    LOGFONT      lf;
+    PAINTSTRUCT ps;
+    HDC dcMem, dc;
+    HBITMAP bmMem, bmOld;
+
+    dc = BeginPaint(hWnd, &ps);
+
+    /* Use an offscreen dc to avoid flicker */
+    dcMem = CreateCompatibleDC(dc);
+    bmMem = CreateCompatibleBitmap(dc, ps.rcPaint.right - ps.rcPaint.left,
+				    ps.rcPaint.bottom - ps.rcPaint.top);
+
+    bmOld = SelectObject(dcMem, bmMem);
+
+    SetViewportOrgEx(dcMem, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
+    /* Erase the background */
+    FillRect(dcMem, &ps.rcPaint, GetStockObject(LTGRAY_BRUSH));
+
+    if(Globals.bAnalog)
+	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds);
+    else
+	DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
+
+    /* Blit the changes to the screen */
+    BitBlt(dc, 
+	   ps.rcPaint.left, ps.rcPaint.top,
+	   ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top,
+           dcMem,
+	   ps.rcPaint.left, ps.rcPaint.top,
+           SRCCOPY);
+
+    SelectObject(dcMem, bmOld);
+    DeleteObject(bmMem);
+    DeleteDC(dcMem);
     
-    font.lStructSize     = sizeof(font);
-    font.hwndOwner       = Globals.hMainWnd;
-    font.hDC             = NULL;
-    font.lpLogFont       = &lf;
-    font.iPointSize      = 0;
-    font.Flags           = 0;
-    font.rgbColors       = 0;
-    font.lCustData       = 0;
-    font.lpfnHook        = 0;
-    font.lpTemplateName  = 0;
-    font.hInstance       = Globals.hInstance;
-/*    font.lpszStyle       = LF_FACESIZE; */
-    font.nFontType       = 0;
-    font.nSizeMin        = 0;
-    font.nSizeMax        = 144;
-    
-    if (ChooseFont(&font)) {
-        /* do nothing yet */
-    }
+    EndPaint(hWnd, &ps);
 }
 
 /***********************************************************************
@@ -184,35 +323,30 @@ VOID MAIN_FileChooseFont(VOID)
 LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
-      
-        case WM_CREATE: {
-            break;
-        }
+	/* L button drag moves the window */
+        case WM_NCHITTEST: {
+	    LRESULT ret = DefWindowProc (hWnd, msg, wParam, lParam);
+	    if (ret == HTCLIENT)
+		ret = HTCAPTION;
+            return ret;
+	}
 
-        case WM_RBUTTONUP: {
-            Globals.bWithoutTitle = !Globals.bWithoutTitle;
-            LANGUAGE_UpdateMenuCheckmarks();
-            LANGUAGE_UpdateWindowCaption();
-            UpdateWindow (Globals.hMainWnd);
+        case WM_NCLBUTTONDBLCLK:
+        case WM_LBUTTONDBLCLK: {
+	    CLOCK_ToggleTitle();
             break;
         }
 
         case WM_PAINT: {
-            PAINTSTRUCT ps;
-            HDC context;
-            
-            context = BeginPaint(hWnd, &ps);
-            if(Globals.bAnalog)
-                AnalogClock(context, Globals.MaxX, Globals.MaxY, Globals.bSeconds);
-            else
-                DigitalClock(context, Globals.MaxX, Globals.MaxY, Globals.bSeconds);
-            EndPaint(hWnd, &ps);
+	    CLOCK_Paint(hWnd);
             break;
+
         }
 
         case WM_SIZE: {
             Globals.MaxX = LOWORD(lParam);
             Globals.MaxY = HIWORD(lParam);
+	    CLOCK_ResetFont();
             break;
         }
 
@@ -255,27 +389,19 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     char szWinName[]   = "Clock";
     
     /* Setup Globals */
+    memset(&Globals.hFont, 0, sizeof (Globals.hFont));
     Globals.bAnalog         = TRUE;
     Globals.bSeconds        = TRUE;
-    Globals.lpszIniFile     = "clock.ini";
-    Globals.lpszIcoFile     = "clock.ico";
-    
-    Globals.hInstance       = hInstance;
-    Globals.hMainIcon       = ExtractIcon(Globals.hInstance,
-                                          Globals.lpszIcoFile, 0);
-    
-    if (!Globals.hMainIcon)
-        Globals.hMainIcon = LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
     
     if (!prev){
-        class.style         = CS_HREDRAW | CS_VREDRAW;
+        class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
         class.lpfnWndProc   = CLOCK_WndProc;
         class.cbClsExtra    = 0;
         class.cbWndExtra    = 0;
-        class.hInstance     = Globals.hInstance;
+        class.hInstance     = hInstance;
         class.hIcon         = LoadIcon (0, IDI_APPLICATION);
         class.hCursor       = LoadCursor (0, IDC_ARROW);
-        class.hbrBackground = GetStockObject (GRAY_BRUSH);
+        class.hbrBackground = 0;
         class.lpszMenuName  = 0;
         class.lpszClassName = szClassName;
     }
@@ -286,15 +412,15 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     Globals.hMainWnd = CreateWindow (szClassName, szWinName, WS_OVERLAPPEDWINDOW,
                                      CW_USEDEFAULT, CW_USEDEFAULT,
                                      Globals.MaxX, Globals.MaxY, 0,
-                                     0, Globals.hInstance, 0);
+                                     0, hInstance, 0);
 
     if (!CLOCK_ResetTimer())
         return FALSE;
 
-    LANGUAGE_LoadMenus();
+    Globals.hMainMenu = LoadMenu(0, MAKEINTRESOURCE(MAIN_MENU));
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
-    
-    LANGUAGE_UpdateMenuCheckmarks();
+    CLOCK_UpdateMenuCheckmarks();
+    CLOCK_UpdateWindowCaption();
     
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
@@ -305,6 +431,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     }
 
     KillTimer(Globals.hMainWnd, TIMER_ID);
+    DeleteObject(Globals.hFont);
 
     return 0;
 }

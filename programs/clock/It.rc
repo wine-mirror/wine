@@ -34,6 +34,8 @@ MAIN_MENU MENU
   MENUITEM SEPARATOR
   MENUITEM "&Secondi", IDM_SECONDS
   MENUITEM "&Data", IDM_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Sempre in primo piano", IDM_ONTOP
  }
  POPUP "Inf&o" {
   MENUITEM "&Licenza...", IDM_LICENSE
@@ -45,5 +47,4 @@ MAIN_MENU MENU
 STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "Orologio"
-IDS_ONTOP, "&Sempre in primo piano"
 }

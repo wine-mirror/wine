@@ -25,18 +25,11 @@
 
 typedef struct
 {
+  LOGFONT logfont;
+  HFONT   hFont;
   HANDLE  hInstance;
   HWND    hMainWnd;
-  HICON   hMainIcon;
-  HICON   hDefaultIcon;
   HMENU   hMainMenu;
-  HMENU   hPropertiesMenu;
-  HMENU   hLanguageMenu;
-  HMENU   hInfoMenu;
-  HMENU   hSystemMenu;
-  HMENU   hPopupMenu1;
-  LPCSTR  lpszIniFile;
-  LPCSTR  lpszIcoFile;
 
   BOOL    bAnalog;
   BOOL    bAlwaysOnTop;
@@ -49,6 +42,3 @@ typedef struct
 } CLOCK_GLOBALS;
 
 extern CLOCK_GLOBALS Globals;
-
-/* function prototypes */
-VOID MAIN_FileChooseFont(VOID);
