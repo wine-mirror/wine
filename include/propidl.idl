@@ -1,6 +1,7 @@
 /*
  * Copyright 2002 Ove Kaaven
  * Copyright 2004 Francois Gouget
+ * Copyright 2005 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,10 +40,25 @@ interface IPropertyStorage : IUnknown
   const DWORD PROPSETFLAG_NONSIMPLE = 1;
   const DWORD PROPSETFLAG_ANSI = 2;
   const DWORD PROPSETFLAG_UNBUFFERED = 4;
+  const DWORD PROPSETFLAG_CASE_SENSITIVE = 8;
+
+  const DWORD PROPSET_BEHAVIOR_CASE_SENSITIVE = 1;
+
+  const PROPID PID_DICTIONARY          = 0x00000000;
+  const PROPID PID_CODEPAGE            = 0x00000001;
+  const PROPID PID_FIRST_USABLE        = 0x00000002;
+  const PROPID PID_FIRST_NAME_DEFAULT  = 0x00000fff;
+  const PROPID PID_LOCALE              = 0x80000000;
+  const PROPID PID_MODIFY_TIME         = 0x80000001;
+  const PROPID PID_SECURITY            = 0x80000002;
+  const PROPID PID_BEHAVIOR            = 0x80000003;
+  const PROPID PID_ILLEGAL             = 0xffffffff;
+  const PROPID PID_MIN_READONLY        = 0x80000000;
+  const PROPID PID_MAX_READONLY        = 0xbfffffff;
 
   typedef struct tagPROPVARIANT PROPVARIANT;
 
-  #define TYPEDEF_CA(type, name) \
+#define TYPEDEF_CA(type, name) \
     typedef struct tag##name { \
       ULONG cElems; \
       [size_is(cElems)] \
@@ -131,7 +147,42 @@ interface IPropertyStorage : IUnknown
 
   typedef struct tagPROPVARIANT *LPPROPVARIANT;
 
-  /* FIXME: bunches of property IDs */
+  cpp_quote("#define PIDDI_THUMBNAIL 0x00000002L /* VT_BLOB */")
+  cpp_quote("")
+  cpp_quote("#define PIDSI_TITLE        0x00000002L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_SUBJECT      0x00000003L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_AUTHOR       0x00000004L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_KEYWORDS     0x00000005L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_COMMENTS     0x00000006L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_TEMPLATE     0x00000007L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_LASTAUTHOR   0x00000008L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_REVNUMBER    0x00000009L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_EDITTIME     0x0000000AL /* VT_FILETIME (UTC) */")
+  cpp_quote("#define PIDSI_LASTPRINTED  0x0000000BL /* VT_FILETIME (UTC) */")
+  cpp_quote("#define PIDSI_CREATE_DTM   0x0000000CL /* VT_FILETIME (UTC) */")
+  cpp_quote("#define PIDSI_LASTSAVE_DTM 0x0000000DL /* VT_FILETIME (UTC) */")
+  cpp_quote("#define PIDSI_PAGECOUNT    0x0000000EL /* VT_I4 */")
+  cpp_quote("#define PIDSI_WORDCOUNT    0x0000000FL /* VT_I4 */")
+  cpp_quote("#define PIDSI_CHARCOUNT    0x00000010L /* VT_I4 */")
+  cpp_quote("#define PIDSI_THUMBNAIL    0x00000011L /* VT_CF */")
+  cpp_quote("#define PIDSI_APPNAME      0x00000012L /* VT_LPSTR */")
+  cpp_quote("#define PIDSI_DOC_SECURITY 0x00000013L /* VT_I4 */")
+  cpp_quote("")
+  cpp_quote("#define PIDDSI_CATEGORY    0x00000002L /* VT_LPSTR */")
+  cpp_quote("#define PIDDSI_PRESFORMAT  0x00000003L /* VT_LPSTR */")
+  cpp_quote("#define PIDDSI_BYTECOUNT   0x00000004L /* VT_I4 */")
+  cpp_quote("#define PIDDSI_LINECOUNT   0x00000005L /* VT_I4 */")
+  cpp_quote("#define PIDDSI_PARCOUNT    0x00000006L /* VT_I4 */")
+  cpp_quote("#define PIDDSI_SLIDECOUNT  0x00000007L /* VT_I4 */")
+  cpp_quote("#define PIDDSI_NOTECOUNT   0x00000008L /* VT_I4 */")
+  cpp_quote("#define PIDDSI_HIDDENCOUNT 0x00000009L /* VT_I4 */")
+  cpp_quote("#define PIDDSI_MMCLIPCOUNT 0x0000000AL /* VT_I4 */")
+  cpp_quote("#define PIDDSI_SCALE       0x0000000BL /* VT_BOOL */")
+  cpp_quote("#define PIDDSI_HEADINGPAIR 0x0000000CL /* VT_VARIANT|VT_VECTOR */")
+  cpp_quote("#define PIDDSI_DOCPARTS    0x0000000DL /* VT_LPSTR|VT_VECTOR */")
+  cpp_quote("#define PIDDSI_MANAGER     0x0000000EL /* VT_LPSTR */")
+  cpp_quote("#define PIDDSI_COMPANY     0x0000000FL /* VT_LPSTR */")
+  cpp_quote("#define PIDDSI_LINKSDIRTY  0x00000010L /* VT_B0OL */")
 
   const ULONG PRSPEC_INVALID = 0xffffffff;
   const ULONG PRSPEC_LPWSTR = 0;
@@ -152,7 +203,11 @@ interface IPropertyStorage : IUnknown
     VARTYPE vt;
   } STATPROPSTG;
 
-  /* FIXME: macros */
+  cpp_quote("/* Macros for dwOSVersion member of STATPROPSETSTG */")
+  cpp_quote("#define PROPSETHDR_OSVER_KIND(dwOSVer)  HIWORD((dwOSVer))")
+  cpp_quote("#define PROPSETHDR_OSVER_MAJOR(dwOSVer) LOBYTE(LOWORD((dwOSVer)))")
+  cpp_quote("#define PROPSETHDR_OSVER_MINOR(dwOSVer) HIBYTE(LOWORD((dwOSVer)))")
+  cpp_quote("#define PROPSETHDR_OSVERSION_UNKNOWN    0xffffffff")
 
   typedef struct tagSTATPROPSETSTG {
     FMTID fmtid;
@@ -309,3 +364,6 @@ interface IEnumSTATPROPSETSTG : IUnknown
 cpp_quote("HRESULT WINAPI FreePropVariantArray(ULONG,PROPVARIANT*);");
 cpp_quote("HRESULT WINAPI PropVariantClear(PROPVARIANT*);");
 cpp_quote("HRESULT WINAPI PropVariantCopy(PROPVARIANT*,const PROPVARIANT*);");
+cpp_quote("")
+cpp_quote("#define _PROPVARIANT_INIT_DEFINED_")
+cpp_quote("#define PropVariantInit(p) memset((p), 0, sizeof(PROPVARIANT))")
