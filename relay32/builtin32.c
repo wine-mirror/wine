@@ -41,10 +41,13 @@ void *BUILTIN32_dlopen( const char *name )
 
     if (!(handle = wine_dll_load( name, error, sizeof(error) )))
     {
-        if (strstr(error, "cannot open")) /* cannot open -> WARN() */
+        if (strstr(error, "cannot open") || strstr(error, "open failed")) {
+	    /* The file does not exist -> WARN() */
             WARN("cannot open .so lib for builtin %s: %s\n", name, error);
-        else /* ERR() for all other errors (missing functions, ...) */
+        } else {
+	    /* ERR() for all other errors (missing functions, ...) */
             ERR("failed to load .so lib for builtin %s: %s\n", name, error );
+	}
     }
     return handle;
 }
