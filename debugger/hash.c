@@ -982,10 +982,23 @@ int DEBUG_LoadEntryPoints(const char* pfx)
 	    DEBUG_LEPHelper( entry.szModule, TRUE, &lep ))
 	    DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
     }
+
     for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next)
     {
-        if (DEBUG_LEPHelper( wm->modname, FALSE, &lep ))
-	    DEBUG_LoadEntryPoints32( wm->module, wm->modname );
+        if ((wm->flags & WINE_MODREF_INTERNAL))
+        {
+            if (DEBUG_LEPHelper( wm->modname, FALSE, &lep ))
+               DEBUG_LoadEntryPoints32( wm->module, wm->modname );
+        }
+    }
+    if (lep.first) fprintf( stderr, " $");
+    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next)
+    {
+        if (!(wm->flags & WINE_MODREF_INTERNAL))
+        {
+            if (DEBUG_LEPHelper( wm->modname, FALSE, &lep ))
+               DEBUG_LoadEntryPoints32( wm->module, wm->modname );
+        }
     }
     if (lep.first) fprintf( stderr, "\n" );
     return lep.first;
