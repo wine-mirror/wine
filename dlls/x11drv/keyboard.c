@@ -1371,12 +1371,15 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
     e2.display = display;
     e2.state = 0;
 
-    OEMvkey = VK_OEM_7; /* next is available.  */
+    OEMvkey = VK_OEM_8; /* next is available.  */
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
+        char buf[30];
+        int have_chars;
+
         keysym = 0;
         e2.keycode = (KeyCode)keyc;
-        XLookupString(&e2, NULL, 0, &keysym, NULL);
+        have_chars = XLookupString(&e2, buf, sizeof(buf), &keysym, NULL);
         vkey = 0; scan = 0;
         if (keysym)  /* otherwise, keycode not used */
         {
@@ -1389,7 +1392,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
             } else if (keysym == 0x20) {                 /* Spacebar */
 	        vkey = VK_SPACE;
 		scan = 0x39;
-	    } else {
+	    } else if (have_chars) {
 	      /* we seem to need to search the layout-dependent scancodes */
 	      int maxlen=0,maxval=-1,ok;
 	      for (i=0; i<syms; i++) {
@@ -1427,7 +1430,9 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 		vkey = (*lvkey)[maxval];
 	      }
 	    }
-
+#if 0 /* this breaks VK_OEM_x VKeys in some layout tables by inserting
+       * a VK code into a not appropriate place.
+       */
             /* find a suitable layout-dependent VK code */
 	    /* (most Winelib apps ought to be able to work without layout tables!) */
             for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
@@ -1457,7 +1462,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 		case '+':             vkey = VK_OEM_PLUS; break;
 		}
 	    }
-
+#endif
             if (!vkey)
             {
                 /* Others keys: let's assign OEM virtual key codes in the allowed range,
@@ -1490,6 +1495,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
                 }
             }
         }
+        TRACE("keycode %04x => vkey %04x\n", e2.keycode, vkey);
         keyc2vkey[e2.keycode] = vkey;
         keyc2scan[e2.keycode] = scan;
     } /* for */
