@@ -128,15 +128,15 @@ static DWORD PCM_GetFormatIndex(LPWAVEFORMATEX wfx)
  * parameters:
  *	+ 8 bit unsigned vs 16 bit signed
  *	+ mono vs stereo (1 or 2 channels)
- *	+ sampling rate (8.0, 11.025, 22.05, 44.1 kHz are defined, but algo shall work
- *	  in all cases)
+ *	+ sampling rate (8.0, 11.025, 22.05, 44.1 kHz are defined, but algo
+ *	  shall work in all cases)
  *
  * mono => stereo: copy the same sample on Left & Right channels
  * stereo =) mono: use the average value of samples from Left & Right channels
- * resampling; we lookup for each destination sample the two source adjacent samples
- * 	were src <= dst < src+1 (dst is increased by a fractional value which is
- *	equivalent to the increment by one on src); then we use a linear
- *	interpolation between src and src+1
+ * resampling; we lookup for each destination sample the two source adjacent
+ *      samples were src <= dst < src+1 (dst is increased by a fractional
+ *      value which is equivalent to the increment by one on src); then we
+ *      use a linear interpolation between src and src+1
  */
 
 /***********************************************************************
@@ -146,7 +146,7 @@ static DWORD PCM_GetFormatIndex(LPWAVEFORMATEX wfx)
  */
 static inline short C816(unsigned char b)
 {
-    return (short)(b ^ 0x80) * 256;
+    return (short)((b+(b << 8))-32768);
 }
 
 /***********************************************************************
@@ -784,8 +784,8 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	afd->pwfx->nChannels = PCM_Formats[afd->dwFormatIndex].nChannels;
 	afd->pwfx->nSamplesPerSec = PCM_Formats[afd->dwFormatIndex].rate;
 	afd->pwfx->wBitsPerSample = PCM_Formats[afd->dwFormatIndex].nBits;
-	/* native MSACM uses a PCMWAVEFORMAT structure, so cbSize is not accessible
-	 * afd->pwfx->cbSize = 0;
+	/* native MSACM uses a PCMWAVEFORMAT structure, so cbSize is not
+	 * accessible afd->pwfx->cbSize = 0;
 	 */
 	afd->pwfx->nBlockAlign =
 	    (afd->pwfx->nChannels * afd->pwfx->wBitsPerSample) / 8;
