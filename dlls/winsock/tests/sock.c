@@ -676,7 +676,7 @@ static test_setup tests [NUM_TESTS] =
         event_client,
         {
             NULL,
-            0,
+            WSA_FLAG_OVERLAPPED,
             128
         }
     }
