@@ -207,35 +207,55 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    if (dwFlags & MCI_DGV_WHERE_MAX)
-    {
-        FIXME("WHERE_MAX\n");
-        return MCIERR_UNRECOGNIZED_COMMAND;
-    }
-
     EnterCriticalSection(&wma->cs);
 
     if (dwFlags & MCI_DGV_WHERE_DESTINATION) {
-        TRACE("WHERE_DESTINATION %s\n", wine_dbgstr_rect(&wma->dest));
-        lpParms->rc = wma->dest;
+	if (dwFlags & MCI_DGV_WHERE_MAX) {
+	    GetClientRect(wma->hWndPaint, &lpParms->rc);
+	    TRACE("WHERE_DESTINATION_MAX %s\n", wine_dbgstr_rect(&lpParms->rc));
+	} else {
+	    TRACE("WHERE_DESTINATION %s\n", wine_dbgstr_rect(&wma->dest));
+	    lpParms->rc = wma->dest;
+	}
     }
     if (dwFlags & MCI_DGV_WHERE_FRAME) {
-       FIXME("MCI_DGV_WHERE_FRAME\n");
-        LeaveCriticalSection(&wma->cs);
+	if (dwFlags & MCI_DGV_WHERE_MAX)
+	    FIXME("MCI_DGV_WHERE_FRAME_MAX\n");
+	else
+	    FIXME("MCI_DGV_WHERE_FRAME\n");
+	LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_WHERE_SOURCE) {
-        TRACE("WHERE_SOURCE %s\n", wine_dbgstr_rect(&wma->source));
-        lpParms->rc = wma->source;
+	if (dwFlags & MCI_DGV_WHERE_MAX) {
+	    RECT rect;
+	    rect.left = 0;
+	    rect.top = 0;
+	    rect.right = wma->inbih->biWidth; 
+	    rect.bottom = wma->inbih->biHeight; 
+	    TRACE("WHERE_SOURCE_MAX %s\n", wine_dbgstr_rect(&rect));
+	    lpParms->rc = rect;
+ 	} else {
+	    TRACE("WHERE_SOURCE %s\n", wine_dbgstr_rect(&wma->source));
+	    lpParms->rc = wma->source;
+	}
     }
     if (dwFlags & MCI_DGV_WHERE_VIDEO) {
-       FIXME("WHERE_VIDEO\n");
-        LeaveCriticalSection(&wma->cs);
+	if (dwFlags & MCI_DGV_WHERE_MAX)
+	    FIXME("WHERE_VIDEO_MAX\n");
+	else
+	    FIXME("WHERE_VIDEO\n");
+	LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_WHERE_WINDOW) {
-        GetClientRect(wma->hWndPaint, &lpParms->rc);
-        TRACE("WHERE_WINDOW %s\n", wine_dbgstr_rect(&lpParms->rc));
+	if (dwFlags & MCI_DGV_WHERE_MAX) {
+	    GetWindowRect(GetDesktopWindow(), &lpParms->rc);
+	    TRACE("WHERE_WINDOW_MAX %s\n", wine_dbgstr_rect(&lpParms->rc));
+	} else {
+	    GetWindowRect(wma->hWndPaint, &lpParms->rc);
+	    TRACE("WHERE_WINDOW %s\n", wine_dbgstr_rect(&lpParms->rc));
+	}
     }
     LeaveCriticalSection(&wma->cs);
     return 0;
