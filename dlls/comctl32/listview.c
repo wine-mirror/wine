@@ -231,6 +231,7 @@ static LRESULT LISTVIEW_GetItemState(HWND hwnd, INT nItem, UINT uMask);
 static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMA lpLVItem);
 static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem);
 static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem);
+static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc);
 
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       900
@@ -1008,7 +1009,7 @@ static INT LISTVIEW_GetItemWidth(HWND hwnd)
   {
     nItemWidth = infoPtr->iconSpacing.cx;
   }
-  else if (uView == LVS_REPORT && (!(LVS_NOCOLUMNHEADER & style)) )
+  else if (uView == LVS_REPORT)
   {
     /* calculate width of header */
     nHeaderItemCount = Header_GetItemCount(infoPtr->hwndHeader);
@@ -2787,7 +2788,6 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   CHAR szDispText[DISP_TEXT_SIZE];
   LVITEMA lvItem;
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
-  HBRUSH hBrush;
   RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, nSubItem=%d)\n", hwnd, hdc,
@@ -2803,15 +2803,13 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
 
   /* redraw the background of the item */
-  hBrush = CreateSolidBrush(infoPtr->clrBk);
   rcTemp = rcItem;
   if(infoPtr->nColumnCount == (nSubItem + 1))
     rcTemp.right = infoPtr->rcList.right;
   else
     rcTemp.right+=WIDTH_PADDING;
 
-  FillRect(hdc, &rcTemp, hBrush);
-  DeleteObject(hBrush);
+  LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
   /* set item colors */
   if (ListView_GetItemState(hwnd,nItem,LVIS_SELECTED)
@@ -2885,7 +2883,6 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   BOOL bImage = FALSE;
   INT   iBkMode = -1;
   UINT  textoutOptions = ETO_OPAQUE | ETO_CLIPPED;
-  HBRUSH hBrush;
   RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d)\n", hwnd, hdc, nItem);
@@ -2902,15 +2899,13 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
 
   /* redraw the background of the item */
-  hBrush = CreateSolidBrush(infoPtr->clrBk);
   rcTemp = rcItem;
   if(infoPtr->nColumnCount == (nItem + 1))
     rcTemp.right = infoPtr->rcList.right;
   else
     rcTemp.right+=WIDTH_PADDING;
 
-  FillRect(hdc, &rcTemp, hBrush);
-  DeleteObject(hBrush);
+  LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
   /* do indent */
   if (lvItem.iIndent>0 && infoPtr->iconSize.cx > 0)
@@ -3067,7 +3062,6 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   TEXTMETRICA tm;
   LVITEMA lvItem;
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
-  HBRUSH hBrush;
   RECT rcTemp;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, \
@@ -3085,14 +3079,13 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
   LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
 
   /* redraw the background of the item */
-  hBrush = CreateSolidBrush(infoPtr->clrBk);
+  rcTemp = rcItem;
   if(infoPtr->nColumnCount == (nItem + 1))
     rcTemp.right = infoPtr->rcList.right;
   else
     rcTemp.right+=WIDTH_PADDING;
 
-  FillRect(hdc, &rcTemp, hBrush);
-  DeleteObject(hBrush);
+  LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
   if (lvItem.state & LVIS_SELECTED)
   {
@@ -3216,7 +3209,6 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
   BOOL FullSelected;
   DWORD cditemmode = CDRF_DODEFAULT;
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-  HBRUSH hBrush;
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
@@ -3249,9 +3241,7 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
 
   /* clear the background of any part of the control that doesn't contain items */
   SubtractRect(&rcTemp, &infoPtr->rcList, &infoPtr->rcView);
-  hBrush = CreateSolidBrush(infoPtr->clrBk);
-  FillRect(hdc, &infoPtr->rcList, hBrush);
-  DeleteObject(hBrush);
+  LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
   /* nothing to draw */
   if(GETITEMCOUNT(infoPtr) == 0)
@@ -3282,7 +3272,6 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
         dis.hwndItem = hwnd;
         dis.hDC = hdc;
 
-        Header_GetItemRect(infoPtr->hwndHeader, 0, &dis.rcItem);
         Header_GetItemRect(infoPtr->hwndHeader, nColumnCount-1, &br);
 
         dis.rcItem.left =0; 
@@ -3495,7 +3484,6 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc, DWORD cdmode)
   INT nItemWidth = infoPtr->nItemWidth;
   INT nItemHeight = infoPtr->nItemHeight;
   DWORD cditemmode = CDRF_DODEFAULT;
-  HBRUSH hBrush;
 
   /* get number of fully visible columns */
   nColumnCount = LISTVIEW_GetColumnCount(hwnd);
@@ -3505,9 +3493,7 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc, DWORD cdmode)
 
   /* paint the background of the control that doesn't contain any items */
   SubtractRect(&rcTemp, &infoPtr->rcList, &infoPtr->rcView);
-  hBrush = CreateSolidBrush(infoPtr->clrBk);
-  FillRect(hdc, &infoPtr->rcList, hBrush);
-  DeleteObject(hBrush);
+  LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
   /* nothing to draw, return here */
   if(GETITEMCOUNT(infoPtr) == 0)
@@ -3563,7 +3549,6 @@ static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall, DWORD cdmode)
   POINT ptPosition;
   POINT ptOrigin;
   RECT rcItem, SuggestedFocus, rcTemp;
-  HBRUSH hBrush;
   INT i;
   DWORD cditemmode = CDRF_DODEFAULT;
 
@@ -3572,9 +3557,7 @@ static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall, DWORD cdmode)
 
   /* paint the background of the control that doesn't contain any items */
   SubtractRect(&rcTemp, &infoPtr->rcList, &infoPtr->rcView);
-  hBrush = CreateSolidBrush(infoPtr->clrBk);
-  FillRect(hdc, &infoPtr->rcList, hBrush);
-  DeleteObject(hBrush);
+  LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
   /* nothing to draw, return here */
   if(GETITEMCOUNT(infoPtr) == 0)
@@ -7579,15 +7562,9 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     else
     {
-      /* resize our header to nothing */
-      RECT zeroRect;
-      WINDOWPOS wp;
-      HDLAYOUT hd;
-      memset(&zeroRect,0,sizeof(RECT));
-      hd.prc = &zeroRect;
-      hd.pwpos = &wp;
-     
-      Header_Layout(infoPtr->hwndHeader,&hd);
+      /* set HDS_HIDDEN flag to hide the header bar */
+      SetWindowLongA(infoPtr->hwndHeader, GWL_STYLE, 
+                    GetWindowLongA(infoPtr->hwndHeader, GWL_STYLE) | HDS_HIDDEN);
     }
       
 
@@ -7653,6 +7630,19 @@ static LRESULT LISTVIEW_EraseBackground(HWND hwnd, WPARAM wParam,
   }
 
   return bResult;
+}
+
+
+static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+
+  if (infoPtr->clrBk != CLR_NONE) 
+  {
+    HBRUSH hBrush = CreateSolidBrush(infoPtr->clrBk);
+    FillRect(hdc, rc, hBrush);
+    DeleteObject(hBrush);
+  }
 }
 
 /***
@@ -8835,7 +8825,7 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
       }
     }
   }
-  else if ((uView == LVS_REPORT)&&(!(LVS_NOCOLUMNHEADER & lStyle)))
+  else if (uView == LVS_REPORT)
   {
     HDLAYOUT hl;
     WINDOWPOS wp;
@@ -8913,24 +8903,13 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
       HDLAYOUT hl;
       WINDOWPOS wp;
 
-      if (!(LVS_NOCOLUMNHEADER & lpss->styleNew))
-      {
-        hl.prc = &rcList;
-        hl.pwpos = &wp;
-        Header_Layout(infoPtr->hwndHeader, &hl);
-        SetWindowPos(infoPtr->hwndHeader, hwnd, wp.x, wp.y, wp.cx, wp.cy, 
+      hl.prc = &rcList;
+      hl.pwpos = &wp;
+      Header_Layout(infoPtr->hwndHeader, &hl);
+      SetWindowPos(infoPtr->hwndHeader, hwnd, wp.x, wp.y, wp.cx, wp.cy, 
                    wp.flags);
+      if (!(LVS_NOCOLUMNHEADER & lpss->styleNew))
         ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
-      }
-      else
-      {
-        RECT zeroRect;
-        ZeroMemory(&zeroRect,sizeof(RECT));
-
-        hl.prc = &zeroRect;
-        hl.pwpos = &wp;
-        Header_Layout(infoPtr->hwndHeader, &hl);
-      }
       
       infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
       infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
