@@ -59,6 +59,10 @@ typedef long MSVCRT(clock_t);
 #endif
 #endif
 
+#ifndef CLOCKS_PER_SEC
+#define CLOCKS_PER_SEC 1000
+#endif
+
 #ifndef MSVCRT_TM_DEFINED
 #define MSVCRT_TM_DEFINED
 struct MSVCRT(tm) {
