@@ -258,7 +258,7 @@ void WCMD_process_command (char *command)
 {
     char *cmd, *p;
     int status, i, len;
-    DWORD count;
+    DWORD count, creationDisposition;
     HANDLE old_stdin = 0, old_stdout = 0, h;
     char *whichcmd;
     SECURITY_ATTRIBUTES sa;
@@ -307,16 +307,27 @@ void WCMD_process_command (char *command)
       SetStdHandle (STD_INPUT_HANDLE, h);
     }
     if ((p = strchr(cmd,'>')) != NULL) {
-      h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_WRITE, 0, &sa, CREATE_ALWAYS,
+      *p++ = '\0';
+      if ('>' == *p) {
+        creationDisposition = OPEN_ALWAYS;
+        p++;
+      }
+      else {
+        creationDisposition = CREATE_ALWAYS;
+      }
+      h = CreateFile (WCMD_parameter (p, 0, NULL), GENERIC_WRITE, 0, &sa, creationDisposition,
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
         HeapFree( GetProcessHeap(), 0, cmd );
 	return;
       }
+      if (SetFilePointer (h, 0, NULL, FILE_END) ==
+          INVALID_SET_FILE_POINTER) {
+        WCMD_print_error ();
+      }
       old_stdout = GetStdHandle (STD_OUTPUT_HANDLE);
       SetStdHandle (STD_OUTPUT_HANDLE, h);
-      *--p = '\0';
     }
     if ((p = strchr(cmd,'<')) != NULL) *p = '\0';
 
