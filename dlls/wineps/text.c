@@ -161,15 +161,17 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
     if(!lpDx)
         PSDRV_WriteShow(dc, strbuf, lstrlenW(strbuf));
     else {
-        INT i, dx, dy;
-	INT newx = x, newy = y;
+        INT i;
+	float dx = 0.0, dy = 0.0;
+	float cos_theta = cos(physDev->font.escapement * M_PI / 1800.0);
+	float sin_theta = sin(physDev->font.escapement * M_PI / 1800.0);
         for(i = 0; i < count-1; i++) {
+	    TRACE("lpDx[%d] = %d\n", i, lpDx[i]);
 	    PSDRV_WriteShow(dc, &strbuf[i], 1);
-	    dx = lpDx[i] * cos(physDev->font.escapement);
-	    dy = lpDx[i] * sin(physDev->font.escapement);
-	    newx += INTERNAL_XWSTODS(dc, dx);
-	    newy += INTERNAL_YWSTODS(dc, dy);
-	    PSDRV_WriteMoveTo(dc, newx, newy);
+	    dx += lpDx[i] * cos_theta;
+	    dy -= lpDx[i] * sin_theta;
+	    PSDRV_WriteMoveTo(dc, x + INTERNAL_XWSTODS(dc, dx),
+			      y + INTERNAL_YWSTODS(dc, dy));
 	}
 	PSDRV_WriteShow(dc, &strbuf[i], 1);
     }
