@@ -36,17 +36,31 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 
-NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HANDLE hModule)
+/******************************************************************
+ *		LdrDisableThreadCalloutsForDll (NTDLL.@)
+ *
+ */
+NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
 {
-    if (DisableThreadLibraryCalls(hModule))
-	return STATUS_SUCCESS;
+    WINE_MODREF *wm;
+    NTSTATUS    ret = STATUS_SUCCESS;
+
+    RtlEnterCriticalSection( &loader_section );
+
+    wm = MODULE32_LookupHMODULE( hModule );
+    if ( !wm )
+        ret = STATUS_DLL_NOT_FOUND;
     else
-	return STATUS_DLL_NOT_FOUND;
+        wm->flags |= WINE_MODREF_NO_DLL_CALLS;
+
+    RtlLeaveCriticalSection( &loader_section );
+
+    return ret;
 }
 
 /* FIXME : MODULE_FindModule should depend on LdrGetDllHandle, not vice-versa */
 
-NTSTATUS WINAPI LdrGetDllHandle(ULONG x, LONG y, PUNICODE_STRING name, PVOID *base)
+NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE *base)
 {
     STRING str;
     WINE_MODREF *wm;
@@ -66,18 +80,58 @@ NTSTATUS WINAPI LdrGetDllHandle(ULONG x, LONG y, PUNICODE_STRING name, PVOID *ba
 
 /* FIXME : MODULE_GetProcAddress should depend on LdrGetProcedureAddress, not vice-versa */
 
-NTSTATUS WINAPI LdrGetProcedureAddress(PVOID base, PANSI_STRING name, ULONG ord, PVOID *address)
+NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE base, PANSI_STRING name, ULONG ord, PVOID *address)
 {
-    WARN("%p %s %ld %p\n",base, debugstr_an(name->Buffer,name->Length), ord, address);
+    WARN("%p %s %ld %p\n", base, debugstr_an(name->Buffer,name->Length), ord, address);
 
     if(name)
-        *address = MODULE_GetProcAddress( (HMODULE) base, name->Buffer, -1, FALSE);
+        *address = MODULE_GetProcAddress( base, name->Buffer, -1, FALSE);
     else
-        *address = MODULE_GetProcAddress( (HMODULE) base, (LPSTR) ord, -1, FALSE);
+        *address = MODULE_GetProcAddress( base, (LPSTR) ord, -1, FALSE);
 
     return (*address) ? STATUS_SUCCESS : STATUS_DLL_NOT_FOUND;
 }
 
+
+/******************************************************************
+ *		LdrShutdownProcess (NTDLL.@)
+ *
+ */
+NTSTATUS    WINAPI  LdrShutdownProcess(void)
+{
+    TRACE("()\n");
+    MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
+    return STATUS_SUCCESS; /* FIXME */
+}
+
+/******************************************************************
+ *		LdrShutdownThread (NTDLL.@)
+ *
+ */
+NTSTATUS WINAPI LdrShutdownThread(void)
+{
+    WINE_MODREF *wm;
+    TRACE("()\n");
+
+    /* don't do any detach calls if process is exiting */
+    if (process_detaching) return STATUS_SUCCESS;
+    /* FIXME: there is still a race here */
+
+    RtlEnterCriticalSection( &loader_section );
+
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
+    {
+        if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
+            continue;
+        if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
+            continue;
+
+        MODULE_InitDLL( wm, DLL_THREAD_DETACH, NULL );
+    }
+
+    RtlLeaveCriticalSection( &loader_section );
+    return STATUS_SUCCESS; /* FIXME */
+}
 
 /***********************************************************************
  *           RtlImageNtHeader   (NTDLL.@)

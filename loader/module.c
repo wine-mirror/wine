@@ -49,9 +49,9 @@ WINE_MODREF *MODULE_modref_list = NULL;
 
 static WINE_MODREF *exe_modref;
 static int free_lib_count;   /* recursion depth of FreeLibrary calls */
-static int process_detaching;  /* set on process detach to avoid deadlocks with thread detach */
+int process_detaching = 0;  /* set on process detach to avoid deadlocks with thread detach */
 
-static CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
+CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
 
 /***********************************************************************
  *           wait_input_idle
@@ -77,7 +77,7 @@ static DWORD wait_input_idle( HANDLE process, DWORD timeout )
  * looks for the referenced HMODULE in the current process
  * NOTE: Assumes that the process critical section is held!
  */
-static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
+WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 {
     WINE_MODREF	*wm;
 
@@ -141,7 +141,7 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
 /*************************************************************************
  *		MODULE_InitDLL
  */
-static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
+BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
 {
     BOOL retv = TRUE;
 
@@ -362,20 +362,11 @@ void MODULE_DllThreadDetach( LPVOID lpReserved )
  */
 BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
 {
-    WINE_MODREF *wm;
-    BOOL retval = TRUE;
+    NTSTATUS    nts = LdrDisableThreadCalloutsForDll( hModule );
+    if (nts == STATUS_SUCCESS) return TRUE;
 
-    RtlEnterCriticalSection( &loader_section );
-
-    wm = MODULE32_LookupHMODULE( hModule );
-    if ( !wm )
-        retval = FALSE;
-    else
-        wm->flags |= WINE_MODREF_NO_DLL_CALLS;
-
-    RtlLeaveCriticalSection( &loader_section );
-
-    return retval;
+    SetLastError( RtlNtStatusToDosError( nts ) );
+    return FALSE;
 }
 
 

@@ -46,8 +46,8 @@
 @ stub LdrProcessRelocationBlock
 @ stub LdrQueryImageFileExecutionOptions
 @ stub LdrQueryProcessModuleInformation
-@ stub LdrShutdownProcess
-@ stub LdrShutdownThread
+@ stdcall LdrShutdownProcess() LdrShutdownProcess
+@ stdcall LdrShutdownThread() LdrShutdownThread
 @ stub LdrUnloadDll
 @ stub LdrVerifyImageMatchesChecksum
 @ stub NPXEMULATORTABLE

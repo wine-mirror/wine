@@ -1130,6 +1130,73 @@ inline static BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
         memset(_p->BitMapBuffer,0xff,((_p->SizeOfBitMap + 31) & 0xffffffe0) >> 3); \
     } while (0)
 
+/*************************************************************************
+ * Loader functions and structures.
+ *
+ * Those are not part of standard Winternl.h
+ */
+typedef struct _LDR_MODULE
+{
+    LIST_ENTRY          InLoadOrderModuleList;
+    LIST_ENTRY          InMemoryOrderModuleList;
+    LIST_ENTRY          InInitializationOrderModuleList;
+    void*               BaseAddress;
+    ULONG               EntryPoint;
+    ULONG               SizeOfImage;
+    UNICODE_STRING      FullDllName;
+    UNICODE_STRING      BaseDllName;
+    ULONG               Flags;
+    SHORT               LoadCount;
+    SHORT               TlsIndex;
+    HANDLE              SectionHandle;
+    ULONG               CheckSum;
+    ULONG               TimeDateStamp;
+} LDR_MODULE, *PLDR_MODULE;
+
+/* FIXME: to be checked */
+#define MAXIMUM_FILENAME_LENGTH 256
+
+typedef struct _SYSTEM_MODULE
+{
+    ULONG               Reserved1;
+    ULONG               Reserved2;
+    PVOID               ImageBaseAddress;
+    ULONG               ImageSize;
+    ULONG               Flags;
+    WORD                Id;
+    WORD                Rank;
+    WORD                Unknown;
+    WORD                NameOffset;
+    BYTE                Name[MAXIMUM_FILENAME_LENGTH];
+} SYSTEM_MODULE, *PSYSTEM_MODULE;
+
+typedef struct _SYSTEM_MODULE_INFORMATION
+{
+    ULONG               ModulesCount;
+    SYSTEM_MODULE       Modules[1]; /* FIXME: should be Modules[0] */
+} SYSTEM_MODULE_INFORMATION, *PSYSTEM_MODULE_INFORMATION;
+
+typedef struct _LDR_RESOURCE_INFO
+{
+    ULONG               Type;
+    ULONG               Name;
+    ULONG               Language;
+} LDR_RESOURCE_INFO, *PLDR_RESOURCE_INFO;
+
+NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE);
+NTSTATUS WINAPI LdrFindEntryForAddress(void*, PLDR_MODULE*);
+NTSTATUS WINAPI LdrGetDllHandle(ULONG, ULONG, PUNICODE_STRING, HMODULE*);
+NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE, PANSI_STRING, ULONG, void**);
+NTSTATUS WINAPI LdrLoadDll(LPCSTR, DWORD, PUNICODE_STRING, HMODULE*);
+NTSTATUS WINAPI LdrShutdownThread(void);
+NTSTATUS WINAPI LdrShutdownProcess(void);
+NTSTATUS WINAPI LdrUnloadDll(HMODULE);
+NTSTATUS WINAPI LdrAccessResource(HMODULE, PIMAGE_RESOURCE_DATA_ENTRY, void**, PULONG);
+NTSTATUS WINAPI LdrFindResourceDirectory_U(HMODULE, PLDR_RESOURCE_INFO, DWORD, 
+                                           PIMAGE_RESOURCE_DIRECTORY_ENTRY*);
+NTSTATUS WINAPI LdrFindResource_U(HMODULE, PLDR_RESOURCE_INFO, ULONG, 
+                                  PIMAGE_RESOURCE_DATA_ENTRY*);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

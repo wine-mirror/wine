@@ -351,12 +351,12 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 
     if (last)
     {
-        MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
+        LdrShutdownProcess();
         exit( code );
     }
     else
     {
-        MODULE_DllThreadDetach( NULL );
+        LdrShutdownThread();
         if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_ExitTask();
         SYSDEPS_ExitThread( code );
     }

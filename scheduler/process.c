@@ -1425,7 +1425,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
  */
 void WINAPI ExitProcess( DWORD status )
 {
-    MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
+    LdrShutdownProcess();
     SERVER_START_REQ( terminate_process )
     {
         /* send the exit code to the server */
