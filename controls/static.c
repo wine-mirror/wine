@@ -322,20 +322,18 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
     case WM_SETFONT:
         if ((style == SS_ICON) || (style == SS_BITMAP)) return 0;
         SetWindowLongA( hwnd, HFONT_GWL_OFFSET, wParam );
+        if (!LOWORD(lParam)) break;  /* don't refresh */
 	switch (style) {
 	case SS_LEFT:
 	case SS_CENTER:
 	case SS_RIGHT:
 	case SS_SIMPLE:
 	case SS_LEFTNOWORDWRAP:
-        {
-	    if (uMsg == WM_SETTEXT)
-		STATIC_TryPaintFcn( hwnd, full_style );
+            STATIC_TryPaintFcn( hwnd, full_style );
 	    break;
-	}
 	default:
-	    if (LOWORD(lParam))
-		InvalidateRect( hwnd, NULL, FALSE );
+            InvalidateRect( hwnd, NULL, FALSE );
+            break;
 	}
         break;
 
