@@ -645,6 +645,9 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT WINAPI FormatCharDlgProcA(HWND,UINT,WPARAM,LPARAM);
 LRESULT WINAPI FormatCharDlgProcW(HWND,UINT,WPARAM,LPARAM);
 #define FormatCharDlgProc WINELIB_NAME_AW(FormatCharDlgProc)
+
+void COMDLG32_SetCommDlgExtendedError(DWORD err); 
+
 #ifdef __cplusplus
 }
 #endif

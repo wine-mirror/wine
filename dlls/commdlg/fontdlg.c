@@ -3,7 +3,6 @@
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Albrecht Kleine
- * Copyright 1999 Klaas van Gend
  */
 
 #include <ctype.h>
@@ -20,13 +19,10 @@
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "drive.h"
 #include "debug.h"
 #include "font.h"
 #include "winproc.h"
 #include "cderr.h"
-
-extern DWORD      CommDlgLastError;
 
 static HBITMAP16 hBitmapTT = 0; 
 
@@ -77,7 +73,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     {
         if (!(template = LockResource16( lpChFont->hInstance )))
         {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
+            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
             return FALSE;
         }
     }
@@ -88,13 +84,13 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
                                          lpChFont->lpTemplateName,
                                          RT_DIALOG16)))
         {
-            CommDlgLastError = CDERR_FINDRESFAILURE;
+            COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
         }
         if (!(hDlgTmpl = LoadResource16( lpChFont->hInstance, hResInfo )) ||
             !(template = LockResource16( hDlgTmpl )))
         {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
+            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
             return FALSE;
         }
     }

@@ -3,7 +3,6 @@
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Albrecht Kleine
- * Copyright 1999 Klaas van Gend
  */
 
 #include <ctype.h>
@@ -22,11 +21,8 @@
 #include "module.h"
 #include "drive.h"
 #include "debug.h"
-#include "font.h"
 #include "winproc.h"
 #include "cderr.h"
-
-extern DWORD      CommDlgLastError;
 
 static HICON16 hFolder = 0;
 static HICON16 hFolder2 = 0;
@@ -106,7 +102,7 @@ BOOL16 WINAPI GetOpenFileName16(
 	    {
 		if (!(template = LockResource( MapHModuleSL(lpofn->hInstance ))))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 	    }
@@ -115,14 +111,14 @@ BOOL16 WINAPI GetOpenFileName16(
 		if (!(hResInfo = FindResourceA(MapHModuleSL(lpofn->hInstance),
 						PTR_SEG_TO_LIN(lpofn->lpTemplateName), RT_DIALOGA)))
 		{
-		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 		    return FALSE;
 		}
 		if (!(hDlgTmpl = LoadResource( MapHModuleSL(lpofn->hInstance),
 						 hResInfo )) ||
 		    !(template = LockResource( hDlgTmpl )))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 	    } else {
@@ -134,7 +130,7 @@ BOOL16 WINAPI GetOpenFileName16(
 	    {
 		if (!(template = LockResource16( lpofn->hInstance )))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 	    }
@@ -144,13 +140,13 @@ BOOL16 WINAPI GetOpenFileName16(
 						lpofn->lpTemplateName,
                                                 RT_DIALOG16)))
 		{
-		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 		    return FALSE;
 		}
 		if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
 		    !(template = LockResource16( hDlgTmpl )))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 	    } else {
@@ -243,7 +239,7 @@ BOOL16 WINAPI GetSaveFileName16(
 	    {
 		if (!(template = LockResource( MapHModuleSL(lpofn->hInstance ))))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 	    }
@@ -254,14 +250,14 @@ BOOL16 WINAPI GetSaveFileName16(
 						 PTR_SEG_TO_LIN(lpofn->lpTemplateName),
                                                  RT_DIALOGA)))
 		{
-		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 		    return FALSE;
 		}
 		if (!(hDlgTmpl = LoadResource(MapHModuleSL(lpofn->hInstance),
 						hResInfo)) ||
 		    !(template = LockResource(hDlgTmpl)))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 		win32Format= TRUE;
@@ -274,7 +270,7 @@ BOOL16 WINAPI GetSaveFileName16(
 	    {
 		if (!(template = LockResource16( lpofn->hInstance )))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 	    }
@@ -285,13 +281,13 @@ BOOL16 WINAPI GetSaveFileName16(
 						lpofn->lpTemplateName,
                                                 RT_DIALOG16)))
 		{
-		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 		    return FALSE;
 		}
 		if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
 		    !(template = LockResource16( hDlgTmpl )))
 		{
-		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 		    return FALSE;
 		}
 	} else {

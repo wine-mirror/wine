@@ -3,7 +3,6 @@
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Albrecht Kleine
- * Copyright 1999 Klaas van Gend
  */
 
 #include <ctype.h>
@@ -13,28 +12,15 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "win.h"
-#include "heap.h"
 #include "message.h"
 #include "commdlg.h"
 #include "resource.h"
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "drive.h"
 #include "debug.h"
-#include "font.h"
 #include "winproc.h"
 
-extern DWORD      CommDlgLastError;
-/*
-extern HBITMAP16  hFolder;
-extern HBITMAP16  hFolder2;
-extern HBITMAP16  hFloppy;
-extern HBITMAP16  hHDisk;
-extern HBITMAP16  hCDRom;
-extern HBITMAP16  hBitmapTT;
-extern const char defaultfilter[];
-*/
 
 /***********************************************************************
  *           FindText16   (COMMDLG.11)

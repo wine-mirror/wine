@@ -3,7 +3,6 @@
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Albrecht Kleine
- * Copyright 1999 Klaas van Gend
  */
 
 #include <ctype.h>
@@ -14,19 +13,14 @@
 #include "wine/winuser16.h"
 #include "win.h"
 #include "heap.h"
-#include "message.h"
 #include "commdlg.h"
 #include "resource.h"
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "drive.h"
 #include "debug.h"
-#include "font.h"
 #include "winproc.h"
 #include "cderr.h"
-
-extern DWORD      CommDlgLastError;
 
 /***********************************************************************
  *           ChooseColor   (COMMDLG.5)
@@ -46,7 +40,7 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
     {
         if (!(template = LockResource16( lpChCol->hInstance )))
         {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
+            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
             return FALSE;
         }
     }
@@ -57,13 +51,13 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
                                         lpChCol->lpTemplateName,
                                         RT_DIALOG16)))
         {
-            CommDlgLastError = CDERR_FINDRESFAILURE;
+            COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
         }
         if (!(hDlgTmpl = LoadResource16( lpChCol->hInstance, hResInfo )) ||
             !(template = LockResource16( hDlgTmpl )))
         {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
+            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
             return FALSE;
         }
     }

@@ -13,31 +13,15 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "win.h"
-#include "heap.h"
 #include "message.h"
 #include "commdlg.h"
 #include "resource.h"
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "drive.h"
 #include "debug.h"
-#include "font.h"
 #include "winproc.h"
 #include "cderr.h"
-
-DWORD CommDlgLastError = 0;
-
-extern HBITMAP16  hFolder;
-extern HBITMAP16  hFolder2;
-extern HBITMAP16  hFloppy;
-extern HBITMAP16  hHDisk;
-extern HBITMAP16  hCDRom;
-extern HBITMAP16  hBitmapTT;
-extern const char defaultfilter[];
-
-
-
 
 /***********************************************************************
  *           PrintDlg16   (COMMDLG.20)
@@ -136,14 +120,15 @@ BOOL WINAPI PrintDlgA(
 	   {
 	    WARN(commdlg, ": PrintDlg was requested to return printer info only."
 					  "\n The return value currently does NOT provide these.\n");
-		CommDlgLastError=PDERR_NODEVICES; /* return TRUE, thus never checked! */
+		COMDLG32_SetCommDlgExtendedError(PDERR_NODEVICES); 
+        								/* return TRUE, thus never checked! */
 	    return(TRUE);
 	   }
 	   
 	if (lppd->Flags & PD_PRINTSETUP)
 		{
 		 FIXME(commdlg, ": PrintDlg was requested to display PrintSetup box.\n");
-		 CommDlgLastError=PDERR_INITFAILURE; 
+		 COMDLG32_SetCommDlgExtendedError(PDERR_INITFAILURE); 
 		 return(FALSE);
 		}
 		
