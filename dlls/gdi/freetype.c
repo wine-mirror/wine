@@ -1821,7 +1821,8 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
-    ret->aveWidth= lf.lfWidth;
+
+    ret->aveWidth = FT_IS_SCALABLE(ret->ft_face) ? lf.lfWidth : 0;
     list_add_head(&gdi_font_list, &ret->entry);
     return ret;
 }
