@@ -67,9 +67,11 @@ int	CDROM_SetDoor(WINE_CDAUDIO* wcda, int open);
 UINT16 	CDROM_Audio_GetNumberOfTracks(WINE_CDAUDIO* wcda);
 BOOL 	CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda);
 BOOL	CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda);
+WORD	CDROM_Data_FindBestVoldesc(int fd);
 DWORD	CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda);
 DWORD	CDROM_Data_GetSerial(WINE_CDAUDIO* wcda);
 DWORD	CDROM_GetSerial(int drive);
+DWORD	CDROM_GetLabel(int drive, char *label);
 
 #define CDFRAMES_PERSEC 		75
 #define SECONDS_PERMIN	 		60

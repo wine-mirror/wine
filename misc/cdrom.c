@@ -16,6 +16,7 @@
 #include "cdrom.h"
 #include "drive.h"
 #include "debugtools.h"
+#include "winbase.h"
 
 DEFAULT_DEBUG_CHANNEL(cdrom);
 
@@ -205,7 +206,7 @@ BOOL CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda)
 	    entry.cdte_track = CDROM_LEADOUT;
 #else
 #define LEADOUT 0xaa
-	entry.starting_track = LEADOUT; /* XXX */
+	entry.starting_track = LEADOUT; /* FIXME */
 #endif
 	else
 #ifdef linux
@@ -553,7 +554,7 @@ int	CDROM_Reset(WINE_CDAUDIO* wcda)
 #endif
 }
 
-unsigned int get_offs_best_voldesc(int fd)
+WORD CDROM_Data_FindBestVoldesc(int fd)
 {
     BYTE cur_vd_type, max_vd_type = 0;
     unsigned int offs, best_offs = 0;
@@ -562,7 +563,7 @@ unsigned int get_offs_best_voldesc(int fd)
     {
         lseek(fd, offs, SEEK_SET);
         read(fd, &cur_vd_type, 1);
-        if (cur_vd_type == 0xff)
+        if (cur_vd_type == 0xff) /* voldesc set terminator */
             break;
         if (cur_vd_type > max_vd_type)
         {
@@ -602,27 +603,41 @@ DWORD CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda)
  */
 DWORD CDROM_Data_GetSerial(WINE_CDAUDIO* wcda)
 {
-    unsigned int offs = get_offs_best_voldesc(wcda->unixdev);
+    WORD offs = CDROM_Data_FindBestVoldesc(wcda->unixdev);
     union {
 	unsigned long val;
 	unsigned char p[4];
     } serial;
-
+    BYTE b0 = 0, b1 = 1, b2 = 2, b3 = 3;
+    
     serial.val = 0;
     if (offs)
     {
 	BYTE buf[2048];
+	OSVERSIONINFOA ovi;
 	int i;
 
 	lseek(wcda->unixdev,offs,SEEK_SET);
 	read(wcda->unixdev,buf,2048);
+	/*
+	 * OK, another braindead one... argh. Just believe it.
+	 * Me$$ysoft chose to reverse the serial number in NT4/W2K.
+	 * It's true and nobody will ever be able to change it.
+	 */
+	ovi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+	GetVersionExA(&ovi);
+	if ((ovi.dwPlatformId == VER_PLATFORM_WIN32_NT)
+	&&  (ovi.dwMajorVersion >= 4))
+	{
+	    b0 = 3; b1 = 2; b2 = 1; b3 = 0;
+	}
 	for(i=0; i<2048; i+=4)
 	{
 	    /* DON'T optimize this into DWORD !! (breaks overflow) */
-	    serial.p[0] += buf[i+0];
-	    serial.p[1] += buf[i+1];
-	    serial.p[2] += buf[i+2];
-	    serial.p[3] += buf[i+3];
+	    serial.p[b0] += buf[i+b0];
+	    serial.p[b1] += buf[i+b1];
+	    serial.p[b2] += buf[i+b2];
+	    serial.p[b3] += buf[i+b3];
 	}
     }
     return serial.val;
@@ -655,9 +670,13 @@ DWORD CDROM_GetSerial(int drive)
 	    serial = CDROM_Audio_GetSerial(&wcda);
 	}
 	else
-	if (media > CDS_AUDIO)
+	if ((media > CDS_AUDIO)
+	||  (media == -1) /* ioctl() error: ISO9660 image file given ? */
+	   )
 	    /* hopefully a data CD */
 	    serial = CDROM_Data_GetSerial(&wcda);
+	else
+	    WARN("Strange CD type (%d) or empty ?\n", media);
 
 	p = (media == CDS_AUDIO) ? "Audio " :
 	    (media > CDS_AUDIO) ? "Data " : "";
@@ -669,5 +688,98 @@ DWORD CDROM_GetSerial(int drive)
 	CDROM_Close(&wcda);
     }
     return serial;
+}
+
+static const char empty_label[] = "           ";
+
+/**************************************************************************
+ *				CDROM_Data_GetLabel		[internal]
+ */
+DWORD CDROM_Data_GetLabel(WINE_CDAUDIO* wcda, char *label)
+{
+#define LABEL_LEN	32+1
+    WORD offs = CDROM_Data_FindBestVoldesc(wcda->unixdev);
+    WCHAR label_read[LABEL_LEN]; /* Unicode possible, too */
+    DWORD unicode_id = 0;
+
+    if (offs)
+    {
+	if ((lseek(wcda->unixdev, offs+0x58, SEEK_SET) == offs+0x58)
+	&&  (read(wcda->unixdev, &unicode_id, 3) == 3))
+	{
+	    int ver = (unicode_id & 0xff0000) >> 16;
+
+	    if ((lseek(wcda->unixdev, offs+0x28, SEEK_SET) != offs+0x28)
+	    ||  (read(wcda->unixdev, &label_read, LABEL_LEN) != LABEL_LEN))
+		goto failure;
+
+	    if ((LOWORD(unicode_id) == 0x2f25) /* Unicode ID */
+	    &&  ((ver == 0x40) || (ver == 0x43) || (ver == 0x45)))
+	    { /* yippee, unicode */
+		int i;
+		WORD ch;
+		for (i=0; i<LABEL_LEN;i++)
+		{ /* Motorola -> Intel Unicode conversion :-\ */
+		     ch = label_read[i];
+		     label_read[i] = (ch << 8) | (ch >> 8);
+		}
+		lstrcpynWtoA(label, label_read, 11);
+	    }
+	    else
+	    {
+		strncpy(label, (LPSTR)label_read, 11);
+		label[11] = '\0';
+	    }
+	    return 0;
+	}
+    }
+failure:
+    ERR("error reading label !\n");
+    strcpy(label, empty_label);
+    return 0;
+}
+
+/**************************************************************************
+ *				CDROM_GetLabel			[internal]
+ */
+DWORD CDROM_GetLabel(int drive, char *label)
+{
+    WINE_CDAUDIO wcda;
+    DWORD res = 1;
+
+    if (!(CDROM_Open(&wcda, drive)))
+    {
+	int media = CDROM_GetMediaType(&wcda);
+	LPSTR p;
+
+	if (media == CDS_AUDIO)
+	{
+	    strcpy(label, "Audio CD   ");
+	}
+	else
+	if (media == CDS_NO_INFO)
+	{
+	    strcpy(label, empty_label);
+	}
+	else
+	if ((media > CDS_AUDIO)
+	||  (media == -1) /* ioctl() error: ISO9660 image file given ? */
+	   )
+	    /* hopefully a data CD */
+	    CDROM_Data_GetLabel(&wcda, label);
+	else
+	{
+	    WARN("Strange CD type (%d) or empty ?\n", media);
+	    strcpy(label, empty_label);
+	    res = 0;
+	}
+
+	p = (media == CDS_AUDIO) ? "Audio " :
+	    (media > CDS_AUDIO) ? "Data " : "";
+	TRACE("%sCD label is '%s'.\n",
+	    p, label);
+	CDROM_Close(&wcda);
+    }
+    return res;
 }
 

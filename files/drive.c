@@ -239,6 +239,7 @@ int DRIVE_Init(void)
         strcpy( DOSDrives[2].label_conf, "Drive C    " );
         DOSDrives[2].serial_conf   = 12345678;
         DOSDrives[2].type     = TYPE_HD;
+        DOSDrives[2].device   = NULL;
         DOSDrives[2].flags    = 0;
         DRIVE_CurDrive = 2;
     }
@@ -456,9 +457,7 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
 	    offs = 0;
 	    break;
 	case TYPE_CDROM:
-	/* FIXME: Maybe we should search for the first data track on the CD,
-		  not just assume that it is the first track */
-	    offs = (off_t)2048*(16+0);
+	    offs = CDROM_Data_FindBestVoldesc(fd);
 	    break;
 		default:
 		    offs = 0;
@@ -473,7 +472,7 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
 	case TYPE_FLOPPY:
 	case TYPE_HD:
 	    if ((buff[0x26]!=0x29) ||  /* Check for FAT present */
-                /* FIXME: do really all Fat have their name beginning with
+                /* FIXME: do really all FAT have their name beginning with
                    "FAT" ? (At least FAT12, FAT16 and FAT32 have :) */
 	    	memcmp( buff+0x36,"FAT",3))
             {
@@ -544,41 +543,20 @@ const char * DRIVE_GetLabel( int drive )
     if (!DRIVE_IsValid( drive )) return NULL;
     if (DRIVE_GetType(drive) == TYPE_CDROM)
     {
-	WINE_CDAUDIO wcda;
-
-	if (!(CDROM_Open(&wcda, drive)))
-	{
-	    int media = CDROM_GetMediaType(&wcda);
-
-	    if (media == CDS_AUDIO)
-	    {
-		strcpy(DOSDrives[drive].label_read, "Audio CD   ");
-		read = 1;
-	    }
-	    else
-	    if (media == CDS_NO_INFO)
-	    {
-		strcpy(DOSDrives[drive].label_read, "           ");
-		read = 1;
-	    }
-
-	    CDROM_Close(&wcda);
-}
+	read = CDROM_GetLabel(drive, DOSDrives[drive].label_read); 
     }
-    if ((!read) && (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO))
+    else
+    if (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO)
     {
 	if (DRIVE_ReadSuperblock(drive,(char *) buff))
 	    ERR("Invalid or unreadable superblock on %s (%c:).\n",
 		DOSDrives[drive].device, (char)(drive+'A'));
 	else {
-	    if (DOSDrives[drive].type == TYPE_CDROM)
-		offs = 40;
-	    else
 	    if (DOSDrives[drive].type == TYPE_FLOPPY ||
 		DOSDrives[drive].type == TYPE_HD)
 		offs = 0x2b;
 
-	    /* FIXME: ISO9660 uses 32-bytes long label. Should we do also? */
+	    /* FIXME: ISO9660 uses a 32 bytes long label. Should we do also? */
 	    if (offs != -1) memcpy(DOSDrives[drive].label_read,buff+offs,11);
 	    DOSDrives[drive].label_read[11]='\0';
 	    read = 1;
@@ -683,7 +661,7 @@ int DRIVE_Chdir( int drive, const char *path )
 
     strcpy( buffer, "A:" );
     buffer[0] += drive;
-    TRACE("(%c:,%s)\n", buffer[0], path );
+    TRACE("(%s,%s)\n", buffer, path );
     lstrcpynA( buffer + 2, path, sizeof(buffer) - 2 );
 
     if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
@@ -769,8 +747,8 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
 
     if ( new->root )
     {
-        TRACE("Can\'t map drive %c to drive %c - drive %c already exists\n",
-              'A' + existing_drive, 'A' + new_drive, 'A' + new_drive );
+        TRACE("Can't map drive %c: to already existing drive %c:\n",
+              'A' + existing_drive, 'A' + new_drive );
 	/* it is already mapped there, so return success */
 	if (!strcmp(old->root,new->root))
 	    return 1;
@@ -780,14 +758,16 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     new->root = HEAP_strdupA( GetProcessHeap(), 0, old->root );
     new->dos_cwd = HEAP_strdupA( GetProcessHeap(), 0, old->dos_cwd );
     new->unix_cwd = HEAP_strdupA( GetProcessHeap(), 0, old->unix_cwd );
+    new->device = HEAP_strdupA( GetProcessHeap(), 0, old->device );
     memcpy ( new->label_conf, old->label_conf, 12 );
+    memcpy ( new->label_read, old->label_read, 12 );
     new->serial_conf = old->serial_conf;
     new->type = old->type;
     new->flags = old->flags;
     new->dev = old->dev;
     new->ino = old->ino;
 
-    TRACE("Drive %c is now equal to drive %c\n",
+    TRACE("Drive %c: is now equal to drive %c:\n",
           'A' + new_drive, 'A' + existing_drive );
 
     return 1;
@@ -825,15 +805,15 @@ int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL fa
     else
     {
         memset(dataptr, 0, nr_sect * 512);
-		if (fake_success)
+	if (fake_success)
         {
-			if (begin == 0 && nr_sect > 1) *(dataptr + 512) = 0xf8;
-			if (begin == 1) *dataptr = 0xf8;
-		}
-		else
-		return 0;
+	    if (begin == 0 && nr_sect > 1) *(dataptr + 512) = 0xf8;
+	    if (begin == 1) *dataptr = 0xf8;
+	}
+	else
+	    return 0;
     }
-	return 1;
+    return 1;
 }
 
 
@@ -844,7 +824,7 @@ int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL fa
  */
 int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL fake_success)
 {
-	int fd;
+    int fd;
 
     if ((fd = DRIVE_OpenDevice( drive, O_RDONLY )) != -1)
     {
@@ -854,10 +834,10 @@ int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
         close( fd );
     }
     else
-	if (!(fake_success))
-		return 0;
+    if (!(fake_success))
+	return 0;
 
-	return 1;
+    return 1;
 }
 
 
@@ -1093,13 +1073,13 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
     if (total)
     {
         total->s.HighPart = size.s.HighPart;
-        total->s.LowPart = size.s.LowPart ;
+        total->s.LowPart = size.s.LowPart;
     }
 
     if (totalfree)
     {
         totalfree->s.HighPart = available.s.HighPart;
-        totalfree->s.LowPart = available.s.LowPart ;
+        totalfree->s.LowPart = available.s.LowPart;
     }
 
     if (avail)
@@ -1124,7 +1104,7 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
         /* Quick hack, should eventually be fixed to work 100% with
            Windows2000 (see comment above). */
         avail->s.HighPart = available.s.HighPart;
-        avail->s.LowPart = available.s.LowPart ;
+        avail->s.LowPart = available.s.LowPart;
     }
 
     return TRUE;
@@ -1176,7 +1156,7 @@ UINT16 WINAPI GetDriveType16(
 /***********************************************************************
  *           GetDriveTypeA   (KERNEL32.208)
  *
- * Returns the type of the disk drive specified.  If root is NULL the
+ * Returns the type of the disk drive specified. If root is NULL the
  * root of the current directory is used.
  *
  * RETURNS
@@ -1184,15 +1164,15 @@ UINT16 WINAPI GetDriveType16(
  *  Type of drive (from Win32 SDK):
  *
  *   DRIVE_UNKNOWN     unable to find out anything about the drive
- *   DRIVE_NO_ROOT_DIR nonexistand root dir
+ *   DRIVE_NO_ROOT_DIR nonexistent root dir
  *   DRIVE_REMOVABLE   the disk can be removed from the machine
  *   DRIVE_FIXED       the disk can not be removed from the machine
  *   DRIVE_REMOTE      network disk
  *   DRIVE_CDROM       CDROM drive
- *   DRIVE_RAMDISK     virtual disk in ram
+ *   DRIVE_RAMDISK     virtual disk in RAM
  *
- *   DRIVE_DOESNOTEXIST    XXX Not valid return value
- *   DRIVE_CANNOTDETERMINE XXX Not valid return value
+ *   DRIVE_DOESNOTEXIST    FIXME Not valid return value
+ *   DRIVE_CANNOTDETERMINE FIXME Not valid return value
  *   
  * BUGS
  *
@@ -1297,7 +1277,7 @@ BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
  */
 BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 {
-    int olddrive, drive = DRIVE_GetCurrentDrive();
+    int drive, olddrive = DRIVE_GetCurrentDrive();
 
     if (!dir) {
     	ERR_(file)("(NULL)!\n");
@@ -1305,13 +1285,14 @@ BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
     }
     if (dir[0] && (dir[1]==':'))
     {
-        drive = tolower( *dir ) - 'a';
+        drive = toupper( *dir ) - 'A';
         dir += 2;
     }
+    else
+	drive = olddrive;
 
     /* WARNING: we need to set the drive before the dir, as DRIVE_Chdir
        sets pTask->curdir only if pTask->curdrive is drive */
-    olddrive = drive; /* in case DRIVE_Chdir fails */
     if (!(DRIVE_SetCurrentDrive( drive )))
 	return FALSE;
     /* FIXME: what about empty strings? Add a \\ ? */
@@ -1356,10 +1337,10 @@ UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
                 *p++ = '\0';
             }
         *p = '\0';
-       return count * 4;
+        return count * 4;
     }
     else
-      return (count * 4) + 1;/* account for terminating null */
+        return (count * 4) + 1; /* account for terminating null */
     /* The API tells about these different return values */
 }
 

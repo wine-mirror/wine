@@ -9,19 +9,11 @@
 
 #include "config.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "wine/winbase16.h"
-#include "ldt.h"
 #include "drive.h"
-#include "msdos.h"
 #include "miscemu.h"
 #include "module.h"
 #include "task.h"
-#include "dosexe.h"
-#include "heap.h"
 /* #define DEBUG_INT */
 #include "debugtools.h"
 #include "cdrom.h"
@@ -582,7 +574,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			MSCDEX_StoreMSF(wcda.dwCurFrame, io_stru + 2);
 			break;
 		    default:
-			ERR("CDRom-Driver: Unsupported addressing mode !!\n");
+			ERR("CD-ROM driver: unsupported addressing mode !!\n");
 			Error = 0x0c;
 		    }	
 		    TRACE(" ----> HEAD LOCATION <%ld>\n", PTR_AT(io_stru, 2, DWORD)); 
