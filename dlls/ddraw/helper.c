@@ -66,7 +66,8 @@ static void DDRAW_dump_flags_(DWORD flags, const flag_info* names,
     unsigned int	i;
 
     for (i=0; i < num_names; i++)
-	if (names[i].val & flags)
+        if ((flags & names[i].val) ||      /* standard flag value */
+	    ((!flags) && (!names[i].val))) /* zero value only */
 	    DPRINTF("%s ", names[i].name);
 
     if (newline)
@@ -324,6 +325,21 @@ void DDRAW_dump_colorkeyflag(DWORD ck)
     };
 
     DDRAW_dump_flags(ck, flags, sizeof(flags)/sizeof(flags[0]));
+}
+
+void DDRAW_dump_lockflag(DWORD lockflag)
+{
+    static const flag_info flags[] =
+	{
+	    FE(DDLOCK_SURFACEMEMORYPTR),
+	    FE(DDLOCK_WAIT),
+	    FE(DDLOCK_EVENT),
+	    FE(DDLOCK_READONLY),
+	    FE(DDLOCK_WRITEONLY),
+	    FE(DDLOCK_NOSYSLOCK)
+	};
+
+    DDRAW_dump_flags(lockflag, flags, sizeof(flags)/sizeof(flags[0]));
 }
 
 static void DDRAW_dump_DWORD(const void *in) {

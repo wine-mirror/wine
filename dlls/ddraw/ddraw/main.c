@@ -451,7 +451,7 @@ create_primary(IDirectDrawImpl* This, LPDDSURFACEDESC2 pDDSD,
 
 	ddsd.dwFlags &= ~DDSD_BACKBUFFERCOUNT;
 	ddsd.ddsCaps.dwCaps &= ~(DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE
-				 | DDSCAPS_BACKBUFFER);
+				 | DDSCAPS_BACKBUFFER | DDSCAPS_FRONTBUFFER);
 
 	primary = ICOM_OBJECT(IDirectDrawSurfaceImpl,IDirectDrawSurface7,
 			      *ppSurf);

@@ -977,7 +977,10 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 {
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
-    TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,prect,pDDSD,flags,(DWORD)h);
+    if (TRACE_ON(ddraw)) {
+        TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,prect,pDDSD,flags,(DWORD)h);
+	TRACE(" - locking flags : "); DDRAW_dump_lockflag(flags);
+    }
 
     if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
 	WARN("(%p)->Lock(%p,%p,%08lx,%08lx)\n",
