@@ -577,7 +577,6 @@ static HRESULT register_filters(struct regsvr_filter const *list)
     IFilterMapper2* pFM2 = NULL;
 
     CoInitialize(NULL);
-    
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pFM2);
 
     if (SUCCEEDED(hr)) {
@@ -585,6 +584,7 @@ static HRESULT register_filters(struct regsvr_filter const *list)
 	    REGFILTER2 rf2;
 	    REGFILTERPINS2* prfp2;
 	    int i;
+
 	    for (i = 0; list->pins[i].flags != 0xFFFFFFFF; i++) ;
 	    rf2.dwVersion = 2;
 	    rf2.dwMerit = list->merit;
@@ -598,6 +598,7 @@ static HRESULT register_filters(struct regsvr_filter const *list)
 		REGPINTYPES* lpMediatype;
 		CLSID* lpClsid;
 		int j, nbmt;
+                
 		for (nbmt = 0; list->pins[i].mediatypes[nbmt].majortype; nbmt++) ;
 		/* Allocate a single buffer for regpintypes struct and clsids */
 		lpMediatype = (REGPINTYPES*) CoTaskMemAlloc(nbmt*(sizeof(REGPINTYPES) + 2*sizeof(CLSID)));
@@ -627,10 +628,17 @@ static HRESULT register_filters(struct regsvr_filter const *list)
 		prfp2[i].clsPinCategory = NULL;
 	    }
 
+	    if (FAILED(hr)) {
+		ERR("failed to register with hresult 0x%lx\n", hr);
+		break;
+	    }
+
 	    hr = IFilterMapper2_RegisterFilter(pFM2, list->clsid, list->name, NULL, list->category, NULL, &rf2);
 
-	    while (i--)
+	    while (i) {
 		CoTaskMemFree((REGPINTYPES*)prfp2[i-1].lpMediaType);
+		i--;
+	    }
 	    CoTaskMemFree(prfp2);
 	}
     }
