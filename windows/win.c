@@ -15,16 +15,15 @@
 #include "heap.h"
 #include "user.h"
 #include "dce.h"
+#include "controls.h"
 #include "cursoricon.h"
 #include "hook.h"
-#include "menu.h"
 #include "message.h"
 #include "queue.h"
 #include "winpos.h"
 #include "task.h"
 #include "thread.h"
 #include "winerror.h"
-#include "mdi.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -585,9 +584,8 @@ BOOL WIN_CreateDesktopWindow(void)
     TRACE("Creating desktop window\n");
 
 
-    if (!ICONTITLE_Init() ||
-	!WINPOS_CreateInternalPosAtom() ||
-        !(class = CLASS_AddWindow( DESKTOP_CLASS_ATOM, 0, WIN_PROC_32A,
+    if (!WINPOS_CreateInternalPosAtom() ||
+        !(class = CLASS_AddWindow( (ATOM)LOWORD(DESKTOP_CLASS_ATOM), 0, WIN_PROC_32W,
                                    &wndExtra, &winproc, &clsStyle, &dce )))
         return FALSE;
 
@@ -632,11 +630,9 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->cbWndExtra        = wndExtra;
     pWndDesktop->irefCount         = 0;
 
-    /* FIXME: How do we know if it should be Unicode or not */
-    if(!pWndDesktop->pDriver->pCreateDesktopWindow(pWndDesktop, FALSE))
-      return FALSE;
-    
-    SendMessageA( hwndDesktop, WM_NCCREATE, 0, 0 );
+    if(!pWndDesktop->pDriver->pCreateDesktopWindow(pWndDesktop)) return FALSE;
+
+    SendMessageW( hwndDesktop, WM_NCCREATE, 0, 0 );
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     return TRUE;
 }

@@ -11,6 +11,7 @@
 #include "wingdi.h"
 #include "winerror.h"
 #include "wine/winuser16.h"
+#include "controls.h"
 #include "heap.h"
 #include "user.h"
 #include "region.h"

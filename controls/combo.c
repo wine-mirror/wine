@@ -17,7 +17,7 @@
 #include "spy.h"
 #include "user.h"
 #include "heap.h"
-#include "combo.h"
+#include "controls.h"
 #include "drive.h"
 #include "debugtools.h"
 #include "tweak.h"
@@ -56,6 +56,24 @@ static UINT	CBitHeight, CBitWidth;
 #define COMBO_YBORDERSIZE()      ( (TWEAK_WineLook == WIN31_LOOK) ? 0 : 2 )
 #define COMBO_EDITBUTTONSPACE()  ( (TWEAK_WineLook == WIN31_LOOK) ? 8 : 0 )
 #define EDIT_CONTROL_PADDING()   ( (TWEAK_WineLook == WIN31_LOOK) ? 0 : 1 )
+
+static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
+
+/*********************************************************************
+ * combo class descriptor
+ */
+const struct builtin_class_descr COMBO_builtin_class =
+{
+    "ComboBox",           /* name */
+    CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, /* style  */
+    ComboWndProcA,        /* procA */
+    NULL,                 /* procW (FIXME) */
+    sizeof(HEADCOMBO *),  /* extra */
+    IDC_ARROWA,           /* cursor */
+    0                     /* brush */
+};
+
 
 /***********************************************************************
  *           COMBO_Init
@@ -2147,18 +2165,16 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 }
 
 /***********************************************************************
- *           ComboWndProc
+ *           ComboWndProcA
  *
  * This is just a wrapper for the real ComboWndProc which locks/unlocks
  * window structs.
  */
-LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
-                             WPARAM wParam, LPARAM lParam )
+static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     WND*	pWnd = WIN_FindWndPtr(hwnd);
     LRESULT retvalue = ComboWndProc_locked(pWnd,message,wParam,lParam);
 
-    
     WIN_ReleaseWndPtr(pWnd);
     return retvalue;
 }

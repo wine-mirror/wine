@@ -15,19 +15,6 @@
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
-  /* Built-in class names (see _Undocumented_Windows_ p.418) */
-#define POPUPMENU_CLASS_NAME "#32768"  /* PopupMenu */
-#define DESKTOP_CLASS_NAME   "#32769"  /* Desktop */
-#define DIALOG_CLASS_NAME    "#32770"  /* Dialog */
-#define WINSWITCH_CLASS_NAME "#32771"  /* WinSwitch */
-#define ICONTITLE_CLASS_NAME "#32772"  /* IconTitle */
-
-#define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
-#define DESKTOP_CLASS_ATOM   ((ATOM)32769)       /* Desktop */
-#define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
-#define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
-#define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
-
   /* PAINT_RedrawWindow() control flags */
 #define RDW_EX_USEHRGN		0x0001
 #define RDW_EX_DELETEHRGN	0x0002
@@ -102,7 +89,7 @@ typedef struct tagWND_DRIVER
 {
     void   (*pInitialize)(WND *);
     void   (*pFinalize)(WND *);
-    BOOL   (*pCreateDesktopWindow)(WND *, BOOL);
+    BOOL   (*pCreateDesktopWindow)(WND *);
     BOOL   (*pCreateWindow)(WND *, CREATESTRUCTA *, BOOL);
     BOOL (*pDestroyWindow)(WND *);
     WND*   (*pSetParent)(WND *, WND *);
@@ -201,32 +188,16 @@ extern HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT flags);     /* windows/pai
 
 /* Classes functions */
 struct tagCLASS;  /* opaque structure */
-extern ATOM CLASS_RegisterBuiltinClass( LPCSTR name, DWORD style, INT winExtra, LPCSTR cursor,
-                                        HBRUSH brush, WNDPROC wndProcA, WNDPROC wndProcW );
+struct builtin_class_descr;
+extern ATOM CLASS_RegisterBuiltinClass( const struct builtin_class_descr *descr );
 extern struct tagCLASS *CLASS_AddWindow( ATOM atom, HINSTANCE inst, WINDOWPROCTYPE type,
                                          INT *winExtra, WNDPROC *winproc,
                                          DWORD *style, struct tagDCE **dce );
 extern void CLASS_RemoveWindow( struct tagCLASS *cls );
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 
-/* controls/widgets.c */
-extern BOOL WIDGETS_Init( void );
-
-/* controls/icontitle.c */
-extern LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );
-
-extern HWND ICONTITLE_Create( WND* );
-extern BOOL ICONTITLE_Init( void );
-
 /* windows/focus.c */
 extern void FOCUS_SwitchFocus( struct tagMESSAGEQUEUE *pMsgQ, HWND , HWND );
-
-/* windows/edit.c */
-extern LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-
-/* windows/listbox.c */
-extern LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-extern LRESULT WINAPI ComboLBWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
 /* generic method that returns TRUE if the window properties ask for a 
    window manager type of border */

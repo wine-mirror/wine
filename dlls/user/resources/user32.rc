@@ -7,7 +7,9 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "dlgs.h"
-#include "mdi.h"
+
+#define MDI_IDC_LISTBOX         100
+#define MDI_IDS_MOREWINDOWS     13
 
 /*
  * Everything that does not depend on language,

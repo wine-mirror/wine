@@ -15,10 +15,10 @@
 #include "wine/winuser16.h"
 #include "winerror.h"
 
+#include "controls.h"
 #include "keyboard.h"
 #include "tweak.h"
 #include "user.h"
-#include "desktop.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(system);

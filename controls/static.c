@@ -10,7 +10,7 @@
 #include "wine/winuser16.h"
 #include "win.h"
 #include "cursoricon.h"
-#include "static.h"
+#include "controls.h"
 #include "heap.h"
 #include "debugtools.h"
 #include "tweak.h"
@@ -23,9 +23,16 @@ static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintBitmapfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintEtchedfn( WND *wndPtr, HDC hdc );
+static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 static COLORREF color_windowframe, color_background, color_window;
 
+typedef struct
+{
+    HFONT16  hFont;   /* Control font (or 0 for system font) */
+    WORD     dummy;   /* Don't know what MS-Windows puts in there */
+    HICON16  hIcon;   /* Icon handle for SS_ICON controls */
+} STATICINFO;
 
 typedef void (*pfPaint)( WND *, HDC );
 
@@ -50,6 +57,21 @@ static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     STATIC_PaintEtchedfn,    /* SS_ETCHEDHORIZ */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDVERT */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDFRAME */
+};
+
+
+/*********************************************************************
+ * static class descriptor
+ */
+const struct builtin_class_descr STATIC_builtin_class =
+{
+    "Static",            /* name */
+    CS_GLOBALCLASS | CS_DBLCLKS | CS_PARENTDC, /* style  */
+    StaticWndProcA,      /* procA */
+    NULL,                /* procW (FIXME) */
+    sizeof(STATICINFO),  /* extra */
+    IDC_ARROWA,          /* cursor */
+    0                    /* brush */
 };
 
 
@@ -135,10 +157,9 @@ static HBITMAP STATIC_LoadBitmap( WND *wndPtr, LPCSTR name )
 
 
 /***********************************************************************
- *           StaticWndProc
+ *           StaticWndProcA
  */
-LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
-                              LPARAM lParam )
+static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     LRESULT lResult = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);

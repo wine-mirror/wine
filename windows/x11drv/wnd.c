@@ -173,7 +173,7 @@ void X11DRV_WND_Finalize(WND *wndPtr)
 /**********************************************************************
  *		X11DRV_WND_CreateDesktopWindow
  */
-BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, BOOL bUnicode)
+BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr)
 {
     if (wmProtocols == None)
         wmProtocols = TSXInternAtom( display, "WM_PROTOCOLS", True );

@@ -28,7 +28,6 @@
 #include "clipboard.h"
 #include "dce.h"
 #include "debugtools.h"
-#include "drive.h"
 #include "heap.h"
 #include "input.h"
 #include "keyboard.h"
@@ -1576,9 +1575,6 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 	    {
 	      p_drop = p;
 	      if((u.i = *p) != -1 ) 
-		u.i = DRIVE_FindDriveRoot( (const char **)&p_drop );
-	      if( u.i == -1 ) *p = -1;	/* mark as "bad" */
-	      else
 		{
 		  INT len = GetShortPathNameA( p, NULL, 0 );
 		  if (len) aux_long += len + 1;

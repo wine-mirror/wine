@@ -8,13 +8,38 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "desktop.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "heap.h"
 #include "user.h"
 #include "win.h"
+#include "controls.h"
 #include "wine/winuser16.h"
+
+typedef struct
+{
+    HBRUSH        hbrushPattern;
+    HBITMAP       hbitmapWallPaper;
+    SIZE          bitmapSize;
+    BOOL          fTileWallPaper;
+} DESKTOP;
+
+static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
+
+
+/*********************************************************************
+ * desktop class descriptor
+ */
+const struct builtin_class_descr DESKTOP_builtin_class =
+{
+    DESKTOP_CLASS_ATOM,   /* name */
+    CS_GLOBALCLASS,       /* style */
+    NULL,                 /* procA (winproc is Unicode only) */
+    DesktopWndProc,       /* procW */
+    sizeof(DESKTOP),      /* extra */
+    IDC_ARROWA,           /* cursor */
+    COLOR_BACKGROUND+1    /* brush */
+};
 
 
 /***********************************************************************
@@ -183,8 +208,7 @@ static inline LRESULT WINAPI DesktopWndProc_locked( WND *wndPtr, UINT message,
  * This is just a wrapper for the DesktopWndProc which does windows
  * locking and unlocking.
  */
-LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
-                               WPARAM wParam, LPARAM lParam )
+static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT retvalue = DesktopWndProc_locked(wndPtr,message,wParam,lParam);

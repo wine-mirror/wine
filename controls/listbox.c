@@ -18,7 +18,7 @@
 #include "spy.h"
 #include "selectors.h"
 #include "win.h"
-#include "combo.h"
+#include "controls.h"
 #include "debugtools.h"
 #include "tweak.h"
 
@@ -110,6 +110,39 @@ typedef enum
 } TIMER_DIRECTION;
 
 static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
+
+static LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
+
+/*********************************************************************
+ * listbox class descriptor
+ */
+const struct builtin_class_descr LISTBOX_builtin_class =
+{
+    "ListBox",            /* name */
+    CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,  /* style */
+    ListBoxWndProcA,      /* procA */
+    NULL,                 /* procW (FIXME) */
+    sizeof(LB_DESCR *),   /* extra */
+    IDC_ARROWA,           /* cursor */
+    0                     /* brush */
+};
+
+
+/*********************************************************************
+ * combolbox class descriptor
+ */
+const struct builtin_class_descr COMBOLBOX_builtin_class =
+{
+    "ComboLBox",          /* name */
+    CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,  /* style */
+    ComboLBWndProcA,      /* procA */
+    NULL,                 /* procW (FIXME) */
+    sizeof(LB_DESCR *),   /* extra */
+    IDC_ARROWA,           /* cursor */
+    0                     /* brush */
+};
 
 
 /***********************************************************************
@@ -2855,13 +2888,12 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
 }
 
 /***********************************************************************
- *           ListBoxWndProc
+ *           ListBoxWndProcA
  *
  * This is just a wrapper for the real wndproc, it only does window locking
  * and unlocking.
  */
-LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg,
-                               WPARAM wParam, LPARAM lParam )
+static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     WND*	wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT	res = ListBoxWndProc_locked(wndPtr,msg,wParam,lParam);
@@ -2968,7 +3000,7 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 		       /*
 			* If we are in Win3.1 look, go with the default behavior.
 			*/
-		       return ListBoxWndProc( hwnd, msg, wParam, lParam );
+		       return ListBoxWndProcA( hwnd, msg, wParam, lParam );
 		     }
   	        case WM_LBUTTONUP:
 		     if (TWEAK_WineLook > WIN31_LOOK)
@@ -3029,7 +3061,7 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 
 		case LB_SETCURSEL16:
 		case LB_SETCURSEL:
-		     lRet = ListBoxWndProc( hwnd, msg, wParam, lParam );
+		     lRet = ListBoxWndProcA( hwnd, msg, wParam, lParam );
 		     lRet =(lRet == LB_ERR) ? lRet : descr->selected_item; 
 		     return lRet;
 		case WM_NCDESTROY:
@@ -3038,7 +3070,7 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 		     /* fall through */
 
 	        default:
-                    return ListBoxWndProc( hwnd, msg, wParam, lParam );
+                    return ListBoxWndProcA( hwnd, msg, wParam, lParam );
 	    }
         }
         lRet = DefWindowProcA( hwnd, msg, wParam, lParam );
@@ -3057,7 +3089,7 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
  * This is just a wrapper for the real wndproc, it only does window locking
  * and unlocking.
  */
-LRESULT WINAPI ComboLBWndProc( HWND hwnd, UINT msg,
+LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg,
                                WPARAM wParam, LPARAM lParam )
 {
     WND *wnd = WIN_FindWndPtr( hwnd );

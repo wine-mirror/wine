@@ -88,12 +88,12 @@ void TTYDRV_WND_Finalize(WND *wndPtr)
 /**********************************************************************
  *		TTYDRV_WND_CreateDesktopWindow
  */
-BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr, BOOL bUnicode)
+BOOL TTYDRV_WND_CreateDesktopWindow(WND *wndPtr)
 {
   TTYDRV_WND_DATA *pWndDriverData =
     (TTYDRV_WND_DATA *) wndPtr->pDriverData;
 
-  TRACE("(%p, %d)\n", wndPtr, bUnicode);
+  TRACE("(%p)\n", wndPtr);
 
   if(!pWndDriverData) { ERR("WND never initialized\n"); return FALSE; }
 

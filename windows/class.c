@@ -22,6 +22,7 @@
 #include "wine/unicode.h"
 #include "heap.h"
 #include "win.h"
+#include "controls.h"
 #include "dce.h"
 #include "ldt.h"
 #include "toolhelp.h"
@@ -348,27 +349,26 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance,
  * Register a builtin control class.
  * This allows having both ASCII and Unicode winprocs for the same class.
  */
-ATOM CLASS_RegisterBuiltinClass( LPCSTR name, DWORD style, INT winExtra, LPCSTR cursor,
-                                 HBRUSH brush, WNDPROC wndProcA, WNDPROC wndProcW )
+ATOM CLASS_RegisterBuiltinClass( const struct builtin_class_descr *descr )
 {
     ATOM atom;
     CLASS *classPtr;
 
-    if (!(atom = GlobalAddAtomA( name ))) return 0;
+    if (!(atom = GlobalAddAtomA( descr->name ))) return 0;
 
-    if (!(classPtr = CLASS_RegisterClass( atom, 0, style, 0, winExtra )))
+    if (!(classPtr = CLASS_RegisterClass( atom, 0, descr->style, 0, descr->extra )))
     {
         GlobalDeleteAtom( atom );
         return 0;
     }
 
-    classPtr->hCursor       = LoadCursorA( 0, cursor );
-    classPtr->hbrBackground = brush;
+    classPtr->hCursor       = LoadCursorA( 0, descr->cursor );
+    classPtr->hbrBackground = descr->brush;
 
-    if (wndProcA) WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)wndProcA,
-                                   WIN_PROC_32A, WIN_PROC_CLASS );
-    if (wndProcW) WINPROC_SetProc( &classPtr->winprocW, (HWINDOWPROC)wndProcW,
-                                   WIN_PROC_32W, WIN_PROC_CLASS );
+    if (descr->procA) WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)descr->procA,
+                                       WIN_PROC_32A, WIN_PROC_CLASS );
+    if (descr->procW) WINPROC_SetProc( &classPtr->winprocW, (HWINDOWPROC)descr->procW,
+                                       WIN_PROC_32W, WIN_PROC_CLASS );
     return atom;
 }
 

@@ -8,12 +8,35 @@
 #include <string.h>
 #include <stdlib.h>	/* for abs() */
 #include "win.h"
-#include "button.h"
 #include "winbase.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "controls.h"
 #include "tweak.h"
+
+/* Note: under MS-Windows, state is a BYTE and this structure is
+ * only 3 bytes long. I don't think there are programs out there
+ * broken enough to rely on this :-)
+ */
+typedef struct
+{
+    WORD     state;   /* Current state */
+    HFONT16  hFont;   /* Button font (or 0 for system font) */
+    HANDLE   hImage;  /* Handle to the image or the icon */
+} BUTTONINFO;
+
+  /* Button state values */
+#define BUTTON_UNCHECKED       0x00
+#define BUTTON_CHECKED         0x01
+#define BUTTON_3STATE          0x02
+#define BUTTON_HIGHLIGHTED     0x04
+#define BUTTON_HASFOCUS        0x08
+#define BUTTON_NSTATES         0x0F
+  /* undocumented flags */
+#define BUTTON_BTNPRESSED      0x40
+#define BUTTON_UNKNOWN2        0x20
+#define BUTTON_UNKNOWN3        0x10
 
 static void PB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void CB_Paint( WND *wndPtr, HDC hDC, WORD action );
@@ -22,6 +45,8 @@ static void UB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void OB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void BUTTON_CheckAutoRadioButton( WND *wndPtr );
 static void BUTTON_DrawPushButton( WND *wndPtr, HDC hDC, WORD action, BOOL pushedState);
+static LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 #define MAX_BTN_TYPE  12
 
@@ -71,6 +96,21 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
 
 static HBITMAP hbitmapCheckBoxes = 0;
 static WORD checkBoxWidth = 0, checkBoxHeight = 0;
+
+
+/*********************************************************************
+ * button class descriptor
+ */
+const struct builtin_class_descr BUTTON_builtin_class =
+{
+    "Button",            /* name */
+    CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
+    ButtonWndProcA,      /* procA */
+    ButtonWndProcW,      /* procW */
+    sizeof(BUTTONINFO),  /* extra */
+    IDC_ARROWA,          /* cursor */
+    0                    /* brush */
+};
 
 
 /***********************************************************************
@@ -365,7 +405,7 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
  * the passed HWND and calls the real window procedure (with a WND*
  * pointer pointing to the locked windowstructure).
  */
-LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     LRESULT res;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
@@ -380,7 +420,7 @@ LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 /***********************************************************************
  *           ButtonWndProcA
  */
-LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+static LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     LRESULT res;
     WND *wndPtr = WIN_FindWndPtr(hWnd);

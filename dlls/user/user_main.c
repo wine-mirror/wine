@@ -9,12 +9,11 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 
+#include "controls.h"
 #include "dce.h"
-#include "dialog.h"
 #include "global.h"
 #include "input.h"
 #include "keyboard.h"
-#include "menu.h"
 #include "message.h"
 #include "queue.h"
 #include "spy.h"
@@ -95,6 +94,41 @@ static BOOL load_driver(void)
 
 
 /***********************************************************************
+ *           controls_init
+ *
+ * Register the classes for the builtin controls
+ */
+static void controls_init(void)
+{
+    extern const struct builtin_class_descr BUTTON_builtin_class;
+    extern const struct builtin_class_descr COMBO_builtin_class;
+    extern const struct builtin_class_descr COMBOLBOX_builtin_class;
+    extern const struct builtin_class_descr DIALOG_builtin_class;
+    extern const struct builtin_class_descr DESKTOP_builtin_class;
+    extern const struct builtin_class_descr EDIT_builtin_class;
+    extern const struct builtin_class_descr ICONTITLE_builtin_class;
+    extern const struct builtin_class_descr LISTBOX_builtin_class;
+    extern const struct builtin_class_descr MDICLIENT_builtin_class;
+    extern const struct builtin_class_descr MENU_builtin_class;
+    extern const struct builtin_class_descr SCROLL_builtin_class;
+    extern const struct builtin_class_descr STATIC_builtin_class;
+
+    CLASS_RegisterBuiltinClass( &BUTTON_builtin_class );
+    CLASS_RegisterBuiltinClass( &COMBO_builtin_class );
+    CLASS_RegisterBuiltinClass( &COMBOLBOX_builtin_class );
+    CLASS_RegisterBuiltinClass( &DIALOG_builtin_class );
+    CLASS_RegisterBuiltinClass( &DESKTOP_builtin_class );
+    CLASS_RegisterBuiltinClass( &EDIT_builtin_class );
+    CLASS_RegisterBuiltinClass( &ICONTITLE_builtin_class );
+    CLASS_RegisterBuiltinClass( &LISTBOX_builtin_class );
+    CLASS_RegisterBuiltinClass( &MDICLIENT_builtin_class );
+    CLASS_RegisterBuiltinClass( &MENU_builtin_class );
+    CLASS_RegisterBuiltinClass( &SCROLL_builtin_class );
+    CLASS_RegisterBuiltinClass( &STATIC_builtin_class );
+}
+
+
+/***********************************************************************
  *           palette_init
  *
  * Patch the function pointers in GDI for SelectPalette and RealizePalette
@@ -149,7 +183,7 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     if (!WINPROC_Init()) return FALSE;
 
     /* Initialize built-in window classes */
-    if (!WIDGETS_Init()) return FALSE;
+    controls_init();
 
     /* Initialize dialog manager */
     if (!DIALOG_Init()) return FALSE;

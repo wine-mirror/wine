@@ -143,7 +143,7 @@ extern HANDLE TTYDRV_LoadOEMResource(WORD resid, WORD type);
 
 extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);
 extern void TTYDRV_WND_Finalize(struct tagWND *wndPtr);
-extern BOOL TTYDRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, BOOL bUnicode);
+extern BOOL TTYDRV_WND_CreateDesktopWindow(struct tagWND *wndPtr);
 extern BOOL TTYDRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCREATESTRUCTA *cs, BOOL bUnicode);
 extern BOOL TTYDRV_WND_DestroyWindow(struct tagWND *pWnd);
 extern struct tagWND *TTYDRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);

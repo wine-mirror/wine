@@ -8,7 +8,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "scroll.h"
+#include "controls.h"
 #include "heap.h"
 #include "win.h"
 #include "debugtools.h"
@@ -17,19 +17,28 @@
 
 DEFAULT_DEBUG_CHANNEL(scroll);
 
+typedef struct
+{
+    INT   CurVal;   /* Current scroll-bar value */
+    INT   MinVal;   /* Minimum scroll-bar value */
+    INT   MaxVal;   /* Maximum scroll-bar value */
+    INT   Page;     /* Page size of scroll bar (Win32) */
+    UINT  flags;    /* EnableScrollBar flags */
+} SCROLLBAR_INFO;
 
-static HBITMAP hUpArrow = 0;
-static HBITMAP hDnArrow = 0;
-static HBITMAP hLfArrow = 0;
-static HBITMAP hRgArrow = 0;
-static HBITMAP hUpArrowD = 0;
-static HBITMAP hDnArrowD = 0;
-static HBITMAP hLfArrowD = 0;
-static HBITMAP hRgArrowD = 0;
-static HBITMAP hUpArrowI = 0;
-static HBITMAP hDnArrowI = 0;
-static HBITMAP hLfArrowI = 0;
-static HBITMAP hRgArrowI = 0;
+
+static HBITMAP hUpArrow;
+static HBITMAP hDnArrow;
+static HBITMAP hLfArrow;
+static HBITMAP hRgArrow;
+static HBITMAP hUpArrowD;
+static HBITMAP hDnArrowD;
+static HBITMAP hLfArrowD;
+static HBITMAP hRgArrowD;
+static HBITMAP hUpArrowI;
+static HBITMAP hDnArrowI;
+static HBITMAP hLfArrowI;
+static HBITMAP hRgArrowI;
 
 #define TOP_ARROW(flags,pressed) \
    (((flags)&ESB_DISABLE_UP) ? hUpArrowI : ((pressed) ? hUpArrowD:hUpArrow))
@@ -98,6 +107,22 @@ static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
 				    INT thumbSize, INT thumbPos,
 				    UINT flags, BOOL vertical,
 				    BOOL top_selected, BOOL bottom_selected );
+static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+
+
+/*********************************************************************
+ * scrollbar class descriptor
+ */
+const struct builtin_class_descr SCROLL_builtin_class =
+{
+    "ScrollBar",            /* name */
+    CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
+    NULL,                   /* procA (winproc is Unicode only) */
+    ScrollBarWndProc,       /* procW */
+    sizeof(SCROLLBAR_INFO), /* extra */
+    IDC_ARROWA,             /* cursor */
+    0                       /* brush */
+};
 
 
 /***********************************************************************
@@ -878,7 +903,7 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WPARAM wParam )
         WIN_ReleaseWndPtr(wndPtr);
         return;
     }
-    SendMessageA( GetParent(hwnd),
+    SendMessageW( GetParent(hwnd),
                     (wndPtr->dwStyle & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
                     msg, hwnd );
     WIN_ReleaseWndPtr(wndPtr);
@@ -1109,20 +1134,18 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 /***********************************************************************
  *           ScrollBarWndProc
  */
-LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
-                                 LPARAM lParam )
+static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     switch(message)
     {
     case WM_CREATE:
         {
-	    CREATESTRUCTA *lpCreat = (CREATESTRUCTA *)lParam;
+            CREATESTRUCTW *lpCreat = (CREATESTRUCTW *)lParam;
             if (lpCreat->style & SBS_SIZEBOX)
             {
                 FIXME("Unimplemented style SBS_SIZEBOX.\n" );
                 return 0;
             }
-            
 	    if (lpCreat->style & SBS_VERT)
             {
                 if (lpCreat->style & SBS_LEFTALIGN)
@@ -1285,7 +1308,7 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
         if (message >= WM_USER)
             WARN("unknown msg %04x wp=%04x lp=%08lx\n",
 			 message, wParam, lParam );
-        return DefWindowProcA( hwnd, message, wParam, lParam );
+        return DefWindowProcW( hwnd, message, wParam, lParam );
     }
     return 0;
 }

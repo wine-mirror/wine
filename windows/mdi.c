@@ -77,10 +77,8 @@
 #include "win.h"
 #include "heap.h"
 #include "nonclient.h"
-#include "mdi.h"
+#include "controls.h"
 #include "user.h"
-#include "menu.h"
-#include "scroll.h"
 #include "struct32.h"
 #include "tweak.h"
 #include "debugtools.h"
@@ -88,7 +86,36 @@
 
 DEFAULT_DEBUG_CHANNEL(mdi);
 
+#define MDI_MAXLISTLENGTH       0x40
+#define MDI_MAXTITLELENGTH      0xa1
+
+#define MDI_NOFRAMEREPAINT      0
+#define MDI_REPAINTFRAMENOW     1
+#define MDI_REPAINTFRAME        2
+
+#define WM_MDICALCCHILDSCROLL   0x10ac /* this is exactly what Windows uses */
+
+/* "More Windows..." definitions */
+#define MDI_MOREWINDOWSLIMIT    9       /* after this number of windows, a "More Windows..." 
+                                           option will appear under the Windows menu */
+#define MDI_IDC_LISTBOX         100
+#define MDI_IDS_MOREWINDOWS     13
+
 #define MDIF_NEEDUPDATE		0x0001
+
+typedef struct
+{
+    UINT      nActiveChildren;
+    HWND      hwndChildMaximized;
+    HWND      hwndActiveChild;
+    HMENU     hWindowMenu;
+    UINT      idFirstChild;
+    LPWSTR    frameTitle;
+    UINT      nTotalCreated;
+    UINT      mdiFlags;
+    UINT      sbRecalc;   /* SB_xxx flags for scrollbar fixup */
+    HWND      self;
+} MDICLIENTINFO;
 
 static HBITMAP16 hBmpClose   = 0;
 static HBITMAP16 hBmpRestore = 0;
@@ -102,6 +129,7 @@ static LONG MDI_ChildActivate( WND*, HWND );
 
 static HWND MDI_MoreWindowsDialog(WND*);
 static void MDI_SwapMenuItems(WND *, UINT, UINT);
+static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
 /* -------- Miscellaneous service functions ----------
  *
  *			MDI_GetChildByID
@@ -123,6 +151,22 @@ static void MDI_PostUpdate(HWND hwnd, MDICLIENTINFO* ci, WORD recalc)
     }
     ci->sbRecalc = recalc;
 }
+
+
+/*********************************************************************
+ * MDIClient class descriptor
+ */
+const struct builtin_class_descr MDICLIENT_builtin_class =
+{
+    "MDIClient",            /* name */
+    CS_GLOBALCLASS,         /* style */
+    MDIClientWndProcA,      /* procA */
+    NULL,                   /* procW (FIXME) */
+    sizeof(MDICLIENTINFO),  /* extra */
+    IDC_ARROWA,             /* cursor */
+    COLOR_APPWORKSPACE+1    /* brush */
+};
+
 
 /**********************************************************************
  *			MDI_MenuModifyItem
@@ -1190,12 +1234,11 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
 
 
 /**********************************************************************
- *					MDIClientWndProc
+ *					MDIClientWndProcA
  *
  * This function handles all MDI requests.
  */
-LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
-                                 LPARAM lParam )
+static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     LPCREATESTRUCTA	 cs;
     MDICLIENTINFO       *ci;

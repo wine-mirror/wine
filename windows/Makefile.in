@@ -4,6 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = windows
+EXTRAINCL = -I$(TOPSRCDIR)/dlls/user
 
 C_SRCS = \
 	caret.c \

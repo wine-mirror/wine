@@ -9,7 +9,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "dialog.h"
+#include "controls.h"
 #include "win.h"
 #include "winproc.h"
 

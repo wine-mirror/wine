@@ -12,24 +12,30 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "controls.h"
 #include "win.h"
 #include "heap.h"
 
 static BOOL bMultiLineTitle;
 static HFONT hIconTitleFont;
 
-/***********************************************************************
- *           ICONTITLE_Init
- */
-BOOL ICONTITLE_Init(void)
-{
-    LOGFONTA logFont;
+static LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
-    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
-    SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &bMultiLineTitle, 0 );
-    hIconTitleFont = CreateFontIndirectA( &logFont );
-    return (hIconTitleFont) ? TRUE : FALSE;
-}
+/*********************************************************************
+ * icon title class descriptor
+ */
+const struct builtin_class_descr ICONTITLE_builtin_class =
+{
+    ICONTITLE_CLASS_ATOM, /* name */
+    CS_GLOBALCLASS,       /* style */
+    NULL,                 /* procA (winproc is Unicode only) */
+    IconTitleWndProc,     /* procW */
+    0,                    /* extra */
+    IDC_ARROWA,           /* cursor */
+    0                     /* brush */
+};
+
+
 
 /***********************************************************************
  *           ICONTITLE_Create
@@ -194,6 +200,16 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
 
     switch( msg )
     {
+        case WM_CREATE:
+            if (!hIconTitleFont)
+            {
+                LOGFONTA logFont;
+                SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
+                SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &bMultiLineTitle, 0 );
+                hIconTitleFont = CreateFontIndirectA( &logFont );
+            }
+            retvalue = (hIconTitleFont) ? 0 : -1;
+            goto END;
 	case WM_NCHITTEST:
 	     retvalue = HTCAPTION;
              goto END;
@@ -243,7 +259,7 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
 	     }
     }
 
-    retvalue = DefWindowProcA( hWnd, msg, wParam, lParam );
+    retvalue = DefWindowProcW( hWnd, msg, wParam, lParam );
 END:
     WIN_ReleaseWndPtr(wnd);
     return retvalue;

@@ -21,7 +21,7 @@
 #include "win.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "combo.h"
+#include "controls.h"
 #include "local.h"
 #include "selectors.h"
 #include "debugtools.h"
@@ -253,6 +253,24 @@ static void	EDIT_WM_Timer(WND *wnd, EDITSTATE *es);
 static LRESULT	EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos);
 static void EDIT_UpdateText(WND *wnd, LPRECT rc, BOOL bErase);
 
+LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
+
+
+/*********************************************************************
+ * edit class descriptor
+ */
+const struct builtin_class_descr EDIT_builtin_class =
+{
+    "Edit",               /* name */
+    CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,   /* style */
+    EditWndProc,         /* procA */
+    NULL,                 /* procW (FIXME) */
+    sizeof(EDITSTATE *),  /* extra */
+    IDC_IBEAMA,           /* cursor */
+    0                     /* brush */
+};
+
 
 /*********************************************************************
  *
@@ -342,7 +360,7 @@ static DWORD get_app_version(void)
 
 /*********************************************************************
  *
- *	EditWndProc()
+ *	EditWndProc   (USER32.@)
  *
  *	The messages are in the order of the actual integer values
  *	(which can be found in include/windows.h)
@@ -353,8 +371,7 @@ static DWORD get_app_version(void)
  *	names).
  *
  */
-LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
-                            WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
 	WND *wnd = WIN_FindWndPtr(hwnd);
 	EDITSTATE *es = *(EDITSTATE **)((wnd)->wExtra);

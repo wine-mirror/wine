@@ -16,7 +16,7 @@
 #include "queue.h"
 #include "win.h"
 #include "clipboard.h"
-#include "menu.h"
+#include "controls.h"
 #include "cursoricon.h"
 #include "hook.h"
 #include "toolhelp.h"

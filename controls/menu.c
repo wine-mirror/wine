@@ -26,7 +26,7 @@
 #include "win.h"
 #include "task.h"
 #include "heap.h"
-#include "menu.h"
+#include "controls.h"
 #include "nonclient.h"
 #include "user.h"
 #include "message.h"
@@ -175,6 +175,23 @@ static UINT uSubPWndLevel = 0;
 
   /* Flag set by EndMenu() to force an exit from menu tracking */
 static BOOL fEndMenu = FALSE;
+
+static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
+
+
+/*********************************************************************
+ * menu class descriptor
+ */
+const struct builtin_class_descr MENU_builtin_class =
+{
+    POPUPMENU_CLASS_ATOM,          /* name */
+    CS_GLOBALCLASS | CS_SAVEBITS,  /* style */
+    NULL,                          /* procA (winproc is Unicode only) */
+    PopupMenuWndProc,              /* procW */
+    sizeof(HMENU),                 /* extra */
+    IDC_ARROWA,                    /* cursor */
+    COLOR_MENU+1                   /* brush */
+};
 
 
 /***********************************************************************
@@ -3163,12 +3180,8 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
  *
  * NOTE: Windows has totally different (and undocumented) popup wndproc.
  */
-LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam,
-                                 LPARAM lParam )
-{    
-    WND* wndPtr = WIN_FindWndPtr(hwnd);
-    LRESULT retvalue;
-
+static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+{
     TRACE("hwnd=0x%04x msg=0x%04x wp=0x%04x lp=0x%08lx\n",
     hwnd, message, wParam, lParam);
 
@@ -3176,15 +3189,13 @@ LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam,
     {
     case WM_CREATE:
 	{
-	    CREATESTRUCTA *cs = (CREATESTRUCTA*)lParam;
-	    SetWindowLongA( hwnd, 0, (LONG)cs->lpCreateParams );
-            retvalue = 0;
-            goto END;
+	    CREATESTRUCTW *cs = (CREATESTRUCTW*)lParam;
+	    SetWindowLongW( hwnd, 0, (LONG)cs->lpCreateParams );
+            return 0;
 	}
 
     case WM_MOUSEACTIVATE:  /* We don't want to be activated */
-        retvalue = MA_NOACTIVATE;
-        goto END;
+        return MA_NOACTIVATE;
 
     case WM_PAINT:
 	{
@@ -3193,12 +3204,10 @@ LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam,
 	    MENU_DrawPopupMenu( hwnd, ps.hdc,
                                 (HMENU)GetWindowLongA( hwnd, 0 ) );
 	    EndPaint( hwnd, &ps );
-            retvalue = 0;
-            goto END;
+            return 0;
 	}
     case WM_ERASEBKGND:
-        retvalue = 1;
-        goto END;
+        return 1;
 
     case WM_DESTROY:
 
@@ -3224,31 +3233,23 @@ LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam,
 
 	if( wParam )
 	{
-	    if( !(*(HMENU*)wndPtr->wExtra) )
-		ERR("no menu to display\n");
+            if (!GetWindowLongW( hwnd, 0 )) ERR("no menu to display\n");
 	}
 	else
-	    *(HMENU*)wndPtr->wExtra = 0;
+            SetWindowLongW( hwnd, 0, 0 );
 	break;
 
     case MM_SETMENUHANDLE:
-
-	*(HMENU*)wndPtr->wExtra = (HMENU)wParam;
+        SetWindowLongW( hwnd, 0, wParam );
         break;
 
     case MM_GETMENUHANDLE:
-
-        retvalue = *(HMENU*)wndPtr->wExtra;
-        goto END;
+        return GetWindowLongW( hwnd, 0 );
 
     default:
-        retvalue = DefWindowProcA( hwnd, message, wParam, lParam );
-        goto END;
+        return DefWindowProcW( hwnd, message, wParam, lParam );
     }
-    retvalue = 0;
-END:
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return 0;
 }
 
 

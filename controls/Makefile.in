@@ -4,6 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = controls
+EXTRAINCL = -I$(TOPSRCDIR)/dlls/user
 
 C_SRCS = \
 	button.c \
@@ -15,8 +16,7 @@ C_SRCS = \
 	menu.c \
 	scroll.c \
 	static.c \
-	uitools.c \
-	widgets.c
+	uitools.c
 
 GLUE = edit.c
 

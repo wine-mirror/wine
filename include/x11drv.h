@@ -417,7 +417,7 @@ extern Window X11DRV_WND_FindXWindow(struct tagWND *wndPtr);
 
 extern void X11DRV_WND_Initialize(struct tagWND *wndPtr);
 extern void X11DRV_WND_Finalize(struct tagWND *wndPtr);
-extern BOOL X11DRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, BOOL bUnicode);
+extern BOOL X11DRV_WND_CreateDesktopWindow(struct tagWND *wndPtr);
 extern BOOL X11DRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCREATESTRUCTA *cs, BOOL bUnicode);
 extern BOOL X11DRV_WND_DestroyWindow(struct tagWND *pWnd);
 extern struct tagWND *X11DRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);

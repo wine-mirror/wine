@@ -18,8 +18,7 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
-#include "dialog.h"
-#include "drive.h"
+#include "controls.h"
 #include "heap.h"
 #include "win.h"
 #include "user.h"
@@ -77,6 +76,21 @@ typedef struct
 
   /* Dialog base units */
 static WORD xBaseUnit = 0, yBaseUnit = 0;
+
+
+/*********************************************************************
+ * dialog class descriptor
+ */
+const struct builtin_class_descr DIALOG_builtin_class =
+{
+    DIALOG_CLASS_ATOM,  /* name */
+    CS_GLOBALCLASS | CS_SAVEBITS, /* style  */
+    DefDlgProcA,        /* procA */
+    DefDlgProcW,        /* procW */
+    DLGWINDOWEXTRA,     /* extra */
+    IDC_ARROWA,         /* cursor */
+    0                   /* brush */
+};
 
 
 /***********************************************************************
@@ -2216,7 +2230,6 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPSTR str, INT len,
 static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
                                 INT idStatic, UINT attrib, BOOL combo )
 {
-    int drive;
     HWND hwnd;
     LPSTR orig_spec = spec;
 
@@ -2227,16 +2240,8 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
     TRACE("%04x '%s' %d %d %04x\n",
                     hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
 
-    if (spec && spec[0] && (spec[1] == ':'))
-    {
-        drive = toupper( spec[0] ) - 'A';
-        spec += 2;
-        if (!DRIVE_SetCurrentDrive( drive )) return FALSE;
-    }
-    else drive = DRIVE_GetCurrentDrive();
-
     /* If the path exists and is a directory, chdir to it */
-    if (!spec || !spec[0] || DRIVE_Chdir( drive, spec )) spec = "*.*";
+    if (!spec || !spec[0] || SetCurrentDirectoryA( spec )) spec = "*.*";
     else
     {
         char *p, *p2;
@@ -2247,7 +2252,7 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
         {
             char sep = *p;
             *p = 0;
-            if (!DRIVE_Chdir( drive, spec ))
+            if (!SetCurrentDirectoryA( spec ))
             {
                 *p = sep;  /* Restore the original spec */
                 return FALSE;
@@ -2256,8 +2261,7 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
         }
     }
 
-    TRACE("path=%c:\\%s mask=%s\n",
-                    'A' + drive, DRIVE_GetDosCwd(drive), spec );
+    TRACE( "mask=%s\n", spec );
 
     if (idLBox && ((hwnd = GetDlgItem( hDlg, idLBox )) != 0))
     {
@@ -2286,11 +2290,8 @@ static INT DIALOG_DlgDirList( HWND hDlg, LPSTR spec, INT idLBox,
 
     if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
     {
-        char temp[512];
-        int drive = DRIVE_GetCurrentDrive();
-        strcpy( temp, "A:\\" );
-        temp[0] += drive;
-        lstrcpynA( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
+        char temp[MAX_PATH];
+        GetCurrentDirectoryA( sizeof(temp), temp );
         CharLowerA( temp );
         /* Can't use PostMessage() here, because the string is on the stack */
         SetDlgItemTextA( hDlg, idStatic, temp );

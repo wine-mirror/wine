@@ -15,6 +15,7 @@
 #include "wine/winuser16.h"
 #include "stackframe.h"
 #include "builtin16.h"
+#include "controls.h"
 #include "heap.h"
 #include "selectors.h"
 #include "struct32.h"
@@ -25,7 +26,6 @@
 #include "commctrl.h"
 #include "task.h"
 #include "thread.h"
-#include "menu.h"
 
 DECLARE_DEBUG_CHANNEL(msg);
 DECLARE_DEBUG_CHANNEL(relay);

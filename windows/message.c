@@ -26,7 +26,7 @@
 #include "selectors.h"
 #include "thread.h"
 #include "options.h"
-#include "menu.h"
+#include "controls.h"
 #include "struct32.h"
 #include "debugtools.h"
 
