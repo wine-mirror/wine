@@ -59,13 +59,6 @@ LONG WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 	}\
 } while(0)
 
-/* calling DriverProc. */
-#define _MCI_CALL_DRIVER(cmd,params) \
- 	{ \
-	    MCIPROC32	proc = MCI_GetProc32(uDevTyp); \
-            res = (proc) ? (*proc)(MCI_GetDrv(wDevID)->modp.wDeviceID, 0, cmd, dwFlags, (DWORD)(params)) : MCIERR_DEVICE_NOT_INSTALLED;	\
-	}
-
 /* print a DWORD in the specified timeformat */
 static void
 _MCISTR_printtf(char *buf,UINT16 uDevType,DWORD timef,DWORD val) {
@@ -392,7 +385,8 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	      keywords[i]);
 	i++;
     }
-    _MCI_CALL_DRIVER(MCI_OPEN, pU);
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_OPEN, dwFlags, (DWORD)pU);
+
     if (res==0)
 	memcpy(MCI_GetOpenDrv(wDevID),&pU->openParams,sizeof(MCI_OPEN_PARMS16));
     else {
@@ -417,7 +411,8 @@ _MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef)
     if (!statusParams) return 0;
     statusParams->dwItem	= MCI_STATUS_TIME_FORMAT;
     statusParams->dwReturn	= 0;
-    _MCI_CALL_DRIVER( MCI_STATUS, statusParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_STATUS, dwFlags, (DWORD)statusParams);
+
     if (res==0) *timef = statusParams->dwReturn;
     free(statusParams);
     return res;
@@ -588,7 +583,8 @@ MCISTR_Status(_MCISTR_PROTO_) {
     if (!statusParams->dwItem) 
 	return MCIERR_MISSING_STRING_ARGUMENT;
     
-    _MCI_CALL_DRIVER( MCI_STATUS, statusParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_STATUS, dwFlags, (DWORD)statusParams);
+
     if (res==0)
 	_MCISTR_convreturn(type,statusParams->dwReturn,lpstrReturnString,uReturnLength,uDevTyp,timef);
     free(statusParams);
@@ -791,7 +787,7 @@ MCISTR_Set(_MCISTR_PROTO_) {
     }
     if (!dwFlags)
 	return MCIERR_MISSING_STRING_ARGUMENT;
-    _MCI_CALL_DRIVER( MCI_SET, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_SET, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -823,7 +819,7 @@ MCISTR_Break(_MCISTR_PROTO_)
 	    continue;
 	}
     }
-    _MCI_CALL_DRIVER( MCI_BREAK, breakParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_BREAK, dwFlags, (DWORD)breakParams);
     free(breakParams);
     return res;
 }
@@ -943,7 +939,8 @@ MCISTR_Capability(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_GETDEVCAPS, gdcParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_GETDEVCAPS, dwFlags, (DWORD)gdcParams);
+
     /* no timeformat needed */
     if (res==0)
 	_MCISTR_convreturn( type, gdcParams->dwReturn, lpstrReturnString,
@@ -961,7 +958,8 @@ MCISTR_Resume(_MCISTR_PROTO_)
     MCI_GENERIC_PARMS *genParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int	res;
     genParams->dwCallback = hwndCallback;
-    _MCI_CALL_DRIVER( MCI_RESUME, genParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_RESUME, dwFlags, (DWORD)genParams);
+    free(genParams);
     return res;
 }
 
@@ -972,7 +970,8 @@ MCISTR_Pause(_MCISTR_PROTO_)
     MCI_GENERIC_PARMS *genParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int res;
     genParams->dwCallback = hwndCallback;
-    _MCI_CALL_DRIVER( MCI_PAUSE, genParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_PAUSE, dwFlags, (DWORD)genParams);
+    free(genParams);
     return res;
 }
 
@@ -983,7 +982,8 @@ MCISTR_Stop(_MCISTR_PROTO_)
     MCI_GENERIC_PARMS *genParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int res;
     genParams->dwCallback = hwndCallback;
-    _MCI_CALL_DRIVER( MCI_STOP, genParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_STOP, dwFlags, (DWORD)genParams);
+    free(genParams);
     return res;
 }
 
@@ -1057,7 +1057,7 @@ MCISTR_Record(_MCISTR_PROTO_) {
 	FLAG1("overwrite",MCI_RECORD_OVERWRITE);
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_RECORD, recordParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_RECORD, dwFlags, (DWORD)recordParams);
     free(recordParams);
     return res;
 }
@@ -1170,7 +1170,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_PLAY, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_PLAY, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -1243,7 +1243,7 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_SEEK, seekParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_SEEK, dwFlags, (DWORD)seekParams);
     free(seekParams);
     return res;
 }
@@ -1254,7 +1254,8 @@ MCISTR_Close(_MCISTR_PROTO_)
 {
     MCI_GENERIC_PARMS *closeParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int res;
-    _MCI_CALL_DRIVER( MCI_CLOSE, closeParams );
+    
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_CLOSE, dwFlags, (DWORD)closeParams);
     free(closeParams);
     return res;
 }
@@ -1276,7 +1277,8 @@ MCISTR_Info(_MCISTR_PROTO_)
     int		i,res;
     
     sflags = dwFlags;
-    i=0;while (i<nrofkeywords) {
+    i=0;
+    while (i<nrofkeywords) {
 	FLAG1("product",MCI_INFO_PRODUCT);
 	FLAG1("file",MCI_INFO_FILE);
 	switch (uDevTyp) {
@@ -1294,7 +1296,7 @@ MCISTR_Info(_MCISTR_PROTO_)
     /* MCI driver will fill in lpstrReturn, dwRetSize.
      * FIXME: I don't know if this is correct behaviour
      */
-    _MCI_CALL_DRIVER( MCI_INFO, infoParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_INFO, dwFlags, (DWORD)infoParams);
     if (res==0)
 	_MCI_STR(infoParams->lpstrReturn);
     free(infoParams);
@@ -1356,7 +1358,7 @@ MCISTR_Load(_MCISTR_PROTO_) {
     int		i,len,res;
     char		*s;
     
-    i=0;len=0;
+    i=len=0;
     while (i<nrofkeywords) {
 	switch (uDevTyp) {
 	case MCI_DEVTYPE_OVERLAY:
@@ -1383,7 +1385,7 @@ MCISTR_Load(_MCISTR_PROTO_) {
     }
     pU->loadParams.lpfilename=s;
     dwFlags |= MCI_LOAD_FILE;
-    _MCI_CALL_DRIVER( MCI_LOAD, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_LOAD, dwFlags, (DWORD)pU);
     free(s);
     free(pU);
     return res;
@@ -1430,7 +1432,7 @@ MCISTR_Save(_MCISTR_PROTO_) {
     }
     pU->saveParams.lpfilename=s;
     dwFlags |= MCI_LOAD_FILE;
-    _MCI_CALL_DRIVER( MCI_SAVE, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_SAVE, dwFlags, (DWORD)pU);
     free(s);
     free(pU);
     return res;
@@ -1444,17 +1446,15 @@ MCISTR_Cue(_MCISTR_PROTO_) {
     MCI_GENERIC_PARMS	*cueParams = xmalloc(sizeof(MCI_GENERIC_PARMS));
     int			i,res;
     
-    i=0;
-    while (i<nrofkeywords) {
+    for (i = 0; i < nrofkeywords; i++) {
 	switch (uDevTyp) {
 	case MCI_DEVTYPE_WAVEFORM_AUDIO:
 	    FLAG1("input",MCI_WAVE_INPUT);
 	    FLAG1("output",MCI_WAVE_OUTPUT);
 	    break;
 	}
-	i++;
     }
-    _MCI_CALL_DRIVER( MCI_CUE, cueParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_CUE, dwFlags, (DWORD)cueParams);
     free(cueParams);
     return res;
 }
@@ -1522,7 +1522,7 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_DELETE, deleteParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_DELETE, dwFlags, (DWORD)deleteParams);
     free(deleteParams);
     return res;
 }
@@ -1551,7 +1551,7 @@ MCISTR_Escape(_MCISTR_PROTO_)
     }
     escapeParams->lpstrCommand = s;
     dwFlags |= MCI_VD_ESCAPE_STRING;
-    _MCI_CALL_DRIVER( MCI_ESCAPE, escapeParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_ESCAPE, dwFlags, (DWORD)escapeParams);
     free(s);
     free(escapeParams);
     return res;
@@ -1580,7 +1580,7 @@ MCISTR_Unfreeze(_MCISTR_PROTO_)
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_UNFREEZE, unfreezeParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_UNFREEZE, dwFlags, (DWORD)unfreezeParams);
     free(unfreezeParams);
     return res;
 }
@@ -1607,7 +1607,7 @@ MCISTR_Freeze(_MCISTR_PROTO_)
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_FREEZE, freezeParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_FREEZE, dwFlags, (DWORD)freezeParams);
     free(freezeParams);
     return res;
 }
@@ -1667,7 +1667,7 @@ MCISTR_Put(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_PUT, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_PUT, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -1691,7 +1691,7 @@ MCISTR_Realize(_MCISTR_PROTO_)
 	FLAG1("normal",MCI_ANIM_REALIZE_NORM);
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_REALIZE, realizeParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_REALIZE, dwFlags, (DWORD)realizeParams);
     free(realizeParams);
     return res;
 }
@@ -1714,7 +1714,7 @@ MCISTR_Spin(_MCISTR_PROTO_)
 	FLAG1("down",MCI_VD_SPIN_UP);
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_SPIN, spinParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_SPIN, dwFlags, (DWORD)spinParams);
     free(spinParams);
     return res;
 }
@@ -1756,7 +1756,7 @@ MCISTR_Step(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_STEP, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_STEP, dwFlags, (DWORD)pU);
     free(pU);
     return res;
 }
@@ -1790,7 +1790,7 @@ MCISTR_Update(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_UPDATE, updateParams );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_UPDATE, dwFlags, (DWORD)updateParams);
     free(updateParams);
     return res;
 }
@@ -1829,7 +1829,7 @@ MCISTR_Where(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_WHERE, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_WHERE, dwFlags, (DWORD)pU);
     if (res==0) {
 	char	buf[100];
 	switch (uDevTyp) {
@@ -2012,7 +2012,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 	}
 	i++;
     }
-    _MCI_CALL_DRIVER( MCI_WINDOW, pU );
+    res = MCI_SendCommand32(MCI_GetDrv(wDevID)->modp.wDeviceID, MCI_WINDOW, dwFlags, (DWORD)pU);
     if (s) free(s);
     free(pU);
     return res;
