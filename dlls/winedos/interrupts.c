@@ -232,7 +232,7 @@ FARPROC48 DOSVM_GetPMHandler48( BYTE intnum )
   if (!DOSVM_Vectors48[intnum].selector)
   {
     DOSVM_Vectors48[intnum].selector = DOSVM_dpmi_segments->int48_sel;
-    DOSVM_Vectors48[intnum].offset = 4 * intnum;
+    DOSVM_Vectors48[intnum].offset = 6 * intnum;
   }
   return DOSVM_Vectors48[intnum];
 }

@@ -212,19 +212,21 @@ static void DOSMEM_InitDPMI(void)
     memcpy( ptr, enter_pm, sizeof(enter_pm) );
     DOSMEM_dpmi_segments.dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), WINE_LDT_FLAGS_CODE );
 
-    ptr = DOSMEM_GetBlock( 4 * 256, &DOSMEM_dpmi_segments.int48_seg );
+    ptr = DOSMEM_GetBlock( 6 * 256, &DOSMEM_dpmi_segments.int48_seg );
     for(i=0; i<256; i++) {
         /*
-         * Each 32-bit interrupt handler is 4 bytes:
-         * 0xCD,<i>  = int <i> (nested 16-bit interrupt)
-         * 0x66,0xCF = iretd   (32-bit interrupt return)
+         * Each 32-bit interrupt handler is 6 bytes:
+         * 0xCD,<i>            = int <i> (nested 16-bit interrupt)
+         * 0x66,0xCA,0x04,0x00 = ret 4   (32-bit far return and pop 4 bytes)
          */
-        ptr[i * 4 + 0] = 0xCD;
-        ptr[i * 4 + 1] = i;
-        ptr[i * 4 + 2] = 0x66;
-        ptr[i * 4 + 3] = 0xCF;
+        ptr[i * 6 + 0] = 0xCD;
+        ptr[i * 6 + 1] = i;
+        ptr[i * 6 + 2] = 0x66;
+        ptr[i * 6 + 3] = 0xCA;
+        ptr[i * 6 + 4] = 0x04;
+        ptr[i * 6 + 5] = 0x00;
     }
-    DOSMEM_dpmi_segments.int48_sel = SELECTOR_AllocBlock( ptr, 4 * 256, WINE_LDT_FLAGS_CODE );
+    DOSMEM_dpmi_segments.int48_sel = SELECTOR_AllocBlock( ptr, 6 * 256, WINE_LDT_FLAGS_CODE );
 }
 
 static BIOSDATA * DOSMEM_BiosData(void)
