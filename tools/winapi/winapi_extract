@@ -331,7 +331,7 @@ foreach my $file (@h_files, @c_files) {
 	    my $field_type_name = $field->type_name;
 	    my $field_name = $field->name;
 
-	    if ($options->struct) {
+	    if ($options->struct && $kind =~ /^(?:struct|union)$/) {
 		if ($name) {
 		    $output->write("$name:$field_type_name:$field_name\n");
 		} else {

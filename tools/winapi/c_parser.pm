@@ -697,6 +697,80 @@ sub parse_c_declarations {
 }
 
 ########################################################################
+# parse_c_enum
+
+sub parse_c_enum {
+    my $self = shift;
+
+    my $refcurrent = shift;
+    my $refline = shift;
+    my $refcolumn = shift;
+
+    local $_ = $$refcurrent;
+    my $line = $$refline;
+    my $column = $$refcolumn;
+
+    $self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
+
+    if (!s/^enum\s+((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
+	return 0;
+    }
+    my $_name = $1 || "";
+
+    $self->_update_c_position($&, \$line, \$column);
+
+    my $name = "";
+    
+    my $match;
+    while ($self->_parse_c_on_same_level_until_one_of(',', \$_, \$line, \$column, \$match)) {
+	if ($match) {
+	    if ($match !~ /^(\w+)\s*(?:=\s*(.*?)\s*)?$/) {
+		$self->_parse_c_error($_, $line, $column, "enum");
+	    }
+	    my $enum_name = $1;
+	    my $enum_value = $2 || "";
+
+	    # $output->write("enum:$_name:$enum_name:$enum_value\n");
+	}
+
+	if ($self->_parse_c(',', \$_, \$line, \$column)) {
+	    next;
+	} elsif ($self->_parse_c('}', \$_, \$line, \$column)) {
+	    # FIXME: Kludge
+	    my $tuple = "($_)";
+	    my $tuple_line = $line;
+	    my $tuple_column = $column - 1;
+	    
+	    my @arguments;
+	    my @argument_lines;
+		    my @argument_columns;
+	    
+	    if(!$self->parse_c_tuple(\$tuple, \$tuple_line, \$tuple_column,
+				     \@arguments, \@argument_lines, \@argument_columns)) 
+	    {
+		$self->_parse_c_error($_, $line, $column, "enum");
+	    }
+	    
+	    # FIXME: Kludge
+	    if ($#arguments >= 0) {
+		$name = $arguments[0];
+	    }
+	    
+	    last;
+	} else {
+	    $self->_parse_c_error($_, $line, $column, "enum");
+	}
+    }
+
+    $self->_update_c_position($_, \$line, \$column);
+
+    $$refcurrent = $_;
+    $$refline = $line;
+    $$refcolumn = $column;
+}
+
+
+########################################################################
 # parse_c_expression
 
 sub parse_c_expression {
@@ -1503,6 +1577,104 @@ sub parse_c_statements {
 }
 
 ########################################################################
+# parse_c_struct_union
+
+sub parse_c_struct_union {
+    my $self = shift;
+
+    my $refcurrent = shift;
+    my $refline = shift;
+    my $refcolumn = shift;
+
+    my $refkind = shift;
+    my $ref_name = shift;
+    my $reffield_type_names = shift;
+    my $reffield_names = shift;
+    my $refnames = shift;
+
+    local $_ = $$refcurrent;
+    my $line = $$refline;
+    my $column = $$refcolumn;
+
+    my $kind;
+    my $_name;
+    my @field_type_names = ();
+    my @field_names = ();
+    my @names = ();
+
+    $self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
+
+    if (!s/^(struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
+	return 0;
+    }
+    $kind = $1;
+    $_name = $2 || "";
+
+    $self->_update_c_position($&, \$line, \$column);
+    
+    $kind =~ s/\s+//g;
+
+    my $match;
+    while ($_ && $self->_parse_c_on_same_level_until_one_of(';', \$_, \$line, \$column, \$match))
+    {
+	my $field_linkage;
+	my $field_type_name;
+	my $field_name;
+	
+	if ($self->parse_c_variable(\$match, \$line, \$column, \$field_linkage, \$field_type_name, \$field_name)) {
+	    $field_type_name =~ s/\s+/ /g;
+	    
+	    push @field_type_names, $field_type_name;
+	    push @field_names, $field_name;
+	    # $output->write("$kind:$_name:$field_type_name:$field_name\n");
+	} elsif ($match) {
+	    $self->_parse_c_error($_, $line, $column, "typedef $kind: '$match'");
+	}
+	
+	if ($self->_parse_c(';', \$_, \$line, \$column)) {
+	    next;
+	} elsif ($self->_parse_c('}', \$_, \$line, \$column)) {
+	    # FIXME: Kludge
+	    my $tuple = "($_)";
+	    my $tuple_line = $line;
+	    my $tuple_column = $column - 1;
+	    
+	    my @arguments;
+	    my @argument_lines;
+	    my @argument_columns;
+	    
+	    if(!$self->parse_c_tuple(\$tuple, \$tuple_line, \$tuple_column,
+				     \@arguments, \@argument_lines, \@argument_columns)) 
+	    {
+		$self->_parse_c_error($_, $line, $column, "$kind");
+	    }
+
+	    foreach my $argument (@arguments) {
+		my $name = $argument;
+
+		push @names, $name;
+	    }
+
+	    last;
+	} else {
+	    $self->_parse_c_error($_, $line, $column, "$kind");
+	}
+    }
+
+    $$refcurrent = $_;
+    $$refline = $line;
+    $$refcolumn = $column;
+
+    $$refkind = $kind;
+    $$ref_name = $_name;
+    @$reffield_type_names = @field_type_names;
+    @$reffield_names = @field_names;
+    @$refnames = @names;
+
+    return 1;
+}
+
+########################################################################
 # parse_c_tuple
 
 sub parse_c_tuple {
@@ -1634,177 +1806,103 @@ sub parse_c_typedef {
     my $refline = shift;
     my $refcolumn = shift;
 
-    my $reftype = shift;
-
     local $_ = $$refcurrent;
     my $line = $$refline;
     my $column = $$refcolumn;
 
     my $type;
 
-    if (0) {
+    if (!$self->_parse_c("typedef", \$_, \$line, \$column)) {
+	return 0;
+    }
+
+    my $finished = 0;
+    
+    if ($finished) {
 	# Nothing
-    } elsif (s/^(?:typedef\s+)?(enum\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
-	$self->_update_c_position($&, \$line, \$column);
+    } elsif ($self->parse_c_enum(\$_, \$line, \$column)) {
+	$finished = 1;
+    } 
 
-	my $kind = $1;
-	my $_name = $2 || "";
-
-	$kind =~ s/\s+//g;
-
-	if ($kind =~ /^struct|union$/) {
-	    my $name = "";
-	    my @field_type_names = ();
-	    my @field_names = ();
-
-	    my $match;
-	    while ($_ && $self->_parse_c_on_same_level_until_one_of(';', \$_, \$line, \$column, \$match))
-	    {
-		my $field_linkage;
-		my $field_type_name;
-		my $field_name;
-
-		if ($self->parse_c_variable(\$match, \$line, \$column, \$field_linkage, \$field_type_name, \$field_name)) {
-		    $field_type_name =~ s/\s+/ /g;
-		    
-		    push @field_type_names, $field_type_name;
-		    push @field_names, $field_name;
-		    # $output->write("$kind:$_name:$field_type_name:$field_name\n");
-		} elsif ($match) {
-		    $self->_parse_c_error($_, $line, $column, "typedef $kind: '$match'");
-		}
-
-		if ($self->_parse_c(';', \$_, \$line, \$column)) {
-		    next;
-		} elsif ($self->_parse_c('}', \$_, \$line, \$column)) {
-		    # FIXME: Kludge
-		    my $tuple = "($_)";
-		    my $tuple_line = $line;
-		    my $tuple_column = $column - 1;
-
-		    my @arguments;
-		    my @argument_lines;
-		    my @argument_columns;
-
-		    if(!$self->parse_c_tuple(\$tuple, \$tuple_line, \$tuple_column,
-					     \@arguments, \@argument_lines, \@argument_columns)) 
-		    {
-			$self->_parse_c_error($_, $line, $column, "typedef $kind");
-		    }
-
-		    # FIXME: Kludge
-		    if ($#arguments >= 0) {
-			$name = $arguments[0];
-		    }
-
-		    last;
-		} else {
-		    $self->_parse_c_error($_, $line, $column, "typedef $kind");
-		}
-	    }
-
-	    my $type = &$$create_type();
-
-	    $type->kind($kind);
-	    $type->_name($_name);
-	    $type->name($name);
-	    $type->field_type_names([@field_type_names]);
-	    $type->field_names([@field_names]);
-
-	    &$$found_type($type);
-	} else {
-	    my $name = "";
-
-	    my $match;
-	    while ($self->_parse_c_on_same_level_until_one_of(',', \$_, \$line, \$column, \$match)) {
-		if ($match) {
-		    if ($match !~ /^(\w+)\s*(?:=\s*(.*?)\s*)?$/) {
-			$self->_parse_c_error($_, $line, $column, "typedef $kind");
-		    }
-		    my $enum_name = $1;
-		    my $enum_value = $2 || "";
-
-		    # $output->write("$kind:$_name:$enum_name:$enum_value\n");
-		}
-
-		if ($self->_parse_c(',', \$_, \$line, \$column)) {
-		    next;
-		} elsif ($self->_parse_c('}', \$_, \$line, \$column)) {
-		    # FIXME: Kludge
-		    my $tuple = "($_)";
-		    my $tuple_line = $line;
-		    my $tuple_column = $column - 1;
-
-		    my @arguments;
-		    my @argument_lines;
-		    my @argument_columns;
-
-		    if(!$self->parse_c_tuple(\$tuple, \$tuple_line, \$tuple_column,
-					     \@arguments, \@argument_lines, \@argument_columns)) 
-		    {
-			$self->_parse_c_error($_, $line, $column, "typedef $kind");
-		    }
-
-		    # FIXME: Kludge
-		    if ($#arguments >= 0) {
-			$name = $arguments[0];
-		    }
-
-		    last;
-		} else {
-		    $self->_parse_c_error($_, $line, $column, "typedef $kind");
-		}
-	    }
-
-	    # FIXME: Not correct
-	    # $output->write("typedef:$name:$_name\n");
-	}
-    } elsif ($self->_parse_c("typedef", \$_, \$line, \$column)) {
-	my $linkage;
-	my $type_name;
-	my $name;
-	
-	if ($self->parse_c_variable(\$_, \$line, \$column, \$linkage, \$type_name, \$name)) {
-	    $type_name =~ s/\s+/ /g;
-
-	    if(defined($type_name) && defined($name)) {
+    my $kind;
+    my $_name;
+    my @field_type_names;
+    my @field_names;
+    my @names;
+    if ($finished) {
+	# Nothing
+    } elsif ($self->parse_c_struct_union(\$_, \$line, \$column,
+					 \$kind, \$_name, \@field_type_names, \@field_names, \@names))
+    {
+	my $base_name;
+	foreach my $name (@names) {
+	    if ($name =~ /^\w+$/) {
 		my $type = &$$create_type();
 		
-		if (length($name) == 0) {
-		    $self->_parse_c_error($_, $line, $column, "typedef");
-		}
+		$type->kind($kind);
+		$type->_name($_name);
+		$type->name($name);
+		$type->field_type_names([@field_type_names]);
+		$type->field_names([@field_names]);
+
+		&$$found_type($type);
+
+		$base_name = $name;
+	    } elsif (!defined($base_name)) {
+		$self->_parse_c_error($_, $line, $column, "typedef 1");
+	    } elsif ($name =~ /^(\*+)\s*(?:RESTRICTED_POINTER\s+)?(\w+)$/) {
+		my $type_name = "$base_name $1";
+		$name = $2;
+
+		my $type = &$$create_type();
 
 		$type->kind("");
 		$type->name($name);
-		$type->pack(1);
 		$type->field_type_names([$type_name]);
 		$type->field_names([""]);
 
-		&$$found_type($type);
+		&$$found_type($type);		
+	    } else {
+		$self->_parse_c_error($_, $line, $column, "typedef 2");
+	    }
+	}
+	
+	$finished = 1;
+    }
+
+    my $linkage;
+    my $type_name;
+    my $name;
+    if ($finished) {
+	# Nothing
+    } elsif ($self->parse_c_variable(\$_, \$line, \$column, \$linkage, \$type_name, \$name)) {
+	$type_name =~ s/\s+/ /g;
+	
+	if(defined($type_name) && defined($name)) {
+	    my $type = &$$create_type();
+	    
+	    if (length($name) == 0) {
+		$self->_parse_c_error($_, $line, $column, "typedef");
 	    }
 
-	    if (0 && $_ && !/^,/) {
-		$self->_parse_c_error($_, $line, $column, "typedef");
-	    }   
-	} else {
-	    $self->_parse_c_error($_, $line, $column, "typedef");
+	    $type->kind("");
+	    $type->name($name);
+	    $type->field_type_names([$type_name]);
+	    $type->field_names([""]);
+	    
+	    &$$found_type($type);
 	}
-    } elsif (0 && $self->_parse_c("typedef", \$_, \$line, \$column)) {
-	my $type_name;
-	$self->_parse_c('\w+', \$_, \$line, \$column, \$type_name);
 
-	my $name;
-	$self->_parse_c('\w+', \$_, \$line, \$column, \$name);
-
+	if (0 && $_ && !/^,/) {
+	    $self->_parse_c_error($_, $line, $column, "typedef");
+	}   
     } else {
-	return 0;
+	$self->_parse_c_error($_, $line, $column, "typedef");
     }
 
     $$refcurrent = $_;
     $$refline = $line;
     $$refcolumn = $column;
-
-    $$reftype = $type;
 
     return 1;
 }
@@ -1860,7 +1958,7 @@ sub parse_c_variable {
 	# Nothing
     } elsif(/^$/) {
 	return 0;
-    } elsif(s/^(enum|struct|union)(?:\s+(\w+))?\s*\{//s) {
+    } elsif (s/^(enum\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
 	my $kind = $1;
 	my $_name = $2;
 	$self->_update_c_position($&, \$line, \$column);

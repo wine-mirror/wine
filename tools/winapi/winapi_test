@@ -104,8 +104,70 @@ my %defines = (
     "SIZE_OF_80387_REGISTERS" => 80,
 );
 
-my %kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
-my %parse_reported;
+my %align_kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
+
+sub find_align {
+    my $type_name = shift;
+
+    local $_ = $type_name;
+
+    # Remove "count" and "bits"
+    s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/;
+
+    my $align;
+    if (0) {
+	# Nothing
+    } elsif (/\*+$/) {
+	$align = 4;
+    } elsif(/^(?:(?:signed\s+|unsigned\s+)?char)$/) {
+	$align = 1;
+    } elsif (/^(?:(?:signed\s+|unsigned\s+)?short)$/) {
+	$align = 2;
+    } elsif (/^(?:wchar_t)$/) {
+	$align = 2;
+    } elsif (/^(?:(?:signed\s+|unsigned\s+)?(?:__int32|int|long(?:\s+int)?)|unsigned|signed)$/) {
+	$align = 4;
+    } elsif (/^(?:float)$/) {
+	$align = 4;
+    } elsif (/^(?:signed\s+|unsigned\s+)?__int64$/) {
+	$align = 4;
+    } elsif (/^(?:double)$/) {
+	$align = 4;
+    } elsif (/^(?:long\s+double)$/) {
+	$align = 4;
+    } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|MENU|METAFILE|WND)$/) {
+	$align = 4;
+    } elsif (/^LP(?:CSTR|CWSTR|DWORD|STR|VOID|THREAD_START_ROUTINE|WSTR)$/) {
+	$align = 4;
+    } elsif (/^(?:(?:MSGBOX)CALLBACK[AW]?|(?:FAR|WND)PROC[AW]?)$/) {
+	$align = 4;
+    } elsif (/^(?:FILETIME|LARGE_INTEGER|LONGLONG)$/) {
+	$align = 4;
+    } else {
+	$align = undef;
+    }
+
+    my $align2;
+    if (defined(my $type = $type_name2type{$_})) {
+	$align2 = $type->align;
+    }
+
+    if (!defined($align)) {
+	$align = $align2;
+    } elsif (defined($align2) && !$align_kludge_reported{$_}) {
+	$align_kludge_reported{$_} = 1;
+	$output->write("$type_name: type needn't be kludged\n");
+    }
+
+    if (!defined($align)) {
+	# $output->write("$type_name: can't find type\n");
+    }
+
+    return $align;
+}
+
+my %size_kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
+my %size_parse_reported;
 
 sub find_size {
     my $type_name = shift;
@@ -148,12 +210,10 @@ sub find_size {
 	$size = 4;
     } elsif (/^(?:FILETIME|LARGE_INTEGER|LONGLONG)$/) {
 	$size = 8;
-    } elsif (/^(?:CRITICAL_SECTION)$/) {
-	$size = 24;
     } elsif (/^(?:struct|union)$/) {
-	if (!$parse_reported{$_}) {
+	if (!$size_parse_reported{$_}) {
 	    $output->write("$type_name: can't parse type\n");
-	    $parse_reported{$_} = 1;
+	    $size_parse_reported{$_} = 1;
 	}
 	$size = undef;
     } else {
@@ -167,8 +227,8 @@ sub find_size {
 
     if (!defined($size)) {
 	$size = $size2;
-    } elsif (defined($size2) && !$kludge_reported{$_}) {
-	$kludge_reported{$_} = 1;
+    } elsif (defined($size2) && !$size_kludge_reported{$_}) {
+	$size_kludge_reported{$_} = 1;
 	$output->write("$type_name: type needn't be kludged\n");
     }
 
@@ -246,7 +306,7 @@ foreach my $file (@files) {
 	if (/^\#\s*include\s+\"pshpack(\d+)\.h\"$/) {
 	    push @packs, $1;
 	} elsif(/^\#\s*include\s+\"poppack\.h\"$/) {
-	    unshift @packs;
+	    pop @packs;
 	}
 
 	return 1;
@@ -258,23 +318,29 @@ foreach my $file (@files) {
 
 	&$update_output();
 
-	if (!defined($type->pack)) {
-	    my $pack = $packs[$#packs];
-	    $type->pack($pack);
-	}
-
 	my $name = $type->name;
 	$file2types{$file}{$name} = $type;
 
-	my $size = $type->size(\&find_size);
+	$type->set_find_align_callback(\&find_align);
+	$type->set_find_size_callback(\&find_size);
+
+	my $pack = $packs[$#packs];
+	if (!defined($type->pack)) {
+	    $type->pack($pack);
+	}
+	my $size = $type->size();
 	if (defined($size)) {
-	    foreach my $field ($type->fields(\&find_size)) {
+	    my $max_field_base_size = 0;
+
+	    foreach my $field ($type->fields()) {
 		my $field_type_name = $field->type_name;
 		my $field_name = $field->name;
 		my $field_size = $field->size;
+		my $field_base_size = $field->base_size;
 		my $field_offset = $field->offset;
+		my $field_align = $field->align;
 
-		# $output->write("$name: $field_type_name: $field_name: $field_offset: $field_size\n");
+		# $output->write("$name: $field_type_name: $field_name: $field_offset: $field_size($field_base_size): $field_align\n");
 	    }
 	    # $output->write("$name: $size\n");
 
@@ -324,6 +390,7 @@ sub output_header {
     print OUT "#include <stdio.h>\n";
     print OUT "\n";
     print OUT "#include \"wine/test.h\"\n";
+    print OUT "#include \"wine/test_generated.h\"\n";
     foreach my $test (@tests) {
 	my @includes = $tests->get_section($test_dir, $test, "include");
 	foreach my $include (@includes) {
@@ -377,12 +444,17 @@ sub output_test_pack {
 		next;
 	    }
 	    $type_name_not_used{$type_name} = 0;
-	    
-	    my $pack = $type->pack;
 
-	    print OUT "    /* $type_name */\n";
+	    my $type_align = $type->align;
+	    my $type_pack = $type->pack;
+	    my $type_size = $type->size;
 
-	    foreach my $field ($type->fields(\&find_size)) {
+	    print OUT "    /* $type_name (pack $type_pack) */\n";
+	    if (defined($type_align) && defined($type_size)) {
+		print OUT "    TEST_TYPE($type_name, $type_size, $type_align);\n";
+	    }
+
+	    foreach my $field ($type->fields()) {
 		my $field_type_name = $field->type_name;
 		my $field_name = $field->name;
 		my $field_size = $field->size;
@@ -392,30 +464,12 @@ sub output_test_pack {
 		next if $field_name eq "" || (defined($field_size) && $field_size < 0);
 
 		if (defined($field_size) && defined($field_offset)) {
-		    print OUT "    ok(FIELD_OFFSET($type_name, $field_name) == $field_offset,\n";
-		    print OUT "       \"FIELD_OFFSET($type_name, $field_name) == %ld (expected $field_offset)\",\n";
-		    print OUT "       FIELD_OFFSET($type_name, $field_name)); /* $field_type_name */\n";
-
-		    if (0) {
-			print OUT "    ok(TYPE_ALIGNMENT($field_type_name) == $field_align,\n";
-			print OUT "       \"TYPE_ALIGNMENT($field_type_name) == %d (expected $field_align)\",\n";
-			print OUT "       TYPE_ALIGNMENT($field_type_name)); /* $field_name */\n";
-		    }
+		    print OUT "    TEST_FIELD($type_name, $field_type_name, $field_name, $field_offset, $field_size, $field_align);\n";
 		} else {
 		    $output->write("$type_name: $field_type_name: $field_name: test not generated (offset not defined)\n");
 		}
 	    }
-
-	    my $type_size = $type->size;
-
-	    if (defined($type_size)) {
-		print OUT "    ok(sizeof($type_name) == $type_size, ";
-		print OUT "\"sizeof($type_name) == %d (expected $type_size)\", ";
-		print OUT "sizeof($type_name));\n";
-		print OUT "\n";
-	    } else {
-		$output->write("$type_name: test not generated (size not defined)\n");
-	    }
+	    print OUT "\n";
 	}
     }
 
