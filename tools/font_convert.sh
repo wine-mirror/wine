@@ -19,10 +19,16 @@
 
 # default settings
 TMPDIR=/tmp/fconv.$$;
-TFILE=`tempfile`;
+if [ -f `which mktemp` ]; then
+  TFILE=`mktemp -q /tmp/fconv.XXXXXX`
+else
+  TFILE=`tempfile`;
+fi
 
 # Where the fnt2bdf utility resides
-FC=$HOME""/wine/tools/fnt2bdf;
+FC=`which fnt2bdf`;
+if [ -z "$FC" ]; then FC=$HOME""/wine/tools/fnt2bdf; fi;
+
 # which OEM_CHARSET to use
 CHARSET="winsys";
 TARGET=/usr/X11R6/lib/X11/fonts/misc;
@@ -75,12 +81,13 @@ if [ ! -d "$TARGET" ]; then $Q echo "$TARGET is not a directory"; exit 1; fi;
 type -p $BDFTOPCF 1>/dev/null || { $Q echo "Can 't execute $BDFTOPCF"; exit 1; }
 type -p $FC 1>/dev/null || { $Q echo "Can't execute $FC"; exit 1; }
 
-$Q echo -n "looking for bitmap fonts... "
-FONTS=`find "$WIND" -iname $PAT 1>$TFILE 2>/dev/null`;
+$Q echo -n "looking for bitmap fonts (\"$PAT\") in directory \"$WIND\"... ";
+FONTS=`find $WIND -iname "$PAT" 1>$TFILE 2>/dev/null`;
 if [ $? -ne 0 ]; then
-    $Q echo "$PAT is a invalid sarch expression"; exit 1;
+    $Q echo "$PAT is a invalid search expression"; exit 1;
 fi;
 i=0;
+
 { while read dummy; do FONTS[$i]="$dummy"; i=$[$i+1]; done; } < $TFILE
 rm $TFILE;
 $Q echo "done."
@@ -88,6 +95,7 @@ $Q echo "done."
 if [ -z "$FONTS" ]; then $Q echo "Can't find any fonts in $WIND"; exit 1; fi;
 
 mkdir "$TMPDIR"
+for i in "${FONTS[@]}"; do cp $i $TMPDIR; done
 cd "$TMPDIR"
 
 for i in "${FONTS[@]}"; do
@@ -101,12 +109,16 @@ for i in "${FONTS[@]}"; do
 done;
 
 for i in *.bdf; do
-    if [ "$i" == "*.bdf" ]; then echo "No fonts extracted"; exit 0; fi;
-    bdftopcf -o "${i%.???}.pcf" "$i";
-    $Q echo "installing ${i%.???}.pcf";
-    mv "${i%.???}.pcf" $TARGET 2>/dev/null
+    if [ "$i" == "*.bdf" ]; then
+       echo "No fonts extracted"; rm -rf "$TMPDIR"; exit 0; 
+    fi;
+    bdftopcf "$i" | gzip -c > ${i%.???}.pcf.gz;
+    $Q echo "installing ${i%.???}.pcfi.gz";
+    mv "${i%.???}.pcf.gz" $TARGET 2>/dev/null
     if [ $? -ne 0 ]; then
-	$Q echo "Can't install fonts to $TARGET. Are your root?"; cd "$OLDPWD"; rm -rf "$TMPDIR"; exit 1; fi;
+	$Q echo "Can't install fonts to $TARGET. Try again as the root user.";
+        $Q echo "Cleaning up..."; cd "$OLDPWD"; rm -rf "$TMPDIR"; exit 1;
+    fi;
     rm "$i";
 done;
 
@@ -117,6 +129,6 @@ if [ "$Q" ]; then
 else
     mkfontdir
 fi;
-rmdir "$TMPDIR"
+rm -rf "$TMPDIR"
 
 if [ "$DISPLAY" ]; then $Q echo "adjusting X font database"; xset fp rehash; fi;
