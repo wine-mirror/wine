@@ -314,12 +314,15 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     BITMAPOBJ *bitmap;
     INT result = 0;
 
-    if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
-
     if (!(dc = DC_GetDCUpdate( hdc )))
     {
         if (coloruse == DIB_RGB_COLORS) FIXME( "shouldn't require a DC for DIB_RGB_COLORS\n" );
-        GDI_ReleaseObj( hbitmap );
+        return 0;
+    }
+
+    if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+    {
+        GDI_ReleaseObj( hdc );
         return 0;
     }
 
@@ -332,8 +335,8 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         result = lines;
 
  done:
-    GDI_ReleaseObj( hdc );
     GDI_ReleaseObj( hbitmap );
+    GDI_ReleaseObj( hdc );
     return result;
 }
 
