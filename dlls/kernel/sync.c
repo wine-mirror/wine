@@ -1174,7 +1174,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 /***********************************************************************
  *           SYNC_CompletePipeOverlapped   (Internal)
  */
-static void SYNC_CompletePipeOverlapped (LPOVERLAPPED overlapped, DWORD result)
+static void CALLBACK SYNC_CompletePipeOverlapped (LPOVERLAPPED overlapped, DWORD result)
 {
     TRACE("for %p result %08lx\n",overlapped,result);
     if(!overlapped)
