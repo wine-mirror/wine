@@ -161,12 +161,14 @@ static struct {
   char *PSName;
   WORD WinBin;
 } BinTrans[] = {
+  /* In alphabetical order by the PSName member */
   {"Cassette",          DMBIN_CASSETTE},
   {"Envelope",		DMBIN_ENVELOPE},
   {"LargeCapacity",	DMBIN_LARGECAPACITY},
   {"Lower",		DMBIN_LOWER},
   {"ManualFeed",        DMBIN_MANUAL},
   {"Middle",            DMBIN_MIDDLE},
+  {"OnlyOne",		DMBIN_ONLYONE},
   {"Upper",		DMBIN_UPPER},
   {NULL,		0}
 };
