@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 void DSOUND_RecalcPrimary(IDirectSoundImpl *This)
 {
 	DWORD sw;
+	TRACE("(%p)\n",This);
 
 	sw = This->wfx.nChannels * (This->wfx.wBitsPerSample / 8);
 	if (This->hwbuf) {
@@ -69,6 +70,7 @@ void DSOUND_RecalcPrimary(IDirectSoundImpl *This)
 static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 {
 	HRESULT err = DS_OK;
+	TRACE("(%p)\n",This);
 
 	/* are we using waveOut stuff? */
 	if (!This->hwbuf) {
@@ -129,6 +131,8 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 
 static void DSOUND_PrimaryClose(IDirectSoundImpl *This)
 {
+	TRACE("(%p)\n",This);
+
 	/* are we using waveOut stuff? */
 	if (!This->hwbuf) {
 		unsigned c;
@@ -144,6 +148,7 @@ static void DSOUND_PrimaryClose(IDirectSoundImpl *This)
 HRESULT DSOUND_PrimaryCreate(IDirectSoundImpl *This)
 {
 	HRESULT err = DS_OK;
+	TRACE("(%p)\n",This);
 
 	This->buflen = This->wfx.nAvgBytesPerSec;
 
@@ -182,6 +187,8 @@ HRESULT DSOUND_PrimaryCreate(IDirectSoundImpl *This)
 
 HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This)
 {
+	TRACE("(%p)\n",This);
+
 	DSOUND_PrimaryClose(This);
 	if (This->hwbuf) {
 		if (IDsDriverBuffer_Release(This->hwbuf) == 0)
@@ -198,6 +205,8 @@ HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This)
 HRESULT DSOUND_PrimaryPlay(IDirectSoundImpl *This)
 {
 	HRESULT err = DS_OK;
+	TRACE("(%p)\n",This);
+
 	if (This->hwbuf)
 		err = IDsDriverBuffer_Play(This->hwbuf, 0, 0, DSBPLAY_LOOPING);
 	else
@@ -208,8 +217,7 @@ HRESULT DSOUND_PrimaryPlay(IDirectSoundImpl *This)
 HRESULT DSOUND_PrimaryStop(IDirectSoundImpl *This)
 {
 	HRESULT err = DS_OK;
-
-        TRACE("\n");
+	TRACE("(%p)\n",This);
 
 	if (This->hwbuf) {
 		err = IDsDriverBuffer_Stop(This->hwbuf);
@@ -239,6 +247,8 @@ HRESULT DSOUND_PrimaryStop(IDirectSoundImpl *This)
 
 HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWORD writepos)
 {
+	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
+
 	if (This->hwbuf) {
 		HRESULT err=IDsDriverBuffer_GetPosition(This->hwbuf,playpos,writepos);
 		if (err) return err;
@@ -277,6 +287,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	IDirectSoundBufferImpl** dsb;
 	HRESULT err = DS_OK;
 	int			i;
+	TRACE("(%p,%p)\n",This,wfex);
 
 	if (This->dsound->priolevel == DSSCL_NORMAL) {
 		TRACE("failed priority check!\n");
@@ -874,6 +885,8 @@ HRESULT WINAPI PrimaryBuffer_Create(
 {
 	PrimaryBufferImpl *dsb;
 
+	TRACE("%p,%p,%p)\n",This,pdsb,dsbd);
+
 	if (dsbd->lpwfxFormat)
 		return DSERR_INVALIDPARAM;
 
@@ -885,6 +898,11 @@ HRESULT WINAPI PrimaryBuffer_Create(
 	memcpy(&dsb->dsbd, dsbd, sizeof(*dsbd));
 
 	TRACE("Created primary buffer at %p\n", dsb);
+	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
+		"bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+		This->wfx.wFormatTag, This->wfx.nChannels, This->wfx.nSamplesPerSec,
+		This->wfx.nAvgBytesPerSec, This->wfx.nBlockAlign,
+		This->wfx.wBitsPerSample, This->wfx.cbSize);
 
 	if (dsbd->dwFlags & DSBCAPS_CTRL3D) {
 		/* FIXME: IDirectSound3DListener */

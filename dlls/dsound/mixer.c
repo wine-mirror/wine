@@ -256,12 +256,14 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 
 static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 {
-	INT	i, inc = dsb->dsound->wfx.wBitsPerSample >> 3;
+	INT	i;
 	BYTE	*bpc = buf;
 	INT16	*bps = (INT16 *) buf;
 
-	TRACE("(%p) left = %lx, right = %lx\n", dsb,
-		dsb->cvolpan.dwTotalLeftAmpFactor, dsb->cvolpan.dwTotalRightAmpFactor);
+	TRACE("(%p,%p,%d)\n",dsb,buf,len);
+	TRACE("left = %lx, right = %lx\n", dsb->cvolpan.dwTotalLeftAmpFactor, 
+		dsb->cvolpan.dwTotalRightAmpFactor);
+
 	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->cvolpan.lPan == 0)) &&
 	    (!(dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) || (dsb->cvolpan.lVolume == 0)) &&
 	    !(dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
@@ -271,30 +273,60 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	/* with a mono primary buffer, it could sound very weird using */
 	/* this method. Oh well, tough patooties. */
 
-	for (i = 0; i < len; i += inc) {
-		INT	val;
-
-		switch (inc) {
-
+	switch (dsb->dsound->wfx.wBitsPerSample) {
+	case 8:
+		/* 8-bit WAV is unsigned, but we need to operate */
+		/* on signed data for this to work properly */
+		switch (dsb->dsound->wfx.nChannels) {
 		case 1:
-			/* 8-bit WAV is unsigned, but we need to operate */
-			/* on signed data for this to work properly */
-			val = *bpc - 128;
-			val = ((val * (i & inc ? dsb->cvolpan.dwTotalRightAmpFactor : dsb->cvolpan.dwTotalLeftAmpFactor)) >> 16);
-			*bpc = val + 128;
-			bpc++;
+			for (i = 0; i < len; i++) {
+				INT val = *bpc - 128;
+				val = (val * dsb->cvolpan.dwTotalLeftAmpFactor) >> 16;
+				*bpc = val + 128;
+				bpc++;
+			}
 			break;
 		case 2:
-			/* 16-bit WAV is signed -- much better */
-			val = *bps;
-			val = ((val * ((i & inc) ? dsb->cvolpan.dwTotalRightAmpFactor : dsb->cvolpan.dwTotalLeftAmpFactor)) >> 16);
-			*bps = val;
-			bps++;
+			for (i = 0; i < len; i+=2) {
+				INT val = *bpc - 128;
+				val = (val * dsb->cvolpan.dwTotalLeftAmpFactor) >> 16;
+				*bpc++ = val + 128;
+				val = *bpc - 128;
+				val = (val * dsb->cvolpan.dwTotalRightAmpFactor) >> 16;
+				*bpc = val + 128;
+				bpc++;
+			}
 			break;
 		default:
-			/* Very ugly! */
-			FIXME("MixerVol had a nasty error\n");
+			FIXME("doesn't support %d channels\n", dsb->dsound->wfx.nChannels);
+			break;
 		}
+		break;
+	case 16:
+		/* 16-bit WAV is signed -- much better */
+		switch (dsb->dsound->wfx.nChannels) {
+		case 1:
+			for (i = 0; i < len; i += 2) {
+				*bps = (*bps * dsb->cvolpan.dwTotalLeftAmpFactor) >> 16;
+				bps++;
+			}
+			break;
+		case 2:
+			for (i = 0; i < len; i += 4) {
+				*bps = (*bps * dsb->cvolpan.dwTotalLeftAmpFactor) >> 16;
+				bps++;
+				*bps = (*bps * dsb->cvolpan.dwTotalRightAmpFactor) >> 16;
+				bps++;
+			}
+			break;
+		default:
+			FIXME("doesn't support %d channels\n", dsb->dsound->wfx.nChannels);
+			break;
+		}
+		break;
+	default:
+		FIXME("doesn't support %d bit samples\n", dsb->dsound->wfx.wBitsPerSample);
+		break;
 	}
 }
 
@@ -320,6 +352,8 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	INT	advance = dsb->dsound->wfx.wBitsPerSample >> 3;
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
+
+	TRACE("%p,%ld,%ld)\n",dsb,writepos,fraglen);
 
 	len = fraglen;
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
@@ -807,6 +841,8 @@ void DSOUND_PerformMix(void)
 	int nfiller;
 	BOOL forced;
 	HRESULT hres;
+
+	TRACE("()\n");
 
 	RtlAcquireResourceShared(&(dsound->lock), TRUE);
 
