@@ -65,7 +65,6 @@
  *     - TBN_TOOLBARCHANGE
  *   - Button wrapping (under construction).
  *   - Fix TB_SETROWS.
- *   - Fix TOOLBAR_SetButtonInfo32A/W.
  *   - iListGap custom draw support.
  *   - Customization dialog:
  *      - Minor buglet in 'available buttons' list:
@@ -94,7 +93,6 @@
 #include "wine/unicode.h"
 #include "winnls.h"
 #include "commctrl.h"
-#include "imagelist.h"
 #include "comctl32.h"
 #include "wine/debug.h"
 
@@ -108,10 +106,10 @@ typedef struct
     BYTE  fsStyle;
     DWORD dwData;
     INT iString;
-
     BOOL bHot;
     INT nRow;
     RECT rect;
+    INT cx; /* manually set size */
 } TBUTTON_INFO;
 
 typedef struct
@@ -1506,7 +1504,9 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	}
 	else
 	{
-            if ((infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || 
+            if (btnPtr->cx)
+              cx = btnPtr->cx;
+            else if ((infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || 
                 (btnPtr->fsStyle & BTNS_AUTOSIZE))
             {
               SIZE sz;
@@ -1541,7 +1541,10 @@ TOOLBAR_CalcToolbar (HWND hwnd)
             else
 	      cx = infoPtr->nButtonWidth;
 
-	    if ((hasDropDownArrows && (btnPtr->fsStyle & BTNS_DROPDOWN)) || (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN))
+            /* if size has been set manually then don't add on extra space
+             * for the drop down arrow */
+	    if (!btnPtr->cx && hasDropDownArrows && 
+                ((btnPtr->fsStyle & BTNS_DROPDOWN) || (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)))
 	      cx += DDARROW_WIDTH;
 	}
 	if (btnPtr->fsState & TBSTATE_WRAP )
@@ -4159,6 +4162,11 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     HIMAGELIST himlDef = GETDEFIMAGELIST(infoPtr, 0);
 
+    TRACE("hwnd=%p, wParam=%d, lParam=%ld\n", hwnd, wParam, lParam);
+
+    if (wParam != 0)
+        FIXME("wParam is %d. Perhaps image list index?\n", wParam);
+
     if ((LOWORD(lParam) <= 0) || (HIWORD(lParam)<=0))
 	return FALSE;
 
@@ -4172,10 +4180,11 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
 
 
-    /* uses image list internals directly */
-    if (himlDef) {
-        himlDef->cx = infoPtr->nBitmapWidth;
-        himlDef->cy = infoPtr->nBitmapHeight;
+    if ((himlDef == infoPtr->himlInt) &&
+        (ImageList_GetImageCount(infoPtr->himlInt) == 0))
+    {
+        ImageList_SetIconSize(infoPtr->himlInt, infoPtr->nBitmapWidth,
+            infoPtr->nBitmapHeight);
     }
 
     return TRUE;
@@ -4189,6 +4198,7 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPTBBUTTONINFOA lptbbi = (LPTBBUTTONINFOA)lParam;
     TBUTTON_INFO *btnPtr;
     INT nIndex;
+    RECT oldBtnRect;
 
     if (lptbbi == NULL)
 	return FALSE;
@@ -4207,8 +4217,8 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->iBitmap = lptbbi->iImage;
     if (lptbbi->dwMask & TBIF_LPARAM)
 	btnPtr->dwData = lptbbi->lParam;
-/*    if (lptbbi->dwMask & TBIF_SIZE) */
-/*	btnPtr->cx = lptbbi->cx; */
+    if (lptbbi->dwMask & TBIF_SIZE)
+	btnPtr->cx = lptbbi->cx;
     if (lptbbi->dwMask & TBIF_STATE)
 	btnPtr->fsState = lptbbi->fsState;
     if (lptbbi->dwMask & TBIF_STYLE)
@@ -4221,6 +4231,16 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
          Str_SetPtrAtoW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
     }
+
+    /* save the button rect to see if we need to redraw the whole toolbar */
+    oldBtnRect = btnPtr->rect;
+    TOOLBAR_CalcToolbar(hwnd);
+
+    if (!EqualRect(&oldBtnRect, &btnPtr->rect))
+        InvalidateRect(hwnd, NULL, TRUE);
+    else
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
+
     return TRUE;
 }
 
@@ -4232,6 +4252,7 @@ TOOLBAR_SetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPTBBUTTONINFOW lptbbi = (LPTBBUTTONINFOW)lParam;
     TBUTTON_INFO *btnPtr;
     INT nIndex;
+    RECT oldBtnRect;
 
     if (lptbbi == NULL)
 	return FALSE;
@@ -4250,8 +4271,8 @@ TOOLBAR_SetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->iBitmap = lptbbi->iImage;
     if (lptbbi->dwMask & TBIF_LPARAM)
 	btnPtr->dwData = lptbbi->lParam;
-/*    if (lptbbi->dwMask & TBIF_SIZE) */
-/*	btnPtr->cx = lptbbi->cx; */
+    if (lptbbi->dwMask & TBIF_SIZE)
+	btnPtr->cx = lptbbi->cx;
     if (lptbbi->dwMask & TBIF_STATE)
 	btnPtr->fsState = lptbbi->fsState;
     if (lptbbi->dwMask & TBIF_STYLE)
@@ -4263,6 +4284,16 @@ TOOLBAR_SetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    btnPtr->iString=0;
         Str_SetPtrW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
     }
+
+    /* save the button rect to see if we need to redraw the whole toolbar */
+    oldBtnRect = btnPtr->rect;
+    TOOLBAR_CalcToolbar(hwnd);
+
+    if (!EqualRect(&oldBtnRect, &btnPtr->rect))
+        InvalidateRect(hwnd, NULL, TRUE);
+    else
+        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
+
     return TRUE;
 }
 
