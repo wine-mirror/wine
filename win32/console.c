@@ -710,28 +710,90 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
                                      LPSMALL_RECT lpWriteRegion)
 {
     int i,j,off=0,lastattr=-1;
+    int offbase;
     char	sbuf[20],*buffer=NULL;
     int		bufused=0,curbufsize = 100;
     DWORD	res;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
     const int colormap[8] = {
     	0,4,2,6,
 	1,5,3,7,
     };
     CONSOLE_make_complex(hConsoleOutput);
-    buffer = HeapAlloc(GetProcessHeap(),0,100);
-    curbufsize = 100;
+    buffer = HeapAlloc(GetProcessHeap(),0,curbufsize);
+    offbase = (dwBufferCoord.y - 1) * dwBufferSize.x +
+              (dwBufferCoord.x - lpWriteRegion->Left);
 
-    TRACE("wr: top = %d, bottom=%d, left=%d,right=%d\n",
+    TRACE("orig rect top = %d, bottom=%d, left=%d, right=%d\n",
     	lpWriteRegion->Top,
     	lpWriteRegion->Bottom,
     	lpWriteRegion->Left,
     	lpWriteRegion->Right
     );
 
+    GetConsoleScreenBufferInfo(hConsoleOutput, &csbi);
+
+    /* Step 1. Make (Bottom,Right) offset of intersection with
+       Screen Buffer                                              */
+    lpWriteRegion->Bottom = min(lpWriteRegion->Bottom, csbi.dwSize.y-1) - 
+                                lpWriteRegion->Top;
+    lpWriteRegion->Right = min(lpWriteRegion->Right, csbi.dwSize.x-1) -
+                                lpWriteRegion->Left;
+
+    /* Step 2. If either offset is negative, then no action 
+       should be performed. (Implies that requested rectangle is
+       outside the current screen buffer rectangle.)              */
+    if ((lpWriteRegion->Bottom < 0) ||
+        (lpWriteRegion->Right < 0)) {
+        /* readjust (Bottom Right) for rectangle */
+        lpWriteRegion->Bottom += lpWriteRegion->Top;
+        lpWriteRegion->Right += lpWriteRegion->Left;
+
+        TRACE("invisible rect top = %d, bottom=%d, left=%d, right=%d\n",
+            lpWriteRegion->Top,
+    	    lpWriteRegion->Bottom,
+    	    lpWriteRegion->Left,
+    	    lpWriteRegion->Right
+        );
+
+        HeapFree(GetProcessHeap(),0,buffer);
+        return TRUE;
+    }
+
+    /* Step 3. Intersect with source rectangle                    */
+    lpWriteRegion->Bottom = lpWriteRegion->Top - dwBufferCoord.y +
+             min(lpWriteRegion->Bottom + dwBufferCoord.y, dwBufferSize.y-1);
+    lpWriteRegion->Right = lpWriteRegion->Left - dwBufferCoord.x +
+             min(lpWriteRegion->Right + dwBufferCoord.x, dwBufferSize.x-1);
+
+    TRACE("clipped rect top = %d, bottom=%d, left=%d,right=%d\n",
+    	lpWriteRegion->Top,
+    	lpWriteRegion->Bottom,
+    	lpWriteRegion->Left,
+    	lpWriteRegion->Right
+    );
+
+    /* Validate above computations made sense, if not then issue
+       error and fudge to single character rectangle                  */
+    if ((lpWriteRegion->Bottom < lpWriteRegion->Top) ||
+        (lpWriteRegion->Right < lpWriteRegion->Left)) {
+       ERR("Invalid clipped rectangle top = %d, bottom=%d, left=%d,right=%d\n",
+    	      lpWriteRegion->Top,
+    	      lpWriteRegion->Bottom,
+    	      lpWriteRegion->Left,
+    	      lpWriteRegion->Right
+          );
+       lpWriteRegion->Bottom = lpWriteRegion->Top;
+       lpWriteRegion->Right = lpWriteRegion->Left;
+    }
+
+    /* Now do the real processing and move the characters    */
     for (i=lpWriteRegion->Top;i<=lpWriteRegion->Bottom;i++) {
+        offbase += dwBufferSize.x;
     	sprintf(sbuf,"%c[%d;%dH",27,i+1,lpWriteRegion->Left+1);
 	SADD(sbuf);
 	for (j=lpWriteRegion->Left;j<=lpWriteRegion->Right;j++) {
+            off = j + offbase;
 	    if (lastattr!=lpBuffer[off].Attributes) {
 		lastattr = lpBuffer[off].Attributes;
 		sprintf(sbuf,"%c[0;%s3%d;4%dm",
@@ -744,7 +806,6 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
 		SADD(sbuf);
 	    }
 	    CADD(lpBuffer[off].Char.AsciiChar);
-	    off++;
 	}
     }
     sprintf(sbuf,"%c[0m",27);SADD(sbuf);
@@ -1064,8 +1125,15 @@ BOOL WINAPI SetConsoleCursorPosition( HANDLE hcon, COORD pos )
  */
 BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE hcon,LPDWORD nrofevents)
 {
+    struct read_console_input_request *req = get_req_buffer();
+
     CONSOLE_get_input(hcon,FALSE);
-    *nrofevents = 1; /* UMM */
+
+    req->handle = hcon;
+    req->count = -1;
+    req->flush = 0;
+    if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
+    if (nrofevents) *nrofevents = req->read;
     return TRUE;
 }
 
