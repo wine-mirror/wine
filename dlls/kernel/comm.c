@@ -67,7 +67,6 @@
 #include "wine/port.h"
 #include "wine/server.h"
 #include "winerror.h"
-#include "services.h"
 #include "callback.h"
 #include "file.h"
 
@@ -110,7 +109,7 @@ struct DosDeviceStruct {
     unsigned obuf_size,obuf_head,obuf_tail;
     /* notifications */
     int wnd, n_read, n_write;
-    HANDLE s_read, s_write;
+    OVERLAPPED read_ov, write_ov;
     /* save terminal states */
     DCB16 dcb;
     /* pointer to unknown(==undocumented) comm structure */ 
@@ -216,12 +215,12 @@ static struct DosDeviceStruct *GetDeviceStruct(int index)
 	return NULL;
 }
 
-static int    GetCommPort_fd(HANDLE handle)
+static int    GetCommPort_ov(LPOVERLAPPED ov, int write)
 {
         int x;
         
         for (x=0; x<MAX_PORTS; x++) {
-             if (COM[x].handle == handle)
+            if (ov == (write?&COM[x].write_ov:&COM[x].read_ov))
                  return x;
        }
        
@@ -269,26 +268,32 @@ static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
     return ioctl(fd, TIOCMSET, &mstat);
 }
 
-static void CALLBACK comm_notification( ULONG_PTR private )
-{
-  struct DosDeviceStruct *ptr = (struct DosDeviceStruct *)private;
-  int prev, bleft;
-  DWORD len;
-  WORD mask = 0;
-  int cid = GetCommPort_fd(ptr->handle);
+static void comm_waitread(struct DosDeviceStruct *ptr);
+static void comm_waitwrite(struct DosDeviceStruct *ptr);
 
-  TRACE("async notification\n");
+static VOID WINAPI COMM16_ReadComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
+{
+	int prev ;
+  WORD mask = 0;
+	int cid = GetCommPort_ov(ov,0);
+	struct DosDeviceStruct *ptr;
+
+	if(cid<0) {
+		ERR("async write with bad overlapped pointer\n");
+		return;
+	}
+	ptr = &COM[cid];
+
   /* read data from comm port */
+	if (status != STATUS_SUCCESS) {
+		ERR("async read failed\n");
+		COM[cid].commerror = CE_RXOVER;
+		return;
+	}
+	TRACE("async read completed %ld bytes\n",len);
+
   prev = comm_inbuf(ptr);
-  do {
-    bleft = ((ptr->ibuf_tail > ptr->ibuf_head) ? (ptr->ibuf_tail-1) : ptr->ibuf_size)
-      - ptr->ibuf_head;
-    if(!ReadFile(ptr->handle, ptr->inbuf + ptr->ibuf_head, bleft?bleft:1, &len, NULL))
-      len = -1;
-    if (len > 0) {
-      if (!bleft) {
-	ptr->commerror = CE_RXOVER;
-      } else {
+
 	/* check for events */
 	if ((ptr->eventmask & EV_RXFLAG) &&
 	    memchr(ptr->inbuf + ptr->ibuf_head, ptr->evtchar, len)) {
@@ -299,13 +304,12 @@ static void CALLBACK comm_notification( ULONG_PTR private )
 	  *(WORD*)(COM[cid].unknown) |= EV_RXCHAR;
 	  mask |= CN_EVENT;
 	}
+
 	/* advance buffer position */
 	ptr->ibuf_head += len;
 	if (ptr->ibuf_head >= ptr->ibuf_size)
 	  ptr->ibuf_head = 0;
-      }
-    }
-  } while (len > 0);
+
   /* check for notification */
   if (ptr->wnd && (ptr->n_read>0) && (prev<ptr->n_read) &&
       (comm_inbuf(ptr)>=ptr->n_read)) {
@@ -313,39 +317,55 @@ static void CALLBACK comm_notification( ULONG_PTR private )
     mask |= CN_RECEIVE;
   }
 
+	/* send notifications, if any */
+	if (ptr->wnd && mask) {
+		TRACE("notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
+		if (Callout.PostMessageA) Callout.PostMessageA(ptr->wnd, WM_COMMNOTIFY, cid, mask);
+	}
+
+	/* on real windows, this could cause problems, since it is recursive */
+	/* restart the receive */
+	comm_waitread(ptr);
+}
+
+static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
+{
+	int prev, bleft;
+	WORD mask = 0;
+	int cid = GetCommPort_ov(ov,1);
+	struct DosDeviceStruct *ptr;
+
+	if(cid<0) {
+		ERR("async write with bad overlapped pointer\n");
+		return;
+	}
+	ptr = &COM[cid];
+
+	/* read data from comm port */
+	if (status != STATUS_SUCCESS) {
+		ERR("async write failed\n");
+		COM[cid].commerror = CE_RXOVER;
+		return;
+	}
+	TRACE("async write completed %ld bytes\n",len);
+
+	/* update the buffer pointers */
+	prev = comm_outbuf(&COM[cid]);
+	ptr->obuf_tail += len;
+	if (ptr->obuf_tail >= ptr->obuf_size)
+		ptr->obuf_tail = 0;
+
   /* write any TransmitCommChar character */
   if (ptr->xmit>=0) {
     if(!WriteFile(ptr->handle, &(ptr->xmit), 1, &len, NULL))
       len = -1;
     if (len > 0) ptr->xmit = -1;
   }
+
   /* write from output queue */
-  prev = comm_outbuf(ptr);
-  do {
-    bleft = ((ptr->obuf_tail <= ptr->obuf_head) ? ptr->obuf_head : ptr->obuf_size)
-      - ptr->obuf_tail;
-    if(bleft) {
-       if(!WriteFile(ptr->handle, ptr->outbuf + ptr->obuf_tail, bleft, &len, NULL))
-          len = -1;
-    } else
-       len = bleft;
-    if (len > 0) {
-      ptr->obuf_tail += len;
-      if (ptr->obuf_tail >= ptr->obuf_size)
-	ptr->obuf_tail = 0;
-      /* flag event */
-      if (ptr->obuf_tail == ptr->obuf_head) {
-	if (ptr->s_write) {
-	  SERVICE_Delete( ptr->s_write );
-	  ptr->s_write = INVALID_HANDLE_VALUE;
-	}
-        if (ptr->eventmask & EV_TXEMPTY) {
-	  *(WORD*)(COM[cid].unknown) |= EV_TXEMPTY;
-	  mask |= CN_EVENT;
-	}
-      }
-    }
-  } while (len > 0);
+	bleft = ((ptr->obuf_tail <= ptr->obuf_head) ? 
+		ptr->obuf_head : ptr->obuf_size) - ptr->obuf_tail;
+
   /* check for notification */
   if (ptr->wnd && (ptr->n_write>0) && (prev>=ptr->n_write) &&
       (comm_outbuf(ptr)<ptr->n_write)) {
@@ -358,30 +378,37 @@ static void CALLBACK comm_notification( ULONG_PTR private )
     TRACE("notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
     if (Callout.PostMessageA) Callout.PostMessageA(ptr->wnd, WM_COMMNOTIFY, cid, mask);
   }
+
+	/* start again if necessary */
+	if(bleft)
+		comm_waitwrite(ptr);
 }
 
 static void comm_waitread(struct DosDeviceStruct *ptr)
 {
-  HANDLE dup=INVALID_HANDLE_VALUE;
+	int bleft;
 
-  if (ptr->s_read != INVALID_HANDLE_VALUE)
-    return;
-  if(!DuplicateHandle(GetCurrentProcess(), ptr->handle,
-                  GetCurrentProcess(), &dup, GENERIC_READ|SYNCHRONIZE, FALSE, 0 ))
-    return;
-  ptr->s_read = SERVICE_AddObject( dup, comm_notification, (ULONG_PTR)ptr );
+	bleft = ((ptr->ibuf_tail > ptr->ibuf_head) ? 
+		(ptr->ibuf_tail-1) : ptr->ibuf_size) - ptr->ibuf_head;
+	/* FIXME: get timeouts working properly so we can read bleft bytes */
+	ReadFileEx(ptr->handle,
+		ptr->inbuf + ptr->ibuf_head,
+		1,
+		&ptr->read_ov,
+		COMM16_ReadComplete);
 }
 
 static void comm_waitwrite(struct DosDeviceStruct *ptr)
 {
-  HANDLE dup=INVALID_HANDLE_VALUE;
+	int bleft;
 
-  if (ptr->s_write != INVALID_HANDLE_VALUE)
-    return;
-  if(!DuplicateHandle(GetCurrentProcess(), ptr->handle,
-                  GetCurrentProcess(), &dup, GENERIC_WRITE|SYNCHRONIZE, FALSE, 0 ))
-    return;
-  ptr->s_write = SERVICE_AddObject( dup, comm_notification, (ULONG_PTR)ptr );
+	bleft = ((ptr->obuf_tail <= ptr->obuf_head) ? 
+		ptr->obuf_head : ptr->obuf_size) - ptr->obuf_tail;
+	WriteFileEx(ptr->handle,
+		ptr->outbuf + ptr->obuf_tail,
+		bleft,
+		&ptr->write_ov,
+		COMM16_WriteComplete);
 }
 
 /**************************************************************************
@@ -590,9 +617,13 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			  return IE_MEMORY;
 			}
 
-                        COM[port].s_read = INVALID_HANDLE_VALUE;
-                        COM[port].s_write = INVALID_HANDLE_VALUE;
+			ZeroMemory(&COM[port].read_ov,sizeof (OVERLAPPED));
+			ZeroMemory(&COM[port].write_ov,sizeof (OVERLAPPED));
+			COM[port].read_ov.hEvent = CreateEventA(NULL,0,0,NULL);
+			COM[port].write_ov.hEvent = CreateEventA(NULL,0,0,NULL);
+
                         comm_waitread( &COM[port] );
+
 			return port;
 		}
 	} 
@@ -635,8 +666,9 @@ INT16 WINAPI CloseComm16(INT16 cid)
 		/* COM port */
 		SEGPTR_FREE(COM[cid].unknown); /* [LW] */
 
-		SERVICE_Delete( COM[cid].s_write );
-		SERVICE_Delete( COM[cid].s_read );
+		CloseHandle(COM[cid].read_ov.hEvent);
+		CloseHandle(COM[cid].write_ov.hEvent);
+
 		/* free buffers */
 		free(ptr->outbuf);
 		free(ptr->inbuf);
@@ -815,7 +847,14 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 	COMM_MSRUpdate( ptr->handle, stol );
 
 	if (lpStat) {
+		HANDLE rw_events[2];
+
 		lpStat->status = 0;
+
+		rw_events[0] = COM[cid].read_ov.hEvent;
+		rw_events[1] = COM[cid].write_ov.hEvent;
+
+		WaitForMultipleObjectsEx(2,&rw_events[0],FALSE,1,TRUE);
 
 		lpStat->cbOutQue = comm_outbuf(ptr);
 		lpStat->cbInQue = comm_inbuf(ptr);
