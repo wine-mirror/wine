@@ -122,21 +122,18 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message
  */
 static void MSG_SendParentNotify( HWND hwnd, WORD event, WORD idChild, POINT pt )
 {
-    WND *tmpWnd = WIN_FindWndPtr(hwnd);
-
     /* pt has to be in the client coordinates of the parent window */
-    MapWindowPoints( 0, tmpWnd->hwndSelf, &pt, 1 );
-    while (tmpWnd)
+    MapWindowPoints( 0, hwnd, &pt, 1 );
+    for (;;)
     {
-        if (!(tmpWnd->dwStyle & WS_CHILD) || (tmpWnd->dwExStyle & WS_EX_NOPARENTNOTIFY))
-        {
-            WIN_ReleaseWndPtr(tmpWnd);
-            break;
-        }
-	pt.x += tmpWnd->rectClient.left;
-	pt.y += tmpWnd->rectClient.top;
-	WIN_UpdateWndPtr(&tmpWnd,tmpWnd->parent);
-	SendMessageA( tmpWnd->hwndSelf, WM_PARENTNOTIFY,
+        HWND parent;
+
+        if (!(GetWindowLongA( hwnd, GWL_STYLE ) & WS_CHILD)) break;
+        if (GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY) break;
+        if (!(parent = GetParent(hwnd))) break;
+        MapWindowPoints( hwnd, parent, &pt, 1 );
+        hwnd = parent;
+        SendMessageA( hwnd, WM_PARENTNOTIFY,
                       MAKEWPARAM( event, idChild ), MAKELPARAM( pt.x, pt.y ) );
     }
 }

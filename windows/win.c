@@ -19,6 +19,7 @@
 #include "hook.h"
 #include "message.h"
 #include "queue.h"
+#include "task.h"
 #include "winpos.h"
 #include "winerror.h"
 #include "stackframe.h"
@@ -1096,7 +1097,8 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 static void WIN_SendDestroyMsg( WND* pWnd )
 {
     if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret();
-    USER_Driver.pResetSelectionOwner( pWnd, TRUE ); 
+    if (USER_Driver.pResetSelectionOwner)
+        USER_Driver.pResetSelectionOwner( pWnd->hwndSelf, TRUE );
 
     /*
      * Send the WM_DESTROY to the window.
@@ -1261,7 +1263,8 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
             }
 	}
 
-    USER_Driver.pResetSelectionOwner( wndPtr, FALSE ); /* before the window is unmapped */
+    if (USER_Driver.pResetSelectionOwner)
+        USER_Driver.pResetSelectionOwner( hwnd, FALSE ); /* before the window is unmapped */
 
       /* Hide the window */
 
@@ -2544,50 +2547,53 @@ HWND16 WINAPI GetNextWindow16( HWND16 hwnd, WORD flag )
 
 BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly )
 {
-    INT totalChild=0, count=0;
+    int count = 0;
+    HWND *win_array = WIN_BuildWinArray( GetDesktopWindow() );
 
-    WND **pWnd = WIN_BuildWinArray(WIN_GetDesktop(), 0, &totalChild);
-
-    if (!pWnd) return TRUE;
+    if (!win_array) return TRUE;
 
     /*
      * Show windows Lowest first, Highest last to preserve Z-Order
      */
-    for (count = totalChild-1 ; count >=0; count--)
+    while (win_array[count]) count++;
+    while (--count >= 0)
     {
-        if (pWnd[count]->owner && (pWnd[count]->owner->hwndSelf == owner) && (pWnd[count]->dwStyle & WS_POPUP))
+        WND *pWnd = WIN_FindWndPtr( win_array[count] );
+        if (!pWnd) continue;
+
+        if (pWnd->owner && (pWnd->owner->hwndSelf == owner) && (pWnd->dwStyle & WS_POPUP))
         {
             if (fShow)
             {
                 /* check in window was flagged for showing in previous WIN_InternalShowOwnedPopups call */
-                if (pWnd[count]->flags & WIN_NEEDS_INTERNALSOP) 
+                if (pWnd->flags & WIN_NEEDS_INTERNALSOP)
                 {
                     /*
                      * Call ShowWindow directly because an application can intercept WM_SHOWWINDOW messages
                      */
-                    ShowWindow(pWnd[count]->hwndSelf,SW_SHOW);
-                    pWnd[count]->flags &= ~WIN_NEEDS_INTERNALSOP; /* remove the flag */
+                    ShowWindow(pWnd->hwndSelf,SW_SHOW);
+                    pWnd->flags &= ~WIN_NEEDS_INTERNALSOP; /* remove the flag */
                 }
             }
             else
             {
-                if ( IsWindowVisible(pWnd[count]->hwndSelf) &&                   /* hide only if window is visible */
-                     !( pWnd[count]->flags & WIN_NEEDS_INTERNALSOP ) &&          /* don't hide if previous call already did it */
-                     !( unmanagedOnly && (pWnd[count]->dwExStyle & WS_EX_MANAGED) ) ) /* don't hide managed windows if unmanagedOnly is TRUE */
+                if ( IsWindowVisible(pWnd->hwndSelf) &&                   /* hide only if window is visible */
+                     !( pWnd->flags & WIN_NEEDS_INTERNALSOP ) &&          /* don't hide if previous call already did it */
+                     !( unmanagedOnly && (pWnd->dwExStyle & WS_EX_MANAGED) ) ) /* don't hide managed windows if unmanagedOnly is TRUE */
                 {
                     /*
                      * Call ShowWindow directly because an application can intercept WM_SHOWWINDOW messages
                      */
-                    ShowWindow(pWnd[count]->hwndSelf,SW_HIDE);
+                    ShowWindow(pWnd->hwndSelf,SW_HIDE);
                     /* flag the window for showing on next WIN_InternalShowOwnedPopups call */
-                    pWnd[count]->flags |= WIN_NEEDS_INTERNALSOP;
+                    pWnd->flags |= WIN_NEEDS_INTERNALSOP;
                 }
             }
         }
+        WIN_ReleaseWndPtr( pWnd );
     }
-    WIN_ReleaseDesktop();    
-    WIN_ReleaseWinArray(pWnd);
-    
+    WIN_ReleaseWinArray( win_array );
+
     return TRUE;
 }
 
@@ -2605,45 +2611,48 @@ void WINAPI ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
  */
 BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
 {
-    UINT totalChild=0, count=0;
+    int count = 0;
 
-    WND **pWnd = WIN_BuildWinArray(WIN_GetDesktop(), 0, &totalChild);
+    HWND *win_array = WIN_BuildWinArray(GetDesktopWindow());
 
-    if (!pWnd) return TRUE;
+    if (!win_array) return TRUE;
 
-    for (; count < totalChild; count++)
+    while (win_array[count]) count++;
+    while (--count >= 0)
     {
-        if (pWnd[count]->owner && (pWnd[count]->owner->hwndSelf == owner) && (pWnd[count]->dwStyle & WS_POPUP))
+        WND *pWnd = WIN_FindWndPtr( win_array[count] );
+        if (!pWnd) continue;
+
+        if (pWnd->owner && (pWnd->owner->hwndSelf == owner) && (pWnd->dwStyle & WS_POPUP))
         {
             if (fShow)
             {
-                if (pWnd[count]->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
+                if (pWnd->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
                 {
-                    /*
-                     * In Windows, ShowOwnedPopups(TRUE) generates WM_SHOWWINDOW messages with SW_PARENTOPENING, 
+                    /* In Windows, ShowOwnedPopups(TRUE) generates
+                     * WM_SHOWWINDOW messages with SW_PARENTOPENING,
                      * regardless of the state of the owner
                      */
-                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_SHOW, SW_PARENTOPENING);
-                    pWnd[count]->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
+                    SendMessageA(pWnd->hwndSelf, WM_SHOWWINDOW, SW_SHOW, SW_PARENTOPENING);
+                    pWnd->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
                 }
             }
             else
             {
-                if (IsWindowVisible(pWnd[count]->hwndSelf))
+                if (IsWindowVisible(pWnd->hwndSelf))
                 {
-                    /*
-                     * In Windows, ShowOwnedPopups(FALSE) generates WM_SHOWWINDOW messages with SW_PARENTCLOSING, 
+                    /* In Windows, ShowOwnedPopups(FALSE) generates
+                     * WM_SHOWWINDOW messages with SW_PARENTCLOSING,
                      * regardless of the state of the owner
                      */
-                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
-                    pWnd[count]->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
+                    SendMessageA(pWnd->hwndSelf, WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
+                    pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
                 }
             }
         }
+        WIN_ReleaseWndPtr( pWnd );
     }
-
-    WIN_ReleaseDesktop();    
-    WIN_ReleaseWinArray(pWnd);
+    WIN_ReleaseWinArray( win_array );
     return TRUE;
 }
 
@@ -2679,31 +2688,21 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  * The array must be freed with WIN_ReleaseWinArray. Return NULL
  * when no windows are found.
  */
-WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
+HWND *WIN_BuildWinArray( HWND hwnd )
 {
     /* Future: this function will lock all windows associated with this array */
-    
-    WND **list, **ppWnd;
-    WND *pWnd;
-    UINT count = 0, skipOwned, skipHidden;
-    DWORD skipFlags;
-
-    skipHidden = bwaFlags & BWA_SKIPHIDDEN;
-    skipOwned = bwaFlags & BWA_SKIPOWNED;
-    skipFlags = (bwaFlags & BWA_SKIPDISABLED) ? WS_DISABLED : 0;
-    if( bwaFlags & BWA_SKIPICONIC ) skipFlags |= WS_MINIMIZE;
+    WND *pWnd, *wndPtr = WIN_FindWndPtr( hwnd );
+    HWND *list, *phwnd;
+    UINT count = 0;
 
     /* First count the windows */
 
-    if (!wndPtr)
-        wndPtr = WIN_GetDesktop();
+    if (!wndPtr) return NULL;
 
     pWnd = WIN_LockWndPtr(wndPtr->child);
     while (pWnd)
     {
-	if( !(pWnd->dwStyle & skipFlags) && !(skipOwned && pWnd->owner) &&
-           (!skipHidden || (pWnd->dwStyle & WS_VISIBLE)) )
-            count++;
+        count++;
         WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
 
@@ -2711,34 +2710,29 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
     {
 	/* Now build the list of all windows */
 
-	if ((list = (WND **)HeapAlloc( GetProcessHeap(), 0, sizeof(WND *) * (count + 1))))
+	if ((list = HeapAlloc( GetProcessHeap(), 0, sizeof(HWND) * (count + 1))))
 	{
-	    for (pWnd = WIN_LockWndPtr(wndPtr->child), ppWnd = list, count = 0; pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
+	    for (pWnd = WIN_LockWndPtr(wndPtr->child), phwnd = list, count = 0; pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
 	    {
-		if( (pWnd->dwStyle & skipFlags) || (skipOwned && pWnd->owner) );
-		else if( !skipHidden || pWnd->dwStyle & WS_VISIBLE )
-		{
-		   *ppWnd++ = pWnd;
-		    count++;
-		}
+                *phwnd++ = pWnd->hwndSelf;
+                count++;
 	    }
             WIN_ReleaseWndPtr(pWnd);
-	   *ppWnd = NULL;
+            *phwnd = 0;
 	}
 	else count = 0;
     } else list = NULL;
 
-    if( pTotal ) *pTotal = count;
+    WIN_ReleaseWndPtr( wndPtr );
     return list;
 }
+
 /*******************************************************************
  *           WIN_ReleaseWinArray
  */
-void WIN_ReleaseWinArray(WND **wndArray)
+void WIN_ReleaseWinArray(HWND *wndArray)
 {
-    /* Future: this function will also unlock all windows associated with wndArray */
-     HeapFree( GetProcessHeap(), 0, wndArray );
-
+    if (wndArray) HeapFree( GetProcessHeap(), 0, wndArray );
 }
 
 /*******************************************************************
@@ -2746,82 +2740,28 @@ void WIN_ReleaseWinArray(WND **wndArray)
  */
 BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
-    WND **list, **ppWnd;
+    HWND *list;
+    BOOL ret = TRUE;
+    int i, iWndsLocks;
 
     /* We have to build a list of all windows first, to avoid */
     /* unpleasant side-effects, for instance if the callback */
     /* function changes the Z-order of the windows.          */
 
-    if (!(list = WIN_BuildWinArray(WIN_GetDesktop(), 0, NULL )))
-    {
-        WIN_ReleaseDesktop();
-        return FALSE;
-    }
+    if (!(list = WIN_BuildWinArray( GetDesktopWindow() ))) return FALSE;
 
     /* Now call the callback function for every window */
 
-    for (ppWnd = list; *ppWnd; ppWnd++)
+    iWndsLocks = WIN_SuspendWndsLock();
+    for (i = 0; list[i]; i++)
     {
-        LRESULT lpEnumFuncRetval;
-        int iWndsLocks = 0;
         /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-
-        /* To avoid any deadlocks, all the locks on the windows
-           structures must be suspended before the control
-           is passed to the application */
-        iWndsLocks = WIN_SuspendWndsLock();
-        lpEnumFuncRetval = lpEnumFunc( (*ppWnd)->hwndSelf, lParam);
-        WIN_RestoreWndsLock(iWndsLocks);
-
-        if (!lpEnumFuncRetval) break;
+        if (!IsWindow( list[i] )) continue;
+        if (!(ret = lpEnumFunc( list[i], lParam ))) break;
     }
+    WIN_RestoreWndsLock(iWndsLocks);
     WIN_ReleaseWinArray(list);
-    WIN_ReleaseDesktop();
-    return TRUE;
-}
-
-
-/**********************************************************************
- *		WIN_EnumQueueWindows
- *
- * Helper for EnumTaskWindows16 and EnumThreadWindows.
- */
-static BOOL WIN_EnumQueueWindows( HQUEUE16 queue, WNDENUMPROC func, LPARAM lParam )
-{
-    WND **list, **ppWnd;
-
-    /* This function is the same as EnumWindows(),    */
-    /* except for an added check on the window's task. */
-
-    if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
-    {
-        WIN_ReleaseDesktop();
-        return FALSE;
-    }
-
-    /* Now call the callback function for every window */
-
-    for (ppWnd = list; *ppWnd; ppWnd++)
-    {
-        LRESULT funcRetval;
-        int iWndsLocks = 0;
-        /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        if ((*ppWnd)->hmemTaskQ != queue) continue;
-
-        /* To avoid any deadlocks, all the locks on the windows
-           structures must be suspended before the control
-           is passed to the application */
-        iWndsLocks = WIN_SuspendWndsLock();
-        funcRetval = func( (*ppWnd)->hwndSelf, lParam );
-        WIN_RestoreWndsLock(iWndsLocks);
-
-        if (!funcRetval) break;
-    }
-    WIN_ReleaseWinArray(list);
-    WIN_ReleaseDesktop();
-    return TRUE;
+    return ret;
 }
 
 
@@ -2831,9 +2771,9 @@ static BOOL WIN_EnumQueueWindows( HQUEUE16 queue, WNDENUMPROC func, LPARAM lPara
 BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
                                  LPARAM lParam )
 {
-    HQUEUE16 queue = GetTaskQueue16( hTask );
-    if (!queue) return FALSE;
-    return WIN_EnumQueueWindows( queue, (WNDENUMPROC)func, lParam );
+    TDB *tdb = TASK_GetPtr( hTask );
+    if (!tdb) return FALSE;
+    return EnumThreadWindows( (DWORD)tdb->teb->tid, (WNDENUMPROC)func, lParam );
 }
 
 
@@ -2842,9 +2782,22 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
  */
 BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
 {
-    HQUEUE16 queue = GetThreadQueue16( id );
-    if (!queue) return FALSE;
-    return WIN_EnumQueueWindows( queue, func, lParam );
+    HWND *list;
+    int i, iWndsLocks;
+
+    if (!(list = WIN_BuildWinArray( GetDesktopWindow() ))) return FALSE;
+
+    /* Now call the callback function for every window */
+
+    iWndsLocks = WIN_SuspendWndsLock();
+    for (i = 0; list[i]; i++)
+    {
+        if (GetWindowThreadProcessId( list[i], NULL ) != id) continue;
+        if (!func( list[i], lParam )) break;
+    }
+    WIN_RestoreWndsLock(iWndsLocks);
+    WIN_ReleaseWinArray(list);
+    return TRUE;
 }
 
 
@@ -2853,26 +2806,21 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
  *
  * Helper function for EnumChildWindows().
  */
-static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC func, LPARAM lParam )
+static BOOL WIN_EnumChildWindows( HWND *list, WNDENUMPROC func, LPARAM lParam )
 {
-    WND **childList;
-    BOOL16 ret = FALSE;
+    HWND *childList;
+    BOOL ret = FALSE;
 
-    for ( ; *ppWnd; ppWnd++)
+    for ( ; *list; list++)
     {
-        int iWndsLocks = 0;
-
         /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if (!IsWindow( *list )) continue;
+        /* skip owned windows */
+        if (GetWindow( *list, GW_OWNER )) continue;
         /* Build children list first */
-        childList = WIN_BuildWinArray( *ppWnd, BWA_SKIPOWNED, NULL );
-        
-        /* To avoid any deadlocks, all the locks on the windows
-           structures must be suspended before the control
-           is passed to the application */
-        iWndsLocks = WIN_SuspendWndsLock();
-        ret = func( (*ppWnd)->hwndSelf, lParam );
-        WIN_RestoreWndsLock(iWndsLocks);
+        childList = WIN_BuildWinArray( *list );
+
+        ret = func( *list, lParam );
 
         if (childList)
         {
@@ -2888,20 +2836,16 @@ static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC func, LPARAM lParam
 /**********************************************************************
  *		EnumChildWindows (USER32.@)
  */
-BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func,
-                                  LPARAM lParam )
+BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func, LPARAM lParam )
 {
-    WND **list, *pParent;
+    HWND *list;
+    int iWndsLocks;
 
-    if (!(pParent = WIN_FindWndPtr( parent ))) return FALSE;
-    if (!(list = WIN_BuildWinArray( pParent, BWA_SKIPOWNED, NULL )))
-    {
-        WIN_ReleaseWndPtr(pParent);
-        return FALSE;
-    }
+    if (!(list = WIN_BuildWinArray( parent ))) return FALSE;
+    iWndsLocks = WIN_SuspendWndsLock();
     WIN_EnumChildWindows( list, func, lParam );
+    WIN_RestoreWndsLock(iWndsLocks);
     WIN_ReleaseWinArray(list);
-    WIN_ReleaseWndPtr(pParent);
     return TRUE;
 }
 
@@ -3048,75 +2992,73 @@ BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
  */
 BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 {
- BOOL16		wParam, bResult = 0;
- POINT        pt;
- LPDRAGINFO16	ptrDragInfo = MapSL(spDragInfo);
- WND 	       *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd),*ptrWnd;
- RECT		tempRect;
+    BOOL16 wParam, bResult = 0;
+    POINT pt;
+    LPDRAGINFO16 ptrDragInfo = MapSL(spDragInfo);
+    RECT tempRect;
 
- if( !ptrQueryWnd || !ptrDragInfo )
-    goto end;
+    if (!ptrDragInfo) return FALSE;
 
- CONV_POINT16TO32( &ptrDragInfo->pt, &pt );
+    CONV_POINT16TO32( &ptrDragInfo->pt, &pt );
 
- GetWindowRect(hQueryWnd,&tempRect); 
+    GetWindowRect(hQueryWnd,&tempRect);
 
- if( !PtInRect(&tempRect,pt) ||
-     (ptrQueryWnd->dwStyle & WS_DISABLED) )
-    goto end;
+    if( !PtInRect(&tempRect,pt) || !IsWindowEnabled(hQueryWnd)) return FALSE;
 
- if( !(ptrQueryWnd->dwStyle & WS_MINIMIZE) ) 
-   {
-     tempRect = ptrQueryWnd->rectClient;
-     if(ptrQueryWnd->parent)
-        MapWindowPoints( ptrQueryWnd->parent->hwndSelf, 0,
-                           (LPPOINT)&tempRect, 2 );
+    if (!IsIconic( hQueryWnd ))
+    {
+        WND *ptrWnd, *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd);
 
-     if (PtInRect( &tempRect, pt))
-	{
-	 wParam = 0;
-         
-         for (ptrWnd = WIN_LockWndPtr(ptrQueryWnd->child); ptrWnd ;WIN_UpdateWndPtr(&ptrWnd,ptrWnd->next))
-         {
-             if( ptrWnd->dwStyle & WS_VISIBLE )
-	     {
-                 GetWindowRect( ptrWnd->hwndSelf, &tempRect );
-                 if (PtInRect( &tempRect, pt )) break;
-	     }
-         }
+        tempRect = ptrQueryWnd->rectClient;
+        if(ptrQueryWnd->parent)
+            MapWindowPoints( ptrQueryWnd->parent->hwndSelf, 0,
+                             (LPPOINT)&tempRect, 2 );
 
-	 if(ptrWnd)
-         {
-	    TRACE_(msg)("hwnd = %04x, %d %d - %d %d\n",
-                        ptrWnd->hwndSelf, ptrWnd->rectWindow.left, ptrWnd->rectWindow.top,
-			ptrWnd->rectWindow.right, ptrWnd->rectWindow.bottom );
-            if( !(ptrWnd->dwStyle & WS_DISABLED) )
-	        bResult = DRAG_QueryUpdate(ptrWnd->hwndSelf, spDragInfo, bNoSend);
+        if (PtInRect( &tempRect, pt))
+        {
+            wParam = 0;
 
-            WIN_ReleaseWndPtr(ptrWnd);
-         }
+            for (ptrWnd = WIN_LockWndPtr(ptrQueryWnd->child); ptrWnd ;WIN_UpdateWndPtr(&ptrWnd,ptrWnd->next))
+            {
+                if( ptrWnd->dwStyle & WS_VISIBLE )
+                {
+                    GetWindowRect( ptrWnd->hwndSelf, &tempRect );
+                    if (PtInRect( &tempRect, pt )) break;
+                }
+            }
 
-         if(bResult)
-	    goto end;
-	}
-     else wParam = 1;
-   }
- else wParam = 1;
+            if(ptrWnd)
+            {
+                TRACE_(msg)("hwnd = %04x, %d %d - %d %d\n",
+                            ptrWnd->hwndSelf, ptrWnd->rectWindow.left, ptrWnd->rectWindow.top,
+                            ptrWnd->rectWindow.right, ptrWnd->rectWindow.bottom );
+                if( !(ptrWnd->dwStyle & WS_DISABLED) )
+                    bResult = DRAG_QueryUpdate(ptrWnd->hwndSelf, spDragInfo, bNoSend);
 
- ScreenToClient16(hQueryWnd,&ptrDragInfo->pt);
+                WIN_ReleaseWndPtr(ptrWnd);
+            }
 
- ptrDragInfo->hScope = hQueryWnd;
+            if(bResult)
+            {
+                WIN_ReleaseWndPtr(ptrQueryWnd);
+                return bResult;
+            }
+        }
+        else wParam = 1;
+        WIN_ReleaseWndPtr(ptrQueryWnd);
+    }
+    else wParam = 1;
 
- bResult = ( bNoSend ) 
-	   ? ptrQueryWnd->dwExStyle & WS_EX_ACCEPTFILES
-	   : SendMessage16( hQueryWnd ,WM_QUERYDROPOBJECT ,
-                          (WPARAM16)wParam ,(LPARAM) spDragInfo );
- if( !bResult ) 
-     CONV_POINT32TO16( &pt, &ptrDragInfo->pt );
+    ScreenToClient16(hQueryWnd,&ptrDragInfo->pt);
 
-end:
- WIN_ReleaseWndPtr(ptrQueryWnd);
- return bResult;
+    ptrDragInfo->hScope = hQueryWnd;
+
+    if (bNoSend) bResult = (GetWindowLongA( hQueryWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
+    else bResult = SendMessage16( hQueryWnd, WM_QUERYDROPOBJECT, (WPARAM16)wParam, spDragInfo );
+
+    if( !bResult ) CONV_POINT32TO16( &pt, &ptrDragInfo->pt );
+
+    return bResult;
 }
 
 
@@ -3183,25 +3125,17 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     SEGPTR	spDragInfo;
     HCURSOR16 	hDragCursor=0, hOldCursor=0, hBummer=0;
     HGLOBAL16	hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO16));
-    WND        *wndPtr = WIN_FindWndPtr(hWnd);
     HCURSOR16	hCurrentCursor = 0;
     HWND16	hCurrentWnd = 0;
 
     lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
     spDragInfo = K32WOWGlobalLock16(hDragInfo);
 
-    if( !lpDragInfo || !spDragInfo )
-    {
-        WIN_ReleaseWndPtr(wndPtr);
-        return 0L;
-    }
+    if( !lpDragInfo || !spDragInfo ) return 0L;
 
-    hBummer = LoadCursorA(0, MAKEINTRESOURCEA(OCR_NO));
-
-    if( !hBummer || !wndPtr )
+    if (!(hBummer = LoadCursorA(0, MAKEINTRESOURCEA(OCR_NO))))
     {
         GlobalFree16(hDragInfo);
-        WIN_ReleaseWndPtr(wndPtr);
         return 0L;
     }
 
@@ -3210,7 +3144,6 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	if( !(hDragCursor = CURSORICON_IconToCursor(hCursor, FALSE)) )
 	{
 	    GlobalFree16(hDragInfo);
-            WIN_ReleaseWndPtr(wndPtr);
 	    return 0L;
 	}
 
@@ -3232,8 +3165,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 
     do
     {
-	do{  WaitMessage(); }
-	while( !PeekMessageA(&msg,0,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE) );
+        GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST );
 
        *(lpDragInfo+1) = *lpDragInfo;
 
@@ -3288,7 +3220,6 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     else
         msg.lParam = 0;
     GlobalFree16(hDragInfo);
-    WIN_ReleaseWndPtr(wndPtr);
 
     return (DWORD)(msg.lParam);
 }

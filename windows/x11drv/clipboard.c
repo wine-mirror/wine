@@ -1109,11 +1109,12 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
  * Any top level window can own the selection. See X11DRV_CLIPBOARD_Acquire
  * for a more detailed description of this.
  */
-void X11DRV_ResetSelectionOwner(WND *pWnd, BOOL bFooBar)
+void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
 {
     Display *display = thread_display();
     HWND hWndClipOwner = 0;
-    Window XWnd = get_whole_window(pWnd);
+    HWND tmp;
+    Window XWnd = X11DRV_get_whole_window(hwnd);
     Atom xaClipboard;
     BOOL bLostSelection = FALSE;
 
@@ -1141,11 +1142,8 @@ void X11DRV_ResetSelectionOwner(WND *pWnd, BOOL bFooBar)
     selectionPrevWindow = selectionWindow;
     selectionWindow = None;
 
-    if( pWnd->next ) 
-        selectionWindow = get_whole_window(pWnd->next);
-    else if( pWnd->parent )
-         if( pWnd->parent->child != pWnd ) 
-             selectionWindow = get_whole_window(pWnd->parent->child);
+    if (!(tmp = GetWindow( hwnd, GW_HWNDNEXT ))) tmp = GetWindow( hwnd, GW_HWNDFIRST );
+    if (tmp && tmp != hwnd) selectionWindow = X11DRV_get_whole_window(tmp);
 
     if( selectionWindow != None )
     {

@@ -212,10 +212,3 @@ BOOL TTYDRV_IsSelectionOwner(void)
 {
     return FALSE;
 }
-
-/***********************************************************************
- *		ResetSelectionOwner (TTYDRV.@)
- */
-void TTYDRV_ResetSelectionOwner(struct tagWND *pWnd, BOOL bFooBar)
-{
-}

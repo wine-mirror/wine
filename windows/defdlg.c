@@ -38,32 +38,45 @@ static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 /***********************************************************************
  *           DEFDLG_SaveFocus
  */
-static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
+static void DEFDLG_SaveFocus( HWND hwnd )
 {
+    DIALOGINFO *infoPtr;
+    WND *wndPtr;
     HWND hwndFocus = GetFocus();
 
-    if (!hwndFocus || !IsChild( hwnd, hwndFocus )) return FALSE;
+    if (!hwndFocus || !IsChild( hwnd, hwndFocus )) return;
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
+    infoPtr = (DIALOGINFO *)&wndPtr->wExtra;
     infoPtr->hwndFocus = hwndFocus;
-      /* Remove default button */
-    return TRUE;
+    WIN_ReleaseWndPtr( wndPtr );
+    /* Remove default button */
 }
 
 
 /***********************************************************************
  *           DEFDLG_RestoreFocus
  */
-static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
+static void DEFDLG_RestoreFocus( HWND hwnd )
 {
-    if (!infoPtr->hwndFocus || IsIconic(hwnd)) return FALSE;
-    if (!IsWindow( infoPtr->hwndFocus )) return FALSE;
+    DIALOGINFO *infoPtr;
+    WND *wndPtr;
 
-    /* Don't set the focus back to controls if EndDialog is already called.*/
-    if (!(infoPtr->flags & DF_END))
-       DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
-
-    /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
-       sometimes losing focus when receiving WM_SETFOCUS messages. */
-    return TRUE;
+    if (IsIconic( hwnd )) return;
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
+    infoPtr = (DIALOGINFO *)&wndPtr->wExtra;
+    if (IsWindow( infoPtr->hwndFocus ))
+    {
+        /* Don't set the focus back to controls if EndDialog is already called.*/
+        if (!(infoPtr->flags & DF_END))
+        {
+            WIN_ReleaseWndPtr( wndPtr );
+            DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
+            return;
+        }
+        /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
+           sometimes losing focus when receiving WM_SETFOCUS messages. */
+    }
+    WIN_ReleaseWndPtr( wndPtr );
 }
 
 
@@ -161,16 +174,16 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
 	case WM_SHOWWINDOW:
-	    if (!wParam) DEFDLG_SaveFocus( hwnd, dlgInfo );
+	    if (!wParam) DEFDLG_SaveFocus( hwnd );
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
 	case WM_ACTIVATE:
-	    if (wParam) DEFDLG_RestoreFocus( hwnd, dlgInfo );
-	    else DEFDLG_SaveFocus( hwnd, dlgInfo );
+	    if (wParam) DEFDLG_RestoreFocus( hwnd );
+	    else DEFDLG_SaveFocus( hwnd );
 	    return 0;
 
 	case WM_SETFOCUS:
-	    DEFDLG_RestoreFocus( hwnd, dlgInfo );
+	    DEFDLG_RestoreFocus( hwnd );
 	    return 0;
 
         case DM_SETDEFID:
@@ -231,7 +244,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 /***********************************************************************
  *           DEFDLG_Epilog
  */
-static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT msg, BOOL fResult)
+static LRESULT DEFDLG_Epilog(HWND hwnd, UINT msg, BOOL fResult)
 {
     /* see SDK 3.1 */
 
@@ -241,7 +254,7 @@ static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT msg, BOOL fResult)
          msg == WM_QUERYDRAGICON || msg == WM_INITDIALOG)
         return fResult; 
 
-    return dlgInfo->msgResult;
+    return GetWindowLongA( hwnd, DWL_MSGRESULT );
 }
 
 /***********************************************************************
@@ -251,18 +264,22 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                              LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
+    WNDPROC16 dlgproc;
     BOOL result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    
+
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
     dlgInfo->msgResult = 0;
+    dlgproc = (WNDPROC16)dlgInfo->dlgProc;
+    WIN_ReleaseWndPtr(wndPtr);
 
-    if (dlgInfo->dlgProc) {	/* Call dialog procedure */
-	result = CallWindowProc16( (WNDPROC16)dlgInfo->dlgProc,
-                                           hwnd, msg, wParam, lParam );
+    if (dlgproc)
+    {
+        /* Call dialog procedure */
+        result = CallWindowProc16( dlgproc, hwnd, msg, wParam, lParam );
         /* 16 bit dlg procs only return BOOL16 */
-        if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
+        if( WINPROC_GetProcType( dlgproc ) == WIN_PROC_16 )
             result = LOWORD(result);
     }
 
@@ -285,7 +302,6 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                WIN_ReleaseWndPtr(wndPtr);
                 return DEFDLG_Proc( (HWND)hwnd, msg, 
                                     (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
@@ -295,12 +311,10 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                 break;
 
             default:
-                WIN_ReleaseWndPtr(wndPtr);
                 return DefWindowProc16( hwnd, msg, wParam, lParam );
         }
-    }   
-    WIN_ReleaseWndPtr(wndPtr);
-    return DEFDLG_Epilog(dlgInfo, msg, result);
+    }
+    return DEFDLG_Epilog(hwnd, msg, result);
 }
 
 
@@ -311,18 +325,22 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
                               WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
+    WNDPROC dlgproc;
     BOOL result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    
+
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
     dlgInfo->msgResult = 0;
+    dlgproc = dlgInfo->dlgProc;
+    WIN_ReleaseWndPtr(wndPtr);
 
-    if (dlgInfo->dlgProc) {      /* Call dialog procedure */
-        result = CallWindowProcA( (WNDPROC)dlgInfo->dlgProc,
-                                            hwnd, msg, wParam, lParam );
+    if (dlgproc)
+    {
+        /* Call dialog procedure */
+        result = CallWindowProcA( dlgproc, hwnd, msg, wParam, lParam );
         /* 16 bit dlg procs only return BOOL16 */
-        if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
+        if( WINPROC_GetProcType( dlgproc ) == WIN_PROC_16 )
             result = LOWORD(result);
     }
 
@@ -345,9 +363,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                 WIN_ReleaseWndPtr(wndPtr);
-                 return DEFDLG_Proc( (HWND)hwnd, msg,
-                                     (WPARAM)wParam, lParam, dlgInfo );
+                 return DEFDLG_Proc( hwnd, msg, wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:
@@ -355,12 +371,10 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
                  break;
 
             default:
-                 WIN_ReleaseWndPtr(wndPtr);
                  return DefWindowProcA( hwnd, msg, wParam, lParam );
         }
     }
-    WIN_ReleaseWndPtr(wndPtr);
-    return DEFDLG_Epilog(dlgInfo, msg, result);
+    return DEFDLG_Epilog(hwnd, msg, result);
 }
 
 
@@ -372,17 +386,21 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
 {
     DIALOGINFO * dlgInfo;
     BOOL result = FALSE;
+    WNDPROC dlgproc;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    
+
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
     dlgInfo->msgResult = 0;
+    dlgproc = dlgInfo->dlgProc;
+    WIN_ReleaseWndPtr(wndPtr);
 
-    if (dlgInfo->dlgProc) {      /* Call dialog procedure */
-        result = CallWindowProcW( (WNDPROC)dlgInfo->dlgProc,
-                                            hwnd, msg, wParam, lParam );
+    if (dlgproc)
+    {
+        /* Call dialog procedure */
+        result = CallWindowProcW( dlgproc, hwnd, msg, wParam, lParam );
         /* 16 bit dlg procs only return BOOL16 */
-        if( WINPROC_GetProcType( dlgInfo->dlgProc ) == WIN_PROC_16 )
+        if( WINPROC_GetProcType( dlgproc ) == WIN_PROC_16 )
             result = LOWORD(result);
     }
 
@@ -405,9 +423,7 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                 WIN_ReleaseWndPtr(wndPtr);
-                 return DEFDLG_Proc( (HWND)hwnd, msg,
-                                     (WPARAM)wParam, lParam, dlgInfo );
+                 return DEFDLG_Proc( hwnd, msg, wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:
@@ -415,10 +431,8 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
                  break;
 
             default:
-                 WIN_ReleaseWndPtr(wndPtr);
                  return DefWindowProcW( hwnd, msg, wParam, lParam );
         }
     }
-    WIN_ReleaseWndPtr(wndPtr);
-    return DEFDLG_Epilog(dlgInfo, msg, result);
+    return DEFDLG_Epilog(hwnd, msg, result);
 }

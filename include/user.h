@@ -67,7 +67,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pIsClipboardFormatAvailable)(UINT);  /* Check if specified format is available */
     BOOL   (*pRegisterClipboardFormat)(LPCSTR);   /* Register a clipboard format */
     BOOL   (*pIsSelectionOwner)(void);            /* Check if we own the selection */
-    void   (*pResetSelectionOwner)(struct tagWND *, BOOL);
+    void   (*pResetSelectionOwner)(HWND, BOOL);
 
     /* windowing functions */
     BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);

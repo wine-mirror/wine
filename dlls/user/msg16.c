@@ -28,7 +28,6 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM l
         GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
     {
         /* call 16-bit window proc directly */
-        WND *wndPtr;
         WNDPROC16 winproc;
 
         /* first the WH_CALLWNDPROC hook */
@@ -51,13 +50,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM l
             }
         }
 
-        if (!(wndPtr = WIN_FindWndPtr( hwnd )))
-        {
-            WARN("invalid hwnd %04x\n", hwnd );
-            return 0;
-        }
-        winproc = (WNDPROC16)wndPtr->winproc;
-        WIN_ReleaseWndPtr( wndPtr );
+        if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd, GWL_WNDPROC ))) return 0;
 
         SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wparam, lparam );
         result = CallWindowProc16( (WNDPROC16)winproc, hwnd, msg, wparam, lparam );

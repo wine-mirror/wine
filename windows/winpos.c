@@ -1570,37 +1570,33 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     /* send WM_ACTIVATEAPP if necessary */
     if (hOldActiveQueue != hNewActiveQueue)
     {
-        WND **list, **ppWnd;
-        WND *pDesktop = WIN_GetDesktop();
+        HWND *list, *phwnd;
+        DWORD old_thread = GetWindowThreadProcessId( hwndPrevActive, NULL );
+        DWORD new_thread = GetWindowThreadProcessId( hwndActive, NULL );
 
-        if ((list = WIN_BuildWinArray( pDesktop, 0, NULL )))
+        if ((list = WIN_BuildWinArray( GetDesktopWindow() )))
         {
-            DWORD new_thread = GetWindowThreadProcessId( hwndActive, NULL );
-            for (ppWnd = list; *ppWnd; ppWnd++)
+            for (phwnd = list; *phwnd; phwnd++)
             {
-                if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-
-                if ((*ppWnd)->hmemTaskQ == hOldActiveQueue)
-                    SendMessageW( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP, 0, new_thread );
+                if (!IsWindow( *phwnd )) continue;
+                if (GetWindowThreadProcessId( *phwnd, NULL ) == old_thread)
+                    SendMessageW( *phwnd, WM_ACTIVATEAPP, 0, new_thread );
             }
             WIN_ReleaseWinArray(list);
         }
 
 	hActiveQueue = hNewActiveQueue;
 
-        if ((list = WIN_BuildWinArray(pDesktop, 0, NULL )))
+        if ((list = WIN_BuildWinArray( GetDesktopWindow() )))
         {
-            DWORD old_thread = GetWindowThreadProcessId( hwndPrevActive, NULL );
-            for (ppWnd = list; *ppWnd; ppWnd++)
+            for (phwnd = list; *phwnd; phwnd++)
             {
-                if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-
-                if ((*ppWnd)->hmemTaskQ == hNewActiveQueue)
-                    SendMessageW( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP, 1, old_thread );
+                if (!IsWindow( *phwnd )) continue;
+                if (GetWindowThreadProcessId( *phwnd, NULL ) == new_thread)
+                    SendMessageW( *phwnd, WM_ACTIVATEAPP, 1, old_thread );
             }
             WIN_ReleaseWinArray(list);
         }
-        WIN_ReleaseDesktop();
         
 	if (hWnd && !IsWindow(hWnd)) goto CLEANUP;
     }

@@ -324,7 +324,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
 
-    bIcon = (wndPtr->dwStyle & WS_MINIMIZE && GetClassWord(wndPtr->hwndSelf, GCW_HICON));
+    bIcon = (wndPtr->dwStyle & WS_MINIMIZE && GetClassLongA(hwnd, GCL_HICON));
 
     wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
@@ -756,7 +756,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
  */
     HDC  hDC;
     HWND hWnd = wndPtr->hwndSelf;
-    BOOL bIcon = ((wndPtr->dwStyle & WS_MINIMIZE) && GetClassWord(wndPtr->hwndSelf, GCW_HICON)); 
+    BOOL bIcon = ((wndPtr->dwStyle & WS_MINIMIZE) && GetClassLongA(hWnd, GCL_HICON));
 
       /* Erase/update the window itself ... */
 
@@ -814,20 +814,18 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
     if( wndPtr->child && !(flags & RDW_NOCHILDREN) && !(wndPtr->dwStyle & WS_MINIMIZE) 
 	&& ((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)) )
     {
-	WND** list, **ppWnd;
+        HWND *list, *phwnd;
 
-	if( (list = WIN_BuildWinArray( wndPtr, 0, NULL )) )
+	if( (list = WIN_BuildWinArray( wndPtr->hwndSelf )) )
 	{
-            wndPtr = NULL;
-	    for (ppWnd = list; *ppWnd; ppWnd++)
+	    for (phwnd = list; *phwnd; phwnd++)
 	    {
-		WIN_UpdateWndPtr(&wndPtr,*ppWnd);
-		if (!IsWindow(wndPtr->hwndSelf)) continue;
-		    if ( (wndPtr->dwStyle & WS_VISIBLE) &&
-			 (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT)) )
-		        hrgn = RDW_Paint( wndPtr, hrgn, flags, ex );
+                if (!(wndPtr = WIN_FindWndPtr( *phwnd ))) continue;
+                if ( (wndPtr->dwStyle & WS_VISIBLE) &&
+                     (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT)) )
+                    hrgn = RDW_Paint( wndPtr, hrgn, flags, ex );
+                WIN_ReleaseWndPtr(wndPtr);
 	    }
-            WIN_ReleaseWndPtr(wndPtr);
 	    WIN_ReleaseWinArray(list);
 	}
     }

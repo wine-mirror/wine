@@ -220,38 +220,32 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
 {
     int i;
     BOOL result;
-    WND **list, **ppWnd;
-        
+    HWND *list, *phwnd;
+
     /* We have to build a list of all windows first, as in EnumWindows */
 
-    if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
-    {
-        WIN_ReleaseDesktop();
-        return FALSE;
-    }
+    if (!(list = WIN_BuildWinArray( GetDesktopWindow() ))) return FALSE;
 
     /* Send a WM_QUERYENDSESSION message to every window */
 
-    for (ppWnd = list, i = 0; *ppWnd; ppWnd++, i++)
+    for (i = 0; list[i]; i++)
     {
         /* Make sure that the window still exists */
-        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-        if (!SendMessageW( (*ppWnd)->hwndSelf, WM_QUERYENDSESSION, 0, 0 ))
-            break;
+        if (!IsWindow( list[i] )) continue;
+        if (!SendMessageW( list[i], WM_QUERYENDSESSION, 0, 0 )) break;
     }
-    result = !(*ppWnd);
+    result = !list[i];
 
     /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
 
-    for (ppWnd = list; i > 0; i--, ppWnd++)
+    for (phwnd = list; i > 0; i--, phwnd++)
     {
-        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-        SendMessageW( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
+        if (!IsWindow( *phwnd )) continue;
+        SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
     }
     WIN_ReleaseWinArray(list);
 
     if (result) ExitKernel16();
-    WIN_ReleaseDesktop();
     return FALSE;
 }
 

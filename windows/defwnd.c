@@ -35,21 +35,24 @@ static short iMenuSysKey = 0;
  *
  * Handle the WM_WINDOWPOSCHANGED message.
  */
-static void DEFWND_HandleWindowPosChanged( WND *wndPtr, UINT flags )
+static void DEFWND_HandleWindowPosChanged( HWND hwnd, UINT flags )
 {
-    WPARAM wp = SIZE_RESTORED;
+    RECT rect;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    rect = wndPtr->rectClient;
+    WIN_ReleaseWndPtr( wndPtr );
 
     if (!(flags & SWP_NOCLIENTMOVE))
-        SendMessageW( wndPtr->hwndSelf, WM_MOVE, 0,
-                    MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top));
+        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG(rect.left, rect.top));
+
     if (!(flags & SWP_NOCLIENTSIZE))
     {
-        if (wndPtr->dwStyle & WS_MAXIMIZE) wp = SIZE_MAXIMIZED;
-        else if (wndPtr->dwStyle & WS_MINIMIZE) wp = SIZE_MINIMIZED;
+        WPARAM wp = SIZE_RESTORED;
+        if (IsZoomed(hwnd)) wp = SIZE_MAXIMIZED;
+        else if (IsIconic(hwnd)) wp = SIZE_MINIMIZED;
 
-        SendMessageW( wndPtr->hwndSelf, WM_SIZE, wp, 
-                     MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-                            wndPtr->rectClient.bottom-wndPtr->rectClient.top));
+        SendMessageW( hwnd, WM_SIZE, wp, MAKELONG(rect.right-rect.left, rect.bottom-rect.top) );
     }
 }
 
@@ -59,21 +62,24 @@ static void DEFWND_HandleWindowPosChanged( WND *wndPtr, UINT flags )
  *
  * Set the window text.
  */
-void DEFWND_SetTextA( WND *wndPtr, LPCSTR text )
+static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
 {
     int count;
+    WCHAR *textW;
+    WND *wndPtr;
 
     if (!text) text = "";
     count = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
     if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
-    if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
+    if ((wndPtr->text = textW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
         MultiByteToWideChar( CP_ACP, 0, text, -1, wndPtr->text, count );
     else
         ERR("Not enough memory for window text\n");
+    WIN_ReleaseWndPtr( wndPtr );
 
-    if (USER_Driver.pSetWindowText)
-        USER_Driver.pSetWindowText(wndPtr->hwndSelf, wndPtr->text);
+    if (USER_Driver.pSetWindowText) USER_Driver.pSetWindowText( hwnd, textW );
 }
 
 /***********************************************************************
@@ -81,22 +87,25 @@ void DEFWND_SetTextA( WND *wndPtr, LPCSTR text )
  *
  * Set the window text.
  */
-void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text )
+static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
 {
     static const WCHAR empty_string[] = {0};
+    WND *wndPtr;
     int count;
 
     if (!text) text = empty_string;
     count = strlenW(text) + 1;
 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
     if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
 	strcpyW( wndPtr->text, text );
     else
         ERR("Not enough memory for window text\n");
+    text = wndPtr->text;
+    WIN_ReleaseWndPtr( wndPtr );
 
-    if (USER_Driver.pSetWindowText)
-        USER_Driver.pSetWindowText(wndPtr->hwndSelf, wndPtr->text);
+    if (USER_Driver.pSetWindowText) USER_Driver.pSetWindowText( hwnd, text );
 }
 
 /***********************************************************************
@@ -148,8 +157,9 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
 /***********************************************************************
  *           DEFWND_SetRedraw
  */
-static void DEFWND_SetRedraw( WND* wndPtr, WPARAM wParam )
+static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
 {
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
     BOOL bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
     TRACE("%04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
@@ -171,6 +181,7 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM wParam )
 	DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
 	wndPtr->dwStyle &= ~WS_VISIBLE;
     }
+    WIN_ReleaseWndPtr( wndPtr );
 }
 
 /***********************************************************************
@@ -178,16 +189,13 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM wParam )
  *
  * This method handles the default behavior for the WM_PRINT message.
  */
-static void DEFWND_Print(
-  WND*  wndPtr,
-  HDC   hdc,
-  ULONG uFlags)
+static void DEFWND_Print( HWND hwnd, HDC hdc, ULONG uFlags)
 {
   /*
    * Visibility flag.
    */
   if ( (uFlags & PRF_CHECKVISIBLE) &&
-       !IsWindowVisible(wndPtr->hwndSelf) )
+       !IsWindowVisible(hwnd) )
       return;
 
   /*
@@ -204,13 +212,13 @@ static void DEFWND_Print(
    * Background
    */
   if ( uFlags & PRF_ERASEBKGND)
-    SendMessageW(wndPtr->hwndSelf, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    SendMessageW(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
 
   /*
    * Client area
    */
   if ( uFlags & PRF_CLIENT)
-    SendMessageW(wndPtr->hwndSelf, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT);
+    SendMessageW(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT);
 }
 
 
@@ -284,40 +292,33 @@ static BOOL DEFWND_ImmIsUIMessageW( HWND hwndIME, UINT msg, WPARAM wParam, LPARA
  *
  * Default window procedure for messages that are the same in Win16 and Win32.
  */
-static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
-                                  LPARAM lParam, BOOL unicode )
+static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT (WINAPI *pSendMessage)(HWND, UINT, WPARAM, LPARAM);
-    BOOL (WINAPI *pPostMessage)(HWND, UINT, WPARAM, LPARAM);
-
-    pSendMessage = unicode ? SendMessageW : SendMessageA;
-    pPostMessage = unicode ? PostMessageW : PostMessageA;
-
     switch(msg)
     {
     case WM_NCPAINT:
-	return NC_HandleNCPaint( wndPtr->hwndSelf, (HRGN)wParam );
+        return NC_HandleNCPaint( hwnd, (HRGN)wParam );
 
     case WM_NCHITTEST:
         {
             POINT pt;
             pt.x = SLOWORD(lParam);
             pt.y = SHIWORD(lParam);
-            return NC_HandleNCHitTest( wndPtr->hwndSelf, pt );
+            return NC_HandleNCHitTest( hwnd, pt );
         }
 
     case WM_NCLBUTTONDOWN:
-        return NC_HandleNCLButtonDown( wndPtr->hwndSelf, wParam, lParam );
+        return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
 
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
-        return NC_HandleNCLButtonDblClk( wndPtr->hwndSelf, wParam, lParam );
+        return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
 
     case WM_NCRBUTTONDOWN:
         /* in Windows, capture is taken when right-clicking on the caption bar */
         if (wParam==HTCAPTION)
         {
-            SetCapture(wndPtr->hwndSelf);
+            SetCapture(hwnd);
         }
         break;
 
@@ -325,15 +326,14 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
         {
             POINT pt;
 
-            if (wndPtr->hwndSelf == GetCapture())
+            if (hwnd == GetCapture())
                 /* release capture if we took it on WM_NCRBUTTONDOWN */
                 ReleaseCapture();
 
 	    pt.x = SLOWORD(lParam);
 	    pt.y = SHIWORD(lParam);
-	    ClientToScreen(wndPtr->hwndSelf, &pt);
-	    pSendMessage( wndPtr->hwndSelf, WM_CONTEXTMENU,
-                          wndPtr->hwndSelf, MAKELPARAM(pt.x, pt.y) );
+            ClientToScreen(hwnd, &pt);
+            SendMessageW( hwnd, WM_CONTEXTMENU, hwnd, MAKELPARAM(pt.x, pt.y) );
         }
         break;
 
@@ -347,89 +347,89 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
         break;
 
     case WM_CONTEXTMENU:
-        if( wndPtr->dwStyle & WS_CHILD )
-	    pSendMessage( wndPtr->parent->hwndSelf, msg, wParam, lParam );
-        else if (wndPtr->hSysMenu)
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
+            SendMessageW( GetParent(hwnd), msg, wParam, lParam );
+        else
         {
             LONG hitcode;
             POINT pt;
+            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            HMENU hMenu = wndPtr->hSysMenu;
+            WIN_ReleaseWndPtr( wndPtr );
+            if (!hMenu) return 0;
             pt.x = SLOWORD(lParam);
             pt.y = SHIWORD(lParam);
-
-            /*
-             * WM_CONTEXTMENU coordinates are relative to screen, but 
-             * NC_HandleNCHitTest expects coordinates relative to the parent's 
-             * client area (to compare with the rectangle returned by 
-             * GetWindowRect)
-             */
-            if (wndPtr->parent)
-                ScreenToClient(wndPtr->parent->hwndSelf, &pt);
-
-            hitcode = NC_HandleNCHitTest(wndPtr->hwndSelf, pt);
+            hitcode = NC_HandleNCHitTest(hwnd, pt);
 
             /* Track system popup if click was in the caption area. */
             if (hitcode==HTCAPTION || hitcode==HTSYSMENU)
-               TrackPopupMenu(GetSystemMenu(wndPtr->hwndSelf, FALSE),
+               TrackPopupMenu(GetSystemMenu(hwnd, FALSE),
                                TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
-                               pt.x, pt.y, 0, wndPtr->hwndSelf, NULL);
+                               pt.x, pt.y, 0, hwnd, NULL);
         }
         break;
 
     case WM_NCACTIVATE:
-        return NC_HandleNCActivate( wndPtr->hwndSelf, wParam );
+        return NC_HandleNCActivate( hwnd, wParam );
 
     case WM_NCDESTROY:
-	if (wndPtr->text) HeapFree( GetProcessHeap(), 0, wndPtr->text );
-	wndPtr->text = NULL;
-	if (wndPtr->pVScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pVScroll );
-	if (wndPtr->pHScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pHScroll );
-        wndPtr->pVScroll = wndPtr->pHScroll = NULL;
-	return 0;
+        {
+            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            if (!wndPtr) return 0;
+            if (wndPtr->text) HeapFree( GetProcessHeap(), 0, wndPtr->text );
+            wndPtr->text = NULL;
+            if (wndPtr->pVScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pVScroll );
+            if (wndPtr->pHScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pHScroll );
+            wndPtr->pVScroll = wndPtr->pHScroll = NULL;
+            WIN_ReleaseWndPtr( wndPtr );
+            return 0;
+        }
 
     case WM_PRINT:
-        DEFWND_Print(wndPtr, (HDC)wParam, lParam);
+        DEFWND_Print(hwnd, (HDC)wParam, lParam);
         return 0;
 
     case WM_PAINTICON:
     case WM_PAINT:
 	{
 	    PAINTSTRUCT ps;
-	    HDC hdc = BeginPaint( wndPtr->hwndSelf, &ps );
+	    HDC hdc = BeginPaint( hwnd, &ps );
 	    if( hdc ) 
 	    {
               HICON hIcon;
-	      if( (wndPtr->dwStyle & WS_MINIMIZE) && ((hIcon = GetClassLongW( wndPtr->hwndSelf, GCL_HICON))) )
+	      if (IsIconic(hwnd) && ((hIcon = GetClassLongW( hwnd, GCL_HICON))) )
 	      {
-	        int x = (wndPtr->rectWindow.right - wndPtr->rectWindow.left -
-			GetSystemMetrics(SM_CXICON))/2;
-	        int y = (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top -
-			GetSystemMetrics(SM_CYICON))/2;
-		TRACE("Painting class icon: vis rect=(%i,%i - %i,%i)\n",
-		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
-	        DrawIcon( hdc, x, y, hIcon );
+                  RECT rc;
+                  int x, y;
+
+                  GetClientRect( hwnd, &rc );
+                  x = (rc.right - rc.left - GetSystemMetrics(SM_CXICON))/2;
+                  y = (rc.bottom - rc.top - GetSystemMetrics(SM_CYICON))/2;
+                  TRACE("Painting class icon: vis rect=(%i,%i - %i,%i)\n",
+                        ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
+                  DrawIcon( hdc, x, y, hIcon );
 	      }
-	      EndPaint( wndPtr->hwndSelf, &ps );
+	      EndPaint( hwnd, &ps );
 	    }
 	    return 0;
 	}
 
     case WM_SYNCPAINT:
-        RedrawWindow ( wndPtr->hwndSelf, NULL, 0, RDW_ERASENOW | RDW_ERASE | RDW_ALLCHILDREN );
+        RedrawWindow ( hwnd, NULL, 0, RDW_ERASENOW | RDW_ERASE | RDW_ALLCHILDREN );
         return 0;
 
     case WM_SETREDRAW:
-	DEFWND_SetRedraw( wndPtr, wParam );
+        DEFWND_SetRedraw( hwnd, wParam );
         return 0;
 
     case WM_CLOSE:
-	DestroyWindow( wndPtr->hwndSelf );
+	DestroyWindow( hwnd );
 	return 0;
 
     case WM_MOUSEACTIVATE:
-	if (wndPtr->dwStyle & WS_CHILD)
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
 	{
-	    LONG ret = pSendMessage( wndPtr->parent->hwndSelf,
-                                      WM_MOUSEACTIVATE, wParam, lParam );
+	    LONG ret = SendMessageW( GetParent(hwnd), WM_MOUSEACTIVATE, wParam, lParam );
 	    if (ret) return ret;
 	}
 
@@ -440,17 +440,13 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	/* The default action in Windows is to set the keyboard focus to
 	 * the window, if it's being activated and not minimized */
 	if (LOWORD(wParam) != WA_INACTIVE) {
-		if (!(wndPtr->dwStyle & WS_MINIMIZE))
-			SetFocus(wndPtr->hwndSelf);
+            if (!IsIconic(hwnd)) SetFocus(hwnd);
 	}
 	break;
 
-     case WM_MOUSEWHEEL:
-	if (wndPtr->dwStyle & WS_CHILD)
-	{
-	    return pSendMessage( wndPtr->parent->hwndSelf,
-				 WM_MOUSEWHEEL, wParam, lParam );
-	}
+    case WM_MOUSEWHEEL:
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
+            return SendMessageW( GetParent(hwnd), WM_MOUSEWHEEL, wParam, lParam );
 	break;
 
     case WM_ERASEBKGND:
@@ -458,13 +454,13 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	{
 	    RECT rect;
             HDC hdc = (HDC)wParam;
-            HBRUSH hbr = GetClassLongW( wndPtr->hwndSelf, GCL_HBRBACKGROUND );
+            HBRUSH hbr = GetClassLongW( hwnd, GCL_HBRBACKGROUND );
             if (!hbr) return 0;
 
-            if (GetClassLongW( wndPtr->hwndSelf, GCL_STYLE ) & CS_PARENTDC)
+            if (GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC)
             {
                 /* can't use GetClipBox with a parent DC or we fill the whole parent */
-                GetClientRect( wndPtr->hwndSelf, &rect );
+                GetClientRect( hwnd, &rect );
                 DPtoLP( hdc, (LPPOINT)&rect, 2 );
             }
             else GetClipBox( hdc, &rect );
@@ -488,24 +484,23 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return (LRESULT)DEFWND_ControlColor( (HDC)wParam, HIWORD(lParam) );
 	
     case WM_SETCURSOR:
-	if (wndPtr->dwStyle & WS_CHILD)
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
 	{
             /* with the exception of the border around a resizable wnd,
              * give the parent first chance to set the cursor */
             if ((LOWORD(lParam) < HTSIZEFIRST) || (LOWORD(lParam) > HTSIZELAST))
             {
-                if (pSendMessage(wndPtr->parent->hwndSelf, WM_SETCURSOR, wParam, lParam))
-                    return TRUE;
+                if (SendMessageW(GetParent(hwnd), WM_SETCURSOR, wParam, lParam)) return TRUE;
             }
         }
-	return NC_HandleSetCursor( wndPtr->hwndSelf, wParam, lParam );
+	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
     case WM_SYSCOMMAND:
         {
             POINT pt;
             pt.x = SLOWORD(lParam);
             pt.y = SHIWORD(lParam);
-            return NC_HandleSysCommand( wndPtr->hwndSelf, wParam, pt );
+            return NC_HandleSysCommand( hwnd, wParam, pt );
         }
 
     case WM_KEYDOWN:
@@ -525,18 +520,16 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 
 	    if( wParam == VK_F4 )	/* try to close the window */
 	    {
-		HWND hWnd = WIN_GetTopParent( wndPtr->hwndSelf );
-		wndPtr = WIN_FindWndPtr( hWnd );
-		if( wndPtr && !(wndPtr->clsStyle & CS_NOCLOSE) )
-		    pPostMessage( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
-                WIN_ReleaseWndPtr(wndPtr);
+                HWND top = WIN_GetTopParent( hwnd );
+                if (!(GetClassLongW( top, GCL_STYLE ) & CS_NOCLOSE))
+                    PostMessageW( top, WM_SYSCOMMAND, SC_CLOSE, 0 );
 	    }
 	} 
 	else if( wParam == VK_F10 )
 	        iF10Key = 1;
 	     else
 	        if( wParam == VK_ESCAPE && (GetKeyState(VK_SHIFT) & 0x8000))
-		    pSendMessage( wndPtr->hwndSelf, WM_SYSCOMMAND, SC_KEYMENU, VK_SPACE );
+                    SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, VK_SPACE );
 	break;
 
     case WM_KEYUP:
@@ -544,42 +537,44 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	/* Press and release F10 or ALT */
 	if (((wParam == VK_MENU) && iMenuSysKey) ||
             ((wParam == VK_F10) && iF10Key))
-	      pSendMessage( WIN_GetTopParent(wndPtr->hwndSelf),
-                             WM_SYSCOMMAND, SC_KEYMENU, 0L );
+              SendMessageW( WIN_GetTopParent(hwnd), WM_SYSCOMMAND, SC_KEYMENU, 0L );
 	iMenuSysKey = iF10Key = 0;
         break;
 
     case WM_SYSCHAR:
 	iMenuSysKey = 0;
-	if (wParam == VK_RETURN && (wndPtr->dwStyle & WS_MINIMIZE))
+	if (wParam == VK_RETURN && IsIconic(hwnd))
         {
-	    pPostMessage( wndPtr->hwndSelf, WM_SYSCOMMAND, SC_RESTORE, 0L );
+            PostMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0L );
 	    break;
         } 
 	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
         {
 	    if (wParam == VK_TAB || wParam == VK_ESCAPE) break;
-	    if (wParam == VK_SPACE && (wndPtr->dwStyle & WS_CHILD))
-		pSendMessage( wndPtr->parent->hwndSelf, msg, wParam, lParam );
+            if (wParam == VK_SPACE && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD))
+                SendMessageW( GetParent(hwnd), msg, wParam, lParam );
 	    else
-		pSendMessage( wndPtr->hwndSelf, WM_SYSCOMMAND, SC_KEYMENU, wParam );
+                SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wParam );
         } 
 	else /* check for Ctrl-Esc */
             if (wParam != VK_ESCAPE) MessageBeep(0);
 	break;
 
     case WM_SHOWWINDOW:
-        if (!lParam) return 0; /* sent from ShowWindow */
-        if (!(wndPtr->dwStyle & WS_POPUP) || !wndPtr->owner) return 0;
-        if ((wndPtr->dwStyle & WS_VISIBLE) && wParam) return 0;
-	else if (!(wndPtr->dwStyle & WS_VISIBLE) && !wParam) return 0;
-        ShowWindow( wndPtr->hwndSelf, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
-	break; 
+        {
+            LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+            if (!lParam) return 0; /* sent from ShowWindow */
+            if (!(style & WS_POPUP)) return 0;
+            if ((style & WS_VISIBLE) && wParam) return 0;
+            if (!(style & WS_VISIBLE) && !wParam) return 0;
+            if (!GetWindow( hwnd, GW_OWNER )) return 0;
+            ShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
+            break;
+        }
 
     case WM_CANCELMODE:
-	if (wndPtr->parent == WIN_GetDesktop()) EndMenu();
-	if (GetCapture() == wndPtr->hwndSelf) ReleaseCapture();
-        WIN_ReleaseDesktop();
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)) EndMenu();
+	if (GetCapture() == hwnd) ReleaseCapture();
 	break;
 
     case WM_VKEYTOITEM:
@@ -590,27 +585,32 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return DRAG_FILE;  
 
     case WM_QUERYDROPOBJECT:
-	if (wndPtr->dwExStyle & WS_EX_ACCEPTFILES) return 1;
-	break;
+        return (GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
 
     case WM_QUERYDRAGICON:
         {
             UINT len;
 
-            HICON hIcon = GetClassLongW( wndPtr->hwndSelf, GCL_HICON );
+            HICON hIcon = GetClassLongW( hwnd, GCL_HICON );
+            HINSTANCE instance = GetWindowLongW( hwnd, GWL_HINSTANCE );
             if (hIcon) return hIcon;
             for(len=1; len<64; len++)
-                if((hIcon = LoadIconW(wndPtr->hInstance, MAKEINTRESOURCEW(len))))
+                if((hIcon = LoadIconW(instance, MAKEINTRESOURCEW(len))))
                     return (LRESULT)hIcon;
             return (LRESULT)LoadIconW(0, IDI_APPLICATIONW);
         }
         break;
 
     case WM_ISACTIVEICON:
-	return ((wndPtr->flags & WIN_NCACTIVATED) != 0);
+        {
+            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            BOOL ret = (wndPtr->flags & WIN_NCACTIVATED) != 0;
+            WIN_ReleaseWndPtr( wndPtr );
+            return ret;
+        }
 
     case WM_NOTIFYFORMAT:
-      if (IsWindowUnicode(wndPtr->hwndSelf)) return NFR_UNICODE;
+      if (IsWindowUnicode(hwnd)) return NFR_UNICODE;
       else return NFR_ANSI;
         
     case WM_QUERYOPEN:
@@ -619,14 +619,14 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 
     case WM_SETICON:
         if (USER_Driver.pSetWindowIcon)
-            return USER_Driver.pSetWindowIcon( wndPtr->hwndSelf, lParam, (wParam != ICON_SMALL) );
+            return USER_Driver.pSetWindowIcon( hwnd, lParam, (wParam != ICON_SMALL) );
         else
 	{
 		int index = (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM;
-		HICON hOldIcon = GetClassLongW(wndPtr->hwndSelf, index); 
-		SetClassLongW(wndPtr->hwndSelf, index, lParam);
+		HICON hOldIcon = GetClassLongW(hwnd, index); 
+		SetClassLongW(hwnd, index, lParam);
 
-		SetWindowPos(wndPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED
+		SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED
 			 | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
 			 | SWP_NOZORDER);
 		return hOldIcon;
@@ -635,11 +635,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_GETICON:
 	{
 		int index = (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM;
-		return GetClassLongW(wndPtr->hwndSelf, index); 
+		return GetClassLongW(hwnd, index); 
 	}
 
     case WM_HELP:
-	pSendMessage( wndPtr->parent->hwndSelf, msg, wParam, lParam );
+        SendMessageW( GetParent(hwnd), msg, wParam, lParam );
 	break;
     }
 
@@ -654,10 +654,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                                 LPARAM lParam )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT result = 0;
 
-    if (!wndPtr) return 0;
+    if (!IsWindow( hwnd )) return 0;
     SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -668,7 +667,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
 	     * may have child window IDs instead of window name */
 	    if (HIWORD(cs->lpszName))
-		DEFWND_SetTextA( wndPtr, MapSL(cs->lpszName) );
+                DEFWND_SetTextA( hwnd, MapSL(cs->lpszName) );
 	    result = 1;
 	}
         break;
@@ -689,39 +688,20 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     case WM_WINDOWPOSCHANGED:
 	{
 	    WINDOWPOS16 * winPos = MapSL(lParam);
-            DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
+            DEFWND_HandleWindowPosChanged( hwnd, winPos->flags );
 	}
         break;
 
-    case WM_GETTEXTLENGTH:
-        if (wndPtr->text)
-            result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, strlenW(wndPtr->text),
-                                          NULL, 0, NULL, NULL );
-        break;
-
     case WM_GETTEXT:
-        if (wParam && wndPtr->text)
-        {
-            LPSTR dest = MapSL(lParam);
-            if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1, dest, wParam, NULL, NULL ))
-                dest[wParam-1] = 0;
-            result = strlen(dest);
-        }
-        break;
-
     case WM_SETTEXT:
-	DEFWND_SetTextA( wndPtr, MapSL(lParam) );
-	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
-	    NC_HandleNCPaint( hwnd , (HRGN)1 );
-	result = 1; /* success. FIXME: check text length */
+        result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)MapSL(lParam) );
         break;
 
     default:
-        result = DEFWND_DefWinProc( wndPtr, msg, wParam, lParam, FALSE );
+        result = DefWindowProcA( hwnd, msg, wParam, lParam );
         break;
     }
 
-    WIN_ReleaseWndPtr(wndPtr);
     SPY_ExitMessage( SPY_RESULT_DEFWND16, hwnd, msg, result, wParam, lParam );
     return result;
 }
@@ -731,13 +711,11 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
  *		DefWindowProcA (USER32.@)
  *
  */
-LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
-                                 LPARAM lParam )
+LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT result = 0;
 
-    if (!wndPtr) return 0;
+    if (!IsWindow( hwnd )) return 0;
     SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -748,7 +726,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
 	     * may have child window IDs instead of window name */
 	    if (HIWORD(cs->lpszName))
-	        DEFWND_SetTextA( wndPtr, cs->lpszName );
+                DEFWND_SetTextA( hwnd, cs->lpszName );
 	    result = 1;
 	}
         break;
@@ -764,29 +742,37 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
     case WM_WINDOWPOSCHANGED:
 	{
 	    WINDOWPOS * winPos = (WINDOWPOS *)lParam;
-            DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
+            DEFWND_HandleWindowPosChanged( hwnd, winPos->flags );
 	}
         break;
 
     case WM_GETTEXTLENGTH:
-        if (wndPtr->text)
-            result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, strlenW(wndPtr->text),
-                                          NULL, 0, NULL, NULL );
+        {
+            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            if (wndPtr && wndPtr->text)
+                result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, strlenW(wndPtr->text),
+                                              NULL, 0, NULL, NULL );
+            WIN_ReleaseWndPtr( wndPtr );
+        }
         break;
 
     case WM_GETTEXT:
-        if (wParam && wndPtr->text)
         {
-            if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1,
-                                      (LPSTR)lParam, wParam, NULL, NULL ))
-                ((LPSTR)lParam)[wParam-1] = 0;
-            result = (LRESULT)strlen( (LPSTR)lParam );
+            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            if (wParam && wndPtr && wndPtr->text)
+            {
+                LPSTR dest = (LPSTR)lParam;
+                if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1,
+                                          dest, wParam, NULL, NULL )) dest[wParam-1] = 0;
+                result = strlen( dest );
+            }
+            WIN_ReleaseWndPtr( wndPtr );
         }
         break;
 
     case WM_SETTEXT:
-	DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
-	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
+        DEFWND_SetTextA( hwnd, (LPCSTR)lParam );
+        if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
 	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
 	result = 1; /* success. FIXME: check text length */
         break;
@@ -832,11 +818,10 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 	break;
 
     default:
-	result = DEFWND_DefWinProc( wndPtr, msg, wParam, lParam, FALSE );
+        result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );
         break;
     }
 
-    WIN_ReleaseWndPtr(wndPtr);
     SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result, wParam, lParam );
     return result;
 }
@@ -857,10 +842,9 @@ LRESULT WINAPI DefWindowProcW(
     WPARAM wParam,  /* [in] first message parameter */
     LPARAM lParam )   /* [in] second message parameter */
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT result = 0;
 
-    if (!wndPtr) return 0;
+    if (!IsWindow( hwnd )) return 0;
     SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -871,7 +855,7 @@ LRESULT WINAPI DefWindowProcW(
 	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
 	     * may have child window IDs instead of window name */
 	    if (HIWORD(cs->lpszName))
-	        DEFWND_SetTextW( wndPtr, cs->lpszName );
+	        DEFWND_SetTextW( hwnd, cs->lpszName );
 	    result = 1;
 	}
         break;
@@ -887,25 +871,34 @@ LRESULT WINAPI DefWindowProcW(
     case WM_WINDOWPOSCHANGED:
 	{
 	    WINDOWPOS * winPos = (WINDOWPOS *)lParam;
-            DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
+            DEFWND_HandleWindowPosChanged( hwnd, winPos->flags );
 	}
         break;
 
     case WM_GETTEXTLENGTH:
-        if (wndPtr->text) result = (LRESULT)strlenW(wndPtr->text);
+        {
+            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            if (wndPtr && wndPtr->text) result = (LRESULT)strlenW(wndPtr->text);
+            WIN_ReleaseWndPtr( wndPtr );
+        }
         break;
 
     case WM_GETTEXT:
-        if (wParam && wndPtr->text)
         {
-            lstrcpynW( (LPWSTR)lParam, wndPtr->text, wParam );
-            result = strlenW( (LPWSTR)lParam );
+            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            if (wParam && wndPtr && wndPtr->text)
+            {
+                LPWSTR dest = (LPWSTR)lParam;
+                lstrcpynW( dest, wndPtr->text, wParam );
+                result = strlenW( dest );
+            }
+            WIN_ReleaseWndPtr( wndPtr );
         }
         break;
 
     case WM_SETTEXT:
-	DEFWND_SetTextW( wndPtr, (LPCWSTR)lParam );
-	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
+        DEFWND_SetTextW( hwnd, (LPCWSTR)lParam );
+        if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
 	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
 	result = 1; /* success. FIXME: check text length */
         break;
@@ -925,10 +918,9 @@ LRESULT WINAPI DefWindowProcW(
 	break;
 
     default:
-	result = DEFWND_DefWinProc( wndPtr, msg, wParam, lParam, TRUE );
+        result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );
         break;
     }
-    WIN_ReleaseWndPtr(wndPtr);
     SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result, wParam, lParam );
     return result;
 }

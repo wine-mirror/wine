@@ -73,4 +73,3 @@ debug_channels (ttydrv)
 @ cdecl IsClipboardFormatAvailable(long) TTYDRV_IsClipboardFormatAvailable
 @ cdecl RegisterClipboardFormat(str) TTYDRV_RegisterClipboardFormat
 @ cdecl IsSelectionOwner() TTYDRV_IsSelectionOwner
-@ cdecl ResetSelectionOwner(ptr long) TTYDRV_ResetSelectionOwner

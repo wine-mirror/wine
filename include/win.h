@@ -77,12 +77,6 @@ typedef struct
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0800 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
 #define WIN_NEEDS_INTERNALSOP  0x1000 /* Window was hidden by WIN_InternalShowOwnedPopups */
 
-  /* BuildWinArray() flags */
-#define BWA_SKIPDISABLED	0x0001
-#define BWA_SKIPHIDDEN		0x0002
-#define BWA_SKIPOWNED		0x0004
-#define BWA_SKIPICONIC		0x0008
-
   /* Window functions */
 extern int    WIN_SuspendWndsLock( void );
 extern void   WIN_RestoreWndsLock(int ipreviousLock);
@@ -102,16 +96,14 @@ extern BOOL WIN_CreateDesktopWindow(void);
 extern HWND WIN_GetTopParent( HWND hwnd );
 extern WND*   WIN_GetTopParentPtr( WND* pWnd );
 extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
-extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT bwa, UINT* pnum );
-extern void   WIN_ReleaseWinArray(WND **wndArray);
+extern HWND *WIN_BuildWinArray( HWND hwnd );
+extern void WIN_ReleaseWinArray( HWND *wndArray );
 extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
 
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 
 extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL );
-extern void DEFWND_SetTextA( WND *wndPtr, LPCSTR text );
-extern void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text );
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
 extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */
