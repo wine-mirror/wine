@@ -189,18 +189,24 @@ static FILE *open_src_file( INCL_FILE *pFile )
 {
     FILE *file;
 
+    /* first try name as is */
+    if ((file = fopen( pFile->name, "r" )))
+    {
+        pFile->filename = xstrdup( pFile->name );
+        return file;
+    }
+    /* now try in source dir */
     if (SrcDir)
     {
         pFile->filename = xmalloc( strlen(SrcDir) + strlen(pFile->name) + 2 );
         strcpy( pFile->filename, SrcDir );
         strcat( pFile->filename, "/" );
         strcat( pFile->filename, pFile->name );
+        file = fopen( pFile->filename, "r" );
     }
-    else pFile->filename = xstrdup( pFile->name );
-
-    if (!(file = fopen( pFile->filename, "r" )))
+    if (!file)
     {
-        perror( pFile->filename );
+        perror( pFile->name );
         exit(1);
     }
     return file;
