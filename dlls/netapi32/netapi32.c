@@ -60,8 +60,9 @@ NET_API_STATUS  WINAPI NetServerEnum(
   LPDWORD resume_handle
 )
 {
-    FIXME("Stub (%p, %ld %p %ld %p %p %ld %s %p)\n",servername, level, bufptr,
-          prefmaxlen, entriesread, totalentries, servertype, debugstr_w(domain), resume_handle);
+    FIXME("Stub (%s %ld %p %ld %p %p %ld %s %p)\n", debugstr_w(servername),
+     level, bufptr, prefmaxlen, entriesread, totalentries, servertype,
+     debugstr_w(domain), resume_handle);
 
     return ERROR_NO_BROWSER_SERVERS_FOUND;
 }

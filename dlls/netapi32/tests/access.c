@@ -111,7 +111,8 @@ void run_usergetinfo_tests(void)
            "Bad Network Path: rc=%ld\n",rc);
     }
     rc=pNetUserGetInfo(sEmptyStr, sAdminUserName, 0, (LPBYTE *)&ui0);
-    ok(rc == ERROR_BAD_NETPATH,"Bad Network Path: rc=%ld\n",rc);
+    ok(rc == ERROR_BAD_NETPATH || rc == NERR_Success,
+       "Bad Network Path: rc=%ld\n",rc);
     rc=pNetUserGetInfo(sInvalidName, sAdminUserName, 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%ld\n",rc);
     rc=pNetUserGetInfo(sInvalidName2, sAdminUserName, 0, (LPBYTE *)&ui0);

@@ -33,8 +33,8 @@
 @ stub I_NetLogonUasLogoff
 @ stub I_NetLogonUasLogon
 @ stub I_NetNameCanonicalize
-@ stub I_NetNameCompare
-@ stub I_NetNameValidate
+@ stdcall I_NetNameCompare(ptr wstr wstr ptr ptr)
+@ stdcall I_NetNameValidate(ptr wstr ptr ptr)
 @ stub I_NetPathCanonicalize
 @ stub I_NetPathCompare
 @ stub I_NetPathType

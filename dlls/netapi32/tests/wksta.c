@@ -152,7 +152,7 @@ static void run_wkstatransportenum_tests(void)
     /* 3rd check: is param 3 passed? */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
         NULL, NULL, NULL);
-    ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == ERROR_INVALID_PARAMETER,
+    ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == RPC_X_NULL_REF_POINTER,
        "NetWkstaTransportEnum returned %ld\n", apiReturn);
 
     /* 4th check: is param 6 passed? */

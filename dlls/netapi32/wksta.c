@@ -53,6 +53,8 @@ BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName)
     {
         return TRUE;
     }
+    else if (ServerName[0] == '\0')
+        return TRUE;
     else
     {
         DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
@@ -453,16 +455,34 @@ NET_API_STATUS WINAPI NetpGetComputerName(LPWSTR *Buffer)
     }
 }
 
+NET_API_STATUS WINAPI I_NetNameCompare(LPVOID p1, LPWSTR wkgrp, LPWSTR comp,
+ LPVOID p4, LPVOID p5)
+{
+    FIXME("(%p %s %s %p %p): stub\n", p1, debugstr_w(wkgrp), debugstr_w(comp),
+     p4, p5);
+    return ERROR_INVALID_PARAMETER;
+}
+
+NET_API_STATUS WINAPI I_NetNameValidate(LPVOID p1, LPWSTR wkgrp, LPVOID p3,
+ LPVOID p4)
+{
+    FIXME("(%p %s %p %p): stub\n", p1, debugstr_w(wkgrp), p3, p4);
+    return ERROR_INVALID_PARAMETER;
+}
+
 NET_API_STATUS WINAPI NetWkstaGetInfo( LPWSTR servername, DWORD level,
                                        LPBYTE* bufptr)
 {
     NET_API_STATUS ret;
 
-    TRACE("%p %ld %p\n", debugstr_w( servername ), level, bufptr );
+    TRACE("%s %ld %p\n", debugstr_w( servername ), level, bufptr );
     if (servername)
     {
-        FIXME("remote computers not supported\n");
-        return ERROR_INVALID_LEVEL;
+        if (!NETAPI_IsLocalComputer(servername))
+        {
+            FIXME("remote computers not supported\n");
+            return ERROR_INVALID_LEVEL;
+        }
     }
     if (!bufptr) return ERROR_INVALID_PARAMETER;
 
