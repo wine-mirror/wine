@@ -3128,7 +3128,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
 
 inline static UINT create_component_directory ( MSIPACKAGE* package, INT component)
 {
-    UINT rc;
+    UINT rc = ERROR_SUCCESS;
     MSIFOLDER *folder;
     LPWSTR install_path;
 
