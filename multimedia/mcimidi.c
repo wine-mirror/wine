@@ -41,7 +41,7 @@ typedef struct {
 } MCI_MIDITRACK;
 
 typedef struct tagWINE_MCIMIDI {
-    UINT		wDevID;
+    UINT		wDevID;			/* the MCI one */
     HMIDI		hMidi;
     int			nUseCount;          	/* Incremented for each shared open          */
     WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
@@ -1016,19 +1016,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	}
     }
     
-    /* stop all notes */
-    /* should be (0x7800 | MIDI_CTL_CHANGE) instead of 0x78B0,
-     * but MIDI_CTL_CHANGE is defined in OSS's soundcard.h and MCI must compile
-     * without any reference to OSS
-     */
-    /* FIXME: check if 0x78B0 is channel dependant or not. I coded it so that 
-     * it's channel dependent...
-     */
-    {
-	unsigned chn;
-	for (chn = 0; chn < 16; chn++)
-	    midiOutShortMsg(wmm->hMidi, 0x78B0 | chn);
-    }
+    midiOutReset(wmm->hMidi);
     
     dwRet = midiOutClose(wmm->hMidi);
     wmm->dwStatus = MCI_MODE_STOP;
@@ -1080,6 +1068,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     dwRet = midiInPrepareHeader(wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
     TRACE("After MIDM_PREPARE \n");
     wmm->dwStatus = MCI_MODE_RECORD;
+    /* FIXME: there is no buffer added */
     while (wmm->dwStatus != MCI_MODE_STOP) {
 	TRACE("wmm->dwStatus=%p %d\n",
 	      &wmm->dwStatus, wmm->dwStatus);
@@ -1117,7 +1106,6 @@ static DWORD MIDI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
     
     if (wmm->dwStatus == MCI_MODE_PLAY) {
 	/* stop all notes */
-	/* see note in MIDI_mciPlay */
 	unsigned chn;
 	for (chn = 0; chn < 16; chn++)
 	    midiOutShortMsg(wmm->hMidi, 0x78B0 | chn);
@@ -1491,7 +1479,7 @@ static DWORD MIDI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	if (dwFlags & MCI_NOTIFY) {
 	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	    mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			      wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			    wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
     }
     return ret;	
@@ -1550,7 +1538,7 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 	break;
     /* commands that should report an error */
     case MCI_WINDOW:		
-	FIXME("Unsupported command=%s\n", MCI_MessageToString(wMsg));
+	TRACE("Unsupported command=%s\n", MCI_MessageToString(wMsg));
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
