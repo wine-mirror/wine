@@ -340,7 +340,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 	sizeof(IDirectDrawSurfaceImpl)
     );
     dsurf = (IDirectDrawSurfaceImpl*)*lpdsf;
-    dsurf->ref                 = 2;
+    dsurf->ref                 = 1;
     dsurf->private = HeapAlloc(
 	    GetProcessHeap(),
 	    HEAP_ZERO_MEMORY,
@@ -403,7 +403,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 		IDirectDraw2_AddRef(iface);
 		back->s.ddraw = This;
 		
-		back->ref = 2;
+		back->ref = 1;
 		ICOM_VTBL(back)=(ICOM_VTABLE(IDirectDrawSurface4)*)&xlib_dds4vt;
 		/* Copy the surface description from the front buffer */
 		back->s.surface_desc = dsurf->s.surface_desc;
