@@ -123,12 +123,12 @@ init	MMSYSTEM_LibMain
 716    pascal  mciGetYieldProc(word ptr) mciGetYieldProc16
 717    pascal  mciGetCreatorTask(word) mciGetCreatorTask16
 800    pascal  mixerGetNumDevs() mixerGetNumDevs16
-801    pascal  mixerGetDevCaps(word ptr long) mixerGetDevCaps16
+801    pascal  mixerGetDevCaps(word ptr word) mixerGetDevCaps16
 802    pascal  mixerOpen(ptr word long long) mixerOpen16
 803    pascal  mixerClose(word) mixerClose16
 804    pascal  mixerMessage(word word long long) mixerMessage16
 805    pascal  mixerGetLineInfo(word ptr long) mixerGetLineInfo16
-806    pascal  mixerGetID(word) mixerGetID16
+806    pascal  mixerGetID(word ptr long) mixerGetID16
 807    pascal  mixerGetLineControls(word ptr long) mixerGetLineControls16
 808    pascal  mixerGetControlDetails(word ptr long) mixerGetControlDetails16
 809    pascal  mixerSetControlDetails(word ptr long) mixerSetControlDetails16

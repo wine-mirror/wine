@@ -593,7 +593,7 @@ UINT16 WINAPI mixerGetDevCaps16(UINT16 devid, LPMIXERCAPS16 mixcaps, UINT16 size
 	mixcaps->wMid           = micA.wMid;
 	mixcaps->wPid           = micA.wPid;
 	mixcaps->vDriverVersion = micA.vDriverVersion;
-	strcpy(PTR_SEG_TO_LIN(mixcaps->szPname), micA.szPname);
+	strcpy(mixcaps->szPname, micA.szPname);
 	mixcaps->fdwSupport     = micA.fdwSupport;
 	mixcaps->cDestinations  = micA.cDestinations;
     }
