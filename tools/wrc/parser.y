@@ -531,6 +531,8 @@ resource
 			yywarning("LANGUAGE not supported in 16-bit mode");
 		if(currentlanguage)
 			free(currentlanguage);
+		if (get_language_codepage($3, $5) == -1)
+			yyerror( "Language %04x is not supported", ($5<<10) + $3);
 		currentlanguage = new_language($3, $5);
 		$$ = NULL;
 		chat("Got LANGUAGE %d,%d (0x%04x)", $3, $5, ($5<<10) + $3);
@@ -1752,7 +1754,10 @@ opt_lvc	: /* Empty */		{ $$ = new_lvc(); }
 	 * The conflict is now moved to the expression handling below.
 	 */
 opt_language
-	: tLANGUAGE expr ',' expr	{ $$ = new_language($2, $4); }
+	: tLANGUAGE expr ',' expr	{ $$ = new_language($2, $4);
+					  if (get_language_codepage($2, $4) == -1)
+						yyerror( "Language %04x is not supported", ($4<<10) + $2);
+					}
 	;
 
 opt_characts

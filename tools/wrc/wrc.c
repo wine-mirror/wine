@@ -363,6 +363,8 @@ int main(int argc,char *argv[])
 			{
 				int lan;
 				lan = strtol(optarg, NULL, 0);
+				if (get_language_codepage(PRIMARYLANGID(lan), SUBLANGID(lan)) == -1)
+					error("Language %04x is not supported",lan);
 				currentlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
 			}
 			break;

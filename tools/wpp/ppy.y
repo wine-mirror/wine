@@ -284,7 +284,7 @@ preprocessor
 	| tGCCLINE tNL		/* The null-token */
 	| tERROR opt_text tNL	{ pperror("#error directive: '%s'", $2); if($2) free($2); }
 	| tWARNING opt_text tNL	{ ppwarning("#warning directive: '%s'", $2); if($2) free($2); }
-	| tPRAGMA opt_text tNL	{ if(pp_status.pedantic) ppwarning("#pragma ignored (arg: '%s')", $2); if($2) free($2); }
+	| tPRAGMA opt_text tNL	{ fprintf(ppout, "#pragma %s\n", $2 ? $2 : ""); if ($2) free($2); }
 	| tPPIDENT opt_text tNL	{ if(pp_status.pedantic) ppwarning("#ident ignored (arg: '%s')", $2); if($2) free($2); }
         | tRCINCLUDE tRCINCLUDEPATH {
                 int nl=strlen($2) +3;

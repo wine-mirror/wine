@@ -82,6 +82,9 @@
 %x pp_stripp_final
 /* Set when scanning #line style directives */
 %x pp_line
+/* Set when scanning #pragma */
+%x pp_pragma
+%x pp_code_page
 
 %option stack
 %option never-interactive
@@ -100,6 +103,7 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 #include <ctype.h>
 #include <assert.h>
 
+#include "wine/unicode.h"
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"
@@ -115,7 +119,7 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 #define YY_USER_ACTION	char_number+=yyleng; wanted_id = want_id; want_id = 0;
 
 static void addcchar(char c);
-static void addwchar(short s);
+static void addwchar(WCHAR s);
 static string_t *get_buffered_cstring(void);
 static string_t *get_buffered_wstring(void);
 static string_t *make_string(char *s);
@@ -123,12 +127,14 @@ static string_t *make_string(char *s);
 static char *cbuffer;		/* Buffers for string collection */
 static int cbufidx;
 static int cbufalloc = 0;
-static short *wbuffer;
+static WCHAR *wbuffer;
 static int wbufidx;
 static int wbufalloc = 0;
 static int stripslevel = 0;	/* Count {} during pp_strips/pp_stripe mode */
 static int stripplevel = 0;	/* Count () during pp_strips mode */
 static int cjunk_tagline;	/* Where did we start stripping (helps error tracking) */
+
+static int current_codepage = -1;  /* use language default */
 
 /*
  * This one is a bit tricky.
@@ -316,6 +322,7 @@ static struct keyword *iskeyword(char *kw)
 	 * because we only want to know the linenumber and
 	 * filename.
 	 */
+<INITIAL,pp_strips,pp_stripp>^{ws}*\#{ws}*pragma{ws}+	yy_push_state(pp_pragma);
 <INITIAL,pp_strips,pp_stripp>^{ws}*\#{ws}*	yy_push_state(pp_line);
 <pp_line>[^\n]*	{
 		int lineno;
@@ -336,6 +343,23 @@ static struct keyword *iskeyword(char *kw)
 		line_number = lineno - 1;	/* We didn't read the newline */
 		input_name = xstrdup(fname);
 	}
+
+<pp_pragma>code_page[^\n]*	yyless(9); yy_pop_state(); yy_push_state(pp_code_page);
+<pp_pragma>[^\n]*		yy_pop_state(); if (pedantic) yywarning("Unrecognized #pragma directive '%s'",yytext);
+
+<pp_code_page>\({ws}*default{ws}*\)[^\n]*	current_codepage = -1; yy_pop_state();
+<pp_code_page>\({ws}*[0-9]+{ws}*\)[^\n]* {
+        char *p = yytext;
+        yy_pop_state();
+        while (*p < '0' || *p > '9') p++;
+        current_codepage = strtol( p, NULL, 10 );
+        if (current_codepage && !cp_get_table( current_codepage ))
+        {
+            yyerror("Codepage %d not supported", current_codepage);
+            current_codepage = 0;
+        }
+    }
+<pp_code_page>[^\n]*	yy_pop_state(); yyerror("Malformed #pragma code_page directive");
 
 	/*
 	 * Strip everything until a ';' taking
@@ -418,16 +442,16 @@ L\"			{
 				return tSTRING;
 			}
 <yylstr>\\[0-7]{1,6}	{ /* octal escape sequence */
-				int result;
-				result = strtol(yytext+1, 0, 8);
+				unsigned int result;
+				result = strtoul(yytext+1, 0, 8);
 				if ( result > 0xffff )
 					yyerror("Character constant out of range");
-				addwchar((short)result);
+				addwchar((WCHAR)result);
 			}
 <yylstr>\\x[0-9a-fA-F]{4} {  /* hex escape sequence */
-				int result;
-				result = strtol(yytext+2, 0, 16);
-				addwchar((short)result);
+				unsigned int result;
+				result = strtoul(yytext+2, 0, 16);
+				addwchar((WCHAR)result);
 			}
 <yylstr>\\x[0-9a-fA-F]{1,3} {  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
@@ -441,8 +465,8 @@ L\"			{
 <yylstr>\\v		addwchar('\v');
 <yylstr>\\(\n|.)	addwchar(yytext[1]);
 <yylstr>\\\r\n		addwchar(yytext[2]);
-<yylstr>\"\"		addcchar('\"');		/* "bla""bla"  -> "bla\"bla" */
-<yylstr>\\\"\"		addcchar('\"');		/* "bla\""bla" -> "bla\"bla" */
+<yylstr>\"\"		addwchar('\"');		/* "bla""bla"  -> "bla\"bla" */
+<yylstr>\\\"\"		addwchar('\"');		/* "bla\""bla" -> "bla\"bla" */
 <yylstr>\"{ws}+\"	;			/* "bla" "bla" -> "blabla" */
 <yylstr>[^\\\n\"]+	{
 				char *yptr = yytext;
@@ -596,7 +620,7 @@ static void addcchar(char c)
 	cbuffer[cbufidx++] = c;
 }
 
-static void addwchar(short s)
+static void addwchar(WCHAR s)
 {
 	if(wbufidx >= wbufalloc)
 	{
@@ -605,27 +629,33 @@ static void addwchar(short s)
 		if(wbufalloc > 65536)
 			yywarning("Reallocating wide string buffer larger than 64kB");
 	}
-
-	/*
-	 * BS 08-Aug-1999 FIXME: The '& 0xff' is probably a bug, but I have
-	 * not experienced it yet and I seem to remember that this was for
-	 * a reason. But, as so many things you tend to forget why.
-	 * I guess that there were problems due to the sign extension of
-	 * shorts WRT chars (e.g. 0x80 becomes 0xff80 instead of 0x0080).
-	 * This should then be fixed in the lexer calling the function.
-	 */
-	wbuffer[wbufidx++] = (short)(s & 0xff);
+	wbuffer[wbufidx++] = s;
 }
 
 static string_t *get_buffered_cstring(void)
 {
-	string_t *str = new_string();
-	str->size = cbufidx;
-	str->type = str_char;
-	str->str.cstr = (char *)xmalloc(cbufidx+1);
-	memcpy(str->str.cstr, cbuffer, cbufidx);
-	str->str.cstr[cbufidx] = '\0';
-	return str;
+    string_t *str = new_string();
+
+    str->size = cbufidx;
+    str->type = str_char;
+    str->str.cstr = (char *)xmalloc(cbufidx+1);
+    memcpy(str->str.cstr, cbuffer, cbufidx);
+    str->str.cstr[cbufidx] = '\0';
+
+    if (!current_codepage || current_codepage == -1 || !win32)  /* store as ANSI string */
+    {
+        if (!current_codepage) yyerror("Codepage set to Unicode only, cannot use ASCII string here");
+        return str;
+    }
+    else  /* convert to Unicode before storing */
+    {
+        string_t *str_w = convert_string( str, str_unicode, current_codepage );
+        if (!check_unicode_conversion( str, str_w, current_codepage ))
+            yyerror("String %s does not convert identically to Unicode and back in codepage %d. "
+                    "Try using a Unicode string instead.", str->str.cstr, current_codepage );
+        free_string( str );
+        return str_w;
+    }
 }
 
 static string_t *get_buffered_wstring(void)
@@ -633,8 +663,8 @@ static string_t *get_buffered_wstring(void)
 	string_t *str = new_string();
 	str->size = wbufidx;
 	str->type = str_unicode;
-	str->str.wstr = (short *)xmalloc(2*(wbufidx+1));
-	memcpy(str->str.wstr, wbuffer, wbufidx);
+	str->str.wstr = xmalloc((wbufidx+1)*sizeof(WCHAR));
+	memcpy(str->str.wstr, wbuffer, wbufidx*sizeof(WCHAR));
 	str->str.wstr[wbufidx] = 0;
 	return str;
 }

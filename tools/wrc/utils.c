@@ -36,8 +36,6 @@
 
 /* #define WANT_NEAR_INDICATION */
 
-static const union cptable *current_codepage;
-
 #ifdef WANT_NEAR_INDICATION
 void make_print(char *str)
 {
@@ -202,31 +200,6 @@ char *xstrdup(const char *str)
 	return strcpy(s, str);
 }
 
-short *dupcstr2wstr(const char *str)
-{
-	int len;
-	WCHAR *ws;
-
-	if (!current_codepage) set_language( LANG_NEUTRAL, SUBLANG_NEUTRAL );
-	len = cp_mbstowcs( current_codepage, 0, str, strlen(str), NULL, 0 );
-	ws = xmalloc( sizeof(WCHAR) * (len + 1) );
-	len = cp_mbstowcs( current_codepage, 0, str, strlen(str), ws, len );
-	ws[len] = 0;
-	return ws;
-}
-
-char *dupwstr2cstr(const short *str)
-{
-	int len;
-	char *cs;
-
-	if (!current_codepage) set_language( LANG_NEUTRAL, SUBLANG_NEUTRAL );
-	len = cp_wcstombs( current_codepage, 0, str, strlenW(str), NULL, 0, NULL, NULL );
-	cs = xmalloc( len + 1 );
-	len = cp_wcstombs( current_codepage, 0, str, strlenW(str),  cs, len, NULL, NULL );
-	cs[len] = 0;
-	return cs;
-}
 
 /*
  *****************************************************************************
@@ -272,37 +245,84 @@ int compare_name_id(name_id_t *n1, name_id_t *n2)
 	return 0; /* Keep the compiler happy */
 }
 
-string_t *convert_string(const string_t *str, enum str_e type)
+string_t *convert_string(const string_t *str, enum str_e type, int codepage)
 {
-        string_t *ret = xmalloc(sizeof(*ret));
+    const union cptable *cptable = codepage ? cp_get_table( codepage ) : NULL;
+    string_t *ret = xmalloc(sizeof(*ret));
 
-        if((str->type == str_char) && (type == str_unicode))
-	{
-		ret->str.wstr = dupcstr2wstr(str->str.cstr);
-		ret->type     = str_unicode;
-		ret->size     = strlenW(ret->str.wstr);
-	}
-	else if((str->type == str_unicode) && (type == str_char))
-	{
-	        ret->str.cstr = dupwstr2cstr(str->str.wstr);
-	        ret->type     = str_char;
-	        ret->size     = strlen(ret->str.cstr);
-	}
-	else if(str->type == str_unicode)
-        {
-	        ret->type     = str_unicode;
-		ret->size     = strlenW(str->str.wstr);
-		ret->str.wstr = xmalloc(sizeof(WCHAR)*(ret->size+1));
-		strcpyW(ret->str.wstr, str->str.wstr);
-	}
-	else /* str->type == str_char */
-        {
-	        ret->type     = str_char;
-		ret->size     = strlen(str->str.cstr);
-		ret->str.cstr = xmalloc( ret->size + 1 );
-		strcpy(ret->str.cstr, str->str.cstr);
-        }
-	return ret;
+    if (!cptable && str->type != type)
+        error( "Current language is Unicode only, cannot convert strings" );
+
+    if((str->type == str_char) && (type == str_unicode))
+    {
+        ret->type     = str_unicode;
+        ret->size     = cp_mbstowcs( cptable, 0, str->str.cstr, str->size, NULL, 0 );
+        ret->str.wstr = xmalloc( (ret->size+1) * sizeof(WCHAR) );
+        cp_mbstowcs( cptable, 0, str->str.cstr, str->size, ret->str.wstr, ret->size );
+        ret->str.wstr[ret->size] = 0;
+    }
+    else if((str->type == str_unicode) && (type == str_char))
+    {
+        ret->type     = str_char;
+        ret->size     = cp_wcstombs( cptable, 0, str->str.wstr, str->size,
+                                     NULL, 0, NULL, NULL );
+        ret->str.cstr = xmalloc( ret->size + 1 );
+        cp_wcstombs( cptable, 0, str->str.wstr, str->size, ret->str.cstr, ret->size,
+                     NULL, NULL );
+        ret->str.cstr[ret->size] = 0;
+    }
+    else if(str->type == str_unicode)
+    {
+        ret->type     = str_unicode;
+        ret->size     = str->size;
+        ret->str.wstr = xmalloc(sizeof(WCHAR)*(ret->size+1));
+        memcpy( ret->str.wstr, str->str.wstr, ret->size * sizeof(WCHAR) );
+        ret->str.wstr[ret->size] = 0;
+    }
+    else /* str->type == str_char */
+    {
+        ret->type     = str_char;
+        ret->size     = str->size;
+        ret->str.cstr = xmalloc( ret->size + 1 );
+        memcpy( ret->str.cstr, str->str.cstr, ret->size );
+        ret->str.cstr[ret->size] = 0;
+    }
+    return ret;
+}
+
+
+void free_string(string_t *str)
+{
+    if (str->type == str_unicode) free( str->str.wstr );
+    else free( str->str.cstr );
+    free( str );
+}
+
+
+int check_unicode_conversion( const string_t *str_a, const string_t *str_w, int codepage )
+{
+    int ok;
+    string_t *teststr = convert_string( str_w, str_char, codepage );
+
+    ok = (teststr->size == str_a->size && !memcmp( teststr->str.cstr, str_a->str.cstr, str_a->size ));
+
+    if (!ok)
+    {
+        int i;
+
+        fprintf( stderr, "Source: %s", str_a->str.cstr );
+        for (i = 0; i < str_a->size; i++)
+            fprintf( stderr, " %02x", (unsigned char)str_a->str.cstr[i] );
+        fprintf( stderr, "\nUnicode: " );
+        for (i = 0; i < str_w->size; i++)
+            fprintf( stderr, " %04x", str_w->str.wstr[i] );
+        fprintf( stderr, "\nBack: %s", teststr->str.cstr );
+        for (i = 0; i < teststr->size; i++)
+            fprintf( stderr, " %02x", (unsigned char)teststr->str.cstr[i] );
+        fprintf( stderr, "\n" );
+    }
+    free_string( teststr );
+    return ok;
 }
 
 
@@ -321,60 +341,88 @@ static const struct lang2cp lang2cps[] =
     { LANG_AFRIKAANS,      SUBLANG_NEUTRAL,              1252 },
     { LANG_ALBANIAN,       SUBLANG_NEUTRAL,              1250 },
     { LANG_ARABIC,         SUBLANG_NEUTRAL,              1256 },
+    { LANG_ARMENIAN,       SUBLANG_NEUTRAL,              0    },
+    { LANG_AZERI,          SUBLANG_NEUTRAL,              1254 },
+    { LANG_AZERI,          SUBLANG_AZERI_CYRILLIC,       1251 },
     { LANG_BASQUE,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_BELARUSIAN,     SUBLANG_NEUTRAL,              1251 },
     { LANG_BRETON,         SUBLANG_NEUTRAL,              1252 },
     { LANG_BULGARIAN,      SUBLANG_NEUTRAL,              1251 },
-    { LANG_BYELORUSSIAN,   SUBLANG_NEUTRAL,              1251 },
     { LANG_CATALAN,        SUBLANG_NEUTRAL,              1252 },
-    { LANG_CHINESE,        SUBLANG_NEUTRAL,              936  },
+    { LANG_CHINESE,        SUBLANG_NEUTRAL,              950  },
+    { LANG_CHINESE,        SUBLANG_CHINESE_SINGAPORE,    936  },
+    { LANG_CHINESE,        SUBLANG_CHINESE_SIMPLIFIED,   936  },
     { LANG_CORNISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_CROATIAN,       SUBLANG_NEUTRAL,              1250 },
     { LANG_CZECH,          SUBLANG_NEUTRAL,              1250 },
     { LANG_DANISH,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_DIVEHI,         SUBLANG_NEUTRAL,              0    },
     { LANG_DUTCH,          SUBLANG_NEUTRAL,              1252 },
     { LANG_ENGLISH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_ESPERANTO,      SUBLANG_NEUTRAL,              1252 },
     { LANG_ESTONIAN,       SUBLANG_NEUTRAL,              1257 },
     { LANG_FAEROESE,       SUBLANG_NEUTRAL,              1252 },
+    { LANG_FARSI,          SUBLANG_NEUTRAL,              1256 },
     { LANG_FINNISH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_FRENCH,         SUBLANG_NEUTRAL,              1252 },
     { LANG_GAELIC,         SUBLANG_NEUTRAL,              1252 },
+    { LANG_GALICIAN,       SUBLANG_NEUTRAL,              1252 },
+    { LANG_GEORGIAN,       SUBLANG_NEUTRAL,              0    },
     { LANG_GERMAN,         SUBLANG_NEUTRAL,              1252 },
     { LANG_GREEK,          SUBLANG_NEUTRAL,              1253 },
+    { LANG_GUJARATI,       SUBLANG_NEUTRAL,              0    },
     { LANG_HEBREW,         SUBLANG_NEUTRAL,              1255 },
+    { LANG_HINDI,          SUBLANG_NEUTRAL,              0    },
     { LANG_HUNGARIAN,      SUBLANG_NEUTRAL,              1250 },
     { LANG_ICELANDIC,      SUBLANG_NEUTRAL,              1252 },
     { LANG_INDONESIAN,     SUBLANG_NEUTRAL,              1252 },
     { LANG_ITALIAN,        SUBLANG_NEUTRAL,              1252 },
     { LANG_JAPANESE,       SUBLANG_NEUTRAL,              932  },
+    { LANG_KANNADA,        SUBLANG_NEUTRAL,              0    },
+    { LANG_KAZAK,          SUBLANG_NEUTRAL,              1251 },
+    { LANG_KONKANI,        SUBLANG_NEUTRAL,              0    },
     { LANG_KOREAN,         SUBLANG_NEUTRAL,              949  },
+    { LANG_KYRGYZ,         SUBLANG_NEUTRAL,              1251 },
     { LANG_LATVIAN,        SUBLANG_NEUTRAL,              1257 },
     { LANG_LITHUANIAN,     SUBLANG_NEUTRAL,              1257 },
     { LANG_MACEDONIAN,     SUBLANG_NEUTRAL,              1251 },
     { LANG_MALAY,          SUBLANG_NEUTRAL,              1252 },
+    { LANG_MARATHI,        SUBLANG_NEUTRAL,              0    },
+    { LANG_MONGOLIAN,      SUBLANG_NEUTRAL,              1251 },
     { LANG_NEUTRAL,        SUBLANG_NEUTRAL,              1252 },
     { LANG_NORWEGIAN,      SUBLANG_NEUTRAL,              1252 },
     { LANG_POLISH,         SUBLANG_NEUTRAL,              1250 },
     { LANG_PORTUGUESE,     SUBLANG_NEUTRAL,              1252 },
+    { LANG_PUNJABI,        SUBLANG_NEUTRAL,              0    },
     { LANG_ROMANIAN,       SUBLANG_NEUTRAL,              1250 },
     { LANG_RUSSIAN,        SUBLANG_NEUTRAL,              1251 },
-    { LANG_SERBO_CROATIAN, SUBLANG_NEUTRAL,              1250 },
-    { LANG_SERBO_CROATIAN, SUBLANG_SERBIAN,              1251 },
+    { LANG_SANSKRIT,       SUBLANG_NEUTRAL,              0    },
+    { LANG_SERBIAN,        SUBLANG_NEUTRAL,              1250 },
+    { LANG_SERBIAN,        SUBLANG_SERBIAN_CYRILLIC,     1251 },
     { LANG_SLOVAK,         SUBLANG_NEUTRAL,              1250 },
     { LANG_SLOVENIAN,      SUBLANG_NEUTRAL,              1250 },
     { LANG_SPANISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_SWAHILI,        SUBLANG_NEUTRAL,              1252 },
     { LANG_SWEDISH,        SUBLANG_NEUTRAL,              1252 },
+    { LANG_SYRIAC,         SUBLANG_NEUTRAL,              0    },
+    { LANG_TAMIL,          SUBLANG_NEUTRAL,              0    },
+    { LANG_TATAR,          SUBLANG_NEUTRAL,              1251 },
+    { LANG_TELUGU,         SUBLANG_NEUTRAL,              0    },
     { LANG_THAI,           SUBLANG_NEUTRAL,              874  },
     { LANG_TURKISH,        SUBLANG_NEUTRAL,              1254 },
     { LANG_UKRAINIAN,      SUBLANG_NEUTRAL,              1251 },
+    { LANG_URDU,           SUBLANG_NEUTRAL,              1256 },
+    { LANG_UZBEK,          SUBLANG_NEUTRAL,              1254 },
+    { LANG_UZBEK,          SUBLANG_UZBEK_CYRILLIC,       1251 },
     { LANG_VIETNAMESE,     SUBLANG_NEUTRAL,              1258 },
     { LANG_WALON,          SUBLANG_NEUTRAL,              1252 },
     { LANG_WELSH,          SUBLANG_NEUTRAL,              1252 }
 };
 
-void set_language( unsigned short lang, unsigned short sublang )
+int get_language_codepage( unsigned short lang, unsigned short sublang )
 {
     unsigned int i;
-    unsigned int cp = 0, defcp = 0;
+    int cp = -1, defcp = -1;
 
     for (i = 0; i < sizeof(lang2cps)/sizeof(lang2cps[0]); i++)
     {
@@ -387,9 +435,7 @@ void set_language( unsigned short lang, unsigned short sublang )
         if (lang2cps[i].sublang == SUBLANG_NEUTRAL) defcp = lang2cps[i].cp;
     }
 
-    if (!cp) cp = defcp;
-    if (!cp)
-        error( "No codepage value for language %04x", MAKELANGID(lang,sublang) );
-    if (!(current_codepage = cp_get_table( cp )))
-        error( "Bad codepage %d for language %04x", cp, MAKELANGID(lang,sublang) );
+    if (cp == -1) cp = defcp;
+    assert( cp <= 0 || cp_get_table(cp) );
+    return cp;
 }

@@ -37,16 +37,16 @@ char *xstrdup(const char *str);
 
 int yyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int yywarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
-void internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
+void internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4), noreturn));
 void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
 char *dup_basename(const char *name, const char *ext);
-char *dupwstr2cstr(const short *str);
-short *dupcstr2wstr(const char *str);
 int compare_name_id(name_id_t *n1, name_id_t *n2);
-string_t *convert_string(const string_t *str, enum str_e type);
-void set_language(unsigned short lang, unsigned short sublang);
+string_t *convert_string(const string_t *str, enum str_e type, int codepage);
+void free_string( string_t *str );
+int check_unicode_conversion( const string_t *str_a, const string_t *str_w, int codepage );
+int get_language_codepage( unsigned short lang, unsigned short sublang );
 
 #endif

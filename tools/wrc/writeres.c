@@ -243,26 +243,22 @@ static void write_name_str(FILE *fp, name_id_t *nid)
 	else if(!win32 && nid->name.s_name->type == str_unicode)
 	{
 		name_id_t lnid;
-		string_t str;
 
 		lnid.type = name_str;
-		lnid.name.s_name = &str;
-		str.type = str_char;
-		str.str.cstr = dupwstr2cstr(nid->name.s_name->str.wstr);
+		lnid.name.s_name = convert_string( nid->name.s_name, str_char,
+                                                   get_language_codepage(0,0) );
 		write_name_str(fp, &lnid);
-		free(str.str.cstr);
+		free_string( lnid.name.s_name );
 	}
 	else if(win32 && nid->name.s_name->type == str_char)
 	{
 		name_id_t lnid;
-		string_t str;
 
 		lnid.type = name_str;
-		lnid.name.s_name = &str;
-		str.type = str_unicode;
-		str.str.wstr = dupcstr2wstr(nid->name.s_name->str.cstr);
+		lnid.name.s_name = convert_string( nid->name.s_name, str_unicode,
+                                                   get_language_codepage(0,0) );
 		write_name_str(fp, &lnid);
-		free(str.str.wstr);
+		free_string( lnid.name.s_name );
 	}
 	else  if(win32 && nid->name.s_name->type == str_unicode)
 	{

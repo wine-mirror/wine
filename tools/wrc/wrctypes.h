@@ -99,7 +99,7 @@ typedef struct string {
 	enum str_e	type;
 	union {
 		char *cstr;
-		short *wstr;
+		WCHAR *wstr;
 	} str;
 } string_t;
 
