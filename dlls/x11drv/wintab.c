@@ -630,7 +630,7 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
         /* Set cursor to inverted if cursor is the eraser */
         gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
         set_button_state(button->deviceid);
-        gMsgPacket.pkTime = button->time;
+        gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(button->time);
         gMsgPacket.pkSerialNumber = gSerial++;
         gMsgPacket.pkCursor = button->deviceid;
         gMsgPacket.pkX = button->axis_data[0];
@@ -667,7 +667,7 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
         /* Set cursor to inverted if cursor is the eraser */
         gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
         gMsgPacket.pkStatus |= (event->type==proximity_out_type)?TPS_PROXIMITY:0;
-        gMsgPacket.pkTime = proximity->time;
+        gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(proximity->time);
         gMsgPacket.pkSerialNumber = gSerial++;
         gMsgPacket.pkCursor = proximity->deviceid;
         gMsgPacket.pkX = proximity->axis_data[0];
