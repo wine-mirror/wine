@@ -93,7 +93,6 @@
  *   -- LVS_EX_UNDERLINEHOT
  *   
  * Notifications:
- *   -- LVN_BEGINRDRAG
  *   -- LVN_BEGINSCROLL, LVN_ENDSCROLL
  *   -- LVN_GETINFOTIP
  *   -- LVN_HOTTRACK
@@ -4990,7 +4989,7 @@ static HIMAGELIST LISTVIEW_GetImageList(LISTVIEW_INFO *infoPtr, INT nImageList)
  *   the buffer pointer you provided on input. Most code already does
  *   that, so it's not a problem.
  *   For the two cases when the text must be copied (that is,
- *   for LVM_GETITEM, and LVMGETITEMTEXT), use LISTVIEW_GetItemExtT.
+ *   for LVM_GETITEM, and LVM_GETITEMTEXT), use LISTVIEW_GetItemExtT.
  *
  * RETURN:
  *   SUCCESS : TRUE
