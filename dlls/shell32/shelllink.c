@@ -12,6 +12,7 @@
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "wine/obj_shelllink.h"
+#include "wine/undocshell.h"
 
 #include "heap.h"
 #include "winnls.h"
@@ -312,7 +313,7 @@ static HRESULT WINAPI IPersistStream_fnLoad(
 	          {	
 	            This->pPidl = ILClone (&lpLinkHeader->Pidl);
 
-	            _ILGetPidlPath(&lpLinkHeader->Pidl, sTemp, 512);
+	            SHGetPathFromIDListA(&lpLinkHeader->Pidl, sTemp);
 	            This->sPath = HEAP_strdupA ( GetProcessHeap(), 0, sTemp);
 		    This->wHotKey = lpLinkHeader->wHotKey;
 		    ret = S_OK;
@@ -392,15 +393,12 @@ static ICOM_VTABLE(IPersistStream) psvt =
 IShellLink * IShellLink_Constructor(BOOL bUnicode) 
 {	IShellLinkImpl * sl;
 
-	sl = (IShellLinkImpl *)HeapAlloc(GetProcessHeap(),0,sizeof(IShellLinkImpl));
+	sl = (IShellLinkImpl *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellLinkImpl));
 	sl->ref = 1;
 	sl->lpvtbl = &slvt;
 	sl->lpvtblw = &slvtw;
 	sl->lpvtblPersistFile = &pfvt;
 	sl->lpvtblPersistStream = &psvt;
-	sl->sPath = NULL;
-	sl->pPidl = NULL;
-	sl->lpFileStream = NULL;
 	
 	TRACE("(%p)->()\n",sl);
 	shell32_ObjCount++;
@@ -494,7 +492,7 @@ static HRESULT WINAPI IShellLink_fnGetPath(IShellLink * iface, LPSTR pszFile,INT
 	TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%lu)(%s)\n",This, pszFile, cchMaxPath, pfd, fFlags, debugstr_a(This->sPath));
 
 	if (This->sPath)
-	  strncpy(pszFile,This->sPath, cchMaxPath);
+	  lstrcpynA(pszFile,This->sPath, cchMaxPath);
 	else
 	  return E_FAIL;
 
@@ -525,7 +523,7 @@ static HRESULT WINAPI IShellLink_fnGetDescription(IShellLink * iface, LPSTR pszN
 	ICOM_THIS(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->(%p len=%u)\n",This, pszName, cchMaxName);
-	strncpy(pszName,"Description, FIXME",cchMaxName);
+	lstrcpynA(pszName,"Description, FIXME",cchMaxName);
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLink_fnSetDescription(IShellLink * iface, LPCSTR pszName)
@@ -540,7 +538,7 @@ static HRESULT WINAPI IShellLink_fnGetWorkingDirectory(IShellLink * iface, LPSTR
 	ICOM_THIS(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->()\n",This);
-	strncpy(pszDir,"c:\\", cchMaxPath);
+	lstrcpynA(pszDir,"c:\\", cchMaxPath);
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLink_fnSetWorkingDirectory(IShellLink * iface, LPCSTR pszDir)
@@ -555,7 +553,7 @@ static HRESULT WINAPI IShellLink_fnGetArguments(IShellLink * iface, LPSTR pszArg
 	ICOM_THIS(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->(%p len=%u)\n",This, pszArgs, cchMaxPath);
-	strncpy(pszArgs, "", cchMaxPath);
+	lstrcpynA(pszArgs, "", cchMaxPath);
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLink_fnSetArguments(IShellLink * iface, LPCSTR pszArgs)
@@ -606,7 +604,7 @@ static HRESULT WINAPI IShellLink_fnGetIconLocation(IShellLink * iface, LPSTR psz
 	ICOM_THIS(IShellLinkImpl, iface);
 	
 	FIXME("(%p)->(%p len=%u iicon=%p)\n",This, pszIconPath, cchIconPath, piIcon);
-	strncpy(pszIconPath,"shell32.dll",cchIconPath);
+	lstrcpynA(pszIconPath,"shell32.dll",cchIconPath);
 	*piIcon=1;
 	return NOERROR;
 }
