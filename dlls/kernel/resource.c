@@ -52,7 +52,7 @@ static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
     if (name[0] == '#')
     {
         ULONG value;
-        if (RtlCharToInteger( name, 10, &value ) != STATUS_SUCCESS || HIWORD(value))
+        if (RtlCharToInteger( name + 1, 10, &value ) != STATUS_SUCCESS || HIWORD(value))
             return STATUS_INVALID_PARAMETER;
         str->Buffer = (LPWSTR)value;
         return STATUS_SUCCESS;
@@ -73,7 +73,7 @@ static NTSTATUS get_res_nameW( LPCWSTR name, UNICODE_STRING *str )
     if (name[0] == '#')
     {
         ULONG value;
-        RtlInitUnicodeString( str, name );
+        RtlInitUnicodeString( str, name + 1 );
         if (RtlUnicodeStringToInteger( str, 10, &value ) != STATUS_SUCCESS || HIWORD(value))
             return STATUS_INVALID_PARAMETER;
         str->Buffer = (LPWSTR)value;
