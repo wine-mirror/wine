@@ -107,7 +107,7 @@ import	kernel32
 101 stub OleDraw
 102 stdcall OleDuplicateData(long long long) OleDuplicateData
 103 stdcall OleFlushClipboard() OleFlushClipboard
-104 stub OleGetAutoConvert
+104 stdcall OleGetAutoConvert(ptr ptr) OleGetAutoConvert
 105 stdcall OleGetClipboard(ptr) OleGetClipboard
 106 stdcall OleGetIconOfClass(ptr ptr long) OleGetIconOfClass
 107 stub OleGetIconOfFile

@@ -1941,3 +1941,25 @@ BOOL WINAPI COMPOBJ_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD
         }
         return TRUE;
 }
+
+/******************************************************************************
+ *              OleGetAutoConvert        [OLE32.104]
+ */
+HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
+{
+  HKEY	hkey;
+  char	buf[200];
+  WCHAR	wbuf[200];
+  DWORD	len;
+
+  sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
+  if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+      return REGDB_E_CLASSNOTREG;
+  len = 200;
+  if (RegQueryValueA(hkey,"AutoConvertTo",buf,&len))
+      return REGDB_E_KEYMISSING;
+  RegCloseKey(hkey);
+  lstrcpyAtoW(wbuf,buf);
+  CLSIDFromString(wbuf,pClsidNew);
+  return S_OK;
+}
