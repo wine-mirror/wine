@@ -83,6 +83,8 @@ extern struct region *subtract_region( struct region *dst, const struct region *
                                        const struct region *src2 );
 extern struct region *union_region( struct region *dst, const struct region *src1,
                                     const struct region *src2 );
+extern struct region *xor_region( struct region *dst, const struct region *src1,
+                                  const struct region *src2 );
 extern int point_in_region( struct region *region, int x, int y );
 extern int rect_in_region( struct region *region, const rectangle_t *rect );
 static inline struct region *create_empty_region(void) { return create_region( NULL, 0 ); }

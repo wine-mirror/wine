@@ -76,6 +76,7 @@ SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include "request.h"
+#include "user.h"
 
 struct region
 {
@@ -759,6 +760,23 @@ struct region *union_region( struct region *dst, const struct region *src1,
     return dst;
 }
 
+/* compute the exclusive or of two regions into dst, which can be one of the source regions */
+struct region *xor_region( struct region *dst, const struct region *src1,
+                           const struct region *src2 )
+{
+    struct region *tmp = create_empty_region();
+
+    if (!tmp) return NULL;
+
+    if (!subtract_region( tmp, src1, src2 ) ||
+        !subtract_region( dst, src2, src1 ) ||
+        !union_region( dst, dst, tmp ))
+        dst = NULL;
+
+    free_region( tmp );
+    return dst;
+}
+
 /* check if the given point is inside the region */
 int point_in_region( struct region *region, int x, int y )
 {
@@ -783,10 +801,9 @@ int rect_in_region( struct region *region, const rectangle_t *rect )
 
     for (ptr = region->rects, end = region->rects + region->num_rects; ptr < end; ptr++)
     {
-        if (ptr->top > rect->bottom) return 0;
+        if (ptr->top >= rect->bottom) return 0;
         if (ptr->bottom <= rect->top) continue;
-        /* now we are in the correct band */
-        if (ptr->left > rect->right) return 0;
+        if (ptr->left >= rect->right) continue;
         if (ptr->right <= rect->left) continue;
         return 1;
     }
