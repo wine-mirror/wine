@@ -6023,7 +6023,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_Notify (hwnd, wParam, lParam);
 
 	case WM_NOTIFYFORMAT:
-	    TOOLBAR_NotifyFormatFake (hwnd, wParam, lParam);
+	    return TOOLBAR_NotifyFormatFake (hwnd, wParam, lParam);
 
 	case WM_PAINT:
 	    return TOOLBAR_Paint (hwnd, wParam);
