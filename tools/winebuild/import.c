@@ -440,6 +440,7 @@ static int output_immediate_imports( FILE *outfile )
 #endif
             fprintf( outfile, "\"\n" );
         }
+        pos += 4;
     }
     fprintf( outfile, "\".previous\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
 
