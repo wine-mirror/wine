@@ -41,6 +41,34 @@ typedef struct
 
 #endif  /* linux */
 
+#ifdef BSDI
+
+#define EAX_sig(context)     ((context)->tf_eax)
+#define EBX_sig(context)     ((context)->tf_ebx)
+#define ECX_sig(context)     ((context)->tf_ecx)
+#define EDX_sig(context)     ((context)->tf_edx)
+#define ESI_sig(context)     ((context)->tf_esi)
+#define EDI_sig(context)     ((context)->tf_edi)
+#define EBP_sig(context)     ((context)->tf_ebp)
+                            
+#define CS_sig(context)      ((context)->tf_cs)
+#define DS_sig(context)      ((context)->tf_ds)
+#define ES_sig(context)      ((context)->tf_es)
+#define SS_sig(context)      ((context)->tf_ss)
+
+#include <machine/frame.h>
+typedef struct trapframe SIGCONTEXT;
+
+#define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
+#define HANDLER_CONTEXT context
+
+#define EFL_sig(context)     ((context)->tf_eflags)
+
+#define EIP_sig(context)     (*((unsigned long*)&(context)->tf_eip))
+#define ESP_sig(context)     (*((unsigned long*)&(context)->tf_esp))
+
+#endif /* bsdi */
+
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 
 #include <signal.h>
