@@ -20,8 +20,8 @@
 @ stdcall BackupEventLogW (long wstr)
 @ stub BuildExplicitAccessWithNameA
 @ stub BuildExplicitAccessWithNameW
-@ stub BuildTrusteeWithNameA # (ptr str)
-@ stub BuildTrusteeWithNameW # (ptr wstr)
+@ stdcall BuildTrusteeWithNameA(ptr str)
+@ stdcall BuildTrusteeWithNameW(ptr wstr)
 @ stub BuildTrusteeWithObjectsAndNameA # (ptr ptr long str str str)
 @ stub BuildTrusteeWithObjectsAndNameW # (ptr ptr long wstr wstr wstr)
 @ stub BuildTrusteeWithObjectsAndSidA # (ptr ptr ptr ptr ptr)

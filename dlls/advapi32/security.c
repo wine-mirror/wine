@@ -1519,8 +1519,7 @@ VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid)
 
     pTrustee->pMultipleTrustee = NULL;
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
-    pTrustee->TrusteeForm = NO_MULTIPLE_TRUSTEE;
-    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->TrusteeForm = TRUSTEE_IS_SID;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
     pTrustee->ptstrName = (LPSTR) pSid;
 }
@@ -1534,10 +1533,37 @@ VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid)
 
     pTrustee->pMultipleTrustee = NULL;
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
-    pTrustee->TrusteeForm = NO_MULTIPLE_TRUSTEE;
-    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->TrusteeForm = TRUSTEE_IS_SID;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
     pTrustee->ptstrName = (LPWSTR) pSid;
+}
+
+/******************************************************************************
+ * BuildTrusteeWithNameA [ADVAPI32.@]
+ */
+VOID WINAPI BuildTrusteeWithNameA(PTRUSTEEA pTrustee, LPSTR name)
+{
+    TRACE("%p %s\n", pTrustee, debugstr_a(name) );
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = TRUSTEE_IS_NAME;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = name;
+}
+
+/******************************************************************************
+ * BuildTrusteeWithNameW [ADVAPI32.@]
+ */
+VOID WINAPI BuildTrusteeWithNameW(PTRUSTEEW pTrustee, LPWSTR name)
+{
+    TRACE("%p %s\n", pTrustee, debugstr_w(name) );
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = TRUSTEE_IS_NAME;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = name;
 }
 
 /******************************************************************************

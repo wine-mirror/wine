@@ -62,6 +62,7 @@ void test_trustee()
     TRUSTEE trustee;
     PSID psid;
     DWORD r;
+    LPSTR str = "2jjj";
 
     SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
 
@@ -78,8 +79,19 @@ void test_trustee()
     ok( trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
     ok( trustee.ptstrName == (LPSTR) psid, "ptstrName wrong\n" );
     FreeSid( psid );
-}
 
+    /* test BuildTrusteeWithNameA */
+    memset( &trustee, 0xff, sizeof trustee );
+    BuildTrusteeWithNameA( &trustee, str );
+
+    ok( trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
+    ok( trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, 
+        "MultipleTrusteeOperation wrong\n");
+    ok( trustee.TrusteeForm == TRUSTEE_IS_NAME, "TrusteeForm wrong\n");
+    ok( trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
+    ok( trustee.ptstrName == str, "ptstrName wrong\n" );
+}
+ 
 START_TEST(security)
 {
     test_sid();
