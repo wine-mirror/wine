@@ -65,6 +65,50 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
 
 
 /***********************************************************************
+ *           RtlpWaitForCriticalSection   (NTDLL.@)
+ */
+void WINAPI RtlpWaitForCriticalSection( CRITICAL_SECTION *crit )
+{
+    for (;;)
+    {
+        EXCEPTION_RECORD rec;
+        HANDLE sem = get_semaphore( crit );
+
+        DWORD res = WaitForSingleObject( sem, 5000L );
+        if ( res == WAIT_TIMEOUT )
+        {
+            ERR("Critical section %p wait timed out, retrying (60 sec)\n", crit );
+            res = WaitForSingleObject( sem, 60000L );
+            if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
+            {
+                ERR("Critical section %p wait timed out, retrying (5 min)\n", crit );
+                res = WaitForSingleObject( sem, 300000L );
+            }
+        }
+        if (res == STATUS_WAIT_0) break;
+
+        rec.ExceptionCode    = EXCEPTION_CRITICAL_SECTION_WAIT;
+        rec.ExceptionFlags   = 0;
+        rec.ExceptionRecord  = NULL;
+        rec.ExceptionAddress = RtlRaiseException;  /* sic */
+        rec.NumberParameters = 1;
+        rec.ExceptionInformation[0] = (DWORD)crit;
+        RtlRaiseException( &rec );
+    }
+}
+
+
+/***********************************************************************
+ *           RtlpUnWaitCriticalSection   (NTDLL.@)
+ */
+void WINAPI RtlpUnWaitCriticalSection( CRITICAL_SECTION *crit )
+{
+    HANDLE sem = get_semaphore( crit );
+    ReleaseSemaphore( sem, 1, NULL );
+}
+
+
+/***********************************************************************
  *           EnterCriticalSection   (KERNEL32.195) (NTDLL.344)
  */
 void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
@@ -78,32 +122,7 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
         }
 
         /* Now wait for it */
-        for (;;)
-        {
-            EXCEPTION_RECORD rec;
-            HANDLE sem = get_semaphore( crit );
-
-            DWORD res = WaitForSingleObject( sem, 5000L );
-            if ( res == WAIT_TIMEOUT )
-            {
-                ERR("Critical section %p wait timed out, retrying (60 sec)\n", crit );
-                res = WaitForSingleObject( sem, 60000L );
-                if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
-                {
-                    ERR("Critical section %p wait timed out, retrying (5 min)\n", crit );
-                    res = WaitForSingleObject( sem, 300000L );
-                }
-            }
-            if (res == STATUS_WAIT_0) break;
-
-            rec.ExceptionCode    = EXCEPTION_CRITICAL_SECTION_WAIT;
-            rec.ExceptionFlags   = 0;
-            rec.ExceptionRecord  = NULL;
-            rec.ExceptionAddress = RtlRaiseException;  /* sic */
-            rec.NumberParameters = 1;
-            rec.ExceptionInformation[0] = (DWORD)crit;
-            RtlRaiseException( &rec );
-        }
+        RtlpWaitForCriticalSection( crit );
     }
     crit->OwningThread   = GetCurrentThreadId();
     crit->RecursionCount = 1;
@@ -149,8 +168,7 @@ void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
     if (InterlockedDecrement( &crit->LockCount ) >= 0)
     {
         /* Someone is waiting */
-        HANDLE sem = get_semaphore( crit );
-        ReleaseSemaphore( sem, 1, NULL );
+        RtlpUnWaitCriticalSection( crit );
     }
 }
 

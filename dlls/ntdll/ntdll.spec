@@ -550,8 +550,8 @@ type	win32
 @ stub RtlpNtOpenKey
 @ stub RtlpNtQueryValueKey
 @ stub RtlpNtSetValueKey
-@ stub RtlpUnWaitCriticalSection
-@ stub RtlpWaitForCriticalSection
+@ stdcall RtlpUnWaitCriticalSection(ptr) RtlpUnWaitCriticalSection
+@ stdcall RtlpWaitForCriticalSection(ptr) RtlpWaitForCriticalSection
 @ stdcall RtlxAnsiStringToUnicodeSize(ptr) RtlAnsiStringToUnicodeSize
 @ stdcall RtlxOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
 @ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
