@@ -433,7 +433,7 @@ typedef struct _DDCAPS
 
 
 /* Set/Get Colour Key Flags */
-#define DDCKEY_COLORSPACE  0x00000001  /* Struct is ingle colour space */
+#define DDCKEY_COLORSPACE  0x00000001  /* Struct is single colour space */
 #define DDCKEY_DESTBLT     0x00000002  /* To be used as dest for blt */
 #define DDCKEY_DESTOVERLAY 0x00000004  /* To be used as dest for CK overlays */
 #define DDCKEY_SRCBLT      0x00000008  /* To be used as src for blt */
