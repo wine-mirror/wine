@@ -230,14 +230,18 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 {
     BOOL ret = TRUE;
     DC *dc = DC_GetDCPtr( hdc );
+    ABORTPROC abproc;
 
     if(!dc) {
         ERR("Invalid hdc %04x\n", hdc);
 	return FALSE;
     }
 
-    if (dc->pAbortProc) ret = dc->pAbortProc(hdc, 0);
+    abproc = dc->pAbortProc;
     GDI_ReleaseObj( hdc );
+
+    if (abproc)
+	ret = abproc(hdc, 0);
     return ret;
 }
 
