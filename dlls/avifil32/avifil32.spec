@@ -44,7 +44,7 @@
 @ stdcall AVIStreamInfoA(ptr ptr long)
 @ stdcall AVIStreamInfoW(ptr ptr long)
 @ stdcall AVIStreamLength(ptr)
-@ stub    AVIStreamOpenFromFile
+@ stdcall AVIStreamOpenFromFile (ptr str long long long ptr) AVIStreamOpenFromFileA
 @ stdcall AVIStreamOpenFromFileA(ptr str long long long ptr)
 @ stdcall AVIStreamOpenFromFileW(ptr wstr long long long ptr)
 @ stdcall AVIStreamRead(ptr long long ptr long ptr ptr)
