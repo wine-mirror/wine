@@ -2,6 +2,7 @@
  * Program Manager
  *
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Andriy Palamarchuk
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -550,31 +551,43 @@ static BOOL CALLBACK DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 
 static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
 			  LPSTR lpstrFile, INT nMaxFile)
-{
-  OPENFILENAME openfilename;
 
-  /* FIXME is this correct ? */
-  openfilename.lStructSize       = 0;
-  openfilename.hwndOwner         = hDlg;
-  openfilename.hInstance         = Globals.hInstance;
-  openfilename.lpstrFilter       = (LPSTR)lpszzFilter;
-  openfilename.lpstrCustomFilter = 0;
-  openfilename.nMaxCustFilter    = 0;
-  openfilename.nFilterIndex      = 0;
-  openfilename.lpstrFile         = lpstrFile;
-  openfilename.nMaxFile          = nMaxFile;
-  openfilename.lpstrFileTitle    = 0;
-  openfilename.nMaxFileTitle     = 0;
-  openfilename.lpstrInitialDir   = 0;
-  openfilename.lpstrTitle        = 0;
-  openfilename.Flags             = 0;
-  openfilename.nFileOffset       = 0;
-  openfilename.nFileExtension    = 0;
-  openfilename.lpstrDefExt       = 0;
-  openfilename.lCustData         = 0;
-  openfilename.lpfnHook          = 0;
-  openfilename.lpTemplateName    = 0;
-  return GetOpenFileName(&openfilename);
+{
+    OPENFILENAME openfilename;
+
+    CHAR szPath[MAX_PATH];
+    CHAR szDir[MAX_PATH];
+    CHAR szDefaultExt[] = "exe";
+
+    ZeroMemory(&openfilename, sizeof(openfilename));
+
+    GetCurrentDirectory(sizeof(szDir), szDir);
+    lstrcpy(szPath,"*.exe");
+
+    /* FIXME is this correct ? */
+    openfilename.lStructSize       = sizeof(openfilename);
+    openfilename.hwndOwner         = Globals.hMainWnd;
+    openfilename.hInstance         = Globals.hInstance;
+    openfilename.lpstrFile         = szPath;
+    openfilename.nMaxFile          = sizeof(szPath);
+    openfilename.lpstrInitialDir   = szDir;
+    openfilename.Flags             = 0;
+    openfilename.lpstrDefExt       = szDefaultExt;
+    openfilename.lpstrCustomFilter = 0;
+    openfilename.nMaxCustFilter    = 0;
+    openfilename.nFilterIndex      = 0;
+    openfilename.lpstrFileTitle    = 0;
+    openfilename.nMaxFileTitle     = 0;
+    openfilename.lpstrInitialDir   = 0;
+    openfilename.lpstrTitle        = 0;
+    openfilename.nFileOffset       = 0;
+    openfilename.nFileExtension    = 0;
+    openfilename.lCustData         = 0;
+    openfilename.lpfnHook          = 0;
+    openfilename.lpTemplateName    = 0;
+
+    return GetOpenFileName(&openfilename);
+    /* FIXME */
 }
 
 /***********************************************************************
