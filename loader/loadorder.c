@@ -15,7 +15,6 @@
 #include "heap.h"
 #include "file.h"
 #include "module.h"
-#include "elfdll.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
@@ -175,7 +174,7 @@ static BOOL ParseLoadOrder(char *order, module_loadorder_t *mlo)
 
 		case 'E':	/* Elfdll */
 		case 'e':
-                    if (!warn++) MESSAGE("Load order 'elfdll' no longer support, ignored\n");
+                    if (!warn++) MESSAGE("Load order 'elfdll' no longer supported, ignored\n");
                     break;
 		case 'S':	/* So */
 		case 's': type = MODULE_LOADORDER_SO; break;
@@ -338,10 +337,6 @@ endit:
  *	[DllDefaults]
  *
  * Keys:
- *	EXTRA_LD_LIBRARY_PATH=/usr/local/lib/wine[:/more/path/to/search[:...]]
- * The path will be appended to any existing LD_LIBRARY_PATH from the 
- * environment (see note in code below).
- *
  *	DefaultLoadOrder=native,so,builtin
  * A comma separated list of module types to try to load in that specific
  * order. The DefaultLoadOrder key is used as a fallback when a module is
@@ -386,17 +381,6 @@ BOOL MODULE_InitLoadOrder(void)
 	int nbuffer;
         int idx;
         const struct tagDllPair *dllpair;
-
-#if defined(HAVE_DL_API)
-	/* Get/set the new LD_LIBRARY_PATH */
-	nbuffer = PROFILE_GetWineIniString("DllDefaults", "EXTRA_LD_LIBRARY_PATH", "", buffer, sizeof(buffer));
-
-	if(nbuffer)
-	{
-		extra_ld_library_path = HEAP_strdupA(GetProcessHeap(), 0, buffer);
-		TRACE("Setting extra LD_LIBRARY_PATH=%s\n", buffer);
-	}
-#endif
 
 	/* Get the default load order */
 	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,b,s", buffer, sizeof(buffer));

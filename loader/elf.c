@@ -23,7 +23,6 @@
 #include "module.h"
 #include "debugtools.h"
 #include "winerror.h"
-#include "elfdll.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);
 

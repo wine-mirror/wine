@@ -7,7 +7,6 @@ MODULE    = loader
 
 C_SRCS = \
 	elf.c \
-	elfdll.c \
 	loadorder.c \
 	main.c \
 	module.c \
