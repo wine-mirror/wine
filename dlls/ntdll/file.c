@@ -1078,7 +1078,10 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
                 {
                     if (info->FileAttributes & FILE_ATTRIBUTE_READONLY)
                     {
-                        st.st_mode &= ~0222; /* clear write permission bits */
+                        if (S_ISDIR( st.st_mode))
+                            WARN("FILE_ATTRIBUTE_READONLY ignored for directory.\n");
+                        else
+                            st.st_mode &= ~0222; /* clear write permission bits */
                     }
                     else
                     {
