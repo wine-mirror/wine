@@ -440,8 +440,15 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		if (lpParms->dwTrack > wmcda->wcda.nTracks || lpParms->dwTrack == 0)
 		    return MCIERR_OUTOFRANGE;
 		lpParms->dwReturn = wmcda->wcda.lpdwTrackLen[lpParms->dwTrack - 1];
+		/* Windows returns one frame less than the total track length for the
+		   last track on the CD.  See CDDB HOWTO.  Verified on Win95OSR2. */
+		if (lpParms->dwTrack == wmcda->wcda.nTracks)
+		    lpParms->dwReturn--;
 	    } else {
-		lpParms->dwReturn = wmcda->wcda.dwLastFrame;
+		/* Sum of the lengths of all of the tracks.  Inherits the
+		   'off by one frame' behavior from the length of the last track.
+		   See above comment. */
+		lpParms->dwReturn = wmcda->wcda.dwLastFrame - wmcda->wcda.dwFirstFrame - 1;
 	    }
 	    lpParms->dwReturn = MCICDA_CalcTime(wmcda, 
 						 (wmcda->dwTimeFormat == MCI_FORMAT_TMSF) 
