@@ -41,15 +41,13 @@ EXTRASUBDIRS = \
 
 CTESTS = \
 	tests/alloc.c \
+	tests/atom.c \
 	tests/directory.c \
 	tests/file.c \
 	tests/locale.c \
 	tests/path.c \
 	tests/process.c \
 	tests/thread.c
-
-PLTESTS = \
-	tests/atom.pl
 
 @MAKE_DLL_RULES@
 
