@@ -7003,6 +7003,9 @@ dlls/ddraw/ddraw \
 dlls/ddraw/direct3d \
 dlls/ddraw/dpalette \
 dlls/ddraw/dsurface \
+dlls/dinput/joystick \
+dlls/dinput/keyboard \
+dlls/dinput/mouse \
 dlls/kernel/messages \
 dlls/user/resources \
 "

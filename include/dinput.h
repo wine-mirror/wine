@@ -62,6 +62,7 @@ typedef struct IDirectInput2A IDirectInput2A,*LPDIRECTINPUT2A;
 typedef struct IDirectInput7A IDirectInput7A,*LPDIRECTINPUT7A;
 typedef struct IDirectInputDeviceA IDirectInputDeviceA,*LPDIRECTINPUTDEVICEA;
 typedef struct IDirectInputDevice2A IDirectInputDevice2A,*LPDIRECTINPUTDEVICE2A;
+typedef struct IDirectInputDevice7A IDirectInputDevice7A,*LPDIRECTINPUTDEVICE7A;
 typedef struct IDirectInputEffect IDirectInputEffect,*LPDIRECTINPUTEFFECT;
 typedef struct SysKeyboardA SysKeyboardA,*LPSYSKEYBOARDA;
 typedef struct SysMouseA SysMouseA,*LPSYSMOUSEA;
@@ -758,6 +759,18 @@ typedef struct DIJOYSTATE2 {
 #define DIJOFS_BUTTON30		DIJOFS_BUTTON(30)
 #define DIJOFS_BUTTON31		DIJOFS_BUTTON(31)
 
+/* DInput 7 structures, types */
+typedef struct DIFILEEFFECT {
+  DWORD       dwSize;
+  GUID        GuidEffect;
+  LPCDIEFFECT lpDiEffect;
+  CHAR        szFriendlyName[MAX_PATH];
+} DIFILEEFFECT, *LPDIFILEEFFECT;
+
+typedef const DIFILEEFFECT *LPCDIFILEEFFECT;                                            
+typedef BOOL CALLBACK (*LPDIENUMEFFECTSINFILECALLBACK)(LPCDIFILEEFFECT , LPVOID); 
+
+
 /*****************************************************************************
  * IDirectInputEffect interface
  */
@@ -894,6 +907,54 @@ ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
 #define IDirectInputDevice2_Escape(p,a)                       ICOM_CALL1(Escape,p,a)
 #define IDirectInputDevice2_Poll(p)                           ICOM_CALL (Poll,p)
 #define IDirectInputDevice2_SendDeviceData(p,a,b,c,d)         ICOM_CALL4(SendDeviceData,p,a,b,c,d)
+
+/*****************************************************************************
+ * IDirectInputDevice7A interface
+ */
+#define ICOM_INTERFACE IDirectInputDevice7A
+#define IDirectInputDevice7A_METHODS \
+    ICOM_METHOD4(HRESULT,EnumEffectsInFile,LPCSTR,lpszFileName,LPDIENUMEFFECTSINFILECALLBACK,pec,LPVOID,pvRef,DWORD,dwFlags) \
+    ICOM_METHOD4(HRESULT,WriteEffectToFile,LPCSTR,lpszFileName,DWORD,dwEntries,LPDIFILEEFFECT,rgDiFileEft,DWORD,dwFlags)
+#define IDirectInputDevice7A_IMETHODS \
+    IDirectInputDeviceA_IMETHODS \
+    IDirectInputDevice2A_METHODS \
+    IDirectInputDevice7A_METHODS
+ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectInputDevice7_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectInputDevice7_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectInputDevice7_Release(p)            ICOM_CALL (Release,p)
+/*** IDirectInputDevice methods ***/
+#define IDirectInputDevice7_GetCapabilities(p,a)       ICOM_CALL1(GetCapabilities,p,a)
+#define IDirectInputDevice7_EnumObjects(p,a,b,c)       ICOM_CALL3(EnumObjects,p,a,b,c)
+#define IDirectInputDevice7_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
+#define IDirectInputDevice7_SetProperty(p,a,b)         ICOM_CALL2(SetProperty,p,a,b)
+#define IDirectInputDevice7_Acquire(p)                 ICOM_CALL (Acquire,p)
+#define IDirectInputDevice7_Unacquire(p)               ICOM_CALL (Unacquire,p)
+#define IDirectInputDevice7_GetDeviceState(p,a,b)      ICOM_CALL2(GetDeviceState,p,a,b)
+#define IDirectInputDevice7_GetDeviceData(p,a,b,c,d)   ICOM_CALL4(GetDeviceData,p,a,b,c,d)
+#define IDirectInputDevice7_SetDataFormat(p,a)         ICOM_CALL1(SetDataFormat,p,a)
+#define IDirectInputDevice7_SetEventNotification(p,a)  ICOM_CALL1(SetEventNotification,p,a)
+#define IDirectInputDevice7_SetCooperativeLevel(p,a,b) ICOM_CALL2(SetCooperativeLevel,p,a,b)
+#define IDirectInputDevice7_GetObjectInfo(p,a,b,c)     ICOM_CALL3(GetObjectInfo,p,a,b,c)
+#define IDirectInputDevice7_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
+#define IDirectInputDevice7_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
+#define IDirectInputDevice7_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
+/*** IDirectInputDevice2 methods ***/
+#define IDirectInputDevice7_CreateEffect(p,a,b,c,d)           ICOM_CALL4(CreateEffect,p,a,b,c,d)
+#define IDirectInputDevice7_EnumEffects(p,a,b,c)              ICOM_CALL3(EnumEffects,p,a,b,c)
+#define IDirectInputDevice7_GetEffectInfo(p,a,b)              ICOM_CALL2(GetEffectInfo,p,a,b)
+#define IDirectInputDevice7_GetForceFeedbackState(p,a)        ICOM_CALL1(GetForceFeedbackState,p,a)
+#define IDirectInputDevice7_SendForceFeedbackCommand(p,a)     ICOM_CALL1(SendForceFeedbackCommand,p,a)
+#define IDirectInputDevice7_EnumCreatedEffectObjects(p,a,b,c) ICOM_CALL3(EnumCreatedEffectObjects,p,a,b,c)
+#define IDirectInputDevice7_Escape(p,a)                       ICOM_CALL1(Escape,p,a)
+#define IDirectInputDevice7_Poll(p)                           ICOM_CALL (Poll,p)
+#define IDirectInputDevice7_SendDeviceData(p,a,b,c,d)         ICOM_CALL4(SendDeviceData,p,a,b,c,d)
+/*** IDirectInputDevice7 methods ***/
+#define IDirectInputDevice7_EnumEffectsInFile(p,a,b,c,d) ICOM_CALL4(EnumEffectsInFile,p,a,b,c,d)
+#define IDirectInputDevice7_WriteEffectToFile(p,a,b,c,d) ICOM_CALL4(WriteEffectToFile,p,a,b,c,d)
 
 /* "Standard" Mouse report... */
 typedef struct DIMOUSESTATE {
