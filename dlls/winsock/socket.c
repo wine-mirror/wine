@@ -202,6 +202,23 @@ static int _px_tcp_ops[] = {
 	0
 };
 
+/* Permutation of 0..FD_MAX_EVENTS - 1 representing the order in which we post
+ * messages if there are multiple events.  Used in WINSOCK_DoAsyncEvent.  The
+ * problem is if there is both a FD_CONNECT event and, say, an FD_READ event
+ * available on the same socket, we want to notify the app of the connect event
+ * first.  Otherwise it may discard the read event because it thinks it hasn't
+ * connected yet.
+ */
+static const int event_bitorder[FD_MAX_EVENTS] = {
+    FD_CONNECT_BIT,
+    FD_ACCEPT_BIT,
+    FD_OOB_BIT,
+    FD_WRITE_BIT,
+    FD_READ_BIT,
+    FD_CLOSE_BIT,
+    6, 7, 8, 9  /* leftovers */
+};
+
 /* set last error code from NT status without mapping WSA errors */
 inline static unsigned int set_error( unsigned int err )
 {
@@ -908,7 +925,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
 	if (as)
 	{
 	    unsigned omask = _get_sock_mask( s );
-	    WS_getpeername(fd, addr, addrlen32);
+	    WS_getpeername(as, addr, addrlen32);
 	    if (omask & FD_WINE_SERVEVENT)
 		ws2_async_accept(s, as);
 	    return as;
@@ -2762,7 +2779,7 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 {
     ws_select_info *info = (ws_select_info*)ptr;
-    unsigned int i, pmask, orphan = FALSE;
+    unsigned int i, j, pmask, orphan = FALSE;
     int errors[FD_MAX_EVENTS];
 
     TRACE("socket %08x, event %08x\n", info->sock, info->event);
@@ -2800,13 +2817,17 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 	    }
 	pmask &= ~FD_WINE_SERVEVENT;
     }
-    /* dispatch network events */
-    for (i=0; i<FD_MAX_EVENTS; i++)
-	if (pmask & (1<<i)) {
-	    TRACE("post: event bit %d, error %d\n", i, errors[i]);
-	    PostMessageA(info->hWnd, info->uMsg, info->sock,
-			 WSAMAKESELECTREPLY(1<<i, errors[i]));
-	}
+    /* dispatch network events, but use the order in the event_bitorder
+     * array.
+     */
+    for (i=0; i<FD_MAX_EVENTS; i++) {
+        j = event_bitorder[i];
+        if (pmask & (1<<j)) {
+            TRACE("post: event bit %d, error %d\n", j, errors[j]);
+            PostMessageA(info->hWnd, info->uMsg, info->sock,
+                         WSAMAKESELECTREPLY(1<<j, errors[j]));
+        }
+    }
     /* cleanup */
     if (orphan)
     {
