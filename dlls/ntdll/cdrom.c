@@ -43,6 +43,9 @@
 #ifdef HAVE_SCSI_SG_H
 # include <scsi/sg.h>
 #endif
+#ifdef HAVE_SCSI_SCSI_IOCTL_H
+# include <scsi/scsi_ioctl.h>
+#endif
 #ifdef HAVE_LINUX_MAJOR_H
 # include <linux/major.h>
 #endif
@@ -351,8 +354,8 @@ static void CDROM_ClearCacheEntry(int dev)
  *
  * Determines the ide interface (the number after the ide), and the
  * number of the device on that interface for ide cdroms (*port == 0).
- * Determines the scsi information for scsi cdroms (*port == 1).
- * Returns false if the info could not be get
+ * Determines the scsi information for scsi cdroms (*port >= 1).
+ * Returns false if the info cannot not be obtained.
  *
  * NOTE: this function is used in CDROM_InitRegistry and CDROM_GetAddress
  */
@@ -361,17 +364,13 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
 #if defined(linux)
     {
         struct stat st;
-#ifdef SG_EMULATED_HOST
-        if (ioctl(fd, SG_EMULATED_HOST) != -1) {
-            FIXME("not implemented for true scsi drives\n");
-            return 0;
-        }
-#endif
         if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode)) {
             FIXME("cdrom not a block device!!!\n");
             return 0;
         }
         *port = 0;
+        *iface = 0;
+        *device = 0;
         *lun = 0;
         switch (major(st.st_rdev)) {
             case IDE0_MAJOR: *iface = 0; break;
@@ -382,12 +381,30 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
             case IDE5_MAJOR: *iface = 5; break;
             case IDE6_MAJOR: *iface = 6; break;
             case IDE7_MAJOR: *iface = 7; break;
-            case SCSI_CDROM_MAJOR: *iface = 11; break;
-            default:
-                FIXME("CD-ROM device with major ID %d not supported\n", major(st.st_rdev));
-                break;
+            default: *port = 1; break;
         }
-        *device = (minor(st.st_rdev) == 63 ? 1 : 0);
+
+        if (*port == 0)
+                *device = (minor(st.st_rdev) >> 6);
+        else
+        {
+#ifdef SCSI_IOCTL_GET_IDLUN
+                UINT32 idlun[2];
+                if (ioctl(fd, SCSI_IOCTL_GET_IDLUN, &idlun) != -1)
+                {
+                        *port = ((idlun[0] >> 24) & 0xff) + 1;
+                        *iface = (idlun[0] >> 16) & 0xff;
+                        *device = idlun[0] & 0xff;
+                        *lun = (idlun[0] >> 8) & 0xff;
+                }
+                else
+#endif
+                {
+                        FIXME("CD-ROM device (%d, %d) not supported\n",
+                              major(st.st_rdev), minor(st.st_rdev));
+                        return 0;
+                }
+        }
         return 1;
     }
 #elif defined(__NetBSD__)
