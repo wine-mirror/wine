@@ -211,14 +211,18 @@ static HRESULT WINAPI AVISplitter_QueryInterface(IBaseFilter * iface, REFIID rii
 static ULONG WINAPI AVISplitter_AddRef(IBaseFilter * iface)
 {
     AVISplitter *This = (AVISplitter *)iface;
-    TRACE("()\n");
+
+    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
+
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI AVISplitter_Release(IBaseFilter * iface)
 {
     AVISplitter *This = (AVISplitter *)iface;
-    TRACE("()\n");
+
+    TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
+    
     if (!InterlockedDecrement(&This->refCount))
     {
         ULONG i;

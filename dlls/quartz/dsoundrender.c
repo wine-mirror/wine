@@ -358,14 +358,18 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
 static ULONG WINAPI DSoundRender_AddRef(IBaseFilter * iface)
 {
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
-    TRACE("(%p/%p)->()\n", This, iface);
+
+    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
+
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 {
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
-    TRACE("(%p/%p)->()\n", This, iface);
+
+    TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
+
     if (!InterlockedDecrement(&This->refCount))
     {
         DeleteCriticalSection(&This->csFilter);

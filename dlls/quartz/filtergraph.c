@@ -1030,7 +1030,7 @@ error:
     IGraphBuilder_RemoveFilter(iface, preader);
     IBaseFilter_Release(preader);
        
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI Graphbuilder_SetLogFile(IGraphBuilder *iface,

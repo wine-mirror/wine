@@ -283,7 +283,7 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
     if (SUCCEEDED(hr) && !bFound)
     {
         ERR("Media class not found\n");
-        hr = S_FALSE;
+        hr = E_FAIL;
     }
     else if (bFound)
         TRACE("Found file's class: major = %s, subtype = %s\n", qzdebugstr_guid(majorType), qzdebugstr_guid(minorType));
@@ -358,7 +358,7 @@ static ULONG WINAPI AsyncReader_AddRef(IBaseFilter * iface)
 {
     AsyncReader *This = (AsyncReader *)iface;
     
-    TRACE("()\n");
+    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
     
     return InterlockedIncrement(&This->refCount);
 }
@@ -367,7 +367,7 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
 {
     AsyncReader *This = (AsyncReader *)iface;
     
-    TRACE("()\n");
+    TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
     
     if (!InterlockedDecrement(&This->refCount))
     {

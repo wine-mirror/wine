@@ -222,21 +222,22 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
                         *(ptr + i*psz + 3 + j * sdesc.u1.lPitch) = 0xFF;
                 }
         }
-	else if (format->bmiHeader.biBitCount == 32)
+	else if ((format->bmiHeader.biBitCount == 24) || (format->bmiHeader.biBitCount == 32))
 	{
-            int psz = sdesc.ddpfPixelFormat.u1.dwRGBBitCount == 32 ? 4 : 3;
+            int dpsz = sdesc.ddpfPixelFormat.u1.dwRGBBitCount == 32 ? 4 : 3;
+            int spsz = format->bmiHeader.biBitCount == 32 ? 4 : 3;
             for (j = 0; j < height; j++)
                 for (i = 0; i < width; i++)
                 {
-                    *(ptr + i*psz + 0 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*4 + 0);
-                    *(ptr + i*psz + 1 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*4 + 1);
-                    *(ptr + i*psz + 2 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*4 + 2);
-		    if (psz == 4)
-                        *(ptr + i*psz + 3 + j * sdesc.u1.lPitch) = 0xFF;
+                    *(ptr + i*dpsz + 0 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*spsz + 0);
+                    *(ptr + i*dpsz + 1 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*spsz + 1);
+                    *(ptr + i*dpsz + 2 + j * sdesc.u1.lPitch) = *(data + (i + 0 + (height-1-j) * width)*spsz + 2);
+		    if (dpsz == 4)
+                        *(ptr + i*dpsz + 3 + j * sdesc.u1.lPitch) = 0xFF;
                 }
 	}
 	else
-            FIXME("Source size with a depths other than paletted 8 or 32 bits are not yet supported\n");
+            FIXME("Source size with a depths other than 8 (paletted), 24 or 32 bits are not yet supported\n");
     }
     else
         FIXME("Destination depths with a depth other than 24 or 32 bits are not yet supported\n");     
@@ -403,14 +404,18 @@ static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID r
 static ULONG WINAPI VideoRenderer_AddRef(IBaseFilter * iface)
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
+
     TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, This->refCount);
+
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
+
     TRACE("(%p/%p)->() Release from %ld\n", This, iface, This->refCount);
+
     if (!InterlockedDecrement(&This->refCount))
     {
         DeleteCriticalSection(&This->csFilter);

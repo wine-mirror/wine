@@ -1134,6 +1134,8 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
     REFERENCE_TIME rtCurrent;
     ALLOCATOR_PROPERTIES allocProps;
 
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    
     SetEvent(This->hEventStateChanged);
 
     hr = IMemAllocator_GetProperties(This->pAlloc, &allocProps);
@@ -1174,6 +1176,8 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
         if (pSample)
             IMediaSample_Release(pSample);
     }
+
+    CoUninitialize();
 }
 
 static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
