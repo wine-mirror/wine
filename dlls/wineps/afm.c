@@ -163,7 +163,9 @@ static void PSDRV_DumpFontList(void)
         TRACE("Family '%s'\n", family->FamilyName);
 	for(afmle = family->afmlist; afmle; afmle = afmle->next)
 	{
+#if 0
 	    INT i;
+#endif
 
 	    TRACE("\tFontName '%s' (%i glyphs) - '%s' encoding:\n",
 	    	    afmle->afm->FontName, afmle->afm->NumofMetrics,
@@ -173,11 +175,13 @@ static void PSDRV_DumpFontList(void)
 
 	    /* PSDRV_AFM2C(afmle->afm); */
 
+#if 0
 	    for (i = 0; i < afmle->afm->NumofMetrics; ++i)
 	    {
 	    	TRACE("\t\tU+%.4lX; C %i; N '%s'\n", afmle->afm->Metrics[i].UV,
 		    	afmle->afm->Metrics[i].C, afmle->afm->Metrics[i].N->sz);
 	    }
+#endif
 	}
     }
     return;

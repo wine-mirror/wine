@@ -124,9 +124,10 @@ inline static INT GlyphListInsert(LPCSTR szName, INT index)
     ++glyphListSize;
     glyphNamesIndexed = FALSE;
 
+#if 0
     TRACE("Added '%s' at glyphList[%i] (glyphListSize now %i)\n",
 	    glyphList[index]->sz, index, glyphListSize);
-
+#endif
     return index;
 }
 
@@ -153,8 +154,10 @@ static INT GlyphListSearch(LPCSTR szName, INT loIndex, INT hiIndex)
 
 	if (cmpResult == 0)
 	{
+#if 0
 	    TRACE("Found '%s' at glyphList[%i]\n", glyphList[midIndex]->sz,
 		    midIndex);
+#endif
 	    return midIndex;
 	}
 
@@ -175,8 +178,6 @@ static INT GlyphListSearch(LPCSTR szName, INT loIndex, INT hiIndex)
 const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
 {
     INT index;
-
-    TRACE("'%s'\n", szName);
 
     index = GlyphListSearch(szName, 0, glyphListSize - 1);
     if (index < 0)
@@ -203,7 +204,9 @@ VOID PSDRV_IndexGlyphList()
     for (i = 0; i < glyphListSize; ++i)
     {
     	glyphList[i]->index = i;
+#if 0
 	TRACE("  glyphList[%i] -> '%s'\n", i, glyphList[i]->sz);
+#endif
     }
 
     glyphNamesIndexed = TRUE;
