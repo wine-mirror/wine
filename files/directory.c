@@ -70,7 +70,8 @@ int DIR_Init(void)
     cwd = path;
     if ((drive = DRIVE_FindDriveRoot( &cwd )) == -1)
     {
-        MSG("Warning: could not find DOS drive for cwd %s; "
+        MSG("Warning: could not find wine.conf [Drive x] entry "
+            "for current working directory %s; "
 	    "starting in windows directory.\n", cwd );
     }
     else
