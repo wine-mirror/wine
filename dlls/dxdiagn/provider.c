@@ -59,11 +59,39 @@ ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
 
 /* IDxDiagProvider Interface follow: */
 HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT_PARAMS* pParams) {
-  return S_OK;
+    ICOM_THIS(IDxDiagProviderImpl, iface);
+    TRACE("(%p,%p)\n", iface, pParams);
+
+    if (NULL == pParams) {
+      return E_POINTER;
+    }
+    if (pParams->dwSize != sizeof(DXDIAG_INIT_PARAMS)) {
+      return E_INVALIDARG;
+    }
+
+    This->init = TRUE;
+    memcpy(&This->params, pParams, pParams->dwSize);
+    return S_OK;
 }
 
 HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance) {
-  return S_OK;
+  HRESULT hr = S_OK;
+  ICOM_THIS(IDxDiagProviderImpl, iface);
+  TRACE("(%p,%p)\n", iface, ppInstance);
+
+  if (NULL == ppInstance) {
+    return E_INVALIDARG;
+  }
+  if (FALSE == This->init) {
+    return E_INVALIDARG; /* should be E_CO_UNINITIALIZED */
+  }
+  if (NULL == This->pRootContainer) {
+    hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &This->pRootContainer);
+    if (FAILED(hr)) {
+      return hr;
+    }
+  }
+  return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)This->pRootContainer, &IID_IDxDiagContainer, (void**) ppInstance);
 }
 
 ICOM_VTABLE(IDxDiagProvider) DxDiagProvider_Vtbl =

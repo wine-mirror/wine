@@ -31,12 +31,12 @@ extern "C" {
 #define DXDIAG_DX9_SDK_VERSION 111
 
 #define _FACDXDIAG  0x007
-#define MAKE_DXDIAGHRESULT( code )  MAKE_HRESULT( 1, _FACDDXDIAG, code )
+#define MAKE_DXDIAGHRESULT( code )  MAKE_HRESULT( 1, _FACDXDIAG, code )
 
 /*
  * DXDiag Errors
  */
-#define DXDIAG_E_INSUFFICIENT_BUFFER       MAKE_DXDIAGHRESULT(007A)
+#define DXDIAG_E_INSUFFICIENT_BUFFER       MAKE_DXDIAGHRESULT(0x007A)
 
 
 /*****************************************************************************
