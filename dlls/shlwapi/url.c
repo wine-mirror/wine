@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "windef.h"
+#include "winnls.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/unicode.h"
@@ -211,6 +212,131 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 	TRACE("result %s\n", debugstr_w(pszCanonicalized));
 
     return hr;
+}
+
+/*************************************************************************
+ *        UrlCombineA     [SHLWAPI.@]
+ */
+HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
+			   LPSTR pszCombined, LPDWORD pcchCombined,
+			   DWORD dwFlags)
+{
+    FIXME("(base %s, Relative %s, Combine size %ld, flags %08lx):stub\n",
+	  debugstr_a(pszBase),debugstr_a(pszRelative),
+	  *pcchCombined,dwFlags);
+    return E_INVALIDARG;
+}
+
+/*************************************************************************
+ *        Helper for UrlCombineW
+ */
+DWORD URL_LocateSchemeW(LPCWSTR p)
+{
+    DWORD len = 0;
+
+    while (*p) {
+	if (*p == L':') break;
+	if (!((get_char_typeW(*p) & (C1_ALPHA|C1_DIGIT)) != 0) && !(*p == L'-')) {
+
+	    len = -1;
+	    break;
+	}
+	p++;
+	len++;
+    }
+    return len;
+}
+
+/*************************************************************************
+ *        UrlCombineW     [SHLWAPI.@]
+ */
+HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
+			   LPWSTR pszCombined, LPDWORD pcchCombined,
+			   DWORD dwFlags)
+{
+    DWORD s1len, s2len, len, len2;
+    LPWSTR p1;
+
+    TRACE("(base %s, Relative %s, Combine size %ld, flags %08lx)\n",
+	  debugstr_w(pszBase),debugstr_w(pszRelative),
+	  *pcchCombined,dwFlags);
+
+    s1len = URL_LocateSchemeW(pszBase);
+    s2len = URL_LocateSchemeW(pszRelative);
+
+    if ((s1len == s2len) && (strncmpiW(pszBase, pszRelative, s1len) == 0)) {
+	/* same protocol, see if can combine */
+
+	/* first copy the base without the document (if it exists) */
+	len = strlenW(pszBase);
+	p1 = strrchrW(pszBase, L'/');
+	if (p1) {
+	    len = p1 - pszBase + 1;
+	}
+	if (len+1 > *pcchCombined) {
+	    *pcchCombined = len;
+	    return E_POINTER;
+	} 
+	strncpyW(pszCombined, pszBase, len);
+	*(pszCombined+len) = L'\0';
+
+	/* second locate the document in the relative */
+	len2 = strlenW(pszRelative);
+	p1 = strrchrW(pszRelative, L'/');
+	if (p1) {
+	    p1++;
+	    len2 -= p1 - pszRelative;
+	}
+	else
+	    p1 = (LPWSTR)pszRelative;
+	if (len2+len+1 > *pcchCombined) {
+	    *pcchCombined = len2 + len;
+	    return E_POINTER;
+	} 
+	strcatW(pszCombined, p1);
+	*pcchCombined = len2 + len;
+	TRACE("return-1 len=%ld, %s\n",
+	      *pcchCombined, debugstr_w(pszCombined));
+	return S_OK;
+    }
+
+    if ((s1len > 0) && (strlenW(pszRelative) == 0)) {
+	/* remove "document" from base */
+	len = strlenW(pszBase);
+	p1 = strrchrW(pszBase, L'/');
+	if (p1) {
+	    len = p1 - pszBase + 1;
+	}
+	if (len+1 > *pcchCombined) {
+	    *pcchCombined = len;
+	    return E_POINTER;
+	} 
+	strncpyW(pszCombined, pszBase, len);
+	*(pszCombined+len) = L'\0';
+	*pcchCombined = len;
+	TRACE("return-2 len=%ld, %s\n",
+	      *pcchCombined, debugstr_w(pszCombined));
+	return S_OK;
+    }
+
+    if (s2len > 0) {
+	/* pszRelative is a protocol itself so return it only */
+	len = strlenW(pszRelative);
+	if (len+1 > *pcchCombined) {
+	    *pcchCombined = len;
+	    return E_POINTER;
+	} 
+	strcpyW(pszCombined, pszRelative);
+	*pcchCombined = len;
+	TRACE("return-3 len=%ld, %s\n",
+	      *pcchCombined, debugstr_w(pszCombined));
+	return S_OK;
+    }
+    FIXME("(base %s, Relative %s, Combine size %ld, flags %08lx) unknown case\n",
+	  debugstr_w(pszBase),debugstr_w(pszRelative),
+	  *pcchCombined,dwFlags);
+    FIXME("     s1len=%ld, s2len=%ld\n", s1len, s2len);
+    return E_INVALIDARG;
 }
 
 /*************************************************************************
