@@ -19,6 +19,16 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * Maintenance Information
+ * -----------------------
+ *
+ * For documentation on the stabs format see for example
+ *   The "stabs" debug format
+ *     by Julia Menapace, Jim Kingdon, David Mackenzie
+ *     of Cygnus Support
+ *     available (hopefully) from http:\\sources.redhat.com\gdb\onlinedocs
  */
 
 #include "config.h"
@@ -357,6 +367,10 @@ static inline int DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct d
 	/* agg_name : type ',' <int:offset> ',' <int:size> */
 	idx = ptd->idx;
 	if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
+        /* Ref. TSDF R2.130 Section 7.4.  When the field name is a method name
+         * it is followed by two colons rather than one.
+         */
+        if (*ptd->ptr == ':') ptd->ptr++;
 
 	if (DEBUG_PTS_ReadTypedef(ptd, NULL, &adt) == -1) return -1;
 	if (!adt) return -1;
@@ -648,6 +662,9 @@ DEBUG_ParseStabType(const char * stab)
    * Look through the stab definition, and figure out what datatype
    * this represents.  If we have something we know about, assign the
    * type.
+   * According to "The \"stabs\" debug format" (Rev 2.130) the name may be
+   * a C++ name and contain double colons e.g. foo::bar::baz:t5=*6.  Not
+   * yet implemented.
    */
   c = strchr(stab, ':');
   if( c == NULL )
@@ -655,10 +672,12 @@ DEBUG_ParseStabType(const char * stab)
 
   c++;
   /*
-   * The next character says more about the type (i.e. data, function, etc)
-   * of symbol.  Skip it.
+   * The next characters say more about the type (i.e. data, function, etc)
+   * of symbol.  Skip them.  (C++ for example may have Tt).
+   * Actually this is a very weak description; I think Tt is the only
+   * multiple combination we should see.
    */
-  if (*c != '(')
+  while (*c && *c != '(' && !isdigit(*c))
     c++;
   /*
    * The next is either an integer or a (integer,integer).
@@ -1326,6 +1345,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename,
    if (filename == NULL) return DIL_ERROR;
    if (DEBUG_FindModuleByName(filename, DMT_ELF)) return DIL_LOADED;
 
+   if (strstr (filename, "libstdc++")) return DIL_ERROR; /* We know we can't do it */
    dil = DEBUG_ProcessElfFile(filename, load_offset, dyn_addr);
 
    /* if relative pathname, try some absolute base dirs */
