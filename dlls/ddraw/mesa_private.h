@@ -84,10 +84,6 @@ typedef struct render_state {
     BOOLEAN fog_on;
 } RenderState;
 
-/* Common functions defined in d3dcommon.c */
-void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
-		      DWORD dwRenderState, RenderState *rs) ;
-
 typedef struct IDirect3DGLImpl
 {
     struct IDirect3DImpl parent;
@@ -160,6 +156,15 @@ extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, I
 extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context) ;
 extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
+
+/* Common functions defined in d3dcommon.c */
+void set_render_state(IDirect3DDeviceGLImpl* This,
+		      D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState);
+void store_render_state(D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState,
+		        STATEBLOCK* lpStateBlock);
+void get_render_state(D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState,
+		      STATEBLOCK* lpStateBlock);
+void apply_render_state(IDirect3DDeviceGLImpl* This, STATEBLOCK* lpStateBlock);
 
 /* This structure contains all the function pointers to OpenGL extensions
    that are used by Wine */

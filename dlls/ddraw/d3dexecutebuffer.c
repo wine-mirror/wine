@@ -460,7 +460,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 		    
 		    /* Handle the state transform */
-		    set_render_state(ci->u1.drstRenderStateType, ci->u2.dwArg[0], &(lpDeviceGL->render_state));
+		    set_render_state(lpDeviceGL, ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
 
 		    instr += size;
 		}

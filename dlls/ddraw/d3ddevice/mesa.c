@@ -531,7 +531,23 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetRenderState(LPDIRECT3DDEVICE7 iface,
     TRACE("(%p/%p)->(%08x,%08lx)\n", This, iface, dwRenderStateType, dwRenderState);
 
     /* Call the render state functions */
-    set_render_state(dwRenderStateType, dwRenderState, &(glThis->render_state));
+    set_render_state(glThis, dwRenderStateType, dwRenderState);
+    store_render_state(dwRenderStateType, dwRenderState, &glThis->parent.state_block);
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_2T_GetRenderState(LPDIRECT3DDEVICE7 iface,
+					      D3DRENDERSTATETYPE dwRenderStateType,
+					      LPDWORD lpdwRenderState)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dwRenderStateType, lpdwRenderState);
+
+    /* Call the render state functions */
+    get_render_state(dwRenderStateType, lpdwRenderState, &glThis->parent.state_block);
 
     return DD_OK;
 }
@@ -561,7 +577,7 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 
 	case D3DLIGHTSTATE_AMBIENT:     /* 2 */
 	    /* Call the render_state function... */
-	    set_render_state(D3DRENDERSTATE_AMBIENT, dwLightState, &(glThis->render_state));
+	    set_render_state(glThis, D3DRENDERSTATE_AMBIENT, dwLightState);
 	    break;
 
 #define UNSUP(x) case D3DLIGHTSTATE_##x: FIXME("unsupported D3DLIGHTSTATE_" #x "!\n");break;
@@ -578,6 +594,8 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 	    return DDERR_INVALIDPARAMS;
     }
 
+    This->state_block.light_state[dwLightStateType] = dwLightState;
+    
     return DD_OK;
 }
 
@@ -1358,6 +1376,8 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	default:
 	    if (TRACE_ON(ddraw)) DPRINTF(" unhandled.\n");
     }
+   
+    This->state_block.texture_stage_state[dwStage][d3dTexStageStateType-1] = dwState;
     
     return DD_OK;
 }
@@ -1590,7 +1610,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(SetLight) GL_IDirect3DDeviceImpl_7_SetLight,
     XCAST(GetLight) Main_IDirect3DDeviceImpl_7_GetLight,
     XCAST(SetRenderState) GL_IDirect3DDeviceImpl_7_3T_2T_SetRenderState,
-    XCAST(GetRenderState) Main_IDirect3DDeviceImpl_7_3T_2T_GetRenderState,
+    XCAST(GetRenderState) GL_IDirect3DDeviceImpl_7_3T_2T_GetRenderState,
     XCAST(BeginStateBlock) Main_IDirect3DDeviceImpl_7_BeginStateBlock,
     XCAST(EndStateBlock) Main_IDirect3DDeviceImpl_7_EndStateBlock,
     XCAST(PreLoad) Main_IDirect3DDeviceImpl_7_PreLoad,
@@ -1998,7 +2018,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     XVisualInfo *vis;
     int num;
     XVisualInfo template;
-    GLenum buffer;
+    GLenum buffer = GL_FRONT;
     int light;
     
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDeviceGLImpl));
@@ -2074,28 +2094,16 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
 	}
 	surf->d3ddevice = object;
     }
-    
-    gl_object->render_state.src = GL_ONE;
-    gl_object->render_state.dst = GL_ZERO;
-    gl_object->render_state.mag = GL_NEAREST;
-    gl_object->render_state.min = GL_NEAREST;
-    gl_object->render_state.alpha_ref = 0.0; /* No actual idea about the real default value... */
-    gl_object->render_state.alpha_func = GL_ALWAYS; /* Here either but it seems logical */
-    gl_object->render_state.alpha_blend_enable = FALSE;
+
+    /* FIXME: Should handle other versions than just 7 */
+    InitDefaultStateBlock(&object->state_block,7);
+        
+    /* FIXME: These 4 statements are kept for compatibility but should be removed as soon
+       as they are correctly handled */
     gl_object->render_state.fog_on = FALSE;
-    gl_object->render_state.stencil_func = GL_ALWAYS;
-    gl_object->render_state.stencil_mask = 0xFFFFFFFF;
-    gl_object->render_state.stencil_ref = 0;
     gl_object->render_state.stencil_enable = FALSE;
-    gl_object->render_state.stencil_fail = GL_KEEP;
-    gl_object->render_state.stencil_zfail = GL_KEEP;
-    gl_object->render_state.stencil_pass = GL_KEEP;
     gl_object->render_state.lighting_enable = FALSE;
     gl_object->render_state.specular_enable = FALSE;
-    gl_object->render_state.color_diffuse = D3DMCS_COLOR1;
-    gl_object->render_state.color_specular = D3DMCS_COLOR2;
-    gl_object->render_state.color_ambient = D3DMCS_COLOR2;
-    gl_object->render_state.color_emissive = D3DMCS_MATERIAL;
 
     /* Set the various light parameters */
     for (light = 0; light < MAX_LIGHTS; light++) {
@@ -2121,7 +2129,13 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->set_context(object);
     ENTER_GL();
     TRACE(" current context set\n");
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+    /* Apply default render state values */
+    /* FIXME: disable because our current D3D code does not like it */
+    /* apply_render_state(gl_object, &object->state_block); */
+    
+    /* FIXME: do something similar for ligh_state and texture_stage_state */
+    
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);

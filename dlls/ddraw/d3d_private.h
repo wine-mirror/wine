@@ -26,6 +26,10 @@
 
 #include "d3d.h"
 
+#define HIGHEST_RENDER_STATE         152
+#define HIGHEST_TEXTURE_STAGE_STATE   24
+#define HIGHEST_LIGHT_STATE            8
+
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
@@ -38,6 +42,19 @@ typedef struct IDirect3DDeviceImpl IDirect3DDeviceImpl;
 typedef struct IDirect3DVertexBufferImpl IDirect3DVertexBufferImpl;
 
 #include "ddraw_private.h"
+
+typedef struct STATEBLOCKFLAGS {
+   BOOL render_state[HIGHEST_RENDER_STATE];
+   BOOL texture_stage_state[8][HIGHEST_TEXTURE_STAGE_STATE];
+   BOOL light_state[HIGHEST_LIGHT_STATE];
+} STATEBLOCKFLAGS;
+
+typedef struct STATEBLOCK {
+   STATEBLOCKFLAGS set_flags; 
+   DWORD render_state[HIGHEST_RENDER_STATE];
+   DWORD texture_stage_state[8][HIGHEST_TEXTURE_STAGE_STATE];
+   DWORD light_state[HIGHEST_LIGHT_STATE];
+} STATEBLOCK;
 
 /*****************************************************************************
  * IDirect3D implementation structure.
@@ -212,6 +229,8 @@ struct IDirect3DDeviceImpl
     void (*matrices_updated)(IDirect3DDeviceImpl *This, DWORD matrices);
     void (*set_matrices)(IDirect3DDeviceImpl *This, DWORD matrices,
 			 D3DMATRIX *world_mat, D3DMATRIX *view_mat, D3DMATRIX *proj_mat);
+
+    STATEBLOCK state_block;
 };
 
 /*****************************************************************************

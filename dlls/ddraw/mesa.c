@@ -62,9 +62,10 @@ GLenum convert_D3D_stencilop_to_GL(D3DSTENCILOP dwRenderState)
     return GL_KEEP;
 }
 
-void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
-		      DWORD dwRenderState, RenderState *rs)
+void set_render_state(IDirect3DDeviceGLImpl* This,
+		      D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState)
 {
+    RenderState* rs = &This->render_state;
     if (TRACE_ON(ddraw))
         TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
 
@@ -503,7 +504,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		}
 		break;
 
-	    case D3DRENDERSTATE_DIFFUSEMATERIALSOURCE:     /* 145 */
+	    case D3DRENDERSTATE_DIFFUSEMATERIALSOURCE:    /* 145 */
 	        rs->color_diffuse = dwRenderState;
 		break;
 
@@ -524,4 +525,28 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	}
 	LEAVE_GL();
     }
+}
+
+void store_render_state(D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState,
+		        STATEBLOCK* lpStateBlock)
+{
+    TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
+    lpStateBlock->render_state[dwRenderStateType-1] = dwRenderState;
+}
+
+void get_render_state(D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState,
+		      STATEBLOCK* lpStateBlock)
+{
+    *lpdwRenderState = lpStateBlock->render_state[dwRenderStateType-1];
+    if (TRACE_ON(ddraw))
+        TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), *lpdwRenderState);
+}
+
+void apply_render_state(IDirect3DDeviceGLImpl* This, STATEBLOCK* lpStateBlock)
+{
+    DWORD i;
+    TRACE("(%p,%p)\n", This, lpStateBlock);
+    for(i=0;i<HIGHEST_RENDER_STATE;i++)
+	if (lpStateBlock->set_flags.render_state[i])
+            set_render_state(This, i+1, lpStateBlock->render_state[i]);    
 }

@@ -34,6 +34,170 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+DWORD InitRenderStateTab[] = {
+    /*D3DRENDERSTATE_TEXTUREHANDLE,           (DWORD)NULL,*/
+    D3DRENDERSTATE_ANTIALIAS,               D3DANTIALIAS_NONE,
+    /* FIXME: D3DRENDERSTATE_TEXTUREADDRESS */
+    D3DRENDERSTATE_TEXTUREPERSPECTIVE,      TRUE,
+    /* FIXME: D3DRENDERSTATE_WRAPU */
+    /* FIXME: D3DRENDERSTATE_WRAPV */
+    D3DRENDERSTATE_ZENABLE,                 FALSE,
+    D3DRENDERSTATE_FILLMODE,                D3DFILL_SOLID,
+    D3DRENDERSTATE_SHADEMODE,               D3DSHADE_GOURAUD,
+    D3DRENDERSTATE_LINEPATTERN,             0,
+    D3DRENDERSTATE_MONOENABLE,              FALSE,
+    D3DRENDERSTATE_ROP2,                    R2_COPYPEN,
+    D3DRENDERSTATE_PLANEMASK,               0xFFFFFFFF,
+    D3DRENDERSTATE_ZWRITEENABLE,            TRUE,
+    D3DRENDERSTATE_ALPHATESTENABLE,         FALSE,
+    D3DRENDERSTATE_LASTPIXEL,               TRUE,
+    D3DRENDERSTATE_TEXTUREMAG,              D3DFILTER_NEAREST,
+    D3DRENDERSTATE_TEXTUREMIN,              D3DFILTER_NEAREST,
+    D3DRENDERSTATE_SRCBLEND,                D3DBLEND_ONE,
+    D3DRENDERSTATE_DESTBLEND,               D3DBLEND_ZERO,
+    D3DRENDERSTATE_TEXTUREMAPBLEND,         D3DTBLEND_MODULATE,
+    D3DRENDERSTATE_CULLMODE,                D3DCULL_CCW,
+    D3DRENDERSTATE_ZFUNC,                   D3DCMP_LESSEQUAL,
+    D3DRENDERSTATE_ALPHAREF,                0,
+    D3DRENDERSTATE_ALPHAFUNC,               D3DCMP_ALWAYS,
+    D3DRENDERSTATE_DITHERENABLE,            FALSE,
+    D3DRENDERSTATE_ALPHABLENDENABLE,        FALSE,
+    D3DRENDERSTATE_FOGENABLE,               FALSE,
+    D3DRENDERSTATE_SPECULARENABLE,          FALSE,
+    D3DRENDERSTATE_ZVISIBLE,                FALSE,
+    D3DRENDERSTATE_SUBPIXEL,                FALSE,
+    D3DRENDERSTATE_SUBPIXELX,               FALSE,
+    D3DRENDERSTATE_STIPPLEDALPHA,           FALSE,
+    D3DRENDERSTATE_FOGCOLOR,                D3DRGBA(0,0,0,0),
+    D3DRENDERSTATE_FOGTABLEMODE,            D3DFOG_NONE,
+    /* FIXME: D3DRENDERSTATE_FOGTABLESTART (same as D3DRENDERSTATE_FOGSTART) */
+    /* FIXME: D3DRENDERSTATE_FOGTABLEEND (same as D3DRENDERSTATE_FOGEND) */
+    D3DRENDERSTATE_FOGTABLEDENSITY,         0x3F80000, /* 1.0f (same as D3DRENDERSTATE_FOGDENSITY) */
+    /* FXIME: D3DRENDERSTATE_STIPPLEENABLE */
+    D3DRENDERSTATE_EDGEANTIALIAS,           FALSE,
+    D3DRENDERSTATE_COLORKEYENABLE,          FALSE,
+    /* FIXME: D3DRENDERSTATE_BORDERCOLOR */
+    D3DRENDERSTATE_TEXTUREADDRESSU,         D3DTADDRESS_WRAP,
+    D3DRENDERSTATE_TEXTUREADDRESSV,         D3DTADDRESS_WRAP,
+    D3DRENDERSTATE_MIPMAPLODBIAS,           0x00000000, /* 0.0f */
+    D3DRENDERSTATE_ZBIAS,                   0,
+    D3DRENDERSTATE_RANGEFOGENABLE,          FALSE,    
+    /* FIXME: D3DRENDERSTATE_ANISOTROPY */
+    /* FIXME: D3DRENDERSTATE_FLUSHBATCH */
+    /* FIXME: D3DRENDERSTATE_TRANSLUCENTSORTINDEPENDENT */
+    D3DRENDERSTATE_STENCILENABLE,           FALSE,
+    D3DRENDERSTATE_STENCILFAIL,             D3DSTENCILOP_KEEP,
+    D3DRENDERSTATE_STENCILZFAIL,            D3DSTENCILOP_KEEP,
+    D3DRENDERSTATE_STENCILPASS,             D3DSTENCILOP_KEEP,
+    D3DRENDERSTATE_STENCILFUNC,             D3DCMP_ALWAYS,
+    D3DRENDERSTATE_STENCILREF,              0,
+    D3DRENDERSTATE_STENCILMASK,             0xFFFFFFFF,
+    D3DRENDERSTATE_STENCILWRITEMASK,        0xFFFFFFFF,
+    /* FIXME: D3DRENDERSTATE_TEXTUREFACTOR */
+    /* FIXME: D3DRENDERSTATE_STIPPLEPATTERN00..31 */
+    D3DRENDERSTATE_WRAP0,                   0,
+    D3DRENDERSTATE_WRAP1,                   0,
+    D3DRENDERSTATE_WRAP2,                   0,
+    D3DRENDERSTATE_WRAP3,                   0,
+    D3DRENDERSTATE_WRAP4,                   0,
+    D3DRENDERSTATE_WRAP5,                   0,
+    D3DRENDERSTATE_WRAP6,                   0,
+    D3DRENDERSTATE_WRAP7,                   0,
+    D3DRENDERSTATE_CLIPPING,                FALSE,
+    D3DRENDERSTATE_LIGHTING,                TRUE,
+    D3DRENDERSTATE_EXTENTS,                 FALSE,
+    D3DRENDERSTATE_AMBIENT,                 D3DRGBA(0,0,0,0),
+    D3DRENDERSTATE_FOGVERTEXMODE,           D3DFOG_NONE,
+    D3DRENDERSTATE_COLORVERTEX,             TRUE,
+    D3DRENDERSTATE_LOCALVIEWER,             TRUE,
+    D3DRENDERSTATE_NORMALIZENORMALS,        FALSE,
+    /* FIXME: D3DRENDER_STATE_COLORKEYBLENDENABLE */
+    D3DRENDERSTATE_DIFFUSEMATERIALSOURCE,   D3DMCS_COLOR1,
+    D3DRENDERSTATE_SPECULARMATERIALSOURCE,  D3DMCS_COLOR2,
+    D3DRENDERSTATE_AMBIENTMATERIALSOURCE,   D3DMCS_COLOR2,
+    D3DRENDERSTATE_EMISSIVEMATERIALSOURCE,  D3DMCS_MATERIAL,
+    D3DRENDERSTATE_VERTEXBLEND,             D3DVBLEND_DISABLE,
+    D3DRENDERSTATE_CLIPPLANEENABLE,         0
+};
+
+DWORD InitLightStateTab[] = {
+    D3DLIGHTSTATE_MATERIAL,           (DWORD)NULL,
+    D3DLIGHTSTATE_AMBIENT,            D3DRGBA(0,0,0,0),
+    D3DLIGHTSTATE_COLORMODEL,         D3DCOLOR_RGB,
+    D3DLIGHTSTATE_FOGMODE,            D3DFOG_NONE,
+    D3DLIGHTSTATE_FOGSTART,           0x3F80000, /* 1.0f */
+    D3DLIGHTSTATE_FOGEND,             0x42C8000, /* 100.0f */
+    D3DLIGHTSTATE_FOGDENSITY,         0x3F80000  /* 1.0f */
+    /* FIXME: D3DLIGHTSTATE_COLORVERTEX */
+};
+
+DWORD InitTextureStageStateTab[] = {
+    D3DTSS_COLOROP,          D3DTOP_DISABLE,
+    D3DTSS_COLORARG1,        D3DTA_TEXTURE,
+    D3DTSS_COLORARG2,        D3DTA_CURRENT,
+    D3DTSS_ALPHAOP,          D3DTOP_DISABLE,
+    D3DTSS_ALPHAARG1,        D3DTA_TEXTURE,
+    D3DTSS_ALPHAARG2,        D3DTA_CURRENT,
+    /* FIXME: D3DTSS_BUMPENVMAT00,01,10,11 */
+    /* D3DTSS_TEXCOORDINDEX is set manually */
+    D3DTSS_ADDRESS,          D3DTADDRESS_WRAP,
+    D3DTSS_ADDRESSU,         D3DTADDRESS_WRAP,
+    D3DTSS_ADDRESSV,         D3DTADDRESS_WRAP,
+    /* FIXME: D3DTSS_BORDERCOLOR */
+    D3DTSS_MAGFILTER,        D3DTFG_POINT,
+    D3DTSS_MINFILTER,        D3DTFN_POINT,
+    D3DTSS_MIPFILTER,        D3DTFP_NONE,
+    D3DTSS_MIPMAPLODBIAS,    0x00000000, /* 0.0f */
+    D3DTSS_MAXMIPLEVEL,      0
+    /* FIXME: D3DTSS_MAXANISOTROPY */
+    /* FIXME: D3DTSS_BUMPENVLSCALE */
+    /* FIXME: D3DTSS_NUMPENVLOFFSET */
+    /* FIXME: D3DTSS_TEXTURETRANSFORMFLAGS */
+};
+
+	
+void InitDefaultStateBlock(STATEBLOCK* lpStateBlock, int version)
+{
+    int i,j;  
+    TRACE("(%p,%d)\n", lpStateBlock, version);    
+    memset(lpStateBlock,0,sizeof(STATEBLOCK));
+    
+    /* Initialize render states */
+    for(i=0;i<sizeof(InitRenderStateTab)/4;i+=2)
+    {
+        lpStateBlock->render_state[InitRenderStateTab[i]-1] = InitRenderStateTab[i+1];
+	lpStateBlock->set_flags.render_state[InitRenderStateTab[i]-1] = TRUE;
+    }
+
+    /* Initialize render states */
+    for(i=0;i<sizeof(InitLightStateTab)/4;i+=2)
+    {
+        lpStateBlock->light_state[InitLightStateTab[i]-1] = InitLightStateTab[i+1];
+	lpStateBlock->set_flags.light_state[InitLightStateTab[i]-1] = TRUE;
+    }
+
+    /* Initialize texture stages states */
+    for(i=0;i<8;i++)
+    {
+       for(j=0;j<sizeof(InitTextureStageStateTab)/4;j+=2)
+       {
+           lpStateBlock->texture_stage_state[i][InitTextureStageStateTab[j]-1] = InitTextureStageStateTab[j+1];
+           lpStateBlock->set_flags.texture_stage_state[i][InitTextureStageStateTab[j]-1] = TRUE;
+       }
+       /* Map texture coords 0 to stage 0, 1 to stage 1, etc... */
+       lpStateBlock->texture_stage_state[i][D3DTSS_TEXCOORDINDEX-1] = i;
+       lpStateBlock->set_flags.texture_stage_state[i][D3DTSS_TEXCOORDINDEX-1] = TRUE;
+    }
+    
+    /* The first texture is particular, update it consequently */
+    lpStateBlock->texture_stage_state[0][D3DTSS_COLOROP-1] = D3DTOP_MODULATE;
+    lpStateBlock->texture_stage_state[0][D3DTSS_ALPHAOP-1] = D3DTOP_SELECTARG1;
+    
+    /* Updates for particular versions */
+    if ((version == 1)||(version==2))
+       lpStateBlock->render_state[D3DRENDERSTATE_SPECULARENABLE-1] = TRUE;
+}
+
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3DDEVICE7 iface,
                                                    REFIID riid,
@@ -593,8 +757,12 @@ Main_IDirect3DDeviceImpl_7_3T_GetTextureStageState(LPDIRECT3DDEVICE7 iface,
                                                    LPDWORD lpdwState)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08lx,%08x,%p): stub!\n", This, iface, dwStage, d3dTexStageStateType, lpdwState);
-    return DD_OK;
+    TRACE("(%p/%p)->(%08lx,%08x,%p)\n", This, iface, dwStage, d3dTexStageStateType, lpdwState);
+    if (lpdwState && (dwStage < 8) && d3dTexStageStateType && (d3dTexStageStateType < HIGHEST_TEXTURE_STAGE_STATE) ) {
+        *lpdwState = This->state_block.texture_stage_state[dwStage][d3dTexStageStateType-1];
+	return DD_OK;
+    }
+    return DDERR_INVALIDPARAMS;
 }
 
 HRESULT WINAPI
@@ -938,8 +1106,12 @@ Main_IDirect3DDeviceImpl_3_2T_GetLightState(LPDIRECT3DDEVICE3 iface,
                                             LPDWORD lpdwLightState)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%08x,%p): stub!\n", This, iface, dwLightStateType, lpdwLightState);
-    return DD_OK;
+    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dwLightStateType, lpdwLightState);
+    if (lpdwLightState && dwLightStateType && (dwLightStateType <= HIGHEST_LIGHT_STATE) ) {
+       *lpdwLightState = This->state_block.light_state[dwLightStateType-1];
+       return DD_OK;
+    }
+    return DDERR_INVALIDPARAMS;
 }
 
 HRESULT WINAPI

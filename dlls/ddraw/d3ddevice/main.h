@@ -20,6 +20,8 @@
 
 /* This is defined here so as to be able to put them in 'drivers' */
 
+void InitDefaultStateBlock(STATEBLOCK* lpStateBlock, int version);
+
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3DDEVICE7 iface,
                                                    REFIID riid,
