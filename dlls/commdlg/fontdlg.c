@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "font.h"
 #include "winproc.h"
+#include "cderr.h"
 
 extern DWORD      CommDlgLastError;
 
