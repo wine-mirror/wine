@@ -320,11 +320,12 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
     else  /* large heap handle */
     {
         int i = (handle >> 2) - FIRST_LARGE_HANDLE;
-        if (i >= 0 && large_handles[i])
+        if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
         {
             HeapFree( GetProcessHeap(), 0, large_handles[i] );
             large_handles[i] = NULL;
         }
+        else ERR( "Invalid handle %x\n", handle );
     }
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
@@ -357,7 +358,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     else  /* large heap handle */
     {
         int i = (handle >> 2) - FIRST_LARGE_HANDLE;
-        if (i >= 0)
+        if (i >= 0 && i < MAX_LARGE_HANDLES)
         {
             ptr = large_handles[i];
             if (ptr && (magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
@@ -368,6 +369,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     {
         _LeaveSysLevel( &GDI_level );
         SetLastError( ERROR_INVALID_HANDLE );
+        WARN( "Invalid handle %x\n", handle );
     }
     else TRACE_SEC( handle, "enter" );
 
