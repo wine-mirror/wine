@@ -1771,9 +1771,9 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
     }
 
     if (flags & SMSG_WIN32)
-        SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, ret );
+        SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, *pRes );
     else
-    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, ret );
+    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, *pRes );
 END:
     WIN_ReleaseWndPtr(wndPtr);
     return ret;
