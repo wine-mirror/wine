@@ -3296,25 +3296,48 @@ static void EDIT_EM_SetLimitText(EDITSTATE *es, INT limit)
  *	EM_SETMARGINS
  *
  * EC_USEFONTINFO is used as a left or right value i.e. lParam and not as an
- * action wParam despite what the docs say. EC_USEFONTINFO means one third
- * of the char's width, according to the new docs.
+ * action wParam despite what the docs say. EC_USEFONTINFO calculates the
+ * margin according to the textmetrics of the current font.
+ *
+ * FIXME - With TrueType or vector fonts EC_USEFONTINFO currently sets one third
+ * of the char's width as the margin, but this is not how Windows handles this.
+ * For all other fonts Windows sets the margins to zero.
  *
  */
 static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
 			       INT left, INT right)
 {
+	TEXTMETRICW tm;
+	INT default_left_margin  = 0; /* in pixels */
+	INT default_right_margin = 0; /* in pixels */
+
+        /* Set the default margins depending on the font */
+        if (es->font && (left == EC_USEFONTINFO || right == EC_USEFONTINFO)) {
+            HDC dc = GetDC(es->hwndSelf);
+            HFONT old_font = SelectObject(dc, es->font);
+            GetTextMetricsW(dc, &tm);
+            /* The default margins are only non zero for TrueType or Vector fonts */
+            if (tm.tmPitchAndFamily & ( TMPF_VECTOR | TMPF_TRUETYPE )) {
+                /* This must be calculated more exactly! But how? */
+                default_left_margin = tm.tmAveCharWidth / 3;
+                default_right_margin = tm.tmAveCharWidth / 3;
+            }
+            SelectObject(dc, old_font);
+            ReleaseDC(es->hwndSelf, dc);
+        }
+
 	if (action & EC_LEFTMARGIN) {
 		if (left != EC_USEFONTINFO)
 			es->left_margin = left;
 		else
-			es->left_margin = es->char_width / 3;
+			es->left_margin = default_left_margin;
 	}
 
 	if (action & EC_RIGHTMARGIN) {
 		if (right != EC_USEFONTINFO)
  			es->right_margin = right;
 		else
-			es->right_margin = es->char_width / 3;
+			es->right_margin = default_right_margin;
 	}
 	TRACE("left=%d, right=%d\n", es->left_margin, es->right_margin);
 }
