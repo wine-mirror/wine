@@ -1,4 +1,830 @@
 ----------------------------------------------------------------
+Thu Sep 23 16:14:44 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* Makefile.in, windows/x11drv/.cvsignore, windows/x11drv/Makefile.in, windows/x11drv/wineclipsrv.c:
+	Noel Borthwick <noel@macadamian.com>
+	Added clipboard server.
+
+	* tools/Attic/winapi-check, tools/winapi_check/nativeapi.dat, tools/winapi_check/nativeapi.pm, tools/winapi_check/parser.pm, tools/winapi_check/win16api.dat, tools/winapi_check/win32api.dat, tools/winapi_check/winapi.pm, tools/winapi_check/winapi_check, tools/winapi_check/winapi_global.pm, tools/winapi_check/winapi_local.pm, tools/winapi_check/winapi_options.pm, tools/winapi_check/winapi_parser.pm:
+	Patrik Stridvall <ps@leissner.se>
+	Made a new improved version of winapi-check in perl.
+
+	* msdos/int21.c:
+	Implemented uppercasing functions (based on a patch by Robert
+	'Admiral' Coeyman).
+
+	* windows/user.c, dlls/ole32/ole2stubs.c, dlls/ole32/storage.c, dlls/oleaut32/typelib.c, dlls/stress/stress_main.c, if1632/dummy.c, include/stress.h, include/wine/wingdi16.h, misc/printdrv.c, windows/input.c:
+	Patrik Stridvall <ps@leissner.se>
+	Fixed some of the issues reported by winapi-check.
+
+	* misc/comm.c: Patrik Stridvall <ps@leissner.se>
+	Modification due to problems with winapi-check.
+
+	* windows/x11drv/event.c: Noomen Hamza <noomen@macadamian.com>
+	WS_POPUP windows (excluding the WS_POPUPWINDOW windows) should be
+	closed after loosing the focus.
+
+	* objects/dib.c: Francois Boisvert <francois@macadamian.com>
+	CreateDIBitmap creates a monochrome bitmap only when the first color of the
+	colormap is black followed by white. Otherwise it creates a color bitmap.
+
+	* windows/defwnd.c, windows/nonclient.c:
+	Noomen Hamza <noomen@macadamian.com>
+	Non active window should be activated when it gets any
+	client/non-client double/single left/medium/right mouse click(s).
+
+Wed Sep 22 16:53:54 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* relay32/builtin32.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added WINEOSS descriptor.
+
+	* multimedia/mmsystem.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	MMSYSTEM_GetIData() now dies when no iData is present
+	Better error recovery when the process attachment fails
+	PlaySound (and helper functions) now use the regular waveOutXXX (instead of wodMessage)
+	Moved handling of hack for differenciating between 16 and 32 bit callback to lolvldrv.c
+	Makes use of new lolvldrv.c interfaces
+
+	* multimedia/.cvsignore, multimedia/Makefile.in, multimedia/lolvldrv.c, multimedia/oss.c, multimedia/oss.h, multimedia/winemm.h:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added lolvldrv.c and oss.c.
+	Thunks to 16 bit are now generated for the MMSYSTEM module.
+
+	* configure.in, dlls/winmm/.cvsignore, dlls/winmm/Makefile.in, dlls/winmm/wineoss/.cvsignore, dlls/winmm/wineoss/Makefile.in, dlls/winmm/wineoss/wineoss.spec, Makefile.in, configure:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added dlls/winmm and dlls/winmm/wineoss directories.
+
+	* multimedia/time.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	No longer checking for correct iData in code.
+
+	* relay32/winmm.spec: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added missing DriverCallBack function.
+
+	* if1632/mmsystem.spec: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	All headers (wave and midi functions) are now seen as segptr.
+	Added stub for joyGetPosEx16().
+
+	* include/mmsystem.h: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added some missing defines.
+
+	* include/mmddk.h: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Now using the same structs for low-level drivers as Windows do.
+
+	* multimedia/audio.c, multimedia/mixer.c, multimedia/mmaux.c:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Make it (almost) 32 bit only.
+	Reflected creation of WINEOSS module.
+
+	* multimedia/midi.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Make it (almost) 32 bit only.
+	Reflected creation of WINEOSS module.
+	No longer using ERR when no MIDI card is present.
+
+	* multimedia/joystick.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added stub for joyGetPosEx16().
+
+	* multimedia/mci.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	No longer checking for correct iData in code.
+	Added look-up tables to command tables (speeds up queries).
+
+	* multimedia/mciwave.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Now using WAVEFORMATEX instead of PCMWAVEFORMAT.
+
+	* multimedia/mcimidi.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Now using modReset() instead of tweaking MIDI controls.
+
+	* multimedia/mcicda.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed returned type upon open.
+	Fixed some bogus error checking.
+
+	* multimedia/mcianim.c, multimedia/mciavi.c:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed returned type upon open.
+
+	* dlls/ntdll/exception.c: Juergen Schmied <juergen.schmied@metronet.de>
+	Do not set EH_NONCONTINUABLE.
+
+	* programs/osversioncheck/.cvsignore, programs/osversioncheck/ChangeLog, programs/osversioncheck/Makefile.in, programs/osversioncheck/osversioncheck.c, configure, configure.in, programs/Makefile.in:
+	Morten Eriksen <mortene@sim.no>
+	Added simple console mode example program which lists information
+	about the version of Windows we're currently running on.
+
+	* loader/module.c: Fixed memory allocation bug.
+
+	* windows/x11drv/event.c: Gerard Patel <g.patel@wanadoo.fr>
+	Fix infinite loop with glastXFocusWindow.
+
+	* dlls/comctl32/imagelist.c: Stephane Lussier <stephane@macadamian.com>
+	Allow creation of empty imagelist.
+
+	* objects/palette.c, relay32/gdi32.spec:
+	Ian Schmidt <ischmidt@cfl.rr.com>
+	Added partial implementation of GetICMProfileA, required by Paint Shop
+	Pro 5.
+
+	* controls/menu.c: Abey George <abey@macadamian.com>
+	Don't send WM_ENTERMENULOOP, WM_INITMENU & WM_INITMENUPOPUP messages
+	when TPM_NONOTIFY flag is set in TrackPopupMenu.
+
+	* misc/winsock.c: David Luyer <luyer@ucs.uwa.edu.au>
+	getpeername() and getsockname() return errors in errno not h_errno.
+
+Mon Sep 20 18:52:06 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/commdlg/filedlgbrowser.c, dlls/commdlg/printdlg.c, include/builtin16.h, misc/registry.c, objects/cursoricon.c, tools/build.c:
+	Patrik Stridvall <ps@leissner.se>
+	Fixed ANSI C violations.
+
+	* windows/keyboard.c, windows/mouse.c, if1632/keyboard.spec, if1632/mouse.spec, windows/input.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Keyboard/mouse event proc thunk creation moved out of if1632/thunk.c.
+
+	* if1632/kernel.spec, include/task.h, loader/.cvsignore, loader/Makefile.in, loader/ne/module.c, loader/ne/segment.c, loader/task.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Don't create thunk for task signal proc, call it directly.
+
+	* if1632/gdi.spec, include/gdi.h, objects/.cvsignore, objects/Makefile.in, objects/clipping.c, objects/dc.c, windows/dce.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	DC hook proc thunk management simplified.
+
+	* misc/system.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	System timer proc thunk creation moved out of if1632/thunk.c.
+
+	* scheduler/thread.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Don't create thunk for CreateThread16 proc, call it directly.
+
+	* windows/.cvsignore, windows/Makefile.in, windows/hook.c, dlls/shell32/shell.c, if1632/user.spec, include/hook.h:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Windows hook proc thunk management simplified.
+
+	* include/callback.h, if1632/thunk.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Modified THUNK_Alloc so as to avoid 32->16->32 calling sequences.
+	Removed persistent thunk creation routines.
+
+	* configure, configure.in, include/acconfig.h, include/config.h.in, include/ts_xf86dga2.h, tools/make_X11wrappers, tsx11/Makefile.in, tsx11/X11_calls, tsx11/ts_xf86dga2.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Added the possibility to use DGA 2.0.
+
+	* winedefault.reg: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added HKEY_LOCAL_MACHINE\...\ProgramFilesDir registry key.
+
+	* dlls/comctl32/commctrl.c: Dennis Borklund <dennisb@cs.chalmers.se>
+	It's no error to send a WM_COMMAND to MenuHelp.
+
+	* files/file.c: Francois Boisvert<francois@macadamian.com>
+	CreateFileA returns HFILE_ERROR when the filename contains a wild card.
+
+	* controls/static.c: Francis Beaudet <francis@macadamian.com>
+	Fixed display bug in the static control.
+
+	* controls/menu.c: Pascal Lessard <pascal@macadamian.com>
+	Message removed when menu tracking finish on a WM_LBUTTONDOWN.
+
+	* include/bitmap.h, include/ts_xlib.h, include/x11drv.h, objects/dib.c, tsx11/X11_calls, tsx11/ts_xlib.c, windows/clipboard.c, windows/x11drv/clipboard.c, windows/x11drv/event.c, graphics/x11drv/bitmap.c, graphics/x11drv/dib.c:
+	Noel Borthwick <noel@macadamian.com>
+	- Add clipboard support for copying/pasting bitmaps or Pixmaps between Wine
+	  and native Linux applications.
+	- Respond to the MULTIPLE selection request target when Wine is the
+	  selection owner.
+	- Relax type checking for TARGETS selection.
+
+	* if1632/builtin.c, loader/module.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Set 'expected_version' of built-in and dummy modules according to
+	emulated Windows version.
+
+	* if1632/relay.c, loader/main.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Make CallTo16 return stub segment owned by KERNEL.
+
+	* include/wine/winbase16.h, loader/task.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: Improved GetCodeHandle16 / GetCodeInfo16.
+
+	* ole/nls/sve.nls: Dennis Bjorklund <dennisb@cs.chalmers.se>
+	Added some values that were missing in the Swedish nls file.
+
+Sun Sep 19 18:58:16 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* graphics/x11drv/dib.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: create DDB in X11DRV_DIB_GetDIBits if necessary.
+
+	* dlls/ole32/ole32.spec: Juergen Schmied <juergen.schmied@metronet.de>
+	Added missing export.
+
+	* objects/cursoricon.c: Juergen Schmied <juergen.schmied@metronet.de>
+	Fixed crash when loading *.ani files.
+
+	* ole/*, dlls/ole32/*, dlls/oleaut32/*, dlls/olecli/*, dlls/oledlg/*:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Moved bulk of OLE implementation to dlls/ subdirectories.
+
+	* controls/menu.c: Dennis Björklund <dennisb@cs.chalmers.se>
+	Send correct WM_MENUSELECT when menu closes.
+
+	* dlls/commdlg/filedlg95.c, dlls/commdlg/filedlgbrowser.c, dlls/shell32/shres.rc:
+	Francois Boisvert <francois@macadamian.com>
+	Added small feature in the file dialog.
+
+	* win32/newfns.c, files/drive.c, include/winnt.h, include/wtypes.h, msdos/vxd.c, ole/antimoniker.c, ole/compositemoniker.c, ole/datacache.c, ole/filemoniker.c, ole/hglobalstream.c, ole/itemmoniker.c, ole/memlockbytes.c, ole/olefont.c, ole/stg_bigblockfile.c, ole/stg_stream.c, ole/storage.c, ole/storage32.c, ole/variant.c, dlls/advapi32/service.c, dlls/comctl32/comctl32undoc.c:
+	Patrik Stridvall <ps@leissner.se>
+	Added support for anonymous structs/unions on compilers that implement it.
+
+	* include/wingdi.h, objects/text.c, relay32/gdi32.spec:
+	Peter Ganten <ganten@uni-bremen.de>
+	Stubs for PolyTextOutA/W.
+
+	* graphics/x11drv/dib.c, objects/dib.c:
+	Karl Lessard <ybicubuk@umail.corel.com>
+	Some more minor GDI fixes.
+
+	* dlls/comctl32/imagelist.c: Stephane Lussier <stephane@macadamian.com>
+	In ImageList_Draw when drawing the bitmap with the transparent flag
+	set, background color/foreground color should be set to white/black,
+	when doing bitblt operation with the bitmap mask.
+
+	* graphics/escape.c, graphics/win16drv/init.c, include/win16drv.h:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Extend DRAWMODE struct to win95 spec.
+	Add some more Escape -> Escape16 conversions.
+
+	* graphics/win16drv/prtdrv.c:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Stop trashing devmode if in and out devmodes are the same.
+
+	* controls/widgets.c: Noomen Hamza <noomen@macadamian.com>
+	The MDIClient class must be registered with the IDC_ARROW cursor.
+
+	* controls/combo.c: Francis Beaudet <francis@macadamian.com>
+	Implemented the disabled state of the combobox.
+
+	* controls/menu.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	Protect SetMenu from rogue menu handle.
+	GetMenu16 can just call GetMenu.
+
+	* windows/mdi.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	Protect MDISetMenu from rogue menu handles.
+
+	* memory/local.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	Tidy up TRACE etc to use default channel.
+
+	* dlls/version/info.c, dlls/version/version.spec, include/winbase.h, include/winver.h, ole/ole2nls.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Move VerLanguageName[AW] back to base (exported from KERNEL32 ...).
+
+	* dlls/comctl32/rsrc.rc, dlls/comctl32/comctl32.h, dlls/comctl32/propsheet.c:
+	Thuy Nguyen <thuy@macadamian.com>
+	Added support for wizard property sheets.
+
+	* misc/lstr.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Fix FormatMessage16 at least enough to get win95 16bit printdlg working.
+
+	* dlls/comctl32/tab.c: David Luyer <luyer@ucs.uwa.edu.au>
+	- iSelected should be -1 if no item selected (Gerard Patel)
+	- some of the checks for invalid items where > when they should have been >=
+	  (Marcus Meissner)
+	- made InsertItem behave similarly to DeleteItem, ie, if the current item is
+	  after where the item is inserted, increment the selected item (David Luyer)
+
+	* if1632/thunk.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: Declare CALL32_CBClient[Ex] without WINAPI.
+
+	* debugger/db_disasm.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: (E)IP-relative offsets depend on operand, not address, size.
+
+	* include/winuser.h, relay32/user32.spec, windows/user.c, include/wingdi.h:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added stub implementation for EnumDisplayDevices*.
+
+	* dlls/wnaspi32/winaspi32.c: Marcus Meissner <marcus@jet.franken.de>
+	Added SC_GET_DEVTYPE.
+
+	* ole/compobj.c: Juergen Schmied <juergen.schmied@metronet.de>
+	Added stub for OLE32.DllGetClassObject.
+
+	* dlls/shell32/pidl.h, dlls/shell32/shell32_main.c, include/shlguid.h, dlls/shell32/pidl.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	More support for special pidls in SHGetSpecialFolderLocation.
+
+	* graphics/psdrv/graphics.c, graphics/psdrv/pen.c, include/psdrv.h:
+	Luc Tourangeau <luc@macadamian.com>
+	Implemented invisible pens.
+
+	* objects/dib.c, graphics/x11drv/dib.c:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Small DIB fixes.
+
+	* controls/menu.c: Pascal Lessard <pascal@macadamian.com>
+	Added a case for menu handling in win31.
+
+Tue Sep 14 11:51:02 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/x11drv.h, objects/dib.c, graphics/x11drv/dib.c:
+	Karl Lessard <karll@corel.com>
+	Fixed GetDIBits problems.
+
+	* misc/cpu.c, multimedia/mixer.c, include/commctrl.h, include/mmsystem.h, include/ntddk.h, include/prsht.h, include/shlobj.h, include/winbase.h, include/windef.h, include/wine/obj_dataobject.h, include/wine/obj_oleaut.h:
+	Patrik Stridvall <ps@leissner.se>
+	Add support for anonymous struct/unions on compilers that implement it.
+
+Mon Sep 13 16:06:17 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* controls/button.c, controls/uitools.c:
+	Dennis Bj|rklund <dennisb@cs.chalmers.se>
+	Fixed win9x look on checkboxes and radiobuttons.
+
+	* graphics/win16drv/.cvsignore, graphics/win16drv/Makefile.in, graphics/win16drv/init.c, graphics/win16drv/prtdrv.c, if1632/thunk.c, include/callback.h, include/gdi.h, misc/.cvsignore, misc/Makefile.in, misc/printdrv.c, objects/dc.c, graphics/escape.c, graphics/psdrv/escape.c:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Change interfaces to THUNK_Alloc/Free slightly and make them non-static.
+	Remove relays for win16drv from CallBack table, instead use build to
+	generate them directly in graphics/win16drv/prtdrv.c.
+	If Printer AbortProc is 16bit then allocate thunk and store that as a
+	32bit proc in DC.  Setting of abortprocs now done in the correct place
+	(i.e. not in the driver).
+
+	* objects/dib.c: Kai Morich <kai.morich@bigfoot.de>
+	Relaxed parameter checking for GetDIBits.
+
+	* win32/device.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fixed last error code when trying to load unknown VxD with CreateFile.
+
+	* dlls/shell32/shell32_main.c:
+	Andreas Mohr <amohr@student.ei.uni-stuttgart.de>
+	Pretend successful execution of SHELL_NotifyIcon*().
+
+	* controls/menu.c, relay32/user32.spec:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added MenuItemFromPoint stub.
+
+	* dlls/comctl32/comctl32undoc.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed off by one allocation error (DPA and DSA).
+
+	* multimedia/mmsystem.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed crash in PlaySound thread.
+
+Sat Sep 11 16:29:00 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* controls/listbox.c: Nick Holloway <Nick.Holloway@alfie.demon.co.uk>
+	For Win 3.x applications, if they have either horizontal or vertical
+	scrollbars, enable both.
+
+	* dlls/advapi32/crypt.c, dlls/msacm32/internal.c, dlls/shell32/pidl.c, include/wine/winestring.h, memory/string.c:
+	Patrik Stridvall <ps@leissner.se>
+	Eliminated warnings.
+
+	* controls/combo.c, controls/listbox.c:
+	Pierre Mageau <pierre@macadamian.com>
+	Set the mouse capture on the combo listbox.
+
+	* graphics/ddraw.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	- fixed the creation of back-buffers in DGA mode
+	- added a check on the validity of the Locking rectangle
+	- fixed the enumeration for DX-6.0
+
+	* dlls/comctl32/commctrl.c: Stephane Lussier <stephane@macadamian.com>
+	Fixed RGBQUAD/COLORREF mixup in CreateMappedBitmap().
+
+	* controls/button.c: Abey George <abey@macadamian.com>
+	Draw the focus rectangle for buttons with BS_3STATE, BS_RADIOBUTTON,
+	BS_CHECKBOX, BS_AUTO* styles.
+
+Fri Sep 10 14:38:20 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* graphics/psdrv/driver.c, graphics/win16drv/init.c, graphics/win16drv/prtdrv.c, if1632/thunk.c, include/callback.h, include/gdi.h, include/psdrv.h, include/win16drv.h, graphics/driver.c:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Winspool DocumentProperties and DeviceCapabilities should now work on
+	native 16 bit drivers.
+
+	* dlls/winspool/info.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Fixes DeviceCapabilities for DC_PAPERSIZE.
+	Various fixes for OpenPrinter and EnumPrinters.
+	Separation of GetPrinter in preparation for unification with EnumPrinters.
+
+	* graphics/psdrv/ppd.c, include/wingdi.h:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Add support for a large number of different paper sizes to PostScript
+	driver.
+
+	* include/d3d.h: Lionel Ulmer <lionel.ulmer@free.fr>
+	Added definitions of COM objects for D3D 6.x support.
+
+	* graphics/psdrv/font.c: Nick Holloway <alfie@alfie.demon.co.uk>
+	If there is not an exact match found for the requested font name,
+	instead of using the first font defined for the printer, map some
+	common font families (e.g. Arial -> Helvetica), and search again.
+
+	* if1632/kernel.spec, if1632/thunk.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fixed bug in CBClient routines by storing the SEGPTR in the global
+	table and translating it on every use.
+
+	* include/bitmaps/oic_sample: Abey George <abey@macadamian.com>
+	Changed the pixmap to look like the windows default application icon.
+
+	* files/drive.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	Stop crash in GetDiskFreeSpaceEx.
+
+	* windows/nonclient.c: Francis Beaudet <francis@macadamian.com>
+	Made sure that the windows with the WS_EX_TOOLWINDOW style didn't get
+	handled by the window manager.
+
+	* controls/edit.c: Pascal Lessard <pascal@macadamian.com>
+	Implemented the behavior around the ES_WANTRETURN style in the edit
+	control.
+
+	* windows/x11drv/keyboard.c: Stephane Lussier <stephane@macadamian.com>
+	Pressing the delete key using an extended keyboard with numlock on is
+	not generating anymore a WM_CHAR message.
+
+	* dlls/shell32/shellpath.c: Niclas Karlsson <nkarlsso@ra.abo.fi>
+	Fixed pattern matching in PathMatchSpecA/W
+
+	* dlls/shell32/shlview.c: Francois Boisvert <francois@macadamian.com>
+	Tabbing in the listview of the shellview.
+
+	* dlls/comctl32/listview.c: Luc Tourangeau <luc@macadamian.com>
+	Fixed LISTVIEW_GetItemRect: the calculations were off for LVIR_BOUNDS,
+	LVIR_SELCTBOUNDS, LVIR_LABEL when the item width is greater than the
+	column width.
+	Fixed WM_GETDLGCODE by removing the DLGC_WANTRTAB and adding DLGC_WANTCHARS.
+
+	* dlls/shell32/shell32_main.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Fixed crash in detach sequence.
+
+	* dlls/shell32/shlfolder.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Fixed wrong return value.
+
+	* dlls/crtdll/crtdll_main.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Prevent endless loop in except2.
+
+	* tools/bug_report.pl: Adam Sacarny <magicbox@bestweb.net>
+	Now works around wine never exiting the debugger.
+	Should put bug reports in the right place now.
+
+	* ole/oleaut32.c, ole/Makefile.in, relay32/oleaut32.spec:
+	Marcus Meissner <Marcus.Meissner@caldera.de>
+	Added stub for RegisterActiveObject().
+
+	* dlls/win32s/w32sys.c, dlls/win32s/w32sys.spec:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added stub for WIN32S16.EXP1 (most likely LoadPeResource16).
+
+Sun Sep  5 16:48:17 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* loader/main.c, loader/module.c, miscemu/main.c, include/windef.h:
+	Removed __winelib flag.
+
+	* windows/driver.c, multimedia/audio.c, multimedia/dsound.c, multimedia/mci.c, multimedia/mcianim.c, multimedia/mciavi.c, multimedia/mcicda.c, multimedia/midi.c, multimedia/mixer.c, multimedia/mmaux.c, multimedia/mmsystem.c, multimedia/time.c, multimedia/winmm.rc:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Updated to new MM header organization.
+
+	* include/multimedia.h, include/mmddk.h, include/mmsystem.h, multimedia/oss.h, multimedia/winemm.h:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Moved DDK level material to new include/mmddk.h file.
+	Copied some SDK level material from include/multimedia.h file.
+
+	* multimedia/mciwave.c, multimedia/mcimidi.c:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Updated to new MM header organization.
+	Cleaned-up internal structures (now 32 bit only).
+	Now using the MMSYSTEM entry points rather than the low level driver
+	ones directly.
+
+	* include/sig_context.h: Juergen Lock <nox@jelal.kn-bremen.de>
+	Fix %fs for signal handlers in the FS_sig undefined case (this patch
+	actually from Ulrich Weigand, I only tested it).
+
+	* scheduler/sysdeps.c, configure, configure.in, include/acconfig.h, include/config.h.in:
+	Ron Record <rr@sco.com>
+	Added support of __thr_errno for reentrance on UnixWare.
+
+	* windows/dialog.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	No longer needs to calculate its own character size.
+
+	* misc/main.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	Consequential changes to default system font sizes
+
+	* graphics/x11drv/xfont.c, include/x11font.h:
+	Richard Cohen <richard@jubjub.demon.co.uk>
+	Various fixes for the X11 font mapper, particularly:
+	- size fonts with negative heights correctly
+	- calculate average width correctly.
+
+	* objects/cursoricon.c: Francis Beaudet <francis@macadamian.com>
+	Use a special value in the hotspot coordinate to identify which HICON
+	are cursors and which are icons.
+
+	* controls/combo.c: Pierre Mageau <pierre@macadamian.com>
+	Modified CBDropDown to find the best height of the listbox.
+
+Sat Sep  4 14:36:03 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* configure.in, include/config.h.in, include/wine/winestring.h, memory/string.c, misc/port.c, configure:
+	Added configure check for str[n]casecmp.
+
+	* windows/timer.c: Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Allow timeout of 0. Cap timer rate to SYS_TIMER_RATE.
+
+	* include/windef.h: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Added type PWORD.
+
+	* dlls/winspool/info.c, include/winspool.h:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Added loads of types, defines and declarations to winspool.h.
+
+	* dlls/commdlg/cdlg_En.rc, dlls/commdlg/filedlg95.c:
+	Francois Boisvert<francois@macadamian.com>
+	Fixed the height of items in the lookin combobox of the filedlg95.
+
+	* controls/edit.c: Stephane Lussier <stephane@macadamian.com>
+	Initialize the enabling state variable in the edit.
+
+	* graphics/bitblt.c: Noomen Hamza <noomen@macadamian.com>
+	The fast window frame size should be the same as the frame size used
+	by NC_DrawFrame function.
+
+	* objects/region.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Fixed compiler warnings.
+
+	* programs/regapi/regapi.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	lstrncmpi isn't a windows API, use strncasecmp instead.
+
+	* memory/global.c:
+	Fixed GMEM_ZEROINIT in GlobalRealloc (thanks to Gerard Patel).
+
+	* windows/msgbox.c: Added missing HFONT type.
+
+	* dlls/comctl32/imagelist.c, include/cursoricon.h, loader/main.c, objects/bitmap.c, objects/cursoricon.c, windows/class.c:
+	Pierre Mageau <pierre@macadamian.com>
+	Changed CopyImage to accept desiredX, desiredY and LR_COPYFROMRESOURCE.
+	CURSORICON_FindBestIcon changed to find the correct icon.
+	ImageList_ReplaceIcon now calls CopyImage internally.
+	Assign a value for the hIconSm CLASS member (using CopyImage).
+
+	* win32/console.c: Guy Albertelli <galberte@neo.lrun.com>
+	Fixed WriteConsoleOutput and GetNumberOfConsoleInputEvents.
+
+	* dlls/comctl32/propsheet.c: Thuy Nguyen <thuy@macadamian.com>
+	Give applications a copy of the property sheet dialog template as they
+	might modify it.
+
+	* relay32/relay386.c: Marcus Meissner <marcus@jet.franken.de>
+	Relay exclude lists were not working due to some CharUpperA()
+	somewhere else.
+
+	* loader/loadorder.c, wine.ini:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	winspool -> winspool.drv
+
+	* dlls/comctl32/comctl32.spec, dlls/comctl32/comctl32undoc.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Implemented StrCmpNIA like the other StrCmpXX functions.
+
+	* files/profile.c: Thuy Nguyen <thuy@macadamian.com>
+	Resolve environment variable when enumerating values.
+
+	* controls/edit.c: Pascal Lessard <pascal@macadamian.com>
+	The format rect is recalculated for each font change. MoveEnd &
+	MoveHome improved.
+
+Fri Sep  3 16:49:17 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* graphics/x11drv/dib.c, include/x11drv.h, objects/dib.c:
+	Karl Lessard <karll@corel.com>
+	Ian Ward
+	Dan Langlois
+	Speed up conversion between XImages and DIBSections.
+
+	* dlls/commdlg/filedlg95.c, dlls/commdlg/filedlgbrowser.c, dlls/commdlg/filedlgbrowser.h, dlls/shell32/shlview.c:
+	Francois Boisvert <francois@macadamian.com>
+	Some <open> features in the file dialog 95.
+
+	* include/winnt.h, scheduler/sysdeps.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Removed global variable pCurrentTeb.
+
+	* memory/heap.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	HEAP_Commit/Decommit were assuming a page size of 4KB
+	unconditionally.
+
+	* include/wingdi.h: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	A few more DC_ defines from Win2000.
+
+	* dlls/comctl32/status.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Check that lpCreate->lpszName is non-NULL.
+
+	* windows/dialog.c: Marcus Meissner <Marcus.Meissner@caldera.de>
+	More restrictive checks, so DIALOG_IsAccelerator don't loop
+	endlessly.
+
+	* controls/menu.c: Pascal Lessard <pascal@macadamian.com>
+	Menu hides when clicked for a second time.
+
+	* windows/msgbox.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	- select the font into the dc before calculating the extent
+	- make buttonheight correspond to text height + width to caption
+	- button was "flashing" on EndDialog (must delete font AFTER EndDialog)
+	- #defines for DlgItemIds
+	- implement MB_RETRYCANCEL
+
+	* controls/edit.c: Stephane Lussier <stephane@macadamian.com>
+	Keep the enable state in the edit structure instead of calling
+	IsWindowEnabled().
+
+	* include/clipboard.h, include/ttydrv.h, include/x11drv.h, ole/clipboard.c, windows/clipboard.c, windows/ttydrv/clipboard.c, windows/ttydrv/init.c, windows/user.c, windows/x11drv/clipboard.c, windows/x11drv/event.c, windows/x11drv/init.c:
+	Noel Borthwick <noel@macadamian.com>
+	- Implement interprocess clipboard communication.
+	- Support for the PRIMARY and CLIPBOARD selection atoms.
+	- Support for the TARGETS selection format.
+	- Expose native Windows clipboard formats through X selection targets.
+
+	* objects/gdiobj.c: Richard Cohen <richard@jubjub.demon.co.uk>
+	Make stock fonts independent of mapping mode.
+	System font should only be bold for Win31.
+
+	* windows/dialog.c: Francis Beaudet <francis@macadamian.com>
+	Removed truncating errors that happen when converting fom dialog units
+	to pixels.
+
+	* windows/winpos.c: Abey George<abey@macadamian.com>
+	Check new coordinates received in WM_NCCALCSIZE message.
+
+	* controls/button.c: Francis Beaudet <francis@macadamian.com>
+	Slight 1 pixel adjustment on the position of the radio button bitmap.
+
+	* dlls/commdlg/filedlg95.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed off by one allocation errors.
+
+	* controls/edit.c: Pascal Lessard <pascal@macadamian.com>
+	The backspace is now handled in the WM_CHAR message.
+
+	* windows/mdi.c, windows/nonclient.c:
+	Francis Beaudet <francis@macadamian.com>
+	Make sure that all MDI children have the WS_EX_MDICHILD style set.
+
+	* memory/string.c: Marcus Meissner <marcus@jet.franken.de>
+	Fixed prototype order.
+
+	* dlls/ntdll/exception.c: Juergen Lock <nox@jelal.kn-bremen.de>
+	Fix EXC_segv for the TRAP_sig undefined case (eg FreeBSD).
+
+	* debugger/stabs.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed crash.
+
+	* dlls/shell32/shell32_main.c: Francis Beaudet <francis@macadamian.com>
+	Fixed the support for the close button in the ShellAbout dialogs.
+
+	* dlls/commdlg/cdlg_Nl.rc: Klaas van Gend <klaas@vangend.demon.nl>
+	Added Dutch resources for PrintDlg32.
+
+	* dlls/commdlg/cdlg.h, dlls/commdlg/cdlg_En.rc, dlls/commdlg/printdlg.c:
+	Klaas van Gend <klaas@vangend.demon.nl>
+	Completed PrintDlg32 resource stringtable.
+
+	* dlls/comctl32/tooltips.c: Francis Beaudet <francis@macadamian.com>
+	Added sanity checks in the cleanup code.
+
+	* windows/x11drv/keyboard.c: Guy Albertelli <galberte@neo.lrun.com>
+	Completed GetKeyNameText for non-character keys.
+
+	* dlls/shell32/brsfolder.c: Francois Boisvert <francois@macadamian.com>
+	Make directories name appear in the BrowseForFolder dialog.
+
+	* loader/loadorder.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Do not remove .drv from filenames.
+
+	* controls/button.c: Francis Beaudet <francis@macadamian.com>
+	Fixed a little positioning bug with the checkbox.
+
+	* windows/nonclient.c, windows/win.c, windows/x11drv/wnd.c:
+	Abey George <abey@macadamian.com>
+	Fixed resizing bugs for windows with WS_THICKFRAME and WS_DLGFRAME
+	styles.
+
+	* multimedia/mci.c: Michael McCormack <mccormac@aals27.alcatel.com.au>
+	Changed snprintf to wsnprintfA to remove unresolved external when
+	compiling on Solaris/Sun.
+
+	* dlls/comctl32/listview.c: Marcus Meissner <marcus@jet.franken.de>
+	Implemented LVM_INSERTCOLUMNW and LVM_INSERTITEMW by using the ascii
+	equivalents. (WinWord 97, File Open dialog)
+
+	* windows/class.c: Marcus Meissner <marcus@jet.franken.de>
+	Use in GetClassInfoW the same hack for systemclasses as in
+	GetClassInfoA (winword 97 with native comctl32).
+
+	* dlls/shell32/pidl.c: Marcus Meissner <marcus@jet.franken.de>
+	Handle SHGDFIL_FINDDATA correctly in SHGetDataFromIDListW.
+
+	* controls/edit.c: Gerard Patel <g.patel@wanadoo.fr>
+	Implemented wParam of WM_PAINT msg for edit control.
+
+	* dlls/winspool/info.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Fix off by one error in WINSPOOL_GetOpenedPrinterA.
+
+	* misc/registry.c: Marcus Meissner <marcus@jet.franken.de>
+	subkey_found did not search for _all_ sub keys.
+
+Sat Aug 21 14:47:29 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/commdlg/filedlg95.c, dlls/commdlg/filedlgbrowser.c, dlls/commdlg/cdlg.h, dlls/commdlg/cdlg32.c:
+	Francois Boisvert <francois@macadamian.com>
+	Implemented basic browsing in the file name edit of the filedlg 95.
+
+	* controls/menu.c: Stephane Lussier <stephane@macadamian.com>
+	Avoid changing the activation state in EnableMenuItem.
+
+	* include/winnt.h: Fixed #ifdef symbol for PowerPC.
+
+	* ole/parsedt.c, ole/parsedt.h:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Only declare DateStyle in a single compilation unit.
+
+	* windows/nonclient.c: Pascal Lessard <pascal@macadamian.com>
+	Added the case of a user defined icon for the sysbutton hittest.
+
+	* ole/typelib.c: Rein Klazes <rklazes@casema.net>
+	Fixed typelib reading to correctly use the offset of the typelib that
+	is embedded in for example a dll file.
+
+	* graphics/x11drv/dib.c: Kristian Nielsen <kristian.nielsen@risoe.dk>
+	Fixed CreateDIBSection() called with negative height to set the height
+	positive in the created DIBSECTION, as per MS knowledgebase Q186586.
+
+	* windows/painting.c: Stephane Lussier <stephane@macadamian.com>
+	The paint rectangle return in the PAINTSTRUCT in BeginPaint should
+	never be bigger than the client area of the window.
+
+	* controls/listbox.c: Rein Klazes <rklazes@casema.net>
+	Make sure that an empty string never matches a listbox entry in
+	LISTBOX_FindString().
+
+	* dlls/version/info.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Alignment fix.
+
+	* controls/menu.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed crash when accessing sysmenu.
+
+	* debugger/stack.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Really do a silent backtrace when requested.
+
+	* debugger/hash.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Do not set the address if the symbol is still tagged INVALID.
+
+	* debugger/stabs.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added support for N_BINCL and N_EINCL instructions.
+	Fixed type parsing (as generated by egcs).
+
+Wed Aug 18 18:40:52 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* tools/build.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Use typedef to work around egcs problem.
+
+	* ole/*.c: Michael Veksler <mveksler@techunix.technion.ac.il>
+	Removed unnecessary includes from ole related files.
+
+	* ole/compobj.c, multimedia/mmsystem.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Adapted to WOW changes.
+
+	* include/callback.h, include/winbase.h, include/wine/winbase16.h, include/wownt32.h, loader/module.c, memory/global.c, memory/selector.c, relay32/Makefile.in, relay32/kernel32.spec, relay32/wow32.spec, relay32/wowthunk.c, win32/kernel32.c, win32/ordinals.c, if1632/kernel.spec, if1632/relay.c, if1632/thunk.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Moved implementation of WOW routines to single file.
+	Added all missing WOW routines, fixed WOWCallback16Ex.
+
+	* multimedia/mmio.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed internal buffer for 16 bit mmio MEM files.
+
+	* multimedia/mci.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	- some errors in cleaning up values returned by MCI drivers: this
+	  should solve the issues reported with the CD player/writer
+	- crash when command was requested with automatic open (note, this
+	  will now gracefully report an error, not do the correct thing).
+
+	* dlls/comctl32/propsheet.c: Thuy Nguyen <thuy@macadamian.com>
+	Implemented the PSH_USEICONID/PSH_USEHICON and the PSP_USETITLE
+	flags.
+
+	* tools/build.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: EFlags were passed incorrectly by CallFrom16Register.
+
+	* loader/task.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: restore STACK16FRAME fields in SwitchStackBack16.
+
+	* tools/wrc/wrc.h, dlls/commdlg/cdlg_En.rc, tools/wrc/CHANGES, tools/wrc/parser.y:
+	Bertho Stultiens <bertho@panter.soci.aau.dk>
+	Wrc did not check any IDs which are only 16 bit. Common dialogs had some
+	IDs larger and that caused problems. This is now solved (I hope).
+
+----------------------------------------------------------------
 Sun Aug 15 18:52:32 1999  Alexandre Julliard  <julliard@winehq.com>
 
 	* objects/cursoricon.c: Steve Tibbett <stevet@corel.com>
