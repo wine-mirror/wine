@@ -721,7 +721,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 		strcat(arglist, ", ");
 	      }
 	    DEBUG_READ_MEM_VERBOSE(ptr, &val, sizeof(val));
-	    sprintf(argtmp, "%s=0x%x", nearest->local_vars[i].name, val);
+	    snprintf(argtmp, sizeof(argtmp), "%s=0x%x", nearest->local_vars[i].name, val);
 
 	    strcat(arglist, argtmp);
 	  }
@@ -736,7 +736,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
        char*	ptr = strrchr(module->module_name, '/');
 
        if (!ptr++) ptr = module->module_name;
-       sprintf( modbuf, " in %s", ptr);
+       snprintf( modbuf, sizeof(modbuf), " in %s", ptr);
     }
     else
        modbuf[0] = '\0';
@@ -765,7 +765,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 
 	if( lineno != -1 )
 	  {
-	    sprintf(linebuff, ":%d", lineno);
+	    snprintf(linebuff, sizeof(linebuff), ":%d", lineno);
 	    lineinfo = linebuff;
 	    if( source != NULL )
 	      {
@@ -779,22 +779,22 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
         else sourcefile++;
 
 	if (addr->off == nearest->value.addr.off)
-	  sprintf( name_buffer, "%s%s [%s%s]%s", nearest->name,
+	  snprintf( name_buffer, sizeof(name_buffer), "%s%s [%s%s]%s", nearest->name,
 		   arglist, sourcefile, lineinfo, modbuf);
 	else
-	  sprintf( name_buffer, "%s+0x%lx%s [%s%s]%s", nearest->name,
+	  snprintf( name_buffer, sizeof(name_buffer), "%s+0x%lx%s [%s%s]%s", nearest->name,
 		   addr->off - nearest->value.addr.off,
 		   arglist, sourcefile, lineinfo, modbuf );
       }
     else
       {
 	if (addr->off == nearest->value.addr.off)
-	  sprintf( name_buffer, "%s%s%s", nearest->name, arglist, modbuf);
+	  snprintf( name_buffer, sizeof(name_buffer), "%s%s%s", nearest->name, arglist, modbuf);
 	else {
 	  if (addr->seg && (nearest->value.addr.seg!=addr->seg))
 	      return NULL;
 	  else
-	      sprintf( name_buffer, "%s+0x%lx%s%s", nearest->name,
+	      snprintf( name_buffer, sizeof(name_buffer), "%s+0x%lx%s%s", nearest->name,
 		       addr->off - nearest->value.addr.off, arglist, modbuf);
  	}
       }

@@ -215,7 +215,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                     /*
                      * Still couldn't find it.  Ask user for path to add.
                      */
-                    sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
+                    snprintf(zbuf, sizeof(zbuf), "Enter path to file '%s': ", sourcefile);
                     DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath));
 
                     if ( tmppath[strlen(tmppath)-1] != '/' )

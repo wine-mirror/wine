@@ -129,7 +129,7 @@ void DEBUG_ExternalDebugger(void)
     memset(pid_string, 0, DBG_BUFF_SIZE);
 
     /* make pid into string */
-    sprintf(pid_string, "%ld", (long) attach_pid);
+    snprintf(pid_string, sizeof(pid_string), "%ld", (long) attach_pid);
 
     /* now exec the debugger to get it's own clean memory space */
     if (dbg_no_xterm)

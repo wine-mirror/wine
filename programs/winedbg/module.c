@@ -246,7 +246,7 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
     cpnt += 1 + buf[0] + sizeof(WORD);
 
     while (DEBUG_READ_MEM_VERBOSE(cpnt, buf, sizeof(buf)) && buf[0]) {
-	sprintf(epname, "%s.%.*s", name, buf[0], &buf[1]);
+	snprintf(epname, sizeof(epname), "%s.%.*s", name, buf[0], &buf[1]);
 	if (DEBUG_GetEP16(moduleAddr, module, *(WORD*)&buf[1 + buf[0]], &value.addr)) {
 	    DEBUG_AddSymbol(epname, &value, NULL, SYM_WIN32 | SYM_FUNC);
 	}
@@ -257,7 +257,7 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
     if (!module->nrname_handle) return;  /* No non-resident table */
     cpnt = (char *)GlobalLock16(module->nrname_handle);
     while (DEBUG_READ_MEM_VERBOSE(cpnt, buf, sizeof(buf)) && buf[0]) {
-	sprintf(epname, "%s.%.*s", name, buf[0], &buf[1]);
+	snprintf(epname, sizeof(epname), "%s.%.*s", name, buf[0], &buf[1]);
 	if (DEBUG_GetEP16(moduleAddr, module, *(WORD*)&buf[1 + buf[0]], &value.addr)) {
 	    DEBUG_AddSymbol(epname, &value, NULL, SYM_WIN32 | SYM_FUNC);
 	}
