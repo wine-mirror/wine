@@ -1173,8 +1173,8 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
  * Implementation of GetFullPathNameA/W.
  *
  * bon@elektron 000331:
- * A test for GetFullPathName with many patholotical case 
- * gives now identical output for Wine and OSR2
+ * A test for GetFullPathName with many pathological cases 
+ * now gives identical output for Wine and OSR2
  */
 static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
                                       BOOL unicode )
