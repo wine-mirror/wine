@@ -108,11 +108,9 @@ UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE hDatabase,
     if( FAILED( r ) )
     {
         ERR("IStorage -> IPropertySetStorage failed\n");
-        if (db)
-            msiobj_release(&db->hdr);
-        return ERROR_FUNCTION_FAILED;
+        ret = ERROR_FUNCTION_FAILED;
+        goto end;
     }
-    ERR("storage = %p propertysetstorage = %p\n", db->storage, psstg);
 
     grfMode = STGM_READ | STGM_SHARE_EXCLUSIVE;
     r = IPropertySetStorage_Open( psstg, &FMTID_SummaryInformation, grfMode, &ps );
@@ -135,7 +133,7 @@ UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE hDatabase,
     suminfo->propstg = ps;
     handle = alloc_msihandle( &suminfo->hdr );
     if( handle )
-    *phSummaryInfo = handle;
+        *phSummaryInfo = handle;
     else
         ret = ERROR_FUNCTION_FAILED;
     msiobj_release( &suminfo->hdr );
@@ -145,7 +143,7 @@ end:
         IPropertyStorage_Release(ps);
     if( psstg )
         IPropertySetStorage_Release(psstg);
-    if (db)
+    if( db )
         msiobj_release(&db->hdr);
 
     return ret;
@@ -275,19 +273,24 @@ UINT WINAPI MsiSummaryInfoGetPropertyW(
 
 UINT WINAPI MsiSummaryInfoSetPropertyA( MSIHANDLE hSummaryInfo, UINT uiProperty,
                                        UINT uiDataType, INT iValue, 
-                                       FILETIME* pftValue, LPSTR szValue)
+                                       FILETIME* pftValue, LPSTR szValue )
 {
+    FIXME("%ld %u %u %i %p %s\n", hSummaryInfo, uiProperty,
+          uiDataType, iValue, pftValue, debugstr_a(szValue) );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 UINT WINAPI MsiSummaryInfoSetPropertyW( MSIHANDLE hSummaryInfo, UINT uiProperty,
                                        UINT uiDataType, INT iValue, 
-                                       FILETIME* pftValue, LPWSTR szValue)
+                                       FILETIME* pftValue, LPWSTR szValue )
 {
+    FIXME("%ld %u %u %i %p %s\n", hSummaryInfo, uiProperty,
+          uiDataType, iValue, pftValue, debugstr_w(szValue) );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiSummaryInfoPersist(MSIHANDLE hSummaryInfo)
+UINT WINAPI MsiSummaryInfoPersist( MSIHANDLE hSummaryInfo )
 {
+    FIXME("%ld\n", hSummaryInfo );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
