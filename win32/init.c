@@ -67,9 +67,8 @@ BOOL32 WINAPI GetComputerName32W(LPWSTR name,LPDWORD size)
 {
     LPSTR nameA = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *size);
     BOOL32 ret = GetComputerName32A(nameA,size);
-    if (ret) lstrcpynAtoW(name,nameA,*size);
+    if (ret) lstrcpynAtoW(name,nameA,*size+1);
     HeapFree( GetProcessHeap(), 0, nameA );
-    /* FIXME : size correct? */
     return ret;
 }
 
