@@ -35,7 +35,7 @@ static void test_RtlDetermineDosPathNameType(void)
     struct test
     {
         const char *path;
-        int ret;
+        UINT ret;
     };
 
     static const struct test tests[] =
@@ -255,7 +255,7 @@ static void test_RtlGetFullPathName_U()
     ULONG ret;
     WCHAR *file_part;
     DWORD reslen;
-    int len;
+    UINT len;
 
     for (test = tests; test->path; test++)
     {

@@ -71,7 +71,7 @@ static void test_fileops( void )
     ok(feof(file) !=0,"feof doesn't signal EOF\n");
     rewind(file);
     ok(fgets(buffer,strlen(outbuffer),file) !=0,"fgets failed unexpected\n");
-    ok(lstrlenA(buffer) == strlen(outbuffer) -1,"fgets didn't read right size\n");
+    ok(lstrlenA(buffer) == lstrlenA(outbuffer) -1,"fgets didn't read right size\n");
     ok(fgets(buffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
     ok(strlen(buffer) == 1,"fgets dropped chars\n");
     ok(buffer[0] == outbuffer[strlen(outbuffer)-1],"fgets exchanged chars\n");
@@ -83,7 +83,7 @@ static void test_fileops( void )
     ok(feof(file) !=0,"feof doesn't signal EOF\n");
     rewind(file);
     ok(fgetws(wbuffer,strlen(outbuffer),file) !=0,"fgetws failed unexpected\n");
-    ok(lstrlenW(wbuffer) == (strlen(outbuffer) -1),"fgetws didn't read right size\n");
+    ok(lstrlenW(wbuffer) == (lstrlenA(outbuffer) -1),"fgetws didn't read right size\n");
     ok(fgetws(wbuffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
     ok(lstrlenW(wbuffer) == 1,"fgets dropped chars\n");
     fclose (file);

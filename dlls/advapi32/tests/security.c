@@ -224,7 +224,7 @@ static void test_allocateLuid(void)
     LUID luid1, luid2;
     BOOL ret;
 
-    pAllocateLocallyUniqueId = GetProcAddress(hmod, "AllocateLocallyUniqueId");
+    pAllocateLocallyUniqueId = (void*)GetProcAddress(hmod, "AllocateLocallyUniqueId");
     if (!pAllocateLocallyUniqueId) return;
 
     ret = pAllocateLocallyUniqueId(&luid1);
@@ -256,7 +256,7 @@ static void test_lookupPrivilegeName(void)
     BOOL ret;
 
     /* check whether it's available first */
-    pLookupPrivilegeNameA = GetProcAddress(hmod, "LookupPrivilegeNameA");
+    pLookupPrivilegeNameA = (void*)GetProcAddress(hmod, "LookupPrivilegeNameA");
     if (!pLookupPrivilegeNameA) return;
     luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
     ret = pLookupPrivilegeNameA(NULL, &luid, buf, &cchName);
@@ -309,7 +309,7 @@ static void test_lookupPrivilegeName(void)
 struct NameToLUID
 {
     const char *name;
-    LONG lowPart;
+    DWORD lowPart;
 };
 
 static void test_lookupPrivilegeValue(void)
@@ -351,7 +351,7 @@ static void test_lookupPrivilegeValue(void)
     BOOL ret;
 
     /* check whether it's available first */
-    pLookupPrivilegeValueA = GetProcAddress(hmod, "LookupPrivilegeValueA");
+    pLookupPrivilegeValueA = (void*)GetProcAddress(hmod, "LookupPrivilegeValueA");
     if (!pLookupPrivilegeValueA) return;
     ret = pLookupPrivilegeValueA(NULL, "SeCreateTokenPrivilege", &luid);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)

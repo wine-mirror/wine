@@ -259,8 +259,7 @@ static const unsigned char MF_PATTERN_BRUSH_BITS[] = {
 static void dump_mf_bits (const HMETAFILE mf, const char *desc)
 {
     char buf[MF_BUFSIZE];
-    UINT mfsize;
-    int i;
+    UINT mfsize, i;
 
     mfsize = GetMetaFileBitsEx (mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetMetaFileBitsEx failed.\n", desc);
@@ -286,12 +285,12 @@ static void dump_mf_bits (const HMETAFILE mf, const char *desc)
  * otherwise returns the number of non-matching bytes.
  */
 
-static int compare_mf_bits (const HMETAFILE mf, const char *bits, int bsize,
+static int compare_mf_bits (const HMETAFILE mf, const char *bits, UINT bsize,
     const char *desc)
 {
     char buf[MF_BUFSIZE];
-    UINT mfsize;
-    int i, diff;
+    UINT mfsize, i;
+    int diff;
 
     mfsize = GetMetaFileBitsEx (mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetMetaFileBitsEx failed.\n", desc);
