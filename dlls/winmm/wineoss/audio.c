@@ -65,8 +65,12 @@
 #include "winerror.h"
 #include "wine/winuser16.h"
 #include "mmddk.h"
+#include "mmreg.h"
 #include "dsound.h"
 #include "dsdriver.h"
+#include "ks.h"
+#include "ksguid.h"
+#include "ksmedia.h"
 #include "oss.h"
 #include "wine/debug.h"
 
@@ -180,7 +184,7 @@ typedef struct {
     volatile int		state;			/* one of the WINE_WS_ manifest constants */
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
-    PCMWAVEFORMAT		format;
+    WAVEFORMATPCMEX             waveFormat;
     DWORD			volume;
 
     /* OSS information */
@@ -210,7 +214,7 @@ typedef struct {
     DWORD			dwFragmentSize;		/* OpenSound '/dev/dsp' give us that size */
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
-    PCMWAVEFORMAT		format;
+    WAVEFORMATPCMEX             waveFormat;
     LPWAVEHDR			lpQueuePtr;
     DWORD			dwTotalRecorded;
     DWORD			dwTotalRead;
@@ -324,33 +328,33 @@ static DWORD wdDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 }
 
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
-                             PCMWAVEFORMAT* format)
+                             WAVEFORMATPCMEX* format)
 {
     TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
-          lpTime->wType, format->wBitsPerSample, format->wf.nSamplesPerSec,
-          format->wf.nChannels, format->wf.nAvgBytesPerSec);
+          lpTime->wType, format->Format.wBitsPerSample, format->Format.nSamplesPerSec,
+          format->Format.nChannels, format->Format.nAvgBytesPerSec);
     TRACE("Position in bytes=%lu\n", position);
 
     switch (lpTime->wType) {
     case TIME_SAMPLES:
-        lpTime->u.sample = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
+        lpTime->u.sample = position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels);
         TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
         break;
     case TIME_MS:
-        lpTime->u.ms = 1000.0 * position / (format->wBitsPerSample / 8 * format->wf.nChannels * format->wf.nSamplesPerSec);
+        lpTime->u.ms = 1000.0 * position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels * format->Format.nSamplesPerSec);
         TRACE("TIME_MS=%lu\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
-        position = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
-        lpTime->u.smpte.sec = position / format->wf.nSamplesPerSec;
-        position -= lpTime->u.smpte.sec * format->wf.nSamplesPerSec;
+        position = position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels);
+        lpTime->u.smpte.sec = position / format->Format.nSamplesPerSec;
+        position -= lpTime->u.smpte.sec * format->Format.nSamplesPerSec;
         lpTime->u.smpte.min = lpTime->u.smpte.sec / 60;
         lpTime->u.smpte.sec -= 60 * lpTime->u.smpte.min;
         lpTime->u.smpte.hour = lpTime->u.smpte.min / 60;
         lpTime->u.smpte.min -= 60 * lpTime->u.smpte.hour;
         lpTime->u.smpte.fps = 30;
-        lpTime->u.smpte.frame = position * lpTime->u.smpte.fps / format->wf.nSamplesPerSec;
-        position -= lpTime->u.smpte.frame * format->wf.nSamplesPerSec / lpTime->u.smpte.fps;
+        lpTime->u.smpte.frame = position * lpTime->u.smpte.fps / format->Format.nSamplesPerSec;
+        position -= lpTime->u.smpte.frame * format->Format.nSamplesPerSec / lpTime->u.smpte.fps;
         if (position != 0)
         {
             /* Round up */
@@ -370,6 +374,47 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         break;
     }
     return MMSYSERR_NOERROR;
+}
+
+static BOOL supportedFormat(LPWAVEFORMATEX wf)
+{
+    TRACE("(%p)\n",wf);
+
+    if (wf->nSamplesPerSec<DSBFREQUENCY_MIN||wf->nSamplesPerSec>DSBFREQUENCY_MAX)
+        return FALSE;
+
+    if (wf->wFormatTag == WAVE_FORMAT_PCM) {
+        if (wf->nChannels==1||wf->nChannels==2) { 
+            if (wf->wBitsPerSample==8||wf->wBitsPerSample==16) {
+                return TRUE;
+            }
+        }
+    }
+    else if (wf->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE * wfex = (WAVEFORMATEXTENSIBLE *)wf; 
+        if (wf->cbSize == 22 && IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
+            if (wf->nChannels==1||wf->nChannels==2) { 
+                if ((wf->wBitsPerSample==8||wf->wBitsPerSample==16) &&
+                   (wfex->Samples.wValidBitsPerSample==8||wfex->Samples.wValidBitsPerSample==16)) {
+                    FIXME("WAVE_FORMAT_EXTENSIBLE not fully supported\n");
+                    return TRUE;
+                }
+            }
+        }
+    }
+
+    return FALSE;
+}
+
+static void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
+{
+    ZeroMemory(wf2, sizeof(wf2));
+    if (wf1->wFormatTag == WAVE_FORMAT_PCM)
+        memcpy(wf2, wf1, sizeof(PCMWAVEFORMAT));
+    else if (wf1->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        memcpy(wf2, wf1, sizeof(WAVEFORMATPCMEX));
+    else
+        memcpy(wf2, wf1, sizeof(WAVEFORMATEX) + wf1->cbSize);
 }
 
 /*======================================================================*
@@ -1425,7 +1470,7 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
 static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
 {
     /* time for one fragment to be played */
-    return wwo->dwFragmentSize * 1000 / wwo->format.wf.nAvgBytesPerSec;
+    return wwo->dwFragmentSize * 1000 / wwo->waveFormat.Format.nAvgBytesPerSec;
 }
 
 /**************************************************************************
@@ -1442,7 +1487,7 @@ static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
     if (lpWaveHdr->reserved < wwo->dwPlayedTotal) {
 	dwMillis = 1;
     } else {
-	dwMillis = (lpWaveHdr->reserved - wwo->dwPlayedTotal) * 1000 / wwo->format.wf.nAvgBytesPerSec;
+	dwMillis = (lpWaveHdr->reserved - wwo->dwPlayedTotal) * 1000 / wwo->waveFormat.Format.nAvgBytesPerSec;
 	if (!dwMillis) dwMillis = 1;
     }
 
@@ -1810,10 +1855,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* only PCM format is supported so far... */
-    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
-	lpDesc->lpFormat->nChannels == 0 ||
-	lpDesc->lpFormat->nSamplesPerSec == 0 ||
-        (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
+    if (!supportedFormat(lpDesc->lpFormat)) {
 	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
@@ -1895,15 +1937,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
-    memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+    memcpy(&wwo->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    copy_format(lpDesc->lpFormat, &wwo->waveFormat);
 
-    if (wwo->format.wBitsPerSample == 0) {
+    if (wwo->waveFormat.Format.wBitsPerSample == 0) {
 	WARN("Resetting zeroed wBitsPerSample\n");
-	wwo->format.wBitsPerSample = 8 *
-	    (wwo->format.wf.nAvgBytesPerSec /
-	     wwo->format.wf.nSamplesPerSec) /
-	    wwo->format.wf.nChannels;
+	wwo->waveFormat.Format.wBitsPerSample = 8 *
+	    (wwo->waveFormat.Format.nAvgBytesPerSec /
+	     wwo->waveFormat.Format.nSamplesPerSec) /
+	    wwo->waveFormat.Format.nChannels;
     }
     /* Read output space info for future reference */
     if (ioctl(wwo->ossdev->fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
@@ -1935,14 +1977,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     TRACE("fd=%d fragstotal=%d fragsize=%d BufferSize=%ld\n",
           wwo->ossdev->fd, info.fragstotal, info.fragsize, wwo->dwBufferSize);
-    if (wwo->dwFragmentSize % wwo->format.wf.nBlockAlign) {
-        ERR("Fragment doesn't contain an integral number of data blocks fragsize=%ld BlockAlign=%d\n",wwo->dwFragmentSize,wwo->format.wf.nBlockAlign);
+    if (wwo->dwFragmentSize % wwo->waveFormat.Format.nBlockAlign) {
+        ERR("Fragment doesn't contain an integral number of data blocks fragsize=%ld BlockAlign=%d\n",wwo->dwFragmentSize,wwo->waveFormat.Format.nBlockAlign);
         /* Some SoundBlaster 16 cards return an incorrect (odd) fragment
          * size for 16 bit sound. This will cause a system crash when we try
          * to write just the specified odd number of bytes. So if we
          * detect something is wrong we'd better fix it.
          */
-        wwo->dwFragmentSize-=wwo->dwFragmentSize % wwo->format.wf.nBlockAlign;
+        wwo->dwFragmentSize-=wwo->dwFragmentSize % wwo->waveFormat.Format.nBlockAlign;
     }
 
     OSS_InitRingMessage(&wwo->msgRing);
@@ -1954,9 +1996,9 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
-	  wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
-	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
-	  wwo->format.wf.nBlockAlign);
+	  wwo->waveFormat.Format.wBitsPerSample, wwo->waveFormat.Format.nAvgBytesPerSec,
+	  wwo->waveFormat.Format.nSamplesPerSec, wwo->waveFormat.Format.nChannels,
+	  wwo->waveFormat.Format.nBlockAlign);
 
     return wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
 }
@@ -2019,10 +2061,10 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->lpNext = 0;
 
-    if ((lpWaveHdr->dwBufferLength & (WOutDev[wDevID].format.wf.nBlockAlign - 1)) != 0)
+    if ((lpWaveHdr->dwBufferLength & (WOutDev[wDevID].waveFormat.Format.nBlockAlign - 1)) != 0)
     {
-        WARN("WaveHdr length isn't a multiple of the PCM block size: %ld %% %d\n",lpWaveHdr->dwBufferLength,WOutDev[wDevID].format.wf.nBlockAlign);
-        lpWaveHdr->dwBufferLength &= ~(WOutDev[wDevID].format.wf.nBlockAlign - 1);
+        WARN("WaveHdr length isn't a multiple of the PCM block size: %ld %% %d\n",lpWaveHdr->dwBufferLength,WOutDev[wDevID].waveFormat.Format.nBlockAlign);
+        lpWaveHdr->dwBufferLength &= ~(WOutDev[wDevID].waveFormat.Format.nBlockAlign - 1);
     }
 
     OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
@@ -2152,7 +2194,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	OSS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
 #endif
 
-    return bytes_to_mmtime(lpTime, wwo->dwPlayedTotal, &wwo->format);
+    return bytes_to_mmtime(lpTime, wwo->dwPlayedTotal, &wwo->waveFormat);
 }
 
 /**************************************************************************
@@ -2353,7 +2395,7 @@ struct IDsDriverBufferImpl
     /* IDsDriverBufferImpl fields */
     IDsDriverImpl*              drv;
     DWORD                       buflen;
-    WAVEFORMATEX                wfx;
+    WAVEFORMATPCMEX             wfex;
     LPBYTE                      mapping;
     DWORD                       maplen;
     int                         fd;
@@ -2572,8 +2614,8 @@ IDsDriverNotifyVtbl dsdnvt =
 
 static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
 {
-    TRACE("(%p), format=%ldx%dx%d\n", dsdb, dsdb->wfx.nSamplesPerSec,
-          dsdb->wfx.wBitsPerSample, dsdb->wfx.nChannels);
+    TRACE("(%p), format=%ldx%dx%d\n", dsdb, dsdb->wfex.Format.nSamplesPerSec,
+          dsdb->wfex.Format.wBitsPerSample, dsdb->wfex.Format.nChannels);
     if (!dsdb->mapping) {
         dsdb->mapping = mmap(NULL, dsdb->maplen, PROT_WRITE, MAP_SHARED,
                              dsdb->fd, 0);
@@ -2593,8 +2635,8 @@ static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
 	{
             unsigned char*      p1 = dsdb->mapping;
             unsigned            len = dsdb->maplen;
-	    unsigned char	silence = (dsdb->wfx.wBitsPerSample == 8) ? 128 : 0;
-	    unsigned long	ulsilence = (dsdb->wfx.wBitsPerSample == 8) ? 0x80808080 : 0;
+	    unsigned char	silence = (dsdb->wfex.Format.wBitsPerSample == 8) ? 128 : 0;
+	    unsigned long	ulsilence = (dsdb->wfex.Format.wBitsPerSample == 8) ? 0x80808080 : 0;
 
 	    if (len >= 16) /* so we can have at least a 4 long area to store... */
 	    {
@@ -3022,7 +3064,7 @@ static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
     (*ippdsdb)->lpVtbl  = &dsdbvt;
     (*ippdsdb)->ref	= 1;
     (*ippdsdb)->drv	= This;
-    (*ippdsdb)->wfx     = *pwfx;
+    copy_format(pwfx, &(*ippdsdb)->wfex);
     (*ippdsdb)->fd      = WOutDev[This->wDevID].ossdev->fd;
     (*ippdsdb)->dwFlags = dwFlags;
 
@@ -3320,7 +3362,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     read(wwi->ossdev->fd, &xs, 4);
 
     /* make sleep time to be # of ms to output a fragment */
-    dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->format.wf.nAvgBytesPerSec;
+    dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->waveFormat.Format.nAvgBytesPerSec;
     TRACE("sleeptime=%ld ms\n", dwSleepTime);
 
     for (;;) {
@@ -3620,10 +3662,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* only PCM format is supported so far... */
-    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
-	lpDesc->lpFormat->nChannels == 0 ||
-	lpDesc->lpFormat->nSamplesPerSec == 0 ||
-        (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
+    if (!supportedFormat(lpDesc->lpFormat)) {
 	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
@@ -3697,15 +3736,15 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwi->dwTotalRead = 0;
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwi->waveDesc, lpDesc,           sizeof(WAVEOPENDESC));
-    memcpy(&wwi->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+    memcpy(&wwi->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    copy_format(lpDesc->lpFormat, &wwi->waveFormat);
 
-    if (wwi->format.wBitsPerSample == 0) {
+    if (wwi->waveFormat.Format.wBitsPerSample == 0) {
 	WARN("Resetting zeroed wBitsPerSample\n");
-	wwi->format.wBitsPerSample = 8 *
-	    (wwi->format.wf.nAvgBytesPerSec /
-	     wwi->format.wf.nSamplesPerSec) /
-	    wwi->format.wf.nChannels;
+	wwi->waveFormat.Format.wBitsPerSample = 8 *
+	    (wwi->waveFormat.Format.nAvgBytesPerSec /
+	     wwi->waveFormat.Format.nSamplesPerSec) /
+	    wwi->waveFormat.Format.nChannels;
     }
 
     if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
@@ -3725,9 +3764,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     TRACE("dwFragmentSize=%lu\n", wwi->dwFragmentSize);
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
-	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
-	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
-	  wwi->format.wf.nBlockAlign);
+	  wwi->waveFormat.Format.wBitsPerSample, wwi->waveFormat.Format.nAvgBytesPerSec,
+	  wwi->waveFormat.Format.nSamplesPerSec, wwi->waveFormat.Format.nChannels,
+	  wwi->waveFormat.Format.nBlockAlign);
 
     OSS_InitRingMessage(&wwi->msgRing);
 
@@ -3903,7 +3942,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
         OSS_AddRingMessage(&(wwi->msgRing), WINE_WM_UPDATE, 0, TRUE);
 #endif
 
-    return bytes_to_mmtime(lpTime, wwi->dwTotalRecorded, &wwi->format);
+    return bytes_to_mmtime(lpTime, wwi->dwTotalRecorded, &wwi->waveFormat);
 }
 
 /**************************************************************************
