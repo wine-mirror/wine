@@ -620,6 +620,13 @@ typedef struct _DDPIXELFORMAT {
 #define	DDSD_LINEARSIZE		0x00080000
 #define	DDSD_ALL		0x000ff9ee
 
+/* EnumSurfaces flags */
+#define DDENUMSURFACES_ALL          0x00000001
+#define DDENUMSURFACES_MATCH        0x00000002
+#define DDENUMSURFACES_NOMATCH      0x00000004
+#define DDENUMSURFACES_CANBECREATED 0x00000008
+#define DDENUMSURFACES_DOESEXIST    0x00000010
+
 /* SetDisplayMode flags */
 #define DDSDM_STANDARDVGAMODE	0x00000001
 
@@ -987,6 +994,9 @@ struct _common_directdrawsurface {
     LPDIRECTDRAWSURFACE3	backbuffer;
 
     DDSURFACEDESC               surface_desc;
+
+    DDCOLORKEY                  ckDestOverlay, ckSrcOverlay;
+    DDCOLORKEY                  ckDestBlt, ckSrcBlt;
 };
 
 struct _dga_directdrawsurface {

@@ -124,7 +124,7 @@ DirectDrawEnumerate32A(LPDDENUMCALLBACK32A ddenumproc,LPVOID data) {
 	}
 	ddenumproc(&XLIB_DirectDraw_GUID,"WINE with Xlib","display",data);
 	ddenumproc(NULL,"WINE","display",data);
-	return 0;
+	return DD_OK;
 }
 
 /* What is this doing here? */
@@ -391,14 +391,14 @@ static HRESULT WINAPI IDirectDrawSurface3_Lock(
 	} else {
 		assert(this->s.surface_desc.y.lpSurface);
 	}
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDrawSurface3_Unlock(
 	LPDIRECTDRAWSURFACE3 this,LPVOID surface
 ) {
 	TRACE(ddraw,"(%p)->Unlock(%p)\n",this,surface);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
@@ -469,7 +469,7 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_Flip(
 		this->s.surface_desc.y.lpSurface = flipto->s.surface_desc.y.lpSurface;
 		flipto->s.surface_desc.y.lpSurface = ptmp;
 	}
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -480,7 +480,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 ) {
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",this,flipto,dwFlags);
 	if (!this->s.ddraw->e.xlib.paintable)
-		return 0;
+		return DD_OK;
 
 	if (!flipto) {
 		if (this->s.backbuffer)
@@ -522,7 +522,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 		this->s.surface_desc.y.lpSurface = flipto->s.surface_desc.y.lpSurface;
 		flipto->s.surface_desc.y.lpSurface = surf;
 	}
-	return 0;
+	return DD_OK;
 }
 
 
@@ -534,12 +534,15 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
 ) {
 	int i;
-	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
+	TRACE(ddraw,"(%p)->(%p)\n",this,pal);
 
-	if (!(pal->cm) && (this->s.ddraw->d.depth<=8)) {
+	if( !(pal->cm) && (this->s.ddraw->d.depth<=8)) 
+	{
 		pal->cm = TSXCreateColormap(display,this->s.ddraw->e.xlib.drawable,DefaultVisualOfScreen(screen),AllocAll);
-		/* FIXME: this is not correct, when using -managed */
+
+		/* FIXME: this is not correct, when using -managed (XSetWindowColormap??) */
 		TSXInstallColormap(display,pal->cm);
+
 		for (i=0;i<256;i++) {
 			XColor xc;
 
@@ -551,6 +554,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 			TSXStoreColor(display,pal->cm,&xc);
 		}
         }
+
         /* According to spec, we are only supposed to 
          * AddRef if this is not the same palette.
          */
@@ -574,7 +578,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
           /* Perform the refresh */
           TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
         }
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDrawSurface3_SetPalette(
@@ -602,7 +606,7 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_SetPalette(
           }
 	  TSXF86DGAInstallColormap(display,DefaultScreen(display),this->s.palette->cm);
         }
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -682,7 +686,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	    if (dwFlags) {
 	      TRACE(ddraw,"\t(src=NULL):Unsupported flags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
 	    }
-	    return 0;
+	    return DD_OK;
 	}
 
 	if (	(xsrc.top ==0) && (xsrc.bottom ==ddesc.dwHeight) &&
@@ -714,7 +718,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	this->lpvtbl->fnUnlock(this,ddesc.y.lpSurface);
 	src ->lpvtbl->fnUnlock(src,sdesc.y.lpSurface);
 
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_BltFast(
@@ -742,7 +746,7 @@ static HRESULT WINAPI IDirectDrawSurface3_BltFast(
 	}
 	this->lpvtbl->fnUnlock(this,ddesc.y.lpSurface);
 	src ->lpvtbl->fnUnlock(src,sdesc.y.lpSurface);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_BltBatch(
@@ -751,7 +755,7 @@ static HRESULT WINAPI IDirectDrawSurface3_BltBatch(
 	FIXME(ddraw,"(%p)->BltBatch(%p,%08lx,%08lx),stub!\n",
 		this,ddbltbatch,x,y
 	);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_GetCaps(
@@ -759,7 +763,7 @@ static HRESULT WINAPI IDirectDrawSurface3_GetCaps(
 ) {
 	TRACE(ddraw,"(%p)->GetCaps(%p)\n",this,caps);
 	caps->dwCaps = DDSCAPS_PALETTE; /* probably more */
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_GetSurfaceDesc(
@@ -781,7 +785,7 @@ static HRESULT WINAPI IDirectDrawSurface3_GetSurfaceDesc(
 		fprintf(stderr,"\n");
 	}
 
-	return 0;
+	return DD_OK;
 }
 
 static ULONG WINAPI IDirectDrawSurface3_AddRef(LPDIRECTDRAWSURFACE3 this) {
@@ -871,7 +875,7 @@ static HRESULT WINAPI IDirectDrawSurface3_GetAttachedSurface(
         if( this->s.backbuffer )
           this->s.backbuffer->lpvtbl->fnAddRef( this->s.backbuffer );
 
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_Initialize(
@@ -889,26 +893,26 @@ static HRESULT WINAPI IDirectDrawSurface3_GetPixelFormat(
 
 	*pf = this->s.surface_desc.ddpfPixelFormat;
 	
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_GetBltStatus(LPDIRECTDRAWSURFACE3 this,DWORD dwFlags) {
 	FIXME(ddraw,"(%p)->(0x%08lx),stub!\n",this,dwFlags);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_GetOverlayPosition(
 	LPDIRECTDRAWSURFACE3 this,LPLONG x1,LPLONG x2
 ) {
 	FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,x1,x2);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_SetClipper(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWCLIPPER clipper
 ) {
 	FIXME(ddraw,"(%p)->(%p),stub!\n",this,clipper);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_AddAttachedSurface(
@@ -919,19 +923,19 @@ static HRESULT WINAPI IDirectDrawSurface3_AddAttachedSurface(
 	/* This hack will be enough for the moment */
 	if (this->s.backbuffer == NULL)
 	this->s.backbuffer = surf;
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_GetDC(LPDIRECTDRAWSURFACE3 this,HDC32* lphdc) {
 	FIXME(ddraw,"(%p)->GetDC(%p)\n",this,lphdc);
 	*lphdc = BeginPaint32(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_ReleaseDC(LPDIRECTDRAWSURFACE3 this,HDC32 hdc) {
 	FIXME(ddraw,"(%p)->(0x%08lx),stub!\n",this,(long)hdc);
 	EndPaint32(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
-	return 0;
+	return DD_OK;
 }
 
 
@@ -951,7 +955,7 @@ static HRESULT WINAPI IDirectDrawSurface3_QueryInterface(LPDIRECTDRAWSURFACE3 th
 	) {
 		*obj = this;
 		this->lpvtbl->fnAddRef(this);
-		return 0;
+		return S_OK;
 	}
 	FIXME(ddraw,"(%p):interface for IID %s NOT found!\n",this,xrefiid);
 	return OLE_E_ENUM_NOMORE;
@@ -959,29 +963,54 @@ static HRESULT WINAPI IDirectDrawSurface3_QueryInterface(LPDIRECTDRAWSURFACE3 th
 
 static HRESULT WINAPI IDirectDrawSurface3_IsLost(LPDIRECTDRAWSURFACE3 this) {
 	TRACE(ddraw,"(%p)->(), stub!\n",this);
-	return 0; /* hmm */
+	return DD_OK; /* hmm */
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_EnumAttachedSurfaces(LPDIRECTDRAWSURFACE3 this,LPVOID context,LPDDENUMSURFACESCALLBACK esfcb) {
 	FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,context,esfcb);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_Restore(LPDIRECTDRAWSURFACE3 this) {
 	FIXME(ddraw,"(%p)->(),stub!\n",this);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_SetColorKey(
-	LPDIRECTDRAWSURFACE3 this, DWORD dwFlags, LPDDCOLORKEY ckey
-) {
-	FIXME(ddraw,"(%p)->(0x%08lx,%p),stub!\n",this,dwFlags,ckey);
+	LPDIRECTDRAWSURFACE3 this, DWORD dwFlags, LPDDCOLORKEY ckey ) 
+{
+        TRACE(ddraw,"(%p)->(0x%08lx,%p)\n",this,dwFlags,ckey);
 
         if( dwFlags & DDCKEY_SRCBLT )
+        {
            dwFlags &= ~DDCKEY_SRCBLT;
+           memcpy( &(this->s.ckSrcBlt), ckey, sizeof( *ckey ) );
+        }
+
+        if( dwFlags & DDCKEY_DESTBLT )
+        {
+           dwFlags &= ~DDCKEY_DESTBLT;
+           memcpy( &(this->s.ckDestBlt), ckey, sizeof( *ckey ) );
+        }
+
+        if( dwFlags & DDCKEY_SRCOVERLAY )
+        {
+           dwFlags &= ~DDCKEY_SRCOVERLAY;
+           memcpy( &(this->s.ckSrcOverlay), ckey, sizeof( *ckey ) );
+        }
+        if( dwFlags & DDCKEY_DESTOVERLAY )
+        {
+           dwFlags &= ~DDCKEY_DESTOVERLAY;
+           memcpy( &(this->s.ckDestOverlay), ckey, sizeof( *ckey ) );
+        }
+
         if( dwFlags )
-          TRACE( ddraw, "unhandled dwFlags: %08lx\n", dwFlags );
-	return DD_OK;
+        {
+          FIXME( ddraw, "unhandled dwFlags: 0x%08lx\n", dwFlags );
+        }
+
+        return DD_OK;
+
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_AddOverlayDirtyRect(
@@ -1029,7 +1058,35 @@ static HRESULT WINAPI IDirectDrawSurface3_GetColorKey(
         DWORD dwFlags,
         LPDDCOLORKEY lpDDColorKey )
 {
-  FIXME(ddraw,"(%p)->(0x%08lx,%p),stub!\n", this, dwFlags, lpDDColorKey);
+  TRACE(ddraw,"(%p)->(0x%08lx,%p)\n", this, dwFlags, lpDDColorKey);
+
+  if( dwFlags & DDCKEY_SRCBLT )  {
+     dwFlags &= ~DDCKEY_SRCBLT;
+     memcpy( lpDDColorKey, &(this->s.ckSrcBlt), sizeof( *lpDDColorKey ) );
+  }
+
+  if( dwFlags & DDCKEY_DESTBLT )
+  {
+    dwFlags &= ~DDCKEY_DESTBLT;
+    memcpy( lpDDColorKey, &(this->s.ckDestBlt), sizeof( *lpDDColorKey ) );
+  }
+
+  if( dwFlags & DDCKEY_SRCOVERLAY )
+  {
+    dwFlags &= ~DDCKEY_SRCOVERLAY;
+    memcpy( lpDDColorKey, &(this->s.ckSrcOverlay), sizeof( *lpDDColorKey ) );
+  }
+
+  if( dwFlags & DDCKEY_DESTOVERLAY )
+  {
+    dwFlags &= ~DDCKEY_DESTOVERLAY;
+    memcpy( lpDDColorKey, &(this->s.ckDestOverlay), sizeof( *lpDDColorKey ) );
+  }
+
+  if( dwFlags )
+  {
+    FIXME( ddraw, "unhandled dwFlags: 0x%08lx\n", dwFlags );
+  }
 
   return DD_OK;
 }
@@ -1231,7 +1288,7 @@ HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags,
   (*lplpDDClipper)->lpvtbl = &ddclipvt;
   (*lplpDDClipper)->ref = 1;
 
-  return 0;
+  return DD_OK;
 }
 
 /******************************************************************************
@@ -1241,7 +1298,7 @@ static HRESULT WINAPI IDirectDrawClipper_SetHwnd(
 	LPDIRECTDRAWCLIPPER this,DWORD x,HWND32 hwnd
 ) {
 	FIXME(ddraw,"(%p)->SetHwnd(0x%08lx,0x%08lx),stub!\n",this,x,(DWORD)hwnd);
-	return 0;
+	return DD_OK;
 }
 
 static ULONG WINAPI IDirectDrawClipper_Release(LPDIRECTDRAWCLIPPER this) {
@@ -1259,27 +1316,68 @@ static HRESULT WINAPI IDirectDrawClipper_GetClipList(
 ) {
 	FIXME(ddraw,"(%p,%p,%p,%p),stub!\n",this,rects,lprgn,hmm);
 	if (hmm) *hmm=0;
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDrawClipper_SetClipList(
 	LPDIRECTDRAWCLIPPER this,LPRGNDATA lprgn,DWORD hmm
 ) {
 	FIXME(ddraw,"(%p,%p,%ld),stub!\n",this,lprgn,hmm);
-	return 0;
+	return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawClipper_QueryInterface(
+         LPDIRECTDRAWCLIPPER this,
+         REFIID riid,
+         LPVOID* ppvObj )
+{
+   FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,riid,ppvObj);
+   return OLE_E_ENUM_NOMORE;
+}
+
+static ULONG WINAPI IDirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER this )
+{
+  TRACE( ddraw, "(%p)->() incrementing from %lu.\n", this, this->ref );
+  return ++(this->ref);
+}
+
+static HRESULT WINAPI IDirectDrawClipper_GetHWnd(
+         LPDIRECTDRAWCLIPPER this,
+         HWND32* HWndPtr )
+{
+   FIXME(ddraw,"(%p)->(%p),stub!\n",this,HWndPtr);
+   return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawClipper_Initialize(
+         LPDIRECTDRAWCLIPPER this,
+         LPDIRECTDRAW lpDD,
+         DWORD dwFlags )
+{
+   FIXME(ddraw,"(%p)->(%p,0x%08lx),stub!\n",this,lpDD,dwFlags);
+   return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawClipper_IsClipListChanged(
+         LPDIRECTDRAWCLIPPER this,
+         BOOL32* lpbChanged )
+{
+   FIXME(ddraw,"(%p)->(%p),stub!\n",this,lpbChanged);
+   return DD_OK;
 }
 
 static struct IDirectDrawClipper_VTable ddclipvt = {
-	(void*)1,
-	(void*)2,
-	IDirectDrawClipper_Release,
-	IDirectDrawClipper_GetClipList,
-	(void*)5,
-	(void*)6,
-	(void*)7,
-	IDirectDrawClipper_SetClipList,
-	IDirectDrawClipper_SetHwnd
+        IDirectDrawClipper_QueryInterface,
+        IDirectDrawClipper_AddRef,
+        IDirectDrawClipper_Release,
+        IDirectDrawClipper_GetClipList,
+        IDirectDrawClipper_GetHWnd,
+        IDirectDrawClipper_Initialize,
+        IDirectDrawClipper_IsClipListChanged,
+        IDirectDrawClipper_SetClipList,
+        IDirectDrawClipper_SetHwnd
 };
+
 
 /******************************************************************************
  *			IDirectDrawPalette
@@ -1303,7 +1401,7 @@ static HRESULT WINAPI IDirectDrawPalette_GetEntries(
                 palent[i].peFlags = this->palents[start+i].peFlags;
 
 	}
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI Xlib_IDirectDrawPalette_SetEntries(
@@ -1332,7 +1430,7 @@ static HRESULT WINAPI Xlib_IDirectDrawPalette_SetEntries(
 	}
 	if (!this->cm) /* should not happen */ {
 	}
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDrawPalette_SetEntries(
@@ -1370,7 +1468,7 @@ static HRESULT WINAPI DGA_IDirectDrawPalette_SetEntries(
                 this->palents[start+i].peFlags = palent[i].peFlags;
 	}
 	TSXF86DGAInstallColormap(display,DefaultScreen(display),this->cm);
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -1455,7 +1553,7 @@ static HRESULT WINAPI IDirect3D_QueryInterface(
         if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
                 *obj = this;
                 this->lpvtbl->fnAddRef(this);
-                return 0;
+                return S_OK;
         }
         if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
                 LPDIRECT3D      d3d;
@@ -1466,7 +1564,7 @@ static HRESULT WINAPI IDirect3D_QueryInterface(
                 this->lpvtbl->fnAddRef(this);
                 d3d->lpvtbl = &d3dvt;
                 *obj = d3d;
-                return 0;
+                return S_OK;
         }
         if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
                 LPDIRECT3D2     d3d;
@@ -1477,7 +1575,7 @@ static HRESULT WINAPI IDirect3D_QueryInterface(
                 this->lpvtbl->fnAddRef(this);
                 d3d->lpvtbl = &d3d2vt;
                 *obj = d3d;
-                return 0;
+                return S_OK;
         }
         FIXME(ddraw,"(%p):interface for IID %s NOT found!\n",this,xrefiid);
         return OLE_E_ENUM_NOMORE;
@@ -1528,19 +1626,56 @@ static HRESULT WINAPI IDirect3D_CreateDevice(LPDIRECT3D this,LPCLSID rclsid,LPDI
   return E_FAIL; /* D3DERR_INVALID_DEVICE probably */
 }
 
+static HRESULT WINAPI IDirect3D_EnumDevices(
+         LPDIRECT3D this,
+         LPD3DENUMDEVICESCALLBACK a,
+         LPVOID b )
+{
+  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirect3D_CreateMaterial(
+         LPDIRECT3D this,
+         LPDIRECT3DMATERIAL* a,
+         IUnknown* b)
+{
+  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirect3D_CreateViewport(
+         LPDIRECT3D this,
+         LPDIRECT3DVIEWPORT* a,
+         IUnknown* b )
+{
+  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirect3D_FindDevice(
+         LPDIRECT3D this,
+         LPD3DFINDDEVICESEARCH a,
+         LPD3DFINDDEVICERESULT b )
+{
+  FIXME( ddraw,"(%p)->(%p,%p)\n",this,a,b);
+  return DD_OK;
+}
+
+
 /*******************************************************************************
  *				IDirect3D
  */
 static struct IDirect3D_VTable d3dvt = {
-	IDirect3D_QueryInterface,
-	IDirect3D_AddRef,
-	IDirect3D_Release,
-	IDirect3D_Initialize,
-	IDirect3D_CreateLight,
-	(void*)6,
-	(void*)7,
-	(void*)8,
-	IDirect3D_CreateDevice,
+        IDirect3D_QueryInterface,
+        IDirect3D_AddRef,
+        IDirect3D_Release,
+        IDirect3D_Initialize,
+        IDirect3D_EnumDevices,
+        IDirect3D_CreateLight,
+        IDirect3D_CreateMaterial,
+        IDirect3D_CreateViewport,
+        IDirect3D_FindDevice,
 };
 
 /*******************************************************************************
@@ -1571,7 +1706,7 @@ static HRESULT WINAPI IDirect3D2_EnumDevices(
 	d2.dwFlags	= 0;
 	cb((void*)&IID_IDirect3DHALDevice,"WINE Direct3D HAL","direct3d",&d1,&d2,context);
 #endif
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirect3D2_CreateDevice(LPDIRECT3D2 this,REFCLSID rclsid,LPDIRECTDRAWSURFACE surf,LPDIRECT3DDEVICE2 *d3dev) {
@@ -1588,15 +1723,15 @@ static HRESULT WINAPI IDirect3D2_CreateLight(LPDIRECT3D2 this,LPDIRECT3DLIGHT *l
 }
 
 static struct IDirect3D2_VTable d3d2vt = {
-	(void*)1,
-	(void*)2,
-	IDirect3D2_Release,
-	IDirect3D2_EnumDevices,
-	IDirect3D2_CreateLight,
-	(void*)6,
-	(void*)7,
-	(void*)8,
-	IDirect3D2_CreateDevice,
+        (void*)IDirect3D_QueryInterface,
+        (void*)IDirect3D_AddRef,
+        IDirect3D2_Release,
+        IDirect3D2_EnumDevices,
+        (void*)IDirect3D_EnumDevices,
+        (void*)IDirect3D_CreateLight,
+        (void*)IDirect3D_CreateMaterial,
+        (void*)IDirect3D_CreateViewport,
+        (void*)IDirect3D_FindDevice,
 };
 
 /*******************************************************************************
@@ -1637,7 +1772,7 @@ static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
   
   TRACE(ddraw,"using system memory for a surface (%p)\n", lpdsf);
 
-  return 0;
+  return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
@@ -1657,15 +1792,16 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 
 	*lpdsf = (LPDIRECTDRAWSURFACE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurface));
 	this->lpvtbl->fnAddRef(this);
+        
 	(*lpdsf)->ref = 1;
 	(*lpdsf)->lpvtbl = (LPDIRECTDRAWSURFACE_VTABLE)&dga_dds3vt;
 	(*lpdsf)->s.ddraw = this;
 	(*lpdsf)->s.palette = NULL;
 	(*lpdsf)->t.dga.fb_height = -1; /* This is to have non-on screen surfaces freed */
 
-		if (!(lpddsd->dwFlags & DDSD_WIDTH))
+	if (!(lpddsd->dwFlags & DDSD_WIDTH))
 	  lpddsd->dwWidth  = this->d.width;
-		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
+	if (!(lpddsd->dwFlags & DDSD_HEIGHT))
 	  lpddsd->dwHeight = this->d.height;
 	
 	/* Check if this a 'primary surface' or not */
@@ -1737,7 +1873,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 	  return common_off_screen_CreateSurface(this, lpddsd, *lpdsf);
 	}
 	
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -1834,10 +1970,10 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 	(*lpdsf)->s.palette = NULL;
 	(*lpdsf)->t.xlib.image = NULL; /* This is for off-screen buffers */
 
-		if (!(lpddsd->dwFlags & DDSD_WIDTH))
-			lpddsd->dwWidth	 = this->d.width;
-		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-			lpddsd->dwHeight = this->d.height;
+	if (!(lpddsd->dwFlags & DDSD_WIDTH))
+		lpddsd->dwWidth	 = this->d.width;
+	if (!(lpddsd->dwFlags & DDSD_HEIGHT))
+		lpddsd->dwHeight = this->d.height;
 
 	/* Check if this a 'primary surface' or not */
   if ((lpddsd->dwFlags & DDSD_CAPS) && 
@@ -1905,7 +2041,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 	  return common_off_screen_CreateSurface(this, lpddsd, *lpdsf);
   }
   
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDraw2_DuplicateSurface(
@@ -1913,7 +2049,7 @@ static HRESULT WINAPI IDirectDraw2_DuplicateSurface(
 ) {
 	FIXME(ddraw,"(%p)->(%p,%p) simply copies\n",this,src,dst);
 	*dst = src; /* FIXME */
-	return 0;
+	return DD_OK;
 }
 
 /* 
@@ -1948,7 +2084,7 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 	  TRACE(ddraw,"	cooperative level %s\n", dbg_str(ddraw));
 	}
         this->d.mainWindow = hwnd;
-	return 0;
+	return DD_OK;
 }
 
 /* Small helper to either use the cooperative window or create a new 
@@ -2081,7 +2217,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 #ifdef RESTORE_SIGNALS
 	SIGNAL_InitEmulator();
 #endif
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -2117,7 +2253,7 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
         /* We don't have a context for this window. Host off the desktop */
         if( !this->e.xlib.drawable )
            this->e.xlib.drawable = WIN_GetDesktop()->window;
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDraw2_GetCaps(
@@ -2133,7 +2269,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_GetCaps(
 		caps2->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED);		/* we can do anything */
 		caps2->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
 	}
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -2153,7 +2289,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_GetCaps(
 		caps2->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
 	}
 	/* END FIXME: Xlib */
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDraw2_CreateClipper(
@@ -2165,7 +2301,7 @@ static HRESULT WINAPI IDirectDraw2_CreateClipper(
 	*lpddclip = (LPDIRECTDRAWCLIPPER)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawClipper));
 	(*lpddclip)->ref = 1;
 	(*lpddclip)->lpvtbl = &ddclipvt;
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
@@ -2182,7 +2318,14 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
 		/* we don't want palettes in hicolor or truecolor */
 		(*lpddpal)->cm = 0;
 	}
-	return 0;
+
+        if (palent)
+        {
+                /* Initialize the palette based on the passed palent struct */
+                FIXME(ddraw,"needs to handle palent (%p)\n",palent);
+        }
+
+	return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDraw2_CreatePalette(
@@ -2193,7 +2336,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreatePalette(
 	res = common_IDirectDraw2_CreatePalette(this,x,palent,lpddpal,lpunk);
 	if (res != 0) return res;
 	(*lpddpal)->lpvtbl = &dga_ddpalvt;
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
@@ -2201,18 +2344,21 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
 ) {
 	TRACE(ddraw,"(%p)->(%08lx,%p,%p,%p)\n",this,x,palent,lpddpal,lpunk);
 	*lpddpal = (LPDIRECTDRAWPALETTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPalette));
-	if (*lpddpal == NULL) return E_OUTOFMEMORY;
+
+	if (*lpddpal == NULL) 
+		return E_OUTOFMEMORY;
+
 	(*lpddpal)->ref = 1;
 	(*lpddpal)->installed = 0;
-	if (palent)
-		FIXME(ddraw,"needs to handle palent (%p)\n",palent);
+	(*lpddpal)->lpvtbl = &xlib_ddpalvt;
 
 	(*lpddpal)->ddraw = (LPDIRECTDRAW)this;
         this->lpvtbl->fnAddRef(this);
-	(*lpddpal)->cm = 0;
 
-	(*lpddpal)->lpvtbl = &xlib_ddpalvt;
-	return 0;
+	if (palent)
+		FIXME(ddraw,"needs to handle palent (%p)\n",palent);
+
+	return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDraw2_RestoreDisplayMode(LPDIRECTDRAW2 this) {
@@ -2232,14 +2378,14 @@ static HRESULT WINAPI DGA_IDirectDraw2_RestoreDisplayMode(LPDIRECTDRAW2 this) {
 static HRESULT WINAPI Xlib_IDirectDraw2_RestoreDisplayMode(LPDIRECTDRAW2 this) {
 	TRACE(ddraw, "(%p)->RestoreDisplayMode()\n", this);
 	Sleep(1000);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDraw2_WaitForVerticalBlank(
 	LPDIRECTDRAW2 this,DWORD x,HANDLE32 h
 ) {
 	TRACE(ddraw,"(%p)->(0x%08lx,0x%08x)\n",this,x,h);
-	return 0;
+	return DD_OK;
 }
 
 static ULONG WINAPI IDirectDraw2_AddRef(LPDIRECTDRAW2 this) {
@@ -2295,19 +2441,19 @@ static HRESULT WINAPI DGA_IDirectDraw2_QueryInterface(
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
 		this->lpvtbl->fnAddRef(this);
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&dga_ddvt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&dga_dd2vt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
 		LPDIRECT3D	d3d;
@@ -2318,7 +2464,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3dvt;
 		*obj = d3d;
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
 		LPDIRECT3D2	d3d;
@@ -2329,7 +2475,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3d2vt;
 		*obj = d3d;
-		return 0;
+		return S_OK;
 	}
 	WARN(ddraw,"(%p):interface for IID %s _NOT_ found!\n",this,xrefiid);
         return OLE_E_ENUM_NOMORE;
@@ -2345,19 +2491,19 @@ static HRESULT WINAPI Xlib_IDirectDraw2_QueryInterface(
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
 		this->lpvtbl->fnAddRef(this);
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&xlib_ddvt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) {
 		this->lpvtbl = (LPDIRECTDRAW2_VTABLE)&xlib_dd2vt;
 		this->lpvtbl->fnAddRef(this);
 		*obj = this;
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
 		LPDIRECT3D	d3d;
@@ -2368,7 +2514,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3dvt;
 		*obj = d3d;
-		return 0;
+		return S_OK;
 	}
 	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
 		LPDIRECT3D2	d3d;
@@ -2379,7 +2525,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_QueryInterface(
 		this->lpvtbl->fnAddRef(this);
 		d3d->lpvtbl = &d3d2vt;
 		*obj = d3d;
-		return 0;
+		return S_OK;
 	}
 	WARN(ddraw,"(%p):interface for IID %s _NOT_ found!\n",this,xrefiid);
         return OLE_E_ENUM_NOMORE;
@@ -2390,7 +2536,7 @@ static HRESULT WINAPI IDirectDraw2_GetVerticalBlankStatus(
 ) {
         TRACE(ddraw,"(%p)->(%p)\n",this,status);
 	*status = TRUE;
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
@@ -2456,13 +2602,13 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 		ddsfd.dwWidth = screenWidth;
 		ddsfd.dwHeight = screenHeight;
 		TRACE(ddraw," enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
-		if (!modescb(&ddsfd,context)) return 0;
+		if (!modescb(&ddsfd,context)) return DD_OK;
 
 		for (j=0;j<sizeof(modes)/sizeof(modes[0]);j++) {
 			ddsfd.dwWidth	= modes[j].w;
 			ddsfd.dwHeight	= modes[j].h;
 			TRACE(ddraw," enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
-			if (!modescb(&ddsfd,context)) return 0;
+			if (!modescb(&ddsfd,context)) return DD_OK;
 		}
 
 		if (!(dwFlags & DDEDM_STANDARDVGAMODES)) {
@@ -2471,7 +2617,7 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 			ddsfd.dwHeight = 200;
 			ddsfd.dwWidth = 320;
 			TRACE(ddraw," enumerating (320x200x%d)\n",depths[i]);
-			if (!modescb(&ddsfd,context)) return 0;
+			if (!modescb(&ddsfd,context)) return DD_OK;
 		}
 	}
 	return DD_OK;
@@ -2523,7 +2669,7 @@ static HRESULT WINAPI IDirectDraw2_GetMonitorFrequency(
 ) {
 	FIXME(ddraw,"(%p)->(%p) returns 60 Hz always\n",this,freq);
 	*freq = 60*100; /* 60 Hz */
-	return 0;
+	return DD_OK;
 }
 
 /* what can we directly decompress? */
@@ -2531,14 +2677,16 @@ static HRESULT WINAPI IDirectDraw2_GetFourCCCodes(
 	LPDIRECTDRAW2 this,LPDWORD x,LPDWORD y
 ) {
 	FIXME(ddraw,"(%p,%p,%p), stub\n",this,x,y);
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDraw2_EnumSurfaces(
 	LPDIRECTDRAW2 this,DWORD x,LPDDSURFACEDESC ddsfd,LPVOID context,LPDDENUMSURFACESCALLBACK ddsfcb
-) {
-	FIXME(ddraw,"(%p)->(0x%08lx,%p,%p,%p),stub!\n",this,x,ddsfd,context,ddsfcb);
-	return 0;
+) 
+{
+  FIXME(ddraw,"(%p)->(0x%08lx,%p,%p,%p),stub!\n",this,x,ddsfd,context,ddsfcb);
+
+  return DD_OK;
 }
 
 static HRESULT WINAPI IDirectDraw2_Compact(
@@ -2635,7 +2783,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_GetAvailableVidMem(
 	);
 	if (total) *total = this->e.dga.fb_memsize * 1024;
 	if (free) *free = this->e.dga.fb_memsize * 1024;
-	return 0;
+	return DD_OK;
 }
 
 static HRESULT WINAPI Xlib_IDirectDraw2_GetAvailableVidMem(
@@ -2646,7 +2794,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_GetAvailableVidMem(
 	);
 	if (total) *total = 2048 * 1024;
 	if (free) *free = 2048 * 1024;
-	return 0;
+	return DD_OK;
 }
 
 static IDirectDraw2_VTable dga_dd2vt = {
@@ -2818,7 +2966,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 	SIGNAL_InitEmulator();
 #endif
 
-	return 0;
+	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return DDERR_INVALIDDIRECTDRAWGUID;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -2863,7 +3011,7 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 	  TRACE(ddraw, "Using XShm extesion.\n");
 #endif
 	
-	return 0;
+	return DD_OK;
 }
 
 HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter ) {
@@ -2875,7 +3023,7 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	if (HIWORD(lpGUID))
 		WINE_StringFromCLSID(lpGUID,xclsid);
 	else {
-		sprintf(xclsid,"<guid-%0x08x>",(int)lpGUID);
+		sprintf(xclsid,"<guid-0x%08x>",(int)lpGUID);
 		lpGUID = NULL;
 	}
 
