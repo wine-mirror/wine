@@ -42,9 +42,8 @@
  * - UI
  *      + enable back the limited output (depth of structure printing and number of 
  *        lines)
+ *      + make the output as close as possible to what gdb does
  * - symbol management:
- *      + in most of the module enumeration for symbol lookup, we don't search in
- *        the ELF modules (should we turn wine extented flag for ELF modules on ?)
  *      + symbol table loading is broken
  * - type management:
  *      + some bits of internal types are missing (like type casts and the address

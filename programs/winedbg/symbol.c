@@ -204,6 +204,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     char                        tmp[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*                si = (SYMBOL_INFO*)tmp;
     char                        buffer[512];
+    DWORD                       opt;
 
     if (strlen(name) + 4 > sizeof(buffer))
     {
@@ -223,16 +224,27 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     buffer[1] = '!';
     strcpy(&buffer[2], name);
 
+    /* this is a wine specific options to return also ELF modules in the
+     * enumeration
+     */
+    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
     if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
+    {
+        SymSetOptions(opt);
         return sglv_unknown;
+    }
 
     if (!sgv.num && (name[0] != '_'))
     {
         buffer[2] = '_';
         strcpy(&buffer[3], name);
         if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
+        {
+            SymSetOptions(opt);
             return sglv_unknown;
+        }
     }
+    SymSetOptions(opt);
 
     /* now grab local symbols */
     si->SizeOfStruct = sizeof(*si);
@@ -426,6 +438,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
 {
     struct sgv_data     sgv;
     char                buffer[512];
+    DWORD               opt;
 
     sgv.num        = 0;
     sgv.num_thunks = 0;
@@ -439,16 +452,27 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
     buffer[1] = '!';
     strcpy(&buffer[2], name);
 
+    /* this is a wine specific options to return also ELF modules in the
+     * enumeration
+     */
+    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
     if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
+    {
+        SymSetOptions(opt);
         return sglv_unknown;
+    }
 
     if (!sgv.num && (name[0] != '_'))
     {
         buffer[2] = '_';
         strcpy(&buffer[3], name);
         if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
+        {
+            SymSetOptions(opt);
             return sglv_unknown;
+        }
     }
+    SymSetOptions(opt);
 
     switch (sgv.num)
     {
@@ -547,6 +571,7 @@ static BOOL CALLBACK symbols_info_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 void symbol_info(const char* str)
 {
     char        buffer[512];
+    DWORD       opt;
 
     if (strlen(str) + 3 >= sizeof(buffer))
     {
@@ -556,5 +581,10 @@ void symbol_info(const char* str)
     buffer[0] = '*';
     buffer[1] = '!';
     strcpy(&buffer[2], str);
+    /* this is a wine specific options to return also ELF modules in the
+     * enumeration
+     */
+    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
     SymEnumSymbols(dbg_curr_process->handle, 0, buffer, symbols_info_cb, NULL);
+    SymSetOptions(opt);
 }

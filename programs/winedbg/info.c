@@ -120,6 +120,7 @@ static const char* get_symtype_str(SYM_TYPE st)
 {
     switch (st)
     {
+    case -1:            return "\\";
     default:
     case SymNone:       return "--none--";
     case SymCoff:       return "COFF";
@@ -129,6 +130,7 @@ static const char* get_symtype_str(SYM_TYPE st)
     case SymDeferred:   return "Deferred";
     case SymSym:        return "Sym";
     case SymDia:        return "DIA";
+    case NumSymTypes:   return "Stabs";
     }
 }
 
@@ -139,11 +141,11 @@ struct info_module
     unsigned            num_used;
 };
 
-static void module_print_info(const IMAGEHLP_MODULE* mi)
+static void module_print_info(const IMAGEHLP_MODULE* mi, SYM_TYPE st)
 {
     dbg_printf("0x%08lx-%08lx\t%-16s%s\n",
                mi->BaseOfImage, mi->BaseOfImage + mi->ImageSize,
-               get_symtype_str(mi->SymType), mi->ModuleName);
+               get_symtype_str(st), mi->ModuleName);
 }
 
 static int      module_compare(const void* p1, const void* p2)
@@ -172,7 +174,6 @@ static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD base, void* ctx)
     im->mi[im->num_used].SizeOfStruct = sizeof(im->mi[im->num_used]);
     if (SymGetModuleInfo(dbg_curr_process->handle, base, &im->mi[im->num_used]))
     {
-        module_print_info(&im->mi[im->num_used]);
         im->num_used++;
     }   
     return TRUE;
@@ -202,7 +203,7 @@ void info_win32_module(DWORD base)
             dbg_printf("'0x%08lx' is not a valid module address\n", base);
             return;
         }
-        module_print_info(&mi);
+        module_print_info(&mi, mi.SymType);
     }
     else
     {
@@ -229,14 +230,14 @@ void info_win32_module(DWORD base)
             if (strstr(im.mi[i].ModuleName, "<elf>"))
             {
                 dbg_printf("ELF\t");
-                module_print_info(&im.mi[i]);
+                module_print_info(&im.mi[i], (im.mi[i].SymType == SymDia) ? NumSymTypes : im.mi[i].SymType);
                 /* print all modules embedded in this one */
                 for (j = 0; j < im.num_used; j++)
                 {
                     if (!strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[i], &im.mi[j]))
                     {
                         dbg_printf("  \\-PE\t");
-                        module_print_info(&im.mi[j]);
+                        module_print_info(&im.mi[j], -1);
                     }
                 }
             }
@@ -253,7 +254,7 @@ void info_win32_module(DWORD base)
                     dbg_printf("ELF\t");
                 else
                     dbg_printf("PE\t");
-                module_print_info(&im.mi[i]);
+                module_print_info(&im.mi[i], im.mi[i].SymType);
             }
         }
         HeapFree(GetProcessHeap(), 0, im.mi);
@@ -704,7 +705,6 @@ void info_wine_dbg_channel(BOOL turn_on, const char* chnl, const char* name)
 
     if (symbol_get_lvalue("first_dll", -1, &lvalue, FALSE) != sglv_found)
     {
-        dbg_printf("Can't get first_dll symbol\n");
         return;
     }
     addr = memory_to_linear_addr(&lvalue.addr);
