@@ -100,7 +100,7 @@ function conf_string_answer {
 }
 
 function create_windows_directories {
-  for tdir in "$CROOT/windows" "$CROOT/windows/system" "$CROOT/windows/system32" \
+  for tdir in "$CROOT/windows" "$CROOT/windows/system" \
               "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
               "$CROOT/Program Files" "$CROOT/Program Files/Common Files" \
               "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator" \
@@ -132,14 +132,14 @@ function configure_wine_applications {
   link_app notepad      "$CROOT/windows/notepad.exe"
   link_app regedit      "$CROOT/windows/regedit.exe"
   link_app rundll32     "$CROOT/windows/rundll32.exe"
-  link_app wcmd         "$CROOT/windows/system32/cmd.exe"
-  link_app control      "$CROOT/windows/system32/control.exe"
-  link_app winhelp      "$CROOT/windows/system32/help.exe"
-  link_app notepad      "$CROOT/windows/system32/notepad.exe"
-  link_app progman      "$CROOT/windows/system32/progman.exe"
-  link_app regsvr32     "$CROOT/windows/system32/regsvr32.exe"
-  link_app winemine     "$CROOT/windows/system32/winmine.exe"
-  link_app winver       "$CROOT/windows/system32/winver.exe"
+  link_app wcmd         "$CROOT/windows/system/wcmd.exe"
+  link_app control      "$CROOT/windows/system/control.exe"
+  link_app winhelp      "$CROOT/windows/system/help.exe"
+  link_app notepad      "$CROOT/windows/system/notepad.exe"
+  link_app progman      "$CROOT/windows/system/progman.exe"
+  link_app regsvr32     "$CROOT/windows/system/regsvr32.exe"
+  link_app winemine     "$CROOT/windows/system/winmine.exe"
+  link_app winver       "$CROOT/windows/system/winver.exe"
   link_app uninstaller  "$CROOT/windows/uninstall.exe"
   link_app winhelp      "$CROOT/windows/winhelp.exe"
   link_app winhelp      "$CROOT/windows/winhlp32.exe"
