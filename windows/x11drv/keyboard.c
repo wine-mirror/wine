@@ -936,24 +936,36 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
  */
 INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
-#if 0
-  int i;
-#endif
+  int key, i, scanCode;
+  const char (*lkey)[MAIN_LEN][4];
 	
-  FIXME(keyboard,"(%ld,<ptr>,%d): stub\n",lParam,nSize);
+  scanCode = lParam >> 16;
+  scanCode &= 0xff;
+  lkey = main_key_tab[kbd_layout].key;
 
-#if 0
-  lParam >>= 16;
-  lParam &= 0xff;
-  
-  for (i = 0 ; i != KeyTableSize ; i++) 
-    if (KeyTable[i].scancode == lParam)  {
-      lstrcpynA( lpBuffer, KeyTable[i].name, nSize );
-      return strlen(lpBuffer);
-    }
-#endif
+  if (!(lParam & 0x01000000))  /* handle non-extended keys */
+  { 
+    /*  FIXME:  need to handle "don't care" bit (0x02000000) */
 
-  *lpBuffer = 0;
+    /*  FIXME:  assume return caps */
+    i = 1;
+    for (key = 0 ; key < MAIN_LEN ; key++) 
+      if (main_key_scan[key] == scanCode)
+      {
+        if ((nSize >= 2) && lpBuffer)
+	{
+          *lpBuffer = (*lkey)[key][i];
+          *(lpBuffer+1) = 0;
+          return 1;
+        } 
+        else return 0;
+      }
+  }
+
+  FIXME(keyboard,"(%08lx,%p,%d): unsupported key\n",lParam,lpBuffer,nSize);
+
+  if (lpBuffer && nSize)
+    *lpBuffer = 0;
   return 0;
 }
 
