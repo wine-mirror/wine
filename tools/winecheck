@@ -537,7 +537,6 @@ sub Check_Devices {
   &Do_CheckDevice("sound device", $dev_sound, 1);
   &Do_CheckDevice("audio mixer device", $dev_mixer, 1);
   &Do_CheckDevice("MIDI sequencer device", $dev_sequencer, 0);
-  &Do_CheckDevice("device needed for DGA (option \"UseDGA\"):", $dev_mem, 0);
 }
 
 sub Check_Registry {
@@ -568,7 +567,7 @@ sub Check_Registry {
   }
   else
   {
-    Do_PrintResult($is_critical, "entry \"Default Taskbar\" not found", "Windows registry does not seem to be added to Wine. This can affect many newer programs");
+    Do_PrintResult($is_critical, "entry \"Default Taskbar\" not found", "Windows registry does not seem to be added to Wine. This can affect many newer programs. Original registry entries won't be available with a no-windows install, of course, so you'll have to live with that.");
   }
   @entries = ();
 }
