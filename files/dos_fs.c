@@ -1001,27 +1001,52 @@ DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
                                   DWORD longlen )
 {
     DOS_FULL_NAME full_name;
-    char *p;
-    char *longfilename;
-    DWORD shortpathlen;
+    char *p, *r, *ll, *ss;
     
     if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
     lstrcpynA( longpath, full_name.short_name, longlen );
-    /* Do some hackery to get the long filename.
-     * FIXME: Would be better if it returned the
-     * long version of the directories too
-     */
-    longfilename = strrchr(full_name.long_name, '/')+1;
-    if (longpath != NULL) {
-      if ((p = strrchr( longpath, '\\' )) != NULL) {
-	p++;
-	longlen -= (p-longpath);
-	lstrcpynA( p, longfilename , longlen);
-      }
+
+    /* Do some hackery to get the long filename. */
+
+    if (longpath) {
+     ss=longpath+strlen(longpath);
+     ll=full_name.long_name+strlen(full_name.long_name);
+     p=NULL;
+     while (ss>=longpath)
+     {
+       /* FIXME: aren't we more paranoid, than needed? */
+       while ((ss[0]=='\\') && (ss>=longpath)) ss--;
+       p=ss;
+       while ((ss[0]!='\\') && (ss>=longpath)) ss--;
+       if (ss>=longpath) 
+         {
+         /* FIXME: aren't we more paranoid, than needed? */
+         while ((ll[0]=='/') && (ll>=full_name.long_name)) ll--;
+         while ((ll[0]!='/') && (ll>=full_name.long_name)) ll--;
+         if (ll<full_name.long_name) 
+              { 
+              ERR("Bad longname! (ss=%s ll=%s)\n This should never happen !\n"
+		  ,ss ,ll ); 
+              return 0;
+              }
+         }
+     }
+
+   /* FIXME: fix for names like "C:\\" (ie. with more '\'s) */
+      if (p && p[2]) 
+        {
+	p+=1;
+	if ((p-longpath)>0) longlen -= (p-longpath);
+	lstrcpynA( p, ll , longlen);
+
+        /* Now, change all '/' to '\' */
+        for (r=p; r<(p+longlen); r++ ) 
+          if (r[0]=='/') r[0]='\\';
+        return strlen(longpath) - strlen(p) + longlen;
+        }
     }
-    shortpathlen =
-      ((strrchr( full_name.short_name, '\\' ) - full_name.short_name) + 1);
-    return shortpathlen + strlen( longfilename );
+
+    return strlen(longpath);
 }
 
 
