@@ -35,10 +35,10 @@ MAIN_MENU MENU LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 POPUP "&Urejanje" {
   MENUITEM "&Razveljavi\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "&Izre¾i\tCtrl+X",      CMD_CUT
+  MENUITEM "&Izreži\tCtrl+X",      CMD_CUT
   MENUITEM "&Kopiraj\tCtrl+C",     CMD_COPY
   MENUITEM "&Prilepi\tCtrl+V",    CMD_PASTE
-  MENUITEM "Izbri&¹i\tDel",      CMD_DELETE
+  MENUITEM "Izbri&ši\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
   MENUITEM "Izberi &vse",       CMD_SELECT_ALL
   MENUITEM "Èas/&Datum\tF5",    CMD_TIME_DATE
@@ -99,7 +99,7 @@ STRING_PAGESETUP_RIGHTVALUE,    "20 mm"     /* FIXME */
 STRING_PAGESETUP_TOPVALUE,              "25 mm"     /* FIXME */
 STRING_PAGESETUP_BOTTOMVALUE,   "25 mm"     /* FIXME */
 
-STRING_NOTEPAD,                                 "Bele¾nica"
+STRING_NOTEPAD,                                 "Beležnica"
 STRING_ERROR,                                   "NAPAKA"
 STRING_WARNING,                                 "OPOZORILO"
 STRING_INFO,                                    "Informacija"
@@ -109,16 +109,16 @@ STRING_UNTITLED,                                "Neimenovana"
 STRING_ALL_FILES,                               "Vse datoteke (*.*)"
 STRING_TEXT_FILES_TXT,                  "Datoteke z besedilom (*.txt)"
 
-STRING_TOOLARGE,                                "Datoteka '%s' je prevelika za Bele¾nico.\n \
+STRING_TOOLARGE,                                "Datoteka '%s' je prevelika za Beležnico.\n \
 Uporabite drug urejevalnik."
 STRING_NOTEXT,                                  "Niste vnesli besedila. \
 \nVnesite besedilo in poskusite znova."
 STRING_DOESNOTEXIST,                            "Datoteka '%s' ne obstaja.\n\n \
-Ali ¾elite ustvariti novo datoteko?"
+Ali želite ustvariti novo datoteko?"
 STRING_NOTSAVED,                                "Vsebina datoteke '%s'je bila spremenjena.\n\n \
-Ali ¾elite shraniti spremembe?"
+Ali želite shraniti spremembe?"
 STRING_NOTFOUND,                                        "Ni mogoèe najti '%s'."
 STRING_OUT_OF_MEMORY,                   "Na voljo ni dovolj pomnilnika, da bi bilo mogoèe dokonèati to \
-operacijo. \nÈe ga ¾elite sprostiti, konèajte enega ali veè programov in poskusite znova. "
+operacijo. \nÈe ga želite sprostiti, konèajte enega ali veè programov in poskusite znova. "
 
 }
