@@ -541,8 +541,10 @@ VOID WINAPI GetSystemTimeAsFileTime(
  */
 static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
 {
-    LONGLONG secs = RtlEnlargedUnsignedMultiply( unix_time, 10000000 );
-    ((LARGE_INTEGER *)filetime)->QuadPart = RtlExtendedLargeIntegerDivide( secs, CLK_TCK, NULL );
+    ULONGLONG secs = RtlEnlargedUnsignedMultiply( unix_time, 10000000 );
+    secs = RtlExtendedLargeIntegerDivide( secs, CLK_TCK, NULL );
+    filetime->dwLowDateTime  = (DWORD)secs;
+    filetime->dwHighDateTime = (DWORD)(secs >> 32);
 }
 
 /*********************************************************************

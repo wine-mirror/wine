@@ -206,7 +206,8 @@ VOID WINAPI RtlSystemTimeToLocalTime(
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
 {
-    ULONGLONG tmp = RtlLargeIntegerDivide( ((LARGE_INTEGER *)time)->QuadPart, 10000000LL, NULL );
+    ULONGLONG tmp = ((ULONGLONG)time->dwHighDateTime << 32) | time->dwLowDateTime;
+    tmp = RtlLargeIntegerDivide( tmp, 10000000LL, NULL );
     tmp -= SECS_1601_TO_1970;
     if (tmp > 0xffffffff) return FALSE;
     *res = (DWORD)tmp;
@@ -218,7 +219,8 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
 {
-    ULONGLONG tmp = RtlLargeIntegerDivide( ((LARGE_INTEGER *)time)->QuadPart, 10000000LL, NULL );
+    ULONGLONG tmp = ((ULONGLONG)time->dwHighDateTime << 32) | time->dwLowDateTime;
+    tmp = RtlLargeIntegerDivide( tmp, 10000000LL, NULL );
     tmp -= SECS_1601_to_1980;
     if (tmp > 0xffffffff) return FALSE;
     *res = (DWORD)tmp;
@@ -230,8 +232,9 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
  */
 void WINAPI RtlSecondsSince1970ToTime( DWORD time, FILETIME *res )
 {
-    LONGLONG secs = time + SECS_1601_TO_1970;
-    ((LARGE_INTEGER *)res)->QuadPart = RtlExtendedIntegerMultiply( secs, 10000000 );
+    ULONGLONG secs = RtlExtendedIntegerMultiply( time + SECS_1601_TO_1970, 10000000 );
+    res->dwLowDateTime  = (DWORD)secs;
+    res->dwHighDateTime = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************
@@ -239,8 +242,9 @@ void WINAPI RtlSecondsSince1970ToTime( DWORD time, FILETIME *res )
  */
 void WINAPI RtlSecondsSince1980ToTime( DWORD time, FILETIME *res )
 {
-    LONGLONG secs = time + SECS_1601_to_1980;
-    ((LARGE_INTEGER *)res)->QuadPart = RtlExtendedIntegerMultiply( secs, 10000000 );
+    ULONGLONG secs = RtlExtendedIntegerMultiply( time + SECS_1601_to_1980, 10000000 );
+    res->dwLowDateTime  = (DWORD)secs;
+    res->dwHighDateTime = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************
