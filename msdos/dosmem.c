@@ -313,7 +313,7 @@ static void DOSMEM_FillBiosSegments(void)
     pBiosData->NbHardDisks          = 2;
     pBiosData->KbdBufferStart       = 0x1e;
     pBiosData->KbdBufferEnd         = 0x3e;
-    pBiosData->RowsOnScreenMinus1   = 23;
+    pBiosData->RowsOnScreenMinus1   = 24;
     pBiosData->BytesPerChar         = 0x10;
     pBiosData->ModeOptions          = 0x64;
     pBiosData->FeatureBitsSwitches  = 0xf9;
