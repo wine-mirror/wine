@@ -13,12 +13,6 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 /* resource ids for different version infos */
-/* These are internal resources for win16, but simple numbers in win32 */
-/* All win32 defines should be moved to winver.h */
-#define	VS_FILE_INFO16		MAKEINTRESOURCE16(16)
-#define	VS_VERSION_INFO16	MAKEINTRESOURCE16(1)
-#define	VS_USER_INFO16		MAKEINTRESOURCE16(100)
-
 #define	VS_FILE_INFO		16
 #define	VS_VERSION_INFO		1
 #define	VS_USER_DEFINED		100

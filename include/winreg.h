@@ -11,18 +11,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-/*
-#define SHELL_ERROR_SUCCESS           0L
-#define SHELL_ERROR_BADDB             1L
-#define SHELL_ERROR_BADKEY            2L
-#define SHELL_ERROR_CANTOPEN          3L
-#define SHELL_ERROR_CANTREAD          4L
-#define SHELL_ERROR_CANTWRITE         5L
-#define SHELL_ERROR_OUTOFMEMORY       6L
-#define SHELL_ERROR_INVALID_PARAMETER 7L
-#define SHELL_ERROR_ACCESS_DENIED     8L
-*/
-
 #define HKEY_CLASSES_ROOT       ((HKEY) 0x80000000)
 #define HKEY_CURRENT_USER       ((HKEY) 0x80000001)
 #define HKEY_LOCAL_MACHINE      ((HKEY) 0x80000002)
