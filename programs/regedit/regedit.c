@@ -168,13 +168,32 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
             }
 
             while(filename[0]) {
-                reg_file = fopen(filename, "r");
-                if (reg_file) {
-                    processRegLines(reg_file, doSetValue);
-                } else {
+                char* realname = NULL;
+                int size;
+                size=SearchPath(NULL,filename,NULL,0,NULL,NULL);
+                if (size>0)
+                {
+                    realname=HeapAlloc(GetProcessHeap(),0,size);
+                    size=SearchPath(NULL,filename,NULL,size,realname,NULL);
+                }
+                if (size==0)
+                {
+                    fprintf(stderr,"%s: File not found \"%s\" (%ld)\n",
+                            getAppName(),filename,GetLastError());
+                    exit(1);
+                }
+                reg_file = fopen(realname, "r");
+                if (reg_file==NULL)
+                {
                     perror("");
                     fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
                     exit(1);
+                }
+                processRegLines(reg_file, doSetValue);
+                if (realname)
+                {
+                    HeapFree(GetProcessHeap(),0,realname);
+                    fclose(reg_file);
                 }
                 get_file_name(&s, filename);
             }
