@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "wine/winbase16.h"
 #include "process.h"
 #include "module.h"
 #include "neexe.h"
@@ -261,51 +262,6 @@ static BOOL PROCESS_BuildEnvDB( PDB *pdb )
     return ENV_BuildEnvironment( pdb );
 }
 
-
-/***********************************************************************
- *           PROCESS_InheritEnvDB
- */
-static BOOL PROCESS_InheritEnvDB( PDB *pdb, LPCSTR cmd_line, LPCSTR env,
-                                    BOOL inherit_handles, STARTUPINFOA *startup )
-{
-    if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
-        return FALSE;
-    InitializeCriticalSection( &pdb->env_db->section );
-
-    /* Copy the parent environment */
-
-    if (!ENV_InheritEnvironment( pdb, env )) return FALSE;
-
-    /* Copy the command line */
-
-    if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
-        return FALSE;
-
-    /* Remember startup info */
-    if (!(pdb->env_db->startup_info = 
-          HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
-        return FALSE;
-    *pdb->env_db->startup_info = *startup;
-
-    /* Inherit the standard handles */
-    if (pdb->env_db->startup_info->dwFlags & STARTF_USESTDHANDLES)
-    {
-        pdb->env_db->hStdin  = pdb->env_db->startup_info->hStdInput;
-        pdb->env_db->hStdout = pdb->env_db->startup_info->hStdOutput;
-        pdb->env_db->hStderr = pdb->env_db->startup_info->hStdError;
-    }
-    else if (inherit_handles)
-    {
-        pdb->env_db->hStdin  = pdb->parent->env_db->hStdin;
-        pdb->env_db->hStdout = pdb->parent->env_db->hStdout;
-        pdb->env_db->hStderr = pdb->parent->env_db->hStderr;
-    }
-    /* else will be done later on in PROCESS_Create */
-
-    return TRUE;
-}
-
-
 /***********************************************************************
  *           PROCESS_CreateEnvDB
  *
@@ -455,15 +411,22 @@ BOOL PROCESS_Init(void)
 void PROCESS_Start(void)
 {
     UINT cmdShow = 0;
-    LPTHREAD_START_ROUTINE entry;
+    LPTHREAD_START_ROUTINE entry = NULL;
     THDB *thdb = THREAD_Current();
     PDB *pdb = thdb->process;
     NE_MODULE *pModule = NE_GetPtr( pdb->module );
     OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
-    IMAGE_OPTIONAL_HEADER *header = &PE_HEADER(pModule->module32)->OptionalHeader;
+    IMAGE_OPTIONAL_HEADER *header = !pModule->module32? NULL :
+                                    &PE_HEADER(pModule->module32)->OptionalHeader;
 
-    /* Setup process flags */
-    if (header->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) pdb->flags |= PDB32_CONSOLE_PROC;
+    /* Get process type */
+    enum { PROC_DOS, PROC_WIN16, PROC_WIN32 } type;
+    if ( pdb->flags & PDB32_DOS_PROC )
+        type = PROC_DOS;
+    else if ( pdb->flags & PDB32_WIN16_PROC )
+        type = PROC_WIN16;
+    else
+        type = PROC_WIN32;
 
     /* Map system DLLs into this process (from initial process) */
     /* FIXME: this is a hack */
@@ -473,23 +436,32 @@ void PROCESS_Start(void)
     InitializeCriticalSection( &pdb->crit_section );
 
     /* Create the heap */
-
-    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, header->SizeOfHeapReserve,
-                                  header->SizeOfHeapCommit ))) goto error;
+    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, 
+                                  header? header->SizeOfHeapReserve : 0x10000,
+                                  header? header->SizeOfHeapCommit  : 0 ))) 
+        goto error;
     pdb->heap_list = pdb->heap;
 
     /* Create the environment db */
     if (!PROCESS_CreateEnvDB()) goto error;
 
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
-
     /* Create a task for this process */
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = pdb->env_db->startup_info->wShowWindow;
-    if (!TASK_Create( thdb, pModule, 0, 0, cmdShow )) goto error;
+    if (!TASK_Create( thdb, pModule, pdb->hInstance, pdb->hPrevInstance, cmdShow ))
+        goto error;
 
-    /* Link the task in the task list */
-    TASK_StartTask( pdb->task );
+    /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
+     *       context of the parent process.  Actually, the USER signal proc
+     *       doesn't really care about that, but it *does* require that the
+     *       startup parameters are correctly set up, so that GetProcessDword
+     *       works.  Furthermore, before calling the USER signal proc the 
+     *       16-bit stack must be set up, which it is only after TASK_Create
+     *       in the case of a 16-bit process. Thus, we send the signal here.
+     */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
+
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
 
     PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
 
@@ -498,38 +470,59 @@ void PROCESS_Start(void)
     CloseHandle( pdb->load_done_evt );
     pdb->load_done_evt = INVALID_HANDLE_VALUE;
 
-    /* Send the debug event to the debugger */
-    entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
-                                            OptionalHeader.AddressOfEntryPoint);
-    if (pdb->flags & PDB32_DEBUGGED)
-        DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
+    /* Perform Win32 specific process initialization */
+    if ( type == PROC_WIN32 )
+    {
+        /* Send the debug event to the debugger */
+        entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
+                                                OptionalHeader.AddressOfEntryPoint);
+        if (pdb->flags & PDB32_DEBUGGED)
+            DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
 
-    /* Create 32-bit MODREF */
-    if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
+        /* Create 32-bit MODREF */
+        if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
 
-    /* Increment EXE refcount */
-    assert( pdb->exe_modref );
-    pdb->exe_modref->refCount++;
+        /* Increment EXE refcount */
+        assert( pdb->exe_modref );
+        pdb->exe_modref->refCount++;
+
+        /* Initialize thread-local storage */
+        PE_InitTls();
+    }
 
     PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );   /* FIXME: correct location? */
 
-    /* Initialize thread-local storage */
-
-    PE_InitTls();
-
-    if ( pdb->flags & PDB32_CONSOLE_PROC )
+    if ( (pdb->flags & PDB32_CONSOLE_PROC) || (pdb->flags & PDB32_DOS_PROC) )
         AllocConsole();
 
+    if ( type == PROC_WIN32 )
+    {
+        EnterCriticalSection( &pdb->crit_section );
+        MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
+        LeaveCriticalSection( &pdb->crit_section );
+    }
+
     /* Now call the entry point */
-
-    EnterCriticalSection( &pdb->crit_section );
-    MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
-    LeaveCriticalSection( &pdb->crit_section );
-
     PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
-    TRACE_(relay)("(entryproc=%p)\n", entry );
-    ExitProcess( entry(NULL) );
+    switch ( type )
+    {
+    case PROC_DOS:
+        TRACE_(relay)( "Starting DOS process\n" );
+        DOSVM_Enter( NULL );
+        ERR_(relay)( "DOSVM_Enter returned; should not happen!\n" );
+        ExitProcess( 0 );
+
+    case PROC_WIN16:
+        TRACE_(relay)( "Starting Win16 process\n" );
+        TASK_CallToStart();
+        ERR_(relay)( "TASK_CallToStart returned; should not happen!\n" );
+        ExitProcess( 0 );
+
+    case PROC_WIN32:
+        TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
+        ExitProcess( entry(NULL) );
+    }
 
  error:
     ExitProcess( GetLastError() );
@@ -547,12 +540,11 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                      BOOL inherit, DWORD flags, STARTUPINFOA *startup,
                      PROCESS_INFORMATION *info )
 {
-    HANDLE load_done_evt = INVALID_HANDLE_VALUE;
-    DWORD size, commit;
+    HANDLE handles[2], load_done_evt = INVALID_HANDLE_VALUE;
+    DWORD exitcode, size;
     int server_thandle;
     struct new_process_request req;
     struct new_process_reply reply;
-    UINT cmdShow = 0;
     THDB *thdb = NULL;
     PDB *parent = PROCESS_Current();
     PDB *pdb = PROCESS_CreatePDB( parent, inherit );
@@ -591,14 +583,22 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         ((parent->flags & PDB32_DEBUGGED) && !(flags & DEBUG_ONLY_THIS_PROCESS)))
         pdb->flags |= PDB32_DEBUGGED;
 
-    if (pModule->module32)
+    if (pModule->module32)   /* Win32 process */
     {
-        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
+        IMAGE_OPTIONAL_HEADER *header = &PE_HEADER(pModule->module32)->OptionalHeader;
+        size = header->SizeOfStackReserve;
+        if (header->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) 
+            pdb->flags |= PDB32_CONSOLE_PROC;
     }
-    else  /* 16-bit process */
+    else if (!pModule->dos_image) /* Win16 process */
     {
         size = 0;
         pdb->flags |= PDB32_WIN16_PROC;
+    }
+    else  /* DOS process */
+    {
+        size = 0;
+        pdb->flags |= PDB32_DOS_PROC;
     }
 
     /* Create the main thread */
@@ -609,84 +609,49 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     info->dwThreadId  = (DWORD)thdb->teb.tid;
     thdb->startup     = PROCESS_Start;
 
-    if (pModule->module32)
+    /* Create the load-done event */
+    load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL );
+    DuplicateHandle( GetCurrentProcess(), load_done_evt,
+                     info->hProcess, &pdb->load_done_evt, 0, TRUE, DUPLICATE_SAME_ACCESS );
+
+    /* Pass module/instance to new process (FIXME: hack) */
+    pdb->module = pModule->self;
+    pdb->hInstance = hInstance;
+    pdb->hPrevInstance = hPrevInstance;
+    SYSDEPS_SpawnThread( thdb );
+
+    /* Wait until process is initialized (or initialization failed) */
+    handles[0] = info->hProcess;
+    handles[1] = load_done_evt;
+
+    switch ( WaitForMultipleObjects( 2, handles, FALSE, INFINITE ) )
     {
-        HANDLE handles[2];
-        DWORD exitcode;
+    default: 
+        ERR_(process)( "WaitForMultipleObjects failed\n" );
+        break;
 
-        /* Create the load-done event */
-        load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL );
-        DuplicateHandle( GetCurrentProcess(), load_done_evt,
-                         info->hProcess, &pdb->load_done_evt, 0, TRUE, DUPLICATE_SAME_ACCESS );
+    case 0:
+        /* Child initialization code returns error condition as exitcode */
+        if ( GetExitCodeProcess( info->hProcess, &exitcode ) )
+            SetLastError( exitcode );
+        goto error;
 
-        /* Call USER signal proc */
-        PROCESS_CallUserSignalProcHelper( USIG_PROCESS_CREATE, info->dwProcessId, 0,
-                                          pdb->flags, startup->dwFlags );
-
-        /* Set the process module (FIXME: hack) */
-        pdb->module = pModule->self;
-        SYSDEPS_SpawnThread( thdb );
-
-        /* Wait until process is initialized (or initialization failed) */
-        handles[0] = info->hProcess;
-        handles[1] = load_done_evt;
-
-        switch ( WaitForMultipleObjects( 2, handles, FALSE, INFINITE ) )
+    case 1:
+        /* Get 16-bit task up and running */
+        if ( pdb->flags & PDB32_WIN16_PROC )
         {
-        default: 
-            ERR_(process)( "WaitForMultipleObjects failed\n" );
-            break;
+            /* Post event to start the task */
+            PostEvent16( pdb->task );
 
-        case 0:
-            /* Child initialization code returns error condition as exitcode */
-            if ( GetExitCodeProcess( info->hProcess, &exitcode ) )
-                SetLastError( exitcode );
-            goto error;
-
-        case 1:
-            break;
-        } 
-
-        CloseHandle( load_done_evt );
-        load_done_evt = INVALID_HANDLE_VALUE;
-    }
-    else  /* Create a 16-bit process */
-    {
-        /* Create the heap */
-	size = 0x10000;
-	commit = 0;
-        if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
-        pdb->heap_list = pdb->heap;
-
-        /* Inherit the env DB from the parent */
-        if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
-
-        /* Duplicate the standard handles */
-        if ((!(pdb->env_db->startup_info->dwFlags & STARTF_USESTDHANDLES)) && !inherit)
-        {
-            DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdin,
-                             info->hProcess, &pdb->env_db->hStdin, 0, TRUE, DUPLICATE_SAME_ACCESS );
-            DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdout,
-                             info->hProcess, &pdb->env_db->hStdout, 0, TRUE, DUPLICATE_SAME_ACCESS );
-            DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStderr,
-                             info->hProcess, &pdb->env_db->hStderr, 0, TRUE, DUPLICATE_SAME_ACCESS );
+            /* If we ourselves are a 16-bit task, we Yield() directly. */
+            if ( parent->flags & PDB32_WIN16_PROC )
+                OldYield16();
         }
+        break;
+    } 
 
-        /* Call USER signal proc */
-        PROCESS_CallUserSignalProcHelper( USIG_PROCESS_CREATE, info->dwProcessId, 0,
-                                          pdb->flags, startup->dwFlags );
-
-        /* Create a Win16 task for this process */
-        if (startup->dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup->wShowWindow;
-        if (!TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow )) goto error;
-
-        /* Map system DLLs into this process (from initial process) */
-        /* FIXME: this is a hack */
-        pdb->modref_list = PROCESS_Initial()->modref_list;
-
-        /* Start the task */
-        TASK_StartTask( pdb->task );
-    }
+    CloseHandle( load_done_evt );
+    load_done_evt = INVALID_HANDLE_VALUE;
 
     return pdb;
 
@@ -707,9 +672,6 @@ void WINAPI ExitProcess( DWORD status )
     EnterCriticalSection( &PROCESS_Current()->crit_section );
     MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
-
-    if ( THREAD_IsWin16( THREAD_Current() ) )
-        TASK_KillCurrentTask( status );
 
     TASK_KillTask( 0 );
     TerminateProcess( GetCurrentProcess(), status );

@@ -107,8 +107,8 @@ typedef struct _TDB
     WORD      more_thunks[6*4];           /* c2 Space for 6 more thunks */
     BYTE      module_name[8];             /* f2 Module name for task */
     WORD      magic;                      /* fa TDB signature */
-    DWORD     unused7;                    /* fc */
-    PDB16       pdb;                        /* 100 PDB for this task */
+    HANDLE    hEvent;                     /* fc scheduler event handle */
+    PDB16     pdb;                        /* 100 PDB for this task */
 } TDB;
 
 #define TDB_MAGIC    ('T' | ('D' << 8))
@@ -149,11 +149,10 @@ extern void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask );
 extern BOOL TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
                          HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
                          UINT16 cmdShow );
-extern void TASK_StartTask( HTASK16 hTask );
 extern void TASK_KillTask( HTASK16 hTask );
-extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
-extern BOOL TASK_Reschedule(void);
+extern void TASK_Reschedule(void);
+extern void TASK_CallToStart(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
 extern HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue );

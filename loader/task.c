@@ -59,12 +59,7 @@ THHOOK *pThhook = &DefaultThhook;
 #define hFirstTask   (pThhook->HeadTDB)
 #define hLockedTask  (pThhook->LockTDB)
 
-static HTASK16 hTaskToKill = 0;
 static UINT16 nTaskCount = 0;
-
-static HANDLE TASK_ScheduleEvent = INVALID_HANDLE_VALUE;
-
-static void TASK_YieldToSystem( void );
 
 
 /***********************************************************************
@@ -231,81 +226,54 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
  * 32-bit entry point for a new task. This function is responsible for
  * setting up the registers and jumping to the 16-bit entry point.
  */
-static void TASK_CallToStart(void)
+void TASK_CallToStart(void)
 {
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
+    CONTEXT context;
 
-    SYSDEPS_SetCurThread( pTask->thdb );
-    CLIENT_InitThread();
+    /* Add task to 16-bit scheduler pool */
+    TASK_Reschedule();
 
-    /* Terminate the stack frame chain */
-    memset(THREAD_STACK16( pTask->thdb ), '\0', sizeof(STACK16FRAME));
+    /* Registers at initialization must be:
+     * ax   zero
+     * bx   stack size in bytes
+     * cx   heap size in bytes
+     * si   previous app instance
+     * di   current app instance
+     * bp   zero
+     * es   selector to the PSP
+     * ds   dgroup of the application
+     * ss   stack selector
+     * sp   top of the stack
+     */
 
-    /* Initialize process critical section */
-    InitializeCriticalSection( &PROCESS_Current()->crit_section );
+    memset( &context, 0, sizeof(context) );
+    CS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
+    DS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->dgroup - 1].hSeg);
+    ES_reg(&context)  = pTask->hPDB;
+    EIP_reg(&context) = pModule->ip;
+    EBX_reg(&context) = pModule->stack_size;
+    ECX_reg(&context) = pModule->heap_size;
+    EDI_reg(&context) = context.SegDs;
 
-    /* Call USER signal proc */
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+    TRACE_(task)("Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
+                  CS_reg(&context), IP_reg(&context), DS_reg(&context),
+                  SELECTOROF(pTask->thdb->cur_stack),
+                  OFFSETOF(pTask->thdb->cur_stack) );
 
-    if (pModule->flags & NE_FFLAGS_WIN32)
-    {
-        ERR_(task)("Called for Win32 task!\n" );
-        ExitProcess( 1 );
-    }
-    else if (pModule->dos_image)
-    {
-        DOSVM_Enter( NULL );
-        ExitProcess( 0 );
-    }
-    else
-    {
-        /* Registers at initialization must be:
-         * ax   zero
-         * bx   stack size in bytes
-         * cx   heap size in bytes
-         * si   previous app instance
-         * di   current app instance
-         * bp   zero
-         * es   selector to the PSP
-         * ds   dgroup of the application
-         * ss   stack selector
-         * sp   top of the stack
-         */
-        CONTEXT context;
-
-        memset( &context, 0, sizeof(context) );
-        CS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
-        DS_reg(&context)  = GlobalHandleToSel16(pSegTable[pModule->dgroup - 1].hSeg);
-        ES_reg(&context)  = pTask->hPDB;
-        EIP_reg(&context) = pModule->ip;
-        EBX_reg(&context) = pModule->stack_size;
-        ECX_reg(&context) = pModule->heap_size;
-        EDI_reg(&context) = context.SegDs;
-
-        TRACE_(task)("Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
-                      CS_reg(&context), IP_reg(&context), DS_reg(&context),
-                      SELECTOROF(pTask->thdb->cur_stack),
-                      OFFSETOF(pTask->thdb->cur_stack) );
-
-        Callbacks->CallRegisterShortProc( &context, 0 );
-        /* This should never return */
-        ERR_(task)("Main program returned! (should never happen)\n" );
-        ExitProcess( 1 );
-    }
+    Callbacks->CallRegisterShortProc( &context, 0 );
 }
 
 
 /***********************************************************************
  *           TASK_Create
  *
- * NOTE: This routine might be called by a Win32 thread. We don't have
- *       any real problems with that, since we operated merely on a private
- *       TDB structure that is not yet linked into the task list.
+ * NOTE: This routine might be called by a Win32 thread. Thus, we need
+ *       to be careful to protect global data structures. We do this
+ *       by entering the Win16Lock while linking the task into the
+ *       global task list.
  */
 BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
                   HINSTANCE16 hPrevInstance, UINT16 cmdShow)
@@ -314,10 +282,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     TDB *pTask;
     LPSTR cmd_line;
     WORD sp;
-    char *stack32Top;
     char name[10];
-    STACK16FRAME *frame16;
-    STACK32FRAME *frame32;
     PDB *pdb32 = thdb->process;
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
@@ -410,12 +375,18 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
                                 (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
 
+    /* Create scheduler event for 16-bit tasks */
+
+    if ( !(pTask->flags & TDBF_WIN32) )
+    {
+        pTask->hEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
+        pTask->hEvent = ConvertToGlobalHandle( pTask->hEvent );
+    }
+
     /* Enter task handle into thread and process */
  
     pTask->thdb->teb.htask16 = pTask->thdb->process->task = hTask;
-     TRACE_(task)("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
-
-    if (pTask->flags & TDBF_WIN32) return TRUE;
+    TRACE_(task)("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
 
     /* If we have a DGROUP/hInstance, use it for 16-bit stack */
  
@@ -427,47 +398,10 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
         pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
     }
 
-    /* Create the 16-bit stack frame */
+    /* If requested, add entry point breakpoint */
 
-    pTask->thdb->cur_stack -= sizeof(STACK16FRAME);
-    frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
-    frame16->ebp = OFFSETOF( pTask->thdb->cur_stack ) + (int)&((STACK16FRAME *)0)->bp;
-    frame16->bp = LOWORD(frame16->ebp);
-    frame16->ds = frame16->es = hInstance;
-    frame16->fs = 0;
-    frame16->entry_point = 0;
-    frame16->entry_cs = 0;
-    frame16->mutex_count = 1; /* TASK_Reschedule is called from 16-bit code */
-    /* The remaining fields will be initialized in TASK_Reschedule */
-
-    /* Create the 32-bit stack frame */
-
-    stack32Top = (char*)pTask->thdb->teb.stack_top;
-    frame16->frame32 = frame32 = (STACK32FRAME *)stack32Top - 1;
-    frame32->frame16 = pTask->thdb->cur_stack + sizeof(STACK16FRAME);
-    frame32->edi     = 0;
-    frame32->esi     = 0;
-    frame32->edx     = 0;
-    frame32->ecx     = 0;
-    frame32->ebx     = 0;
-    frame32->retaddr = (DWORD)TASK_CallToStart;
-    /* The remaining fields will be initialized in TASK_Reschedule */
-
-    return TRUE;
-}
-
-/***********************************************************************
- *           TASK_StartTask
- *
- * NOTE: This routine might be called by a Win32 thread. Thus, we need
- *       to be careful to protect global data structures. We do this
- *       by entering the Win16Lock while linking the task into the
- *       global task list.
- */
-void TASK_StartTask( HTASK16 hTask )
-{
-    TDB *pTask = (TDB *)GlobalLock16( hTask );
-    if ( !pTask ) return;
+    if ( TASK_AddTaskEntryBreakpoint )
+        TASK_AddTaskEntryBreakpoint( hTask );
 
     /* Add the task to the linked list */
 
@@ -475,26 +409,8 @@ void TASK_StartTask( HTASK16 hTask )
     TASK_LinkTask( hTask );
     SYSLEVEL_LeaveWin16Lock();
 
-    TRACE_(task)("linked task %04x\n", hTask );
-
-    /* If requested, add entry point breakpoint */
-
-    if ( TASK_AddTaskEntryBreakpoint )
-        TASK_AddTaskEntryBreakpoint( hTask );
-
-    /* Get the task up and running. */
-
-    if ( THREAD_IsWin16( pTask->thdb ) )
-    {
-        /* Post event to start the task */
-        PostEvent16( hTask );
-
-        /* If we ourselves are a 16-bit task, we Yield() directly. */
-        if ( THREAD_IsWin16( THREAD_Current() ) )
-            OldYield16();
-    }
+    return TRUE;
 }
-
 
 /***********************************************************************
  *           TASK_DeleteTask
@@ -608,60 +524,23 @@ void TASK_KillTask( HTASK16 hTask )
     if ( hLockedTask == hTask )
         hLockedTask = 0;
 
-    if ( hTaskToKill && ( hTaskToKill != hCurrentTask ) )
-    {
-        /* If another task is already marked for destruction, */
-        /* we can kill it now, as we are in another context.  */ 
-        TASK_DeleteTask( hTaskToKill );
-        hTaskToKill = 0;
-    }
+    TASK_DeleteTask( hTask );
 
-    /*
-     * If hTask is not the task currently scheduled by the Win16
-     * scheduler, we simply delete it; otherwise we mark it for
-     * destruction.  Note that if the current task is a 32-bit
-     * one, hCurrentTask is *different* from GetCurrentTask()!
-     */
+    /* When deleting the current task ... */
     if ( hTask == hCurrentTask )
     {
-        assert( hTaskToKill == 0 || hTaskToKill == hCurrentTask );
-        hTaskToKill = hCurrentTask;
-    }
-    else
-        TASK_DeleteTask( hTask );
+        DWORD lockCount;
 
-    SYSLEVEL_LeaveWin16Lock();
-}
+        /* ... schedule another one ... */
+        TASK_Reschedule();
 
-    
-/***********************************************************************
- *           TASK_KillCurrentTask
- *
- * Kill the currently running task. As it's not possible to kill the
- * current task like this, it is simply marked for destruction, and will
- * be killed when either TASK_Reschedule or this function is called again 
- * in the context of another task.
- */
-void TASK_KillCurrentTask( INT16 exitCode )
-{
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
-    {
-        FIXME_(task)("called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        /* ... and completely release the Win16Lock, just in case. */
+        ReleaseThunkLock( &lockCount );
+
         return;
     }
 
-    assert(hCurrentTask == GetCurrentTask());
-
-    TRACE_(task)("Killing current task %04x\n", hCurrentTask );
-
-    TASK_KillTask( 0 );
-
-    TASK_YieldToSystem();
-
-    /* We should never return from this Yield() */
-
-    ERR_(task)("Return of the living dead %04x!!!\n", hCurrentTask);
-    exit(1);
+    SYSLEVEL_LeaveWin16Lock();
 }
 
 /***********************************************************************
@@ -669,188 +548,169 @@ void TASK_KillCurrentTask( INT16 exitCode )
  *
  * This is where all the magic of task-switching happens!
  *
- * Note: This function should only be called via the TASK_YieldToSystem()
- *       wrapper, to make sure that all the context is saved correctly.
- *   
- *       It must not call functions that may yield control.
+ * 16-bit Windows performs non-preemptive (cooperative) multitasking.
+ * This means that each 16-bit task runs until it voluntarily yields 
+ * control, at which point the scheduler gets active and selects the
+ * next task to run.
+ *
+ * In Wine, all processes, even 16-bit ones, are scheduled preemptively
+ * by the standard scheduler of the underlying OS.  As many 16-bit apps
+ * *rely* on the behaviour of the Windows scheduler, however, we have
+ * to simulate that behaviour.
+ *
+ * This is achieved as follows: every 16-bit task is at time (except
+ * during task creation and deletion) in one of two states: either it
+ * is the one currently running, then the global variable hCurrentTask
+ * contains its task handle, or it is not currently running, then it
+ * is blocked on a special scheduler event, a global handle to which
+ * is stored in the task struct.
+ *
+ * When the current task yields control, this routine gets called. Its
+ * purpose is to determine the next task to be active, signal the 
+ * scheduler event of that task, and then put the current task to sleep
+ * waiting for *its* scheduler event to get signalled again.
+ *
+ * This routine can get called in a few other special situations as well:
+ *
+ * - On creation of a 16-bit task, the Unix process executing the task
+ *   calls TASK_Reschedule once it has completed its initialization.
+ *   At this point, the task needs to be blocked until its scheduler
+ *   event is signalled the first time (this will be done by the parent
+ *   process to get the task up and running).
+ *
+ * - When the task currently running terminates itself, this routine gets
+ *   called and has to schedule another task, *without* blocking the 
+ *   terminating task.
+ *
+ * - When a 32-bit thread posts an event for a 16-bit task, it might be
+ *   the case that *no* 16-bit task is currently running.  In this case
+ *   the task that has now an event pending is to be scheduled.
+ *
  */
-BOOL TASK_Reschedule(void)
+void TASK_Reschedule(void)
 {
-    TDB *pOldTask = NULL, *pNewTask;
-    HTASK16 hTask = 0;
-    STACK16FRAME *newframe16;
+    TDB *pOldTask = NULL, *pNewTask = NULL;
+    HTASK16 hOldTask = 0, hNewTask = 0;
+    enum { MODE_YIELD, MODE_SLEEP, MODE_WAKEUP } mode;
+    DWORD lockCount;
 
-    /* Create scheduler event */
-    if ( TASK_ScheduleEvent == INVALID_HANDLE_VALUE )
+    SYSLEVEL_EnterWin16Lock();
+
+    /* Check what we need to do */
+    hOldTask = GetCurrentTask();
+    pOldTask = (TDB *)GlobalLock16( hOldTask );
+    TRACE_(task)( "entered with hCurrentTask %04x by hTask %04x (pid %d)\n", 
+                  hCurrentTask, hOldTask, getpid() );
+
+    if ( pOldTask && THREAD_IsWin16( THREAD_Current() ) )
     {
-        TASK_ScheduleEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
-        TASK_ScheduleEvent = ConvertToGlobalHandle( TASK_ScheduleEvent );
+        /* We are called by an active (non-deleted) 16-bit task */
+
+        /* If we don't even have a current task, or else the current
+           task has yielded, we'll need to schedule a new task and
+           (possibly) put the calling task to sleep.  Otherwise, we
+           only block the caller. */
+
+        if ( !hCurrentTask || hCurrentTask == hOldTask )
+            mode = MODE_YIELD;
+        else
+            mode = MODE_SLEEP;
     }
-
-    /* Get the initial task up and running */
-    if (!hCurrentTask && GetCurrentTask())
+    else
     {
-        /* We need to remove one pair of stackframes (exept for Winelib) */
-        STACK16FRAME *oldframe16 = CURRENT_STACK16;
-        STACK32FRAME *oldframe32 = oldframe16? oldframe16->frame32 : NULL;
-        STACK16FRAME *newframe16 = oldframe32? PTR_SEG_TO_LIN( oldframe32->frame16 ) : NULL;
-        STACK32FRAME *newframe32 = newframe16? newframe16->frame32 : NULL;
-        if (newframe32)
+        /* We are called by a deleted 16-bit task or a 32-bit thread */
+
+        /* The only situation where we need to do something is if we
+           now do not have a current task.  Then, we'll need to wake up
+           some task that has events pending. */
+
+        if ( !hCurrentTask || hCurrentTask == hOldTask )
+            mode = MODE_WAKEUP;
+        else
         {
-            newframe16->entry_ip     = oldframe16->entry_ip;
-            newframe16->entry_cs     = oldframe16->entry_cs;
-            newframe16->ip           = oldframe16->ip;
-            newframe16->cs           = oldframe16->cs;
-            newframe32->ebp          = oldframe32->ebp;
-            newframe32->restore_addr = oldframe32->restore_addr;
-            newframe32->codeselector = oldframe32->codeselector;
-
-            THREAD_Current()->cur_stack = oldframe32->frame16;
+            /* nothing to do */
+            SYSLEVEL_LeaveWin16Lock();
+            return;
         }
-
-        hCurrentTask = GetCurrentTask();
-        pNewTask = (TDB *)GlobalLock16( hCurrentTask );
-        pNewTask->ss_sp = pNewTask->thdb->cur_stack;
-        return FALSE;
     }
 
-    /* NOTE: As we are entered from 16-bit code, we hold the Win16Lock.
-             We hang onto it thoughout most of this routine, so that accesses
-             to global variables (most notably the task list) are protected. */
-    assert(hCurrentTask == GetCurrentTask());
-
-    TRACE_(task)("entered with hTask %04x (pid %d)\n", hCurrentTask, getpid());
-
-#ifdef CONFIG_IPC
-    /* FIXME: What about the Win16Lock ??? */
-    dde_reschedule();
-#endif
-      /* First check if there's a task to kill */
-
-    if (hTaskToKill && (hTaskToKill != hCurrentTask))
+    /* Find a task to yield to: check for DirectedYield() */
+    if ( mode == MODE_YIELD && pOldTask && pOldTask->hYieldTo )
     {
-        TASK_DeleteTask( hTaskToKill );
-        hTaskToKill = 0;
-    }
-
-    /* Find a task to yield to */
-
-    pOldTask = (TDB *)GlobalLock16( hCurrentTask );
-    if (pOldTask && pOldTask->hYieldTo)
-    {
-        /* check for DirectedYield() */
-
-        hTask = pOldTask->hYieldTo;
-        pNewTask = (TDB *)GlobalLock16( hTask );
-        if( !pNewTask || !pNewTask->nEvents) hTask = 0;
+        hNewTask = pOldTask->hYieldTo;
+        pNewTask = (TDB *)GlobalLock16( hNewTask );
+        if( !pNewTask || !pNewTask->nEvents) hNewTask = 0;
         pOldTask->hYieldTo = 0;
     }
 
-    while (!hTask)
+    /* Find a task to yield to: check for pending events */
+    if ( (mode == MODE_YIELD || mode == MODE_WAKEUP) && !hNewTask )
     {
-        /* Find a task that has an event pending */
-
-        hTask = hFirstTask;
-        while (hTask)
+        hNewTask = hFirstTask;
+        while (hNewTask)
         {
-            pNewTask = (TDB *)GlobalLock16( hTask );
+            pNewTask = (TDB *)GlobalLock16( hNewTask );
 
-	    TRACE_(task)("\ttask = %04x, events = %i\n", hTask, pNewTask->nEvents);
+            TRACE_(task)( "\ttask = %04x, events = %i\n",
+                          hNewTask, pNewTask->nEvents );
 
             if (pNewTask->nEvents) break;
-            hTask = pNewTask->hNext;
+            hNewTask = pNewTask->hNext;
         }
-        if (hLockedTask && (hTask != hLockedTask)) hTask = 0;
-        if (hTask) break;
-
-        /* No task found, wait for some events to come in */
-
-        /* NOTE: We release the Win16Lock while waiting for events. This is to enable
-                 Win32 threads to thunk down to 16-bit temporarily. Since Win16
-                 tasks won't execute and Win32 threads are not allowed to enter 
-                 TASK_Reschedule anyway, there should be no re-entrancy problem ... */
-
-        ResetEvent( TASK_ScheduleEvent );
-        SYSLEVEL_ReleaseWin16Lock();
-        WaitForSingleObject( TASK_ScheduleEvent, INFINITE );
-        SYSLEVEL_RestoreWin16Lock();
+        if (hLockedTask && (hNewTask != hLockedTask)) hNewTask = 0;
     }
 
-    if (hTask == hCurrentTask) 
+    /* If we are still the task with highest priority, just return ... */
+    if ( mode == MODE_YIELD && hNewTask == hCurrentTask )
     {
+        TRACE_(task)("returning to the current task (%04x)\n", hCurrentTask );
+        SYSLEVEL_LeaveWin16Lock();
+
         /* Allow Win32 threads to thunk down even while a Win16 task is
            in a tight PeekMessage() or Yield() loop ... */
-        SYSLEVEL_ReleaseWin16Lock();
-        SYSLEVEL_RestoreWin16Lock();
-
-        TRACE_(task)("returning to the current task(%04x)\n", hTask );
-        return FALSE;  /* Nothing to do */
-    }
-    pNewTask = (TDB *)GlobalLock16( hTask );
-    TRACE_(task)("Switching to task %04x (%.8s)\n",
-                  hTask, pNewTask->module_name );
-
-     /* Make the task the last in the linked list (round-robin scheduling) */
-
-    pNewTask->priority++;
-    TASK_UnlinkTask( hTask );
-    TASK_LinkTask( hTask );
-    pNewTask->priority--;
-
-    /* Finish initializing the new task stack if necessary */
-
-    newframe16 = THREAD_STACK16( pNewTask->thdb );
-    if (!newframe16->entry_cs)
-    {
-        STACK16FRAME *oldframe16 = CURRENT_STACK16;
-        STACK32FRAME *oldframe32 = oldframe16->frame32;
-        STACK32FRAME *newframe32 = newframe16->frame32;
-        newframe16->entry_ip     = oldframe16->entry_ip;
-        newframe16->entry_cs     = oldframe16->entry_cs;
-        newframe16->ip           = oldframe16->ip;
-        newframe16->cs           = oldframe16->cs;
-        newframe32->ebp          = oldframe32->ebp;
-        newframe32->restore_addr = oldframe32->restore_addr;
-        newframe32->codeselector = oldframe32->codeselector;
-    }
-    
-    /* Switch to the new stack */
-
-    /* NOTE: We need to release/restore the Win16Lock, as the task
-             switched to might be at another recursion level than
-             the old task ... */
-
-    SYSLEVEL_ReleaseWin16Lock();
-
-    hCurrentTask = hTask;
-    SYSDEPS_SetCurThread( pNewTask->thdb );
-    pNewTask->ss_sp = pNewTask->thdb->cur_stack;
-
-    SYSLEVEL_RestoreWin16Lock();
-
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           TASK_YieldToSystem
- *
- * Scheduler interface, this way we ensure that all "unsafe" events are
- * processed outside the scheduler.
- */
-static void TASK_YieldToSystem( void )
-{
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
-    {
-        FIXME_(task)("called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        ReleaseThunkLock( &lockCount );
+        RestoreThunkLock( lockCount );
         return;
     }
 
-    EVENT_Synchronize( FALSE );
+    /* If no task to yield to found, suspend 16-bit scheduler ... */
+    if ( mode == MODE_YIELD && !hNewTask )
+    {
+        TRACE_(task)("No currently active task\n");
+        hCurrentTask = 0;
+    }
 
-    Callbacks->CallTaskRescheduleProc();
+    /* If we found a task to wake up, do it ... */
+    if ( (mode == MODE_YIELD || mode == MODE_WAKEUP) && hNewTask )
+    {
+        TRACE_(task)("Switching to task %04x (%.8s)\n",
+                      hNewTask, pNewTask->module_name );
+
+        pNewTask->priority++;
+        TASK_UnlinkTask( hNewTask );
+        TASK_LinkTask( hNewTask );
+        pNewTask->priority--;
+
+        hCurrentTask = hNewTask;
+        SetEvent( pNewTask->hEvent );
+
+        /* This is set just in case some app reads it ... */
+        pNewTask->ss_sp = pNewTask->thdb->cur_stack;
+    }
+
+    /* If we need to put the current task to sleep, do it ... */
+    if ( (mode == MODE_YIELD || mode == MODE_SLEEP) && hOldTask != hCurrentTask )
+    {
+        ResetEvent( pOldTask->hEvent );
+
+        ReleaseThunkLock( &lockCount );
+        SYSLEVEL_CheckNotLevel( 1 );
+        WaitForSingleObject( pOldTask->hEvent, INFINITE );
+        RestoreThunkLock( lockCount );
+    }
+
+    SYSLEVEL_LeaveWin16Lock();
 }
-
 
 /***********************************************************************
  *           InitTask  (KERNEL.91)
@@ -943,7 +803,7 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
         pTask->nEvents--;
         return FALSE;
     }
-    TASK_YieldToSystem();
+    TASK_Reschedule();
 
     /* When we get back here, we have an event */
 
@@ -969,7 +829,10 @@ void WINAPI PostEvent16( HTASK16 hTask )
     }
 
     pTask->nEvents++;
-    SetEvent( TASK_ScheduleEvent );    
+
+    /* If we are a 32-bit task, we might need to wake up the 16-bit scheduler */
+    if ( !THREAD_IsWin16( THREAD_Current() ) )
+        TASK_Reschedule();
 }
 
 
@@ -1028,7 +891,7 @@ void WINAPI OldYield16(void)
     }
 
     if (pCurTask) pCurTask->nEvents++;  /* Make sure we get back here */
-    TASK_YieldToSystem();
+    TASK_Reschedule();
     if (pCurTask) pCurTask->nEvents--;
 }
 

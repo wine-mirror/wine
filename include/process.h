@@ -93,6 +93,8 @@ typedef struct _PDB
     void            *server_pid;       /*    Server id for this process */
     HANDLE          *dos_handles;      /*    Handles mapping DOS -> Win32 */
     struct _PDB     *next;             /*    List reference - list of PDB's */
+    WORD            hInstance;         /*    hInstance on startup */
+    WORD            hPrevInstance;     /*    hPrevInstance on startup */
 } PDB;
 
 /* Process flags */
