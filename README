@@ -7,9 +7,8 @@ Windows binary, and a library (called Winelib) that implements Windows
 API calls using their Unix or X11 equivalents.  The library may also
 be used for porting Win32 code into native Unix executables.
 
-Wine is free software, and its license (contained in the file LICENSE)
-is BSD style.  Basically, you can do anything with it except claim
-that you wrote it.
+Wine is free software, released under the GNU LGPL; see the file
+LICENSE for the details.
 
 2. QUICK START
 
