@@ -76,16 +76,18 @@ static const char *make_internal_name( const ORDDEF *odp, DLLSPEC *spec, const c
  *
  * Output a prototype for a weak function.
  */
-static void declare_weak_function( FILE *outfile, const char *name, const char *prototype )
+static void declare_weak_function( FILE *outfile, const char *ret_type, const char *name, const char *params)
 {
     fprintf( outfile, "#ifdef __GNUC__\n" );
     fprintf( outfile, "# ifdef __APPLE__\n" );
-    fprintf( outfile, "extern %s __attribute__((weak_import));\n", prototype );
+    fprintf( outfile, "extern %s %s(%s) __attribute__((weak_import));\n", ret_type, name, params );
+    fprintf( outfile, "static %s (*__wine_spec_weak_%s)(%s) = %s;\n", ret_type, name, params, name );
+    fprintf( outfile, "#define %s __wine_spec_weak_%s\n", name, name );
     fprintf( outfile, "# else\n" );
-    fprintf( outfile, "extern %s __attribute__((weak));\n", prototype );
+    fprintf( outfile, "extern %s %s(%s) __attribute__((weak));\n", ret_type, name, params );
     fprintf( outfile, "# endif\n" );
     fprintf( outfile, "#else\n" );
-    fprintf( outfile, "extern %s;\n", prototype );
+    fprintf( outfile, "extern %s %s(%s);\n", ret_type, name, params );
     fprintf( outfile, "static void __asm__dummy_%s(void)", name );
     fprintf( outfile, " { asm(\".weak " __ASM_NAME("%s") "\"); }\n", name );
     fprintf( outfile, "#endif\n\n" );
@@ -600,8 +602,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
             fprintf( outfile, "extern int __stdcall %s( void*, unsigned int, void* );\n\n", init_func );
         else
         {
-            declare_weak_function( outfile, "DllMain",
-                                   "int __stdcall DllMain( void*, unsigned int, void* )" );
+            declare_weak_function( outfile, "int __stdcall", "DllMain", "void*, unsigned int, void*" );
             init_func = "DllMain";
         }
         fprintf( outfile,
@@ -624,8 +625,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
             fprintf( outfile, "extern int __stdcall %s( void*, void* );\n\n", init_func );
         else
         {
-            declare_weak_function( outfile, "DriverEntry",
-                                   "int __stdcall DriverEntry( void*, void* )" );
+            declare_weak_function( outfile, "int __stdcall", "DriverEntry", "void*, void*");
             init_func = "DriverEntry";
         }
         fprintf( outfile,
@@ -647,9 +647,9 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
             fprintf( outfile, "extern int %s( int argc, char *argv[] );\n", init_func );
         else
         {
-            declare_weak_function( outfile, "main", "int main( int argc, char *argv[] )" );
-            declare_weak_function( outfile, "wmain", "int wmain( int argc, unsigned short *argv[] )" );
-            declare_weak_function( outfile, "WinMain", "int __stdcall WinMain(void *,void *,char *,int)" );
+            declare_weak_function( outfile, "int", "main", "int argc, char *argv[]" );
+            declare_weak_function( outfile, "int", "wmain", "int argc, unsigned short *argv[]" );
+            declare_weak_function( outfile, "int __stdcall", "WinMain", "void *,void *,char *,int" );
         }
         fprintf( outfile,
                  "\ntypedef struct {\n"
