@@ -337,7 +337,9 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->ExtentsAdjust = 0;
 
-    pCaps->StencilCaps = 0;
+    pCaps->StencilCaps = D3DSTENCILCAPS_DECRSAT | D3DSTENCILCAPS_INCRSAT | 
+                         D3DSTENCILCAPS_INVERT  | D3DSTENCILCAPS_KEEP    | 
+                         D3DSTENCILCAPS_REPLACE | D3DSTENCILCAPS_ZERO /* | D3DSTENCILCAPS_DECR | D3DSTENCILCAPS_INCR */;
 
     pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x80000;
     pCaps->TextureOpCaps = 0xFFFFFFFF;
@@ -380,6 +382,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
                                                             IDirect3DDevice8** ppReturnedDeviceInterface) {
     IDirect3DDevice8Impl *object;
     HWND whichHWND;
+    const char *GL_Extensions = NULL;
 
     ICOM_THIS(IDirect3D8Impl,iface);
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
@@ -412,8 +415,8 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     /* Initialize openGl */
     {
         HDC hDc;
-        int          dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
-        /*int          dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16, None};   // Useful for debugging */
+        int          dblBuf[]={GLX_STENCIL_SIZE,8,GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
+        /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
 
         /* Which hwnd are we using? */
 /*      if (pPresentationParameters->Windowed) { */
@@ -436,6 +439,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         ENTER_GL();
         object->visInfo = glXChooseVisual(object->display, DefaultScreen(object->display), dblBuf);
         object->glCtx   = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
+
 	LEAVE_GL();
         ReleaseDC(whichHWND, hDc);
 
@@ -502,11 +506,31 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     glEnable(GL_LIGHTING);
     checkGLcall("glEnable");
 
+    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+    checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
+
     glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
     checkGLcall("glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
 
     /* Setup all the devices defaults */
     CreateStateBlock((LPDIRECT3DDEVICE8) object);
+
+    /* Parse the gl supported features, in theory enabling parts of our code appropriately */
+    GL_Extensions = glGetString(GL_EXTENSIONS);
+    TRACE("GL_Extensions reported:\n");  
+
+    while (*GL_Extensions!=0x00) {
+        const char *Start = GL_Extensions;
+        char ThisExtn[256];
+
+        memset(ThisExtn, 0x00, sizeof(ThisExtn));
+        while (*GL_Extensions!=' ' && *GL_Extensions!=0x00) {
+            GL_Extensions++;
+        }
+        memcpy(ThisExtn, Start, (GL_Extensions-Start));
+        TRACE ("   %s\n", ThisExtn);
+        if (*GL_Extensions==' ') GL_Extensions++;
+    }
 
     LEAVE_GL();
 

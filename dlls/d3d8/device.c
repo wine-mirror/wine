@@ -515,8 +515,10 @@ GLenum StencilOp(DWORD op) {
     case D3DSTENCILOP_INCRSAT : return GL_INCR;
     case D3DSTENCILOP_DECRSAT : return GL_DECR;
     case D3DSTENCILOP_INVERT  : return GL_INVERT;
-    case D3DSTENCILOP_INCR    : return GL_INCR; /* Fixme - needs to support wrap */
-    case D3DSTENCILOP_DECR    : return GL_DECR; /* Fixme - needs to support wrap */
+    case D3DSTENCILOP_INCR    : FIXME("Unsupported stencil op %ld\n", op);
+                                return GL_INCR; /* Fixme - needs to support wrap */
+    case D3DSTENCILOP_DECR    : FIXME("Unsupported stencil op %ld\n", op);
+                                return GL_DECR; /* Fixme - needs to support wrap */
     default:
         FIXME("Invalid stencil op %ld\n", op);
         return GL_ALWAYS;
@@ -1130,8 +1132,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
                   curRect->x1, curRect->y2, curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             glScissor(curRect->x1, curRect->y2, curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
-        } else {
-            TRACE("Clearing screen with glClear to color %lx\n", Color);
         }
 
         /* Clear the whole screen */
@@ -1148,6 +1148,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
         }
 
         if (Flags & D3DCLEAR_TARGET) {
+            TRACE("Clearing screen with glClear to color %lx\n", Color);
             glClearColor(((Color >> 16) & 0xFF) / 255.0, ((Color >>  8) & 0xFF) / 255.0,
                          ((Color >>  0) & 0xFF) / 255.0, ((Color >> 24) & 0xFF) / 255.0);
             checkGLcall("glClearColor");
@@ -2050,6 +2051,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_STENCILWRITEMASK          :
         {
             glStencilMask(Value);
+            TRACE("glStencilMask(%lu)\n", Value);
             checkGLcall("glStencilMask");
         }
         break;
@@ -2826,26 +2828,28 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             } else {
 
                 /* Enable only the appropriate texture dimension */
-                if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_1D) {
-                    glEnable(GL_TEXTURE_1D);
-                    checkGLcall("Enable GL_TEXTURE_1D");
-                } else {
-                    glDisable(GL_TEXTURE_1D);
-                    checkGLcall("Disable GL_TEXTURE_1D");
-                }
-                if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_2D) {
-                    glEnable(GL_TEXTURE_2D);
-                    checkGLcall("Enable GL_TEXTURE_2D");
-                } else {
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("Disable GL_TEXTURE_2D");
-                }
-                if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_3D) {
-                    glEnable(GL_TEXTURE_3D);
-                    checkGLcall("Enable GL_TEXTURE_3D");
-                } else {
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("Disable GL_TEXTURE_3D");
+                if (Type==D3DTSS_ALPHAOP && Value != D3DTOP_DISABLE) {
+                    if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_1D) {
+                        glEnable(GL_TEXTURE_1D);
+                        checkGLcall("Enable GL_TEXTURE_1D");
+                    } else {
+                        glDisable(GL_TEXTURE_1D);
+                        checkGLcall("Disable GL_TEXTURE_1D");
+                    } 
+                    if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_2D) {
+                        glEnable(GL_TEXTURE_2D);
+                        checkGLcall("Enable GL_TEXTURE_2D");
+                    } else {
+                        glDisable(GL_TEXTURE_2D);
+                        checkGLcall("Disable GL_TEXTURE_2D");
+                    }
+                    if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_3D) {
+                        glEnable(GL_TEXTURE_3D);
+                        checkGLcall("Enable GL_TEXTURE_3D");
+                    } else {
+                        glDisable(GL_TEXTURE_3D);
+                        checkGLcall("Disable GL_TEXTURE_3D");
+                    }
                 }
 
                 /* Now set up the operand correctly */
@@ -2867,7 +2871,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     /* Correct scale */
                     if (Type == D3DTSS_ALPHAOP) glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale);
                     else glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale);
-
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);
                     break;
 
@@ -2875,12 +2878,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD);
                     break;
 
-
                 case D3DTOP_ADDSIGNED2X               : Scale = Scale * 2;  /* Drop through */
                 case D3DTOP_ADDSIGNED                 :
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT);
                     break;
 
+                case D3DTOP_DOTPRODUCT3               :
+                    /*glTexEnvi(GL_TEXTURE_ENV, Parm, GL_DOT3_RGBA);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA);");
+                    break;*/
 
                 case D3DTOP_SUBTRACT                  :
                     /* glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT); Missing? */
@@ -2899,7 +2905,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                 case D3DTOP_MODULATEINVCOLOR_ADDALPHA :
                 case D3DTOP_BUMPENVMAP                :
                 case D3DTOP_BUMPENVMAPLUMINANCE       :
-                case D3DTOP_DOTPRODUCT3               :
                 case D3DTOP_MULTIPLYADD               :
                 case D3DTOP_LERP                      :
                 default:
@@ -3467,13 +3472,11 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
        texture stage, but disable all stages by default. Hence if a stage is enabled
        then the default texture will kick in until replaced by a SetTexture call     */
     for (i=0; i<8; i++) {
+        GLubyte white = 255;
 
         /* Make appropriate texture active */
         glActiveTextureARB(GL_TEXTURE0_ARB + i);
         checkGLcall("glActiveTextureARB");
-
-        /* Define 64 dummy bytes for the texture */
-        This->dummyTexture[i] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 64);
 
         /* Generate an opengl texture name */
         glGenTextures(1, &This->dummyTextureName[i]);
@@ -3485,7 +3488,7 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
         glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
         checkGLcall("glBindTexture");
 
-        glTexImage1D(GL_TEXTURE_1D, 1, GL_ALPHA8, 1, 0, GL_ALPHA, GL_BYTE, &This->dummyTexture[i]); 
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white); 
         checkGLcall("glTexImage1D");
 
         /* Reapply all the texture state information to this texture */

@@ -311,7 +311,6 @@ struct IDirect3DDevice8Impl
     Display     *display;
     Window       win;
 
-    void        *dummyTexture[8];
     UINT         dummyTextureName[8];
 
 };

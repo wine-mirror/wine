@@ -63,9 +63,6 @@ IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion)
 
     TRACE("SDKVersion = %x, Created Direct3D object at %p\n", SDKVersion, object);
 
-    /* Dump out the gl supported features
-    TRACE("GL_Extensions reported: %s\n", glGetString(GL_EXTENSIONS)); */
-
     return (IDirect3D8 *)object;
 }
 
