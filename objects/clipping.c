@@ -80,7 +80,7 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
     {
         if (fnMode == RGN_COPY)
         {
-            if (dc->hClipRgn) DeleteObject16( dc->hClipRgn );
+            if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
             dc->hClipRgn = 0;
             retval = SIMPLEREGION; /* Clip region == whole DC */
         }

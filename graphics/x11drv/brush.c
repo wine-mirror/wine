@@ -269,7 +269,7 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
                                         bmpInfo,
                                         (WORD)brush->logbrush.lbColor );
 	    BRUSH_SelectPatternBrush( dc, hBitmap );
-	    DeleteObject16( hBitmap );
+	    DeleteObject( hBitmap );
 	    GlobalUnlock16( (HGLOBAL16)brush->logbrush.lbHatch );	    
 	}
 	

@@ -392,7 +392,7 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
     }
     else
     {
-        if (dc->hClipRgn) DeleteObject16( dc->hClipRgn );
+        if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
         dc->hClipRgn = 0;
     }
     CLIPPING_UpdateGCRegion( dc );

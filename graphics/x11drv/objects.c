@@ -54,7 +54,7 @@ HGDIOBJ X11DRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ret = X11DRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
 	  break;
       case REGION_MAGIC:
-	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
+	  ret = (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
 	  break;
     }
     GDI_ReleaseObj( handle );

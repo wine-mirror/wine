@@ -901,11 +901,11 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
           itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
     TSXFree(itemFmtName);
     
-    hClipData = GetClipboardData16(wFormat);
+    hClipData = GetClipboardData(wFormat);
     
-    if( hClipData && (lpClipData = GlobalLock16(hClipData)) )
+    if( hClipData && (lpClipData = GlobalLock(hClipData)) )
     {
-        cBytes = GlobalSize16(hClipData);
+        cBytes = GlobalSize(hClipData);
         
         TRACE("\tUpdating property %s, %d bytes...\n",
               TSXGetAtomName(display, rprop), cBytes);
@@ -915,7 +915,7 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
                                 (unsigned char *)lpClipData, cBytes);
         TRACE("(Rc=%d)\n", xRc);
         
-        GlobalUnlock16(hClipData);
+        GlobalUnlock(hClipData);
     }
     else
     {
