@@ -19,6 +19,7 @@
  */
 #include <winsock.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "winetest.h"
 
@@ -29,6 +30,7 @@ open_http (const char *ipnum)
     struct sockaddr_in sa;
     SOCKET s;
 
+    report (R_STATUS, "Opening HTTP connection to %s", ipnum);
     if (WSAStartup (MAKEWORD (2,2), &wsad)) return INVALID_SOCKET;
 
     s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -68,15 +70,15 @@ send_buf (SOCKET s, const char *buf, size_t length)
 }
 
 int
-send_str (SOCKET s, const char *fmt, ...)
+send_str (SOCKET s, ...)
 {
     va_list ap;
     char *p;
     int ret;
     size_t len;
 
-    va_start (ap, fmt);
-    p = vstrmake (&len, fmt, ap);
+    va_start (ap, s);
+    p = vstrmake (&len, ap);
     va_end (ap);
     if (!p) return 1;
     ret = send_buf (s, p, len);
@@ -111,55 +113,73 @@ send_file (const char *name)
 
     s = open_http ("157.181.170.47");
     if (s == INVALID_SOCKET) {
-        fprintf (stderr, "Can't open connection: %x.\n",
-                 WSAGetLastError ());
+        report (R_WARNING, "Can't open network connection: %d",
+                WSAGetLastError ());
         return 1;
     }
 
     f = fopen (name, "rb");
-    if (!f) goto abort1;
+    if (!f) {
+        report (R_WARNING, "Can't open file '%s': %d", name, errno);
+        goto abort1;
+    }
     fseek (f, 0, SEEK_END);
     filesize = ftell (f);
-    if (filesize > 1024*1024) goto abort2;
+    if (filesize > 1024*1024) {
+        report (R_WARNING,
+                "File too big (%d > 1 MB), copy and submit manually",
+                filesize);
+        goto abort2;
+    }
     fseek (f, 0, SEEK_SET);
 
+    report (R_STATUS, "Sending header");
     str = strmake (&total, body1, name);
     ret = send_str (s, head, filesize + total + sizeof body2 - 1) ||
         send_buf (s, str, total);
     free (str);
     if (ret) {
-        fprintf (stderr, "Can't send header.\n");
+        report (R_WARNING, "Error sending header: %d, %d",
+                errno, WSAGetLastError ());
         goto abort2;
     }
 
-    while ((bytes_read = fread (buffer, 1, sizeof buffer, f)))
+    report (R_STATUS, "Sending %u bytes of data", filesize);
+    report (R_PROGRESS, filesize);
+    while ((bytes_read = fread (buffer, 1, sizeof buffer / 8, f))) {
         if (send_buf (s, buffer, bytes_read)) {
-            fprintf (stderr, "Can't send body.\n");
+            report (R_WARNING, "Error sending body: %d, %d",
+                    errno, WSAGetLastError ());
             goto abort2;
         }
+        report (R_DELTA, bytes_read, "Network transfer: In progress");
+    }
     fclose (f);
 
     if (send_buf (s, body2, sizeof body2 - 1)) {
-        fprintf (stderr, "Can't send trailer.\n");
+        report (R_WARNING, "Error sending trailer: %d, %d",
+                errno, WSAGetLastError ());
         goto abort2;
     }
+    report (R_DELTA, 0, "Network transfer: Done");
 
     total = 0;
     while ((bytes_read = recv (s, buffer + total,
                                sizeof buffer - total, 0))) {
         if ((signed)bytes_read == SOCKET_ERROR) {
-            fprintf (stderr, "Error receiving response: %d.\n",
-                     WSAGetLastError ());
+            report (R_WARNING, "Error receiving reply: %d, %d",
+                    errno, WSAGetLastError ());
             goto abort1;
         }
         total += bytes_read;
         if (total == sizeof buffer) {
-            fprintf (stderr, "Buffer overflow.\n");
+            report (R_WARNING, "Buffer overflow");
             goto abort1;
         }
     }
     if (close_http (s)) {
-        fprintf (stderr, "Error closing connection.\n");
+        report (R_WARNING, "Error closing connection: %d, %d",
+                errno, WSAGetLastError ());
         return 1;
     }
 

@@ -37,6 +37,8 @@
 
 #include "winetest.h"
 
+#define TESTRESOURCE "USERDATA"
+
 struct wine_test
 {
     char *name;
@@ -47,7 +49,7 @@ struct wine_test
     char *exename;
 };
 
-static struct wine_test wine_tests[32];
+static struct wine_test *wine_tests;
 
 static const char *wineloader;
 
@@ -61,7 +63,7 @@ void print_version ()
     {
 	ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	if (!GetVersionEx ((OSVERSIONINFO *) &ver))
-	    fatal("Can't get OS version.");
+	    report (R_FATAL, "Can't get OS version.");
     }
 
     xprintf ("    dwMajorVersion=%ld\n    dwMinorVersion=%ld\n"
@@ -104,155 +106,158 @@ void remove_dir (const char *dir)
         if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
             remove_dir(path);
         else if (!DeleteFile (path))
-            warning (strmake (NULL, "Can't delete file %s: error %d", path, GetLastError ()));
+            report (R_WARNING, "Can't delete file %s: error %d",
+                    path, GetLastError ());
     } while (FindNextFile (hFind, &wfd));
     FindClose (hFind);
     if (!RemoveDirectory (dir))
-        warning (strmake (NULL, "Can't remove directory %s: error %d", dir, GetLastError ()));
+        report (R_WARNING, "Can't remove directory %s: error %d",
+                dir, GetLastError ());
 }
 
 void* extract_rcdata (int id, DWORD* size)
 {
     HRSRC rsrc;
     HGLOBAL hdl;
-
-    rsrc = FindResource (0, (LPTSTR)(id + 1), "USERDATA");
-    if (!rsrc) return 0;
-    *size = SizeofResource (0, rsrc);
-    if (!*size) return 0;
-    hdl = LoadResource (0, rsrc);
-    if (!hdl) return 0;
-    return LockResource (hdl);
+    LPVOID addr = NULL;
+    
+    if (!(rsrc = FindResource (0, (LPTSTR)id, TESTRESOURCE)) ||
+        !(*size = SizeofResource (0, rsrc)) ||
+        !(hdl = LoadResource (0, rsrc)) ||
+        !(addr = LockResource (hdl)))
+        report (R_FATAL, "Can't extract test file of id %d: %d",
+                id, GetLastError ());
+    return addr;
 }
 
-int extract_test (const char *dir, int id)
+/* Fills out the name, is_elf and exename fields */
+void
+extract_test (struct wine_test *test, const char *dir, int id)
 {
     BYTE* code;
     DWORD size;
     FILE* fout;
-    char buffer[128];
-    int len;
-    struct wine_test *test;
-
-    if (id >= sizeof(wine_tests)/sizeof(wine_tests[0])-1) fatal("Too many tests\n");
+    int strlen, bufflen = 128;
 
     code = extract_rcdata (id, &size);
-    if (!code) return 0;
+    test->name = xmalloc (bufflen);
+    while ((strlen = LoadStringA (NULL, id, test->name, bufflen))
+           == bufflen - 1) {
+        bufflen *= 2;
+        test->name = xrealloc (test->name, bufflen);
+    }
+    if (!strlen) report (R_FATAL, "Can't read name of test %d.", id);
+    test->name = xrealloc (test->name, strlen+1);
+    report (R_STEP, "Extracting: %s", test->name);
+    test->is_elf = !memcmp (code+1, "ELF", 3);
+    test->exename = strmake (NULL, "%s/%s", dir, test->name);
 
-    test = &wine_tests[id];
-    len = LoadStringA(0, id + 1, buffer, sizeof(buffer) );
-    test->name = xmalloc( len + 1 );
-    memcpy( test->name, buffer, len + 1 );
-    test->is_elf = (code[1] == 'E' && code[2] == 'L' && code[3] == 'F');
-    test->exename = strmake(NULL, "%s/%s", dir, test->name);
-
-    if (!(fout = fopen(test->exename, "wb")) ||
+    if (!(fout = fopen (test->exename, "wb")) ||
         (fwrite (code, size, 1, fout) != 1) ||
-        fclose (fout)) fatal (strmake (NULL, "Failed to write file %s.", test->name));
-    return 1;
+        fclose (fout)) report (R_FATAL, "Failed to write file %s.",
+                               test->name);
 }
 
-int get_subtests (struct wine_test tests[])
+void
+get_subtests (const char *tempdir, struct wine_test *test, int id)
 {
     char *subname;
     FILE *subfile;
     size_t subsize, bytes_read, total;
-    char buffer[8000], *index;
+    char *buffer, *index;
     const char header[] = "Valid test names:", seps[] = " \r\n";
     int oldstdout;
     const char *argv[] = {"wine", NULL, NULL};
-    struct wine_test* test;
-    int allocated, all_subtests = 0;
+    int allocated;
 
     subname = tempnam (0, "sub");
-    if (!subname) fatal ("Can't name subtests file.");
+    if (!subname) report (R_FATAL, "Can't name subtests file.");
     oldstdout = dup (1);
-    if (-1 == oldstdout) fatal ("Can't preserve stdout.");
+    if (-1 == oldstdout) report (R_FATAL, "Can't preserve stdout.");
     subfile = fopen (subname, "w+b");
-    if (!subfile) fatal ("Can't open subtests file.");
+    if (!subfile) report (R_FATAL, "Can't open subtests file.");
     if (-1 == dup2 (fileno (subfile), 1))
-        fatal ("Can't redirect output to subtests.");
+        report (R_FATAL, "Can't redirect output to subtests.");
     fclose (subfile);
 
-    for (test = tests; test->name; test++) {
-        lseek (1, 0, SEEK_SET);
-        argv[1] = test->exename;
-        if (test->is_elf)
-            spawnvp (_P_WAIT, wineloader, argv);
-        else
-            spawnvp (_P_WAIT, test->exename, argv+1);
-        subsize = lseek (1, 0, SEEK_CUR);
-        if (subsize >= sizeof buffer) {
-            fprintf (stderr, "Subtests output too big: %s.\n",
-                     test->name);
-            continue;
-        }
+    extract_test (test, tempdir, id);
+    argv[1] = test->exename;
+    if (test->is_elf)
+        spawnvp (_P_WAIT, wineloader, argv);
+    else
+        spawnvp (_P_WAIT, test->exename, argv+1);
+    subsize = lseek (1, 0, SEEK_CUR);
+    buffer = xmalloc (subsize+1);
 
-        lseek (1, 0, SEEK_SET);
-        total = 0;
-        while ((bytes_read = read (1, buffer + total, subsize - total))
+    lseek (1, 0, SEEK_SET);
+    total = 0;
+    while ((bytes_read = read (1, buffer + total, subsize - total))
                && (signed)bytes_read != -1)
             total += bytes_read;
-        if (bytes_read) {
-            fprintf (stderr, "Error reading %s.\n", test->name);
-            continue;
+    if (bytes_read)
+        report (R_FATAL, "Can't get subtests of %s", test->name);
+    buffer[total] = 0;
+    index = strstr (buffer, header);
+    if (!index)
+        report (R_FATAL, "Can't parse subtests output of %s",
+                test->name);
+    index += sizeof header;
+
+    allocated = 10;
+    test->subtests = xmalloc (allocated * sizeof(char*));
+    test->subtest_count = 0;
+    index = strtok (index, seps);
+    while (index) {
+        if (test->subtest_count == allocated) {
+            allocated *= 2;
+            test->subtests = xrealloc (test->subtests,
+                                       allocated * sizeof(char*));
         }
-        buffer[total] = 0;
-        index = strstr (buffer, header);
-        if (!index) {
-            fprintf (stderr, "Can't parse subtests output of %s.\n",
-                     test->name);
-            continue;
-        }
-        index += sizeof(header);
-        allocated = 10;
-        test->subtests = xmalloc (allocated * sizeof (char*));
-        test->subtest_count = 0;
-        index = strtok (index, seps);
-        while (index) {
-            if (test->subtest_count == allocated) {
-                allocated *= 2;
-                test->subtests = xrealloc (test->subtests,
-                                           allocated * sizeof (char*));
-            }
-            test->subtests[test->subtest_count++] = strdup (index);
-            index = strtok (NULL, seps);
-        }
-        test->subtests = xrealloc (test->subtests,
-                                   test->subtest_count * sizeof (char*));
-        all_subtests += test->subtest_count;
+        test->subtests[test->subtest_count++] = strdup (index);
+        index = strtok (NULL, seps);
     }
+    test->subtests = xrealloc (test->subtests,
+                               test->subtest_count * sizeof(char*));
+    free (buffer);
     close (1);
-
-    if (-1 == dup2 (oldstdout, 1)) fatal ("Can't recover old stdout.");
+    if (-1 == dup2 (oldstdout, 1))
+        report (R_FATAL, "Can't recover old stdout.");
     close (oldstdout);
-
-    if (remove (subname)) fatal ("Can't remove subtests file.");
+    if (remove (subname))
+        report (R_FATAL, "Can't remove subtests file.");
     free (subname);
-
-    return all_subtests;
 }
 
-void run_test (struct wine_test* test, const char* subtest)
+/* Return number of failures, -1 if couldn't spawn process. */
+int run_test (struct wine_test* test, const char* subtest)
 {
     int status;
     const char *argv[] = {"wine", test->exename, subtest, NULL};
 
-    fprintf (stderr, "Running %s:%s\n", test->name, subtest);
     xprintf ("%s:%s start\n", test->name, subtest);
     if (test->is_elf)
         status = spawnvp (_P_WAIT, wineloader, argv);
     else
         status = spawnvp (_P_WAIT, test->exename, argv+1);
     if (status == -1)
-        xprintf ("Can't run: %d, errno=%d: %s\n", status, errno, strerror (errno));
-    xprintf ("%s:%s done (%x)\n", test->name, subtest, status);
+        xprintf ("Can't run: %d, errno=%d: %s\n",
+                 status, errno, strerror (errno));
+    xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
+    return status;
 }
 
-int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow)
+BOOL CALLBACK
+EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
+                  LPTSTR lpszName, LONG_PTR lParam)
 {
-    struct wine_test* test;
-    int nr_of_tests, subtest, i;
+    (*(int*)lParam)++;
+    return TRUE;
+}
+
+void
+run_tests ()
+{
+    int nr_of_files = 0, nr_of_tests = 0, i;
     char *tempdir, *logname;
     FILE *logfile;
     char build_tag[128];
@@ -260,51 +265,87 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     SetErrorMode (SEM_FAILCRITICALERRORS);
 
     if (!(wineloader = getenv("WINELOADER"))) wineloader = "wine";
-    if (setvbuf (stdout, NULL, _IONBF, 0)) fatal ("Can't unbuffer output.");
+    if (setvbuf (stdout, NULL, _IONBF, 0))
+        report (R_FATAL, "Can't unbuffer output.");
 
     tempdir = tempnam (0, "wct");
-    if (!tempdir) fatal ("Can't name temporary dir (check TMP).");
-    fprintf (stderr, "tempdir=%s\n", tempdir);
-    if (!CreateDirectory (tempdir, NULL)) fatal (strmake (NULL, "Could not create directory: %s", tempdir));
+    if (!tempdir)
+        report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
+    report (R_DIR, tempdir);
+    if (!CreateDirectory (tempdir, NULL))
+        report (R_FATAL, "Could not create directory: %s", tempdir);
 
     logname = tempnam (0, "res");
-    if (!logname) fatal ("Can't name logfile.");
-    fprintf (stderr, "logname=%s\n", logname);
+    if (!logname) report (R_FATAL, "Can't name logfile.");
+    report (R_OUT, logname);
 
-    logfile = fopen (logname, "ab");
-    if (!logfile) fatal ("Could not open logfile.");
-    if (-1 == dup2 (fileno (logfile), 1)) fatal ("Can't redirect stdout.");
+    logfile = fopen (logname, "a");
+    if (!logfile) report (R_FATAL, "Could not open logfile.");
+    if (-1 == dup2 (fileno (logfile), 1))
+        report (R_FATAL, "Can't redirect stdout.");
     fclose (logfile);
 
-    LoadStringA( 0, 0, build_tag, sizeof(build_tag) );
+    xprintf ("Version 1\n");
+    i = LoadStringA (GetModuleHandle (NULL), 0,
+                     build_tag, sizeof build_tag);
+    if (i == 0) report (R_FATAL, "Build descriptor not found.");
+    if (i >= sizeof build_tag)
+        report (R_FATAL, "Build descriptor too long.");
     xprintf ("Tests from build %s\n", build_tag);
     xprintf ("Operating system version:\n");
     print_version ();
     xprintf ("Test output:\n" );
 
-    i = 0;
-    while (extract_test (tempdir, i)) i++;
+    report (R_STATUS, "Counting tests");
+    if (!EnumResourceNames (NULL, TESTRESOURCE,
+                            EnumTestFileProc, (LPARAM)&nr_of_files))
+        report (R_FATAL, "Can't enumerate test files: %d",
+                GetLastError ());
+    wine_tests = xmalloc (nr_of_files * sizeof wine_tests[0]);
 
-    nr_of_tests = get_subtests (wine_tests);
-
-    for (test = wine_tests; test->name; test++)
-	for (subtest = 0; subtest < test->subtest_count; subtest++)
-	    run_test (test, test->subtests[subtest]);
-
-    close (1);
-
-    remove_dir (tempdir);
-
-    /* FIXME: add an explanation of what is going on */
-    if (MessageBoxA( 0, "Do you want to submit the test results?", "Confirmation",
-                     MB_YESNO | MB_ICONQUESTION ) == IDYES)
-    {
-        if (send_file (logname))
-            fatal ("Can't submit logfile (network of file error).");
+    report (R_STATUS, "Extracting tests");
+    report (R_PROGRESS, nr_of_files);
+    for (i = 0; i < nr_of_files; i++) {
+        get_subtests (tempdir, wine_tests+i, i+1);
+        nr_of_tests += wine_tests[i].subtest_count;
     }
+    report (R_DELTA, 0, "Extracting: Done");
+
+    report (R_STATUS, "Running tests");
+    report (R_PROGRESS, nr_of_tests);
+    for (i = 0; i < nr_of_files; i++) {
+        struct wine_test *test = wine_tests + i;
+        int j;
+
+	for (j = 0; j < test->subtest_count; j++) {
+            report (R_STEP, "Running: %s: %s", test->name,
+                    test->subtests[j]);
+	    run_test (test, test->subtests[j]);
+        }
+    }
+    report (R_DELTA, 0, "Running: Done");
+
+    report (R_STATUS, "Cleaning up");
+    close (1);
+    remove_dir (tempdir);
+    free (tempdir);
+    free (wine_tests);
+
+    if (report (R_ASK, MB_YESNO,
+                "Do you want to submit the test results?") == IDYES)
+        if (send_file (logname))
+            report (R_FATAL, "Can't submit logfile '%s'", logname);
 
     if (remove (logname))
-        warning (strmake (NULL, "Can't remove logfile: %d.", errno));
+        report (R_WARNING, "Can't remove logfile: %d.", errno);
+    free (logname);
+}
 
-    return 0;
+int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
+                    LPSTR cmdLine, int cmdShow)
+{
+    report (R_STATUS, "Starting up");
+    run_tests ();
+    report (R_STATUS, "Finished");
+    exit (0);
 }

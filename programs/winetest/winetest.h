@@ -31,9 +31,27 @@ void warning (const char* msg);
 void *xmalloc (size_t len);
 void *xrealloc (void *op, size_t len);
 void xprintf (const char *fmt, ...);
-char *vstrmake (size_t *lenp, const char *fmt, va_list ap);
-char *strmake (size_t *lenp, const char *fmt, ...);
+char *vstrmake (size_t *lenp, va_list ap);
+char *strmake (size_t *lenp, ...);
 
 int send_file (const char *name);
+
+/* GUI definitions */
+
+#include <windows.h>
+
+enum report_type {
+    R_STATUS = 0,
+    R_PROGRESS,
+    R_STEP,
+    R_DELTA,
+    R_DIR,
+    R_OUT,
+    R_FATAL,
+    R_WARNING,
+    R_ASK
+};
+
+int report (enum report_type t, ...);
 
 #endif /* __WINETESTS_H */

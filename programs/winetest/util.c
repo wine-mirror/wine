@@ -22,22 +22,11 @@
 
 #include "winetest.h"
 
-void fatal (const char* msg)
-{
-    MessageBox (NULL, msg, "Fatal Error", MB_ICONERROR | MB_OK);
-    exit (1);
-}
-
-void warning (const char* msg)
-{
-    MessageBox (NULL, msg, "Warning", MB_ICONWARNING | MB_OK);
-}
-
 void *xmalloc (size_t len)
 {
     void *p = malloc (len);
 
-    if (!p) fatal ("Out of memory.");
+    if (!p) report (R_FATAL, "Out of memory.");
     return p;
 }
 
@@ -45,7 +34,7 @@ void *xrealloc (void *op, size_t len)
 {
     void *p = realloc (op, len);
 
-    if (!p) fatal ("Out of memory.");
+    if (!p) report (R_FATAL, "Out of memory.");
     return p;
 }
 
@@ -54,18 +43,20 @@ void xprintf (const char *fmt, ...)
     va_list ap;
 
     va_start (ap, fmt);
-    if (vprintf (fmt, ap) < 0) fatal ("Can't write logs.");
+    if (vprintf (fmt, ap) < 0) report (R_FATAL, "Can't write logs.");
     va_end (ap);
 }
 
-char *vstrmake (size_t *lenp, const char *fmt, va_list ap)
+char *vstrmake (size_t *lenp, va_list ap)
 {
+    char *fmt;
     size_t size = 1000;
     char *p, *q;
     int n;
 
     p = malloc (size);
     if (!p) return NULL;
+    fmt = va_arg (ap, char*);
     while (1) {
         n = vsnprintf (p, size, fmt, ap);
         if (n < 0) size *= 2;   /* Windows */
@@ -82,14 +73,14 @@ char *vstrmake (size_t *lenp, const char *fmt, va_list ap)
     return p;
 }
 
-char *strmake (size_t *lenp, const char *fmt, ...)
+char *strmake (size_t *lenp, ...)
 {
     va_list ap;
     char *p;
 
-    va_start (ap, fmt);
-    p = vstrmake (lenp, fmt, ap);
-    if (!p) fatal ("Out of memory.");
+    va_start (ap, lenp);
+    p = vstrmake (lenp, ap);
+    if (!p) report (R_FATAL, "Out of memory.");
     va_end (ap);
     return p;
 }

@@ -4,14 +4,20 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winetest.exe
 APPMODE   = gui
-IMPORTS   = user32 wsock32
+IMPORTS   = comctl32 user32 wsock32
 
 C_SRCS = \
+	gui.c \
 	main.c \
 	send.c \
 	util.c
 
-RC_SRCS = winetest.rc
+RC_SRCS = \
+	gui.rc \
+	winetest.rc
+
+RC_BINSRC = gui.rc
+RC_BINARIES = wine.ico 
 
 TESTS = \
 	advapi32 \
