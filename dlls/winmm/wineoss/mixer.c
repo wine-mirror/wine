@@ -21,6 +21,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* TODO:
+ * + implement notification mechanism when state of mixer's controls
+ */
+
 #include "config.h"
 
 #include <stdlib.h>
@@ -990,7 +994,7 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc,
 			TRACE("[%d] => [%2d]: typ=%08lx\n", j, i + 1,
                               mix->ctrl[i].ctrl.dwControlType);
 			lpMlc->pamxctrl[j++] = mix->ctrl[i].ctrl;
-		    }
+                    }
 		}
 	    }
 	}

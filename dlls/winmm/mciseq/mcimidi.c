@@ -29,6 +29,13 @@
  * 98/11 splitted in midi.c and mcimidi.c
  */
 
+/* TODO:
+ *      + implement it correctly
+ *      + finish asynchronous commands (especially for reading/record)
+ *      + better implement non waiting command (without the MCI_WAIT flag).
+ *      + implement the recording features
+ */
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>

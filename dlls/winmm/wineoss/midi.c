@@ -26,6 +26,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* TODO:
+ *    + use better instrument definition for OPL/2 (midiPatch.c) or
+ *      use existing instrument definition (from playmidi or kmid)
+ *      with a .winerc option 
+ *    + have a look at OPL/3 ?
+ *    + implement asynchronous playback of MidiHdr
+ *    + implement STREAM'ed MidiHdr (question: how shall we share the
+ *      code between the midiStream functions in MMSYSTEM/WINMM and
+ *      the code for the low level driver)
+ *    + use a more accurate read mechanism than the one of snooping on
+ *      timers (like select on fd)
+ */
+
 #include "config.h"
 
 #include <string.h>

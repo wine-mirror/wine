@@ -28,6 +28,17 @@
  *      99/9	added support for loadable low level drivers
  */
 
+/* TODO
+ *      + it seems that some programs check what's installed in
+ *        registry against the value returned by drivers. Wine is
+ *        currently broken regarding this point.
+ *      + check thread-safeness for MMSYSTEM and WINMM entry points
+ *      + unicode entry points are badly supported (would require
+ *        moving 32 bit drivers as Unicode as they are supposed to be)
+ *      + allow joystick and timer external calls as we do for wave,
+ *        midi, mixer and aux
+ */
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
